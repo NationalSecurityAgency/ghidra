@@ -1,0 +1,1359 @@
+<!DOCTYPE doctype PUBLIC "-//W3C//DTD HTML 4.0 Frameset//EN">
+
+<!-- Keep pre text from wrapping so that it is formatted exactly as we have it -->
+<style>
+pre {
+    white-space: no-wrap;
+    font-family: 'Courier New', 'Courier';
+}
+
+typewriter {
+	font-family: 'Courier New', 'Courier';
+}
+
+/* Make the general text a bit more readable */
+body { 
+	font-size: 20px;
+}
+</style>
+
+<html> 
+<head>
+<title>Headless Analyzer README</title>
+</head>
+
+<body>
+<h1 align="center">Headless Analyzer README</h1>
+
+<h2>Table of Contents</h2>
+<UL>
+  <LI><a href="#general">Introduction</a></LI>
+  <LI><a href="#usage">Usage</a></LI>
+  <LI><a href="#examples">Examples</a></LI>
+  <LI><a href="#scripting">Writing Scripts for the Headless Analyzer</a></LI>
+  <UL>
+    <LI><a href="#scripting_passArgs">Passing Parameters using arguments</LI>
+    <LI><a href="#scripting_passParams">Passing Parameters using ask<i>Xxx</i>() methods</a></LI>
+    <LI><a href="#scripting_headlessScripts">Headless Scripts</a></LI>
+    <UL>
+      <LI><a href="#scripting_headlessScripts_enableDisableAnalysis">Enabling/Disabling Analysis</a></LI>
+      <LI><a href="#scripting_headlessScripts_setImportDir">Setting the Import Directory</a></LI>
+      <LI><a href="#scripting_headlessScripts_checkAnalysisTimeout">Checking for Analysis Timeout</a></LI>
+      <LI><a href="#scripting_headlessScripts_storeVariables">Headless Scripts: Passing Values Between Scripts</a></LI>
+      <LI><a href="#scripting_headlessScripts_controlProgramDisposition">Using Scripts to Control 
+      Program Disposition</a></LI>
+      <LI><a href="#scripting_headlessScripts_multipleScripts">Using Multiple Scripts to Control 
+      Program Disposition</a></LI>
+    </UL>
+  </UL>
+  <LI><a href="#wildcards">Wildcards: Specifying Files to Import or Process</a></LI>
+</UL>
+
+<div style="border-top: 4px double; margin-top: 1em; padding-top: 1em;"> </div>
+
+<h2><a name="general">Headless Analyzer Introduction and Guidelines</a></h2>
+
+<P>
+The Headless Analyzer is a command-line-based (non-GUI) version of Ghidra that allows users to:
+<UL>
+  <LI>Create and populate projects</LI>
+  <LI>Perform analysis on imported or existing binaries</LI>
+  <LI>Run non-GUI scripts in a project (scripts may be program-dependent or program-independent)</LI>
+</UL>
+The Headless Analyzer can be useful when performing repetitive tasks on a project (i.e., importing 
+and analyzing a directory of files or running a script over all the binaries in a project).
+<br><br>
+Users initiate Headless operation using the <typewriter>analyzeHeadless</typewriter> shell script. 
+The shell script takes, at a minimum, the path and name of an existing project (or one to be 
+created). When other parameters are specified, the following types of actions may be performed:
+
+<UL>
+  <LI><a href="#import">Import</a> a single file or directory of executable(s) (recursively or 
+  non-recursively).</LI>
+  <LI><a href="#process">Process</a> a single file or directory of executable(s) already present in 
+  an existing project (recursively or non-recursively).</LI>
+  <LI>Run any number of non-GUI Ghidra <a href="#preScript">pre-processing scripts</a> on each 
+  executable.</LI>
+  <LI>Turn analysis on or <a href="#noanalysis">off</a> for each executable.</LI>
+  <LI>Run any number of non-GUI Ghidra <a href="#postScript">post-processing scripts</a> on each 
+  executable.</LI>
+  <LI>Write to a <a href="#log">log</a> with information about each file processed; 
+  <a href="#scriptLog">separated logging</a> is available for scripts.</LI>
+  <LI>Keep or <a href="#deleteProject">delete</a> a created project.</LI>
+  <LI>Save any changes made to the project/file, or operate in a <a href="#readOnly">read-only</a> 
+  manner in <a href="#import"><typewriter>-import</typewriter></a> or 
+  <a href="#process"><typewriter>-process</typewriter></a> modes.</LI>
+  <LI>Use pre- and/or post-processing scripts to dictate 
+  <a href="#scripting_headlessScripts_controlProgramDisposition">program disposition</a>. For 
+  example, scripts can dictate whether further processing (i.e., analysis or other scripts) should 
+  be aborted and whether the current file should be deleted after all processing is complete.</LI>
+</UL>  
+While running, be aware that:
+<UL>
+  <LI>The Headless Analyzer may not run if the specified project is already open in Ghidra.</LI>
+  <LI>In bulk import mode (i.e., specifying a directory, <typewriter>-import dirOfExes</typewriter>, 
+  or wildcard string, <typewriter>-import dir1/*</typewriter>), any file beginning with the character 
+  &quot;.&quot; is assumed to be a hidden file and ignored by default. However, when a file beginning 
+  with &quot;.&quot; is named during import (for example, <typewriter>import /Users/user/.hidden.exe</typewriter>), 
+  the Headless Analyzer will attempt to import it.
+  <LI>Log files can only be redirected if Log4J is used.</LI>
+</UL>
+</P>
+(<a href="#top">Back to Top</a>)
+
+<div style="border-top: 4px double; margin-top: 1em; padding-top: 1em;"> </div>
+
+<h2><a name="usage">Headless Analyzer Usage</a></h2>
+The Headless Analyzer uses the command-line parameters discussed below. See <a href="#examples">Examples</a> for common use cases.
+
+<PRE>
+
+    analyzeHeadless <a href="#projLocation">&lt;project_location&gt;</a> &lt;<a href="#projName">project_name&gt;[/&lt;folder_path&gt;]</a> | <a href="#ghidraServer">ghidra://&lt;server&gt;[:&lt;port&gt;]/&lt;repository_name&gt;[/&lt;folder_path&gt;]</a>
+        [[<a href="#import">-import [&lt;directory&gt;|&lt;file&gt;]+</a>] | [<a href="#process">-process [&lt;project_file&gt;]]</a>]
+        [<a href="#preScript">-preScript &lt;ScriptName&gt;&nbsp;[&lt;arg&gt;]*</a>]
+        [<a href="#postScript">-postScript &lt;ScriptName&gt;&nbsp[&lt;arg&gt;]*</a>]
+        [<a href="#scriptPath">-scriptPath &quot;&lt;path1&gt;[;&lt;path2&gt;...]&quot;</a>]
+        [<a href="#propertiesPath">-propertiesPath &quot;&lt;path1&gt;[;&lt;path2&gt;...]&quot;</a>]
+        [<a href="#scriptLog">-scriptlog &lt;path to script log file&gt;</a>]
+        [<a href="#log">-log &lt;path to log file&gt;</a>]
+        [<a href="#overwrite">-overwrite</a>]
+        [<a href="#recursive">-recursive</a>]
+        [<a href="#readOnly">-readOnly</a>]
+        [<a href="#deleteProject">-deleteProject</a>]
+        [<a href="#noanalysis">-noanalysis</a>]
+        [<a href="#processor">-processor &lt;languageID&gt;</a>]
+        [<a href="#cspec">-cspec &lt;compilerSpecID&gt;</a>]
+        [<a href="#timeout">-analysisTimeoutPerFile &lt;timeout in seconds&gt;</a>]
+        [<a href="#keystore">-keystore &lt;KeystorePath&gt;</a>]
+        [<a href="#connect">-connect [&lt;userID&gt;]</a>]
+        [<a href="#password">-p</a>]
+        [<a href="#commit">-commit [&quot;&lt;comment&gt;&quot;]</a>]
+        [<a href="#okToDelete">-okToDelete</a>]
+        [<a href="#max-cpu">-max-cpu &lt;max cpu cores to use&gt;</a>]
+        [<a href="#loader">-loader &lt;desired loader name&gt;</a>]
+
+</PRE>
+
+<UL>
+    <LI>
+    <a name="projLocation"><typewriter>&lt;project_location&gt;</typewriter></a><br>The directory 
+    that either contains an existing Ghidra project (in -import or -process mode) or will contain a 
+    newly created project (in -import mode for a local project).
+    <br>
+    <i><b>You must specify either a project location and project name, or a Ghidra Server repository URL.</b> 
+       </br></br>
+        Some parameters will have no effect, depending on which project_location is specified.  The following table shows parameters that are specific to project_location:
+    </i>
+    </LI>
+    
+    <br>
+
+    <table style="width:20%" border="1px solid #000">
+        <tr>
+            <th>Parameter</th>
+            <th>Local Project</th> 
+            <th>Server Repository</th>
+        </tr>
+        <tr>
+            <td>-p</td>
+            <td></td>
+            <td>X</td>
+        </tr>
+        <tr>
+            <td>- connect</td>
+            <td></td>
+            <td>X</td>
+        </tr>
+        <tr>
+            <td>- keystore</td>
+            <td></td>
+            <td>X</td>
+        </tr>
+        <tr>
+            <td>- commit</td>
+            <td></td>
+            <td>X</td>
+        </tr>
+        <tr>
+            <td>- delete</td>
+            <td>X</td>
+            <td></td>
+        </tr>
+    </table>
+
+    <br><br>
+
+    <LI>
+    <a name="projName"><typewriter>&lt;project_name&gt;[/&lt;folder_path&gt;]</typewriter></a><br>
+    The name of either an existing project (in <typewriter>-import</typewriter> or 
+    <typewriter>-process</typewriter> mode) or new project (in <typewriter>-import</typewriter> mode) 
+    to be created in the above directory. If the optional folder path is included, imports will be 
+    rooted under this project folder. In <typewriter>-import</typewriter> mode with 
+    <typewriter>-recursive</typewriter> enabled, any folders in the folder path that do not already 
+    exist in the project will be created (even if nested).
+    <br>
+    <i><b>You must specify either a project location and project name, or a Ghidra Server repository URL.</b></i>
+    </LI>
+
+    <br><br>
+
+    <LI>
+    <a name="ghidraServer"><typewriter>ghidra://&lt;server&gt;[:&lt;port&gt;]/&lt;repository_name&gt;[/&lt;folder_path&gt;]</typewriter></a>
+    <br>A Ghidra Server repository URL (shared Ghidra Server project) and folder path. Using the 
+    repository URL eliminates the need for a local shared Ghidra project; however, the named 
+    repository must already exist on the Ghidra Server. If the specified repository does not already 
+    exist, it will not be created (see the <typewriter>GhidraProject</typewriter> class for a simple 
+    API that allows shared project creation from within a script).<br><br>If the optional folder 
+    path is included, imports will be rooted under this folder (in <typewriter>-import</typewriter> 
+    mode, folders will be created if they don&apos;t already exist).
+    </LI>
+
+    <br><br>
+
+    <LI>
+    <a name="import"><typewriter>-import [&lt;directory&gt;|&lt;file&gt;]+</typewriter></a><br>
+    <i>Note: <typewriter>-import</typewriter> and <typewriter>-process</typewriter> can not both be 
+    present in the parameters list.</i>
+    <br><br>
+    Specifies one or more executables (or directories of executables) to import. When importing a 
+    directory, a folder with the same name will be created in the Ghidra project. When using the 
+    <typewriter>-recursive</typewriter> parameter, each executable that is found in a recursive 
+    search through the given directory will be stored in the project in the same relative location 
+    (i.e., any directories found under the import directory will also be created in the project).
+    <br><br>
+    Operating system-specific wildcard characters can be used when importing files and/or directories. 
+    Please see the <a href="#wildcards">Wildcards</a> section for more details.
+    <br><br>
+    When importing multiple executables/directories in the same session, use one of the following 
+    methods:
+
+      <UL>
+        <LI>List multiple directories and/or executables after the <typewriter>-import</typewriter> 
+        option, separated by a space.</LI>
+  	    <PRE>
+  -import /Users/myDir/peFiles /Users/myDir/otherFiles/test.exe
+  	    </PRE>
+  	    <LI>Repeat the <typewriter>-import</typewriter> option multiple times (each use of 
+        <typewriter>-import</typewriter> may be separated by other parameters) to import from more 
+        than one directory or file source.</LI>
+        <PRE>
+  -import /Users/myDir/peFiles -recursive -import /Users/myDir/otherFiles/test.exe
+        </PRE>
+      </UL>
+    </LI>
+    
+    <LI>
+    <a name="process"><typewriter>-process [&lt;project_file&gt;]</typewriter></a><br>
+    <i>Note: <typewriter>-import</typewriter> and <typewriter>-process</typewriter> can not both be 
+    present in the parameters list.</i>
+    <br><br>
+    Performs processing (running pre/post-scripts and/or analysis) on one or more program files
+    that already exist in the project or repository. Use the optional <typewriter>project_file</typewriter> 
+    argument to specify an existing file by name.  Searching will be performed within the specified project folder 
+    (specified by <typewriter>folder_path</typewriter>, which was 
+    included with the <a href="#projName">project_name</a> or <a href="#ghidraServer">repository URL</a> 
+    specification). Omit the <typewriter>project_file</typewriter> argument to allow processing over 
+    all files within the project folder.
+    <br><br>
+    You can also use the wildcard characters &apos;<typewriter>*</typewriter>&apos; and 
+    &apos;<typewriter>?</typewriter>&apos; in the <typewriter>project_file</typewriter> parameter 
+    to specify all files within a folder which match the pattern. To prevent premature expansion (by the shell) of any wildcard 
+    characters, use single quotes around the <typewriter>project_file</typewriter>. For example:
+    <PRE>
+    -process &apos;*.exe&apos;
+    </PRE>
+    For further details on wildcard usage, please see the <a href="#wildcards">Wildcards</a> section below.
+    <br><br>
+    Omitting the optional <typewriter>project_file</typewriter> argument will cause all files to be processed
+    within the project folder (equivelent to &apos;*&apos;).
+    <br><br>
+    Including the <a href="#recursive"><typewriter>-recursive</typewriter></a> parameter will cause the same 
+    project file name/pattern search to be performed recursively within all sub-folders.  
+    <br><br>
+    Unlike the <a href="#import"><typewriter>-import</typewriter></a> option, 
+    <typewriter>-process</typewriter> may only be specified once.
+    </LI>
+
+    <br><br>
+    
+    <LI>
+    <a name="preScript"><typewriter>-preScript &lt;ScriptName.ext&gt;&nbsp[&lt;arg&gt;]*</typewriter>
+    </a><br>Identifies the name of a script that will execute before analysis, and an optional list 
+    of arguments to pass to the script. The script name must include its file extension (i.e., 
+    <typewriter>MyScript.java</typewriter>).
+    <br><br>
+    <B><I>This parameter expects the script name only; do not include the path to the script.</I></B> The
+    Headless Analyzer searches specific default locations for the named script, but additional script 
+    director(ies) may also be specified (see the <a href="#scriptPath"><typewriter>-scriptPath</typewriter>
+    </a> argument for more information).
+    <br><br>
+    This option must be repeated to specify additional scripts. See the <a href="#scripting">Scripting
+    </a> section for a description of advanced scripting capabilities.
+    </LI>
+
+    <br><br>
+
+    <LI>
+    <a name="postScript"><typewriter>-postScript &lt;ScriptName.ext&gt;&nbsp[&lt;arg&gt;]*</typewriter></a><br>
+    Identifies the name of a script that will execute after analysis, and an optional list 
+    of arguments to pass to the script. The script name must include its file extension (i.e., 
+    <typewriter>MyScript.java</typewriter>).
+    <br><br>
+    <B><I>This parameter expects the script name only; do not include the path to the script.</I></B> The
+    Headless Analyzer searches specific default locations for the named script, but additional script 
+    director(ies) may also be specified (see the <a href="#scriptPath"><typewriter>-scriptPath</typewriter>
+    </a> argument for more information).
+    <br><br>
+    This option must be repeated to specify additional scripts. See the <a href="#scripting">Scripting</a> 
+    section for a description of advanced scripting capabilities.
+    </LI>
+
+    <br><br>
+
+    <LI>
+    <a name="scriptPath"><typewriter>-scriptPath &quot;&lt;path1&gt;[;&lt;path2&gt;...]&quot;</typewriter></a>
+    <br>Specifies the search path(s) for scripts, including secondary scripts (a script invoked from 
+    another script). A path may start with <typewriter>$GHIDRA_SCRIPT</typewriter>, which corresponds 
+    to the Ghidra installation directory, or <typewriter>$USER_HOME</typewriter>, which corresponds 
+    to the user&apos;s home directory. On Unix systems, these home variables must be escaped using a 
+    &apos;<typewriter>\</typewriter>&apos; (backslash) character.
+    <br><br>
+    Examples:
+    
+      <UL>
+        <LI>
+        Windows:
+        <PRE>    -scriptPath &quot;$GHIDRA_HOME/Ghidra/Features/Base/ghidra_scripts;/myscripts&quot;</PRE>
+        </LI>
+
+        <LI>
+        Unix:
+        <PRE>    -scriptPath &quot;\$GHIDRA_HOME/Ghidra/Features/Base/ghidra_scripts;/myscripts&quot;</PRE>
+        </LI>
+      </UL>
+    </LI>
+	The <typewriter>scriptPath</typewriter> parameter is optional. If it is not present, the 
+	Headless Analyzer will search the following paths for the specified script(s):
+    <br>
+      <UL>
+        <LI><typewriter>$USER_HOME/ghidra_scripts</typewriter></LI>
+        <LI>All <typewriter>ghidra_script</typewriter> subdirectories that exist in the Ghidra distribution</LI>
+	  </UL>
+    <br><br>
+    
+    <LI>
+    <a name="propertiesPath"><typewriter>-propertiesPath &quot;&lt;path1&gt;[;&lt;path2&gt;&hellip;]&quot;</typewriter></a>
+    <br>Specifies path(s) that contain <typewriter>.properties</typewriter> files used by scripts or 
+    secondary/subscripts. A path may start with <typewriter>$GHIDRA_SCRIPT</typewriter>, which 
+    corresponds to the Ghidra installation directory, or <typewriter>$USER_HOME</typewriter>, which 
+    corresponds to the user&apos;s home directory. On Unix systems these home variables must be 
+    escaped with a &apos;\&apos; character.
+    <br><br>
+    More information on the use of <typewriter>.properties</typewriter> files to pass parameters 
+    during Headless Analysis can be found <a href="#scripting_passParams">here</a>.
+    </LI>
+
+    <br><br>
+
+    <LI>
+    <a name="scriptLog"><typewriter>-scriptlog &lt;path to script log file&gt;</typewriter></a><br>
+    Sets the location of the file that stores logging information from pre- and post-scripts. If a 
+    path to a script log file is not set, script logs are written to <typewriter>script.log</typewriter> 
+    in the user directory, by default.
+    <br><br>
+    NOTE: Only the built-in scripting print methods will print to the the script log file 
+    (print, println, printf, printerr).
+    </LI>
+
+    <br><br>
+
+    <LI>
+    <a name="log"><typewriter>-log &lt;path to log file&gt;</typewriter></a><br>
+    Sets the location of the file that stores logging information from analysis or other non-script 
+    processing of the files. If a path to a log file is not set, logging information is written to 
+    <typewriter>application.log</typewriter> in the user directory, by default.
+    </LI>
+
+    <br><br>
+
+    <LI><a name="overwrite"><typewriter>-overwrite</typewriter></a><br>
+    Applies to <a href="#import"><typewriter>-import</typewriter></a> mode only and is ignored if 
+    the <typewriter>-readOnly</typewriter> option is present.
+    If present, an existing project file that conflicts with an import file is overwritten. If this 
+    parameter is not included, import files that conflict with existing project files will be skipped
+    (if not operating with the <typewriter>-readOnly</typewriter> option).
+    If a conflicting file is contained within a version repository, and the <typewriter>-commit</typewriter>
+    option has not been specified, the overwrite will fail.  Removing a versioned file is also subject
+    to other permission and in-use restrictions which could also cause an overwrite failure.
+    </LI>
+
+    <br><br>
+
+    <LI>
+    <a name="recursive"><typewriter>-recursive</typewriter></a><br>
+    If present, enables recursive descent into directories and project sub-folders when a directory/
+    folder has been specified in <typewriter>-import</typewriter> or <typewriter>-process</typewriter> 
+    modes.
+    </LI>
+
+    <br><br>
+
+    <LI>
+    <a name="readOnly"><typewriter>-readOnly</typewriter></a><br>
+    If present in <typewriter>-import</typewriter> mode, imported files will NOT be saved to the 
+    project. If present in <typewriter>-process</typewriter> mode, any changes made to existing 
+    files by scripts or analysis are discarded.  The <typewriter>-overwrite</typewriter> option
+    will be ignored if this option is specified during import operations.
+    </LI>
+
+    <br><br>
+    
+    <LI>
+    <a name="deleteProject"><typewriter>-deleteProject</typewriter></a><br>
+    If present, the Ghidra project will be deleted after scripts and/or analysis have completed 
+    (only applies if the project has been created in the current session with 
+    <a href="#import"><typewriter>-import</typewriter></a>; existing projects are never deleted).
+    This project delete option is assumed when the <typewriter>-readOnly</typewriter> option is specified 
+    for import operations which create a new project.
+    </LI>
+
+    <br><br>
+
+    <LI>
+    <a name="noanalysis"><typewriter>-noanalysis</typewriter></a><br>
+    If present, executables will not be analyzed (auto-analysis occurs by default).
+    </LI>
+
+    <br><br>
+    
+    <LI>
+    <a name="processor"><typewriter>-processor &lt;languageID&gt;</typewriter></a><br>
+    Specifies the processor information to be used in <a href="#import"><typewriter>-import</typewriter></a> 
+    mode (and subsequent analysis, if analysis is enabled). Be sure to use quotes around the 
+    <typewriter>languageId</typewriter> if it contains spaces. If this parameter is not present, 
+    Ghidra uses header info (if available) to identify the processor.
+    <br><br>
+    The possible <i>languageIDs</i> can be found in the 
+    processor-specific <typewriter>.ldefs</typewriter> files (found here: 
+    <typewriter>ghidra_x.x\Ghidra\Processors\<i>proc_name</i>\data\languages\*.ldefs</typewriter>)
+    in the <typewriter>id</typewriter> attribute of the <typewriter>language</typewriter> element.
+    The specified &lt;languageID&gt; should match exactly, including case, as it appears in the <typewriter>.ldefs</typewriter> file.
+    <br><br>
+    For example:
+    <PRE>
+    &lt;language processor=&quot;x86&quot;
+              endian=&quot;little&quot;
+              size=&quot;32&quot;
+              variant=&quot;default&quot;
+              version=&quot;2.6&quot;
+              slafile=&quot;x86.sla&quot;
+              processorspec=&quot;x86.pspec&quot;
+              manualindexfile=&quot;../manuals/x86.idx&quot;
+              <b>id=&quot;x86:LE:32:default&quot;</b>&gt;
+    </PRE>
+    
+    <I>Note: The <typewriter>-processor</typewriter> parameter may be used without specifying the 
+    <a href="#cspec"><typewriter>-cspec</typewriter></a> parameter (if the given processor is valid, 
+    the Headless Analyzer chooses the default compiler specification for that processor).</I>
+    </LI>
+
+	<br><br>
+
+    <LI>
+    <a name="cspec"><typewriter>-cspec &lt;compilerSpecID&gt;</typewriter></a><br>
+    Specifies the compiler specification to be used in <a href="#import"><typewriter>-import</typewriter></a> 
+    mode (and subsequent analysis, if analysis is enabled).
+    <br><br>
+    The possible compilerSpecIDs can be found in the processor-specific <typewriter>.ldefs</typewriter> 
+    files (found here: <typewriter>ghidra_x.x\Ghidra\Processors\<i>proc_name</i>\data\languages\*.ldefs</typewriter>) 
+    in the <typewriter>id</typewriter> attribute of the appropriate <typewriter>compiler</typewriter> element.
+    The specified &lt;compilerSpecID&gt; should match exactly, including case, as it appears in the <typewriter>.ldefs</typewriter> file.
+    
+    <br><br>
+    For example:
+    <PRE>
+    &lt;compiler name=&quot;Visual Studio&quot; spec=&quot;x86win.cspec&quot; <b>id=&quot;windows&quot;</b>/&gt;
+    &lt;compiler name=&quot;gcc&quot; spec=&quot;x86gcc.cspec&quot; <b>id=&quot;gcc&quot;</b>/&gt;
+    &lt;compiler name=&quot;Borland C++&quot; spec=&quot;x86borland.cspec&quot; <b>id=&quot;borlandcpp&quot;</b>/&gt;
+    </PRE>
+    
+    <I>Note: The <typewriter>-cspec</typewriter> parameter may <b>not</b> be used without specifying the 
+    <a href="#processor"><typewriter>-processor</typewriter></a> parameter.</I>
+    </LI>
+    
+    <br><br>
+
+    <LI>
+    <a name="timeout"><typewriter>-analysisTimeoutPerFile &lt;timeout in seconds&gt;</typewriter></a><br>
+    Sets a timeout value (in seconds) for analysis. If analysis on a file exceeds the specified time, 
+    analysis is interrupted and processing continues as scheduled (i.e., to the 
+    <a href="#postScript"><typewriter>-postScript</typewriter></a> stage, if specified). Results 
+    from individual analyzers that have completed processing prior to timeout will still be saved 
+    with the program. Post-scripts can be used to detect that analysis has timed out (in Headless 
+    processing ONLY) by calling the <typewriter>getHeadlessAnalysisTimeoutStatus()</typewriter> method. 
+    </LI>
+
+    <br><br>
+
+    <LI>
+    <a name="keystore"><typewriter>-keystore &lt;KeystorePath&gt;</typewriter></a><br>
+    When connecting to a Ghidra Server using PKI or SSH authentication, this option allows 
+    specification of a suitable private keystore file. The file should rely on filesystem protection 
+    only to avoid prompting for a password.
+    </LI>
+
+    <br><br>
+
+    <LI>
+    <a name="connect"><typewriter>-connect &lt;userID&gt;</typewriter></a><br>
+    If used, allows the process owner&apos;s default userID to be overridden with the given 
+    <typewriter>userID</typewriter> when connecting to a Ghidra Server (provided the server has been 
+    configured to allow this).
+    </LI>
+
+    <br><br>
+
+    <LI>
+    <a name="password"><typewriter>-p</typewriter></a><br>
+    When connecting to a server, allows interactive prompting for a password via the console. 
+    Although this method of authentication is normally discouraged, the server connection will 
+    likely fail authentication if a password is required and this parameter is not enabled.
+    <br>
+    <b><u><i>NOTE: In some cases, password entry will be echoed to the console (a warning will show at 
+    password prompt).</i></u></b>
+    </LI>
+
+    <br><br>
+
+    <LI>
+    <a name="commit"><typewriter>-commit [&quot;&lt;comment&gt;&quot;]</typewriter></a><br>
+    When connected to a shared project, enables a commit of changes to the project&apos;s underlying 
+    repository (residing on the Ghidra Server). Commits are enabled by default for shared projects; 
+    however, the optional quoted <typewriter>comment</typewriter> may be specified and will be saved 
+    with all commits. Commits do not apply when the <a href="#readOnly"><typewriter>-readOnly</typewriter></a> 
+    parameter is present.
+    </LI>
+
+    <br><br>
+
+	<LI>
+	<a name="okToDelete"><typewriter>-okToDelete</typewriter></a><br>
+	When using Headless Scripts to control <a href="#scripting_headlessScripts_controlProgramDisposition">
+	program disposition</a> in <a href="#process"><typewriter>-process</typewriter></a> mode, it is 
+	possible to delete existing programs in a project. These deletions are permanent and can not be
+	undone (in a versioned project, all versions of a program are deleted). To ensure that programs
+	are not deleted irretrievably without the user&apos;s knowledge, Headless operation requires the
+	<typewriter>-okToDelete</typewriter> parameter to be set if a program is to be deleted in 
+	<typewriter>-process</typewriter> mode. If a program is scheduled to be deleted and 
+	<typewriter>-okToDelete</typewriter> has not been set, Headless will print a warning and the
+	program will not be deleted.
+	<br><br>
+	The <typewriter>-okToDelete</typewriter> parameter is not necessary when running in 
+	<a href="#import"><typewriter>-import</typewriter></a> mode. If a HeadlessScripts schedules
+	deletion of one of the programs being imported, the program will simply not be saved to the 
+	project.
+	</LI>
+	
+	<br><br>
+
+    <LI>
+    <a name="max-cpu"><typewriter>-max-cpu &lt;max cpu cores to use&gt;</typewriter></a><br>
+    Sets the maximum number of CPU cores to use during headless processing (must be an integer). 
+    Setting <typewriter>max-cpu</typewriter> to 0 or a negative integer is equivalent to setting 
+    the maximum number of cores to 1.
+    </LI>
+    
+	<br><br>
+
+    <LI>
+    <a name="loader"><typewriter>-loader &lt;desired loader name&gt;</typewriter></a><br>
+    Forces the file to be imported using a specific loader.  <br><br>
+    Loaders can take additional arguments that they apply during the import process.  
+    Below is a list of the most commonly used loaders and their arguments.<br>
+    <b>Note: </b>Full java package loader paths are no longer recognized.<br><br>
+    <UL>
+      <LI><typewriter>-loader BinaryLoader<typewriter></LI>
+      <UL>
+        <LI><typewriter>-loader-blockName &lt;block name&gt;</typewriter></LI>
+        <LI><typewriter>-loader-baseAddr &lt;base address<sup>1</sup>&gt;</typewriter></LI>
+        <LI><typewriter>-loader-fileOffset &lt;file offset<sup>2</sup>&gt;</typewriter></LI>
+        <LI><typewriter>-loader-length &lt;length in bytes<sup>2</sup>&gt;</typewriter></LI>
+        <LI><typewriter>-loader-applyLabels &lt;true|false&gt;</typewriter></LI>
+        <LI><typewriter>-loader-anchorLabels &lt;true|false&gt;</typewriter></LI>
+      </UL>
+      <LI><typewriter>-loader ElfLoader<typewriter></LI>
+      <UL>
+        <LI><typewriter>-loader-applyLabels &lt;true|false&gt;</typewriter></LI>
+        <LI><typewriter>-loader-anchorLabels &lt;true|false&gt;</typewriter></LI>
+        <LI><typewriter>-loader-createExportSymbolFiles &lt;true|false&gt;</typewriter></LI>
+        <LI><typewriter>-loader-loadExternalLibs &lt;true|false&gt;</typewriter></LI> 
+        <LI><typewriter>-loader-applyRelocations &lt;true|false&gt;</typewriter></LI>
+        <LI><typewriter>-loader-imagebase &lt;imagebase<sup>3</sup>&gt;</typewriter></LI>
+        <LI><typewriter>-loader-includeOtherBlocks &lt;true|false&gt;</typewriter></LI>
+        <LI><typewriter>-loader-resolveExternalSymbols &lt;true|false&gt;</typewriter></LI>
+      </UL>
+      <LI><typewriter>-loader PeLoader<typewriter></LI>
+      <UL>
+        <LI><typewriter>-loader-applyLabels &lt;true|false&gt;</typewriter></LI>
+        <LI><typewriter>-loader-anchorLabels &lt;true|false&gt;</typewriter></LI>
+        <LI><typewriter>-loader-createExportSymbolFiles &lt;true|false&gt;</typewriter></LI>
+        <LI><typewriter>-loader-loadExternalLibs &lt;true|false&gt;</typewriter></LI>
+        <LI><typewriter>-loader-parseCliHeaders &lt;true|false&gt;</typewriter></LI> 
+      </UL>
+      <LI><typewriter>-loader MachoLoader<typewriter></LI>
+      <UL>
+        <LI><typewriter>-loader-applyLabels &lt;true|false&gt;</typewriter></LI>
+        <LI><typewriter>-loader-anchorLabels &lt;true|false&gt;</typewriter></LI>
+        <LI><typewriter>-loader-createExportSymbolFiles &lt;true|false&gt;</typewriter></LI>
+        <LI><typewriter>-loader-loadExternalLibs &lt;true|false&gt;</typewriter></LI>
+      </UL>
+    </UL>
+    <br>
+    <sup>1. Address must be in the form [space:]offset.  Space is optional, and offset is a hex value with no leading 0x.</sup><br>
+    <sup>2. To specify hexadecimal, use a leading 0x.</sup><br>
+    <sup>3. Address is in the default space, and must be specified as a hexadecimal value without the leading 0x.</sup><br>
+    </LI>
+
+</UL>
+</P>
+(<a href="#top">Back to Top</a>)
+<div style="border-top: 4px double; margin-top: 1em; padding-top: 1em;"> </div>
+
+<h2><a name="examples">Headless Analyzer Examples</a></h2>
+<P>
+<UL>
+    <LI>Import a binary <typewriter>/binaries/binary1.exe</typewriter> to a local Ghidra Project named 
+    <typewriter>Project1</typewriter>. Analysis is on by default.</LI>
+    <PRE>analyzeHeadless /Users/user/ghidra/projects Project1 -import /binaries/binary1.exe</PRE>
+
+    <br><br>
+
+    <LI>Import all <typewriter>*.exe</typewriter> binaries from a local folder to a local Ghidra 
+    project named <typewriter>Project1</typewriter>, suppressing analysis.</LI>
+    <PRE>analyzeHeadless /Users/user/ghidra/projects Project1 -import /Users/user/sourceFiles/*.exe -noanalysis</PRE>
+
+    <br><br>
+
+    <LI>Import the binary <typewriter>/usr/local/binaries/binaryA.exe</typewriter> to a subfolder of a 
+    local Ghidra Project, running a prescript, but suppressing analysis.</LI>
+    <PRE>analyzeHeadless /Users/user/ghidra/projects Project1/folderOne -scriptPath /usr/scripts -preScript RunThisScriptFirst.java -import /usr/local/binaries/binaryA.exe -noanalysis</PRE>
+
+    <br><br>
+
+    <LI>Import the binary <typewriter>/usr/local/binaries/binaryB.exe</typewriter> to a local Ghidra 
+    Project, running a prescript that depends on a .properties file in the location 
+    <typewriter>/propertiesLocation</typewriter>. Analysis is on by default.</LI>
+    <PRE>analyzeHeadless /Users/user/ghidra/projects Project1 -scriptPath /usr/scripts -preScript RunThisScriptFirst.java -propertiesPath /propertiesLocation -import /usr/local/binaries/binaryB.exe</PRE>
+
+    <br><br>
+
+    <LI>Specify more than one import to a local project, running more than one script and performing analysis.</LI>
+    <PRE>analyzeHeadless /Users/user/ghidra/Projects Project1/folderOne -scriptPath /usr/scripts -preScript RunThisScriptFirst.java -preScript RunThisScriptSecond.java -import /usr/local/binaries/binaryA.exe /user/local/morebinaries -postScript RunThisScriptLast.java
+  
+     OR
+  
+analyzeHeadless /Users/user/ghidra/Projects Project1/folderOne -scriptPath /usr/scripts -preScript RunThisScriptFirst.java -preScript RunThisScriptSecond.java -import /usr/local/binaries/binaryA.exe -postScript RunThisScriptLast.java -import /user/local/morebinaries </PRE>
+
+    <br><br>
+
+    <LI>Run a script on an existing project binary <typewriter>importedBinA.exe</typewriter> in the folder 
+    <typewriter>folderOne</typewriter> of the existing project named <typewriter>Project1</typewriter>.</LI>
+    <PRE>analyzeHeadless /Users/user/ghidra/Projects Project1/folderOne -scriptPath /user/scripts -postScript FixupScript.java -process importedBinA.exe -noanalysis</PRE>
+
+    <br><br>
+
+    <LI>Recursively run scripts and analysis over all the binaries in the folder <typewriter>folderTwo</typewriter> 
+    of the existing project named <typewriter>Project2</typewriter>.</LI>
+    <PRE>analyzeHeadless /Users/user/ghidra/Projects Project2/folderTwo -scriptPath /user/scripts -preScript FixupPreScript.java -process -recursive</PRE>
+
+    <br><br>
+
+    <LI>Run a script and analysis on binaries starting with the letter <typewriter>&apos;a&apos;</typewriter> 
+    in the folder <typewriter>aFolder</typewriter> 
+    (and any of its subfolders) in the existing projected named <typewriter>Project1</typewriter>.</LI>
+    <PRE>analyzeHeadless /Users/user/ghidra/Projects Project1/aFolder -scriptPath /user/scripts -preScript ProcessAScript.java -process &apos;a*&apos; -recursive</PRE>
+
+    <br><br>
+  
+    <LI>Recursively import the directory<typewriter>/usr/local/binaries</typewriter> to a Ghidra Server, 
+    running a prescript and analysis. Commit changes with the specified comment. Server prompts for a 
+    password for the user named <typewriter>userID</typewriter>.</LI>
+    <PRE>analyzeHeadless ghidra://example.server.org:13100/RepositoryName/RootFolder -scriptPath /usr/scripts/ -preScript RunThisScriptFirst.java -import /usr/local/binaries -recursive -connect userID -p -commit &quot;Testing server imports.&quot;</PRE>
+  
+    <br><br>
+  
+    <LI>Change the default log location when importing and analyzing a file.</LI>
+    <PRE>analyzeHeadless /Users/user/ghidra/projects Project1 -import /binaries/binary1.exe -log /new/log_location.txt</PRE>
+  
+    <br><br>
+  
+    <LI>Re-import and overwrite a file that already exists in the project.</LI>
+    <PRE>analyzeHeadless /Users/user/ghidra/projects Project1 -import /binaries/IAlreadyExist.exe -overwrite</PRE>
+  
+    <br><br>
+  
+    <LI>Create a new project, import and analyze a file, then delete the project when done.</LI>
+    <PRE>analyzeHeadless /Users/user/ghidra/projects ANewProject -import /binaries/binary2.exe -deleteProject</PRE>
+  
+    <br><br>
+
+    <LI>Set a timeout value, in seconds, for analysis (analysis will abort if it takes longer than the 
+    set timeout value).</LI>
+    <PRE>analyzeHeadless /Users/user/ghidra/projects MyProject -import /binaries/binary2.exe -analysisTimeoutPerFile 100</PRE>
+
+    <br><br>
+  
+    <LI>Run a script without using <typewriter>-import</typewriter> or <typewriter>-process</typewriter> modes (<b><i>Script must not be program-dependent!</i></b>).</LI>
+    <PRE>analyzeHeadless /Users/user/ghidra/projects MyProject -preScript HelloWorldScript.java -scriptPath /my/ghidra_scripts</PRE>
+  
+    <br><br>
+  
+    <LI>Specify a language and compiler to be used when importing with analysis.</LI>
+    <PRE>analyzeHeadless /Users/user/ghidra/projects MyProject -import hello.exe -processor &quot;x86:LE:32:System Management Mode&quot; -cspec default</PRE>
+  
+    <br><br>
+  
+    <LI>Import, run a script, and analyze a file, but don&apos;t allow the file to be saved to the project.</LI>
+    <PRE>analyzeHeadless /Users/user/ghidra/projects MyProject -import hello.exe -preScript GetInfoScript.java -readOnly</PRE>
+    
+    <br><br>
+    
+    <LI>Import and run scripts that take their own own arguments.</LI>
+    <PRE>analyzeHeadless /Users/user/ghidra/projects MyProject -import hello.exe -preScript Script.java arg1 arg2 arg3 -preScript AnotherScript.java "arg1 with spaces" arg2 </PRE>
+    
+    <br><br>
+  
+    <LI>Import a PE file as a raw binary image with a specified base address and block name.</LI>
+    <PRE>analyzeHeadless /Users/user/ghidra/projects MyProject -import hello.exe -loader BinaryLoader -loader-baseAddr 0x1000 -loader-blockName MyBlock -processor x86:LE:32:default</PRE>
+      
+    <br>
+</UL>
+</P>
+(<a href="#top">Back to Top</a>)
+<div style="border-top: 4px double; margin-top: 1em; padding-top: 1em;"> </div>
+
+<h2><a name="scripting">Writing Scripts for the Headless Analyzer</a></h2>
+<P>
+Many scripts that extend the <typewriter>GhidraScript</typewriter> class, and written for use with the 
+headed (GUI) version of Ghidra, can also be used during Headless operation. However, there are certain 
+GUI-specific methods that do not make sense when called during Headless operation. When a GhidraScript 
+containing one or more GUI-specific methods is run headlessly, the script will throw an 
+<typewriter>ImproperUseException</typewriter>.
+<br><br>
+A script that extends the <typewriter>HeadlessScript</typewriter> class may be used to write scripts 
+that refer to Headless-only methods. See the <a href=#scripting_headlessScripts>HeadlessScripts</a> 
+section for more detail.
+<br><br>
+Here are some general guidelines for running scripts headlessly.
+<UL>
+    <LI>If neither <typewriter>-import</typewriter> mode nor <typewriter>-process</typewriter> mode 
+    is specified in the Headless Analyzer command line arguments, only the specified pre/post-script(s) 
+    will be executed. In this case, all scripts must execute in a program-independent manner, or 
+    errors will occur. If you intend for scripts to be run against programs, please run in 
+    <typewriter>-process</typewriter> mode.</LI>
+    <LI>For each pre-/post-script group, scripts are executed in the order specified on the command line.</LI>
+    <LI>Any pre- or post-script may invoke the <typewriter>setTemporary</typewriter> method on 
+    <typewriter>currentProgram</typewriter> to prevent changes from being saved. In <a href="#import">
+    <typewriter>-import</typewriter></a> mode, the method prevents the specific import from being 
+    saved. In <a href="#process"><typewriter>-process</typewriter></a> mode, the method prevents
+    changes to the program from being saved.</LI>
+    <LI>Avoid using the script API method <typewriter>setServerCredentials</typewriter> for shared projects.</LI>
+</UL>
+</P>
+(<a href="#top">Back to Top</a>)
+
+<hr>
+<h3><a name="scripting_passArgs">Passing Parameters using arguments</a></h3>
+<P>
+As of Ghidra 7.2, it is possible to pass script-specific arguments directly to scripts.
+The arguments are stored in a String array and can be accessed with the following method:
+<br>
+<PRE>String[] args = getScriptArgs();</PRE>
+If running in headless mode, this array will contain the ordered list of arguments passed to the script
+on the command line (specified with <a href="#preScript">-preScript</a> or <a href="#postScript">
+-postScript</a>).
+<br>
+For example, if a script was run with the following command:
+<PRE>analyzeHeadless /Users/user/ghidra/projects MyProject -import hello.exe -preScript Script.java arg1 arg2 arg3 -preScript AnotherScript.java "arg1 with spaces" arg2</PRE> 
+Then the elements of the argument array for Script.java would look like this:
+<PRE>args = {"arg1", "arg2", "arg3"}</PRE>
+and the argument array for AnotherScript.java would look like this:
+<PRE>args = {"arg1 with spaces", "arg2"}</PRE>
+
+
+<hr>
+<h3><a name="scripting_passParams">Passing Parameters using <typewriter>askXxx()</typewriter> methods</a></h3>
+<P>
+Many of the GhidraScript <typewriter>askXxx()</typewriter> methods can be run in both headless and 
+headed (GUI) modes, allowing seamless script usage between headed and headless modes. As of Ghidra 6.1, 
+the following methods can be run in both modes:
+<UL>
+    <LI><typewriter>askFile</typewriter></LI>
+    <LI><typewriter>askDirectory</typewriter></LI>
+    <LI><typewriter>askLanguage</typewriter></LI>
+    <LI><typewriter>askProjectFolder</typewriter></LI>
+    <LI><typewriter>askInt</typewriter></LI>
+    <LI><typewriter>askLong</typewriter></LI>
+    <LI><typewriter>askAddress</typewriter></LI>
+    <LI><typewriter>askBytes</typewriter></LI>
+    <LI><typewriter>askProgram</typewriter></LI>
+    <LI><typewriter>askDomainFile</typewriter></LI>
+    <LI><typewriter>askDouble</typewriter></LI>
+    <LI><typewriter>askString</typewriter></LI>
+    <LI><typewriter>askChoice</typewriter></LI>
+    <LI><typewriter>askChoices</typewriter></LI>
+    <LI><typewriter>askYesNo</typewriter></LI>
+</UL>
+<i>Further details for each specific <typewriter>askXxx()</typewriter> method can be found in the 
+method&apos;s JavaDoc.</i>
+<br><br>
+When running headlessly, the <typewriter>askXxx()</typewriter> methods allow users to to &quot;pre-set&quot; 
+or &quot;pass in&quot; one or more values for use in scripts. Use the appropriate method to pass in
+values of certain types (i.e., file, directory, int, long).
+<br><br>
+To pass a value to a script, create a <typewriter>.properties</typewriter> file corresponding to each 
+GhidraScript that uses an <typewriter>askXxx()</typewriter> method. For example, the 
+<typewriter>.properties</typewriter> file that corresponds to a script named <typewriter>MyScript.java</typewriter>
+would share the script&apos;s basename and be called <typewriter>MyScript.properties</typewriter>. 
+By default, the Headless Analyzer assumes that the script and its <typewriter>.properties</typewriter> 
+file are both located in the same folder. If you would like the <typewriter>.properties</typewriter>
+file to be in a different location from the script, you can use the 
+<a href="#propertiesPath"><typewriter>propertiesPath</typewriter></a> parameter to specify the location 
+of the <typewriter><i>.properties</i></typewriter> file. Below is 
+an example of a GhidraScript and its <typewriter><i>.properties</i></typewriter> file. Use it for 
+reference to determine how the <typewriter><i>.properties</i></typewriter> file should be structured 
+to communicate the necessary information to the GhidraScript:
+<br><br>
+<typewriter><b><i>Script1.java</i></b></typewriter>
+<PRE>
+public class Script1 extends GhidraScript {
+ 
+    @Override
+    public void run() throws Exception {
+  	
+        File userFile = askFile(&quot;Choose a file &quot;, &quot;Please choose a file: &quot;);
+        println(&quot;Chosen file: &quot; + userFile.toString());
+
+        double userDouble = askDouble(&quot;Double dialog&quot;, &quot;Please enter a double: &quot;);
+        println(&quot;Entered double: &quot; + userDouble);
+	
+        double userDouble2 = askDouble(&quot;Double dialog&quot;, &quot;Please enter another double: &quot;);
+        println(&quot;Second entered double: &quot; + userDouble2);
+
+        Address userAddress = askAddress(&quot;Address&quot;, &quot;Enter an address!&quot;);
+        println(&quot;Entered address: &quot; + userAddress.toString());
+
+        byte[] userBytes = askBytes(&quot;Asking for bytes&quot;, &quot;Put some bytes here --&quot;);
+        StringBuilder byteStr = new StringBuilder();
+        for (byte aByte : askedBytes) {
+            byteStr.append(String.format(&quot;%02X &quot;, aByte));
+        }
+        println(&quot;Bytes: &quot; + byteStr.toString().trim());
+	
+        String userString = askString(&quot;Asking for a string&quot;, &quot;Please type a string: &quot;, &quot;my default String&quot;);
+        println(&quot;Entered String: &quot; + userString);
+   
+    }
+}
+</PRE>
+
+<typewriter><i><b>Script1.properties</b></i></typewriter>
+<PRE>	  
+    # A comment line is indicated if the &apos;#&apos; or &apos;!&apos; character is the first non-whitespace character of that line.
+    # 
+    # Use a space-separated concatenation of the parameters to communicate which variable gets what value:
+    #    Format:    &lt;space-separated concatenation of parameters&gt; = &lt;value&gt;
+    #
+    # Notice that spaces at the beginning and end of parameters are removed prior to concatenation.
+    #
+    # Note that if the askXxx() method contains a "defaultValue" parameter, that parameter should not be included
+    # in the concatenation of parameters.
+
+    Choose a file Please choose a file: = /Users/username/help.exe
+    Double dialog Please enter a double: = 32.2
+    Address Enter an address! = 0x10AB34D
+    Double dialog Please enter another double: = 3.14159 
+    Asking for bytes Put some bytes here -- = AA BB CC 11 02 24
+    Asking for a string Please type a string: = STRING ABC
+
+</PRE>
+</P>
+<b>NOTE: </b>If <a href="#scripting_passArgs">script-specific arguments</a> have been passed into the 
+script, the <typewriter>askXxx()</typewriter> methods will consume values found in the argument array 
+rather than a <typewriter>.properties</typewriter> file.  The first <typewriter>askXxx()</typewriter> 
+method will use the first value in the array, the second <typewriter>askXxx()</typewriter> method will 
+use the second value in the array, and so on. If all of the arguments in the array have been consumed, 
+the next <typewriter>askXxx()</typewriter> will throw an <typewriter>IndexOutOfBoundsException</typewriter> 
+exception.
+<br><br>
+(<a href="#top">Back to Top</a>)
+<hr>
+<h3><a name="scripting_headlessScripts">HeadlessScripts</a></h3>
+
+<P>
+A script of type <typewriter>HeadlessScript</typewriter> (which extends <typewriter>GhidraScript</typewriter>) 
+can be used by any user looking for more control over the Headless Analysis process than is 
+offered using the more generic <typewriter>GhidraScript</typewriter> class. Using 
+<typewriter>HeadlessScript</typewriter>s, users are able to store variables for use by later scripts, 
+change the location of where an import will be saved, and change the disposition of a program depending 
+on script-specific conditions (i.e., save it in a different folder, delete it, turn off analysis, 
+abort further processing, etc.).
+</P>
+
+<P>
+<typewriter>HeadlessScript</typewriter>s allow the user to access certain methods that are specific 
+to the HeadlessAnalyzer. Otherwise, these types of scripts operate exactly like 
+<typewriter>GhidraScript</typewriter>s. Users should <u>only</u> use <typewriter>HeadlessScript</typewriter> 
+for headless operation. While <typewriter>HeadlessScript</typewriter>s could possibly run successfully 
+in the Ghidra GUI, an exception will be thrown if a <typewriter>HeadlessScript</typewriter>-only method 
+is called during GUI operation.
+</P>
+
+<br>
+(<a href="#top">Back to Top</a>)
+
+
+<hr>
+<h3><a name="scripting_headlessScripts_enableDisableAnalysis">Headless Scripts: Enabling/Disabling Analysis</a></h3>
+
+<P>
+In order to enable or disable analysis using a HeadlessScript, simply include the following line in 
+your script:
+<br>
+<PRE>
+    enableHeadlessAnalysis(true);  // turn on analysis
+
+             OR
+
+    enableHeadlessAnalysis(false);  // turn off analysis
+</PRE>
+</P>
+
+<P>
+Note that a script that includes this line should be run as a <typewriter>preScript</typewriter>, 
+since preScripts execute before analysis would typically run. Running the script as a 
+<typewriter>postScript</typewriter> is ineffective, since the stage at which analysis would have 
+happened has already passed.
+</P>
+
+<P>
+This change will persist throughout the current HeadlessAnalyzer session, unless changed again (in 
+other words, once analysis is enabled via script for one program, it will also be enabled for future 
+programs in the current session, unless changed).
+</P>
+
+<P>
+NOTE: To check whether analysis is currently enabled, use the following method:
+
+<PRE>
+    boolean analysisEnabled = isHeadlessAnalysisEnabled();
+</PRE>
+</P>
+    
+(<a href="#top">Back to Top</a>)
+<hr>
+<h3><a name="scripting_headlessScripts_setImportDir">Headless Scripts: Setting the Import Directory</a></h3>
+
+<P>
+When using <typewriter>-import mode</typewriter>, a user can change the path in the Ghidra project 
+where imported files are saved. This is done by using the following script method:
+<br>
+<PRE>
+    setHeadlessImportDirectory(&quot;path/to/new/dir&quot;);
+</PRE>
+The new path does not have to exist (it will be created if it doesn&apos;t already exist). The path 
+is also assumed to be relative to the project&apos;s root folder.
+</P>
+
+<P>
+Here are some examples assuming the Ghidra project structure looks like this:
+<PRE>	  
+    MyGhidraProject:
+        /dir1
+            /innerDir1
+            /innerDir2
+</PRE>
+<br>
+<UL>
+    <LI>
+    The following usage ensures that any files imported after the call to this method are saved 
+    in the existing <typewriter>MyGhidraProject:dir1/innerDir2</typewriter> folder:
+
+    <PRE>
+    setHeadlessImportDirectory(&quot;dir1/innerDir2&quot;);
+    </PRE>
+	</LI>
+	
+	<LI>
+    In contrast, the following usage adds new folders to the Ghidra project and saves the imported 
+    files into the newly-created path.
+
+    <PRE>
+    setHeadlessImportDirectory(&quot;dir1/innerDir2/my/folder&quot;);
+    </PRE>
+
+    changes the directory structure to:
+
+    <PRE>
+    MyGhidraProject:
+        /dir1
+            /innerDir1
+            /innerDir2
+                /my
+                    /folder
+    </PRE>
+    </LI>
+    
+    <LI>
+    Another usage example where new folders are added to the Ghidra project.
+    <PRE>
+    setHeadlessImportDirectory(&quot;dir1/newDir/saveHere&quot;);
+    </PRE>
+    This changes the directory structure to:
+    <PRE>
+    MyGhidraProject:
+        /dir1
+            /innerDir1
+            /innerDir2
+            /newDir
+                /saveHere
+    </PRE>
+</UL>
+</P>
+
+<P>
+When using this method to set the save directory for imports, whether the save succeeds may depend 
+on the state of the <a href="#overwrite"><typewriter>-overwrite</typewriter></a> parameter. For 
+example, if the new import location already exists and contains a file of the same name as the 
+current program, the current program will only be successfully saved if 
+<a href="#overwrite"><typewriter>-overwrite</typewriter></a> is enabled.
+</P>
+
+<P>
+This change in import directory will persist throughout the current HeadlessAnalyzer session, unless 
+changed again (in other words, once the import location has been changed, it will continue to be the 
+import save location for future imported programs in the current session, unless changed again).
+<br><br>
+To revert back to the default import location (that which was specified via command line), pass the 
+null object as the argument to this method:
+<PRE>
+    setHeadlessImportDirectory(null);    // Sets import save directory to default
+</PRE>
+The <typewriter>setHeadlessImportDirectory</typewriter> method is ineffective in 
+<a href="#process"><typewriter>-process</typewriter></a> mode (the program will <i>not</i> be saved 
+to a different location if this method is called when running in 
+<a href="#process"><typewriter>-process</typewriter></a> mode).
+</P>
+
+(<a href="#top">Back to Top</a>)
+
+<hr>
+<h3><a name="scripting_headlessScripts_checkAnalysisTimeout">Headless Scripts: Checking for Analysis Timeout</a></h3>
+
+<P>
+In the case where all of the following apply:
+<UL>
+    <LI>the user set an analysis timeout period using the 
+    <a href="#timeout"><typewriter>-analysisTimeoutPerFile</typewriter></a> parameter</LI>
+    <LI>analysis is enabled and has completed</LI>
+    <LI>the current script is being run as a postScript</LI>
+</UL>
+the user can check whether analysis timed out, using the following query method:
+<PRE>
+    boolean didTimeout = analysisTimeoutOccurred();
+</PRE>
+</P>
+
+(<a href="#top">Back to Top</a>)
+<hr>
+<h3><a name="scripting_headlessScripts_storeVariables">Headless Scripts: Passing Values Between Scripts</a></h3> 
+
+<P>
+If you are running multiple scripts in headless operation and would like to store a value in one script
+that is accessible by another script, use the <typewriter>HeadlessScript</typewriter> methods below.
+They facilitate the storage and retrieval of key-value pairs to/from a data structure that is available to
+any script of type <typewriter>HeadlessScript</typewriter>: 
+
+<PRE>
+    storeHeadlessValue(String key, Object value);
+    Object myObject = getStoredHeadlessValue(String key);
+    boolean containsKey = headlessStorageContainsKey(String key);
+</PRE>
+
+
+(<a href="#top">Back to Top</a>)
+<hr>
+<h3><a name="scripting_headlessScripts_controlProgramDisposition">Headless Scripts: Using Scripts to Control Program Disposition</a></h3>
+
+<P>
+HeadlessScripts can be used to control disposition of the program currently being imported/processed 
+(note: if running in <a href="#process"><typewriter>-process</typewriter></a> mode with 
+<a href="#readOnly"><typewriter>-readOnly</typewriter></a> enabled, programs can not be deleted, 
+even if directed by a script).
+<br><br>
+The available options to control program disposition are as follows:		  
+<UL>
+    <LI><a name="ABORT"><typewriter>HeadlessContinuationOption.ABORT</typewriter></a></LI>
+    <UL>
+      <LI>in <a href="#import"><typewriter>import</typewriter></a> mode, does not run any follow-on 
+      scripts/analysis; program is imported.</LI>
+      <LI>in <a href="#process"><typewriter>process</typewriter></a> mode, does not run any follow-on 
+      scripts/analysis; changes to the current (existing) program are saved.</LI>
+    </UL>
+    <br>
+    <LI><a name="ABORT_AND_DELETE"><typewriter>HeadlessContinuationOption.ABORT_AND_DELETE</typewriter></a></LI>
+    <UL>
+      <LI>in <a href="#import"><typewriter>import</typewriter></a> mode, does not run any follow-on 
+      scripts/analysis; program is not imported.</LI>
+      <LI>in <a href="#process"><typewriter>process</typewriter></a> mode, does not run any follow-on 
+      scripts/analysis; the current (existing) program is deleted.</LI>
+    </UL>
+    <br>
+    <LI><a name="CONTINUE_THEN_DELETE"><typewriter>HeadlessContinuationOption.CONTINUE_THEN_DELETE</typewriter></a></LI>
+    <UL>
+      <LI>in <a href="#import"><typewriter>import</typewriter></a> mode, continues to run any follow-on 
+      scripts/analysis; program is not imported.</LI>
+      <LI>in <a href="#process"><typewriter>process</typewriter></a> mode, continues to run any follow-on 
+      scripts/analysis; the current (existing) program is deleted after processing is complete.</LI>
+    </UL>
+    <br>
+    <LI><a name="CONTINUE"><typewriter>HeadlessContinuationOption.CONTINUE</typewriter></a> (<b>default setting</b>)</LI>
+    <UL>
+      <LI>in <a href="#import"><typewriter>import</typewriter></a> mode, continues to run any follow-on 
+      scripts/analysis; program is imported.</LI>
+      <LI>in <a href="#process"><typewriter>process</typewriter></a> mode, continues to run any follow-on 
+      scripts/analysis; changes to the current (existing) program are saved.</LI>
+    </UL>
+</UL>
+To set the program disposition, use the <typewriter>setHeadlessContinuationOption</typewriter> method. 
+For example, to dictate that further processing be aborted and the program deleted, the script should 
+use the following method with the <typewriter>ABORT_AND_DELETE</typewriter> option:
+<PRE>
+    setHeadlessContinuationOption(HeadlessContinuationOption.ABORT_AND_DELETE);
+</PRE>
+At the start of processing for each program (immediately before the first script runs), the 
+script&apos;s continuation option is set to <a href="#CONTINUE"><typewriter>CONTINUE</typewriter></a> 
+by default. If the <typewriter>setHeadlessContinationOption</typewriter> method is not used, then 
+operation continues as normal.
+<br><br>
+Note that when an option is set, it takes effect AFTER the current script completes. For example, 
+setting the continuation option to <a href="#ABORT"><typewriter>ABORT</typewriter></a> does <i>not</i> 
+immediately abort the current script; instead, it aborts any processing (analysis, other scripts) 
+that immediately follow the current script.
+<br><br>
+In the case where a subscript or secondary script sets an <a href="#ABORT"><typewriter>ABORT</typewriter></a> 
+or <a href="#ABORT_AND_DELETE"><typewriter>ABORT_AND_DELETE</typewriter></a> option, that option will 
+go into effect once the primary (or outermost) script has completed execution.
+<br><br>
+For a very basic example script, see <typewriter>SetHeadlessContinuationOptionScript.java</typewriter>, 
+which is included in the Ghidra distribution.
+<br><br>
+When multiple scripts set program disposition, they are combined. Continue on to 
+<a href="#scripting_headlessScripts_multipleScripts">Using Multiple Scripts to Control Program Disposition</a> 
+to understand how this works.
+<br><br>
+(<a href="#top">Back to Top</a>)
+<hr>
+<h3><a name="scripting_headlessScripts_multipleScripts">Headless Scripts: Using Multiple Scripts to Control Program Disposition</a></h3>
+While running scripts that change the program disposition, there may be instances when the program 
+disposition is changed more than once for the same program. Some cases where this could happen are:
+<UL>
+    <LI>when the user runs multiple pre-scripts and/or post-scripts that use 
+    <typewriter>setHeadlessContinuationOption</typewriter></LI>
+    <LI>when the user runs scripts that call sub-scripts (or secondary scripts) that use 
+    <typewriter>setHeadlessContinuationOption</typewriter></LI>
+    <LI>when the user runs a script that makes multiple calls to the 
+    <typewriter>setHeadlessContinuationOption</typewriter> method</LI>
+</UL>
+If there are multiple calls to <typewriter>setHeadlessContinuationOption</typewriter> within a single 
+script, the last method call is used as the setting dictated by that script.
+<br><br>
+However, if multiple scripts make calls to <typewriter>setHeadlessContinuationOption</typewriter>, 
+the options from each script are combined in a rational way (in the order the options were set) to 
+potentially result in a new continuation option. 
+<br><br>
+For example, if <typewriter><i>Script1.java</i></typewriter> sets the continuation option, then is followed 
+by <typewriter>Script2.java</typewriter> which also sets the continuation option, the resulting 
+continuation status is shown in the following diagram:
+<br><br>
+<table border="1px solid #000">
+    <tr>
+      <td><typewriter><b><i>Script1</i> Continuation Option</b></typewriter></td>
+      <td colspan="4"><typewriter><b><i>Script2</i> Continuation Option</b></typewriter></td>
+    </tr>
+    <tr>
+      <td></td>
+      <td><typewriter><b>ABORT</b></typewriter></td>
+      <td><typewriter><b>ABORT_AND_DELETE</b></typewriter></td>
+      <td><typewriter><b>CONTINUE_THEN_DELETE</b></typewriter></td>
+      <td><typewriter><b>CONTINUE</b></typewriter></td>
+    </tr>
+    <tr>
+      <td><typewriter><b>ABORT</b></typewriter></td>
+      <td><typewriter>ABORT*</typewriter></td>
+      <td><typewriter>ABORT*</typewriter></td>
+      <td><typewriter>ABORT*</typewriter></td>
+      <td><typewriter>ABORT*</typewriter></td>
+    </tr>
+    <tr>
+      <td><typewriter><b>ABORT_AND_DELETE</b></typewriter></td>
+      <td><typewriter>ABORT_AND_DELETE*</typewriter></td>
+      <td><typewriter>ABORT_AND_DELETE*</typewriter></td>
+      <td><typewriter>ABORT_AND_DELETE*</typewriter></td>
+      <td><typewriter>ABORT_AND_DELETE*</typewriter></td>
+    </tr>
+    <tr>
+      <td><typewriter><b>CONTINUE_THEN_DELETE</b></typewriter></td>
+      <td><typewriter>ABORT_AND_DELETE</typewriter></td>
+      <td><typewriter>ABORT_AND_DELETE</typewriter></td>
+      <td><typewriter>CONTINUE_THEN_DELETE</typewriter></td>
+      <td><typewriter>CONTINUE_THEN_DELETE</typewriter></td>
+    </tr>
+    <tr>
+      <td><typewriter><b>CONTINUE</b></typewriter></td>
+      <td><typewriter>ABORT</typewriter></td>
+      <td><typewriter>ABORT_AND_DELETE</typewriter></td>
+      <td><typewriter>CONTINUE_THEN_DELETE</typewriter></td>
+      <td><typewriter>CONTINUE</typewriter></td>
+    </tr>
+</table>
+<br>
+* In cases where <typewriter><i>Script1</i></typewriter> specifies <a href="#ABORT"><typewriter>ABORT</typewriter></a> 
+or <a href="#ABORT_AND_DELETE"><typewriter>ABORT_AND_DELETE</typewriter></a>, <typewriter><i>Script2</i></typewriter> 
+will not run unless <typewriter><i>Script2</i></typewriter> is a subscript or secondary script called 
+by <typewriter><i>Script1</i></typewriter>.
+<br>
+<br>
+Keep in mind:
+<UL>
+    <LI>If <typewriter><i>Script2</i></typewriter> does not change the continuation option, then the 
+    status from <typewriter><i>Script1</i></typewriter> will carry over.</LI>
+    <LI>An <a href="#ABORT"><typewriter>ABORT</typewriter></a> at the postScript stage is still 
+    meaningful in stopping further processing, since follow-on analysis may occur as a result of 
+    changes made by the postScript.</LI>
+    <LI>You can check the current continuation option by using the 
+    <typewriter>getHeadlessContinuationOption</typewriter> method. For example:
+    <PRE>
+    HeadlessContinuationOption currentOption = getHeadlessContinuationOption();
+    </PRE>
+    </LI>
+    <LI>When specifying deletion options such as 
+    <a href="#ABORT_AND_DELETE"><typewriter>ABORT_AND_DELETE</typewriter></a> or
+     <a href="#CONTINUE_THEN_DELETE"><typewriter>CONTINUE_THEN_DELETE</typewriter></a> in 
+     <a href="#process"><typewriter>-process</typewriter></a> mode, be sure to include 
+     <a href="#okToDelete"><typewriter>-okToDelete</typewriter></a> in the command line parameters to 
+     verify that deletions are allowed. This is an extra safety step to ensure programs aren&apos;t 
+     deleted when the user didn&apos;t mean to delete them.</LI> 
+</UL>
+</P>
+(<a href="#top">Back to Top</a>)
+<div style="border-top: 4px double; margin-top: 1em; padding-top: 1em;"> </div>
+
+<h2><a name="wildcards">Wildcards: Specifying Files to Import or Process</a></h2>
+<P>
+Wildcards can be used when specifying files and/or directories for 
+<a href="#import"><typewriter>-import</typewriter></a> mode, or when specifying one or more files 
+for <a href="#process"><typewriter>-process</typewriter></a> mode. Wildcards in 
+<a href="#import"><typewriter>-import</typewriter></a> mode are expanded by the underlying system 
+shell before being passed on to headless Ghidra (consequently, any wildcard limitations will be 
+dictated by the specific operating system you are using). Wildcards in 
+<a href="#process"><typewriter>-process</typewriter></a> mode are expanded by headless Ghidra and 
+are limited to the use of &apos;*&apos; and &apos;?&apos; only.
+<br><br>
+Note that wildcarding is NOT supported for specifying the Ghidra project/repository location or 
+folder path. 
+<br><br>
+Below are some general guidelines for wildcard usage:
+<UL>
+    <LI><a href="#import"><typewriter>-import</typewriter></a> mode</LI>
+    <UL>
+        <LI>During import, the rules for wildcard use depend on the operating system on which the 
+        Headless Analyzer is being run. The operating system will expand the wildcards to a list of 
+        matching files and pass the list to the Headless Analyzer.</LI>
+        <br>
+        <LI>Unix-based Operating Systems allow the following wildcards:</LI>
+        <UL>
+            <LI>Use the &apos;<typewriter>*</typewriter>&apos; character to substitute for zero or more 
+            characters</LI>
+            <LI>Use the &apos;<typewriter>?</typewriter>&apos; character to substitute for exactly one 
+            character</LI>
+            <LI>Use ranges of characters enclosed in square brackets (for example, <typewriter>[a-z]</typewriter>) 
+            to substitute for any one of the characters in that range. Negation of the characters is 
+            also allowed by using a leading &quot;!&quot; within the brackets (i.e., <typewriter>[!a-z]</typewriter>).</LI>
+            <LI>Wildcards can expand to either directories or files</LI>
+        </UL>
+        <br>
+        <LI>Windows allows the following wildcards:</LI>
+        <UL>
+            <LI>Use the &apos;<typewriter>*</typewriter>&apos; character to substitute for zero or 
+            more characters</LI>
+            <LI>Use the &apos;<typewriter>?</typewriter>&apos; to substitute for one character or 
+            less</LI>
+            <LI>Wildcards can only expand to files (directories whose names conform to the wildcard 
+            string will not be returned)</LI>
+        </UL>
+        <br>
+        <LI>When using a wildcard to specify files, be sure to use as specific of a string as possible. 
+        There may be unintended consequences to using more generalized wildcard strings, such as:</LI>
+        <PRE>
+    ./analyzeHeadless /home/usr/ghidra/projects TestProj -import /home/files/n*
+        </PRE>
+        When using a Unix-based operating system, this import specification results in not only all 
+        files in <typewriter>/home/files</typewriter> starting with <i>n</i> to be imported, but 
+        also the contents of the all directories starting with <i>n</i> to be imported (contents of 
+        those directories&apos; subdirectories would also be imported, if the 
+        <a href="#recursive"><typewriter>-recursive</typewriter></a> option was specified -- note 
+        that the contents of the directories starting with <i>n</i> are not also subject to the 
+        restriction that they start with <i>n</i>).
+    </UL>
+</UL>
+<br>
+<UL>
+    <LI><a href="#import"><typewriter>-process</typewriter></a> mode:</LI>
+    <UL>
+        <LI>In process mode, the wildcard string applies only to files, not directories. The only 
+        accepted wildcard characters are &apos;<typewriter>*</typewriter>&apos; and 
+        &apos;<typewriter>?</typewriter>&apos;.</LI>
+        <br>
+        <LI>There are some cases where the wildcard string may be prematurely expanded by the 
+        operating system. For example, in order to run in <a href="#process"><typewriter>-process</typewriter></a> 
+        mode over all existing project files that start with the letter <i>a</i>, one might use the 
+        following command:</LI>
+        <PRE>
+    ./analyzeHeadless /home/usr/ghidra/projects TestProj -process a* -recursive
+        </PRE>
+        <LI>Instead of the &quot;a*&quot; string being passed along to be used within the Ghidra 
+        project, the shell will prematurely expand the wildcard string to match all <i>a</i>-prefixed 
+        files in the current directory. The command ends up looking like this:</LI>
+        <PRE>
+    ./analyzeHeadless /home/usr/ghidra/projects TestProj -process analyzeHeadless -recursive
+        </PRE>
+        <LI>In order to prevent the system shell from doing this premature wildcard expansion, simply 
+        surround the wildcard string with single-quote characters:</LI>
+        <PRE>
+    ./analyzeHeadless /home/usr/ghidra/projects TestProj -process &apos;a*&apos; -recursive
+        </PRE>
+    </UL>
+</UL>
+</P>
+(<a href="#top">Back to Top</a>)
+
+
+  
+<div style="border-top: 4px double; margin-top: 1em; padding-top: 1em;"> </div>
+<address></address>
+Last modified: Aug 31 2017
+</body> </html>
+
+<style>
+
+table, td {
+border: 1px solid black;
+}
+
+td {
+padding: 15px;
+text-align: center;
+}
+
+</style>

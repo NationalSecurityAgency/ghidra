@@ -1,0 +1,97 @@
+<!DOCTYPE doctype PUBLIC "-//W3C//DTD HTML 4.0 Frameset//EN">
+<html>
+<head>
+  <title>Printing</title>
+         
+  <meta http-equiv="Content-Type"
+ content="text/html; charset=windows-1252">
+     
+  <link rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+</head>
+  <body lang="EN-US">  
+<h1><a name="Print"></a>Printing</h1>
+   
+<p>Ghidra includes printing support that allows disassembled code to be printed 
+using the same formatting as the code browser.  Printing can be limited to 
+the current view, the current selection, or code currently on the screen in
+the code browser.  Printed code will appear with the same fonts, colors, and
+spacing as code on the screen.</p>
+   
+<p>To Print:</p>
+   
+<ul>
+  	   
+  <ol>
+  		<li>You can optionally specify page settings (paper size, orientation, 
+			margins, etc.).  To do this, select File<img border="0" src="../../shared/arrow.gif">
+ 			Page Setup... from the code browser tool.</li>
+  		<li>To print, select File<img border="0" src="../../shared/arrow.gif">
+ 			Print...</li>
+  		<li>Select the content to print as well as other printing options in
+			the dialog that appears.  Click "OK" when finished.</li>
+  		<li>Select printer-specific options in the printing dialog that appears. 
+ 			Click "OK" to begin printing.</li>
+  	   
+  </ol>
+   
+</ul>
+     
+<p> </p>
+  
+<h2><a name="Page_Setup"></a><b><font size="5">The Page Setup Dialog</font></b></h2>
+     
+	<p>When page setup is selected from the File menu, the standard page setup 
+	dialog is displayed.  The exact appearance of this dialog is platform dependent 
+	and will vary based on the operating system used.  The above image is an
+	example of how this dialog appears on Windows XP.</p>
+	    
+	<p>Generally, the page setup dialog will allow you to specify the paper size, 
+	orientation, and margin.  Margins will automatically be adjusted to fit the 
+	specified paper and printer.</p>
+	     
+	<p> </p>
+   
+<h2><b><font size="5">The Print Options Dialog</font></b></h2>
+     
+<center><img src="images/PrintOptions.png"></center>
+     
+	<p>When you select <b>Print</b> from the <b>File</b> menu, a dialog with basic options is
+	displayed.  This dialog allows you to choose what to print, including whether
+	to put headers and footers on each page.  You can choose to print the current
+	selection (if there is a current selection), the code currently visible in
+	the code browser, or all code in the current view.  You will be prompted
+	later to choose specific page ranges.</p>
+	    
+	<p>The print options dialog also includes an option to print the code in monochrome.
+	 When selected, this option will cause all text to be printed as solid black.
+	 For printers that do not print color or do not produce good grayscale, it
+	may be useful to enable this option.</p>
+     
+<p> </p>
+   
+<h2><b><font size="5">The Print Dialog</font></b></h2>
+     
+ </center>
+     
+	<p>Finally, the print dialog is displayed.  This generally allows you to select
+	and configure the printer and choose copies and page ranges.  As with page
+	setup, this dialog varies on different platforms.  The above example was
+	taken with Windows XP.</p>
+	      
+	<p> </p>
+   
+<h2><b><font size="5">Printing</font></b></h2>
+	    
+	<p>Once printing starts, a task dialog is displayed showing current progress. 
+	 You may notice that the progress meter seems to indicate that the same page 
+	is printed multiple times even when only one copy is specified.  This is normal
+	behavior.  The print job can be cancelled at any time by pressing the cancel
+	button, although pages already sent to the printer cannot be stopped.</p>
+    <br>
+    <br>
+     
+<p> </p>
+  <br>
+ 
+</body>
+</html>

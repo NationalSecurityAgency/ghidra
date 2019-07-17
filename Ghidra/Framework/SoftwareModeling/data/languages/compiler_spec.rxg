@@ -1,0 +1,460 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<grammar xmlns="http://relaxng.org/ns/structure/1.0">
+
+  <include href="language_common.rxg" />
+
+  <!-- compiler_spec files have extension .cspec -->
+
+  <define name="value_type">
+    <attribute name="value"/>
+  </define>
+
+  <start>
+    <element name="compiler_spec">
+      <interleave>
+        <optional>
+          <ref name="properties_type"/>
+        </optional>
+
+        <optional>
+          <element name="data_organization">
+            <interleave>
+              <optional>
+                <element name="absolute_max_alignment"><ref name="value_type"/></element>
+              </optional>
+              <optional>
+                <element name="machine_alignment"><ref name="value_type"/></element>
+              </optional>
+              <optional>
+                <element name="default_alignment"><ref name="value_type"/></element>
+              </optional>
+              <optional>
+                <element name="default_pointer_alignment"><ref name="value_type"/></element>
+              </optional>
+              <optional>
+                <element name="pointer_size"><ref name="value_type"/></element>
+              </optional>
+              <optional>
+                <element name="pointer_shift"><ref name="value_type"/></element>
+              </optional>
+              <optional>
+                <element name="char_type">
+	              <attribute name="signed">
+	                <ref name="boolean_type"/>
+	              </attribute>
+                </element>
+              </optional>
+              <optional>
+                <element name="char_size"><ref name="value_type"/></element>
+              </optional>
+              <optional>
+                <element name="wchar_size"><ref name="value_type"/></element>
+              </optional>
+              <optional>
+                <element name="short_size"><ref name="value_type"/></element>
+              </optional>
+              <optional>
+                <element name="integer_size"><ref name="value_type"/></element>
+              </optional>
+              <optional>
+                <element name="long_size"><ref name="value_type"/></element>
+              </optional>
+              <optional>
+                <element name="long_long_size"><ref name="value_type"/></element>
+              </optional>
+              <optional>
+                <element name="float_size"><ref name="value_type"/></element>
+              </optional>
+              <optional>
+                <element name="double_size"><ref name="value_type"/></element>
+              </optional>
+              <optional>
+                <element name="long_double_size"><ref name="value_type"/></element>
+              </optional>
+
+              <optional>
+                <element name="size_alignment_map">
+                  <zeroOrMore>
+                    <element name="entry">
+                      <attribute name="size"/>
+                      <attribute name="alignment"/>
+                    </element>
+                  </zeroOrMore>
+                </element>
+              </optional>
+            </interleave>
+          </element>
+        </optional>
+        
+        <zeroOrMore>
+          <element name="callfixup">
+            <attribute name="name"/>
+            <zeroOrMore>
+              <element name="target">
+                <attribute name="name"/>
+              </element>
+            </zeroOrMore>          
+            <element name="pcode"><ref name="pcode_type"/></element>  
+          </element>
+        </zeroOrMore>
+        
+        <zeroOrMore>
+          <element name="callotherfixup">
+            <attribute name="targetop"/>
+            <element name="pcode"><ref name="pcode_type"/></element>
+          </element>
+        </zeroOrMore>
+
+        <!-- see language_common.rxg -->
+        <optional>
+          <element name="context_data">
+            <ref name="context_data_type"/>
+          </element>
+        </optional>
+        
+        <optional>
+          <element name="enum">
+            <attribute name="size"/>
+            <optional>
+              <attribute name="signed">
+                <ref name="boolean_type"/>
+              </attribute>
+            </optional>
+          </element>
+        </optional>
+
+        <optional>
+          <element name="global">
+            <oneOrMore>
+              <ref name="memory_tags_type"/>
+            </oneOrMore>
+          </element>
+        </optional>
+
+        <optional>
+          <element name="prefersplit">
+            <attribute name="style"/>
+            <oneOrMore>
+              <ref name="varnode_tags_type"/>
+            </oneOrMore>
+          </element>
+        </optional>
+
+        <optional>
+          <element name="aggressivetrim">
+            <optional>
+              <attribute name="signext"/>
+            </optional>
+          </element>
+        </optional>
+
+        <optional>
+          <element name="nohighptr">
+            <oneOrMore>
+              <ref name="memory_tags_type"/>
+            </oneOrMore>
+          </element>
+        </optional>
+
+        <optional>
+          <element name="readonly">
+            <oneOrMore>
+              <ref name="memory_tags_type"/>
+            </oneOrMore>
+          </element>
+        </optional>
+
+        <optional>
+          <element name="stackpointer">
+            <attribute name="register"/>
+            <attribute name="space"/>
+            <optional>
+              <attribute name="growth">
+                <choice>
+                  <value>negative</value>
+                  <value>positive</value>
+                </choice>
+              </attribute>
+            </optional>
+            <optional>
+            	<attribute name="reversejustify">
+            		<ref name="boolean_type"/>
+            	</attribute>
+            </optional>
+          </element>
+        </optional>
+ 
+        <optional>
+          <element name="returnaddress">
+            <ref name="varnode_tags_type"/>
+          </element>
+        </optional>
+
+        <optional>
+          <element name="funcptr">
+            <attribute name="align"/>
+          </element>
+        </optional>
+        
+        <zeroOrMore>
+          <element name="spacebase">
+            <attribute name="name"/>
+            <attribute name="register"/>
+            <attribute name="space"/>
+          </element>
+        </zeroOrMore>
+        
+        <zeroOrMore>
+          <element name="deadcodedelay">
+            <attribute name="space"/>
+            <attribute name="delay"/>
+          </element>
+        </zeroOrMore>
+
+        <zeroOrMore>
+          <element name="segmentop">
+            <attribute name="space"/>
+            <optional> <attribute name="userop"/> </optional>
+            <optional> <attribute name="baseinsize"/> </optional>
+            <optional> <attribute name="innerinsize"/> </optional>
+            <optional> <attribute name="farpointer"/> </optional>
+            <optional>
+              <attribute name="force">
+                <ref name="boolean_type"/>
+              </attribute>
+            </optional>
+            <interleave>
+              <zeroOrMore>
+                <element name="baseop">
+                  <ref name="segment_op_type"/>
+                </element>
+              </zeroOrMore>
+              <zeroOrMore>
+                <element name="innerop">
+                  <ref name="segment_op_type"/>
+                </element>
+              </zeroOrMore>
+              <optional>
+                <element name="constresolve">
+                  <ref name="varnode_tags_type"/>
+                </element>
+              </optional>
+            </interleave>
+          </element>
+        </zeroOrMore>
+
+        <element name="default_proto">
+          <element name="prototype">
+            <ref name="prototype_type"/>
+          </element>
+        </element>
+
+        <zeroOrMore>
+          <element name="prototype">
+            <ref name="prototype_type"/>
+          </element>
+        </zeroOrMore>
+
+        <zeroOrMore>
+          <element name="resolveprototype">
+            <attribute name="name"/>
+              <oneOrMore>
+                <element name="model">
+                  <attribute name="name"/>
+                </element>
+              </oneOrMore>
+          </element>
+        </zeroOrMore>
+
+        <optional>
+          <element name="eval_current_prototype">
+            <attribute name="name"/>
+          </element>
+        </optional>
+
+        <optional>
+          <element name="eval_called_prototype">
+            <attribute name="name"/>
+          </element>
+        </optional>
+
+      </interleave>
+    </element>
+  </start>
+
+  <define name="segment_op_type">
+    <attribute name="code">
+      <choice>
+        <value type="string">INT_ZEXT</value>
+        <value type="string">INT_LEFT</value>
+        <value type="string">INT_AND</value>
+      </choice>
+    </attribute>
+    <optional>
+      <attribute name="value"/>
+    </optional>
+    <optional>
+      <attribute name="slot"/>
+    </optional>
+  </define>
+
+  <define name="pentry_type">
+    <optional> <attribute name="maxsize"/> </optional>
+    <optional> <attribute name="minsize"/> </optional>
+    <optional> <attribute name="align"/> </optional>
+    <optional> <attribute name="metatype"/> </optional>
+    <optional>
+      <attribute name="trial">
+        <ref name="boolean_type"/>
+      </attribute>
+    </optional>
+    <optional> <attribute name="extension"/> </optional>
+    <!--
+        THIS IS THE WEAK ADDR TYPE.  Attribute size is not required.
+      -->
+    <ref name="addr_tags_type"/>
+  </define>
+
+  <define name="rangelist_type">
+    <oneOrMore>
+      <ref name="range_type"/>
+    </oneOrMore>
+  </define>
+
+  <!--
+	Specifies generic calling convention for PrototypeModels
+      
+	unknown: Unspecified convention (default)
+
+	stdcall: An MS Windows specific calling convention which 
+				uses the stack to pass all parameters and where
+				the called-function is responsible for purging the stack.
+	
+	cdecl: A standard/default calling convention which uses 
+				the stack to pass all parameters and where the
+				caller is responsible for purging the stack.
+
+	fastcall: A standard/default calling convention
+	 			in which only registers are used to pass parameters
+
+	thiscall: A C++ instance method calling convention
+      
+    -->
+  <define name="generic_calling_convention_type">
+    <choice>
+      <value type="string">unknown</value>
+      <value type="string">stdcall</value>
+      <value type="string">cdecl</value>
+      <value type="string">fastcall</value>
+      <value type="string">thiscall</value>
+    </choice>
+  </define>
+
+  <define name="prototype_type">
+    <attribute name="extrapop"/>
+    <attribute name="stackshift"/>
+    <attribute name="name"/>
+    <optional>
+    	<attribute name="type">
+                <ref name="generic_calling_convention_type"/>
+        </attribute>
+    </optional>
+
+    <optional>
+      <attribute name="strategy">
+        <choice>
+          <value>standard</value>
+          <value>register</value>
+        </choice>
+      </attribute>  
+    </optional>
+    
+    <optional> <attribute name="hasthis"/> </optional>
+    <optional> <attribute name="constructor"/> </optional>
+
+    <interleave>
+
+      <element name="input">
+        <optional> <attribute name="pointermax"/> </optional>
+        <optional> <attribute name="thisbeforeretpointer"/> </optional>
+        <optional> <attribute name="killedbycall"/> </optional>
+        <zeroOrMore>
+          <element name="pentry">
+            <ref name="pentry_type"/>
+          </element>
+        </zeroOrMore>
+      </element>
+
+      <element name="output">
+        <optional> <attribute name="killedbycall"/> </optional>
+        <zeroOrMore>
+          <element name="pentry">
+            <ref name="pentry_type"/>
+          </element>
+        </zeroOrMore>
+      </element>
+
+      <!--
+          returnaddress describes where the return address is stored upon entry to
+          a function with this prototype.
+      -->
+      <optional>
+        <element name="returnaddress">
+          <oneOrMore>
+            <ref name="varnode_tags_type"/>
+          </oneOrMore>
+        </element>
+      </optional>
+
+      <optional>
+        <element name="unaffected">
+          <interleave>
+            <oneOrMore>
+              <ref name="varnode_tags_type"/>
+            </oneOrMore>
+          </interleave>
+        </element>
+      </optional>
+
+      <!--
+          killedbycall places a "dividing line" in time so
+          that you can cut off references to a varnode from a previous
+          variable
+      -->
+      <optional>
+        <element name="killedbycall">
+          <oneOrMore>
+            <ref name="varnode_tags_type"/>
+          </oneOrMore>
+        </element>
+      </optional>
+
+      <zeroOrMore>
+        <element name="pcode">
+          <attribute name="inject"/>
+          <ref name="pcode_type"/>
+        </element>
+      </zeroOrMore>
+
+      <!--
+          likelytrash indicates when calls will put random
+          data in places that could be construed as global data
+      -->
+      <optional>
+        <element name="likelytrash">
+          <oneOrMore>
+            <ref name="varnode_tags_type"/>
+          </oneOrMore>
+        </element>
+      </optional>
+
+      <optional>
+        <element name="localrange">
+          <ref name="rangelist_type"/>
+        </element>
+      </optional>
+      
+    </interleave>
+  </define>
+
+</grammar>

@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<processor_spec>
+  <programcounter register="PC"/>
+  
+  <context_data>
+    <tracked_set space="ram">
+      <set name="DECOMPILE_MODE" val="1"/>
+    </tracked_set>
+  </context_data>
+  
+  <register_data>
+    <register name="AF_" group="Alt"/>
+    <register name="BC_" group="Alt"/>
+    <register name="DE_" group="Alt"/>
+    <register name="HL_" group="Alt"/>
+  </register_data>
+  <default_symbols>
+  
+    <symbol name="RST0" address="ram:0000" entry="true"/>
+    <symbol name="RST1" address="ram:0008" entry="true"/>
+    <symbol name="RST2" address="ram:0010" entry="true"/>
+    <symbol name="RST3" address="ram:0018" entry="true"/>
+    <symbol name="RST4" address="ram:0020" entry="true"/>
+    <symbol name="RST5" address="ram:0028" entry="true"/>
+    <symbol name="RST6" address="ram:0030" entry="true"/>
+    <symbol name="RST7" address="ram:0038" entry="true"/>
+    
+    <symbol name="NMI_ISR" address="ram:0066" entry="true"/>
+    
+    <symbol name="CNTLA0" address="io:0000" entry="false"/>
+    <symbol name="CNTLA1" address="io:0001" entry="false"/>
+    <symbol name="CNTLB0" address="io:0002" entry="false"/>
+    <symbol name="CNTLB1" address="io:0003" entry="false"/>
+    <symbol name="STAT0" address="io:0004" entry="false"/>
+    <symbol name="STAT1" address="io:0005" entry="false"/>
+    <symbol name="TDR0" address="io:0006" entry="false"/>
+    <symbol name="TDR1" address="io:0007" entry="false"/>
+    <symbol name="RDR0" address="io:0008" entry="false"/>
+    <symbol name="RDR1" address="io:0009" entry="false"/>
+    <symbol name="CNTR" address="io:000a" entry="false"/>
+    <symbol name="TRD" address="io:000b" entry="false"/>
+    <symbol name="TMDR0L" address="io:000c" entry="false"/>
+    <symbol name="TMDR0H" address="io:000d" entry="false"/>
+    <symbol name="RLDR0L" address="io:000e" entry="false"/>
+    <symbol name="RLDR0H" address="io:000f" entry="false"/>
+
+    <symbol name="TCR" address="io:0010" entry="false"/>
+
+    <symbol name="ASEXT0" address="io:0012" entry="false"/>
+    <symbol name="ASEXT1" address="io:0013" entry="false"/>
+    <symbol name="TMDR1L" address="io:0014" entry="false"/>
+    <symbol name="TMDR1H" address="io:0015" entry="false"/>
+    <symbol name="RLDR1L" address="io:0016" entry="false"/>
+    <symbol name="RLDR1H" address="io:0017" entry="false"/>
+    <symbol name="FRC" address="io:0018" entry="false"/>
+
+    <symbol name="ASTC0L" address="io:001a" entry="false"/>
+    <symbol name="ASTC0H" address="io:001b" entry="false"/>
+    <symbol name="ASCT1L" address="io:001c" entry="false"/>
+    <symbol name="ASCT1H" address="io:001d" entry="false"/>
+    <symbol name="CMR" address="io:001e" entry="false"/>
+    <symbol name="CCR" address="io:001f" entry="false"/>
+
+    <symbol name="SAR0L" address="io:0020" entry="false"/>
+    <symbol name="SAR0H" address="io:0021" entry="false"/>
+    <symbol name="SAR0B" address="io:0022" entry="false"/>
+    <symbol name="DAR0L" address="io:0023" entry="false"/>
+    <symbol name="DAR0H" address="io:0024" entry="false"/>
+    <symbol name="DAR0B" address="io:0025" entry="false"/>
+    <symbol name="BCR0L" address="io:0026" entry="false"/>
+    <symbol name="BCR0H" address="io:0027" entry="false"/>
+    <symbol name="MAR1L" address="io:0028" entry="false"/>
+    <symbol name="MAR1H" address="io:0029" entry="false"/>
+    <symbol name="MAR1B" address="io:002a" entry="false"/>
+    <symbol name="IAR1L" address="io:002b" entry="false"/>
+    <symbol name="IAR1H" address="io:002c" entry="false"/>
+    <symbol name="IAR1B" address="io:002d" entry="false"/>
+    <symbol name="BCR1L" address="io:002e" entry="false"/>
+    <symbol name="BCR1H" address="io:002f" entry="false"/>
+
+    <symbol name="DSTAT" address="io:0030" entry="false"/>
+    <symbol name="DMODE" address="io:0031" entry="false"/>
+    <symbol name="DCNTL" address="io:0032" entry="false"/>
+    <symbol name="IL" address="io:0033" entry="false"/>
+    <symbol name="ITC" address="io:0034" entry="false"/>
+
+    <symbol name="RCR" address="io:0036" entry="false"/>
+
+    <symbol name="CBR" address="io:0038" entry="false"/>
+    <symbol name="BBR" address="io:0039" entry="false"/>
+    <symbol name="CBAR" address="io:003a" entry="false"/>
+
+    <symbol name="OMCR" address="io:003e" entry="false"/>
+    <symbol name="CR" address="io:003f" entry="false"/>
+  
+  </default_symbols>
+  <default_memory_blocks>
+    <memory_block name="IO" start_address="io:0" length="0xFF" initialized="false"/>
+  </default_memory_blocks>
+</processor_spec>

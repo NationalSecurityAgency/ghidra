@@ -1,0 +1,445 @@
+# The Sparc VIS1 vector instruction set
+# The opcodes below that have their pcodeop uncommented have been checked to make sure
+# that the register width is correct. If the call to the pcodeop is still commented out
+# that means that the register width may be incorrect. For example, a call to a 64 bit
+# floating point register may really use a 32 bit register.
+# VIS2 or VIS2+ instructions are not included in this file.
+
+define pcodeop alignaddr;
+:alignaddr RS1,RS2,rd is opf = 0x18 & op3 = 0x36 & op = 0x2 & RS1 & RS2 & rd
+{
+	rd = alignaddr(RS1,RS2);
+}
+
+define pcodeop alignaddrl;
+:alignaddrl RS1,RS2,rd is opf = 0x1a & op3 = 0x36 & op = 0x2 & RS1 & RS2 & rd
+{
+	rd = alignaddrl(RS1,RS2);
+}
+
+define pcodeop array16;
+:array16 RS1,RS2,rd is opf = 0x12 & op3 = 0x36 & op = 0x2 & RS1 & RS2 & rd
+{
+	rd = array16(RS1,RS2);
+}
+
+define pcodeop array32;
+:array32 RS1,RS2,rd is opf = 0x14 & op3 = 0x36 & op = 0x2 & RS1 & RS2 & rd
+{
+	rd = array32(RS1,RS2);
+}
+
+define pcodeop array8;
+:array8 RS1,RS2,rd is opf = 0x10 & op3 = 0x36 & op = 0x2 & RS1 & RS2 & rd
+{
+	rd = array8(RS1,RS2);
+}
+
+define pcodeop edge16cc;
+:edge16cc RS1,RS2,rd is opf = 0x4 & op3 = 0x36 & op = 0x2 & RS1 & RS2 & rd
+{
+	rd = edge16cc(RS1,RS2);
+}
+
+define pcodeop edge16lcc;
+:edge16lcc RS1,RS2,rd is opf = 0x6 & op3 = 0x36 & op = 0x2 & RS1 & RS2 & rd
+{
+	rd = edge16lcc(RS1,RS2);
+}
+
+define pcodeop edge32cc;
+:edge32cc RS1,RS2,rd is opf = 0x8 & op3 = 0x36 & op = 0x2 & RS1 & RS2 & rd
+{
+	rd = edge32cc(RS1,RS2);
+}
+
+define pcodeop edge32lcc;
+:edge32lcc RS1,RS2,rd is opf = 0xa & op3 = 0x36 & op = 0x2 & RS1 & RS2 & rd
+{
+	rd = edge32lcc(RS1,RS2);
+}
+
+define pcodeop edge8cc;
+:edge8cc RS1,RS2,rd is opf = 0x0 & op3 = 0x36 & op = 0x2 & RS1 & RS2 & rd
+{
+	rd = edge8cc(RS1,RS2);
+}
+
+define pcodeop edge8lcc;
+:edge8lcc RS1,RS2,rd is opf = 0x2 & op3 = 0x36 & op = 0x2 & RS1 & RS2 & rd
+{
+	rd = edge8lcc(RS1,RS2);
+}
+
+define pcodeop faligndata;
+:faligndata fdrs1,fdrs2,fdrd is opf = 0x48 & op3 = 0x36 & op = 0x2 & fdrs1 & fdrs2 & fdrd
+{
+	fdrd = faligndata(fdrs1,fdrs2);
+}
+
+define pcodeop fandd;
+:fandd fdrs1,fdrs2,fdrd is opf = 0x70 & op3 = 0x36 & op = 0x2 & fdrs1 & fdrs2 & fdrd
+{
+	fdrd = fandd(fdrs1,fdrs2);
+}
+
+define pcodeop fandnot1d;
+:fandnot1d fdrs1,fdrs2,fdrd is opf = 0x68 & op3 = 0x36 & op = 0x2 & fdrs1 & fdrs2 & fdrd
+{
+	fdrd = fandnot1d(fdrs1,fdrs2);
+}
+
+define pcodeop fandnot1s;
+:fandnot1s fdrs1,fdrs2,fdrd is opf = 0x69 & op3 = 0x36 & op = 0x2 & fdrs1 & fdrs2 & fdrd
+{
+	fdrd = fandnot1s(fdrs1,fdrs2);
+}
+
+define pcodeop fandnot2d;
+:fandnot2d fdrs1,fdrs2,fdrd is opf = 0x64 & op3 = 0x36 & op = 0x2 & fdrs1 & fdrs2 & fdrd
+{
+	fdrd = fandnot2d(fdrs1,fdrs2);
+}
+
+define pcodeop fandnot2s;
+:fandnot2s fdrs1,fdrs2,fdrd is opf = 0x65 & op3 = 0x36 & op = 0x2 & fdrs1 & fdrs2 & fdrd
+{
+	fdrd = fandnot2s(fdrs1,fdrs2);
+}
+
+define pcodeop fands;
+:fands fdrs1,fdrs2,fdrd is opf = 0x71 & op3 = 0x36 & op = 0x2 & fdrs1 & fdrs2 & fdrd
+{
+	fdrd = fands(fdrs1,fdrs2);
+}
+
+define pcodeop fexpand;
+:fexpand fsrs2,fdrd is opf = 0x4d & op3 = 0x36 & op = 0x2 & fsrs2 & fdrd
+{
+	fdrd = fexpand(fsrs2);
+}
+
+define pcodeop fmul8sux16;
+:fmul8sux16 fdrs1,fdrs2,fdrd is opf = 0x36 & op3 = 0x36 & op = 0x2 & fdrs1 & fdrs2 & fdrd
+{
+	fdrd = fmul8sux16(fdrs1,fdrs2);
+}
+
+define pcodeop fmul8ulx16;
+:fmul8ulx16 fdrs1,fdrs2,fdrd is opf = 0x37 & op3 = 0x36 & op = 0x2 & fdrs1 & fdrs2 & fdrd
+{
+	fdrd = fmul8ulx16(fdrs1,fdrs2);
+}
+
+define pcodeop fmul8x16;
+:fmul8x16 fdrs1,fdrs2,fdrd is opf = 0x31 & op3 = 0x36 & op = 0x2 & fdrs1 & fdrs2 & fdrd
+{
+	fdrd = fmul8x16(fdrs1,fdrs2);
+}
+
+define pcodeop fmul8x16al;
+:fmul8x16al fdrs1,fdrs2,fdrd is opf = 0x35 & op3 = 0x36 & op = 0x2 & fdrs1 & fdrs2 & fdrd
+{
+	fdrd = fmul8x16al(fdrs1,fdrs2);
+}
+
+define pcodeop fmul8x16au;
+:fmul8x16au fdrs1,fdrs2,fdrd is opf = 0x33 & op3 = 0x36 & op = 0x2 & fdrs1 & fdrs2 & fdrd
+{
+	fdrd = fmul8x16au(fdrs1,fdrs2);
+}
+
+define pcodeop fmuld8sux16;
+:fmuld8sux16 fdrs1,fdrs2,fdrd is opf = 0x38 & op3 = 0x36 & op = 0x2 & fdrs1 & fdrs2 & fdrd
+{
+	fdrd = fmuld8sux16(fdrs1,fdrs2);
+}
+
+define pcodeop fmuld8ulx16;
+:fmuld8ulx16 fdrs1,fdrs2,fdrd is opf = 0x39 & op3 = 0x36 & op = 0x2 & fdrs1 & fdrs2 & fdrd
+{
+	fdrd = fmuld8ulx16(fdrs1,fdrs2);
+}
+
+define pcodeop fnandd;
+:fnandd fdrs1,fdrs2,fdrd is opf = 0x6e & op3 = 0x36 & op = 0x2 & fdrs1 & fdrs2 & fdrd
+{
+	fdrd = fnandd(fdrs1,fdrs2);
+}
+
+define pcodeop fnands;
+:fnands fdrs1,fdrs2,fdrd is opf = 0x6f & op3 = 0x36 & op = 0x2 & fdrs1 & fdrs2 & fdrd
+{
+	fdrd = fnands(fdrs1,fdrs2);
+}
+
+define pcodeop fnord;
+:fnord fdrs1,fdrs2,fdrd is opf = 0x62 & op3 = 0x36 & op = 0x2 & fdrs1 & fdrs2 & fdrd
+{
+	fdrd = fnord(fdrs1,fdrs2);
+}
+
+define pcodeop fnors;
+:fnors fdrs1,fdrs2,fdrd is opf = 0x63 & op3 = 0x36 & op = 0x2 & fdrs1 & fdrs2 & fdrd
+{
+	fdrd = fnors(fdrs1,fdrs2);
+}
+
+define pcodeop fnot1d;
+:fnot1d fdrs1,fdrd is opf = 0x6a & op3 = 0x36 & op = 0x2 & fdrs1 & fdrd
+{
+	fdrd = fnot1d(fdrs1);
+}
+
+define pcodeop fnot1s;
+:fnot1s fdrs1,fdrd is opf = 0x6b & op3 = 0x36 & op = 0x2 & fdrs1 & fdrd
+{
+	fdrd = fnot1s(fdrs1);
+}
+
+define pcodeop fnot2d;
+:fnot2d fdrs2,fdrd is opf = 0x66 & op3 = 0x36 & op = 0x2 & fdrs2 & fdrd
+{
+	fdrd = fnot2d(fdrs2);
+}
+
+define pcodeop fnot2s;
+:fnot2s fdrs2,fdrd is opf = 0x67 & op3 = 0x36 & op = 0x2 & fdrs2 & fdrd
+{
+	fdrd = fnot2s(fdrs2);
+}
+
+define pcodeop foned;
+:foned fdrd is opf = 0x7e & op3 = 0x36 & op = 0x2 & fdrd
+{
+	fdrd = foned();
+}
+
+define pcodeop fones;
+:fones fsrd is opf = 0x7f & op3 = 0x36 & op = 0x2 & fsrd
+{
+	fsrd = fones();
+}
+
+define pcodeop ford;
+:ford fdrs1,fdrs2,fdrd is opf = 0x7c & op3 = 0x36 & op = 0x2 & fdrs1 & fdrs2 & fdrd
+{
+	fdrd = ford(fdrs1,fdrs2);
+}
+
+define pcodeop fornot1d;
+:fornot1d fdrs1,fdrs2,fdrd is opf = 0x7a & op3 = 0x36 & op = 0x2 & fdrs1 & fdrs2 & fdrd
+{
+	fdrd = fornot1d(fdrs1,fdrs2);
+}
+
+define pcodeop fornot1s;
+:fornot1s fdrs1,fdrs2,fdrd is opf = 0x7b & op3 = 0x36 & op = 0x2 & fdrs1 & fdrs2 & fdrd
+{
+	fdrd = fornot1s(fdrs1,fdrs2);
+}
+
+define pcodeop fornot2d;
+:fornot2d fdrs1,fdrs2,fdrd is opf = 0x76 & op3 = 0x36 & op = 0x2 & fdrs1 & fdrs2 & fdrd
+{
+	fdrd = fornot2d(fdrs1,fdrs2);
+}
+
+define pcodeop fornot2s;
+:fornot2s fdrs1,fdrs2,fdrd is opf = 0x77 & op3 = 0x36 & op = 0x2 & fdrs1 & fdrs2 & fdrd
+{
+	fdrd = fornot2s(fdrs1,fdrs2);
+}
+
+define pcodeop fors;
+:fors fdrs1,fdrs2,fdrd is opf = 0x7d & op3 = 0x36 & op = 0x2 & fdrs1 & fdrs2 & fdrd
+{
+	fdrd = fors(fdrs1,fdrs2);
+}
+
+define pcodeop fpack16;
+:fpack16 fdrs2,fsrd is opf = 0x3b & op3=0x36 & op = 0x2 & fdrs2 & fsrd
+{
+	fsrd = fpack16(fdrs2);
+}
+
+define pcodeop fpack32;
+:fpack32 fdrs1,fdrs2,fdrd is opf = 0x3a & op3 = 0x36 & op = 0x2 & fdrs1 & fdrs2 & fdrd
+{
+	fdrd = fpack32(fdrs1,fdrs2);
+}
+
+define pcodeop fpackfix;
+:fpackfix fdrs2,fsrd is opf = 0x3d & op3 = 0x36 & op = 0x2 & fdrs2 & fsrd
+{
+	fsrd = fpackfix(fdrs2);
+}
+
+define pcodeop fpadd16;
+:fpadd16 fdrs1,fdrs2,fdrd is opf = 0x50 & op3 = 0x36 & op = 0x2 & fdrs1 & fdrs2 & fdrd
+{
+	fdrd = fpadd16(fdrs1,fdrs2);
+}
+
+define pcodeop fpadd16s;
+:fpadd16s fdrs1,fdrs2,fdrd is opf = 0x51 & op3 = 0x36 & op = 0x2 & fdrs1 & fdrs2 & fdrd
+{
+	fdrd = fpadd16s(fdrs1,fdrs2);
+}
+
+define pcodeop fpadd32;
+:fpadd32 fdrs1,fdrs2,fdrd is opf = 0x52 & op3 = 0x36 & op = 0x2 & fdrs1 & fdrs2 & fdrd
+{
+	fdrd = fpadd32(fdrs1,fdrs2);
+}
+
+define pcodeop fpadd32s;
+:fpadd32s fdrs1,fdrs2,fdrd is opf = 0x53 & op3 = 0x36 & op = 0x2 & fdrs1 & fdrs2 & fdrd
+{
+	fdrd = fpadd32s(fdrs1,fdrs2);
+}
+
+define pcodeop fpcmpeq16;
+:fpcmpeq16 fdrs1,fdrs2,rd is opf = 0x2a & op3 = 0x36 & op = 0x2 & fdrs1 & fdrs2 & rd
+{
+	rd = fpcmpeq16(fdrs1,fdrs2);
+}
+
+define pcodeop fpcmpeq32;
+:fpcmpeq32 fdrs1,fdrs2,rd is opf = 0x2e & op3 = 0x36 & op = 0x2 & fdrs1 & fdrs2 & rd
+{
+	rd = fpcmpeq32(fdrs1,fdrs2);
+}
+
+define pcodeop fpcmpgt16;
+:fpcmpgt16 fdrs1,fdrs2,rd is opf = 0x28 & op3 = 0x36 & op = 0x2 & fdrs1 & fdrs2 & rd
+{
+	rd = fpcmpgt16(fdrs1,fdrs2);
+}
+
+define pcodeop fpcmpgt32;
+:fpcmpgt32 fdrs1,fdrs2,rd is opf = 0x2c & op3 = 0x36 & op = 0x2 & fdrs1 & fdrs2 & rd
+{
+	rd = fpcmpgt32(fdrs1,fdrs2);
+}
+
+define pcodeop fpcmple16;
+:fpcmple16 fdrs1,fdrs2,rd is opf = 0x20 & op3 = 0x36 & op = 0x2 & fdrs1 & fdrs2 & rd
+{
+	rd = fpcmple16(fdrs1,fdrs2);
+}
+
+define pcodeop fpcmple32;
+:fpcmple32 fdrs1,fdrs2,rd is opf = 0x24 & op3 = 0x36 & op = 0x2 & fdrs1 & fdrs2 & rd
+{
+	rd = fpcmple32(fdrs1,fdrs2);
+}
+
+define pcodeop fpcmpne16;
+:fpcmpne16 fdrs1,fdrs2,rd is opf = 0x22 & op3 = 0x36 & op = 0x2 & fdrs1 & fdrs2 & rd
+{
+	rd = fpcmpne16(fdrs1,fdrs2);
+}
+
+define pcodeop fpcmpne32;
+:fpcmpne32 fdrs1,fdrs2,rd is opf = 0x26 & op3 = 0x36 & op = 0x2 & fdrs1 & fdrs2 & rd
+{
+	rd = fpcmpne32(fdrs1,fdrs2);
+}
+
+define pcodeop fpmerge;
+:fpmerge fdrs1,fdrs2,fdrd is opf = 0x4b & op3 = 0x36 & op = 0x2 & fdrs1 & fdrs2 & fdrd
+{
+	fdrd = fpmerge(fdrs1,fdrs2);
+}
+
+define pcodeop fpsub16;
+:fpsub16 fdrs1,fdrs2,fdrd is opf = 0x54 & op3 = 0x36 & op = 0x2 & fdrs1 & fdrs2 & fdrd
+{
+	fdrd = fpsub16(fdrs1,fdrs2);
+}
+
+define pcodeop fpsub16s;
+:fpsub16s fdrs1,fdrs2,fdrd is opf = 0x55 & op3 = 0x36 & op = 0x2 & fdrs1 & fdrs2 & fdrd
+{
+	fdrd = fpsub16s(fdrs1,fdrs2);
+}
+
+define pcodeop fpsub32;
+:fpsub32 fdrs1,fdrs2,fdrd is opf = 0x56 & op3 = 0x36 & op = 0x2 & fdrs1 & fdrs2 & fdrd
+{
+	fdrd = fpsub32(fdrs1,fdrs2);
+}
+
+define pcodeop fpsub32s;
+:fpsub32s fdrs1,fdrs2,fdrd is opf = 0x57 & op3 = 0x36 & op = 0x2 & fdrs1 & fdrs2 & fdrd
+{
+	fdrd = fpsub32s(fdrs1,fdrs2);
+}
+
+define pcodeop fsrc1d;
+:fsrc1d fdrs1,fdrd is opf = 0x74 & op3 = 0x36 & op = 0x2 & fdrs1 & fdrd
+{
+	fdrd = fsrc1d(fdrs1);
+}
+
+define pcodeop fsrc1s;
+:fsrc1s fdrs1,fdrd is opf = 0x75 & op3 = 0x36 & op = 0x2 & fdrs1 & fdrd
+{
+	fdrd = fsrc1s(fdrs1);
+}
+
+define pcodeop fsrc2d;
+:fsrc2d fdrs2,fdrd is opf = 0x78 & op3 = 0x36 & op = 0x2 & fdrs2 & fdrd
+{
+	fdrd = fsrc2d(fdrs2);
+}
+
+define pcodeop fsrc2s;
+:fsrc2s fdrs2,fdrd is opf = 0x79 & op3 = 0x36 & op = 0x2 & fdrs2 & fdrd
+{
+	fdrd = fsrc2s(fdrs2);
+}
+
+define pcodeop fxnord;
+:fxnord fdrs1,fdrs2,fdrd is opf = 0x72 & op3 = 0x36 & op = 0x2 & fdrs1 & fdrs2 & fdrd
+{
+	fdrd = fxnord(fdrs1,fdrs2);
+}
+
+define pcodeop fxnors;
+:fxnors fdrs1,fdrs2,fdrd is opf = 0x73 & op3 = 0x36 & op = 0x2 & fdrs1 & fdrs2 & fdrd
+{
+	fdrd = fxnors(fdrs1,fdrs2);
+}
+
+define pcodeop fxord;
+:fxord fdrs1,fdrs2,fdrd is opf = 0x6c & op3 = 0x36 & op = 0x2 & fdrs1 & fdrs2 & fdrd
+{
+	fdrd = fxord(fdrs1,fdrs2);
+}
+
+define pcodeop fxors;
+:fxors fdrs1,fdrs2,fdrd is opf = 0x6d & op3 = 0x36 & op = 0x2 & fdrs1 & fdrs2 & fdrd
+{
+	fdrd = fxors(fdrs1,fdrs2);
+}
+
+define pcodeop fzerod;
+:fzerod fdrd is opf = 0x60 & op3 = 0x36 & op = 0x2 & fdrd
+{
+	fdrd = fzerod();
+}
+
+define pcodeop fzeros;
+:fzeros fsrd is opf = 0x61 & op3 = 0x36 & op = 0x2 & fsrd
+{
+	fsrd = fzeros();
+}
+
+define pcodeop pdist;
+:pdist fdrs1,fdrs2,fdrd is opf = 0x3e & op3 = 0x36 & op = 0x2 & fdrs1 & fdrs2 & fdrd
+{
+	fdrd = pdist(fdrs1,fdrs2);
+}
+

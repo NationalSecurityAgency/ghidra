@@ -1,0 +1,996 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<HTML>
+  <HEAD>
+    <TITLE>Ghidra Front End</TITLE>
+    <META http-equiv="content-type" content="text/html; charset=windows-1252">
+    <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+  </HEAD>
+
+  <BODY>
+    <H1><A name="Project_Window"></A>Ghidra Project Window</H1>
+
+    <P>The Project Window is displayed when you run Ghidra. From this window, you manage your <A
+    href="help/topics/Project/Ghidra_Projects.htm">projects</A>, <A href=
+    "#Workspace">workspaces</A>, <A href=
+    "help/topics/Program/Ghidra_Programs.htm">Programs</A>,&nbsp; and <A href=
+    "help/topics/Tool/Ghidra_Tool_Administration.htm">tools</A>.&nbsp;If you are running Ghidra for
+    the first time, you will need to create a <A href="Creating_a_Project.htm">new project</A> to
+    get started.</P>
+
+    <P>The Project Window is a tool and may be <A href=
+    "Ghidra_Front_end_Menus.htm#Configure">configured</A> with "special" <A href=
+    "help/topics/Tool/Ghidra_Tool_Administration.htm#Plugins">plugins</A> that provide general
+    capabilities that may be required at a high level. By default, the Project Window contains
+    plugins for <A href="help/topics/ImporterPlugin/importer.htm">importing</A> and <A href=
+    "help/topics/ExporterPlugin/exporter.htm">exporting Programs</A><FONT color="#0000ff">,</FONT>
+    <A href="Archive_Project.htm">archiving a project</A>, and <A href=
+    "Restore_Project.htm">restoring an archived project</A>. These plugins may be added to other
+    tools.&nbsp;</P>
+
+    <P><IMG src="../../shared/note.png" border="0">The options for archiving
+    and restoring a project will show up only in the Ghidra Project window, even though the plugins
+    providing these options can be added to other tools.</P>
+
+
+      <CENTER>
+        <IMG src= "images/ProjectWindow.png" border="0">
+      </CENTER>
+    <P>&nbsp;</P>
+
+    <P>The following sections describe the Project Window:</P>
+
+    <UL>
+      <LI><A href="#ToolChest">Tool Chest</A></LI>
+
+      <LI><A href="#ActiveProjectPanel">Active Project Panel</A></LI>
+
+      <LI><A href="#ReadOnlyProjectDataPanel">Read-Only Project Data Panel</A></LI>
+
+      <LI><A href="#Workspace">Workspaces</A></LI>
+
+      <LI><A href="#RunningTools">Running Tools</A></LI>
+
+      <LI><A href="help/topics/VersionControl/project_repository.htm">Project Repository</A></LI>
+
+      <LI><A href="#ConnectionStatus">Ghidra Server Connection Status</A></LI>
+
+      <LI><A href="#ProjectDataTree">Data Tree</A></LI>
+
+      <LI><A href="#ProjectDataTable">Data Table</A></LI>
+
+      <LI><A href="#FileIcons">File Icons</A></LI>
+
+      <LI><A href="#StatusWindow">Console</A></LI>
+
+      <LI><A href="Ghidra_Front_end_Menus.htm#Configure">Configure Project Window</A></LI>
+
+      <LI><A href="Ghidra_Front_end_Menus.htm#EditMenuOptions">Edit Menu Options</A></LI>
+
+      <LI><A href="help/topics/Tool/Ghidra_Tool_Administration.htm">Manage Tools</A></LI>
+
+      <LI><A href="#GettingHelp">Getting Help</A></LI>
+
+      <LI><A href="Ghidra_Front_end_Menus.htm#Exit_Ghidra">Exit Ghidra</A></LI>
+    </UL>
+
+    <H2><A name="ToolChest"></A> <A name="Tool_Chest"></A> Tool Chest</H2>
+
+    <BLOCKQUOTE>
+      <P>The Tool Chest shows the tools that you currently have in your 
+      <b>&lt;user home dir&gt;/.ghidra/.ghidra-&lt;version&gt;/tools</b> folder. 
+      The tools are placed there when you initially install Ghidra.&nbsp;
+      These tools are always available to your currently open project. See <A href=
+      "help/topics/Tool/Ghidra_Tool_Administration.htm">Ghidra Tool Administration</A> for
+      information on managing tools. The Tool Chest panel is a tool bar with an icon that
+      represents each tool in your Tool Chest.</P>
+
+      <P>You can launch a tool by clicking on the icon. You can launch a tool with a Program by
+      dragging a Program file from the <A href="#ProjectDataTree">Project data tree</A> and
+      dropping it on the tool icon in the Tool Chest.&nbsp;</P>
+    </BLOCKQUOTE>
+
+    <H2><A name="ActiveProjectPanel"></A>Active Project</H2>
+
+    <BLOCKQUOTE>
+      <P>The Active Project view shows your programs and datatype archives in a tree view or a
+      table view.  The tree view is useful for organizing your files into folders and sub-folders.
+      The table view is useful for sorting all your files on some particular attribute such as
+      size, processor, or modification date.  In either view, you open and perform various
+      actions on program files or datatype archives.</P>
+
+      <H3><A name="DataTree"></A><A name="ProjectDataTree"></A>Project Data Tree</H3>
+      <CENTER>
+        <IMG src= "images/ProjectDataTree.png" border="0">
+      </CENTER>
+      <BLOCKQUOTE>
+        <P>The data tree shows all files in the project orgnanized into folders and sub-folders.
+         <A href="#FileIcons">Icons for files</A>
+        indicate whether they are under <A href=
+        "help/topics/VersionControl/project_repository.htm#Versioning">version control</A> and whether
+        you have the file <A href=
+        "help/topics/VersionControl/project_repository.htm#SampleCheckOutIcon">checked out</A>.
+        Open this view by activating the "Tree View" tab.</P>   
+	  </BLOCKQUOTE>
+	  <P>&nbsp;</P>
+     <H3>Tree Only Actions</H3>
+        
+        <P> The
+        data tree supports the following operations:</P>
+
+        <H4><A name="New_Folder"></A>Create New Folder</H4>
+
+        <BLOCKQUOTE>
+          <P>To create a new folder,</P>
+
+          <OL>
+            <LI>Select a folder that you own.&nbsp;</LI>
+
+            <LI>Right mouse click and choose the <I>New Folder</I> option.</LI>
+
+            <LI>A new node is created in the tree; a cell editor is displayed, containing the
+            default name, New Folder; enter a new name, or the &lt;Escape&gt; key to cancel the
+            editing.</LI>
+          </OL>
+
+          <P><IMG src="../../shared/note.png" border="0"> You cannot create
+          a sub-folder of a folder that you do not own.</P>
+        </BLOCKQUOTE>
+
+        <H4><A name="Copy"></A><A name="Paste"></A>Copy Folders and Files</H4>
+
+        <BLOCKQUOTE>
+          <P>To copy folders and files to another folder that you own,</P>
+
+          <OL>
+            <LI>
+              Select a file or folder; you may also select multiple folders and files. 
+
+              <P><IMG src="../../shared/note.png" border="0">If you select a
+              folder, then any selections that are descendants of this folder are ignored.</P>
+            </LI>
+
+            <LI>Right mouse click and choose the&nbsp; <I>Copy</I> option.</LI>
+
+            <LI>Select a destination folder.</LI>
+
+            <LI>Right mouse click and choose the <I>Paste</I> option. For very large files, an "in
+            progress" dialog is displayed. You may cancel the paste operation at any
+            time.&nbsp;</LI>
+          </OL>
+        </BLOCKQUOTE>
+
+        <H4><A name="Cut"></A>Move Folders and Files</H4>
+
+        <BLOCKQUOTE>
+          <P>To move folders and files to another folder that you own,</P>
+
+          <OL>
+            <LI>
+              Select a file or folder; you may also select multiple folders and files. 
+
+              <P><IMG src="../../shared/note.png" border="0">If you select a
+              folder, then any selections that are descendants of this folder are ignored.</P>
+            </LI>
+
+            <LI>Right mouse click and choose the <I>Cut</I> option; the icon will change to a
+            dithered image to indicate the cut operation.</LI>
+
+            <LI>Select a destination folder.</LI>
+
+            <LI>Right mouse click and choose the <I>Paste</I> option.&nbsp;</LI>
+          </OL>
+
+          <P><IMG src="../../shared/note.png" border="0">You cannot move a
+          file that is in use.</P>
+        </BLOCKQUOTE>
+
+        <H4>Drag/Drop for Copy</H4>
+
+        <BLOCKQUOTE>
+          <P>You can get the same effect of Copy/Paste using Drag and Drop.</P>
+
+          <OL>
+            <LI>Select a folder or file (or multiple folders and files).</LI>
+
+            <LI>Hold the Ctrl key down and drag the object to another folder.</LI>
+
+            <LI>Drop the object on a folder.</LI>
+          </OL>
+
+          <P><IMG src="../../shared/note.png" border="0"> You will not get a
+          valid drop target for folders that you do not own.</P>
+
+          <P><IMG src="../../shared/note.png" border="0"> If you release the
+          Ctrl key during the drag, the operation changes to a <I>move</I> if you are dragging from
+          a folder that you own. Dragging files from another user always results in a <I>copy</I>,
+          regardless of whether you hold down the Ctrl key.</P>
+        </BLOCKQUOTE>
+
+        <H4>Drag/Drop for Move</H4>
+
+        <BLOCKQUOTE>
+          <P>You can get the same effect of Cut/Paste using Drag and Drop.</P>
+
+          <OL>
+            <LI>Select a folder or file and drag it to a folder that you own.&nbsp;</LI>
+
+            <LI>Release the mouse button when you get a valid drop target.</LI>
+          </OL>
+        </BLOCKQUOTE>
+
+        <P><IMG src="../../shared/note.png" border="0"> If a folder or file
+        already exists in the destination folder, Ghidra will append a ".copy" to the name to make
+        it unique.</P>
+       <H4><A name="Collapse_All"></A><A name="Expand_All"></A>Expand/Collapse</H4>
+
+        <BLOCKQUOTE>
+          <P>To expand a folder and all of its descendant folders,&nbsp;</P>
+
+          <OL>
+            <LI>Select a folder.</LI>
+
+            <LI>Right mouse click and choose the <B>Expand All</B> option.</LI>
+          </OL>
+
+          <P>To collapse a folder and all of its descendant folders,</P>
+
+          <OL>
+            <LI>Select a folder.</LI>
+
+            <LI>Right mouse click and choose the <B>Collapse All</B> option.</LI>
+          </OL>
+        </BLOCKQUOTE>
+
+
+	  <P>&nbsp;</P>
+
+      <H3><A name="ProjectDataTable"></A>Project Data Table</H3>
+      <CENTER>
+        <IMG src= "images/ProjectDataTable.png" border="0">
+      </CENTER>
+      <BLOCKQUOTE>
+        <P>The data table shows all files in the project in a table sorted by some attribute
+        of the file. In the example above, the files are sorted on file type.
+         <A href="#FileIcons">Icons for files</A>
+        indicate whether they are under <A href=
+        "help/topics/VersionControl/project_repository.htm#Versioning">version control</A> and whether
+        you have the file <A href=
+        "help/topics/VersionControl/project_repository.htm#SampleCheckOutIcon">checked out</A>.
+        To open this view, active the "Table View" tab.</P>
+      </BLOCKQUOTE>
+
+	  <P>&nbsp;</P>
+
+    <H3>Actions for Both the Data Tree and the Data Table</H3>
+        
+ 
+        <H4><A name="Delete"></A>Delete</H4>
+
+        <BLOCKQUOTE>
+          <P>Deleting folders is a recursive operation, so all descendant folders and files are
+          also deleted. <B>This is a <I><FONT color="#ff0000">permanent</FONT></I>
+          operation.</B>&nbsp; To delete a folder or file,</P>
+
+          <OL>
+            <LI>
+              Select the folder or file or select multiple folders and files. 
+
+              <P><IMG src="../../shared/note.png" border="0">If you select a
+              folder, then any selections that are descendants of this folder are ignored.</P>
+            </LI>
+
+            <LI>Right mouse click and choose the <B><FONT size="4">Delete</FONT></B> option.</LI>
+          </OL>
+
+          <P><IMG src="../../shared/note.png" border="0"> The Delete option
+          is disabled for a file that is in use.</P>
+        </BLOCKQUOTE>
+
+        <H4><A name="Rename"></A>Rename</H4>
+
+        <BLOCKQUOTE>
+          <P>To rename a folder or file,</P>
+
+          <OL>
+            <LI>Select the folder or file.</LI>
+
+            <LI>Right mouse click and choose the <B><FONT size="4">Rename</FONT></B> option.</LI>
+
+            <LI>A cell editor is displayed; enter the new name.</LI>
+          </OL>
+
+          <P>Duplicate names are not allowed within the same folder.</P>
+
+          <P><IMG src="../../shared/note.png" border="0">You cannot rename a
+          file that is in use.&nbsp;</P>
+
+          <P><IMG src="../../shared/note.png" border="0">You cannot rename
+          your project folder.</P>
+        </BLOCKQUOTE>
+
+         <H4><A name="Select_All"></A>Select All</H4>
+
+        <BLOCKQUOTE>
+          <P>To select a folder and all of its descendants,&nbsp;</P>
+
+          <OL>
+            <LI>Select a folder.</LI>
+
+            <LI>Right mouse click and choose the <B>Select All</B> option.</LI>
+          </OL>
+        </BLOCKQUOTE>
+
+        <H4><A name="Read_Only"></A>Read-Only</H4>
+
+        <BLOCKQUOTE>
+          <P>To mark a file as read only,</P>
+
+          <OL>
+            <LI>Select a file.</LI>
+
+            <LI>Right mouse click and choose the <B><FONT size="4">Read-Only</FONT></B>
+            option.</LI>
+          </OL>
+
+          <P>The icon for the file is updated to indicate the read only state. When you right mouse
+          click, a check mark shows up in the Read-Only option.</P>
+
+          <P><IMG src="../../shared/note.png" border="0"> A read-only
+          Program must be saved to a new name if you make changes to it.</P>
+
+          <P><IMG src="../../shared/note.png" border="0">You cannot change
+          the read-only state of a file while it is in use.</P>
+        </BLOCKQUOTE>
+
+        <H4>Drag File to a Tool</H4>
+
+        <UL>
+          <LI>To launch a tool with a specific file, drag a file to the tool icon in the Tool
+          Chest.</LI>
+
+          <LI>To open a file in a <I>running tool</I>, drag a file to the tool icon in the <A href=
+          "#RunningTools">Running Tools</A> tool bar, OR drag the file to the tool window.</LI>
+        </UL>
+
+        <H4><A name="Open_File"></A>Open a File in the Default Tool</H4>
+
+        <UL>
+          <LI>To open a file in the tool that was <A href=
+          "help/topics/Tool/Ghidra_Tool_Administration.htm#Set_Tool_Associations">specified as the
+          "default,"</A> double click on the Program that you want to open, OR right mouse click on
+          the file and choose <B>Open in Default Tool.</B></LI>
+        </UL>
+
+        <H4><A name="Open_File_With"></A>Open a File With a Specific Tool</H4>
+
+        <UL>
+          <LI>To launch a tool with a specific file,&nbsp;</LI>
+        </UL>
+
+        <BLOCKQUOTE>
+          <OL>
+            <LI>Select the file.</LI>
+
+            <LI>Right mouse click and choose <B>Open With</B><IMG src="../../shared/arrow.gif"
+            border="0">&lt;<B><I>tool</I></B> <B><I>name</I></B>&gt;.</LI>
+          </OL>
+        </BLOCKQUOTE>
+
+        <H4><A name="RefreshFolders"></A>Refresh</H4>
+
+        <BLOCKQUOTE>
+          <P>The <IMG src="Icons.REFRESH_ICON" border="0"> button on the
+          tool bar refreshes the list of files in the selected folders. This is a way to sync the
+          project folder/file structure with the project repository. The list of files and folders
+          in the Project Data Tree is updated. This button is enabled only for selected folders.
+          You can also refresh folders from a <A href="#View_Project">viewed project</A> or 
+          <A href="#View_Repository">viewed repository</A>.</P>
+        </BLOCKQUOTE>
+
+        <H4>About</H4>
+
+        <BLOCKQUOTE>
+          <P>To <A href="help/topics/About/About_Program_File.htm">view information about a
+          file</A>, right mouse click on the file in the data tree and choose the <B>About...</B>
+          option.</P>
+        </BLOCKQUOTE>
+      </BLOCKQUOTE>
+      
+      <H3> Version Control Actions</H3>
+      <BLOCKQUOTE>
+      <P>There are numerous actions related to version control.  See <A href="help/topics/VersionControl/project_repository.htm">Project Repository</A>
+	 for details.</P>
+	  </BLOCKQUOTE
+	  <P>&nbsp;</P>
+	 
+      <H3><A name="FileIcons"></A>File Icons</H3>
+		<BLOCKQUOTE>
+      <P>The Project Data Tree shows icons for the following types of files:<BR>
+      </P>
+
+      <TABLE style="width: 100%; text-align: left;" border="0" cellpadding="2" cellspacing="2">
+        <TBODY>
+          <TR>
+            <TD style="vertical-align: top; width: 20px;"><IMG alt="" src="images/program_obj.png"></TD>
+
+            <TD style="vertical-align: top; width: 10px;">-<BR>
+            </TD>
+
+            <TD style="vertical-align: top;">A <A href=
+            "help/topics/Program/Ghidra_Programs.htm"><SPAN style=
+            "font-weight: bold;">program</SPAN></A><BR>
+            </TD>
+          </TR>
+
+          <TR>
+            <TD style="vertical-align: top; width: 20px;"><IMG alt="" src=
+            "images/closedBookBlue.png"></TD>
+
+            <TD style="vertical-align: top; width: 10px;">-<BR>
+            </TD>
+
+            <TD style="vertical-align: top;">A <A href=
+            "help/topics/DataTypeManagerPlugin/data_type_manager_description.htm#ProjectDataTypeArchive"><SPAN
+             style="font-weight: bold;">project data type archive</SPAN></A> (a data type file
+            stored in the project)<BR>
+            </TD>
+          </TR>
+        </TBODY>
+      </TABLE>
+
+      <P><A name="VersionStatus"></A>The Project Data Tree shows modifications to these icons for
+      files in the following states:</P>
+    </BLOCKQUOTE>
+
+    <DIV align="center">
+      <CENTER>
+        <TABLE border="1" width="80%">
+          <TBODY>
+            <TR>
+              <TD align="center" bgcolor="#00ffff" width="25%">File Status</TD>
+
+              <TD align="center" bgcolor="#00ffff" width="20%">Sample Icon in Project Data
+              Tree</TD>
+
+              <TD align="center" bgcolor="#00ffff" width="40%">Description</TD>
+            </TR>
+
+            <TR>
+              <TD width="25%"><A href=
+              "help/topics/VersionControl/project_repository.htm#VersionControl">Versioned File</A> not
+              checked out.</TD>
+
+              <TD width="20%"><IMG src="images/VersionedFileIcon.png" border="0"></TD>
+
+              <TD width="40%"> The program named "Example" is versioned as indicated by 
+              the light purple background. It is not checked out , since there is no circle with a 
+              check mark. Version 1 is the latest version, as indicated by "(1)";&nbsp; 
+              the version will be the latest version when the file is not checked out.</TD>
+            </TR>
+
+            <TR>
+              <TD width="25%">Versioned File is <A href=
+              "help/topics/VersionControl/project_repository.htm#CheckOut">Checked out</A> exclusively 
+              by you.</TD>
+
+              <TD width="20%"><IMG src="images/VersionedFileCOnoServer.png" border="0"></TD>
+
+              <TD width="40%">Version 1 of the program named "Example" is checked out, as indicated 
+              by "(1 of 1)"; Version 1 is the latest version. The blue check mark icon indicates 
+              that the file is checked out with an <A href=
+              "help/topics/VersionControl/project_repository.htm#ExclusiveLock">exclusive</A> lock.<BR>
+              If your project is not associated with a Ghidra Server, 
+              you will always have the latest version checked out and the check out will always 
+              be exclusive,&nbsp; since the project is not shared.&nbsp;</TD>
+            </TR>
+
+            <TR>
+              <TD width="25%">Versioned File is Checked Out; the project is associated with a
+              Ghidra Server</TD>
+
+              <TD width="20%"><IMG src="images/VersionedFileCOwithServer.png" border="0"></TD>
+
+              <TD width="40%">Version 3 of the program named "Example" is checked out; Version 3 is the latest
+              version on the server, as indicated by "(3 of 3)" and the green circle with a 
+              check mark. The asterisk indicates you have changes to the file which have not been 
+              checked in yet.</TD>
+            </TR>
+
+            <TR>
+              <TD width="25%">Versioned File is Checked Out; the project is associated with a
+              Ghidra Server. A newer version exists on the server.</TD>
+
+              <TD width="20%"><IMG src="images/CheckedOutNotLatest.png" border="0"></TD>
+
+              <TD width="40%">Version 2 of the program named "Example" is checked out; a Version 3
+              has been created since Version 2 was checked out, as indicated by "(2 of 3)" and
+              the magenta circle with a check mark. The asterisk indicates you have changes to the 
+              file which have not been checked in yet.</TD>
+            </TR>
+
+            <TR>
+              <TD width="25%">Private File&nbsp;</TD>
+
+              <TD width="20%"><IMG src="images/PrivateFileIcon.png" border="0"></TD>
+
+              <TD width="40%"><A name="PrivateFile"></A>A program named "Example" is
+              not under version control, exists only on your local machine, and is not visible to
+              other users.</TD>
+            </TR>
+
+            <TR>
+              <TD width="25%">Hijacked File</TD>
+
+              <TD width="20%"><IMG src="images/hijack_file.png" border="0"></TD>
+
+              <TD width="40%"><A name="HijackedFile"></A>The private file "Example" exists on your 
+              computer, but another user added "Example" to version control, which
+              caused the private file to appear as <I>hijacked</I>, (i.e., the file can be saved "as
+              is" using "<B>Save As</B>" since you do not have the the file checked out that is on 
+              the Ghidra Server.) Hijacked files may also result from a checkout that was <A href=
+              "help/topics/VersionControl/project_repository.htm#TerminateCheckout">terminated</A>. The
+              <I>shared</I> version of "Example" will not be visible in your project until you 
+              <A href="help/topics/VersionControl/project_repository.htm#Undo_Hijack">undo the
+              hijack</A>.&nbsp; You can also either rename the hijacked "Example", move it to
+              another folder, delete it, or use the <B><A href=
+              "help/topics/VersionControl/project_repository.htm#Undo_Hijack">Undo Hijack</A></B> <A
+              href="help/topics/VersionControl/project_repository.htm#Undo_Hijack">action</A>. Then the
+              shared "Example" will appear in your data tree as a versioned file.&nbsp;</TD>
+            </TR>
+          </TBODY>
+        </TABLE>
+      </CENTER>
+    </DIV>
+	</BLOCKQUOTE>
+    <BLOCKQUOTE>
+      <H3>&nbsp;</H3>
+    </BLOCKQUOTE>
+
+    <H2><A name="ReadOnlyProjectDataPanel"></A>Read-Only Project Data</H2>
+
+    <BLOCKQUOTE>
+      <P>You can view data from other Projects or remote Repositories and copy data into your current 
+      Project's data folders.</P>
+
+      <H3><A name="View_Project"></A>View Other Projects</H3>
+
+      <BLOCKQUOTE>
+        <P>To view the data from another project:</P>
+
+        <OL>
+          <LI>Select <B><FONT size="4">Project<IMG src="../../shared/arrow.gif" border="0">
+          View Project...</FONT></B></LI>
+
+          <LI>A file chooser is displayed; the default location is the projects folder in the
+          installation folder.</LI>
+
+          <LI>Choose a project; the file extension is "gpr."</LI>
+
+          <LI>A new tab for the data tree is created in the "READ-ONLY Project Data" panel in the
+          Project Window, next to the Active Project panel; the tab shows the name of the
+          project.&nbsp;</LI>
+
+          <LI>The list of <A href="#View_Recent">recent projects menu</A> is updated to include
+          this project.</LI>
+        </OL>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <CENTER>
+      <TABLE border="0" width="100%">
+        <TBODY>
+          <TR>
+            <TD align="center" width="100%"><IMG src="images/ViewOtherProjects.png" border="0"></TD>
+          </TR>
+        </TBODY>
+      </TABLE>
+    </CENTER>
+
+    <BLOCKQUOTE>
+      <BLOCKQUOTE>
+        <P>You can copy and paste folders (via menus or drag and drop) and files from the other
+        view to your folders.&nbsp;</P>
+
+        <P><IMG src="../../shared/tip.png" border="0">You do not have to
+        hold the Ctrl key down when you drag from the other view since this cannot be a move
+        operation, as this view is always read-only.</P>
+      </BLOCKQUOTE>
+
+      <H3>View a Shared Project</H3>
+
+      <BLOCKQUOTE>
+        <P>You view a shared project the same way you would a non-shared project; the difference is
+        that when you view the shared project, an attempt is made to connect to the Ghidra Server
+        associated with that project. Depending on the user authentication mode of the Ghidra
+        Server for the other shared project, you may have to enter a password. If the connection to
+        the Ghidra Server is unsuccessful, then the only files available to you are your <A href=
+        "help/topics/VersionControl/project_repository.htm#PrivateFile">private files</A>.</P>
+      </BLOCKQUOTE>
+      
+      <H3><A name="View_Repository"></A>View a Repository</H3>
+
+      <BLOCKQUOTE>
+        <P>To view the data from a server-based repository:</P>
+
+        <OL>
+          <LI>Select <B><FONT size="4">Project<IMG src="../../shared/arrow.gif" border="0">
+          View Repository...</FONT></B></LI>
+
+          <LI>A repository chooser is displayed; allowing you to specify a Ghidra Server
+          network address and select one of its repositories...</LI>
+
+          <LI>Enter the Ghidra Server address and port.  The default port is 13100.</LI>
+         
+          <LI>Click the Refresh button to the right of the host name and port fields.  This will 
+          connect to the specified Ghidra Server and list available repositories for which 
+          you have been granted access.  You may be prompted for a password should user authentication
+          be needed.</LI>
+          
+          <LI>Select the desired repository from the list of those available.</LI>
+
+          <LI>Click the <B>Select Repository</B> button.  A new tab for the data tree is created 
+          in the "READ-ONLY Project Data" panel in the
+          Project Window, next to the Active Project panel; the tab shows the URL of the
+          remote repository.&nbsp;</LI>
+
+          <LI>The list of <A href="#View_Recent">recent projects/repositories menu</A> is updated to include
+          this repository.</LI>
+        </OL>
+      </BLOCKQUOTE>
+
+      <H3><A name="View_Recent"></A>View Recent</H3>
+
+      <BLOCKQUOTE>
+        <P>Ghidra maintains a list of Projects and remote Repositories that were recently viewed.&nbsp;</P>
+
+        <P>To view a recently opened project or repository,</P>
+
+        <OL>
+          <LI>Select <B><FONT size="4">Project<IMG src="../../shared/arrow.gif" border="0">
+          View Recent<IMG src="../../shared/arrow.gif" border="0">
+          &lt;<I>project path or repository URL</I>&gt;</FONT></B></LI>
+
+          <LI>
+            Select a project or repository from the menu. 
+
+            <UL>
+              <LI>If the project/repository is not in the view, a new tab is created in the "READ-ONLY Project
+              Data" panel in the Project Window; the tab shows the name of the project or repository URL.&nbsp;</LI>
+
+              <LI>If the tab is in the view, then the tab for this project/repository is selected.</LI>
+            </UL>
+          </LI>
+        </OL>
+      </BLOCKQUOTE>
+
+      <H3><A name="Close_View"></A>Close View</H3>
+
+      <BLOCKQUOTE>
+        <P>To close a view, select <FONT size="4"><B>Project</B></FONT><B><FONT size="4"><IMG src=
+        "../../shared/arrow.gif" border="0"></FONT></B><FONT size=
+        "4"><B>Close View</B></FONT><B><FONT size="4"><IMG src="../../shared/arrow.gif" border="0">
+        </FONT></B><FONT size="4"><B>&lt;<I>project path/repository URL</I>&gt;,</B></FONT>
+        OR click on the small 'X' on the specific view tab, OR right mouse click on the 
+        corresponding view tab and choose the <B><FONT size="4">Close</FONT></B>
+        option.</P>
+
+        <P>The tab is removed from the "READ-ONLY Project Data" panel in the Project Window.</P>
+      </BLOCKQUOTE>
+
+      <H3><A name="Close_All_Read_Only_Views"></A>Close All Read-Only Views</H3>
+
+      <BLOCKQUOTE>
+        <P>To close all read-only views at once, select <FONT size=
+        "4"><B>Project</B></FONT><B><FONT size="4"><IMG src="../../shared/arrow.gif" border="0">
+        </FONT></B><FONT size="4"><B>Close View</B></FONT><B><FONT size=
+        "4"><IMG src="../../shared/arrow.gif" border="0"></FONT></B><FONT
+        size="4"><B>Close All Read-Only Views.</B></FONT></P>
+
+        <P>The tabbed pane for read-only Project data is removed from the Project Window.</P>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <H2><A name="Workspace"></A>Workspaces</H2>
+
+    <BLOCKQUOTE>
+      <P>A workspace contains a set of <A href="#RunningTools">running tools</A>, and the tools'
+      opened data. A workspace is analogous to a virtual desktop. When you switch to another
+      workspace, you switch to a different set of running tools. The tools from the other workspace
+      remain running, but are not visible until you switch back to that workspace.</P>
+
+      <P>The workspace names are listed in a combo box in the Running Tools panel. Switch to
+      another workspace by choosing a name from the list. The default workspace, named
+      "Workspace,"&nbsp; is created in the project.&nbsp;</P>
+
+      <P>The workspace state, i.e., <A href="#RunningTools">running tools</A>, <A href=
+      "Connecting_Tools.htm">tool connections</A>, <A href=
+      "help/topics/Tool/Configure_Tool.htm">tool configuration</A>, etc.,&nbsp; is maintained when
+      you <A href="Ghidra_Front_end_Menus.htm#Exit_Ghidra">exit Ghidra</A> or <A href=
+      "Close_Project.htm">close the Project</A>.&nbsp;</P>
+    </BLOCKQUOTE>
+
+    <UL>
+      <LI><A name="Add_Workspace"></A>To create a new workspace,</LI>
+    </UL>
+
+    <BLOCKQUOTE>
+      <OL>
+        <LI>Select <B><FONT size="4">Project<IMG src="../../shared/arrow.gif" border="0">
+        Workspace<IMG src="../../shared/arrow.gif" border="0">Add...</FONT></B></LI>
+
+        <LI>A dialog is displayed; enter a new workspace name. Duplicate workspace names are not
+        allowed.</LI>
+
+        <LI>
+          Click on the <B><FONT size="4">OK</FONT></B> button; the newly created workspace becomes
+          the current workspace; the name is added to the list of workspaces in the combo box. 
+
+          <P><IMG src="../../shared/tip.png" border="0"> If you leave
+          "Workspace" as the new workspace name in the dialog and click on <B>OK</B>, a one-up
+          number is appended to the name to make it unique.</P>
+        </LI>
+      </OL>
+    </BLOCKQUOTE>
+
+    <UL>
+      <LI><A name="Rename_Workspace"></A>To rename the current workspace,</LI>
+    </UL>
+
+    <BLOCKQUOTE>
+      <OL>
+        <LI>Select <FONT size="4"><B>Project</B></FONT><B><FONT size="4"><IMG src=
+        "../../shared/arrow.gif" border="0">Workspace<IMG src=
+        "../../shared/arrow.gif" border="0">Rename...</FONT></B></LI>
+
+        <LI>A dialog is displayed.</LI>
+
+        <LI>Enter the new name for the current workspace. Duplicate workspace names are not
+        allowed. The list of workspace names is updated to reflect the new name.</LI>
+      </OL>
+    </BLOCKQUOTE>
+
+    <UL>
+      <LI><A name="Delete_Workspace"></A>To delete the current workspace,</LI>
+    </UL>
+
+    <BLOCKQUOTE>
+      <OL>
+        <LI>Select <FONT size="4"><B>Project</B></FONT><B><FONT size="4"><IMG src=
+        "../../shared/arrow.gif" border="0">Workspace<IMG src=
+        "../../shared/arrow.gif" border="0">Delete...</FONT></B></LI>
+
+        <LI>A dialog is displayed to confirm your delete request.</LI>
+
+        <LI>
+          Choose the <B><FONT size="4">Delete</FONT></B> button to delete the workspace. 
+
+          <UL>
+            <LI>Tools in the workspace are closed.</LI>
+
+            <LI>If you made changes to a file that is not open in any other tool, a dialog will be
+            displayed to prompt you to save your changes.</LI>
+
+            <LI>The oldest workspace becomes the current workspace. If the deleted workspace was
+            the last one, then the default workspace ("Workspace") becomes the current
+            workspace.</LI>
+          </UL>
+        </LI>
+      </OL>
+	</BLOCKQUOTE>
+
+	<UL>
+	  <LI><A name="Switch_Workspace"></A>To switch workspaces,</LI>
+	</UL>
+	
+	<BLOCKQUOTE>
+	  <OL>
+	
+	    <LI>Select <FONT size="4"><B>Project</B></FONT><B><FONT size="4"><IMG src=
+	    "../../shared/arrow.gif" border="0">Workspace<IMG src=
+	    "../../shared/arrow.gif" border="0">Switch...</FONT></B></LI>
+	
+	    <LI>Switches sequentially through the list of workspaces (in creation order), 
+	    wrapping back to the first after the last has been reached.</LI>
+	    	<UL>
+	    		<LI>For example: WS1, WS2, WS3, then WS1.</LI>
+	    	</UL>
+	    <LI>If only 1 workspace exists, this action will do nothing.</LI>
+	  </OL>
+	</BLOCKQUOTE>
+
+
+      <H3><A name="RunningTools"></A>Running Tools</H3>
+
+      <BLOCKQUOTE>
+        <P>The Running Tools panel shows an icon for each tool that is running in the current
+        workspace. Click on the icon to bring that tool forward on your console. To close the tool
+        from the Running Tools panel, right mouse click on the icon for the tool and choose the
+        <B><FONT size="4">Close</FONT></B> option.</P>
+
+        <P>To <A href="Connecting_Tools.htm#AutomaticToolConnection">connect running tools</A>,
+        drag one icon onto another icon. Those tools are connected for all <A href=
+        "Connecting_Tools.htm#ToolEvents">tool events</A>.</P>
+
+        <P><IMG src="../../shared/note.png" border="0"> Tools running in
+        different workspaces may be connected.</P>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <H2><A name="ConnectionStatus"></A>Ghidra Server Connection Status</H2>
+
+    <BLOCKQUOTE>
+      <P>If your project is associated with a Ghidra Server, then below the <I>Running Tools</I>
+      panel you will see a connection status panel that shows the name of the <A href=
+      "help/topics/VersionControl/project_repository.htm">Project Repository</A>, your access
+      privileges, and an indication of whether you are currently connected to the Ghidra
+      Server.&nbsp; The <A href=
+      "help/topics/VersionControl/project_repository.htm#ConnectToServer">status button</A>, <IMG src=
+      "../VersionControl/images/connected.gif" border="0"> indicates that your
+      project repository is connected to the Ghidra Server; the status button, <IMG src=
+      "../VersionControl/images/disconnected.gif" border="0"> indicates that
+      your project repository is associated with a Ghidra Server but it is not connected to
+      it.&nbsp;</P>
+
+      <P><IMG src="../../shared/note.png" border="0">If your project is not
+      associated with a Ghidra Server, then this status panel is empty.</P>
+    </BLOCKQUOTE>
+
+    <H2><A name="Edit_Project_Access_List"></A><A name="View_Project_Access_List"></A>Edit Project Access List</H2>
+
+    <BLOCKQUOTE>
+      <P>If your project is <A href=
+      "help/topics/VersionControl/project_repository.htm#SharedProject">shared</A>, the Project menu
+      has an option to edit the <A href="Creating_a_Project.htm#UserAccessList">project access
+      list</A>. This list controls what users have access to the project and what <A href=
+      "Creating_a_Project.htm#UserPrivileges">privileges</A> the users have. If you have
+      administrative privilege in the project, the option for <B>Project<IMG src=
+      "../../shared/arrow.gif" border="0">Edit Project Access List</B> will
+      be enabled. The dialog displayed when you select this option shows a panel that is the same
+      as the one you see in the <A href="Creating_a_Project.htm#CreateSharedProject">New Project
+      Wizard</A> when you set up the user list for new project. As in the New Project Wizard, this
+      dialog allows you to add and remove users, and change users' privileges in the project.</P>
+
+      <P align="center"><IMG src="images/EditProjectAccessList.png" border="0"></P>
+
+      <P><IMG src="../../shared/note.png" border="0">In order for a user to
+      show up in the <I>Known Users</I> list, the server administrator must <SPAN style=
+      "font-weight: bold;">add</SPAN> a new user to the Ghidra Server. &nbsp; This is accomplished
+      from a command shell on the server system using the <SPAN style=
+      "font-style: italic;">svrAdmin</SPAN> command.&nbsp; Refer to the <SPAN style=
+      "font-family: monospace; font-style: italic;">server/svrREADME.html</SPAN> file in the installation
+      directory for use of this administration command.</P>
+      
+      <P><IMG src="../../shared/note.png" border="0">If the user does not have administrative privilege in the project, the user will not be able to view
+      this full dialog and make edits. Instead, the option for <B>Project<IMG src=
+      "../../shared/arrow.gif" border="0">View Project Access List</B> will be enabled, which will display
+      the following dialog and allow the user to view the project users and their current access privileges only.</P>
+      
+      <P align="center"><IMG src="images/UsersPanelMini.png" border="0"></P>
+      
+    </BLOCKQUOTE>
+
+    <H2><A name="Change_Password"></A>Change Password</H2>
+
+    <BLOCKQUOTE>
+      <P>If your project is associated with a Ghidra Server that is using Ghidra password
+      authentication, then the menu item, <B>Project</B><IMG src="../../shared/arrow.gif" border=
+      "0"><B>Change Password...</B> will be present. Use this option when
+      you want to change your password. A dialog is displayed to confirm your request, as shown
+      below.</P>
+
+      <P align="center"><IMG src="images/ConfirmChangePassword.png" border="0"></P>
+
+      <P align="left">If you select <B>Continue</B>, a dialog is displayed for you to enter your
+      new password, and to re-enter your password.</P>
+
+      <P align="center"><IMG src="images/ChangePassword.png" border="0"></P>
+
+      <P><IMG src="../../shared/note.png" border="0">When you initially
+      connect to the Ghidra Server using password authentication, your default password is "<SPAN
+      style="font-family: monospace; font-weight: bold;">changeme</SPAN>".&nbsp; The default
+      password expires after 24 hours so you must change your password as soon as possible. If your
+      password expires or if a user forgets their password, the Ghidra Server administrator must
+      <SPAN style="font-weight: bold;">reset</SPAN> your password.&nbsp; This is accomplished from
+      a command shell on the server system using the <SPAN style=
+      "font-style: italic;">svrAdmin</SPAN> command.&nbsp; Refer to the <SPAN style=
+      "font-family: monospace; font-style: italic;">server/svrREADME.html</SPAN> file in the installation
+      directory for use of this administration command.</P>
+    </BLOCKQUOTE>
+
+    <H2><A name="StatusWindow"></A> <A name="Console_Dialog"></A> Console <IMG src=
+    "images/monitor.png" border="0"></H2>
+
+    <BLOCKQUOTE>
+      <P>Click on the console icon <IMG src="images/monitor.png" border="0">&nbsp; to display the system console.&nbsp;</P>
+
+      <P>Log messages, including the standard output and error streams, are redirected to the
+      console.&nbsp;If you are running Ghidra in development mode (i.e., through Eclipse or some
+      other IDE),&nbsp; you will see standard output and errors in your IDE's console as well as
+      the Ghidra console.</P>
+
+      <P>Errors and other informational messages are logged to a file in &lt;user
+      home&gt;/.ghidra/<I><B>ghidraUser.log</B></I>.&nbsp; Messages are appended to the file every
+      time you launch Ghidra.&nbsp; Once the log file has reached 500KB in size, however, it will
+      be rolled to a backup file named <I><B>ghidraUser.log.0</B></I>.&nbsp; Older backup files are
+      similarly rolled to another file with a one-up digit suffix as well.&nbsp; Ghidra stores a
+      maximum of three backup files (<I><B>ghidraUser.log.0</B></I>,
+      <I><B>ghidraUser.log.1</B></I>, <I><B>ghidraUser.log.2</B></I>) at a time.&nbsp; The log
+      files can be used by Ghidra developers for troubleshooting.&nbsp;</P>
+
+      <P>The field next to the icon in the Ghidra Project Window shows the last message sent to the
+      console (error messages are in red).&nbsp;</P>
+
+    </BLOCKQUOTE>
+
+    <H2><A name="GettingHelp"></A>Getting Help</H2>
+
+    <BLOCKQUOTE>
+      <H3>Context Sensitive Help</H3>
+
+      <UL>
+        <LI>Ghidra provides context sensitive help that pops up when you hit the &lt;<B><FONT size=
+        "4">F1</FONT></B>&gt; or &lt;<B><FONT size="4">Help</FONT></B>&gt;&nbsp; key.</LI>
+      </UL>
+
+      <BLOCKQUOTE>
+        <BLOCKQUOTE>
+          <P>To get help on a menu option,</P>
+
+          <OL>
+            <LI>Display the menu (either from the tool menu or the popup) that has the option you
+            want help on.</LI>
+
+            <LI>Position the mouse pointer over the option.</LI>
+
+            <LI>Press the &lt;<B><FONT size="4">F1</FONT></B>&gt; or &lt;<B><FONT size=
+            "4">Help</FONT></B>&gt; key.</LI>
+
+            <LI>The Help Viewer is displayed and shows the appropriate help contents.</LI>
+          </OL>
+        </BLOCKQUOTE>
+      </BLOCKQUOTE>
+
+      <UL>
+        <LI>To get help on a dialog or tool window, click somewhere in that window and press the
+        &lt;<B><FONT size="4">F1</FONT></B>&gt; or &lt;<B><FONT size="4">Help</FONT></B>&gt;
+        key.</LI>
+      </UL>
+
+      <BLOCKQUOTE>
+        <P>If no specific help exists, then a <A href=
+        "help/topics/Misc/Welcome_to_Ghidra_Help.htm">default page for Ghidra help</A> is
+        displayed.</P>
+      </BLOCKQUOTE>
+
+      <H3>About Ghidra</H3>
+
+      <BLOCKQUOTE>
+        <P>The <A href="help/topics/About/About_Ghidra.htm">About Ghidra</A> option shows build
+        information about the Ghidra application.</P>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <P class="relatedtopic">Related Topics:</P>
+
+    <UL>
+      <LI><A href="help/topics/Tool/Ghidra_Tool_Administration.htm">Tool Administration</A></LI>
+
+      <LI><A href="help/topics/Project/Ghidra_Projects.htm">Projects</A></LI>
+
+      <LI><A href="help/topics/Program/Ghidra_Programs.htm">Program</A></LI>
+
+      <LI><A href="help/topics/ImporterPlugin/importer.htm">Import Program</A></LI>
+
+      <LI><A href="help/topics/ExporterPlugin/exporter.htm">Export Program</A></LI>
+
+      <LI><A href="help/topics/Misc/Welcome_to_Ghidra_Help.htm">Welcome to Ghidra Help</A></LI>
+
+      <LI><A href="Creating_a_Project.htm#CreateSharedProject">Create a Shared Project</A></LI>
+
+      <LI><A href="help/topics/VersionControl/project_repository.htm">Project Repository</A></LI>
+
+      <LI><A href="Project_Info.htm">Project Info dialog</A></LI>
+    </UL>
+  </BODY>
+</HTML>

@@ -1,0 +1,487 @@
+<!DOCTYPE doctype PUBLIC "-//W3C//DTD HTML 4.0 Frameset//EN">
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+
+    <TITLE>Version Tracking Matches Table</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=windows-1252">
+    <LINK rel="stylesheet" type="text/css" href="../../../shared/Frontpage.css">
+  </HEAD>
+
+  <BODY lang="EN-US">
+  
+  <BLOCKQUOTE>
+  
+	  
+	    <H1><A name="Matches_Table"></A>Version Tracking Matches Table</H1>
+	
+	    <BLOCKQUOTE>
+	      <P>The Version Tracking Matches Table is the primary window for managing a version tracking
+	      session.  It displays a list of all matches contained in the current session.  All other
+	      version tracking windows are driven by selecting a match within this table.  This window
+	      is also the primary means for accepting matches and bulk applying markup items. In addition,
+	      this table provides an extensive filtering system. </P>
+	    </BLOCKQUOTE>
+	    
+	    <TABLE x-use-null-cells="" width="100%">
+	      <TBODY>
+	        <TR>
+	          <TD valign="top" align="center" width="100%"><IMG border="0" src="../images/MatchesTable.png"></TD>
+	        </TR>
+	      </TBODY>
+	    </TABLE>
+	
+	    <H2><A name="Match"></A>Version Tracking Match</H2>
+	
+	    <BLOCKQUOTE>
+	      <P>A match represents an opinion that a function or data in one program is the equivalent
+	      function or data in another program.  The pairing of a function or data from one program to
+	      another is called an association. There can be multiple matches (opinions) for the same
+	      association by one or more correlation algorithms.  When a match is considered correct, it
+	      should be marked as accepted.  When a match is marked as accepted, it is really the 
+	      association that is accepted and therefore all matches that have the same association are
+	      considered accepted. Also, when a match is accepted, all competing matches (matches that have
+	      the same source or destination address, but not both) become blocked.  For example, if one
+	      match has the opinion that A in one program is associated with X in another program and
+	      another match has the opinion that A is associated with Y, then accepting the first match,
+	      will block the second match since A can't be associated with both X and Y.</P>
+	    </BLOCKQUOTE>
+	
+	    <H2><A name="Match_Status"></A>Match Status</H2>
+	
+	    <BLOCKQUOTE>
+	      <P>Each match has a primary status that is one of <B>Available, Accepted, Rejected, or 
+	      Blocked</B>. In addition, matches that are <B>Accepted</B> have additional status for its
+	      markup items. The status column uses overlayed icons to provide information about both
+	      types of status. The table below lists the various combined status of a match.</P>
+	
+	      <TABLE border="1" width="90%">
+	        <TR>
+	          <TH>Status</TH>
+	
+	          <TH>Icon</TH>
+	
+	          <TH>Description</TH>
+	        </TR>
+	
+	        <TR>
+	          <TD valign="top">AVAILABLE</TD>
+	
+	          <TD valign="top"></TD>
+	
+	          <TD valign="top">The match is available to be accepted and applied.</TD>
+	        </TR>
+	        <TR>
+	          <TD valign="top">REJECTED</TD>
+	
+	          <TD valign="top"><IMG src="../images/dialog-cancel.png"></TD>
+	
+	          <TD valign="top">The match has been rejected by the user.</TD>
+	        </TR>
+	        <TR>
+	          <TD valign="top"><a name="blocked"></a>BLOCKED</TD>
+	
+	          <TD valign="top"><IMG src="../images/kgpg.png"></TD>
+	
+	          <TD valign="top">
+	          The match can't be accepted because a conflicting match has been accepted.
+	          <br>
+	          <br>
+	          Note: To see which associations are causing a blocked association, sort the table
+	          by source or destination address to see all conflicting associations.
+	          </TD>
+	        </TR>
+	        <TR>
+	          <TD valign="top">ACCEPTED</TD>
+	
+	          <TD valign="top"><IMG src="../images/flag.png"></TD>
+	
+	          <TD valign="top">The match has been accepted.</TD>
+	        </TR>
+	        <TR>
+	          <TD valign="top">ACCEPTED - Not Done</TD>
+	
+	          <TD valign="top"><IMG src="../images/accepted_warning.png"></TD>
+	
+	          <TD valign="top">The match has been accepted. There is at least 1 markup item that has not been examined.</TD>
+	        </TR> 
+	        <TR>
+	          <TD valign="top" nowrap>ACCEPTED - Fully considered</TD>
+	
+	          <TD valign="top"><IMG src="../images/accepted_fully_considered.png"></TD>
+	
+	          <TD valign="top">The match is accepted and all markup items have been applied or ignored.</TD>
+	        </TR>
+	        <TR>
+	          <TD valign="top">ACCEPTED - Fully Applied</TD>
+	
+	          <TD valign="top"><IMG src="../images/accepted_fully_applied.png"></TD>
+	
+	          <TD valign="top">The match is accepted and all markup items have been applied.</TD>
+	        </TR>
+	
+	      </TABLE><BR>
+	      <BR>
+	    </BLOCKQUOTE>
+	
+	    <H2>Match Table Columns</H2>
+	
+	    <BLOCKQUOTE>
+	      <TABLE border="1" width="90%">
+	        <TR>
+	          <TH nowrap>Column Name</TH>
+	
+	          <TH>Description</TH>
+	        </TR>
+	
+	        <TR>
+	          <TD valign="top">Session ID</TD>
+	          <TD valign="top">A one-up number for the correlation algorithm run this match belongs to.</TD>
+	        </TR>
+	        
+	        </TR>
+	          <TD valign="top">Tag</TD>
+	          <TD valign="top">User-defined text that has been applied to a given match. This can be set from the <A
+	          href="#Choose_Tag">Choose Tag</A> action.</TD>
+	        </TR>
+	        
+	        <TR>
+	          <TD valign="top">Status</TD>
+	          <TD valign="top">The match status. See the section above on <A href="#Match_Status">Match Status</A></TD>
+	        </TR>
+	        
+	        <TR>
+	          <TD valign="top">Type</TD>
+	          <TD valign="top">Type of match.  Either function or data</TD>
+	        </TR>        
+	        
+	        <TR>
+	          <TD valign="top">Source Label</TD>
+	          <TD valign="top">The label at the source address of this match.</TD>
+	        </TR>        
+	        
+	        <TR>
+	          <TD valign="top">Dest Label</TD>
+	          <TD valign="top">The label at the destination address of this match.</TD>
+	        </TR>        
+	        
+	        <TR>
+	          <TD valign="top">Multiple Source Labels?</TD>
+	          <TD valign="top">Icon indicating there is more than one label at the match's source 
+	          address and a number indicating how many labels. The tooltip can be viewed to see 
+	          the label names.</TD>
+	        </TR>        
+	        
+	        <TR>
+	          <TD valign="top">Multiple Dest Labels?</TD>
+	          <TD valign="top">Icon indicating there is more than one label at the match's destination 
+	          address and a number indicating how many labels. The tooltip can be viewed to see 
+	          the label names.</TD>
+	        </TR>        
+	        
+	        <TR>
+	          <TD valign="top">Score</TD>
+	          <TD valign="top">The primary similarity score for this match. The value will be between 0.0 and 1.0. This score
+	          indicates how similar two match items are, not necessarily that they are THE correct match. Scores should NOT be compared
+	          between different correlator algorithms. </TD>
+	        </TR>        
+	        
+	        <TR>
+	          <TD valign="top">Confidence Score</TD>
+	          <TD valign="top">A score where higher numbers indicate more confidence that the two items are a match.  These numbers have no intrinsic 
+	          meaning other than higher numbers are better for the same correlator algorithm.  Confidence scores should NOT be compared
+	          between differrent correlator algorithms. Typically, this number
+	          is a combination of the similarity score and some length indicator or the number of duplicate matches.</TD>
+	        </TR>
+	                
+	        <TR>
+	          <TD valign="top">Source Length</TD>
+	          <TD valign="top">The length of the source function or data item.</TD>
+	        </TR>        
+	        
+	        <TR>
+	          <TD valign="top">Dest Length</TD>
+	          <TD valign="top">The length of the destination function or data item.</TD>
+	        </TR>        
+	        
+	        <TR>
+	          <TD valign="top">Votes</TD>
+	          <TD valign="top">The number of references from from previously accepted matches that would suggest
+	          that this is a correct match.</TD>
+	        </TR>        
+	        
+	        <TR>
+	          <TD valign="top">Source Address</TD>
+	          <TD valign="top">The address of the function or data object in the source program.</TD>
+	        </TR>        
+	        
+	        <TR>
+	          <TD valign="top" nowrap>Destination Address</TD>
+	          <TD valign="top">The address of the function or data object in the destination program.</TD>
+	        </TR>        
+	        
+	        <TR>
+	          <TD valign="top">Algorithm</TD>
+	          <TD valign="top">The algorithm that was used to generate this match.</TD>
+	        </TR>        
+	        
+	        <TR>
+	          <TD valign="top">Length Delta</TD>
+	          <TD valign="top">The difference in lengths between the source and destination objects.</TD>
+	        </TR>
+	                
+	        <TR>
+	          <TD valign="top">Source Label Type</TD>
+	          <TD valign="top">The source of the label in the source program.  (Imported, Analysis, User Defined, etc.)</TD>
+	        </TR>
+	                
+	        <TR>
+	          <TD nowrap nowrap valign="top">Destination Label Type</TD>
+	          <TD valign="top">The source of the label in the destination program.  (Imported, Analysis, User Defined, etc.)</TD>
+	        </TR>
+	        
+	        <TR>
+	          <TD valign="top">Markup Status</TD>
+	          <TD valign="top">Displays an overview of the markup items status.  There is a colored
+	          orb for each status type and that orb is either colored if at least one markup item
+	          has that status or else it is greyed out. An orange orb indicates that one or more
+	          markup items have
+	          been applied or marked.  A green orb indicates at least one markup item has
+	          been applied.  A purple orb indicates markup items that are rejected. A blue orb
+	          indicates there are markup items that have been ignored (either "Don't Know" or "Don't 
+	          Care". And finally, a red orb indicates that at least one markup item could not be
+	          applied due to some error.</TD>
+	        </TR> 
+	        
+	        <TR>
+	          <TD nowrap nowrap valign="top"># Conflicting</TD>
+	          <TD valign="top">
+	          The number of unique associations with either the same source or same destination address.
+	          <br><br>
+	          This is the number of associations that will become 
+	          <a href="#blocked">BLOCKED</a> if you accept the match
+	          in this row of the table.
+	          </TD>
+	        </TR>
+	        
+	    </TABLE>
+	    </BLOCKQUOTE>
+	
+	    <H2><A name="Matches_Actions"></A>Match Table Actions</H2>
+	
+	    <BLOCKQUOTE>
+	      
+	      <P align="left"><A name="Accept_Match"></A>The <b>Accept Match</b> 
+	      	<IMG src="../images/flag.png" border="0">
+	      	action marks a match (and all matches that have the same association) as being 
+	      	accepted.  All competing matches will become blocked. 
+	      	<a href="help/topics/VersionTrackingPlugin/providers/VT_Apply_Options.html#Match_Accept_Options">
+	      	There are options</a> to auto-apply
+	      	function names and create implied matches when accepting a match.</P>      
+	      
+	      <P align="left"><A name="Apply_Blocked_Match"></A>The <b>Apply Blocked Match</b> 
+	      	<IMG src="Icons.APPLY_BLOCKED_MATCH_ICON" border="0">
+	      	action will clear conflicting matches and then apply the match, which had been blocked 
+	      	by those conflicts, and its markup items  
+	      	<a href="help/topics/VersionTrackingPlugin/providers/VT_Apply_Options.html#Match_Apply_Options">
+	      	according to the apply settings</a>.</P>      
+	      
+	      <P align="left"><A name="Apply_Markup"></A>The <b>Apply Markup</b> 
+	      	<IMG src="../images/checkmark_green.gif" border="0">
+	      	action will attempt to apply all the markup items for the match 
+	      	<a href="help/topics/VersionTrackingPlugin/providers/VT_Apply_Options.html#Match_Apply_Options">
+	      	according to the apply settings</a>.  
+	      	If the match is not already accepted, it will first be marked as accepted.</P>      
+	      
+	      <P align="left"><A name="Reject_Match"></A>The <b>Reject Match</b> 
+	      	<IMG src="../images/dialog-cancel.png" border="0">
+	     	action will mark the match as rejected.</P>     
+	      
+	       <P align="left"><A name="Choose_Tag"></A>The <b>Choose Match Tag</b> 
+	       	<IMG src="../images/tag_blue.png" border="0">
+	    		action allows the user to set a user-defined tag that has been created via the <A href=
+	      "#Edit_Tag">Edit Tag</A> action.</P>
+	      
+	      <P align="left"><A name="Remove_Tag"></A>The <b>Remove Match Tag</b> 
+	      	<IMG src="../images/tag_blue_delete.png" border="0">
+	      	action removes any tag associated with the selected match(es) </P>
+	      
+	      <P align="left"><A name="Edit_Tag"></A>The <b>Edit Tag</b> 
+	      	<IMG src="../images/tag_blue_edit.png" border="0">
+	     	action allows the user to manage (create and delete) custom tags that can be applied to
+	      	matches.</P>
+	
+	      <P align="left"><A name="Clear_Match"></A>The <b>Clear Match</b> <IMG src="../images/undo-apply.png" border="0">
+	      action will reset the match to unaccepted and undo any applied markup.</P>
+	      
+	      <P align="left"><A name="Remove_Match"></A>The <b>Remove Match</b> <IMG src="../images/edit-delete.png" border="0">
+	      action will remove a manually created match from the matches table.</P>
+	      
+	      <P align="left"><A name="Make_Selections"></A>The <b>Make Selections</b> <IMG src="Icons.MAKE_SELECTION_ICON" border="0">
+	      action will create selections in the source and destination tools for all matches selected in the table.</P>
+
+
+		 <P align="left"><A name="Match_Table_Selection"></A>The <b>Table Selection Mode</b>  
+		 	<IMG src="../images/table_gear.png" border="0"> allows you to change the behavior
+		 	of the match table with regard to how it tracks table selections as you apply 
+		 	matches.
+		 </p>
+		 	<BLOCKQUOTE>
+		 		
+				 <P>
+				 As you make changes to a match, the table will update.   Sometimes as the table 
+				 updates the changed match will disappear from the table (for example, if your filter
+				 settings are setup to hide applied matches and you have just applied a match).  The 
+				 default behavior (<IMG src="../images/table_gear.png" border="0">) is to keep 
+				 the table selection on the same row, regardless of whether
+				 the match changes its position in the table or is removed from the table altogether.					 	
+			    </P>
+			    
+			    <P>
+			    Table Selection States:
+			    </P>
+			     <TABLE border="1" width="90%">
+			        <TR>
+			        
+			          <TH>Action Icon</TH>			        
+			          <TH nowrap>Action Name</TH>			
+			          <TH>Description</TH>
+			        </TR>
+			        
+			        <TR>
+			        	<TD valign="top" align="center"><IMG src="../images/table_gear.png" border="0"></TD>
+			        	<TD nowrap valign="top">Track Selected Index</TD>
+			        	<TD valign="top">Causes the match table to maintain the selection for 
+			        		the selected <b>row</b>.  So, for example, if you change a match, and that 
+			        		match is moved as a result of the table re-sorting, then the selection 
+			        		will remain on the row where the applied match used to be.
+			        	</TD>
+			        </TR>
+			        
+			        <TR>
+			        	<TD valign="top" align="center"><IMG src="../images/table_go.png" border="0"></TD>
+			        	<TD nowrap valign="top">Track Selected Match</TD>
+			        	<TD valign="top">Causes the match table to maintain the selection for 
+			        		the selected <b>match</b>.  So, for example, if you change a match, 
+			        		and that match is moved as a result of the table re-sorting, then 
+			        		the selection will change to keep the applied match selected.
+			        	</TD>
+			        </TR>
+			        
+			        <TR>
+			        	<TD valign="top" align="center"><IMG src="../images/table_delete.png" border="0"></TD>
+			        	<TD nowrap valign="top">No Selection Tracking</TD>
+			        	<TD valign="top">In this state the table will not restore selections.  
+			        			If changes are made to matches, the selection will be lost.
+			        	</TD>
+			        </TR>
+			        
+			     </TABLE>
+			</BLOCKQUOTE>
+			<BR>
+			<BR>
+			
+
+
+	      <P align="left"><A name="Match_Table_Settings"></A>The <b>Settings</b> <IMG src="../images/settings16.gif" border="0">
+	      action will bring up the version tracking accept and apply options.</P>
+	
+	    </BLOCKQUOTE>
+	
+	    <H2><A name="Match_Filters"></A>Match Filters</H2>
+	
+	    <BLOCKQUOTE>
+	      <P align="left">The match table has an extensive assortment of filters. There
+	      are several commonly used filter controls at the bottom of the table:
+	      <ol>
+	      	<li><b>Text Filter</b> - allows you to filter based on any text in the table
+	      	</li>
+	      	<li><b>Score Filter</b> - allows you to filter on a range of scores.  All scores
+	      		are between 0 and 1
+	      	</li>
+	      	<li><b>Confidence Filter</b> - allows you to filter a range of confidence values.
+	      	All confidence values will be greater than -9.999 and smaller than 9.999. 
+	      	</li>
+	      	<li><b>Length Filter</b> - is used to filter out
+	      						functions that are smaller than some number
+	      	</li>
+	      </ol>
+	      
+	      </P>
+	
+	      <P>Finally, the <IMG src="../images/view-filter.png" border="0"> will show the ancillary filters
+	      available. The table below lists and describes the available filters. When an ancillary
+	      filter is applied, the icon will change to <IMG src="../images/lightbulb.png" border="0"> .
+	      Further, the icon may occasionally flash as a reminder that there is a filter applied.</P>
+		<BR>
+	      <TABLE border="1" width="90%">
+	        <TR>
+	          <TH nowrap>Filter Name</TH>
+	
+	          <TH>Description</TH>
+	        </TR>
+	
+	        <TR>
+	          <TD valign="top">Match Type</TD>
+	
+	          <TD valign="top">This filter allows the user to show only function or data matches.</TD>
+	        </TR>
+	
+	        <TR>
+	          <TD valign="top" nowrap>Association Status</TD>
+	
+	          <TD valign="top">This filter allows the user to show only matches whose assocation
+	          	has one of the included status types.  A useful setting
+	          	for this filter is to turn off all but the <B>Available</B> status.  This will cause the
+	          	table to act like a "To Do" list.</TD>
+	        </TR>
+	        <TR>
+	          <TD valign="top">Symbol Type</TD>
+	
+	          <TD valign="top">This filter allows the user to show only matches whose source or 
+	          destination labels are of one of the included symbol types.</TD>
+	        </TR>
+	
+	        <TR>
+	          <TD valign="top">Algorithms</TD>
+	
+	          <TD valign="top">This filter allows the user to show only matches that were generated
+	          by one of the included types of correlating algorithms</TD>
+	        </TR>
+	        <TR>
+	          <TD valign="top">Address Range</TD>
+	
+	          <TD valign="top">This filter allows the user to show only matches whose source or
+	          destination address is within the specified range.</TD>
+	        </TR>
+	        <TR>
+	          <TD valign="top">Tags</TD>
+	
+	          <TD valign="top">This filter allows the user to show only matches whose tag is an
+	          included tag.</TD>
+	        </TR>
+	
+	
+	      </TABLE>
+	    </BLOCKQUOTE>
+
+	</BLOCKQUOTE> <!-- end of top-level blockquote -->
+
+    <P class="providedbyplugin">Provided by: <I>Version Tracking Plugin</I></P>
+
+    <P class="relatedtopic">Related Topics:</P>
+
+    <UL>
+      <LI><A href="help/topics/VersionTrackingPlugin/providers/VT_Markup_Table.html">Version
+      Tracking Markup Items Table</A></LI>
+
+      <LI><A href="help/topics/VersionTrackingPlugin/VT_Tool.html">Version Tracking Tool</A></LI>
+
+      <LI><A href="help/topics/VersionTrackingPlugin/Version_Tracking_Intro.html">Version
+      Tracking Introduction</A></LI>
+    </UL><BR>
+     <BR>
+  </BODY>
+</HTML>

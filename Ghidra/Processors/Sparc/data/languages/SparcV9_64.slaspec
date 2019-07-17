@@ -1,0 +1,6 @@
+@define SIZE      "8"
+
+@include "SparcV9.sinc"
+
+
+

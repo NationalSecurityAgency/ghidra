@@ -1,0 +1,108 @@
+<!DOCTYPE doctype>
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+
+    <TITLE>Headless Analyzer</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=windows-1252">
+    <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+    <META name="generator" content="Microsoft FrontPage 4.0">
+  </HEAD>
+
+  <BODY>
+    <H1 align="center">Headless Analyzer</H1>
+
+<P>
+The <I>Headless Analyzer</I> is a command-line-based (non-GUI) version of Ghidra that allows users to:
+<BLOCKQUOTE>
+	<UL>
+	  <LI>Create and populate projects</LI>
+	  <LI>Perform analysis on imported or existing binaries</LI>
+	  <LI>Run non-GUI scripts in a project (scripts may be program-dependent or program-independent)</LI>
+	</UL>
+	</BLOCKQUOTE>
+</P>
+<P>
+The Headless Analyzer can be useful when performing repetitive tasks on a project (i.e., importing and analyzing a directory of files or running a script over all binaries).
+</P>
+
+
+<H2><B>Headless Analyzer Options</B></H2>
+
+<BLOCKQUOTE>
+
+<P>The following options are available for the Headless Analyzer:</P>
+
+
+	<BLOCKQUOTE>
+	<P>
+	<FONT face="Courier New">
+	analyzeHeadless [&lt;project_location&gt; &lt;project_name&gt;[/&lt;folder_path&gt;]] <B>|</B>
+	<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[ghidra://&lt;server&gt;[:&lt;port&gt;]/&lt;repository_name&gt;[/&lt;folder_path&gt;]]
+	<BR>
+	<BR>&nbsp;&nbsp;&nbsp;&nbsp;[[-import [&lt;directory&gt;|&lt;file&gt;]+] | [-process [&lt;project_file&gt;]]]
+	<BR>&nbsp;&nbsp;&nbsp;&nbsp;[-preScript &lt;ScriptName&gt;&nbsp;[&lt;arg&gt;]*]
+	<BR>&nbsp;&nbsp;&nbsp;&nbsp;[-postScript &lt;ScriptName&gt;&nbsp;[&lt;arg&gt;]*]
+	<BR>&nbsp;&nbsp;&nbsp;&nbsp;[-scriptPath &quot;&lt;path1&gt;[;&lt;path2&gt;...]&quot;]
+	<BR>&nbsp;&nbsp;&nbsp;&nbsp;[-propertiesPath &quot;&lt;path1&gt;[;&lt;path2&gt;...]&quot;]
+	<BR>&nbsp;&nbsp;&nbsp;&nbsp;[-scriptlog &lt;path to script log file&gt;]
+	<BR>&nbsp;&nbsp;&nbsp;&nbsp;[-log &lt;path to log file&gt;]
+	<BR>&nbsp;&nbsp;&nbsp;&nbsp;[-overwrite]
+	<BR>&nbsp;&nbsp;&nbsp;&nbsp;[-recursive]
+	<BR>&nbsp;&nbsp;&nbsp;&nbsp;[-readOnly]
+	<BR>&nbsp;&nbsp;&nbsp;&nbsp;[-deleteProject]
+	<BR>&nbsp;&nbsp;&nbsp;&nbsp;[-noanalysis]
+	<BR>&nbsp;&nbsp;&nbsp;&nbsp;[-processor &lt;languageID&gt;]
+	<BR>&nbsp;&nbsp;&nbsp;&nbsp;[-cspec &lt;compilerSpecID&gt;]
+	<BR>&nbsp;&nbsp;&nbsp;&nbsp;[-analysisTimeoutPerFile &lt;timeout in seconds&gt;]
+	<BR>&nbsp;&nbsp;&nbsp;&nbsp;[-keystore &lt;KeystorePath&gt;]
+	<BR>&nbsp;&nbsp;&nbsp;&nbsp;[-connect [&lt;userID&gt;]]
+	<BR>&nbsp;&nbsp;&nbsp;&nbsp;[-p]
+	<BR>&nbsp;&nbsp;&nbsp;&nbsp;[-commit [&quot;&lt;comment&gt;&quot;]]
+	<BR>&nbsp;&nbsp;&nbsp;&nbsp;[-max-cpu &lt;max cpu cores to use&gt;]
+	<BR>&nbsp;&nbsp;&nbsp;&nbsp;[-loader &lt;desired loader name&gt;]
+	</FONT>
+	</P>
+	</BLOCKQUOTE>
+</BLOCKQUOTE>
+
+<H2><B>Accessing the Headless Analyzer</B></H2>
+
+<UL>
+  <LI>The shell script that launches the Headless Analyzer can be found in your Ghidra installation's <I>support</I> folder.</LI>
+
+  <BLOCKQUOTE>
+	  <BLOCKQUOTE>
+	  <P>
+	  <FONT face="Courier New">
+	  ghidra_x.x/support/analyzeHeadless[.bat]
+	  </FONT>
+	  </P>
+	  </BLOCKQUOTE>
+  </BLOCKQUOTE>
+
+  
+  <LI>Execute the <I>analyzeHeadless</I> shell script from the command line with the desired options.</LI>
+</UL>
+
+<H2><B>Headless Analyzer Documentation</B></H2>
+
+<UL>
+  <LI>The <I>analyzeHeadlessREADME.html</I> file contains details on Headless Analyzer usage and options. It is located in your Ghidra installation's <I>support</I> folder.</LI>
+
+  <BLOCKQUOTE>
+	  <BLOCKQUOTE>
+	  <P>
+	  <FONT face="Courier New">
+	  ghidra_x.x/support/analyzeHeadlessREADME.html
+	  </FONT>
+	  </P>
+	  </BLOCKQUOTE>
+  </BLOCKQUOTE>
+</UL>
+
+
+</BODY>
+</HTML>

@@ -1,0 +1,214 @@
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<title>3. Preprocessing</title>
+<link rel="stylesheet" type="text/css" href="Frontpage.css">
+<link rel="stylesheet" type="text/css" href="languages.css">
+<meta name="generator" content="DocBook XSL Stylesheets V1.78.1">
+<link rel="home" href="sleigh.html" title="SLEIGH">
+<link rel="up" href="sleigh.html" title="SLEIGH">
+<link rel="prev" href="sleigh_layout.html" title="2. Basic Specification Layout">
+<link rel="next" href="sleigh_definitions.html" title="4. Basic Definitions">
+</head>
+<body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
+<div class="navheader">
+<table width="100%" summary="Navigation header">
+<tr><th colspan="3" align="center">3. Preprocessing</th></tr>
+<tr>
+<td width="20%" align="left">
+<a accesskey="p" href="sleigh_layout.html">Prev</a> </td>
+<th width="60%" align="center"> </th>
+<td width="20%" align="right"> <a accesskey="n" href="sleigh_definitions.html">Next</a>
+</td>
+</tr>
+</table>
+<hr>
+</div>
+<div class="sect1">
+<div class="titlepage"><div><div><h2 class="title" style="clear: both">
+<a name="sleigh_preprocessing"></a>3. Preprocessing</h2></div></div></div>
+<p>
+SLEIGH provides support for simple file inclusion, macros, and other
+basic preprocessing functions.  These are all invoked with directives
+that start with the &#8216;@&#8217; character, which must be the first character
+in the line.
+</p>
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="sleigh_including_files"></a>3.1. Including Files</h3></div></div></div>
+<p>
+In general a single SLEIGH specification is contained in a single
+file, and the compiler is invoked on one file at a time. Multiple
+files can be put together for one specification by using
+the <span class="bold"><strong>@include</strong></span> directive. This must
+appear at the beginning of the line and is followed by the path name
+of the file to be included, enclosed in double quotes.
+</p>
+<div class="informalexample"><code class="code">@include "example.slaspec"</code></div>
+<p>
+Parsing proceeds as if the entire line is replaced with the contents
+of the indicated file. Multiple inclusions are possible, and the
+included files can have their
+own <span class="bold"><strong>@include</strong></span> directives.
+</p>
+</div>
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="idm140310875545072"></a>3.2. Preprocessor Macros</h3></div></div></div>
+<p>
+SLEIGH allows simple (unparameterized) macro definitions and
+expansions. A macro definition occurs on one line and starts with
+the <span class="bold"><strong>@define</strong></span> directive. This is
+followed by an identifier for the macro and then a string to which the
+macro should expand. The string must either be a proper identifier
+itself or surrounded with double quotes. The macro can then be
+expanded with typical &#8220;$(identifier)&#8221; syntax at any other point in the
+specification following the definition.
+</p>
+<div class="informalexample"><pre class="programlisting">
+@define ENDIAN "big"
+  <span class="weak">...</span>
+define endian=$(ENDIAN);
+</pre></div>
+<p>
+This example defines a macro identified as <span class="emphasis"><em>ENDIAN</em></span>
+with the string &#8220;big&#8221;, and then expands the macro in a later SLEIGH
+statement. Macro definitions can also be made from the command line
+and in the &#8220;.spec&#8221; file, allowing multiple specification variations to
+be derived from one file. SLEIGH also has
+an <span class="bold"><strong>@undef</strong></span> directive which removes the
+definition of a macro from that point on in the file.
+</p>
+<div class="informalexample"><code class="code">@undef ENDIAN</code></div>
+<p>
+</p>
+</div>
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="idm140310875538656"></a>3.3. Conditional Compilation</h3></div></div></div>
+<p>
+SLEIGH supports several directives that allow conditional inclusion of
+parts of a specification, based on the existence of a macro, or its
+value. The lines of the specification to be conditionally included are
+bounded by one of the <span class="bold"><strong>@if...</strong></span>
+directives described below and at the bottom by
+the <span class="bold"><strong>@endif</strong></span> directive. If the
+condition described by the <span class="bold"><strong>@if...</strong></span>
+directive is true, the bounded lines are evaluated as part of the
+specification, otherwise they are skipped. Nesting of these directives
+is allowed: a
+second <span class="bold"><strong>@if...</strong></span> <span class="bold"><strong>@endif</strong></span>
+pair can occur inside an initial <span class="bold"><strong>@if</strong></span>
+and <span class="bold"><strong>@endif</strong></span>.
+</p>
+<div class="sect3">
+<div class="titlepage"><div><div><h4 class="title">
+<a name="idm140310875532832"></a>3.3.1. @ifdef and @ifndef</h4></div></div></div>
+<p>
+The <span class="bold"><strong>@ifdef</strong></span> directive is followed by a
+macro identifier and evaluates to true if the macro is defined.
+The <span class="bold"><strong>@ifndef</strong></span> directive is similar
+except it evaluates to true if the macro identifier
+is <span class="emphasis"><em>not</em></span> defined.
+</p>
+<div class="informalexample"><pre class="programlisting">
+@ifdef ENDIAN
+define endian=$(ENDIAN);
+@else
+define endian=little;
+@endif
+</pre></div>
+<p>
+This directive can only take a single identifier as an argument, any
+other form is flagged as an error.  For logically combining a test of
+whether a macro is defined with other tests, use
+the <span class="bold"><strong>defined</strong></span> operator in
+an <span class="bold"><strong>@if</strong></span>
+or <span class="bold"><strong>@elif</strong></span> directive (See below).
+</p>
+</div>
+<div class="sect3">
+<div class="titlepage"><div><div><h4 class="title">
+<a name="idm140310875526896"></a>3.3.2. @if</h4></div></div></div>
+<p>
+The <span class="bold"><strong>@if</strong></span> directive is followed by a
+boolean expression with macros as the variables and strings as the
+constants. Comparisons between macros and strings are currently
+limited to string equality or inequality. But individual comparisons
+can be combined arbitrarily using parentheses and the boolean
+operators &#8216;&amp;&amp;&#8217;, &#8216;||&#8217;, and &#8216;^^&#8217;. These represent a <span class="emphasis"><em>logical
+and</em></span>, a <span class="emphasis"><em>logical or</em></span>, and
+a <span class="emphasis"><em>logical exclusive-or</em></span> operation respectively. It
+is possible to test whether a particular macro is defined within the
+boolean expression for an <span class="bold"><strong>@if</strong></span>
+directive, by using the <span class="bold"><strong>defined</strong></span>
+operator. This exists as a keyword and a functional operator only
+within a preprocessor boolean
+expression. The <span class="bold"><strong>defined</strong></span> keyword takes
+as argument a macro identifier, and it evaluates to true if the macro
+is defined.
+</p>
+<div class="informalexample"><pre class="programlisting">
+@if defined(X_EXTENSION) || (VERSION == "5")
+  ...
+@endif
+</pre></div>
+<p>
+</p>
+</div>
+<div class="sect3">
+<div class="titlepage"><div><div><h4 class="title">
+<a name="idm140310875520240"></a>3.3.3. @else and @elif</h4></div></div></div>
+<p>
+An <span class="bold"><strong>@else</strong></span> directive splits the lines
+bounded by an <span class="bold"><strong>@if</strong></span> directive and
+an <span class="bold"><strong>@endif</strong></span> directive into two
+parts. The first part is included in the processing if the
+initial <span class="bold"><strong>@if</strong></span> directive evaluates to
+true, otherwise the second part is included.
+</p>
+<p>
+The <span class="bold"><strong>@elif</strong></span> directive splits the
+bounded lines up as with <span class="bold"><strong>@else</strong></span>, but
+the second part is included only if the
+previous <span class="bold"><strong>@if</strong></span> was false and the
+condition specified in the <span class="bold"><strong>@elif</strong></span>
+itself is true. Between one <span class="bold"><strong>@if</strong></span>
+and <span class="bold"><strong>@endif</strong></span> pair, there can be
+multiple <span class="bold"><strong>@elif</strong></span> directives, but only
+one <span class="bold"><strong>@else</strong></span>, which must occur after all
+the <span class="bold"><strong>@elif</strong></span> directives.
+</p>
+<div class="informalexample"><pre class="programlisting">
+@if PROCESSOR == &#8220;mips&#8221;
+@ define ENDIAN &#8220;big&#8221;
+@elif ((PROCESSOR==&#8221;x86&#8221;)&amp;&amp;(OS!=&#8221;win&#8221;))
+@ define ENDIAN &#8220;little&#8221;
+@else
+@ define ENDIAN &#8220;unknown&#8221;
+@endif
+</pre></div>
+<p>
+</p>
+</div>
+</div>
+</div>
+<div class="navfooter">
+<hr>
+<table width="100%" summary="Navigation footer">
+<tr>
+<td width="40%" align="left">
+<a accesskey="p" href="sleigh_layout.html">Prev</a> </td>
+<td width="20%" align="center"> </td>
+<td width="40%" align="right"> <a accesskey="n" href="sleigh_definitions.html">Next</a>
+</td>
+</tr>
+<tr>
+<td width="40%" align="left" valign="top">2. Basic Specification Layout </td>
+<td width="20%" align="center"><a accesskey="h" href="sleigh.html">Home</a></td>
+<td width="40%" align="right" valign="top"> 4. Basic Definitions</td>
+</tr>
+</table>
+</div>
+</body>
+</html>

@@ -1,0 +1,5 @@
+<patternconstraints>
+  <language id="AARCH64:*:64:*">
+    <patternfile>AARCH64_LE_patterns.xml</patternfile>
+  </language>
+</patternconstraints>

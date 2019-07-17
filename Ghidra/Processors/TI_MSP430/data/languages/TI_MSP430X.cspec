@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<compiler_spec>
+  <global>
+    <range space="RAM"/>
+  </global>
+  <stackpointer register="SP" space="RAM"/>
+   <default_proto>
+    <prototype name="__stdcall" extrapop="4" stackshift="4">
+	<input>
+	   <pentry maxsize="4" minsize="1">
+              <register name="R12"/>
+           </pentry>
+           <pentry maxsize="4" minsize="1">
+              <register name="R13"/>
+            </pentry>
+            <pentry maxsize="4" minsize="1">
+              <register name="R14"/>
+            </pentry>
+            <pentry maxsize="4" minsize="1">
+              <register name="R15"/>
+            </pentry>
+            <pentry maxsize="500" minsize="1" align="2">
+              <addr space="stack" offset="2"/>
+            </pentry>
+	</input>
+	<output>
+            <pentry maxsize="4" minsize="1">
+              <register name="R12"/>
+            </pentry>
+	</output>
+	
+	<!-- FIXME: language should be changed to use 3-byte registers and memory space -->
+	<!--
+	<output>
+        <pentry minsize="1" maxsize="3"> 
+          <register name="R12"/>
+        </pentry>
+        <pentry minsize="4" maxsize="4">
+          <addr space="join" piece1="R13_16" piece2="R12_16"/>
+        </pentry>
+        <pentry minsize="5" maxsize="6">
+          <addr space="join" piece1="R14_16" piece2="R13_16" piece3="R12_16"/>
+        </pentry>
+        <pentry minsize="7" maxsize="8">
+          <addr space="join" piece1="R15_16" piece2="R14_16" piece3="R13_16" piece4="R12_16"/>
+        </pentry>
+	</output>
+	-->
+	
+	<unaffected>
+          <register name="SP"/>
+          <register name="SR"/>
+          <register name="R3"/>
+          <register name="R4"/>
+          <register name="R5"/>
+          <register name="R6"/>
+          <register name="R8"/>
+          <register name="R9"/>
+          <register name="R10"/>
+          <register name="R11"/>
+ 	</unaffected>
+      </prototype>
+    </default_proto>
+</compiler_spec>

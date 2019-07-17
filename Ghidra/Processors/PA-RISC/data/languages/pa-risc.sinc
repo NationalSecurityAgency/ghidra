@@ -1,0 +1,1746 @@
+# PA-RISC common specification file for 32 and 64-bit processors
+# Appropriate defines (PARISC32, PARISC64) must be
+# specified before including this file
+
+# Known Issues:
+#  The branch target is annotated onto the line following the branch, not the branch itself
+#  There may still be issues with condition codes and instructions like INST,=,N r2,r3,r2 that write back into one of the input argument registers.
+#    The condition uses the final value in r2, when it should use the value passed in to r2 before the operation.
+#  The implementation of space registers is incorrect. There should really be a 64 bit address space with space register in the upper 64 bits.
+#     Right now, the space register is either ignored or else just added to the base address.
+#  Some of the pcode could be simplified.
+
+
+# Attention- Sometimes the source and destination registers can be the same registers.
+# When you write to a destination reg, it's important that your pcode always keeps a temp copy
+# of the original if you later refer to a source reg.
+
+
+# Register conventions
+#
+# r0 is always 0
+# r1 scratch register, caller saved
+# r2 is rp is the return pointer
+# r3 to r18 callee saves
+# r19 to r22 caller saves
+# r23 is arg3
+# r24 is arg2
+# r25 is arg1
+# r26 is arg0
+# r27 is the global data pointer dp and must be set to the .data symbol in the elf header
+# r28 is ret0 the subroutine return value, high order word if a 64-bit return value
+# r29 is ret1 the low order word of a 64-bit return value
+# r30 is sp the stack pointer
+# r31 is the millicode return pointer
+#
+# fr0 is farg0 if floating arg is 32-bits, 64-bit args are in farg1 high and low
+# fr1 is farg0 if floating arg is 32-bits
+# fr2 is farg0 if floating arg is 32-bits, 64-bit args are in farg3 high and low
+# fr0 is farg0 if floating arg is 32-bits
+# fr4 is fret floating point return (8 bytes)
+#
+# Note- only two double arguments can be passed in registers.
+# If a function return value is larger than 64 bits, then the caller passes the address in r28
+#
+# Note- function calls and returns are usually through relocation stubs
+#
+
+#-----
+@ifdef PARISC64
+@define REGSIZE "8"     # General purpose register size (8 or 4)
+@define ADDRSIZE "8"    # Memory address size (8 bytes in 64 bit mode)
+
+@else # PARISC32
+@define REGSIZE "4"     # General purpose register size (8 or 4)
+@define ADDRSIZE "4"    # Memory address size (8 bytes, using the space registers as the upper 32 bits and the regular base and offset as the lower 32 bits)
+@endif
+#-----
+
+define endian=$(ENDIAN);
+
+define alignment=4;
+
+# I'm not sure what to set for the sizes of these spaces -- TODO set these correctly
+define space ram type=ram_space size=$(ADDRSIZE) default;
+define space register type=register_space size=4; # this is a large enough address space to address all the registers. Two bytes would probably be enough
+
+# General purpose registers
+define register offset=0 size=$(REGSIZE) [ 
+    r0 r1 rp r3
+    r4 r5 r6 r7
+    r8 r9 r10 r11
+    r12 r13 r14 r15
+    r16 r17 r18 r19
+    r20 r21 r22 r23
+    r24 r25 r26 dp
+    r28 r29 sp r31 
+];
+
+# Floating point registers
+define register offset=0x1000 size=8 [
+    fr0  fpe23  fpe45  fpe67  fr4  fr5  fr6  fr7
+    fr8  fr9  fr10 fr11 fr12 fr13 fr14 fr15
+    fr16 fr17 fr18 fr19 fr20 fr21 fr22 fr23
+    fr24 fr25 fr26 fr27 fr28 fr29 fr30 fr31
+];
+
+define register offset=0x1000 size=4 [
+	fr0R fr0L fpe2 fpe3 fpe4 fpe5 fpe6 fpe7
+	fr4L fr4R fr5L fr5R fr6L fr6R fr7L fr7R
+	fr8L fr8R fr9L fr9R fr10L fr10R
+	fr11L fr11R fr12L fr12R fr13L fr13R fr14L fr14R
+	fr15L fr15R fr16L fr16R fr17L fr17R fr18L fr18R
+	fr19L fr19R fr20L fr20R fr21L fr21R fr22L fr22R
+	fr23L fr23R fr24L fr24R fr25L fr25R fr26L fr26R
+	fr27L fr27R fr28L fr28R fr29L fr29R fr30L fr30R
+	fr31L fr31R
+];
+
+# Floating Point Status Register
+# Only the compare bit and the compare queue are implemented here
+# and the Condition Queue is only 8 bits, rather than 10
+define register offset=0x1100 size=1 [
+	compareBit	compareQueue
+];
+
+# Shadow Registers
+define register offset=0x2000 size=$(REGSIZE) [
+	shr0 shr1 shr2 shr3 shr4 shr5 shr6
+];
+
+# Space Registers
+define register offset=0x3000 size=4 [
+	sr0 sr1 sr2 sr3 sr4 sr5 sr6 sr7
+];
+
+# Processor Status Word
+define register offset=0x4000 size=1 [
+	pswY pswZ pswE pswS pswT pswH pswL pswN pswX pswB pswC pswV pswM pswCB pswG pswF pswR pswQ pswP pswD pswI
+];
+
+# Control Registers
+define register offset=0x5000 size=4 [
+	cr0 cr1 cr2 cr3 cr4 cr5 cr6 cr7
+	cr8 cr9 cr10 sar cr12 cr13 cr14 cr15
+	cr16 cr17 cr18 cr19 cr20 cr21 cr22 cr23
+	cr24 cr25 cr26 cr27 cr28 cr29 cr30 cr31
+];
+
+# instruction address offset and instruction address space queues
+# these are used for branching, to compute target addresses and deal with branch delay slots
+define register offset=0x6000 size=4 [
+	iasq_front iasq_back iaoq_front iaoq_back
+];
+
+# special hidden registers to support the nullify and delay slot features of PA-RISC
+define register offset=0x7000 size=1 [nullifyCond nullifyNextCond branchCond branchExecuted]; 
+define register offset=0x7100 size=4 [branchIndDest nullifyCondResult];
+
+define register offset=0x7200 size=12   contextreg;
+define context contextreg
+
+ # transient context 
+ phase       = (0,2) noflow
+ temp1		 = (3,3)
+  
+ # stored context
+ nullifyEnable = (4,4) noflow
+ branchCouldBeNullified = (5,5) noflow
+ branchEnable  = (6,6) noflow
+ branchType    = (7,9) noflow
+# These do not appear to be used:
+#    branchIsInd     = (7,7) noflow
+#    branchIsCond    = (8,8) noflow
+#    branchIsCall    = (9,9) noflow
+ branchIsReturn  = (10,10) noflow # used for returns
+ padding = (10,31) noflow
+ branchImmDest = (32,63) noflow  
+ temp32 = (64,95) noflow
+;
+
+@define COMMON  "phase=1 " 
+
+# Instruction fields
+
+define token instr(32)
+    opfam	    = (26,31)
+    cr			= (21,25)
+    crname2		= (21,25)
+    freg2		= (21,25)
+    freg2sgl	= (21,25)
+    fr2half		= (21,25)
+    fusedr2		= (21,25)
+    reg2        = (21,25)
+    b			= (21,25)
+    bboffset	= (21,25)
+    crname1		= (21,25)
+    bit20		= (20,20) signed
+    fpc1sub2	= (17,20)
+    highIm10	= (16,25)
+    reg1        = (16,20)
+    fusedr1		= (16,20)
+    freg1		= (16,20)
+    freg1sgl	= (16,20)
+    fr1half		= (16,20)
+    r           = (16,20)
+    highIm5		= (16,20) signed
+    highIm5less16	= (17,20)
+    tr			= (16,20)
+    x			= (16,20)
+    w1			= (16,20)
+    bit16		= (16,16)
+    fpc1sub		= (15,16)
+    srbit1		= (15,15)
+    s			= (14,15)
+    srbit0		= (14,14)
+    im13		= (13,25) signed
+    SEDCondSym	= (13,15)
+    RegUnitCondSym	= (13,15)
+    InvUnitCondSym	= (13,15)
+    RegLogicCondSym = (13,15)
+    InvLogicCondSym = (13,15)
+    RegAddCondSym	= (13,15)
+    InvAddCondSym	= (13,15)
+    RegCSCondSym = (13,15)
+    InvCSCondSym = (13,15)
+    c           = (13,15)
+    fpsub		= (13,15)
+    srbit2		= (13,13)
+    fpdf		= (13,14)
+    fixeddf		= (13,14)
+    fpdfraw		= (13,14)
+    fixedsf		= (13,14)
+    a			= (13,13)
+    u			= (13,13)
+    fpr1x		= (12,12)
+    f			= (12,12)
+    fv			= (12,12)
+    zero		= (12,12)
+    one			= (12,12)
+    subop1012	= (10,12)
+    im15		= (11,25)
+    sopim10		= (11,20) signed
+    sopim5		= (11,15) signed
+    fpta		= (11,15)
+    fusedta		= (11,15)
+    fpsf		= (11,12)
+    fpsfraw		= (11,12)
+    fpfmt		= (11,12)
+    fpfmt1bit	= (11,11)
+    bit11		= (11,11)
+    cc			= (10,11)
+    ldcc		= (10,11)
+    stcc		= (10,11)
+    ldcwcc		= (10,11)
+    bit10		= (10,10)
+    sopim17		= (9,25)
+    pmuop		= (9,13)
+    specop		= (9,10)
+    fpclass		= (9,10)
+    bit9		= (9,9)
+    bit8		= (8,8)
+    fpx			= (8,8)
+    bits78		= (7,8)
+    fpr2x		= (7,7)
+    fpra		= (6,10)
+    fusedra		= (6,10)
+    ext4		= (6,9)
+    C			= (6,9)
+    subop		= (6,9)
+    sysopshifted= (6,13)
+    sysopshiftedshort	= (6,12)
+    op			= (6,11)
+    sfu			= (6,8)
+    fp0czero	= (6,8)
+    fptx		= (6,6)		
+    bit6		= (6,6)
+    sysop		= (5,12)
+    i2			= (5,11)
+    bits59		= (5,9)
+    cp			= (5,9)
+    fusedfmt	= (5,5)
+    bit5		= (5,5)
+    m			= (5,5)
+    spn			= (5,5)
+    w2			= (2,12)
+    w2_2		= (2,2)
+    w2less2		= (3,12)
+    n			= (1,1)
+    im26		= (0,25) signed
+    sim21		= (0,20) signed
+    sim14		= (0,13) signed
+    im21less0	= (1,20)
+    im21_1_12	= (1,11)
+    im21_12_14	= (12,13)
+    im21_14_16	= (14,15)
+    im21_16_21	= (16,20)
+    im14		= (0,13)
+    im14less0	= (1,13)
+    im11		= (0,10) signed
+    im11less0	= (1,11)
+    sim5		= (0,4) signed
+    im5			= (0,4)
+    im5less0	= (1,4)
+    fpcond		= (0,4)
+    fptest		= (0,4)
+    fpt			= (0,4)
+    fptsgl		= (0,4)
+    fusedrt		= (0,4)
+    fpthalf		= (0,4)
+    crnamet		= (0,4)
+    t			= (0,4)
+    bit0		= (0,0)
+    w			= (0,0) 
+;
+
+# general purpose registers
+attach variables [reg1 reg2 t r b x] [
+	r0 r1 rp r3 r4 r5 r6 r7
+	r8 r9 r10 r11 r12 r13 r14 r15
+	r16 r17 r18 r19 r20 r21 r22 r23
+	r24 r25 r26 dp r28 r29 sp r31
+];
+
+# fp registers - 64 bit doubles
+attach variables [ freg2 freg1 fpt fpra fpta ] [ 
+    fr0  fpe23  fpe45  fpe67  fr4  fr5  fr6  fr7
+    fr8  fr9  fr10 fr11 fr12 fr13 fr14 fr15
+    fr16 fr17 fr18 fr19 fr20 fr21 fr22 fr23
+    fr24 fr25 fr26 fr27 fr28 fr29 fr30 fr31
+];
+
+# 64 bit fp registers when used as 32 bit (.sgl completer)
+# This mapping goes from bit pattern N -> register NL
+attach variables [ freg2sgl freg1sgl fptsgl ] [ 
+    fr0L  fpe2  fpe4  fpe6  fr4L  fr5L  fr6L  fr7L
+    fr8L  fr9L  fr10L fr11L fr12L fr13L fr14L fr15L
+    fr16L fr17L fr18L fr19L fr20L fr21L fr22L fr23L
+    fr24L fr25L fr26L fr27L fr28L fr29L fr30L fr31L
+];
+
+# 32 bit single precision mode fpra fpta for mult-add and mult-sub instructions
+attach variables [ fusedra fusedta fusedr2 fusedr1 fusedrt ] [ 
+    fr16L fr17L fr18L fr19L fr20L fr21L fr22L fr23L
+    fr24L fr25L fr26L fr27L fr28L fr29L fr30L fr31L
+    fr16R fr17R fr18R fr19R fr20R fr21R fr22R fr23R
+    fr24R fr25R fr26R fr27R fr28R fr29R fr30R fr31R
+];
+
+# control registers
+attach variables [ cr ] [
+	cr0 cr1 cr2 cr3 cr4 cr5 cr6 cr7
+	cr8 cr9 cr10 sar cr12 cr13 cr14 cr15
+	cr16 cr17 cr18 cr19 cr20 cr21 cr22 cr23
+	cr24 cr25 cr26 cr27 cr28 cr29 cr30 cr31
+];
+
+# control registers by their purpose names
+attach names [ crname2 crname1 crnamet ] [
+	RCTR CR1 CR2 CR3 CR4 CR5 CR6 CR7
+	PID1 PID2 CCR SAR PID3 PID4 IVA EIEM
+	ITMR IIASQ IIAOQ IIR ISR IOR IPSW EIRR
+	TMP0 TMP1 TMP2 TMP3 TMP4 TMP5 TMP6 TMP7 
+];
+
+attach names [ ldcc ] [
+	none resv sl resv
+];
+
+attach names [ stcc ] [
+	none BC SL resv
+];
+
+attach names [ ldcwcc ] [
+	none CO resv resv
+];
+
+# Table 5-7
+attach names [ SEDCondSym ] [
+	"" ",=" ",&lt;" ",OD" ",TR" ",&lt;&gt;" ",&gt;=" ",EV"
+];
+
+attach names [ RegUnitCondSym ] [
+	"" _ ",SBZ" ",SHZ" ",SDC" _ ",SBC" ",SHC"
+];
+
+attach names [ InvUnitCondSym ] [
+	"" _ ",NBZ" ",NHZ" ",NDC" _ ",NBC" ",NHC"
+];
+
+attach names [ RegLogicCondSym ] [
+	"" ",=" ",&lt;" ",&lt;=" _ _ _ ",OD"
+];
+
+attach names [ InvLogicCondSym ] [
+	"" ",&lt;&gt;" ",&gt;=" ",&gt;" _ _ _ ",EV"
+];
+
+# Table 5-4
+attach names [ RegAddCondSym ] [
+	"" ",=" ",&lt;" ",&lt;=" ",NUV" ",ZNV" ",SV" ",OD"
+];
+
+attach names [ InvAddCondSym ] [
+	"" ",&lt;&gt;" ",&gt;=" ",&gt;" ",UV" ",VNZ" ",NSV" ",EV"
+];
+
+attach names [ RegCSCondSym ] [
+	"" ",=" ",&lt;" ",&lt;=" ",&lt;&lt;" ",&lt;&lt;=" ",SV" ",OD"
+];
+
+attach names [ InvCSCondSym ] [
+	"" ",&lt;&gt;" ",&gt;=" ",&gt;" ",&gt;&gt;=" ",&gt;&gt;" ",NSV" ",EV"
+];
+
+# the different tests used by the FTEST instruction
+attach names [ fptest ] [
+	"" "ACC" "REJ" _ _ "ACC8" "REJ8" _ _ "ACC6" _ _ _ "ACC4" _ _ _ "ACC2" _ _ _ _ _ _ _ _ _ _ _ _ _ _
+];
+
+# the floating point number types
+attach names [ fpsf fpdf fpfmt  ] [
+	",SGL" ",DBL" ",QUAD" _
+];
+
+attach names [ fpfmt1bit  ] [
+	",SGL" ",DBL"
+];
+
+# the fixed point number types
+attach names [ fixedsf fixeddf ] [
+	",UW" ",UD" ",UQ" _
+];
+
+# the floating point number types for fused ops
+attach names [ fusedfmt ] [
+	",DBL" ",SGL" 
+];
+
+
+######################################################################################
+# caret instruction builders for nullify and branch
+######################################################################################
+# These all assume a fall through from a preceding branch
+# If there is a branch into the delay slot of a different branch,
+# then the branch logic will still be present from the preceding instruction
+# and the control flow will branch to that destination.
+# This case should result in a red bookmark due to the disassembly context difference
+# These all also assume that the instruction following a branch (in the delay slot)
+# does not nullify its succeeding instruction 
+#######################################################################################
+# no branch, no nullify
+# previous instruction was not a branch and did not nullify this instruction
+:^instruction is phase=0 & branchEnable=0 & nullifyEnable=0 & instruction [ phase=1; ] {
+	nullifyNextCond=0;
+		build instruction;
+	nullifyCond=nullifyNextCond;
+}
+
+# previous instruction was not a branch, but may have conditionally nullified this instruction
+:^instruction is phase=0 & branchEnable=0 & nullifyEnable=1 & instruction [ phase=1; ] {
+	local wasNullified = nullifyCond;
+	nullifyCond = 0;
+	nullifyNextCond=0;
+	if (wasNullified) goto <skip>;
+		build instruction;
+		nullifyCond=nullifyNextCond;
+	<skip>	
+}
+
+#
+# Handle branches that don't nullify their branch delay slot instructions
+# These instructions themselves may have been nullified, so we need to
+# check and conditionally execute the branch based on that.
+#
+# Need to reset branchCond = 0 before build instruction because the insruction does not reset it,
+# and if branchcond is not reset, then it persists to subsequent instructions.
+
+immediateDest: is branchImmDest { export *:$(ADDRSIZE) branchImmDest; }
+
+# previous instruction was a branch, but this instruction was not nullified
+# but branch instruction could have been nullified
+# branchType = 0, unconditional immediate branch
+:^instruction is phase=0 & branchEnable=1 & nullifyEnable=0 & branchType=0 & branchCouldBeNullified=1 & instruction & immediateDest [ phase=1; ] {
+	nullifyCond = 0;
+	nullifyNextCond = 0;
+	local previousBranchExecuted = branchExecuted;
+        branchCond = 0;
+	branchExecuted = 0;
+	build instruction;
+	if ( previousBranchExecuted ) goto immediateDest;
+	nullifyCond=nullifyNextCond;
+}
+
+# previous instruction was a branch, but this instruction was not nullified
+# branchType = 0, unconditional immediate branch
+:^instruction is phase=0 & branchEnable=1 & nullifyEnable=0 & branchType=0 & branchCouldBeNullified=0 & instruction & immediateDest [ phase=1; ] {
+	nullifyCond = 0;
+	nullifyNextCond = 0;
+        branchCond = 0;
+	branchExecuted=0;
+	build instruction;
+	goto immediateDest;
+}
+
+# branchType = 1, unconditional immediate call
+# this doesn't handle the case where the inst in the delay slot nullifies the next instruction
+:^instruction is phase=0 & branchEnable=1 & nullifyEnable=0 & branchType=1 & branchCouldBeNullified=1 & instruction & immediateDest [ phase=1; ] {
+	nullifyCond = 0;
+	nullifyNextCond = 0;
+	local previousBranchExecuted = branchExecuted;
+        branchCond = 0;
+	branchExecuted = 0;
+	build instruction;
+	if ( ! previousBranchExecuted ) goto <skip>;
+	call immediateDest;
+	<skip>
+	nullifyCond=nullifyNextCond;
+}
+
+# branchType = 1, unconditional immediate call
+# this doesn't handle the case where the inst in the delay slot nullifies the next instruction
+# this is the case where the branch could not have been nullified
+:^instruction is phase=0 & branchEnable=1 & nullifyEnable=0 & branchType=1 & branchCouldBeNullified=0 & instruction & immediateDest [ phase=1; ] {
+	nullifyCond = 0;
+	nullifyNextCond = 0;
+	branchExecuted = 0;
+	build instruction;
+	call immediateDest;
+}
+
+# branchType = 2, conditional immediate branch
+# the preceding instruction was a branch that may or may not have been taken and may or may not have been nullified
+# but was not nullifying itself (the delay slot must execute)
+# this doesn't handle the case where the instruction in the branch delay slot nullifies the next instruction
+:^instruction is phase=0 & branchEnable=1 & nullifyEnable=0 & branchType=2 & branchCouldBeNullified=1 & instruction & immediateDest [ phase=1; ] {
+	nullifyCond = 0;
+	nullifyNextCond=0;
+	local previousBranchExecuted = branchExecuted;
+	branchExecuted = 0;
+	local previousBranchCond = branchCond;
+        branchCond = 0;
+	build instruction;
+	if (previousBranchCond && previousBranchExecuted) goto immediateDest;
+	nullifyCond=nullifyNextCond;
+}
+
+# branchType = 2, conditional immediate branch
+# the preceding instruction was a branch that may or may not have been taken and may or may not have been nullified
+# but was not nullifying itself (the delay slot must execute)
+# this doesn't handle the case where the instruction in the branch delay slot nullifies the next instruction
+:^instruction is phase=0 & branchEnable=1 & nullifyEnable=0 & branchType=2 & branchCouldBeNullified=0 & instruction & immediateDest [ phase=1; ] {
+	nullifyCond = 0;
+	nullifyNextCond = 0;
+	branchExecuted = 0;
+	local previousBranchCond = branchCond;
+        branchCond = 0;
+	build instruction;
+	if (previousBranchCond) goto immediateDest;
+	nullifyCond=nullifyNextCond;}
+
+# branchType = 3, conditional immediate call, (currently not used, may not exist in PA-RISC)
+:^instruction is phase=0 & branchEnable=1 & nullifyEnable=0 & branchType=3 & branchCouldBeNullified=1 & instruction & immediateDest [ phase=1; ] {
+	nullifyNextCond=0;
+	local previousBranchExecuted = branchExecuted;
+	local previousBranchCond = branchCond;
+        branchCond = 0;
+	branchExecuted = 0;
+	build instruction;
+	if ( ! (previousBranchCond && previousBranchExecuted) ) goto <skip>;
+	call immediateDest;
+	<skip>
+	nullifyCond=nullifyNextCond;
+}
+
+# branchType = 3, conditional immediate call, (currently not used, may not exist in PA-RISC)
+:^instruction is phase=0 & branchEnable=1 & nullifyEnable=0 & branchType=3 & branchCouldBeNullified=0 & instruction & immediateDest [ phase=1; ] {
+	nullifyNextCond=0;
+	local previousBranchCond = branchCond;
+        branchCond = 0;
+	branchExecuted = 0;
+	build instruction;
+	if ( ! (previousBranchCond) ) goto <skip>;
+	call immediateDest;
+	<skip>
+	nullifyCond=nullifyNextCond;
+}
+
+# branchType = 4, unconditional indirect branch
+# the preceding instruction was a branch that did not nullify its branch delay slot inst
+# The branch is indirect and may have been nullified
+:^instruction is phase=0 & branchEnable=1 & nullifyEnable=0 & branchCouldBeNullified=1 & branchType=4 & instruction [ phase=1; ] {
+	nullifyCond = 0;
+	nullifyNextCond = 0;
+	local previousBranchExecuted = branchExecuted;
+	branchExecuted = 0;
+	build instruction;
+	if ( ! previousBranchExecuted ) goto <skip>;
+	goto [branchIndDest];
+	<skip>
+	nullifyCond=nullifyNextCond;
+}
+
+# branchType = 4, unconditional indirect branch and also return
+# the preceding instruction was a branch that did not nullify its branch delay slot inst
+# The branch is indirect and WAS NOT nullified
+#
+:^instruction is phase=0 & branchEnable=1 & nullifyEnable=0 & branchCouldBeNullified=0 & branchType=4 & instruction & branchIsReturn=0 [ phase=1; ] {
+	nullifyCond = 0;
+	nullifyNextCond = 0;
+	branchExecuted = 0;
+	build instruction;
+	goto [branchIndDest];
+}
+
+:^instruction is phase=0 & branchEnable=1 & nullifyEnable=0 & branchCouldBeNullified=0 & branchType=4 & instruction & branchIsReturn=1 [ phase=1; ] {
+        nullifyCond = 0;
+        nullifyNextCond = 0;
+        branchExecuted = 0;
+        build instruction;
+        return [branchIndDest];
+}
+
+
+# branchType = 5, unconditional indirect call
+:^instruction is phase=0 & branchEnable=1 & nullifyEnable=0 & branchType=5 & branchCouldBeNullified=1 & instruction [ phase=1; ] {
+	nullifyCond = 0;
+	nullifyNextCond = 0;
+	local previousBranchExecuted = branchExecuted;
+	branchExecuted = 0;
+	build instruction;
+	if ( ! previousBranchExecuted ) goto <skip>;
+		call [branchIndDest];
+	<skip>
+	nullifyCond=nullifyNextCond;
+}
+
+# branchType = 5, unconditional indirect call
+:^instruction is phase=0 & branchEnable=1 & nullifyEnable=0 & branchType=5 & branchCouldBeNullified=0 & instruction [ phase=1; ] {
+	nullifyCond = 0;
+	nullifyNextCond = 0;
+	branchExecuted = 0;
+	build instruction;
+	call [branchIndDest];
+}
+
+# branchType = 6, conditional indirect branch
+# previous instruction was a conditional branch that may or may not be taken and may have been nullified
+# however, the branch does not nullify the inst in its branch delay slot
+:^instruction is phase=0 & branchEnable=1 & nullifyEnable=0 & branchType=6 & branchCouldBeNullified=1 & instruction [ phase=1; ] {
+	nullifyCond = 0;
+	nullifyNextCond=0;
+	local previousBranchExecuted = branchExecuted;
+	local previousBranchCond = branchCond;
+        branchCond = 0;
+	branchExecuted = 0;
+	build instruction;
+	if ( ! previousBranchExecuted || ! previousBranchCond) goto <skip>;
+	goto [branchIndDest];
+	<skip>
+	nullifyCond=nullifyNextCond;
+}
+
+# branchType = 6, conditional indirect branch
+# previous instruction was a conditional branch that may or may not be taken and may have been nullified
+# however, the branch does not nullify the inst in its branch delay slot
+:^instruction is phase=0 & branchEnable=1 & nullifyEnable=0 & branchType=6 & branchCouldBeNullified=0 & instruction [ phase=1; ] {
+	nullifyCond = 0;
+	nullifyNextCond=0;
+	branchExecuted = 0;
+	local previousBranchCond = branchCond;
+        branchCond = 0;
+	build instruction;
+	if ( ! previousBranchCond ) goto <skip>;
+	goto [branchIndDest];
+	<skip>
+	nullifyCond=nullifyNextCond;
+}
+
+# branchType = 7, conditional indirect call
+:^instruction is phase=0 & branchEnable=1 & nullifyEnable=0 & branchType=7 & branchCouldBeNullified=1 & instruction [ phase=1; ] {
+	nullifyCond = 0;
+	nullifyNextCond=0;
+	local previousBranchExecuted = branchExecuted;
+	local previousBranchCond = branchCond;
+        branchCond = 0;
+	branchExecuted = 0;
+	build instruction;
+	if ( ! previousBranchExecuted || ! previousBranchCond) goto <skip>;
+	call [branchIndDest];
+	<skip>
+	nullifyCond=nullifyNextCond;
+}
+
+# branchType = 7, conditional indirect call
+:^instruction is phase=0 & branchEnable=1 & nullifyEnable=0 & branchType=7 & branchCouldBeNullified=0 & instruction [ phase=1; ] {
+	nullifyCond = 0;
+	nullifyNextCond=0;
+	branchExecuted = 0;
+	local previousBranchCond= branchCond;
+	branchCond = 0;
+	build instruction;
+	if ( ! previousBranchCond) goto <skip>;
+	call [branchIndDest];
+	<skip>
+	nullifyCond=nullifyNextCond;
+}
+
+#
+# Handle branches with nullification -- the branch may nullify its branch delay slot
+#
+
+# branchType = 0, unconditional immediate branch
+:^instruction is phase=0 & branchEnable=1 & nullifyEnable=1 & branchType=0 & branchCouldBeNullified=1 & instruction & immediateDest [ phase=1; ] {
+	local nullify = nullifyCond;
+	nullifyCond = 0;
+	nullifyNextCond = 0;
+	local previousBranchExecuted = branchExecuted;
+	branchExecuted = 0;
+	if (nullify) goto <skip>;
+	build instruction;
+	<skip>
+	if ( previousBranchExecuted ) goto immediateDest;
+	nullifyCond=nullifyNextCond;
+}
+
+# branchType = 0, unconditional immediate branch
+:^instruction is phase=0 & branchEnable=1 & nullifyEnable=1 & branchType=0 & branchCouldBeNullified=0 & instruction & immediateDest [ phase=1; ] {
+	local nullify = nullifyCond;
+	nullifyCond = 0;
+	nullifyNextCond = 0;
+	branchExecuted = 0;
+	if (nullify) goto <skip>;
+	build instruction;
+	<skip>
+	goto immediateDest;
+}
+
+# branchType = 1, unconditional immediate call
+:^instruction is phase=0 & branchEnable=1 & nullifyEnable=1 & branchType=1 & branchCouldBeNullified=1 & instruction & immediateDest [ phase=1; ] {
+	local nullify = nullifyCond;
+	nullifyCond = 0;
+	nullifyNextCond = 0;
+	local previousBranchExecuted = branchExecuted;
+	branchExecuted = 0;
+	if (nullify) goto <skip>;
+	build instruction;
+	<skip>
+	if ( ! previousBranchExecuted ) goto <nobranch>;
+	call immediateDest;
+	<nobranch>
+	nullifyCond=nullifyNextCond;
+}
+
+# branchType = 1, unconditional immediate call
+:^instruction is phase=0 & branchEnable=1 & nullifyEnable=1 & branchType=1 & branchCouldBeNullified=0 & instruction & immediateDest [ phase=1; ] {
+	local nullify = nullifyCond;
+	nullifyCond = 0;
+	nullifyNextCond = 0;
+	branchExecuted = 0;
+	if (nullify) goto <skip>;
+	build instruction;
+	<skip>
+	call immediateDest;
+}
+
+# branchType = 2, conditional immediate branch
+:^instruction is phase=0 & branchEnable=1 & nullifyEnable=1 & branchType=2 & branchCouldBeNullified=1 & instruction & immediateDest [ phase=1; ] {
+	local nullify = nullifyCond;
+	nullifyCond = 0;
+	nullifyNextCond=0;
+	local previousBranchExecuted = branchExecuted;
+	branchExecuted = 0;
+	local previousBranchCond = branchCond;
+        branchCond = 0;
+	if (nullify) goto <skip>;
+	build instruction;
+	<skip>
+	if (previousBranchCond && previousBranchExecuted) goto immediateDest;
+	nullifyCond=nullifyNextCond;
+}
+
+# branchType = 2, conditional immediate branch
+:^instruction is phase=0 & branchEnable=1 & nullifyEnable=1 & branchType=2 & branchCouldBeNullified=0 & instruction & immediateDest [ phase=1; ] {
+	local nullify = nullifyCond;
+	nullifyCond = 0;
+	nullifyNextCond=0;
+	branchExecuted = 0;
+	local previousBranchCond = branchCond;
+	branchCond = 0; # Need to reset branchCond
+	if (nullify) goto <skip>;
+	build instruction;
+	<skip>
+	if (previousBranchCond) goto immediateDest;
+	nullifyCond=nullifyNextCond;
+}
+
+# branchType = 3, conditional immediate call
+:^instruction is phase=0 & branchEnable=1 & nullifyEnable=1 & branchType=3 & branchCouldBeNullified=1 & instruction & immediateDest [ phase=1; ] {
+	local nullify = nullifyCond;
+	nullifyNextCond=0;
+	local previousBranchExecuted = branchExecuted;
+	local previousBranchCond = branchCond;
+        branchCond = 0;
+	branchExecuted = 0;
+	if (nullify) goto <wasnullified>;
+	build instruction;
+	<wasnullified>
+	if ( ! (previousBranchCond && previousBranchExecuted) ) goto <nobranch>;
+	call immediateDest;
+	<nobranch>
+	nullifyCond=nullifyNextCond;
+}
+
+# branchType = 3, conditional immediate call
+:^instruction is phase=0 & branchEnable=1 & nullifyEnable=1 & branchType=3 & branchCouldBeNullified=0 & instruction & immediateDest [ phase=1; ] {
+	local nullify = nullifyCond;
+	nullifyNextCond=0;
+	local previousBranchCond = branchCond;
+        branchCond = 0;
+	branchExecuted = 0;
+	if (nullify) goto <wasnullified>;
+	build instruction;
+	<wasnullified>
+	if ( ! previousBranchCond ) goto <nobranch>;
+	call immediateDest;
+	<nobranch>
+	nullifyCond=nullifyNextCond;
+}
+
+# branchType = 4, unconditional indirect branch
+:^instruction is phase=0 & branchEnable=1 & nullifyEnable=1 & branchType=4 & branchCouldBeNullified=1 & instruction [ phase=1; ] {
+	local nullify = nullifyCond;
+	nullifyCond = 0;
+	nullifyNextCond = 0;
+	local previousBranchExecuted = branchExecuted;
+	branchExecuted = 0;
+	if (nullify) goto <wasnullified>;
+		build instruction;
+	<wasnullified>
+	if ( ! previousBranchExecuted ) goto <skip>;
+	goto [branchIndDest];
+	<skip>
+	nullifyCond=nullifyNextCond;
+}
+
+# branchType = 4, unconditional indirect branch
+:^instruction is phase=0 & branchEnable=1 & nullifyEnable=1 & branchType=4 & branchCouldBeNullified=0 & instruction [ phase=1; ] {
+	local nullify = nullifyCond;
+	nullifyCond = 0;
+	nullifyNextCond = 0;
+	branchExecuted = 0;
+	if (nullify) goto <wasnullified>;
+		build instruction;
+	<wasnullified>
+	goto [branchIndDest];
+}
+
+# branchType = 5, unconditional indirect call
+:^instruction is phase=0 & branchEnable=1 & nullifyEnable=1 & branchType=5 & branchCouldBeNullified=1 & instruction [ phase=1; ] {
+	local nullify = nullifyCond;
+	nullifyCond = 0;
+	nullifyNextCond = 0;
+	local previousBranchExecuted = branchExecuted;
+	branchExecuted = 0;
+	if (nullify) goto <wasnullified>;
+		build instruction;
+	<wasnullified>
+	if ( ! previousBranchExecuted ) goto <skip>;
+	call [branchIndDest];
+	<skip>
+	nullifyCond=nullifyNextCond;
+}
+
+# branchType = 5, unconditional indirect call
+:^instruction is phase=0 & branchEnable=1 & nullifyEnable=1 & branchType=5 & branchCouldBeNullified=0 & instruction [ phase=1; ] {
+	local nullify = nullifyCond;
+	nullifyCond = 0;
+	nullifyNextCond = 0;
+	branchExecuted = 0;
+	if (nullify) goto <wasnullified>;
+		build instruction;
+	<wasnullified>
+	call [branchIndDest];
+}
+
+# branchType = 6, conditional indirect branch
+:^instruction is phase=0 & branchEnable=1 & nullifyEnable=1 & branchType=6 & branchCouldBeNullified=1 & instruction [ phase=1; ] {
+	local nullify = nullifyCond;
+	nullifyCond = 0;
+	nullifyNextCond=0;
+	local previousBranchExecuted = branchExecuted;
+	branchExecuted = 0;
+	local previousBranchCond = branchCond;
+        branchCond = 0;
+	if (nullify) goto <wasnullified>;
+		build instruction;
+	<wasnullified>
+	if ( ! previousBranchExecuted || ! previousBranchCond) goto <skip>;
+	goto [branchIndDest];
+	<skip>
+	nullifyCond=nullifyNextCond;
+}
+
+# branchType = 6, conditional indirect branch
+:^instruction is phase=0 & branchEnable=1 & nullifyEnable=1 & branchType=6 & branchCouldBeNullified=0 & instruction [ phase=1; ] {
+	local nullify = nullifyCond;
+	nullifyCond = 0;
+	nullifyNextCond=0;
+	branchExecuted = 0;
+	local previousBranchCond = branchCond;
+        branchCond = 0;
+	if (nullify) goto <wasnullified>;
+		build instruction;
+	<wasnullified>
+	if ( ! previousBranchCond) goto <skip>;
+	goto [branchIndDest];
+	<skip>
+	nullifyCond=nullifyNextCond;
+}
+
+# branchType = 7, conditional indirect call
+:^instruction is phase=0 & branchEnable=1 & nullifyEnable=1 & branchType=7 & branchCouldBeNullified=1 & instruction [ phase=1; ] {
+	local nullify = nullifyCond;
+	nullifyNextCond=0;
+	local previousBranchExecuted = branchExecuted;
+	branchExecuted = 0;
+	local previousBranchCond = branchCond;
+        branchCond = 0;
+	if (nullify) goto <wasnullified>;
+		build instruction;
+	<wasnullified>
+	if ( ! previousBranchExecuted || ! previousBranchCond) goto <skip>;
+	call [branchIndDest];
+	<skip>
+	nullifyCond=nullifyNextCond;
+}
+
+# branchType = 7, conditional indirect call
+:^instruction is phase=0 & branchEnable=1 & nullifyEnable=1 & branchType=7 & branchCouldBeNullified=0 & instruction [ phase=1; ] {
+	local nullify = nullifyCond;
+	nullifyNextCond=0;
+	branchExecuted = 0;
+	local previousBranchCond = branchCond;
+	branchCond = 0;
+	if (nullify) goto <wasnullified>;
+		build instruction;
+	<wasnullified>
+	if ( ! previousBranchCond ) goto <skip>;
+	call [branchIndDest];
+	<skip>
+	nullifyCond=nullifyNextCond;
+}
+
+############################################################
+# Subconstructors
+############################################################
+
+#############################
+# general purpose registers selected 
+# by different fields for different purposes (index, base, general, src, target, ...)
+#############################
+R1: reg1					is reg1 & reg1=0 { export 0:$(REGSIZE); }
+R1: reg1					is reg1 { export reg1; }
+R1dst: reg1					is reg1 { export reg1; }
+
+R2: reg2					is reg2 & reg2=0 { export 0:$(REGSIZE); }
+R2: reg2					is reg2 { export reg2; }
+R2dst: reg2					is reg2 { export reg2; }
+
+RT:	t						is t { export t; }
+
+RB: b						is b & b=0 { export 0:$(REGSIZE); }
+RB: b						is b  { export b; }
+
+RX:							is x=0 { export 0:$(REGSIZE); }
+RX: x						is x  { export x; }
+
+RR: r						is r & r=0  { export 0:$(REGSIZE); }
+RR: r						is r  { export r; }
+
+SAR: "SAR"				is epsilon { export sar; }
+SR0: sr0				is sr0 { export sr0; }
+R31: r31				is r31 { export r31; }
+
+# 64 bit fp register access
+FPR164: freg1				is freg1 { export freg1; }
+FPR264: freg2				is freg2 { export freg2; }
+FPRT64: fpt					is fpt   { export fpt; }
+
+# register encoding for fused ops (fmpyadd, fmpysub)
+FUSEDR1: fusedr1			is fusedr1 { export fusedr1; }
+FUSEDR2: fusedr2			is fusedr2 { export fusedr2; }
+FUSEDRA: fusedra			is fusedra { export fusedra; }
+FUSEDTA: fusedta			is fusedta { export fusedta; }
+FUSEDRT: fusedrt			is fusedrt { export fusedrt; }
+
+# 32 bit fp register access, lower half (L) and upper half (R)
+FPR132: freg1^"L"					is fpr1x = 0 & freg1 & fr1half = 0 { export fr0L; }
+FPR132: freg1^"L"					is fpr1x = 0 & freg1 & fr1half = 1 { export fpe2; }
+FPR132: freg1^"L"				is fpr1x = 0 & freg1 & fr1half = 2 { export fpe4; }
+FPR132: freg1^"L"					is fpr1x = 0 & freg1 & fr1half = 3 { export fpe6; }
+FPR132: freg1^"L"					is fpr1x = 0 & freg1 & fr1half = 4 { export fr4L; }
+FPR132: freg1^"L"					is fpr1x = 0 & freg1 & fr1half = 5 { export fr5L; }
+FPR132: freg1^"L"					is fpr1x = 0 & freg1 & fr1half = 6 { export fr6L; }
+FPR132: freg1^"L"					is fpr1x = 0 & freg1 & fr1half = 7 { export fr7L; }
+FPR132: freg1^"L"					is fpr1x = 0 & freg1 & fr1half = 8 { export fr8L; }
+FPR132: freg1^"L"					is fpr1x = 0 & freg1 & fr1half = 9 { export fr9L; }
+FPR132: freg1^"L"					is fpr1x = 0 & freg1 & fr1half = 10 { export fr10L; }
+FPR132: freg1^"L"					is fpr1x = 0 & freg1 & fr1half = 11 { export fr11L; }
+FPR132: freg1^"L"					is fpr1x = 0 & freg1 & fr1half = 12 { export fr12L; }
+FPR132: freg1^"L"					is fpr1x = 0 & freg1 & fr1half = 13 { export fr13L; }
+FPR132: freg1^"L"					is fpr1x = 0 & freg1 & fr1half = 14 { export fr14L; }
+FPR132: freg1^"L"					is fpr1x = 0 & freg1 & fr1half = 15 { export fr15L; }
+FPR132: freg1^"L"					is fpr1x = 0 & freg1 & fr1half = 16 { export fr16L; }
+FPR132: freg1^"L"					is fpr1x = 0 & freg1 & fr1half = 17 { export fr17L; }
+FPR132: freg1^"L"					is fpr1x = 0 & freg1 & fr1half = 18 { export fr18L; }
+FPR132: freg1^"L"					is fpr1x = 0 & freg1 & fr1half = 19 { export fr19L; }
+FPR132: freg1^"L"					is fpr1x = 0 & freg1 & fr1half = 20 { export fr20L; }
+FPR132: freg1^"L"					is fpr1x = 0 & freg1 & fr1half = 21 { export fr21L; }
+FPR132: freg1^"L"					is fpr1x = 0 & freg1 & fr1half = 22 { export fr22L; }
+FPR132: freg1^"L"					is fpr1x = 0 & freg1 & fr1half = 23 { export fr23L; }
+FPR132: freg1^"L"					is fpr1x = 0 & freg1 & fr1half = 24 { export fr24L; }
+FPR132: freg1^"L"					is fpr1x = 0 & freg1 & fr1half = 25 { export fr25L; }
+FPR132: freg1^"L"					is fpr1x = 0 & freg1 & fr1half = 26 { export fr26L; }
+FPR132: freg1^"L"					is fpr1x = 0 & freg1 & fr1half = 27 { export fr27L; }
+FPR132: freg1^"L"					is fpr1x = 0 & freg1 & fr1half = 28 { export fr28L; }
+FPR132: freg1^"L"					is fpr1x = 0 & freg1 & fr1half = 29 { export fr29L; }
+FPR132: freg1^"L"					is fpr1x = 0 & freg1 & fr1half = 30 { export fr30L; }
+FPR132: freg1^"L"					is fpr1x = 0 & freg1 & fr1half = 31 { export fr31L; }
+FPR132: freg1^"R"					is freg1 & fpr1x = 1 & fr1half = 0 { export fr0R; }
+FPR132: freg1^"R"					is freg1 & fpr1x = 1 & fr1half = 1 { export fpe3; }
+FPR132: freg1^"R"					is freg1 & fpr1x = 1 & fr1half = 2 { export fpe5; }
+FPR132: freg1^"R"					is freg1 & fpr1x = 1 & fr1half = 3 { export fpe7; }
+FPR132: freg1^"R"					is freg1 & fpr1x = 1 & fr1half = 4 { export fr4R; }
+FPR132: freg1^"R"					is freg1 & fpr1x = 1 & fr1half = 5 { export fr5R; }
+FPR132: freg1^"R"					is freg1 & fpr1x = 1 & fr1half = 6 { export fr6R; }
+FPR132: freg1^"R"					is freg1 & fpr1x = 1 & fr1half = 7 { export fr7R; }
+FPR132: freg1^"R"					is freg1 & fpr1x = 1 & fr1half = 8 { export fr8R; }
+FPR132: freg1^"R"					is freg1 & fpr1x = 1 & fr1half = 9 { export fr9R; }
+FPR132: freg1^"R"					is freg1 & fpr1x = 1 & fr1half = 10 { export fr10R; }
+FPR132: freg1^"R"					is freg1 & fpr1x = 1 & fr1half = 11 { export fr11R; }
+FPR132: freg1^"R"					is freg1 & fpr1x = 1 & fr1half = 12 { export fr12R; }
+FPR132: freg1^"R"					is freg1 & fpr1x = 1 & fr1half = 13 { export fr13R; }
+FPR132: freg1^"R"					is freg1 & fpr1x = 1 & fr1half = 14 { export fr14R; }
+FPR132: freg1^"R"					is freg1 & fpr1x = 1 & fr1half = 15 { export fr15R; }
+FPR132: freg1^"R"					is freg1 & fpr1x = 1 & fr1half = 16 { export fr16R; }
+FPR132: freg1^"R"					is freg1 & fpr1x = 1 & fr1half = 17 { export fr17R; }
+FPR132: freg1^"R"					is freg1 & fpr1x = 1 & fr1half = 18 { export fr18R; }
+FPR132: freg1^"R"					is freg1 & fpr1x = 1 & fr1half = 19 { export fr19R; }
+FPR132: freg1^"R"					is freg1 & fpr1x = 1 & fr1half = 20 { export fr20R; }
+FPR132: freg1^"R"					is freg1 & fpr1x = 1 & fr1half = 21 { export fr21R; }
+FPR132: freg1^"R"					is freg1 & fpr1x = 1 & fr1half = 22 { export fr22R; }
+FPR132: freg1^"R"					is freg1 & fpr1x = 1 & fr1half = 23 { export fr23R; }
+FPR132: freg1^"R"					is freg1 & fpr1x = 1 & fr1half = 24 { export fr24R; }
+FPR132: freg1^"R"					is freg1 & fpr1x = 1 & fr1half = 25 { export fr25R; }
+FPR132: freg1^"R"					is freg1 & fpr1x = 1 & fr1half = 26 { export fr26R; }
+FPR132: freg1^"R"					is freg1 & fpr1x = 1 & fr1half = 27 { export fr27R; }
+FPR132: freg1^"R"					is freg1 & fpr1x = 1 & fr1half = 28 { export fr28R; }
+FPR132: freg1^"R"					is freg1 & fpr1x = 1 & fr1half = 29 { export fr29R; }
+FPR132: freg1^"R"					is freg1 & fpr1x = 1 & fr1half = 30 { export fr30R; }
+FPR132: freg1^"R"					is freg1 & fpr1x = 1 & fr1half = 31 { export fr31R; }
+
+FPR232: freg2^"L"					is fpr2x = 0 & freg2 & fr2half = 0 { export fr0L; }
+FPR232: freg2^"L"					is fpr2x = 0 & freg2 & fr2half = 1 { export fpe2; }
+FPR232: freg2^"L"					is fpr2x = 0 & freg2 & fr2half = 2 { export fpe4; }
+FPR232: freg2^"L"					is fpr2x = 0 & freg2 & fr2half = 3 { export fpe6; }
+FPR232: freg2^"L"					is fpr2x = 0 & freg2 & fr2half = 4 { export fr4L; }
+FPR232: freg2^"L"					is fpr2x = 0 & freg2 & fr2half = 5 { export fr5L; }
+FPR232: freg2^"L"					is fpr2x = 0 & freg2 & fr2half = 6 { export fr6L; }
+FPR232: freg2^"L"					is fpr2x = 0 & freg2 & fr2half = 7 { export fr7L; }
+FPR232: freg2^"L"					is fpr2x = 0 & freg2 & fr2half = 8 { export fr8L; }
+FPR232: freg2^"L"					is fpr2x = 0 & freg2 & fr2half = 9 { export fr9L; }
+FPR232: freg2^"L"					is fpr2x = 0 & freg2 & fr2half = 10 { export fr10L; }
+FPR232: freg2^"L"					is fpr2x = 0 & freg2 & fr2half = 11 { export fr11L; }
+FPR232: freg2^"L"					is fpr2x = 0 & freg2 & fr2half = 12 { export fr12L; }
+FPR232: freg2^"L"					is fpr2x = 0 & freg2 & fr2half = 13 { export fr13L; }
+FPR232: freg2^"L"					is fpr2x = 0 & freg2 & fr2half = 14 { export fr14L; }
+FPR232: freg2^"L"					is fpr2x = 0 & freg2 & fr2half = 15 { export fr15L; }
+FPR232: freg2^"L"					is fpr2x = 0 & freg2 & fr2half = 16 { export fr16L; }
+FPR232: freg2^"L"					is fpr2x = 0 & freg2 & fr2half = 17 { export fr17L; }
+FPR232: freg2^"L"					is fpr2x = 0 & freg2 & fr2half = 18 { export fr18L; }
+FPR232: freg2^"L"					is fpr2x = 0 & freg2 & fr2half = 19 { export fr19L; }
+FPR232: freg2^"L"					is fpr2x = 0 & freg2 & fr2half = 20 { export fr20L; }
+FPR232: freg2^"L"					is fpr2x = 0 & freg2 & fr2half = 21 { export fr21L; }
+FPR232: freg2^"L"					is fpr2x = 0 & freg2 & fr2half = 22 { export fr22L; }
+FPR232: freg2^"L"					is fpr2x = 0 & freg2 & fr2half = 23 { export fr23L; }
+FPR232: freg2^"L"					is fpr2x = 0 & freg2 & fr2half = 24 { export fr24L; }
+FPR232: freg2^"L"					is fpr2x = 0 & freg2 & fr2half = 25 { export fr25L; }
+FPR232: freg2^"L"					is fpr2x = 0 & freg2 & fr2half = 26 { export fr26L; }
+FPR232: freg2^"L"					is fpr2x = 0 & freg2 & fr2half = 27 { export fr27L; }
+FPR232: freg2^"L"					is fpr2x = 0 & freg2 & fr2half = 28 { export fr28L; }
+FPR232: freg2^"L"					is fpr2x = 0 & freg2 & fr2half = 29 { export fr29L; }
+FPR232: freg2^"L"					is fpr2x = 0 & freg2 & fr2half = 30 { export fr30L; }
+FPR232: freg2^"L"					is fpr2x = 0 & freg2 & fr2half = 31 { export fr31L; }
+
+FPR232: freg2^"R"					is freg2 & fpr2x = 1 & fr2half = 0 { export fr0R; }
+FPR232: freg2^"R"					is freg2 & fpr2x = 1 & fr2half = 1 { export fpe3; }
+FPR232: freg2^"R"					is freg2 & fpr2x = 1 & fr2half = 2 { export fpe5; }
+FPR232: freg2^"R"					is freg2 & fpr2x = 1 & fr2half = 3 { export fpe7; }
+FPR232: freg2^"R"					is freg2 & fpr2x = 1 & fr2half = 4 { export fr4R; }
+FPR232: freg2^"R"					is freg2 & fpr2x = 1 & fr2half = 5 { export fr5R; }
+FPR232: freg2^"R"					is freg2 & fpr2x = 1 & fr2half = 6 { export fr6R; }
+FPR232: freg2^"R"					is freg2 & fpr2x = 1 & fr2half = 7 { export fr7R; }
+FPR232: freg2^"R"					is freg2 & fpr2x = 1 & fr2half = 8 { export fr8R; }
+FPR232: freg2^"R"					is freg2 & fpr2x = 1 & fr2half = 9 { export fr9R; }
+FPR232: freg2^"R"					is freg2 & fpr2x = 1 & fr2half = 10 { export fr10R; }
+FPR232: freg2^"R"					is freg2 & fpr2x = 1 & fr2half = 11 { export fr11R; }
+FPR232: freg2^"R"					is freg2 & fpr2x = 1 & fr2half = 12 { export fr12R; }
+FPR232: freg2^"R"					is freg2 & fpr2x = 1 & fr2half = 13 { export fr13R; }
+FPR232: freg2^"R"					is freg2 & fpr2x = 1 & fr2half = 14 { export fr14R; }
+FPR232: freg2^"R"					is freg2 & fpr2x = 1 & fr2half = 15 { export fr15R; }
+FPR232: freg2^"R"					is freg2 & fpr2x = 1 & fr2half = 16 { export fr16R; }
+FPR232: freg2^"R"					is freg2 & fpr2x = 1 & fr2half = 17 { export fr17R; }
+FPR232: freg2^"R"					is freg2 & fpr2x = 1 & fr2half = 18 { export fr18R; }
+FPR232: freg2^"R"					is freg2 & fpr2x = 1 & fr2half = 19 { export fr19R; }
+FPR232: freg2^"R"					is freg2 & fpr2x = 1 & fr2half = 20 { export fr20R; }
+FPR232: freg2^"R"					is freg2 & fpr2x = 1 & fr2half = 21 { export fr21R; }
+FPR232: freg2^"R"					is freg2 & fpr2x = 1 & fr2half = 22 { export fr22R; }
+FPR232: freg2^"R"					is freg2 & fpr2x = 1 & fr2half = 23 { export fr23R; }
+FPR232: freg2^"R"					is freg2 & fpr2x = 1 & fr2half = 24 { export fr24R; }
+FPR232: freg2^"R"					is freg2 & fpr2x = 1 & fr2half = 25 { export fr25R; }
+FPR232: freg2^"R"					is freg2 & fpr2x = 1 & fr2half = 26 { export fr26R; }
+FPR232: freg2^"R"					is freg2 & fpr2x = 1 & fr2half = 27 { export fr27R; }
+FPR232: freg2^"R"					is freg2 & fpr2x = 1 & fr2half = 28 { export fr28R; }
+FPR232: freg2^"R"					is freg2 & fpr2x = 1 & fr2half = 29 { export fr29R; }
+FPR232: freg2^"R"					is freg2 & fpr2x = 1 & fr2half = 30 { export fr30R; }
+FPR232: freg2^"R"					is freg2 & fpr2x = 1 & fr2half = 31 { export fr31R; }
+
+FPRT32: fpt^"L"					is fptx = 0 & fpt & fpthalf = 0 { export fr0L; }
+FPRT32: fpt^"L"					is fptx = 0 & fpt & fpthalf = 1 { export fpe2; }
+FPRT32: fpt^"L"					is fptx = 0 & fpt & fpthalf = 2 { export fpe4; }
+FPRT32: fpt^"L"					is fptx = 0 & fpt & fpthalf = 3 { export fpe6; }
+FPRT32: fpt^"L"					is fptx = 0 & fpt & fpthalf = 4 { export fr4L; }
+FPRT32: fpt^"L"					is fptx = 0 & fpt & fpthalf = 5 { export fr5L; }
+FPRT32: fpt^"L"					is fptx = 0 & fpt & fpthalf = 6 { export fr6L; }
+FPRT32: fpt^"L"					is fptx = 0 & fpt & fpthalf = 7 { export fr7L; }
+FPRT32: fpt^"L"					is fptx = 0 & fpt & fpthalf = 8 { export fr8L; }
+FPRT32: fpt^"L"					is fptx = 0 & fpt & fpthalf = 9 { export fr9L; }
+FPRT32: fpt^"L"					is fptx = 0 & fpt & fpthalf = 10 { export fr10L; }
+FPRT32: fpt^"L"					is fptx = 0 & fpt & fpthalf = 11 { export fr11L; }
+FPRT32: fpt^"L"					is fptx = 0 & fpt & fpthalf = 12 { export fr12L; }
+FPRT32: fpt^"L"					is fptx = 0 & fpt & fpthalf = 13 { export fr13L; }
+FPRT32: fpt^"L"					is fptx = 0 & fpt & fpthalf = 14 { export fr14L; }
+FPRT32: fpt^"L"					is fptx = 0 & fpt & fpthalf = 15 { export fr15L; }
+FPRT32: fpt^"L"					is fptx = 0 & fpt & fpthalf = 16 { export fr16L; }
+FPRT32: fpt^"L"					is fptx = 0 & fpt & fpthalf = 17 { export fr17L; }
+FPRT32: fpt^"L"					is fptx = 0 & fpt & fpthalf = 18 { export fr18L; }
+FPRT32: fpt^"L"					is fptx = 0 & fpt & fpthalf = 19 { export fr19L; }
+FPRT32: fpt^"L"					is fptx = 0 & fpt & fpthalf = 20 { export fr20L; }
+FPRT32: fpt^"L"					is fptx = 0 & fpt & fpthalf = 21 { export fr21L; }
+FPRT32: fpt^"L"					is fptx = 0 & fpt & fpthalf = 22 { export fr22L; }
+FPRT32: fpt^"L"					is fptx = 0 & fpt & fpthalf = 23 { export fr23L; }
+FPRT32: fpt^"L"					is fptx = 0 & fpt & fpthalf = 24 { export fr24L; }
+FPRT32: fpt^"L"					is fptx = 0 & fpt & fpthalf = 25 { export fr25L; }
+FPRT32: fpt^"L"					is fptx = 0 & fpt & fpthalf = 26 { export fr26L; }
+FPRT32: fpt^"L"					is fptx = 0 & fpt & fpthalf = 27 { export fr27L; }
+FPRT32: fpt^"L"					is fptx = 0 & fpt & fpthalf = 28 { export fr28L; }
+FPRT32: fpt^"L"					is fptx = 0 & fpt & fpthalf = 29 { export fr29L; }
+FPRT32: fpt^"L"					is fptx = 0 & fpt & fpthalf = 30 { export fr30L; }
+FPRT32: fpt^"L"					is fptx = 0 & fpt & fpthalf = 31 { export fr31L; }
+
+# 32 bit fp register access, upper half (R)
+FPRT32: fpt^"R"					is fptx = 1 & fpt & fpthalf = 0 { export fr0R; }
+FPRT32: fpt^"R"					is fptx = 1 & fpt & fpthalf = 1 { export fpe3; }
+FPRT32: fpt^"R"					is fptx = 1 & fpt & fpthalf = 2 { export fpe5; }
+FPRT32: fpt^"R"					is fptx = 1 & fpt & fpthalf = 3 { export fpe7; }
+FPRT32: fpt^"R"					is fptx = 1 & fpt & fpthalf = 4 { export fr4R; }
+FPRT32: fpt^"R"					is fptx = 1 & fpt & fpthalf = 5 { export fr5R; }
+FPRT32: fpt^"R"					is fptx = 1 & fpt & fpthalf = 6 { export fr6R; }
+FPRT32: fpt^"R"					is fptx = 1 & fpt & fpthalf = 7 { export fr7R; }
+FPRT32: fpt^"R"					is fptx = 1 & fpt & fpthalf = 8 { export fr8R; }
+FPRT32: fpt^"R"					is fptx = 1 & fpt & fpthalf = 9 { export fr9R; }
+FPRT32: fpt^"R"					is fptx = 1 & fpt & fpthalf = 10 { export fr10R; }
+FPRT32: fpt^"R"					is fptx = 1 & fpt & fpthalf = 11 { export fr11R; }
+FPRT32: fpt^"R"					is fptx = 1 & fpt & fpthalf = 12 { export fr12R; }
+FPRT32: fpt^"R"					is fptx = 1 & fpt & fpthalf = 13 { export fr13R; }
+FPRT32: fpt^"R"					is fptx = 1 & fpt & fpthalf = 14 { export fr14R; }
+FPRT32: fpt^"R"					is fptx = 1 & fpt & fpthalf = 15 { export fr15R; }
+FPRT32: fpt^"R"					is fptx = 1 & fpt & fpthalf = 16 { export fr16R; }
+FPRT32: fpt^"R"					is fptx = 1 & fpt & fpthalf = 17 { export fr17R; }
+FPRT32: fpt^"R"					is fptx = 1 & fpt & fpthalf = 18 { export fr18R; }
+FPRT32: fpt^"R"					is fptx = 1 & fpt & fpthalf = 19 { export fr19R; }
+FPRT32: fpt^"R"					is fptx = 1 & fpt & fpthalf = 20 { export fr20R; }
+FPRT32: fpt^"R"					is fptx = 1 & fpt & fpthalf = 21 { export fr21R; }
+FPRT32: fpt^"R"					is fptx = 1 & fpt & fpthalf = 22 { export fr22R; }
+FPRT32: fpt^"R"					is fptx = 1 & fpt & fpthalf = 23 { export fr23R; }
+FPRT32: fpt^"R"					is fptx = 1 & fpt & fpthalf = 24 { export fr24R; }
+FPRT32: fpt^"R"					is fptx = 1 & fpt & fpthalf = 25 { export fr25R; }
+FPRT32: fpt^"R"					is fptx = 1 & fpt & fpthalf = 26 { export fr26R; }
+FPRT32: fpt^"R"					is fptx = 1 & fpt & fpthalf = 27 { export fr27R; }
+FPRT32: fpt^"R"					is fptx = 1 & fpt & fpthalf = 28 { export fr28R; }
+FPRT32: fpt^"R"					is fptx = 1 & fpt & fpthalf = 29 { export fr29R; }
+FPRT32: fpt^"R"					is fptx = 1 & fpt & fpthalf = 30 { export fr30R; }
+FPRT32: fpt^"R"					is fptx = 1 & fpt & fpthalf = 31 { export fr31R; }
+
+
+fpcmp: ",FALSE?"		is fpcond=0 { result:1 = 0; export result; }
+fpcmp: ",false"			is fpcond=1 { result:1 = 0; export result; }
+fpcmp: ",?"				is fpcond=2 { result:1 = 0; export result; }
+fpcmp: ",!<=>"			is fpcond=3 { result:1 = 0; export result; }
+fpcmp: ",="				is fpcond=4 & FPR132 & FPR232 { result:1 = FPR232 f== FPR132; export result; }
+fpcmp: ",=T"			is fpcond=5 & FPR132 & FPR232 { result:1 = FPR232 f== FPR132; export result; }
+fpcmp: ",?="			is fpcond=6 & FPR132 & FPR232 { result:1 = FPR232 f== FPR132; export result; }
+fpcmp: ",!<>"			is fpcond=7 & FPR132 & FPR232 { result:1 = FPR232 f== FPR132; export result; }
+fpcmp: ",!?>="			is fpcond=8 & FPR132 & FPR232  { result:1 = FPR232 f< FPR132; export result; }
+fpcmp: ",<"				is fpcond=9 & FPR132 & FPR232  { result:1 = FPR232 f< FPR132; export result; }
+fpcmp: ",?<"			is fpcond=10 & FPR132 & FPR232 { result:1 = FPR232 f< FPR132; export result; }
+fpcmp: ",!>="			is fpcond=11 & FPR132 & FPR232 { result:1 = FPR232 f< FPR132; export result; }
+fpcmp: ",!?>"			is fpcond=12 & FPR132 & FPR232 { result:1 = FPR232 f<= FPR132; export result; }
+fpcmp: ",<="			is fpcond=13 & FPR132 & FPR232 { result:1 = FPR232 f<= FPR132; export result; }
+fpcmp: ",?<="			is fpcond=14 & FPR132 & FPR232 { result:1 = FPR232 f<= FPR132; export result; }
+fpcmp: ",!>"			is fpcond=15 & FPR132 & FPR232 { result:1 = FPR232 f<= FPR132; export result; }
+fpcmp: ",!?<="			is fpcond=16 & FPR132 & FPR232 { result:1 = FPR232 f> FPR132; export result; }
+fpcmp: ",>"				is fpcond=17 & FPR132 & FPR232 { result:1 = FPR232 f> FPR132; export result; }
+fpcmp: ",?>"			is fpcond=18 & FPR132 & FPR232 { result:1 = FPR232 f> FPR132; export result; }
+fpcmp: ",!<="			is fpcond=19 & FPR132 & FPR232 { result:1 = FPR232 f> FPR132; export result; }
+fpcmp: ",!?<"			is fpcond=20 & FPR132 & FPR232 { result:1 = FPR232 f>= FPR132; export result; }
+fpcmp: ",>="			is fpcond=21 & FPR132 & FPR232 { result:1 = FPR232 f>= FPR132; export result; }
+fpcmp: ",?>="			is fpcond=22 & FPR132 & FPR232 { result:1 = FPR232 f>= FPR132; export result; }
+fpcmp: ",!<;"			is fpcond=23 & FPR132 & FPR232 { result:1 = FPR232 f>= FPR132; export result; }
+fpcmp: ",!?="			is fpcond=24 & FPR132 & FPR232 { result:1 = FPR232 f!= FPR132; export result; }
+fpcmp: ",<>"			is fpcond=25 & FPR132 & FPR232 { result:1 = FPR232 f!= FPR132; export result; }
+fpcmp: ",!="			is fpcond=26 & FPR132 & FPR232 { result:1 = FPR232 f!= FPR132; export result; }
+fpcmp: ",!=T"			is fpcond=27 & FPR132 & FPR232 { result:1 = FPR232 f!= FPR132; export result; }
+fpcmp: ",!?"			is fpcond=28 { result:1 = 1; export result; }
+fpcmp: ",<=>"			is fpcond=29 { result:1 = 1; export result; }
+fpcmp: ",TRUE?"			is fpcond=30 { result:1 = 1; export result; }
+fpcmp: ",TRUE"			is fpcond=31 { result:1 = 1; export result; }
+
+fpcmp64: ",FALSE?"		is fpcond=0 { result:1 = 0; export result; }
+fpcmp64: ",false"		is fpcond=1 { result:1 = 0; export result; }
+fpcmp64: ",?"			is fpcond=2 { result:1 = 0; export result; }
+fpcmp64: ",!<=>;"		is fpcond=3 { result:1 = 0; export result; }
+fpcmp64: ",="			is fpcond=4 & FPR164 & FPR264 { result:1 = FPR264 f== FPR164; export result; }
+fpcmp64: ",=T"			is fpcond=5 & FPR164 & FPR264 { result:1 = FPR264 f== FPR164; export result; }
+fpcmp64: ",?="			is fpcond=6 & FPR164 & FPR264 { result:1 = FPR264 f== FPR164; export result; }
+fpcmp64: ",!<>"			is fpcond=7 & FPR164 & FPR264 { result:1 = FPR264 f== FPR164; export result; }
+fpcmp64: ",!?>="		is fpcond=8 & FPR164 & FPR264 { result:1 = FPR264 f< FPR164; export result; }
+fpcmp64: ",<"			is fpcond=9 & FPR164 & FPR264 { result:1 = FPR264 f< FPR164; export result; }
+fpcmp64: ",?<"			is fpcond=10 & FPR164 & FPR264 { result:1 = FPR264 f< FPR164; export result; }
+fpcmp64: ",!>="			is fpcond=11 & FPR164 & FPR264 { result:1 = FPR264 f< FPR164; export result; }
+fpcmp64: ",!?>"			is fpcond=12 & FPR164 & FPR264 { result:1 = FPR264 f<= FPR164; export result; }
+fpcmp64: ",<="			is fpcond=13 & FPR164 & FPR264 { result:1 = FPR264 f<= FPR164; export result; }
+fpcmp64: ",?<="			is fpcond=14 & FPR164 & FPR264 { result:1 = FPR264 f<= FPR164; export result; }
+fpcmp64: ",!>"			is fpcond=15 & FPR164 & FPR264 { result:1 = FPR264 f<= FPR164; export result; }
+fpcmp64: ",!?<="		is fpcond=16 & FPR164 & FPR264 { result:1 = FPR264 f> FPR164; export result; }
+fpcmp64: ",>"			is fpcond=17 & FPR164 & FPR264 { result:1 = FPR264 f> FPR164; export result; }
+fpcmp64: ",?>"			is fpcond=18 & FPR164 & FPR264 { result:1 = FPR264 f> FPR164; export result; }
+fpcmp64: ",!<="			is fpcond=19 & FPR164 & FPR264 { result:1 = FPR264 f> FPR164; export result; }
+fpcmp64: ",!?<"			is fpcond=20 & FPR164 & FPR264 { result:1 = FPR264 f>= FPR164; export result; }
+fpcmp64: ",>="			is fpcond=21 & FPR164 & FPR264 { result:1 = FPR264 f>= FPR164; export result; }
+fpcmp64: ",?>="			is fpcond=22 & FPR164 & FPR264 { result:1 = FPR264 f>= FPR164; export result; }
+fpcmp64: ",!<"			is fpcond=23 & FPR164 & FPR264 { result:1 = FPR264 f>= FPR164; export result; }
+fpcmp64: ",!?="			is fpcond=24 & FPR164 & FPR264 { result:1 = FPR264 f!= FPR164; export result; }
+fpcmp64: ",<>"			is fpcond=25 & FPR164 & FPR264 { result:1 = FPR264 f!= FPR164; export result; }
+fpcmp64: ",!="			is fpcond=26 & FPR164 & FPR264 { result:1 = FPR264 f!= FPR164; export result; }
+fpcmp64: ",!=T"			is fpcond=27 & FPR164 & FPR264 { result:1 = FPR264 f!= FPR164; export result; }
+fpcmp64: ",!?"			is fpcond=28 { result:1 = 1; export result; }
+fpcmp64: ",<=>"			is fpcond=29 { result:1 = 1; export result; }
+fpcmp64: ",TRUE?"		is fpcond=30 { result:1 = 1; export result; }
+fpcmp64: ",TRUE"		is fpcond=31 { result:1 = 1; export result; }
+ 	
+
+#################################
+# space register subconstructors
+#################################
+SR: "srN"					is s = 0 { export 0:4; }
+SR: sr1						is s = 1 & sr1 { export sr1; }
+SR: sr2						is s = 2 & sr2 { export sr2; }
+SR: sr3						is s = 3 & sr3 { export sr3; }
+
+SR3bit: sr0					is srbit2=0 & srbit1=0 & srbit0=0 & sr0 { export sr0; }
+SR3bit: sr1					is srbit2=0 & srbit1=0 & srbit0=1 & sr1 { export sr1; }
+SR3bit: sr2					is srbit2=0 & srbit1=1 & srbit0=0 & sr2 { export sr2; }
+SR3bit: sr3					is srbit2=0 & srbit1=1 & srbit0=1 & sr3 { export sr3; }
+SR3bit: sr4					is srbit2=1 & srbit1=0 & srbit0=0 & sr4 { export sr4; }
+SR3bit: sr5					is srbit2=1 & srbit1=0 & srbit0=1 & sr5 { export sr5; }
+SR3bit: sr6					is srbit2=1 & srbit1=1 & srbit0=0 & sr6 { export sr6; }
+SR3bit: sr7					is srbit2=1 & srbit1=1 & srbit0=1 & sr7 { export sr7; }
+
+# These two are the cosmetic constructors for printing purposes
+# They print out SR,RB or else just RB if the space register is determined by the lower bits of RB
+# s=0 means use the least significant two bits of the address in RB as the space register selection (added to 4)
+SRRB: (RB)						is RB & s=0 { }
+# s=1-3 means use SR1 - SR3
+SRRB: (SR,RB)					is SR & RB { }
+
+# BE uses three bits for the space register
+SRRB3bit: (SR3bit,RB)				is SR3bit & RB { }
+
+# these are the semantic constructors dealing with space registers
+# this first one gets the value in the appropriate space register and returns it.
+# it is used by LDSID.
+SRVAL:	SR						is SR & RB & s=0 {
+								   local selbits = (RB >> 30);
+								   srreg:4 = &sr4 + 4 * selbits;
+								   spc:4 = *[register] srreg;
+								   export spc; 
+}
+
+SRVAL: sr1						is sr1 & s=1  { export sr1; }
+SRVAL: sr2						is sr2 & s=2  { export sr2; }
+SRVAL: sr3						is sr3 & s=3  { export sr3; }
+
+# TODO This is broken until we decide on how to handle space registers and a 64 bit extended address space
+SPCBASE:		is SRVAL & RB {
+#								space:$(ADDRSIZE) = zext(SRVAL);
+								off:$(ADDRSIZE) = zext(RB); # need to decide whether to remove the lower bits to hide privilege-- TODO & 0xFFFFFFFFFFFFFFFC;
+#								address:$(ADDRSIZE) = (space << 32) | offset;
+#								export address;
+								export off; 
+}				
+
+###############################################
+# encodings for branches
+###############################################
+# 12 bit displacement encoded using assemble_12
+displacement2W: target				is w & w2 [ target = (1-(w*2)) *  ( ((w2 & 0x1) << 10) | ((w2>>1) & 0x3FF) ); ] { temp:$(ADDRSIZE) = target; export temp; }
+#branchTarget2W: target				is w & w2 [ target = inst_start + 8 + 4 * ( (w * 0xFFFFFFFFFFFFF800) | ((w2 & 0x1) << 10) | ((w2>>1) & 0x3FF) ); ] { temp:$(ADDRSIZE) = target; export temp; }
+# this has the space register added
+#branchTarget2W: target		is w & w2 [ target = inst_start + 8 + 4 * ( (w * 0xFFFFFFFFFFFFF800) | ((w2 & 0x1) << 10) | ((w2>>1) & 0x3FF) ); ] { temp:$(ADDRSIZE) = target; temp = temp + (iasq_front<<32); export *:$(ADDRSIZE) temp; }
+##### good before caret branchTarget2W: target		is w & w2 [ target = inst_start + 8 + 4 * ( (w * 0xFFFFFFFFFFFFF800) | ((w2 & 0x1) << 10) | ((w2>>1) & 0x3FF) ); ] { export *:$(ADDRSIZE) target;  }
+#branchTarget2W: target	is w & w2 [
+branchTarget2W: target is w & w2less2 & w2_2
+	[ 
+#		target = inst_start + 8 + 4 * ( (w * 0xFFFFFFFFFFFFF800) | ((w2 & 0x1) << 10) | ((w2>>1) & 0x3FF) );
+		target = inst_start + 8 + 4 * (
+			((-1 * w) << 11) |
+			(w2_2 << 10) |
+			w2less2
+		);
+		temp32 = branchImmDest;
+		branchImmDest = target;
+		globalset(inst_next, branchImmDest);
+		branchImmDest = temp32;
+	]
+	{ export *:$(ADDRSIZE) target; }
+
+
+# 17 bit displacement encoded using assemble_17
+#displacement3W: target				is w & w1 & w2 [ target = 4 * ( (w * 0xFFFFFFFFFFFF0000) | (w1 << 11) | ((w2 & 0x1) << 10) | ((w2>>1) & 0x3FF) ); ] { temp:$(ADDRSIZE) = target; export temp; }
+displacement3W: target				is w & w1 & w2less2 & w2_2 [ target = 4 * (
+	((-1 * w) << 16) |
+	(w1 << 11) |
+	(w2_2 << 10) |
+	w2less2
+);] { temp:$(ADDRSIZE) = target; export temp; }
+#branchTarget3W: target				is w & w1 & w2 [ target = inst_start + 8 + 4 * ( (w * 0xFFFFFFFFFFFF0000) | (w1 << 11) | ((w2 & 0x1) << 10) | ((w2>>1) & 0x3FF) ); ] { temp:$(ADDRSIZE) = target; export temp; }
+#branchTarget3W: target				is w & w1 & w2 [ target = inst_start + 8 + 4 * ( (w * 0xFFFFFFFFFFFF0000) | (w1 << 11) | ((w2 & 0x1) << 10) | ((w2>>1) & 0x3FF) ); ] { temp:$(ADDRSIZE) = target; target = target + (iasq_front << 32); export temp; }
+#####good before caret  branchTarget3W: target				is w & w1 & w2 [ target = inst_start + 8 + 4 * ( (w * 0xFFFFFFFFFFFF0000) | (w1 << 11) | ((w2 & 0x1) << 10) | ((w2>>1) & 0x3FF) ); ] { export *:$(ADDRSIZE) target; }
+#branchTarget3W: target	is w & w1 & w2
+branchTarget3W: target				is w & w1 & w2less2 & w2_2
+	[
+#		target = inst_start + 8 + 4 * ( (w * 0xFFFFFFFFFFFF0000) | (w1 << 11) | ((w2 & 0x1) << 10) | ((w2>>1) & 0x3FF) );
+		target = inst_start + 8 + 4 * (
+			((-1 * w) << 16) |
+			(w1 << 11) |
+			(w2_2 << 10) |
+			w2less2
+		);
+		temp32 = branchImmDest;
+		branchImmDest = target;
+		globalset(inst_next, branchImmDest);
+		branchImmDest = temp32;
+	]
+	{ export *:$(ADDRSIZE) target; }
+
+# simple IP relative branch
+IPRelativeIndexedTarget: 						is RX
+{
+	target:$(ADDRSIZE) = inst_start + (RX<<3) + 8;
+	branchIndDest = target;
+	export target;
+}
+
+# vectored (base register plus index register) branch
+IndexedTarget:									is RX & RB
+	{
+		target:$(ADDRSIZE) = (RX<<3) + RB;
+		branchIndDest = target;
+		export target;
+	}
+
+# vectored (base register plus index register -- but index register is r0 so skip it since this is a return) branch
+ReturnTarget:									is RB
+	{
+		branchIndDest = RB;
+		export RB;
+	}
+
+# generate the target address for an external branch
+externalTarget: displacement3W^SRRB3bit				is RB & displacement3W & SRRB3bit {
+#	spaceID:$(ADDRSIZE) = zext(SRVAL);
+#	spaceID = spaceID << 32;
+#	spaceID:$(ADDRSIZE) = 0;
+# currently ignoring the spaceID TODO FIX THIS?
+#	target = spaceID + sext(RB) + sext(displacement3W);
+	target:$(ADDRSIZE) = sext(displacement3W) + sext(RB);
+	branchIndDest = target;
+	export target;
+}
+
+shiftC: shift				is cp [ shift=31-cp; ] { amount:4 = shift; export amount; }
+shiftCLen: shift			is im5 [ shift=32-im5; ] { amount:4 = shift; export amount; }
+
+#lse14: offset				is sim14 & bit0 [ offset = (-1 * bit0) * ( (sim14 >> 1) & 0x1FFF ); ] { temp:4 = offset; export temp; }
+#lse14: offset				is sim14 & bit0 [ offset = (-1 * 0x2000 * bit0) | ( (sim14 >> 1) & 0x1FFF ); ] { temp:4 = sext(offset:4); export temp; }
+lse14: off				is im14less0 & bit0 [ off = ((-1 * bit0) << 13) | im14less0; ] { temp:4 = sext(off:4); export temp; }
+####lse14: offset				is sim14 & bit0 [ offset = (0xFFFFFFFFFFFFE000 * bit0) | ( (sim14 >> 1) & 0x1FFF ); ] { temp:4 = offset; export temp; }
+
+#lse5: offset				is sim5 & bit0  [ offset = (-1 * 0x10 * bit0) | ( (sim5 >> 1) & 0xF ); ] { temp:1 = sext(offset:1); export temp; }
+lse5: off				is im5less0 & bit0 [ off = ((-1 * bit0) << 4) | im5less0; ] { temp:1 = sext(off:1); export temp; }
+
+#highlse5: offset			is highIm5 & bit16 [ offset = (-1 * 0x10 * bit16) | ( (highIm5 >> 1) & 0xF ); ] { temp:1 = offset; export temp; }
+highlse5: off			is highIm5less16 & bit16 [ off = ((-1 * bit16) << 4) | highIm5less16; ] { temp:1 = off; export temp; }
+
+#lse21: offset				is sim21 [ offset = ( ((sim21 & 0x1) * 0xFFFFFFFFFFF00000) | ((sim21 & 0xFFE) << 8) | ((sim21 & 0xC000) >> 7) | ((sim21 & 0x1F0000) >> 14) | ((sim21 & 0x3000) >> 12) ) << 11  ; ] { temp:$(REGSIZE) = offset; export temp; }
+lse21: off				is im21less0 & bit0 & im21_1_12 & im21_12_14 & im21_14_16 & im21_16_21 [
+	off = (
+		((-1 * bit0) << 20) |
+		(im21_1_12 << 9) |
+		(im21_14_16 << 7) |
+		(im21_16_21 << 2) |
+		im21_12_14
+	) << 11;
+] { temp:$(REGSIZE) = off; export temp; }
+
+# Note for the im11 11-bit immediate, the sign is in bit 0, and the rest of the value is in bit 1 to 10.
+# Negative numbers are stored 2s complement, with bit0 set to 1.
+#
+# Need to set temp32 to lse11 since the value of lse11 does not propogate so well to uplevel tables, maybe a compiler bug
+#
+#lse11: immed				is im11 & bit0
+lse11: immed				is im11less0 & bit0
+	[ immed	= ((-1*bit0) << 10) | im11less0; temp32 = immed; ]
+#	[ immed = (bit0 * 0xFFFFFFFFFFFFFC00) | ( (im11 >> 1) & 0x3FF ); temp32 = immed; ]
+	{ temp:4 = immed; export temp; }
+
+OFF_BASE_14: lse14^SRRB	is lse14 & SRRB & SPCBASE { temp:$(ADDRSIZE) = SPCBASE + sext(lse14); export temp; }
+
+#############################
+# condition codes
+#############################
+
+# shift conditions. There are no inverted forms of these conditions.
+ShiftCond:				is c=0 { export 0:1; } # never 
+ShiftCond:				is c=1 & RT { tmp:1 = (nullifyCondResult == 0) ; export tmp; } # equal 
+ShiftCond:				is c=2 & RT { tmp:1 = ((nullifyCondResult & (1:$(REGSIZE) << $(REGSIZE)-1)) != 0) ; export tmp; } # leftmost bit is one
+ShiftCond:				is c=3 & RT { tmp:1 = ((nullifyCondResult & 0x1) != 0) ; export tmp; } # rightmost bit is 1 (odd)
+ShiftCond:				is c=4 { export 1:1; } # always
+ShiftCond:				is c=5 & RT { tmp:1 = (nullifyCondResult != 0) ; export tmp; } # some bits are one
+ShiftCond:				is c=6 & RT { tmp:1 = ((nullifyCondResult & (1:$(REGSIZE) << $(REGSIZE)-1)) == 0) ; export tmp; } # leftmost bit is zero
+ShiftCond:				is c=7 & RT { tmp:1 = ((nullifyCondResult & 0x1) == 0) ; export tmp; } # rightmost bit is zero (even)
+
+ShiftCondNullify:	is c=0 { }
+ShiftCondNullify:	is ShiftCond [ nullifyEnable = 1; globalset(inst_next, nullifyEnable); ]
+{
+	nullifyNextCond = ShiftCond;
+}
+
+# deposit conditions. There are no inverted forms of these conditions.
+DepCond:				is c=0 { export 0:1; } # never 
+DepCond:				is c=1 { tmp:1 = (nullifyCondResult == 0) ; export tmp; } # equal 
+DepCond:				is c=2 { tmp:1 = (nullifyCondResult s< 0) ; export tmp; } # leftmost bit is one (< 0)
+DepCond:				is c=3 { tmp:1 = ((nullifyCondResult & 0x1) == 1) ; export tmp; } # rightmost bit is 1 (odd)
+DepCond:				is c=4 { export 1:1; } # always
+DepCond:				is c=5 { tmp:1 = (nullifyCondResult != 0) ; export tmp; } # some bits are one
+DepCond:				is c=6 { tmp:1 = (nullifyCondResult s>= 0) ; export tmp; } # leftmost bit is zero (>=)
+DepCond:				is c=7 { tmp:1 = ((nullifyCondResult & 0x1) == 0) ; export tmp; } # rightmost bit is zero (even)
+
+DepCondNullify:	is c=0 { }
+DepCondNullify:	is DepCond [nullifyEnable = 1; globalset(inst_next, nullifyEnable); ]
+{
+	nullifyNextCond = DepCond;
+}
+
+# extract conditions. The extract ops target R1, not R2 like deposit does
+ExtrCond:				is c=0 { export 0:1; } # never 
+ExtrCond:				is c=1 { tmp:1 = (nullifyCondResult == 0) ; export tmp; } # equal 
+ExtrCond:				is c=2 { tmp:1 = ((nullifyCondResult & (1:$(REGSIZE) << $(REGSIZE)-1)) != 0) ; export tmp; } # leftmost bit is one
+ExtrCond:				is c=3 { tmp:1 = ((nullifyCondResult & 0x1) != 0) ; export tmp; } # rightmost bit is 1 (odd)
+ExtrCond:				is c=4 { export 1:1; } # always
+ExtrCond:				is c=5 { tmp:1 = (nullifyCondResult != 0) ; export tmp; } # some bits are one
+ExtrCond:				is c=6 { tmp:1 = ((nullifyCondResult & (1:$(REGSIZE) << $(REGSIZE)-1)) == 0) ; export tmp; } # leftmost bit is zero
+ExtrCond:				is c=7 { tmp:1 = ((nullifyCondResult & 0x1) == 0) ; export tmp; } # rightmost bit is zero (even)
+
+ExtrCondNullify:	is c=0 { }
+ExtrCondNullify:	is ExtrCond [ nullifyEnable = 1; globalset(inst_next, nullifyEnable); ]
+{
+	nullifyNextCond = ExtrCond;
+}
+
+
+# a subset of the SED conditions used for bit tests
+BVBCond:				is c=2 & R1 { tmp:1 = ((R1 >> (31-sar)) & 0x1) == 1 ; export tmp; } # target bit is one
+BVBCond:				is c=6 & R1 { tmp:1 = ((R1 >> (31-sar)) & 0x1) == 0 ; export tmp; } # target bit is zero
+
+BBCond:					is c=2 & R1 & bboffset { tmp:1 = ((R1 >> (31-bboffset)) & 0x1) == 1 ; export tmp; } # target bit is one
+BBCond:					is c=6 & R1 & bboffset { tmp:1 = ((R1 >> (31-bboffset)) & 0x1) == 0 ; export tmp; } # target bit is zero
+
+#
+# unit conditions for checking byte ranges within a word
+#
+RegUnitCond:		is c=0 { export 0:1; } # never
+RegUnitCond:		is c=2 & RT  { tmp:1 = (RT:1 == 0) || ((RT:2 & 0xFF00) == 0) || ((RT:3 & 0xFF0000) == 0) || ((RT & 0xFF000000) == 0)   ; export tmp; } # some byte zero
+RegUnitCond:		is c=3 & RT { tmp:1 = ((RT:2 & 0xFFFF) == 0) || ((RT & 0xFFFF0000) == 0) ; export tmp; } # some halfword zero
+RegUnitCond:		is c=4  { export 0:1; } # some digit carry -- TODO FIGURE OUT BCD
+RegUnitCond:		is c=6  { export 0:1; } # some byte carry -- TODO BCD
+RegUnitCond:		is c=7  { export 0:1; } # some halfword carry -- TODO BCD
+
+UnitCond: ""			is RegUnitCond & fv=0 { export RegUnitCond; }
+UnitCond: ""			is RegUnitCond & fv=1 { tmp:1 = ! RegUnitCond; export tmp; }
+
+UnitCondNullify:	is c=0 & fv=0 { }
+UnitCondNullify:	is UnitCond [ nullifyEnable = 1; globalset(inst_next, nullifyEnable); ]
+{
+	nullifyNextCond = UnitCond;
+}
+
+UnitCondSym: RegUnitCondSym	is RegUnitCondSym & fv=0 { }
+UnitCondSym: InvUnitCondSym	is InvUnitCondSym & fv=1 { }
+
+#
+##### The Add Conditions from table 5-4 on page 5-5
+#
+RegAddCond: 		is c = 0 { export 0:1; } # never
+RegAddCond: 		is c = 1 & R1 & R2 { tmp:1 = (R1 == R2) ; export tmp; } # equal
+RegAddCond: 		is c = 2 & R1 & R2 { tmp:1 = (R1 s< -R2) ; export tmp; } # signed less than negative of R2 
+RegAddCond: 		is c = 3 & R1 & R2 { tmp:1 = (R1 s<= R2) ; export tmp; } # signed less than or equal to R2
+RegAddCond: 		is c = 4 & R1 & R2 { tmp:1 = ! carry(R1,R2) ; export tmp; } # unsigned sum does not overflow
+RegAddCond: 		is c = 5 & R1 & R2 { tmp:1 = (R1 + R2) == 0 ; export tmp; } # sum is zero or no overflow (why two definitions??)
+RegAddCond: 		is c = 6 & R1 & R2 { tmp:1 = scarry(R1,R2); export tmp; } # signed sum overflows
+RegAddCond: 		is c = 7 & R1 & R2 { tmp:1 = ((R1+R2) & 0x1) == 0x1 ; export tmp; } # sum is odd
+
+AddCond:			is RegAddCond & fv=0 { export RegAddCond; }
+AddCond:			is RegAddCond & fv=1 { tmp:1 = ! RegAddCond; export tmp; }
+
+AddCondNullify:	is c=0 & fv=0 { }
+AddCondNullify:	is AddCond [ nullifyEnable=1; globalset(inst_next, nullifyEnable); ]
+{
+	nullifyNextCond = AddCond;
+}
+
+AddCondSym: RegAddCondSym	is RegAddCondSym & fv=0 { }
+AddCondSym: InvAddCondSym	is InvAddCondSym & fv=1 { }
+
+RegAddCondI: 		is c = 0 { export 0:1; } # never
+RegAddCondI: 		is c = 1 & highlse5 & R2 { val:$(REGSIZE) = sext(highlse5:1); tmp:1 = (val == -R2) ; export tmp; } # equal to negated
+RegAddCondI: 		is c = 2 & highlse5 & R2 { val:$(REGSIZE) = sext(highlse5:1); tmp:1 = (val s< -R2) ; export tmp; } # signed less than negated R2 
+RegAddCondI: 		is c = 3 & highlse5 & R2 { val:$(REGSIZE) = sext(highlse5:1); tmp:1 = (val s<= -R2) ; export tmp; } # signed less than or equal to R2
+RegAddCondI: 		is c = 4 & highlse5 & R2 { val:$(REGSIZE) = sext(highlse5:1); tmp:1 = ! carry(val,R2) ; export tmp; } # unsigned sum does not overflow
+RegAddCondI: 		is c = 5 & highlse5 & R2 { val:$(REGSIZE) = sext(highlse5:1); tmp:1 = (val + R2) == 0 ; export tmp; } # sum is zero or no overflow (why two definitions??)
+RegAddCondI: 		is c = 6 & highlse5 & R2 { val:$(REGSIZE) = sext(highlse5:1); tmp:1 = scarry(val,R2); export tmp; } # signed sum overflows
+RegAddCondI: 		is c = 7 & highlse5 & R2 { val:$(REGSIZE) = sext(highlse5:1); tmp:1 = ((val+R2) & 0x1) == 0x1 ; export tmp; } # sum is odd
+
+
+# Some notes-
+#	lse11 is derived from an 11-bit immediate, so we need to take 2 bytes, not 1 byte as in the original coding
+# 	R2 must sometimes be negated before the comparison, as per the manual, Table 5-4
+#	The arithmetic comparison must be performed on a larger size temp than the original, so that negating 0x80000000 works correctly
+#	temp32 is used because the value of lse11 in the pcode does not flow so well to here - maybe a compiler bug?
+#
+
+RegAddCondI11: is c = 0 { export 0:1; } # never
+
+RegAddCondI11: is temp32 & c = 1 & lse11 & R2 {
+                                val:8 = sext(temp32:2); tmp_R2:8 = sext(R2);
+				tmp:1 = (val == -tmp_R2) ; export tmp; } # equal
+
+RegAddCondI11: is temp32 & c = 2 & lse11 & R2 {
+                                val:8 = sext(temp32:2); tmp_R2:8 = sext(R2);
+				tmp:1 = (val s< -tmp_R2) ; export tmp; } # signed less than negative of R2
+
+RegAddCondI11: is temp32 & c = 3 & lse11 & R2 {
+				val:8 = sext(temp32:2); tmp_R2:8 = sext(R2);
+				tmp:1 = (val s<= -tmp_R2) ; export tmp; } # signed less than or equal to R2
+
+RegAddCondI11: is temp32 & c = 4 & lse11 & R2 {
+				val:$(REGSIZE) = sext(temp32:2);
+				tmp:1 = ! carry(val,R2) ; export tmp; } # unsigned sum does not overflow
+
+RegAddCondI11: is temp32 & c = 5 & lse11 & R2 {
+				# Don't need 64-bit arithmetic here
+				val:$(REGSIZE) = sext(temp32:2);
+				tmp:1 = (val + R2) == 0 ; export tmp; } # sum is zero or no overflow (why two definitions??)
+
+RegAddCondI11: is temp32 & c = 6 & lse11 & R2 {
+				val:$(REGSIZE) = sext(temp32:2);
+				tmp:1 = scarry(val,R2); export tmp; } # signed sum overflows
+
+RegAddCondI11: is temp32 & c = 7 & lse11 & R2 {
+				val:8 = sext(temp32:2); tmp_R2:8 = sext(R2);
+				tmp:1 = ((val+tmp_R2) & 0x1) == 0x1 ; export tmp; } # sum is odd
+
+AddCondI11:		is RegAddCondI11 & fv=0 { export RegAddCondI11; }
+AddCondI11:		is RegAddCondI11 & fv=1 { temp:1 = ! RegAddCondI11; export temp; }
+
+AddCondI11Nullify:	is c=0 & fv=0 { }
+AddCondI11Nullify:	is AddCondI11 [ nullifyEnable=1; globalset(inst_next, nullifyEnable); ]
+{
+	nullifyNextCond = AddCondI11;
+}
+
+#
+#### Compare / Subtract Instructions
+#
+RegCSCond: 		is c=0 & R1 & R2 { export 0:1; }  # never
+RegCSCond: 		is c=1 & R1 & R2 { tmp:1 = (R1 == R2) ; export tmp; } # equal
+RegCSCond: 		is c=2 & R1 & R2 { tmp:1 = (R1 s< R2) ; export tmp; } # signed less than
+RegCSCond: 		is c=3 & R1 & R2 { tmp:1 = (R1 s<= R2) ; export tmp; } # signed less than equal
+RegCSCond: 		is c=4 & R1 & R2 { tmp:1 = (R1 < R2) ; export tmp; } # unsigned less than 
+RegCSCond: 		is c=5 & R1 & R2 { tmp:1 = (R1 <= R2) ; export tmp; } # unsigned less than equal
+RegCSCond: 		is c=6 & R1 & R2 { tmp:1 = sborrow(R1,R2) ; export tmp; } # signed minus overflows (borrows)
+RegCSCond: 		is c=7 & R1 & R2 { tmp:1 = ((R1 - R2) & 0x1) == 1 ; export tmp; } # odd
+
+CSCond: 	is fv=0 & RegCSCond { export RegCSCond; }
+CSCond: 	is fv=1 & RegCSCond { tmp:1 = ! RegCSCond; export tmp; }
+
+CSCondNullify:	is c=0 & fv=0 { }
+CSCondNullify:	is CSCond [ nullifyEnable = 1; globalset(inst_next, nullifyEnable); ]
+{
+	nullifyNextCond = CSCond;
+}
+
+CSCondSym: RegCSCondSym	is RegCSCondSym & fv=0 { }
+CSCondSym: InvCSCondSym	is InvCSCondSym & fv=1 { }
+
+# The Compare or Subtract conditions compared with 5 bit immediates
+# This is used in the COMIB[TF] instructions. The inverted versions are never used.
+RegCSCondI: 		is  c=0 & R2 & highlse5 { export 0:1; }  # never
+RegCSCondI: 		is  c=1 & R2 & highlse5 { val:$(REGSIZE) = sext(highlse5); tmp:1 = (val == R2) ; export tmp; } # equal
+RegCSCondI: 		is  c=2 & R2 & highlse5 { val:$(REGSIZE) = sext(highlse5); tmp:1 = (val s< R2) ; export tmp; } # signed less than
+RegCSCondI: 		is  c=3 & R2 & highlse5 { val:$(REGSIZE) = sext(highlse5); tmp:1 = (val s<= R2) ; export tmp; } # signed less than equal
+RegCSCondI: 		is  c=4 & R2 & highlse5 { val:$(REGSIZE) = sext(highlse5); tmp:1 = (val < R2) ; export tmp; } # unsigned less than 
+RegCSCondI: 		is  c=5 & R2 & highlse5 { val:$(REGSIZE) = sext(highlse5); tmp:1 = (val <= R2) ; export tmp; } # unsigned less than equal
+RegCSCondI: 		is  c=6 & R2 & highlse5 { val:$(REGSIZE) = sext(highlse5); local diff = (val - R2); tmp:1 = (val s> 0 && R2 s> 0 && diff s< 0) || (val s< 0 && R2 s< 0 && diff s> 0)  ; export tmp; } # overflow
+RegCSCondI: 		is  c=7 & R2 & highlse5 { val:$(REGSIZE) = sext(highlse5); tmp:1 = ((val - R2) & 0x1) == 1 ; export tmp; } # odd
+
+# The Compare or Subtract conditions compared with 11 bit immediates. These are used with the SUBI[O] and COMICLR instructions. Both regular and inverted forms are used.
+RegCSCondI11: 		is  c=0 & R2 & lse11 { export 0:1; }  # never
+RegCSCondI11: 		is  c=1 & R2 & lse11 { val:$(REGSIZE) = sext(lse11); tmp:1 = (val == R2) ; export tmp; } # equal
+RegCSCondI11: 		is  c=2 & R2 & lse11 { val:$(REGSIZE) = sext(lse11); tmp:1 = (val s< R2) ; export tmp; } # signed less than
+RegCSCondI11: 		is  c=3 & R2 & lse11 { val:$(REGSIZE) = sext(lse11); tmp:1 = (val s<= R2) ; export tmp; } # signed less than equal
+RegCSCondI11: 		is  c=4 & R2 & lse11 { val:$(REGSIZE) = sext(lse11); tmp:1 = (val < R2) ; export tmp; } # unsigned less than 
+RegCSCondI11: 		is  c=5 & R2 & lse11 { val:$(REGSIZE) = sext(lse11); tmp:1 = (val <= R2) ; export tmp; } # unsigned less than equal
+RegCSCondI11: 		is  c=6 & R2 & lse11 { val:$(REGSIZE) = sext(lse11); local diff = (val - R2); tmp:1 = (val s> 0 && R2 s> 0 && diff s< 0) || (val s< 0 && R2 s< 0 && diff s> 0)  ; export tmp; } # overflow
+RegCSCondI11: 		is  c=7 & R2 & lse11 { val:$(REGSIZE) = sext(lse11); tmp:1 = ((val - R2) & 0x1) == 1 ; export tmp; } # odd
+
+CSCondI11:		is RegCSCondI11 & fv=0 { export RegCSCondI11; }
+CSCondI11:		is RegCSCondI11 & fv=1 { temp:1 = ! RegCSCondI11; export temp; }
+
+CSCondI11Nullify:	is c=0 & fv=0 { }
+CSCondI11Nullify:	is CSCondI11 [ nullifyEnable = 1; globalset(inst_next, nullifyEnable); ]
+{
+	nullifyNextCond = CSCondI11;
+}
+
+#
+#### Logical Conditions
+#
+RegLogicCond:		is c=0 { export 0:1; } # never
+RegLogicCond:		is c=1 & RT { tmp:1 = (RT == 0) ; export tmp; } # equal, all zeros
+RegLogicCond:		is c=2 & RT { tmp:1 = (RT & 0x80000000) != 0 ; export tmp; } # <, leftmost bit is 1
+RegLogicCond:		is c=3 & RT { tmp:1 = ((RT & 0x80000000) != 0) || RT == 0 ; export tmp; } # <=, leftmost bit is 1 or all bits are zero
+RegLogicCond:		is c=7 & RT { tmp:1 = (RT & 0x1) == 0x1; export tmp; } # odd, rightmost bit is 1
+
+LogicCond:		is fv=0 & RegLogicCond { tmp:1 = RegLogicCond; export tmp; }   # non-inverted cases
+LogicCond:		is fv=1 & RegLogicCond { tmp:1 = ! RegLogicCond; export tmp; } # inverted cases
+
+LogicCondSym: RegLogicCondSym	is RegLogicCondSym & fv=0 { }
+LogicCondSym: InvLogicCondSym	is InvLogicCondSym & fv=1 { }
+
+LogicCondNullify:	is c=0 & fv=0 { }
+LogicCondNullify:	is LogicCond [ nullifyEnable = 1; globalset(inst_next, nullifyEnable); ]
+{
+	nullifyNextCond = LogicCond;
+}
+
+##########################################
+# Completers from the tables in chapter 5
+##########################################
+
+# Table 5-11 on page 5-22
+# The shifted form for byte doesn't shift, as byte addressing is single byte aligned
+indexedByteAccessCmplt: 					is u=0 & m=0 & RX & SPCBASE { off:$(ADDRSIZE) = SPCBASE + sext(RX); export off; } # none
+indexedByteAccessCmplt: ",M"				is u=0 & m=1 & RX & RB & SPCBASE { off:$(ADDRSIZE) = SPCBASE; RB = RB + RX; export off; } # M, modify, post inc by RX
+indexedByteAccessCmplt: ",S"				is u=1 & m=0 & RX & SPCBASE { off:$(ADDRSIZE) = SPCBASE + sext(RX); export off; } # S, shift left by 2
+indexedByteAccessCmplt: ",SM"				is u=1 & m=1 & RX & RB & SPCBASE { off:$(ADDRSIZE) = SPCBASE; RB = RB + sext(RX); export off; } # SM, shift and modify
+
+# The shifted form for halfword shifts by 2 bytes, since that is the size of a halfword
+indexedHalfwordAccessCmplt: 					is u=0 & m=0 & RX & SPCBASE { off:$(ADDRSIZE) = SPCBASE + sext(RX); export off; } # none
+indexedHalfwordAccessCmplt: ",M"				is u=0 & m=1 & RX & RB & SPCBASE { off:$(ADDRSIZE) = SPCBASE; RB = RB + RX; export off; } # M, modify, post inc by RX
+indexedHalfwordAccessCmplt: ",S"				is u=1 & m=0 & RX & SPCBASE { off:$(ADDRSIZE) = SPCBASE + sext((RX << 1)); export off; } # S, shift left by 1
+indexedHalfwordAccessCmplt: ",SM"				is u=1 & m=1 & RX & RB & SPCBASE { off:$(ADDRSIZE) = SPCBASE; RB = RB + sext(RX << 1); export off; } # SM, shift and modify
+
+# The shifted form for words shifts by 2 (x4), since words are aligned on 4 and increment by 4
+indexedWordAccessCmplt: 					is u=0 & m=0 & RX & SPCBASE { off:$(ADDRSIZE) = SPCBASE + sext(RX); export off; } # none
+indexedWordAccessCmplt: ",M"				is u=0 & m=1 & RX & RB & SPCBASE { off:$(ADDRSIZE) = SPCBASE; RB = RB + RX; export off; } # M, modify, post inc by RX
+indexedWordAccessCmplt: ",S"				is u=1 & m=0 & RX & SPCBASE { off:$(ADDRSIZE) = SPCBASE + sext((RX << 2)); export off; } # S, shift left by 2
+indexedWordAccessCmplt: ",SM"				is u=1 & m=1 & RX & RB & SPCBASE { off:$(ADDRSIZE) = SPCBASE; RB = RB + sext(RX << 2); export off; } # SM, shift and modify
+
+# same as above, but shifts by 3 bits. Used for the LDCWX instruction
+indexedDoublewordAccessCmplt: 					is u=0 & m=0 & RX & SPCBASE { off:$(ADDRSIZE) = SPCBASE + sext(RX); export off; } # none
+indexedDoublewordAccessCmplt: ",M"				is u=0 & m=1 & RX & RB & SPCBASE { off:$(ADDRSIZE) = SPCBASE; RB = RB + RX; export off; } # M, modify, post inc by RX
+indexedDoublewordAccessCmplt: ",S"				is u=1 & m=0 & RX & SPCBASE { off:$(ADDRSIZE) = SPCBASE + sext((RX << 3)); export off; } # S, shift left by 3 NOTE YES THIS IS 3
+indexedDoublewordAccessCmplt: ",SM"			is u=1 & m=1 & RX & RB & SPCBASE { off:$(ADDRSIZE) = SPCBASE; RB = RB + sext(RX << 3); export off; } # SM, shift and modify
+
+# Table 5-12 on Page 5-24
+# these are for loads, e.g.  ldws
+shortDispCmplt: 						is m=0 & highlse5 & SPCBASE { off:$(ADDRSIZE) = SPCBASE + sext(highlse5); export off; } # no modification
+shortDispCmplt: ",MA"					is u=0 & m=1 & RB & RX & SPCBASE & highlse5 { off:$(ADDRSIZE) = SPCBASE; RB = RB + sext(highlse5); export off; } # modify after
+shortDispCmplt: ",MB"					is u=1 & m=1 & RB & RX & SPCBASE & highlse5 { local lse = sext(highlse5); off:$(ADDRSIZE) = SPCBASE + sext(lse); RB = RB + lse; export off; } # modify before
+
+# short displacement for stores, e.g. stws
+storeShortDispCmplt: 						is m=0 & lse5 & SPCBASE { off:$(ADDRSIZE) = SPCBASE + sext(lse5); export off; } # no modification
+storeShortDispCmplt: ",MA"					is u=0 & m=1 & RB & RX & SPCBASE & lse5 { off:$(ADDRSIZE) = SPCBASE; RB = RB + sext(lse5); export off; } # modify after
+storeShortDispCmplt: ",MB"					is u=1 & m=1 & RB & RX & SPCBASE & lse5 { local lse = sext(lse5); off:$(ADDRSIZE) = SPCBASE + sext(lse); RB = RB + lse; export off; } # modify before
+
+# Table 5-13 on page 5-26
+storeBytesShortCmplt: 					is u=0 & m=0 & SPCBASE & lse5 { off:$(ADDRSIZE) = SPCBASE + sext(lse5); export off; } # none / beginning, don't modify base register
+storeBytesShortCmplt: ",BM"				is u=0 & m=1 & SPCBASE & RR & lse5  { off:$(ADDRSIZE) = SPCBASE + sext(lse5); RR = (RR + sext(lse5)) & 0xFFFFFFFC; export off; } # beginning, modify base register
+storeBytesShortCmplt: ",E"				is u=1 & m=0 & SPCBASE & lse5 { off:$(ADDRSIZE) = SPCBASE + sext(lse5); export off; } # ending, don't modify
+storeBytesShortCmplt: ",EM"				is u=1 & m=1 & SPCBASE & RR & lse5 { off:$(ADDRSIZE) = SPCBASE + sext(lse5); RR = (RR + sext(lse5)) & 0xFFFFFFFC; export off; } # ending, modify
+
+# u fixed at 0, Table 5-11 on page 5-22, for LPA and related system level opcodes
+sysCmplt: 							is m=0 { }
+sysCmplt: ",M"						is m=1 { }
+
+# Table 5-8 on page 5-17
+loadCC: 							is cc=0 { }
+loadCC: ",SL"						is cc=2 { }
+
+# Table 5-9 on page 5-18
+storeCC: 							is cc=0 { }
+storeCC: ",BC"						is cc=1 { }
+storeCC: ",SL"						is cc=2 { }
+
+# Table 5-10 on page 5-18
+loadClearCC: 						is cc=0 { }
+loadClearCC: ",CO"					is cc=1 { }
+
+# nullification as used with branches
+#####nullifyForBranch:					is n=0 { export 0:1; }
+#####nullifyForBranch: ",N"				is n=1 { export 1:1; }
+# caret versions
+nullifyForBranch:						is n=0 { export 0:1; }
+nullifyForBranch: ",N"					is n=1 [ nullifyEnable = 1; globalset(inst_next, nullifyEnable); ] { export 1:1; }
+
+nullifySymForBranch:					is n=0 { }
+nullifySymForBranch: ",N"				is n=1 { }
+
+# nullification as used with special function unit ops
+nullifyForSpecial:						is spn=0 { }
+nullifyForSpecial: ",N"					is spn=1 { }
+
+# Floating point completers
+#csize: "SGL"							is fpsize=0 & opfam=0x0C { }
+#csize: "DBL"							is fpsize=1 & opfam=0x0C { }
+#csize: "QUAD"							is fpsize=3 & opfam=0x0C { }
+
+#esize: "SGL"							is fpsize=0 & opfam=0x0E { }
+#esize: "DBL"							is fpsize=1 & opfam=0x0E { }
+
+SFU: sfu								is sfu { }
+
+

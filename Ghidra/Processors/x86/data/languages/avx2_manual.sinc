@@ -1,0 +1,203 @@
+# VINSERTI128/VINSERTI32x4/VINSERTI64x2/VINSERTI32x8/VINSERTI64x4 5-314 PAGE 2138 LINE 109785
+define pcodeop vinserti128 ;
+:VINSERTI128 YmmReg1, vexVVVV_YmmReg, XmmReg2_m128, imm8 is $(VEX_NDS) & $(VEX_L256) & $(VEX_PRE_66) & $(VEX_0F3A) & $(VEX_W0) & vexVVVV_YmmReg & vexVVVV_YmmReg_DQa & vexVVVV_YmmReg_DQb; byte=0x38; (YmmReg1 & YmmReg1_DQa & YmmReg1_DQb) ... & XmmReg2_m128; imm8 & imm8_0 {
+	local tmp:16 = XmmReg2_m128;
+
+	# ignoring all but the least significant bit
+	if (imm8_0:1 == 0) goto <case0>;
+	if (imm8_0:1 == 1) goto <case1>;
+
+ <case0>
+	YmmReg1_DQa = tmp;
+	YmmReg1_DQb = vexVVVV_YmmReg_DQb;
+	goto <done>;
+
+ <case1>
+	YmmReg1_DQa = vexVVVV_YmmReg_DQa;
+	YmmReg1_DQb = tmp;
+
+ <done>
+}
+
+# VGATHERDPD/VGATHERQPD 5-251 PAGE 2075 LINE 106903
+define pcodeop vgatherdpd ;
+:VGATHERDPD XmmReg1, q_vm32x, vexVVVV_XmmReg is $(VEX_DDS) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W1) & vexVVVV_XmmReg; byte=0x92; (XmmReg1 & YmmReg1) ... & q_vm32x {
+# TODO full semantics necessary for VSIB memory data access, leave out of data flow for now
+#	XmmReg1 = vgatherdpd(XmmReg1, q_vm32x, vexVVVV_XmmReg);
+	local tmp:16 = vgatherdpd(XmmReg1, vexVVVV_XmmReg);
+	YmmReg1 = zext(tmp);
+	# TODO ZmmReg1 = zext(XmmReg1)
+	vexVVVV_XmmReg = 0;
+}
+
+# VGATHERDPD/VGATHERQPD 5-251 PAGE 2075 LINE 106908
+@ifdef IA64
+define pcodeop vgatherqpd ;
+:VGATHERQPD XmmReg1, q_vm64x, vexVVVV_XmmReg is $(VEX_DDS) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W1) & vexVVVV_XmmReg; byte=0x93; (XmmReg1 & YmmReg1) ... & q_vm64x {
+# TODO full semantics necessary for VSIB memory data access, leave out of data flow for now
+#	XmmReg1 = vgatherqpd(XmmReg1, q_vm64x, vexVVVV_XmmReg);
+	local tmp:16 = vgatherqpd(XmmReg1, vexVVVV_XmmReg);
+	YmmReg1 = zext(tmp);
+	# TODO ZmmReg1 = zext(XmmReg1)
+	vexVVVV_XmmReg = 0;
+}
+@endif
+
+# VGATHERDPD/VGATHERQPD 5-251 PAGE 2075 LINE 106913
+:VGATHERDPD YmmReg1, q_vm32x, vexVVVV_YmmReg is $(VEX_DDS) & $(VEX_L256) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W1) & vexVVVV_YmmReg; byte=0x92; YmmReg1 ... & q_vm32x {
+# TODO full semantics necessary for VSIB memory data access, leave out of data flow for now
+#	YmmReg1 = vgatherdpd(YmmReg1, q_vm32x, vexVVVV_YmmReg);
+	YmmReg1 = vgatherdpd(YmmReg1, vexVVVV_YmmReg);
+	# TODO ZmmReg1 = zext(YmmReg1)
+	vexVVVV_YmmReg = 0;
+}
+
+# VGATHERDPD/VGATHERQPD 5-251 PAGE 2075 LINE 106918
+@ifdef IA64
+:VGATHERQPD YmmReg1, q_vm64y, vexVVVV_YmmReg is $(VEX_DDS) & $(VEX_L256) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W1) & vexVVVV_YmmReg; byte=0x93; YmmReg1 ... & q_vm64y {
+# TODO full semantics necessary for VSIB memory data access, leave out of data flow for now
+#	YmmReg1 = vgatherqpd(YmmReg1, q_vm64y, vexVVVV_YmmReg);
+	YmmReg1 = vgatherqpd(YmmReg1, vexVVVV_YmmReg);
+	# TODO ZmmReg1 = zext(YmmReg1)
+	vexVVVV_YmmReg = 0;
+}
+@endif
+
+
+# VGATHERDPS/VGATHERQPS 5-256 PAGE 2080 LINE 107130
+define pcodeop vgatherdps ;
+:VGATHERDPS XmmReg1, d_vm32x, vexVVVV_XmmReg is $(VEX_DDS) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_XmmReg; byte=0x92; (XmmReg1 & YmmReg1) ... & d_vm32x {
+# TODO full semantics necessary for VSIB memory data access, leave out of data flow for now
+#	XmmReg1 = vgatherdps(XmmReg1, d_vm32x, vexVVVV_XmmReg);
+	local tmp:16 = vgatherdps(XmmReg1, vexVVVV_XmmReg);
+	YmmReg1 = zext(tmp);
+	# TODO ZmmReg1 = zext(XmmReg1)
+	vexVVVV_XmmReg = 0;
+}
+
+# VGATHERDPS/VGATHERQPS 5-256 PAGE 2080 LINE 107135
+@ifdef IA64
+define pcodeop vgatherqps ;
+:VGATHERQPS XmmReg1, d_vm64x, vexVVVV_XmmReg is $(VEX_DDS) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_XmmReg; byte=0x93; (XmmReg1 & YmmReg1) ... & d_vm64x {
+# TODO full semantics necessary for VSIB memory data access, leave out of data flow for now
+#	XmmReg1 = vgatherqps(XmmReg1, d_vm64x, vexVVVV_XmmReg);
+	local tmp:16 = vgatherqps(XmmReg1, vexVVVV_XmmReg);
+	YmmReg1 = zext(tmp);
+	# TODO ZmmReg1 = zext(XmmReg1)
+	vexVVVV_XmmReg = 0;
+}
+@endif
+
+# VGATHERDPS/VGATHERQPS 5-256 PAGE 2080 LINE 107140
+:VGATHERDPS YmmReg1, d_vm32y, vexVVVV_YmmReg is $(VEX_DDS) & $(VEX_L256) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_YmmReg; byte=0x92; YmmReg1 ... & d_vm32y {
+# TODO full semantics necessary for VSIB memory data access, leave out of data flow for now
+#	YmmReg1 = vgatherdps(YmmReg1, d_vm32y, vexVVVV_YmmReg);
+	YmmReg1 = vgatherdps(YmmReg1, vexVVVV_YmmReg);
+	# TODO ZmmReg1 = zext(YmmReg1)
+	vexVVVV_YmmReg = 0;
+}
+
+# VGATHERDPS/VGATHERQPS 5-256 PAGE 2080 LINE 107145
+@ifdef IA64
+:VGATHERQPS XmmReg1, d_vm64y, vexVVVV_XmmReg is $(VEX_DDS) & $(VEX_L256) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_XmmReg; byte=0x93; (XmmReg1 & YmmReg1) ... & d_vm64y {
+# TODO full semantics necessary for VSIB memory data access, leave out of data flow for now
+#	XmmReg1 = vgatherqps(XmmReg1, d_vm64y, vexVVVV_XmmReg);
+	XmmReg1 = vgatherqps(XmmReg1, vexVVVV_XmmReg);
+	YmmReg1 = zext(XmmReg1);
+	# TODO ZmmReg1 = zext(XmmReg1)
+	vexVVVV_XmmReg = 0;
+}
+@endif
+
+
+# VPGATHERDD/VPGATHERQD 5-273 PAGE 2097 LINE 107884
+define pcodeop vpgatherdd ;
+:VPGATHERDD XmmReg1, d_vm32x, vexVVVV_XmmReg is $(VEX_DDS) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_XmmReg; byte=0x90; (XmmReg1 & YmmReg1) ... & d_vm32x {
+# TODO full semantics necessary for VSIB memory data access, leave out of data flow for now
+#	XmmReg1 = vpgatherdd(XmmReg1, d_vm32x, vexVVVV_XmmReg);
+	local tmp:16 = vpgatherdd(XmmReg1, vexVVVV_XmmReg);
+	YmmReg1 = zext(tmp);
+	# TODO ZmmReg1 = zext(XmmReg1)
+	vexVVVV_XmmReg = 0;
+}
+
+# VPGATHERDD/VPGATHERQD 5-273 PAGE 2097 LINE 107888
+@ifdef IA64
+define pcodeop vpgatherqd ;
+:VPGATHERQD XmmReg1, d_vm64x, vexVVVV_XmmReg is $(VEX_DDS) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_XmmReg; byte=0x91; (XmmReg1 & YmmReg1) ... & d_vm64x {
+# TODO full semantics necessary for VSIB memory data access, leave out of data flow for now
+#	XmmReg1 = vpgatherqd(XmmReg1, d_vm64x, vexVVVV_XmmReg);
+	local tmp:16 = vpgatherqd(XmmReg1, vexVVVV_XmmReg);
+	YmmReg1 = zext(tmp);
+	# TODO ZmmReg1 = zext(XmmReg1)
+	vexVVVV_XmmReg = 0;
+}
+@endif
+
+# VPGATHERDD/VPGATHERQD 5-273 PAGE 2097 LINE 107892
+:VPGATHERDD YmmReg1, d_vm32y, vexVVVV_YmmReg is $(VEX_DDS) & $(VEX_L256) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_YmmReg; byte=0x90; YmmReg1 ... & d_vm32y {
+# TODO full semantics necessary for VSIB memory data access, leave out of data flow for now
+#	YmmReg1 = vpgatherdd(YmmReg1, d_vm32y, vexVVVV_YmmReg);
+	YmmReg1 = vpgatherdd(YmmReg1, vexVVVV_YmmReg);
+	# TODO ZmmReg1 = zext(YmmReg1)
+	vexVVVV_YmmReg = 0;
+}
+
+# VPGATHERDD/VPGATHERQD 5-273 PAGE 2097 LINE 107896
+@ifdef IA64
+:VPGATHERQD XmmReg1, d_vm64y, vexVVVV_XmmReg is $(VEX_DDS) & $(VEX_L256) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_XmmReg; byte=0x91; (XmmReg1 & YmmReg1) ... & d_vm64y {
+# TODO full semantics necessary for VSIB memory data access, leave out of data flow for now
+#	XmmReg1 = vpgatherqd(XmmReg1, d_vm64y, vexVVVV_XmmReg);
+	local tmp:16 = vpgatherqd(XmmReg1, vexVVVV_XmmReg);
+	YmmReg1 = zext(tmp);
+	# TODO ZmmReg1 = zext(XmmReg1)
+	vexVVVV_XmmReg = 0;
+}
+@endif
+
+
+# VPGATHERDQ/VPGATHERQQ 5-280 PAGE 2104 LINE 108234
+define pcodeop vpgatherdq ;
+:VPGATHERDQ XmmReg1, q_vm32x, vexVVVV_XmmReg is $(VEX_DDS) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W1) & vexVVVV_XmmReg; byte=0x90; (XmmReg1 & YmmReg1) ... & q_vm32x {
+# TODO full semantics necessary for VSIB memory data access, leave out of data flow for now
+#	XmmReg1 = vpgatherdq(XmmReg1, q_vm32x, vexVVVV_XmmReg);
+	local tmp:16 = vpgatherdq(XmmReg1, vexVVVV_XmmReg);
+	YmmReg1 = zext(tmp);
+	# TODO ZmmReg1 = zext(XmmReg1)
+	vexVVVV_XmmReg = 0;
+}
+
+# VPGATHERDQ/VPGATHERQQ 5-280 PAGE 2104 LINE 108238
+@ifdef IA64
+define pcodeop vpgatherqq ;
+:VPGATHERQQ XmmReg1, q_vm64x, vexVVVV_XmmReg is $(VEX_DDS) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W1) & vexVVVV_XmmReg; byte=0x91; (XmmReg1 & YmmReg1) ... & q_vm64x {
+# TODO full semantics necessary for VSIB memory data access, leave out of data flow for now
+#	XmmReg1 = vpgatherqq(XmmReg1, q_vm64x, vexVVVV_XmmReg);
+	local tmp:16 = vpgatherqq(XmmReg1, vexVVVV_XmmReg);
+	YmmReg1 = zext(tmp);
+	# TODO ZmmReg1 = zext(XmmReg1)
+	vexVVVV_XmmReg = 0;
+}
+@endif
+
+# VPGATHERDQ/VPGATHERQQ 5-280 PAGE 2104 LINE 108242
+:VPGATHERDQ YmmReg1, q_vm32x, vexVVVV_YmmReg is $(VEX_DDS) & $(VEX_L256) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W1) & vexVVVV_YmmReg; byte=0x90; YmmReg1 ... & q_vm32x {
+# TODO full semantics necessary for VSIB memory data access, leave out of data flow for now
+#	YmmReg1 = vpgatherdq(YmmReg1, q_vm32x, vexVVVV_YmmReg);
+	YmmReg1 = vpgatherdq(YmmReg1, vexVVVV_YmmReg);
+	# TODO ZmmReg1 = zext(YmmReg1)
+	vexVVVV_YmmReg = 0;
+}
+
+# VPGATHERDQ/VPGATHERQQ 5-280 PAGE 2104 LINE 108246
+@ifdef IA64
+:VPGATHERQQ YmmReg1, q_vm64y, vexVVVV_YmmReg is $(VEX_DDS) & $(VEX_L256) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W1) & vexVVVV_YmmReg; byte=0x91; YmmReg1 ... & q_vm64y {
+# TODO full semantics necessary for VSIB memory data access, leave out of data flow for now
+#	YmmReg1 = vpgatherqq(YmmReg1, q_vm64y, vexVVVV_YmmReg);
+	YmmReg1 = vpgatherqq(YmmReg1, vexVVVV_YmmReg);
+	# TODO ZmmReg1 = zext(YmmReg1)
+	vexVVVV_YmmReg = 0;
+}
+@endif
+
+

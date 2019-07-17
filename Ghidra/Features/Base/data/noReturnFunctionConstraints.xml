@@ -1,0 +1,11 @@
+<noReturnFunctionConstraints>
+  <executable_format name="Executable and Linking Format (ELF)">
+    <functionNamesFile>ElfFunctionsThatDoNotReturn</functionNamesFile>
+  </executable_format>
+  <executable_format name="Mac OS X Mach-O">
+    <functionNamesFile>MachOFunctionsThatDoNotReturn</functionNamesFile>
+  </executable_format>
+  <executable_format name="Portable Executable (PE)">
+    <functionNamesFile>PEFunctionsThatDoNotReturn</functionNamesFile>
+  </executable_format>
+</noReturnFunctionConstraints>

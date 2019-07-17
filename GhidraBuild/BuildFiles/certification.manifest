@@ -1,0 +1,6 @@
+##VERSION: 2.0
+JsonDoclet/Module.manifest||GHIDRA||||END|
+JsonDoclet/build.gradle||GHIDRA||||END|
+build.gradle||GHIDRA||||END|
+sleighDevBuild.template||GHIDRA||||END|
+sleighDistBuild.template||GHIDRA||||END|

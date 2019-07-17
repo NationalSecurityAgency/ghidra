@@ -1,0 +1,95 @@
+#
+# PIC-16 Main Section
+#   includes constants, memory space and common register space definitions
+#
+
+# STATUS bit definitions
+@define STATUS_IRP_BIT	7
+@define STATUS_RP0_BIT	5
+@define STATUS_Z_BIT	2
+@define STATUS_DC_BIT	1
+@define STATUS_C_BIT	0
+
+# STATUS bit masks used for setting
+@define STATUS_IRP_MASK 0x80
+@define STATUS_RP_MASK	0x60
+@define STATUS_Z_MASK	0x04
+@define STATUS_DC_MASK	0x02
+@define STATUS_C_MASK	0x01
+
+# STATUS bit masks used for clearing
+@define STATUS_IRP_CLEARMASK 0x7F
+@define STATUS_RP_CLEARMASK	0x9F
+@define STATUS_Z_CLEARMASK	0xFB
+@define STATUS_DC_CLEARMASK	0xFD
+@define STATUS_C_CLEARMASK	0xFE
+
+define endian=little;
+define alignment=2;
+
+# Instruction Memory (ROM-based)
+define space CODE type=ram_space wordsize=2 size=2 default;
+
+# General Purpose Register Memory consists of 4-banks of 255-bytes for PIC16,
+# or 32-banks of 255 bytes each for PIC_16F.
+# Bank selection occurs using STATUS register bits RP0 & RP1
+define space DATA type=ram_space size=2; 
+
+# HWSTACK consists of a 8-word by 13-bit RAM and a corresponding to a hidden stack pointer (STKPTR).
+define space HWSTACK type=ram_space wordsize=2 size=1;  # WORDSIZE is actually 13-bits
+ 
+define space register type=register_space size=2; 
+
+# Program Counter (13-bits) - PC Latch: PCLATH<PC:12-8> / PCL<PC:7-0>
+define register offset=0x0000 size=2 [ PC ];
+
+# Stack Pointer
+define register offset=0x0002 size=1 [ STKPTR ];
+
+# Working register
+define register offset=0x0003 size=1 [ W SkipNext ];
+
+# Status bit registers (these do not really exist and must get reflected into the STATUS byte register)
+@if PROCESSOR == "PIC_16"
+define register offset=0x0007 size=1 [ IRP RP ];
+@elif PROCESSOR == "PIC_16F"
+define register offset=0x0007 size=1 [ IRP RP ];
+@endif
+
+@define C  "STATUS[0,1]"
+@define DC "STATUS[1,1]"
+@define Z  "STATUS[2,1]"
+@define PD "STATUS[3,1]"
+@define TO "STATUS[4,1]"
+@define PA0 "STATUS[5,1]"
+
+#
+# WARNING! - Reflection of these DATA-based registers with the corresponding register
+#            is not fully implemented due to the complexity of doing so within this language specification.
+#            Reflection of certain registers (e.g., STATUS) within other memory banks is also not modeled.
+#
+# NOTES	-
+#   1. Chips with voltage comparator and reference functions may replace A/D registers (ADCON0 and ADCON1) with (VMCON and VRCON)
+#      Instances of this include PIC16F627A/628A/648A (there could be others)
+#	2. If a specific PIC-16 has a different register set, this file and the pic16.pspec file may be copied/renamed and
+#      slightly modified to specify a the correct Register File Map.  
+#
+
+#
+# Bank-0 File Registers
+#
+@if PROCESSOR == "PIC_16"
+define DATA offset=0x0000 size=1 [
+	INDF	TMR0	PCL		STATUS	FSR		PORTA	PORTB	PORTC	PORTD	PORTE	PCLATH	INTCON	PIR1	PIR2	TMR1L	TMR1H
+];
+
+@elif PROCESSOR == "PIC_16F"
+define DATA offset=0x0000 size=1 [
+	INDF0	INDF1	PCL	STATUS	FSR0L	FSR0H	FSR1L	FSR1H	BSR	WREG	PCLATH	INTCON	_	_	_	_
+];
+
+define DATA offset=0x0004 size=2 [ FSR0  FSR1 ];
+
+@endif
+
+# Additional Data Bank data registers are defined in the .PSPEC file.

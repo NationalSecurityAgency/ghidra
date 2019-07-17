@@ -1,0 +1,277 @@
+import org.apache.tools.ant.filters.ReplaceTokens
+
+defaultTasks 'buildExtension'
+
+apply plugin: 'java'
+
+/*****************************************************************************************
+ *
+ * Reads the application.properties file and sets properties for the version, 
+ *  		release name, and distro prefix (ghidira_<version>)
+ *
+ *****************************************************************************************/
+def ghidraDir = buildscript.sourceFile.getAbsolutePath() + "/../../Ghidra"
+def ghidraProps = new Properties()
+file(ghidraDir + "/application.properties").withReader { reader ->
+	ghidraProps.load(reader)
+	project.ext.ghidra_version = ghidraProps.getProperty('application.version')
+	project.ext.RELEASE_NAME = ghidraProps.getProperty('application.release.name')
+	project.ext.DISTRO_PREFIX = "ghidra_${ghidra_version}"
+}
+
+configurations {
+	helpPath
+}
+
+artifacts {
+	helpPath jar
+}
+
+dependencies {
+	compile fileTree(dir: 'lib', include: "*.jar")
+	compile fileTree(dir: ghidraDir + '/Framework', include: "**/*.jar")
+	compile fileTree(dir: ghidraDir + '/Features', include: "**/*.jar")
+	helpPath fileTree(dir: ghidraDir + '/Features/Base', include: "**/Base.jar")
+}
+	
+def ZIP_NAME_PREFIX = "${DISTRO_PREFIX}_${RELEASE_NAME}_${getCurrentDate()}"
+def DISTRIBUTION_DIR = file("dist")
+	
+def pathInZip = "${project.name}"
+
+task zipSource (type: Zip) {
+		
+	// Define some metadata about the zip (name, location, version, etc....)
+	it.baseName project.name + "-src"
+	it.extension 'zip'
+	it.destinationDir file(project.projectDir.path + "/build/tmp/src")
+		
+	// We MUST copy from a directory, and not just grab a list of source files.  
+	// This is the only way to preserve the directory structure.
+	it.from project.projectDir
+	it.include 'src/**/*'
+}
+
+				
+task buildExtension (type: Zip) {
+				
+	baseName "${ZIP_NAME_PREFIX}_${project.name}"
+	extension 'zip'
+	destinationDir DISTRIBUTION_DIR
+	version ''
+	
+	// Make sure that we don't try to copy the same file with the same path into the
+	// zip (this can happen!)
+	duplicatesStrategy 'exclude'
+	
+	// This filtered property file copy must appear before the general 
+	// copy to ensure that it is prefered over the unmodified file
+	File propFile = new File(project.projectDir, "extension.properties")
+	from (propFile) {
+		String version = "${ghidra_version}"
+		String name = "${project.name}"
+		filter (ReplaceTokens, tokens: [extversion: version])
+		filter (ReplaceTokens, tokens: [extname: name])
+		into pathInZip
+	}
+	
+	from (project.jar) {
+		into pathInZip + "/lib"
+	} 
+		
+	from (project.projectDir) {
+		exclude 'build/**'
+		exclude '*.gradle'
+		exclude 'certification.manifest'
+		exclude 'dist/**'
+		exclude 'bin/**'
+		exclude 'src/**'
+		exclude '.gradle/**'
+		exclude '.classpath'
+		exclude '.project'
+		exclude '.settings/**'
+		exclude 'developer_scripts'
+		exclude '.antProperties.xml'
+		
+		into pathInZip
+	}
+			
+	/////////////////
+	// SOURCE
+	/////////////////
+	from (tasks["zipSource"]) {
+		into pathInZip + "/lib"
+	}.dependsOn(zipSource)
+		
+		
+	/////////////////
+	// GLOBALS
+	/////////////////		
+						
+	// First get a list of all files that are under 'src/global'.	
+	FileTree fileTree = project.fileTree('src/global') {
+		include '**/*'
+	}
+
+			
+	// Now loop over each one, copying it into the zip we're creating.  Each will be placed
+	// at the root level, starting with the first folder AFTER 'src/global/'.  
+	//
+	// eg: 	If the file is '/Ghidra/Extensions/Sample/src/global/docs/hello.html', then
+	// 		the file in the zip will be at /docs/hello.html
+	//
+	fileTree.each { File file ->
+		String filePath = stripGlobalFilePath(file)
+		from (file) {
+			into filePath
+		}
+	}
+
+	doLast {
+		println "\nCreated " + baseName + "." + extension + " in " + destinationDir
+	}
+}
+
+// task for calling the java help indexer
+task indexHelp(type: JavaExec) {	
+	File helpRootDir = file('src/main/help')		// this the root dir for the help source
+	File outputFile = file("build/help/main/help/${project.name}_JavaHelpSearch")	
+	onlyIf {helpRootDir.exists()}
+
+	dependsOn configurations.helpPath
+
+	inputs.dir helpRootDir
+	outputs.dir outputFile
+
+	classpath = sourceSets.main.runtimeClasspath		// this modules runtime classpath (contains jhall.jar)
+	
+	main = 'com.sun.java.help.search.Indexer'		// main class to call
+
+	// tell the indexer where send its output
+	
+	args '-db', outputFile.absolutePath
+
+
+	// The index has a config file parameter.  The only thing we use in the config file
+	// is a root directory path that should be stripped off all the help references to
+	// make them relative instead of absolute
+	
+	File configFile = file('build/helpconfig')		// this is the config file that we will create 
+
+	// create the config file when the task runs and not during configuration. 
+	doFirst {
+		configFile.parentFile.mkdirs();
+		configFile.write "IndexRemove ${helpRootDir.absolutePath}" + File.separator + "\n"
+	}
+	
+	// pass the config file we created as an argument to the indexer
+	args '-c',"$configFile"
+
+	// gather up all the help files into a file collection
+	FileTree helpFiles = fileTree('src/main/help') {
+		include '**/*.htm'
+		include '**/*.html'
+	}
+	
+	doFirst {
+		// for each help file that was found, add it as an argument to the indexer
+		helpFiles.each { File file ->
+			args "${file.absolutePath}"
+		}	
+	}
+	
+	group "private"
+	description "indexes the helps files for this module.  [gradle/helpProject.gradle]"
+}
+
+// task for building Ghidra help files - depends on the output from the help indexer
+task buildHelp(type: JavaExec, dependsOn: indexHelp) {
+
+	File helpRootDir = file('src/main/help/help')	//  help root where topics dir lives
+	File outputDir = file('build/help/main/help')	// dir where we want the help files to be generated
+	onlyIf {helpRootDir.exists()}
+
+	inputs.dir helpRootDir
+	outputs.dir outputDir
+
+	classpath = sourceSets.main.runtimeClasspath		// this modules runtime classpath (contains jhall.jar)
+
+	main = 'help.GHelpBuilder'				// program to run to build help files.
+	
+	args '-n', "${project.name}"				// use the modules name as the base for the help file name
+	
+	args '-o', "${outputDir.absolutePath}"	// set the output directory arg
+
+	doFirst {		
+		configurations.helpPath.each { 
+			args "-hp"
+			args "${it.absolutePath}"
+		}
+		args "${helpRootDir.absolutePath}"		// tell the help builder what help dir to process
+	}
+	description "      Builds the help for this module.  [gradle/helpProject.gradle]\n"	
+}
+
+// include the help into the module's jar
+jar {
+	from "build/help/main"		// include the generated help index files
+	from "src/main/help"			// include the help source files
+	version = ""
+}
+
+// build the help whenever this module's jar file is built
+jar.dependsOn 'buildHelp'			
+
+
+
+/*********************************************************************************
+ *  Takes the given file and returns a string representing the file path with everything
+ *	up-to and including 'src/global' removed, as well as the filename. 
+ *	
+ *	eg: 	If the file path is '/Ghidra/Configurations/Common/src/global/docs/hello.html', 
+ *			the returned string will be at /docs
+ *
+ *	Note: 	We have to use 'File.separator' instead of a slash ('/') because of how 
+ * 			windows/unix handle slashes ('/' vs. '\'). We only need to do this in cases where we're
+ *			using java string manipulation libraries (eg String.replace); Gradle already
+ *			understands how to use the proper slash.
+*********************************************************************************/
+String stripGlobalFilePath(File file) {
+
+	// First strip off everything before 'src/global/ in the file path.
+	def slashIndex = file.path.indexOf('src' + File.separator + 'global')
+	String filePath = file.path.substring(slashIndex);
+					
+	// Now remove 'src/global/' from the string.
+	filePath = filePath.replace('src' + File.separator + 'global' + File.separator, "");
+					
+	// Now we need to strip off the filename itself, which we do by finding the last
+	// instance of a slash ('/') in the string.  Unfortunately, groovy doesn't give
+	// us a "lastIndexOf('/')" or something nice like that, so we reverse the string
+	// and look for the slash that way, remove the filename, then reverse it back.
+	//
+	// Note that it's possible there is no slash (all we have is a filename), meaning 
+	// this file will be placed at the root level.
+	//
+	String reverseFilePath = filePath.reverse()
+	slashIndex = reverseFilePath.indexOf(File.separator)
+	if (slashIndex != -1) {
+		reverseFilePath = reverseFilePath.substring(slashIndex)
+		filePath = reverseFilePath.reverse()
+	}	
+	else {
+		filePath = ""
+	}
+	
+	return filePath 
+}
+/*********************************************************************************
+ * Returns the current date formatted as yyyyMMdd.
+ *********************************************************************************/
+def getCurrentDate() {
+
+	def date = new Date()
+	def formattedDate = date.format('yyyyMMdd')
+	return formattedDate
+}
+

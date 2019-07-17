@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+
+OS=`uname -s`
+
+SCRIPT_DIR=`echo $0 | sed -e 's/[^\/]*$//'`
+
+pushd $SCRIPT_DIR > /dev/null
+
+SCRIPT_DIR=`pwd`
+SFILE=$SCRIPT_DIR/ghidraSvr
+
+success=1;
+if [ "$OS" = "Linux" ]; then
+        $SFILE uninstall
+        success=$?
+elif [ "$OS" = "Darwin" ]; then
+        $SFILE uninstall
+        success=$?
+fi
+
+popd > /dev/null
+
+if [ $success -eq 0 ]; then
+        echo "Successfully uninstalled Ghidra Server."
+        exit 0
+else
+        echo "Failed to uninstall Ghidra Server!"
+        exit 1
+fi
+

@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<language version="1" endian="big">
+    <description>
+        <id>8051:BE:16:default</id>
+        <processor>8051</processor>
+        <variant>default</variant>
+        <size>16</size>
+    </description>
+    <compiler name="default" id="default" />
+    <compiler name="Archimedes" id="Archimedes" />
+    <spaces>
+        <space name="CODE" type="ram" size="2" default="yes" />
+        <space name="INTMEM" type="ram" size="1" />
+        <space name="BITS" type="ram" size="1" />
+        <space name="SFR" type="ram" size="1" />
+        <space name="EXTMEM" type="ram" size="2" />
+        <space name="register" type="register" size="1" />
+    </spaces>
+    <registers>
+        <register name="R0" offset="0x0" bitsize="8" />
+        <register name="R1" offset="0x1" bitsize="8" />
+        <register name="R2" offset="0x2" bitsize="8" />
+        <register name="R3" offset="0x3" bitsize="8" />
+        <register name="R4" offset="0x4" bitsize="8" />
+        <register name="R5" offset="0x5" bitsize="8" />
+        <register name="R6" offset="0x6" bitsize="8" />
+        <register name="R7" offset="0x7" bitsize="8" />
+        <register name="R3R2R1" offset="0x1" bitsize="24" />
+        <register name="R2R1" offset="0x1" bitsize="16" />
+        <register name="R5R4" offset="0x4" bitsize="16" />
+        <register name="R7R6" offset="0x6" bitsize="16" />
+        <register name="R7R6R5R4" offset="0x4" bitsize="32" />
+        <register name="ACC" offset="0xe0" bitsize="8" />
+        <register name="B" offset="0xf0" bitsize="8" />
+        <register name="C" offset="0x22" bitsize="8" />
+        <register name="DPTR" offset="0x82" bitsize="16" />
+        <register name="DPH" offset="0x82" bitsize="8" />
+        <register name="DPL" offset="0x83" bitsize="8" />
+        <register name="PC" offset="0x20" bitsize="16" />
+        <register name="SP" offset="0x81" bitsize="8" />
+        <register name="PSW" address="SFR:d0" bitsize="8" />
+    </registers>
+</language>
+

@@ -1,0 +1,599 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<HTML>
+  <HEAD>
+    <TITLE>Function Comparison</TITLE>
+    <META http-equiv="content-type" content="text/html; charset=windows-1252">
+    	<link rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">    
+  </HEAD>
+
+  <BODY>
+    <H1><A name="FunctionComparisonPlugin"></A> <A name="Function_Comparison"></A> <A name=
+    "FunctionComparison"></A> Function Comparison Window</H1>
+
+    <P>The Function Comparison window can provide different types of panels for visually comparing
+    two or more functions. The Listing View of the Function Comparison window and its capabilities
+    is explained below.</P>
+
+    <H2><A name="Compare Selected Functions"></A>Compare Selected Functions</H2>
+
+    <BLOCKQUOTE>
+      <P>A Function Comparison window can be displayed from a selection containing two or more
+      functions in the CodeBrowser listing.</P>
+    </BLOCKQUOTE>
+
+    <BLOCKQUOTE>
+      <OL>
+        <LI>In the CodeBrowser Listing make a selection containing two or more functions that you
+        want to compare.</LI>
+
+        <LI>Right mouse click and select the <IMG alt="" src="images/page_white_c.png"> <B>Compare
+        Selected Functions...</B> option on the right mouse popup menu.</LI>
+      </OL>
+    </BLOCKQUOTE>
+
+    <P><A name="Dual_Listing"></A>A Function Comparison window will appear.</P>
+    <BR><BR>
+
+    <CENTER>
+      <IMG alt="" border="0" src="images/FunctionComparisonWindow.png">
+    </CENTER><BR>
+     <BR>
+     
+
+    <P>This window can have multiple tabs, one for each type of function comparison view that is
+    available.</P>
+
+    <H2><A name="Listing_View"></A>Listing View</H2>
+
+    <BLOCKQUOTE>
+      <P>The <B><I>Listing View</I></B> shows a pair of listings side by side so the functions can
+      be compared. The highlights in the two listings indicate where there are possible differences
+      in the bytes and instructions between the functions. The background highlights that have a 
+      default color of <SPAN style="background:#b9b9b9">gray</SPAN> are where bytes or instructions differ
+      wherever the instructions could be matched up between the two functions. The code units with
+      white background also have a matching code unit in the other function but do not have any
+      differences based on the current difference settings. Any instructions that couldn't be
+      automatically matched up are highlighted with a default background color of
+      <SPAN style="background:#69cde1">blue</SPAN>. 
+      The detailed differences with a default background color of light 
+      <SPAN style="background:#afff69">green</SPAN> within
+      the gray difference code units indicates individual bytes and parts of instructions that
+      differ between a code unit in one function and its matching code unit in the other function
+      using the current difference settings.</P>
+      <P><IMG src="../../shared/note.png" border="0">The user can change these colors from the 
+      <B>Properties</B> action in the popup menu of the Listing View or from the 
+      <A href="#Listing_Code_Comparison_Options">Listing Code Comparison</A> entry in the 
+      Tool Options.</P>
+      <BR><BR>
+
+      <BLOCKQUOTE>
+        <CENTER>
+          <TABLE border="1">
+            <TR>
+              <TH>Indicator</TH>
+
+              <TH>Default Color</TH>
+
+              <TH>Description</TH>
+            </TR>
+
+            <TR>
+              <TD>Unmatched Code Units</TD>
+            
+              <TD bgcolor="#69CDE1" width="20">&nbsp;</TD>
+
+              <TD>Highlights where the code from one listing didn't get matched up with
+              code from the other listing.</TD>
+            </TR>
+
+            <TR>
+               <TD>Differing Code Units</TD>
+            
+              <TD bgcolor="#B9B9B9" width="20">&nbsp;</TD>
+
+              <TD>Highlights where matched code units have one or more detailed differences 
+              currently being detected.</TD>
+            </TR>
+
+            <TR>
+              <TD>Byte Differences</TD>
+            
+              <TD bgcolor="#AFFF69" width="20">&nbsp;</TD>
+
+              <TD>Highlights bytes that differ between matched code units in the two listings. 
+              <i>A toolbar action toggles whether or not these are being detected.</i></TD>
+            </TR>
+
+            <TR>
+              <TD>Mnemonic Differences</TD>
+            
+              <TD bgcolor="#AFFF69" width="20">&nbsp;</TD>
+
+              <TD>Highlights mnemonics that are different between matched code units in the two
+              listings.</TD>
+            </TR>
+
+            <TR>
+              <TD>Operand Differences</TD>
+            
+              <TD bgcolor="#AFFF69" width="20">&nbsp;</TD>
+
+              <TD>Highlights operands that are different between matched code units in the two
+              listings. 
+              <i>Toolbar actions toggle whether or not these are being detected for constants 
+              or registers.</i></TD>
+            </TR>
+          </TABLE>
+
+          <CENTER>
+            <BR>
+            <BR>
+          </CENTER>
+        </CENTER>
+      </BLOCKQUOTE>
+
+      <P>If you move the cursor within one of the listings, if possible it will move the cursor to
+      the matching location in the other listing. Scrolling one listing will scroll the other. The
+      two listings are locked together for scrolling at the code unit where the cursor last had a
+      matching code unit in the other listing. In other words as the cursor moves within the code
+      units that have white and gray backgrounds, the cursor in the other listing will also move to
+      the matching code unit. When the cursor moves into a code unit that is unmatched 
+      (with a default blue background), the
+      cursor in the other listing will not move since it doesn't have a matching code unit.</P>
+    </BLOCKQUOTE>
+
+    <BLOCKQUOTE>
+      <H3>Cursor Arrow <IMG alt="" src="images/cursor_arrow_flipped.gif"></H3>
+
+	<BLOCKQUOTE>
+      <P>The left side margin of each listing can display a cursor arrow <IMG alt="" src=
+      "images/cursor_arrow_flipped.gif"> that indicates the code unit with the current cursor
+      location. In the active side of the dual listing, the cursor arrow will always display to
+      indicate the current cursor location. The inactive side of the dual listing will also show
+      the cursor arrow whenever its matching location was able to be determined. If the active
+      side's cursor location is on an unmatched code unit then the other side's cursor arrow will
+      not appear.</P>
+
+      <P>Whenever the cursor arrow appears and there isn't already another background color, the
+      code unit background will be highlighted <SPAN style="background:#e8f2fe">light blue</SPAN>
+      to help you determine where the red location cursor is located in the listing. If the cursor
+      is on a code unit with an indicated difference or an unmatched instruction then that
+      associated background color will take priority and will display instead of the light blue
+      highlight.</P>
+	</BLOCKQUOTE>
+
+      <H3>Listing Layout Actions</H3>
+
+      <BLOCKQUOTE>
+        <P>There are actions in the toolbar that control the layout of the two listings in the
+        Listing View. One controls the orientation of the two listings relative to each other.
+        Another displays the header for adjusting the field sizes and positions in the listing.</P>
+
+        <H4><A name="Dual_Listing_Toggle_Format_Header"></A>Toggle Format Header</H4>
+
+        <BLOCKQUOTE>
+          <P>The two listings which display each of the functions can show numerous fields and
+          those fields can be sized and positioned relative to each other in the way a user
+          desires. The display fields can be changed from the Field Header in the same way they can
+          be adjusted in the CodeBrowser. To change the fields in the listing,</P>
+
+          <BLOCKQUOTE>
+            <OL>
+              <LI>Select the menu icon <IMG alt="" src="images/menu16.gif"> on the far right end of
+              the toolbar.</LI>
+
+              <LI>From the menu that is displayed choose <B>Toggle Format Header</B>.</LI>
+            </OL>
+          </BLOCKQUOTE>
+
+          <P>This will display the Field Header above the left Listing. For more information on how
+          to manipulate the fields, see the help for the <A href=
+          "help/topics/CodeBrowserPlugin/Browser_Field_Formatter.htm#Toggle_Header">Code Browser
+          Header</A>.</P>
+        </BLOCKQUOTE>
+
+        <H4><A name="Dual_Listing_Toggle_Orientation"></A>Show Listings Side-by-Side</H4>
+
+        <BLOCKQUOTE>
+          <P>The two listings which display each of the functions can be displayed side by side or
+          one above the other. To change how the two listings are positioned relative to each
+          other,</P>
+
+          <BLOCKQUOTE>
+            <OL>
+              <LI>Select the menu icon <IMG alt="" src="images/menu16.gif"> on the far right end of
+              the toolbar.</LI>
+
+              <LI>From the menu that is displayed choose <B>Show Listings Side-by-Side</B>.</LI>
+            </OL>
+          </BLOCKQUOTE>
+
+          <P>This switches the layout of the two panels for the functions from side-by-side (left
+          and right) to one above the other (top and bottom). Each time you select this option, the
+          layout will switch between these two layouts.</P>
+        </BLOCKQUOTE>
+      </BLOCKQUOTE>
+
+      <H3>Navigating Differences</H3>
+
+	<BLOCKQUOTE>
+      <P>There are actions in the toolbar that allow you to navigate to the next or previous
+      difference block (default <SPAN style="background:#b9b9b9">gray</SPAN> background) or unmatched code
+      unit block (default <SPAN style="background:#69cde1">blue</SPAN> background). There is also a choice
+      icon that indicates whether you want to navigate to the unmatched code unit blocks, the
+      difference blocks, or both types of blocks.</P>
+
+      <P>There is a pink border around one of the two listings to indicate which of the two side's
+      blocks are being navigated.</P>
+
+        <H4><A name="Dual_Listing_Next_Previous_Area_Marker"></A>Next/Previous Area Marker</H4>
+
+        <BLOCKQUOTE>
+          <P>The Next/Previous Area Marker allows the user to choose the type of highlighted areas
+          that you go to when navigating.</P>
+
+          <P>The Function Comparison window has a navigation choice icon with a small triangle <IMG
+          alt="" src="images/menu16.gif" width="12" height="12"> to the right of it on the tool
+          bar. This lets you choose which type of highlighted areas (blocks) you want the
+          next/previous area navigation to go to in the listing window. The following list
+          indicates the setting to choose for navigation to the various types of highlighted
+          areas.</P>
+
+          <UL>
+            <LI><IMG alt="" src="images/text_list_bullets.png">&nbsp;<B>Both</B> - Navigates to the
+            next/previous highlight area whether it is an unmatched code unit block or a difference
+            block.</LI>
+
+            <LI><IMG alt="" src="images/locationIn.gif">&nbsp;<B>Unmatched Code Units</B> -
+            Navigates between unmatched code unit blocks.</LI>
+
+            <LI><IMG alt="" src="images/table_relationship.png">&nbsp;<B>Differences</B> -
+            Navigates between difference blocks.</LI>
+          </UL>
+        </BLOCKQUOTE>
+
+        <H4><A name="Dual_Listing_Go_To_Next_Highlighted_Area"></A>Go To Next Highlighted Area</H4>
+
+        <BLOCKQUOTE>
+          <P>The Listing View provides an icon (<IMG alt="" src="images/view-sort-ascending.png">)
+          on the tool bar to go to the next highlighted area in the listing window.</P>
+
+          <UL>
+            <LI>Right mouse click and select the <IMG alt="" src="images/view-sort-ascending.png">
+            <B>Go To Next Highlighted Area</B> option, OR select the <IMG alt="" src=
+            "images/view-sort-ascending.png"> button on the tool bar.</LI>
+          </UL>
+
+          <P>If there is another highlighted area to go to then the location cursor will move to
+          that highlighted block. If there aren't any more highlighted areas below the current
+          location, a message is displayed in the tool's status area to indicate this.</P>
+
+          <P>The <A href="#Dual_Listing_Next_Previous_Area_Marker">Next/Previous Area Marker</A>
+          allows the user to choose the type of highlighted areas that you go to when
+          navigating.</P>
+        </BLOCKQUOTE>
+
+        <H4><A name="Dual_Listing_Go_To_Previous_Highlighted_Area"></A>Go To Previous Highlighted
+        Area</H4>
+
+        <BLOCKQUOTE>
+          <P>The Listing View provides an icon (<IMG alt="" src="images/view-sort-descending.png">)
+          on the tool bar to go to the previous highlighted area in the listing window.</P>
+
+          <UL>
+            <LI>Right mouse click and select the <IMG alt="" src="images/view-sort-descending.png">
+            <B>Go To Previous Highlighted Area</B> option, OR select the <IMG alt="" src=
+            "images/view-sort-descending.png"> button on the tool bar.</LI>
+          </UL>
+
+          <P>If there is another highlighted area to go to then the location cursor will move to
+          that highlighted block. If there aren't any more highlighted areas above the current
+          location, a message is displayed in the tool's status area to indicate this.</P>
+
+          <P>The <A href="#Dual_Listing_Next_Previous_Area_Marker">Next/Previous Area Marker</A>
+          allows the user to choose the type of highlighted areas that you go to when
+          navigating.</P>
+        </BLOCKQUOTE>
+      </BLOCKQUOTE>
+
+      <H3>Difference Settings</H3>
+
+	<BLOCKQUOTE>
+      <P>There are several actions in the toolbar that control the highlighting of code unit
+      differences between the functions in the two listings. More specifically, byte and
+      instruction differences. Each of the action descriptions that follows explains how that
+      action affects the difference highlighting in the listings.</P>
+
+        <H4><A name="Dual_Listing_Ignore_Bytes"></A>Ignore Bytes</H4>
+
+        <BLOCKQUOTE>
+          <P>The ListingView has an icon (<IMG alt="" src="images/binaryData.gif">) on the tool bar
+          to ignore byte differences in the listing window. Selecting the toolbar button causes
+          byte differences to be ignored within the two listings. In other words, they won't be
+          highlighted. When ignoring byte differences the toolbar icon will look as though it is
+          pressed inward and will have a <IMG alt="" src="images/no_small.png"> in the upper left
+          corner.</P>
+
+          <P>When byte differences are being displayed, do the following to now ignore bytes in the
+          differences.</P>
+
+          <OL>
+            <LI>Right mouse click and select the <IMG alt="" src="images/binaryData.gif"> <B>Ignore
+            Bytes As Differences</B> option, OR select the <IMG alt="" src="images/binaryData.gif">
+            button on the tool bar.</LI>
+
+            <LI>A <IMG alt="" src="images/no_small.png"> will be in the upper left corner
+            indicating bytes are now being ignored and a check mark will now appear next to the
+            Ignore Bytes popup menu option. Any byte differences will no longer be highlighted with
+            a light green background in the listing.</LI>
+          </OL>
+
+          <P>Clicking the Ignore Bytes while it is ignoring byte differences will change it back to
+          determining byte differences.</P>
+        </BLOCKQUOTE>
+
+        <H4><A name="Dual_Listing_Ignore_Operand_Constants"></A>Ignore Operand Constants</H4>
+
+        <BLOCKQUOTE>
+          <P>The Listing View has an icon (<IMG alt="" src="images/class.png">) on the tool bar to
+          ignore differences in operand constants when comparing instructions in the listing
+          window. Selecting the toolbar button causes differences in operand constants to be
+          ignored within the two listings. In other words, they won't be highlighted. When ignoring
+          differences in constants the toolbar icon will look as though it is pressed inward and
+          will have a <IMG alt="" src="images/no_small.png"> in the upper left corner.</P>
+
+          <P>When operand constants differences are being displayed, do the following to now ignore
+          operand constants differences when comparing instructions.</P>
+
+          <OL>
+            <LI>Right mouse click and select the <IMG alt="" src="images/class.png"> <B>Ignore
+            Operand Constants As Differences</B> option, OR select the <IMG alt="" src=
+            "images/class.png"> button on the tool bar.</LI>
+
+            <LI>A <IMG alt="" src="images/no_small.png"> will be in the upper left corner
+            indicating operand constants are now being ignored and a check mark will now appear
+            next to the Ignore Operand Constants popup menu option. Any differences of operand
+            constants will no longer be highlighted with a light green background in the
+            listing.</LI>
+          </OL>
+
+          <P>Clicking the Ignore Operand Constants while it is ignoring differences of operand
+          constants will change it back to determining differences of operand constants.</P>
+        </BLOCKQUOTE>
+
+        <H4><A name="Dual_Listing_Ignore_Operand_Registers"></A>Ignore Operand Registers</H4>
+
+        <BLOCKQUOTE>
+          <P>The Listing View has an icon (<IMG alt="" src="images/registerGroup.png">) on the tool
+          bar to ignore differences in operand registers other than register size when comparing
+          instructions in the listing window. Selecting the toolbar button causes differences in
+          operand registers other than size to be ignored within the two listings. In other words,
+          they won't be highlighted. When ignoring differences in registers the toolbar icon will
+          look as though it is pressed inward and will have a <IMG alt="" src=
+          "images/no_small.png"> in the upper left corner.</P>
+
+          <P>When operand register differences are being displayed, do the following to now ignore
+          operand register differences when comparing instructions.</P>
+
+          <OL>
+            <LI>Right mouse click and select the <IMG alt="" src="images/registerGroup.png">
+            <B>Ignore Operand Registers As Differences</B> option, OR select the <IMG alt="" src=
+            "images/registerGroup.png"> button on the tool bar.</LI>
+
+            <LI>A <IMG alt="" src="images/no_small.png"> will be in the upper left corner
+            indicating operand registers are now being ignored and a check mark will now appear
+            next to the Ignore Operand Registers popup menu option. Any differences of operand
+            registers will no longer be highlighted with a light green background in the
+            listing.</LI>
+          </OL>
+
+          <P>Clicking the Ignore Operand Registers while it is ignoring differences of operand
+          registers will change it back to determining differences of operand registers.</P>
+        </BLOCKQUOTE>
+      </BLOCKQUOTE>
+	
+      <H3><A name="Listing_Code_Comparison_Options"></A>Listing Code Comparison Options</H3>
+
+      <BLOCKQUOTE>
+        <P>These are the tool options that can be adjusted for the dual listing view of a Function Comparison.</P>
+        <BR>
+
+        <CENTER>
+          <IMG alt="" border="0" src="images/ListingCodeComparisonOptions.png">
+        </CENTER><BR>
+    
+        <BR>
+        <P>The <B>Byte Differences Color</B> option sets the highlight color for bytes that 
+        differ between matched code units in the two listings.</P>
+        
+        <P>The <B>Differing Code Units Color</B> option sets the background highlight color of 
+        matched code units with one or more detailed differences currently being detected.</P>
+        
+        <P>The <B>Mnemonic Differences Color</B> option sets the highlight color for mnemonics 
+        that differ between matched code units in the two listings.</P>
+        
+        <P>The <B>Operand Differences Color</B> option sets the highlight color for operands 
+        that differ between matched code units in the two listings.</P>
+        
+        <P>The <B>Unmatched Code Units Color</B> option sets the background highlight color
+        where the code from one listing didn't get matched up with code from the other listing.</P>
+        <BR>
+	  </BLOCKQUOTE>
+	
+	</BLOCKQUOTE>
+
+    <H2><A name="Compare Multiple Functions"></A>Comparing Multiple Functions</H2>
+
+    <BLOCKQUOTE>
+      <P>When comparing more than two functions, a Function Comparison window will have additional
+      components at the top of it. This window displays two functions side by side again, but has
+      two choice components at the top of the panel, which indicates the current function being
+      displayed in each side (left and right) of the panel. Each choice component can display a
+      list indicating the functions that can be displayed in the listing below it. Only one
+      function at a a time from the list can be displayed below it based on the type of view
+      currently set. You can simply change the current function for either side of the function
+      comparison using the choice component in order to get a different function comparison.</P>
+
+      <P>There are two toolbar actions with quick keys that allow you to change to the
+      next/previous function for the side that has focus as indicated by the pink border.</P>
+
+	  <BR><BR>
+      <CENTER>
+        <IMG alt="" border="0" src="images/MultiFunctionComparisonWindow.png">
+      </CENTER><BR>
+      <BR>
+       
+
+      <H3>Multi-Function Comparison Actions</H3>
+
+      <BLOCKQUOTE>
+        <P>There are two additional actions that are available when you are comparing more than
+        just two functions. The following describes them.</P>
+
+        <H4><A name="Compare_The_Next_Function"></A>Compare The Next Function</H4>
+
+        <BLOCKQUOTE>
+          <P>The Function Comparison window has an icon (<IMG alt="" src=
+          "images/FunctionScope.gif"><IMG alt="" src="images/arrow_down.png">) on the tool bar to
+          change the function being compared to the next one in the list for the side that
+          currently has focus.</P>
+
+          <OL>
+            <LI>Make sure the side (left or right) has focus for the function you want to change to
+            the next one. The side with focus will have the pink border around it. It if doesn't,
+            you can mouse click in the other side to get the focused side to change or you can use
+            the Tab key to move the focus until it moves the pink border around the correct
+            side.</LI>
+
+            <LI>Right mouse click and select the <IMG alt="" src="images/FunctionScope.gif"><IMG
+            alt="" src="images/arrow_down.png"> <B>Compare The Next Function</B> option, OR select
+            the <IMG alt="" src="images/FunctionScope.gif"><IMG alt="" src="images/arrow_down.png">
+            button on the tool bar.</LI>
+          </OL>
+
+          <P>The function should change to the next one available in the list from the choice
+          component. The differences will be recomputed for the new function comparison that is now
+          displayed. If the currently displayed function is at the end of the list, a message will
+          display in the tool's status area indicating there isn't a next function.</P>
+        </BLOCKQUOTE>
+
+          <H4><A name="Compare_The_Previous_Function"></A>Compare The Previous Function</H4>
+
+          <BLOCKQUOTE>
+            <P>The Function Comparison window has an icon (<IMG alt="" src=
+            "images/FunctionScope.gif"><IMG alt="" src="images/arrow_up.png">) on the tool bar to
+            change the function being compared to the previous one in the list for the side that
+            currently has focus.</P>
+
+            <OL>
+              <LI>Make sure the side (left or right) has focus for the function you want to change
+              to the previous one. The side with focus will have the pink border around it. It if
+              doesn't, you can mouse click in the other side to get the focused side to change or
+              you can use the Tab key to move the focus until it moves the pink border around the
+              correct side.</LI>
+
+              <LI>Right mouse click and select the <IMG alt="" src="images/FunctionScope.gif"><IMG
+              alt="" src="images/arrow_up.png"> <B>Compare The Previous Function</B> option, OR
+              select the <IMG alt="" src="images/FunctionScope.gif"><IMG alt="" src=
+              "images/arrow_up.png"> button on the tool bar.</LI>
+            </OL>
+
+            <P>The function should change to the previous one available in the list from the choice
+            component. The differences will be recomputed for the new function comparison that is
+            now displayed. If the currently displayed function is at the beginning of the list, a
+            message will display in the tool's status area indicating there isn't a previous
+            function.</P>
+          </BLOCKQUOTE>
+      </BLOCKQUOTE>
+
+      <H3>Other Function Comparison Actions</H3>
+
+      <P>The following are additional actions that are available in the Function Comparison
+      window.</P>
+
+        <H4><A name="Dual_Listing_Toggle_Mouse_Hover_Popups"></A>Toggle Mouse Hover Popups</H4>
+
+        <BLOCKQUOTE>
+          <P>If you hover the mouse over a reference in either listing A popup window will appear
+          showing a listing at the part of the program being referenced. You can also hover over a
+          field in the listing that contains truncated text, which will show you the entire text in
+          a popup. You can turn the hover popup windows off using the <IMG alt="" src=
+          "images/hoverOn.gif"> mouse hover button in the toolbar.</P>
+
+          <OL>
+            <LI>Selecting the <IMG alt="" src="images/hoverOn.gif"> button in the toolbar will turn
+            mouse hover popups off and the icon will switch to a <IMG alt="" src=
+            "images/hoverOff.gif">.</LI>
+
+            <LI>Selecting the <IMG alt="" src="images/hoverOff.gif"> button in the toolbar will
+            turn mouse hover popups back on and the icon will switch to a <IMG alt="" src=
+            "images/hoverOn.gif">.</LI>
+          </OL>
+        </BLOCKQUOTE>
+
+        <H4><A name="Synchronize_Scrolling_of_Dual_View"></A>Synchronize Scrolling of Dual View</H4>
+
+        <BLOCKQUOTE>
+          <P>If the <IMG alt="" src="images/lock.gif"> button is showing in the toolbar then
+          the dual listing or dual decompiler will synchronize scrolling of the left and right 
+          function in their views. Scrolling or moving the cursor in one side will cause the 
+          location in the other side to also scroll or move if a matching location can be 
+          determined.</P>
+          <P>When the <IMG alt="" src="images/unlock.gif"> button is showing in the toolbar the
+          left and right sides of the dual listing or dual decompiler will scroll independent
+          of the other side.</P>
+
+          <OL>
+            <LI>Selecting the <IMG alt="" src="images/lock.gif"> button in the toolbar will turn
+            synchronized scrolling of the dual views off and the icon will switch to a 
+            <IMG alt="" src="images/unlock.gif">.</LI>
+
+            <LI>Selecting the <IMG alt="" src="images/unlock.gif"> button in the toolbar will
+            turn synchronized scrolling of the dual views back on and the icon will switch to a 
+            <IMG alt="" src="images/lock.gif">.</LI>
+          </OL>
+        </BLOCKQUOTE>
+
+        <H4><A name="Apply_Function_Signature_To_Other_Side"></A>Apply Function Signature To Other
+        Side</H4>
+
+        <BLOCKQUOTE>
+          <P>The <B>Apply Function Signature To Other Side</B> action is available in the Function
+          Comparison window from the popup menu. This will apply the function signature from the
+          side of the panel that has focus (the one with the pink border around it) to the function
+          in the other side.</P>
+
+          <P>When you apply the signature it updates the other side's function so its signature
+          will match the function's signature in the side with focus as closely as possible. This
+          will try to create conflict names if necessary for the function and its parameters.</P>
+
+          <P>To apply the signature from one function to the other:</P>
+
+          <OL>
+            <LI>Right mouse click in the side of the Function Comparison Window that has the
+            function signature that you want to apply.</LI>
+
+            <LI>Choose the <B>Apply Function Signature To Other Side</B> option from the menu.</LI>
+          </OL>
+
+          <P>The function signature in the non-focused side of the Function Comparison window
+          should update if the apply succeeded.</P>
+        </BLOCKQUOTE>
+
+    </BLOCKQUOTE><BR>
+    <BR>
+     
+
+    <P class="providedbyplugin">Provided By:&nbsp; <I>FunctionComparisonPlugin</I></P>
+
+    <P class="relatedtopic">Related Topics:</P>
+
+    <UL>
+      <LI>
+        <P class="relatedtopic"><A href="help/topics/CodeBrowserPlugin/CodeBrowser.htm">Code
+        Browser</A></P>
+      </LI>
+    </UL>
+  </BODY>
+</HTML>

@@ -1,0 +1,204 @@
+<!DOCTYPE doctype PUBLIC "-//W3C//DTD HTML 4.0 Frameset//EN">
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+
+    <TITLE>Version Tracking Introduction</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=windows-1252">
+    <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+  </HEAD>
+
+  <BODY lang="EN-US">
+    <H1><A name="Version_Tracking_Plugin"></A></A>Version Tracking Introduction</H1>
+
+
+	  <BLOCKQUOTE>
+        <P>
+        
+        Version Tracking refers to the process used by reverse engineers to identify matching code or data 
+        between different software binaries.  One common use case is to version track two 
+        different versions of the same binary.  Alternatively, version tracking techniques 
+        can be used to check for the presence of of a particular piece of code within a given 
+        binary of interest.       
+        </P>
+        
+        <P>        
+        Perhaps the most common version tracking scenario is when you have a binary file that 
+        you have previously analyzed, identifying important areas of interest and annotating the code with comments
+        and labels.  Suppose the software developer releases a newer version of the software including bug 
+        fixes and feature modifications.  Since customers may be using the more up-to-date version,
+        the analyst will probably want to continue evaluation with the newer version as well.
+        However, it can be very time-consuming to have to initiate the analysis from scratch. In
+        order to leverage the existing work, version tracking enables the reverse engineer 
+        to port comments and labels into the new context.        
+        </P>
+        
+        <P>
+        Perhaps the second most common version tracking scenario is where you wish to check for
+        the presence of existing code within a given binary.  As an example, given a small collection 
+        of functions, say from some library of routines or code representing known malware, you 
+        can use version tracking to search for that code in a given binary.
+        </P>
+        
+        <P>        
+        The remainder of this document describes high-level version tracking concepts use by 
+        Ghidra, followed by links to documents that describe how to get started version 
+        tracking in Ghidra.      
+        </P>
+      </BLOCKQUOTE>
+
+	<BLOCKQUOTE>
+		<p>
+      	Version Tracking Concepts:
+      	</p>
+      	<ul>
+      		<li><a href="#Session">Session</a></li>
+      		<li><a href="#Intro_Associations">Associations</a></li>
+      		<li><a href="#Intro_Matches">Matches</a></li>
+      		<li><a href="#Intro_Markup_Items">Markup Items</a></li>
+      		<li><a href="#Intro_Correlators">Correlators</a></li>
+      		<li><a href="#Intro_How_To_Start">How to Start</a></li>
+      	</ul>
+      
+    </BLOCKQUOTE>
+
+    
+    <H2><A name="Session"></A>Version Tracking Session</H2>
+	  <BLOCKQUOTE>
+	  
+	   <P>
+	   A <i>session</i> is created as a result of running one of Ghidra's matching 
+	   algorithms (a.k.a., a <a href="#Intro_Correlators">correlator</a>) against two binaries. 
+	   The newly created session is stored in the 
+	   <a href="help/topics/FrontEndPlugin/Ghidra_Front_end.htm#Project_Window">Ghidra Project Window</a>.
+	   The session records the history of any work done within that session (e.g., applying 
+	   markup).  Furthermore, since changes are saved, you may close and reopen a session to 
+	   continue work at a later time.  Sessions can be updated with new data by running 
+	   additional matching algorithms at any time.
+	   </P>
+      </BLOCKQUOTE>
+      
+
+	<H2><A name="Intro_Associations"></A>Version Tracking Associations</H2>
+	  <BLOCKQUOTE>
+        <P>
+        
+		An <I>association</I> is any pairing of information between the two versions of the same program, which suggests 
+		that the items correspond with one another in some way.  An association is characterized by a collection
+		of metadata including the correlating algorithm that determined the association, a memory address reference
+		locating the items in each version, and the type of the items being associated (data or function).		
+		</P>
+
+	    <P>	
+		Sometimes a variable or function in the source program will be associated with several
+		variables or functions in the destination program.  This happens because the version tracking algorithm has
+		found enough evidence to support each candidate as a possible correspondence between the two versions.  When
+		this happens, we say that they are conflicting associations.  It may be that only one of the associations
+		is exactly right or that the modularity of the program has changed sufficiently and none of the associations
+		is quite right.  Ultimately, the analyst has to inspect the actual code
+		to make a determination about which associations represents a valid match.		
+		</P>
+		
+	    <P>	    
+		Once an association is accepted by the user, any other associations which may be conflicting because they include
+		either the same source or the same destination address will become blocked because the tool only allows one-to-one
+		mappings.  Blocked and conflicting associations which lead to other inconsistencies can be a useful way of identifying 
+		valid matches between two different versions.  
+		
+        </P>
+      </BLOCKQUOTE>
+
+	<H2><A name="Intro_Matches"></A>Version Tracking Matches</H2>
+	  <BLOCKQUOTE>
+        <P>
+        A <i>match</i> is an association that has been assigned a score.  As a correlator finds an 
+        association it will assign that association a score, thus creating a match.  The
+        <a href="help/topics/VersionTrackingPlugin/providers/VT_Matches_Table.html">matches table</a>
+        contains all matches discovered by any correlators run within a given session.  Users 
+        can use the score to help determine the accuracy of a given match, as not all matches
+        created by the correlators are correct.		
+		</P>
+		
+		<P>
+		When the you determine that a match is valid, then you can 
+		<a href="help/topics/VersionTrackingPlugin/providers/VT_Matches_Table.html#Accept_Match">accept</a>
+		the match, which will block conflicting, related matches.  When you apply markup for a
+		given match, then that match is automatically accepted.  Finally, you cannot apply
+		markup for a match that has been blocked by another already accepted match.
+		</P>
+		
+		<P>		
+		Ghidra also has the concept of an 
+		<a href="help/topics/VersionTrackingPlugin/providers/VT_Implied_Matches_Table.html#Implied_Matches">Implied 
+		Match</a>.  If you accept a function match, then Ghidra will generate implied matches for any functions
+		called by the two functions that make up the function match.
+		</P>
+      </BLOCKQUOTE>
+      
+      <H2><A name="Intro_Markup_Items"></A>Version Tracking Markup Items</H2>
+	  <BLOCKQUOTE>
+        <P>
+        
+		During analysis of a program, the analyst will develop a greater understanding of the code and will annotate
+		the disassembly with comments, labels, data type information, and parameter and variable names to document 
+		the code and to make it more readable.  Ghidra refers to all of these annotated details
+		as markup items.
+		
+		</P>
+		<P>
+		For any given match we can apply its markup items
+		and port these annotations in an appropriate manner so that the labels and comments appear in the corresponding
+		locations in the new binary.  This is the ultimate purpose of version tracking, to retain any progress that
+		has already been made in understanding the code and be able to proceed despite any changes 
+		to the original binary. 
+		
+        </P>
+      </BLOCKQUOTE>
+      
+      
+      <H2><A name="Intro_Correlators"></A>Version Tracking Correlators</H2>
+	  <BLOCKQUOTE>
+        <P>
+		
+		There are many strategies for identifying 
+		how different versions of the a program are related to each other.  Any scheme or algorithm 
+		that determines these relationships is referred to as a correlator.  Correlators may be based 
+		on the underlying bytes in a program, the program flow, or any other aspect of the code upon
+		which similarities may be observed.  Additional documentation is available for the specific
+		<a href="help/topics/VersionTrackingPlugin/VT_Correlators.html">correlators used in Ghidra.</a>
+		
+		</font>
+        </P>
+      </BLOCKQUOTE>
+      
+       <H2><A name="Intro_How_To_Start"></A>How to Start</H2>
+	  <BLOCKQUOTE>
+        <P>
+			This list presents a few different useful links for getting started with 
+			version tracking.
+      	</P>
+      	<ul>      		
+      		<li><a href="help/topics/VersionTrackingPlugin/VT_Workflow.html">Workflow</a></li>
+      		<li><a href="help/topics/VersionTrackingPlugin/VT_Tool.html">Version Tracking Tool</a></li>
+      		<li><a href="help/topics/VersionTrackingPlugin/VT_Wizard.html">Version Tracking Wizard</a>
+      		</li>      		
+      	</ul>
+      </BLOCKQUOTE>
+      
+
+    <P class="providedbyplugin">Provided by: <I>Version Tracking Plugin</I></P>
+
+    <P class="relatedtopic">Related Topics:</P>
+
+    <UL>
+      <li><a href="help/topics/VersionTrackingPlugin/VT_Workflow.html">Workflow</a></li>
+	  <li><a href="help/topics/VersionTrackingPlugin/VT_Tool.html">Version Tracking Tool</a></li>
+	  <li><a href="help/topics/VersionTrackingPlugin/VT_Wizard.html">Version Tracking Wizard</a>
+      <LI><A href="help/topics/VersionTrackingPlugin/providers/VT_Matches_Table.html">Version Tracking Matches Table</A></LI>
+      <LI><A href="help/topics/VersionTrackingPlugin/providers/VT_Markup_Table.html">Version Markup Items Table</A></LI>      
+    </UL><BR>
+     <BR>
+  </BODY>
+</HTML>

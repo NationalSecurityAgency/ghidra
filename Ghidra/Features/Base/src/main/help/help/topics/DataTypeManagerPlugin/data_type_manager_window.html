@@ -1,0 +1,744 @@
+<!DOCTYPE doctype PUBLIC "-//W3C//DTD HTML 4.0 Frameset//EN">
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+
+    <TITLE>Data Type Manager Window</TITLE>
+    <META http-equiv="content-type" content="text/html; charset=windows-1252">
+    <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+    <META name="generator" content="Microsoft FrontPage 4.0">
+  </HEAD>
+
+  <BODY>
+  
+  
+  	
+
+      <H1>Data Type Manager Window</H1>
+
+      <BLOCKQUOTE>
+        <P>The <I>Data Type Manager</I> window shows the data types and their categories using a
+        tree structure. To bring up the window, click on the <IMG alt="" src=
+        "images/dataTypes.png"> icon in the tool bar, or select the <B><FONT size="4">Window<IMG
+        src="../../shared/arrow.gif" alt="" border="0"> Data Types...</FONT></B> menu option in the
+        tool.</P>
+
+        <CENTER>
+         <P>
+          <IMG alt="" src="images/DataTypeManager.png"><BR>
+         </P>
+        </CENTER>
+
+        <H2><A name="ProgramRootNode"></A>The Data Type Tree<BR>
+        </H2>
+
+          <BLOCKQUOTE>
+
+              <P>The first level nodes under the root <IMG alt="" src="images/BookShelfOpen.png">
+              are <I>archive</I> nodes. There are two special archive nodes: one for standard <A
+              href="data_type_manager_description.htm#built_in">"Built-in"</A> data types and one for data types that are stored in
+              the current program. Additional archive nodes are created for each open data type
+              archive file. Archive nodes can contain both <A href="data_type_manager_description.htm#categories">category</A> nodes
+              and "data type" nodes. Category nodes can contain data type nodes and other category
+              nodes. Data type nodes are leaf nodes and they represent a specific data type.<BR>
+              </P>
+
+              <P>The different colors of the archive nodes indicate the type of archive:<BR>
+              </P>
+
+                <TABLE style="width: 100%; text-align: left;" border="0" cellpadding="2"
+                cellspacing="0">
+                  <TBODY>
+                    <TR valign="top">
+                      <TD style="width: 16px;"><IMG alt="" src="images/closedBookBrown.png" style=
+                      "width: 16px; height: 16px;"></TD>
+
+                      <TD style="">- Built-in archive data types</TD>
+                    </TR>
+
+                    <TR valign="top">
+                      <TD style="width: 16px;"><IMG alt="" src="images/closedBookRed.png" style=
+                      "width: 16px; height: 16px;"></TD>
+
+                      <TD style="">- Program data types</TD>
+                    </TR>
+
+                    <TR valign="top">
+                      <TD style="width: 16px;"><IMG alt="" src="images/closedBookBlue.png" style=
+                      "width: 16px; height: 16px;"></TD>
+
+                      <TD style="">- Project Archive</TD>
+                    </TR>
+
+                    <TR valign="top">
+                      <TD style="width: 16px;"><IMG alt="" src="images/closedBookGreen.png" style=
+                      "width: 16px; height: 16px;"></TD>
+
+                      <TD style="">- File Archive</TD>
+                    </TR>
+                  </TBODY>
+                </TABLE>
+
+              <P>Archive Icon modifiers (These icons are overlayed with the icons above)<BR>
+              </P>
+
+                <TABLE style="width: 100%; text-align: left;" border="0" cellpadding="2"
+                cellspacing="0">
+                  <TBODY>
+                    <TR valign="top">
+                      <TD style="width: 40px;" align="right" valign="top"><IMG alt="" src=
+                      "images/check.png" style="width: 17px; height: 17px;"></TD>
+
+                      <TD style="">- Indicates the archive is modifiable by you and possibly by
+                      others in your shared project</TD>
+                    </TR>
+
+                    <TR valign="top">
+                      <TD style="width: 40px;" align="right" valign="top"><IMG alt="" src=
+                      "images/checkex.png" style="width: 17px; height: 17px;"></TD>
+
+                      <TD style="">- Indicates the archive is currently modifiable only by you</TD>
+                    </TR>
+
+                    <TR valign="top">
+                      <TD style="width: 40px;" align="right" valign="top"><IMG alt="" src=
+                      "images/checkNotLatest.gif" style="width: 16px; height: 16px;"></TD>
+
+                      <TD style="">- Indicates the archive is out of date (someone has checked
+                      changes for this archive into the repository)</TD>
+                    </TR>
+
+                    <TR valign="top">
+                      <TD style="width: 40px;" align="right" valign="top"><IMG alt="" src=
+                      "images/small_hijack.gif" style="width: 17px; height: 17px;" border="0"></TD>
+
+                      <TD style="">- Indicates the archive is hijacked (modified without being
+                      checked out)</TD>
+                    </TR>
+
+                    <TR>
+                      <TD style="width: 40px;" align="right" valign="top"><IMG alt="" src=
+                      "images/lockoverlay.png" border="0"><BR>
+                      </TD>
+
+                      <TD style="vertical-align: top;">- Indicates the archive is a read only
+                      version and is not modifiable<BR>
+                      </TD>
+                    </TR>
+
+                    <TR>
+                      <TD style="width: 40px;" align="right" valign="top"><IMG alt="" src=
+                      "images/smallRightArrow.png" style="width: 12px; height: 10px;" border=
+                      "0"><BR>
+                      </TD>
+
+                      <TD style="vertical-align: top;">- Indicates the archive has changes to
+                      datatypes that have not been committed back to its source archive. A commit
+                      is needed.</TD>
+                    </TR>
+
+                    <TR>
+                      <TD style="width: 40px;" align="right" valign="top"><IMG alt="" src=
+                      "images/smallLeftArrow.png" style="width: 12px; height: 10px;" border=
+                      "0"><BR>
+                      </TD>
+
+                      <TD style="vertical-align: top;">- Indicates the archive has datatypes from a
+                      source archive that has been been modified. An update is needed.</TD>
+                    </TR>
+
+                    <TR valign="top">
+                      <TD style="width: 40px;" align="right" valign="top"><IMG alt="" src=
+                      "images/doubleArrow.png" style="width: 16px; height: 10px;" border="0"></TD>
+
+                      <TD style="">- Indicates the archive has datatypes that need updating and
+                      datatypes that need to be committed.</TD>
+                    </TR>
+                  </TBODY>
+                </TABLE>
+    
+              <P>Other Icons used in the tree:<BR>
+              </P>
+
+
+                <TABLE style="width: 100%; text-align: left;" border="0" cellpadding="2"
+                cellspacing="0">
+                  <TBODY>
+                    <TR valign="top">
+                      <TD style="width: 25px;"><IMG alt="" src="images/closedFolder.png" style=
+                      "width: 25px; height: 17px;"></TD>
+
+                      <TD style="">- Category</TD>
+                    </TR>
+
+                    <TR valign="top">
+                      <TD style="width: 25px;"><IMG alt="" src="images/package_development.png"
+                      style="width: 18px; height: 18px;"></TD>
+
+                      <TD style="">- Built-in data type</TD>
+                    </TR>
+
+                    <TR valign="top">
+                      <TD style="width: 25px;"><IMG alt="" src="images/cstruct.png" style=
+                      "width: 16px; height: 16px;"></TD>
+
+                      <TD style="">- Structure</TD>
+                    </TR>
+
+                    <TR valign="top">
+                      <TD style="width: 25px;"><IMG alt="" src="images/cUnion.png" style=
+                      "width: 16px; height: 16px;"></TD>
+
+                      <TD style="">- Union</TD>
+                    </TR>
+
+                    <TR valign="top">
+                      <TD style="width: 25px;"><IMG alt="" src="images/typedef.png" style=
+                      "width: 16px; height: 16px;"></TD>
+
+                      <TD style="">- Typedef</TD>
+                    </TR>
+
+                    <TR valign="top">
+                      <TD style="width: 25px;"><IMG alt="" src="images/functionDef.png" style=
+                      "width: 16px; height: 16px;"></TD>
+
+                      <TD style="">- Function Definition</TD>
+                    </TR>
+
+                    <TR valign="top">
+                      <TD style="width: 25px;"><IMG alt="" src="images/enum.png" style=
+                      "width: 16px; height: 16px;"></TD>
+
+                      <TD style="">- Enum</TD>
+                    </TR>
+
+                    <TR valign="top">
+                      <TD style="width: 25px;"><IMG alt="" src="images/fingerPointer.png" style=
+                      "width: 16px; height: 16px;"></TD>
+
+                      <TD style="">- Pointer</TD>
+                    </TR>
+
+                    <TR valign="top">
+                      <TD style="width: 25px;"><IMG alt="" src="images/emblem-favorite.png" style=
+                      "width: 18px; height: 18px;"></TD>
+
+                      <TD style="">- Favorite</TD>
+                    </TR>
+                  </TBODY>
+                </TABLE>
+  
+              <P>Data Type Icon modifiers (These icons are overlayed with the icons above)<BR>
+              </P>
+
+                <TABLE style="width: 100%; text-align: left;" border="0" cellpadding="2"
+                cellspacing="0">
+                  <TBODY>
+                    <TR valign="top">
+                      <TD style="width: 20px; text-align: center;"><IMG alt="" src=
+                      "images/smallRightArrow.png" style="width: 12px; height: 10px;"></TD>
+
+                      <TD style="">- Indicates the data type has changes that need to be committed
+                      to the source archive</TD>
+                    </TR>
+
+                    <TR valign="top">
+                      <TD style="width: 20px; text-align: center;"><IMG alt="" src=
+                      "images/smallLeftArrow.png" style="width: 12px; height: 10px;"></TD>
+
+                      <TD style="">- Indicates the data type has been updated in the source archive
+                      and needs to be updated locally.</TD>
+                    </TR>
+
+                    <TR valign="top">
+                      <TD style="width: 20px; text-align: center;"><IMG alt="" src=
+                      "images/doubleArrow.png" style="width: 16px; height: 10px;"></TD>
+
+                      <TD style="">- Indicates the data type has changed both in this archive and
+                      in the source archive. (conflict)<BR>
+                      </TD>
+                    </TR>
+
+                    <TR valign="top">
+                      <TD style="width: 20px; text-align: center;"><IMG alt="" src=
+                      "images/redQuestionMark.png"></TD>
+
+                      <TD style="">- Indicates the data type is missing in the source archive.</TD>
+                    </TR>
+                  </TBODY>
+                </TABLE>
+
+
+              <P><IMG src="../../shared/note.png" alt="">Opening a program also causes file data
+              type archives that have been associated with that program to be opened. As of Ghidra
+              version 4.3, whenever a data type is applied from an archive to a program, that
+              archive will become associated with the program.</P>
+
+              <P>By using the data type tree in various ways (drag-n-drop, cut/paste, menus, etc.),
+              users can perform the following actions.</P>
+
+              <UL>
+                <LI>Apply data types to appropriate places in a program (memory locations,
+                parameters, local variables, etc.).</LI>
+
+                <LI>Create new structures, unions, enums, and typedefs.</LI>
+
+                <LI>Copy data types from one archive to another.</LI>
+
+                <LI>Organize data types into categories and sub-categories.</LI>
+
+                <LI>Rename data types and categories.</LI>
+
+                <LI>Find data types by name.</LI>
+
+                <LI>Create new file data type archives.</LI>
+
+                <LI>Create new project data type archives.</LI>
+
+                <LI>Delete data types and categories.</LI>
+
+                <LI>Commit changes back to a source archive.</LI>
+
+                <LI>Update changes from a source archive.</LI>
+
+                <LI>Revert changes back from a source archive.</LI>
+
+                <LI>Disassociate data types from a source archive.</LI>
+              </UL>
+
+          </BLOCKQUOTE>
+
+
+      <H2><A name="Filter"></A>Filter</H2>
+
+      <BLOCKQUOTE>
+        <P>Located at the bottom of the tree component, there is a text field which can be used to
+        quickly find data types by <B>name</B>. As text is entered into the filter, the tree is
+        pruned such that only nodes <B>with names</B> (this means that members of composite types
+        will not be matched) that match the entered text are displayed in the tree. This field
+        interprets the '*' character as a wild card and will match any sequence of characters.
+        There is an assumed '*' at the beginning of the text so that matches don't have to start
+        with the entered filter text. For example, entering "foo" will not only match "foot" and
+        "food", but will also match "snafoo."</P>
+
+        <P>The <B>Include Data Members in Filter</B> action, when toggled on, will trigger the
+        filter field to search the components of <TT>Composite</TT> data types and names, the
+        fields of <TT>Enum</TT> names and values, and <TT>Function</TT> parameter data types and
+        names. You may turn this feature off if you find that your search yields too many results
+        for data types that have common names, such as <TT>byte</TT>.</P>
+      </BLOCKQUOTE>
+
+      <H2><A name="conflict_mode"></A>Data Type Conflict Resolution Mode</H2>
+
+      <BLOCKQUOTE>
+        <P>Anytime a data type is applied, copied or moved via the Data Type tree, name conflicts
+        can occur with existing data types within the destination archive or program. While the
+        default conflict handler simply appends ".conflict" to the new or moved data type name,
+        actions initiated via the tree utilize a Data Type Conflict Mode identified and selected
+        from the Data Type tree toolbar. Four conflict modes are supported:</P>
+
+        <BLOCKQUOTE>
+          <P><IMG alt="" src="images/conflictRename.png"> - <I>Rename New or
+          Moved Data Type</I> is the default behavior where a unique "<I>.conflict</I>" suffix is
+          appended to the new or moved data type.</P>
+
+          <P><IMG alt="" src="images/conflictKeep.png"> - <I>Use Existing
+          Data Type</I> causes the existing data type within the destination category to be used in
+          place of the new or moved data type. All references to the moved data type within the
+          destination archive/program will be replaced with the existing data type within the
+          destination category.</P>
+
+          <P><IMG alt="" src="images/conflictReplace.png"> - <I>Replace
+          Existing Data Type</I> causes the existing data type within the destination category to
+          be replaced by the new or moved data type. All references to the existing data type
+          within the destination archive/program will be replaced with the new or moved data
+          type.</P>
+          <BR>
+          <BR>
+           
+
+          <P><IMG alt="" src="images/conflictReplaceOrRename.png"> -
+          <I>Replace Empty Structures else Rename</I> performs the default "<I>.conflict</I>"
+          rename except in the case when adding a conflicting structure or union that appears
+          similar to an existing structure. The intent is to keep the structure/union which appears
+          to be more complete than the other in its field specification.</P>
+        </BLOCKQUOTE>
+      </BLOCKQUOTE>
+
+      <H2>Local Toolbar Actions</H2>
+
+      <BLOCKQUOTE>
+        <P><A name="Navigation_Actions"></A> <IMG alt="" src="Icons.LEFT_ALTERNATE_ICON">  / 
+        <IMG alt="" src="Icons.RIGHT_ALTERNATE_ICON"> -
+        Navigates forward and backward in the stack of visited data types.</P>
+
+        <P><IMG alt="" src="images/collapse_all.png"> - Collapses all open
+        tree nodes, except for the root node.</P>
+
+        <P><A name="Filter_Arrays"></A><IMG alt="" src="images/Array.png"> -
+        Toggles the array filter on or off. If the filter is on, array data types 
+        are not shown in
+        the data type tree.</P>
+
+        <P><A name="Filter_Pointers"></A><IMG alt="" src="images/fingerPointer.png"> - 
+        Toggles the pointer filter on or off. If the filter is on, pointer data types
+        are not shown in the data type tree.</P>
+      </BLOCKQUOTE>
+
+      <H2>Local Menu Actions</H2>
+
+      <BLOCKQUOTE>
+        <TABLE style="width: 100%;" border="0" cellpadding="2" cellspacing="2">
+          <TBODY>
+            <TR valign="top">
+              <TD style="text-align: left;" nowrap="nowrap" width="5%"><B>Open File
+              Archive...</B><BR>
+              </TD>
+
+              <TD valign="top">This action will launch a file explorer that can be used to find and
+              open an existing <A href="data_type_manager_description.htm#file_archives">file data type archive</A>. The location
+              (file path) of the chosen file will be added to the <A href=
+              "data_type_manager_description.htm#file_archive_path">archive path</A> if it isn't already there.</TD>
+            </TR>
+
+            <TR valign="top">
+              <TD style="text-align: left;"><B>Open Project
+              Archive...</B><BR>
+              </TD>
+
+              <TD style="">This action will launch a project data type archive chooser that can be
+              used to open an existing project archive. Project data type archives live in the
+              project and can be seen in the <A href=
+              "../FrontEndPlugin/Ghidra_Front_end.htm">Ghidra Project Window</A>. Project data type
+              archives can also be opened by dragging them from the Ghidra Project Window to the
+              <I>Data Type Manager</I> tree.</TD>
+            </TR>
+
+            <TR valign="top">
+              <TD style="text-align: left;" width="5%"><B>New File Archive...</B><BR>
+              </TD>
+
+              <TD valign="top">This action is used to create a new file data type archive. A file
+              chooser will launched for choosing a location and name for the new file archive. The
+              location (file path) of the new archive will be added to the <A href=
+              "data_type_manager_description.htm#file_archive_path">archive path</A> if it isn't already there.</TD>
+            </TR>
+
+            <TR valign="top">
+              <TD style="text-align: left;"><B>New Project
+              Archive...</B><BR>
+              </TD>
+
+              <TD style="">This action is used to create a new project data type archive. A project
+              window browser will be launched for choosing a location in the project and a name for
+              the new project archive.</TD>
+            </TR>
+
+            <TR valign="top">
+              <TD style="text-align: left;"><B>Standard Archive</B><BR>
+              </TD>
+
+              <TD valign="top"><A name="Standard_Archives"></A>This menu option will have a
+              sub-menu item for all file archives contained within the Ghidra installation. Only
+              those archives contained within a module <I>data/typeinfo</I> subdirectory will be included. If
+              contained within a contrib module, the contrib name will also be displayed.</TD>
+            </TR>
+
+            <TR>
+              <TD style="vertical-align: top;"><B>Recently Opened Archive</B></TD>
+
+              <TD style="vertical-align: top;"><A name="Recent_Archives"></A>This menu option will
+              have a sub-menu item for all recently opened file archives. Choosing one of the
+              recently open archives actions will open that archive.</TD>
+            </TR>
+
+            <TR valign="top">
+              <TD style="text-align: left;" nowrap="nowrap" width="5%"><B>Refresh BuiltIn
+              Types</B><BR>
+              </TD>
+
+              <TD valign="top"><A name="Refresh_BuiltInTypes"></A>This action will search for new
+              <A href="data_type_manager_description.htm#built_in">Built-in</A> data types in the classpath. This is only useful if
+              somehow new data type java classes have been added since Ghidra was started.</TD>
+            </TR>
+
+            <TR valign="top">
+              <TD style="text-align: left;" nowrap="nowrap" width="5%"><B>Preview Window</B><BR>
+              </TD>
+
+              <TD valign="top">
+                <A name="Preview_Window"></A>This action will show a preview window in the lower
+                part of the data types window. This preview window will be updated with a preview
+                of the selected data type node. To close the preview window, simply click the
+                <B>Preview Window</B> action again. Below is a picture of the data type manager
+                with the preview window open. 
+
+                <TABLE x-use-null-cells="" width="100%">
+                  <TBODY>
+                    <TR>
+                      <TD align="center" width="100%"><IMG alt="" border="1" src=
+                      "images/PreviewWindow.png"></TD>
+                    </TR>
+                  </TBODY>
+                </TABLE>
+              </TD>
+            </TR>
+
+            <TR valign="top">
+              <TD style="text-align: left;" width="5%"><B>Find Data Types by Name...</B><BR>
+              </TD>
+
+              <TD valign="top">This action will prompt for a search string and then launch a new
+              <I>Find Data Type</I> window with its filter set
+              to the search string.</TD>
+            </TR>
+
+            <TR valign="top">
+              <TD style="text-align: left;"><B>Edit Archive
+              Paths...</B><BR>
+              </TD>
+
+              <TD style=""><A name="Edit_Archive_Paths"></A>This action will launch a dialog that
+              can be used to add, remove, or reorder the directories used for searching for a file
+              archive. Ghidra programs only store the name of the archive. Each directory in the <A
+              href="data_type_manager_description.htm#file_archive_path">archive path</A> is searched in order, looking for a file
+              archive with that name. See the section on <A href=
+              "data_type_manager_archives.html#Edit_Data_Type_Archive_Paths">editing archive paths.</A><BR>
+              </TD>
+            </TR>
+          </TBODY>
+        </TABLE>
+      </BLOCKQUOTE>
+
+      <H2>Popup Menu Actions</H2>
+
+      <BLOCKQUOTE>
+        <P>The set of actions on the right-mouse popup menu change depending on what nodes are
+        selected. These actions will be described in the appropriate sections below.</P>
+      </BLOCKQUOTE>
+  	
+  
+        <H2>Miscellaneous Actions</H2>
+
+        <BLOCKQUOTE>
+          <H3><A name="Cut"></A>Cut</H3>
+
+          <BLOCKQUOTE>
+            <P>The <I><B>Cut</B></I> action can be be used to 
+            <A href="data_type_manager_description.htm#MoveDataType">move selected
+            data types</A> and/or 
+            <A href="data_type_manager_description.htm#MoveCategory">move selected categories</A>. The
+            <I><B>Cut</B></I> action only primes the selected nodes to be moved. The
+            <I><B>Paste</B></I> action must be used to complete the move. Any other
+            <I><B>Cut</B></I> or <I><B>Copy</B></I> action will cancel the previous
+            <I><B>Cut.</B></I> The <I><B>Cut</B></I> action can also be used to <A href=
+            "data_type_manager_description.htm#ReplaceDataType">replace one data type for another</A>.</P>
+          </BLOCKQUOTE>
+
+          <H3><A name="Copy"></A>Copy</H3>
+
+          <BLOCKQUOTE>
+            <P>The <I><B>Copy</B></I> action can be be used to 
+            <A href="data_type_manager_description.htm#CopyDataType">copy
+            selected data types</A> and/or 
+            <A href="data_type_manager_description.htm#CopyCategory">copy selected categories</A>.
+            The <I><B>Copy</B></I> action only primes the selected nodes to be copied. The
+            <I><B>Paste</B></I> action must be used to complete the copy. Any other
+            <I><B>Cut</B></I> or <I><B>Copy</B></I> action will cancel the previous<I><B>Copy
+            .</B></I><BR>
+            </P>
+          </BLOCKQUOTE>
+
+          <H3><A name="Paste"></A>Paste</H3>
+
+          <BLOCKQUOTE>
+            <P>The<I><B>Paste</B></I> action is used to complete a move or copy operation as
+            initiated by either the <I><B>Copy</B></I> or <I><B>Cut</B></I> action. The node that
+            is selected will be the destination for whatever nodes where selected when the
+            <I><B>Copy</B></I> or <I><B>Paste</B></I> was invoked.</P>
+          </BLOCKQUOTE>
+
+          <H3><A name="Rename"></A>Rename</H3>
+
+          <BLOCKQUOTE>
+            <P>The <I><B>Rename</B></I> action is used to 
+            <A href="data_type_manager_description.htm#RenameCategory">rename a
+            selected category</A> or to 
+            <A href="data_type_manager_description.htm#RenameDataType">rename a selected data
+            type</A>.</P>
+          </BLOCKQUOTE>
+
+          <H3><A name="Delete"></A>Delete</H3>
+
+          <BLOCKQUOTE>
+            <P>The <I><B>Delete</B></I> action is used to 
+            <A href="data_type_manager_description.htm#DeleteDataType">delete data
+            types</A> and/or 
+            <A href="data_type_manager_description.htm#DeleteCategory">delete categories</A>. A confirmation dialog
+            will appear before actually deleting the selected data types and categories.</P>
+          </BLOCKQUOTE>
+
+          <H3><A name="Collapse_All"></A>Collapse All</H3>
+
+          <BLOCKQUOTE>
+            <P>To collapse all open nodes in a sub-tree, right-click on the root node of the
+            sub-tree and select the <I><B>Collapse All</B></I> action. If this action is invoked
+            via the local toolbar, then the entire tree is collapsed.</P>
+          </BLOCKQUOTE>
+        </BLOCKQUOTE>
+
+        <BLOCKQUOTE>
+          <H3><A name="Expand_All"></A>Expand All</H3>
+        </BLOCKQUOTE>
+
+        <BLOCKQUOTE>
+          <BLOCKQUOTE>
+            <P>To expand all open nodes in a sub-tree, right-click on the root node of the sub-tree
+            and select the <I><B>Expand</B></I> <I><B>All</B></I> action.</P>
+          </BLOCKQUOTE>
+        </BLOCKQUOTE>
+
+        <BLOCKQUOTE>
+          <H3><A name="Apply_All"></A> <A name="Apply_Function_Data_Types"></A>Apply Function Data
+          Types</H3>
+
+          <BLOCKQUOTE>
+            <P>You can apply all function signature data types from an archive to the currently
+            open Program. Function signature definitions can also be applied from the currently
+            open program's defined data types. Applying data types from the program is useful when
+            source header files have been parsed into the program instead of an archive. This
+            action attempts to match the function definition with user defined symbol names in the
+            Program. When a match is found, the <I><B>Apply All</B></I> action does one of the
+            following:<BR>
+            </P>
+
+            <UL>
+              <LI>If a function already exists at the symbol, apply the function signature to the
+              existing function.</LI>
+
+              <LI>If a pointer exists at the symbol, create a new pointer to the function
+              definition.</LI>
+
+              <LI>If no data exists at the symbol and if a valid function can be created at this
+              address, then disassemble, create a function, and apply the function signature.</LI>
+            </UL>
+          </BLOCKQUOTE>
+
+          <H3><A name="Capture_Function_Data_Types"></A>Capture Function Data Types</H3>
+
+          <BLOCKQUOTE>
+            <P>You can capture the signatures of functions in the current program to function
+            definition data types. These data types can be captured to the program or to a data
+            type archive. To capture function data types, right-click on the data type manager tree
+            node of the program or the archive where you want the function definition data types to
+            be captured (saved) and select the <I><B>Capture Function Data Types</B></I>
+            action.</P>
+
+            <UL>
+              <LI>If there isn't currently a selection in the listing, the signatures for all of
+              the functions in the program will be captured.</LI>
+
+              <LI>If there is a selection in the listing, only the functions whose entry points are
+              within the selection will have their signatures captured.</LI>
+            </UL>
+
+            <P>Once you have captured the function data types to an archive, you can use the <A
+            href="#Apply_All">Apply Function Data Types</A> to apply the function definition data
+            types to another program.</P>
+          </BLOCKQUOTE>
+
+          <H3><A name="Find_Data_Types"></A> <A name="FindDataTypesDialog"></A>Find Data Types by
+          Name</H3>
+
+          <BLOCKQUOTE>
+            <P>You can find data types with names that match a string. A separate window is
+            displayed to show the results. Multiple search results are shown as tabs in the results
+            window. To find data types, select the <B>Find Data Types by Name...</B> action from the
+            local menu<IMG src="../../shared/menu16.gif" alt=""> . The following dialog is
+            displayed.</P>
+          </BLOCKQUOTE>
+        </BLOCKQUOTE>
+
+        <BLOCKQUOTE>
+          <BLOCKQUOTE>
+            <P align="center"><IMG src="images/FindDataTypes.png" alt="" border="0"><BR>
+            </P>
+
+            <P>Enter a value in the "Please enter the search string: " field, or choose a
+            previously entered value from the combo box. Either press the &lt;Enter&gt; key or
+            select the <B>OK</B> button. A new <I>Find Data Type</I> window will appear with 
+            the filter set to the entered search text.</P>
+
+            <P align="center"><IMG src="images/SearchResults.png" alt="" border="0"></P>
+
+            <P>This new window can be used in the same way as the original 
+            <I>Data Type Manager</I> window.</P>
+          </BLOCKQUOTE>
+
+          <H3><A name="Find_Data_Types_By_Size"></A>Find Data Types by Size</H3>
+
+          <BLOCKQUOTE>
+            <P>This is similar to the <B>Find Data Types by Name</B> action (show above) except
+            that it lets you specify a size that will be used to show only those data types with
+            the same length.</P>
+          </BLOCKQUOTE>
+
+          <H3><A name="Export_Data_Types"></A>Export Data Type(s)</H3>
+
+          <BLOCKQUOTE>
+            <P>Data types may be exported as header files. To export a data type, select the data
+            types to export, then right-click and select the <I><B>Export as C Header...</B></I>
+            option. An output format dialog will appear. From this dialog select the language
+            header output type (C header files are the default). A file chooser is displayed to
+            choose the name of the output file. If the file already exists, a dialog is displayed
+            to confirm that you want to overwrite the existing file.</P>
+          
+          	<BLOCKQUOTE>  
+            <P>
+            <IMG src="../../shared/tip.png" alt="">Not only will the selected data types be 
+            exported, but so too will be any dependencies for the selected types.   For example,
+            if you select a structure to be exported, all of the types within that structure
+            will be exported as well.
+            </P>
+            </BLOCKQUOTE>
+            
+            
+          </BLOCKQUOTE>
+
+          <H3><A name="Create_Labels_From_Enums"></A>Create Labels From Enums</H3>
+
+          <BLOCKQUOTE>
+            <P>Enum data types can be used to create labels with the names from the enumerated
+            types wherever the value can be used as an address in the program. To create the
+            labels, select the enum data types in the data type manager tree, then right click and
+            select the <I><B>Create Labels From Enums</B></I> option. Labels will be created using
+            the names from the enumerated types at program addresses based on their values as long
+            as the name doesn't result in a conflict with another label.</P>
+          </BLOCKQUOTE>
+
+          <H3><A name="Show_Base_Data_Type">Show Base Data Type</A></H3>
+
+          <BLOCKQUOTE>
+            <P>For Typedefs, Pointers and Arrays, this action will navigate to the tree node of the
+            type to which respective refers.</P>
+          </BLOCKQUOTE>
+        </BLOCKQUOTE>
+        
+          
+        <P class="providedbyplugin">Provided by: <I>DataTypeManagerPlugin</I></P>
+
+        <P class="relatedtopic">Related Topics:</P>
+
+        <UL>
+        		<LI><A href="data_type_manager_description.htm">Data Type Manager</A></LI>
+          <LI><A href="../DataPlugin/Data.htm#DataTypes">Data Types</A></LI>
+          <LI><A href="../DataPlugin/Data.htm#ApplyDataType">Apply Data Types</A></LI>
+          <LI><A href="../DataTypeEditors/StructureEditor.htm">Edit Structure</A></LI>
+        </UL><BR>
+
+  
+  </BODY>
+</HTML>

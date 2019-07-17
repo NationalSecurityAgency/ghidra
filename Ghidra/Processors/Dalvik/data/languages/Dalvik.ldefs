@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<language_definitions>
+  <language processor="Dalvik"
+            endian="little"
+            size="32"
+            variant="default"
+            version="1.0"
+            slafile="Dalvik.sla"
+            processorspec="Dalvik.pspec"
+            id="Dalvik:LE:32:default">
+    <description>Dalvik</description>
+    <compiler name="default" spec="Dalvik.cspec" id="default"/>
+  </language>
+</language_definitions>

@@ -1,0 +1,40 @@
+<html>
+  <head>
+    <title>XML Exporter for IDA version 7</title>
+    <style>
+      filename {
+        font-family: monospace;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>XML Exporter for IDA version 7</h1>
+    <p>
+      The 7XX versions of the XML Exporter, Importer, and Loader can only be used
+      with IDA version 7.0 are greater.
+    </p>
+    <p>
+      <filename>xml_exporter.py</filename> is a plugin to export an IDA database as an XML file.
+      It must be placed in the IDA plugins folder.
+    </p>
+    <p>
+      <filename>xml_loader.py</filename> is an IDA loader to build a new database using an XML file.
+      It loads the .bytes file and builds the IDA database using the contents of
+      the XML file. NOTE: Currently, the loader does not support importing memory
+      overlays or Harvard architectures (e.g., 8051).
+      It must be placed in the IDA loaders folder.
+    </p>
+    <p>
+      <filename>xml_importer.py</filename> is a plugin to add data from an XML file to an existing
+      database. It will NOT load any binary data from the bytes file. It will add
+      symbols, comments, code, data, functions, etc. for addresses that currently
+      exist in the database.
+      It must be placed in the IDA plugins folder.
+    </p>
+    <p>
+      The <filename>idaxml.py</filename> module is a require import for the xml_exporter, xml_importer,
+      and xml_loader.
+      It must be placed in the IDA python folder.
+    </p>
+  </body>
+</html>

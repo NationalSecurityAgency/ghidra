@@ -1,0 +1,23 @@
+# Elf function names which do not return
+# (names should not start with '_' since these are stripped during checking)
+exit
+cexit
+c_exit
+abort
+reboot
+longjmp
+longjmp_chk
+siglongjmp
+panic
+stack_chk_fail
+cxa_throw
+cxa_terminate
+cxa_call_unexpected
+cxa_bad_cast
+Unwind_Resume
+assert_fail
+assert_rtn
+fortify_fail
+ZSt9terminatev
+ZN10__cxxabiv111__terminateEPFvvE
+pthread_exit

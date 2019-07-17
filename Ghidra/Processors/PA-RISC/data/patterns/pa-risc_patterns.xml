@@ -1,0 +1,20 @@
+<patternlist>
+
+  <patternpairs totalbits="32" postbits="16">
+
+    <prepatterns>
+      <data> 0xe840c002 </data>				<!-- bv,n r0(rp) return with the delayslot insn getting nullified -->
+      <data> 0xe840c000 0x........ </data>		<!-- bv r0(rp) return with the delayslot insn not nullified -->
+    </prepatterns>
+
+    <postpatterns>
+      <data> 0x6bc23fd9 </data>           		<!-- stw rp,-14(sp) -->
+      <data> 0x6bc23fd9 0x08030241 0x081e0243 </data>	<!-- stw rp,-14(sp), copy r3,r1, copy sp,r3 -->
+      <data> 0x........ 0x08030241 </data>		<!-- ... stw rp,-14(sp) -->
+      <data> 0x........ 0x........ 0x08030241 </data>	<!-- ... ... stw rp,-14(sp) -->
+      <funcstart/>
+    </postpatterns>
+
+  </patternpairs>
+
+ </patternlist>

@@ -1,0 +1,271 @@
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<title>6. Tokens and Fields</title>
+<link rel="stylesheet" type="text/css" href="Frontpage.css">
+<link rel="stylesheet" type="text/css" href="languages.css">
+<meta name="generator" content="DocBook XSL Stylesheets V1.78.1">
+<link rel="home" href="sleigh.html" title="SLEIGH">
+<link rel="up" href="sleigh.html" title="SLEIGH">
+<link rel="prev" href="sleigh_symbols.html" title="5. Introduction to Symbols">
+<link rel="next" href="sleigh_constructors.html" title="7. Constructors">
+</head>
+<body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
+<div class="navheader">
+<table width="100%" summary="Navigation header">
+<tr><th colspan="3" align="center">6. Tokens and Fields</th></tr>
+<tr>
+<td width="20%" align="left">
+<a accesskey="p" href="sleigh_symbols.html">Prev</a> </td>
+<th width="60%" align="center"> </th>
+<td width="20%" align="right"> <a accesskey="n" href="sleigh_constructors.html">Next</a>
+</td>
+</tr>
+</table>
+<hr>
+</div>
+<div class="sect1">
+<div class="titlepage"><div><div><h2 class="title" style="clear: both">
+<a name="sleigh_tokens"></a>6. Tokens and Fields</h2></div></div></div>
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="sleigh_defining_tokens"></a>6.1. Defining Tokens and Fields</h3></div></div></div>
+<p>
+A <span class="emphasis"><em>token</em></span> is one of the byte-sized pieces that make
+up the machine code instructions being modeled.
+Instruction <span class="emphasis"><em>fields</em></span> must be defined on top of
+them. A <span class="emphasis"><em>field</em></span> is a logical range of bits within
+an instruction that can specify an opcode, or an operand etc. Together
+tokens and fields determine the basic interpretation of bits and how
+many bytes the instruction takes up. To define a token and the fields
+associated with it, we use the <span class="bold"><strong>define
+token</strong></span> statement.
+</p>
+<div class="informalexample"><pre class="programlisting">
+define token <span class="bold"><strong>tokenname</strong></span> ( <span class="bold"><strong>integer</strong></span> )
+  <span class="bold"><strong>fieldname</strong></span>=(<span class="bold"><strong>integer</strong></span>,<span class="bold"><strong>integer</strong></span>) <span class="bold"><strong>attributelist</strong></span>
+  <span class="weak">...</span>
+;
+</pre></div>
+<p>
+</p>
+<p>
+The first part of the definition defines the name of a token and the
+number of bits it uses (this must be a multiple of 8). Following this
+there are one or more field declarations specifying the name of the
+field and the range of bits within the token making up the field. The
+size of a field does <span class="emphasis"><em>not</em></span> need to be a multiple of
+8. The range is inclusive where the least significant bit in the token
+is labeled 0. The endianess of the processor will effect this labeling
+when defining tokens that are bigger than 1 byte.  After each field
+declaration, there can be zero or more of the following attribute
+keywords:
+</p>
+<div class="informalexample"><pre class="programlisting">
+signed
+hex
+dec
+</pre></div>
+<p>
+These attributes are defined in the next section. There can be any
+manner of repeats and overlaps in the fields so long as they all have
+different names.
+</p>
+</div>
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="idm140310875384864"></a>6.2. Fields as Family Symbols</h3></div></div></div>
+<p>
+Fields are the most basic form of family symbol; they define a natural
+map from instruction bits to a specific symbol as follows. We take the
+set of bits within the instruction as given by the field&#8217;s defining
+range and treat them as an integer encoding. The resulting integer is
+both the display portion and the semantic meaning of the specific
+symbol. The display string is obtained by converting the integer into
+either a decimal or hexadecimal representation (see below), and the
+integer is treated as a constant varnode in any semantic action.
+</p>
+<p>
+The attributes of the field affect the resulting specific symbol in
+obvious ways. The <span class="bold"><strong>signed</strong></span> attribute
+determines whether the integer encoding should be treated as just an
+unsigned encoding or if a twos-complement encoding should be used to
+obtain a signed integer. The <span class="bold"><strong>hex</strong></span>
+or <span class="bold"><strong>dec</strong></span> attributes describe whether
+the integer should be displayed with a hexadecimal or decimal
+representation. The default is hexadecimal. [Currently
+the <span class="bold"><strong>dec</strong></span> attribute is not supported]
+</p>
+</div>
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="idm140310875379232"></a>6.3. Attaching Alternate Meanings to Fields</h3></div></div></div>
+<p>
+The default interpretation of a field is probably the most natural but
+of course processors interpret fields within an instruction in a wide
+variety of ways. The <span class="bold"><strong>attach</strong></span> keyword
+is used to alter either the display or semantic meaning of fields into
+the most common (and basic) interpretations. More complex
+interpretations must be built up out of tables.
+</p>
+<div class="sect3">
+<div class="titlepage"><div><div><h4 class="title">
+<a name="idm140310875377152"></a>6.3.1. Attaching Registers</h4></div></div></div>
+<p>
+Probably <span class="emphasis"><em>the</em></span> most common processor interpretation
+of a field is as an encoding of a particular register. In SLEIGH this
+can be done with the <span class="bold"><strong>attach variables</strong></span>
+statement:
+</p>
+<div class="informalexample"><pre class="programlisting">
+attach variables <span class="bold"><strong>fieldlist registerlist</strong></span>;
+</pre></div>
+<p>
+A <span class="emphasis"><em>fieldlist</em></span> can be a single field identifier or a
+space separated list of field identifiers surrounded by square
+brackets. A <span class="emphasis"><em>registerlist</em></span> must be a square bracket
+surrounded and space separated list of register identifiers as created
+with <span class="bold"><strong>define</strong></span> statements (see Section
+<a class="xref" href="sleigh_definitions.html#sleigh_naming_registers" title="4.4. Naming Registers">Section 4.4, &#8220;Naming Registers&#8221;</a>). For each field in
+the <span class="emphasis"><em>fieldlist</em></span>, instead of having the display and
+semantic meaning of an integer, the field becomes a look-up table for
+the given list of registers. The original integer interpretation is
+used as the index into the list starting at zero, so a specific
+instruction that has all the bits in the field equal to zero yields
+the first register (a specific varnode) from the list as the meaning
+of the field in the context of that instruction. Note that both the
+display and semantic meaning of the field are now taken from the new
+register.
+</p>
+<p>
+A particular integer can remain unspecified by putting a &#8216;_&#8217; character
+in the appropriate position of the register list or also if the length
+of the register list is less than the integer. A specific integer
+encoding of the field that is unspecified like this
+does <span class="emphasis"><em>not</em></span> revert to the original semantic and
+display meaning. Instead this encoding is flagged as an invalid form
+of the instruction.
+</p>
+</div>
+<div class="sect3">
+<div class="titlepage"><div><div><h4 class="title">
+<a name="idm140310875368784"></a>6.3.2. Attaching Other Integers</h4></div></div></div>
+<p>
+Sometimes a processor interprets a field as an integer but not the
+integer given by the default interpretation. A different integer
+interpretation of the field can be specified with
+an <span class="bold"><strong>attach values</strong></span> statement.
+</p>
+<div class="informalexample"><pre class="programlisting">
+attach values <span class="bold"><strong>fieldlist integerlist</strong></span>;
+</pre></div>
+<p>
+The <span class="emphasis"><em>integerlist</em></span> is surrounded by square brackets
+and is a space separated list of integers. In the same way that a new
+register interpretation is assigned to fields with
+an <span class="bold"><strong>attach variables</strong></span> statement, the
+integers in the list are assigned to each field specified in
+the <span class="emphasis"><em>fieldlist</em></span>. [Currently SLEIGH does not support
+unspecified positions in the list using a &#8216;_&#8217;]
+</p>
+</div>
+<div class="sect3">
+<div class="titlepage"><div><div><h4 class="title">
+<a name="idm140310875363504"></a>6.3.3. Attaching Names</h4></div></div></div>
+<p>
+It is possible to just modify the display characteristics of a field
+without changing the semantic meaning. The need for this is rare, but
+it is possible to treat a field as having influence on the display of
+the disassembly but having no influence on the semantics. Even if the
+bits of the field do have some semantic meaning, sometimes it is
+appropriate to define overlapping fields, one of which is defined to
+have no semantic meaning. The most convenient way to break down the
+required disassembly may not be the most convenient way to break down
+the semantics. It is also possible to have symbols with semantic
+meaning but no display meaning (see <a class="xref" href="sleigh_constructors.html#sleigh_invisible_operands" title="7.4.5. Invisible Operands">Section 7.4.5, &#8220;Invisible Operands&#8221;</a>).
+</p>
+<p>
+At any rate we can list the display interpretation of a field directly
+with an <span class="bold"><strong>attach names</strong></span> statement.
+</p>
+<div class="informalexample"><pre class="programlisting">
+attach names <span class="bold"><strong>fieldlist stringlist</strong></span>;
+</pre></div>
+<p>
+The <span class="emphasis"><em>stringlist</em></span> is assigned to each of the fields
+in the same manner as the <span class="bold"><strong>attach
+variables</strong></span> and <span class="bold"><strong>attach
+values</strong></span> statements. A specific encoding of the field now
+displays as the string in the list at that integer position. Field
+values greater than the size of the list are interpreted as invalid
+encodings.
+</p>
+</div>
+</div>
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="sleigh_context_variables"></a>6.4. Context Variables</h3></div></div></div>
+<p>
+SLEIGH supports the concept of <span class="emphasis"><em>context
+variables</em></span>. For the most part processor instructions can be
+unambiguously decoded by examining only the bits of the instruction
+encoding. But in some cases, decoding may depend on the state of
+processor. Typically, the processor will have some set of status flags
+that indicate what mode is being used to process instructions. In
+terms of SLEIGH, a context variable is a <span class="emphasis"><em>field</em></span>
+which is defined on top of a register rather than the instruction
+encoding (token).
+</p>
+<div class="informalexample"><pre class="programlisting">
+define context <span class="bold"><strong>contextreg</strong></span>
+  <span class="bold"><strong>fieldname</strong></span>=(<span class="bold"><strong>integer</strong></span>,<span class="bold"><strong>integer</strong></span>) <span class="bold"><strong>attributelist</strong></span>
+  <span class="weak">...</span>
+;
+</pre></div>
+<p>
+</p>
+<p>
+Context variables are defined with a <span class="bold"><strong>define
+context</strong></span> statement. The keywords must be followed by the
+name of a defined register. The remaining part of the definition is
+nearly identical to the normal definition of fields. Each context
+variable defined on this register is listed in turn, specifying the
+name, the bit range, and any attributes. All the normal field attributes,
+<span class="bold"><strong>signed</strong></span>, <span class="bold"><strong>dec</strong></span>, and
+<span class="bold"><strong>hex</strong></span>, can also be used for context variables.
+</p>
+<p>
+Context variables introduce a new, dedicated, attribute: <span class="bold"><strong>noflow</strong></span>.
+By default, globally setting a context variable affects instruction decoding
+from the point of the change, forward,
+following the flow of the instructions, but if the variable is labeled as
+<span class="bold"><strong>noflow</strong></span>, any change is limited to a
+single instruction. (See <a class="xref" href="sleigh_context.html#sleigh_contextflow" title="8.3.1. Context Flow">Section 8.3.1, &#8220;Context Flow&#8221;</a>)
+</p>
+<p>
+Once the context variable is defined, in terms of the specification
+syntax, it can be treated as if it were just another field. See
+<a class="xref" href="sleigh_context.html" title="8. Using Context">Section 8, &#8220;Using Context&#8221;</a>, for a complete discussion of how to
+use context variables.
+</p>
+</div>
+</div>
+<div class="navfooter">
+<hr>
+<table width="100%" summary="Navigation footer">
+<tr>
+<td width="40%" align="left">
+<a accesskey="p" href="sleigh_symbols.html">Prev</a> </td>
+<td width="20%" align="center"> </td>
+<td width="40%" align="right"> <a accesskey="n" href="sleigh_constructors.html">Next</a>
+</td>
+</tr>
+<tr>
+<td width="40%" align="left" valign="top">5. Introduction to Symbols </td>
+<td width="20%" align="center"><a accesskey="h" href="sleigh.html">Home</a></td>
+<td width="40%" align="right" valign="top"> 7. Constructors</td>
+</tr>
+</table>
+</div>
+</body>
+</html>

@@ -1,0 +1,265 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+    <META http-equiv="Content-Language" content="en-us">
+    <META http-equiv="Content-Type" content="text/html; charset=windows-1252">
+    <META name="GENERATOR" content="Microsoft FrontPage 4.0">
+    <META name="ProgId" content="FrontPage.Editor.Document">
+
+    <TITLE>Program Options Dialog</TITLE>
+    <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+  </HEAD>
+
+  <BODY>
+    <H1><A name="Program_Information"></A><A name="Program_Options"></A>Program Options Dialog</H1>
+
+    <P>A program has properties that may be edited with an <I>Options</I> dialog. The dialog is
+    used just like the <A href="help/topics/Tool/ToolOptions_Dialog.htm">Tool Options</A> dialog
+    except that the properties are saved as part of the Program, versus part of the tool.
+    Properties are settings related to a program.</P>
+
+    <P><A name="OptionsSampleImage"></A>&nbsp;</P>
+
+    <P align="center"> <IMG alt="" src="images/ProgramOptionsDialog.png"></P>
+
+    <H2>Accessing Program Properties</H2>
+
+    <P>The Program Options dialog allows the user to control various settings related to a
+    program.&nbsp; The settings are organized into categories and are viewed with the Program
+    Options Dialog.&nbsp; The category hierarchy is displayed on the left side, while individual
+    settings for the selected category are displayed on the right.&nbsp; See below for detailed
+    information on the various settings.</P>
+
+    <P align="left">Generically, to modify a program option or setting for the currently open
+    program:</P>
+
+    <OL>
+      <LI>
+        <P align="left">Select <B>Edit<IMG src="../../shared/arrow.gif" border="0"> Program
+        Options...</B>.</P>
+      </LI>
+
+      <LI>
+        <P align="left">Select the <I>category</I> node in the Options tree to view the settings
+        for that category.</P>
+      </LI>
+
+      <LI>
+        <P align="left">The displayed settings can then be changed as needed.</P>
+      </LI>
+
+      <LI>
+        <P align="left">Select <B>OK</B> to dismiss the dialog, or <B>Apply</B> to make the changes
+        but leave the dialog displayed.</P>
+      </LI>
+    </OL>
+
+    <P align="left">&nbsp;</P>
+
+    <H2 align="left"><A name="Properties"></A>Detailed Properties Descriptions</H2>
+
+    <P align="left">Except for the Program Information category, all other categories are created
+    by plugins.&nbsp; Depending on what has previously been done to the program, your settings may
+    differ from those shown.&nbsp; However, the Program Information category is always present and
+    shows basic information about the program.&nbsp; The following is a description of the
+    categories and settings you may encounter:</P>
+
+    <TABLE border="1" width="100%">
+      <TBODY>
+        <TR>
+          <TD rowspan="3" width="45%">Program Information Options</TD>
+        </TR>
+
+        <TR>
+          <TD width="39%">Executable Format&nbsp;&nbsp;</TD>
+
+          <TD width="66%">The binary file format of the executable. (e.g. Portable Executable, ELF,
+          DOS MZ, etc.)</TD>
+        </TR>
+
+        <TR>
+          <TD width="39%">Executable Location</TD>
+
+          <TD width="66%">The absolute path of the executable binary.</TD>
+        </TR>
+
+        <TR>
+          <TD rowspan="4" width="45%">Analysis/Bytes Options</TD>
+
+          <TD width="39%">Aggressive Instruction Finder (Prototype)</TD>
+
+          <TD width="66%">&nbsp;</TD>
+        </TR>
+
+        <TR>
+          <TD width="39%">Create Address Tables</TD>
+
+          <TD width="66%">Locates address jump tables and follow flow.</TD>
+        </TR>
+
+        <TR>
+          <TD width="39%">Disassemble Entry Points</TD>
+
+          <TD width="66%">Disassemble from all external entry points.</TD>
+        </TR>
+
+        <TR>
+          <TD width="39%">Library Identification Analyzer</TD>
+
+          <TD width="66%">Attempts to match function signatures to standard libraries</TD>
+        </TR>
+
+        <TR>
+          <TD rowspan="2" width="45%">Analysis/Bytes/Create Address Tables Options</TD>
+
+          <TD width="39%">Minimum Table Size</TD>
+
+          <TD width="66%">Minimum number of addresses required to constitute a valid jump
+          table</TD>
+        </TR>
+
+        <TR>
+          <TD width="39%">Table Alignment</TD>
+
+          <TD width="66%">Alignment boundary for valid addresses.</TD>
+        </TR>
+
+        <TR>
+          <TD rowspan="2" width="45%">Analysis/Bytes/Library Identification Analyzer</TD>
+
+          <TD width="39%">Analyze undefined memory</TD>
+
+          <TD width="66%">Examines undefined bytes attempting to locate library function signatures
+          that may dynamically invoked.</TD>
+        </TR>
+
+        <TR>
+          <TD width="39%">Disassemble matches in undefined memory</TD>
+
+          <TD width="66%">Disassembles matching code when analyzing undefined memory</TD>
+        </TR>
+
+        <TR>
+          <TD width="45%">Analysis/Disassembly</TD>
+
+          <TD width="39%">Mark Bad Disassembly</TD>
+
+          <TD width="66%">Flag locations where code was expected but could not be
+          disassembled.</TD>
+        </TR>
+
+        <TR>
+          <TD rowspan="2" width="45%">Analysis/Functions</TD>
+
+          <TD width="39%">Decompiler Stack Analysis</TD>
+
+          <TD width="66%">&nbsp;</TD>
+        </TR>
+
+        <TR>
+          <TD width="39%">Stack Analysis</TD>
+
+          <TD width="66%">&nbsp;</TD>
+        </TR>
+
+        <TR>
+          <TD rowspan="4" width="45%">Analysis/Instructions</TD>
+
+       </TR>
+
+        <TR>
+          <TD width="39%">Data Reference Analysis</TD>
+
+          <TD width="66%">&nbsp;</TD>
+        </TR>
+
+        <TR>
+          <TD width="39%">Scalar Operand References</TD>
+
+          <TD width="66%">&nbsp;</TD>
+        </TR>
+
+        <TR>
+          <TD width="39%">Subroutine References</TD>
+
+          <TD width="66%">&nbsp;</TD>
+        </TR>
+
+        <TR>
+          <TD rowspan="3" width="45%">Analysis/Instructions/Data Reference Analysis</TD>
+
+          <TD width="39%">Ascii String References</TD>
+
+          <TD width="66%">Searches for ascii strings and labels them with an "s_" prefix</TD>
+        </TR>
+
+        <TR>
+          <TD width="39%">Subroutine References</TD>
+
+          <TD width="66%">&nbsp;</TD>
+        </TR>
+
+        <TR>
+          <TD width="39%">Unicode String References</TD>
+
+          <TD width="66%">Searches for unicode strings and labels them with an "u_" prefix</TD>
+        </TR>
+      </TBODY>
+    </TABLE>
+
+    <H2>Property Editors</H2>
+
+    <BLOCKQUOTE>
+      <P>In addition to the editors for modifying boolean values, fonts, colors, etc., Ghidra
+      provides editors for changing dates and filenames.&nbsp; These editors are described in the
+      following paragraphs.&nbsp;</P>
+
+      <H3><A name="DateEditor"></A>Date Editor</H3>
+
+      <BLOCKQUOTE>
+        <P>The <A href="#OptionsSampleImage">sample image</A> above shows an option for <I>Date
+        Created</I>. Click on the browse button (<B>...</B>) to the right of the field that shows
+        the date. The date editor is displayed as shown below.</P>
+      </BLOCKQUOTE>
+
+      <P align="center"><IMG src="images/EditDate.png" border="0"></P>
+
+      <BLOCKQUOTE>
+        <P align="left">The editor displays a calendar to change the month, day or year, and
+        separate fields to edit hours, minutes, and seconds. The scroll bar next to the seconds
+        fields pertains to the current field that you are editing, as indicated by the purple
+        background. In the sample image, the seconds field is the current field; if you click on
+        the up arrow,&nbsp; the seconds field is incremented.</P>
+
+        <P align="left">After you have made your changes, click on the <B>OK</B> button. The date
+        field on the options panel updates to show the new date. The <B>Apply</B> button becomes
+        enabled. Click on either the <B>OK</B> or <B>Apply</B> button to make the change.</P>
+      </BLOCKQUOTE>
+
+      <H3>File Chooser Editor</H3>
+
+      <BLOCKQUOTE>
+        <P>If a property is a filename, then it can be edited using the <I>File Chooser</I> editor.
+        Click on the browse button (<B>...</B>) to the right of the field that shows the filename.
+        A file chooser is displayed. Select the new filename from the file chooser and click on
+        either the <B>OK</B> or <B>Apply</B> button to make the change.</P>
+      </BLOCKQUOTE>
+
+      <P>&nbsp;</P>
+    </BLOCKQUOTE>
+
+    <P class="providedbyplugin">Provided by: <I>ProgramManagerPlugin&nbsp;</I></P>
+
+    <P class="relatedtopic">Related Topics:</P>
+
+    <UL>
+      <LI>
+        <P class="relatedtopic"><A href="help/topics/Tool/ToolOptions_Dialog.htm">Tool
+        Options</A></P>
+      </LI>
+    </UL><BR>
+  </BODY>
+</HTML>

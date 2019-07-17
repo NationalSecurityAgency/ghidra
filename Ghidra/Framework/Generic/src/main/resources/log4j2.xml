@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- 
+	Dummy log4j2 configuration file provided so that we will not see the following
+	error message on startup:
+	
+		"ERROR StatusLogger No log4j2 configuration file found. Using default configuration:
+		logging only errors to the console"
+		
+	Log4j2 looks for a file named "log4j2.xml" on startup; if it's not provided this error is 
+	generated. We never use a file by this name but the error message is disconcerting; this 
+	seems to be the best way to ensure that we never see it.
+ -->
+<Configuration xmlns:xi="http://www.w3.org/2001/XInclude"> 
+</Configuration>

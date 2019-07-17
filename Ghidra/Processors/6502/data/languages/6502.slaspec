@@ -1,0 +1,488 @@
+# sleigh specification file for MOS 6502
+
+define endian=little;
+define alignment=1;
+
+define space RAM     type=ram_space      size=2  default;
+define space register type=register_space size=1;
+
+define register offset=0x00  size=1 [ A X Y P ];
+define register offset=0x20 size=2  [ PC      SP   ];
+define register offset=0x20 size=1  [ PCL PCH S SH ];
+define register offset=0x30 size=1 [ N V B D I Z C ];	# status bits
+
+#TOKENS
+
+define token opbyte (8)
+   op       = (0,7)
+   
+   aaa      = (5,7)
+   bbb      = (2,4)
+   cc       = (0,1)
+;
+
+define token data8 (8)
+   imm8		= (0,7)
+   rel		= (0,7) signed
+;
+
+define token data (16)
+	imm16 = (0,15)
+;
+
+macro popSR() {
+	local ccr = *:1 SP;
+	N = ccr[7,1];
+	V = ccr[6,1];
+	B = ccr[4,1];
+	D = ccr[3,1];
+	I = ccr[2,1];
+	Z = ccr[1,1];
+	C = ccr[0,1];
+}
+
+macro pushSR() {
+	local ccr:1 = 0xff;
+	ccr[7,1] = N;
+	ccr[6,1] = V;
+	ccr[4,1] = B;
+	ccr[3,1] = D;
+	ccr[2,1] = I;
+	ccr[1,1] = Z;
+	ccr[0,1] = C;
+	*:1 (SP) = ccr;
+	SP = SP -1;
+}
+
+macro resultFlags(value) {
+	Z = (value == 0);
+	N = (value s< 0);
+}
+
+macro subtraction_flags1(register, operand, result) {
+	local complement_register = ~register;
+	
+	V = ( ((register & ~operand & ~result) | (complement_register & operand & result)) & 0b10000000 ) != 0;
+	N = (result s< 0);
+	Z = (result == 0);
+	C = ( ((complement_register & operand) | (operand & result) | (result & complement_register)) & 0b10000000 ) != 0;
+}
+
+
+################################################################
+# Psuedo Instructions
+################################################################
+
+define pcodeop readIRQ;
+
+################################################################
+REL: reloc		is rel	[ reloc = inst_next + rel; ] { export *:2 reloc; } 
+
+# Immediate
+OP1: "#"imm8    is bbb=2; imm8			{ tmp:1 = imm8; export tmp; }
+# Zero Page
+OP1: imm8       is bbb=1; imm8			{ export *:1 imm8; }
+# Zero Page Indexed X
+OP1: imm8,X     is bbb=5 & X; imm8		{ tmp:2 = zext(imm8 + X); export *:1 tmp; }
+# Absolute
+OP1: imm16      is bbb=3; imm16			{ export *:1 imm16; }
+# Absolute Indexed X
+OP1: imm16,X    is bbb=7 & X; imm16		{ tmp:2 = imm16 + zext(X); export *:1 tmp; }
+# Absolute Indexed Y
+OP1: imm16,Y    is bbb=6 & Y; imm16		{ tmp:2 = imm16 + zext(Y); export *:1 tmp; }
+# Indirect X
+OP1: (imm8,X)   is bbb=0 & X; imm8		{ addr:2 = zext(imm8 + X); tmp:2 = *:2 addr; export *:1 tmp; }
+# Indirect Y
+OP1: (imm8),Y   is bbb=4 & Y; imm8		{ addr:2 = imm8; tmp:2 = *:2 addr; tmp = tmp + zext(Y); export *:1 tmp; }
+
+# Immediate
+OP2: "#"imm8    is bbb=0; imm8			{ tmp:1 = imm8; export tmp; }
+# Zero Page
+OP2: imm8       is bbb=1; imm8			{ export *:1 imm8; }
+OP2: A          is bbb=2 & A            { export A; }
+# Absolute
+OP2: imm16      is bbb=3; imm16			{ export *:1 imm16; }
+# Zero Page Indexed X
+OP2: imm8,X     is bbb=5 & X; imm8		{ tmp:2 = zext(imm8 + X); export *:1 tmp; }
+# Absolute Indexed X
+OP2: imm16,X    is bbb=7 & X; imm16		{ tmp:2 = imm16 + zext(X); export *:1 tmp; }
+
+OP2ST: OP2      is OP2                  { export OP2; }
+OP2ST: imm8,Y   is bbb=5 & Y; imm8		{ tmp:2 = zext(imm8 + Y); export *:1 tmp; }
+
+OP2LD: OP2      is OP2                  { export OP2; }
+OP2LD: imm8,Y   is bbb=5 & Y; imm8		{ tmp:2 = zext(imm8 + Y); export *:1 tmp; }
+OP2LD: imm16,Y  is bbb=7 & Y; imm16		{ tmp:2 = imm16 + zext(Y); export *:1 tmp; }
+
+
+ADDR8:  imm8    is imm8		{ export *:1 imm8; }
+ADDR16: imm16   is imm16   	{ export *:1 imm16; }
+ADDRI:  imm16   is imm16    { tmp:2 = imm16; export *:2 tmp; }
+
+
+# Instructions
+
+
+:ADC OP1     is (cc=1 & aaa=3) ... & OP1
+{
+	local op1 = OP1;
+	local tmpC = C;
+	
+	C = carry(A, op1);
+	
+	A = A + op1 + tmpC;
+
+	resultFlags(A);
+	V = C;
+}
+
+:AND OP1     is (cc=1 & aaa=1) ... & OP1
+{ 
+	A = A & OP1; 
+	resultFlags(A);
+}
+
+:ASL OP2     is (op=0x06 | op=0x0A | op=0x0E | op=0x16 | op=0x1E) ... & OP2
+{
+	local tmp = OP2;
+	C = tmp >> 7;
+	tmp = tmp << 1;
+	OP2 = tmp;
+	resultFlags(tmp);	
+}
+
+:BCC  REL			is op=0x90; REL
+{
+	if (C == 0) goto REL;
+}
+
+:BCS  REL			is op=0xB0; REL
+{
+	if (C) goto REL;
+}
+
+:BEQ  REL			is op=0xF0; REL
+{
+	if (Z) goto REL;
+}
+
+:BIT OP2     is (op=0x24 | op=0x2C) ... & OP2
+{
+	local value = A & OP2;
+	resultFlags(value);
+}
+
+:BMI  REL			is op=0x30; REL
+{
+	if (N) goto REL;
+}
+
+:BNE  REL			is op=0xD0; REL
+{
+	if (Z == 0) goto REL;
+}
+
+:BPL  REL			is op=0x10; REL
+{
+	if (N == 0) goto REL;
+}
+
+:BRK   is op=0x00
+{
+	goto inst_start;
+}
+
+:BVC  REL			is op=0x50; REL
+{
+	if (V == 0) goto REL;
+}
+
+:BVS  REL			is op=0x70; REL
+{
+	if (V) goto REL;
+}
+
+:CLC     is op=0x18
+{
+	C = 0;
+}
+
+:CLD     is op=0xD8
+{
+	D = 0;
+}
+
+:CLI     is op=0x58
+{
+	I = 0;
+}
+
+:CLV     is op=0xB8
+{
+	V = 0;
+}
+
+:CMP OP1     is (cc=1 & aaa=6) ... & OP1
+{ 
+	local op1 = OP1;
+	local tmp = A - op1;
+	resultFlags(tmp);
+	C = (A < op1);
+}
+
+:CPX OP2     is (op=0xE0 | op=0xE4 | op=0xEC) ... & OP2
+{
+	local op1 = OP2;
+	local tmp = X - op1;
+	resultFlags(tmp);
+	C = (A < op1);
+}
+
+:CPY OP2     is (op=0xC0 | op=0xC4 | op=0xCC) ... & OP2
+{
+	local op1 = OP2;
+	local tmp = Y - op1;
+	resultFlags(tmp);
+	C = (A < op1);
+}
+
+:DEC OP2     is (op=0xC6 | op=0xCE | op=0xD6 | op=0xDE) ... & OP2
+{
+	local tmp = OP2 - 1;
+	OP2 = tmp;
+	resultFlags(tmp);
+}
+
+:DEX     is op=0xCA
+{
+	X = X - 1;
+	resultFlags(X);
+}
+
+
+:DEY     is op=0x88
+{
+	Y = Y -1;
+	resultFlags(Y);
+}
+
+:EOR OP1     is (cc=1 & aaa=2) ... & OP1
+{ 
+	local op1 = OP1;
+	A = A ^ op1;
+	resultFlags(A);
+}
+
+:INC OP2     is (op=0xE6 | op=0xEE | op=0xF6 | op=0xFE) ... & OP2
+{
+	local tmp = OP2 + 1;
+	OP2 = tmp;
+	resultFlags(tmp);
+}
+
+:INY     is op=0xC8
+{
+	Y = Y + 1;
+	resultFlags(Y);
+}
+
+:INX     is op=0xE8
+{
+	X = X + 1;
+	resultFlags(X);
+}
+
+:JMP ADDR16     is (op=0x4C); ADDR16
+{
+	goto ADDR16;
+}
+
+:JMP ADDRI     is (op=0x6c); ADDRI
+{
+	goto [ADDRI];
+}
+
+:JSR   ADDR16    is op=0x20; ADDR16
+{
+	*:2 (SP-1) = inst_next;
+	SP=SP-2; 
+	call ADDR16;
+}
+
+:LDA OP1     is (cc=1 & aaa=5) ... & OP1
+{
+	A = OP1;
+	resultFlags(A);
+}
+
+:LDY OP2     is (op=0xA0 | op=0xA4 | op=0xAC | op=0xB4 | op=0xBC) ... & OP2
+{
+	Y = OP2;
+	resultFlags(Y);
+}
+
+:LDX OP2LD     is (op=0xA2 | op=0xA6 | op=0xAE | op=0xB6 | op=0xBE) ... & OP2LD
+{
+	X = OP2LD;
+	resultFlags(X);
+}
+
+:LSR OP2     is (op=0x46 | op=0x4A | op=0x4E | op=0x56 | op=0x5E) ... & OP2
+{
+	local tmp = OP2;
+	C = tmp & 1;
+	tmp = tmp >> 1;
+	OP2 = tmp;
+	Z = (tmp == 0);
+	N = 0;	
+}
+
+:NOP     is op=0xEA
+{
+}
+
+:ORA  OP1    is  (cc=1 & aaa=0) ... & OP1
+{
+	A = A | OP1; 
+	resultFlags(A);
+}
+
+:PHP     is op=0x8
+{
+	pushSR();
+}
+
+:PLP     is op=0x28
+{
+	popSR();
+}
+
+:PHA     is op=0x48
+{
+	*:1 (SP) = A;
+	SP = SP - 1;
+}
+
+:PLA     is op=0x68
+{
+	SP = SP + 1;
+	A = *:1 (SP);
+}
+
+:ROL OP2     is (op=0x26 | op=0x2A | op=0x2E | op=0x36 | op=0x3E) ... & OP2
+{
+	local tmpC = C;
+	local op2 = OP2;
+	C = op2 >> 7;
+	local result = op2 << 1;
+	result = result | tmpC;
+	OP2 = result;
+	resultFlags(result);	
+}
+
+:ROR OP2     is (op=0x66 | op=0x6A | op=0x6E | op=0x76 | op=0x7E) ... & OP2
+{
+	local tmpC = C << 7;
+	local tmp = OP2;
+	C = tmp & 1;
+	tmp = tmp >> 1;
+	tmp = tmp | tmpC;
+	OP2 = tmp;
+	resultFlags(tmp);	
+}
+:RTI      is op=0x40
+{
+	popSR();
+	SP = SP+1;
+	
+    SP = SP+1;
+	tmp:2 = *:2 SP;
+	SP = SP+1;
+	
+	return [tmp];
+}
+
+:RTS      is op=0x60
+{
+	SP = SP+1;
+	tmp:2 = *:2 SP;
+	SP = SP+1;
+	
+	return [tmp];
+}
+
+:SBC OP1     is (cc=1 & aaa=7) ... & OP1
+{
+	local op1 = OP1;
+	local result = A - op1 - C;
+	
+	subtraction_flags1(A, op1, result);
+	A = result;	
+	
+	# resultFlags(tmp);
+	# C = ((A <= op1) * C) | (A < op1);
+	# A = tmp;
+}
+
+:SEC     is op=0x38
+{
+	C = 1;
+}
+
+:SED     is op=0xF8
+{
+	D = 1;	
+}
+
+:SEI     is op=0x78
+{
+	I = 1;
+}
+
+:STA OP1     is (cc=1 & aaa=4) ... & OP1
+{
+	OP1 = A;
+	resultFlags(A);
+}
+
+:STX OP2ST     is (op=0x86 | op=0x8E | op=0x96) ... & OP2ST
+{
+	OP2ST = X;
+	resultFlags(X);
+}
+
+:STY OP2     is (op=0x84 | op=0x8C | op=0x94) ... & OP2
+{
+	OP2 = Y;
+	resultFlags(Y);
+}
+
+:TAX     is op=0xAA
+{
+	X = A;
+}
+
+:TAY     is op=0xA8
+{
+	Y = A;
+}
+
+:TSX     is op=0xBA
+{
+	X = S;
+}
+
+:TXA     is op=0x8A
+{
+	A = X;
+}
+
+:TXS     is op=0x9A
+{
+	S = X;
+}
+
+:TYA     is op=0x98
+{
+	A = Y;
+}

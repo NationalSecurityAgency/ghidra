@@ -1,0 +1,221 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<language version="1" endian="little">
+    <description>
+        <id>x64:LE:64:default</id>
+        <processor>x64</processor>
+    </description>
+    <compiler name="Visual Studio" id="windows"/>
+    <compiler name="gcc" id="gcc"/>
+    <spaces>
+        <space name="ram" type="ram" size="8" default="yes" />
+        <space name="register" type="register" size="4" />
+    </spaces>
+    <registers>
+        <context_register name="contextreg" offset="0x2000" bitsize="32">
+            <field name="rexprefix" range="15,15" />
+            <field name="rexBprefix" range="14,14" />
+            <field name="rexXprefix" range="13,13" />
+            <field name="rexRprefix" range="12,12" />
+            <field name="rexWprefix" range="11,11" />
+            <field name="lockprefx" range="10,10" />
+            <field name="repprefx" range="9,9" />
+            <field name="repneprefx" range="8,8" />
+            <field name="sstype" range="7,7" />
+            <field name="segover" range="4,6" />
+            <field name="opsize" range="2,3" />
+            <field name="addrsize" range="0,1" />
+            <field name="bit64" range="0,0" />
+        </context_register>
+        <register name="RAX" offset="0x0" bitsize="64" />
+        <register name="RCX" offset="0x8" bitsize="64" />
+        <register name="RDX" offset="0x10" bitsize="64" />
+        <register name="RBX" offset="0x18" bitsize="64" />
+        <register name="RSP" offset="0x20" bitsize="64" />
+        <register name="RBP" offset="0x28" bitsize="64" />
+        <register name="RSI" offset="0x30" bitsize="64" />
+        <register name="RDI" offset="0x38" bitsize="64" />
+        <register name="EAX" offset="0x0" bitsize="32" />
+        <register name="ECX" offset="0x8" bitsize="32" />
+        <register name="EDX" offset="0x10" bitsize="32" />
+        <register name="EBX" offset="0x18" bitsize="32" />
+        <register name="ESP" offset="0x20" bitsize="32" />
+        <register name="EBP" offset="0x28" bitsize="32" />
+        <register name="ESI" offset="0x30" bitsize="32" />
+        <register name="EDI" offset="0x38" bitsize="32" />
+        <register name="AX" offset="0x0" bitsize="16" />
+        <register name="CX" offset="0x8" bitsize="16" />
+        <register name="DX" offset="0x10" bitsize="16" />
+        <register name="BX" offset="0x18" bitsize="16" />
+        <register name="SP" offset="0x20" bitsize="16" />
+        <register name="BP" offset="0x28" bitsize="16" />
+        <register name="SI" offset="0x30" bitsize="16" />
+        <register name="DI" offset="0x38" bitsize="16" />
+        <register name="AL" offset="0x0" bitsize="8" />
+        <register name="AH" offset="0x1" bitsize="8" />
+        <register name="CL" offset="0x8" bitsize="8" />
+        <register name="CH" offset="0x9" bitsize="8" />
+        <register name="DL" offset="0x10" bitsize="8" />
+        <register name="DH" offset="0x11" bitsize="8" />
+        <register name="BL" offset="0x18" bitsize="8" />
+        <register name="BH" offset="0x19" bitsize="8" />
+        <register name="SPL" offset="0x20" bitsize="8" />
+        <register name="BPL" offset="0x28" bitsize="8" />
+        <register name="SIL" offset="0x30" bitsize="8" />
+        <register name="DIL" offset="0x38" bitsize="8" />
+        <register name="R8" offset="0x80" bitsize="64" />
+        <register name="R9" offset="0x88" bitsize="64" />
+        <register name="R10" offset="0x90" bitsize="64" />
+        <register name="R11" offset="0x98" bitsize="64" />
+        <register name="R12" offset="0xa0" bitsize="64" />
+        <register name="R13" offset="0xa8" bitsize="64" />
+        <register name="R14" offset="0xb0" bitsize="64" />
+        <register name="R15" offset="0xb8" bitsize="64" />
+        <register name="R8D" offset="0x80" bitsize="32" />
+        <register name="R9D" offset="0x88" bitsize="32" />
+        <register name="R10D" offset="0x90" bitsize="32" />
+        <register name="R11D" offset="0x98" bitsize="32" />
+        <register name="R12D" offset="0xa0" bitsize="32" />
+        <register name="R13D" offset="0xa8" bitsize="32" />
+        <register name="R14D" offset="0xb0" bitsize="32" />
+        <register name="R15D" offset="0xb8" bitsize="32" />
+        <register name="R8W" offset="0x80" bitsize="16" />
+        <register name="R9W" offset="0x88" bitsize="16" />
+        <register name="R10W" offset="0x90" bitsize="16" />
+        <register name="R11W" offset="0x98" bitsize="16" />
+        <register name="R12W" offset="0xa0" bitsize="16" />
+        <register name="R13W" offset="0xa8" bitsize="16" />
+        <register name="R14W" offset="0xb0" bitsize="16" />
+        <register name="R15W" offset="0xb8" bitsize="16" />
+        <register name="R8B" offset="0x80" bitsize="8" />
+        <register name="R9B" offset="0x88" bitsize="8" />
+        <register name="R10B" offset="0x90" bitsize="8" />
+        <register name="R11B" offset="0x98" bitsize="8" />
+        <register name="R12B" offset="0xa0" bitsize="8" />
+        <register name="R13B" offset="0xa8" bitsize="8" />
+        <register name="R14B" offset="0xb0" bitsize="8" />
+        <register name="R15B" offset="0xb8" bitsize="8" />
+        <register name="ES" offset="0x100" bitsize="16" />
+        <register name="CS" offset="0x102" bitsize="16" />
+        <register name="SS" offset="0x104" bitsize="16" />
+        <register name="DS" offset="0x106" bitsize="16" />
+        <register name="FS" offset="0x108" bitsize="16" />
+        <register name="GS" offset="0x10a" bitsize="16" />
+        <register name="FS_OFFSET" offset="0x110" bitsize="32" />
+        <register name="CF" offset="0x200" bitsize="8" />
+        <register name="F1" offset="0x201" bitsize="8" />
+        <register name="PF" offset="0x202" bitsize="8" />
+        <register name="F3" offset="0x203" bitsize="8" />
+        <register name="AF" offset="0x204" bitsize="8" />
+        <register name="F5" offset="0x205" bitsize="8" />
+        <register name="ZF" offset="0x206" bitsize="8" />
+        <register name="SF" offset="0x207" bitsize="8" />
+        <register name="TF" offset="0x208" bitsize="8" />
+        <register name="IF" offset="0x209" bitsize="8" />
+        <register name="DF" offset="0x20a" bitsize="8" />
+        <register name="OF" offset="0x20b" bitsize="8" />
+        <register name="IOPL" offset="0x20c" bitsize="8" />
+        <register name="NT" offset="0x20d" bitsize="8" />
+        <register name="F15" offset="0x20e" bitsize="8" />
+        <register name="RF" offset="0x20f" bitsize="8" />
+        <register name="VM" offset="0x210" bitsize="8" />
+        <register name="AC" offset="0x211" bitsize="8" />
+        <register name="VIF" offset="0x212" bitsize="8" />
+        <register name="VIP" offset="0x213" bitsize="8" />
+        <register name="ID" offset="0x214" bitsize="8" />
+        <register name="rflags" offset="0x280" bitsize="64" />
+        <register name="RIP" offset="0x288" bitsize="64" />
+        <register name="eflags" offset="0x280" bitsize="32" />
+        <register name="EIP" offset="0x288" bitsize="32" />
+        <register name="flags" offset="0x280" bitsize="16" />
+        <register name="IP" offset="0x288" bitsize="16" />
+        <register name="DR0" offset="0x300" bitsize="64" />
+        <register name="DR1" offset="0x308" bitsize="64" />
+        <register name="DR2" offset="0x310" bitsize="64" />
+        <register name="DR3" offset="0x318" bitsize="64" />
+        <register name="DR4" offset="0x320" bitsize="64" />
+        <register name="DR5" offset="0x328" bitsize="64" />
+        <register name="DR6" offset="0x330" bitsize="64" />
+        <register name="DR7" offset="0x338" bitsize="64" />
+        <register name="DR8" offset="0x340" bitsize="64" />
+        <register name="DR9" offset="0x348" bitsize="64" />
+        <register name="DR10" offset="0x350" bitsize="64" />
+        <register name="DR11" offset="0x358" bitsize="64" />
+        <register name="DR12" offset="0x360" bitsize="64" />
+        <register name="DR13" offset="0x368" bitsize="64" />
+        <register name="DR14" offset="0x370" bitsize="64" />
+        <register name="DR15" offset="0x378" bitsize="64" />
+        <register name="CR0" offset="0x380" bitsize="64" />
+        <register name="CR1" offset="0x388" bitsize="64" />
+        <register name="CR2" offset="0x390" bitsize="64" />
+        <register name="CR3" offset="0x398" bitsize="64" />
+        <register name="CR4" offset="0x3a0" bitsize="64" />
+        <register name="CR5" offset="0x3a8" bitsize="64" />
+        <register name="CR6" offset="0x3b0" bitsize="64" />
+        <register name="CR7" offset="0x3b8" bitsize="64" />
+        <register name="CR8" offset="0x3c0" bitsize="64" />
+        <register name="CR9" offset="0x3c8" bitsize="64" />
+        <register name="CR10" offset="0x3d0" bitsize="64" />
+        <register name="CR11" offset="0x3d8" bitsize="64" />
+        <register name="CR12" offset="0x3e0" bitsize="64" />
+        <register name="CR13" offset="0x3e8" bitsize="64" />
+        <register name="CR14" offset="0x3f0" bitsize="64" />
+        <register name="CR15" offset="0x3f8" bitsize="64" />
+        <register name="ST0" offset="0x1000" bitsize="80" />
+        <register name="ST1" offset="0x100a" bitsize="80" />
+        <register name="ST2" offset="0x1014" bitsize="80" />
+        <register name="ST3" offset="0x101e" bitsize="80" />
+        <register name="ST4" offset="0x1028" bitsize="80" />
+        <register name="ST5" offset="0x1032" bitsize="80" />
+        <register name="ST6" offset="0x103c" bitsize="80" />
+        <register name="ST7" offset="0x1046" bitsize="80" />
+        <register name="C0" offset="0x1080" bitsize="8" />
+        <register name="C1" offset="0x1081" bitsize="8" />
+        <register name="C2" offset="0x1082" bitsize="8" />
+        <register name="C3" offset="0x1083" bitsize="8" />
+        <register name="FPUControlWord" offset="0x1090" bitsize="16" />
+        <register name="FPUStatusWord" offset="0x1092" bitsize="16" />
+        <register name="FPUTagWord" offset="0x1094" bitsize="16" />
+        <register name="FPUDataPointer" offset="0x1096" bitsize="16" />
+        <register name="FPUInstructionPointer" offset="0x1098" bitsize="16" />
+        <register name="FPULastInstructionOpcode" offset="0x109a" bitsize="16" />
+        <register name="MM0" offset="0x1100" bitsize="64" />
+        <register name="MM1" offset="0x1108" bitsize="64" />
+        <register name="MM2" offset="0x1110" bitsize="64" />
+        <register name="MM3" offset="0x1118" bitsize="64" />
+        <register name="MM4" offset="0x1120" bitsize="64" />
+        <register name="MM5" offset="0x1128" bitsize="64" />
+        <register name="MM6" offset="0x1130" bitsize="64" />
+        <register name="MM7" offset="0x1138" bitsize="64" />
+        <register name="XMM0" offset="0x1200" bitsize="128" />
+        <register name="XMM1" offset="0x1210" bitsize="128" />
+        <register name="XMM2" offset="0x1220" bitsize="128" />
+        <register name="XMM3" offset="0x1230" bitsize="128" />
+        <register name="XMM4" offset="0x1240" bitsize="128" />
+        <register name="XMM5" offset="0x1250" bitsize="128" />
+        <register name="XMM6" offset="0x1260" bitsize="128" />
+        <register name="XMM7" offset="0x1270" bitsize="128" />
+        <register name="XMM8" offset="0x1280" bitsize="128" />
+        <register name="XMM9" offset="0x1290" bitsize="128" />
+        <register name="XMM10" offset="0x12a0" bitsize="128" />
+        <register name="XMM11" offset="0x12b0" bitsize="128" />
+        <register name="XMM12" offset="0x12c0" bitsize="128" />
+        <register name="XMM13" offset="0x12d0" bitsize="128" />
+        <register name="XMM14" offset="0x12e0" bitsize="128" />
+        <register name="XMM15" offset="0x12f0" bitsize="128" />
+        <register name="IDTR_Limit" offset="0x2200" bitsize="32" />
+        <register name="IDTR" offset="0x2200" bitsize="96" />
+        <register name="IDTR_Address" offset="0x2204" bitsize="64" />
+        <register name="GDTR_Limit" offset="0x2220" bitsize="32" />
+        <register name="GDTR" offset="0x2220" bitsize="96" />
+        <register name="GDTR_Address" offset="0x2224" bitsize="64" />
+        <register name="LDTR_Limit" offset="0x2240" bitsize="32" />
+        <register name="LDTR" offset="0x2240" bitsize="112" />
+        <register name="LDTR_Address" offset="0x2244" bitsize="64" />
+        <register name="LDTR_Attributes" offset="0x2248" bitsize="16" />
+        <register name="TR_Limit" offset="0x2260" bitsize="32" />
+        <register name="TR" offset="0x2260" bitsize="112" />
+        <register name="TR_Address" offset="0x2264" bitsize="64" />
+        <register name="TR_Attributes" offset="0x2268" bitsize="16" />
+    </registers>
+</language>
+

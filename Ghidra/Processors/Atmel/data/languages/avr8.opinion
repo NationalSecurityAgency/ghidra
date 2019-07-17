@@ -1,0 +1,5 @@
+<opinions>
+    <constraint loader="Executable and Linking Format (ELF)" compilerSpecID="gcc">      
+        <constraint primary="83" processor="AVR8"    endian="little" />       
+    </constraint>
+</opinions>

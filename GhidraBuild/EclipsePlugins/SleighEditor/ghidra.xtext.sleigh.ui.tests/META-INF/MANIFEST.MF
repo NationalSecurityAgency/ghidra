@@ -1,0 +1,18 @@
+Manifest-Version: 1.0
+Automatic-Module-Name: ghidra.xtext.sleigh.ui.tests
+Bundle-ManifestVersion: 2
+Bundle-Name: ghidra.xtext.sleigh.ui.tests
+Bundle-Vendor: Ghidra
+Bundle-Version: 1.0.0.qualifier
+Bundle-SymbolicName: ghidra.xtext.sleigh.ui.tests; singleton:=true
+Bundle-ActivationPolicy: lazy
+Require-Bundle: ghidra.xtext.sleigh.ui,
+ org.junit.jupiter.api;bundle-version="[5.0.0,6.0.0)",
+ org.eclipse.xtext.testing,
+ org.eclipse.xtext.xbase.testing,
+ org.eclipse.xtext.junit4,
+ org.eclipse.xtext.xbase.junit,
+ org.eclipse.core.runtime,
+ org.eclipse.ui.workbench;resolution:=optional
+Bundle-RequiredExecutionEnvironment: JavaSE-1.8
+Export-Package: ghidra.xtext.sleigh.ui.tests;x-internal=true

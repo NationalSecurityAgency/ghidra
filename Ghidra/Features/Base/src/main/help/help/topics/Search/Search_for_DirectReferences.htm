@@ -1,0 +1,179 @@
+<!DOCTYPE doctype PUBLIC "-//W3C//DTD HTML 4.0 Frameset//EN">
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+
+    <TITLE>Search for Direct References</TITLE>
+    <META http-equiv="content-type" content="text/html; charset=windows-1252">
+    <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+    <META name="generator" content="Microsoft FrontPage 4.0">
+  </HEAD>
+
+  <BODY>
+    <H1><A name="Search_for_Direct_References"></A>Search for Direct References</H1>
+
+    <P>Search for Direct References will search the entire program for possible direct references
+    to the current location or to locations within the current selection in the program. This
+    search attempts to find the actual bytes that make up the address of the current
+    location/selection. The search takes into account the <A href=
+    "help/topics/Glossary/glossary.htm#Endian">endianness</A> of the processor. The results are
+    displayed in a <A href="Query_Results_Dialog.htm">Query Results</A> table. The following table
+    shows the results of searching for direct references to a location (i.e. the program doesn't
+    have a selection). You can navigate to any resulting reference by selecting it in the
+    table.</P>
+
+	<BR><BR>
+
+    <DIV align="center">
+      <CENTER>
+        <TABLE border="0" width="100%">
+          <TBODY>
+            <TR>
+              <TD width="100%" align="center"><IMG src="images/DirectReferences.png" alt=""><BR>
+              </TD>
+            </TR>
+          </TBODY>
+        </TABLE>
+      </CENTER>
+    </DIV>
+
+    <P>The Search Results Table shows the following for a search on a location:</P>
+
+	<BLOCKQUOTE>
+	    <UL>
+	      <LI><B>From Location</B> - address of the possible direct reference</LI>
+	
+	      <LI><B>Label</B> - primary label at the location of the possible direct reference</LI>
+	
+	      <LI><B>From Preview</B> - current definition of the code unit at the location of the possible
+	      direct reference</LI>
+	
+	      <LI><B>To Location</B> - address that is being referred to directly</LI>
+	
+	      <LI><B>To Preview</B> - current definition of the code unit at the "referred to"
+	      location</LI>
+	    </UL>
+    	</BLOCKQUOTE>
+
+    <P>To search for possible direct references to an address,</P>
+
+	<BLOCKQUOTE>
+	    <OL>
+	      <LI>Click on the address in the <A href="help/topics/CodeBrowserPlugin/CodeBrowser.htm">Code
+	      Browser</A>.</LI>
+	
+	      <LI>Select <B>Search<IMG border="0" src="../../shared/arrow.gif"> for Direct
+	      References...</B></LI>
+	
+	      <LI>If the search will take a while, an "in progress" dialog pops up so that you can see the
+	      search progress, as well as cancel the search at any time.</LI>
+	
+	      <LI>A <A href="Query_Results_Dialog.htm">Query Results</A> window is displayed to show the
+	      results of the search.</LI>
+	    </OL>
+
+		<BLOCKQUOTE>
+		
+			<P>If you have a selection in your program when you perform the search, 
+				<B><I>Search For Direct References</B></I> will search for possible references to any of 
+				the addresses in the selection. This can be very useful for finding 
+				references into an area of memory that currently
+    				has no references to it.
+    			</P>
+		
+			<P><IMG border="0" src="../../shared/tip.png">To search for all possible 
+				references within the current program's memory space,
+    					press <TT><B>Ctrl+A</B></TT> to select the entire program
+    					 before performing the search</P>
+		</BLOCKQUOTE>
+
+    	</BLOCKQUOTE>
+
+		
+
+
+
+
+
+    <P><IMG border="0" src="../../shared/note.png"> If you use this search multiple times on
+    different addresses without closing the window, one window will show all the results. Each
+    result for an address is displayed when you click on the tab at the bottom of the window.</P>
+
+    <P><IMG border="0" src="../../shared/note.png"> This plugin works with 16-bit, 16-bit
+    segmented, and 32-bit programs.<BR>
+    <BR>
+    </P>
+
+    <H3><A name="Restore_Direct_Refs_Search_Selection"></A>Restoring the Search Selection</H3>
+
+    <BLOCKQUOTE>
+      <P>If your search results came from searching on a selection, you can restore the program's
+      selection that was used for the search. To do this, click the <IMG src=
+      "../../shared/menu16.gif" alt=""> menu button in the Search Results button bar and select
+      <B>Restore Search Results</B>. This will set the program selection back to what it was when
+      you initially performed the search.<BR>
+      <BR>
+      </P>
+    </BLOCKQUOTE>
+
+    <H3><A name="Direct_Refs_Search_Alignment"></A>Filtering Results Based on Alignment</H3>
+
+    <BLOCKQUOTE>
+      <P>Once you have search results you can filter them based on the address alignment of the
+      <B>From Location</B>. To do this, click the <IMG src="../../shared/menu16.gif" alt=""> menu
+      button in the Search Results button bar, pull right on <B>Alignment</B>, and select the
+      desired alignment (<B>1</B>, <B>2</B>, <B>4</B>, or <B>8</B>). This will limit the displayed
+      results to those where the <B>From Location</B> is an address that matches the selected byte
+      alignment.</P>
+    </BLOCKQUOTE>
+
+    	<H2>Actions</H2>
+
+	
+      <BLOCKQUOTE>
+		<H3></A>Make Selection <IMG border="0" src="Icons.MAKE_SELECTION_ICON"></H3>
+		
+			<BLOCKQUOTE>
+				<P>
+	    			<I>See <A HREF="help/topics/Search/Query_Results_Dialog.htm#Make_Selection">
+	    				Make Selection</A></I>.
+	    			</P>
+	    		</BLOCKQUOTE>
+	
+	    <H3>Selection Navigation <IMG border="0" src="images/locationIn.gif" alt=""></H3>
+	    
+	    		<BLOCKQUOTE>
+	    			<P>
+	    			<I>See <A HREF="help/topics/Search/Query_Results_Dialog.htm#Selection_Navigation">
+	    				Selection Navigation</A></I>.
+	    			</P>
+	    		</BLOCKQUOTE>
+    
+     </BLOCKQUOTE>
+     
+     
+
+    <P class="providedbyplugin">Provided by: <I>FindPossibleReferencesPlugin</I></P>
+
+    <P class="relatedtopic">Related Topics:</P>
+
+    <UL>
+      <LI>
+        <P class="relatedtopic"><A href="help/topics/CodeBrowserPlugin/CodeBrowser.htm">Code
+        Browser</A></P>
+      </LI>
+
+      <LI>
+        <P class="relatedtopic"><A href="Query_Results_Dialog.htm">Query Results</A></P>
+      </LI>
+    </UL><BR>
+     <BR>
+     <BR>
+     <BR>
+     <BR>
+     <BR>
+     <BR>
+  </BODY>
+</HTML>

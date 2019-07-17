@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<processor_spec>
+  <properties>
+    <property key="addressesDoNotAppearDirectlyInCode" value="true"/>
+    <property key="allowOffcutReferencesToFunctionStarts" value="false"/>
+    <property key="useNewFunctionStackAnalysis" value="true"/>
+    <property key="emulateInstructionStateModifierClass"
+			value="ghidra.program.emulation.AARCH64EmulateInstructionStateModifier"/>
+    <property key="assemblyRating:AARCH64:BE:64:v8A" value="PLATINUM"/>
+    <property key="assemblyRating:AARCH64:LE:64:v8A" value="PLATINUM"/>
+  </properties>
+  <programcounter register="pc"/>
+  
+  <default_symbols>
+    <symbol name="Reset" address="ram:0x0" entry="true"/>
+  </default_symbols>
+  
+  <volatile outputop="cWrite" inputop="cRead">
+    <range space="register" first="0x1000" last="0x3fff"/>
+  </volatile>
+  
+  <register_data>
+    <register name="z0" group="SVE" vector_lane_sizes="1,2,4,8"/> 
+    <register name="z1" group="SVE" vector_lane_sizes="1,2,4,8"/> 
+    <register name="z2" group="SVE" vector_lane_sizes="1,2,4,8"/> 
+    <register name="z3" group="SVE" vector_lane_sizes="1,2,4,8"/> 
+    <register name="z4" group="SVE" vector_lane_sizes="1,2,4,8"/> 
+    <register name="z5" group="SVE" vector_lane_sizes="1,2,4,8"/> 
+    <register name="z6" group="SVE" vector_lane_sizes="1,2,4,8"/> 
+    <register name="z7" group="SVE" vector_lane_sizes="1,2,4,8"/> 
+    <register name="z8" group="SVE" vector_lane_sizes="1,2,4,8"/> 
+    <register name="z9" group="SVE" vector_lane_sizes="1,2,4,8"/> 
+    <register name="z10" group="SVE" vector_lane_sizes="1,2,4,8"/> 
+    <register name="z11" group="SVE" vector_lane_sizes="1,2,4,8"/> 
+    <register name="z12" group="SVE" vector_lane_sizes="1,2,4,8"/> 
+    <register name="z13" group="SVE" vector_lane_sizes="1,2,4,8"/> 
+    <register name="z14" group="SVE" vector_lane_sizes="1,2,4,8"/> 
+    <register name="z15" group="SVE" vector_lane_sizes="1,2,4,8"/> 
+    <register name="z16" group="SVE" vector_lane_sizes="1,2,4,8"/> 
+    <register name="z17" group="SVE" vector_lane_sizes="1,2,4,8"/> 
+    <register name="z18" group="SVE" vector_lane_sizes="1,2,4,8"/> 
+    <register name="z19" group="SVE" vector_lane_sizes="1,2,4,8"/> 
+    <register name="z20" group="SVE" vector_lane_sizes="1,2,4,8"/> 
+    <register name="z21" group="SVE" vector_lane_sizes="1,2,4,8"/> 
+    <register name="z22" group="SVE" vector_lane_sizes="1,2,4,8"/> 
+    <register name="z23" group="SVE" vector_lane_sizes="1,2,4,8"/> 
+    <register name="z24" group="SVE" vector_lane_sizes="1,2,4,8"/> 
+    <register name="z25" group="SVE" vector_lane_sizes="1,2,4,8"/> 
+    <register name="z26" group="SVE" vector_lane_sizes="1,2,4,8"/> 
+    <register name="z27" group="SVE" vector_lane_sizes="1,2,4,8"/> 
+    <register name="z28" group="SVE" vector_lane_sizes="1,2,4,8"/> 
+    <register name="z29" group="SVE" vector_lane_sizes="1,2,4,8"/> 
+    <register name="z30" group="SVE" vector_lane_sizes="1,2,4,8"/> 
+    <register name="z31" group="SVE" vector_lane_sizes="1,2,4,8"/> 
+  
+    <register name="q0" vector_lane_sizes="1,2,4,8"/> 
+    <register name="q1" vector_lane_sizes="1,2,4,8"/> 
+    <register name="q2" vector_lane_sizes="1,2,4,8"/> 
+    <register name="q3" vector_lane_sizes="1,2,4,8"/> 
+    <register name="q4" vector_lane_sizes="1,2,4,8"/> 
+    <register name="q5" vector_lane_sizes="1,2,4,8"/> 
+    <register name="q6" vector_lane_sizes="1,2,4,8"/> 
+    <register name="q7" vector_lane_sizes="1,2,4,8"/> 
+    <register name="q8" vector_lane_sizes="1,2,4,8"/> 
+    <register name="q9" vector_lane_sizes="1,2,4,8"/> 
+    <register name="q10" vector_lane_sizes="1,2,4,8"/> 
+    <register name="q11" vector_lane_sizes="1,2,4,8"/> 
+    <register name="q12" vector_lane_sizes="1,2,4,8"/> 
+    <register name="q13" vector_lane_sizes="1,2,4,8"/> 
+    <register name="q14" vector_lane_sizes="1,2,4,8"/> 
+    <register name="q15" vector_lane_sizes="1,2,4,8"/> 
+    <register name="q16" vector_lane_sizes="1,2,4,8"/> 
+    <register name="q17" vector_lane_sizes="1,2,4,8"/> 
+    <register name="q18" vector_lane_sizes="1,2,4,8"/> 
+    <register name="q19" vector_lane_sizes="1,2,4,8"/> 
+    <register name="q20" vector_lane_sizes="1,2,4,8"/> 
+    <register name="q21" vector_lane_sizes="1,2,4,8"/> 
+    <register name="q22" vector_lane_sizes="1,2,4,8"/> 
+    <register name="q23" vector_lane_sizes="1,2,4,8"/> 
+    <register name="q24" vector_lane_sizes="1,2,4,8"/> 
+    <register name="q25" vector_lane_sizes="1,2,4,8"/> 
+    <register name="q26" vector_lane_sizes="1,2,4,8"/> 
+    <register name="q27" vector_lane_sizes="1,2,4,8"/> 
+    <register name="q28" vector_lane_sizes="1,2,4,8"/> 
+    <register name="q29" vector_lane_sizes="1,2,4,8"/> 
+    <register name="q30" vector_lane_sizes="1,2,4,8"/> 
+    <register name="q31" vector_lane_sizes="1,2,4,8"/> 
+  </register_data>
+
+</processor_spec>

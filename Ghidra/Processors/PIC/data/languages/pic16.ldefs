@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<language_definitions>
+  <language processor="PIC-16"
+            endian="little"
+            size="16"
+            variant="PIC-16"
+            version="1.2"
+            slafile="pic16.sla"
+            processorspec="pic16.pspec"
+            manualindexfile="../manuals/PIC-16.idx"
+            id="PIC-16:LE:16:PIC-16">
+    <description>PIC-16(C,CR)XXX</description>
+    <compiler name="default" spec="pic16.cspec" id="default"/>
+    <external_name tool="IDA-PRO" name="pic16cxx"/>
+  </language>
+  <!-- TODO: Need PIC-16F manual and index -->
+  <language processor="PIC-16"
+            endian="little"
+            size="16"
+            variant="PIC-16F"
+            version="1.2"
+            slafile="pic16f.sla"
+            processorspec="pic16f.pspec"
+            manualindexfile="../manuals/PIC-16F.idx"
+            id="PIC-16:LE:16:PIC-16F">
+    <description>PIC-16F(L)XXX</description>
+    <compiler name="default" spec="pic16f.cspec" id="default"/>
+    <external_name tool="IDA-PRO" name="pic16fxx"/>
+  </language>
+</language_definitions>

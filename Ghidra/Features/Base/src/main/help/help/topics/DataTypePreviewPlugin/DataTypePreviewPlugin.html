@@ -1,0 +1,73 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+    <META http-equiv="Content-Language" content="en-us">
+    <META http-equiv="Content-Type" content="text/html; charset=windows-1252">
+
+    <TITLE>Data Preview</TITLE>
+    <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+  </HEAD>
+
+  <BODY>
+    <H1><a name="DataTypePreviewPlugin"></a>Data Type Preview</H1>
+
+    <P align="left">The Data Type Preview provides a preview of bytes at an address based on data
+    types that you choose to view. As you move the cursor to different addresses, the Preview
+    column will update with the appropriate representation for each data type. If the value in the
+    <I>Preview</I> column represents a valid address, you can double-click on the <I>Preview</I>
+    column and navigate to that address in the <A href=
+    "help/topics/CodeBrowserPlugin/CodeBrowser.htm">Listing</A>.</P>
+
+    <P align="center"><IMG src="images/Data_Type_Preview.png"><BR>
+    </P>
+
+    <H2 align="left"><A name="Add"></A>Adding Data Types</H2>
+
+    <BLOCKQUOTE>
+      <P>Click the <IMG src="images/Plus.png"> button and select a datatype from the <A href=
+      "help/topics/DataTypeEditors/DataTypeSelectionDialog.htm">Data Type Chooser</A>.<BR>
+      </P>
+
+      <P>OR<BR>
+      </P>
+
+      <P align="left">Data types can be dragged from the <A href=
+      "help/topics/DataTypeManagerPlugin/data_type_manager_description.htm">Data Type Manager</A>
+      and dropped into the Data Type Preview table. If you add a structure or union, then a row
+      will be added for member of the structure or union.</P>
+
+      <P align="left"><I><IMG border="0" src="../../shared/note.png"> The data type preview does
+      not support <i>dynamic</i> data types.  However, keep in mind that not all variable-length
+      data types are dynamic.  Specifically, you <b>can</b> use data types that
+      implement</i> <tt>Dynamic</tt> <i>as long as they do not also extend from</i>
+      <tt>DynamicDataType</tt>.</I></P>
+    </BLOCKQUOTE>
+
+    <H2 align="left"><A name="Delete"></A>Removing Data Types</H2>
+
+    <BLOCKQUOTE>
+      <P align="left">Select the row(s) to delete and click on the <IMG src=
+      "images/edit-delete.png"> to remove data types from the table.</P>
+
+      <P align="left"><I><IMG border="0" src="../../shared/note.png"> If you remove a structure
+      member, then entire structure will be removed from the preview table</I></P>
+    </BLOCKQUOTE>
+
+    <P align="left" class="providedbyplugin">Provided by: DataTypePreviewPlugin</P>
+
+    <P class="relatedtopic">Related Topics</P>
+
+    <UL>
+      <LI><A href="help/topics/CodeBrowserPlugin/CodeBrowser.htm">Listing</A></LI>
+
+      <LI><A href="help/topics/DataTypeManagerPlugin/data_type_manager_description.htm">Data Type
+      Manager</A></LI>
+
+      <LI><A href="help/topics/DataPlugin/Data.htm">Data</A></LI>
+    </UL><BR>
+     <BR>
+  </BODY>
+</HTML>

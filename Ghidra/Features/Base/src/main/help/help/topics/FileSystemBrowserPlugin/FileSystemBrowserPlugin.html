@@ -1,0 +1,188 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+    <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+
+    <TITLE>FileSystem Browser</TITLE>
+  </HEAD>
+
+  <BODY>
+    <H1>FileSystem Browser</H1>
+
+    <H2><A name="FileSystemBrowserIntroduction"></A>Introduction</H2>
+
+    <BLOCKQUOTE>
+      <P>The file system browser is a generic tool for browsing and accessing the contents of
+      filesystems or container files (such as zips, tars, firmware images, etc).</P>
+    </BLOCKQUOTE>
+
+    <H2>GHIDRA Tool File Menu Actions</H2>
+
+    <BLOCKQUOTE>
+      <H3><A name="Open_File_System"></A>Open File System</H3>
+
+      <BLOCKQUOTE>
+        <P>Opens a file system container file (ie. a zip, tar, iso, etc) in a new browser tree.<BR>
+         Subdirectories of your local computer's file system can also be opened in this manner.</P>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <H2>Right-click Context Menu Actions</H2>
+
+    <BLOCKQUOTE>
+      <H3><A name="FSB_Get_Info"></A>Get Info</H3>
+
+      <BLOCKQUOTE>
+        <P>Returns information about the selected file. Sometimes there will not be any available
+        information. Generally, this information is not that useful. It will mostly consist of
+        meta-data from the internal file system.</P>
+      </BLOCKQUOTE>
+
+      <H3><A name="FSB_Expand_All"></A>Expand All</H3>
+
+      <BLOCKQUOTE>
+        <P>Expands all folders below, and including, the selected node.</P>
+      </BLOCKQUOTE>
+
+      <H3><A name="FSB_Collapse_All"></A>Collapse All</H3>
+
+      <BLOCKQUOTE>
+        <P>Collapses all folders below, and including, the selected node.</P>
+      </BLOCKQUOTE>
+
+      <H3><A name="FSB_Open_File_System_Nested"></A>Open File System</H3>
+
+      <BLOCKQUOTE>
+        <P>Attempts to open the selected file as a sub-file-system. If this operation succeeds, the
+        node will turn into a folder with one or more children. If this operation fails, the node
+        will remain a leaf node. This operation could fail for many reasons, but generally it fails
+        because the node does not represent a valid sub-file-system.</P>
+      </BLOCKQUOTE>
+
+      <H3><A name="FSB_Open_File_System_In_New_Window"></A>Open File System in new window</H3>
+
+      <BLOCKQUOTE>
+        <P>Attempts to open the selected file as a sub-file-system. If this operation succeeds, a
+        new file system browsing tree will be shown with the contents of the selected file.</P>
+      </BLOCKQUOTE>
+
+      <H3><A name="FSB_Open_Programs"></A>Open Program(s)</H3>
+
+      <BLOCKQUOTE>
+        <P>Opens the GHIDRA program(s) that correspond to the selected file(s). If no program in
+        the current GHIDRA project is linked to the selected file, you will be able to import the
+        selected file.</P>
+      </BLOCKQUOTE>
+
+      <H3><A name="FSB_Import_Single"></A>Import</H3>
+
+      <BLOCKQUOTE>
+        <P>Imports the selected file into GHIDRA as new program in your current project.</P>
+      </BLOCKQUOTE>
+
+      <H3><A name="FSB_Import_Batch"></A>Batch Import</H3>
+
+      <BLOCKQUOTE>
+        <P>Imports the selected file(s) into GHIDRA as new programs in your current project
+        using the Batch Import dialog.</P>
+      </BLOCKQUOTE>
+      
+      <H3><A name="FSB_Export"></A>Export</H3>
+
+      <BLOCKQUOTE>
+        <P>Writes a copy of the selected files to a directory you select on your local
+        computer.</P>
+      </BLOCKQUOTE>
+
+      <H3><A name="FSB_Export_All"></A>Export All</H3>
+
+      <BLOCKQUOTE>
+        <P>Recursively copies the contents of a selected folder to a directory you select on your
+        local computer.</P>
+      </BLOCKQUOTE>
+
+      <H3><A name="FSB_View_As_Image"></A>View As Image</H3>
+
+      <BLOCKQUOTE>
+        <P>Attempts to render the selected file as an image.</P>
+      </BLOCKQUOTE>
+
+      <H3><A name="FSB_View_As_Text"></A>View As Text</H3>
+
+      <BLOCKQUOTE>
+        <P>Attempts to render the selected file as an text.</P>
+      </BLOCKQUOTE>
+
+      <H3><A name="FSB_List_Mounted_Filesystems"></A>List Mounted File Systems</H3>
+
+      <BLOCKQUOTE>
+        <P>Displays a list of the file systems that are currently open and mounted. Selecting one
+        of the file systems will display that file system's browser tree.</P>
+      </BLOCKQUOTE>
+
+      <H3><A name="FSB_Close"></A>Close</H3>
+
+      <BLOCKQUOTE>
+        <P>Closes the currently highlighted file system root node. The file system itself will not
+        be unmounted until all open browser windows to it are closed and a caching timeout period
+        has passed.</P>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <H2>Browser Dialog Actions</H2>
+
+    <BLOCKQUOTE>
+      <H3><A name="FSB_Display_Supported_File_Systems_and_Loaders"></A>Display Supported File Systems
+      and Loaders</H3>
+
+      <BLOCKQUOTE>
+        <P>Lists the currently supported file systems.</P>
+      </BLOCKQUOTE>
+
+      <H3><A name="FSB_Open_File_System_Chooser"></A>Open File System Chooser</H3>
+
+      <BLOCKQUOTE>
+        <P>Opens a new file system container file in a new browser tree. This is the same as "File
+        | Open File System" in the main GHIDRA window.</P>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <H2>How To Handle Unsupported File Systems</H2>
+
+    <BLOCKQUOTE>
+      <P>If you receive this message: <B>No file system provider for the selected file.</B><BR>
+      <BR>
+       It means one of the following two things:</P>
+
+      <OL>
+        <LI>The file you attempted to open as a file-system is actually NOT a file-system</LI>
+
+        <LI>GHIDRA does not have an implementation for that file-system</LI>
+      </OL>
+
+      <P>If the file does not really represent a file system, then you may want to try importing
+      it.<BR>
+      <BR>
+       Otherwise new file-systems can easily be written by implementing the
+      <CODE>ghidra.formats.gfilesystem.GFileSystem</CODE> interface.</P>
+    </BLOCKQUOTE>
+
+    <H2><A name="FileSystemBrowserKnownIssues"></A>Known issues</H2>
+
+    <BLOCKQUOTE>
+      <H3>Strong Crypto Support</H3>
+
+      <BLOCKQUOTE>
+        <P>Your Java JVM install may not have support for strong crypto currently installed.<BR>
+        <BR>
+         In order to fix this issue, you must install Oracle's "Java Cryptography Extension (JCE)
+        Unlimited Strength Jurisdiction Policy Files"<BR>
+        <BR>
+        </P>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+  </BODY>
+</HTML>

@@ -1,0 +1,418 @@
+<!DOCTYPE doctype PUBLIC "-//W3C//DTD HTML 4.0 Frameset//EN">
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+
+    <TITLE>Version Tracking Wizard</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=windows-1252">
+    <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+  </HEAD>
+
+  <BODY lang="EN-US">
+    <H1><A name="Version_Tracking_Wizard"></A>Version Tracking Wizard</H1>
+
+    <BLOCKQUOTE>
+      <P>The version tracking wizard guides you through the process of creating a new version
+      tracking session or adding results to an existing session.</P>
+
+      <H2><A name="New_Session"></A>Creating a New Session</H2>
+
+      <BLOCKQUOTE>
+        <P>To create a new version tracking session you can:</P>
+
+        <UL>
+          <LI>Drag the two programs to be tracked onto a running tool or the Version Tracking tool
+          button (<A href="help/topics/Tool/Ghidra_Tool_Administration.htm#Run_Tool">more
+          info</A>)</LI>
+
+          <LI>Press the <B>Create Session</B> <IMG border="0" src="images/start-here_16.png"> 
+          action from within the 
+          <A href="help/topics/VersionTrackingPlugin/VT_Tool.html#Create_Session">
+          Version Tracking Tool</A></LI>
+        </UL>
+        
+      </BLOCKQUOTE>
+
+        <BLOCKQUOTE>
+          <H3><A name="New_Session_Panel"></A>New Version Tracking Session Panel</H3>
+
+          <TABLE x-use-null-cells="" width="100%">
+            <TBODY>
+              <TR>
+                <TD align="center" width="100%"><IMG border="0" src="images/SessionPanel.png"></TD>
+              </TR>
+            </TBODY>
+          </TABLE>
+
+          <P>The new version tracking session panel appears when creating a new session only. On
+          this page you specify the domain folder in your project in which to store the session
+          information, the name of the session domain object, and the source and destination
+          programs. The source program is the existing program that's been analyzed and contains
+          markup to transfer. The destination program is the new program that will receive the
+          markup items.</P>
+
+          <P>When dragging two programs from the front-end onto the version tracking tool, the
+          source and destination might not be properly identified. If they are backwards (source is
+          destination, destination is source) simply press the "swap" button (<IMG border="0" src=
+          "images/doubleArrowUpDown.png">) to correct the ordering.</P>
+        </BLOCKQUOTE>
+        
+        <BLOCKQUOTE>
+          <H3><A name="Preconditions_Panel"></A>Preconditions Panel</H3>
+
+          <TABLE x-use-null-cells="" width="100%">
+            <TBODY>
+              <TR>
+                <TD align="center" width="100%"><IMG border="0" src=
+                "images/PreconditionsPanel.png"></TD>
+              </TR>
+            </TBODY>
+          </TABLE>
+
+          <P>The preconditions panel has a list of mini-analysis routines called "validators".
+          These validators analyze parts of your source and destination programs, looking for
+          potential problems which will adversely affect version tracking success. For instance, a
+          large difference in the number of defined functions between the source and the
+          destination programs could be an indication that they are not ready to be correlated.</P>
+
+          <P>Press the button "Run Precondition checks", and then review the results in the panel
+          by clicking on the individual tests in the list.</P>
+          
+          <P>
+          <a href="help/topics/VersionTrackingPlugin/VT_Preconditions.html">Click here</a> for a list of known preconditions.
+          </P>
+        </BLOCKQUOTE>
+
+        <BLOCKQUOTE>
+          <H3><A name="New_Session_Summary_Panel"></A>Summary Panel</H3>
+
+          <TABLE x-use-null-cells="" width="100%">
+            <TBODY>
+              <TR>
+                <TD align="center" width="100%"><IMG border="0" src="images/SummaryPanel.png"></TD>
+              </TR>
+            </TBODY>
+          </TABLE>
+
+          <P>The summary panel shows a summary of the selections provided to the Version Tracking
+          wizard before it creates the new version tracking session. 
+          Selecting the "Finish" button creates the new version tracking session.</P>
+        </BLOCKQUOTE>
+        
+      <H2><A name="Wizard_Add_To_Session"></A>Add to an Existing Session</H2>
+
+        <BLOCKQUOTE>
+          <P>To add to an existing session you can:</P>
+
+          <UL>
+            <LI>Press the <B>Add to Session</B> <IMG border="0" src="images/Plus.png">
+            action from within the 
+            <A href="help/topics/VersionTrackingPlugin/VT_Tool.html#Add_To_Session">
+            Version Tracking Tool</A></LI>
+          </UL>
+
+          <P>The wizard panels that appear can vary depending on which options are selected on 
+          prior panels. For example, the correlator options will depend upon which correlation 
+          algorithm was chosen. Also the Select Address Ranges panel is only displayed if you 
+          choose to Limit Addresses on the Address Set Options panel. The following wizard panels
+          are for adding correlation results to an existing session.</P>
+        </BLOCKQUOTE>
+
+        <BLOCKQUOTE>
+          <H3><A name="Correlator_Panel"></A>Correlation Algorithm Panel</H3>
+
+          <TABLE x-use-null-cells="" width="100%">
+            <TBODY>
+              <TR>
+                <TD align="center" width="100%"><IMG border="0" src=
+                "images/CorrelatorPanel.png"></TD>
+              </TR>
+            </TBODY>
+          </TABLE>
+
+          <P>The correlation algorithm panel lets you choose which program correlator to use. The
+          list is dynamically populated based upon which features you have installed, so the actual
+          list may look different than that above.  See the 
+          <a href="help/topics/VersionTrackingPlugin/VT_Correlators.html">Correlators</a> help 
+          page for more information about individual correlators or the <a href="help/topics/VersionTrackingPlugin/VT_Workflow.html">Workflow</a> help
+          page for information about which correlators to run first. 
+          </P>  
+        </BLOCKQUOTE>
+
+        <BLOCKQUOTE>
+          <H3><A name="Options_Panel"></A>Options Panel</H3>
+
+          <TABLE x-use-null-cells="" width="100%">
+            <TBODY>
+              <TR>
+                <TD align="center" width="100%"><IMG border="0" src="images/OptionsPanel.png"></TD>
+              </TR>
+            </TBODY>
+          </TABLE>
+
+          <P>The options panel displays correlation algorithm specific options to select. Please
+          see notes on the individual correlator algorithms for more information about their
+          options.</P>
+        </BLOCKQUOTE>
+
+        <BLOCKQUOTE>
+          <H3><A name="Address_Set_Panel"></A>Address Set Options Panel</H3>
+
+          <TABLE x-use-null-cells="" width="100%">
+            <TBODY>
+              <TR>
+                <TD align="center" width="100%"><IMG border="0" src="images/VT_Wizard_AddressSetOptions.png"></TD>
+              </TR>
+            </TBODY>
+          </TABLE>
+
+          <P>The address set options panel lets the user add or remove specific address ranges from
+          consideration by the chosen program correlator.</P>
+          <ul>
+          <li> 
+          <P>This <b>Exclude accepted matches</b> option will cause the correlator algorithm to not 
+	      consider any functions or data that have already been accepted.  Using this option 
+	      can greatly speed up the processing time of the correlator algorithm; however, this
+	      options should only be used when you trust that your accepted matches are correct. As an example, 
+	      if you accepted matches from the <b>Exact Function Bytes</b> correlator algorithm, you can be very 
+	      confident that your matches are correct because they are unique matches with
+          all bytes in each function are identical to each other. These matches would be ok to exclude in the next correlator
+          run. 
+	      </P>
+		       <BLOCKQUOTE>
+		          <P><IMG src="../../shared/note.png" border="0"> 
+		          <B>NOTE: </B> This option will be disabled when the correlator does not support
+		          limiting search scope. 
+		          </P>
+		       </BLOCKQUOTE></li>
+          
+          <li><P>The <b>Limit source and destination address sets</b> option allows the users to 
+          choose ranges of their program to limit the current correlator algorithm to when matching
+          functions and data. 
+          If you need to restrict the address ranges of your programs, you should select the
+          checkbox here. For instance, this might be useful if you have two copies of your 
+          functions in memory and only want to consider one copy. 
+          </P>
+          <P>If you select this option you will be presented with another panel for limiting the 
+          source program's address ranges and the destination program's address ranges.
+          </P>
+          </li>
+          </ul>
+          </P>
+
+        </BLOCKQUOTE>
+
+        <BLOCKQUOTE>
+          <H3><A name="Select_Address_Ranges_Panel"></A>Select Address Range(s) Panel</H3>
+
+          <TABLE x-use-null-cells="" width="100%">
+            <TBODY>
+              <TR>
+                <TD align="center" width="100%"><IMG border="0" src="images/VT_Wizard_SelectAddressRanges.png"></TD>
+              </TR>
+            </TBODY>
+          </TABLE>
+
+          <P>The select address ranges panel lets the user limit the source and destination 
+          address sets that will be used by the chosen program correlator when determining
+          version tracking matches. The left side lets you specify what addresses to use from
+          the Source program and the right side allows you to specify
+          the address ranges to use from the Destination program.</P>
+          
+          <H4><A name="Select_Source_Address_Ranges"></A>Source</H4>
+          <BLOCKQUOTE>
+            <P>The left side of this panel allows you to specify the 
+            address ranges to use from the Source program when adding version tracking matches 
+            to a session. Select the appropriate radio button to indicate
+            the addresses that you want the correlator to use.
+            </P>
+          </BLOCKQUOTE>
+          
+          <ul>
+          	<li> 
+          	  <P>The <b>Use Entire Source Program</b> option will use all memory addresses currently
+          	  defined in the source program when determining match results. 
+	      	  </P>
+		      <BLOCKQUOTE>
+		          <P><IMG src="../../shared/note.png" border="0"> 
+		          <B>NOTE: </B> This is the default option which you normally get if you don't 
+		          check the <b>Limit source and destination address sets</b> box on the previous panel
+		          for Address Set Options. 
+		          </P>
+		      </BLOCKQUOTE>
+		  	</li>
+          
+          	<li> 
+          	  <P>The <b>Use Source Tool Selection</b> option will use all memory addresses that were
+          	  selected in the Source Tool's listing when you invoked the Add To Session version 
+          	  tracking wizard. If necessary, you can Cancel the current wizard, 
+          	  select addresses in the version tracking Source Tool, and restart the wizard if you 
+          	  want to limit the addresses using a selection.
+	      	  </P>
+		      <BLOCKQUOTE>
+		          <P><IMG src="../../shared/note.png" border="0"> 
+		          <B>NOTE: </B> This option will be disabled if there wasn't a selection in 
+		          the version tracking Source Tool when the Add To Session version tracking wizard 
+		          was started. 
+		          </P>
+		      </BLOCKQUOTE>
+		  	</li>
+          
+            <li>
+          	  <P>The <b>Specify My Own Address Ranges</b> option allows you to manually specify 
+          	  address ranges of the Source program to include when determining matches with the 
+          	  current correlator algorithm. All other addresses will be ignored. 
+          	  </P>
+          	  <P>If you choose this option, you can specify the ranges of addresses, which then 
+          	  appear in the <b>Address Ranges</b> list. The list and its associated buttons are 
+          	  disabled whenever the option is not the currently selected radio button.
+          	  When you have a Source Tool selection, the list will initially contain the same 
+          	  address ranges as the selection. Otherwise, it will contain the address ranges for
+          	  the current memory in the source program.
+          	  </P>
+	          <ul>
+	          	<li> 
+ 	         	  <P>Press the <B>Add Range</B> <IMG border="0" src="images/Plus.png"> 
+          button to add another address range to those already in the list. 
+		      	  </P>
+			  	</li>
+          
+	          	<li> 
+ 	         	  <P>Press the <B>Remove Range</B> <IMG border="0" src="images/list-remove.png"> 
+          button to remove all addresses from the list that fall within a specific range. 
+		      	  </P>
+			  	</li>
+          
+	            <li>
+	          	  <P>Pressing the <b>Remove Selected Range(s)</b> button will remove any 
+	          	  address ranges from the Address Ranges list that are currently selected. 
+	          	  </P>
+			      <BLOCKQUOTE>
+			          <P><IMG src="../../shared/note.png" border="0"> 
+			          <B>NOTE: </B> This button will be disabled if the <b>Specify My Own Address Ranges</b> option
+			          isn't selected or if there isn't an address range selected in the list.
+			          </P>
+			      </BLOCKQUOTE>
+	            </li>
+	          </ul>
+            </li>
+          </ul>
+
+          <H4><A name="Select_Destination_Address_Ranges"></A>Destination</H4>
+          <BLOCKQUOTE>
+            <P>The right side of this panel allows you to specify the 
+            address ranges to use from the Destination program when adding version tracking matches 
+            to a session. Select the appropriate radio button to indicate
+            the addresses that you want the correlator to use from the destination program.
+            </P>
+            <P>The options within the Destination function in the same manner as they did for the Source,
+            but instead apply to addresses within the destination program.</P>
+          </BLOCKQUOTE>
+          
+          <ul>
+          	<li> 
+          	  <P>The <b>Use Entire Destination Program</b> option will use all memory addresses currently
+          	  defined in the destination program when determining match results. 
+	      	  </P>
+		      <BLOCKQUOTE>
+		          <P><IMG src="../../shared/note.png" border="0"> 
+		          <B>NOTE: </B> This is the default option which you normally get if you don't 
+		          check the <b>Limit source and destination address sets</b> box on the previous panel
+		          for Address Set Options. 
+		          </P>
+		      </BLOCKQUOTE>
+		  	</li>
+          
+          	<li> 
+          	  <P>The <b>Use Destination Tool Selection</b> option will use all memory addresses that were
+          	  selected in the Destination Tool's listing when you invoked the Add To Session version 
+          	  tracking wizard. If necessary, you can Cancel the current wizard, 
+          	  select addresses in the version tracking Destination Tool, and restart the wizard if you 
+          	  want to limit the addresses using a selection.
+	      	  </P>
+		      <BLOCKQUOTE>
+		          <P><IMG src="../../shared/note.png" border="0"> 
+		          <B>NOTE: </B> This option will be disabled if there wasn't a selection in 
+		          the version tracking Destination Tool when the Add To Session version tracking wizard 
+		          was started. 
+		          </P>
+		      </BLOCKQUOTE>
+		  	</li>
+          
+            <li>
+          	  <P>The <b>Specify My Own Address Ranges</b> option allows you to manually specify 
+          	  address ranges of the Destination program to include when determining matches with the 
+          	  current correlator algorithm. All other addresses will be ignored. 
+          	  </P>
+          	  <P>If you choose this option, you can specify the ranges of addresses, which then 
+          	  appear in the <b>Address Ranges</b> list. The list and its associated buttons are 
+          	  disabled whenever the option is not the currently selected radio button.
+          	  When you have a Destination Tool selection, the list will initially contain the same 
+          	  address ranges as the selection. Otherwise, it will contain the address ranges for
+          	  the current memory in the destination program.
+          	  </P>
+	          <ul>
+	          	<li> 
+ 	         	  <P>Press the <B>Add Range</B> <IMG border="0" src="images/Plus.png"> 
+          button to add another address range to those already in the list. 
+		      	  </P>
+			  	</li>
+          
+	          	<li> 
+ 	         	  <P>Press the <B>Remove Range</B> <IMG border="0" src="images/list-remove.png"> 
+          button to remove all addresses from the list that fall within a specific range. 
+		      	  </P>
+			  	</li>
+          
+	            <li>
+	          	  <P>Pressing the <b>Remove Selected Range(s)</b> button will remove any 
+	          	  address ranges from the Address Ranges list that are currently selected. 
+	          	  </P>
+			      <BLOCKQUOTE>
+			          <P><IMG src="../../shared/note.png" border="0"> 
+			          <B>NOTE: </B> This button will be disabled if the <b>Specify My Own Address Ranges</b> option
+			          isn't selected or if there isn't an address range selected in the list.
+			          </P>
+			      </BLOCKQUOTE>
+	            </li>
+	          </ul>
+            </li>
+          </ul>
+
+        </BLOCKQUOTE>
+
+        <BLOCKQUOTE>
+          <H3><A name="Add_To_Session_Summary_Panel"></A>Summary Panel</H3>
+
+          <TABLE x-use-null-cells="" width="100%">
+            <TBODY>
+              <TR>
+                <TD align="center" width="100%">
+                <IMG border="0" src="images/VT_Wizard_AddToSession_Summary.png"></TD>
+              </TR>
+            </TBODY>
+          </TABLE>
+
+          <P>The summary panel shows a summary of the selections provided to the Version Tracking
+          wizard before it runs the correlation. 
+          Selecting the <b>Finish</b> button will run the correlation and add its results to the current 
+          version tracking session.</P>
+        </BLOCKQUOTE>
+        
+    </BLOCKQUOTE><!-- Main content blockquote -->
+
+    <P class="providedbyplugin">Provided by: <I>Version Tracking Plugin</I></P>
+
+    <P class="relatedtopic">Related Topics:</P>
+
+    <UL>
+      <LI><A href="help/topics/VersionTrackingPlugin/Version_Tracking_Intro.html">Version Tracking
+      Introduction</A></LI>
+
+      <LI><A href="help/topics/VersionTrackingPlugin/VT_Tool.html">Version Tracking Tool</A></LI>
+    </UL><BR>
+     <BR>
+  </BODY>
+</HTML>

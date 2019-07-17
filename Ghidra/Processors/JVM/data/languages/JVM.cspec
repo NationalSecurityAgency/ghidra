@@ -1,0 +1,122 @@
+<?xml version="1.1" encoding="UTF-8"?>
+
+<compiler_spec>
+   <global>
+     <range space="ram"/>
+   </global>
+  
+   <stackpointer register="SP" space="ram" growth="negative"/> 
+ 
+   <data_organization>
+      <char_type signed="false" />
+      <char_size value="2" />
+      <short_size value="2" />
+      <pointer_size value="4"/>
+      <integer_size value = "4"/>
+      <float_size value="4" />
+      <long_size value="8" />
+      <double_size value="8" />
+    </data_organization>
+   
+    <default_proto>
+      <prototype name="__stdcall" extrapop="0" stackshift="0">
+        <input>
+          <pentry minsize="1" maxsize="500" align="4" extension="inttype">
+            <addr offset="0" space="parameterSpace"/>
+          </pentry>
+        </input>
+        <output>        
+          <pentry minsize="1" maxsize="8" extension="inttype">
+            <register name= "cat2_return_value"/>
+          </pentry>
+        </output>
+        <unaffected>
+          <register name = "SP"/>
+        </unaffected>
+        <pcode inject="uponentry" dynamic="true"/>  <!-- Injected dynamically by PcodeInjectLibraryJava -->
+        <localrange>
+          <range space="parameterSpace" first="0x00010000" last="0x00010010"/>
+        </localrange>
+      </prototype>
+    </default_proto>
+       
+    <callotherfixup targetop="getFieldCallOther">
+      <pcode dynamic="true">
+        <input name="cpool_index_getfield"/>
+      </pcode>
+    </callotherfixup>
+  
+    <callotherfixup targetop="getStaticCallOther">
+      <pcode dynamic="true">
+        <input name="cpool_index_getstatic"/>
+      </pcode>
+    </callotherfixup>
+    
+    <callotherfixup targetop="invokedynamicCallOther">
+      <pcode dynamic="true">
+        <input name="cpool_index_invokedynamic"/>
+      </pcode>
+    </callotherfixup>
+
+    <callotherfixup targetop="invokeinterfaceCallOther">
+      <pcode dynamic="true">
+        <input name="cpool_index_invokeinterface"/>
+      </pcode>
+    </callotherfixup>
+
+    <callotherfixup targetop="invokespecialCallOther">
+      <pcode dynamic="true">
+        <input name="cpool_index_invokespecial"/>
+      </pcode>
+    </callotherfixup>
+
+    <callotherfixup targetop="invokestaticCallOther">
+      <pcode dynamic="true">
+        <input name="cpool_index_invokestatic"/>
+      </pcode>
+    </callotherfixup>
+   
+    <callotherfixup targetop="invokevirtualCallOther">
+      <pcode dynamic="true">
+        <input name="cpool_index_invokevirtual"/>
+      </pcode>
+    </callotherfixup>
+   
+    <callotherfixup targetop="ldcCallOther">
+      <pcode dynamic="true">
+        <input name="cpool_index_ldc"/>
+      </pcode>
+    </callotherfixup>
+   
+    <callotherfixup targetop="ldc_wCallOther">
+      <pcode dynamic="true">
+        <input name="cpool_index_ldc_w"/>
+      </pcode>
+    </callotherfixup>
+   
+    <callotherfixup targetop="ldc2_wCallOther">
+      <pcode dynamic="true">
+        <input name="cpool_index_ldc2_w"/>
+      </pcode>
+    </callotherfixup>
+    
+   <callotherfixup targetop="multianewarrayCallOther">
+     <pcode dynamic="true">
+       <input name="cpool_index_multianewarray"/>
+       <input name="dimensions"/>
+     </pcode>
+   </callotherfixup>
+   
+   <callotherfixup targetop="putFieldCallOther">
+     <pcode dynamic="true">
+       <input name="cpool_index_putfield"/>
+     </pcode>
+   </callotherfixup>
+   
+   <callotherfixup targetop="putStaticCallOther">
+     <pcode dynamic="true">
+       <input name="cpool_index_putstatic"/>
+     </pcode>
+   </callotherfixup>
+      
+</compiler_spec>

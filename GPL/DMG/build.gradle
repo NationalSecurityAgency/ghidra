@@ -1,0 +1,63 @@
+apply from: file("../gpl.gradle").getCanonicalPath()
+
+if (findProject(':Generic') != null) {
+	apply from: "$rootProject.projectDir/gradle/javaProject.gradle"
+	apply from: "$rootProject.projectDir/gradle/distributableGPLModule.gradle"
+	
+	rootProject.assembleDistribution {
+		doLast {
+			// eliminate standard module lib directory
+			def assemblePath = destinationDir.path + "/" + getZipPath(this.project)
+			delete assemblePath + "/lib"
+		}
+	}
+}
+else {
+	apply plugin: 'java'
+}
+apply plugin: 'eclipse'
+
+eclipse.project.name = 'GPL DMG'
+
+/*********************************************************************************
+ *
+ * Define a new source set for dmg source because it is not part of Ghidra, it is 
+ * a standalone application that is executed and called from Ghidra. 
+ *  			
+ * see DmgServerProcessManager 
+ *
+ *********************************************************************************/
+sourceSets {
+	
+	dmg {
+		java {
+			srcDir 'src/dmg/java'
+		}
+	}
+}
+
+eclipse.classpath.plusConfigurations += [configurations.dmgCompile]
+
+dependencies {
+	dmgCompile ':csframework@jar'
+	dmgCompile ':hfsx@jar'
+	dmgCompile ':hfsx_dmglib@jar'
+}
+
+/***************************************************************************************
+ *
+ * Task to create the dmg.jar file
+ *
+ ***************************************************************************************/
+//task dmgJar(type: Jar) {
+//	from sourceSets.dmg.output
+//	destinationDir = file("build/data/lib")
+//	baseName = 'dmg'
+//}
+
+jar {
+	destinationDir = file("build/data/lib")
+	doLast {
+		delete "build/libs"
+	}
+}

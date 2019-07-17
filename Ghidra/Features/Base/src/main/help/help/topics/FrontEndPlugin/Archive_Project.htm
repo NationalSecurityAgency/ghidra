@@ -1,0 +1,111 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN">
+
+<HTML>
+  <HEAD>
+    <TITLE>Archive Project</TITLE>
+    <META http-equiv="content-type" content="text/html; charset=windows-1252">
+    <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+  </HEAD>
+
+  <BODY>
+    <H1>Archive Current Project</H1>
+
+    <P>Archive Current Project will save the entire contents of the currently open project to a
+    file name that you specify.</P>
+
+    <P>The archive is a snapshot of the project data at the time of the archival. You must close
+    all running tools before you can begin the archive process.&nbsp;</P>
+
+    <P>After the archive is complete, the <A href="Ghidra_Front_end.htm">Ghidra Project
+    Window</A>'s message area will indicate whether the archive succeeded or failed. The archive
+    can be restored by using the <A href="Restore_Project.htm">Restore Project</A> operation.</P>
+
+    <BLOCKQUOTE>
+      <H3>Why Archive a Project?</H3>
+    </BLOCKQUOTE>
+
+    <UL>
+      <LI>Archiving a project saves it to a file in a format that is compatible between different
+      Ghidra release versions. It also saves off the project data in a way that it can easily be
+      restored at a later date.</LI>
+
+      <LI>Archiving the project does not remove the project from the Ghidra projects directory. So
+      archiving the project has no impact on further use of the project.</LI>
+
+      <LI>Archiving periodically to a uniquely named file can simply be used as a way to backup the
+      current state of the project data. The archive file(s) can then be copied to another disk
+      drive or computer system for redundancy.</LI>
+    </UL>
+
+    <P>To archive the current project:</P>
+
+    <OL type="1">
+      <LI>Close any tools that are running. (You cannot archive a project that has running
+      tools.)</LI>
+
+      <LI>From the <A href="Ghidra_Front_end.htm">Ghidra Project Window</A>, select <B>File<IMG
+      src="../../shared/arrow.gif" border="0">Archive Current
+      Project...</B></LI>
+
+      <LI>From the <I>Archive Current Project</I> dialog, specify the <I>Archive File</I> where the
+      project is to be saved. The default location of the archive file&nbsp; is your projects
+      directory.&nbsp;</LI>
+    </OL>
+
+    <P align="center"><IMG alt="" src="images/ArchiveProject.png" border="0"></P>
+
+    <P align="center"><IMG src="../../shared/note.png" border="0"> The file
+    name must end with a '.gar' extension.</P>
+
+    <OL start="4">
+      <LI>Click the <B>OK</B> button to begin archiving.</LI>
+
+      <LI>If the specified archive already exists the <I>Archive File Exists</I> dialog is
+      displayed.</LI>
+    </OL>
+
+    <P align="center"><IMG alt="" src="images/ArchiveFileExists.png" border="0"></P>
+
+    <P>Decide whether you want to overwrite the existing archive file. Select <B>Yes</B> if you
+    want to overwrite the file. Otherwise, select <B>No</B> and enter another filename in the
+    <I>Archive Current Project</I> dialog.</P>
+
+    <OL start="6">
+      <LI>Your project is saved automatically before the archive process begins.&nbsp;</LI>
+
+      <LI>The 'In Progress' dialog is displayed indicating the project is being archived. You can
+      cancel the archive process at any time by clicking on the <B>Cancel</B> button in the
+      progress dialog.</LI>
+    </OL>
+
+    <P>&nbsp;</P>
+
+    <BLOCKQUOTE>
+      <H3>When Archiving Errors Occur</H3>
+
+      <P>If the archive process encounters an error, archiving will terminate and a message will
+      appear. Also, the failure is indicated in the <A href="Ghidra_Front_end.htm">Ghidra Project
+      Window</A>'s message area.</P>
+    </BLOCKQUOTE>
+
+    <P class="providedbyplugin">Provided by: <I>Project Archiver</I> Plugin</P>
+
+    <P class="relatedtopic">Related Topics:</P>
+
+    <UL>
+      <LI><A href="Restore_Project.htm">Restore Project</A></LI>
+
+      <LI><A href="help/topics/Project/Ghidra_Projects.htm">Ghidra Projects</A></LI>
+    </UL>
+
+    <P>&nbsp;</P>
+
+    <P>&nbsp;</P>
+
+    <P>&nbsp;</P>
+
+    <P>&nbsp;</P>
+
+    <P>&nbsp;</P>
+  </BODY>
+</HTML>

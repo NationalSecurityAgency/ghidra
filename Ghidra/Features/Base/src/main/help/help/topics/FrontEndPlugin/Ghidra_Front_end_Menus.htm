@@ -1,0 +1,228 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<HTML>
+  <HEAD>
+    <TITLE>Ghidra Front end Menus</TITLE>
+    <META http-equiv="content-type" content="text/html; charset=windows-1252">
+    <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+  </HEAD>
+
+  <BODY>
+    <H1><A name=""></A>Ghidra Front End Menus</H1>
+
+    <H2><A name="Configure"></A>Configure Project Window</H2>
+
+    <BLOCKQUOTE>
+      <P>You can configure your <A href="Ghidra_Front_end.htm">Project Window</A>&nbsp; just as you
+      would another tool, however, only a subset of the Ghidra <A href=
+      "help/topics/Tool/Ghidra_Tool_Administration.htm#Plugins">Plugins</A> will be included in the
+      list of available Plugins, as these Plugins are the only ones that may be added to the
+      Project Window.&nbsp;These Plugins are "marked" as providing general capabilities that may be
+      required at a high level, such as <A href="help/topics/ImporterPlugin/importer.htm">importing
+      a Program</A> into a Ghidra project, or <A href="Archive_Project.htm">archiving</A> the
+      active project. These "special" Plugins can also be added to any tool; however, the archive
+      and restore options show up only in the Ghidra Project Window even though the plugins
+      providing these options can be added to other tools.&nbsp;To bring up the <I>Configure Tool
+      Plugins</I>&nbsp; dialog, select the <B>File</B><IMG src="../../shared/arrow.gif" border="0">
+      <B>Configure...</B> option.</P>
+    </BLOCKQUOTE>
+
+    <CENTER>
+      <TABLE border="0" width="100%">
+        <TBODY>
+          <TR>
+            <TD align="center" width="100%"><IMG src="images/ConfigureTool.png" border="0"></TD>
+          </TR>
+        </TBODY>
+      </TABLE>
+    </CENTER>
+
+    <BLOCKQUOTE>
+      <BLOCKQUOTE>
+        <P>The <I>Configure Tool</I> dialog shows a list of plugin packages that can be added to
+        the tool. Clicking the checkbox will add (or remove) all the plugins in the package to the
+        tool. Clicking on the <B>Configure</B> link will bring up a dialog for adding individual
+        plugins. See <A href="help/topics/Tool/Configure_Tool.htm#ManagePluginsDialog">Configure Tool
+        </A> for more information.</P>
+
+ 
+
+    <BLOCKQUOTE>
+
+      <P><IMG src="../../shared/note.png" border="0"> Adding or removing
+      Plugins may cause menu options to change.</P>
+
+      <P><IMG src="../../shared/note.png" border="0"> The configuration for
+      your Project Window is saved when you <A href="Saving_a_Ghidra_Project.htm">save your
+      Project</A>.</P>
+
+      <H3>&nbsp;</H3>
+
+      <H3>Refresh&nbsp;</H3>
+
+      <BLOCKQUOTE>
+        <P>This action will refresh the list of available plugins, based upon what is found in the
+        <A href="Edit_Plugin_Path.htm">plugins path</A>.</P>
+      </BLOCKQUOTE>
+
+      <H3>&nbsp;</H3>
+
+    </BLOCKQUOTE>
+
+    <H2><A name="EditMenuOptions"></A><B>Edit</B> Menu Options</H2>
+
+    <BLOCKQUOTE>
+      <H3><A name="Tool_Options"></A> <A name="EditOptions"></A> <A name=
+      "framework_options_OptionsDialog"></A> Project Window and Tool Options</H3>
+
+      <BLOCKQUOTE>
+        <P>Each tool has an <I><A href="help/topics/Tool/ToolOptions_Dialog.htm">Options</A></I>
+        dialog to change <A href="help/topics/Tool/ToolOptions_Dialog.htm#KeyBindings_Option">key
+        bindings</A> and set <A href="help/topics/Tool/ToolOptions_Dialog.htm#OptionsForTool">tool
+        options</A>. In addition to these two option categories, the dialog has a node in the
+        Options tree for each category of options that are used by plugins in the tool. If a plugin
+        is removed from the tool, and no other plugin is using a set of options, then this category
+        will not be displayed the next time you run the tool and bring up the <I>Options</I>
+        dialog.</P>
+
+        <P>To bring up the <I>Options</I> dialog, select <B>Edit<IMG src=
+        "../../shared/arrow.gif" border="0">Options...</B></P>
+
+        <P class="relatedtopic">Related Topics:&nbsp;</P>
+
+        <UL>
+          <LI><A href="Edit_Plugin_Path.htm">Edit Plugin Path&nbsp;</A></LI>
+
+          <LI><A href="help/topics/Tool/ToolOptions_Dialog.htm#KeyBindings_Option">Key
+          Bindings</A></LI>
+        </UL>
+      </BLOCKQUOTE>
+
+      <H3>&nbsp;</H3>
+
+      <H3><A name="Set_PKI_Certificate"></A>PKI Certificate &nbsp;</H3>
+
+      <BLOCKQUOTE>
+        <P>The Ghidra Server can be set up to perform user authentication using PKI
+        certificates.&nbsp; When the Ghidra Server is in this authentication mode, you must set
+        your PKI Certificate before you attempt to open a <A href=
+        "help/topics/VersionControl/project_repository.htm">project repository</A> or create a new <A
+        href="help/topics/VersionControl/project_repository.htm#SharedProject">shared project</A>&nbsp;
+        associated with this server.  
+        </P>
+        <P>To configure, choose <B>Edit<IMG src=
+        "../../shared/arrow.gif" border="0">Set PKI Certificate...</B>. A
+        file chooser is displayed; select your PKI certificate file and select the <B>Set
+        Certificate</B> button. You must restart Ghidra in order for the setting to take effect.
+        When you connect to the server the next time you run Ghidra, you will be prompted for the
+        key-store password associated with this certificate key file. The path to your PKI
+        certificate file is saved as part of your Ghidra preferences.</P>
+      </BLOCKQUOTE>
+
+      <BLOCKQUOTE>
+        <P><IMG src="../../shared/note.png" border="0"> If the Ghidra Server
+        is not using PKI Certificates for user authentication, you can ignore this menu option.</P>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <H2><A name="Exit_Ghidra"></A>Exiting Ghidra</H2>
+
+    <BLOCKQUOTE>
+      <P>To exit Ghidra,</P>
+
+      <UL>
+        <LI>Select <B>File</B><IMG src="../../shared/arrow.gif" border="0">
+        <B>Exit Ghidra</B> option on the Project Window, OR</LI>
+      </UL>
+
+      <UL>
+        <LI>Select&nbsp; the native windowing system's window closing feature, OR</LI>
+      </UL>
+
+      <UL>
+        <LI>Select <B>File</B><IMG src="../../shared/arrow.gif" border="0">
+        <FONT size="4"><B>Exit Ghidra</B></FONT> option from a running
+        tool.</LI>
+      </UL>
+    </BLOCKQUOTE>
+
+    <BLOCKQUOTE>
+      <P><IMG src="../../shared/note.png" border="0"> If you have made
+      changes to read-only files, then the <B><I>Read-Only Files</I></B> dialog will appear.
+      It will indicate that you must do a <I>Save As</I> to
+      save these files to a new name. You can choose to <B>Cancel</B> and go perform the 
+      <I>Save As</I> or choose <B>Lose Changes</B> to continue without saving your changes 
+      to the read-only file.</P>
+    </BLOCKQUOTE>
+
+    <CENTER>
+      <TABLE border="0" width="100%">
+        <TBODY>
+          <TR>
+            <TD align="center" width="100%"><IMG src="images/SaveReadOnly.png" border="0"></TD>
+          </TR>
+        </TBODY>
+      </TABLE>
+    </CENTER>
+
+    <BLOCKQUOTE>
+      <P><A name="SaveDataDialog"></A>If you have made any changes to Programs, then a dialog is
+      displayed to prompt you to save changes. After the programs, all other files that have been 
+      changed and not saved are listed.</P>
+
+      <P>&nbsp;</P>
+    </BLOCKQUOTE>
+
+    <CENTER>
+      <TABLE border="0" width="100%">
+        <TBODY>
+          <TR>
+            <TD align="center" width="100%"><IMG src="images/SaveFiles.png" border="0"></TD>
+          </TR>
+        </TBODY>
+      </TABLE>
+    </CENTER>
+
+    <BLOCKQUOTE>
+      <P>By default, the check box is selected to do a save. You can select or deselect the check
+      boxes individually. Click on the buttons to either turn all the check boxes on (<B><FONT
+      size="4">Select All</FONT></B>) or off (<B><FONT size="4">Select None</FONT></B>).</P>
+    </BLOCKQUOTE>
+
+    <BLOCKQUOTE>
+      <P>Your Ghidra preferences file is updated to record your last opened project. The position
+      of the Ghidra Project Window is also recorded so that when you run Ghidra again, the window
+      position is restored. If the Project configuration has changed (tools or
+      <A href="Ghidra_Front_end.htm#Workspace">workspaces</A> that were <A href=
+      "help/topics/Tool/Ghidra_Tool_Administration.htm#Run_Tool">added</A> or <A href=
+      "help/topics/Tool/Ghidra_Tool_Administration.htm#Close_Tool">removed</A>, etc.), 
+      the new configuration will be saved automatically.</P>
+    </BLOCKQUOTE>
+
+    <P class="relatedtopic">&nbsp;</P>
+
+    <P class="relatedtopic">Related Topics:</P>
+
+    <UL>
+      <LI><A href="Ghidra_Front_end.htm">Ghidra Project Window</A></LI>
+
+      <LI><A href="help/topics/VersionControl/project_repository.htm">Project Repository</A></LI>
+
+      <LI><A href="help/topics/ImporterPlugin/importer.htm">Import Programs</A></LI>
+
+      <LI><A href="help/topics/ExporterPlugin/exporter.htm">Export Programs</A></LI>
+
+      <LI><A href="Archive_Project.htm">Archive Project</A></LI>
+
+      <LI><A href="Restore_Project.htm">Restore Project</A></LI>
+
+      <LI><A href="help/topics/Tool/ToolOptions_Dialog.htm">Tool Options Dialog</A></LI>
+
+      <LI><A href="help/topics/Tool/Ghidra_Tool_Administration.htm#Plugins">Plugins</A></LI>
+
+      <LI><A href="help/topics/Tool/Configure_Tool.htm">Configure Ghidra Tool</A></LI>
+    </UL>
+
+    <P>&nbsp;</P>
+  </BODY>
+</HTML>

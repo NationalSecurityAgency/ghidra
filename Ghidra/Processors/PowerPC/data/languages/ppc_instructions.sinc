@@ -1,0 +1,4392 @@
+#===========================================================
+#                            ADD
+#===========================================================
+
+#add r1,r2,r3  0x7c 22 1a 14
+:add D,A,B		is OP=31 & D & A & B & OE=0 & XOP_1_9=266 & Rc=0
+{
+	 D = A + B;
+}
+
+#add. r1,r2,r3  0x7c 22 1a 15
+:add. D,A,B		is OP=31 & D & A & B & OE=0 & XOP_1_9=266 & Rc=1	
+{ 	
+	D = A + B;
+	cr0flags(D);
+}
+
+#addo r1,r2,r3  0x7c 22 1e 14
+:addo D,A,B		is OP=31 & D & A & B & OE=1 & XOP_1_9=266 & Rc=0
+{ 
+	D = A + B;
+	addOverflow(A,B);
+}
+
+#addo. r1,r2,r3  0x7c 22 1e 15
+:addo. D,A,B	is OP=31 & D & A & B & OE=1 & XOP_1_9=266 & Rc=1
+{ 	
+	D = A + B;	 
+	addOverflow( A, B );
+	cr0flags(D);
+}
+
+#addc r1,r2,r3  0x7c 22 18 14
+:addc D,A,B		is OP=31 & D & A & B & OE=0 & XOP_1_9=10 & Rc=0
+{	
+	xer_ca = carry(A,B);
+	D = A + B;
+}
+
+#addc. r1,r2,r3  0x7c 22 18 15
+:addc. D,A,B	is OP=31 & D & A & B & OE=0 & XOP_1_9=10 & Rc=1	
+{ 	
+	xer_ca = carry(A,B);
+	D = A + B; 
+	cr0flags(D); 
+}
+
+#addco r1,r2,r3  0x7c 22 1c 14
+:addco D,A,B	is OP=31 & D & A & B & OE=1 & XOP_1_9=10 & Rc=0
+{ 
+	xer_ca = carry(A,B); 	
+	addOverflow( A, B );
+	D = A + B;
+}
+
+#addco. r1,r2,r3  0x7c 22 1c 15
+:addco. D,A,B	is OP=31 & D & A & B & OE=1 & XOP_1_9=10 & Rc=1
+{ 	
+	xer_ca = carry(A,B);
+	addOverflow( A, B );
+	D = A + B;	 
+	cr0flags(D);
+}
+
+#adde r1,r2,r3  0x7c 22 19 14
+:adde D,A,B		is OP=31 & D & A & B & OE=0 & XOP_1_9=138 & Rc=0
+{	
+	zextCarry:$(REGISTER_SIZE) = zext(xer_ca);
+	xer_ca = carry(B, zextCarry);
+	tmp:$(REGISTER_SIZE)=B + zextCarry; 
+	xer_ca = xer_ca || carry(A, tmp);
+	D=A+tmp; 
+}
+
+#adde. r1,r2,r3  0x7c 22 19 15
+:adde. D,A,B	is OP=31 & D & A & B & OE=0 & XOP_1_9=138 & Rc=1	
+{ 	
+	zextCarry:$(REGISTER_SIZE) = zext(xer_ca);
+	xer_ca = carry(B, zextCarry);
+	tmp:$(REGISTER_SIZE)=B + zextCarry; 
+	xer_ca = xer_ca || carry(A, tmp);
+	D=A+tmp; 
+	cr0flags(D);
+}
+
+#addeo r1,r2,r3  0x7c 22 1d 14
+:addeo D,A,B	is OP=31 & D & A & B & OE=1 & XOP_1_9=138 & Rc=0
+{ 
+	zextCarry:$(REGISTER_SIZE) = zext(xer_ca);
+	xer_ca = carry(B, zextCarry);
+	addOverflow(B, zextCarry);
+	tmp:$(REGISTER_SIZE)=B + zextCarry; 
+	addOverflowAgain(A,tmp); 
+	xer_ca = xer_ca || carry(A, tmp);
+	D=A+tmp; 
+}
+
+#addeo. r1,r2,r3  0x7c 22 1d 15
+:addeo. D,A,B	is OP=31 & D & A & B & OE=1 & XOP_1_9=138 & Rc=1
+{ 	
+	zextCarry:$(REGISTER_SIZE) = zext(xer_ca);
+	xer_ca = carry(B, zextCarry);
+	addOverflow(B, zextCarry);
+	tmp:$(REGISTER_SIZE)=B + zextCarry; 
+	addOverflowAgain(A,tmp); 
+	xer_ca = xer_ca || carry(A, tmp);
+	D=A+tmp; 
+	cr0flags(D);
+}
+#addi r0,0x7fff		0x38 00 7f ff
+#addi r0,1 0x38 01 00 01
+:addi D,A,SIMM 		is $(NOTVLE) & OP=14 & D & A & SIMM_SIGN=0 & SIMM
+{
+	D = A + SIMM;
+}
+
+#li r0,1 0x38 00 00 01       	# addi simplified mnemonic
+:li D,SIMM			is $(NOTVLE) & OP=14 & D & A=0 & SIMM_SIGN=1 & SIMM
+{
+	D = SIMM;
+}
+
+#li r0,-0x1 0x38 00 FF FF			# addi simplified mnemonic
+:li D,SIMM			is $(NOTVLE) & OP=14 & D & A=0 & SIMM_SIGN=0 & SIMM
+{
+	D = SIMM;
+}
+
+#subi r0,r1,1 0x38 01 FF FF 	# addi simplified mnemonic
+:subi D,A,tmp		is $(NOTVLE) & OP=14 & D & A & SIMM_SIGN=1 & SIMM [ tmp = -SIMM; ]
+{
+	D = A + SIMM;
+}
+
+#addic r0,r0,2 0x30 00 00 02
+:addic D,A,SIMM		is $(NOTVLE) & OP=12 & D & A & SIMM_SIGN=0 & SIMM
+{
+	xer_ca=carry(A,SIMM);
+	D = A + SIMM; 
+}
+
+#subic r0,r0,2 0x30 00 FF FE	# addi simplified mnemonic
+:subic D,A,tmp		is $(NOTVLE) & OP=12 & D & A & SIMM_SIGN=1 & SIMM [ tmp = -SIMM; ]
+{
+	xer_ca=carry(A,SIMM);
+	D = A + SIMM; 
+}
+
+#addic. r0,r0,5 0x34 00 00 05
+:addic. D,A,SIMM	is $(NOTVLE) & OP=13 & D & A & SIMM_SIGN=0 & SIMM
+{
+	xer_ca = carry(A,SIMM);
+	D = A + SIMM;
+	cr0flags( D );
+}
+
+#subic. r0,r0,1 0x34 00 FF FF	# addic. simplified mnemonic
+:subic. D,A,tmp		is $(NOTVLE) & OP=13 & D & A & SIMM_SIGN=1 & SIMM [ tmp = -SIMM; ]
+{
+	xer_ca=carry(A,SIMM);
+	D = A + SIMM; 
+	cr0flags( D );
+}
+
+#addis r0,r1,1 0x3c 01 00 01 
+:addis D,A,SIMM		is $(NOTVLE) & OP=15 & D & A & SIMM_SIGN=0 & SIMM 
+{
+	D = A + (SIMM:$(REGISTER_SIZE) << 16);
+}
+
+#lis r0,1 0x3c 00 00 01       	# addis simplified mnemonic
+:lis D,SIMM			is $(NOTVLE) & OP=15 & D & A=0 & SIMM_SIGN=1 & SIMM
+{
+	D = SIMM:$(REGISTER_SIZE) << 16;
+}
+
+#lis r0,-1 0x3c 00 FF FF			# addis simplified mnemonic
+:lis D,SIMM			is $(NOTVLE) & OP=15 & D & A=0 & SIMM_SIGN=0 & SIMM
+{
+	D = SIMM:$(REGISTER_SIZE) << 16;
+}
+
+#subis r0,r1,1 0x3c 01 FF FF 	# addis simplified mnemonic
+:subis D,A,tmp		is $(NOTVLE) & OP=15 & D & A & SIMM_SIGN=1 & SIMM [ tmp = -SIMM; ]
+{
+	D = A + (SIMM:$(REGISTER_SIZE) << 16);
+}
+
+#addme r0,r0 0x7c 00 01 D4
+:addme D,A			is OP=31 & D & A & BITS_11_15=0 & OE=0 & XOP_1_9=234 & Rc=0
+{
+	tmp:$(REGISTER_SIZE) = zext(xer_ca) - 1;
+	xer_ca = carry(A, tmp);
+	D = A + tmp;
+}
+
+#addme. r0,r0 0x7c 00 01 D5
+:addme. D,A			is OP=31 & D & A & BITS_11_15=0 & OE=0 & XOP_1_9=234 & Rc=1
+{
+	tmp:$(REGISTER_SIZE) = zext(xer_ca) - 1;
+	xer_ca = carry(A, tmp);
+	D = A + tmp;
+	cr0flags(D);
+}
+
+#addmeo r0,r0 0x7C 00 05 D4
+:addmeo D,A		is OP=31 & D & A & BITS_11_15=0 & OE=1 & XOP_1_9=234 & Rc=0
+{
+	tmp:$(REGISTER_SIZE) = zext(xer_ca) - 1;
+	xer_ca = carry(A, tmp);
+	addOverflow(A, tmp);
+	D = A + tmp;
+}
+
+#addmeo. r0,r0 0x7C 00 05 D5
+:addmeo. D,A 	is OP=31 & D & A & BITS_11_15=0 & OE=1 & XOP_1_9=234 & Rc=1
+{
+	tmp:$(REGISTER_SIZE) = zext(xer_ca) - 1;
+	xer_ca = carry(A, tmp);
+	addOverflow(A, tmp);
+	D = A + tmp;
+	cr0flags(D);
+}
+
+#addze r0,r0 0x7C 00 01 94
+:addze D,A		is OP=31 & D & A & BITS_11_15=0 & OE=0 & XOP_1_9=202 & Rc=0
+{
+	zextedCarry:$(REGISTER_SIZE) = zext( xer_ca );
+	xer_ca = carry(A,zextedCarry);
+	D = A + zextedCarry;
+} 
+
+#addze. r0,r0 0x7C 00 01 95
+:addze. D,A		is OP=31 & D & A & BITS_11_15=0 & OE=0 & XOP_1_9=202 & Rc=1
+{
+	zextedCarry:$(REGISTER_SIZE) = zext( xer_ca );
+	xer_ca=carry(A,zextedCarry);
+	D = A + zextedCarry;
+	cr0flags( D );
+}
+
+#addzeo r0,r0 0x7C 00 05 94
+:addzeo D,A		is OP=31 & D & A & BITS_11_15=0 & OE=1 & XOP_1_9=202 & Rc=0
+{
+	zextedCarry:$(REGISTER_SIZE) = zext( xer_ca );
+	xer_ca=carry(A,zextedCarry);
+	addOverflow(A,zextedCarry);
+	D = A + zextedCarry;
+} 
+
+#addzeo. r0,r0 0x7C 00 05 95
+:addzeo. D,A	is OP=31 & D & A & BITS_11_15=0 & OE=1 & XOP_1_9=202 & Rc=1
+{
+	zextedCarry:$(REGISTER_SIZE) = zext( xer_ca );
+	xer_ca=carry(A,zextedCarry);
+	addOverflow(A,zextedCarry);
+	D = A + zextedCarry;
+	cr0flags( D );
+}
+
+#===========================================================
+#                            AND
+#===========================================================
+
+#and r0,r0,r0 0x7C 00 00 38
+:and A,S,B		is OP=31 & S & A & B & XOP_1_10=28 & Rc=0
+{
+	A = S & B;
+}
+
+#and. r0,r0,r0 0x7C 00 00 39
+:and. A,S,B		is OP=31 & S & A & B & XOP_1_10=28 & Rc=1
+{
+	A = S & B;
+	cr0flags( A );
+}
+
+#andc r0,r0,r0 0x7C 00 00 78
+:andc A,S,B		is OP=31 & S & A & B & XOP_1_10=60 & Rc=0
+{
+	A = S & ~B;
+}
+
+#andc. r0,r0,r0 0x7C 00 00 79
+:andc. A,S,B		is OP=31 & S & A & B & XOP_1_10=60 & Rc=1
+{
+	A = S & ~B;
+	cr0flags( A );
+}
+
+#andi. r0,r0,0xffff 0x70 00 ff ff
+:andi. A,S,UIMM		is $(NOTVLE) & OP=28 & S & A & UIMM
+{
+	A = S & UIMM:$(REGISTER_SIZE);
+	cr0flags( A );
+}
+
+#andis. r0,r0,1 0x74 00 00 01
+:andis. A,S,UIMM	is $(NOTVLE) & OP=29 & A & S & UIMM 
+{
+	A = S & (UIMM:$(REGISTER_SIZE) << 16);
+	cr0flags( A );
+}
+
+#===========================================================
+#                         Branch (op=18)
+#===========================================================
+
+#b 1008 0x48 00 00 08  (assuming a starting address of 1000)
+#ba LAB_00000158		0x48 00 01 5a
+:b^REL_ABS addressLI		is $(NOTVLE) & OP=18 & REL_ABS & addressLI & LK=0
+{
+	goto addressLI;
+}
+
+:b^REL_ABS addressLI		is linkreg=1 & OP=18 & REL_ABS & addressLI & LK=0
+    [ linkreg=0; globalset(inst_start,linkreg); ]
+{
+    # don't do this anymore, detect another way
+	# call addressLI;
+	# return [LR];
+	goto addressLI;
+}
+
+#bl 0x48 00 00 09
+#bla 0x48 00 10 0f
+:bl^REL_ABS addressLI	is $(NOTVLE) & OP=18 & REL_ABS & addressLI & LK=1
+										[ linkreg=0; globalset(inst_start,linkreg); ]
+{
+	r2Save = r2; # Save r2 (needed for branch to ppc64 call stub)
+	LR = inst_next;
+	call addressLI;
+}
+
+# special case when branch is to fall-through instruction, just loading the link register
+#bl 0x48 00 00 05	
+:bl addressLI	is $(NOTVLE) & OP=18 & REL_ABS & AA=0 & addressLI & LK=1 & LI=1
+										[ linkreg=0; globalset(inst_start,linkreg); ]
+{
+	LR = inst_next;
+	goto addressLI;
+}
+
+#===========================================================
+#                         Branch Conditional (op=16)
+#===========================================================
+
+#b sameAddr		0x42 80 00 00
+#ba LAB_0000		0x42 80 00 02
+:b^REL_ABS addressBD 		is $(NOTVLE) & OP=16 & addressBD & REL_ABS & BO_0=1 & BO_2=1 & LK=0
+{
+	goto addressBD;
+}
+
+:b^REL_ABS addressBD 		is linkreg=1 & OP=16 & addressBD & REL_ABS & BO_0=1 & BO_2=1 & LK=0
+      [ linkreg=0; globalset(inst_start,linkreg); ]
+{
+    # don't do this anymore, detect another way
+	# call addressBD;
+	# return [LR];
+	goto addressBD;
+}
+
+#bl LAB_0000		0x42 80 00 01
+#bla LAB_0000		0x42 80 00 03
+:bl^REL_ABS addressBD 		is $(NOTVLE) & OP=16 & addressBD & REL_ABS & BO_0=1 & BO_2=1 & LK=1
+										[ linkreg=0; globalset(inst_start,linkreg); ]
+{
+	LR = inst_next;
+	call addressBD;
+}
+
+# special case when branch is to fall-through instruction, just loading the link register
+#bl (Load LR) 
+:bl addressBD 		is $(NOTVLE) & OP=16 & addressBD & REL_ABS & BO_0=1 & BO_2=1 & BD=1 & LK=1
+{
+	LR = inst_next;
+	goto addressBD;
+}
+
+
+
+#blt LAB_0000		0x41 80 00 00
+:b^CC^REL_ABS addressBD 	is $(NOTVLE) & OP=16 & CC & addressBD & BO_0=0 & BO_2=1 & BI_CR= 0 &
+								    REL_ABS & LK=0
+								    [ linkreg=0; globalset(inst_start,linkreg); ] # affects both flows, but not at this instruction
+{
+	if (CC) goto addressBD; 
+}
+## do a special linkreg setting only if linkreg is set, since this happens all over the code
+:b^CC^REL_ABS addressBD 	is linkreg=1 & OP=16 & CC & addressBD & BO_0=0 & BO_2=1 & BI_CR= 0 &
+								    REL_ABS & LK=0
+								    [ linkreg=0; globalset(inst_start,linkreg); ]
+{
+	if (CC) goto addressBD; 
+}
+
+#bltl LAB_0000		0x41 80 00 01
+:b^CC^"l"^REL_ABS addressBD 	is $(NOTVLE) & OP=16 & CC & addressBD & BO_0=0 & BO_2=1 & BI_CR= 0 &
+								    REL_ABS & LK=1
+								    [ linkreg=0; globalset(inst_start,linkreg); ]
+{
+	if (!CC) goto inst_next;
+	LR = inst_next;
+	call addressBD;
+}
+
+#bne cr2,LAB_xxxx		0x40 8a 00 00
+:b^CC^REL_ABS BI_CR,addressBD 		is $(NOTVLE) & OP=16 & CC & BI_CR & addressBD & BO_0=0 & BO_2=1 & 
+										REL_ABS & LK=0
+										[ linkreg=0; globalset(inst_start,linkreg); ]
+{
+	if (CC) goto addressBD;
+}
+
+#bnel cr2,LAB_xxxx		0x40 8a 00 01
+:b^CC^"l"^REL_ABS BI_CR,addressBD 		is $(NOTVLE) & OP=16 & CC & BI_CR & addressBD & BO_0=0 & BO_2=1 & 
+										REL_ABS & LK=1
+										[ linkreg=0; globalset(inst_start,linkreg); ]
+{
+	if (!CC) goto inst_next;
+	LR = inst_next;
+	call addressBD;
+}
+
+#bdnz LAB_0000		0x42 00 00 00 
+:bd^CTR_DEC^REL_ABS addressBD 		is $(NOTVLE) & OP=16 & CTR_DEC & REL_ABS & addressBD & BO_0=1 & BO_2=0 & LK=0
+{
+	if (CTR_DEC) goto addressBD;
+}
+
+#bdnzl FUN_0xxx		0x42 00 00 01
+#bdzla FUN_0000		0x42 40 00 03
+:bd^CTR_DEC^"l"^REL_ABS addressBD 		is $(NOTVLE) & OP=16 & CTR_DEC & REL_ABS & addressBD & BO_0=1 & BO_2=0 & LK=1
+										[ linkreg=0; globalset(inst_start,linkreg); ]
+{
+	if (!CTR_DEC) goto inst_next; 
+	LR = inst_next;
+	call addressBD;
+}
+
+#bdnzf lt,LAB_0000				0x40 00 00 00
+#bdnzf 4*cr2+eq,LAB_0000		0x40 0a 00 00
+:bd^CTR_DEC^CC_TF^REL_ABS CC_OP,addressBD 		is $(NOTVLE) & OP=16 & CC_TF & REL_ABS & CTR_DEC & CC_OP & addressBD & BO_0=0 & BO_2=0 & LK=0
+{
+	if (CTR_DEC && CC_OP) goto addressBD;
+}
+
+#bdzfl lt,FUN_0000				0x40 00 00 01
+#bdnzfl 4*cr2+eq,FUN_0000		0x40 0a 00 01
+:bd^CTR_DEC^CC_TF^"l"^REL_ABS CC_OP,addressBD 		is $(NOTVLE) & OP=16 & CC_TF & CTR_DEC & REL_ABS & CC_OP & addressBD & BO_0=0 & BO_2=0 & LK=1
+										[ linkreg=0; globalset(inst_start,linkreg); ]
+{
+	if (!(CTR_DEC && CC_OP)) goto inst_next; 
+	LR = inst_next;
+	call addressBD;
+}
+
+
+#===========================================================
+#                         Branch Conditional CTR(op=19, xop=528)
+#===========================================================
+
+
+#bctr		0x4E 80 04 20
+:bctr 		is $(NOTVLE) & OP=19 & BO_0=1 & BO_2=1 & LK=0 & BITS_13_15=0 & BH=0 & XOP_1_10=528
+{
+	goto [CTR];
+}
+
+:bctr 		is $(NOTVLE) & linkreg=1 & OP=19 & BO_0=1 & BO_2=1 & LK=0 & BITS_13_15=0 & BH=0 & XOP_1_10=528
+        [ linkreg=0; globalset(inst_start,linkreg); ]
+{
+    # don't do this anymore, detect another way
+	# call [CTR];
+	# return [LR];
+	goto [CTR];
+}
+
+:bctr BH 		is $(NOTVLE) & OP=19 & BO_0=1 & BO_2=1 & LK=0 & BITS_13_15=0 & BH & XOP_1_10=528
+{
+	goto [CTR];
+}
+
+#bctrl		0x4e 80 04 21
+:bctrl		is $(NOTVLE) & OP=19 & BO_0=1 & BO_2=1 & LK=1 & BITS_13_15=0 & BH=0 & XOP_1_10=528
+										[ linkreg=0; globalset(inst_start,linkreg); ]
+{
+	LR = inst_next;
+	call [CTR];
+}
+:bctrl BH		is $(NOTVLE) & OP=19 & BO_0=1 & BO_2=1 & LK=1 & BITS_13_15=0 & BH & XOP_1_10=528
+										[ linkreg=0; globalset(inst_start,linkreg); ]
+{
+	LR = inst_next;
+	call [CTR];
+}
+
+#bgectr		0x4c 80 04 20
+:b^CC^"ctr" 	is $(NOTVLE) & OP=19 & CC & BO_0=0 & BO_2=1 & BI_CR= 0 & BH=0 & LK=0 & BITS_13_15=0 & XOP_1_10=528
+{
+	if (!CC) goto inst_next; 
+	goto [CTR];
+}
+:b^CC^"ctr" BH  	is $(NOTVLE) & OP=19 & CC & BO_0=0 & BO_2=1 & BI_CR= 0 & BH & BH_BITS!=0 & LK=0 & BITS_13_15=0 & XOP_1_10=528
+{
+	if (!CC) goto inst_next; 
+	goto [CTR];
+}
+
+#bgectrl		0x4c 80 04 21
+:b^CC^"ctrl"  	is $(NOTVLE) & OP=19 & CC & BO_0=0 & BO_2=1 & BI_CR= 0 & BH=0 & LK=1 & BITS_13_15=0 & XOP_1_10=528
+										[ linkreg=0; globalset(inst_start,linkreg); ]
+{
+	if (!CC) goto inst_next; 
+	LR = inst_next;
+	call [CTR];
+}
+:b^CC^"ctrl" BH  	is $(NOTVLE) & OP=19 & CC & BO_0=0 & BO_2=1 & BI_CR= 0 & BH & BH_BITS!=0 & LK=1 & BITS_13_15=0 & XOP_1_10=528
+										[ linkreg=0; globalset(inst_start,linkreg); ]
+{
+	if (!CC) goto inst_next; 
+	LR = inst_next;
+	call [CTR];
+}
+
+#bgectr cr3		0x4c 8c 04 20
+:b^CC^"ctr" BI_CR  		is $(NOTVLE) & OP=19 & CC & BI_CR & BO_0=0 & BO_2=1 & BH=0 & LK=0 & BITS_13_15=0 & XOP_1_10=528
+{
+	if (!CC) goto inst_next; 
+	goto [CTR];
+}
+
+#bnectr cr2,#0x3 0x4c 8c 1c 20
+:b^CC^"ctr" BI_CR,BH  		is $(NOTVLE) & OP=19 & CC & BI_CR & BO_0=0 & BO_2=1 & BH & LK=0 & BITS_13_15=0 & XOP_1_10=528
+{
+	if (!CC) goto inst_next; 
+	goto [CTR];
+}
+
+#bgectrl cr2,LAB_xxxx		0x4c 8c 04 21
+:b^CC^"ctrl" BI_CR 		is $(NOTVLE) & OP=19 & CC & BI_CR & BO_0=0 & BO_2=1 & BH=0 & LK=1 & BITS_13_15=0 & XOP_1_10=528
+										[ linkreg=0; globalset(inst_start,linkreg); ]
+{
+	if (!CC) goto inst_next; 
+	LR = inst_next;
+	call [CTR];
+}
+
+#bnectr cr2,#0x3 0x4c 8c 1c 21
+:b^CC^"ctrl" BI_CR,BH  		is $(NOTVLE) & OP=19 & CC & BI_CR & BO_0=0 & BO_2=1 & BH & LK=1 & BITS_13_15=0 & XOP_1_10=528
+										[ linkreg=0; globalset(inst_start,linkreg); ]
+{
+	if (!CC) goto inst_next; 
+	LR = inst_next;
+	call [CTR];
+}
+
+#===========================================================
+#                         Branch Conditional to Link Register (op=19, XOP=16)
+#===========================================================
+
+#bclr		0x4E 80 00 20
+:blr 		is $(NOTVLE) & OP=19 & BO_0=1 & BO_2=1 & LK=0 & BITS_13_15=0 & BH=0 & XOP_1_10=16
+{
+	return [LR];
+}
+:blr BH 		is $(NOTVLE) & OP=19 & BO_0=1 & BO_2=1 & LK=0 & BITS_13_15=0 & BH & XOP_1_10=16
+{
+	goto [LR];
+}
+
+#blrl		0x4e 80 00 21
+:blrl			is $(NOTVLE) & OP=19 & BO_0=1 & BO_2=1 & LK=1 & BITS_13_15=0 & BH=0 & XOP_1_10=16
+										[ linkreg=0; globalset(inst_start,linkreg); ]
+{
+	tmp:$(REGISTER_SIZE) = LR;
+	LR = inst_next;
+	call [tmp];
+}
+:blrl BH		is $(NOTVLE) & OP=19 & BO_0=1 & BO_2=1 & LK=1 & BITS_13_15=0 & BH & XOP_1_10=16
+										[ linkreg=0; globalset(inst_start,linkreg); ]
+{
+	tmp:$(REGISTER_SIZE) = LR;
+	LR = inst_next;
+	call [tmp];
+}
+
+#bgelr		0x4c 80 00 20
+:b^CC^"lr"  	is $(NOTVLE) & OP=19 & CC & BO_0=0 & BO_2=1 & BI_CR=0 & BH=0 & LK=0 & BITS_13_15=0 & XOP_1_10=16
+										[ linkreg=0; globalset(inst_start,linkreg); ]
+{
+	if (!CC) goto inst_next; 
+	return [LR];
+}
+:b^CC^"lr" BH  	is $(NOTVLE) & OP=19 & CC & BO_0=0 & BO_2=1 & BI_CR=0 & BH & BH_BITS!=0 & LK=0 & BITS_13_15=0 & XOP_1_10=16
+										[ linkreg=0; globalset(inst_start,linkreg); ]
+{
+	if (!CC) goto inst_next; 
+	goto [LR];
+}
+
+#bgelrl		0x4c 80 00 21
+:b^CC^"lrl"  	is $(NOTVLE) & OP=19 & CC & BO_0=0 & BO_2=1 & BI_CR=0 & BH=0 & LK=1 & BITS_13_15=0 & XOP_1_10=16
+										[ linkreg=0; globalset(inst_start,linkreg); ]
+{
+	if (!CC) goto inst_next; 
+	tmp:$(REGISTER_SIZE) = LR;
+	LR = inst_next;
+	call [tmp];
+}
+:b^CC^"lrl" BH  	is $(NOTVLE) & OP=19 & CC & BO_0=0 & BO_2=1 & BI_CR=0 & BH & BH_BITS!=0 & LK=1 & BITS_13_15=0 & XOP_1_10=16
+										[ linkreg=0; globalset(inst_start,linkreg); ]
+{
+	if (!CC) goto inst_next; 
+	tmp:$(REGISTER_SIZE) = LR;
+	LR = inst_next;
+	call [tmp];
+}
+
+#bgelr cr2		0x4c 88 00 20
+:b^CC^"lr" BI_CR  		is $(NOTVLE) & OP=19 & CC & BI_CR & BO_0=0 & BO_2=1 & BH=0 & LK=0 & BITS_13_15=0 & XOP_1_10=16
+										[ linkreg=0; globalset(inst_start,linkreg); ]
+{
+	if (!CC) goto inst_next; 
+	return [LR];
+}
+
+#bnelr cr2,#0x3 0x4c 8c 18 20
+:b^CC^"lr" BI_CR,BH  		is $(NOTVLE) & OP=19 & CC & BI_CR & BO_0=0 & BO_2=1 & BH & BH_BITS!=0 & LK=0 & BITS_13_15=0 & XOP_1_10=16
+										[ linkreg=0; globalset(inst_start,linkreg); ]
+{
+	if (!CC) goto inst_next; 
+	goto [LR];
+}
+
+#bgelrl cr3		0x4c 8c 00 21
+:b^CC^"lrl" BI_CR 		is $(NOTVLE) & OP=19 & CC & BI_CR & BO_0=0 & BO_2=1 & BH=0 & LK=1 & BITS_13_15=0 & XOP_1_10=16
+										[ linkreg=0; globalset(inst_start,linkreg); ]
+{
+	if (!CC) goto inst_next;
+	tmp:$(REGISTER_SIZE) = LR; 
+	LR = inst_next;
+	call [tmp];
+}
+
+#bnelr cr2,#0x3 0x4c 8c 18 21
+:b^CC^"lrl" BI_CR,BH  		is $(NOTVLE) & OP=19 & CC & BI_CR & BO_0=0 & BO_2=1 & BH & LK=1 & BITS_13_15=0 & XOP_1_10=16
+										[ linkreg=0; globalset(inst_start,linkreg); ]
+{
+	if (!CC) goto inst_next; 
+	tmp:$(REGISTER_SIZE) = LR; 
+	LR = inst_next;
+	call [tmp];
+}
+
+######
+
+#bdnzlr		0x4e 00 00 20 
+:bd^CTR_DEC^"lr"  		is $(NOTVLE) & OP=19 & BH=0 & CTR_DEC & BO_0=1 & BO_2=0 & LK=0 & BITS_13_15=0 & XOP_1_10=16
+										[ linkreg=0; globalset(inst_start,linkreg); ]
+{
+	if (!CTR_DEC) goto inst_next; 
+	goto [LR];
+}
+:bd^CTR_DEC^"lr" BH  		is $(NOTVLE) & OP=19 & BH & CTR_DEC & BO_0=1 & BO_2=0 & LK=0 & BITS_13_15=0 & XOP_1_10=16
+										[ linkreg=0; globalset(inst_start,linkreg); ]
+{
+	if (!CTR_DEC) goto inst_next; 
+	goto [LR];
+}
+
+#bdnzlrl		0x4e 00 00 21
+:bd^CTR_DEC^"lrl" 		is $(NOTVLE) & OP=19 & CTR_DEC & BH=0 & BO_0=1 & BO_2=0 & LK=1 & BITS_13_15=0 & XOP_1_10=16
+										[ linkreg=0; globalset(inst_start,linkreg); ]
+{
+	if (!CTR_DEC) goto inst_next;
+	tmp:$(REGISTER_SIZE) = LR; 
+	LR = inst_next;
+	call [tmp];
+}
+:bd^CTR_DEC^"lrl" BH 		is $(NOTVLE) & OP=19 & CTR_DEC & BH & BO_0=1 & BO_2=0 & LK=1 & BITS_13_15=0 & XOP_1_10=16
+										[ linkreg=0; globalset(inst_start,linkreg); ]
+{
+	if (!CTR_DEC) goto inst_next;
+	tmp:$(REGISTER_SIZE) = LR; 
+	LR = inst_next;
+	call [tmp];
+}
+
+#bdnzflr lt				0x4c 00 00 20
+#bdnzflr 4*cr2+eq		0x4c 0a 00 20
+:bd^CTR_DEC^CC_TF^"lr" CC_OP 		is $(NOTVLE) & OP=19 & CC_TF & CTR_DEC & CC_OP & BO_0=0 & BO_2=0 & BH=0 & LK=0 & BITS_13_15=0 & XOP_1_10=16 
+										[ linkreg=0; globalset(inst_start,linkreg); ]
+{
+	if (!(CTR_DEC && CC_OP)) goto inst_next; 
+	goto [LR];
+}
+
+#bdnzflr ge				0x4c 00 18 20
+#bdnzflr 4*cr2+eq		0x4c 0a 18 20
+:bd^CTR_DEC^CC_TF^"lr" CC_OP,BH 		is $(NOTVLE) & OP=19 & CC_TF & CTR_DEC & CC_OP & BO_0=0 & BO_2=0 & BH & LK=0 & BITS_13_15=0 & XOP_1_10=16 
+										[ linkreg=0; globalset(inst_start,linkreg); ]
+{
+	if (!(CTR_DEC && CC_OP)) goto inst_next; 
+	goto [LR];
+}
+
+#bdzflrl lt				0x4c 00 00 21
+#bdnzflrl 4*cr2+eq		0x4c 0a 00 21
+:bd^CTR_DEC^CC_TF^"lrl" CC_OP 		is $(NOTVLE) & OP=19 & CC_TF & CTR_DEC & CC_OP & BH=0 & BO_0=0 & BO_2=0 & LK=1 & BITS_13_15=0 & XOP_1_10=16
+										[ linkreg=0; globalset(inst_start,linkreg); ]
+{
+	if (!(CTR_DEC && CC_OP)) goto inst_next; 
+	tmp:$(REGISTER_SIZE) = LR; 
+	LR = inst_next;
+	call [tmp];
+}
+
+#bdzflrl lt				0x4c 00 18 21
+#bdnzflrl 4*cr2+eq		0x4c 0a 18 21
+:bd^CTR_DEC^CC_TF^"lrl" CC_OP,BH 		is $(NOTVLE) & OP=19 & CC_TF & CTR_DEC & CC_OP & BH & BO_0=0 & BO_2=0 & LK=1 & BITS_13_15=0 & XOP_1_10=16
+										[ linkreg=0; globalset(inst_start,linkreg); ]
+{
+	if (!(CTR_DEC && CC_OP)) goto inst_next; 
+	tmp:$(REGISTER_SIZE) = LR; 
+	LR = inst_next;
+	call [tmp];
+}
+
+
+#===========================================================
+#          CMP
+#===========================================================
+
+#cmpw r0,r1		0x7c 00 08 00
+#cmpd r0,r1		0x7c 20 08 00  (64 bit mode)
+:cmp^DSIZE 	A,B			is OP=31 & CRFD=0 & BIT_22=0 & DSIZE & A & B & REG_A & REG_B & XOP_1_10=0 & BIT_0=0 
+{
+	tmpA:$(REGISTER_SIZE) = REG_A;
+	tmpB:$(REGISTER_SIZE) = REG_B;
+	cr0 = ((tmpA s< tmpB) << 3) | ((tmpA s> tmpB) << 2) | ((tmpA == tmpB) << 1) | (xer_so & 1);
+	
+}
+
+#cmpw cr2,r0,r1     0x7d 00 08 00
+#cmpd cr2,r0,r1     0x7d 20 08 00 (64 bit mode)
+:cmp^DSIZE 	CRFD,A,B	is OP=31 & CRFD & BIT_22=0 & DSIZE & A & B & REG_A & REG_B & XOP_1_10=0 & BIT_0=0 
+{
+	tmpA:$(REGISTER_SIZE) = REG_A;
+	tmpB:$(REGISTER_SIZE) = REG_B;
+	CRFD = ((tmpA s< tmpB) << 3) | ((tmpA s> tmpB) << 2) | ((tmpA == tmpB) << 1) | (xer_so & 1);
+}
+
+###############################
+#cmpwi r0,0x00		0x2c 00 00 00
+#cmpdi r0,0x00		0x2c 20 00 00  (64 bit mode)
+:cmp^DSIZE^"i" 	A,SIMM			is $(NOTVLE) & OP=11 & CRFD=0 & BIT_22=0 & DSIZE & A & REG_A & SIMM 
+{
+	tmpA:$(REGISTER_SIZE) = REG_A;
+	tmpB:$(REGISTER_SIZE) = SIMM;
+	cr0 = ((tmpA s< tmpB) << 3) | ((tmpA s> tmpB) << 2) | ((tmpA == tmpB) << 1) | (xer_so & 1);
+	
+}
+
+#cmpwi cr2,r0,0x00     0x2d 00 00 00
+#cmpwi cr2,r0,0x00     0x2d 20 00 00 (64 bit mode)
+:cmp^DSIZE^"i" 	CRFD,A,SIMM	is $(NOTVLE) & OP=11 & CRFD & BIT_22=0 & DSIZE & A & B & REG_A & SIMM 
+{
+	tmpA:$(REGISTER_SIZE) = REG_A;
+	tmpB:$(REGISTER_SIZE) = SIMM;
+	CRFD = ((tmpA s< tmpB) << 3) | ((tmpA s> tmpB) << 2) | ((tmpA == tmpB) << 1) | (xer_so & 1);
+}
+
+############################
+#cmplw r0,r1		0x7c 00 08 40
+#cmpld r0,r1		0x7c 20 08 40  (64 bit mode)
+:cmpl^DSIZE 	A,B			is OP=31 & CRFD=0 & BIT_22=0 & DSIZE & A & B & UREG_A & UREG_B & XOP_1_10=32 & BIT_0=0 
+{
+	tmpA:$(REGISTER_SIZE) = UREG_A;
+	tmpB:$(REGISTER_SIZE) = UREG_B;
+	cr0 = ((tmpA < tmpB) << 3) | ((tmpA > tmpB) << 2) | ((tmpA == tmpB) << 1) | (xer_so & 1);
+	
+}
+
+#cmplw cr2,r0,r1     0x7d 00 08 40
+#cmplw cr2,r0,r1     0x7d 20 08 40 (64 bit mode)
+:cmpl^DSIZE 	CRFD,A,B	is OP=31 & CRFD & BIT_22=0 & DSIZE & A & B & UREG_A & UREG_B & XOP_1_10=32 & BIT_0=0 
+{
+	tmpA:$(REGISTER_SIZE) = UREG_A;
+	tmpB:$(REGISTER_SIZE) = UREG_B;
+	CRFD = ((tmpA < tmpB) << 3) | ((tmpA > tmpB) << 2) | ((tmpA == tmpB) << 1) | (xer_so & 1);
+}
+
+###############################
+#cmplwi r0,0x00		0x28 00 00 00
+#cmpldi r0,0x00		0x28 20 00 00  (64 bit mode)
+:cmpl^DSIZE^"i" 	A,UIMM			is $(NOTVLE) & OP=10 & CRFD=0 & BIT_22=0 & DSIZE & A & UREG_A & UIMM 
+{
+	tmpA:$(REGISTER_SIZE) = UREG_A;
+	tmpB:$(REGISTER_SIZE) = UIMM;
+	cr0 = ((tmpA < tmpB) << 3) | ((tmpA > tmpB) << 2) | ((tmpA == tmpB) << 1) | (xer_so & 1);
+	
+}
+
+#cmplwi cr2,r0,0x00     0x29 00 00 00
+#cmplwi cr2,r0,0x00     0x29 20 00 00 (64 bit mode)
+:cmpl^DSIZE^"i" 	CRFD,A,UIMM	is $(NOTVLE) & OP=10 & CRFD & BIT_22=0 & DSIZE & A & B & UREG_A & UIMM 
+{
+	tmpA:$(REGISTER_SIZE) = UREG_A;
+	tmpB:$(REGISTER_SIZE) = UIMM;
+	CRFD = ((tmpA < tmpB) << 3) | ((tmpA > tmpB) << 2) | ((tmpA == tmpB) << 1) | (xer_so & 1);
+}
+#===========================================================
+#          CNTLZx
+#===========================================================
+
+@ifdef BIT_64
+#cntlzd  r0,r0 		0x7c 00 00 74
+:cntlzd A,S			is OP=31 & S & A & BITS_11_15=0 & XOP_1_10=58 & Rc=0
+{
+	A = countLeadingZeros(S);
+}
+
+#cntlzd. r0,r0		0x7c 00 00 75
+:cntlzd. A,S		is OP=31 & S & A & BITS_11_15=0 & XOP_1_10=58 & Rc=1
+{
+	A = countLeadingZeros(S);
+	cr0flags(A);
+}
+@endif
+
+#cntlzw  r0,r0 		0x7c 00 00 34
+:cntlzw A,S			is OP=31 & S & A & BITS_11_15=0 & XOP_1_10=26 & Rc=0
+{
+	A = countLeadingZeros(S:4);
+}
+
+#cntlzw. r0,r0		0x7c 00 00 35
+:cntlzw. A,S		is OP=31 & S & A & BITS_11_15=0 & XOP_1_10=26 & Rc=1
+{
+	A = countLeadingZeros(S:4);
+	cr0flags(A);
+}
+#===========================================================
+#          CRxxx
+#===========================================================
+#crand	lt,lt,lt						0x4c 00 02 02
+#crand	4*cr1+lt,4*cr2+gt,4*cr3+eq		0x4c 89 72 02
+:crand	CC_D_OP,CC_OP,CC_B_OP	is $(NOTVLE) & OP=19 & CC_D_OP & CC_OP & CC_B_OP & CR_D & CR_D_CC & XOP_1_10=257 & BIT_0=0
+{
+	setCrBit(CR_D,CR_D_CC,CC_OP & CC_B_OP);
+}
+
+#crandc lt,lt,lt						0x4c 00 01 02
+#crandc	4*cr1+lt,4*cr2+gt,4*cr3+eq		0x4c 89 71 02
+:crandc	CC_D_OP,CC_OP,CC_B_OP	is $(NOTVLE) & OP=19 & CC_D_OP & CC_OP & CC_B_OP & CR_D & CR_D_CC & XOP_1_10=129 & BIT_0=0
+{
+	tmp1:1 = !CC_B_OP;
+	setCrBit(CR_D,CR_D_CC,CC_OP & tmp1);
+}
+
+#creqv lt,lt,lt							0x4c 00 02 42
+#creqv	4*cr1+lt,4*cr2+gt,4*cr3+eq		0x4c 89 72 42
+:creqv	CC_D_OP,CC_OP,CC_B_OP	is $(NOTVLE) & OP=19 & CC_D_OP & CC_OP & CC_B_OP & CR_D & CR_D_CC & XOP_1_10=289 & BIT_0=0
+{
+	setCrBit(CR_D,CR_D_CC,CC_B_OP == CC_OP);
+}
+
+#crnand lt,lt,lt							0x4c 00 01 c2
+#crnand	4*cr1+lt,4*cr2+gt,4*cr3+eq			0x4c 89 71 c2
+:crnand	CC_D_OP,CC_OP,CC_B_OP	is $(NOTVLE) & OP=19 & CC_D_OP & CC_OP & CC_B_OP & CR_D & CR_D_CC & XOP_1_10=225 & BIT_0=0
+{
+	setCrBit(CR_D,CR_D_CC,!(CC_B_OP & CC_OP));
+}
+
+#crnor lt,lt,lt								0x4c 00 00 42
+#crnor	4*cr1+lt,4*cr2+gt,4*cr3+eq			0x4c 89 70 42
+:crnor	CC_D_OP,CC_OP,CC_B_OP	is $(NOTVLE) & OP=19 & CC_D_OP & CC_OP & CC_B_OP & CR_D & CR_D_CC & XOP_1_10=33 & BIT_0=0
+{
+	setCrBit(CR_D,CR_D_CC,!(CC_B_OP | CC_OP));
+}
+
+#cror lt,lt,lt								0x4c 00 03 82
+#cror	4*cr1+lt,4*cr2+gt,4*cr3+eq			0x4c 89 73 82
+:cror	CC_D_OP,CC_OP,CC_B_OP	is $(NOTVLE) & OP=19 & CC_D_OP & CC_OP & CC_B_OP & CR_D & CR_D_CC & XOP_1_10=449 & BIT_0=0
+{
+	setCrBit(CR_D,CR_D_CC,(CC_B_OP | CC_OP));
+}
+
+#crorc lt,lt,lt								0x4c 00 03 42
+#crorc	4*cr1+lt,4*cr2+gt,4*cr3+eq			0x4c 89 73 42
+:crorc	CC_D_OP,CC_OP,CC_B_OP	is $(NOTVLE) & OP=19 & CC_D_OP & CC_OP & CC_B_OP & CR_D & CR_D_CC & XOP_1_10=417 & BIT_0=0
+{
+	setCrBit(CR_D,CR_D_CC,(CC_B_OP | (!CC_OP)));
+}
+
+#crxor lt,lt,lt								0x4c 00 01 82
+#crxor 4*cr1+lt,4*cr2+gt,4*cr3+eq			0x4c 89 71 82
+:crxor CC_D_OP,CC_OP,CC_B_OP	is $(NOTVLE) & OP=19 & CC_D_OP & CC_OP & CC_B_OP & CR_D & CR_D_CC & XOP_1_10=193 & BIT_0=0
+{
+	setCrBit(CR_D,CR_D_CC,(CC_B_OP ^ CC_OP));
+}
+
+@ifndef IS_ISA
+# replace with dci command in ISA
+#dccci 0,r0             0x7c 00 03 8c
+:dccci RA_OR_ZERO,B	is OP=31 & BITS_21_25=0 & B & XOP_1_10=454 & BIT_0=0 & RA_OR_ZERO
+{
+	ea:$(REGISTER_SIZE) = RA_OR_ZERO + B;
+	dataCacheCongruenceClassInvalidate(ea);
+}
+@endif
+
+#===========================================================
+#          DIVxx
+#===========================================================
+
+@ifdef BIT_64
+#divd r0,r0,r0		0x7c 00 03 d2
+:divd D,A,B			is OP=31 & D & A & B & OE=0 & XOP_1_9=489 & Rc=0
+{
+	D = A s/ B;
+}
+
+#divd. r0,r0,r0		0x7c 00 03 d3
+:divd. D,A,B		is OP=31 & D & A & B & OE=0 & XOP_1_9=489 & Rc=1
+{
+	D = A s/ B;
+	cr0flags(D);
+}
+
+#divdo r0,r0,r0		0x7c 00 07 d2
+:divdo D,A,B		is OP=31 & D & A & B & OE=1 & XOP_1_9=489 & Rc=0
+{
+	D = A s/ B;
+	divOverflow(A,B);
+}
+
+#divdo. r0,r0,r0	0x7c 00 07 d3
+:divdo. D,A,B		is OP=31 & D & A & B & OE=1 & XOP_1_9=489 & Rc=1
+{
+	D = A s/ B;
+	divOverflow(A,B);
+	cr0flags(D);
+}
+
+######################
+#divdu r0,r0,r0		0x7c 00 03 92
+:divdu D,A,B		is OP=31 & D & A & B & OE=0 & XOP_1_9=457 & Rc=0
+{
+	D = A / B;
+}
+
+#divdu. r0,r0,r0		0x7c 00 03 93
+:divdu. D,A,B		is OP=31 & D & A & B & OE=0 & XOP_1_9=457 & Rc=1
+{
+	D = A / B;
+	cr0flags(D);
+}
+
+#divduo r0,r0,r0		0x7c 00 07 92
+:divduo D,A,B		is OP=31 & D & A & B & OE=1 & XOP_1_9=457 & Rc=0
+{
+	D = A / B;
+	divZero(A,B);
+}
+
+#divduo. r0,r0,r0	0x7c 00 07 93
+:divduo. D,A,B		is OP=31 & D & A & B & OE=1 & XOP_1_9=457 & Rc=1
+{
+	D = A / B;
+	divZero(A,B);
+	cr0flags(D);
+}
+@endif
+
+#############################3
+#divw r0,r0,r0		0x7c 00 03 d6
+:divw D,A,B			is OP=31 & D & A & B & OE=0 & XOP_1_9=491 & Rc=0
+{
+@ifdef BIT_64
+	D = sext(A:4 s/ B:4);
+@else
+	D = A s/ B;
+@endif
+}
+
+#divw. r0,r0,r0		0x7c 00 03 d7
+:divw. D,A,B		is OP=31 & D & A & B & OE=0 & XOP_1_9=491 & Rc=1
+{
+@ifdef BIT_64
+	D = sext(A:4 s/ B:4);
+	divOverflow(A:4,B:4);
+	cr0flags(D:4);
+@else
+	D = A s/ B;
+	divOverflow(A,B);
+	cr0flags(D);
+@endif
+}
+
+#divwo r0,r0,r0		0x7c 00 07 d6
+:divwo D,A,B		is OP=31 & D & A & B & OE=1 & XOP_1_9=491 & Rc=0
+{
+@ifdef BIT_64
+	D = sext(A:4 s/ B:4);
+	divOverflow(A:4,B:4);
+@else
+	D = A s/ B;
+	divOverflow(A,B);
+@endif
+}
+
+#divwo. r0,r0,r0	0x7c 00 07 d7
+:divwo. D,A,B		is OP=31 & D & A & B & OE=1 & XOP_1_9=491 & Rc=1
+{
+@ifdef BIT_64
+	D = sext(A:4 s/ B:4);
+	divOverflow(A:4,B:4);
+	cr0flags(D:4);
+@else
+	D = A s/ B;
+	divOverflow(A,B);
+	cr0flags(D);
+@endif
+}
+
+#########################
+#divwu r0,r0,r0		0x7c 00 03 96
+:divwu D,A,B		is OP=31 & D & A & B & OE=0 & XOP_1_9=459 & Rc=0
+{
+@ifdef BIT_64
+	D = zext(A:4) / zext(B:4);
+@else
+	D = A / B;
+@endif
+}
+
+#divwu. r0,r0,r0		0x7c 00 03 97
+:divwu. D,A,B		is OP=31 & D & A & B & OE=0 & XOP_1_9=459 & Rc=1
+{
+@ifdef BIT_64
+	D = zext(A:4) / zext(B:4);
+	cr0flags(D:4);
+@else
+	D = A / B;
+	cr0flags(D);
+@endif
+}
+
+#divwuo r0,r0,r0		0x7c 00 07 96
+:divwuo D,A,B		is OP=31 & D & A & B & OE=1 & XOP_1_9=459 & Rc=0
+{
+@ifdef BIT_64
+	D = zext(A:4) / zext(B:4);
+	divZero(A:4,B:4);
+@else
+	D = A / B;
+	divZero(A,B);
+@endif
+}
+
+#divwuo. r0,r0,r0	0x7c 00 07 97
+:divwuo. D,A,B		is OP=31 & D & A & B & OE=1 & XOP_1_9=459 & Rc=1
+{
+@ifdef BIT_64
+	D = zext(A:4) / zext(B:4);
+	divZero(A:4,B:4);
+	cr0flags(D:4);
+@else
+	D = A / B;
+	divZero(A,B);
+	cr0flags(D);
+@endif
+}
+
+#===========================================================
+#          ECxxx,EIxxx
+#===========================================================
+#eciwx r0,r0,r0		0x7c 00 02 6c
+:eciwx D,RA_OR_ZERO,B	is $(NOTVLE) & OP=31 & D & B & RA_OR_ZERO & XOP_1_10=310 & BIT_0=0
+{
+	ea:$(REGISTER_SIZE) = RA_OR_ZERO + B;
+	D = externalControlIn(ea);
+}
+
+#ecowx r0,r0,r0		0x7c 00 03 6c
+:ecowx S,RA_OR_ZERO,B	is $(NOTVLE) & OP=31 & S & B & RA_OR_ZERO & XOP_1_10=438 & BIT_0=0
+{
+	ea:$(REGISTER_SIZE) = RA_OR_ZERO + B;
+	externalControlOut(ea, S);
+}
+
+#===========================================================
+#          EQVx
+#===========================================================
+#eqv r0,r0,r0	0x7c 00 02 38
+:eqv A,S,B		is OP=31 & S & A & B & XOP_1_10=284 & Rc=0
+{
+	A = ~(S ^ B);
+}
+
+#eqv. r0,r0,r0	0x7c 00 02 39
+:eqv. A,S,B		is OP=31 & S & A & B & XOP_1_10=284 & Rc=1
+{
+	A = ~(S ^ B);
+	cr0flags(A);
+}
+
+#===========================================================
+#          EXTSBx
+#===========================================================
+#extsb r0,r0	0x7c 00 07 74
+:extsb A,S		is OP=31 & S & A & BITS_11_15=0 & XOP_1_10=954 & Rc=0
+{
+	A = sext(S:1);
+}
+
+#extsb. r0,r0	0x7c 00 07 75
+:extsb. A,S		is OP=31 & S & A & BITS_11_15=0 & XOP_1_10=954 & Rc=1
+{
+	A = sext(S:1);
+	cr0flags(A);
+}
+
+#===========================================================
+#          EXTSHx
+#===========================================================
+#extsh r0,r0	0x7c 00 07 34
+:extsh A,S		is OP=31 & S & A & BITS_11_15=0 & XOP_1_10=922 & Rc=0
+{
+	A = sext(S:2);
+}
+
+#extsh. r0,r0	0x7c 00 07 35
+:extsh. A,S		is OP=31 & S & A & BITS_11_15=0 & XOP_1_10=922 & Rc=1
+{
+	A = sext(S:2);
+	cr0flags(A);
+}
+
+@ifdef BIT_64
+#extsw r0,r0	0x7c 00 07 b4
+:extsw A,S		is OP=31 & S & A & BITS_11_15=0 & XOP_1_10=986 & Rc=0
+{
+	A = sext(S:4);
+}
+
+#extsw. r0,r0	0x7c 00 07 b5
+:extsw. A,S		is OP=31 & S & A & BITS_11_15=0 & XOP_1_10=986 & Rc=1
+{
+	A = sext(S:4);
+	cr0flags(A);
+}
+@endif
+
+#===========================================================
+#          FABSx
+#===========================================================
+#fabs fr,f1r		0xfc 00 02 10
+:fabs fD,fB		is $(NOTVLE) & OP=63 & fD & BITS_16_20=0 & fB & XOP_1_10=264 & Rc=0
+{
+ 	fD = abs(fB);
+}
+
+#fabs. fr0,fr1		0xfc 00 02 11
+:fabs. fD,fB	is $(NOTVLE) & OP=63 & fD & BITS_16_20=0 & fB & XOP_1_10=264 & Rc=1
+{
+	fD = abs(fB);
+	cr1flags();
+}
+#fadd fr0,fr0,fr0	0xfc 00 00 2a
+:fadd fD,fA,fB	is $(NOTVLE) & OP=63 & fD & fA & fB & BITS_6_10=0 & XOP_1_5=21 & Rc=0
+{
+	fD = fA f+ fB;
+	setFPAddFlags(fA,fB,fD);
+}
+
+#fadd. fr0,fr0,fr0	0xfc 00 00 2b
+:fadd. fD,fA,fB	is $(NOTVLE) & OP=63 & fD & fA & fB & BITS_6_10=0 & XOP_1_5=21 & Rc=1
+{
+	fD = fA f+ fB;
+	setFPAddFlags(fA,fB,fD);
+	cr1flags();
+}
+
+#fadds fr0,fr0,fr0	0xec 00 00 2a
+:fadds fD,fA,fB	is $(NOTVLE) & OP=59 & fD & fA & fB & BITS_6_10=0 & XOP_1_5=21 & Rc=0
+{
+	tmp:4 = float2float(fA f+ fB);
+	fD = float2float(tmp);
+	setFPAddFlags(fA,fB,fD);
+	
+}
+
+#fadds. fr0,fr0,fr0	0xec 00 00 2b
+:fadds. fD,fA,fB	is $(NOTVLE) & OP=59 & fD & fA & fB & BITS_6_10=0 & XOP_1_5=21 & Rc=1
+{
+	tmp:4 = float2float(fA f+ fB);
+	fD = float2float(tmp);
+	setFPAddFlags(fA,fB,fD);
+	cr1flags();
+}
+
+#===========================================================
+#          FCFIDx
+#===========================================================
+#fcfid fr0,fr0		0xfc 00 06 9c
+:fcfid fD,fB		is $(NOTVLE) & OP=63 & fD & BITS_16_20=0 & fB & XOP_1_10=846 & Rc=0
+{
+	fD = int2float(fB);
+}
+
+#fcfid. fr0,fr0		0xfc 00 06 9d
+:fcfid. fD,fB		is $(NOTVLE) & OP=63 & fD & BITS_16_20=0 & fB & XOP_1_10=846 & Rc=1
+{
+	fD = int2float(fB);
+	setFPRF(fD);
+#	fp_fr = intToFloatRoundedUp(fB);
+#	fp_fi = intToFloatInexact(fB);
+	fp_xx = fp_xx | fp_fi;
+	setSummaryFPSCR();
+	cr1flags();
+}
+
+#===========================================================
+#          FCMPO
+#===========================================================
+#fcmpo fr0,fr0,fr0		0xfc 00 00 40
+:fcmpo CRFD,fA,fB		is $(NOTVLE) & OP=63 & CRFD & BITS_21_22=0 & fA & fB & XOP_1_10=32 & BIT_0=0
+{
+	tmp:1 = nan(fA) | nan(fB);
+	fp_cc0 = (fA f< fB);
+	fp_cc1 = (fA f> fB);
+	fp_cc2 = (fA f== fB);
+	CRFD = (fp_cc0 << 3) | (fp_cc1 << 2) | (fp_cc2 << 1) | tmp;	
+}
+#fcmpu fr0,fr0,fr0		0xfc 00 00 00
+:fcmpu CRFD,fA,fB		is $(NOTVLE) & OP=63 & CRFD & BITS_21_22=0 & fA & fB & XOP_1_10=0 & BIT_0=0
+{
+	tmp:1 = nan(fA) | nan(fB);
+	fp_cc0 = (fA f< fB);
+	fp_cc1 = (fA f> fB);
+	fp_cc2 = (fA f== fB);
+	CRFD = (fp_cc0 << 3) | (fp_cc1 << 2) | (fp_cc2 << 1) | tmp;	
+}
+
+#fctid fr0,fr0	0xfc 00 06 5c
+:fctid fD,fB	is $(NOTVLE) & OP=63 & fD & BITS_16_20=0 & fB & XOP_1_10=814 & Rc=0
+{
+#	fp_fr = floatToIntRoundedUp(fB);
+#	fp_fi = floatToIntInexact(fB);
+	fp_vxsnan = fp_vxsnan | nan(fB);
+#	fp_vxcvi = fp_vxcvi | invalidFloatToInt(fB);
+#	fp_xx = fp_xx | fp_fi;
+	fD = trunc(fB);
+}
+#fctid. fr0,fr0	0xfc 00 06 5d
+:fctid. fD,fB	is $(NOTVLE) & OP=63 & fD & BITS_16_20=0 & fB & XOP_1_10=814 & Rc=1
+{
+#	fp_fr = floatToIntRoundedUp(fB);
+#	fp_fi = floatToIntInexact(fB);
+	fp_xx = fp_xx | fp_fi;
+#	fp_vxsnan = fp_vxsnan | nan(fB);
+#	fp_vxcvi = fp_vxcvi | invalidFloatToInt(fB);
+	setSummaryFPSCR();
+	cr1flags();
+	fD = trunc(fB);
+}
+#fctidz fr0,fr0	0xfc 00 06 5e
+:fctidz fD,fB	is $(NOTVLE) & OP=63 & fD & BITS_16_20=0 & fB & XOP_1_10=815 & Rc=0
+{
+	fp_fr = 0;
+#	fp_fi = floatToIntInexact(fB);
+	fp_vxsnan = fp_vxsnan | nan(fB);
+#	fp_vxcvi = fp_vxcvi | invalidFloatToInt(fB);
+	fp_xx = fp_xx | fp_fi;
+	fD = trunc(fB);
+}
+#fctidz. fr0,fr0	0xfc 00 06 5f
+:fctidz. fD,fB	is $(NOTVLE) & OP=63 & fD & BITS_16_20=0 & fB & XOP_1_10=815 & Rc=1
+{
+	fp_fr = 0;
+#	fp_fi = floatToIntInexact(fB);
+	fp_xx = fp_xx | fp_fi;
+	fp_vxsnan = fp_vxsnan | nan(fB);
+#	fp_vxcvi = fp_vxcvi | invalidFloatToInt(fB);
+	setSummaryFPSCR();
+	cr1flags();
+	fD = trunc(fB);
+}
+
+#fctiw fr0,fr0	0xfc 00 00 1c
+:fctiw fD,fB	is $(NOTVLE) & OP=63 & fD & BITS_16_20=0 & fB & XOP_1_10=14 & Rc=0
+{
+#	fp_fr = floatToIntRoundedUp(fB);
+#	fp_fi = floatToIntInexact(fB);
+	fp_vxsnan = fp_vxsnan | nan(fB);
+#	fp_vxcvi = fp_vxcvi | invalidFloatToInt(fB);
+	fp_xx = fp_xx | fp_fi;
+	local intres:4;
+	intres = trunc(fB);
+	fD = sext(intres);
+}
+#fctiw. fr0,fr0	0xfc 00 00 1d
+:fctiw. fD,fB	is $(NOTVLE) & OP=63 & fD & BITS_16_20=0 & fB & XOP_1_10=14 & Rc=1
+{
+#	fp_fr = floatToIntRoundedUp(fB);
+#	fp_fi = floatToIntInexact(fB);
+	fp_xx = fp_xx | fp_fi;
+	fp_vxsnan = fp_vxsnan | nan(fB);
+#	fp_vxcvi = fp_vxcvi | invalidFloatToInt(fB);
+	setSummaryFPSCR();
+	cr1flags();
+	local intres:4;
+	intres = trunc(fB);
+	fD = sext(intres);
+}
+#fctiwz fr0,fr0	0xfc 00 00 1e
+:fctiwz fD,fB	is $(NOTVLE) & OP=63 & fD & BITS_16_20=0 & fB & XOP_1_10=15 & Rc=0
+{
+	fp_fr = 0;
+#	fp_fi = floatToIntInexact(fB);
+	fp_vxsnan = fp_vxsnan | nan(fB);
+#	fp_vxcvi = fp_vxcvi | invalidFloatToInt(fB);
+	fp_xx = fp_xx | fp_fi;
+	local intres:4;
+	intres = trunc(fB);
+	fD = sext(intres);
+}
+#fctiwz. fr0,fr0	0xfc 00 00 1f
+:fctiwz. fD,fB	is $(NOTVLE) & OP=63 & fD & BITS_16_20=0 & fB & XOP_1_10=15 & Rc=1
+{
+	fp_fr = 0;
+#	fp_fi = floatToIntInexact(fB);
+	fp_xx = fp_xx | fp_fi;
+	fp_vxsnan = fp_vxsnan | nan(fB);
+#	fp_vxcvi = fp_vxcvi | invalidFloatToInt(fB);
+	setSummaryFPSCR();
+	cr1flags();
+	local intres:4;
+	intres = trunc(fB);
+	fD = sext(intres);
+}
+
+#fdiv fr0,fr0,fr0  0xfc 00 00 24
+:fdiv fD,fA,fB   is $(NOTVLE) & OP=63 & fD & fA & fB & BITS_6_10=0 & XOP_1_5=18 & Rc=0
+{
+	fD = fA f/ fB;
+	setFPDivFlags(fA,fB,fD);
+}
+#fdiv. fr0,fr0,fr0  0xfc 00 00 25
+:fdiv. fD,fA,fB   is $(NOTVLE) & OP=63 & fD & fA & fB & BITS_6_10=0 & XOP_1_5=18 & Rc=1
+{
+	fD = fA f/ fB;
+	setFPDivFlags(fA,fB,fD);
+	cr1flags();
+}
+
+#fdivs fr0,fr0,fr0  0xec 00 00 24
+:fdivs fD,fA,fB   is $(NOTVLE) & OP=59 & fD & fA & fB & BITS_6_10=0 & XOP_1_5=18 & Rc=0
+{
+	tmp:4 = float2float(fA f/ fB);
+	fD = float2float(tmp);
+	setFPDivFlags(fA,fB,fD);
+}
+#fdivs. fr0,fr0,fr0  0xec 00 00 25
+:fdivs. fD,fA,fB   is $(NOTVLE) & OP=59 & fD & fA & fB & BITS_6_10=0 & XOP_1_5=18 & Rc=1
+{
+	tmp:4 = float2float(fA f/ fB);
+	fD = float2float(tmp);
+	setFPDivFlags(fA,fB,fD);
+	cr1flags();
+}
+
+#fmadd fr0,fr0,fr0,fr0	0xfc 00 00 3a
+:fmadd fD,fA,fC,fB	is $(NOTVLE) & OP=63 & fD & fA & fC & fB & XOP_1_5=29 & Rc=0
+{
+	tmp:8 = fA f* fC;
+	fD = tmp f+ fB;
+	setFPRF(fD);
+#	fp_fr = floatMaddRoundedUp(fA, fC, fB);
+#	fp_fi = floatMaddInexact(fA,fC,fB);
+#	fp_ox = fp_ox | floatMaddOverflow(fA,fC,fB);
+#	fp_ux = fp_ux | floatMaddUnderflow(fA,fC,fB);
+	fp_xx = fp_xx | fp_fi;
+	fp_vxsnan = fp_vxsnan | nan(fA) | nan(fC) | nan(fB);
+#	fp_vxisi = fp_vxisi | floatInfinityAdd(tmp, fB);
+#	fp_vximz = fp_vximz | floatInfinityMulZero(fA,fC);
+	setSummaryFPSCR();
+}
+
+#fmadd. fr0,fr0,fr0,fr0	0xfc 00 00 3b
+:fmadd. fD,fA,fC,fB	is $(NOTVLE) & OP=63 & fD & fA & fC & fB & XOP_1_5=29 & Rc=1
+{
+	tmp:8 = fA f* fC;
+	fD = tmp f+ fB;
+	setFPRF(fD);
+#	fp_fr = floatMaddRoundedUp(fA, fC, fB);
+#	fp_fi = floatMaddInexact(fA,fC,fB);
+#	fp_ox = fp_ox | floatMaddOverflow(fA,fC,fB);
+#	fp_ux = fp_ux | floatMaddUnderflow(fA,fC,fB);
+	fp_xx = fp_xx | fp_fi;
+	fp_vxsnan = fp_vxsnan | nan(fA) | nan(fC) | nan(fB);
+#	fp_vxisi = fp_vxisi | floatInfinityAdd(tmp, fB);
+#	fp_vximz = fp_vximz | floatInfinityMulZero(fA,fC);
+	setSummaryFPSCR();
+	cr1flags();
+}
+
+#fmadds fr0,fr0,fr0,fr0	0xec 00 00 3a
+:fmadds fD,fA,fC,fB	is $(NOTVLE) & OP=59 & fD & fA & fC & fB & XOP_1_5=29 & Rc=0
+{
+	tmp:8 = fA f* fC;
+	tmp2:4 = float2float(tmp f+ fB);
+	fD = float2float(tmp2);
+	setFPRF(fD);
+#	fp_fr = floatMaddRoundedUp(fA, fC, fB);
+#	fp_fi = floatMaddInexact(fA,fC,fB);
+#	fp_ox = fp_ox | floatMaddOverflow(fA,fC,fB);
+#	fp_ux = fp_ux | floatMaddUnderflow(fA,fC,fB);
+	fp_xx = fp_xx | fp_fi;
+	fp_vxsnan = fp_vxsnan | nan(fA) | nan(fC) | nan(fB);
+#	fp_vxisi = fp_vxisi | floatInfinityAdd(tmp, fB);
+#	fp_vximz = fp_vximz | floatInfinityMulZero(fA,fC);
+	setSummaryFPSCR();
+}
+
+#fmadds. fr0,fr0,fr0,fr0	0xec 00 00 3b
+:fmadds. fD,fA,fC,fB	is $(NOTVLE) & OP=59 & fD & fA & fC & fB & XOP_1_5=29 & Rc=1
+{
+	tmp:8 = fA f* fC;
+	tmp2:4 = float2float(tmp f+ fB);
+	fD = float2float(tmp2);
+	setFPRF(fD);
+#	fp_fr = floatMaddRoundedUp(fA, fC, fB);
+#	fp_fi = floatMaddInexact(fA,fC,fB);
+#	fp_ox = fp_ox | floatMaddOverflow(fA,fC,fB);
+#	fp_ux = fp_ux | floatMaddUnderflow(fA,fC,fB);
+	fp_xx = fp_xx | fp_fi;
+	fp_vxsnan = fp_vxsnan | nan(fA) | nan(fC) | nan(fB);
+#	fp_vxisi = fp_vxisi | floatInfinityAdd(tmp, fB);
+#	fp_vximz = fp_vximz | floatInfinityMulZero(fA,fC);
+	setSummaryFPSCR();
+	cr1flags();
+}
+
+#fmr fr0,fr0	0xfc 00 00 90
+:fmr fD,fB   		is $(NOTVLE) & OP=63 & fD & BITS_16_20=0 & fB & XOP_1_10=72 & Rc=0
+{
+	fD = fB;
+}
+#fmr. fr0,fr0	0xfc 00 00 91
+:fmr. fD,fB   		is $(NOTVLE) & OP=63 & fD & BITS_16_20=0 & fB & XOP_1_10=72 & Rc=1
+{
+	fD = fB;
+	cr1flags();
+}
+#fmsub fr0,fr0,fr0,fr0	0xfc 00 00 38
+:fmsub fD,fA,fC,fB	is $(NOTVLE) & OP=63 & fD & fA & fC & fB & XOP_1_5=28 & Rc=0
+{
+	tmp:8 = fA f* fC;
+	fD = tmp f- fB;
+	setFPRF(fD);
+#	fp_fr = floatMsubRoundedUp(fA, fC, fB);
+#	fp_fi = floatMsubInexact(fA,fC,fB);
+#	fp_ox = fp_ox | floatMsubOverflow(fA,fC,fB);
+#	fp_ux = fp_ux | floatMsubUnderflow(fA,fC,fB);
+	fp_xx = fp_xx | fp_fi;
+	fp_vxsnan = fp_vxsnan | nan(fA) | nan(fC) | nan(fB);
+#	fp_vxisi = fp_vxisi | floatInfinitySub(tmp, fB);
+#	fp_vximz = fp_vximz | floatInfinityMulZero(fA,fC);
+	setSummaryFPSCR();
+}
+
+#fmsub. fr0,fr0,fr0,fr0	0xfc 00 00 39
+:fmsub. fD,fA,fC,fB	is $(NOTVLE) & OP=63 & fD & fA & fC & fB & XOP_1_5=28 & Rc=1
+{
+	tmp:8 = fA f* fC;
+	tmp2:4 = float2float(tmp f- fB);
+	fD = float2float(tmp2);
+	setFPRF(fD);
+#	fp_fr = floatMsubRoundedUp(fA, fC, fB);
+#	fp_fi = floatMsubInexact(fA,fC,fB);
+#	fp_ox = fp_ox | floatMsubOverflow(fA,fC,fB);
+#	fp_ux = fp_ux | floatMsubUnderflow(fA,fC,fB);
+	fp_xx = fp_xx | fp_fi;
+	fp_vxsnan = fp_vxsnan | nan(fA) | nan(fC) | nan(fB);
+#	fp_vxisi = fp_vxisi | floatInfinitySub(tmp, fB);
+#	fp_vximz = fp_vximz | floatInfinityMulZero(fA,fC);
+	setSummaryFPSCR();
+	cr1flags();
+}
+
+#fmsubs fr0,fr0,fr0,fr0	0xec 00 00 38
+:fmsubs fD,fA,fC,fB	is $(NOTVLE) & OP=59 & fD & fA & fC & fB & XOP_1_5=28 & Rc=0
+{
+	tmp:8 = fA f* fC;
+	tmp2:4 = float2float(tmp f- fB);
+	fD = float2float(tmp2);
+	setFPRF(fD);
+#	fp_fr = floatMsubRoundedUp(fA, fC, fB);
+#	fp_fi = floatMsubInexact(fA,fC,fB);
+#	fp_ox = fp_ox | floatMsubOverflow(fA,fC,fB);
+#	fp_ux = fp_ux | floatMsubUnderflow(fA,fC,fB);
+	fp_xx = fp_xx | fp_fi;
+	fp_vxsnan = fp_vxsnan | nan(fA) | nan(fC) | nan(fB);
+#	fp_vxisi = fp_vxisi | floatInfinitySub(tmp, fB);
+#	fp_vximz = fp_vximz | floatInfinityMulZero(fA,fC);
+	setSummaryFPSCR();
+}
+
+#fmsubs. fr0,fr0,fr0,fr0	0xfc 00 00 39
+:fmsubs. fD,fA,fC,fB	is $(NOTVLE) & OP=59 & fD & fA & fC & fB & XOP_1_5=28 & Rc=1
+{
+	tmp:8 = fA f* fC;
+	tmp2:4 = float2float(tmp f- fB);
+	fD = float2float(tmp2);
+	setFPRF(fD);
+#	fp_fr = floatMsubRoundedUp(fA, fC, fB);
+#	fp_fi = floatMsubInexact(fA,fC,fB);
+#	fp_ox = fp_ox | floatMsubOverflow(fA,fC,fB);
+#	fp_ux = fp_ux | floatMsubUnderflow(fA,fC,fB);
+	fp_xx = fp_xx | fp_fi;
+	fp_vxsnan = fp_vxsnan | nan(fA) | nan(fC) | nan(fB);
+#	fp_vxisi = fp_vxisi | floatInfinitySub(tmp, fB);
+#	fp_vximz = fp_vximz | floatInfinityMulZero(fA,fC);
+	setSummaryFPSCR();
+	cr1flags();
+}
+
+#fmul fr0,fr0,fr0	0xfc 00 00 32
+:fmul fD,fA,fC	is $(NOTVLE) & OP=63 & fD & fA & fC & BITS_11_15=0 & XOP_1_5=25 & Rc=0
+{
+	fD = fA f* fC;
+	setFPMulFlags(fA,fC,fD);
+}
+#fmul. fr0,fr0,fr0	0xfc 00 00 33
+:fmul. fD,fA,fC	is $(NOTVLE) & OP=63 & fD & fA & fC & BITS_11_15=0 & XOP_1_5=25 & Rc=1
+{
+	fD = fA f* fC;
+	setFPMulFlags(fA,fC,fD);
+	cr1flags();
+}
+
+#fmuls fr0,fr0,fr0	0xec 00 00 32
+:fmuls fD,fA,fC	is $(NOTVLE) & OP=59 & fD & fA & fC & BITS_11_15=0 & XOP_1_5=25 & Rc=0
+{
+	tmp:4 = float2float(fA f* fC);
+	fD = float2float(tmp);
+	setFPMulFlags(fA,fC,fD);
+}
+
+#fmuls. fr0,fr0,fr0	0xec 00 00 33
+:fmuls. fD,fA,fC	is $(NOTVLE) & OP=59 & fD & fA & fC & BITS_11_15=0 & XOP_1_5=25 & Rc=1
+{
+	tmp:4 = float2float(fA f* fC);
+	fD = float2float(tmp);
+	setFPMulFlags(fA,fC,fD);
+	cr1flags();
+}
+
+#fnabs fr0,fr0	0xfc 00 01 10
+:fnabs fD,fB	is $(NOTVLE) & OP=63 & fD & fB & BITS_16_20=0 & XOP_1_10=136 & Rc=0
+{
+	fD = fB | 0x8000000000000000;
+}
+
+#fnabs. fr0,fr0	0xfc 00 01 11
+:fnabs. fD,fB	is $(NOTVLE) & OP=63 & fD & fB & BITS_16_20=0 & XOP_1_10=136 & Rc=1
+{
+	fD = fB | 0x8000000000000000;
+	cr1flags();
+}
+
+#fneg fr0,fr0	0xfc 00 00 50
+:fneg fD,fB	is $(NOTVLE) & OP=63 & fD & fB & BITS_16_20=0 & XOP_1_10=40 & Rc=0
+{
+	fD = f- fB;
+}
+
+#fneg. fr0,fr0	0xfc 00 00 51
+:fneg. fD,fB	is $(NOTVLE) & OP=63 & fD & fB & BITS_16_20=0 & XOP_1_10=40 & Rc=1
+{
+	fD = f- fB;
+	cr1flags();
+}
+
+#fnmadd fr0,fr0,fr0,fr0	0xfc 00 00 3e
+:fnmadd fD,fA,fC,fB	is $(NOTVLE) & OP=63 & fD & fA & fC & fB & XOP_1_5=31 & Rc=0
+{
+	tmp:8 = fA f* fC;
+	fD = f- (tmp f+ fB);
+	setFPRF(fD);
+#	fp_fr = floatMaddRoundedUp(fA, fC, fB);
+#	fp_fi = floatMaddInexact(fA,fC,fB);
+#	fp_ox = fp_ox | floatMaddOverflow(fA,fC,fB);
+#	fp_ux = fp_ux | floatMaddUnderflow(fA,fC,fB);
+	fp_xx = fp_xx | fp_fi;
+	fp_vxsnan = fp_vxsnan | nan(fA) | nan(fC) | nan(fB);
+#	fp_vxisi = fp_vxisi | floatInfinityAdd(tmp, fB);
+#	fp_vximz = fp_vximz | floatInfinityMulZero(fA,fC);
+	setSummaryFPSCR();
+}
+
+#fnmadd. fr0,fr0,fr0,fr0	0xfc 00 00 3f
+:fnmadd. fD,fA,fC,fB	is $(NOTVLE) & OP=63 & fD & fA & fC & fB & XOP_1_5=31 & Rc=1
+{
+	tmp:8 = fA f* fC;
+	fD = f- (tmp f+ fB);
+	setFPRF(fD);
+#	fp_fr = floatMaddRoundedUp(fA, fC, fB);
+#	fp_fi = floatMaddInexact(fA,fC,fB);
+#	fp_ox = fp_ox | floatMaddOverflow(fA,fC,fB);
+#	fp_ux = fp_ux | floatMaddUnderflow(fA,fC,fB);
+	fp_xx = fp_xx | fp_fi;
+	fp_vxsnan = fp_vxsnan | nan(fA) | nan(fC) | nan(fB);
+#	fp_vxisi = fp_vxisi | floatInfinityAdd(tmp, fB);
+#	fp_vximz = fp_vximz | floatInfinityMulZero(fA,fC);
+	setSummaryFPSCR();
+	cr1flags();
+}
+
+#fnmadds fr0,fr0,fr0,fr0	0xec 00 00 3e
+:fnmadds fD,fA,fC,fB	is $(NOTVLE) & OP=59 & fD & fA & fC & fB & XOP_1_5=31 & Rc=0
+{
+	tmp:8 = fA f* fC;
+	tmp2:4 = float2float(tmp f+ fB);
+	fD = f- float2float(tmp2);
+	setFPRF(fD);
+#	fp_fr = floatMaddRoundedUp(fA, fC, fB);
+#	fp_fi = floatMaddInexact(fA,fC,fB);
+#	fp_ox = fp_ox | floatMaddOverflow(fA,fC,fB);
+#	fp_ux = fp_ux | floatMaddUnderflow(fA,fC,fB);
+	fp_xx = fp_xx | fp_fi;
+	fp_vxsnan = fp_vxsnan | nan(fA) | nan(fC) | nan(fB);
+#	fp_vxisi = fp_vxisi | floatInfinityAdd(tmp, fB);
+#	fp_vximz = fp_vximz | floatInfinityMulZero(fA,fC);
+	setSummaryFPSCR();
+}
+
+#fnmadds. fr0,fr0,fr0,fr0	0xec 00 00 3f
+:fnmadds. fD,fA,fC,fB	is $(NOTVLE) & OP=59 & fD & fA & fC & fB & XOP_1_5=31 & Rc=1
+{
+	tmp:8 = fA f* fC;
+	tmp2:4 = float2float(tmp f+ fB);
+	fD = f- float2float(tmp2);
+	setFPRF(fD);
+#	fp_fr = floatMaddRoundedUp(fA, fC, fB);
+#	fp_fi = floatMaddInexact(fA,fC,fB);
+#	fp_ox = fp_ox | floatMaddOverflow(fA,fC,fB);
+#	fp_ux = fp_ux | floatMaddUnderflow(fA,fC,fB);
+	fp_xx = fp_xx | fp_fi;
+	fp_vxsnan = fp_vxsnan | nan(fA) | nan(fC) | nan(fB);
+#	fp_vxisi = fp_vxisi | floatInfinityAdd(tmp, fB);
+#	fp_vximz = fp_vximz | floatInfinityMulZero(fA,fC);
+	setSummaryFPSCR();
+	cr1flags();
+}
+
+#fnmsub fr0,fr0,fr0,fr0	0xfc 00 00 3c
+:fnmsub fD,fA,fC,fB	is $(NOTVLE) & OP=63 & fD & fA & fC & fB & XOP_1_5=30 & Rc=0
+{
+	tmp:8 = fA f* fC;
+	fD = f- (tmp f- fB);
+	setFPRF(fD);
+#	fp_fr = floatMsubRoundedUp(fA, fC, fB);
+#	fp_fi = floatMsubInexact(fA,fC,fB);
+#	fp_ox = fp_ox | floatMsubOverflow(fA,fC,fB);
+#	fp_ux = fp_ux | floatMsubUnderflow(fA,fC,fB);
+	fp_xx = fp_xx | fp_fi;
+	fp_vxsnan = fp_vxsnan | nan(fA) | nan(fC) | nan(fB);
+#	fp_vxisi = fp_vxisi | floatInfinitySub(tmp, fB);
+#	fp_vximz = fp_vximz | floatInfinityMulZero(fA,fC);
+	setSummaryFPSCR();
+}
+
+#fnmsub. fr0,fr0,fr0,fr0	0xfc 00 00 3d
+:fnmsub. fD,fA,fC,fB	is $(NOTVLE) & OP=63 & fD & fA & fC & fB & XOP_1_5=30 & Rc=1
+{
+	tmp:8 = fA f* fC;
+	tmp2:4 = float2float(tmp f- fB);
+	fD = f- float2float(tmp2);
+	setFPRF(fD);
+#	fp_fr = floatMsubRoundedUp(fA, fC, fB);
+#	fp_fi = floatMsubInexact(fA,fC,fB);
+#	fp_ox = fp_ox | floatMsubOverflow(fA,fC,fB);
+#	fp_ux = fp_ux | floatMsubUnderflow(fA,fC,fB);
+	fp_xx = fp_xx | fp_fi;
+	fp_vxsnan = fp_vxsnan | nan(fA) | nan(fC) | nan(fB);
+#	fp_vxisi = fp_vxisi | floatInfinitySub(tmp, fB);
+#	fp_vximz = fp_vximz | floatInfinityMulZero(fA,fC);
+	setSummaryFPSCR();
+	cr1flags();
+}
+
+#fnmsubs fr0,fr0,fr0,fr0	0xec 00 00 3c
+:fnmsubs fD,fA,fC,fB	is $(NOTVLE) & OP=59 & fD & fA & fC & fB & XOP_1_5=30 & Rc=0
+{
+	tmp:8 = fA f* fC;
+	tmp2:4 = float2float(tmp f- fB);
+	fD = f- float2float(tmp2);
+	setFPRF(fD);
+#	fp_fr = floatMsubRoundedUp(fA, fC, fB);
+#	fp_fi = floatMsubInexact(fA,fC,fB);
+#	fp_ox = fp_ox | floatMsubOverflow(fA,fC,fB);
+#	fp_ux = fp_ux | floatMsubUnderflow(fA,fC,fB);
+	fp_xx = fp_xx | fp_fi;
+	fp_vxsnan = fp_vxsnan | nan(fA) | nan(fC) | nan(fB);
+#	fp_vxisi = fp_vxisi | floatInfinitySub(tmp, fB);
+#	fp_vximz = fp_vximz | floatInfinityMulZero(fA,fC);
+	setSummaryFPSCR();
+}
+
+#fnmsubs. fr0,fr0,fr0,fr0	0xfc 00 00 3d
+:fnmsubs. fD,fA,fC,fB	is $(NOTVLE) & OP=59 & fD & fA & fC & fB & XOP_1_5=30 & Rc=1
+{
+	tmp:8 = fA f* fC;
+	tmp2:4 = float2float(tmp f- fB);
+	fD = f- float2float(tmp2);
+	setFPRF(fD);
+#	fp_fr = floatMsubRoundedUp(fA, fC, fB);
+#	fp_fi = floatMsubInexact(fA,fC,fB);
+#	fp_ox = fp_ox | floatMsubOverflow(fA,fC,fB);
+#	fp_ux = fp_ux | floatMsubUnderflow(fA,fC,fB);
+	fp_xx = fp_xx | fp_fi;
+	fp_vxsnan = fp_vxsnan | nan(fA) | nan(fC) | nan(fB);
+#	fp_vxisi = fp_vxisi | floatInfinitySub(tmp, fB);
+#	fp_vximz = fp_vximz | floatInfinityMulZero(fA,fC);
+	setSummaryFPSCR();
+	cr1flags();
+}
+
+#fres fr0,fr0		0xec 00 00 30
+:fres fD,fB	is $(NOTVLE) & OP=59 & fD & BITS_16_20 & fB & BITS_6_10=0 & XOP_1_5=24 & Rc=0 
+{
+	one:8 = 1;
+	floatOne:8 = int2float(one);
+	tmp:4 = float2float(floatOne f/ fB);
+	fD = float2float(tmp);
+	setFPRF(fD);
+#	fp_fr = floatDivRoundedUp(floatOne, fB);
+#	fp_fi = floatDivInexact(floatOne, fB);
+#	fp_ox = fp_ox | floatDivOverflow(floatOne, fB);
+#	fp_ux = fp_ux | floatDivUnderflow(floatOne, fB);
+	fp_zx = fp_zx | (fB f== 0);
+	fp_vxsnan = fp_vxsnan | nan(fB);
+	setSummaryFPSCR();	
+}
+
+#fres. fr0,fr0		0xec 00 00 31
+:fres. fD,fB	is $(NOTVLE) & OP=59 & fD & BITS_16_20 & fB & BITS_6_10=0 & XOP_1_5=24 & Rc=1
+{
+	one:8 = 1;
+	floatOne:8 = int2float(one);
+	tmp:4 = float2float(floatOne f/ fB);
+	fD = float2float(tmp);
+	setFPRF(fD);
+#	fp_fr = floatDivRoundedUp(floatOne, fB);
+#	fp_fi = floatDivInexact(floatOne, fB);
+#	fp_ox = fp_ox | floatDivOverflow(floatOne, fB);
+#	fp_ux = fp_ux | floatDivUnderflow(floatOne, fB);
+	fp_zx = fp_zx | (fB f== 0);
+	fp_vxsnan = fp_vxsnan | nan(fB);
+	setSummaryFPSCR();
+	cr1flags();
+}
+
+#frsp fr0,fr0		0xfc 00 00 18
+:frsp fD,fB		is $(NOTVLE) & OP=63 & fD & BITS_16_20=0 & fB & XOP_1_10=12 & Rc=0
+{
+	#zero:8 = 0;
+	#floatZero:8 = int2float(zero);
+	tmp:4 = float2float(fB);
+	fD = float2float(tmp);
+	setFPRF(fD);
+#	fp_fr = floatAddRoundedUp(floatZero, fB);
+#	fp_fi = floatAddInexact(floatZero, fB);
+#	fp_ox = fp_ox | floatAddOverflow(floatZero, fB);
+#	fp_ux = fp_ux | floatAddUnderflow(floatZero, fB);
+	fp_xx = fp_xx | fp_fi;
+	fp_vxsnan = fp_vxsnan | nan(fB);
+	setSummaryFPSCR();
+}
+
+#frsp. fr0,fr0		0xfc 00 00 19
+:frsp. fD,fB		is $(NOTVLE) & OP=63 & fD & BITS_16_20=0 & fB & XOP_1_10=12 & Rc=1
+{
+	#zero:8 = 0;
+	#floatZero:8 = int2float(zero);
+	tmp:4 = float2float(fB);
+	fD = float2float(tmp);
+	setFPRF(fD);
+#	fp_fr = floatAddRoundedUp(floatZero, fB);
+#	fp_fi = floatAddInexact(floatZero, fB);
+#	fp_ox = fp_ox | floatAddOverflow(floatZero, fB);
+#	fp_ux = fp_ux | floatAddUnderflow(floatZero, fB);
+	fp_xx = fp_xx | fp_fi;
+	fp_vxsnan = fp_vxsnan | nan(fB);
+	setSummaryFPSCR();
+	cr1flags();
+}
+
+#frsqrte fr0,fr0		0xfc 00 00 34
+:frsqrte fD,fB	is $(NOTVLE) & OP=63 & fD & BITS_16_20 & fB & BITS_6_10=0 & XOP_1_5=26 & Rc=0 
+{
+	one:8 = 1;
+	floatOne:8 = int2float(one);
+	tmpSqrt:8 = sqrt(fB);
+	fD = (floatOne f/ tmpSqrt);
+	setFPRF(fD);
+#	fp_fr = floatDivRoundedUp(floatOne, tmpSqrt);
+#	fp_fi = floatDivInexact(floatOne, tmpSqrt);
+#	fp_ox = fp_ox | floatDivOverflow(floatOne, tmpSqrt);
+#	fp_ux = fp_ux | floatDivUnderflow(floatOne, tmpSqrt);
+	fp_xx = fp_xx | fp_fi;
+	fp_vxsnan = fp_vxsnan | nan(fB);
+	setSummaryFPSCR();	
+}
+
+#frsqrte. fr0,fr0		0xfc 00 00 35
+:frsqrte. fD,fB	is $(NOTVLE) & OP=63 & fD & BITS_16_20 & fB & BITS_6_10=0 & XOP_1_5=26 & Rc=1
+{
+	one:8 = 1;
+	floatOne:8 = int2float(one);
+	tmpSqrt:8 = sqrt(fB);
+	fD = (floatOne f/ tmpSqrt);
+	setFPRF(fD);
+#	fp_fr = floatDivRoundedUp(floatOne, tmpSqrt);
+#	fp_fi = floatDivInexact(floatOne, tmpSqrt);
+#	fp_ox = fp_ox | floatDivOverflow(floatOne, tmpSqrt);
+#	fp_ux = fp_ux | floatDivUnderflow(floatOne, tmpSqrt);
+	fp_xx = fp_xx | fp_fi;
+	fp_vxsnan = fp_vxsnan | nan(fB);
+	fp_vxsqrt = fp_vxsqrt | sqrtInvalid(fB);
+	setSummaryFPSCR();	
+	cr1flags();
+}
+
+#fsel f0r,fr0,fr0,fr0	0xfc 00 00 2e
+:fsel fD,fA,fC,fB	is $(NOTVLE) & OP=63 & fD & fA & fB & fC & XOP_1_5=23 & Rc=0
+{
+	zero:4=0;
+	fD=fC;
+	if (fA f> int2float(zero)) goto inst_next; 
+	fD=fB; 
+}
+
+#fsel. fr0,fr0,fr0,fr0	0xfc 00 00 2f
+:fsel. fD,fA,fC,fB	is $(NOTVLE) & OP=63 & fD & fA & fB & fC & XOP_1_5=23 & Rc=1
+{
+	zero:4=0;
+	fD=fC;
+	cr1flags();
+	if (fA f> int2float(zero)) goto inst_next; 
+	fD=fB; 
+}
+
+#fsqrt f0r,fr0	0xfc 00 00 2c
+:fsqrt fD,fB 	is $(NOTVLE) & OP=63 & fD & BITS_16_20=0 & fB & BITS_6_10=0 & XOP_1_5=22 & Rc=0
+{
+	fD = sqrt(fB);
+	setFPRF(fD);
+#	fp_fr = floatSqrtRoundedUp(fB);
+#	fp_fi = floatSqrtInexact(fB);
+	fp_xx = fp_xx | fp_fi;
+	fp_vxsnan = fp_vxsnan | nan(fB);
+#	fp_vxsqrt = fp_vxsqrt | sqrtInvalid(fB);	
+	setSummaryFPSCR();	
+}
+ 
+#fsqrt. fr0,fr0	0xfc 00 00 2d
+:fsqrt. fD,fB 	is $(NOTVLE) & OP=63 & fD & BITS_16_20=0 & fB & BITS_6_10=0 & XOP_1_5=22 & Rc=1
+{
+	fD = sqrt(fB);
+	setFPRF(fD);
+#	fp_fr = floatSqrtRoundedUp(fB);
+#	fp_fi = floatSqrtInexact(fB);
+	fp_xx = fp_xx | fp_fi;
+	fp_vxsnan = fp_vxsnan | nan(fB);
+#	fp_vxsqrt = fp_vxsqrt | sqrtInvalid(fB);	
+	setSummaryFPSCR();	
+	cr1flags();
+} 
+
+#fsqrts fr0,fr0	0xec 00 00 2c
+:fsqrts fD,fB 	is $(NOTVLE) & OP=59 & fD & BITS_16_20=0 & fB & BITS_6_10=0 & XOP_1_5=22 & Rc=0
+{
+	tmp:4 = float2float(sqrt(fB));
+	fD = float2float(tmp);
+	setFPRF(fD);
+#	fp_fr = floatSqrtRoundedUp(fB);
+#	fp_fi = floatSqrtInexact(fB);
+	fp_xx = fp_xx | fp_fi;
+	fp_vxsnan = fp_vxsnan | nan(fB);
+#	fp_vxsqrt = fp_vxsqrt | sqrtInvalid(fB);	
+	setSummaryFPSCR();	
+}
+ 
+#fsqrts. fr0,fr0	0xec 00 00 2d
+:fsqrts. fD,fB 	is $(NOTVLE) & OP=59 & fD & BITS_16_20=0 & fB & BITS_6_10=0 & XOP_1_5=22 & Rc=1
+{
+	tmp:4 = float2float(sqrt(fB));
+	fD = float2float(tmp);
+	setFPRF(fD);
+#	fp_fr = floatSqrtRoundedUp(fB);
+#	fp_fi = floatSqrtInexact(fB);
+	fp_xx = fp_xx | fp_fi;
+	fp_vxsnan = fp_vxsnan | nan(fB);
+#	fp_vxsqrt = fp_vxsqrt | sqrtInvalid(fB);	
+	setSummaryFPSCR();	
+	cr1flags();
+} 
+
+#fsub fr0,fr0,fr0	0xfc 00 00 28
+:fsub fD,fA,fB	is $(NOTVLE) & OP=63 & fD & fA & fB & BITS_6_10=0 & XOP_1_5=20 & Rc=0
+{
+	fD = fA f- fB;
+	setFPSubFlags(fA,fB,fD);
+}
+
+#fsub. fr0,fr0,fr0	0xfc 00 00 29
+:fsub. fD,fA,fB	is $(NOTVLE) & OP=63 & fD & fA & fB & BITS_6_10=0 & XOP_1_5=20 & Rc=1
+{
+	fD = fA f- fB;
+	setFPSubFlags(fA,fB,fD);
+	cr1flags();
+}
+
+#fsubs fr0,fr0,fr0	0xec 00 00 28
+:fsubs fD,fA,fB	is $(NOTVLE) & OP=59 & fD & fA & fB & BITS_6_10=0 & XOP_1_5=20 & Rc=0
+{
+	tmp:4 = float2float(fA f- fB);
+	fD = float2float(tmp);
+	setFPSubFlags(fA,fB,fD);
+	
+}
+
+#fsubs. fr0,fr0,fr0	0xec 00 00 29
+:fsubs. fD,fA,fB	is $(NOTVLE) & OP=59 & fD & fA & fB & BITS_6_10=0 & XOP_1_5=20 & Rc=1
+{
+	tmp:4 = float2float(fA f- fB);
+	fD = float2float(tmp);
+	setFPSubFlags(fA,fB,fD);
+	cr1flags();
+}
+
+@ifndef IS_ISA
+# iccci is just a special form of ici
+#iccci 0,r0            0x7c 00 07 8c
+:iccci RA_OR_ZERO,B		is OP=31 & BITS_21_25=0 & B & XOP_1_10=966 & BIT_0=0 & RA_OR_ZERO
+{
+	ea:$(REGISTER_SIZE) = RA_OR_ZERO + B;
+	instructionCacheCongruenceClassInvalidate(ea);	
+}
+@endif
+
+#icread 0,r0           0x7c 00 07 cc
+:icread RA_OR_ZERO,B		is OP=31 & BITS_21_25=0 & B & XOP_1_10=998 & BIT_0=0 & RA_OR_ZERO
+{
+	ea:$(REGISTER_SIZE) = RA_OR_ZERO + B;
+	instructionCacheRead(ea);	
+}
+
+#lbz	r0,3(0)		0x88 00 00 03
+#lbz	r0,3(r2)	0x88 02 00 03
+:lbz	D,dPlusRaOrZeroAddress	is $(NOTVLE) & OP=34 & D & dPlusRaOrZeroAddress
+{
+	D = zext(*:1(dPlusRaOrZeroAddress));
+	
+}
+
+#lbzu	r0,3(r2)	0x8c 02 00 03
+:lbzu	D,dPlusRaAddress	is $(NOTVLE) & OP=35 & D & dPlusRaAddress & A
+{
+	A = dPlusRaAddress;
+	D = zext(*:1(A));
+	
+}
+
+#lbzux	r0,r2,r0	0x7c 02 00 ee
+:lbzux	D,A,B				is OP=31 & D & A & B & XOP_1_10=119 & BIT_0=0
+{
+	A = A+B;
+	D = zext(*:1(A));
+}
+
+#lbzx	r0,r2,r0	0x7c 02 00 ae
+:lbzx	D,RA_OR_ZERO,B		is OP=31 & D & RA_OR_ZERO & B & XOP_1_10=87 & BIT_0=0
+{
+	tmp:$(REGISTER_SIZE) = RA_OR_ZERO+B;
+	D = zext(*:1(tmp));
+}
+
+@ifdef BIT_64
+#ld r0,8(r2)	0xe8 02 00 08	
+:ld	D,dPlusRaOrZeroAddress 	is $(NOTVLE) & OP=58 & D & dPlusRaOrZeroAddress & BITS_0_1=0
+{
+	D = *:8(dPlusRaOrZeroAddress);
+}
+
+##ldarx r0,r0,r0	 0x7c 00 00 a8
+#:ldarx T,RA_OR_ZERO,B	is $(NOTVLE) & OP=31 & T & RA_OR_ZERO & B & XOP_1_10=84 & TX
+#{
+#	ea = RA_OR_ZERO+B;
+#	RESERVE = 1;
+#	RESERVE_ADDRSS = ea;
+#	T = *:8(ea);
+#}
+
+#ldu	r0,8(r2)	0xe8 02 00 09
+:ldu	D,dsPlusRaAddress	is $(NOTVLE) & OP=58 & D & dsPlusRaAddress & A & BITS_0_1=1
+{
+	A = dsPlusRaAddress;
+	D = *:8(A);
+}
+
+#ldux	r0,r2,r0	0x7c 02 00 6a
+:ldux	D,A,B			is OP=31 & D & A & B & XOP_1_10=53 & BIT_0=0
+{
+	A = A+B;
+	D = *:8(A);
+}
+
+@ifndef IS_ISA
+#ldarx r0,r2,r0	 0x7c 02 00 2a
+:ldarx D,RA_OR_ZERO,B	is OP=31 & D & RA_OR_ZERO & B & XOP_1_10=21 & BIT_0=0
+{
+	ea:$(REGISTER_SIZE) = RA_OR_ZERO+B;
+	D = *:8(ea);
+}
+@endif
+@endif
+
+#lfd fr0,8(r2)	0xc8 02 00 08	
+:lfd	fD,dPlusRaOrZeroAddress 	is $(NOTVLE) & OP=50 & fD & dPlusRaOrZeroAddress
+{
+	fD = *:8(dPlusRaOrZeroAddress);
+}
+
+#lfdu fr0,8(r2)	0xcc 02 00 08	
+:lfdu	fD,dPlusRaAddress 	is $(NOTVLE) & OP=51 & fD & dPlusRaAddress & A
+{
+	A = dPlusRaAddress;
+	fD = *:8(A);
+}
+#lfdux fr0,r2,r0	0x7c 02 04 ee	
+:lfdux	fD,A,B 	is $(NOTVLE) & OP=31 & fD & A & B & XOP_1_10=631 & BIT_0=0
+{
+	A = A+B;
+	fD = *:8(A);
+}
+#lfdx fr0,r2,r0	0x7c 02 04 ae	
+:lfdx	fD,RA_OR_ZERO,B 	is $(NOTVLE) & OP=31 & fD & RA_OR_ZERO & B & XOP_1_10=599 & BIT_0=0
+{
+	fD = *:8(RA_OR_ZERO+B);
+}
+
+#lfs fr0,8(r2)	0xc0 02 00 08	
+:lfs	fD,dPlusRaOrZeroAddress 	is $(NOTVLE) & OP=48 & fD & dPlusRaOrZeroAddress
+{
+	fD = float2float(*:4(dPlusRaOrZeroAddress));
+}
+#lfsu fr0,8(r2)	0xc0 02 00 08	
+:lfsu	fD,dPlusRaAddress 	is $(NOTVLE) & OP=49 & fD & dPlusRaAddress & A
+{
+	A = dPlusRaAddress;
+	fD = float2float(*:4(A));
+}
+
+#lfsux fr0,r2,r0	0x7c 02 04 6e	
+:lfsux	fD,A,B 	is $(NOTVLE) & OP=31 & fD & A & B & XOP_1_10=567 & BIT_0=0
+{
+	A = A+B;
+	fD = float2float(*:4(A));
+}
+#lfsx fr0,r2,r0	0x7c 02 04 2e	
+:lfsx	fD,RA_OR_ZERO,B 	is $(NOTVLE) & OP=31 & fD & RA_OR_ZERO & B & XOP_1_10=535 & BIT_0=0
+{
+	fD = float2float(*:4(RA_OR_ZERO+B));
+}
+#lha	r0,4(0)		0xa8 00 00 04
+#lha	r0,4(r2)	0xa8 02 00 04
+:lha	D,dPlusRaOrZeroAddress	is $(NOTVLE) & OP=42 & D & dPlusRaOrZeroAddress
+{
+	D = sext(*:2(dPlusRaOrZeroAddress));
+	
+}
+#lhau r0,8(r2)	0xac 02 00 08	
+:lhau D,dPlusRaAddress 	is $(NOTVLE) & OP=43 & D & dPlusRaAddress & A
+{
+	A = dPlusRaAddress;
+	D = sext(*:2(A));
+}
+#lhaux r0,r2,r0	0x7c 02 02 ee	
+:lhaux D,A,B 			is OP=31 & D & A & B & XOP_1_10=375 & BIT_0=0
+{
+	A = A+B;
+	D = sext(*:2(A));
+}
+#lhax r0,r2,r0	0x7c 02 02 ae	
+:lhax D,RA_OR_ZERO,B 	is OP=31 & D & RA_OR_ZERO & B & XOP_1_10=343 & BIT_0=0
+{
+	D = sext(*:2(RA_OR_ZERO+B));
+}
+
+#lhbrx r0,r2,r0	0x7c 02 06 2c	
+:lhbrx D,RA_OR_ZERO,B 	is OP=31 & D & RA_OR_ZERO & B & XOP_1_10=790 & BIT_0=0
+{
+	ea:$(REGISTER_SIZE) = RA_OR_ZERO+B;
+	tmp:$(REGISTER_SIZE) = zext(*:1(ea+1)) << 8;
+	D = tmp | zext(*:1(ea));
+}
+
+#lhz	r0,4(0)		0xa0 00 00 04
+#lhz	r0,4(r2)	0xa0 02 00 04
+:lhz	D,dPlusRaOrZeroAddress	is $(NOTVLE) & OP=40 & D & dPlusRaOrZeroAddress
+{
+	D = zext(*:2(dPlusRaOrZeroAddress));
+	
+}
+
+#lhzu	r0,4(r2)	0xa4 02 00 04
+:lhzu	D,dPlusRaAddress	is $(NOTVLE) & OP=41 & D & dPlusRaAddress & A
+{
+	A = dPlusRaAddress;
+	D = zext(*:2(A));
+}
+
+#lhzux r0,r2,r0	0x7c 02 02 6e	
+:lhzux D,A,B 			is OP=31 & D & A & B & XOP_1_10=311 & BIT_0=0
+{
+	A = A+B;
+	D = zext(*:2(A));
+}
+#lhzx r0,r2,r0	0x7c 02 02 2e	
+:lhzx D,RA_OR_ZERO,B 	is OP=31 & D & RA_OR_ZERO & B & XOP_1_10=279 & BIT_0=0
+{
+	D = zext(*:2(RA_OR_ZERO+B));
+}
+
+# big stuffs
+@include "lmwInstructions.sinc"
+
+@include "lswInstructions.sinc"
+
+#lswx	r0,0,r0			0x7c 00 3c 2a
+#lswx	r0,r2,40		0x7c 02 3c 2a
+define pcodeop lswxOp;
+:lswx	D,RA_OR_ZERO,B	is OP=31 & D & RA_OR_ZERO & NB & BITS_21_25 & B & XOP_1_10=533 & BIT_0=0
+{
+	D = lswxOp(D,RA_OR_ZERO,B);
+}
+@ifdef BIT_64
+#lwa	r0,8(r2)	0xe8 02 00 0a
+:lwa	D,dsPlusRaOrZeroAddress	is $(NOTVLE) & OP=58 & D & dsPlusRaOrZeroAddress & BITS_0_1=2
+{
+	D = sext(*:4(dsPlusRaOrZeroAddress));
+}
+@endif
+
+#lwarx r0,r0,r0	 0x7c 00 00 28
+:lwarx D,RA_OR_ZERO,B	is OP=31 & D & RA_OR_ZERO & B & XOP_1_10=20 & BIT_0=0
+{
+	ea:$(REGISTER_SIZE) = RA_OR_ZERO+B;
+	#RESERVE = 1;
+	#RESERVE_ADDRSS:$(REGISTER_SIZE) = ea;
+@ifdef BIT_64
+	D = zext(*:4(ea));
+@else
+	D = *:4(ea);
+@endif
+}
+
+@ifdef BIT_64
+#lwaux r0,r2,r0	0x7c 02 02 ea	
+:lwaux D,A,B 			is OP=31 & D & A & B & XOP_1_10=373 & BIT_0=0
+{
+	A = A+B;
+	D = sext(*:4(A));
+}
+#lwax r0,r2,r0	0x7c 02 02 aa	
+:lwax D,RA_OR_ZERO,B 	is OP=31 & D & RA_OR_ZERO & B & XOP_1_10=341 & BIT_0=0
+{
+	D = sext(*:4(RA_OR_ZERO));
+}
+@endif
+
+#lwbrx r0,r2,r0	0x7c 02 04 2c	
+:lwbrx D,RA_OR_ZERO,B 	is OP=31 & D & RA_OR_ZERO & B & XOP_1_10=534 & BIT_0=0
+{
+	ea:$(REGISTER_SIZE) = RA_OR_ZERO+B;
+	tmp1:$(REGISTER_SIZE) = zext(*:1(ea+3)) << 24;
+	tmp2:$(REGISTER_SIZE) = zext(*:1(ea+2)) << 16;
+	tmp3:$(REGISTER_SIZE) = zext(*:1(ea+1)) << 8;
+	D = tmp1 | tmp2 | tmp3 | zext(*:1(ea));
+}
+#lwz	r0,4(0)		0x80 00 00 04
+#lwz	r0,4(r2)	0x80 02 00 04
+:lwz	D,dPlusRaOrZeroAddress	is $(NOTVLE) & OP=32 & D & dPlusRaOrZeroAddress
+{
+@ifdef BIT_64
+	D = zext(*:4(dPlusRaOrZeroAddress));
+@else
+	D = *:4(dPlusRaOrZeroAddress);
+@endif
+}
+
+#lwzu	r0,4(r2)	0x84 02 00 04
+:lwzu	D,dPlusRaAddress	is $(NOTVLE) & OP=33 & D & dPlusRaAddress & A
+{
+	A = dPlusRaAddress;
+@ifdef BIT_64
+	D = zext(*:4(A));
+@else
+	D = *:4(A);
+@endif
+}
+
+#lwzux r0,r2,r0	0x7c 02 00 6e	
+:lwzux D,A,B 			is OP=31 & D & A & B & XOP_1_10=55 & BIT_0=0
+{
+	A = A+B;
+@ifdef BIT_64
+	D = zext(*:4(A));
+@else
+	D = *:4(A);
+@endif
+
+}
+#lwzx r0,r2,r0	0x7c 02 00 2e	
+:lwzx D,RA_OR_ZERO,B 	is OP=31 & D & RA_OR_ZERO & B & XOP_1_10=23 & BIT_0=0
+{
+@ifdef BIT_64
+	D = zext(*:4(RA_OR_ZERO+B));
+@else
+	D = *:4(RA_OR_ZERO+B);
+@endif
+}
+
+#macchw r0,r0,r0	0x10 00 01 58
+:macchw D,A,B		is OP=4 & D & A & B & OE=0 & XOP_1_9=172 & Rc=0
+{
+        D = macchw(D, A, B);
+}
+
+#macchw. r0,r0,r0	0x10 00 01 59
+:macchw. D,A,B		is OP=4 & D & A & B & OE=0 & XOP_1_9=172 & Rc=1
+{
+        D = macchw(D, A, B);
+	cr0flags(D);	
+}
+
+#macchwo r0,r0,r0	0x10 00 05 58
+:macchwo D,A,B		is OP=4 & D & A & B & OE=1 & XOP_1_9=172 & Rc=0
+{
+        D = macchw(D, A, B);
+        xer_mac_update(D, A, B);
+}
+
+@ifndef NoLegacyIntegerMultiplyAccumulate
+#macchwo. r0,r0,r0	0x10 00 05 59
+:macchwo. D,A,B		is OP=4 & D & A & B & OE=1 & XOP_1_9=172 & Rc=1
+{
+        D = macchw(D, A, B);
+        xer_mac_update(D, A, B);
+	cr0flags(D);	
+}
+@endif
+
+#macchws r0,r0,r0	0x10 00 01 d8
+:macchws D,A,B		is OP=4 & D & A & B & OE=0 & XOP_1_9=236 & Rc=0
+{
+        D = macchws(D, A, B);
+}
+
+#macchws. r0,r0,r0	0x10 00 01 d9
+:macchws. D,A,B		is OP=4 & D & A & B & OE=0 & XOP_1_9=236 & Rc=1
+{
+        D = macchws(D, A, B);
+	cr0flags(D);	
+}
+
+@ifndef NoLegacyIntegerMultiplyAccumulate
+#macchwso r0,r0,r0	0x10 00 05 d8
+:macchwso D,A,B		is OP=4 & D & A & B & OE=1 & XOP_1_9=236 & Rc=0
+{
+        D = macchws(D, A, B);
+        xer_mac_update(D, A, B);
+}
+@endif
+
+@ifndef NoLegacyIntegerMultiplyAccumulate
+#macchwso. r0,r0,r0	0x10 00 05 d9
+:macchwso. D,A,B	is OP=4 & D & A & B & OE=1 & XOP_1_9=236 & Rc=1
+{
+        D = macchws(D, A, B);
+        xer_mac_update(D, A, B);
+	cr0flags(D);	
+}
+@endif
+
+#macchwsu r0,r0,r0	0x10 00 01 98
+:macchwsu D,A,B		is OP=4 & D & A & B & OE=0 & XOP_1_9=204 & Rc=0
+{
+        D = macchwsu(D, A, B);
+}
+
+#macchwsu. r0,r0,r0	0x10 00 01 99
+:macchwsu. D,A,B		is OP=4 & D & A & B & OE=0 & XOP_1_9=204 & Rc=1
+{
+        D = macchwsu(D, A, B);
+	cr0flags(D);	
+}
+
+#macchwsuo r0,r0,r0	0x10 00 05 98
+:macchwsuo D,A,B		is OP=4 & D & A & B & OE=1 & XOP_1_9=204 & Rc=0
+{
+        D = macchwsu(D, A, B);
+        xer_mac_update(D, A, B);
+}
+
+#macchwsuo. r0,r0,r0	0x10 00 05 99
+:macchwsuo. D,A,B	is OP=4 & D & A & B & OE=1 & XOP_1_9=204 & Rc=1
+{
+        D = macchwsu(D, A, B);
+        xer_mac_update(D, A, B);
+	cr0flags(D);	
+}
+
+#macchwu r0,r0,r0	0x10 00 01 18
+:macchwu D,A,B		is OP=4 & D & A & B & OE=0 & XOP_1_9=140 & Rc=0
+{
+        D = macchwu(D, A, B);
+}
+
+#macchwu. r0,r0,r0	0x10 00 01 19
+:macchwu. D,A,B		is OP=4 & D & A & B & OE=0 & XOP_1_9=140 & Rc=1
+{
+        D = macchwu(D, A, B);
+	cr0flags(D);	
+}
+
+#macchwuo r0,r0,r0	0x10 00 05 18
+:macchwuo D,A,B		is OP=4 & D & A & B & OE=1 & XOP_1_9=140 & Rc=0
+{
+        D = macchwu(D, A, B);
+        xer_mac_update(D, A, B);
+}
+
+#macchwuo. r0,r0,r0	0x10 00 05 19
+:macchwuo. D,A,B	is OP=4 & D & A & B & OE=1 & XOP_1_9=140 & Rc=1
+{
+        D = macchwu(D, A, B);
+        xer_mac_update(D, A, B);
+	cr0flags(D);	
+}
+
+
+#machhw r0,r0,r0	0x10 00 00 58
+:machhw D,A,B		is OP=4 & D & A & B & OE=0 & XOP_1_9=44 & Rc=0
+{
+        D = machhw(D, A, B);
+}
+
+#machhw. r0,r0,r0	0x10 00 00 59
+:machhw. D,A,B		is OP=4 & D & A & B & OE=0 & XOP_1_9=44 & Rc=1
+{
+        D = machhw(D, A, B);
+	cr0flags(D);	
+}
+
+@ifndef NoLegacyIntegerMultiplyAccumulate
+#machhwo r0,r0,r0	0x10 00 04 58
+:machhwo D,A,B		is OP=4 & D & A & B & OE=1 & XOP_1_9=44 & Rc=0
+{
+        D = machhw(D, A, B);
+        xer_mac_update(D, A, B);
+}
+@endif
+
+@ifndef NoLegacyIntegerMultiplyAccumulate
+#machhwo. r0,r0,r0	0x10 00 04 59
+:machhwo. D,A,B		is OP=4 & D & A & B & OE=1 & XOP_1_9=44 & Rc=1
+{
+        D = machhw(D, A, B);
+        xer_mac_update(D, A, B);
+	cr0flags(D);	
+}
+@endif
+
+#machhws r0,r0,r0	0x10 00 00 d8
+:machhws D,A,B		is OP=4 & D & A & B & OE=0 & XOP_1_9=108 & Rc=0
+{
+        D = machhws(D, A, B);
+}
+
+#machhws. r0,r0,r0	0x10 00 00 d9
+:machhws. D,A,B		is OP=4 & D & A & B & OE=0 & XOP_1_9=108 & Rc=1
+{
+        D = machhws(D, A, B);
+	cr0flags(D);	
+}
+
+#machhwso r0,r0,r0	0x10 00 04 d8
+:machhwso D,A,B		is OP=4 & D & A & B & OE=1 & XOP_1_9=108 & Rc=0
+{
+        D = machhws(D, A, B);
+        xer_mac_update(D, A, B);
+}
+
+#machhwso. r0,r0,r0	0x10 00 04 d9
+:machhwso. D,A,B	is OP=4 & D & A & B & OE=1 & XOP_1_9=108 & Rc=1
+{
+        D = machhws(D, A, B);
+        xer_mac_update(D, A, B);
+	cr0flags(D);	
+}
+
+#machhwsu r0,r0,r0	0x10 00 00 98
+:machhwsu D,A,B		is OP=4 & D & A & B & OE=0 & XOP_1_9=76 & Rc=0
+{
+        D = machhwsu(D, A, B);
+}
+
+#machhwsu. r0,r0,r0	0x10 00 00 99
+:machhwsu. D,A,B	is OP=4 & D & A & B & OE=0 & XOP_1_9=76 & Rc=1
+{
+        D = machhwsu(D, A, B);
+	cr0flags(D);	
+}
+
+#machhwsuo r0,r0,r0	0x10 00 04 98
+:machhwsuo D,A,B	is OP=4 & D & A & B & OE=1 & XOP_1_9=76 & Rc=0
+{
+        D = machhwsu(D, A, B);
+        xer_mac_update(D, A, B);
+}
+
+#machhwsuo. r0,r0,r0	0x10 00 04 99
+:machhwsuo. D,A,B	is OP=4 & D & A & B & OE=1 & XOP_1_9=76 & Rc=1
+{
+        D = machhwsu(D, A, B);
+        xer_mac_update(D, A, B);
+	cr0flags(D);	
+}
+
+#machhwu r0,r0,r0	0x10 00 00 18
+:machhwu D,A,B		is OP=4 & D & A & B & OE=0 & XOP_1_9=12 & Rc=0
+{
+        D = machhwu(D, A, B);
+}
+
+#machhwu. r0,r0,r0	0x10 00 00 19
+:machhwu. D,A,B		is OP=4 & D & A & B & OE=0 & XOP_1_9=12 & Rc=1
+{
+        D = machhwu(D, A, B);
+	cr0flags(D);	
+}
+
+#machhwuo r0,r0,r0	0x10 00 04 18
+:machhwuo D,A,B		is OP=4 & D & A & B & OE=1 & XOP_1_9=12 & Rc=0
+{
+        D = machhwu(D, A, B);
+        xer_mac_update(D, A, B);
+}
+
+#machhwuo. r0,r0,r0	0x10 00 04 19
+:machhwuo. D,A,B	is OP=4 & D & A & B & OE=1 & XOP_1_9=12 & Rc=1
+{
+        D = machhwu(D, A, B);
+        xer_mac_update(D, A, B);
+	cr0flags(D);	
+}
+
+
+#maclhw r0,r0,r0	0x10 00 03 58
+:maclhw D,A,B		is OP=4 & D & A & B & OE=0 & XOP_1_9=428 & Rc=0
+{
+        D = maclhw(D, A, B);
+}
+
+#maclhw. r0,r0,r0	0x10 00 03 59
+:maclhw. D,A,B		is OP=4 & D & A & B & OE=0 & XOP_1_9=428 & Rc=1
+{
+        D = maclhw(D, A, B);
+	cr0flags(D);	
+}
+
+#maclhwo r0,r0,r0	0x10 00 07 58
+:maclhwo D,A,B		is OP=4 & D & A & B & OE=1 & XOP_1_9=428 & Rc=0
+{
+        D = maclhw(D, A, B);
+        xer_mac_update(D, A, B);
+}
+
+#maclhwo. r0,r0,r0	0x10 00 07 59
+:maclhwo. D,A,B		is OP=4 & D & A & B & OE=1 & XOP_1_9=428 & Rc=1
+{
+        D = maclhw(D, A, B);
+        xer_mac_update(D, A, B);
+	cr0flags(D);	
+}
+
+#maclhws r0,r0,r0	0x10 00 03 d8
+:maclhws D,A,B		is OP=4 & D & A & B & OE=0 & XOP_1_9=492 & Rc=0
+{
+        D = maclhws(D, A, B);
+}
+
+#maclhws. r0,r0,r0	0x10 00 03 d9
+:maclhws. D,A,B		is OP=4 & D & A & B & OE=0 & XOP_1_9=492 & Rc=1
+{
+        D = maclhws(D, A, B);
+	cr0flags(D);	
+}
+
+#maclhwso r0,r0,r0	0x10 00 07 d8
+:maclhwso D,A,B		is OP=4 & D & A & B & OE=1 & XOP_1_9=492 & Rc=0
+{
+        D = maclhws(D, A, B);
+        xer_mac_update(D, A, B);
+}
+
+#maclhwso. r0,r0,r0	0x10 00 07 d9
+:maclhwso. D,A,B	is OP=4 & D & A & B & OE=1 & XOP_1_9=492 & Rc=1
+{
+        D = maclhws(D, A, B);
+        xer_mac_update(D, A, B);
+	cr0flags(D);	
+}
+
+#maclhwsu r0,r0,r0	0x10 00 03 98
+:maclhwsu D,A,B		is OP=4 & D & A & B & OE=0 & XOP_1_9=460 & Rc=0
+{
+        D = maclhwsu(D, A, B);
+}
+
+#maclhwsu. r0,r0,r0	0x10 00 03 99
+:maclhwsu. D,A,B	is OP=4 & D & A & B & OE=0 & XOP_1_9=460 & Rc=1
+{
+        D = maclhwsu(D, A, B);
+	cr0flags(D);	
+}
+
+#maclhwsuo r0,r0,r0	0x10 00 07 98
+:maclhwsuo D,A,B	is OP=4 & D & A & B & OE=1 & XOP_1_9=460 & Rc=0
+{
+        D = maclhwsu(D, A, B);
+        xer_mac_update(D, A, B);
+}
+
+#maclhwsuo. r0,r0,r0	0x10 00 07 99
+:maclhwsuo. D,A,B	is OP=4 & D & A & B & OE=1 & XOP_1_9=460 & Rc=1
+{
+        D = maclhwsu(D, A, B);
+        xer_mac_update(D, A, B);
+	cr0flags(D);	
+}
+
+@ifndef NoLegacyIntegerMultiplyAccumulate
+#maclhwu r0,r0,r0	0x10 00 03 18
+:maclhwu D,A,B		is OP=4 & D & A & B & OE=0 & XOP_1_9=396 & Rc=0
+{
+        D = maclhwu(D, A, B);
+}
+@endif
+
+@ifndef NoLegacyIntegerMultiplyAccumulate
+#maclhwu. r0,r0,r0	0x10 00 03 19
+:maclhwu. D,A,B		is OP=4 & D & A & B & OE=0 & XOP_1_9=396 & Rc=1
+{
+        D = maclhwu(D, A, B);
+	cr0flags(D);	
+}
+@endif
+
+#maclhwuo r0,r0,r0	0x10 00 07 18
+:maclhwuo D,A,B		is OP=4 & D & A & B & OE=1 & XOP_1_9=396 & Rc=0
+{
+        D = maclhwu(D, A, B);
+        xer_mac_update(D, A, B);
+}
+
+#maclhwuo. r0,r0,r0	0x10 00 07 19
+:maclhwuo. D,A,B	is OP=4 & D & A & B & OE=1 & XOP_1_9=396 & Rc=1
+{
+        D = maclhwu(D, A, B);
+        xer_mac_update(D, A, B);
+	cr0flags(D);	
+}
+
+#mulchw r0,r0,r0	0x10 00 01 50
+:mulchw D,A,B		is OP=4 & D & A & B & XOP_1_10=168 & Rc=0
+{
+        D = mulchw(D, A, B);
+}
+
+#mulchw. r0,r0,r0	0x10 00 01 51
+:mulchw. D,A,B		is OP=4 & D & A & B & XOP_1_10=168 & Rc=1
+{
+        D = mulchw(D, A, B);
+	cr0flags(D);	
+}
+
+#mulchwu r0,r0,r0	0x10 00 01 10
+:mulchwu D,A,B		is OP=4 & D & A & B & XOP_1_10=136 & Rc=0
+{
+        D = mulchwu(D, A, B);
+}
+
+#mulchwu. r0,r0,r0	0x10 00 01 11
+:mulchwu. D,A,B		is OP=4 & D & A & B & XOP_1_10=136 & Rc=1
+{
+        D = mulchwu(D, A, B);
+	cr0flags(D);	
+}
+
+#mulhhw r0,r0,r0	0x10 00 00 50
+:mulhhw D,A,B		is OP=4 & D & A & B & XOP_1_10=40 & Rc=0
+{
+        D = mulhhw(D, A, B);
+}
+
+#mulhhw. r0,r0,r0	0x10 00 00 51
+:mulhhw. D,A,B		is OP=4 & D & A & B & XOP_1_10=40 & Rc=1
+{
+        D = mulhhw(D, A, B);
+	cr0flags(D);	
+}
+
+#mulhhwu r0,r0,r0	0x10 00 00 10
+:mulhhwu D,A,B		is OP=4 & D & A & B & XOP_1_10=8 & Rc=0
+{
+        D = mulhhwu(D, A, B);
+}
+
+#mulhhwu. r0,r0,r0	0x10 00 00 11
+:mulhhwu. D,A,B		is OP=4 & D & A & B & XOP_1_10=8 & Rc=1
+{
+        D = mulhhwu(D, A, B);
+	cr0flags(D);	
+}
+
+#mullhw r0,r0,r0	0x10 00 03 50
+:mullhw D,A,B		is OP=4 & D & A & B & XOP_1_10=424 & Rc=0
+{
+        D = mullhw(D, A, B);
+}
+
+#mullhw. r0,r0,r0	0x10 00 03 51
+:mullhw. D,A,B		is OP=4 & D & A & B & XOP_1_10=424 & Rc=1
+{
+        D = mullhw(D, A, B);
+	cr0flags(D);	
+}
+
+@ifndef NoLegacyIntegerMultiplyAccumulate
+# mulhwu r0,r0,r0	0x10 00 03 10
+:mullhwu D,A,B		is OP=4 & D & A & B & XOP_1_10=392 & Rc=0
+{
+        D = mullhwu(D, A, B);
+}
+@endif
+
+@ifndef NoLegacyIntegerMultiplyAccumulate
+#mullhwu. r0,r0,r0	0x10 00 03 11
+:mullhwu. D,A,B		is OP=4 & D & A & B & XOP_1_10=392 & Rc=1
+{
+        D = mullhwu(D, A, B);
+	cr0flags(D);	
+}
+@endif
+
+#nmacchw r0,r0,r0	0x10 00 01 5c
+:nmacchw D,A,B		is OP=4 & D & A & B & OE=0 & XOP_1_9=174 & Rc=0
+{
+        D = nmacchw(D, A, B);
+}
+
+#nmacchw. r0,r0,r0	0x10 00 01 5d
+:nmacchw. D,A,B		is OP=4 & D & A & B & OE=0 & XOP_1_9=174 & Rc=1
+{
+        D = nmacchw(D, A, B);
+	cr0flags(D);	
+}
+
+#nmacchwo r0,r0,r0	0x10 00 05 5c
+:nmacchwo D,A,B		is OP=4 & D & A & B & OE=1 & XOP_1_9=174 & Rc=0
+{
+        D = nmacchw(D, A, B);
+        xer_mac_update(D, A, B);
+}
+
+#nmacchwo. r0,r0,r0	0x10 00 05 5d
+:nmacchwo. D,A,B	is OP=4 & D & A & B & OE=1 & XOP_1_9=174 & Rc=1
+{
+        D = nmacchw(D, A, B);
+        xer_mac_update(D, A, B);
+	cr0flags(D);	
+}
+
+#nmacchws r0,r0,r0	0x10 00 01 dc
+:nmacchws D,A,B		is OP=4 & D & A & B & OE=0 & XOP_1_9=238 & Rc=0
+{
+        D = nmacchws(D, A, B);
+}
+
+#nmacchws. r0,r0,r0	0x10 00 01 dd
+:nmacchws. D,A,B	is OP=4 & D & A & B & OE=0 & XOP_1_9=238 & Rc=1
+{
+        D = nmacchws(D, A, B);
+	cr0flags(D);	
+}
+
+#nmacchwso r0,r0,r0	0x10 00 05 dc
+:nmacchwso D,A,B	is OP=4 & D & A & B & OE=1 & XOP_1_9=238 & Rc=0
+{
+        D = nmacchws(D, A, B);
+        xer_mac_update(D, A, B);
+}
+
+#nmacchwso. r0,r0,r0	0x10 00 05 dd
+:nmacchwso. D,A,B	is OP=4 & D & A & B & OE=1 & XOP_1_9=238 & Rc=1
+{
+        D = nmacchws(D, A, B);
+        xer_mac_update(D, A, B);
+	cr0flags(D);	
+}
+
+#nmachhw r0,r0,r0	0x10 00 00 5c
+:nmachhw D,A,B		is OP=4 & D & A & B & OE=0 & XOP_1_9=46 & Rc=0
+{
+        D = nmachhw(D, A, B);
+}
+
+#nmachhw. r0,r0,r0	0x10 00 00 5d
+:nmachhw. D,A,B		is OP=4 & D & A & B & OE=0 & XOP_1_9=46 & Rc=1
+{
+        D = nmachhw(D, A, B);
+	cr0flags(D);	
+}
+
+#nmachhwo r0,r0,r0	0x10 00 04 5c
+:nmachhwo D,A,B		is OP=4 & D & A & B & OE=1 & XOP_1_9=46 & Rc=0
+{
+        D = nmachhw(D, A, B);
+        xer_mac_update(D, A, B);
+}
+
+#nmachhwo. r0,r0,r0	0x10 00 04 5d
+:nmachhwo. D,A,B	is OP=4 & D & A & B & OE=1 & XOP_1_9=46 & Rc=1
+{
+        D = nmachhw(D, A, B);
+        xer_mac_update(D, A, B);
+	cr0flags(D);	
+}
+
+#nmachhws r0,r0,r0	0x10 00 00 dc
+:nmachhws D,A,B		is OP=4 & D & A & B & OE=0 & XOP_1_9=110 & Rc=0
+{
+        D = nmachhws(D, A, B);
+}
+
+#nmachhws. r0,r0,r0	0x10 00 00 dd
+:nmachhws. D,A,B	is OP=4 & D & A & B & OE=0 & XOP_1_9=110 & Rc=1
+{
+        D = nmachhws(D, A, B);
+	cr0flags(D);	
+}
+
+#nmachhwso r0,r0,r0	0x10 00 04 dc
+:nmachhwso D,A,B	is OP=4 & D & A & B & OE=1 & XOP_1_9=110 & Rc=0
+{
+        D = nmachhws(D, A, B);
+        xer_mac_update(D, A, B);
+}
+
+#nmachhwso. r0,r0,r0	0x10 00 04 dd
+:nmachhwso. D,A,B	is OP=4 & D & A & B & OE=1 & XOP_1_9=110 & Rc=1
+{
+        D = nmachhws(D, A, B);
+        xer_mac_update(D, A, B);
+	cr0flags(D);	
+}
+
+#nmaclhw r0,r0,r0	0x10 00 03 5c
+:nmaclhw D,A,B		is OP=4 & D & A & B & OE=0 & XOP_1_9=430 & Rc=0
+{
+        D = nmaclhw(D, A, B);
+}
+
+#nmaclhw. r0,r0,r0	0x10 00 03 5d
+:nmaclhw. D,A,B		is OP=4 & D & A & B & OE=0 & XOP_1_9=430 & Rc=1
+{
+        D = nmaclhw(D, A, B);
+	cr0flags(D);	
+}
+
+#nmaclhwo r0,r0,r0	0x10 00 07 5c
+:nmaclhwo D,A,B		is OP=4 & D & A & B & OE=1 & XOP_1_9=430 & Rc=0
+{
+        D = nmaclhw(D, A, B);
+        xer_mac_update(D, A, B);
+}
+
+#nmaclhwo. r0,r0,r0	0x10 00 07 5d
+:nmaclhwo. D,A,B	is OP=4 & D & A & B & OE=1 & XOP_1_9=430 & Rc=1
+{
+        D = nmaclhw(D, A, B);
+        xer_mac_update(D, A, B);
+	cr0flags(D);	
+}
+
+#nmaclhws r0,r0,r0	0x10 00 03 dc
+:nmaclhws D,A,B		is OP=4 & D & A & B & OE=0 & XOP_1_9=494 & Rc=0
+{
+        D = nmaclhws(D, A, B);
+}
+
+#nmaclhws. r0,r0,r0	0x10 00 03 dd
+:nmaclhws. D,A,B	is OP=4 & D & A & B & OE=0 & XOP_1_9=494 & Rc=1
+{
+        D = nmaclhws(D, A, B);
+	cr0flags(D);	
+}
+
+#nmaclhwso r0,r0,r0	0x10 00 07 dc
+:nmaclhwso D,A,B	is OP=4 & D & A & B & OE=1 & XOP_1_9=494 & Rc=0
+{
+        D = nmaclhws(D, A, B);
+        xer_mac_update(D, A, B);
+}
+
+#nmaclhwso. r0,r0,r0	0x10 00 07 dd
+:nmaclhwso. D,A,B	is OP=4 & D & A & B & OE=1 & XOP_1_9=494 & Rc=1
+{
+        D = nmaclhws(D, A, B);
+        xer_mac_update(D, A, B);
+	cr0flags(D);	
+}
+
+#mcrf cr0,cr0	0x4c 00 00 00
+:mcrf CRFD,CRFS		is $(NOTVLE) & OP=19 & CRFD & BITS_21_22=0 & CRFS & BITS_0_17=0 
+{
+	CRFD = CRFS;
+}
+
+#mcrfs cr0,cr0	0xfc 00 00 80
+:mcrfs CRFD,CRFS	is $(NOTVLE) & OP=63 & CRFD & FPSCR_CRFS & BITS_21_22=0 & CRFS & BITS_11_17=0 & XOP_1_10=64 & BIT_0=0
+{
+	CRFD = FPSCR_CRFS;
+}
+
+#mcrxr cr0	0x7c 00 04 00
+:mcrxr CRFD		is OP=31 & CRFD & BITS_11_22=0 & XOP_1_10=512 & BIT_0=0
+{
+	CRFD = (xer_so & 1) << 3 | (xer_ov & 1) << 2 | (xer_ca & 1) << 1;
+}
+
+#mfcr r0 	0x7c 00 00 26
+:mfcr D		is OP=31 & D & BITS_11_20=0 & XOP_1_10=19 & BIT_0=0
+{
+	tmp:4 = zext(cr0 & 0xf) << 28 |
+			zext(cr1 & 0xf) << 24 |
+			zext(cr2 & 0xf) << 20 |
+			zext(cr3 & 0xf) << 16 |
+			zext(cr4 & 0xf) << 12 |
+			zext(cr5 & 0xf) << 8 |
+			zext(cr6 & 0xf) << 4 |
+			zext(cr7 & 0xf); 
+@ifdef BIT_64
+	D = zext(tmp);
+@else
+	D = tmp;
+@endif
+}
+
+#mfocrf D,cr1  0x7c 31 00 26
+:mfocrf D,CRM_CR	is OP=31 & D & BIT_20=1 & CRM_CR & BIT_11 & XOP_1_10=19 & BIT_0=0
+{
+@ifdef BIT_64
+	D = zext(CRM_CR);
+@else
+	D = CRM_CR;
+@endif
+}
+
+#mffs fD	0xfc 00 04 8e
+:mffs fD		is $(NOTVLE) & OP=63 & fD & BITS_11_20=0 & XOP_1_10=583 & Rc=0
+{
+	tmp:4 = 0;
+	packFPSCR(tmp);
+	fD = zext(tmp);
+}
+
+#mffs. fD	0xfc 00 04 8f
+:mffs. fD		is $(NOTVLE) & OP=63 & fD & BITS_11_20=0 & XOP_1_10=583 & Rc=1
+{
+	tmp:4 = 0;
+	packFPSCR(tmp);
+	fD = zext(tmp);
+	cr1flags();
+}
+
+### is this pcode correct on 64-bit bridge?
+#mfsr r0,r0	0x7c 00 04 a6
+:mfsr D,B		is $(NOTVLE) & OP=31 & D & SR & BIT_20=0 & B & BITS_11_15=0 &  XOP_1_10=595 & BIT_0=0
+{
+@ifdef BIT_64
+	D = zext(SR);
+@else
+	D = SR;
+@endif
+}
+#mfsrin r0,r0	0x7c 00 05 26
+:mfsrin D,B		is $(NOTVLE) & OP=31 & D & BITS_16_20=0 & B & XOP_1_10=659 & BIT_0=0
+{
+@ifdef BIT_64
+	tmp:4 = (B:4 >> 28);
+@else
+	tmp:$(REGISTER_SIZE) = (B >> 28);
+@endif
+	D = *[register]:4 ($(SEG_REGISTER_BASE)+tmp); 
+}
+
+#mtcrf 10,r0		0x7c 01 01 20
+:mtcrf CRM,S	is OP=31 & S & BIT_20=0 & CRM & CRM0 & CRM1 & CRM2 & CRM3 & CRM4 & CRM5 & CRM6 & CRM7 & BIT_11=0 & XOP_1_10=144 & BIT_0=0 
+{
+	tmp:$(REGISTER_SIZE) = (S >> 28) & 0xf;
+	cr0 = (cr0 * (CRM0:1 == 0)) | (tmp:1 * (CRM0:1 == 1));
+
+	tmp = (S >> 24) & 0xf;
+	cr1 = (cr1 * (CRM1:1 == 0)) | (tmp:1 * (CRM1:1 == 1));
+
+	tmp = (S >> 20) & 0xf;
+	cr2 = (cr2 * (CRM2:1 == 0)) | (tmp:1 * (CRM2:1 == 1));
+
+	tmp = (S >> 16) & 0xf;
+	cr3 = (cr3 * (CRM3:1 == 0)) | (tmp:1 * (CRM3:1 == 1));
+
+	tmp = (S >> 12) & 0xf;
+	cr4 = (cr4 * (CRM4:1 == 0)) | (tmp:1 * (CRM4:1 == 1));
+
+	tmp = (S >> 8) & 0xf;
+	cr5 = (cr5 * (CRM5:1 == 0)) | (tmp:1 * (CRM5:1 == 1));
+
+	tmp = (S >> 4) & 0xf;
+	cr6 = (cr6 * (CRM6:1 == 0)) | (tmp:1 * (CRM6:1 == 1));
+
+	tmp = S & 0xf;
+	cr7 = (cr7 * (CRM7:1 == 0)) | (tmp:1 * (CRM7:1 == 1));
+}
+
+#mtfsb0 fp_ux		0xfc 80 00 8c
+:mtfsb0 CRBD	is $(NOTVLE) & OP=63 & CRBD & BITS_11_20=0 & XOP_1_10=70 & Rc=0
+{
+	CRBD = 0;
+}
+#mtfsb0. fp_ux		0xfc 80 00 8d
+:mtfsb0. CRBD	is $(NOTVLE) & OP=63 & CRBD & BITS_11_20=0 & XOP_1_10=70 & Rc=1
+{
+	CRBD = 0;
+	cr1flags();
+}
+#mtfsb1 fp_ux		0xfc 80 00 4c
+:mtfsb1 CRBD	is $(NOTVLE) & OP=63 & CRBD & BITS_11_20=0 & XOP_1_10=38 & Rc=0
+{
+	CRBD = 1;
+}
+#mtfsb1. fp_ux		0xfc 80 00 4d
+:mtfsb1. CRBD	is $(NOTVLE) & OP=63 & CRBD & BITS_11_20=0 & XOP_1_10=38 & Rc=1
+{
+	CRBD = 1;
+}
+
+#mtfsf 10,fr0		0xfc 00 05 8e
+:mtfsf FM,fB	is $(NOTVLE) & OP=63 & BIT_25=0 & FM & FM0 & FM1 & FM2 & FM3 & FM4 & FM5 & FM6 & FM7 & BIT_16=0 & fB &  XOP_1_10=711 & Rc=0
+{
+	tmp:4 = 0;
+	packFPSCR(tmp);
+	
+	mask0:4 = zext((FM0:1 == 1)* 0xf) << 28; 
+	mask1:4 = zext((FM1:1 == 1)* 0xf) << 24; 
+	mask2:4 = zext((FM2:1 == 1)* 0xf) << 20; 
+	mask3:4 = zext((FM3:1 == 1)* 0xf) << 16; 
+	mask4:4 = zext((FM4:1 == 1)* 0xf) << 12; 
+	mask5:4 = zext((FM5:1 == 1)* 0xf) << 8; 
+	mask6:4 = zext((FM6:1 == 1)* 0xf) << 4; 
+	mask7:4 = zext((FM7:1 == 1)* 0xf);
+	
+	mask:4 = mask0 | mask1 | mask2 | mask3 | mask4 | mask5 | mask6 | mask7;
+	
+	tmp1:4 = fB:4;
+	tmp2:4 = (tmp & ~mask) | (tmp1 & mask);
+	unpackFPSCR(tmp2);
+}
+
+#mtfsf. 10,fr0		0xfc 00 05 8f
+:mtfsf. FM,fB	is $(NOTVLE) & OP=63 & BIT_25=0 & FM & FM0 & FM1 & FM2 & FM3 & FM4 & FM5 & FM6 & FM7 & BIT_16=0 & fB &  XOP_1_10=711 & Rc=1
+{
+	tmp:4 = 0;
+	packFPSCR(tmp);
+	
+	mask0:4 = zext((FM0:1 == 1)* 0xf) << 28; 
+	mask1:4 = zext((FM1:1 == 1)* 0xf) << 24; 
+	mask2:4 = zext((FM2:1 == 1)* 0xf) << 20; 
+	mask3:4 = zext((FM3:1 == 1)* 0xf) << 16; 
+	mask4:4 = zext((FM4:1 == 1)* 0xf) << 12; 
+	mask5:4 = zext((FM5:1 == 1)* 0xf) << 8; 
+	mask6:4 = zext((FM6:1 == 1)* 0xf) << 4; 
+	mask7:4 = zext((FM7:1 == 1)* 0xf);
+	
+	mask:4 = mask0 | mask1 | mask2 | mask3 | mask4 | mask5 | mask6 | mask7;
+	
+	tmp1:4 = fB:4;
+	tmp2:4 = (tmp & ~mask) | (tmp1 & mask);
+	unpackFPSCR(tmp2);
+	cr1flags();
+}
+
+#mtfsfi 10,3		0xfc 00 01 0c
+:mtfsfi crfD,IMM	is $(NOTVLE) & OP=63 & crfD & BITS_16_22=0 & IMM & BIT_11=0 & XOP_1_10=134 & Rc=0 
+{
+	tmp:4 = 0;
+	packFPSCR(tmp);
+	shift:1 = 28-(crfD*4);
+	mask:4 = 0xf << shift;
+	tmp1:4 = IMM << shift;
+	tmp2:4 = (tmp & ~mask) | tmp1;
+	unpackFPSCR(tmp2);
+}
+
+#mtfsfi. 10,3		0xfc 00 01 0d
+:mtfsfi. crfD,IMM	is $(NOTVLE) & OP=63 & crfD & BITS_16_22=0 & IMM & BIT_11=0 & XOP_1_10=134 & Rc=1
+{
+	tmp:4 = 0;
+	packFPSCR(tmp);
+	shift:1 = 28-(crfD*4);
+	mask:4 = 0xf << shift;
+	tmp1:4 = IMM << shift;
+	tmp2:4 = (tmp & ~mask) | tmp1;
+	unpackFPSCR(tmp2);
+	cr1flags();
+}
+
+# This instruction is not exclusive to 64 bit processors, per page 1259 of the PowerISA manual.
+# However, it does seem to require 64 bit registers, so it is currently restricted to 64 bit machines.
+@ifdef BIT_64
+#mtmsrd r0,0		0x7c 00 01 64
+:mtmsrd S,0		is $(NOTVLE) & OP=31 & S & BITS_17_20=0 & MSR_L=0 & BITS_11_15=0 & XOP_1_10=178 & BIT_0=0
+{
+	bit0:8 = S >> 63 & 1;
+	bit1:8 = S >> 62 & 1;
+	bit49:8 = (S >> 14)& 1;	
+	bit59:8 = (S >> 4) & 1;	
+	tmp:8 = S & 0x6fffffffffff6fcf;  
+	tmp = tmp & ((bit0 | bit1) << 63);
+	tmp = tmp & ((bit59 | bit49) << 5);
+	MSR = MSR & 0xefffffff00009020 | tmp;
+}
+
+#mtmsrd r0,1		0x7c 01 01 64
+:mtmsrd S,1		is $(NOTVLE) & OP=31 & S & BITS_17_20=0 & MSR_L=1 & BITS_11_15=0 & XOP_1_10=178 & BIT_0=0 
+{
+	mask:8 = 0x000000000000fffe & S;
+	MSR = (MSR & ~mask) | (S & mask);
+}
+@endif
+#mtocrf 10,r0		0x7c 21 01 20
+:mtocrf CRM,S	is OP=31 & S & BIT_20=1 & CRM & CRM0 & CRM1 & CRM2 & CRM3 & CRM4 & CRM5 & CRM6 & CRM7 & BIT_11=0 & XOP_1_10=144 & BIT_0=0 
+{
+	tmp:$(REGISTER_SIZE) = (S >> 28) & 0xf;
+	cr0 = (cr0 * (CRM0:1 == 0)) | (tmp:1 * (CRM0:1 == 1));
+
+	tmp = (S >> 24) & 0xf;
+	cr1 = (cr1 * (CRM1:1 == 0)) | (tmp:1 * (CRM1:1 == 1));
+
+	tmp = (S >> 20) & 0xf;
+	cr2 = (cr2 * (CRM2:1 == 0)) | (tmp:1 * (CRM2:1 == 1));
+
+	tmp = (S >> 16) & 0xf;
+	cr3 = (cr3 * (CRM3:1 == 0)) | (tmp:1 * (CRM3:1 == 1));
+
+	tmp = (S >> 12) & 0xf;
+	cr4 = (cr4 * (CRM4:1 == 0)) | (tmp:1 * (CRM4:1 == 1));
+
+	tmp = (S >> 8) & 0xf;
+	cr5 = (cr5 * (CRM5:1 == 0)) | (tmp:1 * (CRM5:1 == 1));
+
+	tmp = (S >> 4) & 0xf;
+	cr6 = (cr6 * (CRM6:1 == 0)) | (tmp:1 * (CRM6:1 == 1));
+
+	tmp = S & 0xf;
+	cr7 = (cr7 * (CRM7:1 == 0)) | (tmp:1 * (CRM7:1 == 1));
+}
+
+### is this pcode correct on 64-bit bridge?
+#mtsr sr0,r0	0x7c 00 01 a4
+:mtsr SR,S		is $(NOTVLE) & OP=31 & S & SR & BIT_20=0 & B & BITS_11_15=0 &  XOP_1_10=210 & BIT_0=0
+{
+@ifdef BIT_64
+	SR = S:4;
+@else
+	SR = S;
+@endif
+}
+
+#mtsrd  sr0,r0	0x7c 00 0 a4
+:mtsrd SR,S	is $(NOTVLE) & OP=31 & S & BIT_20=0 & SR & BITS_11_15=0 &  XOP_1_10=82 & BIT_0=0
+{
+	SR = S:4;
+}
+
+#mtsrdin r0,r0	0x7c 00 00 e4
+:mtsrdin S,B		is $(NOTVLE) & OP=31 & S & BITS_16_20=0 & B & XOP_1_10=114 & BIT_0=0
+{
+	local tmp = (B >> 28) & 0xf;
+	*[register]:4 ($(SEG_REGISTER_BASE)+tmp:4) = S:4;
+}
+
+### is this pcode correct on 64-bit bridge?
+#mtsrin r0,r0	0x7c 00 01 e4
+:mtsrin S,B		is $(NOTVLE) & OP=31 & S & BITS_16_20=0 & B & XOP_1_10=242 & BIT_0=0
+{
+@ifdef BIT_64
+	tmp:4 = (B:4 >> 28);
+@else
+	tmp:$(REGISTER_SIZE) = (B >> 28);
+@endif
+	*[register]:4 ($(SEG_REGISTER_BASE)+tmp) = S;
+}
+
+@ifdef BIT_64
+#mulhd r0,r0	0x7c 00 00 92
+:mulhd D,A,B	is OP=31 & D & A & B & BIT_10=0 & XOP_1_9=73 & Rc=0
+{
+	tmp:16 = sext(A) * sext(B);
+	D = tmp(8);
+}
+#mulhd.  r0,r0	0x7c 00 00 93
+:mulhd. D,A,B	is OP=31 & D & A & B & BIT_10=0 & XOP_1_9=73 & Rc=1
+{
+	tmp:16 = sext(A) * sext(B);
+	D = tmp(8);
+	cr0flags(D);
+}
+
+#mulhdu r0,r0	0x7c 00 00 12
+:mulhdu D,A,B	is OP=31 & D & A & B & BIT_10=0 & XOP_1_9=9 & Rc=0
+{
+	tmp:16 = zext(A) * zext(B);
+	D = tmp(8);
+}
+#mulhdu.  r0,r0	0x7c 00 00 13
+:mulhdu. D,A,B	is OP=31 & D & A & B & BIT_10=0 & XOP_1_9=9 & Rc=1
+{
+	tmp:16 = zext(A) * zext(B);
+	D = tmp(8);
+	cr0flags(D);
+}
+
+@endif
+
+#mulhw	r0,r0,r0	0x7c 00 00 96
+:mulhw D,A,B		is OP=31 & D & A & B & BIT_10=0 & XOP_1_9=75 & Rc=0
+{
+@ifdef BIT_64
+	tmp:8 = sext(A:4) * sext(B:4);
+	tmp2:4 = tmp(4);
+	D = sext(tmp2);
+@else
+	tmp:8 = sext(A) * sext(B);
+	D = tmp(4);
+@endif
+}
+
+#mulhw.	r0,r0,r0	0x7c 00 00 97
+:mulhw. D,A,B		is OP=31 & D & A & B & BIT_10=0 & XOP_1_9=75 & Rc=1
+{
+@ifdef BIT_64
+	tmp:8 = sext(A:4) * sext(B:4);
+	tmp2:4 = tmp(4);
+	D = sext(tmp2);
+@else
+	tmp:8 = sext(A) * sext(B);
+	D = tmp(4);
+@endif
+	cr0flags(D);
+}
+
+#mulhwu	r0,r0,r0	0x7c 00 00 16
+:mulhwu D,A,B		is OP=31 & D & A & B & BIT_10=0 & XOP_1_9=11 & Rc=0	
+{ 
+@ifdef BIT_64
+	tmp:8 = zext(A:4) * zext(B:4); 
+	tmp2:4 = tmp(4); 
+	D=zext(tmp2);
+@else
+	tmp:8 = zext(A) * zext(B);
+	D = tmp(4); 
+@endif 
+}
+#mulhwu.	r0,r0,r0	0x7c 00 00 17
+:mulhwu. D,A,B		is OP=31 & D & A & B & BIT_10=0 & XOP_1_9=11 & Rc=1	
+{ 
+@ifdef BIT_64
+	tmp:8 = zext(A:4) * zext(B:4); 
+	tmp2:4 = tmp(4); 
+	D=zext(tmp2);
+@else
+	tmp:8 = zext(A) * zext(B);
+	D = tmp(4); 
+@endif 
+	cr0flags(D); 
+}
+
+@ifdef BIT_64
+#mulld r0, r0, r0	0x7C 00 01 D2
+:mulld D,A,B		is OP=31 & D & A & B & OE=0 & XOP_1_9=233 & Rc=0
+{
+	tmp:16 = sext(A) * sext(B);
+	D = tmp:8;
+} 
+
+#mulld. r0, r0, r0	0x7C 00 01 D3
+:mulld. D,A,B		is OP=31 & D & A & B & OE=0 & XOP_1_9=233 & Rc=1
+{
+	tmp:16 = sext(A) * sext(B);
+	D = tmp:8;
+	cr0flags(D);
+}
+
+#mulldo r0, r0, r0	0x7C 00 05 D2
+:mulldo D,A,B		is OP=31 & D & A & B & OE=1 & XOP_1_9=233 & Rc=0
+{
+	tmp:16 = sext(A) * sext(B);
+	D = tmp:8;
+	mulOverflow128(tmp);
+}
+
+#mulldo. r0, r0, r0	0x7C 00 05 D3
+:mulldo. D,A,B		is OP=31 & D & A & B & OE=1 & XOP_1_9=233 & Rc=1
+{
+	tmp:16 = sext(A) * sext(B);
+	D = tmp:8;
+	mulOverflow128(tmp);
+	cr0flags(D);	
+}
+
+@endif
+
+#mulli r0,r0,r0		0x1C 00 00 00
+:mulli D,A,SIMM		is $(NOTVLE) & OP=7 & D & A & SIMM				
+{
+ 	D = A * SIMM; 
+}
+
+#mullw r0,r0,r0		0x7C 00 01 D6
+:mullw D,A,B		is OP=31 & D & A & B & OE=0 & XOP_1_9=235 & Rc=0	
+{ 
+@ifdef BIT_64
+	D = sext(A:4) * sext(B:4);
+@else
+	D = A*B;
+@endif
+}
+
+#mullw. r0,r0,r0		0x7C 00 01 D7
+:mullw. D,A,B		is OP=31 & D & A & B & OE=0 & XOP_1_9=235 & Rc=1	
+{ 
+@ifdef BIT_64
+	D = sext(A:4) * sext(B:4);
+@else
+	D = A*B;
+@endif
+	cr0flags(D); 
+}
+
+#mullwo r0,r0,r0		0x7C 00 05 D6
+:mullwo D,A,B		is OP=31 & D & A & B & OE=1 & XOP_1_9=235 & Rc=0	
+{ 	
+@ifdef BIT_64
+	D = sext(A:4) * sext(B:4);
+	mulOverflow64(D);
+@else
+	tmp:8 = sext(A) * sext(B);
+	mulOverflow64(tmp);
+	D = tmp:4;
+@endif
+}
+
+#mullwo. r0,r0,r0		0x7C 00 05 D7
+:mullwo. D,A,B		is OP=31 & D & A & B & OE=1 & XOP_1_9=235 & Rc=1	
+{
+@ifdef BIT_64
+	D = sext(A:4) * sext(B:4);
+	mulOverflow64(D);
+@else
+	tmp:8 = sext(A) * sext(B);
+	mulOverflow64(tmp);
+	D = tmp:4;
+@endif	
+	cr0flags(D); 
+}
+
+#nand r0,r0,r0 0x7C 00 03 B8
+:nand A,S,B		is OP=31 & S & A & B & XOP_1_10=476 & Rc=0
+{
+	A = ~(S & B);
+}
+
+#nand. r0,r0,r0 0x7C 00 03 B9
+:nand. A,S,B		is OP=31 & S & A & B & XOP_1_10=476 & Rc=1
+{
+	A = ~(S & B);
+	cr0flags( A );
+}
+
+#neg r0,r0		0x7C 00 00 D0
+:neg D,A		is OP=31 & D & A & BITS_11_15=0 & OE=0 & XOP_1_9=104 & Rc=0
+{
+	D = -A;
+}
+
+#neg. r0,r0		0x7C 00 00 D1
+:neg. D,A		is OP=31 & D & A & BITS_11_15=0 & OE=0 & XOP_1_9=104 & Rc=1
+{
+	D = -A;
+	cr0flags( D );
+}
+
+#nego r0,r0		0x7C 00 04 D0
+:nego D,A		is $(NOTVLE) & OP=31 & D & A & BITS_11_15=0 & OE=1 & XOP_1_9=104 & Rc=0
+{
+	subOverflow(A,1);
+	D = -A;
+}
+
+#nego. r0,r0		0x7C 00 04 D1
+:nego. D,A		is OP=31 & D & A & BITS_11_15=0 & OE=1 & XOP_1_9=104 & Rc=1
+{	
+	subOverflow(A,1);
+	D = -A;
+	cr0flags( A );
+}
+
+#nor r0,r0,r0		0x7C 00 00 F8
+:nor A,S,B		is OP=31 & A & S & B & XOP_1_10=124 & Rc=0
+{
+	A = ~(S | B);
+}
+
+#nor. r0,r0,r0		0x7C 00 00 F9
+:nor. A,S,B		is OP=31 & A & S & B & XOP_1_10=124 & Rc=1
+{
+	A = ~(S | B);
+	cr0flags(A);
+}
+
+#or r0,r0,r0		0x7C 00 03 78
+:or A,S,B		is OP=31 & A & S & B & XOP_1_10=444 & Rc=0
+{
+	A = (S | B);
+}
+
+#or. r0,r0,r0		0x7C 00 03 79
+:or. A,S,B		is OP=31 & A & S & B & XOP_1_10=444 & Rc=1
+{
+	A = (S | B);
+	cr0flags(A);
+}
+
+#orc r0,r0,r0		0x7C 00 03 38
+:orc A,S,B		is OP=31 & A & S & B & XOP_1_10=412 & Rc=0
+{
+	A = S | ~B;
+}
+
+#orc. r0,r0,r0		0x7C 00 03 39
+:orc. A,S,B		is OP=31 & A & S & B & XOP_1_10=412 & Rc=1
+{
+	A = S | ~B;
+	cr0flags(A);
+}
+
+#ori r0,r0,r0		0x60 00 00 00
+:ori A,S,UIMM	is $(NOTVLE) & OP=24 & A & S & UIMM
+{
+	A = S | UIMM;
+}
+
+#oris r0,r0,r0		0x64 00 00 00
+:oris A,S,UIMM	is $(NOTVLE) & OP=25 & A & S & UIMM
+{
+	A = S | (UIMM << 16);
+}
+
+#rfid	0x4c 00 00 24 
+:rfid		is $(NOTVLE) & OP=19 & BITS_11_25=0 & XOP_1_10=18 & BIT_0=0	
+{ 
+	returnFromInterrupt();  
+	return[SRR0]; 
+}
+
+@ifdef BIT_64
+#rldcl r0,r0,r0,0	0x78 00 00 10
+:rldcl A,S,B,MB	is $(NOTVLE) & OP=30 & S & A & B & MB & XOP_1_4=8 & Rc=0
+{ 
+	shift:$(REGISTER_SIZE) = B & 0x3f; 
+	tmp:$(REGISTER_SIZE)=(S<<shift)|(S>>(64-shift)); 
+	A = tmp & (0xffffffffffffffff >> MB); 
+}
+#rldcl. r0,r0,r0,0	0x78 00 00 11
+:rldcl. A,S,B,MB	is $(NOTVLE) & OP=30 & S & A & B & MB & XOP_1_4=8 & Rc=1
+{ 
+	shift:$(REGISTER_SIZE) = B & 0x3f; 
+	tmp:$(REGISTER_SIZE)=(S<<shift)|(S>>(64-shift)); 
+	A = tmp & (0xffffffffffffffff >> MB); 
+	cr0flags(A);
+}
+#rldcr r0,r0,r0,0	0x78 00 00 12
+:rldcr A,S,B,MB	is $(NOTVLE) & OP=30 & S & A & B & MB & XOP_1_4=9 & Rc=0
+{ 
+	shift:$(REGISTER_SIZE) = B & 0x3f; 
+	tmp:$(REGISTER_SIZE)=(S<<shift)|(S>>(64-shift)); 
+	A = tmp & (0xffffffffffffffff >> MB); 
+}
+#rldcr. r0,r0,r0,0	0x78 00 00 13
+:rldcr. A,S,B,MB	is $(NOTVLE) & OP=30 & S & A & B & MB & XOP_1_4=9 & Rc=1
+{ 
+	shift:$(REGISTER_SIZE) = B & 0x3f; 
+	tmp:$(REGISTER_SIZE)=(S<<shift)|(S>>(64-shift)); 
+	A = tmp & (0xffffffffffffffff << (64-MB)); 
+	cr0flags(A);
+}
+
+#rldic r0,r0,r0,0	0x78 00 00 08
+:rldic A,S,SH,MB	is $(NOTVLE) & OP=30 & S & A & B & SH & MB & XOP_2_4=2 & Rc=0
+{ 
+	shift:4 = SH;
+	tmp:$(REGISTER_SIZE)=(S<<shift)|(S>>(64-shift)); 
+	mask:$(REGISTER_SIZE) = (0xffffffffffffffff >> MB) & (0xffffffffffffffff << shift);
+	A = tmp & mask; 
+}
+#rldic. r0,r0,r0,0	0x78 00 00 09
+:rldic. A,S,SH,MB	is $(NOTVLE) & OP=30 & S & A & B & SH & MB & XOP_2_4=2 & Rc=1
+{ 
+	shift:4 = SH; 
+	tmp:$(REGISTER_SIZE)=(S<<shift)|(S>>(64-shift)); 
+	mask:$(REGISTER_SIZE) = (0xffffffffffffffff >> MB) & (0xffffffffffffffff << shift);
+	A = tmp & mask; 
+	cr0flags(A);
+}
+#rldicl r0,r0,r0,0	0x78 00 00 00
+:rldicl A,S,SH,MB	is $(NOTVLE) & OP=30 & S & A & B & SH & MB & XOP_2_4=0 & Rc=0
+{ 
+	shift:4 = SH;
+	tmp:$(REGISTER_SIZE)=(S<<shift)|(S>>(64-shift)); 
+	A = tmp & (0xffffffffffffffff >> MB); 
+}
+#rldicl. r0,r0,r0,0	0x78 00 00 01
+:rldicl. A,S,SH,MB	is $(NOTVLE) & OP=30 & S & A & B & SH & MB & XOP_2_4=0 & Rc=1
+{ 
+	shift:4 = SH; 
+	tmp:$(REGISTER_SIZE)=(S<<shift)|(S>>(64-shift)); 
+	A = tmp & (0xffffffffffffffff >> MB); 
+	cr0flags(A);
+}
+#rldicr r0,r0,r0,0	0x78 00 00 04
+:rldicr A,S,SH,MB	is $(NOTVLE) & OP=30 & S & A & B & SH & MB & XOP_2_4=1 & Rc=0
+{ 
+	shift:4 = SH;
+	tmp:$(REGISTER_SIZE)=(S<<shift)|(S>>(64-shift)); 
+	A = tmp & (0xffffffffffffffff << (63-MB)); 
+}
+#rldicr. r0,r0,r0,0	0x78 00 00 05
+:rldicr. A,S,SH,MB	is $(NOTVLE) & OP=30 & S & A & B & SH & MB & XOP_2_4=1 & Rc=1
+{ 
+	shift:4 = SH; 
+	tmp:$(REGISTER_SIZE)=(S<<shift)|(S>>(64-shift)); 
+	A = tmp & (0xffffffffffffffff << (63-MB)); 
+	cr0flags(A);
+}
+#rldimi r0,r0,r0,0	0x78 00 00 0c
+:rldimi A,S,SH,MB	is $(NOTVLE) & OP=30 & S & A & B & SH & MB & XOP_2_4=3 & Rc=0
+{ 
+	shift:4 = SH;
+	tmp:$(REGISTER_SIZE)=(S<<shift)|(S>>(64-shift)); 
+	mask:$(REGISTER_SIZE) = (0xffffffffffffffff >> MB) & (0xffffffffffffffff << shift);
+	A = (tmp & mask) | (A & ~mask);
+}
+#rldimi. r0,r0,r0,0	0x78 00 00 0d
+:rldimi. A,S,SH,MB	is $(NOTVLE) & OP=30 & S & A & B & SH & MB & XOP_2_4=3 & Rc=1
+{ 
+	shift:4 = SH; 
+	tmp:$(REGISTER_SIZE)=(S<<shift)|(S>>(64-shift)); 
+	mask:$(REGISTER_SIZE) = (0xffffffffffffffff >> MB) & (0xffffffffffffffff << shift);
+	A = (tmp & mask) | (A & ~mask);
+	cr0flags(A);
+}
+@endif
+
+
+
+#rlwimi r0,r0,0,0,0		0x50 00 00 00
+:rlwimi A,S,SHL,MBL,ME	is $(NOTVLE) & OP=20 & S & A & SHL & MBL & ME & Rc=0 & rotmask 
+{ 
+	shift:1 = SHL;
+@ifdef BIT_64
+	tmp:4 = S:4;
+	tmp2:4 = (tmp<<shift)|(tmp>>(32-shift)); 
+	A = zext(tmp2 & rotmask) | (A & ~zext(rotmask));
+@else
+	tmp = (S<<shift)|(S>>(32-shift)); 
+	A = (tmp & rotmask) | (A & ~rotmask);
+@endif
+}
+
+#rlwimi. r0,r0,0,0,0		0x50 00 00 01
+:rlwimi. A,S,SHL,MBL,ME is $(NOTVLE) & OP=20 & S & A & SHL & MBL & ME & Rc=1 & rotmask
+{ 
+	shift:1 = SHL;
+@ifdef BIT_64
+	tmp:4 = S:4;
+	tmp2:4 = (tmp<<shift)|(tmp>>(32-shift)); 
+	A = zext(tmp2 & rotmask) | (A & ~zext(rotmask));
+@else
+	tmp = (S<<shift)|(S>>(32-shift)); 
+	A = (tmp & rotmask) | (A & ~rotmask);
+@endif
+	cr0flags(A);
+}
+
+#rlwinm r0,r0,0,0,0		0x54 00 00 00
+:rlwinm A,S,SHL,MBL,ME	is $(NOTVLE) & OP=21 & S & A & SHL & MBL & ME & Rc=0 & rotmask
+{ 
+	shift:1 = SHL;
+@ifdef BIT_64
+	tmp:4 = S:4;
+	tmp2:4 = (tmp<<shift)|(tmp>>(32-shift)); 
+	A = zext(tmp2 & rotmask);
+@else
+	tmp = (S<<shift)|(S>>(32-shift)); 
+	A = (tmp & rotmask);
+@endif
+}
+
+#rlwinm. r0,r0,0,0,0		0x54 00 00 01
+:rlwinm. A,S,SHL,MBL,ME is $(NOTVLE) & OP=21 & S & A & SHL & MBL & ME & Rc=1 & rotmask
+{ 
+	shift:1 = SHL;
+@ifdef BIT_64
+	tmp:4 = S:4;
+	tmp2:4 = (tmp<<shift)|(tmp>>(32-shift)); 
+	A = zext(tmp2 & rotmask);
+@else
+	tmp = (S<<shift)|(S>>(32-shift)); 
+	A = (tmp & rotmask);
+@endif
+	cr0flags(A);
+}
+
+#rlwnm r0,r0,0,0,0		0x5C 00 00 00
+:rlwnm A,S,B,MBL,ME	is $(NOTVLE) & OP=23 & S & A & B & MBL & ME & Rc=0 & rotmask
+{ 	
+	shift:$(REGISTER_SIZE) = B & 0x1f;
+@ifdef BIT_64
+	tmp:4 = S:4;
+	tmp2:4 = (tmp<<shift)|(tmp>>(32-shift)); 
+	A = zext(tmp2 & rotmask);
+@else
+	tmp = (S<<shift)|(S>>(32-shift)); 
+	A = (tmp & rotmask);
+@endif
+}
+
+#rlwnm. r0,r0,0,0,0		0x5C 00 00 01
+:rlwnm. A,S,B,MBL,ME	is $(NOTVLE) & OP=23 & S & A & B & MBL & ME & Rc=1 & rotmask
+{ 
+	shift:$(REGISTER_SIZE) = B & 0x1f;
+@ifdef BIT_64
+	tmp:4 = S:4;
+	tmp2:4 = (tmp<<shift)|(tmp>>(32-shift)); 
+	A = zext(tmp2 & rotmask);
+@else
+	tmp = (S<<shift)|(S>>(32-shift)); 
+	A = (tmp & rotmask);
+@endif
+	cr0flags(A);
+}
+
+#sc 		0x44 00 00 02
+:sc	LEV				is $(NOTVLE) & OP=17 & BITS_12_25=0 & LEV & BITS_2_4=0 & BIT_1=1 & BIT_0=0
+{
+	syscall();
+}
+
+#slbia		0x7C 00 03 E4
+:slbia				is $(NOTVLE) & OP=31 & BITS_11_25=0 & XOP_1_10=498 & BIT_0=0
+{
+	slbInvalidateAll();
+}
+
+#slbie r0	0x7C 00 03 64
+:slbie	B			is $(NOTVLE) & OP=31 & BITS_16_20=0 & B & XOP_1_10=434 & BIT_0=0
+{
+	slbInvalidateEntry();
+}
+
+#slbmfee r0,r0	0x7C 00 07 26
+:slbmfee D,B		is $(NOTVLE) & OP=31 & D & BITS_16_20=0 & B & XOP_1_10=915 & BIT_0=0
+{
+	slbMoveFromEntryESID();
+}
+
+#slbmfev r0,r0	0x7C 00 06 A6
+:slbmfev D,B		is $(NOTVLE) & OP=31 & D & BITS_16_20=0 & B & XOP_1_10=851 & BIT_0=0
+{
+	slbMoveFromEntryVSID();
+}
+
+#slbmte r0,r0 	0x7C 00 03 24
+:slbmte S,B		is $(NOTVLE) & OP=31 & S & BITS_16_20=0 & B & XOP_1_10=402 & BIT_0=0
+{
+	slbMoveToEntry();
+}
+
+@ifdef BIT_64
+#sld r0,r0,r0 		0x7C 00 00 36
+:sld A,S,B		is OP=31 & S & A & B & XOP_1_10=27 & Rc=0
+{
+	A = S << (B & 0x7f);
+}
+
+#sld. 		0x7C 00 00 37
+:sld. A,S,B		is OP=31 & S & A & B & XOP_1_10=27 & Rc=1
+{
+	A = S << (B & 0x7f);
+	cr0flags(A);
+}
+@endif
+
+#slw r0,r0,r0 	0x7C 00 00 30
+:slw A,S,B		is OP=31 & S & A & B & XOP_1_10=24 & Rc=0
+{
+@ifdef BIT_64
+	tmp:4 = S:4 << B;
+	A = (A & 0xffffffff00000000) | zext(tmp);
+@else
+	A = S << B;
+@endif
+}
+
+
+#slw. r0,r0,r0 	0x7C 00 00 31
+:slw. A,S,B		is OP=31 & S & A & B & XOP_1_10=24 & Rc=1
+{
+@ifdef BIT_64
+	tmp:4 = S:4 << B;
+	A = (A & 0xffffffff00000000) | zext(tmp);
+@else
+	A = S << B;	
+@endif
+	cr0flags(A);
+}
+
+@ifdef BIT_64
+#srad r0,r0,r0	0x7C 00 06 34
+:srad A,S,B			is OP=31 & A & S & B & XOP_1_10=794 & Rc=0
+{
+	tmp:$(REGISTER_SIZE) = B & 0x7f;
+	shiftCarry(S,tmp);
+	A = S s>> tmp;
+}
+
+#srad. r0,r0,r0	0x7C 00 06 35
+:srad. A,S,B		is OP=31 & A & S & B & XOP_1_10=794 & Rc=1
+{
+	tmp:$(REGISTER_SIZE) = B & 0x7f;
+	shiftCarry(S,tmp);
+	A = S s>> tmp;
+	cr0flags(A);
+}
+
+#sradi r0,r0,r0	0x7C 00 06 74
+:sradi A,S,SH		is OP=31 & A & S & SH & XOP_2_10=413 & Rc=0
+{
+	shiftCarry(S,SH);
+	A = S s>> SH;
+}
+
+#sradi. r0,r0,r0	0x7C 00 06 75
+:sradi. A,S,SH		is OP=31 & A & S & SH & XOP_2_10=413 & Rc=1
+{
+	shiftCarry(S,SH);
+	A = S s>> SH;
+}
+
+@endif
+
+
+#sraw r0,r0,r0	0x7C 00 06 30
+:sraw A,S,B			is OP=31 & A & S & B & XOP_1_10=792 & Rc=0
+{
+	shift:$(REGISTER_SIZE) = B & 0x3f;
+@ifdef BIT_64
+	shiftCarry(S:4,shift);
+	tmp2:4 = S:4 s>> shift;
+	A = (A & 0xffffffff00000000) | zext(tmp2);
+@else
+	shiftCarry(S,shift);
+	A = S s>> shift;
+@endif
+}
+#sraw. r0,r0,r0	0x7C 00 06 31
+:sraw. A,S,B		is OP=31 & A & S & B & XOP_1_10=792 & Rc=1
+{
+	shift:$(REGISTER_SIZE) = B & 0x3f;
+@ifdef BIT_64
+	shiftCarry(S:4,shift);
+	tmp2:4 = S:4 s>> shift;
+	A = (A & 0xffffffff00000000) | zext(tmp2);
+@else
+	shiftCarry(S,shift);
+	A = S s>> shift;
+@endif
+	cr0flags(A);
+}
+
+#srawi r0,r0,r0	0x7C 00 06 70
+:srawi A,S,SHL		is OP=31 & A & S & SHL & XOP_1_10=824 & Rc=0
+{
+@ifdef BIT_64
+	shift:4 = SHL;
+	shiftCarry(S:4,shift);
+	tmp2:4 = S:4 s>> shift;
+	A = (A & 0xffffffff00000000) | zext(tmp2);
+@else
+	shiftCarry(S,SHL);
+	A = S s>> SHL;
+@endif
+}
+#srawi. r0,r0,r0	0x7C 00 06 71
+:srawi. A,S,SHL		is OP=31 & A & S & SHL & XOP_1_10=824 & Rc=1
+{
+@ifdef BIT_64
+	shift:4 = SHL;
+	shiftCarry(S:4,shift);
+	tmp2:4 = S:4 s>> shift;
+	A = (A & 0xffffffff00000000) | zext(tmp2);
+@else
+	shiftCarry(S,SHL);
+	A = S s>> SHL;
+@endif
+	cr0flags(A);
+}
+
+@ifdef BIT_64
+#srd r0,r0,r0 		0x7C 00 04 36
+:srd A,S,B		is OP=31 & S & A & B & XOP_1_10=539 & Rc=0
+{
+	A = S >> (B & 0x7f);
+}
+
+#srd. 		0x7C 00 04 37
+:srd. A,S,B		is OP=31 & S & A & B & XOP_1_10=539 & Rc=1
+{
+	A = S >> (B & 0x7f);
+	cr0flags(A);
+}
+@endif
+
+#srw r0,r0,r0 	0x7C 00 04 30
+:srw A,S,B		is OP=31 & S & A & B & XOP_1_10=536 & Rc=0
+{
+@ifdef BIT_64
+	tmp:4 = S:4 >> B;
+	A = (A & 0xffffffff00000000) | zext(tmp);
+@else
+	A = S >> B;
+@endif
+}
+
+
+#srw. r0,r0,r0 	0x7C 00 04 31
+:srw. A,S,B		is OP=31 & S & A & B & XOP_1_10=536 & Rc=1
+{
+@ifdef BIT_64
+	tmp:4 = S:4 >> B;
+	A = (A & 0xffffffff00000000) | zext(tmp);
+@else
+	A = S >> B;	
+@endif
+	cr0flags(A);
+}
+
+
+
+#stb	r0,3(0)		0x98 00 00 00
+#stb	r0,3(r2)	0x98 02 00 00
+:stb	S,dPlusRaOrZeroAddress	is $(NOTVLE) & OP=38 & S & dPlusRaOrZeroAddress
+{
+	*:1(dPlusRaOrZeroAddress) = S:1;
+}
+
+#stbu	r0,3(0)		0x9c 00 00 00
+#stbu	r0,3(r2)	0x9c 02 00 00
+:stbu	S,dPlusRaAddress	is $(NOTVLE) & OP=39 & S & dPlusRaAddress & A
+{
+	*:1(dPlusRaAddress) = S:1;
+	A = dPlusRaAddress;
+}
+
+#stbux	r0,r2,r0	0x7c 00 01 ee		### WARNING the B in this definition is different from manual - I think the manual is wrong
+:stbux	S,A,B			is OP=31 & S & A & B & XOP_1_10=247 & BIT_0=0
+{
+	tmp:$(REGISTER_SIZE) = A+B;          # S may be same register as A
+	*tmp = S:1;         # So do store before updating A
+	A = tmp;
+}
+
+#stbx	r0,r2,r0	0x7c 00 01 ae		### WARNING the B in this definition is different from manual - I think the manual is wrong
+:stbx	S,RA_OR_ZERO,B	is OP=31 & S & RA_OR_ZERO & B & XOP_1_10=215 & BIT_0=0
+{
+	*(RA_OR_ZERO+B) = S:1;
+}
+
+@ifdef BIT_64
+#std r0,8(0)	0xf8 00 00 08	
+#std r0,8(r2)	0xf8 02 00 08	
+:std S,dsPlusRaOrZeroAddress 	is $(NOTVLE) & OP=62 & S & dsPlusRaOrZeroAddress & BITS_0_1=0
+{
+	*:8(dsPlusRaOrZeroAddress) = S;
+}
+
+#Special case when saving r2 to stack prior to function call (for inline call stub case)
+#std r2,0x28(r1)	
+:std r2,dsPlusRaOrZeroAddress 	is $(NOTVLE) & OP=62 & S=2 & r2 & A=1 & SIMM_DS=0xa & dsPlusRaOrZeroAddress & BITS_0_1=0
+{
+	r2Save = r2;
+	*:8(dsPlusRaOrZeroAddress) = r2;
+}
+
+#stdcx. r0,8(0)	0x7c 00 01 AD	
+:stdcx. S,RA_OR_ZERO,B 	is OP=31 & S & RA_OR_ZERO & B & XOP_1_10=214 & BIT_0=1
+{
+	EA:$(REGISTER_SIZE) = RA_OR_ZERO + B;
+	if (RESERVE == 0) goto inst_next;
+	*[ram]:8 EA = storeDoubleWordConditionalIndexed(S,RA_OR_ZERO,B);
+}
+
+#stdu r0,8(0)	0xf8 00 00 01	
+#stdu r0,8(r2)	0xf8 02 00 01	
+:stdu S,dsPlusRaAddress 	is $(NOTVLE) & OP=62 & S & A & dsPlusRaAddress & BITS_0_1=1
+{
+	*:8(dsPlusRaAddress) = S;
+	A = dsPlusRaAddress;
+}
+
+#stdux	r0,r2,r0	0x7c 00 01 6a
+:stdux	S,A,B	is OP=31 & S & A & B & XOP_1_10=181 & BIT_0=0
+{
+	A = A+B;
+	*:8(A) = S;
+}
+
+#stdx	r0,r2,r0	0x7c 00 01 2a
+:stdx	S,RA_OR_ZERO,B	is OP=31 & S & B & RA_OR_ZERO & XOP_1_10=149 & BIT_0=0
+{
+	ea:$(REGISTER_SIZE) = RA_OR_ZERO+B;
+	*:8(ea) = S;
+}
+
+@endif
+
+#stfd fr0,8(0)	0xD8 00 00 08	
+#stfd fr0,8(r2)	0xD8 02 00 08
+:stfd fS,dPlusRaOrZeroAddress		is $(NOTVLE) & OP=54 & fS & dPlusRaOrZeroAddress
+{
+	*:8(dPlusRaOrZeroAddress) = fS;
+}
+
+#stfdu fr0,8(0)	0xDC 00 00 08	
+#stfdu fr0,8(r2)	0xDC 02 00 08
+:stfdu fS,dPlusRaAddress 	is $(NOTVLE) & OP=55 & fS & dPlusRaAddress & A
+{
+	A = dPlusRaAddress;
+	*:8(dPlusRaAddress) = fS;
+}
+
+#stfdux	fr0,r2,r0	0x7C 00 05 EE
+:stfdux	fS,A,B	is $(NOTVLE) & OP=31 & fS & A & B & XOP_1_10=759 & BIT_0=0
+{
+	A = A+B;
+	*:8(A) = fS;
+}
+
+#stfdx fr0,r0,r0	0x7C 00 05 AE
+:stfdx fS,RA_OR_ZERO,B	is $(NOTVLE) & OP=31 & fS & B & RA_OR_ZERO & XOP_1_10=727 & BIT_0=0
+{
+	ea:$(REGISTER_SIZE) = RA_OR_ZERO+B;
+	*:8(ea) = fS;
+}
+
+#stfiwx fr0,r0,r0	0x7C 00 07 AE
+:stfiwx fS,RA_OR_ZERO,B	is $(NOTVLE) & OP=31 & fS & B & RA_OR_ZERO & XOP_1_10=983 & BIT_0=0
+{
+	ea:$(REGISTER_SIZE) = RA_OR_ZERO+B;
+	*:4(ea) = fS:4;
+}
+
+#stfs fr0,8(0)	0xD0 00 00 08
+#stfs fr0,8(r2)	0xD0 02 00 08
+:stfs fS,dPlusRaOrZeroAddress		is $(NOTVLE) & OP=52 & fS & dPlusRaOrZeroAddress
+{
+	tmp:4 = float2float(fS);	
+	*:4(dPlusRaOrZeroAddress) = tmp;
+}
+
+#stfsu fr0,8(0) 	0xD4 00 00 08
+#stfsu fr0,8(r2)	0xD4 02 00 08
+:stfsu fS,dPlusRaAddress			is $(NOTVLE) & OP=53 & fS & dPlusRaAddress & A
+{
+	tmp:4 = float2float(fS);	
+	*:4(dPlusRaAddress) = tmp;
+	A = dPlusRaAddress;
+}
+
+#stfsux fr0,r0,r0	0x7C 00 05 6E
+:stfsux fS,A,B	is $(NOTVLE) & OP=31 & fS & B & A & XOP_1_10=695 & BIT_0=0
+{
+	ea:$(REGISTER_SIZE) = A + B;
+	tmp:4 = float2float(fS);
+	*:4(ea) = tmp;
+	A = ea;
+}
+
+#stfsx fr0,r0,r0	0x7C 00 05 2E
+:stfsx fS,RA_OR_ZERO,B	is $(NOTVLE) & OP=31 & fS & B & RA_OR_ZERO & XOP_1_10=663 & BIT_0=0
+{
+	ea:$(REGISTER_SIZE) = RA_OR_ZERO + B;
+	tmp:4 = float2float(fS);
+	*:4(ea) = tmp;
+}
+
+#sth r0,r0			0xB0 00 00 00
+:sth S,dPlusRaOrZeroAddress		is $(NOTVLE) & OP=44 & S & dPlusRaOrZeroAddress
+{
+	*:2(dPlusRaOrZeroAddress) = S:2;
+}
+
+#sthbrx r0,r0,r0	0x7C 00 07 2C
+:sthbrx S,RA_OR_ZERO,B			is OP=31 & S & RA_OR_ZERO & B & XOP_1_10=918 & BIT_0=0
+{
+	tmp:2 = zext(S:1) <<8;
+	tmp2:2 = S:2 >>8; 
+	ea:$(REGISTER_SIZE) = RA_OR_ZERO + B;
+	*:2(ea) = tmp2 | tmp;
+}
+
+#sthu r0,r0			0xB4 00 00 00
+:sthu S,dPlusRaAddress		is $(NOTVLE) & OP=45 & S & A & dPlusRaAddress
+{
+	*:2(dPlusRaAddress) = S:2;
+	A = dPlusRaAddress;
+}
+
+#sthux r0,r0,r0		0x7C 00 03 6E
+:sthux S,A,B				is OP=31 & S & A & B & XOP_1_10=439 & BIT_0=0
+{
+	ea:$(REGISTER_SIZE) = A + B;
+	*:2(ea) = S:2;
+	A = ea;
+}
+
+#sthx r0,r0,r0		0x7C 00 03 2E
+:sthx S,RA_OR_ZERO,B		is OP=31 & S & RA_OR_ZERO & B & XOP_1_10=407 & BIT_0=0
+{
+	ea:$(REGISTER_SIZE) = RA_OR_ZERO + B;
+	*:2(ea) = S:2;
+}
+
+#### 
+#stm instruction
+@include "stmwInstructions.sinc"
+
+@include "stswiInstructions.sinc"
+#stswi r0,r0,0 		0x7c 00 05 aa
+#:stswi S,A,NB		is $(NOTVLE) & OP=31 & S & A & NB & XOP_1_10=725 & BIT_0=0
+#{
+#	tmp:1 = NB;
+#	storeString(S,A,tmp);
+#}
+
+#stswx r0,r0,0		0x7c 00 05 2a
+define pcodeop stswxOp;
+:stswx S,RA_OR_ZERO,B		is OP=31 & S & RA_OR_ZERO & B & XOP_1_10=661 & BIT_0=0
+{
+	EA:$(REGISTER_SIZE) = RA_OR_ZERO + B;
+	*[ram]:1 EA = stswxOp(S,RA_OR_ZERO,B);
+}
+
+#stw r0,r0,0		0x90 00 00 00
+:stw S,dPlusRaOrZeroAddress		is $(NOTVLE) & OP=36 & S & dPlusRaOrZeroAddress
+{
+@ifdef BIT_64
+	*:4(dPlusRaOrZeroAddress) = S:4;
+@else
+	*:4(dPlusRaOrZeroAddress) = S;
+@endif
+}
+
+#stwbrx r0,r0,0		0x7c 00 05 2c
+:stwbrx S,RA_OR_ZERO,B		is OP=31 & S & RA_OR_ZERO & B & XOP_1_10=662 & BIT_0=0
+{
+@ifdef BIT_64
+	value:4 = S:4;
+@else
+	value:$(REGISTER_SIZE) = S;
+@endif
+	ea:$(REGISTER_SIZE) = RA_OR_ZERO + B;
+	tmp1:4 = value << 24;
+	tmp2:4 = (value << 8) & 0xff0000;
+	tmp3:4 = (value >> 8)  & 0x00ff00;
+	tmp4:4 = value >> 24;
+	*:4(ea) = tmp1 | tmp2 | tmp3 | tmp4;	
+}
+
+#stwcx. r0,8(0)	0x7c 00 01 2D	
+:stwcx. S,RA_OR_ZERO,B 	is OP=31 & S & RA_OR_ZERO & B & XOP_1_10=150 & BIT_0=1
+{
+	EA:$(REGISTER_SIZE) = RA_OR_ZERO + B;
+	if (RESERVE == 0) goto inst_next;
+	*[ram]:4 EA = storeWordConditionalIndexed(S,RA_OR_ZERO,B);
+}
+
+#stwu r0,r0			0x94 00 00 00
+:stwu S,dPlusRaAddress		is $(NOTVLE) & OP=37 & S & A & dPlusRaAddress
+{
+@ifdef BIT_64
+	*:4(dPlusRaAddress) = S:4;
+@else
+	*:4(dPlusRaAddress) = S;
+@endif
+	A = dPlusRaAddress;
+}
+
+#stwux r0,r0,r0		0x7C 00 01 6E
+:stwux S,A,B				is OP=31 & S & A & B & XOP_1_10=183 & BIT_0=0
+{
+	ea:$(REGISTER_SIZE) = A + B;
+@ifdef BIT_64
+	*:4(ea) = S:4;
+@else
+	*:4(ea) = S;
+@endif
+	A = ea;
+}
+
+#stwx r0,r0,r0		0x7C 00 01 2E
+:stwx S,RA_OR_ZERO,B		is OP=31 & S & RA_OR_ZERO & B & XOP_1_10=151 & BIT_0=0
+{
+	ea:$(REGISTER_SIZE) = RA_OR_ZERO + B;
+@ifdef BIT_64
+	*:4(ea) = S:4;
+@else
+	*:4(ea) = S;
+@endif
+}
+
+
+#subf r0,r0,r0  0x7c 00 00 50
+:subf D,A,B			is OP=31 & D & A & B & OE=0 & XOP_1_9=40 & Rc=0
+{
+	D = B - A;
+}
+
+#subf. r0,r0,r0  0x7c 00 00 51 
+:subf. D,A,B		is OP=31 & D & A & B & OE=0 & XOP_1_9=40 & Rc=1	
+{ 	
+	D = B - A;
+	cr0flags(D);
+}
+
+#subfo r1,r2,r3  0x7c 00 04 50
+:subfo D,A,B		is OP=31 & D & A & B & OE=1 & XOP_1_9=40 & Rc=0
+{ 
+	D = B - A;
+	subOverflow(A,B);
+}
+
+#subfo. r1,r2,r3  0x7c 00 04 51
+:subfo. D,A,B		is OP=31 & D & A & B & OE=1 & XOP_1_9=40 & Rc=1
+{ 	
+	D = B - A;
+	subOverflow( A, B );
+	cr0flags(D);
+}
+
+#subfc r0,r0,r0  0x7c 00 00 10
+:subfc D,A,B		is OP=31 & D & A & B & OE=0 & XOP_1_9=8 & Rc=0
+{	
+	xer_ca = (A <= B);
+	D = B - A;
+}
+
+#subfc. r0,r0,r0  0x7c 00 00 11
+:subfc. D,A,B		is OP=31 & D & A & B & OE=0 & XOP_1_9=8 & Rc=1	
+{ 	
+	xer_ca = (A <= B);
+	D = B - A;
+	cr0flags(D); 
+}
+
+#subfco r0,r0,r0  0x7c 00 04 10
+:subfco D,A,B		is OP=31 & D & A & B & OE=1 & XOP_1_9=8 & Rc=0
+{ 
+	xer_ca = (A <= B);
+	D = B - A;
+	subOverflow( A, B );
+}
+
+#subfco. r0,r0,r0  0x7c 00 04 11
+:subfco. D,A,B		is OP=31 & D & A & B & OE=1 & XOP_1_9=8 & Rc=1
+{ 	
+	xer_ca = (A <= B);
+	D = B - A;
+	subOverflow( B, A );
+	cr0flags(D);
+}
+
+#subfe r0,r0,r0  0x7c 00 01 10
+:subfe D,A,B		is OP=31 & D & A & B & OE=0 & XOP_1_9=136 & Rc=0
+{	
+	tmp:$(REGISTER_SIZE) = zext(!xer_ca)+A; 
+	xer_ca= (tmp<=B); 
+	D = B - tmp; 
+}
+
+#subfe. r0,r0,r0  0x7c 00 01 11
+:subfe. D,A,B		is OP=31 & D & A & B & OE=0 & XOP_1_9=136 & Rc=1	
+{ 	
+	tmp:$(REGISTER_SIZE) = zext(!xer_ca)+A; 
+	xer_ca= (tmp<=B); 
+	D = B - tmp; 
+	cr0flags(D);
+}
+
+#subfeo r0,r0,r0  0x7c 00 05 10
+:subfeo D,A,B		is OP=31 & D & A & B & OE=1 & XOP_1_9=136 & Rc=0
+{ 
+	tmp:$(REGISTER_SIZE) = zext(!xer_ca)+A; 
+	xer_ca= (tmp<=B); 
+	D = B - tmp; 
+	subOverflow( B, tmp );
+}
+
+#subfeo. r0,r0,r0  0x7c 00 05 11
+:subfeo. D,A,B		is OP=31 & D & A & B & OE=1 & XOP_1_9=136 & Rc=1
+{ 	
+	tmp:$(REGISTER_SIZE) = zext(!xer_ca)+A; 
+	xer_ca= (tmp<=B); 
+	D = B - tmp; 
+	subOverflow( B, tmp );
+	cr0flags(D);
+}
+
+#subfic r0,r0,2 0x20 00 00 02
+:subfic D,A,SIMM		is $(NOTVLE) & OP=8 & D & A & SIMM
+{
+	xer_ca = !(SIMM<A); 
+	D = SIMM - A;
+}
+
+#subfme r0,r0	0x7c 00 01 d0
+:subfme D,A			is OP=31 & D & A & BITS_11_15=0 & OE=0 & XOP_1_9=232 & Rc=0
+{
+	tmp:$(REGISTER_SIZE)=zext(!xer_ca)+A;
+	xer_ca=!(-1<tmp);
+	D=-1-tmp; 
+}
+
+#subfme. r0,r0	0x7c 00 01 d1
+:subfme. D,A		is OP=31 & D & A & BITS_11_15=0 & OE=0 & XOP_1_9=232 & Rc=1
+{
+	tmp:$(REGISTER_SIZE)=zext(!xer_ca)+A;
+	xer_ca=!(-1<tmp);
+	D=-1-tmp;
+	cr0flags(D);
+}
+
+#subfmeo r0,r0	0x7c 00 05 d0
+:subfmeo D,A		is OP=31 & D & A & BITS_11_15=0 & OE=1 & XOP_1_9=232 & Rc=0
+{
+	tmp:$(REGISTER_SIZE)=zext(!xer_ca)+A;
+	subOverflow(0xffffffff,tmp);
+	xer_ca=!(-1<tmp);
+	D=-1-tmp;
+}
+
+#subfmeo. r0,r0	0x7c 00 05 d1
+:subfmeo. D,A		is OP=31 & D & A & BITS_11_15=0 & OE=1 & XOP_1_9=232 & Rc=1
+{
+	tmp:$(REGISTER_SIZE)=zext(!xer_ca)+A;
+	subOverflow(0xffffffff,tmp);
+	xer_ca=!(-1<tmp);
+	D=-1-tmp;
+	cr0flags(D);
+}
+
+#subfze r0,r0	0x7c 00 01 90
+:subfze D,A			is OP=31 & D & A & BITS_11_15=0 & OE=0 & XOP_1_9=200 & Rc=0
+{
+	tmp:$(REGISTER_SIZE) = zext(!xer_ca)+A;
+	xer_ca=!(0 s< tmp);
+	D=-tmp;
+}
+
+#subfze. r0,r0	0x7c 00 01 91
+:subfze. D,A		is OP=31 & D & A & BITS_11_15=0 & OE=0 & XOP_1_9=200 & Rc=1
+{
+	tmp:$(REGISTER_SIZE) = zext(!xer_ca)+A;
+	xer_ca= !(0 s< tmp);
+	D=-tmp;
+	cr0flags(D);
+}
+
+#subfzeo r0,r0	0x7c 00 05 90
+:subfzeo D,A		is OP=31 & D & A & BITS_11_15=0 & OE=1 & XOP_1_9=200 & Rc=0
+{
+	tmp:$(REGISTER_SIZE) = zext(!xer_ca)+A;
+	subOverflow(0,tmp);
+	xer_ca= !(0 s< tmp);
+	D=-tmp;
+}
+
+#subfzeo. r0,r0	0x7c 00 05 91
+:subfzeo. D,A		is OP=31 & D & A & BITS_11_15=0 & OE=1 & XOP_1_9=200 & Rc=1
+{
+	tmp:$(REGISTER_SIZE) = zext(!xer_ca)+A;
+	subOverflow(0,tmp);
+	xer_ca= !(0 s< tmp);
+	D=-tmp;
+	cr0flags(D);
+}
+
+#sync 0			0x7c 00 04 ac
+:sync L			is OP=31 & BITS_23_25=0 & L & BITS_11_20=0 & XOP_1_10=598 & BIT_0=0
+{
+	tmp:1 = L;
+	sync(tmp);
+}
+
+@ifdef BIT_64
+#td 0,r0,r0		0x7c 00 00 88
+:td^TOm A,B		is OP=31 & TO & TOm & A & B & XOP_1_10=68 & BIT_0=0
+{
+	tmp:1 = TO;
+	trapDoubleWord(tmp, A, B);
+}
+
+#tdi 0,r0,0		0x08 00 00 00
+:td^TOm^"i" A,SIMM		is $(NOTVLE) & OP=2 & TO & TOm & A & SIMM
+{
+	tmp:1 = TO;
+	tmp2:2 = SIMM;
+	trapDoubleWordImmediate(tmp, A, tmp2);
+}
+@endif
+
+define pcodeop TLBInvalidateEntry; # Outputs/affect TBD
+:tlbie RB_OR_ZERO,RS_OR_ZERO is $(NOTVLE) & OP=31 & RS_OR_ZERO & RB_OR_ZERO & BITS_16_20=0 & XOP_1_10=306 & BIT_0=0 { 
+	TLBInvalidateEntry(RB_OR_ZERO,RS_OR_ZERO);
+}
+
+define pcodeop TLBInvalidateEntryLocal; # Outputs/affect TBD
+:tlbiel RB_OR_ZERO is $(NOTVLE) & OP=31 & RB_OR_ZERO & BITS_21_25=0 & BITS_16_20=0 & XOP_1_10=274 & BIT_0=0 { 
+	TLBInvalidateEntryLocal(RB_OR_ZERO);
+}
+
+# PowerISA II: TLB Management Instructions
+# CMT: TLB Invalidate All
+# FORM: X-form
+define pcodeop TLBInvalidateAll; # Outputs/affect TBD
+:tlbia	is $(NOTVLE) & OP=31 & BITS_21_25=0 & BITS_16_20=0 & BITS_11_15=0 & XOP_1_10=370 & BIT_0=0 { TLBInvalidateAll(); }
+
+# PowerISA II: TLB Management Instructions
+# CMT: TLB Synchronize
+# FORM: X-form
+define pcodeop TLBSynchronize; # Outputs/affect TBD
+:tlbsync	is OP=31 & BITS_21_25=0 & BITS_16_20=0 & BITS_11_15=0 & XOP_1_10=566 & BIT_0=0 { TLBSynchronize(); }
+
+#tw	7,r0,r0			0x7c e0 00 08
+:tw^TOm A,B		is OP=31 & TO & TOm & A & B & BITS_1_10=4 & BIT_0=0
+{
+	tmp:1 = TO;
+	trapWord(tmp,A,B);
+}
+
+#tweq r0,r0			0x7c 80 00 08
+##:tweq A,B		is $(NOTVLE) & OP=31 & TO=4 & A & B & BITS_1_10=4 & BIT_0=0
+##{
+##	tmp:1 =4;
+##	trapWord(tmp,A,B);
+##}
+
+#twlge r0,r0	0x7c a0 00 08
+#:twlge A,B		is $(NOTVLE) & OP=31 & TO=5 & A & B & BITS_1_10=4 & BIT_0=0
+#{
+#	tmp:1 = 5;
+#	trapWord(tmp,A,B);
+#}
+
+#trap		0x7f e0 00 08
+:trap			is $(NOTVLE) & OP=31 & TO=31 & A & B & A_BITS=0 & B_BITS=0 & BITS_1_10=4 & BIT_0=0
+{
+	tmp:1 = 31;
+	trapWord(tmp,A,B);
+}
+
+#twi 0,r0,0		0x0c 00 00 00
+:tw^TOm^"i" A,SIMM	is $(NOTVLE) & OP=3 & TO & TOm & A & SIMM
+{
+	tmp:1 = TO;
+	tmp2:2 = SIMM;
+	trapWord(tmp,A,tmp2);
+}
+
+#twl r0,0	0xcc 00 00 00
+##:twl^TOm A,SIMM	is $(NOTVLE) & OP=3 & TO & TOm & A & SIMM
+##{
+##	tmp:1 = 6;
+##	tmp2:2 = SIMM;	
+##	trapWord(tmp,A,tmp2);
+##}
+
+#twli r0,0	0xcc 00 00 00
+##:twl^TOm^"i" A,SIMM	is $(NOTVLE) & OP=3 & TO & TOm & A & SIMM
+##{
+##	tmp:1 = 6;
+##	tmp2:2 = SIMM;	
+##	trapWord(tmp,A,tmp2);
+##}
+
+#twgti r0,0		0x0d 00 00 00
+##:twgti A,SIMM	is $(NOTVLE) & OP=3 & TO=8 & A & SIMM
+##{
+##	tmp:1 = 8;
+##	tmp2:2 = SIMM;	
+##	trapWord(tmp,A,tmp2);
+##}
+
+#twllei r0,0	0xcc 00 00 00
+##:twllei A,SIMM	is $(NOTVLE) & OP=3 & TO=6 & A & SIMM
+##{
+##	tmp:1 = 6;
+##	tmp2:2 = SIMM;	
+##	trapWord(tmp,A,tmp2);
+##}
+
+#xor r0,r0,r0	0x7c 00 02 78
+:xor A,S,B		is OP=31 & S & A & B & XOP_1_10=316 & Rc=0
+{
+	A = S ^ B;
+}
+
+#xor. r0,r0,r0	0x7c 00 02 79
+:xor. A,S,B		is $(NOTVLE) & OP=31 & S & A & B & XOP_1_10=316 & Rc=1
+{
+	A = S ^ B;
+	cr0flags(A);
+}
+
+#xori r0,r0,0	0x68 00 00 00
+:xori A,S,UIMM	is $(NOTVLE) & OP=26 & S & A & UIMM
+{
+	A = S ^ UIMM;
+}
+
+#xoris r0,r0,0	0x6c 00 00 00
+:xoris A,S,UIMM	is $(NOTVLE) & OP=27 & S & A & UIMM
+{
+	A = S ^ (UIMM << 16);
+}
+
+
+#TODO:
+# 2) Add simplified mnemonics for all instructions
+# 3) Break out load/store into '80-billion' instructions instead of a switch statement
+# 4)

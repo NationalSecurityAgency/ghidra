@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<processor_spec>
+  <properties>
+    <property key="DisableAllAnalyzers" value="value ignored, just turns them off"/>
+    <property key="Analyzers.Java Class Analyzer" value="true"/>
+    <property key="Analyzers.JVM Switch Analyzer" value="true"/>
+    <property key="pcodeInjectLibraryClass" value="ghidra.app.util.pcodeInject.PcodeInjectLibraryJava"/>
+  </properties>
+  <programcounter register="PC"/>
+  <register_data>
+    <register name="SP" group="Alt"/>
+  </register_data>
+  <jumpassist name="switchAssist">
+    <!-- pcode to describe how to get case values from an index 0...size-1 -->
+    <case_pcode>  
+      <input name="index" size="4"/>
+      <input name="opcodeAddr" size="4"/>
+      <input name="padding" size="1"/>
+      <input name="default" size="4"/>
+      <input name="npairs" size="4"/>
+      <output name="case" size="4"/>
+      <body><![CDATA[
+        case = *:4 (opcodeAddr + 1 + padding + 4 + 4 + 8*index);
+      ]]></body>
+    </case_pcode>
+    <!-- pcode to describe how to get address values from the same index range -->
+    <addr_pcode>
+      <input name="index" size="4"/>
+      <input name="opcodeAddr" size="4"/>
+      <input name="padding" size="1"/>
+      <input name="default" size="4"/>
+      <input name="npairs" size="4"/>
+      <output name="addr" size="4"/>
+      <body><![CDATA[
+        _offset:4 = opcodeAddr + 1 + padding + 4 + 4 + 8*index + 4;
+        addr = opcodeAddr + *:4 (_offset);
+      ]]></body>
+    </addr_pcode>
+    <!-- how to calculate the switch's default address -->
+    <default_pcode>
+      <input name="index" size="4"/>
+      <input name="opcodeAddr" size="4"/>
+      <input name="padding" size="1"/>
+      <input name="default" size="4"/>
+      <input name="npairs" size="4"/>
+      <output name="defaultAddress" size="4"/>
+      <body><![CDATA[
+        defaultAddress = default;
+      ]]></body>
+    </default_pcode>
+    <!-- recovers the number of indices in the table -->
+    <size_pcode>
+      <input name="index" size="4"/>
+      <input name="opcodeAddr" size="4"/>
+      <input name="padding" size="1"/>
+      <input name="default" size="4"/>
+      <input name="npairs" size="4"/>
+      <output name="numIndices" size="4"/>
+      <body><![CDATA[
+        numIndices = npairs;
+      ]]></body>
+    </size_pcode>
+  </jumpassist>
+  
+</processor_spec>

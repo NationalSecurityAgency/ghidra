@@ -1,0 +1,241 @@
+<!DOCTYPE doctype PUBLIC "-//W3C//DTD HTML 4.0 Frameset//EN">
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+
+    <TITLE>Search Instruction Patterns</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=windows-1252">
+    <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+  </HEAD>
+
+  <BODY lang="EN-US">
+    <H1><A name="Instruction_Pattern_Search"></A>Instruction Pattern Search</H1>
+
+    <P>This dialog allows users to search the current program for specific instruction sequences.
+    Operands and mnemonics may be masked to allow maximum flexibility in modifying the search
+    pattern.</P>
+
+    <P align="center"><IMG src="images/SearchInstructionPatterns.png" border="0" alt=""> &nbsp;</P>
+
+    <H2><B><FONT size="5">Dialog Layout</FONT></B></H2>
+
+    <BLOCKQUOTE>
+      <P>The search dialog consists of two main components: the <I>Instruction Table</I> and the
+      <I>Preview Table</I>. The former contains all instructions selected by the user; the latter
+      displays the string (in binary or hex) that will be used for searching</P>
+
+      <H3>Instruction Table</H3>
+
+      <BLOCKQUOTE>
+        <P align="center"><IMG src="images/SearchInstructionPatternsInstructionTable.png" border=
+        "0" alt=""> &nbsp;</P>
+
+        <P>This table is populated when a selection is made in the code listing and the <IMG
+        border="0" src="images/reload.png" width="16" height="16"> icon is selected. All items in
+        the selection range will have an entry in the table, even non-instructions. Users may click
+        on an item in the table to mask it from the final search string.</P>
+
+        <P><IMG border="0" src="../../shared/tip.png">Color-coding is used to indicate the code
+        unit type. <SPAN style="background-color:#BCD4FE">Instructions are displayed in
+        blue</SPAN>, <SPAN style="background-color:#CBBA96">data items are tan</SPAN>.</P>
+      </BLOCKQUOTE>
+
+      <BLOCKQUOTE>
+        <H4>Instruction Table Toolbar</H4>
+
+        <BLOCKQUOTE>
+          <P><IMG src="images/SearchInstructionPatternsInstructionTableToolbar.png" border="0" alt=
+          ""> &nbsp;</P>
+
+          <P>These tools provide ways to manipulate the Instruction Table and are discussed in
+          detail below:</P>
+
+          <BLOCKQUOTE>
+            <UL>
+              <LI>[ <IMG border="0" src="images/edit-clear.png"> ] Clears
+              all masks.</LI>
+
+              <LI>[ <IMG border="0" src="images/DOSA_D.png"> ] Masks all
+              data (non-instructions).</LI>
+
+              <LI>[ <IMG border="0" src="images/DOSA_O.png"> ] Masks all
+              operands.</LI>
+
+              <LI>[ <IMG border="0" src="images/DOSA_S.png"> ] Masks all
+              scalar operands.</LI>
+
+              <LI>[ <IMG border="0" src="images/DOSA_A.png"> ] Masks all
+              address operands.</LI>
+
+              <LI>[ <IMG border="0" src="images/reload.png"> ] Reloads the
+              table from what is currently selected in the listing.</LI>
+
+              <LI>[ <IMG border="0" src="images/editbytes.gif"> ] Allows
+              users to manually enter bytes to be loaded.</LI>
+
+              <LI>[ <IMG border="0" src="images/go-home.png"> ] Navigates in
+              the listing to the location defined by this set of instructions.</LI>
+            </UL>
+          </BLOCKQUOTE>
+        </BLOCKQUOTE>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <H3>Preview Table</H3>
+
+    <BLOCKQUOTE>
+      <P align="center"><IMG src="images/SearchInstructionPatternsPreviewTable.png" border="0" alt=
+      ""> &nbsp;</P>
+
+      <P>The Preview Table shows what the search string will look like, in either binary or hex
+      format. It will change dynamically as masks are applied/removed in the Instruction Table.</P>
+
+      <BLOCKQUOTE>
+        <UL>
+          <LI>When viewing the table in binary mode, any masked bits will appear as periods
+          [<B>.</B>]</LI>
+
+          <LI>In Hex mode, if any part of a byte has masked bits, the hex value will not be shown;
+          instead, the binary value with the masked bits will be displayed inside brackets. ie:
+          <B>[001..011]</B></LI>
+        </UL>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <BLOCKQUOTE>
+      <H4>Preview Table Toolbar</H4>
+
+      <BLOCKQUOTE>
+        <P><IMG src="images/SearchInstructionPatternsPreviewTableToolbar.png" border="0" alt="">
+        &nbsp;</P>
+
+        <P>These tools provide ways to manipulate the Preview Table and are discussed in detail
+        below:</P>
+
+        <BLOCKQUOTE>
+          <UL>
+            <LI>[ <IMG border="0" src="images/binaryData.gif"> ] Switches to
+            binary display mode.</LI>
+
+            <LI>[ <IMG border="0" src="images/hexData.png"> ] Switches to
+            hex display mode.</LI>
+
+            <LI>[ <IMG border="0" src="images/page_white_copy.png"> ] Copies the
+            preview table contents to the clipboard.</LI>
+          </UL>
+        </BLOCKQUOTE>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <H3>Search Bounds</H3>
+
+    <BLOCKQUOTE>
+      <P>By default any search will be run against the entire program. If you only want to search a
+      particular range, that can be done using the options below:</P>
+
+      <BLOCKQUOTE>
+        <P align="left"><IMG src="images/SearchInstructionPatternsControlPanel.png" border="0" alt=
+        ""> &nbsp;</P>
+
+        <UL>
+          <LI>Selection Scope</LI>
+
+          <LI style="list-style: none">
+            <P>Allows the user to specify what region of the program will be searched. The default
+            is to search for the entire program. If <I>Search Selection</I> is chosen, whatever
+            region is currently selected in the listing will be used as the search bounds.</P>
+          </LI>
+
+          <LI>Search Direction</LI>
+
+          <LI style="list-style: none">
+            <P>Indicates whether subsequent invocations of the <I>Search</I> button will look
+            forward or backward in the listing for the search pattern.</P>
+          </LI>
+        </UL>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <H3>Manual Entry</H3>
+
+    <BLOCKQUOTE>
+      <P align="center"><IMG src="images/SearchInstructionsManualSearchDialog.png" border="0">
+      </P>
+
+      <P>If the user clicks the <IMG border="0" src="images/editbytes.gif">
+      button, the manual entry dialog above will be displayed. Users may enter either a binary or
+      hex string here (full bytes, no nibbles!) and if the string represents a valid set of
+      instructions for the loaded program, then activating the <I>Apply</I> button will cause them
+      to be displayed in the <I>Instruction Table</I>.</P>
+
+      <H3>Search Results</H3>
+
+      <P>If the user clicks the <I>Search All</I> button, all search results will be shown in a
+      single window, where each entry represents the starting address of a match. Clicking on an
+      entry will take you to that spot in the listing.</P>
+
+      <P>If the user clicks the <I>Search</I> button, no results table will appear but the cursor
+      will immediately move to the next match in the listing. Whether the cursor moves to the next
+      or previous match depends on the <I>Search Direction</I> setting.</P>
+
+      <P align="center"><IMG src="images/SearchInstructionPatternsResultsTable.png" border="0" alt=
+      ""> &nbsp;</P>
+
+      <P><IMG border="0" src="../../shared/tip.png">It should be noted that the search will look
+      for exact byte pattern matches, not simply the mnemonic and/or operand text. eg: If you load a
+      program and select a <I>RET</I> instruction, you can't expect to use that same search pattern
+      to find a <I>RET</I> instruction in a different program. Unless they represent the same
+      architecture, their byte representations will likely be different.</P>
+    </BLOCKQUOTE>
+
+    <H2><B><FONT size="5">Usage</FONT></B></H2>
+
+    <BLOCKQUOTE>
+      <P>The most basic usage of the search dialog is as follows:</P>
+
+      <OL>
+        <LI>Select a range of instructions in the code listing.</LI>
+
+        <LI>From the Tool, select <B>Search</B><IMG border="0" src="../../shared/arrow.gif"> <B>For
+        Instruction Patterns</B>.<BR>
+         The dialog will launch and be populated with the instruction set.</LI>
+
+        <LI>Select/deselect items in the table to mask the desired instructions.</LI>
+
+        <LI>Click the <I>Search All</I> button. A dialog will pop up showing all occurrences of the
+        pattern in the program.</LI>
+      </OL><BR>
+      <BR>
+       
+
+      <H4>Saving a Search Pattern</H4>
+
+      <BLOCKQUOTE>
+        <P>Users may copy and save the generated search pattern by right-clicking on the preview
+        table and selecting one of the options; the text will be copied to the clipboard.</P>
+      </BLOCKQUOTE>
+
+      <H4>Constraints</H4>
+
+      <UL>
+        <LI>The number of instructions that can be used in a pattern is capped at <B>500</B>.</LI>
+
+        <LI>Only one range of addresses may be selected in the code browser. MULTIPLE SELECTIONS
+        ARE NOT ALLOWED.</LI>
+      </UL>
+
+      <H4>Multiple Programs</H4>
+
+      <BLOCKQUOTE>
+        <P>The instruction search dialog will always operate on the program currently selected in
+        the listing. If you select a set of instructions in Program A, then switch over to Program
+        B and select the <I>Search</I> button, Program B will be searched for the selected
+        instructions.</P>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <P class="providedbyplugin">Provided by: <I>InstructionSearchPlugin</I></P>
+  </BODY>
+</HTML>

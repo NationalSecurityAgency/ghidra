@@ -1,0 +1,191 @@
+<!DOCTYPE doctype PUBLIC "-//W3C//DTD HTML 4.0 Frameset//EN">
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+
+    <TITLE>Register Values Plugin</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=windows-1252">
+    <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+  </HEAD>
+
+  <BODY lang="EN-US">
+    <H1>Register Values</H1>
+
+    <P>Each program has a set of registers that is determined by the program's <I>language.</I>
+    When a program is actually running, the registers contain values that make up the <I>processor
+    state</I> at any given instant. Since Ghidra programs represent a <I>static</I> view (i.e. not
+    running), there is no "instant" that can be examined to see register values. The best
+    approximation is to assign registers values at addresses. This is useful if the register value
+    can be determined to be constant anytime the instruction at that address is executed.</P>
+
+    <P>For example, if an instruction at address 0x1000 is "mov ax,20", then it might be possible
+    to assume that the value of register ax will be 20 for the next several instructions (assuming
+    there are no "jumps" into that code).</P>
+
+    <P>Setting register values can sometimes be the critical link for successfully performing
+    various types of analysis or even getting the correct disassembly. For example, some processors
+    have a "mode" that is stored in some register. Depending on the mode, the processor may have
+    completely different instruction sets. To disassemble properly, the mode register must be set
+    at the address where the disassembly begins.</P>
+
+    <H2><A name="Register_Manager"></A>Register Manager</H2>
+
+    <BLOCKQUOTE>
+      <P>The <I>Register Manager</I> displays the assigned values of registers at addresses within
+      a program.<BR>
+      </P>
+
+      <P>To display the <I>Register Manager</I>, select the <B>Register Manager</B> menu item from
+      the <B>Window</B> menu of the toolbar or.</P>
+    </BLOCKQUOTE><BR>
+
+    <CENTER>
+      <IMG src="images/RegisterManager.png">
+    </CENTER>
+
+    <BLOCKQUOTE>
+      <P><BR>
+      </P>
+
+      <P>The left side of the Register Manager is a tree containing all the registers defined for
+      the program's language. &nbsp;If the registers have been grouped into categories by the
+      language, those registers will appear under a folder with that group name. &nbsp;Registers
+      that break down into smaller registers are marked with the <IMG src=
+      "images/registerGroup.png"> icon. &nbsp;These nodes can be further opened to reveal their
+      component registers. &nbsp;For example, EAX can be opened to show AX, which can then be
+      opened to show AL and AH. &nbsp;Registers that don't have sub pieces use the&nbsp;<IMG src=
+      "images/registerIcon.png"> icon. &nbsp;The filter text field, located under the register tree
+      can be used to quickly find any register. &nbsp;As you begin to type the name of a register,
+      the tree will shrink eliminating any registers that don't contain the filter text.<BR>
+      </P>
+
+      <P>The right side of the Register Manager is a table that displays ranges of addresses that
+      have assigned values for whichever register is selected in the register tree.
+      &nbsp;Initially, the table only contains values that have been explicitly associated with the
+      selected register and addresses. &nbsp;There is an option in the drop down menu that will
+      cause the table to also show <I>default</I> values for a register. &nbsp;Default values are
+      assigned by the language and usually only apply to context registers.<BR>
+      </P>
+    </BLOCKQUOTE>
+
+    <BLOCKQUOTE>
+      <H3><A name="tool_buttons"></A>Tool Buttons</H3>
+    </BLOCKQUOTE>
+
+    <BLOCKQUOTE>
+      <BLOCKQUOTE>
+        <P><IMG src="images/locationIn.gif">Toggles whether or not to select the row in the 
+        currently selected register value table whose address range contains the current address
+        of the cursor in the listing view.  For example, in the Register Manager image show above,
+        if the user clicks on any address between 804c12 and 804c24, then the first row of the
+        table will be selected if this action toggle is on.</P>
+
+        <P><IMG src="images/edit-delete.png">Deletes the register value associations for all the
+        selected ranges in the table.</P>
+
+        <P><IMG src="Icons.MAKE_SELECTION_ICON">Creates a selection in the browser for all the address
+        ranges selected in the register values table.</P>
+
+        <P><IMG src="images/view-filter.png">Filters out all registers in the register tree that
+        don't have any associated values (default or otherwise).</P>
+
+        <H3><BR>
+        </H3>
+      </BLOCKQUOTE>
+
+      <H3><A name="menu_actions"></A>Menu Actions</H3>
+
+      <BLOCKQUOTE>
+        <P><B>Show Default Values</B> - if selected, the register manager will show default
+        register value ranges mixed in with user set register value ranges.<BR>
+        </P>
+      </BLOCKQUOTE>
+
+      <H3><A name="EditRegisterValues"></A>Editing an Address Value Range</H3>
+
+      <BLOCKQUOTE>
+        <P>Double click on any row in the register value table to bring up the <I>Edit Register
+        Value Range</I> dialog.<BR>
+        </P>
+
+        <DIV align="center">
+          <IMG src="images/EditRegisterValueRange.png"><BR>
+           
+
+          <DIV align="left">
+            <BR>
+            <BR>
+             
+
+            <P>Using the dialog, you can adjust the start or end address and/or change the value
+            associated with the range. &nbsp;If you change the start or end address such that the
+            range is smaller, then value associations for address range that was trucated is
+            effectively cleared. For example, in the dialog shown above, if you change the end
+            address to 01001b47 and change the value to 111, then addresses 01001b33 to 01001b47
+            will have the value 111 and address 01001b48 will have no value.<BR>
+            </P>
+          </DIV>
+        </DIV>
+      </BLOCKQUOTE><BR>
+    </BLOCKQUOTE>
+
+    <H2><A name="SetRegisterValues"></A>Setting Register Values Over Address Ranges</H2>
+
+    <BLOCKQUOTE>
+      <P>To set a value for a register across an address range, first create a selection in 
+      the browser and then invoke the <I>Set Register Values</I>
+      action by either using the right-mouse popup or using the &lt;Ctrl&gt;R quick key. &nbsp;The
+      following dialog appears.<BR>
+      </P>
+
+      <P align="center"><IMG src="images/SetRegisterValues.png"><BR>
+      </P>
+
+      <P align="left"><BR>
+      Choose the register for which you want to set a value, enter the value and press the <I>Ok</I> button.
+      &nbsp;The <I>Address(es)</I> field shows the set of addresses that will be affected. &nbsp;By
+      default, the <I>Value</I> field is entered as an unsigned hex value, but the format can be
+      changed using the adjacent drop-down menu.<BR>
+      </P>
+
+      <P align="left"><IMG src="../../shared/note.png"> If the browser cursor is on a register when
+      this dialog is invoked, then the register combo will be set to that register.</P>
+
+      <P align="left"><BR>
+      </P>
+    </BLOCKQUOTE>
+
+    <H2><A name="ClearRegisterValues"></A>Clearing Register Values Over Address Ranges<BR>
+    </H2>
+
+    <BLOCKQUOTE>
+      <P>To clear a register value over an address range, first create a selection in the browser and then
+      invoke the <I>Clear Register Values</I> action by using the right-mouse popup. &nbsp;The
+      following dialog appears.<BR>
+      </P>
+
+      <P align="center"><IMG src="images/ClearRegisterValues.png"><BR>
+      </P>
+
+      <P align="left"><BR>
+      Choose the register for the association and press the <I>Ok</I> button. &nbsp;The
+      <I>Address(es)</I> field shows the set of addresses that will be affected.&nbsp;<BR>
+      </P>
+    </BLOCKQUOTE>
+
+    <H2><A name="DeleteRegisterValueRange"></A>Delete Exiting Register Value Ranges
+    Associations</H2>
+
+    <BLOCKQUOTE>
+      <P>You can delete associated register values using <I>Delete Register Value Range</I> action
+      when over a <B>Register Transition</B> &nbsp;field in the browser ("assume ESI = 0x20".)
+      &nbsp;Activating this action will remove the register association over the entire range
+      associated with that "Assume" statement.<BR>
+      </P>
+    </BLOCKQUOTE><BR>
+
+    <P class="providedbyplugin">Provided by: <I>RegisterPlugin</I></P>
+  </BODY>
+</HTML>

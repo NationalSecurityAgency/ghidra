@@ -1,0 +1,111 @@
+#---------------------------------------------------------------------
+# 8.3.10 System/Control
+#---------------------------------------------------------------------
+
+#---------------------------------------------------------------------
+# SR{cond} - Set Register Conditionally
+# I.    cond4 -> {eq,ne,hs,lo,ge,lt,mi,pl,ls,gt,le,hi,vs,vc,qs,al} 
+#           d -> {0, 1, ..., 15}
+#---------------------------------------------------------------------
+
+# SR{cond} Format I
+# Operation: if (cond4) Rd <- 1; else Rd <- 0;
+# Syntax:    SR{cond4} Rd
+# 0101 1111 cccc dddd
+
+:SR^{COND_4_4} rd0 is op8_8=0x5f & rd0 & COND_4_4 {
+        rd0 = 0;
+        build COND_4_4;
+        rd0 = 1;
+}
+
+:BREAKPOINT 					is op0_16=0xd673  {
+	trap();
+}
+
+:CACHE rd0[disp0_11],eop11_5	is op4_12=0xF41 & rd0 ; disp0_11 & eop11_5 {
+	tmpa:4 = disp0_11;
+	tmpb:4 = eop11_5;
+	cacheOp(rd0,tmpa,tmpb);
+}
+
+:CSRF imm4_5 					is op9_7=0x6a & op0_4=0x3 & imm4_5 {
+	tmp:4 = 1 << imm4_5;
+	SR = SR & ~tmp;
+	SRTOFLAGS();
+}
+
+:CSRFCZ imm4_5 					is op9_7=0x68 & imm4_5 & op0_4=0x3 {
+	tmp:1 = ((SR >> imm4_5) & 0x1) != 0;
+	C = tmp;
+	Z = tmp;
+	CZTOSR();
+}
+
+:FRS  is op0_16=0xd743 { }
+
+:MFSR rd0,sysreg				is op4_12=0xE1B & rd0 ; eop8_8=0 & sysreg {
+	rd0 = sysreg;
+}
+
+:MTSR sysreg,rs0				is op4_12=0xE3B & rs0 ; eop8_8=0 & sysreg {
+	sysreg = rs0;
+}
+
+:MFDR rd0, dbgreg 	is op4_12=0xe5b & rd0 ; eop8_8=0x0 & dbgreg {
+	tmp:1 = dbgreg;
+	MoveFromDebugReg(rd0,tmp);
+}
+
+:MTDR dbgreg, rs0  	is op4_12=0xe7b & rs0 ; eop8_8=0x0 & dbgreg {
+	tmp:1 = dbgreg;
+	MoveToDebugReg(rs0,tmp);
+}
+
+:MUSFR rs0 		is op4_12=0x5d3 & rs0 {
+	SR = (SR & 0xFFFFFFF0) | (rs0 & 0xF);
+	SRTOLOWFLAGS();
+}
+
+:MUSTR rd0 		is op4_12=0x5d2 & rd0 {
+	rd0 = SR & 0xF;
+}
+
+:NOP							is op0_16=0xD703 {}
+# I found gcc assembler will also use an add r0,r0 for a nop which is an all 0 opcode
+:NOP							is op0_16=0 {}
+
+:PREF rp0[disp_16] is op4_12=0xf21 & rp0 ; disp_16 {
+	tmpa:2 = disp_16;
+	tmp:4 = rp0 + sext(tmpa);
+	CacheFetch(tmp);
+}
+
+SLGM: val			is disp_8 [ val = disp_8 << 0; ] { export *[const]:1 val; }
+SLGM: val			is eb7=1 & disp_8 [ val = disp_8 << 0; ] { GM = 0; export *[const]:1 val; }  
+:SLEEP SLGM 		is op0_16=0xe9b0 ; eop8_8=0x0 & SLGM {
+	doSleep(SLGM);
+}
+
+:SSRF imm4_5 					is op9_7=0x69 & op0_4=0x3 & imm4_5 {
+	tmp:4 = 1 << imm4_5;
+	SR = SR | tmp;
+	SRTOFLAGS();
+}
+
+:SYNC eop0_8 	is op0_16=0xebb0 ; eop8_8=0x0 & eop0_8 {
+	tmp:1 = eop0_8;
+	SynchMemory(tmp);
+}
+
+:TLBR  is op0_16=0xd643 {
+	ReadTLBEntry();
+}
+
+:TLBS  is op0_16=0xd653 {
+	SearchTLBEntry();
+}
+
+:TLBW  is op0_16=0xd663 {
+	WriteTLBEntry();
+}

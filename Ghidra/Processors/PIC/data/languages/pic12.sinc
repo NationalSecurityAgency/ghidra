@@ -1,0 +1,63 @@
+#
+# PIC-12 Main Section
+#   includes constants, memory space and common register space definitions
+#
+
+# STATUS bit definitions
+@define STATUS_PA0_BIT	5
+@define STATUS_Z_BIT	2
+@define STATUS_DC_BIT	1
+@define STATUS_C_BIT	0
+
+# STATUS bit masks used for setting
+@define STATUS_PA_MASK	0x60
+@define STATUS_Z_MASK	0x04
+@define STATUS_DC_MASK	0x02
+@define STATUS_C_MASK	0x01
+
+# STATUS bit masks used for clearing
+@define STATUS_PA_CLEARMASK	0x9F
+@define STATUS_Z_CLEARMASK	0xFB
+@define STATUS_DC_CLEARMASK	0xFD
+@define STATUS_C_CLEARMASK	0xFE
+
+@define FSR_BSEL_MASK		0x60		# FSR<5:6> Bank Select bits : Direct Addressing
+
+define endian=little;
+define alignment=2;
+
+# Instruction Memory (ROM-based)
+define space CODE type=ram_space wordsize=2 size=2 default;
+
+# General Purpose Register Memory consists of 2-banks of 32-bytes each
+# Bank selection occurs using FSR bits <6:5>
+define space DATA type=ram_space size=1; 
+
+# HWSTACK consists of a 2-word by 12-bit RAM and a corresponding to a hidden stack pointer (STKPTR).
+define space HWSTACK type=ram_space wordsize=2 size=1;  # WORDSIZE is actually 12-bits
+ 
+define space register type=register_space size=2; 
+
+# Program Counter (9-bits) - PC Latch: PCL<PC:7-0>
+define register offset=0x0000 size=2 [ PC ];
+
+# Stack Pointer
+define register offset=0x0002 size=1 [ STKPTR ];
+
+# Working register
+define register offset=0x0003 size=1 [ W ];
+
+# PC Latch register (real register is memory based)
+define register offset=0x0004 size=1 [ PCL ];
+
+# File Selection register (real register is memory based)
+define register offset=0x0005 size=1 [ FSR ];
+
+# STATUS register (real register is memory based)
+define register offset=0x0006 size=1 [ STATUS ];
+
+# Status bit registers (these do not really exist and must get reflected into the STATUS byte register)
+define register offset=0x0007 size=1 [ PA Z DC C ];
+
+# Option Register
+define register offset=0x00b size=1 [ OPTION ];

@@ -1,0 +1,65 @@
+<patternlist>
+  <patternpairs totalbits="32" postbits="16">
+    <prepatterns>
+      <data>0x9090</data>                                          <!-- NOP; NOP  -->     
+      <data>0xc390</data>                                          <!-- RET; NOP --> 
+      <data>0x5bc3</data>                                          <!-- POP EBX; RET --> 
+      <data>0xc2 0000..00 0x00</data>                              <!-- RET 4/8 -->
+      <data>0xc2 0000..00 0x0090</data>                            <!-- RET 4/8; NOP -->
+      <data>0xe8 ........ ........ ........ ........ 0xc3</data>   <!-- CALL; RET -->
+      <data>0xeb..</data>                                          <!-- JMP small -->
+      <data>0xe9........</data>                                    <!-- JMP xxx - after a shared jump target -->
+    </prepatterns>
+    <postpatterns>
+      <!-- two-instruction sequences -->
+      <data>0x558bec</data>                        <!-- PUSH EBP : MOV EBP,ESP -->
+      <data>0x538bd8</data>                        <!-- PUSH EBX; MOV(EBX,EAX) -->
+      <!-- three-instruction sequences -->  
+      <data>0x535657</data>                        <!-- PUSH EBX; PUSH ESI; PUSH EDI -->
+      <data>0x53568bd8</data>                      <!-- PUSH EBX; PUSH ESI; MOV(EBX,EAX)-->
+      <data>0x53568bf0</data>                      <!-- PUSH EBX; PUSH ESI; MOV(ESI, EAX) -->
+      <data>0x535684d2</data>                      <!-- PUSH EBX; PUSH ESI; TEST(DL,DL) -->
+      <data>0x53 0x56 0x83 0xc4  1...1.00</data>   <!-- PUSH EBX; PUSH ESI; ADD(ESP, C) -->
+      <funcstart/>
+    </postpatterns>
+  </patternpairs>
+
+  <!-- in delphi libraries a function can be put in its own section, but the pattern matcher doesn't
+       search across section boundaries. -->
+  <pattern>
+    <data>0x558bec</data>
+    <funcstart after="function" />
+  </pattern>
+ 
+  <pattern>
+    <data>0x538bd8</data>
+    <funcstart after="function" />
+  </pattern>
+
+  <pattern>
+    <data>0x535657</data>
+    <funcstart after="function" />
+  </pattern>
+  
+  <pattern>
+    <data>0x53568bd8</data>
+    <funcstart after="function" />
+  </pattern>
+
+  <pattern>
+    <data>0x53568bf0</data>
+    <funcstart after="function" />
+  </pattern>
+  
+  <pattern>
+    <data>0x535684d2</data>
+    <funcstart after="function" />
+  </pattern>
+  
+  <pattern>
+    <data>0x53 0x56 0x83 0xc4 1...1.00</data>
+    <funcstart after="function" />
+  </pattern>
+
+
+</patternlist>

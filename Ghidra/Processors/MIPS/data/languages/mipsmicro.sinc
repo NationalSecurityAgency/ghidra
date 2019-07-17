@@ -1,0 +1,3850 @@
+define token micinstr (16)
+  mic_op=(10,15)
+  mic_code=(0,9)
+  mic_code4=(0,3)
+  mic_code4s=(0,3) signed
+  mic_code4r6=(6,9)
+  mic_off4r6=(4,7)
+
+  mic_base0=(0,4)
+  mic_base4=(4,6)
+  mic_index=(5,9)
+  
+  mic_rd7=(7,9)
+  mic_rd7lo=(7,9)
+  mic_rd1=(1,3)
+  mic_rd1lo=(7,9)
+
+  mic_rs0=(0,2)
+  mic_rs0lo=(0,2)  
+  mic_rs1=(1,3)
+  mic_rs1lo=(1,3)
+  mic_rs4=(4,6)
+  mic_rs4lo=(4,6)
+  mic_rs7=(7,9)
+  mic_rs7lo=(7,9)
+  
+  mic_rt3=(3,5)
+  mic_rt3lo=(3,5)
+  mic_rt4=(4,6)
+  mic_rt4lo=(4,6)
+  mic_rt7=(7,9)
+  mic_rt7lo=(7,9)
+  
+  
+
+  mic_rd32_5=(5,9)
+  mic_rd32_5lo=(5,9)
+  mic_rd32_11=(11,15)
+  mic_rd32_0=(0,4)
+
+  mic_rs32_0=(0,4)
+  mic_rs32_0a=(0,4)
+  mic_rs32_0b=(0,4)
+  mic_rs32_0lo=(0,4)
+  mic_rs32_5=(5,9)
+
+  mic_rt32_0=(0,4)
+  mic_rt32_5=(5,9)
+  mic_rt32_5a=(5,9)
+  mic_rt32_5lo=(5,9)
+  
+  mic_fd=(0,4)
+  mic_fdD=(0,4)
+  mic_fs=(0,4)
+  mic_fsD=(0,4)
+  mic_fs_5=(5,9)
+  mic_fsD_5=(5,9)
+  mic_ft_0=(0,4)
+  mic_ft_5=(5,9)
+  mic_ftD_5=(5,9)  
+  mic_ct=(0,4)
+
+  mic_stype=(0,4)
+  mic_funci=(5,9)
+  mic_cop5=(5,9)
+  mic_impl=(0,4)
+  mic_pcf=(0,4)
+  mic_pcz=(3,4)
+  mic_cc=(2,4)
+  mic_pcf2=(2,4)
+  mic_cp2z=(0,1)
+  mic_rlist=(5,9)
+  mic_imm10=(0,9)
+  mic_imm9=(1,9)
+  mic_imm9s=(1,9) signed
+  mic_imm9e=(0,8)
+  mic_imm7=(0,6)
+  mic_imm6=(1,6)
+  mic_imm6r6=(0,5)
+  mic_imm5=(0,4)
+  mic_imm5s=(0,4) signed
+  mic_imm5r6=(5,9)
+  mic_imm4=(1,4)
+  mic_imm4s=(1,4) signed
+  mic_imm3=(1,3)
+  mic_imm03=(0,3)
+  mic_imm02=(0,2)
+  mic_imm01=(0,1)
+  mic_bit0=(0,0)
+  mic_bit01=(0,1)
+  mic_bit3=(3,3)
+  mic_bit10=(10,10)
+  mic_sub2=(5,9)
+  mic_csub=(6,9)
+  mic_csubr6=(0,3)
+  mic_jalr=(5,9)
+  mic_jalrr6=(0,4)
+  mic_off12=(0,11)
+  mic_off10=(0,9)
+  mic_soff10=(0,9) signed
+  mic_off7=(0,6)
+  mic_soff7=(0,6) signed
+  mic_off4=(0,3)
+  mic_break=(4,9)
+  mic_breakr6=(0,5)
+  mic_ja32=(6,15)
+  mic_list=(4,5)
+  mic_listr6=(8,9)
+  mic_cofun=(3,15)
+  mic_encrs=(1,3)
+  mic_encrt=(4,6)
+  mic_encrd=(7,9)
+  mic_encre=(7,9)
+  mic_encrt2=(7,9)
+  mic_sa=(1,3)
+;
+
+define token micinstrb (16)
+  micb_imm16=(0,15)
+  micb_simm16=(0,15) signed
+  micb_poolax=(0,5)
+  micb_poolfx=(0,5)
+  micb_bp=(9,10)
+  micb_bp8=(8,10)
+  micb_flt6=(6,12)
+  micb_fmt14=(14,14)
+  micb_fmt=(13,14)
+  micb_fmt8=(8,9)
+  micb_fmt9=(9,10)
+  micb_fmt10=(10,11)
+  micb_spec=(0,5)
+  micb_axf=(6,15)
+  micb_axf2=(0,9)
+  micb_axf3=(6,11)
+  micb_code10=(6,15)
+  micb_asel=(6,8)
+  micb_fxf=(6,15)
+  micb_fxf2=(0,10)
+  micb_fxf3=(0,7)
+  micb_fxf4=(6,13)
+  micb_fxf5=(0,8)
+  micb_bit10=(10,10)
+  micb_bit11=(11,11)
+  micb_bit12=(12,12)
+  micb_bit15=(15,15)
+  micb_cc=(13,15)
+  
+  micb_rd32=(11,15)
+  micb_rd32lo=(11,15)
+  micb_rs32=(6,10)
+  
+  micb_fd=(11,15)
+  micb_fdD=(11,15)
+  
+  micb_fr=(6,10)
+  micb_frD=(6,10)
+  
+  micb_rx=(6,10)
+  micb_pos=(6,10)
+  micb_size=(11,15)
+  micb_sa=(11,15)
+  micb_sa9=(9,10)
+  micb_hint=(11,15)
+  micb_offset12=(0,11)
+  micb_offset12s=(0,11) signed
+  micb_offset11=(0,10)
+  micb_offset11s=(0,10) signed
+  micb_offset9=(0,8)
+  micb_offset9s=(0,8) signed
+  micb_func12=(12,15)
+  micb_trap=(6,11)
+  micb_cond=(6,9)
+  micb_cond2=(6,10)
+  micb_sub9=(9,11)
+  micb_cop=(0,2)
+  micb_cofun=(3,15)
+  micb_z14=(14,15)
+  micb_z12=(12,15)
+  micb_z11=(11,12)
+  micb_z9=(9,10)
+  micb_z68=(6,8)
+  micb_z67=(6,7)
+  micb_sel=(11,13)
+  micb_cpf=(6,10)
+;
+
+attach variables [ mic_rd7 mic_rd1 mic_rt4 mic_rs1 mic_rs7 mic_rs0 mic_rs4 mic_rt3 mic_rt7 mic_base4 ]
+                 [ s0 s1 v0 v1 a0 a1 a2 a3 ];
+
+@ifdef MIPS64
+attach variables [ mic_rd7lo mic_rd1lo mic_rt4lo mic_rs1lo mic_rs7lo mic_rs0lo mic_rs4lo mic_rt3lo mic_rt7lo ]
+				 [ s0_lo s1_lo v0_lo v1_lo a0_lo a1_lo a2_lo a3_lo ];
+
+attach variables [ mic_rs32_0lo mic_rt32_5lo micb_rd32lo mic_rd32_5lo ext_32_rs1lo] [ 
+    zero_lo  at_lo  v0_lo  v1_lo  a0_lo  a1_lo  a2_lo  a3_lo
+    t0_lo    t1_lo  t2_lo  t3_lo  t4_lo  t5_lo  t6_lo  t7_lo
+    s0_lo    s1_lo  s2_lo  s3_lo  s4_lo  s5_lo  s6_lo  s7_lo
+    t8_lo    t9_lo  k0_lo  k1_lo  gp_lo  sp_lo  s8_lo  ra_lo 
+];
+@else
+attach variables [ mic_rd7lo mic_rd1lo mic_rt4lo mic_rs1lo mic_rs7lo mic_rs0lo mic_rs4lo mic_rt3lo mic_rt7lo ]
+				 [ s0 s1 v0 v1 a0 a1 a2 a3 ];
+
+attach variables [ mic_rs32_0lo mic_rt32_5lo micb_rd32lo mic_rd32_5lo ext_32_rs1lo] [ 
+    zero  at  v0  v1  a0  a1  a2  a3
+    t0    t1  t2  t3  t4  t5  t6  t7
+    s0    s1  s2  s3  s4  s5  s6  s7
+    t8    t9  k0  k1  gp  sp  s8  ra 
+];
+@endif
+
+
+attach variables [ mic_encrs mic_encrt ext_16_rs]
+				 [ zero s1 v0 v1 s0 s2 s3 s4 ];
+				 
+attach variables [ mic_encrt2]
+				 [ zero s1 v0 v1 a0 a1 a2 a3 ];
+				 
+attach variables [ mic_encrd]
+				 [ a1 a1 a2 a0 a0 a0 a0 a0 ];
+				 
+attach variables [ mic_encre]
+				 [ a2 a3 a3 s5 s6 a1 a2 a3 ];
+
+attach variables [ mic_rd32_5 mic_rs32_0 mic_rs32_5 mic_rt32_5 mic_rd32_11 mic_rd32_0 ext_32_base micb_rd32 ext_32_rd micb_rs32 mic_base0 ext_32_rs1 mic_index] [ 
+    zero  at  v0  v1  a0  a1  a2  a3
+    t0    t1  t2  t3  t4  t5  t6  t7
+    s0    s1  s2  s3  s4  s5  s6  s7
+    t8    t9  k0  k1  gp  sp  s8  ra 
+];
+
+attach variables [ mic_fs mic_ft_5 micb_fd micb_fr mic_fs_5 mic_fd] [ 
+    f0  f1  f2  f3  f4  f5  f6  f7  f8  f9  f10 f11 f12 f13 f14 f15
+    f16 f17 f18 f19 f20 f21 f22 f23 f24 f25 f26 f27 f28 f29 f30 f31 
+];
+
+@if FREGSIZE == "4"
+# For 64-bit floating point Double instruction operands need to bond two 32-bit FPRs
+attach variables [ mic_fsD mic_ftD_5 micb_fdD micb_frD mic_fsD_5 mic_fdD] [
+    f0_1   _ f2_3   _ f4_5   _ f6_7   _
+    f8_9   _ f10_11 _ f12_13 _ f14_15 _
+    f16_17 _ f18_19 _ f20_21 _ f22_23 _
+    f24_25 _ f26_27 _ f28_29 _ f30_31 _
+];
+@else # FREGSIZE == "8"
+attach variables [ mic_fsD mic_ftD_5 micb_fdD micb_frD mic_fsD_5 mic_fdD] [
+    f0  f1  f2  f3  f4  f5  f6  f7  f8  f9  f10 f11 f12 f13 f14 f15
+    f16 f17 f18 f19 f20 f21 f22 f23 f24 f25 f26 f27 f28 f29 f30 f31
+];
+@endif
+
+attach names [ ext_t4_name][
+	_		"s0"    "s0-s1" "s0-s2" 
+	"s0-s3"	"s0-s4"	"s0-s5" "s0-s6" 
+	"s0-s7"	"s0-s8" _		_
+	_		_		_		_
+];
+
+RD5L: mic_rd32_5	is mic_rd32_5 & mic_rd32_5lo	{ export mic_rd32_5lo; }
+
+RD7R1: mic_rd7		is mic_rd7 & REL6=0				{ export mic_rd7; }
+RD7R1: mic_rd1		is mic_rd1 & REL6=1				{ export mic_rd1; }
+
+RSEXTL: ext_32_rs1	is ext_32_rs1 & ext_32_rs1lo	{ export ext_32_rs1lo; }
+RS0L: mic_rs32_0	is mic_rs32_0 & mic_rs32_0lo	{ export mic_rs32_0lo; }
+RS4L: mic_rs4		is mic_rs4 & mic_rs4lo 			{ export mic_rs4lo; }
+
+RS0R4: mic_rs0		is mic_rs0 & REL6=0 			{ export mic_rs0; }
+RS0R4: mic_rs4		is mic_rs4 & REL6=1 			{ export mic_rs4; }
+RS0R5: mic_rs32_0	is mic_rs32_0 & REL6=0			{ export mic_rs32_0; } 
+RS0R5: mic_rs32_5	is mic_rs32_5 & REL6=1			{ export mic_rs32_5; } 
+
+RS1R7L: mic_rs1		is mic_rs1 & mic_rs1lo & REL6=0 { export mic_rs1lo; }
+RS1R7L: mic_rs7		is mic_rs7 & mic_rs7lo & REL6=1 { export mic_rs7lo; }
+
+RT4L: mic_rt4		is mic_rt4 & mic_rt4lo 			{ export mic_rt4lo; }
+RT5L: mic_rt32_5	is mic_rt32_5 & mic_rt32_5lo	{ export mic_rt32_5lo; }
+
+RT3R7: mic_rt3		is mic_rt3 & REL6=0				{ export mic_rt3; }
+RT3R7: mic_rt7		is mic_rt7 & REL6=1				{ export mic_rt7; }
+
+RST7R5: mic_rs7		is mic_rs7 & REL6=0 			{ export mic_rs7; }
+RST7R5: mic_rt32_5	is mic_rt32_5 & REL6=1 			{ export mic_rt32_5; }
+
+RT5RD5: ext_32_rd	is ext_32_rd & REL6=0			{ export ext_32_rd; } 
+RT5RD5: micb_rd32	is micb_rd32 & REL6=1			{ export micb_rd32; }
+
+RS0RT5: mic_rs32_0	is mic_rs32_0 & REL6=0			{ export mic_rs32_0; }
+RS0RT5: mic_rt32_5	is mic_rt32_5 & REL6=1			{ export mic_rt32_5; }
+
+ENCRS: mic_encrs	is mic_encrs & REL6=0			{ export mic_encrs; }
+ENCRS: ext_16_rs	is ext_16_rs & REL6=1			{ export ext_16_rs; }
+
+Abs26_mic1: reloc            	is ext_32_code & micb_imm16 [ reloc=((inst_start+4) $and 0xfffffffff8000000)+2*(micb_imm16 | (ext_32_code << 16)); ]   { export *:$(ADDRSIZE) reloc; }                 
+Abs26_mic2: reloc            	is ext_32_code & micb_imm16 [ reloc=((inst_start+4) $and 0xfffffffff0000000)+4*(micb_imm16 | (ext_32_code << 16)); ]   { export *:$(ADDRSIZE) reloc; } 
+Rel26_mic: reloc				is micb_imm16 [ reloc=inst_start+4+2*((ext_32_codes << 16) | micb_imm16); ] { export *:$(ADDRSIZE) reloc; }               
+Rel21_mic: reloc				is micb_imm16 [ reloc=inst_start+4+2*((ext_32_imm5s << 16) | micb_imm16); ] { export *:$(ADDRSIZE) reloc; }               
+Rel16_mic: reloc            	is micb_simm16 [ reloc=inst_start+4+2*micb_simm16; ] { export *:$(ADDRSIZE) reloc; }                 
+Rel10_mic: reloc            	is mic_soff10 [ reloc=inst_start+2+2*mic_soff10; ] { export *:$(ADDRSIZE) reloc; }                 
+Rel7_mic: reloc            		is mic_soff7  [ reloc=inst_start+2+2*mic_soff7; ] { export *:$(ADDRSIZE) reloc; }
+
+EXT_CODE3: val					is mic_imm3=0 [ext_off16_s = 0x0001; val = ext_off16_s; ] { export *[const]:2 val; }
+EXT_CODE3: val					is mic_imm3=7 [ext_off16_s = 0xFFFF; val = ext_off16_s; ] { export *[const]:2 val; }
+EXT_CODE3: val					is mic_imm3   [ext_off16_s = mic_imm3 << 2; val = ext_off16_s; ] { export *[const]:2 val; }
+
+EXT_CODE4A: val					is mic_imm03=0x0 [ext_off16_u = 0x80; val = ext_off16_u; ] { export *[const]:2 val; }
+EXT_CODE4A: val					is mic_imm03=0x1 [ext_off16_u = 0x1; val = ext_off16_u; ] { export *[const]:2 val; }
+EXT_CODE4A: val					is mic_imm03=0x2 [ext_off16_u = 0x2; val = ext_off16_u; ] { export *[const]:2 val; }
+EXT_CODE4A: val					is mic_imm03=0x3 [ext_off16_u = 0x3; val = ext_off16_u; ] { export *[const]:2 val; }
+EXT_CODE4A: val					is mic_imm03=0x4 [ext_off16_u = 0x4; val = ext_off16_u; ] { export *[const]:2 val; }
+EXT_CODE4A: val					is mic_imm03=0x5 [ext_off16_u = 0x7; val = ext_off16_u; ] { export *[const]:2 val; }
+EXT_CODE4A: val					is mic_imm03=0x6 [ext_off16_u = 0x8; val = ext_off16_u; ] { export *[const]:2 val; }
+EXT_CODE4A: val					is mic_imm03=0x7 [ext_off16_u = 0xf; val = ext_off16_u; ] { export *[const]:2 val; }
+EXT_CODE4A: val					is mic_imm03=0x8 [ext_off16_u = 0x10; val = ext_off16_u; ] { export *[const]:2 val; }
+EXT_CODE4A: val					is mic_imm03=0x9 [ext_off16_u = 0x1f; val = ext_off16_u; ] { export *[const]:2 val; }
+EXT_CODE4A: val					is mic_imm03=0xa [ext_off16_u = 0x20; val = ext_off16_u; ] { export *[const]:2 val; }
+EXT_CODE4A: val					is mic_imm03=0xb [ext_off16_u = 0x3f; val = ext_off16_u; ] { export *[const]:2 val; }
+EXT_CODE4A: val					is mic_imm03=0xc [ext_off16_u = 0x40; val = ext_off16_u; ] { export *[const]:2 val; }
+EXT_CODE4A: val					is mic_imm03=0xd [ext_off16_u = 0xff; val = ext_off16_u; ] { export *[const]:2 val; }
+EXT_CODE4A: val					is mic_imm03=0xe [ext_off16_u = 0x8000; val = ext_off16_u; ] { export *[const]:2 val; }
+EXT_CODE4A: val					is mic_imm03=0xf [ext_off16_u = 0xffff; val = ext_off16_u; ] { export *[const]:2 val; }
+
+EXT_CODE4B: val					is mic_code4=0xf [ ext_off16_s = 0xffff; val = ext_off16_s; ] { export *[const]:2 val; }
+EXT_CODE4B: val					is mic_code4	 [ ext_off16_s = mic_code4; val = ext_off16_s; ] { export *[const]:2 val; }
+
+EXT_CODE4C: val					is mic_code4 [ val = mic_code4 << 1; ] { export *[const]:2 val; }
+
+EXT_CODE4D: val					is mic_code4s [ val = mic_code4s << 2; ] { export *[const]:2 val; }
+
+EXT_CODE4E: val					is mic_code4 & REL6=0 [ val = mic_code4 << 2; ] { export *[const]:2 val; }
+EXT_CODE4E: val					is mic_off4r6 & REL6=1 [ val = mic_off4r6 << 2; ] { export *[const]:2 val; }
+EXT_CODE5R6: val				is mic_imm5r6 [ val = mic_imm5r6 << 2; ] { export *[const]:2 val; }
+
+
+EXT_CODE5: val					is mic_imm5 [ val = mic_imm5 << 2; ] { export *[const]:2 val; }
+
+EXT_CODE7: val					is mic_imm7=0x7f [ ext_off16_s = 0xffff; val = ext_off16_s; ] { export *[const]:2 val; }
+EXT_CODE7: val					is mic_imm7		 [ ext_off16_s = mic_imm7; val = ext_off16_s; ] { export *[const]:2 val; }
+
+EXT_CODE7A: val					is mic_soff7 [ val = mic_soff7 << 2; ] { export *[const]:2 val; }
+
+EXT_CODE9: val					is mic_imm9=0x000 [ext_off16_s = 0x0100; val = ext_off16_s << 2; ] { export *[const]:2 val; }
+EXT_CODE9: val					is mic_imm9=0x001 [ext_off16_s = 0x0101; val = ext_off16_s << 2; ] { export *[const]:2 val; }
+EXT_CODE9: val					is mic_imm9=0x1fe [ext_off16_s = 0xfefe; val = ext_off16_s << 2; ] { export *[const]:2 val; }
+EXT_CODE9: val					is mic_imm9=0x1ff [ext_off16_s = 0xfeff; val = ext_off16_s << 2; ] { export *[const]:2 val; }
+EXT_CODE9: val					is mic_imm9s      [ val = mic_imm9s << 2; ] { export *[const]:2 val; }
+
+EXT_CODE9E: val					is micb_offset9s [ val = micb_offset9s << 0; ] { export *[const]:2 val; }
+EXT_CODE12: val					is micb_offset12s [ val = micb_offset12s << 0; ] { export *[const]:2 val; }
+
+EXT_CODE16: val					is micb_code10 [ val = (ext_32_imm6 << 10) | micb_code10; ] { export *[const]:2 val; }
+
+EXT_MS16: val					is micb_simm16 [ val = micb_simm16 << 0; ] { export *[const]:2 val; }
+EXT_MS18: val					is micb_imm16 [ val = (ext_32_imm2s << 19) | (micb_imm16 << 3); ] { export *[const]:4 val; }
+
+EXT_MS19: val					is micb_imm16 [ val = (ext_32_imm3s << 18) | (micb_imm16 << 2); ] { export *[const]:4 val; }
+
+EXT_MS32: val					is micb_simm16 [ val = micb_simm16 << 16; ] { export *[const]:4 val; }
+EXT_MS48: val					is micb_simm16 [ val = micb_simm16 << 32; ] { export *[const]:8 val; }
+EXT_MS64: val					is micb_simm16 [ val = micb_simm16 << 48; ] { export *[const]:8 val; }
+
+EXT_MSPC: val					is ext_32_imm3s & micb_imm16 & REL6=1 [val = (ext_32_imm3s << 18) | (micb_imm16 << 2); ] { export *[const]:4 val; }
+
+EXT_MSPC: val					is ext_32_addims & micb_imm16 & REL6=0 [val = (ext_32_addims << 18) | (micb_imm16 << 2); ] { export *[const]:4 val; }
+
+EXT_MU23: val					is ext_32_code & micb_cofun [val = (ext_32_code << 13) | micb_cofun; ] { export *[const]:4 val; }
+
+EXT_MU6: val					is mic_imm6 [val = mic_imm6 << 2; ] { export *[const]:1 val; }
+
+EXT_SA: val						is mic_sa=0 [ val = 8; ] { export *[const]:1 val; }
+EXT_SA: val						is mic_sa [ val = mic_sa << 0; ] {export *[const]:1 val; }
+
+EXT_SA9: val					is micb_sa9 [ val = micb_sa9+1; ] { export *[const]:1 val; }
+
+DIDISP:							is mic_rs32_0=0 {}
+DIDISP: mic_rs32_0				is mic_rs32_0 {}
+
+RTIMP:							is mic_rt32_5=31 {}
+RTIMP: mic_rt32_5", "			is mic_rt32_5 {}
+
+SIZEP: val						is micb_size [ val = micb_size+1; ] { export *[const]:1 val; }
+SIZEPLG: val					is micb_size [ val = micb_size+1+32; ] { export *[const]:1 val; }
+SIZEQ: val						is micb_size & micb_pos [ val = micb_size + 1 - micb_pos; ] { export *[const]:1 val; }
+SIZEQLG: val					is micb_size & micb_pos [ val = micb_size + 1 - micb_pos + 32; ] { export *[const]:1 val; }
+POSHI: val						is micb_pos [ val = micb_pos+32; ] { export *[const]:1 val; }
+
+CPSEL:							is micb_sel=0 {}
+CPSEL: ", "micb_sel				is micb_sel {}
+
+STYPE:							is mic_stype=0 {}
+STYPE: val						is mic_stype [ val = mic_stype << 0; ] {}
+
+SDB16: mic_code4				is mic_code4 & REL6=0	{ export *[const]:1 mic_code4; }
+SDB16: mic_code4r6				is mic_code4r6 & REL6=1 { export *[const]:1 mic_code4r6; }
+
+SA32: val						is micb_sa [ val = micb_sa+32; ] { export *[const]:1 val; }
+
+COP2CC:							is mic_cc=0 {}
+COP2CC: val", "					is mic_cc [ val = mic_cc << 0; ] {}
+
+LOAD_S8:						is ext_t4=8 {}
+LOAD_S8:						is ext_t4 { MemSrcCast(s8,tsp); tsp = tsp+$(REGSIZE); }
+
+LOAD_S7:						is ext_t4=7 {}
+LOAD_S7:						is LOAD_S8 { MemSrcCast(s7,tsp); tsp = tsp+$(REGSIZE); build LOAD_S8; }
+
+LOAD_S6:						is ext_t4=6 {}
+LOAD_S6:						is LOAD_S7 { MemSrcCast(s6,tsp); tsp = tsp+$(REGSIZE); build LOAD_S7; }
+
+LOAD_S5:						is ext_t4=5 {}
+LOAD_S5:						is LOAD_S6 {MemSrcCast(s5,tsp); tsp = tsp+$(REGSIZE); build LOAD_S6; }
+
+LOAD_S4:						is ext_t4=4 {}
+LOAD_S4:						is LOAD_S5 { MemSrcCast(s4,tsp); tsp = tsp+$(REGSIZE); build LOAD_S5; }
+
+LOAD_S3:						is ext_t4=3 {}
+LOAD_S3:						is LOAD_S4 { MemSrcCast(s3,tsp); tsp = tsp+$(REGSIZE); build LOAD_S4; }
+
+LOAD_S2:						is ext_t4=2 {}
+LOAD_S2:						is LOAD_S3 { MemSrcCast(s2,tsp); tsp = tsp+$(REGSIZE); build LOAD_S3; }
+
+LOAD_S1:						is ext_t4=1 {}
+LOAD_S1:						is LOAD_S2 { MemSrcCast(s1,tsp); tsp = tsp+$(REGSIZE); build LOAD_S2; }
+
+LOAD_S0:						is ext_t4=0 {}
+LOAD_S0:						is LOAD_S1 { MemSrcCast(s0,tsp); tsp = tsp+$(REGSIZE); build LOAD_S1; }
+
+LOAD_SREG:						is ext_t4=0 {}
+LOAD_SREG: ext_t4_name","		is LOAD_S0 & ext_t4_name { build LOAD_S0; }
+
+LOAD_RA:						is ext_tra=0 {}
+LOAD_RA: "ra,"					is ext_tra=1 { MemSrcCast(ra,tsp); tsp = tsp+$(REGSIZE); }
+
+LOAD_TOP: LOAD_SREG^LOAD_RA EXT_CODE12(ext_32_base)	is LOAD_SREG & LOAD_RA & ext_32_base & ext_32_rlist & EXT_CODE12 [ext_t4 = ext_32_rlist $and 0xf; ext_tra = ext_32_rlist >> 4; ] {
+	build EXT_CODE12;
+	
+	tmp:$(REGSIZE) = sext(EXT_CODE12);
+	tsp = ext_32_base + tmp;
+	
+	build LOAD_SREG;
+	build LOAD_RA;
+}
+LOAD_TOP16: LOAD_SREG^ra,EXT_CODE4E(sp) is mic_list & REL6=0 & LOAD_SREG & EXT_CODE4E & ra & sp [ext_t4 = mic_list+1;] {
+	build EXT_CODE4E;
+
+	tmp:$(REGSIZE) = zext(EXT_CODE4E);
+	tsp = sp + tmp;
+	
+	build LOAD_SREG;
+	MemSrcCast(ra,tsp);
+}
+LOAD_TOP16: LOAD_SREG^ra,EXT_CODE4E(sp) is mic_listr6 & REL6=1 & LOAD_SREG & EXT_CODE4E & ra & sp [ext_t4 = mic_listr6+1;] {
+	build EXT_CODE4E;
+
+	tmp:$(REGSIZE) = zext(EXT_CODE4E);
+	tsp = sp + tmp;
+	
+	build LOAD_SREG;
+	MemSrcCast(ra,tsp);
+}
+
+
+STORE_S8:						is ext_t4=8 {}
+STORE_S8:						is ext_t4 { MemDestCast(tsp,s8); tsp = tsp+$(REGSIZE); }
+
+STORE_S7:						is ext_t4=7 {}
+STORE_S7:						is STORE_S8 { MemDestCast(tsp,s7); tsp = tsp+$(REGSIZE); build STORE_S8; }
+
+STORE_S6:						is ext_t4=6 {}
+STORE_S6:						is STORE_S7 { MemDestCast(tsp,s6); tsp = tsp+$(REGSIZE); build STORE_S7; }
+
+STORE_S5:						is ext_t4=5 {}
+STORE_S5:						is STORE_S6 { MemDestCast(tsp,s5); tsp = tsp+$(REGSIZE); build STORE_S6; }
+
+STORE_S4:						is ext_t4=4 {}
+STORE_S4:						is STORE_S5 { MemDestCast(tsp,s4); tsp = tsp+$(REGSIZE); build STORE_S5; }
+
+STORE_S3:						is ext_t4=3 {}
+STORE_S3:						is STORE_S4 { MemDestCast(tsp,s3); tsp = tsp+$(REGSIZE); build STORE_S4; }
+
+STORE_S2:						is ext_t4=2 {}
+STORE_S2:						is STORE_S3 { MemDestCast(tsp,s2); tsp = tsp+$(REGSIZE); build STORE_S3; }
+
+STORE_S1:						is ext_t4=1 {}
+STORE_S1:						is STORE_S2 { MemDestCast(tsp,s1); tsp = tsp+$(REGSIZE); build STORE_S2; }
+
+STORE_S0:						is ext_t4=0 {}
+STORE_S0:						is STORE_S1 { MemDestCast(tsp,s0); tsp = tsp+$(REGSIZE); build STORE_S1; }
+
+STORE_SREG:						is ext_t4=0 {}
+STORE_SREG: ext_t4_name","		is STORE_S0 & ext_t4_name { build STORE_S0; }
+
+STORE_RA:						is ext_tra=0 {}
+STORE_RA: "ra,"					is ext_tra=1 { MemDestCast(tsp,ra); tsp = tsp+$(REGSIZE); }
+
+STORE_TOP: STORE_SREG^STORE_RA EXT_CODE12(ext_32_base)	is STORE_SREG & STORE_RA & ext_32_base & ext_32_rlist & EXT_CODE12 [ext_t4 = ext_32_rlist $and 0xf; ext_tra = ext_32_rlist >> 4; ] {
+	build EXT_CODE12;
+	
+	tmp:$(REGSIZE) = sext(EXT_CODE12);
+	tsp = ext_32_base + tmp;
+	
+	build STORE_SREG;
+	build STORE_RA;
+}
+STORE_TOP16: STORE_SREG^ra,EXT_CODE4E(sp) is mic_list & REL6=0 & STORE_SREG & EXT_CODE4E & ra & sp [ext_t4 = mic_list+1;] {
+	build EXT_CODE4E;
+
+	tmp:$(REGSIZE) = zext(EXT_CODE4E);
+	tsp = sp + tmp;
+	
+	build STORE_SREG;
+	MemDestCast(tsp,ra);
+}
+STORE_TOP16: STORE_SREG^ra,EXT_CODE4E(sp) is mic_listr6 & REL6=1 & STORE_SREG & EXT_CODE4E & ra & sp [ext_t4 = mic_listr6+1;] {
+	build EXT_CODE4E;
+
+	tmp:$(REGSIZE) = zext(EXT_CODE4E);
+	tsp = sp + tmp;
+	
+	build STORE_SREG;
+	MemDestCast(tsp,ra);
+}
+
+####
+#
+# Common semantics
+#
+####
+
+:abs.S mic_ft_5, mic_fs						is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & mic_ft_5 & mic_fs ; micb_bit15=0 & micb_fmt=0 & micb_poolfx=0b111011 & micb_flt6=0b0001101 {
+    fs_tmp:4 = mic_fs:4;
+    fd_tmp:4 = abs(fs_tmp);
+    mic_ft_5 = zext(fd_tmp);
+}
+
+:abs.D mic_ft_5, mic_fs						is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & mic_ft_5 & mic_fs & mic_fsD & mic_ftD_5; micb_bit15=0 & micb_fmt=1 & micb_poolfx=0b111011 & micb_flt6=0b0001101 {
+    mic_ftD_5 = abs(mic_fsD);
+}
+
+:add micb_rd32, RS0L, RT5L					is ISA_MODE=1 & RELP=0 & mic_op=0b000000 & RS0L & RT5L ; micb_axf2=0b0100010000 & micb_bit10=0 & micb_rd32 {
+	tmps:8 = zext(RS0L);
+	tmpt:8 = zext(RT5L);
+	tmps = tmps + tmpt;
+	tmpt = tmps >> 32;
+	if (tmpt != 0) goto <done>;
+	micb_rd32 = sext(tmps:4);
+	<done>	
+}
+
+:add.S micb_fd, mic_fs, mic_ft_5			is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & mic_ft_5 & mic_fs ; micb_fd & micb_bit10=0 & micb_fmt8=0 & micb_fxf3=0b00110000 {
+    fd_tmp:4 = mic_fs:4 f+ mic_ft_5:4;
+    micb_fd = zext(fd_tmp);
+}
+
+:add.D micb_fd, mic_fs, mic_ft_5			is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & mic_ft_5 & mic_fs & mic_fsD & mic_ftD_5 ; micb_fd & micb_fdD & micb_bit10=0 & micb_fmt8=1 & micb_fxf3=0b00110000 {
+    micb_fdD = mic_fsD f+ mic_ftD_5;
+}
+
+:addiu mic_rt32_5, RS0L, EXT_MS16			is ISA_MODE=1 & RELP=0 & mic_op=0b001100 & RS0L & mic_rt32_5 ; EXT_MS16 {
+	tmp:4 = sext(EXT_MS16);
+	tmp = tmp + RS0L;
+	mic_rt32_5 = sext(tmp);
+}
+
+:addiupc RST7R5, EXT_MSPC					is ISA_MODE=1 & RELP=0 & mic_op=0b011110 & RST7R5 & mic_imm7 & (REL6=0  | (REL6=1 & mic_pcz=0)); EXT_MSPC [ ext_32_addim=mic_imm7; ] {
+	tmpa:$(REGSIZE) = inst_start & ~3;
+	tmpb:$(REGSIZE) = sext(EXT_MSPC);
+	RST7R5 = tmpa + tmpb;
+}
+
+:addiur1sp mic_rd7, EXT_MU6					is ISA_MODE=1 & RELP=0 & mic_op=0b011011 & mic_bit0=1 & mic_rd7 & EXT_MU6 {
+@if REGSIZE == "4"
+	tmp:4 = sp + zext(EXT_MU6);
+@else
+	tmp:4 = sp_lo + zext(EXT_MU6);
+@endif
+	mic_rd7 = sext(tmp);
+}
+
+:addiur2 mic_rd7, RS4L, EXT_CODE3			is ISA_MODE=1 & RELP=0 & mic_op=0b011011 & mic_bit0=0 & RS4L & mic_rd7 & EXT_CODE3 {
+	tmp:4 = RS4L + sext(EXT_CODE3);
+	mic_rd7 = sext(tmp);
+}
+
+:addiusp EXT_CODE9							is ISA_MODE=1 & RELP=0 & mic_op=0b010011 & mic_bit0=1 & EXT_CODE9 {
+@if REGSIZE == "4"
+	tmp:4 = sp + sext(EXT_CODE9);
+@else
+	tmp:4 = sp_lo + sext(EXT_CODE9);
+@endif
+	sp = sext(tmp);
+}
+
+:addius5 RD5L, mic_imm4s					is ISA_MODE=1 & RELP=0 & mic_op=0b010011 & mic_bit0=0 & mic_rd32_5 & RD5L & mic_imm4s {
+	tmp:4 = mic_imm4s;
+	tmp = tmp + RD5L;
+	mic_rd32_5 = sext(tmp);
+}
+
+:addu micb_rd32, RS0L, RT5L					is ISA_MODE=1 & RELP=0 & mic_op=0b000000 & RS0L & RT5L ; micb_axf2=0b0101010000 & micb_bit10=0 & micb_rd32 {
+	tmp:4 = RS0L + RT5L;
+	micb_rd32 = sext(tmp);
+}
+
+:addu16 RD7R1, RT4L, RS1R7L					is ISA_MODE=1 & RELP=0 & mic_op=0b000001 & mic_bit0=0 & RD7R1 & RT4L & RS1R7L {
+	tmp:4 = RT4L + RS1R7L;
+	RD7R1 = sext(tmp);
+}
+
+:and micb_rd32, mic_rs32_0, mic_rt32_5		is ISA_MODE=1 & RELP=0 & mic_op=0b000000 & mic_rs32_0 & mic_rt32_5 ; micb_axf2=0b1001010000 & micb_bit10=0 & micb_rd32 {
+	micb_rd32 = mic_rs32_0 & mic_rt32_5;
+}
+
+:and16 RT3R7, RS0R4							is ISA_MODE=1 & RELP=0 & mic_op=0b010001 & RT3R7 & RS0R4 & ((mic_csub=0b0010 & REL6=0) | (mic_csubr6=0b0001 & REL6=1)) {
+	RT3R7 = RT3R7 & RS0R4;
+}
+
+:andi mic_rt32_5, mic_rs32_0, micb_imm16	is ISA_MODE=1 & RELP=0 & mic_op=0b110100 & mic_rs32_0 & mic_rt32_5 ; micb_imm16 {
+	tmp:$(REGSIZE) = micb_imm16;
+	mic_rt32_5 = mic_rs32_0 & tmp;
+}
+
+:andi16	mic_rd7, mic_rs4, EXT_CODE4A 		is ISA_MODE=1 & RELP=0 & mic_op=0b001011 & mic_rd7 & mic_rs4 & EXT_CODE4A {
+	mic_rd7 = mic_rs4 & zext(EXT_CODE4A);
+}
+
+:break										is ISA_MODE=1 & RELP=0 & mic_op=0b000000 ; micb_poolax=0b000111 {
+	break();
+}
+
+:break16									is ISA_MODE=1 & RELP=0 & mic_op=0b010001 & SDB16 & ((mic_break=0b101000 & REL6=0) | (mic_breakr6=0b011011 & REL6=1))  {
+	break();
+}
+
+:cachee mic_cop5, EXT_CODE9E(mic_base0)		is ISA_MODE=1 & RELP=0 & mic_op=0b011000 & mic_cop5 & mic_base0 ; micb_func12=0b1010 & micb_sub9=0b011 & EXT_CODE9E {
+	cacheOp();
+}
+
+:ceil.l.S mic_ft_5, mic_fs					is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & mic_ft_5 & mic_fs & mic_ftD_5 ; micb_bit15=0 & micb_fmt14=0 & micb_poolfx=0b111011 & micb_fxf4=0b01001100 {
+    fd_tmp:4 = ceil(mic_fs:4); 
+    mic_ftD_5 = trunc(fd_tmp); 
+}
+
+:ceil.l.D mic_ft_5, mic_fs					is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & mic_ft_5 & mic_fs & mic_fsD & mic_ftD_5 ; micb_bit15=0 & micb_fmt14=1 & micb_poolfx=0b111011 & micb_fxf4=0b01001100 {
+    fsD_tmp:8 = ceil(mic_fsD); 
+    mic_ftD_5 = trunc(fsD_tmp); 
+}
+
+:ceil.w.S mic_ft_5, mic_fs					is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & mic_ft_5 & mic_fs ; micb_bit15=0 & micb_fmt14=0 & micb_poolfx=0b111011 & micb_fxf4=0b01101100 {
+    fs_ceil_tmp:4 = ceil(mic_fs:4); 
+    fd_tmp:4 = trunc(fs_ceil_tmp);
+    mic_ft_5 = zext(fd_tmp);
+}
+
+:ceil.w.D mic_ft_5, mic_fs					is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & mic_ft_5 & mic_fs & mic_fsD; micb_bit15=0 & micb_fmt14=1 & micb_poolfx=0b111011 & micb_fxf4=0b01101100 {
+    fs_tmp:8 = ceil(mic_fsD); 
+    fd_tmp:4 = trunc(fs_tmp); 
+    mic_ft_5 = zext(fd_tmp);
+}
+
+:cfc1 mic_rt32_5, mic_fs					is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & mic_rt32_5 & mic_fs ; micb_poolfx=0b111011 & micb_fxf=0b0001000000 {
+    mic_rt32_5 = getCopControlWord( 1:1, mic_fs:4 );
+}
+
+:cfc2 mic_rt32_5, mic_impl					is ISA_MODE=1 & RELP=0 & mic_op=0b000000 & mic_rt32_5 & mic_impl ; micb_poolfx=0b111100 & micb_axf=0b1100110100 {
+	tmpa:1 = 2;
+	tmpb:1 = mic_impl;
+	mic_rt32_5 = getCopControlWord(tmpa,tmpb);
+}
+
+:clo mic_rt32_5, RS0L						is ISA_MODE=1 & RELP=0 & mic_op=0b000000 & mic_rt32_5 & RS0L ; micb_poolax=0b111100 & micb_axf=0b0100101100   {
+    mic_rt32_5 = countLeadingOnes( RS0L );
+}
+
+:clz mic_rt32_5, RS0L						is ISA_MODE=1 & RELP=0 & mic_op=0b000000 & mic_rt32_5 & RS0L ; micb_poolax=0b111100 & micb_axf=0b0101101100 {
+    mic_rt32_5 = countLeadingZeros( RS0L );
+}
+
+:cop2 EXT_MU23								is ISA_MODE=1 & RELP=0 & mic_op=0b000000 & mic_code ; micb_cop=0b010 & EXT_MU23 [ ext_32_code=mic_code; ] {
+	tmp:1 = 2;
+	copFunction(tmp,EXT_MU23);
+}
+
+:ctc1 RT5L, mic_fs							is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & RT5L & mic_fs ; micb_poolfx=0b111011 & micb_fxf=0b0001100000 {
+    setCopControlWord( 1:1, mic_fs:4, RT5L );
+}
+
+:ctc2 mic_rt32_5, mic_impl					is ISA_MODE=1 & RELP=0 & mic_op=0b000000 & mic_rt32_5 & mic_impl ; micb_poolax=0b111100 & micb_axf=0b1101110100 {
+	tmpa:1 = 2;
+	tmpb:1 = mic_impl;
+	setCopControlWord(tmpa,tmpb,mic_rt32_5);	
+}
+
+:cvt.d.S mic_ft_5, mic_fs					is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & mic_ft_5 & mic_fs & mic_ftD_5 ; micb_bit15=0 & micb_fmt=0 & micb_poolfx=0b111011 & micb_flt6=0b1001101 {
+    fs_tmp:4 = mic_fs:4;
+    mic_ftD_5 = float2float(fs_tmp);
+}
+
+:cvt.d.W mic_ft_5, mic_fs					is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & mic_ft_5 & mic_fs & mic_ftD_5 ; micb_bit15=0 & micb_fmt=1 & micb_poolfx=0b111011 & micb_flt6=0b1001101 {
+    fs_tmp:4 = mic_fs:4;
+    mic_ftD_5 = int2float(fs_tmp);
+}
+
+:cvt.d.L mic_ft_5, mic_fs					is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & mic_ft_5 & mic_fs & mic_fsD & mic_ftD_5 ; micb_bit15=0 & micb_fmt=2 & micb_poolfx=0b111011 & micb_flt6=0b1001101 {
+    mic_ftD_5 = int2float(mic_fsD);
+}
+
+:cvt.l.S mic_ft_5, mic_fs					is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & mic_ft_5 & mic_fs & mic_ftD_5 ; micb_bit15=0 & micb_fmt14=0 & micb_poolfx=0b111011 & micb_fxf4=0b00000100 {
+    rm_tmp:1 = fcsr[0,2]; 
+    fs_tmp:4 = mic_fs:4;
+    fs_cvt_tmp:4 = 0;
+    if (rm_tmp == 0) goto <do_round>;
+      fs_cvt_tmp = floor(fs_tmp); # RM is 1, no rounding, and floor returns a float
+      goto <done>;
+    <do_round>
+      fs_cvt_tmp = round(fs_tmp); # round returns a float
+    <done>
+    mic_ftD_5 = trunc(fs_cvt_tmp);
+}
+
+:cvt.l.D mic_ft_5, mic_fs					is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & mic_ft_5 & mic_fs & mic_fsD & mic_ftD_5 ; micb_bit15=0 & micb_fmt14=1 & micb_poolfx=0b111011 & micb_fxf4=0b00000100 {
+    rm_tmp:1 = fcsr[0,2]; # Get RM rounding mode bits
+    if (rm_tmp == 0) goto <do_round>;
+      fd_tmp:8 = floor(mic_fsD); # RM is 1, no rounding
+      goto <done>;
+    <do_round>
+      fd_tmp = round(mic_fsD);
+    <done>
+    mic_ftD_5 = trunc(fd_tmp);
+}
+
+:cvt.s.D mic_ft_5, mic_fs					is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & mic_ft_5 & mic_fs & mic_fsD ; micb_bit15=0 & micb_fmt=0 & micb_poolfx=0b111011 & micb_flt6=0b1101101 {
+    fd_tmp:4 = float2float(mic_fsD);
+    mic_ft_5 = zext(fd_tmp);
+}
+
+:cvt.s.W mic_ft_5, mic_fs					is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & mic_ft_5 & mic_fs ; micb_bit15=0 & micb_fmt=1 & micb_poolfx=0b111011 & micb_flt6=0b1101101 {
+    fs_tmp:4 = mic_fs:4;
+    fd_tmp:4 = int2float(fs_tmp);
+    mic_ft_5 = zext(fd_tmp);
+}
+
+:cvt.s.L mic_ft_5, mic_fs					is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & mic_ft_5 & mic_fs & mic_fsD ; micb_bit15=0 & micb_fmt=2 & micb_poolfx=0b111011 & micb_flt6=0b1101101 {
+    fd_tmp:4 = int2float(mic_fsD);
+    mic_ft_5 = zext(fd_tmp);
+}
+
+:cvt.w.S mic_ft_5, mic_fs					is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & mic_ft_5 & mic_fs ; micb_bit15=0 & micb_fmt14=0 & micb_poolfx=0b111011 & micb_fxf4=0b00100100 {
+    rm_tmp:1 = fcsr[0,2]; # Get RM rounding mode bits
+    fs_tmp:4 = mic_fs:4;
+    fs_cvt_tmp:4 = 0;
+    if (rm_tmp == 0) goto <do_round>;
+      fs_cvt_tmp = floor(fs_tmp); # RM is 1, no rounding, and floor returns a float
+      goto <done>;
+    <do_round>
+      fs_cvt_tmp = round(fs_tmp); # round returns a float
+    <done>
+    fd_tmp:4 = trunc(fs_cvt_tmp);
+    mic_ft_5 = zext(fd_tmp); # trunc returns an integer
+}
+
+:cvt.w.D mic_ft_5, mic_fs					is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & mic_ft_5 & mic_fs & mic_fsD ; micb_bit15=0 & micb_fmt14=1 & micb_poolfx=0b111011 & micb_fxf4=0b00100100 {
+    rm_tmp:1 = fcsr[0,2]; # Get RM rounding mode bits
+    if (rm_tmp == 0) goto <do_round>;
+      fs_tmp:8 = floor(mic_fsD); # RM is 1, no rounding
+      goto <done>;
+    <do_round>
+      fs_tmp = round(mic_fsD);
+    <done>
+    fd_tmp:4 = trunc(fs_tmp);
+    mic_ft_5 = zext(fd_tmp); # In 64-bit FPUs, fd might be 64-bits, so need to set top half to something
+}
+
+:deret 										is ISA_MODE=1 & RELP=0 & mic_op=0b000000 & mic_code=0 ; micb_poolax=0b111100 & micb_axf=0b1110001101 {}
+
+:di DIDISP 									is ISA_MODE=1 & RELP=0 & mic_op=0b000000 & mic_rt32_5=0 & DIDISP ; micb_poolax=0b111100 & micb_axf=0b0100011101 {
+	disableInterrupts(DIDISP);
+}
+
+:div.S micb_fd, mic_fs, mic_ft_5			is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & mic_ft_5 & mic_fs ; micb_fd & micb_bit10=0 & micb_fmt8=0 & micb_fxf3=0b11110000 {
+    fs_tmp:4 = mic_fs:4; # need to only get the single float 32-bit (mic_fs might be 64-bits)
+    ft_tmp:4 = mic_ft_5:4;
+    fd_tmp:4 = fs_tmp f/ ft_tmp;
+    micb_fd = zext(fd_tmp);
+}
+
+:div.D micb_fd, mic_fs, mic_ft_5			is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & mic_ft_5 & mic_fs & mic_fsD & mic_ftD_5 ; micb_fdD & micb_fd & micb_bit10=0 & micb_fmt8=1 & micb_fxf3=0b11110000 {
+    micb_fdD = mic_fsD f/ mic_ftD_5;
+}
+
+:ehb 										is ISA_MODE=1 & RELP=0 & mic_op=0b000000 & mic_code=0b0000000000 ; micb_poolax=0 & micb_rx=0 & micb_rd32=3 {
+	hazzard();
+}
+
+:ei DIDISP 									is ISA_MODE=1 & RELP=0 & mic_op=0b000000 & mic_rt32_5=0 & DIDISP ; micb_poolax=0b111100 & micb_axf=0b0101011101 {
+	enableInterrupts(DIDISP);
+}
+
+:eret 										is ISA_MODE=1 & RELP=0 & mic_op=0b000000 & mic_code=0 ; micb_poolax=0b111100 & micb_axf=0b1111001101 {}
+
+:eretnc 									is ISA_MODE=1 & RELP=0 & mic_op=0b000000 & mic_code=1 ; micb_poolax=0b111100 & micb_axf=0b1111001101 {}
+
+:ext mic_rt32_5, RS0L, micb_pos, SIZEP		is ISA_MODE=1 & RELP=0 & mic_op=0b000000 & mic_rt32_5 & RS0L ; micb_poolax=0b101100 & micb_pos & SIZEP {
+	tmpa:4 = 0xFFFFFFFF;
+	tmpa = tmpa >> (32 - SIZEP);
+	tmpb:4 = RS0L;
+	tmpb = (tmpb >> micb_pos) & tmpa;
+	mic_rt32_5 = sext(tmpb);
+}
+
+:floor.l.S mic_ft_5, mic_fs					is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & mic_ft_5 & mic_fs & mic_ftD_5 ; micb_bit15=0 & micb_fmt14=0 & micb_poolfx=0b111011 & micb_fxf4=0b00001100 {
+    fs_tmp:4 = mic_fs:4;
+    fd_tmp:4 = floor(fs_tmp); # returns a float
+    mic_ftD_5 = trunc(fd_tmp);  # converts float to int
+}
+
+:floor.l.D mic_ft_5, mic_fs					is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & mic_ft_5 & mic_fs & mic_fsD & mic_ftD_5; micb_bit15=0 & micb_fmt14=1 & micb_poolfx=0b111011 & micb_fxf4=0b00001100 {
+    fsD_tmp:8 = floor(mic_fsD);
+    mic_ftD_5 = trunc(fsD_tmp);
+}
+
+:floor.w.S mic_ft_5, mic_fs					is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & mic_ft_5 & mic_fs ; micb_bit15=0 & micb_fmt14=0 & micb_poolfx=0b111011 & micb_fxf4=0b00101100 {
+    fs_tmp:4 = mic_fs:4;
+    fd_tmp:4 = floor(fs_tmp); # returns a float
+    mic_ft_5 = trunc(fd_tmp);  # converts float to int
+}
+
+:floor.w.D mic_ft_5, mic_fs					is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & mic_ft_5 & mic_fs & mic_fsD ; micb_bit15=0 & micb_fmt14=1 & micb_poolfx=0b111011 & micb_fxf4=0b00101100 {
+    fs_tmp:8 = floor(mic_fsD);
+    fd_tmp:4 = trunc(fs_tmp);
+    mic_ft_5 = zext(fd_tmp);
+}
+
+:ins RT5L, RS0L, micb_pos, SIZEQ		is ISA_MODE=1 & RELP=0 & mic_op=0b000000 & mic_rt32_5 & RS0L & RT5L ; micb_poolax=0b001100 & micb_pos & SIZEQ {
+	tmpa:4 = 0xFFFFFFFF;
+	tmpa = tmpa >> (32 - SIZEQ);
+	tmpb:4 = RS0L & tmpa;
+	tmpa = tmpa << micb_pos;
+	tmpa = ~tmpa;
+	tmpb = tmpb << micb_pos;
+	RT5L = (RT5L & tmpa) | tmpb;
+	mic_rt32_5 = sext(RT5L);
+}
+
+:lb mic_rt32_5, EXT_MS16(mic_base0)			is ISA_MODE=1 & RELP=0 & mic_op=0b000111 & mic_rt32_5 & mic_base0 ; EXT_MS16 {
+	tmp:$(REGSIZE) = sext(EXT_MS16);
+	tmp = tmp + mic_base0;
+	tmpa:$(ADDRSIZE) = 0;
+	ValCast(tmpa,tmp);
+    mic_rt32_5 = sext(*[ram]:1 tmpa);  
+}
+
+:lbe mic_rt32_5, EXT_CODE9E(mic_base0)		is ISA_MODE=1 & RELP=0 & mic_op=0b011000 & mic_rt32_5 & mic_base0 ; micb_func12=0b0110 & micb_sub9=0b100 & EXT_CODE9E {
+	tmp:$(REGSIZE) = sext(EXT_CODE9E);
+	tmp = tmp + mic_base0;
+	tmpa:$(ADDRSIZE) = 0;
+	ValCast(tmpa,tmp);
+    mic_rt32_5 = sext(*[ram]:1 tmpa);  
+}
+
+:lbu mic_rt32_5, EXT_MS16(mic_base0)		is ISA_MODE=1 & RELP=0 & mic_op=0b000101 & mic_rt32_5 & mic_base0 ; EXT_MS16 {
+	tmp:$(REGSIZE) = sext(EXT_MS16);
+	tmp = tmp + mic_base0;
+	tmpa:$(ADDRSIZE) = 0;
+	ValCast(tmpa,tmp);
+    mic_rt32_5 = zext(*[ram]:1 tmpa);  
+}
+
+:lbue mic_rt32_5, EXT_CODE9E(mic_base0)		is ISA_MODE=1 & RELP=0 & mic_op=0b011000 & mic_rt32_5 & mic_base0 ; micb_func12=0b0110 & micb_sub9=0b000 & EXT_CODE9E {
+	tmp:$(REGSIZE) = sext(EXT_CODE9E);
+	tmp = tmp + mic_base0;
+	tmpa:$(ADDRSIZE) = 0;
+	ValCast(tmpa,tmp);
+    mic_rt32_5 = zext(*[ram]:1 tmpa);  
+}
+
+:lbu16 mic_rt7, EXT_CODE4B(mic_base4)		is ISA_MODE=1 & RELP=0 & mic_op=0b000010 & mic_rt7 & mic_base4 & EXT_CODE4B {
+	tmp:$(REGSIZE) = sext(EXT_CODE4B);
+	tmp = tmp + mic_base4;
+	tmpa:$(ADDRSIZE) = 0;
+	ValCast(tmpa,tmp);
+    mic_rt7 = zext(*[ram]:1 tmpa);  
+}
+
+:ldc1 mic_ft_5, EXT_MS16(mic_base0)			is ISA_MODE=1 & RELP=0 & mic_op=0b101111 & mic_base0 & mic_ft_5 & mic_ftD_5; EXT_MS16 {
+	tmp:$(REGSIZE) = sext(EXT_MS16);
+	tmp = tmp + mic_base0;
+	tmpa:$(ADDRSIZE) = 0;
+	ValCast(tmpa,tmp);
+    mic_ftD_5 = *[ram]:8 tmpa;
+}
+
+:ldc2 mic_rt32_5, EXT_CODE12(mic_base0)		is ISA_MODE=1 & RELP=0 & mic_op=0b001000 & mic_rt32_5 & mic_base0 ; micb_func12=0b0010 & EXT_CODE12 {
+	tmp:$(REGSIZE) = sext(EXT_CODE12);
+	tmp = tmp + mic_base0;
+	tmpa:$(ADDRSIZE) = 0;
+	ValCast(tmpa,tmp);
+	setCopReg(2:1,mic_rt32_5,*[ram]:8 tmpa);
+}
+
+:lh mic_rt32_5, EXT_MS16(mic_base0)			is ISA_MODE=1 & RELP=0 & mic_op=0b001111 & mic_rt32_5 & mic_base0 ; EXT_MS16 {
+	tmp:$(REGSIZE) = sext(EXT_MS16);
+	tmp = tmp + mic_base0;
+	tmpa:$(ADDRSIZE) = 0;
+	ValCast(tmpa,tmp);
+    mic_rt32_5 = sext(*[ram]:2 tmpa);  
+}
+
+:lhe mic_rt32_5, EXT_CODE9E(mic_base0)		is ISA_MODE=1 & RELP=0 & mic_op=0b011000 & mic_rt32_5 & mic_base0 ; micb_func12=0b0110 & micb_sub9=0b101 & EXT_CODE9E {
+	tmp:$(REGSIZE) = sext(EXT_CODE9E);
+	tmp = tmp + mic_base0;
+	tmpa:$(ADDRSIZE) = 0;
+	ValCast(tmpa,tmp);
+    mic_rt32_5 = sext(*[ram]:2 tmpa);  
+}
+
+:lhu mic_rt32_5, EXT_MS16(mic_base0)		is ISA_MODE=1 & RELP=0 & mic_op=0b001101 & mic_rt32_5 & mic_base0 ; EXT_MS16 {
+	tmp:$(REGSIZE) = sext(EXT_MS16);
+	tmp = tmp + mic_base0;
+	tmpa:$(ADDRSIZE) = 0;
+	ValCast(tmpa,tmp);
+    mic_rt32_5 = zext(*[ram]:2 tmpa);  
+}
+
+:lhue mic_rt32_5, EXT_CODE9E(mic_base0)		is ISA_MODE=1 & RELP=0 & mic_op=0b011000 & mic_rt32_5 & mic_base0 ; micb_func12=0b0110 & micb_sub9=0b001 & EXT_CODE9E {
+	tmp:$(REGSIZE) = sext(EXT_CODE9E);
+	tmp = tmp + mic_base0;
+	tmpa:$(ADDRSIZE) = 0;
+	ValCast(tmpa,tmp);
+    mic_rt32_5 = zext(*[ram]:2 tmpa);  
+}
+
+:lhu16 mic_rt7, EXT_CODE4C(mic_base4)		is ISA_MODE=1 & RELP=0 & mic_op=0b001010 & mic_rt7 & mic_base4 & EXT_CODE4C {
+	tmp:$(REGSIZE) = sext(EXT_CODE4C);
+	tmp = tmp + mic_base4;
+	tmpa:$(ADDRSIZE) = 0;
+	ValCast(tmpa,tmp);
+    mic_rt7 = zext(*[ram]:2 tmpa);  
+}
+
+:li16 mic_rd7, EXT_CODE7					is ISA_MODE=1 & RELP=0 & mic_op=0b111011 & mic_rd7 & EXT_CODE7 {
+	mic_rd7 = sext(EXT_CODE7);
+}
+
+:ll mic_rt32_5, EXT_CODE9E(mic_base0)		is ISA_MODE=1 & RELP=0 & mic_op=0b011000 & mic_rt32_5 & mic_base0 ; micb_func12=0b0011 & micb_sub9=0 & EXT_CODE9E {
+	tmp:$(REGSIZE) = sext(EXT_CODE9E);
+	tmp = tmp + mic_base0;
+	tmpa:$(ADDRSIZE) = 0;
+	ValCast(tmpa,tmp);
+    mic_rt32_5 = sext(*[ram]:4 tmpa);
+    lockload(tmp);
+}
+
+:lle mic_rt32_5, EXT_CODE9E(mic_base0)		is ISA_MODE=1 & RELP=0 & mic_op=0b011000 & mic_rt32_5 & mic_base0 ; micb_func12=0b0110 & micb_sub9=0b110 & EXT_CODE9E {
+	tmp:$(REGSIZE) = sext(EXT_CODE9E);
+	tmp = tmp + mic_base0;
+	tmpa:$(ADDRSIZE) = 0;
+	ValCast(tmpa,tmp);
+    mic_rt32_5 = sext(*[ram]:4 tmpa);
+    lockload(tmp);
+}
+
+:lui RS0RT5, micb_imm16						is ISA_MODE=1 & RELP=0 & RS0RT5 & ((mic_op=0b010000  & mic_sub2=0b01101 & REL6=0) | (mic_op=0b000100 & mic_rs32_0=0 & REL6=1)); micb_imm16 {
+	tmp:4 = micb_imm16;
+	tmp = tmp << 16;
+	RS0RT5 = sext(tmp);
+}
+
+:lw mic_rt32_5, EXT_MS16(mic_base0)			is ISA_MODE=1 & RELP=0 & mic_op=0b111111 & mic_rt32_5 & mic_base0 ; EXT_MS16 {
+	tmp:$(REGSIZE) = sext(EXT_MS16);
+	tmp = tmp + mic_base0;
+	tmpa:$(ADDRSIZE) = 0;
+	ValCast(tmpa,tmp);
+    mic_rt32_5 = sext(*[ram]:4 tmpa);  
+}
+
+:lwe mic_rt32_5, EXT_CODE9E(mic_base0)		is ISA_MODE=1 & RELP=0 & mic_op=0b011000 & mic_rt32_5 & mic_base0 ; micb_func12=0b0110 & micb_sub9=0b111 & EXT_CODE9E {
+	tmp:$(REGSIZE) = sext(EXT_CODE9E);
+	tmp = tmp + mic_base0;
+	tmpa:$(ADDRSIZE) = 0;
+	ValCast(tmpa,tmp);
+    mic_rt32_5 = sext(*[ram]:4 tmpa);  
+}
+
+:lw16 mic_rt7, EXT_CODE4D(mic_base4) 		is ISA_MODE=1 & RELP=0 & mic_op=0b011010 & mic_rt7 & mic_base4 & EXT_CODE4D {
+	tmp:$(REGSIZE) = sext(EXT_CODE4D);
+	tmp = tmp + mic_base4;
+	tmpa:$(ADDRSIZE) = 0;
+	ValCast(tmpa,tmp);
+    mic_rt7 = sext(*[ram]:4 tmpa);  
+}
+
+:lwm16 LOAD_TOP16							is ISA_MODE=1 & RELP=0 & mic_op=0b010001 & LOAD_TOP16 & ((mic_csub=0b0100 & REL6=0) | (mic_csubr6=0b0010 & REL6=1)) { 
+	build LOAD_TOP16; 
+}
+
+:lwm32 LOAD_TOP								is ISA_MODE=1 & RELP=0 & mic_op=0b001000 & mic_base0 & mic_rlist ; micb_func12=0b0101 & LOAD_TOP [ ext_32_basea=mic_base0; ext_32_rlist=mic_rlist; ] { 
+	build LOAD_TOP; 
+}
+
+:lwc1 mic_ft_5, EXT_MS16(mic_base0)			is ISA_MODE=1 & RELP=0 & mic_op=0b100111 & mic_base0 & mic_ft_5 ; EXT_MS16 {
+	tmp:$(REGSIZE) = sext(EXT_MS16);
+	tmp = tmp + mic_base0;
+	tmpa:$(ADDRSIZE) = 0;
+	ValCast(tmpa,tmp);
+    mic_ft_5 = sext( *[ram]:4 tmpa);
+}
+
+:lwc2 mic_rt32_5, EXT_CODE12(mic_base0)		is ISA_MODE=1 & RELP=0 & mic_op=0b001000 & mic_rt32_5 & mic_base0 ; micb_func12=0b0000 & EXT_CODE12 {
+	tmp:$(REGSIZE) = sext(EXT_CODE12);
+	tmp = tmp + mic_base0;
+	tmpa:$(ADDRSIZE) = 0;
+	ValCast(tmpa,tmp);
+	setCopReg(2:1,mic_rt32_5,*[ram]:4 tmpa);
+}
+
+:lwp mic_rd32_5, EXT_CODE12(mic_base0)		is ISA_MODE=1 & RELP=0 & mic_op=0b001000 & mic_rd32_5 & mic_base0 & ext_32_rd ; micb_func12=0b0001 & EXT_CODE12 [ext_32_rdset = mic_rd32_5+1;] {
+	tmp:$(REGSIZE) = sext(EXT_CODE12);
+	tmp = tmp + mic_base0;
+	tmpa:$(ADDRSIZE) = 0;
+	ValCast(tmpa,tmp);
+	mic_rd32_5 = sext( *[ram]:4 tmpa);
+	tmp = tmp + 4;
+	ValCast(tmpa,tmp);
+	ext_32_rd = sext( *[ram]:4 tmpa);
+}
+
+:lwgp mic_rt7, EXT_CODE7A(gp)				is ISA_MODE=1 & RELP=0 & mic_op=0b011001 & mic_rt7 & gp & EXT_CODE7A {
+	tmp:$(REGSIZE) = sext(EXT_CODE7A);
+	tmp = tmp + gp;
+	tmpa:$(ADDRSIZE) = 0;
+	ValCast(tmpa,tmp);
+    mic_rt7 = sext( *[ram]:4 tmpa);
+}
+
+:lwsp mic_rt32_5, EXT_CODE5(sp)			is ISA_MODE=1 & RELP=0 & mic_op=0b010010 & mic_rt32_5 & sp & EXT_CODE5 {
+	tmp:$(REGSIZE) = zext(EXT_CODE5);
+	tmp = tmp + sp;
+	tmpa:$(ADDRSIZE) = 0;
+	ValCast(tmpa,tmp);
+    mic_rt32_5 = sext( *[ram]:4 tmpa);
+}
+
+:lwxs micb_rd32, mic_index(mic_base0) 		is ISA_MODE=1 & RELP=0 & mic_op=0b000000 & mic_index & mic_base0 ; micb_bit10=0 & micb_rd32 & ((micb_axf2=0b0100011000 & REL6=0) | (micb_axf2=0b0100000000 & REL6=1)) {
+	tmp:$(REGSIZE) = mic_base0 + (mic_index << 2);
+	tmpa:$(ADDRSIZE) = 0;
+	ValCast(tmpa,tmp);
+    micb_rd32 = sext( *[ram]:4 tmpa);
+}
+
+:mfc0 mic_rt32_5, mic_rs32_0, CPSEL			is ISA_MODE=1 & RELP=0 & mic_op=0b000000 & mic_rs32_0 & mic_rt32_5 ; micb_z14=0 & micb_cpf=0b00011 & micb_poolax=0b111100 & CPSEL {
+	mic_rt32_5 = getCopReg(0:1,mic_rs32_0,CPSEL);
+}
+
+:mfc1 mic_rt32_5, mic_fs					is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & mic_rt32_5 & mic_fs ; micb_poolfx=0b111011 & micb_fxf=0b0010000000 {
+    mic_rt32_5 = sext(mic_fs:4);
+}
+
+:mfc2 mic_rt32_5, mic_impl					is ISA_MODE=1 & RELP=0 & mic_op=0b000000 & mic_rt32_5 & mic_impl ; micb_poolax=0b111100 & micb_axf=0b0100110100 {
+	mic_rt32_5 = getCopReg(2:1,mic_impl:1);
+}
+
+:mfhc0 mic_rt32_5, mic_rs32_0, CPSEL		is ISA_MODE=1 & RELP=0 & mic_op=0b000000 & mic_rs32_0 & mic_rt32_5 ; micb_z14=0 & micb_cpf=0b00011 & micb_poolax=0b110100 & CPSEL {
+	mic_rt32_5 = getCopRegH(0:1,mic_rs32_0,CPSEL);
+}
+
+:mfhc1 mic_rt32_5, mic_fs					is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & mic_rt32_5 & mic_fs & mic_fsD ; micb_poolfx=0b111011 & micb_fxf=0b0011000000 {
+	tmp:4 = mic_fsD[32,32];
+	mic_rt32_5 = sext(tmp);
+}
+
+:mfhc2 mic_rt32_5, mic_impl					is ISA_MODE=1 & RELP=0 & mic_op=0b000000 & mic_rt32_5 & mic_impl ; micb_poolax=0b111100 & micb_axf=0b1000110100 {
+	mic_rt32_5 = getCopRegH(2:1,mic_impl:1);
+}
+
+:mov.S mic_ft_5, mic_fs						is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & mic_ft_5 & mic_fs ; micb_bit15=0 & micb_fmt=0 & micb_poolfx=0b111011 & micb_flt6=0b0000001 {
+    mic_ft_5 = zext(mic_fs:4);
+}
+
+:mov.D mic_ft_5, mic_fs						is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & mic_ft_5 & mic_fs & mic_fsD & mic_ftD_5 ; micb_bit15=0 & micb_fmt=1 & micb_poolfx=0b111011 & micb_flt6=0b0000001 {
+    mic_ftD_5 = mic_fsD;
+}
+
+:move16 mic_rd32_5, mic_rs32_0				is ISA_MODE=1 & RELP=0 & mic_op=0b000011 & mic_rd32_5 & mic_rs32_0 {
+	mic_rd32_5 = mic_rs32_0;
+}
+
+# The docs are not clear if this format is pre and/or post R6.
+:movep mic_encrd, mic_encre, ENCRS, mic_encrt is ISA_MODE=1 & RELP=0 & mic_op=0b100001 & mic_bit0=0 & mic_encrd & mic_encre & ENCRS & mic_encrt & mic_bit3 & mic_bit01 [ext_16_rshi=mic_bit3; ext_16_rslo=mic_bit01;] {
+	mic_encrd = ENCRS;
+	mic_encre = mic_encrt;
+}
+
+:mtc0 mic_rt32_5, mic_rs32_0, CPSEL			is ISA_MODE=1 & RELP=0 & mic_op=0b000000 & mic_rs32_0 & mic_rt32_5 ; micb_z14=0 & micb_cpf=0b01011 & micb_poolax=0b111100 & CPSEL {
+	setCopReg(0:1,mic_rs32_0,mic_rt32_5,CPSEL);
+}
+
+:mtc1 RT5L, mic_fs						is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & RT5L & mic_fs ; micb_poolfx=0b111011 & micb_fxf=0b0010100000 {
+	mic_fs[0,32] = RT5L;
+}
+
+:mtc2 mic_rt32_5, mic_impl					is ISA_MODE=1 & RELP=0 & mic_op=0b000000 & mic_rt32_5 & mic_impl ; micb_poolax=0b111100 & micb_axf=0b0101110100 {
+	setCopReg(2:1,mic_rt32_5,mic_impl:1);
+}
+
+:mthc0 mic_rt32_5, mic_rs32_0, CPSEL		is ISA_MODE=1 & RELP=0 & mic_op=0b000000 & mic_rs32_0 & mic_rt32_5 ; micb_z14=0 & micb_cpf=0b01011 & micb_poolax=0b110100 & CPSEL {
+	setCopRegH(0:1,mic_rs32_0,mic_rt32_5,CPSEL);
+}
+
+:mthc1 RT5L, mic_fs							is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & RT5L & mic_fs & mic_fsD ; micb_poolfx=0b111011 & micb_fxf=0b0011100000 {
+	mic_fsD[32,32] = RT5L;
+}
+
+:mthc2 mic_rt32_5, mic_impl					is ISA_MODE=1 & RELP=0 & mic_op=0b000000 & mic_rt32_5 & mic_impl ; micb_poolax=0b111100 & micb_axf=0b1001110100 {
+	setCopRegH(2:1,mic_rt32_5,mic_impl:1);
+}
+
+:mul micb_rd32, RS0L, RT5L					is ISA_MODE=1 & RELP=0 & mic_op=0b000000 & RS0L & RT5L ; micb_rd32 & micb_bit10=0 & ((micb_axf2=0b1000010000 & REL6=0) | (micb_axf2=0b0000011000 & REL6=1)) {
+	tmp:4 = RS0L * RT5L;
+	micb_rd32 = sext(tmp);
+}
+
+:mul.S micb_fd, mic_fs, mic_ft_5			is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & mic_ft_5 & mic_fs ; micb_fd & micb_bit10=0 & micb_fmt8=0 & micb_fxf3=0b10110000 {
+    fd_tmp:4 = mic_fs:4 f* mic_ft_5:4;
+    micb_fd = zext(fd_tmp);
+}
+
+:mul.D micb_fd, mic_fs, mic_ft_5			is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & mic_ft_5 & mic_fs & mic_fsD & mic_ftD_5; micb_fd & micb_fdD & micb_bit10=0 & micb_fmt8=1 & micb_fxf3=0b10110000 {
+    micb_fdD = mic_fsD f* mic_ftD_5;
+}
+
+:neg.S mic_ft_5, mic_fs						is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & mic_ft_5 & mic_fs ; micb_bit15=0 & micb_fmt=0 & micb_poolfx=0b111011 & micb_flt6=0b0101101 {
+    fs_tmp:4 = mic_fs:4;
+    fd_tmp:4 = f- fs_tmp;
+    mic_ft_5 = zext(fd_tmp);
+}
+
+:neg.D mic_ft_5, mic_fs						is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & mic_ft_5 & mic_fs & mic_fsD & mic_ftD_5; micb_bit15=0 & micb_fmt=1 & micb_poolfx=0b111011 & micb_flt6=0b0101101 {
+    mic_ftD_5 = f- mic_fsD;
+}
+
+# This is a special case of sll
+:nop 										is ISA_MODE=1 & RELP=0 & mic_op=0b000000 & mic_rs32_0=0 & mic_rt32_5=0 ; micb_sa=0 & micb_axf2=0b0000000000 & micb_bit10=0 {
+}
+
+:nor micb_rd32, mic_rs32_0, mic_rt32_5		is ISA_MODE=1 & RELP=0 & mic_op=0b000000 & mic_rs32_0 & mic_rt32_5 ; micb_axf2=0b1011010000 & micb_bit10=0 & micb_rd32 {
+    micb_rd32 = ~(mic_rs32_0 | mic_rt32_5); 
+}
+
+:not16 RT3R7, RS0R4							is ISA_MODE=1 & RELP=0 & mic_op=0b010001 & RT3R7 & RS0R4 & ((mic_csub=0b0000 & REL6=0) | (mic_csubr6=0b0000 & REL6=1)) {
+	RT3R7 = ~RS0R4;
+}
+
+:or micb_rd32, mic_rs32_0, mic_rt32_5		is ISA_MODE=1 & RELP=0 & mic_op=0b000000 & mic_rs32_0 & mic_rt32_5 ; micb_axf2=0b1010010000 & micb_bit10=0 & micb_rd32 {
+	micb_rd32 = mic_rs32_0 | mic_rt32_5;
+}
+
+:ori mic_rt32_5, mic_rs32_0, micb_imm16		is ISA_MODE=1 & RELP=0 & mic_op=0b010100 & mic_rs32_0 & mic_rt32_5 ; micb_imm16 {
+	tmp:$(REGSIZE) = micb_imm16;
+	mic_rt32_5 = mic_rs32_0 | tmp;
+}
+
+:or16 RT3R7, RS0R4							is ISA_MODE=1 & RELP=0 & mic_op=0b010001 & RT3R7 & RS0R4 & ((mic_csub=0b0011 & REL6=0) | (mic_csubr6=0b1001 & REL6=1)) {
+	RT3R7 = RT3R7 | RS0R4;
+}
+
+:pause 										is ISA_MODE=1 & RELP=0 & mic_op=0b000000 & mic_rs32_0=0 & mic_rt32_5=0 ; micb_sa=0b00101 & micb_axf2=0b0000000000 & micb_bit10=0 {
+	wait();
+}
+
+:pref mic_cop5, EXT_CODE9E(mic_base0)		is ISA_MODE=1 & RELP=0 & mic_op=0b011000 & mic_cop5 & mic_base0 ; micb_func12=0b0100 & micb_sub9=0b000 & EXT_CODE9E {
+	tmp:$(REGSIZE) = zext(EXT_CODE9E);
+	tmp = tmp + mic_base0;
+	prefetch(mic_cop5:1,tmp);
+}
+
+:prefe mic_cop5, EXT_CODE9E(mic_base0)		is ISA_MODE=1 & RELP=0 & mic_op=0b011000 & mic_cop5 & mic_base0 ; micb_func12=0b1010 & micb_sub9=0b010 & EXT_CODE9E {
+	tmp:$(REGSIZE) = zext(EXT_CODE9E);
+	tmp = tmp + mic_base0;
+	prefetch(mic_cop5:1,tmp);
+}
+
+:rdpgpr mic_rt32_5, mic_rs32_0   			is ISA_MODE=1 & RELP=0 & mic_op=0b000000 & mic_rt32_5 & mic_rs32_0 ; micb_poolax=0b111100 & micb_axf=0b1110000101 {
+	mic_rt32_5 = getShadow(mic_rs32_0);
+}
+
+:recip.S mic_ft_5, mic_fs					is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & mic_ft_5 & mic_fs ; micb_bit15=0 & micb_fmt14=0 & micb_poolfx=0b111011 & micb_fxf4=0b01001000 {
+    fd_tmp:4 = 1:4 f/ mic_fs:4;
+    mic_ft_5 = zext(fd_tmp);
+}
+
+:recip.D mic_ft_5, mic_fs					is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & mic_ft_5 & mic_fs & mic_ftD_5 & mic_fsD ; micb_bit15=0 & micb_fmt14=1 & micb_poolfx=0b111011 & micb_fxf4=0b01001000 {
+    mic_ftD_5 = 1:8 f/ mic_fsD;
+}
+
+:rotr mic_rt32_5, RS0L, micb_sa				is ISA_MODE=1 & RELP=0 & mic_op=0b000000 & RS0L & mic_rt32_5 ; micb_sa & micb_axf2=0b0011000000 & micb_bit10=0 {
+	tmpa:4 = RS0L >> micb_sa;
+	tmpb:4 = RS0L << (32 - micb_sa);
+	tmpa = tmpa | tmpb;
+	mic_rt32_5 = sext(tmpa);
+}
+
+:rotrv micb_rd32, RT5L, RS0L		is ISA_MODE=1 & RELP=0 & mic_op=0b000000 & RS0L & RT5L ; micb_rd32 & micb_axf2=0b0011010000 & micb_bit10=0 {
+	tmpr:1 = RS0L[0,5];
+	tmpa:4 = RT5L >> tmpr;
+	tmpb:4 = RT5L << (32 - tmpr);
+	tmpa = tmpa | tmpb;
+	micb_rd32 = sext(tmpa);
+}
+
+:round.l.S mic_ft_5, mic_fs					is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & mic_ft_5 & mic_fs & mic_ftD_5 ; micb_bit15=0 & micb_fmt14=0 & micb_poolfx=0b111011 & micb_fxf4=0b11001100 {
+    fd_tmp:4 = round(mic_fs:4); # round returns a float of the same size are the arg
+    mic_ftD_5 = trunc(fd_tmp);     # trunc converts to any size integer
+}
+
+:round.l.D mic_ft_5, mic_fs					is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & mic_ft_5 & mic_fs & mic_fsD & mic_ftD_5 ; micb_bit15=0 & micb_fmt14=1 & micb_poolfx=0b111011 & micb_fxf4=0b11001100 {
+    fsD_tmp:8 = round(mic_fsD);
+    mic_ftD_5 = trunc(fsD_tmp);
+}
+
+:round.w.S mic_ft_5, mic_fs					is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & mic_ft_5 & mic_fs & mic_ftD_5 ; micb_bit15=0 & micb_fmt14=0 & micb_poolfx=0b111011 & micb_fxf4=0b11101100 {
+    fd_tmp:4 = round(mic_fs:4);
+    mic_ft_5 = trunc(fd_tmp);
+}
+
+:round.w.D mic_ft_5, mic_fs					is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & mic_ft_5 & mic_fs & mic_fsD ; micb_bit15=0 & micb_fmt14=1 & micb_poolfx=0b111011 & micb_fxf4=0b11101100 {
+    fdD_tmp:8 = round(mic_fsD); # round returns a float, not an int
+    fd_tmp:4 = trunc(fdD_tmp); # We need only a 32-bit integer
+    mic_ft_5 = zext(fd_tmp); # But fill the top half with 0s if we have a 64-bit FPU
+}
+
+:rsqrt.S mic_ft_5, mic_fs					is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & mic_ft_5 & mic_fs ; micb_bit15=0 & micb_fmt14=0 & micb_poolfx=0b111011 & micb_fxf4=0b00001000 {
+    fd_tmp:4 = 1:4 f/ sqrt(mic_fs:4);
+    mic_ft_5 = zext(fd_tmp);
+}
+
+:rsqrt.D mic_ft_5, mic_fs					is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & mic_ft_5 & mic_fs & mic_fsD & mic_ftD_5 ; micb_bit15=0 & micb_fmt14=1 & micb_poolfx=0b111011 & micb_fxf4=0b00001000 {
+    mic_ftD_5 = 1:8 f/ sqrt( mic_fsD );
+}
+
+:sb RT5L, EXT_MS16(mic_base0)				is ISA_MODE=1 & RELP=0 & mic_op=0b000110 & RT5L & mic_base0 ; EXT_MS16 {
+	tmp:$(REGSIZE) = sext(EXT_MS16);
+	tmp = tmp + mic_base0;
+	tmpa:$(ADDRSIZE) = 0;
+	ValCast(tmpa,tmp);
+	*[ram]:1 tmpa = RT5L:1;
+}
+
+:sbe RT5L, EXT_CODE9E(mic_base0)			is ISA_MODE=1 & RELP=0 & mic_op=0b011000 & RT5L & mic_base0 ; micb_func12=0b1010 & micb_sub9=0b100 & EXT_CODE9E {
+	tmp:$(REGSIZE) = sext(EXT_CODE9E);
+	tmp = tmp + mic_base0;
+	tmpa:$(ADDRSIZE) = 0;
+	ValCast(tmpa,tmp);
+	*[ram]:1 tmpa = RT5L:1;
+}
+
+:sb16 mic_encrt2, mic_off4(mic_base4)		is ISA_MODE=1 & RELP=0 & mic_op=0b100010 & mic_encrt2 & mic_base4 & mic_off4 {
+	tmp:$(REGSIZE) = mic_off4;
+	tmp = tmp + mic_base4;
+	tmpa:$(ADDRSIZE) = 0;
+	ValCast(tmpa,tmp);
+	*[ram]:1 tmpa = mic_encrt2:1;
+}
+
+:sc RT5L, EXT_CODE9E(mic_base0)				is ISA_MODE=1 & RELP=0 & mic_op=0b011000 & RT5L & mic_base0 ; micb_func12=0b1011 & micb_sub9=0b000 & EXT_CODE9E {
+	tmp:$(REGSIZE) = sext(EXT_CODE9E);
+	tmp = tmp + mic_base0;
+    lockwrite(tmp);
+	tmpa:$(ADDRSIZE) = 0;
+	ValCast(tmpa,tmp);
+	*[ram]:4 tmpa = RT5L;
+	RT5L = 1;
+}
+
+:sce RT5L, EXT_CODE9E(mic_base0)			is ISA_MODE=1 & RELP=0 & mic_op=0b011000 & RT5L & mic_base0 ; micb_func12=0b1010 & micb_sub9=0b110 & EXT_CODE9E {
+	tmp:$(REGSIZE) = sext(EXT_CODE9E);
+	tmp = tmp + mic_base0;
+	tmpa:$(ADDRSIZE) = 0;
+	ValCast(tmpa,tmp);
+	*[ram]:4 tmpa = RT5L;
+    lockwrite(tmp);
+}
+
+:sdbbp mic_code   							is ISA_MODE=1 & RELP=0 & mic_op=0b000000 & mic_code ; micb_poolax=0b111100 & micb_axf=0b1101101101 {
+	break(mic_code:2);
+}
+
+:sdbbp16 SDB16								is ISA_MODE=1 & RELP=0 & mic_op=0b100010 & SDB16 & ((mic_break=0b101100 & REL6=0) | (mic_breakr6=0b111011 & REL6=1))  {
+	break(SDB16);
+}
+
+:sdc1 mic_ft_5, EXT_MS16(mic_base0)			is ISA_MODE=1 & RELP=0 & mic_op=0b101110 & mic_base0 & mic_ft_5 & mic_ftD_5 ; EXT_MS16 {
+	tmp:$(REGSIZE) = sext(EXT_MS16);
+	tmp = tmp + mic_base0;
+	tmpa:$(ADDRSIZE) = 0;
+	ValCast(tmpa,tmp);
+    *[ram]:8 tmpa = mic_ftD_5;
+}
+
+:sdc2 mic_rt32_5, EXT_CODE12(mic_base0)		is ISA_MODE=1 & RELP=0 & mic_op=0b011000 & mic_rt32_5 & mic_base0 ; micb_func12=0b1010 & EXT_CODE12 {
+	tmp:$(REGSIZE) = sext(EXT_CODE12);
+	tmp = tmp + mic_base0;
+	tmpa:$(ADDRSIZE) = 0;
+	ValCast(tmpa,tmp);
+	*[ram]:8 tmpa = getCopReg(2:1,mic_rt32_5); 
+}
+
+:seb mic_rt32_5, RS0L   					is ISA_MODE=1 & RELP=0 & mic_op=0b000000 & mic_rt32_5 & RS0L ; micb_poolax=0b111100 & micb_axf=0b0010101100 {
+	mic_rt32_5 = sext(RS0L:1);
+}
+
+:seh mic_rt32_5, RS0L   					is ISA_MODE=1 & RELP=0 & mic_op=0b000000 & mic_rt32_5 & RS0L ; micb_poolax=0b111100 & micb_axf=0b0011101100 {
+	mic_rt32_5 = sext(RS0L:2);
+}
+
+:sh RT5L, EXT_MS16(mic_base0)				is ISA_MODE=1 & RELP=0 & mic_op=0b001110 & RT5L & mic_base0 ; EXT_MS16 {
+	tmp:$(REGSIZE) = sext(EXT_MS16);
+	tmp = tmp + mic_base0;
+	tmpa:$(ADDRSIZE) = 0;
+	ValCast(tmpa,tmp);
+	*[ram]:2 tmpa = RT5L:2;
+}
+
+:she RT5L, EXT_CODE9E(mic_base0)			is ISA_MODE=1 & RELP=0 & mic_op=0b011000 & RT5L & mic_base0 ; micb_func12=0b1010 & micb_sub9=0b101 & EXT_CODE9E {
+	tmp:$(REGSIZE) = sext(EXT_CODE9E);
+	tmp = tmp + mic_base0;
+	tmpa:$(ADDRSIZE) = 0;
+	ValCast(tmpa,tmp);
+	*[ram]:2 tmpa = RT5L:2;
+}
+
+:sh16 mic_encrt2, EXT_CODE4C(mic_base4)		is ISA_MODE=1 & RELP=0 & mic_op=0b101010 & mic_encrt2 & mic_base4 & EXT_CODE4C {
+	tmp:$(REGSIZE) = sext(EXT_CODE4C);
+	tmp = tmp + mic_base4;
+	tmpa:$(ADDRSIZE) = 0;
+	ValCast(tmpa,tmp);
+	*[ram]:2 tmpa = mic_encrt2:2;
+}
+
+:sll mic_rt32_5, RS0L, micb_sa				is ISA_MODE=1 & RELP=0 & mic_op=0b000000 & RS0L & mic_rt32_5 ; micb_sa & micb_axf2=0b0000000000 & micb_bit10=0 {
+	mic_rt32_5 = sext(RS0L << micb_sa);
+}
+
+:sllv micb_rd32, RT5L, RS0L					is ISA_MODE=1 & RELP=0 & mic_op=0b000000 & RS0L & RT5L ; micb_axf2=0b0000010000 & micb_bit10=0 & micb_rd32 {
+	tmp:1 = RS0L[0,5];
+	micb_rd32 = sext(RT5L << tmp);
+}
+
+:sll16 mic_rd7, RT4L, EXT_SA				is ISA_MODE=1 & RELP=0 & mic_op=0b001001 & mic_bit0=0 & mic_rd7 & RT4L & EXT_SA {
+	mic_rd7 = sext(RT4L << EXT_SA);
+}
+
+:slt micb_rd32, mic_rs32_0, mic_rt32_5 		is ISA_MODE=1 & RELP=0 & mic_op=0b000000 & mic_rs32_0 & mic_rt32_5 ; micb_axf2=0b1101010000 & micb_bit10=0 & micb_rd32 {
+	tmp:1 = mic_rs32_0 s< mic_rt32_5;
+	micb_rd32 = zext(tmp);
+}
+
+:slti mic_rt32_5, mic_rs32_0, EXT_MS16		is ISA_MODE=1 & RELP=0 & mic_op=0b100100 & mic_rs32_0 & mic_rt32_5 ; EXT_MS16 {
+	tmp:$(REGSIZE) = sext(EXT_MS16);
+	tmpa:1 = mic_rs32_0 s< tmp;
+	mic_rt32_5 = zext(tmpa);
+}
+
+:sltiu mic_rt32_5, mic_rs32_0, EXT_MS16		is ISA_MODE=1 & RELP=0 & mic_op=0b101100 & mic_rs32_0 & mic_rt32_5 ; EXT_MS16 {
+	tmp:$(REGSIZE) = sext(EXT_MS16);
+	tmpa:1 = mic_rs32_0 < tmp;
+	mic_rt32_5 = zext(tmpa);
+}
+
+:sltu micb_rd32, mic_rs32_0, mic_rt32_5 	is ISA_MODE=1 & RELP=0 & mic_op=0b000000 & mic_rs32_0 & mic_rt32_5 ; micb_axf2=0b1110010000 & micb_bit10=0 & micb_rd32 {
+	tmp:1 = mic_rs32_0 < mic_rt32_5;
+	micb_rd32 = zext(tmp);
+}
+
+:sqrt.S mic_ft_5, mic_fs					is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & mic_ft_5 & mic_fs ; micb_bit15=0 & micb_fmt14=0 & micb_poolfx=0b111011 & micb_fxf4=0b00101000 {
+    fd_tmp:4 = sqrt(mic_fs:4);
+    mic_ft_5 = zext(fd_tmp);
+}
+
+:sqrt.D mic_ft_5, mic_fs					is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & mic_ft_5 & mic_fs & mic_fsD & mic_ftD_5 ; micb_bit15=0 & micb_fmt14=1 & micb_poolfx=0b111011 & micb_fxf4=0b00101000 {
+    mic_ftD_5 = sqrt(mic_fsD);
+}
+
+:sra mic_rt32_5, RS0L, micb_sa				is ISA_MODE=1 & RELP=0 & mic_op=0b000000 & RS0L & mic_rt32_5 ; micb_sa & micb_axf2=0b0010000000 & micb_bit10=0 {
+	mic_rt32_5 = sext(RS0L s>> micb_sa);
+}
+
+:srav micb_rd32, RT5L, RS0L					is ISA_MODE=1 & RELP=0 & mic_op=0b000000 & RS0L & RT5L ; micb_axf2=0b0010010000 & micb_bit10=0 & micb_rd32 {
+	tmp:1 = RS0L[0,5];
+	micb_rd32 = sext(RT5L s>> tmp);
+}
+
+:srl mic_rt32_5, RS0L, micb_sa				is ISA_MODE=1 & RELP=0 & mic_op=0b000000 & RS0L & mic_rt32_5 ; micb_sa & micb_axf2=0b0001000000 & micb_bit10=0 {
+	mic_rt32_5 = sext(RS0L >> micb_sa);
+}
+
+:srlv micb_rd32, RT5L, RS0L					is ISA_MODE=1 & RELP=0 & mic_op=0b000000 & RS0L & RT5L ; micb_axf2=0b0001010000 & micb_bit10=0 & micb_rd32 {
+	tmp:1 = RS0L[0,5];
+	micb_rd32 = sext(RT5L >> tmp);
+}
+
+:srl16 mic_rd7, RT4L, EXT_SA				is ISA_MODE=1 & RELP=0 & mic_op=0b001001 & mic_bit0=1 & mic_rd7 & RT4L & EXT_SA {
+	mic_rd7 = sext(RT4L >> EXT_SA);
+}
+
+:ssnop 										is ISA_MODE=1 & RELP=0 & mic_op=0b000000 & mic_rs32_0=0 & mic_rt32_5=0 ; micb_sa=1 & micb_axf2=0b0000000000 & micb_bit10=0 {}
+
+:sub micb_rd32, RS0L, RT5L					is ISA_MODE=1 & RELP=0 & mic_op=0b000000 & RS0L & RT5L ; micb_axf2=0b0110010000 & micb_bit10=0 & micb_rd32 {
+# Do we want this check?
+	#tmpa:8 = sext(RS0L);
+	#tmpb:8 = sext(RT5L);
+	#tmpa = tmpa - tmpb;
+	#if (tmpa[31,1] != tmpa[32,1]) goto <done>;
+	micb_rd32 = sext(RS0L - RT5L);
+	#<done>
+}
+
+:sub.S micb_fd, mic_fs, mic_ft_5			is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & mic_ft_5 & mic_fs ; micb_fd & micb_bit10=0 & micb_fmt8=0 & micb_fxf3=0b01110000 {
+    fd_tmp:4 = mic_fs:4 f- mic_ft_5:4;
+    micb_fd = zext(fd_tmp);
+}
+
+:sub.D micb_fd, mic_fs, mic_ft_5			is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & mic_ft_5 & mic_fs & mic_fsD & mic_ftD_5 ; micb_fdD & micb_fd & micb_bit10=0 & micb_fmt8=1 & micb_fxf3=0b01110000 {
+    micb_fdD = mic_fsD f- mic_ftD_5;
+}
+
+:subu micb_rd32, RS0L, RT5L					is ISA_MODE=1 & RELP=0 & mic_op=0b000000 & RS0L & RT5L ; micb_axf2=0b0111010000 & micb_bit10=0 & micb_rd32 {
+	micb_rd32 = sext(RS0L - RT5L);
+}
+
+:subu16 RD7R1, RS1R7L, RT4L  				is ISA_MODE=1 & RELP=0 & mic_op=0b000001 & mic_bit0=1 & RD7R1 & RT4L & RS1R7L {
+	RD7R1 = sext(RS1R7L - RT4L);
+}
+
+:sw RT5L, EXT_MS16(mic_base0)				is ISA_MODE=1 & RELP=0 & mic_op=0b111110 & RT5L & mic_base0 ; EXT_MS16 {
+	tmp:$(REGSIZE) = sext(EXT_MS16);
+	tmp = tmp + mic_base0;
+	tmpa:$(ADDRSIZE) = 0;
+	ValCast(tmpa,tmp);
+	*[ram]:4 tmpa = RT5L:4;
+}
+
+:swe RT5L, EXT_CODE9E(mic_base0)			is ISA_MODE=1 & RELP=0 & mic_op=0b011000 & RT5L & mic_base0 ; micb_func12=0b1010 & micb_sub9=0b111 & EXT_CODE9E {
+	tmp:$(REGSIZE) = sext(EXT_CODE9E);
+	tmp = tmp + mic_base0;
+	tmpa:$(ADDRSIZE) = 0;
+	ValCast(tmpa,tmp);
+	*[ram]:4 tmpa = RT5L:4;
+}
+
+:sw16 mic_encrt2, EXT_CODE4E(mic_base4)		is ISA_MODE=1 & RELP=0 & mic_op=0b111010 & mic_encrt2 & mic_base4 & EXT_CODE4E {
+	tmp:$(REGSIZE) = sext(EXT_CODE4E);
+	tmp = tmp + mic_base4;
+	tmpa:$(ADDRSIZE) = 0;
+	ValCast(tmpa,tmp);
+	*[ram]:4 tmpa = mic_encrt2:4;
+}
+
+:swc1 mic_ft_5, EXT_MS16(mic_base0)			is ISA_MODE=1 & RELP=0 & mic_op=0b100110 & mic_base0 & mic_ft_5 ; EXT_MS16 {
+	tmp:$(REGSIZE) = sext(EXT_MS16);
+	tmp = tmp + mic_base0;
+	tmpa:$(ADDRSIZE) = 0;
+	ValCast(tmpa,tmp);
+    *[ram]:4 tmpa = mic_ft_5:4; 
+}
+
+:swc2 mic_rt32_5, micb_offset11s(mic_base0)	is ISA_MODE=1 & RELP=0 & mic_op=0b001000 & mic_rt32_5 & mic_base0 ; micb_func12=0b1000 & micb_bit11=0 & micb_offset11s {
+	tmp:$(REGSIZE) = micb_offset11s;
+	tmp = tmp + mic_base0;
+	tmpa:$(ADDRSIZE) = 0;
+	ValCast(tmpa,tmp);
+	*[ram]:4 tmpa = getCopReg(2:1,mic_rt32_5); 
+}
+
+:swsp RT5L, EXT_CODE5(sp)					is ISA_MODE=1 & RELP=0 & mic_op=0b110010 & RT5L & sp & EXT_CODE5 {
+	tmp:$(REGSIZE) = zext(EXT_CODE5);
+	tmp = tmp + sp;
+	tmpa:$(ADDRSIZE) = 0;
+	ValCast(tmpa,tmp);
+	*[ram]:4 tmpa = RT5L;
+}
+
+:swp RT5L, EXT_CODE12(mic_base0)			is ISA_MODE=1 & RELP=0 & mic_op=0b001000 & RT5L & mic_base0 & RSEXTL & mic_rs32_5; micb_func12=0b1001 & EXT_CODE12 [ext_32_rs1set = mic_rs32_5+1;] {
+	tmp:$(REGSIZE) = sext(EXT_CODE12);
+	tmp = tmp + mic_base0;
+	tmpa:$(ADDRSIZE) = 0;
+	ValCast(tmpa,tmp);
+	*[ram]:4 tmpa = RT5L;
+	tmp = tmp + 4;
+	ValCast(tmpa,tmp);
+	*[ram]:4 tmpa = RSEXTL;
+}
+
+:swm16 STORE_TOP16							is ISA_MODE=1 & RELP=0 & mic_op=0b010001 & STORE_TOP16 & ((mic_csub=0b0101 & REL6=0) | (mic_csubr6=0b1010 & REL6=1)) { 
+	build STORE_TOP16; 
+}
+
+:swm32 STORE_TOP							is ISA_MODE=1 & RELP=0 & mic_op=0b001000 & mic_base0 & mic_rlist ; micb_func12=0b1101 & STORE_TOP [ ext_32_basea=mic_base0; ext_32_rlist=mic_rlist; ] { 
+	build STORE_TOP; 
+}
+
+:sync STYPE   								is ISA_MODE=1 & RELP=0 & mic_op=0b000000 & mic_funci=0 & STYPE ; micb_poolax=0b111100 & micb_axf=0b0110101101 {
+	synch(STYPE);
+}
+
+:synci EXT_MS16(mic_base0)					is ISA_MODE=1 & RELP=0 & mic_op=0b010000 & mic_base0 & ((mic_funci=0b10000 & REL6=0) | (mic_funci=0b01100 & REL6=1)); EXT_MS16 {
+	tmp:$(REGSIZE) = sext(EXT_MS16);
+	tmp = tmp + mic_base0;
+	synch(tmp);
+}
+
+:syscall    								is ISA_MODE=1 & RELP=0 & mic_op=0b000000 ; micb_poolax=0b111100 & micb_axf=0b1000101101 {
+	syscall();
+}
+
+:teq mic_rs32_0, mic_rt32_5   				is ISA_MODE=1 & RELP=0 & mic_op=0b000000 & mic_rt32_5 & mic_rs32_0 ; micb_poolax=0b111100 & micb_trap=0b000000 {
+	if (mic_rs32_0 != mic_rt32_5) goto <done>;
+	trap();
+	<done>
+}
+
+:tge mic_rs32_0, mic_rt32_5   				is ISA_MODE=1 & RELP=0 & mic_op=0b000000 & mic_rt32_5 & mic_rs32_0 ; micb_poolax=0b111100 & micb_trap=0b001000 {
+	if (mic_rt32_5 s< mic_rs32_0) goto <done>;
+	trap();
+	<done>
+}
+
+:tgeu mic_rs32_0, mic_rt32_5   				is ISA_MODE=1 & RELP=0 & mic_op=0b000000 & mic_rt32_5 & mic_rs32_0 ; micb_poolax=0b111100 & micb_trap=0b010000 {
+	if (mic_rt32_5 < mic_rs32_0) goto <done>;
+	trap();
+	<done>
+}
+
+:tlbinv    									is ISA_MODE=1 & RELP=0 & mic_op=0b000000 & mic_code=0 ; micb_poolax=0b111100 & micb_axf=0b0100001101 {
+	tlbop(0:1);
+}
+
+:tlbinvf    								is ISA_MODE=1 & RELP=0 & mic_op=0b000000 & mic_code=0 ; micb_poolax=0b111100 & micb_axf=0b0101001101 {
+	tlbop(1:1);
+}
+
+:tlbp    									is ISA_MODE=1 & RELP=0 & mic_op=0b000000 & mic_code=0 ; micb_poolax=0b111100 & micb_axf=0b0000001101 {
+	tlbop(2:1);
+}
+
+:tlbr    									is ISA_MODE=1 & RELP=0 & mic_op=0b000000 & mic_code=0 ; micb_poolax=0b111100 & micb_axf=0b0001001101 {
+	tlbop(3:1);
+}
+
+:tlbwi    									is ISA_MODE=1 & RELP=0 & mic_op=0b000000 & mic_code=0 ; micb_poolax=0b111100 & micb_axf=0b0010001101 {
+	tlbop(4:1);
+}
+
+:tlbwr    									is ISA_MODE=1 & RELP=0 & mic_op=0b000000 & mic_code=0 ; micb_poolax=0b111100 & micb_axf=0b0011001101 {
+	tlbop(5:1);
+}
+
+:tlt mic_rs32_0, mic_rt32_5   				is ISA_MODE=1 & RELP=0 & mic_op=0b000000 & mic_rt32_5 & mic_rs32_0 ; micb_poolax=0b111100 & micb_trap=0b100000 {
+	if (mic_rt32_5 s>= mic_rs32_0) goto <done>;
+	trap();
+	<done>
+}
+
+:tltu mic_rs32_0, mic_rt32_5   				is ISA_MODE=1 & RELP=0 & mic_op=0b000000 & mic_rt32_5 & mic_rs32_0 ; micb_poolax=0b111100 & micb_trap=0b101000 {
+	if (mic_rt32_5 >= mic_rs32_0) goto <done>;
+	trap();
+	<done>
+}
+
+:tne mic_rs32_0, mic_rt32_5   				is ISA_MODE=1 & RELP=0 & mic_op=0b000000 & mic_rt32_5 & mic_rs32_0 ; micb_poolax=0b111100 & micb_trap=0b110000 {
+	if (mic_rt32_5 == mic_rs32_0) goto <done>;
+	trap();
+	<done>
+}
+
+:trunk.l.S mic_ft_5, mic_fs					is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & mic_ft_5 & mic_fs ; micb_bit15=0 & micb_fmt14=0 & micb_poolfx=0b111011 & micb_fxf4=0b10001100 {
+    mic_ft_5 = trunc(mic_fs:4);
+}
+
+:trunk.l.D mic_ft_5, mic_fs					is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & mic_ft_5 & mic_fs & mic_fsD & mic_ftD_5 ; micb_bit15=0 & micb_fmt14=1 & micb_poolfx=0b111011 & micb_fxf4=0b10001100 {
+    mic_ftD_5 = trunc(mic_fsD);
+}
+
+:trunk.w.S mic_ft_5, mic_fs					is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & mic_ft_5 & mic_fs ; micb_bit15=0 & micb_fmt14=0 & micb_poolfx=0b111011 & micb_fxf4=0b10101100 {
+    fd_tmp:4 = trunc(mic_fs:4);
+    mic_ft_5 = zext(fd_tmp);
+}
+
+:trunk.w.D mic_ft_5, mic_fs					is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & mic_ft_5 & mic_fs & mic_fsD ; micb_bit15=0 & micb_fmt14=1 & micb_poolfx=0b111011 & micb_fxf4=0b10101100 {
+    fd_tmp:4 = trunc(mic_fsD);
+    mic_ft_5 = zext(fd_tmp);
+}
+
+:wait    									is ISA_MODE=1 & RELP=0 & mic_op=0b000000 ; micb_poolax=0b111100 & micb_axf=0b1001001101 {
+	wait();
+}
+
+:wrpgpr mic_rt32_5, mic_rs32_0   			is ISA_MODE=1 & RELP=0 & mic_op=0b000000 & mic_rt32_5 & mic_rs32_0 ; micb_poolax=0b111100 & micb_axf=0b1111000101 {
+	setShadow(mic_rt32_5,mic_rs32_0);
+}
+
+:wsbh mic_rt32_5, RS0L   					is ISA_MODE=1 & RELP=0 & mic_op=0b000000 & mic_rt32_5 & RS0L ; micb_poolax=0b111100 & micb_axf=0b0111101100 {
+	tmp1:4 = zext(RS0L[24,8]);
+	tmp2:4 = zext(RS0L[16,8]);
+	tmp3:4 = zext(RS0L[8,8]);
+	tmp4:4 = zext(RS0L[0,8]);
+	tmp5:4 = (tmp2 << 24) | (tmp1 << 16) | (tmp4 << 8) | tmp3;
+	mic_rt32_5 = sext(tmp5);
+}
+
+:xor micb_rd32, mic_rs32_0, mic_rt32_5		is ISA_MODE=1 & RELP=0 & mic_op=0b000000 & mic_rs32_0 & mic_rt32_5 ; micb_axf2=0b1100010000 & micb_bit10=0 & micb_rd32 {
+	micb_rd32 = mic_rs32_0 ^ mic_rt32_5;
+}
+
+:xori mic_rt32_5, mic_rs32_0, micb_imm16	is ISA_MODE=1 & RELP=0 & mic_op=0b011100 & mic_rs32_0 & mic_rt32_5 ; micb_imm16 {
+	tmp:$(REGSIZE) = micb_imm16;
+	mic_rt32_5 = mic_rs32_0 ^ tmp;
+}
+
+:xor16 RT3R7, RS0R4							is ISA_MODE=1 & RELP=0 & mic_op=0b010001 & RT3R7 & RS0R4 & ((mic_csub=0b0001 & REL6=0) | (mic_csubr6=0b1000 & REL6=1)) {
+	RT3R7 = RT3R7 ^ RS0R4;
+}
+
+@ifdef MIPS64
+:dadd micb_rd32, mic_rs32_0, mic_rt32_5		is ISA_MODE=1 & RELP=0 & mic_op=0b010110 & mic_rs32_0 & mic_rt32_5 ; micb_axf2=0b0100010000 & micb_bit10=0 & micb_rd32 {
+	# The dest doesn't get modified if there's an overflow. As our sleigh max size is 64bits, checking for this is a little complicated.
+	# Should we include this check or not?
+#	tmpsl:8 = zext(mic_rs32_0:4);
+#	tmptl:8 = zext(mic_rt32_5:4);
+#	tmpsh:8 = zext(mic_rs32_0[32,32]);
+#	tmpth:8 = zext(mic_rt32_5[32,32]);
+#	tmpres:8 = tmpsl + tmptl;
+#	tmpres = tmpres >> 32;
+#	tmpres = tmpres + tmpsh + tmpth;
+#	tmpres = tmpres >> 32;
+#	if (tmpres == 1) goto <done>;
+	micb_rd32 = mic_rs32_0 + mic_rt32_5;
+#	<done>
+}
+
+:daddiu mic_rt32_5, mic_rs32_0, EXT_MS16	is ISA_MODE=1 & RELP=0 & mic_op=0b010111 & mic_rs32_0 & mic_rt32_5 ; EXT_MS16 {
+	tmp:8 = sext(EXT_MS16);
+	mic_rt32_5 = mic_rs32_0 + tmp;
+}
+
+:daddu micb_rd32, mic_rs32_0, mic_rt32_5	is ISA_MODE=1 & RELP=0 & mic_op=0b010110 & mic_rs32_0 & mic_rt32_5 ; micb_axf2=0b0101010000 & micb_bit10=0 & micb_rd32 {
+	micb_rd32 = mic_rs32_0 + mic_rt32_5;
+}
+
+:dclo mic_rt32_5, mic_rs32_0				is ISA_MODE=1 & RELP=0 & mic_op=0b010110 & mic_rt32_5 & mic_rs32_0 ; micb_poolax=0b111100 & micb_axf=0b0100101100 {
+    mic_rt32_5 = countLeadingOnes( mic_rs32_0 );
+}
+
+:dclz mic_rt32_5, mic_rs32_0				is ISA_MODE=1 & RELP=0 & mic_op=0b010110 & mic_rt32_5 & mic_rs32_0 ; micb_poolax=0b111100 & micb_axf=0b0101101100   {
+    mic_rt32_5 = countLeadingZeros( mic_rs32_0 );
+}
+
+:dext mic_rt32_5, mic_rs32_0, micb_pos, SIZEP 	is ISA_MODE=1 & RELP=0 & mic_op=0b010110 & REL6=1 & mic_rt32_5 & mic_rs32_0 ; micb_poolax=0b101100 & micb_pos & SIZEP {
+	tmpa:8 = 0xFFFFFFFFFFFFFFFF;
+	tmpa = tmpa >> (64 - SIZEP);
+	tmpb:8 = mic_rs32_0;
+	tmpb = (tmpb >> micb_pos) & tmpa;
+	mic_rt32_5 = tmpb;
+}
+
+:dextm mic_rt32_5, mic_rs32_0, micb_pos, SIZEPLG 	is ISA_MODE=1 & RELP=0 & mic_op=0b010110 & REL6=1 & mic_rt32_5 & mic_rs32_0 ; micb_poolax=0b100100 & micb_pos & SIZEPLG {
+	tmpa:8 = 0xFFFFFFFFFFFFFFFF;
+	tmpa = tmpa >> (64 - SIZEPLG);
+	tmpb:8 = mic_rs32_0;
+	tmpb = (tmpb >> micb_pos) & tmpa;
+	mic_rt32_5 = tmpb;
+}
+
+:dextu mic_rt32_5, mic_rs32_0, POSHI, SIZEP 	is ISA_MODE=1 & RELP=0 & mic_op=0b010110 & REL6=1 & mic_rt32_5 & mic_rs32_0 ; micb_poolax=0b010100 & POSHI & SIZEP {
+	tmpa:8 = 0xFFFFFFFFFFFFFFFF;
+	tmpa = tmpa >> (64 - SIZEP);
+	tmpb:8 = mic_rs32_0;
+	tmpb = (tmpb >> POSHI) & tmpa;
+	mic_rt32_5 = tmpb;
+}
+
+:dins mic_rt32_5, mic_rs32_0, micb_pos, SIZEQ	is ISA_MODE=1 & RELP=0 & mic_op=0b010110 & mic_rt32_5 & mic_rs32_0 ; micb_poolax=0b001100 & micb_pos & SIZEQ {
+	tmpa:8 = 0xFFFFFFFFFFFFFFFF;
+	tmpa = tmpa >> (64 - SIZEQ);
+	tmpb:8 = mic_rs32_0 & tmpa;
+	tmpa = tmpa << micb_pos;
+	tmpa = ~tmpa;
+	tmpb = tmpb << micb_pos;
+	mic_rt32_5 = (mic_rt32_5 & tmpa) | tmpb;
+}
+
+:dinsm mic_rt32_5, mic_rs32_0, micb_pos, SIZEQLG	is ISA_MODE=1 & RELP=0 & mic_op=0b010110 & mic_rt32_5 & mic_rs32_0 ; micb_poolax=0b000100 & micb_pos & SIZEQLG {
+	tmpa:8 = 0xFFFFFFFFFFFFFFFF;
+	tmpa = tmpa >> (64 - SIZEQLG);
+	tmpb:8 = mic_rs32_0 & tmpa;
+	tmpa = tmpa << micb_pos;
+	tmpa = ~tmpa;
+	tmpb = tmpb << micb_pos;
+	mic_rt32_5 = (mic_rt32_5 & tmpa) | tmpb;
+}
+
+:dinsu mic_rt32_5, mic_rs32_0, POSHI, SIZEQ	is ISA_MODE=1 & RELP=0 & mic_op=0b010110 & mic_rt32_5 & mic_rs32_0 ; micb_poolax=0b110100 & POSHI & SIZEQ {
+	tmpa:8 = 0xFFFFFFFFFFFFFFFF;
+	tmpa = tmpa >> (64 - SIZEQ);
+	tmpb:8 = mic_rs32_0 & tmpa;
+	tmpa = tmpa << POSHI;
+	tmpa = ~tmpa;
+	tmpb = tmpb << POSHI;
+	mic_rt32_5 = (mic_rt32_5 & tmpa) | tmpb;
+}
+
+:dmfc0 mic_rt32_5, mic_rs32_0, CPSEL		is ISA_MODE=1 & RELP=0 & mic_op=0b010110 & mic_rs32_0 & mic_rt32_5 ; micb_z14=0 & micb_cpf=0b00011 & micb_poolax=0b111100 & CPSEL {
+	mic_rt32_5 = getCopReg(0:1,mic_rs32_0,CPSEL);
+}
+
+:dmfc1 mic_rt32_5, mic_fs					is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & mic_rt32_5 & mic_fs & mic_fsD ; micb_poolfx=0b111011 & micb_fxf=0b0010010000 {
+    mic_rt32_5 = mic_fsD;
+}
+
+:dmfc2 mic_rt32_5, mic_impl					is ISA_MODE=1 & RELP=0 & mic_op=0b000000 & mic_rt32_5 & mic_impl ; micb_poolax=0b111100 & micb_axf=0b0110110100 {
+	mic_rt32_5 = getCopReg(2:1,mic_impl:1);
+}
+
+:dmtc0 mic_rt32_5, mic_rs32_0, CPSEL		is ISA_MODE=1 & RELP=0 & mic_op=0b010110 & mic_rs32_0 & mic_rt32_5 ; micb_z14=0 & micb_cpf=0b01011 & micb_poolax=0b111100 & CPSEL {
+	setCopReg(0:1,mic_rs32_0,mic_rt32_5,CPSEL);
+}
+
+:dmtc1 mic_rt32_5, mic_fs					is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & mic_rt32_5 & mic_fs & mic_fsD ; micb_poolfx=0b111011 & micb_fxf=0b0010110000 {
+	mic_fsD = mic_rt32_5;
+}
+
+:dmtc2 mic_rt32_5, mic_impl					is ISA_MODE=1 & RELP=0 & mic_op=0b000000 & mic_rt32_5 & mic_impl ; micb_poolax=0b000011 & micb_axf=0b0111110100 {
+	setCopReg(2:1,mic_rt32_5,mic_impl:1);
+}
+
+:drotr mic_rt32_5, mic_rs32_0, micb_sa		is ISA_MODE=1 & RELP=0 & mic_op=0b010110 & mic_rs32_0 & mic_rt32_5 ; micb_sa & micb_axf2=0b0011000000 & micb_bit10=0 {
+	tmpa:8 = mic_rs32_0 >> micb_sa;
+	tmpb:8 = mic_rs32_0 << (64 - micb_sa);
+	tmpa = tmpa | tmpb;
+	mic_rt32_5 = tmpa;
+}
+
+:drotr32 mic_rt32_5, mic_rs32_0, SA32		is ISA_MODE=1 & RELP=0 & mic_op=0b010110 & mic_rs32_0 & mic_rt32_5 ; SA32 & micb_axf2=0b0011001000 & micb_bit10=0 {
+	tmpa:8 = mic_rs32_0 >> SA32;
+	tmpb:8 = mic_rs32_0 << (64 - SA32);
+	tmpa = tmpa | tmpb;
+	mic_rt32_5 = tmpa;
+}
+
+:drotrv micb_rd32, mic_rt32_5, RS0L			is ISA_MODE=1 & RELP=0 & mic_op=0b010110 & RS0L & mic_rt32_5 ; micb_rd32 & micb_axf2=0b0011010000 & micb_bit10=0 {
+	tmpr:1 = RS0L[0,6];
+	tmpa:8 = mic_rt32_5 >> tmpr;
+	tmpb:8 = mic_rt32_5 << (64 - tmpr);
+	tmpa = tmpa | tmpb;
+	micb_rd32 = tmpa;
+}
+
+:dsbh mic_rt32_5, mic_rs32_0				is ISA_MODE=1 & RELP=0 & mic_op=0b010110 & mic_rt32_5 & mic_rs32_0 ; micb_poolax=0b111100 & micb_axf=0b0111101100 {
+	tmp1:8 = zext(mic_rs32_0[56,8]);
+	tmp2:8 = zext(mic_rs32_0[48,8]);
+	tmp3:8 = zext(mic_rs32_0[40,8]);
+	tmp4:8 = zext(mic_rs32_0[32,8]);
+	tmp5:8 = zext(mic_rs32_0[24,8]);
+	tmp6:8 = zext(mic_rs32_0[16,8]);
+	tmp7:8 = zext(mic_rs32_0[8,8]);
+	tmp8:8 = zext(mic_rs32_0[0,8]);
+	tmp9:8 = (tmp2 << 56) | (tmp1 << 48) | (tmp4 << 40) | (tmp3 << 32) | (tmp6 << 24) | (tmp5 << 16) | (tmp8 << 8) | tmp7;
+	mic_rt32_5 = tmp9;
+}
+
+:dshd mic_rt32_5, mic_rs32_0				is ISA_MODE=1 & RELP=0 & mic_op=0b010110 & mic_rt32_5 & mic_rs32_0 ; micb_poolax=0b111100 & micb_axf=0b1111101100   {
+	tmp1:8 = zext(mic_rs32_0[48,16]);
+	tmp2:8 = zext(mic_rs32_0[32,16]);
+	tmp3:8 = zext(mic_rs32_0[16,16]);
+	tmp4:8 = zext(mic_rs32_0[0,16]);
+	tmp5:8 = (tmp4 << 48) | (tmp3 << 32) | (tmp2 << 16) | tmp1;
+	mic_rt32_5 = tmp5;
+}
+
+:dsll mic_rt32_5, mic_rs32_0, micb_sa		is ISA_MODE=1 & RELP=0 & mic_op=0b010110 & mic_rs32_0 & mic_rt32_5 ; micb_sa & micb_axf2=0b0000000000 & micb_bit10=0 {
+	mic_rt32_5 = mic_rs32_0 << micb_sa;
+}
+
+:dsll32 mic_rt32_5, mic_rs32_0, SA32		is ISA_MODE=1 & RELP=0 & mic_op=0b010110 & mic_rs32_0 & mic_rt32_5 ; SA32 & micb_axf2=0b0000001000 & micb_bit10=0 {
+	mic_rt32_5 = mic_rs32_0 << SA32;
+}
+
+:dsllv micb_rd32, mic_rt32_5, RS0L			is ISA_MODE=1 & RELP=0 & mic_op=0b010110 & RS0L & mic_rt32_5 ; micb_axf2=0b0000010000 & micb_bit10=0 & micb_rd32 {
+	tmps:1 = RS0L[0,6];
+	micb_rd32 = mic_rt32_5 << tmps;
+}
+
+:dsra mic_rt32_5, mic_rs32_0, micb_sa		is ISA_MODE=1 & RELP=0 & mic_op=0b010110 & mic_rs32_0 & mic_rt32_5 ; micb_sa & micb_axf2=0b0010000000 & micb_bit10=0 {
+	mic_rt32_5 = mic_rs32_0 s>> micb_sa;
+}
+
+:dsra32 mic_rt32_5, mic_rs32_0, SA32		is ISA_MODE=1 & RELP=0 & mic_op=0b010110 & mic_rs32_0 & mic_rt32_5 ; SA32 & micb_axf2=0b0010000100 & micb_bit10=0 {
+	mic_rt32_5 = mic_rs32_0 s>> SA32;
+}
+
+:dsrav micb_rd32, mic_rt32_5, RS0L			is ISA_MODE=1 & RELP=0 & mic_op=0b010110 & RS0L & mic_rt32_5 ; micb_axf2=0b0010010000 & micb_bit10=0 & micb_rd32 {
+	tmps:1 = RS0L[0,6];
+	micb_rd32 = mic_rt32_5 s>> tmps;
+}
+
+:dsrl mic_rt32_5, mic_rs32_0, micb_sa		is ISA_MODE=1 & RELP=0 & mic_op=0b010110 & mic_rs32_0 & mic_rt32_5 ; micb_sa & micb_axf2=0b0001000000 & micb_bit10=0 {
+	mic_rt32_5 = mic_rs32_0 >> micb_sa;
+}
+
+:dsrl32 mic_rt32_5, mic_rs32_0, SA32		is ISA_MODE=1 & RELP=0 & mic_op=0b010110 & mic_rs32_0 & mic_rt32_5 ; SA32 & micb_axf2=0b0001001000 & micb_bit10=0 {
+	mic_rt32_5 = mic_rs32_0 >> SA32;
+}
+
+:dsrlv micb_rd32, mic_rt32_5, RS0L			is ISA_MODE=1 & RELP=0 & mic_op=0b010110 & RS0L & mic_rt32_5 ; micb_axf2=0b0001010000 & micb_bit10=0 & micb_rd32 {
+	tmps:1 = RS0L[0,6];
+	micb_rd32 = mic_rt32_5 >> tmps;
+}
+
+:dsub micb_rd32, mic_rs32_0, mic_rt32_5 		is ISA_MODE=1 & RELP=0 & mic_op=0b010110 & mic_rs32_0 & mic_rt32_5 ; micb_axf2=0b0110010000 & micb_bit10=0 & micb_rd32 {
+# Do we want to test for this?
+	#tmpt:1 = zext(mic_rt32_5[63,1]);
+	#tmps:1 = zext(mic_rs32_0[63,1]);
+	#tmp:8 = mic_rs32_0 - mic_rt32_5;
+	#tmpa:1 = zext(tmp[63,1]);
+	#if ((tmpa ^ tmps) & (tmpt ^ tmps)) goto <done>;
+	micb_rd32 = mic_rs32_0 - mic_rt32_5;
+	#<done>
+}
+
+:dsubu micb_rd32, mic_rs32_0, mic_rt32_5 	is ISA_MODE=1 & RELP=0 & mic_op=0b010110 & mic_rs32_0 & mic_rt32_5 ; micb_axf2=0b0111010000 & micb_bit10=0 & micb_rd32 {
+	micb_rd32 = mic_rs32_0 - mic_rt32_5;
+}
+
+:ld mic_rt32_5, EXT_MS16(mic_base0)			is ISA_MODE=1 & RELP=0 & mic_op=0b110111 & mic_rt32_5 & mic_base0 ; EXT_MS16 {
+	tmp:$(REGSIZE) = sext(EXT_MS16);
+	tmp = tmp + mic_base0;
+	tmpa:$(ADDRSIZE) = 0;
+	ValCast(tmpa,tmp);
+    mic_rt32_5 = *[ram]:8 tmpa;  
+}
+
+:lld mic_rt32_5, EXT_CODE12(mic_base0)		is ISA_MODE=1 & RELP=0 & mic_op=0b011000 & mic_rt32_5 & mic_base0 ; micb_func12=0b0111 & EXT_CODE12 {
+	tmp:$(REGSIZE) = sext(EXT_CODE12);
+	tmp = tmp + mic_base0;
+    lockload(tmp);
+	tmpa:$(ADDRSIZE) = 0;
+	ValCast(tmpa,tmp);
+    mic_rt32_5 = *[ram]:8 tmpa;
+}
+
+:lwu mic_rt32_5, EXT_CODE12(mic_base0)		is ISA_MODE=1 & RELP=0 & mic_op=0b011000 & mic_rt32_5 & mic_base0 ; micb_func12=0b1110 & EXT_CODE12 {
+	tmp:$(REGSIZE) = sext(EXT_CODE12);
+	tmp = tmp + mic_base0;
+	tmpa:$(ADDRSIZE) = 0;
+	ValCast(tmpa,tmp);
+	tmpb:4 = *[ram]:4 tmpa;
+	mic_rt32_5 = zext(tmpb);
+}
+
+:scd mic_rt32_5, EXT_CODE9E(mic_base0)		is ISA_MODE=1 & RELP=0 & mic_op=0b011000 & mic_rt32_5 & mic_base0 ; micb_func12=0b1111 & micb_sub9=0b000 & EXT_CODE9E {
+	tmp:$(REGSIZE) = sext(EXT_CODE9E);
+	tmp = tmp + mic_base0;
+    lockwrite(tmp);
+	tmpa:$(ADDRSIZE) = 0;
+	ValCast(tmpa,tmp);
+	*[ram]:8 tmpa = mic_rt32_5;
+	mic_rt32_5 = 1;
+}
+
+:sd mic_rt32_5, EXT_MS16(mic_base0)			is ISA_MODE=1 & RELP=0 & mic_op=0b110110 & mic_rt32_5 & mic_base0 ; EXT_MS16 {
+	tmp:$(REGSIZE) = sext(EXT_MS16);
+	tmp = tmp + mic_base0;
+	tmpa:$(ADDRSIZE) = 0;
+	ValCast(tmpa,tmp);
+    *[ram]:8 tmpa = mic_rt32_5;  
+}
+
+@endif
+
+
+####
+#
+# Pre-6 semantics
+#
+####
+:abs.PS mic_ft_5, mic_fs				is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=0 & mic_ft_5 & mic_fs & mic_fsD & mic_ftD_5 ; micb_bit15=0 & micb_fmt=2 & micb_poolfx=0b111011 & micb_flt6=0b0001101 {
+    mic_ftD_5 = mipsFloatPS(mic_fsD);
+}
+
+:add.PS	micb_fd, mic_fs, mic_ft_5		is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=0 & mic_ft_5 & mic_fs & mic_fsD & mic_ftD_5 ; micb_fd & micb_fdD & micb_bit10=0 & micb_fmt8=2 & micb_fxf3=0b00110000 {
+    micb_fdD = mipsFloatPS(mic_fsD, mic_ftD_5);
+}
+
+:addi mic_rt32_5, RS0L, EXT_MS16		is ISA_MODE=1 & RELP=0 & mic_op=0b000100 & REL6=0 & RS0L & mic_rt32_5; EXT_MS16 {
+	tmp:4 = sext(EXT_MS16);
+	tmp = tmp + RS0L;
+	mic_rt32_5 = sext(tmp);
+}
+
+:alnv.ps micb_fd, mic_fs, mic_ft_5, micb_rs32 is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=0 & mic_fs & mic_ft_5 & mic_fsD & mic_ftD_5 ; micb_fd & micb_fdD & micb_rs32 & micb_poolfx=0b011001 {
+    micb_fdD = mipsFloatPS(mic_fsD, mic_ftD_5);
+}
+
+:b Rel16_mic							is ISA_MODE=1 & RELP=0 & mic_op=0b010000 & REL6=0 & mic_rs32_0=0 & mic_rt32_5=0 ; Rel16_mic {
+    delayslot( 1 );
+	goto Rel16_mic;
+}
+
+:b16 Rel10_mic							is ISA_MODE=1 & RELP=0 & mic_op=0b110011 & REL6=0 & Rel10_mic {
+    delayslot( 1 );
+	goto Rel10_mic;
+}
+
+:bal Rel16_mic							is ISA_MODE=1 & RELP=0 & mic_op=0b010000 & REL6=0 & mic_sub2=0b00011 & mic_rs32_0=0 ; Rel16_mic {
+    ra = inst_next | 0x1; 
+    delayslot( 1 ); 
+    call Rel16_mic;
+}
+
+:bc1f COP2CC^Rel16_mic					is ISA_MODE=1 & RELP=0 & mic_op=0b010000 & REL6=0 & mic_sub2=0b11100 & mic_cp2z=0 & COP2CC ; Rel16_mic {
+    # tmp:1 = getFpCondition(cc:1);  # Note that other cc conditions are not implemented
+    tmp:1 = fcsr[23,1]; # The floating point condition bit
+    delayslot(1);
+    if (tmp != 0) goto inst_next;
+    goto Rel16_mic;
+}
+
+:bc1t COP2CC^Rel16_mic					is ISA_MODE=1 & RELP=0 & mic_op=0b010000 & REL6=0 & mic_sub2=0b11101 & mic_cp2z=0 & COP2CC ; Rel16_mic {
+    # tmp:1 = getFpCondition(cc:1);
+    tmp:1 = fcsr[23,1]; # The floating point condition bit
+    delayslot(1);
+    if (tmp == 0) goto inst_next;
+    goto Rel16_mic;
+}
+
+:bc2f COP2CC^Rel16_mic					is ISA_MODE=1 & RELP=0 & mic_op=0b010000 & REL6=0 & mic_sub2=0b10100 & mic_cp2z=0 & COP2CC ; Rel16_mic {
+    tmp:1 = getCopCondition(2:1, COP2CC); 
+    delayslot(1); 
+    if (tmp != 0) goto inst_next; 
+    goto Rel16_mic; 
+}
+
+:bc2t COP2CC^Rel16_mic					is ISA_MODE=1 & RELP=0 & mic_op=0b010000 & REL6=0 & mic_sub2=0b10101 & mic_cp2z=0 & COP2CC ; Rel16_mic {
+    tmp:1 = getCopCondition(2:1, COP2CC); 
+    delayslot(1); 
+    if (tmp == 0) goto inst_next; 
+    goto Rel16_mic; 
+}
+
+:beq mic_rs32_0, mic_rt32_5, Rel16_mic	is ISA_MODE=1 & RELP=0 & mic_op=0b100101 & REL6=0 & mic_rs32_0 & mic_rt32_5; Rel16_mic {
+    delayflag:1 = ( mic_rs32_0 == mic_rt32_5 ); 
+    delayslot( 1 );
+    if (delayflag) goto Rel16_mic;
+}
+
+:beqz16 mic_rs7, Rel7_mic				is ISA_MODE=1 & RELP=0 & mic_op=0b100011 & REL6=0 & mic_rs7 & Rel7_mic {
+    delayflag:1 = ( mic_rs7 == 0 ); 
+    delayslot( 1 );
+    if (delayflag) goto Rel7_mic;
+}
+
+:beqzc mic_rs32_0, Rel16_mic			is ISA_MODE=1 & RELP=0 & mic_op=0b010000 & REL6=0 & mic_sub2=0b00111 & mic_rs32_0 ; Rel16_mic {
+    if (mic_rs32_0 == 0) goto Rel16_mic;
+}
+
+:bgez mic_rs32_0, Rel16_mic				is ISA_MODE=1 & RELP=0 & mic_op=0b010000 & REL6=0 & mic_sub2=0b00010 & mic_rs32_0 ; Rel16_mic {
+    delayflag:1 = (mic_rs32_0 s>= 0); 
+    delayslot( 1 );
+    if (delayflag) goto Rel16_mic;
+}
+
+:bgezal mic_rs32_0, Rel16_mic			is ISA_MODE=1 & RELP=0 & mic_op=0b010000 & REL6=0 & mic_sub2=0b00011 & mic_rs32_0 ; Rel16_mic {
+    delayflag:1 = (mic_rs32_0 s>= 0); 
+    ra = inst_next | 0x1; 
+    delayslot( 1 );
+    if (delayflag) goto Rel16_mic;
+}
+
+:bgezals mic_rs32_0, Rel16_mic			is ISA_MODE=1 & RELP=0 & mic_op=0b010000 & REL6=0 & mic_sub2=0b10011 & mic_rs32_0 ; Rel16_mic {
+    delayflag:1 = (mic_rs32_0 s>= 0); 
+    ra = inst_next | 0x1; 
+    delayslot( 1 );
+    if (delayflag) goto Rel16_mic;
+}
+
+:bgtz mic_rs32_0, Rel16_mic				is ISA_MODE=1 & RELP=0 & mic_op=0b010000 & REL6=0 & mic_sub2=0b00110 & mic_rs32_0 ; Rel16_mic {
+    delayflag:1 = (mic_rs32_0 s> 0); 
+    delayslot( 1 );
+    if (delayflag) goto Rel16_mic;
+}
+
+:blez mic_rs32_0, Rel16_mic				is ISA_MODE=1 & RELP=0 & mic_op=0b010000 & REL6=0 & mic_sub2=0b00100 & mic_rs32_0 ; Rel16_mic {
+    delayflag:1 = (mic_rs32_0 s<= 0); 
+    delayslot( 1 );
+    if (delayflag) goto Rel16_mic;
+}
+
+:bltz mic_rs32_0, Rel16_mic				is ISA_MODE=1 & RELP=0 & mic_op=0b010000 & REL6=0 & mic_sub2=0b00000 & mic_rs32_0 ; Rel16_mic {
+    delayflag:1 = (mic_rs32_0 s< 0); 
+    delayslot( 1 );
+    if (delayflag) goto Rel16_mic;
+}
+
+:bltzal mic_rs32_0, Rel16_mic			is ISA_MODE=1 & RELP=0 & mic_op=0b010000 & REL6=0 & mic_sub2=0b00001 & mic_rs32_0 ; Rel16_mic {
+    delayflag:1 = (mic_rs32_0 s< 0); 
+    ra = inst_next | 0x1; 
+    delayslot( 1 );
+    if (delayflag) goto Rel16_mic;
+}
+
+:bltzals mic_rs32_0, Rel16_mic			is ISA_MODE=1 & RELP=0 & mic_op=0b010000 & REL6=0 & mic_sub2=0b10001 & mic_rs32_0 ; Rel16_mic {
+    delayflag:1 = (mic_rs32_0 s< 0); 
+    ra = inst_next | 0x1; 
+    delayslot( 1 );
+    if (delayflag) goto Rel16_mic;
+}
+
+:bne mic_rs32_0, mic_rt32_5, Rel16_mic	is ISA_MODE=1 & RELP=0 & mic_op=0b101101 & REL6=0 & mic_rs32_0 & mic_rt32_5 ; Rel16_mic {
+    delayflag:1 = (mic_rs32_0 != mic_rt32_5); 
+    delayslot( 1 );
+    if (delayflag) goto Rel16_mic;
+}
+
+:bnez16 mic_rs7, Rel7_mic				is ISA_MODE=1 & RELP=0 & mic_op=0b101011 & REL6=0 & mic_rs7 & Rel7_mic {
+    delayflag:1 = (mic_rs7 != 0); 
+    delayslot( 1 );
+    if (delayflag) goto Rel7_mic;
+}
+
+:bnezc mic_rs32_0, Rel16_mic			is ISA_MODE=1 & RELP=0 & mic_op=0b010000 & REL6=0 & mic_sub2=0b00101 & mic_rs32_0 ; Rel16_mic {
+    if (mic_rs32_0 != 0) goto Rel16_mic;
+}
+
+:c.f.S  micb_cc, mic_fs, mic_ft_5		is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=0 & mic_ft_5 & mic_fs ; micb_cc & micb_bit12=0 & micb_fmt10=0 & micb_cond=0 & micb_poolfx=0b111100 {
+    trapIfSNaN(mic_fs:4, mic_ft_5:4); # Trap if either operand is a Signaling NaN
+    fcsr[23,1] = 0; # Always false, no trap
+}
+:c.f.D  micb_cc, mic_fs, mic_ft_5		is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=0 & mic_ft_5 & mic_fs & mic_fsD & mic_ftD_5 ; micb_cc & micb_bit12=0 & micb_fmt10=1 & micb_cond=0 & micb_poolfx=0b111100 {
+    trapIfSNaN(mic_fsD, mic_ftD_5);
+    fcsr[23,1] = 0; # Always false, no trap
+}
+:c.f.PS  micb_cc, mic_fs, mic_ft_5		is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=0 & mic_ft_5 & mic_fs & mic_fsD & mic_ftD_5 ; micb_cc & micb_bit12=0 & micb_fmt10=2 & micb_cond=0 & micb_poolfx=0b111100 {
+    fcsr[23,1] = mipsFloatPS(mic_fsD, mic_ftD_5);
+}
+
+:c.un.S  micb_cc, mic_fs, mic_ft_5			is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=0 & mic_ft_5 & mic_fs ; micb_cc & micb_bit12=0 & micb_fmt10=0 & micb_cond=1 & micb_poolfx=0b111100 {
+    trapIfSNaN(mic_fs:4, mic_ft_5:4); # Trap if either operand is a Signaling NaN
+    fcsr[23,1] = nan(mic_fs:4) || nan(mic_ft_5:4); # True if an operand is NaN, no trap
+}
+
+:c.un.D  micb_cc, mic_fs, mic_ft_5			is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=0 & mic_ft_5 & mic_fs & mic_fsD & mic_ftD_5 ; micb_cc & micb_bit12=0 & micb_fmt10=1 & micb_cond=1 & micb_poolfx=0b111100 {
+    trapIfSNaN(mic_fsD, mic_ftD_5);
+    fcsr[23,1] = nan(mic_fsD) || nan(mic_ftD_5); # True if an operand is NaN, no trap
+}
+
+:c.un.PS  micb_cc, mic_fs, mic_ft_5			is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=0 & mic_ft_5 & mic_fs & mic_fsD & mic_ftD_5 ; micb_cc & micb_bit12=0 & micb_fmt10=2 & micb_cond=1 & micb_poolfx=0b111100 {
+    fcsr[23,1] = mipsFloatPS(mic_fsD, mic_ftD_5);
+}
+
+:c.eq.S  micb_cc, mic_fs, mic_ft_5			is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=0 & mic_ft_5 & mic_fs ; micb_cc & micb_bit12=0 & micb_fmt10=0 & micb_cond=2 & micb_poolfx=0b111100 {
+    trapIfSNaN(mic_fs:4, mic_ft_5:4); # Trap if either operand is a Signaling NaN
+    fcsr[23,1] = (mic_fs:4 f== mic_ft_5:4); # No trap
+}
+
+:c.eq.D  micb_cc, mic_fs, mic_ft_5			is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=0 & mic_ft_5 & mic_fs & mic_fsD & mic_ftD_5 ; micb_cc & micb_bit12=0 & micb_fmt10=1 & micb_cond=2 & micb_poolfx=0b111100 {
+    trapIfSNaN(mic_fsD, mic_ftD_5);
+    fcsr[23,1] = (mic_fsD f== mic_ftD_5);
+}
+
+:c.eq.PS  micb_cc, mic_fs, mic_ft_5			is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=0 & mic_ft_5 & mic_fs & mic_fsD & mic_ftD_5 ; micb_cc & micb_bit12=0 & micb_fmt10=2 & micb_cond=2 & micb_poolfx=0b111100 {
+    fcsr[23,1] = mipsFloatPS(mic_fsD, mic_ftD_5);
+}
+
+:c.ueq.S  micb_cc, mic_fs, mic_ft_5			is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=0 & mic_ft_5 & mic_fs ; micb_cc & micb_bit12=0 & micb_fmt10=0 & micb_cond=3 & micb_poolfx=0b111100 {
+    trapIfSNaN(mic_fs:4, mic_ft_5:4); # Trap if either operand is a Signaling NaN
+    fcsr[23,1] = (mic_fs:4 f== mic_ft_5:4); # No trap
+}
+
+:c.ueq.D  micb_cc, mic_fs, mic_ft_5			is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=0 & mic_ft_5 & mic_fs & mic_fsD & mic_ftD_5 ; micb_cc & micb_bit12=0 & micb_fmt10=1 & micb_cond=3 & micb_poolfx=0b111100 {
+    trapIfSNaN(mic_fsD, mic_ftD_5);
+    fcsr[23,1] = (mic_fsD f== mic_ftD_5); # No trap
+}
+
+:c.ueq.PS  micb_cc, mic_fs, mic_ft_5		is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=0 & mic_ft_5 & mic_fs & mic_fsD & mic_ftD_5 ; micb_cc & micb_bit12=0 & micb_fmt10=2 & micb_cond=3 & micb_poolfx=0b111100 {
+    fcsr[23,1] = mipsFloatPS(mic_fsD, mic_ftD_5);
+}
+
+:c.olt.S  micb_cc, mic_fs, mic_ft_5			is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=0 & mic_ft_5 & mic_fs ; micb_cc & micb_bit12=0 & micb_fmt10=0 & micb_cond=4 & micb_poolfx=0b111100 {
+    trapIfSNaN(mic_fs:4, mic_ft_5:4); # Trap if either operand is a Signaling NaN
+    fcsr[23,1] = (mic_fs:4 f< mic_ft_5:4); # No trap
+}
+
+:c.olt.D  micb_cc, mic_fs, mic_ft_5			is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=0 & mic_ft_5 & mic_fs & mic_fsD & mic_ftD_5 ; micb_cc & micb_bit12=0 & micb_fmt10=1 & micb_cond=4 & micb_poolfx=0b111100 {
+    trapIfSNaN(mic_fsD, mic_ftD_5);
+    fcsr[23,1] = (mic_fsD f< mic_ftD_5); # No trap
+}
+
+:c.olt.PS  micb_cc, mic_fs, mic_ft_5		is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=0 & mic_ft_5 & mic_fs & mic_fsD & mic_ftD_5 ; micb_cc & micb_bit12=0 & micb_fmt10=2 & micb_cond=4 & micb_poolfx=0b111100 {
+    fcsr[23,1] = mipsFloatPS(mic_fsD, mic_ftD_5);
+}
+
+:c.ult.S  micb_cc, mic_fs, mic_ft_5			is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=0 & mic_ft_5 & mic_fs ; micb_cc & micb_bit12=0 & micb_fmt10=0 & micb_cond=5 & micb_poolfx=0b111100 {
+    trapIfSNaN(mic_fs:4, mic_ft_5:4); # Trap if either operand is a Signaling NaN
+    fcsr[23,1] = (mic_fs:4 f< mic_ft_5:4) || nan(mic_fs:4) || nan(mic_ft_5:4); # Less than or NaN No trap
+}
+
+:c.ult.D  micb_cc, mic_fs, mic_ft_5			is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=0 & mic_ft_5 & mic_fs & mic_fsD & mic_ftD_5 ; micb_cc & micb_bit12=0 & micb_fmt10=1 & micb_cond=5 & micb_poolfx=0b111100 {
+    trapIfSNaN(mic_fsD, mic_ftD_5);
+    fcsr[23,1] = (mic_fsD f< mic_ftD_5) || nan(mic_fsD) || nan(mic_ftD_5); # No trap
+}
+
+:c.ult.PS  micb_cc, mic_fs, mic_ft_5		is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=0 & mic_ft_5 & mic_fs & mic_fsD & mic_ftD_5 ; micb_cc & micb_bit12=0 & micb_fmt10=2 & micb_cond=5 & micb_poolfx=0b111100 {
+    fcsr[23,1] = mipsFloatPS(mic_fsD, mic_ftD_5);
+}
+
+:c.ole.S  micb_cc, mic_fs, mic_ft_5			is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=0 & mic_ft_5 & mic_fs ; micb_cc & micb_bit12=0 & micb_fmt10=0 & micb_cond=6 & micb_poolfx=0b111100 {
+    trapIfSNaN(mic_fs:4, mic_ft_5:4); # Trap if either operand is a Signaling NaN
+    fcsr[23,1] = (mic_fs:4 f<= mic_ft_5:4); # No trap
+}
+
+:c.ole.D  micb_cc, mic_fs, mic_ft_5			is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=0 & mic_ft_5 & mic_fs & mic_fsD & mic_ftD_5 ; micb_cc & micb_bit12=0 & micb_fmt10=1 & micb_cond=6 & micb_poolfx=0b111100 {
+    trapIfSNaN(mic_fsD, mic_ftD_5);
+    fcsr[23,1] = (mic_fsD f<= mic_ftD_5); # No trap
+}
+
+:c.ole.PS  micb_cc, mic_fs, mic_ft_5		is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=0 & mic_ft_5 & mic_fs & mic_fsD & mic_ftD_5 ; micb_cc & micb_bit12=0 & micb_fmt10=2 & micb_cond=6 & micb_poolfx=0b111100 {
+    fcsr[23,1] = mipsFloatPS(mic_fsD, mic_ftD_5);
+}
+
+:c.ule.S  micb_cc, mic_fs, mic_ft_5			is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=0 & mic_ft_5 & mic_fs ; micb_cc & micb_bit12=0 & micb_fmt10=0 & micb_cond=7 & micb_poolfx=0b111100 {
+    trapIfSNaN(mic_fs:4, mic_ft_5:4); # Trap if either operand is a Signaling NaN
+    fcsr[23,1] = (mic_fs:4 f<= mic_ft_5:4) || nan(mic_fs:4) || nan(mic_ft_5:4); # Less than or equal or NaN No trap
+}
+
+:c.ule.D  micb_cc, mic_fs, mic_ft_5			is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=0 & mic_ft_5 & mic_fs & mic_fsD & mic_ftD_5 ; micb_cc & micb_bit12=0 & micb_fmt10=1 & micb_cond=7 & micb_poolfx=0b111100 {
+    trapIfSNaN(mic_fsD, mic_ftD_5);
+    fcsr[23,1] = (mic_fsD f<= mic_ftD_5) || nan(mic_fsD) || nan(mic_ftD_5); # No trap
+}
+
+:c.ule.PS  micb_cc, mic_fs, mic_ft_5		is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=0 & mic_ft_5 & mic_fs & mic_fsD & mic_ftD_5 ; micb_cc & micb_bit12=0 & micb_fmt10=2 & micb_cond=7 & micb_poolfx=0b111100 {
+    fcsr[23,1] = mipsFloatPS(mic_fsD, mic_ftD_5);
+}
+
+:c.sf.S  micb_cc, mic_fs, mic_ft_5			is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=0 & mic_ft_5 & mic_fs ; micb_cc & micb_bit12=0 & micb_fmt10=0 & micb_cond=8 & micb_poolfx=0b111100 {
+    trapIfNaN(mic_fs:4, mic_ft_5:4);
+    fcsr[23,1] = 0; # Always false, trap if either operand is NaN
+}
+
+:c.sf.D  micb_cc, mic_fs, mic_ft_5			is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=0 & mic_ft_5 & mic_fs & mic_fsD & mic_ftD_5 ; micb_cc & micb_bit12=0 & micb_fmt10=1 & micb_cond=8 & micb_poolfx=0b111100 {
+    trapIfNaN(mic_fsD, mic_ftD_5);
+    fcsr[23,1] = 0; # Always false, trap
+}
+
+:c.sf.PS  micb_cc, mic_fs, mic_ft_5			is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=0 & mic_ft_5 & mic_fs & mic_fsD & mic_ftD_5 ; micb_cc & micb_bit12=0 & micb_fmt10=2 & micb_cond=8 & micb_poolfx=0b111100 {
+    fcsr[23,1] = mipsFloatPS(mic_fsD, mic_ftD_5);
+}
+
+:c.ngle.S  micb_cc, mic_fs, mic_ft_5		is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=0 & mic_ft_5 & mic_fs ; micb_cc & micb_bit12=0 & micb_fmt10=0 & micb_cond=9 & micb_poolfx=0b111100 {
+    trapIfNaN(mic_fs:4, mic_ft_5:4);
+    fcsr[23,1] = nan(mic_fs:4) || nan(mic_ft_5:4); # True if an operand is NaN, trap
+}
+
+:c.ngle.D  micb_cc, mic_fs, mic_ft_5		is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=0 & mic_ft_5 & mic_fs & mic_fsD & mic_ftD_5 ; micb_cc & micb_bit12=0 & micb_fmt10=1 & micb_cond=9 & micb_poolfx=0b111100 {
+    trapIfNaN(mic_fsD, mic_ftD_5);
+    fcsr[23,1] = nan(mic_fsD) || nan(mic_ftD_5); # True if an operand is NaN, trap
+}
+
+:c.ngle.PS  micb_cc, mic_fs, mic_ft_5		is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=0 & mic_ft_5 & mic_fs & mic_fsD & mic_ftD_5 ; micb_cc & micb_bit12=0 & micb_fmt10=2 & micb_cond=9 & micb_poolfx=0b111100 {
+    fcsr[23,1] = mipsFloatPS(mic_fsD, mic_ftD_5);
+}
+
+:c.seq.S  micb_cc, mic_fs, mic_ft_5			is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=0 & mic_ft_5 & mic_fs ; micb_cc & micb_bit12=0 & micb_fmt10=0 & micb_cond=10 & micb_poolfx=0b111100 {
+    trapIfNaN(mic_fs:4, mic_ft_5:4);
+    fcsr[23,1] = (mic_fs:4 f== mic_ft_5:4); # trap
+}
+
+:c.seq.D  micb_cc, mic_fs, mic_ft_5			is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=0 & mic_ft_5 & mic_fs & mic_fsD & mic_ftD_5 ; micb_cc & micb_bit12=0 & micb_fmt10=1 & micb_cond=10 & micb_poolfx=0b111100 {
+    trapIfNaN(mic_fsD, mic_ftD_5);
+    fcsr[23,1] = (mic_fsD f== mic_ftD_5); # trap
+}
+
+:c.seq.PS  micb_cc, mic_fs, mic_ft_5		is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=0 & mic_ft_5 & mic_fs & mic_fsD & mic_ftD_5 ; micb_cc & micb_bit12=0 & micb_fmt10=2 & micb_cond=10 & micb_poolfx=0b111100 {
+    fcsr[23,1] = mipsFloatPS(mic_fsD, mic_ftD_5);
+}
+
+:c.ngl.S  micb_cc, mic_fs, mic_ft_5			is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=0 & mic_ft_5 & mic_fs ; micb_cc & micb_bit12=0 & micb_fmt10=0 & micb_cond=11 & micb_poolfx=0b111100 {
+    trapIfNaN(mic_fs:4, mic_ft_5:4);
+    fcsr[23,1] = (mic_fs:4 f== mic_ft_5:4) || nan(mic_fs:4) || nan(mic_ft_5:4); # trap
+}
+
+:c.ngl.D  micb_cc, mic_fs, mic_ft_5			is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=0 & mic_ft_5 & mic_fs & mic_fsD & mic_ftD_5 ; micb_cc & micb_bit12=0 & micb_fmt10=1 & micb_cond=11 & micb_poolfx=0b111100 {
+    trapIfNaN(mic_fsD, mic_ftD_5);
+    fcsr[23,1] = (mic_fsD f== mic_ftD_5) || nan(mic_fsD) || nan(mic_ftD_5); # trap
+}
+
+:c.ngl.PS  micb_cc, mic_fs, mic_ft_5		is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=0 & mic_ft_5 & mic_fs & mic_fsD & mic_ftD_5 ; micb_cc & micb_bit12=0 & micb_fmt10=2 & micb_cond=11 & micb_poolfx=0b111100 {
+    fcsr[23,1] = mipsFloatPS(mic_fsD, mic_ftD_5);
+}
+
+:c.lt.S  micb_cc, mic_fs, mic_ft_5			is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=0 & mic_ft_5 & mic_fs ; micb_cc & micb_bit12=0 & micb_fmt10=0 & micb_cond=12 & micb_poolfx=0b111100 {
+    trapIfNaN(mic_fs:4, mic_ft_5:4);
+    fcsr[23,1] = (mic_fs:4 f< mic_ft_5:4); # trap
+}
+
+:c.lt.D  micb_cc, mic_fs, mic_ft_5			is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=0 & mic_ft_5 & mic_fs & mic_fsD & mic_ftD_5 ; micb_cc & micb_bit12=0 & micb_fmt10=1 & micb_cond=12 & micb_poolfx=0b111100 {
+    trapIfNaN(mic_fsD, mic_ftD_5);
+    fcsr[23,1] = (mic_fsD f< mic_ftD_5); # trap
+}
+
+:c.lt.PS  micb_cc, mic_fs, mic_ft_5			is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=0 & mic_ft_5 & mic_fs & mic_fsD & mic_ftD_5 ; micb_cc & micb_bit12=0 & micb_fmt10=2 & micb_cond=12 & micb_poolfx=0b111100 {
+    fcsr[23,1] = mipsFloatPS(mic_fsD, mic_ftD_5);
+}
+
+:c.nge.S  micb_cc, mic_fs, mic_ft_5			is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=0 & mic_ft_5 & mic_fs ; micb_cc & micb_bit12=0 & micb_fmt10=0 & micb_cond=13 & micb_poolfx=0b111100 {
+    trapIfNaN(mic_fs:4, mic_ft_5:4);
+    fcsr[23,1] = (mic_fs:4 f< mic_ft_5:4) || nan(mic_fs:4) || nan(mic_ft_5:4); # trap
+}
+
+:c.nge.D  micb_cc, mic_fs, mic_ft_5			is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=0 & mic_ft_5 & mic_fs & mic_fsD & mic_ftD_5 ; micb_cc & micb_bit12=0 & micb_fmt10=1 & micb_cond=13 & micb_poolfx=0b111100 {
+    trapIfNaN(mic_fsD, mic_ftD_5);
+    fcsr[23,1] = (mic_fsD f< mic_ftD_5) || nan(mic_fsD) || nan(mic_ftD_5); # trap
+}
+
+:c.nge.PS  micb_cc, mic_fs, mic_ft_5		is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=0 & mic_ft_5 & mic_fs & mic_fsD & mic_ftD_5 ; micb_cc & micb_bit12=0 & micb_fmt10=2 & micb_cond=13 & micb_poolfx=0b111100 {
+    fcsr[23,1] = mipsFloatPS(mic_fsD, mic_ftD_5);
+}
+
+:c.le.S  micb_cc, mic_fs, mic_ft_5			is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=0 & mic_ft_5 & mic_fs ; micb_cc & micb_bit12=0 & micb_fmt10=0 & micb_cond=14 & micb_poolfx=0b111100 {
+    trapIfNaN(mic_fs:4, mic_ft_5:4);
+    fcsr[23,1] = (mic_fs:4 f<= mic_ft_5:4); # Less than or equal trap
+}
+
+:c.le.D  micb_cc, mic_fs, mic_ft_5			is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=0 & mic_ft_5 & mic_fs & mic_fsD & mic_ftD_5 ; micb_cc & micb_bit12=0 & micb_fmt10=1 & micb_cond=14 & micb_poolfx=0b111100 {
+    trapIfNaN(mic_fsD, mic_ftD_5);
+    fcsr[23,1] = (mic_fsD f<= mic_ftD_5); # trap
+}
+
+:c.le.PS  micb_cc, mic_fs, mic_ft_5			is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=0 & mic_ft_5 & mic_fs & mic_fsD & mic_ftD_5 ; micb_cc & micb_bit12=0 & micb_fmt10=2 & micb_cond=14 & micb_poolfx=0b111100 {
+    fcsr[23,1] = mipsFloatPS(mic_fsD, mic_ftD_5);
+}
+
+:c.ngt.S  micb_cc, mic_fs, mic_ft_5			is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=0 & mic_ft_5 & mic_fs ; micb_cc & micb_bit12=0 & micb_fmt10=0 & micb_cond=15 & micb_poolfx=0b111100 {
+    trapIfNaN(mic_fs:4, mic_ft_5:4);
+    fcsr[23,1] = (mic_fs:4 f<= mic_ft_5:4) || nan(mic_fs:4) || nan(mic_ft_5:4); # Less than or equal or NaN trap
+}
+
+:c.ngt.D  micb_cc, mic_fs, mic_ft_5			is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=0 & mic_ft_5 & mic_fs & mic_fsD & mic_ftD_5 ; micb_cc & micb_bit12=0 & micb_fmt10=1 & micb_cond=15 & micb_poolfx=0b111100 {
+    trapIfNaN(mic_fsD, mic_ftD_5);
+    fcsr[23,1] = (mic_fsD f<= mic_ftD_5) || nan(mic_fsD) || nan(mic_ftD_5); # trap
+}
+
+:c.ngt.PS  micb_cc, mic_fs, mic_ft_5		is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=0 & mic_ft_5 & mic_fs & mic_fsD & mic_ftD_5 ; micb_cc & micb_bit12=0 & micb_fmt10=2 & micb_cond=15 & micb_poolfx=0b111100 {
+    fcsr[23,1] = mipsFloatPS(mic_fsD, mic_ftD_5);
+}
+
+:cache mic_cop5, EXT_CODE12(mic_base0)	is ISA_MODE=1 & RELP=0 & mic_op=0b001000 & REL6=0 & mic_cop5 & mic_base0 ; micb_func12=0b0110 & EXT_CODE12 {
+	cacheOp();
+}
+
+:cvt.PS micb_fd, mic_fs, mic_ft_5		is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=0 & mic_ft_5 & mic_fs & mic_fsD & mic_ftD_5 ; micb_fd & micb_fdD & micb_fxf2=0b00110000000 {
+    micb_fdD = mipsFloatPS(mic_fsD, mic_ftD_5);
+}
+
+:cvt.s.PL mic_ft_5, mic_fs				is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=0 & mic_ft_5 & mic_fs & mic_fsD & mic_ftD_5 ; micb_bit15=0 & micb_poolfx=0b111011 & micb_fxf4=0b10000100 {
+    mic_ftD_5 = mipsFloatPS(mic_fsD);
+}
+
+:cvt.s.PU mic_ft_5, mic_fs				is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=0 & mic_ft_5 & mic_fs & mic_fsD & mic_ftD_5 ; micb_bit15=0 & micb_poolfx=0b111011 & micb_fxf4=0b10100100 {
+    mic_ftD_5 = mipsFloatPS(mic_fsD);
+}
+
+:div RT5L, RS0L  						is ISA_MODE=1 & RELP=0 & mic_op=0b000000 & REL6=0 & RS0L & RT5L ; micb_poolax=0b111100 & micb_axf=0b1010101100 {
+    lo = sext(RS0L s/ RT5L); 
+    hi = sext(RS0L s% RT5L); 
+}
+
+:divu RS0L, RT5L   						is ISA_MODE=1 & RELP=0 & mic_op=0b000000 & REL6=0 & RS0L & RT5L ; micb_poolax=0b111100 & micb_axf=0b1011101100 {
+    lo = sext(RS0L / RT5L); 
+    hi = sext(RS0L % RT5L); 
+}
+
+:j Abs26_mic1							is ISA_MODE=1 & RELP=0 & mic_op=0b110101 & REL6=0 & mic_code ; Abs26_mic1 [ ext_32_code = mic_code; ] {
+    delayslot( 1 );
+	goto Abs26_mic1;
+}
+
+:jal Abs26_mic1							is ISA_MODE=1 & RELP=0 & mic_op=0b111101 & REL6=0 & mic_code ; Abs26_mic1 [ ext_32_code = mic_code; ] {
+    ra = inst_next | 0x1; 
+    delayslot( 1 ); 
+    call Abs26_mic1;
+}
+
+:jalr RTIMP^mic_rs32_0					is ISA_MODE=1 & RELP=0 & mic_op=0b000000 & REL6=0 & mic_rs32_0 & mic_rt32_5 & RTIMP ; micb_axf=0b0000111100 & micb_poolax=0b111100 {
+	JXWritePC(mic_rs32_0); 
+    mic_rt32_5 = inst_next | 0x1; 
+    delayslot( 1 ); 
+    call [pc];
+}
+
+:jalr.hb RTIMP^mic_rs32_0				is ISA_MODE=1 & RELP=0 & mic_op=0b000000 & REL6=0 & mic_rs32_0 & mic_rt32_5 & RTIMP ; micb_axf=0b0001111100 & micb_poolax=0b111100 {
+	JXWritePC(mic_rs32_0); 
+    mic_rt32_5 = inst_next | 0x1; 
+    delayslot( 1 ); 
+    call [pc];
+}
+
+:jalr16 mic_rs32_0						is ISA_MODE=1 & RELP=0 & mic_op=0b010001 & REL6=0 & mic_jalr=0b01110 & mic_rs32_0 {
+	JXWritePC(mic_rs32_0); 
+    ra = inst_next | 0x1; 
+    delayslot( 1 ); 
+    call [pc];
+}
+
+:jalrs16 mic_rs32_0						is ISA_MODE=1 & RELP=0 & mic_op=0b010001 & REL6=0 & mic_jalr=0b01111 & mic_rs32_0 {
+	JXWritePC(mic_rs32_0); 
+    ra = inst_next | 0x1; 
+    delayslot( 1 ); 
+    call [pc];
+}
+
+:jalrs RTIMP^mic_rs32_0					is ISA_MODE=1 & RELP=0 & mic_op=0b000000 & REL6=0 & mic_rs32_0 & mic_rt32_5 & RTIMP ; micb_axf=0b0100111100 & micb_poolax=0b111100 {
+	JXWritePC(mic_rs32_0); 
+    mic_rt32_5 = inst_next | 0x1; 
+    delayslot( 1 ); 
+    call [pc];
+}
+
+:jalrs.hb RTIMP^mic_rs32_0				is ISA_MODE=1 & RELP=0 & mic_op=0b000000 & REL6=0 & mic_rs32_0 & mic_rt32_5 & RTIMP ; micb_axf=0b0101111100 & micb_poolax=0b111100 {
+	JXWritePC(mic_rs32_0); 
+    mic_rt32_5 = inst_next | 0x1; 
+    delayslot( 1 ); 
+    call [pc];
+}
+
+:jals Abs26_mic1						is ISA_MODE=1 & RELP=0 & mic_op=0b011101 & REL6=0 & mic_code ; Abs26_mic1 [ ext_32_code = mic_code; ] {
+    ra = inst_next | 0x1; 
+    delayslot( 1 ); 
+    call Abs26_mic1;
+}
+
+:jalx Abs26_mic2						is ISA_MODE=1 & RELP=0 & mic_op=0b111100 & REL6=0 & mic_code ; Abs26_mic2 [ ext_32_code = mic_code; ISA_MODE = 0; globalset(Abs26_mic2, ISA_MODE);] {
+    ra = inst_next | 0x1; 
+    delayslot( 1 );
+    ISAModeSwitch = 0; 
+    call Abs26_mic2;
+}
+
+:jr mic_rs32_0							is ISA_MODE=1 & RELP=0 & mic_op=0b000000 & REL6=0 & mic_rs32_0 & mic_rt32_5=0 ; micb_axf=0b0000111100 & micb_poolax=0b111100 {
+	JXWritePC(mic_rs32_0); 
+    delayslot( 1 ); 
+    goto [pc];
+}
+
+:jr.hb mic_rs32_0						is ISA_MODE=1 & RELP=0 & mic_op=0b000000 & REL6=0 & mic_rs32_0 & mic_rt32_5=0 ; micb_axf=0b0001111100 & micb_poolax=0b111100 {
+	JXWritePC(mic_rs32_0); 
+    delayslot( 1 ); 
+    goto [pc];
+}
+
+:jr16 mic_rs32_0						is ISA_MODE=1 & RELP=0 & mic_op=0b010001 & REL6=0 & mic_jalr=0b01100 & mic_rs32_0 {
+	JXWritePC(mic_rs32_0); 
+    delayslot( 1 ); 
+    goto [pc];
+}
+
+:jr16 ra								is ISA_MODE=1 & RELP=0 & mic_op=0b010001 & REL6=0 & mic_jalr=0b01100 & mic_rs32_0=31 & ra {
+	JXWritePC(ra); 
+    delayslot( 1 ); 
+    return [pc];
+}
+
+:jraddiusp EXT_CODE5					is ISA_MODE=1 & RELP=0 & mic_op=0b010001 & REL6=0 & mic_jalr=0b11000 & EXT_CODE5 {
+	tmp:4 = zext(EXT_CODE5);
+@if REGSIZE == "4"
+	sp = sp + tmp;
+@else
+	sp_lo = sp_lo + tmp;
+	sp = sext(sp_lo);
+@endif
+	JXWritePC(ra); 
+    return [pc];
+}
+
+:jrc mic_rs32_0							is ISA_MODE=1 & RELP=0 & mic_op=0b010001 & REL6=0 & mic_jalr=0b01101 & mic_rs32_0 {
+	JXWritePC(mic_rs32_0); 
+    goto [pc];
+}
+
+:jrc	 ra								is ISA_MODE=1 & RELP=0 & mic_op=0b010001 & REL6=0 & mic_jalr=0b01101 & mic_rs32_0=31 & ra {
+	JXWritePC(ra); 
+    return [pc];
+}
+
+@if ENDIAN == "big"
+
+:lwl mic_rt32_5, EXT_CODE12(mic_base0)	is ISA_MODE=1 & RELP=0 & mic_op=0b011000 & REL6=0 & mic_rt32_5 & mic_base0 ; micb_func12=0b0000 & EXT_CODE12 {
+	tmp:$(REGSIZE) = sext(EXT_CODE12);
+	tmp = tmp + mic_base0;
+    shft:$(REGSIZE) = tmp & 0x3; 
+    addr:$(REGSIZE) = tmp - shft; 
+    valOrig:4 = mic_rt32_5:$(SIZETO4) & (0xffffffff >> ((4-shft) * 8));
+    valLoad:4 = 0;
+    MemSrcCast(valLoad,addr);
+    valLoad = valLoad << (shft * 8);     
+    mic_rt32_5 = sext( valLoad | valOrig );            
+}
+
+:lwle mic_rt32_5, EXT_CODE9E(mic_base0)	is ISA_MODE=1 & RELP=0 & mic_op=0b011000 & REL6=0 & mic_rt32_5 & mic_base0 ; micb_func12=0b0110 & micb_sub9=0b010 & EXT_CODE9E {
+	tmp:$(REGSIZE) = sext(EXT_CODE9E);
+	tmp = tmp + mic_base0;
+    shft:$(REGSIZE) = tmp & 0x3; 
+    addr:$(REGSIZE) = tmp - shft; 
+    valOrig:4 = mic_rt32_5:$(SIZETO4) & (0xffffffff >> ((4-shft) * 8));
+    valLoad:4 = 0;
+    MemSrcCast(valLoad,addr);
+    valLoad = valLoad << (shft * 8);     
+    mic_rt32_5 = sext( valLoad | valOrig );            
+}
+
+:lwr mic_rt32_5, EXT_CODE12(mic_base0)	is ISA_MODE=1 & RELP=0 & mic_op=0b011000 & REL6=0 & mic_rt32_5 & mic_base0 ; micb_func12=0b0001 & EXT_CODE12 {
+	tmp:$(REGSIZE) = sext(EXT_CODE12);
+	tmp = tmp + mic_base0;
+    shft:$(REGSIZE) = tmp & 0x3; 
+    addr:$(REGSIZE) = tmp - shft; 
+    valOrig:4 = mic_rt32_5:$(SIZETO4) & (0xffffffff << ((shft+1) * 8));
+    valLoad:4 = 0;
+    MemSrcCast(valLoad,addr);
+    valLoad = valLoad >> ((3-shft) * 8);
+    mic_rt32_5 = sext( valOrig | valLoad );
+}
+
+:lwre mic_rt32_5, EXT_CODE9E(mic_base0)	is ISA_MODE=1 & RELP=0 & mic_op=0b011000 & REL6=0 & mic_rt32_5 & mic_base0 ; micb_func12=0b0110 & micb_sub9=0b011 & EXT_CODE9E {
+	tmp:$(REGSIZE) = sext(EXT_CODE9E);
+	tmp = tmp + mic_base0;
+    shft:$(REGSIZE) = tmp & 0x3; 
+    addr:$(REGSIZE) = tmp - shft; 
+    valOrig:4 = mic_rt32_5:$(SIZETO4) & (0xffffffff << ((shft+1) * 8));
+    valLoad:4 = 0;
+    MemSrcCast(valLoad,addr);
+    valLoad = valLoad >> ((3-shft) * 8);
+    mic_rt32_5 = sext( valOrig | valLoad );
+}
+
+@else
+
+:lwl mic_rt32_5, EXT_CODE12(mic_base0)	is ISA_MODE=1 & RELP=0 & mic_op=0b011000 & REL6=0 & mic_rt32_5 & mic_base0 ; micb_func12=0b0000 & EXT_CODE12 {
+	tmp:$(REGSIZE) = sext(EXT_CODE12);
+	tmp = tmp + mic_base0;
+    shft:$(REGSIZE) = tmp & 0x3; 
+    addr:$(REGSIZE) = tmp - shft; 
+    valOrig:4 = mic_rt32_5:$(SIZETO4) & (0xffffffff >> ((shft+1)* 8));
+    valLoad:4 = 0;
+    MemSrcCast(valLoad,addr);
+    valLoad = valLoad << ((3-shft) * 8);     
+    mic_rt32_5 = sext( valLoad | valOrig );            
+}
+
+:lwle mic_rt32_5, EXT_CODE9E(mic_base0)	is ISA_MODE=1 & RELP=0 & mic_op=0b011000 & REL6=0 & mic_rt32_5 & mic_base0 ; micb_func12=0b0110 & micb_sub9=0b010 & EXT_CODE9E {
+	tmp:$(REGSIZE) = sext(EXT_CODE9E);
+	tmp = tmp + mic_base0;
+    shft:$(REGSIZE) = tmp & 0x3; 
+    addr:$(REGSIZE) = tmp - shft; 
+    valOrig:4 = mic_rt32_5:$(SIZETO4) & (0xffffffff >> ((shft+1)* 8));
+    valLoad:4 = 0;
+    MemSrcCast(valLoad,addr);
+    valLoad = valLoad << ((3-shft) * 8);     
+    mic_rt32_5 = sext( valLoad | valOrig );            
+}
+
+:lwr mic_rt32_5, EXT_CODE12(mic_base0)	is ISA_MODE=1 & RELP=0 & mic_op=0b011000 & REL6=0 & mic_rt32_5 & mic_base0 ; micb_func12=0b0001 & EXT_CODE12 {
+	tmp:$(REGSIZE) = sext(EXT_CODE12);
+	tmp = tmp + mic_base0;
+    shft:$(REGSIZE) = tmp & 0x3; 
+    addr:$(REGSIZE) = tmp - shft; 
+    valOrig:4 = mic_rt32_5:$(SIZETO4) & (0xffffffff << ((4-shft)* 8));
+    valLoad:4 = 0;
+    MemSrcCast(valLoad,addr);
+    valLoad = valLoad >> (shft * 8);
+    mic_rt32_5 = sext( valOrig | valLoad );
+}
+
+:lwre mic_rt32_5, EXT_CODE9E(mic_base0)	is ISA_MODE=1 & RELP=0 & mic_op=0b011000 & REL6=0 & mic_rt32_5 & mic_base0 ; micb_func12=0b0110 & micb_sub9=0b011 & EXT_CODE9E {
+	tmp:$(REGSIZE) = sext(EXT_CODE9E);
+	tmp = tmp + mic_base0;
+    shft:$(REGSIZE) = tmp & 0x3; 
+    addr:$(REGSIZE) = tmp - shft; 
+    valOrig:4 = mic_rt32_5:$(SIZETO4) & (0xffffffff << ((4-shft)* 8));
+    valLoad:4 = 0;
+    MemSrcCast(valLoad,addr);
+    valLoad = valLoad >> (shft * 8);
+    mic_rt32_5 = sext( valOrig | valLoad );
+}
+
+@endif
+# lwl and lwr almost always come in pairs. 
+# When the analyzer does finds a matching lwl/lwr pair, the pcode is simplified so that 
+# lwl does all the loading while lwr is a no-op
+@if ENDIAN == "big"
+:lwl mic_rt32_5, EXT_CODE12(mic_base0)	is ISA_MODE=1 & RELP=0 & mic_op=0b011000 & REL6=0 & mic_rt32_5 & mic_base0 & PAIR_INSTRUCTION_FLAG=1 ; micb_func12=0b0000 & EXT_CODE12 [ PAIR_INSTRUCTION_FLAG = 1; globalset(inst_next, PAIR_INSTRUCTION_FLAG);] {
+	tmp:$(REGSIZE) = sext(EXT_CODE12);
+	tmp = tmp + mic_base0;
+	tmpa:$(ADDRSIZE) = 0;
+	ValCast(tmpa,tmp);
+    mic_rt32_5 = sext( *[ram]:4 tmpa );    
+}
+:lwr mic_rt32_5, EXT_CODE12(mic_base0)	is ISA_MODE=1 & RELP=0 & mic_op=0b011000 & REL6=0 & mic_rt32_5 & mic_base0 & PAIR_INSTRUCTION_FLAG=1 ; micb_func12=0b0001 & EXT_CODE12 [ PAIR_INSTRUCTION_FLAG = 0; ] {
+}
+@else
+:lwl mic_rt32_5, EXT_CODE12(mic_base0)	is ISA_MODE=1 & RELP=0 & mic_op=0b011000 & REL6=0 & mic_rt32_5 & mic_base0 & PAIR_INSTRUCTION_FLAG=1 ; micb_func12=0b0000 & EXT_CODE12 [ PAIR_INSTRUCTION_FLAG = 1; globalset(inst_next, PAIR_INSTRUCTION_FLAG);] {
+}
+:lwr mic_rt32_5, EXT_CODE12(mic_base0)	is ISA_MODE=1 & RELP=0 & mic_op=0b011000 & REL6=0 & mic_rt32_5 & mic_base0 & PAIR_INSTRUCTION_FLAG=1 ; micb_func12=0b0001 & EXT_CODE12 [ PAIR_INSTRUCTION_FLAG = 0; ] {
+	tmp:$(REGSIZE) = sext(EXT_CODE12);
+	tmp = tmp + mic_base0;
+	tmpa:$(ADDRSIZE) = 0;
+	ValCast(tmpa,tmp);
+    mic_rt32_5 = sext( *[ram]:4 tmpa );    
+}
+@endif
+
+
+
+:lwxc1 micb_fd, mic_index(mic_base0) 	is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=0 & mic_index & mic_base0 ; micb_fd & micb_fxf2=0b00001001000 {
+	tmpa:$(REGSIZE) = mic_index + mic_base0;
+	tmpb:$(ADDRSIZE) = 0;
+	ValCast(tmpb,tmpa);
+    tmp:4 = *[ram]:4 tmpb;
+    micb_fd = (micb_fd ^ 0xffffffff) + zext(tmp);
+}
+
+:madd RS0L, RT5L  						is ISA_MODE=1 & RELP=0 & mic_op=0b000000 & REL6=0 & RT5L & RS0L ; micb_poolax=0b111100 & micb_axf=0b1100101100 {
+	tmp1:8 = sext(RS0L);
+	tmp2:8 = sext(RT5L);
+	prod:8 = tmp1 * tmp2;
+    lo = lo & 0xffffffff;       # Make sure any upper bits of lo don't contribute to sum
+	sum:8 = (zext(hi) << 32) + zext(lo) + prod;
+    lo = sext(sum:4);    
+    sum = sum >> 32;
+    hi = sext(sum:4);    
+}
+
+:madd.S micb_fd, micb_fr, mic_fs, mic_ft_5	is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=0 & mic_fs & mic_ft_5 ; micb_fd & micb_fr & micb_poolfx=0b000001 {
+    fd_tmp:4 = (mic_fs:4 f* mic_ft_5:4) f+ micb_fr:4;
+    micb_fd = zext(fd_tmp);
+}
+
+:madd.D micb_fd, micb_fr, mic_fs, mic_ft_5	is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=0 & mic_fs & mic_ft_5 & mic_ftD_5 & mic_fsD; micb_fd & micb_fdD & micb_fr &micb_frD & micb_poolfx=0b001001 {
+    micb_fdD = (mic_fsD f* mic_ftD_5) f+ micb_frD;
+}
+
+:madd.PS micb_fd, micb_fr, mic_fs, mic_ft_5	is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=0 & mic_fs & mic_ft_5 & mic_ftD_5 & mic_fsD ; micb_fd & micb_fdD & micb_fr & micb_poolfx=0b010001 {
+    micb_fdD = mipsFloatPS(mic_fsD, mic_ftD_5);
+}
+
+:maddu RS0L, RT5L  						is ISA_MODE=1 & RELP=0 & mic_op=0b000000 & REL6=0 & RT5L & RS0L ; micb_poolax=0b111100 & micb_axf=0b1101101100 {
+	tmp1:8 = zext(RS0L);
+	tmp2:8 = zext(RT5L);
+	prod:8 = tmp1 * tmp2;
+        lo = lo & 0xffffffff;       # Make sure any upper bits of lo don't contribute to sum
+	sum:8 = (zext(hi) << 32) + zext(lo) + prod;
+    lo = sext(sum:4);
+    sum = sum >> 32;
+    hi = sext(sum:4); 
+}
+
+:mfhi mic_rs32_0   						is ISA_MODE=1 & RELP=0 & mic_op=0b000000 & REL6=0 & mic_rt32_5=0 & mic_rs32_0 ; micb_poolax=0b111100 & micb_axf=0b0000110101 {
+	mic_rs32_0 = hi;
+}
+
+:mfhi16 mic_rd32_0						is ISA_MODE=1 & RELP=0 & mic_op=0b010001 & REL6=0 & mic_sub2=0b10000 & mic_rd32_0 {
+	mic_rd32_0 = hi;	
+}
+
+:mflo mic_rs32_0   						is ISA_MODE=1 & RELP=0 & mic_op=0b000000 & REL6=0 & mic_rt32_5=0 & mic_rs32_0 ; micb_poolax=0b111100 & micb_axf=0b0001110101 {
+	mic_rs32_0 = lo;
+}
+
+:mflo16 mic_rd32_0						is ISA_MODE=1 & RELP=0 & mic_op=0b010001 & REL6=0 & mic_sub2=0b10010 & mic_rd32_0 {
+	mic_rd32_0 = lo;	
+}
+
+:mov.PS mic_ft_5, mic_fs				is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=0 & mic_ft_5 & mic_fs & mic_ftD_5 & mic_fsD ; micb_bit15=0 & micb_fmt=2 & micb_poolfx=0b111011 & micb_flt6=0b0000001 {
+    mic_ftD_5 = mipsFloatPS(mic_fsD);
+}
+
+:movf mic_rt32_5, mic_rs32_0, micb_cc	is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=0 & mic_rs32_0 & mic_rt32_5 ; micb_cc & micb_poolfx=0b111011 & micb_flt6=0b0000101 {
+    tmp:1 = fcsr[23,1]; # was getFpCondition(cc:1);
+    if (tmp != 0) goto <done>;
+    mic_rt32_5 = mic_rs32_0;
+    <done>
+}
+
+:movf.S mic_ft_5, mic_fs, micb_cc		is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=0 & mic_fs & mic_ft_5 ; micb_cc & micb_fmt9=0 & micb_z11=0 & micb_fxf5=0b000100000 {
+    tmp:1 = fcsr[23,1]; # was getFpCondition(cc:1);
+    if (tmp != 0) goto <done>;
+    fs_tmp:4 = mic_fs:4;
+    mic_ft_5 = zext(fs_tmp);
+    <done>
+}
+
+:movf.D mic_ft_5, mic_fs, micb_cc		is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=0 & mic_fs & mic_ft_5 & mic_fsD & mic_ftD_5 ; micb_cc & micb_fmt9=1 & micb_z11=0 & micb_fxf5=0b000100000 {
+    tmp:1 = fcsr[23,1]; # was getFpCondition(cc:1);
+    if (tmp != 0) goto <done>;
+    mic_ftD_5 = mic_fsD;
+    <done>
+}
+
+:movf.PS mic_ft_5, mic_fs, micb_cc		is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=0 & mic_fs & mic_ft_5 & mic_ftD_5 & mic_fsD ; micb_cc & micb_fmt9=2 & micb_z11=0 & micb_fxf5=0b000100000 {
+    mic_ftD_5 = mipsFloatPS(mic_fsD);
+}
+
+
+:movn micb_rd32, mic_rs32_0, mic_rt32_5	is ISA_MODE=1 & RELP=0 & mic_op=0b000000 & REL6=0 & mic_rs32_0 & mic_rt32_5 ; micb_axf2=0b0000011000 & micb_bit10=0 & micb_rd32 {
+	if (mic_rt32_5 == 0) goto <done>;
+	micb_rd32 = mic_rs32_0;
+	<done>
+}
+
+:movn.S micb_fd, mic_fs, mic_rt32_5		is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=0 & mic_rt32_5 & mic_fs ; micb_fd & micb_bit10=0 & micb_fmt8=0 & micb_fxf3=0b00111000 {
+    if (mic_rt32_5 == 0) goto <done>;
+    fs_tmp:4 = mic_fs:4;
+    micb_fd = zext(fs_tmp);
+    <done>
+}
+
+:movn.D micb_fd, mic_fs, mic_rt32_5		is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=0 & mic_rt32_5 & mic_fs & mic_fsD ; micb_fdD & micb_fd & micb_bit10=0 & micb_fmt8=1 & micb_fxf3=0b00111000 {
+    if (mic_rt32_5 == 0) goto <done>;
+    micb_fdD = mic_fsD;
+    <done>
+}
+
+:movn.PS micb_fd, mic_fs, mic_rt32_5	is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=0 & mic_rt32_5 & mic_fs & mic_fsD & mic_ftD_5; micb_fd & micb_fdD & micb_bit10=0 & micb_fmt8=2 & micb_fxf3=0b00111000 {
+    micb_fdD = mipsFloatPS(mic_fsD, mic_ftD_5);
+}
+
+:movt mic_rt32_5, mic_rs32_0, micb_cc	is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=0 & mic_rs32_0 & mic_rt32_5 ; micb_cc & micb_poolfx=0b111011 & micb_flt6=0b0100101 {
+    tmp:1 = fcsr[23,1]; # was getFpCondition(cc:1);
+    if (tmp == 0) goto <done>;
+    mic_rt32_5 = mic_rs32_0;
+    <done>
+}
+
+:movt.S mic_ft_5, mic_fs, micb_cc		is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=0 & mic_fs & mic_ft_5 ; micb_cc & micb_fmt9=0 & micb_z11=0 & micb_fxf5=0b001100000 {
+    tmp:1 = fcsr[23,1]; # was getFpCondition(cc:1);
+    if (tmp == 0) goto <done>;
+    fs_tmp:4 = mic_fs:4;
+    mic_ft_5 = zext(fs_tmp);
+    <done>
+}
+
+:movt.D mic_ft_5, mic_fs, micb_cc		is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=0 & mic_fs & mic_ft_5 & mic_fsD & mic_ftD_5; micb_cc & micb_fmt9=1 & micb_z11=0 & micb_fxf5=0b001100000 {
+    tmp:1 = fcsr[23,1]; # was getFpCondition(cc:1);
+    if (tmp == 0) goto <done>;
+    mic_ftD_5 = mic_fsD;
+    <done>
+}
+
+:movt.PS mic_ft_5, mic_fs, micb_cc		is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=0 & mic_fs & mic_ft_5 & mic_ftD_5 & mic_fsD ; micb_cc & micb_fmt9=2 & micb_z11=0 & micb_fxf5=0b001100000 {
+    mic_ftD_5 = mipsFloatPS(mic_fsD);
+}
+
+:movz micb_rd32, mic_rs32_0, mic_rt32_5	is ISA_MODE=1 & RELP=0 & mic_op=0b000000 & REL6=0 & mic_rs32_0 & mic_rt32_5 ; micb_axf2=0b0001011000 & micb_bit10=0 & micb_rd32 {
+	if (mic_rt32_5 != 0) goto <done>;
+	micb_rd32 = mic_rs32_0;
+	<done>
+}
+
+:movz.S micb_fd, mic_fs, mic_rt32_5		is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=0 & mic_rt32_5 & mic_fs ; micb_fd & micb_bit10=0 & micb_fmt8=0 & micb_fxf3=0b01111000 {
+    if (mic_rt32_5 != 0) goto <done>;
+    fs_tmp:4 = mic_fs:4;
+    micb_fd = zext(fs_tmp);
+    <done>
+}
+
+:movz.D micb_fd, mic_fs, mic_rt32_5		is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=0 & mic_rt32_5 & mic_fs & mic_fsD ; micb_fdD & micb_fd & micb_bit10=0 & micb_fmt8=1 & micb_fxf3=0b01111000 {
+    if (mic_rt32_5 != 0) goto <done>;
+    micb_fdD = mic_fsD;
+    <done>
+}
+
+:movz.PS micb_fd, mic_fs, mic_rt32_5	is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=0 & mic_rt32_5 & mic_fs & mic_fsD & mic_ftD_5; micb_fd & micb_fdD & micb_bit10=0 & micb_fmt8=2 & micb_fxf3=0b01111000 {
+    micb_fdD = mipsFloatPS(mic_fsD, mic_ftD_5);
+}
+
+:msub RS0L, RT5L   						is ISA_MODE=1 & RELP=0 & mic_op=0b000000 & REL6=0 & RT5L & RS0L ; micb_poolax=0b111100 & micb_axf=0b1110101100 {
+	tmp1:8 = sext(RS0L);
+	tmp2:8 = sext(RT5L);
+	prod:8 = tmp1 * tmp2;
+        lo = lo & 0xffffffff;       # Make sure any upper bits of lo don't contribute to sum
+       	sum:8 = (zext(hi) << 32) + zext(lo) - prod;
+    lo = sext(sum:4);    
+    sum = sum >> 32;
+    hi = sext(sum:4);    
+}
+
+:msub.S micb_fd, micb_fr, mic_fs, mic_ft_5	is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=0 & mic_fs & mic_ft_5 ; micb_fd & micb_fr & micb_poolfx=0b100001 {
+    fd_tmp:4 = (mic_fs:4 f* mic_ft_5:4) f- micb_fr:4;
+    micb_fd = zext(fd_tmp);
+}
+
+:msub.D micb_fd, micb_fr, mic_fs, mic_ft_5	is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=0 & mic_fs & mic_ft_5 & mic_fsD & mic_ftD_5; micb_fdD & micb_frD & micb_fd & micb_fr & micb_poolfx=0b101001 {
+    micb_fdD = (mic_fsD f* mic_ftD_5) f- micb_frD;
+}
+
+:msub.PS micb_fd, micb_fr, mic_fs, mic_ft_5	is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=0 & mic_fs & mic_ft_5 & mic_fsD & mic_ftD_5; micb_fd & micb_fdD & micb_fr & micb_poolfx=0b110001 {
+    micb_fdD = mipsFloatPS(mic_fsD, mic_ftD_5);
+}
+
+:msubu RS0L, RT5L   					is ISA_MODE=1 & RELP=0 & mic_op=0b000000 & REL6=0 & RT5L & RS0L ; micb_poolax=0b111100 & micb_axf=0b1111101100 {
+	tmp1:8 = zext(RS0L);
+	tmp2:8 = zext(RT5L);
+	prod:8 = tmp1 * tmp2;
+        lo = lo & 0xffffffff;       # Make sure any upper bits of lo don't contribute to sum
+	sum:8 = (zext(hi) << 32) + zext(lo) - prod;
+    lo = sext(sum:4);    
+    sum = sum >> 32;
+    hi = sext(sum:4);    
+}
+
+:mthi mic_rs32_0   						is ISA_MODE=1 & RELP=0 & mic_op=0b000000 & REL6=0 & mic_rt32_5=0 & mic_rs32_0 ; micb_poolax=0b111100 & micb_axf=0b0010110101 {
+	hi = mic_rs32_0;
+}
+
+:mtlo mic_rs32_0   						is ISA_MODE=1 & RELP=0 & mic_op=0b000000 & REL6=0 & mic_rt32_5=0 & mic_rs32_0 ; micb_poolax=0b111100 & micb_axf=0b0011110101 {
+	lo = mic_rs32_0;
+}
+
+:mul.PS micb_fd, mic_fs, mic_ft_5		is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=0 & mic_ft_5 & mic_fs & mic_fsD & mic_ftD_5; micb_fd & micb_fdD & micb_bit10=0 & micb_fmt8=2 & micb_fxf3=0b10110000 {
+    micb_fdD = mipsFloatPS(mic_fsD, mic_ftD_5);
+}
+
+:mult RS0L, RT5L   						is ISA_MODE=1 & RELP=0 & mic_op=0b000000 & REL6=0 & RT5L & RS0L ; micb_poolax=0b111100 & micb_axf=0b1000101100 {
+	tmps:8 = sext(RS0L);
+	tmpt:8 = sext(RT5L);
+	tmpr:8= tmps * tmpt;
+	lo = sext(tmpr[0,32]);
+	hi = sext(tmpr[32,32]);
+}
+
+:multu RS0L, RT5L   					is ISA_MODE=1 & RELP=0 & mic_op=0b000000 & REL6=0 & RT5L & RS0L ; micb_poolax=0b111100 & micb_axf=0b1001101100 {
+	tmps:8 = zext(RS0L);
+	tmpt:8 = zext(RT5L);
+	tmpr:8= tmps * tmpt;
+	lo = sext(tmpr[0,32]);
+	hi = sext(tmpr[32,32]);
+}
+
+:neg.PS mic_ft_5, mic_fs				is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=0 & mic_ft_5 & mic_fs & mic_ftD_5 & mic_fsD ; micb_bit15=0 & micb_fmt=2 & micb_poolfx=0b111011 & micb_flt6=0b0101101 {
+    mic_ftD_5 = mipsFloatPS(mic_fsD);
+}
+
+:pll.PS micb_fd, mic_fs, mic_ft_5		is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=0 & mic_fs & mic_ft_5 & mic_fsD & mic_ftD_5; micb_fd & micb_fdD & micb_fxf2=0b00010000000 {
+    micb_fdD = mipsFloatPS(mic_fsD, mic_ftD_5);
+}
+
+:plu.PS micb_fd, mic_fs, mic_ft_5		is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=0 & mic_fs & mic_ft_5 & mic_fsD & mic_ftD_5; micb_fd & micb_fdD & micb_fxf2=0b00011000000 {
+    micb_fdD = mipsFloatPS(mic_fsD, mic_ftD_5);
+}
+
+:prefx micb_hint, mic_index(mic_base0)	is ISA_MODE=1 & RELP=0 & mic_op=0b000000 & REL6=0 & mic_index & mic_base0 ; micb_axf2=0b0110100000 & micb_bit10=0 & micb_hint {
+	tmp:$(REGSIZE) = mic_index + mic_base0;
+	prefetch(tmp,micb_hint:1);
+}
+
+:pul.PS micb_fd, mic_fs, mic_ft_5		is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=0 & mic_fs & mic_ft_5 & mic_fsD & mic_ftD_5; micb_fd & micb_fdD & micb_fxf2=0b00100000000 {
+    micb_fdD = mipsFloatPS(mic_fsD, mic_ftD_5);
+}
+
+:puu.PS micb_fd, mic_fs, mic_ft_5		is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=0 & mic_fs & mic_ft_5 & mic_fsD & mic_ftD_5; micb_fd & micb_fdD & micb_fxf2=0b00101000000 {
+    micb_fdD = mipsFloatPS(mic_fsD, mic_ftD_5);
+}
+
+:rdhwr mic_rt32_5, mic_rs32_0   		is ISA_MODE=1 & RELP=0 & mic_op=0b000000 & REL6=0 & mic_rt32_5 & mic_rs32_0 ; micb_poolax=0b111100 & micb_axf=0b0110101100 {
+	mic_rt32_5 = getHWRegister(mic_rs32_0);
+}
+
+:sub.PS micb_fd, mic_fs, mic_ft_5			is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & mic_ft_5 & mic_fs & mic_fsD & mic_ftD_5; micb_fd & micb_fdD & micb_bit10=0 & micb_fmt8=2 & micb_fxf3=0b01110000 {
+    micb_fdD = mipsFloatPS(mic_fsD, mic_ftD_5);
+}
+
+@if ENDIAN == "big"
+
+:swl mic_rt32_5, EXT_CODE12(mic_base0)	is ISA_MODE=1 & RELP=0 & mic_op=0b011000 & REL6=0 & mic_rt32_5 & mic_base0 ; micb_func12=0b1000 & EXT_CODE12 {
+	tmp:$(REGSIZE) = sext(EXT_CODE12);
+	tmp = tmp + mic_base0;
+    tmpRT:4 = mic_rt32_5:$(SIZETO4);  
+    shft:$(REGSIZE) = tmp & 0x3; 
+    addr:$(REGSIZE) = tmp - shft;
+    valOrig:4 = 0;
+    MemSrcCast(valOrig,addr);
+    valOrig = valOrig & (0xffffffff << ((4-shft) * 8));
+    valStore:4 = (tmpRT >> (shft * 8)) | valOrig;
+    MemDestCast(addr,valStore);
+}
+
+:swle mic_rt32_5, EXT_CODE9E(mic_base0)	is ISA_MODE=1 & RELP=0 & mic_op=0b011000 & REL6=0 & mic_rt32_5 & mic_base0 ; micb_func12=0b1010 & micb_sub9=0b000 & EXT_CODE9E {
+	tmp:$(REGSIZE) = sext(EXT_CODE9E);
+	tmp = tmp + mic_base0;
+    tmpRT:4 = mic_rt32_5:$(SIZETO4);  
+    shft:$(REGSIZE) = tmp & 0x3; 
+    addr:$(REGSIZE) = tmp - shft; 
+    valOrig:4 = 0;
+    MemSrcCast(valOrig,addr);
+    valOrig = valOrig & (0xffffffff << ((4-shft) * 8));
+    valStore:4 = (tmpRT >> (shft * 8)) | valOrig;
+    MemDestCast(addr,valStore);
+}
+
+:swr mic_rt32_5, EXT_CODE12(mic_base0)	is ISA_MODE=1 & RELP=0 & mic_op=0b011000 & REL6=0 & mic_rt32_5 & mic_base0 ; micb_func12=0b1001 & EXT_CODE12 {
+	tmp:$(REGSIZE) = sext(EXT_CODE12);
+	tmp = tmp + mic_base0;
+    tmpRT:4 = mic_rt32_5:$(SIZETO4);
+    shft:$(REGSIZE) = tmp & 0x3;      
+    addr:$(REGSIZE) = tmp - shft; 
+    valOrig:4 = 0;
+    MemSrcCast(valOrig,addr);
+    valOrig = valOrig & (0xffffffff >> ((shft+1) * 8));
+    valStore:4 = (tmpRT << ((3-shft)*8)) | valOrig;
+    MemDestCast(addr,valStore);
+}
+
+:swre mic_rt32_5, EXT_CODE9E(mic_base0)	is ISA_MODE=1 & RELP=0 & mic_op=0b011000 & REL6=0 & mic_rt32_5 & mic_base0 ; micb_func12=0b1010 & micb_sub9=0b001 & EXT_CODE9E {
+	tmp:$(REGSIZE) = sext(EXT_CODE9E);
+	tmp = tmp + mic_base0;
+    tmpRT:4 = mic_rt32_5:$(SIZETO4);
+    shft:$(REGSIZE) = tmp & 0x3;      
+    addr:$(REGSIZE) = tmp - shft; 
+    valOrig:4 = 0;
+    MemSrcCast(valOrig,addr);
+    valOrig = valOrig & (0xffffffff >> ((shft+1) * 8));
+    valStore:4 = (tmpRT << ((3-shft)*8)) | valOrig;
+    MemDestCast(addr,valStore);
+}
+
+@else
+
+:swl mic_rt32_5, EXT_CODE12(mic_base0)	is ISA_MODE=1 & RELP=0 & mic_op=0b011000 & REL6=0 & mic_rt32_5 & mic_base0 ; micb_func12=0b1000 & EXT_CODE12 {
+	tmp:$(REGSIZE) = sext(EXT_CODE12);
+	tmp = tmp + mic_base0;
+    tmpRT:4 = mic_rt32_5:$(SIZETO4);  
+    shft:$(REGSIZE) = tmp & 0x3; 
+    addr:$(REGSIZE) = tmp - shft; 
+    valOrig:4 = 0;
+    MemSrcCast(valOrig,addr);
+    valOrig = valOrig & (0xffffffff << ((shft+1) * 8));
+    valStore:4 = (tmpRT >> ((3-shft) * 8)) | valOrig;
+    MemDestCast(addr,valStore);
+}
+
+:swle mic_rt32_5, EXT_CODE9E(mic_base0)	is ISA_MODE=1 & RELP=0 & mic_op=0b011000 & REL6=0 & mic_rt32_5 & mic_base0 ; micb_func12=0b1010 & micb_sub9=0b000 & EXT_CODE9E {
+	tmp:$(REGSIZE) = sext(EXT_CODE9E);
+	tmp = tmp + mic_base0;
+    tmpRT:4 = mic_rt32_5:$(SIZETO4);  
+    shft:$(REGSIZE) = tmp & 0x3; 
+    addr:$(REGSIZE) = tmp - shft; 
+    valOrig:4 = 0;
+    MemSrcCast(valOrig,addr);
+    valOrig = valOrig & (0xffffffff << ((shft+1) * 8));
+    valStore:4 = (tmpRT >> ((3-shft) * 8)) | valOrig;
+    MemDestCast(addr,valStore);
+}
+
+:swr mic_rt32_5, EXT_CODE12(mic_base0)	is ISA_MODE=1 & RELP=0 & mic_op=0b011000 & REL6=0 & mic_rt32_5 & mic_base0 ; micb_func12=0b1001 & EXT_CODE12 {
+	tmp:$(REGSIZE) = sext(EXT_CODE12);
+	tmp = tmp + mic_base0;
+    tmpRT:4 = mic_rt32_5:$(SIZETO4);
+    shft:$(REGSIZE) = tmp & 0x3;      
+    addr:$(REGSIZE) = tmp - shft; 
+    valOrig:4 = 0;
+    MemSrcCast(valOrig,addr);
+    valOrig = valOrig & (0xffffffff >> ((4-shft) * 8));
+    valStore:4 = (tmpRT << (shft*8)) | valOrig;
+    MemDestCast(addr,valStore);
+}
+
+:swre mic_rt32_5, EXT_CODE9E(mic_base0)	is ISA_MODE=1 & RELP=0 & mic_op=0b011000 & REL6=0 & mic_rt32_5 & mic_base0 ; micb_func12=0b1010 & micb_sub9=0b001 & EXT_CODE9E {
+	tmp:$(REGSIZE) = sext(EXT_CODE9E);
+	tmp = tmp + mic_base0;
+    tmpRT:4 = mic_rt32_5:$(SIZETO4);
+    shft:$(REGSIZE) = tmp & 0x3;      
+    addr:$(REGSIZE) = tmp - shft; 
+    valOrig:4 = 0;
+    MemSrcCast(valOrig,addr);
+    valOrig = valOrig & (0xffffffff >> ((4-shft) * 8));
+    valStore:4 = (tmpRT << (shft*8)) | valOrig;
+    MemDestCast(addr,valStore);
+}
+
+@endif
+# When the analyzer finds a matching swl/swr pair, the pcode is simplified so that 
+# swl does all the storing while swr is a no-op
+@if ENDIAN == "big"
+:swl mic_rt32_5, EXT_CODE12(mic_base0)	is ISA_MODE=1 & RELP=0 & mic_op=0b011000 & REL6=0 & mic_rt32_5 & mic_base0 & PAIR_INSTRUCTION_FLAG=1 ; micb_func12=0b1000 & EXT_CODE12 [ PAIR_INSTRUCTION_FLAG = 1; globalset(inst_next, PAIR_INSTRUCTION_FLAG);] {
+	tmp:$(REGSIZE) = sext(EXT_CODE12);
+	tmp = tmp + mic_base0;
+	tmpa:$(ADDRSIZE) = 0;
+	ValCast(tmpa,tmp);
+    *[ram]:4 tmpa = mic_rt32_5:$(SIZETO4);
+}
+:swr mic_rt32_5, EXT_CODE12(mic_base0)	is ISA_MODE=1 & RELP=0 & mic_op=0b011000 & REL6=0 & mic_rt32_5 & mic_base0 & PAIR_INSTRUCTION_FLAG=1 ; micb_func12=0b1001 & EXT_CODE12 [ PAIR_INSTRUCTION_FLAG = 0; ] {
+}
+@else
+:swl mic_rt32_5, EXT_CODE12(mic_base0)	is ISA_MODE=1 & RELP=0 & mic_op=0b011000 & REL6=0 & mic_rt32_5 & mic_base0 & PAIR_INSTRUCTION_FLAG=1 ; micb_func12=0b1000 & EXT_CODE12 [ PAIR_INSTRUCTION_FLAG = 1; globalset(inst_next, PAIR_INSTRUCTION_FLAG);] {
+}
+:swr mic_rt32_5, EXT_CODE12(mic_base0)	is ISA_MODE=1 & RELP=0 & mic_op=0b011000 & REL6=0 & mic_rt32_5 & mic_base0 & PAIR_INSTRUCTION_FLAG=1 ; micb_func12=0b1001 & EXT_CODE12 [ PAIR_INSTRUCTION_FLAG = 0; ] {
+	tmp:$(REGSIZE) = sext(EXT_CODE12);
+	tmp = tmp + mic_base0;
+	tmpa:$(ADDRSIZE) = 0;
+	ValCast(tmpa,tmp);
+    *[ram]:4 tmpa = mic_rt32_5:$(SIZETO4);
+}
+@endif
+
+:sdxc1 micb_fd, mic_index(mic_base0) 	is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=0 & mic_index & mic_base0 ; micb_fd & micb_fdD & micb_fxf2=0b00100001000 {
+	tmp:$(REGSIZE) = mic_index + mic_base0;
+	tmpa:$(ADDRSIZE) = 0;
+	ValCast(tmpa,tmp);
+    *[ram]:8 tmpa = micb_fdD;
+}
+
+:swxc1 micb_fd, mic_index(mic_base0) 	is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=0 & mic_index & mic_base0 ; micb_fd & micb_fxf2=0b00010001000 {
+	tmp:$(REGSIZE) = mic_index + mic_base0;
+	tmpa:$(ADDRSIZE) = 0;
+	ValCast(tmpa,tmp);
+    *[ram]:4 tmpa = micb_fd:4;    
+}
+
+:teqi mic_rs32_0, EXT_MS16				is ISA_MODE=1 & RELP=0 & mic_op=0b010000 & REL6=0 & mic_funci=0b01110 & mic_rs32_0 ; EXT_MS16 {
+	tmp:$(REGSIZE) = sext(EXT_MS16);
+	if (mic_rs32_0 != tmp) goto <done>;
+	trap();
+	<done>
+}
+
+:tgei mic_rs32_0, EXT_MS16				is ISA_MODE=1 & RELP=0 & mic_op=0b010000 & REL6=0 & mic_funci=0b01001 & mic_rs32_0 ; EXT_MS16 {
+	tmp:$(REGSIZE) = sext(EXT_MS16);
+	if (tmp s< mic_rs32_0) goto <done>;
+	trap();
+	<done>
+}
+
+:tgeiu mic_rs32_0, EXT_MS16				is ISA_MODE=1 & RELP=0 & mic_op=0b010000 & REL6=0 & mic_funci=0b01011 & mic_rs32_0 ; EXT_MS16 {
+	tmp:$(REGSIZE) = sext(EXT_MS16);
+	if (tmp < mic_rs32_0) goto <done>;
+	trap();
+	<done>
+}
+
+:tlti mic_rs32_0, EXT_MS16				is ISA_MODE=1 & RELP=0 & mic_op=0b010000 & REL6=0 & mic_funci=0b01000 & mic_rs32_0 ; EXT_MS16 {
+	tmp:$(REGSIZE) = sext(EXT_MS16);
+	if (tmp s>= mic_rs32_0) goto <done>;
+	trap();
+	<done>
+}
+
+:tltiu mic_rs32_0, EXT_MS16				is ISA_MODE=1 & RELP=0 & mic_op=0b010000 & REL6=0 & mic_funci=0b01010 & mic_rs32_0 ; EXT_MS16 {
+	tmp:$(REGSIZE) = sext(EXT_MS16);
+	if (tmp >= mic_rs32_0) goto <done>;
+	trap();
+	<done>
+}
+
+:tnei mic_rs32_0, EXT_MS16				is ISA_MODE=1 & RELP=0 & mic_op=0b010000 & REL6=0 & mic_funci=0b01100 & mic_rs32_0 ; EXT_MS16 {
+	tmp:$(REGSIZE) = sext(EXT_MS16);
+	if (mic_rs32_0 == tmp) goto <done>;
+	trap();
+	<done>
+}
+
+@ifdef MIPS64
+:ddiv mic_rt32_5, mic_rs32_0  			is ISA_MODE=1 & RELP=0 & mic_op=0b010110 & REL6=0 & mic_rs32_0 & mic_rt32_5 ; micb_poolax=0b111100 & micb_axf=0b1010101100 {
+    lo = mic_rs32_0 s/ mic_rt32_5;
+    hi = mic_rs32_0 s% mic_rt32_5;
+}
+
+:ddivu mic_rt32_5, mic_rs32_0  			is ISA_MODE=1 & RELP=0 & mic_op=0b010110 & REL6=0 & mic_rs32_0 & mic_rt32_5 ; micb_poolax=0b111100 & micb_axf=0b1011101100 {
+    lo = mic_rs32_0 / mic_rt32_5;
+    hi = mic_rs32_0 % mic_rt32_5;
+}
+
+:luxc1 micb_fd, mic_index(mic_base0) 	is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=0 & mic_index & mic_base0 ; micb_fd & micb_fxf2=0b00101001000 {
+	tmp:$(REGSIZE) = mic_index + mic_base0;
+	tmpa:$(ADDRSIZE) = 0;
+	ValCast(tmpa,tmp);
+    ptr:$(ADDRSIZE) = tmpa;          
+    micb_fd = *[ram]:8 ptr;
+}
+
+
+@endif
+
+####
+#
+# Release 6 semantics
+#
+####
+:align micb_rd32, RS0L, RT5L, micb_bp	is ISA_MODE=1 & RELP=0 & mic_op=0b000000 & REL6=1 & RT5L & RS0L ; micb_poolax=0b011111 & micb_z68=0 & micb_rd32 & micb_bp {
+	tmp:4 = RT5L << (8 * micb_bp);
+	tmp = tmp | (RS0L >> (32 - (8 * micb_bp)));
+	micb_rd32 = sext(tmp);
+}
+
+:aluipc mic_rt32_5, EXT_MS32			is ISA_MODE=1 & RELP=0 & mic_op=0b011110 & REL6=1 & mic_pcf=0b11111 & mic_rt32_5 ; EXT_MS32 {
+	tmp:$(REGSIZE) = sext(EXT_MS32);
+	tmp = tmp + inst_start;
+	tmp = tmp & ~0xFFFF;
+	mic_rt32_5 = tmp;
+}
+
+:aui mic_rt32_5, RS0L, EXT_MS32   		is ISA_MODE=1 & RELP=0 & mic_op=0b000100 & REL6=1 & mic_rt32_5 & RS0L ; EXT_MS32 {
+	tmp:4 = RS0L + EXT_MS32;
+	mic_rt32_5 = sext(tmp);
+}
+
+:auipc mic_rt32_5, EXT_MS32				is ISA_MODE=1 & RELP=0 & mic_op=0b011110 & REL6=1 & mic_pcf=0b11110 & mic_rt32_5 ; EXT_MS32 {
+	tmp:$(REGSIZE) = sext(EXT_MS32);
+	tmp = tmp + inst_start;
+	mic_rt32_5 = tmp;
+}
+
+# Check this. Says left shift by 1 bit, but then says 4 byte alligned.  BC instruction is simlar though it says left shift by 2 bits.
+# Either way, there is a mistake in the documentation
+:balc Rel26_mic							is ISA_MODE=1 & RELP=0 & mic_op=0b101101 & REL6=1 ; Rel26_mic {
+    ra = inst_next | 0x1; 
+    call Rel26_mic;
+}
+
+:bc Rel26_mic							is ISA_MODE=1 & RELP=0 & mic_op=0b100101 & REL6=1 ; Rel26_mic {
+	goto Rel26_mic;
+}
+
+:bc16 Rel10_mic							is ISA_MODE=1 & RELP=0 & mic_op=0b110011 & REL6=1 & Rel10_mic {
+	goto Rel10_mic;
+}
+
+:bc1eqzc mic_ft_0, Rel16_mic			is ISA_MODE=1 & RELP=0 & mic_op=0b010000 & REL6=1 & mic_funci=0b01000 & mic_ft_0; Rel16_mic {
+    tmp:1 = mic_ft_0[0,8] & 0x01; # Only need to check the LSB
+    if (tmp == 0x00) goto Rel16_mic;
+}
+
+:bc1nezc mic_ft_0, Rel16_mic			is ISA_MODE=1 & RELP=0 & mic_op=0b010000 & REL6=1 & mic_funci=0b01001 & mic_ft_0; Rel16_mic {
+    tmp:1 = mic_ft_0[0,8] & 0x01; # Only need to check the LSB
+    if (tmp == 0x01) goto Rel16_mic;
+}
+
+:bc2eqzc mic_ct, Rel16_mic				is ISA_MODE=1 & RELP=0 & mic_op=0b010000 & REL6=1 & mic_funci=0b01010 & mic_ct; Rel16_mic {
+    tmp:1 = getCopCondition(2:1, mic_ct:1); 
+    if (tmp == 0) goto inst_next; 
+    goto Rel16_mic; 
+}
+
+:bc2nezc mic_ct, Rel16_mic				is ISA_MODE=1 & RELP=0 & mic_op=0b010000 & REL6=1 & mic_funci=0b01011 & mic_ct; Rel16_mic {
+    tmp:1 = getCopCondition(2:1, mic_ct:1); 
+    if (tmp == 1) goto inst_next; 
+    goto Rel16_mic; 
+}
+
+:beqzc16 mic_rs7, Rel7_mic				is ISA_MODE=1 & RELP=0 & mic_op=0b100011 & REL6=1 & mic_rs7 & Rel7_mic {
+    if (mic_rs7 == 0) goto Rel7_mic;
+}
+
+:bnezc16 mic_rs7, Rel7_mic				is ISA_MODE=1 & RELP=0 & mic_op=0b101011 & REL6=1 & mic_rs7 & Rel7_mic {
+    if (mic_rs7 != 0) goto Rel7_mic;
+}
+
+# Some of the branch instructions have a != in the pattern description in mips documentation.
+# In order to avoid pattern blowup in sleigh, I use some fake instructions as sinks when possible.
+# It was not possible to avoid all instances of != in the constructors
+:bad1									is ISA_MODE=1 & RELP=0 & mic_op=0b110000 & REL6=1 & mic_code=0; Rel16_mic unimpl
+:blezalc mic_rt32_5, Rel16_mic			is ISA_MODE=1 & RELP=0 & mic_op=0b110000 & REL6=1 & mic_rs32_0=0 & mic_rt32_5; Rel16_mic {
+	if (mic_rt32_5 s> 0) goto inst_next;
+    ra = inst_next | 0x1; 
+	call Rel16_mic;
+}
+
+:bgezalc mic_rt32_5, Rel16_mic			is ISA_MODE=1 & RELP=0 & mic_op=0b110000 & REL6=1 & mic_rt32_5 & mic_rt32_5=mic_rs32_0 & mic_rt32_5a!=0; Rel16_mic {
+	if (mic_rt32_5 s< 0) goto inst_next;
+    ra = inst_next | 0x1; 
+	call Rel16_mic;
+}
+
+:bgeuc mic_rs32_0,mic_rt32_5,Rel16_mic	is ISA_MODE=1 & RELP=0 & mic_op=0b110000 & REL6=1 & mic_rt32_5 & mic_rs32_0; Rel16_mic {
+	if (mic_rs32_0 >= mic_rt32_5) goto Rel16_mic;
+}
+
+:bad2									is ISA_MODE=1 & RELP=0 & mic_op=0b111000 & REL6=1 & mic_code=0; Rel16_mic unimpl
+:bgtzalc mic_rt32_5, Rel16_mic			is ISA_MODE=1 & RELP=0 & mic_op=0b111000 & REL6=1 & mic_rs32_0=0 & mic_rt32_5; Rel16_mic {
+	if (mic_rt32_5 s<= 0) goto inst_next;
+    ra = inst_next | 0x1; 
+	call Rel16_mic;
+}
+
+:bltzalc mic_rt32_5, Rel16_mic			is ISA_MODE=1 & RELP=0 & mic_op=0b111000 & REL6=1 & mic_rt32_5 & mic_rt32_5=mic_rs32_0 & mic_rt32_5a!=0; Rel16_mic {
+	if (mic_rt32_5 s>= 0) goto inst_next;
+    ra = inst_next | 0x1; 
+	call Rel16_mic;
+}
+:bltuc mic_rs32_0,mic_rt32_5,Rel16_mic	is ISA_MODE=1 & RELP=0 & mic_op=0b111000 & REL6=1 & mic_rt32_5 & mic_rs32_0; Rel16_mic {
+	if (mic_rs32_0 < mic_rt32_5) goto Rel16_mic;
+}
+
+# for this case, bovc is the catch-all. 
+:beqzalc mic_rt32_5, Rel16_mic			is ISA_MODE=1 & RELP=0 & mic_op=0b011101 & REL6=1 & mic_rs32_0=0 & mic_rt32_5 & mic_rt32_5a!=0; Rel16_mic {
+	if (mic_rt32_5 != 0) goto inst_next;
+    ra = inst_next | 0x1; 
+	call Rel16_mic;
+}
+
+:beqc mic_rs32_0, mic_rt32_5, Rel16_mic	is ISA_MODE=1 & RELP=0 & mic_op=0b011101 & REL6=1 & mic_rt32_5 & mic_rs32_0 & mic_rs32_0a!=0 & mic_rs32_0b<mic_rt32_5a; Rel16_mic {
+	if (mic_rs32_0 == mic_rt32_5) goto Rel16_mic;
+}
+
+:bovc mic_rt32_5, mic_rs32_0, Rel16_mic	is ISA_MODE=1 & RELP=0 & mic_op=0b011101 & REL6=1 & mic_rt32_5 & mic_rs32_0 & RT5L & RS0L; Rel16_mic {
+	tmpS:8 = sext(RS0L);
+	tmpT:8 = sext(RT5L);
+	tmpS = tmpS + tmpT;
+	tmpF:1 = (tmpS s> 0x7FFFFFFF) || (tmpS s< -2147483648);
+@if REGSIZE == "8"
+	tmpF = tmpF || (mic_rt32_5 s> 0x7FFFFFFF) || (mic_rt32_5 s< -2147483648) || (mic_rs32_0 s> 0x7FFFFFFF) || (mic_rs32_0 s< -2147483648);
+@endif
+	if (tmpF == 1) goto Rel16_mic;
+}
+
+# for this case, bnvc is the catch-all.
+:bnezalc mic_rt32_5, Rel16_mic			is ISA_MODE=1 & RELP=0 & mic_op=0b011111 & REL6=1 & mic_rs32_0=0 & mic_rt32_5 & mic_rt32_5a!=0; Rel16_mic {
+	if (mic_rt32_5 == 0) goto inst_next;
+    ra = inst_next | 0x1; 
+	call Rel16_mic;
+}
+
+:bnec mic_rs32_0, mic_rt32_5, Rel16_mic	is ISA_MODE=1 & RELP=0 & mic_op=0b011111 & REL6=1 & mic_rt32_5 & mic_rs32_0 & mic_rs32_0a!=0 & mic_rs32_0b<mic_rt32_5a; Rel16_mic {
+	if (mic_rs32_0 != mic_rt32_5) goto Rel16_mic;
+}
+
+:bnvc mic_rt32_5, mic_rs32_0, Rel16_mic	is ISA_MODE=1 & RELP=0 & mic_op=0b011111 & REL6=1 & mic_rt32_5 & mic_rs32_0 & RS0L & RT5L; Rel16_mic {
+	tmpS:8 = sext(RS0L);
+	tmpT:8 = sext(RT5L);
+	tmpS = tmpS + tmpT;
+	tmpF:1 = (tmpS s> 0x7FFFFFFF) || (tmpS s< -2147483648);
+@if FREGSIZE == "8"
+	tmpF = tmpF || (mic_rt32_5 s> 0x7FFFFFFF) || (mic_rt32_5 s< -2147483648) || (mic_rs32_0 s> 0x7FFFFFFF) || (mic_rs32_0 s< -2147483648);
+@endif
+	if (tmpF == 0) goto Rel16_mic;
+}
+
+:bad3									is ISA_MODE=1 & RELP=0 & mic_op=0b111001 & REL6=1 & mic_code=0; Rel16_mic unimpl
+:blezc mic_rt32_5, Rel16_mic			is ISA_MODE=1 & RELP=0 & mic_op=0b111001 & REL6=1 & mic_rs32_0=0 & mic_rt32_5; Rel16_mic {
+	if (mic_rt32_5 s<= 0) goto Rel16_mic;
+}
+
+:bgezc mic_rt32_5, Rel16_mic			is ISA_MODE=1 & RELP=0 & mic_op=0b111001 & REL6=1 & mic_rt32_5 & mic_rt32_5=mic_rs32_0 & mic_rt32_5a!=0; Rel16_mic {
+	if (mic_rt32_5 s>= 0) goto Rel16_mic;
+}
+
+:bgec mic_rs32_0,mic_rt32_5,Rel16_mic	is ISA_MODE=1 & RELP=0 & mic_op=0b111001 & REL6=1 & mic_rt32_5 & mic_rs32_0; Rel16_mic {
+	if (mic_rs32_0 s>= mic_rt32_5) goto Rel16_mic;
+}
+
+:bad4									is ISA_MODE=1 & RELP=0 & mic_op=0b110001 & REL6=1 & mic_code=0; Rel16_mic unimpl
+:bgtzc mic_rt32_5, Rel16_mic			is ISA_MODE=1 & RELP=0 & mic_op=0b110001 & REL6=1 & mic_rs32_0=0 & mic_rt32_5; Rel16_mic {
+	if (mic_rt32_5 s> 0) goto Rel16_mic;
+}
+
+:bltzc mic_rt32_5, Rel16_mic			is ISA_MODE=1 & RELP=0 & mic_op=0b110001 & REL6=1 & mic_rt32_5 & mic_rt32_5=mic_rs32_0 & mic_rt32_5a!=0; Rel16_mic {
+	if (mic_rt32_5 s< 0) goto Rel16_mic;
+}
+
+:bltc mic_rs32_0,mic_rt32_5,Rel16_mic	is ISA_MODE=1 & RELP=0 & mic_op=0b110001 & REL6=1 & mic_rt32_5 & mic_rs32_0; Rel16_mic {
+	if (mic_rs32_0 s< mic_rt32_5) goto Rel16_mic;
+}
+
+:beqzc mic_rs32_5, Rel21_mic			is ISA_MODE=1 & RELP=0 & mic_op=0b100000 & REL6=1 & mic_rs32_5 & mic_imm5; Rel21_mic [ext_32_imm5 = mic_imm5;] {
+	if (mic_rs32_5 == 0) goto Rel21_mic;
+}
+
+:bad6									is ISA_MODE=1 & RELP=0 & mic_op=0b10100 & REL6=1 & mic_rs32_5=0; Rel21_mic unimpl
+:bnezc mic_rs32_5, Rel21_mic			is ISA_MODE=1 & RELP=0 & mic_op=0b10100 & REL6=1 & mic_rs32_5 & mic_imm5; Rel21_mic [ext_32_imm5 = mic_imm5;] {
+	if (mic_rs32_5 != 0) goto Rel21_mic;
+}
+
+:bitswap mic_rd32_0, RT5L				is ISA_MODE=1 & RELP=0 & mic_op=0b000000 & REL6=1 & RT5L & mic_rd32_0 ; micb_poolax=0b111100 & micb_axf3=0b101100 & micb_z12=0 {
+	tmp:4 = bitSwap(RT5L);
+	mic_rd32_0 = sext(tmp);
+}
+
+:cache mic_cop5, EXT_CODE9E(mic_base0)	is ISA_MODE=1 & RELP=0 & mic_op=0b001000 & REL6=1 & mic_cop5 & mic_base0 ; micb_func12=0b0110 & micb_sub9=0 & EXT_CODE9E {
+	cacheOp();
+}
+
+:class.S mic_fd, mic_fs_5 				is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=1 & mic_fs_5 & mic_fd ; micb_size=0 & micb_fmt9=0 & micb_fxf5=0b001100000 {
+    tmp_fs:4 = mic_fs_5:4; # Get just the 4 byte single floating point value
+    tmp_exponent:4 = zext(tmp_fs[23,8]);
+    tmp_fraction:4 = zext(tmp_fs[0,23]);
+    tmp_sign:4 = zext(tmp_fs[31,1]);
+    tmp_b1:4 = zext(tmp_fs[22,1]); # High order bit of fraction, used for NaN
+
+    tmp_SNaN:4 = zext((tmp_exponent == 0x0ff) && (tmp_fraction != 0x0) && (tmp_b1 == 0x0)); 
+    tmp_QNaN:4 = zext((tmp_exponent == 0x0ff) && (tmp_fraction != 0x0) && (tmp_b1 == 0x01));
+    tmp_Neg_Infinity:4 = zext((tmp_sign == 0x01) && (tmp_exponent == 0x0ff)  && (tmp_fraction == 0x0));
+    tmp_Neg_Normal:4 = zext((tmp_sign == 0x01) && (tmp_exponent != 0x0) && (tmp_exponent != 0x0ff));
+    tmp_Neg_Subnormal:4 = zext((tmp_sign == 0x01) && (tmp_exponent == 0x0) && (tmp_fraction != 0x0));
+    tmp_Neg_Zero:4 = zext((tmp_sign == 0x01) && (tmp_exponent == 0x0) && (tmp_fraction == 0x0));
+    tmp_Pos_Infinity:4 = zext((tmp_sign == 0x0) && (tmp_exponent == 0x0ff)  && (tmp_fraction == 0x0));
+    tmp_Pos_Normal:4 = zext((tmp_sign == 0x0) && (tmp_exponent != 0x0) && (tmp_exponent != 0x0ff));
+    tmp_Pos_Subnormal:4 = zext((tmp_sign == 0x0) && (tmp_exponent == 0x0) && (tmp_fraction != 0x0));
+    tmp_Pos_Zero:4 = zext((tmp_sign == 0x0) && (tmp_exponent == 0x0) && (tmp_fraction == 0x0));
+
+    tmp_fd:4 = 0;
+    tmp_fd = tmp_SNaN | (tmp_QNaN << 1) | (tmp_Neg_Infinity << 2) | (tmp_Neg_Normal << 3) |
+		(tmp_Neg_Subnormal << 4) | (tmp_Neg_Zero << 5) | (tmp_Pos_Infinity << 6) |
+		(tmp_Pos_Normal << 7) | (tmp_Pos_Subnormal << 8) | (tmp_Pos_Zero << 9);
+
+    mic_fd = zext(tmp_fd);
+}
+
+:class.D mic_fd, mic_fs_5 				is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=1 & mic_fs_5 & mic_fd & mic_fsD_5 & mic_fdD ; micb_size=0 & micb_fmt9=1 & micb_fxf5=0b001100000 {
+    tmp_fs:8 = mic_fsD_5;
+    tmp_sign:4 = zext(tmp_fs[63,1]);
+    tmp_exponent:4 = zext(tmp_fs[52,11]);
+    tmp_fraction:8 = zext(tmp_fs[0,51]);
+    tmp_b1:4 = zext(tmp_fs[51,1]); # High order bit of fraction, used for NaN
+
+    tmp_SNaN:4 = zext((tmp_exponent == 0x07ff) && (tmp_fraction != 0x0) && (tmp_b1 == 0x0));
+    tmp_QNaN:4 = zext((tmp_exponent == 0x07ff) && (tmp_fraction != 0x0) && (tmp_b1 == 0x01));
+    tmp_Neg_Infinity:4 = zext((tmp_sign == 0x01) && (tmp_exponent == 0x07ff)  && (tmp_fraction == 0x0));
+    tmp_Neg_Normal:4 = zext((tmp_sign == 0x01) && (tmp_exponent != 0x0) && (tmp_exponent != 0x07ff));
+    tmp_Neg_Subnormal:4 = zext((tmp_sign == 0x01) && (tmp_exponent == 0x0) && (tmp_fraction != 0x0));
+    tmp_Neg_Zero:4 = zext((tmp_sign == 0x01) && (tmp_exponent == 0x0) && (tmp_fraction == 0x0));
+    tmp_Pos_Infinity:4 = zext((tmp_sign == 0x0) && (tmp_exponent == 0x07ff)  && (tmp_fraction == 0x0));
+    tmp_Pos_Normal:4 = zext((tmp_sign == 0x0) && (tmp_exponent != 0x0) && (tmp_exponent != 0x07ff));
+    tmp_Pos_Subnormal:4 = zext((tmp_sign == 0x0) && (tmp_exponent == 0x0) && (tmp_fraction != 0x0));
+    tmp_Pos_Zero:4 = zext((tmp_sign == 0x0) && (tmp_exponent == 0x0) && (tmp_fraction == 0x0));
+
+    tmp_fd:4 = 0;
+    tmp_fd = tmp_SNaN | (tmp_QNaN << 1) | (tmp_Neg_Infinity << 2) | (tmp_Neg_Normal << 3) |
+                (tmp_Neg_Subnormal << 4) | (tmp_Neg_Zero << 5) | (tmp_Pos_Infinity << 6) |
+                (tmp_Pos_Normal << 7) | (tmp_Pos_Subnormal << 8) | (tmp_Pos_Zero << 9);
+
+    mic_fdD = zext(tmp_fd);
+}
+
+#:cmp.condn.fmt
+:cmp.af.S micb_fd, mic_fs, mic_ft_5		is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=1 & mic_fs & mic_ft_5 ; micb_fd & micb_cond2=0x00 & micb_poolfx=0b000101 {
+    trapIfSNaN(mic_fs:4, mic_ft_5:4); # Trap if either operand is a Signaling NaN
+    micb_fd = 0x0;
+}
+
+:cmp.af.D micb_fd, mic_fs, mic_ft_5		is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=1 & mic_fs & mic_ft_5 & mic_fsD & mic_ftD_5 ; micb_fd & micb_fdD & micb_cond2=0x00 & micb_poolfx=0b010101 {
+    trapIfSNaN(mic_fsD, mic_ftD_5);
+    micb_fdD = 0x0;
+}
+
+:cmp.un.S micb_fd, mic_fs, mic_ft_5		is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=1 & mic_fs & mic_ft_5 ; micb_fd & micb_cond2=0x01 & micb_poolfx=0b000101 {
+    trapIfSNaN(mic_fs:4, mic_ft_5:4); # Trap if either operand is a Signaling NaN
+    micb_fd = sext((nan(mic_fs:4) || nan(mic_ft_5:4)) * 0xff);
+}
+
+:cmp.un.D micb_fd, mic_fs, mic_ft_5		is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=1 & mic_fs & mic_ft_5 & mic_fsD & mic_ftD_5; micb_fd & micb_fdD & micb_cond2=0x01 & micb_poolfx=0b010101 {
+    trapIfSNaN(mic_fsD, mic_ftD_5);
+    micb_fdD = sext((nan(mic_fsD) || nan(mic_ftD_5)) * 0xff);
+}
+
+:cmp.eq.S micb_fd, mic_fs, mic_ft_5		is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=1 & mic_fs & mic_ft_5 ; micb_fd & micb_cond2=0x02 & micb_poolfx=0b000101 {
+    trapIfSNaN(mic_fs:4, mic_ft_5:4); # Trap if either operand is a Signaling NaN
+    micb_fd = sext((mic_fs:4 f== mic_ft_5:4) * 0xff);
+}
+
+:cmp.eq.D micb_fd, mic_fs, mic_ft_5		is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=1 & mic_fs & mic_ft_5 & mic_fsD & mic_ftD_5 ; micb_fd & micb_fdD & micb_cond2=0x02 & micb_poolfx=0b010101 {
+    trapIfSNaN(mic_fsD, mic_ftD_5);
+    micb_fdD = sext((mic_fsD f== mic_ftD_5) * 0xff);
+}
+
+:cmp.ueq.S micb_fd, mic_fs, mic_ft_5	is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=1 & mic_fs & mic_ft_5 ; micb_fd & micb_cond2=0x03 & micb_poolfx=0b000101 {
+    trapIfSNaN(mic_fs:4, mic_ft_5:4); # Trap if either operand is a Signaling NaN
+    micb_fd = sext( ( nan(mic_fs:4) || nan(mic_ft_5:4) || (mic_fs:4 f== mic_ft_5:4) ) * 0xff);
+}
+
+:cmp.ueq.D micb_fd, mic_fs, mic_ft_5	is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=1 & mic_fs & mic_ft_5 & mic_fsD & mic_ftD_5 ; micb_fd & micb_fdD & micb_cond2=0x03 & micb_poolfx=0b010101 {
+    trapIfSNaN(mic_fsD, mic_ftD_5);
+    micb_fdD = sext( ( nan(mic_fsD) || nan(mic_ftD_5) || (mic_fsD f== mic_ftD_5) ) * 0xff);
+}
+
+:cmp.lt.S micb_fd, mic_fs, mic_ft_5		is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=1 & mic_fs & mic_ft_5 ; micb_fd & micb_cond2=0x04 & micb_poolfx=0b000101 {
+    trapIfSNaN(mic_fs:4, mic_ft_5:4); # Trap if either operand is a Signaling NaN
+    micb_fd = sext((mic_fs:4 f< mic_ft_5:4) * 0xff);
+}
+
+:cmp.lt.D micb_fd, mic_fs, mic_ft_5		is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=1 & mic_fs & mic_ft_5 & mic_fsD & mic_ftD_5 ; micb_fd & micb_fdD & micb_cond2=0x04 & micb_poolfx=0b010101 {
+    trapIfSNaN(mic_fsD, mic_ftD_5);
+    micb_fdD = sext((mic_fsD f< mic_ftD_5) * 0xff);
+}
+
+:cmp.ult.S micb_fd, mic_fs, mic_ft_5	is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=1 & mic_fs & mic_ft_5 ; micb_fd & micb_cond2=0x05 & micb_poolfx=0b000101 {
+    trapIfSNaN(mic_fs:4, mic_ft_5:4); # Trap if either operand is a Signaling NaN
+    micb_fd = sext( ( nan(mic_fs:4) || nan(mic_ft_5:4) || (mic_fs:4 f< mic_ft_5:4) ) * 0xff);
+}
+
+:cmp.ult.D micb_fd, mic_fs, mic_ft_5	is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=1 & mic_fs & mic_ft_5 & mic_fsD & mic_ftD_5 ; micb_fd & micb_fdD & micb_cond2=0x05 & micb_poolfx=0b010101 {
+    trapIfSNaN(mic_fsD, mic_ftD_5);
+    micb_fdD = sext( ( nan(mic_fsD) || nan(mic_ftD_5) || (mic_fsD f< mic_ftD_5) ) * 0xff);
+}
+
+:cmp.le.S micb_fd, mic_fs, mic_ft_5		is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=1 & mic_fs & mic_ft_5 ; micb_fd & micb_cond2=0x06 & micb_poolfx=0b000101 {
+    trapIfSNaN(mic_fs:4, mic_ft_5:4); # Trap if either operand is a Signaling NaN
+    micb_fd = sext((mic_fs:4 f<= mic_ft_5:4) * 0xff);
+}
+
+:cmp.le.D micb_fd, mic_fs, mic_ft_5		is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=1 & mic_fs & mic_ft_5 & mic_fsD & mic_ftD_5 ; micb_fd & micb_fdD & micb_cond2=0x06 & micb_poolfx=0b010101 {
+    trapIfSNaN(mic_fsD, mic_ftD_5);
+    micb_fdD = sext((mic_fsD f<= mic_ftD_5) * 0xff);
+}
+
+:cmp.ule.S micb_fd, mic_fs, mic_ft_5	is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=1 & mic_fs & mic_ft_5 ; micb_fd & micb_cond2=0x07 & micb_poolfx=0b000101 {
+    trapIfSNaN(mic_fs:4, mic_ft_5:4); # Trap if either operand is a Signaling NaN
+    micb_fd = sext( ( nan(mic_fs:4) || nan(mic_ft_5:4) || (mic_fs:4 f<= mic_ft_5:4) ) * 0xff);
+}
+
+:cmp.ule.D micb_fd, mic_fs, mic_ft_5	is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=1 & mic_fs & mic_ft_5 & mic_fsD & mic_ftD_5 ; micb_fd & micb_fdD & micb_cond2=0x07 & micb_poolfx=0b010101 {
+    trapIfSNaN(mic_fsD, mic_ftD_5);
+    micb_fdD = sext( ( nan(mic_fsD) || nan(mic_ftD_5) || (mic_fsD f<= mic_ftD_5) ) * 0xff);
+}
+
+:cmp.saf.S micb_fd, mic_fs, mic_ft_5	is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=1 & mic_fs & mic_ft_5 ; micb_fd & micb_cond2=0x08 & micb_poolfx=0b000101 {
+    trapIfSNaN(mic_fs:4, mic_ft_5:4);
+    micb_fd = 0x0;
+}
+
+:cmp.saf.D micb_fd, mic_fs, mic_ft_5	is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=1 & mic_fs & mic_ft_5 & mic_fsD & mic_ftD_5 ; micb_fd & micb_fdD & micb_cond2=0x08 & micb_poolfx=0b010101 {
+    trapIfNaN(mic_fsD, mic_ftD_5);
+    micb_fdD = 0x0;
+}
+
+:cmp.sun.S micb_fd, mic_fs, mic_ft_5	is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=1 & mic_fs & mic_ft_5 ; micb_fd & micb_cond2=0x09 & micb_poolfx=0b000101 {
+    trapIfSNaN(mic_fs:4, mic_ft_5:4);
+    micb_fd = sext((nan(mic_fs:4) || nan(mic_ft_5:4)) * 0xff);
+}
+
+:cmp.sun.D micb_fd, mic_fs, mic_ft_5	is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=1 & mic_fs & mic_ft_5 & mic_fsD & mic_ftD_5 ; micb_fd & micb_fdD & micb_cond2=0x09 & micb_poolfx=0b010101 {
+    trapIfNaN(mic_fsD, mic_ftD_5);
+    micb_fdD = sext((nan(mic_fsD) || nan(mic_ftD_5)) * 0xff);
+}
+
+:cmp.seq.S micb_fd, mic_fs, mic_ft_5	is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=1 & mic_fs & mic_ft_5 ; micb_fd & micb_cond2=0x0A & micb_poolfx=0b000101 {
+    trapIfSNaN(mic_fs:4, mic_ft_5:4);
+    micb_fd = sext((mic_fs:4 f== mic_ft_5:4) * 0xff);
+}
+
+:cmp.seq.D micb_fd, mic_fs, mic_ft_5	is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=1 & mic_fs & mic_ft_5 & mic_fsD & mic_ftD_5 ; micb_fd & micb_fdD & micb_cond2=0x0A & micb_poolfx=0b010101 {
+    trapIfNaN(mic_fsD, mic_ftD_5);
+    micb_fdD = sext((mic_fsD f== mic_ftD_5) * 0xff);
+}
+
+:cmp.sueq.S micb_fd, mic_fs, mic_ft_5	is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=1 & mic_fs & mic_ft_5 ; micb_fd & micb_cond2=0x0B & micb_poolfx=0b000101 {
+    trapIfSNaN(mic_fs:4, mic_ft_5:4);
+    micb_fd = sext( ( nan(mic_fs:4) || nan(mic_ft_5:4) || (mic_fs:4 f== mic_ft_5:4) ) * 0xff);
+}
+
+:cmp.sueq.D micb_fd, mic_fs, mic_ft_5	is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=1 & mic_fs & mic_ft_5 & mic_fsD & mic_ftD_5 ; micb_fd & micb_fdD & micb_cond2=0x0B & micb_poolfx=0b010101 {
+    trapIfNaN(mic_fsD, mic_ftD_5);
+    micb_fdD = sext( ( nan(mic_fsD) || nan(mic_ftD_5) || (mic_fsD f== mic_ftD_5) ) * 0xff);
+}
+
+:cmp.slt.S micb_fd, mic_fs, mic_ft_5	is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=1 & mic_fs & mic_ft_5 ; micb_fd & micb_cond2=0x0C & micb_poolfx=0b000101 {
+    trapIfSNaN(mic_fs:4, mic_ft_5:4);
+    micb_fd = sext( (mic_fs:4 f< mic_ft_5:4) * 0xff);
+}
+
+:cmp.slt.D micb_fd, mic_fs, mic_ft_5	is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=1 & mic_fs & mic_ft_5 & mic_fsD & mic_ftD_5 ; micb_fd & micb_fdD & micb_cond2=0x0C & micb_poolfx=0b010101 {
+    trapIfNaN(mic_fsD, mic_ftD_5);
+    micb_fdD = sext( (mic_fsD f< mic_ftD_5) * 0xff);
+}
+
+:cmp.sult.S micb_fd, mic_fs, mic_ft_5	is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=1 & mic_fs & mic_ft_5 ; micb_fd & micb_cond2=0x0D & micb_poolfx=0b000101 {
+    trapIfSNaN(mic_fs:4, mic_ft_5:4);
+    micb_fd = sext( ( nan(mic_fs:4) || nan(mic_ft_5:4) || (mic_fs:4 f< mic_ft_5:4) ) * 0xff);
+}
+
+:cmp.sult.D micb_fd, mic_fs, mic_ft_5	is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=1 & mic_fs & mic_ft_5 & mic_fsD & mic_ftD_5 ; micb_fd & micb_fdD & micb_cond2=0x0D & micb_poolfx=0b010101 {
+    trapIfNaN(mic_fsD, mic_ftD_5);
+    micb_fdD = sext( ( nan(mic_fsD) || nan(mic_ftD_5) || (mic_fsD f< mic_ftD_5) ) * 0xff);
+}
+
+:cmp.sle.S micb_fd, mic_fs, mic_ft_5	is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=1 & mic_fs & mic_ft_5 ; micb_fd & micb_cond2=0x0E & micb_poolfx=0b000101 {
+    trapIfSNaN(mic_fs:4, mic_ft_5:4);
+    micb_fd = sext( (mic_fs:4 f<= mic_ft_5:4) * 0xff);
+}
+
+:cmp.sle.D micb_fd, mic_fs, mic_ft_5	is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=1 & mic_fs & mic_ft_5 & mic_fsD & mic_ftD_5 ; micb_fd & micb_fdD & micb_cond2=0x0E & micb_poolfx=0b010101 {
+    trapIfNaN(mic_fsD, mic_ftD_5);
+    micb_fdD = sext( (mic_fsD f<= mic_ftD_5) * 0xff);
+}
+
+:cmp.sule.S micb_fd, mic_fs, mic_ft_5	is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=1 & mic_fs & mic_ft_5 ; micb_fd & micb_cond2=0x0F & micb_poolfx=0b000101 {
+    trapIfSNaN(mic_fs:4, mic_ft_5:4);
+    micb_fd = sext( ( nan(mic_fs:4) || nan(mic_ft_5:4) || (mic_fs:4 f<= mic_ft_5:4) ) * 0xff);
+}
+
+:cmp.sule.D micb_fd, mic_fs, mic_ft_5	is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=1 & mic_fs & mic_ft_5 & mic_fsD & mic_ftD_5 ; micb_fd & micb_fdD & micb_cond2=0x0F & micb_poolfx=0b010101 {
+    trapIfNaN(mic_fsD, mic_ftD_5);
+    micb_fdD = sext( ( nan(mic_fsD) || nan(mic_ftD_5) || (mic_fsD f<= mic_ftD_5) ) * 0xff);
+}
+
+:cmp.or.S micb_fd, mic_fs, mic_ft_5	is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=1 & mic_fs & mic_ft_5 ; micb_fd & micb_cond2=0x11 & micb_poolfx=0b000101 {
+    trapIfSNaN(mic_fs:4, mic_ft_5:4);
+    micb_fd = sext( (!(nan(mic_fs:4) || nan(mic_ft_5:4))) * 0xff); # The negated predicate of "c.un"
+}
+
+:cmp.or.D micb_fd, mic_fs, mic_ft_5	is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=1 & mic_fs & mic_ft_5 & mic_fsD & mic_ftD_5 ; micb_fd & micb_fdD & micb_cond2=0x11 & micb_poolfx=0b010101 {
+    trapIfSNaN(mic_fsD, mic_ftD_5);
+    micb_fdD = sext( (!(nan(mic_fsD) || nan(mic_ftD_5))) * 0xff);
+}
+
+:cmp.une.S micb_fd, mic_fs, mic_ft_5	is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=1 & mic_fs & mic_ft_5 ; micb_fd & micb_cond2=0x12 & micb_poolfx=0b000101 {
+    # The negated predicate of cmp.eq
+    trapIfSNaN(mic_fs:4, mic_ft_5:4);
+    micb_fd = sext((mic_fs:4 f!= mic_ft_5:4) * 0xff);
+}
+
+:cmp.une.D micb_fd, mic_fs, mic_ft_5	is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=1 & mic_fs & mic_ft_5 & mic_fsD & mic_ftD_5 ; micb_fd & micb_fdD & micb_cond2=0x12 & micb_poolfx=0b010101 {
+    trapIfSNaN(mic_fsD, mic_ftD_5);
+    micb_fdD = sext((mic_fsD f!= mic_ftD_5) * 0xff);
+}
+
+:cmp.ne.S micb_fd, mic_fs, mic_ft_5	is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=1 & mic_fs & mic_ft_5 ; micb_fd & micb_cond2=0x13 & micb_poolfx=0b000101 {
+    # The negated predicate of cmp.ueq
+    trapIfSNaN(mic_fs:4, mic_ft_5:4);
+    micb_fd = sext( (!( ( nan(mic_fs:4) || nan(mic_ft_5:4) || (mic_fs:4 f== mic_ft_5:4) ))) * 0xff);
+}
+
+:cmp.ne.D micb_fd, mic_fs, mic_ft_5	is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=1 & mic_fs & mic_ft_5 & mic_fsD & mic_ftD_5 ; micb_fd & micb_fdD & micb_cond2=0x13 & micb_poolfx=0b010101 {
+    trapIfSNaN(mic_fsD, mic_ftD_5);
+    micb_fdD = sext( (!( ( nan(mic_fsD) || nan(mic_ftD_5) || (mic_fsD f== mic_ftD_5) ))) * 0xff);
+}
+
+:cmp.sor.S micb_fd, mic_fs, mic_ft_5	is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=1 & mic_fs & mic_ft_5 ; micb_fd & micb_cond2=0x19 & micb_poolfx=0b000101 {
+    trapIfNaN(mic_fs:4, mic_ft_5:4);
+    micb_fd = sext( (!(nan(mic_fs:4) || nan(mic_ft_5:4))) * 0xff); # negate of cmp.sun
+}
+
+:cmp.sor.D micb_fd, mic_fs, mic_ft_5	is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=1 & mic_fs & mic_ft_5 & mic_fsD & mic_ftD_5 ; micb_fd & micb_fdD & micb_cond2=0x19 & micb_poolfx=0b010101 {
+    trapIfNaN(mic_fsD, mic_ftD_5);
+    micb_fdD = sext( (!(nan(mic_fsD) || nan(mic_ftD_5))) * 0xff);
+}
+
+:cmp.sune.S micb_fd, mic_fs, mic_ft_5	is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=1 & mic_fs & mic_ft_5 ; micb_fd & micb_cond2=0x1A & micb_poolfx=0b000101 {
+    trapIfNaN(mic_fs:4, mic_ft_5:4);
+    micb_fd = sext((mic_fs:4 f!= mic_ft_5:4) * 0xff);
+}
+
+:cmp.sune.D micb_fd, mic_fs, mic_ft_5	is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=1 & mic_fs & mic_ft_5 & mic_fsD & mic_ftD_5 ; micb_fd & micb_fdD & micb_cond2=0x1A & micb_poolfx=0b010101 {
+    trapIfNaN(mic_fsD, mic_ftD_5);
+    micb_fdD = sext((mic_fsD f!= mic_ftD_5) * 0xff);
+}
+
+:cmp.sne.S micb_fd, mic_fs, mic_ft_5	is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=1 & mic_fs & mic_ft_5 ; micb_fd & micb_cond2=0x1B & micb_poolfx=0b000101 {
+    trapIfNaN(mic_fs:4, mic_ft_5:4); # negate of cmp.sueq
+    micb_fd = sext( (! ( nan(mic_fs:4) || nan(mic_ft_5:4) || (mic_fs:4 f== mic_ft_5:4) )) * 0xff);
+}
+
+:cmp.sne.D micb_fd, mic_fs, mic_ft_5	is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=1 & mic_fs & mic_ft_5 & mic_fsD & mic_ftD_5 ; micb_fd & micb_fdD & micb_cond2=0x1B & micb_poolfx=0b010101 {
+    trapIfNaN(mic_fsD, mic_ftD_5);
+    micb_fdD = sext( (! ( nan(mic_fsD) || nan(mic_ftD_5) || (mic_fsD f== mic_ftD_5) )) * 0xff);
+}
+
+:div micb_rd32, RS0L, RT5L 				is ISA_MODE=1 & RELP=0 & mic_op=0b000000 & REL6=1 & RS0L & RT5L ; micb_axf2=0b0100011000 & micb_bit10=0 & micb_rd32 {
+	tmp:4 = RS0L s/ RT5L;
+	micb_rd32 = sext(tmp);
+}
+
+:divu micb_rd32, RS0L, RT5L 			is ISA_MODE=1 & RELP=0 & mic_op=0b000000 & REL6=1 & RS0L & RT5L ; micb_axf2=0b0110011000 & micb_bit10=0 & micb_rd32 {
+	tmp:4 = RS0L / RT5L;
+	micb_rd32 = sext(tmp);
+}
+
+:dvp STYPE   							is ISA_MODE=1 & RELP=0 & mic_op=0b000000 & mic_funci=0 & STYPE ; micb_poolax=0b111100 & micb_axf=0b0001100101 {
+	disableProcessor(STYPE);
+}
+
+:evp STYPE   							is ISA_MODE=1 & RELP=0 & mic_op=0b000000 & mic_funci=0 & STYPE ; micb_poolax=0b111100 & micb_axf=0b0011100101 {
+	enableProcessor(STYPE);
+}
+
+:jalrc RTIMP^mic_rs32_0					is ISA_MODE=1 & RELP=0 & mic_op=0b000000 & REL6=1 & mic_rt32_5 & mic_rs32_0 & RTIMP ; micb_axf=0b0000111100 & micb_poolax=0b111100 {
+	JXWritePC(mic_rs32_0); 
+    mic_rt32_5 = inst_next | 0x1; 
+    call [pc];
+}
+
+:jalrc.hb RTIMP^mic_rs32_0				is ISA_MODE=1 & RELP=0 & mic_op=0b000000 & REL6=1 & mic_rt32_5 & mic_rs32_0 & RTIMP ; micb_axf=0b0001111100 & micb_poolax=0b111100 {
+	JXWritePC(mic_rs32_0); 
+    mic_rt32_5 = inst_next | 0x1; 
+    call [pc];
+}
+
+:jalrc16 mic_rs32_5						is ISA_MODE=1 & RELP=0 & mic_op=0b010001 & REL6=1 & mic_jalrr6=0b01110 & mic_rs32_5 {
+	JXWritePC(mic_rs32_5); 
+    ra = inst_next | 0x1; 
+    call [pc];
+}
+
+:jialc mic_rt32_0, EXT_MS16				is ISA_MODE=1 & RELP=0 & mic_op=0b101000 & REL6=1 & mic_index=0 & mic_rt32_0 ; EXT_MS16 {
+	tmp:$(REGSIZE) = mic_rt32_0 + sext(EXT_MS16);
+	JXWritePC(tmp);
+    ra = inst_next | 0x1; 
+	goto [pc];
+}
+
+:jic mic_rt32_0, EXT_MS16				is ISA_MODE=1 & RELP=0 & mic_op=0b100000 & REL6=1 & mic_index=0 & mic_rt32_0 ; EXT_MS16 {
+	tmp:$(REGSIZE) = mic_rt32_0 + sext(EXT_MS16);
+	JXWritePC(tmp);
+	goto [pc];
+}
+
+:jrcaddiusp EXT_CODE5R6					is ISA_MODE=1 & RELP=0 & mic_op=0b010001 & REL6=1 & mic_jalrr6=0b10011 & EXT_CODE5R6 {
+	tmp:$(REGSIZE) = zext(EXT_CODE5R6);
+	sp = sp + tmp;
+	JXWritePC(ra); 
+    goto [pc];
+}
+
+:jrc16 mic_rs32_5						is ISA_MODE=1 & RELP=0 & mic_op=0b010001 & REL6=1 & mic_jalrr6=0b01100 & mic_rs32_5 {
+	JXWritePC(mic_rs32_5); 
+    goto [pc];
+}
+
+:jrc16 ra								is ISA_MODE=1 & RELP=0 & mic_op=0b010001 & REL6=1 & mic_jalrr6=0b01100 & mic_rs32_5=31 & ra {
+	JXWritePC(ra); 
+    return [pc];
+}
+
+:llx mic_rt32_5, EXT_CODE9E(mic_base0)	is ISA_MODE=1 & RELP=0 & mic_op=0b011000 & REL6=1 & mic_rt32_5 & mic_base0 ; micb_func12=0b0001 & micb_sub9=0b000 & EXT_CODE9E {
+	tmp:$(REGSIZE) = sext(EXT_CODE9E);
+	tmp = tmp + mic_base0;
+	tmpa:$(ADDRSIZE) = 0;
+	ValCast(tmpa,tmp);
+    mic_rt32_5 = sext(*[ram]:4 tmpa);
+    lockload(tmp);
+}
+
+:llxe mic_rt32_5, EXT_CODE9E(mic_base0)	is ISA_MODE=1 & RELP=0 & mic_op=0b011000 & REL6=1 & mic_rt32_5 & mic_base0 ; micb_func12=0b0110 & micb_sub9=0b010 & EXT_CODE9E {
+	tmp:$(REGSIZE) = sext(EXT_CODE9E);
+	tmp = tmp + mic_base0;
+	tmpa:$(ADDRSIZE) = 0;
+	ValCast(tmpa,tmp);
+    mic_rt32_5 = sext(*[ram]:4 tmpa);
+    lockload(tmp);
+}
+
+:lsa micb_rd32, RS0L, RT5L, EXT_SA9 	is ISA_MODE=1 & RELP=0 & mic_op=0b000000 & REL6=1 & RS0L & RT5L ; micb_poolax=0b001111 & micb_asel=0b000 & EXT_SA9 & micb_rd32 {
+	tmp:4 = (RS0L << EXT_SA9) + RT5L;
+	micb_rd32 = sext(tmp);
+}
+
+:lwpc mic_rt32_5, EXT_MS19				is ISA_MODE=1 & RELP=0 & mic_op=0b011110 & REL6=1 & mic_pcz=0b01 & mic_rt32_5 & mic_imm02 ; EXT_MS19 [ ext_32_imm3=mic_imm02; ] {
+	tmp:$(REGSIZE) = inst_start + sext(EXT_MS19);
+	tmpa:$(ADDRSIZE) = 0;
+	ValCast(tmpa,tmp);
+	tmpl:4 = *[ram]:4 tmpa;
+	mic_rt32_5 = sext(tmpl);
+}
+
+:lwupc mic_rt32_5, EXT_MS19				is ISA_MODE=1 & RELP=0 & mic_op=0b011110 & REL6=1 & mic_pcz=0b10 & mic_rt32_5 & mic_imm02 ; EXT_MS19 [ ext_32_imm3=mic_imm02; ] {
+	tmp:$(REGSIZE) = inst_start + sext(EXT_MS19);
+	tmpa:$(ADDRSIZE) = 0;
+	ValCast(tmpa,tmp);
+	tmpl:4 = *[ram]:4 tmpa;
+	mic_rt32_5 = zext(tmpl);
+}
+
+:maddf.S mic_ft_5, mic_fs, micb_fd		is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=1 & mic_fs & mic_ft_5 ; micb_fd & micb_fmt9=0 & micb_fxf5=0b110111000 {
+    tmp:4 = micb_fd:4 f+ (mic_fs:4 f* mic_ft_5:4);
+    micb_fd = zext(tmp);
+}
+
+:maddf.D mic_ft_5, mic_fs, micb_fd		is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=1 & mic_fs & mic_ft_5 & mic_fsD & mic_ftD_5 ; micb_fd & micb_fdD & micb_fmt9=1 & micb_fxf5=0b110111000 {
+    micb_fdD = micb_fdD f+ (mic_fsD f* mic_ftD_5);
+}
+
+:max.S mic_ft_5, mic_fs, micb_fd		is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=1 & mic_fs & mic_ft_5 ; micb_fd & micb_fmt9=0 & micb_fxf5=0b000001011 {
+    # set floating point fd to the max of fs and ft, TBD special case for NaN
+    tmp_cond:1 = mic_fs:4 f> mic_ft_5:4;
+    micb_fd = zext( (mic_fs:4 * zext(tmp_cond == 1)) | (mic_ft_5:4 * zext(tmp_cond == 0) ) );
+}
+
+:max.D mic_ft_5, mic_fs, micb_fd		is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=1 & mic_fs & mic_ft_5 & mic_fsD & mic_ftD_5 ; micb_fd & micb_fdD & micb_fmt9=1 & micb_fxf5=0b000001011 {
+    tmp_cond:1 = mic_fsD f> mic_ftD_5;
+    micb_fdD = zext( (mic_fsD * zext(tmp_cond == 1)) | (mic_ftD_5 * zext(tmp_cond == 0) ) );
+}
+
+:maxa.S mic_ft_5, mic_fs, micb_fd		is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=1 & mic_fs & mic_ft_5 ; micb_fd & micb_fmt9=0 & micb_fxf5=0b000101011 {
+    # set floating point fd to the max of absolute values of fs and ft, TBD special case for NaN
+    tmp_cond:1 = abs(mic_fs:4) f> abs(mic_ft_5:4);
+    micb_fd = zext( (mic_fs:4 * zext(tmp_cond == 1)) | (mic_ft_5:4 * zext(tmp_cond == 0) ) );
+}
+
+:maxa.D mic_ft_5, mic_fs, micb_fd		is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=1 & mic_fs & mic_ft_5 & mic_fsD & mic_ftD_5 ; micb_fd & micb_fdD & micb_fmt9=1 & micb_fxf5=0b000101011 {
+    tmp_cond:1 = abs(mic_fsD) f> abs(mic_ftD_5);
+    micb_fdD = zext( (mic_fsD * zext(tmp_cond == 1)) | (mic_ftD_5 * zext(tmp_cond == 0) ) );
+}
+
+:min.S mic_ft_5, mic_fs, micb_fd		is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=1 & mic_fs & mic_ft_5 ; micb_fd & micb_fmt9=0 & micb_fxf5=0b000000011 {
+    # set floating point fd to the min of fs and ft, TBD special case for NaN
+    tmp_cond:1 = mic_fs:4 f< mic_ft_5:4;
+    micb_fd = zext( (mic_fs:4 * zext(tmp_cond == 1)) | (mic_ft_5:4 * zext(tmp_cond == 0) ) );
+}
+
+:min.D mic_ft_5, mic_fs, micb_fd		is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=1 & mic_fs & mic_ft_5 & mic_fsD & mic_ftD_5 ; micb_fd & micb_fdD & micb_fmt9=1 & micb_fxf5=0b000000011 {
+    tmp_cond:1 = mic_fsD f< mic_ftD_5;
+    micb_fdD = zext( (mic_fsD * zext(tmp_cond == 1)) | (mic_ftD_5 * zext(tmp_cond == 0) ) );
+}
+
+:mina.S mic_ft_5, mic_fs, micb_fd		is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=1 & mic_fs & mic_ft_5 ; micb_fd & micb_fmt9=0 & micb_fxf5=0b000100011 {
+    # set floating point fd to the min of absolute values of fs and ft, TBD special case for NaN
+    tmp_cond:1 = abs(mic_fs:4) f< abs(mic_ft_5:4);
+    micb_fd = zext( (mic_fs:4 * zext(tmp_cond == 1)) | (mic_ft_5:4 * zext(tmp_cond == 0) ) );
+}
+
+:mina.D mic_ft_5, mic_fs, micb_fd		is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=1 & mic_fs & mic_ft_5 & mic_fsD & mic_ftD_5 ; micb_fd & micb_fdD & micb_fmt9=1 & micb_fxf5=0b000100011 {
+    tmp_cond:1 = abs(mic_fsD) f< abs(mic_ftD_5);
+    micb_fdD = zext( (mic_fsD * zext(tmp_cond == 1)) | (mic_ftD_5 * zext(tmp_cond == 0) ) );
+}
+
+:mod micb_rd32, RS0L, RT5L 				is ISA_MODE=1 & RELP=0 & mic_op=0b000000 & REL6=1 & RS0L & RT5L ; micb_axf2=0b0101011000 & micb_bit10=0 & micb_rd32 {
+	tmp:4 = RS0L s% RT5L;
+	micb_rd32 = sext(tmp);
+}
+
+:modu micb_rd32, RS0L, RT5L 			is ISA_MODE=1 & RELP=0 & mic_op=0b000000 & REL6=1 & RS0L & RT5L ; micb_axf2=0b0111011000 & micb_bit10=0 & micb_rd32 {
+	tmp:4 = RS0L % RT5L;
+	micb_rd32 = sext(tmp);
+}
+
+:msubf.S mic_ft_5, mic_fs, micb_fd		is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=1 & mic_fs & mic_ft_5 ; micb_fd & micb_fmt9=0 & micb_fxf5=0b111111000 {
+    # set floating point fd = fd - fs * ft, using 32-bit floating values
+    tmp:4 = micb_fd:4 f- (mic_fs:4 f* mic_ft_5:4);
+    micb_fd = zext(tmp);
+}
+
+:msubf.D mic_ft_5, mic_fs, micb_fd		is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=1 & mic_fs & mic_ft_5 & mic_fsD & mic_ftD_5 ; micb_fd & micb_fdD & micb_fmt9=1 & micb_fxf5=0b111111000 {
+    micb_fdD = micb_fdD f- (mic_fsD f* mic_ftD_5);
+}
+
+:muh micb_rd32, RS0L, RT5L 				is ISA_MODE=1 & RELP=0 & mic_op=0b000000 & REL6=1 & RS0L & RT5L ; micb_axf2=0b0001011000 & micb_bit10=0 & micb_rd32 {
+	tmpS:8 = sext(RS0L);
+	tmpT:8 = sext(RT5L);
+	tmpS = tmpS * tmpT;
+	tmp:4 = tmpS[32,32];
+	micb_rd32 = sext(tmp);
+}
+
+:mulu micb_rd32, RS0L, RT5L 			is ISA_MODE=1 & RELP=0 & mic_op=0b000000 & REL6=1 & RS0L & RT5L ; micb_axf2=0b0010011000 & micb_bit10=0 & micb_rd32 {
+	tmpS:8 = zext(RS0L);
+	tmpT:8 = zext(RT5L);
+	tmpS = tmpS * tmpT;
+	tmp:4 = tmpS[0,32];
+	micb_rd32 = sext(tmp);
+}
+
+:muhu micb_rd32, RS0L, RT5L 			is ISA_MODE=1 & RELP=0 & mic_op=0b000000 & REL6=1 & RS0L & RT5L ; micb_axf2=0b0011011000 & micb_bit10=0 & micb_rd32 {
+	tmpS:8 = zext(RS0L);
+	tmpT:8 = zext(RT5L);
+	tmpS = tmpS * tmpT;
+	tmp:4 = tmpS[32,32];
+	micb_rd32 = sext(tmp);
+}
+
+:rdhwr mic_rt32_5, mic_rs32_0, micb_sel	is ISA_MODE=1 & RELP=0 & mic_op=0b000000 & REL6=1 & mic_rt32_5 & mic_rs32_0 ; micb_sel & micb_z14=0 & micb_bit10=0 & micb_axf2=0b0111000000 {
+	mic_rt32_5 = getHWRegister(mic_rs32_0, micb_sel:1);
+}
+
+:rint.S mic_fd, mic_fs_5				is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=1 & mic_fs_5 & mic_fd ; micb_fd=0 & micb_fmt9=0 & micb_fxf5=0b000100000 {
+    # floating point round to integral floating point
+    rm_tmp:1 = fcsr[0,2]; # Get RM rounding mode bits
+    fs_tmp:4 = mic_fs_5:4;
+    fs_cvt_tmp:4 = 0;
+    if (rm_tmp == 0) goto <do_round>;
+      fs_cvt_tmp = floor(fs_tmp); # RM is 1, no rounding, and floor returns a float
+      goto <done>;
+    <do_round>
+      fs_cvt_tmp = round(fs_tmp); # round returns a float
+    <done>
+    mic_fd = zext(fs_cvt_tmp);
+}
+
+:rint.D mic_fd, mic_fs_5				is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=1 & mic_fs_5 & mic_fd & mic_fsD_5 & mic_fdD; micb_fd=0 & micb_fmt9=1 & micb_fxf5=0b000100000 {
+    # floating point round to integral floating point
+    rm_tmp:1 = fcsr[0,2]; # Get RM rounding mode bits
+    if (rm_tmp == 0) goto <do_round>;
+      mic_fdD = floor(mic_fsD_5); # RM is 1, no rounding, and floor returns a float
+      goto <done>;
+    <do_round>
+      mic_fdD = round(mic_fsD_5); # round returns a float
+    <done>
+}
+
+:scx RT5L, EXT_CODE9E(mic_base0)		is ISA_MODE=1 & RELP=0 & mic_op=0b011000 & REL6=1 & RT5L & mic_base0 ; micb_func12=0b1001 & micb_sub9=0b000 & EXT_CODE9E {
+	tmp:$(REGSIZE) = sext(EXT_CODE9E);
+	tmp = tmp + mic_base0;
+    lockwrite(tmp);
+	tmpa:$(ADDRSIZE) = 0;
+	ValCast(tmpa,tmp);
+	*[ram]:4 tmpa = RT5L;
+	RT5L = 1;
+}
+
+:scxe RT5L, EXT_CODE9E(mic_base0)		is ISA_MODE=1 & RELP=0 & mic_op=0b011000 & REL6=1 & RT5L & mic_base0 ; micb_func12=0b1010 & micb_sub9=0b000 & EXT_CODE9E {
+	tmp:$(REGSIZE) = sext(EXT_CODE9E);
+	tmp = tmp + mic_base0;
+	tmpa:$(ADDRSIZE) = 0;
+	ValCast(tmpa,tmp);
+	*[ram]:4 tmpa = RT5L;
+    lockwrite(tmp);
+}
+
+:seleqz micb_rd32, mic_rs32_0, mic_rt32_5	is ISA_MODE=1 & RELP=0 & mic_op=0b000000 & REL6=1 & mic_rs32_0 & mic_rt32_5 ; micb_axf2=0b0101000000 & micb_bit10=0 & micb_rd32 {
+	# We use tmp to cover case where rs and rd are the same reg
+	tmps:$(REGSIZE) = mic_rs32_0;
+	tmpt:$(REGSIZE) = mic_rt32_5;
+	micb_rd32 = 0;
+	if (tmpt != 0) goto inst_next;
+	micb_rd32 = tmps;
+}
+
+:selnez micb_rd32, mic_rs32_0, mic_rt32_5	is ISA_MODE=1 & RELP=0 & mic_op=0b000000 & REL6=1 & mic_rs32_0 & mic_rt32_5 ; micb_axf2=0b0110000000 & micb_bit10=0 & micb_rd32 {
+	# We use tmp to cover case where rs and rd are the same reg
+	tmps:$(REGSIZE) = mic_rs32_0;
+	tmpt:$(REGSIZE) = mic_rt32_5;
+	micb_rd32 = 0;
+	if (tmpt == 0) goto inst_next;
+	micb_rd32 = tmps;
+}
+
+:sel.S mic_ft_5, mic_fs, micb_fd		is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=0 & mic_fs & mic_ft_5 ; micb_fd & micb_fmt9=0 & micb_fxf5=0b010111000 {
+    tmp:1 = (micb_fd[0,1] == 0x01);
+    micb_fd = (zext(tmp) * mic_ft_5) | (zext(tmp == 0x0) * mic_fs);
+}
+
+:sel.D mic_ft_5, mic_fs, micb_fd		is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=0 & mic_fs & mic_fsD & mic_ft_5 & mic_ftD_5; micb_fd & micb_fdD & micb_fmt9=1 & micb_fxf5=0b010111000 {
+    tmp:1 = (micb_fdD[0,1] == 0x01);
+    micb_fdD = (zext(tmp) * mic_ftD_5) | (zext(tmp == 0x0) * mic_fsD);
+}
+
+:seleqz.S mic_ft_5, mic_fs, micb_fd		is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=1 & mic_fs & mic_ft_5 ; micb_fd & micb_fmt9=0 & micb_fxf5=0b000111000 {
+    micb_fd = zext(mic_fs * zext(mic_ft_5[0,1] == 0));
+}
+
+:seleqz.D mic_ft_5, mic_fs, micb_fd		is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=1 & mic_fs & mic_ft_5 & mic_fsD & mic_ftD_5; micb_fd & micb_fdD & micb_fmt9=1 & micb_fxf5=0b000111000 {
+    micb_fdD = zext(mic_fsD * zext(mic_ftD_5[0,1] == 0));
+}
+
+:selnez.S mic_ft_5, mic_fs, micb_fd		is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=1 & mic_fs & mic_ft_5 ; micb_fd & micb_fmt9=0 & micb_fxf5=0b001111000 {
+    micb_fd = zext(mic_fs * zext(mic_ft_5[0,1] == 1));
+}
+
+:selnez.D mic_ft_5, mic_fs, micb_fd		is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=1 & mic_fs & mic_ft_5 & mic_fsD & mic_ftD_5 ; micb_fd & micb_fdD & micb_fmt9=1 & micb_fxf5=0b001111000 {
+    micb_fdD = zext(mic_fsD * zext(mic_ftD_5[0,1] == 1));
+}
+
+:sigrie	EXT_CODE16						is ISA_MODE=1 & RELP=0 & mic_op=0b000000 & REL6=1 & mic_code4r6=0 & mic_imm6r6; micb_poolax=0b111111 & EXT_CODE16 [ ext_32_imm6 = mic_imm6r6; ] {
+	signalReservedInstruction(EXT_CODE16);
+}
+
+@ifdef MIPS64
+:dalign micb_rd32, mic_rs32_0, mic_rt32_5, micb_bp8	is ISA_MODE=1 & RELP=0 & mic_op=0b010110 & REL6=1 & mic_rt32_5 & mic_rs32_0 ; micb_poolax=0b011100 & micb_z67=0 & micb_rd32 & micb_bp8 {
+	tmp:8 = mic_rt32_5 << (8 * micb_bp8);
+	micb_rd32 = tmp | (mic_rs32_0 >> (64 - (8 * micb_bp8)));
+}
+
+:dahi mic_rs32_0, EXT_MS48  			is ISA_MODE=1 & RELP=0 & mic_op=0b010000 & REL6=1 & mic_funci=0b10001 & mic_rs32_0 ; EXT_MS48 {
+	mic_rs32_0 = mic_rs32_0 + EXT_MS48;
+}
+
+:dati mic_rs32_0, EXT_MS64  			is ISA_MODE=1 & RELP=0 & mic_op=0b010000 & REL6=1 & mic_funci=0b10000 & mic_rs32_0 ; EXT_MS64 {
+	mic_rs32_0 = mic_rs32_0 + EXT_MS64;
+}
+
+:daui mic_rt32_5, mic_rs32_0, EXT_MS32  is ISA_MODE=1 & RELP=0 & mic_op=0b111100 & REL6=1 & mic_rt32_5 & mic_rs32_0 ; EXT_MS32 {
+	mic_rt32_5 = mic_rs32_0 + sext(EXT_MS32);
+}
+
+:dbitswap mic_rd32_0, mic_rt32_5		is ISA_MODE=1 & RELP=0 & mic_op=0b010110 & REL6=1 & mic_rt32_5 & mic_rd32_0 ; micb_poolax=0b111100 & micb_axf3=0b101100 & micb_z12=0 {
+	mic_rd32_0 = bitSwap(mic_rt32_5);
+}
+
+:ddiv micb_rd32, mic_rs32_0, mic_rt32_5 	is ISA_MODE=1 & RELP=0 & mic_op=0b010110 & REL6=1 & mic_rs32_0 & mic_rt32_5 ; micb_axf2=0b0100011000 & micb_bit10=0 & micb_rd32 {
+	micb_rd32 = mic_rs32_0 s/ mic_rt32_5;
+}
+
+:ddivu micb_rd32, mic_rs32_0, mic_rt32_5 	is ISA_MODE=1 & RELP=0 & mic_op=0b010110 & REL6=1 & mic_rs32_0 & mic_rt32_5 ; micb_axf2=0b0110011000 & micb_bit10=0 & micb_rd32 {
+	micb_rd32 = mic_rs32_0 / mic_rt32_5;
+}
+
+:dlsa micb_rd32, mic_rs32_0, mic_rt32_5, EXT_SA9 	is ISA_MODE=1 & RELP=0 & mic_op=0b010110 & REL6=1 & mic_rs32_0 & mic_rt32_5 ; micb_poolax=0b000100 & micb_asel=0b100 & EXT_SA9 & micb_rd32 {
+	micb_rd32 = (mic_rs32_0 << EXT_SA9) + mic_rt32_5;
+}
+
+:dmod micb_rd32, mic_rs32_0, mic_rt32_5 	is ISA_MODE=1 & RELP=0 & mic_op=0b010110 & REL6=1 & mic_rs32_0 & mic_rt32_5 ; micb_axf2=0b0101011000 & micb_bit10=0 & micb_rd32 {
+	micb_rd32 = mic_rs32_0 s% mic_rt32_5;
+}
+
+:dmodu micb_rd32, mic_rs32_0, mic_rt32_5 	is ISA_MODE=1 & RELP=0 & mic_op=0b010110 & REL6=1 & mic_rs32_0 & mic_rt32_5 ; micb_axf2=0b0111011000 & micb_bit10=0 & micb_rd32 {
+	micb_rd32 = mic_rs32_0 % mic_rt32_5;
+}
+
+:dmul micb_rd32, mic_rs32_0, mic_rt32_5 	is ISA_MODE=1 & RELP=0 & mic_op=0b010110 & REL6=1 & mic_rs32_0 & mic_rt32_5 ; micb_axf2=0b0000011000 & micb_bit10=0 & micb_rd32 {
+	micb_rd32 = mic_rs32_0 * mic_rt32_5;
+}
+
+:dmuh micb_rd32, mic_rs32_0, mic_rt32_5 	is ISA_MODE=1 & RELP=0 & mic_op=0b010110 & REL6=1 & mic_rs32_0 & mic_rt32_5 ; micb_axf2=0b0001011000 & micb_bit10=0 & micb_rd32 {
+	tmp:16 = sext(mic_rs32_0) * sext(mic_rt32_5);
+    micb_rd32 = tmp(8); 
+}
+
+:dmulu micb_rd32, mic_rs32_0, mic_rt32_5 	is ISA_MODE=1 & RELP=0 & mic_op=0b010110 & REL6=1 & mic_rs32_0 & mic_rt32_5 ; micb_axf2=0b0010011000 & micb_bit10=0 & micb_rd32 {
+	micb_rd32 = mic_rs32_0 * mic_rt32_5;
+}
+
+:dmuhu micb_rd32, mic_rs32_0, mic_rt32_5 	is ISA_MODE=1 & RELP=0 & mic_op=0b010110 & REL6=1 & mic_rs32_0 & mic_rt32_5 ; micb_axf2=0b0011011000 & micb_bit10=0 & micb_rd32 {
+	tmp:16 = zext(mic_rs32_0) * zext(mic_rt32_5);
+    micb_rd32 = tmp(8); 
+}
+
+:ldpc mic_rt32_5, EXT_MS18				is ISA_MODE=1 & RELP=0 & mic_op=0b011110 & REL6=1 & mic_pcf2=0b110 & mic_rt32_5 & mic_imm01 ; EXT_MS18 [ ext_32_imm2=mic_imm01; ] {
+	tmp:8 = inst_start + sext(EXT_MS18);
+	tmpa:$(ADDRSIZE) = 0;
+	ValCast(tmpa,tmp);
+	mic_rt32_5 = *[ram]:8 tmpa; 
+}
+
+:lldx mic_rt32_5, EXT_CODE9E(mic_base0)	is ISA_MODE=1 & RELP=0 & mic_op=0b011000 & REL6=1 & mic_rt32_5 & mic_base0 ; micb_func12=0b0101 & micb_sub9=0b000 & EXT_CODE9E {
+	tmp:$(REGSIZE) = sext(EXT_CODE9E);
+	tmp = tmp + mic_base0;
+	tmpa:$(ADDRSIZE) = 0;
+	ValCast(tmpa,tmp);
+    mic_rt32_5 = sext(*[ram]:4 tmpa);
+    lockload(tmp);
+}
+
+# The documentation is partly wrong for this instruction and generates a conflict (same pattern) as lldx instruction. The op-code map section of the document
+# does have the difference between this and the lldx so I went with that. 
+:scdx mic_rt32_5, EXT_CODE9E(mic_base0)	is ISA_MODE=1 & RELP=0 & mic_op=0b011000 & REL6=1 & mic_rt32_5 & mic_base0 ; micb_func12=0b1101 & micb_sub9=0b000 & EXT_CODE9E {
+	tmp:$(REGSIZE) = sext(EXT_CODE9E);
+	tmp = tmp + mic_base0;
+    lockwrite(tmp);
+	tmpa:$(ADDRSIZE) = 0;
+	ValCast(tmpa,tmp);
+	*[ram]:8 tmpa = mic_rt32_5;
+	mic_rt32_5 = 1;
+}
+
+@endif

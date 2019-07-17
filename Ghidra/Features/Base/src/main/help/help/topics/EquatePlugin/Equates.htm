@@ -1,0 +1,480 @@
+<!DOCTYPE doctype PUBLIC "-//W3C//DTD HTML 4.0 Frameset//EN">
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+
+    <TITLE>Equates</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=windows-1252">
+    <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+    <META name="generator" content="Microsoft FrontPage 4.0">
+  </HEAD>
+
+  <BODY lang="EN-US">
+    <H1>Equates</H1>
+
+    <P>
+    An Equate is a string substitution for <A href=
+    "help/topics/Glossary/glossary.htm#Scalar">scalar</A> (a numeric value) in any code unit (instruction
+    operand or data).  For example, consider the instruction below:</P>
+
+    <P style="margin-left:100px">
+    		<TT>MOV R2, $0xb</TT>
+    </P>
+
+    <P>The scalar <I>$0xb</I> can be replaced with the string <I>BATTERY_FLAG_CRITICAL</I>.
+    This will yield the following:</P>
+
+    <P style="margin-left:100px">    
+    		<TT>MOV R2, BATTERY_FLAG_CRITICAL</TT>
+    </P>
+
+    <P>The substitution of "BATTERY_FLAG_CRITICAL" for <I>$0xb</I> is called an equate. That is,
+    <I>$0xb</I> is equated to "BATTERY_FLAG_CRITICAL". Note that the default choice for the new 
+    equate application is your current location. "BATTERY_FLAG_CRITICAL" will
+    replace the scalar value <I>$0xb</I> only at the current cursor location unless you choose a 
+    different option. However, when replacing another scalar of the same value, 
+    a list of previously declared Equates for that
+    scalar value is presented.</P>
+
+    <P>Scalars can only be equated to strings. The string can be of any length and may
+    contain spaces and special characters. Duplicate equate names are not allowed.</P>
+    
+    <BLOCKQUOTE>
+    <P><IMG alt="Note" src="../../shared/note.png">It should be noted that for the purposes of this document, "scalars" refers to scalar values
+    contained in <i>code units</i>.  A code unit is an instruction operand or other data element.</P>
+    </BLOCKQUOTE>
+
+    <P>There are several operations that are associated with Equates. They are:</P>
+
+    <DIV style="margin-left: 2em" type="disc">
+      <UL type="disc">
+        <LI><A href="#Set_Equate">Set Equate</A></LI>
+        
+        <LI><A href="#Rename_Equate">Rename Equate</A></LI>
+
+        <LI><A href="#CBAnnotationEquateRemoveEquate">Remove Equate</A></LI>
+        
+        <LI><A href="#Apply_Enum">Apply Enum</A></LI>
+
+        <LI><A href="#Equate_Table">View Equates</A></LI>
+
+        <LI><A href="#CBAnnotationEquateConvertSignedDecimal">Convert</A></LI>
+      </UL>
+    </DIV>
+
+    <H2><A name="Set_Equate"></A>Set Equate</H2>
+
+    <BLOCKQUOTE>
+      <P>The <I>Set Equate</I> action will create one or more Equates in the Listing.</P>
+
+      <P>To set an Equate:</P>
+    </BLOCKQUOTE>
+
+    <DIV style="margin-left: 2em" type="">
+      <OL type="1">
+        <LI>
+          Right-mouse-click on the target scalar value<B>,</B> and select <B>Set Equate</B> or press
+          <B>&lt;E&gt;</B>.<BR>
+           
+
+			<BR><BR>
+            <P align="center"><IMG src="images/SetEquate.png" alt="Set Equate Dialog"><BR>
+            </P>
+            <BR><BR>
+        </LI>
+
+        <LI>When the dialog appears, either type in an equate string or choose one from the list of
+        strings that are known to be associated with the given value. As you type in the
+        "Equate String" field, the list will be narrowed down to show only the strings that contain 
+        the text that has been typed.<BR>
+        </LI>
+
+		<LI>
+		Select one of the choices from the "Apply To" list. <B>Current Location</B> is 
+		the default choice unless a selection is made, in which case the <B>Current Selection</B> option
+		will be set. The other option is <B>Entire Program.</B>
+		
+		<OL type="a">
+			<LI>
+				<B>Current Location</B>: When selected the equate will be applied to the scalar 
+				value at the current location of your cursor only.
+			</LI>
+			<LI>
+				<B>Current Selection</B>: When selected the equate will be applied to all of 
+				the scalar values in your current selection that match the value 
+				of the scalar that you originally clicked. When you make a 
+				selection in your program this button will become enabled. If you do not make a 
+				selection then it will not be enabled and the option will be grayed out. Note that
+				scalars in your selection that already have an equate set will not be affected
+				by this unless you also select the overwrite option.
+			</LI>
+			<LI>
+				<B>Entire Program</B>: When selected the equate will be applied to all of the 
+				scalar values in the entire program that also match the value of the scalar that 
+				you originally right-mouse-clicked on.
+			</LI>
+			<LI>
+				<B>Overwrite existing equates</B>: This option is only enabled when setting equates in a selection or the whole program. If this 
+				option is selected, all scalars and all named equates in the selection or entire program, depending on which option is selected, will be
+				set with the user-given equate name. If the overwrite option is not selected, only scalars not already with equates set will be assigned the user-given equate name. 
+			</LI>
+		</OL>
+		</LI>
+
+        <LI>Double-click on an entry in the list, or select an entry in the list and press <SPAN
+        style="font-weight: bold;">OK,</SPAN> or type in the string and press OK. If any item
+        in the list is selected it will be used, otherwise the text in the "Equate String" field
+        will be used.</LI>
+        
+        
+        
+      </OL><SPAN style="font-family: times new roman;"><BR>
+      </SPAN>
+    </DIV>
+
+	<BLOCKQUOTE>
+    <P style="margin-left: 40px;"><SPAN style="font-family: times new roman;"><IMG alt="Note" src=
+    "../../shared/note.png"> The list of strings shown in the <SPAN style="font-weight: bold;">Set
+    Equate</SPAN> dialog are generated from two sources. The first source is all the currently
+    assigned equates to the given value. The other source is all the Enum datatypes that
+    exist in all the <SPAN style="font-weight: bold;">open</SPAN> datatype archives. If an
+    Enum datatype exists that has a member value equal to the given equate value, then that string
+    will be included.<BR>
+    </SPAN></P>
+    
+    <P style="margin-left: 40px;"><SPAN style="font-family: times new roman;"><IMG alt="Note" src=
+    "../../shared/note.png">The <SPAN style="font-weight: bold;">open</SPAN> data type archives
+    contain valid enums and "fake" enums. The fake enums are created from #define values
+    (parsed from .h files), specifically so that they will be available in the <SPAN style=
+    "font-weight: bold;">Set Equate</SPAN> dialog.</SPAN></P>
+
+    <P style="margin-left: 40px;"><SPAN style="font-family: times new roman;"><IMG alt="Note" src=
+    "../../shared/note.png"> Each entry in the dialog is color-coded based upon how it is being used
+    as an equate.<BR>
+    
+	<OL type="a" style="margin-left: 80px;">
+		<LI>
+			<B>Blue</B>: Blue entries are existing user-defined string equates that are being used 
+			for that scalar.
+		</LI>
+		
+		<LI>
+			<B>Black</B>: Black entries are existing enum field equates being used for that scalar.
+		</LI>
+		
+		<LI>
+			<B>Gray</B>: Gray entries are suggested enum fields that have the same value as the 
+			scalar. These entries are only suggestions, and have not yet been made equates.
+		</LI>
+    </OL>
+    	
+    </SPAN></P>
+    </BLOCKQUOTE>
+
+	<H2><A name="Rename_Equate"></A>Rename Equate</H2>
+	
+   <BLOCKQUOTE>
+      <P>The <I>Rename Equate</I> action will rename one or more instances of a named Equate in the Listing.</P>
+
+      <P>To rename an Equate:</P>
+    </BLOCKQUOTE>
+
+    <DIV style="margin-left: 2em" type="">
+      <OL type="1">
+        <LI>
+          Right-mouse-click on the current Equate<B>,</B> and select <B>Rename Equate</B> or press
+          <B>&lt;E&gt;</B>.<BR>
+           
+
+			<BR><BR>
+            <P align="center"><IMG src="images/RenameEquate.png" alt="Rename Equate Dialog"><BR>
+            </P>
+            <BR><BR>
+        </LI>
+
+ 	<LI>
+		Select one of the choices from the "Apply To" list. <B>Current Location</B> is 
+		the default choice unless a selection is made, in which case the <B>Current Selection</B> option
+		will be set. The other option is <B>Entire Program.</B>
+		
+		<OL type="a">
+			<LI>
+				<B>Current Location</B>: When selected the equate will be applied to the scalar 
+				value at the current location of your cursor only.
+			</LI>
+			<LI>
+				<B>Current Selection</B>: When selected the equate will be applied to all of 
+				the scalar values in your current selection that match the value 
+				of the scalar that you originally clicked. When you make a 
+				selection in your program this button will become enabled. If you do not make a 
+				selection then it will not be enabled and the option will be grayed out.
+			</LI>
+			<LI>
+				<B>Entire Program</B>: When selected the equate will be applied to all of the 
+				scalar values in the entire program that match the value of the scalar that you
+				originally clicked. Scalars that already have an equate set that 
+				is different from the one you selected will not be affected.
+			</LI>
+		</OL>
+		</LI>
+
+        <LI>Double-click an entry in the list, select an entry in the list and press <SPAN
+        style="font-weight: bold;">OK,</SPAN> or type in the string and press <b>OK</b>. If any item
+        in the list is selected it will be used, otherwise the text in the "Equate String" field
+        will be used.</LI>
+    </DIV>
+     <H2><A name="CBAnnotationEquateRemoveEquate"></A><A name="Delete_Equate"></A><A name=
+    "Remove_Equate"></A>Remove Equate</H2>
+    
+    <BLOCKQUOTE>
+      <P>The <I>Remove Equate</I> action will remove an Equate(s) from a listing; effectively returning the operand to its original scalar value.</P>
+
+      <P>To remove references to an Equate via the context popup menu:</P>
+    </BLOCKQUOTE>
+
+    <DIV style="margin-left: 2em" type="">
+      <OL>
+        <LI>Right-mouse-click on an existing Equate, or select a group of equates and right-click on an equate within that selection, then choose <B>Remove Equate</B> or press
+        &lt;<B>Delete</B>&gt;.</LI>
+        
+        <LI>If you made a group selection, a confirmation dialog will appear to ensure you want to remove all equates in the selection; equates within the selection
+        matching the one you clicked will be removed.
+        
+           <P align="center"><BR>
+           <IMG src="images/RemoveSelection.png" alt="Confirm Equate Remove Dialog"></P>
+
+          <P align="center"></P>
+        </LI>
+      </OL>
+    </DIV>
+
+    <BLOCKQUOTE>
+      <P>To remove all references of an Equate via the <I>Equates Table</I> window:</P>
+    </BLOCKQUOTE>
+
+    <DIV style="margin-left: 2em" type="">
+      <OL>
+        <LI>Select the Code Browser menu option <B>Window<IMG src="../../shared/arrow.gif" border=
+        "0">Equates Table</B> to bring up the <I>Equates Table</I> window.</LI>
+
+        <LI>Right-mouse-click on the Equate to be deleted and select <B>Delete</B>.</LI>
+
+        <LI>
+          A confirmation dialog will appear. 
+
+          <P align="center"><BR>
+           <IMG src="images/ConfirmEquateDelete.png" alt="Confirm Equate Delete Dialog"></P>
+
+          <P align="center"></P>
+        </LI>
+
+        <LI>Select <B>Delete</B> to remove all references to the equate and the Equate's definition
+        itself.<BR>
+        </LI>
+      </OL>
+    </DIV>
+    
+         <H2><A name="Apply_Enum"></A> Apply Enum</H2>
+    
+    <BLOCKQUOTE>
+      <P>The <I>Apply Enum</I> action (only available when there is a selection), will apply 
+      enum member names to scalars in the current selection if any of the enum values match 
+      those scalars.</P>
+
+      <P>To apply an enum to the selection:</P>
+    </BLOCKQUOTE>
+
+    <DIV style="margin-left: 2em" type="">
+      <OL>
+        <LI> Make a selection and then Right-mouse-click, then choose <B>Apply Enum</B>. 
+        	 
+        	  <P align="center"><BR>
+        	  <IMG src="images/BeforeApplyEnum.png" alt="Apply Enum Popup"></P>
+
+        	  <P align="center"></P>
+        </LI>
+        
+        <LI>A dialog similar to the one below should appear. Select the enum that
+        	 you want to be applied to the selection. The data type must be an enum for the action
+        	 to work.
+        
+           <P align="center"><BR>
+           <IMG src="images/ApplyEnum.png" alt="Apply Enum Popup"></P>
+
+           <P align="center"></P>
+          
+           <UL>
+            
+             <LI><I>Apply to sub-operands</I> - Applies the enum to scalars within operands.</LI>
+           </UL>
+          
+           <P>Once the data type is selected, the scalars in the selection will have equates
+            applied to them as shown below.</P>
+          
+           <P align="center"><BR>
+           <IMG src="images/AfterApplyEnum.png" alt="Apply Enum Popup"></P>
+
+           <P align="center"></P>
+          
+        </LI>
+      </OL>
+    </DIV>
+
+    <H2><A name="Equate_Table"></A> <A name="Display_Equates_Table"></A> View Equates</H2>
+
+    <BLOCKQUOTE>
+      <P>The <I>Display Equates Table</I> action displays a window which lists all of the Equates
+      and their references in a tabular format.</P>
+    </BLOCKQUOTE>
+
+    <DIV align="center">
+      <CENTER>
+        <TABLE border="0" width="100%">
+          <TBODY>
+            <TR>
+              <TD align="center" width="100%"><IMG src="images/EquatesTable.png" alt=
+              "Equates Table" border="0"></TD>
+            </TR>
+          </TBODY>
+        </TABLE>
+      </CENTER>
+    </DIV>
+
+    <BLOCKQUOTE>
+      <P>The left panel, <I>Equates,</I> lists name, value, and number of references for all
+      Equates. The right panel, <I>References,</I> lists the address and operand index of
+      each location that references the Equate selected in the left panel. Selecting an
+      address on the <I>References</I> panel will cause the Code Browser to go to that address in
+      the listing. The <I>Equates</I> panel and the <I>References</I> panel can each be
+      sorted by any column. The ascending and descending indicator displays the sort order of
+      the information.</P>
+    </BLOCKQUOTE>
+
+    <BLOCKQUOTE>
+      <P>To view the <I>Equates Table</I> select the Code Browser menu option <B>Window<IMG src=
+      "../../shared/arrow.gif" border="0">Equates Table</B> to bring up the <I>Equates Table</I>
+      window.</P>
+
+      <P>You can re-order the columns in the Equates table by dragging the header to another
+      position in the table. Sort the columns by double-clicking on the header. By default, equates
+      are sort alphabetically. You can re-order the References table and sort by the operand index,
+      Op Index. By default, the references are sorted by reference address in ascending order.<BR>
+      </P>
+
+      <P>You can also rename the equate by double clicking in the name field and entering a 
+      new name. If the equate is based off of an enum, then an enum editor dialog will appear. 
+      Changing the matching field name will also change the equate name.<BR>
+      </P>
+      
+      <P style="margin-left: 40px;"><SPAN style="font-family: times new roman;"><IMG alt="Note" src=
+    "../../shared/note.png"> Each equate is color-coded based upon how it is being used.<BR>
+    
+	<OL type="a" style="margin-left: 80px;">
+		<LI>
+			<B>Blue</B>: Blue equates are existing user-defined string equates that are being used 
+			for that scalar.
+		</LI>
+		
+		<LI>
+			<B>Black</B>: Black equates are existing enum field equates being used for that scalar.
+		</LI>
+		
+		<LI>
+			<B>Red</B>: Red entries are bad equates. A bad equate could either mean that the enum
+			that this equate is based off of was deleted, the field inside the enum was deleted, or
+			 the field's value was changed.
+		</LI>
+    </OL>
+    	
+    </SPAN></P>
+    </BLOCKQUOTE>
+
+    <H2><A name="CBAnnotationEquateConvertSignedDecimal"></A><A name="Convert"></A>Convert</H2>
+
+    <DIV style="margin-left: 40px;">
+      <P>The various convert actions are used to change the number format display of scalars
+      displayed in the code browser. These actions are available whenever the cursor is on a number
+      in the operand field, or the value field of a data item (byte, word, dword, qword). Note that 
+      these actions and equates are not currently supported for composite and array data.
+      For instruction operands, the scalar number is converted visually by replacing the number with an
+      appropriately named equate.  Such a conversion can be cleared by removing the equate
+      from the operand.  For data value fields, a combination of data format settings and signed/unsigned 
+      data type alteration is used to reflect a conversion.  The available formats are as follows.<BR>
+      </P>
+    </DIV>
+
+    <BLOCKQUOTE>
+      <H3><A name="Convert_To_Signed_Decimal"></A>Signed Decimal</H3>
+
+      <P>The existing scalar value will be displayed as a signed decimal number. This action
+      is only available if the value can be interpreted as a negative value.<BR>
+      </P>
+
+      <H3><A name="Convert_To_Unsigned_Decimal"></A>Unsigned Decimal</H3>
+
+      <P>The existing scalar value will be displayed as an unsigned decimal number. If the
+      value would be positive even if the signed decimal format was selected, the action will
+      simply be name <SPAN style="font-weight: bold;">Decimal</SPAN> instead of <SPAN style=
+      "font-weight: bold;">Unsigned Decimal</SPAN>.</P>
+
+      <H3><A name="Convert_To_Unsigned_Octal"></A>Unsigned Octal</H3>
+
+      <P>The existing scalar value will be displayed as an unsigned octal number.</P>
+
+	  <H3><A name="Convert_To_Signed_Hex"></A>Signed Hex</H3>
+
+      <P>The existing scalar value will be displayed as a signed hexadecimal number.  This action
+      is only available if the value can be interpreted as a negative value, and
+      is only supported on instruction operands since the data hex format
+      currently supports unsigned rendering only.</P>
+      
+      <H3><A name="Convert_To_Unsigned_Hex"></A>Unsigned Hex</H3>
+
+      <P>The existing scalar value will be displayed as an unsigned hexadecimal number.</P>
+      
+      <H3><A name="Convert_To_Char"></A>Char / Char Sequence</H3>
+
+      <P>The existing scalar value will be displayed as either a single ASCII character or a
+      sequence of ASCII characters, whichever is more appropriate.  Invalid and non-printable 
+      ASCII characters will be rendered in hex (e.g., \x20).<BR>
+      </P>
+
+      <H3><A name="Convert_To_Unsigned_Binary"></A>Unsigned Binary</H3>
+
+	      <P>The existing scalar value will be displayed as an unsigned binary number.<BR>
+	      </P>
+      
+      <H3><A name="Convert_To_Float"></A>Float</H3>
+	      <P>The existing scalar value will be displayed as a IEEE 754 single 
+	      precision floating point number.  The floating point size is processor specific
+	      and will match the size of the Float data type.  This action is only supported on instruction
+	      operands.<BR>
+	      </P>
+      
+      <H3><A name="Convert_To_Double"></A>Double</H3>
+	      <P>The existing scalar value will be displayed as a IEEE 754 double
+	      precision floating point number.  The floating point size is processor specific
+	      and will match the size of the Double data type.  This action is only supported on instruction
+	      operands.<BR>
+	      </P>
+
+	      <P><IMG src="../../shared/tip.png" alt="" border="0"> The convert actions also work on an 
+		    instruction selection. Just make a selection then choose an operand scalar value to convert. 
+		    All matching instruction scalar values in the selection will be converted.</P>
+		  
+		  <P><IMG src="../../shared/tip.png" alt="" border="0"> Based upon how an instruction
+		  is implemented by its' associated language module, a hexadecimal operand which appears 
+		  to be negative may in fact be a positive scalar with negative sign '-' character prepended.
+		  In such cases, the convert action may not produce the expected result.</P>
+		  
+		  <P><IMG src="../../shared/tip.png" alt="" border="0"> The presence of a primary reference
+		  on an operand may prevent rendering of the converted scalar value since reference 
+		  markup takes precedence over equates and data formatting.</P>
+	  </BLOCKQUOTE>
+
+    <P class="providedbyplugin">Provided By: <I>EquatePlugin</I> and <I>EquateTablePlugin</I></P>
+    <BR>
+  </BODY>
+</HTML>

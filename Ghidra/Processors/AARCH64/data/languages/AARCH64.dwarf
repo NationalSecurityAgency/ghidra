@@ -1,0 +1,8 @@
+<dwarf>
+	<register_mappings>
+		<register_mapping dwarf="0" ghidra="x0" auto_count="31"/> <!-- x0..x30 -->
+		<register_mapping dwarf="31" ghidra="xzr" stackpointer="true"/>
+		<register_mapping dwarf="64" ghidra="q0" auto_count="32"/> <!-- q0..q31 -->
+	</register_mappings>
+	<call_frame_cfa value="0"/>
+</dwarf>

@@ -1,0 +1,400 @@
+# CR16B
+
+
+# TODO: instructions not implemented
+
+
+# Basic ================================================================================
+
+# define endian=big; # Defined in file that includes this file
+define alignment=2;
+
+define space ram 	  type=ram_space 	  size=3 default;
+define space register type=register_space size=2;
+
+# Registers ============================================================================
+
+
+
+define register offset=0 size=2 [
+  R0   R1   R2   R3   R4    R5    R6    R7
+  R8   R9   R10  R11  R12_L R12_H R13_L R13_H  
+  RA_L RA_H SP_L _
+];
+
+
+
+
+# Fields =================================================================================
+
+
+define token instr(16)
+    b0=(0,0)        # bit0
+    op1=(1,4)       # operand1
+    op2=(5,8)       # operand2
+    opcode1=(9,12)  # opcode1
+    i=(13,13)       # integer operation length bit: i=0=8bit, i=1=16bit
+    opcode2=(14,15) # opcode2
+
+    op1_b02=(1,3)   # bits 0,1,2 of op1
+    op1_b12=(2,3)   # bits 1,2 of op1
+
+    op2_b23=(7,8)   # bits 2,3 of op2
+    op2_b12=(6,7)   # bits 1,2 of op2
+
+    opcode1_b23=(11,12) # bits 2,3 of opcode1
+    opcode1_b13=(10,12) # bits 1,2,3 of opcode1
+
+   ;
+
+
+# Context variables ====================================================
+
+
+# Attach variables =====================================================
+
+# attach normal registers 
+#attach variables [ N_0 M_0 ] [
+#  r0  r1  r2  r3  r4  r5  r6  r7  r8  r9  r10  r11  r12  r13  r14  r15
+#];
+
+
+
+
+
+# Constructors =======================================================================
+
+# MOVES
+
+:MOV is opcode2=1 & i & opcode1=0xc & op2 & op1 & b0=1 {
+
+}
+:MOV is opcode2=0 & i & opcode1=0xc & op2 & op1 & b0 {
+
+}
+
+:MOVXB is opcode2=1 & i=1 & opcode1=0x4 & op2 & op1 & b0=0 {
+
+}
+:MOVZB is opcode2=1 & i=1 & opcode1=0x5 & op2 & op1 & b0=0 {
+
+}
+:MOVD is opcode2=1 & i=1 & opcode1_b13=1 & op2 & op1 & b0=0 {
+
+}
+
+
+# ARITHMETIC
+
+:ADD is opcode2=1 & i & opcode1=0 & op2 & op1 & b0=1 {
+
+}
+:ADD is opcode2=0 & i & opcode1=0 & op2 & op1 & b0 {
+
+}
+
+:ADDU is opcode2=1 & i & opcode1=1 & op2 & op1 & b0=1 {
+
+}
+:ADDU is opcode2=0 & i & opcode1=1 & op2 & op1 & b0 {
+
+}
+
+:ADDC is opcode2=1 & i & opcode1=9 & op2 & op1 & b0=1 {
+
+}
+:ADDC is opcode2=0 & i & opcode1=9 & op2 & op1 & b0 {
+
+}
+
+
+:MUL is opcode2=1 & i & opcode1=3 & op2 & op1 & b0=1 {
+
+}
+:MUL is opcode2=0 & i & opcode1=3 & op2 & op1 & b0 {
+
+}
+
+:MULSB is opcode2=1 & i=1 & opcode1=0 & op2 & op1 & b0=0 {
+
+}
+:MULSW is opcode2=1 & i=1 & opcode1=1 & op2 & op1 & b0=0 {
+
+}
+:MULUW is opcode2=1 & i=1 & opcode1=0xf & op2 & op1_b12=0 & b0=0 {
+
+}
+
+:SUB is opcode2=1 & i & opcode1=0xf & op2 & op1 & b0=1 {
+
+}
+:SUB is opcode2=0 & i & opcode1=0xf & op2 & op1 & b0 {
+
+}
+
+:SUBC is opcode2=1 & i & opcode1=0xd & op2 & op1 & b0=1 {
+
+}
+:SUBC is opcode2=0 & i & opcode1=0xd & op2 & op1 & b0 {
+
+}
+
+
+# INTEGER COMPARISON
+
+:CMP is opcode2=1 & i & opcode1=0x7 & op2 & op1 & b0=1 {
+
+}
+:CMP is opcode2=0 & i & opcode1=0x7 & op2 & op1 & b0 {
+
+}
+
+:BEQ0 is opcode2=0 & i & opcode1=0xa & op2_b12=0 & op1 & b0=1 {
+
+}
+
+:BEQ1 is opcode2=0 & i & opcode1=0xa & op2_b12=1 & op1 & b0=1 {
+
+}
+
+:BNE0 is opcode2=0 & i & opcode1=0xa & op2_b12=2 & op1 & b0=1 {
+
+}
+
+:BNE1 is opcode2=0 & i & opcode1=0xa & op2_b12=3 & op1 & b0=1 {
+
+}
+
+
+
+# LOGICAL / BOOLEAN
+:AND is opcode2=1 & i & opcode1=0x8 & op2 & op1 & b0=1 {
+
+}
+:AND is opcode2=0 & i & opcode1=0x8 & op2 & op1 & b0 {
+
+}
+
+:OR is opcode2=1 & i & opcode1=0xe & op2 & op1 & b0=1 {
+
+}
+:OR is opcode2=0 & i & opcode1=0xe & op2 & op1 & b0 {
+
+}
+
+:S is opcode2=1 & i & opcode1=0x7 & op2 & op1 & b0=0 {
+
+}
+
+:XOR is opcode2=1 & i & opcode1=0x6 & op2 & op1 & b0=1 {
+
+}
+:XOR is opcode2=0 & i & opcode1=0x6 & op2 & op1 & b0 {
+
+}
+
+# SHIFTS
+:ASHU is opcode2=1 & i & opcode1=0x4 & op2 & op1 & b0=1 {
+
+}
+:ASHU is opcode2=0 & i & opcode1=0x4 & op2 & op1 & b0 {
+
+}
+
+:LSH is opcode2=1 & i & opcode1=0x5 & op2 & op1 & b0=1 {
+
+}
+:LSH is opcode2=0 & i & opcode1=0x5 & op2 & op1 & b0 {
+
+}
+
+# BITS
+:TBIT is opcode2=1 & i=1 & opcode1=0xb & op2 & op1 & b0=1 {
+
+}
+:TBIT is opcode2=0 & i=1 & opcode1=0xb & op2 & op1 & b0 {
+
+}
+
+:TBIT is opcode2=1 & i & opcode1=2 & op2_b12=2 & op1 & b0=1 {
+
+}
+:TBIT is opcode2=0 & i & opcode1=2 & op2_b12=2 & op1 & b0=1 {
+
+}
+:TBIT is opcode2=0 & i & opcode1=2 & op2_b12=2 & op1 & b0=0 {
+
+}
+
+:CBIT is opcode2=1 & i & opcode1=2 & op2_b12=0 & op1 & b0=1 {
+
+}
+:CBIT is opcode2=0 & i & opcode1=2 & op2_b12=0 & op1 & b0=1 {
+
+}
+:CBIT is opcode2=0 & i & opcode1=2 & op2_b12=0 & op1 & b0=0 {
+
+}
+
+:SBIT is opcode2=1 & i & opcode1=2 & op2_b12=1 & op1 & b0=1 {
+
+}
+:SBIT is opcode2=0 & i & opcode1=2 & op2_b12=1 & op1 & b0=1 {
+
+}
+:SBIT is opcode2=0 & i & opcode1=2 & op2_b12=1 & op1 & b0=0 {
+
+}
+
+# PROCESSOR REGISTER MANIPULATION
+:LPR is opcode2=1 & i=1 & opcode1=8 & op2 & op1 & b0=0 {
+
+}
+:SPR is opcode2=1 & i=1 & opcode1=9 & op2 & op1 & b0=0 {
+
+}
+
+# JUMPS / LINKS
+:Bcond is opcode2=1 & i=0 & opcode1 & op2 & op1 & b0=0 {
+
+}
+:Bcond is opcode2=0 & i=0 & opcode1=0xa & op2 & op1_b02=7 & b0=0 {
+
+}
+:Bcond is opcode2=1 & i=1 & opcode1=0xa & op2 & op1 & b0=0 {
+
+}
+
+:BAL is opcode2=0 & i=1 & opcode1=0xa & op2 & op1_b02=7 & b0=0 {
+
+}
+:BAL is opcode2=1 & i=1 & opcode1=0xb & op2 & op1 & b0=0 {
+
+}
+
+:BR is opcode2=1 & i=0 & opcode1 & op2=0xe & op1 & b0=0 {
+
+}
+:BR is opcode2=0 & i=0 & opcode1=0xa & op2=0xe & op1_b02=7 & b0=0 {
+
+}
+:BR is opcode2=1 & i=1 & opcode1=0xa & op2=0xe & op1 & b0=0 {
+
+}
+
+:EXCP is opcode2=1 & i=1 & opcode1=0xd & op2=0xf & op1 & b0=0 {
+
+}
+
+:Jcond is opcode2=1 & i=0 & opcode1=0xa & op2 & op1 & b0=1 {
+
+}
+:Jcond is opcode2=0 & i=0 & opcode1=0xb & op2 & op1 & b0=1 {
+
+}
+
+:JAL is opcode2=1 & i=1 & opcode1=0xa & op2 & op1 & b0=1 {
+
+}
+:JAL is opcode2=0 & i=0 & opcode1=0xb & op2 & op1 & b0=0 {
+
+}
+
+:JUMP is opcode2=1 & i=0 & opcode1=0xa & op2=0xe & op1 & b0=1 {
+
+}
+:JUMP is opcode2=0 & i=0 & opcode1=0xb & op2=0xe & op1 & b0=1 {
+
+}
+
+:RETX is opcode2=1 & i=1 & opcode1=0xc & op2=0xf & op1=0xf & b0=0 {
+
+}
+
+:PUSH is opcode2=1 & i=1 & opcode1=0x6 & op2_b23=0 & op1 & b0=0 {
+
+}
+
+:POP is opcode2=1 & i=1 & opcode1=0x6 & op2_b23=1 & op1 & b0=0 {
+
+}
+
+:POPRET is opcode2=1 & i=1 & opcode1=0x6 & op2_b23=2 & op1 & b0=0 {
+
+}
+
+:POPRET is opcode2=1 & i=1 & opcode1=0x6 & op2_b23=3 & op1 & b0=0 {
+
+}
+
+
+# LOAD / STORE
+
+:LOAD is opcode2=2 & i & opcode1 & op2 & op1 & b0 {
+
+}
+:LOAD is opcode2=2 & i & opcode1_b23=2 & op2 & op1 & b0=1 {
+
+}
+:LOAD is opcode2=2 & i & opcode1_b23=3 & op2 & op1 & b0=1 {
+
+}
+:LOAD is opcode2=2 & i & opcode1_b23=3 & op2 & op1=0xf & b0=1 {
+
+}
+
+:LOADM is opcode2=1 & i=1 & opcode1=0xf & op2_b23=0 & op1=2 & b0=0 {
+
+}
+
+:STORE is opcode2=3 & i & opcode1 & op2 & op1 & b0 {
+
+}
+:STORE is opcode2=3 & i & opcode1_b23=2 & op2 & op1 & b0=1 {
+
+}
+:STORE is opcode2=3 & i & opcode1_b23=3 & op2 & op1 & b0=1 {
+
+}
+:STORE is opcode2=3 & i & opcode1_b23=3 & op2 & op1=0xf & b0=1 {
+
+}
+:STORE is opcode2=1 & i & opcode1=2 & op2_b12=3 & op1 & b0=1 {
+
+}
+:STORE is opcode2=0 & i & opcode1=2 & op2_b12=3 & op1 & b0=1 {
+
+}
+:STORE is opcode2=0 & i & opcode1=2 & op2_b12=3 & op1 & b0=0 {
+
+}
+
+:STORM is opcode2=1 & i=1 & opcode1=0xf & op2_b23=1 & op1=2 & b0=0 {
+
+}
+
+
+# MISC
+
+:DI is opcode2=1 & i=1 & opcode1=0xe & op2=0xe & op1=0xf & b0=0 {
+
+}
+:EI is opcode2=1 & i=1 & opcode1=0xe & op2=0xf & op1=0xf & b0=0 {
+
+}
+:NOP is opcode2=0 & i=0 & opcode1=0x1 & op2=0 & op1=0 & b0=0 {
+
+}
+:WAIT is opcode2=1 & i=1 & opcode1=0xf & op2=0xf & op1=0xf & b0=0 {
+
+}
+:EIWAIT is opcode2=1 & i=1 & opcode1=0xf & op2=0xf & op1=0x3 & b0=0 {
+
+}
+
+
+
+
+
+
+

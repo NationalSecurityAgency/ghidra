@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<processor_spec>
+  <properties>
+    <property key="assemblyRating:pa-risc:BE:32:default" value="PLATINUM"/>
+  </properties>
+
+  <programcounter register="iaoq_front"/>
+</processor_spec>

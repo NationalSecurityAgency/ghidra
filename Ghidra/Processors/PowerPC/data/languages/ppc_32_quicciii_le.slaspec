@@ -1,0 +1,14 @@
+# SLA specification file for IBM PowerPC 4xx series core
+
+@define ENDIAN "little"
+
+@define REGISTER_SIZE "4"
+
+@define EATRUNC "ea"
+
+@define CTR_OFFSET "32"
+
+@include "ppc_common.sinc"
+@include "quicciii.sinc"
+@include "evx.sinc"
+

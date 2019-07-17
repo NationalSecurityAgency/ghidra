@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<language_definitions>
+  <language processor="Sparc"
+            endian="big"
+            size="32"
+            variant="default"
+            version="1.2"
+            slafile="SparcV9_32.sla"
+            processorspec="SparcV9.pspec"
+            manualindexfile="../manuals/Sparc.idx"
+            id="sparc:BE:32:default">
+    <description>Sparc V9 32-bit</description>
+    <compiler name="default" spec="SparcV9_32.cspec" id="default"/>
+    <external_name tool="gnu" name="sparc:v9b"/>
+    <external_name tool="IDA-PRO" name="sparcb" />
+  </language>
+  <language processor="Sparc"
+            endian="big"
+            size="64"
+            variant="default"
+            version="1.2"
+            slafile="SparcV9_64.sla"
+            processorspec="SparcV9.pspec"
+            manualindexfile="../manuals/Sparc.idx"
+            id="sparc:BE:64:default">
+    <description>Sparc V9 64-bit</description>
+    <compiler name="default" spec="SparcV9_64.cspec" id="default"/>
+    <external_name tool="gnu" name="sparc:v9b"/>
+    <external_name tool="IDA-PRO" name="sparcb" />
+  </language>
+</language_definitions>

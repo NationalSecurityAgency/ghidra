@@ -1,0 +1,320 @@
+<!DOCTYPE doctype PUBLIC "-//W3C//DTD HTML 4.0 Frameset//EN">
+<html>
+<head>
+  <title>The Byte Viewer</title>
+  <meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+  <link rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+  <meta name="generator" content="Microsoft FrontPage 4.0">
+</head>
+<body lang="EN-US">
+
+<h1><a name="ByteViewerPlugin"></a><a name="Bytes"></a>The Byte Viewer </h1>
+	<p>The Byte Viewer displays bytes in memory in various formats, e.g.,
+	Hex, Ascii, Octal, etc.&nbsp;The figure below shows the Byte Viewer
+	plugin in a separate window from the 
+	<a href="help/topics/Tool/Ghidra_Tool_Administration.htm#DefaultTools">default
+	tool</a>, the Code Browser.&nbsp;</p>
+	
+	<p align="center"><img alt="" src="images/ByteViewer.png" ><br> &nbsp;</p>
+	
+	<p>To show the Byte Viewer, select the icon, <img
+ 	src="images/binaryData.gif" border="0">,
+	on the Code Browser toolbar, OR, choose the <b>Window</b><img
+	 src="../../shared/arrow.gif" border="0" ><b>Bytes: ...</b> menu.</p>
+	<p> The following paragraphs describe the Byte Viewer.</p>
+
+	<h2><a name="ToggleFormatAction"></a><a name="formats"></a>Data Formats</h2>
+		<blockquote>
+	  		<p>This section describes the formats that Ghidra provides by
+			default.&nbsp; Each format is an instance of a DataFormatModel interface,
+			 so any <a href="#WriteYourOwn">
+			new formats that you provide</a> will automatically show up in the <span
+			 style="font-style: italic;">Byte Viewer Options </span>dialog that
+			lists the data formats that
+			may be added to your view.&nbsp;To add or remove a data format view
+			from the tool, press the&nbsp;<img alt="" src="images/wrench.png"> 
+			icon to bring up the&nbsp; <span
+			 style="font-style: italic;">Byte Vieweer Options </span>dialog.&nbsp;
+			Select the formats that you want and press the <span
+			 style="font-weight: bold;">OK </span>button.<br>
+	  		</p>
+
+  		<h3><a name="Hex"></a><a name="Add_Byteviewer_Hex_Panel"></a>Hex </h3>
+  			<blockquote>
+    			<p>The Hex view shows each byte as a two character hex value. <a
+				 href="#GroupSize">Change the group size</a> for the Hex format to show
+				the bytes grouped in that size.&nbsp;When you add the Byte Viewer
+				plugin to a tool and then open a program, the Hex view is automatically
+				displayed by default.&nbsp;</p>
+
+    			<p> This view supports byte <a href="#EditBytes">editing</a>.&nbsp;</p>
+  			</blockquote>
+  
+  		<h3><a name="Ascii"></a><a name="Add_Byteviewer_Ascii_Panel"></a>Ascii </h3>
+  			<blockquote>
+    			<p>The Ascii view shows each byte as its equivalent Ascii character.
+				For those bytes that do not represent an Ascii character, the format shows
+				it as a tic (".").</p>
+    			<p> This view supports byte <a href="#EditBytes">editing</a>.&nbsp;</p>
+  			</blockquote>
+  
+  		<h3><a name="Add_Byteviewer_Address_Panel"></a><a name="Address"></a>Address</h3>
+  			<blockquote>
+    			<p> The Address view displays&nbsp; a tic (".") for all bytes whose
+				formed address does not fall within the range of memory for the
+				program. For those addresses that can be formed and are in memory, the
+				view shows the symbol, <img src="images/addressMark.png" border="0"> 
+				&nbsp; So if you go to that address in the <a
+				 href="help/topics/CodeBrowserPlugin/CodeBrowser.htm"> Code Browser</a>, and <font
+				 color="#000000"><a href="help/topics/DataPlugin/Data.htm#Pointer">make a
+				Pointer data type</a>,</font> <font color="#0000ff"> </font><font
+				 color="#000000">the address pointed to is in memory. Conversely, if
+				you go to a "tic" address in the Code Browser and make a pointer, the
+				address pointed to is not in memory (the operand is
+				rendered in red).</font></p>
+    
+    			<p><font color="#000000">This view does not support <a href="#EditBytes">editing</a>.</font></p>
+  			</blockquote>
+  
+  		<h3><a name="Add_Byteviewer_Disassembled_Panel"></a><a name="Disassembled"></a>Disassembled</h3>
+  			<blockquote>
+    		<p> The Disassemble view shows a "box" (<img src="images/box.gif"
+				 border="0" > ) symbol for each address that has
+				undefined bytes. For those addresses that are <a
+				 href="help/topics/Glossary/glossary.htm#Instruction"> instructions</a>
+				or <a href="help/topics/Glossary/glossary.htm#DataItem"> defined data</a>, the
+				view
+				shows a tic ("."). With this view, you can easily see what areas of the
+				program have been disassembled.</p>
+    		<p>This view does not support <a href="#EditBytes">editing</a>.</p>
+  			</blockquote>
+  
+  		<h3><a name="Add_Byteviewer_HexInteger_Panel"></a><a name="HexInteger"></a>HexInteger </h3>
+  			<blockquote>
+	    		<p>This format shows four byte numbers represented as an eight digit hex number.&nbsp;</p>
+	    		<p> This view supports <a href="#EditBytes">editing</a>. When a byte
+				is changed, all four bytes associated with this address are rendered in
+	    		<font color="#ff0000"> red</font> to denote the change.</p>
+  			</blockquote>
+
+	 	<h3><a name="Add_Byteviewer_Integer_Panel"></a><a name="Integer"></a>Integer&nbsp; </h3>
+  			<blockquote>
+    			<p>This view shows four byte numbers represented in decimal format.&nbsp;</p>
+    			<p> This view does not support <a href="#EditBytes">editing</a>.</p>
+  			</blockquote>
+  
+  		<h3><a name="Octal"></a><a name="Add_Byteviewer_Octal_Panel"></a>Octal </h3>
+  			<blockquote>
+    			<p>The octal view shows each byte as a three character octal value.&nbsp;</p>
+    			<p> This view supports <a href="The_Byte_Viewer.htm#EditBytes">editing</a>.</p>
+  			</blockquote>
+  		
+  		<h3><a name="Binary"></a><a name="Add_Byteviewer_Binary_Panel"></a>Binary </h3>
+  			<blockquote>
+    			<p>The binary view shows each byte as an eight character binary value.&nbsp;</p>
+    			<p> This view supports <a href="#EditBytes">editing</a>.</p>
+  			</blockquote>
+		</blockquote>
+
+	<h2>Status Fields</h2>
+		<blockquote>
+  			<p>The&nbsp; labels below the scroll pane that contains the views shows the following information:</p>
+  			<p>&nbsp;</p>
+  			<div align="left">
+  			
+  			<table border="1" width="65%">
+    			<tbody>
+		      	<tr>
+		        	<td width="20%">Start</td>
+		        	<td width="80%">The minimum address of Memory</td>
+		      	</tr>
+		      	<tr>
+		        	<td width="20%">End</td>
+		        	<td width="80%">The maximum address of Memory</td>
+		      	</tr>
+		      	<tr>
+		        	<td width="20%"><a name="OffsetField"></a>Offset</td>
+		        	<td width="80%">Displayed in decimal, the
+					number of bytes added to each block of memory that is being displayed.
+					This number is calculated when you set the <a href="#AlignmentAddress">alignment
+					address</a> or the number of bytes per line.&nbsp;</td>
+      			</tr>
+      			<tr>
+        			<td width="20%">Insertion</td>
+        			<td width="80%">The address of your current cursor location</td>
+      			</tr>
+    			</tbody>
+  			</table>
+  		</div>
+		</blockquote>
+
+	<p>&nbsp;</p>
+
+	<h2><a name="Enable_Disable_Byteviewer_Editing"></a><a name="EditBytes"></a>Editing Memory </h2>
+		<blockquote>
+  			<p>To enable byte editing,&nbsp;</p>
+  			<ol>
+    			<li>Toggle the Enable/Disable Edit toolbar button <img
+ 				src="images/editbytes.gif" alt="" >
+				&nbsp;so that it appears pushed-in.&nbsp;</li>
+    			<li> Click in a view that supports editing, e.g., Hex or Ascii&nbsp;</li>
+    			<li> The cursor changes to red to indicate that this view can be edited.&nbsp;</li>
+  			</ol>
+  			<p> Changing bytes is allowed only if your cursor is at an address
+				that does not contain an instruction. If you attempt to change a byte
+				of an instruction, an "editing not allowed" message is displayed in the
+				status area of the
+				tool.&nbsp;</p>
+		</blockquote>
+		<blockquote>
+  			<p>Changed bytes are rendered in <font color="#ff0000">red</font>.
+			This color can be changed via the <font color="#000000"><a
+ 			href="ByteViewerOptions.htm#EditColorsAndFont">Byte Viewer Edit Options</a></font><font
+ 			color="#0000ff"> </font><font color="#000000">by double-clicking on
+			the <i><a href="ByteViewerOptions.htm#EditColor">Edit Color</a></i>
+			field</font>.</p>
+			
+  			<p><font color="#000000">Undo the edit by hitting the Undo button (<img
+ 			src="../../shared/undo.png" border="0" > ) on
+			the tool. The byte reverts to its original value. Redo your edit by
+			hitting the Redo button (<img src="../../shared/redo.png" border="0"> ).</font></p>
+		</blockquote>
+
+		<blockquote>
+  			<p><font color="#000000">To turn off byte editing, click the
+			Enable/Disable
+			Edit toolbar button </font><img src="images/editbytes.gif" alt=""> 
+			so that it no longer appears pushed-in<font
+			 color="#000000">.</font></p>
+			  <p><img src="../../shared/note.png" border="0">If
+			you have two Byte Viewers running, you can <a
+			 href="help/topics/FrontEndPlugin/Connecting_Tools.htm#SpecialToolEvent">connect</a>
+			the two tools for the "Byte Block Edit" event so that when you make
+			changes
+			in one Byte Viewer, the other will reflect those changes in red.</p>
+		</blockquote>
+
+	<h2>Cursor Colors</h2>
+		<blockquote>
+			<p>The format view that currently has focus shows its cursor in <font
+			 color="#ff00ff">magenta</font>. (Cursor colors can be changed via the <a
+			 href="ByteViewerOptions.htm#EditColorsAndFont">Options</a> dialog) If
+			the byte editing is enabled and the view that is in focus supports
+			editing,
+			then the cursor is <font color="#ff0000">red</font>.&nbsp;</p>
+		</blockquote>
+	<br>
+
+	<h2><a name="Byte_Viewer_Options"></a>Byte Viewer Options:</h2>
+		<p style="margin-left: 40px;">The <span style="font-style: italic;">Byte
+		Viewer Options </span>dialog can be used to add and remove views, set the
+		<span style="font-style: italic;">Alignment Address</span>, set the
+		number of <span style="font-style: italic;">bytes per line</span>,
+		and set the <span style="font-style: italic;">group size</span> to be
+		used by the <span style="font-style: italic;">hex</span> view.&nbsp;
+		To launch the <span style="font-style: italic;"><span
+		 style="font-style: italic;">Byte Viewer Options</span></span> dialog,
+		press the <img alt="" src="images/wrench.png"> icon on the Byte Viewer toolbar.</p>
+
+	<div style="text-align: center;"><img alt=""
+	 	src="images/ByteViewerOptionsDialog.png"><br>
+	</div>
+
+	<blockquote>
+  		<h3><a name="AlignmentAddress"></a>Alignment Address&nbsp;&nbsp;</h3>
+  		<blockquote>
+    		<p>The alignment address specifies what address should appear in
+			column 0.&nbsp; Any address can be specified, but the address will be
+			normalized to be near the program's miminum address. This enables you to
+			view bytes in an offcut manner and to identify patterns in the bytes.
+			Changing the alignment address affects the <a href="#OffsetField">offset</a>,
+			which is the column that would display the bytes for address 0 if it
+			existed.
+			The offset is affected by both the alignment address and the bytes per
+			line. The offset is displayed as a label below the scroll
+			pane containing the views.</p>
+    		<p><img src="../../shared/tip.png" border="0" >Sometimes
+			you might see a byte pattern such that you want all the bytes
+			to line up in the first column of the display. Consider the cursor
+			position in the image below. If you want to see the fourth column of
+			bytes (values of 00) to appear in the first column, you would enter an
+			alignment address of 0040b003, as indicated by your cursor position.</p>
+			    <p align="center"><img src="images/ByteViewerExample.png" border="0"></p>
+			    <p align="left">The result of setting the alignment address to 0040b003
+			is shown below. The calculated offset is 13, the number of bytes added
+			to each memory block to create a new alignment. The first line of the
+			display shows the "remainder" bytes of 16 (bytes per line) divided by
+			13, the offset. If you were to put your cursor on the starting byte of
+			the first line, you would see that your insertion point is 0040b000, in
+			this example.</p>
+    		<p align="center"><img src="images/ByteViewerResults.png" border="0" ></p>
+		</blockquote>
+ 
+  		<h3>Set Bytes Per Line <br></h3>
+	  		<blockquote>
+    			<p>The bytes per line indicates how many bytes are displayed in one
+				line in a view. The default value is 16. <br></p>
+    			<p><img src="../../shared/note.png" border="0"> 
+    			All formats shown must be able to support the new value.
+				For example,&nbsp; since the HexInteger and Integer&nbsp; formats show
+				bytes in groups of four, the bytes per line must be a multiple of four.
+				If a selected format cannot support a value for the bytes per line, an
+				error message will appear and the <span style="font-weight: bold;">OK</span>
+				button will be disabled.<br></p>
+  			</blockquote>
+  
+  		<h3><a name="GroupSize"></a>Set Group Size</h3>
+  			<blockquote>
+    			<p>The group size is the number of bytes that the Hex view shows as
+				a "unit." For example, a group size of two means to show two bytes
+				grouped together with no spaces. <br></p>
+  			</blockquote>
+  
+  		<h3>View Selection<br></h3>
+  			<blockquote>
+    			<p>Each potential view is listed as a checkbox.&nbsp; Select the
+				checkboxes corresponding to the views to be shown.&nbsp; Red text
+				indicates a view cannot be displayed since it doesn't support the
+				specified number of bytes per line.</p>
+  			</blockquote>
+	</blockquote>
+
+	<h2>Reorder Views</h2>
+		<blockquote>
+			<p>The various views in the ByteViewer can be reordered by dragging
+			the view header to the left or right of its current position. The view
+			positions are swapped.<br></p>
+		</blockquote>
+
+	<h2><a name="WriteYourOwn"></a>Writing Your Own Format Plugin</h2>
+		<blockquote>
+  			<p>To supply your own format to be added to the list of views
+			displayed in the Byte Viewer,</p>
+			<ol>
+    			<li>Write an implementation of the <font face="Courier New"
+	 				size="3">ghidra.app.plugin.core.format.DataFormatModel </font>interface,
+					which determines the format of how the bytes should be
+					represented.&nbsp;</li>
+    			<li>Edit your&nbsp;<a href="help/topics/FrontEndPlugin/Edit_Plugin_Path.htm"> Plugin
+					path</a> to include your class files if you are running Ghidra in production
+					mode versus development mode; in development mode, you will have
+					to add your class files to your classpath in your development
+					environment.</li>
+    			<li>Restart Ghidra. </li>
+  			</ol>
+		</blockquote>
+	<p> </p>
+
+	<p class="providedbyplugin">Provided by: <i> Byte Viewer Plugin</i></p>
+	<p class="relatedtopic">Related Topics: </p>
+	<ul>
+  		<li> <a href="ByteViewerOptions.htm">Byte Viewer Options</a></li>
+  		<li> <font color="#000000"><a href="help/topics/DataPlugin/Data.htm#Pointer">Pointer
+			data types</a></font></li>
+  		<li> <a href="help/topics/CodeBrowserPlugin/CodeBrowser.htm">Code Browser</a></li>
+  		<li> <a href="help/topics/Tool/Configure_Tool.htm">Configure Tool</a></li>
+  		<li> <a href="help/topics/SelectBlockPlugin/Select_Block_Help.html">Select Bytes</a></li>
+	</ul>
+
+</body>
+</html>

@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<language_definitions>
+  <language processor="Toy"
+            endian="big"
+            size="64"
+            variant="default"
+            version="0.1"
+            slafile="toy64_be.sla"
+            processorspec="toy.pspec"
+            id="Toy:BE:64:default">
+    <description>Toy (test) processor 64-bit big-endian</description>
+    <compiler name="default" spec="toy64.cspec" id="default"/>
+  </language>
+  <language processor="Toy"
+            endian="little"
+            size="64"
+            variant="default"
+            version="0.1"
+            slafile="toy64_le.sla"
+            processorspec="toy.pspec"
+            id="Toy:LE:64:default">
+    <description>Toy (test) processor 64-bit little-endian</description>
+    <compiler name="default" spec="toy64.cspec" id="default"/>
+  </language>
+</language_definitions>

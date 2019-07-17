@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<compiler_spec>
+  <global>
+    <range space="CODE"/>
+    <range space="DATA" first="0x0020" last="0x00ff"/>
+    <range space="DATA" first="0x0120" last="0x01ff"/>
+    <range space="DATA" first="0x0220" last="0x02ff"/>
+    <range space="DATA" first="0x0320" last="0x03ff"/>
+  </global>
+  <nohighptr>
+    <range space="DATA" first="0x0" last="0x001f"/>
+    <range space="DATA" first="0x0100" last="0x011f"/>
+    <range space="DATA" first="0x0200" last="0x021f"/>
+    <range space="DATA" first="0x0300" last="0x031f"/>
+    <range space="DATA" first="0x0400" last="0x041f"/>
+    <range space="DATA" first="0x0500" last="0x051f"/>
+    <range space="DATA" first="0x0600" last="0x061f"/>
+    <range space="DATA" first="0x0700" last="0x071f"/>
+    <range space="DATA" first="0x0800" last="0x081f"/>
+  </nohighptr>
+  <stackpointer register="STKPTR" space="HWSTACK" growth="positive"/>
+  <default_proto>
+    <prototype name="__stdcall" extrapop="-2" stackshift="-2">
+      <input>
+        <pentry minsize="1" maxsize="1">
+          <register name="WREG"/>
+        </pentry>
+      </input>
+      <output>
+        <pentry minsize="1" maxsize="1">
+          <register name="WREG"/>
+        </pentry>
+      </output>
+      <unaffected>
+        <register name="FS32"/>
+        <register name="FS10"/>
+        <register name="OV"/>
+        <register name="Z"/>
+        <register name="DC"/>
+        <register name="C"/>
+        <register name="PC"/>
+        <register name="PCL"/>
+        <register name="PCLATH"/>
+        <register name="STKPTR"/>
+      </unaffected>
+      <localrange>
+        <range space="stack" first="0x0" last="0xf"/>
+      </localrange>
+    </prototype>
+  </default_proto>
+</compiler_spec>

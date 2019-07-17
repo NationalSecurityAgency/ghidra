@@ -1,0 +1,172 @@
+/* ###
+ * IP: GHIDRA
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package docking;
+
+import javax.swing.Icon;
+import javax.swing.ImageIcon;
+
+import docking.action.*;
+import ghidra.util.HelpLocation;
+import resources.ResourceManager;
+
+/**
+ * Action for showing components.  If the component is hidden it will be made visible.
+ * If it is tabbed, it will become the top tab. In all cases it will receive focus.
+ */
+class ShowComponentAction extends DockingAction implements Comparable<ShowComponentAction> {
+	private static final int MAX_LENGTH = 40;
+
+	protected static final ImageIcon EMPTY_ICON =
+		ResourceManager.loadImage("images/EmptyIcon16.gif");
+	protected static final String MENU_WINDOW = "&" + DockingWindowManager.COMPONENT_MENU_NAME;
+
+	protected DockingWindowManager winMgr;
+	private ComponentPlaceholder info;
+	private String title;
+
+	private static String truncateTitleAsNeeded(String title) {
+		if (title.length() <= MAX_LENGTH) {
+			return title;
+		}
+
+		return title.substring(0, MAX_LENGTH - 3) + "...";
+	}
+
+	protected ShowComponentAction(DockingWindowManager winMgr, String name, String subMenuName) {
+		super(truncateTitleAsNeeded(name), DockingWindowManager.DOCKING_WINDOWS_OWNER);
+	}
+
+	ShowComponentAction(DockingWindowManager winMgr, ComponentPlaceholder placeholder,
+			String subMenuName, boolean isTransient) {
+		super(placeholder.getProvider().getName(), DockingWindowManager.DOCKING_WINDOWS_OWNER,
+			createKeyBindingType(isTransient, placeholder));
+
+		this.info = placeholder;
+		this.winMgr = winMgr;
+		this.title = truncateTitleAsNeeded(placeholder.getTitle());
+		String group = isTransient ? "Transient" : "Permanent";
+
+		Icon icon = placeholder.getIcon();
+		if (icon == null) {
+			icon = EMPTY_ICON;
+		}
+
+		if (subMenuName != null) {
+			setMenuBarData(
+				new MenuData(new String[] { MENU_WINDOW, subMenuName, placeholder.getFullTitle() },
+					icon, "Permanent"));
+			winMgr.doSetMenuGroup(new String[] { MENU_WINDOW, subMenuName }, group);
+		}
+		else {
+			setMenuBarData(new MenuData(new String[] { MENU_WINDOW, title }, icon, "Permanent"));
+		}
+
+		// keybinding data used to show the binding in the menu
+		ComponentProvider provider = placeholder.getProvider();
+		synchronizeKeyBinding(provider);
+
+		// Use provider Help for this action		
+		HelpLocation helpLocation = provider.getHelpLocation();
+		if (helpLocation != null) {
+			setHelpLocation(helpLocation);
+		}
+		else {
+			// This action only exists as a convenience for users to show a provider from the menu.
+			// There is no need for this action itself to report errors if no help exists.
+			markHelpUnnecessary();
+		}
+	}
+
+	/**
+	 * Ensures that the given provider's key binding matches this class's key binding
+	 * @param provider the provider
+	 */
+	private void synchronizeKeyBinding(ComponentProvider provider) {
+		DockingActionIf action = provider.getShowProviderAction();
+		KeyBindingData defaultBinding = action.getDefaultKeyBindingData();
+		setKeyBindingData(defaultBinding);
+
+		KeyBindingData kbData = action.getKeyBindingData();
+		if (kbData != null) {
+			setUnvalidatedKeyBindingData(kbData);
+		}
+	}
+
+	private static KeyBindingType createKeyBindingType(boolean isTransient,
+			ComponentPlaceholder placeholder) {
+
+		if (isTransient) {
+			return KeyBindingType.UNSUPPORTED; // temporary window
+		}
+
+		// 'info' is null when this action is used to 'show all' instances of a given provider
+		return placeholder == null ? KeyBindingType.UNSUPPORTED : KeyBindingType.SHARED;
+	}
+
+	@Override
+	public void actionPerformed(ActionContext context) {
+		winMgr.showComponent(info, true, true);
+	}
+
+	@Override
+	public boolean isEnabledForContext(ActionContext context) {
+		return true;
+	}
+
+	// this compare method must take into account that there is sorting amongst top-level menus
+	// and sub-menus, while understanding that they will all end up in one datastructure 
+	@Override
+	public int compareTo(ShowComponentAction other) {
+		String[] myMenuPath = getMenuBarData().getMenuPath();
+		String[] otherMenuPath = other.getMenuBarData().getMenuPath();
+
+		// compare each path downward until they are no longer equal
+		int loopLength = Math.min(myMenuPath.length, otherMenuPath.length);
+		for (int i = 0; i < loopLength; i++) {
+			int result = myMenuPath[i].compareTo(otherMenuPath[i]);
+			if (result != 0) {
+				return result;
+			}
+		}
+
+		// return the smaller path first (arbitrary)
+		return myMenuPath.length - otherMenuPath.length;
+	}
+
+	@Override
+	public String getHelpInfo() {
+		if (info == null) {
+			return super.getHelpInfo();
+		}
+
+		StringBuilder buffy = new StringBuilder(super.getHelpInfo());
+
+		ComponentProvider provider = info.getProvider();
+		Class<? extends ComponentProvider> clazz = provider.getClass();
+		String className = clazz.getName();
+		String filename = className.substring(className.lastIndexOf('.') + 1);
+
+		DockingActionIf showAction = provider.getShowProviderAction();
+		String realInception = showAction.getInceptionInformation();
+		buffy.append("           ").append(realInception).append("\n    ");
+
+		buffy.append("    ").append("PROVIDER:    ").append(filename).append(' ');
+		buffy.append('(').append(provider.getOwner()).append(")");
+		buffy.append("\n    ");
+
+		return buffy.toString();
+	}
+}

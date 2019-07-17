@@ -1,0 +1,14 @@
+
+define pcodeop tlbli;
+define pcodeop tlbld;
+
+:tlbld B			is $(NOTVLE) & OP=31 & BITS_21_25=0 & BITS_16_20=0 & B & XOP_1_10=978 & BIT_0=0
+{
+	tlbld(B);
+}
+
+:tlbli B			is $(NOTVLE) & OP=31 & BITS_21_25=0 & BITS_16_20=0 & B & XOP_1_10=1010 & BIT_0=0
+{
+	tlbli(B);
+}
+

@@ -1,0 +1,43 @@
+<file_extensions>
+	<!-- Only single level file exts supported right now -->
+	<file_extension  extension=""            icon="images/famfamfam_silk_icons_v013/page_white.png" />
+	<file_extension  extension=".apk"        icon="images/famfamfam_silk_icons_v013/package.png" />
+	<file_extension  extension=".c"          icon="images/oxygen/16x16/text-x-csrc.png" />
+	<file_extension  extension=".cpp"        icon="images/oxygen/16x16/text-x-c++src.png" />
+    <file_extension  extension=".class"      icon="images/famfamfam_silk_icons_v013/cup.png" />
+    <file_extension  extension=".cs"         icon="images/oxygen/16x16/text-x-csharp.png" />
+    <file_extension  extension=".css"        icon="images/famfamfam_silk_icons_v013/css.png" />
+    <file_extension  extension=".data"       icon="images/famfamfam_silk_icons_v013/database.png" />
+	<file_extension  extension=".dfu"        icon="images/famfamfam_silk_icons_v013/bullet_blue.png" />
+	<file_extension  extension=".dmg"        icon="images/famfamfam_silk_icons_v013/bullet_green.png" />
+	<file_extension  extension=".f"          icon="images/F.gif" />
+	<file_extension  extension=".h"          icon="images/oxygen/16x16/text-x-chdr.png" />
+	<file_extension  extension=".html"       icon="images/famfamfam_silk_icons_v013/html.png" />
+	<file_extension  extension=".img"        icon="images/famfamfam_silk_icons_v013/images.png" />
+	<file_extension  extension=".img3"       icon="images/famfamfam_silk_icons_v013/bullet_orange.png" />
+	<file_extension  extension=".index"      icon="images/oxygen/16x16/bookmarks.png" />
+	<file_extension  extension=".ipsw"       icon="images/oxygen/16x16/multimedia-player-apple-ipod.png" />
+	<file_extension  extension=".iso"        icon="images/nuvola/16x16/cdimage.png" />
+	<file_extension  extension=".jar"        icon="images/oxygen/16x16/application-x-java-archive.png" />
+	<file_extension  extension=".java"       icon="images/famfamfam_silk_icons_v013/page_white_cup.png" />
+	<file_extension  extension=".kext"       icon="images/famfamfam_silk_icons_v013/bullet_pink.png" />
+	<file_extension  extension=".lib"        icon="images/famfamfam_silk_icons_v013/server.png" />
+	<file_extension  extension=".obj"        icon="images/oxygen/16x16/application-x-subrip.png" />
+	<file_extension  extension=".p"          icon="images/oxygen/16x16/text-x-pascal.png" />
+	<file_extension  extension=".pdf"        icon="images/oxygen/16x16/application-pdf.png" />
+	<file_extension  extension=".plist"      icon="images/oxygen/16x16/insert-table.png" />
+	<file_extension  extension=".png"        icon="images/famfamfam_silk_icons_v013/bullet_red.png" />
+	<file_extension  extension=".release."   icon="images/famfamfam_silk_icons_v013/bullet_purple.png" />
+	<file_extension  extension=".rss"        icon="images/famfamfam_silk_icons_v013/rss.png" />
+	<file_extension  extension=".strings"    icon="images/oxygen/16x16/insert-text.png" />
+	<file_extension  extension=".txt"        icon="images/oxygen/16x16/text-x-bibtex.png" />
+	<file_extension  extension=".usb"        icon="images/nuvola/16x16/usb.png" />
+	<file_extension  extension=".xhtml"      icon="images/famfamfam_silk_icons_v013/xhtml.png" />
+	<file_extension  extension=".xml"        icon="images/oxygen/16x16/text-xml.png" />
+	<file_extension  extension=".zip"        icon="images/oxygen/16x16/application-x-bzip.png" />
+	
+	<file_overlay    name="imported"         icon="images/checkmark_green.gif" />
+	<file_overlay    name="filesystem"       icon="images/nuvola/16x16/ledgreen.png" quadrant="LL"  />
+</file_extensions>
+
+

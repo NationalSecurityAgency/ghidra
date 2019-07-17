@@ -1,0 +1,19 @@
+<dwarf>
+	<register_mappings>
+		<register_mapping dwarf="0" ghidra="r0"/>
+		<register_mapping dwarf="1" ghidra="r1" stackpointer="true"/>
+		<register_mapping dwarf="2" ghidra="r2" auto_count="30"/> <!-- r2...r31 -->
+		<register_mapping dwarf="32" ghidra="f0" auto_count="32"/> <!-- f0...f31 -->
+		<register_mapping dwarf="64" ghidra="cr2"/> <!-- also mapped as 88 -->
+		<register_mapping dwarf="66" ghidra="MSR"/>
+		<register_mapping dwarf="70" ghidra="sr0" auto_count="16"/> <!-- sr0...sr15 -->
+		<register_mapping dwarf="86" ghidra="cr0" auto_count="8"/> <!-- cr0...cr7 -->
+		<register_mapping dwarf="101" ghidra="XER"/>
+		<register_mapping dwarf="108" ghidra="LR"/>
+		<register_mapping dwarf="109" ghidra="CTR"/>
+		<register_mapping dwarf="118" ghidra="DSISR"/>
+		<register_mapping dwarf="119" ghidra="DAR"/>
+		<!-- <register_mapping dwarf="1124" ghidra="v0" auto_count="32"/> **not implemented** --> <!-- v0...v31 -->
+	</register_mappings>
+	<call_frame_cfa value="31"/>
+</dwarf>

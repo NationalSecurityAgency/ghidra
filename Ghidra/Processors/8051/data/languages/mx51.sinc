@@ -1,0 +1,332 @@
+# Extended mx51 instructions live here, so as to avoid further
+# complicating the main 8051 file.
+
+# All have 0xa5 as prefix, so subtract one
+define token TwoByteOp (8)
+  b2op = (0,7)
+;
+define token ThreeByteOp (16)
+  b3op = (8,15)
+;
+define token FourByteOp (24)
+  b4op = (16,23)
+;
+
+define token EcallDispTok (24)
+  imm24 = (0,23)
+;
+
+####################
+
+# Note that PRi is used in little endian format, as R3 is the MSB
+attach variables PRi_revend [ R1R2R3 R5R6R7 ];
+@define ENDIANSWAPFUNC ""
+@if defined(ENDIANSWAPFUNC)
+define pcodeop endian_swap;
+PRi: PRi_revend is PRi_revend { tmp:3 = endian_swap(PRi_revend); export tmp; }
+@else
+PRi: PRi_revend is PRi_sel=0 & PRi_revend { tmp:3 = (zext(R3) << 16) | (zext(R2) << 8) | zext(R1); export tmp; }
+PRi: PRi_revend is PRi_sel=1 & PRi_revend { tmp:3 = (zext(R7) << 16) | (zext(R6) << 8) | zext(R5); export tmp; }
+@endif
+####################
+
+@ifdef OMIT_RETADDR
+macro push24(val) { }
+macro pop24(val) { }
+
+@else
+# stack grows up.
+macro push24(val) {
+  ptr:3 = zext(SP) + 1 + $(STACKBASE);
+  *[RAM]:3 ptr = val;
+  SP = SP + 2;
+}
+macro pop24(val) {
+  ptr:3 = zext(SP - 2) + $(STACKBASE);
+  val = *[RAM]:3 ptr;
+  SP = SP - 3;
+}
+@endif
+
+####################
+
+eptrReg: EPTR is EPTR { export EPTR; }
+APlusEptr:     "@"Areg"+"eptrReg    is Areg & eptrReg	{ tmp:3 = EPTR + zext(ACC); export tmp; }
+ecallImmAddr: imm24 is imm24 { export *:1 imm24; }
+add_with_pr_const: emov_delta is emov_delta { tmp:1 = emov_delta; export tmp; }
+add_with_pr_const: "4" is emov_delta = 0 { tmp:1 = 4; export tmp; }
+
+EDirect:  mainreg   is bank=0 & mainreg	{ tmp:3 = mainreg + 0x7f0000; export *[RAM]:1 tmp; }
+EDirect:  direct    is bank=1 & direct 	{ export *[ESFR]:1 direct; }
+EDirect:  EPL       is bank=1 & direct=0xfc & EPL 	{ export EPL; }
+EDirect:  EPM       is bank=1 & direct=0xfd & EPM 	{ export EPM; }
+EDirect:  EPH       is bank=1 & direct=0xfe & EPH 	{ export EPH; }
+
+EDirect2:  mainreg2   is bank2=0 & mainreg2	{ tmp:3 = mainreg2 + 0x7f0000; export *[RAM]:1 tmp; }
+EDirect2:  direct2    is bank2=1 & direct2 	{ export *[ESFR]:1 direct2; }
+EDirect2:  EPL       is bank2=1 & direct2=0xfc & EPL 	{ export EPL; }
+EDirect2:  EPM       is bank2=1 & direct2=0xfd & EPM 	{ export EPM; }
+EDirect2:  EPH       is bank2=1 & direct2=0xfe & EPH 	{ export EPH; }
+
+# Continuing with pattern via copying from stock 8051 sleighspec.  
+# Note that there is a known bug with the Bit addressing of the SFR.
+EBitAddr:  bitaddr is bitbank=1 & sfrbyte & sfrbit [ bitaddr =(sfrbyte << 3)+sfrbit; ] { export *[EBITS]:1 bitaddr; }
+EBitAddr:  bitaddr is bitbank=0 & lowbyte & sfrbit [ bitaddr =(lowbyte << 3)+sfrbit; ] { export *[EBITS]:1 bitaddr; }
+EBitAddr2: "/"bitaddr is bitbank=1 & sfrbyte & sfrbit	 [ bitaddr =(sfrbyte << 3)+sfrbit; ] { export *[EBITS]:1 bitaddr; }
+EBitAddr2: "/"bitaddr is bitbank=0 & lowbyte & sfrbit [ bitaddr =(lowbyte << 3)+sfrbit; ] { export *[EBITS]:1 bitaddr; }
+
+EBitByteAddr: byteaddr 	is bitbank=1 & sfrbyte & sfrbit [ byteaddr =(sfrbyte << 3); ] { export *[ESFR]:1 byteaddr; }
+EBitByteAddr: byteaddr 	is bitbank=0 & lowbyte & sfrbit [ byteaddr = lowbyte + 0x20; ] { tmp:3 = byteaddr + 0x7f0000; export *[RAM]:1 tmp; }
+
+
+####################
+
+:inc EDirect is opfull=0xa5; ophi=0 & oplo=5; EDirect { 
+  EDirect = EDirect + 1; 
+}
+:dec EDirect is opfull=0xa5; opfull=0x15; EDirect { 
+  EDirect = EDirect - 1;
+}
+:add Areg,EDirect is opfull=0xa5; opfull=0x25 & Areg; EDirect { 
+  addflags(ACC,EDirect); ACC = ACC + EDirect; resultflags(ACC);
+}
+:addc Areg,EDirect is opfull=0xa5; opfull=0x35 & Areg; EDirect { 
+  tmp:1 =$(CY)+ EDirect; addflags(ACC,tmp); ACC = ACC + tmp; resultflags(ACC);
+}
+:orl Areg,EDirect is opfull=0xa5; opfull=0x45 & Areg; EDirect { 
+  ACC = ACC | EDirect;
+}
+:anl Areg,EDirect is opfull=0xa5; opfull=0x55 & Areg; EDirect { 
+  ACC = ACC & EDirect; resultflags(ACC); 
+}
+:xrl Areg,EDirect is opfull=0xa5; opfull=0x65 & Areg; EDirect { 
+  ACC = ACC ^ EDirect;
+}
+:subb Areg,EDirect is opfull=0xa5; opfull=0x95 & Areg; EDirect { 
+  tmp:1 = EDirect+$(CY); subflags(ACC,tmp); ACC = ACC - tmp;
+}
+:xch Areg,EDirect is opfull=0xa5; opfull=0xc5 & Areg; EDirect { 
+  tmp:1 = ACC; ACC = EDirect; EDirect = tmp;
+}
+:mov Areg,EDirect is opfull=0xa5; opfull=0xe5 & Areg; EDirect { 
+  ACC = EDirect;
+}
+:mov EDirect,Areg is opfull=0xa5; opfull=0xf5 & Areg; EDirect { 
+  EDirect = ACC;
+}
+:mov EDirect,rn is opfull=0xa5; ophi=0x8 & rnfill=1 & rn; EDirect {
+  EDirect = rn;
+}
+:mov rn,EDirect is opfull=0xa5; ophi=0xa & rnfill=1 & rn; EDirect {
+  rn = EDirect;
+}
+:mov EDirect2,EDirect is opfull=0xa5; ophi=8 & oplo=5; EDirect; EDirect2  { 
+  EDirect2 = EDirect; 
+}
+:mov EDirect,Data    is opfull=0xa5; ophi=7 & oplo=5; EDirect; Data { 
+  EDirect = Data; 
+}
+:mov EDirect,Ri      is opfull=0xa5; ophi=8 & rifill=3 & Ri; EDirect { 
+  EDirect = Ri; 
+}
+:mov Ri,EDirect is opfull=0xa5; ophi=10 & rifill=3 & Ri; EDirect { 
+  Ri = EDirect; 
+}
+:orl EDirect,Areg is opfull=0xa5; ophi=4 & oplo=2 & Areg; EDirect { 
+  EDirect = EDirect | ACC; 
+}
+:anl EDirect,Areg is opfull=0xa5; ophi=5 & oplo=2 & Areg; EDirect { 
+  tmp:1 = EDirect & ACC; EDirect = tmp; resultflags(tmp); 
+}
+:xrl EDirect,Areg is opfull=0xa5; ophi=6 & oplo=2 & Areg; EDirect { 
+  EDirect = EDirect ^ ACC; 
+}
+:xrl EDirect,Data is opfull=0xa5; ophi=6 & oplo=3; EDirect; Data  { 
+  EDirect = EDirect ^ Data; 
+}
+:anl EDirect,Data is opfull=0xa5; ophi=5 & oplo=3; EDirect; Data  { 
+  tmp:1 = EDirect & Data; EDirect = tmp; resultflags(tmp); 
+}
+:orl EDirect,Data is opfull=0xa5; ophi=4 & oplo=3 & Areg; EDirect; Data { 
+  EDirect = EDirect | Data; 
+}
+:push EDirect is opfull=0xa5; opfull=0xc0; EDirect { 
+  push8(EDirect);
+}
+:pop EDirect is opfull=0xa5; opfull=0xd0; EDirect { 
+  pop8(EDirect);
+}
+:cjne Areg,EDirect,Rel8 is opfull=0xa5; ophi=11 & oplo=5 & Areg; EDirect; Rel8	 { 
+  compflags(ACC,EDirect); if (ACC!=EDirect) goto Rel8; 
+}
+:djnz EDirect,Rel8 is opfull=0xa5; ophi=13 & oplo=5; EDirect; Rel8 { 
+  EDirect = EDirect - 1; 
+  if (EDirect!=0) goto Rel8; 
+}
+
+
+# EPTR operations
+:ejmp ecallImmAddr is opfull=0xa5; opfull=0x02; ecallImmAddr { 
+   goto ecallImmAddr;
+}
+:ecall ecallImmAddr is opfull=0xa5; opfull=0x12; ecallImmAddr { 
+  ret:3 = inst_next; push24(ret); call ecallImmAddr;
+}
+:mov eptrReg,ecallImmAddr is opfull=0xa5; opfull=0x90; ecallImmAddr & eptrReg & imm24 { 
+  EPTR = imm24;
+}
+:eret is opfull=0xa5; opfull=0x22 { 
+  pc:3 = 0; pop24(pc); return[pc]; 
+}
+:jmp APlusEptr is opfull=0xa5; opfull=0x73 & APlusEptr { 
+  # this is correct, but causes disassembler problems
+  # goto APlusEptr;  
+  # added additional indirection to stop disassembler problems.
+  goto [APlusEptr];  
+}
+:movx Areg",@"eptrReg is opfull=0xa5; opfull=0xe0 & Areg & eptrReg { 
+  ACC = *:1 EPTR;
+}
+:movx "@"eptrReg,Areg is opfull=0xa5; opfull=0xf0 & Areg & eptrReg { 
+  *:1 EPTR = ACC;
+}
+:movc Areg,APlusEptr is opfull=0xa5; opfull=0x93 & Areg & APlusEptr { 
+  ACC = *:1 APlusEptr;
+}
+:inc EPTR is opfull=0xa5; opfull=0xa3 & EPTR { 
+  EPTR = EPTR + 1;
+}
+
+# PRi operations
+:emov Areg",@"PRi"+"emov_delta is opfull=0xa5; ophi=4 & PRi & emov_delta & Areg { 
+  tmp:3 = zext(PRi) + emov_delta;
+  ACC = *:1 tmp;
+}
+:emov "@"PRi"+"emov_delta,Areg is opfull=0xa5; ophi=5 & PRi & emov_delta & Areg { 
+  tmp:3 = PRi + emov_delta;
+  *:1 tmp = ACC;
+}
+:add PRi_revend,add_with_pr_const is opfull=0xa5; ophi=6 & PRi_revend & PRi & add_with_pr_const { 
+  x:3 = zext(add_with_pr_const);
+  tmp:3 = PRi + x;
+@if defined(ENDIANSWAPFUNC)
+  y:3 = endian_swap(tmp);
+@else
+  y:3 = (tmp << 16) | (tmp & 0x00ff00) | zext(tmp >> 16);
+@endif
+  PRi_revend = y;
+}
+
+# bit operations
+:anl CY,EBitAddr   is opfull=0xa5; CY & ophi=8  & oplo=2; EBitAddr  & bitaddr57=7 & sfrbit3=0 & sfrbit & EBitByteAddr {tmp:1 = EBitByteAddr; $(CY)=$(CY)& ((tmp>>sfrbit)&1); resultflags(tmp); }
+:anl CY,EBitAddr2  is opfull=0xa5; CY & ophi=11 & oplo=0; EBitAddr2 & bitaddr57=7 & sfrbit3=0 & sfrbit & EBitByteAddr {tmp:1 = EBitByteAddr; $(CY)=$(CY)& (~((tmp>>sfrbit)&1));  }
+@if BIT_OPS == "BIT_ADDRS"
+:anl CY,EBitAddr   is opfull=0xa5; CY & ophi=8  & oplo=2; EBitAddr  & sfrbit & EBitByteAddr {$(CY)=$(CY)& EBitAddr; }
+:anl CY,EBitAddr2  is opfull=0xa5; CY & ophi=11 & oplo=0; EBitAddr2 & sfrbit & EBitByteAddr {$(CY)=$(CY)& ~EBitAddr2; }
+@elif BIT_OPS == "PCODEOPS"
+:anl CY,EBitAddr   is opfull=0xa5; CY & ophi=8  & oplo=2; EBitAddr  & sfrbit & EBitByteAddr {$(CY)=$(CY)& get(EBitAddr, EBitByteAddr); }
+:anl CY,EBitAddr2  is opfull=0xa5; CY & ophi=11 & oplo=0; EBitAddr2 & sfrbit & EBitByteAddr {$(CY)=$(CY)& (get(EBitAddr2, EBitByteAddr)^1); }
+@elif BIT_OPS == "SHIFTS"
+:anl CY,EBitAddr   is opfull=0xa5; CY & ophi=8  & oplo=2; EBitAddr  & sfrbit	& EBitByteAddr {$(CY)=$(CY)& ((EBitByteAddr>>sfrbit)&1);  }
+:anl CY,EBitAddr2  is opfull=0xa5; CY & ophi=11 & oplo=0; EBitAddr2 & sfrbit	& EBitByteAddr {$(CY)=$(CY)& (~((EBitByteAddr>>sfrbit)&1));  }
+@endif
+
+:clr EBitAddr  is opfull=0xa5; ophi=12 & oplo=2; EBitAddr & bitaddr57=7 & sfrbit3=0 & sfrbit & EBitByteAddr { tmp:1 = ~(1<<sfrbit); EBitByteAddr = EBitByteAddr & tmp; }
+@if BIT_OPS == "BIT_ADDRS"
+:clr EBitAddr  is opfull=0xa5; ophi=12 & oplo=2; EBitAddr & sfrbit & EBitByteAddr { EBitAddr = 0; }
+@elif BIT_OPS == "PCODEOPS"
+:clr EBitAddr  is opfull=0xa5; ophi=12 & oplo=2; EBitAddr & sfrbit & EBitByteAddr { EBitByteAddr = clr(EBitAddr, EBitByteAddr); }
+#:CLR PortBit  is opfull=0xa5; ophi=12 & oplo=2; PortBit & sfrbit & EBitByteAddr { outp(PortBit, 0:1, EBitByteAddr); }
+@elif BIT_OPS == "SHIFTS"
+:clr EBitAddr  is opfull=0xa5; ophi=12 & oplo=2; EBitAddr & sfrbit	& EBitByteAddr { tmp:1 = ~(1<<sfrbit); EBitByteAddr = EBitByteAddr & tmp; }
+@endif
+
+:cpl EBitAddr  is opfull=0xa5; ophi=11 & oplo=2; EBitAddr & bitaddr57=7 & sfrbit3=0 & sfrbit & EBitByteAddr { tmp:1 = (1<<sfrbit); EBitByteAddr = EBitByteAddr ^ tmp; }
+@if BIT_OPS == "BIT_ADDRS"
+:cpl EBitAddr  is opfull=0xa5; ophi=11 & oplo=2; EBitAddr & sfrbit & EBitByteAddr { EBitAddr = EBitAddr ^ 1; }
+@elif BIT_OPS == "PCODEOPS"
+:cpl EBitAddr  is opfull=0xa5; ophi=11 & oplo=2; EBitAddr & sfrbit & EBitByteAddr { tmp:1 = get(EBitAddr, EBitByteAddr) ^ 1; EBitByteAddr = set_bit_value(EBitAddr, tmp, EBitByteAddr); }
+@elif BIT_OPS == "SHIFTS"
+:cpl EBitAddr  is opfull=0xa5; ophi=11 & oplo=2; EBitAddr & sfrbit	& EBitByteAddr { tmp:1 = (1<<sfrbit); EBitByteAddr = EBitByteAddr ^ tmp; }
+@endif
+
+:jb  EBitAddr,Rel8 is opfull=0xa5; ophi=2 & oplo=0; EBitAddr & bitaddr57=7 & sfrbit3=0 & sfrbit & EBitByteAddr; Rel8	 { if (((EBitByteAddr>>sfrbit)&1) == 1:1) goto Rel8; }
+:jbc EBitAddr,Rel8 is opfull=0xa5; ophi=1 & oplo=0; EBitAddr & bitaddr57=7 & sfrbit3=0 & sfrbit & EBitByteAddr; Rel8	 { tmp:1 = 1<<sfrbit; if ((EBitByteAddr & tmp)==0) goto inst_next; EBitByteAddr = EBitByteAddr & ~tmp; goto Rel8; }
+@if BIT_OPS == "BIT_ADDRS"
+:jb  EBitAddr,Rel8 is opfull=0xa5; ophi=2 & oplo=0; EBitAddr & sfrbit & EBitByteAddr; Rel8	 { if (EBitAddr == 1:1) goto Rel8; }
+:jbc EBitAddr,Rel8 is opfull=0xa5; ophi=1 & oplo=0; EBitAddr & sfrbit & EBitByteAddr; Rel8	 { if (EBitAddr == 0:1) goto inst_next; EBitAddr = 0; goto Rel8; }
+@elif BIT_OPS == "PCODEOPS"
+:jb  EBitAddr,Rel8 is opfull=0xa5; ophi=2 & oplo=0; EBitAddr & sfrbit & EBitByteAddr; Rel8	 { if (get(EBitAddr, EBitByteAddr)==1:1) goto Rel8; }
+:jbc EBitAddr,Rel8 is opfull=0xa5; ophi=1 & oplo=0; EBitAddr & sfrbit & EBitByteAddr; Rel8	 { tmp:1 = get(EBitAddr, EBitByteAddr); if (tmp==0) goto inst_next; EBitByteAddr = clr(EBitAddr, EBitByteAddr); goto Rel8; }
+@elif BIT_OPS == "SHIFTS"
+:jb  EBitAddr,Rel8 is opfull=0xa5; ophi=2 & oplo=0; EBitAddr & sfrbit & EBitByteAddr; Rel8	 { if (((EBitByteAddr>>sfrbit)&1) == 1:1) goto Rel8; }
+:jbc EBitAddr,Rel8 is opfull=0xa5; ophi=1 & oplo=0; EBitAddr & sfrbit & EBitByteAddr; Rel8	 { tmp:1 = 1<<sfrbit; if ((EBitByteAddr & tmp)==0) goto inst_next; EBitByteAddr = EBitByteAddr & ~tmp; goto Rel8; }
+@endif
+
+:jnb EBitAddr,Rel8 is opfull=0xa5; ophi=3 & oplo=0; EBitAddr & bitaddr57=7 & sfrbit3=0 & sfrbit & EBitByteAddr; Rel8  { if (((EBitByteAddr>>sfrbit)&1)==0:1) goto Rel8; }
+@if BIT_OPS == "BIT_ADDRS"
+:jnb EBitAddr,Rel8 is opfull=0xa5; ophi=3 & oplo=0; EBitAddr & sfrbit & EBitByteAddr; Rel8  { if (EBitAddr == 0:1) goto Rel8; }
+@elif BIT_OPS == "PCODEOPS"
+:jnb EBitAddr,Rel8 is opfull=0xa5; ophi=3 & oplo=0; EBitAddr & sfrbit & EBitByteAddr; Rel8  { if (get(EBitAddr, EBitByteAddr)==0:1) goto Rel8; }
+@elif BIT_OPS == "SHIFTS"
+:jnb EBitAddr,Rel8 is opfull=0xa5; ophi=3 & oplo=0; EBitAddr & sfrbit & EBitByteAddr; Rel8  { if (((EBitByteAddr>>sfrbit)&1)==0:1) goto Rel8; }
+@endif
+
+:mov CY,EBitAddr is opfull=0xa5; CY & ophi=10 & oplo=2;  EBitAddr & bitaddr57=7 & sfrbit3=0 & sfrbit & EBitByteAddr {$(CY)= (EBitByteAddr>>sfrbit)&1; }
+:mov EBitAddr,CY is opfull=0xa5; CY & ophi=9  & oplo=2;  EBitAddr & bitaddr57=7 & sfrbit3=0 & sfrbit & EBitByteAddr { EBitByteAddr = EBitByteAddr & (~(1<<sfrbit)); EBitByteAddr = EBitByteAddr | ($(CY)<<sfrbit); }
+@if BIT_OPS == "BIT_ADDRS"
+:mov CY,EBitAddr is opfull=0xa5; CY & ophi=10 & oplo=2;  EBitAddr & sfrbit & EBitByteAddr {$(CY)= EBitAddr; }
+:mov EBitAddr,CY is opfull=0xa5; CY & ophi=9  & oplo=2;  EBitAddr & sfrbit & EBitByteAddr { EBitAddr = $(CY); }
+@elif BIT_OPS == "PCODEOPS"
+:mov CY,EBitAddr is opfull=0xa5; CY & ophi=10 & oplo=2;  EBitAddr & sfrbit & EBitByteAddr {$(CY) = get(EBitAddr, EBitByteAddr); }
+:mov EBitAddr,CY is opfull=0xa5; CY & ophi=9  & oplo=2;  EBitAddr & sfrbit & EBitByteAddr { EBitByteAddr = set_bit_value(EBitAddr, $(CY), EBitByteAddr); }
+@elif BIT_OPS == "SHIFTS"
+:mov CY,EBitAddr is opfull=0xa5; CY & ophi=10 & oplo=2;  EBitAddr & sfrbit & EBitByteAddr{$(CY)= (EBitByteAddr>>sfrbit)&1; }
+:mov EBitAddr,CY is opfull=0xa5; CY & ophi=9  & oplo=2;  EBitAddr & sfrbit & EBitByteAddr { EBitByteAddr = EBitByteAddr & (~(1<<sfrbit)); EBitByteAddr = EBitByteAddr | ($(CY)<<sfrbit); }
+@endif
+
+:orl CY,EBitAddr  is opfull=0xa5; CY & ophi=7  & oplo=2; EBitAddr  & bitaddr57=7 & sfrbit3=0 & sfrbit & EBitByteAddr {$(CY)=$(CY)| ((EBitByteAddr>>sfrbit)&1); }
+:orl CY,EBitAddr2 is opfull=0xa5; CY & ophi=10 & oplo=0; EBitAddr2 & bitaddr57=7 & sfrbit3=0 & sfrbit & EBitByteAddr {$(CY)=$(CY)| (((EBitByteAddr>>sfrbit)&1)^1); }
+@if BIT_OPS == "BIT_ADDRS"
+:orl CY,EBitAddr  is opfull=0xa5; CY & ophi=7  & oplo=2; EBitAddr  & sfrbit & EBitByteAddr {$(CY)=$(CY)| EBitAddr; }
+:orl CY,EBitAddr2 is opfull=0xa5; CY & ophi=10 & oplo=0; EBitAddr2 & sfrbit & EBitByteAddr {$(CY)=$(CY)| (EBitAddr2^1); }
+@elif BIT_OPS == "PCODEOPS"
+:orl CY,EBitAddr  is opfull=0xa5; CY & ophi=7  & oplo=2; EBitAddr  & sfrbit & EBitByteAddr {$(CY)=$(CY)| get(EBitAddr, EBitByteAddr); }
+:orl CY,EBitAddr2 is opfull=0xa5; CY & ophi=10 & oplo=0; EBitAddr2 & sfrbit & EBitByteAddr {$(CY)=$(CY)| (get(EBitAddr2, EBitByteAddr)^1); }
+@elif BIT_OPS == "SHIFTS"
+:orl CY,EBitAddr  is opfull=0xa5; CY & ophi=7  & oplo=2; EBitAddr  & sfrbit & EBitByteAddr {$(CY)=$(CY)| ((EBitByteAddr>>sfrbit)&1); }
+:orl CY,EBitAddr2 is opfull=0xa5; CY & ophi=10 & oplo=0; EBitAddr2 & sfrbit & EBitByteAddr {$(CY)=$(CY)| (((EBitByteAddr>>sfrbit)&1)^1); }
+@endif
+
+:setb EBitAddr is opfull=0xa5; ophi=13 & oplo=2; EBitAddr & bitaddr57=7 & sfrbit3=0 & sfrbit & EBitByteAddr { EBitByteAddr = EBitByteAddr | (1<<sfrbit); }
+@if BIT_OPS == "BIT_ADDRS"
+:setb EBitAddr is opfull=0xa5; ophi=13 & oplo=2; EBitAddr & sfrbit & EBitByteAddr { EBitAddr = 1; }
+@elif BIT_OPS == "PCODEOPS"
+:setb EBitAddr is opfull=0xa5; ophi=13 & oplo=2; EBitAddr & sfrbit & EBitByteAddr { EBitByteAddr = set(EBitAddr, EBitByteAddr); }
+@elif BIT_OPS == "SHIFTS"
+:setb EBitAddr is opfull=0xa5; ophi=13 & oplo=2; EBitAddr & sfrbit & EBitByteAddr { EBitByteAddr = EBitByteAddr | (1<<sfrbit); }
+@endif
+
+########################################################################
+@if defined(INS_FUSION)
+# Eventually, it is hoped that the decompiler will just handle these.
+# In the meantime, lets try to rewrite so to help the decompiler out.
+#
+# Due to compiler optimizations, this can sometimes lead to bad results
+# on 8051 derivatives.  E.g, jumps to the middle of the fused instruction.
+
+define token Fuse4ByteToken (32)
+  f4op1 = (24,31)
+  f4op1imm8 = (16,23)
+  f4op2 = (8,15)
+  f4op2imm8 = (0,7)
+;
+
+f4imm16: val is f4op1imm8 & f4op2imm8 [ val = (f4op2imm8 << 8) | f4op1imm8; ] { tmp:2 = val; export tmp; }
+
+# Just do r7 r6 for now
+:mov_fused R6R7,"#"f4imm16 is f4op1=0x7f & f4op2=0x7e & R6R7 & f4imm16 {
+  R6R7 = f4imm16;
+}
+@endif
+

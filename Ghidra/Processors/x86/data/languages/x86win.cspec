@@ -1,0 +1,373 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<compiler_spec>
+  <data_organization>
+	<absolute_max_alignment value="0" /> <!-- no maximum alignment -->
+	<machine_alignment value="8" />
+	<default_alignment value="1" />
+	<default_pointer_alignment value="4" />
+	<pointer_size value="4" />
+	<wchar_size value="2" />
+	<short_size value="2" />
+	<integer_size value="4" />
+	<long_size value="4" />
+	<long_long_size value="8" />
+	<float_size value="4" />
+	<double_size value="8" />
+	<long_double_size value="8" />
+	<size_alignment_map>
+		<entry size="1" alignment="1" />
+		<entry size="2" alignment="2" />
+		<entry size="4" alignment="4" />
+		<entry size="8" alignment="4" />
+	</size_alignment_map>
+  </data_organization>
+  
+  <global>
+    <range space="ram"/>
+  </global>
+  <stackpointer register="ESP" space="ram"/>
+  <returnaddress>
+    <varnode space="stack" offset="0" size="4"/>
+  </returnaddress>
+  <default_proto>
+    <prototype name="__stdcall" extrapop="unknown" stackshift="4">
+      <input>
+        <pentry minsize="1" maxsize="500" align="4">
+          <addr offset="4" space="stack"/>
+        </pentry>
+      </input>
+      <output killedbycall="true">
+        <pentry minsize="4" maxsize="10" metatype="float" extension="float">
+          <register name="ST0"/>
+        </pentry>
+        <pentry minsize="1" maxsize="4">
+          <register name="EAX"/>
+        </pentry>
+        <pentry minsize="5" maxsize="8">
+          <addr space="join" piece1="EDX" piece2="EAX"/>
+        </pentry>
+      </output>
+      <unaffected>
+        <varnode space="ram" offset="0" size="4"/>
+        <register name="ESP"/>
+        <register name="EBP"/>
+        <register name="ESI"/>
+        <register name="EDI"/>
+        <register name="EBX"/>
+        <register name="DF"/>
+      </unaffected>
+      <killedbycall>
+        <register name="ECX"/>
+	<register name="EDX"/>
+        <register name="ST0"/>
+        <register name="ST1"/>
+      </killedbycall>
+      <likelytrash>
+        <register name="ECX"/>
+      </likelytrash>
+    </prototype>
+  </default_proto>
+  <prototype name="__cdecl" extrapop="4" stackshift="4">
+    <input>
+      <pentry minsize="1" maxsize="500" align="4">
+        <addr offset="4" space="stack"/>
+      </pentry>
+    </input>
+    <output killedbycall="true">
+      <pentry minsize="4" maxsize="10" metatype="float" extension="float">
+        <register name="ST0"/>
+      </pentry>
+      <pentry minsize="1" maxsize="4">
+        <register name="EAX"/>
+      </pentry>
+      <pentry minsize="5" maxsize="8">
+        <addr space="join" piece1="EDX" piece2="EAX"/>
+      </pentry>
+    </output>
+    <unaffected>
+      <varnode space="ram" offset="0" size="4"/>
+      <register name="ESP"/>
+      <register name="EBP"/>
+      <register name="ESI"/>
+      <register name="EDI"/>
+      <register name="EBX"/>
+      <register name="DF"/>
+    </unaffected>
+    <killedbycall>
+      <register name="ECX"/>
+      <register name="EDX"/>
+      <register name="ST0"/>
+      <register name="ST1"/>
+    </killedbycall>
+    <likelytrash>
+      <register name="ECX"/>
+    </likelytrash>
+  </prototype>
+  <prototype name="__fastcall" extrapop="unknown" stackshift="4">
+    <input>
+      <pentry minsize="1" maxsize="4">
+        <register name="ECX"/>
+      </pentry>
+      <pentry minsize="1" maxsize="4">
+        <register name="EDX"/>
+      </pentry>
+      <pentry minsize="1" maxsize="500" align="4">
+        <addr offset="4" space="stack"/>
+      </pentry>
+    </input>
+    <output killedbycall="true">
+      <pentry minsize="4" maxsize="10" metatype="float" extension="float">
+        <register name="ST0"/>
+      </pentry>
+      <pentry minsize="1" maxsize="4">
+        <register name="EAX"/>
+      </pentry>
+      <pentry minsize="5" maxsize="8">
+        <addr space="join" piece1="EDX" piece2="EAX"/>
+      </pentry>
+    </output>
+    <unaffected>
+      <varnode space="ram" offset="0" size="4"/>
+      <register name="ESP"/>
+      <register name="EBP"/>
+      <register name="ESI"/>
+      <register name="EDI"/>
+      <register name="EBX"/>
+      <register name="DF"/>
+    </unaffected>
+    <killedbycall>
+      <register name="ECX"/>
+      <register name="EDX"/>
+      <register name="ST0"/>
+      <register name="ST1"/>
+    </killedbycall>
+    <likelytrash>
+      <register name="ECX"/>
+    </likelytrash>
+  </prototype>
+  <prototype name="__thiscall" extrapop="unknown" stackshift="4">
+    <input thisbeforeretpointer="true">
+      <pentry minsize="1" maxsize="4">
+        <register name="ECX"/>
+      </pentry>
+      <pentry minsize="1" maxsize="500" align="4">
+        <addr offset="4" space="stack"/>
+      </pentry>
+    </input>
+    <output killedbycall="true">
+      <pentry minsize="4" maxsize="10" metatype="float" extension="float">
+        <register name="ST0"/>
+      </pentry>
+      <pentry minsize="1" maxsize="4">
+        <register name="EAX"/>
+      </pentry>
+      <pentry minsize="5" maxsize="8">
+        <addr space="join" piece1="EDX" piece2="EAX"/>
+      </pentry>
+    </output>
+    <unaffected>
+      <varnode space="ram" offset="0" size="4"/>
+      <register name="ESP"/>
+      <register name="EBP"/>
+      <register name="ESI"/>
+      <register name="EDI"/>
+      <register name="EBX"/>
+      <register name="DF"/>
+    </unaffected>
+    <killedbycall>
+      <register name="ECX"/>
+      <register name="EDX"/>
+      <register name="ST0"/>
+      <register name="ST1"/>
+    </killedbycall>
+    <likelytrash>
+      <register name="ECX"/>
+    </likelytrash>
+  </prototype>
+  <resolveprototype name="__fastcall/__thiscall/__stdcall">
+     <model name="__stdcall"/>      <!-- The default case -->
+     <model name="__fastcall"/>
+     <model name="__thiscall"/>
+  </resolveprototype>
+  <eval_current_prototype name="__fastcall/__thiscall/__stdcall"/>
+
+
+
+  <!-- Injections for various compiler helper functions -->
+
+<callfixup name="EH_prolog">
+  <target name="__EH_prolog"/>
+  <target name="_EH_prolog"/>
+  <target name="thunk_EH_prolog"/>
+  <pcode>
+    <body><![CDATA[
+     ESP = ESP - 4;
+     *:4 ESP = -1;
+     ESP = ESP - 4;
+     * ESP = EAX;
+     EAX = * FS_OFFSET;
+     ESP = ESP - 4;
+     * ESP = EAX;
+     * FS_OFFSET = ESP;
+     tmp = ESP + 12;
+     * tmp = EBP;
+     EBP = tmp;
+    ]]></body>
+  </pcode>
+</callfixup>
+
+
+<callfixup name="EH_prolog3">
+  <target name="_EH_prolog3"/>
+  <target name="__EH_prolog3"/>
+  <target name="EH_prolog3_GS"/>
+  <target name="_EH_prolog3_GS"/>
+  <target name="__EH_prolog3_GS"/>
+  <target name="EH_prolog3_catch"/>
+  <target name="_EH_prolog3_catch"/>
+  <target name="__EH_prolog3_catch"/>
+  <target name="EH_prolog3_catch_GS"/>
+  <target name="_EH_prolog3_catch_GS"/>
+  <target name="__EH_prolog3_catch_GS"/>
+  <target name="EH_prolog3_catch"/>
+  <target name="_EH_prolog3_catch"/>
+  <target name="__EH_prolog3_catch"/>
+  <target name="EH_prolog3_catch_GS"/>
+  <target name="_EH_prolog3_catch_GS"/>
+  <target name="__EH_prolog3_catch_GS"/>
+  <pcode>
+    <body><![CDATA[
+     EBP = ESP + 4;
+     tmp = * EBP;
+     ESP = ESP - tmp;
+     ESP = ESP - 24;
+    ]]></body>
+  </pcode>
+</callfixup>
+
+<callfixup name="EH_epilog3">
+  <target name="_EH_epilog3"/>
+  <target name="__EH_epilog3"/>
+  <target name="EH_epilog3_GS"/>
+  <target name="_EH_epilog3_GS"/>
+  <target name="__EH_epilog3_GS"/>
+  <target name="EH_epilog3_catch"/>
+  <target name="_EH_epilog3_catch"/>
+  <target name="__EH_epilog3_catch"/>
+  <target name="EH_epilog3_catch_GS"/>
+  <target name="_EH_epilog3_catch_GS"/>
+  <target name="FID_conflict:__EH_epilog3_GS"/>
+  <target name="FID_conflict:__EH_epilog3_catch"/>
+  <target name="FID_conflict:__EH_epilog3_catch_GS"/>
+  <target name="SEH_epilog"/>
+  <target name="_SEH_epilog"/>
+  <target name="__SEH_epilog"/>
+  <target name="SEH_epilog4"/>
+  <target name="_SEH_epilog4"/>
+  <target name="__SEH_epilog4"/>
+  <target name="SEH_epilog4_GS"/>
+  <target name="_SEH_epilog4_GS"/>
+  <target name="__SEH_epilog4_GS"/>
+  <target name="FID_conflict:__SEH_epilog4_GS"/>
+  <pcode>
+   <body><![CDATA[
+    ESP = EBP;
+    EBP = * ESP;
+    ESP = ESP + 4;
+   ]]></body>
+  </pcode>
+</callfixup>
+
+
+<!-- Not sure if these are ever used, and how they affect the stack
+<callfixup name="EH_prolog3_align">
+  <target name="_EH_prolog3_align"/>
+  <target name="__EH_prolog3_align"/>
+  <target name="EH_prolog3_GS_align"/>
+  <target name="_EH_prolog3_GS_align"/>
+  <target name="__EH_prolog3_GS_align"/>
+  <target name="EH_prolog3_catch_align"/>
+  <target name="_EH_prolog3_catch_align"/>
+  <target name="__EH_prolog3_catch_align"/>
+  <target name="EH_prolog3_catch_GS_align"/>
+  <target name="_EH_prolog3_catch_GS_align"/>
+  <target name="__EH_prolog3_catch_GS_align"/>
+  <pcode>
+    <body><![CDATA[
+     EBP = ESP + 4;
+     tmp = * EBP;
+     ESP = ESP - tmp;
+     ESP = ESP - 24;
+    ]]></body>
+  </pcode>
+</callfixup>
+
+<callfixup name="EH_epilog3_align">
+  <target name="_EH_epilog3_align"/>
+  <target name="__EH_epilog3_align"/>
+  <target name="EH_epilog3_GS_align"/>
+  <target name="_EH_epilog3_GS_align"/>
+  <target name="__EH_epilog3_GS_align"/>
+  <pcode>
+   <body><![CDATA[
+    ESP = EBP;
+    EBP = * ESP;
+    ESP = ESP - 4;
+   ]]></body>
+  </pcode>
+</callfixup>
+-->
+ 
+<callfixup name="alloca_probe">
+  <target name="__alloca_probe"/>
+  <target name="__alloca_probe_8"/>
+  <target name="__alloca_probe_16"/>
+  <target name="__chkstk"/>
+  <pcode>
+   <body><![CDATA[
+     ESP = ESP + 4 - EAX;
+   ]]></body>
+  </pcode>
+</callfixup>
+
+<callfixup name="SEH_prolog">
+  <target name="_SEH_prolog"/>
+  <target name="__SEH_prolog"/>
+  <pcode>
+   <body><![CDATA[
+    newframetmp = ESP + 8;
+    localsizetmp:4 = * newframetmp; 
+    ESP = ESP - localsizetmp;
+    ESP = ESP - 20;
+    * newframetmp = EBP;
+    EBP = newframetmp;
+    *ESP = EDI;
+    *(ESP+4) = ESI;
+    *(ESP+8) = EBX;
+   ]]></body>
+  </pcode>
+</callfixup>
+
+<callfixup name="SEH_prolog4">
+  <target name="_SEH_prolog4"/>
+  <target name="__SEH_prolog4"/>
+  <target name="SEH_prolog4_GS"/>
+  <target name="_SEH_prolog4_GS"/>
+  <target name="__SEH_prolog4_GS"/>
+  <pcode>
+   <body><![CDATA[
+    newframetmp = ESP + 8;
+    localsizetmp:4 = * newframetmp; 
+    ESP = ESP - localsizetmp;
+    ESP = ESP - 24;
+    * newframetmp = EBP;
+    EBP = newframetmp;
+    *(ESP+4) = EDI;
+    *(ESP+8) = ESI;
+    *(ESP+12) = EBX;
+   ]]></body>
+  </pcode>
+</callfixup>
+
+</compiler_spec>

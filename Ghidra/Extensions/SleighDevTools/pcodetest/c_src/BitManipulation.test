@@ -1,0 +1,356 @@
+#include "pcode_test.h"
+
+#ifdef HAS_LONGLONG
+TEST pcode_BM1_GetBitLongLong_Main()
+{
+	extern i8 pcode_BM1_GetBitLongLong(i8 arg, u4 bit);
+	ASSERTI8(pcode_BM1_GetBitLongLong(0xFF, 1), 2); 
+	ASSERTI8(pcode_BM1_GetBitLongLong(I8_MAX, 8), 256); 
+	ASSERTI8(pcode_BM1_GetBitLongLong(I8_MAX, 16), 65536); 
+	ASSERTI8(pcode_BM1_GetBitLongLong(I8_MAX, 32), 4294967296LL); 
+	ASSERTI8(pcode_BM1_GetBitLongLong(I8_MAX, 63), 0); 
+	ASSERTI8(pcode_BM1_GetBitLongLong(0x0, 1), 0); 
+}
+#endif
+
+TEST pcode_BM2_GetBitInt_Main()
+{
+	extern i4 pcode_BM2_GetBitInt(i4 arg, u4 bit);
+	ASSERTI4(pcode_BM2_GetBitInt(0xFF, 1), 2); 
+	ASSERTI4(pcode_BM2_GetBitInt(0, 1), 0); 
+	ASSERTI4(pcode_BM2_GetBitInt(I4_MAX, 8), 256); 
+	ASSERTI4(pcode_BM2_GetBitInt(I4_MAX, 16), 65536); 
+	ASSERTI4(pcode_BM2_GetBitInt(I4_MAX, 24), 16777216); 
+	ASSERTI4(pcode_BM2_GetBitInt(I4_MAX, 31), 0); 
+}
+
+TEST pcode_BM3_GetBitShort_Main()
+{
+	extern i2 pcode_BM3_GetBitShort(i2 arg, u4 bit);
+	ASSERTI2(pcode_BM3_GetBitShort(0xFD, 1), 0); 
+	ASSERTI2(pcode_BM3_GetBitShort(0x02, 1), 2); 
+	ASSERTI2(pcode_BM3_GetBitShort(I2_MAX, 8), 256); 
+	ASSERTI2(pcode_BM3_GetBitShort(I2_MAX, 14), 16384); 
+	ASSERTI2(pcode_BM3_GetBitShort(I2_MAX, 15), 0); 
+}
+
+TEST pcode_BM4_GetBitChar_Main()
+{
+	extern i1 pcode_BM4_GetBitChar(i1 arg, u4 bit);
+	ASSERTI1(pcode_BM4_GetBitChar(0xFD, 1), 0);          
+	ASSERTI1(pcode_BM4_GetBitChar(0x02, 1), 2); 
+	ASSERTI1(pcode_BM4_GetBitChar(0xFF, 7), -128); 
+	ASSERTI1(pcode_BM4_GetBitChar(0x7F, 7), 0);
+	ASSERTI1(pcode_BM4_GetBitChar(0, 1), 0); 
+}
+
+#ifdef HAS_LONGLONG
+TEST pcode_BM5_GetBitUnsignedLongLong_Main()
+{
+	extern u8 pcode_BM5_GetBitUnsignedLongLong(u8 arg, u8 bit);
+	ASSERTU8(pcode_BM5_GetBitUnsignedLongLong(0x02, 1), 2); 
+	ASSERTU8(pcode_BM5_GetBitUnsignedLongLong(0xFFFFFFFFFFFFFFFDULL, 1), 0); 
+	ASSERTU8(pcode_BM5_GetBitUnsignedLongLong(U8_MAX, 8), 256); 
+	ASSERTU8(pcode_BM5_GetBitUnsignedLongLong(U8_MAX, 16), 65536); 
+	ASSERTU8(pcode_BM5_GetBitUnsignedLongLong(U8_MAX, 24), 16777216ULL); 
+	ASSERTU8(pcode_BM5_GetBitUnsignedLongLong(U8_MAX, 32), 4294967296ULL); 
+}
+#endif
+
+TEST pcode_BM6_GetBitUnsignedInt_Main()
+{
+	extern u4 pcode_BM6_GetBitUnsignedInt(u4 arg, u4 bit);
+	ASSERTU4(pcode_BM6_GetBitUnsignedInt(0x02, 1), 2); 
+	ASSERTU4(pcode_BM6_GetBitUnsignedInt(0xFD, 1), 0); 
+	ASSERTU4(pcode_BM6_GetBitUnsignedInt(U4_MAX, 8), 256); 
+	ASSERTU4(pcode_BM6_GetBitUnsignedInt(U4_MAX, 16), 65536); 
+	ASSERTU4(pcode_BM6_GetBitUnsignedInt(U4_MAX, 24), 16777216); 
+	ASSERTU4(pcode_BM6_GetBitUnsignedInt(U4_MAX, 31), 2147483648); 
+}
+
+TEST pcode_BM7_GetBitUnsignedShort_Main()
+{
+	extern u2 pcode_BM7_GetBitUnsignedShort(u2 arg, u4 bit);
+	ASSERTU2(pcode_BM7_GetBitUnsignedShort(0xFF, 1), 2); 
+	ASSERTU2(pcode_BM7_GetBitUnsignedShort(0, 1), 0); 
+	ASSERTU2(pcode_BM7_GetBitUnsignedShort(U2_MAX, 8), 256); 
+	ASSERTU2(pcode_BM7_GetBitUnsignedShort(U2_MAX, 15), 32768);
+}
+
+TEST pcode_BM8_GetBitUnsignedChar_Main()
+{
+	extern u1 pcode_BM8_GetBitUnsignedChar(u1 arg, u4 bit);
+	ASSERTU1(pcode_BM8_GetBitUnsignedChar(0xFF, 1), 2); 
+	ASSERTU1(pcode_BM8_GetBitUnsignedChar(0, 1), 0); 
+	ASSERTU1(pcode_BM8_GetBitUnsignedChar(U1_MAX, 4), 16); 
+	ASSERTU1(pcode_BM8_GetBitUnsignedChar(U1_MAX, 8), 0); 
+}
+
+#ifdef HAS_LONGLONG 
+TEST pcode_BM9_SetBitLongLong_Main()
+{
+	extern i8 pcode_BM9_SetBitLongLong(i8 arg, u4 bit);
+	ASSERTI8(pcode_BM9_SetBitLongLong(0xFF, 1), 255); 
+	ASSERTI8(pcode_BM9_SetBitLongLong(0, 1), 2); 
+	ASSERTI8(pcode_BM9_SetBitLongLong(I8_MAX, 8), I8_MAX); 
+	ASSERTI8(pcode_BM9_SetBitLongLong(I8_MAX, 16), I8_MAX); 
+	ASSERTI8(pcode_BM9_SetBitLongLong(I8_MAX, 24), I8_MAX); 
+	ASSERTI8(pcode_BM9_SetBitLongLong(I8_MAX, 32), I8_MAX); 
+	ASSERTI8(pcode_BM9_SetBitLongLong(I8_MAX, 0), I8_MAX); 
+	ASSERTI8(pcode_BM9_SetBitLongLong(4, 8), 260); 
+}
+#endif
+
+TEST pcode_BM10_SetBitInt_Main()
+{
+	extern i4 pcode_BM10_SetBitInt(i4 arg, u4 bit);
+	ASSERTI4(pcode_BM10_SetBitInt(0xFF, 1), 255); 
+	ASSERTI4(pcode_BM10_SetBitInt(0, 1), 2); 
+	ASSERTI4(pcode_BM10_SetBitInt(I4_MAX, 31), -1); 
+	ASSERTI4(pcode_BM10_SetBitInt(I4_MAX, I4_MIN), I4_MAX);     
+	ASSERTI4(pcode_BM10_SetBitInt(4, 8), 260);     
+}
+
+TEST pcode_BM11_SetBitShort_Main()
+{
+	extern i2 pcode_BM11_SetBitShort(i2 arg, i2 bit);
+	ASSERTI2(pcode_BM11_SetBitShort(0xFF, 1), 255); 
+	ASSERTI2(pcode_BM11_SetBitShort(0, 1), 2); 
+	ASSERTI2(pcode_BM11_SetBitShort(I2_MAX, 8), 32767); 
+	ASSERTI2(pcode_BM11_SetBitShort(I2_MAX, 15), -1); 
+}
+
+TEST pcode_BM12_SetBitChar_Main()
+{
+	extern i1 pcode_BM12_SetBitChar(i1 arg, u1 bit);
+	ASSERTI1(pcode_BM12_SetBitChar(0xFF, 1), -1); 
+	ASSERTI1(pcode_BM12_SetBitChar(0, 1), 2); 
+	ASSERTI1(pcode_BM12_SetBitChar(I1_MAX, 8), 127); 
+}
+
+#ifdef HAS_LONGLONG
+TEST pcode_BM12_SetBitUnsignedLongLong_Main()
+{
+	extern u8 pcode_BM12_SetBitUnsignedLongLong(u8 arg, u8 bit);
+	ASSERTU8(pcode_BM12_SetBitUnsignedLongLong(0xFF, 1), 255); 
+	ASSERTU8(pcode_BM12_SetBitUnsignedLongLong(0, 1), 2);
+	ASSERTU8(pcode_BM12_SetBitUnsignedLongLong(0, 8), 256); 
+	ASSERTU8(pcode_BM12_SetBitUnsignedLongLong(0, 16), 65536); 
+	ASSERTU8(pcode_BM12_SetBitUnsignedLongLong(0, 24), 16777216ULL);
+	ASSERTU8(pcode_BM12_SetBitUnsignedLongLong(0, 31), 2147483648ULL); 
+	ASSERTU8(pcode_BM12_SetBitUnsignedLongLong(0, 32), 4294967296ULL); 
+	ASSERTU8(pcode_BM12_SetBitUnsignedLongLong(U8_MAX, 8), U8_MAX); 
+	ASSERTU8(pcode_BM12_SetBitUnsignedLongLong(U8_MAX, 16), U8_MAX); 
+	ASSERTU8(pcode_BM12_SetBitUnsignedLongLong(U8_MAX, 24), U8_MAX); 
+	ASSERTU8(pcode_BM12_SetBitUnsignedLongLong(U8_MAX, 32), U8_MAX); 
+}
+#endif
+
+#ifdef HAS_LONGLONG
+TEST pcode_BM13_SetLowBitUnsignedLongLong_Main()
+{
+	extern u8 pcode_BM13_SetLowBitUnsignedLongLong(u8 arg, u8 bit);
+	ASSERTU8(pcode_BM13_SetLowBitUnsignedLongLong(0xFF, 1), 255); 
+	ASSERTU8(pcode_BM13_SetLowBitUnsignedLongLong(0, 1), 2); 
+	ASSERTU8(pcode_BM13_SetLowBitUnsignedLongLong(0, 8), 256); 
+	ASSERTU8(pcode_BM13_SetLowBitUnsignedLongLong(0, 16), 65536); 
+	ASSERTU8(pcode_BM13_SetLowBitUnsignedLongLong(0, 24), 16777216ULL); 
+	ASSERTU8(pcode_BM13_SetLowBitUnsignedLongLong(0, 31), 2147483648ULL); // ensure no sign extension occurs
+}
+#endif
+
+TEST pcode_BM14_SetBitUnsignedInt_Main()
+{
+	extern u4 pcode_BM14_SetBitUnsignedInt(u4 arg, u4 bit);
+	ASSERTU4(pcode_BM14_SetBitUnsignedInt(0xFF, 1), 255); 
+	ASSERTU4(pcode_BM14_SetBitUnsignedInt(0, 1), 2); 
+	ASSERTU4(pcode_BM14_SetBitUnsignedInt(0, 8), 256); 
+	ASSERTU4(pcode_BM14_SetBitUnsignedInt(0, 16), 65536); 
+	ASSERTU4(pcode_BM14_SetBitUnsignedInt(0, 24), 16777216);
+	ASSERTU4(pcode_BM14_SetBitUnsignedInt(0, 31), 2147483648);  
+}
+
+TEST pcode_BM15_SetBitUnsignedShort_Main()
+{
+	extern u2 pcode_BM15_SetBitUnsignedShort(u2 arg, u4 bit);
+	ASSERTU2(pcode_BM15_SetBitUnsignedShort(0xFF, 1), 255); 
+	ASSERTU2(pcode_BM15_SetBitUnsignedShort(0, 1), 2); 
+	ASSERTU2(pcode_BM15_SetBitUnsignedShort(0, 8), 256); 
+	ASSERTU2(pcode_BM15_SetBitUnsignedShort(0, 15), 32768);
+}
+
+TEST pcode_BM16_SetBitUnsignedChar_Main()
+{
+	extern u1 pcode_BM16_SetBitUnsignedChar(u1 arg, u1 bit);
+	ASSERTU1(pcode_BM16_SetBitUnsignedChar(0xFF, 1), 255); 
+	ASSERTU1(pcode_BM16_SetBitUnsignedChar(0, 1), 2); 
+	ASSERTU1(pcode_BM16_SetBitUnsignedChar(4, 1), 6); 
+}
+
+#ifdef HAS_LONGLONG
+TEST pcode_BM17_ClearBitLongLong_Main()
+{
+	extern i8 pcode_BM17_ClearBitLongLong(i8 arg, i8 bit);
+	ASSERTI8(pcode_BM17_ClearBitLongLong(0xFF, 1), 253); 
+	ASSERTI8(pcode_BM17_ClearBitLongLong(0, 1), 0); 
+	ASSERTI8(pcode_BM17_ClearBitLongLong(I8_MAX, 8), 9223372036854775551LL); 
+	ASSERTI8(pcode_BM17_ClearBitLongLong(I8_MAX, 16), 9223372036854710271LL); 
+	ASSERTI8(pcode_BM17_ClearBitLongLong(I8_MAX, 24), 9223372036837998591LL); 
+	ASSERTI8(pcode_BM17_ClearBitLongLong(I8_MAX, 32), 9223372032559808511LL); 
+}
+#endif
+
+TEST pcode_BM18_ClearBitInt_Main()
+{
+	extern i4 pcode_BM18_ClearBitInt(i4 arg, i4 bit);
+	ASSERTI4(pcode_BM18_ClearBitInt(0xFF, 1), 253); 
+	ASSERTI4(pcode_BM18_ClearBitInt(0, 1), 0); 
+	ASSERTI4(pcode_BM18_ClearBitInt(I4_MAX, 8), 2147483391); 
+	ASSERTI4(pcode_BM18_ClearBitInt(I4_MAX, 16), 2147418111); 
+	ASSERTI4(pcode_BM18_ClearBitInt(I4_MAX, 31), 2147483647); 
+}
+
+TEST pcode_BM19_ClearBitShort_Main()
+{
+	extern i2 pcode_BM19_ClearBitShort(i2 arg, i2 bit);
+	ASSERTI2(pcode_BM19_ClearBitShort(0xFF, 1), 253); 
+	ASSERTI2(pcode_BM19_ClearBitShort(0, 1), 0); 
+	ASSERTI2(pcode_BM19_ClearBitShort(I2_MAX, 8), 32511); 
+	ASSERTI2(pcode_BM19_ClearBitShort(I2_MAX, 15), 32767); 
+}
+
+TEST pcode_BM20_ClearBitChar_Main()
+{
+	extern i1 pcode_BM20_ClearBitChar(i1 arg, u1 bit);
+	ASSERTI1(pcode_BM20_ClearBitChar(0xFF, 1), -3); 
+	ASSERTI1(pcode_BM20_ClearBitChar(0, 1), 0); 
+	ASSERTI1(pcode_BM20_ClearBitChar(I1_MAX, 4), 111); 
+	ASSERTI1(pcode_BM20_ClearBitChar(I1_MAX, 8), 127); 
+}
+
+#ifdef HAS_LONGLONG
+TEST pcode_BM21_ClearBitUnsignedLongLong_Main()
+{
+	extern u8 pcode_BM21_ClearBitUnsignedLongLong(u8 arg, u8 bit);
+	ASSERTU8(pcode_BM21_ClearBitUnsignedLongLong(0xFF, 1), 253); 
+	ASSERTU8(pcode_BM21_ClearBitUnsignedLongLong(0, 1), 0); 
+	ASSERTU8(pcode_BM21_ClearBitUnsignedLongLong(U8_MAX, 8), 18446744073709551359ULL); 
+	ASSERTU8(pcode_BM21_ClearBitUnsignedLongLong(U8_MAX, 16), 18446744073709486079ULL); 
+	ASSERTU8(pcode_BM21_ClearBitUnsignedLongLong(U8_MAX, 32), 18446744069414584319ULL); 
+	ASSERTU8(pcode_BM21_ClearBitUnsignedLongLong(U8_MAX, 63), 9223372036854775807ULL); 
+}
+#endif
+
+TEST pcode_BM22_ClearBitUnsignedInt_Main()
+{
+	extern u4 pcode_BM22_ClearBitUnsignedInt(u4 arg, u4 bit);
+	ASSERTU4(pcode_BM22_ClearBitUnsignedInt(0xFF, 1), 253); 
+	ASSERTU4(pcode_BM22_ClearBitUnsignedInt(0, 1), 0); 
+	ASSERTU4(pcode_BM22_ClearBitUnsignedInt(U4_MAX, 8), -257); 
+	ASSERTU4(pcode_BM22_ClearBitUnsignedInt(U4_MAX, 16), -65537); 
+	ASSERTU4(pcode_BM22_ClearBitUnsignedInt(U4_MAX, 24), -16777217); 
+	ASSERTU4(pcode_BM22_ClearBitUnsignedInt(U4_MAX, 31), 2147483647); 
+}
+
+TEST pcode_BM23_ClearBitUnsignedShort_Main()
+{
+	extern u2 pcode_BM23_ClearBitUnsignedShort(u2 arg, u2 bit);
+	ASSERTU2(pcode_BM23_ClearBitUnsignedShort(0xFF, 1), 253); 
+	ASSERTU2(pcode_BM23_ClearBitUnsignedShort(0, 1), 0); 
+	ASSERTU2(pcode_BM23_ClearBitUnsignedShort(U2_MAX, 8), 65279); 
+	ASSERTU2(pcode_BM23_ClearBitUnsignedShort(U2_MAX, 15), 32767); 
+}
+
+TEST pcode_BM24_ClearBitUnsignedChar_Main()
+{
+	extern u1 pcode_BM24_ClearBitUnsignedChar(u1 arg, u1 bit);
+	ASSERTU1(pcode_BM24_ClearBitUnsignedChar(0xFF, 1), 253); 
+	ASSERTU1(pcode_BM24_ClearBitUnsignedChar(0, 1), 0); 
+	ASSERTU1(pcode_BM24_ClearBitUnsignedChar(U1_MAX, 4), 239); 
+	ASSERTU1(pcode_BM24_ClearBitUnsignedChar(U1_MAX, 8), 255); 
+}
+
+#ifdef HAS_LONGLONG
+TEST pcode_BM25_ToggleBitLongLong_Main()
+{
+	extern i8 pcode_BM25_ToggleBitLongLong(i8 arg, u4 bit);
+	ASSERTI8(pcode_BM25_ToggleBitLongLong(0xFF, 1), 253); 
+	ASSERTI8(pcode_BM25_ToggleBitLongLong(0, 1), 2); 
+	ASSERTI8(pcode_BM25_ToggleBitLongLong(I8_MAX, 8), 9223372036854775551LL); 
+	ASSERTI8(pcode_BM25_ToggleBitLongLong(I8_MAX, 16), 9223372036854710271LL); 
+	ASSERTI8(pcode_BM25_ToggleBitLongLong(I8_MAX, 32), 9223372032559808511LL); 
+	ASSERTI8(pcode_BM25_ToggleBitLongLong(I8_MAX, 63), -1LL); 
+}
+#endif
+
+TEST pcode_BM26_ToggleBitInt_Main()
+{
+	extern i4 pcode_BM26_ToggleBitInt(i4 arg, i4 bit);
+	ASSERTI4(pcode_BM26_ToggleBitInt(0xFF, 1), 253); 
+	ASSERTI4(pcode_BM26_ToggleBitInt(0, 1), 2);
+	ASSERTI4(pcode_BM26_ToggleBitInt(I4_MAX, 8), 2147483391);
+	ASSERTI4(pcode_BM26_ToggleBitInt(I4_MAX, 16), 2147418111);    
+	ASSERTI4(pcode_BM26_ToggleBitInt(I4_MAX, 24), 2130706431);  
+	ASSERTI4(pcode_BM26_ToggleBitInt(I4_MAX, 31), -1);  
+}
+
+TEST pcode_BM27_ToggleBitShort_Main()
+{
+	extern i2 pcode_BM27_ToggleBitShort(i2 arg, i2 bit);
+	ASSERTI2(pcode_BM27_ToggleBitShort(0xFF, 1), 253); 
+	ASSERTI2(pcode_BM27_ToggleBitShort(0, 1), 2); 
+	ASSERTI2(pcode_BM27_ToggleBitShort(I2_MAX, 8), 32511); 
+	ASSERTI2(pcode_BM27_ToggleBitShort(I2_MAX, 15), -1); 
+}
+
+TEST pcode_BM28_ToggleBitChar_Main()
+{
+	extern i1 pcode_BM28_ToggleBitChar(i1 arg, u4 bit);
+	ASSERTI1(pcode_BM28_ToggleBitChar(0xFF, 1), -3); 
+	ASSERTI1(pcode_BM28_ToggleBitChar(0, 1), 2); 
+	ASSERTI1(pcode_BM28_ToggleBitChar(I1_MAX, 4), 111); 
+	ASSERTI1(pcode_BM28_ToggleBitChar(I1_MAX, 7), -1); 
+}
+
+#ifdef HAS_LONGLONG
+TEST pcode_BM29_ToggleBitUnsignedLongLong_Main()
+{
+	extern u8 pcode_BM29_ToggleBitUnsignedLongLong(u8 arg, u4 bit);
+	ASSERTU8(pcode_BM29_ToggleBitUnsignedLongLong(0xFF, 1), 253); 
+	ASSERTU8(pcode_BM29_ToggleBitUnsignedLongLong(0, 1), 2); 
+	ASSERTU8(pcode_BM29_ToggleBitUnsignedLongLong(U8_MAX, 8), 18446744073709551359ULL); 
+	ASSERTU8(pcode_BM29_ToggleBitUnsignedLongLong(U8_MAX, 16), 18446744073709486079ULL); 
+	ASSERTU8(pcode_BM29_ToggleBitUnsignedLongLong(U8_MAX, 32), 18446744069414584319ULL); 
+	ASSERTU8(pcode_BM29_ToggleBitUnsignedLongLong(U8_MAX, 63), 9223372036854775807ULL); 
+}
+#endif
+
+TEST pcode_BM30_ToggleBitUnsignedInt_Main()
+{
+	extern u4 pcode_BM30_ToggleBitUnsignedInt(u4 arg, u4 bit);
+	ASSERTU4(pcode_BM30_ToggleBitUnsignedInt(0xFF, 1), 253); 
+	ASSERTU4(pcode_BM30_ToggleBitUnsignedInt(0, 1), 2); 
+	ASSERTU4(pcode_BM30_ToggleBitUnsignedInt(U4_MAX, 8), 4294967039); 
+	ASSERTU4(pcode_BM30_ToggleBitUnsignedInt(U4_MAX, 16), 4294901759); 
+	ASSERTU4(pcode_BM30_ToggleBitUnsignedInt(U4_MAX, 31), 2147483647); 
+}
+
+TEST pcode_BM31_ToggleBitUnsignedShort_Main()
+{
+	extern u2 pcode_BM31_ToggleBitUnsignedShort(u2 arg, u4 bit);
+	ASSERTU2(pcode_BM31_ToggleBitUnsignedShort(0xFF, 1), 253); 
+	ASSERTU2(pcode_BM31_ToggleBitUnsignedShort(0, 1), 2); 
+	ASSERTU2(pcode_BM31_ToggleBitUnsignedShort(U2_MAX, 8), 65279); 
+	ASSERTU2(pcode_BM31_ToggleBitUnsignedShort(U2_MAX, 15), 32767); 
+}
+
+TEST pcode_BM32_ToggleBitUnsignedChar_Main()
+{
+	extern u1 pcode_BM32_ToggleBitUnsignedChar(u1 arg, u1 bit);
+	ASSERTU1(pcode_BM32_ToggleBitUnsignedChar(0xFF, 1), 253); 
+	ASSERTU1(pcode_BM32_ToggleBitUnsignedChar(0, 1), 2); 
+	ASSERTU1(pcode_BM32_ToggleBitUnsignedChar(U1_MAX, 4), 239); 
+	ASSERTU1(pcode_BM32_ToggleBitUnsignedChar(U1_MAX, 7), 127); 
+}
+
+MAIN BitManipulation_main() { }

@@ -1,0 +1,1804 @@
+<!DOCTYPE html>
+
+<meta charset="utf-8" http-equiv="X-UA-Compatible" content="IE=Edge">
+<title>Scripting</title>
+
+<!-- Your Slides -->
+<!-- One section is one slide -->
+
+<!-- This is the first slide -->
+<section>
+<header>Scripting</header>
+<ul>
+  <li>Script Manager</li>
+  <ul>
+    <li>Script Category Tree</li>
+    <ul>
+      <li>Displays dynamic tree of categories</li>
+    </ul>
+    <li>Script Table</li>
+    <ul>
+      <li>Displays name, description, key binding</li>
+    </ul>
+    <li>Filter</li>
+    <ul>
+      <li>Matches filter to name or description</li>
+      <li>Wildcard and case-insensitive</li>
+    </ul>
+  </ul>
+</ul>
+</section>
+
+<section>
+<header>Scripting</header>
+<ul>
+  <br><br>
+  <li>Run Script</li>
+  <ul>
+    <li>Click the <i>RUN</i> button</li>
+    <li>Double-click on the row in the script table</li>
+  </ul>
+</ul>
+</section>
+
+<section>
+<header>Scripting</header>
+<ul>
+  <br>
+  <li>Edit Script</li>
+  <ul>
+    <li>Click the <i>Edit Script with basic editor</i> button</li>
+    <li>Make a change</li>
+    <li>Click the <i>SAVE</i> or <i>SAVE AS</i> button</li>
+  </ul>
+  <li>Exercise</li>
+  <ul>
+    <li>Edit the <span style="font-family:'Courier New'; font-size:30px">HelloWorldScript.java</span> to print &quot;Hello Ghidra Student&quot;</li>
+    <li>Verify the output in the console</li>
+  </ul>
+
+</ul>
+</section>
+
+<section>
+<header>Scripting</header>
+<ul>
+  <br>
+  <li>Assign Key Binding</li>
+  <ul>
+    <li>Allows scripts to run from anywhere in Ghidra</li>
+  </ul>
+  <li>Delete Script</li>
+  <ul>
+    <li>Deletes the selected script(s)</li>
+    <li>System scripts cannot be deleted</li>
+  </ul>
+  <li>Rename script</li>
+</ul>
+</section>
+
+<section>
+<header>Scripting</header>
+<ul>
+  <br>
+  <li>Create New Script</li>
+  <ul>
+    <li>Click the <i>NEW</i> button</li>
+    <li>In the <i>New Script</i> dialog</li>
+    <ul>
+      <li>Select a script type (if applicable)</li>
+      <li>Select a directory (if applicable)</li>
+      <li>Enter a script name</li>
+      <li>Click OK button</li>
+    </ul>
+  </ul>
+</ul>
+</section>
+
+<section>
+<header>Scripting</header>
+<table style="width:100%; border-spacing:0px;">
+  <tr>
+    <td>
+      <br><br>
+      <img src="Images/Scripting/scriptTemplate.png" style="vertical-align:middle" width="99%"></img>
+    </td>
+    <td style="vertical-align:top">
+      <ul class="medium">
+	<br><br>
+	<li>Sample script template in Java</li>
+	<ul>
+	  <li>Must fill in the <span style="font-family:'Courier New'; font-size:30px">TODO</span> areas</li>
+	  <li>Create a description</li>
+	  <li>Fill in the <span style="font-family:'Courier New'; font-size:30px">run()</span> method</li>
+	</ul>
+      </ul>
+    </td>
+    <td>
+  </tr>
+</table>
+</section>
+
+<section>
+<header>Scripting</header>
+<ul>
+  <br>
+  <li>Refresh Script List</li>
+  <ul>
+    <li>Refreshes script manager</li>
+    <li>Use it when change script category</li>
+    <li>Needed when script development occurs outside Ghidra</li>
+    <ul>
+      <li>For example, using <span style="font-family:'Courier New'; font-size:30px">emacs</span> for script development</li>
+    </ul>
+  </ul>
+</ul>
+</section>
+
+<section>
+<header>Scripting</header>
+<ul>
+  <br>
+  <li>Script Directories</li>
+  <ul>
+    <li>Allows management of script directories</li>
+    <li>Default directories</li>
+    <ul>
+      <li><span style="font-family:'Courier New'; font-size:30px">&lt;HomeDirectory&gt;/ghidra_scripts</span></li>
+    </ul>
+    <li>Useful for sharing scripts in multi-user</li>
+  </ul>
+</ul>
+</section>
+
+<section>
+<header>Scripting</header>
+<br>
+<ul>
+  <li>Help</li>
+  <ul>
+    <li>Opens <span style="font-family:'Courier New'; font-size:30px">javadoc</span> for GhidraScript base class</li>
+    <li>Provides access to <span style="font-family:'Courier New'; font-size:30px">javadoc</span> for the entire Ghidra API</li>
+  </ul>
+</ul>
+</section>
+
+<section>
+<header>Scripting</header>
+<ul>
+  <li>Exercise</li>
+  <ol class="decimal medium">
+    <li>Create a new Java script</li>
+    <span style="font-family:'Courier New'; font-size:25px">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;MyClassScript.java</span>
+    <li>Set the description</li>
+    <li>Change the body of the run() method to</li>
+    <span style="font-family:'Courier New'; font-size:25px">
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;public void run() {
+    <br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;println(&quot;hello class&quot;);
+    <br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+    </span>
+    <li>Save it</li>
+    <li>Run it</li>
+    <li>Assign a keybinding of <span style="font-family:'Courier New'; font-size:35px">ctrl-5</span></li>
+    <li>Re-run the script using the key binding</li>
+  </ol>
+</ul>
+</section>
+
+<section>
+<header>Scripting</header>
+<br>
+<ul>
+  <li>Script Meta-data</li>
+  <ul>
+    <li>Special tags in header comment</li>
+    <li>Describe the script</li>
+    <li>All are optional</li>
+    <li>Handle all the messy Java GUI stuff (buttons, menus, etc)</li>
+    <li><i>Do not insert blank lines between meta-data</i></li>
+  </ul>
+</ul>
+</section>
+
+<section>
+<header>Scripting</header>
+<br><br>
+<ul>
+  <li>Script Meta-data</li>
+  <ul>
+    <li><span style="font-family:'Courier New'; font-size:32px">@category</span></li>
+    <ul>
+      <li>The category path for the script</li>
+      <li>Levels are separated by &quot;.&quot;</li>
+      <li>Example</li>
+      <ul>
+	<li><span style="font-family:'Courier New'; font-size:28px">@category A.B.C</span></li>
+      </ul>
+    </ul>
+  </ul>
+</ul>
+</section>
+
+<section>
+<header>Scripting</header>
+<br>
+<ul>
+  <li>Script Meta-data</li>
+  <ul class="medium">
+    <li><span style="font-family:'Courier New'; font-size:32px">@keybinding</span></li>
+    <ul>
+      <li>Default key binding for a script</li>
+      <li>Format is <span style="font-family:'Courier New'; font-size:28px">[ctrl] [alt] [shift] [A-Z,0-9,F1-F12]</span> and is case-sensitive</li>
+      <li>Examples</li>
+      <ul>
+	<li><span style="font-family:'Courier New'; font-size:28px">@keybinding L</span></li>
+	<li><span style="font-family:'Courier New'; font-size:28px">@keybinding ctrl alt shift F1</span></li>
+	<li><span style="font-family:'Courier New'; font-size:28px">@keybinding ctrl shift COMMA</span></li>
+      </ul>
+    </ul>
+  </ul>
+</ul>
+</section>
+
+<section>
+<header>Scripting</header>
+<br><br>
+<ul>
+  <li>Script Meta-data</li>
+  <ul class="medium">
+    <li><span style="font-family:'Courier New'; font-size:32px">@menupath</span></li>
+    <ul>
+      <li>Top-level menu path for a script</li>
+      <li>Use with caution!</li>
+      <ul>
+	<li>Overcrowded menu</li>
+	<li>Collide with system action</li>
+      </ul>
+      <li>Example</li>
+      <ul>
+	<li><span style="font-family:'Courier New'; font-size:28px">@menupath File.Run.My Script</span></li>
+      </ul>
+    </ul>
+  </ul>
+</ul>
+</section>
+
+<section>
+<header>Scripting</header>
+<br>
+<ul class="medium">
+  <li>Script Meta-data</li>
+  <ul>
+    <li><span style="font-family:'Courier New'; font-size:32px">@toolbar</span></li>
+    <ul>
+      <li>Image for top-level toolbar button to launch this script</li>
+      <li>Searches for image in script directories and then Ghidra installation directory</li>
+      <li>Also use with caution! (same as <span style="font-family:'Courier New'; font-size:32px">@menupath</span>)</li>
+      <li>Example</li>
+      <ul>
+	<li><span style="font-family:'Courier New'; font-size:28px">@toolbar myScriptImage.gif</span></li>
+      </ul>
+    </ul>
+  </ul>
+</ul>
+</section>
+
+<section>
+<header>Scripting</header>
+<br><br>
+<ul>
+  <li>Script Meta-data Exercise</li>
+  <ul class="medium">
+    <li>In <span style="font-family:'Courier New'; font-size:32px">MyClassScript.java</span></li>
+    <ul>
+      <li>Set category to <span style="font-family:'Courier New'; font-size:26px; color:#1E90FF"><b>Category A.Category B</b></span></li>
+      <li>Set key binding to <span style="font-family:'Courier New'; font-size:26px; color:#1E90FF"><b>alt shift 6</b></span></li>
+      <li>Set menu path to <span style="font-family:'Courier New'; font-size:26px; color:#1E90FF"><b>Script.My Class Script</b></span></li>
+      <li>Set toolbar button to <span style="font-family:'Courier New'; font-size:26px; color:#1E90FF"><b>Info.png</b></span></li>
+    </ul>
+  </ul>
+</ul>
+</section>
+
+<section>
+<header>Scripting</header>
+<ul>
+  <li>Script Meta-data Exercise Solution</li>
+  <br>
+  <span style="font-size:22px">
+  <pre>
+        //This is my class script.
+     //It prints &quot;hello class&quot; to the console.
+     //@category Category A.Category B
+     //@keybinding alt shift 6
+     //@menupath Script.My Class Script
+     //@toolbar Info.png
+
+     import ghidra.app.script.GhidraScript;
+
+     public class MyClassScript extends GhidraScript {
+         public void run() throws Exception {
+             println("hello class");
+         }
+     }
+  </pre>
+  </span>
+</ul>
+</section>
+
+<section>
+<header>Scripting</header>
+<br>
+<ul>
+  <li>Console</li>
+  <ul>
+    <li>Provides a place to dump information</li>
+    <li>Any text that represents a symbol or address can be navigated by double-clicking</li>
+    <li>Example</li>
+    <ul>
+      <li>Run the <span style="font-family:'Courier New'; font-size:28px">PropagateExternalParameters.java</span> script</li>
+    </ul>
+  </ul>
+</ul>
+</section>
+
+
+<section>
+<header>Scripting</header>
+<table style="width:100%; border-spacing:2px;">
+  <tr>
+    <td valign="top">
+      <br>
+      <ul class="small">
+	<li>Ghidra Program API</li>
+	<ul>
+	  <li>Object-oriented</li>
+	  <li>Very deep</li>
+	  <li>Can change from version to version</li>
+	</ul>
+      </ul>
+    </td>
+    <td>
+      <br>
+      <ul class="small">
+	<li>Program</li>
+	<ul>
+	  <li>Listing</li>
+	  <ul>
+	    <li>Instruction</li>
+	    <li>Data</li>
+	    <li>Function</li>
+	    <li>Comments</li>
+	    <li>...</li>
+	  </ul>
+	  <li>Memory</li>
+	  <ul>
+	    <li>Memory Blocks</li>
+	    <li>Bytes</li>
+	  </ul>
+	  <li>Symbol Table</li>
+	  <ul>
+	    <li>Symbol</li>
+	  </ul>
+	  <li>Reference Manager</li>
+	  <ul>
+	    <li>Reference</li>
+	  </ul>
+	</ul>
+      </ul>
+    </td>
+  </tr>
+</table>
+</section>
+
+<section>
+<header>Scripting</header>
+<br>
+<ul>
+  <li>Script API</li>
+  <ul>
+    <li>Flat</li>
+    <li>Provides access to most common features</li>
+    <li>Is not complete</li>
+    <li>Will not change on you</li>
+  </ul>
+</ul>
+</section>
+
+<section>
+<header>Scripting</header>
+<br>
+<ul>
+  <li>Script API</li>
+  <br>
+  <span style="font-size:25px">
+  <pre>
+       public abstract class GhidraScript {
+         ask...()
+         create...()
+         find...()
+         get...()
+         remove...()
+         runScript()
+         set...()
+         to...()
+     }
+  </pre>
+  </span>
+</ul>
+</section>
+
+<section>
+<header>Scripting</header>
+<br>
+<ul>
+  <li>Script State</li>
+  <ul class="medium">
+    <li><span style="font-family:'Courier New'; font-size:32px">currentProgram</span></li>
+    <ul>
+      <li>The current active open program</li>
+    </ul>
+    <li><span style="font-family:'Courier New'; font-size:32px">currentAddress</span></li>
+    <ul>
+      <li>The current address of the location of the cursor</li>
+    </ul>
+    <li><span style="font-family:'Courier New'; font-size:32px">currentLocation</span></li>
+    <ul>
+      <li>The program location of the cursor</li>
+    </ul>
+  </ul>
+</ul>
+</section>
+
+<section>
+<header>Scripting</header>
+<br>
+<ul>
+  <li>Script State (continued)</li>
+  <ul class="medium">
+    <li><span style="font-family:'Courier New'; font-size:32px">currentSelection</span></li>
+    <ul>
+      <li>The current <span style="color:#7CFC00">selection</span> or null if no selection exists</li>
+    </ul>
+    <li><span style="font-family:'Courier New'; font-size:32px">currentHighlight</span></li>
+    <ul>
+      <li>The current <span style="color:#F0E68C">highlight</span> or null if no highlight exists</li>
+    </ul>
+    <li><span style="font-family:'Courier New'; font-size:32px">state</span></li>
+    <ul>
+      <li>Encapsulates script state</li>
+      <li>Allows script state to be passed to other called scripts</li>
+      <li>Provides place to store environment variables</li>
+     </ul>
+  </ul>
+</ul>
+</section>
+
+<section>
+<header>Scripting</header>
+<br>
+<ul>
+  <li>Script State (continued)</li>
+  <ul class="small">
+    <li><span style="font-family:'Courier New'; font-size:32px">monitor</span></li>
+    <ul>
+      <li>Allows script writer to inform user</li>
+      <ul>
+	<li>messages and progress</li>
+      </ul>
+      <li>Allows user to cancel script</li>
+      <li>Always use inside loops</li>
+    </ul>
+  </ul>
+</ul>
+<br>
+<table style="width:80%; float:inherit; border-spacing:10px;" border="1">
+  <tr style="padding: 8px">
+    <td style="padding: 8px">
+      <span style="font-size:12px; color:#1E90FF;">
+      <pre>
+while (!monitor.isCancelled()) {
+  ...
+}
+      </pre>
+      </span>
+  </td>
+  <td>
+    <span style="font-size:12px; color:#1E90FF;">
+    <pre>
+
+  for (int i = 0; i < max(); ++i) {
+    if (monitor.isCancelled()) {
+      break;
+    }
+  }
+    </pre>
+    </span>
+  </td>
+  <td>
+    <span style="font-size:12px; color:#1E90FF;">
+    <pre>
+    inside loop:
+
+    monitor.checkCancelled();
+
+    </pre>
+    </span>
+  </td>
+</tr>
+</table>
+</section>
+
+<section>
+<header>Scripting</header>
+<br>
+<ul>
+  <li>Eclipse</li>
+  <ul>
+    <li>Integrated Development Environment (IDE) for Java, Python, C/C++, etc.</li>
+    <li>Highly recommended for Ghidra script development</li>
+    <ul>
+      <li>Officially supported by Ghidra</li>
+      <li>Makes development significantly faster and easier</li>
+    </ul>
+  </ul>
+</ul>
+</section>
+
+<section>
+<header>Scripting</header>
+<br>
+<ul>
+  <li>GhidraDev Eclipse plugin</li>
+  <ul>
+  	<li>Provides an interface between Eclipse and Ghidra
+    <li>Quickly create and manage Ghidra script and module projects</li>
+    <li>Can be installed into Eclipse manually or automatically by Ghidra</li>
+    <li>Plugin and documentation found at <span style="font-family:'Courier New'; font-size:28px">&lt;GhidraInstall&gt;/Extensions/<br>Eclipse/GhidraDev/</span></li>
+  </ul>
+</ul>
+</section>
+
+<section>
+<header>Scripting</header>
+<br>
+<ul class="medium">
+  <li>Edit Script with Eclipse</li>
+  <ul>
+    <li>Click the <i>Edit Script with Eclipse</i> button</li>
+    <li>Click <i>Yes</i> to point Ghidra at Eclipse</li>
+    <li>Enter path to pre-installed Eclipse Installation Directory</li>
+    <li>Remaining options can use default values</li>
+    <li>Click <i>OK</i> to save changes and launch Eclipse</li>
+    <li>Choose Eclipse workspace (default recommended)</li>
+    <li>GhidraDev plugin automatically starts during Eclipse initialization (more on next slide)</li>
+  </ul>
+</ul>
+</section>
+
+<section>
+<header>Scripting</header>
+<br>
+<ul>
+  <li>GhidraDev New Script Project Wizard</li>
+  <ul>
+    <li>Automatically started if a Ghidra Script Project does not exist</li>
+    <li>Allows customization of Ghidra script project</li>
+    <li>Click <i>Finish</i> to use default wizard settings (recommended)</li>
+    <i>OR</i>
+    <li>Click <i>Next</i> to see advanced project customization options</li>
+  </ul>
+</ul>
+</section>
+
+<section>
+<header>Scripting</header>
+<table style="width:100%; border-spacing:5px;">
+  <tr>
+    <td valign="top">
+      <br>
+      <ul class="medium">
+	<li>Editing in Eclipse</li>
+	<ul>
+	  <li><i>Package Explorer</i></li>
+	  <ul>
+	    <li>Projects</li>
+	    <li>Source Folders</li>
+	    <ul>
+	      <li>Packages</li>
+	    </ul>
+	    <li>Libraries</li>
+	    <li>Non-source folders</li>
+	    <ul>
+	      <li>Resources</li>
+	    </ul>
+	</ul>
+      </ul>
+    </td>
+    <td>
+      <br>
+      <img src="Images/Scripting/scriptEclipse.png" style="vertical-align:middle"></img>
+    </td>
+  </tr>
+</table>
+</section>
+
+<section>
+<header>Scripting</header>
+<table style="width:100%; border-spacing:5px;">
+  <tr>
+    <td valign="top">
+      <br>
+      <ul class="medium">
+	<li>Editing in Eclipse</li>
+	<ul>
+	  <li><i>Outline</i></li>
+	  <ul>
+	    <li>Methods</li>
+	    <ul>
+	      <li><span style="font-size:25px">Public, Protected, Private, Default</span></li>
+	    </ul>
+	    <li>Fields</li>
+	    <ul>
+	      <li><span style="font-size:25px">Instance, Static</span></li>
+	    </ul>
+	    <li>Import Statements</li>
+	  </ul>
+	</ul>
+      </ul>
+    </td>
+    <td>
+      <br>
+      <img src="Images/Scripting/scriptEditEclipse.png" style="vertical-align:middle"></img>
+    </td>
+  </tr>
+</table>
+</section>
+
+<section>
+<header>Scripting</header>
+<table style="width:100%; border-spacing:5px;">
+  <tr>
+    <br>
+    <td valign="top">
+      <ul>
+	<li>Editing in Eclipse</li>
+	<ul>
+	  <li><i>Hierarchy</i></li>
+	  <ul>
+	    <li>Super-class</li>
+	    <li>Entire sub-class hierarchy</li>
+	  </ul>
+	</ul>
+      </ul>
+    </td>
+    <td>
+      <br>
+      <img src="Images/Scripting/scriptHierarchyEclipse.png" style="vertical-align:middle"></img>
+    </td>
+  </tr>
+</table>
+</section>
+
+<section>
+<header>Scripting</header>
+<ul>
+  <li>Editing in Eclipse</li>
+  <ul>
+    <li><i>Java Editor</i></li>
+  </ul>
+  <br>
+  <img src="Images/Scripting/scriptEditorEclipse.png" style="vertical-align:middle"></img>
+</ul>
+</section>
+
+<section>
+<header>Scripting</header>
+<br>
+<ul class="medium">
+  <li>Eclipse Java Editor Tips and Tricks</li>
+  <ul>
+    <li>Open Type (<span style="font-family:'Courier New'; font-size:30px">Control-Shift-T</span>)</li>
+    <ul>
+      <li>Allows you to find a class without knowing package</li>
+    </ul>
+    <li>Organize Imports (<span style="font-family:'Courier New'; font-size:30px">Control-Shift-O</span>)</li>
+    <ul>
+      <li>Automatically fixes import statements</li>
+    </ul>
+    <li>Navigation (<span style="font-family:'Courier New'; font-size:30px">F3</span>)</li>
+    <ul>
+      <li>Navigate to the class or method at the current cursor location</li>
+    </ul>
+    <li>Object Hierarchy (<span style="font-family:'Courier New'; font-size:30px">F4</span>)</li>
+    <ul>
+      <li>Show the object inheritance hierarchy of current object</li>
+    </ul>
+  </ul>
+</ul>
+</section>
+
+<section>
+<header>Scripting</header>
+<br>
+<ul class="medium">
+  <li>Eclipse Java Editor Tips and Tricks (continued)</li>
+  <ul>
+    <li>Find References (<span style="font-family:'Courier New'; font-size:30px">Control-Shift-G</span>)</li>
+    <ul>
+      <li>Finds all the places that reference the object at the current cursor location</li>
+    </ul>
+    <li>Toggle Comments (<span style="font-family:'Courier New'; font-size:30px">Control-/</span>)</li>
+    <ul>
+      <li>Convert selection to comments, or uncomment the selection</li>
+    </ul>
+    <li>Outline View (<span style="font-family:'Courier New'; font-size:30px">Control-O</span>)</li>
+    <ul>
+      <li>Lists methods of the class</li>
+    </ul>
+    <li>Code Completion (<span style="font-family:'Courier New'; font-size:30px">Control-SPACE</span>)</li>
+    <ul>
+      <li>Displays a list of matches to completion current expression</li>
+    </ul>
+  </ul>
+</ul>
+</section>
+
+<section>
+<header>Scripting</header>
+<ul>
+  <li>Eclipse Java Editor Tips and Tricks (continued)</li>
+  <ul>
+    <li>Quick Fix (<span style="font-family:'Courier New'; font-size:30px">Control-1</span>)</li>
+    <ul>
+      <li>Eclipse editor can offer corrections to certain problems underline with a highlight line</li>
+      <br>
+      <img src="Images/Scripting/scriptCorrectionsEclipse.png" style="vertical-align:middle; horizontal-align:middle"></img>
+    </ul>
+  </ul>
+</ul>
+</section>
+
+<section>
+<header>Scripting</header>
+<ul class="medium">
+  <li>Running Scripts</li>
+  <ul>
+    <li>Scripts are always run from the Ghidra Script Manager, even if they are created/edited in Eclipse</li>
+    <li>Any open Ghidra will be able to find and run your script
+    <ul>
+      <li>No need to launch a new instance of Ghidra</li>
+      <li>The Script Manager may need to be refreshed in order to discover new scripts that were created outside of the Script Manager</li>
+    </ul>
+  </ul>
+</ul>
+</section>
+
+<section>
+<header>Scripting</header>
+<ul class="medium">
+  <li>Debugging in Eclipse</li>
+  <br>
+  <ul class="small">
+    <li>Launch Ghidra project in debug mode (bug icon)</li>
+    <ul>
+      <li><b>Note: </b>Any open instances of Ghidra must be closed before launching a new instance of Ghidra from Eclipse</li>
+      <img src="Images/Scripting/scriptDebugEclipse.png" style="vertical-align:middle; horizontal-align:middle; width:400px; height: 115px;"></img>
+    </ul>
+    <br>
+    <li>When debugging, scripts are still launched from the Ghidra Script Manager</li>
+    <li>Not only can Ghidra scripts be debugged, but so can all of Ghidra!</li>
+    <ul>
+      <li>To see this, simply "Step Into" any call you make to the Ghidra API.</li>
+    </ul>
+    <br>
+  </ul>
+</ul>
+</section>
+
+<section>
+<header>Scripting</header>
+<table style="width:100%; border-spacing:2px;">
+  <tr>
+    <td>
+      <ul class="medium">
+	<li>Eclipse <i>Debug</i> window allows you to control the process and threads</li>
+	<ul>
+	  <li>Execution Control Commands</li>
+	  <ul>
+	    <li>Resume</li>
+	    <li>Suspend</li>
+	    <li>Terminate</li>
+	    <li>Step Into</li>
+	    <li>Step Over</li>
+	    <li>Step Return</li>
+	  </ul>
+	</ul>
+      </ul>
+    </td>
+    <td style="vertical-align:middle">
+      <img src="Images/Scripting/scriptDebugWindowEclipse.png"></img>
+    </td>
+  </tr>
+</table>
+</section>
+
+<section>
+<header>Scripting</header>
+<ul class="medium">
+  <li>Eclipse <i>Breakpoints</i> window display all existing breakpoints</li>
+  <ul>
+    <li>Remove and modify breakpoints</li>
+    <li>All breakpoints global</li>
+    <ul>
+      <li>Across projects and processes</li>
+      <br>
+      <img src="Images/Scripting/scriptBreakpointsEclipse.png" style="vertical-align:middle; horizontal-align:middle"></img>
+    </ul>
+  </ul>
+</ul>
+</section>
+
+<section>
+<header>Scripting</header>
+<ul class="medium">
+  <li>Breakpoints are created by right-clicking on the left margin of the Eclipse editor and selecting <i>Toggle Breakpoint</i></li>
+  <li><span style="font-family:'Courier New'; font-size:30px">Ctrl-Shift-B</span></li>
+  <br>
+  <img src="Images/Scripting/scriptToggleBreakpointsEclipse.png" style="vertical-align:middle"></img>
+</ul>
+</section>
+
+<section>
+<header>Scripting</header>
+<ul class="medium">
+  <li>Eclipse <i>Variables</i> window displays variables within scope of the selected thread</li>
+  <ul>
+    <li>Variables can be inspected and modified from within this window</li>
+    <br>
+    <img src="Images/Scripting/scriptVariablesEclipse.png" style="vertical-align:middle"></img>
+  </ul>
+</ul>
+</section>
+
+
+<section>
+<header>Scripting</header>
+<br><br>
+<ul>
+  <li>Script API Example</li>
+  <ul>
+    <li>Create new script that will ask for an integer and print the current program’s name that many times to the console.</li>
+  </ul>
+</ul>
+</section>
+
+<section>
+<header>Scripting</header>
+<br>
+<ul>
+  <li>Script API Example Solution</li>
+  <span style="font-size:20px">
+  <br>
+  <pre>
+        public class PrintProgramScript extends GhidraScript {
+       public void run() {
+         int n = askInt( &quot;How many times?&quot; ,  &quot;N&quot; );
+         for ( int i = 0 ; i < n ; ++i ) {
+           if ( monitor.isCancelled() ) {
+             break;
+           }
+           println( i + &quot;)&quot; + currentProgram.getName() );
+           Thread.sleep( 1000 );
+         }
+       }
+     }
+  </pre>
+  </span>
+</ul>
+</section>
+
+<section>
+<header>Scripting</header>
+<br><br>
+<ul>
+  <li>Eclipse Exercise</li>
+  <ul>
+    <li>Debug <span style="font-family:'Courier New'; font-size:32px">PrintProgramScript</span></li>
+    <ul>
+      <li>Use breakpoints</li>
+      <li>Inspect and modify variables</li>
+      <li>Use execution control commands</li>
+    </ul>
+  </ul>
+</ul>
+</section>
+
+<section>
+<header>Scripting</header>
+<br>
+<ul class="medium">
+  <li>Python support in Ghidra</li>
+  <ul>
+    <li>Based on Jython, a Java-based Python implementation</li>
+    <ul>
+      <li>Jython 2.7.1</li>
+      <li>Full generic Java API access from Python</li>
+      <li>Full access to Ghidra's Java API</li>
+    </ul>
+    <li>Eclipse support with GhidraDev + PyDev plugins</li>
+    <ul>
+      <li>PyDev must be independently acquired and installed.  See <span style="font-family:'Courier New'; font-size:28px">GhidraDev_README.html</span> for more info.</li>
+    </ul>
+    <li>Ghidra Python Interpreter plugin</li>
+    <ul>
+      <li>Click <i>Window -> Python</i></li>
+    </ul>
+  </ul>
+</ul>
+</section>
+
+<section>
+<header>Scripting</header>
+<br>
+<ul class="medium">
+  <li>Python Interpreter plugin</li>
+  <ul>
+    <li>Tightly tied to tool's currently open program</li>
+    <li>Issue commands one at a time</li>
+    <li>Excellent way to experiment with scripting API</li>
+    <li>Ghidra scripting API automatically imported</li>
+    <ul>
+      <li>Must manually import other Ghidra classes not contained in scripting API</li>
+    </ul>
+    <li>Type help(<i>item_name</i>) to see API help for a particular script class or method</li>
+    <li>Press TAB for code completion on partially typed variable/function</li>
+    <li>Hit F1 in interpreter window for more tips and help</li>
+</ul>
+</section>
+
+<section>
+<header>Scripting</header>
+<br>
+<ul class="small">
+  <li>Python Interpreter Example</li>
+  <ul>
+    <li>Print memory block information</li>
+  </ul>
+  <span style="font-size:20px">
+  <pre>
+
+  Python Interpreter for Ghidra
+  Based on Jython version 2.7.1 (default:0df7adb1b397, Jun 30 2017, 19:02:43) 
+  [Java HotSpot(TM) 64-Bit Server VM (Oracle Corporation)]
+  Press 'F1' for usage instructions
+  >>> 
+  >>> mem = currentProgram.getMemory()
+  >>> for block in mem.getBlocks():
+  ...   print block.getName() + ", " + hex(block.getSize())
+  ... 
+  Headers, 0x400L
+  .textbss, 0x10000L
+  .text, 0x4b57L
+  .rdata, 0x1ed6L
+  .data, 0x200L
+  .data, 0x384L
+  .idata, 0x8b7L
+  .rsrc, 0x1b4L
+  .reloc, 0x48fL
+  </pre>
+  </span>
+</ul>
+</section>
+
+<section>
+<header>Scripting</header>
+<br>
+<ul class="small">
+  <li>Python Interpreter Exercise</li>
+  <br>
+  <ol class="decimal medium">
+    <li>Make a selection in your program with your mouse</li>
+    <li>Ask the user for an address using the GhidraScript API</li>
+    <li>Determine if the current selection contains the address entered by the user</li>
+  </ol>
+  <br>
+  <ul>
+    <li>Hints:
+    <ul>
+      <li>Use TAB-completion to figure out how to <b>ask</b> the user for an address</li>
+      <li>Use the help() command on <i>currentSelection</i> to find and use a function that checks if a program selection contains an address</li>
+    </ul>
+  </ul>
+</ul>
+</section>
+
+<section>
+<header>Scripting</header>
+<ul>
+  <li>Python Interpreter Exercise Solution</li>
+  <span style="font-size:20px">
+  <pre>
+
+    Python Interpreter for Ghidra
+    Based on Jython version 2.7.1 (default:0df7adb1b397, Jun 30 2017, 19:02:43) 
+    [Java HotSpot(TM) 64-Bit Server VM (Oracle Corporation)]
+    Press 'F1' for usage instructions
+    >>> 
+    >>> currentSelection
+    ProgramSelection: [[01022362, 01022379] ]
+    >>> addr = askAddress("Address", "Enter an address")
+    >>> addr
+    0102236b
+    >>> currentSelection.contains(addr)
+    True
+    >>> addr = askAddress("Address", "Enter an address")
+    >>> addr
+    00000000
+    >>> currentSelection.contains(addr)
+    False
+  </pre>
+  </span>
+</ul>
+</section>
+
+
+<!-- COPY THE TEXT BELOW TO START A NEW SLIDE
+<section>
+<header>Insert Title of Slide Here</header>
+<ul class="small" comment="NOTE: remove the class attribute for regular size, adjust the name if you want big, small, or tiny">
+  <li>Bullet text here</li>
+  <ul>
+    <li>Nested bullet here</li>
+  </ul>
+</ul>
+<div role="note">
+<p>Insert notes here</p>
+<p>And here, too</p>
+</div>
+</section>
+END COPY -->
+
+<!-- Your Style -->
+<!-- Define the style of your presentation -->
+
+<!-- Maybe a font from http://www.google.com/webfonts ? -->
+<!--link href='http://fonts.googleapis.com/css?family=Oswald' rel='stylesheet'-->
+
+<style>
+  html, .view body { background-color: black; counter-reset: slideidx; }
+  body, .view section { background-color: black; border-radius: 12px; color: white; }
+  /* A section is a slide. It's size is 800x600, and this will never change */
+  section, .view head > title {
+      font-family: arial, serif;
+      font-size: 35px;
+  }
+
+  .view section:after {
+    counter-increment: slideidx;
+    content: counter(slideidx, decimal-leading-zero);
+    position: absolute; bottom: -80px; right: 100px;
+    color: black;
+  }
+
+  .view head > title {
+    color: black;
+    text-align: center;
+    margin: 1em 0 1em 0;
+  }
+
+  h1, h2 {
+    margin-top: 200px;
+    text-align: center;
+    font-size: 80px;
+    font-family: 'Times New Roman'
+  }
+
+  h3 {
+    margin: 100px 0 50px 100px;
+  }
+
+/* My custom list sizes */
+
+  .big ul {
+    font-size: 45px;
+  }
+
+  .big ol {
+    font-size: 45px;
+  }
+
+  .big li {
+    font-size: 45px;
+  }
+
+  .big li:before {
+      font-size: 200px;
+  }
+
+  .medium ul {
+    margin: 0px 0px;
+    font-size: 30px;
+  }
+
+  .medium ol {
+    margin: 0px 0px;
+    font-size: 30px;
+  }
+
+  .medium li {
+    margin: 0px 0px;
+    font-size: 30px;
+  }
+
+  .medium li:before {
+      font-size: 120px;
+  }
+
+  .small ul {
+    margin: 0px 0px;
+    font-size: 25px;
+  }
+
+  .small ol {
+    margin: 0px 0px;
+    font-size: 25px;
+  }
+
+  .small li {
+    margin: 0px 0px;
+    font-size: 25px;
+  }
+
+  .small li:before {
+      font-size: 80px;
+  }
+
+  .tiny ul {
+    margin: 0px 0px;
+    font-size: 20px;
+  }
+
+  .tiny ol {
+    margin: 0px 0px;
+    font-size: 20px;
+  }
+
+  .tiny li {
+    margin: 0px 0px;
+    font-size: 20px;
+  }
+
+  .tiny li:before {
+      font-size: 70px;
+  }
+/* end custom list sizes */
+
+/* Standard list size */
+  ul {
+    margin: 10px 50px;
+    font-size: 35px;
+    list-style-type: none;
+    margin-left: 0;
+    padding-left: 1em;
+    text-indent: -1em;
+  }
+
+  ol {
+    margin: 10px 50px;
+    font-size: 35px;
+    list-style-type: none;
+    margin-left: 0;
+    padding-left: 1em;
+    text-indent: -1em;
+  }
+
+  ol.decimal {
+    list-style-position: inside;
+    list-style-type: decimal;
+  }
+
+  li {
+    margin: 10px 10px;
+    font-size: 35px;
+  }
+
+  ul > li:before {
+    content:"·";
+    font-size:160px;
+    vertical-align:middle;
+    line-height: 20px;
+    color: red;
+  }
+
+
+/* end custom list sizes */
+
+  p {
+    margin: 75px;
+    font-size: 100px;
+  }
+
+  blockquote {
+    height: 100%;
+    background-color: black;
+    color: white;
+    font-size: 60px;
+    padding: 50px;
+  }
+  blockquote:before {
+    content: open-quote;
+  }
+  blockquote:after {
+    content: close-quote;
+  }
+
+  /* Figures are displayed full-page, with the caption
+     on top of the image/video */
+  figure {
+    background-color: black;
+    width: 100%;
+    height: 100%;
+  }
+  figure > * {
+    position: absolute;
+  }
+  figure > img, figure > video {
+    width: 100%; height: 100%;
+  }
+  figcaption {
+    margin: 70px;
+    font-size: 50px;
+  }
+
+  footer {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    padding: 40px;
+    text-align: right;
+    background-color: black;
+    border-top: 1px solid #CCC;
+  }
+
+  header {
+    font-family: 'Times New Roman';
+    position: relative;
+    top: 0px;
+    width: 100%;
+    padding: 0px;
+    text-align: center;
+    background-image: url(Images/GhidraLogo64.png), url(Images/GhidraLogo64.png);
+    background-repeat: no-repeat, no-repeat;
+    background-position: left top, right top;
+    background-size: contain, contain;
+    border-bottom: 1px solid red;
+    font-size: 50px;
+  }
+
+  /* Transition effect */
+  /* Feel free to change the transition effect for original
+     animations. See here:
+     https://developer.mozilla.org/en/CSS/CSS_transitions
+     How to use CSS3 Transitions: */
+  section {
+    -moz-transition: left 400ms linear 0s;
+    -webkit-transition: left 400ms linear 0s;
+    -ms-transition: left 400ms linear 0s;
+    transition: left 400ms linear 0s;
+  }
+  .view section {
+    -moz-transition: none;
+    -webkit-transition: none;
+    -ms-transition: none;
+    transition: none;
+  }
+
+  .view section[aria-selected] {
+    border: 5px red solid;
+  }
+
+  /* Before */
+  section { left: -150%; }
+  /* Now */
+  section[aria-selected] { left: 0; }
+  /* After */
+  section[aria-selected] ~ section { left: +150%; }
+
+  /* Incremental elements */
+
+  /* By default, visible */
+  .incremental > * { opacity: 1; }
+
+  /* The current item */
+  .incremental > *[aria-selected] { opacity: 1; }
+
+  /* The items to-be-selected */
+  .incremental > *[aria-selected] ~ * { opacity: 0; }
+
+  /* The progressbar, at the bottom of the slides, show the global
+     progress of the presentation. */
+  #progress-bar {
+    height: 2px;
+    background: #AAA;
+  }
+</style>
+
+<!-- {{{{ dzslides core
+#
+#
+#     __  __  __       .  __   ___  __
+#    |  \  / /__` |    | |  \ |__  /__`
+#    |__/ /_ .__/ |___ | |__/ |___ .__/ core :€
+#
+#
+# The following block of code is not supposed to be edited.
+# But if you want to change the behavior of these slides,
+# feel free to hack it!
+#
+-->
+
+<div id="progress-bar"></div>
+
+<!-- Default Style -->
+<style>
+  * { margin: 0; padding: 0; -moz-box-sizing: border-box; -webkit-box-sizing: border-box; box-sizing: border-box; }
+  [role="note"] { display: none; }
+  body {
+    width: 800px; height: 600px;
+    margin-left: -400px; margin-top: -300px;
+    position: absolute; top: 50%; left: 50%;
+    overflow: hidden;
+    display: none;
+  }
+  .view body {
+    position: static;
+    margin: 0; padding: 0;
+    width: 100%; height: 100%;
+    display: inline-block;
+    overflow: visible; overflow-x: hidden;
+    /* undo Dz.onresize */
+    transform: none !important;
+    -moz-transform: none !important;
+    -webkit-transform: none !important;
+    -o-transform: none !important;
+    -ms-transform: none !important;
+  }
+  .view head, .view head > title { display: block }
+  section {
+    position: absolute;
+    pointer-events: none;
+    width: 100%; height: 100%;
+  }
+  .view section {
+    pointer-events: auto;
+    position: static;
+    width: 800px; height: 600px;
+    margin: -150px -200px;
+    float: left;
+
+    transform: scale(.4);
+    -moz-transform: scale(.4);
+    -webkit-transform: scale(.4);
+    -o-transform: scale(.4);
+    -ms-transform: scale(.4);
+  }
+  .view section > * { pointer-events: none; }
+  section[aria-selected] { pointer-events: auto; }
+  html { overflow: hidden; }
+  html.view { overflow: visible; }
+  body.loaded { display: block; }
+  .incremental {visibility: hidden; }
+  .incremental[active] {visibility: visible; }
+  #progress-bar{
+    bottom: 0;
+    position: absolute;
+    -moz-transition: width 400ms linear 0s;
+    -webkit-transition: width 400ms linear 0s;
+    -ms-transition: width 400ms linear 0s;
+    transition: width 400ms linear 0s;
+  }
+  .view #progress-bar {
+    display: none;
+  }
+</style>
+
+<script>
+  var Dz = {
+    remoteWindows: [],
+    idx: -1,
+    step: 0,
+    html: null,
+    slides: null,
+    progressBar : null,
+    params: {
+      autoplay: "1"
+    }
+  };
+
+  Dz.init = function() {
+    document.body.className = "loaded";
+    this.slides = Array.prototype.slice.call($$("body > section"));
+    this.progressBar = $("#progress-bar");
+    this.html = document.body.parentNode;
+    this.setupParams();
+    this.onhashchange();
+    this.setupTouchEvents();
+    this.onresize();
+    this.setupView();
+  }
+
+  Dz.setupParams = function() {
+    var p = window.location.search.substr(1).split('&');
+    p.forEach(function(e, i, a) {
+      var keyVal = e.split('=');
+      Dz.params[keyVal[0]] = decodeURIComponent(keyVal[1]);
+    });
+  // Specific params handling
+    if (!+this.params.autoplay)
+      $$.forEach($$("video"), function(v){ v.controls = true });
+  }
+
+  Dz.onkeydown = function(aEvent) {
+    // Don't intercept keyboard shortcuts
+    if (aEvent.altKey
+      || aEvent.ctrlKey
+      || aEvent.metaKey
+      || aEvent.shiftKey) {
+      return;
+    }
+    if ( aEvent.keyCode == 37 // left arrow
+      || aEvent.keyCode == 38 // up arrow
+      || aEvent.keyCode == 33 // page up
+    ) {
+      aEvent.preventDefault();
+      this.back();
+    }
+    if ( aEvent.keyCode == 39 // right arrow
+      || aEvent.keyCode == 40 // down arrow
+      || aEvent.keyCode == 34 // page down
+    ) {
+      aEvent.preventDefault();
+      this.forward();
+    }
+    if (aEvent.keyCode == 35) { // end
+      aEvent.preventDefault();
+      this.goEnd();
+    }
+    if (aEvent.keyCode == 36) { // home
+      aEvent.preventDefault();
+      this.goStart();
+    }
+    if (aEvent.keyCode == 32) { // space
+      aEvent.preventDefault();
+      this.toggleContent();
+    }
+    if (aEvent.keyCode == 70) { // f
+      aEvent.preventDefault();
+      this.goFullscreen();
+    }
+    if (aEvent.keyCode == 79) { // o
+      aEvent.preventDefault();
+      this.toggleView();
+    }
+  }
+
+  /* Touch Events */
+
+  Dz.setupTouchEvents = function() {
+    var orgX, newX;
+    var tracking = false;
+
+    var db = document.body;
+    db.addEventListener("touchstart", start.bind(this), false);
+    db.addEventListener("touchmove", move.bind(this), false);
+
+    function start(aEvent) {
+      aEvent.preventDefault();
+      tracking = true;
+      orgX = aEvent.changedTouches[0].pageX;
+    }
+
+    function move(aEvent) {
+      if (!tracking) return;
+      newX = aEvent.changedTouches[0].pageX;
+      if (orgX - newX > 100) {
+        tracking = false;
+        this.forward();
+      } else {
+        if (orgX - newX < -100) {
+          tracking = false;
+          this.back();
+        }
+      }
+    }
+  }
+
+  Dz.setupView = function() {
+    document.body.addEventListener("click", function ( e ) {
+      if (!Dz.html.classList.contains("view")) return;
+      if (!e.target || e.target.nodeName != "SECTION") return;
+
+      Dz.html.classList.remove("view");
+      Dz.setCursor(Dz.slides.indexOf(e.target) + 1);
+    }, false);
+  }
+
+  /* Adapt the size of the slides to the window */
+
+  Dz.onresize = function() {
+    var db = document.body;
+    var sx = db.clientWidth / window.innerWidth;
+    var sy = db.clientHeight / window.innerHeight;
+    var transform = "scale(" + (1/Math.max(sx, sy)) + ")";
+
+    db.style.MozTransform = transform;
+    db.style.WebkitTransform = transform;
+    db.style.OTransform = transform;
+    db.style.msTransform = transform;
+    db.style.transform = transform;
+  }
+
+
+  Dz.getNotes = function(aIdx) {
+    var s = $("section:nth-of-type(" + aIdx + ")");
+    var d = s.$("[role='note']");
+    return d ? d.innerHTML : "";
+  }
+
+  Dz.onmessage = function(aEvent) {
+    var argv = aEvent.data.split(" "), argc = argv.length;
+    argv.forEach(function(e, i, a) { a[i] = decodeURIComponent(e) });
+    var win = aEvent.source;
+    if (argv[0] === "REGISTER" && argc === 1) {
+      this.remoteWindows.push(win);
+      this.postMsg(win, "REGISTERED", document.title, this.slides.length);
+      this.postMsg(win, "CURSOR", this.idx + "." + this.step);
+      return;
+    }
+    if (argv[0] === "BACK" && argc === 1)
+      this.back();
+    if (argv[0] === "FORWARD" && argc === 1)
+      this.forward();
+    if (argv[0] === "START" && argc === 1)
+      this.goStart();
+    if (argv[0] === "END" && argc === 1)
+      this.goEnd();
+    if (argv[0] === "TOGGLE_CONTENT" && argc === 1)
+      this.toggleContent();
+    if (argv[0] === "SET_CURSOR" && argc === 2)
+      window.location.hash = "#" + argv[1];
+    if (argv[0] === "GET_CURSOR" && argc === 1)
+      this.postMsg(win, "CURSOR", this.idx + "." + this.step);
+    if (argv[0] === "GET_NOTES" && argc === 1)
+      this.postMsg(win, "NOTES", this.getNotes(this.idx));
+  }
+
+  Dz.toggleContent = function() {
+    // If a Video is present in this new slide, play it.
+    // If a Video is present in the previous slide, stop it.
+    var s = $("section[aria-selected]");
+    if (s) {
+      var video = s.$("video");
+      if (video) {
+        if (video.ended || video.paused) {
+          video.play();
+        } else {
+          video.pause();
+        }
+      }
+    }
+  }
+
+  Dz.setCursor = function(aIdx, aStep) {
+    // If the user change the slide number in the URL bar, jump
+    // to this slide.
+    aStep = (aStep != 0 && typeof aStep !== "undefined") ? "." + aStep : ".0";
+    window.location.hash = "#" + aIdx + aStep;
+  }
+
+  Dz.onhashchange = function() {
+    var cursor = window.location.hash.split("#"),
+        newidx = 1,
+        newstep = 0;
+    if (cursor.length == 2) {
+      newidx = ~~cursor[1].split(".")[0];
+      newstep = ~~cursor[1].split(".")[1];
+      if (newstep > Dz.slides[newidx - 1].$$('.incremental > *').length) {
+        newstep = 0;
+        newidx++;
+      }
+    }
+    this.setProgress(newidx, newstep);
+    if (newidx != this.idx) {
+      this.setSlide(newidx);
+    }
+    if (newstep != this.step) {
+      this.setIncremental(newstep);
+    }
+    for (var i = 0; i < this.remoteWindows.length; i++) {
+      this.postMsg(this.remoteWindows[i], "CURSOR", this.idx + "." + this.step);
+    }
+  }
+
+  Dz.back = function() {
+    if (this.idx == 1 && this.step == 0) {
+      return;
+    }
+    if (this.step == 0) {
+      this.setCursor(this.idx - 1,
+                     this.slides[this.idx - 2].$$('.incremental > *').length);
+    } else {
+      this.setCursor(this.idx, this.step - 1);
+    }
+  }
+
+  Dz.forward = function() {
+    if (this.idx >= this.slides.length &&
+        this.step >= this.slides[this.idx - 1].$$('.incremental > *').length) {
+        return;
+    }
+    if (this.step >= this.slides[this.idx - 1].$$('.incremental > *').length) {
+      this.setCursor(this.idx + 1, 0);
+    } else {
+      this.setCursor(this.idx, this.step + 1);
+    }
+  }
+
+  Dz.goStart = function() {
+    this.setCursor(1, 0);
+  }
+
+  Dz.goEnd = function() {
+    var lastIdx = this.slides.length;
+    var lastStep = this.slides[lastIdx - 1].$$('.incremental > *').length;
+    this.setCursor(lastIdx, lastStep);
+  }
+
+  Dz.toggleView = function() {
+    this.html.classList.toggle("view");
+
+    if (this.html.classList.contains("view")) {
+      $("section[aria-selected]").scrollIntoView(true);
+    }
+  }
+
+  Dz.setSlide = function(aIdx) {
+    this.idx = aIdx;
+    var old = $("section[aria-selected]");
+    var next = $("section:nth-of-type("+ this.idx +")");
+    if (old) {
+      old.removeAttribute("aria-selected");
+      var video = old.$("video");
+      if (video) {
+        video.pause();
+      }
+    }
+    if (next) {
+      next.setAttribute("aria-selected", "true");
+      if (this.html.classList.contains("view")) {
+        next.scrollIntoView();
+      }
+      var video = next.$("video");
+      if (video && !!+this.params.autoplay) {
+        video.play();
+      }
+    } else {
+      // That should not happen
+      this.idx = -1;
+      // console.warn("Slide doesn't exist.");
+    }
+  }
+
+  Dz.setIncremental = function(aStep) {
+    this.step = aStep;
+    var old = this.slides[this.idx - 1].$('.incremental > *[aria-selected]');
+    if (old) {
+      old.removeAttribute('aria-selected');
+    }
+    var incrementals = $$('.incremental');
+    if (this.step <= 0) {
+      $$.forEach(incrementals, function(aNode) {
+        aNode.removeAttribute('active');
+      });
+      return;
+    }
+    var next = this.slides[this.idx - 1].$$('.incremental > *')[this.step - 1];
+    if (next) {
+      next.setAttribute('aria-selected', true);
+      next.parentNode.setAttribute('active', true);
+      var found = false;
+      $$.forEach(incrementals, function(aNode) {
+        if (aNode != next.parentNode)
+          if (found)
+            aNode.removeAttribute('active');
+          else
+            aNode.setAttribute('active', true);
+        else
+          found = true;
+      });
+    } else {
+      setCursor(this.idx, 0);
+    }
+    return next;
+  }
+
+  Dz.goFullscreen = function() {
+    var html = $('html'),
+        requestFullscreen = html.requestFullscreen || html.requestFullScreen || html.mozRequestFullScreen || html.webkitRequestFullScreen;
+    if (requestFullscreen) {
+      requestFullscreen.apply(html);
+    }
+  }
+
+  Dz.setProgress = function(aIdx, aStep) {
+    var slide = $("section:nth-of-type("+ aIdx +")");
+    if (!slide)
+      return;
+    var steps = slide.$$('.incremental > *').length + 1,
+        slideSize = 100 / (this.slides.length - 1),
+        stepSize = slideSize / steps;
+    this.progressBar.style.width = ((aIdx - 1) * slideSize + aStep * stepSize) + '%';
+  }
+
+  Dz.postMsg = function(aWin, aMsg) { // [arg0, [arg1...]]
+    aMsg = [aMsg];
+    for (var i = 2; i < arguments.length; i++)
+      aMsg.push(encodeURIComponent(arguments[i]));
+    aWin.postMessage(aMsg.join(" "), "*");
+  }
+
+  function init() {
+    Dz.init();
+    window.onkeydown = Dz.onkeydown.bind(Dz);
+    window.onresize = Dz.onresize.bind(Dz);
+    window.onhashchange = Dz.onhashchange.bind(Dz);
+    window.onmessage = Dz.onmessage.bind(Dz);
+  }
+
+  window.onload = init;
+</script>
+
+
+<script> // Helpers
+  if (!Function.prototype.bind) {
+    Function.prototype.bind = function (oThis) {
+
+      // closest thing possible to the ECMAScript 5 internal IsCallable
+      // function
+      if (typeof this !== "function")
+      throw new TypeError(
+        "Function.prototype.bind - what is trying to be fBound is not callable"
+      );
+
+      var aArgs = Array.prototype.slice.call(arguments, 1),
+          fToBind = this,
+          fNOP = function () {},
+          fBound = function () {
+            return fToBind.apply( this instanceof fNOP ? this : oThis || window,
+                   aArgs.concat(Array.prototype.slice.call(arguments)));
+          };
+
+      fNOP.prototype = this.prototype;
+      fBound.prototype = new fNOP();
+
+      return fBound;
+    };
+  }
+
+  var $ = (HTMLElement.prototype.$ = function(aQuery) {
+    return this.querySelector(aQuery);
+  }).bind(document);
+
+  var $$ = (HTMLElement.prototype.$$ = function(aQuery) {
+    return this.querySelectorAll(aQuery);
+  }).bind(document);
+
+  $$.forEach = function(nodeList, fun) {
+    Array.prototype.forEach.call(nodeList, fun);
+  }
+
+</script>
+<!-- vim: set fdm=marker: }}} -->

@@ -1,0 +1,273 @@
+<!DOCTYPE doctype PUBLIC "-//W3C//DTD HTML 4.0 Frameset//EN">
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+
+    <TITLE>Location References Dialog</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=windows-1252">
+    <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+  </HEAD>
+
+  <BODY lang="EN-US">
+    <H1><A name="LocationReferencesPlugin"></A><A name="Location_References_Plugin"></A> Location
+    References Dialog</H1>
+
+    <TABLE width="100%">
+      <TBODY>
+        <TR>
+          <TD align="center" width="100%"><IMG alt="" src="images/ReferencesToDialog.png"></TD>
+        </TR>
+      </TBODY>
+    </TABLE>
+
+    <BLOCKQUOTE>
+      <P>The <I>Location References Dialog</I> displays all the memory reference destinations to a
+      specific code unit that is described by the item under the current location. For example, if
+      the current location is a referenced label, then the dialog will show references to that
+      label and not the current address. In the following snippet, the label "LAB_40768a" is the
+      field at the current location.</P>
+      <BR>
+       
+
+      <CENTER>
+        <IMG alt="" border="1" src="images/LabelReferencesSample.png">
+      </CENTER><BR>
+       
+
+      <P>Showing the <I>Location References Dialog</I> dialog at this location will show all
+      references to the label "LAB_4078d2".</P>
+
+      <P>This dialog also works with data types. If the item at the current location is a data
+      type, then all places that data type is applied will be shown and the data type will be
+      highlighted in the <I>Data Type Manager</I> tree.</P>
+
+      <P>As another example, if the location is an XRef field location, then the dialog will show
+      references to the address that the XRef field represents. In the following snippet, the Xref
+      field "0040767d(j)" is the field at the current location.</P>
+      <BR>
+       
+
+      <CENTER>
+        <IMG alt="" border="1" src="images/XRefLabelReferencesSample.png">
+      </CENTER><BR>
+       
+
+      <P>Showing the <I>Location References Dialog</I> dialog at this location will show all
+      references to the address 0040767d.</P>
+
+      <BLOCKQUOTE>
+        <P><IMG alt="" src="../../shared/tip.png">You can also <A href="#Data_Types">show
+        references to data types</A> from the Data Type Manager. In this case, all locations where
+        the selected data type is applied will be highlighted.</P>
+      </BLOCKQUOTE>
+      
+    </BLOCKQUOTE><BR>
+     
+
+    <H2>To Find Location References</H2>
+
+    <OL start="1" type="1">
+      <LI>Right-mouse anywhere on the code unit*</LI>
+
+	  <LI>Select whichever of the following is available from the popup menu:
+	  <UL>
+	  	      <LI>Select <B>References <IMG alt="" src="../../shared/arrow.gif"> Show References to</B>
+      			from the popup menu.</LI>
+      		  <LI>Select <B>References <IMG alt="" src="../../shared/arrow.gif"> Find References to</B>
+      			from the popup menu.</LI>
+      		  <LI>Select <B>References <IMG alt="" src="../../shared/arrow.gif"> Find Uses of</B>
+      			from the popup menu.</LI>
+	  </UL>
+    </OL>
+
+    <BLOCKQUOTE>
+      <P>
+      <SPAN style="font-size: 0.7em;">*If the Location References Dialog cannot show 
+      references to the location that
+      was clicked, then the menu item will be disabled.</SPAN>
+      </P> 
+
+		<P>
+		The results of performing this action depend upon the location the cursor when the
+		popup is shown.  Here are some examples:
+		</P>
+		<UL>
+			<LI>
+			When over a data type, a <b>search</b> is performed for all uses of that data type, such
+			as in function signatures and locations that type is applied in memory,
+			</LI>
+			<LI>
+			When over an address, all references to the code unit containing that address will
+			be shown, (which is what the 
+			<A HREF="#Show_Refs_To_Code_Unit">Show References to Address</A> action does),
+			</LI>
+		</UL>
+
+      <H3 align="left">Results Window Header</H3>
+
+      <BLOCKQUOTE>
+        <P align="left">This title displays the item that is the destination of all the references
+        in the <I>Reference(s)</I> table.</P>
+
+        <P align="left"><A name="Home"></A>The <IMG alt="" src="images/go-home.png"> button will
+        cause the code browser to return the cursor to the location from which the dialog was
+        launched.</P>
+
+        <P align="left"><A name="Refresh"></A>The <IMG alt="" src="Icons.REFRESH_ICON"> button will
+        refresh the table of references. This button will appear disabled when the data is not
+        stale. However, if Ghidra detects that the data <I>may</I> be stale, then the button will
+        become color filled, as it is here. You may push the button for a refresh in either
+        state.</P>
+
+        <P align="left"><A name="Select"></A>The <IMG alt="" src="Icons.MAKE_SELECTION_ICON"> button
+        will create a selection in the code browser with the reference entries selected in the
+        table. You may also access this feature by right-clicking an item in the table and
+        selecting <B>Make Selection</B>.</P>
+
+        <P align="left"><A name="Highlight"></A>The <IMG alt="" src="images/tag_yellow.png">
+        button toggles the highlighting of the matching references.   In this case, the
+        term highlight refers to the background color of the item in the Listing and not
+        a <A HREF="help/topics/SetHighlightPlugin/Highlighting.htm">Program Selection 
+        Highlight</A>.
+        </P>
+      	<BLOCKQUOTE>
+      		<P>
+      		<IMG alt="" src="../../shared/tip.png">
+      		To instead make a Program Selection Highlight, use the select button mentioned above.  
+      		Then, click from the menu bar <B>Select 
+      		<img src="../../shared/arrow.gif" alt="-&gt;" border="0">
+      		 Program Highlight
+      		 <img src="../../shared/arrow.gif" alt="-&gt;" border="0"> 
+      		 Entire Selection
+      		 </B>
+      		</P>
+      	</BLOCKQUOTE>  
+        
+      </BLOCKQUOTE>
+
+      <H3>Search Results</H3>
+
+      <BLOCKQUOTE>
+        <P>This table displays a list a reference sources, one for each reference associated with
+        the selected destination instruction or data item. There are four fields by default that
+        are displayed in the table:</P>
+
+        <P><I><B>Location -</B></I> Shows the source address.</P>
+
+        <P><I><B>Label -</B></I> Shows the primary label at the source address (if one exists).</P>
+
+        <P><B><I>Preview -</I></B> Shows the instruction or data item at the source address.
+        </P>
+
+        <P><B><I>Context -</I></B> Shows the type of reference to the current location.  If the 
+        		result is a Ghidra in-memory Reference, then this column will show the type of 
+        		reference.  If the result is found by way of the Decompiler, then the line from 
+        		the decompiled function will be shown.
+        </P>
+
+        <P><A name="Make_Selection"></A><IMG alt="" src="../../shared/tip.png"> You can make a
+        selection in the Code Browser from the entries in the table:</P>
+
+        <OL>
+          <LI>Click on an entry in the table, or Ctrl-click to select multiple entries.</LI>
+
+          <LI>
+            Right mouse click and choose <B>Make</B> <B>Selection</B>. 
+
+            <UL>
+              <LI>The current selection in the Code Browser is set to include the addresses that
+              you selected in the Address table.</LI>
+            </UL>
+          </LI>
+        </OL>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE><BR>
+     
+
+    <H2><A name="Data_Types"></A>To Find Location References to Data Types</H2>
+
+    <BLOCKQUOTE>
+      <P>From within the <A href=
+      "help/topics/DataTypeManagerPlugin/data_type_manager_description.htm">Data Type Manager</A>
+      you can right-click on a data type and select <B>Find Uses of</B>. This will show a
+      <I>Location References Dialog</I> that lists all locations where the selected data type is
+
+      applied, such as in function signatures, return types, structures, etc. For <TT>FunctionDefinition</TT>s
+      the action will display all places that function is applied.</P>
+      
+      
+      	<BLOCKQUOTE>
+	      <P>
+	      <IMG border="0" src="../../shared/note.png" alt="">
+	      <A name="Data_Type_Discovery"></A>
+	      By default, finding uses of 
+	      data types will search not only for applied data types, but also will perform 
+	      dynamic discovery of data types using the <CODE>Data Type Reference Finder</CODE>
+	      service.   This causes the search to be slower, but also reports many more type 
+	      uses.  To disable the dynamic searching, use the 
+	      <B>Search</B><img src="../../shared/arrow.gif" alt="-&gt;" border="0"> 
+	      <B>Dynamic Data Type Discovery</B> 
+	      <A href="help/topics/Tool/ToolOptions_Dialog.htm">tool option</A>.
+	      </P>
+	    </BLOCKQUOTE>
+      
+    </BLOCKQUOTE>     
+     
+
+    <H2><A name="Show_Refs_To_Code_Unit"></A>To Show Location References to Code Unit</H2>
+
+    <OL start="1" type="1">
+      <LI>Right-mouse anywhere on the code unit*</LI>
+
+      <LI>Select <B>References <IMG alt="" src="../../shared/arrow.gif"> Show References to 
+      Address </B> from the popup menu.</LI>      
+    </OL>
+
+    <BLOCKQUOTE>
+      <P>
+      This will show all references to the current address, as well as all addresses consumed 
+      by the current instruction or data.
+      </P>
+      <P>
+      <SPAN style="font-size: 0.7em;">*If the Location References Dialog cannot show 
+      references to the location that
+      was clicked, then the menu item will be disabled.</SPAN>
+      </P> 
+    </BLOCKQUOTE>
+     
+
+    <BLOCKQUOTE>
+      <P>
+      <IMG border="0" src="../../shared/note.png" alt=""> This action will show only direct
+      references to the current code unit. No other special reference finding will take place.
+      </P>
+    </BLOCKQUOTE>
+     
+
+    <H2>Renaming Windows</H2>
+
+    <BLOCKQUOTE>
+    	  <P>
+      <IMG border="0" src="../../shared/tip.png" alt=""> <I>see <A href=
+      "help/topics/DockingWindows/Docking_Windows.htm#Renaming_Windows">Docking Windows - Renaming
+      Windows</A></I>
+      </P>
+    </BLOCKQUOTE>
+
+    <P class="providedbyplugin">Provided by: <I>LocationReferencesPlugin</I></P>
+
+    <P class="relatedtopic">Related Topics:</P>
+
+    <UL>
+      <LI><A href="help/topics/ReferencesPlugin/References_from.htm">Forward References (Reference
+      Editor)</A></LI>
+
+      <LI><A href="help/topics/DataTypeManagerPlugin/data_type_manager_description.htm">Data Type
+      Manager</A></LI>
+    </UL><BR>
+     <BR>
+     <BR>
+  </BODY>
+</HTML>

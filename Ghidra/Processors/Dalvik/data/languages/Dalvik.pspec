@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<processor_spec>
+  <properties>
+    <property key="DisableAllAnalyzers" value="value ignored, just turns them off"/>
+    <property key="Analyzers.Android DEX Condense Filler Bytes" value="true"/>
+    <property key="Analyzers.Android DEX Data Markup" value="true"/>
+    <property key="Analyzers.Android DEX Exception Handlers" value="true"/>
+    <property key="Analyzers.Android DEX Header Format" value="true"/>
+    <property key="Analyzers.Android DEX Instruction Markup" value="true"/>
+    <property key="Analyzers.Android DEX Switch Table Markup" value="true"/>
+    <property key="Analyzers.Android ODEX Header Format" value="true"/>
+    <property key="pcodeInjectLibraryClass" value="ghidra.dalvik.dex.inject.PcodeInjectLibraryDex"/>
+  </properties>
+  
+  <jumpassist name="switchAssist">
+    <case_pcode>
+      <input name="index" size="4"/>
+      <input name="tableSize" size="4"/>
+      <input name="defaultAddr" size="4"/>
+      <input name="table" size="4"/>
+      <input name="distance" size="4"/>
+      <output name="finaladdr" size="4"/>
+      <body><![CDATA[
+        finaladdr = *(table + distance + 4 + index * 4);
+      ]]></body>      
+    </case_pcode>
+    <addr_pcode>
+      <input name="index" size="4"/>
+      <input name="tableSize" size="4"/>
+      <input name="defaultAddr" size="4"/>
+      <input name="table" size="4"/>
+      <input name="distance" size="4"/>
+      <output name="finaladdr" size="4"/>
+      <body><![CDATA[
+        finaladdr = *(table + distance + 4 + tableSize * 4 + index * 4);
+        finaladdr = table + finaladdr * 2;
+      ]]></body>      
+    </addr_pcode>
+    <default_pcode>
+      <input name="index" size="4"/>
+      <input name="tableSize" size="4"/>
+      <input name="defaultAddr" size="4"/>
+      <input name="table" size="4"/>
+      <input name="distance" size="4"/>
+      <output name="finaladdr" size="4"/>
+      <body><![CDATA[
+        finaladdr = defaultAddr;
+      ]]></body>      
+    </default_pcode>
+  </jumpassist>
+</processor_spec>

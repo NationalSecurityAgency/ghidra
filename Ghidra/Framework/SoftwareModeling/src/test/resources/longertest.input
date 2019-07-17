@@ -1,0 +1,24 @@
+@define FOO "def"
+abc
+@ifdef FOO
+I'm in an ifdef!
+@endif
+@ifndef FOO
+Exclude me, please!
+@endif
+@if FOO == "bar"
+I'm not here.
+@elif FOO == "def" # ignore this comment completely
+I'm here.
+@elif FOO == "def"
+Guess what? this isn't here either because the thing
+above handled this if block.
+@else
+else is also not here.
+@endif
+@undef FOO
+@ifdef FOO
+excluded now because it's undef
+@else
+I'm here, FOO is no longer defined
+@endif

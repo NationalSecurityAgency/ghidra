@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<processor_spec>
+  <properties>
+    <property key="assemblyRating:avr32:BE:32:default" value="BRONZE"/>
+  </properties>
+  <programcounter register="PC"/>
+</processor_spec>

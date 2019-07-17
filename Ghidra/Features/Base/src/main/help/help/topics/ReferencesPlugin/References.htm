@@ -1,0 +1,51 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+
+    <TITLE>References</TITLE>
+    <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+  </HEAD>
+
+  <BODY lang="EN-US">
+    <H1>References</H1>
+
+    <P>Within Ghidra, the term "Reference" covers two very broad areas:</P>
+
+    <OL>
+      <LI><I>Forward References</I> from a data or instruction code unit to a memory, external,
+      stack, or register location</LI>
+
+      <LI><I>Back References</I> to a location of interest (e.g., code unit, variable, data-type,
+      etc.).</LI>
+    </OL>
+
+    <H2>Forward References</H2>
+
+    <P><I>Forward References</I> can be explicitly defined within the program, on data or
+    instruction code units. This is accomplished during disassembly, auto-analysis or manually by
+    the user. In addition, <I>Forward References</I> to function parameters and variables may also
+    be inferred. Both explicit and inferred <I>Forward References</I> can affect the code unit
+    rendering and XRefs (i.e., Back References) displayed within the CodeBrowser listing. The
+    effect of <I>Forward References</I> on the rendering of code unit operands can be somewhat
+    controlled by means of various Code Browser Options (see <A href=
+    "help/topics/CodeBrowserPlugin/CodeBrowserOptions.htm#Operands_Field">Operands Field
+    options</A>).</P>
+
+    <P>Management capabilities for explicit <I>Forward References</I> is provided by the
+    <B>ReferencesPlugin</B> and is discussed in detail within the <A href=
+    "References_from.htm">Forward References help section</A>.</P>
+
+    <H2>Back References</H2>
+
+    <P><I>Back References</I> (also referred to as "<I>Location References</I>") include both the
+    inverse of <I>Forward References</I>, and the identification of listing locations where
+    specific data-types are utilized. The viewing of <I>Location/Back References</I> is provided by
+    the <B>LocationReferencesPlugin</B> and discussed in more detail on the <A href=
+    "help/topics/LocationReferencesPlugin/Location_References.html">Location References Dialog help
+    section</A>.</P>
+    <BR>
+  </BODY>
+</HTML>

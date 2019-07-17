@@ -1,0 +1,272 @@
+#---------------------------------------------------------------------
+# 8.3.8 INSTRUCTION FLOW
+#---------------------------------------------------------------------
+
+#---------------------------------------------------------------------
+# ACALL - Application Call
+# I.    disp -> {0, 4, ..., 1020}
+#---------------------------------------------------------------------
+
+# ACALL Format I:
+# Operation:    LR <- PC + 2
+# Syntax:       acall disp
+# 1101 nnnn nnnn 0000
+
+ACALLdisp: disp is disp4_8 [ disp = ACBA + (disp4_8 << 2); ] { export *:4 disp; }
+
+:ACALL ACALLdisp is op12_4=0xd & op0_4=0 & ACALLdisp
+{
+        LR = inst_next;
+        call ACALLdisp;
+}
+ 
+#---------------------------------------------------------------------
+# RET{cond4} - Conditional Return from Subroutine
+# I.	cond4 -> {eq, ne, cc/hs, cs/lo, ge, lt, mi, pl, ls, gt, le, hi, vs, vc, qs, al}
+#		s -> {0, 1, ..., 15}
+#---------------------------------------------------------------------
+
+retCond4Sub: rs0 is rs0 & rs0=0xf { R12 = 0x1;}		#PC (0xf)
+retCond4Sub: rs0 is rs0 & rs0=0xe { R12 = -0x1;}	#LR (0xe)
+retCond4Sub: rs0 is rs0 & rs0=0xd { R12 = 0x0;}		#SP (0xd)
+retCond4Sub: rs0 is rs0 & rs0=0xc {} #Else R12 is R12
+retCond4Sub: rs0 is rs0 {R12 = rs0;} #Else		
+
+
+#RET{Cond4} Format I:
+#Operation:
+#	Conditional return from subroutine with move and test of return value:
+#	if (Rs != {LR, SP, PC})
+#		R12 <- Rs
+#		PC <- LR
+#	Conditional return from subroutine with return of false value:
+#	else if (Rs == LR)
+#		R12 <- -1
+#		PC <- LR
+#	Conditional return from subroutine with return of false value:
+#	else if (Rs == SP)
+#		R12 <- 0
+#		PC <- LR
+#	Conditional return from subroutine with return of true value:
+#	else if (Rs == PC)
+#		R12 <- 1
+#		PC <- LR
+#Syntax: 	ret{cond4} Rs
+#010 1111 0 CCCC ssss
+#0101 1110 CCCC ssss
+:RET^{COND_4_4} retCond4Sub is  op13_3=0x2 &  op9_4=0xf & op8_1 = 0x0 & COND_4_4 & retCond4Sub {
+	# Test Condition
+	build COND_4_4;
+	build retCond4Sub;
+	# Flags Set:
+	V = 0x0;  	
+	C = 0x0;
+	NZSTATUS(R12);
+	# End Operation:
+	#PC = LR;
+	return [ LR ];
+}
+
+#---------------------------------------------------------------------
+# BR{cond} - Branch if Condition Satisfied
+# I. 	cond3 -> {eq, ne, cc/hs, cs/lo, ge, lt, mi, pl}
+# 		disp -> {-256, -254, ..., 254}
+# II. 	cond4 -> {eq, ne, cc/hs, cs/lo, ge, lt, mi, pl, ls, gt, le, hi, vs, vc, qs, al}
+#		disp -> {-2097152, -2097150, ..., 2097150}
+#---------------------------------------------------------------------
+
+sDisp8: sdisp is sdisp4_8
+[ sdisp = inst_start + (sdisp4_8 << 1); ]
+{
+        export *:4 sdisp;
+}
+
+sDisp21: sdisp21 is disp21part2_4_1 & disp21part3_9_4; disp21part1_0_16
+[ sdisp21 = inst_start + (((disp21part3_9_4 << 17) | (disp21part2_4_1 << 16) | disp21part1_0_16) << 1); ]
+{
+        export *:4 sdisp21;
+}
+
+#BR{cond3} Format I:
+#Operation:
+#	Branch if condition satisfied:
+#	if(cond3)
+#		PC <- PC + (SE(disp8)<<1)
+#	else
+#		PC <- PC + 2;
+#Syntax:	br{cond3}disp
+#110 0 nnnnnnnn 0 CCC
+#1100 nnnn nnnn 0CCC
+
+
+:BR^{COND_3} sDisp8 is op13_3=0x6 & op12_1=0x0 & op3_1 = 0x0 & COND_3 & sDisp8
+{
+	tst:1 = COND_3;
+	if (tst) goto sDisp8;
+}
+ 
+#BR{cond4} Format II:
+#Operation:
+#	Branch if condition satisfied:
+#	if(cond4)
+#		PC <- PC + (SE(disp21)<<1)
+#	else
+#		PC <- PC + 4;
+#Syntax:	br{cond3}disp
+#111 nnnn 0100 n CCCC nnnnnnnnnnnnnnnn
+#111n nnn0 100n CCCC nnnn nnnn nnnn nnnn
+:BR^{COND_4_0} sDisp21 is (op13_3=0x7 & op5_4=0x4 & COND_4_0) ... & sDisp21
+{
+	build COND_4_0;
+	goto sDisp21;
+}
+
+#---------------------------------------------------------------------
+# RJMP - Relative Jump
+# I.    disp -> {-1024, -1022, ..., 1022}
+#---------------------------------------------------------------------
+
+# RJMP Format I:
+# Operation:  PC <- PC + (SE(disp10)<<1);
+# Syntax:     rjmp PC[disp]
+# 1100 nnnn nnnn 10nn
+
+RJMPdisp: disp is disp4_8 & sdisp0_2
+[ disp = inst_start + (((sdisp0_2 << 8) | disp4_8) << 1); ]
+{
+        export *:4 disp;
+}
+
+:RJMP RJMPdisp is op12_4=0xc & op2_2=0x2 & RJMPdisp
+{
+        goto RJMPdisp;
+}
+
+#---------------------------------------------------------------------
+# ICALL - Subroutine Call
+# I.    d -> {0, 1, ..., 15}
+#---------------------------------------------------------------------
+
+# ICALL Format I:
+# Operation:  LR <- PC + 2
+#             PC <- Rd
+# Syntax:     icall Rd
+# 0101 1101 0001 dddd
+
+:ICALL rd0 is op4_12=0x5d1 & rd0 {
+        LR = inst_next;
+        call [rd0];
+}
+
+#---------------------------------------------------------------------
+# MCALL - Subroutine Call
+# I.    p -> {0, 1, ..., 15}
+#       disp -> {-131072, -131068, ..., 131068}
+#---------------------------------------------------------------------
+
+RP0Disp16: rp0^"["^disp^"]"  is rp0; disp_16
+[ disp = (disp_16 << 2); ]
+{
+		val:4 = (rp0 & 0xfffffffc) + disp;
+        export *:4 val;
+}
+
+RP0Disp16_2: PC[disp] is disp_16 & PC
+[ disp = (inst_start & 0xfffffffc) + (disp_16 << 2); ]
+{
+        export *:4 disp;
+}
+
+# MCALL Format I:
+# Operation:  LR <- PC + 4
+#             PC <- *((Rp & 0xfffffffc) + (SE(disp16) << 2))
+# Syntax:     mcall Rp[disp]
+# 1111 0000 0001 pppp nnnn nnnn nnnn nnnn
+
+IndirectPlaceHolder: " " is epsilon{}
+
+:MCALL RP0Disp16 is op4_12=0xf01 ... & RP0Disp16 {
+        LR = inst_next;
+        PC = RP0Disp16;
+        call [PC];
+}
+
+:MCALL RP0Disp16_2^IndirectPlaceHolder is op4_12=0xf01 & rp0=0xf ; RP0Disp16_2 & IndirectPlaceHolder {
+        LR = inst_next;
+        PC = RP0Disp16_2;
+        call [PC];
+}
+
+RelDisp10: val			is disp4_8 & disp0_2 [ctx_rel0_8=disp4_8; ctx_rel8_2=disp0_2; val= inst_start + (ctx_rel10 << 1); ] {
+	export *:4 val;
+}
+
+RelDisp21: val			is imm16 [ctx_rel0_16=imm16; val=inst_start + (ctx_rel21 << 1); ] {
+	export *:4 val;
+}
+
+:RCALL PC[RelDisp10]	is op13_3=6 & op12_1=0 & b02=1 & b03=1 & PC & RelDisp10 {
+	LR = inst_next;
+	call RelDisp10;
+}
+
+:RCALL PC[RelDisp21]	is op13_3=7 & op5_4=5 & op0_4=0 & PC & b04 & bp9_4; RelDisp21 [ctx_rel16_1=b04; ctx_rel17_4=bp9_4;] {
+	LR = inst_next;
+	call RelDisp21;
+}
+
+# The RETx instructions are somewhat complicated.  The architecutre version (A/B)
+# determines hardware actions as well as the status of the mode bits M2:M0. For now,
+# we follow the "B" model as it's simpler and have a custom pcode.  For RETE I also
+# picked a given interrupt level that would actually be determined by the mode bits.
+:RETD					is op0_16=0xd623 {
+	SR = RSR_DBG;
+	SRTOFLAGS();
+	return [ RAR_DBG ];
+}
+
+:RETE					is op0_16=0xd603 {
+	CheckAndRestoreInterupt();
+	SR = RSR_INT0;
+	SRTOFLAGS();
+	L = 0;
+	LTOSR();
+	return [ RAR_INT0 ];
+}
+
+:RETS					is op0_16=0xd613 {
+	CheckAndRestoreSupervisor();
+	SR = RSR_SUP;
+	SRTOFLAGS();
+	return [ RAR_SUP ];
+}
+
+:RETJ  					is op0_16=0xd633 {
+	JavaTrap();
+	J = 1;
+	R = 0;
+	JRGMTOSR();
+	return [ LR ];
+}
+
+:SCALL  is op0_16=0xd733 {
+	SupervisorCallSetup();
+	LR = inst_next;
+	tmp:4 = EVBA + 0x100;
+	call [ tmp ];
+}
+
+JV3: val			is b06=1 & ctx_rel3 [ val = ctx_rel3 << 0; ] { export *[const]:1 val; }
+JV3: val			is b06=0 & disp4_3 [ val = disp4_3+1; ] { export *[const]:1 val; }
+:INCJOSP JV3 		is op7_9=0x1ad & op0_4=0x3 & disp4_3 & JV3 [ctx_rel3 = disp4_3;] {
+	JavaCheckStack(JOSP,JV3);
+	JOSP = JOSP + sext(JV3);
+}
+
+:POPJC  				is op0_16=0xd713 {
+	JavaPopContext();
+}
+
+:PUSHJC  				is op0_16=0xd723 {
+	JavaPushContext();
+}

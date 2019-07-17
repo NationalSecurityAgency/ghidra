@@ -1,0 +1,109 @@
+<!doctype html public "-//w3c//dtd html 4.0 transitional//en">
+<html>
+<head>
+   <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+   <meta name="Author" content=",k,k,">
+   <meta name="GENERATOR" content="Mozilla/4.5 [en] (WinNT; I) [Netscape]">
+   <title>program</title>
+</head>
+<body>
+
+<h1>
+Program Design Notes
+<hr WIDTH="100%"></h1>
+
+<h3>
+Definition:</h3>
+
+<blockquote>
+<blockquote>Program is a single object that encapsulates reverse engineering
+knowledge generated for a single component of a software target. Programs
+allow a target to be decomposed into a set of components, each oriented
+toward a single address space.
+<p>This knowledge includes:
+<ul>
+<li>
+symbol information</li>
+
+<li>
+instructions and their comments</li>
+
+<li>
+macros</li>
+
+<li>
+user defined data</li>
+
+<li>
+the underlying bytes (memory)</li>
+
+<li>
+program flow information</li>
+
+<li>
+a partitioning of program into a set of fragments</li>
+
+<li>
+hierarchical grouping of fragments into modules</li>
+</ul>
+</blockquote>
+</blockquote>
+
+<hr WIDTH="100%">
+<h3>
+Restrictions and Assumptions:</h3>
+1. Program is represented by Code, SymbolTable, EquateTable, and Memory.
+From these, one can obtain various program element objects such as Instruction,
+Data, BasicBlock, Symbol, Equate, Fragment, Module, and Macro. All but
+BasicBlock can be considered integral parts of the program and always reflect
+the current state of the object. If one of these objects has been deleted
+from the program then any subsequent call to the object will result in
+a ConcurrentModificationException being thrown. The BasicBlocks that are
+returned by a program represent snapshot objects that are created from
+that call and independent of any further changes in program.
+<p>2. A program is always loosely associated with one and only one language
+which is set when program is first created and cannot be changed. The association
+is loose in that it really consists of a name.
+<p>3. A program has one and only one address space determined at creation
+time (and thus one and only one type of address).
+<p>4. The fragments in a program always partition that program as a set
+of code units. In other words each code unit must be in one and only one
+fragment.
+<p>5. A Module can contain only other modules or fragments.&nbsp; Fragments
+and Modules can be contained in more than one module.&nbsp; A module cannot
+have duplicates in its children.&nbsp; If additional structure is desired
+for modules or fragments it must be applied externally by a tool. (ie:
+Routines).
+<p>6. A macro must consist of code units that are all contained in the
+same fragment. Macros do not need to satisfy any relationship with respect
+to basic blocks.
+<p>7. CodeUnits, Fragments, and Modules may have property, value pairs
+assigned to them by external plugins. These values may be set and changed
+by any plugin and persist until the underlying object is deleted.
+<p>8. Modules, fragments, and code units may only be deleted by the user.
+In comparison basic blocks change, are created, and deleted as a side effect
+of other operations.
+<br>&nbsp;
+<br>
+<hr WIDTH="100%">
+<br>&nbsp;
+<h3>
+Definitions:</h3>
+<b>Basic Block:</b> A basic block is a minimal set of code units as determined
+by flow control and a set of rules. Program supports two sets of rules,
+the SimpleBlockModel and the BasicBlockModel.
+<p><b>Instruction Prototype: </b>An Instruction Prototype is the encapsulation
+of all information for a single cpu instruction. Instruction prototypes
+are provided by language modules as the result of a parsing bytes. Instruction
+prototypes do not need an address to exist, but in order to be fully expressed
+or interpreted need an address and a memory to interpret on.
+<p><b>Data Prototype:</b> A Data Prototype is the encapsulation of all
+information for a single CPU data type.&nbsp; The set of available
+<br>data prototypes is provided by the Language Module.&nbsp; Data prototypes
+are assigned to a particular location to define a Data object at that location.
+<p><b>Macro:</b> A Macro is a substitution of one or more consecutive Code
+Units.
+<br>&nbsp;
+<br>&nbsp;
+</body>
+</html>

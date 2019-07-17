@@ -1,0 +1,6 @@
+define endian=little;
+define alignment=2;
+
+@define SIZE "4"
+
+@include "toy_builder.sinc"

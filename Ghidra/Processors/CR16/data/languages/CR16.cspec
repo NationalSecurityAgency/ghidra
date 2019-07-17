@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<compiler_spec>
+  <data_organization> 
+     <absolute_max_alignment value="0" /> 
+     <machine_alignment value="2" /> 
+     <default_alignment value="2" /> 
+     <default_pointer_alignment value="2" /> 
+     <pointer_size value="4" />
+     <pointer_shift value="1" />
+     <short_size value="1" /> 
+     <integer_size value="2" /> 
+     <double_size value="4" /> 
+     <size_alignment_map> 
+          <entry size="1" alignment="1" /> 
+          <entry size="2" alignment="2" /> 
+          <entry size="4" alignment="2" /> 
+     </size_alignment_map> 
+  </data_organization>
+
+  <global>
+    <range space="ram"/>
+  </global>
+
+  <stackpointer register="SP" space="ram"  growth="negative"/> 
+
+  <returnaddress>
+    <register name="RA" />
+  </returnaddress>
+
+  <default_proto>
+    <prototype name="__ptrcall2" extrapop="0" stackshift="0">
+    <input>
+      <pentry minsize="3" maxsize="4">
+         <register name="R3R2"/>
+      </pentry>
+      <pentry minsize="3" maxsize="4">
+         <register name="R5R4"/>
+      </pentry>
+      <pentry minsize="1" maxsize="500" align="1">
+        <addr offset="0" space="stack"/>
+      </pentry>
+    </input>
+    <output>
+      <pentry minsize="1" maxsize="4">
+         <register name="R1R0"/>
+      </pentry>
+    </output>
+    <unaffected>
+      <register name="SP" /> 
+      <register name="PSR" />
+      <register name="CFG" />
+	  <register name="RA" />
+	  <register name="R7" />
+	  <register name="R8" />
+	  <register name="R9" />
+	  <register name="R10" />
+	  <register name="R11" />
+	  <register name="R12" />
+	  <register name="R13" />
+    </unaffected>
+    </prototype>
+  </default_proto>
+  
+  
+ <prototype name="__ptrcall" extrapop="0" stackshift="0">
+    <input>
+      <pentry minsize="3" maxsize="4">
+         <register name="R3R2"/>
+      </pentry>
+      <pentry minsize="1" maxsize="2">
+         <register name="R4"/>
+      </pentry>
+      <pentry minsize="1" maxsize="2">
+         <register name="R5"/>
+      </pentry>
+      <pentry minsize="1" maxsize="500" align="1">
+        <addr offset="0" space="stack"/>
+      </pentry>
+    </input>
+    <output>
+      <pentry minsize="1" maxsize="4">
+         <register name="R1R0"/>
+      </pentry>
+    </output>
+    <unaffected>
+      <register name="SP" /> 
+      <register name="PSR" />
+      <register name="CFG" />
+	  <register name="RA" />
+	  <register name="R7" />
+	  <register name="R8" />
+	  <register name="R9" />
+	  <register name="R10" />
+	  <register name="R11" />
+	  <register name="R12" />
+	  <register name="R13" />
+    </unaffected>
+ </prototype>
+  
+<prototype name="__stdcall" extrapop="0" stackshift="0">
+    <input>
+      <pentry minsize="1" maxsize="2">
+         <register name="R2"/>
+      </pentry>
+      <pentry minsize="1" maxsize="2">
+         <register name="R3"/>
+      </pentry>
+      <pentry minsize="1" maxsize="2">
+         <register name="R4"/>
+      </pentry>
+      <pentry minsize="1" maxsize="2">
+         <register name="R5"/>
+      </pentry>
+      <pentry minsize="1" maxsize="500" align="1">
+        <addr offset="0" space="stack"/>
+      </pentry>
+    </input>
+    <output>
+      <pentry minsize="1" maxsize="4">
+         <register name="R1R0"/>
+      </pentry>
+    </output>
+    <unaffected>
+      <register name="SP" /> 
+      <register name="PSR" />
+      <register name="CFG" />
+	  <register name="RA" />
+	  <register name="R7" />
+	  <register name="R8" />
+	  <register name="R9" />
+	  <register name="R10" />
+	  <register name="R11" />
+	  <register name="R12" />
+	  <register name="R13" />
+    </unaffected>
+ </prototype>
+ 
+ <resolveprototype name="__ptrcall/__ptrcall2/__stdcall">
+    <model name="__stdcall"/>
+    <model name="__ptrcall"/>
+    <model name="__ptrcall2"/>
+ </resolveprototype>
+ <eval_current_prototype name="__ptrcall/__ptrcall2/__stdcall"/>
+  
+</compiler_spec>

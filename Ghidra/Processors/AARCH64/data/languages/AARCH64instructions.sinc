@@ -1,0 +1,3845 @@
+# Specification for the AARCH64 64-bit ARM instruction set
+#
+# See "ARM Architecture Reference Manual ARMv8, for ARMv8-A architecture profile"
+# opcodes are always Little endian, although the data can be Big/Little Endian.
+
+# TODO Collapse SUB/SUBS forms
+# TODO MSR/MRS's need to be specified with special registers, coproc
+# TODO Many special case opcodes for UBFM and BFM, For example BFI
+
+# TODO? Floating point numbers don't display correctly as IEEE floats
+# TODO? Many special case opcodes like
+
+# TODO When writing to 32-bit Rd32, the upper bits of the bigger 64-bit Rd64 are zero'ed
+# Most pcode does this, but this needs to be carefully checked. There may be some
+# that do not zero extend into Rd64, and some that do extend into Rd64 but shouldn't.
+# If it's not done right (or naively) the decompiler gets confused. So
+# the accepted pattern for doing this is:
+#
+# ... calculate and set destination register ...
+# local tmps:SIZE = destination_register;
+# big_register = zext(tmps);
+# destination_register = big_register;
+
+# Note Implemented 2/2016
+#
+# UBFM/SBFM/BFM is implemented
+#
+# When the destination is a 32-bit register, the upper 32 bits of the register must be set to 0.
+# This includes the wsp stack pointer, which might clobber the upper part of an address.
+#
+# And when the destination is a Rd_VPR vector register but the operand size is less than 128 bits,
+# and the destination is not the upper half of the register (ie, bit 30 q=0)
+# then the unused remaining upper bits must be set to 0.
+
+define endian=little;
+define alignment=4;
+
+# SECTION registers
+
+define space ram type=ram_space size=8 default;
+define space register type=register_space size=4;
+
+# See "ABOUT THE ENDIAN IFDEFS" below for an explanation of the endian
+# ifdefs
+
+@if DATA_ENDIAN == "little"
+define register offset=0x0000 size=8 [ pc sp ];
+define register offset=0x0000 size=4 [ _ _ wsp _ ];
+@else
+define register offset=0x0000 size=8 [ pc sp ];
+define register offset=0x0000 size=4 [ _ _ _ wsp ];
+@endif
+
+define register offset=0x0010 size=8 [ NZCV ];
+
+define register offset=0x0100 size=1 [ NG ZR CY OV shift_carry tmpCY tmpOV tmpNG tmpZR ];
+
+define register offset=0x0200 size=4 [ glob_mask32 ];
+define register offset=0x0204 size=8 [ glob_mask64 ];
+
+# address set to load/store a value from memory in/out of vectors
+define register offset=0x0300 size=8 [ VecMemAddr VectorSelem ];
+
+# register address to load/store a value from memory in/out of registers
+define register offset=0x0310 size=4 [ VecRegAddr ];
+
+# Special Purpose Registers - most of these are really 1 bit and part
+# of a status register, however they all need to be consistent 23
+# registers 0xb8 bytes
+
+define register offset=0x1000 size=8
+[
+	spsr_el1
+	elr_el1
+	sp_el0
+	spsel
+	daif
+	currentel
+	nzcv
+	fpcr
+	fpsr
+	dspsr_el0
+	dlr_el0
+	spsr_el2
+	elr_el2
+	sp_el1
+	spsr_irq
+	spsr_abt
+	spsr_und
+	spsr_fiq
+	spsr_el3
+	elr_el3
+	sp_el2
+	spsr_svc
+	spsr_hyp
+	uao
+	pan
+];
+
+# System Registers
+
+# 200 registers 0x320 bytes
+define register offset=0x1100 size=8
+[
+	midr_el1
+	mpidr_el1
+	revidr_el1
+	id_dfr0_el1
+	id_pfr0_el1
+	id_pfr1_el1
+	id_afr0_el1
+	id_mmfr0_el1
+	id_mmfr1_el1
+	id_mmfr2_el1
+	id_mmfr3_el1
+	id_isar0_el1
+	id_isar1_el1
+	id_isar2_el1
+	id_isar3_el1
+	id_isar4_el1
+	id_isar5_el1
+	mvfr0_el1
+	mvfr1_el1
+	mvfr2_el1
+	ccsidr_el1
+	id_aa64pfr0_el1
+	id_aa64pfr1_el1
+	id_aa64dfr0_el1
+	id_aa64dfr1_el1
+	id_aa64isar0_el1
+	id_aa64isar1_el1
+	id_aa64mmfr0_el1
+	id_aa64mmfr1_el1
+	id_aa64afr0_el1
+	id_aa64afr1_el1
+	clidr_el1
+	aidr_el1
+	csselr_el1
+	ctr_el0
+	dczid_el0
+	vpidr_el2
+	vmpidr_el2
+	sctlr_el1
+	actlr_el1
+	cpacr_el1
+	sctlr_el2
+	actlr_el2
+	hcr_el2
+	mdcr_el2
+	cptr_el2
+	hstr_el2
+	hacr_el2
+	sctlr_el3
+	actlr_el3
+	scr_el3
+	cptr_el3
+	mdcr_el3
+	ttbr0_el1
+	ttbr1_el1
+	ttbr0_el2
+	ttbr0_el3
+	vttbr_el2
+	tcr_el1
+	tcr_el2
+	tcr_el3
+	vtcr_el2
+	afsr0_el1
+	afsr1_el1
+	afsr0_el2
+	afsr1_el2
+	afsr0_el3
+	afsr1_el3
+	esr_el1
+	esr_el2
+	esr_el3
+	fpexc32_el2
+	far_el1
+	far_el2
+	far_el3
+	hpfar_el2
+	par_el1
+	pmintenset_el1
+	pmintenclr_el1
+	pmcr_el0
+	pmcntenset_el0
+	pmcntenclr_el0
+	pmovsclr_el0
+	pmswinc_el0
+	pmselr_el0
+	pmceid0_el0
+	pmceid1_el0
+	pmccntr_el0
+	pmxevtyper_el0
+	pmxevcntr_el0
+	pmuserenr_el0
+	pmovsset_el0
+	pmevcntr0_el0
+	pmevcntr1_el0
+	pmevcntr2_el0
+	pmevcntr3_el0
+	pmevcntr4_el0
+	pmevcntr5_el0
+	pmevcntr6_el0
+	pmevcntr7_el0
+	pmevcntr8_el0
+	pmevcntr9_el0
+	pmevcntr10_el0
+	pmevcntr11_el0
+	pmevcntr12_el0
+	pmevcntr13_el0
+	pmevcntr14_el0
+	pmevcntr15_el0
+	pmevcntr16_el0
+	pmevcntr17_el0
+	pmevcntr18_el0
+	pmevcntr19_el0
+	pmevcntr20_el0
+	pmevcntr21_el0
+	pmevcntr22_el0
+	pmevcntr23_el0
+	pmevcntr24_el0
+	pmevcntr25_el0
+	pmevcntr26_el0
+	pmevcntr27_el0
+	pmevcntr28_el0
+	pmevcntr29_el0
+	pmevcntr30_el0
+	pmevtyper0_el0
+	pmevtyper1_el0
+	pmevtyper2_el0
+	pmevtyper3_el0
+	pmevtyper4_el0
+	pmevtyper5_el0
+	pmevtyper6_el0
+	pmevtyper7_el0
+	pmevtyper8_el0
+	pmevtyper9_el0
+	pmevtyper10_el0
+	pmevtyper11_el0
+	pmevtyper12_el0
+	pmevtyper13_el0
+	pmevtyper14_el0
+	pmevtyper15_el0
+	pmevtyper16_el0
+	pmevtyper17_el0
+	pmevtyper18_el0
+	pmevtyper19_el0
+	pmevtyper20_el0
+	pmevtyper21_el0
+	pmevtyper22_el0
+	pmevtyper23_el0
+	pmevtyper24_el0
+	pmevtyper25_el0
+	pmevtyper26_el0
+	pmevtyper27_el0
+	pmevtyper28_el0
+	pmevtyper29_el0
+	pmevtyper30_el0
+	pmccfiltr_el0
+	mair_el1
+	mair_el2
+	mair_el3
+	amair_el1
+	amair_el2
+	amair_el3
+	vbar_el1
+	vbar_el2
+	vbar_el3
+	rvbar_el1
+	rvbar_el2
+	rvbar_el3
+	rmr_el1
+	rmr_el2
+	rmr_el3
+	isr_el1
+	contextidr_el1
+	tpidr_el0
+	tpidrro_el0
+	tpidr_el1
+	tpidr_el2
+	tpidr_el3
+	teecr32_el1
+	cntfrq_el0
+	cntpct_el0
+	cntvct_el0
+	cntvoff_el2
+	cntkctl_el1
+	cnthctl_el2
+	cntp_tval_el0
+	cntp_ctl_el0
+	cntp_cval_el0
+	cntv_tval_el0
+	cntv_ctl_el0
+	cntv_cval_el0
+	cnthp_tval_el2
+	cnthp_ctl_el2
+	cnthp_cval_el2
+	cntps_tval_el1
+	cntps_ctl_el1
+	cntps_cval_el1
+	dacr32_el2
+	ifsr32_el2
+	teehbr32_el1
+	sder32_el3
+];
+
+# Debug Registers
+# 82 registers 0x290 bytes
+
+define register offset=0x1800 size=8
+[
+	osdtrrx_el1
+	mdccint_el1
+	mdscr_el1
+	osdtrtx_el1
+	oseccr_el1
+	dbgbvr0_el1
+	dbgbvr1_el1
+	dbgbvr2_el1
+	dbgbvr3_el1
+	dbgbvr4_el1
+	dbgbvr5_el1
+	dbgbvr6_el1
+	dbgbvr7_el1
+	dbgbvr8_el1
+	dbgbvr9_el1
+	dbgbvr10_el1
+	dbgbvr11_el1
+	dbgbvr12_el1
+	dbgbvr13_el1
+	dbgbvr14_el1
+	dbgbvr15_el1
+	dbgbcr0_el1
+	dbgbcr1_el1
+	dbgbcr2_el1
+	dbgbcr3_el1
+	dbgbcr4_el1
+	dbgbcr5_el1
+	dbgbcr6_el1
+	dbgbcr7_el1
+	dbgbcr8_el1
+	dbgbcr9_el1
+	dbgbcr10_el1
+	dbgbcr11_el1
+	dbgbcr12_el1
+	dbgbcr13_el1
+	dbgbcr14_el1
+	dbgbcr15_el1
+	dbgwvr0_el1
+	dbgwvr1_el1
+	dbgwvr2_el1
+	dbgwvr3_el1
+	dbgwvr4_el1
+	dbgwvr5_el1
+	dbgwvr6_el1
+	dbgwvr7_el1
+	dbgwvr8_el1
+	dbgwvr9_el1
+	dbgwvr10_el1
+	dbgwvr11_el1
+	dbgwvr12_el1
+	dbgwvr13_el1
+	dbgwvr14_el1
+	dbgwvr15_el1
+	dbgwcr0_el1
+	dbgwcr1_el1
+	dbgwcr2_el1
+	dbgwcr3_el1
+	dbgwcr4_el1
+	dbgwcr5_el1
+	dbgwcr6_el1
+	dbgwcr7_el1
+	dbgwcr8_el1
+	dbgwcr9_el1
+	dbgwcr10_el1
+	dbgwcr11_el1
+	dbgwcr12_el1
+	dbgwcr13_el1
+	dbgwcr14_el1
+	dbgwcr15_el1
+	mdrar_el1
+	oslar_el1
+	oslsr_el1
+	osdlr_el1
+	dbgprcr_el1
+	dbgclaimset_el1
+	dbgclaimclr_el1
+	dbgauthstatus_el1
+	mdccsr_el0
+	dbgdtr_el0
+	dbgdtrrx_el0
+	dbgdtrtx_el0
+	dbgvcr32_el2
+];
+
+define register offset=0x3000 size=4 contextreg;
+
+# value loaded from memory to store in register
+# or computed to store in memory
+define register offset=0x3100 size=4 tmp_ldWn;
+define register offset=0x3104 size=8 tmp_ldXn;
+define register offset=0x310c size=4 tmp_stWn;
+define register offset=0x3110 size=8 tmp_stXn;
+
+# General purpose and SIMD registers
+#
+# These will start at 0x3800 and there should be no defined registers
+# after this address (this is because the size of the registers is
+# potentially variable).
+#
+# ABOUT THE ENDIAN IFDEFS
+# the *address* of the overlain registers depends on if the underlying
+# memory is in big or little endian order. In little endian order, the
+# LSB is byte 0, so (for example) w0 and x0 have the same address *in
+# register memory*. But in big endian order, the LSB of x0 is byte 7,
+# and so w0 starts at byte 4. All of that just gets at the address in
+# register memory. Any time a value is loaded into a varnode and
+# manipulated in sleigh code, it is always in big endian order. It is
+# only byte reversed when read or written to little endian memory. All
+# that means is that there are endian ifdefs for the overlain
+# registers here, but that can and should be ignored when writing
+# semantics.
+
+# General purpose registers R0-R30 (R31=zero register ZR)
+# They are accessed as
+#	64-bit register named X0-X30
+#	32-bit registers named W0-W30
+
+define register offset=0x4000 size=8
+[
+	x0 x1 x2 x3 x4 x5 x6 x7 x8 x9 x10 x11 x12 x13 x14 x15
+	x16 x17 x18 x19 x20 x21 x22 x23 x24 x25 x26 x27 x28 x29 x30 xzr
+];
+
+@if DATA_ENDIAN == "little"
+define register offset=0x4000 size=4
+[
+	w0 _
+	w1 _
+	w2 _
+	w3 _
+	w4 _
+	w5 _
+	w6 _
+	w7 _
+	w8 _
+	w9 _
+	w10 _
+	w11 _
+	w12 _
+	w13 _
+	w14 _
+	w15 _
+	w16 _
+	w17 _
+	w18 _
+	w19 _
+	w20 _
+	w21 _
+	w22 _
+	w23 _
+	w24 _
+	w25 _
+	w26 _
+	w27 _
+	w28 _
+	w29 _
+	w30 _
+	wzr _
+];
+@else
+define register offset=0x4000 size=4
+[
+	_ w0
+	_ w1
+	_ w2
+	_ w3
+	_ w4
+	_ w5
+	_ w6
+	_ w7
+	_ w8
+	_ w9
+	_ w10
+	_ w11
+	_ w12
+	_ w13
+	_ w14
+	_ w15
+	_ w16
+	_ w17
+	_ w18
+	_ w19
+	_ w20
+	_ w21
+	_ w22
+	_ w23
+	_ w24
+	_ w25
+	_ w26
+	_ w27
+	_ w28
+	_ w29
+	_ w30
+	_ wzr
+];
+@endif
+
+# SIMD&FP registers V0-V31 at 0x5000
+# They are accessed as:
+#	128-bit registers named Q0-Q31
+#	64-bit registers named D0-D31
+#	32-bit registers named S0-S31
+#	16-bit registers named H0-H31
+#	8-bit registers named B0-B31
+#	a 128-bit vector of elements
+#	a 64-bit vector of elements
+# The packing is endian dependent
+# For SVE, registers Z0-Z31 can be any size that is a multiple of 128
+# up to 2048 bits, and they overlap the V0-V31 registers
+
+# temporary SIMD registers, needed for calculations in SIMD semantics
+
+define register offset=0x4800 size=32 [ TMPZ1 TMPZ2 TMPZ3 TMPZ4 TMPZ5 TMPZ6 ];
+
+@if DATA_ENDIAN == "little"
+
+define register offset=0x4800 size=16
+[
+	TMPQ1 _
+	TMPQ2 _
+	TMPQ3 _
+	TMPQ4 _
+	TMPQ5 _
+	TMPQ6 _
+];
+
+define register offset=0x4800 size=8
+[
+	TMPD1 _ _ _
+	TMPD2 _ _ _
+	TMPD3 _ _ _
+	TMPD4 _ _ _
+	TMPD5 _ _ _
+	TMPD6 _ _ _
+];
+
+define register offset=0x4800 size=4
+[
+	TMPS1 _ _ _ _ _ _ _
+	TMPS2 _ _ _ _ _ _ _
+	TMPS3 _ _ _ _ _ _ _
+	TMPS4 _ _ _ _ _ _ _
+	TMPS5 _ _ _ _ _ _ _
+	TMPS6 _ _ _ _ _ _ _
+];
+
+@else # this is DATA_ENDIAN == "big"
+
+define register offset=0x4800 size=16
+[
+	_ TMPQ1
+	_ TMPQ2
+	_ TMPQ3
+	_ TMPQ4
+	_ TMPQ5
+	_ TMPQ6
+];
+
+define register offset=0x4800 size=8
+[
+	_ _ _ TMPD1
+	_ _ _ TMPD2
+	_ _ _ TMPD3
+	_ _ _ TMPD4
+	_ _ _ TMPD5
+	_ _ _ TMPD6
+];
+
+define register offset=0x4800 size=4
+[
+	_ _ _ _ _ _ _ TMPS1
+	_ _ _ _ _ _ _ TMPS2
+	_ _ _ _ _ _ _ TMPS3
+	_ _ _ _ _ _ _ TMPS4
+	_ _ _ _ _ _ _ TMPS5
+	_ _ _ _ _ _ _ TMPS6
+];
+
+@endif
+
+# The size of the simd (z) register (in bytes) can be any multiple of
+# 16 from 32 to 256 bytes. There are also 16 predicate registers are
+# 1/8 the size of the corresponding simd registers.
+
+@define SIMD_SIZE "32"
+@define PRED_SIZE "4"
+
+# In order to "move" the overlain registers to the right place, use
+# these defines to locate within the z register. The __128 is for an
+# 128-bit vector overlaid in a z-register, etc. For this to work
+# SIMD_SIZE must be at least 32.
+
+define register offset=0x5000 size=$(SIMD_SIZE)
+[
+	z0 z1 z2 z3 z4 z5 z6 z7 z8 z9 z10 z11 z12 z13 z14 z15
+	z16 z17 z18 z19 z20 z21 z22 z23 z24 z25 z26 z27 z28 z29 z30 z31
+];
+
+define register offset=0x6000 size=$(PRED_SIZE)
+[
+	p0 p1 p2 p3 p4 p5 p6 p7 p8 p9 p10 p11 p12 p13 p14 p15
+];
+
+# define the overlaid simd registers
+
+@if DATA_ENDIAN == "little"
+
+define register offset=0x5000 size=16
+[
+	q0 _
+	q1 _
+	q2 _
+	q3 _
+	q4 _
+	q5 _
+	q6 _
+	q7 _
+	q8 _
+	q9 _
+	q10 _
+	q11 _
+	q12 _
+	q13 _
+	q14 _
+	q15 _
+	q16 _
+	q17 _
+	q18 _
+	q19 _
+	q20 _
+	q21 _
+	q22 _
+	q23 _
+	q24 _
+	q25 _
+	q26 _
+	q27 _
+	q28 _
+	q29 _
+	q30 _
+	q31 _
+];
+
+define register offset=0x5000 size=8
+[
+	d0 _ _ _
+	d1 _ _ _
+	d2 _ _ _
+	d3 _ _ _
+	d4 _ _ _
+	d5 _ _ _
+	d6 _ _ _
+	d7 _ _ _
+	d8 _ _ _
+	d9 _ _ _
+	d10 _ _ _
+	d11 _ _ _
+	d12 _ _ _
+	d13 _ _ _
+	d14 _ _ _
+	d15 _ _ _
+	d16 _ _ _
+	d17 _ _ _
+	d18 _ _ _
+	d19 _ _ _
+	d20 _ _ _
+	d21 _ _ _
+	d22 _ _ _
+	d23 _ _ _
+	d24 _ _ _
+	d25 _ _ _
+	d26 _ _ _
+	d27 _ _ _
+	d28 _ _ _
+	d29 _ _ _
+	d30 _ _ _
+	d31 _ _ _
+];
+
+define register offset=0x5000 size=4
+[
+	s0 _ _ _ _ _ _ _
+	s1 _ _ _ _ _ _ _
+	s2 _ _ _ _ _ _ _
+	s3 _ _ _ _ _ _ _
+	s4 _ _ _ _ _ _ _
+	s5 _ _ _ _ _ _ _
+	s6 _ _ _ _ _ _ _
+	s7 _ _ _ _ _ _ _
+	s8 _ _ _ _ _ _ _
+	s9 _ _ _ _ _ _ _
+	s10 _ _ _ _ _ _ _
+	s11 _ _ _ _ _ _ _
+	s12 _ _ _ _ _ _ _
+	s13 _ _ _ _ _ _ _
+	s14 _ _ _ _ _ _ _
+	s15 _ _ _ _ _ _ _
+	s16 _ _ _ _ _ _ _
+	s17 _ _ _ _ _ _ _
+	s18 _ _ _ _ _ _ _
+	s19 _ _ _ _ _ _ _
+	s20 _ _ _ _ _ _ _
+	s21 _ _ _ _ _ _ _
+	s22 _ _ _ _ _ _ _
+	s23 _ _ _ _ _ _ _
+	s24 _ _ _ _ _ _ _
+	s25 _ _ _ _ _ _ _
+	s26 _ _ _ _ _ _ _
+	s27 _ _ _ _ _ _ _
+	s28 _ _ _ _ _ _ _
+	s29 _ _ _ _ _ _ _
+	s30 _ _ _ _ _ _ _
+	s31 _ _ _ _ _ _ _
+];
+
+define register offset=0x5000 size=2
+[
+	h0 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+	h1 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+	h2 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+	h3 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+	h4 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+	h5 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+	h6 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+	h7 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+	h8 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+	h9 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+	h10 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+	h11 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+	h12 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+	h13 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+	h14 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+	h15 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+	h16 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+	h17 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+	h18 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+	h19 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+	h20 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+	h21 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+	h22 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+	h23 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+	h24 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+	h25 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+	h26 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+	h27 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+	h28 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+	h29 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+	h30 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+	h31 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+];
+
+define register offset=0x5000 size=1
+[
+	b0 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+	b1 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+	b2 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+	b3 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+	b4 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+	b5 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+	b6 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+	b7 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+	b8 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+	b9 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+	b10 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+	b11 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+	b12 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+	b13 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+	b14 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+	b15 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+	b16 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+	b17 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+	b18 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+	b19 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+	b20 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+	b21 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+	b22 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+	b23 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+	b24 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+	b25 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+	b26 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+	b27 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+	b28 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+	b29 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+	b30 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+	b31 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+];
+
+@else # this is DATA_ENDIAN == "big"
+
+define register offset=0x5000 size=16
+[
+	_ q0
+	_ q1
+	_ q2
+	_ q3
+	_ q4
+	_ q5
+	_ q6
+	_ q7
+	_ q8
+	_ q9
+	_ q10
+	_ q11
+	_ q12
+	_ q13
+	_ q14
+	_ q15
+	_ q16
+	_ q17
+	_ q18
+	_ q19
+	_ q20
+	_ q21
+	_ q22
+	_ q23
+	_ q24
+	_ q25
+	_ q26
+	_ q27
+	_ q28
+	_ q29
+	_ q30
+	_ q31
+];
+
+define register offset=0x5000 size=8
+[
+	_ _ _ d0
+	_ _ _ d1
+	_ _ _ d2
+	_ _ _ d3
+	_ _ _ d4
+	_ _ _ d5
+	_ _ _ d6
+	_ _ _ d7
+	_ _ _ d8
+	_ _ _ d9
+	_ _ _ d10
+	_ _ _ d11
+	_ _ _ d12
+	_ _ _ d13
+	_ _ _ d14
+	_ _ _ d15
+	_ _ _ d16
+	_ _ _ d17
+	_ _ _ d18
+	_ _ _ d19
+	_ _ _ d20
+	_ _ _ d21
+	_ _ _ d22
+	_ _ _ d23
+	_ _ _ d24
+	_ _ _ d25
+	_ _ _ d26
+	_ _ _ d27
+	_ _ _ d28
+	_ _ _ d29
+	_ _ _ d30
+	_ _ _ d31
+];
+
+define register offset=0x5000 size=4
+[
+	_ _ _ _ _ _ _ s0
+	_ _ _ _ _ _ _ s1
+	_ _ _ _ _ _ _ s2
+	_ _ _ _ _ _ _ s3
+	_ _ _ _ _ _ _ s4
+	_ _ _ _ _ _ _ s5
+	_ _ _ _ _ _ _ s6
+	_ _ _ _ _ _ _ s7
+	_ _ _ _ _ _ _ s8
+	_ _ _ _ _ _ _ s9
+	_ _ _ _ _ _ _ s10
+	_ _ _ _ _ _ _ s11
+	_ _ _ _ _ _ _ s12
+	_ _ _ _ _ _ _ s13
+	_ _ _ _ _ _ _ s14
+	_ _ _ _ _ _ _ s15
+	_ _ _ _ _ _ _ s16
+	_ _ _ _ _ _ _ s17
+	_ _ _ _ _ _ _ s18
+	_ _ _ _ _ _ _ s19
+	_ _ _ _ _ _ _ s20
+	_ _ _ _ _ _ _ s21
+	_ _ _ _ _ _ _ s22
+	_ _ _ _ _ _ _ s23
+	_ _ _ _ _ _ _ s24
+	_ _ _ _ _ _ _ s25
+	_ _ _ _ _ _ _ s26
+	_ _ _ _ _ _ _ s27
+	_ _ _ _ _ _ _ s28
+	_ _ _ _ _ _ _ s29
+	_ _ _ _ _ _ _ s30
+	_ _ _ _ _ _ _ s31
+];
+
+define register offset=0x5000 size=2
+[
+	_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ h0
+	_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ h1
+	_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ h2
+	_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ h3
+	_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ h4
+	_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ h5
+	_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ h6
+	_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ h7
+	_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ h8
+	_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ h9
+	_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ h10
+	_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ h11
+	_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ h12
+	_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ h13
+	_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ h14
+	_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ h15
+	_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ h16
+	_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ h17
+	_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ h18
+	_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ h19
+	_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ h20
+	_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ h21
+	_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ h22
+	_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ h23
+	_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ h24
+	_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ h25
+	_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ h26
+	_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ h27
+	_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ h28
+	_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ h29
+	_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ h30
+	_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ h31
+];
+
+define register offset=0x5000 size=1
+[
+	_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ b0
+	_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ b1
+	_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ b2
+	_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ b3
+	_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ b4
+	_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ b5
+	_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ b6
+	_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ b7
+	_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ b8
+	_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ b9
+	_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ b10
+	_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ b11
+	_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ b12
+	_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ b13
+	_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ b14
+	_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ b15
+	_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ b16
+	_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ b17
+	_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ b18
+	_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ b19
+	_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ b20
+	_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ b21
+	_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ b22
+	_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ b23
+	_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ b24
+	_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ b25
+	_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ b26
+	_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ b27
+	_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ b28
+	_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ b29
+	_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ b30
+	_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ b31
+];
+@endif
+
+# SECTION token fields and context variables
+
+define context contextreg
+	ImmS_ImmR_TestSet = (0,0)
+	ImmS_LT_ImmR = (1,1)
+	ImmS_EQ_ImmR = (2,2)
+	ImmS_LT_ImmR_minus_1 = (3,3)
+	ImmS_ne_1f = (4,4)
+	ImmS_ne_3f = (5,5)
+;
+
+define token instrAARCH64 (32)
+
+	Rm = (16,20)
+	Rn = (5,9)
+	Rd = (0,4)
+	Rt = (0,4)
+	Ra = (10,14)
+	Rt2 = (10,14)
+
+	Rm_FPR8 = (16,20)
+	Rn_FPR8 = (5,9)
+	Rd_FPR8 = (0,4)
+	Rd_FPR8_2 = (0,4)
+	Rt_FPR8 = (0,4)
+	Rm_FPR16 = (16,20)
+	Rn_FPR16 = (5,9)
+	Rd_FPR16 = (0,4)
+	Rd_FPR16_2 = (0,4)
+	Rt_FPR16 = (0,4)
+	Ra_FPR16 = (10,14)
+	Rm_FPR32 = (16,20)
+	Rn_FPR32 = (5,9)
+	Rd_FPR32 = (0,4)
+	Rd_FPR32_2 = (0,4)
+	Ra_FPR32 = (10,14)
+	Rm_FPR64 = (16,20)
+	Rn_FPR64 = (5,9)
+	Rd_FPR64 = (0,4)
+	Rd_FPR64_2 = (0,4)
+	Rt_FPR64 = (0,4)
+	Rt_FPR32 = (0,4)
+	Ra_FPR64 = (10,14)
+	Rt2_FPR128 = (10,14)
+	Rt2_FPR32 = (10,14)
+	Rt2_FPR64 = (10,14)
+	Ra_VPR128 = (10,14)
+
+	Rm_VPR64 = (16,20)
+	Rn_VPR64 = (5,9)
+	Rd_VPR64 = (0,4)
+
+	Re_VPR128 = (16,20)
+	Re_VPR128Lo = (16,19)
+	Rm_VPR128 = (16,20)
+	Rm_VPR128Lo = (16,19)
+	Rn_VPR128 = (5,9)
+	Rnn_VPR128 = (5,9)
+	Rnnn_VPR128 = (5,9)
+	Rnnnn_VPR128 = (5,9)
+	Rd_VPR128 = (0,4)
+	Rt_VPR128 = (0,4)
+	Rtt_VPR128 = (0,4)
+	Rttt_VPR128 = (0,4)
+	Rtttt_VPR128 = (0,4)
+	Rt_VPR64 = (0,4)
+	Rtt_VPR64 = (0,4)
+	Rttt_VPR64 = (0,4)
+	Rtttt_VPR64 = (0,4)
+	Rt_FPR128 = (0,4)
+	vRm_VPR64 = (16,20)
+	vRm_VPR128Lo = (16,19)
+	vRe_VPR128 = (16,20)
+	vRe_VPR128Lo = (16,19)
+	vRn_VPR64 = (5,9)
+	vRd_VPR64 = (0,4)
+	vRm_VPR128 = (16,20)
+	vRn_VPR128 = (5,9)
+	vRnn_VPR128 = (5,9)
+	vRnnn_VPR128 = (5,9)
+	vRnnnn_VPR128 = (5,9)
+	vRd_VPR128 = (0,4)
+	vRa_VPR128 = (10,14)
+
+	Vt = (0,4)
+	Vtt = (0,4)
+	Vttt = (0,4)
+	Vtttt = (0,4)
+
+	vVt = (0,4)
+	vVtt = (0,4)
+	vVttt = (0,4)
+	vVtttt = (0,4)
+
+	aa_Xm = (16,20)
+	aa_Xn = (5,9)
+	aa_Xd = (0,4)
+	aa_Xs = (16,20)
+	aa_Xss = (16,20)
+	aa_Xt = (0,4)
+	aa_Xtt = (0,4)
+	aa_Xa = (10,14)
+	aa_Wm = (16,20)
+	aa_Wn = (5,9)
+	aa_Wd = (0,4)
+	aa_Ws = (16,20)
+	aa_Wss = (16,20)
+	aa_Wt = (0,4)
+	aa_Wtt = (0,4)
+	aa_Wa = (10,14)
+	aa_Wa2 = (10,14)
+	aa_CRm = (8,11)
+
+	br_cond_op = (0,3)
+	cond_op = (12,15)
+
+	aa_prefetch = (0,4)
+
+	aa_hw = (21,22)
+
+	aa_extreg_imm3 = (10,12)
+	aa_extreg_shift = (22,23)
+	aa_extreg_option = (13,15)
+
+	imm6 = (10,15)
+	aa_imm7 = (15,21)
+	imm12 = (10,21)
+	imm16 = (5,20)
+
+	simm7 = (15,21) signed
+	simm9 = (12,20) signed
+	simm14 = (5,18) signed
+	simm19 = (5,23) signed
+	simm26 = (0,25) signed
+
+	immlo = (29,30)
+	immhi = (5,23) signed
+
+	# Arbitrary bit fields
+
+	b_00 = (0,0)
+	b_01 = (1,1)
+	b_02 = (2,2)
+	b_03 = (3,3)
+	b_04 = (4,4)
+	b_05 = (5,5)
+	b_06 = (6,6)
+	b_07 = (7,7)
+	b_08 = (8,8)
+	b_09 = (9,9)
+	b_10 = (10,10)
+	b_11 = (11,11)
+	b_12 = (12,12)
+	b_13 = (13,13)
+	b_14 = (14,14)
+	b_15 = (15,15)
+	b_16 = (16,16)
+	b_17 = (17,17)
+	b_18 = (18,18)
+	b_19 = (19,19)
+	b_20 = (20,20)
+	b_21 = (21,21)
+	b_22 = (22,22)
+	b_23 = (23,23)
+	b_24 = (24,24)
+	b_25 = (25,25)
+	b_26 = (26,26)
+	b_27 = (27,27)
+	b_28 = (28,28)
+	b_29 = (29,29)
+	b_30 = (30,30)
+	b_31 = (31,31)
+
+	b_0001 = (0,1)
+	b_0003 = (0,3)
+	b_0004 = (0,4)
+	b_0006 = (0,6)
+	b_0007 = (0,7)
+	b_0009 = (0,9)
+	b_0011 = (0,11)
+	b_0027 = (0,27)
+	b_0031 = (0,31)
+	b_0102 = (1,2)
+	b_0103 = (1,3)
+	b_0204 = (2,4)
+	b_0304 = (3,4)
+	b_0405 = (4,5)
+	b_0406 = (4,6)
+	b_0407 = (4,7)
+	b_0409 = (4,9)
+	b_0411 = (4,11)
+	b_0427 = (4,27)
+	b_0431 = (4,31)
+	b_0506 = (5,6)
+	b_0507 = (5,7)
+	b_0508 = (5,8)
+	b_0509 = (5,9)
+	b_0510 = (5,10)
+	b_0515 = (5,15)
+	b_0607 = (6,7)
+	b_0609 = (6,9)
+	b_0610 = (6,10)
+	b_0611 = (6,11)
+	b_0708 = (7,8)
+	b_0709 = (7,9)
+	b_0710 = (7,10)
+	b_0711 = (7,11)
+	b_0809 = (8,9)
+	b_0810 = (8,10)
+	b_0811 = (8,11)
+	b_0910 = (9,10)
+	b_0911 = (9,11)
+	b_0916 = (9,16)
+	b_1010 = (10,10)
+	b_1011 = (10,11)
+	b_1012 = (10,12)
+	b_1013 = (10,13)
+	b_1014 = (10,14)
+	b_1015 = (10,15)
+	b_1021 = (10,21)
+	b_1022 = (10,22)
+	b_1028 = (10,28)
+	b_1029 = (10,29)
+	b_1031 = (10,31)
+	b_1111 = (11,11)
+	b_1112 = (11,12)
+	b_1113 = (11,13)
+	b_1114 = (11,14)
+	b_1115 = (11,15)
+	b_1116 = (11,16)
+	b_1131 = (11,31)
+	b_1212 = (12,12)
+	b_1213 = (12,13)
+	b_1214 = (12,14)
+	b_1215 = (12,15)
+	b_1216 = (12,16)
+	b_1217 = (12,17)
+	b_1220 = (12,20)
+	b_1223 = (12,23)
+	b_1230 = (12,30)
+	b_1231 = (12,31)
+	b_1313 = (13,13)
+	b_1314 = (13,14)
+	b_1315 = (13,15)
+	b_1317 = (13,17)
+	b_1321 = (13,21)
+	b_1322 = (13,22)
+	b_1414 = (14,14)
+	b_1417 = (14,17)
+	b_1415 = (14,15)
+	b_1431 = (14,31)
+	b_1515 = (15,15)
+	b_1517 = (15,17)
+	b_1616 = (16,16)
+	b_1617 = (16,17)
+	b_1618 = (16,18)
+	b_1619 = (16,19)
+	b_1620 = (16,20)
+	b_1621 = (16,21)
+	b_1627 = (16,27)
+	b_1718 = (17,18)
+	b_1719 = (17,19)
+	b_1720 = (17,20)
+	b_1721 = (17,21)
+	b_1722 = (17,22)
+	b_1818 = (18,18)
+	b_1819 = (18,19)
+	b_1820 = (18,20)
+	b_1821 = (18,21)
+	b_1920 = (19,20)
+	b_1921 = (19,21)
+	b_1922 = (19,22)
+	b_1923 = (19,23)
+	b_1928 = (19,28)
+	b_1929 = (19,29)
+	b_1931 = (19,31)
+	b_2020 = (20,20)
+	b_2021 = (20,21)
+	b_2022 = (20,22)
+	b_2023 = (20,23)
+	b_2024 = (20,24)
+	b_2027 = (20,27)
+	b_2121 = (21,21)
+	b_2122 = (21,22)
+	b_2123 = (21,23)
+	b_2124 = (21,24)
+	b_2125 = (21,25)
+	b_2127 = (21,27)
+	b_2128 = (21,28)
+	b_2129 = (21,29)
+	b_2130 = (21,30)
+	b_2131 = (21,31)
+	b_2222 = (22,22)
+	b_2223 = (22,23)
+	b_2224 = (22,24)
+	b_2225 = (22,25)
+	b_2229 = (22,29)
+	b_2231 = (22,31)
+	b_2323 = (23,23)
+	b_2324 = (23,24)
+	b_2325 = (23,25)
+	b_2327 = (23,27)
+	b_2328 = (23,28)
+	b_2329 = (23,29)
+	b_2331 = (23,31)
+	b_2425 = (24,25)
+	b_2427 = (24,27)
+	b_2428 = (24,28)
+	b_2429 = (24,29)
+	b_2430 = (24,30)
+	b_2431 = (24,31)
+	b_2525 = (25,25)
+	b_2527 = (25,27)
+	b_2529 = (25,29)
+	b_2530 = (25,30)
+	b_2531 = (25,31)
+	b_2627 = (26,27)
+	b_2629 = (26,29)
+	b_2630 = (26,30)
+	b_2631 = (26,31)
+	b_2729 = (27,29)
+	b_2929 = (29,29)
+	b_2930 = (29,30)
+	b_2931 = (29,31)
+	b_3030 = (30,30)
+	b_3031 = (30,31)
+	b_3131 = (31,31)
+
+	cmpr_op = (24,24)
+	sf = (31,31)
+
+	imm_neon_uimm1 = (20,20)
+	imm_neon_uimm2 = (19,20)
+	imm_neon_uimm3 = (18,20)
+	imm_neon_uimm4 = (17,20)
+	immN_neon_uimm1 = (14,14)
+	immN_neon_uimm2 = (13,14)
+	immN_neon_uimm3 = (12,14)
+	immN_neon_uimm4 = (11,14)
+
+	fpOpcode = (16,18)
+	fpDpOpcode = (15,20)
+
+	CRm_CRx = (8,11)
+	CRm_32 = (10,11)
+	CRm_10 = (8,9)
+	CRm_dbarrier_op = (8,11)
+	CRm_isb_op = (8,11)
+
+	CRn = (12,15)
+	CRm = (8,11)
+	CRn_CRx = (12,15)
+
+	Imm4 = (11,13)
+
+	# C2.2.3 Modified immediate constants in A64 instructions page C2-158
+
+	Imm8_fmov_sign = (20,20)	# a
+	Imm8_fmov_exph = (19,19)	# b
+	Imm8_fmov_expl = (17,18)	# cd
+	Imm8_fmov_frac = (13,16)	# efgh
+
+	ImmN = (22,22)
+	ImmR = (16,21)
+	ImmS = (10,15)
+	Imm_imm0_63 = (16,21)
+
+	n_uimm8L = (5,9)
+	n_uimm8H = (16,18)
+
+	Imm_uimm3 = (16,18)
+	Imm_uimm4 = (16,19)
+	Imm_uimm5 = (16,20)
+	Imm_uimm5_31 = (31,31)
+	Imm_uimm6 = (31,31)
+
+	L = (22,22)
+
+	N = (21,21)
+
+	Op0 = (19,20)
+	Op1 = (16,18)
+	Op1_uimm3 = (16,18)
+	Op2 = (5,7)
+	Op2_uimm3 = (5,7)
+	Q = (30,30)
+	S = (29,29)
+
+	Scale = (10,15)
+
+	excCode = (21,23)
+	excCode2 = (2,4)
+
+	imm7Low = (5,11)
+
+	cmode = (12,15)
+	imm4 = (11,14)
+	imm5 = (5,9)
+	l = (21,21)
+	ll = (0,1)
+	m = (31,31)
+	mode = (19,20)
+	n = (22,22)
+	o0 = (4,4)
+	o1 = (24,24)
+	o2 = (10,10)
+
+	o3 = (4,4)
+	op = (30,30)
+
+	fpccmp.op = (4,4)
+	fpcmp.op = (14,15)
+
+	op2 = (16,20)
+
+	op3 = (10,15)
+	op4 = (0,4)
+	opc = (29,30)
+	opc.indexmode = (10,11)
+
+	op.dp3 = (29,30)
+	op.dp3_o0 = (15,15)
+	op.dp3_op31 = (21,23)
+	op.dp3_op54 = (29,30)
+
+	opcode2 = (10,15)
+	dp1.opcode2 = (16,20)
+	fpcmp.opcode2 = (0,4)
+	opt = (22,23)
+	option = (13,15)
+	optionlo = (13,13)
+	q = (30,30)
+	rmode = (19,20)
+	s = (29,29)
+
+	size.ldstr = (30,31)
+
+	shift = (22,23)
+	advSIMD3.size = (22,23)
+	size.neon = (10,11)
+
+	size_high = (23,23)
+	ftype = (22,23)
+	u = (29,29)
+	v = (26,26)
+
+	# SVE tokens
+
+	Zd = (0,4)
+	Zt = (0,4)
+	Ztt = (0,4)
+	Zttt = (0,4)
+	Ztttt = (0,4)
+	Ze = (16,20)
+	Zm = (16,20)
+	Zn = (5,9)
+	Zt2 = (10,14)
+
+	sve_b_00 = (0,0)
+	sve_b_0001 = (0,1)
+	sve_b_01 = (1,1)
+	sve_b_02 = (2,2)
+	sve_b_03 = (3,3)
+	sve_b_04 = (4,4)
+	sve_b_0409 = (4,9)
+	sve_b_0609 = (6,9)
+	sve_b_09 = (9,9)
+	sve_b_10 = (10,10)
+	sve_b_1015 = (10,15)
+	sve_b_1019 = (10,19)
+	sve_b_1021 = (10,21)
+	sve_b_11 = (11,11)
+	sve_b_1112 = (11,12)
+	sve_b_1115 = (11,15)
+	sve_b_12 = (12,12)
+	sve_b_1215 = (12,15)
+	sve_b_13 = (13,13)
+	sve_b_1315 = (13,15)
+	sve_b_1321 = (13,21)
+	sve_b_14 = (14,14)
+	sve_b_1415 = (14,15)
+	sve_b_1416 = (14,16)
+	sve_b_1419 = (14,19)
+	sve_b_1421 = (14,21)
+	sve_b_15 = (15,15)
+	sve_b_16 = (16,16)
+	sve_b_17 = (17,17)
+	sve_b_1718 = (17,18)
+	sve_b_1719 = (17,19)
+	sve_b_1720 = (17,20)
+	sve_b_1721 = (17,21)
+	sve_b_1731 = (17,31)
+	sve_b_18 = (18,18)
+	sve_b_1821 = (18,21)
+	sve_b_1831 = (18,31)
+	sve_b_1921 = (19,21)
+	sve_b_20 = (20,20)
+	sve_b_2021 = (20,21)
+	sve_b_2022 = (20,22)
+	sve_b_21 = (21,21)
+	sve_b_2122 = (21,22)
+	sve_b_2131 = (21,31)
+	sve_b_22 = (22,22)
+	sve_b_2224 = (22,24)
+	sve_b_2231 = (22,31)
+	sve_b_23 = (23,23)
+	sve_b_2331 = (23,31)
+	sve_b_24 = (24,24)
+	sve_b_2429 = (24,29)
+	sve_b_2431 = (24,31)
+	sve_b_2531 = (25,31)
+	sve_b_3031 = (30,31)
+	sve_float_dec = (5,8)
+	sve_float_exp = (9,11)
+	sve_i1_05 = (5,5)
+	sve_i1_20 = (20,20)
+	sve_i2_1920 = (19,20)
+	sve_i3h_22 = (22,22)
+	sve_i3l_1920 = (19,20)
+	sve_imm13_0517 = (5,17)
+	sve_imm2_2223 = (22,23)
+	sve_imm3_0507 = (5,7)
+	sve_imm3_1618 = (16,18)
+	sve_imm4_1619 = (16,19)
+	sve_imm4s_1619 = (16,19) signed
+	sve_imm5_0509 = (5,9)
+	sve_imm5s_0509 = (5,9) signed
+	sve_imm5_1620 = (16,20)
+	sve_imm5s_1620 = (16,20) signed
+	sve_imm5b_1620 = (16,20) signed
+	sve_imm6_0510 = (5,10)
+	sve_imm6s_0510 = (5,10) signed
+	sve_imm6_1621 = (16,21)
+	sve_imm6s_1621 = (16,21) signed
+	sve_imm7_1420 = (14,20)
+	sve_imm8_0512 = (5,12)
+	sve_imm8s_0512 = (5,12) signed
+	sve_imm8h_1620 = (16,20)
+	sve_imm8l_1012 = (10,12)
+	sve_imm9h_1621 = (16,21)
+	sve_imm9hs_1621 = (16,21) signed
+	sve_imm9l_1012 = (10,12)
+	sve_m_04 = (4,4)
+	sve_m_14 = (14,14)
+	sve_m_16 = (16,16)
+	sve_msz_1011 = (10,11)
+	sve_pattern_0509 = (5,9)
+	sve_pd_0003 = (0,3)
+	sve_pdm_0003 = (0,3)
+	sve_pdn_0003 = (0,3)
+	sve_pg_0508 = (5,8)
+	sve_pg_1012 = (10,12)
+	sve_pg_1013 = (10,13)
+	sve_pg_1619 = (16,19)
+	sve_pm_1619 = (16,19)
+	sve_pn_0508 = (5,8)
+	sve_prfop_0003 = (0,3)
+	sve_pt_0003 = (0,3)
+	sve_rd_0004 = (0,4)
+	sve_rdn_0004 = (0,4)
+	sve_rm_0509 = (5,9)
+	sve_rm_1620 = (16,20)
+	sve_rn_0509 = (5,9)
+	sve_rn_1620 = (16,20)
+	sve_rot_1011 = (10,11)
+	sve_rot_1314 = (13,14)
+	sve_rot_16 = (16,16)
+	sve_s_22 = (22,22)
+	sve_sf_12 = (12,12)
+	sve_sh_13 = (13,13)
+	sve_size_2122 = (21,22)
+	sve_size_2223 = (22,23)
+	sve_sz_22 = (22,22)
+	sve_tsz_1620 = (16,20)
+	sve_tszh_2223 = (22,23)
+	sve_tszl_0809 = (8,9)
+	sve_tszl_1920 = (19,20)
+	sve_vd_0004 = (0,4)
+	sve_vdn_0004 = (0,4)
+	sve_vm_0509 = (5,9)
+	sve_vn_0509 = (5,9)
+	sve_xs_14 = (14,14)
+	sve_xs_22 = (22,22)
+	sve_za_0509 = (5,9)
+	sve_za_1620 = (16,20)
+	sve_zd_0004 = (0,4)
+	sve_zda_0004 = (0,4)
+	sve_zdn_0004 = (0,4)
+	sve_zm_0509 = (5,9)
+	sve_zm_1618 = (16,18)
+	sve_zm_1619 = (16,19)
+	sve_zm_1620 = (16,20)
+	sve_zn_0509 = (5,9)
+	sve_zt_0004 = (0,4)
+	sve_ztt_0004 = (0,4)
+	sve_zttt_0004 = (0,4)
+	sve_ztttt_0004 = (0,4)
+;
+
+# SECTION variables and variable names
+
+attach variables [ Zd Ze Zm Zn Zt Zt2 ]
+[
+	z0 z1 z2 z3 z4 z5 z6 z7 z8 z9 z10 z11 z12 z13 z14 z15
+	z16 z17 z18 z19 z20 z21 z22 z23 z24 z25 z26 z27 z28 z29 z30 z31
+];
+
+attach variables [ Ztt ]
+[
+	z1 z2 z3 z4 z5 z6 z7 z8 z9 z10 z11 z12 z13 z14 z15
+	z16 z17 z18 z19 z20 z21 z22 z23 z24 z25 z26 z27 z28 z29 z30 z31 z0
+];
+
+attach variables [ Zttt ]
+[
+	z2 z3 z4 z5 z6 z7 z8 z9 z10 z11 z12 z13 z14 z15
+	z16 z17 z18 z19 z20 z21 z22 z23 z24 z25 z26 z27 z28 z29 z30 z31 z0 z1
+];
+
+attach variables [ Ztttt ]
+[
+	z3 z4 z5 z6 z7 z8 z9 z10 z11 z12 z13 z14 z15
+	z16 z17 z18 z19 z20 z21 z22 z23 z24 z25 z26 z27 z28 z29 z30 z31 z0 z1 z2
+];
+
+attach variables [ aa_Xn aa_Xm aa_Xs aa_Xd aa_Xt aa_Xa ]
+[
+	x0 x1 x2 x3 x4 x5 x6 x7 x8 x9 x10 x11 x12 x13 x14 x15
+	x16 x17 x18 x19 x20 x21 x22 x23 x24 x25 x26 x27 x28 x29 x30 xzr
+];
+
+attach variables [ aa_Xss aa_Xtt ]
+[
+	x1 _ x3 _ x5 _ x7 _ x9 _ x11 _ x13 _ x15
+	_ x17 _ x19 _ x21 _ x23 _ x25 _ x27 _ x29 _ xzr _
+];
+
+attach variables [ aa_Wn aa_Wm aa_Ws aa_Wd aa_Wt aa_Wa ]
+[
+	w0 w1 w2 w3 w4 w5 w6 w7 w8 w9 w10 w11 w12 w13 w14 w15
+	w16 w17 w18 w19 w20 w21 w22 w23 w24 w25 w26 w27 w28 w29 w30 wzr
+];
+
+attach variables [ aa_Wss aa_Wtt ]
+[
+	w1 _ w3 _ w5 _ w7 _ w9 _ w11 _ w13 _ w15
+	_ w17 _ w19 _ w21 _ w23 _ w25 _ w27 _ w29 _ wzr _
+];
+
+attach variables [ Rm_VPR128 Rn_VPR128 Rd_VPR128 Rt_VPR128 Rt2_FPR128 Re_VPR128 Rt_FPR128 Ra_VPR128 ]
+[
+	q0 q1 q2 q3 q4 q5 q6 q7 q8 q9 q10 q11 q12 q13 q14 q15
+	q16 q17 q18 q19 q20 q21 q22 q23 q24 q25 q26 q27 q28 q29 q30 q31
+];
+
+attach variables [ Rnn_VPR128 Rtt_VPR128 ]
+[
+	q1 q2 q3 q4 q5 q6 q7 q8 q9 q10 q11 q12 q13 q14 q15
+	q16 q17 q18 q19 q20 q21 q22 q23 q24 q25 q26 q27 q28 q29 q30 q31
+	q0
+];
+
+attach variables [ Rnnn_VPR128 Rttt_VPR128 ]
+[
+	q2 q3 q4 q5 q6 q7 q8 q9 q10 q11 q12 q13 q14 q15
+	q16 q17 q18 q19 q20 q21 q22 q23 q24 q25 q26 q27 q28 q29 q30 q31
+	q0 q1
+];
+
+attach variables [ Rnnnn_VPR128 Rtttt_VPR128 ]
+[
+	q3 q4 q5 q6 q7 q8 q9 q10 q11 q12 q13 q14 q15
+	q16 q17 q18 q19 q20 q21 q22 q23 q24 q25 q26 q27 q28 q29 q30 q31
+	q0 q1 q2
+];
+
+attach names [ vRm_VPR128 vRn_VPR128 vRd_VPR128 vRe_VPR128 vRa_VPR128 ]
+[
+	v0 v1 v2 v3 v4 v5 v6 v7 v8 v9 v10 v11 v12 v13 v14 v15
+	v16 v17 v18 v19 v20 v21 v22 v23 v24 v25 v26 v27 v28 v29 v30 v31
+];
+
+attach names [ vRnn_VPR128 ]
+[
+	v1 v2 v3 v4 v5 v6 v7 v8 v9 v10 v11 v12 v13 v14 v15
+	v16 v17 v18 v19 v20 v21 v22 v23 v24 v25 v26 v27 v28 v29 v30 v31
+	v0
+];
+
+attach names [ vRnnn_VPR128 ]
+[
+	v2 v3 v4 v5 v6 v7 v8 v9 v10 v11 v12 v13 v14 v15
+	v16 v17 v18 v19 v20 v21 v22 v23 v24 v25 v26 v27 v28 v29 v30 v31
+	v0 v1
+];
+
+attach names [ vRnnnn_VPR128 ]
+[
+	v3 v4 v5 v6 v7 v8 v9 v10 v11 v12 v13 v14 v15
+	v16 v17 v18 v19 v20 v21 v22 v23 v24 v25 v26 v27 v28 v29 v30 v31
+	v0 v1 v2
+];
+
+attach variables [ Rm_VPR128Lo Re_VPR128Lo ] [ q0 q1 q2 q3 q4 q5 q6 q7 q8 q9 q10 q11 q12 q13 q14 q15 ];
+
+attach names [ vRm_VPR128Lo vRe_VPR128Lo ] [ v0 v1 v2 v3 v4 v5 v6 v7 v8 v9 v10 v11 v12 v13 v14 v15 ];
+
+attach variables [ Rm_VPR64 Rn_VPR64 Rd_VPR64 Rt_VPR64 ]
+[
+	d0 d1 d2 d3 d4 d5 d6 d7 d8 d9 d10 d11 d12 d13 d14 d15
+	d16 d17 d18 d19 d20 d21 d22 d23 d24 d25 d26 d27 d28 d29 d30 d31
+];
+
+attach variables [ Rtt_VPR64 ]
+[
+	d1 d2 d3 d4 d5 d6 d7 d8 d9 d10 d11 d12 d13 d14 d15
+	d16 d17 d18 d19 d20 d21 d22 d23 d24 d25 d26 d27 d28 d29 d30 d31 d0
+];
+
+attach variables [ Rttt_VPR64 ]
+[
+	d2 d3 d4 d5 d6 d7 d8 d9 d10 d11 d12 d13 d14 d15
+	d16 d17 d18 d19 d20 d21 d22 d23 d24 d25 d26 d27 d28 d29 d30 d31 d0 d1
+];
+
+attach variables [ Rtttt_VPR64 ]
+[
+	d3 d4 d5 d6 d7 d8 d9 d10 d11 d12 d13 d14 d15
+	d16 d17 d18 d19 d20 d21 d22 d23 d24 d25 d26 d27 d28 d29 d30 d31 d0 d1 d2
+];
+
+attach names [ vRm_VPR64 vRn_VPR64 vRd_VPR64 ]
+[
+	v0 v1 v2 v3 v4 v5 v6 v7 v8 v9 v10 v11 v12 v13 v14 v15
+	v16 v17 v18 v19 v20 v21 v22 v23 v24 v25 v26 v27 v28 v29 v30 v31
+];
+
+attach variables [ Rm_FPR64 Rn_FPR64 Rd_FPR64 Rd_FPR64_2 Rt2_FPR64 Ra_FPR64 Rt_FPR64 ]
+[
+	d0 d1 d2 d3 d4 d5 d6 d7 d8 d9 d10 d11 d12 d13 d14 d15
+	d16 d17 d18 d19 d20 d21 d22 d23 d24 d25 d26 d27 d28 d29 d30 d31
+];
+
+attach variables [ Rm_FPR32 Rn_FPR32 Rd_FPR32 Rd_FPR32_2 Rt2_FPR32 Ra_FPR32 Rt_FPR32 ]
+[
+	s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 s12 s13 s14 s15
+	s16 s17 s18 s19 s20 s21 s22 s23 s24 s25 s26 s27 s28 s29 s30 s31
+];
+
+attach variables [ Rm_FPR16 Rn_FPR16 Rd_FPR16 Rd_FPR16_2 Rt_FPR16 Ra_FPR16 ]
+[
+	h0 h1 h2 h3 h4 h5 h6 h7 h8 h9 h10 h11 h12 h13 h14 h15
+	h16 h17 h18 h19 h20 h21 h22 h23 h24 h25 h26 h27 h28 h29 h30 h31
+];
+
+attach variables [ Rm_FPR8 Rn_FPR8 Rd_FPR8 Rd_FPR8_2 Rt_FPR8 ]
+[
+	b0 b1 b2 b3 b4 b5 b6 b7 b8 b9 b10 b11 b12 b13 b14 b15
+	b16 b17 b18 b19 b20 b21 b22 b23 b24 b25 b26 b27 b28 b29 b30 b31
+];
+
+attach variables [ Vt ]
+[
+	q0 q1 q2 q3 q4 q5 q6 q7 q8 q9 q10 q11 q12 q13 q14 q15
+	q16 q17 q18 q19 q20 q21 q22 q23 q24 q25 q26 q27 q28 q29 q30 q31
+];
+
+attach variables [ Vtt ]
+[
+	q1 q2 q3 q4 q5 q6 q7 q8 q9 q10 q11 q12 q13 q14 q15
+	q16 q17 q18 q19 q20 q21 q22 q23 q24 q25 q26 q27 q28 q29 q30 q31 q0
+];
+
+attach variables [ Vttt ]
+[
+	q2 q3 q4 q5 q6 q7 q8 q9 q10 q11 q12 q13 q14 q15
+	q16 q17 q18 q19 q20 q21 q22 q23 q24 q25 q26 q27 q28 q29 q30 q31 q0 q1
+];
+
+attach variables [ Vtttt ]
+[
+	q3 q4 q5 q6 q7 q8 q9 q10 q11 q12 q13 q14 q15
+	q16 q17 q18 q19 q20 q21 q22 q23 q24 q25 q26 q27 q28 q29 q30 q31 q0 q1 q2
+];
+
+attach names [ vVt ]
+[
+	v0 v1 v2 v3 v4 v5 v6 v7 v8 v9 v10 v11 v12 v13 v14 v15
+	v16 v17 v18 v19 v20 v21 v22 v23 v24 v25 v26 v27 v28 v29 v30 v31
+];
+
+attach names [ vVtt ]
+[
+	v1 v2 v3 v4 v5 v6 v7 v8 v9 v10 v11 v12 v13 v14 v15
+	v16 v17 v18 v19 v20 v21 v22 v23 v24 v25 v26 v27 v28 v29 v30 v31 v0
+];
+
+attach names [ vVttt ]
+[
+	v2 v3 v4 v5 v6 v7 v8 v9 v10 v11 v12 v13 v14 v15
+	v16 v17 v18 v19 v20 v21 v22 v23 v24 v25 v26 v27 v28 v29 v30 v31 v0 v1
+];
+
+attach names [ vVtttt ]
+[
+	v3 v4 v5 v6 v7 v8 v9 v10 v11 v12 v13 v14 v15
+	v16 v17 v18 v19 v20 v21 v22 v23 v24 v25 v26 v27 v28 v29 v30 v31 v0 v1 v2
+];
+
+attach names [ aa_prefetch ]
+[
+	PLDL1KEEP PLDL1STRM PLDL2KEEP PLDL2STRM PLDL3KEEP PLDL3STRM P_0x06 P_0x07
+	PLIL1KEEP PLIL1STRM PLIL2KEEP PLIL2STRM PLIL3KEEP PLIL3STRM P_0x0e P_0x0f
+	PSTL1KEEP PSTL1STRM PSTL2KEEP PSTL2STRM PSTL3KEEP PSTL3STRM
+	P_0x16 P_0x17 P_0x18 P_0x19 P_0x1a P_0x1b P_0x1c P_0x1d P_0x1e P_0x1f
+];
+
+attach names [ CRm_dbarrier_op ] [ _ OSHLD OSHST OSH _ NSHLD NSHST NSH _ ISHLD ISHST ISH _ LD ST SY ];
+
+# SVE registers and names
+
+attach variables [ sve_zm_1618 ]
+[
+	z0 z1 z2 z3 z4 z5 z6 z7
+];
+
+attach variables [ sve_zm_1619 ]
+[
+	z0 z1 z2 z3 z4 z5 z6 z7 z8 z9 z10 z11 z12 z13 z14 z15
+];
+
+attach variables [ sve_za_0509 sve_za_1620 sve_zd_0004 sve_zda_0004 sve_zdn_0004 sve_zm_0509 sve_zm_1620 sve_zn_0509 sve_zt_0004 ]
+[
+	z0 z1 z2 z3 z4 z5 z6 z7 z8 z9 z10 z11 z12 z13 z14 z15
+	z16 z17 z18 z19 z20 z21 z22 z23 z24 z25 z26 z27 z28 z29 z30 z31
+];
+
+attach variables [ sve_ztt_0004 ]
+[
+	z1 z2 z3 z4 z5 z6 z7 z8 z9 z10 z11 z12 z13 z14 z15
+	z16 z17 z18 z19 z20 z21 z22 z23 z24 z25 z26 z27 z28 z29 z30 z31 z0
+];
+
+attach variables [ sve_zttt_0004 ]
+[
+	z2 z3 z4 z5 z6 z7 z8 z9 z10 z11 z12 z13 z14 z15
+	z16 z17 z18 z19 z20 z21 z22 z23 z24 z25 z26 z27 z28 z29 z30 z31 z0 z1
+];
+
+attach variables [ sve_ztttt_0004 ]
+[
+	z3 z4 z5 z6 z7 z8 z9 z10 z11 z12 z13 z14 z15
+	z16 z17 z18 z19 z20 z21 z22 z23 z24 z25 z26 z27 z28 z29 z30 z31 z0 z1 z2
+];
+
+attach variables [ sve_pg_1012 ]
+[
+	p0 p1 p2 p3 p4 p5 p6 p7
+];
+
+attach variables [ sve_pd_0003 sve_pdm_0003 sve_pdn_0003 sve_pg_0508 sve_pg_1013 sve_pg_1619 sve_pm_1619 sve_pn_0508 sve_pt_0003 ]
+[
+	p0 p1 p2 p3 p4 p5 p6 p7 p8 p9 p10 p11 p12 p13 p14 p15
+];
+
+attach names [ sve_sz_22 ] [ b h ];
+attach names [ sve_msz_1011 ] [ "" " #1" " #2" " #3" ];
+attach names [ sve_rot_16 ] [ "#90" "#270" ];
+attach names [ sve_rot_1314 ] [ "#0" "#90" "#180" "#270" ];
+attach names [ sve_rot_1011 ] [ "#0" "#90" "#180" "#270" ];
+
+# SECTION subtables
+
+Rm_GPR32: aa_Wm is aa_Wm { export aa_Wm; }
+Rm_GPR32: wzr is aa_Wm=31 & wzr { tmp:4 = 0; export tmp; }
+
+Rd_GPR32: aa_Wd is aa_Wd { export aa_Wd; }
+Rd_GPR32: wzr is aa_Wd=31 & wzr { tmp:4 = 0; export tmp; }
+Rd_GPR32_2: aa_Wd is aa_Wd { export aa_Wd; }
+Rd_GPR32_2: wzr is aa_Wd=31 & wzr { tmp:4 = 0; export tmp; }
+
+Rd_GPR32xsp: aa_Wd is aa_Wd { export aa_Wd; }
+Rd_GPR32xsp: wsp is aa_Wd=31 & wsp { export wsp; }
+
+Rd_GPR32wsp: Rd_GPR32xsp is Rd_GPR32xsp { export Rd_GPR32xsp; }
+
+Rn_GPR32: aa_Wn is aa_Wn { export aa_Wn; }
+Rn_GPR32: wzr is aa_Wn=31 & wzr { tmp:4 = 0; export tmp; }
+
+Ra_GPR32: aa_Wa is aa_Wa { export aa_Wa; }
+Ra_GPR32: wzr is aa_Wa=31 & wzr { tmp:4 = 0; export tmp; }
+
+Rt2_GPR32: aa_Wa is aa_Wa { export aa_Wa; }
+Rt2_GPR32: wzr is aa_Wa=31 & wzr { tmp:4 = 0; export tmp; }
+
+Rn_GPR32xsp: aa_Wn is aa_Wn { export aa_Wn; }
+Rn_GPR32xsp: wsp is aa_Wn=31 & wsp { export wsp; }
+
+Rn_GPR32wsp: aa_Wn is aa_Wn { export aa_Wn; }
+Rn_GPR32wsp: wsp is aa_Wn=31 & wsp { export wsp; }
+
+Rt_GPR32: aa_Wt is aa_Wt { export aa_Wt; }
+Rt_GPR32: wzr is aa_Wt=31 & wzr { tmp:4 = 0; export tmp; }
+
+Rm_GPR64: aa_Xm is aa_Xm { export aa_Xm; }
+Rm_GPR64: xzr is aa_Xm=31 & xzr { export 0:8; }
+
+Rd_GPR64: aa_Xd is aa_Xd { export aa_Xd; }
+Rd_GPR64: xzr is aa_Xd=31 & xzr { tmp:8 = 0; export tmp; }
+Rd_GPR64_2: aa_Xd is aa_Xd { export aa_Xd; }
+Rd_GPR64_2: xzr is aa_Xd=31 & xzr { tmp:8 = 0; export tmp; }
+
+Ra_GPR64: aa_Xa is aa_Xa { export aa_Xa; }
+Ra_GPR64: xzr is aa_Xa=31 & xzr { tmp:8 = 0; export tmp; }
+
+Rt2_GPR64: aa_Xa is aa_Xa { export aa_Xa; }
+Rt2_GPR64: xzr is aa_Xa=31 & xzr { tmp:8 = 0; export tmp; }
+
+Rd_GPR64xsp: aa_Xd is aa_Xd { export aa_Xd; }
+Rd_GPR64xsp: sp is aa_Xd=31 & sp { export sp; }
+
+Rn_GPR64: aa_Xn is aa_Xn { export aa_Xn; }
+Rn_GPR64: xzr is aa_Xn=31 & xzr { tmp:8 = 0; export tmp; }
+
+Rt_GPR64: aa_Xt is aa_Xt { export aa_Xt; }
+Rt_GPR64: xzr is aa_Xt=31 & xzr { tmp:8 = 0; export tmp; }
+
+Rn_GPR64xsp: aa_Xn is aa_Xn { export aa_Xn; }
+Rn_GPR64xsp: sp is aa_Xn=31 & sp { export sp; }
+
+Rm_GPR64xsp: aa_Xm is aa_Xm { export aa_Xm; }
+Rm_GPR64xsp: sp is aa_Xm=31 & sp { export sp; }
+
+Rs_GPR32: Rm_GPR32 is Rm_GPR32 { export Rm_GPR32; }
+Rs_GPR64: Rm_GPR64 is Rm_GPR64 { export Rm_GPR64; }
+
+Rm_fpz16: "#0.0" is Rm { tmp:2 = int2float(0:2); export tmp; }
+Rm_fpz32: "#0.0" is Rm { tmp:4 = int2float(0:4); export tmp; }
+Rm_fpz64: "#0.0" is Rm { tmp:8 = int2float(0:8); export tmp; }
+
+Rd_VPR128.16B: vRd_VPR128^".16B" is Rd_VPR128 & vRd_VPR128 { export Rd_VPR128; }
+Rd_VPR128.8H: vRd_VPR128^".8H" is Rd_VPR128 & vRd_VPR128 { export Rd_VPR128; }
+Rd_VPR128.4S: vRd_VPR128^".4S" is Rd_VPR128 & vRd_VPR128 { export Rd_VPR128; }
+Rd_VPR128.2D: vRd_VPR128^".2D" is Rd_VPR128 & vRd_VPR128 { export Rd_VPR128; }
+Rd_VPR128.1Q: vRd_VPR128^".1Q" is Rd_VPR128 & vRd_VPR128 { export Rd_VPR128; }
+
+Rn_VPR128.16B: vRn_VPR128^".16B" is Rn_VPR128 & vRn_VPR128 { export Rn_VPR128; }
+Rnn_VPR128.16B: vRnn_VPR128^".16B" is Rnn_VPR128 & vRnn_VPR128 { export Rnn_VPR128; }
+Rnnn_VPR128.16B: vRnnn_VPR128^".16B" is Rnnn_VPR128 & vRnnn_VPR128 { export Rnnn_VPR128; }
+Rnnnn_VPR128.16B: vRnnnn_VPR128^".16B" is Rnnnn_VPR128 & vRnnnn_VPR128 { export Rnnnn_VPR128; }
+Rn_VPR128.8H: vRn_VPR128^".8H" is Rn_VPR128 & vRn_VPR128 { export Rn_VPR128; }
+Rn_VPR128.4S: vRn_VPR128^".4S" is Rn_VPR128 & vRn_VPR128 { export Rn_VPR128; }
+Rn_VPR128.2D: vRn_VPR128^".2D" is Rn_VPR128 & vRn_VPR128 { export Rn_VPR128; }
+
+Rm_VPR128.16B: vRm_VPR128^".16B" is Rm_VPR128 & vRm_VPR128 { export Rm_VPR128; }
+Rm_VPR128.8H: vRm_VPR128^".8H" is Rm_VPR128 & vRm_VPR128 { export Rm_VPR128; }
+Rm_VPR128.4S: vRm_VPR128^".4S" is Rm_VPR128 & vRm_VPR128 { export Rm_VPR128; }
+Rm_VPR128.2D: vRm_VPR128^".2D" is Rm_VPR128 & vRm_VPR128 { export Rm_VPR128; }
+
+Ra_VPR128.16B: vRa_VPR128^".16B" is Ra_VPR128 & vRa_VPR128 { export Ra_VPR128; }
+# Ra_VPR128.8H: vRa_VPR128^".8H" is Ra_VPR128 & vRa_VPR128 { export Ra_VPR128; }
+Ra_VPR128.4S: vRa_VPR128^".4S" is Ra_VPR128 & vRa_VPR128 { export Ra_VPR128; }
+# Ra_VPR128.2D: vRa_VPR128^".2D" is Ra_VPR128 & vRa_VPR128 { export Ra_VPR128; }
+# Ra_VPR128.1Q: vRa_VPR128^".1Q" is Ra_VPR128 & vRa_VPR128 { export Ra_VPR128; }
+
+Rd_VPR64.8B: vRd_VPR64^".8B" is Rd_VPR64 & vRd_VPR64 { export Rd_VPR64; }
+Rd_VPR64.4H: vRd_VPR64^".4H" is Rd_VPR64 & vRd_VPR64 { export Rd_VPR64; }
+Rd_VPR64.2S: vRd_VPR64^".2S" is Rd_VPR64 & vRd_VPR64 { export Rd_VPR64; }
+Rd_VPR64.1D: vRd_VPR64^".1D" is Rd_VPR64 & vRd_VPR64 { export Rd_VPR64; }
+
+Rn_VPR64.8B: vRn_VPR64^".8B" is Rn_VPR64 & vRn_VPR64 { export Rn_VPR64; }
+Rn_VPR64.4H: vRn_VPR64^".4H" is Rn_VPR64 & vRn_VPR64 { export Rn_VPR64; }
+Rn_VPR64.2S: vRn_VPR64^".2S" is Rn_VPR64 & vRn_VPR64 { export Rn_VPR64; }
+Rn_VPR64.1D: vRn_VPR64^".1D" is Rn_VPR64 & vRn_VPR64 { export Rn_VPR64; }
+
+Rm_VPR64.8B: vRm_VPR64^".8B" is Rm_VPR64 & vRm_VPR64 { export Rm_VPR64; }
+Rm_VPR64.4H: vRm_VPR64^".4H" is Rm_VPR64 & vRm_VPR64 { export Rm_VPR64; }
+Rm_VPR64.2S: vRm_VPR64^".2S" is Rm_VPR64 & vRm_VPR64 { export Rm_VPR64; }
+Rm_VPR64.1D: vRm_VPR64^".1D" is Rm_VPR64 & vRm_VPR64 { export Rm_VPR64; }
+
+Rd_VPR128.B: vRd_VPR128^".B" is Rd_VPR128 & vRd_VPR128 { export Rd_VPR128; }
+Rd_VPR128.H: vRd_VPR128^".H" is Rd_VPR128 & vRd_VPR128 { export Rd_VPR128; }
+Rd_VPR128.S: vRd_VPR128^".S" is Rd_VPR128 & vRd_VPR128 { export Rd_VPR128; }
+Rd_VPR128.D: vRd_VPR128^".D" is Rd_VPR128 & vRd_VPR128 { export Rd_VPR128; }
+
+Rn_VPR128.B: vRn_VPR128^".B" is Rn_VPR128 & vRn_VPR128 { export Rn_VPR128; }
+Rn_VPR128.H: vRn_VPR128^".H" is Rn_VPR128 & vRn_VPR128 { export Rn_VPR128; }
+Rn_VPR128.S: vRn_VPR128^".S" is Rn_VPR128 & vRn_VPR128 { export Rn_VPR128; }
+Rn_VPR128.D: vRn_VPR128^".D" is Rn_VPR128 & vRn_VPR128 { export Rn_VPR128; }
+
+Re_VPR128.B: vRe_VPR128^".B" is Re_VPR128 & vRe_VPR128 { export Re_VPR128; }
+Re_VPR128.H: vRe_VPR128^".H" is Re_VPR128 & vRe_VPR128 { export Re_VPR128; }
+Re_VPR128.S: vRe_VPR128^".S" is Re_VPR128 & vRe_VPR128 { export Re_VPR128; }
+Re_VPR128.D: vRe_VPR128^".D" is Re_VPR128 & vRe_VPR128 { export Re_VPR128; }
+
+Re_VPR128Lo.H: vRe_VPR128Lo^".H" is Re_VPR128Lo & vRe_VPR128Lo { export Re_VPR128Lo; }
+
+br_cc_op: "eq" is br_cond_op=0 { export ZR; }
+br_cc_op: "ne" is br_cond_op=1 { tmp:1 = !ZR; export tmp; }
+br_cc_op: "cs" is br_cond_op=2 { export CY; }
+br_cc_op: "cc" is br_cond_op=3 { tmp:1 = !CY; export tmp; }
+br_cc_op: "mi" is br_cond_op=4 { export NG; }
+br_cc_op: "pl" is br_cond_op=5 { tmp:1 = !NG; export tmp; }
+br_cc_op: "vs" is br_cond_op=6 { export OV; }
+br_cc_op: "vc" is br_cond_op=7 { tmp:1 = !OV; export tmp; }
+br_cc_op: "hi" is br_cond_op=8 { tmp:1 = CY && (!ZR); export tmp; }
+br_cc_op: "ls" is br_cond_op=9 { tmp:1 = (!CY) || ZR; export tmp; }
+br_cc_op: "ge" is br_cond_op=10 { tmp:1 = (NG==OV); export tmp; }
+br_cc_op: "lt" is br_cond_op=11 { tmp:1 = (NG!=OV); export tmp; }
+br_cc_op: "gt" is br_cond_op=12 { tmp:1 = (!ZR) && (NG==OV); export tmp; }
+br_cc_op: "le" is br_cond_op=13 { tmp:1 = ZR || (NG!=OV); export tmp; }
+br_cc_op: "al" is br_cond_op=14 { export 1:1; }
+br_cc_op: "nv" is br_cond_op=15 { export 1:1; }
+
+BranchCondOp: br_cc_op is br_cc_op { export br_cc_op; }
+
+cc_op: "eq" is cond_op=0 { export ZR; }
+cc_op: "ne" is cond_op=1 { tmp:1 = !ZR; export tmp; }
+cc_op: "cs" is cond_op=2 { export CY; }
+cc_op: "cc" is cond_op=3 { tmp:1 = !CY; export tmp; }
+cc_op: "mi" is cond_op=4 { export NG; }
+cc_op: "pl" is cond_op=5 { tmp:1 = !NG; export tmp; }
+cc_op: "vs" is cond_op=6 { export OV; }
+cc_op: "vc" is cond_op=7 { tmp:1 = !OV; export tmp; }
+cc_op: "hi" is cond_op=8 { tmp:1 = CY && (!ZR); export tmp; }
+cc_op: "ls" is cond_op=9 { tmp:1 = (!CY) || ZR; export tmp; }
+cc_op: "ge" is cond_op=10 { tmp:1 = (NG==OV); export tmp; }
+cc_op: "lt" is cond_op=11 { tmp:1 = (NG!=OV); export tmp; }
+cc_op: "gt" is cond_op=12 { tmp:1 = (!ZR) && (NG==OV); export tmp; }
+cc_op: "le" is cond_op=13 { tmp:1 = ZR || (NG!=OV); export tmp; }
+cc_op: "al" is cond_op=14 { export 1:1; }
+cc_op: "nv" is cond_op=15 { export 1:1; }
+
+CondOp: cc_op is cc_op { export cc_op; }
+
+inv_cc_op: "eq" is cond_op=1 { export ZR; }
+inv_cc_op: "ne" is cond_op=0 { tmp:1 = !ZR; export tmp; }
+inv_cc_op: "cs" is cond_op=3 { export CY; }
+inv_cc_op: "cc" is cond_op=2 { tmp:1 = !CY; export tmp; }
+inv_cc_op: "mi" is cond_op=5 { export NG; }
+inv_cc_op: "pl" is cond_op=4 { tmp:1 = !NG; export tmp; }
+inv_cc_op: "vs" is cond_op=7 { export OV; }
+inv_cc_op: "vc" is cond_op=6 { tmp:1 = !OV; export tmp; }
+inv_cc_op: "hi" is cond_op=9 { tmp:1 = CY && (!ZR); export tmp; }
+inv_cc_op: "ls" is cond_op=8 { tmp:1 = (!CY) || ZR; export tmp; }
+inv_cc_op: "ge" is cond_op=11 { tmp:1 = (NG==OV); export tmp; }
+inv_cc_op: "lt" is cond_op=10 { tmp:1 = (NG!=OV); export tmp; }
+inv_cc_op: "gt" is cond_op=13 { tmp:1 = (!ZR) && (NG==OV); export tmp; }
+inv_cc_op: "le" is cond_op=12 { tmp:1 = ZR || (NG!=OV); export tmp; }
+inv_cc_op: "al" is cond_op=15 { export 1:1; }
+inv_cc_op: "nv" is cond_op=14 { export 1:1; }
+
+InvCondOp: inv_cc_op is inv_cc_op { export inv_cc_op; }
+
+SBIT_CZNO: is b_29=0 { } # Do nothing to the flag bits
+SBIT_CZNO: "s" is b_29=1 { CY = tmpCY; ZR = tmpZR; NG = tmpNG; OV = tmpOV; }
+
+Imm_uimm_exact8: "#"^value is aa_extreg_shift [ value = 8 << aa_extreg_shift; ] { export *[const]:4 value; }
+Imm_uimm_exact16: "#"^value is aa_extreg_shift [ value = 8 << aa_extreg_shift; ] { export *[const]:4 value; }
+Imm_uimm_exact32: "#"^value is aa_extreg_shift [ value = 8 << aa_extreg_shift; ] { export *[const]:4 value; }
+
+Imm_shr_imm8: "#"^val is b_1922 & b_1618 [ val = (8*2) - (b_1922 << 3 | b_1618); ] { export *[const]:4 val; }
+Imm_shr_imm16: "#"^val is b_1922 & b_1618 [ val = (16*2) - (b_1922 << 3 | b_1618); ] { export *[const]:4 val; }
+Imm_shr_imm32: "#"^val is b_1922 & b_1618 [ val = (32*2) - (b_1922 << 3 | b_1618); ] { export *[const]:4 val; }
+Imm_shr_imm64: "#"^val is b_1922 & b_1618 [ val = (64*2) - (b_1922 << 3 | b_1618); ] { export *[const]:4 val; }
+
+NZCVImm_uimm4: "#"^b_0003 is b_0003 { export *[const]:1 b_0003; }
+UImm5: "#"^b_1620 is b_1620 { export *[const]:4 b_1620; }
+
+CRm_uimm4: "#"^b_0811 is b_0811 { export *[const]:1 b_0811; }
+
+CRm_uimm4_def15: "#"^b_0811 is b_0811 { export *[const]:1 b_0811; }
+CRm_uimm4_def15: is b_0811=0xf { export 15:1; }
+
+LSB_bitfield32_imm: "#"^imm6 is b_1515=0 & imm6 { export *[const]:8 imm6; }
+LSB_bitfield64_imm: "#"^imm6 is imm6 { export *[const]:8 imm6; }
+
+LSB_bitfield32_imm_shift: "#"^shift is b_1515=0 & imm6 [ shift = 31 - imm6; ] { export *[const]:4 shift; }
+LSB_bitfield64_imm_shift: "#"^shift is imm6 [ shift = 63 - imm6; ] { export *[const]:8 shift; }
+
+AddrLoc14: reloc is simm14 [ reloc = inst_start + (4*simm14); ] { export *[const]:8 reloc; }
+
+AddrLoc19: reloc is simm19 [ reloc = inst_start + (4*simm19); ] { export *[const]:8 reloc; }
+
+AddrLoc26: reloc is simm26 [ reloc = inst_start + (4*simm26); ] { export *[const]:8 reloc; }
+
+Addr14: AddrLoc14 is AddrLoc14 { export *:8 AddrLoc14; }
+
+Addr19: AddrLoc19 is AddrLoc19 { export *:8 AddrLoc19; }
+
+Addr26: AddrLoc26 is AddrLoc26 { export *:8 AddrLoc26; }
+
+AdrReloff: reloff is b_31=1 & immlo & immhi [ reloff = ((inst_start) & ~0xfff) + ( ((immhi << 2) | immlo) << 12 ); ] { export *[const]:8 reloff; }
+AdrReloff: reloff is b_31=0 & immlo & immhi [ reloff = (inst_start) + ( ((immhi << 2) | immlo) ); ] { export *[const]:8 reloff; }
+
+ImmShift32: "#"^imm12 is aa_extreg_shift=0 & imm12 { export *[const]:4 imm12; }
+ImmShift32: "#"^imm12, "LSL #12" is aa_extreg_shift=1 & imm12 { tmp:4 = imm12 << 12; export tmp; }
+
+ImmShift64: "#"^imm12 is aa_extreg_shift=0 & imm12 { export *[const]:8 imm12; }
+ImmShift64: "#"^imm12, "LSL #12" is aa_extreg_shift=1 & imm12 { tmp:8 = imm12 << 12; export tmp; }
+
+# TODO some instructions can't do ROR operation on immediate!
+
+RegShift32: Rm_GPR32, "LSL #"^imm6 is Rm_GPR32 & aa_extreg_shift = 0 & imm6 & b_1515=0 { tmp:4 = Rm_GPR32 << imm6; export tmp; }
+RegShift32: Rm_GPR32 is Rm_GPR32 & aa_extreg_shift = 0 & imm6=0 { export Rm_GPR32; }
+RegShift32: Rm_GPR32, "LSR #"^imm6 is Rm_GPR32 & aa_extreg_shift = 1 & imm6 & b_1515=0 { tmp:4 = Rm_GPR32 >> imm6; export tmp; }
+RegShift32: Rm_GPR32, "ASR #"^imm6 is Rm_GPR32 & aa_extreg_shift = 2 & imm6 & b_1515=0 { tmp:4 = Rm_GPR32 s>> imm6; export tmp; }
+
+RegShift32Log: RegShift32 is aa_extreg_shift & RegShift32 { export RegShift32; }
+RegShift32Log: Rm_GPR32, "ROR #"^imm6 is aa_extreg_shift=3 & Rm_GPR32 & imm6 & b_1515=0 { tmp:4 = (Rm_GPR32 >> imm6) | (Rm_GPR32 << (32 - imm6)); export tmp; }
+
+RegShift64: Rm_GPR64, "LSL #"^imm6 is Rm_GPR64 & aa_extreg_shift = 0 & imm6 { tmp:8 = Rm_GPR64 << imm6; export tmp; }
+RegShift64: Rm_GPR64 is Rm_GPR64 & aa_extreg_shift = 0 & imm6=0 { export Rm_GPR64; }
+RegShift64: Rm_GPR64, "LSR #"^imm6 is Rm_GPR64 & aa_extreg_shift = 1 & imm6 { tmp:8 = Rm_GPR64 >> imm6; export tmp; }
+RegShift64: Rm_GPR64, "ASR #"^imm6 is Rm_GPR64 & aa_extreg_shift = 2 & imm6 { tmp:8 = Rm_GPR64 s>> imm6; export tmp; }
+
+RegShift64Log: RegShift64 is aa_extreg_shift & RegShift64 & aa_Xn & aa_Xm & imm6 { export RegShift64; }
+RegShift64Log: Rm_GPR64, "ROR #"^imm6 is aa_extreg_shift=3 & Rm_GPR64 & aa_Xn & aa_Xm & imm6 { tmp:8 = (Rm_GPR64 >> imm6) | (Rm_GPR64 << (64 - imm6)); export tmp; }
+
+RegShiftVal32: " #"^b_1012 is aa_extreg_imm3=1 & b_1012 { export 1:4; }
+RegShiftVal32: " #"^b_1012 is aa_extreg_imm3=2 & b_1012 { export 2:4; }
+RegShiftVal32: " #"^b_1012 is aa_extreg_imm3=3 & b_1012 { export 3:4; }
+RegShiftVal32: " #"^b_1012 is aa_extreg_imm3=4 & b_1012 { export 4:4; }
+RegShiftVal32: "" is aa_extreg_imm3=0 { export 0:4; }
+
+LSL_Sp_Special32: Rm_GPR32, "LSL " is Rm_GPR32 & aa_extreg_imm3 { export Rm_GPR32; }
+LSL_Sp_Special32: Rm_GPR32 is Rm_GPR32 & aa_extreg_imm3=0 { export Rm_GPR32; }
+
+ExtendReg32: Rm_GPR32, "UXTB " is Rm_GPR32 & b_2121=1 & aa_extreg_option=0 { tmp0:4 = Rm_GPR32; tmp:4 = zext(tmp0:1); export tmp; }
+ExtendReg32: Rm_GPR32, "UXTH " is Rm_GPR32 & b_2121=1 & aa_extreg_option=1 { tmp0:4 = Rm_GPR32; tmp:4 = zext(tmp0:2); export tmp; }
+ExtendReg32: LSL_Sp_Special32 is Rm_GPR32 & b_2121=1 & aa_extreg_option=2 & b_29=1 & (Rn=0x1f) & LSL_Sp_Special32 { export Rm_GPR32; }
+ExtendReg32: LSL_Sp_Special32 is Rm_GPR32 & b_2121=1 & aa_extreg_option=2 & b_29=0 & (Rd=0x1f | Rn=0x1f) & LSL_Sp_Special32 { export Rm_GPR32; }
+ExtendReg32: Rm_GPR32, "UXTW " is Rm_GPR32 & b_2121=1 & aa_extreg_option=2 { tmp:4 = Rm_GPR32; export tmp; }
+ExtendReg32: Rm_GPR32, "UXTX " is Rm_GPR32 & b_2121=1 & aa_extreg_option=3 { tmp:4 = Rm_GPR32; export tmp; }
+ExtendReg32: Rm_GPR32, "SXTB " is Rm_GPR32 & b_2121=1 & aa_extreg_option=4 { tmp0:4 = Rm_GPR32; tmp:4 = sext(tmp0:1); export tmp; }
+ExtendReg32: Rm_GPR32, "SXTH " is Rm_GPR32 & b_2121=1 & aa_extreg_option=5 { tmp0:4 = Rm_GPR32; tmp:4 = sext(tmp0:2); export tmp; }
+
+ExtendReg32: Rm_GPR32, "SXTW " is Rm_GPR32 & b_2121=1 & aa_extreg_option=6 { tmp:4 = Rm_GPR32; export tmp; }
+ExtendReg32: Rm_GPR32, "SXTX " is Rm_GPR32 & b_2121=1 & aa_extreg_option=7 { tmp:4 = Rm_GPR32; export tmp; }
+
+ExtendRegShift32: ExtendReg32^RegShiftVal32 is aa_extreg_shift = 0 & aa_extreg_option & aa_extreg_imm3 & ExtendReg32 & RegShiftVal32 { tmp:4 = ExtendReg32; tmp = tmp << RegShiftVal32; export tmp; }
+ExtendRegShift32: ExtendReg32 is Rm_GPR32 & aa_extreg_shift = 0 & aa_extreg_option=2 & aa_extreg_imm3=0 & ExtendReg32 & RegShiftVal32 { export Rm_GPR32; }
+ExtendRegShift32: ExtendReg32 is Rm_GPR32 & aa_extreg_shift = 0 & aa_extreg_option=3 & aa_extreg_imm3=0 & ExtendReg32 & RegShiftVal32 { export Rm_GPR32; }
+ExtendRegShift32: ExtendReg32 is Rm_GPR32 & aa_extreg_shift = 0 & aa_extreg_option=6 & aa_extreg_imm3=0 & ExtendReg32 & RegShiftVal32 { export Rm_GPR32; }
+ExtendRegShift32: ExtendReg32 is Rm_GPR32 & aa_extreg_shift = 0 & aa_extreg_option=7 & aa_extreg_imm3=0 & ExtendReg32 & RegShiftVal32 { export Rm_GPR32; }
+
+Imm12_addsubimm_operand_i32_negimm_lsl0: ImmShift32 is ImmShift32 { export ImmShift32; }
+Imm12_addsubimm_operand_i32_negimm_lsl12: ImmShift32 is ImmShift32 { export ImmShift32; }
+Imm12_addsubimm_operand_i32_posimm_lsl0: ImmShift32 is ImmShift32 { export ImmShift32; }
+Imm12_addsubimm_operand_i32_posimm_lsl12: ImmShift32 is ImmShift32 { export ImmShift32; }
+Imm12_addsubimm_operand_i64_negimm_lsl0: ImmShift64 is ImmShift64 { export ImmShift64; }
+Imm12_addsubimm_operand_i64_negimm_lsl12: ImmShift64 is ImmShift64 { export ImmShift64; }
+Imm12_addsubimm_operand_i64_posimm_lsl0: ImmShift64 is ImmShift64 { export ImmShift64; }
+Imm12_addsubimm_operand_i64_posimm_lsl12: ImmShift64 is ImmShift64 { export ImmShift64; }
+
+RegShiftVal64: " #"^b_1012 is aa_extreg_imm3=1 & b_1012 { export 1:8; }
+RegShiftVal64: " #"^b_1012 is aa_extreg_imm3=2 & b_1012 { export 2:8; }
+RegShiftVal64: " #"^b_1012 is aa_extreg_imm3=3 & b_1012 { export 3:8; }
+RegShiftVal64: " #"^b_1012 is aa_extreg_imm3=4 & b_1012 { export 4:8; }
+RegShiftVal64: "" is aa_extreg_imm3=0 { export 0:8; }
+
+LSL_Sp_Special64: Rm_GPR64, "LSL " is Rm_GPR64 & aa_extreg_imm3 { export Rm_GPR64; }
+LSL_Sp_Special64: Rm_GPR64 is Rm_GPR64 & aa_extreg_imm3=0 { export Rm_GPR64; }
+
+ExtendReg64: Rm_GPR32, "UXTB " is Rm_GPR32 & b_2121=1 & aa_extreg_option=0 { tmp0:4 = Rm_GPR32; tmp:8 = zext(tmp0:1); export tmp; }
+ExtendReg64: Rm_GPR32, "UXTH " is Rm_GPR32 & b_2121=1 & aa_extreg_option=1 { tmp0:4 = Rm_GPR32; tmp:8 = zext(tmp0:2); export tmp; }
+ExtendReg64: Rm_GPR32, "UXTW " is Rm_GPR32 & b_2121=1 & aa_extreg_option=2 { tmp:8 = zext(Rm_GPR32); export tmp; }
+ExtendReg64: LSL_Sp_Special64 is Rm_GPR64 & b_2121=1 & aa_extreg_option=3 & b_29=1 & b_25=1 & (Rn=0x1f) & LSL_Sp_Special64 { tmp:8 = Rm_GPR64; export tmp; }
+ExtendReg64: LSL_Sp_Special64 is Rm_GPR64 & b_2121=1 & aa_extreg_option=3 & b_29=0 & b_25=1 & (Rd=0x1f | Rn=0x1f) & LSL_Sp_Special64 { tmp:8 = Rm_GPR64; export tmp; }
+ExtendReg64: Rm_GPR64, "LSL " is Rm_GPR64 & b_2121=1 & aa_extreg_option=3 & b_29 & b_25=0 { tmp:8 = Rm_GPR64; export tmp; }
+ExtendReg64: Rm_GPR64, "UXTX " is Rm_GPR64 & b_2121=1 & aa_extreg_option=3 { tmp:8 = Rm_GPR64; export tmp; }
+ExtendReg64: Rm_GPR32, "SXTB " is Rm_GPR32 & b_2121=1 & aa_extreg_option=4 { tmp0:4 = Rm_GPR32; tmp:8 = sext(tmp0:1); export tmp; }
+ExtendReg64: Rm_GPR32, "SXTH " is Rm_GPR32 & b_2121=1 & aa_extreg_option=5 { tmp0:4 = Rm_GPR32; tmp:8 = sext(tmp0:2); export tmp; }
+ExtendReg64: Rm_GPR32, "SXTW " is Rm_GPR32 & b_2121=1 & aa_extreg_option=6 { tmp:8 = sext(Rm_GPR32); export tmp; }
+ExtendReg64: Rm_GPR64, "SXTX " is Rm_GPR64 & b_2121=1 & aa_extreg_option=7 { tmp:8 = Rm_GPR64; export tmp; }
+
+ExtendRegShift64: ExtendReg64^RegShiftVal64
+is aa_extreg_shift = 0 & aa_extreg_option & aa_extreg_imm3 & ExtendReg64 & RegShiftVal64
+{
+	build ExtendReg64;
+	build RegShiftVal64;
+	tmp:8 = ExtendReg64;
+	tmp = tmp << RegShiftVal64;
+	export tmp;
+}
+
+ExtendRegShift64: ExtendReg64 is Rm_GPR64 & aa_extreg_shift = 0 & aa_extreg_option=3 & aa_extreg_imm3=0 & ExtendReg64 & RegShiftVal64 { export Rm_GPR64; }
+ExtendRegShift64: ExtendReg64 is Rm_GPR64 & aa_extreg_shift = 0 & aa_extreg_option=7 & aa_extreg_imm3=0 & ExtendReg64 & RegShiftVal64 { export Rm_GPR64; }
+
+UnscPriv: "u" is b_1011=0 { }
+UnscPriv: "t" is b_1011=2 { }
+
+# Simple register load or store
+addrReg: "["^Rn_GPR64xsp^"]" is Rn_GPR64xsp { export Rn_GPR64xsp; }
+
+# Scaled Offset
+addrUIMM: "["^Rn_GPR64xsp, "#"^pimm^"]" is size.ldstr=0 & b_2729=7 & v & b_2425=1 & b_2323 & Rn_GPR64xsp & imm12 [ pimm = imm12 << 0; ] { tmp:8 = Rn_GPR64xsp + pimm; export tmp; }
+addrUIMM: "["^Rn_GPR64xsp, "#"^pimm^"]" is size.ldstr=1 & b_2729=7 & v & b_2425=1 & b_2323 & Rn_GPR64xsp & imm12 [ pimm = imm12 << 1; ] { tmp:8 = Rn_GPR64xsp + pimm; export tmp; }
+addrUIMM: "["^Rn_GPR64xsp, "#"^pimm^"]" is size.ldstr=2 & b_2729=7 & v & b_2425=1 & b_2323 & Rn_GPR64xsp & imm12 [ pimm = imm12 << 2; ] { tmp:8 = Rn_GPR64xsp + pimm; export tmp; }
+addrUIMM: "["^Rn_GPR64xsp, "#"^pimm^"]" is size.ldstr=3 & b_2729=7 & v & b_2425=1 & b_2323 & Rn_GPR64xsp & imm12 [ pimm = imm12 << 3; ] { tmp:8 = Rn_GPR64xsp + pimm; export tmp; }
+
+addrUIMM: "["^Rn_GPR64xsp, "#"^pimm^"]" is size.ldstr=0 & b_2729=7 & v=1 & b_2425=1 & b_2323=1 & Rn_GPR64xsp & imm12 [ pimm = imm12 << 4; ] { tmp:8 = Rn_GPR64xsp + pimm; export tmp; }
+addrUIMM: "["^Rn_GPR64xsp^"]" is size.ldstr=0 & b_2729=7 & v & b_2425=1 & b_2323 & Rn_GPR64xsp & imm12=0 { tmp:8 = Rn_GPR64xsp; export tmp; }
+addrUIMM: "["^Rn_GPR64xsp^"]" is size.ldstr=1 & b_2729=7 & v & b_2425=1 & b_2323 & Rn_GPR64xsp & imm12=0 { tmp:8 = Rn_GPR64xsp; export tmp; }
+addrUIMM: "["^Rn_GPR64xsp^"]" is size.ldstr=2 & b_2729=7 & v & b_2425=1 & b_2323 & Rn_GPR64xsp & imm12=0 { tmp:8 = Rn_GPR64xsp; export tmp; }
+addrUIMM: "["^Rn_GPR64xsp^"]" is size.ldstr=3 & b_2729=7 & v & b_2425=1 & b_2323 & Rn_GPR64xsp & imm12=0 { tmp:8 = Rn_GPR64xsp; export tmp; }
+addrUIMM: "["^Rn_GPR64xsp^"]" is size.ldstr=0 & b_2729=7 & v=1 & b_2425=1 & b_2323=1 & Rn_GPR64xsp & imm12=0 { tmp:8 = Rn_GPR64xsp; export tmp; }
+
+# unsigned Immediate
+addr_unscUIMM: "["^Rn_GPR64xsp, "#"^simm9^"]" is size.ldstr & b_2729=7 & b_2425=0 & Rn_GPR64xsp & b_2121=0 & simm9 & b_1011=0 { tmp:8 = Rn_GPR64xsp + simm9; export tmp; }
+addr_unscUIMM: "["^Rn_GPR64xsp^"]" is size.ldstr & b_2729=7 & b_2425=0 & Rn_GPR64xsp & b_2121=0 & simm9=0 & b_1011=0 { tmp:8 = Rn_GPR64xsp; export tmp; }
+
+# unsigned Immediate Unpriv
+addr_unscUIMM: "["^Rn_GPR64xsp, "#"^simm9^"]" is size.ldstr & b_2729=7 & b_2425=0 & Rn_GPR64xsp & b_2121=0 & simm9 & b_1011=2 { tmp:8 = Rn_GPR64xsp + simm9; export tmp; }
+addr_unscUIMM: "["^Rn_GPR64xsp^"]" is size.ldstr & b_2729=7 & b_2425=0 & Rn_GPR64xsp & b_2121=0 & simm9=0 & b_1011=2 { tmp:8 = Rn_GPR64xsp; export tmp; }
+
+addrRegShift64: "#"^val is size.ldstr=0 & v=0 & opt & b_1212=1 [ val = 0 & 0xff; ] { export *[const]:8 val; }
+addrRegShift64: "" is size.ldstr=0 & v=0 & opt & b_1212=0 { export 0:8; }
+
+addrRegShift64: "#"^val is size.ldstr=0 & v=1 & opt=0 & b_1212=1 [ val = 0 & 0xff; ] { export *[const]:8 val; }
+addrRegShift64: "" is size.ldstr=0 & v=1 & opt=0 & b_1212=0 { export 0:8; }
+addrRegShift64: "#"^val is size.ldstr=0 & v=1 & opt=1 & b_1212=1 [ val = 0 & 0xff; ] { export *[const]:8 val; }
+addrRegShift64: "" is size.ldstr=0 & v=1 & opt=1 & b_1212=0 { export 0:8; }
+addrRegShift64: "#"^val is size.ldstr=0 & v=1 & opt=2 & b_1212 [ val = b_1212 * 4; ] { export *[const]:8 val; }
+addrRegShift64: "#"^val is size.ldstr=0 & v=1 & opt=3 & b_1212 [ val = b_1212 * 4; ] { export *[const]:8 val; }
+
+addrRegShift64: "#"^val is size.ldstr=1 & v=0 & opt & b_1212 [ val = b_1212 * 1; ] { export *[const]:8 val; }
+addrRegShift64: "#"^val is size.ldstr=1 & v=1 & opt & b_1212 [ val = b_1212 * 1; ] { export *[const]:8 val; }
+
+addrRegShift64: "#"^val is size.ldstr=2 & v=0 & opt & b_1212 [ val = b_1212 * 2; ] { export *[const]:8 val; }
+addrRegShift64: "#"^val is size.ldstr=2 & v=1 & opt & b_1212 [ val = b_1212 * 2; ] { export *[const]:8 val; }
+
+addrRegShift64: "#"^val is size.ldstr=3 & v=0 & opt & b_1212 [ val = b_1212 * 3; ] { export *[const]:8 val; }
+addrRegShift64: "#"^val is size.ldstr=3 & v=1 & opt & b_1212 [ val = b_1212 * 3; ] { export *[const]:8 val; }
+
+addrExtendRegShift64: ExtendReg64^addrRegShift64 is aa_extreg_option=2 & aa_extreg_imm3 & addrRegShift64 & ExtendReg64 { tmp:8 = ExtendReg64; tmp = tmp << addrRegShift64; export tmp; }
+addrExtendRegShift64: ExtendReg64^addrRegShift64 is aa_extreg_option=3 & aa_extreg_imm3 & addrRegShift64 & ExtendReg64 { tmp:8 = ExtendReg64; tmp = tmp << addrRegShift64; export tmp; }
+addrExtendRegShift64: ExtendReg64^addrRegShift64 is aa_extreg_option=6 & aa_extreg_imm3 & addrRegShift64 & ExtendReg64 { tmp:8 = ExtendReg64; tmp = tmp << addrRegShift64; export tmp; }
+addrExtendRegShift64: ExtendReg64^addrRegShift64 is aa_extreg_option=7 & aa_extreg_imm3 & addrRegShift64 & ExtendReg64 { tmp:8 = ExtendReg64; tmp = tmp << addrRegShift64; export tmp; }
+addrExtendRegShift64: Rm_GPR64 is Rm_GPR64 & aa_extreg_option=3 & aa_extreg_imm3=0 & ExtendReg64 { export Rm_GPR64; }
+addrExtendRegShift64: Rm_GPR64 is Rm_GPR64 & aa_extreg_option=7 & aa_extreg_imm3=0 & ExtendReg64 { export Rm_GPR64; }
+
+# unsigned offset
+addrIndexed: addrUIMM is size.ldstr & b_2729=7 & b_2425=1 & addrUIMM { export addrUIMM; }
+
+# unsinged offset unscaled immediate
+addrIndexed: addr_unscUIMM is size.ldstr & b_2729=7 & b_2425=0 & b_2121=0 & opc.indexmode=0 & addr_unscUIMM { export addr_unscUIMM; }
+
+# register unpriviledged
+addrIndexed: addr_unscUIMM is size.ldstr & b_2729=7 & b_2425=0 & b_2121=0 & opc.indexmode=2 & addr_unscUIMM { export addr_unscUIMM; }
+
+# post indexed wback
+addrIndexed: "["^Rn_GPR64xsp^"]", "#"^simm9
+is size.ldstr & b_2729=7 & b_2425=0 & b_2121=0 & Rn_GPR64xsp & simm9 & opc.indexmode=1
+{
+	tmp:8 = Rn_GPR64xsp;
+	Rn_GPR64xsp = Rn_GPR64xsp + simm9;
+	export tmp;
+}
+
+# Register, Register offset extended
+addrIndexed: "["^Rn_GPR64xsp, addrExtendRegShift64^"]"
+is size.ldstr & b_2729=7 & b_2425=0 & b_2121=1 & Rn_GPR64xsp & opc.indexmode=2 & addrExtendRegShift64
+{
+	tmp:8 = Rn_GPR64xsp + addrExtendRegShift64;
+	export tmp;
+}
+
+# pre indexed wback
+addrIndexed: "["^Rn_GPR64xsp, "#"^simm9^"]!"
+is size.ldstr & b_2729=7 & b_2425=0 & b_2121=0 & Rn_GPR64xsp & simm9 & opc.indexmode=3
+{
+	Rn_GPR64xsp = Rn_GPR64xsp + simm9;
+	export Rn_GPR64xsp;
+}
+
+# post indexed wback (with S)
+addrIndexed: "["^Rn_GPR64xsp, "#"^sim^"]"
+is size.ldstr & b_2729=7 & b_2425=0 & b_22 & b_2121=1 & Rn_GPR64xsp & simm9 & opc.indexmode=1
+[ sim = (b_22 * (-1<<9) | (simm9 & 0x1ff)) << 3; ]
+{
+	tmp:8 = Rn_GPR64xsp;
+	Rn_GPR64xsp = Rn_GPR64xsp + simm9;
+	export tmp;
+}
+
+# pre indexed wback (with S)
+addrIndexed: "["^Rn_GPR64xsp, "#"^sim^"]!"
+is size.ldstr & b_2729=7 & b_2425=0 & b_22 & b_2121=1 & Rn_GPR64xsp & simm9 & opc.indexmode=3
+[ sim = (b_22 * (-1<<9) | (simm9 & 0x1ff)) << 3; ]
+{
+	Rn_GPR64xsp = Rn_GPR64xsp + sim;
+	export Rn_GPR64xsp;
+}
+
+addrPairScale: pimm is b_3031=0 & v=0 & simm7 [ pimm = simm7 << 2; ] { export *[const]:8 pimm; }
+addrPairScale: pimm is b_3031=0 & v=1 & simm7 [ pimm = simm7 << 2; ] { export *[const]:8 pimm; }
+addrPairScale: pimm is b_3031=2 & v=0 & simm7 [ pimm = simm7 << 3; ] { export *[const]:8 pimm; }
+addrPairScale: pimm is b_3031=1 & v=0 & simm7 [ pimm = simm7 << 2; ] { export *[const]:8 pimm; }
+addrPairScale: pimm is b_3031=1 & v=1 & simm7 [ pimm = simm7 << 3; ] { export *[const]:8 pimm; }
+addrPairScale: pimm is b_3031=2 & v=1 & simm7 [ pimm = simm7 << 4; ] { export *[const]:8 pimm; }
+
+# Scaled Offset
+addrPairUIMM: "["^Rn_GPR64xsp, "#"^addrPairScale^"]"
+is sf & Rn_GPR64xsp & addrPairScale & simm7
+{
+	tmp:8 = Rn_GPR64xsp + addrPairScale;
+	export tmp;
+}
+
+addrPairUIMM: "["^Rn_GPR64xsp^"]"
+is sf & Rn_GPR64xsp & addrPairScale & simm7=0
+{
+	tmp:8 = Rn_GPR64xsp;
+	export tmp;
+}
+
+# unsigned offset
+addrPairIndexed: addrPairUIMM
+is b_2729=0b101 & b_2325=0b010 & addrPairUIMM
+{ export addrPairUIMM; }
+
+# unsigned offset, non-temporal hint
+addrPairIndexed: addrPairUIMM
+is b_2729=0b101 & b_2325=0b000 & addrPairUIMM
+{ export addrPairUIMM; }
+
+# post indexed wback
+addrPairIndexed: "["^Rn_GPR64xsp^"]", "#"^addrPairScale
+is b_2729=0b101 & b_2325=0b001 & Rn_GPR64xsp & addrPairScale
+{
+	tmp:8 = Rn_GPR64xsp;
+	Rn_GPR64xsp = Rn_GPR64xsp + addrPairScale;
+	export tmp;
+}
+
+# pre indexed wback
+addrPairIndexed: "["^Rn_GPR64xsp, "#"^addrPairScale^"]!"
+is b_2729=0b101 & b_2325=0b011 & Rn_GPR64xsp & addrPairScale
+{
+	Rn_GPR64xsp = Rn_GPR64xsp + addrPairScale;
+	export Rn_GPR64xsp;
+}
+
+# esize=32, len=5, levels=0x1f: 32 bits with b_1014+1 1s; rotate right b_1620; replicate 1 time
+DecodeWMask32: "#"^wmask is b_31=0 & b_22=0 & b_15=0 & b_1014 & b_1620
+[ wmask=(((~(-1<<(b_1014+1)))*0x100000001)>>b_1620)&0xffffffff; ]
+{ export * [const]:4 wmask; }
+
+# esize=32, len=5, levels=0x1f: 32 bits with |b_1014-b_1620|+1 1s; replicate 1 time
+DecodeTMask32: "#"^tmask is b_31=0 & b_22=0 & b_15=0 & b_1014 & b_1620
+[ tmask=(~(-1<<(((b_1014-b_1620)&0x1f)+1)))&0xffffffff; ]
+{ export * [const]:4 tmask; }
+
+# esize=16, len=4, levels=0xf: 16 bits with b_1013+1 1s; rotate right b_1619; replicate 2 times
+DecodeWMask32: "#"^wmask is b_31=0 & b_22=0 & b_1415=0x2 & b_1013 & b_1619
+[ wmask=((((~(-1<<(b_1013+1)))*0x10001)>>b_1619)&0xffff)*0x10001; ]
+{ export * [const]:4 wmask; }
+
+# esize=16, len=4, levels=0xf: 16 bits with |b_1013-b_1619|+1 1s; replicate 2 times
+DecodeTMask32: "#"^tmask is b_31=0 & b_22=0 & b_1415=0x2 & b_1013 & b_1619
+[ tmask=((~(-1<<(((b_1013-b_1619)&0xf)+1)))&0xffff)*0x10001; ]
+{ export * [const]:4 tmask; }
+
+# esize=8, len=3, levels=0x7: 8 bits with b_1012+1 1s; rotate right b_1618; replicate 4 times
+DecodeWMask32: "#"^wmask is b_31=0 & b_22=0 & b_1315=0x6 & b_1012 & b_1618
+[ wmask=((((~(-1<<(b_1012+1)))*0x101)>>b_1618)&0xff)*0x101*0x10001; ]
+{ export * [const]:4 wmask; }
+
+# esize=8, len=3, levels=0x7: 8 bits with |b_1012-b_1618|+1 1s; replicate 4 times
+DecodeTMask32: "#"^tmask is b_31=0 & b_22=0 & b_1315=0x6 & b_1012 & b_1618
+[ tmask=((~(-1<<(((b_1012-b_1618)&0x7)+1)))&0xff)*0x101*0x10001; ]
+{ export * [const]:4 tmask; }
+
+# esize=4, len=2, levels=0x3: 4 bits with b_1011+1 1s; rotate right b_1617; replicate 8 times
+DecodeWMask32: "#"^wmask is b_31=0 & b_22=0 & b_1215=0xe & b_1011 & b_1617
+[ wmask=((((~(-1<<(b_1011+1)))*0x11)>>b_1617)&0xf)*0x11*0x101*0x10001; ]
+{ export * [const]:4 wmask; }
+
+# esize=4, len=2, levels=0x3: 4 bits with |b_1011-b_1617|+1 1s; replicate 8 times
+DecodeTMask32: "#"^tmask is b_31=0 & b_22=0 & b_1215=0xe & b_1011 & b_1617
+[ tmask=((~(-1<<(((b_1011-b_1617)&0x7)+1)))&0xf)*0x11*0x101*0x10001; ]
+{ export * [const]:4 tmask; }
+
+# esize=2, len=1, levels=0x1: 2 bits with b_1010+1 1s; rotate right b_1616; replicate 16 times
+DecodeWMask32: "#"^wmask is b_31=0 & b_22=0 & b_1115=0x1e & b_1010 & b_1616
+[ wmask=((((~(-1<<(b_1010+1)))*0x5)>>b_1616)&0x3)*0x5*0x11*0x101*0x10001; ] 
+{ export * [const]:4 wmask; }
+
+# esize=2, len=1, levels=0x1: 2 bits with |b_1010-b_1616|+1 1s; replicate 16 times
+DecodeTMask32: "#"^tmask is b_31=0 & b_22=0 & b_1115=0x1e & b_1010 & b_1616
+[ tmask=((~(-1<<(((b_1010-b_1616)&0x1)+1)))&0x3)*0x5*0x11*0x101*0x10001; ] 
+{ export * [const]:4 tmask; }
+
+# esize=64, len=6, levels=0x3f: 64 bits with b_1015+1 1s; rotate right b_1621; repeat 1 time
+# can't rotate 64 bits by multiplying, and can't shift by 64 bits all at once
+DecodeWMask64: "#"^wmask is b_31=1 & b_22=1 & b_1015 & b_1621
+[ wmask=((~((-1<<b_1015)<<1))>>b_1621)|((~((-1<<b_1015)<<1))<<(64-b_1621)); ]
+{ export * [const]:8 wmask; }
+
+# esize=64, len=6, levels=0x3f: 64 bits with |b_1015-b_1621|+1 1s; repeat 1 time
+DecodeTMask64: "#"^tmask is b_31=1 & b_22=1 & b_1015 & b_1621
+[ tmask=~((-1<<((b_1015-b_1621)&0x3f))<<1); ] 
+{ export * [const]:8 tmask; }
+
+# esize=32, len=5, levels=0x1f: 32 bits with b_1014+1 1s; rotate right b_1620; replicate 2 times
+DecodeWMask64: "#"^wmask is b_31=1 & b_22=0 & b_15=0 & b_1014 & b_1620
+[ wmask=((((~(-1<<(b_1014+1)))*0x100000001)>>b_1620)&0xffffffff)*0x100000001; ] 
+{ export * [const]:8 wmask; }
+
+# esize=32, len=5, levels=0x1f: 32 bits with |b_1014-b_1620|+1 1s; replicate 2 times
+DecodeTMask64: "#"^tmask is b_31=1 & b_22=0 & b_15=0 & b_1014 & b_1620
+[ tmask=((~(-1<<(((b_1014-b_1620)&0x1f)+1)))&0xffffffff)*0x100000001; ] 
+{ export * [const]:8 tmask; }
+
+# returned 0xffcfffdefcfffcf
+# shouldbe 0xffcfffcfffcfffcf
+# esize=16, len=4, levels=0xf: 16 bits with b_1013+1 1s; rotate right b_1619; replicate 4 times
+DecodeWMask64: "#"^wmask is b_31=1 & b_22=0 & b_1415=0x2 & b_1013 & b_1619
+[ wmask=((((~(-1<<(b_1013+1)))*0x10001)>>b_1619)&0xffff)*0x10001*0x100000001; ] 
+{ export * [const]:8 wmask; }
+
+# esize=16, len=4, levels=0xf: 16 bits with |b_1013-b_1619|+1 1s; replicate 4 times
+DecodeTMask64: "#"^tmask is b_31=1 & b_22=0 & b_1415=0x2 & b_1013 & b_1619
+[ tmask=((~(-1<<(((b_1013-b_1619)&0xf)+1)))&0xffff)*0x10001*0x100000001; ]
+{ export * [const]:8 tmask; }
+
+# esize=8, len=3, levels=0x7: 8 bits with b_1012+1 1s; rotate right b_1618; replicate 8 times
+DecodeWMask64: "#"^wmask is b_31=1 & b_22=0 & b_1315=0x6 & b_1012 & b_1618
+[ wmask=((((~(-1<<(b_1012+1)))*0x101)>>b_1618)&0xff)*0x101*0x10001*0x100000001; ]
+{ export * [const]:8 wmask; }
+
+# esize=8, len=3, levels=0x7: 8 bits with |b_1012-b_1618|+1 1s; replicate 8 times
+DecodeTMask64: "#"^tmask is b_31=1 & b_22=0 & b_1315=0x6 & b_1012 & b_1618
+[ tmask=((~(-1<<(((b_1012-b_1618)&0x7)+1)))&0xff)*0x101*0x10001*0x100000001; ]
+{ export * [const]:8 tmask; }
+
+# esize=4, len=2, levels=0x3: 4 bits with b_1011+1 1s; rotate right b_1617; replicate 16 times
+DecodeWMask64: "#"^wmask is b_31=1 & b_22=0 & b_1215=0xe & b_1011 & b_1617
+[ wmask=((((~(-1<<(b_1011+1)))*0x11)>>b_1617)&0xf)*0x11*0x101*0x10001*0x100000001; ]
+{ export * [const]:8 wmask; }
+
+# esize=4, len=2, levels=0x3: 4 bits with |b_1011-b_1617|+1 1s; replicate 16 times
+DecodeTMask64: "#"^tmask is b_31=1 & b_22=0 & b_1215=0xe & b_1011 & b_1617
+[ tmask=((~(-1<<(((b_1011-b_1617)&0x3)+1)))&0xf)*0x11*0x101*0x10001*0x100000001; ]
+{ export * [const]:8 tmask; }
+
+# esize=2, len=1, levels=0x1: 2 bits with b_1010+1 1s; rotate right b_1616; replicate 32 times
+DecodeWMask64: "#"^wmask is b_31=1 & b_22=0 & b_1115=0x1e & b_1010 & b_1616
+[ wmask=((((~((-1)<<(b_1010+1)))*0x5)>>b_1616)&0x3)*0x5*0x11*0x101*0x10001*0x100000001; ]
+{ export * [const]:8 wmask; }
+
+# esize=2, len=1, levels=0x1: 2 bits with |b_1010-b_1616|+1 1s; replicate 32 times
+DecodeTMask64: "#"^tmask is b_31=1 & b_22=0 & b_1115=0x1e & b_1010 & b_1616
+[ tmask=((~(-1<<(((b_1010-b_1616)&0x1)+1)))&0x3)*0x5*0x11*0x101*0x10001*0x100000001; ]
+{ export * [const]:8 tmask; }
+
+ImmRConst32: "#"^ImmR is ImmR { export *[const]:4 ImmR; }
+ImmRConst64: "#"^ImmR is ImmR { export *[const]:8 ImmR; }
+
+ImmSConst32: "#"^ImmS is ImmS { export *[const]:4 ImmS; }
+ImmSConst64: "#"^ImmS is ImmS { export *[const]:8 ImmS; }
+
+ImmR_bitfield64_imm: "#"^ImmR is ImmR & DecodeWMask64 { export DecodeWMask64; }
+ImmR_bitfield32_imm: "#"^ImmR is ImmR & DecodeWMask32 { export DecodeWMask32; }
+
+ImmS_bitfield64_imm: "#"^ImmS is ImmS & DecodeTMask64 { export DecodeTMask64; }
+ImmS_bitfield32_imm: "#"^ImmS is ImmS & DecodeTMask32 { export DecodeTMask32; }
+
+abcdefgh: "#"^imm is n_uimm8H & n_uimm8L [ imm = ((n_uimm8H << 5 | n_uimm8L)); ] { export *[const]:8 imm; }
+
+repl000: "#"^imm is abcdefgh & n_uimm8H & n_uimm8L [ imm = ((n_uimm8H << 5 | n_uimm8L) << 32) | ((n_uimm8H << 5 | n_uimm8L)); ] { export *[const]:8 imm; }
+repl001: "#"^imm is abcdefgh & n_uimm8H & n_uimm8L [ imm = ((n_uimm8H << 5 | n_uimm8L) << 40) | ((n_uimm8H << 5 | n_uimm8L) << 8); ] { export *[const]:8 imm; }
+repl010: "#"^imm is abcdefgh & n_uimm8H & n_uimm8L [ imm = ((n_uimm8H << 5 | n_uimm8L) << 48) | ((n_uimm8H << 5 | n_uimm8L) << 16); ] { export *[const]:8 imm; }
+repl011: "#"^imm is abcdefgh & n_uimm8H & n_uimm8L [ imm = ((n_uimm8H << 5 | n_uimm8L) << 56) | ((n_uimm8H << 5 | n_uimm8L) << 24); ] { export *[const]:8 imm; }
+repl100: "#"^imm is abcdefgh & n_uimm8H & n_uimm8L [ imm = ((n_uimm8H << 5 | n_uimm8L) << 48) | ((n_uimm8H << 5 | n_uimm8L) << 32) | ((n_uimm8H << 5 | n_uimm8L) << 16) | ((n_uimm8H << 5 | n_uimm8L)); ] { export *[const]:8 imm; }
+repl101: "#"^imm is abcdefgh & n_uimm8H & n_uimm8L [ imm = ((n_uimm8H << 5 | n_uimm8L) << 56) | ((n_uimm8H << 5 | n_uimm8L) << 40) | ((n_uimm8H << 5 | n_uimm8L) << 24) | ((n_uimm8H << 5 | n_uimm8L) << 8); ] { export *[const]:8 imm; }
+repl1100: "#"^imm is abcdefgh & n_uimm8H & n_uimm8L [ imm = ((((n_uimm8H << 5 | n_uimm8L) << 8) | 0xff) << 32) | (((n_uimm8H << 5 | n_uimm8L) << 8) | 0xff); ] { export *[const]:8 imm; }
+repl1101: "#"^imm is abcdefgh & n_uimm8H & n_uimm8L [ imm = ((((n_uimm8H << 5 | n_uimm8L) << 16) | 0xffff) << 32) | (((n_uimm8H << 5 | n_uimm8L) << 16) | 0xffff); ] { export *[const]:8 imm; }
+repl11100: "#"^imm is abcdefgh & n_uimm8H & n_uimm8L [ imm = ((n_uimm8H << 5 | n_uimm8L) << 56) | ((n_uimm8H << 5 | n_uimm8L) << 48) | ((n_uimm8H << 5 | n_uimm8L) << 40) | ((n_uimm8H << 5 | n_uimm8L) << 32) | ((n_uimm8H << 5 | n_uimm8L) << 24) | ((n_uimm8H << 5 | n_uimm8L) << 16) | ((n_uimm8H << 5 | n_uimm8L) << 8) | (n_uimm8H << 5 | n_uimm8L); ] { export *[const]:8 imm; }
+repl11101: "#"^imm is abcdefgh & b_18 & b_17 & b_16 & b_09 & b_08 & b_07 & b_06 & b_05 [ imm = ((b_18 * 0xff) << 56) | ((b_17 * 0xff) << 48) | ((b_16 * 0xff) << 40) | ((b_09 * 0xff) << 32) | ((b_08 * 0xff) << 24) | ((b_07 * 0xff) << 16) | ((b_06 * 0xff) << 8) | (b_05 * 0xff); ] { export *[const]:8 imm; }
+repl11110: "#"^imm is abcdefgh & b_18 & b_17 & b_16 & b_09 & b_08 & b_07 & b_06 & b_05 [ imm = (b_18 << 31) | ((b_17 $xor 1) << 30) | ((b_17 * 0x1f) << 25) | (b_16 << 24) | (b_09 << 23) | (b_08 << 22) | (b_07 << 21) | (b_06 << 20) | (b_05 << 19); ] { tmp:8 = imm; tmp = (tmp << 32) | tmp; export tmp; }
+repl11111: "#"^imm is abcdefgh & b_18 & b_17 & b_16 & b_09 & b_08 & b_07 & b_06 & b_05 [ imm = (b_18 << 63) | ((b_17 $xor 1) << 62) | ((b_17 * 0xff) << 54) | (b_16 << 53) | (b_09 << 52) | (b_08 << 51) | (b_07 << 50) | (b_06 << 49) | (b_05 << 48); ] { tmp:8 = imm; export tmp; }
+
+Imm_neon_uimm8Shift: abcdefgh is abcdefgh & cmode=0x0 & b_29=0 & repl000 { export repl000; }
+Imm_neon_uimm8Shift: abcdefgh is abcdefgh & cmode=0x1 & b_29=0 & repl000 { export repl000; }
+Imm_neon_uimm8Shift: abcdefgh^", LSL #8" is abcdefgh & cmode=0x2 & b_29=0 & repl001 { export repl001; }
+Imm_neon_uimm8Shift: abcdefgh^", LSL #8" is abcdefgh & cmode=0x3 & b_29=0 & repl001 { export repl001; }
+Imm_neon_uimm8Shift: abcdefgh^", LSL #16" is abcdefgh & cmode=0x4 & b_29=0 & repl010 { export repl010; }
+Imm_neon_uimm8Shift: abcdefgh^", LSL #16" is abcdefgh & cmode=0x5 & b_29=0 & repl010 { export repl010; }
+Imm_neon_uimm8Shift: abcdefgh^", LSL #24" is abcdefgh & cmode=0x6 & b_29=0 & repl011 { export repl011; }
+Imm_neon_uimm8Shift: abcdefgh^", LSL #24" is abcdefgh & cmode=0x7 & b_29=0 & repl011 { export repl011; }
+Imm_neon_uimm8Shift: abcdefgh is abcdefgh & cmode=0x8 & b_29=0 & repl100 { export repl100; }
+Imm_neon_uimm8Shift: abcdefgh is abcdefgh & cmode=0x9 & b_29=0 & repl100 { export repl100; }
+Imm_neon_uimm8Shift: abcdefgh^", LSL #8" is abcdefgh & cmode=0xa & b_29=0 & repl101 { export repl101; }
+Imm_neon_uimm8Shift: abcdefgh^", LSL #8" is abcdefgh & cmode=0xb & b_29=0 & repl101 { export repl101; }
+Imm_neon_uimm8Shift: abcdefgh^", MSL #8" is abcdefgh & cmode=0xc & b_29=0 & repl1100 { export repl1100; }
+Imm_neon_uimm8Shift: abcdefgh^", MSL #16" is abcdefgh & cmode=0xd & b_29=0 & repl1101 { export repl1101; }
+Imm_neon_uimm8Shift: abcdefgh is abcdefgh & cmode=0xe & b_29=0 & repl11100 { export repl11100; }
+Imm_neon_uimm8Shift: repl11101 is abcdefgh & cmode=0xe & b_29=1 & repl11101 { export repl11101; } # MOVI 64
+Imm_neon_uimm8Shift: repl11110 is abcdefgh & cmode=0xf & b_29=0 & repl11110 { export repl11110; } # FMOV
+Imm_neon_uimm8Shift: repl11111 is abcdefgh & cmode=0xf & b_29=1 & repl11111 { export repl11111; } # FMOV
+
+Imm_neon_uimm8Shift: abcdefgh is abcdefgh & cmode=0x1 & b_29=1 & repl000 { export repl000; } # BIC32
+Imm_neon_uimm8Shift: abcdefgh^", LSL 8" is abcdefgh & cmode=0x3 & b_29=1 & repl001 { export repl001; }
+Imm_neon_uimm8Shift: abcdefgh^", LSL 16" is abcdefgh & cmode=0x5 & b_29=1 & repl010 { export repl010; }
+Imm_neon_uimm8Shift: abcdefgh^", LSL 24" is abcdefgh & cmode=0x7 & b_29=1 & repl011 { export repl011; } # BIC16
+Imm_neon_uimm8Shift: abcdefgh is abcdefgh & cmode=0x9 & b_29=1 & repl000 { export repl000; }
+Imm_neon_uimm8Shift: abcdefgh^", LSL 8" is abcdefgh & cmode=0xb & b_29=1 & repl001 { export repl001; }
+
+Imm_neon_uimm8Shift: abcdefgh is abcdefgh & cmode=0x0 & b_29=1 & repl000 { export repl000; } # MVNI
+Imm_neon_uimm8Shift: abcdefgh^", LSL 8" is abcdefgh & cmode=0x2 & b_29=1 & repl001 { export repl001; }
+Imm_neon_uimm8Shift: abcdefgh^", LSL 16" is abcdefgh & cmode=0x4 & b_29=1 & repl010 { export repl010; }
+Imm_neon_uimm8Shift: abcdefgh^", LSL 24" is abcdefgh & cmode=0x6 & b_29=1 & repl011 { export repl011; }
+Imm_neon_uimm8Shift: abcdefgh is abcdefgh & cmode=0x8 & b_29=1 & repl000 { export repl000; } # MVNI
+Imm_neon_uimm8Shift: abcdefgh^", LSL 8" is abcdefgh & cmode=0xa & b_29=1 & repl001 { export repl001; }
+Imm_neon_uimm8Shift: abcdefgh^", MSL 8" is abcdefgh & cmode=0xc & b_29=1 & repl1100 { export repl1100; } # MVNI
+Imm_neon_uimm8Shift: abcdefgh^", MSL 16" is abcdefgh & cmode=0xd & b_29=1 & repl1101 { export repl1101; }
+
+vIndex: val is b_2222=0 & b_2121 & b_1111 [ val = b_1111 << 1 | b_2121; ] { export *[const]:8 val; }
+vIndex: val is b_2222=1 & b_2121=0 & b_1111 [ val = b_1111 & 0x1; ] { export *[const]:8 val; }
+
+vIndexHLM: val is b_2223=2 & b_2121 & b_1111 [ val = b_1111 << 1 | b_2121; ] { export *[const]:8 val; }
+vIndexHLM: val is b_2223=1 & b_2121 & b_1111 & b_2020 [ val = b_1111 << 2 | b_2121 << 1 | b_2020; ] { export *[const]:8 val; }
+vIndexHLM: val is b_2223=0 & b_2121 & b_1111 & b_2020 [ val = b_1111 << 2 | b_2121 << 1 | b_2020; ] { export *[const]:8 val; }
+
+vIndexHL: val is b_2223=0b01 & b_21 & b_11 [ val = b_11 << 1 | b_21; ] { export *[const]:8 val; }
+vIndexHL: b_11 is b_2223=0b10 & b_11 { export *[const]:8 b_11; }
+
+Re_VPR128.B.vIndex: Re_VPR128.B^"["^vIndex^"]" is Re_VPR128.B & vIndex { }
+Re_VPR128.S.vIndex: Re_VPR128.S^"["^vIndex^"]" is Re_VPR128.S & vIndex { }
+Re_VPR128.D.vIndex: Re_VPR128.D^"["^vIndex^"]" is Re_VPR128.D & vIndex { }
+
+Rd_VPR128.B.imm_neon_uimm4: Rd_VPR128.B^"["^imm_neon_uimm4^"]" is Rd_VPR128.B & imm_neon_uimm4 { export Rd_VPR128.B; }
+Rd_VPR128.H.imm_neon_uimm3: Rd_VPR128.H^"["^imm_neon_uimm3^"]" is Rd_VPR128.H & imm_neon_uimm3 { export Rd_VPR128.H; }
+Rd_VPR128.S.imm_neon_uimm2: Rd_VPR128.S^"["^imm_neon_uimm2^"]" is Rd_VPR128.S & imm_neon_uimm2 { export Rd_VPR128.S; }
+Rd_VPR128.D.imm_neon_uimm1: Rd_VPR128.D^"["^imm_neon_uimm1^"]" is Rd_VPR128.D & imm_neon_uimm1 { export Rd_VPR128.D; }
+
+Rn_VPR128.B.immN_neon_uimm4: Rn_VPR128.B^"["^immN_neon_uimm4^"]" is Rn_VPR128.B & immN_neon_uimm4 { export Rn_VPR128.B; }
+Rn_VPR128.H.immN_neon_uimm3: Rn_VPR128.H^"["^immN_neon_uimm3^"]" is Rn_VPR128.H & immN_neon_uimm3 { export Rn_VPR128.H; }
+Rn_VPR128.S.immN_neon_uimm2: Rn_VPR128.S^"["^immN_neon_uimm2^"]" is Rn_VPR128.S & immN_neon_uimm2 { export Rn_VPR128.S; }
+Rn_VPR128.D.immN_neon_uimm1: Rn_VPR128.D^"["^immN_neon_uimm1^"]" is Rn_VPR128.D & immN_neon_uimm1 { export Rn_VPR128.D; }
+
+Rn_VPR128.B.imm_neon_uimm4: Rn_VPR128.B^"["^imm_neon_uimm4^"]" is Rn_VPR128.B & imm_neon_uimm4 { export Rn_VPR128.B; }
+Rn_VPR128.H.imm_neon_uimm3: Rn_VPR128.H^"["^imm_neon_uimm3^"]" is Rn_VPR128.H & imm_neon_uimm3 { export Rn_VPR128.H; }
+Rn_VPR128.S.imm_neon_uimm2: Rn_VPR128.S^"["^imm_neon_uimm2^"]" is Rn_VPR128.S & imm_neon_uimm2 { export Rn_VPR128.S; }
+Rn_VPR128.D.imm_neon_uimm1: Rn_VPR128.D^"["^imm_neon_uimm1^"]" is Rn_VPR128.D & imm_neon_uimm1 { export Rn_VPR128.D; }
+
+Re_VPR128.H.vIndexHL: Re_VPR128.H^"["^vIndexHL^"]" is Re_VPR128.H & vIndexHL { }
+Re_VPR128Lo.H.vIndexHLM: Re_VPR128Lo.H^"["^vIndexHLM^"]" is Re_VPR128Lo.H & vIndexHLM { }
+
+FBitsOp: "#"^fbits is Scale [ fbits = 64 - Scale; ] { export *[const]:2 fbits; }
+
+FBits64: factor is FBitsOp & Scale [ factor = 1 << (64 - Scale); ] { fval:8 = int2float(factor:8); export fval; }
+FBits32: factor is FBitsOp & Scale [ factor = 1 << (64 - Scale); ] { fval:4 = int2float(factor:8); export fval; }
+FBits16: factor is FBitsOp & Scale [ factor = 1 << (64 - Scale); ] { fval:2 = int2float(factor:8); export fval; }
+
+# float
+
+Imm8_fmov16_operand: imm is Imm8_fmov_sign & Imm8_fmov_exph & Imm8_fmov_expl & Imm8_fmov_frac & ftype=3 [ imm = (Imm8_fmov_sign << 15) | ((Imm8_fmov_exph $xor 1) << 14) | ((Imm8_fmov_exph * 0x3) << 12) | (Imm8_fmov_expl << 10) | (Imm8_fmov_frac << 6); ] { export *[const]:2 imm; }
+
+Imm8_fmov32_operand: imm is Imm8_fmov_sign & Imm8_fmov_exph & Imm8_fmov_expl & Imm8_fmov_frac & ftype=0 [ imm = (Imm8_fmov_sign << 31) | ((Imm8_fmov_exph $xor 1) << 30) | ((Imm8_fmov_exph * 0x1f) << 25) | (Imm8_fmov_expl << 23) | (Imm8_fmov_frac << 19); ] { export *[const]:4 imm; }
+
+# double
+Imm8_fmov64_operand: imm is Imm8_fmov_sign & Imm8_fmov_exph & Imm8_fmov_expl & Imm8_fmov_frac & ftype=1 [ imm = (Imm8_fmov_sign << 63) | ((Imm8_fmov_exph $xor 1) << 62) | ((Imm8_fmov_exph * 0xff) << 54) | (Imm8_fmov_expl << 52) | (Imm8_fmov_frac << 48); ] { export *[const]:8 imm; }
+
+# SVE subtables
+
+# The size qualifer (T) is encoded in several different ways. The
+# majority of encodings are in sve_size_2223
+
+# <T> encoded in "size" -- Is the size specifier, size <T> 00 B 01 H 10 S 11 D
+
+T: "B" is sve_size_2223=0b00 { export 1:1; }
+T: "H" is sve_size_2223=0b01 { export 2:1; }
+T: "S" is sve_size_2223=0b10 { export 4:1; }
+T: "D" is sve_size_2223=0b11 { export 8:1; }
+
+T_sz: "S" is sve_sz_22=0 { export 4:1; }
+T_sz: "D" is sve_sz_22=1 { export 8:1; }
+
+# <T> encoded in "tszh:tszl" -- Is the size specifier, tszh tszl <T> 00 00 RESERVED 00 01 B 00 1x H 01 xx S 1x xx D 
+# Note that tszl is either in b_0809 (if b_21=0) or b_1920 (if b_21=1)
+
+T_tszh: "B" is sve_tszh_2223=0b00 & b_21=0 & sve_tszl_0809=0b01 { export 1:1; }
+T_tszh: "B" is sve_tszh_2223=0b00 & b_21=1 & sve_tszl_1920=0b01 { export 1:1; }
+T_tszh: "H" is sve_tszh_2223=0b00 & b_21=0 & b_09=1 { export 2:1; }
+T_tszh: "H" is sve_tszh_2223=0b00 & b_21=1 & b_20=1 { export 2:1; }
+T_tszh: "S" is sve_tszh_2223=0b01 { export 4:1; }
+T_tszh: "D" is b_23=1 { export 8:1; }
+
+# <T> encoded in "size" -- Is the size specifier, size <T> 00 B 01 H 10 S 11 D
+
+T_size_2122: "B" is sve_size_2122=0b00 { export 1:1; }
+T_size_2122: "H" is sve_size_2122=0b01 { export 2:1; }
+T_size_2122: "S" is sve_size_2122=0b10 { export 4:1; }
+T_size_2122: "D" is sve_size_2122=0b11 { export 8:1; }
+
+# <T> encoded in "tsz" -- Is the size specifier, tsz <T> 00000 RESERVED xxxx1 B xxx10 H xx100 S x1000 D 10000 Q
+
+T_tsz: "B" is b_16=1 { export 1:1; }
+T_tsz: "H" is b_1617=0b10 { export 2:1; }
+T_tsz: "S" is b_1618=0b100 { export 4:1; }
+T_tsz: "D" is b_1619=0b1000 { export 8:1; }
+T_tsz: "Q" is b_1620=0b10000 { export 16:1; }
+sve_imm2_tsz: tmp is b_16=1 & sve_imm2_2223 & b_1720 [ tmp = sve_imm2_2223 * 16 + b_1720; ] { export *[const]:1 tmp; }
+sve_imm2_tsz: tmp is b_1617=0b10 & sve_imm2_2223 & b_1820 [ tmp = sve_imm2_2223 * 8 + b_1820; ] { export *[const]:1 tmp; }
+sve_imm2_tsz: tmp is b_1618=0b100 & sve_imm2_2223 & b_1920 [ tmp = sve_imm2_2223 * 4 + b_1920; ] { export *[const]:1 tmp; }
+sve_imm2_tsz: tmp is b_1619=0b1000 & sve_imm2_2223 & b_20 [ tmp = sve_imm2_2223 * 2 + b_20; ] { export *[const]:1 tmp; }
+sve_imm2_tsz: tmp is b_1620=0b10000 & sve_imm2_2223 [ tmp = sve_imm2_2223 + 0; ] { export *[const]:1 tmp; }
+
+# <T> encoded in "imm13<12>:imm13<5:0>" -- Is the size specifier, imm13<12> imm13<5:0> <T> 0 0xxxxx S 0 10xxxx H 0 110xxx B 0 1110xx B 0 11110x B 0 111110 RESERVED 0 111111 RESERVED 1 xxxxxx D
+
+T_imm13: "S" is b_17=0 & b_10=0 { export 4:1; }
+T_imm13: "H" is b_17=0 & b_0910=0b10 { export 2:1; }
+T_imm13: "B" is b_17=0 & b_0810=0b110 { export 1:1; }
+T_imm13: "B" is b_17=0 & b_0710=0b1110 { export 1:1; }
+T_imm13: "B" is b_17=0 & b_0610=0b11110 { export 1:1; }
+T_imm13: "D" is b_17=1 { export 8:1; }
+
+Zd.T: Zd^"."^T is Zd & T { export Zd; }
+Zd.T_2: Zd^"."^T is Zd & T { export Zd; }
+Zd.T_tszh: Zd^"."^T_tszh is Zd & T_tszh { export Zd; }
+Zd.T_tszh_2: Zd^"."^T_tszh is Zd & T_tszh { export Zd; }
+Zd.T_tsz: Zd^"."^T_tsz is Zd & T_tsz { export Zd; }
+Zd.T_imm13: Zd^"."^T_imm13 is Zd & T_imm13 { export Zd; }
+Zd.T_imm13_2: Zd^"."^T_imm13 is Zd & T_imm13 { export Zd; }
+Zd.T_sz: Zd^"."^T_sz is Zd & T_sz { export Zd; }
+Zd.T_sz_2: Zd^"."^T_sz is Zd & T_sz { export Zd; }
+Zd.T_size_2122: Zd^"."^T_size_2122 is Zd & T_size_2122 { export Zd; }
+
+Zd.B: Zd^".B" is Zd { export Zd; }
+Zd.B_2: Zd^".B" is Zd { export Zd; }
+Zd.H: Zd^".H" is Zd { export Zd; }
+Zd.S: Zd^".S" is Zd { export Zd; }
+Zd.D: Zd^".D" is Zd { export Zd; }
+
+Zt.B: sve_zt_0004^".B" is sve_zt_0004 { export sve_zt_0004; }
+Ztt.B: sve_ztt_0004^".B" is sve_ztt_0004 { export sve_ztt_0004; }
+Zttt.B: sve_zttt_0004^".B" is sve_zttt_0004 { export sve_zttt_0004; }
+Ztttt.B: sve_ztttt_0004^".B" is sve_ztttt_0004 { export sve_ztttt_0004; }
+Zt.H: sve_zt_0004^".H" is sve_zt_0004 { export sve_zt_0004; }
+Ztt.H: sve_ztt_0004^".H" is sve_ztt_0004 { export sve_ztt_0004; }
+Zttt.H: sve_zttt_0004^".H" is sve_zttt_0004 { export sve_zttt_0004; }
+Ztttt.H: sve_ztttt_0004^".H" is sve_ztttt_0004 { export sve_ztttt_0004; }
+Zt.S: sve_zt_0004^".S" is sve_zt_0004 { export sve_zt_0004; }
+Ztt.S: sve_ztt_0004^".S" is sve_ztt_0004 { export sve_ztt_0004; }
+Zttt.S: sve_zttt_0004^".S" is sve_zttt_0004 { export sve_zttt_0004; }
+Ztttt.S: sve_ztttt_0004^".S" is sve_ztttt_0004 { export sve_ztttt_0004; }
+Zt.D: sve_zt_0004^".D" is sve_zt_0004 { export sve_zt_0004; }
+Ztt.D: sve_ztt_0004^".D" is sve_ztt_0004 { export sve_ztt_0004; }
+Zttt.D: sve_zttt_0004^".D" is sve_zttt_0004 { export sve_zttt_0004; }
+Ztttt.D: sve_ztttt_0004^".D" is sve_ztttt_0004 { export sve_ztttt_0004; }
+
+Zn.T: sve_zn_0509^"."^T is sve_zn_0509 & T { export sve_zn_0509; }
+Zn.T_sz: sve_zn_0509^"."^T_sz is sve_zn_0509 & T_sz { export sve_zn_0509; }
+Zn.T_tszh: sve_zn_0509^"."^T_tszh is sve_zn_0509 & T_tszh { export sve_zn_0509; }
+Zn.T_tsz: sve_zn_0509^"."^T_tsz is sve_zn_0509 & T_tsz { export sve_zn_0509; }
+Zn.Tb_sz: sve_zn_0509^".B" is sve_zn_0509 & sve_sz_22=0 { export sve_zn_0509; }
+Zn.Tb_sz: sve_zn_0509^".H" is sve_zn_0509 & sve_sz_22=1 { export sve_zn_0509; }
+Zn.Tb: sve_zn_0509^".B" is sve_zn_0509 & sve_size_2223=0b01 { export sve_zn_0509; }
+Zn.Tb: sve_zn_0509^".H" is sve_zn_0509 & sve_size_2223=0b10 { export sve_zn_0509; }
+Zn.Tb: sve_zn_0509^".S" is sve_zn_0509 & sve_size_2223=0b11 { export sve_zn_0509; }
+
+Zn.B: sve_zn_0509^".B" is sve_zn_0509 { export sve_zn_0509; }
+Zn.H: sve_zn_0509^".H" is sve_zn_0509 { export sve_zn_0509; }
+Zn.S: sve_zn_0509^".S" is sve_zn_0509 { export sve_zn_0509; }
+Zn.D: sve_zn_0509^".D" is sve_zn_0509 { export sve_zn_0509; }
+
+Zm.T: sve_zm_1620^"."^T is sve_zm_1620 & T { export sve_zm_1620; }
+Zm.T_sz: sve_zm_1620^"."^T_sz is sve_zm_1620 & T_sz { export sve_zm_1620; }
+Zm.Tb_sz: sve_zm_1620^".B" is sve_zm_1620 & sve_sz_22=0 { export sve_zm_1620; }
+Zm.Tb_sz: sve_zm_1620^".H" is sve_zm_1620 & sve_sz_22=1 { export sve_zm_1620; }
+# Zm.Tb: sve_zm_1620^".B" is sve_zm_1620 & sve_size_2223=0b01 { export sve_zm_1620; }
+# Zm.Tb: sve_zm_1620^".H" is sve_zm_1620 & sve_size_2223=0b10 { export sve_zm_1620; }
+# Zm.Tb: sve_zm_1620^".S" is sve_zm_1620 & sve_size_2223=0b11 { export sve_zm_1620; }
+
+# Zm.B: sve_zm_1620^".B" is sve_zm_1620 { export sve_zm_1620; }
+# Zm.H: sve_zm_1620^".H" is sve_zm_1620 { export sve_zm_1620; }
+Zm.S: sve_zm_1620^".S" is sve_zm_1620 { export sve_zm_1620; }
+Zm.D: sve_zm_1620^".D" is sve_zm_1620 { export sve_zm_1620; }
+
+Zm3.B: sve_zm_1618^".B" is sve_zm_1618 { export sve_zm_1618; }
+Zm3.H: sve_zm_1618^".H" is sve_zm_1618 { export sve_zm_1618; }
+Zm3.S: sve_zm_1618^".S" is sve_zm_1618 { export sve_zm_1618; }
+# Zm3.D: sve_zm_1618^".D" is sve_zm_1618 { export sve_zm_1618; }
+
+# Zm4.B: sve_zm_1619^".B" is sve_zm_1619 { export sve_zm_1619; }
+Zm4.H: sve_zm_1619^".H" is sve_zm_1619 { export sve_zm_1619; }
+Zm4.S: sve_zm_1619^".S" is sve_zm_1619 { export sve_zm_1619; }
+Zm4.D: sve_zm_1619^".D" is sve_zm_1619 { export sve_zm_1619; }
+
+Pg: sve_pg_1013 is sve_pg_1013 { export sve_pg_1013; }
+Pg_z: sve_pg_1013^"/z" is sve_pg_1013 { export sve_pg_1013; }
+Pg_zm: sve_pg_1013^"/z" is sve_pg_1013 & sve_m_04=0 { export sve_pg_1013; }
+Pg_zm: sve_pg_1013^"/m" is sve_pg_1013 & sve_m_04=1 { export sve_pg_1013; }
+Pg3: sve_pg_1012 is sve_pg_1012 { export sve_pg_1012; }
+Pg3_m: sve_pg_1012^"/m" is sve_pg_1012 { export sve_pg_1012; }
+Pg3_z: sve_pg_1012^"/z" is sve_pg_1012 { export sve_pg_1012; }
+Pg3_zm: sve_pg_1012^"/z" is sve_pg_1012 & sve_m_16=0 { export sve_pg_1012; }
+Pg3_zm: sve_pg_1012^"/m" is sve_pg_1012 & sve_m_16=1 { export sve_pg_1012; }
+
+Pd.T: sve_pd_0003^"."^T is sve_pd_0003 & T { export sve_pd_0003; }
+Pd.T_2: sve_pd_0003^"."^T is sve_pd_0003 & T { export sve_pd_0003; }
+Pd: sve_pd_0003 is sve_pd_0003 { export sve_pd_0003; }
+Pd.B: sve_pd_0003^".B" is sve_pd_0003 { export sve_pd_0003; }
+Pd.B_2: sve_pd_0003^".B" is sve_pd_0003 { export sve_pd_0003; }
+Pd.H: sve_pd_0003^".H" is sve_pd_0003 { export sve_pd_0003; }
+# Pd.S: sve_pd_0003^".S" is sve_pd_0003 { export sve_pd_0003; }
+# Pd.D: sve_pd_0003^".D" is sve_pd_0003 { export sve_pd_0003; }
+
+Pn: sve_pn_0508 is sve_pn_0508 { export sve_pn_0508; }
+Pn_z: sve_pn_0508^"/z" is sve_pn_0508 { export sve_pn_0508; }
+Pn.T: sve_pn_0508^"."^T is sve_pn_0508 & T { export sve_pn_0508; }
+Pn.B: sve_pn_0508^".B" is sve_pn_0508 { export sve_pn_0508; }
+# Pn.H: sve_pn_0508^".H" is sve_pn_0508 { export sve_pn_0508; }
+# Pn.S: sve_pn_0508^".S" is sve_pn_0508 { export sve_pn_0508; }
+# Pn.D: sve_pn_0508^".D" is sve_pn_0508 { export sve_pn_0508; }
+
+Pm_m: sve_pm_1619^"/m" is sve_pm_1619 { export sve_pm_1619; }
+Pm_zm: sve_pm_1619^"/z" is sve_pm_1619 & sve_m_14=0 { export sve_pm_1619; }
+Pm_zm: sve_pm_1619^"/m" is sve_pm_1619 & sve_m_14=1 { export sve_pm_1619; }
+Pm.T: sve_pm_1619^"."^T is sve_pm_1619 & T { export sve_pm_1619; }
+Pm.B: sve_pm_1619^".B" is sve_pm_1619 { export sve_pm_1619; }
+# Pm.H: sve_pm_1619^".H" is sve_pm_1619 { export sve_pm_1619; }
+# Pm.S: sve_pm_1619^".S" is sve_pm_1619 { export sve_pm_1619; }
+# Pm.D: sve_pm_1619^".D" is sve_pm_1619 { export sve_pm_1619; }
+
+sve_i3h_i3l: tmp is sve_i3h_22 & sve_i3l_1920 [ tmp = sve_i3h_22 * 4 + sve_i3l_1920; ] { export *[const]:1 tmp; }
+sve_imm3_1_0to7: sve_imm3_1618 is sve_imm3_1618 { export *[const]:1 sve_imm3_1618; }
+sve_imm4_1_1to16: tmp is sve_imm4_1619 [ tmp = sve_imm4_1619 + 1; ] { export *[const]:1 tmp; }
+sve_imm4_1_m128to112: tmp is sve_imm4s_1619 [ tmp = sve_imm4s_1619 * 16; ] { export *[const]:1 tmp; }
+sve_opt4_1_m128to112: "" is sve_imm4s_1619=0 { export 0:1; }
+sve_opt4_1_m128to112: ", #"^sve_imm4_1_m128to112 is sve_imm4_1_m128to112 { export sve_imm4_1_m128to112; }
+sve_imm4_1_m16to14: tmp is sve_imm4s_1619 [ tmp = sve_imm4s_1619 * 2; ] { export *[const]:1 tmp; }
+sve_mul4_1_m16to14: "" is sve_imm4s_1619=0 { export 0:1; }
+sve_mul4_1_m16to14: ", #"^sve_imm4_1_m16to14^", mul vl" is sve_imm4_1_m16to14 { export *[const]:1 sve_imm4_1_m16to14; }
+sve_imm4_1_m24to21: tmp is sve_imm4s_1619 [ tmp = sve_imm4s_1619 * 3; ] { export *[const]:1 tmp; }
+sve_mul4_1_m24to21: "" is sve_imm4s_1619=0 { export 0:1; }
+sve_mul4_1_m24to21: ", #"^sve_imm4_1_m24to21^", mul vl" is sve_imm4_1_m24to21 { export *[const]:1 sve_imm4_1_m24to21; }
+sve_imm4_1_m32to28: tmp is sve_imm4s_1619 [ tmp = sve_imm4s_1619 * 4; ] { export *[const]:1 tmp; }
+sve_mul4_1_m32to28: "" is sve_imm4s_1619=0 { export 0:1; }
+sve_mul4_1_m32to28: ", #"^sve_imm4_1_m32to28^", mul vl" is sve_imm4_1_m32to28 { export *[const]:1 sve_imm4_1_m32to28; }
+sve_imm4_1_m8to7: tmp is sve_imm4s_1619 [ tmp = sve_imm4s_1619 * 1; ] { export *[const]:1 tmp; }
+sve_mul4_1_m8to7: "" is sve_imm4s_1619=0 { export 0:1; }
+sve_mul4_1_m8to7: ", #"^sve_imm4_1_m8to7^", mul vl" is sve_imm4_1_m8to7 { export *[const]:1 sve_imm4_1_m8to7; }
+sve_imm5_1_0to124: tmp is sve_imm5_1620 [ tmp = sve_imm5_1620 * 4; ] { export *[const]:1 tmp; }
+sve_opt5_1_0to124: "" is sve_imm5_1620=0 { export 0:1; }
+sve_opt5_1_0to124: ", #"^sve_imm5_1_0to124 is sve_imm5_1_0to124 { export sve_imm5_1_0to124; }
+sve_imm5_1_0to248: tmp is sve_imm5_1620 [ tmp = sve_imm5_1620 * 8; ] { export *[const]:1 tmp; }
+sve_opt5_1_0to248: "" is sve_imm5_1620=0 { export 0:1; }
+sve_opt5_1_0to248: ", #"^sve_imm5_1_0to248 is sve_imm5_1_0to248 { export sve_imm5_1_0to248; }
+sve_imm5_1_0to31: sve_imm5_1620 is sve_imm5_1620 { export *[const]:1 sve_imm5_1620; }
+sve_opt5_1_0to31: "" is sve_imm5_1620=0 { export 0:1; }
+sve_opt5_1_0to31: ", #"^sve_imm5_1_0to31 is sve_imm5_1_0to31 { export sve_imm5_1_0to31; }
+sve_imm5_1_0to62: tmp is sve_imm5_1620 [ tmp = sve_imm5_1620 * 2; ] { export *[const]:1 tmp; }
+sve_opt5_1_0to62: "" is sve_imm5_1620=0 { export 0:1; }
+sve_opt5_1_0to62: ", #"^sve_imm5_1_0to62 is sve_imm5_1_0to62 { export sve_imm5_1_0to62; }
+sve_imm5_1_m16to15: sve_imm5s_1620 is sve_b_1015=0b010001 & sve_imm5s_1620 { export *[const]:1 sve_imm5s_1620; }
+sve_imm5_1_m16to15: sve_imm5s_0509 is sve_b_1015=0b010010 & sve_imm5s_0509 { export *[const]:1 sve_imm5s_0509; }
+sve_imm6_1_0to126: tmp is sve_imm6_1621 [ tmp = sve_imm6_1621 * 2; ] { export *[const]:1 tmp; }
+sve_opt6_1_0to126: "" is sve_imm6_1621=0 { export 0:1; }
+sve_opt6_1_0to126: ", #"^sve_imm6_1_0to126 is sve_imm6_1_0to126 { export sve_imm6_1_0to126; }
+sve_imm6_1_0to252: tmp is sve_imm6_1621 [ tmp = sve_imm6_1621 * 4; ] { export *[const]:1 tmp; }
+sve_opt6_1_0to252: "" is sve_imm6_1621=0 { export 0:1; }
+sve_opt6_1_0to252: ", #"^sve_imm6_1_0to252 is sve_imm6_1_0to252 { export sve_imm6_1_0to252; }
+sve_imm6_1_0to504: tmp is sve_imm6_1621 [ tmp = sve_imm6_1621 * 8; ] { export *[const]:2 tmp; }
+sve_opt6_1_0to504: "" is sve_imm6_1621=0 { export 0:2; }
+sve_opt6_1_0to504: ", #"^sve_imm6_1_0to504 is sve_imm6_1_0to504 { export sve_imm6_1_0to504; }
+sve_imm6_1_0to63: sve_imm6_1621 is sve_imm6_1621 { export *[const]:1 sve_imm6_1621; }
+sve_opt6_1_0to63: "" is sve_imm6_1621=0 { export 0:1; }
+sve_opt6_1_0to63: ", #"^sve_imm6_1_0to63 is sve_imm6_1_0to63 { export sve_imm6_1_0to63; }
+sve_imm6_1_m32to31: sve_imm6s_0510 is sve_imm6s_0510 { export *[const]:1 sve_imm6s_0510; }
+sve_mul6_1_m32to31: "" is sve_imm6_1621=0 { export 0:1; }
+sve_mul6_1_m32to31: ", #"^sve_imm6s_1621^", mul vl" is sve_imm6s_1621 { export *[const]:1 sve_imm6s_1621; }
+sve_imm8_1_0to255: sve_imm8_0512 is sve_imm8_0512 { export *[const]:1 sve_imm8_0512; }
+sve_shf8_1_0to255: "#0, LSL #8" is sve_imm8_0512=0 & sve_sh_13=1 { export 0:2; }
+sve_shf8_1_0to255: "#"^tmp is sve_imm8_0512 & sve_sh_13 [ tmp = sve_imm8_0512 << (8 * sve_sh_13); ] { export *[const]:2 tmp; }
+sve_imm8_1_m128to127: sve_imm8s_0512 is sve_imm8s_0512 { export *[const]:1 sve_imm8s_0512; }
+sve_shf8_1_m128to127: "#0, LSL #8" is sve_imm8s_0512=0 & sve_sh_13=1 { export 0:2; }
+sve_shf8_1_m128to127: "#"^tmp is sve_imm8s_0512 & sve_sh_13 [ tmp = sve_imm8s_0512 << (8 * sve_sh_13); ] { export *[const]:2 tmp; }
+sve_imm8_2_0to255: tmp is sve_imm8h_1620 & sve_imm8l_1012 [ tmp = sve_imm8h_1620 * 8 + sve_imm8l_1012; ] { export *[const]:1 tmp; }
+sve_imm9_2_m256to255: tmp is sve_imm9hs_1621 & sve_imm9l_1012 [ tmp = sve_imm9hs_1621 * 8 +  sve_imm9l_1012; ] { export *[const]:2 tmp; }
+sve_mul9_2_m256to255: "" is sve_imm6_1621=0 & sve_imm9l_1012=0 { export 0:2; }
+sve_mul9_2_m256to255: ", #"^sve_imm9_2_m256to255^", mul vl" is sve_imm9_2_m256to255 { export sve_imm9_2_m256to255; }
+
+sve_pattern: "POW2" is sve_pattern_0509=0b00000 { export 0b00000:1; }
+sve_pattern: "VL1" is sve_pattern_0509=0b00001 { export 0b00001:1; }
+sve_pattern: "VL2" is sve_pattern_0509=0b00010 { export 0b00010:1; }
+sve_pattern: "VL3" is sve_pattern_0509=0b00011 { export 0b00011:1; }
+sve_pattern: "VL4" is sve_pattern_0509=0b00100 { export 0b00100:1; }
+sve_pattern: "VL5" is sve_pattern_0509=0b00101 { export 0b00101:1; }
+sve_pattern: "VL6" is sve_pattern_0509=0b00110 { export 0b00110:1; }
+sve_pattern: "VL7" is sve_pattern_0509=0b00111 { export 0b00111:1; }
+sve_pattern: "VL8" is sve_pattern_0509=0b01000 { export 0b01000:1; }
+sve_pattern: "VL16" is sve_pattern_0509=0b01001 { export 0b01001:1; }
+sve_pattern: "VL32" is sve_pattern_0509=0b01010 { export 0b01010:1; }
+sve_pattern: "VL64" is sve_pattern_0509=0b01011 { export 0b01011:1; }
+sve_pattern: "VL128" is sve_pattern_0509=0b01100 { export 0b01100:1; }
+sve_pattern: "VL256" is sve_pattern_0509=0b01101 { export 0b01101:1; }
+sve_pattern: "#"^sve_pattern_0509 is b_0609=0b0111 & sve_pattern_0509 { export *[const]:1 sve_pattern_0509; }
+sve_pattern: "#"^sve_pattern_0509 is b_0709=0b101 & b_05=1 & sve_pattern_0509 { export *[const]:1 sve_pattern_0509; }
+sve_pattern: "#"^sve_pattern_0509 is b_0509=0b10110 & sve_pattern_0509 { export *[const]:1 sve_pattern_0509; }
+sve_pattern: "#"^sve_pattern_0509 is b_09=1 & b_07=0 & b_05=1 & sve_pattern_0509 { export *[const]:1 sve_pattern_0509; }
+sve_pattern: "#"^sve_pattern_0509 is b_09=1 & b_0507=0b010 & sve_pattern_0509 { export *[const]:1 sve_pattern_0509; }
+sve_pattern: "#"^sve_pattern_0509 is b_09=1 & b_0506=0b00 & sve_pattern_0509 { export *[const]:1 sve_pattern_0509; }
+sve_pattern: "MUL4" is sve_pattern_0509=0b11101 { export 0b11101:1; }
+sve_pattern: "MUL3" is sve_pattern_0509=0b11110 { export 0b11110:1; }
+sve_pattern: "ALL" is sve_pattern_0509=0b11111 { export 0b11111:1; }
+
+sve_opt_pattern: "" is sve_pattern_0509=0b11111 { export 0b11111:1; }
+sve_opt_pattern: ", "^sve_pattern is sve_pattern { export sve_pattern; }
+
+sve_mul_pattern: "" is sve_pattern_0509=0b11111 & sve_imm4_1619=0b0000 { export 0b11111:1; }
+sve_mul_pattern: ", "^sve_pattern is sve_pattern & sve_imm4_1619=0b0000 { export sve_pattern; }
+sve_mul_pattern: ", "^sve_pattern^", mul #"^sve_imm4_1_1to16 is sve_pattern & sve_imm4_1_1to16 { export sve_pattern; }
+
+sve_mod_amount: "" is sve_msz_1011=0b00 { export 0:1; }
+sve_mod_amount: ", LSL #1" is sve_msz_1011=0b01 { export 1:1; }
+sve_mod_amount: ", LSL #2" is sve_msz_1011=0b10 { export 2:1; }
+sve_mod_amount: ", LSL #3" is sve_msz_1011=0b11 { export 3:1; }
+
+sve_mod: "UXTW" is b_15=1 & b_14=0 { export 2:1; }
+sve_mod: "SXTW" is b_15=1 & b_14=1 { export 3:1; }
+sve_mod: "UXTW" is b_15=0 & b_22=0 { export 0:1; }
+sve_mod: "SXTW" is b_15=0 & b_22=1 { export 1:1; }
+
+sve_prfop: "PLDL1KEEP" is sve_prfop_0003=0b0000 { export 0b0000:1; }
+sve_prfop: "PLDL1STRM" is sve_prfop_0003=0b0001 { export 0b0001:1; }
+sve_prfop: "PLDL2KEEP" is sve_prfop_0003=0b0010 { export 0b0010:1; }
+sve_prfop: "PLDL2STRM" is sve_prfop_0003=0b0011 { export 0b0011:1; }
+sve_prfop: "PLDL3KEEP" is sve_prfop_0003=0b0100 { export 0b0100:1; }
+sve_prfop: "PLDL3STRM" is sve_prfop_0003=0b0101 { export 0b0101:1; }
+sve_prfop: "#"^sve_prfop_0003 is b_02 & b_01=1 & sve_prfop_0003 { export *[const]:1 sve_prfop_0003; }
+sve_prfop: "PSTL1KEEP" is sve_prfop_0003=0b1000 { export 0b1000:1; }
+sve_prfop: "PSTL1STRM" is sve_prfop_0003=0b1001 { export 0b1001:1; }
+sve_prfop: "PSTL2KEEP" is sve_prfop_0003=0b1010 { export 0b1010:1; }
+sve_prfop: "PSTL2STRM" is sve_prfop_0003=0b1011 { export 0b1011:1; }
+sve_prfop: "PSTL3KEEP" is sve_prfop_0003=0b1100 { export 0b1100:1; }
+sve_prfop: "PSTL3STRM" is sve_prfop_0003=0b1101 { export 0b1101:1; }
+
+sve_decode_bit_mask: wmask is b_17=0 & b_0510=0b111100 & b_11 [ wmask = (0x5555 >> b_11) & 0xff; ] { export *[const]:8 wmask; }
+sve_decode_bit_mask: wmask is b_17=0 & b_0710=0b1110 & b_0506=0b00 & b_1112 [ wmask = (0x1111 >> b_1112) & 0xff; ] { export *[const]:8 wmask; }
+sve_decode_bit_mask: wmask is b_17=0 & b_0710=0b1110 & b_0506=0b01 & b_1112 [ wmask = (0x3333 >> b_1112) & 0xff; ] { export *[const]:8 wmask; }
+sve_decode_bit_mask: wmask is b_17=0 & b_0710=0b1110 & b_0506=0b10 & b_1112 [ wmask = (0x7777 >> b_1112) & 0xff; ] { export *[const]:8 wmask; }
+sve_decode_bit_mask: wmask is b_17=0 & b_0810=0b110 & b_0507 & b_1113 [ wmask = (((~(-1<<(b_0507+1))) | (~(-1<<(b_0507+9)) & 0xff00)) >> b_1113) & 0xff; ] { export *[const]:8 wmask; }
+sve_decode_bit_mask: wmask is b_17=0 & b_0910=0b10 & b_0508 & b_1114 [ wmask = (((~(-1<<(b_0508+1))) | (~(-1<<(b_0508+17)) & 0xffff0000)) >> b_1114) & 0xffff; ] { export *[const]:8 wmask; }
+sve_decode_bit_mask: wmask is b_17=0 & b_10=0 & b_0509 & b_1115 [ wmask = (((~(-1<<(b_0509+1))) | (~(-1<<(b_0509+33)) & 0xffffffff00000000)) >> b_1115) & 0xffffffff; ] { export *[const]:8 wmask; }
+sve_decode_bit_mask: wmask is b_17=1 & b_0510 & b_1116 [ wmask = ( (((~(-1<<(b_0510+1)))) >> b_1116) | (((~(-1<<(b_0510+1)))) << (64-b_1116))) & 0xffffffffffffffff; ] { export *[const]:8 wmask; }
+
+sve_shift_13: "" is sve_sh_13=0 { export 0:1; }
+sve_shift_13: ", LSL #8" is sve_sh_13=1 { export 8:1; }
+
+# The immediate shift is computed from tszh, tszl, imm8. The formula
+# depends on the instruction, as does the location of tszl and imm8.
+# The conditions b_21=0/1 and b_17/b_11=0/1 were found by inspecting
+# the differences between the instructions.
+
+# Instructions where the immediate shift is 2 * esize - UInt(tsz:imm3)
+sve_imm_shift: tmp is b_21=0 & b_17=0 & sve_tszh_2223=0b00 & sve_tszl_0809=0b01     & sve_imm3_0507 [ tmp = 16  - (                     8                 + sve_imm3_0507); ] { export *[const]:1 tmp; }
+sve_imm_shift: tmp is b_21=0 & b_17=0 & sve_tszh_2223=0b00 & b_09=1 & sve_tszl_0809 & sve_imm3_0507 [ tmp = 32  - (                     8 * sve_tszl_0809 + sve_imm3_0507); ] { export *[const]:1 tmp; }
+sve_imm_shift: tmp is b_21=0 & b_17=0 & sve_tszh_2223=0b01 & sve_tszl_0809          & sve_imm3_0507 [ tmp = 64  - (32                 + 8 * sve_tszl_0809 + sve_imm3_0507); ] { export *[const]:1 tmp; }
+sve_imm_shift: tmp is b_21=0 & b_17=0 & b_23=1 & sve_tszh_2223 & sve_tszl_0809      & sve_imm3_0507 [ tmp = 128 - (32 * sve_tszh_2223 + 8 * sve_tszl_0809 + sve_imm3_0507); ] { export *[const]:1 tmp; }
+sve_imm_shift: tmp is b_21=1 & b_11=0 & sve_tszh_2223=0b00 & sve_tszl_1920=0b01     & sve_imm3_1618 [ tmp = 16  - (                     8                 + sve_imm3_1618); ] { export *[const]:1 tmp; }
+sve_imm_shift: tmp is b_21=1 & b_11=0 & sve_tszh_2223=0b00 & b_20=1 & sve_tszl_1920 & sve_imm3_1618 [ tmp = 32  - (                     8 * sve_tszl_1920 + sve_imm3_1618); ] { export *[const]:1 tmp; }
+sve_imm_shift: tmp is b_21=1 & b_11=0 & sve_tszh_2223=0b01 & sve_tszl_1920          & sve_imm3_1618 [ tmp = 64  - (32                 + 8 * sve_tszl_1920 + sve_imm3_1618); ] { export *[const]:1 tmp; }
+sve_imm_shift: tmp is b_21=1 & b_11=0 & b_23=1 & sve_tszh_2223 & sve_tszl_1920      & sve_imm3_1618 [ tmp = 128 - (32 * sve_tszh_2223 + 8 * sve_tszl_1920 + sve_imm3_1618); ] { export *[const]:1 tmp; }
+
+# Instructions where the immediate shift is UInt(tsz:imm3) - esize
+sve_imm_shift: tmp is b_21=0 & b_17=1 & sve_tszh_2223=0b00 & sve_tszl_0809=0b01     & sve_imm3_0507 [ tmp = (                     8                 + sve_imm3_0507) -   8; ] { export *[const]:1 tmp; }
+sve_imm_shift: tmp is b_21=0 & b_17=1 & sve_tszh_2223=0b00 & b_09=1 & sve_tszl_0809 & sve_imm3_0507 [ tmp = (                     8 * sve_tszl_0809 + sve_imm3_0507) -  16; ] { export *[const]:1 tmp; }
+sve_imm_shift: tmp is b_21=0 & b_17=1 & sve_tszh_2223=0b01 & sve_tszl_0809          & sve_imm3_0507 [ tmp = (32                 + 8 * sve_tszl_0809 + sve_imm3_0507) -  32; ] { export *[const]:1 tmp; }
+sve_imm_shift: tmp is b_21=0 & b_17=1 & b_23=1 & sve_tszh_2223 & sve_tszl_0809      & sve_imm3_0507 [ tmp = (32 * sve_tszh_2223 + 8 * sve_tszl_0809 + sve_imm3_0507) -  64; ] { export *[const]:1 tmp; }
+sve_imm_shift: tmp is b_21=1 & b_11=1 & sve_tszh_2223=0b00 & sve_tszl_1920=0b01     & sve_imm3_1618 [ tmp = (                     8                 + sve_imm3_1618) -   8; ] { export *[const]:1 tmp; }
+sve_imm_shift: tmp is b_21=1 & b_11=1 & sve_tszh_2223=0b00 & b_20=1 & sve_tszl_1920 & sve_imm3_1618 [ tmp = (                     8 * sve_tszl_1920 + sve_imm3_1618) -  16; ] { export *[const]:1 tmp; }
+sve_imm_shift: tmp is b_21=1 & b_11=1 & sve_tszh_2223=0b01 & sve_tszl_1920          & sve_imm3_1618 [ tmp = (32                 + 8 * sve_tszl_1920 + sve_imm3_1618) -  32; ] { export *[const]:1 tmp; }
+sve_imm_shift: tmp is b_21=1 & b_11=1 & b_23=1 & sve_tszh_2223 & sve_tszl_1920      & sve_imm3_1618 [ tmp = (32 * sve_tszh_2223 + 8 * sve_tszl_1920 + sve_imm3_1618) -  64; ] { export *[const]:1 tmp; }
+
+sve_float_0510: "#0.5" is sve_i1_05=0 { export 0:1; }
+sve_float_0510: "#1.0" is sve_i1_05=1 { export 1:1; }
+sve_float_0520: "#0.5" is sve_i1_05=0 { export 0:1; }
+sve_float_0520: "#2.0" is sve_i1_05=1 { export 1:1; }
+sve_float_0010: "#0.0" is sve_i1_05=0 { export 0:1; }
+sve_float_0010: "#1.0" is sve_i1_05=1 { export 1:1; }
+
+# there are no floating point constants in SLEIGH
+# generate equivalent hex floating point constant
+
+attach names [ sve_float_dec ] [ "0" "1" "2" "3" "4" "5" "6" "7" "8" "9" "a" "b" "c" "d" "e" "f" ];
+attach names [ sve_float_exp ] [ "+1" "+2" "+3" "+4" "-3" "-2" "-1" "+0" ];
+
+sve_float_imm8: s^"."^sve_float_dec^"p"^sve_float_exp is sve_imm8_0512 & sve_float_dec & sve_float_exp & b_12 [ s = (1 - 2 * b_12); ] { export *[const]:1 sve_imm8_0512; }
+
+# SECTION pcodeops
+
+# The following SIMD and MP versions of SLEIGH primitives are
+# implemented in java for AARCH64
+
+define pcodeop MP_INT_ABS;
+define pcodeop MP_INT_RIGHT;
+define pcodeop MP_INT_MULT;
+define pcodeop MP_INT_UMULT;
+
+# The following AARCH64 instructions are implemented in java as a
+# pcodeop
+
+define pcodeop a64_TBL;
+
+# The following pcode ops are not implemented
+
+define pcodeop AT_S12E0R;
+define pcodeop AT_S12E0W;
+define pcodeop AT_S12E1R;
+define pcodeop AT_S12E1W;
+define pcodeop AT_S1E0R;
+define pcodeop AT_S1E0W;
+define pcodeop AT_S1E1R;
+define pcodeop AT_S1E1RP;
+define pcodeop AT_S1E1W;
+define pcodeop AT_S1E1WP;
+define pcodeop AT_S1E2R;
+define pcodeop AT_S1E2W;
+define pcodeop AT_S1E3R;
+define pcodeop AT_S1E3W;
+define pcodeop AuthIA;
+define pcodeop AuthIB;
+define pcodeop AuthDA;
+define pcodeop AuthDB;
+define pcodeop CallHyperVisor;
+define pcodeop CallSecureMonitor;
+define pcodeop CallSupervisor;
+define pcodeop ClearExclusiveLocal;
+define pcodeop crc32b; define pcodeop crc32h;
+define pcodeop crc32w;
+define pcodeop crc32x;
+define pcodeop DataMemoryBarrier;
+define pcodeop DataSynchronizationBarrier;
+define pcodeop DC_CISW;
+define pcodeop DC_CIVAC;
+define pcodeop DC_CSW;
+define pcodeop DC_CVAC;
+define pcodeop DC_CVAP;
+define pcodeop DC_CVAU;
+define pcodeop DC_ISW;
+define pcodeop DC_IVAC;
+define pcodeop DCPSInstruction;
+define pcodeop DC_ZVA;
+define pcodeop DRPSInstruction;
+define pcodeop ExceptionReturn;
+define pcodeop ExclusiveMonitorPass;
+define pcodeop ExclusiveMonitorsStatus;
+define pcodeop HaltBreakPoint;
+define pcodeop Hint_Prefetch;
+define pcodeop IC_IALLU;
+define pcodeop IC_IALLUIS;
+define pcodeop IC_IVAU;
+define pcodeop InstructionSynchronizationBarrier;
+define pcodeop LOAcquire;
+define pcodeop LORelease;
+define pcodeop pacda;
+define pcodeop pacdb;
+define pcodeop pacdza;
+define pcodeop pacdzb;
+define pcodeop pacga;
+define pcodeop pacia;
+define pcodeop paciza;
+define pcodeop pacib;
+define pcodeop pacizb;
+define pcodeop SendEvent;
+define pcodeop SendEventLocally;
+define pcodeop SoftwareBreakpoint;
+define pcodeop SysOp_R;
+define pcodeop SysOp_W;
+define pcodeop TLBI_ALLE1;
+define pcodeop TLBI_ALLE1IS;
+define pcodeop TLBI_ALLE2;
+define pcodeop TLBI_ALLE2IS;
+define pcodeop TLBI_ALLE3;
+define pcodeop TLBI_ALLE3IS;
+define pcodeop TLBI_ASIDE1;
+define pcodeop TLBI_ASIDE1IS;
+define pcodeop TLBI_IPAS2E1;
+define pcodeop TLBI_IPAS2E1IS;
+define pcodeop TLBI_IPAS2LE1;
+define pcodeop TLBI_IPAS2LE1IS;
+define pcodeop TLBI_VAAE1;
+define pcodeop TLBI_VAALE1;
+define pcodeop TLBI_VAAE1IS;
+define pcodeop TLBI_VAALE1IS;
+define pcodeop TLBI_VAE1;
+define pcodeop TLBI_VAE1IS;
+define pcodeop TLBI_VAE2;
+define pcodeop TLBI_VAE2IS;
+define pcodeop TLBI_VAE3;
+define pcodeop TLBI_VAE3IS;
+define pcodeop TLBI_VALE1;
+define pcodeop TLBI_VALE1IS;
+define pcodeop TLBI_VALE2;
+define pcodeop TLBI_VALE2IS;
+define pcodeop TLBI_VALE3;
+define pcodeop TLBI_VALE3IS;
+define pcodeop TLBI_VMALLE1;
+define pcodeop TLBI_VMALLE1IS;
+define pcodeop TLBI_VMALLS12E1;
+define pcodeop TLBI_VMALLS12E1IS;
+define pcodeop UnkSytemRegRead;
+define pcodeop UnkSytemRegWrite;
+define pcodeop WaitForEvent;
+define pcodeop WaitForInterrupt;
+define pcodeop xpac;
+define pcodeop Yield;
+
+# These pseudo ops are used in neon
+
+define pcodeop SIMD_COPY;
+define pcodeop SIMD_FLOAT;
+define pcodeop SIMD_FLOAT2FLOAT;
+define pcodeop SIMD_FLOAT_ABS;
+define pcodeop SIMD_FLOAT_ADD;
+define pcodeop SIMD_FLOAT_DIV;
+define pcodeop SIMD_FLOAT_MULT;
+define pcodeop SIMD_FLOAT_NEG;
+define pcodeop SIMD_FLOAT_SUB;
+define pcodeop SIMD_INT;
+define pcodeop SIMD_INT_2COMP;
+define pcodeop SIMD_INT_ABS;
+define pcodeop SIMD_INT_ADD;
+define pcodeop SIMD_INT_AND;
+define pcodeop SIMD_INT_LEFT;
+define pcodeop SIMD_INT_LESS;
+define pcodeop SIMD_INT_MULT;
+define pcodeop SIMD_INT_NEGATE;
+define pcodeop SIMD_INT_OR;
+define pcodeop SIMD_INT_RIGHT;
+define pcodeop SIMD_INT_SEXT;
+define pcodeop SIMD_INT_SLESS;
+define pcodeop SIMD_INT_SRIGHT;
+define pcodeop SIMD_INT_SUB;
+define pcodeop SIMD_INT_XOR;
+define pcodeop SIMD_INT_ZEXT;
+define pcodeop SIMD_PIECE;
+define pcodeop SIMD_TRUNC;
+
+define pcodeop NEON_abs;
+define pcodeop NEON_add;
+define pcodeop NEON_addhn;
+define pcodeop NEON_addhn2;
+define pcodeop NEON_addp;
+define pcodeop NEON_addv;
+define pcodeop NEON_aesd;
+define pcodeop NEON_aese;
+define pcodeop NEON_aesimc;
+define pcodeop NEON_aesmc;
+define pcodeop NEON_and;
+define pcodeop NEON_bcax;
+define pcodeop NEON_bic;
+define pcodeop NEON_bif;
+define pcodeop NEON_bit;
+define pcodeop NEON_bsl;
+define pcodeop NEON_cls;
+define pcodeop NEON_clz;
+define pcodeop NEON_cmeq;
+define pcodeop NEON_cmge;
+define pcodeop NEON_cmgt;
+define pcodeop NEON_cmhi;
+define pcodeop NEON_cmhs;
+define pcodeop NEON_cmle;
+define pcodeop NEON_cmlt;
+define pcodeop NEON_cmtst;
+define pcodeop NEON_cnt;
+define pcodeop NEON_dup;
+define pcodeop NEON_eor;
+define pcodeop NEON_eor3;
+define pcodeop NEON_ext;
+define pcodeop NEON_fabd;
+define pcodeop NEON_fabs;
+define pcodeop NEON_facge;
+define pcodeop NEON_facgt;
+define pcodeop NEON_fadd;
+define pcodeop NEON_faddp;
+define pcodeop NEON_fcadd;
+define pcodeop NEON_fccmp;
+define pcodeop NEON_fccmpe;
+define pcodeop NEON_fcmeq;
+define pcodeop NEON_fcmge;
+define pcodeop NEON_fcmgt;
+define pcodeop NEON_fcmla;
+define pcodeop NEON_fcmle;
+define pcodeop NEON_fcmlt;
+define pcodeop NEON_fcmp;
+define pcodeop NEON_fcmpe;
+define pcodeop NEON_fcsel;
+define pcodeop NEON_fcvt;
+define pcodeop NEON_fcvt_amnpz_su;
+define pcodeop NEON_fcvtl;
+define pcodeop NEON_fcvtl2;
+define pcodeop NEON_fcvtn;
+define pcodeop NEON_fcvtn2;
+define pcodeop NEON_fcvtxn;
+define pcodeop NEON_fcvtxn2;
+define pcodeop NEON_fcvtzs;
+define pcodeop NEON_fcvtzu;
+define pcodeop NEON_fdiv;
+define pcodeop NEON_fjcvtzs;
+define pcodeop NEON_fmadd;
+define pcodeop NEON_fmax;
+define pcodeop NEON_fmaxnm;
+define pcodeop NEON_fmaxnmp;
+define pcodeop NEON_fmaxnmv;
+define pcodeop NEON_fmaxp;
+define pcodeop NEON_fmaxv;
+define pcodeop NEON_fmin;
+define pcodeop NEON_fminnm;
+define pcodeop NEON_fminnmp;
+define pcodeop NEON_fminnmv;
+define pcodeop NEON_fminp;
+define pcodeop NEON_fminv;
+define pcodeop NEON_fmla;
+define pcodeop NEON_fmlal;
+define pcodeop NEON_fmlal2;
+define pcodeop NEON_fmls;
+define pcodeop NEON_fmlsl;
+define pcodeop NEON_fmlsl2;
+define pcodeop NEON_fmov;
+define pcodeop NEON_fmsub;
+define pcodeop NEON_fmul;
+define pcodeop NEON_fmulx;
+define pcodeop NEON_fneg;
+define pcodeop NEON_fnmadd;
+define pcodeop NEON_fnmsub;
+define pcodeop NEON_fnmul;
+define pcodeop NEON_frecpe;
+define pcodeop NEON_frecps;
+define pcodeop NEON_frecpx;
+define pcodeop NEON_frint_aimnpxz;
+define pcodeop NEON_frsqrte;
+define pcodeop NEON_frsqrts;
+define pcodeop NEON_fsqrt;
+define pcodeop NEON_fsub;
+define pcodeop NEON_ldnp1;
+define pcodeop NEON_ldnp2;
+define pcodeop NEON_ldp1;
+define pcodeop NEON_ldp2;
+define pcodeop NEON_ldr;
+define pcodeop NEON_ldur;
+define pcodeop NEON_mla;
+define pcodeop NEON_mls;
+define pcodeop NEON_mov;
+define pcodeop NEON_movi;
+define pcodeop NEON_mul;
+define pcodeop NEON_mvn;
+define pcodeop NEON_mvni;
+define pcodeop NEON_neg;
+define pcodeop NEON_orn;
+define pcodeop NEON_orr;
+define pcodeop NEON_pmul;
+define pcodeop NEON_pmull;
+define pcodeop NEON_pmull2;
+define pcodeop NEON_raddhn;
+define pcodeop NEON_raddhn2;
+define pcodeop NEON_rax1;
+define pcodeop NEON_rbit;
+define pcodeop NEON_rev16;
+define pcodeop NEON_rev32;
+define pcodeop NEON_rev64;
+define pcodeop NEON_rshrn;
+define pcodeop NEON_rshrn2;
+define pcodeop NEON_rsubhn;
+define pcodeop NEON_rsubhn2;
+define pcodeop NEON_saba;
+define pcodeop NEON_sabal;
+define pcodeop NEON_sabal2;
+define pcodeop NEON_sabd;
+define pcodeop NEON_sabdl;
+define pcodeop NEON_sabdl2;
+define pcodeop NEON_sadalp;
+define pcodeop NEON_saddl;
+define pcodeop NEON_saddl2;
+define pcodeop NEON_saddlp;
+define pcodeop NEON_saddlv;
+define pcodeop NEON_saddw;
+define pcodeop NEON_saddw2;
+define pcodeop NEON_scvtf;
+define pcodeop NEON_sdot;
+define pcodeop NEON_sha1c;
+define pcodeop NEON_sha1h;
+define pcodeop NEON_sha1m;
+define pcodeop NEON_sha1p;
+define pcodeop NEON_sha1su0;
+define pcodeop NEON_sha1su1;
+define pcodeop NEON_sha256h;
+define pcodeop NEON_sha256h2;
+define pcodeop NEON_sha256su0;
+define pcodeop NEON_sha256su1;
+define pcodeop NEON_sha512h;
+define pcodeop NEON_sha512h2;
+define pcodeop NEON_sha512su0;
+define pcodeop NEON_sha512su1;
+define pcodeop NEON_shadd;
+define pcodeop NEON_shl;
+define pcodeop NEON_shll;
+define pcodeop NEON_shll2;
+define pcodeop NEON_shrn;
+define pcodeop NEON_shrn2;
+define pcodeop NEON_shsub;
+define pcodeop NEON_sli;
+define pcodeop NEON_sm3partw1;
+define pcodeop NEON_sm3partw2;
+define pcodeop NEON_sm3ss1;
+define pcodeop NEON_sm3tt1a;
+define pcodeop NEON_sm3tt1b;
+define pcodeop NEON_sm3tt2a;
+define pcodeop NEON_sm3tt2b;
+define pcodeop NEON_sm4e;
+define pcodeop NEON_sm4ekey;
+define pcodeop NEON_smax;
+define pcodeop NEON_smaxp;
+define pcodeop NEON_smaxv;
+define pcodeop NEON_smin;
+define pcodeop NEON_sminp;
+define pcodeop NEON_sminv;
+define pcodeop NEON_smlal;
+define pcodeop NEON_smlal2;
+define pcodeop NEON_smlsl;
+define pcodeop NEON_smlsl2;
+define pcodeop NEON_smov;
+define pcodeop NEON_smull;
+define pcodeop NEON_smull2;
+define pcodeop NEON_sqabs;
+define pcodeop NEON_sqadd;
+define pcodeop NEON_sqdmlal;
+define pcodeop NEON_sqdmlal2;
+define pcodeop NEON_sqdmlsl;
+define pcodeop NEON_sqdmlsl2;
+define pcodeop NEON_sqdmulh;
+define pcodeop NEON_sqdmull;
+define pcodeop NEON_sqdmull2;
+define pcodeop NEON_sqneg;
+define pcodeop NEON_sqrdml_as_h;
+define pcodeop NEON_sqrdmulh;
+define pcodeop NEON_sqrshl;
+define pcodeop NEON_sqrshrn;
+define pcodeop NEON_sqrshrn2;
+define pcodeop NEON_sqrshrun;
+define pcodeop NEON_sqrshrun2;
+define pcodeop NEON_sqshl;
+define pcodeop NEON_sqshlu;
+define pcodeop NEON_sqshrn;
+define pcodeop NEON_sqshrn2;
+define pcodeop NEON_sqshrun;
+define pcodeop NEON_sqshrun2;
+define pcodeop NEON_sqsub;
+define pcodeop NEON_sqxtn;
+define pcodeop NEON_sqxtn2;
+define pcodeop NEON_sqxtun;
+define pcodeop NEON_sqxtun2;
+define pcodeop NEON_srhadd;
+define pcodeop NEON_sri;
+define pcodeop NEON_srshl;
+define pcodeop NEON_srshr;
+define pcodeop NEON_srsra;
+define pcodeop NEON_sshl;
+define pcodeop NEON_sshll;
+define pcodeop NEON_sshll2;
+define pcodeop NEON_sshr;
+define pcodeop NEON_ssra;
+define pcodeop NEON_ssubl;
+define pcodeop NEON_ssubl2;
+define pcodeop NEON_ssubw;
+define pcodeop NEON_ssubw2;
+define pcodeop NEON_stnp1;
+define pcodeop NEON_stnp2;
+define pcodeop NEON_stp1;
+define pcodeop NEON_stp2;
+define pcodeop NEON_str;
+define pcodeop NEON_stur;
+define pcodeop NEON_sub;
+define pcodeop NEON_subhn;
+define pcodeop NEON_subhn2;
+define pcodeop NEON_suqadd;
+define pcodeop NEON_sxtl;
+define pcodeop NEON_sxtl2;
+define pcodeop NEON_tblx;
+define pcodeop NEON_trn1;
+define pcodeop NEON_trn2;
+define pcodeop NEON_uaba;
+define pcodeop NEON_uabal;
+define pcodeop NEON_uabal2;
+define pcodeop NEON_uabd;
+define pcodeop NEON_uabdl;
+define pcodeop NEON_uabdl2;
+define pcodeop NEON_uadalp;
+define pcodeop NEON_uaddl;
+define pcodeop NEON_uaddl2;
+define pcodeop NEON_uaddlp;
+define pcodeop NEON_uaddlv;
+define pcodeop NEON_uaddw;
+define pcodeop NEON_uaddw2;
+define pcodeop NEON_ucvtf;
+define pcodeop NEON_udot;
+define pcodeop NEON_uhadd;
+define pcodeop NEON_uhsub;
+define pcodeop NEON_umax;
+define pcodeop NEON_umaxp;
+define pcodeop NEON_umaxv;
+define pcodeop NEON_umin;
+define pcodeop NEON_uminp;
+define pcodeop NEON_uminv;
+define pcodeop NEON_umlal;
+define pcodeop NEON_umlal2;
+define pcodeop NEON_umlsl;
+define pcodeop NEON_umlsl2;
+define pcodeop NEON_umov;
+define pcodeop NEON_umull;
+define pcodeop NEON_umull2;
+define pcodeop NEON_uqadd;
+define pcodeop NEON_uqrshl;
+define pcodeop NEON_uqrshrn;
+define pcodeop NEON_uqrshrn2;
+define pcodeop NEON_uqshl;
+define pcodeop NEON_uqshrn;
+define pcodeop NEON_uqshrn2;
+define pcodeop NEON_uqsub;
+define pcodeop NEON_uqxtn;
+define pcodeop NEON_uqxtn2;
+define pcodeop NEON_urecpe;
+define pcodeop NEON_urhadd;
+define pcodeop NEON_urshl;
+define pcodeop NEON_urshr;
+define pcodeop NEON_ursqrte;
+define pcodeop NEON_ursra;
+define pcodeop NEON_ushl;
+define pcodeop NEON_ushll;
+define pcodeop NEON_ushll2;
+define pcodeop NEON_ushr;
+define pcodeop NEON_usqadd;
+define pcodeop NEON_usra;
+define pcodeop NEON_usubl;
+define pcodeop NEON_usubl2;
+define pcodeop NEON_usubw;
+define pcodeop NEON_usubw2;
+define pcodeop NEON_uxtl;
+define pcodeop NEON_uxtl2;
+define pcodeop NEON_uzp1;
+define pcodeop NEON_uzp2;
+define pcodeop NEON_xar;
+define pcodeop NEON_xtn;
+define pcodeop NEON_xtn2;
+define pcodeop NEON_zip1;
+define pcodeop NEON_zip2;
+
+# These pseudo ops are automatically generated
+
+define pcodeop SVE_abs;
+define pcodeop SVE_add;
+define pcodeop SVE_addpl;
+define pcodeop SVE_addvl;
+define pcodeop SVE_adr;
+define pcodeop SVE_and;
+define pcodeop SVE_ands;
+define pcodeop SVE_andv;
+define pcodeop SVE_asr;
+define pcodeop SVE_asrd;
+define pcodeop SVE_asrr;
+define pcodeop SVE_bic;
+define pcodeop SVE_bics;
+define pcodeop SVE_brka;
+define pcodeop SVE_brkas;
+define pcodeop SVE_brkb;
+define pcodeop SVE_brkbs;
+define pcodeop SVE_brkn;
+define pcodeop SVE_brkns;
+define pcodeop SVE_brkpa;
+define pcodeop SVE_brkpas;
+define pcodeop SVE_brkpb;
+define pcodeop SVE_brkpbs;
+define pcodeop SVE_clasta;
+define pcodeop SVE_clastb;
+define pcodeop SVE_cls;
+define pcodeop SVE_clz;
+define pcodeop SVE_cmpeq;
+define pcodeop SVE_cmpge;
+define pcodeop SVE_cmpgt;
+define pcodeop SVE_cmphi;
+define pcodeop SVE_cmphs;
+define pcodeop SVE_cmple;
+define pcodeop SVE_cmplo;
+define pcodeop SVE_cmpls;
+define pcodeop SVE_cmplt;
+define pcodeop SVE_cmpne;
+define pcodeop SVE_cnot;
+define pcodeop SVE_cnt;
+define pcodeop SVE_cntb;
+define pcodeop SVE_cntd;
+define pcodeop SVE_cnth;
+define pcodeop SVE_cntp;
+define pcodeop SVE_cntw;
+define pcodeop SVE_compact;
+define pcodeop SVE_cpy;
+define pcodeop SVE_ctermeq;
+define pcodeop SVE_ctermne;
+define pcodeop SVE_decb;
+define pcodeop SVE_decd;
+define pcodeop SVE_dech;
+define pcodeop SVE_decp;
+define pcodeop SVE_decw;
+define pcodeop SVE_dup;
+define pcodeop SVE_dupm;
+define pcodeop SVE_eon;
+define pcodeop SVE_eor;
+define pcodeop SVE_eors;
+define pcodeop SVE_eorv;
+define pcodeop SVE_ext;
+define pcodeop SVE_fabd;
+define pcodeop SVE_fabs;
+define pcodeop SVE_facge;
+define pcodeop SVE_facgt;
+define pcodeop SVE_fadd;
+define pcodeop SVE_fadda;
+define pcodeop SVE_faddv;
+define pcodeop SVE_fcadd;
+define pcodeop SVE_fcmeq;
+define pcodeop SVE_fcmge;
+define pcodeop SVE_fcmgt;
+define pcodeop SVE_fcmla;
+define pcodeop SVE_fcmle;
+define pcodeop SVE_fcmlt;
+define pcodeop SVE_fcmne;
+define pcodeop SVE_fcmuo;
+define pcodeop SVE_fcpy;
+define pcodeop SVE_fcvt;
+define pcodeop SVE_fcvtzs;
+define pcodeop SVE_fcvtzu;
+define pcodeop SVE_fdiv;
+define pcodeop SVE_fdivr;
+define pcodeop SVE_fdup;
+define pcodeop SVE_fexpa;
+define pcodeop SVE_fmad;
+define pcodeop SVE_fmax;
+define pcodeop SVE_fmaxnm;
+define pcodeop SVE_fmaxnmv;
+define pcodeop SVE_fmaxv;
+define pcodeop SVE_fmin;
+define pcodeop SVE_fminnm;
+define pcodeop SVE_fminnmv;
+define pcodeop SVE_fminv;
+define pcodeop SVE_fmla;
+define pcodeop SVE_fmls;
+define pcodeop SVE_fmov;
+define pcodeop SVE_fmsb;
+define pcodeop SVE_fmul;
+define pcodeop SVE_fmulx;
+define pcodeop SVE_fneg;
+define pcodeop SVE_fnmad;
+define pcodeop SVE_fnmla;
+define pcodeop SVE_fnmls;
+define pcodeop SVE_fnmsb;
+define pcodeop SVE_frecpe;
+define pcodeop SVE_frecps;
+define pcodeop SVE_frecpx;
+define pcodeop SVE_frinta;
+define pcodeop SVE_frinti;
+define pcodeop SVE_frintm;
+define pcodeop SVE_frintn;
+define pcodeop SVE_frintp;
+define pcodeop SVE_frintx;
+define pcodeop SVE_frintz;
+define pcodeop SVE_frsqrte;
+define pcodeop SVE_frsqrts;
+define pcodeop SVE_fscale;
+define pcodeop SVE_fsqrt;
+define pcodeop SVE_fsub;
+define pcodeop SVE_fsubr;
+define pcodeop SVE_ftmad;
+define pcodeop SVE_ftsmul;
+define pcodeop SVE_ftssel;
+define pcodeop SVE_incb;
+define pcodeop SVE_incd;
+define pcodeop SVE_inch;
+define pcodeop SVE_incp;
+define pcodeop SVE_incw;
+define pcodeop SVE_index;
+define pcodeop SVE_insr;
+define pcodeop SVE_lasta;
+define pcodeop SVE_lastb;
+define pcodeop SVE_ld1b;
+define pcodeop SVE_ld1d;
+define pcodeop SVE_ld1h;
+define pcodeop SVE_ld1rb;
+define pcodeop SVE_ld1rd;
+define pcodeop SVE_ld1rh;
+define pcodeop SVE_ld1rqb;
+define pcodeop SVE_ld1rqd;
+define pcodeop SVE_ld1rqh;
+define pcodeop SVE_ld1rqw;
+define pcodeop SVE_ld1rsb;
+define pcodeop SVE_ld1rsh;
+define pcodeop SVE_ld1rsw;
+define pcodeop SVE_ld1rw;
+define pcodeop SVE_ld1sb;
+define pcodeop SVE_ld1sh;
+define pcodeop SVE_ld1sw;
+define pcodeop SVE_ld1w;
+define pcodeop SVE_ld2b;
+define pcodeop SVE_ld2d;
+define pcodeop SVE_ld2h;
+define pcodeop SVE_ld2w;
+define pcodeop SVE_ld3b;
+define pcodeop SVE_ld3d;
+define pcodeop SVE_ld3h;
+define pcodeop SVE_ld3w;
+define pcodeop SVE_ld4b;
+define pcodeop SVE_ld4d;
+define pcodeop SVE_ld4h;
+define pcodeop SVE_ld4w;
+define pcodeop SVE_ldff1b;
+define pcodeop SVE_ldff1d;
+define pcodeop SVE_ldff1h;
+define pcodeop SVE_ldff1sb;
+define pcodeop SVE_ldff1sh;
+define pcodeop SVE_ldff1sw;
+define pcodeop SVE_ldff1w;
+define pcodeop SVE_ldnf1b;
+define pcodeop SVE_ldnf1d;
+define pcodeop SVE_ldnf1h;
+define pcodeop SVE_ldnf1sb;
+define pcodeop SVE_ldnf1sh;
+define pcodeop SVE_ldnf1sw;
+define pcodeop SVE_ldnf1w;
+define pcodeop SVE_ldnt1b;
+define pcodeop SVE_ldnt1d;
+define pcodeop SVE_ldnt1h;
+define pcodeop SVE_ldnt1w;
+define pcodeop SVE_ldr;
+define pcodeop SVE_lsl;
+define pcodeop SVE_lslr;
+define pcodeop SVE_lsr;
+define pcodeop SVE_lsrr;
+define pcodeop SVE_mad;
+define pcodeop SVE_mla;
+define pcodeop SVE_mls;
+define pcodeop SVE_movprfx;
+define pcodeop SVE_msb;
+define pcodeop SVE_mul;
+define pcodeop SVE_nand;
+define pcodeop SVE_nands;
+define pcodeop SVE_neg;
+define pcodeop SVE_nor;
+define pcodeop SVE_nors;
+define pcodeop SVE_not;
+define pcodeop SVE_orn;
+define pcodeop SVE_orns;
+define pcodeop SVE_orr;
+define pcodeop SVE_orrs;
+define pcodeop SVE_orv;
+define pcodeop SVE_pfalse;
+define pcodeop SVE_pfirst;
+define pcodeop SVE_pnext;
+define pcodeop SVE_prfb;
+define pcodeop SVE_prfd;
+define pcodeop SVE_prfh;
+define pcodeop SVE_prfw;
+define pcodeop SVE_ptest;
+define pcodeop SVE_ptrue;
+define pcodeop SVE_ptrues;
+define pcodeop SVE_punpkhi;
+define pcodeop SVE_punpklo;
+define pcodeop SVE_rbit;
+define pcodeop SVE_rdffr;
+define pcodeop SVE_rdffrs;
+define pcodeop SVE_rdvl;
+define pcodeop SVE_rev;
+define pcodeop SVE_revb;
+define pcodeop SVE_revh;
+define pcodeop SVE_revw;
+define pcodeop SVE_sabd;
+define pcodeop SVE_saddv;
+define pcodeop SVE_scvtf;
+define pcodeop SVE_sdiv;
+define pcodeop SVE_sdivr;
+define pcodeop SVE_sdot;
+define pcodeop SVE_sel;
+define pcodeop SVE_smax;
+define pcodeop SVE_smaxv;
+define pcodeop SVE_smin;
+define pcodeop SVE_sminv;
+define pcodeop SVE_smulh;
+define pcodeop SVE_splice;
+define pcodeop SVE_sqadd;
+define pcodeop SVE_sqdecb;
+define pcodeop SVE_sqdecd;
+define pcodeop SVE_sqdech;
+define pcodeop SVE_sqdecp;
+define pcodeop SVE_sqdecw;
+define pcodeop SVE_sqincb;
+define pcodeop SVE_sqincd;
+define pcodeop SVE_sqinch;
+define pcodeop SVE_sqincp;
+define pcodeop SVE_sqincw;
+define pcodeop SVE_sqsub;
+define pcodeop SVE_st1b;
+define pcodeop SVE_st1d;
+define pcodeop SVE_st1h;
+define pcodeop SVE_st1w;
+define pcodeop SVE_st2b;
+define pcodeop SVE_st2d;
+define pcodeop SVE_st2h;
+define pcodeop SVE_st2w;
+define pcodeop SVE_st3b;
+define pcodeop SVE_st3d;
+define pcodeop SVE_st3h;
+define pcodeop SVE_st3w;
+define pcodeop SVE_st4b;
+define pcodeop SVE_st4d;
+define pcodeop SVE_st4h;
+define pcodeop SVE_st4w;
+define pcodeop SVE_stnt1b;
+define pcodeop SVE_stnt1d;
+define pcodeop SVE_stnt1h;
+define pcodeop SVE_stnt1w;
+define pcodeop SVE_str;
+define pcodeop SVE_sub;
+define pcodeop SVE_subr;
+define pcodeop SVE_sunpkhi;
+define pcodeop SVE_sunpklo;
+define pcodeop SVE_sxtb;
+define pcodeop SVE_sxth;
+define pcodeop SVE_sxtw;
+define pcodeop SVE_tbl;
+define pcodeop SVE_trn1;
+define pcodeop SVE_trn2;
+define pcodeop SVE_uabd;
+define pcodeop SVE_uaddv;
+define pcodeop SVE_ucvtf;
+define pcodeop SVE_udiv;
+define pcodeop SVE_udivr;
+define pcodeop SVE_udot;
+define pcodeop SVE_umax;
+define pcodeop SVE_umaxv;
+define pcodeop SVE_umin;
+define pcodeop SVE_uminv;
+define pcodeop SVE_umulh;
+define pcodeop SVE_uqadd;
+define pcodeop SVE_uqdecb;
+define pcodeop SVE_uqdecd;
+define pcodeop SVE_uqdech;
+define pcodeop SVE_uqdecp;
+define pcodeop SVE_uqdecw;
+define pcodeop SVE_uqincb;
+define pcodeop SVE_uqincd;
+define pcodeop SVE_uqinch;
+define pcodeop SVE_uqincp;
+define pcodeop SVE_uqincw;
+define pcodeop SVE_uqsub;
+define pcodeop SVE_uunpkhi;
+define pcodeop SVE_uunpklo;
+define pcodeop SVE_uxtb;
+define pcodeop SVE_uxth;
+define pcodeop SVE_uxtw;
+define pcodeop SVE_uzp1;
+define pcodeop SVE_uzp2;
+define pcodeop SVE_whilele;
+define pcodeop SVE_whilelo;
+define pcodeop SVE_whilels;
+define pcodeop SVE_whilelt;
+define pcodeop SVE_wrffr;
+define pcodeop SVE_zip1;
+define pcodeop SVE_zip2;
+
+# SECTION macros
+
+macro addflags(op1, op2)
+{
+	tmpCY = carry(op1, op2);
+	tmpOV = scarry(op1, op2);
+}
+
+macro affectflags()
+{
+	NG = tmpNG; ZR = tmpZR; CY = tmpCY; OV = tmpOV;
+}
+
+macro affectLflags()
+{
+	NG = tmpNG; ZR = tmpZR; CY = 0; OV = 0;
+}
+
+# NOTE unlike x86, carry flag is SET if there is NO borrow
+macro subflags(op1, op2)
+{
+	tmpCY = op1 >= op2;
+	tmpOV = sborrow(op1, op2);
+}
+
+# Special case when the first op of the macro call is 0
+macro subflags0(op2)
+{
+	tmpCY = 0 == op2;
+	tmpOV = sborrow(0, op2);
+}
+
+macro logicflags()
+{
+	tmpCY = shift_carry;
+	tmpOV = OV;
+}
+
+macro CVunaffected()
+{
+	tmpCY = CY;
+	tmpOV = OV;
+}
+
+macro resultflags(result)
+{
+	tmpNG = result s< 0;
+	tmpZR = result == 0;
+}
+
+macro fcomp(a, b)
+{
+	NG = a f< b;
+	ZR = a f== b;
+	CY = a f>= b;
+	OV = 0;
+}
+
+macro ftestNAN(a, b)
+{
+	NG = 0;
+	ZR = 0;
+	CY = 0;
+	OV = 0;
+	tst:1 = nan(a) || nan(b);
+	if (tst) goto inst_next;
+}
+
+macro ROR32(out, val, rotate)
+{
+	out = ( val >> rotate) | ( val << ( 32 - rotate ) );
+}
+
+macro ROR64(out, val, rotate)
+{
+	out = ( val >> rotate) | ( val << ( 64 - rotate ) );
+}
+
+macro selectCC(result, val1, val2, condition)
+{
+	result = (zext(condition) * val1) + (zext(!condition) * val2);
+}
+
+macro setCC_NZCV(condMask)
+{
+	NG = (condMask & 0x8) == 0x8;
+	ZR = (condMask & 0x4) == 0x4;
+	CY = (condMask & 0x2) == 0x2;
+	OV = (condMask & 0x1) == 0x1;
+}
+
+# Macro to access simd lanes
+
+macro simd_address_at(dest, reg, elem, esize, vsize)
+{
+@if DATA_ENDIAN == "little"
+        dest = &reg + elem * esize;
+@else
+        dest = &reg + vsize - esize - elem * esize;
+@endif
+}
+
+# Macros to zero the high bits of the Z or Q registers
+# These are friendlier to the decompiler
+
+macro zext_zb(reg)
+{
+	reg[8,56] = 0;
+	reg[64,64] = 0;
+	reg[128,64] = 0;
+	reg[192,64] = 0;
+}
+
+macro zext_zh(reg)
+{
+	reg[16,48] = 0;
+	reg[64,64] = 0;
+	reg[128,64] = 0;
+	reg[192,64] = 0;
+}
+
+macro zext_zs(reg)
+{
+	reg[32,32] = 0;
+	reg[64,64] = 0;
+	reg[128,64] = 0;
+	reg[192,64] = 0;
+}
+
+macro zext_zd(reg)
+{
+	reg[64,64] = 0;
+	reg[128,64] = 0;
+	reg[192,64] = 0;
+}
+
+macro zext_zq(reg)
+{
+	reg[128,64] = 0;
+	reg[192,64] = 0;
+}
+
+macro zext_rb(reg)
+{
+	reg[8,56] = 0;
+}
+
+macro zext_rh(reg)
+{
+	reg[16,48] = 0;
+}
+
+macro zext_rs(reg)
+{
+	reg[32,32] = 0;
+}
+
+# SECTION instructions
+
+:^instruction
+is ImmS_ImmR_TestSet=0 & ImmR & ImmS & instruction
+[
+	ImmS_LT_ImmR = (((ImmS - ImmR) >> 6) $and 1);
+	ImmS_EQ_ImmR = ~((((ImmS - ImmR) >> 6) $and 1) | (((ImmR - ImmS) >> 6) $and 1));
+	# For ubfm, lsl is the preferred alias when imms + 1 == immr, so we must subtract an extra one
+	# to determine when ubfiz is the preferred alias.
+	ImmS_LT_ImmR_minus_1 = (((ImmS - (ImmR - 1)) >> 6) & 0x1) & (((ImmS - (ImmR - 1)) >> 7) & 0x1);
+	ImmS_ne_1f = (((ImmS - 0x1f) >> 6) & 0x1) | (((0x1f - ImmS) >> 6) & 0x1);
+	ImmS_ne_3f = (((ImmS - 0x3f) >> 6) & 0x1) | (((0x3f - ImmS) >> 6) & 0x1);
+	ImmS_ImmR_TestSet=1;
+]{}
+
+with : ImmS_ImmR_TestSet=1 {
+
+@include "AARCH64base.sinc"
+@include "AARCH64neon.sinc"
+@include "AARCH64ldst.sinc"
+@include "AARCH64sve.sinc"
+
+# TODO These are placeholders until the correction instruction implementations can be found
+
+:NotYetImplemented_UNK1
+is b_0031=0xe7ffdeff
+unimpl
+
+:NotYetImplemented_UNK2
+is b_0031=0x00200820
+unimpl
+
+:NotYetImplemented_UNK3
+is b_0031=0x00200c20
+unimpl
+
+} # end with ImmS_ImmR_TestSet=1
+

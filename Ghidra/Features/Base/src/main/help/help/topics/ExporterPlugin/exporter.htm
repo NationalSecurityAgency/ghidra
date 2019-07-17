@@ -1,0 +1,338 @@
+<!DOCTYPE doctype PUBLIC "-//W3C//DTD HTML 4.0 Frameset//EN">
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+
+    <TITLE>Exporting Files</TITLE>
+    <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+  </HEAD>
+
+  <BODY lang="EN-US">
+    <H1><A name="Export"></A>Exporting Files</H1>
+
+    <P>Ghidra provides an <I>Exporter</I> that allows a user to output program information into a
+    file in various formats.&nbsp;</P>
+
+    <P>Some of the formats the <I>Exporter</I> supports are:</P>
+    <A name="Exporter_Formats">
+     
+
+    <UL>
+      <LI><A href="#ascii">ASCII</A></LI>
+
+      <LI><A href="#binary">Binary</A></LI>
+
+      <LI><A href="#c_cpp">C/C++</A></LI>
+
+      <LI><A href="#gzf">Ghidra Zip File (.gzf)</A></LI>
+
+      <LI><A href="#html">HTML</A></LI>
+
+      <LI><A href="#intel_hex">Intel Hex</A></LI>
+
+      <LI><A href="#xml">XML Export Format</A></LI>
+    </UL>
+
+    <H2>Export Action</H2>
+
+    <BLOCKQUOTE>
+      <P>The export action can be invoked from the front-end project window or the CodeBrowser
+      tool.</P>
+
+      <H3>To export from the front-end project window:</H3>
+
+      <BLOCKQUOTE>
+        <H4>Steps:</H4>
+
+        <UL>
+          <LI>Right-click on the file to export in the tree.</LI>
+
+          <LI>From the popup menu that appears, select the <B>Export...</B> menu item.</LI>
+
+          <LI>Use the <A href="#Exporter_Dialog">Exporter Dialog</A> that appears to configure the
+          export.</LI>
+
+          <LI>Press the <B>OK</B> button to perform the export.</LI>
+        </UL>
+      </BLOCKQUOTE>
+
+      <H3>To export from the CodeBrowser tool:</H3>
+
+      <BLOCKQUOTE>
+        <H4>Steps:</H4>
+
+        <UL>
+          <LI>Make sure the program to export is the currently open program in the CodeBrowser
+          tool.</LI>
+
+          <LI>Invoke the action from the <B>File<IMG src="../../shared/arrow.gif" alt="">Export
+          File...</B> menu item.</LI>
+
+          <LI>Use the <A href="#Exporter_Dialog">Exporter Dialog</A> that appears to configure the
+          export.</LI>
+
+          <LI>Press the <B>OK</B> button to perform the export.</LI>
+        </UL>
+      </BLOCKQUOTE>
+
+      <H2>Export Dialog <A name="Exporter_Dialog"></A></H2>
+
+      <BLOCKQUOTE>
+        <P>The Export Dialog is used to configure the export of the chosen program.</P>
+
+        <P align="center"><IMG src="images/Export_Dialog.png" alt=""></P>
+
+        <H3>Dialog Fields</H3>
+
+        <BLOCKQUOTE>
+          <UL>
+            <LI><B>Format</B> - This field is a drop-down list containing all the valid <A href=
+            "#Exporter_Formats">export file formats</A> that could be used to to export the
+            program. By default, the last used format will be auto-selected.</LI>
+
+            <LI><B>Output File</B> - This field specifies the the output file for the export. By
+            default, the output file's name will be the name of the program and the output folder
+            will be the user's home folder or the last folder used for an export if an export has
+            been performed in the current session. Use the "..." button to bring up a file chooser
+            to change the output file.</LI>
+
+            <LI><B>Selection Only</B> - If this checkbox is selected, then only the areas of the
+            program that are in the current selection will be exported. Obviously, this only
+            applies when exporting from an open program with a selection in the CodeBrowser tool
+            and not when exporting from the front-end project window. Also, not all export formats
+            support partial exports. The GZF format, for example, always exports the entire program
+            since it is really just making an exported copy of the entire program database.</LI>
+
+            <LI><B>Options...</B> - This button will pop up format specific options for the
+            import.</LI>
+          </UL>
+        </BLOCKQUOTE>
+      </BLOCKQUOTE>
+
+      <H2>Exporters</H2>
+
+      <BLOCKQUOTE>
+        <H3><A name="ascii"/><A name="Options_Ascii"/>Ascii</H3>
+
+        <BLOCKQUOTE>
+          <P>Creates a plain text representation of the program's listing, similar to what is
+          displayed in the <A href="help/topics/CodeBrowserPlugin/Browser_Field_Formatter.htm">Code
+          Browser Field Format</A>.</P>
+
+          <H4><A name="ascii_options"/>Ascii Options</H4>
+        </BLOCKQUOTE>
+
+        <DIV align="center">
+          <IMG src="images/Ascii_Options.png" alt=""><BR>
+        </DIV>
+
+        <BLOCKQUOTE>
+          <BLOCKQUOTE>
+            <H4>Advanced</H4>
+
+            <BLOCKQUOTE>
+              <TABLE cellspacing="1" border="0" width="70%">
+                <TBODY>
+                  <TR>
+                    <TD><I><B>Label Suffix</B></I><BR>
+                    </TD>
+
+                    <TD valign="top">the string to append on the end of labels<BR>
+                    </TD>
+                  </TR>
+
+                  <TR>
+                    <TD><I><B>Comment Prefix</B></I><BR>
+                    </TD>
+
+                    <TD valign="top">the string to append on the begining of comments<BR>
+                    </TD>
+                  </TR>
+                </TBODY>
+              </TABLE>
+            </BLOCKQUOTE>
+
+            <H4>Show</H4>
+
+            <BLOCKQUOTE>
+              <P>The check-boxes in this panel are used to determine what program elements should
+              be included in the output file. A selected check-box denotes that the corresponding
+              element will be included in the file. The checkboxes for elements that are present in
+              the program are selected by default.</P>
+
+              <TABLE border="0" cellspacing="1" width="70%">
+                <TBODY>
+                  <TR>
+                    <TD><I><B>Comments</B></I></TD>
+
+                    <TD valign="top" align="left">Include <I>Pre</I>, <I>Post</I>, <I>EOL</I>, and
+                    <I>Plate</I> comments</TD>
+                  </TR>
+
+                  <TR>
+                    <TD><I><B>Properties</B></I></TD>
+
+                    <TD valign="top" align="left">Include properties; e.g., <I>Bookmarks</I>,
+                    <I>Spacers</I></TD>
+                  </TR>
+
+                  <TR>
+                    <TD><I><B>Structures</B></I></TD>
+
+                    <TD valign="top" align="left">Include <I>Structures</I> and <I>Unions</I>
+                    defined on code units</TD>
+                  </TR>
+
+                  <TR>
+                    <TD><I><B>Undefined Data</B></I></TD>
+
+                    <TD valign="top" align="left">Include all undefined code units (e.g, "??") or
+                    replace with "<I>[BYTES REMOVED]</I>" place-holder</TD>
+                  </TR>
+
+                  <TR>
+                    <TD><I><B>Ref Headers</B></I></TD>
+
+                    <TD valign="top" align="left">Include the cross reference header
+                    <I>BACK[m,n]</I> or <I>FWD[m,n]:</I>, where <I>m</I> is the number of cross
+                    references and <I>n</I> is the number of offcut cross reference; select the
+                    <B><I>Back Refs</I></B> and/or <I><B>Forward Refs</B></I> for the
+                    <I><B>Back/FWD</B></I> header to show up</TD>
+                  </TR>
+
+                  <TR>
+                    <TD><I><B>Back Refs</B></I></TD>
+
+                    <TD valign="top" align="left">Include the list of cross references for each
+                    code unit</TD>
+                  </TR>
+
+                  <TR>
+                    <TD><B><I>Forward Refs</I></B></TD>
+
+                    <TD valign="top" align="left">Include the list of references to the mnemonic
+                    for each code unit</TD>
+                  </TR>
+
+                  <TR>
+                    <TD><I><B>Functions</B></I></TD>
+
+                    <TD valign="top" align="left">Include signature and header for each
+                    function</TD>
+                  </TR>
+                </TBODY>
+              </TABLE>
+            </BLOCKQUOTE>
+
+            <H4>Width</H4>
+
+            <BLOCKQUOTE>
+              <P>The text-fields in this panel specify the width, in number of characters, to use
+              when displaying program elements in the output file.</P>
+
+              <P><IMG alt="" border="0" src="../../shared/note.png"> <I>Setting a width to zero (0)
+              effectively excludes it from the output file.</I></P>
+            </BLOCKQUOTE>
+          </BLOCKQUOTE>
+        </BLOCKQUOTE>
+
+        <H3><A name="binary"><A name="Options_Binary"/></A>Binary</H3>
+
+        <BLOCKQUOTE>
+          <P>Creates a binary file containing only the bytes from each memory block in the program.
+          If the program was originally created using the <B>Binary Importer</B>, then this
+          exporter allows recreation of the original file.</P>
+
+          <P><IMG alt="" border="0" src="../../shared/note.png"> <I>Only initialized memory blocks
+          are included in the output file.</I></P>
+        </BLOCKQUOTE>
+
+        <H3><A name="c_cpp"/><A name="Options_C_C__""/>C/C++</H3>
+
+        <BLOCKQUOTE>
+          <P>Create a C/C++ file containing all datatypes from the program's <A href=
+          "help/topics/DataTypeManagerPlugin/data_type_manager_description.htm">data type
+          manager</A> and all of the functions in the program.&nbsp;</P>
+
+          <H4>C/C++ Options</H4>
+
+          <P align="center"><IMG src="images/C_Options.png" alt=""></P>
+
+          <UL>
+            <LI><B>Create Header File (.h)</B> - Select to create a .h file.</LI>
+
+            <LI><B>Create C File (.c)</B> - Select to create a .c file.</LI>
+
+            <LI><B>Use C++ Style Comments (//)</B> - Select to use // or /* style comments.</LI>
+          </UL>
+        </BLOCKQUOTE>
+
+        <H3><A name="gzf"></A>Ghidra Zip File (.gzf)</H3>
+
+        <BLOCKQUOTE>
+          <P>Creates a zip file from a program in your project. You may want to create a zip file
+          so that you can give it to another user who can then <A href=
+          "help/topics/ImporterPlugin/importer.htm">import</A> into their project.</P>
+        </BLOCKQUOTE>
+
+        <H3><A name="html"/><A name="Options_HTML"/>HTML</H3>
+
+        <BLOCKQUOTE>
+          <P>Creates a hyper-text representation of the program's listing, similar to what is
+          displayed in the <A href="help/topics/CodeBrowserPlugin/Browser_Field_Formatter.htm">Code
+          Browser Field Format</A>. The HTML output is analogous to the ASCII output, however HTML
+          allows format and hyper-link information to be added to the file. The formatting allows
+          fields to be color-matched to those in the Code Browser. The hyper-linking allows
+          navigation similar to that supported in the Code Browser.</P>
+
+          <P><I><IMG alt="" border="0" src="../../shared/note.png"> The HTML Options are identical
+          the <A href="#ascii_options">ASCII Options</A>.</I></P>
+        </BLOCKQUOTE>
+
+        <H3><A name="intel_hex"><A name="Options_Intel_Hex"/></A>Intel Hex</H3>
+
+        <BLOCKQUOTE>
+          <P>The Intel Hex format, a printable file representing memory images, was originally
+          designed to program EPROM devices. The Intel Hex exporter creates files in this format
+          which can be used to program these EPROM devices.</P>
+
+          <H4>Intel Hex Options</H4>
+
+          <P align="center"><IMG src="images/Intel_Hex_Options.png" alt=""></P>
+
+          <UL>
+            <LI><B>Address Space</B> - Specifies which address space to export as Intel Hex format
+            only supports one address space. This option will be intialized to the "default"
+            address space.</LI>
+            <LI><B>Record Size</B> - Specifies the size (in bytes) of each record in the 
+            output file. The default 16.</LI>
+            <LI><B>Align To Record Size</B> - If checked, this will ensure that <b>only</b> records matching
+            the record size will be output. eg: if you set the record size to 16 but there are 
+            18 bytes selected, you will see only one line of 16 bytes in the output; the remaining 
+            2 bytes will be dropped.</LI>
+          </UL>
+        </BLOCKQUOTE>
+
+        <H3><A name="xml"/><A name="Options_XML"/>XML</H3>
+
+        <BLOCKQUOTE>
+          <P>The XML Exporter creates XML files that conform to Ghidra's Program DTD. You can
+          re-import files in this format using the <A href=
+          "help/topics/ImporterPlugin/importer.htm">XML Importer</A>.</P>
+
+          <P><A name="xml_options"></A> <I><IMG alt="" border="0" src="../../shared/note.png">The
+          XML Options are identical the <A href=
+          "help/topics/ImporterPlugin/importer.htm#xml_options">XML Importer Options</A>.</I></P>
+        </BLOCKQUOTE>
+      </BLOCKQUOTE>
+
+      <P class="relatedtopic">Related Topics:</P>
+
+      <UL>
+        <LI><A href="help/topics/ImporterPlugin/importer.htm">Importing Files</A></LI>
+      </UL><BR>
+    </BLOCKQUOTE>
+  </BODY>
+</HTML>

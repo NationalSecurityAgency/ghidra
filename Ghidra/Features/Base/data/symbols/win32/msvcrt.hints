@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<LIBRARY_HINTS NAME="MSVCRT.DLL">
+    <HINT ATTR="NO_RETURN" VALUE="y" NAME="_exit" />
+    <HINT ATTR="NO_RETURN" VALUE="y" NAME="exit" />
+    <HINT ATTR="NO_RETURN" VALUE="y" NAME="_CxxThrowException" />
+    <HINT ATTR="NO_RETURN" VALUE="y" NAME="CxxThrowException" />
+</LIBRARY_HINTS>

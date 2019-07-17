@@ -1,0 +1,37 @@
+<html>
+  <head>
+    <title>XML Exporter for IDA version 6</title>
+    <style>
+      filename {
+        font-family: monospace;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>XML Exporter for IDA version 6</h1>
+    <p>
+      <filename>xmlexp.py</filename> and <filename>xmldr.py</filename> can be used with IDA versions 6.2 and greater.
+      For best results, it is recommended to use version 6.7 or greater.
+    </p>
+    <p>
+      <filename>xmlexp.py</filename> is a plugin to export an IDA database as an XML file.
+    </p>
+    <p>
+      <filename>xmlldr.py</filename> can be used as an IDA loader to build a new database using an XML file and
+      it can be used as an IDA plugin to add data from an XML file to an existing database.
+    </p>
+    <p>
+      As a loader, it loads the bytes file and builds the IDA database
+      using the contents of the XML file.
+    </p>
+    <p>
+      As a plugin, it will add information to an existing IDA database.
+      It will NOT load any binary data from the bytes file.
+      It will add symbols, comments, code, data, functions, etc. for
+      addresses that currently existing in the database.
+    </p>
+    <p>
+      Currently, the loader does not support importing memory overlays or Harvard architectures (e.g., 8051).
+    </p>
+  </body>
+</html>

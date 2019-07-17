@@ -1,0 +1,11 @@
+MODULE FILE LICENSE: lib/dex-ir-2.0.jar Apache License 2.0
+MODULE FILE LICENSE: lib/dexlib-1.4.0.jar Apache License 2.0
+MODULE FILE LICENSE: lib/dex-reader-2.0.jar Apache License 2.0
+MODULE FILE LICENSE: lib/dex-reader-api-2.0.jar Apache License 2.0
+MODULE FILE LICENSE: lib/dex-translator-2.0.jar Apache License 2.0
+MODULE FILE LICENSE: lib/asm-debug-all-4.1.jar Apache License 2.0
+MODULE FILE LICENSE: lib/baksmali-1.4.0.jar Apache License 2.0
+MODULE FILE LICENSE: lib/sevenzipjbinding-9.20-2.00beta.jar Apache License 2.0
+MODULE FILE LICENSE: lib/sevenzipjbinding-all-platforms-9.20-2.00beta.jar Apache License 2.0
+MODULE FILE LICENSE: lib/AXMLPrinter2.jar Apache License 2.0
+MODULE FILE LICENSE: lib/util-1.4.0.jar BSD

@@ -1,0 +1,35 @@
+z_complex.input###1#@define FOO foo
+#@define BAR bar
+#@define BAZ baz
+#@define GAMMA
+#@define V4 "undef FAILED"
+
+#@ifdef FOO
+#@ifndef BAR
+#@define V1 "ifndef"
+#@define V2 "failed"
+#@define V3 "bar"
+#@else
+#@if BAZ == "baz"
+#@define V1 "everything"
+#@define V2 "worked"
+#@define V3 "OK"
+#@undef GAMMA
+#@else
+#@define V1 "if"
+#@define V2 "failed"
+#@define V3 "baz"
+#@endif
+#@endif
+#@else
+#@define V1 "ifdef"
+#@define V2 "failed"
+#@define V3 "foo"
+#@endif
+
+#@ifndef GAMMA
+#@define V4 "undef OK"
+#@endif
+
+$(V1)everything $(V2)worked $(V3)OK $(V4)undef OK
+

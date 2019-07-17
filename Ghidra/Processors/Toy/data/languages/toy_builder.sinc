@@ -1,0 +1,86 @@
+
+
+@include "toy.sinc"
+
+# Define context bits
+define register offset=0x2000 size=8   contextreg;
+
+define context contextreg
+	# stored context
+	fctx	= (0,3)             # flowing context
+	nfctx   = (4,7) noflow      # single address context
+	# transient context (never stored, aids disassembly)
+	phase   = (8,9) # parse phase - used for complex scenarios
+	counter = (10,13) # parse count-down
+;
+
+define token instr8(8)
+	   op8     = (0, 7)
+;
+
+define token extra16(16)
+       xsimm8  = (0, 7) signed
+;
+
+define token extra8(8)
+	   nnnn   = (0, 3)
+;
+
+# ^instruction - manage parse phases (only required for complex languages)
+
+:^instruction	is phase=0 & instruction [ phase=1; ] { build instruction; }
+
+@define INSTR_PHASE "phase=1 &" # parse instructions during phase 1
+
+@include "toyInstructions.sinc"
+
+# additional forms added to toy language, taken from all three reserved banks:
+#  1101 1001 xxxx xxxx  # RESERVED BANK
+#  1101 1010 xxxx xxxx  # RESERVED BANK
+#  1111 0111 xxxx xxxx  # RESERVED BANK
+
+# fctx i      1101 1001 0000 iiii                      # set flow context (fctx) on next instr  
+# nfctx i     1101 1001 0001 iiii                      # set noflow context (nfctx) on next instr
+# nfctx rel,i 1101 1001 0010 iiii; 0000 0000 iiii iiii # set noflow context on rel instr
+
+# cop# s      1101 1010 ssss 0000                      # coprocessor # determined by nfctx val (1-3) 
+
+# nop #1      1111 0111
+# nop #<n+2>  1101 1001 0011 nnnn; ...                 # nop where nnnn indicates number of additional bytes consumed  
+
+
+# operations
+
+:fctx Imm4 is phase=1 & op1215=0xd & op0811=0x9 & rs=0x0 & imm0003 & Imm4 [ fctx=imm0003; globalset(inst_next,fctx); ] { }
+
+nfctxSetAddr: addr is Imm4 & imm0003; xsimm8 [ addr = inst_start + xsimm8; nfctx=imm0003; globalset(addr, nfctx); ] { export *:$(SIZE) addr; }
+
+:nfctx nfctxSetAddr,Imm4 is (phase=1 & op1215=0xd & op0811=0x9 & rs=0x2 & Imm4) ... & nfctxSetAddr { }
+:nfctx Imm4              is phase=1 & op1215=0xd & op0811=0x9 & rs=0x1 & imm0003 & Imm4 [ nfctx=imm0003; globalset(inst_next,nfctx); ] { }
+
+define pcodeop cop1;
+define pcodeop cop2;
+define pcodeop cop3;
+
+:cop1 rs  is phase=1 & op1215=0xd & op0811=0xa & op0003=0 & nfctx=1 & rs { cop1(rs); }
+:cop2 rs  is phase=1 & op1215=0xd & op0811=0xa & op0003=0 & nfctx=2 & rs { cop2(rs); }
+:cop3 rs  is phase=1 & op1215=0xd & op0811=0xa & op0003=0 & nfctx=3 & rs { cop3(rs); }
+
+NopCnt: "#"^cnt is imm0003 [ cnt = imm0003 + 2; ] { export *[const]:1 cnt; }
+
+NopByte:        is counter=0 { }
+NopByte:        is epsilon; nnnn; NopByte [ counter=counter-1; ]  { }
+
+One: "#"^cnt    is epsilon [ cnt = 1; ] { export *[const]:1 cnt; }
+
+:nop One        is phase=1 & op8=0xf7 & One { }
+:nop NopCnt     is phase=1 & op1215=0xd & op0811=0x9 & rs=0x3 & imm0003 & NopCnt; NopByte ... [ counter=imm0003; ] { }
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,14 @@
+<opinions>
+    <constraint loader="Executable and Linking Format (ELF)" compilerSpecID="default">
+        <constraint primary="183"      processor="AARCH64"                     size="64" variant="v8A" />
+    </constraint>
+    <constraint loader="Mac OS X Mach-O" compilerSpecID="default">
+        <constraint primary="16777228" processor="AARCH64"     endian="little" size="64" />
+    </constraint>
+    <constraint loader="DYLD Cache" compilerSpecID="default">
+        <constraint primary="AARCH64" processor="AARCH64"     endian="little" size="64" />
+    </constraint>
+    <constraint loader="Portable Executable (PE)" compilerSpecID="windows">
+        <constraint primary="43620"    processor="AARCH64"     endian="little" size="64" variant="v8A" />
+    </constraint>
+</opinions>

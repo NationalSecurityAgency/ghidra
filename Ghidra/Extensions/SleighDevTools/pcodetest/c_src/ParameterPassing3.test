@@ -1,0 +1,173 @@
+#include "pcode_test.h"
+
+TEST pcode_PP3_5thMultipleArg_Main()
+{
+	extern i4 pcode_PP3_5thMultipleArg(i4 arg1, i4 arg2, i4 arg3, i4 arg4, i4 arg5);
+	ASSERTI4(pcode_PP3_5thMultipleArg(1, 2, 3, 4, 5), 61);
+	ASSERTI4(pcode_PP3_5thMultipleArg(1000, 2000, 3000, 4000, 5000), 55006);
+	ASSERTI4(pcode_PP3_5thMultipleArg(1000000, 2000000, 3000000, 4000000, 5000000), 55000006);
+	ASSERTI4(pcode_PP3_5thMultipleArg(-1, -2, -3, -4, -5), -49);
+}
+
+TEST pcode_PP3_6thMultipleArg_Main()
+{
+	extern i4 pcode_PP3_6thMultipleArg(i4 arg1, i4 arg2, i4 arg3, i4 arg4, i4 arg5, i4 arg6);
+	ASSERTI4(pcode_PP3_6thMultipleArg(1, 2, 3, 4, 5, 6), 98);
+	ASSERTI4(pcode_PP3_6thMultipleArg(1000, 2000, 3000, 4000, 5000, 6000), 91007);
+	ASSERTI4(pcode_PP3_6thMultipleArg(1000000, 2000000, 3000000, 4000000, 5000000, 6000000), 91000007);
+}
+
+TEST pcode_PP3_7thMultipleArg_Main()
+{
+	extern i4 pcode_PP3_7thMultipleArg(i4 arg1, i4 arg2, i4 arg3, i4 arg4, i4 arg5, i4 arg6, i4 arg7);
+	ASSERTI4(pcode_PP3_7thMultipleArg(1, 2, 3, 4, 5, 6, 7), 148);
+	ASSERTI4(pcode_PP3_7thMultipleArg(1000, 2000, 3000, 4000, 5000, 6000, 7000), 140008);
+	ASSERTI4(pcode_PP3_7thMultipleArg(1000000, 2000000, 3000000, 4000000, 5000000, 6000000, 7000000), 140000008);
+}
+
+TEST pcode_PP3_8thMultipleArg_Main()
+{
+	extern i4 pcode_PP3_8thMultipleArg(i4 arg1, i4 arg2, i4 arg3, i4 arg4, i4 arg5, i4 arg6, i4 arg7, i4 arg8);
+	ASSERTI4(pcode_PP3_8thMultipleArg(1, 2, 3, 4, 5, 6, 7, 8), 213);
+	ASSERTI4(pcode_PP3_8thMultipleArg(1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000), 204009);
+	ASSERTI4(pcode_PP3_8thMultipleArg(1000000, 2000000, 3000000, 4000000, 5000000, 6000000, 7000000, 8000000), 204000009);
+}
+
+TEST pcode_PP3_9thMultipleArg_Main()
+{
+	extern i4 pcode_PP3_9thMultipleArg(i4 arg1, i4 arg2, i4 arg3, i4 arg4, i4 arg5, i4 arg6, i4 arg7, i4 arg8, i4 arg9);
+	ASSERTI4(pcode_PP3_9thMultipleArg(1, 2, 3, 4, 5, 6, 7, 8, 9), 295);
+	ASSERTI4(pcode_PP3_9thMultipleArg(1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000), 285010);
+	ASSERTI4(pcode_PP3_9thMultipleArg(1000000, 2000000, 3000000, 4000000, 5000000, 6000000, 7000000, 8000000, 9000000), 285000010);
+}
+
+TEST pcode_PP3_10thMultipleArg_Main()
+{
+	extern i4 pcode_PP3_10thMultipleArg(i4 arg1, i4 arg2, i4 arg3, i4 arg4, i4 arg5, i4 arg6, i4 arg7, i4 arg8, i4 arg9, i4 arg10);
+	ASSERTI4(pcode_PP3_10thMultipleArg(1, 2, 3, 4, 5, 6, 7, 8, 9, 10), 396);
+	ASSERTI4(pcode_PP3_10thMultipleArg(1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000, 10000), 385011);
+	ASSERTI4(pcode_PP3_10thMultipleArg(1000000, 2000000, 3000000, 4000000, 5000000, 6000000, 7000000, 8000000, 9000000, 10000000), 385000011);
+}
+
+TEST pcode_PP3_11thMultipleArg_Main()
+{
+	extern i4 pcode_PP3_11thMultipleArg(i4 arg1, i4 arg2, i4 arg3, i4 arg4, i4 arg5, i4 arg6, i4 arg7, i4 arg8, i4 arg9, i4 arg10, i4 arg11);
+	ASSERTI4(pcode_PP3_11thMultipleArg(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11), 518);
+	ASSERTI4(pcode_PP3_11thMultipleArg(1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000, 10000, 11000), 506012);
+	ASSERTI4(pcode_PP3_11thMultipleArg(1000000, 2000000, 3000000, 4000000, 5000000, 6000000, 7000000, 8000000, 9000000, 10000000, 11000000), 506000012);
+}
+
+TEST pcode_PP3_12thMultipleArg_Main()
+{
+	extern i4 pcode_PP3_12thMultipleArg(i4 arg1, i4 arg2, i4 arg3, i4 arg4, i4 arg5, i4 arg6, i4 arg7, i4 arg8, i4 arg9, i4 arg10, i4 arg11, i4 arg12);
+	ASSERTI4(pcode_PP3_12thMultipleArg(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12), 663);
+	ASSERTI4(pcode_PP3_12thMultipleArg(1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000, 10000, 11000, 12000), 650013);
+	ASSERTI4(pcode_PP3_12thMultipleArg(1000000, 2000000, 3000000, 4000000, 5000000, 6000000, 7000000, 8000000, 9000000, 10000000, 11000000, 12000000), 650000013);
+}
+
+TEST pcode_PP3_13thMultipleArg_Main()
+{
+	extern i4 pcode_PP3_13thMultipleArg(i4 arg1, i4 arg2, i4 arg3, i4 arg4, i4 arg5, i4 arg6, i4 arg7, i4 arg8, i4 arg9, i4 arg10, i4 arg11, i4 arg12, i4 arg13);
+	ASSERTI4(pcode_PP3_13thMultipleArg(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 1), 677);
+	ASSERTI4(pcode_PP3_13thMultipleArg(1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000, 10000, 11000, 12000, 1000), 663014);
+	ASSERTI4(pcode_PP3_13thMultipleArg(1000000, 2000000, 3000000, 4000000, 5000000, 6000000, 7000000, 8000000, 9000000, 10000000, 11000000, 12000000, 1000000), 663000014);
+}
+
+TEST pcode_PP3_14thMultipleArg_Main()
+{
+	extern i4 pcode_PP3_14thMultipleArg(i4 arg1, i4 arg2, i4 arg3, i4 arg4, i4 arg5, i4 arg6, i4 arg7, i4 arg8, i4 arg9, i4 arg10, i4 arg11, i4 arg12, i4 arg13, i4 arg14);
+	ASSERTI4(pcode_PP3_14thMultipleArg(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 1, 2), 706);
+	ASSERTI4(pcode_PP3_14thMultipleArg(1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000, 10000, 11000, 12000, 1000, 2000), 691015);
+	ASSERTI4(pcode_PP3_14thMultipleArg(1000000, 2000000, 3000000, 4000000, 5000000, 6000000, 7000000, 8000000, 9000000, 10000000, 11000000, 12000000, 1000000, 2000000), 691000015);
+}
+
+TEST pcode_PP3_15thMultipleArg_Main()
+{
+	extern i4 pcode_PP3_15thMultipleArg(i4 arg1, i4 arg2, i4 arg3, i4 arg4, i4 arg5, i4 arg6, i4 arg7, i4 arg8, i4 arg9, i4 arg10, i4 arg11, i4 arg12, i4 arg13, i4 arg14, i4 arg15);
+	ASSERTI4(pcode_PP3_15thMultipleArg(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 1, 2, 1), 722);
+	ASSERTI4(pcode_PP3_15thMultipleArg(1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000, 10000, 11000, 12000, 1000, 2000, 1000), 706016);
+	ASSERTI4(pcode_PP3_15thMultipleArg(1000000, 2000000, 3000000, 4000000, 5000000, 6000000, 7000000, 8000000, 9000000, 10000000, 11000000, 12000000, 1000000, 2000000, 1000000), 706000016);
+}
+
+TEST pcode_PP3_16thMultipleArg_Main()
+{
+	extern i4 pcode_PP3_16thMultipleArg(i4 arg1, i4 arg2, i4 arg3, i4 arg4, i4 arg5, i4 arg6, i4 arg7, i4 arg8, i4 arg9, i4 arg10, i4 arg11, i4 arg12, i4 arg13, i4 arg14, i4 arg15, i4 arg16);
+	ASSERTI4(pcode_PP3_16thMultipleArg(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 1, 1, 1, 1), 725);
+	ASSERTI4(pcode_PP3_16thMultipleArg(1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000, 10000, 11000, 12000, 1000, 1000, 1000, 1000), 708017);
+	ASSERTI4(pcode_PP3_16thMultipleArg(1000000, 2000000, 3000000, 4000000, 5000000, 6000000, 7000000, 8000000, 9000000, 10000000, 11000000, 12000000, 1000000, 1000000, 1000000, 1000000), 708000017);
+}
+
+TEST pcode_PP3_17thMultipleArg_Main()
+{
+	extern i4 pcode_PP3_17thMultipleArg(i4 arg1, i4 arg2, i4 arg3, i4 arg4, i4 arg5, i4 arg6, i4 arg7, i4 arg8, i4 arg9, i4 arg10, i4 arg11, i4 arg12, i4 arg13, i4 arg14, i4 arg15, i4 arg16, i4 arg17);
+	ASSERTI4(pcode_PP3_17thMultipleArg(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 1, 1, 1, 1, 1), 743);
+	ASSERTI4(pcode_PP3_17thMultipleArg(1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000, 10000, 11000, 12000, 1000, 1000, 1000, 1000, 1000), 725018);
+	ASSERTI4(pcode_PP3_17thMultipleArg(1000000, 2000000, 3000000, 4000000, 5000000, 6000000, 7000000, 8000000, 9000000, 10000000, 11000000, 12000000, 1000000, 1000000, 1000000, 1000000, 1000000), 725000018);
+}
+
+TEST pcode_PP3_18thMultipleArg_Main()
+{
+	extern i4 pcode_PP3_18thMultipleArg(i4 arg1, i4 arg2, i4 arg3, i4 arg4, i4 arg5, i4 arg6, i4 arg7, i4 arg8, i4 arg9, i4 arg10, i4 arg11, i4 arg12, i4 arg13, i4 arg14, i4 arg15, i4 arg16, i4 arg17, i4 arg18);
+	ASSERTI4(pcode_PP3_18thMultipleArg(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 1, 1, 1, 1, 1, 1), 762);
+	ASSERTI4(pcode_PP3_18thMultipleArg(1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000, 10000, 11000, 12000, 1000, 1000, 1000, 1000, 1000, 1000), 743019);
+	ASSERTI4(pcode_PP3_18thMultipleArg(1000000, 2000000, 3000000, 4000000, 5000000, 6000000, 7000000, 8000000, 9000000, 10000000, 11000000, 12000000, 1000000, 1000000, 1000000, 1000000, 1000000, 1000000), 743000019);
+}
+
+TEST pcode_PP3_19thMultipleArg_Main()
+{
+	extern i4 pcode_PP3_19thMultipleArg(i4 arg1, i4 arg2, i4 arg3, i4 arg4, i4 arg5, i4 arg6, i4 arg7, i4 arg8, i4 arg9, i4 arg10, i4 arg11, i4 arg12, i4 arg13, i4 arg14, i4 arg15, i4 arg16, i4 arg17, i4 arg18, i4 arg19);
+	ASSERTI4(pcode_PP3_19thMultipleArg(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 1, 1, 1, 1, 1, 1), 938);
+	ASSERTI4(pcode_PP3_19thMultipleArg(1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000, 10000, 11000, 12000, 13000, 1000, 1000, 1000, 1000, 1000, 1000), 918020);
+	ASSERTI4(pcode_PP3_19thMultipleArg(1000000, 2000000, 3000000, 4000000, 5000000, 6000000, 7000000, 8000000, 9000000, 10000000, 11000000, 12000000, 13000000, 1000000, 1000000, 1000000, 1000000, 1000000, 1000000), 918000020);
+}
+
+TEST pcode_PP3_20thMultipleArg_Main()
+{
+	extern i4 pcode_PP3_20thMultipleArg(i4 arg1, i4 arg2, i4 arg3, i4 arg4, i4 arg5, i4 arg6, i4 arg7, i4 arg8, i4 arg9, i4 arg10, i4 arg11, i4 arg12, i4 arg13, i4 arg14, i4 arg15, i4 arg16, i4 arg17, i4 arg18, i4 arg19, i4 arg20);
+	ASSERTI4(pcode_PP3_20thMultipleArg(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 1, 1, 1, 1, 1, 1, 1), 959);
+	ASSERTI4(pcode_PP3_20thMultipleArg(1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000, 10000, 11000, 12000, 13000, 1000, 1000, 1000, 1000, 1000, 1000, 1000), 938021);
+	ASSERTI4(pcode_PP3_20thMultipleArg(1000000, 2000000, 3000000, 4000000, 5000000, 6000000, 7000000, 8000000, 9000000, 10000000, 11000000, 12000000, 13000000, 1000000, 1000000, 1000000, 1000000, 1000000, 1000000, 1000000), 938000021);
+}
+
+TEST pcode_PP3_0thMultipleArg_Main()
+{
+	extern i4 pcode_PP3_0thMultipleArg();
+	ASSERTI4(pcode_PP3_0thMultipleArg(), 1);
+}
+
+TEST pcode_PP3_1stMultipleArg_Main()
+{
+	extern i4 pcode_PP3_1stMultipleArg(i4 arg1);
+	ASSERTI4(pcode_PP3_1stMultipleArg(1), 3);
+	ASSERTI4(pcode_PP3_1stMultipleArg(I4_MAX), -2147483647);
+	ASSERTI4(pcode_PP3_1stMultipleArg(I4_MIN), -2147483646);
+	ASSERTI4(pcode_PP3_1stMultipleArg(0), 2);
+}
+
+TEST pcode_PP3_2ndMultipleArg_Main()
+{
+	extern i4 pcode_PP3_2ndMultipleArg(i4 arg1, i4 arg2);
+	ASSERTI4(pcode_PP3_2ndMultipleArg(1, 2), 8);
+	ASSERTI4(pcode_PP3_2ndMultipleArg(I4_MAX, I4_MIN), -2147483646);
+}
+
+TEST pcode_PP3_3rdMultipleArg_Main()
+{
+	extern i4 pcode_PP3_3rdMultipleArg(i4 arg1, i4 arg2, i4 arg3);
+	ASSERTI4(pcode_PP3_3rdMultipleArg(1, 2, 3), 18);
+	ASSERTI4(pcode_PP3_3rdMultipleArg(I4_MAX, 2, 3), -2147483632);
+	ASSERTI4(pcode_PP3_3rdMultipleArg(1, I4_MAX, 3), 12);
+	ASSERTI4(pcode_PP3_3rdMultipleArg(1, I4_MAX, I4_MAX), -2147483648);
+}
+
+TEST pcode_PP3_4thMultipleArg_Main()
+{
+	extern i4 pcode_PP3_4thMultipleArg(i4 arg1, i4 arg2, i4 arg3, i4 arg4);
+	ASSERTI4(pcode_PP3_4thMultipleArg(1, 2, 3, 4), 35);
+	ASSERTI4(pcode_PP3_4thMultipleArg(I4_MAX, 2, 3, 4), -2147483615);
+	ASSERTI4(pcode_PP3_4thMultipleArg(1, I4_MAX, 3, 4), 29);
+	ASSERTI4(pcode_PP3_4thMultipleArg(1, 2, I4_MAX, 4), -2147483625);
+	ASSERTI4(pcode_PP3_4thMultipleArg(1, 2, 3, I4_MAX), 15);
+}
+
+MAIN ParameterPassing3_main() { }

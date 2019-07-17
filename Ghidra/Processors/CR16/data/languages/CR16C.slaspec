@@ -1,0 +1,4 @@
+
+define endian=little;
+
+@include "CR16C.sinc"

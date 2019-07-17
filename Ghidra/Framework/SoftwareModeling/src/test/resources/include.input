@@ -1,0 +1,11 @@
+ORIGINAL TEXT
+@include "empty.input"
+ORIGINAL TEXT 2
+@define FOO foo
+@include "crazy.inc"
+@ifndef FOO
+ORIGINAL TEXT 3
+@endif
+@include "empty.input"
+ORIGINAL TEXT 4
+@include "$(REPLACE)/actual.inc"

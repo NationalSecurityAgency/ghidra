@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<language_translation>
+    <from_language version="0">Toy:BE:64:default</from_language>
+    <to_language version="1">Toy:BE:64:default</to_language>
+    <map_compiler_spec from="default" to="default" />
+    <map_register from="a0" to="r0" size="8" />
+    <map_register from="a1" to="r1" size="8" />
+    <map_register from="a2" to="r2" size="8" />
+    <map_register from="a3" to="r3" size="8" />
+    <map_register from="a4" to="r4" size="8" />
+    <map_register from="a5" to="r5" size="8" />
+    <map_register from="a6" to="r6" size="8" />
+    <map_register from="a7" to="r7" size="8" />
+    <map_register from="a8" to="r8" size="8" />
+    <map_register from="a9" to="r9" size="8" />
+    <map_register from="a10" to="r10" size="8" />
+    <map_register from="a11" to="r11" size="8" />
+    <map_register from="a12" to="r12" size="8" />
+</language_translation>
+

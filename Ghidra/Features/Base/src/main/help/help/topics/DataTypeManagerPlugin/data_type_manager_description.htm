@@ -1,0 +1,1108 @@
+<!DOCTYPE doctype PUBLIC "-//W3C//DTD HTML 4.0 Frameset//EN">
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+
+    <TITLE>Data Type Manager</TITLE>
+    <META http-equiv="content-type" content="text/html; charset=windows-1252">
+    <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+    <META name="generator" content="Microsoft FrontPage 4.0">
+  </HEAD>
+
+  <BODY>
+    <H1><A name="Data_Type_Manager"></A>Data Type Manager</H1>
+
+    <P>The <I>Data Type Manager</I> allows users to locate, organize, and apply data types to a
+    program. Allowing the user to build libraries of data types and to share them between programs,
+    projects, and different users is a long term goal for Ghidra.</P>
+
+    <P>Prior to Ghidra 4.3, sharing data types even between programs in the same project was very
+    difficult. (users would have to drag data types, one at a time, from one program or archive to
+    another to propagate changes to data types). As of Ghidra 4.3, significant progress has been
+    made to make sharing data types easier, but the inherent complexity of this problem requires
+    users to understand a number of basic concepts to take advantage of the new features.<BR>
+    </P>
+
+	<BLOCKQUOTE>
+	
+	<H2>Topics</H2>
+
+	<BLOCKQUOTE>
+	
+		<UL>
+			<LI>
+				<A HREF="#Basic_Concepts">Basic Concepts</A>
+			</LI>
+			<LI>
+				<A HREF="data_type_manager_window.html">Data Type Manager Window</A>
+			</LI>
+			<LI>
+				<A HREF="#Archives">Working With Data Type Archives</A>
+			</LI>
+			<LI>
+				<A HREF="#Category">Working With Categories</A>
+			</LI>
+			<LI>
+				<A HREF="#Data_Types">Working With Data Types</A>				
+			</LI>
+			<LI>
+				<A HREF="data_type_manager_archives.html">Managing Archives</A>				
+			</LI>
+		</U>
+	
+	</BLOCKQUOTE>
+
+    <H2><A NAME="Basic_Concepts"></A>Basic Concepts</H2>
+
+    <BLOCKQUOTE>
+      <H3>Data Types</H3>
+
+      <BLOCKQUOTE>
+        <P>Ghidra supports three kinds of data types: "Built-in", user defined, and derived.</P>
+
+        <TABLE border="1" cellpadding="2" cellspacing="0">
+          <TBODY>
+            <TR valign="top">
+              <TD width="80"><B><A name="built_in"></A>Built-in</B>
+              </TD>
+
+              <TD>The built-in data types are implemented directly in Java and are used for the
+              basic standard types such as byte, word, string, etc. They can't be changed, renamed,
+              or moved within an archive.</TD>
+            </TR>
+
+            <TR valign="top">
+              <TD><B>User Defined</B></TD>
+
+              <TD style="">There are four user defined data types: Structures, Unions, Enums, and
+              Typedefs. They can be created, modified, and renamed as needed.</TD>
+            </TR>
+
+            <TR valign="top">
+              <TD><B>Derived</B>
+              </TD>
+
+              <TD>There are two derivative data types: Pointers and Arrays. Pointers and arrays can
+              be created and deleted as needed, but they take on a name derived from their base
+              type.</TD>
+            </TR>
+          </TBODY>
+        </TABLE>
+      </BLOCKQUOTE>
+
+    <H3><A NAME="Data_Type_Archives_Definition"></A>Data Type Archives</H3>
+
+    <BLOCKQUOTE>
+      <P>Data type archives are used to bundle and share data types between programs, projects, and
+      users. There are two different types of user created archives: File data type archives and
+      Project data type archives. Data type archives can be accessed within the 
+      <I>Data Type Manager</I> window. When a data type archive is open, it
+      is displayed as a node in the <I>Data Type Manager</I>
+      tree. Archives can be opened by the user or automatically when a program is opened which
+      references that archive. Data type archives can be <A href="#open_for_editing">open for
+      modification</A> or as read-only. Within the <I>Data Type Manager</I> window there are
+      actions for opening, closing, renaming, and making archives modifiable.</P>
+    </BLOCKQUOTE>
+
+    <H3>Built-In Data Type Archive <IMG alt="" src="images/closedBookBrown.png"><BR>
+    </H3>
+
+    <BLOCKQUOTE>
+      <P>The "Built-in" archive is a special archive that is always available in the 
+      <I>Data Type Manager</I> window. It provides access to all of Ghidra's
+      "Built-in" data types. "Built-in" types are discovered by searching through Ghidra's class
+      path.</P>
+    
+	<BLOCKQUOTE>
+    <P><IMG src="../../shared/note.png" alt="">In the unlikely event that new data type class files
+    or jar files are added while Ghidra is running, there is a refresh action which will find and
+    add the new data types to the "built-in" archive.</P>
+    </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <H3><A name="file_archives"></A>File Data Type Archive <IMG alt="" src=
+    "images/closedBookGreen.png"><BR>
+    </H3>
+
+    <BLOCKQUOTE>
+      <P>File data type archives (or simply: file archives) store data types in files and have
+      ".gdt" filename extensions. They can be located anywhere in the filesystem. File archives can
+      be open by more than one user at the same time (assuming it is located on a shared
+      filesystem), but only one of those users can have it open for modification.</P>
+    </BLOCKQUOTE>
+
+    <H3><A name="ProjectDataTypeArchive"></A>Project Data Type Archive <IMG alt="" src=
+    "images/closedBookBlue.png"><BR>
+    </H3>
+
+    <BLOCKQUOTE>
+      <P>Project data type archives (or simply: project archives) store data types in Ghidra
+      project database directories, along with the programs for that project. The <A href=
+      "../FrontEndPlugin/Ghidra_Front_end.htm">Ghidra Project Window</A> will display project
+      archives in the same tree structure used to show the programs in the project. Project
+      archives can be versioned and shared in a multi-user environment just like programs. They use
+      the same "check-in/checkout" semantics for updating and sharing changes.</P>
+    </BLOCKQUOTE>
+
+    <H3>Data Types in a Program <IMG alt="" src="images/closedBookRed.png"><BR>
+    </H3>
+
+    <BLOCKQUOTE>
+      <P>Besides being stored in archives, data types are also stored inside programs.</P>
+
+      <P><IMG src="../../shared/note.png" alt="">Any data type used in a program must be stored in
+      that program even if it originally came from an archive.</P>
+
+      <P>Because of this, the "same" data types can live in more than one archive or program and
+      can be modified in different ways in each place where it lives. Prior to Ghidra 4.3, keeping
+      data types consistent between archives and programs was a problem because there was no way to
+      maintain an association, except by location and name, which was difficult due to potential
+      conflicts. Now additional information such as source archive, unique ID and various change
+      times are maintained to facilitate keeping data types consistent across archives and
+      programs.</P>
+    </BLOCKQUOTE>
+
+    <H3><A name="categories"></A>Categories <IMG alt="" src="images/closedFolder.png"><BR>
+    </H3>
+
+    <BLOCKQUOTE>
+      <P>Within a program or data type archive, data types can be organized using categories.
+      Categories are like folders in a filesystem and allow data types to be organized into a
+      hierarchical structure. Categories are ignored for purposes of <A href="#synchronizing">data
+      type synchronization</A>. In other words, the same data type might be in a category named
+      "aaa" in an archive and be in a category named "bbb" in the program. As far as Ghidra is
+      concerned, the different category does not constitute a data type difference.</P>
+    </BLOCKQUOTE>
+
+    <H3>Data Type Manager Tree</H3>
+
+    <BLOCKQUOTE>
+      <P>The <I>Data Type Manager</I> window organizes data types
+      using a tree structure. At the first level below the tree root, a node will exist for each
+      open archive and the "Built-in" archive. If a program is open, a node will also exist at this
+      level representing the program. In many ways, an open program behaves like a data type
+      archive.</P>
+    </BLOCKQUOTE>
+
+    <H3>Applying Data Types</H3>
+
+    <BLOCKQUOTE>
+      <P>The primary purpose of a data type is to apply it to various elements in a program. Data
+      types can be applied to memory locations to provide interpretations of the bytes at those
+      locations. They can also be used to describe function parameters and local variables.</P>
+
+      <P>One way to apply data types is to drag them from an archive and drop them on an element in
+      the program <A href="../CodeBrowserPlugin/CodeBrowser.htm#Code_Browser">Listing</A>. This
+      action will cause a copy of the data type to be added to the program and then a reference to
+      the copy will be used to annotate the program element. There are other ways of applying data
+      types to a program and they are described in more detail <A href=
+      "#applying_datatypes">later</A>.</P>
+    </BLOCKQUOTE>
+
+    <H3>Resolving Data Types</H3>
+
+    <BLOCKQUOTE>
+      <P>When a data type from an archive is applied to a program, a copy of that data type is
+      created in the program. The process of making that copy is called <I>resolving</I>. This is a
+      complicated process because data types can contain or reference other data types, possibly in
+      a circular fashion (via pointers). These referred data types may or may not already exist in
+      the program and the resolving process must account for this. Sometimes, a data type might
+      already exist with the same name as the <I>resolving</I> data type. Even if the conflicting
+      data type is equivalent, Ghidra may not be able to determine if the existing data type is
+      really meant to be the same as the <I>resolving</I> data type. Generally, such conflicts are
+      resolved by renaming the new or moved type by appending ".conflict" to its name. For many of
+      the data type actions initiated from the Data Type tree window, the specific conflict
+      resolution is determined by the current <A href="data_type_manager_window.html#conflict_mode">Data Type Conflict Mode</A>.
+      In the end, applying a single data type to a program can cause many new data types to be
+      added to the program.</P>
+    </BLOCKQUOTE>
+
+    <H3><A name="source_archive"></A>Source Archive</H3>
+
+    <BLOCKQUOTE>
+      <P>Whenever data types are resolved from an archive to a program or another archive, the
+      default behavior is to tag the copied data types with information about the archive from
+      which the data types originated. So each archive or program maintains a list of source
+      archives from which it has associated data types. Ghidra uses the term <I>Source Archive</I>
+      as a descriptor that identifies a file or project data type archive where a data type
+      originated. Whenever a program is opened, the <I>Data Type Manager</I> gets a list of source
+      archives from the program and automatically opens the corresponding data type archives if it
+      can find them. Using information stored in the source archive object along with information
+      from the actual archive and the change time on a data type, Ghidra can determine if data
+      types are <I>out-of-sync</I> with their corresponding data type in a program or other
+      archive.</P>
+      <P><IMG src="../../shared/note.png" alt="">
+      The data type tree will indicate data types that have a source archive association
+      by displaying the name of the source archive in parenthesis after the data type name.</P>
+      <BLOCKQUOTE>
+        <P>DataTypeName <B>(SourceArchiveName)</B></P>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+      <H3>Client Archive</H3>
+
+      <BLOCKQUOTE>
+        <P>Ghidra uses the term <I>client</I> <I>archive</I> to
+        represent the archive that contains a data type taken from a <I><A href=
+        "#source_archive">source archive</A></I>. This includes normal data type archives <B>and
+        the program</B>.</P>
+      </BLOCKQUOTE>
+
+      <H3><A name="Update_Source_Archive_Names">Update Source Archive Names</A></H3>
+
+      <BLOCKQUOTE>
+        <P>When new releases of Ghidra are installed, old datatype archives may be dropped. In some
+        cases these old archives may be replaced with a differently named archive. When this
+        happens, this popup action can be used on a client archive to update the old source archive
+        references. This popup action is only available when such an archive name change has
+        occurred. Any programs or other client archives which reference the old archive will have 
+        this popup action available to update the source archive name reference.</P>
+      </BLOCKQUOTE>
+
+      <H3>Committing Changes To Source Archive</H3>
+
+      <BLOCKQUOTE>
+        <P>If changes are made to a data type that has an association with a source archive, those
+        changes must be applied to the original in the source archive to keep the data types in
+        sync. Ghidra uses the term <I>commit</I> to mean propagating changes from a data type back
+        to its corresponding data type in the source archive.</P>
+      </BLOCKQUOTE>
+
+      <H3>Updating Data Types From Source Archive</H3>
+
+      <BLOCKQUOTE>
+        <P>If changes are made to a data type in an archive that has associated data types in a
+        client archive, those changes can be pushed out to those associations. Ghidra uses the term
+        <I>update</I> to mean propagating changes from a data type in a source archive to its
+        associated copies in a client archive.</P>
+      </BLOCKQUOTE>
+
+      <H3>Reverting</H3>
+
+      <BLOCKQUOTE>
+        <P>If changes are made to a data type that has an association with a source archive, that
+        data type is now different from its source data type. Ghidra uses the term <I>revert</I> to
+        throw away the changes and put the data type back to the way it is in the source archive.
+        If changes are made in both the referenced data type and the source data type, the
+        <I>revert</I> action will not be available because the original state is not known. In this
+        case, you must either <A href="#Commit">commit</A>, which will lose the changes in the
+        source archive, or <A href="#synchronizing">update</A> losing the changes in the client
+        archive. Currently, there is no merge capability.<BR>
+         See <A href="#Revert_Data_Type">Reverting Changes</A> for more information.</P>
+      </BLOCKQUOTE>
+
+      <H3>Synchronizing an Archive</H3>
+
+      <BLOCKQUOTE>
+        <P>When changes are made to data types in either the source archive or client archive, the
+        archive is said to be <I>out-of-sync</I>. Ghidra provides a capability known as
+        <I>synchronizing</I> to find all the data types that need to be <A href=
+        "#Commit_To_Archive">committed</A>, <A href="#Update_From_Archive">updated</A>, or <A href=
+        "#Revert_Data_Type">reverted</A> and allow the user to make a decision on each data
+        type.</P>
+      </BLOCKQUOTE>
+
+      <H3><A name="file_archive_path"></A>File Archive Path<BR>
+      </H3>
+
+      <BLOCKQUOTE>
+        <P>Ghidra maintains a list of directories used to search for file archives. This list is
+        known as the archive path. Ghidra provides a dialog for adding, removing, and re-ordering
+        the list of these directories. When Ghidra maintains source archive information for a file
+        data type archive, it only stores the name of the archive and not the entire file path.
+        Storing absolute paths would make the file archive references very brittle when the program
+        is shared or moved to another location. By using archive paths, different users can
+        maintain copies of the source archives in different locations on their computer and still
+        be able to find the archives in their shared programs.<BR>
+         See also: <A href="data_type_manager_archives.html#Edit_Data_Type_Archive_Paths">editing archive paths</A>.</P>
+      </BLOCKQUOTE>
+      	    	    	</BLOCKQUOTE>
+
+
+
+      <H2><A name="Archives"></A>Working with Data Type Archives</H2>
+
+      <BLOCKQUOTE>
+        <P>There are two types of Data Type Archives: File and Project.</P>
+
+        <DIV align="center">
+          <TABLE style="width: 80%; text-align: left;" border="1" cellpadding="2" cellspacing="0">
+            <TBODY>
+              <TR valign="top">
+                <TD style="width: 160px;"><B>File Data Type
+                Archives</B><BR>
+                </TD>
+
+                <TD style="">Files containing data type definitions, which have ".gdt" as their
+                file suffix.</TD>
+              </TR>
+
+              <TR valign="top">
+                <TD style="width: 160px;"><B>Project Data Type Archives</B><BR>
+                </TD>
+
+                <TD style="">Special files located within the Ghidra project directory structure,
+                which also contain data type definitions. These are available in the <A href=
+                "../FrontEndPlugin/Ghidra_Front_end.htm">Ghidra Project Window</A> and can be saved
+                as versions in a shared project repository.</TD>
+              </TR>
+            </TBODY>
+          </TABLE>
+        </DIV>
+
+        <P>The data types contained in an archive are organized into categories similar to the way
+        files are organized into directories in a filesystem. Archives are useful for sharing data
+        types with other users, or making your data types available for use in other projects.
+        Normally, file archives are opened in a read-only mode, but can optionally be <A href=
+        "#open_for_editing">opened</A> for editing. Project archives are normally opened for
+        editing, since they support sharing and version control and therefore allow more than one
+        user to modify them at a time. Only one user at a time can have a file archive opened for
+        editing.</P>
+      </BLOCKQUOTE>
+
+      <BLOCKQUOTE>
+        <H3><A name="Open_File_Data_Type_Archive"></A>Opening a File Data Type Archive</H3>
+
+        <BLOCKQUOTE>
+          <P>From the local menu <IMG src="../../shared/menu16.gif" alt=""> , select <I><B>Open
+          File Archive...</B></I>. A file chooser will appear. Use the file chooser to find and select
+          the data type archive to open. A new node will appear in the tree for the newly opened
+          archive. Also, the directory containing the newly opened archive will be added to the
+          archive path if it is not already there.</P>
+        </BLOCKQUOTE>
+
+        <H3><A name="Open_Project_Data_Type_Archive"></A>Opening a Project Data Type Archive</H3>
+
+	        <BLOCKQUOTE>
+        <P>From the local menu <IMG src="../../shared/menu16.gif" alt=""> , select <I><B>Open
+        Project Archive...</B></I>. A Ghidra project data type archive chooser will appear. This
+        chooser will show all the project archives in the current project. Use the chooser to find
+        and select the project data type archive to open. A new node will appear in the tree for
+        the newly opened archive.<BR>
+        </P>
+                </BLOCKQUOTE>
+
+        <H3><A name="New_File_Data_Type_Archive"></A>Creating a New File Data Type Archive</H3>
+
+        <BLOCKQUOTE>
+          <P>From the local menu <IMG src="../../shared/menu16.gif" alt=""> , select <I><B>New
+          File Archive...</B></I>. A file chooser will appear. Use the file chooser to select a
+          directory and enter a name for the new archive. If an archive already exists with that
+          name, a dialog will appear asking if the existing archive should be over-written. A new
+          node will appear in the tree for the newly created archive.<BR>
+          </P>
+        </BLOCKQUOTE>
+
+        <H3><A name="New_Project_Data_Type_Archive"></A>Creating a New Project Data Type
+        Archive</H3>
+
+	    <BLOCKQUOTE>
+        <P>From the local menu <IMG src="../../shared/menu16.gif" alt=""> , select <I><B>New
+        Project Archive...</B></I>. A Ghidra project data type archive chooser will appear. Use the
+        chooser to select a folder and enter a name for the new archive. A new node will appear in
+        the tree for the newly created archive.<BR>
+        </P>
+
+	        <BLOCKQUOTE>
+        <P><IMG alt="" src="../../shared/tip.png">You can also create a new Project Data Type
+        Archive by dragging a File Data Type Archive (.gdt) file onto the <A href=
+        "../FrontEndPlugin/Ghidra_Front_end.htm">Ghidra Project Window</A>. This will create a new
+        Project Data Type Archive populated with the same data types as the dragged File Data Type
+        Archive.</P>
+                </BLOCKQUOTE>
+	</BLOCKQUOTE>
+
+        <H3><A name="Close_Archive"></A>Closing a Data Type Archive</H3>
+
+        <BLOCKQUOTE>
+          <P>Select the data type archive to close, right-click on it and select the <I><B>Close
+          Archive</B></I> action. The archive will be removed from the tree.</P>
+        </BLOCKQUOTE>
+
+        <H3><A name="open_for_editing"></A>Opening a File Data Type Archive for Editing</H3>
+
+        <BLOCKQUOTE>
+          <P>When an archive is first opened, it is not editable. In order to make any changes to
+          the archive, it must be open for editing. Select the archive to edit, right-click on it
+          and select the <I><B>Open for Editing</B></I> action. If someone else is currently
+          editing that archive, this action will fail and a dialog will appear explaining that
+          someone else is already editing that archive.<BR>
+          </P>
+        </BLOCKQUOTE>
+
+        <DIV align="left">
+          <H3><A name="Unlock_Archive"></A> <A name="Lock_Archive"></A>Closing a File Data Type
+          Archive for Editing<BR>
+          </H3>
+        </DIV>
+
+        <BLOCKQUOTE>
+          <P>When an archive that is <A href="#open_for_editing">open for editing</A> no longer
+          needs to be edited, then it should be put back to a read-only mode so that other users
+          can then modify it. Select the data type archive to close for editing, right-click on it
+          and select the <I><B>Close for Editing</B></I> action. If the archive has unsaved
+          changes, a dialog will appear providing an opportunity to save the changes.</P>
+        </BLOCKQUOTE>
+
+        <H3><A name="Save"></A>Saving Changes to a File Data Type Archive</H3>
+
+        <BLOCKQUOTE>
+          <P>Whenever a data type archive has been <A href="#open_for_editing">opened for
+          editing</A> and has unsaved changes, the node will display its name with '*' attached.
+          For example the archive "MyArchive" will display as "MyArchive *". To save these changes,
+          right-click on the unsaved archive and select the <I><B>Save Archive</B></I> action. The
+          changes will be saved and the name will be updated to not show a '*'.</P>
+        </BLOCKQUOTE>
+
+        <H3><A name="Save_As"></A>Saving a File Data Type Archive to a New File<BR>
+        </H3>
+
+        <BLOCKQUOTE>
+          <P>Right-click on the file archive to be saved to a new file, and select the <I><B>Save
+          As...</B></I> action. A file chooser will appear which can be used to choose a location
+          and filename for the new archive that will be created. The tree will be updated to show
+          the new name for the archive (the filename). The original archive file is unaffected.</P>
+        </BLOCKQUOTE>
+
+        <H3><A name="Delete_Archive"></A>Deleting a Data Type Archive</H3>
+
+        <BLOCKQUOTE>
+          <P>Deleting an archive will not only remove the archive from the tree, but will
+          permanently remove it from the filesystem. To delete an archive, right-click on it and
+          select the <I><B>Delete Archive</B></I> action. An archive file must be open for editing
+          before this action will appear (see <A href="#open_for_editing">Opening a Data Type
+          Archive for Editing</A>).</P>
+        </BLOCKQUOTE>
+
+        <H3><A name="Remove_Invalid_Archive"></A>Removing an Invalid Data Type Archive</H3>
+
+	        <BLOCKQUOTE>
+        <P>When an archive file fails to open (when Ghidra can't find the file in the archive path
+        or encounters a permission problem) it will be displayed with the <IMG alt="" src=
+        "images/closedFolderInvalid.png"> icon. If you wish to permanently remove the file path
+        from the tool configuration and the current program options, you may right-click on it and
+        select the <I><B>Remove Invalid
+        Archive</B></I> action.</P>
+                </BLOCKQUOTE>
+
+        <H3><A name="Align_All_Data_Types"></A>Aligning All Data Types In a Program or Archive</H3>
+
+        <BLOCKQUOTE>
+          <P>Right-click on the program or data type archive where data types are to be aligned,
+          and select the <I><B>Align All...</B></I> action. A confirmation dialog will appear to
+          make sure you want to align all the structures and unions in the program or data type
+          archive. If you continue, all structures and unions that are unaligned will be changed to
+          aligned data types with no minimum alignment (the default) and no packing.</P>
+        </BLOCKQUOTE>
+
+        <H3><A name="synchronizing"></A> <A name="Update"></A> Updating an Archive From a Source
+        Archive</H3>
+
+        <BLOCKQUOTE>
+          <P>Datatypes within an archive that originally came from some other source archive may
+          need updating if they have been changed in the originating archive. If a an archive has
+          one or more datatypes that need updating, it will be marked with either the <IMG alt=""
+          src="images/smallLeftArrow.png"> or the <IMG alt="" src="images/doubleArrow.png">
+          icon.</P>
+
+          <P>To update the datatypes, right-click on the node that needs updating and select 
+          <B>Update Datatypes From</B> <I><B><IMG src=
+          "../../shared/arrow.gif" alt=""></B> <B>&lt;Source Archive
+          Name&gt;.</B></I> The Update Data Types dialog will be shown allowing you to select
+          the datatypes to update.</P>
+
+          <BLOCKQUOTE>
+            <P><IMG alt="" src="../../shared/warning.png">Ghidra uses time stamps and flags to
+            determine if an archive is out-of-sync. This can result in Ghidra indicating the
+            archive needs updating when actually it does not. For example, if a data type is
+            changed and then changed back, it will cause Ghidra to think the data type was changed.
+            In this case, invoking the update action will cause Ghidra to search for updates, but
+            when it finds none, a message dialog will appear indicating that no changes were
+            detected and the archive will be considered updated.</P>
+          </BLOCKQUOTE>
+        </BLOCKQUOTE>
+
+        <H3><A name="Commit"></A>Committing Changes in an Archive To a Source Archive</H3>
+
+        <BLOCKQUOTE>
+          <P>Datatypes within an archive that originally came from some other source archive may
+          have been changed and need to be pushed back (committed) to the originating archive. If a
+          an archive has one or more datatypes that need committing, it will be marked with either
+          the <IMG alt="" src="images/smallRightArrow.png"> or the <IMG alt="" src=
+          "images/doubleArrow.png"> icon.</P>
+
+          <P>To commit the datatypes, right-click on the node that contains the changed datatypes
+          and select <B>Commit Datatypes To</B> <I><B><IMG src=
+          "../../shared/arrow.gif" alt=""></B> <B>&lt;Source Archive
+          Name&gt;.</B></I> The Commit Data Types dialog will be shown allowing you to select
+          the datatypes to commit.</P>
+
+          <P><IMG alt="" src="../../shared/warning.png">Ghidra uses time stamps and flags to determine
+          if an archive is out-of-sync. This can result in Ghidra indicating the archive needs
+          committing when actually it does not. For example, if a data type is changed and then
+          changed back, it will cause Ghidra to think the data type was changed. In this case,
+          invoking the commit action will cause Ghidra to search for commits, but when it finds
+          none, a message dialog will appear indicating that no changes were detected.</P>
+
+          <P><IMG alt="" src="../../shared/note.png">
+          The source archive must be editable in order to commit File archives must be <A href=
+          "data_type_manager_description.htm#open_for_editing">open for editing</A> and project
+          archives that are under version control must be checked-out.</P>
+        </BLOCKQUOTE>
+
+        <H3>Reverting Changes in an Archive Back To a Source Archive</H3>
+
+        <BLOCKQUOTE>
+          <P>Datatypes within an archive that originally came from some other source archive may
+          have been changed and need to be reverted back to same state as the source archive (i.e.
+          discard the local changes) If a an archive has one or more datatypes that can be
+          reverted, it will be marked with either the <IMG alt="" src="images/smallRightArrow.png">
+          or the <IMG alt="" src="images/doubleArrow.png"> icon.</P>
+
+          <P>To revert the datatypes, right-click on the node that contains the changed datatypes
+          and select <B>Revert Datatypes To</B> <I><B><IMG src=
+          "../../shared/arrow.gif" alt=""></B> <B>&lt;Source Archive
+          Name&gt;.</B></I> The Revert Data Types dialog will be shown allowing you to select
+          the datatypes to revert.</P>
+        </BLOCKQUOTE>
+
+        <H3>Disassociating Data Types in an Archive From a Source Archive</H3>
+
+        <BLOCKQUOTE>
+          <P>Datatypes within an archive that originally came from some other source archive may be
+          disassociated from their source archive. This will prevent them from being updated or
+          committed back to the source archive. If a an archive has one or more datatypes that have
+          source archive relationships, the <B>Disassociate</B>
+          action will be available.</P>
+
+          <P>To disassociate datatypes, right-click on the node that contains the datatypes and
+          select <B>Disassociate Datatypes From</B> <I><B><IMG
+          src="../../shared/arrow.gif" alt=""></B> <B>&lt;Source
+          Archive Name&gt;.</B></I> The Revert Data Types dialog will be shown allowing you to
+          select the datatypes to revert.</P>
+        </BLOCKQUOTE>
+
+        <H3>Refreshing Data Type Sync Indicators in an Archive For a Source Archive</H3>
+
+        <BLOCKQUOTE>
+          <P>Datatypes that are associated with a source archive may have a commit, update, or
+          conflict icon indicating they are out of sync with the data type in the source archive,
+          when the data type actually matches the source datatype. This can happen if a data type
+          is changed, but changed to match its source. Invoke the <B>Refresh</B> 
+          action to refresh all the sync indicators for that
+          source archive.</P>
+
+          <P>To refresh sync indicators for datatypes associated with a particular source archive,
+          right-click on the node that contains the datatypes and select 
+          <B>Refresh Sync Indicators For</B> <I><B><IMG src=
+          "../../shared/arrow.gif" alt=""></B> <B>&lt;Source Archive
+          Name&gt;.</B></I> &lt;
+          </P>
+        </BLOCKQUOTE>
+
+        <H3>Version Control / Multi-user Actions on Project Archives</H3>
+
+        <P>The full set of version control actions from the front-end project window are available
+        when right-clicking on a project archive. See the <A href=
+        "../VersionControl/project_repository.htm#VersionControl">Version Control</A> section of
+        the Project Window for more information.</P>
+        <BR>
+      </BLOCKQUOTE>
+
+      <H2><A name="Category"></A>Working with Categories</H2>
+
+      <BLOCKQUOTE>
+        <P><A href="#categories">Categories</A> are used to organize data types into a hierarchical
+        structure. Categories can contain data types and other categories. Archive nodes represent
+        the root or default category for their corresponding archive they represent in addition to
+        representing the archive itself. In other words, most of the actions that apply to category
+        nodes can also be applied to archive nodes. The two exceptions are <I><B>Delete</B></I> and
+        <I><B>Rename</B></I>. The root category in an archive cannot be deleted and to rename it,
+        you must use the <I><B>Save As...</B></I> action, since its name is the name of the
+        archive.</P>
+
+        <H3><A name="New_Category"></A>Creating a New Category</H3>
+
+        <BLOCKQUOTE>
+          <P>Right-click on the category where the new category is to be created. Select the
+          <I><B>New<IMG src="../../shared/arrow.gif" alt=""> Category</B></I> action and a new
+          category named "New Category" will be created.<BR>
+          </P>
+        </BLOCKQUOTE>
+
+        <H3><A name="RenameCategory"></A>Renaming a Category<BR>
+        </H3>
+
+        <BLOCKQUOTE>
+          <P>Right-click on the category to be renamed. Select the <I><B>Rename</B></I> action and
+          then type in the new name in the in-place text edit box.</P>
+        </BLOCKQUOTE>
+
+        <H3><A name="DeleteCategory"></A>Deleting a Category<BR>
+        </H3>
+
+        <BLOCKQUOTE>
+          <P>Right-click on the category to be deleted. Select the <I><B>Delete</B></I> action. A
+          confirmation dialog will appear since <B>this action cannot be undone</B> (unless its in
+          the program's archive)<BR>
+          </P>
+        </BLOCKQUOTE>
+
+        <H3><A name="MoveCategory"></A>Moving a Category</H3>
+
+        <BLOCKQUOTE>
+          <P>Categories can only be moved <B>within the same archive</B>. Attempts to move
+          categories across archives are converted to a copy action. When a category is moved,
+          effectively all categories and data types are contained in that category are moved as
+          well. There are two ways to move a category:<BR>
+          </P>
+
+          <TABLE style="width: 100%; text-align: left;" border="0" cellpadding="2" cellspacing="2">
+            <TBODY>
+              <TR valign="top">
+                <TD style="vertical-align: top; width: 130px;">1. <B>Drag-N-Drop</B></TD>
+
+                <TD style="vertical-align: top;">Click on the category to be moved and drag it onto
+                its new parent category.</TD>
+              </TR>
+
+              <TR valign="top">
+                <TD style="vertical-align: top; width: 130px;">2. <B>Cut/Paste</B></TD>
+
+                <TD style="vertical-align: top;">Right-click on the category to be moved and select
+                the <I><B>Cut</B></I> action. Then right-click on the destination parent category
+                and select the <I><B>Paste</B></I> action.</TD>
+              </TR>
+            </TBODY>
+          </TABLE>
+        </BLOCKQUOTE>
+
+        <H3><A name="CopyCategory"></A>Copying a Category</H3>
+
+        <BLOCKQUOTE>
+          <P>Categories can be copied within an archive or from one archive to another, but the
+          behavior of the copy is very different for the two cases. When copying within an archive,
+          the behavior is more natural. Copies are made of the source category and its children and
+          placed inside the destination category. However, when copying from one archive to
+          another, the behavior is somewhat unusual. In this case, the selected categories and
+          contained data types are copied into the destination category, but if there are
+          additional data types that are referenced by the copied data types, those are copied into
+          the destination archive as well. After the copy, the additional data types will appear in
+          the same relative location as they exist in the source archive.<BR>
+          </P>
+
+          <TABLE style="width: 100%; text-align: left;" border="0" cellpadding="2" cellspacing="2">
+            <TBODY>
+              <TR valign="top">
+                <TD style="vertical-align: top; width: 130px;">1. <B>Drag-N-Drop</B></TD>
+
+                <TD style="vertical-align: top;">Click on the category to be moved and copy drag
+                (hold the &lt;Ctrl&gt; key while dragging) it onto its new parent category.</TD>
+              </TR>
+
+              <TR valign="top">
+                <TD style="vertical-align: top; width: 130px;">2. <B>Copy/Paste</B></TD>
+
+                <TD style="vertical-align: top;">Right-click on the category to be moved and select
+                the <I><B>Copy</B></I> action. Next, right-click on the destination parent category
+                and select the <I><B>Paste</B></I> action.</TD>
+              </TR>
+            </TBODY>
+          </TABLE>
+        </BLOCKQUOTE>
+      </BLOCKQUOTE>
+
+      <H2><A NAME="Data_Types"></A>Working with Data Types</H2>
+
+      <BLOCKQUOTE>
+        <P>Data types are the actual useful objects within archives. They can be applied to
+        programs to bring meaning to the data, parameters, local variables and function return
+        types contained in that program. User defined data types such as structures can be
+        arbitrarily complex, consisting of other data types which can be built upon other data
+        types and so on, until finally they are built on the primitive types (the built-in data
+        types.)</P>
+
+        <P><IMG src="../../shared/note.yellow.png" alt="">Built-in types have several restrictions. They
+        always live in the root category of an archive and they can't be renamed.</P>
+
+        <H3><A name="applying_datatypes"></A>Applying Data Types to a Program</H3>
+
+        <BLOCKQUOTE>
+          <P>Data types can be applied in several different ways:<BR>
+          </P>
+
+          <TABLE style="width: 100%; text-align: left;" border="0" cellpadding="2" cellspacing="2">
+            <TBODY>
+              <TR valign="top">
+                <TD style="vertical-align: top; width: 130px;">1. <B>Drag-N-Drop</B></TD>
+
+                <TD style="vertical-align: top;">Data types can be dragged directly onto various
+                locations in the <A href=
+                "../CodeBrowserPlugin/CodeBrowser.htm#Code_Browser">Listing</A> view. If dropped
+                onto undefined bytes, a new Data object is created. If dropped onto a function, the
+                return type can be set, etc.</TD>
+              </TR>
+
+              <TR valign="top">
+                <TD style="vertical-align: top; width: 130px;">2. <B>Favorites</B></TD>
+
+                <TD style="vertical-align: top;">Data types can be set to be a favorite. This
+                causes a popup menu action to be generated for that data type whenever the mouse is
+                right-clicked over the appropriate location in the <A href=
+                "../CodeBrowserPlugin/CodeBrowser.htm#Code_Browser">Listing</A> view.</TD>
+              </TR>
+
+              <TR valign="top">
+                <TD style="vertical-align: top; width: 130px;">3. <B>Last Used</B></TD>
+
+                <TD style="vertical-align: top;">Whenever a data type is applied to a program it is
+                remembered as the "last used" data type and can be easily applied to other
+                locations using a key binding or popup menu actions.</TD>
+              </TR>
+            </TBODY>
+          </TABLE>
+
+          <P><IMG src="../../shared/note.png" alt="">Applying a data type from an archive will
+          automatically add that data type to the program's archive. Also, the archive will become
+          associated with the program and automatically be opened whenever the program is
+          opened.</P>
+        </BLOCKQUOTE>
+
+        <H3><A name="CreateDataTypes"></A> <A name="Create_Structure"></A> <A name=
+        "Create_Enum"></A> <A name="Create_Typedef"></A> <A name="UserDefinedDataTypes"></A> <A
+        name="Structure"></A> <A name="Union"></A> <A name="Enum"></A> <A name=
+        "Function_Definition"></A><A name="Create_Typedef_From_Dialog"></A><A name=
+        "Create_Pointer"></A>Creating New User Defined Data Types</H3>
+
+        <BLOCKQUOTE>
+          <P>There are seven types of data types that users can create: Structures, Unions, Enums,
+          Function Definitions, Typedefs and Pointers.</P>
+
+          <P>Structures, unions, enums, and function definitions can be created by right-clicking
+          on the category where the new type should be located, and then choosing either the
+          <B><I>New<IMG src="../../shared/arrow.gif" alt=""> Structure</I>, <I>New<IMG src=
+          "../../shared/arrow.gif" alt=""> Union</I>,</B> <I><B>New<IMG src=
+          "../../shared/arrow.gif" alt=""> Enum</B></I> or <I><B>New<IMG src=
+          "../../shared/arrow.gif" alt=""> Function Definition</B></I> action respectively. Each of
+          these actions will bring up an appropriate editor (<A href=
+          "../DataTypeEditors/StructureEditor.htm"><FONT color="#0000ff">structure
+          editor</FONT></A> for structures and unions, the <A href=
+          "../DataTypeEditors/EnumEditor.htm">enum editor</A> for enums and the edit function
+          signature editor for function definitions) for creating the new desired data type.</P>
+
+          <BLOCKQUOTE>
+            <P>Creating a new <B>typedef</B> is even easier. Right-click on the data type to be
+            typedef'ed and select the <I><B>New<IMG src="../../shared/arrow.gif" alt=""> Typedef on
+            XYZ</B></I> action. A new typedef will be created on the <I>XYZ</I> data type in the
+            same category as the original data type.<BR>
+            </P>
+
+            <BLOCKQUOTE>
+            	<P>
+              Alternatively, you can click <I><B>New<IMG src="../../shared/arrow.gif" alt="">
+              Typedef...</B></I>, which will show a dialog that allows you to choose a typedef name
+              and the data type from which the typedef will be created.<SUP>*</SUP> This action can
+              also be executed from any folder instead of directly on another data type.
+              </P>
+            </BLOCKQUOTE>
+            <BR>
+            <BR>
+             
+
+            <P>To create a <B>pointer</B>, you can click <I><B>New<IMG src="../../shared/arrow.gif"
+            alt=""> Pointer to XYZ</B></I>. A new pointer will be created to the <I>XYZ</I> data
+            type in the same category as the original data type.<SUP>*</SUP></P>
+
+            <P><IMG src="../../shared/note.png" alt=""><SUP>*</SUP>If you create a typedef or
+            pointer to a data type in the <B>Built-in Data Type Manager</B>, the newly created type
+            will be placed in program's data type manager at the root category.</P>
+
+          <P>Structures can also be created directly in the <A href=
+          "../CodeBrowserPlugin/CodeBrowser.htm#Code_Browser">Listing</A> view. See <A href=
+          "../DataPlugin/Data.htm#StructureDefinition"><FONT color="#0000ff">creating structures in
+          the Browser</FONT></A> for details.</P>
+        </BLOCKQUOTE>
+                </BLOCKQUOTE>
+
+        <H3><A name="RenameDataType"></A>Renaming a Data Type</H3>
+
+        <BLOCKQUOTE>
+          <P>Right-click on the data type to be renamed. Select the <I><B>Rename</B></I> action and
+          then type in the new name in the in-place text edit box.</P>
+        </BLOCKQUOTE>
+
+        <H3><A name="EditEnum"></A><A name="Edit_Data_Type"></A>Editing a Data Type</H3>
+
+        <BLOCKQUOTE>
+          <P>Only structures, unions, enums and functionDefinitions can be edited. To edit one of
+          these data types, either double-click on its node or right-click its node and select the
+          <I><B>Edit</B></I> action. For structures and unions, the <A href=
+          "../DataTypeEditors/StructureEditor.htm"><FONT color="#0000ff">structure
+          editor</FONT></A> will appear, and for enums the <A href=
+          "../DataTypeEditors/EnumEditor.htm">enum editor</A> will appear.</P>
+        </BLOCKQUOTE>
+
+        <H3><A name="CreateEnumFromSelection"></A>Creating a new Enum from a Selection of
+        Enums</H3>
+
+        <BLOCKQUOTE>
+          <P>Select two or more existing enums. Select the <I><B>Create Enum from Selection</B></I>
+          action. A dialog will appear asking you for the new enum's name. This name must be unique
+          or you will be prompted to enter a unique name. The resulting enum will contain a
+          combination of all names and values from the selected enums. NOTE: If more than one of
+          the same value is contained in the enums, they will all be added to the new enum.
+          However, only the first one entered will be applied when this enum is used.</P>
+        </BLOCKQUOTE>
+
+        <H3><A name="DeleteDataType"></A>Deleting a Data Type</H3>
+
+        <BLOCKQUOTE>
+          <P>Right-click on the category to be deleted. Select the <I><B>Delete</B></I> action. A
+          confirmation dialog will appear since <B>this action cannot be undone</B> (unless its in
+          the program's archive)<BR>
+          </P>
+        </BLOCKQUOTE>
+
+        <H3><A name="MoveDataType"></A>Moving a Data Type</H3>
+
+        <BLOCKQUOTE>
+          <P>Data types can only be moved within the same archive. Attempts to move data types
+          across archives are converted to a copy action. There are two ways to move a data
+          type:<BR>
+          </P>
+
+          <TABLE style="width: 100%; text-align: left;" border="0" cellpadding="2" cellspacing="2">
+            <TBODY>
+              <TR valign="top">
+                <TD style="vertical-align: top; width: 130px;">1. <B>Drag-N-Drop</B></TD>
+
+                <TD style="vertical-align: top;">Click on the data type to be moved and drag it
+                onto its new parent category.</TD>
+              </TR>
+
+              <TR valign="top">
+                <TD style="vertical-align: top; width: 130px;">2. <B>Cut/Paste</B></TD>
+
+                <TD style="vertical-align: top;">Right-click on the data type to be moved and
+                select the <I><B>Cut</B></I> action. Next, right-click on the destination parent
+                category and select the <I><B>Paste</B></I> action.</TD>
+              </TR>
+            </TBODY>
+          </TABLE>
+        </BLOCKQUOTE>
+
+        <H3><A name="CopyDataType"></A>Copying a Data Type</H3>
+
+        <BLOCKQUOTE>
+          <P>Data types can be copied within an archive or from one archive to another, but the
+          behavior of the copy is very different for the two cases. When copying within an archive,
+          the behavior is more natural. A copy of the source data type is placed inside the
+          destination category. However, copying from one archive to another behaves somewhat
+          unusually. In this case, the destination folder is only relevant as to which archive is
+          the recipient of the copy. After the copy, the destination archive will contain the
+          copied data type. However, any data types contained by the copied data type are also
+          copied to exactly the same relative (to the root category node) category paths as the
+          source archive. There are two ways to copy a data type:<BR>
+          </P>
+
+          <TABLE style="width: 100%; text-align: left;" border="0" cellpadding="2" cellspacing="2">
+            <TBODY>
+              <TR valign="top">
+                <TD style="vertical-align: top; width: 130px;">1.Drag-N-Drop</TD>
+
+                <TD style="vertical-align: top;">Click on the data type to be moved and copy drag
+                (hold the &lt;Ctrl&gt; key while dragging) it onto its new parent category.</TD>
+              </TR>
+
+              <TR valign="top">
+                <TD style="vertical-align: top; width: 130px;">2.Copy/Paste</TD>
+
+                <TD style="vertical-align: top;">Right-click on the data type to be moved and
+                select the <I><B>Copy</B></I> action. Then right-click on the destination parent
+                category and select the <I><B>Paste</B></I> action.</TD>
+              </TR>
+            </TBODY>
+          </TABLE>
+        </BLOCKQUOTE>
+
+      <H3><A name="Align_Data_Type"></A>Aligning a Data Type</H3>
+
+      <BLOCKQUOTE>
+        <P>Right-click on the structure or union to be aligned. Select the <I><B>Align</B></I>
+        action. If the data type is unaligned it will be changed to an aligned data type with no
+        minimum alignment (the default) and no packing.</P>
+      </BLOCKQUOTE>
+
+      <H3><A name="Commit_To_Archive"></A>Committing Changes To Source Archive</H3>
+
+      <BLOCKQUOTE>
+        <P>If changes are made to a data type that has an association with a source archive, those
+        changes must be applied (<I>committed</I>) to the original
+        in the source archive as well to keep the data types in sync. Right-click on the data type
+        to be committed. Select the <B>Commit To Archive</B> action
+        and the changes will be applied back to the source archive.</P>
+      </BLOCKQUOTE>
+
+      <H3><A name="Update_From_Archive"></A>Updating Data Types From Source Archive</H3>
+
+      <BLOCKQUOTE>
+        <P>If changes are made to a data type in a source archive that has associated data types in
+        a client archive (another archive or the program), the data type in the client archive can
+        be <I>updated</I> from the source archive. Right-click on
+        the data type to be updated. Select the <B>Update From
+        Archive</B> action and the changes will be applied from the archive.</P>
+      </BLOCKQUOTE>
+
+      <H3><A name="Revert_Data_Type"></A>Reverting Changes</H3>
+
+      <BLOCKQUOTE>
+        <P>If changes are made to a data type that has an association with a source archive, that
+        data type is now different from its source data type. Those changes can be thrown away and
+        the data type can be <I>reverted</I> back to its original
+        state. Right-click on the data type to be reverted and select the 
+        <B>Revert</B> action and the changes will be removed.</P>
+      </BLOCKQUOTE>
+
+      <H3><A name="Disassociate_From_Archive"></A>Disassociate a Data Type</H3>
+
+      <BLOCKQUOTE>
+        <P>To remove a data type association with a source archive, right-click on the data type in
+        the client archive (another archive or the program) and select the 
+        <B>Disassociate From Archive</B> action. The data type will become a
+        local data type within the client archive and any changes to it will not affect the
+        original data type in the source archive.</P>
+      </BLOCKQUOTE>
+
+      <H3>Associate a Data Type with a Source Archive</H3>
+
+      <BLOCKQUOTE>
+        <P>Whenever a data type is applied to a program, or dragged to a category under the
+        program's node in the data type manager tree from a file or project archive, a copy of that
+        data type is created in the program. Also, an association back to the original data type is
+        created. That is the normal case and it is designed to be fairly intuitive. Less intuitive
+        is when a data type is originally created in a program and then is shared by dragging a
+        copy to an archive. Since programs cannot be the source for a data type, a dialog is
+        displayed asking the user if they want an association to be created. If the user answers
+        yes, an association is created, but the archive will become the source and the program's
+        data type is the one that gets the association. In other words, it appears as if the data
+        type were created in the archive and copied to the program.</P>
+        
+             </BLOCKQUOTE>
+
+        <H3><A name="DataTypeConflicts"></A>Handling Data Type Conflicts</H3>
+
+        <BLOCKQUOTE>
+          <P>When you move or copy a data type to a category that has a data type with the same
+          name, a conflict occurs. If the data types are not the same, then a dialog is displayed
+          in order to resolve the conflict, as shown below:</P>
+        </BLOCKQUOTE>
+
+        <P align="center"><IMG src="images/DataTypeConflict.png" alt="" border="0"></P>
+
+        <BLOCKQUOTE>
+          <P>In this example, you dragged (or pasted) the data type "SIZE_T" from one category to
+          the /basetsd.h category; the one being dragged is different from the one that already
+          exists in the /basetsd.h category. The choices to resolve the conflict are:</P>
+
+          <OL>
+            <LI><I>Rename</I> the data type that you are dragging to have ".conflict" appended to
+            it to make a unique name.</LI>
+
+            <LI><I>Replace</I> the existing data type with the one you are dragging (or, pasting);
+            this means any use of the existing data types is <B><I>replaced</I></B> with the new
+            data type; the existing data type is deleted.</LI>
+
+            <LI>Use the existing data type; if you did a cut/paste or drag/move operation, the
+            "cut" or "dragged" data type is removed from its original category; the destination
+            category is unaffected.</LI>
+          </OL>
+        </BLOCKQUOTE>
+
+        <H3><A name="ReplaceDataType"></A>Replacing a Data Type</H3>
+
+        <BLOCKQUOTE>
+          <P>A data type can be replaced by another data type. This means that every occurrence of
+          the original data type in a program is replaced by the new data type and the original
+          data type is deleted. There are two ways to replace a data type.</P>
+
+          <TABLE style="width: 100%; text-align: left;" border="0" cellpadding="2" cellspacing="2">
+            <TBODY>
+              <TR valign="top">
+                <TD style="vertical-align: top; width: 130px;">1. <B>Drag-N-Drop</B></TD>
+
+                <TD style="vertical-align: top;">Click on the replacement data type and drag it
+                onto the data type to be replaced.</TD>
+              </TR>
+
+              <TR valign="top">
+                <TD style="vertical-align: top; width: 130px;">2. <B>Copy/Paste</B></TD>
+
+                <TD style="vertical-align: top;">Right-click on the replacement data type to be
+                moved and select the <I><B>Cut</B></I> action. Next, right-click on the data type
+                to be replaced and select the <I><B>Paste</B></I> action.</TD>
+              </TR>
+            </TBODY>
+          </TABLE>
+        </BLOCKQUOTE>
+
+        <BLOCKQUOTE>
+          <P>Either way, a confirmation dialog will appear.</P>
+        </BLOCKQUOTE>
+
+        <H3><A name="Favorites"></A>Setting Favorite Data Types</H3>
+
+        <BLOCKQUOTE>
+          <P>Data types can be marked as <I>favorites</I> such that they show up in the <B><A href=
+          "../DataPlugin/Data.htm#Favorites">Data</A></B> option menu and the <B><A href=
+          "../FunctionPlugin/Variables.htm#DataType">Set Data Type</A></B> popup action menu in the
+          Browser. This is a quick way to apply a data type to the Program. The default Code
+          Browser has most of the well-known types in the <I><B>BuiltInTypes</B></I> category
+          marked as a favorite.</P>
+
+          <P>To make a favorite, right-click on the data type and select the <I><B>Favorite</B></I>
+          action. Favorite data types are marked with the <IMG src="images/emblem-favorite.png"
+          alt=""> icon.</P>
+        </BLOCKQUOTE>
+
+        <CENTER>
+          <IMG src="images/FavoriteDts.png" alt="" border="0">
+        </CENTER>
+
+        <BLOCKQUOTE>
+          <P>To remove a favorite, right-click on the data type and deselect the
+          <I><B>Favorite</B></I> action.</P>
+        </BLOCKQUOTE>
+
+        <BLOCKQUOTE>
+          <P><IMG src="../../shared/note.png" alt="" border="0"> The favorites are identified by
+          name and must be unique, so you cannot have data type "fred" in one "categoryA" marked as
+          a favorite and "fred" in "categoryB" also marked as a favorite.</P>
+
+          <P><IMG src="../../shared/tip.png" alt="" border="0"> Any data type from any archive
+          type (Program, BuildInTypes, or archive) can be marked as a favorite and used as such,
+          however, only those marked in the <I><B>BuiltInTypes</B></I> category will be saved as
+          part of your tool's state when you close the Project or exit Ghidra. Your list of
+          favorites is restored when you re-open your project or restart Ghidra.</P>
+        </BLOCKQUOTE>
+      </BLOCKQUOTE>
+            </BLOCKQUOTE>
+
+        <P class="providedbyplugin">Provided by: <I>DataTypeManagerPlugin</I></P>
+
+        <P class="relatedtopic">Related Topics:</P>
+
+        <UL>
+          <LI><A href="../DataPlugin/Data.htm#DataTypes">Data Types</A></LI>
+
+          <LI><A href="../FrontEndPlugin/Edit_Plugin_Path.htm">Edit Plugin Path</A></LI>
+
+          <LI><A href="../DataPlugin/Data.htm#ApplyDataType">Apply Data Types</A></LI>
+
+          <LI><A href="../DataTypeEditors/StructureEditor.htm">Edit Structure</A></LI>
+        </UL><BR>
+        <BR>
+
+  </BODY>
+</HTML>

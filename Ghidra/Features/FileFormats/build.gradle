@@ -1,0 +1,37 @@
+apply from: "$rootProject.projectDir/gradle/distributableGhidraModule.gradle"
+apply from: "$rootProject.projectDir/gradle/javaProject.gradle"
+apply from: "$rootProject.projectDir/gradle/helpProject.gradle"
+apply from: "$rootProject.projectDir/gradle/jacocoProject.gradle"
+apply from: "$rootProject.projectDir/gradle/javaTestProject.gradle"
+apply plugin: 'eclipse'
+
+eclipse.project.name = 'Features FileFormats'
+
+
+
+dependencies {
+	compile project(':Base')
+	compile project(':Recognizers')
+	compile project(':Python')
+	
+	compile ':dex-ir:2.0'
+	compile ':dex-reader:2.0'
+	compile ':dex-reader-api:2.0'
+	compile ':dex-translator:2.0'
+
+	compile 'org.ow2.asm:asm-debug-all:4.1'
+
+	compile 'org.smali:baksmali:1.4.0' // TODO: upgrade to 2.2.6
+	compile 'org.smali:dexlib:1.4.0'
+	compile 'org.smali:util:1.4.0'
+
+	compile 'net.sf.sevenzipjbinding:sevenzipjbinding:9.20-2.00beta'
+	compile ':AXMLPrinter2'
+	
+	runtime 'net.sf.sevenzipjbinding:sevenzipjbinding-all-platforms:9.20-2.00beta'
+	
+	helpPath project(path: ":Base", configuration: 'helpPath')
+
+	// include code from src/test/slow in Base
+	testCompile project(path: ':Base', configuration: 'integrationTestArtifacts')	
+}

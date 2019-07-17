@@ -1,0 +1,185 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+
+    <TITLE>Docking Windows</TITLE>
+    <META http-equiv="content-type">
+    <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+    <META name="author" content="NSAweb">
+  </HEAD>
+
+  <BODY>
+    <H1>Docking Windows</H1>
+
+	    <P>Ghidra tools provide various GUI components that allow users to view and manage
+	    programs.&nbsp; The Docking Windows feature allows users to customize the layout of these
+	    "Dockable" components within a Ghidra tool.</P>
+	
+	    <H2>The Basic Dockable Component</H2>
+		<BLOCKQUOTE>
+		    <P>The image below shows a tool with three <B><I>Dockable Components</I></B>:&nbsp; <I>Program
+		    Trees</I>, <I>Listing,</I> and <I>Data Type Manager</I>.</P>
+		    <BR><BR>
+		    <CENTER>
+		    <IMG src="images/Tool.png" alt=""> 
+			</CENTER>
+		</BLOCKQUOTE>
+		
+	<BR><BR>
+    <P>Each component consist of several common parts:</P>
+
+	<BLOCKQUOTE>
+	    <H3>Title Bar</H3>
+	
+		    <BLOCKQUOTE>
+		      <P>The title bar is at the top of the component and displays the title of the window.
+		      It also serves as a handle for dragging the component to other positions within the
+		      tool. &nbsp;The title bar's color indicates whether the component has keyboard focus.
+		      When the component has focus, the title bar is blue, otherwise it is gray. Only
+		      one component can have focus at a time.</P>
+		    </BLOCKQUOTE>
+	    
+	    
+	    <H3>Local Toolbar</H3>
+	
+		    <BLOCKQUOTE>
+		      <P>The title bar also serves as a local toolbar.&nbsp; It contains icons for actions that
+		      apply only to this component. Hovering the mouse over an icon causes a tool tip to be
+		      displayed. The tool tip give a hint as to what the action will do if you select the icon.
+		      </P>
+		    </BLOCKQUOTE>
+	
+	
+	    <H3><A name="Local_Menu"></A>Menu Icon <IMG src="../../shared/menu16.gif" alt=""></H3>
+	
+		    <BLOCKQUOTE>
+		      <P>The menu icon will appear if the dockable component has a local menu. &nbsp;As with the
+		      local toolbar, the local menu item applies only to this component. Mouse click on the icon to
+		      show the menu.</P>
+		    </BLOCKQUOTE>
+	
+	        <H3><A name="Close_Window"></A>Close Icon <IMG src="../../shared/close16.gif" alt=""></H3>
+	    
+			    <BLOCKQUOTE>
+			      <P>Select <IMG src="../../shared/close16.gif" alt=""> to hide the dockable component.
+			      The component will be removed until you select the component's name from the 
+			      tool's <I><A HREF="#Windows_Menu">Window</A></I> menu.  Some components, such 
+			      as search results, are transient and are permanently removed when you close 
+			      these components.</P>
+			    </BLOCKQUOTE>
+	
+	        <H3>Work Area</H3>
+	    
+		    <BLOCKQUOTE>
+		      <P>The work area contains the specific GUI component that is being managed.</P>
+		    </BLOCKQUOTE>
+		    
+	</BLOCKQUOTE>
+
+	<BR><BR>
+
+    <H2>Arranging Components</H2>
+
+    <BLOCKQUOTE>
+      <P><I>Docking Windows</I> allows users to arrange components into configurations that best
+      fit their needs. There are three ways components can be arranged in a tool:&nbsp;</P>
+
+      <OL>
+        <LI><I><B>Docked with other components</B></I>: components are side-by-side (or top to
+        bottom) with another component.</LI>
+
+        <LI><I><B>Stacked with other components</B></I>: components share the same space and tabs
+        are used to display them one at a time.</LI>
+
+        <LI><I><B>In their own window</B></I>: a component can be placed in its own window.</LI>
+      </OL>
+    </BLOCKQUOTE>
+
+    <BLOCKQUOTE>
+      <H3>Moving Components</H3>
+      <BLOCKQUOTE>
+
+	      <P>Components can be rearranged by dragging them in various ways. &nbsp;To drag a component,
+	      press and hold the left mouse button on the title bar of the component to be moved and begin
+	      moving the mouse. &nbsp;The mouse cursor will change to indicate what will happen if the
+	      mouse button is released at that location.<BR>
+	      &nbsp;&nbsp;&nbsp;<BR>
+	      &nbsp;&nbsp;&nbsp; <IMG src="images/invalid.png" alt=""> &nbsp; &nbsp;Invalid Location -
+	      releasing here will cancel the drag operation.<BR>
+	      &nbsp;&nbsp;&nbsp; <IMG src="images/leftArrow.png" alt=""> &nbsp; Will move the component to the
+	      left of the component that the mouse cursor is over.<BR>
+	      &nbsp;&nbsp;&nbsp; <IMG src="images/rightArrow.png" alt=""> &nbsp; &nbsp;Will move the component
+	      to the right of the component that the mouse cursor is over.<BR>
+	      &nbsp;&nbsp;&nbsp; <IMG src="images/upArrow.png" alt=""> &nbsp; Will move the component above the
+	      component that the mouse cursor is over.<BR>
+	      &nbsp;&nbsp;&nbsp; <IMG src="images/downArrow.png" alt=""> &nbsp; Will move the component below
+	      the component that the mouse cursor is over.<BR>
+	      &nbsp;&nbsp;&nbsp; <IMG src="images/stack.png" alt=""> &nbsp; Will stack the component with
+	      the component that the mouse is over, creating a tabbed pane effect.<BR>
+	      &nbsp;&nbsp;&nbsp; <IMG src="images/window.png" alt=""> &nbsp; &nbsp;Will place the component
+	      in a new window.<BR>
+	      </P>
+	
+	      <P><IMG src="../../shared/tip.png" border="0"> To get the arrow cursors to appear, move the
+	      mouse near the inside edge of another component. &nbsp;To get the stack cursor, move the
+	      mouse over the middle area of another component. &nbsp;To get the new window cursor, move the
+	      mouse over the desktop. &nbsp;The Invalid location cursor will appear when the mouse is over
+	      the component being moved.</P>
+	</BLOCKQUOTE>
+
+      <H3>Resizing components</H3>
+	  <BLOCKQUOTE>
+	      <P>Docked components are separated by thin borders. &nbsp;When the mouse is moved over a
+	      border which separates two docked components, the cursor will change to a resize <IMG src=
+	      "images/resize.png" alt=""> icon. To change the relative size of the components, press the
+	      left mouse button while over a border and drag the border in the appropriate direction.</P>
+    	</BLOCKQUOTE>
+	</BLOCKQUOTE> 
+
+	<BR><BR>
+
+	 <H3><A name="Renaming_Windows"></A>Renaming Components</H3>
+	 <BLOCKQUOTE>
+		 <P>
+		 	<b>Transient</B> components (e.g., search windows) can be renamed.  Right-click on 
+		 	either the title bar or tab of a transient window and a popup menu item will
+		 	appear that allows you to change the title of that component.  This can be useful
+		 	when you wish to better identify search results when you have performed many 
+		 	searches.
+		 </P>
+	</BLOCKQUOTE>
+
+	<BR><BR>
+
+    <H2><A name="Windows_Menu"></A>Windows Menu</H2>
+	<BLOCKQUOTE>
+
+	    <P>Each component currently loaded in the tool has a corresponding entry in the tool's
+	    <I>Window</I> menu. The menu item for a component can be used to show a component that is
+	    currently not visible. &nbsp;If the component is already showing, it will be brought to the
+	    front (if it is behind some other component or windows) and the component will be made active
+	    (have keyboard focus).&nbsp; Temporary windows such as search results are shown at the bottom
+	    of the menu below the separator bar.&nbsp; Multiple windows of the same type are grouped into
+	    sub-menus. &nbsp; For example the following snapshot of a window menu indicates there are
+	    several search results windows open.</P>
+    </BLOCKQUOTE>
+
+    <DIV align="center">
+      <IMG border="1" alt="" src="images/Window_Menu.png">&nbsp;<BR>
+      <BR>
+    </DIV><BR>
+
+    <P class="relatedtopic">Related Topics:</P>
+
+    <UL>
+      <LI><A href="help/topics/Tool/ToolOptions_Dialog.htm#OptionsForTool">Tool Options</A></LI>
+
+      <LI><A href="help/topics/Tool/Ghidra_Tool_Administration.htm">Ghidra Tool</A></LI>
+    </UL>
+
+    <P>&nbsp;</P>
+  </BODY>
+</HTML>

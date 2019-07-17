@@ -1,0 +1,184 @@
+<!DOCTYPE doctype PUBLIC "-//W3C//DTD HTML 4.0 Frameset//EN">
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+
+    <TITLE>Search for Address Tables</TITLE>
+    <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+    <META name="generator" content="Microsoft FrontPage 4.0">
+  </HEAD>
+
+  <BODY>
+    <H1><A name="Search_for_Address_Tables"></A>Search for Address Tables</H1>
+
+    <P></P>
+
+    <P>The <B>Search for Address Tables</B> feature searches the program for possible <A href=
+    "help/topics/Glossary/glossary.htm#AddressTable">address tables</A>. The search can span
+    the entire program or be limited to a selection. The results are presented in list form,
+    allowing the user to make tables and disassemble the addresses in those tables.</P>
+    
+    <BR>
+
+    <TABLE border="0" width="100%">
+      <TBODY>
+        <TR>
+          <TD width="100%" align="center"><IMG border="0" src="images/SearchForAddressTables.png" alt=""></TD>
+        </TR>
+      </TBODY>
+    </TABLE>
+
+    <H3>Searching for Address Tables</H3>
+
+    <BLOCKQUOTE>
+      <P>To search for address tables,</P>
+
+      <OL>
+        <LI>Select the <B>Search<IMG border="0" src="../../shared/arrow.gif" >For Address Tables...</B> option</LI>
+
+	    <LI>Select the <B>Search</B> button; the results of the search are displayed in the table.</LI>
+      </OL>
+      
+      <H4>Search Options</H4>
+      
+      	<BLOCKQUOTE>
+      	<UL>	
+	        <LI><B>Search Selection</B> - limit the search to the
+	        current selection in the Listing. (The checkbox is disabled if there is no
+	        selection).</LI>
+	
+	        <LI><B>Minimum Length</B> - determines the shortest length of the possible
+	        address tables to display.</LI>
+	
+	        <LI><B>Alignment</B> - the address tables must be aligned on the
+	        		indicated byte boundary. For example, 2 indicates alignment on a word boundary.
+	        </LI>
+	        <LI><B>Skip Length</B> - the number of bytes to skip between address matches.  This
+	         		is useful when finding addresses in structures that are known to have 
+	         		non-address byte sequences between the addresses.
+	        </LI>
+	     </UL>
+	    </BLOCKQUOTE>
+
+      <P><IMG border="0" src="../../shared/tip.png" > For very large Programs
+      that may take a while to search, you can cancel the search at any time by hitting the cancel
+      (<IMG border="0" src="Icons.STOP_ICON">) button. A progress bar is
+      displayed as needed.</P>
+      
+      </BLOCKQUOTE>
+
+    	  <H3>Search Results Table</H3>
+    	  
+    	  <BLOCKQUOTE>
+      <P>Default columns:</P>
+
+      <UL>
+        <LI><B>Location</B> - location of the possible address table</LI>
+
+        <LI><B>Label</B> - primary label at the location of the possible table.</LI>
+
+        <LI><B>Data (Hex/Ascii)</B> - Ascii and hex views of the bytes pointed to by the first
+        				element in the table.</LI>
+
+        <LI><B>Length</B> - the length of the possible address table</LI>
+      </UL>
+    </BLOCKQUOTE>
+
+    <H3>Making Address Tables</H3>
+
+    <BLOCKQUOTE>
+      <P>To make an address table,</P>
+
+      <OL>
+        <LI>Select one or more rows in the <B>Possible Address Tables</B> table.</LI>
+
+        <LI>Select the <B>Auto Label</B> checkbox to automatically create labels at the beginning
+        of each address table that was created, at all of the addresses contained in those tables,
+        and at the top of the indexes to the tables if there are any.</LI>
+
+        <LI>
+          If necessary, enter an offset (number of addresses to be skipped) to be added to the
+          starting address(es) (offset multiplied by 4, the address size). 
+
+          <UL>
+            <LI>For one address table, the entered offset cannot be greater than one less than the
+            length of the possible table.</LI>
+
+            <LI>For multiple address tables, the offset value cannot be greater than one less than
+            the length of the smallest selected table.</LI>
+
+            <LI>The field next to <I>Offset</I> shows the adjusted start address for the table;
+            this field cannot be edited. It is empty for multiple table selections.</LI>
+          </UL>
+        </LI>
+
+        <LI>Select the <B>Make Table</B> button.</LI>
+
+        <LI>An address table gets created at the location you chose, containing defined addresses
+        which now point to to the address created. These addresses now contain XREFs to the table
+        entries. If an index to the table exists immediately after the table, it will get created
+        as an array of bytes, as well.</LI>
+      </OL>
+
+	  <BLOCKQUOTE>
+      <P><IMG border="0" src="../../shared/warning.png">A warning dialog is
+      displayed if address tables could not be created due to a collision with existing data at
+      either the start of end of possible address tables. If the auto label option is selected, you
+      can determine from the label column those address tables that were not created.</P>
+      </BLOCKQUOTE>
+
+      <P>To disassemble the address tables,</P>
+
+      <BLOCKQUOTE>
+        <OL>
+          <LI>Select one or more rows in the <B>Possible Address Tables</B> table.</LI>
+
+          <LI>Select the <B>Disassemble</B> button; disassembly will begin at each address in the
+          selected address tables.</LI>
+        </OL>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+        	<H2>Actions</H2>
+
+	
+      <BLOCKQUOTE>
+		<H3></A>Make Selection <IMG border="0" src="Icons.MAKE_SELECTION_ICON"></H3>
+		
+			<BLOCKQUOTE>
+				<P>
+	    			<I>See <A HREF="help/topics/Search/Query_Results_Dialog.htm#Make_Selection">
+	    				Make Selection</A></I>.
+	    			</P>
+	    		</BLOCKQUOTE>
+	
+	    <H3>Selection Navigation <IMG border="0" src="images/locationIn.gif" alt=""></H3>
+	    
+	    		<BLOCKQUOTE>
+	    			<P>
+	    			<I>See <A HREF="help/topics/Search/Query_Results_Dialog.htm#Selection_Navigation">
+	    				Selection Navigation</A></I>.
+	    			</P>
+	    		</BLOCKQUOTE>
+    
+     </BLOCKQUOTE>
+     
+
+
+	<P class="providedbyplugin">Provided by: <I>AutoTableDisassemblerPlugin</I></P>
+    <P class="relatedtopic">Related Topics:</P>
+
+    <UL>
+      <LI><A href="Search_Memory.htm">Search Memory</A></LI>
+
+      <LI><A href="Search_Memory.htm">Search Program Memory</A></LI>
+
+      <LI><A href="Search_Program_Text.htm">Search Program Text</A></LI>
+
+      <LI><A href="Searching.htm">Searching</A></LI>
+    </UL>
+
+  </BODY>
+</HTML>

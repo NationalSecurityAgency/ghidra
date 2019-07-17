@@ -1,0 +1,349 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+    <META http-equiv="Content-Type" content="text/html; charset=windows-1252">
+    <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+
+    <TITLE>Bookmarks</TITLE>
+  </HEAD>
+
+  <BODY>
+    <H1>Bookmarks</H1>
+
+    <P>Bookmarks are used to flag addresses of interest in a Program. Each Bookmark consists of an
+    address, a type, a name, a category (optional), and a description (optional). Bookmarks may be
+    organized using the category field. Ghidra places various Bookmark icons in the <A href=
+    "help/topics/CodeBrowserPlugin/CodeBrowser.htm#CBMarkerMargin">Marker Margin</A> of the <A
+    href="help/topics/CodeBrowserPlugin/CodeBrowser.htm">Code Browser</A> to indicate locations of
+    defined bookmarks. The tooltip (shown when the mouse hovers over the Bookmark icon in the
+    Marker Margin) shows the Bookmark's type and comment.</P>
+
+    <P>The type refers to how the bookmark was added. Ghidra supplies five types of bookmarks:</P>
+
+    <DIV align="center">
+      <CENTER>
+        <TABLE border="1" width="100%">
+          <TBODY>
+            <TR>
+              <TD width="100%" colspan="3" align="center" bgcolor="#c0c0c0" height="21"><A name=
+              "BookmarkType"></A>Bookmark Types</TD>
+            </TR>
+
+            <TR>
+              <TH width="33%" bgcolor="#00ffff">Type (icon)</TH>
+
+              <TH width="33%" bgcolor="#00ffff">How Bookmark is Added</TH>
+
+              <TH width="34%" bgcolor="#00ffff">Navigator Color</TH>
+            </TR>
+
+            <TR>
+              <TD width="33%">Note <IMG src="images/notes.gif" alt=""></TD>
+
+              <TD width="33%">Added via the <A href="#CreateBookmarkDialog"><I>Note Bookmark</I>
+              dialog</A>; <I>Notes</I> are intended to be user-defined only.</TD>
+
+              <TD width="34%"><FONT color="#7F00FF">Purple</FONT></TD>
+            </TR>
+
+            <TR>
+              <TD width="33%">Info <IMG src="images/information.png" alt=""></TD>
+
+              <TD width="33%">May be added by a plugin to mark an address of interest.</TD>
+
+              <TD width="34%"><FONT color="#00ffff">Cyan</FONT></TD>
+            </TR>
+
+            <TR>
+              <TD width="33%">Analysis <IMG src="images/applications-system.png" alt=""></TD>
+
+              <TD width="33%">Added during the <A href=
+              "help/topics/AutoAnalysisPlugin/AutoAnalysis.htm">Auto Analysis</A> process.
+              Indicates automatic changes which have been made to the program (e.g., code found,
+              address tables, etc.).</TD>
+
+              <TD width="34%"><FONT color="#FF7F00">Orange</FONT></TD>
+            </TR>
+
+            <TR>
+              <TD width="33%">Error <IMG src="images/edit-delete.png" alt=""></TD>
+
+              <TD width="33%">Added by the <A href=
+              "help/topics/DisassemblerPlugin/Disassembly.htm">disassembler</A> or <A href=
+              "help/topics/AutoAnalysisPlugin/AutoAnalysis.htm">Auto Analysis</A> process when an
+              unexpected condition is identified at a specific address (e.g., bad
+              instruction).</TD>
+
+              <TD width="34%"><FONT color="#CC0033">Red</FONT></TD>
+            </TR>
+
+            <TR>
+              <TD valign="top"><I>Unknown</I> <IMG src="images/unknown.gif" alt=""><BR>
+              </TD>
+
+              <TD valign="top">Represents a custom Bookmark type which was added by a plugin not
+              currently configured into the tool. A properly designed plugin will assign a custom
+              icon and color to its custom type.<BR>
+              </TD>
+
+              <TD valign="top"><FONT color="#ff00ff">Magenta</FONT><BR>
+              </TD>
+            </TR>
+          </TBODY>
+        </TABLE>
+      </CENTER>
+    </DIV>
+
+    <P>Ghidra also places a marker for the bookmark in the <A href=
+    "help/topics/CodeBrowserPlugin/CodeBrowser.htm#CBNavigationMargin">Navigation Margin</A> of the
+    Code Browser. Clicking on the Navigation Margin causes the Code Browser to go to that address,
+    and centers it in the browser.</P>
+
+    <P>The following paragraphs describes the <A href="#Show_Bookmarks"><I>Bookmarks
+    window</I></A>, and how to <A href="#CreateBookmarkDialog">add</A> and <A href=
+    "#Delete_Bookmarks">remove</A> bookmarks.</P>
+
+    <H2><A name="CreateBookmarkDialog"></A><A name="Add_Bookmark"></A><B>Add a Bookmark (in the
+    CodeBrowser)</B></H2>
+
+    <CENTER>
+      <IMG border="0" src="images/AddBookmarkDialog.png" alt="">
+    </CENTER>
+
+    <BLOCKQUOTE>
+      <P>To add a Note Bookmark,</P>
+
+      <OL>
+        <LI>Position the cursor at an address</LI>
+
+        <LI><B>Right-mouse-click</B> in the Code Browser, select <B><FONT size=
+        "4">Bookmark</FONT></B></LI>
+
+        <LI>The <I>Address</I> field on the <I>Note Bookmark</I> dialog shows the location where
+        the bookmark will be added</LI>
+
+        <LI>Enter a <I>Category</I> (optional) or choose an existing one from the combo box</LI>
+
+        <LI>Enter a <I>Description</I> (optional); if an end of line comment exists at this
+        address, then this text becomes the default description of the bookmark, as shown in the
+        image above.</LI>
+
+        <LI>Click on the <B><FONT size="4">OK</FONT></B> button.</LI>
+      </OL>
+
+      <P><IMG border="0" src="images/tip.png" alt=""> When adding a bookmark with multiple selections in the
+      Code Browser, the <I>Bookmark Top of Each Selection</I> checkbox is both enabled and selected by default.
+      Leave the checkbox selected to create a bookmark at the start of each address range in the
+      selection. Deselecting the checkbox will cause the bookmark to be created at the cursor
+      location.</P>
+
+      <TABLE cellpadding="2" cellspacing="2" border="0" width="100%">
+        <TBODY>
+          <TR>
+            <TD valign="top" align="center"><IMG src="images/Before.png" alt="before"><BR>
+             Before Adding Bookmarks to Selection<BR>
+            </TD>
+
+            <TD valign="top" align="center"><IMG src="images/After.png" alt="after"><BR>
+             After Adding Bookmarks to Selection<BR>
+            </TD>
+          </TR>
+        </TBODY>
+      </TABLE>
+
+      <P>The following image depicts the Code Browser with Bookmarks. Notice the checkmarks in the
+      <A href="help/topics/CodeBrowserPlugin/CodeBrowser.htm#CBMarkerMargin">Marker Margin</A> on
+      the left and the markers in the <A href=
+      "help/topics/CodeBrowserPlugin/CodeBrowser.htm#CBNavigationMargin">Navigation Margin</A> on
+      the right.</P>
+    </BLOCKQUOTE>
+
+    <CENTER>
+      <IMG border="0" src="images/MarkerForBookmark.png" alt="">
+    </CENTER>
+
+    <H2><A name="Delete_Bookmark"></A><A name="Removing_Bookmarks"></A><B>Remove a Bookmark (in the
+    CodeBrowser)</B></H2>
+
+    <BLOCKQUOTE>
+      <P>To remove a bookmark,</P>
+
+      <OL start="1" type="1">
+        <LI>Position the cursor on the address of the bookmark to be deleted</LI>
+
+        <LI>From the <A href="help/topics/CodeBrowserPlugin/CodeBrowser.htm#CBMarkerMargin">Marker
+        Margin</A>, right-mouse-click, select <B><FONT size="4">Delete Bookmark<IMG src=
+        "images/arrow.gif" alt=""> &lt;type&gt;: &lt;description&gt;</FONT></B></LI>
+      </OL><BR>
+      <BR>
+    </BLOCKQUOTE>
+
+    <H2><A name="BookmarkDialog"></A><A name="Show_Bookmarks"></A><B>Bookmarks Window</B></H2>
+
+    <BLOCKQUOTE>
+      <P>The <I>Bookmarks</I> window lists all of the bookmarks within a Program, including the
+      bookmark type, category, description, address, label, and code unit where the bookmark was
+      placed. Click on a Bookmark to navigate to the selected address in the <A href=
+      "help/topics/CodeBrowserPlugin/CodeBrowser.htm">Code Browser</A>.</P>
+    </BLOCKQUOTE>
+
+    <P align="center"><IMG src="images/Bookmarks.png" border="0" alt=""></P>
+
+    <BLOCKQUOTE>
+      <P>To display the <I>Bookmarks</I> window, click the bookmark icon <IMG border="0" src=
+      "images/notes.gif" alt=""> in the Code Browser toolbar, or select the <B><FONT size=
+      "4">Window<IMG src="images/arrow.gif" alt=""> Bookmarks</FONT></B> option from the menu.</P>
+
+      <P>Each of the columns may be sorted by clicking on the header. The sort graphic illustrates
+      which column is being sorted on, and whether it is ascending (<IMG border="0" src=
+      "Icons.SORT_ASCENDING_ICON" alt=""> ) or descending (<IMG border="0" src=
+      "Icons.SORT_DESCENDING_ICON" alt=""> ). In the image above, the <I>Preview</I> column is
+      sorted in ascending alphabetical order. By default, the bookmarks are sorted in ascending
+      order by the <I>Type</I> column.</P>
+
+      <P>In the Bookmark table, only the <I><FONT size="4">Category</FONT></I> and <FONT size=
+      "4"><I>Description</I></FONT> columns are editable. To edit entries in these columns,
+      double-click on the appropriate cell and begin typing. Click outside of the cell to apply the
+      changes. When the <I>Category</I> column is being edited, it shows a combo box, listing all
+      of the categories. Choose an existing category or enter a new one. If a new category in
+      entered, the combo box is updated.<BR>
+      </P>
+
+      <P align="center"><IMG src="images/BookmarksFilter.png" alt=""></P>
+
+      <P><A name="Filter_Dialog"></A>The list of Bookmarks displayed can be filtered by clicking
+      the Filter button <IMG src="images/view-filter.png" alt=""> in the toolbar of the Bookmark
+      Window. The displayed bookmarks will correspond to the selected checkboxes in the <I>Bookmark
+      Filter</I> dialog.</P>
+
+      <P><IMG border="0" src="images/note.png" alt=""> You may also filter the contents of the
+      bookmark table by using the <A href="#Filter_TextField">filter text field</A>.</P>
+
+      <P>The following describes the features available from the Bookmarks window (Note: some of
+      these features are also available from inside the CodeBrowser):</P>
+
+      <H3>Edit Category</H3>
+
+        <OL>
+          <LI>Double click in a <I>Category</I> cell to display the cell editor.</LI>
+
+          <LI>Click on the down-arrow button in the cell editor to display the list of
+          categories.</LI>
+
+          <LI>Select a category from the list OR enter a new category in the cell editor.</LI>
+
+          <LI>Press the <B>&lt;Enter&gt;</B> key or click outside of the editor.</LI>
+        </OL>
+
+      <H3>Edit Description</H3>
+
+        <OL>
+          <LI>Double click on a <I>Description</I> cell to display the cell editor.</LI>
+
+          <LI>Enter a new description.</LI>
+
+          <LI>Press the <B>&lt;Enter&gt;</B> key or click outside of the editor.</LI>
+        </OL>
+
+
+      <H3>Change the Sort Order</H3>
+
+      <BLOCKQUOTE>
+        Click on the desired column header to change the sort order.
+      </BLOCKQUOTE>
+
+      <H3><B>Navigate to a Bookmark</B></H3>
+
+      <BLOCKQUOTE>
+        Click anywhere in the row to navigate to the bookmark.
+      </BLOCKQUOTE>
+
+      <H3><A name="Filter_Bookmarks"></A>Filter Bookmarks</H3>
+
+        <OL>
+          <LI>Click the Filter <IMG src="Icons.CONFIGURE_FILTER_ICON" alt=""> button in the local
+          toolbar of the <I>Bookmark</I>s window to display the <I>Bookmark Filter</I> dialog.</LI>
+
+          <LI>Configure filter information.</LI>
+
+          <LI>Click on the <B>OK</B> button.</LI>
+        </OL>
+
+        <BLOCKQUOTE>
+          	<P><IMG border="0" src="images/tip.png" alt="">
+          	If you have turned off some of the filter types, then the filter icon will show
+          	a checkmark (<IMG border="0" src="images/check.png" alt="" />).
+          	</P>
+        </BLOCKQUOTE>
+
+		<BLOCKQUOTE>
+        <P><IMG border="0" src="images/note.png" alt=""> You may save the settings of the bookmark
+        filter dialog by saving the tool.</P>
+
+        <P><A name="Filter_TextField"></A> In addition to filtering on the type of bookmarks you
+        may also filter the contents of the bookmark table by entering text into the filter text
+        field found at the bottom of the bookmark table. This filter will include only those
+        Bookmarks whose Category or Description contain the specified text. For example, to show
+        only the entry point bookmarks, you would enter "entry" in the filter field. The results
+        would show only those bookmarks with a Category or Description containing the word "entry".
+        The text filter is not case sensitive, nor does it support <I><A href=
+        "help/topics/Glossary/glossary.htm#RegularExpression">regular expressions</A></I>.</P>
+      </BLOCKQUOTE>
+
+      <H3><B>Reorder Columns</B></H3>
+
+      <BLOCKQUOTE>
+        Reorder columns in the Bookmarks window by dragging the column header to another position
+        in the table.
+      </BLOCKQUOTE>
+
+      <H3><A name="Select_Bookmark_Locations"></A>Make Selection in the Code Browser</H3>
+
+        <OL>
+          <LI>Select one or more rows in the Bookmarks table.</LI>
+
+          <LI>Click the Select Bookmark Locations <IMG src="Icons.MAKE_SELECTION_ICON" alt="">
+          button in the local toolbar.</LI>
+
+          <LI>The corresponding addresses are selected in the browser.</LI>
+
+          <LI>Navigate to the selected addressed by using the <A href=
+          "help/topics/Selection/Selecting.htm#NavigateOverSelection">navigation buttons</A> (<IMG
+          border="0" src="images/NextSelectionBlock16.gif" alt=""> , <IMG border="0" src=
+          "images/PreviousSelectionBlock16.gif" alt=""> ) on the <I>main</I> tool bar.</LI>
+        </OL>
+
+      <H3><A name="Delete_Bookmarks"></A>Remove Bookmarks</H3>
+
+        <OL>
+          <LI>Select one or more rows in the Bookmarks table.</LI>
+
+          <LI>Hit the <B>&lt;Delete&gt;</B> key, or press the <IMG alt="" border="0" src=
+          "images/edit-delete.png"> icon on the <I>Bookmarks</I> toolbar, or right mouse click and
+          choose the <B><FONT size="4">Delete</FONT></B> option.</LI>
+        </OL>
+
+      <H3>Dismiss the <I>Bookmarks</I> Window</H3>
+
+      <BLOCKQUOTE>
+        Click the <B>Dismiss</B> button to exit the <I>Bookmarks</I> window.
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <P class="providedbyplugin">Provided by: <I>Bookmarks</I> Plugin</P>
+
+    <P class="relatedtopic">Related Topics:</P>
+
+    <UL>
+      <LI><A href="help/topics/Selection/Selecting.htm">Navigate on Selection</A></LI>
+
+      <LI><A href="help/topics/CodeBrowserPlugin/CodeBrowser.htm#CBMarkerMargin">Marker
+      Margin</A></LI>
+
+      <LI><A href="help/topics/CodeBrowserPlugin/CodeBrowser.htm">Code Browser</A></LI>
+    </UL>
+  </BODY>
+</HTML>

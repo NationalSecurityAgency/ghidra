@@ -1,0 +1,78 @@
+apply from: file("../gpl.gradle").getCanonicalPath()
+
+if (findProject(':Generic') != null) {
+	apply from: "$rootProject.projectDir/gradle/nativeProject.gradle"
+	apply from: "$rootProject.projectDir/gradle/distributableGPLModule.gradle"
+}
+else {
+	apply from: "../nativeBuildProperties.gradle"
+}
+
+apply plugin: 'eclipse'
+
+eclipse.project.name = 'GPL CabExtract'
+
+project.ext.cabextract = "cabextract-1.6"
+
+/*********************************************************************************
+ * CabExtract extraction task
+ *
+ * Unpacks the cabextract tar file that's needed for the symbol server.  This
+ * is only unpacked for building the tool; once it's built, this unzipped 
+ * archive is removed.
+ *********************************************************************************/
+task unpackCabExtract (type: Copy) {
+ 
+	from tarTree(file("data/${cabextract}.tar.gz"))
+	into 'build/unpack'
+	
+	// Force the task to be executed every time by setting to false.
+	// This is done since configure changes the contents for a platform
+	// NOTE: this can cause the 'build/unpack' to be deleted prior to an unpack
+	outputs.upToDateWhen { false }
+	
+	doLast {
+ 		// Force all unpacked files to have the same timestamp
+ 		ant.touch() {
+ 			fileset(dir: file("build/unpack/${cabextract}"))
+	    }
+ 	}
+}
+
+/*********************************************************************************
+ * CabExtract configure task
+ *
+ * Performs configure on a newly unpacked cabextract tar file prior to
+ * performing make.
+ *********************************************************************************/
+task configureCabExtract (type: Exec) {
+	group "private"
+	workingDir "build/unpack/${cabextract}"
+	executable "./configure"
+	dependsOn unpackCabExtract
+}
+
+/*********************************************************************************
+ * CabExtract platform specific tasks
+ *
+ * The cabextract tool requires that its 'configure' script is called before make.
+ *********************************************************************************/
+def currentPlatform = getCurrentPlatformName()
+if (['linux64', 'osx64'].contains(currentPlatform)) {
+		
+	def makeName = "${currentPlatform}CabExtractMake" // native Make task found automatically
+
+	task (makeName, type: Exec) {
+		group "private"
+		workingDir "build/unpack/${cabextract}"
+		executable "make"
+		dependsOn configureCabExtract
+		doLast {
+			copy {
+				from "build/unpack/${cabextract}/cabextract"
+				into "build/os/${currentPlatform}"
+			}
+			delete file("build/unpack/${cabextract}")
+		}
+	}
+}

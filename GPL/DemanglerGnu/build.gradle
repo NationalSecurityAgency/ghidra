@@ -1,0 +1,117 @@
+apply from: file("../gpl.gradle").getCanonicalPath()
+
+if (findProject(':Generic') != null) {
+	apply from: "$rootProject.projectDir/gradle/nativeProject.gradle"
+	apply from: "$rootProject.projectDir/gradle/distributableGPLModule.gradle"
+}
+else {
+	apply from: "../nativeBuildProperties.gradle"
+}
+
+apply plugin: 'eclipse'
+
+eclipse.project.name = 'GPL DemanglerGnu'
+
+/****************************************************************************
+ * Defines the platforms we have to support in Ghidra.  This model is used 
+ * for all native builds and should be extended by each module as-needed.
+ ****************************************************************************/
+model {
+
+	// define the platforms that we support in ghidra
+	platforms {
+		win64 {
+			architecture 'x86_64'
+			operatingSystem 'windows'
+		}
+		linux64 {
+			architecture 'x86_64'
+			operatingSystem 'linux'
+		}
+		osx64 {
+			architecture 'x86_64'
+			operatingSystem 'osx'
+		}
+	}	
+}
+
+
+/**
+ * This project has some native 'c' code we need to include in the zip for licensing 
+ * and build reasons. So include them here, but we have to do something special: the 
+ * source is divided up into folders for makefiles, headers and .c files:
+ * 		/headers
+ * 		/c
+ * 		/build
+ *
+ * The contents of all these need to be merged into the same folder for distribution.  
+ * Hence the following 3 'from' clauses:
+ */
+task zipBuildableSource(type:Zip) {
+
+	group 'private'
+	description "Collects the source files needed to build this module."
+	baseName project.name + "-src-for-build"
+	extension 'zip'
+			
+	from (project.projectDir.toString() + "/src/demangler_gnu/c") {
+		into "/src/demangler_gnu"
+	}
+	from (project.projectDir.toString() + "/src/demangler_gnu/headers") {
+		into "/src/demangler_gnu"
+	}
+	from (project.projectDir.toString() + "/src/demangler_gnu/build") {
+		into "/src/demangler_gnu"
+	}
+	from (project.projectDir.toString() + "/src/demangler_gnu/README.txt")
+}
+
+model {
+	components {
+		demangler_gnu(NativeExecutableSpec) {
+			targetPlatform "win64"
+			targetPlatform "linux64"
+			targetPlatform "osx64"
+			sources {
+				c {
+					source {
+						srcDir "src/demangler_gnu/c"
+					}
+					exportedHeaders {
+						srcDir "src/demangler_gnu/headers"
+					}
+				}
+			}
+			
+		}
+	}
+}
+
+model {
+	binaries {
+		all{ b ->
+			if (toolChain in Gcc) {
+				cCompiler.args "-DMAIN_CPLUS_DEM"
+				cCompiler.args "-DHAVE_STDLIB_H"
+				cCompiler.args "-DHAVE_STRING_H"
+				if (targetPlatform.operatingSystem.linux) {
+//					linker.args "-static"
+				}
+			}
+			else if (toolChain in VisualCpp) {
+				cCompiler.args "/D_CONSOLE"
+				cCompiler.args "/DMAIN_CPLUS_DEM"
+				cCompiler.args "-DHAVE_STDLIB_H"
+				cCompiler.args "-DHAVE_STRING_H"
+			}
+			else if (toolChain in Clang) {
+				cCompiler.args "-DMAIN_CPLUS_DEM"
+				cCompiler.args "-DHAVE_STDLIB_H"
+				cCompiler.args "-DHAVE_STRING_H"
+				if (targetPlatform.operatingSystem.linux) {
+//					linker.args "-static"
+				}
+			}
+		}
+	}
+}

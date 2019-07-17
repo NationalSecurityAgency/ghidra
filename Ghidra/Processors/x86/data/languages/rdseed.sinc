@@ -1,0 +1,6 @@
+define pcodeop rdseed;
+define pcodeop rdseedIsValid;
+:RDSEED r16     is vexMode=0 & opsize=0 & byte=0x0f; byte=0xC7; r16 & reg_opcode=7 { r16 = rdseed(); CF=rdseedIsValid(); }
+:RDSEED r32     is vexMode=0 & opsize=1 & byte=0x0f; byte=0xC7; r32 & reg_opcode=7 { r32 = rdseed(); CF=rdseedIsValid(); }
+:RDSEED r64     is vexMode=0 & opsize=2 & $(REX_W) & byte=0x0f; byte=0xC7; r64 & reg_opcode=7 { r64 = rdseed(); CF=rdseedIsValid(); }
+

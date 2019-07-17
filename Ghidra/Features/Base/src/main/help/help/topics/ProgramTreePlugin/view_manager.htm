@@ -1,0 +1,167 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+
+    <TITLE>View Manager</TITLE>
+    <META http-equiv="content-type" content="text/html; charset=windows-1252">
+    <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+    <META name="generator" content="Microsoft FrontPage 4.0">
+  </HEAD>
+
+  <BODY>
+    <H1><A name="ProgramTreePlugin"></A>Program Tree Manager&nbsp;</H1>
+
+    <P>Program Trees are used to organize programs into a tree structure. Nodes within the a
+    program tree can be used to navigate to the corresponding address in the <A href=
+    "help/topics/CodeBrowserPlugin/CodeBrowser.htm">Code Browser</A>. Also, the program tree can be
+    used to restrict the view (set of addresses) that are displayed in the <A href=
+    "help/topics/CodeBrowserPlugin/CodeBrowser.htm">Code Browser</A>. The <SPAN style=
+    "font-weight: bold;">Program Tree Manager</SPAN> allows you to <A href=
+    "#Create_Default_Tree_View">create</A> , <A href="#Delete_Tree_View">delete</A>, <A href=
+    "#Rename_Tree_View">rename</A>, and <A href="#Close_Tree_View">close</A> program tree
+    views.&nbsp;</P>
+
+    <CENTER>
+      <TABLE border="0" width="100%">
+        <TBODY>
+          <TR>
+            <TD align="center" width="100%"><IMG src="images/ViewManager.png" border="0"></TD>
+          </TR>
+        </TBODY>
+      </TABLE>
+    </CENTER>
+
+    <P>The following paragraphs describe features of the Program Tree Manager.</P>
+
+    <H3><A name="Create_Default_Tree_View"></A>Create a Default Program Tree <IMG src=
+    "images/layout_add.png" x-maintain-ratio="TRUE" border="0"></H3>
+
+    <BLOCKQUOTE>
+      <P>A default tree has a fragment for each memory block in the program; the fragments are
+      named the same as the memory blocks.</P>
+
+      <P>When you bring up a Code Browser, the Program Tree Manager (the tabbed pane on the left
+      side of the Code Browser) shows a default view with no program open. When you open a program,
+      the Program Tree Manager will create a tab for each tree view that is in the
+      program.&nbsp;When you re-open the project, the Program Tree Manager will show the view from
+      when you last closed the project.</P>
+    </BLOCKQUOTE>
+
+    <BLOCKQUOTE>
+      <P>You can create a new default program tree by selecting the <IMG src="images/layout_add.png"
+      x-maintain-ratio="TRUE" border="0"> icon. A new tab is displayed with
+      the default name of the view, "Program Tree." If a view named "Program Tree" exists, then the
+      name has a one-up number appended to it to ensure the name is unique, e.g., "Program
+      Tree(1)."</P>
+
+      <P class="providedbyplugin">Provided by: <I>ProgramTreePlugin&nbsp;</I></P>
+    </BLOCKQUOTE>
+
+    <H3><A name="Open_Tree_View"></A>Open Program Tree <IMG src=
+    "images/openFolder.png" x-maintain-ratio="TRUE" border="0"></H3>
+
+    <BLOCKQUOTE>
+      <P>You can see a list of existing Program Trees in the Program by selecting the <IMG src=
+      "images/preferences-system-windows.png" x-maintain-ratio="TRUE" border="0"> icon. Select
+      the program tree name from the popup menu; a tab is created in the panel for this tree, if
+      one does not already exist. The selected tree becomes the current tree in the tabbed
+      pane.</P>
+
+      <P class="providedbyplugin">Provided by: <I>ProgramTreePlugin&nbsp;</I></P>
+    </BLOCKQUOTE>
+
+    <H3><A name="Navigation"></A>Select Fragments Corresponding to a Program Location <IMG src=
+    "images/locationIn.gif" border="0"></H3>
+
+    <BLOCKQUOTE>
+      <P>The icon&nbsp; <IMG src="images/locationIn.gif" border="0">&nbsp;
+      is a toggle button that controls whether the fragment(s) that correspond to the location in
+      the code browser should be selected in the Program Tree.&nbsp; <B>On</B> means to select the
+      fragment(s) that contain the address of the location. While the button is <B>On</B>, the
+      Program Tree will track the location in the browser by selecting the appropriate
+      fragments.&nbsp; The toggle is <B>Off</B> by default.</P>
+
+      <P class="providedbyplugin">Provided by: <I>ProgramTreePlugin&nbsp;</I></P>
+    </BLOCKQUOTE>
+
+    <H3><A name="Close_Tree_View"></A>Close a&nbsp; Program Tree</H3>
+
+    <BLOCKQUOTE>
+      <P>To close a program tree, right-mouse click on the tab of that program tree and choose the "Close" option.
+      Closing a program tree does not affect the Program.&nbsp;</P>
+
+      <P>Re-open the program tree by selecting it from the list of views described above.</P>
+
+      <P><IMG src="../../shared/note.png" border="0"> You cannot close the
+      last program tree..</P>
+    </BLOCKQUOTE>
+
+    <H3><A name="Rename_Tree_View"></A>Rename a&nbsp; Program Tree</H3>
+
+    <BLOCKQUOTE>
+      <P>To rename a program tree,&nbsp;</P>
+
+      <OL>
+        <LI>Right-mouse click on the tab of the program tree.</LI>
+
+        <LI>Choose the "Rename" option.&nbsp;</LI>
+
+        <LI>A text field is created over the tab; the value defaults to the current view name and
+        is selected. Enter a new name.</LI>
+      </OL>
+
+      <BLOCKQUOTE>
+        <P>If another view exists with this name, a message is displayed in the status area of the
+        tool. The list of existing views will show the new name.</P>
+      </BLOCKQUOTE>
+
+      <P><IMG src="../../shared/note.png" border="0"> If you move focus out
+      of the edit window, the edit window is removed, and no change is made to the name.</P>
+
+      <P>Click the <IMG src="../../shared/undo.png" border="0"> button to
+      undo the rename.</P>
+    </BLOCKQUOTE>
+
+    <H3><A name="Delete_Tree_View"></A>Delete a Program Tree</H3>
+
+    <BLOCKQUOTE>
+      <P>To delete a program tree,&nbsp;&nbsp;</P>
+
+      <OL>
+        <LI>Right-mouse click on the tab of the program tree.</LI>
+
+        <LI>Choose the "Delete" option.&nbsp;</LI>
+      </OL>
+
+      <P><IMG src="../../shared/note.png" border="0">You cannot delete the
+      last program tree. You must first create a new default tree, then delete your other tree.</P>
+
+      <P>Click the <IMG src="../../shared/undo.png" border="0"> button to
+      undo the Delete.</P>
+    </BLOCKQUOTE>
+
+    <H3>Change to Other Program Tree<BR>
+    </H3>
+
+    <BLOCKQUOTE>
+      <P>To switch to another tree view, either click on another tab, OR select a program tree name
+      from the list of program trees.</P>
+    </BLOCKQUOTE>
+
+    <P class="providedbyplugin">Provided By: <I>View Manager Plugin</I></P>
+
+    <P>Related Topics:&nbsp;</P>
+
+    <UL>
+      <LI><A href="help/topics/ProgramTreePlugin/program_tree.htm">Program Tree</A></LI>
+
+      <LI><A href="help/topics/ProgramTreePlugin/Program_Organizations.htm">Program
+      Organizations</A></LI>
+
+      <LI><A href="help/topics/CodeBrowserPlugin/CodeBrowser.htm">Code Browser</A></LI>
+    </UL>
+  </BODY>
+</HTML>

@@ -1,0 +1,225 @@
+<!DOCTYPE doctype PUBLIC "-//W3C//DTD HTML 4.0 Frameset//EN">
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+
+    <TITLE>Version Tracking Functions Table</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=windows-1252">
+    <LINK rel="stylesheet" type="text/css" href="../../../shared/Frontpage.css">
+  </HEAD>
+
+  <BODY lang="EN-US">
+    <H1><A name="Functions_Table"></A></A>Version Tracking Functions Table</H1>
+
+	    <TABLE x-use-null-cells="" width="100%">
+	      <TBODY>
+	        <TR>
+	          <TD align="center" width="100%"><IMG border="0" src="../images/FunctionsTable.png"></TD>
+	        </TR>
+	      </TBODY>
+	    </TABLE>
+
+	<blockquote>
+	
+		<BLOCKQUOTE>
+			<p>
+	      	The functions table shows a list of all functions in the source program and the 
+	      	destination program.  You can filter this table to show only those functions that are 
+	      	not part of a match.  This is useful if you would like to 
+	      	<a href="#Create_Manual_Match">create a manual match</a> from two functions.
+	      	</p>
+	        <P>
+	        If you select function in each table and there exists already a match between the 
+	        two functions, then the following status message will be displayed in the table: 
+	        A match already exists between &lt;<i>source function name</i>&gt; 
+	        and &lt;<i>destination function name</i>&gt;.
+	        </P>
+	        <P>
+	        The title of this window will show, for each program, the number of total functions, as
+	        well as the number of functions filtered-out of the table, if any filters are applied.
+	        </P>
+	      
+	    </BLOCKQUOTE>
+	
+		<H2>Functions Table Columns</H2>
+		  <BLOCKQUOTE>
+	        <table border="1" width="90%">
+	        	<tr>
+	        		<th>
+	        			Column Name
+	        		</th>
+	        		<th>
+	        			Description
+	        		</th>
+	        	</tr>
+	        	        	
+	        	<tr>
+	        		<td>
+	        		Label
+	        		</td>
+	        		<td>
+	        		This column shows the label for function in the given row.
+	        		</td>
+	        	</tr>
+	        	
+	        	<tr>
+	        		<td>
+	        		Location
+	        		</td>
+	        		<td>
+	        		This column shows the address for the function in the given row.
+	        		</td>
+	        	</tr>
+	        	
+	        	<tr>
+	        		<td>
+	        		Function Signature
+	        		</td>
+	        		<td>
+	        		This column shows the function signature for the function in the given row.
+	        		</td>
+	        	</tr>
+	        	
+	        </table>
+	      </BLOCKQUOTE>
+	
+		<H2><A name="Functions_Actions"></A>Functions Table Actions</H2>
+		  <BLOCKQUOTE>
+		  
+		  <h3><a name="Create_Manual_Match"></a>Create Manual Match</h3>
+		  <BLOCKQUOTE>
+	        <p align="left">  
+	            The <b>Create Manual Match</b> action (<img src="../images/Plus.png"/>) allows the user to create a match for the 
+				selected function in source table to the selected function in the destination table.
+				The action will be disabled if you do not have a single function selected in both
+				tables.
+			</p>
+			</BLOCKQUOTE>
+			<BR>
+			<h3><a name="Create_And_Accept_Manual_Match"></a>Create And Accept Manual Match</h3>
+		  <BLOCKQUOTE>
+	        <p align="left">  
+	            The <b>Create And Accept Manual Match</b> action (<img src="../images/flag.png"/>) allows the user to create a match for the 
+				selected function in source table to the selected function in the destination table and then automatically accept it.
+				The action will be disabled if you do not have a single function selected in both
+				tables.
+			</p>
+			</BLOCKQUOTE>
+			<BR>
+			
+			<h3><a name="Create_And_Apply_Manual_Match"></a>Create And Apply Manual Match</h3>
+		  <BLOCKQUOTE>
+	        <p align="left">  
+	            The <b>Create And Apply Manual Match</b> action (<img src="../images/checkmark_green.gif"/>) allows the user to create a match for the 
+				selected function in source table to the selected function in the destination table and then accept it and then automatically apply
+				any appropriate markup items from the source to the destination program.
+				The action will be disabled if you do not have a single function selected in both
+				tables.
+			</p>
+			</BLOCKQUOTE>
+			<BR>
+	        
+	        <h3><a name="Select_Existing_Match"></a>Select Existing Match</h3>
+	        <BLOCKQUOTE>
+	        <p align="left">The
+				<b>Select Existing Match</b> action (<img src="Icons.MAKE_SELECTION_ICON"/>) will 
+				select the existing match in the matches table.  To use this action you must have 
+				one function selected in source table and one function selected in the destination 
+				table.  Further, the action will only be enabled if a match exists for the two 
+				selected functions.
+			</p>
+			</BLOCKQUOTE>
+			<BR>
+			
+			<h3>Functions Table Filter</h3>
+			<BLOCKQUOTE>
+			<p align="left"> <a name="Functions_Filter"></a>
+				The <b>Functions Filter</b> action filters functions from the tables 
+				based upon the chosen state of the action.   You can change the state of the 
+				filter from the actions toolbar using the drop-down menu. 
+				 (<img src="../images/ActionsMenu_DropDown.png"/>).
+			</p>
+			
+			<p>
+			This list below shows the available filter states:
+			</p>
+			<ul>
+				<li>
+					<a name="Show_All_Functions"></a>
+					<b>Show All Functions</b> (<img src="../images/function.png" />) -
+					Shows all functions found in the source and destination programs. 
+				</li>
+				<li>
+					<a name="Show_Unmatched_Functions"></a>
+					<b>Show Only Unmatched Functions</b> (<img src="../images/filter_matched.png" />) - 
+					Shows only functions in the source and destination programs that are 
+					not part of any match.  This is
+					useful for showing functions that were not matched by any of the 
+					<a href="help/topics/VersionTrackingPlugin/VT_Correlators.html">program correlators</a>.
+				</li>
+				<li>
+					<a name="Show_Unaccepted_Functions"></a>
+					<b>Show Only Unaccepted Match Functions</b> (<img src="Icons.FILTER_NOT_ACCEPTED_ICON" />) -
+					Shows only functions in the source and destination programs that 
+					are not part of <b>an accepted match</b>.  This means that the functions
+					visible in the tables will either be part of no match or part of a 
+					match that has not been accepted.  This is useful for showing functions
+					that you have not yet accepted as being part of a valid match.
+				</li>
+			</ul>
+			</BLOCKQUOTE>
+			<BR>
+	        
+	        <h3><a name="Function_Association_Show_Hide_Function_Compare"></a>Show/Hide the Function Comparison Panel</h3>
+	        <BLOCKQUOTE>
+	        <p align="left">The
+				<b>Toggle Visibility of Dual Comparison Views</b> action
+				 (<img src="../images/application_tile_horizontal.png"/>) will 
+				toggle whether or not a function comparison panel is displayed below the source
+				and destination function tables. As you select a function in the source or destination
+				table, it is displayed in the function comparison panel so you can visually compare 
+				the source and destination functions.
+			</p>
+			<p align="left">
+				There are other toolbar and popup actions that are available for this function 
+				comparison panel. See the help for the 
+				<A href="help/topics/FunctionComparison/FunctionComparison.htm">Function Comparison Window</A> 
+				to learn more about using these.
+			</p>
+			</BLOCKQUOTE>
+			
+	      </BLOCKQUOTE>
+	      <BR>
+	
+	      
+	      	<H2><A name="Function_Filters"></A>Text Filter</H2>
+			  <BLOCKQUOTE>
+		        <p align="left"> 
+					Each table has a text field at that bottom labeled <b>Search Filter</b> that
+					allows you to search for text in the respective table.  If the text searched 
+					is contained in any column, then that column will remain in the table; otherwise
+					the row will be filtered out.					
+				</p>	       
+				
+			  </BLOCKQUOTE> 
+		        
+	      </BLOCKQUOTE>
+	      
+
+	</blockquote>
+
+    <P class="providedbyplugin">Provided by: <I>Version Tracking Plugin</I></P>
+
+    <P class="relatedtopic">Related Topics:</P>
+
+    <UL>
+      <LI><A href="help/topics/VersionTrackingPlugin/providers/VT_Matches_Table.html">Version Tracking Matches Table</A></LI>
+      <LI><A href="help/topics/VersionTrackingPlugin/VT_Tool.html">Version Tracking Tool</A></LI>
+      <LI><A href="help/topics/VersionTrackingPlugin/Version_Tracking_Intro.html">Version Tracking Introduction</A></LI>
+      <LI><A href="help/topics/FunctionComparison/FunctionComparison.htm">Function Comparison Window</A></LI>
+    </UL><BR>
+     <BR>
+  </BODY>
+</HTML>

@@ -1,0 +1,5 @@
+<opinions>
+    <constraint loader="Executable and Linking Format (ELF)" compilerSpecID="default">
+        <constraint primary="177" processor="CR16C"  size="16" />
+    </constraint>
+</opinions>

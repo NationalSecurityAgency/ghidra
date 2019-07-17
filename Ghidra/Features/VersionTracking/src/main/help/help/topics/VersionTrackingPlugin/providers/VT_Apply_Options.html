@@ -1,0 +1,626 @@
+<!DOCTYPE doctype PUBLIC "-//W3C//DTD HTML 4.0 Frameset//EN">
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+
+    <TITLE>Version Tracking Apply Options</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=windows-1252">
+    <LINK rel="stylesheet" type="text/css" href="../../../shared/Frontpage.css">
+  </HEAD>
+
+  <BODY lang="EN-US">
+    <H1><A name="Version_Tracking_Apply_Options"></A>Version Tracking Options</H1>
+
+
+	    <BLOCKQUOTE>
+			<P>
+				The actions taken when accepting match or applying its markup are defined as options, which 
+				can be changed by the user.  The sections below describe the various options available
+				and list the default values.  To access the options you can click the 
+				<img src="../images/settings16.gif" /> icon on the  
+				<a href="help/topics/VersionTrackingPlugin/providers/VT_Matches_Table.html">
+				Matches Table</a>.
+			</P>
+		</BLOCKQUOTE>
+		
+		<br>
+		
+			<BLOCKQUOTE>
+			<H2><A NAME="Match_Accept_Options"></A>Accept Match Options</H2>
+			
+			   <P>
+			   Below is a image of the <b>Accept Match Options</b>:
+			   </P>
+			   <BR>
+			</BLOCKQUOTE>	
+			   
+			       <TABLE x-use-null-cells="" width="100%">
+				      <TBODY>
+				        <TR>
+				          <TD align="center" width="100%">
+				          	<IMG border="1" src="../images/VTOptions_AcceptMatchDialog.png">
+				          </TD>
+				        </TR>
+				      </TBODY>
+				   </TABLE>
+			
+			<BLOCKQUOTE>	
+				<BR>
+				<BR>
+				<BR>
+				<P>
+				The following items will happen when a 
+				<a href="help/topics/VersionTrackingPlugin/providers/VT_Matches_Table.html#Accept_Match">match is accepted</a>:
+				</P>
+				<BR>
+				 <TABLE border="1" width="90%">
+			        <TR>
+			          <TH>Name</TH>
+			
+			          <TH>Description</TH>
+			
+			          <TH nowrap>Default Value</TH>
+			        </TR>
+			
+			        <TR>
+			          <TD nowrap><b>Auto Create Implied Matches</b></TD>
+			
+			          <TD>When true, an 
+			          <a href="help/topics/VersionTrackingPlugin/providers/VT_Implied_Matches_Table.html">implied match</a>
+			             will be created.
+			          </TD>
+			
+			          <TD><tt>True</tt></TD>
+			        </TR>
+			        
+			        <TR>
+			          <TD nowrap><b>Automatically Apply Function Name on Accept</b></TD>
+			
+			          <TD>When true,
+			          	the function name of the function in the source
+			          	program will be applied to the matched function in the destination program.
+			          </TD>
+			
+			          <TD><tt>True</tt></TD>
+			        </TR>		        
+			     </TABLE>
+			</BLOCKQUOTE>
+				
+			<br>
+			
+			<BLOCKQUOTE>
+			<H2><A NAME="Match_Apply_Options"></A>Apply Markup Options</H2>
+			<P>
+			   Below is a image of the <b>Apply Markup Options</b>:
+			</P>
+			<BR>
+			</BLOCKQUOTE>	
+	   
+	       <TABLE x-use-null-cells="" width="100%">
+		      <TBODY>
+		        <TR>
+		          <TD align="center" width="100%">
+		          	<IMG border="1" src="../images/VTOptions_ApplyMarkupDialog.png">
+		          </TD>
+		        </TR>
+		      </TBODY>
+		   </TABLE>
+				
+			<BLOCKQUOTE>	
+			<BR>
+			<BR>
+			<BR>
+			<P>
+				The table below contains the markup items and their default actions taken
+				when 
+				<a href="help/topics/VersionTrackingPlugin/providers/VT_Matches_Table.html#Apply_Markup">
+				Apply Markup</a> is executed on a match.  Each type of markup has different 
+				available actions.  These are:
+				
+					<ul>
+						
+		          		<li><b>Data Match Data Type Markup</b>:<br>
+		          		<ul>
+		          			<li><b>Do Not Apply</b> - Do not apply markup to the destination program.</li>
+		          			<li><b>Replace First Data Only</b> - Replace the markup in the destination 
+		          					with that from the source program. The replace will fail if any instructions 
+		          					or defined data, other than a defined data at the destination address, would
+		          					be overwritten by the replace.</li>
+		          			<li><b>Replace All Data</b> - Replace the markup in the destination 
+		          					with that from the source program. The replace will fail if any instructions 
+		          					would be overwritten by the replace.
+		          					<br>
+									<FONT color="red"><b>Important</b>: After doing Replace All Data, 
+				        				the <i>Reset Mark-up</i> action will only be able to restore the single 
+		        						Data item that was originally at the Destination Address. Any other 
+		        						Data items that were replaced by this action will not be restored by 
+				        				<i>Reset Mark-up</i>.</FONT>
+		          					</li>
+		          			<li><b>Replace Undefined Data Only</b> - Only replace undefined bytes in the destination 
+		          					with the markup item's data type in the source program. Otherwise, do nothing.</li>
+		          		</ul>
+		          		</li>
+		          		
+		          		<li><b>Label Markup</b>:<br>
+		          		<ul>
+		          			<li><b>Do Not Apply</b> - Do not apply markup to the destination program</li>
+		          			<li><b>Add</b> - Adds the labels from the source program to those already 
+		          			at the address in the destination program.</li>
+		          			<li><b>Add As Primary</b> - Adds the labels from the source program to 
+		          			those already at the address in the destination program. Sets the 
+		          			primary label in the destination program to whatever label was the 
+		          			primary one in the source program.</li>
+		          			<li><b>Replace All</b> - Replaces all the labels at the the address in 
+		          			the destination program with those from the source program.</li>
+		          			<li><b>Replace Default Only</b> - Only apply labels from the 
+		          					source program to the destination program when the label 
+		          					in the destination program is a default label.</li>
+		          		</ul>
+		          		</li>
+		          		
+		          		<li><b>Function Name Markup</b>:<br>
+		          		<ul>
+		          			<li><b>Do Not Apply</b> - Do not apply markup to the destination program</li>
+		          			<li><b>Add</b> - Adds the function name from the source program to the one already 
+		          					at the address in the destination program.</li>
+		          			<li><b>Add As Primary</b> - Adds the function name from the source program to 
+		          					the one already at the address in the destination program. Sets the 
+		          					primary label in the destination program to whatever label was the 
+		          					primary one in the source program.</li>
+		          			<li><b>Replace Always</b> - Always apply markup to from the source
+		          					program to the destination program.</li>
+		          			<li><b>Replace Default Only</b> - Only apply markup from the 
+		          					source program to the destination program when the label 
+		          					in the destination program is a default label.</li>
+		          		</ul>
+		          		</li>
+		          		
+		          		<li><b>Function Signature Markup</b>:<br>
+		          		Applying function signature markup applies the function signature except for the names, 
+		          		which are controlled by the parameter names markup.<br>
+		          		<ul>
+		          			<li><b>Do Not Apply</b> - Do not apply markup to the destination program.</li>
+		          			<li><b>Replace</b> - Always replace the markup in the destination 
+		          					with that from the source program.</li>
+		          			<li><b>Replace When Same Parameter Count</b> - Only replace the function signature in the 
+		          					destination with that from the source program when the number of parameters in the 
+		          					source signature match the number of parameters in the destination signature.</li>
+		          		</ul>
+		          		</li>
+		          		
+						<li><b>Comment Markup</b>:<br>
+		          		<ul>
+		          			<li><b>Do Not Apply</b> - Do not apply markup to the destination program.</li>
+		          			<li><b>Add To Existing</b> - Append the markup from the source program
+		          					to the destination program.</li>
+		          			<li><b>Replace Existing</b> - Replace the markup in the destination program with 
+		          			        the markup from the source program.</li>
+		          		</ul>
+		          		</li>
+		          		
+		          		
+		          		<P><U><b>Function Signature Details</b></U></P>
+		          		<BLOCKQUOTE>
+		          			<li><b>Return Type</b>:<br>
+		          			The function return type is applied as part of the function signature markup based on this 
+		          			option setting.<br>
+		          			<ul>
+		          				<li><b>Do Not Apply</b> - Do not apply the function REturn type in the destination program.</li>
+		          				<li><b>Replace Undefined Data Types Only</b> - Replace the function return type in the destination 
+		          					with that from the source program when replacing the function signature only
+		          					if the source return type is an undefined data type.</li>
+		          				<li><b>Replace</b> - Replace the function return type in the destination 
+		          					with that from the source program when replacing the function signature.</li>
+		          			</ul>
+		          			</li>
+		          		
+		          			<li><b>Inline</b>:<br>
+		          			The function inline flag is applied as part of the function signature markup based on this 
+		          			option setting.<br>
+		          			<ul>
+		          				<li><b>Do Not Apply</b> - Do not apply the function inline flag in the destination program.</li>
+		          				<li><b>Replace</b> - Replace the function inline flag in the destination 
+		          					with that from the source program when replacing the function signature.</li>
+		          			</ul>
+		          			</li>
+		          			
+		          			<li><b>No Return</b>:<br>
+		          			The function "No Return" flag is applied as part of the function signature markup based on this 
+		          			option setting.
+		          			<ul>
+		          				<li><b>Do Not Apply</b> - Do not apply the "No Return" flag to the destination program.</li>
+		          				<li><b>Replace</b> - Replace the "No Return" flag in the destination 
+		          					with that from the source program when replacing the function signature.</li>
+		          			</ul>
+		          			</li>
+		          		
+		          			<li><b>Calling Convention</b>:<br>
+		          			The calling convention is applied as part of the function signature markup based on this 
+		          			option setting.<br>
+		          			<ul>
+		          				<li><b>Do Not Apply</b> - Do not apply the calling convention to the destination program.</li>
+		          				<li><b>Replace If Same Language</b> - Replace the calling convention in the destination 
+		          					with that from the source program when replacing the function signature if the
+		          					source and destination programs are the same language.</li>
+		          				<li><b>Replace If Has Named Convention</b> - Replace the calling convention in the destination 
+		          					with that from the source program when replacing the function signature if the
+		          					destination program has a calling convention with the same name as the one in 
+		          					the source program.</li>
+		          			</ul>
+		          			</li>
+		          			
+		          			<li><b>Call Fixup</b>:<br>
+		          			The function call fixup is applied as part of the function signature markup based on this 
+		          			option setting.<br>
+		          			<ul>
+		          				<li><b>Do Not Apply</b> - Do not apply the function call fixup to the destination program.</li>
+		          				<li><b>Replace</b> - Replace the function call fixup in the destination 
+		          					with that from the source program when replacing the function signature.</li>
+		          			</ul>
+		          			</li>
+		          			
+		          			<li><b>Var Args</b>:<br>
+		          			The function var args flag is applied as part of the function signature markup based on this 
+		          			option setting.<br>
+		          			<ul>
+		          				<li><b>Do Not Apply</b> - Do not apply the function var args flag in the destination program.</li>
+		          				<li><b>Replace</b> - Replace the function var args flag in the destination 
+		          					with that from the source program when replacing the function signature.</li>
+		          			</ul>
+		          			</li>
+		          		
+						</BLOCKQUOTE>
+		          		
+		          		<P><U><b>Parameter Details</b></U></P>
+		          		<BLOCKQUOTE>
+		          			
+		          			<li><b>Parameter Data Types</b>:<br>
+		          			The parameter data types are applied as part of the function signature markup based on this 
+		          			option setting.<br>
+		          			Undefined parameter data types will not replace any defined parameter data types. 
+		          			A default data type won't replace another undefined data type or a defined data type.<br>
+		          			<ul>
+		          				<li><b>Do Not Apply</b> - Do not apply parameter data types to the destination program.</li>
+		          				<li><b>Replace Undefined Data Types Only</b> - Only replace undefined bytes in the destination 
+		          						with the parameter data type in the source program. Otherwise, do nothing.</li>
+		          				<li><b>Replace</b> - Replace the markup in the destination 
+		          						with that from the source program. The replace will fail if any instructions 
+		          						or defined data, other than a defined data at the destination address, would
+		          						be overwritten by the replace.</li>
+		          			</ul>
+		          			</li>
+		          		
+		          			<li><b>Parameter Names</b>:<br>
+		          			The parameter names are applied as part of the function signature markup based on this 
+		          			option setting.<br>
+		          			Default parameter names will not replace any defined parameter names.<br>
+		          			Whenever parameter names are replaced in the function signature using one of the 
+		          			source type priorities, an additional 
+		          			option controls whether a name in the destination function should be replaced by the one from 
+		          			the source function if the source types are the same.<br>
+		          			<ul>
+		          				<li><b>Do Not Apply</b> - Do not apply the parameter names to the function signature of the 
+		          				destination program.</li>
+		          				<li><b>Replace Default Only</b> - Replace only default parameter names in the destination 
+		          						with those from the source program. </li>
+		          				<li><b>Replace</b> - Replace the parameter names in the destination 
+		          						with those from the source program. Default parameter names from the source 
+		          						will not replace defined names in the destination.</li>
+		          				<li><b>Priority Replace</b> - Only replace the parameter names in the 
+		          						destination with one that has a higher priority source type from the source program.
+		          						This option applies names based on the source types from highest to lowest in the 
+		          						following order:
+		          						User Defined, Imported, Analysis, Default.</li>
+		          				<li><b>Import Priority Replace</b> - Only replace the parameter names in the 
+		          						destination with one that has a higher priority source type from the source program.
+		          						This option applies names based on the source types from highest to lowest in the 
+		          						following order:
+		          						Imported, User Defined, Analysis, Default.</li>
+		          			</ul>
+		          			</li>
+		          		
+		          			<li><b>Parameter Names Highest Name Priority</b>:<br>
+		          			Whenever the Function Parameter Names option is set to Priority Replace,
+		          			this option determines the order of the source type priorities.
+		          			Whenever parameter names are replaced in the function signature using 
+		          			one of the source type priorities, this option controls whether a name 
+		          			in the destination function should be replaced by the one from 
+		          			the source function if the source types are the same.
+		          			Only replace the parameter names in the destination with one that has 
+		          			a higher priority source type from the source program.<br>
+		          			<ul>
+		          				<li><b>User</b> - This option applies names based on the source types from highest to lowest in the 
+		          						following order:
+		          						User Defined, Imported, Analysis, Default.</li>
+		          				<li><b>Import</b> - This option applies names based on the source types from highest to lowest in the 
+		          						following order:
+		          						Imported, User Defined, Analysis, Default.</li>
+		          			</ul>
+		          			</li>
+		          		
+		          			<li><b>Parameter Names Replace If Same Priority</b>:<br>
+		          			This option determines whether or not to replace the destination parameter name with the 
+		          			source parameter name whenever their source types are the same and the Function Parameter 
+		          			Names option is set to either "User Priority Replace" or "Import Priority Replace". 
+		          			Checking this option's box prevents causes the source parameter name to replace the 
+		          			destination name when they are the same source type.<br>
+		          			</li>
+		          			
+		          			<li><b>Parameter Comments</b>:<br>
+		          			The parameter comments are applied as part of the function signature markup based on this 
+		          			option setting.<br>
+		          			<ul>
+		          				<li><b>Do Not Apply</b> - Do not apply the parameter comments to the destination program
+		          				even if the parameter names are applied.</li>
+		          				<li><b>Append To Existing</b> - Append the parameter comments from the source program
+		          					to the destination program whenever parameter names are applied.</li>
+		          				<li><b>Replace Existing</b> - Overwrite the parameter comments in the destination program with 
+		          			        the parameter comments from the source program whenever parameter names are applied.</li>
+		          			</ul>
+		          			</li>
+		          		</BLOCKQUOTE>
+		          		<br>
+		          	</ul>
+		         </P>
+		         </BLOCKQUOTE>
+		         
+			<BLOCKQUOTE>	
+				 <TABLE border="1" width="90%">
+			        <TR>
+			          <TH><b>Name &</b><br>
+			          Description</TH>
+			
+			          <TH nowrap><b>Default Value</b></TH>
+			        </TR>
+				        
+			        <TR>
+			          <TD><b>Calling Convention</b> : <br>
+			          		Specifies the default action to take for applying the function's calling 
+			          		convention when applying the function signature markup of a match.
+			          </TD>
+			
+			          <TD nowrap><tt>Replace If Same Language</tt>
+			          </TD>
+			        </TR>
+			        
+			        <TR>
+			          <TD><b>Call Fixup</b> : <br>
+			          		Specifies the default action to take for applying the function's call 
+			          		fixup when applying the function signature markup of a match.
+			          </TD>
+			
+			          <TD nowrap><tt>Replace</tt>
+			          </TD>
+			        </TR>
+			
+			        <TR>
+			          <TD><b>Data Match Data Type</b> : <br>
+			            Specifies the default action to take when applying the data type markup of a 
+			          	data match.  
+			          </TD>
+			
+			          <TD nowrap><tt>Replace Undefined Data Only</tt>
+			          </TD>
+			        </TR>
+			        
+			        <TR>
+			          <TD><b>End of Line Comment</b> : <br>
+			          		Specifies the default action to take when applying EOL comment markup of a 
+			          		match.  
+			          </TD>
+			
+			          <TD nowrap><tt>Add To Existing</tt>
+			          </TD>
+			        </TR>
+			        
+			        <TR>
+			          <TD><b>Function Name</b> : <br>
+			          		Specifies the default action to take when applying the function
+			          		name of a match.
+			          </TD>
+			
+			          <TD nowrap><tt>Add As Primary</tt>
+			          </TD>
+			        </TR>				   
+			        
+			        <TR>
+			          <TD><b>Inline</b> : <br>
+			          		Specifies the action to take for applying the inline flag when 
+			          		applying a function signature markup of a match.
+			          </TD>
+			
+			          <TD nowrap><tt>Replace</tt>
+			          </TD>
+			        </TR>
+			        
+			        <TR>
+			          <TD><b>No Return</b> : <br>
+			          		Specifies the default action to take when applying the no return 
+			          		flag when applying a function signature markup of a match.
+			          </TD>
+			
+			          <TD nowrap><tt>Replace</tt>
+			          </TD>
+			        </TR>
+			        
+			        <TR>
+			          <TD><b>Parameter Comments</b> : <br>
+			          		Specifies the default action to take when applying the parameter comments 
+			          		when applying a function signature markup of a match.
+			          </TD>
+			
+			          <TD nowrap><tt>Add To Existing</tt>
+			          </TD>
+			        </TR>	
+			        
+			        <TR>
+			          <TD><b>Parameter Data Types</b> : <br>
+			          		Specifies the default action to take when applying the parameter data types 
+			          		when applying a function signature markup of a match.
+			          </TD>
+			
+			          <TD nowrap><tt>Replace Undefined Data Types Only</tt>
+			          </TD>
+			        </TR>	
+			        
+			        <TR>
+			          <TD><b>Parameter Names</b> : <br>
+			          		Specifies the default action to take when applying the parameter
+			          		names when applying a function signature markup of a match.
+			          </TD>
+			
+			          <TD><tt>Priority Replace</tt>
+			          </TD>
+			        </TR>	
+			        
+			        <TR>
+			          <TD><b>Parameter Names Highest Name Priority</b> : <br>
+			          		Specifies the highest to lowest priority order of the source types that 
+			          		are used when performing a Priority Replace for Function Parameter Names.
+			          </TD>
+			
+			          <TD><tt>User</tt>
+			          </TD>
+			        </TR>	
+			        
+			        <TR>
+			          <TD><b>Parameter Names Replace If Same Priority</b> : <br>
+			          		When true, if Function Signatures are being replaced and Function 
+			          		Parameter Names are doing a User Priority Replace or an Import Priority 
+			          		Replace and the Source Types are the same for the source and 
+			          		destination parameters, the source parameter will replace the 
+			          		destination parameter.
+			          </TD>
+			
+			          <TD nowrap><tt>False</tt>
+			          </TD>
+			        </TR>	
+			        
+			        <TR>
+			          <TD><b>Function Signature</b> : <br>
+			          		Specifies the default action to take when applying the function
+			          		signature of a match.
+			          </TD>
+			
+			          <TD nowrap><tt>Replace When Same Parameter Count</tt>
+			          </TD>
+			        </TR>
+			        
+			        <TR>
+			          <TD><b>Labels</b> : <br>
+			          		Specifies the default action to take when applying the label of a match.
+			          </TD>
+			
+			          <TD nowrap><tt>Add</tt>
+			          </TD>
+			        </TR>	
+			        
+			        <TR>
+			          <TD><b>Plate Comment</b> : <br>
+			          		Specifies the default action to take when applying Plate Comment
+			          		 markup of a match.  
+			          </TD>
+			
+			          <TD nowrap><tt>Add To Existing</tt>
+			          </TD>
+			        </TR>	
+			            
+			      	<TR>
+			          <TD><b>Post Comment</b> : <br>
+			          		Specifies the default action to take when applying Post Comment
+			          		 markup of a match.  
+			          </TD>
+			
+			          <TD nowrap><tt>Add To Existing</tt>
+			          </TD>
+			        </TR>	
+			          
+			          <TR>
+			          <TD><b>Pre Comment</b> : <br>
+			          		Specifies the default action to take when applying Pre Comment
+			          		 markup of a match.  
+			          </TD>
+			
+			          <TD nowrap><tt>Add To Existing</tt>
+			          </TD>
+			        </TR>	
+			        
+			        <TR>
+			          <TD><b>Repeatable Comment</b> : <br>
+			          		Specifies the default action to take when applying Repeatable Comment
+			          		 markup of a match.  
+			          </TD>
+			
+			          <TD nowrap><tt>Add To Existing</tt>
+			          </TD>
+			        </TR>	
+			        
+			        <TR>
+			          <TD><b>Return Type</b> : <br>
+			          		Specifies the action to take for applying the return type when 
+			          		applying a function signature markup of a match.
+			          </TD>
+			
+			          <TD nowrap><tt>Replace Undefined Data Types Only</tt>
+			          </TD>
+			        </TR>
+			        
+			        <TR>
+			          <TD><b>Set Excluded Markup Items To Ignored</b> : <br>
+			          		When true, any markup items marked as <b>Do Not Apply</b> via these options
+			          		will have their status marked as ignored, with a 
+			          		<a href="help/topics/VersionTrackingPlugin/providers/VT_Markup_Table.html#Markup_Item_Status">
+			          		status of <b>Don't Care</b></a>.
+			          </TD>
+			
+			          <TD nowrap><tt>False</tt>
+			          </TD>
+			        </TR>	
+			          
+			        <TR>
+			          <TD><b>Set Incomplete Markup Items To Ignored</b> : <br>
+			          		When true, any markup item that could not be applied (such as when
+			          		it has no destination address set) will have their 
+			          		status marked as ignored, with a 
+			          		<a href="help/topics/VersionTrackingPlugin/providers/VT_Markup_Table.html#Markup_Item_Status">
+			          		status of <b>Don't Care</b></a>.
+			          </TD>
+			
+			          <TD nowrap><tt>False</tt>
+			          </TD>
+			        </TR>	
+			        
+			        <TR>
+			          <TD><b>Var Args</b> : <br>
+			          		Specifies the action to take for applying the var args flag when 
+			          		applying a function signature markup of a match.
+			          </TD>
+			
+			          <TD nowrap><tt>Replace</tt>
+			          </TD>
+			        </TR>
+			          
+			        </TR>		        
+			     </TABLE>
+			</BLOCKQUOTE>	
+		</BLOCKQUOTE>	
+	
+
+    <P class="providedbyplugin">Provided by: <I>Version Tracking Plugin</I></P>
+
+    <P class="relatedtopic">Related Topics:</P>
+
+    <UL>
+      <LI><A href="help/topics/VersionTrackingPlugin/providers/VT_Matches_Table.html">Version Tracking Matches Table</A></LI>
+      <LI><A href="help/topics/VersionTrackingPlugin/providers/VT_Markup_Table.html">Version
+      Tracking Markup Table</A></LI>
+      <LI><A href="help/topics/VersionTrackingPlugin/Version_Tracking_Intro.html">Version
+      Tracking Introduction</A></LI>
+      <li><a href="help/topics/CodeBrowserPlugin/CodeBrowser.htm">Code Browser</a></li>
+    </UL><BR>
+     <BR>
+  </BODY>
+</HTML>
+	

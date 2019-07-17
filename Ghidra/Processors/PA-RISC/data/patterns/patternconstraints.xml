@@ -1,0 +1,5 @@
+<patternconstraints>
+  <language id="pa-risc:BE:*:*">
+    <patternfile>pa-risc_patterns.xml</patternfile>
+  </language>
+</patternconstraints>

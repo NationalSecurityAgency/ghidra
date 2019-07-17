@@ -1,0 +1,26 @@
+/*****************************************************************************************
+	This file is a "mix-in" gradle script that individual gradle projects should include if it 
+	has content that should be included in a distribution as an extension. Including this
+	will cause all the standard module files to be included in the build as a sub-zipped extension.
+	
+	A gradle project can add itself as an extension to the build distribution by adding the
+	following to its build.gradle file:
+
+		apply from: "$rootProject.projectDir/gradle/support/distributableGhidraModule.gradle"
+*****************************************************************************************/
+
+apply from: "$rootProject.projectDir/gradle/support/distributionCommon.gradle"
+apply from: "$rootProject.projectDir/gradle/support/extensionCommon.gradle"
+
+rootProject.createInstallationZip {
+	from (this.project.zipExtensions) {
+		into  {
+			ZIP_DIR_PREFIX + "/Extensions/Ghidra"
+		}
+	} 
+	doLast {
+		this.project.zipExtensions.outputs.each {
+			delete it
+		}
+	}
+}

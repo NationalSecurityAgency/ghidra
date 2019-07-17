@@ -1,0 +1,122 @@
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<title>2. Basic Specification Layout</title>
+<link rel="stylesheet" type="text/css" href="Frontpage.css">
+<link rel="stylesheet" type="text/css" href="languages.css">
+<meta name="generator" content="DocBook XSL Stylesheets V1.78.1">
+<link rel="home" href="sleigh.html" title="SLEIGH">
+<link rel="up" href="sleigh.html" title="SLEIGH">
+<link rel="prev" href="sleigh.html" title="SLEIGH">
+<link rel="next" href="sleigh_preprocessing.html" title="3. Preprocessing">
+</head>
+<body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
+<div class="navheader">
+<table width="100%" summary="Navigation header">
+<tr><th colspan="3" align="center">2. Basic Specification Layout</th></tr>
+<tr>
+<td width="20%" align="left">
+<a accesskey="p" href="sleigh.html">Prev</a> </td>
+<th width="60%" align="center"> </th>
+<td width="20%" align="right"> <a accesskey="n" href="sleigh_preprocessing.html">Next</a>
+</td>
+</tr>
+</table>
+<hr>
+</div>
+<div class="sect1">
+<div class="titlepage"><div><div><h2 class="title" style="clear: both">
+<a name="sleigh_layout"></a>2. Basic Specification Layout</h2></div></div></div>
+<p>
+A SLEIGH specification is typically contained in a single file,
+although see <a class="xref" href="sleigh_preprocessing.html#sleigh_including_files" title="3.1. Including Files">Section 3.1, &#8220;Including Files&#8221;</a>.  The file must
+follow a specific format as parsed by the SLEIGH compiler. In this
+section, we list the basic formatting rules for this file as enforced
+by the compiler.
+</p>
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="idm140310875562464"></a>2.1. Comments</h3></div></div></div>
+<p>
+Comments start with the &#8216;#&#8217; character and continue to the end of the
+line. Comments can appear anywhere except the <span class="emphasis"><em>display section</em></span> of a
+constructor (see <a class="xref" href="sleigh_constructors.html#sleigh_display_section" title="7.3. The Display Section">Section 7.3, &#8220;The Display Section&#8221;</a>) where the &#8216;#&#8217; character will be
+interpreted as something that should be printed in disassembly.
+</p>
+</div>
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="idm140310875560064"></a>2.2. Identifiers</h3></div></div></div>
+<p>
+Identifiers are made up of letters a-z, capitals A-Z, digits 0-9 and
+the characters &#8216;.&#8217; and &#8216;_&#8217;. An identifier can use these characters in
+any order and for any length, but it must not start with a digit.
+</p>
+</div>
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="idm140310875558464"></a>2.3. Strings</h3></div></div></div>
+<p>
+String literals can be used, when specifying names and when specifying
+how disassembly should be printed, so that special characters are
+treated as literals. Strings are surrounded by the double quote
+character &#8216;&#8221;&#8217; and all characters in between lose their special
+meaning.
+</p>
+</div>
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="idm140310875556736"></a>2.4. Integers</h3></div></div></div>
+<p>
+Integers are specified either in a decimal format or in a standard
+<span class="emphasis"><em>C-style</em></span> hexadecimal format by prepending the
+number with &#8220;0x&#8221;. Alternately, a binary representation of an integer
+can be given by prepending the string of '0' and '1' characters with "0b".
+</p>
+<div class="informalexample"><pre class="programlisting">
+1006789
+0xF5CC5
+0xf5cc5
+0b11110101110011000101
+</pre></div>
+<p>
+Numbers are treated as unsigned
+except when used in patterns where they are treated as signed (see
+<a class="xref" href="sleigh_constructors.html#sleigh_bit_pattern" title="7.4. The Bit Pattern Section">Section 7.4, &#8220;The Bit Pattern Section&#8221;</a>). The number of bytes used to
+encode the integer when specifying the semantics of an instruction is
+inferred from other parts of the syntax (see
+<a class="xref" href="sleigh_constructors.html#sleigh_display_section" title="7.3. The Display Section">Section 7.3, &#8220;The Display Section&#8221;</a>). Otherwise, integers should
+be thought of as having arbitrary precision. Currently, SLEIGH stores
+integers internally with 64 bits of precision.
+</p>
+</div>
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="idm140310875552544"></a>2.5. White Space</h3></div></div></div>
+<p>
+White space characters include space, tab, line-feed, vertical
+line-feed, and carriage-return (&#8216; &#8216;, &#8216;\t&#8217;, &#8216;\r&#8217;, &#8216;\v&#8217;,
+&#8216;\n&#8217;). Variations in spacing have no effect on the parsing of the file
+except in string literals.
+</p>
+</div>
+</div>
+<div class="navfooter">
+<hr>
+<table width="100%" summary="Navigation footer">
+<tr>
+<td width="40%" align="left">
+<a accesskey="p" href="sleigh.html">Prev</a> </td>
+<td width="20%" align="center"> </td>
+<td width="40%" align="right"> <a accesskey="n" href="sleigh_preprocessing.html">Next</a>
+</td>
+</tr>
+<tr>
+<td width="40%" align="left" valign="top">SLEIGH </td>
+<td width="20%" align="center"><a accesskey="h" href="sleigh.html">Home</a></td>
+<td width="40%" align="right" valign="top"> 3. Preprocessing</td>
+</tr>
+</table>
+</div>
+</body>
+</html>

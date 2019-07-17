@@ -1,0 +1,224 @@
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<title>5. Introduction to Symbols</title>
+<link rel="stylesheet" type="text/css" href="Frontpage.css">
+<link rel="stylesheet" type="text/css" href="languages.css">
+<meta name="generator" content="DocBook XSL Stylesheets V1.78.1">
+<link rel="home" href="sleigh.html" title="SLEIGH">
+<link rel="up" href="sleigh.html" title="SLEIGH">
+<link rel="prev" href="sleigh_definitions.html" title="4. Basic Definitions">
+<link rel="next" href="sleigh_tokens.html" title="6. Tokens and Fields">
+</head>
+<body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
+<div class="navheader">
+<table width="100%" summary="Navigation header">
+<tr><th colspan="3" align="center">5. Introduction to Symbols</th></tr>
+<tr>
+<td width="20%" align="left">
+<a accesskey="p" href="sleigh_definitions.html">Prev</a> </td>
+<th width="60%" align="center"> </th>
+<td width="20%" align="right"> <a accesskey="n" href="sleigh_tokens.html">Next</a>
+</td>
+</tr>
+</table>
+<hr>
+</div>
+<div class="sect1">
+<div class="titlepage"><div><div><h2 class="title" style="clear: both">
+<a name="sleigh_symbols"></a>5. Introduction to Symbols</h2></div></div></div>
+<p>
+After the definition section, we are prepared to start writing the
+body of the specification. This part of the specification shows how
+the bits in an instruction break down into opcodes, operands,
+immediate values, and the other pieces of an instruction. Then once
+this is figured out, the specification must also describe exactly how
+the processor would manipulate the data and operands if this
+particular instruction were executed. All of SLEIGH revolves around
+these two major tasks of disassembling and following semantics. It
+should come as no surprise then that the primary symbols defined and
+manipulated in the specification all have two key properties.
+</p>
+<div class="informalexample"><div class="orderedlist"><ol class="orderedlist compact" type="1">
+<li class="listitem">
+    How does the symbol get displayed as part of the disassembly?
+  </li>
+<li class="listitem">
+    What semantic variable is associated with the symbol, and how is it constructed?
+  </li>
+</ol></div></div>
+<p>
+Formally a <span class="emphasis"><em>Specific Symbol</em></span> is defined as an identifier associated with
+</p>
+<div class="informalexample"><div class="orderedlist"><ol class="orderedlist compact" type="1">
+<li class="listitem">
+    A string displayed in disassembly.
+  </li>
+<li class="listitem">
+    varnode used in semantic actions, and any p-code used to construct that varnode.
+  </li>
+</ol></div></div>
+<p>
+The named registers that we defined earlier are the simplest examples
+of specific symbols (see
+<a class="xref" href="sleigh_definitions.html#sleigh_naming_registers" title="4.4. Naming Registers">Section 4.4, &#8220;Naming Registers&#8221;</a>). The symbol identifier
+itself is the string that will get printed in disassembly and the
+varnode associated with the symbol is the one constructed by the
+define statement.
+</p>
+<p>
+The other crucial part of the specification is how to map from the
+bits of a particular instruction to the specific symbols that
+apply. To this end we have the <span class="emphasis"><em>Family Symbol</em></span>,
+which is defined as an identifier associated with a map from machine
+instructions to specific symbols.
+</p>
+<div class="informalexample">
+<span class="bold"><strong>Family Symbol:</strong></span> Instruction Encodings =&gt; Specific Symbols
+</div>
+<p>
+The set of instruction encodings that map to a single specific symbol
+is called an <span class="emphasis"><em>instruction pattern</em></span> and is described
+more fully in <a class="xref" href="sleigh_constructors.html#sleigh_bit_pattern" title="7.4. The Bit Pattern Section">Section 7.4, &#8220;The Bit Pattern Section&#8221;</a>. In most cases, this
+can be thought of as a mask on the bits of the instruction and a value
+that the remaining unmasked bits must match. At any rate, the family
+symbol identifier, when taken out of context, represents the entire
+collection of specific symbols involved in this map. But in the
+context of a specific instruction, the identifier represents the one
+specific symbol associated with the encoding of that instruction by
+the family symbol map.
+</p>
+<p>
+Given these maps, the idea of the specification is to build up more
+and more complicated family symbols until we have a single root
+symbol. This gives us a single map from the bits of an instruction to
+the full disassembly of it and to the sequence of p-code instructions
+that simulate the instruction.
+</p>
+<p>
+The symbol responsible for combining smaller family symbols is called
+a <span class="emphasis"><em>table</em></span>, which is fully described in
+<a class="xref" href="sleigh_constructors.html#sleigh_tables" title="7.8. Tables">Section 7.8, &#8220;Tables&#8221;</a>. Any <span class="emphasis"><em>table</em></span> symbol
+can be used in the definition of other <span class="emphasis"><em>table</em></span>
+symbols until the root symbol is fully described. The root symbol has
+the predefined identifier <span class="emphasis"><em>instruction</em></span>.
+</p>
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="idm140310875423632"></a>5.1. Notes on Namespaces</h3></div></div></div>
+<p>
+Almost all identifiers live in the same global "scope". The global scope includes
+</p>
+<div class="informalexample"><div class="itemizedlist"><ul class="itemizedlist compact" style="list-style-type: bullet; ">
+<li class="listitem" style="list-style-type: disc">
+  Names of address spaces
+  </li>
+<li class="listitem" style="list-style-type: disc">
+  Names of tokens
+  </li>
+<li class="listitem" style="list-style-type: disc">
+  Names of fields
+  </li>
+<li class="listitem" style="list-style-type: disc">
+  Names of user-defined p-code ops
+  </li>
+<li class="listitem" style="list-style-type: disc">
+  Names of registers
+  </li>
+<li class="listitem" style="list-style-type: disc">
+  Names of macros (see <a class="xref" href="sleigh_constructors.html#sleigh_macros" title="7.9. P-code Macros">Section 7.9, &#8220;P-code Macros&#8221;</a>)
+  </li>
+<li class="listitem" style="list-style-type: disc">
+  Names of tables (see <a class="xref" href="sleigh_constructors.html#sleigh_tables" title="7.8. Tables">Section 7.8, &#8220;Tables&#8221;</a>)
+  </li>
+</ul></div></div>
+<p>
+All of the names in this scope must be unique. Each
+individual <span class="emphasis"><em>constructor</em></span> (defined in <a class="xref" href="sleigh_constructors.html" title="7. Constructors">Section 7, &#8220;Constructors&#8221;</a>)
+defines a local scope for operand names. As with most languages, a
+local symbol with the same name as a global
+symbol <span class="emphasis"><em>hides</em></span> the global symbol while that scope
+is in affect.
+</p>
+</div>
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="sleigh_predefined_symbols"></a>5.2. Predefined Symbols</h3></div></div></div>
+<p>
+We list all of the symbols that are predefined by SLEIGH.
+</p>
+<div class="informalexample">
+<div class="table">
+<a name="predefine.htmltable"></a><p class="title"><b>Table 2. Predefined Symbols</b></p>
+<div class="table-contents"><table width="80%" frame="box" rules="all">
+<col width="30%">
+<col width="70%">
+<thead><tr>
+  <td><span class="bold"><strong>Identifier</strong></span></td>
+  <td><span class="bold"><strong>Meaning</strong></span></td>
+</tr></thead>
+<tbody>
+<tr>
+  <td><code class="code">instruction</code></td>
+  <td>The root instruction table.</td>
+</tr>
+<tr>
+  <td><code class="code">const</code></td>
+  <td>Special address space for building constant varnodes.</td>
+</tr>
+<tr>
+  <td><code class="code">unique</code></td>
+  <td>Address space for allocating temporary registers.</td>
+</tr>
+<tr>
+  <td><code class="code">inst_start</code></td>
+  <td>Offset of the address of the current instruction.</td>
+</tr>
+<tr>
+  <td><code class="code">inst_next</code></td>
+  <td>Offset of the address of the next instruction.</td>
+</tr>
+<tr>
+  <td><code class="code">epsilon</code></td>
+  <td>A special identifier indicating an empty bit pattern.</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<br class="table-break">
+</div>
+<p>
+The most important of these to be aware of
+are <span class="emphasis"><em>inst_start</em></span>
+and <span class="emphasis"><em>inst_next</em></span>. These are family symbols which map
+in the context of particular instruction to the integer offset of
+either the address of the instruction or the address of the next
+instruction respectively. These are used in any relative branching
+situation. The other symbols are rarely
+used. The <span class="emphasis"><em>const</em></span> and <span class="emphasis"><em>unique</em></span>
+identifiers are address spaces. The <span class="emphasis"><em>epsilon</em></span>
+identifier is inherited from SLED and is a specific symbol equivalent
+to the constant zero. The <span class="emphasis"><em>instruction</em></span> identifier
+is the root instruction table.
+</p>
+</div>
+</div>
+<div class="navfooter">
+<hr>
+<table width="100%" summary="Navigation footer">
+<tr>
+<td width="40%" align="left">
+<a accesskey="p" href="sleigh_definitions.html">Prev</a> </td>
+<td width="20%" align="center"> </td>
+<td width="40%" align="right"> <a accesskey="n" href="sleigh_tokens.html">Next</a>
+</td>
+</tr>
+<tr>
+<td width="40%" align="left" valign="top">4. Basic Definitions </td>
+<td width="20%" align="center"><a accesskey="h" href="sleigh.html">Home</a></td>
+<td width="40%" align="right" valign="top"> 6. Tokens and Fields</td>
+</tr>
+</table>
+</div>
+</body>
+</html>

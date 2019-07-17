@@ -1,0 +1,833 @@
+
+macro satub(RES) {
+	RES = (zext(RES > 0x00FF) * 0x00FF) + (zext(RES < 0x0100) * RES);
+}
+
+macro satsb(RES) {
+	RES = (0x007F * zext(RES s> 0x007F)) + (RES * zext(RES s< 0x0080) * zext(RES s>= 0xFF80)) + (0x0080 * zext(RES s< 0xFF80));
+}
+
+macro satsh(RES) {
+	RES = (0x00007FFF * zext(RES s> 0x00007FFF)) + (RES * zext(RES s< 0x00008000) * zext(RES s>= 0xFFFF8000)) + (0x00008000 * zext(RES s< 0xFFFF8000));
+}
+
+macro satuh(RES) {
+	RES = (0x0000FFFF * zext(RES > 0x0000FFFF)) + (RES * zext(RES < 0x00010000));
+}
+
+macro sataddub(OP1, OP2, RES) {
+	RES = zext(OP1) + zext(OP2);
+	satub(RES);
+}
+
+macro sataddsb(OP1, OP2, RES) {
+	RES = sext(OP1) + sext(OP2);
+	satsb(RES);
+}
+
+macro satsubub(OP1, OP2, RES) {
+	RES = zext(OP1) - zext(OP2);
+	satub(RES);
+}
+
+macro satsubsb(OP1, OP2, RES) {
+	RES = sext(OP1) - sext(OP2);
+	satsb(RES);
+}
+
+macro satadduh(OP1, OP2, RES) {
+	RES = zext(OP1) + zext(OP2);
+	satuh(RES);
+}
+
+macro satsubuh(OP1, OP2, RES) {
+	RES = zext(OP1) - zext(OP2);
+	satuh(RES);
+}
+
+macro sataddsh(OP1, OP2, RES) {
+	RES = sext(OP1) + sext(OP2);
+	satsh(RES);
+}
+
+macro satsubsh(OP1, OP2, RES) {
+	RES = sext(OP1) - sext(OP2);
+	satsh(RES);
+}
+
+PXPART: ":T" is ctx_usex & xpart=0x1 {
+	tmp:4 = ctx_usex;
+	tmp = tmp >> 16;
+	export *[const]:2 tmp;
+}
+
+PXPART: ":B" is ctx_usex & xpart=0x0 { 
+	tmp:4 = ctx_usex;
+	tmp = tmp & 0x0000FFFF;
+	export *[const]:2 tmp;
+}
+
+PYPART: ":T" is ctx_usey & ypart=0x1 { 
+	tmp:4 = ctx_usey;
+	tmp = tmp >> 16;
+	export *[const]:2 tmp;
+}
+
+PYPART: ":B" is ctx_usey & ypart=0x0 { 
+	tmp:4 = ctx_usey;
+	tmp = tmp & 0x0000FFFF;
+	export *[const]:2 tmp;
+}
+
+PUPART: ":T" is ctx_useu & upart=0x1 { 
+	tmp:4 = ctx_useu;
+	tmp = tmp >> 16;
+	export *[const]:2 tmp;
+}
+
+PUPART: ":B" is ctx_useu & upart=0x0 { 
+	tmp:4 = ctx_useu;
+	tmp = tmp & 0x0000FFFF;
+	export *[const]:2 tmp;
+}
+
+
+:PABS.SB erd0, rs0  is op4_12=0xe00 & rs0 ; eop4_12=0x23e & erd0 {
+	tmps:1 = rs0[24,8];
+	erd0[24,8] = abs(tmps);
+		
+	tmps = rs0[16,8];
+	erd0[16,8] = abs(tmps);
+		
+	tmps = rs0[8,8];
+	erd0[8,8] = abs(tmps);
+		
+	tmps = rs0[0,8];
+	erd0[0,8] = abs(tmps);	
+}
+
+:PABS.SH erd0, rs0  is op4_12=0xe00 & rs0 ; eop4_12=0x23f & erd0 {
+	tmps:2 = rs0[16,16];
+	erd0[16,16] = abs(tmps);
+		
+	tmps = rs0[0,16];
+	erd0[0,16] = abs(tmps);
+}
+
+:PACKSH.UB erd0, rx9, ry0  is op13_3=0x7 & rx9 & op4_5=0x0 & ry0 ; eop4_12=0x24c & erd0 {
+	tmp:2 = rx9[16,16];
+	satub(tmp);
+	erd0[24,8] = tmp:1;
+	tmp = rx9[0,16];
+	satub(tmp);
+	erd0[16,8] = tmp:1;
+	tmp = ry0[16,16];
+	satub(tmp);
+	erd0[8,8] = tmp:1;
+	tmp = ry0[0,16];
+	satub(tmp);
+	erd0[0,8] = tmp:1;
+}
+
+:PACKSH.SB erd0, rx9, ry0  is op13_3=0x7 & rx9 & op4_5=0x0 & ry0 ; eop4_12=0x24d & erd0 {
+	tmp:2 = rx9[16,16];
+	satsb(tmp);
+	erd0[24,8] = tmp:1;
+	tmp = rx9[0,16];
+	satsb(tmp);
+	erd0[16,8] = tmp:1;
+	tmp = ry0[16,16];
+	satsb(tmp);
+	erd0[8,8] = tmp:1;
+	tmp = ry0[0,16];
+	satsb(tmp);
+	erd0[0,8] = tmp:1;
+}
+
+:PACKW.SH erd0, rx9, ry0  is op13_3=0x7 & rx9 & op4_5=0x0 & ry0 ; eop4_12=0x247 & erd0 {
+	tmp:4 = rx9;
+	satsh(tmp);
+	erd0[16,16] = tmp:2;
+	tmp = ry0;
+	satsh(tmp);
+	erd0[0,16] = tmp:2;
+}
+
+:PADD.B erd0, rx9, ry0  is op13_3=0x7 & rx9 & op4_5=0x0 & ry0 ; eop4_12=0x230 & erd0 {
+	tmpx:1 = rx9[24,8];
+	tmpy:1 = ry0[24,8];
+	tmpd:1 = tmpx + tmpy;
+	erd0[24,8] = tmpd;
+
+	tmpx = rx9[16,8];
+	tmpy = ry0[16,8];
+	tmpd = tmpx + tmpy;
+	erd0[16,8] = tmpd;
+
+	tmpx = rx9[8,8];
+	tmpy = ry0[8,8];
+	tmpd = tmpx + tmpy;
+	erd0[8,8] = tmpd;
+
+	tmpx = rx9[0,8];
+	tmpy = ry0[0,8];
+	tmpd = tmpx + tmpy;
+	erd0[0,8] = tmpd;
+	
+}
+
+:PADD.H erd0, rx9, ry0  is op13_3=0x7 & rx9 & op4_5=0x0 & ry0 ; eop4_12=0x200 & erd0 {
+	tmpx:2 = rx9[16,16];
+	tmpy:2 = ry0[16,16];
+	tmpd:2 = tmpx + tmpy;
+	erd0[16,16] = tmpd;
+
+	tmpx = rx9[0,16];
+	tmpy = ry0[0,16];
+	tmpd = tmpx + tmpy;
+	erd0[0,16] = tmpd;
+}
+
+:PADDH.UB erd0, rx9, ry0  is op13_3=0x7 & rx9 & op4_5=0x0 & ry0 ; eop4_12=0x236 & erd0 {
+	tmpx:2 = zext(rx9[24,8]);
+	tmpy:2 = zext(ry0[24,8]);
+	tmpd:2 = tmpx + tmpy;
+	tmpd = tmpd >> 1;
+	erd0[24,8] = tmpd:1;
+
+	tmpx = zext(rx9[16,8]);
+	tmpy = zext(ry0[16,8]);
+	tmpd = tmpx + tmpy;
+	tmpd = tmpd >> 1;
+	erd0[16,8] = tmpd:1;
+
+	tmpx = zext(rx9[8,8]);
+	tmpy = zext(ry0[8,8]);
+	tmpd = tmpx + tmpy;
+	tmpd = tmpd >> 1;
+	erd0[8,8] = tmpd:1;
+
+	tmpx = zext(rx9[0,8]);
+	tmpy = zext(ry0[0,8]);
+	tmpd = tmpx + tmpy;
+	tmpd = tmpd >> 1;
+	erd0[0,8] = tmpd:1;
+}
+
+:PADDH.SH erd0, rx9, ry0  is op13_3=0x7 & rx9 & op4_5=0x0 & ry0 ; eop4_12=0x20c & erd0 {
+	tmpx:4 = sext(rx9[16,16]);
+	tmpy:4 = sext(ry0[16,16]);
+	tmpd:4 = tmpx + tmpy;
+	tmpd = tmpd s>> 1;
+	erd0[16,16] = tmpd:2;
+
+	tmpx = sext(rx9[0,16]);
+	tmpy = sext(ry0[0,16]);
+	tmpd = tmpx + tmpy;
+	tmpd = tmpd s>> 1;
+	erd0[0,16] = tmpd:2;
+}
+
+:PADDS.UB erd0, rx9, ry0  is op13_3=0x7 & rx9 & op4_5=0x0 & ry0 ; eop4_12=0x234 & erd0 {
+	tmpx:1 = rx9[24,8];
+	tmpy:1 = ry0[24,8];
+	tmpd:2 = 0;
+	sataddub(tmpx,tmpy,tmpd);
+	erd0[24,8] = tmpd:1;
+	
+	tmpx = rx9[16,8];
+	tmpy = ry0[16,8];
+	sataddub(tmpx,tmpy,tmpd);
+	erd0[16,8] = tmpd:1;
+
+	tmpx = rx9[8,8];
+	tmpy = ry0[8,8];
+	sataddub(tmpx,tmpy,tmpd);
+	erd0[8,8] = tmpd:1;
+	
+	tmpx = rx9[0,8];
+	tmpy = ry0[0,8];
+	sataddub(tmpx,tmpy,tmpd);
+	erd0[0,8] = tmpd:1;
+
+}
+
+:PADDS.SB erd0, rx9, ry0  is op13_3=0x7 & rx9 & op4_5=0x0 & ry0 ; eop4_12=0x232 & erd0 {
+	tmpx:1 = rx9[24,8];
+	tmpy:1 = ry0[24,8];
+	tmpd:2 = 0;
+	sataddsb(tmpx,tmpy,tmpd);
+	erd0[24,8] = tmpd:1;
+
+	tmpx = rx9[16,8];
+	tmpy = ry0[16,8];
+	sataddsb(tmpx,tmpy,tmpd);
+	erd0[16,8] = tmpd:1;
+
+	tmpx = rx9[8,8];
+	tmpy = ry0[8,8];
+	sataddsb(tmpx,tmpy,tmpd);
+	erd0[8,8] = tmpd:1;
+	
+	tmpx = rx9[0,8];
+	tmpy = ry0[0,8];
+	sataddsb(tmpx,tmpy,tmpd);
+	erd0[0,8] = tmpd:1;
+	
+}
+
+:PADDS.UH erd0, rx9, ry0  is op13_3=0x7 & rx9 & op4_5=0x0 & ry0 ; eop4_12=0x208 & erd0 {
+	tmpx:2 = rx9[16,16];
+	tmpy:2 = ry0[16,16];
+	tmpd:4 = 0;
+	satadduh(tmpx,tmpy,tmpd);
+	erd0[16,16] = tmpd:2;
+	
+	tmpx = rx9[0,16];
+	tmpy = ry0[0,16];
+	satadduh(tmpx,tmpy,tmpd);
+	erd0[0,16] = tmpd:2;
+}
+
+:PADDS.SH erd0, rx9, ry0  is op13_3=0x7 & rx9 & op4_5=0x0 & ry0 ; eop4_12=0x204 & erd0 {
+	tmpx:2 = rx9[16,16];
+	tmpy:2 = ry0[16,16];
+	tmpd:4 = 0;
+	sataddsh(tmpx,tmpy,tmpd);
+	erd0[16,16] = tmpd:2;
+	
+	tmpx = rx9[0,16];
+	tmpy = ry0[0,16];
+	sataddsh(tmpx,tmpy,tmpd);
+	erd0[0,16] = tmpd:2;
+}
+
+:PADDSUB.H erd0, rx9^PXPART, ry0^PYPART  is op13_3=0x7 & rx9 & op4_5=0x0 & ry0 ; eop6_10=0x84 & PXPART & PYPART & erd0 [ctx_savex=rx9; ctx_savey=ry0; ] {
+	tmp:2 = PXPART + PYPART;
+	erd0[16,16] = tmp;
+	tmp = PXPART - PYPART;
+	erd0[0,16] = tmp;
+}
+
+:PADDSUBH.SH erd0, rx9^PXPART, ry0^PYPART  is op13_3=0x7 & rx9 & op4_5=0x0 & ry0 ; eop6_10=0x8a & PXPART & PYPART & erd0 [ctx_savex=rx9; ctx_savey=ry0; ] {
+	tmp:4 = sext(PXPART) + sext(PYPART);
+	tmp = tmp s>> 1;
+	erd0[16,16] = tmp:2;
+	tmp = sext(PXPART) - sext(PYPART);
+	tmp = tmp s>> 1;
+	erd0[0,16] = tmp:2;
+}
+
+:PADDX.H erd0, rx9, ry0  is op13_3=0x7 & rx9 & op4_5=0x0 & ry0 ; eop4_12=0x202 & erd0 {
+	tmpx:2 = rx9[16,16];
+	tmpy:2 = ry0[0,16];
+	tmpd:2 = tmpx + tmpy;
+	erd0[16,16] = tmpd;
+	
+	tmpx = rx9[0,16];
+	tmpy = ry0[16,16];
+	tmpd = tmpx + tmpy;
+	erd0[0,16] = tmpd;
+}
+
+:PADDXH.SH erd0, rx9, ry0  is op13_3=0x7 & rx9 & op4_5=0x0 & ry0 ; eop4_12=0x20e & erd0 {
+	tmpx:4 = sext(rx9[16,16]);
+	tmpy:4 = sext(ry0[0,16]);
+	tmpd:4 = tmpx + tmpy;
+	tmpd = tmpd s>> 1;
+	erd0[16,16] = tmpd:2;
+	
+	tmpx = sext(rx9[0,16]);
+	tmpy = sext(ry0[16,16]);
+	tmpd = tmpx + tmpy;
+	tmpd = tmpd s>> 1;
+	erd0[0,16] = tmpd:2;
+}
+
+:PASR.B erd0, rs9, sa0_3  is op13_3=0x7 & rs9 & op3_6=0x0 & sa0_3 ; eop4_12=0x241 & erd0 {
+	tmp:1 = rs9[24,8];
+	tmp = tmp s>> sa0_3;
+	erd0[24,8] = tmp;
+	tmp = rs9[16,8];
+	tmp = tmp s>> sa0_3;
+	erd0[16,8] = tmp;
+	tmp = rs9[8,8];
+	tmp = tmp s>> sa0_3;
+	erd0[8,8] = tmp;
+	tmp = rs9[0,8];
+	tmp = tmp s>> sa0_3;
+	erd0[0,8] = tmp;
+}
+
+:PASR.H erd0, rs9, sa0_4  is op13_3=0x7 & rs9 & op4_5=0x0 & sa0_4 ; eop4_12=0x244 & erd0 {
+	tmp:2 = rs9[16,16];
+	tmp = tmp s>> sa0_4;
+	erd0[16,16] = tmp;
+	tmp = rs9[0,16];
+	tmp = tmp s>> sa0_4;
+	erd0[0,16] = tmp;
+}
+
+:PAVG.UB erd0, rx9, ry0  is op13_3=0x7 & rx9 & op4_5=0x0 & ry0 ; eop4_12=0x23c & erd0 {
+	tmpx:1 = rx9[24,8];
+	tmpy:1 = ry0[24,8];
+	tmpd:2 = (zext(tmpx) + zext(tmpy) + 1) >> 1;
+	erd0[24,8] = tmpd:1;
+
+	tmpx = rx9[16,8];
+	tmpy = ry0[16,8];
+	tmpd = (zext(tmpx) + zext(tmpy) + 1) >> 1;
+	erd0[16,8] = tmpd:1;
+
+	tmpx = rx9[8,8];
+	tmpy = ry0[8,8];
+	tmpd = (zext(tmpx) + zext(tmpy) + 1) >> 1;
+	erd0[8,8] = tmpd:1;
+
+	tmpx = rx9[0,8];
+	tmpy = ry0[0,8];
+	tmpd = (zext(tmpx) + zext(tmpy) + 1) >> 1;
+	erd0[0,8] = tmpd:1;
+}
+
+:PAVG.SH erd0, rx9, ry0  is op13_3=0x7 & rx9 & op4_5=0x0 & ry0 ; eop4_12=0x23d & erd0 {
+	tmpx:2 = rx9[16,16];
+	tmpy:2 = ry0[16,16];
+	tmpd:4 = (sext(tmpx) + sext(tmpy) + 1) s>> 1;
+	erd0[16,16] = tmpd:2;
+
+	tmpx = rx9[0,16];
+	tmpy = ry0[0,16];
+	tmpd = (sext(tmpx) + sext(tmpy) + 1) s>> 1;
+	erd0[0,16] = tmpd:2;
+}
+
+:PLSL.B erd0, rs9, sa0_3  is op13_3=0x7 & rs9 & op3_6=0x0 & sa0_3 ; eop4_12=0x242 & erd0 {
+	tmp:1 = rs9[24,8];
+	tmp = tmp << sa0_3;
+	erd0[24,8] = tmp;
+	tmp = rs9[16,8];
+	tmp = tmp << sa0_3;
+	erd0[16,8] = tmp;
+	tmp = rs9[8,8];
+	tmp = tmp << sa0_3;
+	erd0[8,8] = tmp;
+	tmp = rs9[0,8];
+	tmp = tmp << sa0_3;
+	erd0[0,8] = tmp;
+}
+
+:PLSL.H erd0, rs9, sa0_4  is op13_3=0x7 & rs9 & op4_5=0x0 & sa0_4 ; eop4_12=0x245 & erd0 {
+	tmp:2 = rs9[16,16];
+	tmp = tmp << sa0_4;
+	erd0[16,16] = tmp;
+	tmp = rs9[0,16];
+	tmp = tmp << sa0_4;
+	erd0[0,16] = tmp;
+}
+
+:PLSR.B erd0, rs9, sa0_3  is op13_3=0x7 & rs9 & op3_6=0x0 & sa0_3 ; eop4_12=0x243 & erd0 {
+	tmp:1 = rs9[24,8];
+	tmp = tmp >> sa0_3;
+	erd0[24,8] = tmp;
+	tmp = rs9[16,8];
+	tmp = tmp >> sa0_3;
+	erd0[16,8] = tmp;
+	tmp = rs9[8,8];
+	tmp = tmp >> sa0_3;
+	erd0[8,8] = tmp;
+	tmp = rs9[0,8];
+	tmp = tmp >> sa0_3;
+	erd0[0,8] = tmp;
+}
+
+:PLSR.H erd0, rs9, sa0_4  is op13_3=0x7 & rs9 & op4_5=0x0 & sa0_4 ; eop4_12=0x246 & erd0 {
+	tmp:2 = rs9[16,16];
+	tmp = tmp >> sa0_4;
+	erd0[16,16] = tmp;
+	tmp = rs9[0,16];
+	tmp = tmp >> sa0_4;
+	erd0[0,16] = tmp;
+}
+
+:PMAX.UB erd0, rx9, ry0  is op13_3=0x7 & rx9 & op4_5=0x0 & ry0 ; eop4_12=0x238 & erd0 {
+	tmpx:1 = rx9[24,8];
+	tmpy:1 = ry0[24,8];
+	tmpd:1 = (tmpx * zext(tmpx > tmpy)) + (tmpy * zext(tmpy <= tmpx));
+	erd0[24,8] = tmpd;
+	tmpx = rx9[16,8];
+	tmpy = ry0[16,8];
+	tmpd = (tmpx * zext(tmpx > tmpy)) + (tmpy * zext(tmpy <= tmpx));
+	erd0[16,8] = tmpd;
+	tmpx = rx9[8,8];
+	tmpy = ry0[8,8];
+	tmpd = (tmpx * zext(tmpx > tmpy)) + (tmpy * zext(tmpy <= tmpx));
+	erd0[8,8] = tmpd;
+	tmpx = rx9[0,8];
+	tmpy = ry0[0,8];
+	tmpd = (tmpx * zext(tmpx > tmpy)) + (tmpy * zext(tmpy <= tmpx));
+	erd0[0,8] = tmpd;
+}
+
+:PMAX.SH erd0, rx9, ry0  is op13_3=0x7 & rx9 & op4_5=0x0 & ry0 ; eop4_12=0x239 & erd0 {
+	tmpx:2 = rx9[16,16];
+	tmpy:2 = ry0[16,16];
+	tmpd:2 = (tmpx * zext(tmpx > tmpy)) + (tmpy * zext(tmpy <= tmpx));
+	erd0[16,16] = tmpd;
+	tmpx = rx9[0,16];
+	tmpy = ry0[0,16];
+	tmpd = (tmpx * zext(tmpx > tmpy)) + (tmpy * zext(tmpy <= tmpx));
+	erd0[0,16] = tmpd;
+}
+
+:PMIN.UB erd0, rx9, ry0  is op13_3=0x7 & rx9 & op4_5=0x0 & ry0 ; eop4_12=0x23a & erd0 {
+	tmpx:1 = rx9[24,8];
+	tmpy:1 = ry0[24,8];
+	tmpd:1 = (tmpx * zext(tmpx < tmpy)) + (tmpy * zext(tmpy >= tmpx));
+	erd0[24,8] = tmpd;
+	tmpx = rx9[16,8];
+	tmpy = ry0[16,8];
+	tmpd = (tmpx * zext(tmpx < tmpy)) + (tmpy * zext(tmpy >= tmpx));
+	erd0[16,8] = tmpd;
+	tmpx = rx9[8,8];
+	tmpy = ry0[8,8];
+	tmpd = (tmpx * zext(tmpx < tmpy)) + (tmpy * zext(tmpy >= tmpx));
+	erd0[8,8] = tmpd;
+	tmpx = rx9[0,8];
+	tmpy = ry0[0,8];
+	tmpd = (tmpx * zext(tmpx < tmpy)) + (tmpy * zext(tmpy >= tmpx));
+	erd0[0,8] = tmpd;
+}
+
+:PMIN.SH erd0, rx9, ry0  is op13_3=0x7 & rx9 & op4_5=0x0 & ry0 ; eop4_12=0x23b & erd0 {
+	tmpx:2 = rx9[16,16];
+	tmpy:2 = ry0[16,16];
+	tmpd:2 = (tmpx * zext(tmpx < tmpy)) + (tmpy * zext(tmpy >= tmpx));
+	erd0[16,16] = tmpd;
+	tmpx = rx9[0,16];
+	tmpy = ry0[0,16];
+	tmpd = (tmpx * zext(tmpx < tmpy)) + (tmpy * zext(tmpy >= tmpx));
+	erd0[0,16] = tmpd;
+}
+
+:PADDSUBS.UH erd0, rx9^PXPART, ry0^PYPART  is op13_3=0x7 & rx9 & op4_5=0x0 & ry0 ; eop6_10=0x88 & PXPART & PYPART & erd0 {
+	tmpx:2 = PXPART;
+	tmpy:2 = PYPART;
+	tmpd:4 = 0;
+	satadduh(tmpx,tmpy,tmpd);
+	erd0[16,16] = tmpd:2;
+	satsubuh(tmpx,tmpy,tmpd);
+	erd0[0,16] = tmpd:2;
+}
+
+:PADDSUBS.SH erd0, rx9^PXPART, ry0^PYPART  is op13_3=0x7 & rx9 & op4_5=0x0 & ry0 ; eop6_10=0x86 & PXPART & PYPART & erd0 {
+	tmpx:2 = PXPART;
+	tmpy:2 = PYPART;
+	tmpd:4 = 0;
+	sataddsh(tmpx,tmpy,tmpd);
+	erd0[16,16] = tmpd:2;
+	satsubsh(tmpx,tmpy,tmpd);
+	erd0[0,16] = tmpd:2;
+}
+
+:PADDXS.UH erd0, rx9, ry0  is op13_3=0x7 & rx9 & op4_5=0x0 & ry0 ; eop4_12=0x20a & erd0 {
+	tmpx:2 = rx9[16,16];
+	tmpy:2 = ry0[0,16];
+	tmpd:4 = 0;
+	satadduh(tmpx,tmpy,tmpd);
+	erd0[16,16] = tmpd:2;
+	
+	tmpx = rx9[0,16];
+	tmpy = ry0[16,16];
+	satadduh(tmpx,tmpy,tmpd);
+	erd0[0,16] = tmpd:2;
+}
+
+:PADDXS.SH erd0, rx9, ry0  is op13_3=0x7 & rx9 & op4_5=0x0 & ry0 ; eop4_12=0x206 & erd0 {
+	tmpx:2 = rx9[16,16];
+	tmpy:2 = ry0[0,16];
+	tmpd:4 = 0;
+	sataddsh(tmpx,tmpy,tmpd);
+	erd0[16,16] = tmpd:2;
+	
+	tmpx = rx9[0,16];
+	tmpy = ry0[16,16];
+	sataddsh(tmpx,tmpy,tmpd);
+	erd0[0,16] = tmpd:2;
+}
+
+:PSAD erd0, rx9, ry0  is op13_3=0x7 & rx9 & op4_5=0x0 & ry0 ; eop4_12=0x240 & erd0 {
+	tmpx:1 = rx9[24,8];
+	tmpy:1 = ry0[24,8];
+	tmpd:1 = abs(tmpx - tmpy);
+	erd0 = zext(tmpd);
+
+	tmpx = rx9[16,8];
+	tmpy = ry0[16,8];
+	tmpd = abs(tmpx - tmpy);
+	erd0 = erd0 + zext(tmpd);
+
+	tmpx = rx9[8,8];
+	tmpy = ry0[8,8];
+	tmpd = abs(tmpx - tmpy);
+	erd0 = erd0 + zext(tmpd);
+
+	tmpx = rx9[0,8];
+	tmpy = ry0[0,8];
+	tmpd = abs(tmpx - tmpy);
+	erd0 = erd0 + zext(tmpd);
+}
+
+:PSUB.B erd0, rx9, ry0  is op13_3=0x7 & rx9 & op4_5=0x0 & ry0 ; eop4_12=0x231 & erd0 {
+	tmpx:1 = rx9[24,8];
+	tmpy:1 = ry0[24,8];
+	tmpd:1 = tmpx - tmpy;
+	erd0[24,8] = tmpd;
+
+	tmpx = rx9[16,8];
+	tmpy = ry0[16,8];
+	tmpd = tmpx - tmpy;
+	erd0[16,8] = tmpd;
+
+	tmpx = rx9[8,8];
+	tmpy = ry0[8,8];
+	tmpd = tmpx - tmpy;
+	erd0[8,8] = tmpd;
+
+	tmpx = rx9[0,8];
+	tmpy = ry0[0,8];
+	tmpd = tmpx - tmpy;
+	erd0[0,8] = tmpd;
+}
+
+:PSUB.H erd0, rx9, ry0  is op13_3=0x7 & rx9 & op4_5=0x0 & ry0 ; eop4_12=0x201 & erd0 {
+	tmpx:2 = rx9[16,16];
+	tmpy:2 = ry0[16,16];
+	tmpd:2 = tmpx - tmpy;
+	erd0[16,16] = tmpd;
+
+	tmpx = rx9[0,16];
+	tmpy = ry0[0,16];
+	tmpd = tmpx - tmpy;
+	erd0[0,16] = tmpd;
+}
+
+:PSUBADD.H erd0, rx9^PXPART, ry0^PYPART  is op13_3=0x7 & rx9 & op4_5=0x0 & ry0 ; eop6_10=0x85 & PXPART & PYPART & erd0 [ctx_savex=rx9; ctx_savey=ry0; ] {
+	tmp:2 = PXPART - PYPART;
+	erd0[16,16] = tmp;
+	tmp = PXPART + PYPART;
+	erd0[0,16] = tmp;
+}
+
+:PSUBADDH.SH erd0, rx9^PXPART, ry0^PYPART  is op13_3=0x7 & rx9 & op4_5=0x0 & ry0 ; eop6_10=0x8b & PXPART & PYPART & erd0 [ctx_savex=rx9; ctx_savey=ry0; ] {
+	tmp:4 = sext(PXPART) - sext(PYPART);
+	tmp = tmp s>> 1;
+	erd0[16,16] = tmp:2;
+	tmp = sext(PXPART) + sext(PYPART);
+	tmp = tmp s>> 1;
+	erd0[0,16] = tmp:2;
+}
+
+:PSUBADDS.UH erd0, rx9^PXPART, ry0^PYPART  is op13_3=0x7 & rx9 & op4_5=0x0 & ry0 ; eop6_10=0x89 & PXPART & PYPART & erd0 {
+	tmpx:2 = PXPART;
+	tmpy:2 = PYPART;
+	tmpd:4 = 0;
+	satsubuh(tmpx,tmpy,tmpd);
+	erd0[16,16] = tmpd:2;
+	satadduh(tmpx,tmpy,tmpd);
+	erd0[0,16] = tmpd:2;
+}
+
+:PSUBADDS.SH erd0, rx9^PXPART, ry0^PYPART  is op13_3=0x7 & rx9 & op4_5=0x0 & ry0 ; eop6_10=0x87 & PXPART & PYPART & erd0 {
+	tmpx:2 = PXPART;
+	tmpy:2 = PYPART;
+	tmpd:4 = 0;
+	satsubsh(tmpx,tmpy,tmpd);
+	erd0[16,16] = tmpd:2;
+	sataddsh(tmpx,tmpy,tmpd);
+	erd0[0,16] = tmpd:2;
+}
+
+:PSUBH.UB erd0, rx9, ry0  is op13_3=0x7 & rx9 & op4_5=0x0 & ry0 ; eop4_12=0x237 & erd0 {
+	tmpx:2 = zext(rx9[24,8]);
+	tmpy:2 = zext(ry0[24,8]);
+	tmpd:2 = tmpx - tmpy;
+	tmpd = tmpd >> 1;
+	erd0[24,8] = tmpd:1;
+
+	tmpx = zext(rx9[16,8]);
+	tmpy = zext(ry0[16,8]);
+	tmpd = tmpx - tmpy;
+	tmpd = tmpd >> 1;
+	erd0[16,8] = tmpd:1;
+
+	tmpx = zext(rx9[8,8]);
+	tmpy = zext(ry0[8,8]);
+	tmpd = tmpx - tmpy;
+	tmpd = tmpd >> 1;
+	erd0[8,8] = tmpd:1;
+
+	tmpx = zext(rx9[0,8]);
+	tmpy = zext(ry0[0,8]);
+	tmpd = tmpx - tmpy;
+	tmpd = tmpd >> 1;
+	erd0[0,8] = tmpd:1;
+}
+
+:PSUBH.SH erd0, rx9, ry0  is op13_3=0x7 & rx9 & op4_5=0x0 & ry0 ; eop4_12=0x20d & erd0 {
+	tmpx:4 = sext(rx9[16,16]);
+	tmpy:4 = sext(ry0[16,16]);
+	tmpd:4 = tmpx - tmpy;
+	tmpd = tmpd s>> 1;
+	erd0[16,16] = tmpd:2;
+
+	tmpx = sext(rx9[0,16]);
+	tmpy = sext(ry0[0,16]);
+	tmpd = tmpx - tmpy;
+	tmpd = tmpd s>> 1;
+	erd0[0,16] = tmpd:2;
+}
+
+:PSUBS.UB erd0, rx9, ry0  is op13_3=0x7 & rx9 & op4_5=0x0 & ry0 ; eop4_12=0x235 & erd0 {
+	tmpx:1 = rx9[24,8];
+	tmpy:1 = ry0[24,8];
+	tmpd:2 = 0;
+	satsubub(tmpx,tmpy,tmpd);
+	erd0[24,8] = tmpd:1;
+	
+	tmpx = rx9[16,8];
+	tmpy = ry0[16,8];
+	satsubub(tmpx,tmpy,tmpd);
+	erd0[16,8] = tmpd:1;
+
+	tmpx = rx9[8,8];
+	tmpy = ry0[8,8];
+	satsubub(tmpx,tmpy,tmpd);
+	erd0[8,8] = tmpd:1;
+	
+	tmpx = rx9[0,8];
+	tmpy = ry0[0,8];
+	satsubub(tmpx,tmpy,tmpd);
+	erd0[0,8] = tmpd:1;
+}
+
+:PSUBS.SB erd0, rx9, ry0  is op13_3=0x7 & rx9 & op4_5=0x0 & ry0 ; eop4_12=0x233 & erd0 {
+	tmpx:1 = rx9[24,8];
+	tmpy:1 = ry0[24,8];
+	tmpd:2 = 0;
+	satsubsb(tmpx,tmpy,tmpd);
+	erd0[24,8] = tmpd:1;
+
+	tmpx = rx9[16,8];
+	tmpy = ry0[16,8];
+	satsubsb(tmpx,tmpy,tmpd);
+	erd0[16,8] = tmpd:1;
+
+	tmpx = rx9[8,8];
+	tmpy = ry0[8,8];
+	satsubsb(tmpx,tmpy,tmpd);
+	erd0[8,8] = tmpd:1;
+	
+	tmpx = rx9[0,8];
+	tmpy = ry0[0,8];
+	satsubsb(tmpx,tmpy,tmpd);
+	erd0[0,8] = tmpd:1;
+}
+
+:PSUBS.UH erd0, rx9, ry0  is op13_3=0x7 & rx9 & op4_5=0x0 & ry0 ; eop4_12=0x209 & erd0 {
+	tmpx:2 = rx9[16,16];
+	tmpy:2 = ry0[16,16];
+	tmpd:4 = 0;
+	satsubuh(tmpx,tmpy,tmpd);
+	erd0[16,16] = tmpd:2;
+	
+	tmpx = rx9[0,16];
+	tmpy = ry0[0,16];
+	satsubuh(tmpx,tmpy,tmpd);
+	erd0[0,16] = tmpd:2;
+}
+
+:PSUBS.SH erd0, rx9, ry0  is op13_3=0x7 & rx9 & op4_5=0x0 & ry0 ; eop4_12=0x205 & erd0 {
+	tmpx:2 = rx9[16,16];
+	tmpy:2 = ry0[16,16];
+	tmpd:4 = 0;
+	satsubsh(tmpx,tmpy,tmpd);
+	erd0[16,16] = tmpd:2;
+	
+	tmpx = rx9[0,16];
+	tmpy = ry0[0,16];
+	satsubsh(tmpx,tmpy,tmpd);
+	erd0[0,16] = tmpd:2;
+}
+
+:PSUBX.H erd0, rx9, ry0  is op13_3=0x7 & rx9 & op4_5=0x0 & ry0 ; eop4_12=0x203 & erd0 {
+	tmpx:2 = rx9[16,16];
+	tmpy:2 = ry0[0,16];
+	tmpd:2 = tmpx - tmpy;
+	erd0[16,16] = tmpd;
+	
+	tmpx = rx9[0,16];
+	tmpy = ry0[16,16];
+	tmpd = tmpx - tmpy;
+	erd0[0,16] = tmpd;
+}
+
+:PSUBXH.SH erd0, rx9, ry0  is op13_3=0x7 & rx9 & op4_5=0x0 & ry0 ; eop4_12=0x20f & erd0 {
+	tmpx:4 = sext(rx9[16,16]);
+	tmpy:4 = sext(ry0[0,16]);
+	tmpd:4 = tmpx - tmpy;
+	tmpd = tmpd s>> 1;
+	erd0[16,16] = tmpd:2;
+	
+	tmpx = sext(rx9[0,16]);
+	tmpy = sext(ry0[16,16]);
+	tmpd = tmpx - tmpy;
+	tmpd = tmpd s>> 1;
+	erd0[0,16] = tmpd:2;
+}
+
+:PSUBXS.UH erd0, rx9, ry0  is op13_3=0x7 & rx9 & op4_5=0x0 & ry0 ; eop4_12=0x20b & erd0 {
+	tmpx:2 = rx9[16,16];
+	tmpy:2 = ry0[0,16];
+	tmpd:4 = 0;
+	satsubuh(tmpx,tmpy,tmpd);
+	erd0[16,16] = tmpd:2;
+	
+	tmpx = rx9[0,16];
+	tmpy = ry0[16,16];
+	satsubuh(tmpx,tmpy,tmpd);
+	erd0[0,16] = tmpd:2;
+}
+
+:PSUBXS.SH erd0, rx9, ry0  is op13_3=0x7 & rx9 & op4_5=0x0 & ry0 ; eop4_12=0x207 & erd0 {
+	tmpx:2 = rx9[16,16];
+	tmpy:2 = ry0[0,16];
+	tmpd:4 = 0;
+	satsubsh(tmpx,tmpy,tmpd);
+	erd0[16,16] = tmpd:2;
+	
+	tmpx = rx9[0,16];
+	tmpy = ry0[16,16];
+	satsubsh(tmpx,tmpy,tmpd);
+	erd0[0,16] = tmpd:2;
+}
+
+:PUNPCKUB.H erd0, rs9^PUPART  is op13_3=0x7 & rs9 & op0_9=0x0 ; eop5_11=0x124 & PUPART & erd0 {
+	tmp:2 = PUPART;
+	tmph:1 = tmp[8,8];
+	tmpl:1 = tmp[0,8];
+	tmp = zext(tmph);
+	erd0[16,16] = tmp;
+	tmp = zext(tmpl);
+	erd0[0,16] = tmp;
+}
+
+:PUNPCKSB.H erd0, rs9^PUPART  is op13_3=0x7 & rs9 & op0_9=0x0 ; eop5_11=0x125 & PUPART & erd0 {
+	tmp:2 = PUPART;
+	tmph:1 = tmp[8,8];
+	tmpl:1 = tmp[0,8];
+	tmp = sext(tmph);
+	erd0[16,16] = tmp;
+	tmp = sext(tmpl);
+	erd0[0,16] = tmp;
+}

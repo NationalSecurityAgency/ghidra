@@ -1,0 +1,3 @@
+@define Z180 ""
+
+@include "z80.slaspec"

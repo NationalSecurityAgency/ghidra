@@ -1,0 +1,888 @@
+# MIPS Common specification file for 32 and 64-bit processors
+# Appropriate defines (MIPS32, MIPS64, MIPS64_32ADDRS) must be
+# specified before including this file
+
+# The following Coprocessor configuration is supported:
+#   COP0: integrated CPU virtual memory and exception handler
+#   COP1: Floating-point Unit (FPU)
+#   COP2: <not supported>
+#   COP3: Used for MIPS64 FPU extended instructions (see COP1X)
+#
+# ################################
+#
+# Notes for the elf header e_flags "secondary" field in the MIPS.opinion file.
+#
+# "-" indicates don't care
+#
+# 0x5-------	MIPS32 Release 1, 32-bit addresses, ABI is o32, FREGSIZE = 4, gcc -mips32
+#		Example: 0x50001001, secondary="1342181377"
+#
+# 0x6-----2-	MIPS64 Release 1, 32-bit addresses, ABI is n32, FREGSIZE = 8, gcc -mips64
+#
+# 0x6-----0-    MIPS64 Release 1, 64-bit addresses, ABI is n64, FREGSIZE = 8, gcc -mips64 -mabi-64
+#
+# 0x7-------    MIPS32 Release 2, ABI is o32, gcc -mips32r2 to r5
+#		if 0x00000200 is set then FREGSIZE = 8 else FREGSIZE = 4
+#               0x70001001, secondary="1879052289"
+#		with mips16: 0x74001001
+#
+# 0x8-----2-    MIPS64 Release 2, 32-bit addresses, ABI is n32, FREGSIZE = 8, gcc -mips64r2 to r5
+#		0x80000021, secondary="2147483681"
+#
+# 0x8-----0-    MIPS64 Release 2, 64-bit addresses, ABI is n64, gcc -mips64r2 to r5 -mabi-64
+#		0x80000001
+#
+# 0x9-------    MIPS32 Release 6, ABI is o32, gcc -mips32r6
+#               if 0x00000200 is set then FREGSIZE = 8 else FREGSIZE = 4
+#
+# 0xa-----2-    MIPS64 Release 6, 32-bit addresses, ABI is n32, FREGSIZE = 8, gcc -mips64r6
+#		0xa0000421
+#
+# 0xa-----0-    MIPS64 Release 6, 64-bit addresses, ABI is n64, FREGSIZE = 8, gcc -mips64r6 -mabi-64
+#
+# Masks:
+#
+# 0x04000000	MIPS-16
+#
+# 0x02000000	MicroMIPS
+#
+# ################################
+#
+# Notes about register names and function args:
+#
+#   Function args are passed in a0 - a3, which are the same as $4 - $7, other args are on the stack
+#   Floating point args are in f12 and f14
+#
+#   Function return values are stored in v0 (and v1 if the regs are 32-bit and return type is 64-bits)
+#     v0 and v1 are the same as general purpose regs $2 and $3
+#   Floating point return values are in f0 (and f1 if needed for binding)
+#
+#   $29 is the stack pointer sp
+#   $30 is the frame pointer fp also called s8
+#   $31 is the return address ra
+#
+# ################################
+# There is now support for single and double floating point instructions, with the following limitations:
+#
+#       The PS paired single fmt1 format is not implemented. In paired single instructions,
+#       the specified 64-bit floating point register operands are each considered as two separate
+#       32-bit floating points numbers, and they are processed in parallel with the same instuction.
+#       (This is supposed to be the first microprocessor implementation of SIMD.)
+#
+#       Only COP1 Floating point coprocessor unit 1 is supported (there is no support for unit 2)
+#
+# Some notes about MIPS Floating Point, derived from the FPU table on page 87 of the MIPS
+# Architecture Volume 1, 2014
+#
+# FPU configuration is stored in a 32-bit read-only Floating Point Implementation Register (FIR),
+# this is also known as CP1 Control Register 0.
+#   Bit 22, called F64 or also called the FR bit, is = 1 when you have 64-bit FPRs,
+#   else if the FR bit = 0 then you have 32-bit FPRs
+#
+#   The macro FREGSIZE = 4 for 32-bit FPRs, and = 8 for 64-bit FPRs
+#
+# Other info is in the FCSR register, CP1 Register 31.
+#   Bit 23 is one condition code, and bits 25-31 is the FCC with other condition codes,
+#   which are set after a compare. Note this FCRE register is removed in Release 6.
+#
+#   MIPS32 Release 1:
+#     The FPU (floating point unit) has 32 32-bit FPRs
+#     64-bit floating point doubles are stored in even-odd pairs of FPRs
+#     F64 = 0
+#
+#   MIPS32 Release 2 and later:
+#     FPU has 32 64-bit FPRs
+#     F64 = 1
+#     Use these gcc options to get 64-bit floating point instructions: -mips32r2 -mfp64
+#     (gcc default is 32-bit FPRs)
+#
+#   MIPS64 Release 1 - 5
+#     The FPU has 32 64-bit FPRs
+#     F64 = 1
+#
+#   MIPS32 Release 6:
+#     In "strictly 32-bit" mode there are 32 32-bit FPRs, and bonding of two 32-bit FPRs to support
+#     64-bit floating point is not allowed
+#     F64 = 0
+#
+#   MIPS64 Release 6:
+#     FPU has 32 64-bit FPRs, when F64 = 1
+#     In "strictly 32-bit" mode there are 32 32-bit FPRs, and bonding of two 32-bit FPRs is not allowed
+#     F64 = 0
+#
+#   Release 6:
+#     Floating point condition codes are removed, and replaced by a new CMP.condn.fmt instruction
+#     The PS paired-single format in floating point instructions is removed - this was when
+#     two 32-bit floats were stuffed into one 64-bit FPR, and supported SIMD.
+#
+# In function calls, floating point args are passed in FPRs f12 to f15, and the return value is in f0
+#
+# When you have 32-bit FPRs, then 64-bit double floats are created by bonding a pair of 32-bit FPRs.
+#   f0 is the low half or has the LSB or also called lower word of the double, and
+#   f1 is the high half or has the MSB or also called upper word of the double
+#
+# When you have a 64-bit longword integer:
+#   For function return longword values:
+#     $2 (same as v0) holds the MSB top half of the longword
+#     $3 (same as v1) holds the LSB bottom half of the longword
+#
+# Note that when FREGSIZE = 8 (ie, 64-bit FPRs) and you have a single 32-bit float, then the
+# 32-bit float data is stored in bits 0-31 of the FPR.  (Bits 32-63 are "unused".)
+#
+# Note that when conversions are done to/from floats, doubles, ints, and longs (64-bit) that rounding
+# errors can occur in the simulator, so equality comparisons should be done carefully.
+#
+# ################################
+#
+#-----
+@ifdef MIPS64
+
+@ifdef MIPS64_32ADDRS   # used for 64-bit mips restricted to 32-bit addresses
+
+@define REGSIZE "8"     # General purpose register size (8 or 4)
+@define FREGSIZE "8"    # Floating point register size (8 or 4)
+@define ADDRSIZE "4"    # Memory address size (8 or 4, virtual and physical)
+@define SIZETO4  "4"   # In 32-bit mode, no truncation needed
+@define ADDRCAST ":4"   # need to down cast to pointer size
+@define NEEDCAST "1"
+
+@else                # full 64 bit ptrs
+
+@define REGSIZE "8"     # General purpose register size (8 or 4)
+@define FREGSIZE "8"    # Floating point register size (8 or 4)
+@define ADDRSIZE "8"    # Memory address size (8 or 4, virtual and physical)
+@define SIZETO4 "4"    # In 64-bit mode, use when need to do 32-bit operation
+@define ADDRCAST ""     # no need to down cast to pointer size
+
+@endif #MIPS64_32ADDRS
+
+
+@else # MIPS32
+
+@define REGSIZE "4"     # General purpose register size (8 or 4)
+# FREGSIZE for mips32 is set in slaspec file
+@define ADDRSIZE "4"    # Memory address size (8 or 4, virtual and physical)
+@define SIZETO4 "4"
+@define ADDRCAST ""     # no need to down cast to pointer size
+
+@endif
+#-----
+
+define endian=$(ENDIAN);
+
+define alignment=2;
+
+define space ram type=ram_space size=$(ADDRSIZE) default;
+define space register type=register_space size=4;
+
+# General purpose registers
+define register offset=0 size=$(REGSIZE) [ 
+    zero at v0 v1 
+    a0 a1 a2 a3 
+    t0 t1 t2 t3 
+    t4 t5 t6 t7 
+    s0 s1 s2 s3 
+    s4 s5 s6 s7 
+    t8 t9 k0 k1 
+    gp sp s8 ra
+    pc
+];
+
+@ifdef MIPS64
+# We need the 32-bit pieces of the main registers for the 32-bit instructions
+@if ENDIAN == "big"
+define register offset=0 size=4 [
+    zero_hi zero_lo at_hi at_lo v0_hi v0_lo v1_hi v1_lo
+    a0_hi a0_lo a1_hi a1_lo a2_hi a2_lo a3_hi a3_lo
+    t0_hi t0_lo t1_hi t1_lo t2_hi t2_lo t3_hi t3_lo
+    t4_hi t4_lo t5_hi t5_lo t6_hi t6_lo t7_hi t7_lo
+    s0_hi s0_lo s1_hi s1_lo s2_hi s2_lo s3_hi s3_lo
+    s4_hi s4_lo s5_hi s5_lo s6_hi s6_lo s7_hi s7_lo
+    t8_hi t8_lo t9_hi t9_lo k0_hi k0_lo k1_hi k1_lo
+    gp_hi gp_lo sp_hi sp_lo s8_hi s8_lo ra_hi ra_lo
+    pc_hi pc_lo
+];
+@else
+define register offset=0 size=4 [
+    zero_lo zero_hi at_lo at_hi v0_lo v0_hi v1_lo v1_hi
+    a0_lo a0_hi a1_lo a1_hi a2_lo a2_hi a3_lo a3_hi
+    t0_lo t0_hi t1_lo t1_hi t2_lo t2_hi t3_lo t3_hi
+    t4_lo t4_hi t5_lo t5_hi t6_lo t6_hi t7_lo t7_hi
+    s0_lo s0_hi s1_lo s1_hi s2_lo s2_hi s3_lo s3_hi
+    s4_lo s4_hi s5_lo s5_hi s6_lo s6_hi s7_lo s7_hi
+    t8_lo t8_hi t9_lo t9_hi k0_lo k0_hi k1_lo k1_hi
+    gp_lo gp_hi sp_lo sp_hi s8_lo s8_hi ra_lo ra_hi
+    pc_lo pc_hi
+];
+@endif # ENDIAN
+
+@endif # MIPS64
+
+# Floating point registers
+@if FREGSIZE == "4"
+# For 64-bit Double floating point operands need to bond two 32-bit FPRs
+define register offset=0x1000 size=4 [
+    f1  f0  f3  f2  f5  f4  f7  f6
+    f9  f8  f11 f10 f13 f12 f15 f14
+    f17 f16 f19 f18 f21 f20 f23 f22
+    f25 f24 f27 f26 f29 f28 f31 f30
+];
+
+# Note ftD, fsD, and fdD and frD have been added to support 64-bit double floats
+define register offset=0x1000 size=8 [
+    f0_1   f2_3   f4_5   f6_7
+    f8_9   f10_11 f12_13 f14_15
+    f16_17 f18_19 f20_21 f22_23
+    f24_25 f26_27 f28_29 f30_31
+];
+@else # FREGSIZE == "8"
+define register offset=0x1000 size=8 [
+    f0  f1  f2  f3  f4  f5  f6  f7
+    f8  f9  f10 f11 f12 f13 f14 f15
+    f16 f17 f18 f19 f20 f21 f22 f23
+    f24 f25 f26 f27 f28 f29 f30 f31
+];
+@endif # FREGSIZE
+
+# Floating point control registers (common to both MIPS32 and MIPS64)
+define register offset=0x1200 size=4 [
+    fir     fccr       fexr     fenr    fcsr
+];
+
+# COP-0 control registers, sel=0
+define register offset=0x2000 size=$(REGSIZE) [
+    Index           Random          EntryLo0        EntryLo1 
+    Context         PageMask        Wired           HWREna  
+    BadVAddr        Count           EntryHi         Compare  
+    Status          Cause           EPC             PRId 
+    Config          LLAddr          WatchLo         WatchHi 
+    XContext        cop0_reg21      cop0_reg22      Debug
+    DEPC            PerfCnt         ErrCtl          CacheErr
+    TagLo           TagHi           ErrorEPC        DESAVE 
+];
+
+# COP-0 control registers, sel=1
+define register offset=0x2100 size=$(REGSIZE) [
+    MVPControl      VPEControl      TCStatus        cop0_reg3.1
+    ContextConfig   PageGrain       SRSConf0        cop0_reg7.1
+    cop0_reg8.1     cop0_reg9.1     cop0_reg10.1    cop0_reg11.1
+    IntCtl          cop0_reg13.1    cop0_reg14.1    EBase
+    Config1         cop0_reg17.1    WatchLo.1       WatchHi.1
+    cop0_reg20.1    cop0_reg21.1    cop0_reg22.1    TraceControl
+    cop0_reg24.1    PerfCnt.1       cop0_reg26.1    CacheErr.1
+    DataLo.1        DataHi.1        cop0_reg30.1    cop0_reg31.1
+];
+
+# COP-0 control registers, sel=2
+define register offset=0x2200 size=$(REGSIZE) [
+    MVPConf0        VPEConf0        TCBind          cop0_reg3.2
+    cop0_reg4.2     cop0_reg5.2     SRSConf1        cop0_reg7.2
+    cop0_reg8.2     cop0_reg9.2     cop0_reg10.2    cop0_reg11.2
+    SRSCtl          cop0_reg13.2    cop0_reg14.2    cop0_reg15.2
+    Config2         cop0_reg17.2    WatchLo.2       WatchHi.2
+    cop0_reg20.2    cop0_reg21.2    cop0_reg22.2    TraceControl2
+    cop0_reg24.2    PerfCnt.2       cop0_reg26.2    CacheErr.2
+    TagLo.2         TagHi.2         cop0_reg30.2    cop0_reg31.2
+];
+
+# COP-0 control registers, sel=3
+define register offset=0x2300 size=$(REGSIZE) [
+    MVPConf1        VPEConf1        TCRestart       cop0_reg3.3
+    cop0_reg4.3     cop0_reg5.3     SRSConf2        cop0_reg7.3
+    cop0_reg8.3     cop0_reg9.3     cop0_reg10.3    cop0_reg11.3
+    SRSMap          cop0_reg13.3    cop0_reg14.3    cop0_reg15.3
+    Config3         cop0_reg17.3    WatchLo.3       WatchHi.3
+    cop0_reg20.3    cop0_reg21.3    cop0_reg22.3    UserTraceData
+    cop0_reg24.3    PerfCnt.3       cop0_reg26.3    CacheErr.3
+    DataLo.3        DataHi.3        cop0_reg30.3    cop0_reg31.3
+];
+
+# COP-0 control registers, sel=4
+define register offset=0x2400 size=$(REGSIZE) [
+    cop0_reg0.4     YQMask          TCHalt          cop0_reg3.4
+    cop0_reg4.4     cop0_reg5.4     SRSConf3        cop0_reg7.4
+    cop0_reg8.4     cop0_reg9.4     cop0_reg10.4    cop0_reg11.4
+    cop0_reg12.4    cop0_reg13.4    cop0_reg14.4    cop0_reg15.4
+    cop0_reg16.4    cop0_reg17.4    WatchLo.4       WatchHi.4
+    cop0_reg20.4    cop0_reg21.4    cop0_reg22.4    TraceBPC
+    cop0_reg24.4    PerfCnt.4       cop0_reg26.4    CacheErr.4
+    TagLo.4         TagHi.4         cop0_reg30.4    cop0_reg31.4
+];
+
+# COP-0 control registers, sel=5
+define register offset=0x2500 size=$(REGSIZE) [
+    cop0_reg0.5 VPESchedule TCContext   cop0_reg3.5
+    cop0_reg4.5     cop0_reg5.5     SRSConf4        cop0_reg7.5
+    cop0_reg8.5     cop0_reg9.5     cop0_reg10.5    cop0_reg11.5
+    cop0_reg12.5    cop0_reg13.5    cop0_reg14.5    cop0_reg15.5
+    cop0_reg16.5    cop0_reg17.5    WatchLo.5       WatchHi.5
+    cop0_reg20.5    cop0_reg21.5    cop0_reg22.5    cop0_reg23.5
+    cop0_reg24.5    PerfCnt.5       cop0_reg26.5    CacheErr.5
+    DataLo.5        DataHi.5        cop0_reg30.5    cop0_reg31.5
+];
+
+# COP-0 control registers, sel=6
+define register offset=0x2600 size=$(REGSIZE) [
+    cop0_reg0.6     VPEScheFBack    TCSchedule      cop0_reg3.6
+    cop0_reg4.6     cop0_reg5.6     cop0_reg6.6     cop0_reg7.6
+    cop0_reg8.6     cop0_reg9.6     cop0_reg10.6    cop0_reg11.6
+    cop0_reg12.6    cop0_reg13.6    cop0_reg14.6    cop0_reg15.6
+    cop0_reg16.6    cop0_reg17.6    WatchLo.6       WatchHi.6
+    cop0_reg20.6    cop0_reg21.6    cop0_reg22.6    cop0_reg23.6
+    cop0_reg24.6    PerfCnt.6       cop0_reg26.6    CacheErr.6
+    TagLo.6         TagHi.6         cop0_reg30.6    cop0_reg31.6
+];
+
+# COP-0 control registers, sel=7
+define register offset=0x2700 size=$(REGSIZE) [
+    cop0_reg0.7     VPEOpt          TCScheFBack     cop0_reg3.7
+    cop0_reg4.7     cop0_reg5.7     cop0_reg6.7     cop0_reg7.7
+    cop0_reg8.7     cop0_reg9.7     cop0_reg10.7    cop0_reg11.7
+    cop0_reg12.7    cop0_reg13.7    cop0_reg14.7    cop0_reg15.7
+    cop0_reg16.7    cop0_reg17.7    WatchLo.7       WatchHi.7
+    cop0_reg20.7    cop0_reg21.7    cop0_reg22.7    cop0_reg23.7
+    cop0_reg24.7    PerfCnt.7       cop0_reg26.7    CacheErr.7
+    DataLo.7        DataHi.7        cop0_reg30.7    cop0_reg31.7
+];
+
+# Some other internal registers
+define register offset=0x3000 size=$(REGSIZE) [ hi lo hi1 lo1 hi2 lo2 hi3 lo3 tsp ];
+
+define register offset=0x3F00 size=1 [ ISAModeSwitch ];
+
+# Define context bits
+define register offset=0x4000 size=4   contextreg;
+define context contextreg
+  PAIR_INSTRUCTION_FLAG=(0,0) noflow      # =1 paired instruction
+  REL6=(31,31)							  # =1 Release 6, =0 Pre release 6, (Fixed, set via pspec)
+  RELP=(30,30)							  # =1 Mips16e, =0 MicroMips. REL6, RELP can't both be 1 (Fixed, set via pspec)
+@ifdef ISA_VARIANT  
+  ISA_MODE=(1,1)						  # =1 Decode using alternate ISA, variable.
+  LowBitCodeMode = (1,1)				  # =1 if low bit of instruction address is set on a branch
+#below here is for mips16e. Overlaps with micromips   
+  ext_isjal=(2,2) noflow
+  ext_value=(3,13) noflow
+  ext_value_select=(3,5) noflow
+  ext_value_1005=(3,8) noflow
+  ext_value_1004=(3,9) noflow
+  ext_value_sa40=(3,7) noflow
+  ext_value_xreg=(3,5) noflow
+  ext_value_frame=(6,9) noflow
+  ext_value_areg=(10,13) noflow
+  ext_value_b0=(13,13) noflow
+  ext_value_b1=(12,12) noflow
+  ext_value_b2=(11,11) noflow
+  ext_value_b3=(10,10) noflow
+  ext_value_saz=(8,13) noflow
+  ext_value_1511=(9,13) noflow
+  ext_value_1511s=(9,13) signed noflow
+  ext_value_1411=(10,13) noflow
+  ext_value_1411s=(10,13) signed noflow
+  ext_tgt_2521=(3,7) noflow
+  ext_tgt_2016=(8,12) noflow
+  ext_tgt_x=(13,13) noflow
+  ext_is_ext=(14,14) noflow
+  ext_m16r32=(15,19) noflow
+  ext_m16r32a=(15,19) noflow
+  ext_reg_high=(15,16) noflow
+  ext_reg_low=(17,19) noflow
+  ext_svrs_sreg=(20,24) noflow
+  ext_svrs_xs=(20,22) noflow
+  ext_svrs_s1=(23,23) noflow
+  ext_svrs_s0=(24,24) noflow
+  ext_done=(25,25) noflow
+  ext_delay=(26,27) noflow
+#below here is for micromips. Overlaps with mips16e
+  ext_t4_name=(2,5) noflow
+  ext_t4=(2,5) noflow
+  ext_tra=(6,6) noflow
+  ext_32_code=(7,16) noflow
+  ext_32_codes=(7,16) signed noflow
+  ext_32_addim=(10,16) noflow
+  ext_32_addims=(10,16) signed noflow
+  ext_32_imm2=(15,16) noflow
+  ext_32_imm2s=(15,16) signed noflow
+  ext_32_imm3=(14,16) noflow 
+  ext_32_imm3s=(14,16) signed noflow 
+  ext_32_imm5=(12,16) noflow
+  ext_32_imm5s=(12,16) signed noflow
+  ext_32_imm6=(11,16) noflow
+  ext_32_rlist=(7,11) noflow
+  ext_32_base=(12,16) noflow
+  ext_32_basea=(12,16) noflow
+
+  ext_32_rd=(7,11) noflow
+  ext_32_rdset=(7,11) noflow  
+  ext_32_rs1=(7,11) noflow
+  ext_32_rs1lo=(7,11) noflow
+  ext_32_rs1set=(7,11) noflow
+  ext_16_rs=(7,9) noflow
+  ext_16_rslo=(7,8) noflow
+  ext_16_rshi=(9,9) noflow
+  
+  ext_off16_s=(7,22) signed noflow
+  ext_off16_u=(7,22) noflow
+@endif  # ISA_VARIANT  
+;
+
+
+# Instruction fields
+
+define token instr(32)
+    prime       = (26,31)
+    bit25       = (25,25)
+    zero2325    = (23,25)
+    zero1       = (22,25)
+    rs32        = (21,25)
+    frD         = (21,25)
+    rs          = (21,25)
+    fr          = (21,25)
+    base        = (21,25)
+    format      = (21,25)
+    copop       = (21,25)
+    mfmc0       = (21,25)
+    zero21	= (21,25)
+    jsub	= (21,25)
+    acflo       = (21,22)
+    acfhi       = (21,22)
+    breakcode   = (6,25)
+    off26       = (0,25) signed			# 26 bit signed offset, e.g. balc, bc
+    ind26       = (0,25)				# 26 bit unsigned index, e.g. jal
+    copfill     = (6,24)
+    cofun       = (0,24)
+    off21	= (0,20) signed		# 21 bit signed offset in conditional branch/link
+    off16	= (0,15) signed		# 16 bit signed offset in conditional branch/link
+    bit21       = (21,21)
+    bitz19	= (19,20)
+    pcrel	= (19,20)
+    pcrel2	= (18,20)
+    cc          = (18,20)
+    rt32        = (16,20)
+    rt          = (16,20)
+    ftD         = (16,20)
+    ft          = (16,20)
+    index       = (16,20)
+    hint        = (16,20)
+    cop1code    = (16,20)
+    synci       = (16,20)  
+    cond        = (16,20)
+    op          = (16,20)
+    zero1620    = (16,20)
+    nd          = (17,17)
+    tf          = (16,16)
+    zero1320    = (13,20)
+    zero1315    = (13,15)
+    szero       = (11,25)
+    baser6	= (11,15)
+    rd32        = (11,15)
+    rd          = (11,15)
+    rd0_0       = (11,15)
+    rd0_1       = (11,15)
+    rd0_2       = (11,15)
+    rd0_3       = (11,15)
+    rd0_4       = (11,15)
+    rd0_5       = (11,15)
+    rd0_6       = (11,15)
+    rd0_7       = (11,15)
+    cp2cprSel0	= (11,15)
+    cp2cprSel1	= (11,15)
+    cp2cprSel2	= (11,15)
+    cp2cprSel3	= (11,15)
+    cp2cprSel4	= (11,15)
+    cp2cprSel5	= (11,15)
+    cp2cprSel6	= (11,15)
+    cp2cprSel7	= (11,15)
+    fsD         = (11,15)
+    fs          = (11,15)
+    fs_unk	= (11,15)
+    fs_fcr	= (11,15)
+    zero4       = (11,15)
+    msbd        = (11,15)
+    aclo        = (11,12)
+    achi        = (11,12)
+    code        = (6,15)
+    bit10       = (10,10)
+    spec2	= (9,10)
+    spec3	= (8,10)
+    simmed9	= (7,15)
+    zero2       = (7,10)
+    fdD         = (6,10)
+    fd          = (6,10)
+    stype       = (6,10)
+    sa          = (6,10)
+    lsb         = (6,10)
+    fct2        = (6,10)
+    zero5       = (6,10)
+    wsbh        = (6,10)
+    bp3			= (6,8)
+    sa2			= (6,7)
+    bp2			= (6,7)
+    zero6       = (3,10)
+    bigfunct    = (0,10)
+    fct         = (0,5)
+    bshfl       = (0,5)
+    bit6        = (6,6)
+    zero3       = (0,4)
+    bit5        = (5,5)
+    op4         = (3,5)
+    sel         = (0,2)
+    format1X    = (0,2)
+    simmed19	= (0,18) signed
+    simmed18	= (0,17) signed
+    immed       = (0,15)
+    simmed      = (0,15) signed
+    simmseq	= (6,15) signed
+    simmed11	= (0,10)
+;
+
+attach variables [ rs rt rd base index baser6 ] [ 
+    zero  at  v0  v1  a0  a1  a2  a3
+    t0    t1  t2  t3  t4  t5  t6  t7
+    s0    s1  s2  s3  s4  s5  s6  s7
+    t8    t9  k0  k1  gp  sp  s8  ra 
+];
+
+@ifdef MIPS64
+attach variables [ rs32 rt32 rd32 ] [ 
+    zero_lo  at_lo  v0_lo  v1_lo  a0_lo  a1_lo  a2_lo  a3_lo
+    t0_lo    t1_lo  t2_lo  t3_lo  t4_lo  t5_lo  t6_lo  t7_lo
+    s0_lo    s1_lo  s2_lo  s3_lo  s4_lo  s5_lo  s6_lo  s7_lo
+    t8_lo    t9_lo  k0_lo  k1_lo  gp_lo  sp_lo  s8_lo  ra_lo 
+];
+@else
+# For MIPS32 these are the same as rs, rt, and rd
+attach variables [ rs32 rt32 rd32 ] [ 
+    zero  at  v0  v1  a0  a1  a2  a3
+    t0    t1  t2  t3  t4  t5  t6  t7
+    s0    s1  s2  s3  s4  s5  s6  s7
+    t8    t9  k0  k1  gp  sp  s8  ra 
+];
+@endif
+               
+attach variables [ fs ft fd fr ] [
+    f0  f1  f2  f3  f4  f5  f6  f7  f8  f9  f10 f11 f12 f13 f14 f15
+    f16 f17 f18 f19 f20 f21 f22 f23 f24 f25 f26 f27 f28 f29 f30 f31
+];
+
+@if FREGSIZE == "4"
+# For 64-bit floating point Double instruction operands need to bond two 32-bit FPRs
+attach variables [ fsD ftD fdD frD ] [
+    f0_1   _ f2_3   _ f4_5   _ f6_7   _
+    f8_9   _ f10_11 _ f12_13 _ f14_15 _
+    f16_17 _ f18_19 _ f20_21 _ f22_23 _
+    f24_25 _ f26_27 _ f28_29 _ f30_31 _
+];
+@else # FREGSIZE == "8"
+attach variables [ fsD ftD fdD frD ] [
+    f0  f1  f2  f3  f4  f5  f6  f7  f8  f9  f10 f11 f12 f13 f14 f15
+    f16 f17 f18 f19 f20 f21 f22 f23 f24 f25 f26 f27 f28 f29 f30 f31
+];
+@endif
+
+# Only a few Floating Point Control (FCR) registers are defined
+attach variables [ fs_fcr ] [
+	fir		_		_		_		_		_		_		_
+	_		_		_		_		_		_		_		_
+	_		_		_		_		_		_		_		_
+	_		fccr	fexr	_		fenr	_		_		fcsr
+];
+    
+attach variables [ rd0_0 ] [
+    Index           Random          EntryLo0        EntryLo1 
+    Context         PageMask        Wired           HWREna  
+    BadVAddr        Count           EntryHi         Compare  
+    Status          Cause           EPC             PRId 
+    Config          LLAddr          WatchLo         WatchHi 
+    XContext        cop0_reg21      cop0_reg22      Debug
+    DEPC            PerfCnt         ErrCtl          CacheErr
+    TagLo           TagHi           ErrorEPC        DESAVE 
+];
+
+attach variables [ rd0_1 ] [
+    MVPControl      VPEControl      TCStatus        cop0_reg3.1
+    ContextConfig   PageGrain       SRSConf0        cop0_reg7.1
+    cop0_reg8.1     cop0_reg9.1     cop0_reg10.1    cop0_reg11.1
+    IntCtl          cop0_reg13.1    cop0_reg14.1    EBase
+    Config1         cop0_reg17.1    WatchLo.1       WatchHi.1
+    cop0_reg20.1    cop0_reg21.1    cop0_reg22.1    TraceControl
+    cop0_reg24.1    PerfCnt.1       cop0_reg26.1    CacheErr.1
+    DataLo.1        DataHi.1        cop0_reg30.1    cop0_reg31.1
+];
+
+attach variables [ rd0_2 ] [
+    MVPConf0        VPEConf0        TCBind          cop0_reg3.2
+    cop0_reg4.2     cop0_reg5.2     SRSConf1        cop0_reg7.2
+    cop0_reg8.2     cop0_reg9.2     cop0_reg10.2    cop0_reg11.2
+    SRSCtl          cop0_reg13.2    cop0_reg14.2    cop0_reg15.2
+    Config2         cop0_reg17.2    WatchLo.2       WatchHi.2
+    cop0_reg20.2    cop0_reg21.2    cop0_reg22.2    TraceControl2
+    cop0_reg24.2    PerfCnt.2       cop0_reg26.2    CacheErr.2
+    TagLo.2         TagHi.2         cop0_reg30.2    cop0_reg31.2
+];
+
+attach variables [ rd0_3 ] [
+    MVPConf1        VPEConf1        TCRestart       cop0_reg3.3
+    cop0_reg4.3     cop0_reg5.3     SRSConf2        cop0_reg7.3
+    cop0_reg8.3     cop0_reg9.3     cop0_reg10.3    cop0_reg11.3
+    SRSMap          cop0_reg13.3    cop0_reg14.3    cop0_reg15.3
+    Config3         cop0_reg17.3    WatchLo.3       WatchHi.3
+    cop0_reg20.3    cop0_reg21.3    cop0_reg22.3    UserTraceData
+    cop0_reg24.3    PerfCnt.3       cop0_reg26.3    CacheErr.3
+    DataLo.3        DataHi.3        cop0_reg30.3    cop0_reg31.3
+];
+
+attach variables [ rd0_4 ] [
+    cop0_reg0.4     YQMask          TCHalt          cop0_reg3.4
+    cop0_reg4.4     cop0_reg5.4     SRSConf3        cop0_reg7.4
+    cop0_reg8.4     cop0_reg9.4     cop0_reg10.4    cop0_reg11.4
+    cop0_reg12.4    cop0_reg13.4    cop0_reg14.4    cop0_reg15.4
+    cop0_reg16.4    cop0_reg17.4    WatchLo.4       WatchHi.4
+    cop0_reg20.4    cop0_reg21.4    cop0_reg22.4    TraceBPC
+    cop0_reg24.4    PerfCnt.4       cop0_reg26.4    CacheErr.4
+    TagLo.4         TagHi.4         cop0_reg30.4    cop0_reg31.4
+];
+
+attach variables [ rd0_5 ] [
+    cop0_reg0.5 VPESchedule TCContext   cop0_reg3.5
+    cop0_reg4.5     cop0_reg5.5     SRSConf4        cop0_reg7.5
+    cop0_reg8.5     cop0_reg9.5     cop0_reg10.5    cop0_reg11.5
+    cop0_reg12.5    cop0_reg13.5    cop0_reg14.5    cop0_reg15.5
+    cop0_reg16.5    cop0_reg17.5    WatchLo.5       WatchHi.5
+    cop0_reg20.5    cop0_reg21.5    cop0_reg22.5    cop0_reg23.5
+    cop0_reg24.5    PerfCnt.5       cop0_reg26.5    CacheErr.5
+    DataLo.5        DataHi.5        cop0_reg30.5    cop0_reg31.5
+];
+
+attach variables [ rd0_6 ] [
+    cop0_reg0.6     VPEScheFBack    TCSchedule      cop0_reg3.6
+    cop0_reg4.6     cop0_reg5.6     cop0_reg6.6     cop0_reg7.6
+    cop0_reg8.6     cop0_reg9.6     cop0_reg10.6    cop0_reg11.6
+    cop0_reg12.6    cop0_reg13.6    cop0_reg14.6    cop0_reg15.6
+    cop0_reg16.6    cop0_reg17.6    WatchLo.6       WatchHi.6
+    cop0_reg20.6    cop0_reg21.6    cop0_reg22.6    cop0_reg23.6
+    cop0_reg24.6    PerfCnt.6       cop0_reg26.6    CacheErr.6
+    TagLo.6         TagHi.6         cop0_reg30.6    cop0_reg31.6
+];
+
+attach variables [ rd0_7 ] [
+    cop0_reg0.7     VPEOpt          TCScheFBack     cop0_reg3.7
+    cop0_reg4.7     cop0_reg5.7     cop0_reg6.7     cop0_reg7.7
+    cop0_reg8.7     cop0_reg9.7     cop0_reg10.7    cop0_reg11.7
+    cop0_reg12.7    cop0_reg13.7    cop0_reg14.7    cop0_reg15.7
+    cop0_reg16.7    cop0_reg17.7    WatchLo.7       WatchHi.7
+    cop0_reg20.7    cop0_reg21.7    cop0_reg22.7    cop0_reg23.7
+    cop0_reg24.7    PerfCnt.7       cop0_reg26.7    CacheErr.7
+    DataLo.7        DataHi.7        cop0_reg30.7    cop0_reg31.7
+];
+
+attach variables [ aclo acflo ] [ lo lo1 lo2 lo3 ];
+attach variables [ achi acfhi ] [ hi hi1 hi2 hi3 ];
+
+attach names hint [ 
+    "load" "store" "hint2" "hint3" "load_streamed" "store_streamed" "load_retained" "store_retained"
+    "hint8" "hint9" "hint10" "hint11" "hint12" "hint13" "hint14" "hint15"
+    "hint16" "hint17" "hint18" "hint19" "hint20" "hint21" "hint22" "hint23" "hint24"
+    "writeback_invalidate" "hint26" "hint27" "hint28" "hint29" "PrepareForStore" "hint31" ];
+
+
+# Subconstructors
+RD0: rd0_0  is rd0_0 & sel=0  { export rd0_0; }
+RD0: rd0_1  is rd0_1 & sel=1  { export rd0_1; }
+RD0: rd0_2  is rd0_2 & sel=2  { export rd0_2; }
+RD0: rd0_3  is rd0_3 & sel=3  { export rd0_3; }
+RD0: rd0_4  is rd0_4 & sel=4  { export rd0_4; }
+RD0: rd0_5  is rd0_5 & sel=5  { export rd0_5; }
+RD0: rd0_6  is rd0_6 & sel=6  { export rd0_6; }
+RD0: rd0_7  is rd0_7 & sel=7  { export rd0_7; }
+
+RD: rd          is rd           { export rd; }
+RDsrc: rd       is rd           { export rd; }
+RDsrc: rd       is rd & rd=0    { export 0:$(REGSIZE); }
+
+RS: rs       	is rs           { export rs; }
+RSsrc: rs       is rs           { export rs; }
+RSsrc: rs       is rs & rs=0    { export 0:$(REGSIZE); }
+
+RT: rt          is rt           { export rt; }
+RTsrc: rt       is rt           { export rt; }
+RTsrc: rt       is rt & rt=0    { export 0:$(REGSIZE); }
+
+RD32: rd      is rd & rd32         { export rd32; }
+RS32src: rs   is rs & rs32         { export rs32; }
+RS32src: rs   is rs & rs32=0       { export 0:4; }
+RT32: rt      is rt & rt32         { export rt32; }
+RT32src: rt   is rt & rt32         { export rt32; }
+RT32src: rt   is rt & rt32=0       { export 0:4; }
+
+@ifdef NEEDCAST
+macro MemSrcCast(dest,src) {
+	dest = *(src:$(ADDRSIZE));
+}
+macro MemDestCast(dest,src) {
+	*(dest:$(ADDRSIZE)) = src;
+}
+macro ValCast(dest,src) {
+	dest = src:$(ADDRSIZE);
+}
+@else
+macro MemSrcCast(dest,src) {
+	dest = *(src);
+}
+macro MemDestCast(dest,src) {
+	*(dest) = src;
+}
+macro ValCast(dest,src) {
+	dest = src;
+}
+@endif
+
+OFF_BASE: simmed(base)  is simmed & base    { tmp:$(REGSIZE) = base + simmed; tmpscaled:$(ADDRSIZE) = 0; ValCast(tmpscaled,tmp); export tmpscaled; }
+INDEX_BASE: index(base) is index & base     { tmp:$(REGSIZE) = base + index; tmpscaled:$(ADDRSIZE) = 0; ValCast(tmpscaled,tmp); export tmpscaled; }
+
+OFF_BASER6: simmed(base)	is REL6=0 & simmed & base	{ tmp:$(REGSIZE) = base + simmed; tmpscaled:$(ADDRSIZE) = 0; ValCast(tmpscaled,tmp); export tmpscaled; }
+OFF_BASER6: simmed9(base)	is REL6=1 & simmed9 & base	{ tmp:$(REGSIZE) = base + simmed9; tmpscaled:$(ADDRSIZE) = 0; ValCast(tmpscaled,tmp); export tmpscaled; }
+
+S18L3: val							is simmed18 [ val = simmed18 << 3; ] { export *[const]:4 val; }
+S19L2: val							is simmed19 [ val = simmed19 << 2; ] { export *[const]:4 val; }
+S16L16: val							is simmed [ val = simmed << 16; ] { export *[const]:4 val; }
+S16L32: val							is simmed [ val = simmed << 32; ] { export *[const]:8 val; }
+S16L48: val							is simmed [ val = simmed << 48; ] { export *[const]:8 val; }
+SAV: val							is sa2 [ val = sa2+1; ] { export *[const]:1 val; }
+
+Rel16: reloc		is off16	[ reloc=inst_start+4+4*off16; ]					{ export *:$(ADDRSIZE) reloc; }
+Rel21: reloc		is off21	[ reloc=inst_start+4+4*off21; ]					{ export *:$(ADDRSIZE) reloc; }
+Rel26: reloc		is off26	[ reloc=inst_start+4+4*off26; ]					{ export *:$(ADDRSIZE) reloc; }
+Abs26: reloc		is ind26	[ reloc=((inst_start+4) $and 0xfffffffff0000000) | 4*ind26; ]	{ export *:$(ADDRSIZE) reloc; }
+
+InsSize: mysize           is msbd & lsb   [ mysize = msbd - lsb + 1; ]      { tmp:1 = mysize; export tmp; }
+ExtSize: mysize           is msbd         [ mysize = msbd + 1; ]            { tmp:1 = mysize; export tmp; }
+
+@ifdef MIPS64
+DextmSize: mysize         is msbd         [ mysize = msbd + 1 + 32; ]       { tmp:1 = mysize; export tmp; }
+DXuPos: pos             is lsb          [ pos = lsb + 32; ]             { tmp:1 = pos; export tmp; }
+DinsXSize: mysize         is msbd & lsb   [ mysize = msbd - lsb + 1 + 32; ] { tmp:1 = mysize; export tmp; }
+@endif
+
+macro JXWritePC(addr) {
+   ISAModeSwitch = (addr & 0x1) != 0;
+   tmp:$(REGSIZE) = -2;
+   tmp = tmp & addr;
+   pc = tmp;
+}
+
+# Floating point formats
+#fmt: "S"        is format=0x10   { }
+#fmt: "D"        is format=0x11   { }
+#fmt: "W"        is format=0x14   { }
+#fmt: "L"        is format=0x15   { }
+#fmt: "PS"       is format=0x16   { }
+
+fmt1: "S"       is format=0x10   { }
+fmt1: "D"       is format=0x11   { }
+fmt1: "PS"      is format=0x16   { }
+
+fmt2: "S"       is format=0x10   { }
+fmt2: "D"       is format=0x11   { }
+
+fmt3: "S"       is format=0x10   { }
+fmt3: "W"       is format=0x14   { }
+fmt3: "L"       is format=0x15   { }
+
+fmt4: "D"       is format=0x11   { }
+fmt4: "W"       is format=0x14   { }
+fmt4: "L"       is format=0x15   { }
+
+fmt5: "S"       is format1X=0x0   { }
+fmt5: "D"       is format1X=0x1   { }
+fmt5: "PS"      is format1X=0x6   { }
+
+# Release 6 and later:
+fmt6: "S"	is format=0x14    { }
+fmt6: "D"	is format=0x15    { }
+
+# Custom Pcode Operations
+#
+# To add a new pcodeop op that is implemented in Java code:
+#
+#   In this directory:
+#     ./ghidra/Ghidra/Processors/MIPS/src/main/java/ghidra/program/emulation
+#   Edit this file to register a new Java method that implements the pcodeop:
+#     MIPSEmulateInstructionStateModifier.java
+#   (Be sure to also import the new class)
+#
+#   The mips.pspec file must have this key set (this has already been done):
+#     <property key="emulateInstructionStateModifierClass" value="ghidra.program.emulation.MIPSEmulateInstructionStateModifier"/>
+#
+#   Add the Java class file for the new pcodeop here:
+#     ./ghidra/Ghidra/Framework/SoftwareModeling/src/main/java/ghidra/pcode/emulate/callother
+#
+define pcodeop break;
+define pcodeop trap;
+define pcodeop wait;
+define pcodeop syscall;
+define pcodeop cacheOp;
+define pcodeop signalDebugBreakpointException;
+define pcodeop disableInterrupts;
+define pcodeop enableInterrupts;
+define pcodeop hazzard;
+define pcodeop lockload;
+define pcodeop lockwrite;
+define pcodeop synch;
+define pcodeop tlbop;
+define pcodeop bitSwap;
+define pcodeop disableProcessor;
+define pcodeop enableProcessor;
+define pcodeop signalReservedInstruction;
+define pcodeop TLB_invalidate;
+define pcodeop TLB_invalidate_flush;
+define pcodeop TLB_probe_for_matching_entry;
+define pcodeop TLB_read_indexed_entryHi;
+define pcodeop TLB_read_indexed_entryLo0;
+define pcodeop TLB_read_indexed_entryLo1;
+define pcodeop TLB_read_indexed_entryPageMask;
+define pcodeop TLB_write_indexed_entry;
+define pcodeop TLB_write_random_entry;
+
+# prefetch(vaddr, hint); 
+define pcodeop prefetch;
+
+# getFpCondition(cc)
+define pcodeop getFpCondition;
+
+# getCopCondition(cop_num, cc)
+define pcodeop getCopCondition;
+
+# setCopControlWord(cop_num, reg_num, value)
+define pcodeop setCopControlWord;
+
+# getCopControlWord(cop_num, reg_num)
+define pcodeop getCopControlWord;
+
+# copFunction(cop_num, func)
+define pcodeop copFunction;
+
+# getCopReg(cop_num, reg_num)
+define pcodeop getCopReg;
+define pcodeop getCopRegH;
+
+# setCopReg(cop_num, reg_num, value)
+define pcodeop setCopReg;
+define pcodeop setCopRegH;
+
+# countLeadingOnes(val)
+define pcodeop countLeadingOnes;
+
+# countLeadingZeros(val)
+define pcodeop countLeadingZeros;
+
+# extractField(value, msbd, lsb)
+define pcodeop extractField;
+
+# getHWRegister(regnum)
+define pcodeop getHWRegister;
+
+# setShadow(sgpr, value)
+define pcodeop setShadow;
+
+# gpr = getShadow(sgpr)
+define pcodeop getShadow;

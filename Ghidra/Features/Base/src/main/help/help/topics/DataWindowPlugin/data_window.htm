@@ -1,0 +1,114 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+
+    <TITLE>Data Window</TITLE>
+    <META http-equiv="content-type" content="text/html; charset=windows-1252">
+    <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+  </HEAD>
+
+  <BODY>
+    <H1><A name="DataWindowPlugin"></A>Data Window</H1>
+
+    <P>The Data Window provides a list of data defined in the currently open program. To display
+    the <I>Data Window</I>, select the <B>Window</B><IMG border="0" src=
+    "../../shared/arrow.gif"><B>Defined Data</B> from the tool menu.</P>
+
+    <CENTER>
+      <TABLE border="0" width="100%">
+        <TR>
+          <TD width="100%" align="center"><IMG border="0" src="images/DataWindow.png"></TD>
+        </TR>
+      </TABLE>
+    </CENTER>
+
+    <P>This window has four columns. The <B>Data</B> column shows the string representation of the
+    data. The <B>Address</B> column shows the function's address. The <B>Type</B> column shows the
+    name of the data type. The <B>Size</B> column shows the size (in bytes) of the data. Click on
+    the top of a column to sort the list by that column. By default, the data is sorted by address
+    ascending.</P>
+
+    <P>Click on a row to navigate to the corresponding data.</P>
+
+    <H3><A name="Make_Selection"></A>Make Selection</H3>
+
+    <BLOCKQUOTE>
+      <P><IMG src="Icons.MAKE_SELECTION_ICON"></P>
+
+      <P>The data window's tool bar has a button that will <A href=
+      "help/topics/Selection/Selecting.htm">select</A> all of the code units in the Code Browser
+      display corresponding to the selected rows&nbsp; in the table. Since the table allows for
+      multiple selections, any number of data items may be selected. To make the selection, either
+      click on <IMG src="Icons.MAKE_SELECTION_ICON">, or right mouse click in the table and choose
+      <B>Make Selection</B>.</P>
+    </BLOCKQUOTE>
+
+    <H3><A name="Filter_Data_Types"></A>Filtering Types</H3>
+
+    <BLOCKQUOTE>
+      <P><IMG src="images/exec.png"></P>
+
+      <P>Click on the filter icon <IMG src="images/exec.png"> in the tool bar of the <I>Data
+      Window</I> to launch the data filter dialog. This dialog allows you to filter the type of
+      data displayed in the data window, including the ability to limit data to the current
+      selection or <A href="help/topics/CodeBrowserPlugin/CodeBrowser.htm#View">current view</A>.
+      An example of the dialog appears below.&nbsp;</P>
+	  <BR>
+      <CENTER>
+        <IMG border="0" src="images/DataWindowFilter.png">
+      </CENTER><BR>
+      <BR>
+       
+
+      <P>Use the radio buttons in the <I>Filter Enable</I> panel at the top of the dialog to enable
+      and disable the filter. By default, the filter will be enabled. When the filter is enabled,
+      the icon at the top of the data window is depressed to indicate that the displayed data has
+      been filtered. When the filter is disabled, all defined data types will show in the <I>Data
+      Window</I>.</P>
+
+      <P>Use the drop down menu to limit data displayed by the data window. You may select
+      <B>Entire Program</B> (display all data), or <B>Current View</B> (display only data in the
+      current view in the code browser). If there is a selection in the Code Browser, then an
+      additional choice for <B>Current Selection</B> (display only data in current selection) is
+      present in menu. By default, all data will be displayed.</P>
+
+      <P>Use the checkboxes to choose which data types to include. Deselect a checkbox to exclude
+      the type; select a checkbox to include the type. By default, all types are selected.&nbsp;
+      When new data types are added to the program, this list is updated.</P>
+
+      <P>You'll notice that the checkbox list is ordered Alphabetically in natural ASCENDING order,
+      in a case-insensitive manner. Use the "Filter:" text field to limit the shown Data Types
+      checkbox list in the <I>Filter Enabled Data Types List Above</I> panel. The more accurate
+      your filter, the more accurate and succint your shown Data Types result set will be. The
+      letters typed in the filter will correspond to the matched Data Types in the list via the
+      <B>bolding</B> of each matching character. This will assist you in rapidly accessing the Data
+      Type of your choice. Moreover, if you know only part of the Data Type word, just begin typing
+      the part you know, and that Data Type (if it exists in the list) will show up in the matched
+      list based on the letter(s) that you know. The matching filter will find the first sequence
+      of the substring you type into the filter regardless of whether or not that substring is at
+      the beginning of the Data Type or not. Note: During this phase of filtered list typing, the
+      "Select All" and "Select None" buttons will be temporarily disabled while the list filter is
+      active (field will show up in yellow); simply remove each letter from this field to restore
+      the non-filtered state. Also, all filtering, is case-insensitive.</P>
+
+      <P>&nbsp;</P>
+    </BLOCKQUOTE>
+
+    <P class="providedbyplugin">Provided By: <I>DataWindowPlugin</I></P>
+
+    <P class="relatedtopic">Related Topics:</P>
+
+    <UL>
+      <LI>
+        <P class="relatedtopic"><A href="help/topics/Selection/Selecting.htm">Selection</A></P>
+      </LI>
+
+      <LI>
+        <P class="relatedtopic"><A href="help/topics/DataPlugin/Data.htm">Data Types</A></P>
+      </LI>
+    </UL>
+  </BODY>
+</HTML>

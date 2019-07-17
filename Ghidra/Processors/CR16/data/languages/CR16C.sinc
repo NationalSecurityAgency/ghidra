@@ -1,0 +1,2315 @@
+# This module defines CR16C
+
+
+# NOTE: Have assumed for now CFG.SR = 0
+
+# sizes:
+# B = byte       = 1 byte
+# W = word       = 2 bytes
+# D = doubleword = 4 bytes
+
+
+# Basic =====================================================================
+
+define alignment=2;
+
+define space ram 	  type=ram_space 	  size=4 default;
+define space register type=register_space size=2;
+
+# Registers ==================================================================
+
+# - When CFG.SR is not set, register pairs are defined as follows:
+# (R1,R0), (R2,R1) ... (R11,R10), (R12_L, R11)
+# R12, R13, RA and SP are double-word registers for direct storage of
+# addresses greater than 16 bits.
+#
+# - The most significant 8 bits of ISP and the least significant bit of ISP 
+# are forced to 0
+
+# General purpose registers
+# NOTE: RA_L==RA and SP_L==SP
+# NOTE: R12_H, R13_H, RA_H don't actually exist as named registers
+#       (name needed for push/pop instructions implementation only)
+define register offset=0 size=2 [
+  R0   R1   R2   R3   R4    R5    R6    R7
+  R8   R9   R10  R11  R12_L R12_H R13_L R13_H  
+  RA_L RA_H SP_L SP_H
+];
+
+define register offset=0 size=4 [
+  R1R0  R3R2    R5R4   R7R6   R9R8  R11R10  R12    R13   RA    SP 
+];
+
+define register offset=2 size=4 [
+  R2R1  R4R3  R6R5  R8R7  R10R9 R12LR11
+];
+
+# Dedicated address registers
+define register offset=50 size=4 [ PC ];
+define register offset=60 size=2 [ ISPH ISPL  USPH USPL  INTBASEH INTBASEL ];
+define register offset=60 size=4 [ ISP        USP        INTBASE ];
+
+# Processor Status register
+define register offset=80 size=2 [ PSR ];
+#define register offset=90 size=1 [ C T L U F Z N E P I ];   # cond flags
+@define C   "PSR[0,1]"
+@define T	"PSR[1,1]"
+@define L	"PSR[2,1]"
+@define U	"PSR[3,1]"
+@define F	"PSR[5,1]"
+@define Z	"PSR[6,1]"
+@define N	"PSR[7,1]"
+@define E	"PSR[9,1]"
+@define P	"PSR[10,1]"
+@define I	"PSR[11,1]"
+
+# Configuration register
+define register offset=100 size=2 [ CFG ];
+
+# Debug registers
+define register offset=110 size=2 [ DBS  DSR  DCRH DCRL  CAR0H CAR0L  CAR1H CAR1L ];
+define register offset=114 size=4 [ DCR  CAR0 CAR1 ];
+ 
+# these don't actually exist - they are for prd definition (size=4)
+define register offset=130 size=4 [ DBS_1 DSR_1 CFG_1 PSR_1 ];  
+
+
+# Fields ======================================================================
+
+define token word1(16)
+    hi = (8,15)     # opcode8
+    lo = (0,7)      # 
+    op = (0,15)     # opcode16
+    op12 = (4,15)   # opcode12
+    op9 =  (7,15)   # opcode9
+    op7 =  (9,15)   # opcode7
+    op7p3 = (8,8)   # p3 for opcode7
+#    op10 = (6,15)   # opcode10
+    op4 =  (12,15)  # opcode4
+    lo1 = (0,3)
+    op13 = (3,15)   # opcode13
+    op11 = (5,15)
+
+    dst = (0,3)     # register
+    src = (4,7)
+    src1 = (0,3)
+    reg0 = (0,3)
+    reg1 = (0,3)
+    reg2 = (0,3)
+    reg3 = (0,3)
+    reg4 = (0,3)
+    reg5 = (0,3)
+    reg6 = (0,3)
+    reg7 = (0,3)
+    dst1 = (4,7)
+
+    rp_dst = (0,3)  # register pair
+    rp_src = (4,7)
+    rp_dst2 = (4,7)
+    rp_src2 = (0,3)
+
+    prp_src1 = (0,3)
+    prp_dst1 = (0,3)
+
+    cond = (4,7)
+
+    x4 = (12,15)    # generic, nibble 4
+    x3 = (8,11) 
+    x2 = (4,7)
+    x1 = (0,3) 
+
+    x2s = (4,6)
+    x3s = (8,11)    signed
+    b4_8 = (4,8)
+    b4_7 = (4,7)
+    b4_6 = (4,6)
+    b_ra = (7,7)    # RA bit for push/pop, fmt 14
+    b_prp = (3,3)   # prp bit, fmt 18
+    b0_2 = (0,2)    # fmt 6
+;
+
+define token word2(16)
+    w2 = (0,15)
+    n4 = (12,15)    # nibble 4, sometimes an opcode extension
+    n3 = (8,11)
+    n2 = (4,7)
+    n1 = (0,3)
+    w2_b0    = (0,0)
+    w2_b1_15 = (1,15)   signed
+    w2_hi    = (8,15)
+  
+    prd = (4,7)     # processor registers
+    pr = (4,7)
+    
+    rp_src3 = (0,3) # register pairs
+    rp_dst3 = (0,3)
+    rp_src6 = (4,7)
+    rp_dst6 = (4,7)
+    rp_dst7 = (8,11)
+
+    src2 = (0,3)    # registers
+    dst2 = (0,3)
+    src5 = (4,7)
+;
+
+define token word3(16)
+    w3       = (0,15)
+    w3_b0    = (0,0)
+    w3_b1_15 = (1,15)     
+;
+
+# used this token when operands spanned across 2 words
+# | byte1 byte0 byte3 byte2 |
+define token doubleword(32)
+    dw = (0,31)
+    dw_w1 = (0,15) signed
+    dw_w2 = (16,31)
+    n8 = (12,15)    # nibble 4, sometimes an opcode extension
+    n7 = (8,11)
+    n6 = (4,7)      # (cond)
+    n5 = (0,3)      
+    n5s = (0,3)     signed
+    b1_15 = (17,31)
+    b0_15 = (16,31)
+    dw_lo = (0,7)   signed  # for fmt 5
+    dw_hi = (8,15)  # (op8)   
+    dw_op7 = (9,15) # (op7)
+    dw_op9 = (7,15) # (op9)
+    op10 = (6,15)   # (opcode 10)
+    b_rs = (8,8)    # for fmt 13
+    dw_b4_6 = (4,6) 
+    dw_b_prp = (3,3)    # for fmt 17
+    f17a = (16,19)      # for fmt 17 p3
+    f17b = (4,5)
+    f17c = (30,31)
+    f17d = (24,29)
+    dw_n2 = (20,23)     # fmt 17, p2, 4-bits
+    dw_n2b = (20,22)    # fmt 17, p2, 3-bit version
+
+    rp_dst4 = (4,7)
+    rp_src4 = (4,7)
+    rp_dst5 = (0,3)
+    rp_src5 = (0,3)
+    dst3 = (4,7)
+    src3 = (4,7)
+    dst4 = (0,3)
+    src4 = (0,3)
+    prp_dst = (0,3)
+    prp_src = (0,3)
+;
+
+
+# Attach variables =====================================================
+
+# normal registers 
+attach variables [ src dst src1 dst1 src2 dst2 src3 dst3 src4 dst4 src5 ] [
+  R0  R1  R2  R3  R4  R5  R6  R7  R8  R9  R10  R11  R12_L  R13_L  RA_L   SP_L
+];
+
+# register pairs
+attach variables [ rp_src  rp_dst  rp_src2 rp_dst2 rp_src3 rp_dst3 
+                   rp_src4 rp_dst4 rp_src5 rp_dst5 rp_src6 rp_dst6 rp_dst7 ] [
+  R1R0  R2R1  R3R2    R4R3    R5R4  R6R5  R7R6 R8R7
+  R9R8  R10R9 R11R10  R12LR11 R12   R13   RA    SP 
+];
+
+attach variables [ prp_src prp_dst prp_src1 prp_dst1 ] [             # rrp
+  R1R0  R3R2  R5R4  R7R6  R9R8  R11R10  R4R3  R6R5
+  R1R0  R3R2  R5R4  R7R6  R9R8  R11R10  R4R3  R6R5
+];
+
+# processor registers
+attach variables [ pr ] [
+  DBS DSR DCRL DCRH CAR0L CAR0H CAR1L CAR1H CFG PSR INTBASEL INTBASEH ISPL ISPH USPL USPH
+];
+
+attach variables [ prd ] [
+  DBS_1 DSR_1 DCR _ CAR0 _ CAR1 _ CFG_1 PSR_1 INTBASE _ ISP _ USP _
+];
+
+# Pseudo instructions =================================================
+
+define pcodeop trap;
+define pcodeop suspend;
+
+# Macros ==============================================================
+
+# Flags set by add instructions
+macro addflags(op1, op2) {          
+    $(C) = (carry(op1, op2));       # Check for carry
+    $(F) = (scarry(op1, op2));      # Check for overflow
+}
+# Flags set by add instructions (3 operands)
+macro addflags2(op1, op2, op3) {    
+    local tmp = (carry(op1,op2));         # Check for carry
+    $(C) = (carry(zext(tmp), op3));
+    tmp = (scarry(op1,op2));        # Check for overflow
+    $(F) = (scarry(zext(tmp), op3));   
+}
+# Flags set by sub instructions
+macro subflags(op1, op2) {          
+    $(C) = (op1 < op2);             # Check for borrow
+    $(F) = sborrow(op1, op2);       # Check for overflow
+}
+# Flags set by sub instructions (3 operands)
+macro subflags2(op1, op2, op3) {    
+    $(C) = (op1 < (op2 + op3));     # Check for borrow
+    local tmp = sborrow(op1, op2);        # Check for overflow
+    $(F) = sborrow(zext(tmp), op3);
+}
+
+# Flags set by the compare instructions
+macro compflags(op1, op2) {     
+    $(Z) = (op1 == op2);        # Equal comparison
+    $(N) = (op2 s< op1);        # Signed comparison
+    $(L) = (op2  < op1);        # Unsigned comparison
+}
+
+# Operand Display ====================================================
+
+imm20:  "$"tmp      is n5 & dw_w2       [ tmp = (n5 << 16) + dw_w2; ]       { export *[const]:3 tmp; }
+imm32:  "$"tmp      is dw_w1 & dw_w2    [ tmp = (dw_w1 << 16) + dw_w2; ]    { export *[const]:4 tmp; }
+imm4:   "$"x2       is x2       { export *[const]:1 x2; }   # imm src
+imm4:   "$"tmp      is x2=9             [ tmp = -1; ]                       { export *[const]:1 tmp; }
+imm4a:  "$"x2       is x2       { export *[const]:1 x2; }   # imm pos
+imm4b:  "$"n6       is n6       { export *[const]:1 n6; }
+imm4c:  "$"dw_n2    is dw_n2    { export *[const]:1 dw_n2; }
+imm4d:  "$"b4_7     is b4_7     { export *[const]:1 b4_7; }     # for ash and lsh (signed count)
+imm16:  "$"w2       is w2       { export *[const]:2 w2; }
+imm5:   "$"b4_8     is b4_8     { export *[const]:1 b4_8; }     # for ash and lsh (signed count)
+imm3:   "$"b4_6     is b4_6     { export *[const]:1 b4_6; }
+imm3b:  "$"dw_b4_6  is dw_b4_6  { export *[const]:1 dw_b4_6; }
+imm3c:  "$"dw_n2b   is dw_n2b   { export *[const]:1 dw_n2b; }
+imm3d:  "$"x2s      is x2s      { export *[const]:1 x2s; }      # for ash and lsh (signed count)
+
+cnt3:   "$"tmp  is b4_6         [ tmp = b4_6 + 1; ]     { export *[const]:1 tmp; }
+cnt3b:  "$"tmp  is b0_2         [ tmp = b0_2 + 1; ]     { export *[const]:1 tmp; }
+
+# If (abs20 > 0xEFFFF) the resulting address is logically ORed with 0xF00000 
+#   i.e. addresses from 1M-64k to 1M are re-mapped by the core to 16M-64k to 16M.
+abs20:  tmp     is n5 & dw_w2       [ tmp = (n5 << 16) + dw_w2; ]   { 
+    tmp2:3 = tmp;
+    if (tmp2 <= 0xefffff) goto <abs20end>;
+        tmp2 = tmp2 | 0xf00000;
+    <abs20end>
+    export *[const]:3 tmp2; 
+}
+
+abs24:  "*"tmp  is n5 & n7 & b0_15  
+        [ tmp = (n5 << 20) + (n7 << 16) + (b0_15); ]           { export *[const]:4 tmp; }
+
+# NOTE: disp24 is sign extended to 25 bits - hopefully that doesn't matter here
+# TODO: display *+/*- relative to PC?
+disp8:  "*"tmp  is x1 & x3s 
+        [ tmp = (x3s << 5) + (x1 << 1) + inst_start; ]  { export *[ram]:4 tmp; }  # fmt 21
+disp16: "*"tmp  is w2_b1_15  
+        [ tmp = (w2_b1_15 << 1) + inst_start; ]         { export *[ram]:4 tmp; }  # fmt 5, 22 
+disp24: "*"tmp  is n5s & n7 & b1_15  
+        [ tmp = (n5s << 20) + (n7 << 16) + (b1_15 << 1) + inst_start; ]     { export *[ram]:4 tmp; }
+disp24b:"*"tmp  is dw_lo & b1_15   
+        [ tmp = (dw_lo << 16) + (b1_15 << 1) + inst_start; ]                { export *[ram]:4 tmp; }
+disp4c: "*"tmp  is x2
+        [ tmp = ((x2 + 1) << 1) + inst_start;  ]        { export *[ram]:4 tmp; }
+
+# disps not relative to PC
+disp4:  "*"tmp  is x3   [ tmp = (x3 << 1); ]    { export *[const]:3 tmp; }
+disp4b: "*"x3   is x3                           { export *[const]:3 x3; }
+disp16b:"*"w2   is w2                           { export *[const]:2 w2; }
+disp20: "*"tmp  is n7 & dw_w2
+        [ tmp = (n7 << 16) + dw_w2; ]           { export *[const]:3 tmp; }  
+disp14: "*"tmp  is f17a & f17b & f17c & f17d
+        [ tmp = (f17d << 8) + (f17c << 6) + (f17b << 4) + f17a; ]       { export *[const]:3 tmp; }
+
+
+cc: "eq" is cond=0          { local tmp =  $(Z); export tmp; }
+cc: "ne" is cond=1          { local tmp = !$(Z); export tmp; }
+cc: "cs" is cond=2          { local tmp =  $(C); export tmp; }
+cc: "cc" is cond=3          { local tmp = !$(C); export tmp; }
+cc: "hi" is cond=4          { local tmp =  $(L); export tmp; }
+cc: "ls" is cond=5          { local tmp = !$(L); export tmp; }
+cc: "gt" is cond=6          { local tmp =  $(N); export tmp; }
+cc: "le" is cond=7          { local tmp = !$(N); export tmp; }
+cc: "fs" is cond=8          { local tmp =  $(F); export tmp; }
+cc: "fc" is cond=9          { local tmp = !$(F); export tmp; }
+cc: "lo" is cond=10         { local tmp = !$(Z) && !$(L); export tmp; }
+cc: "hs" is cond=11         { local tmp =   $(Z) || $(L); export tmp; }
+cc: "lt" is cond=12         { local tmp = !$(Z) && !$(N); export tmp; }
+cc: "ge" is cond=13         { local tmp =   $(Z) || $(N); export tmp; }
+COND: cc is cc  { if (!cc) goto inst_next; }
+
+cc2: "eq" is n6=0          { local tmp =  $(Z); export tmp; }          
+cc2: "ne" is n6=1          { local tmp = !$(Z); export tmp; }          
+cc2: "cs" is n6=2          { local tmp =  $(C); export tmp; }          
+cc2: "cc" is n6=3          { local tmp = !$(C); export tmp; }          
+cc2: "hi" is n6=4          { local tmp =  $(L); export tmp; }          
+cc2: "ls" is n6=5          { local tmp = !$(L); export tmp; }          
+cc2: "gt" is n6=6          { local tmp =  $(N); export tmp; }          
+cc2: "le" is n6=7          { local tmp = !$(N); export tmp; }          
+cc2: "fs" is n6=8          { local tmp =  $(F); export tmp; }          
+cc2: "fc" is n6=9          { local tmp = !$(F); export tmp; }          
+cc2: "lo" is n6=10         { local tmp = !($(Z) && $(L)); export tmp; }
+cc2: "hs" is n6=11         { local tmp =   $(Z) || $(L); export tmp; } 
+cc2: "lt" is n6=12         { local tmp = !($(Z) && $(N)); export tmp; }
+cc2: "ge" is n6=13         { local tmp =   $(Z) || $(N); export tmp; } 
+COND2: cc2  is cc2  { if (!cc2) goto inst_next; }
+
+
+ra:     "RA"    is epsilon  { }
+const1: "0x0"   is epsilon  { }
+
+rs:     "[R12]" is b_rs=0   { export R12; }
+rs:     "[R13]" is b_rs=1   { export R13; }
+
+prp2:   "[R12]" is dw_b_prp=0  { export R12; }
+prp2:   "[R13]" is dw_b_prp=1  { export R13; }
+
+prp:    "[R12]" is b_prp=0  { export R12; }
+prp:    "[R13]" is b_prp=1  { export R13; }
+
+cinv1:  "[i]"       is epsilon  { }
+cinv2:  "[i,u]"     is epsilon  { }
+cinv3:  "[d]"       is epsilon  { }
+cinv4:  "[d,u]"     is epsilon  { }
+cinv5:  "[d,i]"     is epsilon  { }
+cinv6:  "[d,i,u]"   is epsilon  { }
+
+
+
+# Constructors ===============================================================
+
+# MOVES
+
+# MOVB - move low-order byte only
+:MOVB imm4, dst         is hi=0x58 & dst & imm4 {
+    dst = (dst & 0xff00) | (zext(imm4) & 0x00ff);
+}
+:MOVB imm16, dst        is hi=0x58 & x2=11 & dst ; imm16 {
+    dst = (dst & 0xff00) | (imm16 & 0x00ff);
+}
+:MOVB src, dst          is hi=0x59 & src & dst {
+    dst = (dst & 0xff00) | (zext(src:1) & 0x00ff);
+}
+
+# MOVD - move doubleword
+:MOVD imm20, rp_dst4    is dw_hi=0x05 & rp_dst4 & imm20 {
+    rp_dst4 = zext(imm20);
+}
+:MOVD imm32, rp_dst     is op12=0x007 & rp_dst ; imm32 {
+    rp_dst = imm32;
+}
+:MOVD imm4, rp_dst      is hi=0x54 & rp_dst & imm4 {
+    rp_dst = sext(imm4);
+}
+:MOVD imm16, rp_dst     is hi=0x54 & x2=11 & rp_dst ; imm16 {
+    rp_dst = sext(imm16);
+}
+:MOVD rp_src, rp_dst    is hi=0x55 & rp_dst & rp_src {
+    rp_dst = rp_src;
+}
+
+# MOVW - move word
+:MOVW imm4, dst     is hi=0x5a & dst & imm4 {
+    dst = sext(imm4);
+}
+:MOVW imm16, dst    is hi=0x5a & x2=11 & dst ; imm16 {
+    dst = imm16;
+}
+:MOVW src, dst      is hi=0x5b & src & dst {
+    dst = src;
+}
+
+# MOVXB - move low-order byte of src to word dst with sign extension
+:MOVXB src, dst     is hi=0x5c & src & dst {
+    dst = sext(src:1);
+}
+# MOVXW - move word src to doubleword dst with sign extension
+:MOVXW src, rp_dst  is hi=0x5e & src & rp_dst {
+    rp_dst = sext(src);
+}
+
+# MOVZB - move low-order byte of src to word dst with zero extension
+:MOVZB src, dst     is hi=0x5d & src & dst {
+    dst = zext(src:1);
+}
+# MOVZW - move word src to doubleword dst with zero extension
+:MOVZW src, rp_dst  is hi=0x5f & src & rp_dst {
+    rp_dst = zext(src);
+}
+
+
+# ARITHMETIC
+
+# ADDB - add low-order byte only
+:ADDB imm4, dst     is hi=0x30 & dst & imm4 {
+    addflags(dst:1, imm4);
+    tmp:1 = dst:1 + imm4;
+    dst = (dst & 0xff00) + zext(tmp);
+}
+:ADDB imm16, dst    is hi=0x30 & x2=11 & dst ; imm16 {
+    addflags(dst:1, imm16:1);
+    tmp:1 = dst:1 + imm16:1;
+    dst = (dst & 0xff00) + zext(tmp);
+}
+:ADDB src, dst      is hi=0x31 & src & dst {
+    addflags(dst:1, src:1);
+    tmp:1 = dst:1 + src:1;
+    dst = (dst & 0xff00) + zext(tmp);
+}
+
+# ADDCB - add with carry low-order byte only
+:ADDCB imm4, dst    is hi=0x34 & dst & imm4 {
+    addflags2(dst:1, imm4, $(C));
+    tmp:1 = dst:1 + imm4 + $(C);
+    dst = (dst & 0xff00) + zext(tmp);
+}
+:ADDCB imm16, dst   is hi=0x34 & x2=11 & dst ; imm16 {
+    addflags2(dst:1, imm16:1, $(C));
+    tmp:1 = dst:1 + imm16:1 + $(C);
+    dst = (dst & 0xff00) + zext(tmp);
+}
+:ADDCB src, dst     is hi=0x35 & src & dst {
+    addflags2(dst:1, src:1, $(C));
+    tmp:1 = dst:1 + src:1 + $(C);
+    dst = (dst & 0xff00) + zext(tmp);
+}
+
+# ADDCW - add word with carry
+:ADDCW imm4, dst    is hi=0x36 & dst & imm4 {
+    tmp2:2 = sext(imm4);
+    tmp3:2 = zext($(C));
+    addflags2(dst, tmp2, tmp3);
+    dst = dst + tmp2 + tmp3;
+}
+:ADDCW imm16, dst   is hi=0x36 & x2=11 & dst ; imm16 {
+    tmp3:2 = zext($(C));
+    addflags2(dst, imm16, tmp3);
+    dst = dst + imm16 + tmp3;
+}
+:ADDCW src, dst     is hi=0x37 & src & dst {
+    tmp3:2 = zext($(C));
+    addflags2(dst, src, tmp3);
+    dst = dst + src + tmp3;
+}
+
+# ADDD - add doubleword
+:ADDD imm20, rp_dst4    is dw_hi=0x04 & rp_dst4 & imm20 {
+    tmp:4 = zext(imm20);
+    addflags(tmp, rp_dst4);
+    rp_dst4 = rp_dst4 + tmp;
+}
+:ADDD imm32, rp_dst     is op12=0x002 & rp_dst ; imm32 {
+    addflags(imm32, rp_dst);
+    rp_dst = rp_dst + imm32;
+}
+:ADDD imm4, rp_dst      is hi=0x60 & rp_dst & imm4 {
+    tmp:4 = sext(imm4);
+    addflags(tmp, rp_dst);
+    rp_dst = rp_dst + tmp;
+}
+:ADDD imm16, rp_dst     is hi=0x60 & x2=11 & rp_dst ; imm16 {
+    tmp:4 = sext(imm16);
+    addflags(tmp, rp_dst);
+    rp_dst = rp_dst + tmp;
+}
+:ADDD rp_src, rp_dst    is hi=0x61 & rp_dst & rp_src {
+    addflags(rp_src, rp_dst);
+    rp_dst = rp_dst + rp_src;
+}
+
+# ADDUB - add low-order byte only, PSR flags unaffected
+:ADDUB imm4, dst    is hi=0x2c & dst & imm4 {
+    tmp:1 = dst:1 + imm4;
+    dst = (dst & 0xff00) + zext(tmp);
+}
+:NOP                is hi=0x2c & dst=0 & x2=0 {
+
+}
+:ADDUB imm16, dst   is hi=0x2c & x2=11 & dst ; imm16 {
+    tmp:1 = dst:1 + imm16:1;
+    dst = (dst & 0xff00) + zext(tmp);
+}
+:ADDUB src, dst     is hi=0x2d & src & dst {
+    tmp:1 = dst:1 + src:1;
+    dst = (dst & 0xff00) + zext(tmp);
+}
+
+# ADDUW - add word, PSR flags unaffected
+:ADDUW imm4, dst    is hi=0x2e & dst & imm4 {
+    tmp:2 = sext(imm4);
+    dst = dst + tmp;
+}
+:ADDUW imm16, dst   is hi=0x2e & x2=11 & dst ; imm16 {
+    dst = dst + imm16;
+}
+:ADDUW src, dst     is hi=0x2f & src & dst {
+    dst = dst + src;
+}
+
+# ADDW - add word
+:ADDW imm4, dst     is hi=0x32 & dst & imm4 {
+    tmp:2 = sext(imm4); 
+    addflags(tmp, dst);
+    dst = dst + tmp;
+}
+:ADDW imm16, dst    is hi=0x32 & x2=11 & dst ; imm16 {
+    addflags(imm16, dst);
+    dst = dst + imm16;
+}
+:ADDW src, dst  is hi=0x33 & src & dst {
+    addflags(src, dst);
+    dst = dst + src;
+}
+
+# Multiply Signed Q15 Word and Accumulate Long Result
+:MACQW src2, src5, rp_dst7  is op=0x0014 ; n4=13 & src2 & src5 & rp_dst7 {
+    tmp:4 = sext(src2) * sext(src5);    # TODO based on what Q15 is, this sext may not be right
+    rp_dst7 = rp_dst7 + tmp;
+
+#    if (!scarry(rp_dst7, tmp)) goto <macqw_next>;
+#        rp_dst7 = 0x7fffffff;   # overflowed, set to max
+#        goto <macqw_end>;
+#<macqw_next>
+#    if (!sborrow(rp_dst7, tmp)) goto <macqw_end>;
+#        rp_dst7 = 0x80000000;   # underflowed, set to min
+#<macqw_end>
+
+    # TODO: if scarry(rp_dst7, tmp) then rp_dst7 = 0x?  TODO what is Q15 signed fractional format
+    #       if sborrow(rp_dst7, tmp) then rp_dst7 = 0x?
+}
+
+# Unsigned Multiply Word and Accumulate Long Result
+:MACUW src2, src5, rp_dst7  is op=0x0014 ; n4=14 & src2 & src5 & rp_dst7 {
+    tmp:4 = zext(src2) * zext(src5);
+    rp_dst7 = rp_dst7 + tmp;
+    
+    # if scarry(rp_dst7, tmp) then rp_dst7 = 0xffffffff
+    if (!scarry(rp_dst7, tmp)) goto <macuw_end>;
+        rp_dst7 = 0xffffffff;   # overflowed, set to max
+<macuw_end>
+}
+
+# Signed Multiply Word and Add Long Result
+:MACSW src2, src5, rp_dst7  is op=0x0014 ; n4=15 & src2 & src5 & rp_dst7 {
+    tmp:4 = sext(src2) * sext(src5);
+    rp_dst7 = rp_dst7 + tmp;
+
+    # if scarry(rp_dst7, tmp) then rp_dst7 = 0x7fffffff
+    if (!scarry(rp_dst7, tmp)) goto <macsw_next>;
+        rp_dst7 = 0x7fffffff;   # overflowed, set to max
+        goto <macsw_end>;
+<macsw_next>
+    # if sborrow(rp_dst7, tmp) then rp_dst7 = 0x80000000
+    if (!sborrow(rp_dst7, tmp)) goto <macsw_end>;
+        rp_dst7 = 0x80000000;   # underflowed, set to min
+<macsw_end>
+}
+
+# MULB - multiply byte
+:MULB imm4, dst     is hi=0x64 & dst & imm4 {
+    tmp:1 = dst:1 * imm4;
+    dst = (dst & 0xff00) + zext(tmp);
+}
+:MULB imm16, dst    is hi=0x64 & x2=11 & dst ; imm16 {
+    tmp:1 = dst:1 * imm16:1;
+    dst = (dst & 0xff00) + zext(tmp);}
+:MULB src, dst      is hi=0x65 & src & dst{
+    tmp:1 = dst:1 * src:1;
+    dst = (dst & 0xff00) + zext(tmp);
+}
+
+# Signed Multiply Byte, Word Result
+:MULSB src, dst     is hi=0x0b & src & dst {
+    dst = sext(src:1) * sext(dst:1);
+}
+
+# Signed Multiply Word, Long Result
+:MULSW src, rp_dst  is hi=0x62 & src & rp_dst {
+    rp_dst = sext(src) * sext(rp_dst:2);
+}
+
+# Unsigned Multiply Word, Long Result
+:MULUW src, rp_dst  is hi=0x63 & src & rp_dst {
+    rp_dst = zext(src) * zext(rp_dst:2);
+}
+
+# MULW - multiply word
+:MULW imm4, dst     is hi=0x66 & dst & imm4 {
+    tmp:2 = sext(imm4);
+    dst = dst * tmp;
+}
+:MULW imm16, dst    is hi=0x66 & x2=11 & dst ; imm16 {
+    dst = dst * imm16;
+}
+:MULW src, dst      is hi=0x67 & src & dst {
+    dst = dst * src;
+}
+
+# SUBB - subtract low-order byte only
+:SUBB imm4, dst     is hi=0x38 & dst & imm4 {
+    subflags(dst:1, imm4);
+    tmp:1 = dst:1 - imm4;
+    dst = (dst & 0xff00) + zext(tmp);
+}
+:SUBB imm16, dst    is hi=0x38 & x2=11 & dst ; imm16 {
+    subflags(dst:1, imm16:1);
+    tmp:1 = dst:1 - imm16:1;
+    dst = (dst & 0xff00) + zext(tmp);
+}
+:SUBB src, dst      is hi=0x39 & src & dst {
+    subflags(dst:1, src:1);
+    tmp:1 = dst:1 - src:1;
+    dst = (dst & 0xff00) + zext(tmp);
+}
+
+# SUBCB - subtract with carry low-order byte only
+:SUBCB imm4, dst    is hi=0x3c & dst & imm4 {
+    subflags2(dst:1, imm4, $(C));
+    tmp:1 = dst:1 - imm4 - $(C);
+    dst = (dst & 0xff00) + zext(tmp);
+}
+:SUBCB imm16, dst   is hi=0x3c & x2=11 & dst ; imm16 {
+    subflags2(dst:1, imm16:1, $(C));
+    tmp:1 = dst:1 - imm16:1 - $(C);
+    dst = (dst & 0xff00) + zext(tmp);
+}
+:SUBCB src, dst     is hi=0x3d & src & dst {
+    subflags2(dst:1, src:1, $(C));
+    tmp:1 = dst:1 - src:1 - $(C);
+    dst = (dst & 0xff00) + zext(tmp);
+}
+
+# SUBCW - subtract word with carry
+:SUBCW imm4, dst    is hi=0x3e & dst & imm4 {
+    tmp2:2 = sext(imm4);
+    tmp3:2 = zext($(C));
+    subflags2(dst, tmp2, tmp3);
+    dst = dst - tmp2 - tmp3;
+}
+:SUBCW imm16, dst   is hi=0x3e & x2=11 & dst ; imm16 {
+    tmp3:2 = zext($(C));
+    subflags2(dst, imm16, tmp3);
+    dst = dst - imm16 - tmp3;
+}
+:SUBCW src, dst     is hi=0x3f & src & dst {
+    tmp3:2 = zext($(C));
+    subflags2(dst, src, tmp3);
+    dst = dst - src - tmp3;
+}
+
+# SUBD - subtract doubleword
+:SUBD rp_src6, rp_dst3  is op=0x0014 ; n4=12 & n3=0 & rp_src6 & rp_dst3 {   # fmt 1
+    subflags(rp_dst3, rp_src6);
+    rp_dst3 = rp_dst3 - rp_src6;
+}
+:SUBD imm32, rp_dst     is op12=0x003 & rp_dst ; imm32 {
+    subflags(imm32, rp_dst);
+    rp_dst = rp_dst - imm32;
+}
+
+# SUBW - subtract word
+:SUBW imm4, dst     is hi=0x3a & dst & imm4 {
+    tmp:2 = sext(imm4);
+    subflags(tmp, dst);
+    dst = dst - tmp;
+}
+:SUBW imm16, dst    is hi=0x3a & x2=11 & dst ; imm16 {
+    subflags(imm16, dst);
+    dst = dst - imm16;
+}
+:SUBW src, dst      is hi=0x3b & src & dst {
+    subflags(src, dst);
+    dst = dst - src;
+}
+
+
+# INTEGER COMPARISON
+
+# CMPB - compare low-order byte only
+:CMPB imm4, src1    is hi=0x50 & src1 & imm4 {
+    compflags(imm4, src1:1);
+}
+:CMPB imm16, src1   is hi=0x50 & x2=11 & src1 ; imm16 {
+    compflags(imm16:1, src1:1);
+}
+:CMPB src, src1     is hi=0x51 & src & src1 {
+    compflags(src:1, src1:1);
+}
+
+# CMPD - compare doubleword
+:CMPD imm32, rp_src2    is op12=0x009 & rp_src2 ; imm32 {
+    compflags(imm32, rp_src2);
+}
+:CMPD imm4, rp_src2     is hi=0x56 & rp_src2 & imm4 {
+    tmp:4 = sext(imm4);
+    compflags(tmp, rp_src2);
+}
+:CMPD imm16, rp_src2    is hi=0x56 & x2=11 & rp_src2 ; imm16 {
+    tmp:4 = sext(imm16);
+    compflags(tmp, rp_src2);
+}
+:CMPD rp_src, rp_src2   is hi=0x57 & rp_src & rp_src2 {
+    compflags(rp_src, rp_src2);
+}
+
+# CMPW - compare word
+:CMPW imm4, src1    is hi=0x52 & src1 & imm4 {
+    tmp:2 = sext(imm4);
+    compflags(tmp, src1);
+}
+:CMPW imm16, src1   is hi=0x52 & x2=11 & src1 ; imm16 {
+    compflags(imm16, src1);
+}
+:CMPW src, src1     is hi=0x53 & src & src1 {
+    compflags(src, src1);
+}
+
+
+# LOGICAL / BOOLEAN
+
+# ANDB - and low-order byte only
+:ANDB imm4, dst     is hi=0x20 & dst & imm4  {
+    tmp:1 = dst:1 & imm4;
+    dst = (dst & 0xff00) + zext(tmp);
+}
+:ANDB imm16, dst    is hi=0x20 & x2=11 & dst ; imm16 {
+    tmp:1 = dst:1 & imm16:1;
+    dst = (dst & 0xff00) + zext(tmp);
+}
+:ANDB src, dst      is hi=0x21 & src & dst {
+    tmp:1 = dst:1 & src:1;
+    dst = (dst & 0xff00) + zext(tmp);
+}
+
+# ANDW - and word
+:ANDW imm4, dst     is hi=0x22 & dst & imm4 {
+    tmp:2 = sext(imm4);  
+    dst = dst & tmp;
+}
+:ANDW imm16, dst    is hi=0x22 & x2=11 & dst ; imm16 {
+    dst = dst & imm16;
+}
+:ANDW src, dst      is hi=0x23 & src & dst {
+    dst = dst & src;
+}
+
+# ANDD - and doubleword
+:ANDD imm32, rp_dst     is op12=0x004 & rp_dst ; imm32 {
+    rp_dst = rp_dst & imm32;
+}
+:ANDD rp_src6, rp_dst3  is op=0x0014 ; n4=11 & rp_src6 & rp_dst3 {  # fmt 1
+    rp_dst3 = rp_dst3 & rp_src6;
+}
+
+# ORB - or low-order byte only
+:ORB imm4, dst  is hi=0x24 & dst & imm4 {
+    tmp:1 = dst:1 | imm4;
+    dst = (dst & 0xff00) + zext(tmp);
+}
+:ORB imm16, dst is hi=0x24 & x2=11 & dst ; imm16 {
+    tmp:1 = dst:1 | imm16:1;
+    dst = (dst & 0xff00) + zext(tmp);
+}
+:ORB src, dst   is hi=0x25 & src & dst {
+    tmp:1 = dst:1 | src:1;
+    dst = (dst & 0xff00) + zext(tmp);
+}
+
+# ORW - or word
+:ORW imm4, dst  is hi=0x26 & dst & imm4 {
+    tmp:2 = sext(imm4);        
+    dst = dst | tmp;
+}
+:ORW imm16, dst is hi=0x26 & x2=11 & dst ; imm16 {
+    dst = dst | imm16;
+}
+:ORW src, dst   is hi=0x27 & src & dst {
+    dst = dst | src;
+}
+
+# ORD - or doubleword
+:ORD imm32, rp_dst      is op12=0x005 & rp_dst ; imm32 {
+    rp_dst = rp_dst | imm32;
+}
+:ORD rp_src6, rp_dst3   is op=0x0014 ; n4=9 & rp_src6 & rp_dst3 {   # fmt 1
+    rp_dst3 = rp_dst3 | rp_src6;
+}
+
+# S - save condition as boolean
+:S^COND dst     is hi=0x08 & COND & dst {
+    dst = 0;
+    build COND;
+    dst = 1;
+}
+:S dst          is hi=0x08 & cond=14 & dst {
+    dst = 1;
+}
+:S dst          is hi=0x08 & cond=15 & dst {
+    dst = 1;
+}
+
+# XORB - xor low-order byte only
+:XORB imm4, dst     is hi=0x28 & dst & imm4 {
+    tmp:1 = dst:1 ^ imm4;
+    dst = (dst & 0xff00) + zext(tmp);
+}
+:XORB imm16, dst    is hi=0x28 & x2=11 & dst ; imm16 {
+    tmp:1 = dst:1 ^ imm16:1;
+    dst = (dst & 0xff00) + zext(tmp);
+}
+:XORB src, dst      is hi=0x29 & src & dst {
+    tmp:1 = dst:1 ^ src:1;
+    dst = (dst & 0xff00) + zext(tmp);
+}
+
+# XORW - xor word
+:XORW imm4, dst     is hi=0x2a & dst & imm4 {
+    tmp:2 = sext(imm4);        
+    dst = dst ^ tmp;
+}
+:XORW imm16, dst    is hi=0x2a & x2=11 & dst ; imm16 {
+    dst = dst ^ imm16;
+}
+:XORW src, dst      is hi=0x2b & src & dst {
+    dst = dst ^ src;
+}
+
+# XORD - xor doubleword
+:XORD imm32, rp_dst     is op12=0x006 & rp_dst ; imm32 {
+    rp_dst = rp_dst ^ imm32;
+}
+:XORD rp_src6, rp_dst3  is op=0x0014 ; n4=10 & rp_src6 & rp_dst3 {  # fmt 1
+    rp_dst3 = rp_dst3 ^ rp_src6;
+}
+
+
+# SHIFTS
+
+# TODO: left shift displays "+", right shift displays "-"
+
+macro do_ash(count, dest) {
+    local shift = count:1;
+    local lf = ( shift) * zext(shift s> 0);
+    local rt = (-shift) * zext(shift s< 0);
+    dest = dest << lf;
+    dest = dest s>> rt;
+}
+
+macro do_ashb(count, dest) {
+    local tmp = dest & 0xff;
+    do_ash(count, tmp);
+    dest = (dest & 0xff00) | (tmp & 0x00ff);
+}
+
+macro do_lsh(count, dest) {
+    local shift = count:1;
+    local lf = ( shift) * zext(shift s> 0);
+    local rt = (-shift) * zext(shift s< 0);
+    dest = dest << lf;
+    dest = dest >> rt;
+}
+
+macro do_lshb(count, dest) {
+    local tmp = dest & 0xff;
+    do_lsh(count, tmp);
+    dest = (dest & 0xff00) | (tmp & 0x00ff);
+}
+
+# ASHUB - Arithmetic shift low-order byte only
+:ASHUB imm3d, dst	is op9=0b010000000 & imm3d & dst	{ do_ashb(imm3d, dst); }
+:ASHUB imm3d, dst	is op9=0b010000001 & imm3d & dst	{ do_ashb(imm3d-8, dst); }
+:ASHUB src, dst		is hi=0x41 & src & dst			{ do_ashb(src, dst); }
+
+# ASHUD - Arithmetic shift doubleword
+:ASHUD imm5, rp_dst	is op7=0b0100110 & imm5 & rp_dst	{ do_ash(imm5, rp_dst); }
+:ASHUD imm5, rp_dst	is op7=0b0100111 & imm5 & rp_dst	{ do_ash(imm5-32, rp_dst); }
+:ASHUD src, rp_dst	is hi=0x48 & src & rp_dst		{ do_ash(src, rp_dst); }
+
+# ASHUW - Arithmetic shift word
+:ASHUW imm4d, dst	is hi=0x42 & imm4d & dst		{ do_ash(imm4d, dst); }
+:ASHUW imm4d, dst	is hi=0x43 & imm4d & dst		{ do_ash(imm4d-16, dst); }
+:ASHUW src, dst		is hi=0x45 & src & dst			{ do_ash(src, dst); }
+
+# LSHB - Logical shift low-order byte only
+:LSHB imm3d, dst	is op9=0b000010011 & imm3d & dst	{ do_lshb(imm3d-8, dst); }
+:LSHB src, dst		is hi=0x44 & src & dst			{ do_lshb(src, dst); }
+
+# LSHD - Logical shift doubleword
+:LSHD imm5, rp_dst	is op7=0b0100101 & imm5 & rp_dst	{ do_lsh(imm5-32, rp_dst); }
+:LSHD src, rp_dst	is hi=0x47 & src & rp_dst		{ do_lsh(src, rp_dst); }
+
+# LSHW - Logical shift word
+:LSHW imm4d, dst	is hi=0x49 & imm4d & dst		{ do_lsh(imm4d-16, dst); }
+:LSHW src, dst		is hi=0x46 & src & dst			{ do_lsh(src, dst); }
+
+# BITS
+# - for bit ops, dsp(n) is always unsigned
+
+# CBITB - clear bit in low-order byte
+:CBITB imm3c, prp2 disp14(prp_dst)  is op10=0x1aa & imm3c & prp2 & disp14 & prp_dst {   # fmt 17
+    tmp:4 = prp_dst:4 + prp2:4 + zext(disp14);
+    val:1 = *:1 tmp;                # load dst operand
+    local mask = 1 << imm3c;
+    $(F) = (val & mask) >> imm3c;   # save bit
+    mask = ~mask;
+    *:1 tmp = val & mask;           # clear bit, store
+}
+:CBITB imm3b, disp20(dst4)      is op=0x0010 ; n8=4 & imm3b & disp20 & dst4 {   # fmt 2
+    tmp:4 = zext(dst4) + zext(disp20);
+    val:1 = *:1 tmp;                # load dst operand
+    local mask = 1 << imm3b;
+    $(F) = (val & mask) >> imm3b;   # save bit
+    mask = ~mask;
+    *:1 tmp = val & mask;           # clear bit, store
+}
+:CBITB imm3, const1(rp_dst)     is op9=0x0d4 & imm3 & rp_dst & const1 {     # fmt 9
+    tmp:4 = rp_dst:4;
+    val:1 = *:1 tmp;                # load dst operand
+    local mask = 1 << imm3;
+    $(F) = (val & mask) >> imm3;    # save bit
+    mask = ~mask;
+    *:1 tmp = val & mask;           # clear bit, store
+}
+:CBITB imm3, disp16b(rp_dst)    is op9=0x0d6 & imm3 & rp_dst ; disp16b {    # fmt 10
+    tmp:4 = rp_dst:4 + zext(disp16b);
+    val:1 = *:1 tmp;                # load dst operand
+    local mask = 1 << imm3;
+    $(F) = (val & mask) >> imm3;    # save bit
+    mask = ~mask;
+    *:1 tmp = val & mask;           # clear bit, store
+}
+:CBITB imm3b, disp20(rp_dst5)   is op=0x0010 ; n8=5 & imm3b & disp20 & rp_dst5 {    # fmt 2
+    tmp:4 = rp_dst5:4 + zext(disp20);
+    val:1 = *:1 tmp;                # load dst operand
+    local mask = 1 << imm3b;
+    $(F) = (val & mask) >> imm3b;   # save bit
+    mask = ~mask;
+    *:1 tmp = val & mask;           # clear bit, store
+}
+:CBITB imm3b, disp20(prp_dst)   is op=0x0010 ; n8=6 & imm3b & disp20 & prp_dst {    # fmt 2
+    tmp:4 = prp_dst:4 + zext(disp20);
+    val:1 = *:1 tmp;                # load dst operand
+    local mask = 1 << imm3b;
+    $(F) = (val & mask) >> imm3b;   # save bit
+    mask = ~mask;
+    *:1 tmp = val & mask;           # clear bit, store
+}
+:CBITB imm3b, abs20     is dw_op9=0x0d7 & imm3b & abs20 {   # fmt 7
+    tmp:4 = zext(abs20);
+    val:1 = *:1 tmp;                # load dst operand
+    local mask = 1 << imm3b;
+    $(F) = (val & mask) >> imm3b;   # save bit
+    mask = ~mask;
+    *:1 tmp = val & mask;           # clear bit, store
+}
+:CBITB imm3b, rs abs20  is dw_hi=0x68 & imm3b & rs & abs20 {    # fmt 8
+    tmp:4 = zext(abs20) + rs:4;
+    val:1 = *:1 tmp;                # load dst operand
+    local mask = 1 << imm3b;
+    $(F) = (val & mask) >> imm3b;   # save bit
+    mask = ~mask;
+    *:1 tmp = val & mask;           # clear bit, store
+}
+:CBITB imm3b, abs24     is op=0x0010 ; n8=7 & imm3b & abs24 {   # fmt 3
+    tmp:4 = abs24;
+    val:1 = *:1 tmp;                # load dst operand
+    local mask = 1 << imm3b;
+    $(F) = (val & mask) >> imm3b;   # save bit
+    mask = ~mask;
+    *:1 tmp = val & mask;           # clear bit, store
+}
+
+# CBITW - clear bit in word
+:CBITW imm4c, prp2 disp14(prp_dst)  is op10=0x1ab & imm4c & prp2 & disp14 & prp_dst {   # fmt 17
+    tmp:4 = prp_dst:4 + prp2:4 + zext(disp14);
+    val:2 = *:2 tmp;                # load dst operand
+    mask:2 = 1 << imm4c;
+    bit:2 = (val & mask) >> imm4c;
+    $(F) = bit:1;                   # save bit
+    mask = ~mask;
+    *:2 tmp = val & mask;           # clear bit, store
+}
+:CBITW imm4b, disp20(dst4)      is op=0x0011 ; n8=4 & imm4b & disp20 & dst4 {   # fmt 2
+    tmp:4 = zext(dst4) + zext(disp20);
+    val:2 = *:2 tmp;                # load dst operand
+    mask:2 = 1 << imm4b;
+    bit:2 = (val & mask) >> imm4b;
+    $(F) = bit:1;                   # save bit
+    mask = ~mask;
+    *:2 tmp = val & mask;           # clear bit, store
+}
+:CBITW imm4a, const1(rp_dst)    is hi=0x6e & imm4a & rp_dst & const1 {
+    tmp:4 = rp_dst:4;
+    val:2 = *:2 tmp;                # load dst operand
+    mask:2 = 1 << imm4a;
+    bit:2 = (val & mask) >> imm4a;
+    $(F) = bit:1;                   # save bit
+    mask = ~mask;
+    *:2 tmp = val & mask;           # clear bit, store
+}
+:CBITW imm4a, disp16b(rp_dst)   is hi=0x69 & imm4a & rp_dst ; disp16b {
+    tmp:4 = rp_dst:4 + zext(disp16b);
+    val:2 = *:2 tmp;                # load dst operand
+    mask:2 = 1 << imm4a;
+    bit:2 = (val & mask) >> imm4a;
+    $(F) = bit:1;                   # save bit
+    mask = ~mask;
+    *:2 tmp = val & mask;           # clear bit, store
+}
+:CBITW imm4b, disp20(rp_dst5)   is op=0x0011 ; n8=5 & rp_dst5 & imm4b & disp20 {
+    tmp:4 = rp_dst5:4 + zext(disp20);
+    val:2 = *:2 tmp;                # load dst operand
+    mask:2 = 1 << imm4b;
+    bit:2 = (val & mask) >> imm4b;
+    $(F) = bit:1;                   # save bit
+    mask = ~mask;
+    *:2 tmp = val & mask;           # clear bit, store
+}
+:CBITW imm4b, disp20(prp_dst)   is op=0x0011 ; n8=6 & imm4b & disp20 & prp_dst {    # fmt 2
+    tmp:4 = prp_dst:4 + zext(disp20);
+    val:2 = *:2 tmp;                # load dst operand
+    mask:2 = 1 << imm4b;
+    bit:2 = (val & mask) >> imm4b;
+    $(F) = bit:1;                   # save bit
+    mask = ~mask;
+    *:2 tmp = val & mask;           # clear bit, store
+}
+:CBITW imm4b, abs20             is dw_hi=0x6f & imm4b & abs20 {     # fmt 12
+    tmp:4 = zext(abs20);
+    val:2 = *:2 tmp;                # load dst operand
+    mask:2 = 1 << imm4b;
+    bit:2 = (val & mask) >> imm4b;
+    $(F) = bit:1;                   # save bit
+    mask = ~mask;
+    *:2 tmp = val & mask;           # clear bit, store
+}
+:CBITW imm4b, rs abs20          is dw_op7=0x36 & imm4b & rs & abs20 {   # fmt 13
+    tmp:4 = zext(abs20) + rs:4;
+    val:2 = *:2 tmp;                # load dst operand
+    mask:2 = 1 << imm4b;
+    bit:2 = (val & mask) >> imm4b;
+    $(F) = bit:1;                   # save bit
+    mask = ~mask;
+    *:2 tmp = val & mask;           # clear bit, store
+}
+:CBITW imm4b, abs24             is op=0x0011 ; n8=7 & imm4b & abs24 {   # fmt 3
+    tmp:4 = abs24;
+    val:2 = *:2 tmp;                # load dst operand
+    mask:2 = 1 << imm4b;
+    bit:2 = (val & mask) >> imm4b;
+    $(F) = bit:1;                   # save bit
+    mask = ~mask;
+    *:2 tmp = val & mask;           # clear bit, store
+}
+
+# SBITB - set bit in low-order byte
+:SBITB imm3c, prp2 disp14(prp_dst)  is op10=0x1ca & imm3c & prp2 & disp14 & prp_dst {   # fmt 17
+    tmp:4 = prp_dst:4 + prp2:4 + zext(disp14);
+    val:1 = *:1 tmp;                # load dst operand
+    local mask = 1 << imm3c;
+    $(F) = (val & mask) >> imm3c;   # save bit
+    *:1 tmp = val | mask;           # set bit, store
+}
+:SBITB imm3b, disp20(dst4)          is op=0x0010 ; n8=8 & imm3b & disp20 & dst4 {   # fmt 2
+    tmp:4 = zext(dst4) + zext(disp20);
+    val:1 = *:1 tmp;                # load dst operand
+    local mask = 1 << imm3b;
+    $(F) = (val & mask) >> imm3b;   # save bit
+    *:1 tmp = val | mask;           # set bit, store
+}
+:SBITB imm3, const1(rp_dst)         is op9=0x0e4 & imm3 & rp_dst & const1 {     # fmt 9
+    tmp:4 = rp_dst:4;
+    val:1 = *:1 tmp;                # load dst operand
+    local mask = 1 << imm3;
+    $(F) = (val & mask) >> imm3;    # save bit
+    *:1 tmp = val | mask;           # set bit, store
+}
+:SBITB imm3, disp16b(rp_dst)        is op9=0x0e6 & imm3 & rp_dst ; disp16b {    # fmt 10
+    tmp:4 = rp_dst:4 + zext(disp16b);
+    val:1 = *:1 tmp;                # load dst operand
+    local mask = 1 << imm3;
+    $(F) = (val & mask) >> imm3;    # save bit
+    *:1 tmp = val | mask;           # set bit, store
+}
+:SBITB imm3b, disp20(rp_dst5)       is op=0x0010 ; n8=9 & imm3b & disp20 & rp_dst5 {    # fmt 2
+    tmp:4 = rp_dst5:4 + zext(disp20);
+    val:1 = *:1 tmp;                # load dst operand
+    local mask = 1 << imm3b;
+    $(F) = (val & mask) >> imm3b;   # save bit
+    *:1 tmp = val | mask;           # set bit, store
+}
+:SBITB imm3b, disp20(prp_dst)       is op=0x0010 ; n8=10 & imm3b & disp20 & prp_dst {   # fmt 2
+    tmp:4 = prp_dst:4 + zext(disp20);
+    val:1 = *:1 tmp;                # load dst operand
+    local mask = 1 << imm3b;
+    $(F) = (val & mask) >> imm3b;   # save bit
+    *:1 tmp = val | mask;           # set bit, store
+}
+:SBITB imm3b, abs20     is dw_op9=0x0e7 & imm3b & abs20 {   # fmt 7
+    tmp:4 = zext(abs20);
+    val:1 = *:1 tmp;                # load dst operand
+    local mask = 1 << imm3b;
+    $(F) = (val & mask) >> imm3b;   # save bit
+    *:1 tmp = val | mask;           # set bit, store
+}
+:SBITB imm3b, rs abs20  is dw_hi=0x70 & imm3b & rs & abs20 {    # fmt 8
+    tmp:4 = zext(abs20) + rs:4;
+    val:1 = *:1 tmp;                # load dst operand
+    local mask = 1 << imm3b;
+    $(F) = (val & mask) >> imm3b;   # save bit
+    *:1 tmp = val | mask;           # set bit, store
+}
+:SBITB imm3b, abs24     is op=0x0010 ; n8=11 & imm3b & abs24 {  # fmt 3
+    tmp:4 = abs24;
+    val:1 = *:1 tmp;                # load dst operand
+    local mask = 1 << imm3b;
+    $(F) = (val & mask) >> imm3b;   # save bit
+    *:1 tmp = val | mask;           # set bit, store
+}
+
+# SBITW - set bit in word
+:SBITW imm4c, prp2 disp14(prp_dst)  is op10=0x1cb & imm4c & prp2 & disp14 & prp_dst {   # fmt 17
+    tmp:4 = prp_dst:4 + prp2:4 + zext(disp14);
+    val:2 = *:2 tmp;                # load dst operand
+    mask:2 = 1 << imm4c;
+    bit:2 = (val & mask) >> imm4c;
+    $(F) = bit:1;                   # save bit
+    *:2 tmp = val | mask;           # clear bit, store
+}
+:SBITW imm4b, disp20(dst4)      is op=0x0011 ; n8=8 & imm4b & disp20 & dst4 {   # fmt 2
+    tmp:4 = zext(dst4) + zext(disp20);
+    val:2 = *:2 tmp;                # load dst operand
+    mask:2 = 1 << imm4b;
+    bit:2 = (val & mask) >> imm4b;
+    $(F) = bit:1;                   # save bit
+    *:2 tmp = val | mask;           # clear bit, store
+}
+:SBITW imm4a, const1(rp_dst)    is hi=0x76 & imm4a & const1 & rp_dst {   # fmt 15
+    tmp:4 = rp_dst:4;
+    val:2 = *:2 tmp;                # load dst operand
+    mask:2 = 1 << imm4a;
+    bit:2 = (val & mask) >> imm4a;
+    $(F) = bit:1;                   # save bit
+    *:2 tmp = val | mask;           # clear bit, store
+}
+:SBITW imm4a, disp16b(rp_dst)   is hi=0x71 & imm4a & rp_dst ; disp16b {  # fmt 16
+    tmp:4 = rp_dst:4 + zext(disp16b);
+    val:2 = *:2 tmp;                # load dst operand
+    mask:2 = 1 << imm4a;
+    bit:2 = (val & mask) >> imm4a;
+    $(F) = bit:1;                   # save bit
+    *:2 tmp = val | mask;           # clear bit, store
+}
+:SBITW imm4b, disp20(rp_dst5)   is op=0x0011 ; n8=9 & rp_dst5 & imm4b & disp20 {
+    tmp:4 = rp_dst5:4 + zext(disp20);
+    val:2 = *:2 tmp;                # load dst operand
+    mask:2 = 1 << imm4b;
+    bit:2 = (val & mask) >> imm4b;
+    $(F) = bit:1;                   # save bit
+    *:2 tmp = val | mask;           # clear bit, store
+}
+:SBITW imm4b, disp20(prp_dst)   is op=0x0011 ; n8=10 & imm4b & disp20 & prp_dst {
+    tmp:4 = prp_dst:4 + zext(disp20);
+    val:2 = *:2 tmp;                # load dst operand
+    mask:2 = 1 << imm4b;
+    bit:2 = (val & mask) >> imm4b;
+    $(F) = bit:1;                   # save bit
+    *:2 tmp = val | mask;           # clear bit, store
+}
+:SBITW imm4b, abs20             is dw_hi=0x77 & imm4b & abs20 {     # fmt 12
+    tmp:4 = zext(abs20);
+    val:2 = *:2 tmp;                # load dst operand
+    mask:2 = 1 << imm4b;
+    bit:2 = (val & mask) >> imm4b;
+    $(F) = bit:1;                   # save bit
+    *:2 tmp = val | mask;           # clear bit, store
+}
+:SBITW imm4b, rs abs20          is dw_op7=0x3a & imm4b & rs & abs20 { 
+    tmp:4 = zext(abs20) + rs:4;
+    val:2 = *:2 tmp;                # load dst operand
+    mask:2 = 1 << imm4b;
+    bit:2 = (val & mask) >> imm4b;
+    $(F) = bit:1;                   # save bit
+    *:2 tmp = val | mask;           # clear bit, store
+}
+:SBITW imm4b, abs24             is op=0x0011 ; n8=11 & imm4b & abs24 {  # fmt 3
+    tmp:4 = abs24;
+    val:2 = *:2 tmp;                # load dst operand
+    mask:2 = 1 << imm4b;
+    bit:2 = (val & mask) >> imm4b;
+    $(F) = bit:1;                   # save bit
+    *:2 tmp = val | mask;           # clear bit, store
+}
+
+# TBIT - test bit
+:TBIT imm4a, src1       is hi=0x06 & imm4a & src1 {
+    tmp:4 = zext(src1);
+    val:2 = *:2 tmp;                # load dst operand
+    mask:2 = 1 << imm4a;
+    bit:2 = (val & mask) >> imm4a;
+    $(F) = bit:1;                   # save bit
+}
+:TBIT src, src1         is hi=0x07 & src & src1 {
+    tmp:4 = zext(src1);
+    val:2 = *:2 tmp;                # load dst operand
+    mask:2 = 1 << src;
+    bit:2 = (val & mask) >> src;
+    $(F) = bit:1;                   # save bit
+}
+
+# TBITB - test bit in low-order byte
+:TBITB imm3c, prp2 disp14(prp_dst)  is op10=0x1ea & imm3c & prp2 & disp14 & prp_dst {   # fmt 17  (affected by CFG.SR)
+    tmp:4 = prp_dst:4 + prp2:4 + zext(disp14);
+    val:1 = *:1 tmp;                # load dst operand
+    local mask = 1 << imm3c;
+    $(F) = (val & mask) >> imm3c;   # save bit
+}
+:TBITB imm3b, disp20(dst4)          is op=0x0010 ; n8=12 & imm3b & disp20 & dst4 {  # fmt 2
+    tmp:4 = zext(dst4) + zext(disp20);
+    val:1 = *:1 tmp;                # load dst operand
+    local mask = 1 << imm3b;
+    $(F) = (val & mask) >> imm3b;   # save bit
+}
+:TBITB imm3, const1(rp_dst)         is op9=0x0f4 & imm3 & rp_dst & const1 {     # fmt 9
+    tmp:4 = rp_dst:4;
+    val:1 = *:1 tmp;                # load dst operand
+    local mask = 1 << imm3;
+    $(F) = (val & mask) >> imm3;    # save bit
+}
+:TBITB imm3, disp16b(rp_dst)        is op9=0x0f6 & imm3 & rp_dst ; disp16b {    # fmt 10
+    tmp:4 = rp_dst:4 + zext(disp16b);
+    val:1 = *:1 tmp;                # load dst operand
+    local mask = 1 << imm3;
+    $(F) = (val & mask) >> imm3;    # save bit
+}
+:TBITB imm3b, disp20(rp_dst5)       is op=0x0010 ; n8=13 & imm3b & disp20 & rp_dst5 {
+    tmp:4 = rp_dst5:4 + zext(disp20);
+    val:1 = *:1 tmp;                # load dst operand
+    local mask = 1 << imm3b;
+    $(F) = (val & mask) >> imm3b;   # save bit
+}
+:TBITB imm3b, disp20(prp_dst)       is op=0x0010 ; n8=14 & imm3b & disp20 & prp_dst {
+    tmp:4 = prp_dst:4 + zext(disp20);
+    val:1 = *:1 tmp;                # load dst operand
+    local mask = 1 << imm3b;
+    $(F) = (val & mask) >> imm3b;   # save bit
+}
+:TBITB imm3b, abs20     is dw_op9=0x0f7 & imm3b & abs20 {   # fmt 7
+    tmp:4 = zext(abs20);
+    val:1 = *:1 tmp;                # load dst operand
+    local mask = 1 << imm3b;
+    $(F) = (val & mask) >> imm3b;   # save bit
+}
+:TBITB imm3b, rs abs20  is dw_hi=0x78 & imm3b & rs & abs20 {    # fmt 8
+    tmp:4 = zext(abs20) + rs:4;
+    val:1 = *:1 tmp;                # load dst operand
+    local mask = 1 << imm3b;
+    $(F) = (val & mask) >> imm3b;   # save bit
+}
+:TBITB imm3b, abs24     is op=0x0010 ; n8=15 & imm3b & abs24 {  # fmt 3
+    tmp:4 = abs24;
+    val:1 = *:1 tmp;                # load dst operand
+    local mask = 1 << imm3b;
+    $(F) = (val & mask) >> imm3b;   # save bit
+}
+
+# TBITW - test bit in word
+:TBITW imm4c, prp2 disp14(prp_dst)  is op10=0x1eb & imm4c & prp2 & disp14 & prp_dst {   # fmt 17
+    tmp:4 = prp_dst:4 + prp2:4 + zext(disp14);
+    val:2 = *:2 tmp;                # load dst operand
+    mask:2 = 1 << imm4c;
+    bit:2 = (val & mask) >> imm4c;
+    $(F) = bit:1;                   # save bit
+}
+:TBITW imm4b, disp20(dst4)      is op=0x0011 ; n8=12 & imm4b & disp20 & dst4 {
+    tmp:4 = zext(dst4) + zext(disp20);
+    val:2 = *:2 tmp;                # load dst operand
+    mask:2 = 1 << imm4b;
+    bit:2 = (val & mask) >> imm4b;
+    $(F) = bit:1;                   # save bit
+}
+:TBITW imm4a, const1(rp_dst)    is hi=0x7e & imm4a & const1 & rp_dst {  # fmt 15
+    tmp:4 = rp_dst:4;
+    val:2 = *:2 tmp;                # load dst operand
+    mask:2 = 1 << imm4a;
+    bit:2 = (val & mask) >> imm4a;
+    $(F) = bit:1;                   # save bit
+}
+:TBITW imm4a, disp16b(rp_dst)   is hi=0x79 & imm4a & rp_dst ; disp16b { # fmt 16
+    tmp:4 = rp_dst:4 + zext(disp16b);
+    val:2 = *:2 tmp;                # load dst operand
+    mask:2 = 1 << imm4a;
+    bit:2 = (val & mask) >> imm4a;
+    $(F) = bit:1;                   # save bit
+}
+:TBITW imm4b, disp20(rp_dst5)   is op=0x0011 ; n8=13 & rp_dst5 & imm4b & disp20 {
+    tmp:4 = rp_dst5:4 + zext(disp20);
+    val:2 = *:2 tmp;                # load dst operand
+    mask:2 = 1 << imm4b;
+    bit:2 = (val & mask) >> imm4b;
+    $(F) = bit:1;                   # save bit
+}
+:TBITW imm4b, disp20(prp_dst)   is op=0x0011 ; n8=14 & imm4b & disp20 & prp_dst {
+    tmp:4 = prp_dst:4 + zext(disp20);
+    val:2 = *:2 tmp;                # load dst operand
+    mask:2 = 1 << imm4b;
+    bit:2 = (val & mask) >> imm4b;
+    $(F) = bit:1;                   # save bit
+}
+:TBITW imm4b, abs20             is dw_hi=0x7f & imm4b & abs20 {
+    tmp:4 = zext(abs20);
+    val:2 = *:2 tmp;                # load dst operand
+    mask:2 = 1 << imm4b;
+    bit:2 = (val & mask) >> imm4b;
+    $(F) = bit:1;                   # save bit
+}
+:TBITW imm4b, rs abs20          is dw_op7=0x3e & imm4b & rs & abs20 {   # fmt 13
+    tmp:4 = zext(abs20) + rs:4;
+    val:2 = *:2 tmp;                # load dst operand
+    mask:2 = 1 << imm4b;
+    bit:2 = (val & mask) >> imm4b;
+    $(F) = bit:1;                   # save bit
+}
+:TBITW imm4b, abs24             is op=0x0011 ; n8=15 & imm4b & abs24 {
+    tmp:4 = abs24;
+    val:2 = *:2 tmp;                # load dst operand
+    mask:2 = 1 << imm4b;
+    bit:2 = (val & mask) >> imm4b;
+    $(F) = bit:1;                   # save bit
+}
+
+
+# PROCESSOR REGISTER MANIPULATION
+
+# TODO:
+# For the LPR instruction, if dest is ISPL or INTBASEL the least significant
+# bit (bit 0) of the address is 0. If dest is INTBASEH, ISPH, USPH, CAR0H,
+# or CAR1H bits 8 through 15 are always written as 0.
+# For the LPRD instruction, if dest is ISP or INTBASE the least significant
+# bit (bit 0) of the address is 0. If dest is INTBASE, ISP, USP, CAR0, or
+# CAR1 bits 24 through 31 are always written as 0.
+
+# Load Processor Register (word)
+:LPR src2, pr       is op=0x0014 ; n4=0 & n3=0 & pr & src2 {
+    pr = src2;
+}
+
+# Load Processor Register (doubleword)
+:LPRD rp_src3, prd  is op=0x0014 ; n4=1 & n3=0 & prd & rp_src3 {
+    prd = rp_src3;
+}
+
+# Store Processor Register (word)
+:SPR pr, dst2       is op=0x0014 ; n4=2 & n3=0 & pr & dst2 {
+    dst2 = pr;
+}
+
+# Store Processor Register (doubleword)
+:SPRD prd, rp_dst3  is op=0x0014 ; n4=3 & n3=0 & prd & rp_dst3 {
+    rp_dst3 = prd;
+}
+
+
+# JUMPS AND LINKS
+
+# BAL - Branch and Link
+:BAL (RA), disp24b    is dw_hi=0xc0 & disp24b & RA { 
+    RA = inst_next >> 1;    # save bits 1 to 23 in link reg RA
+    PC = &disp24b;           # PC = PC + sext25(disp)    TODO: 25 bits?
+    call disp24b;
+}
+:BAL rp_dst4, disp24     is op=0x0010 ; n8=2 & disp24 & rp_dst4 {
+    # rp link is at word2 (4,7)
+    rp_dst4 = inst_next >> 1;   # save bits 1 to 23 in link reg
+    PC = &disp24;                # PC = PC + sext25(disp)    TODO: 25 bits?
+    call disp24;
+}
+
+# BEQ0B - branch if low byte equals 0
+:BEQ0B src1, disp4c     is hi=0x0c & src1 & disp4c {    
+    if (src1:1 != 0) goto inst_next;    # don't branch if not equal
+    PC = &disp4c;                  # branch
+    goto disp4c;
+}
+# BEQ0W - branch if word equals 0
+:BEQ0W src1, disp4c     is hi=0x0e & src1 & disp4c {
+    if (src1 != 0) goto inst_next;      # don't branch if not equal
+    PC = &disp4c;                  # branch
+    goto disp4c;
+}
+# BNE0B - branch if low byte does not equal 0
+:BNE0B src1, disp4c     is hi=0x0d & src1 & disp4c {
+    if (src1:1 == 0) goto inst_next;    # don't branch if equal
+    PC = &disp4c;                  # branch
+    goto disp4c;
+}
+:BNE0W src1, disp4c     is hi=0x0f & src1 & disp4c {
+    if (src1 == 0) goto inst_next;      # don't branch if equal
+    PC = &disp4c;                  # branch
+    goto disp4c;
+}
+
+# BR - branch (conditional and unconditional)
+:BR^COND disp8  is op4=1 & COND & disp8 {       # BR (conditional)
+    build COND;
+    PC = &disp8;
+    goto disp8;
+}
+:BR disp8       is op4=1 & cond=14 & disp8 {    # BR cond=14 (always)
+    PC = &disp8;
+    goto disp8;
+}
+:BR disp8       is op4=1 & cond=15 & disp8 {    # BR cond=15 (unconditional)
+    PC = &disp8;
+    goto disp8;
+}
+
+:BR^COND disp16 is hi=0x18 & lo1=0 & COND ; disp16 {        # BR (conditional)
+    build COND;
+    PC = &disp16;
+    goto disp16;
+}
+:BR disp16      is hi=0x18 & lo1=0 & cond=14 ; disp16 {     # BR cond=14 (always)
+    PC = &disp16;
+    goto disp16;
+}
+:BR disp16      is hi=0x18 & lo1=0 & cond=15 ; disp16 {     # BR cond=15 (unconditional)
+    PC = &disp16;
+    goto disp16;
+}
+
+:BR^COND2 disp24    is op=0x0010 ; n8=0 & COND2 & disp24 {      # BR (conditional)
+    build COND2;
+    PC = &disp24;
+    goto disp24;
+}
+:BR disp24          is op=0x0010 ; n8=0 & n6=14 & disp24 {      # BR cond=14 (always)
+    PC = &disp24;
+    goto disp24;
+}
+:BR disp24          is op=0x0010 ; n8=0 & n6=15 & disp24 {      # BR cond=15 (unconditional)
+    PC = &disp24;
+    goto disp24;
+}
+
+# EXCP - Exception
+:EXCP x1        is op12=0x00c & x1 {
+#    *:4(ISP:3) = zext(inst_start);
+    *:2(ISP:4) = PSR;           # push PSR onto interrupt stack
+    ISP = ISP - 2;
+    *:4(ISP:4) = inst_start;    # push ret addr (current instruction) onto interrupt stack
+    ISP = ISP - 4;
+    trap();
+}
+
+# JAL - Jump and Link
+:JAL rp_dst     is op12=0x00d & rp_dst {
+    RA = inst_next >> 1;
+    local tmp = rp_dst << 1;
+    PC = tmp:4;
+    call [PC];
+}
+:JAL rp_dst6    is op=0x0014 ; n4=8 & n3=0 & rp_dst6 & rp_dst3 {
+    # rp link is at word2 (0,3)
+    rp_dst3 = inst_next >> 1;
+    local tmp = rp_dst6 << 1;
+    PC = tmp:4;
+    call [PC];
+}
+
+# J - Jump - special case jumping through link register
+:J^COND RA  is hi=0x0a & COND & rp_dst=14 & RA {    # conditional
+    build COND;
+    local tmp = RA << 1;
+    PC = tmp:4;
+    return [PC];
+}
+:JUMP RA    is hi=0xa & cond=14 & rp_dst=14 & RA {  # always
+    local tmp = RA << 1;
+    PC = tmp:4;
+    return [PC]; 
+}
+:JUSR RA    is hi=0xa & cond=15 & rp_dst=14 & RA {  # unconditional
+    $(U) = 1;
+    local tmp = RA << 1;
+    PC = tmp:4;
+    return [PC]; 
+}
+
+# J - Jump (conditional and unconditional)
+:J^COND rp_dst  is hi=0x0a & COND & rp_dst {    # conditional
+    build COND;
+    local tmp = rp_dst << 1;
+    PC = tmp:4;
+    goto [PC];
+}
+:JUMP rp_dst    is hi=0xa & cond=14 & rp_dst {  # always
+    local tmp = rp_dst << 1;
+    PC = tmp:4;
+    goto [PC]; 
+}
+:JUSR rp_dst    is hi=0xa & cond=15 & rp_dst {  # unconditional
+    $(U) = 1;
+    local tmp = rp_dst << 1;
+    PC = tmp:4;
+    goto [PC]; 
+}
+
+attach variables [ reg0 ] [ R0    R1    R2    R3    R4    R5    R6    R7    R8    R9    R10   R11   R12_L R13_L RA_L  SP_L ];
+attach variables [ reg1 ] [ R1    R2    R3    R4    R5    R6    R7    R8    R9    R10   R11   R12_L R12_H R13_H RA_H  SP_H  ];
+attach variables [ reg2 ] [ R2    R3    R4    R5    R6    R7    R8    R9    R10   R11   R12_L R12_H R13_L RA_L  SP_L  R0    ];
+attach variables [ reg3 ] [ R3    R4    R5    R6    R7    R8    R9    R10   R11   R12_L R12_H R13_L R13_H RA_H  SP_H  R1    ];
+attach variables [ reg4 ] [ R4    R5    R6    R7    R8    R9    R10   R11   R12_L R12_H R13_L R13_H RA_L  SP_L  R0    R3    ];
+attach variables [ reg5 ] [ R5    R6    R7    R8    R9    R10   R11   R12_L R12_H R13_L R13_H RA_L  RA_H  SP_H  R1    R4    ];
+attach variables [ reg6 ] [ R6    R7    R8    R9    R10   R11   R12_L R12_H R13_L R13_H RA_L  RA_H  SP_L  R0    R2    R5    ];
+attach variables [ reg7 ] [ R7    R8    R9    R10   R11   R12_L R12_H R13_L R13_H RA_L  RA_H  SP_L  SP_H  R1    R3    R6    ];
+
+macro push_one(reg) {
+    SP = SP - 2;
+    *SP = reg;
+}
+
+macro pop_one(reg) {
+    reg = *SP;
+    SP = SP + 2;
+}
+
+macro push_ra() {
+    SP = SP - 4;
+    *SP = RA;
+}
+
+macro pop_ra() {
+    RA = *SP;
+    SP = SP + 4;
+}
+macro do_pop_ret() {
+    tmp:4 = RA << 1;
+    PC = tmp;
+    return [PC];
+}
+
+push_args: "$"tmp, reg0 is b_ra=0 & b4_6 & reg0 [ tmp = b4_6 + 1; ] { }
+push_args: "$"tmp, reg0, "ra" is b_ra=1 & b4_6 & reg0 [ tmp = b4_6 + 1; ] { push_ra(); }
+
+pop_args: "$"tmp, reg0 is b_ra=0 & b4_6 & reg0 [ tmp = b4_6 + 1; ] { }
+pop_args: "$"tmp, reg0, "ra" is b_ra=1 & b4_6 & reg0 [ tmp = b4_6 + 1; ] { pop_ra(); }
+
+:push push_args
+is hi=1 & b4_6=0 & reg0 & push_args
+{
+	build push_args;
+	push_one(reg0);
+}
+
+:push push_args
+is hi=1 & b4_6=1 & reg0 & reg1 & push_args
+{
+	build push_args;
+	push_one(reg1);
+	push_one(reg0);
+}
+
+:push push_args
+is hi=1 & b4_6=2 & reg0 & reg1 & reg2 & push_args
+{
+	build push_args;
+	push_one(reg2);
+	push_one(reg1);
+	push_one(reg0);
+}
+
+:push push_args
+is hi=1 & b4_6=3 & reg0 & reg1 & reg2 & reg3 & push_args
+{
+	build push_args;
+	push_one(reg3);
+	push_one(reg2);
+	push_one(reg1);
+	push_one(reg0);
+}
+
+:push push_args
+is hi=1 & b4_6=4 & reg0 & reg1 & reg2 & reg3 & reg4 & push_args
+{
+	build push_args;
+	push_one(reg4);
+	push_one(reg3);
+	push_one(reg2);
+	push_one(reg1);
+	push_one(reg0);
+}
+
+:push push_args
+is hi=1 & b4_6=5 & reg0 & reg1 & reg2 & reg3 & reg4 & reg5 & push_args
+{
+	build push_args;
+	push_one(reg5);
+	push_one(reg4);
+	push_one(reg3);
+	push_one(reg2);
+	push_one(reg1);
+	push_one(reg0);
+}
+
+:push push_args
+is hi=1 & b4_6=6 & reg0 & reg1 & reg2 & reg3 & reg4 & reg5 & reg6 & push_args
+{
+	build push_args;
+	push_one(reg6);
+	push_one(reg5);
+	push_one(reg4);
+	push_one(reg3);
+	push_one(reg2);
+	push_one(reg1);
+	push_one(reg0);
+
+}
+
+:push push_args
+is hi=1 & b4_6=7 & reg0 & reg1 & reg2 & reg3 & reg4 & reg5 & reg6 & reg7 & push_args
+{
+	build push_args;
+	push_one(reg7);
+	push_one(reg6);
+	push_one(reg5);
+	push_one(reg4);
+	push_one(reg3);
+	push_one(reg2);
+	push_one(reg1);
+	push_one(reg0);
+}
+
+pop_ret: "ret" is hi=3 { do_pop_ret(); }
+pop_ret: "" is hi=2 { }
+
+:pop^pop_ret pop_args
+is pop_ret & pop_args & op7=1 & b4_6=0 & reg0
+{
+	pop_one(reg0);
+	build pop_args;
+	build pop_ret;
+}
+
+:pop^pop_ret pop_args
+is pop_ret & pop_args & op7=1 & b4_6=1 & reg0 & reg1
+{
+	pop_one(reg0);
+	pop_one(reg1);
+	build pop_args;
+	build pop_ret;
+}
+
+:pop^pop_ret pop_args
+is pop_ret & pop_args & op7=1 & b4_6=2 & reg0 & reg1 & reg2
+{
+	pop_one(reg0);
+	pop_one(reg1);
+	pop_one(reg2);
+	build pop_args;
+	build pop_ret;
+}
+
+:pop^pop_ret pop_args
+is pop_ret & pop_args & op7=1 & b4_6=3 & reg0 & reg1 & reg2 & reg3
+{
+	pop_one(reg0);
+	pop_one(reg1);
+	pop_one(reg2);
+	pop_one(reg3);
+	build pop_args;
+	build pop_ret;
+}
+
+:pop^pop_ret pop_args
+is pop_ret & pop_args & op7=1 & b4_6=4 & reg0 & reg1 & reg2 & reg3 & reg4
+{
+	pop_one(reg0);
+	pop_one(reg1);
+	pop_one(reg2);
+	pop_one(reg3);
+	pop_one(reg4);
+	build pop_args;
+	build pop_ret;
+}
+
+:pop^pop_ret pop_args
+is pop_ret & pop_args & op7=1 & b4_6=5 & reg0 & reg1 & reg2 & reg3 & reg4 & reg5
+{
+	pop_one(reg0);
+	pop_one(reg1);
+	pop_one(reg2);
+	pop_one(reg3);
+	pop_one(reg4);
+	pop_one(reg5);
+	build pop_args;
+	build pop_ret;
+}
+
+:pop^pop_ret pop_args
+is pop_ret & pop_args & op7=1 & b4_6=6 & reg0 & reg1 & reg2 & reg3 & reg4 & reg5 & reg6
+{
+	pop_one(reg0);
+	pop_one(reg1);
+	pop_one(reg2);
+	pop_one(reg3);
+	pop_one(reg4);
+	pop_one(reg5);
+	pop_one(reg6);
+	build pop_args;
+	build pop_ret;
+}
+
+:pop^pop_ret pop_args
+is pop_ret & pop_args & op7=1 & b4_6=7 & reg0 & reg1 & reg2 & reg3 & reg4 & reg5 & reg6 & reg7
+{
+	pop_one(reg0);
+	pop_one(reg1);
+	pop_one(reg2);
+	pop_one(reg3);
+	pop_one(reg4);
+	pop_one(reg5);
+	pop_one(reg6);
+	pop_one(reg7);
+	build pop_args;
+	build pop_ret;
+}
+
+# RETX - Return from Exception
+:RETX is op=0x0003 {
+    PC = *(ISP:4) << 1; # PC equals bits 0 to 22 popped from stack shifted left 1
+    ISP = ISP + 4;
+    PSR = *(ISP:4);     # PSR popped/restored from interrupt stack
+    ISP = ISP + 2;
+    return [PC]; 
+}
+
+
+# LOAD / STORE
+# - for loads and stores, dsp(n) is always unsigned
+
+# LOADB - Load low-order byte only
+:LOADB prp const1(prp_src1), dst1   is hi=0xbe & prp & const1 & prp_src1 & dst1 {   # fmt 18
+    tmp:4 = prp_src1:4 + prp:4;
+    dst1 = (dst1 & 0xff00) + zext( *:1 tmp );
+}
+:LOADB prp2 disp14(prp_src), dst3   is op10=0x219 & prp2 & disp14 & prp_src & dst3 {   # fmt 17
+    tmp:4 = prp_src:4 + prp2:4 + zext(disp14);
+    dst3 = (dst3 & 0xff00) + zext( *:1 tmp );
+}
+:LOADB disp20(src4), dst3       is op=0x0012 ; n8=4 & disp20 & src4 & dst3 {    # fmt 2
+    tmp:4 = zext(src4) + zext(disp20);
+    dst3 = (dst3 & 0xff00) + zext( *:1 tmp );
+}
+:LOADB -disp20(src4), dst3      is op=0x0018 ; n8=4 & disp20 & src4 & dst3 {
+    tmp:4 = zext(src4) - zext(disp20);
+    dst3 = (dst3 & 0xff00) + zext( *:1 tmp );
+}
+:LOADB disp16b(rp_src2), dst1   is hi=0xbf & rp_src2 & dst1 ; disp16b {     # fmt 19
+    tmp:4 = rp_src2:4 + zext(disp16b);
+    dst1 = (dst1 & 0xff00) + zext( *:1 tmp );
+}
+:LOADB disp20(rp_src5), dst3    is op=0x0012 ; n8=5 & disp20 & rp_src5 & dst3 { # fmt 2
+    tmp:4 = rp_src5:4 + zext(disp20);
+    dst3 = (dst3 & 0xff00) + zext( *:1 tmp );
+}
+:LOADB -disp20(rp_src5), dst3   is op=0x0018 ; n8=5 & disp20 & rp_src5 & dst3 { 
+    tmp:4 = rp_src5:4 - zext(disp20);
+    dst3 = (dst3 & 0xff00) + zext( *:1 tmp );
+}
+:LOADB disp4b(rp_src2), dst1    is op4=0xb & dst1 & disp4b & rp_src2 {  # fmt 18
+    tmp:4 = rp_src2:4 + zext(disp4b);
+    dst1 = (dst1 & 0xff00) + zext( *:1 tmp );
+}
+:LOADB disp20(prp_src), dst3    is op=0x0012 ; n8=6 & disp20 & prp_src & dst3 { # fmt 2 
+    tmp:4 = prp_src:4 + zext(disp20);
+    dst3 = (dst3 & 0xff00) + zext( *:1 tmp );
+}
+:LOADB abs20, dst3      is dw_hi=0x88 & abs20 & dst3 {     # fmt 12
+    tmp:4 = zext(abs20);
+    dst3 = (dst3 & 0xff00) + zext( *:1 tmp );
+}
+:LOADB rs abs20, dst3   is dw_op7=0x45 & dst3 & rs & abs20 {    # fmt 13
+    tmp:4 = zext(abs20) + rs:4;
+    dst3 = (dst3 & 0xff00) + zext( *:1 tmp );
+}
+:LOADB abs24, dst3      is op=0x0012 ; n8=7 & dst3 & abs24 {    # fmt 3
+    dst3 = (dst3 & 0xff00) + zext( *:1 abs24 );
+}
+
+# LOADD - load doubleword
+:LOADD prp const1(prp_src1), rp_dst2    is hi=0xae & prp & const1 & prp_src1 & rp_dst2 {    # fmt 18
+    tmp:4 = prp_src1:4 + prp:4;
+    rp_dst2 = *tmp;
+}
+:LOADD prp2 disp14(prp_src), rp_dst4    is op10=0x21a & prp2 & disp14 & prp_src & rp_dst4 {  # fmt 17
+    tmp:4 = prp_src:4 + prp2:4 + zext(disp14);
+    rp_dst4 = *tmp;
+}
+:LOADD disp20(src4), rp_dst4        is op=0x0012 ; n8=8 & disp20 & src4 & rp_dst4 { # fmt 2  
+    tmp:4 = zext(src4) + zext(disp20);
+    rp_dst4 = *tmp;
+}
+:LOADD -disp20(src4), rp_dst4       is op=0x0018 ; n8=8 & disp20 & src4 & rp_dst4 {
+    tmp:4 = zext(src4) - zext(disp20);
+    rp_dst4 = *tmp;
+}
+:LOADD disp16b(rp_src2), rp_dst2    is hi=0xaf & rp_dst2 & rp_src2 ; disp16b {    # fmt 19
+    tmp:4 = rp_src2:4 + zext(disp16b);
+    rp_dst2 = *tmp;
+}
+:LOADD disp20(rp_src5), rp_dst4     is op=0x0012 ; n8=9 & disp20 & rp_src5 & rp_dst4 {  # fmt 2
+    tmp:4 = rp_src5:4 + zext(disp20);
+    rp_dst4 = *tmp;
+}
+:LOADD -disp20(rp_src5), rp_dst4    is op=0x0018 ; n8=9 & disp20 & rp_src5 & rp_dst4 {
+    tmp:4 = rp_src5:4 - zext(disp20);
+    rp_dst4 = *tmp;
+}
+:LOADD disp4(rp_src2), rp_dst2      is op4=0xa & disp4 & rp_src2 & rp_dst2 {
+    tmp:4 = rp_src2:4 + zext(disp4);
+    rp_dst2 = *tmp;
+}
+:LOADD disp20(prp_src), rp_dst4     is op=0x0012 ; n8=10 & disp20 & prp_src & rp_dst4 { # fmt 2 
+    tmp:4 = prp_src:4 + zext(disp20);
+    rp_dst4 = *tmp;
+}
+:LOADD abs20, rp_dst4       is dw_hi=0x87 & abs20 & rp_dst4 { 
+    tmp:4 = zext(abs20);
+    rp_dst4 = *tmp;
+}
+:LOADD rs abs20, rp_dst4    is dw_op7=0x46 & rs & abs20 & rp_dst4 {
+    tmp:4 = zext(abs20) + rs:4;
+    rp_dst4 = *tmp;
+}
+:LOADD abs24, rp_dst4       is op=0x0012 ; n8=11 & rp_dst4 & abs24 {    # fmt 3
+    rp_dst4 = *abs24;
+}
+
+macro load_one_1(rd) {
+	addr:4 = zext(R0);
+	rd = *addr;
+	R0 = R0 + 2;
+}
+
+macro load_one_2(rd) {
+	addr:4 = R1R0:4;
+	rd = *addr;
+	R1R0 = R1R0 + 2;
+}
+
+# LOADM/LOADMP - Load Multiple Registers from Memory
+:LOADM  cnt3b is op13=0x0014 & b0_2=0 & cnt3b { load_one_1(R2); }
+:LOADM  cnt3b is op13=0x0014 & b0_2=1 & cnt3b { load_one_1(R2); load_one_1(R3); }
+:LOADM  cnt3b is op13=0x0014 & b0_2=2 & cnt3b { load_one_1(R2); load_one_1(R3); load_one_1(R4); }
+:LOADM  cnt3b is op13=0x0014 & b0_2=3 & cnt3b { load_one_1(R2); load_one_1(R3); load_one_1(R4); load_one_1(R5); }
+:LOADM  cnt3b is op13=0x0014 & b0_2=4 & cnt3b { load_one_1(R2); load_one_1(R3); load_one_1(R4); load_one_1(R5); load_one_1(R8); }
+:LOADM  cnt3b is op13=0x0014 & b0_2=5 & cnt3b { load_one_1(R2); load_one_1(R3); load_one_1(R4); load_one_1(R5); load_one_1(R8); load_one_1(R9); }
+:LOADM  cnt3b is op13=0x0014 & b0_2=6 & cnt3b { load_one_1(R2); load_one_1(R3); load_one_1(R4); load_one_1(R5); load_one_1(R8); load_one_1(R9); load_one_1(R10); }
+:LOADM  cnt3b is op13=0x0014 & b0_2=7 & cnt3b { load_one_1(R2); load_one_1(R3); load_one_1(R4); load_one_1(R5); load_one_1(R8); load_one_1(R9); load_one_1(R10); load_one_1(R11); }
+
+:LOADMP cnt3b is op13=0x0015 & b0_2=0 & cnt3b { load_one_2(R2); load_one_2(R3); }
+:LOADMP cnt3b is op13=0x0015 & b0_2=1 & cnt3b { load_one_2(R2); load_one_2(R3); load_one_2(R4); }
+:LOADMP cnt3b is op13=0x0015 & b0_2=2 & cnt3b { load_one_2(R2); load_one_2(R3); load_one_2(R4); }
+:LOADMP cnt3b is op13=0x0015 & b0_2=3 & cnt3b { load_one_2(R2); load_one_2(R3); load_one_2(R4); load_one_2(R5); }
+:LOADMP cnt3b is op13=0x0015 & b0_2=4 & cnt3b { load_one_2(R2); load_one_2(R3); load_one_2(R4); load_one_2(R5); load_one_2(R8); }
+:LOADMP cnt3b is op13=0x0015 & b0_2=5 & cnt3b { load_one_2(R2); load_one_2(R3); load_one_2(R4); load_one_2(R5); load_one_2(R8); load_one_2(R9); }
+:LOADMP cnt3b is op13=0x0015 & b0_2=6 & cnt3b { load_one_2(R2); load_one_2(R3); load_one_2(R4); load_one_2(R5); load_one_2(R8); load_one_2(R9); load_one_2(R10); }
+:LOADMP cnt3b is op13=0x0015 & b0_2=7 & cnt3b { load_one_2(R2); load_one_2(R3); load_one_2(R4); load_one_2(R5); load_one_2(R8); load_one_2(R9); load_one_2(R10); load_one_2(R11); }
+
+# LOADW - load word
+:LOADW prp const1(prp_src1), dst1   is hi=0x9e & prp & const1 & prp_src1 & dst1 {   # fmt 18
+    tmp:4 = prp_src1:4 + prp:4;
+    dst1 = *tmp;
+}
+:LOADW prp2 disp14(prp_src), dst3   is op10=0x21b & prp2 & disp14 & prp_src & dst3 {    # fmt 17
+    tmp:4 = prp_src:4 + prp2:4 + zext(disp14);
+    dst3 = *tmp;
+}
+:LOADW disp20(src4), dst3       is op=0x0012 ; n8=12 & disp20 & src4 & dst3 {   # fmt 2
+    tmp:4 = zext(src4) + zext(disp20);
+    dst3 = *tmp;
+}
+:LOADW -disp20(src4), dst3      is op=0x0018 ; n8=12 & disp20 & src4 & dst3 {
+    tmp:4 = zext(src4) - zext(disp20);
+    dst3 = *tmp;
+}
+:LOADW disp16b(rp_src2), dst1   is hi=0x9f & rp_src2 & dst1 ; disp16b {     # fmt 19
+    tmp:4 = rp_src2:4 + zext(disp16b);
+    dst1 = *tmp;
+}
+:LOADW disp20(rp_src5), dst3    is op=0x0012 ; n8=13 & disp20 & rp_src5 & dst3 {    # fmt 2
+    tmp:4 = rp_src5:4 + zext(disp20);
+    dst3 = *tmp;
+}
+:LOADW -disp20(rp_src5), dst3   is op=0x0018 ; n8=13 & disp20 & rp_src5 & dst3 {
+    tmp:4 = rp_src5:4 - zext(disp20);
+    dst3 = *tmp;
+}
+:LOADW disp4(rp_src2), dst1     is op4=0x9 & disp4 & rp_src2 & dst1 {   # fmt 18
+    tmp:4 = rp_src2:4 + zext(disp4);
+    dst1 = *tmp;
+}
+:LOADW disp20(prp_src), dst3    is op=0x0012 ; n8=14 & disp20 & prp_src & dst3 {    # fmt 2
+    tmp:4 = prp_src:4 + zext(disp20);
+    dst3 = *tmp;
+}
+:LOADW abs20, dst3      is dw_hi=0x89 & abs20 & dst3 {
+    tmp:4 = zext(abs20);
+    dst3 = *tmp;
+}
+:LOADW rs abs20, dst3   is dw_op7=0x47 & dst3 & rs & abs20 {    # fmt 13
+    tmp:4 = zext(abs20) + rs:4;
+    dst3 = *tmp;
+}
+:LOADW abs24, dst3      is op=0x0012 ; n8=15 & dst3 & abs24 {   # fmt 3
+    dst3 = *abs24;
+}
+
+# STORB - store low-order byte only
+:STORB src, prp const1(prp_dst1)    is hi=0xfe & src & prp & const1 & prp_dst1 {    # fmt 18
+    tmp:4 = prp_dst1:4 + prp:4;
+    *tmp = src:1;
+}
+:STORB src3, prp2 disp14(prp_dst)   is op10=0x319 & src3 & prp2 & disp14 & prp_dst {    # fmt 17
+    tmp:4 = prp_dst:4 + prp2:4 + zext(disp14);
+    *tmp = src3:1;
+}
+:STORB src3, disp20(dst4)       is op=0x0013 ; n8=4 & src3 & disp20 & dst4 {    # fmt 2
+    tmp:4 = zext(dst4) + zext(disp20);
+    *tmp = src3:1;
+}
+:STORB src3, -disp20(dst4)      is op=0x0019 ; n8=4 & src3 & disp20 & dst4 {
+    tmp:4 = zext(dst4) - zext(disp20);
+    *tmp = src3:1;
+}
+:STORB src, disp16b(rp_dst)     is hi=0xff & src & rp_dst ; disp16b {      # fmt 19
+    tmp:4 = rp_dst:4 + zext(disp16b);
+    *tmp = src:1;
+}
+:STORB src3, disp20(rp_dst5)    is op=0x0013 ; n8=5 & src3 & disp20 & rp_dst5 { # fmt 2
+    tmp:4 = rp_dst5:4 + zext(disp20);
+    *tmp = src3:1;
+}
+:STORB src3, -disp20(rp_dst5)   is op=0x0019 ; n8=5 & src3 & disp20 & rp_dst5 {
+    tmp:4 = rp_dst5:4 - zext(disp20);
+    *tmp = src3:1;
+}
+:STORB src, disp4b(rp_dst)      is op4=0xf & src & disp4b & rp_dst {     # fmt 18    <---
+    tmp:4 = rp_dst:4 + zext(disp4b);
+    *tmp = src:1;
+}
+:STORB src3, disp20(prp_dst)    is op=0x0013 ; n8=6 & src3 & disp20 & prp_dst { # fmt 2
+    tmp:4 = prp_dst:4 + zext(disp20);
+    *tmp = src3:1;
+}
+:STORB src3, abs20      is dw_hi=0xc8 & abs20 & src3 {
+    tmp:4 = zext(abs20);
+    *tmp = src3:1;
+}
+:STORB src3, rs abs20   is dw_op7=0x65 & src3 & rs & abs20 {    # fmt 13
+    tmp:4 = zext(abs20) + rs:4;
+    *tmp = src3:1;
+}
+:STORB src3, abs24      is op=0x0013 ; n8=7 & src3 & abs24 {    # fmt 3
+    *abs24 = src3:1;
+}
+
+:STORB imm4c, prp2 disp14(prp_dst)  is op10=0x218 & imm4c & prp2 & disp14 & prp_dst {   # fmt 17
+    tmp:4 = prp_dst:4 + prp2:4 + zext(disp14);
+    *tmp = imm4c;
+}
+:STORB imm4c, disp20(dst4)      is op=0x0012 ; n8=0 & imm4c & disp20 & dst4 {   # fmt 2
+    tmp:4 = zext(dst4) + zext(disp20);
+    *tmp = imm4c;
+}
+:STORB imm4a, const1(rp_dst)    is hi=0x82 & imm4a & const1 & rp_dst {  # fmt 15
+    *rp_dst:4 = imm4a;
+}
+:STORB imm4a, disp16b(rp_dst)   is hi=0x83 & imm4a & rp_dst ; disp16b { # fmt 16
+    tmp:4 = rp_dst:4 + zext(disp16b);
+    *tmp = imm4a;
+}
+:STORB imm4c, disp20(rp_dst5)   is op=0x0012 ; n8=1 & imm4c & disp20 & rp_dst5 {    # fmt 2
+    tmp:4 = rp_dst5:4 + zext(disp20);
+    *tmp = imm4c;
+}
+:STORB imm4c, disp20(prp_dst)   is op=0x0012 ; n8=2 & imm4c & disp20 & prp_dst {
+    tmp:4 = prp_dst:4 + zext(disp20);
+    *tmp = imm4c;
+}
+:STORB imm4b, abs20         is dw_hi=0x81 & imm4b & abs20 {     # fmt 12
+    tmp:4 = zext(abs20);
+    *tmp = imm4b;
+}
+:STORB imm4b, rs abs20      is dw_op7=0x42 & imm4b & rs & abs20 {   # fmt 13
+    tmp:4 = zext(abs20) + rs:4;
+    *tmp = imm4b;
+}
+:STORB imm4b, abs24         is op=0x0012 ; n8=3 & imm4b & abs24 {   # fmt 3
+    *abs24 = imm4b;
+}
+
+# STORD - store doubleword
+:STORD rp_src, prp const1(prp_dst1)     is hi=0xee & rp_src & prp & const1 & prp_dst1 {     # fmt 18
+    tmp:4 = prp_dst1:4 + prp:4;
+    *tmp = rp_src;
+}
+:STORD rp_src4, prp2 disp14(prp_dst)    is op10=0x31a & rp_src4 & prp2 & disp14 & prp_dst { # fmt 17
+    tmp:4 = prp_dst:4 + prp2:4 + zext(disp14);
+    *tmp = rp_src4;
+}
+:STORD rp_src4, disp20(dst4)        is op=0x0013 ; n8=8 & rp_src4 & dst4 & disp20 {  # fmt 2 
+    tmp:4 = zext(dst4) + zext(disp20);
+    *tmp = rp_src4;
+}
+:STORD rp_src4, -disp20(dst4)       is op=0x0019 ; n8=8 & rp_src4 & dst4 & disp20 {
+    tmp:4 = zext(dst4) - zext(disp20);
+    *tmp = rp_src4;
+}
+:STORD rp_src, disp16b(rp_dst)      is hi=0xef & rp_src & rp_dst ; disp16b {    # fmt 19
+    tmp:4 = rp_dst:4 + zext(disp16b);
+    *tmp = rp_src;
+}
+:STORD rp_src4, disp20(rp_dst5)     is op=0x0013 ; n8=9 & rp_src4 & disp20 & rp_dst5 {  # fmt 2
+    tmp:4 = rp_dst5:4 + zext(disp20);
+    *tmp = rp_src4;
+}
+:STORD rp_src4, -disp20(rp_dst5)    is op=0x0019 ; n8=9 & rp_src4 & disp20 & rp_dst5 {
+    tmp:4 = rp_dst5:4 - zext(disp20);
+    *tmp = rp_src4;
+}
+:STORD rp_src, disp4(rp_dst)        is op4=0xe & disp4 & rp_src & rp_dst {  # fmt 18
+    tmp:4 = rp_dst:4 + zext(disp4);
+    *tmp = rp_src;
+}
+:STORD rp_src4, disp20(prp_dst)     is op=0x0013 ; n8=10 & rp_src4 & disp20 & prp_dst { # fmt 2
+    tmp:4 = prp_dst:4 + zext(disp20);
+    *tmp = rp_src4;
+}
+:STORD rp_src4, abs20       is dw_hi=0xc7 & abs20 & rp_src4  {
+    tmp:4 = zext(abs20);
+    *tmp = rp_src4;
+}
+:STORD rp_src4, rs abs20    is dw_op7=0x66 & rp_src4 & rs & abs20 {
+    tmp:4 = zext(abs20) + rs:4;
+    *tmp = rp_src4;
+}
+:STORD rp_src4, abs24       is op=0x0013 ; n8=11 & rp_src4 & abs24 {    # fmt 3
+    *abs24 = rp_src4;
+}
+
+macro store_one_1(rd) {
+	addr:4 = zext(R1);
+	*addr = rd;
+	R1 = R1 + 2;
+}
+
+macro store_one_2(rd) {
+	addr:4 = R7R6:4;
+	*addr = rd;
+	R7R6 = R7R6 + 2;
+}
+
+# STORM/STORMP - Store Multiple Registers to Memory
+:STORM  cnt3b is op13=0x0016 & b0_2=0 & cnt3b { store_one_1(R2); }
+:STORM  cnt3b is op13=0x0016 & b0_2=1 & cnt3b { store_one_1(R2); store_one_1(R3); }
+:STORM  cnt3b is op13=0x0016 & b0_2=2 & cnt3b { store_one_1(R2); store_one_1(R3); store_one_1(R4); }
+:STORM  cnt3b is op13=0x0016 & b0_2=3 & cnt3b { store_one_1(R2); store_one_1(R3); store_one_1(R4); store_one_1(R5); }
+:STORM  cnt3b is op13=0x0016 & b0_2=4 & cnt3b { store_one_1(R2); store_one_1(R3); store_one_1(R4); store_one_1(R5); store_one_1(R8); }
+:STORM  cnt3b is op13=0x0016 & b0_2=5 & cnt3b { store_one_1(R2); store_one_1(R3); store_one_1(R4); store_one_1(R5); store_one_1(R8); store_one_1(R9); }
+:STORM  cnt3b is op13=0x0016 & b0_2=6 & cnt3b { store_one_1(R2); store_one_1(R3); store_one_1(R4); store_one_1(R5); store_one_1(R8); store_one_1(R9); store_one_1(R10); }
+:STORM  cnt3b is op13=0x0016 & b0_2=7 & cnt3b { store_one_1(R2); store_one_1(R3); store_one_1(R4); store_one_1(R5); store_one_1(R8); store_one_1(R9); store_one_1(R10); store_one_1(R11); }
+
+:STORMP cnt3b is op13=0x0017 & b0_2=0 & cnt3b { store_one_2(R2); }
+:STORMP cnt3b is op13=0x0017 & b0_2=1 & cnt3b { store_one_2(R2); store_one_2(R3); }
+:STORMP cnt3b is op13=0x0017 & b0_2=2 & cnt3b { store_one_2(R2); store_one_2(R3); store_one_2(R4); }
+:STORMP cnt3b is op13=0x0017 & b0_2=3 & cnt3b { store_one_2(R2); store_one_2(R3); store_one_2(R4); store_one_2(R5); }
+:STORMP cnt3b is op13=0x0017 & b0_2=4 & cnt3b { store_one_2(R2); store_one_2(R3); store_one_2(R4); store_one_2(R5); store_one_2(R8); }
+:STORMP cnt3b is op13=0x0017 & b0_2=5 & cnt3b { store_one_2(R2); store_one_2(R3); store_one_2(R4); store_one_2(R5); store_one_2(R8); store_one_2(R9); }
+:STORMP cnt3b is op13=0x0017 & b0_2=6 & cnt3b { store_one_2(R2); store_one_2(R3); store_one_2(R4); store_one_2(R5); store_one_2(R8); store_one_2(R9); store_one_2(R10); }
+:STORMP cnt3b is op13=0x0017 & b0_2=7 & cnt3b { store_one_2(R2); store_one_2(R3); store_one_2(R4); store_one_2(R5); store_one_2(R8); store_one_2(R9); store_one_2(R10); store_one_2(R11); }
+
+# STORW - store word
+:STORW src, prp const1(prp_dst1)    is hi=0xde & src & prp & const1 & prp_dst1 {    # fmt 18
+    tmp:4 = prp_dst1:4 + prp:4;
+    *tmp = src;
+}
+:STORW src3, prp2 disp14(prp_dst)   is op10=0x31b & prp2 & disp14 & src3 & prp_dst {    # fmt 17
+    tmp:4 = prp_dst:4 + prp2:4 + zext(disp14);
+    *tmp = src3;
+}
+:STORW src3, disp20(dst4)       is op=0x0013 ; n8=12 & src3 & disp20 & dst4 {   # fmt 2
+    tmp:4 = zext(dst4) + zext(disp20);
+    *tmp = src3;
+}
+:STORW src3, -disp20(dst4)      is op=0x0019 ; n8=12 & src3 & disp20 & dst4 {
+    tmp:4 = zext(dst4) - zext(disp20);
+    *tmp = src3;
+}
+:STORW src, disp16b(rp_dst)     is hi=0xdf & src & rp_dst ; disp16b {
+    tmp:4 = rp_dst:4 + zext(disp16b);
+    *tmp = src;
+}
+:STORW src3, disp20(rp_dst5)    is op=0x0013 ; n8=13 & src3 & disp20 & rp_dst5 {    # fmt 2
+    tmp:4 = rp_dst5:4 + zext(disp20);
+    *tmp = src3;
+}
+:STORW src3, -disp20(rp_dst5)   is op=0x0019 ; n8=13 & src3 & disp20 & rp_dst5 {
+    tmp:4 = rp_dst5:4 - zext(disp20);
+    *tmp = src3;
+}
+:STORW src, disp4(rp_dst)       is op4=0xd & disp4 & src & rp_dst {     # fmt 18
+    tmp:4 = rp_dst:4 + zext(disp4);
+    *tmp = src;
+}
+:STORW src3, disp20(prp_dst)    is op=0x0013 ; n8=14 & src3 & disp20 & prp_dst {    # fmt 2
+    tmp:4 = prp_dst:4 + zext(disp20);
+    *tmp = src3;
+}
+:STORW src3, abs20      is dw_hi=0xc9 & abs20 & src3 {
+    tmp:4 = zext(abs20);
+    *tmp = src3;
+}
+:STORW src3, rs abs20   is dw_op7=0x67 & src3 & rs & abs20 {    # fmt 13
+    tmp:4 = zext(abs20) + rs:4;
+    *tmp = src3;
+}
+:STORW src3, abs24      is op=0x0013 ; n8=15 & src3 & abs24 {   # fmt 3
+    *abs24 = src3;
+}
+
+:STORW imm4c, prp2 disp14(prp_dst)  is op10=0x318 & imm4c & prp2 & disp14 & prp_dst {  # fmt 17
+    tmp:4 = prp_dst:4 + prp2:4 + zext(disp14);
+    *:2 tmp = sext(imm4c);
+}
+:STORW imm4c, disp20(dst4)      is op=0x0013 ; n8=0 & imm4c & disp20 & dst4 {   # fmt 2
+    tmp:4 = zext(dst4) + zext(disp20);
+    *:2 tmp = sext(imm4c);
+}
+:STORW imm4a, const1(rp_dst)    is hi=0xc2 & imm4a & const1 & rp_dst {  # fmt 15
+    *:2 rp_dst:4 = sext(imm4a);
+}
+:STORW imm4a, disp16b(rp_dst)   is hi=0xc3 & imm4a & rp_dst ; disp16b { # fmt 16
+    tmp:4 = rp_dst:4 + zext(disp16b);
+    *:2 tmp = sext(imm4a);
+}
+:STORW imm4c, disp20(rp_dst5)   is op=0x0013 ; n8=1 & imm4c & disp20 & rp_dst5 {    # fmt 2
+    tmp:4 = rp_dst5:4 + zext(disp20);
+    *:2 tmp = sext(imm4c);
+}
+:STORW imm4c, disp20(prp_dst)   is op=0x0013 ; n8=2 & imm4c & disp20 & prp_dst {
+    tmp:4 = prp_dst:4 + zext(disp20);
+    *:2 tmp = sext(imm4c);
+}
+:STORW imm4b, abs20         is dw_hi=0xc1 & imm4b & abs20 {
+    tmp:4 = zext(abs20);
+    *:2 tmp = sext(imm4b);
+}
+:STORW imm4b, rs abs20      is dw_op7=0x62 & imm4b & rs & abs20 {   # fmt 13
+    tmp:4 = zext(abs20) + rs:4;
+    *:2 tmp = sext(imm4b);
+}
+:STORW imm4b, abs24         is op=0x0013 ; n8=3 & imm4b & abs24 {   # fmt 3
+    *:2 abs24 = sext(imm4b);
+}
+
+
+# MISC
+
+# CINV - Cache Invalidate
+:CINV cinv1     is op=0x000a & cinv1 {
+}
+:CINV cinv2     is op=0x000b & cinv2 {
+}
+:CINV cinv3     is op=0x000c & cinv3 {
+}
+:CINV cinv4     is op=0x000d & cinv4 {
+}
+:CINV cinv5     is op=0x000e & cinv5 {
+}
+:CINV cinv6     is op=0x000f & cinv6 {
+}
+
+# Disable Maskable Interrupts
+:DI is op=0x0004 {
+    $(E) = 0;
+}
+# Enable Maskable Interrupts
+:EI is op=0x0005 {
+    $(E) = 1;
+}
+# Wait for Interrupt
+:WAIT is op=0x0006 {
+    suspend();
+}
+# Enable Interrupt and Wait for Interrupt
+:EIWAIT is op=0x0007 {
+    $(E) = 1;
+    suspend();
+}
+
+
+# Reserved
+
+:undef is op=0x0000 {
+}
+:undef is op=0x0001 {
+}
+
+:undef is op=0x0002 {
+}
+
+:undef is op=0x0008 {
+}
+:undef is op=0x0009 {
+}
+
+:undef is op=0x0010 ; w2 ; w3 {
+}
+:undef is op=0x0011 ; w2 ; w3 {
+}
+:undef is op=0x0014 ; w2 {
+}
+:undef is op=0x0015 ; w2 {
+}
+:undef is op=0x0016 ; w2 {
+}
+:undef is op=0x0017 ; w2 {
+}
+
+:undef is op=0x0018 ; w2 ; w3 {
+}
+:undef is op=0x0019 ; w2 ; w3 {
+}
+
+:undef is op=0x001a ; w2 ; w3 {
+}
+:undef is op=0x001b ; w2 ; w3 {
+}
+:undef is op=0x001c ; w2 ; w3 {
+}
+:undef is op=0x001d ; w2 ; w3 {
+}
+:undef is op=0x001e ; w2 ; w3 {
+}
+:undef is op=0x001f ; w2 ; w3 {
+}
+
+:undef is op12=0x008 ; w2 ; w3 {
+}
+
+:undef is op11=0x007 {
+}
+
+:undef is op9=0x012 ; w2 {
+}
+
+:undef is hi=0x80 {
+}
+
+#:undef is hi=0xc0 {
+#}
+
+:undef is op=0xffff {
+}
+

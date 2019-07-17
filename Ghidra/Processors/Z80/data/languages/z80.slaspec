@@ -1,0 +1,2077 @@
+# sleigh specification file for Zilog Z80
+
+# TODO:  Improve Flag bit implementation so that bit operations on F register work properly
+
+define endian=little;
+define alignment=1;
+@if defined(Z180)
+define space ram     type=ram_space      size=2  default;
+@define PTRSIZE  "2"
+@else
+define space ram     type=ram_space      size=2  default;
+@define PTRSIZE  "2"
+@endif
+
+define space io      type=ram_space      size=2;
+define space register type=register_space size=1;
+
+define register offset=0x00 size=1 [ F A C B E D L H I R ];
+define register offset=0x00 size=2 [ AF  BC  DE  HL ];
+define register offset=0x20 size=1 [ F_ A_ C_ B_ E_ D_ L_ H_ ]; # Alternate registers
+define register offset=0x20 size=2 [ AF_   BC_   DE_   HL_ ]; # Alternate registers
+define register offset=0x40 size=2 [ _  PC SP IX IY ];
+
+define register offset=0x50 size=1 [ rCBAR rCBR rBBR ];
+
+# Fake Registers used for pcode control
+define register offset=0x60 size=1 [
+	DECOMPILE_MODE
+];
+
+# Define context bits
+define register offset=0xf0 size=4   contextreg;
+	define context contextreg
+  assume8bitIOSpace =(0,0) # only applies to Z180
+	;
+# Flag bits (?? manual is very confusing - could be typos!)
+@define C_flag "F[0,1]"  # C: Carry
+@define N_flag "F[1,1]"  # N: Add/Subtract - used by DAA to distinguish between ADD and SUB instructions (0=ADD,1=SUB)
+@define PV_flag "F[2,1]" # PV: Parity/Overflow
+@define H_flag "F[4,1]"  # H: Half Carry
+@define Z_flag "F[6,1]"  # Z: Zero
+@define S_flag "F[7,1]"  # S: Sign
+
+define token opbyte (8)
+	op0_8        = (0,7)
+	op6_2        = (6,7)
+	dRegPair4_2  = (4,5)
+	pRegPair4_2  = (4,5)
+	sRegPair4_2  = (4,5)
+	qRegPair4_2  = (4,5)
+	rRegPair4_2  = (4,5)
+	reg3_3       = (3,5)
+	bits3_3      = (3,5)
+	bits0_4      = (0,3)
+	reg0_3       = (0,2)
+	bits0_3      = (0,2)
+;
+
+define token data8 (8)
+	imm8  = (0,7)
+	sign8 = (7,7)
+	simm8 = (0,7) signed
+;
+
+define token data16 (16)
+	timm4  = (12,15)
+	imm16  = ( 0,15)
+	sign16 = (15,15)
+	simm16 = ( 0,15) signed
+;
+
+attach variables [ reg0_3 reg3_3 ] [ B C D E H L _ A ];
+
+attach variables [ sRegPair4_2 dRegPair4_2 ] [ BC DE HL SP ];
+
+attach variables [ qRegPair4_2 ] [ BC DE HL AF ];
+
+attach variables [ pRegPair4_2 ] [ BC DE IX SP ];
+attach variables [ rRegPair4_2 ] [ BC DE IY SP ];
+################################################################
+# Psuedo Instructions
+################################################################
+define pcodeop segment; # Define special pcodeop that calculates the RAM address
+# given the segment selector and offset as input
+
+define pcodeop BCDadjust;
+define pcodeop BCDadjustCarry;
+
+define pcodeop hasEvenParity;
+define pcodeop disableMaskableInterrupts;
+define pcodeop enableMaskableInterrupts;
+define pcodeop setInterruptMode;
+define pcodeop parity;
+define pcodeop sleep;
+define pcodeop halt;
+
+################################################################
+# Macros
+################################################################
+
+macro setResultFlags(result) {
+	$(Z_flag) = (result == 0);
+	$(S_flag) = (result s< 0);
+}
+
+macro additionFlags(operand1, operand2) {
+	local AFmask = -1 >> 4;
+	$(H_flag) = (((operand1 & AFmask) + (operand2 & AFmask)) & (AFmask + 1)) != 0;
+	$(PV_flag) = scarry(operand1, operand2);
+	$(N_flag) = 0;
+	$(C_flag) = carry(operand1, operand2);
+}
+
+macro additionFlagsNoPV(operand1, operand2) {
+	local AFmask = -1 >> 4;
+	$(H_flag) = (((operand1 & AFmask) + (operand2 & AFmask)) & (AFmask + 1)) != 0;
+#	$(PV_flag) is not affected
+	$(N_flag) = 0;
+	$(C_flag) = carry(operand1, operand2);
+}
+
+macro additionWithCarry(operand1, operand2, result) {
+	local Ccopy = zext($(C_flag));
+	local AFmask = -1 >> 4;
+	$(H_flag) = (((operand1 & AFmask) + (operand2 & AFmask) + Ccopy) & (AFmask + 1)) != 0;
+	$(PV_flag) = scarry(operand1, operand2);
+	$(N_flag) = 0;
+	$(C_flag) = carry(operand1, operand2);
+	local tempResult = operand1 + operand2;
+	$(C_flag) = $(C_flag) || carry(tempResult, Ccopy);
+	$(PV_flag) = $(PV_flag) ^^ scarry(tempResult, Ccopy);
+	result = tempResult + Ccopy;
+}
+
+macro subtractionFlags(operand1, operand2) {
+	local AFmask = -1 >> 4;
+	$(H_flag) = (((operand1 & AFmask) - (operand2 & AFmask)) & (AFmask + 1)) != 0;
+	$(PV_flag) = sborrow(operand1, operand2);
+	$(N_flag) = 1;
+	$(C_flag) = operand1 < operand2;
+}
+
+macro subtractionFlagsNoC(operand1, operand2) {
+	local AFmask = -1 >> 4;
+	$(H_flag) = (((operand1 & AFmask) - (operand2 & AFmask)) & (AFmask + 1)) != 0;
+	$(PV_flag) = sborrow(operand1, operand2);
+	$(N_flag) = 1;
+#	$(C_flag) is not affected
+}
+
+macro subtractionWithCarry(operand1, operand2, result) {
+	local Ccopy = zext($(C_flag));
+	local AFmask = -1 >> 4;
+	$(H_flag) = (((operand1 & AFmask) - (operand2 & AFmask) - Ccopy) & (AFmask + 1)) != 0;
+	$(PV_flag) = sborrow(operand1, operand2);
+	$(N_flag) = 1;
+	$(C_flag) = operand1 < operand2;
+	local tempResult = operand1 - operand2;
+	$(C_flag) = $(C_flag) || (tempResult < Ccopy);
+	$(PV_flag) = $(PV_flag) ^^ sborrow(tempResult, Ccopy);
+	result = tempResult - Ccopy;
+}
+
+macro setSubtractFlags(op1,op2) {
+	$(C_flag) = (op1 < op2);
+}
+
+# places the parity bit of the given byte in out_parity_bit
+# the upper 7 bits of out_parity_bit are cleared
+macro setParity(in_byte) {
+	local tmp = in_byte ^ (in_byte >> 1);
+	tmp =  tmp ^ (tmp >> 2);
+	tmp = (tmp ^ (tmp >> 4)) & 1;
+	$(PV_flag) = (tmp == 0);
+	
+#     $(PV_flag) = hasEvenParity(in_byte);
+}
+
+macro ioWrite(addr,val) {
+   *[io]:1 addr = val;
+}
+
+macro ioRead(addr,dest) {
+   dest = *[io]:1 addr;
+}
+@if defined(Z180_SEGMENTED)
+
+macro push16(val16) {
+	SP = SP - 2;
+	ptr:$(PTRSIZE) = segment(rBBR,SP);
+	*:2 ptr = val16; 
+}
+
+macro pop16(ret16) {
+    ptr:$(PTRSIZE) = segment(rBBR,SP);
+	ret16 = *:2 ptr;
+	SP = SP + 2; 
+}
+
+macro push8(val8) {
+	SP = SP - 1;
+	ptr:$(PTRSIZE) = segment(rBBR,SP);
+	*:1 ptr = val8; 
+}
+
+macro pop8(ret8) {
+    ptr:$(PTRSIZE) = segment(rBBR,SP);
+	ret8 = *:1 ptr;
+	SP = SP + 1; 
+}
+
+macro swap(val16) {
+	ptr:$(PTRSIZE) = segment(rBBR,SP);
+	tmp:2 = *:2 ptr;
+	*:2 ptr = val16;
+	val16 = tmp;
+}
+
+macro MemRead(dest,off) {
+   	ptr:$(PTRSIZE) = segment(rBBR,off);
+	dest = *:1 ptr;
+}
+
+macro MemStore(off,val) {
+   	ptr:$(PTRSIZE) = segment(rBBR,off);
+	*:1 ptr = val;
+}
+
+macro JumpToLoc(off) {
+	ptr:$(PTRSIZE) = segment(rBBR,off);
+	goto [ptr];
+}
+
+@else
+
+macro push16(val16) {
+	SP = SP - 2;
+	*:2 SP = val16; 
+}
+
+macro pop16(ret16) {
+	ret16 = *:2 SP;
+	SP = SP + 2; 
+}
+
+macro push8(val8) {
+	SP = SP - 1;
+	ptr:$(PTRSIZE) = SP;
+	*:1 ptr = val8; 
+}
+
+macro pop8(ret8) {
+    ptr:$(PTRSIZE) = SP;
+	ret8 = *:1 ptr;
+	SP = SP + 1; 
+}
+
+macro swap(val16) {
+	ptr:$(PTRSIZE) = SP;
+	tmp:2 = *:2 ptr;
+	*:2 ptr = val16;
+	val16 = tmp;
+}
+
+macro MemRead(dest,off) {
+   	ptr:$(PTRSIZE) = off;
+	dest = *:1 ptr;
+}
+
+macro MemStore(off,val) {
+   	ptr:$(PTRSIZE) = off;
+	*:1 ptr = val;
+}
+
+macro JumpToLoc(off) {
+	ptr:$(PTRSIZE) = off;
+	goto [ptr];
+}
+
+@endif
+################################################################
+@if defined(Z180)
+
+Flag: "Flag"  is reg0_3    { }
+
+@endif
+@if defined(Z180_SEGMENTED)
+
+hlMem8: (HL)  is HL      { ptr:$(PTRSIZE) = segment(rBBR,HL); export *:1 ptr; }
+
+ixMem8: (IX+simm8)  is IX & simm8 {
+	off:2 = IX + simm8;
+	ptr:$(PTRSIZE) = segment(rBBR,off); export *:1 ptr;
+}
+ixMem8: (IX-val)    is IX & simm8 & sign8=1	[ val = -simm8; ] {
+	off:2 = IX + simm8;
+	ptr:$(PTRSIZE) = segment(rBBR,off); export *:1 ptr;
+}
+
+iyMem8: (IY+simm8)  is IY & simm8 {
+	off:$(PTRSIZE) = simm8;
+	ptr:$(PTRSIZE) = segment(rBBR,IY);
+	ptr = ptr + off; export *:1 ptr;
+}
+iyMem8: (IY-val)    is IY & simm8 & sign8=1	[ val = -simm8; ] {
+	off:$(PTRSIZE) = simm8;
+	ptr:$(PTRSIZE) = segment(rBBR,IY);
+	ptr = ptr + off; export *:1 ptr;
+}
+
+@else # if Z180_SEGMENTED
+@if defined(Z180)
+
+hlMem8: (HL)  is HL      { ptr:$(PTRSIZE) = HL; export *:1 ptr; }
+@endif
+
+ixMem8: (IX+simm8)  is IX & simm8                                 { ptr:$(PTRSIZE) = IX + simm8; export *:1 ptr; }
+ixMem8: (IX-val)    is IX & simm8 & sign8=1	[ val = -simm8; ]      { ptr:$(PTRSIZE) = IX + simm8; export *:1 ptr; }
+
+iyMem8: (IY+simm8)  is IY & simm8                                 { ptr:$(PTRSIZE) = IY + simm8; export *:1 ptr; }
+iyMem8: (IY-val)    is IY & simm8 & sign8=1	[ val = -simm8; ]      { ptr:$(PTRSIZE) = IY + simm8; export *:1 ptr; }
+
+@endif # end !Z180_SEGMENTED
+@if defined(Z180)
+
+Addr16: imm16  is imm16      { export *:1 imm16; }
+
+Mem8: (imm16)  is imm16    { export *:1 imm16; }
+
+Mem16: (imm16)  is imm16     { export *:2 imm16; }
+
+@else
+
+Addr16: imm16  is imm16      { export *:1 imm16; }
+
+Mem8: (imm16)  is imm16    { export *:1 imm16; }
+
+Mem16: (imm16)  is imm16     { export *:2 imm16; }
+
+@endif
+
+RelAddr8: loc  is simm8  [ loc = inst_next + simm8; ]        { export *:1 loc; }
+
+RstAddr: loc  is bits3_3 [ loc = bits3_3 << 3; ]       { export *:1 loc; }
+@if defined(Z180)
+
+IOAddr8: (imm8)  is imm8       { export *[const]:2 imm8; }
+
+IOAddr8a: (imm8)  is assume8bitIOSpace=0 & imm8        { ptr:2 = (zext(A) << 8) + imm8; export ptr; }
+IOAddr8a: (imm8)  is assume8bitIOSpace=1 & imm8        { export *[const]:2 imm8; }
+
+IOAddrC: (C)  is assume8bitIOSpace=0 & C       { ptr:2 = (zext(B) << 8) + zext(C); export ptr; }
+IOAddrC: (C)  is assume8bitIOSpace=1 & C       { ptr:2 = zext(C); export ptr; }
+@else
+
+IOAddr8a: (imm8)  is imm8                              { export *[const]:2 imm8; }
+
+IOAddrC: (C)  is C                             { ptr:2 = zext(C); export ptr; }
+@endif
+
+cc: "NZ"  is bits3_3=0x0  { c:1 = ($(Z_flag) == 0); export c; }
+cc: "Z"   is bits3_3=0x1  { c:1 = $(Z_flag); export c; }
+cc: "NC"  is bits3_3=0x2  { c:1 = ($(C_flag) == 0); export c; }
+cc: "C"   is bits3_3=0x3  { c:1 = $(C_flag); export c; }
+cc: "PO"  is bits3_3=0x4  { c:1 = ($(PV_flag) == 0); export c; }
+cc: "PE"  is bits3_3=0x5  { c:1 = $(PV_flag); export c; }
+cc: "P"   is bits3_3=0x6  { c:1 = ($(S_flag) == 0); export c; }
+cc: "M"   is bits3_3=0x7  { c:1 = $(S_flag); export c; }
+
+cc2: "NZ"  is bits3_3=0x4   { c:1 = ($(Z_flag) == 0); export c; }
+cc2: "Z"   is bits3_3=0x5   { c:1 = $(Z_flag); export c; }
+cc2: "NC"  is bits3_3=0x6   { c:1 = ($(C_flag) == 0); export c; }
+cc2: "C"   is bits3_3=0x7   { c:1 = $(C_flag); export c; }
+
+################################################################
+:LD reg3_3,reg0_3   is op6_2=0x1 & reg3_3 & reg0_3 {
+	reg3_3 = reg0_3;
+}
+
+:LD reg3_3,imm8     is op6_2=0x0 & reg3_3 & bits0_3=0x6; imm8 {
+	reg3_3 = imm8;
+}
+
+:LD reg3_3,(HL)     is op6_2=0x1 & reg3_3 & bits0_3=0x6 & HL {
+	MemRead(reg3_3,HL);
+}
+
+:LD reg3_3,ixMem8   is op0_8=0xdd; op6_2=0x1 & reg3_3 & bits3_3!=0x6 & bits0_3=0x6; ixMem8  {
+	reg3_3 = ixMem8; 
+}
+
+:LD reg3_3,iyMem8   is op0_8=0xfd; op6_2=0x1 & reg3_3 & bits3_3!=0x6 & bits0_3=0x6; iyMem8  {
+	reg3_3 = iyMem8; 
+}
+
+:LD (HL),reg0_3     is op6_2=0x1 & bits3_3=0x6 & reg0_3 & HL {
+	MemStore(HL,reg0_3);
+}
+
+:LD ixMem8,reg0_3   is op0_8=0xdd; op6_2=0x1 & bits3_3=0x6 & reg0_3 & bits0_3!=0x6; ixMem8  {
+	ixMem8 = reg0_3;
+}
+
+:LD iyMem8,reg0_3   is op0_8=0xfd; op6_2=0x1 & bits3_3=0x6 & reg0_3 & bits0_3!=0x6; iyMem8  {
+	iyMem8 = reg0_3;
+}
+
+:LD (HL),imm8       is op0_8=0x36 & HL; imm8 {
+	tmp:1 = imm8;
+	MemStore(HL,tmp);
+}
+
+:LD ixMem8,imm8     is op0_8=0xdd; op6_2=0x0 & bits3_3=0x6 & bits0_3=0x6; ixMem8; imm8  {
+	ixMem8 = imm8;
+}
+
+:LD iyMem8,imm8     is op0_8=0xfd; op6_2=0x0 & bits3_3=0x6 & bits0_3=0x6; iyMem8; imm8  {
+	iyMem8 = imm8;
+}
+
+:LD A,(BC)          is op0_8=0x0a & A & BC {
+	MemRead(A,BC);
+}
+
+:LD A,(DE)          is op0_8=0x1a & A & DE {
+	MemRead(A,DE);
+}
+
+:LD A,Mem8          is op0_8=0x3a & A; Mem8 {
+	A = Mem8;
+}
+
+:LD (BC),A          is op0_8=0x2 & BC & A {
+	MemStore(BC,A);
+}
+
+:LD (DE),A          is op0_8=0x12 & DE & A {
+	MemStore(DE,A);
+}
+
+:LD Mem8,A          is op0_8=0x32 & A; Mem8 {
+	Mem8 = A;
+}
+
+:LD A,I             is op0_8=0xed & A & I; op0_8=0x57 {
+	A = I;
+	setResultFlags(I);
+	$(H_flag) = 0;
+#	$(PV_flag) = IFF2;
+	$(N_flag) = 0;
+}
+
+:LD A,R             is op0_8=0xed & A & R; op0_8=0x5f {
+	A = R;
+	setResultFlags(R);
+	$(H_flag) = 0;
+#	$(PV_flag) = IFF2;
+	$(N_flag) = 0;
+}
+
+:LD I,A             is op0_8=0xed & A & I; op0_8=0x47 {
+	I = A;
+}
+
+:LD R,A             is op0_8=0xed & A & R; op0_8=0x4f {
+	R = A;
+}
+
+:LD dRegPair4_2,imm16  is op6_2=0x0 & dRegPair4_2 & bits0_4=0x1; imm16 {
+	dRegPair4_2 = imm16;
+}
+
+:LD IX,imm16        is op0_8=0xdd & IX; op0_8=0x21; imm16 {
+	IX = imm16;
+}
+
+:LD IY,imm16        is op0_8=0xfd & IY; op0_8=0x21; imm16 {
+	IY = imm16;
+}
+
+:LD HL,Mem16        is op0_8=0x2a & HL; Mem16 {
+	HL = Mem16;
+}
+
+:LD dRegPair4_2,Mem16  is op0_8=0xed; op6_2=0x1 & dRegPair4_2 & bits0_4=0xb; Mem16 {
+	dRegPair4_2 = Mem16;
+}
+
+:LD IX,Mem16        is op0_8=0xdd & IX; op0_8=0x2a; Mem16 {
+	IX = Mem16;
+}
+
+:LD IY,Mem16        is op0_8=0xfd & IY; op0_8=0x2a; Mem16 {
+	IY = Mem16;
+}
+
+:LD Mem16,HL        is op0_8=0x22 & HL; Mem16 {
+	Mem16 = HL;
+}
+
+:LD Mem16,dRegPair4_2  is op0_8=0xed; op6_2=0x1 & dRegPair4_2 & bits0_4=0x3; Mem16 {
+	Mem16 = dRegPair4_2;
+}
+
+:LD Mem16,IX        is op0_8=0xdd & IX; op0_8=0x22; Mem16 {
+	Mem16 = IX;
+}
+
+:LD Mem16,IY        is op0_8=0xfd & IY; op0_8=0x22; Mem16 {
+	Mem16 = IY;
+}
+
+:LD SP,HL           is op0_8=0xf9 & SP & HL {
+	SP = HL;
+}
+
+:LD SP,IX           is op0_8=0xdd & SP & IX; op0_8=0xf9 {
+	SP = IX;
+}
+
+:LD SP,IY           is op0_8=0xfd & SP & IY; op0_8=0xf9 {
+	SP = IY;
+}
+
+:PUSH qRegPair4_2   is op6_2=0x3 & qRegPair4_2 & bits0_4=0x5 {
+	push16(qRegPair4_2);
+}
+
+:PUSH IX            is op0_8=0xdd & IX; op0_8=0xe5 {
+	push16(IX);
+}
+
+:PUSH IY            is op0_8=0xfd & IY; op0_8=0xe5 {
+	push16(IY);
+}
+
+:POP qRegPair4_2    is op6_2=0x3 & qRegPair4_2 & bits0_4=0x1 {
+	pop16(qRegPair4_2);
+}
+
+:POP IX             is op0_8=0xdd & IX; op0_8=0xe1 {
+	pop16(IX);
+}
+
+# ?? Manual appears to have incorrect encoding
+:POP IY             is op0_8=0xfd & IY; op0_8=0xe1 {
+	pop16(IY);
+}
+
+:EX DE,HL           is op0_8=0xeb & DE & HL {
+	tmp:2 = DE;
+	DE = HL;
+	HL = tmp;	
+}
+
+:EX AF, AF_         is op0_8=0x08 & AF & AF_ {
+	tmp:2 = AF;
+	AF = AF_;
+	AF_ = tmp;
+}
+
+:EXX                is op0_8=0xd9 {
+	tmp:2 = BC;
+	BC = BC_;
+	BC_ = tmp;
+	tmp = DE;
+	DE = DE_;
+	DE_ = tmp;
+	tmp = HL;
+	HL = HL_;
+	HL_ = tmp;
+}
+
+:EX (SP),HL         is op0_8=0xe3 & SP & HL {
+	swap(HL);
+}
+
+:EX (SP),IX         is op0_8=0xdd & SP & IX; op0_8=0xe3 {
+	swap(IX);
+}
+
+:EX (SP),IY         is op0_8=0xfd & SP & IY; op0_8=0xe3 {
+	swap(IY);
+}
+
+# ?? Instruction manual contradicts itself - not sure what to do here ??
+:LDI                is op0_8=0xed; op0_8=0xa0 {
+	val:1 = 0;
+	MemRead(val,HL);
+	MemStore(DE,val);
+	DE = DE + 1;
+	HL = HL + 1;
+	BC = BC - 1;
+	$(H_flag) = 0;
+	$(PV_flag) = (BC != 0);
+	$(N_flag) = 0;
+}
+
+:LDIR               is op0_8=0xed; op0_8=0xb0 {
+	tmp:1 = 0;
+	MemRead(tmp,HL);
+	MemStore(DE,tmp);
+	DE = DE + 1;
+	HL = HL + 1;
+	BC = BC - 1;
+	if (BC != 0) goto inst_start;
+	$(H_flag) = 0;
+	$(PV_flag) = (BC != 0);
+	$(N_flag) = 0;
+}
+
+:LDD                is op0_8=0xed; op0_8=0xa8 {
+	DE = DE - 1;
+	HL = HL - 1;
+	BC = BC - 1;
+	$(H_flag) = 0;
+	$(PV_flag) = (BC != 0);
+	$(N_flag) = 0;
+}
+
+:LDDR               is op0_8=0xed; op0_8=0xb8 {
+	tmp:1 = 0;
+	MemRead(tmp,HL);
+	MemStore(DE,tmp);
+	DE = DE - 1;
+	HL = HL - 1;
+	BC = BC - 1;
+	if (BC != 0) goto inst_start;
+	$(H_flag) = 0;
+	$(PV_flag) = 0;
+	$(N_flag) = 0;
+}
+
+:CPI                is op0_8=0xed; op0_8=0xa1 {
+	val:1 = 0;
+	MemRead(val,HL);
+	cmp:1 = A - val;
+	setResultFlags(cmp);
+	HL = HL + 1;
+	BC = BC - 1;
+
+	carries:1 = (~A & val) | (val & cmp) | (cmp & ~A);
+	$(H_flag) = (carries & 0b00001000) != 0;
+	$(PV_flag) = (BC != 0);
+	$(N_flag) = 1;
+}
+
+:CPIR               is op0_8=0xed; op0_8=0xb1 {
+	val:1 = 0;
+	MemRead(val,HL);
+	cmp:1 = A - val;
+	setResultFlags(cmp);
+	HL = HL + 1;
+	BC = BC - 1;
+	
+	if (cmp == 0 || BC != 0) goto inst_start;
+
+	carries:1 = (~A & val) | (val & cmp) | (cmp & ~A);
+	$(H_flag) = (carries & 0b00001000) != 0;
+	$(PV_flag) = (BC != 0);
+	$(N_flag) = 1;
+}
+
+:CPD                is op0_8=0xed; op0_8=0xa9 {
+	val:1 = 0;
+	MemRead(val,HL);
+	cmp:1 = A - val;
+	setResultFlags(cmp);
+	HL = HL - 1;
+	BC = BC - 1;
+	
+	carries:1 = (~A & val) | (val & cmp) | (cmp & ~A);
+	$(H_flag) = (carries & 0b00001000) != 0;
+	$(PV_flag) = (BC != 0);
+	$(N_flag) = 1;
+}
+
+:CPDR               is op0_8=0xed; op0_8=0xb9 {
+	val:1 = 0;
+	MemRead(val,HL);
+	cmp:1 = A - val;
+	setResultFlags(cmp);
+	HL = HL - 1;
+	BC = BC - 1;
+	
+	if (cmp == 0 || BC != 0) goto inst_start;
+	
+	carries:1 = (~A & val) | (val & cmp) | (cmp & ~A);
+	$(H_flag) = (carries & 0b00001000) != 0;
+	$(PV_flag) = (BC != 0);
+	$(N_flag) = 1;
+}
+
+:ADD A, reg0_3         is op6_2=0x2 & bits3_3=0x0 & reg0_3 & A {
+	local A_temp = A;
+	local reg_temp = reg0_3;
+
+	A = A + reg0_3;
+	setResultFlags(A);
+	additionFlags(A_temp, reg_temp);
+}
+
+:ADD A, imm8           is op0_8=0xc6; imm8 & A {
+	local A_temp = A;
+
+	A = A + imm8;
+	setResultFlags(A);
+	additionFlags(A_temp, imm8);
+}
+
+:ADD A, (HL)           is op0_8=0x86 & HL & A {
+	val:1 = 0;
+	MemRead(val,HL);
+	local A_temp = A;
+
+	A = A + val;
+	setResultFlags(A);
+	additionFlags(A_temp, val);
+}
+
+:ADD A, ixMem8         is op0_8=0xdd; op0_8=0x86; ixMem8 & A {
+	val:1 = ixMem8;
+	local A_temp = A;
+
+	A = A + val;
+	setResultFlags(A);
+	additionFlags(A_temp, val);
+}
+
+:ADD A, iyMem8         is op0_8=0xfd; op0_8=0x86; iyMem8 & A {
+	val:1 = iyMem8;
+	local A_temp = A;
+
+	A = A + val;
+	setResultFlags(A);
+	additionFlags(A_temp, val);
+}
+
+:ADC A, reg0_3         is op6_2=0x2 & bits3_3=0x1 & reg0_3 & A {
+	additionWithCarry(A, reg0_3, A);
+	setResultFlags(A);
+}
+
+:ADC A, imm8           is op0_8=0xce; imm8 & A {
+	additionWithCarry(A, imm8, A);
+	setResultFlags(A);
+}
+
+:ADC A, (HL)           is op0_8=0x8e & HL & A {
+	val:1 = 0;
+	MemRead(val,HL);
+	additionWithCarry(A, val, A);
+	setResultFlags(A);
+}
+
+:ADC A, ixMem8         is op0_8=0xdd; op0_8=0x8e; ixMem8 & A{
+	val:1 = ixMem8;
+	additionWithCarry(A, val, A);
+}
+
+:ADC A, iyMem8         is op0_8=0xfd; op0_8=0x8e; iyMem8 & A {
+	val:1 = iyMem8;
+	additionWithCarry(A, val, A);
+	setResultFlags(A);
+}
+
+:SUB reg0_3         is op6_2=0x2 & bits3_3=0x2 & reg0_3 {
+	local A_temp = A;
+
+	A = A - reg0_3;
+	subtractionFlags(A_temp, reg0_3);
+	setResultFlags(A);
+}
+
+:SUB imm8           is op0_8=0xd6; imm8 {
+	local A_temp = A;
+
+	A = A - imm8;
+	subtractionFlags(A_temp, imm8);
+	setResultFlags(A);
+}
+
+:SUB (HL)           is op0_8=0x96 & HL {
+	val:1 = 0;
+	MemRead(val,HL);
+	local A_temp = A;
+
+	A = A - val;
+	subtractionFlags(A_temp, val);
+	setResultFlags(A);
+}
+
+:SUB ixMem8         is op0_8=0xdd; op0_8=0x96; ixMem8 {
+	val:1 = ixMem8;
+	local A_temp = A;
+
+	A = A - val;
+	subtractionFlags(A_temp, val);
+	setResultFlags(A);
+}
+
+:SUB iyMem8         is op0_8=0xfd; op0_8=0x96; iyMem8 {
+	val:1 = iyMem8;
+	local A_temp = A;
+
+	A = A - val;
+	subtractionFlags(A_temp, val);
+	setResultFlags(A);
+}
+
+:SBC A, reg0_3         is op6_2=0x2 & bits3_3=0x3 & reg0_3 & A {
+	subtractionWithCarry(A, reg0_3, A);
+	setResultFlags(A);
+}
+
+:SBC A, imm8           is op0_8=0xde; imm8 & A {
+	subtractionWithCarry(A, imm8, A);
+	setResultFlags(A);
+}
+
+:SBC A, (HL)           is op0_8=0x9e & HL & A {
+	val:1 = 0;
+	MemRead(val,HL);
+	subtractionWithCarry(A, val, A);
+	setResultFlags(A);
+}
+
+:SBC A, ixMem8         is op0_8=0xdd; op0_8=0x9e; ixMem8 & A {
+	val:1 = ixMem8;
+	subtractionWithCarry(A, val, A);
+	setResultFlags(A);
+}
+
+:SBC A, iyMem8         is op0_8=0xfd; op0_8=0x9e; iyMem8 & A {
+	val:1 = iyMem8;
+	subtractionWithCarry(A, val, A);
+	setResultFlags(A);
+}
+
+:AND reg0_3         is op6_2=0x2 & bits3_3=0x4 & reg0_3 {
+	$(H_flag) = 1;
+	$(C_flag) = 0;
+	$(N_flag) = 0;
+	A = A & reg0_3;
+	setResultFlags(A);
+	setParity(A);
+}
+
+:AND imm8           is op0_8=0xe6; imm8 {
+	$(H_flag) = 1;
+	$(C_flag) = 0;
+	$(N_flag) = 0;
+	A = A & imm8;
+	setResultFlags(A);
+	setParity(A);
+}
+
+:AND (HL)           is op0_8=0xa6 & HL {
+	$(H_flag) = 1;
+	$(C_flag) = 0;
+	$(N_flag) = 0;
+	tmp:1 = 0;
+	MemRead(tmp,HL);
+	A = A & tmp;
+	setResultFlags(A);
+	setParity(A);
+}
+
+:AND ixMem8         is op0_8=0xdd; op0_8=0xa6; ixMem8 {
+	$(H_flag) = 1;
+	$(C_flag) = 0;
+	$(N_flag) = 0;
+	A = A & ixMem8;
+	setResultFlags(A);
+	setParity(A);
+}
+
+:AND iyMem8         is op0_8=0xfd; op0_8=0xa6; iyMem8 {
+	$(H_flag) = 1;
+	$(C_flag) = 0;
+	$(N_flag) = 0;
+	A = A & iyMem8;
+	setResultFlags(A);
+	setParity(A);
+}
+
+:OR reg0_3          is op6_2=0x2 & bits3_3=0x6 & reg0_3 {
+	$(H_flag) = 0;
+	$(C_flag) = 0;
+	$(N_flag) = 0;
+	A = A | reg0_3;
+	setResultFlags(A);
+	setParity(A);
+}
+
+:OR imm8            is op0_8=0xf6; imm8 {
+	$(H_flag) = 0;
+	$(C_flag) = 0;
+	$(N_flag) = 0;
+	A = A | imm8;
+	setResultFlags(A);
+	setParity(A);
+}
+
+:OR (HL)            is op0_8=0xb6 & HL {
+	$(H_flag) = 0;
+	$(C_flag) = 0;
+	$(N_flag) = 0;
+	val:1 = 0;
+	MemRead(val,HL);
+	A = A | val;
+	setResultFlags(A);
+	setParity(A);
+}
+
+:OR ixMem8          is op0_8=0xdd; op0_8=0xb6; ixMem8 {
+	$(H_flag) = 0;
+	$(C_flag) = 0;
+	$(N_flag) = 0;
+	A = A | ixMem8;
+	setResultFlags(A);
+	setParity(A);
+}
+
+:OR iyMem8          is op0_8=0xfd; op0_8=0xb6; iyMem8 {
+	$(H_flag) = 0;
+	$(C_flag) = 0;
+	$(N_flag) = 0;
+	A = A | iyMem8;
+	setResultFlags(A);
+	setParity(A);
+}
+
+:XOR reg0_3         is op6_2=0x2 & bits3_3=0x5 & reg0_3 {
+	$(H_flag) = 0;
+	$(C_flag) = 0;
+	$(N_flag) = 0;
+	A = A ^ reg0_3;
+	setResultFlags(A);
+	setParity(A);
+}
+
+:XOR imm8           is op0_8=0xee; imm8 {
+	$(H_flag) = 0;
+	$(C_flag) = 0;
+	$(N_flag) = 0;
+	A = A ^ imm8;
+	setResultFlags(A);
+	setParity(A);
+}
+
+:XOR (HL)           is op0_8=0xae & HL {
+	$(H_flag) = 0;
+	$(C_flag) = 0;
+	$(N_flag) = 0;
+	val:1 = 0;
+	MemRead(val,HL);
+	A = A ^ val;
+	setResultFlags(A);
+	setParity(A);
+}
+
+:XOR ixMem8         is op0_8=0xdd; op0_8=0xae; ixMem8 {
+	$(H_flag) = 0;
+	$(C_flag) = 0;
+	$(N_flag) = 0;
+	A = A ^ ixMem8;
+	setResultFlags(A);
+	setParity(A);
+}
+
+:XOR iyMem8         is op0_8=0xfd; op0_8=0xae; iyMem8 {
+	$(H_flag) = 0;
+	$(C_flag) = 0;
+	$(N_flag) = 0;
+	A = A ^ iyMem8;
+	setResultFlags(A);
+	setParity(A);
+}
+
+:CP reg0_3          is op6_2=0x2 & bits3_3=0x7 & reg0_3 {
+	cmp:1 = A - reg0_3;
+	subtractionFlags(A, reg0_3);
+	setResultFlags(cmp);
+}
+
+:CP imm8            is op0_8=0xfe; imm8 {
+	cmp:1 = A - imm8;
+	subtractionFlags(A, imm8);
+	setResultFlags(cmp);
+}
+
+:CP (HL)            is op0_8=0xbe & HL {
+	val:1 = 0;
+	MemRead(val,HL);
+
+	cmp:1 = A - val;
+	subtractionFlags(A, val);
+	setResultFlags(cmp);
+}
+
+:CP ixMem8          is op0_8=0xdd; op0_8=0xbe; ixMem8 {
+	val:1 = ixMem8;
+
+	cmp:1 = A - val;
+	subtractionFlags(A, val);
+	setResultFlags(cmp);
+}
+
+:CP iyMem8          is op0_8=0xfd; op0_8=0xbe; iyMem8 {
+	val:1 = iyMem8;
+
+	cmp:1 = A - val;
+	subtractionFlags(A, val);
+	setResultFlags(cmp);
+}
+
+:INC reg3_3         is op6_2=0x0 & reg3_3 & bits0_3=0x4 {
+	local r_temp = reg3_3;
+
+	reg3_3 = reg3_3 + 1;
+	setResultFlags(reg3_3);
+	additionFlags(r_temp, 1);
+}
+
+:INC (HL)           is op0_8=0x34 & HL {
+	val:1 = 0;
+	MemRead(val,HL);
+	val_temp:1 = val;
+
+	val = val + 1;
+	MemStore(HL,val);
+	setResultFlags(val);
+	additionFlags(val_temp, 1);
+}
+
+:INC ixMem8         is op0_8=0xdd; op0_8=0x34; ixMem8 {
+	val:1 = ixMem8;
+	val_temp:1 = val;
+
+	val = val + 1;
+	ixMem8 = val;
+	setResultFlags(val);
+	additionFlags(val_temp, 1);
+}
+
+:INC iyMem8         is op0_8=0xfd; op0_8=0x34; iyMem8 {
+	val:1 = iyMem8;
+	val_temp:1 = val;
+
+	val = val + 1;
+	iyMem8 = val;
+	setResultFlags(val);
+	additionFlags(val_temp, 1);
+}
+
+:DEC reg3_3         is op6_2=0x0 & reg3_3 & bits0_3=0x5 {
+	local r_temp = reg3_3;
+
+	reg3_3 = reg3_3 - 1;
+	subtractionFlagsNoC(r_temp, 1);
+	setResultFlags(reg3_3);
+}
+
+:DEC (HL)           is op0_8=0x35 & HL {
+	val:1 = 0;
+	MemRead(val,HL);
+	val_temp:1 = val;
+
+	val = val - 1;
+	MemStore(HL,val);
+	subtractionFlagsNoC(val_temp, 1);
+	setResultFlags(val);
+}
+
+:DEC ixMem8         is op0_8=0xdd; op0_8=0x35; ixMem8 {
+	val:1 = ixMem8;
+	val_temp:1 = val;
+
+	val = val - 1;
+	ixMem8 = val;
+	subtractionFlagsNoC(val_temp, 1);
+	setResultFlags(val);
+}
+
+:DEC iyMem8         is op0_8=0xfd; op0_8=0x35; iyMem8 {
+	val:1 = iyMem8;
+	val_temp:1 = val;
+
+	val = val - 1;
+	iyMem8 = val;
+	subtractionFlagsNoC(val_temp, 1);
+	setResultFlags(val);
+}
+
+:DAA                is op0_8=0x27 {
+if (DECOMPILE_MODE) goto <forDecompilation>;
+	
+	HN:1 = A >> 4;     # high nibble
+	LN:1 = A & 0xF;    # low nibbble
+	#
+	# If (C and H are both 0, and both nibbles are in range[0,9] no
+	# adjustment is needed.
+	#
+	if (($(C_flag) == 0) & ($(H_flag) == 0) & (HN <= 0x9) & (LN <= 0x9)) goto <exit>;
+	
+	if ($(N_flag) == 1) goto <adjustAfterSubtract>;
+
+		#<adjustAfterAdd>, in effect
+    if ($(C_flag) == 0 & $(H_flag) == 0 & HN <= 0x8 & LN >= 0xA & LN <= 0xF)   goto <addcase2>;
+    if ($(C_flag) == 0 & $(H_flag) == 1 & HN <= 0x9 & LN <= 0x3)               goto <addcase3>;
+    if ($(C_flag) == 0 & $(H_flag) == 0 & HN >= 0xA & HN <= 0xF & LN <= 0x9)   goto <addcase4>;
+    if ($(C_flag) == 0 & $(H_flag) == 0 & HN >= 0x9 & HN <= 0xF & LN >= 0xA & LN <= 0xF)   goto <addcase5>;
+    if ($(C_flag) == 0 & $(H_flag) == 1 & HN >= 0xA & HN <= 0xF & LN <= 0x3)   goto <addcase6>;
+    if ($(C_flag) == 1 & $(H_flag) == 0 & HN <= 0x2 & LN <= 0x9)               goto <addcase7>;
+    if ($(C_flag) == 1 & $(H_flag) == 0 & HN <= 0x2 & LN >= 0xA & LN <= 0xF)   goto <addcase8>;
+    if ($(C_flag) == 1 & $(H_flag) == 1 & HN <= 0x3 & LN <= 0x3)               goto <addcase9>;
+    goto <exit>; 
+
+		# Cases for addition
+   #<addcase1>
+    # Isn't used
+   <addcase2>
+    A = A + 0x06;
+    goto <exit>; 
+   <addcase3>
+    A = A + 0x06;
+    goto <exit>; 
+   <addcase4>
+    A = A + 0x60;
+    $(C_flag) = 1;
+    goto <exit>; 
+   <addcase5>
+    A = A + 0x66;
+    $(C_flag) = 1;
+    goto <exit>; 
+   <addcase6>
+    A = A + 0x66;
+    $(C_flag) = 1;
+    goto <exit>; 
+   <addcase7>
+    A = A + 0x60;
+    goto <exit>; 
+   <addcase8>
+    A = A + 0x66;
+    goto <exit>; 
+   <addcase9>
+    A = A + 0x66;
+	goto <exit>;
+		
+   <adjustAfterSubtract>	
+	# Cases for subtraction
+    #if ($(C_flag) == 0 & $(H_flag) == 0 & HN >= 0x0 & HN <= 0x9 & LN >= 0x0 & LN <= 0x9)   goto <subcase1>;
+    if ($(C_flag) == 0 & $(H_flag) == 1 & HN <= 0x8 & LN >= 0x6 & LN <= 0xF)               goto <subcase2>;
+    if ($(C_flag) == 1 & $(H_flag) == 0 & HN >= 0x7 & HN <= 0xF & LN <= 0x9)               goto <subcase3>;
+    if ($(C_flag) == 1 & $(H_flag) == 1 & HN >= 0x6 & HN <= 0xF & LN >= 0x6 & LN <= 0xF)   goto <subcase4>;
+    goto <exit>;
+
+   #<subcase1>  
+    # Isn't used
+   <subcase2>
+    A = A + 0xFA;
+    goto <exit>; 
+   <subcase3>
+    A = A + 0xA0;
+    goto <exit>; 
+   <subcase4>
+    A = A + 0x9A;
+
+   <exit>		
+  
+   setResultFlags(A);
+   setParity(A);
+   
+   goto <endDAA>;
+    
+
+<forDecompilation>
+   A_temp:1 = A;
+  
+   A = BCDadjust(A_temp, $(C_flag), $(H_flag));
+   $(C_flag) = BCDadjustCarry(A_temp, $(C_flag), $(H_flag));
+  
+   setResultFlags(A);
+   $(PV_flag) = hasEvenParity(A);
+
+<endDAA>
+}
+
+:CPL                is op0_8=0x2f {
+	A = ~A;	
+	$(H_flag) = 1;
+	$(N_flag) = 1;
+}
+
+:NEG                is op0_8=0xed; op0_8=0x44 {
+	A_temp:1 = A;	
+
+	A = -A;
+	subtractionFlags(0, A_temp);
+	setResultFlags(A);
+}
+
+:CCF                is op0_8=0x3f {
+	$(C_flag) = !$(C_flag);
+	$(N_flag) = 0;
+}
+
+:SCF                is op0_8=0x37 {
+	$(C_flag) = 1;
+	$(H_flag) = 0;
+	$(N_flag) = 0;
+}
+
+:NOP                is op0_8=0x0 {
+}
+
+:HALT               is op0_8=0x76 {
+	halt();
+}
+
+:DI                 is op0_8=0xf3 {
+#	IFF1 = 0;
+#	IFF2 = 0;
+	disableMaskableInterrupts();
+}
+
+:EI                 is op0_8=0xfb {
+#	IFF1 = 1;
+#	IFF2 = 1;
+	enableMaskableInterrupts();
+}
+
+:IM 0               is op0_8=0xed; op0_8=0x46 {
+	setInterruptMode(0:1);
+}
+
+:IM 1               is op0_8=0xed; op0_8=0x56 {
+	setInterruptMode(1:1);
+}
+
+:IM 2               is op0_8=0xed; op0_8=0x5e {
+	setInterruptMode(2:1);
+}
+
+:ADD HL,sRegPair4_2 is op6_2=0x0 & sRegPair4_2 & bits0_4=0x9 & HL {
+	local HL_temp = HL;
+	local Reg_temp = sRegPair4_2;
+
+	HL = HL + sRegPair4_2;
+	additionFlagsNoPV(HL_temp, Reg_temp);
+}
+
+:ADC HL,sRegPair4_2 is op0_8=0xed & HL; op6_2=0x1 & sRegPair4_2 & bits0_4=0xa {
+	local HL_temp = HL;
+	local Reg_temp = sRegPair4_2;
+
+	HL = HL + sRegPair4_2 + zext($(C_flag));
+	setResultFlags(HL);
+	additionFlagsNoPV(HL_temp, Reg_temp);
+}
+
+:SBC HL,sRegPair4_2 is op0_8=0xed & HL; op6_2=0x1 & sRegPair4_2 & bits0_4=0x2 {
+	subtractionWithCarry(HL, sRegPair4_2, HL);
+	setResultFlags(HL);
+}
+
+:ADD IX,pRegPair4_2 is op0_8=0xdd & IX; op6_2=0x0 & pRegPair4_2 & bits0_4=0x9 {
+	local IX_temp = IX;
+	local Reg_temp = pRegPair4_2;
+
+	IX = IX + pRegPair4_2;
+	additionFlagsNoPV(IX_temp, Reg_temp);
+}
+
+:ADD IY,pRegPair4_2 is op0_8=0xfd & IY; op6_2=0x0 & pRegPair4_2 & bits0_4=0x9 {
+	local IY_temp = IY;
+	local Reg_temp = pRegPair4_2;
+
+	IY = IY + pRegPair4_2;
+	additionFlagsNoPV(IY_temp, Reg_temp);
+}
+
+:INC sRegPair4_2    is op6_2=0x0 & sRegPair4_2 & bits0_4=0x3 {
+	sRegPair4_2 = sRegPair4_2 + 1;
+}
+
+:INC IX             is op0_8=0xdd & IX; op0_8=0x23 {
+	IX = IX + 1;
+}
+
+:INC IY             is op0_8=0xfd & IY; op0_8=0x23 {
+	IY = IY + 1;
+}
+
+:DEC sRegPair4_2    is op6_2=0x0 & sRegPair4_2 & bits0_4=0xb {
+	sRegPair4_2 = sRegPair4_2 - 1;
+}
+
+:DEC IX             is op0_8=0xdd & IX; op0_8=0x2b {
+	IX = IX - 1;
+}
+
+:DEC IY             is op0_8=0xfd & IY; op0_8=0x2b {
+	IY = IY - 1;
+}
+
+:RLCA               is op0_8=0x07 {
+	$(C_flag) = (A >> 7);
+	A = (A << 1) | $(C_flag);
+	$(H_flag) = 0;
+	$(N_flag) = 0;
+}
+
+:RLA                is op0_8=0x17 {
+	nextC:1 = (A >> 7);
+	A = (A << 1) | $(C_flag);
+	$(C_flag) = nextC;
+	$(H_flag) = 0;
+	$(N_flag) = 0;
+}
+
+:RRCA               is op0_8=0x0f {
+	$(C_flag) = (A & 1);
+	A = (A >> 1) | ($(C_flag) << 7);
+	$(H_flag) = 0;
+	$(N_flag) = 0;
+}
+
+:RRA                is op0_8=0x1f {
+	nextC:1 = (A & 1);
+	A = (A >> 1) | ($(C_flag) << 7);
+	$(C_flag) = nextC;
+	$(H_flag) = 0;
+	$(N_flag) = 0;
+}
+
+:RLC reg0_3         is op0_8=0x0cb; op6_2=0x0 & bits3_3=0x0 & reg0_3 {
+	$(C_flag) = (reg0_3 >> 7);
+	reg0_3 = (reg0_3 << 1) | $(C_flag);
+	setResultFlags(reg0_3);
+	$(H_flag) = 0;
+	setParity(reg0_3);
+	$(N_flag) = 0;
+}
+
+:RLC (HL)           is op0_8=0x0cb & HL; op0_8=0x06 {
+	val:1 = 0;
+	MemRead(val,HL);
+	$(C_flag) = (val >> 7);
+	val = (val << 1) | $(C_flag);
+	setResultFlags(val);
+	MemStore(HL,val);
+	$(H_flag) = 0;
+	setParity(val);
+	$(N_flag) = 0;
+}
+
+:RLC ixMem8         is op0_8=0x0dd; op0_8=0xcb; ixMem8; op0_8=0x06 {
+	val:1 = ixMem8;
+	$(C_flag) = (val >> 7);
+	val = (val << 1) | $(C_flag);
+	setResultFlags(val);
+	ixMem8 = val;
+	$(H_flag) = 0;
+	$(N_flag) = 0;
+}
+
+:RLC iyMem8         is op0_8=0x0fd; op0_8=0xcb; iyMem8; op0_8=0x06 {
+	val:1 = iyMem8;
+	$(C_flag) = (val >> 7);
+	val = (val << 1) | $(C_flag);
+	setResultFlags(val);
+	iyMem8 = val;
+	$(H_flag) = 0;
+	setParity(val);
+	$(N_flag) = 0;
+}
+
+:RL reg0_3          is op0_8=0x0cb; op6_2=0x0 & bits3_3=0x2 & reg0_3 {
+	nextC:1 = (reg0_3 >> 7);
+	reg0_3 = (reg0_3 << 1) | $(C_flag);
+	$(C_flag) = nextC;
+	setResultFlags(reg0_3);
+	$(H_flag) = 0;
+	setParity(reg0_3);
+	$(N_flag) = 0;
+}
+
+:RL (HL)            is op0_8=0x0cb & HL; op0_8=0x16 {
+	val:1 = 0;
+	MemRead(val,HL);
+	nextC:1 = (val >> 7);
+	val = (val << 1) | $(C_flag);
+	$(C_flag) = nextC;
+	setResultFlags(val);
+	MemStore(HL,val);
+	$(H_flag) = 0;
+	setParity(val);
+	$(N_flag) = 0;
+}
+
+:RL ixMem8          is op0_8=0x0dd; op0_8=0xcb; ixMem8; op0_8=0x16 {
+	val:1 = ixMem8;
+	nextC:1 = (val >> 7);
+	val = (val << 1) | $(C_flag);
+	$(C_flag) = nextC;
+	setResultFlags(val);
+	ixMem8 = val;
+	$(H_flag) = 0;
+	setParity(val);
+	$(N_flag) = 0;
+}
+
+:RL iyMem8          is op0_8=0x0fd; op0_8=0xcb; iyMem8; op0_8=0x16 {
+	val:1 = iyMem8;
+	nextC:1 = (val >> 7);
+	val = (val << 1) | $(C_flag);
+	$(C_flag) = nextC;
+	setResultFlags(val);
+	iyMem8 = val;
+	$(H_flag) = 0;
+	setParity(val);
+	$(N_flag) = 0;
+}
+
+:RRC reg0_3         is op0_8=0x0cb; op6_2=0x0 & bits3_3=0x1 & reg0_3 {
+	$(C_flag) = (reg0_3 & 1);
+	reg0_3 = (reg0_3 >> 1) | ($(C_flag) << 7);
+	setResultFlags(reg0_3);
+	$(H_flag) = 0;
+	setParity(reg0_3);
+	$(N_flag) = 0;
+}
+
+:RRC (HL)           is op0_8=0x0cb & HL; op0_8=0x0e {
+	val:1 = 0;
+	MemRead(val,HL);
+	$(C_flag) = (val & 1);
+	val = (val >> 1) | ($(C_flag) << 7);
+	setResultFlags(val);
+	MemStore(HL,val);
+	$(H_flag) = 0;
+	setParity(val);
+	$(N_flag) = 0;
+}
+
+:RRC ixMem8         is op0_8=0x0dd; op0_8=0xcb; ixMem8; op0_8=0x0e {
+	val:1 = ixMem8;
+	$(C_flag) = (val & 1);
+	val = (val >> 1) | ($(C_flag) << 7);
+	setResultFlags(val);
+	ixMem8 = val;
+	$(H_flag) = 0;
+	setParity(val);
+	$(N_flag) = 0;
+}
+
+:RRC iyMem8         is op0_8=0x0fd; op0_8=0xcb; iyMem8; op0_8=0x0e {
+	val:1 = iyMem8;
+	$(C_flag) = (val & 1);
+	val = (val >> 1) | ($(C_flag) << 7);
+	setResultFlags(val);
+	iyMem8 = val;
+	$(H_flag) = 0;
+	setParity(val);
+	$(N_flag) = 0;
+}
+
+:RR reg0_3          is op0_8=0x0cb; op6_2=0x0 & bits3_3=0x3 & reg0_3 {
+	nextC:1 = (reg0_3 & 1);
+	reg0_3 = (reg0_3 >> 1) | ($(C_flag) << 7);
+	$(C_flag) = nextC;
+	setResultFlags(reg0_3);
+	$(H_flag) = 0;
+	setParity(reg0_3);
+	$(N_flag) = 0;
+}
+
+:RR (HL)            is op0_8=0x0cb & HL; op0_8=0x1e {
+	val:1 = 0;
+	MemRead(val,HL);
+	nextC:1 = (val & 1);
+	val = (val >> 1) | ($(C_flag) << 7);
+	$(C_flag) = nextC;
+	setResultFlags(val);
+	MemStore(HL,val);
+	$(H_flag) = 0;
+	setParity(val);
+	$(N_flag) = 0;
+}
+
+:RR ixMem8          is op0_8=0x0dd; op0_8=0xcb; ixMem8; op0_8=0x1e {
+	val:1 = ixMem8;
+	nextC:1 = (val & 1);
+	val = (val >> 1) | ($(C_flag) << 7);
+	$(C_flag) = nextC;
+	setResultFlags(val);
+	ixMem8 = val;
+	$(H_flag) = 0;
+	setParity(val);
+	$(N_flag) = 0;
+}
+
+:RR iyMem8          is op0_8=0x0fd; op0_8=0xcb; iyMem8; op0_8=0x1e {
+	val:1 = iyMem8;
+	nextC:1 = (val & 1);
+	val = (val >> 1) | ($(C_flag) << 7);
+	$(C_flag) = nextC;
+	setResultFlags(val);
+	iyMem8 = val;
+	$(H_flag) = 0;
+	setParity(val);
+	$(N_flag) = 0;
+}
+
+:SLA reg0_3         is op0_8=0x0cb; op6_2=0x0 & bits3_3=0x4 & reg0_3 {
+	$(C_flag) = (reg0_3 >> 7);
+	reg0_3 = reg0_3 << 1;
+	setResultFlags(reg0_3);
+	$(H_flag) = 0;
+	setParity(reg0_3);
+	$(N_flag) = 0;
+}
+
+:SLA (HL)           is op0_8=0x0cb & HL; op0_8=0x26 {
+	val:1 = 0;
+	MemRead(val,HL);
+	$(C_flag) = (val >> 7);
+	val = val << 1;
+	setResultFlags(val);
+	MemStore(HL,val);
+	$(H_flag) = 0;
+	setParity(val);
+	$(N_flag) = 0;
+}
+
+:SLA ixMem8         is op0_8=0x0dd; op0_8=0xcb; ixMem8; op0_8=0x26 {
+	val:1 = ixMem8;
+	$(C_flag) = (val >> 7);
+	val = val << 1;
+	setResultFlags(val);
+	ixMem8 = val;
+	$(H_flag) = 0;
+	setParity(val);
+	$(N_flag) = 0;
+}
+
+:SLA iyMem8         is op0_8=0x0fd; op0_8=0xcb; iyMem8; op0_8=0x26 {
+	val:1 = iyMem8;
+	$(C_flag) = (val >> 7);
+	val = val << 1;
+	setResultFlags(val);
+	iyMem8 = val;
+	$(H_flag) = 0;
+	setParity(val);
+	$(N_flag) = 0;
+}
+
+:SRA reg0_3         is op0_8=0x0cb; op6_2=0x0 & bits3_3=0x5 & reg0_3 {
+	$(C_flag) = (reg0_3 & 1);
+	reg0_3 = reg0_3 s>> 1;
+	setResultFlags(reg0_3);
+	$(H_flag) = 0;
+	setParity(reg0_3);
+	$(N_flag) = 0;
+}
+
+:SRA (HL)           is op0_8=0x0cb & HL; op0_8=0x2e {
+	val:1 = 0;
+	MemRead(val,HL);
+	$(C_flag) = (val & 1);
+	val = val s>> 1;
+	setResultFlags(val);
+	MemStore(HL,val);
+	$(H_flag) = 0;
+	setParity(val);
+	$(N_flag) = 0;
+}
+
+:SRA ixMem8         is op0_8=0x0dd; op0_8=0xcb; ixMem8; op0_8=0x2e {
+	val:1 = ixMem8;
+	$(C_flag) = (val & 1);
+	val = val s>> 1;
+	setResultFlags(val);
+	ixMem8 = val;
+	$(H_flag) = 0;
+	setParity(val);
+	$(N_flag) = 0;
+}
+
+:SRA iyMem8         is op0_8=0x0fd; op0_8=0xcb; iyMem8; op0_8=0x2e {
+	val:1 = iyMem8;
+	$(C_flag) = (val & 1);
+	val = val s>> 1;
+	setResultFlags(val);
+	iyMem8 = val;
+	$(H_flag) = 0;
+	setParity(val);
+	$(N_flag) = 0;
+}
+
+:SRL reg0_3         is op0_8=0x0cb; op6_2=0x0 & bits3_3=0x7 & reg0_3 {
+	$(C_flag) = (reg0_3 & 1);
+	reg0_3 = reg0_3 >> 1;
+	setResultFlags(reg0_3);
+	$(H_flag) = 0;
+	setParity(reg0_3);
+	$(N_flag) = 0;
+}
+
+:SRL (HL)           is op0_8=0x0cb & HL; op0_8=0x3e {
+	val:1 = 0;
+	MemRead(val,HL);
+	$(C_flag) = (val & 1);
+	val = val >> 1;
+	setResultFlags(val);
+	MemStore(HL,val);
+	$(H_flag) = 0;
+	setParity(val);
+	$(N_flag) = 0;
+}
+
+:SRL ixMem8         is op0_8=0x0dd; op0_8=0xcb; ixMem8; op0_8=0x3e {
+	val:1 = ixMem8;
+	$(C_flag) = (val & 1);
+	val = val >> 1;
+	setResultFlags(val);
+	ixMem8 = val;
+	$(H_flag) = 0;
+	setParity(val);
+	$(N_flag) = 0;
+}
+
+:SRL iyMem8         is op0_8=0x0fd; op0_8=0xcb; iyMem8; op0_8=0x3e {
+	val:1 = iyMem8;
+	$(C_flag) = (val & 1);
+	val = val >> 1;
+	setResultFlags(val);
+	iyMem8 = val;
+	$(H_flag) = 0;
+	setParity(val);
+	$(N_flag) = 0;
+}
+
+:RLD                is op0_8=0xed; op0_8=0x6f {
+	val:1 = 0;
+	MemRead(val,HL);
+	nibA:1 = A & 0x0f;
+	nibM:1 = val >> 4;
+	val = (val << 4) | nibA;
+	A = (A & 0xf0) | nibM;
+	MemStore(HL,val);
+@if defined(Z180)
+	setResultFlags(val);
+@else
+	setResultFlags(A);
+@endif
+	$(H_flag) = 0;
+	setParity(A);
+	$(N_flag) = 0;
+}
+
+:RRD                is op0_8=0xed; op0_8=0x67 {
+	val:1 = 0;
+	MemRead(val,HL);
+	nibA:1 = A & 0x0f;
+	nibM:1 = val & 0x0f;
+	val = (val >> 4) | (nibA << 4);
+	A = (A & 0xf0) | nibM;
+	MemStore(HL,val);
+@if defined(Z180)
+	setResultFlags(val);
+@else
+	setResultFlags(A);
+@endif
+	$(H_flag) = 0;
+	setParity(A);
+	$(N_flag) = 0;
+}
+
+:BIT bits3_3,reg0_3 is op0_8=0xcb; op6_2=0x1 & bits3_3 & reg0_3 {
+	mask:1 = (1 << bits3_3);
+	$(Z_flag) = ((reg0_3 & mask) == 0);
+	$(H_flag) = 1;
+	$(N_flag) = 0;
+}
+
+:BIT bits3_3,(HL)   is op0_8=0xcb & HL; op6_2=0x1 & bits3_3 & bits0_3=0x6 {
+	mask:1 = (1 << bits3_3);
+	val:1 = 0;
+	MemRead(val,HL);
+	$(Z_flag) = ((val & mask) == 0);
+	$(H_flag) = 1;
+	$(N_flag) = 0;
+}
+
+:BIT bits3_3,ixMem8 is op0_8=0xdd; op0_8=0xcb; ixMem8; op6_2=0x1 & bits3_3 & bits0_3=0x6 {
+	mask:1 = (1 << bits3_3);
+	val:1 = ixMem8;
+	$(Z_flag) = ((val & mask) == 0);
+	$(H_flag) = 1;
+	$(N_flag) = 0;
+}
+
+:BIT bits3_3,iyMem8 is op0_8=0xfd; op0_8=0xcb; iyMem8; op6_2=0x1 & bits3_3 & bits0_3=0x6 {
+	mask:1 = (1 << bits3_3);
+	val:1 = iyMem8;
+	$(Z_flag) = ((val & mask) == 0);
+	$(H_flag) = 1;
+	$(N_flag) = 0;
+}
+
+:SET bits3_3,reg0_3 is op0_8=0xcb; op6_2=0x3 & bits3_3 & reg0_3 {
+	mask:1 = (1 << bits3_3);
+	reg0_3 = reg0_3 | mask;
+}
+
+:SET bits3_3,(HL)   is op0_8=0xcb & HL; op6_2=0x3 & bits3_3 & bits0_3=0x6 {
+	mask:1 = (1 << bits3_3);
+	val:1 = 0;
+	MemRead(val,HL);
+	val = val | mask;
+	MemStore(HL,val);
+}
+
+:SET bits3_3,ixMem8 is op0_8=0xdd; op0_8=0xcb; ixMem8; op6_2=0x3 & bits3_3 & bits0_3=0x6 {
+	mask:1 = (1 << bits3_3);
+	val:1 = ixMem8;
+	ixMem8 = val | mask;
+}
+
+:SET bits3_3,iyMem8 is op0_8=0xfd; op0_8=0xcb; iyMem8; op6_2=0x3 & bits3_3 & bits0_3=0x6 {
+	mask:1 = (1 << bits3_3);
+	val:1 = iyMem8;
+	iyMem8 = val | mask;
+}
+
+:RES bits3_3,reg0_3 is op0_8=0xcb; op6_2=0x2 & bits3_3 & reg0_3 {
+	mask:1 = ~(1 << bits3_3);
+	reg0_3 = reg0_3 & mask;
+}
+
+:RES bits3_3,(HL)   is op0_8=0xcb & HL; op6_2=0x2 & bits3_3 & bits0_3=0x6 {
+	mask:1 = ~(1 << bits3_3);
+	val:1 = 0;
+	MemRead(val,HL);
+	val = val & mask;
+	MemStore(HL,val);
+}
+
+:RES bits3_3,ixMem8 is op0_8=0xdd; op0_8=0xcb; ixMem8; op6_2=0x2 & bits3_3 & bits0_3=0x6 {
+	mask:1 = ~(1 << bits3_3);
+	val:1 = ixMem8;
+	ixMem8 = val & mask;
+}
+
+:RES bits3_3,iyMem8 is op0_8=0xfd; op0_8=0xcb; iyMem8; op6_2=0x2 & bits3_3 & bits0_3=0x6 {
+	mask:1 = ~(1 << bits3_3);
+	val:1 = iyMem8;
+	iyMem8 = val & mask;
+}
+
+:JP Addr16          is op0_8=0xc3; Addr16 {
+	goto Addr16;	
+}
+
+:JP cc,Addr16       is op6_2=0x3 & cc & bits0_3=0x2; Addr16 {
+	if (cc) goto Addr16;
+}
+
+:JR RelAddr8        is op0_8=0x18; RelAddr8 {
+	goto RelAddr8;
+}
+
+:JR cc2,RelAddr8    is op6_2=0x0 & cc2 & bits0_3=0x0; RelAddr8 {
+	if (cc2) goto RelAddr8;
+}
+
+:JP (HL)            is op0_8=0xe9 & HL {
+	off:2 = (zext(H) << 8) | zext(L);
+	
+	JumpToLoc(off);
+
+}
+
+:JP (IX)            is op0_8=0xdd & IX; op0_8=0xe9 {
+	
+	JumpToLoc(IX);
+}
+
+:JP (IY)            is op0_8=0xfd & IY; op0_8=0xe9 {
+	
+	JumpToLoc(IY);
+}
+
+:DJNZ RelAddr8      is op0_8=0x10; RelAddr8 {
+	B = B - 1;
+	if (B != 0) goto RelAddr8;
+}
+
+:CALL Addr16        is op0_8=0xcd; Addr16 {
+    push16(&:2 inst_next);
+	call Addr16;
+}
+
+:CALL cc,Addr16     is op6_2=0x3 & cc & bits0_3=0x4; Addr16 {
+	if (!cc) goto inst_next;
+    push16(&:2 inst_next);
+	call Addr16;
+}
+
+:RET                is op0_8=0xc9 {
+	pop16(PC);
+	ptr:$(PTRSIZE) = PC;
+	return [ptr];
+}
+
+:RET cc             is op6_2=0x3 & cc & bits0_3=0x0 {
+	if (!cc) goto inst_next;
+	pop16(PC);
+	ptr:$(PTRSIZE) = PC;
+	return [ptr];
+}
+
+:RETI               is op0_8=0xed; op0_8=0x4d {
+	pop16(PC);
+	ptr:$(PTRSIZE) = PC;
+	return [ptr];
+}
+
+:RETN               is op0_8=0xed; op0_8=0x45 {
+	# IFF1 = IFF2;
+	pop16(PC);
+	ptr:$(PTRSIZE) = PC;
+	return [ptr];
+}
+
+:RST RstAddr        is op6_2=0x3 & RstAddr & bits0_3=0x7 {
+    push16(&:2 inst_next);
+	call RstAddr;
+}
+
+:IN A,IOAddr8a      is op0_8=0xdb & A; IOAddr8a {
+	ioRead(IOAddr8a, A);
+}
+
+:IN reg3_3,IOAddrC  is op0_8=0xed & IOAddrC; op6_2=0x1 & reg3_3 & bits0_3=0x0 {
+	ioRead(IOAddrC, reg3_3);
+	setResultFlags(reg3_3);
+	$(H_flag) = 0;
+	setParity(reg3_3);
+	$(N_flag) = 0;
+}
+
+:INI                is op0_8=0xed & IOAddrC; op0_8=0xa2 {
+	val:1 = 0;
+	ioRead(IOAddrC, val);
+	MemStore(HL,val);
+	B = B - 1;
+	HL = HL + 1;
+	$(Z_flag) = (B == 0);
+	$(N_flag) = (B s< 0);
+}
+
+:INIR               is op0_8=0xed & IOAddrC; op0_8=0xb2 {
+	val:1 = 0;
+	ioRead(IOAddrC, val);
+	MemStore(HL,val);
+	B = B - 1;
+	HL = HL + 1;
+	if (B != 0) goto inst_start;
+	$(Z_flag) = 1;
+	$(N_flag) = 1;
+}
+
+:IND                is op0_8=0xed & IOAddrC; op0_8=0xaa {
+	val:1 = 0;
+	ioRead(IOAddrC, val);
+	MemStore(HL,val);
+	B = B - 1;
+	HL = HL - 1;
+	$(Z_flag) = (B == 0);
+	$(N_flag) = (B s< 0);
+}
+
+:INDR               is op0_8=0xed & IOAddrC; op0_8=0xba {
+	val:1 = 0;
+	ioRead(IOAddrC, val);
+	MemStore(HL,val);
+	B = B - 1;
+	HL = HL - 1;
+	if (B != 0) goto inst_start;
+	$(Z_flag) = 1;
+	$(N_flag) = 1;
+}
+
+:OUT IOAddr8a,A     is op0_8=0xd3 & A; IOAddr8a {
+	ioWrite(IOAddr8a, A);
+}
+
+:OUT IOAddrC,reg3_3 is op0_8=0xed & IOAddrC; op6_2=0x1 & reg3_3 & bits0_3=0x1 {
+	ioWrite(IOAddrC, reg3_3);
+}
+
+:OUTI               is op0_8=0xed & IOAddrC; op0_8=0xa3 {
+	val:1 = 0;
+	MemRead(val,HL);
+	ioWrite(IOAddrC, val);
+	B = B - 1;
+	HL = HL + 1;
+	$(Z_flag) = (B == 0);
+	$(N_flag) = (B s< 0);
+}
+
+:OTIR               is op0_8=0xed & IOAddrC; op0_8=0xb3 {
+	B = B - 1;
+	val:1 = 0;
+	MemRead(val,HL);
+	ioWrite(IOAddrC, val);
+	HL = HL + 1;
+	if (B != 0) goto inst_start;
+	$(Z_flag) = 1;
+	$(N_flag) = 1;
+}
+
+:OUTD               is op0_8=0xed & IOAddrC; op0_8=0xab {
+	B = B - 1;
+	val:1 = 0;
+	MemRead(val,HL);
+	ioWrite(IOAddrC, val);
+	HL = HL - 1;
+	$(Z_flag) = (B == 0);
+	$(N_flag) = (B s< 0);
+}
+
+:OTDR               is op0_8=0xed & IOAddrC; op0_8=0xbb {
+	B = B - 1;
+	val:1 = 0;
+	MemRead(val,HL);
+	ioWrite(IOAddrC, val);
+	HL = HL - 1;
+	if (B != 0) goto inst_start;
+	$(Z_flag) = 1;
+	$(N_flag) = 1;
+}
+@if defined(Z180)
+
+:MLT qRegPair4_2    is op0_8=0xed; op6_2=0x1 & qRegPair4_2 & bits0_4=0xc {
+	hi:2 = qRegPair4_2 >> 8;
+	lo:2 = qRegPair4_2 & 0xff;
+	qRegPair4_2 = hi * lo;
+}
+
+:TST reg3_3         is op0_8=0xed; op6_2=0x0 & reg3_3 & bits0_3=0x4 {
+	r:1 = reg3_3 & A;
+	setResultFlags(r);
+	$(H_flag)=1;
+	setParity(r);
+	$(N_flag)=0;
+	$(C_flag)=0;
+}
+
+:TST hlMem8         is op0_8=0xed; op0_8=0x34 & hlMem8 {
+	val:1 = 0;
+	MemRead(val,HL);
+	r:1 = val & A;
+	setResultFlags(r);
+	$(H_flag)=1;
+	setParity(r);
+	$(N_flag)=0;
+	$(C_flag)=0;
+}
+
+:TST imm8           is op0_8=0xed; op0_8=0x64; imm8 { 
+	r:1 = imm8 & A;
+	setResultFlags(r);
+	$(H_flag)=1;
+	setParity(r);
+	$(N_flag)=0;
+	$(C_flag)=0;
+}
+
+:IN0 Flag,IOAddr8   is op0_8=0xed; op6_2=0x0 & bits3_3=0x6 & Flag & bits0_3=0x0; IOAddr8  {
+	r:1 = 0;
+	ioRead(IOAddr8,r); # read input location
+	setResultFlags(r);
+	$(H_flag)=0;
+	setParity(r);
+	$(N_flag)=0;	
+}
+
+:IN0 reg3_3,IOAddr8 is op0_8=0xed; op6_2=0x0 & reg3_3 & bits0_3=0x0; IOAddr8 {
+	ioRead(IOAddr8,reg3_3); # read input location
+	setResultFlags(reg3_3); 
+	$(H_flag)=0;
+	setParity(reg3_3);
+	$(N_flag)=0;	
+}
+
+:OUT0 IOAddr8,reg3_3 is op0_8=0xed; op6_2=0x0 & reg3_3 & bits0_3=0x1; IOAddr8 {
+	ioWrite(IOAddr8, reg3_3);
+}
+
+:OTDM               is op0_8=0xed; op0_8=0x8b & hlMem8 & IOAddrC {
+	r:1 = hlMem8;
+	ioWrite(IOAddrC, r);
+	HL = HL - 1;
+	C = C - 1;
+	setSubtractFlags(B,1); # ?? sets $(C_flag) based upon B-1 ??
+	B = B - 1;
+	setResultFlags(B);
+	# P_flag = parity(r);
+	$(PV_flag) = (r s< 0);
+}
+
+:OTDMR              is op0_8=0xed; op0_8=0x9b & hlMem8 & IOAddrC {
+	r:1 = hlMem8;
+	ioWrite(IOAddrC, r);
+	HL = HL - 1;
+	C = C - 1;
+	B = B - 1;
+	if (B != 0) goto inst_start;
+	$(S_flag)=0;
+	$(Z_flag)=1;
+	$(H_flag) = 0;
+#	$(PV_flag)=1;
+	$(PV_flag) = (r s< 0); # based upon last output byte
+	$(C_flag)=0;	
+}
+
+:TSTIO IOAddr8      is op0_8=0xed; op0_8=0x74; IOAddr8 {
+	v:1 = 0;
+	ioRead(IOAddr8,v);
+	r:1 = A & v;
+	setResultFlags(r);
+	$(H_flag) = 1;
+	# P_flag = parity(v);
+	$(N_flag) = 0;
+	$(C_flag)=0;
+}
+
+:OTIM               is op0_8=0xed; op0_8=0x83 & hlMem8 & IOAddrC {
+	r:1 = hlMem8;
+	ioWrite(IOAddrC, r);
+	HL = HL + 1;
+	C = C + 1;
+	setSubtractFlags(B,1); # ?? sets $(C_flag) based upon B-1 ??
+	B = B - 1;
+	setResultFlags(B);
+	$(H_flag) = 1;
+	# P_flag = parity(r);
+	$(PV_flag) = (r s< 0);
+	$(N_flag) = 0;
+	$(C_flag)=0;
+}
+
+:OTIMR              is op0_8=0xed; op0_8=0x93 & hlMem8 & IOAddrC {
+	r:1 = hlMem8;
+	ioWrite(IOAddrC, r);
+	HL = HL - 1;
+	C = C + 1;
+	B = B - 1;
+	if (B != 0) goto inst_start;
+	$(S_flag)=0;
+	$(Z_flag)=1;
+	$(H_flag) = 0;
+#	$(PV_flag)=1;
+	$(PV_flag) = (r s< 0); # based upon last output byte
+	$(C_flag)=0;	
+}
+
+:SLP                is op0_8=0xed; op0_8=0x76 {
+	sleep();
+}
+
+@endif

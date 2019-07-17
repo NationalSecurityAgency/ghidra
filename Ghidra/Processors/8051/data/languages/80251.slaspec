@@ -1,0 +1,5 @@
+@define MCS251 ""
+
+@include "8051_main.sinc"
+
+@include "80251.sinc"
