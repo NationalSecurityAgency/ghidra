@@ -30,7 +30,7 @@ void fatal( const char * msg )
 }
 
 void checkErr(HRESULT hResult) {
-	if (SUCCEEDED(hResult)) {
+	if (hResult == S_OK) {
 		return;
 	}
 	switch (hResult) {

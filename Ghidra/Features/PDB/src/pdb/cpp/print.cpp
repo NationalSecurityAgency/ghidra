@@ -37,8 +37,8 @@ std::wstring printVariant( VARIANT & v ) {
 			return L"null";
 	}
 
-    const int blen = 100;
-    wchar_t variant[blen] = {};
+	const int blen = 100;
+	wchar_t variant[blen] = {};
 	switch( v.vt ) {
 		case VT_ARRAY://Indicates a SAFEARRAY pointer. 
 			swprintf_s(variant, blen, L"%I64d", (ULONGLONG) v.parray);//TODO
@@ -106,22 +106,20 @@ std::wstring printVariant( VARIANT & v ) {
 	}
 }
 
-void printBound( IDiaSymbol& pBound ) {
+void printBound( IDiaSymbol& bound ) {
 
 	DWORD tag = 0;
-	BSTR nameTemp = NULL;
 	DWORD kind = 0;
-	pBound.get_symTag( &tag );
-	pBound.get_locationType( &kind );
+	bound.get_symTag( &tag );
+	bound.get_locationType( &kind );
+	bstr_t name;
 	if ( tag == SymTagData && kind == LocIsConstant ) {
 		//TODO
 		//CComVariant v;
 		//pBound->get_value( &v );
 		//printVariant( v );
 	} 
-	else if ( pBound.get_name( &nameTemp ) == S_OK ) {
-		bstr_t name;
-		name.Attach(nameTemp);
+	else if ( bound.get_name( name.GetAddress()) == S_OK ) {
 		printf( "%ws", name.GetBSTR() );
 	}
 }
@@ -134,7 +132,7 @@ std::wstring printType( IDiaSymbol * pType, const std::wstring& suffix ) {
 	DWORD tag = getTag(*pType);
 
 	if ( tag == SymTagPointerType ) {
-	    CComPtr<IDiaSymbol> pBaseType;
+		CComPtr<IDiaSymbol> pBaseType;
 		if ( pType->get_type( &pBaseType ) == S_OK ) {
 			return printType(pBaseType, suffix + L" *");
 		}
@@ -148,7 +146,7 @@ std::wstring printType( IDiaSymbol * pType, const std::wstring& suffix ) {
 	}
 
 	if ( tag == SymTagArrayType ) {
-	    CComPtr<IDiaSymbol> pBaseType = getType( *pType );
+		CComPtr<IDiaSymbol> pBaseType = getType( *pType );
 		if ( pBaseType == NULL ) {
 			return L"";
 		}
@@ -158,7 +156,7 @@ std::wstring printType( IDiaSymbol * pType, const std::wstring& suffix ) {
 			lenElem = lenArray;
 		}
 		const size_t strLen = suffix.length() + 64 + 3;	// length of suffix + wag_for_numeric_value + "[]\0" 
-        std::vector<wchar_t> str(strLen);
+		std::vector<wchar_t> str(strLen);
 		swprintf_s(str.data(), strLen, L"%s[%I64d]", suffix.c_str(), lenArray / lenElem);
 		return printType(pBaseType, str.data());
 	} 
@@ -170,27 +168,27 @@ std::wstring printType( IDiaSymbol * pType, const std::wstring& suffix ) {
 	if ( tag == SymTagCustomType ) {
 		DWORD id = 0;
 		DWORD rec = 0;
-        GUID guid = GUID_NULL;
-		if (pType->get_guid(&guid) == S_OK) {
+		GUID guid = GUID_NULL;
+		if ( pType->get_guid(&guid) == S_OK ) {
 			const int maxGUIDStrLen = 64 + 1;
-            std::vector<wchar_t> guidStr(maxGUIDStrLen);
+			std::vector<wchar_t> guidStr(maxGUIDStrLen);
 			if (StringFromGUID2(guid, guidStr.data(), maxGUIDStrLen) > 0) {
-               return guidStr.data();
+				return guidStr.data();
 			}
 		} 
 		else if ( pType->get_oemId( &id ) == S_OK && pType->get_oemSymbolId( &rec ) == S_OK ) {
 			const size_t strLen = 256;		// wag_for_2_hex_numbers "0xNNNNN:0xNNNNN"
-            wchar_t str[strLen] = {};
+			wchar_t str[strLen] = {};
 			if (str != NULL) {
 				swprintf_s(str, L"0x%x:0x%x", id, rec);
-                return str;
+				return str;
 			}
 		}
 		return L"";
 	}
 
 	if ( !name.empty() ) {
-        return name + suffix;
+		return name + suffix;
 	} 
 
 	return L"Undefined";
@@ -200,14 +198,14 @@ void printScopeName( IDiaSymbol& pscope ) {
 	printf("<scope name=\"%S\" tag=\"%S\" />\n", getName( pscope ).c_str(), getTagAsString( pscope ).c_str());
 }
 
-void printNameFromScope( IDiaSymbol& pscope, IDiaEnumSymbols& pEnum ) {
+void printNameFromScope( IDiaSymbol& scope, IDiaEnumSymbols& myEnum ) {
 
-    CComPtr<IDiaSymbol> pSym;
+	CComPtr<IDiaSymbol> pSym;
 	DWORD celt = 0;
-	while ( SUCCEEDED( pEnum.Next( 1, &pSym, &celt ) ) && celt == 1 ) {
-		wprintf( L"\t%s %s found in ", getTagAsString(*pSym).c_str(), getName(*pSym).c_str() );
-		printScopeName( pscope );
-		wprintf( L"\n" );
+	while ( myEnum.Next( 1, &pSym, &celt ) == S_OK && celt == 1 ) {
+		printf( "\t%S %S found in ", getTagAsString(*pSym).c_str(), getName(*pSym).c_str() );
+		printScopeName( scope );
+		printf( "\n" );
 		pSym = 0;
 	}
 }

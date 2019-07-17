@@ -78,10 +78,10 @@ int PDBApiContext::init(const std::wstring& szFilename, const std::wstring& szSi
 	}
 	checkErr(hr);
 
-	if (FAILED(pSource->openSession( &pSession ))) {
+	if (pSource->openSession( &pSession ) != S_OK) {
 		fatal("Unable to open session\n");
 	}
-	if (FAILED(pSession->get_globalScope( &pGlobal ))) {
+	if (pSession->get_globalScope( &pGlobal ) != S_OK) {
 		fatal("Unable to get global scope\n");
 	}
 
@@ -99,12 +99,12 @@ int PDBApiContext::init(const std::wstring& szFilename, const std::wstring& szSi
 	int maxGUIDStrLen = 64;
 	std::wstring guidStr(maxGUIDStrLen, L'\0');
 
-	if (SUCCEEDED(pGlobal->get_guid( &currGUID ))) {
+	if (pGlobal->get_guid( &currGUID ) == S_OK) {
 		if (StringFromGUID2(currGUID, &guidStr[0], maxGUIDStrLen) <= 0) {
 			fatal("Unable to convert GUID\n");
 		}
 
-		if (FAILED(pGlobal->get_age( &currAge ))) {
+		if (pGlobal->get_age( &currAge ) != S_OK) {
 			fatal("Unable to get PDB age\n");
 		}
 	} else {

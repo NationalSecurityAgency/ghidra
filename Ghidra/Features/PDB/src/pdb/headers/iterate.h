@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +27,6 @@ void iterateEnums(PDBApiContext& ctx);
 void iterateTypedefs(PDBApiContext& ctx);
 void iterateClasses(PDBApiContext& ctx);
 void iterateFunctions(PDBApiContext& ctx);
-int iterateTables(PDBApiContext& ctx, bool printAll);
+void iterateTables(PDBApiContext& ctx, bool printAll);
 
 #endif

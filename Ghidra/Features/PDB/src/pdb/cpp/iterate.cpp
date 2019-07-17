@@ -16,22 +16,22 @@
  */
 #include "iterate.h"
 
-static void iterateEnumMembers(IDiaSymbol& pSymbol) {
+static void iterateEnumMembers(IDiaSymbol& symbol) {
 	DWORD celt = 0;
 	CComPtr<IDiaEnumSymbols> pEnum;
 	CComPtr<IDiaSymbol> pMember;
-	pSymbol.findChildren(SymTagNull, NULL, nsNone, &pEnum);
+	symbol.findChildren(SymTagNull, NULL, nsNone, &pEnum);
 	if (pEnum == NULL) {
 		return;
 	}
 	while (1) {
-		if (FAILED(pEnum->Next( 1, &pMember, &celt ))) {
+		if (pEnum->Next( 1, &pMember, &celt ) != S_OK ) {
 			break;
 		}
 		if (celt != 1) {
 			break;
 		}
-        std::wstring name = getName(*pMember);
+		std::wstring name = getName(*pMember);
 		std::wstring value = getValue(*pMember);
 		printf("%S<member name=\"%S\" value=\"%S\" />\n", indent(12).c_str(), name.c_str(), value.c_str());
 		pMember = 0;
@@ -41,14 +41,14 @@ static void iterateEnumMembers(IDiaSymbol& pSymbol) {
 void iterateEnums(PDBApiContext& ctx) {
 	DWORD celt = 0;
 	CComPtr<IDiaEnumSymbols> pEnum;
-    CComPtr<IDiaSymbol> pSymbol;
+	CComPtr<IDiaSymbol> pSymbol;
 	ctx.Global().findChildren(SymTagEnum, NULL, nsNone, &pEnum);
 	if (pEnum == NULL) {
 		return;
 	}
 	printf("%S<enums>\n", indent(4).c_str());
 	while ( 1 ) {
-		if (FAILED(pEnum->Next( 1, &pSymbol, &celt ))) {
+		if (pEnum->Next( 1, &pSymbol, &celt ) != S_OK ) {
 			break;
 		}
 		if (celt != 1) {
@@ -70,16 +70,16 @@ void iterateEnums(PDBApiContext& ctx) {
 	printf("%S</enums>\n", indent(4).c_str());
 }
 
-static void iterateMembers(IDiaSymbol& pSymbol) {
+static void iterateMembers(IDiaSymbol& symbol) {
 	DWORD celt = 0;
 	CComPtr<IDiaEnumSymbols> pEnum;
-	pSymbol.findChildren(SymTagNull, NULL, nsNone, &pEnum);
+	symbol.findChildren(SymTagNull, NULL, nsNone, &pEnum);
 	if (pEnum == NULL) {
 		return;
 	}
 	while (1) {
 		CComPtr<IDiaSymbol> pMember;
-		if (FAILED(pEnum->Next(1, &pMember, &celt))) {
+		if (pEnum->Next(1, &pMember, &celt) != S_OK ) {
 			break;
 		}
 		if (celt != 1) {
@@ -107,7 +107,7 @@ void iterateDataTypes(PDBApiContext& ctx) {
 	while (1) {
 		CComPtr<IDiaSymbol> pSymbol;
 
-		if (FAILED(pEnum->Next(1, &pSymbol, &celt))) {
+		if ( pEnum->Next(1, &pSymbol, &celt) != S_OK ) {
 			break;
 		}
 		if (celt != 1) {
@@ -140,7 +140,7 @@ void iterateDataTypes(PDBApiContext& ctx) {
 
 void iterateTypedefs(PDBApiContext& ctx) {
 	DWORD celt = 0;
-    CComPtr<IDiaEnumSymbols> pEnum;
+	CComPtr<IDiaEnumSymbols> pEnum;
 	ctx.Global().findChildren(SymTagTypedef, NULL, nsNone/*nsfCaseInsensitive|nsfUndecoratedName*/, &pEnum);
 	if (pEnum == NULL) {
 		return;
@@ -148,7 +148,7 @@ void iterateTypedefs(PDBApiContext& ctx) {
 	printf("%S<typedefs>\n", indent(4).c_str());
 	while ( 1 ) {
 		CComPtr<IDiaSymbol> pSymbol;
-		if (FAILED(pEnum->Next( 1, &pSymbol, &celt ))) {
+		if (pEnum->Next( 1, &pSymbol, &celt ) != S_OK ) {
 			break;
 		}
 		if (celt != 1) {
@@ -167,7 +167,7 @@ void iterateTypedefs(PDBApiContext& ctx) {
 
 void iterateClasses(PDBApiContext& ctx) {
 	DWORD celt = 0;
-    CComPtr<IDiaEnumSymbols> pEnum;
+	CComPtr<IDiaEnumSymbols> pEnum;
 	ctx.Global().findChildren(SymTagUDT, NULL, nsNone/*nsfCaseInsensitive|nsfUndecoratedName*/, &pEnum);
 	if (pEnum == NULL) {
 		return;
@@ -175,7 +175,7 @@ void iterateClasses(PDBApiContext& ctx) {
 	printf("%S<classes>\n", indent(4).c_str());
 	while ( 1 ) {
 		CComPtr<IDiaSymbol> pSymbol;
-		if (FAILED(pEnum->Next( 1, &pSymbol, &celt ))) {
+		if (pEnum->Next( 1, &pSymbol, &celt ) != S_OK ) {
 			break;
 		}
 		if (celt != 1) {
@@ -206,27 +206,29 @@ void iterateClasses(PDBApiContext& ctx) {
 	printf("%S</classes>\n", indent(4).c_str());
 }
 
+// This method still leaks memory--seemingly in the pEnum->Next() for
+// certain symbol types (e.g., tag == 32 (inline))
 void dumpFunctionStackVariables( PDBApiContext& ctx, DWORD rva )
 {
-    CComPtr<IDiaSymbol> pBlock;
+	CComPtr<IDiaSymbol> pBlock;
 	if ( FAILED(ctx.Session().findSymbolByRVA( rva, SymTagBlock, &pBlock ) ) ) {
 		fatal( "Failed to find symbols by RVA" );
 	}
 	for ( ; pBlock != NULL; ) {
-        CComPtr<IDiaEnumSymbols> pEnum;
+		CComPtr<IDiaEnumSymbols> pEnum;
 		// Local data search
 		if ( FAILED( pBlock->findChildren( SymTagNull, NULL, nsNone, &pEnum ) ) ) {
 			fatal( "Local scope findChildren failed" );
 		}
-        CComPtr<IDiaSymbol> pSymbol;
+		CComPtr<IDiaSymbol> pSymbol;
 		DWORD tag;
 		DWORD celt;
-		while ( pEnum != NULL && SUCCEEDED( pEnum->Next( 1, &pSymbol, &celt ) ) && celt == 1 ) {
+		while (pEnum != NULL && pEnum->Next(1, &pSymbol, &celt) == S_OK && celt == 1) {
 			pSymbol->get_symTag( &tag );
 			if ( tag == SymTagData ) {
 				printf("%S<stack_variable name=\"%S\" kind=\"%S\" offset=\"0x%x\" datatype=\"%S\" length=\"0x%I64x\" />\n", 
 							indent(12).c_str(),
-                            getName(*pSymbol).c_str(),
+							getName(*pSymbol).c_str(),
 							getKindAsString(*pSymbol).c_str(), 
 							getOffset(*pSymbol),
 							getTypeAsString(*pSymbol).c_str(),
@@ -241,7 +243,7 @@ void dumpFunctionStackVariables( PDBApiContext& ctx, DWORD rva )
 					fatal( "Annotation findChildren failed" );
 				}
 				pSymbol = NULL;
-				while ( pValues != NULL && SUCCEEDED( pValues->Next( 1, &pSymbol, &celt ) ) && celt == 1 ) {
+				while ( pValues != NULL && pValues->Next( 1, &pSymbol, &celt ) == S_OK && celt == 1 ) {
 					//TODO
 					//CComVariant value;
 					//if ( pSymbol->get_value( &value ) != S_OK ) {
@@ -259,53 +261,52 @@ void dumpFunctionStackVariables( PDBApiContext& ctx, DWORD rva )
 			break;
 		}
 		// Move to lexical parent.
-        CComPtr<IDiaSymbol> pParent;
-		if ( SUCCEEDED( pBlock->get_lexicalParent( &pParent ) ) && pParent != NULL ) {
+		CComPtr<IDiaSymbol> pParent;
+		if ( pBlock->get_lexicalParent( &pParent ) == S_OK ) {
 			pBlock = pParent;
 		} 
 		else {
+			break;
 			//fatal( "Finding lexical parent failed." );
 		}
 	};
 }
 
-void dumpFunctionLines( IDiaSymbol& pSymbol, IDiaSession& pSession )
+void dumpFunctionLines( IDiaSymbol& symbol, IDiaSession& session )
 {
 	ULONGLONG length = 0;
 	DWORD isect = 0;
 	DWORD offset = 0;
-	pSymbol.get_addressSection( &isect );
-	pSymbol.get_addressOffset( &offset );
-	pSymbol.get_length( &length );
+	symbol.get_addressSection( &isect );
+	symbol.get_addressOffset( &offset );
+	symbol.get_length( &length );
 	if ( isect == 0 || length <= 0 ) {
 		return;
 	}
 
-    CComPtr<IDiaEnumLineNumbers> pLines;
-	if (FAILED(pSession.findLinesByAddr( isect, offset, static_cast<DWORD>( length ), &pLines ))) {
+	CComPtr<IDiaEnumLineNumbers> pLines;
+	if (session.findLinesByAddr( isect, offset, static_cast<DWORD>( length ), &pLines ) != S_OK ) {
 		return;
 	}
 
 	DWORD celt = 0;
 	while ( 1 ) {
 		CComPtr<IDiaLineNumber> pLine;
-		if (FAILED(pLines->Next( 1, &pLine, &celt ))) {
+		if (pLines->Next( 1, &pLine, &celt ) != S_OK) {
 			break;
 		}
 		if (celt != 1) {
 			break;
 		}
 
-        CComPtr<IDiaSymbol> pComp;
+		CComPtr<IDiaSymbol> pComp;
 		pLine->get_compiland( &pComp );
 
-        CComPtr<IDiaSourceFile> pSrc;
+		CComPtr<IDiaSourceFile> pSrc;
 		pLine->get_sourceFile( &pSrc );
 
-		BSTR temp = NULL;
-		pSrc->get_fileName(&temp);
 		bstr_t sourceFileName;
-		sourceFileName.Attach(temp);
+		pSrc->get_fileName(sourceFileName.GetAddress());
 
 		DWORD addr = 0;
 		pLine->get_relativeVirtualAddress( &addr );
@@ -315,22 +316,22 @@ void dumpFunctionLines( IDiaSymbol& pSymbol, IDiaSession& pSession )
 		DWORD end = 0;
 		pLine->get_lineNumberEnd( &end );
 
-		printf("%S<line_number source_file=\"%S\" start=\"0x%x\" end=\"0x%x\" addr=\"0x%x\" /> \n", 
+		printf("%S<line_number source_file=\"%ws\" start=\"0x%x\" end=\"0x%x\" addr=\"0x%x\" /> \n",
 					indent(12).c_str(), sourceFileName.GetBSTR(), start, end, addr);
 	}
 }
 
 void iterateFunctions(PDBApiContext& ctx) {
 	DWORD celt = 0;
-    CComPtr<IDiaEnumSymbols> pEnum;
-    CComPtr<IDiaSymbol> pSymbol;
+	CComPtr<IDiaEnumSymbols> pEnum;
+	CComPtr<IDiaSymbol> pSymbol;
 	ctx.Global().findChildren(SymTagFunction, NULL, nsNone, &pEnum);
 	if (pEnum == NULL) {
 		return;
 	}
 	printf("%S<functions>\n", indent(4).c_str());
 	while ( 1 ) {
-		if (FAILED(pEnum->Next( 1, &pSymbol, &celt ))) {
+		if (pEnum->Next( 1, &pSymbol, &celt ) != S_OK ) {
 			break;
 		}
 		if (celt != 1) {
@@ -339,10 +340,11 @@ void iterateFunctions(PDBApiContext& ctx) {
 
 		const DWORD tag = getTag(*pSymbol);
 		if (tag != SymTagFunction) {//do not delete
+			pSymbol = 0;
 			continue;
 		}
 
-		const DWORD     address = getRVA(*pSymbol);
+		const DWORD address = getRVA(*pSymbol);
 
 		printf("%S<function name=\"%S\" address=\"0x%x\" length=\"0x%I64x\">\n", indent(8).c_str(), findMangledName(ctx, *pSymbol).c_str(), address, getLength(*pSymbol));
 
@@ -360,7 +362,7 @@ void iterateSymbolTable(IDiaEnumSymbols * pSymbols) {
 	DWORD celt = 0;
 	while ( 1 ) {
 		CComPtr<IDiaSymbol> pSymbol;
-		if (FAILED(pSymbols->Next( 1, &pSymbol, &celt ))) {
+		if (pSymbols->Next( 1, &pSymbol, &celt ) != S_OK ) {
 			break;
 		}
 		if (celt != 1) {
@@ -378,7 +380,7 @@ void iterateSymbolTable(IDiaEnumSymbols * pSymbols) {
 		printf("tag=\"%S\" ",           getTagAsString(*pSymbol).c_str());
 		printf("kind=\"%S\" ",          getKindAsString(*pSymbol).c_str());
 		printf("index=\"0x%x\" ",       getIndex(*pSymbol));
-		printf("undecorated=\"%ws\" ",  getUndecoratedName(*pSymbol).c_str());
+		printf("undecorated=\"%S\" ",   getUndecoratedName(*pSymbol).c_str());
 		printf("value=\"%S\" ",         getValue(*pSymbol).c_str());
 		printf("datatype=\"%S\" ",      getTypeAsString(*pSymbol).c_str());
 		printf(" />\n");
@@ -386,17 +388,12 @@ void iterateSymbolTable(IDiaEnumSymbols * pSymbols) {
 }
 
 void iterateSourceFiles(IDiaEnumSourceFiles * pSourceFiles) {
-	HRESULT hr = S_OK;
 	DWORD celt = 0;
-    CComPtr<IDiaSourceFile> pSourceFile;
-	while ( SUCCEEDED( hr = pSourceFiles->Next( 1, &pSourceFile, &celt ) ) && celt == 1 ) {
-		BSTR temp = NULL;
-		pSourceFile->get_fileName( &temp );
+	CComPtr<IDiaSourceFile> pSourceFile;
+	while ( pSourceFiles->Next( 1, &pSourceFile, &celt ) == S_OK && celt == 1 ) {
 		bstr_t name;
-		name.Attach(temp);
 		DWORD id = 0;
-		pSourceFile->get_uniqueId( &id );
-		if ( name.GetAddress() != NULL ) {
+		if( (pSourceFile->get_fileName( name.GetAddress() ) == S_OK) && (pSourceFile->get_uniqueId( &id ) == S_OK) ) {
 			printf("%S<source_file name=\"%ws\" id=\"0x%x\" /> \n", indent(12).c_str(), name.GetBSTR(), id);
 		}
 		pSourceFile = NULL;
@@ -411,10 +408,9 @@ void iterateSourceFiles(IDiaEnumSourceFiles * pSourceFiles) {
  * information in the segment map.
  */
 void iterateSegments(IDiaEnumSegments * pSegments) {
-	HRESULT hr = S_OK;
 	DWORD celt = 0;
-    CComPtr<IDiaSegment> pSegment;
-	while ( SUCCEEDED( hr = pSegments->Next( 1, &pSegment, &celt ) ) && celt == 1 ) {
+	CComPtr<IDiaSegment> pSegment;
+	while ( pSegments->Next( 1, &pSegment, &celt ) == S_OK && celt == 1 ) {
 		DWORD rva = 0;
 		DWORD seg = 0;
 		pSegment->get_addressSection( &seg );
@@ -429,21 +425,21 @@ void iterateSegments(IDiaEnumSegments * pSegments) {
  * that is, a contiguous block of memory contributed 
  * to the image by a compiland.
  */
-void iterateSections(PDBApiContext& ctx, IDiaEnumSectionContribs& pSecContribs) {
+void iterateSections(PDBApiContext& ctx, IDiaEnumSectionContribs& secContribs) {
 	DWORD celt = 0;
-    CComPtr<IDiaSymbol> pSym ;
-    CComPtr<IDiaSectionContrib> pSecContrib;
+	CComPtr<IDiaSymbol> pSym ;
+	CComPtr<IDiaSectionContrib> pSecContrib;
 
 	while ( 1 ) {
-		if (pSecContribs.Next( 1, &pSecContrib, &celt ) < 0 ) {
+		if (secContribs.Next( 1, &pSecContrib, &celt ) != S_OK ) {
 			break;
 		}
 		if (celt != 1) {
 			break;
 		}
 		DWORD rva = 0;
-		if (SUCCEEDED(pSecContrib->get_relativeVirtualAddress( &rva ))) {
-			if (FAILED(ctx.Session().findSymbolByRVA( rva, SymTagNull, &pSym )) ) {
+		if (pSecContrib->get_relativeVirtualAddress( &rva ) == S_OK) {
+			if (ctx.Session().findSymbolByRVA( rva, SymTagNull, &pSym ) != S_OK ) {
 				pSym = NULL;
 			}
 		} 
@@ -453,7 +449,7 @@ void iterateSections(PDBApiContext& ctx, IDiaEnumSectionContribs& pSecContribs) 
 			pSecContrib->get_addressSection( &isect );
 			pSecContrib->get_addressOffset( &offset );
 			pSecContrib = NULL;
-			if (FAILED(ctx.Session().findSymbolByAddr( isect, offset, SymTagNull, &pSym )) ) {
+			if (ctx.Session().findSymbolByAddr( isect, offset, SymTagNull, &pSym ) != S_OK ) {
 				pSym = NULL;
 			}
 		}
@@ -475,26 +471,21 @@ void iterateSections(PDBApiContext& ctx, IDiaEnumSectionContribs& pSecContribs) 
  */
 void iterateInjectedSource(IDiaEnumInjectedSources * pInjectedSrcs) {
 	DWORD celt = 0;
-    CComPtr<IDiaInjectedSource> pInjectedSrc;
+	CComPtr<IDiaInjectedSource> pInjectedSrc;
 
 	while ( 1 ) {
-		const HRESULT hr = pInjectedSrcs->Next( 1, &pInjectedSrc, &celt );
-		if (FAILED(hr)) {
+		if (pInjectedSrcs->Next( 1, &pInjectedSrc, &celt ) != S_OK ) {
 			break;
 		}
 		if (celt != 1) {
 			break;
 		}
 
-		BSTR fileNameTemp = NULL;
-		pInjectedSrc->get_filename(&fileNameTemp);
 		bstr_t filename;
-		filename.Attach(fileNameTemp);
+		pInjectedSrc->get_filename(filename.GetAddress());
 
-        BSTR objectNameTemp = NULL;
-		pInjectedSrc->get_objectFilename(&objectNameTemp);
 		bstr_t objectname;
-		objectname.Attach(objectNameTemp);
+		pInjectedSrc->get_objectFilename(objectname.GetAddress());
 
 		DWORD crc;
 		pInjectedSrc->get_crc(&crc);
@@ -508,6 +499,8 @@ void iterateInjectedSource(IDiaEnumInjectedSources * pInjectedSrcs) {
 					objectname.GetBSTR(),
 					crc,
 					length);
+
+		pInjectedSrc = NULL;
 	}
 }
 
@@ -521,8 +514,7 @@ void iterateFrameData(IDiaEnumFrameData * pEnumFrameData) {
 
 	while ( 1 ) {
 		CComPtr<IDiaFrameData> pFrameData;
-		const HRESULT hr = pEnumFrameData->Next( 1, &pFrameData, &celt );
-		if (FAILED(hr)) {
+		if (pEnumFrameData->Next( 1, &pFrameData, &celt ) != S_OK) {
 			break;
 		}
 		if (celt != 1) {
@@ -532,66 +524,59 @@ void iterateFrameData(IDiaEnumFrameData * pEnumFrameData) {
 	}
 }
 
-int iterateTables(PDBApiContext& ctx, bool printAll) {
+void iterateTables(PDBApiContext& ctx, bool printAll) {
 	printf("%S<tables>\n", indent(4).c_str());
-	HRESULT hr = S_OK;
 	DWORD celt = 0;
 
-    CComPtr<IDiaEnumTables> pTables;
+	CComPtr<IDiaEnumTables> pTables;
 
-	hr = ctx.Session().getEnumTables( &pTables );
-	if ( FAILED(hr) ) {
-		return hr;
+	if ( ctx.Session().getEnumTables( &pTables ) != S_OK ) {
+		return;
 	}
-
 
 	while ( 1 ) {
 		CComPtr<IDiaTable> pTable;
-		if (FAILED(pTables->Next( 1, &pTable, &celt ))) {
+		if (pTables->Next( 1, &pTable, &celt ) != S_OK ) {
 			break;
 		}
 		if (celt != 1) {
 			break;
 		}
 
-		BSTR nameTemp;
-		pTable->get_name( &nameTemp );
 		bstr_t name;
-		name.Attach(nameTemp);
+		pTable->get_name( name.GetAddress() );
 
 		printf("%S<table name=\"%ws\">\n", indent(8).c_str(), name.GetBSTR() );
 
-        CComPtr<IDiaEnumSymbols>          pSymbols;
-        CComPtr<IDiaEnumSourceFiles>      pSourceFiles;
-        CComPtr<IDiaEnumSegments>         pSegments;
-        CComPtr<IDiaEnumSectionContribs>  pSecContribs;
-        CComPtr<IDiaEnumInjectedSources>  pInjectedSrcs;
-        CComPtr<IDiaEnumFrameData>        pEnumFrameData;
+		CComPtr<IDiaEnumSymbols>          pSymbols;
+		CComPtr<IDiaEnumSourceFiles>      pSourceFiles;
+		CComPtr<IDiaEnumSegments>         pSegments;
+		CComPtr<IDiaEnumSectionContribs>  pSecContribs;
+		CComPtr<IDiaEnumInjectedSources>  pInjectedSrcs;
+		CComPtr<IDiaEnumFrameData>        pEnumFrameData;
 
-		if ( SUCCEEDED( pTable->QueryInterface(IID_PPV_ARGS(&pSymbols) ) ) ) {
+		if ( pTable->QueryInterface(IID_PPV_ARGS(&pSymbols) ) == S_OK ) {
 			iterateSymbolTable(pSymbols);
 		} 
-		else if ( SUCCEEDED( pTable->QueryInterface(IID_PPV_ARGS(&pSourceFiles) ) ) ) {
+		else if ( pTable->QueryInterface(IID_PPV_ARGS(&pSourceFiles) ) == S_OK ) {
 			iterateSourceFiles(pSourceFiles);
 		} 
-		else if ( SUCCEEDED( pTable->QueryInterface(IID_PPV_ARGS(&pSegments)) ) ) {
+		else if ( pTable->QueryInterface(IID_PPV_ARGS(&pSegments)) == S_OK ) {
 			iterateSegments(pSegments);
 		} 
-		else if ( SUCCEEDED( pTable->QueryInterface(IID_PPV_ARGS(&pSecContribs) ) ) ) {
+		else if ( pTable->QueryInterface(IID_PPV_ARGS(&pSecContribs) ) == S_OK ) {
 			if (printAll) {		
 				iterateSections(ctx, *pSecContribs);
 			}
 		}
-		else if ( SUCCEEDED( pTable->QueryInterface(IID_PPV_ARGS(&pInjectedSrcs) ) ) ) {
+		else if ( pTable->QueryInterface(IID_PPV_ARGS(&pInjectedSrcs) ) == S_OK ) {
 			iterateInjectedSource(pInjectedSrcs);
 		}
-		else if ( SUCCEEDED( pTable->QueryInterface(IID_PPV_ARGS(&pEnumFrameData) ) ) ) {
+		else if ( pTable->QueryInterface(IID_PPV_ARGS(&pEnumFrameData) ) == S_OK ) {
 			iterateFrameData(pEnumFrameData);
 		}
 
 		printf("%S</table>\n", indent(8).c_str());
 	}
 	printf("%S</tables>\n", indent(4).c_str());
-
-	return 0;
 }
