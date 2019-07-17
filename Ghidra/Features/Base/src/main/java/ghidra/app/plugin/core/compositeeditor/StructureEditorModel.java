@@ -1363,9 +1363,9 @@ class StructureEditorModel extends CompEditorModel {
 		final StructureDataType structureDataType =
 			new StructureDataType(originalCategoryPath, uniqueName, length, originalDTM);
 
-		if (isAligned()) {
-			structureDataType.setPackingValue(getPackingValue());
-		}
+//		if (isAligned()) {
+//			structureDataType.setPackingValue(getPackingValue());
+//		}
 
 // Get data type components to make into structure.
 		DataTypeComponent firstDtc = null;
@@ -1385,7 +1385,7 @@ class StructureEditorModel extends CompEditorModel {
 
 			length += compLength;
 
-			if (!isAligned() && component.isBitFieldComponent()) {
+			if (!structureDataType.isInternallyAligned() && component.isBitFieldComponent()) {
 				BitFieldDataType bitfield = (BitFieldDataType) dt;
 				structureDataType.insertBitFieldAt(component.getOffset() - firstDtc.getOffset(),
 					compLength, bitfield.getBitOffset(), bitfield.getBaseDataType(),
@@ -1472,5 +1472,116 @@ class StructureEditorModel extends CompEditorModel {
 		finally {
 			originalDTM.endTransaction(transactionID, commit);
 		}
+	}
+
+	/**
+	 * Unpackage the selected component in the structure or array. This means replace the structure
+	 * with the data types for its component parts. For an array replace the array with the data type 
+	 * for each array element.
+	 * If the component isn't a structure or union then returns false.
+	 * @return true if unpackage succeeded.
+	 *
+	 * @throws UsrException if the component can't be unpackaged.
+	 */
+	public void unpackage(int rowIndex) throws UsrException {
+		int componentOrdinal = convertRowToOrdinal(rowIndex);
+		DataTypeComponent currentComp = viewComposite.getComponent(componentOrdinal);
+		if (currentComp == null) {
+			throw new UsrException("Can only unpackage an array or structure.");
+		}
+		DataType currentDataType = currentComp.getDataType();
+		if (!((currentDataType instanceof Array) || (currentDataType instanceof Structure))) {
+			throw new UsrException("Can only unpackage an array or structure.");
+		}
+		if (isEditingField()) {
+			endFieldEditing();
+		}
+
+		Structure viewStruct = (Structure) viewComposite;
+
+		// Get the fieldname and comment before removing.
+		String fieldName = currentComp.getFieldName();
+		String comment = currentComp.getComment();
+		int currentCompLen = currentComp.getLength();
+
+		int numComps = 0;
+		// This component is an array so unpackage it.
+		if (currentDataType instanceof Array) {
+			Array array = (Array) currentDataType;
+			int elementLen = array.getElementLength();
+			numComps = array.getNumElements();
+			// Remove the array.
+			delete(componentOrdinal);
+			if (numComps > 0) {
+				// Add the array's elements
+				try {
+					DataType dt = array.getDataType();
+					insertMultiple(rowIndex, dt, elementLen, numComps);
+				}
+				catch (InvalidDataTypeException ie) {
+					// Do nothing.
+				}
+				catch (OutOfMemoryError memExc) {
+					throw memExc; // rethrow the exception.
+				}
+			}
+		}
+		// This component is a structure so unpackage it.
+		else if (currentDataType instanceof Structure) {
+			Structure struct = (Structure) currentDataType;
+			numComps = struct.getNumComponents();
+			if (numComps > 0) {
+				// Remove the structure.
+				int currentOffset = currentComp.getOffset();
+				deleteComponent(rowIndex);
+				try {
+					// Add the structure's elements
+
+					for (int i = 0; i < numComps; i++) {
+						DataTypeComponent dtc = struct.getComponent(i);
+						DataType dt = dtc.getDataType();
+						int compLength = dtc.getLength();
+						if (!isAligned()) {
+							if (dtc.isBitFieldComponent()) {
+								BitFieldDataType bitfield = (BitFieldDataType) dt;
+								viewStruct.insertBitFieldAt(currentOffset + dtc.getOffset(),
+									compLength, bitfield.getBitOffset(), bitfield.getBaseDataType(),
+									bitfield.getDeclaredBitSize(), dtc.getFieldName(),
+									dtc.getComment());
+							}
+							else {
+								viewStruct.insertAtOffset(currentOffset + dtc.getOffset(), dt,
+									compLength, dtc.getFieldName(), dtc.getComment());
+							}
+						}
+						else {
+							insert(rowIndex + i, dt, compLength, dtc.getFieldName(),
+								dtc.getComment());
+						}
+					}
+				}
+				catch (OutOfMemoryError memExc) {
+					throw memExc; // re-throw the exception.
+				}
+			}
+		}
+		selection.clear();
+		selection.addRange(rowIndex, rowIndex + numComps);
+
+		DataTypeComponent comp = getComponent(rowIndex);
+		// Set the field name and comment the same as before
+		try {
+			if (comp.getFieldName() == null) {
+				comp.setFieldName(fieldName);
+			}
+		}
+		catch (DuplicateNameException exc) {
+			Msg.showError(this, null, null, null);
+		}
+		comp.setComment(comment);
+
+		fixSelection();
+		componentEdited();
+		selectionChanged();
 	}
 }

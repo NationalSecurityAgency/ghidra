@@ -234,6 +234,10 @@ public class CompEditorPanel extends CompositeEditorPanel {
 		bitViewScrollPane.getViewport().setBackground(getBackground());
 		bitViewScrollPane.setBorder(null);
 
+		// establish default preferred size of panel based upon fixed preferred height of bitViewComponent
+		Dimension bitViewerDefaultSize = new Dimension(800, bitViewComponent.getPreferredHeight());
+		bitViewScrollPane.setPreferredSize(bitViewerDefaultSize);
+
 		bitViewPanel.add(bitViewScrollPane);
 		return bitViewPanel;
 	}

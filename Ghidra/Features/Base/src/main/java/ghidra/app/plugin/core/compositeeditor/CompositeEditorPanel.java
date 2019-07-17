@@ -186,6 +186,9 @@ public abstract class CompositeEditorPanel extends JPanel
 				// Starting cell edit.
 				SwingUtilities.invokeLater(() -> {
 					int editingRow = table.getEditingRow();
+					if (editingRow < 0) {
+						return;
+					}
 					int modelColumn = table.convertColumnIndexToModel(table.getEditingColumn());
 					if (!launchBitFieldEditor(modelColumn, editingRow)) {
 						model.beginEditingField(editingRow, modelColumn);

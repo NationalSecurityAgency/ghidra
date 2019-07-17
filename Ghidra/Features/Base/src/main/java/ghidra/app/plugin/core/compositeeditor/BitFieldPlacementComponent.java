@@ -202,7 +202,10 @@ public class BitFieldPlacementComponent extends JPanel {
 		repaint();
 	}
 
-	private int getPreferredHeight() {
+	/**
+	 * @return fixed height of component
+	 */
+	public int getPreferredHeight() {
 		return MY_HEIGHT + SCROLLBAR_THICKNESS;
 	}
 
