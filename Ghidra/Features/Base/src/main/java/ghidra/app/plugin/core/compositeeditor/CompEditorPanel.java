@@ -210,6 +210,7 @@ public class CompEditorPanel extends CompositeEditorPanel {
 				DataTypeComponent dtc = attrs.getDataTypeComponent(false);
 				if (dtc != null) {
 					model.setSelection(new int[] { dtc.getOrdinal() });
+					table.scrollToSelectedRow();
 				}
 				else {
 					model.setSelection(new FieldSelection());

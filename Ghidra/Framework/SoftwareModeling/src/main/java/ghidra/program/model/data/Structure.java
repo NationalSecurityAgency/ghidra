@@ -347,13 +347,30 @@ public interface Structure extends Composite {
 	public void pack(int maxAlignment) throws InvalidInputException;
 
 	/**
-	 * <code>BitOffsetComparator</code> provides ability to compare an Integer bit offset
-	 * with a DataTypeComponent object.  The offset will be consider equal (0) if
-	 * the component contains the offset.  Bit offsets for this comparator number the 
-	 * msb of the first byte in the structure as 0 and the lsb of the last byte as
-	 * (8 * structLength) - 1.  Due to the storage order of bitfields within little-endian
-	 * organization a normalized bit-offset must be used which corresponds to the msb getting
-	 * filled first (in reality little-endian fills the lsb first). 
+	 * <code>BitOffsetComparator</code> provides ability to compare an normalized bit offset
+	 * (see {@link #getNormalizedBitfieldOffset(int, int, int, int, boolean)} with a
+	 * {@link DataTypeComponent} object.  The offset will be considered equal (0) if the component 
+	 * contains the offset.  A normalized component bit numbering is used to establish the footprint
+	 * of each component with an ordinal-based ordering (assumes specific LE/BE allocation rules).  
+	 * Bit offsets for this comparator number the first allocated bit of the structure as 0 and the
+	 * last allocated bit of the structure as (8 * structLength) - 1.  For big-endian bitfields
+	 * the msb of the bitfield will be assigned the lower bit-number (assumes msb-allocated-first), 
+	 * while little-endian will perform similar numbering assuming byte-swap and bit-reversal of the 
+	 * storage unit (assumes lsb-allocated-first).  Both cases result in a normalized view where 
+	 * normalized bit-0 is allocated first.
+	 * 
+	 * Example:
+	 *    
+	 * Big-Endian (normalized view):
+	 *    | . . . . . . . 7 | 8 9 . . . . . . |
+	 *    |<--------------------------------->| storage-size (2-bytes)
+	 *                        |<--------------| bit-offset (6, lsb position within storage unit)
+	 *                    |<--->|               bit-size (3)
+	 *                        
+	 * Little-Endian (normalized view, w/ storage byte-swap and bit-reversal):
+	 *    | . . . . . . 6 7 | 8 . . . . . . . |
+	 *    |------------>|                       bit-offset (6, lsb position within storage unit)
+	 *                  |<--->|                 bit-size (3)
 	 */
 	public static class BitOffsetComparator implements Comparator<Object> {
 
@@ -393,8 +410,12 @@ public interface Structure extends Composite {
 		}
 
 		/**
-		 * Compute the normalize bit offset of a bitfield relative to the start of a structure where 
-		 * the lsb of a bit-field is assigned an offset smaller than the msb.
+		 * Compute the normalized bit offset of a bitfield relative to the start of a structure.
+		 * 
+		 * NOTE: This implementation currently relies only on endianess to dictate bit allocation
+		 * ordering.  If future support is added for alternate bitfield packing, this implementation will
+		 * require modification.
+		 * 
 		 * @param byteOffset byte offset within structure of storage unit
 		 * @param storageSize storage unit size (i.e., component length)
 		 * @param effectiveBitSize size of bitfield in bits

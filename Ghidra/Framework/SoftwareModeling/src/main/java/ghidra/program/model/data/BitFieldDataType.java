@@ -25,13 +25,15 @@ import ghidra.util.exception.AssertException;
 
 /**
  * <code>BitFieldDataType</code> provides a means of defining a minimally sized bit-field
- * for use within data structures.  The length (i.e., storage size) of this datatype
- * less than or equal to the base datatype size and will always be the smallest possible size
- * to contain the bitfield and offset within the least significant byte containing the 
- * lsb of the bitfield.
+ * for use within data structures.  The length (i.e., storage size) of this bitfield datatype is
+ * the minimum number of bytes required to contain the bitfield at its specified offset.
+ * The effective bit-size of a bitfield will be limited by the size of the base
+ * datatype whose size may be controlled by its' associated datatype manager and data organization
+ * (e.g., {@link IntegerDataType}). 
  * <p>
- * NOTE: This datatype implementation is intended for internal use only.  Creating bitfields
- * must be accomplished directly via a Structure or Union instance API method.
+ * NOTE: Instantiation of this datatype implementation is intended for internal use only.  
+ * Creating and manipulating bitfields should be accomplished directly via Structure or Union 
+ * bitfield methods.
  */
 public class BitFieldDataType extends AbstractDataType {
 

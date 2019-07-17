@@ -69,7 +69,7 @@ abstract class CompositeDB extends DataTypeDB implements Composite {
 	/**
 	 * Get the preferred length for a new component.  For Unions and internally aligned
 	 * structures the preferred component length for a fixed-length dataType will be the 
-	 * length of that dataType.  Otherwise the length returned will be no larger then the
+	 * length of that dataType.  Otherwise the length returned will be no larger than the
 	 * specified length.
 	 * @param dataType new component datatype
 	 * @param length constrained length or -1 to force use of dataType size.  Dynamic types
