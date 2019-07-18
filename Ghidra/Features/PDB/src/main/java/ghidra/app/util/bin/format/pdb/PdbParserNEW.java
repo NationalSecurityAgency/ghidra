@@ -84,7 +84,6 @@ public class PdbParserNEW {
 	private PdbErrorReaderThread thread;
 	private boolean parsed = false;
 
-	private String categoryPrefix;
 	private CategoryPath pdbCategory;
 
 	/**
@@ -103,8 +102,7 @@ public class PdbParserNEW {
 	public PdbParserNEW(File pdbFile, Program program, DataTypeManagerService service,
 			PdbProgramAttributes programAttributes, boolean forceAnalysis, TaskMonitor monitor) {
 		this.pdbFile = pdbFile;
-		this.categoryPrefix = "/" + pdbFile.getName();
-		this.pdbCategory = new CategoryPath(categoryPrefix);
+		this.pdbCategory = new CategoryPath(CategoryPath.ROOT, pdbFile.getName());
 		this.program = program;
 		this.dataMgr = program.getDataTypeManager();
 		this.service = service;
@@ -715,21 +713,26 @@ public class PdbParserNEW {
 	}
 
 	Structure createStructure(String name, int length) {
-		return new StructureDataType(getCategory(name, true), stripNamespace(name), length,
+		SymbolPath path = new SymbolPath(name);
+		return new StructureDataType(getCategory(path.getParent(), true), path.getName(), length,
 			dataMgr);
 	}
 
 	Union createUnion(String name) {
-		return new UnionDataType(getCategory(name, true), stripNamespace(name), dataMgr);
+		SymbolPath path = new SymbolPath(name);
+		return new UnionDataType(getCategory(path.getParent(), true), path.getName(), dataMgr);
 	}
 
 	TypedefDataType createTypeDef(String name, DataType baseDataType) {
-		return new TypedefDataType(getCategory(name, true), stripNamespace(name), baseDataType,
-			dataMgr);
+		SymbolPath path = new SymbolPath(name);
+		return new TypedefDataType(getCategory(path.getParent(), true), path.getName(),
+			baseDataType, dataMgr);
 	}
 
 	EnumDataType createEnum(String name, int length) {
-		return new EnumDataType(getCategory(name, true), stripNamespace(name), length, dataMgr);
+		SymbolPath path = new SymbolPath(name);
+		return new EnumDataType(getCategory(path.getParent(), true), path.getName(), length,
+			dataMgr);
 	}
 
 	void createString(boolean isUnicode, Address address, MessageLog log, TaskMonitor monitor) {
@@ -994,6 +997,24 @@ public class PdbParserNEW {
 			System.arraycopy(names, 0, categoryNames, 0, categoryNames.length);
 			for (String c : categoryNames) {
 				category = new CategoryPath(category, c);
+			}
+		}
+		return category;
+	}
+
+	/**
+	 * Get the {@link CategoryPath} associated with the namespace specified by the
+	 * {@link SymbolPath}, rooting it either at the Category Path root or the PDB Category.
+	 * @param symbolPath the {@link SymbolPath} input; can be null if no depth in path.
+	 * @param addPdbRoot True if PDB root category should be used, otherwise it will be omitted.
+	 * @return {@link CategoryPath} created for the input.
+	 */
+	CategoryPath getCategory(SymbolPath symbolPath, boolean addPdbRoot) {
+		CategoryPath category = addPdbRoot ? pdbCategory : CategoryPath.ROOT;
+		if (symbolPath != null) {
+			List<String> names = symbolPath.asList();
+			for (String name : names) {
+				category = new CategoryPath(category, name);
 			}
 		}
 		return category;

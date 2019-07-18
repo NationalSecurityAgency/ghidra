@@ -19,6 +19,7 @@ import java.util.*;
 
 import org.xml.sax.SAXParseException;
 
+import ghidra.app.util.SymbolPath;
 import ghidra.app.util.bin.format.pdb.PdbParserNEW.PdbXmlMember;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.graph.*;
@@ -110,9 +111,10 @@ public class ApplyDataTypes {
 
 			// namespace qualified name used for cache lookups
 			DataType cachedDataType = pdbParser.getCachedDataType(compositeDefinition.name);
+			SymbolPath symbolPath = new SymbolPath(compositeDefinition.name);
 			if (!(cachedDataType instanceof Composite) ||
 				!cachedDataType.getCategoryPath().equals(
-					pdbParser.getCategory(compositeDefinition.name, true)) ||
+					pdbParser.getCategory(symbolPath.getParent(), true)) ||
 				!pdbParser.isCorrectKind(cachedDataType, compositeDefinition.kind)) {
 				log.appendMsg("Error: Conflicting data type name: " + compositeDefinition.name);
 				continue;
@@ -255,12 +257,15 @@ public class ApplyDataTypes {
 
 		@Override
 		public boolean equals(Object obj) {
-			if (this == obj)
+			if (this == obj) {
 				return true;
-			if (obj == null)
+			}
+			if (obj == null) {
 				return false;
-			if (getClass() != obj.getClass())
+			}
+			if (getClass() != obj.getClass()) {
 				return false;
+			}
 			CompositeDefinition other = (CompositeDefinition) obj;
 			return isClass == other.isClass && kind == other.kind && length == other.length &&
 				SystemUtilities.isEqual(name, other.name);
