@@ -965,7 +965,7 @@ int4 ActionDeindirect::apply(Funcdata &data)
   for(int4 i=0;i<data.numCalls();++i) {
     fc = data.getCallSpecs(i);
     op = fc->getOp();
-    if (op->code() != CPUI_CALLIND) continue;
+    if (op->code() != CPUI_CALLIND && op->code() != CPUI_CALL) continue; //seg:ptr is not indirect call
     vn = op->getIn(0);
     while(vn->isWritten()&&(vn->getDef()->code()==CPUI_COPY))
       vn = vn->getDef()->getIn(0);
