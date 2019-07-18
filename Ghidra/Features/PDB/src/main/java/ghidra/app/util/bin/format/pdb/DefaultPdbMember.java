@@ -55,6 +55,15 @@ public class DefaultPdbMember extends PdbMember {
 		this.dataTypeParser = dataTypeParser;
 	}
 
+	@Override
+	public String toString() {
+		String str = super.toString();
+		if (isBitField) {
+			str += ", bitSize=" + bitFieldSize + ", bitOffset=" + bitFieldOffset;
+		}
+		return str;
+	}
+
 	private static String getMemberName(String name) {
 		int bitFieldColonIndex = name != null ? name.indexOf(':') : -1;
 		if (bitFieldColonIndex >= 0) {

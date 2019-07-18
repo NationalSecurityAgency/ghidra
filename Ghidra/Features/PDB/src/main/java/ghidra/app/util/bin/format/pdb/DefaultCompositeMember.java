@@ -790,7 +790,7 @@ class DefaultCompositeMember extends CompositeMember {
 					}
 
 					((Structure) memberDataType).insertBitFieldAt(member.memberOffset,
-						bitfieldDt.getBaseTypeSize(), bitOffset, bitfieldDt.getBaseDataType(),
+						bitfieldDt.getStorageSize(), bitOffset, bitfieldDt.getBaseDataType(),
 						bitfieldDt.getDeclaredBitSize(), member.getName(),
 						member.getStructureMemberComment());
 
@@ -853,7 +853,7 @@ class DefaultCompositeMember extends CompositeMember {
 				bfGroup.addToGroup(member);
 
 				((Structure) memberDataType).insertBitFieldAt(member.memberOffset,
-					bitfieldDt.getBaseTypeSize(), bitOffset, bitfieldDt.getBaseDataType(),
+					bitfieldDt.getStorageSize(), bitOffset, bitfieldDt.getBaseDataType(),
 					bitfieldDt.getDeclaredBitSize(), member.getName(),
 					member.getStructureMemberComment());
 

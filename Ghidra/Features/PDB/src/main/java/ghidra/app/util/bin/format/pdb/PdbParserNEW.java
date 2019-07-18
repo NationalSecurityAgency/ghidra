@@ -1344,7 +1344,7 @@ public class PdbParserNEW {
 		PdbXmlMember(XmlElement element) {
 			super(SymbolUtilities.replaceInvalidChars(element.getAttribute("name"), false),
 				element.getAttribute("datatype"),
-				XmlUtilities.parseInt(element.getAttribute("offset")), dataTypeParser);
+				XmlUtilities.parseInt(element.getAttribute("offset")), getDataTypeParser());
 			kind = PdbXmlKind.parse(element.getAttribute("kind"));
 		}
 

@@ -33,6 +33,11 @@ abstract class PdbMember {
 		this.memberOffset = memberOffset;
 	}
 
+	@Override
+	public String toString() {
+		return "name=" + memberName + ", type=" + memberDataTypeName + ", offset=" + memberOffset;
+	}
+
 	/**
 	 * Get the member's name which will correspond to the field name.
 	 * @return member field name
