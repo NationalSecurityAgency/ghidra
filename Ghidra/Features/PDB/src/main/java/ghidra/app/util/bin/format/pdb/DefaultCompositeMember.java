@@ -390,7 +390,7 @@ class DefaultCompositeMember extends CompositeMember {
 	 */
 	@Override
 	boolean isContainer() {
-		return memberDataTypeName == null;
+		return memberType != MemberType.MEMBER; // memberDataTypeName == null;
 	}
 
 	/**
