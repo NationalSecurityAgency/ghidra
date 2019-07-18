@@ -1,3 +1,16 @@
+# Goals
+
+Goal of this fork, is to be sink hole for the PRs to Ghidra which cannot be accepted right now due to
+official team concerns of maintainability and other limitations on their side. I by no means does not
+have resources to diverge from the official product too much.
+
+I want to keep in the `master` mirror of the official repo, and in the `dev`, keep all customization.
+
+# Changes in addition to Ghidra
+
+- [Support for VS2019](https://github.com/kant2002/ghidra-official/commit/cd767aca016a5a34d249f0d818e2bc834207de8a)
+- [Require a minimum Gradle version instead of a specific version](https://github.com/kant2002/ghidra-official/commit/fdc9894bace81fe965cf5dbb538a3057048419ba)
+
 # Ghidra Software Reverse Engineering Framework
 
 [![Build Status](https://codevision.visualstudio.com/Ghidra/_apis/build/status/kant2002.ghidra-official?branchName=dev)](https://codevision.visualstudio.com/Ghidra/_build/latest?definitionId=106&branchName=dev)
