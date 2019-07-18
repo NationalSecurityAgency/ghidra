@@ -35,9 +35,9 @@ public class StructureEditorUnlockedActions3Test
 	public void testDuplicateMultipleAction() throws Exception {
 		NumberInputDialog dialog;
 		init(complexStructure, pgmTestCat);
-
-		model.clearComponent(3);
-
+		runSwing(() -> {
+			model.clearComponent(3);
+		});
 		int num = model.getNumComponents();
 
 		setSelection(new int[] { 2 });
@@ -203,7 +203,9 @@ public class StructureEditorUnlockedActions3Test
 		init(complexStructure, pgmTestCat);
 
 		String desc = "This is a sample description.";
-		model.setDescription(desc);
+		runSwing(() -> {
+			model.setDescription(desc);
+		});
 		DataType viewCopy = model.viewComposite.clone(null);
 
 		assertEquals(desc, model.getDescription());

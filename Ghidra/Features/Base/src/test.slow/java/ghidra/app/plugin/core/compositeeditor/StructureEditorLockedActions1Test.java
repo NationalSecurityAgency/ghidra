@@ -20,6 +20,7 @@ import static org.junit.Assert.*;
 import org.junit.Test;
 
 import ghidra.program.model.data.*;
+import ghidra.util.exception.UsrException;
 
 public class StructureEditorLockedActions1Test extends AbstractStructureEditorLockedActionsTest {
 
@@ -43,8 +44,14 @@ public class StructureEditorLockedActions1Test extends AbstractStructureEditorLo
 	@Test
 	public void testArrayOnSelectionExtraUndefineds() throws Exception {
 		init(simpleStructure, pgmBbCat);
-		model.clearComponents(new int[] { 4, 5 });
-
+		runSwing(() -> {
+			try {
+				model.clearComponents(new int[] { 4, 5 });
+			}
+			catch (UsrException e) {
+				failWithException("Unexpected error", e);
+			}
+		});
 		setSelection(new int[] { 3, 4, 5, 6, 7, 8, 9, 10 });// starts with DWord 
 		DataType dt3 = getDataType(3);
 		DataType dt11 = getDataType(11);
@@ -66,9 +73,15 @@ public class StructureEditorLockedActions1Test extends AbstractStructureEditorLo
 	@Test
 	public void testClearAction() throws Exception {
 		init(complexStructure, pgmTestCat);
-		model.setComponentName(2, "comp2");
-		model.setComponentComment(2, "comment 2");
-
+		runSwing(() -> {
+			try {
+				model.setComponentName(2, "comp2");
+				model.setComponentComment(2, "comment 2");
+			}
+			catch (UsrException e) {
+				failWithException("Unexpected error", e);
+			}
+		});
 		int num = getModel().getNumComponents();
 
 		// Duplicate Word
@@ -89,8 +102,14 @@ public class StructureEditorLockedActions1Test extends AbstractStructureEditorLo
 	@Test
 	public void testCreateCycleOnPointer() throws Exception {
 		init(simpleStructure, pgmBbCat);
-		model.clearComponents(new int[] { 2, 3 });
-
+		runSwing(() -> {
+			try {
+				model.clearComponents(new int[] { 2, 3 });
+			}
+			catch (UsrException e) {
+				failWithException("Unexpected error", e);
+			}
+		});
 		setSelection(new int[] { 1 });
 		invoke(pointerAction);
 		CycleGroupAction cycleByte = getCycleGroup(new ByteDataType());
@@ -117,8 +136,9 @@ public class StructureEditorLockedActions1Test extends AbstractStructureEditorLo
 	@Test
 	public void testCreatePointerOnUndefined() throws Exception {
 		init(simpleStructure, pgmBbCat);
-		model.clearComponent(3);
-
+		runSwing(() -> {
+			model.clearComponent(3);
+		});
 		setSelection(new int[] { 3 });
 		invoke(pointerAction);
 		assertEquals("pointer", getDataType(3).getDisplayName());
