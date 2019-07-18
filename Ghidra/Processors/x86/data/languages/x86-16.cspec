@@ -191,7 +191,7 @@
     <body><![CDATA[
 	 AX = AX + 1;
 	 AX = AX & 0xFFFE;
-	 SP = SP - AX;
+	 SP = SP + 2 - AX;
     ]]></body>
   </pcode>
 </callfixup>
