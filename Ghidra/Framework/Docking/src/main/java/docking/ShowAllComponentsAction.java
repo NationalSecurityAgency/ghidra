@@ -44,7 +44,7 @@ public class ShowAllComponentsAction extends ShowComponentAction {
 	public void actionPerformed(ActionContext context) {
 		boolean focusMe = true;
 		for (ComponentPlaceholder info : infoList) {
-			winMgr.showComponent(info, true, focusMe);
+			winMgr.showComponent(info, true, focusMe, true);
 			focusMe = false;
 		}
 	}

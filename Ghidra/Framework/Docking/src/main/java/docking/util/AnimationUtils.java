@@ -30,6 +30,7 @@ import ghidra.util.Msg;
 import ghidra.util.bean.GGlassPane;
 import ghidra.util.bean.GGlassPanePainter;
 import ghidra.util.exception.AssertException;
+import resources.ResourceManager;
 
 public class AnimationUtils {
 
@@ -216,6 +217,21 @@ public class AnimationUtils {
 		return pulser.animator;
 	}
 
+	public static Animator showTheDragonOverComponent(Component component) {
+		if (!animationEnabled) {
+			return null;
+		}
+
+		GGlassPane glassPane = getGlassPane(component);
+		if (glassPane == null) {
+			// could happen if the given component has not yet been realized
+			return null;
+		}
+
+		DragonImageDriver pulser = new DragonImageDriver(component);
+		return pulser.animator;
+	}
+
 	public static Animator executeSwingAnimationCallback(SwingAnimationCallback callback) {
 		// note: instead of checking for 'animationEnabled' here, it will happen in the driver
 		//       so that the we can call SwingAnimationCallback.done(), which will let the client 
@@ -225,11 +241,7 @@ public class AnimationUtils {
 		return driver.animator;
 	}
 
-//==================================================================================================
-// Private Methods
-//==================================================================================================	
-
-	private static GGlassPane getGlassPane(Component component) {
+	public static GGlassPane getGlassPane(Component component) {
 
 		// TODO: validate component has been realized? ...check for window, but that would
 		//       then put the onus on the client
@@ -491,10 +503,6 @@ public class AnimationUtils {
 				new Point((int) startBounds.getCenterX(), (int) startBounds.getCenterY());
 			return SwingUtilities.convertPoint(component.getParent(), relativeStartCenter,
 				glassPane);
-
-// TODO do we need this?			
-//			Rectangle glassPaneBounds = glassPane.getBounds();
-//			return new Point((int) glassPaneBounds.getCenterX(), (int) glassPaneBounds.getCenterY());
 		}
 
 		// note: must be public--it is a callback from the animator (also, its name must 
@@ -1140,6 +1148,106 @@ public class AnimationUtils {
 			g2d.rotate(lastDirection, emphasizedBounds.getCenterX(), emphasizedBounds.getCenterY());
 
 			g.drawImage(image, offsetX, offsetY, width, height, null);
+		}
+	}
+
+	// Draws the system dragon icon over the given component
+	public static class DragonImageDriver {
+
+		private Animator animator;
+		private GGlassPane glassPane;
+		private DragonImagePainter rotatePainter;
+
+		DragonImageDriver(Component component) {
+
+			glassPane = AnimationUtils.getGlassPane(component);
+			rotatePainter = new DragonImagePainter(component);
+
+			double start = 0;
+			double max = 1;
+			int duration = 1500;
+			animator =
+				PropertySetter.createAnimator(duration, this, "percentComplete", start, max, start);
+
+			animator.setAcceleration(0.2f);
+			animator.setDeceleration(0.8f);
+
+			animator.addTarget(new TimingTargetAdapter() {
+				@Override
+				public void end() {
+					done();
+				}
+			});
+
+			glassPane.addPainter(rotatePainter);
+
+			animator.start();
+		}
+
+		public void setPercentComplete(double percentComplete) {
+			rotatePainter.setPercentComplete(percentComplete);
+			glassPane.repaint();
+		}
+
+		void done() {
+			glassPane.repaint();
+			glassPane.removePainter(rotatePainter);
+		}
+	}
+
+	private static class DragonImagePainter implements GGlassPanePainter {
+
+		private Component component;
+		private double percentComplete = 0.0;
+
+		DragonImagePainter(Component component) {
+			this.component = component;
+		}
+
+		void setPercentComplete(double percent) {
+			percentComplete = percent;
+		}
+
+		@Override
+		public void paint(GGlassPane glassPane, Graphics g) {
+
+			Graphics2D g2d = (Graphics2D) g;
+			g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
+				RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+
+			float alpha = (float) percentComplete;
+			alpha = Math.min(alpha, .5f);
+			Composite originaComposite = g2d.getComposite();
+			AlphaComposite alphaComposite =
+				AlphaComposite.getInstance(AlphaComposite.SrcOver.getRule(), alpha);
+			g2d.setComposite(alphaComposite);
+
+			ImageIcon ghidra = ResourceManager.loadImage("images/GhidraIcon256.png");
+			Image ghidraImage = ghidra.getImage();
+
+			Rectangle fullBounds = component.getBounds();
+			fullBounds =
+				SwingUtilities.convertRectangle(component.getParent(), fullBounds, glassPane);
+
+			int gw = ghidraImage.getWidth(null);
+			int gh = ghidraImage.getHeight(null);
+			double smallest =
+				fullBounds.width > fullBounds.height ? fullBounds.height : fullBounds.width;
+			smallest -= 10; // padding
+
+			double scale = smallest / gw;
+			int w = (int) (gw * scale);
+			int h = (int) (gh * scale);
+
+			double cx = fullBounds.getCenterX();
+			double cy = fullBounds.getCenterY();
+			int offsetX = (int) (cx - (w >> 1));
+			int offsetY = (int) (cy - (h >> 1));
+
+			g2d.setClip(fullBounds);
+			g2d.drawImage(ghidraImage, offsetX, offsetY, w, h, null);
+
+			g2d.setComposite(originaComposite);
 		}
 	}
 

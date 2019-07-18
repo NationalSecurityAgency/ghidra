@@ -118,7 +118,7 @@ class ShowComponentAction extends DockingAction implements Comparable<ShowCompon
 
 	@Override
 	public void actionPerformed(ActionContext context) {
-		winMgr.showComponent(info, true, true);
+		winMgr.showComponent(info, true, true, true);
 	}
 
 	@Override

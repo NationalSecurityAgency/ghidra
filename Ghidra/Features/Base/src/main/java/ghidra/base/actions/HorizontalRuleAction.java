@@ -32,7 +32,7 @@ public class HorizontalRuleAction extends DockingAction {
 	 * 
 	 * @param owner the action owner
 	 * @param topName the name that will appear above the separator bar
-	 * @param bottomName the name that will apppear below the separator bar
+	 * @param bottomName the name that will appear below the separator bar
 	 */
 	public HorizontalRuleAction(String owner, String topName, String bottomName) {
 		super("HorizontalRuleAction: " + ++idCount, owner, false);

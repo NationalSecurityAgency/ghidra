@@ -707,19 +707,7 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 	 * @see #addComponent(ComponentProvider, boolean)
 	 */
 	public void showComponent(ComponentProvider provider, boolean visibleState) {
-		ComponentPlaceholder placeholder = getActivePlaceholder(provider);
-		if (placeholder != null) {
-			showComponent(placeholder, visibleState, true);
-			return;
-		}
-
-		if (visibleState) {
-
-			// a null placeholder implies the client is trying to show a provider that has not
-			// been added to the tool
-			Msg.warn(this, "Attempting to show an unknown Component Provider '" +
-				provider.getName() + "' - " + "check that the provider has been added to the tool");
-		}
+		showComponent(provider, visibleState, false);
 	}
 
 	public void toFront(ComponentProvider provider) {
@@ -809,6 +797,23 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 		root = null;
 	}
 
+	void showComponent(ComponentProvider provider, boolean visibleState, boolean shouldEmphasize) {
+
+		ComponentPlaceholder placeholder = getActivePlaceholder(provider);
+		if (placeholder != null) {
+			showComponent(placeholder, visibleState, true, shouldEmphasize);
+			return;
+		}
+
+		if (visibleState) {
+
+			// a null placeholder implies the client is trying to show a provider that has not
+			// been added to the tool
+			Msg.warn(this, "Attempting to show an unknown Component Provider '" +
+				provider.getName() + "' - " + "check that the provider has been added to the tool");
+		}
+	}
+
 	/**
 	 * Shows or hides the component associated with the given placeholder object. 
 	 * 
@@ -816,15 +821,20 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 	 * @param visibleState true to show or false to hide.
 	 * @param requestFocus True signals that the system should request focus on the component.
 	 */
-	void showComponent(final ComponentPlaceholder placeholder, final boolean visibleState,
+	private void showComponent(ComponentPlaceholder placeholder, final boolean visibleState,
 			boolean requestFocus) {
+		showComponent(placeholder, visibleState, requestFocus, false);
+	}
+
+	void showComponent(ComponentPlaceholder placeholder, final boolean visibleState,
+			boolean requestFocus, boolean shouldEmphasize) {
 		if (root == null) {
 			return;
 		}
 
 		if (visibleState == placeholder.isShowing()) {
 			if (visibleState) {
-				movePlaceholderToFront(placeholder, true);
+				movePlaceholderToFront(placeholder, shouldEmphasize);
 				setNextFocusPlaceholder(placeholder);
 				scheduleUpdate();
 			}
@@ -2066,17 +2076,19 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 	}
 
 	public void contextChanged(ComponentProvider provider) {
+
 		if (provider == null) {
-			actionToGuiMapper.contextChangedAll(); // update all windows;
+			actionToGuiMapper.contextChangedAll(); // this updates the actions for all windows
 			return;
 		}
 
-		ComponentPlaceholder placeHolder = getActivePlaceholder(provider);
-		if (placeHolder == null) {
+		ComponentPlaceholder placeholder = getActivePlaceholder(provider);
+		if (placeholder == null) {
 			return;
 		}
-		placeHolder.contextChanged();
-		actionToGuiMapper.contextChanged(placeHolder);
+
+		placeholder.contextChanged();
+		actionToGuiMapper.contextChanged(placeholder);
 	}
 
 	public void addContextListener(DockingContextListener listener) {
@@ -2143,7 +2155,6 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 		private ComponentPlaceholder lastActivatedPlaceholder;
 
 		void activated(ComponentPlaceholder placeholder) {
-
 			if (lastActivatedPlaceholder == placeholder) {
 				// repeat call--see if it was quickly called again (a sign of confusion/frustration)
 				long elapsedTime = System.currentTimeMillis() - lastCalledTimestamp;
