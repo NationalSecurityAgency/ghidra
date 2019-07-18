@@ -18,7 +18,7 @@ package ghidra.app.util.opinion;
 import java.io.*;
 import java.util.*;
 
-import ghidra.app.util.MemoryBlockUtil;
+import ghidra.app.util.MemoryBlockUtils;
 import ghidra.app.util.Option;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.importer.MessageLog;
@@ -167,9 +167,8 @@ public class MotorolaHexLoader extends AbstractProgramLoader {
 		CompilerSpec importerCompilerSpec =
 			importerLanguage.getCompilerSpecByID(pair.compilerSpecID);
 
-		Program prog =
-			createProgram(provider, programName, null, getName(), importerLanguage,
-				importerCompilerSpec, consumer);
+		Program prog = createProgram(provider, programName, null, getName(), importerLanguage,
+			importerCompilerSpec, consumer);
 		boolean success = false;
 		try {
 			success = loadInto(provider, loadSpec, options, log, prog, monitor);
@@ -205,8 +204,8 @@ public class MotorolaHexLoader extends AbstractProgramLoader {
 			success = true;
 		}
 		catch (AddressOverflowException e) {
-			throw new IOException("Hex file specifies range greater than allowed address space - " +
-				e.getMessage());
+			throw new IOException(
+				"Hex file specifies range greater than allowed address space - " + e.getMessage());
 		}
 		return success;
 	}
@@ -228,8 +227,7 @@ public class MotorolaHexLoader extends AbstractProgramLoader {
 		int lineNum = 0;
 		byte[] dataBuffer = new byte[BUFSIZE];
 		int counter = 0;
-
-		MemoryBlockUtil mbu = new MemoryBlockUtil(program);
+		MessageLog log = new MessageLog();
 		try (BufferedReader in =
 			new BufferedReader(new InputStreamReader(provider.getInputStream(0)))) {
 			while ((line = in.readLine()) != null) {
@@ -337,25 +335,23 @@ public class MotorolaHexLoader extends AbstractProgramLoader {
 
 						Address start = baseAddr.add(startAddress);
 
-						if (isOverlay) {
-							name = blockName;
-							int count = 0;
-							while (true) {
-								try {
-									mbu.createOverlayBlock(blockName, start,
-										new ByteArrayInputStream(data), data.length, "",
-										provider.getName(), true, true, true, monitor);
-									break;
-								}
-								catch (DuplicateNameException e) {
-									++count;
-									name = blockName + "_" + count;
-								}
+						name = blockName;
+						int count = 0;
+						while (true) {
+							try {
+								MemoryBlockUtils.createInitializedBlock(program, isOverlay, name,
+									start, new ByteArrayInputStream(data), data.length, "",
+									provider.getName(), true, !isOverlay, !isOverlay, log, monitor);
+								break;
 							}
-						}
-						else {
-							mbu.createInitializedBlock(name, start, data, "", provider.getName(),
-								true, false, false, monitor);
+							catch (RuntimeException e) {
+								Throwable cause = e.getCause();
+								if (!(cause instanceof DuplicateNameException)) {
+									throw e;
+								}
+								++count;
+								name = blockName + "_" + count;
+							}
 						}
 					}
 					offset = 0;
@@ -415,24 +411,23 @@ public class MotorolaHexLoader extends AbstractProgramLoader {
 				String name = baseAddr.getAddressSpace().getName();
 				Address start = baseAddr.add(startAddress);
 
-				if (isOverlay) {
-					name = blockName;
-					int count = 0;
-					while (true) {
-						try {
-							mbu.createOverlayBlock(blockName, start, new ByteArrayInputStream(data),
-								data.length, "", provider.getName(), true, true, true, monitor);
-							break;
-						}
-						catch (DuplicateNameException e) {
-							++count;
-							name = blockName + "_" + count;
-						}
+				name = blockName;
+				int count = 0;
+				while (true) {
+					try {
+						MemoryBlockUtils.createInitializedBlock(program, isOverlay, blockName,
+							start, new ByteArrayInputStream(data), data.length, "",
+							provider.getName(), true, true, true, log, monitor);
+						break;
 					}
-				}
-				else {
-					mbu.createInitializedBlock(name, start, data, "", provider.getName(), true,
-						true, true, monitor);
+					catch (RuntimeException e) {
+						Throwable cause = e.getCause();
+						if (!(cause instanceof DuplicateNameException)) {
+							throw e;
+						}
+						++count;
+						name = blockName + "_" + count;
+					}
 				}
 			}
 		}

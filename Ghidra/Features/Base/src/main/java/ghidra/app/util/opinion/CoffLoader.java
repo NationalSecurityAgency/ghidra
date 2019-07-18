@@ -20,7 +20,7 @@ import java.io.InputStream;
 import java.util.*;
 import java.util.Map.Entry;
 
-import ghidra.app.util.MemoryBlockUtil;
+import ghidra.app.util.MemoryBlockUtils;
 import ghidra.app.util.Option;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.bin.format.coff.*;
@@ -29,6 +29,7 @@ import ghidra.app.util.bin.format.coff.relocation.CoffRelocationHandlerFactory;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.framework.model.DomainObject;
 import ghidra.program.database.function.OverlappingFunctionException;
+import ghidra.program.database.mem.FileBytes;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
 import ghidra.program.model.lang.Language;
@@ -37,7 +38,8 @@ import ghidra.program.model.mem.*;
 import ghidra.program.model.symbol.*;
 import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.util.Msg;
-import ghidra.util.exception.*;
+import ghidra.util.exception.InvalidInputException;
+import ghidra.util.exception.NotFoundException;
 import ghidra.util.task.TaskMonitor;
 
 public class CoffLoader extends AbstractLibrarySupportLoader {
@@ -122,7 +124,7 @@ public class CoffLoader extends AbstractLibrarySupportLoader {
 
 		if (CoffMachineType.isMachineTypeDefined(header.getMagic())) {
 			header.parseSectionHeaders(provider);
-			
+
 			if (isVisualStudio(header) != isMicrosoftFormat()) {
 				// Only one of the CoffLoader/MSCoffLoader will survive this check
 				return loadSpecs;
@@ -191,12 +193,12 @@ public class CoffLoader extends AbstractLibrarySupportLoader {
 		Map<CoffSectionHeader, Address> sectionsMap = new HashMap<>();
 		Map<CoffSymbol, Symbol> symbolsMap = new HashMap<>();
 
-		MemoryBlockUtil mbu = new MemoryBlockUtil(program);
+		FileBytes fileBytes = MemoryBlockUtils.createFileBytes(program, provider);
 
 		int id = program.startTransaction("loading program from COFF");
 		boolean success = false;
 		try {
-			processSectionHeaders(provider, header, program, mbu, monitor, log, sectionsMap,
+			processSectionHeaders(provider, header, program, fileBytes, monitor, log, sectionsMap,
 				performFakeLinking);
 			processSymbols(header, program, monitor, log, sectionsMap, symbolsMap);
 			processEntryPoint(header, program, monitor, log);
@@ -207,7 +209,6 @@ public class CoffLoader extends AbstractLibrarySupportLoader {
 			throw new IOException(e);
 		}
 		finally {
-			mbu.dispose();
 			program.endTransaction(id, success);
 		}
 	}
@@ -262,7 +263,7 @@ public class CoffLoader extends AbstractLibrarySupportLoader {
 				symbol.getStorageClass() != CoffSymbolStorageClass.C_LABEL) {
 				continue;
 			}
-*/
+ */
 			Address address = null;
 			try {
 				short sectionNum = symbol.getSectionNumber();
@@ -436,7 +437,7 @@ public class CoffLoader extends AbstractLibrarySupportLoader {
 	}
 
 	private void processSectionHeaders(ByteProvider provider, CoffFileHeader header,
-			Program program, MemoryBlockUtil mbu, TaskMonitor monitor, MessageLog log,
+			Program program, FileBytes fileBytes, TaskMonitor monitor, MessageLog log,
 			Map<CoffSectionHeader, Address> map, boolean performFakeLinking)
 			throws AddressOverflowException, IOException {
 
@@ -477,59 +478,72 @@ public class CoffLoader extends AbstractLibrarySupportLoader {
 				}
 			}
 			else if (!section.isAllocated()) {
-				try (InputStream rawDataStream = section.getRawDataStream(provider, language)) {
-					block = mbu.createOverlayBlock(section.getName() + "-" + sectionNumber,
-						sectionAddr, rawDataStream, sectionSize,
-						"PhysAddr:0x" + Integer.toHexString(section.getPhysicalAddress()) + " " +
-							"Size:0x" + Integer.toHexString(sectionSize) + " " + "Flags:0x" +
-							Integer.toHexString(section.getFlags()),
-						null/*source*/, section.isReadable(), section.isWritable(),
-						section.isExecutable(), monitor);
-					if (block != null) {
-						log.appendMsg("Created Overlay Block: " + section + " @ " + sectionAddr);
-					}
-				}
-				catch (DuplicateNameException e) {
-					log.appendMsg("Unable to create non-loaded block " + section +
-						". No memory block was created.");
-					log.appendException(e);
+				block = createInitializedBlock(provider, program, fileBytes, monitor, log, language,
+					sectionNumber, section, sectionSize, sectionAddr, true);
+				if (block != null) {
+					log.appendMsg("Created Overlay Block: " + section + " @ " + sectionAddr);
 				}
 			}
 			else if (section.isUninitializedData()) {
-				block =
-					mbu.createUninitializedBlock(false, section.getName(), sectionAddr, sectionSize,
-						"PhysAddr:0x" + Integer.toHexString(section.getPhysicalAddress()) + " " +
-							"Size:0x" + Integer.toHexString(sectionSize) + " " + "Flags:0x" +
-							Integer.toHexString(section.getFlags()),
-						null/*source*/, section.isReadable(), section.isWritable(),
-						section.isExecutable());
+				block = MemoryBlockUtils.createUninitializedBlock(program, false, section.getName(),
+					sectionAddr, sectionSize,
+					"PhysAddr:0x" + Integer.toHexString(section.getPhysicalAddress()) + " " +
+						"Size:0x" + Integer.toHexString(sectionSize) + " " + "Flags:0x" +
+						Integer.toHexString(section.getFlags()),
+					null/*source*/, section.isReadable(), section.isWritable(),
+					section.isExecutable(), log);
 				if (block != null) {
 					log.appendMsg("Created Uninitialized Block: " + section + " @ " + sectionAddr);
 				}
 			}
 			else {
-				try (InputStream rawDataStream = section.getRawDataStream(provider, language)) {
-					block = mbu.createInitializedBlock(section.getName(), sectionAddr,
-						rawDataStream, sectionSize,
-						"PhysAddr:0x" + Integer.toHexString(section.getPhysicalAddress()) + " " +
-							"Size:0x" + Integer.toHexString(sectionSize) + " " + "Flags:0x" +
-							Integer.toHexString(section.getFlags()),
-						null/*source*/, section.isReadable(), section.isWritable(),
-						section.isExecutable(), monitor);
-					if (block != null) {
-						log.appendMsg(
-							"Created Initialized Block: " + section + " @ " + sectionAddr);
-					}
+				block = createInitializedBlock(provider, program, fileBytes, monitor, log, language,
+					sectionNumber, section, sectionSize, sectionAddr, false);
+				if (block != null) {
+					log.appendMsg("Created Initialized Block: " + section + " @ " + sectionAddr);
 				}
 			}
+
 			if (block != null) {
 				sectionAddr = block.getStart();
 			}
-			else {
-				log.appendMsg(mbu.getMessages());
-			}
 			map.put(section, sectionAddr);
 		}
+	}
+
+	private MemoryBlock createInitializedBlock(ByteProvider provider, Program program,
+			FileBytes fileBytes, TaskMonitor monitor, MessageLog log, final Language language,
+			int sectionNumber, CoffSectionHeader section, final int sectionSize,
+			Address sectionAddr, boolean isOverlay) throws AddressOverflowException, IOException {
+
+		String name = section.getName();
+		if (isOverlay) {
+			name += "-" + sectionNumber;
+		}
+		MemoryBlock block = null;
+
+		if (section.isProcessedBytes(language)) {
+			try (InputStream dataStream = section.getRawDataStream(provider, language)) {
+				block = MemoryBlockUtils.createInitializedBlock(program, true, name, sectionAddr,
+					dataStream, sectionSize,
+					"PhysAddr:0x" + Integer.toHexString(section.getPhysicalAddress()) + " " +
+						"Size:0x" + Integer.toHexString(sectionSize) + " " + "Flags:0x" +
+						Integer.toHexString(section.getFlags()),
+					null/*source*/, section.isReadable(), section.isWritable(),
+					section.isExecutable(), log, monitor);
+			}
+		}
+		else {
+			block = MemoryBlockUtils.createInitializedBlock(program, true, name, sectionAddr,
+				fileBytes, section.getPointerToRawData(), sectionSize,
+				"PhysAddr:0x" + Integer.toHexString(section.getPhysicalAddress()) + " " +
+					"Size:0x" + Integer.toHexString(sectionSize) + " " + "Flags:0x" +
+					Integer.toHexString(section.getFlags()),
+				null/*source*/, section.isReadable(), section.isWritable(), section.isExecutable(),
+				log);
+		}
+
+		return block;
 	}
 
 	private void possiblyRelocateSections(Program program, CoffFileHeader header,

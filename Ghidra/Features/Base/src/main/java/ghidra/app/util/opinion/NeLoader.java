@@ -15,13 +15,14 @@
  */
 package ghidra.app.util.opinion;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.util.*;
 
 import generic.continues.ContinuesFactory;
 import generic.continues.RethrowContinuesFactory;
-import ghidra.app.util.MemoryBlockUtil;
+import ghidra.app.util.MemoryBlockUtils;
 import ghidra.app.util.Option;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.bin.format.ne.*;
@@ -93,91 +94,81 @@ public class NeLoader extends AbstractLibrarySupportLoader {
 		initVars();
 
 		ContinuesFactory factory = MessageLogContinuesFactory.create(log);
-		MemoryBlockUtil mbu = new MemoryBlockUtil(prog);
-		try {
-			NewExecutable ne = new NewExecutable(factory, provider);
-			WindowsHeader wh = ne.getWindowsHeader();
-			InformationBlock ib = wh.getInformationBlock();
-			SegmentTable st = wh.getSegmentTable();
-			ResourceTable rt = wh.getResourceTable();
-			EntryTable et = wh.getEntryTable();
-			ResidentNameTable rnt = wh.getResidentNameTable();
-			NonResidentNameTable nrnt = wh.getNonResidentNameTable();
-			ImportedNameTable imp = wh.getImportedNameTable();
-			ModuleReferenceTable mrt = wh.getModuleReferenceTable();
+//		FileBytes fileBytes = MemoryBlockUtils.createFileBytes(prog, provider);
 
-			Listing listing = prog.getListing();
-			SymbolTable symbolTable = prog.getSymbolTable();
-			Memory memory = prog.getMemory();
-			SegmentedAddressSpace space =
-					(SegmentedAddressSpace) prog.getAddressFactory().getDefaultAddressSpace();
-			ProgramContext context = prog.getProgramContext();
-			RelocationTable relocTable = prog.getRelocationTable();
+		NewExecutable ne = new NewExecutable(factory, provider);
+		WindowsHeader wh = ne.getWindowsHeader();
+		InformationBlock ib = wh.getInformationBlock();
+		SegmentTable st = wh.getSegmentTable();
+		ResourceTable rt = wh.getResourceTable();
+		EntryTable et = wh.getEntryTable();
+		ResidentNameTable rnt = wh.getResidentNameTable();
+		NonResidentNameTable nrnt = wh.getNonResidentNameTable();
+		ImportedNameTable imp = wh.getImportedNameTable();
+		ModuleReferenceTable mrt = wh.getModuleReferenceTable();
 
-			if (monitor.isCancelled()) {
-				return;
-			}
-			monitor.setMessage("Processing segment table...");
-			processSegmentTable(mbu, ib, st, space, listing, memory, context, monitor);
-			if (prog.getMemory().isEmpty()) {
-				Msg.error(this, "Empty memory for " + prog);
-				return;
-			}
+		Listing listing = prog.getListing();
+		SymbolTable symbolTable = prog.getSymbolTable();
+		Memory memory = prog.getMemory();
+		SegmentedAddressSpace space =
+			(SegmentedAddressSpace) prog.getAddressFactory().getDefaultAddressSpace();
+		ProgramContext context = prog.getProgramContext();
+		RelocationTable relocTable = prog.getRelocationTable();
 
-			if (monitor.isCancelled()) {
-				return;
-			}
-			monitor.setMessage("Processing resource table...");
-			processResourceTable(prog, mbu, rt, space, monitor);
-
-			if (monitor.isCancelled()) {
-				return;
-			}
-			monitor.setMessage("Processing module reference table...");
-			processModuleReferenceTable(mbu, mrt, st, imp, prog, space, log, monitor);
-
-			if (monitor.isCancelled()) {
-				return;
-			}
-			monitor.setMessage("Processing entry table...");
-			processEntryTable(st, ib, et, symbolTable, space);
-
-			if (monitor.isCancelled()) {
-				return;
-			}
-			monitor.setMessage("Processing non-resident name table...");
-			processNonResidentNameTable(nrnt, symbolTable);
-
-			if (monitor.isCancelled()) {
-				return;
-			}
-			monitor.setMessage("Processing resident name table...");
-			processResidentNameTable(rnt, symbolTable);
-
-			if (monitor.isCancelled()) {
-				return;
-			}
-			monitor.setMessage("Processing segment relocations...");
-			processRelocations(st, imp, mrt, relocTable, prog, memory, space, log, monitor);
-
-			if (monitor.isCancelled()) {
-				return;
-			}
-			monitor.setMessage("Processing information block...");
-			processInformationBlock(ib, nrnt, memory, listing);
-
-			processProperties(ib, prog, monitor);
+		if (monitor.isCancelled()) {
+			return;
 		}
-		finally {
-
-			String messages = mbu.getMessages();
-			if (messages.length() != 0) {
-				log.appendMsg(messages);
-			}
-
-			mbu.dispose();
-			mbu = null;
+		monitor.setMessage("Processing segment table...");
+		processSegmentTable(log, ib, st, space, prog, context, monitor);
+		if (prog.getMemory().isEmpty()) {
+			Msg.error(this, "Empty memory for " + prog);
+			return;
 		}
+
+		if (monitor.isCancelled()) {
+			return;
+		}
+		monitor.setMessage("Processing resource table...");
+		processResourceTable(log, prog, rt, space, monitor);
+
+		if (monitor.isCancelled()) {
+			return;
+		}
+		monitor.setMessage("Processing module reference table...");
+		processModuleReferenceTable(mrt, st, imp, prog, space, log, monitor);
+
+		if (monitor.isCancelled()) {
+			return;
+		}
+		monitor.setMessage("Processing entry table...");
+		processEntryTable(st, ib, et, symbolTable, space);
+
+		if (monitor.isCancelled()) {
+			return;
+		}
+		monitor.setMessage("Processing non-resident name table...");
+		processNonResidentNameTable(nrnt, symbolTable);
+
+		if (monitor.isCancelled()) {
+			return;
+		}
+		monitor.setMessage("Processing resident name table...");
+		processResidentNameTable(rnt, symbolTable);
+
+		if (monitor.isCancelled()) {
+			return;
+		}
+		monitor.setMessage("Processing segment relocations...");
+		processRelocations(st, imp, mrt, relocTable, prog, memory, space, log, monitor);
+
+		if (monitor.isCancelled()) {
+			return;
+		}
+		monitor.setMessage("Processing information block...");
+		processInformationBlock(ib, nrnt, memory, listing);
+
+		processProperties(ib, prog, monitor);
+
 	}
 
 	//////////////////////////////////////////////////////////////////
@@ -190,7 +181,7 @@ public class NeLoader extends AbstractLibrarySupportLoader {
 		Options props = prog.getOptions(Program.PROGRAM_INFO);
 
 		boolean relocatable =
-				(ib.getApplicationFlags() & InformationBlock.FLAGS_APP_LIBRARY_MODULE) != 0;
+			(ib.getApplicationFlags() & InformationBlock.FLAGS_APP_LIBRARY_MODULE) != 0;
 
 		props.setBoolean(RelocationTable.RELOCATABLE_PROP_NAME, relocatable);
 	}
@@ -208,12 +199,12 @@ public class NeLoader extends AbstractLibrarySupportLoader {
 		buffer.append("\n");
 		buffer.append(
 			"Program Entry Point (CS:IP):   " + Conv.toHexString(ib.getEntryPointSegment()) + ":" +
-					Conv.toHexString(ib.getEntryPointOffset()) + "\n");
+				Conv.toHexString(ib.getEntryPointOffset()) + "\n");
 		buffer.append(
 			"Initial Stack Pointer (SS:SP): " + Conv.toHexString(ib.getStackPointerSegment()) +
-			":" + Conv.toHexString(ib.getStackPointerOffset()) + "\n");
+				":" + Conv.toHexString(ib.getStackPointerOffset()) + "\n");
 		buffer.append("Auto Data Segment Index:       " +
-				Conv.toHexString(ib.getAutomaticDataSegment()) + "\n");
+			Conv.toHexString(ib.getAutomaticDataSegment()) + "\n");
 		buffer.append(
 			"Initial Heap Size:             " + Conv.toHexString(ib.getInitialHeapSize()) + "\n");
 		buffer.append(
@@ -224,7 +215,7 @@ public class NeLoader extends AbstractLibrarySupportLoader {
 		buffer.append("Linker Version:  " + ib.getVersion() + "." + ib.getRevision() + "\n");
 		buffer.append("Target OS:       " + ib.getTargetOpSysAsString() + "\n");
 		buffer.append("Windows Version: " + (ib.getExpectedWindowsVersion() >> 8) + "." +
-				(ib.getExpectedWindowsVersion() & 0xff) + "\n");
+			(ib.getExpectedWindowsVersion() & 0xff) + "\n");
 		buffer.append("\n");
 		buffer.append("Program Flags:     " + Conv.toHexString(ib.getProgramFlags()) + "\n");
 		buffer.append(ib.getProgramFlagsAsString());
@@ -236,8 +227,8 @@ public class NeLoader extends AbstractLibrarySupportLoader {
 		firstCU.setComment(CodeUnit.PLATE_COMMENT, buffer.toString());
 	}
 
-	private void processSegmentTable(MemoryBlockUtil mbu, InformationBlock ib, SegmentTable st,
-			SegmentedAddressSpace space, Listing listing, Memory memory, ProgramContext context,
+	private void processSegmentTable(MessageLog log, InformationBlock ib, SegmentTable st,
+			SegmentedAddressSpace space, Program program, ProgramContext context,
 			TaskMonitor monitor) throws IOException {
 		try {
 			Segment[] segments = st.getSegments();
@@ -250,10 +241,13 @@ public class NeLoader extends AbstractLibrarySupportLoader {
 				boolean x = segments[i].isCode();
 
 				if (bytes.length > 0) {
-					mbu.createInitializedBlock(name, addr, bytes, "", "", r, w, x, monitor);
+					MemoryBlockUtils.createInitializedBlock(program, false, name, addr,
+						new ByteArrayInputStream(bytes), bytes.length, "", "", r, w, x, log,
+						monitor);
 				}
 				else {
-					mbu.createUninitializedBlock(false, name, addr, bytes.length, "", "", r, w, x);
+					MemoryBlockUtils.createUninitializedBlock(program, false, name, addr,
+						bytes.length, "", "", r, w, x, log);
 				}
 
 				if (segments[i].is32bit()) {
@@ -291,7 +285,7 @@ public class NeLoader extends AbstractLibrarySupportLoader {
 					(segments[i].isPure() ? "Pure (Shareable)" : "Impure (Non-shareable)") + "\n");
 				buff.append((segments[i].isReadOnly() ? TAB + "Read Only" + "\n" : ""));
 				buff.append((segments[i].is32bit() ? TAB + "Use 32 Bit" + "\n" : ""));
-				CodeUnit cu = listing.getCodeUnitAt(addr);
+				CodeUnit cu = program.getListing().getCodeUnitAt(addr);
 				cu.setComment(CodeUnit.PRE_COMMENT, buff.toString());
 			}
 
@@ -300,7 +294,7 @@ public class NeLoader extends AbstractLibrarySupportLoader {
 					continue;
 				}
 				Address addr = space.getAddress(segment.getSegmentID(), 0);
-				MemoryBlock mb = memory.getBlock(addr);
+				MemoryBlock mb = program.getMemory().getBlock(addr);
 				setRegisterDS(ib, st, context, mb.getStart(), mb.getEnd());
 			}
 		}
@@ -314,9 +308,8 @@ public class NeLoader extends AbstractLibrarySupportLoader {
 		return ((int) addr.getOffset() >> 4) + 1;
 	}
 
-	private void processResourceTable(Program program, MemoryBlockUtil mbu, ResourceTable rt,
+	private void processResourceTable(MessageLog log, Program program, ResourceTable rt,
 			SegmentedAddressSpace space, TaskMonitor monitor) throws IOException {
-
 		Listing listing = program.getListing();
 
 		if (rt == null) {
@@ -337,8 +330,9 @@ public class NeLoader extends AbstractLibrarySupportLoader {
 					byte[] bytes = resource.getBytes();
 
 					if (bytes != null && bytes.length > 0) {
-						mbu.createInitializedBlock("Rsrc" + (id++), addr, bytes, "", "", true,
-							false, false, monitor);
+						MemoryBlockUtils.createInitializedBlock(program, false, "Rsrc" + (id++),
+							addr, new ByteArrayInputStream(bytes), bytes.length, "", "", true,
+							false, false, log, monitor);
 					}
 				}
 				catch (AddressOverflowException e) {
@@ -404,9 +398,9 @@ public class NeLoader extends AbstractLibrarySupportLoader {
 	 * that will serve as a jump table for imported
 	 * libraries.
 	 */
-	private void processModuleReferenceTable(MemoryBlockUtil mbu, ModuleReferenceTable mrt,
-			SegmentTable st, ImportedNameTable imp, Program program, SegmentedAddressSpace space,
-			MessageLog log, TaskMonitor monitor) throws IOException {
+	private void processModuleReferenceTable(ModuleReferenceTable mrt, SegmentTable st,
+			ImportedNameTable imp, Program program, SegmentedAddressSpace space, MessageLog log,
+			TaskMonitor monitor) throws IOException {
 
 		int pointerSize = space.getAddress(0, 0).getPointerSize();
 
@@ -424,8 +418,8 @@ public class NeLoader extends AbstractLibrarySupportLoader {
 			Address start = space.getAddress(segment, 0);
 			if (length > 0) {
 				// This isn't a real block, just place holder addresses, so don't create an initialized block
-				mbu.createUninitializedBlock(false, name.getString(), start, length, comment,
-					source, true, false, false);
+				MemoryBlockUtils.createUninitializedBlock(program, false, name.getString(), start,
+					length, comment, source, true, false, false, log);
 			}
 			Address addr = start;
 			for (String callname : callnames) {
@@ -488,7 +482,7 @@ public class NeLoader extends AbstractLibrarySupportLoader {
 		@Override
 		public int compare(String s1, String s2) {
 			if (s1.startsWith(SymbolUtilities.ORDINAL_PREFIX) &&
-					s2.startsWith(SymbolUtilities.ORDINAL_PREFIX)) {
+				s2.startsWith(SymbolUtilities.ORDINAL_PREFIX)) {
 				int i1 = Integer.parseInt(s1.substring(prefixLength));
 				int i2 = Integer.parseInt(s2.substring(prefixLength));
 				if (i1 < i2) {
