@@ -20,6 +20,7 @@ import java.io.InputStream;
 import java.util.List;
 
 import ghidra.framework.store.LockException;
+import ghidra.program.database.mem.AddressSourceInfo;
 import ghidra.program.database.mem.FileBytes;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Program;
@@ -748,4 +749,11 @@ public interface Memory extends AddressSetView {
 	 * @throws IOException if there was an error updating the database.
 	 */
 	public boolean deleteFileBytes(FileBytes fileBytes) throws IOException;
+
+	/**
+	 * Returns information ({@link AddressSourceInfo}) about the byte source at the given address.
+	 * @param address the address to query.
+	 * @return information ({@link AddressSourceInfo}) about the byte source at the given address.
+	 */
+	public AddressSourceInfo getAddressSourceInfo(Address address);
 }

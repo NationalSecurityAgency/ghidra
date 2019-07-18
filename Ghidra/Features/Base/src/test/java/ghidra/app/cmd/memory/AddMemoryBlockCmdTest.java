@@ -22,7 +22,7 @@ import org.junit.*;
 import generic.test.AbstractGenericTest;
 import ghidra.framework.cmd.Command;
 import ghidra.program.database.ProgramBuilder;
-import ghidra.program.database.mem.SourceInfo;
+import ghidra.program.database.mem.MemoryBlockSourceInfo;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.MemoryBlock;
@@ -110,7 +110,7 @@ public class AddMemoryBlockCmdTest extends AbstractGenericTest {
 
 		MemoryBlock block = x08.getMemory().getBlock(addr);
 		assertNotNull(block);
-		SourceInfo info = block.getSourceInfos().get(0);
+		MemoryBlockSourceInfo info = block.getSourceInfos().get(0);
 		assertEquals(getX08Addr(0), info.getMappedRange().get().getMinAddress());
 		assertEquals(MemoryBlockType.BIT_MAPPED, block.getType());
 	}
@@ -124,7 +124,7 @@ public class AddMemoryBlockCmdTest extends AbstractGenericTest {
 
 		MemoryBlock block = x08.getMemory().getBlock(addr);
 		assertNotNull(block);
-		SourceInfo info = block.getSourceInfos().get(0);
+		MemoryBlockSourceInfo info = block.getSourceInfos().get(0);
 		assertEquals(getX08Addr(0), info.getMappedRange().get().getMinAddress());
 		assertEquals(MemoryBlockType.BYTE_MAPPED, block.getType());
 

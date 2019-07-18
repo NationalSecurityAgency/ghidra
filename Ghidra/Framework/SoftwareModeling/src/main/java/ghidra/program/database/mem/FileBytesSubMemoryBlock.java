@@ -113,11 +113,7 @@ class FileBytesSubMemoryBlock extends SubMemoryBlock {
 	protected String getDescription() {
 		String fileName = fileBytes.getFilename();
 
-		if (fileBytes.getFileOffset()> 0) {
-			fileName = "[" + fileName + " + 0x" + Long.toHexString(fileBytes.getFileOffset()) + "]";
-		}
-		
-		String hexString = Long.toHexString(fileBytesOffset);
+		String hexString = Long.toHexString(fileBytesOffset + fileBytes.getFileOffset());
 		return "File: " + fileName + ": 0x" + hexString;
 	}
 

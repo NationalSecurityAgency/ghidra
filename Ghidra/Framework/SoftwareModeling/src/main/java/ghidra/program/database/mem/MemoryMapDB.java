@@ -662,7 +662,7 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 			try {
 				Address overlayAddr = null;
 				if (block.isMapped()) {
-					SourceInfo info = block.getSourceInfos().get(0);
+					MemoryBlockSourceInfo info = block.getSourceInfos().get(0);
 					overlayAddr = info.getMappedRange().get().getMinAddress();
 				}
 				MemoryBlockDB newBlock =
@@ -1838,9 +1838,9 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 	 */
 	private AddressSet getMappedIntersection(MemoryBlock block, AddressSet set) {
 		AddressSet mappedIntersection = new AddressSet();
-		List<SourceInfo> sourceInfos = block.getSourceInfos();
+		List<MemoryBlockSourceInfo> sourceInfos = block.getSourceInfos();
 		// mapped blocks can only ever have one sourceInfo
-		SourceInfo info = sourceInfos.get(0);
+		MemoryBlockSourceInfo info = sourceInfos.get(0);
 		AddressRange range = info.getMappedRange().get();
 		AddressSet resolvedIntersection = set.intersect(new AddressSet(range));
 		for (AddressRange resolvedRange : resolvedIntersection) {
@@ -1855,7 +1855,7 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 	private AddressRange getMappedRange(MemoryBlock mappedBlock, AddressRange resolvedRange) {
 		Address start, end;
 
-		SourceInfo info = mappedBlock.getSourceInfos().get(0);
+		MemoryBlockSourceInfo info = mappedBlock.getSourceInfos().get(0);
 		long startOffset =
 			resolvedRange.getMinAddress().subtract(info.getMappedRange().get().getMinAddress());
 		boolean isBitMapped = mappedBlock.getType() == MemoryBlockType.BIT_MAPPED;
@@ -1989,6 +1989,14 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 		return addrSet.findFirstAddressInCommon(set);
 	}
 
+	@Override
+	public AddressSourceInfo getAddressSourceInfo(Address address) {
+		MemoryBlock block = getBlock(address);
+		if (block != null) {
+			return new AddressSourceInfo(this, address, block);
+		}
+		return null;
+	}
 	private void checkBlockSize(long newBlockLength, boolean initialized) {
 		if (newBlockLength > MAX_BLOCK_SIZE) {
 			throw new IllegalStateException(
@@ -2109,4 +2117,5 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 			}
 		}
 	}
+
 }
