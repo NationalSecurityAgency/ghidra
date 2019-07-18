@@ -13,7 +13,7 @@ You may not need all of these, depending on which portions you are building or d
       - https://docs.aws.amazon.com/corretto/latest/corretto-11-ug/downloads-list.html
 * Eclipse - It must support JDK 11. Eclipse 2018-12 or later should work. Other IDEs may work, but we have not tested them.
     - https://www.eclipse.org/downloads/
-* Gradle 5.0 - Later versions may work, but you'll need to modify our version check.
+* Gradle 5.0 or later - We use version 5.0, and tested with up to 5.5.1.
     - https://gradle.org/next-steps/?version=5.0&format=bin
 * A C/C++ compiler - We use GCC on Linux, Xcode (Clang) on macOS, and Visual Studio 2017 on Windows.
     - https://gcc.gnu.org/
