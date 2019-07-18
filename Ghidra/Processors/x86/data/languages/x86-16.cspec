@@ -179,4 +179,9 @@
       <register name="DF"/>
     </unaffected>
   </prototype>
+  <resolveprototype name="__stdcall16far/__stdcall16near">
+     <model name="__stdcall16near"/>      <!-- The default case -->
+     <model name="__stdcall16far"/>
+  </resolveprototype>
+  <eval_current_prototype name="__stdcall16far/__stdcall16near"/>
 </compiler_spec>
