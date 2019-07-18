@@ -16,12 +16,11 @@
 package ghidra.app.util.opinion;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.*;
 
 import generic.continues.GenericFactory;
 import generic.continues.RethrowContinuesFactory;
-import ghidra.app.util.MemoryBlockUtil;
+import ghidra.app.util.MemoryBlockUtils;
 import ghidra.app.util.Option;
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.ByteProvider;
@@ -34,6 +33,7 @@ import ghidra.app.util.importer.MessageLog;
 import ghidra.app.util.importer.MessageLogContinuesFactory;
 import ghidra.framework.model.DomainObject;
 import ghidra.framework.options.Options;
+import ghidra.program.database.mem.FileBytes;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.*;
@@ -112,10 +112,10 @@ public class PeLoader extends AbstractPeDebugLoader {
 		FileHeader fileHeader = ntHeader.getFileHeader();
 
 		monitor.setMessage("Completing PE header parsing...");
-
+		FileBytes fileBytes = MemoryBlockUtils.createFileBytes(program, provider);
 		try {
 			Map<Integer, Address> sectionNumberToAddress =
-				processMemoryBlocks(pe, program, monitor, log);
+				processMemoryBlocks(pe, program, fileBytes, monitor, log);
 
 			monitor.setCancelEnabled(false);
 			optionalHeader.processDataDirectories(monitor);
@@ -564,7 +564,8 @@ public class PeLoader extends AbstractPeDebugLoader {
 	}
 
 	private Map<Integer, Address> processMemoryBlocks(PortableExecutable pe, Program prog,
-			TaskMonitor monitor, MessageLog log) throws AddressOverflowException, IOException {
+			FileBytes fileBytes, TaskMonitor monitor, MessageLog log)
+			throws AddressOverflowException, IOException {
 
 		AddressFactory af = prog.getAddressFactory();
 		AddressSpace space = af.getDefaultAddressSpace();
@@ -579,35 +580,21 @@ public class PeLoader extends AbstractPeDebugLoader {
 		FileHeader fileHeader = ntHeader.getFileHeader();
 		OptionalHeader optionalHeader = ntHeader.getOptionalHeader();
 
-		MemoryBlockUtil mbu = new MemoryBlockUtil(prog);
-
 		SectionHeader[] sections = fileHeader.getSectionHeaders();
 		if (sections.length == 0) {
 			Msg.warn(this, "No sections found");
 		}
 
 		// Header block
-		try {
-			int virtualSize = getVirtualSize(pe, sections, space);
-			long addr = optionalHeader.getImageBase();
-			Address address = space.getAddress(addr);
+		int virtualSize = getVirtualSize(pe, sections, space);
+		long addr = optionalHeader.getImageBase();
+		Address address = space.getAddress(addr);
 
-			boolean r = true;
-			boolean w = false;
-			boolean x = false;
-
-			try (InputStream dataStream = fileHeader.getDataStream()) {
-				mbu.createInitializedBlock(HEADERS, address, dataStream, virtualSize, "", "", r, w,
-					x, monitor);
-			}
-		}
-		finally {
-			log.appendMsg(mbu.getMessages());
-			mbu.dispose();
-			mbu = null;
-		}
-
-		mbu = new MemoryBlockUtil(prog);
+		boolean r = true;
+		boolean w = false;
+		boolean x = false;
+		MemoryBlockUtils.createInitializedBlock(prog, false, HEADERS, address, fileBytes, 0,
+			virtualSize, "", "", r, w, x, log);
 
 		// Section blocks
 		try {
@@ -616,36 +603,35 @@ public class PeLoader extends AbstractPeDebugLoader {
 					return sectionNumberToAddress;
 				}
 
-				long addr = sections[i].getVirtualAddress() + optionalHeader.getImageBase();
+				addr = sections[i].getVirtualAddress() + optionalHeader.getImageBase();
 
-				Address address = space.getAddress(addr);
+				address = space.getAddress(addr);
 
-				boolean r = ((sections[i].getCharacteristics() &
+				r = ((sections[i].getCharacteristics() &
 					SectionFlags.IMAGE_SCN_MEM_READ.getMask()) != 0x0);
-				boolean w = ((sections[i].getCharacteristics() &
+				w = ((sections[i].getCharacteristics() &
 					SectionFlags.IMAGE_SCN_MEM_WRITE.getMask()) != 0x0);
-				boolean x = ((sections[i].getCharacteristics() &
+				x = ((sections[i].getCharacteristics() &
 					SectionFlags.IMAGE_SCN_MEM_EXECUTE.getMask()) != 0x0);
 
 				int rawDataSize = sections[i].getSizeOfRawData();
-				int virtualSize = sections[i].getVirtualSize();
+				virtualSize = sections[i].getVirtualSize();
 				if (rawDataSize != 0) {
-					try (InputStream dataStream = sections[i].getDataStream()) {
-						int dataSize =
-							((rawDataSize > virtualSize && virtualSize > 0) || rawDataSize < 0)
-									? virtualSize
-									: rawDataSize;
-						if (ntHeader.checkRVA(dataSize) ||
-							(0 < dataSize && dataSize < pe.getFileLength())) {
-							if (!ntHeader.checkRVA(dataSize)) {
-								Msg.warn(this, "OptionalHeader.SizeOfImage < size of " +
-									sections[i].getName() + " section");
-							}
-							mbu.createInitializedBlock(sections[i].getReadableName(), address,
-								dataStream, dataSize, "", "", r, w, x, monitor);
-
-							sectionNumberToAddress.put(i + 1, address);
+					int dataSize =
+						((rawDataSize > virtualSize && virtualSize > 0) || rawDataSize < 0)
+								? virtualSize
+								: rawDataSize;
+					if (ntHeader.checkRVA(dataSize) ||
+						(0 < dataSize && dataSize < pe.getFileLength())) {
+						if (!ntHeader.checkRVA(dataSize)) {
+							Msg.warn(this, "OptionalHeader.SizeOfImage < size of " +
+								sections[i].getName() + " section");
 						}
+						long offset = sections[i].getPointerToRawData();
+						MemoryBlockUtils.createInitializedBlock(prog, false,
+							sections[i].getReadableName(), address, fileBytes, offset, dataSize, "",
+							"", r, w, x, log);
+						sectionNumberToAddress.put(i + 1, address);
 					}
 					if (rawDataSize == virtualSize) {
 						continue;
@@ -672,8 +658,8 @@ public class PeLoader extends AbstractPeDebugLoader {
 				else {
 					int dataSize = (virtualSize > 0 || rawDataSize < 0) ? virtualSize : 0;
 					if (dataSize > 0) {
-						mbu.createUninitializedBlock(false, sections[i].getReadableName(), address,
-							dataSize, "", "", r, w, x);
+						MemoryBlockUtils.createUninitializedBlock(prog, false,
+							sections[i].getReadableName(), address, dataSize, "", "", r, w, x, log);
 						sectionNumberToAddress.put(i + 1, address);
 					}
 				}
@@ -685,11 +671,6 @@ public class PeLoader extends AbstractPeDebugLoader {
 				throw new IllegalStateException(ise);
 			}
 			Msg.warn(this, "Section header processing aborted");
-		}
-		finally {
-			log.appendMsg(mbu.getMessages());
-			mbu.dispose();
-			mbu = null;
 		}
 
 		return sectionNumberToAddress;
