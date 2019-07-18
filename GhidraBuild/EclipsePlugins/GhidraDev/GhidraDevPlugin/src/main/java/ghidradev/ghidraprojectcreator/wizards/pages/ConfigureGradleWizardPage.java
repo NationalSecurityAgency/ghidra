@@ -149,7 +149,7 @@ public class ConfigureGradleWizardPage extends WizardPage {
 				GhidraApplicationLayout ghidraLayout = new GhidraApplicationLayout(ghidraDir);
 				ApplicationProperties props = ghidraLayout.getApplicationProperties();
 				gradleVersion =
-					props.getProperty(ApplicationProperties.APPLICATION_GRADLE_VERSION_PROPERTY);
+					props.getProperty(ApplicationProperties.APPLICATION_GRADLE_MIN_PROPERTY);
 				if (gradleVersion != null && !gradleVersion.isEmpty()) {
 					setDescription("Configure Gradle.  Version " + gradleVersion + " is expected.");
 				}
