@@ -26,6 +26,7 @@ import org.jdesktop.animation.timing.TimingTargetAdapter;
 import org.jdesktop.animation.timing.interpolation.PropertySetter;
 
 import generic.util.WindowUtilities;
+import generic.util.image.ImageUtils;
 import ghidra.util.Msg;
 import ghidra.util.bean.GGlassPane;
 import ghidra.util.bean.GGlassPanePainter;
@@ -241,12 +242,18 @@ public class AnimationUtils {
 		return driver.animator;
 	}
 
-	public static GGlassPane getGlassPane(Component component) {
+	/**
+	 * Returns the {@link GGlassPane} for the given component
+	 * 
+	 * @param c the component
+	 * @return the glass pane
+	 */
+	public static GGlassPane getGlassPane(Component c) {
 
 		// TODO: validate component has been realized? ...check for window, but that would
 		//       then put the onus on the client
 
-		Window window = WindowUtilities.windowForComponent(component);
+		Window window = WindowUtilities.windowForComponent(c);
 		if (window instanceof JFrame) {
 			JFrame frame = (JFrame) window;
 			Component glass = frame.getGlassPane();
@@ -376,7 +383,7 @@ public class AnimationUtils {
 		FocusPainter(Component component, double max) {
 			this.component = component;
 			this.max = max;
-			image = paintImage();
+			image = ImageUtils.createImage(component);
 		}
 
 		void setPercentComplete(double percent) {
@@ -445,16 +452,6 @@ public class AnimationUtils {
 				RenderingHints.VALUE_INTERPOLATION_BILINEAR);
 
 			g.drawImage(image, x, y, width, height, null);
-		}
-
-		private Image paintImage() {
-			Rectangle bounds = component.getBounds();
-			BufferedImage bufferedImage =
-				new BufferedImage(bounds.width, bounds.height, BufferedImage.TYPE_INT_ARGB);
-			Graphics g = bufferedImage.getGraphics();
-			component.paint(g);
-			g.dispose();
-			return bufferedImage;
 		}
 	}
 
@@ -530,7 +527,7 @@ public class AnimationUtils {
 		PointToComponentPainter(Point startPoint, Component component) {
 			this.startPoint = startPoint;
 			this.component = component;
-			image = paintImage();
+			image = ImageUtils.createImage(component);
 		}
 
 		void setPercentComplete(double percent) {
@@ -564,16 +561,6 @@ public class AnimationUtils {
 			// the display; at 0% we want to be at our default location
 			// 
 			g2d.drawImage(image, (int) currentX, (int) currentY, scaledWidth, scaledHeight, null);
-		}
-
-		private Image paintImage() {
-			Rectangle bounds = component.getBounds();
-			BufferedImage bufferedImage =
-				new BufferedImage(bounds.width, bounds.height, BufferedImage.TYPE_INT_ARGB);
-			Graphics g = bufferedImage.getGraphics();
-			component.paint(g);
-			g.dispose();
-			return bufferedImage;
 		}
 	}
 
@@ -806,7 +793,7 @@ public class AnimationUtils {
 
 		RotatePainter(Component component) {
 			this.component = component;
-			image = paintImage();
+			image = ImageUtils.createImage(component);
 		}
 
 		void setPercentComplete(double percent) {
@@ -880,16 +867,6 @@ public class AnimationUtils {
 			int ih = emphasizedBounds.height;
 			g.drawRect(offsetX, offsetY, iw, ih);
 			g.drawImage(image, offsetX, offsetY, iw, ih, null);
-		}
-
-		private Image paintImage() {
-			Rectangle bounds = component.getBounds();
-			BufferedImage bufferedImage =
-				new BufferedImage(bounds.width, bounds.height, BufferedImage.TYPE_INT_ARGB);
-			Graphics g = bufferedImage.getGraphics();
-			component.paint(g);
-			g.dispose();
-			return bufferedImage;
 		}
 	}
 
@@ -1001,7 +978,7 @@ public class AnimationUtils {
 
 		PulsePainter(Component component) {
 			this.component = component;
-			image = paintImage();
+			image = ImageUtils.createImage(component);
 		}
 
 		void setEmphasis(double emphasis) {
@@ -1032,16 +1009,6 @@ public class AnimationUtils {
 
 			g.drawImage(image, offsetX, offsetY, width, height, null);
 		}
-
-		private Image paintImage() {
-			Rectangle bounds = component.getBounds();
-			BufferedImage bufferedImage =
-				new BufferedImage(bounds.width, bounds.height, BufferedImage.TYPE_INT_ARGB);
-			Graphics g = bufferedImage.getGraphics();
-			component.paint(g);
-			g.dispose();
-			return bufferedImage;
-		}
 	}
 
 	private static class ShakePainter implements GGlassPanePainter {
@@ -1051,7 +1018,7 @@ public class AnimationUtils {
 
 		ShakePainter(Component component) {
 			this.component = component;
-			image = paintImage();
+			image = ImageUtils.createImage(component);
 		}
 
 		@Override
@@ -1090,16 +1057,6 @@ public class AnimationUtils {
 
 			g2d.rotate(lastDirection, emphasizedBounds.getCenterX(), emphasizedBounds.getCenterY());
 			g.drawImage(image, offsetX, offsetY, width, height, null);
-		}
-
-		private Image paintImage() {
-			Rectangle bounds = component.getBounds();
-			BufferedImage bufferedImage =
-				new BufferedImage(bounds.width, bounds.height, BufferedImage.TYPE_INT_ARGB);
-			Graphics g = bufferedImage.getGraphics();
-			component.paint(g);
-			g.dispose();
-			return bufferedImage;
 		}
 	}
 

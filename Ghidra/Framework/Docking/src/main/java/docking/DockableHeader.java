@@ -19,7 +19,6 @@ import java.awt.*;
 import java.awt.dnd.*;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseListener;
-import java.awt.image.BufferedImage;
 import java.util.*;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -35,6 +34,7 @@ import docking.help.Help;
 import docking.help.HelpService;
 import docking.util.AnimationUtils;
 import generic.util.WindowUtilities;
+import generic.util.image.ImageUtils;
 import ghidra.framework.OperatingSystem;
 import ghidra.framework.Platform;
 import ghidra.util.HelpLocation;
@@ -494,7 +494,7 @@ public class DockableHeader extends GenericHeader
 
 		EmphasizeDockableComponentPainter(Component component, Set<Component> otherComponents) {
 			this.component = component;
-			this.image = paintImage(component);
+			this.image = ImageUtils.createImage(component);
 
 			for (Component otherComponent : otherComponents) {
 				ComponentPaintInfo info = new ComponentPaintInfo(otherComponent);
@@ -509,7 +509,7 @@ public class DockableHeader extends GenericHeader
 
 			ComponentPaintInfo(Component component) {
 				this.myComponent = component;
-				this.myImage = paintImage(component);
+				this.myImage = ImageUtils.createImage(component);
 			}
 
 			Image getImage() {
@@ -627,16 +627,6 @@ public class DockableHeader extends GenericHeader
 
 				g2d.drawImage(info.getImage(), offsetX, offsetY, w, h, null);
 			}
-		}
-
-		private Image paintImage(Component c) {
-			Rectangle bounds = c.getBounds();
-			BufferedImage bufferedImage =
-				new BufferedImage(bounds.width, bounds.height, BufferedImage.TYPE_INT_ARGB);
-			Graphics g = bufferedImage.getGraphics();
-			c.paint(g);
-			g.dispose();
-			return bufferedImage;
 		}
 	}
 
