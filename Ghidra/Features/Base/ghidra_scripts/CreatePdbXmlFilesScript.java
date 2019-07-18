@@ -13,12 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import java.io.*;
+import java.util.*;
+
 import ghidra.app.script.GhidraScript;
 import ghidra.framework.*;
-
-import java.io.*;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  *
@@ -46,10 +45,10 @@ public class CreatePdbXmlFilesScript extends GhidraScript {
 		// Get appropriate pdb.exe file
 		String pdbExeLocation = Application.getOSFile("pdb.exe").getAbsolutePath();
 
-		String[] choices = new String[] { "single file", "directory of files" };
-		String fileOrDir =
-			askChoice("PDB file or directory", "Would you like to operate on a single "
-				+ ".pdb file or a directory of .pdb files?", choices, choices[1]);
+		List<String> choices = Arrays.asList("single file", "directory of files");
+		String fileOrDir = askChoice("PDB file or directory",
+			"Would you like to operate on a single " + ".pdb file or a directory of .pdb files?",
+			choices, choices.get(1));
 
 		File pdbParentDir;
 		String pdbName;
@@ -57,7 +56,7 @@ public class CreatePdbXmlFilesScript extends GhidraScript {
 		int filesCreated = 0;
 
 		try {
-			if (fileOrDir.equals(choices[0])) {
+			if (fileOrDir.equals(choices.get(0))) {
 				File pdbFile = askFile("Choose a PDB file", "OK");
 
 				if (!pdbFile.exists()) {
@@ -82,12 +81,11 @@ public class CreatePdbXmlFilesScript extends GhidraScript {
 			}
 			else {
 				// Do recursive processing
-				File pdbDir =
-					askDirectory(
-						"Choose PDB root folder (performs recursive search for .pdb files)", "OK");
+				File pdbDir = askDirectory(
+					"Choose PDB root folder (performs recursive search for .pdb files)", "OK");
 
 				// Get list of files to process
-				List<File> pdbFiles = new ArrayList<File>();
+				List<File> pdbFiles = new ArrayList<>();
 				getPDBFiles(pdbDir, pdbFiles);
 
 				int createdFilesCounter = 0;
@@ -157,8 +155,8 @@ public class CreatePdbXmlFilesScript extends GhidraScript {
 				createdFile.delete();
 			}
 
-			throw new IOException("At file '" + pdbName +
-				"':\nAbnormal termination of 'pdb.exe' process.");
+			throw new IOException(
+				"At file '" + pdbName + "':\nAbnormal termination of 'pdb.exe' process.");
 		}
 	}
 

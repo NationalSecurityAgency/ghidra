@@ -220,9 +220,9 @@ public class BuildResultState extends GhidraScript {
 //		}
 //		
 		Register[] regs = currentProgram.getLanguage().getRegisters();
+		List<Register> registers = Arrays.asList(regs);
 		try {
-			Register reg =
-				askChoice("Results Query", "Select Register:", Arrays.asList(regs), null);
+			Register reg = askChoice("Results Query", "Select Register:", registers, null);
 			while (reg != null) {
 				boolean first = true;
 				boolean preserved = true;
@@ -242,7 +242,7 @@ public class BuildResultState extends GhidraScript {
 					System.out.println(reg.getName() + " value is preserved.");
 				}
 
-				reg = askChoice("Results Query", "Select Register:", regs, null);
+				reg = askChoice("Results Query", "Select Register:", registers, null);
 			}
 		}
 		catch (CancelledException e) {

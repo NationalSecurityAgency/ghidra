@@ -18,42 +18,21 @@
 //  Subfolders at a specific depth from this root form the roots of individual libraries
 //    Library Name, Version, and Variant are created from the directory path elements
 //@category FunctionID
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.FileReader;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
+import java.io.*;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.TreeMap;
-import java.util.TreeSet;
 
 import generic.hash.FNV1a64MessageDigest;
 import generic.hash.MessageDigest;
 import ghidra.app.script.GhidraScript;
-import ghidra.feature.fid.db.FidDB;
-import ghidra.feature.fid.db.FidFile;
-import ghidra.feature.fid.db.FidFileManager;
-import ghidra.feature.fid.db.LibraryRecord;
+import ghidra.feature.fid.db.*;
 import ghidra.feature.fid.hash.FidHashQuad;
-import ghidra.feature.fid.service.FidPopulateResult;
+import ghidra.feature.fid.service.*;
 import ghidra.feature.fid.service.FidPopulateResult.Disposition;
-import ghidra.feature.fid.service.FidPopulateResultReporter;
-import ghidra.feature.fid.service.FidService;
-import ghidra.feature.fid.service.Location;
-import ghidra.framework.model.DomainFile;
-import ghidra.framework.model.DomainFolder;
-import ghidra.framework.model.DomainObject;
+import ghidra.framework.model.*;
 import ghidra.program.database.ProgramContentHandler;
 import ghidra.program.model.lang.LanguageID;
-import ghidra.program.model.listing.Function;
-import ghidra.program.model.listing.FunctionIterator;
-import ghidra.program.model.listing.FunctionManager;
-import ghidra.program.model.listing.Program;
+import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
@@ -122,7 +101,7 @@ public class CreateMultipleLibraries extends GhidraScript {
 				}
 			}
 			outputLine("List of unresolved symbols:");
-			TreeSet<String> symbols = new TreeSet<String>();
+			TreeSet<String> symbols = new TreeSet<>();
 			for (Location location : result.getUnresolvedSymbols()) {
 				symbols.add(location.getFunctionName());
 			}
@@ -183,7 +162,7 @@ public class CreateMultipleLibraries extends GhidraScript {
 	private boolean checkForDuplicate(ArrayList<DomainFile> programs) throws CancelledException {
 		String fullName =
 			currentLibraryName + ':' + currentLibraryVersion + ':' + currentLibraryVariant;
-		ArrayList<Long> hashList = new ArrayList<Long>();
+		ArrayList<Long> hashList = new ArrayList<>();
 		for (int i = 0; i < programs.size(); ++i) {
 			monitor.checkCanceled();
 			try {
@@ -216,7 +195,7 @@ public class CreateMultipleLibraries extends GhidraScript {
 	private boolean detectDups(DomainFolder folder) {
 		boolean isDuplicate = false;
 		try {
-			ArrayList<DomainFile> programs = new ArrayList<DomainFile>();
+			ArrayList<DomainFile> programs = new ArrayList<>();
 			findPrograms(programs, folder);
 
 			isDuplicate = checkForDuplicate(programs);
@@ -241,7 +220,7 @@ public class CreateMultipleLibraries extends GhidraScript {
 			return;
 		}
 		BufferedReader reader = new BufferedReader(new FileReader(commonSymbolsFile));
-		commonSymbols = new LinkedList<String>();
+		commonSymbols = new LinkedList<>();
 		String line = reader.readLine();
 		while (line != null) {
 			monitor.checkCanceled();
@@ -291,7 +270,7 @@ public class CreateMultipleLibraries extends GhidraScript {
 	}
 
 	private void populateLibrary(DomainFolder folder) {
-		ArrayList<DomainFile> programs = new ArrayList<DomainFile>();
+		ArrayList<DomainFile> programs = new ArrayList<>();
 		try {
 			findPrograms(programs, folder);
 
@@ -363,16 +342,16 @@ public class CreateMultipleLibraries extends GhidraScript {
 			// ignore, means we use console
 		}
 		if (askYesNo("Do Duplication Detection", "Do you want to detect duplicates")) {
-			duplicatemap = new TreeMap<Long, String>();
+			duplicatemap = new TreeMap<>();
 		}
 
 		List<FidFile> nonInstallationFidFiles = FidFileManager.getInstance().getUserAddedFiles();
-		Object[] FidFile = nonInstallationFidFiles.toArray();
 		if (nonInstallationFidFiles.isEmpty()) {
 			throw new FileNotFoundException("Could not find any fidb files that can be populated");
 		}
-		fidFile = (FidFile) askChoice("Choose destination FidDB",
-			"Please choose the destination FidDB for population", FidFile, FidFile[0]);
+		fidFile = askChoice("Choose destination FidDB",
+			"Please choose the destination FidDB for population", nonInstallationFidFiles,
+			nonInstallationFidFiles.get(0));
 
 		rootFolder =
 			askProjectFolder("Select root folder containing all libraries (at a depth of " +
