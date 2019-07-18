@@ -752,8 +752,9 @@ public interface Memory extends AddressSetView {
 
 	/**
 	 * Returns information ({@link AddressSourceInfo}) about the byte source at the given address.
-	 * @param address the address to query.
-	 * @return information ({@link AddressSourceInfo}) about the byte source at the given address.
+	 * @param address the address to query. Returns null if the address is not in memory.
+	 * @return information ({@link AddressSourceInfo}) about the byte source at the given address or
+	 * null if the address is not in memory.
 	 */
 	public AddressSourceInfo getAddressSourceInfo(Address address);
 }

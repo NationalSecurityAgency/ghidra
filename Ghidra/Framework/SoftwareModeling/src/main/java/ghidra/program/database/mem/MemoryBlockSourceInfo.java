@@ -99,17 +99,14 @@ public class MemoryBlockSourceInfo {
 
 	/**
 	 * Returns the offset into the {@link FileBytes} object for the given address or
-	 * -1 if this SourceInfo does not have an associated {@link FileBytes} or the address doesn't
-	 * belong to this SourceInfo.
+	 * -1 if this MemoryBlockSourceInfo does not have an associated {@link FileBytes} or the address doesn't
+	 * belong to this MemoryBlockSourceInfo.
 	 * 
 	 * @param address the address for which to get an offset into the {@link FileBytes} object.
 	 * @return  the offset into the {@link FileBytes} object for the given address. 
 	 */
 	public long getFileBytesOffset(Address address) {
-		if (!contains(address)) {
-			return -1;
-		}
-		if (subBlock instanceof FileBytesSubMemoryBlock) {
+		if (subBlock instanceof FileBytesSubMemoryBlock && contains(address)) {
 			long blockOffset = address.subtract(getMinAddress());
 			long subBlockOffset = blockOffset - subBlock.startingOffset;
 			return ((FileBytesSubMemoryBlock) subBlock).getFileBytesOffset() + subBlockOffset;
