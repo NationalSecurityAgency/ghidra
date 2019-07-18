@@ -613,10 +613,8 @@ class DefaultCompositeMember extends CompositeMember {
 					// TODO: assumes little-endian, add support for big-endian
 					bitOffset = 0;
 				}
-
-				nestedStructure.insertBitFieldAt(0, bitfieldDt.getBaseTypeSize(), bitOffset,
-					bitfieldDt.getBaseDataType(), bitfieldDt.getDeclaredBitSize(),
-					memberCopy.memberName, null);
+				insertMinimalStructureBitfield(nestedStructure, 0, memberCopy.memberName,
+					bitfieldDt, null);
 			}
 			catch (InvalidDataTypeException e) {
 				Msg.error(this, "PDB failed to add bitfield: " + e.getMessage());
@@ -654,6 +652,29 @@ class DefaultCompositeMember extends CompositeMember {
 			return "warning: zero length array forced to have one element";
 		}
 		return null;
+	}
+
+	/**
+	 * Insert a structure bitfield without creating additional undefined padding
+	 * components (i.e., keep to minimal storage size).
+	 * @param struct structure
+	 * @param memberOffset byte offset within structure
+	 * @param memberName member name
+	 * @param bitfieldDt bitfield datatype with minimal storage
+	 * @param comment member comment
+	 * @return newly inserted structure bitfield component
+	 */
+	private static DataTypeComponent insertMinimalStructureBitfield(Structure struct,
+			int memberOffset, String memberName, PdbBitField bitfieldDt, String comment) {
+		try {
+			int baseOffsetAdjustment = bitfieldDt.getBitOffsetWithinBase() / 8;
+			return struct.insertBitFieldAt(memberOffset + baseOffsetAdjustment,
+				bitfieldDt.getStorageSize(), bitfieldDt.getBitOffset(),
+				bitfieldDt.getBaseDataType(), bitfieldDt.getDeclaredBitSize(), memberName, comment);
+		}
+		catch (InvalidDataTypeException e) {
+			throw new RuntimeException(e); // unexpected
+		}
 	}
 
 	private boolean isRelatedBitField(int conflictOffset, DefaultCompositeMember newMember) {
@@ -788,12 +809,8 @@ class DefaultCompositeMember extends CompositeMember {
 						// TODO: assumes little-endian, add support for big-endian
 						bitOffset = 0;
 					}
-
-					((Structure) memberDataType).insertBitFieldAt(member.memberOffset,
-						bitfieldDt.getStorageSize(), bitOffset, bitfieldDt.getBaseDataType(),
-						bitfieldDt.getDeclaredBitSize(), member.getName(),
-						member.getStructureMemberComment());
-
+					insertMinimalStructureBitfield((Structure) memberDataType, member.memberOffset,
+						member.getName(), bitfieldDt, member.getStructureMemberComment());
 				}
 				else {
 					((Structure) memberDataType).insertAtOffset(member.memberOffset,
@@ -852,10 +869,8 @@ class DefaultCompositeMember extends CompositeMember {
 				// This assumes bit-field packing does not mix type size together as does gcc
 				bfGroup.addToGroup(member);
 
-				((Structure) memberDataType).insertBitFieldAt(member.memberOffset,
-					bitfieldDt.getStorageSize(), bitOffset, bitfieldDt.getBaseDataType(),
-					bitfieldDt.getDeclaredBitSize(), member.getName(),
-					member.getStructureMemberComment());
+				insertMinimalStructureBitfield((Structure) memberDataType, member.memberOffset,
+					member.getName(), bitfieldDt, member.getStructureMemberComment());
 
 				member.parent = this;
 
