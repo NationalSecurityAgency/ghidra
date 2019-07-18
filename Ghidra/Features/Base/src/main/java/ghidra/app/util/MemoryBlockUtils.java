@@ -27,6 +27,7 @@ import ghidra.program.model.address.AddressOverflowException;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.*;
 import ghidra.util.Msg;
+import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.task.TaskMonitor;
 
@@ -106,6 +107,8 @@ public class MemoryBlockUtils {
 		}
 		return null;
 	}
+
+
 
 	/**
 	 * Creates a new bit mapped memory block. (A bit mapped block is a block where each byte value
@@ -189,6 +192,9 @@ public class MemoryBlockUtils {
 
 	/**
 	 * Creates a new initialized block in memory using the bytes from a {@link FileBytes} object.
+	 * If there is a conflict when creating this block (some other block occupies at least some
+	 * of the addresses that would be occupied by the new block), then an attempt will be made
+	 * to create the new block in an overlay.
 	 * 
 	 * @param program the program in which to create the block.
 	 * @param isOverlay if true, the block will be created in a new overlay space for that block
@@ -206,7 +212,6 @@ public class MemoryBlockUtils {
 	 * @return the new created block
 	 * @throws AddressOverflowException if the address 
 	 */
-
 	public static MemoryBlock createInitializedBlock(Program program, boolean isOverlay,
 			String name, Address start, FileBytes fileBytes, long offset, long length,
 			String comment, String source, boolean r, boolean w, boolean x, MessageLog log)
@@ -218,20 +223,73 @@ public class MemoryBlockUtils {
 		}
 		MemoryBlock block;
 		try {
-			block = program.getMemory().createInitializedBlock(name, start, fileBytes, offset,
-				length, isOverlay);
-		}
-		catch (MemoryConflictException e) {
 			try {
+				block = program.getMemory().createInitializedBlock(name, start, fileBytes, offset,
+					length, isOverlay);
+			}
+			catch (MemoryConflictException e) {
 				block = program.getMemory().createInitializedBlock(name, start, fileBytes, offset,
 					length, true);
 			}
-			catch (LockException | DuplicateNameException | MemoryConflictException e1) {
-				throw new RuntimeException(e);
+		}
+		catch (LockException | DuplicateNameException | MemoryConflictException e) {
+			throw new RuntimeException(e);
+		}
+
+		setBlockAttributes(block, comment, source, r, w, x);
+		adjustFragment(program, block.getStart(), name);
+		return block;
+	}
+
+	/**
+	 * Creates a new initialized block in memory using the bytes from the given input stream.
+	 * If there is a conflict when creating this block (some other block occupies at least some
+	 * of the addresses that would be occupied by the new block), then an attempt will be made
+	 * to create the new block in an overlay.
+	 * 
+	 * @param program the program in which to create the block.
+	 * @param isOverlay if true, the block will be created in a new overlay space for that block
+	 * @param name the name of the new block.
+	 * @param start the starting address of the new block.
+	 * @param dataInput the {@link InputStream} object that supplies the bytes for this block.
+	 * @param dataLength the length of the new block
+	 * @param comment the comment text to associate with the new block.
+	 * @param source the source of the block (This field is not well defined - currently another comment)
+	 * @param r the read permission for the new block.
+	 * @param w the write permission for the new block.
+	 * @param x the execute permission for the new block.
+	 * @param log a {@link MessageLog} for appending error messages
+	 * @param monitor the monitor for canceling this potentially long running operation.
+	 * @return the new created block
+	 * @throws AddressOverflowException if the address 
+	 */
+	public static MemoryBlock createInitializedBlock(Program program, boolean isOverlay,
+			String name, Address start, InputStream dataInput, long dataLength, String comment,
+			String source, boolean r, boolean w, boolean x, MessageLog log, TaskMonitor monitor)
+			throws AddressOverflowException {
+
+		if (!program.hasExclusiveAccess()) {
+			log.appendMsg("Failed to create memory block: exclusive access/checkout required");
+			return null;
+		}
+
+		Memory memory = program.getMemory();
+		MemoryBlock block;
+		try {
+			try {
+				block = memory.createInitializedBlock(name, start, dataInput, dataLength,
+					monitor, isOverlay);
+			}
+			catch (MemoryConflictException e) {
+					block = memory.createInitializedBlock(name, start, dataInput, dataLength,
+					monitor, true);
 			}
 		}
-		catch (LockException | DuplicateNameException e) {
+		catch (LockException | DuplicateNameException | MemoryConflictException e) {
 			throw new RuntimeException(e);
+		}
+		catch (CancelledException e) {
+			return null;
 		}
 
 		setBlockAttributes(block, comment, source, r, w, x);
