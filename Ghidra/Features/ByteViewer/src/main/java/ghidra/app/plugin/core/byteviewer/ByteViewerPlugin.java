@@ -19,9 +19,6 @@ import java.util.*;
 
 import org.jdom.Element;
 
-import docking.ActionContext;
-import docking.action.DockingAction;
-import docking.action.ToolBarData;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.events.*;
 import ghidra.app.plugin.PluginCategoryNames;
@@ -35,7 +32,6 @@ import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramLocation;
 import ghidra.program.util.ProgramSelection;
 import ghidra.util.SystemUtilities;
-import resources.ResourceManager;
 import utility.function.Callback;
 
 /**
@@ -73,23 +69,6 @@ public class ByteViewerPlugin extends Plugin {
 		super(tool);
 
 		connectedProvider = new ProgramByteViewerComponentProvider(tool, this, true);
-
-		createActions();
-	}
-
-	private void createActions() {
-		DockingAction action = new DockingAction("Byte Viewer", getName()) {
-			@Override
-			public void actionPerformed(ActionContext context) {
-				showConnectedProvider();
-			}
-		};
-		action.setToolBarData(
-			new ToolBarData(ResourceManager.loadImage("images/binaryData.gif"), "View"));
-
-		action.setDescription("Display Bytes");
-		action.setEnabled(true);
-		tool.addAction(action);
 	}
 
 	protected void showConnectedProvider() {

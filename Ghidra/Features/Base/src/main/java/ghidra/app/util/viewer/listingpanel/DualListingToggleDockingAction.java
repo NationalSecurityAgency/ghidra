@@ -28,10 +28,10 @@ abstract class DualListingToggleDockingAction extends ToggleDockingAction {
 	 * Constructor that creates a toggle action for a dual listing.
 	 * @param name the name for this action
 	 * @param owner the owner of this action
-	 * @param isKeybindingManaged true if this action's key binding should be managed
+	 * @param supportsKeyBindings true if this action's key binding should be managed
 	 */
-	public DualListingToggleDockingAction(String name, String owner, boolean isKeybindingManaged) {
-		super(name, owner, isKeybindingManaged);
+	public DualListingToggleDockingAction(String name, String owner, boolean supportsKeyBindings) {
+		super(name, owner, supportsKeyBindings);
 	}
 
 	/**

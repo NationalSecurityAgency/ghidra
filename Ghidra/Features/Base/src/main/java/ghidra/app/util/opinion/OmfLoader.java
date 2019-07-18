@@ -24,7 +24,6 @@ import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.bin.format.omf.*;
 import ghidra.app.util.bin.format.omf.OmfFixupRecord.Subrecord;
-import ghidra.app.util.importer.MemoryConflictHandler;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressOverflowException;
@@ -108,8 +107,7 @@ public class OmfLoader extends AbstractLibrarySupportLoader {
 
 	@Override
 	protected void load(ByteProvider provider, LoadSpec loadSpec, List<Option> options,
-			Program program, MemoryConflictHandler handler, TaskMonitor monitor, MessageLog log)
-			throws IOException {
+			Program program, TaskMonitor monitor, MessageLog log) throws IOException {
 
 		OmfFileHeader header = null;
 		BinaryReader reader = OmfFileHeader.createReader(provider);
@@ -125,7 +123,7 @@ public class OmfLoader extends AbstractLibrarySupportLoader {
 			}
 			log.appendMsg("File was corrupted - leaving partial program " + provider.getName());
 		}
-		MemoryBlockUtil mbu = new MemoryBlockUtil(program, handler);
+		MemoryBlockUtil mbu = new MemoryBlockUtil(program);
 		int id = program.startTransaction("loading program from OMF");
 		boolean success = false;
 		try {

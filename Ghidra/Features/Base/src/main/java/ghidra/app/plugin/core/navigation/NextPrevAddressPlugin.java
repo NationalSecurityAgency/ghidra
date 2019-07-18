@@ -368,7 +368,7 @@ public class NextPrevAddressPlugin extends Plugin {
 
 		private NavigationAction(Navigatable navigatable, LocationMemento location, boolean isNext,
 				NavigationHistoryService service, CodeUnitFormat formatter) {
-			super("NavigationAction: " + ++idCount, NextPrevAddressPlugin.this.getName(), false);
+			super("NavigationAction: " + ++idCount, NextPrevAddressPlugin.this.getName());
 			this.location = location;
 			this.isNext = isNext;
 			this.service = service;

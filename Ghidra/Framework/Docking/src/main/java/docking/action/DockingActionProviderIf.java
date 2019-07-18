@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,8 +17,6 @@ package docking.action;
 
 import java.util.List;
 
-import docking.ActionContext;
-
 /**
  * An interface for objects (really Components) to implement that signals they provide actions 
  * for the Docking environment.  This interface will be called when the implementor is the source
@@ -32,9 +29,9 @@ import docking.ActionContext;
  */
 public interface DockingActionProviderIf {
 
-    /**
-     * Returns actions that are compatible with the given context.
-     * @param context the current context of the Docking system
-     */
-    public List<DockingActionIf> getDockingActions( ActionContext context );
+	/**
+	 * Returns actions that are compatible with the given context.
+	 * @return the actions
+	 */
+	public List<DockingActionIf> getDockingActions();
 }

@@ -30,14 +30,17 @@ public class JavaClassUtil {
 
 	public final static boolean isClassFile(Program program) {
 
+		AddressFactory factory = program.getAddressFactory();
 		byte[] bytes = new byte[4];
 		try {
-			Address address = program.getAddressFactory().getAddressSpace(
-				JavaLoader.CONSTANT_POOL).getMinAddress();
-			program.getMemory().getBytes(address, bytes);
+			AddressSpace space = factory.getAddressSpace(JavaLoader.CONSTANT_POOL);
+			if (space != null) {
+				Address address = space.getMinAddress();
+				program.getMemory().getBytes(address, bytes);
+			}
 		}
 		catch (Exception e) {
-			Msg.info(JavaClassUtil.class, e.getLocalizedMessage());
+			Msg.error(JavaClassUtil.class, "Exception reading program bytes: " + e.getMessage(), e);
 			return false;
 		}
 		return Arrays.equals(bytes, JavaClassConstants.MAGIC_BYTES);

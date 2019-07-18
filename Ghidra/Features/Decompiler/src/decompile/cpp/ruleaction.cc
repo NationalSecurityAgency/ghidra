@@ -1819,6 +1819,40 @@ int4 RuleDoubleShift::applyOp(PcodeOp *op,Funcdata &data)
   return 1;
 }
 
+/// \class RuleDoubleArithShift
+/// \brief Simply two sequential INT_SRIGHT: `(x s>> #c) s>> #d   =>  x s>> saturate(#c + #d)`
+///
+/// Optimized division optimization in particular can produce a sequence of signed right shifts.
+/// The shift amounts add up to the point where the sign bit has saturated the entire result.
+void RuleDoubleArithShift::getOpList(vector<uint4> &oplist) const
+
+{
+  oplist.push_back(CPUI_INT_SRIGHT);
+}
+
+int4 RuleDoubleArithShift::applyOp(PcodeOp *op,Funcdata &data)
+
+{
+  Varnode *constD = op->getIn(1);
+  if (!constD->isConstant()) return 0;
+  Varnode *shiftin = op->getIn(0);
+  if (!shiftin->isWritten()) return 0;
+  PcodeOp *shift2op = shiftin->getDef();
+  if (shift2op->code() != CPUI_INT_SRIGHT) return 0;
+  Varnode *constC = shift2op->getIn(1);
+  if (!constC->isConstant()) return 0;
+  Varnode *inVn = shift2op->getIn(0);
+  if (inVn->isFree()) return 0;
+  int4 max = op->getOut()->getSize() * 8 - 1;	// This is maximum possible shift.
+  int4 sa = (int4)constC->getOffset() + (int4)constD->getOffset();
+  if (sa <= 0) return 0;	// Something is wrong
+  if (sa > max)
+    sa = max;			// Shift amount has saturated
+  data.opSetInput(op, inVn, 0);
+  data.opSetInput(op, data.newConstant(4, sa),1);
+  return 1;
+}
+
 /// \class RuleConcatShift
 /// \brief Simplify INT_RIGHT canceling PIECE: `concat(V,W) >> c  =>  zext(V)`
 ///

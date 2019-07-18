@@ -21,7 +21,6 @@ import java.util.*;
 
 import ghidra.app.util.Option;
 import ghidra.app.util.bin.ByteProvider;
-import ghidra.app.util.importer.MemoryConflictHandler;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.listing.Program;
@@ -122,7 +121,7 @@ public class MapLoader extends AbstractLibrarySupportLoader {
 
 	@Override
 	public void load(ByteProvider provider, LoadSpec loadSpec, List<Option> options, Program prog,
-			MemoryConflictHandler handler, TaskMonitor monitor, MessageLog log) throws IOException {
+			TaskMonitor monitor, MessageLog log) throws IOException {
 
 		if (!prog.getExecutableFormat().equals(PeLoader.PE_NAME)) {
 			throw new IOException("Program must be a " + PeLoader.PE_NAME);

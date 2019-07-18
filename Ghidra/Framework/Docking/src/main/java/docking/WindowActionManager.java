@@ -72,6 +72,10 @@ public class WindowActionManager {
 		}
 	}
 
+	public DockingActionIf getToolbarAction(String actionName) {
+		return toolBarMgr.getAction(actionName);
+	}
+
 	public void update() {
 		JMenuBar menuBar = menuBarMgr.getMenuBar();
 		if (menuBar.getMenuCount() > 0) {
@@ -92,9 +96,6 @@ public class WindowActionManager {
 		toolBarMgr.dispose();
 	}
 
-	/**
-	 * Notifies the window manager that an action context update is needed.
-	 */
 	synchronized void contextChanged(ComponentPlaceholder placeHolder) {
 		placeHolderForScheduledActionUpdate = placeHolder;
 

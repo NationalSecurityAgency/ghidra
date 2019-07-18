@@ -15,26 +15,53 @@
  */
 package ghidra.util.table.actions;
 
-import javax.swing.JTable;
 import javax.swing.KeyStroke;
 
 import docking.ActionContext;
 import docking.action.*;
+import ghidra.app.events.ProgramSelectionPluginEvent;
+import ghidra.framework.plugintool.Plugin;
+import ghidra.framework.plugintool.PluginEvent;
+import ghidra.program.model.listing.Program;
+import ghidra.program.util.ProgramSelection;
 import ghidra.util.HelpLocation;
+import ghidra.util.table.GhidraTable;
 import resources.Icons;
 
 /**
- * An action to make a program selection based on the given table's selection.  The clients 
- * must implement the make selection code, as they know their own data.  Also, for the context to
+ * An action to make a program selection based on the given table's selection.  For the context to
  * work, the provider using this action must create an {@link ActionContext} that returns a 
- * context object that is the table passed to this action's constructor.
+ * context object that is the table passed to this action's constructor; otherwise, this action 
+ * will not be enabled correctly.
  */
-public abstract class MakeProgramSelectionAction extends DockingAction {
+public class MakeProgramSelectionAction extends DockingAction {
 
-	private JTable table;
+	private GhidraTable table;
 
-	public MakeProgramSelectionAction(String owner, JTable table) {
-		super("Make Selection", owner);
+	// we will have one of these fields be non-null after construction
+	private Plugin plugin;
+
+	/**
+	 * Special constructor for clients that do not have a plugin.  Clients using this 
+	 * constructor must override {@link #makeSelection(ActionContext)}.
+	 * 
+	 * @param owner the action's owner
+	 * @param table the table needed for this action
+	 */
+	public MakeProgramSelectionAction(String owner, GhidraTable table) {
+		super("Make Selection", owner, KeyBindingType.SHARED);
+	}
+
+	/**
+	 * This normal constructor for this action.  The given plugin will be used along with the
+	 * given table to fire program selection events as the action is executed.
+	 * 
+	 * @param plugin the plugin
+	 * @param table the table
+	 */
+	public MakeProgramSelectionAction(Plugin plugin, GhidraTable table) {
+		super("Make Selection", plugin.getName(), KeyBindingType.SHARED);
+		this.plugin = plugin;
 		this.table = table;
 
 		setPopupMenuData(
@@ -45,7 +72,7 @@ public abstract class MakeProgramSelectionAction extends DockingAction {
 		// this help location provides generic help; clients can override to point to their help
 		setHelpLocation(new HelpLocation("Search", "Make_Selection"));
 
-		//  null for now, but we may want a default binding in the future
+		// null for now, but we may want a default binding in the future
 		initKeyStroke(null);
 	}
 
@@ -55,11 +82,6 @@ public abstract class MakeProgramSelectionAction extends DockingAction {
 		}
 
 		setKeyBindingData(new KeyBindingData(keyStroke));
-	}
-
-	@Override
-	public boolean usesSharedKeyBinding() {
-		return true;
 	}
 
 	@Override
@@ -75,6 +97,15 @@ public abstract class MakeProgramSelectionAction extends DockingAction {
 			return false;
 		}
 
+		Program program = table.getProgram();
+		if (program == null) {
+			return false;
+		}
+
+		if (program.isClosed()) {
+			return false;
+		}
+
 		int n = table.getSelectedRowCount();
 		return n > 0;
 	}
@@ -84,5 +115,17 @@ public abstract class MakeProgramSelectionAction extends DockingAction {
 		makeSelection(context);
 	}
 
-	protected abstract void makeSelection(ActionContext context);
+	protected ProgramSelection makeSelection(ActionContext context) {
+		ProgramSelection selection = table.getProgramSelection();
+
+		if (plugin == null) {
+			throw new IllegalStateException("The Make Program Selection action cannot be used " +
+				"without a plugin unless the client overrides this method");
+		}
+
+		PluginEvent event =
+			new ProgramSelectionPluginEvent(plugin.getName(), selection, table.getProgram());
+		plugin.firePluginEvent(event);
+		return selection;
+	}
 }

@@ -915,18 +915,13 @@ public class CodeBrowserPlugin extends Plugin
 			}
 		};
 
+		// note: this action gets added later when the TableService is added
 		tableFromSelectionAction.setEnabled(false);
 		tableFromSelectionAction.setMenuBarData(new MenuData(
 			new String[] { ToolConstants.MENU_SELECTION, "Create Table From Selection" }, null,
 			"SelectUtils"));
-		tableFromSelectionAction
-			.setHelpLocation(new HelpLocation("CodeBrowserPlugin", "Selection_Table"));
-
-		// don't add the actions initially if the service isn't there
-		TableService tableService = tool.getService(TableService.class);
-		if (tableService != null) {
-			tool.addAction(tableFromSelectionAction);
-		}
+		tableFromSelectionAction.setHelpLocation(
+			new HelpLocation("CodeBrowserPlugin", "Selection_Table"));
 	}
 
 	private GhidraProgramTableModel<Address> createTableModel(CodeUnitIterator iterator,
@@ -1001,8 +996,8 @@ public class CodeBrowserPlugin extends Plugin
 	public boolean goToField(Address a, String fieldName, int occurrence, int row, int col,
 			boolean scroll) {
 
-		boolean result = SystemUtilities
-			.runSwingNow(() -> doGoToField(a, fieldName, occurrence, row, col, scroll));
+		boolean result = SystemUtilities.runSwingNow(
+			() -> doGoToField(a, fieldName, occurrence, row, col, scroll));
 		return result;
 	}
 

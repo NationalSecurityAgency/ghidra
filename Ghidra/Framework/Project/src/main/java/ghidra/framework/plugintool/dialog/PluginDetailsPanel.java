@@ -23,9 +23,9 @@ import javax.swing.KeyStroke;
 import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.StyleConstants;
 
-import docking.DockingKeyBindingAction;
 import docking.action.DockingActionIf;
 import docking.action.MenuData;
+import docking.actions.KeyBindingUtils;
 import ghidra.framework.plugintool.PluginConfigurationModel;
 import ghidra.framework.plugintool.util.PluginDescription;
 import ghidra.framework.plugintool.util.PluginStatus;
@@ -201,7 +201,7 @@ class PluginDetailsPanel extends AbstractDetailsPanel {
 			buffer.append("<TD WIDTH=\"100\">");
 			KeyStroke keyBinding = dockableAction.getKeyBinding();
 			if (keyBinding != null) {
-				String keyStrokeString = DockingKeyBindingAction.parseKeyStroke(keyBinding);
+				String keyStrokeString = KeyBindingUtils.parseKeyStroke(keyBinding);
 				insertHTMLString(keyStrokeString, locAttrSet, buffer);
 			}
 			else {

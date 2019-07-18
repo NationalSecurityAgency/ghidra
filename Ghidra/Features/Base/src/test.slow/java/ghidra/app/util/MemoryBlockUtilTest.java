@@ -15,8 +15,7 @@
  */
 package ghidra.app.util;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
@@ -24,7 +23,6 @@ import java.util.Arrays;
 
 import org.junit.*;
 
-import ghidra.app.util.importer.MemoryConflictHandler;
 import ghidra.program.database.ProgramBuilder;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.listing.Program;
@@ -51,7 +49,7 @@ public class MemoryBlockUtilTest extends AbstractGhidraHeadedIntegrationTest {
 
 		id = prog.startTransaction("test");
 		space = prog.getAddressFactory().getDefaultAddressSpace();
-		mbu = new MemoryBlockUtil(prog, MemoryConflictHandler.ALWAYS_OVERWRITE);
+		mbu = new MemoryBlockUtil(prog);
 	}
 
 	@After

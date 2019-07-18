@@ -16,19 +16,19 @@
 package ghidra.app.util.opinion;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.*;
 
 import ghidra.app.util.*;
 import ghidra.app.util.bin.ByteProvider;
-import ghidra.app.util.importer.MemoryConflictHandler;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.framework.model.DomainFolder;
 import ghidra.framework.model.DomainObject;
+import ghidra.framework.store.LockException;
+import ghidra.program.database.mem.FileBytes;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.Program;
-import ghidra.program.model.mem.Memory;
+import ghidra.program.model.mem.*;
 import ghidra.util.Msg;
 import ghidra.util.NumericUtilities;
 import ghidra.util.exception.CancelledException;
@@ -265,8 +265,7 @@ public class BinaryLoader extends AbstractProgramLoader {
 	@Override
 	protected List<Program> loadProgram(ByteProvider provider, String programName,
 			DomainFolder programFolder, LoadSpec loadSpec, List<Option> options, MessageLog log,
-			Object consumer, TaskMonitor monitor)
-			throws IOException, CancelledException {
+			Object consumer, TaskMonitor monitor) throws IOException, CancelledException {
 		LanguageCompilerSpecPair pair = loadSpec.getLanguageCompilerSpec();
 		Language importerLanguage = getLanguageService().getLanguage(pair.languageID);
 		CompilerSpec importerCompilerSpec =
@@ -274,12 +273,11 @@ public class BinaryLoader extends AbstractProgramLoader {
 
 		Address baseAddr =
 			importerLanguage.getAddressFactory().getDefaultAddressSpace().getAddress(0);
-		Program prog = createProgram(provider, programName, baseAddr, getName(),
-			importerLanguage, importerCompilerSpec, consumer);
+		Program prog = createProgram(provider, programName, baseAddr, getName(), importerLanguage,
+			importerCompilerSpec, consumer);
 		boolean success = false;
 		try {
-			success = loadInto(provider, loadSpec, options, log, prog, monitor,
-				MemoryConflictHandler.ALWAYS_OVERWRITE);
+			success = loadInto(provider, loadSpec, options, log, prog, monitor);
 			if (success) {
 				createDefaultMemoryBlocks(prog, importerLanguage, log);
 			}
@@ -299,8 +297,8 @@ public class BinaryLoader extends AbstractProgramLoader {
 
 	@Override
 	protected boolean loadProgramInto(ByteProvider provider, LoadSpec loadSpec,
-			List<Option> options, MessageLog log, Program prog, TaskMonitor monitor,
-			MemoryConflictHandler handler) throws IOException {
+			List<Option> options, MessageLog log, Program prog, TaskMonitor monitor)
+			throws IOException {
 		long length = getLength(options);
 		//File file = provider.getFile();
 		long fileOffset = getFileOffset(options);
@@ -314,10 +312,8 @@ public class BinaryLoader extends AbstractProgramLoader {
 
 		length = clipToMemorySpace(length, log, prog);
 
-		MemoryBlockUtil mbu = new MemoryBlockUtil(prog, handler);
-
-		boolean success = false;
-		try (InputStream fis = provider.getInputStream(fileOffset)) {
+		FileBytes fileBytes = MemoryBlockUtils.createFileBytes(prog, provider, fileOffset, length);
+		try {
 			AddressSpace space = prog.getAddressFactory().getDefaultAddressSpace();
 			if (baseAddr == null) {
 				baseAddr = space.getAddress(0);
@@ -325,20 +321,19 @@ public class BinaryLoader extends AbstractProgramLoader {
 			if (blockName == null || blockName.length() == 0) {
 				blockName = generateBlockName(prog, isOverlay, baseAddr.getAddressSpace());
 			}
-			if (isOverlay) {
-				mbu.createOverlayBlock(blockName, baseAddr, fis, length, "",
-					provider.getAbsolutePath(), true, false, false, monitor);
+			try {
+				MemoryBlock block = prog.getMemory().createInitializedBlock(blockName, baseAddr,
+					fileBytes, 0, length, isOverlay);
+				block.setRead(true);
+				block.setWrite(isOverlay ? false : true);
+				block.setExecute(isOverlay ? false : true);
+				block.setSourceName("Binary Loader");
+				MemoryBlockUtils.adjustFragment(prog, block.getStart(), blockName);
 			}
-			else {
-				mbu.createInitializedBlock(blockName, baseAddr, fis, length,
-					"fileOffset=" + fileOffset + ", length=" + length, provider.getAbsolutePath(),
-					true, true, true, monitor);
+			catch (LockException | MemoryConflictException e) {
+				Msg.error(this, "Unexpected exception creating memory block", e);
 			}
-			success = true;
-			String msg = mbu.getMessages();
-			if (msg.length() > 0) {
-				log.appendMsg(msg);
-			}
+			return true;
 		}
 		catch (AddressOverflowException e) {
 			throw new IllegalArgumentException("Invalid address range specified: start:" +
@@ -347,10 +342,6 @@ public class BinaryLoader extends AbstractProgramLoader {
 		catch (DuplicateNameException e) {
 			throw new IllegalArgumentException("Duplicate block name specified: " + blockName);
 		}
-		finally {
-			mbu.dispose();
-		}
-		return success;
 	}
 
 	private long clipToMemorySpace(long length, MessageLog log, Program program) {

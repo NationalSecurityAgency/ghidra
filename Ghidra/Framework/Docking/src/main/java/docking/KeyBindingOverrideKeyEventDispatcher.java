@@ -425,7 +425,9 @@ class KeyBindingOverrideKeyEventDispatcher implements KeyEventDispatcher {
 		}
 
 		KeyStroke keyStroke = KeyStroke.getKeyStrokeForEvent(event);
-		return (DockingKeyBindingAction) activeManager.getActionForKeyStroke(keyStroke);
+		DockingKeyBindingAction bindingAction =
+			(DockingKeyBindingAction) activeManager.getActionForKeyStroke(keyStroke);
+		return bindingAction;
 	}
 
 	private DockingWindowManager getActiveDockingWindowManager() {

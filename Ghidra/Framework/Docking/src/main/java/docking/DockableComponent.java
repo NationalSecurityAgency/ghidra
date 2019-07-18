@@ -65,7 +65,7 @@ public class DockableComponent extends JPanel implements ContainerListener {
 			this.componentInfo = placeholder;
 
 			winMgr = placeholder.getNode().winMgr;
-			actionMgr = winMgr.getActionManager();
+			actionMgr = winMgr.getActionToGuiMapper();
 
 			popupListener = new MouseAdapter() {
 				@Override

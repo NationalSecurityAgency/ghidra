@@ -29,8 +29,12 @@ import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.Symbol;
 import ghidra.util.HelpLocation;
 import ghidra.util.table.GhidraTable;
+import resources.ResourceManager;
 
 class ReferenceProvider extends ComponentProviderAdapter {
+
+	private static final ImageIcon ICON = ResourceManager.loadImage("images/table_go.png");
+
 	private SymbolTablePlugin plugin;
 	private SymbolReferenceModel referenceKeyModel;
 	private ReferencePanel referencePanel;
@@ -39,15 +43,21 @@ class ReferenceProvider extends ComponentProviderAdapter {
 	ReferenceProvider(SymbolTablePlugin plugin) {
 		super(plugin.getTool(), "Symbol References", plugin.getName(), ProgramActionContext.class);
 		this.plugin = plugin;
+
+		setIcon(ICON);
+		addToToolbar();
 		setHelpLocation(new HelpLocation(plugin.getName(), "Symbol_References"));
 		setWindowGroup("symbolTable");
 		setIntraGroupPosition(WindowPosition.RIGHT);
+
 		renderer = new SymbolRenderer();
 
 		referenceKeyModel =
 			new SymbolReferenceModel(plugin.getBlockModelService(), plugin.getTool());
 		referencePanel =
 			new ReferencePanel(this, referenceKeyModel, renderer, plugin.getGoToService());
+
+		addToTool();
 	}
 
 	void dispose() {
@@ -117,11 +127,6 @@ class ReferenceProvider extends ComponentProviderAdapter {
 
 	private String generateSubTitle() {
 		return "(" + referenceKeyModel.getDescription() + ")";
-	}
-
-	@Override
-	public ImageIcon getIcon() {
-		return SymbolTablePlugin.REF_GIF;
 	}
 
 	void open() {

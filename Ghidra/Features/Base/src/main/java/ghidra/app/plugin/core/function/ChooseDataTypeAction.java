@@ -41,7 +41,7 @@ public class ChooseDataTypeAction extends DockingAction {
 	private FunctionPlugin plugin;
 
 	public ChooseDataTypeAction(FunctionPlugin plugin) {
-		super(ACTION_NAME, plugin.getName(), false);
+		super(ACTION_NAME, plugin.getName(), KeyBindingType.SHARED);
 		this.plugin = plugin;
 
 		setHelpLocation(new HelpLocation("DataTypeEditors", "DataTypeSelectionDialog"));
@@ -55,11 +55,6 @@ public class ChooseDataTypeAction extends DockingAction {
 		}
 
 		setKeyBindingData(new KeyBindingData(keyStroke));
-	}
-
-	@Override
-	public boolean usesSharedKeyBinding() {
-		return true;
 	}
 
 	@Override

@@ -35,6 +35,7 @@ import ghidra.app.plugin.core.gotoquery.GoToServicePlugin;
 import ghidra.app.plugin.core.navigation.NavigationHistoryPlugin;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.database.ProgramBuilder;
+import ghidra.program.database.mem.SourceInfo;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.CodeUnit;
 import ghidra.program.model.listing.Program;
@@ -137,7 +138,7 @@ public class MemoryMapProvider1Test extends AbstractGhidraHeadedIntegrationTest 
 			String name = action.getName();
 			if (name.equals("Add Block") || name.equals("Merge Blocks") ||
 				name.equals("Delete Block") || name.equals("Set Image Base") ||
-				name.equals("View Memory Map")) {
+				name.equals("Memory Map")) {
 				assertTrue(action.isEnabled());
 			}
 			else {
@@ -556,11 +557,13 @@ public class MemoryMapProvider1Test extends AbstractGhidraHeadedIntegrationTest 
 
 		for (int i = 0; i < sources.length; i++) {
 			boolean doAssert = true;
-			for (MemoryBlock element : blocks) {
-				if (element.getSourceName().equals(sources[i]) &&
-					element.getType() == MemoryBlockType.BIT_MAPPED) {
-					assertEquals(((MappedMemoryBlock) element).getOverlayedMinAddress().toString(),
-						model.getValueAt(i, MemoryMapModel.SOURCE));
+			for (MemoryBlock memBlock : blocks) {
+				if (memBlock.getSourceName().equals(sources[i]) &&
+					memBlock.getType() == MemoryBlockType.BIT_MAPPED) {
+					SourceInfo info = memBlock.getSourceInfos().get(0);
+					Address addr = info.getMappedRange().get().getMinAddress();
+
+					assertEquals(addr.toString(), model.getValueAt(i, MemoryMapModel.SOURCE));
 					doAssert = false;
 					break;
 				}
@@ -599,11 +602,12 @@ public class MemoryMapProvider1Test extends AbstractGhidraHeadedIntegrationTest 
 		for (int i = 0; i < sources.length; i++) {
 			int idx = sources.length - 1 - i;
 			boolean doAssert = true;
-			for (MemoryBlock element : blocks) {
-				if (element.getSourceName().equals(sources[idx]) &&
-					element.getType() == MemoryBlockType.BIT_MAPPED) {
-					assertEquals(((MappedMemoryBlock) element).getOverlayedMinAddress().toString(),
-						model.getValueAt(i, MemoryMapModel.SOURCE));
+			for (MemoryBlock memBlock : blocks) {
+				if (memBlock.getSourceName().equals(sources[idx]) &&
+					memBlock.getType() == MemoryBlockType.BIT_MAPPED) {
+					SourceInfo info = memBlock.getSourceInfos().get(0);
+					Address addr = info.getMappedRange().get().getMinAddress();
+					assertEquals(addr.toString(), model.getValueAt(i, MemoryMapModel.SOURCE));
 					doAssert = false;
 					break;
 				}
@@ -667,7 +671,7 @@ public class MemoryMapProvider1Test extends AbstractGhidraHeadedIntegrationTest 
 	/////////////////////////////////////////////////////////////////////
 
 	private void showProvider() {
-		DockingActionIf action = getAction(plugin, "View Memory Map");
+		DockingActionIf action = getAction(plugin, "Memory Map");
 		performAction(action, true);
 		waitForPostedSwingRunnables();
 		provider = plugin.getMemoryMapProvider();

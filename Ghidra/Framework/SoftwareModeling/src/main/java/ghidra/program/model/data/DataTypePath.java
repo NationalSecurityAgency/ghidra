@@ -39,19 +39,20 @@ public class DataTypePath {
 	 * @param dataTypeName the name of the datatype.
 	 * @throws IllegalArgumentException if a null category path or dataTypeName is given.
 	 */
-	public DataTypePath(CategoryPath categoryPath, String datatypeName) {
-		if (datatypeName == null || categoryPath == null) {
+	public DataTypePath(CategoryPath categoryPath, String dataTypeName) {
+		if (dataTypeName == null || categoryPath == null) {
 			throw new IllegalArgumentException("null not allowed for categoryPath or datatypeName");
 		}
 		this.categoryPath = categoryPath;
-		this.dataTypeName = datatypeName;
+		this.dataTypeName = dataTypeName;
 	}
 
 	/**
 	 * Returns the categoryPath for the datatype represented by this datatype path.
 	 * (ie. the CategoryPath that contains the DataType that this DataTypePath points to).
 	 *
-	 * @return the parent {@link CategoryPath} of the {@link DataType} that this DataTypePath points to.
+	 * @return the parent {@link CategoryPath} of the {@link DataType} that this DataTypePath
+	 * points to.
 	 */
 	public CategoryPath getCategoryPath() {
 		return categoryPath;
@@ -70,6 +71,7 @@ public class DataTypePath {
 
 	/**
 	 * Returns the name of the datatype.
+	 * @return the name
 	 */
 	public String getDataTypeName() {
 		return dataTypeName;
@@ -79,6 +81,7 @@ public class DataTypePath {
 	 * Returns the full path of this datatype.  NOTE: if the datatype name contains any
 	 * "/" characters, then the resulting path string may be ambiguous as to where the
 	 * category path ends and the datatype name begins.
+	 * @return the full path
 	 */
 	public String getPath() {
 		StringBuffer buf = new StringBuffer(categoryPath.getPath());

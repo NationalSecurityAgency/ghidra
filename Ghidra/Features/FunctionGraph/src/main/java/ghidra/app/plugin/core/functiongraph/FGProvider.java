@@ -48,8 +48,7 @@ import ghidra.program.model.address.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.*;
 import ghidra.program.util.*;
-import ghidra.util.HelpLocation;
-import ghidra.util.SystemUtilities;
+import ghidra.util.*;
 import ghidra.util.datastruct.WeakDataStructureFactory;
 import ghidra.util.datastruct.WeakSet;
 import ghidra.util.exception.AssertException;
@@ -104,13 +103,20 @@ public class FGProvider extends VisualGraphComponentProvider<FGVertex, FGEdge, F
 		controller = new FGController(this, plugin);
 
 		setConnected(isConnected);
+		setIcon(FunctionGraphPlugin.ICON);
+		if (!isConnected) {
+			setTransient();
+		}
+		else {
+			addToToolbar();
+		}
 
 		decorationPanel = new DecoratorPanel(controller.getViewComponent(), isConnected);
 		setWindowMenuGroup(FunctionGraphPlugin.FUNCTION_GRAPH_NAME);
 		setWindowGroup(FunctionGraphPlugin.FUNCTION_GRAPH_NAME);
 		setDefaultWindowPosition(WindowPosition.WINDOW);
+
 		setHelpLocation(new HelpLocation("FunctionGraphPlugin", "FunctionGraphPlugin"));
-		setIcon(FunctionGraphPlugin.ICON);
 
 		addToTool();
 		addSatelliteFeature(); // must be after addToTool();
@@ -126,6 +132,12 @@ public class FGProvider extends VisualGraphComponentProvider<FGVertex, FGEdge, F
 		clipboardProvider = new FGClipboardProvider(tool, controller);
 		ClipboardService service = tool.getService(ClipboardService.class);
 		setClipboardService(service);
+	}
+
+	@Override
+	public boolean isSnapshot() {
+		// we are a snapshot when we are 'disconnected' 
+		return !isConnected();
 	}
 
 	public void setClipboardService(ClipboardService service) {
@@ -203,7 +215,7 @@ public class FGProvider extends VisualGraphComponentProvider<FGVertex, FGEdge, F
 
 	void cloneWindow() {
 		FGProvider newProvider = plugin.createNewDisconnectedProvider();
-		SystemUtilities.runSwingLater(() -> {
+		Swing.runLater(() -> {
 			newProvider.doSetProgram(currentProgram);
 
 			FGData currentData = controller.getFunctionGraphData();

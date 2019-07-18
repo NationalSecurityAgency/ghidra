@@ -43,6 +43,7 @@ import com.google.common.collect.Sets;
 import docking.*;
 import docking.action.DockingActionIf;
 import docking.action.ToggleDockingActionIf;
+import docking.actions.DockingToolActions;
 import docking.dnd.GClipboard;
 import docking.framework.DockingApplicationConfiguration;
 import docking.menu.DockingToolbarButton;
@@ -1114,7 +1115,8 @@ public abstract class AbstractDockingTest extends AbstractGenericTest {
 	}
 
 	/**
-	 * A helper method to find all actions with the given owner's name
+	 * A helper method to find all actions with the given owner's name (this will not include
+	 * reserved system actions)
 	 *
 	 * @param tool the tool containing all system actions
 	 * @param name the owner's name to match
@@ -1125,7 +1127,8 @@ public abstract class AbstractDockingTest extends AbstractGenericTest {
 	}
 
 	/**
-	 * A helper method to find all actions by name, with the given owner's name
+	 * A helper method to find all actions by name, with the given owner's name (this will not 
+	 * include reserved system actions)
 	 *
 	 * @param tool the tool containing all system actions
 	 * @param owner the owner's name
@@ -1167,7 +1170,8 @@ public abstract class AbstractDockingTest extends AbstractGenericTest {
 	/**
 	 * Finds the action by the given owner name and action name.  
 	 * If you do not know the owner name, then use  
-	 * the call {@link #getActionsByName(DockingTool, String)} instead.
+	 * the call {@link #getActionsByName(DockingTool, String)} instead  (this will not include
+	 * reserved system actions).
 	 * 
 	 * <P>Note: more specific test case subclasses provide other methods for finding actions 
 	 * when you have an owner name (which is usually the plugin name).
@@ -1192,8 +1196,18 @@ public abstract class AbstractDockingTest extends AbstractGenericTest {
 		return CollectionUtils.any(actions);
 	}
 
+	/**
+	 * Returns the action by the given name that belongs to the given provider
+	 * 
+	 * @param provider the provider
+	 * @param actionName the action name
+	 * @return the action
+	 */
 	public static DockingActionIf getLocalAction(ComponentProvider provider, String actionName) {
-		return getAction(provider.getTool(), provider.getName(), actionName);
+		DockingTool tool = provider.getTool();
+		DockingToolActions toolActions = tool.getToolActions();
+		DockingActionIf action = toolActions.getLocalAction(provider, actionName);
+		return action;
 	}
 
 	/**
@@ -1847,10 +1861,12 @@ public abstract class AbstractDockingTest extends AbstractGenericTest {
 	 *
 	 * @param tool the tool in which the provider lives
 	 * @param name the name of the provider to show
+	 * @return the newly shown provider
 	 */
-	public void showProvider(DockingTool tool, String name) {
+	public ComponentProvider showProvider(DockingTool tool, String name) {
 		ComponentProvider provider = tool.getComponentProvider(name);
 		tool.showComponentProvider(provider, true);
+		return provider;
 	}
 
 	/**

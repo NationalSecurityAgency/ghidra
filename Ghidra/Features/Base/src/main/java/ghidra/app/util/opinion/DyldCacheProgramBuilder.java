@@ -19,13 +19,16 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
+import ghidra.app.util.MemoryBlockUtils;
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.bin.format.macho.MachException;
 import ghidra.app.util.bin.format.macho.MachHeader;
 import ghidra.app.util.bin.format.macho.commands.NList;
 import ghidra.app.util.bin.format.macho.dyld.*;
-import ghidra.app.util.importer.*;
+import ghidra.app.util.importer.MessageLog;
+import ghidra.app.util.importer.MessageLogContinuesFactory;
+import ghidra.program.database.mem.FileBytes;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.listing.*;
@@ -47,17 +50,17 @@ public class DyldCacheProgramBuilder extends MachoProgramBuilder {
 	 * 
 	 * @param program The {@link Program} to build up
 	 * @param provider The {@link ByteProvider} that contains the DYLD Cache bytes
+	 * @param fileBytes Where the Mach-O's bytes came from
 	 * @param shouldProcessSymbols True if symbols should be processed; otherwise, false
 	 * @param shouldCreateDylibSections True if memory blocks should be created for DYLIB sections; 
 	 *   otherwise, false
 	 * @param log The log
-	 * @param memoryConflictHandler How to handle memory conflicts that may occur
 	 * @param monitor A cancelable task monitor
 	 */
-	protected DyldCacheProgramBuilder(Program program, ByteProvider provider,
+	protected DyldCacheProgramBuilder(Program program, ByteProvider provider, FileBytes fileBytes,
 			boolean shouldProcessSymbols, boolean shouldCreateDylibSections, MessageLog log,
-			MemoryConflictHandler memoryConflictHandler, TaskMonitor monitor) {
-		super(program, provider, log, memoryConflictHandler, monitor);
+			TaskMonitor monitor) {
+		super(program, provider, fileBytes, log, monitor);
 		this.shouldProcessSymbols = shouldProcessSymbols;
 		this.shouldCreateDylibSections = shouldCreateDylibSections;
 	}
@@ -67,20 +70,19 @@ public class DyldCacheProgramBuilder extends MachoProgramBuilder {
 	 * 
 	 * @param program The {@link Program} to build up
 	 * @param provider The {@link ByteProvider} that contains the DYLD Cache's bytes
+	 * @param fileBytes Where the Mach-O's bytes came from
 	 * @param shouldProcessSymbols True if symbols should be processed; otherwise, false
 	 * @param shouldCreateDylibSections True if memory blocks should be created for DYLIB sections; 
 	 *   otherwise, false
 	 * @param log The log
-	 * @param memoryConflictHandler How to handle memory conflicts that may occur
 	 * @param monitor A cancelable task monitor
 	 * @throws Exception if a problem occurs
 	 */
-	public static void buildProgram(Program program, ByteProvider provider,
+	public static void buildProgram(Program program, ByteProvider provider, FileBytes fileBytes,
 			boolean shouldProcessSymbols, boolean shouldCreateDylibSections, MessageLog log,
-			MemoryConflictHandler memoryConflictHandler, TaskMonitor monitor) throws Exception {
+			TaskMonitor monitor) throws Exception {
 		DyldCacheProgramBuilder dyldCacheProgramBuilder = new DyldCacheProgramBuilder(program,
-			provider, shouldProcessSymbols, shouldCreateDylibSections, log, memoryConflictHandler,
-			monitor);
+			provider, fileBytes, shouldProcessSymbols, shouldCreateDylibSections, log, monitor);
 		dyldCacheProgramBuilder.build();
 	}
 
@@ -93,20 +95,12 @@ public class DyldCacheProgramBuilder extends MachoProgramBuilder {
 		dyldCacheHeader.parseFromFile(shouldProcessSymbols, log, monitor);
 		monitor.incrementProgress(1);
 
-		try {
-			setDyldCacheImageBase();
-			processDyldCacheMemoryBlocks();
-			markupHeaders();
-			markupBranchIslands();
-			createSymbols();
-			processDylibs();
-		}
-		finally {
-			if (mbu != null) {
-				mbu.dispose();
-				mbu = null;
-			}
-		}
+		setDyldCacheImageBase();
+		processDyldCacheMemoryBlocks();
+		markupHeaders();
+		markupBranchIslands();
+		createSymbols();
+		processDylibs();
 	}
 
 	/**
@@ -135,9 +129,9 @@ public class DyldCacheProgramBuilder extends MachoProgramBuilder {
 		for (DyldCacheMappingInfo mappingInfo : mappingInfos) {
 			long offset = mappingInfo.getFileOffset();
 			long size = mappingInfo.getSize();
-			mbu.createInitializedBlock("DYLD", space.getAddress(mappingInfo.getAddress()),
-				provider.getInputStream(offset), size, "", "", mappingInfo.isRead(),
-				mappingInfo.isWrite(), mappingInfo.isExecute(), monitor);
+			MemoryBlockUtils.createInitializedBlock(program, false, "DYLD",
+				space.getAddress(mappingInfo.getAddress()), fileBytes, offset, size, "", "",
+				mappingInfo.isRead(), mappingInfo.isWrite(), mappingInfo.isExecute(), log);
 			if (offset + size > endOfMappedOffset) {
 				endOfMappedOffset = offset + size;
 			}
@@ -147,9 +141,10 @@ public class DyldCacheProgramBuilder extends MachoProgramBuilder {
 
 		if (endOfMappedOffset < provider.length()) {
 			monitor.setMessage("Processing DYLD unmapped memory block...");
-			mbu.createOverlayBlock("FILE", AddressSpace.OTHER_SPACE.getAddress(endOfMappedOffset),
-				provider.getInputStream(endOfMappedOffset), provider.length() - endOfMappedOffset,
-				"Useful bytes that don't get mapped into memory", "", false, false, false, monitor);
+			MemoryBlockUtils.createInitializedBlock(program, true, "FILE",
+				AddressSpace.OTHER_SPACE.getAddress(endOfMappedOffset), fileBytes,
+				endOfMappedOffset, provider.length() - endOfMappedOffset,
+				"Useful bytes that don't get mapped into memory", "", false, false, false, log);
 		}
 	}
 
@@ -228,10 +223,9 @@ public class DyldCacheProgramBuilder extends MachoProgramBuilder {
 		// easier
 		monitor.setMessage("Parsing DYLIB's...");
 		monitor.initialize(dyldCacheHeader.getImageInfos().size());
-		TreeSet<DyldCacheMachoInfo> dyldCacheMachoInfoSet =
-			new TreeSet<>((a, b) -> a.headerAddr.compareTo(b.headerAddr));
+		List<DyldCacheMachoInfo> infoList = new ArrayList<>(dyldCacheHeader.getImageInfos().size());
 		for (DyldCacheImageInfo dyldCacheImageInfo : dyldCacheHeader.getImageInfos()) {
-			dyldCacheMachoInfoSet.add(new DyldCacheMachoInfo(provider,
+			infoList.add(new DyldCacheMachoInfo(provider,
 				dyldCacheImageInfo.getAddress() - dyldCacheHeader.getBaseAddress(),
 				space.getAddress(dyldCacheImageInfo.getAddress()), dyldCacheImageInfo.getPath()));
 			monitor.checkCanceled();
@@ -240,8 +234,8 @@ public class DyldCacheProgramBuilder extends MachoProgramBuilder {
 
 		// Markup DyldCache Mach-O headers 
 		monitor.setMessage("Marking up DYLIB headers...");
-		monitor.initialize(dyldCacheMachoInfoSet.size());
-		for (DyldCacheMachoInfo info : dyldCacheMachoInfoSet) {
+		monitor.initialize(infoList.size());
+		for (DyldCacheMachoInfo info : infoList) {
 			info.markupHeaders();
 			monitor.checkCanceled();
 			monitor.incrementProgress(1);
@@ -249,8 +243,8 @@ public class DyldCacheProgramBuilder extends MachoProgramBuilder {
 
 		// Add DyldCache Mach-O's to program tree
 		monitor.setMessage("Adding DYLIB's to program tree...");
-		monitor.initialize(dyldCacheMachoInfoSet.size());
-		Iterator<DyldCacheMachoInfo> iter = dyldCacheMachoInfoSet.iterator();
+		monitor.initialize(infoList.size());
+		Iterator<DyldCacheMachoInfo> iter = infoList.iterator();
 		if (iter.hasNext()) {
 			DyldCacheMachoInfo curr = iter.next();
 			do {
@@ -263,13 +257,11 @@ public class DyldCacheProgramBuilder extends MachoProgramBuilder {
 			while (iter.hasNext());
 		}
 
-		// Process DyldCache DYLIB memory blocks.  Need to do it in descending (reverse) order or 
-		// the memory block splitting will be way too slow.
+		// Process DyldCache DYLIB memory blocks.
 		monitor.setMessage("Processing DYLIB memory blocks...");
-		monitor.initialize(dyldCacheMachoInfoSet.size());
-		Iterator<DyldCacheMachoInfo> descendingIter = dyldCacheMachoInfoSet.descendingIterator();
-		while (descendingIter.hasNext()) {
-			descendingIter.next().processMemoryBlocks();
+		monitor.initialize(infoList.size());
+		for (DyldCacheMachoInfo info : infoList) {
+			info.processMemoryBlocks();
 			monitor.checkCanceled();
 			monitor.incrementProgress(1);
 		}

@@ -13,7 +13,7 @@
                         <SPLIT_NODE WIDTH="208" HEIGHT="830" DIVIDER_LOCATION="675" ORIENTATION="VERTICAL">
                             <SPLIT_NODE WIDTH="322" HEIGHT="551" DIVIDER_LOCATION="348" ORIENTATION="VERTICAL">
                                 <COMPONENT_NODE TOP_INFO="0">
-                                    <COMPONENT_INFO NAME="ProgramTreePlugin" OWNER="ProgramTreePlugin" TITLE="Program Trees" ACTIVE="true" GROUP="" INSTANCE_ID="2769903892362986613" />
+                                    <COMPONENT_INFO NAME="Program Tree" OWNER="ProgramTreePlugin" TITLE="Program Trees" ACTIVE="true" GROUP="" INSTANCE_ID="2769903892362986613" />
                                 </COMPONENT_NODE>
                                 <SPLIT_NODE WIDTH="212" HEIGHT="535" DIVIDER_LOCATION="520" ORIENTATION="VERTICAL">
                                     <COMPONENT_NODE TOP_INFO="0">
@@ -34,11 +34,11 @@
                                     <SPLIT_NODE WIDTH="1475" HEIGHT="551" DIVIDER_LOCATION="632" ORIENTATION="HORIZONTAL">
                                         <SPLIT_NODE WIDTH="950" HEIGHT="985" DIVIDER_LOCATION="894" ORIENTATION="HORIZONTAL">
                                             <COMPONENT_NODE TOP_INFO="0">
-                                                <COMPONENT_INFO NAME="CodeBrowserPlugin" OWNER="CodeBrowserPlugin" TITLE="Listing: WallaceSrc" ACTIVE="true" GROUP="" INSTANCE_ID="2769903913093334120" />
+                                                <COMPONENT_INFO NAME="Listing" OWNER="CodeBrowserPlugin" TITLE="Listing: WallaceSrc" ACTIVE="true" GROUP="" INSTANCE_ID="2769903913093334120" />
                                                 <COMPONENT_INFO NAME="Test Listing" OWNER="Test Listing" TITLE="Test Listing" ACTIVE="false" GROUP="" INSTANCE_ID="2733632016422332683" />
                                             </COMPONENT_NODE>
                                             <COMPONENT_NODE TOP_INFO="0">
-                                                <COMPONENT_INFO NAME="CodeBrowserPlugin" OWNER="CodeBrowserPlugin" TITLE="[Listing: notepad.exe]" ACTIVE="false" GROUP="disconnected" INSTANCE_ID="2738354194536315852" />
+                                                <COMPONENT_INFO NAME="Listing" OWNER="CodeBrowserPlugin" TITLE="[Listing: notepad.exe]" ACTIVE="false" GROUP="disconnected" INSTANCE_ID="2738354194536315852" />
                                             </COMPONENT_NODE>
                                         </SPLIT_NODE>
                                         <SPLIT_NODE WIDTH="355" HEIGHT="1097" DIVIDER_LOCATION="542" ORIENTATION="VERTICAL">
@@ -67,7 +67,7 @@
                                     </COMPONENT_NODE>
                                 </SPLIT_NODE>
                                 <COMPONENT_NODE TOP_INFO="0">
-                                    <COMPONENT_INFO NAME="ConsolePlugin" OWNER="ConsolePlugin" TITLE="Console" ACTIVE="false" GROUP="" INSTANCE_ID="2769903913093334114" />
+                                    <COMPONENT_INFO NAME="Console" OWNER="ConsolePlugin" TITLE="Console" ACTIVE="false" GROUP="" INSTANCE_ID="2769903913093334114" />
                                 </COMPONENT_NODE>
                             </SPLIT_NODE>
                             <SPLIT_NODE WIDTH="970" HEIGHT="267" DIVIDER_LOCATION="501" ORIENTATION="HORIZONTAL">

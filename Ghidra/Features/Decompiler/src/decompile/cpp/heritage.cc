@@ -672,6 +672,13 @@ bool LoadGuard::isGuarded(const Address &addr) const
   return true;
 }
 
+/// \brief Make final determination of what range new LoadGuards are protecting
+///
+/// Actual LOAD operations are guarded with an initial version of the LoadGuard record.
+/// Now that heritage has completed, a full analysis of each LOAD is conducted, using
+/// value set analysis, to reach a conclusion about what range of stack values the
+/// LOAD might actually alias.  All new LoadGuard records are updated with the analysis,
+/// which then informs handling of LOAD COPYs and possible later heritage passes.
 void Heritage::analyzeNewLoadGuards(void)
 
 {
@@ -809,7 +816,7 @@ bool Heritage::protectFreeStores(AddrSpace *spc,vector<PcodeOp *> &freeStores)
 
 /// \brief Trace input stack-pointer to any indexed loads
 ///
-/// Look for expressions of the form  val = *(SP(i) + vn + #c), where the base stack
+/// Look for expressions of the form  val = *(SP(i) + vn + \#c), where the base stack
 /// pointer has an (optional) constant added to it and a non-constant index, then a
 /// value is loaded from the resulting address.  The LOAD operations are added to the list
 /// of ops that potentially need to be guarded during a heritage pass.  The routine can
@@ -1029,6 +1036,39 @@ void Heritage::guard(const Address &addr,int4 size,vector<Varnode *> &read,vecto
   }
 }
 
+/// \brief Guard an address range that is larger than any single parameter
+///
+/// In this situation, an address range is being heritaged, but only a piece of
+/// it can be a parameter for a given call. We have to construct a SUBPIECE that
+/// pulls out the potential parameter.
+/// \param fc is the call site potentially taking a parameter
+/// \param addr is the starting address of the range
+/// \param size is the size of the range in bytes
+void Heritage::guardCallOverlappingInput(FuncCallSpecs *fc,const Address &addr,int4 size)
+
+{
+  VarnodeData vData;
+
+  if (fc->getBiggestContainedInputParam(addr, size, vData)) {
+    ParamActive *active = fc->getActiveInput();
+    Address taddr(vData.space,vData.offset);
+    if (active->whichTrial(taddr, size) < 0) { // If not already a trial
+      int4 truncateAmount = addr.justifiedContain(size, taddr, vData.size, false);
+      PcodeOp *op = fc->getOp();
+      PcodeOp *subpieceOp = fd->newOp(2,op->getAddr());
+      fd->opSetOpcode(subpieceOp, CPUI_SUBPIECE);
+      Varnode *wholeVn = fd->newVarnode(size,addr);
+      wholeVn->setActiveHeritage();
+      fd->opSetInput(subpieceOp,wholeVn,0);
+      fd->opSetInput(subpieceOp,fd->newConstant(4,truncateAmount),1);
+      Varnode *vn = fd->newVarnodeOut(vData.size, taddr, subpieceOp);
+      fd->opInsertBefore(subpieceOp,op);
+      active->registerTrial(taddr, vData.size);
+      fd->opInsertInput(op, vn, op->numInput());
+    }
+  }
+}
+
 /// \brief Guard CALL/CALLIND ops in preparation for renaming algorithm
 ///
 /// For the given address range, we decide what the data-flow effect is
@@ -1082,15 +1122,20 @@ void Heritage::guardCalls(uint4 flags,const Address &addr,int4 size,vector<Varno
 	}
       }
       Address taddr(spc,off);
-      if (tryregister && fc->possibleInputParam(taddr,size)) {
-	ParamActive *active = fc->getActiveInput();
-	if (active->whichTrial(taddr,size)<0) { // If not already a trial
-	  PcodeOp *op = fc->getOp();
-	  active->registerTrial(taddr,size);
-	  Varnode *vn = fd->newVarnode(size,addr);
-	  vn->setActiveHeritage();
-	  fd->opInsertInput(op,vn,op->numInput());
+      if (tryregister) {
+	int4 inputCharacter = fc->characterizeAsInputParam(taddr,size);
+	if (inputCharacter == 1) {		// Call could be using this range as an input parameter
+	  ParamActive *active = fc->getActiveInput();
+	  if (active->whichTrial(taddr,size)<0) { // If not already a trial
+	    PcodeOp *op = fc->getOp();
+	    active->registerTrial(taddr,size);
+	    Varnode *vn = fd->newVarnode(size,addr);
+	    vn->setActiveHeritage();
+	    fd->opInsertInput(op,vn,op->numInput());
+	  }
 	}
+	else if (inputCharacter == 2)		// Call may be using part of this range as an input parameter
+	  guardCallOverlappingInput(fc, addr, size);
       }
     }
     // We do not guard the call if the effect is "unaffected" or "reload"

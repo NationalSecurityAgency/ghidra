@@ -97,6 +97,7 @@ public class DWARFProgram implements Closeable {
 	private int totalDIECount = -1;
 	private int totalAggregateCount;
 	private boolean foundCrossCURefs = false;
+	private long programBaseAddressFixup;
 
 	private int maxDNICacheSize = 50;
 	private FixedSizeHashMap<Long, DWARFNameInfo> dniCache =
@@ -184,6 +185,11 @@ public class DWARFProgram implements Closeable {
 		this.importOptions = importOptions;
 		this.nameLengthCutoffSize = Math.max(MIN_NAME_LENGTH_CUTOFF,
 			Math.min(importOptions.getNameLengthCutoff(), MAX_NAME_LENGTH_CUTOFF));
+		Long oib = ElfLoader.getElfOriginalImageBase(program);
+		if (oib != null && oib.longValue() != program.getImageBase().getOffset()) {
+			this.programBaseAddressFixup = program.getImageBase().getOffset() - oib.longValue();
+		}
+
 		monitor.setMessage("Reading DWARF debug string table");
 		this.debugStrings = StringTable.readStringTable(
 			sectionProvider.getSectionAsByteProvider(DWARFSectionNames.DEBUG_STR));
@@ -896,5 +902,17 @@ public class DWARFProgram implements Closeable {
 	 */
 	public void setNameLengthCutoff(int nameLenCutoff) {
 		this.nameLengthCutoffSize = nameLenCutoff;
+	}
+
+	/**
+	 * A fixup value that needs to be applied to static addresses of the program.
+	 * <p>
+	 * This value is necessary if the program's built-in base address is overridden at import time.
+	 * <p>
+	 * @return long value to add to static addresses discovered in DWARF to make it agree with
+	 * Ghidra's imported program.
+	 */
+	public long getProgramBaseAddressFixup() {
+		return programBaseAddressFixup;
 	}
 }

@@ -22,8 +22,8 @@ import java.util.Arrays;
 import org.xml.sax.SAXParseException;
 
 import ghidra.app.util.MemoryBlockUtil;
-import ghidra.app.util.importer.MemoryConflictHandler;
 import ghidra.app.util.importer.MessageLog;
+import ghidra.program.database.mem.SourceInfo;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.*;
@@ -53,10 +53,10 @@ class MemoryMapXmlMgr {
 ///////////////////////////////////////////////////////////////////////////////////////
 
 	void read(XmlPullParser parser, boolean overwriteConflicts, TaskMonitor monitor,
-			String directory, MemoryConflictHandler handler)
+			String directory)
 			throws SAXParseException, FileNotFoundException, CancelledException {
 
-		MemoryBlockUtil mbu = new MemoryBlockUtil(program, handler);
+		MemoryBlockUtil mbu = new MemoryBlockUtil(program);
 		try {
 			XmlElement element = parser.next();
 			element = parser.next();
@@ -294,14 +294,18 @@ class MemoryMapXmlMgr {
 		writer.startElement("MEMORY_SECTION", attrs);
 
 		if (block.getType() == MemoryBlockType.BIT_MAPPED) {
+			// bit mapped blocks can only have one sub-block
+			SourceInfo info = block.getSourceInfos().get(0);
 			attrs.addAttribute("SOURCE_ADDRESS",
-				((MappedMemoryBlock) block).getOverlayedMinAddress().toString());
+				info.getMappedRange().get().getMinAddress().toString());
 			writer.startElement("BIT_MAPPED", attrs);
 			writer.endElement("BIT_MAPPED");
 		}
 		else if (block.getType() == MemoryBlockType.BYTE_MAPPED) {
+			// byte mapped blocks can only have one sub-block
+			SourceInfo info = block.getSourceInfos().get(0);
 			attrs.addAttribute("SOURCE_ADDRESS",
-				((MappedMemoryBlock) block).getOverlayedMinAddress().toString());
+				info.getMappedRange().get().getMinAddress().toString());
 			writer.startElement("BYTE_MAPPED", attrs);
 			writer.endElement("BYTE_MAPPED");
 		}

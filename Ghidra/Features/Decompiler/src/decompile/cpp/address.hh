@@ -75,6 +75,7 @@ public:
   Address operator+(int4 off) const; ///< Increment address by a number of bytes
   Address operator-(int4 off) const; ///< Decrement address by a number of bytes
   friend ostream &operator<<(ostream &s,const Address &addr);  ///< Write out an address to stream
+  bool containedBy(int4 sz,const Address &op2,int4 sz2) const;	///< Determine if \e op2 range contains \b this range
   int4 justifiedContain(int4 sz,const Address &op2,int4 sz2,bool forceleft) const; ///< Determine if \e op2 is the least significant part of \e this.
   int4 overlap(int4 skip,const Address &op,int4 size) const; ///< Determine how two address ranges overlap
   bool isContiguous(int4 sz,const Address &loaddr,int4 losz) const; ///< Does \e this form a contigous range with \e loaddr

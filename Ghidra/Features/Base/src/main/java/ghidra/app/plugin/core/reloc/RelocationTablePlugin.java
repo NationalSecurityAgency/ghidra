@@ -15,24 +15,19 @@
  */
 package ghidra.app.plugin.core.reloc;
 
-import javax.swing.ImageIcon;
-
-import docking.ActionContext;
-import docking.action.*;
+import docking.action.DockingAction;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.events.*;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.services.GoToService;
-import ghidra.app.util.HelpTopics;
 import ghidra.framework.model.*;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.ChangeManager;
 import ghidra.program.util.ProgramSelection;
-import ghidra.util.HelpLocation;
 import ghidra.util.table.SelectionNavigationAction;
-import resources.ResourceManager;
+import ghidra.util.table.actions.MakeProgramSelectionAction;
 
 //@formatter:off
 @PluginInfo(
@@ -66,27 +61,15 @@ public class RelocationTablePlugin extends Plugin implements DomainObjectListene
 	}
 
 	private void createActions() {
-		DockingAction programSelectionAction =
-			new DockingAction("Make Selection", getName(), false) {
-				@Override
-				public void actionPerformed(ActionContext context) {
-					makeSelection();
-				}
-			};
-		programSelectionAction.setDescription("Make a selection using selected rows");
-		ImageIcon icon = ResourceManager.loadImage("images/text_align_justify.png");
-		programSelectionAction.setToolBarData(new ToolBarData(icon));
-		programSelectionAction.setPopupMenuData(
-			new MenuData(new String[] { "Make Selection" }, icon));
-		programSelectionAction.setHelpLocation(
-			new HelpLocation(HelpTopics.SEARCH, "Make_Selection"));
-		tool.addLocalAction(provider, programSelectionAction);
+
+		DockingAction selectAction = new MakeProgramSelectionAction(this, provider.getTable());
+		tool.addLocalAction(provider, selectAction);
 
 		DockingAction navigationAction = new SelectionNavigationAction(this, provider.getTable());
 		tool.addLocalAction(provider, navigationAction);
 	}
 
-	private void makeSelection() {
+	private void doMakeSelection() {
 		ProgramSelection selection = provider.getTable().getProgramSelection();
 		PluginEvent event = new ProgramSelectionPluginEvent(getName(), selection, currentProgram);
 		firePluginEvent(event);

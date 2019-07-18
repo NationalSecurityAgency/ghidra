@@ -19,13 +19,13 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 
-import ghidra.app.util.importer.MemoryConflictHandler;
 import ghidra.framework.store.LockException;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.*;
 import ghidra.program.model.symbol.*;
 import ghidra.program.model.util.AddressLabelInfo;
+import ghidra.util.Msg;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
 import ghidra.util.task.TaskMonitorAdapter;
@@ -33,7 +33,10 @@ import ghidra.util.task.TaskMonitorAdapter;
 /**
  * A utility class that encapsulates the creation
  * of different types of memory blocks in a program.
+ * 
+ * @deprecated use {@link MemoryBlockUtils} instead.
  */
+@Deprecated(since = "9.1", forRemoval = true)
 public class MemoryBlockUtil {
 
 	private final static byte MEMORY_CONFLICT_UNKNOWN = 0;
@@ -46,19 +49,16 @@ public class MemoryBlockUtil {
 	private Listing listing;
 	private Memory memory;
 	private SymbolTable symbolTable;
-	private MemoryConflictHandler handler;
 	private StringBuffer messages;
 
 	/**
 	 * Constructs a new memory block utility.
 	 * @param program  the program having memory blocks created
-	 * @param handler  the memory conflict handler
 	 */
-	public MemoryBlockUtil(Program program, MemoryConflictHandler handler) {
+	public MemoryBlockUtil(Program program) {
 		this.listing = program.getListing();
 		this.memory = program.getMemory();
 		this.symbolTable = program.getSymbolTable();
-		this.handler = handler;
 		this.messages = new StringBuffer();
 	}
 
@@ -77,7 +77,6 @@ public class MemoryBlockUtil {
 	public void dispose() {
 		listing = null;
 		memory = null;
-		handler = null;
 	}
 
 	/**
@@ -187,6 +186,7 @@ public class MemoryBlockUtil {
 			comment, source, r, w, x, monitor);
 	}
 
+
 	/**
 	 * Creates an initialized memory block using the specified input stream.  If the length
 	 * of the block is greater than the maximum size of a memory block (0x40000000), then
@@ -241,7 +241,7 @@ public class MemoryBlockUtil {
 			long blockLength = 0; // special case first time through loop, don't change start address
 			while (dataLength > 0) {
 				start = start.add(blockLength);
-				blockLength = Math.min(dataLength, Memory.MAX_INITIALIZED_BLOCK_SIZE);
+				blockLength = Math.min(dataLength, Memory.MAX_BLOCK_SIZE);
 				String blockName = getBlockName(name, blockNum);
 				monitor.setMessage(
 					"Creating memory block \"" + blockName + "\" at 0x" + start + "...");
@@ -301,8 +301,8 @@ public class MemoryBlockUtil {
 		//remove their ranges from our address set.
 		//
 		MemoryBlock[] existingBlocks = memory.getBlocks();
-		for (int i = 0; i < existingBlocks.length; ++i) {
-			set.deleteRange(existingBlocks[i].getStart(), existingBlocks[i].getEnd());
+		for (MemoryBlock existingBlock : existingBlocks) {
+			set.deleteRange(existingBlock.getStart(), existingBlock.getEnd());
 		}
 
 		appendMessage("WARNING!!\n\tMemory block [" + name +
@@ -315,7 +315,7 @@ public class MemoryBlockUtil {
 
 		boolean shouldOverwriteBlock = true;
 		if (existingBlocks.length > 0) {
-			shouldOverwriteBlock = handler.allowOverwrite(start, end);
+			shouldOverwriteBlock = /*handler.allowOverwrite(start, end);*/ true;
 		}
 
 		//TODO: collect all user references in (start,end)
@@ -605,16 +605,21 @@ public class MemoryBlockUtil {
 		messages.append(msg);
 	}
 
-	private void renameFragment(Address blockStart, String blockName) {
+	private void renameFragment(Address address, String name) {
+		adjustFragment(listing, address, name);
+	}
+
+	public static void adjustFragment(Listing listing, Address address, String name) {
 		String[] treeNames = listing.getTreeNames();
-		for (int i = 0; i < treeNames.length; ++i) {
+		for (String treeName : treeNames) {
 			try {
-				ProgramFragment frag = listing.getFragment(treeNames[i], blockStart);
-				frag.setName(blockName);
+				ProgramFragment frag = listing.getFragment(treeName, address);
+				frag.setName(name);
 			}
 			catch (DuplicateNameException e) {
+				Msg.warn(MemoryBlockUtil.class,
+					"Could not rename fragment to match newly created block because of name conflict");
 			}
 		}
 	}
-
 }

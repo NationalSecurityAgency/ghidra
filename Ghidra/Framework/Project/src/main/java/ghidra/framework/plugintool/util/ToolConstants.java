@@ -34,6 +34,12 @@ public interface ToolConstants extends DockingToolConstants {
 	 * Used when placing a PluginAction in the "Navigation" menu of the tool.
 	 */
 	String MENU_NAVIGATION = "&Navigation";
+
+	/**
+	 * Group name for actions to navigate between windows
+	 */
+	String MENU_NAVIGATION_GROUP_WINDOWS = "GoToWindow";
+
 	/**
 	 * Used when placing a PluginAction in the "Search" menu of the tool.
 	 */

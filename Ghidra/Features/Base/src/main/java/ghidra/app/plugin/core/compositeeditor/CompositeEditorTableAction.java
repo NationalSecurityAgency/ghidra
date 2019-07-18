@@ -15,15 +15,14 @@
  */
 package ghidra.app.plugin.core.compositeeditor;
 
-import ghidra.framework.plugintool.Plugin;
-import ghidra.framework.plugintool.PluginTool;
-import ghidra.util.HelpLocation;
-
 import java.awt.event.ActionListener;
 
 import javax.swing.*;
 
 import docking.action.*;
+import ghidra.framework.plugintool.Plugin;
+import ghidra.framework.plugintool.PluginTool;
+import ghidra.util.HelpLocation;
 
 /**
  * CompositeEditorAction is an abstract class that should be extended for any
@@ -45,13 +44,14 @@ abstract public class CompositeEditorTableAction extends DockingAction implement
 
 	public static final String EDIT_ACTION_PREFIX = "Editor: ";
 
-	/**
-	 * Defines an <code>Action</code> object with the specified
-	 * description string and a the specified icon.
-	 */
 	public CompositeEditorTableAction(CompositeEditorProvider provider, String name, String group,
 			String[] popupPath, String[] menuPath, ImageIcon icon) {
-		super(name, provider.plugin.getName());
+		this(provider, name, group, popupPath, menuPath, icon, KeyBindingType.INDIVIDUAL);
+	}
+
+	public CompositeEditorTableAction(CompositeEditorProvider provider, String name, String group,
+			String[] popupPath, String[] menuPath, ImageIcon icon, KeyBindingType kbType) {
+		super(name, provider.plugin.getName(), kbType);
 		this.provider = provider;
 		model = provider.getModel();
 		if (menuPath != null) {
@@ -70,9 +70,6 @@ abstract public class CompositeEditorTableAction extends DockingAction implement
 		setHelpLocation(new HelpLocation(provider.getHelpTopic(), helpAnchor));
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.framework.plugintool.PluginAction#dispose()
-	 */
 	@Override
 	public void dispose() {
 		model.removeCompositeEditorModelListener(this);
@@ -93,64 +90,53 @@ abstract public class CompositeEditorTableAction extends DockingAction implement
 		}
 	}
 
+	@Override
 	abstract public void adjustEnablement();
 
 	public String getHelpName() {
 		String actionName = getName();
 		if (actionName.startsWith(CompositeEditorTableAction.EDIT_ACTION_PREFIX)) {
-			actionName = actionName.substring(CompositeEditorTableAction.EDIT_ACTION_PREFIX.length());
+			actionName =
+				actionName.substring(CompositeEditorTableAction.EDIT_ACTION_PREFIX.length());
 		}
 		return actionName;
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.stackeditor.EditorModelListener#selectionChanged()
-	 */
+	@Override
 	public void selectionChanged() {
 		adjustEnablement();
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.stackeditor.EditorModelListener#editStateChanged(int)
-	 */
 	public void editStateChanged(int i) {
 		adjustEnablement();
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.compositeeditor.CompositeEditorModelListener#compositeEditStateChanged(int)
-	 */
+	@Override
 	public void compositeEditStateChanged(int type) {
 		adjustEnablement();
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.compositeeditor.CompositeEditorModelListener#endFieldEditing()
-	 */
+	@Override
 	public void endFieldEditing() {
 		adjustEnablement();
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.compositeeditor.CompositeEditorModelListener#componentDataChanged()
-	 */
+	@Override
 	public void componentDataChanged() {
 		adjustEnablement();
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.compositeeditor.CompositeEditorModelListener#compositeInfoChanged()
-	 */
+	@Override
 	public void compositeInfoChanged() {
 		adjustEnablement();
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.compositeeditor.CompositeEditorModelListener#statusChanged(java.lang.String, boolean)
-	 */
+	@Override
 	public void statusChanged(String message, boolean beep) {
+		// we are an action; don't care about status messages
 	}
 
+	@Override
 	public void showUndefinedStateChanged(boolean showUndefinedBytes) {
 		adjustEnablement();
 	}

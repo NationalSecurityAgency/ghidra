@@ -128,17 +128,14 @@ public class MemoryMapProvider2Test extends AbstractGhidraHeadedIntegrationTest 
 
 		JCheckBox readCB = (JCheckBox) findComponentByName(d.getComponent(), "Read");
 		assertNotNull(readCB);
-		assertTrue(readCB.isEnabled());
 		assertTrue(readCB.isSelected());
 
 		JCheckBox writeCB = (JCheckBox) findComponentByName(d.getComponent(), "Write");
 		assertNotNull(writeCB);
-		assertTrue(writeCB.isEnabled());
 		assertTrue(writeCB.isSelected());
 
 		JCheckBox executeCB = (JCheckBox) findComponentByName(d.getComponent(), "Execute");
 		assertNotNull(executeCB);
-		assertTrue(executeCB.isEnabled());
 		assertTrue(!executeCB.isSelected());
 
 		RegisterField initialValue =
@@ -192,7 +189,7 @@ public class MemoryMapProvider2Test extends AbstractGhidraHeadedIntegrationTest 
 			lengthField.setText("0x100");
 			commentField.setText("this is a block test");
 			initialValue.setText("0xa");
-			executeCB.setSelected(true);
+			pressButton(executeCB);
 		});
 
 		int x = 1;
@@ -220,7 +217,7 @@ public class MemoryMapProvider2Test extends AbstractGhidraHeadedIntegrationTest 
 		assertEquals(Boolean.TRUE, model.getValueAt(0, MemoryMapModel.EXECUTE));
 		assertEquals("Default", model.getValueAt(0, MemoryMapModel.BLOCK_TYPE));
 		assertEquals(Boolean.TRUE, model.getValueAt(0, MemoryMapModel.INIT));
-		assertEquals("- none -", model.getValueAt(0, MemoryMapModel.SOURCE));
+		assertEquals("", model.getValueAt(0, MemoryMapModel.SOURCE));
 		assertEquals("this is a block test", model.getValueAt(0, MemoryMapModel.COMMENT));
 
 		assertEquals(0xa, memory.getByte(getAddr(0)));
@@ -269,7 +266,7 @@ public class MemoryMapProvider2Test extends AbstractGhidraHeadedIntegrationTest 
 			lengthField.setText("0x100");
 			commentField.setText("this is a block test");
 			initialValue.setText("0xb");
-			executeCB.setSelected(true);
+			pressButton(executeCB);
 		});
 
 		int x = 1;
@@ -297,7 +294,7 @@ public class MemoryMapProvider2Test extends AbstractGhidraHeadedIntegrationTest 
 		assertEquals(Boolean.TRUE, model.getValueAt(0, MemoryMapModel.EXECUTE));
 		assertEquals("Default", model.getValueAt(0, MemoryMapModel.BLOCK_TYPE));
 		assertEquals(Boolean.TRUE, model.getValueAt(0, MemoryMapModel.INIT));
-		assertEquals("- none -", model.getValueAt(0, MemoryMapModel.SOURCE));
+		assertEquals("", model.getValueAt(0, MemoryMapModel.SOURCE));
 		assertEquals("this is a block test", model.getValueAt(0, MemoryMapModel.COMMENT));
 
 		assertEquals(0xb, memory.getByte(getAddr(0x200)));
@@ -341,15 +338,12 @@ public class MemoryMapProvider2Test extends AbstractGhidraHeadedIntegrationTest 
 			lengthField.setText("0x100");
 			commentField.setText("this is a block test");
 			initialValue.setText("0xb");
-			executeCB.setSelected(true);
+			pressButton(executeCB);
 		});
-		assertTrue(okButton.isEnabled());
-
-		SwingUtilities.invokeLater(() -> okButton.getActionListeners()[0].actionPerformed(null));
-		waitForPostedSwingRunnables();
+		assertFalse(okButton.isEnabled());
 
 		String msg = findLabelStr(d.getComponent(), "statusLabel");
-		assertTrue(msg.indexOf("already exists in memory") > 0);
+		assertTrue(msg.startsWith("Block address conflict"));
 		assertTrue(!okButton.isEnabled());
 		runSwing(() -> d.close());
 	}
@@ -445,7 +439,7 @@ public class MemoryMapProvider2Test extends AbstractGhidraHeadedIntegrationTest 
 		assertTrue(uninitializedRB.isSelected()); // default choice
 		final RegisterField initialValue =
 			(RegisterField) findComponentByName(d.getComponent(), "Initial Value");
-		assertFalse(initialValue.isEnabled());
+
 		final JButton okButton = findButton(d.getComponent(), "OK");
 
 		SwingUtilities.invokeAndWait(() -> {
@@ -456,7 +450,7 @@ public class MemoryMapProvider2Test extends AbstractGhidraHeadedIntegrationTest 
 		assertTrue(!okButton.isEnabled());
 
 		String msg = findLabelStr(d.getComponent(), "statusLabel");
-		assertEquals("Please enter a valid length > 0 and <= 0x300000000", msg);
+		assertEquals("Please enter a valid length between 0 and 0x400000000", msg);
 		assertTrue(!okButton.isEnabled());
 		runSwing(() -> d.close());
 	}
@@ -496,7 +490,7 @@ public class MemoryMapProvider2Test extends AbstractGhidraHeadedIntegrationTest 
 		assertTrue(!okButton.isEnabled());
 
 		String msg = findLabelStr(d.getComponent(), "statusLabel");
-		assertEquals("Please enter a valid length > 0 and <= 0x40000000", msg);
+		assertEquals("Please enter a valid length between 0 and 0x400000000", msg);
 		assertTrue(!okButton.isEnabled());
 		runSwing(() -> d.close());
 	}
@@ -586,7 +580,7 @@ public class MemoryMapProvider2Test extends AbstractGhidraHeadedIntegrationTest 
 		assertEquals(Boolean.FALSE, model.getValueAt(0, MemoryMapModel.EXECUTE));
 		assertEquals("Default", model.getValueAt(0, MemoryMapModel.BLOCK_TYPE));
 		assertEquals(Boolean.FALSE, model.getValueAt(0, MemoryMapModel.INIT));
-		assertEquals("- none -", model.getValueAt(0, MemoryMapModel.SOURCE));
+		assertEquals("", model.getValueAt(0, MemoryMapModel.SOURCE));
 		assertEquals("this is an uninitialized block test",
 			model.getValueAt(0, MemoryMapModel.COMMENT));
 
@@ -634,7 +628,7 @@ public class MemoryMapProvider2Test extends AbstractGhidraHeadedIntegrationTest 
 			lengthField.setText("0x100");
 			commentField.setText("this is a block test");
 			initialValue.setText("0xa");
-			executeCB.setSelected(true);
+			pressButton(executeCB);
 		});
 
 		int x = 1;
@@ -642,9 +636,9 @@ public class MemoryMapProvider2Test extends AbstractGhidraHeadedIntegrationTest 
 		clickMouse(initializedRB, 1, x, y, 1, 0);
 
 		assertTrue(okButton.isEnabled());
-		assertTrue(readCB.isEnabled());
-		assertTrue(writeCB.isEnabled());
-		assertTrue(executeCB.isEnabled());
+		assertTrue(readCB.isSelected());
+		assertTrue(writeCB.isSelected());
+		assertTrue(executeCB.isSelected());
 
 		SwingUtilities.invokeAndWait(() -> okButton.getActionListeners()[0].actionPerformed(null));
 		program.flushEvents();
@@ -675,7 +669,7 @@ public class MemoryMapProvider2Test extends AbstractGhidraHeadedIntegrationTest 
 		assertEquals(MemoryBlockType.OVERLAY.toString(),
 			model.getValueAt(row, MemoryMapModel.BLOCK_TYPE));
 		assertEquals(Boolean.TRUE, model.getValueAt(row, MemoryMapModel.INIT));
-		assertEquals("- none -", model.getValueAt(row, MemoryMapModel.SOURCE));
+		assertEquals("", model.getValueAt(row, MemoryMapModel.SOURCE));
 		assertEquals("this is a block test", model.getValueAt(row, MemoryMapModel.COMMENT));
 
 		assertEquals(0xa, memory.getByte(block.getStart()));
@@ -713,7 +707,7 @@ public class MemoryMapProvider2Test extends AbstractGhidraHeadedIntegrationTest 
 			nameField.setText(".test");
 			lengthField.setText("0x100");
 			commentField.setText("this is a block test");
-			executeCB.setSelected(true);
+			pressButton(executeCB);
 			uninitRB.setSelected(true);
 			uninitRB.getActionListeners()[0].actionPerformed(null);
 		});
@@ -752,7 +746,7 @@ public class MemoryMapProvider2Test extends AbstractGhidraHeadedIntegrationTest 
 		assertEquals(MemoryBlockType.OVERLAY.toString(),
 			model.getValueAt(row, MemoryMapModel.BLOCK_TYPE));
 		assertEquals(Boolean.FALSE, model.getValueAt(row, MemoryMapModel.INIT));
-		assertEquals("- none -", model.getValueAt(row, MemoryMapModel.SOURCE));
+		assertEquals("", model.getValueAt(row, MemoryMapModel.SOURCE));
 		assertEquals("this is a block test", model.getValueAt(row, MemoryMapModel.COMMENT));
 
 		try {
@@ -863,7 +857,7 @@ public class MemoryMapProvider2Test extends AbstractGhidraHeadedIntegrationTest 
 		RegisterField initialValue =
 			(RegisterField) findComponentByName(d.getComponent(), "Initial Value");
 		assertNotNull(initialValue);
-		assertTrue(initialValue.isShowing());
+		assertTrue(!initialValue.isShowing());
 		final AddressInput addrField =
 			(AddressInput) findComponentByName(d.getComponent(), "Source Addr");
 		assertNotNull(addrField);
@@ -1332,7 +1326,7 @@ public class MemoryMapProvider2Test extends AbstractGhidraHeadedIntegrationTest 
 	///////////////////////////////////////////////////////////////////
 
 	private void showProvider() {
-		DockingActionIf action = getAction(plugin, "View Memory Map");
+		DockingActionIf action = getAction(plugin, "Memory Map");
 		performAction(action, true);
 		provider = plugin.getMemoryMapProvider();
 		table = provider.getTable();

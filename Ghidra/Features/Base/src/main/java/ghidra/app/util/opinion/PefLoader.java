@@ -25,7 +25,6 @@ import ghidra.app.util.MemoryBlockUtil;
 import ghidra.app.util.Option;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.bin.format.pef.*;
-import ghidra.app.util.importer.MemoryConflictHandler;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.PointerDataType;
@@ -68,8 +67,7 @@ public class PefLoader extends AbstractLibrarySupportLoader {
 
 	@Override
 	public void load(ByteProvider provider, LoadSpec loadSpec, List<Option> options,
-			Program program,
-			MemoryConflictHandler handler, TaskMonitor monitor, MessageLog log) throws IOException {
+			Program program, TaskMonitor monitor, MessageLog log) throws IOException {
 
 		ImportStateCache importState = null;
 		try {
@@ -373,7 +371,7 @@ public class PefLoader extends AbstractLibrarySupportLoader {
 			ImportStateCache importState, MessageLog log, TaskMonitor monitor)
 					throws AddressOverflowException, IOException {
 
-		MemoryBlockUtil mbu = new MemoryBlockUtil(program, MemoryConflictHandler.ALWAYS_OVERWRITE);
+		MemoryBlockUtil mbu = new MemoryBlockUtil(program);
 
 		List<SectionHeader> sections = header.getSections();
 		for (SectionHeader section : sections) {

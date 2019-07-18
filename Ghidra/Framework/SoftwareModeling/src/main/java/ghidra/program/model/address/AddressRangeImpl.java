@@ -72,7 +72,7 @@ public class AddressRangeImpl implements AddressRange, Serializable {
 	 * @param length the length of the range.
 	 * @exception AddressOverflowException if the length would wrap.
 	 */
-	public AddressRangeImpl(Address start, int length) throws AddressOverflowException {
+	public AddressRangeImpl(Address start, long length) throws AddressOverflowException {
 		minAddress = start;
 		maxAddress = start.addNoWrap(length - 1);
 	}

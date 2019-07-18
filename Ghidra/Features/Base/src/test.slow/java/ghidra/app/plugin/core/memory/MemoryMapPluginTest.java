@@ -28,8 +28,7 @@ import javax.swing.table.TableModel;
 import org.junit.*;
 
 import docking.action.DockingActionIf;
-import ghidra.app.cmd.memory.AddMemoryBlockCmd;
-import ghidra.app.cmd.memory.DeleteBlockCmd;
+import ghidra.app.cmd.memory.*;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
 import ghidra.app.plugin.core.gotoquery.GoToServicePlugin;
 import ghidra.app.plugin.core.navigation.NavigationHistoryPlugin;
@@ -37,7 +36,8 @@ import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.database.ProgramBuilder;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
-import ghidra.program.model.mem.*;
+import ghidra.program.model.mem.Memory;
+import ghidra.program.model.mem.MemoryBlock;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.test.TestEnv;
 import ghidra.util.task.TaskMonitorAdapter;
@@ -87,7 +87,7 @@ public class MemoryMapPluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 	@Test
 	public void testActionEnabled() {
-		DockingActionIf action = getAction(plugin, "View Memory Map");
+		DockingActionIf action = getAction(plugin, "Memory Map");
 		assertTrue(action.isEnabled());
 	}
 
@@ -99,7 +99,7 @@ public class MemoryMapPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		Set<DockingActionIf> actions = getActionsByOwner(tool, plugin.getName());
 		for (DockingActionIf action : actions) {
 			if (action.getName().equals("Add Block") || action.getName().equals("Set Image Base") ||
-				action.getName().equals("View Memory Map")) {
+				action.getName().equals("Memory Map")) {
 				assertTrue(action.isEnabledForContext(provider.getActionContext(null)));
 			}
 			else {
@@ -116,7 +116,7 @@ public class MemoryMapPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals(0, table.getModel().getRowCount());
 		Set<DockingActionIf> actions = getActionsByOwner(tool, plugin.getName());
 		for (DockingActionIf action : actions) {
-			if (!action.getName().equals("View Memory Map")) {
+			if (!action.getName().equals("Memory Map")) {
 				assertTrue(!action.isEnabledForContext(provider.getActionContext(null)));
 			}
 		}
@@ -199,8 +199,8 @@ public class MemoryMapPluginTest extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testBlockAdded() {
 		MemoryBlock[] blocks = memory.getBlocks();
-		tool.execute(new AddMemoryBlockCmd(".test", "comments", "test", getAddr(0), 0x100, true,
-			true, true, false, (byte) 1, MemoryBlockType.DEFAULT, null, true), program);
+		tool.execute(new AddInitializedMemoryBlockCmd(".test", "comments", "test", getAddr(0),
+			0x100, true, true, true, false, (byte) 1, false), program);
 
 		JTable table = provider.getTable();
 		assertEquals(".test", table.getModel().getValueAt(0, MemoryMapModel.NAME));
@@ -241,8 +241,8 @@ public class MemoryMapPluginTest extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testBlockReplaced() throws Exception {
 		MemoryBlock[] blocks = memory.getBlocks();
-		tool.execute(new AddMemoryBlockCmd(".test", "comments", "test", getAddr(0), 0x100, true,
-			true, true, false, (byte) 1, MemoryBlockType.DEFAULT, null, false), program);
+		tool.execute(new AddUninitializedMemoryBlockCmd(".test", "comments", "test", getAddr(0),
+			0x100, true, true, true, false, false), program);
 		JTable table = provider.getTable();
 		assertEquals(blocks.length + 1, table.getModel().getRowCount());
 		assertEquals(".test", table.getModel().getValueAt(0, MemoryMapModel.NAME));
@@ -260,8 +260,8 @@ public class MemoryMapPluginTest extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testBlockSplit() throws Exception {
 		MemoryBlock[] blocks = memory.getBlocks();
-		tool.execute(new AddMemoryBlockCmd(".test", "comments", "test", getAddr(0), 0x100, true,
-			true, true, false, (byte) 1, MemoryBlockType.DEFAULT, null, true), program);
+		tool.execute(new AddInitializedMemoryBlockCmd(".test", "comments", "test", getAddr(0),
+			0x100, true, true, true, false, (byte) 1, false), program);
 		JTable table = provider.getTable();
 		assertEquals(blocks.length + 1, table.getModel().getRowCount());
 
@@ -297,7 +297,7 @@ public class MemoryMapPluginTest extends AbstractGhidraHeadedIntegrationTest {
 	/////////////////////////////////////////////////////////////////////////
 
 	private void showProvider() {
-		DockingActionIf action = getAction(plugin, "View Memory Map");
+		DockingActionIf action = getAction(plugin, "Memory Map");
 		performAction(action, true);
 		provider = plugin.getMemoryMapProvider();
 	}

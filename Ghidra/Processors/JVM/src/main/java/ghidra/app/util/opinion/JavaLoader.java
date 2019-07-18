@@ -23,7 +23,6 @@ import ghidra.app.cmd.register.SetRegisterCmd;
 import ghidra.app.util.Option;
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.ByteProvider;
-import ghidra.app.util.importer.MemoryConflictHandler;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.framework.store.LockException;
 import ghidra.javaclass.format.*;
@@ -91,8 +90,7 @@ public class JavaLoader extends AbstractLibrarySupportLoader {
 
 	@Override
 	public void load(ByteProvider provider, LoadSpec loadSpec, List<Option> options,
-			Program program, MemoryConflictHandler handler, TaskMonitor monitor, MessageLog log)
-			throws IOException {
+			Program program, TaskMonitor monitor, MessageLog log) throws IOException {
 		try {
 			doLoad(provider, program, monitor);
 		}
@@ -115,7 +113,7 @@ public class JavaLoader extends AbstractLibrarySupportLoader {
 
 	public void load(ByteProvider provider, Program program, TaskMonitor monitor)
 			throws IOException {
-		load(provider, null, null, program, null, monitor, null);
+		load(provider, null, null, program, monitor, null);
 	}
 
 	private void doLoad(ByteProvider provider, Program program, TaskMonitor monitor)

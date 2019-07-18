@@ -53,6 +53,9 @@ public abstract class WeakSet<T> implements Iterable<T> {
 			return;
 		}
 
+		// Note: sadly, this code does not work with labmda's, as we cannot get the enclosing
+		//       method/constructor
+
 		Class<? extends Object> clazz = t.getClass();
 		if (!clazz.isAnonymousClass()) {
 			return; // O.K.

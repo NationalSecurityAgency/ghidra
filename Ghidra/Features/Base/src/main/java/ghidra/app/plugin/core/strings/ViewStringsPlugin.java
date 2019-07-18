@@ -82,7 +82,7 @@ public class ViewStringsPlugin extends ProgramPlugin implements DomainObjectList
 	}
 
 	private void createActions() {
-		DockingAction refreshAction = new DockingAction("Refresh Strings", getName(), false) {
+		DockingAction refreshAction = new DockingAction("Refresh Strings", getName()) {
 
 			@Override
 			public boolean isEnabledForContext(ActionContext context) {
@@ -100,20 +100,12 @@ public class ViewStringsPlugin extends ProgramPlugin implements DomainObjectList
 		refreshAction.setHelpLocation(new HelpLocation("ViewStringsPlugin", "Refresh"));
 		tool.addLocalAction(provider, refreshAction);
 
-		selectAction = new MakeProgramSelectionAction(getName(), provider.getTable()) {
-
-			@Override
-			protected void makeSelection(ActionContext context) {
-				selectData(provider.selectData());
-			}
-		};
-
-		tool.addLocalAction(provider, selectAction);
+		tool.addLocalAction(provider, new MakeProgramSelectionAction(this, provider.getTable()));
 
 		linkNavigationAction = new SelectionNavigationAction(this, provider.getTable());
 		tool.addLocalAction(provider, linkNavigationAction);
 
-		showSettingsAction = new DockingAction("Settings...", getName(), false) {
+		showSettingsAction = new DockingAction("Settings", getName()) {
 			@Override
 			public void actionPerformed(ActionContext context) {
 				try {
@@ -133,7 +125,7 @@ public class ViewStringsPlugin extends ProgramPlugin implements DomainObjectList
 		showSettingsAction.setPopupMenuData(new MenuData(new String[] { "Settings..." }, "R"));
 		showSettingsAction.setDescription("Shows settings for the selected strings");
 		showSettingsAction.setHelpLocation(new HelpLocation("DataPlugin", "Data_Settings"));
-		showDefaultSettingsAction = new DockingAction("Default Settings...", getName(), false) {
+		showDefaultSettingsAction = new DockingAction("Default Settings", getName()) {
 			@Override
 			public void actionPerformed(ActionContext context) {
 				Data data = provider.getSelectedData();

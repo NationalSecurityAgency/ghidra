@@ -90,14 +90,14 @@ class SymbolTreeTestUtils {
 		this.plugin = plugin;
 		this.program = buildProgram();
 
-		symTreeAction = getAction(plugin, "Display Symbol Tree");
+		symTreeAction = getAction(plugin, "Symbol Tree");
 	}
 
 	SymbolTreeTestUtils(SymbolTreePlugin plugin, Program program) {
 		this.plugin = plugin;
 		this.program = program;
 
-		symTreeAction = getAction(plugin, "Display Symbol Tree");
+		symTreeAction = getAction(plugin, "Symbol Tree");
 	}
 
 	public static Program buildProgram() throws Exception {

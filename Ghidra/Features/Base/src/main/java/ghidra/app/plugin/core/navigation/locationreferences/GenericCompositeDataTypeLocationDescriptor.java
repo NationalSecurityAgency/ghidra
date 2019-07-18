@@ -17,13 +17,14 @@ package ghidra.app.plugin.core.navigation.locationreferences;
 
 import java.awt.Color;
 
+import org.apache.commons.lang3.StringUtils;
+
 import docking.widgets.fieldpanel.support.Highlight;
 import ghidra.app.util.viewer.field.*;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.Composite;
 import ghidra.program.model.listing.Data;
 import ghidra.program.model.listing.Program;
-import ghidra.util.StringUtilities;
 import ghidra.util.datastruct.Accumulator;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
@@ -115,7 +116,7 @@ public class GenericCompositeDataTypeLocationDescriptor extends GenericDataTypeL
 		else if (OperandFieldFactory.class.isAssignableFrom(fieldFactoryClass)) {
 
 			// Not sure how to get the correct part of the text.  This is a hack for now.
-			int offset = StringUtilities.indexOfIgnoreCase(text, typeAndFieldName, 0);
+			int offset = StringUtils.indexOfIgnoreCase(text, typeAndFieldName, 0);
 			if (offset != -1) {
 				return new Highlight[] {
 					new Highlight(offset, offset + typeAndFieldName.length() - 1, highlightColor) };

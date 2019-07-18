@@ -23,7 +23,6 @@ import javax.swing.*;
 import javax.swing.border.Border;
 
 import docking.*;
-import docking.action.DockingAction;
 import docking.help.HelpService;
 import docking.widgets.label.GLabel;
 import docking.widgets.table.GTableFilterPanel;
@@ -61,8 +60,6 @@ public class ScalarSearchProvider extends ComponentProviderAdapter {
 	private JPanel mainPanel;
 	private GhidraTable scalarTable;
 	private ScalarSearchModel scalarModel;
-
-	private DockingAction selectAction;
 
 	private ProgramSelection currentSelection;
 	private Program program;
@@ -258,21 +255,11 @@ public class ScalarSearchProvider extends ComponentProviderAdapter {
 
 	private void createActions() {
 
-		selectAction = new MakeProgramSelectionAction(getName(), getTable()) {
-			@Override
-			protected void makeSelection(ActionContext context) {
-				selectDataInProgramFromTable(getSelection());
-			}
-		};
-
-		tool.addLocalAction(this, selectAction);
-
-		DockingAction selectionAction = new SelectionNavigationAction(plugin, getTable());
-		tool.addLocalAction(this, selectionAction);
+		tool.addLocalAction(this, new MakeProgramSelectionAction(plugin, scalarTable));
+		tool.addLocalAction(this, new SelectionNavigationAction(plugin, getTable()));
 
 		GhidraTable table = threadedTablePanel.getTable();
-		DockingAction removeItemsAction = new DeleteTableRowAction(table, plugin.getName());
-		tool.addLocalAction(this, removeItemsAction);
+		tool.addLocalAction(this, new DeleteTableRowAction(table, plugin.getName()));
 	}
 
 //==================================================================================================

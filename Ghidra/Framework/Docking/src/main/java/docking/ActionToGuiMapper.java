@@ -16,70 +16,38 @@
 package docking;
 
 import java.awt.event.MouseEvent;
-import java.util.*;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.MenuSelectionManager;
 
-import docking.action.*;
+import docking.action.DockingActionIf;
 import docking.menu.MenuGroupMap;
 import docking.menu.MenuHandler;
-import ghidra.util.*;
+import ghidra.util.HelpLocation;
 
 /**
  * Manages the global actions for the menu and toolbar.
  */
 public class ActionToGuiMapper {
 
-	private HashSet<DockingActionIf> globalActions = new LinkedHashSet<>();
+	private Set<DockingActionIf> globalActions = new LinkedHashSet<>();
 
 	private MenuHandler menuBarMenuHandler;
 	private MenuGroupMap menuGroupMap;
 
-	private static boolean enableDiagnosticActions;
-
-	private KeyBindingsManager keyBindingsManager;
-
 	private GlobalMenuAndToolBarManager menuAndToolBarManager;
-
 	private PopupActionManager popupActionManager;
-	private DockingAction keyBindingsAction;
 
 	ActionToGuiMapper(DockingWindowManager winMgr) {
 		menuGroupMap = new MenuGroupMap();
-
 		menuBarMenuHandler = new MenuBarMenuHandler(winMgr);
-
-		keyBindingsManager = new KeyBindingsManager(winMgr);
 		menuAndToolBarManager =
 			new GlobalMenuAndToolBarManager(winMgr, menuBarMenuHandler, menuGroupMap);
 		popupActionManager = new PopupActionManager(winMgr, menuGroupMap);
 
-		initializeHelpActions();
-	}
-
-	private void initializeHelpActions() {
 		DockingWindowsContextSensitiveHelpListener.install();
-
-		keyBindingsAction = new KeyBindingAction(this);
-		keyBindingsManager.addReservedAction(new HelpAction(false, ReservedKeyBindings.HELP_KEY1));
-		keyBindingsManager.addReservedAction(new HelpAction(false, ReservedKeyBindings.HELP_KEY2));
-		keyBindingsManager.addReservedAction(
-			new HelpAction(true, ReservedKeyBindings.HELP_INFO_KEY));
-		keyBindingsManager.addReservedAction(keyBindingsAction);
-
-		if (enableDiagnosticActions) {
-			keyBindingsManager.addReservedAction(new ShowFocusInfoAction());
-			keyBindingsManager.addReservedAction(new ShowFocusCycleAction());
-		}
-	}
-
-	/**
-	 * A static initializer allowing additional diagnostic actions
-	 * to be added to all frame and dialog windows.
-	 * @param enable
-	 */
-	static void enableDiagnosticActions(boolean enable) {
-		enableDiagnosticActions = enable;
 	}
 
 	/**
@@ -95,40 +63,11 @@ public class ActionToGuiMapper {
 	}
 
 	/**
-	 * Removes all actions associated with the given owner
-	 * @param owner the owner of all actions to be removed.
-	 */
-	void removeAll(String owner) {
-		Iterator<DockingActionIf> iter = new ArrayList<>(globalActions).iterator();
-		List<DockingActionIf> removedList = new ArrayList<>();
-		while (iter.hasNext()) {
-			DockingActionIf action = iter.next();
-			if (owner.equals(action.getOwner())) {
-				keyBindingsManager.removeAction(action);
-				menuAndToolBarManager.removeAction(action);
-				popupActionManager.removeAction(action);
-				removedList.add(action);
-			}
-		}
-
-		globalActions.removeAll(removedList);
-	}
-
-	void addLocalAction(DockingActionIf action, ComponentProvider provider) {
-		keyBindingsManager.addAction(action, provider);
-	}
-
-	void removeLocalAction(DockingActionIf action) {
-		keyBindingsManager.removeAction(action);
-	}
-
-	/**
 	 * Adds the given Global action to the menu and/or toolbar.
 	 * @param action the action to be added.
 	 */
 	void addToolAction(DockingActionIf action) {
 		if (globalActions.add(action)) {
-			keyBindingsManager.addAction(action, null);
 			popupActionManager.addAction(action);
 			menuAndToolBarManager.addAction(action);
 		}
@@ -139,26 +78,9 @@ public class ActionToGuiMapper {
 	 * @param action the action to be removed.
 	 */
 	void removeToolAction(DockingActionIf action) {
-		keyBindingsManager.removeAction(action);
 		popupActionManager.removeAction(action);
 		menuAndToolBarManager.removeAction(action);
 		globalActions.remove(action);
-	}
-
-	public Set<DockingActionIf> getAllActions() {
-
-		// Note: this method is called by non-Swing test code.  Synchronize access to the 
-		//       data structures in this class in order to prevent concurrent mod exceptions.
-		Set<DockingActionIf> actions = new HashSet<>();
-		SystemUtilities.runSwingNow(() -> {
-			actions.addAll(globalActions);
-			actions.addAll(keyBindingsManager.getLocalActions());
-		});
-		return actions;
-	}
-
-	public Action getDockingKeyAction(KeyStroke keyStroke) {
-		return keyBindingsManager.getDockingKeyAction(keyStroke);
 	}
 
 	Set<DockingActionIf> getGlobalActions() {
@@ -173,28 +95,16 @@ public class ActionToGuiMapper {
 		}
 	}
 
-	/**
-	 * Close all menus (includes popup menus)
-	 */
-	static void dismissMenus() {
+	private void dismissMenus() {
 		MenuSelectionManager.defaultManager().clearSelectedPath();
 	}
 
-	/**
-	 * Updates the menu and toolbar to reflect any changes in the set of actions.
-	 *
-	 */
 	void update() {
 		menuAndToolBarManager.update();
 		contextChangedAll();
 	}
 
-	/**
-	 * Releases all resources and makes this object unavailable for future use.
-	 *
-	 */
 	void dispose() {
-		keyBindingsManager.dispose();
 		popupActionManager.dispose();
 		menuAndToolBarManager.dispose();
 		globalActions.clear();

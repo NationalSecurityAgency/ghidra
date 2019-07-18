@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,8 +29,8 @@ import docking.action.MenuData;
 public class MenuManager implements ManagedMenuItem {
 	private static String NULL_GROUP_NAME = "<null group>";
 
-	private Set<ManagedMenuItem> managedMenuItems = new HashSet<ManagedMenuItem>();
-	private Map<String, MenuManager> subMenus = new HashMap<String, MenuManager>();
+	private Set<ManagedMenuItem> managedMenuItems = new HashSet<>();
+	private Map<String, MenuManager> subMenus = new HashMap<>();
 
 	private String name;
 	private final String[] menuPath;
@@ -50,9 +49,9 @@ public class MenuManager implements ManagedMenuItem {
 	 * @param name the name of the menu.
 	 * @param mnemonicKey the key to use for the menu mnemonic
 	 * @param group the group of the menu.
-	 * @param showKeyBindings if true, includes the keybinding text on the menu item.
 	 * @param usePopupPath if true, registers actions with popup paths as popup items.
 	 * @param menuHandler Listener to be notified of menu behavior.
+	 * @param menuGroupMap maps menu groups to menu paths
 	 */
 	public MenuManager(String name, char mnemonicKey, String group, boolean usePopupPath,
 			MenuHandler menuHandler, MenuGroupMap menuGroupMap) {
@@ -68,9 +67,9 @@ public class MenuManager implements ManagedMenuItem {
 	 * @param mnemonicKey the key to use for the menu mnemonic
 	 * @param level the number of parent menus that this menu is in.
 	 * @param group the group of this menu.
-	 * @param showKeyBindings if true, includes the keybinding text on the menu item.
 	 * @param usePopupPath if true, registers actions with popup paths as popup items.
 	 * @param menuHandler Listener to be notified of menu behavior.
+	 * @param menuGroupMap maps menu groups to menu paths
 	 */
 	MenuManager(String name, String[] menuPath, char mnemonicKey, int level, String group,
 			boolean usePopupPath, MenuHandler menuHandler, MenuGroupMap menuGroupMap) {
@@ -96,10 +95,8 @@ public class MenuManager implements ManagedMenuItem {
 	}
 
 	/**
-	 * Adds an action to this menu. Can create subMenus depending on the menuPath of the
-	 * action.
-	 * @param action the action to be added.
-	 * @param menuGroupMap group map for menuItems
+	 * Adds an action to this menu. Can create subMenus depending on the menuPath of the action
+	 * @param action the action to be added
 	 */
 	public void addAction(DockingActionIf action) {
 		checkForSwingThread();
@@ -122,9 +119,8 @@ public class MenuManager implements ManagedMenuItem {
 					submenuGroup = subMenuName;
 				}
 
-				mgr =
-					new MenuManager(cleanSubMenuName, submenuPath, mnemonic, submenuLevel,
-						submenuGroup, usePopupPath, menuHandler, menuGroupMap);
+				mgr = new MenuManager(cleanSubMenuName, submenuPath, mnemonic, submenuLevel,
+					submenuGroup, usePopupPath, menuHandler, menuGroupMap);
 				subMenus.put(cleanSubMenuName, mgr);
 				managedMenuItems.add(mgr);
 			}
@@ -198,7 +194,7 @@ public class MenuManager implements ManagedMenuItem {
 				menu.addMenuListener(menuHandler);
 			}
 
-			List<ManagedMenuItem> list = new ArrayList<ManagedMenuItem>(managedMenuItems);
+			List<ManagedMenuItem> list = new ArrayList<>(managedMenuItems);
 			Collections.sort(list, comparator);
 			String lastGroup = null;
 
@@ -259,7 +255,7 @@ public class MenuManager implements ManagedMenuItem {
 		if (popupMenu == null) {
 			popupMenu = new JPopupMenu(name);
 
-			List<ManagedMenuItem> list = new ArrayList<ManagedMenuItem>(managedMenuItems);
+			List<ManagedMenuItem> list = new ArrayList<>(managedMenuItems);
 			Collections.sort(list, comparator);
 			String lastGroup = NULL_GROUP_NAME;
 			boolean hasMenuItems = false;

@@ -17,11 +17,10 @@ package docking;
 
 import java.util.*;
 
-import javax.swing.SwingUtilities;
-
 import docking.action.DockingActionIf;
 import docking.menu.MenuGroupMap;
 import docking.menu.MenuHandler;
+import ghidra.util.Swing;
 
 public class GlobalMenuAndToolBarManager implements DockingWindowListener {
 
@@ -64,6 +63,17 @@ public class GlobalMenuAndToolBarManager implements DockingWindowListener {
 		for (WindowActionManager actionManager : windowToActionManagerMap.values()) {
 			actionManager.update();
 		}
+	}
+
+	public DockingActionIf getToolbarAction(String actionName) {
+
+		for (WindowActionManager actionManager : windowToActionManagerMap.values()) {
+			DockingActionIf action = actionManager.getToolbarAction(actionName);
+			if (action != null) {
+				return action;
+			}
+		}
+		return null;
 	}
 
 	public void dispose() {
@@ -130,7 +140,7 @@ public class GlobalMenuAndToolBarManager implements DockingWindowListener {
 	}
 
 	private List<DockingActionIf> getActionsForWindow(WindowNode windowNode) {
-		ActionToGuiMapper actionManager = windowManager.getActionManager();
+		ActionToGuiMapper actionManager = windowManager.getActionToGuiMapper();
 		Collection<DockingActionIf> globalActions = actionManager.getGlobalActions();
 		List<DockingActionIf> actionsForWindow = new ArrayList<>(globalActions.size());
 		Set<Class<?>> contextTypes = windowNode.getContextTypes();
@@ -143,12 +153,7 @@ public class GlobalMenuAndToolBarManager implements DockingWindowListener {
 	}
 
 	public void contextChangedAll() {
-		if (SwingUtilities.isEventDispatchThread()) {
-			updateAllWindowActions();
-		}
-		else {
-			SwingUtilities.invokeLater(() -> updateAllWindowActions());
-		}
+		Swing.runIfSwingOrRunLater(this::updateAllWindowActions);
 	}
 
 	private void updateAllWindowActions() {

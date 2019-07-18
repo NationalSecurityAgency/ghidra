@@ -17,8 +17,7 @@ package ghidra.app.plugin.core.function;
 
 import javax.swing.KeyStroke;
 
-import docking.action.KeyBindingData;
-import docking.action.MenuData;
+import docking.action.*;
 import ghidra.app.context.ListingActionContext;
 import ghidra.app.context.ListingContextAction;
 import ghidra.app.util.HelpTopics;
@@ -38,7 +37,7 @@ public class CycleGroupAction extends ListingContextAction {
 	private CycleGroup cycleGroup;
 
 	CycleGroupAction(CycleGroup group, FunctionPlugin plugin) {
-		super(group.getName(), plugin.getName(), false);
+		super(group.getName(), plugin.getName(), KeyBindingType.SHARED);
 		this.plugin = plugin;
 		this.cycleGroup = group;
 
@@ -54,11 +53,6 @@ public class CycleGroupAction extends ListingContextAction {
 		}
 
 		setKeyBindingData(new KeyBindingData(keyStroke));
-	}
-
-	@Override
-	public boolean usesSharedKeyBinding() {
-		return true;
 	}
 
 	private void setPopupMenu(String name, boolean isSignatureAction) {

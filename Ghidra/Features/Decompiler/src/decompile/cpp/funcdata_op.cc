@@ -972,8 +972,8 @@ void Funcdata::overrideFlow(const Address &addr,uint4 type)
 }
 
 /// Do in-place replacement of
-///   - `#c <= x`   with  `#c-1 < x`   OR
-///   - `x <= #c`   with  `x < #c+1`
+///   - `c <= x`   with  `c-1 < x`   OR
+///   - `x <= c`   with  `x < c+1`
 ///
 /// \param data is the function being analyzed
 /// \param op is comparison PcodeOp

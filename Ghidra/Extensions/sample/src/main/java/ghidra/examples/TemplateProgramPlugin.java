@@ -32,7 +32,6 @@ import ghidra.program.util.ProgramChangeRecord;
 import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
 
-
 /**
  * Sample plugin for dealing with Programs. The base class handles
  * the event processing and enabling/disabling of actions. This
@@ -51,107 +50,98 @@ import ghidra.util.Msg;
 //@formatter:on
 public class TemplateProgramPlugin extends ProgramPlugin implements DomainObjectListener {
 
-    private DockingAction action;
+	private DockingAction action;
 
-    /*******************************************************************
-    *
-    *                 Standard Plugin Constructor
-    *
-    *******************************************************************/
-    public TemplateProgramPlugin(PluginTool tool) {
+	/*******************************************************************
+	*
+	*                 Standard Plugin Constructor
+	*
+	*******************************************************************/
+	public TemplateProgramPlugin(PluginTool tool) {
 
-        super(tool,
-              true, // true means this plugin consumes ProgramLocation events
-              false); // false means this plugin does not consume
-                        // ProgramSelection events
-        // the base class ProgramPlugin handles all the event registering
+		super(tool, true, // true means this plugin consumes ProgramLocation events
+			false); // false means this plugin does not consume
+					// ProgramSelection events
+					// the base class ProgramPlugin handles all the event registering
 
-        // set up list of actions.
-        setupActions();
-    }
-	
-    /**
-     * This is the callback method for DomainObjectChangedEvents.
-     */
-    public void domainObjectChanged(DomainObjectChangedEvent ev) {
-        for (int i=0; i< ev.numRecords(); i++) {
-            DomainObjectChangeRecord record = ev.getChangeRecord(i);
-            if (record instanceof ProgramChangeRecord) {
-                @SuppressWarnings("unused")
-				ProgramChangeRecord r = (ProgramChangeRecord)record;
-                // code for processing the record...
-                // ...
-            }
-        }
-    }
+		// set up list of actions.
+		setupActions();
+	}
 
-    /**
-     * Called when the program is opened.
-     */
-    @Override
-    protected void programActivated(Program program) {
-        program.addListener(this);
-    }
-    /**
-     * Called when the program is closed.
-     */
-    @Override
-    protected void programDeactivated(Program program) {
-        program.removeListener(this);
-    }
+	/**
+	 * This is the callback method for DomainObjectChangedEvents.
+	 */
+	@Override
+	public void domainObjectChanged(DomainObjectChangedEvent ev) {
+		for (int i = 0; i < ev.numRecords(); i++) {
+			DomainObjectChangeRecord record = ev.getChangeRecord(i);
+			if (record instanceof ProgramChangeRecord) {
+				@SuppressWarnings("unused")
+				ProgramChangeRecord r = (ProgramChangeRecord) record;
+				// code for processing the record...
+				// ...
+			}
+		}
+	}
 
-    /*******************************************************************
-    ********************************************************************
-    **
-    **
-    **      Function 1
-    **
-    **
-    ********************************************************************
-    *******************************************************************/
-    private void Function_1 () {
-        // do something with a program location
-        Msg.info(this, getPluginDescription().getName()
-                + ": Program Location==> " + currentLocation.getAddress());
-    }
+	/**
+	 * Called when the program is opened.
+	 */
+	@Override
+	protected void programActivated(Program program) {
+		program.addListener(this);
+	}
 
+	/**
+	 * Called when the program is closed.
+	 */
+	@Override
+	protected void programDeactivated(Program program) {
+		program.removeListener(this);
+	}
 
-    /**
-    * Set up Actions
-    */
-    private void setupActions() {
+	/*******************************************************************
+	********************************************************************
+	**
+	**
+	**      Function 1
+	**
+	**
+	********************************************************************
+	*******************************************************************/
+	private void Function_1() {
+		// do something with a program location
+		Msg.info(this, getPluginDescription().getName() + ": Program Location==> " +
+			currentLocation.getAddress());
+	}
 
-        //
-        // Function 1
-        //
-        action = new DockingAction("Function 1 Code", getName() ) {
-            @Override
-            public void actionPerformed(ActionContext e) {
-                Function_1();
-            }
-            
-            @Override
-            public boolean isValidContext( ActionContext context ) {
-                return context instanceof ListingActionContext;
-            }
-        };
-        action.setEnabled( false );
+	/**
+	* Set up Actions
+	*/
+	private void setupActions() {
 
+		//
+		// Function 1
+		//
+		action = new DockingAction("Function 1 Code", getName()) {
+			@Override
+			public void actionPerformed(ActionContext e) {
+				Function_1();
+			}
 
-        action.setMenuBarData( new MenuData( 
-        	new String[]{"Misc", "Menu","Menu item 1"}, null, null ) );
+			@Override
+			public boolean isValidContext(ActionContext context) {
+				return context instanceof ListingActionContext;
+			}
+		};
+		action.setEnabled(false);
 
+		action.setMenuBarData(
+			new MenuData(new String[] { "Misc", "Menu", "Menu item 1" }, null, null));
 
-        // call method in base class to enable this action when a
-        // program location event comes in; disable it when focus is
-        // lost; it will be disable when the program is closed
-        enableOnLocation(action);
-
-		action.setHelpLocation(new HelpLocation("SampleHelpTopic", 
-		    "TemplateProgramPlugin_Anchor_Name"));
-        tool.addAction(action);
-    }
-
-
+		action.setHelpLocation(
+			new HelpLocation("SampleHelpTopic", "TemplateProgramPlugin_Anchor_Name"));
+		tool.addAction(action);
+	}
 
 }

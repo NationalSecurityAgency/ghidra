@@ -26,7 +26,8 @@ import ghidra.app.util.Option;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.bin.format.ne.*;
 import ghidra.app.util.bin.format.ne.Resource;
-import ghidra.app.util.importer.*;
+import ghidra.app.util.importer.MessageLog;
+import ghidra.app.util.importer.MessageLogContinuesFactory;
 import ghidra.framework.options.Options;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
@@ -82,7 +83,7 @@ public class NeLoader extends AbstractLibrarySupportLoader {
 
 	@Override
 	public void load(ByteProvider provider, LoadSpec loadSpec, List<Option> options, Program prog,
-			MemoryConflictHandler handler, TaskMonitor monitor, MessageLog log) throws IOException {
+			TaskMonitor monitor, MessageLog log) throws IOException {
 
 		if (monitor.isCancelled()) {
 			return;
@@ -92,7 +93,7 @@ public class NeLoader extends AbstractLibrarySupportLoader {
 		initVars();
 
 		ContinuesFactory factory = MessageLogContinuesFactory.create(log);
-		MemoryBlockUtil mbu = new MemoryBlockUtil(prog, handler);
+		MemoryBlockUtil mbu = new MemoryBlockUtil(prog);
 		try {
 			NewExecutable ne = new NewExecutable(factory, provider);
 			WindowsHeader wh = ne.getWindowsHeader();

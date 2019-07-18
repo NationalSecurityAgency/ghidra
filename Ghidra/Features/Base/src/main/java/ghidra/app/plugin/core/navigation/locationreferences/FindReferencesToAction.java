@@ -17,8 +17,7 @@ package ghidra.app.plugin.core.navigation.locationreferences;
 
 import javax.swing.KeyStroke;
 
-import docking.action.KeyBindingData;
-import docking.action.MenuData;
+import docking.action.*;
 import ghidra.app.actions.AbstractFindReferencesDataTypeAction;
 import ghidra.app.context.ListingActionContext;
 import ghidra.app.context.ListingContextAction;
@@ -34,7 +33,7 @@ public class FindReferencesToAction extends ListingContextAction {
 	private int subGroupPosition;
 
 	public FindReferencesToAction(LocationReferencesPlugin plugin, int subGroupPosition) {
-		super(AbstractFindReferencesDataTypeAction.NAME, plugin.getName(), false);
+		super(AbstractFindReferencesDataTypeAction.NAME, plugin.getName(), KeyBindingType.SHARED);
 		this.plugin = plugin;
 		this.subGroupPosition = subGroupPosition;
 
@@ -52,11 +51,6 @@ public class FindReferencesToAction extends ListingContextAction {
 		}
 
 		setKeyBindingData(new KeyBindingData(keyStroke));
-	}
-
-	@Override
-	public boolean usesSharedKeyBinding() {
-		return true;
 	}
 
 	@Override

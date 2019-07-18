@@ -95,26 +95,6 @@ public class StringUtilitiesTest {
 	}
 
 	@Test
-	public void testLastIndexOfIgnoresCase() {
-		String bob = "bob";
-		String endsWithBob = "endsWithBob";
-
-		assertEquals(8, StringUtilities.lastIndexOfIgnoreCase(endsWithBob, bob));
-
-		String endsWithBobUpperCase = "endsWithBOB";
-		assertEquals(8, StringUtilities.lastIndexOfIgnoreCase(endsWithBobUpperCase, bob));
-
-		String startsWithBob = "bobWithTrailingText";
-		assertEquals(0, StringUtilities.lastIndexOfIgnoreCase(startsWithBob, bob));
-
-		String justBob = "bOb";
-		assertEquals(0, StringUtilities.lastIndexOfIgnoreCase(justBob, bob));
-
-		String manyBobs = "This is a string, bob, that has bob, many bobs...and then some text";
-		assertEquals(42, StringUtilities.lastIndexOfIgnoreCase(manyBobs, bob));
-	}
-
-	@Test
 	public void testIsAllBlank() {
 
 		String[] input = null;

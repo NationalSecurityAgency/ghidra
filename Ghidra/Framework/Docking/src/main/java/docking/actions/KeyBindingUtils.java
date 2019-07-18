@@ -15,13 +15,17 @@
  */
 package docking.actions;
 
+import static org.apache.commons.lang3.StringUtils.indexOfIgnoreCase;
+
 import java.awt.Component;
 import java.awt.KeyboardFocusManager;
+import java.awt.event.*;
 import java.io.*;
 import java.util.*;
 
 import javax.swing.*;
 
+import org.apache.commons.collections4.map.LazyMap;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jdom.*;
@@ -31,6 +35,7 @@ import org.jdom.output.XMLOutputter;
 import com.google.common.collect.Sets;
 
 import docking.DockingTool;
+import docking.DockingUtils;
 import docking.action.*;
 import docking.widgets.filechooser.GhidraFileChooser;
 import ghidra.framework.options.ToolOptions;
@@ -53,10 +58,20 @@ import utilities.util.reflection.ReflectionUtilities;
 public class KeyBindingUtils {
 	private static final String LAST_KEY_BINDING_EXPORT_DIRECTORY = "LastKeyBindingExportDirectory";
 
+	private static final String RELEASED = "released";
+	private static final String TYPED = "typed";
+	private static final String PRESSED = "pressed";
+
+	private static final String SHIFT = "Shift";
+	private static final String CTRL = "Ctrl";
+	private static final String CONTROL = "Control";
+	private static final String ALT = "Alt";
+	private static final String META = "Meta";
+	private static final String MODIFIER_SEPARATOR = "-";
+
 	private static final Logger log = LogManager.getLogger(KeyBindingUtils.class);
 
 	public static final String PREFERENCES_FILE_EXTENSION = ".kbxml";
-
 	private static final GhidraFileFilter FILE_FILTER = new GhidraFileFilter() {
 		@Override
 		public boolean accept(File pathname, GhidraFileChooserModel model) {
@@ -330,15 +345,21 @@ public class KeyBindingUtils {
 	}
 
 	/**
-	 * A utility method to get all key binding actions.  This method will remove duplicate 
-	 * actions and will only return actions that are {@link DockingActionIf#isKeyBindingManaged()}
+	 * A utility method to get all key binding actions.  This method will 
+	 * only return actions that support {@link KeyBindingType key bindings}.
+	 * 
+	 * <p>The mapping returned provides a list of items because it is possible for there to 
+	 * exists multiple actions with the same name and owner.  (This can happen when multiple copies
+	 * of a component provider are shown, each with their own set of actions that share the
+	 * same name.)
 	 * 
 	 * @param tool the tool containing the actions
 	 * @return the actions mapped by their full name (e.g., 'Name (OwnerName)')
 	 */
-	public static Map<String, DockingActionIf> getAllActionsByFullName(DockingTool tool) {
+	public static Map<String, List<DockingActionIf>> getAllActionsByFullName(DockingTool tool) {
 
-		Map<String, DockingActionIf> deduper = new HashMap<>();
+		Map<String, List<DockingActionIf>> result =
+			LazyMap.lazyMap(new HashMap<>(), s -> new LinkedList<>());
 		Set<DockingActionIf> actions = tool.getAllActions();
 		for (DockingActionIf action : actions) {
 			if (isIgnored(action)) {
@@ -348,16 +369,16 @@ public class KeyBindingUtils {
 				continue;
 			}
 
-			deduper.put(action.getFullName(), action);
+			result.get(action.getFullName()).add(action);
 		}
 
-		return deduper;
+		return result;
 	}
 
 	/**
 	 * A utility method to get all key binding actions that have the given owner.  
 	 * This method will remove duplicate actions and will only return actions 
-	 * that are {@link DockingActionIf#isKeyBindingManaged()}
+	 * that support {@link KeyBindingType key bindings}.
 	 * 
 	 * @param tool the tool containing the actions
 	 * @param owner the action owner name
@@ -399,36 +420,6 @@ public class KeyBindingUtils {
 	}
 
 	/**
-	 * A method to locate the {@link SharedStubKeyBindingAction} representative for the given 
-	 * action name.  This method is not useful to general clients.
-	 * 
-	 * @param allActions all actions in the system
-	 * @param sharedName the name of the shared action
-	 * @return the shared action representative
-	 */
-	public static DockingActionIf getSharedKeyBindingAction(Set<DockingActionIf> allActions,
-			String sharedName) {
-
-		String owner = "Tool";
-		for (DockingActionIf action : allActions) {
-			if (!(action instanceof SharedStubKeyBindingAction)) {
-				continue;
-			}
-
-			if (action.getOwner().equals(owner) && action.getName().equals(sharedName)) {
-				return action;
-			}
-		}
-		return null;
-	}
-
-	private static boolean isIgnored(DockingActionIf action) {
-		// not keybinding managed; a shared keybinding implies that this action should not be in 
-		// the UI, as there will be a single proxy in place of all actions sharing that binding
-		return !action.isKeyBindingManaged() || action.usesSharedKeyBinding();
-	}
-
-	/**
 	 * Takes the existing docking action and allows it to be registered with
 	 * Swing components
 	 * 
@@ -455,9 +446,17 @@ public class KeyBindingUtils {
 	public static void assertSameDefaultKeyBindings(DockingActionIf newAction,
 			Collection<DockingActionIf> existingActions) {
 
+		if (!newAction.getKeyBindingType().supportsKeyBindings()) {
+			return;
+		}
+
 		KeyBindingData newDefaultBinding = newAction.getDefaultKeyBindingData();
 		KeyStroke defaultKs = getKeyStroke(newDefaultBinding);
 		for (DockingActionIf action : existingActions) {
+			if (!action.getKeyBindingType().supportsKeyBindings()) {
+				continue;
+			}
+
 			KeyBindingData existingDefaultBinding = action.getDefaultKeyBindingData();
 			KeyStroke existingKs = getKeyStroke(existingDefaultBinding);
 			if (!Objects.equals(defaultKs, existingKs)) {
@@ -493,6 +492,252 @@ public class KeyBindingUtils {
 		Msg.warn(KeyBindingUtils.class, s, ReflectionUtilities.createJavaFilteredThrowable());
 	}
 
+	/**
+	 * Updates the given data with system-independent versions of key modifiers.  For example, 
+	 * the <tt>control</tt> key will be converted to the <tt>command</tt> key on the Mac.
+	 * 
+	 * @param keyStroke the keystroke to validate
+	 * @return the potentially changed keystroke
+	 */
+	// TODO ignore the deprecation, as this method is responsible for fixing deprecated usage.  
+	//      When all actions no longer user the deprecated modifiers, the deprecated elements 
+	//      of this method can be removed
+	@SuppressWarnings("deprecation")
+	public static KeyStroke validateKeyStroke(KeyStroke keyStroke) {
+		if (keyStroke == null) {
+			return null;
+		}
+
+		// remove system-dependent control key mask and transform deprecated modifiers
+		int modifiers = keyStroke.getModifiers();
+		if ((modifiers & InputEvent.CTRL_DOWN_MASK) == InputEvent.CTRL_DOWN_MASK) {
+			modifiers = modifiers ^ InputEvent.CTRL_DOWN_MASK;
+			modifiers = modifiers | DockingUtils.CONTROL_KEY_MODIFIER_MASK;
+		}
+
+		if ((modifiers & InputEvent.CTRL_MASK) == InputEvent.CTRL_MASK) {
+			modifiers = modifiers ^ InputEvent.CTRL_MASK;
+			modifiers = modifiers | DockingUtils.CONTROL_KEY_MODIFIER_MASK;
+		}
+
+		if ((modifiers & ActionEvent.CTRL_MASK) == ActionEvent.CTRL_MASK) {
+			modifiers = modifiers ^ ActionEvent.CTRL_MASK;
+			modifiers = modifiers | DockingUtils.CONTROL_KEY_MODIFIER_MASK;
+		}
+
+		if ((modifiers & InputEvent.SHIFT_MASK) == InputEvent.SHIFT_MASK) {
+			modifiers = modifiers ^ InputEvent.SHIFT_MASK;
+			modifiers = modifiers | InputEvent.SHIFT_DOWN_MASK;
+		}
+
+		if ((modifiers & InputEvent.ALT_MASK) == InputEvent.ALT_MASK) {
+			modifiers = modifiers ^ InputEvent.ALT_MASK;
+			modifiers = modifiers | InputEvent.ALT_DOWN_MASK;
+		}
+
+		if ((modifiers & InputEvent.META_MASK) == InputEvent.META_MASK) {
+			modifiers = modifiers ^ InputEvent.META_MASK;
+			modifiers = modifiers | InputEvent.META_DOWN_MASK;
+		}
+
+		int eventType = keyStroke.getKeyEventType();
+		if (eventType == KeyEvent.KEY_TYPED) {
+			// we know that typed events have a key code of VK_UNDEFINED
+			return KeyStroke.getKeyStroke(Character.valueOf(keyStroke.getKeyChar()), modifiers);
+		}
+
+		// key pressed or released
+		boolean isOnKeyRelease = keyStroke.isOnKeyRelease();
+		return KeyStroke.getKeyStroke(keyStroke.getKeyCode(), modifiers, isOnKeyRelease);
+	}
+
+	/**
+	 * Convert the toString() form of the keyStroke.
+	 * <br>In Java 1.4.2 & earlier, Ctrl-M is returned as "keyCode CtrlM-P"
+	 * and we want it to look like: "Ctrl-M".
+	 * <br>In Java 1.5.0, Ctrl-M is returned as "ctrl pressed M"
+	 * and we want it to look like: "Ctrl-M".
+	 * 
+	 * @param keyStroke the key stroke  
+	 * @return the string value; the empty string if the key stroke is null
+	 */
+	public static String parseKeyStroke(KeyStroke keyStroke) {
+
+		if (keyStroke == null) {
+			return "";
+		}
+
+		final String keyPressSuffix = "-P";
+		String keyString = keyStroke.toString();
+		int type = keyStroke.getKeyEventType();
+		if (type == KeyEvent.KEY_TYPED) {
+			return String.valueOf(keyStroke.getKeyChar());
+		}
+
+		// get the character used in the key stroke
+		int firstIndex = keyString.lastIndexOf(' ') + 1;
+		int ctrlIndex = keyString.indexOf(CTRL, firstIndex);
+		if (ctrlIndex >= 0) {
+			firstIndex = ctrlIndex + CTRL.length();
+		}
+		int altIndex = keyString.indexOf(ALT, firstIndex);
+		if (altIndex >= 0) {
+			firstIndex = altIndex + ALT.length();
+		}
+		int shiftIndex = keyString.indexOf(SHIFT, firstIndex);
+		if (shiftIndex >= 0) {
+			firstIndex = shiftIndex + SHIFT.length();
+		}
+		int metaIndex = keyString.indexOf(META, firstIndex);
+		if (metaIndex >= 0) {
+			firstIndex = metaIndex + META.length();
+		}
+
+		int lastIndex = keyString.length();
+		if (keyString.endsWith(keyPressSuffix)) {
+			lastIndex -= keyPressSuffix.length();
+		}
+		if (lastIndex >= 0) {
+			keyString = keyString.substring(firstIndex, lastIndex);
+		}
+
+		int modifiers = keyStroke.getModifiers();
+		StringBuilder buffy = new StringBuilder();
+		if (isShift(modifiers)) {
+			buffy.insert(0, SHIFT + MODIFIER_SEPARATOR);
+		}
+		if (isAlt(modifiers)) {
+			buffy.insert(0, ALT + MODIFIER_SEPARATOR);
+		}
+		if (isControl(modifiers)) {
+			buffy.insert(0, CTRL + MODIFIER_SEPARATOR);
+		}
+		if (isMeta(modifiers)) {
+			buffy.insert(0, META + MODIFIER_SEPARATOR);
+		}
+		buffy.append(keyString);
+		return buffy.toString();
+	}
+
+	// ignore the deprecated; remove when we are confident that all tool actions no longer use the 
+	// deprecated InputEvent mask types
+	@SuppressWarnings("deprecation")
+	private static boolean isShift(int mask) {
+		return (mask & InputEvent.SHIFT_DOWN_MASK) != 0 || (mask & InputEvent.SHIFT_MASK) != 0;
+	}
+
+	// ignore the deprecated; remove when we are confident that all tool actions no longer use the 
+	// deprecated InputEvent mask types
+	@SuppressWarnings("deprecation")
+	private static boolean isAlt(int mask) {
+		return (mask & InputEvent.ALT_DOWN_MASK) != 0 || (mask & InputEvent.ALT_MASK) != 0;
+	}
+
+	// ignore the deprecated; remove when we are confident that all tool actions no longer use the 
+	// deprecated InputEvent mask types
+	@SuppressWarnings("deprecation")
+	private static boolean isControl(int mask) {
+		return (mask & InputEvent.CTRL_DOWN_MASK) != 0 || (mask & InputEvent.CTRL_MASK) != 0;
+	}
+
+	// ignore the deprecated; remove when we are confident that all tool actions no longer use the 
+	// deprecated InputEvent mask types
+	@SuppressWarnings("deprecation")
+	private static boolean isMeta(int mask) {
+		return (mask & InputEvent.META_DOWN_MASK) != 0 || (mask & InputEvent.META_MASK) != 0;
+	}
+
+	/**
+	 * Parses the given text into a KeyStroke.  This method relies upon 
+	 * {@link KeyStroke#getKeyStroke(String)} for parsing.  Before making that call, this method
+	 * will perform fixup on the given text for added flexibility.  For example, the given 
+	 * text may contain spaces or dashes as the separators between parts in the string.  Also, 
+	 * the text is converted such that it is not case-sensitive.  So, the following example 
+	 * formats are allowed:
+	 * <pre>
+	 *    Alt-F
+	 *    alt p
+	 *    Ctrl-Alt-Z
+	 *    ctrl Z
+	 * </pre>  
+	 * 
+	 * @param keyStroke
+	 * @return the new key stroke (as returned by  {@link KeyStroke#getKeyStroke(String)}
+	 */
+	public static KeyStroke parseKeyStroke(String keyStroke) {
+		List<String> pieces = new ArrayList<>();
+		StringTokenizer tokenizer = new StringTokenizer(keyStroke, "- ");
+		while (tokenizer.hasMoreTokens()) {
+			String token = tokenizer.nextToken();
+			if (!pieces.contains(token)) {
+				pieces.add(token);
+			}
+		}
+
+		StringBuilder buffy = new StringBuilder();
+		for (Iterator<String> iterator = pieces.iterator(); iterator.hasNext();) {
+			String piece = iterator.next();
+			if (indexOfIgnoreCase(piece, SHIFT) != -1) {
+				buffy.append("shift ");
+				iterator.remove();
+			}
+			else if (indexOfIgnoreCase(piece, CTRL) != -1) {
+				buffy.append("ctrl ");
+				iterator.remove();
+			}
+			else if (indexOfIgnoreCase(piece, CONTROL) != -1) {
+				buffy.append("ctrl ");
+				iterator.remove();
+			}
+			else if (indexOfIgnoreCase(piece, ALT) != -1) {
+				buffy.append("alt ");
+				iterator.remove();
+			}
+			else if (indexOfIgnoreCase(piece, META) != -1) {
+				buffy.append("meta ");
+				iterator.remove();
+			}
+			else if (indexOfIgnoreCase(piece, PRESSED) != -1) {
+				iterator.remove();
+			}
+			else if (indexOfIgnoreCase(piece, TYPED) != -1) {
+				iterator.remove();
+			}
+			else if (indexOfIgnoreCase(piece, RELEASED) != -1) {
+				iterator.remove();
+			}
+
+		}
+
+		buffy.append(PRESSED).append(' ');
+
+		// at this point we should only have left one piece--the key ID
+		int leftover = pieces.size();
+		if (leftover > 1 || leftover == 0) {
+			Msg.warn(KeyBindingUtils.class, "Invalid keystroke string found.  Expected " +
+				"format of '[modifier] ... key'.  Found: '" + keyStroke + "'");
+
+			if (leftover == 0) {
+				return null; // nothing to do
+			}
+		}
+
+		String key = pieces.get(0);
+		buffy.append(key.toUpperCase());
+
+		return KeyStroke.getKeyStroke(buffy.toString());
+	}
+
+//==================================================================================================
+// Private Methods
+//==================================================================================================	
+
+	private static boolean isIgnored(DockingActionIf action) {
+		// a shared keybinding implies that this action should not be in 
+		// the UI, as there will be a single proxy in place of all actions sharing that binding
+		return !action.getKeyBindingType().isManaged();
+	}
+
 	private static KeyStroke getKeyStroke(KeyBindingData data) {
 		if (data == null) {
 			return null;
@@ -500,12 +745,7 @@ public class KeyBindingUtils {
 		return data.getKeyBinding();
 	}
 
-//==================================================================================================
-// Private Methods
-//==================================================================================================	
-
-	// prompts the user for a file location from which to read key binding
-	// data
+	// prompts the user for a file location from which to read key binding data
 	private static InputStream getInputStreamForFile(File startingDir) {
 		File selectedFile = getFileFromUser(startingDir);
 
@@ -587,4 +827,5 @@ public class KeyBindingUtils {
 
 		return selectedFile;
 	}
+
 }

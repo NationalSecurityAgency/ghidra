@@ -24,7 +24,6 @@ import db.DBConstants;
 import db.DBHandle;
 import ghidra.app.util.Option;
 import ghidra.app.util.bin.ByteProvider;
-import ghidra.app.util.importer.MemoryConflictHandler;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.framework.model.*;
 import ghidra.framework.store.db.PackedDatabase;
@@ -136,8 +135,8 @@ public class GzfLoader implements Loader {
 
 	@Override
 	public boolean loadInto(ByteProvider provider, LoadSpec loadSpec, List<Option> options,
-			MessageLog messageLog, Program program, TaskMonitor monitor,
-			MemoryConflictHandler memoryConflictHandler) throws IOException, CancelledException {
+			MessageLog messageLog, Program program, TaskMonitor monitor)
+			throws IOException, CancelledException {
 		throw new UnsupportedOperationException("cannot add GZF to program");
 	}
 

@@ -23,7 +23,6 @@ import java.io.IOException;
 import java.util.*;
 import java.util.Map.Entry;
 
-import javax.swing.ImageIcon;
 import javax.swing.SwingUtilities;
 import javax.swing.tree.TreePath;
 
@@ -60,7 +59,6 @@ import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
 import ghidra.util.datastruct.LRUMap;
 import ghidra.util.task.TaskLauncher;
-import resources.ResourceManager;
 
 /**
  * Plugin to pop up the dialog to manage data types in the program
@@ -82,14 +80,12 @@ import resources.ResourceManager;
 public class DataTypeManagerPlugin extends ProgramPlugin
 		implements DomainObjectListener, DataTypeManagerService, PopupListener {
 
-	final static String DATA_TYPES_ICON = "images/dataTypes.png";
 	private static final String SEACH_PROVIDER_NAME = "Search DataTypes Provider";
 	private static final int RECENTLY_USED_CACHE_SIZE = 10;
 
 	private static final String STANDARD_ARCHIVE_MENU = "Standard Archive";
 	private static final String RECENTLY_OPENED_MENU = "Recently Opened Archive";
 
-	private DockingAction manageDataAction;
 	private DataTypeManagerHandler dataTypeManagerHandler;
 	private DataTypesProvider provider;
 	private OpenVersionedFileDialog openDialog;
@@ -126,12 +122,10 @@ public class DataTypeManagerPlugin extends ProgramPlugin
 			@Override
 			public void archiveClosed(Archive archive) {
 				if (archive instanceof ProjectArchive) {
+					// Program is handled by deactivation event
 					((ProjectArchive) archive).getDomainObject().removeListener(
 						DataTypeManagerPlugin.this);
 				}
-				// Program is handled by deactivation.
-
-				// Otherwise, don't care.
 			}
 
 			@Override
@@ -467,21 +461,6 @@ public class DataTypeManagerPlugin extends ProgramPlugin
 	 * Create the actions for the menu on the tool.
 	 */
 	private void createActions() {
-		// create action
-		manageDataAction = new DockingAction("Data Type Manager", getName()) {
-			@Override
-			public void actionPerformed(ActionContext context) {
-				tool.showComponentProvider(provider, true);
-			}
-		};
-		ImageIcon dtIcon = ResourceManager.loadImage(DATA_TYPES_ICON);
-		manageDataAction.setToolBarData(new ToolBarData(dtIcon, "View"));
-
-		manageDataAction.setDescription("Display Data Types");
-		manageDataAction.setHelpLocation(provider.getHelpLocation());
-
-		tool.addAction(manageDataAction);
-
 		createStandardArchivesMenu();
 	}
 

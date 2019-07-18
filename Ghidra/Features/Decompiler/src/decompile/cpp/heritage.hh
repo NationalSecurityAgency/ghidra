@@ -73,6 +73,7 @@ public:
 };
 
 class Funcdata;
+class FuncCallSpecs;
 
 /// \brief Information about heritage passes performed for a specific address space
 ///
@@ -183,6 +184,11 @@ class Heritage {
     uintb offset;		///< Offset relative to base
     uint4 traversals;		///< What kind of operations has this pointer accumulated
     list<PcodeOp *>::const_iterator iter;	///< Next PcodeOp to follow
+
+    /// \brief Constructor
+    /// \param v is the Varnode being visited
+    /// \param o is the current offset from the base pointer
+    /// \param trav indicates what configurations were seen along the path to this Varnode
     StackNode(Varnode *v,uintb o,uint4 trav) {
       vn = v;
       offset = o;
@@ -239,6 +245,7 @@ class Heritage {
   void reprocessFreeStores(AddrSpace *spc,vector<PcodeOp *> &freeStores);
   void guard(const Address &addr,int4 size,vector<Varnode *> &read,vector<Varnode *> &write,vector<Varnode *> &inputvars);
   void guardInput(const Address &addr,int4 size,vector<Varnode *> &input);
+  void guardCallOverlappingInput(FuncCallSpecs *fc,const Address &addr,int4 size);
   void guardCalls(uint4 flags,const Address &addr,int4 size,vector<Varnode *> &write);
   void guardStores(const Address &addr,int4 size,vector<Varnode *> &write);
   void guardLoads(uint4 flags,const Address &addr,int4 size,vector<Varnode *> &write);

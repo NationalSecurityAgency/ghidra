@@ -21,6 +21,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.function.BiConsumer;
 
 import javax.swing.*;
@@ -59,6 +60,7 @@ import ghidra.util.table.GhidraTableFilterPanel;
 import ghidra.util.table.ProgramTableModel;
 import ghidra.util.table.field.AddressBasedLocation;
 import ghidra.util.xml.XmlUtilities;
+import util.CollectionUtils;
 
 public class SymbolTablePluginTest extends AbstractGhidraHeadedIntegrationTest {
 
@@ -93,8 +95,14 @@ public class SymbolTablePluginTest extends AbstractGhidraHeadedIntegrationTest {
 		plugin = env.getPlugin(SymbolTablePlugin.class);
 		provider = (SymbolProvider) getInstanceField("symProvider", plugin);
 
-		viewSymAction = getAction(plugin, "View Symbol Table");
-		viewRefAction = getAction(plugin, "View Symbol References");
+		viewSymAction = getAction(plugin, "Symbol Table");
+
+		// this action is actually in the tool twice: once for the provider and once as a 
+		// local action in the Symbol Table header, so we must pick one
+		Set<DockingActionIf> symbolReferencesActions =
+			getActionsByOwnerAndName(tool, plugin.getName(), "Symbol References");
+		viewRefAction = CollectionUtils.any(symbolReferencesActions);
+
 		deleteAction = getAction(plugin, "Delete Symbols");
 		makeSelectionAction = getAction(plugin, "Make Selection");
 		setFilterAction = getAction(plugin, "Set Filter");

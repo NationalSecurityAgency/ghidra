@@ -4478,6 +4478,7 @@ void universal_action(Architecture *conf)
 	actprop->addRule( new RuleAndCompare("analysis") );
 	actprop->addRule( new RuleDoubleSub("analysis") );
 	actprop->addRule( new RuleDoubleShift("analysis") );
+	actprop->addRule( new RuleDoubleArithShift("analysis") );
 	actprop->addRule( new RuleConcatShift("analysis") );
 	actprop->addRule( new RuleLeftRight("analysis") );
 	actprop->addRule( new RuleShiftCompare("analysis") );
