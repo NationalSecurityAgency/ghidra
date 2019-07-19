@@ -2,14 +2,14 @@
 
 
 # Do not take BS into account when decompiling
-@define SINGLE_REGISTER_BANK
+@define SINGLE_REGISTER_BANK ""
 
 # Treat R0-R7 as not memory mapped (implies SINGLE_REGISTER_BANK)
-@define INTERNAL_REGISTERS
+@define INTERNAL_REGISTERS ""
 
 
 @ifdef INTERNAL_REGISTERS
-@define SINGLE_REGISTER_BANK
+@define SINGLE_REGISTER_BANK ""
 @endif
 
 
