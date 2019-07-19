@@ -16,13 +16,13 @@
 package ghidra.app.util.bin.format.pdb;
 
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.function.Consumer;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.*;
 
 import ghidra.program.model.data.*;
 import ghidra.test.AbstractGhidraHeadlessIntegrationTest;
@@ -92,6 +92,13 @@ public class CompositeMemberTest extends AbstractGhidraHeadlessIntegrationTest
 		dataTypeParser = new PdbDataTypeParser(dataMgr, null, null);
 	}
 
+	@After
+	public void tearDown() {
+		if (dataTypeParser != null && dataTypeParser.hasMissingBitOffsetError()) {
+			fail("Test data specifies bitfield without bit-offset");
+		}
+	}
+
 	@Override
 	public void accept(String message) {
 		Msg.info(this, message + " (Test: " + getName() + ")");
@@ -105,10 +112,10 @@ public class CompositeMemberTest extends AbstractGhidraHeadlessIntegrationTest
 		//@formatter:off
 		List<MyPdbMember> members =
 			CollectionUtils.asList(new MyPdbMember("a", "uchar", 0),
-				new MyPdbMember("b:0x4", "uchar", 1),
-				new MyPdbMember("c:0x4", "uchar", 1),
-				new MyPdbMember("d:0x4", "uchar", 2),
-				new MyPdbMember("e:0x4", "uint", 4),
+				new MyPdbMember("b:0x4:0x0", "uchar", 1),
+				new MyPdbMember("c:0x4:0x4", "uchar", 1),
+				new MyPdbMember("d:0x4:0x0", "uchar", 2),
+				new MyPdbMember("e:0x4:0x0", "uint", 4),
 				new MyPdbMember("f", "ushort", 8));
 		//@formatter:on
 
@@ -263,10 +270,10 @@ public class CompositeMemberTest extends AbstractGhidraHeadlessIntegrationTest
 		//@formatter:off
 		List<MyPdbMember> members =
 			CollectionUtils.asList(new MyPdbMember("a", "uchar", 0),
-				new MyPdbMember("b:0x4", "uchar", 0),
-				new MyPdbMember("c:0x4", "uchar", 0),
-				new MyPdbMember("d:0x4", "uchar", 0),
-				new MyPdbMember("e:0x4", "uchar", 0), 
+				new MyPdbMember("b:0x4:0x0", "uchar", 0),
+				new MyPdbMember("c:0x4:0x4", "uchar", 0),
+				new MyPdbMember("d:0x4:0x0", "uchar", 0),
+				new MyPdbMember("e:0x4:0x4", "uchar", 0), 
 				new MyPdbMember("f", "ushort", 0));
 		//@formatter:on
 
@@ -404,22 +411,22 @@ public class CompositeMemberTest extends AbstractGhidraHeadlessIntegrationTest
 		//@formatter:off
 		List<MyPdbMember> members =
 			CollectionUtils.asList(
-				new MyPdbMember("s0:0x1", "char", 0),
-				new MyPdbMember("s1:0x1", "char", 0),
-				new MyPdbMember("s2:0x1", "char", 0),
-				new MyPdbMember("s3:0x1", "char", 0),
-				new MyPdbMember("s4:0x1", "char", 0),
-				new MyPdbMember("s5:0x1", "char", 0),
-				new MyPdbMember("s6:0x1", "char", 0),
-				new MyPdbMember("s7:0x1", "char", 0),
-				new MyPdbMember("u0:0x1", "uchar", 0),
-				new MyPdbMember("u1:0x1", "uchar", 0),
-				new MyPdbMember("u2:0x1", "uchar", 0),
-				new MyPdbMember("u3:0x1", "uchar", 0),
-				new MyPdbMember("u4:0x1", "uchar", 0),
-				new MyPdbMember("u5:0x1", "uchar", 0),
-				new MyPdbMember("u6:0x1", "uchar", 0),
-				new MyPdbMember("u7:0x1", "uchar", 0),
+				new MyPdbMember("s0:0x1:0x0", "char", 0),
+				new MyPdbMember("s1:0x1:0x1", "char", 0),
+				new MyPdbMember("s2:0x1:0x2", "char", 0),
+				new MyPdbMember("s3:0x1:0x3", "char", 0),
+				new MyPdbMember("s4:0x1:0x4", "char", 0),
+				new MyPdbMember("s5:0x1:0x5", "char", 0),
+				new MyPdbMember("s6:0x1:0x6", "char", 0),
+				new MyPdbMember("s7:0x1:0x7", "char", 0),
+				new MyPdbMember("u0:0x1:0x0", "uchar", 0),
+				new MyPdbMember("u1:0x1:0x1", "uchar", 0),
+				new MyPdbMember("u2:0x1:0x2", "uchar", 0),
+				new MyPdbMember("u3:0x1:0x3", "uchar", 0),
+				new MyPdbMember("u4:0x1:0x4", "uchar", 0),
+				new MyPdbMember("u5:0x1:0x5", "uchar", 0),
+				new MyPdbMember("u6:0x1:0x6", "uchar", 0),
+				new MyPdbMember("u7:0x1:0x7", "uchar", 0),
 				new MyPdbMember("a", "ulong", 8),
 				new MyPdbMember("b", "longlong", 8));
 		//@formatter:on
@@ -489,22 +496,22 @@ public class CompositeMemberTest extends AbstractGhidraHeadlessIntegrationTest
 			CollectionUtils.asList(
 				new MyPdbMember("a", "ulong", 0),
 				new MyPdbMember("b", "longlong", 0),
-				new MyPdbMember("s0:0x1", "char", 0),
-				new MyPdbMember("s1:0x1", "char", 0),
-				new MyPdbMember("s2:0x1", "char", 0),
-				new MyPdbMember("s3:0x1", "char", 0),
-				new MyPdbMember("s4:0x1", "char", 0),
-				new MyPdbMember("s5:0x1", "char", 0),
-				new MyPdbMember("s6:0x1", "char", 0),
-				new MyPdbMember("s7:0x1", "char", 0),
-				new MyPdbMember("u0:0x1", "uchar", 1),
-				new MyPdbMember("u1:0x1", "uchar", 1),
-				new MyPdbMember("u2:0x1", "uchar", 1),
-				new MyPdbMember("u3:0x1", "uchar", 1),
-				new MyPdbMember("u4:0x1", "uchar", 1),
-				new MyPdbMember("u5:0x1", "uchar", 1),
-				new MyPdbMember("u6:0x1", "uchar", 1),
-				new MyPdbMember("u7:0x1", "uchar", 1));
+				new MyPdbMember("s0:0x1:0x0", "char", 0),
+				new MyPdbMember("s1:0x1:0x1", "char", 0),
+				new MyPdbMember("s2:0x1:0x2", "char", 0),
+				new MyPdbMember("s3:0x1:0x3", "char", 0),
+				new MyPdbMember("s4:0x1:0x4", "char", 0),
+				new MyPdbMember("s5:0x1:0x5", "char", 0),
+				new MyPdbMember("s6:0x1:0x6", "char", 0),
+				new MyPdbMember("s7:0x1:0x7", "char", 0),
+				new MyPdbMember("u0:0x1:0x0", "uchar", 1),
+				new MyPdbMember("u1:0x1:0x1", "uchar", 1),
+				new MyPdbMember("u2:0x1:0x2", "uchar", 1),
+				new MyPdbMember("u3:0x1:0x3", "uchar", 1),
+				new MyPdbMember("u4:0x1:0x4", "uchar", 1),
+				new MyPdbMember("u5:0x1:0x5", "uchar", 1),
+				new MyPdbMember("u6:0x1:0x6", "uchar", 1),
+				new MyPdbMember("u7:0x1:0x7", "uchar", 1));
 				
 		//@formatter:on
 
@@ -553,59 +560,59 @@ public class CompositeMemberTest extends AbstractGhidraHeadlessIntegrationTest
 
 		//@formatter:off
 		List<MyPdbMember> members =
-			CollectionUtils.asList(new MyPdbMember("s0:0x1", "char", 0x0),
-				new MyPdbMember("s1:0x1", "char", 0x0),
-					new MyPdbMember("s2:0x1", "char", 0x0),
-					new MyPdbMember("s3:0x1", "char", 0x0),
-					new MyPdbMember("s4:0x1", "char", 0x0),
-					new MyPdbMember("s5:0x1", "char", 0x0),
-					new MyPdbMember("s6:0x1", "char", 0x0),
-					new MyPdbMember("s7:0x1", "char", 0x0),
-					new MyPdbMember("u0:0x1", "uchar", 0x0),
-					new MyPdbMember("u1:0x1", "uchar", 0x0),
-					new MyPdbMember("u2:0x1", "uchar", 0x0),
-					new MyPdbMember("u3:0x1", "uchar", 0x0),
-					new MyPdbMember("u4:0x1", "uchar", 0x0),
-					new MyPdbMember("u5:0x1", "uchar", 0x0),
-					new MyPdbMember("u6:0x1", "uchar", 0x0),
-					new MyPdbMember("u7:0x1", "uchar", 0x0),
+			CollectionUtils.asList(new MyPdbMember("s0:0x1:0x0", "char", 0x0),
+				new MyPdbMember("s1:0x1:0x1", "char", 0x0),
+					new MyPdbMember("s2:0x1:0x2", "char", 0x0),
+					new MyPdbMember("s3:0x1:0x3", "char", 0x0),
+					new MyPdbMember("s4:0x1:0x4", "char", 0x0),
+					new MyPdbMember("s5:0x1:0x5", "char", 0x0),
+					new MyPdbMember("s6:0x1:0x6", "char", 0x0),
+					new MyPdbMember("s7:0x1:0x7", "char", 0x0),
+					new MyPdbMember("u0:0x1:0x0", "uchar", 0x0),
+					new MyPdbMember("u1:0x1:0x1", "uchar", 0x0),
+					new MyPdbMember("u2:0x1:0x2", "uchar", 0x0),
+					new MyPdbMember("u3:0x1:0x3", "uchar", 0x0),
+					new MyPdbMember("u4:0x1:0x4", "uchar", 0x0),
+					new MyPdbMember("u5:0x1:0x5", "uchar", 0x0),
+					new MyPdbMember("u6:0x1:0x6", "uchar", 0x0),
+					new MyPdbMember("u7:0x1:0x7", "uchar", 0x0),
 					new MyPdbMember("val", "ulong", 0x8),
 					new MyPdbMember("d", "double", 0x8),
-					new MyPdbMember("n0:0x4", "ulong", 0x8),
-					new MyPdbMember("n1:0x4", "ulong", 0x8),
-					new MyPdbMember("n2:0x4", "ulong", 0x8),
-					new MyPdbMember("n3:0x4", "ulong", 0x8),
-					new MyPdbMember("n4:0x4", "ulong", 0x8),
-					new MyPdbMember("n5:0x4", "ulong", 0x8),
-					new MyPdbMember("n6:0x4", "ulong", 0x8),
-					new MyPdbMember("n7:0x4", "ulong", 0x8),
-					new MyPdbMember("n8:0x4", "ulong", 0xc),
-					new MyPdbMember("n9:0x4", "ulong", 0xc),
-					new MyPdbMember("n10:0x4", "ulong", 0xc),
-					new MyPdbMember("n11:0x4", "ulong", 0xc),
-					new MyPdbMember("n12:0x4", "ulong", 0xc),
-					new MyPdbMember("n13:0x4", "ulong", 0xc),
-					new MyPdbMember("n14:0x4", "ulong", 0xc),
-					new MyPdbMember("n15:0x4", "ulong", 0xc),
-					new MyPdbMember("x1:0x1", "ulong", 0x8),
-					new MyPdbMember("x2:0x2", "ulong", 0x8),
-					new MyPdbMember("x3:0x3", "ulong", 0x8),
-					new MyPdbMember("x4:0x4", "ulong", 0x8),
-					new MyPdbMember("x5:0x5", "ulong", 0x8),
-					new MyPdbMember("x6:0x6", "ulong", 0x8),
-					new MyPdbMember("x7:0x7", "ulong", 0x8),
-					new MyPdbMember("x8:0x8", "ulong", 0xc),
-					new MyPdbMember("x9:0x9", "ulong", 0xc),
-					new MyPdbMember("x10:0xa", "ulong", 0xc),
-					new MyPdbMember("y1:0x1", "uchar", 0x8),
-					new MyPdbMember("y2:0x2", "uchar", 0x8),
-					new MyPdbMember("y3:0x3", "uchar", 0x8),
-					new MyPdbMember("y4:0x4", "uchar", 0x9),
-					new MyPdbMember("y5:0x5", "uchar", 0xa),
-					new MyPdbMember("y6:0x6", "uchar", 0xb),
-					new MyPdbMember("y7:0x7", "uchar", 0xc),
-					new MyPdbMember("y8:0x8", "uchar", 0xd),
-					new MyPdbMember("y9:0x9", "ushort", 0xe),
+					new MyPdbMember("n0:0x4:0x0", "ulong", 0x8),
+					new MyPdbMember("n1:0x4:0x4", "ulong", 0x8),
+					new MyPdbMember("n2:0x4:0x8", "ulong", 0x8),
+					new MyPdbMember("n3:0x4:0xc", "ulong", 0x8),
+					new MyPdbMember("n4:0x4:0x10", "ulong", 0x8),
+					new MyPdbMember("n5:0x4:0x14", "ulong", 0x8),
+					new MyPdbMember("n6:0x4:0x18", "ulong", 0x8),
+					new MyPdbMember("n7:0x4:0x1c", "ulong", 0x8),
+					new MyPdbMember("n8:0x4:0x0", "ulong", 0xc),
+					new MyPdbMember("n9:0x4:0x4", "ulong", 0xc),
+					new MyPdbMember("n10:0x4:0x8", "ulong", 0xc),
+					new MyPdbMember("n11:0x4:0xc", "ulong", 0xc),
+					new MyPdbMember("n12:0x4:0x10", "ulong", 0xc),
+					new MyPdbMember("n13:0x4:0x14", "ulong", 0xc),
+					new MyPdbMember("n14:0x4:0x18", "ulong", 0xc),
+					new MyPdbMember("n15:0x4:0x1c", "ulong", 0xc),
+					new MyPdbMember("x1:0x1:0x0", "ulong", 0x8),
+					new MyPdbMember("x2:0x2:0x1", "ulong", 0x8),
+					new MyPdbMember("x3:0x3:0x3", "ulong", 0x8),
+					new MyPdbMember("x4:0x4:0x6", "ulong", 0x8),
+					new MyPdbMember("x5:0x5:0xa", "ulong", 0x8),
+					new MyPdbMember("x6:0x6:0xf", "ulong", 0x8),
+					new MyPdbMember("x7:0x7:0x15", "ulong", 0x8),
+					new MyPdbMember("x8:0x8:0x0", "ulong", 0xc),
+					new MyPdbMember("x9:0x9:0x8", "ulong", 0xc),
+					new MyPdbMember("x10:0xa:0x11", "ulong", 0xc),
+					new MyPdbMember("y1:0x1:0x0", "uchar", 0x8),
+					new MyPdbMember("y2:0x2:0x1", "uchar", 0x8),
+					new MyPdbMember("y3:0x3:0x3", "uchar", 0x8),
+					new MyPdbMember("y4:0x4:0x0", "uchar", 0x9),
+					new MyPdbMember("y5:0x5:0x0", "uchar", 0xa),
+					new MyPdbMember("y6:0x6:0x0", "uchar", 0xb),
+					new MyPdbMember("y7:0x7:0x0", "uchar", 0xc),
+					new MyPdbMember("y8:0x8:0x0", "uchar", 0xd),
+					new MyPdbMember("y9:0x9:0x0", "ushort", 0xe),
 					new MyPdbMember("da", "double", 0x10),
 					new MyPdbMember("ca", "char[8]", 0x18),
 					new MyPdbMember("cb", "char[8]", 0x10),
