@@ -521,28 +521,33 @@ public class CoffLoader extends AbstractLibrarySupportLoader {
 			name += "-" + sectionNumber;
 		}
 		MemoryBlock block = null;
-
-		if (section.isProcessedBytes(language)) {
-			try (InputStream dataStream = section.getRawDataStream(provider, language)) {
-				block = MemoryBlockUtils.createInitializedBlock(program, true, name, sectionAddr,
-					dataStream, sectionSize,
+		try {
+			if (section.isProcessedBytes(language)) {
+				try (InputStream dataStream = section.getRawDataStream(provider, language)) {
+					block = MemoryBlockUtils.createInitializedBlock(program, isOverlay, name,
+						sectionAddr, dataStream, sectionSize,
+						"PhysAddr:0x" + Integer.toHexString(section.getPhysicalAddress()) + " " +
+							"Size:0x" + Integer.toHexString(sectionSize) + " " + "Flags:0x" +
+							Integer.toHexString(section.getFlags()),
+						null/*source*/, section.isReadable(), section.isWritable(),
+						section.isExecutable(), log, monitor);
+				}
+			}
+			else {
+				block = MemoryBlockUtils.createInitializedBlock(program, isOverlay, name,
+					sectionAddr, fileBytes, section.getPointerToRawData(), sectionSize,
 					"PhysAddr:0x" + Integer.toHexString(section.getPhysicalAddress()) + " " +
 						"Size:0x" + Integer.toHexString(sectionSize) + " " + "Flags:0x" +
 						Integer.toHexString(section.getFlags()),
 					null/*source*/, section.isReadable(), section.isWritable(),
-					section.isExecutable(), log, monitor);
+					section.isExecutable(), log);
 			}
 		}
-		else {
-			block = MemoryBlockUtils.createInitializedBlock(program, true, name, sectionAddr,
-				fileBytes, section.getPointerToRawData(), sectionSize,
-				"PhysAddr:0x" + Integer.toHexString(section.getPhysicalAddress()) + " " +
-					"Size:0x" + Integer.toHexString(sectionSize) + " " + "Flags:0x" +
-					Integer.toHexString(section.getFlags()),
-				null/*source*/, section.isReadable(), section.isWritable(), section.isExecutable(),
-				log);
+		catch (RuntimeException e) {
+			log.appendMsg(
+				"Unable to create non-loaded block " + section + ". No memory block was created.");
+			log.appendException(e);
 		}
-
 		return block;
 	}
 
