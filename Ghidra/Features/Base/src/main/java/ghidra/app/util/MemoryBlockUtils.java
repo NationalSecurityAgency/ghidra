@@ -312,7 +312,7 @@ public class MemoryBlockUtils {
 				frag.setName(name);
 			}
 			catch (DuplicateNameException e) {
-				Msg.warn(MemoryBlockUtil.class,
+				Msg.warn(MemoryBlockUtils.class,
 					"Could not rename fragment to match newly created block because of name conflict");
 			}
 		}
