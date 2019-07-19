@@ -15,12 +15,18 @@
  */
 package ghidra.app.util.viewer.util;
 
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.swing.*;
+import javax.swing.BorderFactory;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
 
+import docking.widgets.label.GDHtmlLabel;
 import docking.widgets.label.GDLabel;
 
 /**
@@ -41,7 +47,7 @@ public class TitledPanel extends JPanel {
 	 * @param margin the size of the margin to use
 	 */
 	public TitledPanel(String name, JComponent panel, int margin) {
-		this(new GDLabel(name), panel, margin);
+		this(new GDHtmlLabel(name), panel, margin);
 	}
 
 	/**
