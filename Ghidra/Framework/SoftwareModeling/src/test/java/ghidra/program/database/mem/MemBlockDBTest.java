@@ -96,10 +96,10 @@ public class MemBlockDBTest extends AbstractGenericTest {
 		assertNull(block.getSourceName());
 		assertEquals(MemoryBlock.READ, block.getPermissions());
 
-		List<SourceInfo> sourceInfos = block.getSourceInfos();
+		List<MemoryBlockSourceInfo> sourceInfos = block.getSourceInfos();
 
 		assertEquals(1, sourceInfos.size());
-		SourceInfo info = sourceInfos.get(0);
+		MemoryBlockSourceInfo info = sourceInfos.get(0);
 		assertEquals(10, info.getLength());
 		assertEquals(addr(0), info.getMinAddress());
 		assertEquals(addr(9), info.getMaxAddress());
@@ -117,9 +117,9 @@ public class MemBlockDBTest extends AbstractGenericTest {
 		assertEquals(addr(0), block.getStart());
 		assertEquals(addr(9), block.getEnd());
 		assertEquals(MemoryBlockType.DEFAULT, block.getType());
-		List<SourceInfo> sourceInfos = block.getSourceInfos();
+		List<MemoryBlockSourceInfo> sourceInfos = block.getSourceInfos();
 		assertEquals(1, sourceInfos.size());
-		SourceInfo info = sourceInfos.get(0);
+		MemoryBlockSourceInfo info = sourceInfos.get(0);
 		assertEquals(10, info.getLength());
 		assertEquals(addr(0), info.getMinAddress());
 		assertEquals(addr(9), info.getMaxAddress());
@@ -143,9 +143,9 @@ public class MemBlockDBTest extends AbstractGenericTest {
 		assertEquals(9, block.getEnd().getOffset());
 		assertTrue(block.getStart().getAddressSpace().isOverlaySpace());
 		assertEquals(MemoryBlockType.OVERLAY, block.getType());
-		List<SourceInfo> sourceInfos = block.getSourceInfos();
+		List<MemoryBlockSourceInfo> sourceInfos = block.getSourceInfos();
 		assertEquals(1, sourceInfos.size());
-		SourceInfo info = sourceInfos.get(0);
+		MemoryBlockSourceInfo info = sourceInfos.get(0);
 		assertEquals(10, info.getLength());
 		try {
 			block.getByte(block.getStart());
@@ -168,9 +168,9 @@ public class MemBlockDBTest extends AbstractGenericTest {
 		assertEquals(9, block.getEnd().getOffset());
 		assertTrue(block.getStart().getAddressSpace().isOverlaySpace());
 		assertEquals(MemoryBlockType.OVERLAY, block.getType());
-		List<SourceInfo> sourceInfos = block.getSourceInfos();
+		List<MemoryBlockSourceInfo> sourceInfos = block.getSourceInfos();
 		assertEquals(1, sourceInfos.size());
-		SourceInfo info = sourceInfos.get(0);
+		MemoryBlockSourceInfo info = sourceInfos.get(0);
 		assertEquals(10, info.getLength());
 		for (int i = 0; i < 10; i++) {
 			assertEquals(1, block.getByte(block.getStart().add(i)));
@@ -194,10 +194,10 @@ public class MemBlockDBTest extends AbstractGenericTest {
 		assertNull(block.getSourceName());
 		assertEquals(MemoryBlock.READ, block.getPermissions());
 
-		List<SourceInfo> sourceInfos = block.getSourceInfos();
+		List<MemoryBlockSourceInfo> sourceInfos = block.getSourceInfos();
 
 		assertEquals(1, sourceInfos.size());
-		SourceInfo info = sourceInfos.get(0);
+		MemoryBlockSourceInfo info = sourceInfos.get(0);
 		assertEquals(20, info.getLength());
 		assertEquals(new AddressRangeImpl(addr(40), addr(59)), info.getMappedRange().get());
 
@@ -230,10 +230,10 @@ public class MemBlockDBTest extends AbstractGenericTest {
 		assertNull(block.getSourceName());
 		assertEquals(MemoryBlock.READ, block.getPermissions());
 
-		List<SourceInfo> sourceInfos = block.getSourceInfos();
+		List<MemoryBlockSourceInfo> sourceInfos = block.getSourceInfos();
 
 		assertEquals(1, sourceInfos.size());
-		SourceInfo info = sourceInfos.get(0);
+		MemoryBlockSourceInfo info = sourceInfos.get(0);
 		assertEquals(16, info.getLength());
 		assertEquals(new AddressRangeImpl(addr(49), addr(50)), info.getMappedRange().get());
 
@@ -266,10 +266,10 @@ public class MemBlockDBTest extends AbstractGenericTest {
 		assertNull(block.getSourceName());
 		assertEquals(MemoryBlock.READ, block.getPermissions());
 
-		List<SourceInfo> sourceInfos = block.getSourceInfos();
+		List<MemoryBlockSourceInfo> sourceInfos = block.getSourceInfos();
 
 		assertEquals(1, sourceInfos.size());
-		SourceInfo info = sourceInfos.get(0);
+		MemoryBlockSourceInfo info = sourceInfos.get(0);
 		assertEquals(50, info.getLength());
 		assertEquals(addr(100), info.getMinAddress());
 		assertEquals(addr(149), info.getMaxAddress());
@@ -324,9 +324,9 @@ public class MemBlockDBTest extends AbstractGenericTest {
 		assertEquals(1, mem.getBlocks().length);
 		assertEquals(20, block.getSize());
 		assertEquals(addr(10), block.getStart());
-		List<SourceInfo> sourceInfos = block.getSourceInfos();
+		List<MemoryBlockSourceInfo> sourceInfos = block.getSourceInfos();
 		assertEquals(1, sourceInfos.size());
-		SourceInfo sourceInfo = sourceInfos.get(0);
+		MemoryBlockSourceInfo sourceInfo = sourceInfos.get(0);
 		assertEquals(fileBytes, sourceInfo.getFileBytes().get());
 		assertEquals(25, sourceInfo.getFileBytesOffset());
 		byte[] bytes = new byte[30];
@@ -346,9 +346,9 @@ public class MemBlockDBTest extends AbstractGenericTest {
 		assertEquals(1, mem.getBlocks().length);
 		assertEquals(20, block.getSize());
 		assertEquals(addr(10), block.getStart());
-		List<SourceInfo> sourceInfos = block.getSourceInfos();
+		List<MemoryBlockSourceInfo> sourceInfos = block.getSourceInfos();
 		assertEquals(2, sourceInfos.size());
-		SourceInfo sourceInfo = sourceInfos.get(0);
+		MemoryBlockSourceInfo sourceInfo = sourceInfos.get(0);
 		assertEquals(fileBytes, sourceInfo.getFileBytes().get());
 		assertEquals(25, sourceInfo.getFileBytesOffset());
 		assertEquals(10, sourceInfo.getLength());
@@ -370,14 +370,14 @@ public class MemBlockDBTest extends AbstractGenericTest {
 		assertEquals(1, mem.getBlocks().length);
 		assertEquals(20, block.getSize());
 		assertEquals(addr(10), block.getStart());
-		List<SourceInfo> sourceInfos = block.getSourceInfos();
+		List<MemoryBlockSourceInfo> sourceInfos = block.getSourceInfos();
 		assertEquals(2, sourceInfos.size());
-		SourceInfo sourceInfo = sourceInfos.get(0);
+		MemoryBlockSourceInfo sourceInfo = sourceInfos.get(0);
 		assertEquals(fileBytes, sourceInfo.getFileBytes().get());
 		assertEquals(25, sourceInfo.getFileBytesOffset());
 		assertEquals(10, sourceInfo.getLength());
 
-		SourceInfo sourceInfo2 = sourceInfos.get(1);
+		MemoryBlockSourceInfo sourceInfo2 = sourceInfos.get(1);
 		assertEquals(10, sourceInfo2.getLength());
 	}
 
@@ -392,10 +392,10 @@ public class MemBlockDBTest extends AbstractGenericTest {
 		assertEquals(1, mem.getBlocks().length);
 		assertEquals(20, block.getSize());
 		assertEquals(addr(10), block.getStart());
-		List<SourceInfo> sourceInfos = block.getSourceInfos();
+		List<MemoryBlockSourceInfo> sourceInfos = block.getSourceInfos();
 		assertEquals(2, sourceInfos.size());
 
-		SourceInfo sourceInfo = sourceInfos.get(0);
+		MemoryBlockSourceInfo sourceInfo = sourceInfos.get(0);
 		assertEquals(fileBytes1, sourceInfo.getFileBytes().get());
 		assertEquals(25, sourceInfo.getFileBytesOffset());
 		assertEquals(10, sourceInfo.getLength());
@@ -421,9 +421,9 @@ public class MemBlockDBTest extends AbstractGenericTest {
 		assertEquals(addr(10), blocks[0].getStart());
 		assertEquals(addr(30), blocks[1].getStart());
 
-		List<SourceInfo> sourceInfos = blocks[0].getSourceInfos();
+		List<MemoryBlockSourceInfo> sourceInfos = blocks[0].getSourceInfos();
 		assertEquals(1, sourceInfos.size());
-		SourceInfo sourceInfo = sourceInfos.get(0);
+		MemoryBlockSourceInfo sourceInfo = sourceInfos.get(0);
 		assertEquals(fileBytes, sourceInfo.getFileBytes().get());
 		assertEquals(25, sourceInfo.getFileBytesOffset());
 
@@ -479,7 +479,7 @@ public class MemBlockDBTest extends AbstractGenericTest {
 		assertEquals(1, blocks.length);
 		assertEquals(addr(0), blocks[0].getStart());
 		assertEquals(40, blocks[0].getSize());
-		List<SourceInfo> sourceInfos = blocks[0].getSourceInfos();
+		List<MemoryBlockSourceInfo> sourceInfos = blocks[0].getSourceInfos();
 		assertEquals(1, sourceInfos.size()); 	// make sure the sub blocks were merged
 	}
 
@@ -825,6 +825,63 @@ public class MemBlockDBTest extends AbstractGenericTest {
 		assertEquals(2, range.getSize());
 		assertEquals(0, range.getOffset());
 	}
+
+	@Test 
+	public void testAddressSourceInfoForFileBytesBlock() throws Exception {
+		FileBytes fileBytes = createFileBytes();
+		mem.createInitializedBlock("block", addr(100), fileBytes, 10, 50, false);
+
+		AddressSourceInfo info = mem.getAddressSourceInfo(addr(100));
+		assertEquals(addr(100), info.getAddress());
+		assertEquals("test", info.getFileName());
+		assertEquals(10, info.getFileOffset());
+		assertEquals(10, info.getOriginalValue());
+
+		info = mem.getAddressSourceInfo(addr(110));
+		assertEquals(addr(110), info.getAddress());
+		assertEquals("test", info.getFileName());
+		assertEquals(20, info.getFileOffset());
+		assertEquals(20, info.getOriginalValue());
+	}
+
+	@Test
+	public void testAddressSourceInfoForBufferBlock() throws Exception {
+		mem.createInitializedBlock("test", addr(0), 10, (byte) 1, TaskMonitor.DUMMY, false);
+
+		AddressSourceInfo info = mem.getAddressSourceInfo(addr(0));
+		assertEquals(addr(0), info.getAddress());
+		assertNull(info.getFileName());
+		assertEquals(-1, info.getFileOffset());
+		assertEquals(0, info.getOriginalValue());
+
+	}
+
+	@Test
+	public void testAddressSourceInfoForUnitialized() throws Exception {
+		mem.createUninitializedBlock("test", addr(0), 10, false);
+
+		AddressSourceInfo info = mem.getAddressSourceInfo(addr(0));
+		assertEquals(addr(0), info.getAddress());
+		assertNull(info.getFileName());
+		assertEquals(-1, info.getFileOffset());
+		assertEquals(0, info.getOriginalValue());
+
+	}
+
+	@Test
+	public void testAddressSourceInfoForMappedBlock() throws Exception {
+		FileBytes fileBytes = createFileBytes();
+		mem.createInitializedBlock("block", addr(0), fileBytes, 10, 50, false);
+		mem.createByteMappedBlock("mapped", addr(1000), addr(0), 20);
+
+		AddressSourceInfo info = mem.getAddressSourceInfo(addr(1000));
+		assertEquals(addr(1000), info.getAddress());
+		assertEquals("test", info.getFileName());
+		assertEquals(10, info.getFileOffset());
+		assertEquals(10, info.getOriginalValue());
+
+	}
+
 	private MemoryBlock createFileBytesBlock(FileBytes fileBytes, Address addr, int offset,
 			int length) throws Exception {
 		return mem.createInitializedBlock("test" + addr.toString(), addr, fileBytes, offset, length,

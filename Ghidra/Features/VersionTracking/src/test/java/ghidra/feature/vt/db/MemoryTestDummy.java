@@ -20,6 +20,7 @@ import java.io.InputStream;
 import java.util.List;
 
 import ghidra.framework.store.LockException;
+import ghidra.program.database.mem.AddressSourceInfo;
 import ghidra.program.database.mem.FileBytes;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Program;
@@ -346,6 +347,11 @@ public class MemoryTestDummy extends AddressSet implements Memory {
 	public MemoryBlock createInitializedBlock(String name, Address start, FileBytes fileBytes,
 			long offset, long size, boolean overlay) throws LockException, DuplicateNameException,
 			MemoryConflictException, AddressOverflowException {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public AddressSourceInfo getAddressSourceInfo(Address address) {
 		throw new UnsupportedOperationException();
 	}
 }

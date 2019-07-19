@@ -20,6 +20,7 @@ import java.io.InputStream;
 import java.util.List;
 
 import ghidra.framework.store.LockException;
+import ghidra.program.database.mem.AddressSourceInfo;
 import ghidra.program.database.mem.FileBytes;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Program;
@@ -53,6 +54,11 @@ class MyTestMemory extends AddressSet implements Memory {
 
 	@Override
 	public AddressSetView getAllInitializedAddressSet() {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public AddressSourceInfo getAddressSourceInfo(Address address) {
 		throw new UnsupportedOperationException();
 	}
 

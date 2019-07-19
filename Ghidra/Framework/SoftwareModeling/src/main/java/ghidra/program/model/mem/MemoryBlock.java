@@ -20,7 +20,7 @@ import java.io.Serializable;
 import java.util.List;
 
 import ghidra.framework.store.LockException;
-import ghidra.program.database.mem.SourceInfo;
+import ghidra.program.database.mem.MemoryBlockSourceInfo;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
 import ghidra.util.exception.DuplicateNameException;
@@ -264,13 +264,13 @@ public interface MemoryBlock extends Serializable, Comparable<MemoryBlock> {
 	public boolean isLoaded();
 
 	/**
-	 * Returns a list of {@link SourceInfo} objects for this block.  A block may consist of 
+	 * Returns a list of {@link MemoryBlockSourceInfo} objects for this block.  A block may consist of 
 	 * multiple sequences of bytes from different sources.  Each such source of bytes is described
 	 * by its respective SourceInfo object.  Blocks may have multiple sources after two or more
 	 * memory blocks have been joined together and the underlying byte sources can't be joined.
 	 * @return a list of SourceInfo objects, one for each different source of bytes in this block.
 	 */
-	public List<SourceInfo> getSourceInfos();
+	public List<MemoryBlockSourceInfo> getSourceInfos();
 
 	/**
 	 * Determine if the specified address is contained within the reserved EXTERNAL block.

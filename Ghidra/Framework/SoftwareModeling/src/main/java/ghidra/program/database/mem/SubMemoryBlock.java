@@ -189,12 +189,12 @@ abstract class SubMemoryBlock {
 	protected abstract MemoryBlockType getType();
 
 	/**
-	 * Returns the {@link SourceInfo} object for this SubMemoryBlock
+	 * Returns the {@link MemoryBlockSourceInfo} object for this SubMemoryBlock
 	 * @param block the {@link MemoryBlock} that this block belongs to.
-	 * @return the {@link SourceInfo} object for this SubMemoryBlock
+	 * @return the {@link MemoryBlockSourceInfo} object for this SubMemoryBlock
 	 */
-	protected final SourceInfo getSourceInfo(MemoryBlock block) {
-		return new SourceInfo(block, this);
+	protected final MemoryBlockSourceInfo getSourceInfo(MemoryBlock block) {
+		return new MemoryBlockSourceInfo(block, this);
 	}
 
 	/**

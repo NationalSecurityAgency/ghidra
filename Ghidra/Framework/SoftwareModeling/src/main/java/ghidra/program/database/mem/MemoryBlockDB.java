@@ -665,8 +665,8 @@ public class MemoryBlockDB implements MemoryBlock {
 	}
 
 	@Override
-	public List<SourceInfo> getSourceInfos() {
-		List<SourceInfo> infos = new ArrayList<>(subBlocks.size());
+	public List<MemoryBlockSourceInfo> getSourceInfos() {
+		List<MemoryBlockSourceInfo> infos = new ArrayList<>(subBlocks.size());
 		for (SubMemoryBlock subBlock : subBlocks) {
 			infos.add(subBlock.getSourceInfo(this));
 		}
