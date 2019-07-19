@@ -26,9 +26,6 @@
       <unaffected>
         <register name="SP"/>
       </unaffected>
-      <localrange>
-        <range space="stack" first="0x8" last="0x17"/>
-      </localrange>
     </prototype>
   </default_proto>
 </compiler_spec>
