@@ -191,10 +191,10 @@ public class DockableComponent extends JPanel implements ContainerListener {
 	 * @return the provider
 	 */
 	public ComponentProvider getComponentProvider() {
-		if (componentInfo == null) {
+		if (placeholder == null) {
 			return null;
 		}
-		return componentInfo.getProvider();
+		return placeholder.getProvider();
 	}
 
 	/**
@@ -202,10 +202,10 @@ public class DockableComponent extends JPanel implements ContainerListener {
 	 * @return the manager
 	 */
 	public DockingWindowManager getDockingWindowManager() {
-		if (componentInfo == null) {
+		if (placeholder == null) {
 			return null;
 		}
-		return componentInfo.getNode().getDockingWindowManager();
+		return placeholder.getNode().getDockingWindowManager();
 	}
 
 	@Override
