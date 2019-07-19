@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +15,10 @@
  */
 package ghidra.framework.main.datatree;
 
-import ghidra.framework.plugintool.util.ToolConstants;
-
 import javax.swing.Icon;
 import javax.swing.UIManager;
 
+import docking.tool.ToolConstants;
 import docking.widgets.tree.AbstractGTreeRootNode;
 
 public class NoProjectNode extends AbstractGTreeRootNode {

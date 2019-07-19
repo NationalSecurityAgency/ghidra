@@ -25,6 +25,7 @@ import org.apache.commons.lang3.StringUtils;
 import docking.ActionContext;
 import docking.DockingWindowManager;
 import docking.action.*;
+import docking.tool.ToolConstants;
 import ghidra.framework.options.OptionsChangeListener;
 import ghidra.framework.options.ToolOptions;
 
@@ -37,7 +38,7 @@ import ghidra.framework.options.ToolOptions;
  */
 public class SharedStubKeyBindingAction extends DockingAction implements OptionsChangeListener {
 
-	static final String SHARED_OWNER = "Tool";
+	static final String SHARED_OWNER = ToolConstants.TOOL_OWNER;
 
 	/**
 	 * We save the client actions for later validate and options updating.  We also need the
@@ -109,6 +110,13 @@ public class SharedStubKeyBindingAction extends DockingAction implements Options
 				results.add(owner);
 			}
 		}
+
+		if (results.isEmpty()) {
+			// This implies we have an action owned by the DockingWindowManager 
+			// (the DOCKING_WINDOWS_OWNER).  In this case, use the Tool as the owner.
+			results.add(SHARED_OWNER);
+		}
+
 		return results;
 	}
 

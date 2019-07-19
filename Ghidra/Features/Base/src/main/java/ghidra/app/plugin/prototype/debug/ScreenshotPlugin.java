@@ -35,6 +35,7 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 
 import docking.*;
 import docking.action.*;
+import docking.tool.ToolConstants;
 
 //@formatter:off
 @PluginInfo(

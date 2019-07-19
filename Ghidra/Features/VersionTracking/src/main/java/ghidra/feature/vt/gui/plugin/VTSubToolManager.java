@@ -26,6 +26,7 @@ import org.jdom.output.XMLOutputter;
 
 import docking.ActionContext;
 import docking.action.*;
+import docking.tool.ToolConstants;
 import docking.tool.util.DockingToolConstants;
 import docking.widgets.OptionDialog;
 import docking.widgets.fieldpanel.FieldPanel;
@@ -48,7 +49,8 @@ import ghidra.framework.ToolUtils;
 import ghidra.framework.model.*;
 import ghidra.framework.options.*;
 import ghidra.framework.plugintool.*;
-import ghidra.framework.plugintool.util.*;
+import ghidra.framework.plugintool.util.PluginException;
+import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.framework.project.tool.GhidraTool;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.*;
@@ -173,7 +175,7 @@ public class VTSubToolManager implements VTControllerListener, OptionsChangeList
 	}
 
 	private DockingActionIf getToolAction(Tool tool, String actionName) {
-		Set<DockingActionIf> actions = tool.getDockingActionsByOwnerName("Tool");
+		Set<DockingActionIf> actions = tool.getDockingActionsByOwnerName(ToolConstants.TOOL_OWNER);
 		for (DockingActionIf action : actions) {
 			if (action.getName().equals(actionName)) {
 				return action;

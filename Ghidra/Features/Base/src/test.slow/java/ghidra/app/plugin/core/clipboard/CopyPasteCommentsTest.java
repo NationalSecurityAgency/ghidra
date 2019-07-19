@@ -48,14 +48,11 @@ import ghidra.program.util.AddressFieldLocation;
 import ghidra.program.util.ProgramSelection;
 import ghidra.test.AbstractProgramBasedTest;
 import ghidra.test.ToyProgramBuilder;
-import ghidra.util.task.TaskMonitorAdapter;
+import ghidra.util.task.TaskMonitor;
 
 /**
- * Test the plugin that deals with cut/paste comments and labels.
- *
- *
+ * Test the plugin that deals with cut/paste comments and labels
  */
-
 public class CopyPasteCommentsTest extends AbstractProgramBasedTest {
 
 	private PluginTool toolOne;
@@ -112,16 +109,13 @@ public class CopyPasteCommentsTest extends AbstractProgramBasedTest {
 		DomainFolder rootFolder = env.getProject().getProjectData().getRootFolder();
 
 		Program sdk = program;
-		final DomainFile df = rootFolder.createFile("sdk1", sdk, TaskMonitorAdapter.DUMMY_MONITOR);
-		programOne =
-			(ProgramDB) df.getDomainObject(this, true, false, TaskMonitorAdapter.DUMMY_MONITOR);
+		final DomainFile df = rootFolder.createFile("sdk1", sdk, TaskMonitor.DUMMY);
+		programOne = (ProgramDB) df.getDomainObject(this, true, false, TaskMonitor.DUMMY);
 		env.release(sdk);
 
 		Program sdk2 = buildProgram("sdk2");
-		final DomainFile df2 =
-			rootFolder.createFile("sdk2", sdk2, TaskMonitorAdapter.DUMMY_MONITOR);
-		programTwo =
-			(ProgramDB) df2.getDomainObject(this, true, false, TaskMonitorAdapter.DUMMY_MONITOR);
+		final DomainFile df2 = rootFolder.createFile("sdk2", sdk2, TaskMonitor.DUMMY);
+		programTwo = (ProgramDB) df2.getDomainObject(this, true, false, TaskMonitor.DUMMY);
 		env.release(sdk2);
 
 		setupProgramOne();

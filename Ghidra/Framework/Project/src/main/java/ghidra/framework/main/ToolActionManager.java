@@ -27,10 +27,10 @@ import org.jdom.input.SAXBuilder;
 
 import docking.ActionContext;
 import docking.action.*;
+import docking.tool.ToolConstants;
 import docking.widgets.filechooser.GhidraFileChooser;
 import ghidra.framework.model.*;
 import ghidra.framework.plugintool.PluginTool;
-import ghidra.framework.plugintool.util.ToolConstants;
 import ghidra.framework.preferences.Preferences;
 import ghidra.framework.project.tool.GhidraToolTemplate;
 import ghidra.util.HelpLocation;

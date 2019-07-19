@@ -24,6 +24,7 @@ import javax.swing.*;
 import docking.action.DockingActionIf;
 import docking.help.Help;
 import docking.help.HelpService;
+import docking.tool.ToolConstants;
 import docking.wizard.WizardManager;
 import ghidra.GhidraOptions;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
@@ -137,7 +138,7 @@ public class VTPlugin extends Plugin {
 	}
 
 	private DockingActionIf getToolAction(String actionName) {
-		Set<DockingActionIf> actions = tool.getDockingActionsByOwnerName("Tool");
+		Set<DockingActionIf> actions = tool.getDockingActionsByOwnerName(ToolConstants.TOOL_OWNER);
 		for (DockingActionIf action : actions) {
 			if (action.getName().equals(actionName)) {
 				return action;

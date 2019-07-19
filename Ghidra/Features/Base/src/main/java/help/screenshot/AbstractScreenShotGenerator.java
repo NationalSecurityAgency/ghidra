@@ -37,6 +37,7 @@ import docking.*;
 import docking.action.DockingActionIf;
 import docking.framework.ApplicationInformationDisplayFactory;
 import docking.options.editor.OptionsDialog;
+import docking.tool.ToolConstants;
 import docking.widgets.dialogs.SettingsDialog;
 import docking.widgets.fieldpanel.FieldPanel;
 import docking.widgets.fieldpanel.field.Field;
@@ -217,7 +218,7 @@ public abstract class AbstractScreenShotGenerator extends AbstractGhidraHeadedIn
 	}
 
 	public void showOptions(final String optionsCategoryName) {
-		performAction("Edit Options", "Tool", false);
+		performAction("Edit Options", ToolConstants.TOOL_OWNER, false);
 		final OptionsDialog dialog = (OptionsDialog) getDialog();
 		runSwing(() -> dialog.displayCategory(optionsCategoryName, null));
 

@@ -24,6 +24,7 @@ import javax.swing.Timer;
 import docking.ActionContext;
 import docking.DockingUtils;
 import docking.action.*;
+import docking.tool.ToolConstants;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.events.*;
 import ghidra.app.plugin.PluginCategoryNames;
@@ -32,7 +33,6 @@ import ghidra.app.services.ProgramManager;
 import ghidra.framework.model.*;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
-import ghidra.framework.plugintool.util.ToolConstants;
 import ghidra.program.model.listing.Program;
 import ghidra.util.HelpLocation;
 

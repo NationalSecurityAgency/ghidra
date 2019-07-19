@@ -25,6 +25,7 @@ import javax.swing.*;
 import org.junit.*;
 
 import docking.action.DockingActionIf;
+import docking.tool.ToolConstants;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
 import ghidra.app.plugin.core.codebrowser.CodeViewerProvider;
 import ghidra.app.plugin.core.table.TableServicePlugin;
@@ -616,7 +617,7 @@ public class SearchTextPlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 
 		goToService.goTo(new ProgramLocation(program, getAddr(0x01002c92)));
 
-		Options options = tool.getOptions("Tool");
+		Options options = tool.getOptions(ToolConstants.TOOL_OPTIONS);
 		options.setInt("Search Limit", 20);
 
 		setTextAndPressEnter(tf, "eax");

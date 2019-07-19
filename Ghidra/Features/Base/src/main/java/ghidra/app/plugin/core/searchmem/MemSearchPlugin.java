@@ -25,6 +25,7 @@ import javax.swing.JComponent;
 
 import docking.*;
 import docking.action.*;
+import docking.tool.ToolConstants;
 import docking.widgets.fieldpanel.support.Highlight;
 import docking.widgets.table.threaded.*;
 import ghidra.GhidraOptions;
@@ -44,7 +45,6 @@ import ghidra.framework.model.DomainObject;
 import ghidra.framework.options.*;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
-import ghidra.framework.plugintool.util.ToolConstants;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.CodeUnit;
 import ghidra.program.model.listing.Program;

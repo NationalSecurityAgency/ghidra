@@ -184,6 +184,30 @@ public class DockableComponent extends JPanel implements ContainerListener {
 		return placeholder;
 	}
 
+	/**
+	 * Returns the component provider attached to this dockable component; null if this object
+	 * has been disposed
+	 * 
+	 * @return the provider
+	 */
+	public ComponentProvider getComponentProvider() {
+		if (componentInfo == null) {
+			return null;
+		}
+		return componentInfo.getProvider();
+	}
+
+	/**
+	 * Returns the docking window manager that owns this component
+	 * @return the manager
+	 */
+	public DockingWindowManager getDockingWindowManager() {
+		if (componentInfo == null) {
+			return null;
+		}
+		return componentInfo.getNode().getDockingWindowManager();
+	}
+
 	@Override
 	public String toString() {
 		if (placeholder == null) {

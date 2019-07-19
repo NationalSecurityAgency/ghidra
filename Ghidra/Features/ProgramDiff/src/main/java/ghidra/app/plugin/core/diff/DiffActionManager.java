@@ -22,11 +22,11 @@ import javax.swing.ImageIcon;
 
 import docking.ActionContext;
 import docking.action.*;
+import docking.tool.ToolConstants;
 import docking.widgets.OptionDialog;
 import ghidra.app.plugin.core.codebrowser.OtherPanelContext;
 import ghidra.app.services.CodeViewerService;
 import ghidra.app.util.HelpTopics;
-import ghidra.framework.plugintool.util.ToolConstants;
 import ghidra.program.model.listing.Program;
 import ghidra.util.HTMLUtilities;
 import ghidra.util.HelpLocation;

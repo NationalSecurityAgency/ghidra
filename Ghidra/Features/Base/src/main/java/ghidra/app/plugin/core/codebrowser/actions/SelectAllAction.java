@@ -17,7 +17,6 @@ package ghidra.app.plugin.core.codebrowser.actions;
 
 import ghidra.app.plugin.core.codebrowser.CodeViewerProvider;
 import ghidra.app.util.HelpTopics;
-import ghidra.framework.plugintool.util.ToolConstants;
 import ghidra.util.HelpLocation;
 
 import java.awt.event.InputEvent;
@@ -26,6 +25,7 @@ import java.awt.event.KeyEvent;
 import docking.ActionContext;
 import docking.action.KeyBindingData;
 import docking.action.MenuData;
+import docking.tool.ToolConstants;
 
 /**
  * Action for adding all fields to the current format.

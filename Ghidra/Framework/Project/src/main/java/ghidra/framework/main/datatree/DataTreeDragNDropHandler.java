@@ -22,10 +22,10 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import docking.dnd.GenericDataFlavor;
+import docking.tool.ToolConstants;
 import docking.widgets.tree.GTreeNode;
 import docking.widgets.tree.support.GTreeDragNDropHandler;
 import ghidra.framework.main.FrontEndTool;
-import ghidra.framework.plugintool.util.ToolConstants;
 import ghidra.util.Msg;
 import ghidra.util.exception.AssertException;
 

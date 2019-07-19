@@ -25,6 +25,7 @@ import javax.swing.event.ChangeListener;
 import docking.ActionContext;
 import docking.DialogComponentProvider;
 import docking.action.*;
+import docking.tool.ToolConstants;
 import docking.widgets.OptionDialog;
 import ghidra.app.util.GenericHelpTopics;
 import ghidra.framework.main.AppInfo;
@@ -94,12 +95,13 @@ public class ManagePluginsDialog extends DialogComponentProvider implements Chan
 	}
 
 	private void createActions(boolean addSaveActions) {
-		configureAllPluginsAction = new DockingAction("Configure All Plugins", "Tool") {
-			@Override
-			public void actionPerformed(ActionContext context) {
-				comp.manageAllPlugins();
-			}
-		};
+		configureAllPluginsAction =
+			new DockingAction("Configure All Plugins", ToolConstants.TOOL_OWNER) {
+				@Override
+				public void actionPerformed(ActionContext context) {
+					comp.manageAllPlugins();
+				}
+			};
 		ImageIcon icon = ResourceManager.loadImage("images/plugin.png");
 		configureAllPluginsAction.setToolBarData(new ToolBarData(icon, "aaa"));
 		configureAllPluginsAction.setDescription("Configure All Plugins");
@@ -108,7 +110,7 @@ public class ManagePluginsDialog extends DialogComponentProvider implements Chan
 		addAction(configureAllPluginsAction);
 
 		if (addSaveActions) {
-			saveAction = new DockingAction("Save Tool", "Tool") {
+			saveAction = new DockingAction("Save Tool", ToolConstants.TOOL_OWNER) {
 				@Override
 				public void actionPerformed(ActionContext context) {
 					save();
@@ -123,7 +125,7 @@ public class ManagePluginsDialog extends DialogComponentProvider implements Chan
 			saveAction.setDescription("Save tool to tool chest");
 			addAction(saveAction);
 
-			saveAsAction = new DockingAction("Save Tool As", "Tool") {
+			saveAsAction = new DockingAction("Save Tool As", ToolConstants.TOOL_OWNER) {
 				@Override
 				public void actionPerformed(ActionContext context) {
 					saveAs();
