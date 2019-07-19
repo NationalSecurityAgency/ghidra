@@ -1,4 +1,19 @@
+# Goals
+
+Goal of this fork, is to be sink hole for the PRs to Ghidra which cannot be accepted right now due to
+official team concerns of maintainability and other limitations on their side. I by no means does not
+have resources to diverge from the official product too much.
+
+I want to keep in the `master` mirror of the official repo, and in the `dev`, keep all customization.
+
+# Changes in addition to Ghidra
+
+- [Support for VS2019](https://github.com/kant2002/ghidra-official/commit/cd767aca016a5a34d249f0d818e2bc834207de8a)
+- [Require a minimum Gradle version instead of a specific version](https://github.com/kant2002/ghidra-official/commit/fdc9894bace81fe965cf5dbb538a3057048419ba)
+
 # Ghidra Software Reverse Engineering Framework
+
+[![Build Status](https://codevision.visualstudio.com/Ghidra/_apis/build/status/kant2002.ghidra-official?branchName=dev)](https://codevision.visualstudio.com/Ghidra/_build/latest?definitionId=106&branchName=dev)
 
 Ghidra is a software reverse engineering (SRE) framework created and maintained by the [National Security Agency][nsa] Research Directorate. This framework includes a suite of full-featured, high-end software analysis tools that enable users to analyze compiled code on a variety of platforms including Windows, macOS, and Linux. Capabilities include disassembly, assembly, decompilation, graphing, and scripting, along with hundreds of other features. Ghidra supports a wide variety of processor instruction sets and executable formats and can be run in both user-interactive and automated modes. Users may also develop their own Ghidra plug-in components and/or scripts using Java or Python.
 
