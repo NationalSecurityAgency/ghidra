@@ -35,6 +35,7 @@ public abstract class AbstractStructureEditorTest extends AbstractEditorTest {
 	DuplicateAction duplicateAction;
 	DuplicateMultipleAction duplicateMultipleAction;
 	EditComponentAction editComponentAction;
+	EditBitFieldAction editBitFieldAction;
 	EditFieldAction editFieldAction;
 	MoveDownAction moveDownAction;
 	MoveUpAction moveUpAction;
@@ -99,6 +100,7 @@ public abstract class AbstractStructureEditorTest extends AbstractEditorTest {
 		duplicateAction = null;
 		duplicateMultipleAction = null;
 		editComponentAction = null;
+		editBitFieldAction = null;
 		editFieldAction = null;
 		moveDownAction = null;
 		moveUpAction = null;
@@ -141,6 +143,9 @@ public abstract class AbstractStructureEditorTest extends AbstractEditorTest {
 			}
 			else if (action instanceof EditComponentAction) {
 				editComponentAction = (EditComponentAction) action;
+			}
+			else if (action instanceof EditBitFieldAction) {
+				editBitFieldAction = (EditBitFieldAction) action;
 			}
 			else if (action instanceof EditFieldAction) {
 				editFieldAction = (EditFieldAction) action;

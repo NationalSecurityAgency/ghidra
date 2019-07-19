@@ -17,6 +17,7 @@ package ghidra.program.database.data;
 
 import java.io.IOException;
 import java.net.URL;
+import java.util.List;
 
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -41,7 +42,7 @@ import ghidra.util.exception.NotYetImplementedException;
 abstract class DataTypeDB extends DatabaseObject implements DataType, ChangeListener {
 
 	protected Record record;
-	protected DataTypeManagerDB dataMgr;
+	protected final DataTypeManagerDB dataMgr;
 	private volatile Settings defaultSettings;
 	private final static SettingsDefinition[] EMPTY_DEFINITIONS = new SettingsDefinition[0];
 	protected boolean resolving;
@@ -100,6 +101,11 @@ abstract class DataTypeDB extends DatabaseObject implements DataType, ChangeList
 	 * the database lock will be acquired when this method is called.
 	 */
 	protected abstract void setSourceArchiveID(UniversalID id);
+
+	@Override
+	public final DataOrganization getDataOrganization() {
+		return dataMgr.getDataOrganization();
+	}
 
 	@Override
 	protected boolean refresh() {
@@ -241,8 +247,7 @@ abstract class DataTypeDB extends DatabaseObject implements DataType, ChangeList
 		if (length < 0) {
 			return 1;
 		}
-		DataTypeManager dtm = getDataTypeManager();
-		DataOrganization dataOrganization = dtm.getDataOrganization();
+		DataOrganization dataOrganization = dataMgr.getDataOrganization();
 		return dataOrganization.getAlignment(this, length);
 	}
 
@@ -414,7 +419,7 @@ abstract class DataTypeDB extends DatabaseObject implements DataType, ChangeList
 	 */
 	@Override
 	public void addParent(DataType dt) {
-		if (dt instanceof DataTypeDB) {
+		if (dt instanceof DataTypeDB && dt.getDataTypeManager() == dataMgr) {
 			dataMgr.addParentChildRecord(((DataTypeDB) dt).key, key);
 		}
 	}
@@ -424,31 +429,28 @@ abstract class DataTypeDB extends DatabaseObject implements DataType, ChangeList
 	 */
 	@Override
 	public void removeParent(DataType dt) {
-		if (dt instanceof DataTypeDB) {
+		if (dt instanceof DataTypeDB && dt.getDataTypeManager() == dataMgr) {
 			dataMgr.removeParentChildRecord(((DataTypeDB) dt).key, key);
 		}
 	}
 
 	protected void notifySizeChanged() {
-		DataType[] dts = dataMgr.getParentDataTypes(key);
-		for (int i = 0; i < dts.length; i++) {
-			dts[i].dataTypeSizeChanged(this);
+		for (DataType dt : dataMgr.getParentDataTypes(key)) {
+			dt.dataTypeSizeChanged(this);
 		}
 		dataMgr.dataTypeChanged(this);
 	}
 
 	protected void notifyNameChanged(String oldName) {
-		DataType[] dts = dataMgr.getParentDataTypes(key);
-		for (int i = 0; i < dts.length; i++) {
-			dts[i].dataTypeNameChanged(this, oldName);
+		for (DataType dt : dataMgr.getParentDataTypes(key)) {
+			dt.dataTypeNameChanged(this, oldName);
 		}
 		dataMgr.dataTypeNameChanged(this, oldName);
 	}
 
 	protected void notifyDeleted() {
-		DataType[] dts = dataMgr.getParentDataTypes(key);
-		for (int i = 0; i < dts.length; i++) {
-			dts[i].dataTypeDeleted(this);
+		for (DataType dt : dataMgr.getParentDataTypes(key)) {
+			dt.dataTypeDeleted(this);
 		}
 	}
 
@@ -457,7 +459,9 @@ abstract class DataTypeDB extends DatabaseObject implements DataType, ChangeList
 	 */
 	@Override
 	public DataType[] getParents() {
-		return dataMgr.getParentDataTypes(key);
+		List<DataType> parents = dataMgr.getParentDataTypes(key);
+		DataType[] array = new DataType[parents.size()];
+		return parents.toArray(array);
 	}
 
 	/**

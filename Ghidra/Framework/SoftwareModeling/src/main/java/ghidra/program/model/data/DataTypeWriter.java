@@ -242,7 +242,7 @@ public class DataTypeWriter {
 			}
 			Msg.error(this, "Factory data types may not be written - type: " + dt, iae);
 		}
-		if (dt instanceof Pointer || dt instanceof Array) {
+		if (dt instanceof Pointer || dt instanceof Array || dt instanceof BitFieldDataType) {
 			write(getBaseDataType(dt), monitor);
 			return;
 		}
@@ -307,6 +307,9 @@ public class DataTypeWriter {
 		}
 		else if (dt instanceof BuiltInDataType) {
 			writeBuiltIn((BuiltInDataType) dt, monitor);
+		}
+		else if (dt instanceof BitFieldDataType) {
+			// skip
 		}
 		else {
 			writer.write(EOL);
@@ -540,7 +543,12 @@ public class DataTypeWriter {
 
 		if (componentString == null) {
 
-			if (dataType instanceof Array) {
+			if (dataType instanceof BitFieldDataType) {
+				BitFieldDataType bfDt = (BitFieldDataType) dataType;
+				name += ":" + bfDt.getDeclaredBitSize();
+				dataType = bfDt.getBaseDataType();
+			}
+			else if (dataType instanceof Array) {
 				Array array = (Array) dataType;
 				name += getArrayDimensions(array);
 				dataType = getArrayBaseType(array);
@@ -637,6 +645,7 @@ public class DataTypeWriter {
 					return;
 				}
 			}
+			// TODO: A comment explaining the special 'P' case would be helpful!!  Smells like fish.
 			else if (baseType instanceof Pointer && typedefName.startsWith("P")) {
 				DataType dt = ((Pointer) baseType).getDataType();
 				if (dt instanceof TypeDef) {
@@ -764,6 +773,10 @@ public class DataTypeWriter {
 			else if (dt instanceof Pointer) {
 				Pointer pointer = (Pointer) dt;
 				dt = pointer.getDataType();
+			}
+			else if (dt instanceof BitFieldDataType) {
+				BitFieldDataType bitfieldDt = (BitFieldDataType) dt;
+				dt = bitfieldDt.getBaseDataType();
 			}
 			else {
 				break;

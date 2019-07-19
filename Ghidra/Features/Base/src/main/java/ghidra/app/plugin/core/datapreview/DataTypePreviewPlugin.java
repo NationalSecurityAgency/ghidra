@@ -71,7 +71,7 @@ public class DataTypePreviewPlugin extends ProgramPlugin {
 	private GoToService goToService;
 	private DockingAction addAction;
 	private DockingAction deleteAction;
-	private DataTypeManager dataTypeManager;
+	private LayeredDataTypeManager dataTypeManager;
 	private Program activeProgram;
 
 	private SwingUpdateManager updateManager = new SwingUpdateManager(650, () -> updatePreview());
@@ -156,7 +156,33 @@ public class DataTypePreviewPlugin extends ProgramPlugin {
 		updateModel();
 	}
 
-	void updateModel() {
+	private List<DataTypePath> getModelDataTypePaths() {
+		// retain order as they currently exist within model
+		List<DataTypePath> list = new ArrayList<>();
+		for (Preview preview : model.getModelData()) {
+			if (preview instanceof DataTypePreview) {
+				list.add(preview.getDataType().getDataTypePath());
+			}
+			else if (preview instanceof DataTypeComponentPreview) {
+				DataTypeComponentPreview componentPreview = (DataTypeComponentPreview) preview;
+				if (componentPreview.getParent() == null) {
+					list.add(preview.getDataType().getDataTypePath());
+				}
+			}
+		}
+		return list;
+	}
+
+	private void updateModel() {
+
+		// NOTE: data types do not respond to switching the data organization object
+		// since this is cached internal to the data type at time of construction.
+		// We must purge old datatypes and have them re-instantiated by the 
+		// datatype manager
+		List<DataTypePath> dtPaths = getModelDataTypePaths();
+		model.removeAll();
+		dataTypeManager.invalidate();
+
 		int transactionId = dataTypeManager.startTransaction("realign");
 		try {
 			Iterator<Composite> allComposites = dataTypeManager.getAllComposites();
@@ -164,13 +190,18 @@ public class DataTypePreviewPlugin extends ProgramPlugin {
 				Composite composite = allComposites.next();
 				if (composite.isInternallyAligned()) {
 					composite.realign();
-					model.removeAll(composite);
-					model.add(composite);
 				}
 			}
 		}
 		finally {
 			dataTypeManager.endTransaction(transactionId, true);
+		}
+
+		for (DataTypePath dtPath : dtPaths) {
+			DataType dataType = dataTypeManager.getDataType(dtPath);
+			if (dataType != null) {
+				model.add(dataType);
+			}
 		}
 	}
 
@@ -691,6 +722,10 @@ public class DataTypePreviewPlugin extends ProgramPlugin {
 				return currentProgram.getDataTypeManager().getDataOrganization();
 			}
 			return super.getDataOrganization();
+		}
+
+		void invalidate() {
+			invalidateCache();
 		}
 
 	}

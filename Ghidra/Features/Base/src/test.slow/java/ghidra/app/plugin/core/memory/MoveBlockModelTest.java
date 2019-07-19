@@ -22,7 +22,6 @@ import org.junit.*;
 import ghidra.app.cmd.memory.MoveBlockListener;
 import ghidra.app.cmd.memory.MoveBlockTask;
 import ghidra.program.database.ProgramBuilder;
-import ghidra.program.database.ProgramDB;
 import ghidra.program.database.data.DataTypeManagerDB;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
@@ -81,7 +80,7 @@ public class MoveBlockModelTest extends AbstractGhidraHeadedIntegrationTest
 		model.initialize(block);
 
 		int transactionID = x8051.startTransaction("Set settings");
-		DataTypeManagerDB dtm = ((ProgramDB) x8051).getDataManager();
+		DataTypeManagerDB dtm = (DataTypeManagerDB) x8051.getDataTypeManager();
 		for (int i = 0; i < 10; i++) {
 			Address a = getAddr(x8051, "BITS", i);
 			dtm.setStringSettingsValue(a, "color", "red" + i);
@@ -197,8 +196,7 @@ public class MoveBlockModelTest extends AbstractGhidraHeadedIntegrationTest
 		waitForCondition(() -> moveCompleted && x8051.canLock());
 
 		// make sure settings on data got moved
-		DataTypeManagerDB dtm = ((ProgramDB) x8051).getDataManager();
-
+		DataTypeManagerDB dtm = (DataTypeManagerDB) x8051.getDataTypeManager();
 		for (int i = 0; i < 10; i++) {
 			Address a = getAddr(x8051, "CODE", 0x2000 + i);
 

@@ -15,6 +15,12 @@ dependencies {
 	compile project(":Base")
     
     testCompile "org.jmockit:jmockit:1.44"	
+	
+    // Demangler Analyzer needs to find MicrosoftDemangler
+    compile project(":MicrosoftDemangler")
+
+    testCompile project(path: ':Base', configuration: 'testArtifacts')
+    testCompile project(path: ':SoftwareModeling', configuration: 'testArtifacts')
 }
 
 /**

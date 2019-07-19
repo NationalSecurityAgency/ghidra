@@ -17,6 +17,7 @@ src/main/java/ghidra/framework/plugintool/package.html||GHIDRA||||END|
 src/main/java/ghidra/framework/plugintool/util/package.html||GHIDRA||||END|
 src/main/java/ghidra/framework/project/package.html||GHIDRA||||END|
 src/main/java/ghidra/framework/project/tool/package.html||GHIDRA||||END|
+src/main/resources/images/Minus.png||GHIDRA||||END|
 src/main/resources/images/Plus.png||GHIDRA||||END|
 src/main/resources/images/allInTool.gif||GHIDRA||reviewed||END|
 src/main/resources/images/applications-science.png||Oxygen Icons - LGPL 3.0||||END|

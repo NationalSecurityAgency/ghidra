@@ -2,17 +2,16 @@ apply plugin: 'eclipse'
 
 apply from: 'gradle/root/eclipse.gradle'
 apply from: "gradle/support/eclipseLauncher.gradle"
-
+apply from: "gradle/support/loadApplicationProperties.gradle"
 
 
 /***************************************************************************************
  * Make sure the correct version of gradle is being used
  ***************************************************************************************/
 import org.gradle.util.GradleVersion;
-final GradleVersion minimum_version = GradleVersion.version('5.0')
-
+final GradleVersion minimum_version = GradleVersion.version("${rootProject.GRADLE_MINIMUM_VERSION}")
 if (GradleVersion.current() < minimum_version) {
-	throw new GradleException("Requires at least $minimum_version, but was ran with $gradle.gradleVersion")
+	throw new GradleException("Requires at least $minimum_version, but was run with $gradle.gradleVersion")
 }
 
 /***************************************************************************************
@@ -54,12 +53,6 @@ if (file("flatRepo").isDirectory()) {
 		}
 	}
 }
-
-/*********************************************************************************
- *  load properties from Ghidra/application.properties file
- *********************************************************************************/
-
-apply from: "gradle/support/loadApplicationProperties.gradle"
 
 /****************************************************************************
  * Create a set containing all the platforms we need when building native

@@ -213,13 +213,23 @@ class UnionEditorModel extends CompEditorModel {
 	// Begin methods for determining if a type of edit action is allowed.
 	// *************************************************************
 
+	@Override
+	public boolean isBitFieldAllowed() {
+		return isSingleRowSelection();
+	}
+
 	/**
 	 * Returns whether or not the selection
 	 * is allowed to be changed into an array.
 	 */
 	@Override
 	public boolean isArrayAllowed() {
-		return (getNumSelectedComponentRows() == 1);
+		if (!isSingleRowSelection()) {
+			return false;
+		}
+		FieldRange range = selection.getFieldRange(0);
+		DataTypeComponent comp = getComponent(range.getStart().getIndex().intValue());
+		return (comp != null && !comp.isBitFieldComponent());
 	}
 
 	/**
@@ -410,10 +420,10 @@ class UnionEditorModel extends CompEditorModel {
 	}
 
 	@Override
-	public void insert(int rowIndex, DataType dataType, int length, String name, String comment,
-			int numCopies) throws InvalidDataTypeException {
+	public void insert(int rowIndex, DataType dataType, int length, int numCopies)
+			throws InvalidDataTypeException {
 		for (int ii = 0; ii < numCopies; ++ii) {
-			insert(rowIndex + ii, dataType, length, name, comment);
+			insert(rowIndex + ii, dataType, length, null, null);
 		}
 	}
 

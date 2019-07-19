@@ -88,6 +88,11 @@ public interface EditorModel {
 	public boolean isArrayAllowed();
 
 	/**
+	 * Returns whether or not a bitfield is allowed at the current location.
+	 */
+	public boolean isBitFieldAllowed();
+
+	/**
 	 * Returns whether or not clearing the selected components is allowed.
 	 */
 	public boolean isClearAllowed();
@@ -414,14 +419,6 @@ public interface EditorModel {
 	 * @throws UsrException
 	 */
 	public DataTypeComponent replace(int rowIndex, DataType dt, int dtLength) throws UsrException;
-
-	/**
-	 * Replace the component at the indicated index with its subcomponents.
-	 * The component data type must be a composite data type to be unpackaged.
-	 * @param rowIndex index of the row whose component is to be unpackaged in the editor's composite data type.
-	 * @throws UsrException if the component can't be unpackaged.
-	 */
-	public void unpackage(int rowIndex) throws UsrException;
 
 	/**
 	 * Gets the maximum number of bytes available for a data type that is added at the indicated

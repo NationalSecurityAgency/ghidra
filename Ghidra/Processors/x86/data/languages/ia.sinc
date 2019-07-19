@@ -2239,7 +2239,7 @@ Suffix3D: imm8        is imm8 [ suffix3D=imm8; ] { }
 
 :AAA			is vexMode=0 & bit64=0 & byte=0x37		{ local car = ((AL & 0xf) > 9) | AF; AL = (AL+6*car)&0xf; AH=AH+car; CF=car; AF=car; }
 :AAD imm8		is vexMode=0 & bit64=0 & byte=0xd5; imm8	{ AL = AL + imm8*AH; AH=0; resultflags(AX); }
-:AAM imm8		is vexMode=0 & bit64=0 & byte=0xd4; imm8	{ AH = AL/imm8; AL = AL & imm8; resultflags(AX); }
+:AAM imm8		is vexMode=0 & bit64=0 & byte=0xd4; imm8	{ AH = AL/imm8; AL = AL % imm8; resultflags(AX); }
 :AAS			is vexMode=0 & bit64=0 & byte=0x3f		{ local car = ((AL & 0xf) > 9) | AF; AL = (AL-6*car)&0xf; AH=AH-car; CF=car; AF=car; }
 
 :ADC AL,imm8		is vexMode=0 & byte=0x14; AL & imm8						{ addCarryFlags( AL, imm8:1 ); resultflags( AL ); }
@@ -4439,7 +4439,7 @@ define pcodeop invalidInstructionException;
 @ifdef IA64
 :VMCLEAR m64    is vexMode=0 & $(PRE_66) & byte=0x0f; byte=0xc7; ( mod != 0b11 & reg_opcode=6 ) ... & m64 { vmclear(m64); }
 @endif
-#TODO: invockes a VM function specified in EAX
+#TODO: invokes a VM function specified in EAX
 :VMFUNC EAX     is vexMode=0 & byte=0x0f; byte=0x01; byte=0xd4 & EAX                         { vmfunc(EAX); }
 #TODO: this launches the VM managed by the current VMCS.  How is the VMCS expressed for the emulator?  For Ghidra analysis?
 :VMLAUNCH       is vexMode=0 & byte=0x0f; byte=0x01; byte=0xc2                          { vmlaunch(); }

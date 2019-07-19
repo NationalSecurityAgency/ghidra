@@ -78,6 +78,19 @@ public class ReadOnlyDataTypeComponent implements DataTypeComponent, Serializabl
 		return false; // Unsupported use
 	}
 
+	@Override
+	public boolean isBitFieldComponent() {
+		return dataType instanceof BitFieldDataType;
+	}
+
+	@Override
+	public boolean isZeroBitFieldComponent() {
+		if (dataType instanceof BitFieldDataType) {
+			return ((BitFieldDataType) dataType).getBitSize() == 0;
+		}
+		return false;
+	}
+
 	/**
 	 * @see ghidra.program.model.data.DataTypeComponent#getOffset()
 	 */

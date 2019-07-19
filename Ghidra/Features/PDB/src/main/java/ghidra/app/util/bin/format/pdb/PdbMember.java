@@ -15,31 +15,64 @@
  */
 package ghidra.app.util.bin.format.pdb;
 
-import ghidra.program.model.symbol.SymbolUtilities;
-import ghidra.util.task.TaskMonitor;
-import ghidra.util.xml.XmlUtilities;
-import ghidra.xml.XmlElement;
-import ghidra.xml.XmlTreeNode;
+import ghidra.util.exception.CancelledException;
 
-final class PdbMember {
+/**
+ * <code>PdbMember</code> convey PDB member information used for datatype
+ * reconstruction.
+ */
+abstract class PdbMember {
+
 	final String memberName;
 	final String memberDataTypeName;
 	final int memberOffset;
-	final String memberKind;
-	final int memberLength;
 
-	PdbMember(XmlTreeNode node, TaskMonitor monitor) {
-		this(node.getStartElement(), monitor);
+	protected PdbMember(String memberName, String memberDataTypeName, int memberOffset) {
+		this.memberName = memberName;
+		this.memberDataTypeName = memberDataTypeName;
+		this.memberOffset = memberOffset;
 	}
 
-	PdbMember(XmlElement element, TaskMonitor monitor) {
-		// TODO: Need to examine consistency of renaming names/data types for space removal across
-		//  all of PDB.
-		memberName = SymbolUtilities.replaceInvalidChars(element.getAttribute("name"), false);
-		memberDataTypeName = element.getAttribute("datatype");
-		memberOffset = XmlUtilities.parseInt(element.getAttribute("offset"));
-		memberKind = element.getAttribute("kind");
-		memberLength = XmlUtilities.parseInt(element.getAttribute("length"));
+	@Override
+	public String toString() {
+		return "name=" + memberName + ", type=" + memberDataTypeName + ", offset=" + memberOffset;
 	}
+
+	/**
+	 * Get the member's name which will correspond to the field name.
+	 * @return member field name
+	 */
+	public String getName() {
+		return memberName;
+	}
+
+	/**
+	 * Get the member's datatype name (may be namespace qualified)
+	 * @return member's datatype name
+	 */
+	public String getDataTypeName() {
+		return memberDataTypeName;
+	}
+
+	/**
+	 * Get the member's byte offset within the root composite.
+	 * @return member's byte offset
+	 */
+	public int getOffset() {
+		return memberOffset;
+	}
+
+	/**
+	 * Get this member's associated data type which has already been cloned for the 
+	 * target program's data type manager.  This indicates a dependency callback
+	 * and may be used to trigger resolution for composites.  When resolving dependencies
+	 * care must be take to avoid circular dependencies which could occur under certain
+	 * error conditions.
+	 * @param member composite member to be resolved
+	 * @return data-type which corresponds to the specified member's data-type name or null
+	 * if unable to resolve.
+	 * @throws CancelledException if operation cancelled
+	 */
+	protected abstract WrappedDataType getDataType() throws CancelledException;
 
 }

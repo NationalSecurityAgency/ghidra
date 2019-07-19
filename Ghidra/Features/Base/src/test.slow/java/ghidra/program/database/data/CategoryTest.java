@@ -73,7 +73,7 @@ public class CategoryTest extends AbstractGhidraHeadedIntegrationTest {
 	public void setUp() throws Exception {
 
 		program = createDefaultProgram(testName.getMethodName(), ProgramBuilder._TOY, this);
-		dataMgr = program.getDataManager();
+		dataMgr = program.getDataTypeManager();
 		eventRecordingListener = new CategoryTestListener();
 		dataMgr.addDataTypeManagerListener(eventRecordingListener);
 		root = dataMgr.getRootCategory();

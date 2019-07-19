@@ -15,15 +15,14 @@
  */
 package ghidra.app.plugin.core.compositeeditor;
 
-import ghidra.util.SystemUtilities;
-import ghidra.util.exception.UsrException;
-
 import java.util.Arrays;
 
 import javax.swing.ImageIcon;
 
-import resources.ResourceManager;
 import docking.ActionContext;
+import ghidra.util.SystemUtilities;
+import ghidra.util.exception.UsrException;
+import resources.ResourceManager;
 
 /**
  * Action for use in the structure data type editor.
@@ -39,7 +38,7 @@ public class CreateInternalStructureAction extends CompositeEditorTableAction {
 		"Create a new structure from the selected components and replace them with it.";
 	private static String[] popupPath = new String[] { ACTION_NAME };
 
-	public CreateInternalStructureAction(CompositeEditorProvider provider) {
+	public CreateInternalStructureAction(StructureEditorProvider provider) {
 		super(provider, EDIT_ACTION_PREFIX + ACTION_NAME, GROUP_NAME, popupPath, null,
 			createInternalStructureIcon);
 		setDescription(DESCRIPTION);
@@ -66,15 +65,11 @@ public class CreateInternalStructureAction extends CompositeEditorTableAction {
 			}
 		}
 		requestTableFocus();
-		SystemUtilities.runSwingLater(new Runnable() {
-
-			@Override
-			public void run() {
-				provider.toFront();
-				provider.requestFocus();
-				provider.editorPanel.requestFocus();
-				provider.editorPanel.table.requestFocus();
-			}
+		SystemUtilities.runSwingLater(() -> {
+			provider.toFront();
+			provider.requestFocus();
+			provider.editorPanel.requestFocus();
+			provider.editorPanel.table.requestFocus();
 		});
 	}
 

@@ -26,7 +26,7 @@ import ghidra.util.exception.DuplicateNameException;
  * and Unions) dataTypes.
  * <p>
  * While most all components must have a fixed length greater than 0, structures support an
- * optional trailing flexible array component whose length is zero and whose offset equals 
+ * optional trailing flexible array component whose length is zero and whose offset equals
  * the length of the structure.
  */
 public interface DataTypeComponent {
@@ -37,7 +37,7 @@ public interface DataTypeComponent {
 	/**
 	 * Returns the dataType in this component.
 	 * <p>
-	 * NOTE: If this component corresponds to a structure flexible array the returned data type 
+	 * NOTE: If this component corresponds to a structure flexible array the returned data type
 	 * reflects the base type of the array (e.g., char is returned for a flexible char array).
 	 * @return the dataType in this component
 	 */
@@ -51,18 +51,30 @@ public interface DataTypeComponent {
 
 	/**
 	 * Determine if this component corresponds to a unsized flexible array which is
-	 * permitted as the trailing component within a structure.  
+	 * permitted as the trailing component within a structure.
 	 * @return true if component is a trailing flexible array component.
 	 */
 	public boolean isFlexibleArrayComponent();
+
+	/**
+	 * Determine if the specified component corresponds to a bit-field.
+	 * @return true if bit-field else false
+	 */
+	public boolean isBitFieldComponent();
+
+	/**
+	 * Determine if the specified component corresponds to a zero-length bit-field.
+	 * @return true if zer-length bit-field else false
+	 */
+	public boolean isZeroBitFieldComponent();
 
 	/**
 	 * Get the ordinal position within the parent dataType.
 	 * <p>
 	 * NOTE: The special case of a structure flexible array component returns an ordinal equal
 	 * to the parent structure's {@link Structure#getNumComponents()} since it is not included
-	 * in the list of normal components (see {@link Structure#getFlexibleArrayComponent()}. 
-	 * @return ordinal of this component within the parent data type. 
+	 * in the list of normal components (see {@link Structure#getFlexibleArrayComponent()}.
+	 * @return ordinal of this component within the parent data type.
 	 */
 	public int getOrdinal();
 
@@ -80,19 +92,19 @@ public interface DataTypeComponent {
 
 	/**
 	 * Get the byte offset of where this component ends relative to the start of the parent
-	 * data type.  
+	 * data type.
 	 * <p>
-	 * NOTE: The special case of a structure flexible array component returns -1 since its 
+	 * NOTE: The special case of a structure flexible array component returns -1 since its
 	 * length is undefined.
 	 * @return offset of end of component relative to the start of the parent
-	 * data type.  
+	 * data type.
 	 */
 	public int getEndOffset();
 
 	/**
 	 * Get the length of this component.
 	 * <p>
-	 * NOTE: The special case of a structure flexible array component returns 0 since its 
+	 * NOTE: The special case of a structure flexible array component returns 0 since its
 	 * length is undefined.
 	 * @return the length of this component or 0 for a structure flexible array.
 	 */
@@ -153,4 +165,5 @@ public interface DataTypeComponent {
 	 * @return true if the given dataTypeComponent is equivalent to this dataTypeComponent.
 	 */
 	public boolean isEquivalent(DataTypeComponent dtc);
+
 }

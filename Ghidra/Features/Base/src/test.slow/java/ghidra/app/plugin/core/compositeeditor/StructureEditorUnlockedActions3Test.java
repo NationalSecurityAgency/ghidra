@@ -35,9 +35,9 @@ public class StructureEditorUnlockedActions3Test
 	public void testDuplicateMultipleAction() throws Exception {
 		NumberInputDialog dialog;
 		init(complexStructure, pgmTestCat);
-
-		model.clearComponent(3);
-
+		runSwing(() -> {
+			model.clearComponent(3);
+		});
 		int num = model.getNumComponents();
 
 		setSelection(new int[] { 2 });
@@ -134,6 +134,37 @@ public class StructureEditorUnlockedActions3Test
 	}
 
 	@Test
+	public void testEditFieldSetBitfieldDataType() throws Exception {
+		init(complexStructure, pgmTestCat);
+
+		DataTypeComponent dtc = model.getComponent(3);
+		assertNotNull(dtc);
+		assertTrue(!dtc.isBitFieldComponent());
+
+		setSelection(new int[] { 3 });
+		assertTrue(!model.isEditingField());
+		invoke(editFieldAction);
+		JTable table = getTable();
+		Container component = (Container) table.getEditorComponent();
+		assertTrue(model.isEditingField());
+		assertEquals(3, model.getRow());
+		assertEquals(model.getDataTypeColumn(), model.getColumn());
+
+		JTextField textField = findComponent(component, JTextField.class);
+		triggerText(textField, "char:2\n");
+
+		waitForSwing();
+
+		assertTrue(!model.isEditingField());
+		assertEquals(3, model.getRow());
+		assertNotEditingField();
+
+		dtc = model.getComponent(3);
+		assertNotNull(dtc);
+		assertTrue(dtc.isBitFieldComponent());
+	}
+
+	@Test
 	public void testFavoritesFixedOnBlankLine() {
 		init(emptyStructure, pgmTestCat);
 
@@ -172,7 +203,9 @@ public class StructureEditorUnlockedActions3Test
 		init(complexStructure, pgmTestCat);
 
 		String desc = "This is a sample description.";
-		model.setDescription(desc);
+		runSwing(() -> {
+			model.setDescription(desc);
+		});
 		DataType viewCopy = model.viewComposite.clone(null);
 
 		assertEquals(desc, model.getDescription());

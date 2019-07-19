@@ -999,7 +999,7 @@ public abstract class AbstractDataActionTest extends AbstractGhidraHeadedIntegra
 		}
 		String str = (new BigInteger(bytes)).toString(8).toUpperCase();
 		if (padded) {
-			int digits = 3 * byteCnt;
+			int digits = ((8 * byteCnt) + 2) / 3;
 			for (int i = str.length(); i < digits; i++) {
 				str = "0" + str;
 			}

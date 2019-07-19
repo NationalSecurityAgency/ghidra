@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +15,7 @@
  */
 package ghidra.app.plugin.core.compositeeditor;
 
+import javax.swing.JPanel;
 
 public class UnionEditorPanel extends CompEditorPanel {
 
@@ -23,11 +23,9 @@ public class UnionEditorPanel extends CompEditorPanel {
 		super(model, provider);
 	}
 
-	/**
-	 * Updates the name, description, etc. that appears below the table.
-	 */
 	@Override
-    protected void adjustCompositeInfo() {
-		super.adjustCompositeInfo();
+	protected JPanel createBitViewerPanel() {
+		return null;
 	}
+
 }

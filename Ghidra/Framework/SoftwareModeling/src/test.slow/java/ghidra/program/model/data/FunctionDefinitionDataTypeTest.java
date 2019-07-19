@@ -19,42 +19,22 @@ import static org.junit.Assert.*;
 
 import org.junit.*;
 
-import generic.test.AbstractGenericTest;
+import generic.test.AbstractGTest;
 import ghidra.docking.settings.SettingsImpl;
 
-public class FunctionDefinitionDataTypeTest extends AbstractGenericTest {
+public class FunctionDefinitionDataTypeTest extends AbstractGTest {
 	private StandAloneDataTypeManager dtm;
 	private FunctionDefinition functionDt;
-	private int transactionID;
 
 	private FunctionDefinition createFunctionDefinition(String name) {
 		return (FunctionDefinition) dtm.resolve(new FunctionDefinitionDataType(name), null);
 	}
 
-	/**
-	 * Constructor for FunctionDefinitionDataTypeTest.
-	 */
-	public FunctionDefinitionDataTypeTest() {
-		super();
-	}
-
-	/*
-	 * @see TestCase#setUp()
-	 */
 	@Before
 	public void setUp() throws Exception {
 		dtm = new StandAloneDataTypeManager("dummyDTM");
-		transactionID = dtm.startTransaction("");
+		dtm.startTransaction("");
 		functionDt = createFunctionDefinition("Test");
-	}
-
-	/*
-	 * @see TestCase#tearDown()
-	 */
-	@After
-	public void tearDown() throws Exception {
-		dtm.endTransaction(transactionID, true);
-		dtm.close();
 	}
 
 	@Test

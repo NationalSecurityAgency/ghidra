@@ -87,9 +87,9 @@ public class PcodeDataTypeManager {
 	private DataOrganization dataOrganization;
 	private DecompilerLanguage displayLanguage;
 	private boolean voidInputIsVarargs;			// true if we should consider void parameter lists as varargs
-										// Some C header conventions use an empty prototype to mean a
-										// varargs function. Locking in void can cause data-flow to get
-										// truncated. This boolean controls whether we lock it in or not
+	// Some C header conventions use an empty prototype to mean a
+	// varargs function. Locking in void can cause data-flow to get
+	// truncated. This boolean controls whether we lock it in or not
 	private TypeMap[] coreBuiltin;				// Core decompiler datatypes and how they map to full datatype objects
 	private VoidDataType voidDt;
 	private int pointerWordSize;				// Wordsize to assign to all pointer datatypes
@@ -390,6 +390,10 @@ public class PcodeDataTypeManager {
 			resBuf.append(">\n");
 			DataTypeComponent[] comps = ((Structure) type).getDefinedComponents();
 			for (DataTypeComponent comp : comps) {
+				if (comp.isBitFieldComponent()) {
+					// TODO: bitfields are not yet supported by decompiler
+					continue;
+				}
 				resBuf.append("<field");
 				String field_name = comp.getFieldName();
 				if (field_name == null) {
@@ -402,6 +406,7 @@ public class PcodeDataTypeManager {
 				resBuf.append(buildTypeRef(fieldtype, comp.getLength()));
 				resBuf.append("</field>\n");
 			}
+			// TODO: trailing flexible array component not yet supported
 		}
 		else if (type instanceof Enum) {
 			Enum enumDt = (Enum) type;

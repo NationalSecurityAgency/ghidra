@@ -55,7 +55,7 @@ public class ArrayTest extends AbstractGhidraHeadedIntegrationTest {
 	public void setUp() throws Exception {
 
 		program = createDefaultProgram(testName.getMethodName(), ProgramBuilder._TOY, this);
-		dataMgr = program.getDataManager();
+		dataMgr = program.getDataTypeManager();
 		listing = program.getListing();
 		space = program.getAddressFactory().getDefaultAddressSpace();
 		transactionID = program.startTransaction("Test");

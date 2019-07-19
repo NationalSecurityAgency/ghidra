@@ -51,8 +51,8 @@ public class OutgoingFunctionCallNodeTest extends AbstractGenericTest {
 		super();
 	}
 
-    @Before
-    public void setUp() throws Exception {
+	@Before
+	public void setUp() throws Exception {
 		builder = new ToyProgramBuilder("Call Node Test", true);
 		builder.createMemory(".text", "0x0", 0x3000);
 
@@ -64,8 +64,8 @@ public class OutgoingFunctionCallNodeTest extends AbstractGenericTest {
 		node = new OutgoingFunctionCallNode(program, function, source, true, new AtomicInteger(5));
 	}
 
-@Test
-    public void testGenerateChildren_SelfRecursiveCall() throws Exception {
+	@Test
+	public void testGenerateChildren_SelfRecursiveCall() throws Exception {
 
 		builder.createMemoryCallReference(nodeAddress, nodeAddress);
 
@@ -73,8 +73,8 @@ public class OutgoingFunctionCallNodeTest extends AbstractGenericTest {
 		assertTrue(children.isEmpty());
 	}
 
-@Test
-    public void testGenerateChildren_CalledFunctionExists() throws Exception {
+	@Test
+	public void testGenerateChildren_CalledFunctionExists() throws Exception {
 		String otherAddress = "0x1000";
 		builder.createEmptyFunction("Function_2", otherAddress, 10, DataType.DEFAULT);
 		builder.createMemoryCallReference(nodeAddress, otherAddress);
@@ -84,8 +84,8 @@ public class OutgoingFunctionCallNodeTest extends AbstractGenericTest {
 		assertEquals("Function_2", children.get(0).getName());
 	}
 
-@Test
-    public void testGenerateChildren_CalledFunctionExists_ExternalCall() throws Exception {
+	@Test
+	public void testGenerateChildren_CalledFunctionExists_ExternalCall() throws Exception {
 		String otherAddress = "0x1000";
 
 		String externalFunctionName = "External_Function";
@@ -100,8 +100,8 @@ public class OutgoingFunctionCallNodeTest extends AbstractGenericTest {
 		assertEquals(externalFunctionName, children.get(0).getName());
 	}
 
-@Test
-    public void testGenerateChildren_CallReference_ExternalFunction_NoFunctionInMemory()
+	@Test
+	public void testGenerateChildren_CallReference_ExternalFunction_NoFunctionInMemory()
 			throws Exception {
 
 		builder.createMemoryCallReference(nodeAddress, "EXTERNAL:00000001");
@@ -111,8 +111,8 @@ public class OutgoingFunctionCallNodeTest extends AbstractGenericTest {
 		assertEquals("EXTERNAL:00000001", children.get(0).getName());
 	}
 
-@Test
-    public void testGenerateChildren_CallReference_ToPointer_ToExternalFunction() throws Exception {
+	@Test
+	public void testGenerateChildren_CallReference_ToPointer_ToExternalFunction() throws Exception {
 
 		//
 		// Function A 
@@ -137,8 +137,8 @@ public class OutgoingFunctionCallNodeTest extends AbstractGenericTest {
 		assertEquals(externalFunctionName, children.get(0).getName());
 	}
 
-@Test
-    public void testGenerateChildren_CallReference_ToPointer_ToNonExternalFunction()
+	@Test
+	public void testGenerateChildren_CallReference_ToPointer_ToNonExternalFunction()
 			throws Exception {
 
 		//
@@ -162,8 +162,8 @@ public class OutgoingFunctionCallNodeTest extends AbstractGenericTest {
 		assertTrue(children.get(0) instanceof DeadEndNode);
 	}
 
-@Test
-    public void testGenerateChildren_CallReference_ToPointer_Offcut() throws Exception {
+	@Test
+	public void testGenerateChildren_CallReference_ToPointer_Offcut() throws Exception {
 
 		//
 		// Bad code case; expected reference to pointer, but no data there
@@ -179,21 +179,22 @@ public class OutgoingFunctionCallNodeTest extends AbstractGenericTest {
 		assertTrue(children.get(0) instanceof DeadEndNode);
 	}
 
-@Test
-    public void testGenerateChildren_WriteReference() throws Exception {
+	@Test
+	public void testGenerateChildren_WriteReference() throws Exception {
 
 		// 
 		// Have a reference in the function to a place that is not another function, and the
 		// reference is a write reference.  No call node is created.
 		//
 
-		builder.createMemoryReference(nodeAddress, "0x1000", RefType.WRITE, SourceType.USER_DEFINED);
+		builder.createMemoryReference(nodeAddress, "0x1000", RefType.WRITE,
+			SourceType.USER_DEFINED);
 		List<GTreeNode> children = node.generateChildren(TaskMonitor.DUMMY);
 		assertTrue(children.isEmpty());
 	}
 
-@Test
-    public void testGenerateChildren_ReadReference_NullInstruction() throws Exception {
+	@Test
+	public void testGenerateChildren_ReadReference_NullInstruction() throws Exception {
 
 		// 
 		// Have a reference in the function to a place that is not another function, and the
@@ -208,8 +209,8 @@ public class OutgoingFunctionCallNodeTest extends AbstractGenericTest {
 
 	}
 
-@Test
-    public void testGenerateChildren_ReadReference_NotCallInstruction() throws Exception {
+	@Test
+	public void testGenerateChildren_ReadReference_NotCallInstruction() throws Exception {
 
 		//
 		// Read reference to an instruction with a flow type that is not a call
@@ -223,8 +224,8 @@ public class OutgoingFunctionCallNodeTest extends AbstractGenericTest {
 		assertTrue(children.isEmpty());
 	}
 
-@Test
-    public void testGenerateChildren_ReadReference_CallInstruction_InstructionAtToAddress()
+	@Test
+	public void testGenerateChildren_ReadReference_CallInstruction_InstructionAtToAddress()
 			throws Exception {
 
 		//
@@ -243,8 +244,8 @@ public class OutgoingFunctionCallNodeTest extends AbstractGenericTest {
 		assertTrue(children.isEmpty());
 	}
 
-@Test
-    public void testGenerateChildren_ReadReference_CallInstruction_ToData_NoReference()
+	@Test
+	public void testGenerateChildren_ReadReference_CallInstruction_ToData_NoReference()
 			throws Exception {
 
 		//
@@ -258,8 +259,8 @@ public class OutgoingFunctionCallNodeTest extends AbstractGenericTest {
 		assertTrue(children.isEmpty());
 	}
 
-@Test
-    public void testGenerateChildren_ReadReference_CallInstruction_ToData_NonExternalReference()
+	@Test
+	public void testGenerateChildren_ReadReference_CallInstruction_ToData_NonExternalReference()
 			throws Exception {
 
 		//
@@ -277,8 +278,8 @@ public class OutgoingFunctionCallNodeTest extends AbstractGenericTest {
 		assertTrue(children.isEmpty());
 	}
 
-@Test
-    public void testGenerateChildren_ReadReference_CallInstruction_ToData_ExternalReference_NonFunctionSymbol()
+	@Test
+	public void testGenerateChildren_ReadReference_CallInstruction_ToData_ExternalReference_NonFunctionSymbol()
 			throws Exception {
 
 		//
@@ -296,8 +297,8 @@ public class OutgoingFunctionCallNodeTest extends AbstractGenericTest {
 		assertTrue(children.isEmpty());
 	}
 
-@Test
-    public void testGenerateChildren_ReadReference_CallInstruction_ToData_ExternalReference_FunctionSymbol()
+	@Test
+	public void testGenerateChildren_ReadReference_CallInstruction_ToData_ExternalReference_FunctionSymbol()
 			throws Exception {
 
 		//

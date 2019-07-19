@@ -745,6 +745,8 @@ public abstract class AbstractEditorTest extends AbstractGhidraHeadedIntegration
 	}
 
 	protected void doubleClickTableCell(int row, int column) throws Exception {
+		clickTableCell(getTable(), row, column, 1);
+		waitForSwing();
 		clickTableCell(getTable(), row, column, 2);
 		// Double click a second time if not editing,
 		// since editing sometimes gets canceled by a selection event in the TestEnv

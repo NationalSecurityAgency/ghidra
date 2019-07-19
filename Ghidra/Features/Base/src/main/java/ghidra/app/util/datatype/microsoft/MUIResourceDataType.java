@@ -81,10 +81,10 @@ public class MUIResourceDataType extends DynamicDataType {
 		if (checkMagic(memBuffer)) {
 			StructureDataType sdt = MUIStructureHeader();
 			tempOffset = addComp(sdt, sdt.getLength(), "muiResourceHeader",
-					memBuffer.getAddress().add(tempOffset), comps, tempOffset);
+				memBuffer.getAddress().add(tempOffset), comps, tempOffset);
 			sdt = MUIStructureData(tempOffset, memBuffer, offsets, sizes);
 			tempOffset = addComp(sdt, sdt.getLength(), "muiResourceData",
-					memBuffer.getAddress().add(tempOffset), comps, tempOffset);
+				memBuffer.getAddress().add(tempOffset), comps, tempOffset);
 		}
 		else {
 			Msg.debug(this, "Not an MUI resource data type at " + mbIn.getAddress());
@@ -107,7 +107,7 @@ public class MUIResourceDataType extends DynamicDataType {
 			"0x01 = internal, 0x02 = external");
 
 		ArrayDataType adt16 = new ArrayDataType(ByteDataType.dataType, 16, 1);
-		ArrayDataType adt24 = new ArrayDataType(ByteDataType.dataType, 16, 1);
+		ArrayDataType adt24 = new ArrayDataType(ByteDataType.dataType, 24, 1);
 
 		struct.add(adt16, 16, "serviceChecksum", "");
 		struct.add(adt16, 16, "checksum", "");
@@ -195,9 +195,8 @@ public class MUIResourceDataType extends DynamicDataType {
 	private int addComp(DataType dataType, int length, String fieldName, Address address,
 			List<DataTypeComponent> comps, int currentOffset) {
 		if (length > 0) {
-			ReadOnlyDataTypeComponent readOnlyDataTypeComponent =
-				new ReadOnlyDataTypeComponent(dataType, this, length, comps.size(), currentOffset,
-					fieldName, null);
+			ReadOnlyDataTypeComponent readOnlyDataTypeComponent = new ReadOnlyDataTypeComponent(
+				dataType, this, length, comps.size(), currentOffset, fieldName, null);
 			comps.add(readOnlyDataTypeComponent);
 			currentOffset += length;
 		}

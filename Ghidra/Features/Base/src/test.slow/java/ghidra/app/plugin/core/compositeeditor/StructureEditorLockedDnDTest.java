@@ -55,8 +55,9 @@ public class StructureEditorLockedDnDTest extends AbstractStructureEditorTest {
 	public void testDragNDropConsumeAll() throws Exception {
 		init(simpleStructure, pgmBbCat);
 		DataType dt;
-		model.clearComponents(new int[] { 1, 2, 3 });
-
+		runSwing(() -> {
+			getModel().clearComponents(new int[] { 1, 2, 3 });
+		});
 		assertEquals(12, model.getNumComponents());
 		assertEquals(29, model.getLength());
 
