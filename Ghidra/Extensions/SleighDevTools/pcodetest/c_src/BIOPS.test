@@ -404,7 +404,7 @@ TEST biopLogicOri1i1_Main()
 TEST biopDividi1i1_Main()
 {
 	extern i1 biopDividi1i1(i1 lhs, i1 rhs);
-	ASSERTI1(biopDividi1i1(0x01, 0x01), 1);
+	ASSERTI1(biopDividi1i1(0x1, 0x1), 1);
 	ASSERTI1(biopDividi1i1(I1_MAX, I1_MAX), 1);
 	ASSERTI1(biopDividi1i1(I1_MIN, I1_MIN), 1);
 	ASSERTI1(biopDividi1i1(I1_MAX, 1), I1_MAX);
@@ -465,7 +465,7 @@ TEST unopPlusi4_Main()
 TEST biopShtLfti2i2_Main()
 {
 	extern i2 biopShtLfti2i2(i2 lhs, i2 rhs);
-	ASSERTI2(biopShtLfti2i2(0x0101, 16), 0x0);
+	ASSERTI2(biopShtLfti2i2(0x0101, 15), 0x8000);
 	ASSERTI2(biopShtLfti2i2(0x0101, 8), 0x100);
 	ASSERTI2(biopShtLfti2i2(0x0101, 0), 0x101);
 	ASSERTI2(biopShtLfti2i2(2, 1), 4);
@@ -506,7 +506,7 @@ TEST biopMultu4u4_Main()
 TEST biopShtRhti2i2_Main()
 {
 	extern i2 biopShtRhti2i2(i2 lhs, i2 rhs);
-	ASSERTI2(biopShtRhti2i2(0x0101, 16), 0x0);
+	ASSERTI2(biopShtRhti2i2(0x8fff, 15), 0xffff);
 	ASSERTI2(biopShtRhti2i2(0x0101, 8), 0x1);
 	ASSERTI2(biopShtRhti2i2(0x0101, 0), 0x0101);
 	ASSERTI2(biopShtRhti2i2(2, 1), 1);

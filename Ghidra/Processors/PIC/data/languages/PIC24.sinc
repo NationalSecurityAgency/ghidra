@@ -3748,7 +3748,8 @@ define pcodeop isDivideOverflow;
 
 @if  defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
 
-:divf  TOK_14_11_Wreg,TOK_3_0_Wreg is
+:repeat" 0x12 divf"  TOK_14_11_Wreg,TOK_3_0_Wreg is
+         OP_31_0=0x090011;
          OP_23_20=0xD & OP_19_16=0x9 & OP_15=0x0 &
          TOK_14_11_Wreg & OP_10_8=0x0 & OP_7_4=0x0 & TOK_3_0_Wreg {
 

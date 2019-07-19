@@ -49,7 +49,7 @@ class PCodeTest(BuildUtil):
         ce = 'can-export:%-5s' % ('yes' if self.config.can_export else 'no')
         ct = 'compiler-type:%-5s' % self.config.toolchain_type
         tc = 'Toolchain:%s' % self.config.toolchain
-        return self.config.architecture.ljust(20) + cb + ce + ct + tc
+        return self.config.name.ljust(20) + cb + ce + ct + tc
 
 class PCodeTestBuild(BuildUtil):
     def __init__(self, pcode_test):
@@ -182,7 +182,7 @@ class PCodeTestBuild(BuildUtil):
                     if not self.isfile(companion_file) or not self.isfile(body_file):
                         self.log_info('Skipping %s %s build' % (companion_file, body_file))
                         continue
-                    input_files = ['pcode_test.c', 'pcode_main.c', companion_file, body_file]
+                    input_files = ['pcode_test.c', 'pcode_main.c', 'builtin.c', companion_file, body_file]
                     self.compile(input_files, opt_cflag, small_name)
                     self.export_file(small_name+'.out', build_dir)
                     

@@ -31,6 +31,7 @@
 
 typedef i4 (*entryFunc)(i4 * val);
 typedef i4 (*breakOn)(void);
+typedef i4 (*breakOnD)(const char *file, int line, const char *func);
 typedef i4 (*testFuncPtr)(void);
 
 typedef struct PACKED_STRUCTURE FunctionInfo
@@ -47,7 +48,7 @@ typedef struct PACKED_STRUCTURE TestInfo
 	u4 byteOrder;			/* value 0x01020304 used to detect endianess */
 	breakOn onPass;			/* address of breakOnPass function, (where it goes on test pass) */
 	breakOn onError;		/* address of breakOnError function, (where it goes on test failure) */
-	breakOn onDone;			/* address of breakOnDone function, (where it goes when all test done) */
+	breakOnD onDone;		/* address of breakOnDone function, (where it goes when all test done) */
 	u4 numpass;			/* How many test passed */
 	u4 numfail;			/* How many test failed */
 	u4 lastTestPos;			/* Last test index number */
