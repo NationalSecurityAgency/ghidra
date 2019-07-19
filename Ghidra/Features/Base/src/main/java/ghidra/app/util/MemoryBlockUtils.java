@@ -230,6 +230,8 @@ public class MemoryBlockUtils {
 			catch (MemoryConflictException e) {
 				block = program.getMemory().createInitializedBlock(name, start, fileBytes, offset,
 					length, true);
+				log.appendMsg("Conflict attempting to create memory block: " + name +
+					" at address " + start.toString() + " Created block in new overlay instead");
 			}
 		}
 		catch (LockException | DuplicateNameException | MemoryConflictException e) {
