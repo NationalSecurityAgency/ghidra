@@ -9,7 +9,6 @@ I want to keep in the `master` mirror of the official repo, and in the `dev`, ke
 # Changes in addition to Ghidra
 
 - [Support for VS2019](https://github.com/kant2002/ghidra-official/commit/cd767aca016a5a34d249f0d818e2bc834207de8a)
-- [Require a minimum Gradle version instead of a specific version](https://github.com/kant2002/ghidra-official/commit/fdc9894bace81fe965cf5dbb538a3057048419ba)
 
 # Ghidra Software Reverse Engineering Framework
 
