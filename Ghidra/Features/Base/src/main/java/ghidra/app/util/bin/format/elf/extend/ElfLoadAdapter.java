@@ -392,6 +392,8 @@ public class ElfLoadAdapter {
 
 	/**
 	 * Return filtered InputStream for loading a memory block (includes non-loaded OTHER blocks).
+	 * NOTE: If this method is overriden, the {@link #hasFilteredLoadInputStream(ElfLoadHelper, MemoryLoadable, Address)}
+	 * must also be overriden in a consistent fashion.
 	 * @param elfLoadHelper
 	 * @param loadable Corresponding ElfSectionHeader or ElfProgramHeader for the memory block to be created.
 	 * @param start memory load address
@@ -402,6 +404,20 @@ public class ElfLoadAdapter {
 	public InputStream getFilteredLoadInputStream(ElfLoadHelper elfLoadHelper,
 			MemoryLoadable loadable, Address start, long dataLength, InputStream dataInput) {
 		return dataInput;
+	}
+
+	/**
+	 * Determine if the use of {@link #getFilteredLoadInputStream(ElfLoadHelper, MemoryLoadable, Address, long, InputStream)} 
+	 * is required when loading a memory block.  If a filtered input stream is required this will prevent the use of a direct 
+	 * mapping to file bytes.
+	 * @param elfLoadHelper 
+	 * @param loadable Corresponding ElfSectionHeader or ElfProgramHeader for the memory block to be loaded.
+	 * @param start memory load address
+	 * @return true if the use of a filtered input stream is required
+	 */
+	public boolean hasFilteredLoadInputStream(ElfLoadHelper elfLoadHelper, MemoryLoadable loadable,
+			Address start) {
+		return false;
 	}
 
 	/**

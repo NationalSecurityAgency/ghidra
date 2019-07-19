@@ -2845,6 +2845,15 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 		return sym;
 	}
 
+	/**
+	 * Get a suitable input stream for loading a memory block defined by a specified loadable.
+	 * @param loadable Corresponding ElfSectionHeader or ElfProgramHeader for the memory block to be created.
+	 * @param start memory load address
+	 * @param fileOffset byte provider offset
+	 * @param dataLength the in-memory data length in bytes (actual bytes read from dataInput may be more)
+	 * @return input stream for loading memory block
+	 * @throws IOException
+	 */
 	private InputStream getInitializedBlockInputStream(MemoryLoadable loadable, Address start,
 			long fileOffset, long dataLength) throws IOException {
 		InputStream dataInput = elf.getReader().getByteProvider().getInputStream(fileOffset);
@@ -2909,6 +2918,17 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 			blockComment += " (section truncated to " + sizeGB + " GByte)";
 		}
 
+		if (elf.getLoadAdapter().hasFilteredLoadInputStream(this, loadable, start)) {
+			// block is unable to map directly to file bytes - load from input stream
+			try (InputStream dataInput =
+				getInitializedBlockInputStream(loadable, start, fileOffset, revisedLength)) {
+				return MemoryBlockUtils.createInitializedBlock(program, isOverlay, name, start,
+					dataInput, revisedLength, blockComment, BLOCK_SOURCE_NAME, r, w, x, log,
+					monitor);
+			}
+		}
+
+		// create block using direct mapping to file bytes
 		return MemoryBlockUtils.createInitializedBlock(program, isOverlay, name, start, fileBytes,
 			fileOffset, revisedLength, blockComment, BLOCK_SOURCE_NAME, r, w, x, log);
 	}
