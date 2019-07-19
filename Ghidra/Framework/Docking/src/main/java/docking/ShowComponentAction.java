@@ -121,7 +121,7 @@ class ShowComponentAction extends DockingAction
 
 	@Override
 	public void actionPerformed(ActionContext context) {
-		winMgr.showComponent(info, true, true);
+		winMgr.showComponent(info, true, true, true);
 	}
 
 	@Override
