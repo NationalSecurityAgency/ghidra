@@ -19,6 +19,7 @@ import java.util.*;
 
 import org.jdom.Element;
 
+import docking.tool.ToolConstants;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.events.ProgramClosedPluginEvent;
 import ghidra.app.nav.*;
@@ -27,7 +28,6 @@ import ghidra.app.services.*;
 import ghidra.framework.options.*;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
-import ghidra.framework.plugintool.util.ToolConstants;
 import ghidra.program.model.listing.Program;
 import ghidra.util.Msg;
 import ghidra.util.bean.opteditor.OptionsVetoException;

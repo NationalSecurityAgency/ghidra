@@ -18,11 +18,11 @@ package ghidra.app.plugin.core.select.flow;
 import ghidra.app.context.ListingActionContext;
 import ghidra.app.context.ListingContextAction;
 import ghidra.app.util.HelpTopics;
-import ghidra.framework.plugintool.util.ToolConstants;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.CodeUnit;
 import ghidra.util.HelpLocation;
 import docking.action.MenuData;
+import docking.tool.ToolConstants;
 
 /**
  * <CODE>SelectByFlowAction</CODE> allows the user to Select Code By Flowing from

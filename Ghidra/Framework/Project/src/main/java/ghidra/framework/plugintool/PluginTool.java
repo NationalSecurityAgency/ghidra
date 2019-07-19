@@ -40,6 +40,7 @@ import docking.framework.ApplicationInformationDisplayFactory;
 import docking.framework.SplashScreen;
 import docking.help.Help;
 import docking.help.HelpService;
+import docking.tool.ToolConstants;
 import docking.tool.util.DockingToolConstants;
 import docking.widgets.OptionDialog;
 import ghidra.framework.OperatingSystem;
@@ -217,13 +218,13 @@ public abstract class PluginTool extends AbstractDockingTool
 	}
 
 	private void setDefaultOptionValues() {
-		Options toolOptions = optionsMgr.getOptions("Tool");
+		Options toolOptions = optionsMgr.getOptions(ToolConstants.TOOL_OPTIONS);
 		boolean windowsOnTop = toolOptions.getBoolean(DOCKING_WINDOWS_ON_TOP, false);
 		winMgr.setWindowsOnTop(windowsOnTop);
 	}
 
 	private void initOptions() {
-		ToolOptions toolOptions = optionsMgr.getOptions("Tool");
+		ToolOptions toolOptions = optionsMgr.getOptions(ToolConstants.TOOL_OPTIONS);
 		toolOptions.registerOption(DOCKING_WINDOWS_ON_TOP, false, null,
 			"Determines whether a docked window will always be shown on " +
 				"top of its parent window.");
@@ -433,7 +434,8 @@ public abstract class PluginTool extends AbstractDockingTool
 	}
 
 	/**
-	 * Returns true if there is at least one tool listening to this tool's plugin events.
+	 * Returns true if there is at least one tool listening to this tool's plugin events
+	 * @return true if there is at least one tool listening to this tool's plugin events
 	 */
 	public boolean hasToolListeners() {
 		return eventMgr.hasToolListeners();
@@ -663,7 +665,8 @@ public abstract class PluginTool extends AbstractDockingTool
 	}
 
 	/**
-	 * Return whether there is a command being executed.
+	 * Return whether there is a command being executed
+	 * @return true if there is a command being executed
 	 */
 	public boolean isExecutingCommand() {
 		return taskMgr.isBusy();
@@ -743,6 +746,7 @@ public abstract class PluginTool extends AbstractDockingTool
 
 	/**
 	 * Returns options manager
+	 * @return the manager
 	 */
 	OptionsManager getOptionsManager() {
 		return optionsMgr;
@@ -795,8 +799,8 @@ public abstract class PluginTool extends AbstractDockingTool
 	}
 
 	/**
-	 * Returns an object that provides fundamental services that plugins
-	 * can use.
+	 * Returns an object that provides fundamental services that plugins can use
+	 * @return the services instance
 	 */
 	public ToolServices getToolServices() {
 		return toolServices;
@@ -882,6 +886,7 @@ public abstract class PluginTool extends AbstractDockingTool
 	/**
 	 * Triggers a 'Save As' dialog that allows the user to save off the tool under a different
 	 * name.  This returns true if the user performed a save.
+	 * @return true if a save happened
 	 */
 	public boolean saveToolAs() {
 		return dialogMgr.saveToolAs();
@@ -907,7 +912,7 @@ public abstract class PluginTool extends AbstractDockingTool
 	}
 
 	protected void addExitAction() {
-		DockingAction exitAction = new DockingAction("Exit Ghidra", "Tool") {
+		DockingAction exitAction = new DockingAction("Exit Ghidra", ToolConstants.TOOL_OWNER) {
 			@Override
 			public void actionPerformed(ActionContext context) {
 				AppInfo.exitGhidra();
@@ -931,7 +936,7 @@ public abstract class PluginTool extends AbstractDockingTool
 	}
 
 	protected void addOptionsAction() {
-		DockingAction optionsAction = new DockingAction("Edit Options", "Tool") {
+		DockingAction optionsAction = new DockingAction("Edit Options", ToolConstants.TOOL_OWNER) {
 			@Override
 			public void actionPerformed(ActionContext context) {
 				optionsMgr.editOptions();
@@ -956,7 +961,7 @@ public abstract class PluginTool extends AbstractDockingTool
 
 	protected void addSaveToolAction() {
 
-		DockingAction saveAction = new DockingAction("Save Tool", "Tool") {
+		DockingAction saveAction = new DockingAction("Save Tool", ToolConstants.TOOL_OWNER) {
 			@Override
 			public void actionPerformed(ActionContext context) {
 				saveTool();
@@ -967,9 +972,9 @@ public abstract class PluginTool extends AbstractDockingTool
 		menuData.setMenuSubGroup("1Tool");
 		saveAction.setMenuBarData(menuData);
 		saveAction.setEnabled(true);
-		saveAction.setHelpLocation(new HelpLocation("Tool", "Save Tool"));
+		saveAction.setHelpLocation(new HelpLocation(ToolConstants.TOOL_HELP_TOPIC, "Save Tool"));
 
-		DockingAction saveAsAction = new DockingAction("Save Tool As", "Tool") {
+		DockingAction saveAsAction = new DockingAction("Save Tool As", ToolConstants.TOOL_OWNER) {
 			@Override
 			public void actionPerformed(ActionContext context) {
 				saveToolAs();
@@ -981,14 +986,15 @@ public abstract class PluginTool extends AbstractDockingTool
 		saveAsAction.setMenuBarData(menuData);
 
 		saveAsAction.setEnabled(true);
-		saveAsAction.setHelpLocation(new HelpLocation("Tool", "Tool_Changes"));
+		saveAsAction.setHelpLocation(
+			new HelpLocation(ToolConstants.TOOL_HELP_TOPIC, "Tool_Changes"));
 
 		addAction(saveAction);
 		addAction(saveAsAction);
 	}
 
 	protected void addExportToolAction() {
-		exportToolAction = new DockingAction("Export Tool", "Tool") {
+		exportToolAction = new DockingAction("Export Tool", ToolConstants.TOOL_OWNER) {
 			@Override
 			public void actionPerformed(ActionContext context) {
 				dialogMgr.exportTool();
@@ -1000,13 +1006,14 @@ public abstract class PluginTool extends AbstractDockingTool
 		exportToolAction.setMenuBarData(menuData);
 
 		exportToolAction.setEnabled(true);
-		exportToolAction.setHelpLocation(new HelpLocation("Tool", "Export Tool"));
+		exportToolAction.setHelpLocation(
+			new HelpLocation(ToolConstants.TOOL_HELP_TOPIC, "Export Tool"));
 		addAction(exportToolAction);
 	}
 
 	protected void addHelpActions() {
 
-		DockingAction action = new DockingAction("About Ghidra", "Tool") {
+		DockingAction action = new DockingAction("About Ghidra", ToolConstants.TOOL_OWNER) {
 			@Override
 			public void actionPerformed(ActionContext context) {
 				DockingWindowManager.showDialog(new AboutDialog());
@@ -1024,17 +1031,18 @@ public abstract class PluginTool extends AbstractDockingTool
 		action.setEnabled(true);
 		addAction(action);
 
-		DockingAction userAgreementAction = new DockingAction("User Agreement", "Tool") {
-			@Override
-			public void actionPerformed(ActionContext context) {
-				DockingWindowManager.showDialog(new UserAgreementDialog(false, false));
-			}
+		DockingAction userAgreementAction =
+			new DockingAction("User Agreement", ToolConstants.TOOL_OWNER) {
+				@Override
+				public void actionPerformed(ActionContext context) {
+					DockingWindowManager.showDialog(new UserAgreementDialog(false, false));
+				}
 
-			@Override
-			public boolean shouldAddToWindow(boolean isMainWindow, Set<Class<?>> contextTypes) {
-				return true;
-			}
-		};
+				@Override
+				public boolean shouldAddToWindow(boolean isMainWindow, Set<Class<?>> contextTypes) {
+					return true;
+				}
+			};
 		userAgreementAction.setMenuBarData(
 			new MenuData(new String[] { ToolConstants.MENU_HELP, "&User Agreement" }, null,
 				ToolConstants.HELP_CONTENTS_MENU_GROUP));
@@ -1046,7 +1054,7 @@ public abstract class PluginTool extends AbstractDockingTool
 
 		final ErrorReporter reporter = ErrLogDialog.getErrorReporter();
 		if (reporter != null) {
-			action = new DockingAction("Report Bug", "Tool") {
+			action = new DockingAction("Report Bug", ToolConstants.TOOL_OWNER) {
 				@Override
 				public void actionPerformed(ActionContext context) {
 					reporter.report(getToolFrame(), "User Bug Report", null);
@@ -1066,7 +1074,7 @@ public abstract class PluginTool extends AbstractDockingTool
 		}
 
 		HelpService help = Help.getHelpService();
-		action = new DockingAction("Contents", "Tool") {
+		action = new DockingAction("Contents", ToolConstants.TOOL_OWNER) {
 			@Override
 			public void actionPerformed(ActionContext context) {
 				help.showHelp(null, false, getToolFrame());
@@ -1149,7 +1157,10 @@ public abstract class PluginTool extends AbstractDockingTool
 		return configChangedFlag; // ignore the window layout changes
 	}
 
-	/** Called when it is time to save the tool.  Handles auto-saving logic. */
+	/** 
+	 * Called when it is time to save the tool.  Handles auto-saving logic.
+	 * @return true if a save happened
+	 */
 	protected boolean doSaveTool() {
 		if (toolServices.canAutoSave(this)) {
 			saveTool();
@@ -1219,18 +1230,21 @@ public abstract class PluginTool extends AbstractDockingTool
 	 * <br>Note: This forces plugins to terminate any tasks they have running for the
 	 * indicated domain object and apply any unsaved data to the domain object. If they can't do
 	 * this or the user cancels then this returns false.
+	 * 
+	 * @param domainObject the domain object to check
 	 * @return false any of the plugins reports that the domain object
 	 * should not be closed
 	 */
-	public boolean canCloseDomainObject(DomainObject dObj) {
-		if (taskMgr.hasTasksForDomainObject(dObj)) {
-			Msg.showInfo(getClass(), getToolFrame(), "Close " + dObj.getName() + " Failed",
-				"The tool is currently working in the background on " + dObj.getName() +
+	public boolean canCloseDomainObject(DomainObject domainObject) {
+		if (taskMgr.hasTasksForDomainObject(domainObject)) {
+			String name = domainObject.getName();
+			Msg.showInfo(getClass(), getToolFrame(), "Close " + name + " Failed",
+				"The tool is currently working in the background on " + name +
 					".\nPlease stop the background processing first.");
 
 			return false;
 		}
-		return pluginMgr.canCloseDomainObject(dObj);
+		return pluginMgr.canCloseDomainObject(domainObject);
 	}
 
 	@Override
@@ -1415,10 +1429,12 @@ public abstract class PluginTool extends AbstractDockingTool
 
 	private void setToolOptionsHelpLocation() {
 		Options opt = getOptions(ToolConstants.TOOL_OPTIONS);
-		opt.setOptionsHelpLocation(new HelpLocation("Tool", "OptionsForTool"));
+		opt.setOptionsHelpLocation(
+			new HelpLocation(ToolConstants.TOOL_HELP_TOPIC, "OptionsForTool"));
 
 		opt = getOptions(DockingToolConstants.KEY_BINDINGS);
-		opt.setOptionsHelpLocation(new HelpLocation("Tool", "KeyBindings_Option"));
+		opt.setOptionsHelpLocation(
+			new HelpLocation(ToolConstants.TOOL_HELP_TOPIC, "KeyBindings_Option"));
 	}
 
 	public TransientToolState getTransientState() {

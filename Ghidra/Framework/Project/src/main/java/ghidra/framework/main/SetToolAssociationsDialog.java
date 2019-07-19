@@ -16,16 +16,13 @@
 package ghidra.framework.main;
 
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.*;
 import java.util.List;
 
 import javax.swing.*;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 
 import docking.DialogComponentProvider;
+import docking.tool.ToolConstants;
 import docking.widgets.table.*;
 import ghidra.framework.data.ContentHandler;
 import ghidra.framework.model.*;
@@ -43,7 +40,7 @@ class SetToolAssociationsDialog extends DialogComponentProvider {
 		super("Set Tool Associations", true);
 		this.tool = tool;
 
-		setHelpLocation(new HelpLocation("Tool", "Set Tool Associations"));
+		setHelpLocation(new HelpLocation(ToolConstants.TOOL_HELP_TOPIC, "Set Tool Associations"));
 
 		addWorkPanel(createWorkPanel());
 
@@ -61,39 +58,33 @@ class SetToolAssociationsDialog extends DialogComponentProvider {
 		table = new GTable(model);
 
 		final JButton editButton = new JButton("Edit");
-		editButton.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				int selectedRow = table.getSelectedRow();
-				ToolAssociationInfo info = model.getRowObject(selectedRow);
-				if (info == null) {
-					return;
-				}
+		editButton.addActionListener(e -> {
+			int selectedRow = table.getSelectedRow();
+			ToolAssociationInfo info = model.getRowObject(selectedRow);
+			if (info == null) {
+				return;
+			}
 
-				ContentHandler contentHandler = info.getContentHandler();
-				Class<? extends DomainObject> domainClass = contentHandler.getDomainObjectClass();
-				PickToolDialog dialog = new PickToolDialog(tool, domainClass);
-				dialog.showDialog();
+			ContentHandler contentHandler = info.getContentHandler();
+			Class<? extends DomainObject> domainClass = contentHandler.getDomainObjectClass();
+			PickToolDialog dialog = new PickToolDialog(tool, domainClass);
+			dialog.showDialog();
 
-				ToolTemplate template = dialog.getSelectedToolTemplate();
-				if (template != null) {
-					info.setCurrentTool(template);
-					model.fireTableDataChanged();
-				}
+			ToolTemplate template = dialog.getSelectedToolTemplate();
+			if (template != null) {
+				info.setCurrentTool(template);
+				model.fireTableDataChanged();
 			}
 		});
 		editButton.setEnabled(false);
 
 		final JButton resetButton = new JButton("Restore Default");
-		resetButton.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				int selectedRow = table.getSelectedRow();
-				ToolAssociationInfo info = model.getRowObject(selectedRow);
-				if (info != null) {
-					info.restoreDefaultAssociation();
-					table.repaint();
-				}
+		resetButton.addActionListener(e -> {
+			int selectedRow = table.getSelectedRow();
+			ToolAssociationInfo info = model.getRowObject(selectedRow);
+			if (info != null) {
+				info.restoreDefaultAssociation();
+				table.repaint();
 			}
 		});
 		resetButton.setEnabled(false);
@@ -104,24 +95,21 @@ class SetToolAssociationsDialog extends DialogComponentProvider {
 		table.setDefaultRenderer(ContentHandler.class, new ContentHandlerRenderer());
 		table.setDefaultRenderer(GhidraToolTemplate.class, new ToolTemplateRenderer());
 
-		table.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
-			@Override
-			public void valueChanged(ListSelectionEvent e) {
-				if (e.getValueIsAdjusting()) {
-					return;
-				}
-
-				int selectedRow = table.getSelectedRow();
-				ToolAssociationInfo info = model.getRowObject(selectedRow);
-				if (info == null) {
-					editButton.setEnabled(false);
-					resetButton.setEnabled(false);
-					return;
-				}
-
-				editButton.setEnabled(true);
-				resetButton.setEnabled(!info.isDefault());
+		table.getSelectionModel().addListSelectionListener(e -> {
+			if (e.getValueIsAdjusting()) {
+				return;
 			}
+
+			int selectedRow = table.getSelectedRow();
+			ToolAssociationInfo info = model.getRowObject(selectedRow);
+			if (info == null) {
+				editButton.setEnabled(false);
+				resetButton.setEnabled(false);
+				return;
+			}
+
+			editButton.setEnabled(true);
+			resetButton.setEnabled(!info.isDefault());
 		});
 
 		loadList();

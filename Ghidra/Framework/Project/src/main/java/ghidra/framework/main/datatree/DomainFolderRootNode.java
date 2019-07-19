@@ -20,11 +20,11 @@ import java.io.File;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 
+import docking.tool.ToolConstants;
 import docking.widgets.tree.GTree;
 import docking.widgets.tree.GTreeRootNode;
 import ghidra.framework.client.RepositoryAdapter;
 import ghidra.framework.model.*;
-import ghidra.framework.plugintool.util.ToolConstants;
 import resources.ResourceManager;
 
 public class DomainFolderRootNode extends DomainFolderNode implements GTreeRootNode {

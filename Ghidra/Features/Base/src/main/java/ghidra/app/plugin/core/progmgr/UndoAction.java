@@ -22,12 +22,12 @@ import javax.swing.Icon;
 
 import docking.ActionContext;
 import docking.action.*;
+import docking.tool.ToolConstants;
 import ghidra.app.context.ProgramActionContext;
 import ghidra.app.context.ProgramContextAction;
 import ghidra.app.services.GoToService;
 import ghidra.app.services.NavigationHistoryService;
 import ghidra.framework.plugintool.PluginTool;
-import ghidra.framework.plugintool.util.ToolConstants;
 import ghidra.program.model.listing.Program;
 import ghidra.util.*;
 import resources.ResourceManager;
@@ -38,7 +38,7 @@ public class UndoAction extends ProgramContextAction {
 	public UndoAction(PluginTool tool, String owner) {
 		super("Undo", owner);
 		this.tool = tool;
-		setHelpLocation(new HelpLocation("Tool", "Undo"));
+		setHelpLocation(new HelpLocation(ToolConstants.TOOL_HELP_TOPIC, "Undo"));
 		String[] menuPath = { ToolConstants.MENU_EDIT, "&Undo" };
 		Icon icon = ResourceManager.loadImage("images/undo.png");
 		MenuData menuData = new MenuData(menuPath, icon, "Undo");

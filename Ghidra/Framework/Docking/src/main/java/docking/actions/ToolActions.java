@@ -376,6 +376,12 @@ public class ToolActions implements DockingToolActions, PropertyChangeListener {
 		}
 	}
 
+	// triggered by a user-initiated action; called by propertyChange()
+	private void keyBindingsChanged() {
+		dockingTool.setConfigChanged(true);
+		actionGuiHelper.keyBindingsChanged();
+	}
+
 	@Override
 	public DockingActionIf getLocalAction(ComponentProvider provider, String actionName) {
 
@@ -397,9 +403,4 @@ public class ToolActions implements DockingToolActions, PropertyChangeListener {
 		return sharedActionMap.get(name);
 	}
 
-	// triggered by a user-initiated action
-	void keyBindingsChanged() {
-		dockingTool.setConfigChanged(true);
-		actionGuiHelper.keyBindingsChanged();
-	}
 }

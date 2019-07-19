@@ -30,6 +30,7 @@ import org.junit.*;
 
 import docking.ActionContext;
 import docking.action.DockingActionIf;
+import docking.tool.ToolConstants;
 import docking.widgets.MultiLineLabel;
 import docking.widgets.OptionDialog;
 import docking.widgets.table.GTable;
@@ -709,7 +710,7 @@ public class SearchTextPlugin1Test extends AbstractGhidraHeadedIntegrationTest {
 		selectCheckBox(container, "Instruction Operands");
 		deSelectCheckBox(container, "Comments");
 
-		Options options = tool.getOptions("Tool");
+		Options options = tool.getOptions(ToolConstants.TOOL_OPTIONS);
 		options.setInt("Search Limit", 50);
 
 		setText(tf, "sscanf");

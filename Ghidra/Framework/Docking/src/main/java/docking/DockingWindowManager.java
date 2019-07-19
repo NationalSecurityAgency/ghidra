@@ -327,6 +327,14 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 	}
 
 	/**
+	 * Returns the tool that owns this manager
+	 * @return the tool
+	 */
+	public DockingTool getTool() {
+		return tool;
+	}
+
+	/**
 	 * Returns the root window frame.
 	 * @return the root window frame.
 	 */

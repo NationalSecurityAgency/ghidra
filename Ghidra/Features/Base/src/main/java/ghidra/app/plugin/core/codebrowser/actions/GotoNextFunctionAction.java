@@ -22,12 +22,12 @@ import javax.swing.KeyStroke;
 
 import docking.action.KeyBindingData;
 import docking.action.MenuData;
+import docking.tool.ToolConstants;
 import ghidra.app.nav.Navigatable;
 import ghidra.app.plugin.core.codebrowser.CodeViewerActionContext;
 import ghidra.app.services.GoToService;
 import ghidra.app.util.HelpTopics;
 import ghidra.framework.plugintool.PluginTool;
-import ghidra.framework.plugintool.util.ToolConstants;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.*;
 import ghidra.program.util.FunctionSignatureFieldLocation;
