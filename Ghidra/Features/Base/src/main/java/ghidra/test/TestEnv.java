@@ -603,7 +603,7 @@ public class TestEnv {
 	 */
 	public PluginTool launchAnotherDefaultTool() {
 		PluginTool newTool = createDefaultTool();
-		newTool.setToolName(newTool.getToolName() + toolID++);
+		AbstractGenericTest.runSwing(() -> newTool.setToolName(newTool.getToolName() + toolID++));
 		extraTools.add(newTool);
 		return newTool;
 

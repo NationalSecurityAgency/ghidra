@@ -163,10 +163,13 @@ class DockableToolBarManager {
 
 	void dispose() {
 
-		DockingWindowManager dwm = dockableComponent.getDockingWindowManager();
-		DockingTool tool = dwm.getTool();
-		ComponentProvider provider = dockableComponent.getComponentProvider();
-		tool.removeLocalAction(provider, closeButtonManager.getAction());
+		// this will be null for non-standard use cases
+		if (dockableComponent != null) {
+			DockingWindowManager dwm = dockableComponent.getDockingWindowManager();
+			DockingTool tool = dwm.getTool();
+			ComponentProvider provider = dockableComponent.getComponentProvider();
+			tool.removeLocalAction(provider, closeButtonManager.getAction());
+		}
 
 		headerUpdater.dispose();
 		menuManager.dispose();
@@ -186,6 +189,7 @@ class DockableToolBarManager {
 			super("Close Window", owner, KeyBindingType.SHARED);
 			setDescription("Close Window");
 			setToolBarData(new ToolBarData(CLOSE_ICON, null));
+			markHelpUnnecessary();
 		}
 
 		@Override
