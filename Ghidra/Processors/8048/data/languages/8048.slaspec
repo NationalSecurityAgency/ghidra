@@ -225,20 +225,21 @@ Tmr: "T" is epsilon { }
 Cnt: "CNT" is epsilon { }
 TmrCnt: "TCNT" is epsilon { }
 
-Rn: rn is rn & rnfill=1  {
 @ifdef INTERNAL_REGISTERS
+Rn: rn is rn & rnfill=1  {
   export rn;
-@else
-  local ptr:1 = rn; regbank(ptr); export *[INTMEM]:1 ptr;
-@endif
 }
 Rind: @ri is ri & rifill=0 {
-@ifdef INTERNAL_REGISTERS
   export ri;
-@else
-  local ptr:1 = ri; regbank(ptr); export *[INTMEM]:1 ptr;
-@endif
 }
+@else
+Rn: rn is rn & rnfill=1  {
+  local ptr:1 = rn; regbank(ptr); export *[INTMEM]:1 ptr;
+}
+Rind: @ri is ri & rifill=0 {
+  local ptr:1 = ri; regbank(ptr); export *[INTMEM]:1 ptr;
+}
+@endif
 Ri: Rind is Rind { export *[INTMEM]:1 Rind; }
 RiX: Rind is Rind { export *[EXTMEM]:1 Rind; }
 PData: @A is A {
