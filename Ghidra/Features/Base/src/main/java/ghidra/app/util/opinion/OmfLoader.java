@@ -123,6 +123,10 @@ public class OmfLoader extends AbstractLibrarySupportLoader {
 			}
 			log.appendMsg("File was corrupted - leaving partial program " + provider.getName());
 		}
+
+		// We don't use the file bytes to create block because the bytes are manipulated before
+		// forming the block.  Creating the FileBytes anyway in case later we want access to all
+		// the original bytes.
 		MemoryBlockUtils.createFileBytes(program, provider);
 
 		int id = program.startTransaction("loading program from OMF");

@@ -94,7 +94,11 @@ public class NeLoader extends AbstractLibrarySupportLoader {
 		initVars();
 
 		ContinuesFactory factory = MessageLogContinuesFactory.create(log);
-//		FileBytes fileBytes = MemoryBlockUtils.createFileBytes(prog, provider);
+
+		// We don't use the file bytes to create block because the bytes are manipulated before
+		// forming the block.  Creating the FileBytes anyway in case later we want access to all
+		// the original bytes.
+		MemoryBlockUtils.createFileBytes(prog, provider);
 
 		NewExecutable ne = new NewExecutable(factory, provider);
 		WindowsHeader wh = ne.getWindowsHeader();

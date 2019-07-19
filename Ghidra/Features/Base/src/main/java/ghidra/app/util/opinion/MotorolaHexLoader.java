@@ -341,7 +341,7 @@ public class MotorolaHexLoader extends AbstractProgramLoader {
 							try {
 								MemoryBlockUtils.createInitializedBlock(program, isOverlay, name,
 									start, new ByteArrayInputStream(data), data.length, "",
-									provider.getName(), true, !isOverlay, !isOverlay, log, monitor);
+									provider.getName(), true, isOverlay, isOverlay, log, monitor);
 								break;
 							}
 							catch (RuntimeException e) {
