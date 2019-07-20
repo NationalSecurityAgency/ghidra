@@ -15,6 +15,12 @@
  */
 package ghidra.app.plugin.core.blockmodel;
 
+import java.lang.reflect.Constructor;
+import java.util.ArrayList;
+import java.util.TreeMap;
+
+import docking.options.editor.StringWithChoicesEditor;
+import docking.tool.ToolConstants;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.ProgramPlugin;
@@ -30,12 +36,6 @@ import ghidra.util.Msg;
 import ghidra.util.datastruct.WeakDataStructureFactory;
 import ghidra.util.datastruct.WeakSet;
 import ghidra.util.exception.NotFoundException;
-
-import java.lang.reflect.Constructor;
-import java.util.ArrayList;
-import java.util.TreeMap;
-
-import docking.options.editor.StringWithChoicesEditor;
 
 /** 
  * Provides a service for tracking the selected basic/subroutine block models for a tool.
@@ -64,9 +64,9 @@ public class BlockModelServicePlugin extends ProgramPlugin
 	private static final String SUB_OPTION = "Subroutine Block Model";
 
 	private TreeMap<String, BlockModelInfo> basicModelsByName =
-		new TreeMap<String, BlockModelInfo>();
+		new TreeMap<>();
 	private TreeMap<String, BlockModelInfo> subroutineModelsByName =
-		new TreeMap<String, BlockModelInfo>();
+		new TreeMap<>();
 	private BlockModelInfo activeBasicModel;
 	private BlockModelInfo activeSubroutineModel;
 
@@ -103,9 +103,8 @@ public class BlockModelServicePlugin extends ProgramPlugin
 		info =
 			new BlockModelInfo(OverlapCodeSubModel.OVERLAP_MODEL_NAME, OverlapCodeSubModel.class);
 		subroutineModelsByName.put(OverlapCodeSubModel.OVERLAP_MODEL_NAME, info);
-		info =
-			new BlockModelInfo(IsolatedEntrySubModel.ISOLATED_MODEL_NAME,
-				IsolatedEntrySubModel.class);
+		info = new BlockModelInfo(IsolatedEntrySubModel.ISOLATED_MODEL_NAME,
+			IsolatedEntrySubModel.class);
 		subroutineModelsByName.put(IsolatedEntrySubModel.ISOLATED_MODEL_NAME, info);
 		info =
 			new BlockModelInfo(OverlapCodeSubModel.OVERLAP_MODEL_NAME, PartitionCodeSubModel.class);
@@ -115,7 +114,7 @@ public class BlockModelServicePlugin extends ProgramPlugin
 		selectedSubroutineModelName = availableModelNames[0];
 
 		// Install model selection option in Tool panel
-		options = tool.getOptions("Tool");
+		options = tool.getOptions(ToolConstants.TOOL_OPTIONS);
 		editor = new StringWithChoicesEditor(availableModelNames);
 		options.registerOption(SUB_OPTION, OptionType.STRING_TYPE, selectedSubroutineModelName,
 			null, "The default subroutine model used when creating call graphs.", editor);
@@ -426,7 +425,7 @@ public class BlockModelServicePlugin extends ProgramPlugin
 		String defaultModelName =
 			(modelType == BASIC_MODEL) ? DEFAULT_BLOCK_MODEL_NAME : DEFAULT_SUBROUTINE_MODEL_NAME;
 
-		ArrayList<String> list = new ArrayList<String>();
+		ArrayList<String> list = new ArrayList<>();
 		for (String modelName : models.keySet()) {
 			if (modelName.equals(defaultModelName)) {
 				list.add(0, modelName);

@@ -31,6 +31,7 @@ import docking.DockingWindowManager;
 import docking.dnd.*;
 import docking.help.Help;
 import docking.help.HelpService;
+import docking.tool.ToolConstants;
 import docking.widgets.EmptyBorderButton;
 import ghidra.framework.main.datatree.*;
 import ghidra.framework.model.*;
@@ -683,7 +684,7 @@ class ToolButton extends EmptyBorderButton implements Draggable, Droppable {
 
 	private void setHelpLocation(String anchorTag) {
 		HelpService help = Help.getHelpService();
-		help.registerHelp(this, new HelpLocation("Tool", anchorTag));
+		help.registerHelp(this, new HelpLocation(ToolConstants.TOOL_HELP_TOPIC, anchorTag));
 	}
 
 	private void handleMouseReleased() {

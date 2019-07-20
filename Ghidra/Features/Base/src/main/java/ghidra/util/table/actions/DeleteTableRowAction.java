@@ -25,6 +25,7 @@ import javax.swing.table.TableModel;
 
 import docking.ActionContext;
 import docking.action.*;
+import docking.tool.ToolConstants;
 import docking.widgets.table.GTable;
 import docking.widgets.table.RowObjectTableModel;
 import docking.widgets.table.threaded.ThreadedTableModel;
@@ -194,7 +195,7 @@ public class DeleteTableRowAction extends DockingAction {
 	private static class DummyDeleteAction extends DeleteTableRowAction {
 
 		public DummyDeleteAction(PluginTool tool) {
-			super(NAME, "Tool", DEFAULT_KEYSTROKE);
+			super(NAME, ToolConstants.TOOL_OWNER, DEFAULT_KEYSTROKE);
 
 			// prevent this action from appearing in the toolbar, menus, etc
 			setToolBarData(null);

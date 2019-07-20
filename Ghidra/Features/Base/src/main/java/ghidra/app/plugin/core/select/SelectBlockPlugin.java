@@ -27,6 +27,7 @@ import docking.ActionContext;
 import docking.ComponentProvider;
 import docking.action.DockingAction;
 import docking.action.MenuData;
+import docking.tool.ToolConstants;
 
 /**
  * This plugin class contains the structure needed for the user to

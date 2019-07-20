@@ -28,6 +28,7 @@ import com.google.common.collect.Iterables;
 
 import docking.DialogComponentProvider;
 import docking.options.editor.ButtonPanelFactory;
+import docking.tool.ToolConstants;
 import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.list.ListPanel;
 import ghidra.framework.ToolUtils;
@@ -55,7 +56,7 @@ class ImportGhidraToolsDialog extends DialogComponentProvider {
 	ImportGhidraToolsDialog(FrontEndTool tool) {
 
 		super("Import Ghidra Tools", true);
-		setHelpLocation(new HelpLocation("Tool", "Import Ghidra Tools"));
+		setHelpLocation(new HelpLocation(ToolConstants.TOOL_HELP_TOPIC, "Import Ghidra Tools"));
 
 		this.tool = tool;
 

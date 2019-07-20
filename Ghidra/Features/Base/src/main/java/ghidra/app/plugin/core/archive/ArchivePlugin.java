@@ -25,6 +25,7 @@ import java.util.zip.ZipEntry;
 import docking.ActionContext;
 import docking.action.DockingAction;
 import docking.action.MenuData;
+import docking.tool.ToolConstants;
 import ghidra.app.CorePluginPackage;
 import ghidra.framework.main.*;
 import ghidra.framework.model.*;

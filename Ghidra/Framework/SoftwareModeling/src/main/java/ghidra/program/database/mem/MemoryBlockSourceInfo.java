@@ -24,12 +24,12 @@ import ghidra.program.model.mem.MemoryBlock;
 /** 
  * Class for describing the source of bytes for a memory block.
  */
-public class SourceInfo {
+public class MemoryBlockSourceInfo {
 
-	final MemoryBlock block;
-	final SubMemoryBlock subBlock;
+	private final MemoryBlock block;
+	private final SubMemoryBlock subBlock;
 
-	SourceInfo(MemoryBlock block, SubMemoryBlock subBlock) {
+	MemoryBlockSourceInfo(MemoryBlock block, SubMemoryBlock subBlock) {
 		this.block = block;
 		this.subBlock = subBlock;
 	}
@@ -98,6 +98,23 @@ public class SourceInfo {
 	}
 
 	/**
+	 * Returns the offset into the {@link FileBytes} object for the given address or
+	 * -1 if this MemoryBlockSourceInfo does not have an associated {@link FileBytes} or the address doesn't
+	 * belong to this MemoryBlockSourceInfo.
+	 * 
+	 * @param address the address for which to get an offset into the {@link FileBytes} object.
+	 * @return  the offset into the {@link FileBytes} object for the given address. 
+	 */
+	public long getFileBytesOffset(Address address) {
+		if (subBlock instanceof FileBytesSubMemoryBlock && contains(address)) {
+			long blockOffset = address.subtract(getMinAddress());
+			long subBlockOffset = blockOffset - subBlock.startingOffset;
+			return ((FileBytesSubMemoryBlock) subBlock).getFileBytesOffset() + subBlockOffset;
+		}
+		return -1;
+	}
+
+	/**
 	 * Returns an {@link Optional} {@link AddressRange} for the mapped addresses if this is mapped
 	 * memory block (bit mapped or byte mapped). Otherwise, the Optional is empty.
 	 * @return an {@link Optional} {@link AddressRange} for the mapped addresses if this is mapped
@@ -113,5 +130,22 @@ public class SourceInfo {
 			return Optional.of(byteMapped.getMappedRange());
 		}
 		return Optional.empty();
+	}
+
+	/**
+	 * Returns the containing Memory Block 
+	 * @return the containing Memory Block
+	 */
+	public MemoryBlock getMemoryBlock() {
+		return block;
+	}
+
+	/**
+	 * Returns true if this SourceInfo object applies to the given address;
+	 * @param address the address to test if this is its SourceInfo
+	 * @return  true if this SourceInfo object applies to the given address;
+	 */
+	public boolean contains(Address address) {
+		return address.compareTo(getMinAddress()) >= 0 && address.compareTo(getMaxAddress()) <= 0;
 	}
 }

@@ -73,13 +73,11 @@ public class CoffSectionHeader implements StructConverter {
 		byte[] nameBytes = reader.readNextByteArray(CoffConstants.SECTION_NAME_LENGTH);
 		if (nameBytes[0] == 0 && nameBytes[1] == 0 && nameBytes[2] == 0 && nameBytes[3] == 0) {//if 1st 4 bytes are zero, then lookup name in string table
 
-			DataConverter dc =
-				reader.isLittleEndian() ? LittleEndianDataConverter.INSTANCE
-						: BigEndianDataConverter.INSTANCE;
+			DataConverter dc = reader.isLittleEndian() ? LittleEndianDataConverter.INSTANCE
+					: BigEndianDataConverter.INSTANCE;
 			int nameIndex = dc.getInt(nameBytes, 4);//string table index
-			int stringTableIndex =
-				_header.getSymbolTablePointer() +
-					(_header.getSymbolTableEntries() * CoffConstants.SYMBOL_SIZEOF);
+			int stringTableIndex = _header.getSymbolTablePointer() +
+				(_header.getSymbolTableEntries() * CoffConstants.SYMBOL_SIZEOF);
 			s_name = reader.readAsciiString(stringTableIndex + nameIndex);
 		}
 		else {
@@ -232,7 +230,7 @@ public class CoffSectionHeader implements StructConverter {
 	 */
 	public InputStream getRawDataStream(ByteProvider provider, Language language)
 			throws IOException {
-		
+
 		// XXX XXX XXX XXX
 		// XXX XXX XXX XXX
 		// It is NOT CLEAR AT ALL that all big endian, > 1-byte wordsize executables should be BYTE-SWAPPED!!!
@@ -246,6 +244,12 @@ public class CoffSectionHeader implements StructConverter {
 				addressableUnitSize);
 		}
 		return provider.getInputStream(s_scnptr);
+	}
+
+	public boolean isProcessedBytes(Language language) {
+		int addressableUnitSize =
+			language.getAddressFactory().getDefaultAddressSpace().getAddressableUnitSize();
+		return addressableUnitSize > 1 && language.isBigEndian();
 	}
 
 	/**

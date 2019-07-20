@@ -17,11 +17,11 @@ package ghidra.app.plugin.core.codebrowser.actions;
 import ghidra.app.plugin.core.codebrowser.CodeViewerActionContext;
 import ghidra.app.plugin.core.codebrowser.CodeViewerProvider;
 import ghidra.app.util.HelpTopics;
-import ghidra.framework.plugintool.util.ToolConstants;
 import ghidra.program.util.ProgramSelection;
 import ghidra.util.HelpLocation;
 import docking.ActionContext;
 import docking.action.MenuData;
+import docking.tool.ToolConstants;
 
 /**
  * Action for changing the selection to the complement of all the currently 

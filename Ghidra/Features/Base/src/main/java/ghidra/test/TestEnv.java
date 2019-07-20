@@ -29,6 +29,7 @@ import org.jdom.Element;
 import docking.ComponentProvider;
 import docking.DialogComponentProvider;
 import docking.test.AbstractDockingTest;
+import docking.tool.ToolConstants;
 import generic.jar.ResourceFile;
 import generic.test.*;
 import ghidra.app.events.CloseProgramPluginEvent;
@@ -602,7 +603,7 @@ public class TestEnv {
 	 */
 	public PluginTool launchAnotherDefaultTool() {
 		PluginTool newTool = createDefaultTool();
-		newTool.setToolName(newTool.getToolName() + toolID++);
+		AbstractGenericTest.runSwing(() -> newTool.setToolName(newTool.getToolName() + toolID++));
 		extraTools.add(newTool);
 		return newTool;
 
@@ -887,7 +888,7 @@ public class TestEnv {
 	protected void setAutoSaveEnabled(final FrontEndTool frontEndToolInstance,
 			final boolean enabled) {
 		AbstractGenericTest.runSwing(() -> {
-			Options options = frontEndToolInstance.getOptions("Tool");
+			Options options = frontEndToolInstance.getOptions(ToolConstants.TOOL_OPTIONS);
 			options.setBoolean(FrontEndTool.AUTOMATICALLY_SAVE_TOOLS, enabled);
 		});
 	}

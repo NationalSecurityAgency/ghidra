@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +16,6 @@
 package ghidra.framework.project.tool;
 
 import generic.Images;
-import ghidra.framework.plugintool.util.ToolConstants;
 
 import java.awt.image.*;
 import java.io.File;
@@ -25,6 +23,7 @@ import java.util.Hashtable;
 
 import javax.swing.ImageIcon;
 
+import docking.tool.ToolConstants;
 import resources.ResourceManager;
 
 /**

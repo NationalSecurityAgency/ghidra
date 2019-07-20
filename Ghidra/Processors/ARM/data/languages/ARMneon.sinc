@@ -2859,22 +2859,22 @@ vmovIndex: thv_c2121 is TMode=1 & thv_c2222=0 & thv_c2121 & thv_c0606=0 & thv_c0
 dNvmovIndex: Dn^"["^vmovIndex^"]"   is Dn & vmovIndex     { }
 
 
-:vmov^COND^"."^vmovSize dNvmovIndex,Rd	is ( ($(AMODE) & COND &  c2327=0x1c &     c2020=0 &     c0811=11 &     c0404=1 &     c0003=0 ) |
-													($(TMODE_E) &    thv_c2327=0x1c & thv_c2020=0 & thv_c0811=11 & thv_c0404=1 & thv_c0003=0 ) ) & Dn & Rd & vmovSize & vmovIndex & dNvmovIndex
+:vmov^COND^"."^vmovSize dNvmovIndex,VRd	is ( ($(AMODE) & COND &  c2327=0x1c &     c2020=0 &     c0811=11 &     c0404=1 &     c0003=0 ) |
+													($(TMODE_E) &    thv_c2327=0x1c & thv_c2020=0 & thv_c0811=11 & thv_c0404=1 & thv_c0003=0 ) ) & Dn & VRd & vmovSize & vmovIndex & dNvmovIndex
 {
-	VectorSetElement(Rd,Dn,vmovIndex,vmovSize);
+	VectorSetElement(VRd,Dn,vmovIndex,vmovSize);
 }
 
-:vmov^COND^".u"^vmovSize Rd,dNvmovIndex	is ( ($(AMODE) & COND &      c2327=0x1c &     c2020=1 &     c0811=11 &     c0404=1 &     c0003=0 ) |
-															($(TMODE_E) &    thv_c2327=0x1c & thv_c2020=1 & thv_c0811=11 & thv_c0404=1 & thv_c0003=0 ) ) & Dn & Rd & vmovSize & vmovIndex & dNvmovIndex
+:vmov^COND^".u"^vmovSize VRd,dNvmovIndex	is ( ($(AMODE) & COND &      c2327=0x1d &     c2020=1 &     c0811=11 &     c0404=1 &     c0003=0 ) |
+															($(TMODE_E) &    thv_c2327=0x1c & thv_c2020=1 & thv_c0811=11 & thv_c0404=1 & thv_c0003=0 ) ) & Dn & VRd & vmovSize & vmovIndex & dNvmovIndex
 {
-	Rd = VectorGetElement(Dn,vmovIndex,vmovSize,0:1);
+	VRd = VectorGetElement(Dn,vmovIndex,vmovSize,0:1);
 }
 
-:vmov^COND^".s"^vmovSize Rd,dNvmovIndex	is ( ( $(AMODE) & COND &     c2327=0x1d &     c2020=1 &     c0811=11 &     c0404=1 &     c0003=0 ) |
-															($(TMODE_E) &    thv_c2327=0x1d & thv_c2020=1 & thv_c0811=11 & thv_c0404=1 & thv_c0003=0 ) ) & Dn & Rd & vmovSize & vmovIndex & dNvmovIndex
+:vmov^COND^".s"^vmovSize VRd,dNvmovIndex	is ( ( $(AMODE) & COND &     c2327=0x1c &     c2020=1 &     c0811=11 &     c0404=1 &     c0003=0 ) |
+															($(TMODE_E) &    thv_c2327=0x1d & thv_c2020=1 & thv_c0811=11 & thv_c0404=1 & thv_c0003=0 ) ) & Dn & VRd & vmovSize & vmovIndex & dNvmovIndex
 {
-	Rd = VectorGetElement(Dn,vmovIndex,vmovSize,1:1);
+	VRd = VectorGetElement(Dn,vmovIndex,vmovSize,1:1);
 }
 
 @endif # SIMD

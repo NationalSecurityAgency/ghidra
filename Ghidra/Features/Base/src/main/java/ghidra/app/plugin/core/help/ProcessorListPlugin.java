@@ -27,6 +27,7 @@ import docking.action.DockingAction;
 import docking.action.MenuData;
 import docking.dnd.GClipboard;
 import docking.dnd.StringTransferable;
+import docking.tool.ToolConstants;
 import docking.widgets.table.AbstractSortedTableModel;
 import docking.widgets.table.GTable;
 import ghidra.app.CorePluginPackage;

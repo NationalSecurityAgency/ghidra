@@ -18,6 +18,7 @@ package ghidra.app.plugin.core.navigation;
 import javax.swing.*;
 
 import docking.action.*;
+import docking.tool.ToolConstants;
 import ghidra.app.context.ListingActionContext;
 import ghidra.app.nav.Navigatable;
 import ghidra.app.plugin.core.codebrowser.CodeViewerActionContext;
@@ -25,7 +26,6 @@ import ghidra.app.plugin.core.codebrowser.actions.CodeViewerContextAction;
 import ghidra.app.services.GoToService;
 import ghidra.app.util.HelpTopics;
 import ghidra.framework.plugintool.PluginTool;
-import ghidra.framework.plugintool.util.ToolConstants;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.AddressFieldLocation;

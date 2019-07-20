@@ -164,13 +164,17 @@ public class GlobalMenuAndToolBarManager implements DockingWindowListener {
 	}
 
 	public void contextChanged(ComponentPlaceholder placeHolder) {
+		if (placeHolder == null) {
+			return;
+		}
+
 		WindowNode topLevelNode = placeHolder.getTopLevelNode();
 		if (topLevelNode == null) {
-			return;		// no provider in this window has focus - can this happen?
+			return;
 		}
+
 		if (topLevelNode.getLastFocusedProviderInWindow() != placeHolder) {
-			return;		// actions in this window are not currently responding to the provider 
-			// whose context has changed.
+			return; // actions in this window are not currently responding to this provider
 		}
 
 		WindowActionManager windowActionManager = windowToActionManagerMap.get(topLevelNode);
