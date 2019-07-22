@@ -16,30 +16,86 @@
 package ghidra.app.util.bin.format.dwarf4.next;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import ghidra.app.cmd.comments.AppendCommentCmd;
 import ghidra.app.cmd.label.SetLabelPrimaryCmd;
-import ghidra.app.util.bin.format.dwarf4.*;
+import ghidra.app.util.bin.format.dwarf4.DIEAggregate;
+import ghidra.app.util.bin.format.dwarf4.DWARFLocation;
+import ghidra.app.util.bin.format.dwarf4.DWARFRange;
+import ghidra.app.util.bin.format.dwarf4.DebugInfoEntry;
 import ghidra.app.util.bin.format.dwarf4.encoding.DWARFAttribute;
 import ghidra.app.util.bin.format.dwarf4.encoding.DWARFTag;
-import ghidra.app.util.bin.format.dwarf4.expression.*;
+import ghidra.app.util.bin.format.dwarf4.expression.DWARFExpression;
+import ghidra.app.util.bin.format.dwarf4.expression.DWARFExpressionEvaluator;
+import ghidra.app.util.bin.format.dwarf4.expression.DWARFExpressionException;
 import ghidra.program.database.function.OverlappingFunctionException;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSet;
-import ghidra.program.model.data.*;
+import ghidra.program.model.data.AbstractIntegerDataType;
+import ghidra.program.model.data.Array;
+import ghidra.program.model.data.BooleanDataType;
+import ghidra.program.model.data.CharDataType;
+import ghidra.program.model.data.DataType;
+import ghidra.program.model.data.DataTypeComponent;
+import ghidra.program.model.data.DataTypeConflictException;
+import ghidra.program.model.data.DataUtilities;
 import ghidra.program.model.data.DataUtilities.ClearDataMode;
 import ghidra.program.model.data.Enum;
-import ghidra.program.model.lang.*;
-import ghidra.program.model.listing.*;
+import ghidra.program.model.data.FunctionDefinition;
+import ghidra.program.model.data.GenericCallingConvention;
+import ghidra.program.model.data.IntegerDataType;
+import ghidra.program.model.data.Pointer;
+import ghidra.program.model.data.StringDataType;
+import ghidra.program.model.data.Structure;
+import ghidra.program.model.data.TypeDef;
+import ghidra.program.model.data.Undefined;
+import ghidra.program.model.data.UnsignedIntegerDataType;
+import ghidra.program.model.lang.CompilerSpec;
+import ghidra.program.model.lang.PrototypeModel;
+import ghidra.program.model.lang.Register;
+import ghidra.program.model.listing.CodeUnit;
+import ghidra.program.model.listing.Data;
+import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Function.FunctionUpdateType;
+import ghidra.program.model.listing.Group;
+import ghidra.program.model.listing.Instruction;
+import ghidra.program.model.listing.InstructionIterator;
+import ghidra.program.model.listing.Listing;
+import ghidra.program.model.listing.LocalVariable;
+import ghidra.program.model.listing.LocalVariableImpl;
+import ghidra.program.model.listing.Parameter;
+import ghidra.program.model.listing.ParameterImpl;
+import ghidra.program.model.listing.Program;
+import ghidra.program.model.listing.ProgramFragment;
+import ghidra.program.model.listing.ProgramModule;
+import ghidra.program.model.listing.ReturnParameterImpl;
+import ghidra.program.model.listing.Variable;
+import ghidra.program.model.listing.VariableStorage;
+import ghidra.program.model.listing.VariableUtilities;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.model.pcode.Varnode;
-import ghidra.program.model.symbol.*;
+import ghidra.program.model.symbol.FlowType;
+import ghidra.program.model.symbol.Namespace;
+import ghidra.program.model.symbol.SourceType;
+import ghidra.program.model.symbol.Symbol;
+import ghidra.program.model.symbol.SymbolTable;
+import ghidra.program.model.symbol.SymbolType;
+import ghidra.program.model.symbol.SymbolUtilities;
 import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.util.Msg;
-import ghidra.util.exception.*;
+import ghidra.util.exception.AssertException;
+import ghidra.util.exception.CancelledException;
+import ghidra.util.exception.DuplicateNameException;
+import ghidra.util.exception.InvalidInputException;
+import ghidra.util.exception.NotFoundException;
 import ghidra.util.task.TaskMonitor;
 
 /**
@@ -444,9 +500,8 @@ public class DWARFFunctionImporter {
 				}
 
 				boolean external = diea.getBool(DWARFAttribute.DW_AT_external, false);
-				DataType storageType = dwarfDTM.getStorageDataType(diea.getTypeRef(), dvar.type);
 
-				outputGlobal(staticVariableAddress, dvar.type, storageType, external,
+				outputGlobal(staticVariableAddress, dvar.type, external,
 					DWARFSourceInfo.create(diea), dvar.dni);
 			}
 			else {
@@ -750,15 +805,14 @@ public class DWARFFunctionImporter {
 		return false;
 	}
 
-	private Data createVariable(Address address, DataType origDataType, DataType dataType,
-			DWARFNameInfo dni) {
+	private Data createVariable(Address address, DataType dataType, DWARFNameInfo dni) {
 		try {
 			MemoryBlock block = currentProgram.getMemory().getBlock(address);
-			if (dataType.getLength() <= 0 && !block.isInitialized()) {
-				// fall back to the original data type, which shouldn't have any dynamic sized (ie. string) data types
-				dataType = origDataType;
-			}
 			if (dataType.getLength() < 0) {
+				if (!block.isInitialized()) {
+					Msg.warn(this, "Dynamically sized data type in un-initialized memory: " +
+						dataType + " at " + address);
+				}
 				Data result = DataUtilities.createData(currentProgram, address, dataType, -1, false,
 					ClearDataMode.CLEAR_ALL_UNDEFINED_CONFLICT_DATA);
 				variablesProcesesed.add(address);
@@ -784,8 +838,8 @@ public class DWARFFunctionImporter {
 		return null;
 	}
 
-	private void outputGlobal(Address address, DataType origDataType, DataType baseDataType,
-			boolean external, DWARFSourceInfo sourceInfo, DWARFNameInfo dni) {
+	private void outputGlobal(Address address, DataType baseDataType, boolean external,
+			DWARFSourceInfo sourceInfo, DWARFNameInfo dni) {
 
 		Namespace namespace = dni.getParentNamespace(currentProgram);
 
@@ -803,7 +857,7 @@ public class DWARFFunctionImporter {
 
 		setExternalEntryPoint(external, address);
 
-		Data varData = createVariable(address, origDataType, baseDataType, dni);
+		Data varData = createVariable(address, baseDataType, dni);
 		importSummary.globalVarsAdded++;
 
 		if (sourceInfo != null) {
