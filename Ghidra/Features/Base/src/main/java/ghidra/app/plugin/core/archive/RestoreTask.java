@@ -50,6 +50,7 @@ class RestoreTask extends AbstractFileExtractorTask {
 	private static final Set<String> FILES_TO_SKIP = Set.of( //
 		"/" + ArchivePlugin.JAR_VERSION_TAG.toLowerCase(),
 		"/" + ArchivePlugin.PROJECT_PROPERTY_FILE.toLowerCase(),
+		"/" + ArchivePlugin.PROJECT_STATE_FILE.toLowerCase(),
 		"/" + ArchivePlugin.OLD_PROJECT_SAVE_DIR.toLowerCase(),
 		"/" + ArchivePlugin.OLD_PROJECT_GROUPS_DIR.toLowerCase());
 
@@ -87,7 +88,7 @@ class RestoreTask extends AbstractFileExtractorTask {
 		try (GFileSystem fs = fsService.openFileSystemContainer(archiveFSRL, monitor)) {
 			verifyArchive(fs, monitor);
 			startExtract(fs, null, monitor);
-			verifyRestoredProject();
+			createProjectMarkerFile();
 			openRestoredProject();
 			Msg.info(this, "Restore Archive: " + locInfo + " succeeded.");
 		}
@@ -106,7 +107,7 @@ class RestoreTask extends AbstractFileExtractorTask {
 		}
 	}
 
-	private void verifyRestoredProject() throws IOException {
+	private void createProjectMarkerFile() throws IOException {
 		if (!projectFile.createNewFile()) {
 			throw new IOException("Couldn't create file " + projectFile.getAbsolutePath());
 		}
