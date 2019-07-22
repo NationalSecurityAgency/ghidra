@@ -1056,6 +1056,12 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 
 		AddressRange range = new AddressRangeImpl(alignedAddress, freeRange.getMaxAddress());
 		if (size > 0) {
+			long rangeLen = range.getLength();
+			if (rangeLen < 0 || rangeLen > size) {
+				// reduce size of allocation range
+				range = new AddressRangeImpl(range.getMinAddress(),
+					range.getMinAddress().add(size - 1));
+			}
 			// keep track if allocations other than the EXTERNAL block allocation
 			allocatedRegions.add(range);
 		}

@@ -20,8 +20,7 @@ import java.math.BigInteger;
 import ghidra.app.util.bin.format.elf.*;
 import ghidra.app.util.bin.format.elf.ElfDynamicType.ElfDynamicValueType;
 import ghidra.app.util.bin.format.elf.relocation.MIPS_Elf64Relocation;
-import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressOutOfBoundsException;
+import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
 import ghidra.program.model.lang.Language;
 import ghidra.program.model.lang.Register;
@@ -39,8 +38,10 @@ public class MIPS_ElfExtension extends ElfExtension {
 	private static final String MIPS_STUBS_SECTION_NAME = ".MIPS.stubs";
 
 	// GP value reflected by symbol address
-	// TODO: In the future symbol could be created in the constant space
+	public static final String MIPS_GP_DISP_SYMBOL_NAME = "_gp_disp"; // relocation GP marker symbol
+	public static final String MIPS_GP_GNU_LOCAL_SYMBOL_NAME = "__gnu_local_gp";
 	public static final String MIPS_GP_VALUE_SYMBOL = "_mips_gp_value";
+	public static final String MIPS_GP0_VALUE_SYMBOL = "_mips_gp0_value";
 
 	// Elf Program Header Extensions
 	public static final ElfProgramHeaderType PT_MIPS_REGINFO = new ElfProgramHeaderType(0x70000000,
@@ -540,8 +541,6 @@ public class MIPS_ElfExtension extends ElfExtension {
 		odkHeader.add(WordDataType.dataType, "section", null);
 		odkHeader.add(DWordDataType.dataType, "info", null);
 
-		Structure odkRegInfo = buildRegInfoStructure(elf64, true);
-
 		Memory memory = elfLoadHelper.getProgram().getMemory();
 		long limit = 0;
 		MemoryBlock block = memory.getBlock(mipsOptionsAddr);
@@ -577,9 +576,7 @@ public class MIPS_ElfExtension extends ElfExtension {
 				switch (kind) {
 
 					case ODK_REGINFO:
-						Data regInfoData = elfLoadHelper.createData(nextOptionAddr, odkRegInfo);
-						// TODO: need better understanding of ri_gp_value
-						// TODO: adjust gp for section relocation and apply to section context somehow (need for relocation processing?)
+						processMipsRegInfo(elfLoadHelper, nextOptionAddr);
 						break;
 
 					default:
@@ -594,12 +591,9 @@ public class MIPS_ElfExtension extends ElfExtension {
 		catch (AddressOutOfBoundsException | MemoryAccessException e) {
 			// ignore
 		}
-
-		elfLoadHelper.log(
-			"WARNING: .MIPS.options section has not been processed (not yet implemented)");
 	}
 
-	private Structure buildRegInfoStructure(boolean elf64, boolean mipsOptions) {
+	private Structure buildRegInfoStructure(boolean elf64) {
 
 		String prefix = elf64 ? "Elf64" : "Elf32";
 
@@ -640,11 +634,11 @@ public class MIPS_ElfExtension extends ElfExtension {
 		Structure regInfoStruct =
 			new StructureDataType(new CategoryPath("/ELF"), prefix + "_RegInfo_MIPS", 0);
 		regInfoStruct.add(gprMask, "ri_gprmask", null);
-		if (mipsOptions && elf64) {
+		if (elf64) {
 			regInfoStruct.add(DWordDataType.dataType, "ri_pad", null);
 		}
 		regInfoStruct.add(new ArrayDataType(DWordDataType.dataType, 4, 4));
-		if (mipsOptions & elf64) {
+		if (elf64) {
 			regInfoStruct.add(QWordDataType.dataType, "ri_gp_value", null);
 		}
 		else {
@@ -655,18 +649,24 @@ public class MIPS_ElfExtension extends ElfExtension {
 
 	private void processMipsRegInfo(ElfLoadHelper elfLoadHelper, Address regInfoAddr) {
 
-		Structure regInfoStruct =
-			buildRegInfoStructure(elfLoadHelper.getElfHeader().is64Bit(), false);
+		// NOTES: assumes only one gp0 value
+
+		boolean is64bit = elfLoadHelper.getElfHeader().is64Bit();
+		Structure regInfoStruct = buildRegInfoStructure(is64bit);
 
 		Data data = elfLoadHelper.createData(regInfoAddr, regInfoStruct);
-		Data gpValueComponent = data.getComponent(5); // gp_value
+		Data gpValueComponent = data.getComponent(is64bit ? 3 : 2); // ri_gp_value value -> gp0
 		if (gpValueComponent != null) {
 			try {
-				Scalar gpValue = gpValueComponent.getScalar(0);
-				Address gpAddr = elfLoadHelper.getDefaultAddress(gpValue.getUnsignedValue());
-				elfLoadHelper.createSymbol(gpAddr, MIPS_GP_VALUE_SYMBOL, false, false, null);
-				elfLoadHelper.log(
-					MIPS_GP_VALUE_SYMBOL + "=0x" + Long.toHexString(gpValue.getUnsignedValue()));
+				// Create gp0 symbol in default space which represents a constant value (pinned)
+				Scalar gp0Value = gpValueComponent.getScalar(0);
+				long gp0 = gp0Value.getUnsignedValue();
+				AddressSpace defaultSpace =
+					elfLoadHelper.getProgram().getAddressFactory().getDefaultAddressSpace();
+				Address gpAddr = defaultSpace.getAddress(gp0);
+				elfLoadHelper.createSymbol(gpAddr, MIPS_GP0_VALUE_SYMBOL, false, false,
+					null).setPinned(true);
+				elfLoadHelper.log(MIPS_GP0_VALUE_SYMBOL + "=0x" + Long.toHexString(gp0));
 			}
 			catch (InvalidInputException e) {
 				// ignore
