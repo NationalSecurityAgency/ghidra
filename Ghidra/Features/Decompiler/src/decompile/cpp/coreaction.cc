@@ -4464,6 +4464,8 @@ void universal_action(Architecture *conf)
 	actprop->addRule( new RuleTrivialArith("analysis") );
 	actprop->addRule( new RuleTrivialBool("analysis") );
 	actprop->addRule( new RuleTrivialShift("analysis") );
+	actprop->addRule( new RuleSignShift("analysis") );
+	actprop->addRule( new RuleTestSign("analysis") );
 	actprop->addRule( new RuleIdentityEl("analysis") );
 	actprop->addRule( new RuleOrMask("analysis") );
 	actprop->addRule( new RuleAndMask("analysis") );

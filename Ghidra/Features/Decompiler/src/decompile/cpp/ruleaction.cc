@@ -3095,6 +3095,98 @@ int4 RuleTrivialShift::applyOp(PcodeOp *op,Funcdata &data)
   return 1;
 }
 
+/// \class RuleSignShift
+/// \brief Normalize sign-bit extraction:  `V >> 0x1f   =>  (V s>> 0x1f) * -1`
+void RuleSignShift::getOpList(vector<uint4> &oplist) const
+
+{
+  oplist.push_back(CPUI_INT_RIGHT);
+}
+
+int4 RuleSignShift::applyOp(PcodeOp *op,Funcdata &data)
+
+{
+  uintb val;
+  Varnode *constVn = op->getIn(1);
+  if (!constVn->isConstant()) return 0;
+  val = constVn->getOffset();
+  Varnode *inVn = op->getIn(0);
+  if (val != 8*inVn->getSize() -1) return 0;
+  if (inVn->isFree()) return 0;
+  PcodeOp *shiftOp = data.newOp(2,op->getAddr());
+  data.opSetOpcode(shiftOp, CPUI_INT_SRIGHT);
+  Varnode *outVn = data.newUniqueOut(inVn->getSize(), shiftOp);
+  data.opSetInput(op,outVn,0);
+  data.opSetInput(op,data.newConstant(inVn->getSize(),calc_mask(inVn->getSize())),1);
+  data.opSetOpcode(op, CPUI_INT_MULT);
+  data.opSetInput(shiftOp,inVn,0);
+  data.opSetInput(shiftOp,constVn,1);
+  data.opInsertBefore(shiftOp, op);
+  return 1;
+}
+
+/// \class RuleSignShift
+/// \brief Convert sign-bit test to signed comparison:  `(V s>> 0x1f) != 0   =>  V s< 0`
+void RuleTestSign::getOpList(vector<uint4> &oplist) const
+
+{
+  oplist.push_back(CPUI_INT_SRIGHT);
+}
+
+int4 RuleTestSign::applyOp(PcodeOp *op,Funcdata &data)
+
+{
+  uintb val;
+  Varnode *constVn = op->getIn(1);
+  if (!constVn->isConstant()) return 0;
+  val = constVn->getOffset();
+  Varnode *inVn = op->getIn(0);
+  if (val != 8*inVn->getSize() -1) return 0;
+  if (inVn->isFree()) return 0;
+  Varnode *outVn = op->getOut();
+  list<PcodeOp *>::const_iterator iter;
+  iter = outVn->beginDescend();
+  while(iter != outVn->endDescend()) {
+    PcodeOp *compareOp = *iter;
+    Varnode *otherVn;
+    ++iter;
+    int4 sgn;
+    switch(compareOp->code()) {
+      default:
+	sgn = 0;
+	break;
+      case CPUI_INT_EQUAL:
+	otherVn = compareOp->getIn(1);
+	if (otherVn->isConstant() && otherVn->getOffset() == 0)
+	  sgn = 1;
+	else
+	  sgn = 0;
+	break;
+      case CPUI_INT_NOTEQUAL:
+	otherVn = compareOp->getIn(1);
+	if (otherVn->isConstant() && otherVn->getOffset() == 0)
+	  sgn = -1;
+	else
+	  sgn = 0;
+	break;
+    }
+    if (sgn != 0) {
+      if (sgn == 1) {
+	data.opSetInput(compareOp, inVn, 1);
+	data.opSetInput(compareOp, otherVn, 0);
+	data.opSetOpcode(compareOp, CPUI_INT_SLESSEQUAL);
+      }
+      else {
+	data.opSetInput(compareOp, inVn, 0);
+	data.opSetInput(compareOp, otherVn, 1);
+	data.opSetOpcode(compareOp, CPUI_INT_SLESS);
+      }
+      return 1;
+    }
+  }
+  return 0;
+}
+
 /// \class RuleIdentityEl
 /// \brief Collapse operations using identity element:  `V + 0  =>  V`
 ///

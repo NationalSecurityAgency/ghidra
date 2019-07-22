@@ -545,6 +545,26 @@ public:
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
 };
+class RuleSignShift : public Rule {
+public:
+  RuleSignShift(const string &g) : Rule(g, 0, "signshift") {}		///< Constructor
+  virtual Rule *clone(const ActionGroupList &grouplist) const {
+    if (!grouplist.contains(getGroup())) return (Rule *)0;
+    return new RuleSignShift(getGroup());
+  }
+  virtual void getOpList(vector<uint4> &oplist) const;
+  virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+};
+class RuleTestSign : public Rule {
+public:
+  RuleTestSign(const string &g) : Rule(g, 0, "testsign") {}		///< Constructor
+  virtual Rule *clone(const ActionGroupList &grouplist) const {
+    if (!grouplist.contains(getGroup())) return (Rule *)0;
+    return new RuleTestSign(getGroup());
+  }
+  virtual void getOpList(vector<uint4> &oplist) const;
+  virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+};
 class RuleIdentityEl : public Rule {
 public:
   RuleIdentityEl(const string &g) : Rule(g, 0, "identityel") {}	///< Constructor
