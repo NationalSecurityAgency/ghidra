@@ -208,12 +208,19 @@ void iterateClasses(PDBApiContext& ctx) {
 
 // This method still leaks memory--seemingly in the pEnum->Next() for
 // certain symbol types (e.g., tag == 32 (inline))
-void dumpFunctionStackVariables( PDBApiContext& ctx, DWORD rva )
+void dumpFunctionStackVariables(IDiaSymbol* symbol, IDiaSession& session )
 {
 	CComPtr<IDiaSymbol> pBlock;
-	if ( FAILED(ctx.Session().findSymbolByRVA( rva, SymTagBlock, &pBlock ) ) ) {
+
+	const DWORD address = getRVA(*symbol);
+	HRESULT hr = session.findSymbolByRVA( address, SymTagBlock, &pBlock );
+	if( hr == S_FALSE ) {
+		pBlock = symbol;
+	}
+	else if ( FAILED(hr) ){
 		fatal( "Failed to find symbols by RVA" );
 	}
+
 	for ( ; pBlock != NULL; ) {
 		CComPtr<IDiaEnumSymbols> pEnum;
 		// Local data search
@@ -348,7 +355,7 @@ void iterateFunctions(PDBApiContext& ctx) {
 
 		printf("%S<function name=\"%S\" address=\"0x%x\" length=\"0x%I64x\">\n", indent(8).c_str(), findMangledName(ctx, *pSymbol).c_str(), address, getLength(*pSymbol));
 
-		dumpFunctionStackVariables(ctx, address);
+		dumpFunctionStackVariables(pSymbol, ctx.Session());
 		dumpFunctionLines(*pSymbol, ctx.Session());
 
 		printf("%S</function>\n", indent(8).c_str());

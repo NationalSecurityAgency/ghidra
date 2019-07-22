@@ -43,7 +43,10 @@ public class SignedCharDataType extends CharDataType {
 	}
 
 	@Override
-	public DataType clone(DataTypeManager dtm) {
+	public SignedCharDataType clone(DataTypeManager dtm) {
+		if (dtm == getDataTypeManager()) {
+			return this;
+		}
 		return new SignedCharDataType(dtm);
 	}
 

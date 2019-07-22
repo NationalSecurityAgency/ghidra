@@ -27,10 +27,17 @@ import docking.*;
 import ghidra.util.ReservedKeyBindings;
 import ghidra.util.exception.AssertException;
 
+/**
+ * A class that organizes system key bindings by mapping them to assigned {@link DockingActionIf}s.
+ * 
+ * <p>This class understands reserved system key bindings.  For non-reserved key bindings, this 
+ * class knows how to map a single key binding to multiple actions.
+ */
 public class KeyBindingsManager implements PropertyChangeListener {
 
-	protected Map<KeyStroke, DockingKeyBindingAction> dockingKeyMap;
-	protected Map<DockingActionIf, ComponentProvider> actionToProviderMap;
+	// this map exists to update the MultiKeyBindingAction when the key binding changes
+	private Map<DockingActionIf, ComponentProvider> actionToProviderMap;
+	private Map<KeyStroke, DockingKeyBindingAction> dockingKeyMap;
 	private DockingTool tool;
 
 	public KeyBindingsManager(DockingTool tool) {

@@ -24,6 +24,7 @@ import javax.swing.*;
 
 import docking.DialogComponentProvider;
 import docking.DockingWindowManager;
+import docking.tool.ToolConstants;
 import docking.widgets.OptionDialog;
 import ghidra.util.*;
 import ghidra.util.exception.CancelledException;
@@ -146,7 +147,7 @@ public class TaskDialog extends DialogComponentProvider implements TaskMonitor {
 		}
 
 		// SPLIT the help for this dialog should not be in the front end plugin.
-		setHelpLocation(new HelpLocation("Tool", "TaskDialog"));
+		setHelpLocation(new HelpLocation(ToolConstants.TOOL_HELP_TOPIC, "TaskDialog"));
 	}
 
 	/**

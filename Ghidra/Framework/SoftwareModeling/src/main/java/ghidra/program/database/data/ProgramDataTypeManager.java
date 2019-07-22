@@ -70,6 +70,7 @@ public class ProgramDataTypeManager extends DataTypeManagerDB
 	@Override
 	public void setProgram(ProgramDB p) {
 		this.program = p;
+		dataOrganization = p.getCompilerSpec().getDataOrganization();
 		removeOldFileNameList();
 	}
 

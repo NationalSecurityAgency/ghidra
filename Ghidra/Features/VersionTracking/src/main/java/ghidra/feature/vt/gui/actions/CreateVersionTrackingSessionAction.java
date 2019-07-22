@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +18,6 @@ package ghidra.feature.vt.gui.actions;
 import ghidra.feature.vt.gui.plugin.VTController;
 import ghidra.feature.vt.gui.plugin.VTPlugin;
 import ghidra.feature.vt.gui.wizard.VTNewSessionWizardManager;
-import ghidra.framework.plugintool.util.ToolConstants;
 import ghidra.util.HelpLocation;
 
 import javax.swing.Icon;
@@ -27,6 +25,7 @@ import javax.swing.Icon;
 import resources.ResourceManager;
 import docking.ActionContext;
 import docking.action.*;
+import docking.tool.ToolConstants;
 import docking.widgets.OptionDialog;
 import docking.wizard.WizardManager;
 

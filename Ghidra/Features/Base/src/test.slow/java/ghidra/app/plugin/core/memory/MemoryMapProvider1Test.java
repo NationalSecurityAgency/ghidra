@@ -35,7 +35,7 @@ import ghidra.app.plugin.core.gotoquery.GoToServicePlugin;
 import ghidra.app.plugin.core.navigation.NavigationHistoryPlugin;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.database.ProgramBuilder;
-import ghidra.program.database.mem.SourceInfo;
+import ghidra.program.database.mem.MemoryBlockSourceInfo;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.CodeUnit;
 import ghidra.program.model.listing.Program;
@@ -560,7 +560,7 @@ public class MemoryMapProvider1Test extends AbstractGhidraHeadedIntegrationTest 
 			for (MemoryBlock memBlock : blocks) {
 				if (memBlock.getSourceName().equals(sources[i]) &&
 					memBlock.getType() == MemoryBlockType.BIT_MAPPED) {
-					SourceInfo info = memBlock.getSourceInfos().get(0);
+					MemoryBlockSourceInfo info = memBlock.getSourceInfos().get(0);
 					Address addr = info.getMappedRange().get().getMinAddress();
 
 					assertEquals(addr.toString(), model.getValueAt(i, MemoryMapModel.SOURCE));
@@ -605,7 +605,7 @@ public class MemoryMapProvider1Test extends AbstractGhidraHeadedIntegrationTest 
 			for (MemoryBlock memBlock : blocks) {
 				if (memBlock.getSourceName().equals(sources[idx]) &&
 					memBlock.getType() == MemoryBlockType.BIT_MAPPED) {
-					SourceInfo info = memBlock.getSourceInfos().get(0);
+					MemoryBlockSourceInfo info = memBlock.getSourceInfos().get(0);
 					Address addr = info.getMappedRange().get().getMinAddress();
 					assertEquals(addr.toString(), model.getValueAt(i, MemoryMapModel.SOURCE));
 					doAssert = false;

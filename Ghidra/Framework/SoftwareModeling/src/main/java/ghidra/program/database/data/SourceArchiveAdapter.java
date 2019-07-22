@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,16 +15,15 @@
  */
 package ghidra.program.database.data;
 
-import ghidra.app.plugin.core.datamgr.archive.SourceArchive;
-import ghidra.util.UniversalID;
-import ghidra.util.exception.VersionException;
-import ghidra.util.task.TaskMonitor;
-
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.List;
 
 import db.*;
+import ghidra.app.plugin.core.datamgr.archive.SourceArchive;
+import ghidra.util.UniversalID;
+import ghidra.util.exception.VersionException;
+import ghidra.util.task.TaskMonitor;
 
 /**
  * Adapter to access the data type archive identifier table.

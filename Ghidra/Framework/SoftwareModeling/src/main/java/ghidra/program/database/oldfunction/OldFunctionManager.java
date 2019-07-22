@@ -82,7 +82,7 @@ public class OldFunctionManager implements ErrorHandler {
 			throw new AssertException("Function manager already upgraded");
 		}
 		this.program = upgradeProgram;
-		dataManager = upgradeProgram.getDataManager();
+		dataManager = upgradeProgram.getDataTypeManager();
 
 		monitor.setMessage("Upgrading Functions...");
 		monitor.initialize(getFunctionCount());

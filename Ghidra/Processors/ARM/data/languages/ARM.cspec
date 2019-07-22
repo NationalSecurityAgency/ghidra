@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <compiler_spec>
+  <!--
+  	Assumes Procedure Call Standard for the ARM Architecture (AAPCS) Applies.
+  -->
   <data_organization>  <!-- These tags were generated with gcc 4.2.4 -->
      <absolute_max_alignment value="0" />
      <machine_alignment value="2" />

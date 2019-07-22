@@ -151,7 +151,7 @@ public class EquateDB extends DatabaseObject implements Equate {
 	public String getDisplayName() {
 		String equateName = getName();
 		if (isEnumBased()) {
-			DataTypeManager dtm = equateMgr.getProgram().getDataManager();
+			DataTypeManager dtm = equateMgr.getProgram().getDataTypeManager();
 			UniversalID id = EquateManager.getDataTypeUUID(equateName);
 			Enum enoom = (Enum) dtm.findDataTypeForID(id);
 			if (enoom == null || enoom.getName(getValue()) == null) {

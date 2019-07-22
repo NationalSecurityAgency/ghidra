@@ -32,6 +32,7 @@ import javax.swing.Icon;
 
 import resources.ResourceManager;
 import docking.action.*;
+import docking.tool.ToolConstants;
 
 /**
  * The NextPrevCodeUnitPlugin generates a GoTo event based on where the cursor

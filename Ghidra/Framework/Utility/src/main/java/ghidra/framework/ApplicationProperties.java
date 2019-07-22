@@ -53,9 +53,9 @@ public class ApplicationProperties extends Properties {
 	public static final String APPLICATION_LAYOUT_VERSION_PROPERTY = "application.layout.version";
 
 	/**
-	 * The recommended version of gradle used to build the application.
+	 * The minimum version of gradle required to build the application.
 	 */
-	public static final String APPLICATION_GRADLE_VERSION_PROPERTY = "application.gradle.version";
+	public static final String APPLICATION_GRADLE_MIN_PROPERTY = "application.gradle.min";
 
 	/**
 	 * The minimum major version of Java required to run the application. For example, "8".

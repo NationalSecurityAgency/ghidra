@@ -66,8 +66,7 @@ import utilities.util.reflection.ReflectionUtilities;
  * <b><u>Show Provider Action</u></b> - Each provider has an action to show the provider.  For
  * typical, non-transient providers (see {@link #setTransient()}) the action will appear in 
  * the tool's <b>Window</b> menu.   You can have your provider also appear in the tool's toolbar
- * by calling {@link #setIcon(Icon, boolean)}, passing <code>true</code> for 
- * <code>isToolbarAction</code>.
+ * by calling {@link #addToTool()}.
  * <p>
  * Historical Note: This class was created so that implementors could add local actions within the constructor
  * without having to understand that they must first add themselves to the WindowManager.
@@ -805,7 +804,15 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 
 		@Override
 		public void actionPerformed(ActionContext context) {
-			dockingTool.showComponentProvider(ComponentProvider.this, true);
+
+			DockingWindowManager myDwm = DockingWindowManager.getInstance(getComponent());
+			if (myDwm == null) {
+				// don't think this can happen
+				dockingTool.showComponentProvider(ComponentProvider.this, true);
+				return;
+			}
+
+			myDwm.showComponent(ComponentProvider.this, true, true);
 		}
 
 		@Override

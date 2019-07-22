@@ -156,14 +156,15 @@ abstract public class DatabaseObject {
 	 * This method provides a cheap (lock free) way to test if an object is valid.  If
 	 * this object is invalid, then the lock will be used to refresh as needed.
 	 * @param lock the lock that will be used if the object needs to be refreshed.
+	 * @return true if object is valid, else false
 	 */
-	public void validate(Lock lock) {
+	public boolean validate(Lock lock) {
 		if (!deleted && !isInvalid()) {
-			return;
+			return true;
 		}
 		lock.acquire();
 		try {
-			checkIsValid();
+			return checkIsValid();
 		}
 		finally {
 			lock.release();

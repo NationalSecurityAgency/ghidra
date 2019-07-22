@@ -23,6 +23,7 @@ import java.io.IOException;
 import db.Record;
 import ghidra.docking.settings.Settings;
 import ghidra.program.model.data.*;
+import ghidra.util.SystemUtilities;
 import ghidra.util.exception.DuplicateNameException;
 
 /**
@@ -30,12 +31,14 @@ import ghidra.util.exception.DuplicateNameException;
  * component is for an undefined data type, then the record object is
  * null.
  */
-class DataTypeComponentDB implements DataTypeComponent {
+class DataTypeComponentDB implements InternalDataTypeComponent {
 
 	private final DataTypeManagerDB dataMgr;
 	private final ComponentDBAdapter adapter;
 	private final Record record; // null record -> undefined component
 	private final Composite parent;
+
+	private DataType cachedDataType; // required for bit-fields during packing process
 	private boolean isFlexibleArrayComponent = false;
 
 	private int ordinal;
@@ -96,6 +99,24 @@ class DataTypeComponentDB implements DataTypeComponent {
 		return isFlexibleArrayComponent;
 	}
 
+	@Override
+	public boolean isBitFieldComponent() {
+		if (record == null) {
+			return false;
+		}
+		long id = record.getLongValue(ComponentDBAdapter.COMPONENT_DT_ID_COL);
+		return DataTypeManagerDB.getTableID(id) == DataTypeManagerDB.BITFIELD;
+	}
+
+	@Override
+	public boolean isZeroBitFieldComponent() {
+		if (isBitFieldComponent()) {
+			BitFieldDataType bitField = (BitFieldDataType) getDataType();
+			return bitField.getBitSize() == 0;
+		}
+		return false;
+	}
+
 	/**
 	 * Get record key
 	 * @return record key or -1 for undefined component without a record
@@ -108,6 +129,9 @@ class DataTypeComponentDB implements DataTypeComponent {
 	public DataType getDataType() {
 		if (record == null) {
 			return DataType.DEFAULT;
+		}
+		if (cachedDataType != null) {
+			return cachedDataType;
 		}
 		long id = record.getLongValue(ComponentDBAdapter.COMPONENT_DT_ID_COL);
 		if (id == -1) {
@@ -131,6 +155,13 @@ class DataTypeComponentDB implements DataTypeComponent {
 			return parent.getLength();
 		}
 		return offset;
+	}
+
+	boolean containsOffset(int off) {
+		if (isFlexibleArrayComponent) {
+			return false;
+		}
+		return off >= offset && off <= (offset + length - 1);
 	}
 
 	@Override
@@ -202,6 +233,9 @@ class DataTypeComponentDB implements DataTypeComponent {
 
 	@Override
 	public String getFieldName() {
+		if (isZeroBitFieldComponent()) {
+			return "";
+		}
 		if (record != null) {
 			return record.getString(ComponentDBAdapter.COMPONENT_FIELD_NAME_COL);
 		}
@@ -210,6 +244,9 @@ class DataTypeComponentDB implements DataTypeComponent {
 
 	@Override
 	public String getDefaultFieldName() {
+		if (isZeroBitFieldComponent()) {
+			return "";
+		}
 		if (parent instanceof Structure) {
 			return DEFAULT_FIELD_NAME_PREFIX + "_0x" + Integer.toHexString(getOffset());
 		}
@@ -253,6 +290,12 @@ class DataTypeComponentDB implements DataTypeComponent {
 	}
 
 	@Override
+	public int hashCode() {
+		// It is not expected that these objects ever be put in a hash map
+		return super.hashCode();
+	}
+
+	@Override
 	public boolean equals(Object obj) {
 		if (!(obj instanceof DataTypeComponent)) {
 			return false;
@@ -261,11 +304,12 @@ class DataTypeComponentDB implements DataTypeComponent {
 		DataType myDt = getDataType();
 		DataType otherDt = dtc.getDataType();
 
-		// NOTE: use getOffset() and getOrdinal() methods since returned values will differ from 
+		// NOTE: use getOffset() and getOrdinal() methods since returned values will differ from
 		// stored values for flexible array component
 		if (getOffset() != dtc.getOffset() || getLength() != dtc.getLength() ||
-			getOrdinal() != dtc.getOrdinal() || !isSameString(getFieldName(), dtc.getFieldName()) ||
-			!isSameString(getComment(), dtc.getComment())) {
+			getOrdinal() != dtc.getOrdinal() ||
+			!SystemUtilities.isEqual(getFieldName(), dtc.getFieldName()) ||
+			!SystemUtilities.isEqual(getComment(), dtc.getComment())) {
 			return false;
 		}
 		if (!(myDt instanceof Pointer) && !myDt.getPathName().equals(otherDt.getPathName())) {
@@ -302,25 +346,39 @@ class DataTypeComponentDB implements DataTypeComponent {
 		boolean aligned =
 			(myParent instanceof Composite) ? ((Composite) myParent).isInternallyAligned() : false;
 		// Components don't need to have matching offset when they are aligned, only matching ordinal.
-		// NOTE: use getOffset() and getOrdinal() methods since returned values will differ from 
+		// NOTE: use getOffset() and getOrdinal() methods since returned values will differ from
 		// stored values for flexible array component
 		if ((!aligned && (getOffset() != dtc.getOffset())) ||
 			// Components don't need to have matching length when they are aligned. Is this correct?
 			(!aligned && (getLength() != dtc.getLength())) || getOrdinal() != dtc.getOrdinal() ||
-			!isSameString(getFieldName(), dtc.getFieldName()) ||
-			!isSameString(getComment(), dtc.getComment())) {
-
+			!SystemUtilities.isEqual(getFieldName(), dtc.getFieldName()) ||
+			!SystemUtilities.isEqual(getComment(), dtc.getComment())) {
 			return false;
 		}
 
 		return DataTypeUtilities.isSameOrEquivalentDataType(myDt, otherDt);
 	}
 
-	private boolean isSameString(String s1, String s2) {
-		if (s1 == null) {
-			return s2 == null;
+	@Override
+	public void update(int newOrdinal, int newOffset, int newLength) {
+		if (isFlexibleArrayComponent) {
+			return;
 		}
-		return s1.equals(s2);
+		if (length < 0) {
+			throw new IllegalArgumentException(
+				"Cannot set data type component length to " + length + ".");
+		}
+
+		ordinal = newOrdinal;
+		offset = newOffset;
+		length = newLength;
+
+		if (record != null) {
+			record.setIntValue(ComponentDBAdapter.COMPONENT_ORDINAL_COL, ordinal);
+			record.setIntValue(ComponentDBAdapter.COMPONENT_OFFSET_COL, offset);
+			record.setIntValue(ComponentDBAdapter.COMPONENT_SIZE_COL, length);
+			updateRecord();
+		}
 	}
 
 	void setOffset(int newOffset, boolean updateRecord) {
@@ -350,7 +408,7 @@ class DataTypeComponentDB implements DataTypeComponent {
 	}
 
 	void setLength(int length, boolean updateRecord) {
-		if (isFlexibleArrayComponent) {
+		if (isFlexibleArrayComponent || length == this.length) {
 			return;
 		}
 		this.length = length;
@@ -381,12 +439,9 @@ class DataTypeComponentDB implements DataTypeComponent {
 		return record;
 	}
 
-	/**
-	 * @param oldDt
-	 * @param newDt
-	 * @return
-	 */
-	void setDataType(DataType newDt) {
+	@Override
+	public void setDataType(DataType newDt) {
+		// intended for internal use only
 		if (record != null) {
 			record.setLongValue(ComponentDBAdapter.COMPONENT_DT_ID_COL,
 				dataMgr.getResolvedID(newDt));
@@ -404,9 +459,13 @@ class DataTypeComponentDB implements DataTypeComponent {
 		StringBuffer buffer = new StringBuffer();
 		buffer.append("  " + getOrdinal());
 		buffer.append("  " + getOffset());
-		buffer.append("  " + getDataType().getDisplayName());
+		DataType dt = getDataType();
+		buffer.append("  " + dt.getDisplayName());
 		if (isFlexibleArrayComponent) {
 			buffer.append("[0]");
+		}
+		else if (dt instanceof BitFieldDataType) {
+			buffer.append("(" + ((BitFieldDataType) dt).getBitOffset() + ")");
 		}
 		buffer.append("  " + getLength());
 		buffer.append("  " + getFieldName());

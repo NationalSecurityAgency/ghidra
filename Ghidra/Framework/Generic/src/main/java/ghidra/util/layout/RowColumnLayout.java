@@ -86,7 +86,7 @@ public class RowColumnLayout implements LayoutManager {
 			numCols = (n + numRows - 1) / numRows;
 		}
 		else {
-			int height = Math.max(maxSize - insets.top - insets.left, compHeight);
+			int height = Math.max(maxSize - insets.top - insets.bottom, compHeight);
 			numRows = (height + vgap) / (compHeight + vgap);
 			numCols = (n + numRows - 1) / numRows;
 			numRows = (n + numCols - 1) / numCols;

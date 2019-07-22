@@ -55,7 +55,7 @@ public class SettingsTest extends AbstractGhidraHeadedIntegrationTest {
 	public void setUp() throws Exception {
 		program = createDefaultProgram(testName.getMethodName(), ProgramBuilder._TOY, this);
 		space = program.getAddressFactory().getDefaultAddressSpace();
-		dataMgr = program.getDataManager();
+		dataMgr = program.getDataTypeManager();
 		listing = program.getListing();
 		transactionID = program.startTransaction("Test");
 		addBlock();

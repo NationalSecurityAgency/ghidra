@@ -116,7 +116,7 @@ abstract class MemoryMapDBAdapter {
 					Address mappedAddress = null;
 
 					if (block.isMapped()) {
-						SourceInfo info = block.getSourceInfos().get(0);
+						MemoryBlockSourceInfo info = block.getSourceInfos().get(0);
 						mappedAddress = info.getMappedRange().get().getMinAddress();
 					}
 					newBlock =

@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,12 +18,12 @@ package ghidra.app.plugin.core.label;
 import ghidra.app.context.ListingActionContext;
 import ghidra.app.context.ListingContextAction;
 import ghidra.framework.plugintool.PluginTool;
-import ghidra.framework.plugintool.util.ToolConstants;
 
 import java.awt.event.KeyEvent;
 
 import docking.action.KeyBindingData;
 import docking.action.MenuData;
+import docking.tool.ToolConstants;
 
 public class AllHistoryAction extends ListingContextAction {
 

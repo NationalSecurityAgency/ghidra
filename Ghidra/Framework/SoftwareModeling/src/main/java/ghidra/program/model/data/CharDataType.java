@@ -138,7 +138,10 @@ public class CharDataType extends AbstractIntegerDataType implements DataTypeWit
 	}
 
 	@Override
-	public DataType clone(DataTypeManager dtm) {
+	public CharDataType clone(DataTypeManager dtm) {
+		if (dtm == getDataTypeManager()) {
+			return this;
+		}
 		return new CharDataType(dtm);
 	}
 
@@ -176,8 +179,9 @@ public class CharDataType extends AbstractIntegerDataType implements DataTypeWit
 	}
 
 	@Override
-	public DataType getOppositeSignednessDataType() {
-		return isSigned() ? UnsignedCharDataType.dataType : SignedCharDataType.dataType;
+	public CharDataType getOppositeSignednessDataType() {
+		return isSigned() ? UnsignedCharDataType.dataType.clone(getDataTypeManager())
+				: SignedCharDataType.dataType.clone(getDataTypeManager());
 	}
 
 	@Override

@@ -20,7 +20,7 @@ import java.util.Arrays;
 import ghidra.pcode.error.LowlevelError;
 import ghidra.pcode.memstate.MemoryFaultHandler;
 import ghidra.pcode.memstate.MemoryPage;
-import ghidra.program.database.mem.SourceInfo;
+import ghidra.program.database.mem.MemoryBlockSourceInfo;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.*;
@@ -48,7 +48,7 @@ public class ProgramLoadImage {
 	}
 
 	private AddressSetView addMappedInitializedMemory(MemoryBlock mappedBlock) {
-		SourceInfo sourceInfo = mappedBlock.getSourceInfos().get(0); // mapped block has exactly 1 mapped source
+		MemoryBlockSourceInfo sourceInfo = mappedBlock.getSourceInfos().get(0); // mapped block has exactly 1 mapped source
 		if (!sourceInfo.getMappedRange().isPresent()) {
 			throw new AssertException("Mapped block did not have mapped range!");
 		}

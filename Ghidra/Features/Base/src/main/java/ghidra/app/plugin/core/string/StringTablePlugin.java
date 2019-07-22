@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import docking.action.MenuData;
+import docking.tool.ToolConstants;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.context.NavigatableActionContext;
 import ghidra.app.context.NavigatableContextAction;
@@ -29,7 +30,6 @@ import ghidra.app.util.HelpTopics;
 import ghidra.framework.plugintool.PluginInfo;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.util.PluginStatus;
-import ghidra.framework.plugintool.util.ToolConstants;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramSelection;

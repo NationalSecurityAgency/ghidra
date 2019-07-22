@@ -15,17 +15,18 @@
  */
 package ghidra.app.util.opinion;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.*;
 
 import ghidra.app.cmd.data.CreateDataCmd;
 import ghidra.app.cmd.label.AddUniqueLabelCmd;
-import ghidra.app.util.MemoryBlockUtil;
+import ghidra.app.util.MemoryBlockUtils;
 import ghidra.app.util.Option;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.bin.format.pef.*;
 import ghidra.app.util.importer.MessageLog;
+import ghidra.program.database.mem.FileBytes;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.PointerDataType;
 import ghidra.program.model.listing.Data;
@@ -69,6 +70,8 @@ public class PefLoader extends AbstractLibrarySupportLoader {
 	public void load(ByteProvider provider, LoadSpec loadSpec, List<Option> options,
 			Program program, TaskMonitor monitor, MessageLog log) throws IOException {
 
+		FileBytes fileBytes = MemoryBlockUtils.createFileBytes(program, provider);
+
 		ImportStateCache importState = null;
 		try {
 			ContainerHeader header = new ContainerHeader(provider);
@@ -81,7 +84,7 @@ public class PefLoader extends AbstractLibrarySupportLoader {
 
 			program.setExecutableFormat(getName());
 
-			processSections(header, program, importState, log, monitor);
+			processSections(header, program, fileBytes, importState, log, monitor);
 			processExports(header, program, importState, log, monitor);
 			processImports(header, program, importState, log, monitor);
 			processRelocations(header, program, importState, log, monitor);
@@ -367,11 +370,9 @@ public class PefLoader extends AbstractLibrarySupportLoader {
 		}
 	}
 
-	private void processSections(ContainerHeader header, Program program,
+	private void processSections(ContainerHeader header, Program program, FileBytes fileBytes,
 			ImportStateCache importState, MessageLog log, TaskMonitor monitor)
 					throws AddressOverflowException, IOException {
-
-		MemoryBlockUtil mbu = new MemoryBlockUtil(program);
 
 		List<SectionHeader> sections = header.getSections();
 		for (SectionHeader section : sections) {
@@ -388,16 +389,17 @@ public class PefLoader extends AbstractLibrarySupportLoader {
 			}
 
 			if (section.getSectionKind() == SectionKind.PackedData) {
-				mbu.createInitializedBlock(section.getName(), start,
-					section.getUnpackedData(monitor), section.getSectionKind().toString(), null,
-					section.isRead(), section.isWrite(), section.isExecute(), monitor);
+				byte[] unpackedData = section.getUnpackedData(monitor);
+				ByteArrayInputStream is = new ByteArrayInputStream(unpackedData);
+				MemoryBlockUtils.createInitializedBlock(program, false, section.getName(), start,
+					is, unpackedData.length, section.getSectionKind().toString(), null,
+					section.isRead(), section.isWrite(), section.isExecute(), log, monitor);
 			}
 			else {
-				try (InputStream sectionDataStream = section.getData()) {
-					mbu.createInitializedBlock(section.getName(), start, sectionDataStream,
-						section.getUnpackedLength(), section.getSectionKind().toString(), null,
-						section.isRead(), section.isWrite(), section.isExecute(), monitor);
-				}
+				MemoryBlockUtils.createInitializedBlock(program, false, section.getName(), start,
+					fileBytes, section.getContainerOffset(), section.getUnpackedLength(),
+					section.getSectionKind().toString(), null, section.isRead(), section.isWrite(),
+					section.isExecute(), log);
 			}
 
 			importState.setMemoryBlockForSection(section, program.getMemory().getBlock(start));
@@ -405,15 +407,12 @@ public class PefLoader extends AbstractLibrarySupportLoader {
 			if (section.getUnpackedLength() < section.getTotalLength()) {
 				start = start.add(section.getUnpackedLength());
 
-				mbu.createUninitializedBlock(false, section.getName(), start,
+				MemoryBlockUtils.createUninitializedBlock(program, false, section.getName(), start,
 					section.getTotalLength() - section.getUnpackedLength(),
 					section.getSectionKind().toString(), null, section.isRead(), section.isWrite(),
-					section.isExecute());
+					section.isExecute(), log);
 			}
 		}
-
-		log.appendMsg(mbu.getMessages());
-		mbu.dispose();
 	}
 
 	private Address getSectionAddressAligned(SectionHeader section, Program program) {

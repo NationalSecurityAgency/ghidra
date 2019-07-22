@@ -13,79 +13,76 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+/*
+ *
+ */
 package ghidra.program.database.data;
 
 import static org.junit.Assert.*;
 
 import org.junit.*;
 
-import generic.test.AbstractGenericTest;
-import ghidra.program.database.ProgramBuilder;
-import ghidra.program.database.ProgramDB;
+import generic.test.AbstractGTest;
 import ghidra.program.model.data.*;
-import ghidra.test.AbstractGhidraHeadlessIntegrationTest;
+import ghidra.util.task.TaskMonitor;
 
 /**
- * Test the database implementation of Union data type.
- *  
- * 
+ *
  */
-public class UnionTest extends AbstractGenericTest {
-	private Union union;
-	private ProgramDB program;
-	private DataTypeManagerDB dataMgr;
-	private int transactionID;
+public class UnionDBTest extends AbstractGTest {
 
-	/**
-	 * Constructor for UnionTest.
-	 * @param name
-	 */
-	public UnionTest() {
-		super();
-	}
-
-	private Structure createStructure(String name, int length) {
-		return (Structure) dataMgr.resolve(new StructureDataType(name, length),
-			DataTypeConflictHandler.DEFAULT_HANDLER);
-	}
-
-	private Union createUnion(String name) {
-		return (Union) dataMgr.resolve(new UnionDataType(name),
-			DataTypeConflictHandler.DEFAULT_HANDLER);
-	}
-
-	private TypeDef createTypeDef(DataType dataType) {
-		return (TypeDef) dataMgr.resolve(
-			new TypedefDataType(dataType.getName() + "TypeDef", dataType), null);
-	}
-
-	private Array createArray(DataType dataType, int numElements) {
-		return (Array) dataMgr.resolve(
-			new ArrayDataType(dataType, numElements, dataType.getLength()), null);
-	}
-
-	private Pointer createPointer(DataType dataType, int length) {
-		return (Pointer) dataMgr.resolve(new Pointer32DataType(dataType), null);
-	}
+	private DataTypeManager dataMgr;
+	private UnionDB union;
 
 	@Before
 	public void setUp() throws Exception {
-		program =
-			AbstractGhidraHeadlessIntegrationTest.createDefaultProgram("Test", ProgramBuilder._TOY, this);
-		dataMgr = program.getDataManager();
-		transactionID = program.startTransaction("Test");
-		union = createUnion("Test");
+
+		dataMgr = new StandAloneDataTypeManager("dummydataMgr");
+
+		// default data organization is little-endian
+		// default BitFieldPackingImpl uses gcc conventions
+
+		dataMgr.startTransaction("Test");
+
+		union = createUnion("TestUnion");
 		union.add(new ByteDataType(), "field1", "Comment1");
 		union.add(new WordDataType(), null, "Comment2");
 		union.add(new DWordDataType(), "field3", null);
 		union.add(new ByteDataType(), "field4", "Comment4");
 	}
 
-	@After
-	public void tearDown() throws Exception {
-		program.endTransaction(transactionID, true);
-		program.release(this);
+	private void transitionToBigEndian() {
 
+		Union unionClone = (Union) union.clone(null);
+		dataMgr.remove(union, TaskMonitor.DUMMY);
+
+		DataOrganizationImpl dataOrg = (DataOrganizationImpl) dataMgr.getDataOrganization();
+		dataOrg.setBigEndian(true);
+
+		// re-resolve with modified endianess
+		union = (UnionDB) dataMgr.resolve(unionClone, null);
+	}
+
+	private UnionDB createUnion(String name) {
+		Union unionDt = new UnionDataType(name);
+		return (UnionDB) dataMgr.addDataType(unionDt, DataTypeConflictHandler.DEFAULT_HANDLER);
+	}
+
+	private Structure createStructure(String name, int size) {
+		return (Structure) dataMgr.addDataType(new StructureDataType(name, size),
+			DataTypeConflictHandler.DEFAULT_HANDLER);
+	}
+
+	private TypeDef createTypeDef(DataType dataType) {
+		return new TypedefDataType(dataType.getName() + "TypeDef", dataType);
+	}
+
+	private Array createArray(DataType dataType, int numElements) {
+		return new ArrayDataType(dataType, numElements, dataType.getLength());
+	}
+
+	private Pointer createPointer(DataType dataType, int length) {
+		return new PointerDataType(dataType, length);
 	}
 
 	@Test
@@ -109,12 +106,11 @@ public class UnionTest extends AbstractGenericTest {
 
 	@Test
 	public void testAdd2() {
-		Structure struct = new StructureDataType("struct_1", 0);
+		Structure struct = createStructure("struct_1", 0);
 		struct.add(new ByteDataType());
 		struct.add(new StringDataType(), 10);
 
 		union.add(struct);
-
 		union.delete(4);
 		assertEquals(4, union.getNumComponents());
 		assertEquals(4, union.getLength());
@@ -122,7 +118,7 @@ public class UnionTest extends AbstractGenericTest {
 
 	@Test
 	public void testGetComponent() {
-		Structure struct = new StructureDataType("struct_1", 0);
+		Structure struct = createStructure("struct_1", 0);
 		struct.add(new ByteDataType());
 		struct.add(new StringDataType(), 10);
 		DataTypeComponent newdtc = union.add(struct, "field5", "comments");
@@ -135,7 +131,7 @@ public class UnionTest extends AbstractGenericTest {
 
 	@Test
 	public void testGetComponents() {
-		Structure struct = new StructureDataType("struct_1", 0);
+		Structure struct = createStructure("struct_1", 0);
 		struct.add(new ByteDataType());
 		struct.add(new StringDataType(), 10);
 		union.add(struct, "field5", "comments");
@@ -147,7 +143,7 @@ public class UnionTest extends AbstractGenericTest {
 
 	@Test
 	public void testInsert() {
-		Structure struct = new StructureDataType("struct_1", 0);
+		Structure struct = createStructure("struct_1", 0);
 		struct.add(new ByteDataType());
 		struct.add(new StringDataType(), 10);
 
@@ -161,20 +157,194 @@ public class UnionTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testGetName() {
-		assertEquals("Test", union.getName());
+	public void testBitFieldUnion() throws Exception {
+
+		int cnt = union.getNumComponents();
+		for (int i = 0; i < cnt; i++) {
+			union.delete(0);
+		}
+		// NOTE: bitOffset ignored for union
+		union.insertBitField(0, IntegerDataType.dataType, 2, "bf1", "bf1Comment");
+		union.insert(0, ShortDataType.dataType);
+
+		//@formatter:off
+		CompositeTestUtils.assertExpectedComposite(this, "/TestUnion\n" + 
+			"Unaligned\n" + 
+			"Union TestUnion {\n" + 
+			"   0   short   2   null   \"\"\n" + 
+			"   0   int:2(0)   1   bf1   \"bf1Comment\"\n" + 
+			"}\n" + 
+			"Size = 2   Actual Alignment = 1", union);
+		//@formatter:on
 	}
 
 	@Test
-	public void testClone() throws Exception {
+	public void testAlignedBitFieldUnion() throws Exception {
+
+		int cnt = union.getNumComponents();
+		for (int i = 0; i < cnt; i++) {
+			union.delete(0);
+		}
+		union.insertBitField(0, IntegerDataType.dataType, 2, "bf1", "bf1Comment");
+		union.insert(0, ShortDataType.dataType);
+		union.setInternallyAligned(true);
+
+		//@formatter:off
+		CompositeTestUtils.assertExpectedComposite(this, "/TestUnion\n" + 
+			"Aligned\n" + 
+			"Union TestUnion {\n" + 
+			"   0   short   2   null   \"\"\n" + 
+			"   0   int:2(0)   1   bf1   \"bf1Comment\"\n" + 
+			"}\n" + 
+			"Size = 4   Actual Alignment = 4", union);
+		//@formatter:on
+	}
+
+	@Test
+	public void testInsertBitFieldLittleEndian() throws Exception {
+
+		union.insertBitField(2, IntegerDataType.dataType, 4, "bf1", "bf1Comment");
+		union.insertBitField(3, ByteDataType.dataType, 4, "bf2", "bf2Comment");
+
+		//@formatter:off
+		CompositeTestUtils.assertExpectedComposite(this, "/TestUnion\n" + 
+			"Unaligned\n" + 
+			"Union TestUnion {\n" + 
+			"   0   byte   1   field1   \"Comment1\"\n" + 
+			"   0   word   2   null   \"Comment2\"\n" + 
+			"   0   int:4(0)   1   bf1   \"bf1Comment\"\n" + 
+			"   0   byte:4(0)   1   bf2   \"bf2Comment\"\n" + 
+			"   0   dword   4   field3   \"\"\n" + 
+			"   0   byte   1   field4   \"Comment4\"\n" + 
+			"}\n" + 
+			"Size = 4   Actual Alignment = 1", union);
+		//@formatter:on
+	}
+
+	@Test
+	public void testInsertBitFieldBigEndian() throws Exception {
+
+		transitionToBigEndian();
+
+		union.insertBitField(2, IntegerDataType.dataType, 4, "bf1", "bf1Comment");
+		union.insertBitField(3, ByteDataType.dataType, 4, "bf2", "bf2Comment");
+
+		//@formatter:off
+		CompositeTestUtils.assertExpectedComposite(this, "/TestUnion\n" + 
+			"Unaligned\n" + 
+			"Union TestUnion {\n" + 
+			"   0   byte   1   field1   \"Comment1\"\n" + 
+			"   0   word   2   null   \"Comment2\"\n" + 
+			"   0   int:4(4)   1   bf1   \"bf1Comment\"\n" + 
+			"   0   byte:4(4)   1   bf2   \"bf2Comment\"\n" + 
+			"   0   dword   4   field3   \"\"\n" + 
+			"   0   byte   1   field4   \"Comment4\"\n" + 
+			"}\n" + 
+			"Size = 4   Actual Alignment = 1", union);
+		//@formatter:on
+	}
+
+	@Test
+	public void testDeleteBitFieldDependency() throws InvalidDataTypeException {
+
+		TypeDef td = new TypedefDataType("Foo", IntegerDataType.dataType);
+		td = (TypeDef) dataMgr.resolve(td, null);
+
+		union.insertBitField(2, td, 4, "bf1", "bf1Comment");
+		union.insertBitField(3, td, 4, "bf2", "bf2Comment");
+
+		//@formatter:off
+		CompositeTestUtils.assertExpectedComposite(this, "/TestUnion\n" + 
+			"Unaligned\n" + 
+			"Union TestUnion {\n" + 
+			"   0   byte   1   field1   \"Comment1\"\n" + 
+			"   0   word   2   null   \"Comment2\"\n" + 
+			"   0   Foo:4(0)   1   bf1   \"bf1Comment\"\n" + 
+			"   0   Foo:4(0)   1   bf2   \"bf2Comment\"\n" + 
+			"   0   dword   4   field3   \"\"\n" + 
+			"   0   byte   1   field4   \"Comment4\"\n" + 
+			"}\n" + 
+			"Size = 4   Actual Alignment = 1", union);
+		//@formatter:on
+
+		dataMgr.remove(td, TaskMonitor.DUMMY);
+
+		//@formatter:off
+		CompositeTestUtils.assertExpectedComposite(this, "/TestUnion\n" + 
+			"Unaligned\n" + 
+			"Union TestUnion {\n" + 
+			"   0   byte   1   field1   \"Comment1\"\n" + 
+			"   0   word   2   null   \"Comment2\"\n" + 
+			"   0   dword   4   field3   \"\"\n" + 
+			"   0   byte   1   field4   \"Comment4\"\n" + 
+			"}\n" + 
+			"Size = 4   Actual Alignment = 1", union);
+		//@formatter:on
+	}
+
+	@Test
+	public void testReplaceBitFieldDependency()
+			throws InvalidDataTypeException, DataTypeDependencyException {
+
+		TypeDef td = new TypedefDataType("Foo", IntegerDataType.dataType);
+		td = (TypeDef) dataMgr.resolve(td, null);
+
+		union.insertBitField(2, td, 4, "bf1", "bf1Comment");
+		union.insertBitField(3, td, 4, "bf2", "bf2Comment");
+
+		//@formatter:off
+		CompositeTestUtils.assertExpectedComposite(this, "/TestUnion\n" + 
+			"Unaligned\n" + 
+			"Union TestUnion {\n" + 
+			"   0   byte   1   field1   \"Comment1\"\n" + 
+			"   0   word   2   null   \"Comment2\"\n" + 
+			"   0   Foo:4(0)   1   bf1   \"bf1Comment\"\n" + 
+			"   0   Foo:4(0)   1   bf2   \"bf2Comment\"\n" + 
+			"   0   dword   4   field3   \"\"\n" + 
+			"   0   byte   1   field4   \"Comment4\"\n" + 
+			"}\n" + 
+			"Size = 4   Actual Alignment = 1", union);
+		//@formatter:on
+
+		dataMgr.replaceDataType(td, CharDataType.dataType, false);
+
+		//@formatter:off
+		CompositeTestUtils.assertExpectedComposite(this, "/TestUnion\n" + 
+			"Unaligned\n" + 
+			"Union TestUnion {\n" + 
+			"   0   byte   1   field1   \"Comment1\"\n" + 
+			"   0   word   2   null   \"Comment2\"\n" + 
+			"   0   char:4(0)   1   bf1   \"bf1Comment\"\n" + 
+			"   0   char:4(0)   1   bf2   \"bf2Comment\"\n" + 
+			"   0   dword   4   field3   \"\"\n" + 
+			"   0   byte   1   field4   \"Comment4\"\n" + 
+			"}\n" + 
+			"Size = 4   Actual Alignment = 1", union);
+		//@formatter:on
+	}
+
+	@Test
+	public void testGetName() {
+		assertEquals("TestUnion", union.getName());
+	}
+
+	@Test
+	public void testCloneRetainIdentity() throws Exception {
 		Union unionCopy = (Union) union.clone(null);
 		assertNull(unionCopy.getDataTypeManager());
 		assertEquals(4, union.getLength());
 	}
 
 	@Test
+	public void testCopyDontRetain() throws Exception {
+		Union unionCopy = (Union) union.copy(null);
+		assertNull(unionCopy.getDataTypeManager());
+		assertEquals(4, union.getLength());
+	}
+
+	@Test
 	public void testDelete() throws Exception {
-		Structure struct = new StructureDataType("struct_1", 0);
+		Structure struct = createStructure("struct_1", 0);
 		struct.add(new ByteDataType());
 		struct.add(new StringDataType(), 10);
 		union.add(struct);
@@ -189,35 +359,87 @@ public class UnionTest extends AbstractGenericTest {
 
 	@Test
 	public void testIsPartOf() {
-		Structure struct = new StructureDataType("struct_1", 0);
+		Structure struct = createStructure("struct_1", 0);
 		struct.add(new ByteDataType());
-		DataTypeComponent dtc = struct.add(new StringDataType(), 10);
-		DataTypeComponent newdtc = union.add(struct);
-		dtc = union.getComponent(4);
+		DataTypeComponent dtc = struct.add(createStructure("mystring", 10));
 		DataType dt = dtc.getDataType();
+		DataTypeComponent newdtc = union.add(struct);
 		assertTrue(union.isPartOf(dt));
 
 		Structure newstruct = (Structure) newdtc.getDataType();
-		Structure s1 = (Structure) newstruct.add(new StructureDataType("s1", 1)).getDataType();
+		Structure s1 = (Structure) newstruct.add(createStructure("s1", 1)).getDataType();
 		dt = s1.add(new QWordDataType()).getDataType();
 
 		assertTrue(union.isPartOf(dt));
 	}
 
 	@Test
-	public void testReplaceWith() {
-		Structure struct = new StructureDataType("struct_1", 0);
-		struct.add(new ByteDataType());
-		struct.add(new StringDataType(), 10);
-		Union newunion = new UnionDataType("newunion");
-		newunion.add(struct);
+	public void testReplaceWith() throws InvalidDataTypeException {
+		assertEquals(4, union.getLength());
+		assertEquals(4, union.getNumComponents());
 
-		union.replaceWith(newunion);
-		assertEquals(1, newunion.getNumComponents());
-		DataType dt = dataMgr.getDataType("/struct_1");
-		assertNotNull(dt);
+		Union newUnion = createUnion("Replaced");
+		newUnion.setDescription("testReplaceWith()");
+		newUnion.insert(0, new DWordDataType(), 4, "field2", null);
+		newUnion.insert(0, new WordDataType(), 2, null, "Comment2");
+		newUnion.insert(0, new ByteDataType(), 1, "field0", "Comment1");
+		newUnion.addBitField(IntegerDataType.dataType, 4, "MyBit1", "bitComment1");
+		newUnion.addBitField(IntegerDataType.dataType, 3, "MyBit2", "bitComment2");
 
-		assertEquals(dt, union.getComponent(0).getDataType());
+		//@formatter:off
+		CompositeTestUtils.assertExpectedComposite(this, "/Replaced\n" + 
+			"Unaligned\n" + 
+			"Union Replaced {\n" + 
+			"   0   byte   1   field0   \"Comment1\"\n" + 
+			"   0   word   2   null   \"Comment2\"\n" + 
+			"   0   dword   4   field2   \"\"\n" + 
+			"   0   int:4(0)   1   MyBit1   \"bitComment1\"\n" + 
+			"   0   int:3(0)   1   MyBit2   \"bitComment2\"\n" + 
+			"}\n" + 
+			"Size = 4   Actual Alignment = 1", newUnion);
+		//@formatter:on
+
+		union.replaceWith(newUnion);
+
+		//@formatter:off
+		CompositeTestUtils.assertExpectedComposite(this, "/TestUnion\n" + 
+			"Unaligned\n" + 
+			"Union TestUnion {\n" + 
+			"   0   byte   1   field0   \"Comment1\"\n" + 
+			"   0   word   2   null   \"Comment2\"\n" + 
+			"   0   dword   4   field2   \"\"\n" + 
+			"   0   int:4(0)   1   MyBit1   \"bitComment1\"\n" + 
+			"   0   int:3(0)   1   MyBit2   \"bitComment2\"\n" + 
+			"}\n" + 
+			"Size = 4   Actual Alignment = 1", union);
+		//@formatter:on
+
+		assertEquals("", union.getDescription()); // unchanged
+	}
+
+	@Test
+	public void testCyclingProblem() {
+		Union newUnion = createUnion("Test");
+		newUnion.setDescription("testReplaceWith()");
+		newUnion.add(new ByteDataType(), "field0", "Comment1");
+		newUnion.add(union, "field1", null);
+		newUnion.add(new WordDataType(), null, "Comment2");
+		newUnion.add(new DWordDataType(), "field3", null);
+
+		try {
+			union.add(newUnion);
+			Assert.fail();
+		}
+		catch (IllegalArgumentException e) {
+			// expected
+		}
+		try {
+			union.insert(0, newUnion);
+			Assert.fail();
+		}
+		catch (IllegalArgumentException e) {
+			// expected
+		}
 	}
 
 	/**
@@ -403,6 +625,7 @@ public class UnionTest extends AbstractGenericTest {
 			union.insert(0, unionPointer);
 		}
 		catch (IllegalArgumentException e) {
+			e.printStackTrace();
 			Assert.fail("Should be able to insert a union pointer into the pointer's union.");
 		}
 	}
@@ -452,5 +675,4 @@ public class UnionTest extends AbstractGenericTest {
 				"Should be able to insert a union typedef array pointer into the pointer's union.");
 		}
 	}
-
 }

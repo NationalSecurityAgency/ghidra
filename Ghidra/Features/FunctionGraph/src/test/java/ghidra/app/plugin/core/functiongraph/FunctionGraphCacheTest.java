@@ -36,7 +36,7 @@ public class FunctionGraphCacheTest extends AbstractFunctionGraphTest {
 	private List<Address> disposedFunctionData = Collections.synchronizedList(new ArrayList<>());
 	private List<Address> evictedFromCache = Collections.synchronizedList(new ArrayList<>());
 
-	// partial fake of DecompilerController to take control of the buildCache() method and spy
+	// partial fake of FGController to take control of the buildCache() method and spy
 	// on the two methods that might dispose a FunctionGrahpData object.
 	public class FakeFunctionGraphController extends MockUp<FGController> {
 

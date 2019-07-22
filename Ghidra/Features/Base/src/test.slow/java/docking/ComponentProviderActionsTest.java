@@ -18,6 +18,7 @@ package docking;
 import static org.junit.Assert.*;
 
 import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
 import java.util.Set;
 
 import javax.swing.*;
@@ -43,7 +44,7 @@ public class ComponentProviderActionsTest extends AbstractGhidraHeadedIntegratio
 	private final Icon ICON = ResourceManager.loadImage("images/refresh.png");
 	private static final String PROVIDER_NAME = "Test Action Provider";
 	private static final KeyStroke CONTROL_T =
-		KeyStroke.getKeyStroke(Character.valueOf('t'), DockingUtils.CONTROL_KEY_MODIFIER_MASK);
+		KeyStroke.getKeyStroke(Character.valueOf('T'), DockingUtils.CONTROL_KEY_MODIFIER_MASK);
 
 	private TestEnv env;
 	private PluginTool tool;
@@ -161,6 +162,19 @@ public class ComponentProviderActionsTest extends AbstractGhidraHeadedIntegratio
 	}
 
 	@Test
+	public void testSetKeyBinding_ViaDialog_FromWindowMenu_ThenFireKeyEventToShowProvider() {
+
+		showProvider();
+
+		KeyStroke newKs = CONTROL_T;
+		setKeyBindingViaF4Dialog_FromWindowsMenu(newKs);
+
+		hideProvider();
+		pressKey(CONTROL_T);
+		assertProviderIsActive();
+	}
+
+	@Test
 	public void testSetKeyBinding_ViaDialog_FromWindowMenu_ToAlreadyBoundAction() {
 
 		//
@@ -215,7 +229,7 @@ public class ComponentProviderActionsTest extends AbstractGhidraHeadedIntegratio
 		showProvider();
 
 		KeyStroke newKs = CONTROL_T;
-		setKeyBindingViaF4Dialog_FromToolsToolbar(newKs);
+		setKeyBindingViaF4Dialog_FromToolToolbar(newKs);
 
 		assertProviderKeyStroke(newKs);
 		assertOptionsKeyStroke(newKs);
@@ -312,6 +326,19 @@ public class ComponentProviderActionsTest extends AbstractGhidraHeadedIntegratio
 		assertToolbarActionHasIcon(newIcon);
 	}
 
+	@Test
+	public void testSetCloseButtonKeyBinding() {
+
+		showProvider();
+
+		KeyStroke controlEsc =
+			KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, DockingUtils.CONTROL_KEY_MODIFIER_MASK);
+		setKeyBindingViaF4Dialog_FromCloseButton(controlEsc);
+
+		pressKey(controlEsc);
+		assertProviderIsHidden();
+	}
+
 //==================================================================================================
 // Private Methods
 //==================================================================================================
@@ -323,6 +350,11 @@ public class ComponentProviderActionsTest extends AbstractGhidraHeadedIntegratio
 	private void showProvider() {
 		provider.addToTool();
 		tool.showComponentProvider(provider, true);
+		waitForSwing();
+	}
+
+	private void hideProvider() {
+		tool.showComponentProvider(provider, false);
 		waitForSwing();
 	}
 
@@ -339,6 +371,14 @@ public class ComponentProviderActionsTest extends AbstractGhidraHeadedIntegratio
 			provider.setIcon(icon);
 			provider.addToToolbar();
 		});
+	}
+
+	private void pressKey(KeyStroke ks) {
+		int modifiers = ks.getModifiers();
+		char keyChar = ks.getKeyChar();
+		int keyCode = ks.getKeyCode();
+		JFrame toolFrame = tool.getToolFrame();
+		triggerKey(toolFrame, modifiers, keyCode, keyChar);
 	}
 
 	private DockingActionIf getShowProviderAction() {
@@ -387,6 +427,16 @@ public class ComponentProviderActionsTest extends AbstractGhidraHeadedIntegratio
 		// shared option name/format: "Provider Name (Tool)" - the shared action's owner is the Tool
 		runSwing(() -> keyOptions.setKeyStroke(provider.getName() + " (Tool)", newKs));
 		waitForSwing();
+	}
+
+	private void assertProviderIsActive() {
+		assertTrue("The test provider is not showing and focused",
+			runSwing(() -> tool.isActive(provider)));
+	}
+
+	private void assertProviderIsHidden() {
+		assertFalse("The test provider is showing, but should be hidden",
+			runSwing(() -> tool.isVisible(provider)));
 	}
 
 	private void assertNoToolbarAction() {
@@ -461,6 +511,23 @@ public class ComponentProviderActionsTest extends AbstractGhidraHeadedIntegratio
 		assertFalse("Invalid key stroke: " + ks, runSwing(() -> dialog.isVisible()));
 	}
 
+	private void setKeyBindingViaF4Dialog_FromCloseButton(KeyStroke ks) {
+
+		// simulate the user mousing over the toolbar button		
+		DockingActionIf closeAction = getAction(tool, provider.getOwner(), "Close Window");
+		assertNotNull("Provider action not installed in toolbar", closeAction);
+		DockingWindowManager.setMouseOverAction(closeAction);
+
+		performLaunchKeyStrokeDialogAction();
+		KeyEntryDialog dialog = waitForDialogComponent(KeyEntryDialog.class);
+
+		runSwing(() -> dialog.setKeyStroke(ks));
+
+		pressButtonByText(dialog, "OK");
+
+		assertFalse("Invalid key stroke: " + ks, runSwing(() -> dialog.isVisible()));
+	}
+
 	private void applyBindingToDialog_FromWindowsMenu(KeyStroke ks) {
 		DockingActionIf windowMenuAction = getWindowMenuShowProviderAction();
 		DockingWindowManager.setMouseOverAction(windowMenuAction);
@@ -487,9 +554,9 @@ public class ComponentProviderActionsTest extends AbstractGhidraHeadedIntegratio
 			expected, action.getKeyBinding());
 	}
 
-	private void setKeyBindingViaF4Dialog_FromToolsToolbar(KeyStroke ks) {
+	private void setKeyBindingViaF4Dialog_FromToolToolbar(KeyStroke ks) {
 
-		// simulate the user mousing over the 'Window' menu's action		
+		// simulate the user mousing over the toolbar button		
 		DockingActionIf toolbarAction = getToolbarShowProviderAction();
 		assertNotNull("Provider action not installed in toolbar", toolbarAction);
 		DockingWindowManager.setMouseOverAction(toolbarAction);

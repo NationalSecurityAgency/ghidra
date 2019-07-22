@@ -879,7 +879,7 @@ public class MemoryManagerTest extends AbstractGhidraHeadedIntegrationTest {
 
 		assertEquals(MemoryBlockType.BIT_MAPPED, bitBlock.getType());
 
-		SourceInfo info = bitBlock.getSourceInfos().get(0);
+		MemoryBlockSourceInfo info = bitBlock.getSourceInfos().get(0);
 		assertEquals(new AddressRangeImpl(addr(0xf00), addr(0x10ff)), info.getMappedRange().get());
 		AddressSet expectedInitializedSet = new AddressSet();
 		expectedInitializedSet.add(addr(0), addr(0xfff));
@@ -895,7 +895,7 @@ public class MemoryManagerTest extends AbstractGhidraHeadedIntegrationTest {
 
 		assertEquals(MemoryBlockType.BYTE_MAPPED, byteBlock.getType());
 
-		SourceInfo info = byteBlock.getSourceInfos().get(0);
+		MemoryBlockSourceInfo info = byteBlock.getSourceInfos().get(0);
 		assertEquals(new AddressRangeImpl(addr(0xf00), addr(0x10ff)), info.getMappedRange().get());
 		AddressSet expectedInitializedSet = new AddressSet();
 		expectedInitializedSet.add(addr(0), addr(0xfff));

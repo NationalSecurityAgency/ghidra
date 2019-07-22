@@ -192,7 +192,7 @@ public abstract class BiDirectionDataType extends StructureDataType
 	protected void shiftOffsets(int startIndex, int endIndex, int deltaOrdinal, int deltaOffset) {
 		for (int i = startIndex; i <= endIndex && i < components.size(); i++) {
 			DataTypeComponentImpl dtc = components.get(i);
-			shiftOffsets(dtc, deltaOrdinal, deltaOffset);
+			shiftOffset(dtc, deltaOrdinal, deltaOffset);
 		}
 	}
 
@@ -242,7 +242,7 @@ public abstract class BiDirectionDataType extends StructureDataType
 	}
 
 	@Override
-	public DataTypeComponent insertAtOffset(int offset, DataType dataType, int length,
+	public DataTypeComponentImpl insertAtOffset(int offset, DataType dataType, int length,
 			String newName, String comment) {
 		if (offset < splitOffset - negativeLength || offset >= splitOffset + positiveLength) {
 			throw new IllegalArgumentException(
@@ -295,11 +295,6 @@ public abstract class BiDirectionDataType extends StructureDataType
 		numComponents++;
 		notifySizeChanged();
 		return dtc;
-	}
-
-	@Override
-	public DataTypeComponent insertAtOffset(int offset, DataType dataType, int length) {
-		return insertAtOffset(offset, dataType, length, null, null);
 	}
 
 	@Override
@@ -374,7 +369,7 @@ public abstract class BiDirectionDataType extends StructureDataType
 		structLength += absAmount;
 		notifySizeChanged();
 	}
-	
+
 	@Override
 	public DataTypeComponent insert(int index, DataType dataType, int length, String newName,
 			String comment) {
@@ -405,12 +400,6 @@ public abstract class BiDirectionDataType extends StructureDataType
 //		components.add(idx, dtc);											 
 //		sizeChanged();
 //		return dtc;
-	}
-
-	@Override
-	public void insert(int ordinal, DataType dataType, int length, String name, String comment,
-			int numCopies) {
-		throw new AssertException("BiDirectionDataType.insert() not implemented.");
 	}
 
 	protected void insertAtOffset(int offset, int numBytes) {
@@ -676,7 +665,7 @@ public abstract class BiDirectionDataType extends StructureDataType
 //			dtMgr.dataTypeChanged(this);
 //		}
 	}
-	
+
 	@Override
 	public DataTypeComponent[] getDefinedComponents() {
 		return components.toArray(new DataTypeComponent[components.size()]);
@@ -702,12 +691,6 @@ public abstract class BiDirectionDataType extends StructureDataType
 		dataType = dataType.clone(getDataTypeManager());
 		DataTypeComponent origDtc = getComponent(index);
 		return replace(origDtc, dataType, length, newName, comment);
-	}
-
-	@Override
-	public DataTypeComponent replace(int index, DataType dataType, int length) {
-		validateDataType(dataType);
-		return replace(index, dataType, length, null, null);
 	}
 
 	@Override

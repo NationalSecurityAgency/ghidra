@@ -38,6 +38,7 @@ import docking.action.DockingAction;
 import docking.action.MenuData;
 import docking.help.Help;
 import docking.help.HelpService;
+import docking.tool.ToolConstants;
 import docking.util.AnimationUtils;
 import docking.widgets.OptionDialog;
 import generic.jar.ResourceFile;
@@ -225,8 +226,8 @@ public class FrontEndTool extends PluginTool implements OptionsChangeListener {
 	}
 
 	private void initFrontEndOptions() {
-		ToolOptions options = getOptions("Tool");
-		HelpLocation help = new HelpLocation("Tool", "Save_Tool");
+		ToolOptions options = getOptions(ToolConstants.TOOL_OPTIONS);
+		HelpLocation help = new HelpLocation(ToolConstants.TOOL_HELP_TOPIC, "Save_Tool");
 
 		options.registerOption(AUTOMATICALLY_SAVE_TOOLS, true, help,
 			"When enabled tools will be saved " + "when they are closed");
@@ -285,7 +286,7 @@ public class FrontEndTool extends PluginTool implements OptionsChangeListener {
 			return;
 		}
 
-		ToolOptions options = getOptions("Tool");
+		ToolOptions options = getOptions(ToolConstants.TOOL_OPTIONS);
 		options.removeOptionsChangeListener(this);
 
 		configureToolAction.setEnabled(true);
@@ -656,7 +657,7 @@ public class FrontEndTool extends PluginTool implements OptionsChangeListener {
 		addHelpActions();
 
 		// our log file action
-		DockingAction action = new DockingAction("Show Log", "Tool") {
+		DockingAction action = new DockingAction("Show Log", ToolConstants.TOOL_OWNER) {
 			@Override
 			public void actionPerformed(ActionContext context) {
 				showGhidraUserLogFile();

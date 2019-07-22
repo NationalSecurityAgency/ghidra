@@ -22,12 +22,12 @@ import javax.swing.Icon;
 
 import docking.ActionContext;
 import docking.action.*;
+import docking.tool.ToolConstants;
 import ghidra.app.context.ProgramActionContext;
 import ghidra.app.context.ProgramContextAction;
 import ghidra.app.services.GoToService;
 import ghidra.app.services.NavigationHistoryService;
 import ghidra.framework.plugintool.PluginTool;
-import ghidra.framework.plugintool.util.ToolConstants;
 import ghidra.program.model.listing.Program;
 import ghidra.util.*;
 import resources.ResourceManager;
@@ -38,7 +38,7 @@ public class RedoAction extends ProgramContextAction {
 	public RedoAction(PluginTool tool, String owner) {
 		super("Redo", owner);
 		this.tool = tool;
-		setHelpLocation(new HelpLocation("Tool", "Redo"));
+		setHelpLocation(new HelpLocation(ToolConstants.TOOL_HELP_TOPIC, "Redo"));
 		String[] menuPath = { ToolConstants.MENU_EDIT, "&Redo" };
 		String group = "Undo";
 		Icon icon = ResourceManager.loadImage("images/redo.png");

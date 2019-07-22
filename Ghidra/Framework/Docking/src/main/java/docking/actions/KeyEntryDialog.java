@@ -25,6 +25,7 @@ import javax.swing.text.*;
 import docking.DialogComponentProvider;
 import docking.KeyEntryTextField;
 import docking.action.*;
+import docking.tool.ToolConstants;
 import docking.widgets.label.GIconLabel;
 import ghidra.util.HelpLocation;
 import ghidra.util.ReservedKeyBindings;
@@ -54,7 +55,7 @@ public class KeyEntryDialog extends DialogComponentProvider {
 		createPanel();
 		KeyStroke keyBinding = action.getKeyBinding();
 		updateCollisionPane(keyBinding);
-		setHelpLocation(new HelpLocation("Tool", "KeyBindingPopup"));
+		setHelpLocation(new HelpLocation(ToolConstants.TOOL_HELP_TOPIC, "KeyBindingPopup"));
 	}
 
 	private void createPanel() {
@@ -160,8 +161,6 @@ public class KeyEntryDialog extends DialogComponentProvider {
 		}
 
 		action.setUnvalidatedKeyBindingData(new KeyBindingData(newKeyStroke));
-
-		toolActions.keyBindingsChanged();
 
 		close();
 	}

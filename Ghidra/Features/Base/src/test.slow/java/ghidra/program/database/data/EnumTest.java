@@ -48,7 +48,7 @@ public class EnumTest extends AbstractGhidraHeadedIntegrationTest {
     public void setUp() throws Exception {
 		program = createDefaultProgram("Test", ProgramBuilder._TOY, this);
 
-		dataMgr = program.getDataManager();
+		dataMgr = program.getDataTypeManager();
 		transactionID = program.startTransaction("Test");
 	}
 

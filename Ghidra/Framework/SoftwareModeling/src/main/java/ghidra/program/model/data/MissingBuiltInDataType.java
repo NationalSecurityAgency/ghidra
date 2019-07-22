@@ -72,6 +72,7 @@ public class MissingBuiltInDataType extends DataTypeImpl implements Dynamic {
 	/* (non-Javadoc)
 	 * @see ghidra.program.model.data.DataType#getMnemonic(ghidra.program.model.data.Settings)
 	 */
+	@Override
 	public String getMnemonic(Settings settings) {
 		return getName();
 	}
@@ -79,6 +80,7 @@ public class MissingBuiltInDataType extends DataTypeImpl implements Dynamic {
 	/* (non-Javadoc)
 	 * @see ghidra.program.model.data.DataType#getLength()
 	 */
+	@Override
 	public int getLength() {
 		return -1;
 	}
@@ -86,10 +88,12 @@ public class MissingBuiltInDataType extends DataTypeImpl implements Dynamic {
 	/**
 	 * @see ghidra.program.model.data.DataType#isDynamicallySized()
 	 */
+	@Override
 	public boolean isDynamicallySized() {
 		return true;
 	}
 
+	@Override
 	public boolean canSpecifyLength() {
 		return true;
 	}
@@ -97,6 +101,7 @@ public class MissingBuiltInDataType extends DataTypeImpl implements Dynamic {
 	/**
 	 * @see ghidra.program.model.data.Dynamic#getLength(ghidra.program.model.mem.MemBuffer, int)
 	 */
+	@Override
 	public int getLength(MemBuffer buf, int maxLength) {
 		return -1;
 	}
@@ -104,6 +109,7 @@ public class MissingBuiltInDataType extends DataTypeImpl implements Dynamic {
 	/* (non-Javadoc)
 	 * @see ghidra.program.model.data.DataType#getDescription()
 	 */
+	@Override
 	public String getDescription() {
 		return "Missing Built-In Data Type: " + missingBuiltInClassPath;
 	}
@@ -111,6 +117,7 @@ public class MissingBuiltInDataType extends DataTypeImpl implements Dynamic {
 	/* (non-Javadoc)
 	 * @see ghidra.program.model.data.DataType#getRepresentation(ghidra.program.model.mem.MemBuffer, ghidra.program.model.lang.ProcessorContext, ghidra.program.model.data.Settings, int)
 	 */
+	@Override
 	public String getRepresentation(MemBuffer buf, Settings settings, int length) {
 		return missingBuiltInClassPath;
 	}
@@ -118,41 +125,50 @@ public class MissingBuiltInDataType extends DataTypeImpl implements Dynamic {
 	/* (non-Javadoc)
 	 * @see ghidra.program.model.data.DataType#getValue(ghidra.program.model.mem.MemBuffer, ghidra.program.model.lang.ProcessorContext, ghidra.program.model.data.Settings, int)
 	 */
+	@Override
 	public Object getValue(MemBuffer buf, Settings settings, int length) {
 		return missingBuiltInClassPath;
 	}
 
+	@Override
 	public DataType clone(DataTypeManager dtm) {
 		if (dtm == getDataTypeManager()) {
 			return this;
 		}
-		return new MissingBuiltInDataType(categoryPath, missingBuiltInName,
-			missingBuiltInClassPath, dtm);
+		return new MissingBuiltInDataType(categoryPath, missingBuiltInName, missingBuiltInClassPath,
+			dtm);
 	}
 
 	/**
 	 * @see ghidra.program.model.data.DataType#copy(ghidra.program.model.data.DataTypeManager)
 	 */
+	@Override
 	public final DataType copy(DataTypeManager dtm) {
 		return clone(dtm);
 	}
 
+	@Override
 	public void dataTypeDeleted(DataType dt) {
 	}
 
+	@Override
 	public void dataTypeNameChanged(DataType dt, String oldName) {
 	}
 
+	@Override
 	public void dataTypeReplaced(DataType oldDt, DataType newDt) {
 	}
 
+	@Override
 	public void dataTypeSizeChanged(DataType dt) {
 	}
 
+	@Override
 	public boolean dependsOn(DataType dt) {
 		return false;
 	}
 
+	@Override
 	public boolean isEquivalent(DataType dt) {
 		if (dt == null) {
 			return false;
@@ -163,17 +179,21 @@ public class MissingBuiltInDataType extends DataTypeImpl implements Dynamic {
 		if (!(dt instanceof MissingBuiltInDataType)) {
 			return false;
 		}
-		return missingBuiltInClassPath.equals(((MissingBuiltInDataType) dt).missingBuiltInClassPath);
+		return missingBuiltInClassPath.equals(
+			((MissingBuiltInDataType) dt).missingBuiltInClassPath);
 	}
 
+	@Override
 	public void setCategoryPath(CategoryPath path) throws DuplicateNameException {
 	}
 
-	public void setName(String name) throws InvalidNameException, DuplicateNameException {
+	@Override
+	public void setName(String name) throws InvalidNameException {
 	}
 
-	public void setNameAndCategory(CategoryPath path, String name) throws InvalidNameException,
-			DuplicateNameException {
+	@Override
+	public void setNameAndCategory(CategoryPath path, String name)
+			throws InvalidNameException, DuplicateNameException {
 	}
 
 	@Override
@@ -184,10 +204,12 @@ public class MissingBuiltInDataType extends DataTypeImpl implements Dynamic {
 	/**
 	 * @see ghidra.program.model.data.BuiltInDataType#getCTypeDeclaration(ghidra.program.model.data.DataOrganization)
 	 */
+	@Override
 	public String getCTypeDeclaration(DataOrganization dataOrganization) {
 		return null; // missing type
 	}
 
+	@Override
 	public DataType getReplacementBaseType() {
 		return null;
 	}

@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,10 +20,10 @@ import ghidra.app.nav.PreviousRangeAction;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.core.navigation.NavigationOptions;
 import ghidra.framework.plugintool.PluginTool;
-import ghidra.framework.plugintool.util.ToolConstants;
 import ghidra.program.util.ProgramSelection;
 import ghidra.util.HelpLocation;
 import docking.action.MenuData;
+import docking.tool.ToolConstants;
 
 public class PreviousColorRangeAction extends PreviousRangeAction {
 

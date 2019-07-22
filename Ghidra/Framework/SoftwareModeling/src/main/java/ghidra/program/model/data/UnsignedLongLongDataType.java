@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,6 +37,7 @@ public class UnsignedLongLongDataType extends AbstractIntegerDataType {
 	 * 
 	 * @see ghidra.program.model.data.DataType#getLength()
 	 */
+	@Override
 	public int getLength() {
 		return getDataOrganization().getLongLongSize();
 	}
@@ -54,6 +54,7 @@ public class UnsignedLongLongDataType extends AbstractIntegerDataType {
 	 * 
 	 * @see ghidra.program.model.data.DataType#getDescription()
 	 */
+	@Override
 	public String getDescription() {
 		return "Unsigned Long Long Integer (compiler-specific size)";
 	}
@@ -64,11 +65,12 @@ public class UnsignedLongLongDataType extends AbstractIntegerDataType {
 	}
 
 	@Override
-	public DataType getOppositeSignednessDataType() {
+	public LongLongDataType getOppositeSignednessDataType() {
 		return LongLongDataType.dataType.clone(getDataTypeManager());
 	}
 
-	public DataType clone(DataTypeManager dtm) {
+	@Override
+	public UnsignedLongLongDataType clone(DataTypeManager dtm) {
 		if (dtm == getDataTypeManager()) {
 			return this;
 		}

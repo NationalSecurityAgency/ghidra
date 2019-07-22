@@ -16,25 +16,36 @@
 /*
  *
  */
-package ghidra.program.model.data;
+package ghidra.program.database.data;
 
 import static org.junit.Assert.*;
 
 import org.junit.*;
 
 import generic.test.AbstractGTest;
+import ghidra.program.model.data.*;
 
 /**
  *
  */
-public class StructureTest extends AbstractGTest {
+public class StructureDataTypeTest extends AbstractGTest {
+
 	private Structure struct;
 
-	/**
-	 * @param arg0
-	 */
-	public StructureTest() {
-		super();
+	@Before
+	public void setUp() throws Exception {
+		struct = createStructure("TestStruct", 0);
+		struct.add(new ByteDataType(), "field1", "Comment1");
+		struct.add(new WordDataType(), null, "Comment2");
+		struct.add(new DWordDataType(), "field3", null);
+		struct.add(new ByteDataType(), "field4", "Comment4");
+	}
+
+	private void transitionToBigEndian() {
+
+		// transition default little-endian structure to big-endian
+		DataTypeManager beDtm = new MyBigEndianDataTypeManager();
+		struct = (Structure) struct.clone(beDtm);
 	}
 
 	private Structure createStructure(String name, int length) {
@@ -55,15 +66,6 @@ public class StructureTest extends AbstractGTest {
 
 	private Pointer createPointer(DataType dataType, int length) {
 		return new PointerDataType(dataType, length);
-	}
-
-	@Before
-	public void setUp() throws Exception {
-		struct = createStructure("TestStruct", 0);
-		struct.add(new ByteDataType(), "field1", "Comment1");
-		struct.add(new WordDataType(), null, "Comment2");
-		struct.add(new DWordDataType(), "field3", null);
-		struct.add(new ByteDataType(), "field4", "Comment4");
 	}
 
 	@Test
@@ -412,6 +414,304 @@ public class StructureTest extends AbstractGTest {
 	}
 
 	@Test
+	public void testInsertBitFieldLittleEndianAppend() throws Exception {
+
+		struct.insertBitField(4, 4, 0, IntegerDataType.dataType, 3, "bf1", "bf1Comment");
+
+		//@formatter:off
+		CompositeTestUtils.assertExpectedComposite(this, "/TestStruct\n" + 
+			"Unaligned\n" + 
+			"Structure TestStruct {\n" + 
+			"   0   byte   1   field1   \"Comment1\"\n" + 
+			"   1   word   2   null   \"Comment2\"\n" + 
+			"   3   dword   4   field3   \"\"\n" + 
+			"   7   byte   1   field4   \"Comment4\"\n" + 
+			"   8   int:3(0)   1   bf1   \"bf1Comment\"\n" + 
+			"   9   undefined   1   null   \"\"\n" + 
+			"   10   undefined   1   null   \"\"\n" + 
+			"   11   undefined   1   null   \"\"\n" + 
+			"}\n" + 
+			"Size = 12   Actual Alignment = 1", struct);
+		//@formatter:on
+
+		struct.insertBitField(4, 4, 3, IntegerDataType.dataType, 3, "bf2", "bf2Comment");
+
+		//@formatter:off
+		CompositeTestUtils.assertExpectedComposite(this, "/TestStruct\n" + 
+			"Unaligned\n" + 
+			"Structure TestStruct {\n" + 
+			"   0   byte   1   field1   \"Comment1\"\n" + 
+			"   1   word   2   null   \"Comment2\"\n" + 
+			"   3   dword   4   field3   \"\"\n" + 
+			"   7   byte   1   field4   \"Comment4\"\n" + 
+			"   8   int:3(0)   1   bf1   \"bf1Comment\"\n" + 
+			"   8   int:3(3)   1   bf2   \"bf2Comment\"\n" + 
+			"   9   undefined   1   null   \"\"\n" + 
+			"   10   undefined   1   null   \"\"\n" + 
+			"   11   undefined   1   null   \"\"\n" + 
+			"}\n" + 
+			"Size = 12   Actual Alignment = 1", struct);
+		//@formatter:on
+	}
+
+	@Test
+	public void testInsertBitFieldAtLittleEndianAppend() throws Exception {
+
+		struct.insertBitFieldAt(10, 4, 0, IntegerDataType.dataType, 3, "bf1", "bf1Comment");
+
+		//@formatter:off
+		CompositeTestUtils.assertExpectedComposite(this, "/TestStruct\n" + 
+			"Unaligned\n" + 
+			"Structure TestStruct {\n" + 
+			"   0   byte   1   field1   \"Comment1\"\n" + 
+			"   1   word   2   null   \"Comment2\"\n" + 
+			"   3   dword   4   field3   \"\"\n" + 
+			"   7   byte   1   field4   \"Comment4\"\n" + 
+			"   8   undefined   1   null   \"\"\n" + 
+			"   9   undefined   1   null   \"\"\n" + 
+			"   10   int:3(0)   1   bf1   \"bf1Comment\"\n" + 
+			"   11   undefined   1   null   \"\"\n" + 
+			"   12   undefined   1   null   \"\"\n" + 
+			"   13   undefined   1   null   \"\"\n" + 
+			"}\n" + 
+			"Size = 14   Actual Alignment = 1", struct);
+		//@formatter:on
+
+		struct.insertBitFieldAt(10, 4, 3, IntegerDataType.dataType, 3, "bf2", "bf2Comment");
+
+		//@formatter:off
+		CompositeTestUtils.assertExpectedComposite(this, "/TestStruct\n" + 
+			"Unaligned\n" + 
+			"Structure TestStruct {\n" + 
+			"   0   byte   1   field1   \"Comment1\"\n" + 
+			"   1   word   2   null   \"Comment2\"\n" + 
+			"   3   dword   4   field3   \"\"\n" + 
+			"   7   byte   1   field4   \"Comment4\"\n" + 
+			"   8   undefined   1   null   \"\"\n" + 
+			"   9   undefined   1   null   \"\"\n" + 
+			"   10   int:3(0)   1   bf1   \"bf1Comment\"\n" + 
+			"   10   int:3(3)   1   bf2   \"bf2Comment\"\n" + 
+			"   11   undefined   1   null   \"\"\n" + 
+			"   12   undefined   1   null   \"\"\n" + 
+			"   13   undefined   1   null   \"\"\n" + 
+			"}\n" + 
+			"Size = 14   Actual Alignment = 1", struct);
+		//@formatter:on
+	}
+
+	@Test
+	public void testInsertBitFieldAtLittleEndian() throws Exception {
+
+		struct.insertBitFieldAt(2, 4, 0, IntegerDataType.dataType, 3, "bf1", "bf1Comment");
+
+		//@formatter:off
+		CompositeTestUtils.assertExpectedComposite(this, "/TestStruct\n" + 
+			"Unaligned\n" + 
+			"Structure TestStruct {\n" + 
+			"   0   byte   1   field1   \"Comment1\"\n" + 
+			"   1   undefined   1   null   \"\"\n" + 
+			"   2   int:3(0)   1   bf1   \"bf1Comment\"\n" + 
+			"   3   undefined   1   null   \"\"\n" + 
+			"   4   undefined   1   null   \"\"\n" + 
+			"   5   undefined   1   null   \"\"\n" + 
+			"   6   word   2   null   \"Comment2\"\n" + 
+			"   8   dword   4   field3   \"\"\n" + 
+			"   12   byte   1   field4   \"Comment4\"\n" + 
+			"}\n" + 
+			"Size = 13   Actual Alignment = 1", struct);
+		//@formatter:on
+
+		struct.insertBitFieldAt(2, 4, 3, IntegerDataType.dataType, 3, "bf2", "bf2Comment");
+
+		//@formatter:off
+		CompositeTestUtils.assertExpectedComposite(this, "/TestStruct\n" + 
+			"Unaligned\n" + 
+			"Structure TestStruct {\n" + 
+			"   0   byte   1   field1   \"Comment1\"\n" + 
+			"   1   undefined   1   null   \"\"\n" + 
+			"   2   int:3(0)   1   bf1   \"bf1Comment\"\n" + 
+			"   2   int:3(3)   1   bf2   \"bf2Comment\"\n" + 
+			"   3   undefined   1   null   \"\"\n" + 
+			"   4   undefined   1   null   \"\"\n" + 
+			"   5   undefined   1   null   \"\"\n" + 
+			"   6   word   2   null   \"Comment2\"\n" + 
+			"   8   dword   4   field3   \"\"\n" + 
+			"   12   byte   1   field4   \"Comment4\"\n" + 
+			"}\n" + 
+			"Size = 13   Actual Alignment = 1", struct);
+		//@formatter:on
+
+		struct.insertBitFieldAt(2, 4, 6, IntegerDataType.dataType, 15, "bf3", "bf3Comment");
+
+		//@formatter:off
+		CompositeTestUtils.assertExpectedComposite(this, "/TestStruct\n" + 
+			"Unaligned\n" + 
+			"Structure TestStruct {\n" + 
+			"   0   byte   1   field1   \"Comment1\"\n" + 
+			"   1   undefined   1   null   \"\"\n" + 
+			"   2   int:3(0)   1   bf1   \"bf1Comment\"\n" + 
+			"   2   int:3(3)   1   bf2   \"bf2Comment\"\n" + 
+			"   2   int:15(6)   3   bf3   \"bf3Comment\"\n" + 
+			"   5   undefined   1   null   \"\"\n" + 
+			"   6   word   2   null   \"Comment2\"\n" + 
+			"   8   dword   4   field3   \"\"\n" + 
+			"   12   byte   1   field4   \"Comment4\"\n" + 
+			"}\n" + 
+			"Size = 13   Actual Alignment = 1", struct);
+		//@formatter:on
+
+		try {
+			struct.insertBitFieldAt(2, 4, 21, IntegerDataType.dataType, 12, "bf4", "bf4Comment");
+			fail(
+				"expected - IllegalArgumentException: Bitfield does not fit within specified constraints");
+		}
+		catch (IllegalArgumentException e) {
+			// expected
+		}
+
+		struct.insertBitFieldAt(2, 4, 21, IntegerDataType.dataType, 11, "bf4", "bf4Comment");
+
+		//@formatter:off
+		CompositeTestUtils.assertExpectedComposite(this, "/TestStruct\n" + 
+			"Unaligned\n" + 
+			"Structure TestStruct {\n" + 
+			"   0   byte   1   field1   \"Comment1\"\n" + 
+			"   1   undefined   1   null   \"\"\n" + 
+			"   2   int:3(0)   1   bf1   \"bf1Comment\"\n" + 
+			"   2   int:3(3)   1   bf2   \"bf2Comment\"\n" + 
+			"   2   int:15(6)   3   bf3   \"bf3Comment\"\n" + 
+			"   4   int:11(5)   2   bf4   \"bf4Comment\"\n" + 
+			"   6   word   2   null   \"Comment2\"\n" + 
+			"   8   dword   4   field3   \"\"\n" + 
+			"   12   byte   1   field4   \"Comment4\"\n" + 
+			"}\n" + 
+			"Size = 13   Actual Alignment = 1", struct);
+		//@formatter:on
+	}
+
+	@Test
+	public void testInsertBitFieldAtBigEndian() throws Exception {
+
+		transitionToBigEndian();
+
+		try {
+			struct.insertBitFieldAt(2, 4, 30, IntegerDataType.dataType, 3, "bf1", "bf1Comment");
+			fail(
+				"expected - IllegalArgumentException: Bitfield does not fit within specified constraints");
+		}
+		catch (IllegalArgumentException e) {
+			// expected
+		}
+
+		struct.insertBitFieldAt(2, 4, 29, IntegerDataType.dataType, 3, "bf1", "bf1Comment");
+
+		//@formatter:off
+		CompositeTestUtils.assertExpectedComposite(this, "/TestStruct\n" + 
+			"Unaligned\n" + 
+			"Structure TestStruct {\n" + 
+			"   0   byte   1   field1   \"Comment1\"\n" + 
+			"   1   undefined   1   null   \"\"\n" + 
+			"   2   int:3(5)   1   bf1   \"bf1Comment\"\n" + 
+			"   3   undefined   1   null   \"\"\n" + 
+			"   4   undefined   1   null   \"\"\n" + 
+			"   5   undefined   1   null   \"\"\n" + 
+			"   6   word   2   null   \"Comment2\"\n" + 
+			"   8   dword   4   field3   \"\"\n" + 
+			"   12   byte   1   field4   \"Comment4\"\n" + 
+			"}\n" + 
+			"Size = 13   Actual Alignment = 1", struct);
+		//@formatter:on
+
+		struct.insertBitFieldAt(2, 4, 26, IntegerDataType.dataType, 3, "bf2", "bf2Comment");
+
+		//@formatter:off
+		CompositeTestUtils.assertExpectedComposite(this, "/TestStruct\n" + 
+			"Unaligned\n" + 
+			"Structure TestStruct {\n" + 
+			"   0   byte   1   field1   \"Comment1\"\n" + 
+			"   1   undefined   1   null   \"\"\n" + 
+			"   2   int:3(5)   1   bf1   \"bf1Comment\"\n" + 
+			"   2   int:3(2)   1   bf2   \"bf2Comment\"\n" + 
+			"   3   undefined   1   null   \"\"\n" + 
+			"   4   undefined   1   null   \"\"\n" + 
+			"   5   undefined   1   null   \"\"\n" + 
+			"   6   word   2   null   \"Comment2\"\n" + 
+			"   8   dword   4   field3   \"\"\n" + 
+			"   12   byte   1   field4   \"Comment4\"\n" + 
+			"}\n" + 
+			"Size = 13   Actual Alignment = 1", struct);
+		//@formatter:on
+
+		struct.insertBitFieldAt(2, 4, 11, IntegerDataType.dataType, 15, "bf3", "bf3Comment");
+
+		//@formatter:off
+		CompositeTestUtils.assertExpectedComposite(this, "/TestStruct\n" + 
+			"Unaligned\n" + 
+			"Structure TestStruct {\n" + 
+			"   0   byte   1   field1   \"Comment1\"\n" + 
+			"   1   undefined   1   null   \"\"\n" + 
+			"   2   int:3(5)   1   bf1   \"bf1Comment\"\n" + 
+			"   2   int:3(2)   1   bf2   \"bf2Comment\"\n" + 
+			"   2   int:15(3)   3   bf3   \"bf3Comment\"\n" + 
+			"   5   undefined   1   null   \"\"\n" + 
+			"   6   word   2   null   \"Comment2\"\n" + 
+			"   8   dword   4   field3   \"\"\n" + 
+			"   12   byte   1   field4   \"Comment4\"\n" + 
+			"}\n" + 
+			"Size = 13   Actual Alignment = 1", struct);
+		//@formatter:on
+
+		struct.insertBitFieldAt(2, 4, 0, IntegerDataType.dataType, 11, "bf4", "bf4Comment");
+
+		//@formatter:off
+		CompositeTestUtils.assertExpectedComposite(this, "/TestStruct\n" + 
+			"Unaligned\n" + 
+			"Structure TestStruct {\n" + 
+			"   0   byte   1   field1   \"Comment1\"\n" + 
+			"   1   undefined   1   null   \"\"\n" + 
+			"   2   int:3(5)   1   bf1   \"bf1Comment\"\n" + 
+			"   2   int:3(2)   1   bf2   \"bf2Comment\"\n" + 
+			"   2   int:15(3)   3   bf3   \"bf3Comment\"\n" + 
+			"   4   int:11(0)   2   bf4   \"bf4Comment\"\n" + 
+			"   6   word   2   null   \"Comment2\"\n" + 
+			"   8   dword   4   field3   \"\"\n" + 
+			"   12   byte   1   field4   \"Comment4\"\n" + 
+			"}\n" + 
+			"Size = 13   Actual Alignment = 1", struct);
+		//@formatter:on
+	}
+
+	@Test
+	public void testInsertAtOffsetAfterBeforeBitField() throws Exception {
+
+		struct.insertBitFieldAt(2, 4, 0, IntegerDataType.dataType, 3, "bf1", "bf1Comment");
+		struct.insertBitFieldAt(2, 4, 3, IntegerDataType.dataType, 3, "bf2", "bf2Comment");
+		struct.insertBitFieldAt(2, 4, 6, IntegerDataType.dataType, 15, "bf3", "bf3Comment");
+		struct.insertBitFieldAt(2, 4, 21, IntegerDataType.dataType, 11, "bf4", "bf4Comment");
+
+		struct.insertAtOffset(2, FloatDataType.dataType, 4);
+
+		//@formatter:off
+		CompositeTestUtils.assertExpectedComposite(this, "/TestStruct\n" + 
+			"Unaligned\n" + 
+			"Structure TestStruct {\n" + 
+			"   0   byte   1   field1   \"Comment1\"\n" + 
+			"   1   undefined   1   null   \"\"\n" + 
+			"   2   float   4   null   \"\"\n" + 
+			"   6   int:3(0)   1   bf1   \"bf1Comment\"\n" + 
+			"   6   int:3(3)   1   bf2   \"bf2Comment\"\n" + 
+			"   6   int:15(6)   3   bf3   \"bf3Comment\"\n" + 
+			"   8   int:11(5)   2   bf4   \"bf4Comment\"\n" + 
+			"   10   word   2   null   \"Comment2\"\n" + 
+			"   12   dword   4   field3   \"\"\n" + 
+			"   16   byte   1   field4   \"Comment4\"\n" + 
+			"}\n" + 
+			"Size = 17   Actual Alignment = 1", struct);
+		//@formatter:on
+
+	}
+
+	@Test
 	public void testClearComponent() {
 		struct.clearComponent(0);
 		assertEquals(8, struct.getLength());
@@ -437,6 +737,18 @@ public class StructureTest extends AbstractGTest {
 		assertEquals(DWordDataType.class, dtc.getDataType().getClass());
 		assertEquals(3, dtc.getOrdinal());
 		assertEquals(3, dtc.getOffset());
+	}
+
+	@Test
+	public void testReplaceFailure() {// bigger, no space below
+		DataTypeComponent dtc = null;
+		try {
+			dtc = struct.replace(0, new QWordDataType(), 8);
+		}
+		catch (IllegalArgumentException e) {
+			// Not enough undefined bytes so should throw this.
+		}
+		assertNull(dtc);
 	}
 
 	@Test
@@ -490,6 +802,99 @@ public class StructureTest extends AbstractGTest {
 	}
 
 	@Test
+	public void testDataTypeReplaced1() {// bigger, space below
+		Structure struct2 = createStructure("struct2", 3);
+		Structure struct2A = createStructure("struct2A", 5);
+		struct.insert(0, DataType.DEFAULT);
+		struct.insert(3, struct2);
+		struct.clearComponent(4);
+		assertEquals(12, struct.getLength());
+		assertEquals(9, struct.getNumComponents());
+
+		struct.dataTypeReplaced(struct2, struct2A);
+		assertEquals(12, struct.getLength());
+		assertEquals(7, struct.getNumComponents());
+		DataTypeComponent[] comps = struct.getDefinedComponents();
+		assertEquals(4, comps[2].getOffset());
+		assertEquals(3, comps[2].getOrdinal());
+		assertEquals(5, comps[2].getLength());
+		assertEquals(11, comps[3].getOffset());
+		assertEquals(6, comps[3].getOrdinal());
+	}
+
+	@Test
+	public void testDataTypeReplaced3() {// bigger, no space at end (structure grows)
+		Structure struct2 = createStructure("struct2", 3);
+		Structure struct2A = createStructure("struct2A", 5);
+		struct.add(struct2);
+		assertEquals(11, struct.getLength());
+		assertEquals(5, struct.getNumComponents());
+
+		struct.dataTypeReplaced(struct2, struct2A);
+		assertEquals(13, struct.getLength());
+		assertEquals(5, struct.getNumComponents());
+		DataTypeComponent[] comps = struct.getDefinedComponents();
+		assertEquals(8, comps[4].getOffset());
+		assertEquals(4, comps[4].getOrdinal());
+		assertEquals(5, comps[4].getLength());
+	}
+
+	@Test
+	public void testDataTypeSizeChanged() {
+		Structure struct2 = createStructure("struct2", 3);
+		struct.add(struct2);
+		assertEquals(11, struct.getLength());
+		assertEquals(5, struct.getNumComponents());
+
+		struct2.add(new WordDataType());
+		assertEquals(13, struct.getLength());
+		assertEquals(5, struct.getNumComponents());
+		DataTypeComponent[] comps = struct.getDefinedComponents();
+		assertEquals(8, comps[4].getOffset());
+		assertEquals(4, comps[4].getOrdinal());
+		assertEquals(5, comps[4].getLength());
+	}
+
+	@Test
+	public void testDataTypeComponentReplaced() {// bigger, no space at end (structure grows)
+		Structure struct2 = createStructure("struct2", 3);
+		Structure struct2A = createStructure("struct2A", 5);
+		struct.add(struct2);
+		assertEquals(11, struct.getLength());
+		assertEquals(5, struct.getNumComponents());
+
+		struct.replace(4, struct2A, struct2A.getLength());
+		assertEquals(13, struct.getLength());
+		assertEquals(5, struct.getNumComponents());
+		DataTypeComponent[] comps = struct.getDefinedComponents();
+		assertEquals(8, comps[4].getOffset());
+		assertEquals(4, comps[4].getOrdinal());
+		assertEquals(5, comps[4].getLength());
+	}
+
+	@Test
+	public void testDataTypeReplaced2() {// smaller, create undefineds
+		Structure struct2 = createStructure("struct2", 5);
+		Structure struct2A = createStructure("struct2A", 3);
+		struct.insert(0, DataType.DEFAULT);
+		struct.insert(0, DataType.DEFAULT);
+		struct.insert(4, struct2);
+		assertEquals(15, struct.getLength());
+		assertEquals(7, struct.getNumComponents());
+
+		struct.dataTypeReplaced(struct2, struct2A);
+
+		assertEquals(15, struct.getLength());
+		assertEquals(9, struct.getNumComponents());
+		DataTypeComponent[] comps = struct.getDefinedComponents();
+		assertEquals(5, comps[2].getOffset());
+		assertEquals(4, comps[2].getOrdinal());
+		assertEquals(3, comps[2].getLength());
+		assertEquals(10, comps[3].getOffset());
+		assertEquals(7, comps[3].getOrdinal());
+	}
+
+	@Test
 	public void testDelete() {
 		struct.delete(1);
 		assertEquals(6, struct.getLength());
@@ -507,6 +912,25 @@ public class StructureTest extends AbstractGTest {
 		DataTypeComponent[] comps = struct.getDefinedComponents();
 		assertEquals(DWordDataType.class, comps[1].getDataType().getClass());
 		assertEquals(1, comps[1].getOffset());
+	}
+
+	@Test
+	public void testDeleteComponent() {
+		Structure s = new StructureDataType("test1", 0);
+		s.add(new ByteDataType());
+		s.add(new FloatDataType());
+
+		struct.add(s);
+
+		DataTypeComponent[] dtc = struct.getComponents();
+		assertEquals(5, dtc.length);
+
+		struct.dataTypeDeleted(s);
+
+		dtc = struct.getComponents();
+		assertEquals(9, dtc.length);
+
+		assertEquals(9, struct.getNumComponents());
 	}
 
 	@Test
@@ -586,6 +1010,87 @@ public class StructureTest extends AbstractGTest {
 	}
 
 	@Test
+	public void testAddVarLengthDataTypes() {
+		Structure s1 = createStructure("Test1", 0);
+		s1.add(new StringDataType(), 5);
+		s1.add(new StringDataType(), 10);
+		s1.add(new StringDataType(), 15);
+
+		DataTypeComponent dtc = s1.getComponentAt(5);
+		DataType dt = dtc.getDataType();
+		assertEquals(-1, dt.getLength());
+		assertEquals(10, dtc.getLength());
+		assertEquals("string", dt.getDisplayName());
+
+	}
+
+	@Test
+	public void testReplaceVarLengthDataTypes() {
+		Structure s1 = new StructureDataType("Test1", 25);
+
+		s1.replaceAtOffset(0, new StringDataType(), 5, null, null);
+		s1.replaceAtOffset(5, new StringDataType(), 10, null, null);
+		s1.replaceAtOffset(15, new StringDataType(), 10, null, null);
+
+		DataTypeComponent dtc = s1.getComponentAt(5);
+		DataType dt = dtc.getDataType();
+		assertEquals(-1, dt.getLength());
+		assertEquals(10, dtc.getLength());
+		assertEquals("string", dt.getDisplayName());
+	}
+
+	@Test
+	public void testReplaceVarLengthDataTypes2() {
+
+		Structure s1 = new StructureDataType("Test1", 0x60);
+		s1.replaceAtOffset(0, new StringDataType(), 0xd, null, null);
+
+		s1.replaceAtOffset(0xd, new StringDataType(), 0xd, null, null);
+		s1.replaceAtOffset(0x19, new StringDataType(), 0xc, null, null);
+		s1.replaceAtOffset(0x24, new StringDataType(), 0xb, null, null);
+		s1.replaceAtOffset(0x31, new StringDataType(), 0xd, null, null);
+		s1.replaceAtOffset(0x3e, new StringDataType(), 0xa, null, null);
+		s1.replaceAtOffset(0x48, new StringDataType(), 0xb, null, null);
+		s1.replaceAtOffset(0x53, new StringDataType(), 0xd, null, null);
+
+		DataTypeComponent dtc = s1.getComponentAt(0);
+		DataType dt = dtc.getDataType();
+		assertEquals("string", dt.getDisplayName());
+		assertEquals(0xd, dtc.getLength());
+
+		dtc = s1.getComponentAt(0x31);
+		dt = dtc.getDataType();
+		assertEquals("string", dt.getDisplayName());
+		assertEquals(0xd, dtc.getLength());
+	}
+
+	@Test
+	public void testSetName() throws Exception {
+		Structure s1 = new StructureDataType("Test1", 0);
+		s1.add(new StringDataType(), 5);
+		s1.add(new StringDataType(), 10);
+		s1.add(new StringDataType(), 15);
+		s1.add(new ByteDataType());
+
+		s1.setName("NewName");
+
+		assertEquals("NewName", s1.getName());
+	}
+
+	@Test
+	public void testTypedefName() throws Exception {
+		Structure s1 = new StructureDataType("Test1", 0);
+		s1.add(new StringDataType(), 5);
+		s1.add(new StringDataType(), 10);
+		TypedefDataType typdef = new TypedefDataType("TypedefToTest1", s1);
+
+		assertEquals("TypedefToTest1", typdef.getName());
+
+		typdef.setName("NewTypedef");
+		assertEquals("NewTypedef", typdef.getName());
+	}
+
+	@Test
 	public void testGetDataTypeAt() {
 		Structure s1 = createStructure("Test1", 0);
 		s1.add(new WordDataType());
@@ -619,6 +1124,66 @@ public class StructureTest extends AbstractGTest {
 		assertEquals(dtc2, dtcs[2]);
 		assertEquals("TestStruct", struct.getName());
 		assertEquals("", struct.getDescription());
+	}
+
+	@Test
+	public void testReplaceWith2() throws InvalidDataTypeException {
+
+		// NOTE: unaligned bitfields should remain unchanged when
+		// transitioning endianess even though it makes little sense.
+		// Unaligned structures are not intended to be portable! 
+
+		TypeDef td = new TypedefDataType("Foo", IntegerDataType.dataType);
+
+		struct.insertBitFieldAt(9, 1, 0, td, 4, "MyBit1", "bitComment1");
+		struct.insertBitFieldAt(9, 1, 4, td, 3, "MyBit2", "bitComment2");
+		struct.insertBitFieldAt(9, 2, 7, td, 2, "MyBit3", "bitComment3");
+		struct.growStructure(1);
+
+		struct.setFlexibleArrayComponent(td, "myFlex", "flexComment");
+
+		//@formatter:off
+		CompositeTestUtils.assertExpectedComposite(this, "/TestStruct\n" + 
+			"Unaligned\n" + 
+			"Structure TestStruct {\n" + 
+			"   0   byte   1   field1   \"Comment1\"\n" + 
+			"   1   word   2   null   \"Comment2\"\n" + 
+			"   3   dword   4   field3   \"\"\n" + 
+			"   7   byte   1   field4   \"Comment4\"\n" + 
+			"   8   undefined   1   null   \"\"\n" + 
+			"   9   Foo:4(0)   1   MyBit1   \"bitComment1\"\n" + 
+			"   9   Foo:3(4)   1   MyBit2   \"bitComment2\"\n" + 
+			"   9   Foo:2(7)   2   MyBit3   \"bitComment3\"\n" + 
+			"   11   undefined   1   null   \"\"\n" + 
+			"   Foo[0]   0   myFlex   \"flexComment\"\n" + 
+			"}\n" + 
+			"Size = 12   Actual Alignment = 1", struct);
+		//@formatter:on
+
+		DataTypeManager beDtm = new MyBigEndianDataTypeManager();
+
+		Structure newStruct = new StructureDataType("bigStruct", 0, beDtm);
+		newStruct.replaceWith(struct);
+
+		assertTrue(newStruct.getDataOrganization().isBigEndian());
+
+		//@formatter:off
+		CompositeTestUtils.assertExpectedComposite(this, "/bigStruct\n" + 
+			"Unaligned\n" + 
+			"Structure bigStruct {\n" + 
+			"   0   byte   1   field1   \"Comment1\"\n" + 
+			"   1   word   2   null   \"Comment2\"\n" + 
+			"   3   dword   4   field3   \"\"\n" + 
+			"   7   byte   1   field4   \"Comment4\"\n" + 
+			"   8   undefined   1   null   \"\"\n" + 
+			"   9   Foo:4(0)   1   MyBit1   \"bitComment1\"\n" + 
+			"   9   Foo:3(4)   1   MyBit2   \"bitComment2\"\n" + 
+			"   9   Foo:2(7)   2   MyBit3   \"bitComment3\"\n" + 
+			"   11   undefined   1   null   \"\"\n" + 
+			"   Foo[0]   0   myFlex   \"flexComment\"\n" + 
+			"}\n" + 
+			"Size = 12   Actual Alignment = 1", newStruct);
+		//@formatter:on
 	}
 
 	/**
@@ -933,6 +1498,10 @@ public class StructureTest extends AbstractGTest {
 			Assert.fail(
 				"Should be able to replace a structure component with the structure's typedef pointer.");
 		}
+		Pointer p = (Pointer) struct.getComponent(0).getDataType();
+		TypedefDataType dataType = (TypedefDataType) p.getDataType();
+		assertEquals(dataType, typeDef);
+		assertEquals(dataType.getBaseDataType(), struct);
 	}
 
 	/**
@@ -963,6 +1532,15 @@ public class StructureTest extends AbstractGTest {
 		catch (IllegalArgumentException e) {
 			Assert.fail(
 				"Should be able to replace a structure component with the structure's typedef array pointer.");
+		}
+	}
+
+	protected class MyBigEndianDataTypeManager extends StandAloneDataTypeManager {
+		MyBigEndianDataTypeManager() {
+			super("BEdtm");
+			DataOrganizationImpl dataOrg = DataOrganizationImpl.getDefaultOrganization(null);
+			dataOrg.setBigEndian(true);
+			this.dataOrganization = dataOrg;
 		}
 	}
 

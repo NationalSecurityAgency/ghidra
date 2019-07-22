@@ -102,9 +102,9 @@ public class StructureEditorLockedEnablementTest extends AbstractStructureEditor
 		assertEquals(getModel().getTypeName(), "Structure");
 
 		for (CompositeEditorTableAction action : actions) {
-			if ((action instanceof EditFieldAction) || (action instanceof InsertUndefinedAction) ||
-				(action instanceof PointerAction) || (action instanceof HexNumbersAction) ||
-				(action instanceof ApplyAction)) {
+			if ((action instanceof EditFieldAction) || (action instanceof AddBitFieldAction) ||
+				(action instanceof InsertUndefinedAction) || (action instanceof PointerAction) ||
+				(action instanceof HexNumbersAction) || (action instanceof ApplyAction)) {
 				checkEnablement(action, true);
 			}
 			else if (action instanceof FavoritesAction) {
@@ -152,8 +152,9 @@ public class StructureEditorLockedEnablementTest extends AbstractStructureEditor
 			getModel().getOriginalCategoryPath().getPath());
 
 		for (CompositeEditorTableAction action : actions) {
-			if ((action instanceof EditFieldAction) || (action instanceof InsertUndefinedAction) ||
-				(action instanceof PointerAction) || (action instanceof HexNumbersAction)) {
+			if ((action instanceof EditFieldAction) || (action instanceof AddBitFieldAction) ||
+				(action instanceof InsertUndefinedAction) || (action instanceof PointerAction) ||
+				(action instanceof HexNumbersAction)) {
 				checkEnablement(action, true);
 			}
 			else if (action instanceof FavoritesAction) {
@@ -196,6 +197,7 @@ public class StructureEditorLockedEnablementTest extends AbstractStructureEditor
 			}
 			else if ((action instanceof CycleGroupAction) ||
 				(action instanceof InsertUndefinedAction) || (action instanceof EditFieldAction) ||
+				(action instanceof AddBitFieldAction) ||
 				(action instanceof ShowComponentPathAction) || (action instanceof MoveDownAction) ||
 				(action instanceof DuplicateAction) ||
 				(action instanceof DuplicateMultipleAction) || (action instanceof ClearAction) ||
@@ -225,6 +227,7 @@ public class StructureEditorLockedEnablementTest extends AbstractStructureEditor
 			}
 			else if ((action instanceof CycleGroupAction) ||
 				(action instanceof InsertUndefinedAction) || (action instanceof EditFieldAction) ||
+				(action instanceof AddBitFieldAction) ||
 				(action instanceof ShowComponentPathAction) || (action instanceof MoveUpAction) ||
 				(action instanceof MoveDownAction) || (action instanceof ClearAction) ||
 				(action instanceof DeleteAction) || (action instanceof ArrayAction) ||
@@ -252,6 +255,7 @@ public class StructureEditorLockedEnablementTest extends AbstractStructureEditor
 			}
 			else if ((action instanceof CycleGroupAction) ||
 				(action instanceof InsertUndefinedAction) || (action instanceof EditFieldAction) ||
+				(action instanceof AddBitFieldAction) ||
 				(action instanceof ShowComponentPathAction) || (action instanceof MoveUpAction) ||
 				(action instanceof ClearAction) || (action instanceof DeleteAction) ||
 				(action instanceof DuplicateAction) ||

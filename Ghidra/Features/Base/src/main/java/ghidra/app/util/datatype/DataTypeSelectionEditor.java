@@ -15,14 +15,6 @@
  */
 package ghidra.app.util.datatype;
 
-import ghidra.app.plugin.core.datamgr.util.DataTypeChooserDialog;
-import ghidra.app.plugin.core.datamgr.util.DataTypeUtils;
-import ghidra.app.services.DataTypeManagerService;
-import ghidra.framework.plugintool.ServiceProvider;
-import ghidra.program.model.data.*;
-import ghidra.util.data.DataTypeParser;
-
-import java.awt.Component;
 import java.awt.event.*;
 
 import javax.swing.*;
@@ -31,6 +23,12 @@ import javax.swing.tree.TreePath;
 
 import docking.options.editor.ButtonPanelFactory;
 import docking.widgets.DropDownSelectionTextField;
+import ghidra.app.plugin.core.datamgr.util.DataTypeChooserDialog;
+import ghidra.app.plugin.core.datamgr.util.DataTypeUtils;
+import ghidra.app.services.DataTypeManagerService;
+import ghidra.framework.plugintool.ServiceProvider;
+import ghidra.program.model.data.*;
+import ghidra.util.data.DataTypeParser;
 
 /**
  * An editor that is used to show the {@link DropDownSelectionTextField} for the entering of
@@ -58,6 +56,7 @@ public class DataTypeSelectionEditor extends AbstractCellEditor {
 
 	private JPanel editorPanel;
 	private DropDownSelectionTextField<DataType> selectionField;
+	private JButton browseButton;
 	private DataTypeManagerService dataTypeManagerService;
 	private int maxSize = -1;
 	private DataTypeManager dataTypeManager;
@@ -109,9 +108,8 @@ public class DataTypeSelectionEditor extends AbstractCellEditor {
 	}
 
 	private void init() {
-		selectionField =
-			new DropDownSelectionTextField<DataType>(new DataTypeDropDownSelectionDataModel(
-				dataTypeManagerService));
+		selectionField = new DropDownSelectionTextField<>(
+			new DataTypeDropDownSelectionDataModel(dataTypeManagerService));
 		selectionField.addCellEditorListener(new CellEditorListener() {
 			@Override
 			public void editingCanceled(ChangeEvent e) {
@@ -128,15 +126,9 @@ public class DataTypeSelectionEditor extends AbstractCellEditor {
 
 		selectionField.setBorder(UIManager.getBorder("Table.focusCellHighlightBorder"));
 
-		JButton browseButton = ButtonPanelFactory.createButton(ButtonPanelFactory.BROWSE_TYPE);
+		browseButton = ButtonPanelFactory.createButton(ButtonPanelFactory.BROWSE_TYPE);
 		browseButton.setToolTipText("Browse the Data Manager");
-		browseButton.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				// show the data type manager
-				showDataTypeBrowser();
-			}
-		});
+		browseButton.addActionListener(e -> showDataTypeBrowser());
 
 		editorPanel = new JPanel();
 		editorPanel.setLayout(new BoxLayout(editorPanel, BoxLayout.X_AXIS));
@@ -196,12 +188,16 @@ public class DataTypeSelectionEditor extends AbstractCellEditor {
 	 * Returns the component that allows the user to edit.
 	 * @return the component that allows the user to edit.
 	 */
-	public Component getEditorComponent() {
+	public JComponent getEditorComponent() {
 		return editorPanel;
 	}
 
 	public DropDownSelectionTextField<DataType> getDropDownTextField() {
 		return selectionField;
+	}
+
+	public JButton getBrowseButton() {
+		return browseButton;
 	}
 
 	/**
@@ -302,7 +298,7 @@ public class DataTypeSelectionEditor extends AbstractCellEditor {
 
 		// if it is not a known type, the prompt user to create new one
 		if (!isValidDataType()) {
-			return promptUserToCreateDataType();
+			return parseDataTypeTextEntry();
 		}
 
 		return true;
@@ -321,11 +317,11 @@ public class DataTypeSelectionEditor extends AbstractCellEditor {
 		// look for the case where the user made a selection from the matching window, but 
 		// then changed the text field text.
 		DataType selectedDataType = selectionField.getSelectedValue();
-		if (selectedDataType != null && selectionField.getText().equals(selectedDataType.getName())) {
+		if (selectedDataType != null &&
+			selectionField.getText().equals(selectedDataType.getName())) {
 			DataTypeParser.ensureIsAllowableType(selectedDataType, allowedDataTypes);
 			return true;
 		}
-
 		return false;
 	}
 
@@ -343,14 +339,22 @@ public class DataTypeSelectionEditor extends AbstractCellEditor {
 		return null;
 	}
 
-	// TODO: implement in the future to allow the user to create data types
-	private boolean promptUserToCreateDataType() throws InvalidDataTypeException {
+	/**
+	 * Parse datatype text entry using {@link DataTypeParser}.  Allows addition
+	 * of supported modifiers (e.g., arrays, pointers, etc.).
+	 * @return true if parse successful else false
+	 */
+	private boolean parseDataTypeTextEntry() throws InvalidDataTypeException {
+
+		if (selectionField.getText().trim().length() == 0) {
+			// no need to invoke parser on empty string
+			return false;
+		}
 
 		// we will create new pointer and array types by default
 		DataType newDataType = null;
-//        try {
-		DataTypeParser parser =
-			new DataTypeParser(dataTypeManager, null, dataTypeManagerService, allowedDataTypes);
+		DataTypeParser parser = new DataTypeParser(dataTypeManager, dataTypeManager,
+			dataTypeManagerService, allowedDataTypes);
 		newDataType = parser.parse(selectionField.getText(), getDataTypeRootForCurrentText());
 		if (newDataType != null) {
 			if (maxSize >= 0 && newDataType.getLength() > newDataType.getLength()) {
@@ -359,23 +363,6 @@ public class DataTypeSelectionEditor extends AbstractCellEditor {
 			selectionField.setSelectedValue(newDataType);
 			return true;
 		}
-//        }
-//        // squash these exceptions, as this method returns false if we were unable to create the
-//        // given data type
-//        catch ( CancelledException ce ) {
-//        }
-
-		// prompt user
-		/*
-		int userChoice = JOptionPane.showOptionDialog( selectionField, 
-		    "Data type \"" + selectionField.getText() + "\" does not exist.  Would you " +
-		    "like to create it?", "Create New Data Type?", 
-		    JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE, null, null, null );
-		
-		 if ( userChoice == JOptionPane.YES_OPTION ) {
-		     return createNewDataTypeForUserSelection();
-		 }
-		*/
 		return false;
 	}
 

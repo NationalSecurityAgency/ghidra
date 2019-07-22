@@ -195,12 +195,15 @@ std::wstring getName(IDiaSymbol& symbol) {
 
 		DWORD locType = 0;
 		ULONGLONG len = 0;
+		DWORD bitPos = 0;
 		if (symbol.get_locationType(&locType) == S_OK &&
 			locType == LocIsBitField &&
-			symbol.get_length(&len) == S_OK) {
-			const size_t length = wstrName.length() + 4 + 32;	// length of: name + ":0x\0" + wag_hex_numeric_str_len
+			symbol.get_length(&len) == S_OK &&
+			symbol.get_bitPosition(&bitPos) == S_OK) {
+			// allocate length of: name + ":0x" + len + ":0x" + bitPos + "\0" 
+			const size_t length = wstrName.length() + 70;	
 			std::vector<wchar_t> str(length);
-			swprintf_s(str.data(), length, L"%ws:0x%I64x", wstrName.c_str(), len);
+			swprintf_s(str.data(), length, L"%ws:0x%I64x:0x%x", wstrName.c_str(), len, bitPos);
 			return escapeXmlEntities(str.data());
 		}
 

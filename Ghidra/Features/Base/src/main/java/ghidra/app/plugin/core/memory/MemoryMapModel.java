@@ -33,7 +33,7 @@ import docking.widgets.table.AbstractSortedTableModel;
 
 import ghidra.framework.model.DomainFile;
 import ghidra.framework.store.LockException;
-import ghidra.program.database.mem.SourceInfo;
+import ghidra.program.database.mem.MemoryBlockSourceInfo;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.*;
@@ -504,7 +504,7 @@ class MemoryMapModel extends AbstractSortedTableModel<MemoryBlock> {
 				case SOURCE:
 					if ((block.getType() == MemoryBlockType.BIT_MAPPED) ||
 						(block.getType() == MemoryBlockType.BYTE_MAPPED)) {
-						SourceInfo info = block.getSourceInfos().get(0);
+						MemoryBlockSourceInfo info = block.getSourceInfos().get(0);
 						return info.getMappedRange().get().getMinAddress().toString();
 					}
 					return block.getSourceName();
@@ -522,8 +522,8 @@ class MemoryMapModel extends AbstractSortedTableModel<MemoryBlock> {
 		return null;
 	}
 
-	private String getByteSourceDescription(List<SourceInfo> sourceInfos) {
-		List<SourceInfo> limited = sourceInfos.size() < 5 ? sourceInfos : sourceInfos.subList(0, 4);
+	private String getByteSourceDescription(List<MemoryBlockSourceInfo> sourceInfos) {
+		List<MemoryBlockSourceInfo> limited = sourceInfos.size() < 5 ? sourceInfos : sourceInfos.subList(0, 4);
 		
 		//@formatter:off
 		String description = limited

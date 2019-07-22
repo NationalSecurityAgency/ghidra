@@ -116,7 +116,7 @@ public class ToolBarItemManager implements PropertyChangeListener, ActionListene
 
 	private String getToolTipText(DockingActionIf action) {
 		String description = action.getDescription();
-		if (description != null && description.trim().length() > 0) {
+		if (!StringUtils.isEmpty(description)) {
 			return description;
 		}
 		return action.getName();

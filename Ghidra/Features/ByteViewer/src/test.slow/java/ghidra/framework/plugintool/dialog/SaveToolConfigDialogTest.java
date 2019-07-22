@@ -27,6 +27,7 @@ import javax.swing.*;
 import org.junit.*;
 
 import docking.action.DockingActionIf;
+import docking.tool.ToolConstants;
 import docking.widgets.OptionDialog;
 import docking.widgets.filechooser.GhidraFileChooser;
 import generic.test.AbstractGTest;
@@ -44,7 +45,6 @@ import ghidra.framework.model.ToolChest;
 import ghidra.framework.model.ToolTemplate;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.util.PluginException;
-import ghidra.framework.plugintool.util.ToolConstants;
 import ghidra.framework.preferences.Preferences;
 import ghidra.framework.project.tool.ToolIconURL;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
@@ -315,7 +315,7 @@ public class SaveToolConfigDialogTest extends AbstractGhidraHeadedIntegrationTes
 
 	private void showDialogs() throws Exception {
 
-		DockingActionIf action = getAction(tool, "Tool", "Save Tool As");
+		DockingActionIf action = getAction(tool, ToolConstants.TOOL_OWNER, "Save Tool As");
 		performAction(action, false);
 		waitForSwing();
 

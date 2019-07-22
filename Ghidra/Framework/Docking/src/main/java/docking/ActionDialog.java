@@ -80,7 +80,7 @@ public class ActionDialog extends DialogComponentProvider {
 		for (int i = 0; i < list.size(); i++) {
 			ExecutableKeyActionAdapter actionProxy = list.get(i);
 			DockingActionIf action = actionProxy.getAction();
-			listModel.addElement(action.getName());
+			listModel.addElement(action.getName() + " (" + action.getOwnerDescription() + ")");
 		}
 		actionList.setSelectedIndex(0);
 	}
@@ -144,7 +144,7 @@ public class ActionDialog extends DialogComponentProvider {
 			@Override
 			public void mouseClicked(MouseEvent e) {
 
-				if (e.getModifiers() != InputEvent.BUTTON1_MASK) {
+				if (e.getModifiersEx() != InputEvent.BUTTON1_DOWN_MASK) {
 					return;
 				}
 				int clickCount = e.getClickCount();

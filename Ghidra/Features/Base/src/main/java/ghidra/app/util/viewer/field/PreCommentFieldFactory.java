@@ -257,10 +257,8 @@ public class PreCommentFieldFactory extends FieldFactory {
 
 	private String[] getFlexArrayComment(Data data, Address addr) {
 
-		Data originalParent = data.getParent();
-
 		int levelsToIgnore = 0;
-		boolean includeStructureName = true;
+		String label = null;
 
 		int[] cpath = data.getComponentPath();
 		if (cpath != null && cpath.length > 0) {
@@ -269,34 +267,35 @@ public class PreCommentFieldFactory extends FieldFactory {
 				return null; // case not handled
 			}
 			data = data.getParent().getComponent(cpath[cpath.length - 1] - 1);
+			if (data == null || !data.isStructure()) {
+				return null;
+			}
 			levelsToIgnore = cpath.length - 1;
-			includeStructureName = false;
 		}
 		else {
-			data = data.getProgram().getListing().getDefinedDataContaining(addr);
+			Program p = data.getProgram();
+			data = p.getListing().getDefinedDataContaining(addr);
+			if (data == null || !data.isStructure()) {
+				return null;
+			}
+			Symbol s = p.getSymbolTable().getPrimarySymbol(data.getAddress());
+			label = s != null ? s.getName(true) : data.getDataType().getName();
 		}
 
-		while (data != null) {
-			DataType dt = data.getBaseDataType();
-			if ((dt instanceof Union) || (dt instanceof Array) || (dt instanceof Dynamic)) {
-				return null; // case not handled
-			}
+		// locate deepest structure containing addr which will be checked for flex array
+		while (true) {
 			int offset = (int) addr.subtract(data.getMinAddress());
 			Data component = data.getComponentAt(offset);
-			if (component == null) {
-				data = data.getParent(); // back-up to container
+			if (component == null || !component.isStructure()) {
 				break;
 			}
 			data = component;
 		}
-		if (data == null || (originalParent != null && data == originalParent)) {
-			return null;
-		}
-		return buildFlexArrayComment(data, levelsToIgnore, includeStructureName);
+
+		return buildFlexArrayComment(data, levelsToIgnore, label);
 	}
 
-	private String[] buildFlexArrayComment(Data data, int levelsToIgnore,
-			boolean includeStructureName) {
+	private String[] buildFlexArrayComment(Data data, int levelsToIgnore, String label) {
 
 		DataType dt = data.getBaseDataType();
 		if (!(dt instanceof Structure)) {
@@ -325,8 +324,8 @@ public class PreCommentFieldFactory extends FieldFactory {
 			data = component;
 		}
 
-		if (includeStructureName) {
-			flexName.insert(0, data.getDataType().getName() + ".");
+		if (label != null) {
+			flexName.insert(0, label + ".");
 		}
 
 		return new String[] { "Flexible Array: " + flexComponent.getDataType().getName() + "[] " +
