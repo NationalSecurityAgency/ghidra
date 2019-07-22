@@ -23,7 +23,6 @@ import org.xml.sax.SAXParseException;
 
 import ghidra.app.util.MemoryBlockUtils;
 import ghidra.app.util.importer.MessageLog;
-import ghidra.program.database.mem.MemoryBlockSourceInfo;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.*;
