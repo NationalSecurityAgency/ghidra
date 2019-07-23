@@ -556,6 +556,7 @@ public:
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
 };
 class RuleTestSign : public Rule {
+  void findComparisons(Varnode *vn,vector<PcodeOp *> &res);
 public:
   RuleTestSign(const string &g) : Rule(g, 0, "testsign") {}		///< Constructor
   virtual Rule *clone(const ActionGroupList &grouplist) const {

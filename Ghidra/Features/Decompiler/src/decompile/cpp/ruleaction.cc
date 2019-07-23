@@ -3133,6 +3133,44 @@ void RuleTestSign::getOpList(vector<uint4> &oplist) const
   oplist.push_back(CPUI_INT_SRIGHT);
 }
 
+/// \brief Find INT_EQUAL or INT_NOTEQUAL taking the sign bit as input
+///
+/// Trace the given sign-bit varnode to any comparison operations and pass them
+/// back in the given array. Allow the sign-bit to go through a SUBPIECE operation.
+/// \param vn is the given sign-bit varnode
+/// \param res is the array for holding the comparison op results
+void RuleTestSign::findComparisons(Varnode *vn,vector<PcodeOp *> &res)
+
+{
+  list<PcodeOp *>::const_iterator iter1;
+  iter1 = vn->beginDescend();
+  while(iter1 != vn->endDescend()) {
+    PcodeOp *op = *iter1;
+    ++iter1;
+    OpCode opc = op->code();
+    if (opc == CPUI_INT_EQUAL || opc == CPUI_INT_NOTEQUAL) {
+      if (op->getIn(1)->isConstant())
+	res.push_back(op);
+    }
+    else if (opc == CPUI_SUBPIECE) {
+      // Note that it doesn't matter what the truncation is because the varnode is
+      // filled with the same bit everywhere.
+      Varnode *outVn = op->getOut();
+      list<PcodeOp *>::const_iterator iter2;
+      iter2 = outVn->beginDescend();
+      while(iter2 != outVn->endDescend()) {
+	PcodeOp *subOp = *iter2;
+	++iter2;
+	OpCode opc2 = subOp->code();
+	if (opc2 == CPUI_INT_EQUAL || opc2 == CPUI_INT_NOTEQUAL) {
+	  if (subOp->getIn(1)->isConstant())
+	    res.push_back(subOp);
+	}
+      }
+    }
+  }
+}
+
 int4 RuleTestSign::applyOp(PcodeOp *op,Funcdata &data)
 
 {
@@ -3144,47 +3182,41 @@ int4 RuleTestSign::applyOp(PcodeOp *op,Funcdata &data)
   if (val != 8*inVn->getSize() -1) return 0;
   if (inVn->isFree()) return 0;
   Varnode *outVn = op->getOut();
-  list<PcodeOp *>::const_iterator iter;
-  iter = outVn->beginDescend();
-  while(iter != outVn->endDescend()) {
-    PcodeOp *compareOp = *iter;
-    Varnode *otherVn;
-    ++iter;
+  vector<PcodeOp *> compareOps;
+  findComparisons(outVn, compareOps);
+  int4 resultCode = 0;
+  for(int4 i=0;i<compareOps.size();++i) {
+    PcodeOp *compareOp = compareOps[i];
+    Varnode *compVn = compareOp->getIn(0);
+    int4 compSize = compVn->getSize();
+    if (compareOp->code() == CPUI_SUBPIECE)
+      compareOp = compVn->getDef();
+
+    uintb offset = compareOp->getIn(1)->getOffset();
     int4 sgn;
-    switch(compareOp->code()) {
-      default:
-	sgn = 0;
-	break;
-      case CPUI_INT_EQUAL:
-	otherVn = compareOp->getIn(1);
-	if (otherVn->isConstant() && otherVn->getOffset() == 0)
-	  sgn = 1;
-	else
-	  sgn = 0;
-	break;
-      case CPUI_INT_NOTEQUAL:
-	otherVn = compareOp->getIn(1);
-	if (otherVn->isConstant() && otherVn->getOffset() == 0)
-	  sgn = -1;
-	else
-	  sgn = 0;
-	break;
+    if (offset == 0)
+      sgn = 1;
+    else if (offset == calc_mask(compSize))
+      sgn = -1;
+    else
+      continue;
+    if (compareOp->code() == CPUI_INT_NOTEQUAL)
+      sgn = -sgn;	// Complement the domain
+
+    Varnode *zeroVn = data.newConstant(inVn->getSize(), 0);
+    if (sgn == 1) {
+      data.opSetInput(compareOp, inVn, 1);
+      data.opSetInput(compareOp, zeroVn, 0);
+      data.opSetOpcode(compareOp, CPUI_INT_SLESSEQUAL);
     }
-    if (sgn != 0) {
-      if (sgn == 1) {
-	data.opSetInput(compareOp, inVn, 1);
-	data.opSetInput(compareOp, otherVn, 0);
-	data.opSetOpcode(compareOp, CPUI_INT_SLESSEQUAL);
-      }
-      else {
-	data.opSetInput(compareOp, inVn, 0);
-	data.opSetInput(compareOp, otherVn, 1);
-	data.opSetOpcode(compareOp, CPUI_INT_SLESS);
-      }
-      return 1;
+    else {
+      data.opSetInput(compareOp, inVn, 0);
+      data.opSetInput(compareOp, zeroVn, 1);
+      data.opSetOpcode(compareOp, CPUI_INT_SLESS);
     }
+    resultCode = 1;
   }
-  return 0;
+  return resultCode;
 }
 
 /// \class RuleIdentityEl
