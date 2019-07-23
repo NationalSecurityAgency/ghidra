@@ -15,9 +15,7 @@
  */
 package ghidra.app.plugin.core.archive;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
+import java.io.*;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.jar.JarEntry;
@@ -29,24 +27,14 @@ import docking.action.DockingAction;
 import docking.action.MenuData;
 import docking.tool.ToolConstants;
 import ghidra.app.CorePluginPackage;
-import ghidra.framework.main.AppInfo;
-import ghidra.framework.main.FrontEndOnly;
-import ghidra.framework.main.FrontEndTool;
-import ghidra.framework.model.Project;
-import ghidra.framework.model.ProjectListener;
-import ghidra.framework.model.ProjectLocator;
-import ghidra.framework.model.ProjectManager;
-import ghidra.framework.plugintool.Plugin;
-import ghidra.framework.plugintool.PluginInfo;
-import ghidra.framework.plugintool.PluginTool;
+import ghidra.framework.main.*;
+import ghidra.framework.model.*;
+import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
-import ghidra.framework.plugintool.util.ToolConstants;
 import ghidra.framework.preferences.Preferences;
 import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
-import ghidra.util.task.Task;
-import ghidra.util.task.TaskLauncher;
-import ghidra.util.task.TaskListener;
+import ghidra.util.task.*;
 
 /**
  * The archive plugin provides menu action from the front end allowing the
