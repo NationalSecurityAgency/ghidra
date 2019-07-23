@@ -3103,6 +3103,33 @@ void RuleSignShift::getOpList(vector<uint4> &oplist) const
   oplist.push_back(CPUI_INT_RIGHT);
 }
 
+/// \brief Figure out if the given PcodeOp triggers conversion or if we need to propagate further
+///
+/// A logical shift of the sign-bit gets converted to an arithmetic shift if it is involved
+/// in an arithmetic expression or a comparison. Return the categorization code:
+///   - 0 if the op does not trigger a conversion to arithmetic
+///   - 1 if the triggers a conversion
+///   - 2 if the result of the op should be propagated further
+///
+/// \param op is the given PcodeOp to test
+/// \return the categorization code
+int4 RuleSignShift::categorizeOp(PcodeOp *op)
+
+{
+  switch(op->code()) {
+    case CPUI_INT_ADD:
+    case CPUI_INT_MULT:
+    case CPUI_INT_EQUAL:
+    case CPUI_INT_NOTEQUAL:
+      return 1;
+    case CPUI_SUBPIECE:
+      return 2;
+    default:
+      break;
+  }
+  return 0;
+}
+
 int4 RuleSignShift::applyOp(PcodeOp *op,Funcdata &data)
 
 {
@@ -3113,10 +3140,40 @@ int4 RuleSignShift::applyOp(PcodeOp *op,Funcdata &data)
   Varnode *inVn = op->getIn(0);
   if (val != 8*inVn->getSize() -1) return 0;
   if (inVn->isFree()) return 0;
+
+  bool doConversion = false;
+  Varnode *outVn = op->getOut();
+  list<PcodeOp *>::const_iterator iter = outVn->beginDescend();
+  while(iter != outVn->endDescend()) {
+    PcodeOp *arithOp = *iter;
+    ++iter;
+    int4 resultCode = categorizeOp(arithOp);
+    if (resultCode == 1) {
+      doConversion = true;
+      break;
+    }
+    else if (resultCode == 2) {	// We see a SUBPIECE, propagate one more level
+      Varnode *subVn = arithOp->getOut();
+      list<PcodeOp *>::const_iterator iter2 = subVn->beginDescend();
+      while(iter2 != subVn->endDescend()) {
+	arithOp = *iter2;
+	++iter2;
+	resultCode = categorizeOp(arithOp);
+	if (resultCode == 1) {
+	  doConversion = true;
+	  break;
+	}
+      }
+      if (doConversion)
+	break;
+    }
+  }
+  if (!doConversion)
+    return 0;
   PcodeOp *shiftOp = data.newOp(2,op->getAddr());
   data.opSetOpcode(shiftOp, CPUI_INT_SRIGHT);
-  Varnode *outVn = data.newUniqueOut(inVn->getSize(), shiftOp);
-  data.opSetInput(op,outVn,0);
+  Varnode *uniqueVn = data.newUniqueOut(inVn->getSize(), shiftOp);
+  data.opSetInput(op,uniqueVn,0);
   data.opSetInput(op,data.newConstant(inVn->getSize(),calc_mask(inVn->getSize())),1);
   data.opSetOpcode(op, CPUI_INT_MULT);
   data.opSetInput(shiftOp,inVn,0);
