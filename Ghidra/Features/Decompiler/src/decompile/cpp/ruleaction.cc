@@ -5470,6 +5470,7 @@ int4 RuleEqual2Zero::applyOp(PcodeOp *op,Funcdata &data)
 /// Forms include:
 ///  - `V * -1 == c  =>  V == -c`
 ///  - `V + c == d  =>  V == (d-c)`
+///  - `~V == c     =>  V == ~c`
 void RuleEqual2Constant::getOpList(vector<uint4> &oplist) const
 
 {
@@ -5488,19 +5489,24 @@ int4 RuleEqual2Constant::applyOp(PcodeOp *op,Funcdata &data)
   PcodeOp *leftop = lhs->getDef();
   Varnode *a;
   uintb newconst;
-  if (leftop->code() == CPUI_INT_ADD) {
+  OpCode opc = leftop->code();
+  if (opc == CPUI_INT_ADD) {
     Varnode *otherconst = leftop->getIn(1);
     if (!otherconst->isConstant()) return 0;
     newconst = cvn->getOffset() - otherconst->getOffset();
     newconst &= calc_mask(cvn->getSize());
   }
-  else if (leftop->code() == CPUI_INT_MULT) {
+  else if (opc == CPUI_INT_MULT) {
     Varnode *otherconst = leftop->getIn(1);
     if (!otherconst->isConstant()) return 0;
     // The only multiply we transform, is multiply by -1
     if (otherconst->getOffset() != calc_mask(otherconst->getSize())) return 0;
     newconst = cvn->getOffset();
     newconst = (-newconst) & calc_mask(otherconst->getSize());
+  }
+  else if (opc == CPUI_INT_NEGATE) {
+    newconst = cvn->getOffset();
+    newconst = (~newconst) & calc_mask(lhs->getSize());
   }
   else
     return 0;
