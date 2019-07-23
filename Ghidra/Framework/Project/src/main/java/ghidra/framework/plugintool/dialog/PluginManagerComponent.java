@@ -20,7 +20,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.*;
-import javax.swing.border.BevelBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.HyperlinkEvent.EventType;
@@ -76,11 +75,25 @@ public class PluginManagerComponent extends JPanel implements ChangeListener, Sc
 	}
 
 	private class PluginPackageComponent extends JPanel {
-		private static final long serialVersionUID = 1L;
 		private final Color BG = Color.white;
 		private final PluginPackage pluginPackage;
 		private final JCheckBox jCheckBox;
 		
+		PluginPackageComponent(PluginPackage pluginPackage) {
+			super(new BorderLayout());
+			setBackground(BG);
+
+			this.pluginPackage = pluginPackage;
+			this.jCheckBox = new JCheckBox();
+
+			initizalizeCheckBoxSection();
+			initializeLabelSection();
+			initializeDescriptionSection();
+
+			setBorder(BorderFactory.createLineBorder(Color.DARK_GRAY));
+			updateCheckBoxState();
+		}
+
 		private void initizalizeCheckBoxSection() {
 			final JPanel checkboxPanel = new JPanel(new HorizontalLayout(0));
 			checkboxPanel.setBackground(BG);
@@ -108,6 +121,10 @@ public class PluginManagerComponent extends JPanel implements ChangeListener, Sc
 		
 		private void initializeLabelSection() {
 			final JPanel centerPanel = new JPanel(new GridBagLayout());
+			GridBagConstraints gbc = new GridBagConstraints();
+			gbc.fill = GridBagConstraints.HORIZONTAL;
+			gbc.weightx = 1.0;
+
 			centerPanel.setBackground(BG);
 			
 			final JPanel labelPanel = new JPanel(new VerticalLayout(3));
@@ -122,8 +139,7 @@ public class PluginManagerComponent extends JPanel implements ChangeListener, Sc
 			labelPanel.add(configureHyperlink);
 			
 			labelPanel.setBorder(BorderFactory.createEmptyBorder(0, 25, 0, 40));
-			centerPanel.add(labelPanel);
-			
+			centerPanel.add(labelPanel, gbc);
 			add(centerPanel);
 		}
 		
@@ -154,22 +170,6 @@ public class PluginManagerComponent extends JPanel implements ChangeListener, Sc
 				HTMLUtilities.toWrappedHTML(pluginPackage.getDescription(), 80));
 			
 			add(descriptionlabel, BorderLayout.EAST);
-		}
-		
-		PluginPackageComponent(PluginPackage pluginPackage) {
-			super(new BorderLayout());
-			setBackground(BG);
-			
-			this.pluginPackage = pluginPackage;
-			this.jCheckBox = new JCheckBox();
-			
-			initizalizeCheckBoxSection();
-			initializeLabelSection();
-			initializeDescriptionSection();
-
-			setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED, Color.LIGHT_GRAY,
-				Color.DARK_GRAY));
-			updateCheckBoxState();
 		}
 
 		protected void checkBoxClicked() {
