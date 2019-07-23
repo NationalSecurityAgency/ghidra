@@ -546,7 +546,6 @@ public:
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
 };
 class RuleSignShift : public Rule {
-  int4 categorizeOp(PcodeOp *op);
 public:
   RuleSignShift(const string &g) : Rule(g, 0, "signshift") {}		///< Constructor
   virtual Rule *clone(const ActionGroupList &grouplist) const {

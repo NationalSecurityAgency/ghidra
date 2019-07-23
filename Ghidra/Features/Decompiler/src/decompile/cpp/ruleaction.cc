@@ -3097,37 +3097,13 @@ int4 RuleTrivialShift::applyOp(PcodeOp *op,Funcdata &data)
 
 /// \class RuleSignShift
 /// \brief Normalize sign-bit extraction:  `V >> 0x1f   =>  (V s>> 0x1f) * -1`
+///
+/// A logical shift of the sign-bit gets converted to an arithmetic shift if it is involved
+/// in an arithmetic expression or a comparison.
 void RuleSignShift::getOpList(vector<uint4> &oplist) const
 
 {
   oplist.push_back(CPUI_INT_RIGHT);
-}
-
-/// \brief Figure out if the given PcodeOp triggers conversion or if we need to propagate further
-///
-/// A logical shift of the sign-bit gets converted to an arithmetic shift if it is involved
-/// in an arithmetic expression or a comparison. Return the categorization code:
-///   - 0 if the op does not trigger a conversion to arithmetic
-///   - 1 if the triggers a conversion
-///   - 2 if the result of the op should be propagated further
-///
-/// \param op is the given PcodeOp to test
-/// \return the categorization code
-int4 RuleSignShift::categorizeOp(PcodeOp *op)
-
-{
-  switch(op->code()) {
-    case CPUI_INT_ADD:
-    case CPUI_INT_MULT:
-    case CPUI_INT_EQUAL:
-    case CPUI_INT_NOTEQUAL:
-      return 1;
-    case CPUI_SUBPIECE:
-      return 2;
-    default:
-      break;
-  }
-  return 0;
 }
 
 int4 RuleSignShift::applyOp(PcodeOp *op,Funcdata &data)
@@ -3147,26 +3123,18 @@ int4 RuleSignShift::applyOp(PcodeOp *op,Funcdata &data)
   while(iter != outVn->endDescend()) {
     PcodeOp *arithOp = *iter;
     ++iter;
-    int4 resultCode = categorizeOp(arithOp);
-    if (resultCode == 1) {
-      doConversion = true;
+    switch(arithOp->code()) {
+      case CPUI_INT_ADD:
+      case CPUI_INT_MULT:
+      case CPUI_INT_EQUAL:
+      case CPUI_INT_NOTEQUAL:
+        doConversion = true;
+        break;
+      default:
+        break;
+    }
+    if (doConversion)
       break;
-    }
-    else if (resultCode == 2) {	// We see a SUBPIECE, propagate one more level
-      Varnode *subVn = arithOp->getOut();
-      list<PcodeOp *>::const_iterator iter2 = subVn->beginDescend();
-      while(iter2 != subVn->endDescend()) {
-	arithOp = *iter2;
-	++iter2;
-	resultCode = categorizeOp(arithOp);
-	if (resultCode == 1) {
-	  doConversion = true;
-	  break;
-	}
-      }
-      if (doConversion)
-	break;
-    }
   }
   if (!doConversion)
     return 0;
@@ -3193,7 +3161,7 @@ void RuleTestSign::getOpList(vector<uint4> &oplist) const
 /// \brief Find INT_EQUAL or INT_NOTEQUAL taking the sign bit as input
 ///
 /// Trace the given sign-bit varnode to any comparison operations and pass them
-/// back in the given array. Allow the sign-bit to go through a SUBPIECE operation.
+/// back in the given array.
 /// \param vn is the given sign-bit varnode
 /// \param res is the array for holding the comparison op results
 void RuleTestSign::findComparisons(Varnode *vn,vector<PcodeOp *> &res)
@@ -3209,22 +3177,6 @@ void RuleTestSign::findComparisons(Varnode *vn,vector<PcodeOp *> &res)
       if (op->getIn(1)->isConstant())
 	res.push_back(op);
     }
-    else if (opc == CPUI_SUBPIECE) {
-      // Note that it doesn't matter what the truncation is because the varnode is
-      // filled with the same bit everywhere.
-      Varnode *outVn = op->getOut();
-      list<PcodeOp *>::const_iterator iter2;
-      iter2 = outVn->beginDescend();
-      while(iter2 != outVn->endDescend()) {
-	PcodeOp *subOp = *iter2;
-	++iter2;
-	OpCode opc2 = subOp->code();
-	if (opc2 == CPUI_INT_EQUAL || opc2 == CPUI_INT_NOTEQUAL) {
-	  if (subOp->getIn(1)->isConstant())
-	    res.push_back(subOp);
-	}
-      }
-    }
   }
 }
 
@@ -3237,8 +3189,20 @@ int4 RuleTestSign::applyOp(PcodeOp *op,Funcdata &data)
   val = constVn->getOffset();
   Varnode *inVn = op->getIn(0);
   if (val != 8*inVn->getSize() -1) return 0;
-  if (inVn->isFree()) return 0;
   Varnode *outVn = op->getOut();
+
+  // Check if input comes from truncation of larger value
+  if (inVn->isWritten()) {
+    PcodeOp *truncOp = inVn->getDef();
+    if (truncOp->code() == CPUI_SUBPIECE) {
+      Varnode *newIn = truncOp->getIn(0);
+      int4 truncAmount = (int4)truncOp->getIn(1)->getOffset();
+      if (truncAmount + inVn->getSize() == newIn->getSize()) {	// If this is the most significant bytes
+	inVn = newIn;	// We are really extracting the sign-bit from a larger value
+      }
+    }
+  }
+  if (inVn->isFree()) return 0;
   vector<PcodeOp *> compareOps;
   findComparisons(outVn, compareOps);
   int4 resultCode = 0;
@@ -3246,8 +3210,6 @@ int4 RuleTestSign::applyOp(PcodeOp *op,Funcdata &data)
     PcodeOp *compareOp = compareOps[i];
     Varnode *compVn = compareOp->getIn(0);
     int4 compSize = compVn->getSize();
-    if (compareOp->code() == CPUI_SUBPIECE)
-      compareOp = compVn->getDef();
 
     uintb offset = compareOp->getIn(1)->getOffset();
     int4 sgn;
