@@ -33,7 +33,7 @@ import ghidra.util.exception.CancelledException;
  */
 public class DefaultPdbMember extends PdbMember {
 
-	private final String name;
+	final PdbKind kind;
 
 	private boolean isBitField;
 	private int bitFieldSize = -1;
@@ -46,15 +46,25 @@ public class DefaultPdbMember extends PdbMember {
 	 * @param name member field name.  For bitfields this also conveys the bit-size
 	 * and optionally the bit-offset.
 	 * @param dataTypeName field datatype or the base datatype associated with a bitfield
-	 * @param offset
+	 * @param offset member offset
+	 * @param kind kind of member (only {@link PdbKind#MEMBER} are supported as composite members)
 	 * @param dataTypeParser
 	 */
-	DefaultPdbMember(String name, String dataTypeName, int offset,
+	DefaultPdbMember(String name, String dataTypeName, int offset, PdbKind kind,
 			PdbDataTypeParser dataTypeParser) {
-		super(getMemberName(name), dataTypeName, offset);
-		this.name = name;
+		super(getMemberName(name, kind), dataTypeName, offset);
+		this.kind = kind;
 		this.dataTypeParser = dataTypeParser;
-		parseBitField();
+		parseBitField(name);
+	}
+
+	/**
+	 * Kind of member record.  Only those records with a Member kind
+	 * are currently considered for inclusion within a composite.
+	 * @return PDB kind
+	 */
+	public PdbKind getKind() {
+		return kind;
 	}
 
 	@Override
@@ -66,10 +76,20 @@ public class DefaultPdbMember extends PdbMember {
 		return str;
 	}
 
-	private static String getMemberName(String name) {
-		int bitFieldColonIndex = name != null ? name.indexOf(':') : -1;
-		if (bitFieldColonIndex >= 0) {
-			return name.substring(0, bitFieldColonIndex);
+	private static String getMemberName(String name, PdbKind kind) {
+		if (name == null) {
+			return null;
+		}
+		if (kind == PdbKind.MEMBER) {
+			int bitFieldColonIndex = name.indexOf(':');
+			if (bitFieldColonIndex >= 0) {
+				return name.substring(0, bitFieldColonIndex);
+			}
+		}
+		// name may contain namespace prefix for non-Member class members
+		int lastColonIndex = name.lastIndexOf(':');
+		if (lastColonIndex > 0) {
+			name = name.substring(lastColonIndex + 1);
 		}
 		return name;
 	}
@@ -97,7 +117,7 @@ public class DefaultPdbMember extends PdbMember {
 		return wrappedDt;
 	}
 
-	private void parseBitField() {
+	private void parseBitField(String name) {
 		int bitFieldColonIndex = name != null ? name.indexOf(':') : -1;
 		if (bitFieldColonIndex >= 0) {
 

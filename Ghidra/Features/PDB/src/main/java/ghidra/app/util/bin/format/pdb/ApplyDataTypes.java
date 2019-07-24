@@ -20,7 +20,7 @@ import java.util.*;
 import org.xml.sax.SAXParseException;
 
 import ghidra.app.util.SymbolPath;
-import ghidra.app.util.bin.format.pdb.PdbParserNEW.PdbXmlMember;
+import ghidra.app.util.bin.format.pdb.PdbParser.PdbXmlMember;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.graph.*;
 import ghidra.graph.algo.GraphNavigator;
@@ -38,7 +38,7 @@ import ghidra.xml.XmlPullParser;
 
 public class ApplyDataTypes {
 
-	private PdbParserNEW pdbParser;
+	private PdbParser pdbParser;
 	private MessageLog log;
 	private HashMap<String, CompositeDefinition> compositeQueue = new HashMap<>();
 
@@ -54,7 +54,7 @@ public class ApplyDataTypes {
 	 * @throws CancelledException if monitor is cancelled
 	 * @throws SAXParseException PDB XML parse failure
 	 */
-	ApplyDataTypes(PdbParserNEW pdbParser, MessageLog log)
+	ApplyDataTypes(PdbParser pdbParser, MessageLog log)
 			throws CancelledException, SAXParseException {
 		this.pdbParser = pdbParser;
 		this.log = log;
@@ -128,16 +128,6 @@ public class ApplyDataTypes {
 				PdbUtil.clearComponents(composite);
 			}
 
-//			// Do not adjust size of defined structure contains flex array at specified offset
-//			boolean hasFlexibleArray = false;
-//			if (composite instanceof Structure) {
-//				hasFlexibleArray = ((Structure) composite).hasFlexibleArrayComponent();
-//			}
-
-// FIXME: This should be handled during finalization of composite layout 
-//			if (!isClass && !hasFlexibleArray) {
-//				PdbUtil.ensureSize(length, composite, log);
-//			}
 		}
 	}
 
@@ -147,7 +137,7 @@ public class ApplyDataTypes {
 		}
 		ArrayList<PdbXmlMember> list = new ArrayList<>();
 		for (PdbXmlMember m : compositeDefinition.memberList) {
-			if (m.kind == PdbXmlKind.MEMBER) {
+			if (m.kind == PdbKind.MEMBER) {
 				list.add(m);
 			}
 		}
@@ -155,7 +145,7 @@ public class ApplyDataTypes {
 	}
 
 	void preProcessDataTypeList(XmlPullParser xmlParser, boolean isClasses, TaskMonitor monitor)
-			throws SAXParseException, CancelledException {
+			throws CancelledException {
 
 		monitor.setMessage("Pre-processing PDB datatypes...");
 
@@ -207,7 +197,7 @@ public class ApplyDataTypes {
 
 	private class CompositeDefinition {
 		final boolean isClass;
-		final PdbXmlKind kind;
+		final PdbKind kind;
 		final String name;
 		final int length;
 		final List<PdbXmlMember> memberList = new ArrayList<>();
@@ -224,20 +214,20 @@ public class ApplyDataTypes {
 				element = parser.start("member");
 				PdbXmlMember pdbXmlMember = pdbParser.getPdbXmlMember(element);
 				memberList.add(pdbXmlMember);
-				membersOnly &= (pdbXmlMember.kind == PdbXmlKind.MEMBER);
+				membersOnly &= (pdbXmlMember.kind == PdbKind.MEMBER);
 				parser.end(element);
 				element = parser.peek();
 			}
 			parser.end(startElement);
 			this.hasNormalMembersOnly = membersOnly;
 			this.isClass = "class".equals(startElement.getName()) || isInferredClass(kindStr);
-			this.kind = isClass ? PdbXmlKind.STRUCTURE : PdbXmlKind.parse(kindStr);
+			this.kind = isClass ? PdbKind.STRUCTURE : PdbKind.parse(kindStr);
 		}
 
 		private boolean isInferredClass(String kindStr) {
 
 			for (PdbXmlMember m : memberList) {
-				if (m.kind == PdbXmlKind.MEMBER) {
+				if (m.kind == PdbKind.MEMBER) {
 					continue;
 				}
 				if ("void *".equals(m.memberDataTypeName)) {

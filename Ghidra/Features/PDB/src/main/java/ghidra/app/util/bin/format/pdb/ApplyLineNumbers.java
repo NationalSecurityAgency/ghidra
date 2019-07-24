@@ -31,7 +31,7 @@ class ApplyLineNumbers {
 	private XmlPullParser xmlParser;
 	private Program program;
 
-	ApplyLineNumbers(PdbParserNEW pdbParser, XmlPullParser xmlParser, Program program) {
+	ApplyLineNumbers(PdbParser pdbParser, XmlPullParser xmlParser, Program program) {
 		//this.pdbParser = pdbParser;
 		this.xmlParser = xmlParser;
 		this.program = program;

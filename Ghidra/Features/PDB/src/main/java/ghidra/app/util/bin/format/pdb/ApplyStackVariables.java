@@ -16,7 +16,7 @@
 package ghidra.app.util.bin.format.pdb;
 
 import ghidra.app.cmd.function.CallDepthChangeInfo;
-import ghidra.app.util.bin.format.pdb.PdbParserNEW.PdbXmlMember;
+import ghidra.app.util.bin.format.pdb.PdbParser.PdbXmlMember;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSet;
@@ -31,11 +31,11 @@ import ghidra.xml.XmlElement;
 import ghidra.xml.XmlPullParser;
 
 class ApplyStackVariables {
-	private PdbParserNEW pdbParser;
+	private PdbParser pdbParser;
 	private XmlPullParser xmlParser;
 	private Function function;
 
-	ApplyStackVariables(PdbParserNEW pdbParser, XmlPullParser xmlParser, Function function) {
+	ApplyStackVariables(PdbParser pdbParser, XmlPullParser xmlParser, Function function) {
 		this.pdbParser = pdbParser;
 		this.xmlParser = xmlParser;
 		this.function = function;
@@ -58,7 +58,7 @@ class ApplyStackVariables {
 
 			PdbXmlMember member = pdbParser.getPdbXmlMember(elem);
 
-			if (PdbXmlKind.STATIC_LOCAL == member.kind) {
+			if (PdbKind.STATIC_LOCAL == member.kind) {
 				xmlParser.next();//stack variable number end tag
 				continue;
 			}
@@ -68,13 +68,13 @@ class ApplyStackVariables {
 				continue;
 			}
 
-			if (PdbXmlKind.OBJECT_POINTER == member.kind) {
+			if (PdbKind.OBJECT_POINTER == member.kind) {
 				createRegisterParameter(member.memberName, dt, log);
 			}
-			else if (PdbXmlKind.PARAMETER == member.kind) {
+			else if (PdbKind.PARAMETER == member.kind) {
 				createStackVariable(member.memberName, frameBase + member.memberOffset, dt, log);
 			}
-			else if (PdbXmlKind.LOCAL == member.kind) {
+			else if (PdbKind.LOCAL == member.kind) {
 				createStackVariable(member.memberName, frameBase + member.memberOffset, dt, log);
 			}
 

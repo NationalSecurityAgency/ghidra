@@ -15,7 +15,7 @@
  */
 package ghidra.app.util.bin.format.pdb;
 
-public enum PdbXmlKind {
+public enum PdbKind {
 
 	//@formatter:off
 	STRUCTURE, 
@@ -30,7 +30,7 @@ public enum PdbXmlKind {
 
 	private final String camelName;
 
-	private PdbXmlKind() {
+	private PdbKind() {
 		camelName = toCamel(name());
 	}
 
@@ -66,8 +66,8 @@ public enum PdbXmlKind {
 	 * @param kind kind string (underscores not permitted)
 	 * @return PdbKind
 	 */
-	public static PdbXmlKind parse(String kind) {
-		for (PdbXmlKind pdbKind : values()) {
+	public static PdbKind parse(String kind) {
+		for (PdbKind pdbKind : values()) {
 			if (pdbKind.camelName.equalsIgnoreCase(kind)) {
 				return pdbKind;
 			}
