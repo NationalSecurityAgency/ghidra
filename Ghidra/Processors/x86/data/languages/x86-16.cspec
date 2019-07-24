@@ -184,8 +184,10 @@
      <model name="__stdcall16far"/>
   </resolveprototype>
   <eval_current_prototype name="__stdcall16far/__stdcall16near"/>
-<callfixup name="chkstk">
-  <target name="_chkstk"/>
+<callfixup name="alloca_probe">
+  <target name="__alloca_probe"/>
+  <target name="__alloca_probe_8"/>
+  <target name="__alloca_probe_16"/>
   <target name="__chkstk"/>
   <pcode>
     <body><![CDATA[
