@@ -20,7 +20,6 @@ import java.util.Arrays;
 import ghidra.pcode.error.LowlevelError;
 import ghidra.pcode.memstate.MemoryFaultHandler;
 import ghidra.pcode.memstate.MemoryPage;
-import ghidra.program.database.mem.MemoryBlockSourceInfo;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.*;

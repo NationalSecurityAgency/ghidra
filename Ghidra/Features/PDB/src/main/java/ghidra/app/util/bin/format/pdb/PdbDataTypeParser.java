@@ -32,6 +32,7 @@ class PdbDataTypeParser {
 	private DataTypeManagerService service;
 	private TaskMonitor monitor;
 
+	private boolean bitfieldHasMissingBitOffset = false;
 	private Map<String, DataType> dataTypeCache = new HashMap<>();
 
 	PdbDataTypeParser(DataTypeManager programDataTypeMgr, DataTypeManagerService service,
@@ -316,6 +317,22 @@ class PdbDataTypeParser {
 			dt = new ArrayDataType(dt, 1, dt.getLength(), programDataTypeMgr);
 		}
 		return dt;
+	}
+
+	/**
+	 * Set flag which indicates bitfield parsed from data is missing bit-offset which is
+	 * indicative to old XML data.
+	 */
+	void setMissingBitOffsetError() {
+		bitfieldHasMissingBitOffset = true;
+	}
+
+	/**
+	 * Determine if one or more bitfield specifications were missing bit-offset data.
+	 * @return true if bit-offset data was missing, else false
+	 */
+	boolean hasMissingBitOffsetError() {
+		return bitfieldHasMissingBitOffset;
 	}
 
 }

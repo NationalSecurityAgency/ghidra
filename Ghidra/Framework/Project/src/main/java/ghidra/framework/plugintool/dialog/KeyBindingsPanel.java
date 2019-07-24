@@ -168,11 +168,6 @@ public class KeyBindingsPanel extends JPanel {
 		Set<Entry<String, List<DockingActionIf>>> entries = actionsByFullName.entrySet();
 		for (Entry<String, List<DockingActionIf>> entry : entries) {
 
-			String key = entry.getKey();
-			if (key.contains("Close W")) {
-				Msg.debug(this, "");
-			}
-
 			// pick one action, they are all conceptually the same
 			List<DockingActionIf> actions = entry.getValue();
 			DockingActionIf action = actions.get(0);

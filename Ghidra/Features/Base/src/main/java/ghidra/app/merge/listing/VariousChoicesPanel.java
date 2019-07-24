@@ -15,19 +15,29 @@
  */
 package ghidra.app.merge.listing;
 
-import java.awt.*;
-import java.awt.event.*;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Font;
+import java.awt.FontMetrics;
+import java.awt.event.ComponentEvent;
+import java.awt.event.ComponentListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.util.ArrayList;
 import java.util.Iterator;
 
-import javax.swing.*;
+import javax.swing.BorderFactory;
+import javax.swing.ButtonGroup;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.SwingConstants;
 import javax.swing.border.Border;
 import javax.swing.border.TitledBorder;
 import javax.swing.event.ChangeListener;
 
 import docking.widgets.button.GRadioButton;
 import docking.widgets.checkbox.GCheckBox;
-import docking.widgets.label.GDLabel;
+import docking.widgets.label.GDHtmlLabel;
 import docking.widgets.label.GLabel;
 import ghidra.app.merge.util.ConflictUtility;
 import ghidra.util.HTMLUtilities;
@@ -48,7 +58,7 @@ public class VariousChoicesPanel extends ConflictPanel {
 		BorderFactory.createMatteBorder(0, 0, 1, 0, Color.BLACK);
 
 	private JPanel rowPanel;
-	private JLabel headerLabel;
+	private GDHtmlLabel headerLabel;
 	private ArrayList<ChoiceRow> rows;
 	private Border radioButtonBorder;
 	private Border checkBoxBorder;
@@ -80,7 +90,7 @@ public class VariousChoicesPanel extends ConflictPanel {
 		rowPanel = new JPanel(layout);
 		rowPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 		setLayout(new BorderLayout());
-		headerLabel = new GDLabel(" ");
+		headerLabel = new GDHtmlLabel(" ");
 		headerLabel.setHorizontalAlignment(SwingConstants.CENTER);
 		add(headerLabel, BorderLayout.NORTH);
 		setHeader(null);

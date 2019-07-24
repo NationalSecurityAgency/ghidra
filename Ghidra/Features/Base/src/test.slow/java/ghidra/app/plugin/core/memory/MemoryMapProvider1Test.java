@@ -35,7 +35,6 @@ import ghidra.app.plugin.core.gotoquery.GoToServicePlugin;
 import ghidra.app.plugin.core.navigation.NavigationHistoryPlugin;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.database.ProgramBuilder;
-import ghidra.program.database.mem.MemoryBlockSourceInfo;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.CodeUnit;
 import ghidra.program.model.listing.Program;
@@ -120,7 +119,7 @@ public class MemoryMapProvider1Test extends AbstractGhidraHeadedIntegrationTest 
 		Set<DockingActionIf> actions = getActionsByOwner(tool, plugin.getName());
 		for (DockingActionIf action : actions) {
 			if (action.getName().equals("Merge Blocks")) {
-				assertTrue(!action.isEnabled());
+				assertFalse(action.isEnabled());
 			}
 			else {
 				assertTrue(action.isEnabled());
@@ -138,11 +137,14 @@ public class MemoryMapProvider1Test extends AbstractGhidraHeadedIntegrationTest 
 			String name = action.getName();
 			if (name.equals("Add Block") || name.equals("Merge Blocks") ||
 				name.equals("Delete Block") || name.equals("Set Image Base") ||
-				name.equals("Memory Map")) {
-				assertTrue(action.isEnabled());
+				name.equals("Memory Map") || name.equals("Close Window")) {
+				assertTrue("Action should be enabled for  a multi-row selection - '" + name + "'",
+					action.isEnabled());
 			}
 			else {
-				assertTrue(!action.isEnabled());
+				assertFalse(
+					"Action should not be enabled for  a multi-row selection - '" + name + "'",
+					action.isEnabled());
 			}
 		}
 	}

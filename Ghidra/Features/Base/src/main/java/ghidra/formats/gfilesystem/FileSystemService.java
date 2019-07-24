@@ -691,6 +691,34 @@ public class FileSystemService {
 	}
 
 	/**
+	 * Open the file system contained at the specified location.
+	 * <p>
+	 * The newly constructed / mounted file system is not managed by this FileSystemService
+	 * or controlled with {@link FileSystemRef}s.
+	 * <p>
+	 * The caller is responsible for closing the resultant file system instance when it is
+	 * no longer needed.
+	 * <p>
+	 * @param containerFSRL a reference to the file that contains the file system image
+	 * @param monitor {@link TaskMonitor} to allow the user to cancel
+	 * @return new {@link GFileSystem} instance, caller is responsible for closing() when done.
+	 * @throws CancelledException if user cancels
+	 * @throws IOException if file io error or wrong file system type.
+	 */
+	public GFileSystem openFileSystemContainer(FSRL containerFSRL, TaskMonitor monitor)
+			throws CancelledException, IOException {
+
+		if (localFS.isLocalSubdir(containerFSRL)) {
+			File localDir = localFS.getLocalFile(containerFSRL);
+			return new LocalFileSystemSub(localDir, localFS);
+		}
+
+		File containerFile = getFile(containerFSRL, monitor);
+		return fsFactoryMgr.probe(containerFSRL, containerFile, this, null,
+			FileSystemInfo.PRIORITY_LOWEST, monitor);
+	}
+
+	/**
 	 * Returns a cloned copy of the {@code FSRL} that should have MD5 values specified.
 	 * (excluding GFile objects that don't have data streams)
 	 * <p>

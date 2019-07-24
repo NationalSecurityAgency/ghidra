@@ -30,7 +30,7 @@ import ghidra.app.CorePluginPackage;
 import ghidra.framework.main.*;
 import ghidra.framework.model.*;
 import ghidra.framework.plugintool.*;
-import ghidra.framework.plugintool.util.*;
+import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.framework.preferences.Preferences;
 import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
@@ -198,7 +198,7 @@ public class ArchivePlugin extends Plugin implements FrontEndOnly, ProjectListen
 		Project activeProject = AppInfo.getActiveProject();
 		if (activeProject.getToolManager().getRunningTools().length > 0) {
 			Msg.showInfo(getClass(), tool.getToolFrame(), TOOL_RUNNING_TITLE,
-					"You must close running tools before starting the archive process.");
+				"You must close running tools before starting the archive process.");
 			return;
 		}
 
@@ -377,8 +377,7 @@ public class ArchivePlugin extends Plugin implements FrontEndOnly, ProjectListen
 
 	void cleanupRestoredProject(ProjectLocator projectLocator) {
 
-		Project project = tool.getProject();
-		ProjectManager projectManager = project.getProjectManager();
+		ProjectManager projectManager = tool.getProjectManager();
 
 		// delete the project at the given project location
 		if (!projectManager.deleteProject(projectLocator)) {

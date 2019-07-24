@@ -26,8 +26,10 @@ import ghidra.util.exception.CancelledException;
  * reconstruction. The <i>memberDataTypeName</i> is expected to include
  * namespace prefixes when relevant.  When representing bitfields the 
  * <i>memberName</i> is used to convey bit-size and bit-offset information
- * (e.g., fieldname:SSSS[:XXXX] where SSSS corresponds to the bit-size
- * and XXXX corresponds to an optional bit-offset).
+ * (e.g., fieldname:SSSS:XXXX where SSSS corresponds to the bit-size
+ * and XXXX corresponds to an bit-offset).  If bit-offset information is
+ * absent parsing will proceed and {@link PdbDataTypeParser#setMissingBitOffsetError()}
+ * will be notified.
  */
 public class DefaultPdbMember extends PdbMember {
 
@@ -51,8 +53,8 @@ public class DefaultPdbMember extends PdbMember {
 			PdbDataTypeParser dataTypeParser) {
 		super(getMemberName(name), dataTypeName, offset);
 		this.name = name;
-		parseBitField();
 		this.dataTypeParser = dataTypeParser;
+		parseBitField();
 	}
 
 	@Override
@@ -83,7 +85,8 @@ public class DefaultPdbMember extends PdbMember {
 			try {
 				DataType baseDataType =
 					wrappedDt.getDataType().clone(dataTypeParser.getProgramDataTypeManager());
-				bitFieldDt = new PdbBitField(baseDataType, bitFieldSize, bitFieldOffset);
+				bitFieldDt = new PdbBitField(baseDataType, bitFieldSize,
+					bitFieldOffset >= 0 ? bitFieldOffset : 0);
 			}
 			catch (InvalidDataTypeException e) {
 				Msg.error(this, "PDB parse error: " + e.getMessage());
@@ -109,10 +112,13 @@ public class DefaultPdbMember extends PdbMember {
 						bitSizeOffsetStr.substring(colonIndex + 1));
 					bitSizeOffsetStr = bitSizeOffsetStr.substring(0, colonIndex);
 				}
+				else {
+					dataTypeParser.setMissingBitOffsetError();
+				}
 				bitFieldSize = (int) NumericUtilities.parseNumber(bitSizeOffsetStr);
 			}
 			catch (NumberFormatException e) {
-				// ignore
+				Msg.error(this, "Invalid PDB bitfield specification: " + name);
 			}
 		}
 	}

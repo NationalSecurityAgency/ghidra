@@ -33,7 +33,6 @@ import docking.widgets.table.AbstractSortedTableModel;
 
 import ghidra.framework.model.DomainFile;
 import ghidra.framework.store.LockException;
-import ghidra.program.database.mem.MemoryBlockSourceInfo;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.*;

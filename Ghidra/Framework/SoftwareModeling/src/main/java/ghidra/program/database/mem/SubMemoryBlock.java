@@ -194,7 +194,7 @@ abstract class SubMemoryBlock {
 	 * @return the {@link MemoryBlockSourceInfo} object for this SubMemoryBlock
 	 */
 	protected final MemoryBlockSourceInfo getSourceInfo(MemoryBlock block) {
-		return new MemoryBlockSourceInfo(block, this);
+		return new MemoryBlockSourceInfoDB(block, this);
 	}
 
 	/**

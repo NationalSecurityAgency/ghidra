@@ -19,7 +19,6 @@ import java.io.InputStream;
 import java.util.List;
 
 import ghidra.framework.store.LockException;
-import ghidra.program.database.mem.MemoryBlockSourceInfo;
 import ghidra.program.model.address.Address;
 import ghidra.util.exception.DuplicateNameException;
 
