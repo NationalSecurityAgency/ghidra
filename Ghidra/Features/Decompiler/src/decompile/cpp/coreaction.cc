@@ -4472,6 +4472,7 @@ void universal_action(Architecture *conf)
 	actprop->addRule( new RuleOrCollapse("analysis") );
 	actprop->addRule( new RuleAndOrLump("analysis") );
 	actprop->addRule( new RuleShiftBitops("analysis") );
+	actprop->addRule( new RuleRightShiftAnd("analysis") );
 	actprop->addRule( new RuleNotDistribute("analysis") );
 	actprop->addRule( new RuleHighOrderAnd("analysis") );
 	actprop->addRule( new RuleAndDistribute("analysis") );
