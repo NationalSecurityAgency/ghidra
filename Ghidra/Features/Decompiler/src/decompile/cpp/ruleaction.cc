@@ -3191,17 +3191,6 @@ int4 RuleTestSign::applyOp(PcodeOp *op,Funcdata &data)
   if (val != 8*inVn->getSize() -1) return 0;
   Varnode *outVn = op->getOut();
 
-  // Check if input comes from truncation of larger value
-  if (inVn->isWritten()) {
-    PcodeOp *truncOp = inVn->getDef();
-    if (truncOp->code() == CPUI_SUBPIECE) {
-      Varnode *newIn = truncOp->getIn(0);
-      int4 truncAmount = (int4)truncOp->getIn(1)->getOffset();
-      if (truncAmount + inVn->getSize() == newIn->getSize()) {	// If this is the most significant bytes
-	inVn = newIn;	// We are really extracting the sign-bit from a larger value
-      }
-    }
-  }
   if (inVn->isFree()) return 0;
   vector<PcodeOp *> compareOps;
   findComparisons(outVn, compareOps);
@@ -5245,24 +5234,26 @@ Varnode *RuleSLess2Zero::getHiBit(PcodeOp *op)
 }
 
 /// \class RuleSLess2Zero
-/// \brief Simplify INT_SLESS and INT_SLESSEQUAL applied to 0 or -1
+/// \brief Simplify INT_SLESS applied to 0 or -1
 ///
 /// Forms include:
 ///  - `0 s< V * -1  =>  V s< 0`
 ///  - `V * -1 s< 0  =>  0 s< V`
+///  - `-1 s< SUB(V,#hi) => -1 s< V`
+///  - `SUB(V,#hi) s< 0  => V s< 0`
+///  - `-1 s< ~V     => V s< 0`
+///  - `~V s< 0      => -1 s< V`
 ///
 /// There is a second set of forms where one side of the comparison is
 /// built out of a high and low piece, where the high piece determines the
 /// sign bit:
-///  - `0 s<= (hi + lo)  =>  0 s<= hi`
 ///  - `-1 s< (hi + lo)  =>  -1 s< hi`
 ///  - `(hi + lo) s< 0   =>  hi s< 0`
-///  - `(hi + lo) s<= -1 =>  hi s<= -1`
+///
 void RuleSLess2Zero::getOpList(vector<uint4> &oplist) const
 
 {
   oplist.push_back(CPUI_INT_SLESS);
-  oplist.push_back(CPUI_INT_SLESSEQUAL);
 }
 
 int4 RuleSLess2Zero::applyOp(PcodeOp *op,Funcdata &data)
@@ -5287,21 +5278,11 @@ int4 RuleSLess2Zero::applyOp(PcodeOp *op,Funcdata &data)
 	data.opSetInput(op,lvn,1);
 	return 1;
       }
-      else if (op->code() == CPUI_INT_SLESSEQUAL) {
-	Varnode *hibit = getHiBit(multop);
-	if (hibit != (Varnode *)0) { // Test for   0 s<=  (hi ^ lo)
-	  if (hibit->isConstant())
-	    data.opSetInput(op,data.newConstant(hibit->getSize(),hibit->getOffset()),1);
-	  else
-	    data.opSetInput(op,hibit,1);
-	  data.opSetOpcode(op,CPUI_INT_EQUAL);
-	  return 1;
-	}
-      }
     }
     else if (lvn->getOffset() == calc_mask(lvn->getSize())) {
       if (op->code() == CPUI_INT_SLESS) {
-	Varnode *hibit = getHiBit(rvn->getDef());
+	multop = rvn->getDef();
+	Varnode *hibit = getHiBit(multop);
 	if (hibit != (Varnode *)0) { // Test for -1 s<  (hi ^ lo)
 	  if (hibit->isConstant())
 	    data.opSetInput(op,data.newConstant(hibit->getSize(),hibit->getOffset()),1);
@@ -5309,6 +5290,24 @@ int4 RuleSLess2Zero::applyOp(PcodeOp *op,Funcdata &data)
 	    data.opSetInput(op,hibit,1);
 	  data.opSetOpcode(op,CPUI_INT_EQUAL);
 	  data.opSetInput(op,data.newConstant(hibit->getSize(),0),0);
+	  return 1;
+	}
+	else if (multop->code() == CPUI_SUBPIECE) {
+	  avn = multop->getIn(0);
+	  if (avn->isFree()) return 0;
+	  if (avn->getSize() + (int4)multop->getIn(1)->getOffset() == rvn->getSize()) {
+	    // We have -1 s< SUB( avn, #hi )
+	    data.opSetInput(op,avn,1);
+	    data.opSetInput(op,data.newConstant(avn->getSize(),calc_mask(avn->getSize())),0);
+	    return 1;
+	  }
+	}
+	else if (multop->code() == CPUI_INT_NEGATE) {
+	  // We have -1 s< ~avn
+	  avn = multop->getIn(0);
+	  if (avn->isFree()) return 0;
+	  data.opSetInput(op,avn,0);
+	  data.opSetInput(op,data.newConstant(avn->getSize(),0),1);
 	  return 1;
 	}
       }
@@ -5338,18 +5337,22 @@ int4 RuleSLess2Zero::applyOp(PcodeOp *op,Funcdata &data)
 	  data.opSetOpcode(op,CPUI_INT_NOTEQUAL);
 	  return 1;
 	}
-      }
-    }
-    else if (rvn->getOffset() == calc_mask(rvn->getSize())) {
-      if (op->code() == CPUI_INT_SLESSEQUAL) {
-	Varnode *hibit = getHiBit(lvn->getDef());
-	if (hibit != (Varnode *)0) { // Test for (hi ^ lo) s<= -1
-	  if (hibit->isConstant())
-	    data.opSetInput(op,data.newConstant(hibit->getSize(),hibit->getOffset()),0);
-	  else
-	    data.opSetInput(op,hibit,0);
-	  data.opSetOpcode(op,CPUI_INT_NOTEQUAL);
-	  data.opSetInput(op,data.newConstant(hibit->getSize(),0),1);
+	else if (multop->code() == CPUI_SUBPIECE) {
+	  avn = multop->getIn(0);
+	  if (avn->isFree()) return 0;
+	  if (avn->getSize() + (int4)multop->getIn(1)->getOffset() == lvn->getSize()) {
+	    // We have SUB( avn, #hi ) s< 0
+	    data.opSetInput(op,avn,0);
+	    data.opSetInput(op,data.newConstant(avn->getSize(),0),1);
+	    return 1;
+	  }
+	}
+	else if (multop->code() == CPUI_INT_NEGATE) {
+	  // We have ~avn s< 0
+	  avn = multop->getIn(0);
+	  if (avn->isFree()) return 0;
+	  data.opSetInput(op,avn,1);
+	  data.opSetInput(op,data.newConstant(avn->getSize(),calc_mask(avn->getSize())),0);
 	  return 1;
 	}
       }
