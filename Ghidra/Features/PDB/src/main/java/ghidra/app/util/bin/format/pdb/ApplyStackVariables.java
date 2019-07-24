@@ -65,6 +65,7 @@ class ApplyStackVariables {
 
 			DataType dt = getDataType(member, log);
 			if (dt == null) {
+				xmlParser.next();//stack variable number end tag
 				continue;
 			}
 

@@ -81,6 +81,7 @@ public class DefaultPdbMember extends PdbMember {
 			return null;
 		}
 		if (kind == PdbKind.MEMBER) {
+			// Strip bitfield data if present (see parseBitField method)
 			int bitFieldColonIndex = name.indexOf(':');
 			if (bitFieldColonIndex >= 0) {
 				return name.substring(0, bitFieldColonIndex);
@@ -118,7 +119,10 @@ public class DefaultPdbMember extends PdbMember {
 	}
 
 	private void parseBitField(String name) {
-		int bitFieldColonIndex = name != null ? name.indexOf(':') : -1;
+		if (name == null || kind != PdbKind.MEMBER) {
+			return;
+		}
+		int bitFieldColonIndex = name.indexOf(':');
 		if (bitFieldColonIndex >= 0) {
 
 			isBitField = true;
