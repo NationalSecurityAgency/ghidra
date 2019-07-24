@@ -59,8 +59,7 @@ class AlignedComponentPacker {
 	 * @param isLastComponent true if dtc is the last component within the structure
 	 */
 	void addComponent(InternalDataTypeComponent dtc, boolean isLastComponent) {
-		if (dtc.getDataType() == DataType.DEFAULT ||
-			(dtc.isFlexibleArrayComponent() && !isLastComponent)) {
+		if (dtc.getDataType() == DataType.DEFAULT || dtc.isFlexibleArrayComponent()) {
 			throw new IllegalArgumentException("unsupported component");
 		}
 		if (!packComponent(dtc)) {
