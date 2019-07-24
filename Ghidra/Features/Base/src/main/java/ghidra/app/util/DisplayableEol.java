@@ -80,7 +80,7 @@ public class DisplayableEol {
 			codeUnit.getCommentAsArray(CodeUnit.REPEATABLE_COMMENT);
 		totalCommentsFound += displayCommentArrays[MY_REPEATABLES].length;
 
-		displayCommentArrays[REF_REPEATABLES] = new String[0];
+		displayCommentArrays[REF_REPEATABLES] = new RefRepeatComment[0];
 		displayCommentArrays[MY_AUTOMATIC] = new String[0];
 		if (totalCommentsFound > maxDisplayLines) {
 			// no more room to display the comments below; don't process them
@@ -553,9 +553,9 @@ public class DisplayableEol {
 		if (alwaysShowRefRepeats || !(hasEol || hasRepeatable)) {
 			RefRepeatComment[] refRepeatComments =
 				(RefRepeatComment[]) displayCommentArrays[REF_REPEATABLES];
-			for (int j = 0; j < refRepeatComments.length; j++) {
+			for (RefRepeatComment refRepeatComment : refRepeatComments) {
 				// Address addr = refRepeatComments[j].getAddress();
-				list.addAll(Arrays.asList(refRepeatComments[j].getCommentLines()));
+				list.addAll(Arrays.asList(refRepeatComment.getCommentLines()));
 			}
 		}
 
@@ -620,8 +620,8 @@ public class DisplayableEol {
 	 */
 	public String[] getReferencedRepeatableComments(Address refAddress) {
 		Object[] refRepeatArray = displayCommentArrays[REF_REPEATABLES];
-		for (int i = 0; i < refRepeatArray.length; i++) {
-			RefRepeatComment refRepeatComment = (RefRepeatComment) refRepeatArray[i];
+		for (Object element : refRepeatArray) {
+			RefRepeatComment refRepeatComment = (RefRepeatComment) element;
 			if (refRepeatComment.getAddress().equals(refAddress)) {
 				return refRepeatComment.getCommentLines();
 			}
@@ -646,8 +646,8 @@ public class DisplayableEol {
 			case REF_REPEATABLES:
 				int count = 0;
 				Object[] refRepeatArray = displayCommentArrays[REF_REPEATABLES];
-				for (int i = 0; i < refRepeatArray.length; i++) {
-					count += ((RefRepeatComment) refRepeatArray[i]).getCommentLines().length;
+				for (Object element : refRepeatArray) {
+					count += ((RefRepeatComment) element).getCommentLines().length;
 				}
 				return count;
 			case MY_AUTOMATIC:
@@ -661,8 +661,8 @@ public class DisplayableEol {
 
 	public int getRefRepeatableCommentLineCount(Address refAddress) {
 		Object[] refRepeatArray = displayCommentArrays[REF_REPEATABLES];
-		for (int i = 0; i < refRepeatArray.length; i++) {
-			RefRepeatComment refRepeatComment = (RefRepeatComment) refRepeatArray[i];
+		for (Object element : refRepeatArray) {
+			RefRepeatComment refRepeatComment = (RefRepeatComment) element;
 			if (refRepeatComment.getAddress().equals(refAddress)) {
 				return refRepeatComment.getCommentLines().length;
 			}
