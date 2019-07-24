@@ -306,6 +306,29 @@ If the launcher does not appear, it probably has not been marked as a favorite.
 Click the dropdown next to the "Run" button and select "Run Configurations."
 Then expand "Java Application" on the left to find the "Ghidra" launcher.
 
+### Running tests
+
+For running unit tests, run
+
+    gradlew unitTestReport
+
+for more complex integration tests run
+
+    gradlew integrationTest
+
+For running both unit test and integration test and generate report use
+
+    gradlew combinedTestReport
+
+## Setup build in CI
+
+For running build in Linux, in CI environment, or in Docker, before running tests, run
+
+    Xvfb :99 &
+    export DISPLAY=:99
+
+this is required to make AWT happy.
+
 ## Building Supporting Data
 
 Some features of Ghidra require the curation of rather extensive databases.
