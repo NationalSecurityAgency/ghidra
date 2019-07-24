@@ -319,7 +319,7 @@ public final class ReferenceUtils {
 	/**
 	 * A recursive function to get the base highest level data type for the given data type.  For
 	 * example, if the give data type is an {@link Array}, then this
-	 * method will be called again in its data type.
+	 * method will be called again on its data type.
 	 * <p>
 	 * It is not always appropriate to find the base data type. This method contains the
 	 * logic for determining when it is appropriate the seek out the
@@ -351,7 +351,7 @@ public final class ReferenceUtils {
 	/**
 	 * A recursive function to get the base highest level data type for the given data type.  For
 	 * example, if the give data type is an {@link Array}, then this
-	 * method will be called again in its data type.
+	 * method will be called again on its data type.
 	 * <p>
 	 * It is not always appropriate to find the base data type. This method contains the
 	 * logic for determining when it is appropriate the seek out the
