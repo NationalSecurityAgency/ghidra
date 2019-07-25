@@ -137,8 +137,8 @@ public class ApplicationUtilities {
 			throws FileNotFoundException {
 
 		// Look for preset cache directory
-		String cachedir = System.getProperty("application.cachedir");
-		if (cachedir != null && !cachedir.isEmpty()) {
+		String cachedir = System.getProperty("application.cachedir", "").trim();
+		if (!cachedir.isEmpty()) {
 			return new File(cachedir,
 				SystemUtilities.getUserName() + "-" + applicationProperties.getApplicationName());
 		}

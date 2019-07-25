@@ -19,6 +19,8 @@ import java.io.*;
 import java.text.ParseException;
 import java.util.*;
 
+import ghidra.launch.JavaFinder.Platform;
+
 /**
  * Parses and provides convenient access to the properties defined in a launch properties file.
  * <p>
@@ -34,9 +36,14 @@ public class LaunchProperties {
 	public static String JAVA_HOME_OVERRIDE = "JAVA_HOME_OVERRIDE";
 
 	/**
-	 * The VM arguments to use to launch.
+	 * The VM arguments to use to launch (all platforms).
 	 */
 	public static String VMARGS = "VMARGS";
+
+	/**
+	 * The VM arguments to use to launch (current platform only).
+	 */
+	public static String VMARGS_PLATFORM = "VMARGS_" + JavaFinder.getCurrentPlatform();
 
 	private Map<String, List<String>> propertyMap;
 
@@ -68,18 +75,24 @@ public class LaunchProperties {
 	}
 
 	/**
-	 * Gets the command line string of VM arguments to use for the launch.  
-	 * This will be the union of all VM arguments defined in both the user and installation launch 
-	 * properties. If conflicting VM arguments are defined in both files, the user version
-	 * will override the installation version.
+	 * Gets the command line string of VM arguments to use for the launch for the current 
+	 * {@link Platform platform}.
 	 * 
-	 * @return The command line string of VM arguments to use for the launch.
+	 * @return The command line string of VM arguments to use for the launch for the current
+	 *   {@link Platform}
 	 */
 	public String getVmArgs() {
 		StringBuilder sb = new StringBuilder();
 		List<String> vmargList = propertyMap.get(VMARGS);
 		if (vmargList != null) {
 			for (String arg : vmargList) {
+				sb.append(arg);
+				sb.append(" ");
+			}
+		}
+		List<String> vmargPlatformList = propertyMap.get(VMARGS_PLATFORM);
+		if (vmargPlatformList != null) {
+			for (String arg : vmargPlatformList) {
 				sb.append(arg);
 				sb.append(" ");
 			}
