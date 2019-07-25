@@ -339,6 +339,29 @@ public class ComponentProviderActionsTest extends AbstractGhidraHeadedIntegratio
 		assertProviderIsHidden();
 	}
 
+	@Test
+	public void testEveryCloseButtonsActionContext() {
+
+		// grab the tool that has all the provider's loaded
+		env.closeTool(tool);
+		tool = env.launchDefaultTool();
+
+		DockingWindowManager dwm = tool.getWindowManager();
+		PlaceholderManager pm = dwm.getPlaceholderManager();
+		Set<ComponentProvider> allProviders = pm.getActiveProviders();
+		for (ComponentProvider cp : allProviders) {
+			ActionContext context = cp.getActionContext(null);
+			if (context == null) {
+				continue; // a null context is allowed
+			}
+
+			// this is a rule we need for context to work as intended for some actions (like the
+			// close button)
+			assertSame("Component provider did not make itself the context's provider",
+				context.getComponentProvider(), cp);
+		}
+	}
+
 //==================================================================================================
 // Private Methods
 //==================================================================================================

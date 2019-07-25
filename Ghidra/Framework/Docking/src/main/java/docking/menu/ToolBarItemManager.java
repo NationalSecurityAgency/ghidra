@@ -229,7 +229,8 @@ public class ToolBarItemManager implements PropertyChangeListener, ActionListene
 	private ActionContext getActionContext() {
 		ComponentProvider provider = getComponentProvider();
 		ActionContext context = provider == null ? null : provider.getActionContext(null);
-		final ActionContext actionContext = context == null ? new ActionContext() : context;
+		final ActionContext actionContext =
+			context == null ? new ActionContext(provider, null) : context;
 		return actionContext;
 	}
 
