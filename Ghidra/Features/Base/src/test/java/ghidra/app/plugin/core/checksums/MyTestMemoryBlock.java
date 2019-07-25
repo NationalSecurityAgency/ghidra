@@ -18,7 +18,6 @@ package ghidra.app.plugin.core.checksums;
 import java.io.InputStream;
 import java.util.List;
 
-import ghidra.program.database.mem.MemoryBlockSourceInfo;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.mem.*;
 

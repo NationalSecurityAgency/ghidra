@@ -22,11 +22,9 @@ import org.junit.*;
 import generic.test.AbstractGenericTest;
 import ghidra.framework.cmd.Command;
 import ghidra.program.database.ProgramBuilder;
-import ghidra.program.database.mem.MemoryBlockSourceInfo;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.*;
-import ghidra.program.model.mem.MemoryBlock;
-import ghidra.program.model.mem.MemoryBlockType;
+import ghidra.program.model.mem.*;
 import ghidra.util.exception.RollbackException;
 
 /**

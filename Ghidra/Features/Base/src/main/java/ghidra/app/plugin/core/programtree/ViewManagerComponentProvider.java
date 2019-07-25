@@ -45,13 +45,13 @@ public class ViewManagerComponentProvider extends ComponentProviderAdapter
 	private Program currentProgram;
 	private String restoredViewName;
 
-	public ViewManagerComponentProvider(PluginTool tool, String name) {
-		super(tool, NAME, name, ProgramActionContext.class);
+	public ViewManagerComponentProvider(PluginTool tool, String owner) {
+		super(tool, NAME, owner, ProgramActionContext.class);
 		viewPanel = new ViewPanel(tool, this);
 		listeners = new ArrayList<>(3);
 
 		setTitle("Program Trees");
-		setHelpLocation(new HelpLocation(getName(), getName()));
+		setHelpLocation(new HelpLocation(owner, getName()));
 		setDefaultWindowPosition(WindowPosition.LEFT);
 
 		//

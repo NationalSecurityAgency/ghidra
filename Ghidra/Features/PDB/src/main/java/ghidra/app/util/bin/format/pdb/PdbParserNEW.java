@@ -384,6 +384,11 @@ public class PdbParserNEW {
 
 			Options options = program.getOptions(Program.PROGRAM_INFO);
 			options.setBoolean(PdbParserConstants.PDB_LOADED, true);
+
+			if (dataTypeParser != null && dataTypeParser.hasMissingBitOffsetError()) {
+				log.error("PDB Parser",
+					"One or more bitfields were specified without bit-offset data.\nThe use of old pdb.xml data could be the cause.");
+			}
 		}
 		catch (CancelledException e) {
 			throw e;
