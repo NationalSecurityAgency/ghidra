@@ -73,6 +73,7 @@ public:
   bool absorb(RangeHint *b);	///< Try to absorb the other RangeHint into \b this
   bool merge(RangeHint *b,AddrSpace *space,TypeFactory *typeFactory);	///< Try to form the union of \b this with another RangeHint
   static bool compareRanges(const RangeHint *a,const RangeHint *b);	///< Compare to RangeHint pointers
+  static bool rangesEqual(const RangeHint* a, const RangeHint* b);
 };
 
 class ProtoModel;
