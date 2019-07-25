@@ -20,6 +20,7 @@ scope Block {
 @header {
 	import generic.stl.Pair;
 	import generic.stl.VectorSTL;
+	import ghidra.pcodeCPort.context.SleighError;
 	import ghidra.pcodeCPort.opcodes.OpCode;
 	import ghidra.pcodeCPort.semantics.*;
 	import ghidra.pcodeCPort.slgh_compile.*;
@@ -445,7 +446,15 @@ wordsizemod
 
 varnodedef
 	:	^(OP_VARNODE s=space_symbol["varnode definition"] offset=integer size=integer l=identifierlist) {
-			sc.defineVarnodes(s, $offset.value.longValue(), $size.value.longValue(), l.first, l.second);
+			if (offset.bitLength() > 64) {
+				throw new SleighError("Unsupported offset: " + String.format("0x\%x", offset),
+					l.second.get(0));
+			}
+			if (size.bitLength() >= 32) {
+				throw new SleighError("Unsupported size: " + String.format("0x\%x", size),
+					l.second.get(0));
+			}
+			sc.defineVarnodes(s, $offset.value.longValue(), $size.value.intValue(), l.first, l.second);
 		}
 	;
 
