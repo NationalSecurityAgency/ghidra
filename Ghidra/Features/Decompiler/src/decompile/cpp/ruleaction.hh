@@ -1140,6 +1140,7 @@ public:
 
 class RuleDivOpt : public Rule {
   static uintb calcDivisor(uintb n,uint8 y,int4 xsize);		///< Calculate the divisor
+  static void moveSignBitExtraction(Varnode *firstVn,Varnode *replaceVn,Funcdata &data);
 public:
   RuleDivOpt(const string &g) : Rule( g, 0, "divopt") {}	///< Constructor
   virtual Rule *clone(const ActionGroupList &grouplist) const {

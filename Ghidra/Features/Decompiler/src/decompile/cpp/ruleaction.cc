@@ -584,6 +584,11 @@ int4 RuleShiftBitops::applyOp(PcodeOp *op,Funcdata &data)
   return 1;
 }
 
+/// \class RuleRightShiftAnd
+/// \brief Simplify INT_RIGHT and INT_SRIGHT ops where an INT_AND mask becomes unnecessary
+///
+/// - `( V & 0xf000 ) >> 24   =>   V >> 24`
+/// - `( V & 0xf000 ) s>> 24  =>   V s>> 24`
 void RuleRightShiftAnd::getOpList(vector<uint4> &oplist) const
 
 {
@@ -5275,6 +5280,10 @@ Varnode *RuleSLess2Zero::getHiBit(PcodeOp *op)
 ///  - `SUB(V,#hi) s< 0  => V s< 0`
 ///  - `-1 s< ~V     => V s< 0`
 ///  - `~V s< 0      => -1 s< V`
+///  - `(V & 0xf000) s< 0   =>  V s< 0`
+///  - `-1 s< (V & 0xf000)  =>  -1 s< V
+///  - `CONCAT(V,W) s< 0    =>  V s< 0`
+///  - `-1 s< CONCAT(V,W)   =>  -1 s> V`
 ///
 /// There is a second set of forms where one side of the comparison is
 /// built out of a high and low piece, where the high piece determines the
@@ -6810,6 +6819,35 @@ uintb RuleDivOpt::calcDivisor(uintb n,uint8 y,int4 xsize)
   return (uintb)d;
 }
 
+/// \brief Replace sign-bit extractions from the first given Varnode with the second Varnode
+///
+/// Look for either:
+///  - `V >> 0x1f`
+///  - `V s>> 0x1f`
+///
+/// \param firstVn is the first given Varnode
+/// \param replaceVn is the Varnode to replace it with in each extraction
+/// \param data is the function holding the Varnodes
+void RuleDivOpt::moveSignBitExtraction(Varnode *firstVn,Varnode *replaceVn,Funcdata &data)
+
+{
+  list<PcodeOp *>::const_iterator iter = firstVn->beginDescend();
+  while(iter!=firstVn->endDescend()) {
+    PcodeOp *op = *iter;
+    ++iter;		// Increment before modifying the op
+    OpCode opc = op->code();
+    if (opc == CPUI_INT_RIGHT || opc == CPUI_INT_SRIGHT) {
+      Varnode *constVn = op->getIn(1);
+      if (constVn->isConstant()) {
+	int4 sa = firstVn->getSize() * 8 - 1;
+	if (sa == (int4)constVn->getOffset()) {
+	  data.opSetInput(op,replaceVn,0);
+	}
+      }
+    }
+  }
+}
+
 /// \class RuleDivOpt
 /// \brief Convert INT_MULT and shift forms into INT_DIV or INT_SDIV
 ///
@@ -6855,6 +6893,7 @@ int4 RuleDivOpt::applyOp(PcodeOp *op,Funcdata &data)
     data.opSetInput(op,resVn,0);
     data.opSetInput(op,data.newConstant(4, 0),1);
     op = newop;					// Main transform now changes newop
+    outSize = inVn->getSize();
   }
   if (extOpc == CPUI_INT_ZEXT) { // Unsigned division
     data.opSetInput(op,inVn,0);
@@ -6862,6 +6901,7 @@ int4 RuleDivOpt::applyOp(PcodeOp *op,Funcdata &data)
     data.opSetOpcode(op,CPUI_INT_DIV);
   }
   else {			// Sign division
+    moveSignBitExtraction(op->getOut(), inVn, data);
     PcodeOp *divop = data.newOp(2,op->getAddr());
     data.opSetOpcode(divop,CPUI_INT_SDIV);
     Varnode *newout = data.newUniqueOut(outSize,divop);
@@ -6871,9 +6911,9 @@ int4 RuleDivOpt::applyOp(PcodeOp *op,Funcdata &data)
     // Build the sign value correction
     PcodeOp *sgnop = data.newOp(2,op->getAddr());
     data.opSetOpcode(sgnop,CPUI_INT_SRIGHT);
-    Varnode *sgnvn = data.newUniqueOut(inVn->getSize(),sgnop);
+    Varnode *sgnvn = data.newUniqueOut(outSize,sgnop);
     data.opSetInput(sgnop,inVn,0);
-    data.opSetInput(sgnop,data.newConstant(inVn->getSize(),outSize*8-1),1);
+    data.opSetInput(sgnop,data.newConstant(outSize,outSize*8-1),1);
     data.opInsertBefore(sgnop,op);
     // Add the correction into the division op
     data.opSetInput(op,newout,0);
