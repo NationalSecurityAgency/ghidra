@@ -16,14 +16,19 @@
 package ghidra.app.plugin.core.functiongraph.mvc;
 
 import java.awt.Color;
+import java.util.*;
+import java.util.Map.Entry;
 
-import ghidra.framework.options.ToolOptions;
-import ghidra.framework.plugintool.Plugin;
+import ghidra.app.plugin.core.functiongraph.FunctionGraphPlugin;
+import ghidra.app.plugin.core.functiongraph.graph.layout.FGLayoutOptions;
+import ghidra.framework.options.Options;
 import ghidra.graph.viewer.options.*;
 import ghidra.program.model.symbol.FlowType;
 import ghidra.util.HelpLocation;
 
 public class FunctionGraphOptions extends VisualGraphOptions {
+
+	protected static final String OWNER = FunctionGraphPlugin.class.getSimpleName();
 
 	private static final String EDGE_FALLTHROUGH_HIGHLIGHT_COLOR_KEY =
 		"Edge Color - Fallthrough Highlight";
@@ -48,7 +53,7 @@ public class FunctionGraphOptions extends VisualGraphOptions {
 
 	private static final String DEFAULT_GROUP_BACKGROUND_COLOR_KEY = "Default Group Color";
 	private static final String DEFAULT_GROUP_BACKGROUND_COLOR_DESCRPTION =
-		"The default " + "background color applied to newly created group vertices";
+		"The default background color applied to newly created group vertices";
 
 	private static final String UPDATE_GROUP_AND_UNGROUP_COLORS =
 		"Update Vertex Colors When Grouping";
@@ -73,6 +78,8 @@ public class FunctionGraphOptions extends VisualGraphOptions {
 	private Color conditionalJumpEdgeHighlightColor = HOVER_HIGHLIGHT_CONDITIONAL_COLOR;
 
 	protected RelayoutOption relayoutOption = RelayoutOption.NEVER;
+
+	private Map<String, FGLayoutOptions> layoutOptionsByName = new HashMap<>();
 
 	public Color getDefaultGroupBackgroundColor() {
 		return defaultGroupBackgroundColor;
@@ -110,8 +117,9 @@ public class FunctionGraphOptions extends VisualGraphOptions {
 		return relayoutOption;
 	}
 
-	public void initializeOptions(Plugin plugin, ToolOptions options) {
-		HelpLocation help = new HelpLocation(plugin.getName(), "Options");
+	public void registerOptions(Options options) {
+
+		HelpLocation help = new HelpLocation(OWNER, "Options");
 		options.setOptionsHelpLocation(help);
 
 		options.registerOption(RELAYOUT_OPTIONS_KEY, RelayoutOption.VERTEX_GROUPING_CHANGES, help,
@@ -124,8 +132,7 @@ public class FunctionGraphOptions extends VisualGraphOptions {
 			USE_MOUSE_RELATIVE_ZOOM_DESCRIPTION);
 
 		options.registerOption(USE_CONDENSED_LAYOUT, useCondensedLayout(),
-			new HelpLocation(plugin.getName(), "Layout_Compressing"),
-			USE_CONDENSED_LAYOUT_DESCRIPTION);
+			new HelpLocation(OWNER, "Layout_Compressing"), USE_CONDENSED_LAYOUT_DESCRIPTION);
 
 		options.registerOption(VIEW_RESTORE_OPTIONS_KEY, ViewRestoreOption.START_FULLY_ZOOMED_OUT,
 			help, VIEW_RESTORE_OPTIONS_DESCRIPTION);
@@ -161,7 +168,7 @@ public class FunctionGraphOptions extends VisualGraphOptions {
 
 	}
 
-	public void loadOptions(Plugin plugin, ToolOptions options) {
+	public void loadOptions(Options options) {
 		conditionalJumpEdgeColor =
 			options.getColor(EDGE_COLOR_CONDITIONAL_JUMP_KEY, conditionalJumpEdgeColor);
 
@@ -198,6 +205,14 @@ public class FunctionGraphOptions extends VisualGraphOptions {
 
 		updateGroupColorsAutomatically =
 			options.getBoolean(UPDATE_GROUP_AND_UNGROUP_COLORS, updateGroupColorsAutomatically);
+
+		Set<Entry<String, FGLayoutOptions>> entries = layoutOptionsByName.entrySet();
+		for (Entry<String, FGLayoutOptions> entry : entries) {
+			String layoutName = entry.getKey();
+			FGLayoutOptions layoutOptions = entry.getValue();
+			Options layoutToolOptions = options.getOptions(layoutName);
+			layoutOptions.loadOptions(layoutToolOptions);
+		}
 	}
 
 	public Color getColor(FlowType flowType) {
@@ -226,5 +241,13 @@ public class FunctionGraphOptions extends VisualGraphOptions {
 		}
 
 		return Color.BLACK;
+	}
+
+	public FGLayoutOptions getLayoutOptions(String layoutName) {
+		return layoutOptionsByName.get(layoutName);
+	}
+
+	public void setLayoutOptions(String layoutName, FGLayoutOptions options) {
+		layoutOptionsByName.put(layoutName, options);
 	}
 }

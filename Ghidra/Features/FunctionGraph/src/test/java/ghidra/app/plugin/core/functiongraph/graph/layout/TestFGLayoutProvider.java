@@ -25,6 +25,7 @@ import javax.swing.Icon;
 import ghidra.app.plugin.core.functiongraph.graph.FGEdge;
 import ghidra.app.plugin.core.functiongraph.graph.FunctionGraph;
 import ghidra.app.plugin.core.functiongraph.graph.vertex.FGVertex;
+import ghidra.app.plugin.core.functiongraph.graph.vertex.GroupedFunctionGraphVertex;
 import ghidra.graph.VisualGraph;
 import ghidra.graph.viewer.layout.*;
 import ghidra.graph.viewer.vertex.VisualGraphVertexShapeTransformer;
@@ -37,13 +38,14 @@ import resources.Icons;
 /**
  * A simple layout that is used during testing
  */
-public class TestFGLayoutProvider implements FGLayoutProvider {
+public class TestFGLayoutProvider extends FGLayoutProvider {
 
+	private static final String NAME = "Test Layout";
 	private static final int VERTEX_TO_EDGE_ARTICULATION_OFFSET = 20;
 
 	@Override
 	public String getLayoutName() {
-		return "Test Layout";
+		return NAME;
 	}
 
 	@Override
@@ -65,7 +67,7 @@ public class TestFGLayoutProvider implements FGLayoutProvider {
 	private class TestFGLayout extends AbstractFGLayout {
 
 		protected TestFGLayout(FunctionGraph graph) {
-			super(graph);
+			super(graph, NAME);
 		}
 
 		@Override
@@ -224,7 +226,9 @@ public class TestFGLayoutProvider implements FGLayoutProvider {
 					treeify(g, left, nodesByVertices);
 					break;
 				default:
-					Msg.debug(this, "\n\n\tMore than 2 edges????: " + parent);
+					if (!(parent.v instanceof GroupedFunctionGraphVertex)) {
+						Msg.debug(this, "\n\n\tMore than 2 edges????: " + parent);
+					}
 
 			}
 		}
@@ -356,6 +360,17 @@ public class TestFGLayoutProvider implements FGLayoutProvider {
 
 		Node(FGVertex v) {
 			this.v = v;
+		}
+
+		@Override
+		public String toString() {
+			//@formatter:off
+			return "{\n" +
+				"\tv: " + v + ",\n" +
+				"\tleft: " + left + ",\n" +
+				"\tright: " + right + "\n" + 
+			"}";
+			//@formatter:on
 		}
 	}
 }

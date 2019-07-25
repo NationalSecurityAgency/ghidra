@@ -37,8 +37,8 @@ public abstract class AbstractFGLayout extends AbstractVisualGraphLayout<FGVerte
 	protected Function function;
 	protected FunctionGraphOptions options;
 
-	protected AbstractFGLayout(FunctionGraph graph) {
-		super(graph);
+	protected AbstractFGLayout(FunctionGraph graph, String layoutName) {
+		super(graph, layoutName);
 		this.function = graph.getFunction();
 		this.options = graph.getOptions();
 	}

@@ -18,25 +18,33 @@ package ghidra.app.plugin.core.functiongraph.graph.layout;
 import javax.swing.Icon;
 
 import ghidra.app.plugin.core.functiongraph.graph.FunctionGraph;
+import ghidra.framework.options.Options;
 import ghidra.util.task.TaskMonitor;
 import resources.ResourceManager;
 
-public class DecompilerNestedLayoutProvider implements FGLayoutProvider {
+public class DecompilerNestedLayoutProvider extends FGLayoutProvider {
 
 	private static final Icon ICON =
 		ResourceManager.loadImage("images/function_graph_code_flow.png");
+	static final String LAYOUT_NAME = "Nested Code Layout";
 
 	@Override
 	public FGLayout getFGLayout(FunctionGraph graph, TaskMonitor monitor) {
-		DecompilerNestedLayout layout = new DecompilerNestedLayout(graph);
+		DecompilerNestedLayout layout = new DecompilerNestedLayout(graph, LAYOUT_NAME);
 		layout.setTaskMonitor(monitor);
 		return layout;
 	}
 
 	@Override
+	public FGLayoutOptions createLayoutOptions(Options options) {
+		DNLayoutOptions layoutOptions = new DNLayoutOptions();
+		layoutOptions.registerOptions(options);
+		return layoutOptions;
+	}
+
+	@Override
 	public String getLayoutName() {
-		// TODO better name?...or rename classes to match
-		return "Nested Code Layout";
+		return LAYOUT_NAME;
 	}
 
 	@Override

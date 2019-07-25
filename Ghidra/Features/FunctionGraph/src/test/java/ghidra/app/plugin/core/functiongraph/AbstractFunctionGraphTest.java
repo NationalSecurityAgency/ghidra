@@ -53,7 +53,6 @@ import ghidra.app.plugin.core.clipboard.ClipboardPlugin;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
 import ghidra.app.plugin.core.functiongraph.graph.*;
 import ghidra.app.plugin.core.functiongraph.graph.layout.FGLayoutProvider;
-import ghidra.app.plugin.core.functiongraph.graph.layout.TestFGLayoutProvider;
 import ghidra.app.plugin.core.functiongraph.graph.vertex.*;
 import ghidra.app.plugin.core.functiongraph.mvc.*;
 import ghidra.app.services.*;
@@ -75,7 +74,6 @@ import ghidra.program.util.ProgramSelection;
 import ghidra.test.*;
 import ghidra.util.Msg;
 import ghidra.util.task.RunManager;
-import util.CollectionUtils;
 
 public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedIntegrationTest {
 
@@ -558,9 +556,6 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 
 		graphProvider = waitForComponentProvider(FGProvider.class);
 		assertNotNull("Graph not shown", graphProvider);
-
-		FGActionManager actionManager = graphProvider.getActionManager();
-		actionManager.setLayoutFinder(() -> CollectionUtils.asSet(new TestFGLayoutProvider()));
 	}
 
 	protected ProgramSelection makeSingleVertexSelectionInCodeBrowser() {

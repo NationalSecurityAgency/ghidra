@@ -82,11 +82,11 @@ public class VisualGraphRenderer<V extends VisualVertex, E extends VisualEdge<V>
 
 		// paint all the edges
 		// DEBUG code to show the edges *over* the vertices
-//		for (E e : layout.getGraph().getEdges()) {
-//
-//			renderEdge(renderContext, layout, e);
-//			renderEdgeLabel(renderContext, layout, e);
-//		}
+		for (E e : layout.getGraph().getEdges()) {
+
+			renderEdge(renderContext, layout, e);
+			renderEdgeLabel(renderContext, layout, e);
+		}
 
 		paintLayoutGridCells(renderContext, layout);
 	}
