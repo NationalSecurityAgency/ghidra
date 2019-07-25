@@ -292,6 +292,16 @@ bool RangeHint::compareRanges(const RangeHint *a,const RangeHint *b)
   return true;
 }
 
+bool RangeHint::rangesEqual(const RangeHint* a, const RangeHint* b)
+{
+	if (a->sstart == b->sstart && a->size == b->size) {
+		type_metatype ameta = a->type->getMetatype();
+		type_metatype bmeta = b->type->getMetatype();
+		return (ameta == bmeta);
+	}
+	return false;
+}
+
 /// \param spc is the (stack) address space associated with this function's local variables
 /// \param fd is the function associated with these local variables
 /// \param g is the Architecture
@@ -783,7 +793,10 @@ void MapState::addRange(uintb st,Datatype *ct,uint4 fl,RangeHint::RangeType rt,i
   sign_extend(sst,spaceid->getAddrSize()*8-1);
   sst = (intb)AddrSpace::addressToByte(sst,spaceid->getWordSize());
   RangeHint *range = new RangeHint(st,sz,sst,ct,fl,rt,hi);
-  maplist.push_back(range);
+  if (std::find_if(maplist.begin(), maplist.end(), [range](RangeHint* rh) {
+	  return RangeHint::rangesEqual(rh, range);
+	  }) == maplist.end())
+    maplist.push_back(range);
 #ifdef OPACTION_DEBUG
   if (debugon) {
     ostringstream s;
