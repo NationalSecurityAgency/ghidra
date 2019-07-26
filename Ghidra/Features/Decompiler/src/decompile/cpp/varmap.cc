@@ -289,17 +289,7 @@ bool RangeHint::compareRanges(const RangeHint *a,const RangeHint *b)
   type_metatype bmeta = b->type->getMetatype();
   if (ameta != bmeta)
     return (ameta < bmeta);		// Order more specific types first
-  return true;
-}
-
-bool RangeHint::rangesEqual(const RangeHint* a, const RangeHint* b)
-{
-	if (a->sstart == b->sstart && a->size == b->size) {
-		type_metatype ameta = a->type->getMetatype();
-		type_metatype bmeta = b->type->getMetatype();
-		return (ameta == bmeta);
-	}
-	return false;
+  return false; //comp(x, x) must be false for strict weak ordering
 }
 
 /// \param spc is the (stack) address space associated with this function's local variables
@@ -793,10 +783,7 @@ void MapState::addRange(uintb st,Datatype *ct,uint4 fl,RangeHint::RangeType rt,i
   sign_extend(sst,spaceid->getAddrSize()*8-1);
   sst = (intb)AddrSpace::addressToByte(sst,spaceid->getWordSize());
   RangeHint *range = new RangeHint(st,sz,sst,ct,fl,rt,hi);
-  if (std::find_if(maplist.begin(), maplist.end(), [range](RangeHint* rh) {
-	  return RangeHint::rangesEqual(rh, range);
-	  }) == maplist.end())
-    maplist.push_back(range);
+  maplist.push_back(range);
 #ifdef OPACTION_DEBUG
   if (debugon) {
     ostringstream s;
