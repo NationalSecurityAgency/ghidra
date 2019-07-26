@@ -966,6 +966,11 @@ int4 ActionDeindirect::apply(Funcdata &data)
     fc = data.getCallSpecs(i);
     op = fc->getOp();
     if (op->code() == CPUI_CALL && fc->getFuncdata() == nullptr) { //seg:ptr is not indirect call
+      SymbolEntry* entry = data.getScopeLocal()->getParent()->queryContainer(fc->getEntryAddress(), 1, Address());
+      if (entry == (SymbolEntry*)0) continue;
+      Symbol* sym = entry->getSymbol();
+      if (sym == (Symbol*)0) continue;
+      if ((sym->getFlags() & Varnode::externref) == 0) continue;
       Funcdata* newfd = data.getScopeLocal()->getParent()->queryExternalRefFunction(fc->getEntryAddress());
       if (newfd != (Funcdata*)0) {
         fc->deindirect(data, newfd);
