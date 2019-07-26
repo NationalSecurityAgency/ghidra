@@ -4464,12 +4464,15 @@ void universal_action(Architecture *conf)
 	actprop->addRule( new RuleTrivialArith("analysis") );
 	actprop->addRule( new RuleTrivialBool("analysis") );
 	actprop->addRule( new RuleTrivialShift("analysis") );
+	actprop->addRule( new RuleSignShift("analysis") );
+	actprop->addRule( new RuleTestSign("analysis") );
 	actprop->addRule( new RuleIdentityEl("analysis") );
 	actprop->addRule( new RuleOrMask("analysis") );
 	actprop->addRule( new RuleAndMask("analysis") );
 	actprop->addRule( new RuleOrCollapse("analysis") );
 	actprop->addRule( new RuleAndOrLump("analysis") );
 	actprop->addRule( new RuleShiftBitops("analysis") );
+	actprop->addRule( new RuleRightShiftAnd("analysis") );
 	actprop->addRule( new RuleNotDistribute("analysis") );
 	actprop->addRule( new RuleHighOrderAnd("analysis") );
 	actprop->addRule( new RuleAndDistribute("analysis") );
