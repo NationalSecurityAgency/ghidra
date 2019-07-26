@@ -965,7 +965,7 @@ int4 ActionDeindirect::apply(Funcdata &data)
   for(int4 i=0;i<data.numCalls();++i) {
     fc = data.getCallSpecs(i);
     op = fc->getOp();
-    if (op->code() == CPUI_CALL) { //seg:ptr is not indirect call
+    if (op->code() == CPUI_CALL && fc->getFuncdata() == nullptr) { //seg:ptr is not indirect call
       Funcdata* newfd = data.getScopeLocal()->getParent()->queryExternalRefFunction(fc->getEntryAddress());
       if (newfd != (Funcdata*)0) {
         fc->deindirect(data, newfd);
