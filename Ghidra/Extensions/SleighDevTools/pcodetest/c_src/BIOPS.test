@@ -506,7 +506,7 @@ TEST biopMultu4u4_Main()
 TEST biopShtRhti2i2_Main()
 {
 	extern i2 biopShtRhti2i2(i2 lhs, i2 rhs);
-	ASSERTI2(biopShtRhti2i2(0x8fff, 15), 0xffff);
+	ASSERTI2(biopShtRhti2i2(0x7fff, 15), 0x0000);
 	ASSERTI2(biopShtRhti2i2(0x0101, 8), 0x1);
 	ASSERTI2(biopShtRhti2i2(0x0101, 0), 0x0101);
 	ASSERTI2(biopShtRhti2i2(2, 1), 1);
