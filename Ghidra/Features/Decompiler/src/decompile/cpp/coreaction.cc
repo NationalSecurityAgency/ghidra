@@ -965,7 +965,15 @@ int4 ActionDeindirect::apply(Funcdata &data)
   for(int4 i=0;i<data.numCalls();++i) {
     fc = data.getCallSpecs(i);
     op = fc->getOp();
-    if (op->code() != CPUI_CALLIND && op->code() != CPUI_CALL) continue; //seg:ptr is not indirect call
+    if (op->code() == CPUI_CALL) { //seg:ptr is not indirect call
+      Funcdata* newfd = data.getScopeLocal()->getParent()->queryExternalRefFunction(fc->getEntryAddress());
+      if (newfd != (Funcdata*)0) {
+        fc->deindirect(data, newfd);
+        count += 1;
+        continue;
+      }
+    }
+    if (op->code() != CPUI_CALLIND) continue;
     vn = op->getIn(0);
     while(vn->isWritten()&&(vn->getDef()->code()==CPUI_COPY))
       vn = vn->getDef()->getIn(0);
