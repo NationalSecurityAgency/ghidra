@@ -946,7 +946,7 @@ int4 ActionConstantPtr::apply(Funcdata &data)
     entry = isPointer(rspc,vn,op,rampoint,data);
     vn->setPtrCheck();		// Set check flag AFTER searching for symbol
     if (entry != (SymbolEntry *)0) {
-      data.spacebaseConstant(op,slot,entry,rampoint,vn->getOffset(),vn->getSize());
+      data.spacebaseConstant(op,slot,entry,rampoint,entry->getAddr().getOffset(),vn->getSize());
       if ((opc == CPUI_INT_ADD)&&(slot==1))
 	data.opSwapInput(op,0,1);
       count += 1;
