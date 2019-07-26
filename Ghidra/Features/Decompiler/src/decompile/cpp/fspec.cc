@@ -2214,6 +2214,8 @@ void ProtoModelMerged::foldIn(ProtoModel *model)
 			bDiff = ip1->getParamShift() != ip2->getParamShift() ||
 				ip1->isDynamic() != ip2->isDynamic() ||
 				ip1->sizeInput() != ip2->sizeInput() || ip1->sizeOutput() != ip2->sizeOutput();
+		}
+		if (!bDiff) {
 			for (int i = 0; i < ip1->sizeInput(); i++) {
 				if (ip1->getInput(i).getName() != ip2->getInput(i).getName() ||
 					ip1->getInput(i).getSize() != ip2->getInput(i).getSize()) {
