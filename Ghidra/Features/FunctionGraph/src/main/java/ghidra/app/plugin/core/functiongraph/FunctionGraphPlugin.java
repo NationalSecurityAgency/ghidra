@@ -169,18 +169,22 @@ public class FunctionGraphPlugin extends ProgramPlugin implements OptionsChangeL
 	@Override
 	public void optionsChanged(ToolOptions options, String optionName, Object oldValue,
 			Object newValue) {
-		functionGraphOptions.loadOptions(options);
-		connectedProvider.getComponent().repaint();
-		for (FGProvider provider : disconnectedProviders) {
-			provider.getComponent().repaint();
-		}
 
-		if (VisualGraphOptions.USE_CONDENSED_LAYOUT.equals(optionName)) {
-			// the condensed setting requires us to reposition the graph
+		functionGraphOptions.loadOptions(options);
+
+		if (functionGraphOptions.optionChangeRequiresRelayout(optionName)) {
 			connectedProvider.refreshAndKeepPerspective();
 		}
 		else if (VisualGraphOptions.VIEW_RESTORE_OPTIONS_KEY.equals(optionName)) {
 			connectedProvider.clearViewSettings();
+		}
+		else {
+			connectedProvider.refreshDisplayWithoutRebuilding();
+		}
+
+		connectedProvider.getComponent().repaint();
+		for (FGProvider provider : disconnectedProviders) {
+			provider.getComponent().repaint();
 		}
 	}
 

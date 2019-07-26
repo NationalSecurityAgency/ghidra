@@ -19,6 +19,8 @@ import java.awt.Color;
 import java.awt.geom.Point2D;
 import java.util.*;
 
+import com.google.common.base.Function;
+
 import edu.uci.ics.jung.algorithms.layout.Layout;
 import edu.uci.ics.jung.graph.Graph;
 import edu.uci.ics.jung.visualization.*;
@@ -82,11 +84,10 @@ public class VisualGraphRenderer<V extends VisualVertex, E extends VisualEdge<V>
 
 		// paint all the edges
 		// DEBUG code to show the edges *over* the vertices
-		for (E e : layout.getGraph().getEdges()) {
-
-			renderEdge(renderContext, layout, e);
-			renderEdgeLabel(renderContext, layout, e);
-		}
+//		for (E e : layout.getGraph().getEdges()) {
+//			renderEdge(renderContext, layout, e);
+//			renderEdgeLabel(renderContext, layout, e);
+//		}
 
 		paintLayoutGridCells(renderContext, layout);
 	}
@@ -109,11 +110,13 @@ public class VisualGraphRenderer<V extends VisualVertex, E extends VisualEdge<V>
 			return;
 		}
 
-		String label = rc.getEdgeLabelTransformer().apply(e);
+		Function<? super E, String> xform = rc.getEdgeLabelTransformer();
+		String label = xform.apply(e);
 		if (label == null) {
 			return;
 		}
-		super.renderEdgeLabel(rc, layout, e);
+
+		edgeLabelRenderer.labelEdge(rc, layout, e, xform.apply(e));
 	}
 
 	private void paintLayoutGridCells(RenderContext<V, E> renderContext, Layout<V, E> layout) {

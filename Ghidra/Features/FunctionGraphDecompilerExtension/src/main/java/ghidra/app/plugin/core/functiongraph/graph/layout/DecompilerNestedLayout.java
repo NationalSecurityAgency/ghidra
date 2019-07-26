@@ -102,7 +102,7 @@ public class DecompilerNestedLayout extends AbstractFGLayout {
 
 	@Override
 	public EdgeLabel<FGVertex, FGEdge> getEdgeLabelRenderer() {
-		return new CodeFlowEdgeLabelRenderer<>();
+		return new DNLEdgeLabelRenderer<>(getCondenseFactor());
 	}
 
 	@Override

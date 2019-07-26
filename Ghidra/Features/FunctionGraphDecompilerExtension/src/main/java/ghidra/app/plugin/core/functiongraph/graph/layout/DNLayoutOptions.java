@@ -23,6 +23,8 @@ import ghidra.util.HelpLocation;
  */
 public class DNLayoutOptions implements FGLayoutOptions {
 
+	private static final String HELP_ANCHOR =
+		DecompilerNestedLayoutProvider.LAYOUT_NAME + "_Options";
 	private static final String USE_EDGE_ROUTING_AROUND_VERTICES_KEY =
 		"Route Edges Around Vertices";
 	private static final String USE_EDGE_ROUTING_AROUND_VERTICES_DESCRIPTION = "Signals that " +
@@ -34,8 +36,7 @@ public class DNLayoutOptions implements FGLayoutOptions {
 	@Override
 	public void registerOptions(Options options) {
 
-		// TODO layout-specific help
-		HelpLocation help = new HelpLocation(OWNER, "Options");
+		HelpLocation help = new HelpLocation(OWNER, HELP_ANCHOR);
 
 		options.registerOption(USE_EDGE_ROUTING_AROUND_VERTICES_KEY, useEdgeRoutingAroundVertices,
 			help, USE_EDGE_ROUTING_AROUND_VERTICES_DESCRIPTION);
@@ -49,5 +50,11 @@ public class DNLayoutOptions implements FGLayoutOptions {
 
 	public boolean useEdgeRoutingAroundVertices() {
 		return useEdgeRoutingAroundVertices;
+	}
+
+	@Override
+	public boolean optionChangeRequiresRelayout(String optionName) {
+		// format: 'Nested Code Layout.Route Edges....'
+		return optionName.endsWith(USE_EDGE_ROUTING_AROUND_VERTICES_KEY);
 	}
 }

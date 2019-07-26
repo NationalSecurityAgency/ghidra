@@ -41,6 +41,12 @@ public class FunctionGraphOptions extends VisualGraphOptions {
 		"Edge Color - Unconditional Jump ";
 	private static final String EDGE_COLOR_CONDITIONAL_JUMP_KEY = "Edge Color - Conditional Jump ";
 
+	private static final String USE_FULL_SIZE_TOOLTIP_KEY = "Use Full-size Tooltip";
+	private static final String USE_FULL_SIZE_TOOLTIP_DESCRIPTION = "Signals to use the " + "" +
+		"full-size vertex inside of the tooltip popup.  When enabled the tooltip vertex will " +
+		"use the same format size as the Listing.  When disabled, the vertex will use the " +
+		"same format size as in the Function Graph.";
+
 	public static final String RELAYOUT_OPTIONS_KEY = "Automatic Graph Relayout";
 	public static final String RELAYOUT_OPTIONS_DESCRIPTION = "Signals to the Function Graph " +
 		"when an automatic relayout of the graph should take place.  The  basic options are:<ul>" +
@@ -48,7 +54,7 @@ public class FunctionGraphOptions extends VisualGraphOptions {
 		"<li><b>Block Model Changes Only</b> - relayout the graph when the block model changes " +
 		"(like when a label has been added to the program in the currently graphed function)</li>" +
 		"<li><b>Vertex Grouping Changes Only</b> - when vertices are grouped or ungrouped</li>" +
-		"<li><b>Never</b> - do not automatically relayout the graph</li></ul>" + "<br><br>" +
+		"<li><b>Never</b> - do not automatically relayout the graph</li></ul><br><br>" +
 		"<b><i>See help for more</i></b>";
 
 	private static final String DEFAULT_GROUP_BACKGROUND_COLOR_KEY = "Default Group Color";
@@ -77,7 +83,9 @@ public class FunctionGraphOptions extends VisualGraphOptions {
 	private Color unconditionalJumpEdgeHighlightColor = HOVER_HIGHLIGHT_UNCONDITIONAL_COLOR;
 	private Color conditionalJumpEdgeHighlightColor = HOVER_HIGHLIGHT_CONDITIONAL_COLOR;
 
-	protected RelayoutOption relayoutOption = RelayoutOption.NEVER;
+	private boolean useFullSizeTooltip = false;
+
+	private RelayoutOption relayoutOption = RelayoutOption.NEVER;
 
 	private Map<String, FGLayoutOptions> layoutOptionsByName = new HashMap<>();
 
@@ -117,6 +125,10 @@ public class FunctionGraphOptions extends VisualGraphOptions {
 		return relayoutOption;
 	}
 
+	public boolean useFullSizeTooltip() {
+		return useFullSizeTooltip;
+	}
+
 	public void registerOptions(Options options) {
 
 		HelpLocation help = new HelpLocation(OWNER, "Options");
@@ -128,10 +140,10 @@ public class FunctionGraphOptions extends VisualGraphOptions {
 		options.registerOption(SHOW_ANIMATION_OPTIONS_KEY, useAnimation(), help,
 			SHOW_ANIMATION_DESCRIPTION);
 
-		options.registerOption(USE_MOUSE_RELATIVE_ZOOM, useMouseRelativeZoom(), help,
+		options.registerOption(USE_MOUSE_RELATIVE_ZOOM_KEY, useMouseRelativeZoom(), help,
 			USE_MOUSE_RELATIVE_ZOOM_DESCRIPTION);
 
-		options.registerOption(USE_CONDENSED_LAYOUT, useCondensedLayout(),
+		options.registerOption(USE_CONDENSED_LAYOUT_KEY, useCondensedLayout(),
 			new HelpLocation(OWNER, "Layout_Compressing"), USE_CONDENSED_LAYOUT_DESCRIPTION);
 
 		options.registerOption(VIEW_RESTORE_OPTIONS_KEY, ViewRestoreOption.START_FULLY_ZOOMED_OUT,
@@ -145,6 +157,9 @@ public class FunctionGraphOptions extends VisualGraphOptions {
 
 		options.registerOption(UPDATE_GROUP_AND_UNGROUP_COLORS, updateGroupColorsAutomatically,
 			help, UPDATE_GROUP_AND_UNGROUP_COLORS_DESCRIPTION);
+
+		options.registerOption(USE_FULL_SIZE_TOOLTIP_KEY, useFullSizeTooltip, help,
+			USE_FULL_SIZE_TOOLTIP_DESCRIPTION);
 
 		options.registerOption(EDGE_COLOR_CONDITIONAL_JUMP_KEY, conditionalJumpEdgeColor, help,
 			"Conditional jump edge color");
@@ -191,9 +206,12 @@ public class FunctionGraphOptions extends VisualGraphOptions {
 
 		useAnimation = options.getBoolean(SHOW_ANIMATION_OPTIONS_KEY, useAnimation);
 
-		useMouseRelativeZoom = options.getBoolean(USE_MOUSE_RELATIVE_ZOOM, useMouseRelativeZoom);
+		useMouseRelativeZoom =
+			options.getBoolean(USE_MOUSE_RELATIVE_ZOOM_KEY, useMouseRelativeZoom);
 
-		useCondensedLayout = options.getBoolean(USE_CONDENSED_LAYOUT, useCondensedLayout);
+		useCondensedLayout = options.getBoolean(USE_CONDENSED_LAYOUT_KEY, useCondensedLayout);
+
+		useFullSizeTooltip = options.getBoolean(USE_FULL_SIZE_TOOLTIP_KEY, useFullSizeTooltip);
 
 		viewRestoreOption =
 			options.getEnum(VIEW_RESTORE_OPTIONS_KEY, ViewRestoreOption.START_FULLY_ZOOMED_OUT);
@@ -243,6 +261,22 @@ public class FunctionGraphOptions extends VisualGraphOptions {
 		return Color.BLACK;
 	}
 
+	public boolean optionChangeRequiresRelayout(String optionName) {
+		if (USE_CONDENSED_LAYOUT_KEY.equals(optionName)) {
+			return true;
+		}
+
+		Set<Entry<String, FGLayoutOptions>> entries = layoutOptionsByName.entrySet();
+		for (Entry<String, FGLayoutOptions> entry : entries) {
+			FGLayoutOptions layoutOptions = entry.getValue();
+			if (layoutOptions.optionChangeRequiresRelayout(optionName)) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
 	public FGLayoutOptions getLayoutOptions(String layoutName) {
 		return layoutOptionsByName.get(layoutName);
 	}
@@ -250,4 +284,5 @@ public class FunctionGraphOptions extends VisualGraphOptions {
 	public void setLayoutOptions(String layoutName, FGLayoutOptions options) {
 		layoutOptionsByName.put(layoutName, options);
 	}
+
 }

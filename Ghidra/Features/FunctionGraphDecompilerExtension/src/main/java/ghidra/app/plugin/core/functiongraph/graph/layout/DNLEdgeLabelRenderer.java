@@ -20,6 +20,8 @@ import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.util.List;
 
+import com.google.common.base.Predicate;
+
 import edu.uci.ics.jung.algorithms.layout.Layout;
 import edu.uci.ics.jung.graph.Graph;
 import edu.uci.ics.jung.graph.util.Context;
@@ -32,52 +34,63 @@ import ghidra.app.plugin.core.functiongraph.graph.FGEdge;
 import ghidra.app.plugin.core.functiongraph.graph.vertex.FGVertex;
 import ghidra.graph.viewer.vertex.VisualGraphVertexShapeTransformer;
 
-class CodeFlowEdgeLabelRenderer<V extends FGVertex, E extends FGEdge>
+/**
+ * An edge label renderer used with the {@link DecompilerNestedLayout}
+ *
+ * @param <V> the vertex type
+ * @param <E> the edge type
+ */
+class DNLEdgeLabelRenderer<V extends FGVertex, E extends FGEdge>
 		implements Renderer.EdgeLabel<V, E> {
 
-	private static final int EDGE_OFFSET = 20;
+	private static final int DEFAULT_EDGE_OFFSET = 20;
 
-	VisualGraphVertexShapeTransformer vertexShapeTransformer =
-		new VisualGraphVertexShapeTransformer();
+	private VisualGraphVertexShapeTransformer<V> vertexShapeTransformer =
+		new VisualGraphVertexShapeTransformer<>();
+
+	private double edgeOffset;
+
+	DNLEdgeLabelRenderer(double condenseFactor) {
+		this.edgeOffset = DEFAULT_EDGE_OFFSET * (1 - condenseFactor);
+	}
 
 	@Override
 	public void labelEdge(RenderContext<V, E> rc, Layout<V, E> layout, E e, String text) {
 
-		if (text == null || text.isEmpty()) {
-			return;
-		}
-
 		Graph<V, E> jungGraph = layout.getGraph();
+		if (!rc.getEdgeIncludePredicate().apply(Context.getInstance(jungGraph, e))) {
+			return;
+		}
+
 		Pair<V> endpoints = jungGraph.getEndpoints(e);
-		V v1 = endpoints.getFirst();
-		V v2 = endpoints.getSecond();
-		if (!rc.getEdgeIncludePredicate().apply(
-			Context.<Graph<V, E>, E> getInstance(jungGraph, e))) {
+		V startv = endpoints.getFirst();
+		V endv = endpoints.getSecond();
+
+		Predicate<Context<Graph<V, E>, V>> includeVertex = rc.getVertexIncludePredicate();
+		if (!includeVertex.apply(Context.getInstance(jungGraph, startv)) ||
+			!includeVertex.apply(Context.getInstance(jungGraph, endv))) {
 			return;
 		}
 
-		if (!rc.getVertexIncludePredicate().apply(
-			Context.<Graph<V, E>, V> getInstance(jungGraph, v1)) ||
-			!rc.getVertexIncludePredicate().apply(
-				Context.<Graph<V, E>, V> getInstance(jungGraph, v2))) {
-			return;
-		}
-
-		Point2D p1 = layout.apply(v1);
+		Point2D start = layout.apply(startv);
 		MultiLayerTransformer multiLayerTransformer = rc.getMultiLayerTransformer();
-		p1 = multiLayerTransformer.transform(Layer.LAYOUT, p1);
+		start = multiLayerTransformer.transform(Layer.LAYOUT, start);
 
-		Shape vertexShape = vertexShapeTransformer.apply(v1);
+		Shape vertexShape = vertexShapeTransformer.apply(startv);
 		Rectangle vertexBounds = vertexShape.getBounds();
 		int xDisplacement = rc.getLabelOffset();
 
 		Point2D labelPointOffset = new Point2D.Double();
 
+		// note: location is centered
+		double cx = start.getX();
+		double cy = start.getY();
+
 		List<Point2D> articulationPoints = e.getArticulationPoints();
 		if (articulationPoints.isEmpty()) {
-			double vertexBottom = p1.getY() + (vertexBounds.height >> 1); // location is centered
-			int textY = (int) (vertexBottom + EDGE_OFFSET); // below the vertex; above the bend 
-			int textX = (int) (p1.getX() + xDisplacement); // right of the edge
+			double vertexBottom = start.getY() + (vertexBounds.height >> 1); // location is centered
+			int textY = (int) (vertexBottom + edgeOffset); // below the vertex; above the bend 
+			int textX = (int) (start.getX() + xDisplacement); // right of the edge
 			labelPointOffset.setLocation(textX, textY);
 		}
 		else if (articulationPoints.size() == 1) {
@@ -91,24 +104,25 @@ class CodeFlowEdgeLabelRenderer<V extends FGVertex, E extends FGEdge>
 			Point2D bend2 = articulationPoints.get(1);
 			bend2 = multiLayerTransformer.transform(Layer.LAYOUT, bend2);
 
+			double vertexSide = cx + (vertexBounds.width >> 1);
+			double vertexBottom = cy + (vertexBounds.height >> 1);
+
 			double bx1 = bend1.getX();
 
 			if (articulationPoints.size() == 2) {
 
-				double vertexSide = p1.getX() + (vertexBounds.width >> 1); // location is centered
-				int textX = (int) (vertexSide + EDGE_OFFSET); // right of the vertex 
-				int textY = (int) (p1.getY() + EDGE_OFFSET); // above the edge 
+				int textX = (int) (vertexSide + edgeOffset); // right of the vertex 
+				int textY = (int) (cy + edgeOffset); // above the edge 
 				labelPointOffset.setLocation(textX, textY);
 			}
 			else if (articulationPoints.size() == 3) {
-				double vertexBottom = p1.getY() + (vertexBounds.height >> 1); // location is centered
-				int textY = (int) (vertexBottom + EDGE_OFFSET); // below the vertex; above the bend 
+
+				int textY = (int) (vertexBottom + edgeOffset); // below the vertex; above the bend 
 				int textX = (int) (bx1 + xDisplacement); // right of the edge
 				labelPointOffset.setLocation(textX, textY);
 			}
-			else if (articulationPoints.size() == 4) {
-				double vertexBottom = p1.getY() + (vertexBounds.height >> 1); // location is centered
-				int textY = (int) (vertexBottom + EDGE_OFFSET); // below the vertex; above the bend 
+			else { // if (articulationPoints.size() == 4) {
+				int textY = (int) (vertexBottom + edgeOffset); // below the vertex; above the bend 
 				int textX = (int) (bx1 + xDisplacement); // right of the edge
 				labelPointOffset.setLocation(textX, textY);
 			}

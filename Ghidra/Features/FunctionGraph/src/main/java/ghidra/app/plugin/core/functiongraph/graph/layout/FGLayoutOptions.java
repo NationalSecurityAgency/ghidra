@@ -40,4 +40,13 @@ public interface FGLayoutOptions {
 	 * @param options the tool options
 	 */
 	public void loadOptions(Options options);
+
+	/**
+	 * Returns true if the given option name, when changed, requires that the current graph be
+	 * reloaded for the change to take effect
+	 * 
+	 * @param optionName the changed option name
+	 * @return true if a relayout is required
+	 */
+	public boolean optionChangeRequiresRelayout(String optionName);
 }
