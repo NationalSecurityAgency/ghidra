@@ -572,7 +572,7 @@ macrodef
 	}
 	:	^(t=OP_MACRO n=unbound_identifier["macro"] a=arguments {
 			symbol = sc.createMacro(find(n), n.getText(), a.first, a.second);
-		} s=semantic[env, sc.pcode, $t, false, true]) {
+		} s=semantic[env, null, sc.pcode, $t, false, true]) {
 			if (symbol != null) {
 				sc.buildMacro(symbol, $macrodef::macrobody);
 			}
@@ -621,13 +621,13 @@ constructorlikelist
 	;
 
 constructor
-	:	^(OP_CONSTRUCTOR c=ctorstart e=bitpattern b=contextblock r=ctorsemantic) {
+	:	^(OP_CONSTRUCTOR c=ctorstart e=bitpattern b=contextblock r=ctorsemantic[c]) {
 			sc.buildConstructor(c, e, b, r);
 		}
 	;
 
-ctorsemantic returns [SectionVector value]
-	:	^(t=OP_PCODE p=semantic[env, sc.pcode, $t, true, false]) {       $value = p; }
+ctorsemantic[Constructor ctor] returns [SectionVector value]
+	:	^(t=OP_PCODE p=semantic[env, ctor.location, sc.pcode, $t, true, false]) {       $value = p; }
 	|	^(OP_PCODE OP_UNIMPL) { /*unimpl unimplemented ; */ $value = null; }
 	;
 
@@ -950,7 +950,7 @@ cstatement[VectorSTL<ContextChange> r]
 		}
 	;
 
-semantic[ParsingEnvironment pe, PcodeCompile pcode, Tree where, boolean sectionsAllowed, boolean isMacroParse] returns [SectionVector rtl]
+semantic[ParsingEnvironment pe, Location containerLoc, PcodeCompile pcode, Tree where, boolean sectionsAllowed, boolean isMacroParse] returns [SectionVector rtl]
 	scope {
 		SectionVector sections;
 		boolean containsMultipleSections;
@@ -975,7 +975,11 @@ semantic[ParsingEnvironment pe, PcodeCompile pcode, Tree where, boolean sections
 	:	^(x=OP_SEMANTIC c=code_block[find($x)] {
 			if (c != null) {
 				if (c.getOpvec().empty() && c.getResult() == null) {
-					pcode.recordNop(find(where));
+				    Location loc = find(where);
+				    if (loc == null) {
+				       loc = containerLoc;
+				    }
+					pcode.recordNop(loc);
 				}
 				if ($semantic::containsMultipleSections) {
 					$semantic::sections = pcode.finalNamedSection($semantic::sections, c);
