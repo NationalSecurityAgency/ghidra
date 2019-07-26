@@ -16,51 +16,18 @@
 package ghidra.app.util.bin.format.dwarf4.next;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.IdentityHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.NoSuchElementException;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 
 import ghidra.app.plugin.core.datamgr.util.DataTypeUtils;
-import ghidra.app.util.bin.format.dwarf4.DIEAggregate;
-import ghidra.app.util.bin.format.dwarf4.DWARFUtil;
-import ghidra.app.util.bin.format.dwarf4.DebugInfoEntry;
-import ghidra.app.util.bin.format.dwarf4.encoding.DWARFAttribute;
-import ghidra.app.util.bin.format.dwarf4.encoding.DWARFEndianity;
-import ghidra.app.util.bin.format.dwarf4.encoding.DWARFTag;
+import ghidra.app.util.bin.format.dwarf4.*;
+import ghidra.app.util.bin.format.dwarf4.encoding.*;
 import ghidra.app.util.bin.format.dwarf4.expression.DWARFExpressionException;
 import ghidra.program.database.data.DataTypeUtilities;
-import ghidra.program.model.data.Array;
-import ghidra.program.model.data.ArrayDataType;
-import ghidra.program.model.data.BitFieldDataType;
-import ghidra.program.model.data.CategoryPath;
-import ghidra.program.model.data.DataType;
-import ghidra.program.model.data.DataTypeComponent;
-import ghidra.program.model.data.DataTypeConflictHandler;
-import ghidra.program.model.data.DataTypeImpl;
-import ghidra.program.model.data.DataTypeManager;
-import ghidra.program.model.data.DefaultDataType;
+import ghidra.program.model.data.*;
 import ghidra.program.model.data.Enum;
-import ghidra.program.model.data.EnumDataType;
-import ghidra.program.model.data.FunctionDefinitionDataType;
-import ghidra.program.model.data.GenericCallingConvention;
-import ghidra.program.model.data.InvalidDataTypeException;
-import ghidra.program.model.data.ParameterDefinition;
-import ghidra.program.model.data.ParameterDefinitionImpl;
-import ghidra.program.model.data.Pointer;
-import ghidra.program.model.data.PointerDataType;
-import ghidra.program.model.data.Structure;
-import ghidra.program.model.data.StructureDataType;
-import ghidra.program.model.data.TypeDef;
-import ghidra.program.model.data.TypedefDataType;
-import ghidra.program.model.data.UnionDataType;
 import ghidra.util.InvalidNameException;
 import ghidra.util.Msg;
 import ghidra.util.exception.DuplicateNameException;
@@ -621,6 +588,8 @@ public class DWARFDataTypeImporter {
 	 */
 	private void populateStubUnion(DWARFDataType ddt, DIEAggregate diea)
 			throws IOException, DWARFExpressionException {
+		long unionSize = diea.getUnsignedLong(DWARFAttribute.DW_AT_byte_size, -1);
+
 		UnionDataType union = (UnionDataType) ddt.dataType;
 		for (DebugInfoEntry childEntry : diea.getHeadFragment().getChildren(
 			DWARFTag.DW_TAG_member)) {
@@ -647,10 +616,16 @@ public class DWARFDataTypeImporter {
 				continue;
 			}
 
+			if (childDT.dataType instanceof Dynamic ||
+				childDT.dataType instanceof FactoryDataType) {
+				DWARFUtil.appendDescription(union, memberDesc("Missing member",
+					"dynamic length type", memberName, childDT, -1, bitSize, -1), "\n");
+				continue;
+			}
 			int dtLen = childDT.dataType.getLength();
-			if (dtLen == 0) {
-				DWARFUtil.appendDescription(union, memberDesc("Missing member", "zero length type",
-					memberName, childDT, -1, bitSize, -1), "\n");
+			if (unionSize != -1 && dtLen > unionSize) {
+				DWARFUtil.appendDescription(union, memberDesc("Missing member",
+					"data type larger than union", memberName, childDT, -1, bitSize, -1), "\n");
 				continue;
 			}
 
@@ -694,6 +669,23 @@ public class DWARFDataTypeImporter {
 							", skipping");
 				}
 			}
+		}
+
+		if (union.getLength() < unionSize) {
+			// if the Ghidra union data type is smaller than the DWARF union, pad it out
+			DataType padding = Undefined.getUndefinedDataType((int) unionSize);
+			try {
+				union.add(padding, null,
+					"Automatically generated padding to match DWARF declared size");
+			}
+			catch (IllegalArgumentException exc) {
+				DWARFUtil.appendDescription(union,
+					"Failed to add padding to union, size should be " + unionSize, "\n");
+			}
+		}
+		if (unionSize > 0 && union.getLength() > unionSize) {
+			DWARFUtil.appendDescription(union, "Imported union size (" + union.getLength() +
+				") is larger than DWARF value (" + unionSize + ")", "\n");
 		}
 	}
 
@@ -829,10 +821,10 @@ public class DWARFDataTypeImporter {
 				}
 			}
 
-			int dtLen = childDT.dataType.getLength();
-			if (dtLen == 0) {
+			if (childDT.dataType instanceof Dynamic ||
+				childDT.dataType instanceof FactoryDataType) {
 				DWARFUtil.appendDescription(structure, memberDesc("Missing member",
-					"zero length type", memberName, childDT, memberOffset, bitSize, -1), "\n");
+					"dynamic length type", memberName, childDT, memberOffset, bitSize, -1), "\n");
 				continue;
 			}
 
@@ -845,12 +837,21 @@ public class DWARFDataTypeImporter {
 			// TODO: rename parent struct here.  use .conflict or _basetype?
 			//}
 
-			if (childDT.isEmptyArrayType && childDT.dataType instanceof Array &&
-				memberOffset == structure.getLength() &&
-				structure.getFlexibleArrayComponent() == null) {
+			if (childDT.isEmptyArrayType && childDT.dataType instanceof Array) {
 
-				DataType arrayElementType = ((Array) childDT.dataType).getDataType();
-				structure.setFlexibleArrayComponent(arrayElementType, memberName, null);
+				if (memberOffset == structure.getLength() &&
+					structure.getFlexibleArrayComponent() == null) {
+					DataType arrayElementType = ((Array) childDT.dataType).getDataType();
+					structure.setFlexibleArrayComponent(arrayElementType, memberName, null);
+				}
+				else {
+					DWARFUtil.appendDescription(structure,
+						memberDesc("Missing member",
+							"Unsupported interior flex array: " + childDT.dataType.getName(),
+							memberName, childDT, memberOffset, -1, -1),
+						"\n");
+
+				}
 
 				// skip the rest of this loop as it deals with adding component children members.
 				continue;
@@ -869,7 +870,7 @@ public class DWARFDataTypeImporter {
 				int containerLen;
 				if (hasMemberOffset) {
 					int byteSize = childDIEA.parseInt(DWARFAttribute.DW_AT_byte_size, -1);
-					containerLen = byteSize <= 0 ? dtLen : byteSize;
+					containerLen = byteSize <= 0 ? childDT.dataType.getLength() : byteSize;
 				}
 				else {
 					containerLen = structure.getLength();
