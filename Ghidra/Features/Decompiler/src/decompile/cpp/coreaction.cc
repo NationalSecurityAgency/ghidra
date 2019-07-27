@@ -1966,29 +1966,29 @@ int4 ActionSetCasts::castOutput(PcodeOp *op,Funcdata &data,CastStrategy *castStr
       // Preserve implied pointer if it points to a composite
       if ((meta!=TYPE_ARRAY)&&(meta!=TYPE_STRUCT))
 	outvn->updateType(tokenct,false,false); // Otherwise ignore it in favor of the token type
-      }  else {
-		if (op->code() == CPUI_PIECE) {
-			Architecture* glb = data.getArch();
-			AddrSpace* rspc = glb->getDefaultSpace();
-			bool arenearpointers = glb->hasNearPointers(rspc);
-			if (arenearpointers && rspc->getAddrSize() == op->getOut()->getSize()) {
-				SegmentOp* segdef = glb->userops.getSegmentOp(rspc->getIndex());
-				if (segdef->getBaseSize() == op->getIn(0)->getSize() &&
-					segdef->getInnerSize() == op->getIn(1)->getSize() &&
-					op->getIn(1)->getType()->getMetatype() == TYPE_PTR) { //far pointer found
-					//data.opSetOpcode(op, CPUI_CALLOTHER); //this is ideal but its way too late
-					//data.opInsertInput(op, op->getIn(1), 2); //need to check size of offset
-					//data.opSetInput(op, op->getIn(0), 1); //need to check size of segment
-					//data.opSetInput(op, data.newConstant(4, glb->userops.getSegmentOp(rspc->getIndex())->getIndex()), 0);
-					//data.opSetOpcode(op, CPUI_SEGMENTOP); //possible but again segmentizing occurs much earlier
-					//data.opSetInput(op, data.newVarnodeSpace(containerid), 0); //spacebase
-					data.opSetOpcode(op, CPUI_COPY);
-					data.opSwapInput(op, 0, 1);
-					data.opRemoveInput(op, 1);
-				}
-			}
-		}
-	}
+    } else {
+      if (op->code() == CPUI_PIECE) {
+        Architecture* glb = data.getArch();
+        AddrSpace* rspc = glb->getDefaultSpace();
+        bool arenearpointers = glb->hasNearPointers(rspc);
+        if (arenearpointers && rspc->getAddrSize() == op->getOut()->getSize()) {
+          SegmentOp* segdef = glb->userops.getSegmentOp(rspc->getIndex());
+          if (segdef->getBaseSize() == op->getIn(0)->getSize() &&
+            segdef->getInnerSize() == op->getIn(1)->getSize() &&
+            op->getIn(1)->getType()->getMetatype() == TYPE_PTR) { //far pointer found
+            //data.opSetOpcode(op, CPUI_CALLOTHER); //this is ideal but its way too late
+            //data.opInsertInput(op, op->getIn(1), 2); //need to check size of offset
+            //data.opSetInput(op, op->getIn(0), 1); //need to check size of segment
+            //data.opSetInput(op, data.newConstant(4, glb->userops.getSegmentOp(rspc->getIndex())->getIndex()), 0);
+            //data.opSetOpcode(op, CPUI_SEGMENTOP); //possible but again segmentizing occurs much earlier
+            //data.opSetInput(op, data.newVarnodeSpace(containerid), 0); //spacebase
+            data.opSetOpcode(op, CPUI_COPY);
+            data.opSwapInput(op, 0, 1);
+            data.opRemoveInput(op, 1);
+          }
+        }
+      }
+    }
       if (outvn->getType() != tokenct)
       force=true;		// Make sure not to drop pointer type
   }
