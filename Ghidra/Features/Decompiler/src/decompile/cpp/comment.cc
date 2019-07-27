@@ -283,7 +283,7 @@ bool CommentSorter::findPosition(Subsort &subsort,Comment *comm,const Funcdata *
   if (opiter != fd->endOpAll()) {	// If there is an op at or after the comment
     PcodeOp *op = (*opiter).second;
     BlockBasic *block = op->getParent();
-    if (block->contains(comm->getAddr())) { // If the op's block contains the address
+    if ((block != (BlockBasic*)0) && block->contains(comm->getAddr())) { // If the op's block contains the address
       // Associate comment with this op
       subsort.setBlock(block->getIndex(), (uint4)op->getSeqNum().getOrder());
       return true;
@@ -301,7 +301,7 @@ bool CommentSorter::findPosition(Subsort &subsort,Comment *comm,const Funcdata *
       return true;
     }
   }
-  if (backupOp != (PcodeOp *)0) {
+  if ((backupOp->getParent() != (BlockBasic*)0) && backupOp != (PcodeOp *)0) {
     // Its possible the op migrated from its original basic block.
     // Since the address matches exactly, hang the comment on it
     subsort.setBlock(backupOp->getParent()->getIndex(),(uint4)backupOp->getSeqNum().getOrder());
