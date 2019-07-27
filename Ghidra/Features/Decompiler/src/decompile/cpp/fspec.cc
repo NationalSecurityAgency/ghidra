@@ -2229,7 +2229,7 @@ void ProtoModelMerged::foldIn(ProtoModel *model)
 				}
 			}
 		}
-		if (bDiff) throw LowlevelError("Cannot merge prototype models with different inject ids");
+		if (bDiff) throw LowlevelError("Cannot merge prototype models with different injections");
 	}
     intersectEffects(model->effectlist);
     intersectLikelyTrash(model->likelytrash);
