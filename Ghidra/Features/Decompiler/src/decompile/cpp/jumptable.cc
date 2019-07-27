@@ -419,12 +419,12 @@ int4 JumpBasic::getStride(Varnode *vn)
 
 {
   uintb mask = vn->getNZMask();
-  int4 stride = 1;
+  int4 stride = 1; //64-bit mask will overflow this to 0
   while((mask&1)==0) {
     mask >>= 1;
     stride <<= 1;
   }
-  if (stride > 32) return 1;
+  if (stride > 32 || stride == 0) return 1;
   return stride;
 }
 
