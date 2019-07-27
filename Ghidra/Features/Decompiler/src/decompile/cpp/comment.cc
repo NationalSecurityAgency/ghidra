@@ -295,7 +295,7 @@ bool CommentSorter::findPosition(Subsort &subsort,Comment *comm,const Funcdata *
     --opiter;
     PcodeOp *op = (*opiter).second;
     BlockBasic *block = op->getParent();
-    if (block->contains(comm->getAddr())) { // If the op's block contains the address
+    if ((block != (BlockBasic*)0) && block->contains(comm->getAddr())) { // If the op's block contains the address
       // Treat the comment as being in this block at the very end
       subsort.setBlock(block->getIndex(),0xffffffff);
       return true;
