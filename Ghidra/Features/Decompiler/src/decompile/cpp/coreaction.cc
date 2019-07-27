@@ -1989,7 +1989,7 @@ int4 ActionSetCasts::castOutput(PcodeOp *op,Funcdata &data,CastStrategy *castStr
         }
       }
     }
-      if (outvn->getType() != tokenct)
+    if (outvn->getType() != tokenct)
       force=true;		// Make sure not to drop pointer type
   }
   if (!force) {
