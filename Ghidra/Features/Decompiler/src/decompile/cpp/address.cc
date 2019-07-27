@@ -297,6 +297,8 @@ void Range::restoreXml(const Element *el,const AddrSpaceManager *manage)
       break;		// There should be no (space,first,last) attributes
     }
   }
+  if (last < first)
+    	  throw LowlevelError("Illegal range value");
   if (spc == (AddrSpace *)0)
 	  throw LowlevelError("No address space indicated in range tag");
   last = spc->wrapOffset(last);
