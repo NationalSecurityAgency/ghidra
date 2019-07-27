@@ -31,7 +31,7 @@ import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.script.AskDialog;
 import ghidra.app.services.DataTypeManagerService;
 import ghidra.app.util.bin.format.pdb.*;
-import ghidra.app.util.bin.format.pdb.PdbParserNEW.PdbFileType;
+import ghidra.app.util.bin.format.pdb.PdbParser.PdbFileType;
 import ghidra.framework.Application;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
@@ -180,7 +180,7 @@ public class PdbSymbolServerPlugin extends Plugin {
 			throws CancelledException, IOException, PdbException {
 
 		try {
-			PdbProgramAttributes pdbAttributes = PdbParserNEW.getPdbAttributes(program);
+			PdbProgramAttributes pdbAttributes = PdbParser.getPdbAttributes(program);
 
 			// 1. Ask if user wants .pdb or .pdb.xml file
 			fileType = askForFileExtension();
@@ -195,7 +195,7 @@ public class PdbSymbolServerPlugin extends Plugin {
 
 			// 3. See if PDB can be found locally
 			File pdbFile =
-				PdbParserNEW.findPDB(pdbAttributes, localDir.getAbsolutePath(), fileType);
+				PdbParser.findPDB(pdbAttributes, localDir.getAbsolutePath(), fileType);
 
 			// 4. If not found locally, ask if it should be retrieved
 			if (pdbFile != null && pdbFile.getName().endsWith(fileType.toString())) {
@@ -367,7 +367,7 @@ public class PdbSymbolServerPlugin extends Plugin {
 			String userHome = System.getProperty("user.home");
 
 			String storedLocalDir =
-				Preferences.getProperty(PdbParserNEW.PDB_STORAGE_PROPERTY, userHome, true);
+				Preferences.getProperty(PdbParser.PDB_STORAGE_PROPERTY, userHome, true);
 
 			testDirectory = new File(storedLocalDir);
 
@@ -409,7 +409,7 @@ public class PdbSymbolServerPlugin extends Plugin {
 			throw new CancelledException();
 		}
 
-		Preferences.setProperty(PdbParserNEW.PDB_STORAGE_PROPERTY, chosenDir[0].getAbsolutePath());
+		Preferences.setProperty(PdbParser.PDB_STORAGE_PROPERTY, chosenDir[0].getAbsolutePath());
 
 		return chosenDir[0];
 	}
@@ -542,7 +542,7 @@ public class PdbSymbolServerPlugin extends Plugin {
 		String cabextractPath = null;
 		String[] cabextractCmdLine;
 
-		if (PdbParserNEW.onWindows) {
+		if (PdbParser.onWindows) {
 			File cabextractExe = new File("C:\\Windows\\System32\\expand.exe");
 
 			if (!cabextractExe.exists()) {
@@ -736,7 +736,7 @@ public class PdbSymbolServerPlugin extends Plugin {
 	private void tryToLoadPdb(File downloadedPdb, Program currentProgram) {
 
 		// Only ask to load PDB if file type is applicable for current OS
-		if (fileType == PdbFileType.PDB && !PdbParserNEW.onWindows) {
+		if (fileType == PdbFileType.PDB && !PdbParser.onWindows) {
 			return;
 		}
 

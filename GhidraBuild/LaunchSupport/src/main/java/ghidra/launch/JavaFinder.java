@@ -33,23 +33,46 @@ public abstract class JavaFinder {
 	}
 
 	/**
-	 * Creates a Java finder to use for the current OS.
+	 * The different supported platforms (operating systems).
+	 */
+	public enum Platform {
+		WINDOWS, MACOS, LINUX;
+	}
+
+	/**
+	 * Gets the current {@link Platform}.
 	 * 
-	 * @return The Java finder to use for the current OS.
+	 * @return The current {@link Platform}
+	 */
+	public static Platform getCurrentPlatform() {
+		String os = System.getProperty("os.name");
+		if (os != null) {
+			os = os.toLowerCase();
+			if (os.contains("win")) {
+				return Platform.WINDOWS;
+			}
+			if (os.contains("mac")) {
+				return Platform.MACOS;
+			}
+		}
+		return Platform.LINUX;
+	}
+
+	/**
+	 * Creates a Java finder to use for the current {@link Platform platform}.
+	 * 
+	 * @return The Java finder to use for the current {@link Platform platform}
 	 */
 	public static JavaFinder create() {
-		JavaFinder javaFinder;
-		String os = System.getProperty("os.name").toLowerCase();
-		if (os != null && os.contains("win")) {
-			javaFinder = new WindowsJavaFinder();
+		switch (getCurrentPlatform()) {
+			case WINDOWS:
+				return new WindowsJavaFinder();
+			case MACOS:
+				return new MacJavaFinder();
+			case LINUX:
+			default:
+				return new LinuxJavaFinder();
 		}
-		else if (os != null && os.contains("mac")) {
-			javaFinder = new MacJavaFinder();
-		}
-		else {
-			javaFinder = new LinuxJavaFinder();
-		}
-		return javaFinder;
 	}
 
 	/**

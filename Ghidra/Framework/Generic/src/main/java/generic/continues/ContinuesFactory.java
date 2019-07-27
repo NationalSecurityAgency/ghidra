@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,11 +21,7 @@ import net.sf.cglib.proxy.Enhancer;
 
 public class ContinuesFactory implements GenericFactory {
 
-	private static final String CONTINUES_INTERCEPTOR_DISABLED_PROPERTY =
-		"ContinuesInterceptor.disabled";
-
-	private static final boolean disabled =
-		System.getProperty(CONTINUES_INTERCEPTOR_DISABLED_PROPERTY) != null;
+	private static final boolean disabled = Boolean.getBoolean("ContinuesInterceptor.disabled");
 
 	private ExceptionHandler exceptionHandler;
 

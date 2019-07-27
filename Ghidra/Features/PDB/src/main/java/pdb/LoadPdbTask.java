@@ -23,7 +23,7 @@ import docking.widgets.dialogs.MultiLineMessageDialog;
 import ghidra.app.plugin.core.analysis.*;
 import ghidra.app.services.DataTypeManagerService;
 import ghidra.app.util.bin.format.pdb.PdbException;
-import ghidra.app.util.bin.format.pdb.PdbParserNEW;
+import ghidra.app.util.bin.format.pdb.PdbParser;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.framework.options.Options;
 import ghidra.program.model.address.AddressSetView;
@@ -60,8 +60,8 @@ class LoadPdbTask extends Task {
 			public boolean analysisWorkerCallback(Program currentProgram, Object workerContext,
 					TaskMonitor currentMonitor) throws Exception, CancelledException, PdbException {
 
-				PdbParserNEW parser =
-					new PdbParserNEW(pdbFile, program, service, true, currentMonitor);
+				PdbParser parser =
+					new PdbParser(pdbFile, program, service, true, currentMonitor);
 
 				parser.parse();
 				parser.openDataTypeArchives();

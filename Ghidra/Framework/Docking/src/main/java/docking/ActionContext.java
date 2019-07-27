@@ -100,7 +100,7 @@ public class ActionContext {
 	 * Sets the sourceObject for this ActionContext.  This method is used internally by the 
 	 * DockingWindowManager. ComponentProvider and action developers should
 	 * only use this method for testing.
-	 * @param sourceObject
+	 * @param sourceObject the source object
 	 */
 	public void setSource(Object sourceObject) {
 		this.sourceObject = sourceObject;
@@ -125,4 +125,18 @@ public class ActionContext {
 	public MouseEvent getMouseEvent() {
 		return mouseEvent;
 	}
+
+	@Override
+	public String toString() {
+
+		//@formatter:off
+		return "{\n" +
+			"\tprovider: " + provider + ",\n" + 
+			"\tcontextObject: " + contextObject + ",\n" +
+			"\tsourceObject: " + sourceObject + ",\n" +
+			"\tmouseEvent: " + mouseEvent + "\n" +
+		"}";
+		//@formatter:on
+	}
+
 }

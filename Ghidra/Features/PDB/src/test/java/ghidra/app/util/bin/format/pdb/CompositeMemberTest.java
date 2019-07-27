@@ -782,7 +782,7 @@ public class CompositeMemberTest extends AbstractGhidraHeadlessIntegrationTest
 	class MyPdbMember extends DefaultPdbMember {
 
 		protected MyPdbMember(String memberName, String memberDataTypeName, int memberOffset) {
-			super(memberName, memberDataTypeName, memberOffset, dataTypeParser);
+			super(memberName, memberDataTypeName, memberOffset, PdbKind.MEMBER, dataTypeParser);
 		}
 
 	}
