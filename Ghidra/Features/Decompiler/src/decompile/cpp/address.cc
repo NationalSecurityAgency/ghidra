@@ -297,11 +297,12 @@ void Range::restoreXml(const Element *el,const AddrSpaceManager *manage)
       break;		// There should be no (space,first,last) attributes
     }
   }
-  if (last < first)
-    	  throw LowlevelError("Illegal range value");
   if (spc == (AddrSpace *)0)
 	  throw LowlevelError("No address space indicated in range tag");
+  first = spc->wrapOffset(first); //otherwise if first needs wrap, will be greater than last!
   last = spc->wrapOffset(last);
+  if (last < first)
+	  throw LowlevelError("Illegal range value");
 }
 
 /// Insert a new Range merging as appropriate to maintain the disjoint cover
