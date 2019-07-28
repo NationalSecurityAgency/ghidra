@@ -72,22 +72,21 @@ target00_11: target is sdisp_00_11 [ target = (sdisp_00_11 << 1) + inst_start + 
     rn_08_11 = simm_00_07;
 }
 
-:mova   @(disp,pc),r0  is r0 & pc & opcode_08_15=0b11000111 & disp_00_07  [disp = (disp_00_07 << 2); ]
+:mova   addr,r0  is r0 & opcode_08_15=0b11000111 & disp_00_07  [ addr = (inst_start + 4) & 0xFFFFFFFC + (disp_00_07 << 2); ]
 {
-    local temp:4 = inst_start;
-    r0 = disp + (temp & 0xFFFFFFFC) + 4;
+    r0 = addr;
 }
 
-:mov.w  @(target,pc),rn_08_11  is pc & opcode_12_15=0b1001 & rn_08_11 & disp_00_07 [ target = (disp_00_07 << 1) + 4; ]
+:mov.w  @(disp,pc),rn_08_11  is pc & opcode_12_15=0b1001 & rn_08_11 & disp_00_07 [ disp = (disp_00_07 << 1); ]
 {
-    local temp:4 = inst_start;
-    rn_08_11 =  sext(*:2 (temp + target));
+    local temp:4 = inst_start + 4;
+    rn_08_11 =  sext(*:2 (temp + disp));
 }
 
-:mov.l  @(disp,pc),rn_08_11  is pc & opcode_12_15=0b1101 & rn_08_11 & disp_00_07 [disp = (disp_00_07 << 2) + 4; ]
+:mov.l  @(disp,pc),rn_08_11  is pc & opcode_12_15=0b1101 & rn_08_11 & disp_00_07 [disp = (disp_00_07 << 2); ]
 {
-    local temp:4 = inst_start;
-    rn_08_11 = *:4 ((temp & 0xFFFFFFFC) + disp);
+    local temp:4 = (inst_start + 4) & 0xFFFFFFFC;
+    rn_08_11 = *:4 (temp + disp);
 }
 
 :mov.b  @rm_04_07,rn_08_11  is opcode_12_15=0b0110 & rn_08_11 & rm_04_07 & opcode_00_03=0b0000 
@@ -218,17 +217,17 @@ target00_11: target is sdisp_00_11 [ target = (sdisp_00_11 << 1) + inst_start + 
 
 :mov.b  rm_04_07,@(r0,rn_08_11)  is r0 & opcode_12_15=0b0000 & rn_08_11 & rm_04_07 & opcode_00_03=0b0100 
 {
-    *:1 (rn_08_11 + r0) = rm_04_07;
+    *:1 (rn_08_11 + r0) = rm_04_07:1;
 }
 
 :mov.w  rm_04_07,@(r0,rn_08_11)  is r0 & opcode_12_15=0b0000 & rn_08_11 & rm_04_07 & opcode_00_03=0b0101 
 {
-    *:2 (rn_08_11 + r0) = rm_04_07;
+    *:2 (rn_08_11 + r0) = rm_04_07:2;
 }
 
 :mov.l  rm_04_07,@(r0,rn_08_11)  is r0 & opcode_12_15=0b0000 & rn_08_11 & rm_04_07 & opcode_00_03=0b0110 
 {
-    *:4 (rn_08_11 + r0) = rm_04_07;
+    *:4 (rn_08_11 + r0) = rm_04_07:4;
 }
 
 :mov.b  @(disp_00_07,gbr),r0  is gbr & r0 & opcode_08_15=0b11000100 & disp_00_07  
@@ -248,17 +247,17 @@ target00_11: target is sdisp_00_11 [ target = (sdisp_00_11 << 1) + inst_start + 
 
 :mov.b  r0,@(disp_00_07,gbr)  is r0 & gbr & opcode_08_15=0b11000000 & disp_00_07  
 {
-    *:1 (gbr + disp_00_07) = r0;
+    *:1 (gbr + disp_00_07) = r0:1;
 }
 
 :mov.w  r0,@(disp,gbr)  is r0 & gbr & opcode_08_15=0b11000001 & disp_00_07 [disp = (disp_00_07 << 1); ]
 {
-    *:2 (gbr + disp) = r0;
+    *:2 (gbr + disp) = r0:2;
 }
 
 :mov.l  r0,@(disp,gbr)  is r0 & gbr & opcode_08_15=0b11000010 & disp_00_07 [disp = (disp_00_07 << 2); ]
 {
-    *:4 (gbr + disp) = r0;
+    *:4 (gbr + disp) = r0:4;
 }
 
 :movt   rn_08_11  is opcode_12_15=0b0000 & rn_08_11 & opcode_00_07=0b00101001 
@@ -306,9 +305,9 @@ target00_11: target is sdisp_00_11 [ target = (sdisp_00_11 << 1) + inst_start + 
     rn_08_11 = rn_08_11 + rm_04_07;
 }
 
-:add    imm_00_07,rn_08_11  is opcode_12_15=0b0111 & rn_08_11 & imm_00_07  
+:add    simm_00_07,rn_08_11  is opcode_12_15=0b0111 & rn_08_11 & simm_00_07
 {
-    rn_08_11 = rn_08_11 + sext(imm_00_07:1);
+    rn_08_11 = rn_08_11 + simm_00_07;
 }
 
 :addc   rm_04_07,rn_08_11  is opcode_12_15=0b0011 & rn_08_11 & rm_04_07 & opcode_00_03=0b1110 
