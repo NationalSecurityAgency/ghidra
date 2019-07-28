@@ -4236,14 +4236,14 @@ void ActionInferTypes::propagateSpacebaseRef(Funcdata &data,Varnode *spcvn)
     switch(op->code()) {
     case CPUI_COPY:
       vn = op->getIn(0);
-      addr = sbtype->getAddress(0,vn->getSize(),op->getAddr());
+      addr = sbtype->getAddress(0,vn->getSize(),op->getAddr(),vn->isPtrCheck());
       propagateRef(data,op->getOut(),addr);
       break;
     case CPUI_INT_ADD:
     case CPUI_PTRSUB:
       vn = op->getIn(1);
       if (vn->isConstant()) {
-	addr = sbtype->getAddress(vn->getOffset(),vn->getSize(),op->getAddr());
+	addr = sbtype->getAddress(vn->getOffset(),vn->getSize(),op->getAddr(),vn->isPtrCheck());
 	propagateRef(data,op->getOut(),addr);
       }
       break;
@@ -4251,7 +4251,7 @@ void ActionInferTypes::propagateSpacebaseRef(Funcdata &data,Varnode *spcvn)
       vn = op->getIn(1);
       if (vn->isConstant()) {
 	uintb off = vn->getOffset() * op->getIn(2)->getOffset();
-	addr = sbtype->getAddress(off,vn->getSize(),op->getAddr());
+	addr = sbtype->getAddress(off,vn->getSize(),op->getAddr(),vn->isPtrCheck());
 	propagateRef(data,op->getOut(),addr);
       }
       break;
