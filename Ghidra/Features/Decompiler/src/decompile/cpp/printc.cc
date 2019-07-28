@@ -772,7 +772,8 @@ void PrintC::opPtrsub(const PcodeOp *op)
   else if (ct->getMetatype() == TYPE_SPACEBASE) {
     TypeSpacebase *sb = (TypeSpacebase *)ct;
     Scope *scope = sb->getMap();
-    Address addr = sb->getAddress(op->getIn(1)->getOffset(),in0->getSize(),op->getAddr());
+    Address addr = sb->getAddress(op->getIn(1)->getOffset(),in0->getSize(),op->getAddr(),
+      op->getIn(1)->isPtrCheck());
     if (addr.isInvalid())
       throw LowlevelError("Unable to generate proper address from spacebase");
     SymbolEntry *entry = scope->queryContainer(addr,1,Address());
