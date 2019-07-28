@@ -6109,7 +6109,7 @@ int4 RulePtrsubCharConstant::applyOp(PcodeOp *op,Funcdata &data)
   if (outtype->getMetatype() != TYPE_PTR) return 0;
   Datatype *basetype = outtype->getPtrTo();
   if (!basetype->isCharPrint()) return 0;
-  Address symaddr = sbtype->getAddress(vn1->getOffset(),vn1->getSize(),op->getAddr());
+  Address symaddr = sbtype->getAddress(vn1->getOffset(),vn1->getSize(),op->getAddr(),vn1->isPtrCheck());
   Scope *scope = sbtype->getMap();
   if (!scope->isReadOnly(symaddr,1,op->getAddr()))
     return 0;
