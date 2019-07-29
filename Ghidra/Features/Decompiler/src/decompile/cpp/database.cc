@@ -1652,7 +1652,7 @@ void ScopeInternal::clearCategory(int4 cat)
     int4 sz = category[cat].size();
     for(int4 i=0;i<sz;++i) {
       Symbol *sym = category[cat][i];
-      removeSymbol(sym);
+      if (sym != (Symbol*)0) removeSymbol(sym);
     }
   }
   else {
