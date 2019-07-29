@@ -32,6 +32,7 @@ import javax.swing.table.*;
 import docking.*;
 import docking.action.*;
 import docking.actions.KeyBindingUtils;
+import docking.actions.PopupActionProvider;
 import docking.widgets.OptionDialog;
 import docking.widgets.dialogs.SettingsDialog;
 import docking.widgets.filechooser.GhidraFileChooser;
@@ -69,7 +70,7 @@ import resources.ResourceManager;
  *
  * @see GTableFilterPanel
  */
-public class GTable extends JTable implements KeyStrokeConsumer, DockingActionProviderIf {
+public class GTable extends JTable implements KeyStrokeConsumer, PopupActionProvider {
 
 	private static final String LAST_EXPORT_FILE = "LAST_EXPORT_DIR";
 
@@ -510,20 +511,8 @@ public class GTable extends JTable implements KeyStrokeConsumer, DockingActionPr
 	}
 
 	@Override
-	public List<DockingActionIf> getDockingActions() {
-		return getDefaultDockingActions();
-	}
+	public List<DockingActionIf> getPopupActions(ActionContext context) {
 
-	/**
-	 * Returns the default actions of this table.  Normally, the Docking Windows systems uses
-	 * {@link #getDockingActions()} to get the correct actions to show.  However,
-	 * there are some cases where clients override what appears when you click on a table (such
-	 * as in {@link DialogComponentProvider}s.  For those clients that are creating their own
-	 * action building, they need a way to get the default actions, hence this method.
-	 *
-	 * @return the default actions
-	 */
-	public List<DockingActionIf> getDefaultDockingActions() {
 		// we want these top-level groups to all appear together, with no separator
 		DockingWindowManager dwm = DockingWindowManager.getInstance(this);
 		dwm.setMenuGroup(new String[] { "Copy" }, actionMenuGroup, "1");
@@ -590,6 +579,10 @@ public class GTable extends JTable implements KeyStrokeConsumer, DockingActionPr
 
 		createPopupActions();
 		initializeRowHeight();
+
+		DockingWindowManager.registerComponentLoadedListener(this, dwm -> {
+			dwm.getTool().addPopupActionProvider(this);
+		});
 	}
 
 	private void initializeHeader(JTableHeader header) {
@@ -1490,5 +1483,4 @@ public class GTable extends JTable implements KeyStrokeConsumer, DockingActionPr
 			// ignored
 		}
 	}
-
 }

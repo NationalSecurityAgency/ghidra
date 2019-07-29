@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +15,12 @@
  */
 package docking;
 
+import java.awt.Component;
 
+/**
+ * A listener interface to know when a component has been 
+ * made {@link Component#isDisplayable() displayable}
+ */
 public interface ComponentLoadedListener {
 	public void componentLoaded(DockingWindowManager windowManager);
 }

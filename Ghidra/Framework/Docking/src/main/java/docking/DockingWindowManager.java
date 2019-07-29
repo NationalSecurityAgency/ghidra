@@ -30,8 +30,7 @@ import org.apache.commons.collections4.map.LazyMap;
 import org.jdom.Element;
 
 import docking.action.DockingActionIf;
-import docking.actions.DockingToolActions;
-import docking.actions.ToolActions;
+import docking.actions.*;
 import docking.help.HelpService;
 import generic.util.WindowUtilities;
 import ghidra.framework.OperatingSystem;
@@ -87,9 +86,10 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 
 	private Map<String, ComponentProvider> providerNameCache = new HashMap<>();
 	private Map<String, PreferenceState> preferenceStateMap = new HashMap<>();
-	private DockWinListener docListener;
 	private ActionToGuiMapper actionToGuiMapper;
 
+	private WeakSet<PopupActionProvider> popupActionProviders =
+		WeakDataStructureFactory.createSingleThreadAccessWeakSet();
 	private WeakSet<DockingContextListener> contextListeners =
 		WeakDataStructureFactory.createSingleThreadAccessWeakSet();
 
@@ -108,10 +108,9 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 	 * Constructs a new DockingWindowManager
 	 * @param tool the tool
 	 * @param images the images to use for windows in this window manager
-	 * @param docListener the listener to be notified when the user closes the manager
 	 */
-	public DockingWindowManager(DockingTool tool, List<Image> images, DockWinListener docListener) {
-		this(tool, images, docListener, false, true, true, null);
+	public DockingWindowManager(DockingTool tool, List<Image> images) {
+		this(tool, images, false, true, true, null);
 	}
 
 	/**
@@ -119,20 +118,18 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 	 * 
 	 * @param tool the tool
 	 * @param images the list of icons to set on the window
-	 * @param docListener the listener to be notified when the user closes the manager
 	 * @param modal if true then the root window will be a modal dialog instead of a frame
 	 * @param isDocking true for normal operation, false to suppress docking support(removes
 	 * component headers and window menu)
 	 * @param hasStatusBar if true a status bar will be created for the main window
 	 * @param factory the drop target factory
 	 */
-	public DockingWindowManager(DockingTool tool, List<Image> images, DockWinListener docListener,
-			boolean modal, boolean isDocking, boolean hasStatusBar, DropTargetFactory factory) {
+	public DockingWindowManager(DockingTool tool, List<Image> images, boolean modal,
+			boolean isDocking, boolean hasStatusBar, DropTargetFactory factory) {
 
 		KeyBindingOverrideKeyEventDispatcher.install();
 
 		this.tool = tool;
-		this.docListener = docListener;
 		this.isDocking = isDocking;
 		this.hasStatusBar = hasStatusBar;
 		if (images == null) {
@@ -172,10 +169,6 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 	 */
 	public static HelpService getHelpService() {
 		return helpService;
-	}
-
-	List<DockingActionIf> getTemporaryPopupActions(ActionContext context) {
-		return docListener.getPopupActions(context);
 	}
 
 	private static synchronized void addInstance(DockingWindowManager winMgr) {
@@ -1084,7 +1077,7 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 	 * the main window frame.
 	 */
 	void close() {
-		docListener.close();
+		tool.close();
 	}
 
 	boolean isDocking() {
@@ -2099,6 +2092,44 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 		actionToGuiMapper.contextChanged(placeholder);
 	}
 
+	/**
+	 * Adds the given popup action provider to this tool.   This provider will be called each
+	 * time the popup menu is about to be shown.
+	 * @param provider the provider
+	 */
+	public void addPopupActionProvider(PopupActionProvider provider) {
+		popupActionProviders.add(provider);
+	}
+
+	/**
+	 * Removes the given popup action provider
+	 * @param provider the provider
+	 */
+	public void removePopupActionProvider(PopupActionProvider provider) {
+		popupActionProviders.remove(provider);
+	}
+
+	/**
+	 * Returns a list of temporary popup actions to be returned.  Only those actions which have 
+	 * a suitable popup menu path will be considered.  This mechanism allows clients to 
+	 * add transient actions to be added to the tool without the accompanying management overhead.
+	 * 
+	 * @param context the ActionContext
+	 * @return list of temporary actions
+	 * @see #addPopupActionProvider(PopupActionProvider)
+	 */
+	List<DockingActionIf> getTemporaryPopupActions(ActionContext context) {
+
+		List<DockingActionIf> actionList = new ArrayList<>();
+		for (PopupActionProvider pl : popupActionProviders) {
+			List<DockingActionIf> actions = pl.getPopupActions(context);
+			if (actions != null) {
+				actionList.addAll(actions);
+			}
+		}
+		return actionList;
+	}
+
 	public void addContextListener(DockingContextListener listener) {
 		contextListeners.add(listener);
 	}
@@ -2122,12 +2153,9 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 	 * @param component the component that will be parented in a docking window system.
 	 * @param listener the listener to be notified the component was parented.
 	 */
-	public static void registerComponentLoadedListener(final Component component,
-			final ComponentLoadedListener listener) {
+	public static void registerComponentLoadedListener(Component component,
+			ComponentLoadedListener listener) {
 
-		// We want to load our state after the column model is loaded.  We are using this
-		// listener to know when the table has been added to the component hierarchy, as its 
-		// model has been loaded by then.
 		component.addHierarchyListener(new HierarchyListener() {
 			@Override
 			public void hierarchyChanged(HierarchyEvent e) {

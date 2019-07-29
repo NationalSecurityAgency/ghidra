@@ -23,6 +23,7 @@ import javax.swing.SwingUtilities;
 
 import docking.ActionContext;
 import docking.action.*;
+import docking.actions.PopupActionProvider;
 import docking.widgets.table.GTable;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.events.ProgramSelectionPluginEvent;
@@ -60,7 +61,7 @@ import resources.*;
 )
 //@formatter:on
 public class BookmarkPlugin extends ProgramPlugin
-		implements DomainObjectListener, PopupListener, BookmarkService {
+		implements DomainObjectListener, PopupActionProvider, BookmarkService {
 
 	private final static int MAX_DELETE_ACTIONS = 10;
 
@@ -190,7 +191,7 @@ public class BookmarkPlugin extends ProgramPlugin
 	public synchronized void dispose() {
 		navUpdater.dispose();
 
-		tool.removePopupListener(this);
+		tool.removePopupActionProvider(this);
 		if (repaintMgr != null) {
 			repaintMgr.dispose();
 		}
@@ -227,7 +228,7 @@ public class BookmarkPlugin extends ProgramPlugin
 		provider.setGoToService(goToService);
 		markerService = tool.getService(MarkerService.class);
 
-		tool.addPopupListener(this);
+		tool.addPopupActionProvider(this);
 
 		navUpdater = new NavUpdater();
 		repaintMgr = new SwingUpdateManager(500, () -> provider.repaint());

@@ -29,6 +29,7 @@ import org.jdom.Element;
 import docking.*;
 import docking.action.DockingActionIf;
 import docking.actions.DockingToolActions;
+import docking.actions.PopupActionProvider;
 import ghidra.framework.model.*;
 import ghidra.framework.options.ToolOptions;
 import ghidra.framework.plugintool.PluginEvent;
@@ -296,6 +297,16 @@ public class DummyTool implements Tool {
 	@Override
 	public void removeLocalAction(ComponentProvider componentProvider, DockingActionIf action) {
 		//do nothing
+	}
+
+	@Override
+	public void addPopupActionProvider(PopupActionProvider listener) {
+		// do nothing
+	}
+
+	@Override
+	public void removePopupActionProvider(PopupActionProvider listener) {
+		// do nothing
 	}
 
 	@Override

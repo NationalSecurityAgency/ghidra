@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,8 +26,9 @@ import javax.swing.JComponent;
 import docking.ActionContext;
 import docking.WindowPosition;
 import docking.action.DockingActionIf;
+import docking.actions.PopupActionProvider;
 
-public class ListingMergePanelProvider extends ComponentProviderAdapter implements PopupListener {
+public class ListingMergePanelProvider extends ComponentProviderAdapter implements PopupActionProvider {
 	private ListingMergePanel mergePanel;
 
 	public ListingMergePanelProvider(PluginTool tool, Plugin plugin, String owner,
@@ -37,7 +37,7 @@ public class ListingMergePanelProvider extends ComponentProviderAdapter implemen
 		setTitle("Listing Merge Tool");
 		setDefaultWindowPosition(WindowPosition.TOP);
 		this.mergePanel = mergePanel;
-		tool.addPopupListener(this);
+		tool.addPopupActionProvider(this);
 	}
 
 	@Override

@@ -22,6 +22,7 @@ import java.util.List;
 
 import javax.swing.*;
 
+import docking.ActionContext;
 import docking.DockingWindowManager;
 import docking.action.DockingActionIf;
 import docking.widgets.EmptyBorderButton;
@@ -101,7 +102,7 @@ public class InstructionTable extends AbstractInstructionTable {
 	 * (which is all of them).
 	 */
 	@Override
-	public List<DockingActionIf> getDockingActions() {
+	public List<DockingActionIf> getPopupActions(ActionContext context) {
 		return new ArrayList<>();
 	}
 

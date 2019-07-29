@@ -29,6 +29,7 @@ import javax.swing.event.ChangeListener;
 
 import docking.*;
 import docking.action.*;
+import docking.actions.PopupActionProvider;
 import docking.dnd.*;
 import docking.widgets.EventTrigger;
 import docking.widgets.fieldpanel.FieldPanel;
@@ -57,7 +58,7 @@ import resources.ResourceManager;
 
 public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 		implements ProgramLocationListener, ProgramSelectionListener, Draggable, Droppable,
-		ChangeListener, StringSelectionListener, PopupListener {
+		ChangeListener, StringSelectionListener, PopupActionProvider {
 
 	private static final String OLD_NAME = "CodeBrowserPlugin";
 	private static final String NAME = "Listing";
@@ -156,7 +157,7 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 		listingPanel.addIndexMapChangeListener(this);
 
 		codeViewerClipboardProvider = new CodeBrowserClipboardProvider(tool, this);
-		tool.addPopupListener(this);
+		tool.addPopupActionProvider(this);
 	}
 
 	@Override

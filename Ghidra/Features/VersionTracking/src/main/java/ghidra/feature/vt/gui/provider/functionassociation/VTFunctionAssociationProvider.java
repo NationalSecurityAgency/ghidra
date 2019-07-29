@@ -31,6 +31,7 @@ import javax.swing.table.JTableHeader;
 import docking.ActionContext;
 import docking.WindowPosition;
 import docking.action.*;
+import docking.actions.PopupActionProvider;
 import docking.menu.ActionState;
 import docking.menu.MultiStateDockingAction;
 import docking.widgets.EventTrigger;
@@ -52,7 +53,6 @@ import ghidra.framework.model.*;
 import ghidra.framework.options.Options;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
-import ghidra.framework.plugintool.PopupListener;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
@@ -67,7 +67,7 @@ import resources.ResourceManager;
  * Provider for the version tracking function association table. 
  */
 public class VTFunctionAssociationProvider extends ComponentProviderAdapter
-		implements VTControllerListener, PopupListener {
+		implements VTControllerListener, PopupActionProvider {
 
 	private static final String FILTER_SETTINGS_KEY = "FUNCTION_FILTER_SETTINGS";
 	private static final String BASE_TITLE = "Version Tracking Functions";
@@ -125,7 +125,7 @@ public class VTFunctionAssociationProvider extends ComponentProviderAdapter
 		createActions();
 		addGeneralCodeComparisonActions();
 		controller.addListener(this);
-		tool.addPopupListener(this);
+		tool.addPopupActionProvider(this);
 	}
 
 	private void createActions() {
@@ -334,7 +334,7 @@ public class VTFunctionAssociationProvider extends ComponentProviderAdapter
 		destinationFunctionsTable.dispose();
 		destinationTableFilterPanel.dispose();
 
-		tool.removePopupListener(this);
+		tool.removePopupActionProvider(this);
 	}
 
 	public void reload() {

@@ -24,5 +24,5 @@
     <listAttribute key="org.eclipse.jdt.launching.MODULEPATH"/>
     <stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="ghidra.GhidraRun"/>
     <stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="Framework Utility"/>
-    <stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-XX:+IgnoreUnrecognizedVMOptions -Djava.system.class.loader=ghidra.GhidraClassLoader -Dfile.encoding=UTF8 -Duser.country=US -Duser.language=en -Dsun.java2d.pmoffscreen=false -Dsun.java2d.xrender=true -Dsun.java2d.uiScale=1 -Dsun.java2d.d3d=false -Xdock:name=&quot;Ghidra&quot; -Dvisualvm.display.name=Ghidra"/>
+    <stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-XX:+IgnoreUnrecognizedVMOptions -Djava.system.class.loader=ghidra.GhidraClassLoader -Dfile.encoding=UTF8 -Duser.country=US -Duser.language=en -Dsun.java2d.pmoffscreen=false -Dsun.java2d.xrender=false -Dsun.java2d.uiScale=1 -Dsun.java2d.d3d=false -Xdock:name=&quot;Ghidra&quot; -Dvisualvm.display.name=Ghidra"/>
 </launchConfiguration>

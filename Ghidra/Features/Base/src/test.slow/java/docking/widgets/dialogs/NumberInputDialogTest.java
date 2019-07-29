@@ -35,7 +35,7 @@ import ghidra.test.DummyTool;
 public class NumberInputDialogTest extends AbstractDockingTest {
 
 	private DockingWindowManager dwm =
-		new DockingWindowManager(new DummyTool(), (List<Image>) null, null);
+		new DockingWindowManager(new DummyTool(), (List<Image>) null);
 	private NumberInputDialog dialog;
 	private JButton okButton;
 	private JTextField textField;

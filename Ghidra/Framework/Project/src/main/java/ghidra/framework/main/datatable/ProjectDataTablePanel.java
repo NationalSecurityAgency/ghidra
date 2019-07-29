@@ -490,7 +490,7 @@ public class ProjectDataTablePanel extends JPanel {
 		}
 
 		@Override
-		public List<DockingActionIf> getDockingActions() {
+		public List<DockingActionIf> getPopupActions(ActionContext context) {
 
 			// TODO we should at least add the 'copy' action
 

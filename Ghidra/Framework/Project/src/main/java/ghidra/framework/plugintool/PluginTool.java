@@ -22,7 +22,6 @@ import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
@@ -34,6 +33,7 @@ import org.jdom.Element;
 
 import docking.*;
 import docking.action.*;
+import docking.actions.PopupActionProvider;
 import docking.actions.ToolActions;
 import docking.framework.AboutDialog;
 import docking.framework.ApplicationInformationDisplayFactory;
@@ -58,24 +58,24 @@ import ghidra.framework.plugintool.util.*;
 import ghidra.framework.project.ProjectDataService;
 import ghidra.framework.project.tool.ToolIconURL;
 import ghidra.util.*;
-import ghidra.util.datastruct.WeakDataStructureFactory;
-import ghidra.util.datastruct.WeakSet;
 import ghidra.util.task.Task;
 import ghidra.util.task.TaskLauncher;
 
 /**
- * Base class that is a container to manage plugins and their actions, and
- * to coordinate the firing of plugin events and tool events. A
- * PluginTool may have visible components supplied by
- * <pre>ComponentProviders </pre>. These components may be docked within the
- * tool, or moved out into their own windows.
- * <p>The PluginTool also manages tasks that run in the background, and
- * options used by the plugins.
- * </p>
+ * Base class that is a container to manage plugins and their actions, and to coordinate the 
+ * firing of plugin events and tool events. A PluginTool may have visible components supplied by
+ * <pre>ComponentProviders </pre>. These components may be docked within the tool, or moved 
+ * out into their own windows.
+ *
+ * <p>Plugins normally add actions via {@link #addAction(DockingActionIf)}.   There is also 
+ * an alternate method for getting actions to appear in the popup context menu (see
+ * {@link #addPopupActionProvider(PopupActionProvider)}).   The popup listener mechanism is generally not
+ * needed and should only be used in special circumstances (see {@link PopupActionProvider}).
+ * 
+ * <p>The PluginTool also manages tasks that run in the background, and options used by the plugins.
  *
  */
-public abstract class PluginTool extends AbstractDockingTool
-		implements Tool, DockWinListener, ServiceProvider {
+public abstract class PluginTool extends AbstractDockingTool implements Tool, ServiceProvider {
 
 	private static final String DOCKING_WINDOWS_ON_TOP = "Docking Windows On Top";
 
@@ -96,8 +96,6 @@ public abstract class PluginTool extends AbstractDockingTool
 	private DialogManager dialogMgr;
 	private PropertyChangeSupport propertyChangeMgr;
 
-	private WeakSet<PopupListener> popupListeners =
-		WeakDataStructureFactory.createSingleThreadAccessWeakSet();
 	private OptionsChangeListener optionsListener = new ToolOptionsListener();
 	protected ManagePluginsDialog manageDialog;
 	protected ExtensionTableProvider extensionTableProvider;
@@ -192,7 +190,7 @@ public abstract class PluginTool extends AbstractDockingTool
 
 		List<Image> windowIcons = ApplicationInformationDisplayFactory.getWindowIcons();
 		DockingWindowManager newManager =
-			new DockingWindowManager(this, windowIcons, this, isModal, isDockable, hasStatus, null);
+			new DockingWindowManager(this, windowIcons, isModal, isDockable, hasStatus, null);
 		return newManager;
 	}
 
@@ -265,17 +263,6 @@ public abstract class PluginTool extends AbstractDockingTool
 	}
 
 	/**
-	 * Add popup listener that is notified when the popup menu is about to be
-	 * displayed.
-	 *
-	 * @param listener listener that is notified when the popup menu is to
-	 * be displayed
-	 */
-	public void addPopupListener(PopupListener listener) {
-		popupListeners.add(listener);
-	}
-
-	/**
 	 * Returns the manage plugins dialog that is currently
 	 * being used.
 	 * @return the current manage plugins dialog
@@ -306,15 +293,6 @@ public abstract class PluginTool extends AbstractDockingTool
 		}
 		extensionTableProvider = new ExtensionTableProvider(this);
 		showDialog(extensionTableProvider);
-	}
-
-	/**
-	 * Remove popup listener
-	 * @param listener listener that is notified when the popup menu is to
-	 * be displayed
-	 */
-	public void removePopupListener(PopupListener listener) {
-		popupListeners.remove(listener);
 	}
 
 	/**
@@ -1100,19 +1078,6 @@ public abstract class PluginTool extends AbstractDockingTool
 	 */
 	public void clearLastEvents() {
 		eventMgr.clearLastEvents();
-	}
-
-	@Override
-	public List<DockingActionIf> getPopupActions(ActionContext context) {
-
-		List<DockingActionIf> actionList = new ArrayList<>();
-		for (PopupListener pl : popupListeners) {
-			List<DockingActionIf> actions = pl.getPopupActions(context);
-			if (actions != null) {
-				actionList.addAll(actions);
-			}
-		}
-		return actionList;
 	}
 
 	/**

@@ -74,10 +74,8 @@ public class VersionControlShowHistoryAction extends VersionControlAction {
 		if (domainFiles.size() != 1) {
 			return;
 		}
-		if (dialog == null) {
-			dialog = new VersionHistoryDialog();
-		}
-		dialog.setDomainFile(domainFiles.get(0));
+
+		dialog = new VersionHistoryDialog(domainFiles.get(0));
 		tool.showDialog(dialog, tool.getToolFrame());
 	}
 

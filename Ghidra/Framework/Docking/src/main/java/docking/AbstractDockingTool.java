@@ -21,6 +21,7 @@ import java.util.*;
 import javax.swing.JFrame;
 
 import docking.action.DockingActionIf;
+import docking.actions.PopupActionProvider;
 import docking.actions.ToolActions;
 import ghidra.framework.options.ToolOptions;
 import ghidra.util.Swing;
@@ -121,6 +122,16 @@ public abstract class AbstractDockingTool implements DockingTool {
 	@Override
 	public Set<DockingActionIf> getAllActions() {
 		return toolActions.getAllActions();
+	}
+
+	@Override
+	public void addPopupActionProvider(PopupActionProvider provider) {
+		winMgr.addPopupActionProvider(provider);
+	}
+
+	@Override
+	public void removePopupActionProvider(PopupActionProvider provider) {
+		winMgr.removePopupActionProvider(provider);
 	}
 
 	@Override

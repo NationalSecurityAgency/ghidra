@@ -45,7 +45,7 @@ public class DockingWindowManagerTest extends AbstractDockingTest {
 		// default window position.
 		//
 
-		DockingWindowManager dwm = new DockingWindowManager(tool, (List<Image>) null, null);
+		DockingWindowManager dwm = new DockingWindowManager(tool, (List<Image>) null);
 
 		ComponentProvider providerA = addProvider(dwm, "A", "a", RIGHT);
 		ComponentProvider providerB = addProvider(dwm, "B", "b", BOTTOM);
@@ -65,7 +65,7 @@ public class DockingWindowManagerTest extends AbstractDockingTest {
 		// intragroup window position.  Note: 'Stacked' is the default.
 		//
 
-		DockingWindowManager dwm = new DockingWindowManager(tool, (List<Image>) null, null);
+		DockingWindowManager dwm = new DockingWindowManager(tool, (List<Image>) null);
 
 		ComponentProvider providerA1 = addProvider(dwm, "A1", "a", RIGHT, STACK);
 		ComponentProvider providerA2 = addProvider(dwm, "A2", "a", BOTTOM, STACK);
@@ -83,7 +83,7 @@ public class DockingWindowManagerTest extends AbstractDockingTest {
 		// intragroup window position.
 		//
 
-		DockingWindowManager dwm = new DockingWindowManager(tool, (List<Image>) null, null);
+		DockingWindowManager dwm = new DockingWindowManager(tool, (List<Image>) null);
 
 		ComponentProvider providerA1 = addProvider(dwm, "A1", "a", RIGHT, STACK);
 		ComponentProvider providerA2 = addProvider(dwm, "A2", "a", LEFT, BOTTOM);
@@ -100,7 +100,7 @@ public class DockingWindowManagerTest extends AbstractDockingTest {
 		// intragroup window position.
 		//
 
-		DockingWindowManager dwm = new DockingWindowManager(tool, (List<Image>) null, null);
+		DockingWindowManager dwm = new DockingWindowManager(tool, (List<Image>) null);
 
 		ComponentProvider providerA1 = addProvider(dwm, "A1", "a", RIGHT, WINDOW);
 		ComponentProvider providerA2 = addProvider(dwm, "A2", "a", LEFT, WINDOW);
@@ -121,7 +121,7 @@ public class DockingWindowManagerTest extends AbstractDockingTest {
 		//
 
 		// note: the positions specified here are for default positions, not intragroup positions
-		DockingWindowManager dwm = new DockingWindowManager(tool, (List<Image>) null, null);
+		DockingWindowManager dwm = new DockingWindowManager(tool, (List<Image>) null);
 
 		ComponentProvider providerA = addProvider(dwm, "A", "a", RIGHT, STACK);
 		ComponentProvider providerAB = addProvider(dwm, "AB", "a.b", BOTTOM, STACK);
@@ -142,7 +142,7 @@ public class DockingWindowManagerTest extends AbstractDockingTest {
 		//
 
 		// note: the positions specified here are for default positions, not intragroup positions
-		DockingWindowManager dwm = new DockingWindowManager(tool, (List<Image>) null, null);
+		DockingWindowManager dwm = new DockingWindowManager(tool, (List<Image>) null);
 
 		ComponentProvider providerA = addProvider(dwm, "A", "a", RIGHT, BOTTOM);
 		ComponentProvider providerAB = addProvider(dwm, "AB", "a.b", BOTTOM, TOP);
@@ -180,7 +180,7 @@ public class DockingWindowManagerTest extends AbstractDockingTest {
 		// Test that, for unrelated groups, the layout info stored in XML is re-used when providers
 		// are shown after that XML is restored--even if the window positioning changes
 		//
-		final DockingWindowManager dwm1 = new DockingWindowManager(tool, (List<Image>) null, null);
+		final DockingWindowManager dwm1 = new DockingWindowManager(tool, (List<Image>) null);
 
 		ComponentProvider providerA = addProvider(dwm1, "A", "a", RIGHT);
 		ComponentProvider providerB = addProvider(dwm1, "B", "b", BOTTOM);
@@ -215,7 +215,7 @@ public class DockingWindowManagerTest extends AbstractDockingTest {
 		// Test that, for related groups, the layout info stored in XML is re-used when providers
 		// are shown after that XML is restored--even if the window positioning changes
 		//
-		DockingWindowManager dwm1 = new DockingWindowManager(tool, (List<Image>) null, null);
+		DockingWindowManager dwm1 = new DockingWindowManager(tool, (List<Image>) null);
 
 		ComponentProvider providerA = addProvider(dwm1, "A", "a", RIGHT);
 		ComponentProvider providerAB = addProvider(dwm1, "AB", "a.b", BOTTOM);
@@ -251,7 +251,7 @@ public class DockingWindowManagerTest extends AbstractDockingTest {
 		// and that a subgroup 'a.b' will open relative to the parent.  **Make sure that this
 		// works when the parent is the first provider open.
 		//
-		DockingWindowManager dwm = new DockingWindowManager(tool, (List<Image>) null, null);
+		DockingWindowManager dwm = new DockingWindowManager(tool, (List<Image>) null);
 
 		ComponentProvider providerA = addProvider(dwm, "A", "a", TOP, RIGHT);
 		ComponentProvider providerAB = addProvider(dwm, "AB", "a.b", RIGHT, BOTTOM);
@@ -268,7 +268,7 @@ public class DockingWindowManagerTest extends AbstractDockingTest {
 		// and that a subgroup 'a.b' will open relative to the parent.  **Make sure that this
 		// works when the subgroup is the first provider open.
 		//
-		DockingWindowManager dwm = new DockingWindowManager(tool, (List<Image>) null, null);
+		DockingWindowManager dwm = new DockingWindowManager(tool, (List<Image>) null);
 
 		ComponentProvider providerAB = addProvider(dwm, "AB", "a.b", RIGHT, BOTTOM);
 		ComponentProvider providerA = addProvider(dwm, "A", "a", TOP, RIGHT);
@@ -286,7 +286,7 @@ public class DockingWindowManagerTest extends AbstractDockingTest {
 		// Test that two providers that don't share an owner (the plugin) can share a group and 
 		// open relative to each other.
 		//
-		DockingWindowManager dwm = new DockingWindowManager(tool, (List<Image>) null, null);
+		DockingWindowManager dwm = new DockingWindowManager(tool, (List<Image>) null);
 
 		ComponentProvider p1 = addProvider(dwm, "Owner_1", "Name_1", "group", TOP, TOP);
 		ComponentProvider p2 = addProvider(dwm, "Owner_2", "Name_2", "group", BOTTOM, RIGHT);
@@ -335,7 +335,7 @@ public class DockingWindowManagerTest extends AbstractDockingTest {
 		 
 		 */
 
-		DockingWindowManager dwm = new DockingWindowManager(tool, (List<Image>) null, null);
+		DockingWindowManager dwm = new DockingWindowManager(tool, (List<Image>) null);
 
 		ComponentProvider pA = addProvider(dwm, "Owner_1", "A", "a", LEFT, LEFT);
 		ComponentProvider pB = addProvider(dwm, "Owner_2", "B", "b", RIGHT, RIGHT);
@@ -408,7 +408,7 @@ public class DockingWindowManagerTest extends AbstractDockingTest {
 
 	private DockingWindowManager createNewDockingWindowManagerFromXML(final Element element) {
 		final DockingWindowManager dwm2 =
-			new DockingWindowManager(new DummyTool("Tool2"), (List<Image>) null, null);
+			new DockingWindowManager(new DummyTool("Tool2"), (List<Image>) null);
 
 		runSwing(() -> {
 			dwm2.setVisible(true);
