@@ -3060,7 +3060,7 @@ bool FuncProto::isInputLocked(void) const
   if ((flags&voidinputlock)!=0) return true;
   if (numParams()==0) return false;
   ProtoParameter *param = getParam(0);
-  if (param->isTypeLocked()) return true;
+  if (param != (ProtoParameter*)0 && param->isTypeLocked()) return true;
   return false;
 }
 
@@ -3434,7 +3434,7 @@ bool FuncProto::possibleInputParam(const Address &addr,int4 size) const
       bool locktest = false;	// Have tested against locked symbol
       for(int4 i=0;i<num;++i) {
 	ProtoParameter *param = getParam(i);
-	if (!param->isTypeLocked()) continue;
+	if (param == (ProtoParameter*)0 || !param->isTypeLocked()) continue;
 	locktest = true;
 	Address iaddr = param->getAddress();
 	// If the parameter already exists, the varnode must be justified in the parameter relative
@@ -3494,7 +3494,7 @@ bool FuncProto::unjustifiedInputParam(const Address &addr,int4 size,VarnodeData 
       bool locktest = false;	// Have tested against locked symbol
       for(int4 i=0;i<num;++i) {
 	ProtoParameter *param = getParam(i);
-	if (!param->isTypeLocked()) continue;
+	if (param == (ProtoParameter*)0 || !param->isTypeLocked()) continue;
 	locktest = true;
 	Address iaddr = param->getAddress();
 	// If the parameter already exists, test if -addr- -size- is improperly contained in param
