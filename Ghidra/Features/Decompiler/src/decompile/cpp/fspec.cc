@@ -3059,9 +3059,11 @@ bool FuncProto::isInputLocked(void) const
 {
   if ((flags&voidinputlock)!=0) return true;
   if (numParams()==0) return false;
-  ProtoParameter *param = getParam(0);
-  if (param != (ProtoParameter*)0 && param->isTypeLocked()) return true;
-  return false;
+  for (int4 i = 0; i < numParams(); i++) {
+    ProtoParameter* param = getParam(i);
+    if (param == (ProtoParameter*)0 || !param->isTypeLocked()) return false;
+  }
+  return true; //all locked
 }
 
 /// The lock on the data-type of input parameters is set as specified.
@@ -3129,8 +3131,11 @@ void FuncProto::resolveExtraPop(void)
 void FuncProto::clearUnlockedInput(void)
 
 {
-  if (isInputLocked()) return;
-  store->clearAllInputs();
+  for (int4 i = 0; i < numParams(); i++) {
+    ProtoParameter* param = getParam(i);
+    if (param != (ProtoParameter*)0 && param->isTypeLocked()) return;
+  }
+  store->clearAllInputs(); //all unlocked
 }
 
 void FuncProto::clearUnlockedOutput(void)
@@ -3173,7 +3178,7 @@ void FuncProto::updateInputTypes(const vector<Varnode *> &triallist,ParamActive 
 
 {
   if (isInputLocked()) return;	// Input is locked, do no updating
-  store->clearAllInputs();
+  //store->clearAllInputs();
   int4 count = 0;
   int4 numtrials = activeinput->getNumTrials();
   for(int4 i=0;i<numtrials;++i) {
@@ -3181,6 +3186,10 @@ void FuncProto::updateInputTypes(const vector<Varnode *> &triallist,ParamActive 
     if (trial.isUsed()) {
       Varnode *vn = triallist[trial.getSlot()-1];
       if (!vn->isMark()) {
+	if (getParam(count)->isTypeLocked()) {
+	  count++; continue;
+	}
+        store->clearInput(count);
 	ParameterPieces pieces;
 	pieces.addr = trial.getAddress();
 	pieces.type = vn->getHigh()->getType();
@@ -3207,7 +3216,7 @@ void FuncProto::updateInputNoTypes(const vector<Varnode *> &triallist,ParamActiv
 				   TypeFactory *factory)
 {
   if (isInputLocked()) return;	// Input is locked, do no updating
-  store->clearAllInputs();
+  //store->clearAllInputs();
   int4 count = 0;
   int4 numtrials = activeinput->getNumTrials();
   for(int4 i=0;i<numtrials;++i) {
@@ -3215,6 +3224,10 @@ void FuncProto::updateInputNoTypes(const vector<Varnode *> &triallist,ParamActiv
     if (trial.isUsed()) {
       Varnode *vn = triallist[trial.getSlot()-1];
       if (!vn->isMark()) {
+	if (getParam(count)->isTypeLocked()) {
+	  count++; continue;
+	}
+        store->clearInput(count);
 	ParameterPieces pieces;
 	pieces.type = factory->getBase(vn->getSize(),TYPE_UNKNOWN);
 	pieces.addr = trial.getAddress();
