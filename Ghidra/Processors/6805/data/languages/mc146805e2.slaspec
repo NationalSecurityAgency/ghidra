@@ -1,0 +1,3 @@
+# sleigh specification file for Motorola MC146805E2
+@define MC146805E2 ""
+@include "6805.sinc"

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<processor_spec>
+  <programcounter register="PC"/>
+  <default_symbols>
+    <symbol name="PORTA" address="0"/>
+    <symbol name="PORTB" address="1"/>
+    <symbol name="DDRA" address="4"/>
+    <symbol name="DDRB" address="5"/>
+    <symbol name="TDR"  address="8"/>
+    <symbol name="TCR"  address="9"/>
+    <symbol name="TMRINTFROMWAIT" address="1FF6" entry="true" type="code_ptr"/>
+    <symbol name="TMRINT"         address="1FF8" entry="true" type="code_ptr"/>
+    <symbol name="EXTIRQ"         address="1FFA" entry="true" type="code_ptr"/>
+    <symbol name="SWI"            address="1FFC" entry="true" type="code_ptr"/>
+    <symbol name="RST"            address="1FFE" entry="true" type="code_ptr"/>
+  </default_symbols>
+  <default_memory_blocks>
+    <memory_block name="IO" start_address="0" length="0x10" initialized="false"/>
+    <memory_block name="LOW_RAM" start_address="0x10" length="0x30" initialized="false"/>
+    <memory_block name="STACK" start_address="0x40" length="0x40" initialized="false"/>
+  </default_memory_blocks>
+</processor_spec>
