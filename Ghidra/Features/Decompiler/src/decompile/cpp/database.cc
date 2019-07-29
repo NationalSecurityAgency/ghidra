@@ -1507,7 +1507,7 @@ SymbolEntry *ScopeInternal::addMapInternal(Symbol *sym,uint4 exfl,const Address 
     
   list<SymbolEntry>::iterator iter = rangemap->insert(initdata,addr.getOffset(),lastaddress.getOffset());
   // Store reference to map in symbol
-  if (sym->isTypeLocked()) sym->mapentry.push_back(iter);
+  sym->mapentry.push_back(iter);
   return &(*iter);
 }
 
