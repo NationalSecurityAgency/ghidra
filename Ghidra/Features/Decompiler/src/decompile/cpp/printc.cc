@@ -1869,14 +1869,16 @@ void PrintC::emitPrototypeInputs(const FuncProto *proto)
       if (i!=0)
 	emit->print(",");
       ProtoParameter *param = proto->getParam(i);
-      Symbol *sym = param->getSymbol();
+      Symbol *sym = param == (ProtoParameter*)0 ? (Symbol*)0 : param->getSymbol();
       if (sym != (Symbol *)0)
 	emitVarDecl(sym);
       else {
 	// Emit type without name, if there is no backing symbol
-	pushTypeStart(param->getType(),true);
+	Datatype* dt = param == (ProtoParameter*)0 ?
+	  proto->getArch()->types->getBase(1, TYPE_UNKNOWN) : param->getType();
+	pushTypeStart(dt,true);
 	pushAtom(Atom("",blanktoken,EmitXml::no_color));
-	pushTypeEnd(param->getType());
+	pushTypeEnd(dt);
 	recurse();
       }
     }
