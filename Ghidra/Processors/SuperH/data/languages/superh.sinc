@@ -484,7 +484,7 @@ imm20: "#"value is l_simm20_20_23 & l_simm20_00_16
     { export *[ram]:4 value; }
 
 imm20s: "#"value is l_simm20_20_23 & l_simm20_00_16
-    [ value = ((((l_simm20_20_23 << 16) | l_simm20_00_16) << 8)); ]
+    [ value = ((l_simm20_20_23 << 16) | l_simm20_00_16) << 8; ]
     { export *[ram]:4 value; }
 
 # MOVI20 #imm20, Rn           0000nnnniiii0000 iiiiiiiiiiiiiiii     imm → sign extension → Rn
@@ -578,12 +578,7 @@ imm20s: "#"value is l_simm20_20_23 & l_simm20_00_16
 # MOVRT Rn                      0000nnnn00111001    ~ T → Rn
 :movrt rn_08_11 is opcode_12_15=0b0000 & rn_08_11 & opcode_00_07=0b00111001
 {
-    if ($(T_FLAG) == 1) goto <t1>;
-    rn_08_11 = 1;
-    goto <tend>;
-<t1>
-    rn_08_11 = 0;
-<tend>
+    rn_08_11 = zext($(T_FLAG) == 0);
 }
 
 # NOTT                          0000000001101000    ~ T → T
@@ -731,41 +726,29 @@ imm20s: "#"value is l_simm20_20_23 & l_simm20_00_16
 
 @if SH_VERSION == "2A"
 
+# The pseudo code for clips in the super-h manual looks incorrect,
+# this solution was contributed by @mumbel
 :clips.b rn_08_11 is opcode_12_15=0b0100 & rn_08_11 & opcode_00_07=0b10010001
 {
-    if (rn_08_11 > 0x0000007f) goto <cs1>;
-    if (rn_08_11 < 0xffffff80) goto <cs2>;
-    goto <end>;
-<cs1>
-    rn_08_11 = 0x0000007f;
-    $(CS_FLAG) = 1;
-    goto <end>;
-<cs2>
-    rn_08_11 = 0xffffff80;
-    $(CS_FLAG) = 1;
-<end>
+    uppercheck = (rn_08_11 s> 0x7f);
+    lowercheck = (rn_08_11 s< -0x80);
+    if (!(uppercheck || lowercheck)) goto inst_next;
+    rn_08_11 = (0x0000007f * zext(uppercheck)) + (0xffffff80 * zext(lowercheck));
+    $(CS_FLAG)=1;
 }
 
 :clips.w rn_08_11 is opcode_12_15=0b0100 & rn_08_11 & opcode_00_07=0b10010101
 {
-    if (rn_08_11 > 0x00007fff) goto <cs1>;
-    if (rn_08_11 < 0xffff8000) goto <cs2>;
-    goto <end>;
-<cs1>
-    rn_08_11 = 0x00007fff;
-    $(CS_FLAG) = 1;
-    goto <end>;
-<cs2>
-    rn_08_11 = 0xffff8000;
-    $(CS_FLAG) = 1;
-<end>
+    local uppercheck = (rn_08_11 s> 0x7fff);
+    local lowercheck = (rn_08_11 s< -0x8000);
+    if (!(uppercheck || lowercheck)) goto inst_next;
+    rn_08_11 = (0x00007fff * zext(uppercheck)) + (0xffff8000 * zext(lowercheck));
+    $(CS_FLAG)=1;
 }
 
 :clipu.b rn_08_11 is opcode_12_15=0b0100 & rn_08_11 & opcode_00_07=0b10000001
 {
-    if (rn_08_11 > 0x000000ff) goto <cs1>;
-    goto <end>;
-<cs1>
+    if (rn_08_11 <= 0x000000ff) goto <end>;
     rn_08_11 = 0x000000ff;
     $(CS_FLAG) = 1;
 <end>
@@ -773,9 +756,7 @@ imm20s: "#"value is l_simm20_20_23 & l_simm20_00_16
 
 :clipu.w rn_08_11 is opcode_12_15=0b0100 & rn_08_11 & opcode_00_07=0b10000101
 {
-    if (rn_08_11 > 0x0000ffff) goto <cs1>;
-    goto <end>;
-<cs1>
+    if (rn_08_11 <= 0x0000ffff) goto <end>;
     rn_08_11 = 0x0000ffff;
     $(CS_FLAG) = 1;
 <end>
@@ -1863,12 +1844,7 @@ imm20s: "#"value is l_simm20_20_23 & l_simm20_00_16
 # FCMP/EQ FRm, FRn          1111nnnnmmmm0100 (FRn=FRm)? 1:0 → T
 :fcmp"/eq" ffrm_04_07, ffrn_08_11   is fop_12_15=0b1111 & ffrn_08_11 & ffrm_04_07 & fop_00_03=0b0100
 {
-    if (ffrn_08_11 f== ffrm_04_07) goto <eq>;
-    $(T_FLAG) = 0;
-    goto <end>;
-<eq>
-    $(T_FLAG) = 1;
-<end>
+    $(T_FLAG) = (ffrn_08_11 f== ffrm_04_07);
 }
 
 # TODO: FCMP/EQ DRm, DRn          1111nnn0mmm00100 (DRn=DRm)? 1:0 → T
@@ -1876,12 +1852,7 @@ imm20s: "#"value is l_simm20_20_23 & l_simm20_00_16
 # FCMP/GT FRm, FRn          1111nnnnmmmm0101 (FRn>FRm)? 1:0 → T
 :fcmp"/gt" ffrm_04_07, ffrn_08_11   is fop_12_15=0b1111 & ffrn_08_11 & ffrm_04_07 & fop_00_03=0b0101
 {
-    if (ffrn_08_11 f> ffrm_04_07) goto <gt>;
-    $(T_FLAG) = 0;
-    goto <end>;
-<gt>
-    $(T_FLAG) = 1;
-<end>
+    $(T_FLAG) = (ffrn_08_11 f> ffrm_04_07);
 }
 
 # TODO: FCMP/GT DRm, DRn          1111nnn0mmm00101 (DRn>DRm)? 1:0 → T
@@ -2209,12 +2180,7 @@ imm20s: "#"value is l_simm20_20_23 & l_simm20_00_16
 {
     local b = *:1 (l_disp_00_11 + l_rn_24_27);
     local abit = b & (1 << l_imm3_20_22);
-    if (($(T_FLAG) == 0) && (abit == 0)) goto <t0>;
-    $(T_FLAG) = 1;
-    goto <end>;
-<t0>
-    $(T_FLAG) = 0;
-<end>
+    $(T_FLAG) = $(T_FLAG) | (abit != 0);
 }
 
 # BORNOT.B    #imm3, @(disp12,Rn)      0011nnnn0iii1001 1101dddddddddddd        ~ (imm of (disp+ Rn)) | T → T
@@ -2223,12 +2189,7 @@ imm20s: "#"value is l_simm20_20_23 & l_simm20_00_16
 {
     local b = *:1 (l_disp_00_11 + l_rn_24_27);
     local abit = b & (1 << l_imm3_20_22);
-    if (($(T_FLAG) == 1) || (abit == 0)) goto <t1>;
-    $(T_FLAG) = 0;
-    goto <end>;
-<t1>
-    $(T_FLAG) = 1;
-<end>
+    $(T_FLAG) = $(T_FLAG) | (abit == 0);
 }
 
 # BSET.B      #imm3, @(disp12,Rn)      0011nnnn0iii1001 0001dddddddddddd        1 → (imm of (disp+Rn))
@@ -2253,12 +2214,7 @@ imm20s: "#"value is l_simm20_20_23 & l_simm20_00_16
 {
     local b = *:1 (l_disp_00_11 + l_rn_24_27);
     local ibit = 1 << l_imm3_20_22;
-    if ($(T_FLAG) == 0) goto <b1>;
-    b = b | ibit;
-    goto <end>;
-<b1>
-    b = b & (~ibit);
-<end>
+    b = (b | ibit) * ($(T_FLAG) != 0) + (b & (~ibit)) * ($(T_FLAG) == 0);
     *:1 (l_disp_00_11 + l_rn_24_27) = b;
 }
 
@@ -2267,12 +2223,7 @@ imm20s: "#"value is l_simm20_20_23 & l_simm20_00_16
     is opcode_08_15=0b10000111 & rn_04_07 & opcode_03_03=0b0 & imm3_00_02
 {
     local ibit = 1 << imm3_00_02;
-    if ($(T_FLAG) == 0) goto <b1>;
-    rn_04_07 = rn_04_07 | ibit;
-    goto <end>;
-<b1>
-    rn_04_07 = rn_04_07 & (~ibit);
-<end>
+    rn_04_07 = (rn_04_07 | ibit) * zext($(T_FLAG) != 0) + (rn_04_07 & (~ibit)) * zext($(T_FLAG) == 0);
 }
 
 # BXOR.B      #imm3, @(disp12, Rn)     0011nnnn0iii1001 0110dddddddddddd        (imm of (disp+ Rn)) ^ T → T
