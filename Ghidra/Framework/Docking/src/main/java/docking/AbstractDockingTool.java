@@ -185,6 +185,25 @@ public abstract class AbstractDockingTool implements DockingTool {
 		winMgr.updateTitle(provider);
 	}
 
+	/**
+	 * Set the menu group associated with a cascaded submenu.  This allows
+	 * a cascading menu item to be grouped with a specific set of actions.
+	 * The default group for a cascaded submenu is the name of the submenu.
+	 *
+	 * @param menuPath menu name path where the last element corresponds
+	 * to the specified group name.
+	 * @param group group name
+	 * @see #setMenuGroup(String[], String, String)
+	 */
+	public void setMenuGroup(String[] menuPath, String group) {
+		setMenuGroup(menuPath, group, null);
+	}
+
+	@Override
+	public void setMenuGroup(String[] menuPath, String group, String menuSubGroup) {
+		winMgr.setMenuGroup(menuPath, group, menuSubGroup);
+	}
+
 	@Override
 	public void contextChanged(ComponentProvider provider) {
 		winMgr.contextChanged(provider);

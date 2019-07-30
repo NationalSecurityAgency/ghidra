@@ -452,7 +452,7 @@ public class VTMarkupItemsTableProvider extends ComponentProviderAdapter
 	}
 
 	@Override
-	public List<DockingActionIf> getPopupActions(ActionContext context) {
+	public List<DockingActionIf> getPopupActions(DockingTool tool, ActionContext context) {
 		ListingCodeComparisonPanel dualListingPanel = functionComparisonPanel.getDualListingPanel();
 		if (context.getComponentProvider() == this && dualListingPanel != null) {
 			ListingPanel sourcePanel = dualListingPanel.getLeftPanel();

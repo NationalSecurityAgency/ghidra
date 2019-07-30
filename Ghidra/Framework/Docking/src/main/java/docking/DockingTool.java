@@ -105,6 +105,20 @@ public interface DockingTool {
 	public void clearStatusInfo();
 
 	/**
+	 * Set the menu group associated with a cascaded submenu.  This allows
+	 * a cascading menu item to be grouped with a specific set of actions.
+	 * <p>
+	 * The default group for a cascaded submenu is the name of the submenu.
+	 * <p>
+	 *
+	 * @param menuPath menu name path where the last element corresponds to the specified group name.
+	 * @param group group name
+	 * @param menuSubGroup the name used to sort the cascaded menu within other menu items at
+	 *                     its level
+	 */
+	public void setMenuGroup(String[] menuPath, String group, String menuSubGroup);
+
+	/**
 	 * Adds the action to the tool.
 	 * @param action the action to be added.
 	 */

@@ -21,6 +21,7 @@ import java.util.*;
 import javax.swing.Icon;
 
 import docking.ActionContext;
+import docking.DockingTool;
 import docking.action.DockingAction;
 import docking.action.DockingActionIf;
 import docking.actions.PopupActionProvider;
@@ -221,7 +222,7 @@ public class FunctionComparisonProvider extends ComponentProviderAdapter impleme
 	}
 
 	@Override
-	public List<DockingActionIf> getPopupActions(ActionContext context) {
+	public List<DockingActionIf> getPopupActions(DockingTool tool, ActionContext context) {
 		if (context.getComponentProvider() == this) {
 			ListingCodeComparisonPanel dualListingPanel =
 				functionComparisonPanel.getDualListingPanel();

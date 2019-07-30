@@ -360,6 +360,12 @@ public class DummyTool implements Tool {
 	}
 
 	@Override
+	public void setMenuGroup(String[] menuPath, String group, String menuSubGroup) {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
 	public void contextChanged(ComponentProvider provider) {
 		//do nothing
 	}

@@ -30,7 +30,9 @@ import docking.action.DockingActionIf;
  * Most clients will register actions directly with the tool.   However, clients that have numerous
  * actions that vary greatly with the context can use this method to only create those actions
  * on demand as the popup is about to be shown, and only if their context is active.   This 
- * mechanism can reduce the tool's action management overhead. 
+ * mechanism can reduce the tool's action management overhead.    Once you have created an
+ * implementation of this class, you must register it with
+ * {@link DockingTool#addPopupActionProvider(PopupActionProvider)}.
  */
 public interface PopupActionProvider {
 
@@ -40,8 +42,9 @@ public interface PopupActionProvider {
 	 * included in the menu if they have a valid popup menu path and respond true to the 
 	 * {@link DockingActionIf#isValidContext(ActionContext)} call.
 	 * 
+	 * @param tool the tool requesting the actions
 	 * @param context the ActionContext
 	 * @return list of temporary popup actions; return null if there are no popup actions
 	 */
-	public List<DockingActionIf> getPopupActions(ActionContext context);
+	public List<DockingActionIf> getPopupActions(DockingTool tool, ActionContext context);
 }

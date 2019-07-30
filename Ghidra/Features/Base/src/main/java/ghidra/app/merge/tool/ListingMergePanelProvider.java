@@ -23,8 +23,7 @@ import java.util.List;
 
 import javax.swing.JComponent;
 
-import docking.ActionContext;
-import docking.WindowPosition;
+import docking.*;
 import docking.action.DockingActionIf;
 import docking.actions.PopupActionProvider;
 
@@ -55,7 +54,7 @@ public class ListingMergePanelProvider extends ComponentProviderAdapter implemen
 	}
 
 	@Override
-	public List<DockingActionIf> getPopupActions(ActionContext context) {
+	public List<DockingActionIf> getPopupActions(DockingTool tool, ActionContext context) {
 		ListingPanel resultPanel = mergePanel.getResultPanel();
 		if (resultPanel != null) {
 			return resultPanel.getHeaderActions(getName());

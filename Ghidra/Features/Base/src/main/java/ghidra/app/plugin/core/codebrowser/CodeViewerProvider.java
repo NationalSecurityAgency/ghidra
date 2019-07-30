@@ -952,7 +952,7 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 	}
 
 	@Override
-	public List<DockingActionIf> getPopupActions(ActionContext context) {
+	public List<DockingActionIf> getPopupActions(DockingTool tool, ActionContext context) {
 		if (context.getComponentProvider() == this) {
 			return listingPanel.getHeaderActions(getName());
 		}

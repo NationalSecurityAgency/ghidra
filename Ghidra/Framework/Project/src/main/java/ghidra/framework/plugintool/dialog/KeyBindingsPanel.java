@@ -59,7 +59,7 @@ public class KeyBindingsPanel extends JPanel {
 	private static final int FONT_SIZE = 11;
 
 	private JTextPane statusLabel;
-	private JTable actionTable;
+	private GTable actionTable;
 	private JPanel infoPanel;
 	private MultiLineLabel collisionLabel;
 	private KeyBindingsTableModel tableModel;
@@ -96,6 +96,7 @@ public class KeyBindingsPanel extends JPanel {
 	public void dispose() {
 		tableFilterPanel.dispose();
 		tableModel.dispose();
+		actionTable.dispose();
 	}
 
 	/**

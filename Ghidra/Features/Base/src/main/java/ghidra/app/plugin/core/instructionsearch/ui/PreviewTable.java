@@ -136,10 +136,10 @@ public class PreviewTable extends AbstractInstructionTable {
 	 * any existing menus; it simply adds to them.
 	 */
 	@Override
-	public List<DockingActionIf> getPopupActions(ActionContext context) {
+	public List<DockingActionIf> getPopupActions(DockingTool tool, ActionContext context) {
 
 		// Invoke the base class method to add default menu options.
-		List<DockingActionIf> list = super.getPopupActions(context);
+		List<DockingActionIf> list = super.getPopupActions(tool, context);
 
 		// And now add our own.
 		addCustomMenuItems(list);

@@ -41,6 +41,7 @@ import ghidra.util.datastruct.*;
 import ghidra.util.exception.AssertException;
 import ghidra.util.task.SwingUpdateManager;
 import util.CollectionUtils;
+import utilities.util.reflection.ReflectionUtilities;
 
 /**
  * Manages the "Docking" arrangement of a set of components and actions. The components can be "docked" 
@@ -70,7 +71,8 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 	 */
 	private static HelpService helpService = new DefaultHelpService();
 
-	private static List<DockingWindowManager> instanceList = new ArrayList<>();
+	// we use a list to maintain order
+	private static List<DockingWindowManager> instances = new ArrayList<>();
 
 	private DockingTool tool;
 	private RootNode root;
@@ -172,11 +174,11 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 	}
 
 	private static synchronized void addInstance(DockingWindowManager winMgr) {
-		instanceList.add(winMgr);
+		instances.add(winMgr);
 	}
 
 	private static synchronized void removeInstance(DockingWindowManager winMgr) {
-		instanceList.remove(winMgr);
+		instances.remove(winMgr);
 	}
 
 	/**
@@ -190,7 +192,7 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 			return null;
 		}
 
-		Iterator<DockingWindowManager> iter = instanceList.iterator();
+		Iterator<DockingWindowManager> iter = instances.iterator();
 		while (iter.hasNext()) {
 			DockingWindowManager winMgr = iter.next();
 			if (winMgr.root.getFrame() == win) {
@@ -242,8 +244,8 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 		//             most active.  Any time we change the active manager, it will be placed
 		//             in the back of the list.
 		//
-		for (int i = instanceList.size() - 1; i >= 0; i--) {
-			DockingWindowManager mgr = instanceList.get(i);
+		for (int i = instances.size() - 1; i >= 0; i--) {
+			DockingWindowManager mgr = instances.get(i);
 			if (mgr.root.isVisible()) {
 				return mgr;
 			}
@@ -256,7 +258,7 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 	 * @return a new list of all DockingWindowManager instances know to exist.
 	 */
 	public static synchronized List<DockingWindowManager> getAllDockingWindowManagers() {
-		return new ArrayList<>(instanceList);
+		return new ArrayList<>(instances);
 	}
 
 	/**
@@ -264,8 +266,8 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 	 * @param mgr the window manager that became active.
 	 */
 	static synchronized void setActiveManager(DockingWindowManager mgr) {
-		if (instanceList.remove(mgr)) {
-			instanceList.add(mgr);
+		if (instances.remove(mgr)) {
+			instances.add(mgr);
 		}
 	}
 
@@ -1937,26 +1939,13 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 		Toolkit.getDefaultToolkit().beep();
 	}
 
-	/**
-	 * Set the menu group associated with a cascaded submenu.  This allows
-	 * a cascading menu item to be grouped with a specific set of actions.
-	 * The default group for a cascaded submenu is the name of the submenu.
-	 * @param menuPath menu name path where the last element corresponds 
-	 * to the specified group name.
-	 * @param group group name
-	 */
-	public void setMenuGroup(String[] menuPath, String group) {
-		doSetMenuGroup(menuPath, group);
-		scheduleUpdate();
-	}
-
 	/*
 	 * A version of setMenuGroup() that does *not* trigger an update.   When clients call the 
 	 * public API, an update is needed.  This method is used during the rebuilding process
 	 * when we know that an update is not need, as we are in the middle of an update.
 	 */
 	void doSetMenuGroup(String[] menuPath, String group) {
-		actionToGuiMapper.setMenuGroup(menuPath, group);
+		actionToGuiMapper.setMenuGroup(menuPath, group, null);
 	}
 
 	/**
@@ -2122,7 +2111,7 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 
 		List<DockingActionIf> actionList = new ArrayList<>();
 		for (PopupActionProvider pl : popupActionProviders) {
-			List<DockingActionIf> actions = pl.getPopupActions(context);
+			List<DockingActionIf> actions = pl.getPopupActions(tool, context);
 			if (actions != null) {
 				actionList.addAll(actions);
 			}
@@ -2149,9 +2138,10 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 
 	/**
 	 * Registers a callback to be notified when the given component has been parented to
-	 * a docking window manager.
-	 * @param component the component that will be parented in a docking window system.
-	 * @param listener the listener to be notified the component was parented.
+	 * a docking window manager
+	 * 
+	 * @param component the component that will be parented in a docking window system
+	 * @param listener the listener to be notified the component was parented
 	 */
 	public static void registerComponentLoadedListener(Component component,
 			ComponentLoadedListener listener) {
@@ -2160,16 +2150,32 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 			@Override
 			public void hierarchyChanged(HierarchyEvent e) {
 				long changeFlags = e.getChangeFlags();
-				if (HierarchyEvent.DISPLAYABILITY_CHANGED == (changeFlags &
-					HierarchyEvent.DISPLAYABILITY_CHANGED)) {
 
-					// check for the first time we are put together
-					boolean isDisplayable = component.isDisplayable();
-					if (isDisplayable) {
-						component.removeHierarchyListener(this);
-						DockingWindowManager windowManager = getInstance(component);
-						listener.componentLoaded(windowManager);
-					}
+				if (HierarchyEvent.DISPLAYABILITY_CHANGED != (changeFlags &
+					HierarchyEvent.DISPLAYABILITY_CHANGED)) {
+					return;
+				}
+
+				// check for the first time we are put together
+				boolean isDisplayable = component.isDisplayable();
+				if (!isDisplayable) {
+					return;
+				}
+
+				component.removeHierarchyListener(this);
+				DockingWindowManager dwm = getInstance(component);
+				if (dwm != null) {
+					listener.componentLoaded(dwm);
+					return;
+				}
+
+				// Unable to find the manager.  This can happen during testing; only report if 
+				// it is unexpected
+				if (!instances.isEmpty()) {
+					Msg.debug(DockingWindowManager.class,
+						"Unable to find Docking Window Manager for " +
+							component.getClass().getSimpleName(),
+						ReflectionUtilities.createJavaFilteredThrowable());
 				}
 			}
 		});

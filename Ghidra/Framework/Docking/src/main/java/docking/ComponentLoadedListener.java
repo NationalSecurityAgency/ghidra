@@ -26,8 +26,7 @@ public interface ComponentLoadedListener {
 	/**
 	 * Called when the component is made displayable
 	 * 
-	 * @param windowManager the window manager associated with the loaded component; this can 
-	 *        be null when dialogs are used without a tool or window manager
+	 * @param windowManager the window manager associated with the loaded component
 	 */
 	public void componentLoaded(DockingWindowManager windowManager);
 }

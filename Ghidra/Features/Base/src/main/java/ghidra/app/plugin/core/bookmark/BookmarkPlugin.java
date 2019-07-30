@@ -22,6 +22,7 @@ import javax.swing.Icon;
 import javax.swing.SwingUtilities;
 
 import docking.ActionContext;
+import docking.DockingTool;
 import docking.action.*;
 import docking.actions.PopupActionProvider;
 import docking.widgets.table.GTable;
@@ -493,7 +494,7 @@ public class BookmarkPlugin extends ProgramPlugin
 	}
 
 	@Override
-	public List<DockingActionIf> getPopupActions(ActionContext context) {
+	public List<DockingActionIf> getPopupActions(DockingTool tool, ActionContext context) {
 		Object contextObject = context.getContextObject();
 		if (!(contextObject instanceof MarkerLocation)) {
 			return null;

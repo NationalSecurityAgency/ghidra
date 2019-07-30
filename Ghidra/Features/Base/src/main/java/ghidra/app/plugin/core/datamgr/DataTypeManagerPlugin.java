@@ -27,6 +27,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.tree.TreePath;
 
 import docking.ActionContext;
+import docking.DockingTool;
 import docking.action.*;
 import docking.actions.PopupActionProvider;
 import docking.widgets.tree.GTreeNode;
@@ -48,7 +49,8 @@ import ghidra.framework.Application;
 import ghidra.framework.main.OpenVersionedFileDialog;
 import ghidra.framework.model.*;
 import ghidra.framework.options.SaveState;
-import ghidra.framework.plugintool.*;
+import ghidra.framework.plugintool.PluginInfo;
+import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.program.database.DataTypeArchiveContentHandler;
 import ghidra.program.database.data.ProgramDataTypeManager;
@@ -700,7 +702,7 @@ public class DataTypeManagerPlugin extends ProgramPlugin
 	}
 
 	@Override
-	public List<DockingActionIf> getPopupActions(ActionContext context) {
+	public List<DockingActionIf> getPopupActions(DockingTool dockingTool, ActionContext context) {
 		if (!(context instanceof DataTypesActionContext)) {
 			return null;
 		}

@@ -511,13 +511,12 @@ public class GTable extends JTable implements KeyStrokeConsumer, PopupActionProv
 	}
 
 	@Override
-	public List<DockingActionIf> getPopupActions(ActionContext context) {
+	public List<DockingActionIf> getPopupActions(DockingTool tool, ActionContext context) {
 
 		// we want these top-level groups to all appear together, with no separator
-		DockingWindowManager dwm = DockingWindowManager.getInstance(this);
-		dwm.setMenuGroup(new String[] { "Copy" }, actionMenuGroup, "1");
-		dwm.setMenuGroup(new String[] { "Export" }, actionMenuGroup, "2");
-		dwm.setMenuGroup(new String[] { "Select All" }, actionMenuGroup, "3");
+		tool.setMenuGroup(new String[] { "Copy" }, actionMenuGroup, "1");
+		tool.setMenuGroup(new String[] { "Export" }, actionMenuGroup, "2");
+		tool.setMenuGroup(new String[] { "Select All" }, actionMenuGroup, "3");
 
 		List<DockingActionIf> list = new ArrayList<>();
 		list.add(copyAction);
@@ -579,15 +578,6 @@ public class GTable extends JTable implements KeyStrokeConsumer, PopupActionProv
 
 		createPopupActions();
 		initializeRowHeight();
-
-		DockingWindowManager.registerComponentLoadedListener(this, dwm -> {
-
-			if (dwm == null) {
-				return;
-			}
-
-			dwm.getTool().addPopupActionProvider(this);
-		});
 	}
 
 	private void initializeHeader(JTableHeader header) {

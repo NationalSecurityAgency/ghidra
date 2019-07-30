@@ -1009,18 +1009,18 @@ public abstract class PluginTool extends AbstractDockingTool implements Tool, Se
 		action.setEnabled(true);
 		addAction(action);
 
-		DockingAction userAgreementAction =
-			new DockingAction("User Agreement", ToolConstants.TOOL_OWNER) {
-				@Override
-				public void actionPerformed(ActionContext context) {
-					DockingWindowManager.showDialog(new UserAgreementDialog(false, false));
-				}
+		DockingAction userAgreementAction = new DockingAction("User Agreement",
+			ToolConstants.TOOL_OWNER, KeyBindingType.UNSUPPORTED) {
+			@Override
+			public void actionPerformed(ActionContext context) {
+				DockingWindowManager.showDialog(new UserAgreementDialog(false, false));
+			}
 
-				@Override
-				public boolean shouldAddToWindow(boolean isMainWindow, Set<Class<?>> contextTypes) {
-					return true;
-				}
-			};
+			@Override
+			public boolean shouldAddToWindow(boolean isMainWindow, Set<Class<?>> contextTypes) {
+				return true;
+			}
+		};
 		userAgreementAction.setMenuBarData(
 			new MenuData(new String[] { ToolConstants.MENU_HELP, "&User Agreement" }, null,
 				ToolConstants.HELP_CONTENTS_MENU_GROUP));
@@ -1353,36 +1353,6 @@ public abstract class PluginTool extends AbstractDockingTool implements Tool, Se
 	public void showEditWindow(String defaultText, Component comp, Rectangle rect,
 			EditListener listener) {
 		winMgr.showEditWindow(defaultText, comp, rect, listener);
-	}
-
-	/**
-	 * Set the menu group associated with a cascaded submenu.  This allows
-	 * a cascading menu item to be grouped with a specific set of actions.
-	 * The default group for a cascaded submenu is the name of the submenu.
-	 *
-	 * @param menuPath menu name path where the last element corresponds
-	 * to the specified group name.
-	 * @param group group name
-	 * @see #setMenuGroup(String[], String, String)
-	 */
-	public void setMenuGroup(String[] menuPath, String group) {
-		winMgr.setMenuGroup(menuPath, group);
-	}
-
-	/**
-	 * Set the menu group associated with a cascaded submenu.  This allows
-	 * a cascading menu item to be grouped with a specific set of actions.
-	 * <p>
-	 * The default group for a cascaded submenu is the name of the submenu.
-	 * <p>
-	 *
-	 * @param menuPath menu name path where the last element corresponds to the specified group name.
-	 * @param group group name
-	 * @param menuSubGroup the name used to sort the cascaded menu within other menu items at
-	 *                     its level
-	 */
-	public void setMenuGroup(String[] menuPath, String group, String menuSubGroup) {
-		winMgr.setMenuGroup(menuPath, group, menuSubGroup);
 	}
 
 	/**
