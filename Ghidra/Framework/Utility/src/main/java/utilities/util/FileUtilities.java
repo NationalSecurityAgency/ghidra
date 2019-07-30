@@ -785,13 +785,13 @@ public final class FileUtilities {
 	 * @throws IOException if there are any issues reading the file
 	 */
 	public static List<String> getLines(BufferedReader in) throws IOException {
-		List<String> fileLines = new ArrayList<>();
 		try {
+			List<String> fileLines = new ArrayList<>();
 			String line;
 			while ((line = in.readLine()) != null) {
 				fileLines.add(line);
 			}
-			in.close();
+			return fileLines;
 		}
 		finally {
 			try {
@@ -801,7 +801,6 @@ public final class FileUtilities {
 				// don't care; we tried
 			}
 		}
-		return fileLines;
 	}
 
 	/**
