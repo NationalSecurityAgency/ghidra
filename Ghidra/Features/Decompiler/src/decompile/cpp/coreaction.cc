@@ -846,13 +846,13 @@ SymbolEntry *ActionConstantPtr::isPointer(AddrSpace *spc,Varnode *vn,PcodeOp *op
     case CPUI_RETURN:
     case CPUI_CALL:
     case CPUI_CALLIND:
-    {
-      FuncCallSpecs* otherfc = FuncCallSpecs::getFspecFromConst(op->getIn(0)->getAddr());
-      if (otherfc != (FuncCallSpecs*)0 && otherfc->numParams() > op->getSlot(vn) - 1) {
-        ProtoParameter* pp = otherfc->getParam(op->getSlot(vn) - 1);
-        if (pp->getType()->getMetatype() != TYPE_PTR && pp->isTypeLocked()) return (SymbolEntry*)0;
+      if (op->code() != CPUI_RETURN) {
+        FuncCallSpecs* otherfc = FuncCallSpecs::getFspecFromConst(op->getIn(0)->getAddr());
+        if (otherfc != (FuncCallSpecs*)0 && otherfc->numParams() > op->getSlot(vn) - 1) {
+          ProtoParameter* pp = otherfc->getParam(op->getSlot(vn) - 1);
+          if (pp->getType()->getMetatype() != TYPE_PTR && pp->isTypeLocked()) return (SymbolEntry*)0;
+        }
       }
-    }
       // A constant parameter or return value could be a pointer
       if (!glb->infer_pointers)
 	return (SymbolEntry *)0;
