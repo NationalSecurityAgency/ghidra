@@ -216,6 +216,7 @@ abstract class SubMemoryBlock {
 	 * @throws IOException if a database error occurs.
 	 */
 	protected void setParentIdAndStartingOffset(long key, long startingOffset) throws IOException {
+		this.startingOffset = startingOffset;
 		record.setLongValue(MemoryMapDBAdapter.SUB_PARENT_ID_COL, key);
 		record.setLongValue(MemoryMapDBAdapter.SUB_START_OFFSET_COL, startingOffset);
 		adapter.updateSubBlockRecord(record);

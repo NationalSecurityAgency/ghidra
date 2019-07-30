@@ -407,6 +407,16 @@ public class MemBlockDBTest extends AbstractGenericTest {
 	}
 
 	@Test
+	public void testSplitAfterExpand() throws Exception {
+		FileBytes fileBytes = createFileBytes();
+		MemoryBlock block1 = createFileBytesBlock(fileBytes, addr(0), 0, 50);
+		MemoryBlock block2 = mem.createBlock(block1, block1.getName() + ".exp", addr(50), 50);
+		MemoryBlock expandedBlock = mem.join(block1, block2);
+		mem.split(expandedBlock, addr(50));
+		assertEquals(0, mem.getByte(addr(50)));
+	}
+
+	@Test
 	public void testSplitFileBytes() throws Exception {
 		FileBytes fileBytes = createFileBytes();
 		MemoryBlock block1 = createFileBytesBlock(fileBytes, addr(10), 25, 50);
