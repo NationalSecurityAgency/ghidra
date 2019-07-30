@@ -177,25 +177,27 @@ target00_11: target is sdisp_00_11 [ target = (sdisp_00_11 << 1) + inst_start + 
     rn_08_11 = simm_00_07;
 }
 
-disppc4: disp is disp_00_07
+disppc4: @(disp,pc) is disp_00_07 & pc
     [ disp = (disp_00_07 << 2) + ((inst_start + 4) & 0xfffffffc); ]
     { local tmp:4 = disp; export tmp; }
 
-:mova   disppc4,r0  is disppc4 & r0 & opcode_08_15=0b11000111 & disp_00_07
+disppc2: @(disp,pc) is disp_00_07 & pc
+    [ disp = (disp_00_07 << 1) + (inst_start + 4); ]
+    { local tmp:4 = disp; export tmp; }
+
+:mova   disppc4,r0  is r0 & opcode_08_15=0b11000111 & disppc4
 {
     r0 = disppc4;
 }
 
-:mov.w  @(disp,pc),rn_08_11  is pc & opcode_12_15=0b1001 & rn_08_11 & disp_00_07 [ disp = (disp_00_07 << 1); ]
+:mov.w  disppc2,rn_08_11  is opcode_12_15=0b1001 & rn_08_11 & disppc2
 {
-    local temp:4 = inst_start + 4;
-    rn_08_11 =  sext(*:2 (temp + disp));
+    rn_08_11 =  sext(*:2 disppc2);
 }
 
-:mov.l  @(disp,pc),rn_08_11  is pc & opcode_12_15=0b1101 & rn_08_11 & disp_00_07 [disp = (disp_00_07 << 2); ]
+:mov.l  disppc4,rn_08_11  is opcode_12_15=0b1101 & rn_08_11 & disppc4
 {
-    local temp:4 = (inst_start + 4) & 0xFFFFFFFC;
-    rn_08_11 = *:4 (temp + disp);
+    rn_08_11 = *:4 disppc4;
 }
 
 :mov.b  @rm_04_07,rn_08_11  is opcode_12_15=0b0110 & rn_08_11 & rm_04_07 & opcode_00_03=0b0000 
