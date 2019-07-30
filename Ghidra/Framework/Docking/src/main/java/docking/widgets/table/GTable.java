@@ -581,6 +581,11 @@ public class GTable extends JTable implements KeyStrokeConsumer, PopupActionProv
 		initializeRowHeight();
 
 		DockingWindowManager.registerComponentLoadedListener(this, dwm -> {
+
+			if (dwm == null) {
+				return;
+			}
+
 			dwm.getTool().addPopupActionProvider(this);
 		});
 	}

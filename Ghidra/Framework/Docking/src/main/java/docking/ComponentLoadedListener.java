@@ -22,5 +22,12 @@ import java.awt.Component;
  * made {@link Component#isDisplayable() displayable}
  */
 public interface ComponentLoadedListener {
+
+	/**
+	 * Called when the component is made displayable
+	 * 
+	 * @param windowManager the window manager associated with the loaded component; this can 
+	 *        be null when dialogs are used without a tool or window manager
+	 */
 	public void componentLoaded(DockingWindowManager windowManager);
 }
