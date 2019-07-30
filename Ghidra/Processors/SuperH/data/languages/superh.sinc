@@ -1296,7 +1296,7 @@ imm20s: "#"value is l_simm20_20_23 & l_simm20_00_16
         
     temp = ((rn_08_11 & 0x80000000) != 0);
     
-    rn_08_11 = rn_08_11 | zext($(T_FLAG));
+    rn_08_11 = (rn_08_11 << 1) | zext($(T_FLAG));
     
     $(T_FLAG) = temp;
 }
@@ -1307,7 +1307,7 @@ imm20s: "#"value is l_simm20_20_23 & l_simm20_00_16
     
     temp = !((rn_08_11 & 1) == 0);
     
-    rn_08_11= rn_08_11 | (0x80000000 * zext($(T_FLAG)));
+    rn_08_11= (rn_08_11 >> 1) | (0x80000000 * zext($(T_FLAG)));
 
     $(T_FLAG) = temp;
 }
