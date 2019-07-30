@@ -16,6 +16,7 @@
 package ghidra.framework.main.datatree;
 
 import java.awt.event.MouseEvent;
+import java.util.Collections;
 import java.util.List;
 
 import javax.swing.SwingUtilities;
@@ -34,7 +35,7 @@ public class VersionHistoryDialog extends DialogComponentProvider implements Pro
 
 	private VersionHistoryPanel versionPanel;
 	private MyFolderListener listener = new MyFolderListener();
-	private List<DockingActionIf> popupActions;
+	private List<DockingActionIf> popupActions = Collections.emptyList();
 
 	public VersionHistoryDialog(DomainFile domainFile) {
 

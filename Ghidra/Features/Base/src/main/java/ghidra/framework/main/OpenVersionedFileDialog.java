@@ -19,6 +19,7 @@ import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.event.MouseEvent;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
 
 import javax.swing.*;
@@ -56,7 +57,7 @@ public class OpenVersionedFileDialog extends DataTreeDialog {
 	private PluginTool tool;
 
 	private VersionHistoryPanel historyPanel;
-	private List<DockingActionIf> popupActions;
+	private List<DockingActionIf> popupActions = Collections.emptyList();
 
 	/**
 	 * Constructor
