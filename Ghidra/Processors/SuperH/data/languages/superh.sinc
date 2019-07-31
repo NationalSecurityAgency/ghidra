@@ -238,37 +238,40 @@ disppc2: @(disp,pc) is disp_00_07 & pc
     *:4 rn_08_11 = rm_04_07;
 }
 
-:mov.b  @rm_04_07+,rn_08_11  is opcode_12_15=0b0110 & rn_08_11 & rm_04_07 & opcode_00_03=0b0100 & opcode_04_07 & opcode_08_11
+# the following two instructions share the same opcodes but differ if rm == rn
+:mov.b  @rm_04_07+,rn_08_11  is opcode_12_15=0b0110 & rn_08_11 & rm_04_07 & opcode_00_03=0b0100 & (opcode_04_07=opcode_08_11)
 {
     rn_08_11 =  sext(*:1 rm_04_07);
-    
-    local m:4 = opcode_04_07;
-    local n:4 = opcode_08_11;
-    
-    # Check n != m    
-    rm_04_07 = rm_04_07 + zext(1 *(m != n));
+}
+
+:mov.b  @rm_04_07+,rn_08_11  is opcode_12_15=0b0110 & rn_08_11 & rm_04_07 & opcode_00_03=0b0100
+{
+    rn_08_11 =  sext(*:1 rm_04_07);
+    rm_04_07 = rm_04_07 + 1;
+}
+
+# the following two instructions share the same opcodes but differ if rm == rn
+:mov.w  @rm_04_07+,rn_08_11  is opcode_12_15=0b0110 & rn_08_11 & rm_04_07 & opcode_00_03=0b0101 & (opcode_04_07=opcode_08_11)
+{
+    rn_08_11 =  sext(*:2 rm_04_07);
 }
 
 :mov.w  @rm_04_07+,rn_08_11  is opcode_12_15=0b0110 & rn_08_11 & rm_04_07 & opcode_00_03=0b0101 & opcode_04_07 & opcode_08_11
 {
-    rn_08_11 =  sext(*:2 rm_04_07);    
-    
-    local m:4 = opcode_04_07;
-    local n:4 = opcode_08_11;
-    
-    # Check n != m
-    rm_04_07 = rm_04_07 + zext(2 *(m != n));
+    rn_08_11 =  sext(*:2 rm_04_07);
+    rm_04_07 = rm_04_07 + 2;
+}
+
+# the following two instructions share the same opcodes but differ if rm == rn
+:mov.l  @rm_04_07+,rn_08_11  is opcode_12_15=0b0110 & rn_08_11 & rm_04_07 & opcode_00_03=0b0110 & (opcode_04_07=opcode_08_11)
+{
+    rn_08_11 =  *:4 rm_04_07;
 }
 
 :mov.l  @rm_04_07+,rn_08_11  is opcode_12_15=0b0110 & rn_08_11 & rm_04_07 & opcode_00_03=0b0110 & opcode_04_07 & opcode_08_11
 {
     rn_08_11 =  *:4 rm_04_07;
-    
-    local m:4 = opcode_04_07;
-    local n:4 = opcode_08_11;
-    
-    # Check n != m
-    rm_04_07 = rm_04_07 + zext(4 *(m != n));
+    rm_04_07 = rm_04_07 + 4;
 }
 
 :mov.b  rm_04_07,@-rn_08_11  is opcode_12_15=0b0010 & rn_08_11 & rm_04_07 & opcode_00_03=0b0100 
