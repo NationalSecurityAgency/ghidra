@@ -50,17 +50,24 @@ public class FindPotentialDecompilerProblems extends GhidraScript {
 			return;
 		}
 
-		DecompilerCallback<List<ProblemLocation>> callback =
-			new DecompilerCallback<List<ProblemLocation>>(currentProgram,
-				new BasicConfigurer(currentProgram)) {
+		TableChooserDialog tableDialog = createTableChooserDialog(
+			"Possible Decompiler Problems: " + currentProgram.getName(), null);
+		configureTableColumns(tableDialog);
+		tableDialog.show();
+		IssueEntries entryList = new TableEntryList(tableDialog);
+
+		DecompilerCallback<Void> callback =
+			new DecompilerCallback<Void>(currentProgram, new BasicConfigurer(currentProgram)) {
 
 				@Override
-				public List<ProblemLocation> process(DecompileResults results,
-						TaskMonitor tMonitor) throws Exception {
-					return processFunc(results);
+				public Void process(DecompileResults results, TaskMonitor tMonitor)
+						throws Exception {
+					for (ProblemLocation probLoc : processFunc(results)) {
+						entryList.add(probLoc);
+					}
+					return null;
 				}
 			};
-
 
 		Set<Function> funcsToDecompile = new HashSet<>();
 		FunctionIterator fIter = currentProgram.getFunctionManager().getFunctionsNoStubs(true);
@@ -71,22 +78,8 @@ public class FindPotentialDecompilerProblems extends GhidraScript {
 			return;
 		}
 
-		List<List<ProblemLocation>> problemLocs = ParallelDecompiler.decompileFunctions(callback,
-			currentProgram, funcsToDecompile, monitor);
-
+		ParallelDecompiler.decompileFunctions(callback, currentProgram, funcsToDecompile, monitor);
 		monitor.checkCanceled();
-		TableChooserDialog tableDialog =
-			createTableChooserDialog("Possible Decompiler Problems: " + currentProgram.getName(),
-				null);
-		configureTableColumns(tableDialog);
-		tableDialog.show();
-		IssueEntries entryList = new TableEntryList(tableDialog);
-
-		for (List<ProblemLocation> problemsInFunc : problemLocs) {
-			for (ProblemLocation probLoc : problemsInFunc) {
-				entryList.add(probLoc);
-			}
-		}
 		tableDialog.setMessage("Finished");
 	}
 
@@ -116,6 +109,10 @@ public class FindPotentialDecompilerProblems extends GhidraScript {
 				String possible =
 					"Function signature missing register param, called function passed too many register params, or only a subpiece" +
 						" of a register actually used.";
+				if (!(hf.getFunction().getSymbol().isGlobal()) &&
+					!(hf.getFunction().getCallingConventionName().contains("thiscall"))) {
+					possible += " Function might need calling convention changed to thiscall";
+				}
 				if (sym.getName().startsWith("in_stack_ff")) {
 					possible =
 						"Too many stack parameters passed to a called function.  May need to redefine in the called function (could be varargs).";
@@ -124,7 +121,7 @@ public class FindPotentialDecompilerProblems extends GhidraScript {
 					possible =
 						"Too few stack parameters defined for this function.  May need to redefine parameters.";
 				}
-				
+
 				Address funcAddr =
 					getFirstFuncWithVar(func, sym.getHighVariable().getRepresentative());
 
@@ -165,8 +162,7 @@ public class FindPotentialDecompilerProblems extends GhidraScript {
 				String possible =
 					"Bad parameter in called function or extra return value/global register/function register side effect";
 				if (sym.getName().startsWith("extraout_var")) {
-					possible =
-						"Function containing problem may need return type adjusted.";
+					possible = "Function containing problem may need return type adjusted.";
 				}
 				problems.add(new ProblemLocation(currentProgram, func.getEntryPoint(), funcAddr,
 					sym.getName(), possible));
@@ -226,7 +222,6 @@ public class FindPotentialDecompilerProblems extends GhidraScript {
 		//in case there are no references with "from" addresses after the body of func
 		return Address.NO_ADDRESS;
 	}
-
 
 	/**
 	 * Returns the address of first function called by {@code func}.  That is, the returned {@link Address}
