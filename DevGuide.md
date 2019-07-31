@@ -310,21 +310,21 @@ Then expand "Java Application" on the left to find the "Ghidra" launcher.
 
 For running unit tests, run
 
-    gradlew unitTestReport
+    gradle unitTestReport
 
 for more complex integration tests run
 
-    gradlew integrationTest
+    gradle integrationTest
 
 For running both unit test and integration test and generate report use
 
-    gradlew combinedTestReport
+    gradle combinedTestReport
 
 ## Setup build in CI
 
-For running build in Linux, in CI environment, or in Docker, before running tests, run
+For running build in headless mode on Linux, in CI environment, or in Docker, before running tests, run
 
-    Xvfb :99 &
+    Xvfb :99 -nolisten tcp &
     export DISPLAY=:99
 
 this is required to make AWT happy.
