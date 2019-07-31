@@ -846,7 +846,7 @@ SymbolEntry *ActionConstantPtr::isPointer(AddrSpace *spc,Varnode *vn,PcodeOp *op
     case CPUI_RETURN:
     case CPUI_CALL:
     case CPUI_CALLIND:
-      if (op->code() != CPUI_RETURN) {
+      if (op->code() != CPUI_RETURN && op->getIn(0)->getAddr().getSpace()->getType() == IPTR_FSPEC) {
         FuncCallSpecs* otherfc = FuncCallSpecs::getFspecFromConst(op->getIn(0)->getAddr());
         if (otherfc != (FuncCallSpecs*)0 && otherfc->numParams() > op->getSlot(vn) - 1) {
           ProtoParameter* pp = otherfc->getParam(op->getSlot(vn) - 1);
