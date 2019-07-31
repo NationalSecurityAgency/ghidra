@@ -28,8 +28,6 @@ import ghidra.framework.plugintool.Plugin;
  */
 public class VersionControlShowHistoryAction extends VersionControlAction {
 
-	private VersionHistoryDialog dialog;
-
 	/**
 	 * Creates an action to show the version history for a single version controlled 
 	 * domain file in the repository.
@@ -71,11 +69,12 @@ public class VersionControlShowHistoryAction extends VersionControlAction {
 		if (!checkRepositoryConnected()) {
 			return;
 		}
+
 		if (domainFiles.size() != 1) {
 			return;
 		}
 
-		dialog = new VersionHistoryDialog(domainFiles.get(0));
+		VersionHistoryDialog dialog = new VersionHistoryDialog(domainFiles.get(0));
 		tool.showDialog(dialog, tool.getToolFrame());
 	}
 

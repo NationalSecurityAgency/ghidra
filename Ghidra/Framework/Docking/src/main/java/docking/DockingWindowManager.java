@@ -845,9 +845,9 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 		}
 
 		placeholder.show(visibleState);
-		movePlaceholderToFront(placeholder, false);
 
 		if (visibleState) {
+			movePlaceholderToFront(placeholder, false);
 			if (placeholder.getNode() == null) {
 				root.add(placeholder);
 			}

@@ -15,9 +15,6 @@
  */
 package ghidra.app.merge.tool;
 
-import ghidra.app.util.viewer.listingpanel.ListingPanel;
-import ghidra.framework.plugintool.*;
-
 import java.awt.event.MouseEvent;
 import java.util.List;
 
@@ -26,8 +23,11 @@ import javax.swing.JComponent;
 import docking.*;
 import docking.action.DockingActionIf;
 import docking.actions.PopupActionProvider;
+import ghidra.app.util.viewer.listingpanel.ListingPanel;
+import ghidra.framework.plugintool.*;
 
-public class ListingMergePanelProvider extends ComponentProviderAdapter implements PopupActionProvider {
+public class ListingMergePanelProvider extends ComponentProviderAdapter
+		implements PopupActionProvider {
 	private ListingMergePanel mergePanel;
 
 	public ListingMergePanelProvider(PluginTool tool, Plugin plugin, String owner,
@@ -51,6 +51,7 @@ public class ListingMergePanelProvider extends ComponentProviderAdapter implemen
 	}
 
 	void dispose() {
+		tool.removePopupActionProvider(this);
 	}
 
 	@Override

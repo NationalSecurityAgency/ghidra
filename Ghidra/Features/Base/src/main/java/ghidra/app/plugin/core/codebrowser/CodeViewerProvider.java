@@ -48,7 +48,8 @@ import ghidra.app.util.viewer.listingpanel.*;
 import ghidra.app.util.viewer.multilisting.MultiListingLayoutModel;
 import ghidra.app.util.viewer.util.FieldNavigator;
 import ghidra.framework.options.SaveState;
-import ghidra.framework.plugintool.*;
+import ghidra.framework.plugintool.NavigatableComponentProviderAdapter;
+import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.util.*;
@@ -226,6 +227,8 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 	@Override
 	public void dispose() {
 		super.dispose();
+
+		tool.removePopupActionProvider(this);
 
 		if (clipboardService != null) {
 			clipboardService.deRegisterClipboardContentProvider(codeViewerClipboardProvider);
