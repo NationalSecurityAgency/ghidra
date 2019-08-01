@@ -599,7 +599,8 @@ void PrintC::opIntZext(const PcodeOp *op)
       opHiddenFunc(op);
     else
       opTypeCast(op);
-  }
+  } else if (op->getIn(0)->getSize() >= op->getOut()->getSize())
+    pushVnImplied(op->getIn(0), op, mods);
   else
     opFunc(op);
 }
