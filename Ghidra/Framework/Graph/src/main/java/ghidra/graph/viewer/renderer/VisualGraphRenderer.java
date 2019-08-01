@@ -34,6 +34,9 @@ import ghidra.graph.viewer.layout.*;
  * This was created to add the ability to paint selected vertices above other vertices.  We need
  * this since the Jung Graph has no notion of Z-order and thus does not let us specify that any
  * particular vertex should be above another one.
+ * 
+ * @param <V> the vertex type
+ * @param <E> the edge type 
  */
 public class VisualGraphRenderer<V extends VisualVertex, E extends VisualEdge<V>>
 		extends edu.uci.ics.jung.visualization.renderers.BasicRenderer<V, E> {

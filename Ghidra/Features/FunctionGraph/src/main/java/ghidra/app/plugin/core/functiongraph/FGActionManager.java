@@ -855,7 +855,7 @@ class FGActionManager {
 		HelpLocation layoutHelpLocation =
 			new HelpLocation("FunctionGraphPlugin", "Function_Graph_Action_Layout");
 
-		layoutAction = new MultiStateDockingAction<>("Relayout Graph", plugin.getName()) {
+		layoutAction = new MultiStateDockingAction<>("Relayout Graph", plugin.getName(), true) {
 
 			@Override
 			protected void doActionPerformed(ActionContext context) {

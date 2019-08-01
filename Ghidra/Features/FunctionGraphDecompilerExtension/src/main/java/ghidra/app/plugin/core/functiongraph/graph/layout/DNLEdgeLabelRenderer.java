@@ -33,6 +33,7 @@ import edu.uci.ics.jung.visualization.transform.shape.GraphicsDecorator;
 import ghidra.app.plugin.core.functiongraph.graph.FGEdge;
 import ghidra.app.plugin.core.functiongraph.graph.vertex.FGVertex;
 import ghidra.graph.viewer.vertex.VisualGraphVertexShapeTransformer;
+import ghidra.program.model.symbol.FlowType;
 
 /**
  * An edge label renderer used with the {@link DecompilerNestedLayout}
@@ -86,11 +87,18 @@ class DNLEdgeLabelRenderer<V extends FGVertex, E extends FGEdge>
 		double cx = start.getX();
 		double cy = start.getY();
 
+		EdgeLabelRenderer labelRenderer = rc.getEdgeLabelRenderer();
+		Font font = rc.getEdgeFontTransformer().apply(e);
+		boolean isSelected = rc.getPickedEdgeState().isPicked(e);
+		Component component = labelRenderer.getEdgeLabelRendererComponent(rc.getScreenDevice(),
+			text, font, isSelected, e);
+		int labelWidth = component.getPreferredSize().width;
+
 		List<Point2D> articulationPoints = e.getArticulationPoints();
 		if (articulationPoints.isEmpty()) {
 			double vertexBottom = start.getY() + (vertexBounds.height >> 1); // location is centered
-			int textY = (int) (vertexBottom + edgeOffset); // below the vertex; above the bend 
-			int textX = (int) (start.getX() + xDisplacement); // right of the edge
+			double textY = (int) (vertexBottom + edgeOffset); // below the vertex; above the bend 
+			double textX = (int) (start.getX() + xDisplacement); // right of the edge
 			labelPointOffset.setLocation(textX, textY);
 		}
 		else if (articulationPoints.size() == 1) {
@@ -109,29 +117,26 @@ class DNLEdgeLabelRenderer<V extends FGVertex, E extends FGEdge>
 
 			double bx1 = bend1.getX();
 
+			FlowType flow = e.getFlowType();
+			boolean isRight = flow.isFallthrough() || flow.isUnConditional();
+
 			if (articulationPoints.size() == 2) {
 
-				int textX = (int) (vertexSide + edgeOffset); // right of the vertex 
-				int textY = (int) (cy + edgeOffset); // above the edge 
+				double textX = (int) (vertexSide + edgeOffset); // right of the vertex 
+				double textY = (int) (cy + edgeOffset); // above the edge 
 				labelPointOffset.setLocation(textX, textY);
 			}
-			else if (articulationPoints.size() == 3) {
+			else { // 3 or 4 articulations
 
-				int textY = (int) (vertexBottom + edgeOffset); // below the vertex; above the bend 
-				int textX = (int) (bx1 + xDisplacement); // right of the edge
-				labelPointOffset.setLocation(textX, textY);
-			}
-			else { // if (articulationPoints.size() == 4) {
-				int textY = (int) (vertexBottom + edgeOffset); // below the vertex; above the bend 
-				int textX = (int) (bx1 + xDisplacement); // right of the edge
+				double textY = (int) (vertexBottom + edgeOffset); // below the vertex; above the bend 
+				double textX = (int) (bx1 + xDisplacement); // right of the edge
+				if (!isRight) {
+					textX = bx1 - xDisplacement - labelWidth;
+				}
+
 				labelPointOffset.setLocation(textX, textY);
 			}
 		}
-		EdgeLabelRenderer labelRenderer = rc.getEdgeLabelRenderer();
-		Font font = rc.getEdgeFontTransformer().apply(e);
-		boolean isSelected = rc.getPickedEdgeState().isPicked(e);
-		Component component = labelRenderer.getEdgeLabelRendererComponent(rc.getScreenDevice(),
-			text, font, isSelected, e);
 
 		Dimension d = component.getPreferredSize();
 
@@ -142,7 +147,37 @@ class DNLEdgeLabelRenderer<V extends FGVertex, E extends FGEdge>
 
 		g.setTransform(xform);
 		g.draw(component, rc.getRendererPane(), 0, 0, d.width, d.height, true);
-
 		g.setTransform(old);
+
+		// debug
+		//labelArticulations(component, g, rc, e);
+	}
+
+	@SuppressWarnings("unused") // used during debug
+	private void labelArticulations(Component component, GraphicsDecorator g,
+			RenderContext<V, E> rc, E e) {
+
+		int offset = 5;
+		int counter = 1;
+		List<Point2D> points = e.getArticulationPoints();
+		for (Point2D p : points) {
+
+			MultiLayerTransformer multiLayerTransformer = rc.getMultiLayerTransformer();
+			p = multiLayerTransformer.transform(Layer.LAYOUT, p);
+
+			EdgeLabelRenderer labelRenderer = rc.getEdgeLabelRenderer();
+			Font font = rc.getEdgeFontTransformer().apply(e);
+			boolean isSelected = rc.getPickedEdgeState().isPicked(e);
+			component = labelRenderer.getEdgeLabelRendererComponent(rc.getScreenDevice(),
+				"p" + counter++, font, isSelected, e);
+
+			Dimension d = component.getPreferredSize();
+			AffineTransform old = g.getTransform();
+			AffineTransform xform = new AffineTransform(old);
+			xform.translate(p.getX() + offset, p.getY());
+			g.setTransform(xform);
+			g.draw(component, rc.getRendererPane(), 0, 0, d.width, d.height, true);
+			g.setTransform(old);
+		}
 	}
 }
