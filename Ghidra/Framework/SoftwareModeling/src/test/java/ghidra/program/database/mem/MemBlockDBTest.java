@@ -360,6 +360,27 @@ public class MemBlockDBTest extends AbstractGenericTest {
 	}
 
 	@Test
+	public void testJoinNonConsecutiveBlocks() throws Exception {
+		FileBytes fileBytes = createFileBytes();
+		MemoryBlock block1 = createFileBytesBlock(fileBytes, addr(0), 25, 10);
+		MemoryBlock block2 = createFileBytesBlock(fileBytes, addr(20), 70, 10);
+		MemoryBlock block3 = createFileBytesBlock(fileBytes, addr(10), 0, 10);
+
+		MemoryBlock block = mem.join(block1, block3);
+		block = mem.join(block1, block2);
+		assertEquals(1, mem.getBlocks().length);
+		assertEquals(30, block.getSize());
+		assertEquals(addr(0), block.getStart());
+		List<MemoryBlockSourceInfo> sourceInfos = block.getSourceInfos();
+		assertEquals(3, sourceInfos.size());
+
+		for (int i = 0; i < block.getSize(); i++) {
+			mem.getByte(addr(i));
+		}
+	}
+
+
+	@Test
 	public void testJoinFileBytesBlockAndBufferBlock() throws Exception {
 		FileBytes fileBytes = createFileBytes();
 		MemoryBlock block1 = createFileBytesBlock(fileBytes, addr(10), 25, 10);
