@@ -116,7 +116,11 @@ public class MemoryBlockDB implements MemoryBlock {
 
 	@Override
 	public String getName() {
-		return record.getString(MemoryMapDBAdapter.NAME_COL);
+		String name = record.getString(MemoryMapDBAdapter.NAME_COL);
+		if (name == null) {
+			name = "";
+		}
+		return name;
 	}
 
 	@Override

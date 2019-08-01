@@ -295,7 +295,7 @@ public class MemoryBlockUtils {
 		}
 
 		setBlockAttributes(block, comment, source, r, w, x);
-		adjustFragment(program, block.getStart(), name);
+		adjustFragment(program, block.getStart(), block.getName());
 		return block;
 	}
 

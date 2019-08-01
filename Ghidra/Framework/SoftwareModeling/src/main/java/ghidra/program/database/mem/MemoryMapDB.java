@@ -471,7 +471,7 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 	public MemoryBlock createInitializedBlock(String name, Address start, InputStream is,
 			long length, TaskMonitor monitor, boolean overlay) throws MemoryConflictException,
 			AddressOverflowException, CancelledException, LockException, DuplicateNameException {
-
+		Objects.requireNonNull(name);
 		lock.acquire();
 		try {
 			checkBlockSize(length, true);
@@ -513,6 +513,7 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 			long offset, long length, boolean overlay) throws LockException, DuplicateNameException,
 			MemoryConflictException, AddressOverflowException {
 
+		Objects.requireNonNull(name);
 		lock.acquire();
 		try {
 			checkBlockSize(length, true);
@@ -565,6 +566,7 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 			boolean overlay) throws MemoryConflictException, AddressOverflowException,
 			LockException, DuplicateNameException {
 
+		Objects.requireNonNull(name);
 		lock.acquire();
 		try {
 			checkBlockSize(size, false);
@@ -598,6 +600,8 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 	@Override
 	public MemoryBlock createBitMappedBlock(String name, Address start, Address overlayAddress,
 			long length) throws MemoryConflictException, AddressOverflowException, LockException {
+
+		Objects.requireNonNull(name);
 		lock.acquire();
 		try {
 			checkBlockSize(length, false);
@@ -625,6 +629,8 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 	@Override
 	public MemoryBlock createByteMappedBlock(String name, Address start, Address overlayAddress,
 			long length) throws MemoryConflictException, AddressOverflowException, LockException {
+
+		Objects.requireNonNull(name);
 		lock.acquire();
 		try {
 			checkBlockSize(length, false);
@@ -653,6 +659,8 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 	@Override
 	public MemoryBlock createBlock(MemoryBlock block, String name, Address start, long length)
 			throws MemoryConflictException, AddressOverflowException, LockException {
+
+		Objects.requireNonNull(name);
 		lock.acquire();
 		try {
 			checkBlockSize(length, block.isInitialized());

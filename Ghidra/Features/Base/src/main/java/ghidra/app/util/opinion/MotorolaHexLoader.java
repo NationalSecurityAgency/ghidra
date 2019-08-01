@@ -331,11 +331,10 @@ public class MotorolaHexLoader extends AbstractProgramLoader {
 						byte[] data = new byte[offset];
 						System.arraycopy(dataBuffer, 0, data, 0, offset);
 
-						String name = baseAddr.getAddressSpace().getName();
-
 						Address start = baseAddr.add(startAddress);
 
-						name = blockName;
+						String name =
+							blockName == null ? baseAddr.getAddressSpace().getName() : blockName;
 						int count = 0;
 						while (true) {
 							try {

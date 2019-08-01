@@ -211,7 +211,7 @@ class IntelHexMemImage {
 				myRangeMap.remove(range);
 			}
 
-			String name = blockName;
+			String name = blockName == null ? base.getAddressSpace().getName() : blockName;
 			while (true) {
 				try {
 					MemoryBlockUtils.createInitializedBlock(program, isOverlay, name,
