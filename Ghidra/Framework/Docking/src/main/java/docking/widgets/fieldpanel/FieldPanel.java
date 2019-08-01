@@ -15,7 +15,7 @@
  */
 package docking.widgets.fieldpanel;
 
-import static docking.widgets.EventTrigger.INTERNAL_ONLY;
+import static docking.widgets.EventTrigger.*;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -1888,7 +1888,7 @@ public class FieldPanel extends JPanel
 			cursorPosition.fieldNum = fieldNum;
 			cursorPosition.row = row;
 			cursorPosition.col = col;
-			lastX = currentField.getStartX();
+			lastX = currentField.getX(row, col);
 			notifyCursorChanged(trigger);
 			return true;
 		}
