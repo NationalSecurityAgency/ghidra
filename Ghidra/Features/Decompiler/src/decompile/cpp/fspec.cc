@@ -3186,7 +3186,7 @@ void FuncProto::updateInputTypes(const vector<Varnode *> &triallist,ParamActive 
     if (trial.isUsed()) {
       Varnode *vn = triallist[trial.getSlot()-1];
       if (!vn->isMark()) {
-	if (getParam(count)->isTypeLocked()) {
+	if (count < numParams() && getParam(count)->isTypeLocked()) {
 	  count++; continue;
 	}
         store->clearInput(count);
@@ -3224,7 +3224,7 @@ void FuncProto::updateInputNoTypes(const vector<Varnode *> &triallist,ParamActiv
     if (trial.isUsed()) {
       Varnode *vn = triallist[trial.getSlot()-1];
       if (!vn->isMark()) {
-	if (getParam(count)->isTypeLocked()) {
+	if (count < numParams() && getParam(count)->isTypeLocked()) {
 	  count++; continue;
 	}
         store->clearInput(count);
