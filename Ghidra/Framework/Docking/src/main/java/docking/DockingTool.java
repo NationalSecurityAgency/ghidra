@@ -22,6 +22,7 @@ import javax.swing.ImageIcon;
 
 import docking.action.DockingActionIf;
 import docking.actions.DockingToolActions;
+import docking.actions.PopupActionProvider;
 import ghidra.framework.options.ToolOptions;
 
 /**
@@ -104,6 +105,20 @@ public interface DockingTool {
 	public void clearStatusInfo();
 
 	/**
+	 * Set the menu group associated with a cascaded submenu.  This allows
+	 * a cascading menu item to be grouped with a specific set of actions.
+	 * <p>
+	 * The default group for a cascaded submenu is the name of the submenu.
+	 * <p>
+	 *
+	 * @param menuPath menu name path where the last element corresponds to the specified group name.
+	 * @param group group name
+	 * @param menuSubGroup the name used to sort the cascaded menu within other menu items at
+	 *                     its level
+	 */
+	public void setMenuGroup(String[] menuPath, String group, String menuSubGroup);
+
+	/**
 	 * Adds the action to the tool.
 	 * @param action the action to be added.
 	 */
@@ -128,6 +143,19 @@ public interface DockingTool {
 	 * @param action the action to remove.
 	 */
 	public void removeLocalAction(ComponentProvider componentProvider, DockingActionIf action);
+
+	/**
+	 * Adds the given popup action provider to this tool.   This provider will be called each
+	 * time the popup menu is about to be shown.
+	 * @param provider the provider
+	 */
+	public void addPopupActionProvider(PopupActionProvider provider);
+
+	/**
+	 * Removes the given popup action provider
+	 * @param provider the provider
+	 */
+	public void removePopupActionProvider(PopupActionProvider provider);
 
 	/**
 	 * Return a set of all actions in the tool.
@@ -273,4 +301,12 @@ public interface DockingTool {
 	 * @return the action manager
 	 */
 	public DockingToolActions getToolActions();
+
+	/**
+	 * Suggests the tool to attempt to close().  This will be as though the user
+	 * selected the close menu option on the tool or hit the closeWindow x button in
+	 * the upper corner (Windows systems).
+	 */
+	public void close();
+
 }

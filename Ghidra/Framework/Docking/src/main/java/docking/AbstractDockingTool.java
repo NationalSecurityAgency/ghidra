@@ -21,6 +21,7 @@ import java.util.*;
 import javax.swing.JFrame;
 
 import docking.action.DockingActionIf;
+import docking.actions.PopupActionProvider;
 import docking.actions.ToolActions;
 import ghidra.framework.options.ToolOptions;
 import ghidra.util.Swing;
@@ -124,6 +125,16 @@ public abstract class AbstractDockingTool implements DockingTool {
 	}
 
 	@Override
+	public void addPopupActionProvider(PopupActionProvider provider) {
+		winMgr.addPopupActionProvider(provider);
+	}
+
+	@Override
+	public void removePopupActionProvider(PopupActionProvider provider) {
+		winMgr.removePopupActionProvider(provider);
+	}
+
+	@Override
 	public Set<DockingActionIf> getDockingActionsByOwnerName(String owner) {
 		return toolActions.getActions(owner);
 	}
@@ -172,6 +183,25 @@ public abstract class AbstractDockingTool implements DockingTool {
 	@Override
 	public void updateTitle(ComponentProvider provider) {
 		winMgr.updateTitle(provider);
+	}
+
+	/**
+	 * Set the menu group associated with a cascaded submenu.  This allows
+	 * a cascading menu item to be grouped with a specific set of actions.
+	 * The default group for a cascaded submenu is the name of the submenu.
+	 *
+	 * @param menuPath menu name path where the last element corresponds
+	 * to the specified group name.
+	 * @param group group name
+	 * @see #setMenuGroup(String[], String, String)
+	 */
+	public void setMenuGroup(String[] menuPath, String group) {
+		setMenuGroup(menuPath, group, null);
+	}
+
+	@Override
+	public void setMenuGroup(String[] menuPath, String group, String menuSubGroup) {
+		winMgr.setMenuGroup(menuPath, group, menuSubGroup);
 	}
 
 	@Override

@@ -544,7 +544,7 @@ public class BookmarkPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		applyCmd(program, cmd);
 
 		List<DockingActionIf> actions = runSwing(() -> plugin.getPopupActions(
-			new ActionContext(null, new MarkerLocation(null, addr("0100b6db"), 0, 0))));
+			null, new ActionContext(null, new MarkerLocation(null, addr("0100b6db"), 0, 0))));
 		assertEquals(10, actions.size());
 	}
 

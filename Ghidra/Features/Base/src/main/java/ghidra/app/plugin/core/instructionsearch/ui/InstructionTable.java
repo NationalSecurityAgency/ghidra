@@ -17,12 +17,11 @@ package ghidra.app.plugin.core.instructionsearch.ui;
 
 import java.awt.Color;
 import java.awt.event.*;
-import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.*;
 
-import docking.DockingWindowManager;
+import docking.*;
 import docking.action.DockingActionIf;
 import docking.widgets.EmptyBorderButton;
 import ghidra.app.plugin.core.instructionsearch.InstructionSearchPlugin;
@@ -101,8 +100,8 @@ public class InstructionTable extends AbstractInstructionTable {
 	 * (which is all of them).
 	 */
 	@Override
-	public List<DockingActionIf> getDockingActions() {
-		return new ArrayList<>();
+	public List<DockingActionIf> getPopupActions(DockingTool tool, ActionContext context) {
+		return null;
 	}
 
 	public InsertBytesWidget getInsertBytesWidget() {

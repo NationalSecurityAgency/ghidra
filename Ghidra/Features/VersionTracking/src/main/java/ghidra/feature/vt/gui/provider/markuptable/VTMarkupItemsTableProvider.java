@@ -30,6 +30,7 @@ import javax.swing.table.*;
 
 import docking.*;
 import docking.action.*;
+import docking.actions.PopupActionProvider;
 import docking.help.HelpService;
 import docking.widgets.EventTrigger;
 import docking.widgets.fieldpanel.FieldPanel;
@@ -56,7 +57,6 @@ import ghidra.framework.model.DomainObjectChangedEvent;
 import ghidra.framework.options.Options;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
-import ghidra.framework.plugintool.PopupListener;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.util.ProgramLocation;
@@ -69,7 +69,7 @@ import resources.ResourceManager;
  * This provides the GUI for displaying and working with version tracking markup items.
  */
 public class VTMarkupItemsTableProvider extends ComponentProviderAdapter
-		implements FilterDialogModel<VTMarkupItem>, VTControllerListener, PopupListener {
+		implements FilterDialogModel<VTMarkupItem>, VTControllerListener, PopupActionProvider {
 
 	private static final String SHOW_COMPARISON_PANEL = "SHOW_COMPARISON_PANEL";
 
@@ -133,7 +133,7 @@ public class VTMarkupItemsTableProvider extends ComponentProviderAdapter
 		iconTimer = new FilterIconFlashTimer<>(UNFILTERED_ICON, FILTERED_ICON,
 			ancillaryFilterDialog, ancillaryFilterButton);
 
-		tool.addPopupListener(this);
+		tool.addPopupActionProvider(this);
 
 		HelpLocation helpLocation = new HelpLocation("VersionTrackingPlugin", "Markup Items Table");
 		setHelpLocation(helpLocation);
@@ -452,7 +452,7 @@ public class VTMarkupItemsTableProvider extends ComponentProviderAdapter
 	}
 
 	@Override
-	public List<DockingActionIf> getPopupActions(ActionContext context) {
+	public List<DockingActionIf> getPopupActions(DockingTool tool, ActionContext context) {
 		ListingCodeComparisonPanel dualListingPanel = functionComparisonPanel.getDualListingPanel();
 		if (context.getComponentProvider() == this && dualListingPanel != null) {
 			ListingPanel sourcePanel = dualListingPanel.getLeftPanel();
@@ -534,7 +534,7 @@ public class VTMarkupItemsTableProvider extends ComponentProviderAdapter
 			filter.dispose();
 		}
 
-		tool.removePopupListener(this);
+		tool.removePopupActionProvider(this);
 	}
 
 	VTController getController() {

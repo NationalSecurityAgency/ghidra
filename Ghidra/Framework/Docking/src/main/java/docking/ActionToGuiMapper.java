@@ -110,10 +110,6 @@ public class ActionToGuiMapper {
 		globalActions.clear();
 	}
 
-	void setMenuGroup(String[] menuPath, String group) {
-		menuGroupMap.setMenuGroup(menuPath, group);
-	}
-
 	void setMenuGroup(String[] menuPath, String group, String menuSubGroup) {
 		menuGroupMap.setMenuGroup(menuPath, group, menuSubGroup);
 	}
