@@ -72,6 +72,7 @@ public class MemoryBlockDB implements MemoryBlock {
 		}
 		length = lRecord.getLongValue(MemoryMapDBAdapter.LENGTH_COL);
 		lastSubBlock = null;
+		Collections.sort(list);
 		subBlocks = list;
 	}
 
