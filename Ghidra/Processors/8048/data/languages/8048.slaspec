@@ -333,43 +333,29 @@ RniI: Imm is Imm {
 }
 
 
-# These are not decoded correctly if placed alphabetically...
-:JB^Ab Addr8    is oplo=2 & abfill=1 & Ab; Addr8 {
-  if(Ab) goto Addr8;
-}
-:J^Cc Addr8     is oplo=6 & Cc; Addr8 {
-  if(Cc) goto Addr8;
-}
-:CALL Addr12    is aaddrfill=1 & aoplo=4 & Addr12 {
-  funcall(Addr12);
-}
-:JMP Addr12     is aaddrfill=0 & aoplo=4 & Addr12 {
-  goto Addr12;
-}
-:DJNZ Rn,Addr8  is ophi=14 & Rn; Addr8 {
-  Rn = Rn - 1; if(Rn != 0) goto Addr8;
-}
-
-:ADD A,Rni      is ophi=6 & A & Rni {
+:ADD A,Rni      is ophi=6 & (rnfill=1 | rifill=0) & A & Rni {
   add(A,A,Rni,0);
 }
 :ADD A,Imm      is (ophi=0 & A)... & Imm {
   add(A,A,Imm,0);
 }
-:ADDC A,Rni     is ophi=7 & A & Rni {
+:ADDC A,Rni     is ophi=7 & A & (rnfill=1 | rifill=0) & Rni {
   add(A,A,Rni,C);
 }
 :ADDC A,Imm     is (ophi=1 & A)... & Imm {
   add(A,A,Imm,C);
 }
-:ANL A,RniI     is (ophi=5 & A)... & RniI {
+:ANL A,RniI     is (ophi=5 & (rnfill=1 | rifill=0 | oplo=3) & A)... & RniI {
   A = A & RniI;
 }
-:ANL Pp,Data    is ophi=9 & Pp; Data {
+:ANL Pp,Data    is ophi=9 & ppfill=2 & Pp; Data {
   Pp = Pp & Data;
 }
-:ANLD Xpp,A     is ophi=9 & Xpp & A {
+:ANLD Xpp,A     is ophi=9 & ppfill=3 & Xpp & A {
   Xpp = Xpp & (A & 0xf);
+}
+:CALL Addr12    is aopaddr & aaddrfill=1 & aoplo=4 & Addr12 {
+  funcall(Addr12);
 }
 :CLR A          is ophi=2 & oplo=7 & A {
   A = 0;
@@ -410,6 +396,9 @@ RniI: Imm is Imm {
 :DIS TCntInt    is ophi=3 & oplo=5 & TCntInt {
   disableTCntInt();
 }
+:DJNZ Rn,Addr8  is ophi=14 & Rn; Addr8 {
+  Rn = Rn - 1; if(Rn != 0) goto Addr8;
+}
 :EN ExtInt      is ophi=0 & oplo=5 & ExtInt {
   enableExtInt();
 }
@@ -425,11 +414,20 @@ RniI: Imm is Imm {
 :INC A          is ophi=1 & oplo=7 & A {
   A = A + 1;
 }
-:INC Rni        is ophi=1 & Rni {
+:INC Rni        is ophi=1 & (rnfill=1 | rifill=0) & Rni {
   Rni = Rni + 1;
 }
 :INS A,Bus      is ophi=0 & oplo=8 & A & Bus {
   A = Bus;
+}
+:JB^Ab Addr8    is oplo=2 & opaddr & abfill=1 & Ab; Addr8 {
+  if(Ab) goto Addr8;
+}
+:J^Cc Addr8     is ophi & oplo=6 & Cc; Addr8 {
+  if(Cc) goto Addr8;
+}
+:JMP Addr12     is aopaddr & aaddrfill=0 & aoplo=4 & Addr12 {
+  goto Addr12;
 }
 :JMPP AddrInd   is ophi=11 & oplo=3 & AddrInd {
   goto AddrInd;
@@ -440,7 +438,7 @@ RniI: Imm is Imm {
 :MOV A,Psw      is ophi=12 & oplo=7 & A & Psw {
   getPSW(A);
 }
-:MOV A,Rni      is ophi=15 & A & Rni {
+:MOV A,Rni      is ophi=15 & A & (rnfill=1 | rifill=0) & Rni {
   A = Rni;
 }
 :MOV A,Tmr      is ophi=4 & oplo=2 & A & Tmr {
@@ -449,10 +447,10 @@ RniI: Imm is Imm {
 :MOV Psw,A      is ophi=13 & oplo=7 & Psw & A {
   setPSW(A);
 }
-:MOV Rni,A      is ophi=10 & Rni & A {
+:MOV Rni,A      is ophi=10 & (rnfill=1 | rifill=0) & Rni & A {
   Rni = A;
 }
-:MOV Rni,Data	is ophi=11 & Rni; Data {
+:MOV Rni,Data	is ophi=11 & (rnfill=1 | rifill=0) & Rni; Data {
   Rni = Data;
 }
 :MOV Tmr,A      is ophi=6 & oplo=2 & Tmr & A {
@@ -479,7 +477,7 @@ RniI: Imm is Imm {
 :NOP            is ophi=0 & oplo=0 {
   nop();
 }
-:ORL A,RniI     is (ophi=4 & A)... & RniI {
+:ORL A,RniI     is (ophi=4 & (rnfill=1 | rifill=0 | oplo=3) & A)... & RniI {
   A = A | RniI;
 }
 :ORL Pp,Data    is ophi=8 & Pp; Data {
@@ -530,12 +528,12 @@ RniI: Imm is Imm {
 :SWAP A         is ophi=4 & oplo=7 & A {
   A = (A<<4)|(A>>4);
 }
-:XCH A,Rni      is ophi=2 & A & Rni {
+:XCH A,Rni      is ophi=2 & (rnfill=1 | rifill=0) & A & Rni {
   xch(A, Rni);
 }
 :XCHD A,Ri      is ophi=3 & A & Ri {
   xch(A[0,4], Ri[0,4]);
 }
-:XRL A,RniI     is (ophi=13 & A)... & RniI {
+:XRL A,RniI     is (ophi=13 & (rnfill=1 | rifill=0 | oplo=3) & A)... & RniI {
   A = A ^ RniI;
 }
