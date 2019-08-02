@@ -187,6 +187,7 @@ inline void ParserContext::allocateOperand(int4 i,ParserWalkerChange &walker) {
   ConstructState *opstate = &state[alloc++];
   opstate->parent = walker.point;
   opstate->ct = (Constructor *)0;
+  if (walker.point->resolve.size() <= i) walker.point->resolve.resize(i + 1);
   walker.point->resolve[i] = opstate;
   walker.breadcrumb[walker.depth++] += 1;
   walker.point = opstate;
