@@ -1307,6 +1307,7 @@ void FlowInfo::injectPcode(void)
       injectUserOp(op);
     }
     else {	// CPUI_CALL or CPUI_CALLIND
+      if (op->getIn(0)->getAddr().getSpace()->getType() != IPTR_FSPEC) continue;
       FuncCallSpecs *fc = FuncCallSpecs::getFspecFromConst(op->getIn(0)->getAddr());
       if (fc->isInline()) {
 	if (fc->getInjectId() >= 0) {
