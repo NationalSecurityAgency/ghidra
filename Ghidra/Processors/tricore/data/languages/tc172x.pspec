@@ -1,6 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <processor_spec>
+  <properties>
+    <property key="emulateInstructionStateModifierClass"
+			value="ghidra.program.emulation.TRICOREEmulateInstructionStateModifier"/>
+  </properties>
 
   <programcounter register="PC"/>
   <data_space space="ram"/>

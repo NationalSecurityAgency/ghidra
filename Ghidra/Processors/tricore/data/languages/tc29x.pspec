@@ -1,10 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <processor_spec>
-
+  <properties>
+    <property key="emulateInstructionStateModifierClass"
+			value="ghidra.program.emulation.TRICOREEmulateInstructionStateModifier"/>
+  </properties>
+  
   <programcounter register="PC"/> 
   <data_space space="ram"/>
-
+			
   <default_memory_blocks>
     <memory_block name="CPU2_DSPR" start_address="0x50000000" length="0x1E000" mode="rwv" initialized="false"/>
     <memory_block name="CPU2_PSPR" start_address="0x50100000" length="0x8000" mode="rwv" initialized="false"/>
