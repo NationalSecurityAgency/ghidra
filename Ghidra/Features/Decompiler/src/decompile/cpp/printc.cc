@@ -1407,9 +1407,8 @@ bool PrintC::pushPtrCharConstant(uintb val,const TypePointer *ct,const Varnode *
   if (stringaddr.isInvalid()) return false;
   if (!glb->symboltab->getGlobalScope()->isReadOnly(stringaddr,1,Address()))
     return false;	     // Check that string location is readonly
-  uint4 flags; //volatile memory should indicate hole is not mapped in target
-  glb->symboltab->getGlobalScope()->queryProperties(stringaddr,1,Address(),flags);
-  if ((flags & Varnode::volatil)!=0) return false;
+  SymbolEntry* ent = glb->symboltab->getGlobalScope()->queryContainer(stringaddr, 1, Address());
+  if (ent == (SymbolEntry*)0 || ent->getSymbol() == (Symbol*)0) return false;
 
   ostringstream str;
   Datatype *subct = ct->getPtrTo();
