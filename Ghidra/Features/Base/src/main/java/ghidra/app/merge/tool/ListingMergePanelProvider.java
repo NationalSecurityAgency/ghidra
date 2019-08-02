@@ -47,7 +47,7 @@ public class ListingMergePanelProvider extends ComponentProviderAdapter
 	@Override
 	public ActionContext getActionContext(MouseEvent event) {
 		Object obj = mergePanel.getActionContext(event);
-		return new ActionContext(this, obj);
+		return createContext(obj);
 	}
 
 	void dispose() {
@@ -55,7 +55,7 @@ public class ListingMergePanelProvider extends ComponentProviderAdapter
 	}
 
 	@Override
-	public List<DockingActionIf> getPopupActions(DockingTool tool, ActionContext context) {
+	public List<DockingActionIf> getPopupActions(DockingTool dt, ActionContext context) {
 		ListingPanel resultPanel = mergePanel.getResultPanel();
 		if (resultPanel != null) {
 			return resultPanel.getHeaderActions(getName());

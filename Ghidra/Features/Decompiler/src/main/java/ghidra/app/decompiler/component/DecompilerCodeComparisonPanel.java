@@ -528,13 +528,15 @@ public abstract class DecompilerCodeComparisonPanel<T extends DualDecompilerFiel
 
 	@Override
 	public ActionContext getActionContext(ComponentProvider provider, MouseEvent event) {
-		Object sourceObject = null;
+
+		Component component = null;
 		if (event != null) {
-			sourceObject = event.getSource();
+			component = event.getComponent();
 		}
+
 		CDisplayPanel focusedDecompilerPanel = getFocusedDecompilerPanel();
 		DualDecompilerActionContext dualDecompContext =
-			new DualDecompilerActionContext(provider, focusedDecompilerPanel, sourceObject);
+			new DualDecompilerActionContext(provider, focusedDecompilerPanel, component);
 		dualDecompContext.setCodeComparisonPanel(this);
 		return dualDecompContext;
 	}

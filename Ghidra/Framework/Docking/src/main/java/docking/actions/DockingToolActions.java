@@ -92,4 +92,6 @@ public interface DockingToolActions {
 	 */
 	public Set<DockingActionIf> getAllActions();
 
+	// TODO
+	public boolean containsAction(DockingActionIf action);
 }

@@ -25,8 +25,8 @@ import java.util.List;
 
 import javax.swing.*;
 
-import docking.*;
-import docking.action.DockingActionIf;
+import docking.ActionContext;
+import docking.ComponentProvider;
 import docking.help.Help;
 import docking.help.HelpService;
 import docking.widgets.label.GHtmlLabel;
@@ -489,12 +489,8 @@ public class ProjectDataTablePanel extends JPanel {
 		}
 
 		@Override
-		public List<DockingActionIf> getPopupActions(DockingTool tool, ActionContext context) {
-
-			// TODO we should at least add the 'copy' action
-
-			// the table's default actions aren't that useful in the Front End
-			return Collections.emptyList();
+		protected boolean supportsPopupActions() {
+			return false;
 		}
 	}
 }

@@ -135,17 +135,25 @@ public class PreviewTable extends AbstractInstructionTable {
 	 * Adds custom context-sensitive menus to the table. This does NOT modify
 	 * any existing menus; it simply adds to them.
 	 */
-	@Override
-	public List<DockingActionIf> getPopupActions(DockingTool tool, ActionContext context) {
 
-		// Invoke the base class method to add default menu options.
-		List<DockingActionIf> list = super.getPopupActions(tool, context);
+	// TODO
+	// TODO 
+	// TODO 
+	// TODO   Change the custom menu items to be real Docking Actions 
+	// TODO 
+	// TODO 
 
-		// And now add our own.
-		addCustomMenuItems(list);
-
-		return list;
-	}
+//	@Override
+//	public List<DockingActionIf> getPopupActions(DockingTool tool, ActionContext context) {
+//
+//		// Invoke the base class method to add default menu options.
+//		List<DockingActionIf> list = super.getPopupActions(tool, context);
+//
+//		// And now add our own.
+//		addCustomMenuItems(list);
+//
+//		return list;
+//	}
 
 	/**
 	 * Replaces the contents of the preview table at the given row with the

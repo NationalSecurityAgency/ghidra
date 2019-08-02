@@ -32,8 +32,7 @@ import docking.*;
 import docking.action.*;
 import docking.tool.util.DockingToolConstants;
 import ghidra.framework.options.*;
-import ghidra.util.ReservedKeyBindings;
-import ghidra.util.SystemUtilities;
+import ghidra.util.*;
 import ghidra.util.exception.AssertException;
 import util.CollectionUtils;
 
@@ -187,6 +186,16 @@ public class ToolActions implements DockingToolActions, PropertyChangeListener {
 		action.removePropertyChangeListener(this);
 		removeAction(action);
 		actionGuiHelper.removeToolAction(action);
+		dispose(action);
+	}
+
+	private void dispose(DockingActionIf action) {
+		try {
+			action.dispose();
+		}
+		catch (Throwable t) {
+			Msg.error(this, "Exception disposing action '" + action.getFullName() + "'", t);
+		}
 	}
 
 	@Override
@@ -311,6 +320,7 @@ public class ToolActions implements DockingToolActions, PropertyChangeListener {
 		removeAction(action);
 		keyBindingsManager.removeAction(action);
 		actionGuiHelper.removeProviderAction(provider, action);
+		dispose(action);
 	}
 
 	@Override
@@ -393,6 +403,11 @@ public class ToolActions implements DockingToolActions, PropertyChangeListener {
 			}
 		}
 		return null;
+	}
+
+	@Override
+	public boolean containsAction(DockingActionIf action) {
+		return getActionStorage(action).contains(action);
 	}
 
 	public Action getAction(KeyStroke ks) {

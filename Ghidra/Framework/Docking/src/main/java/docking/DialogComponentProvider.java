@@ -1127,7 +1127,19 @@ public class DialogComponentProvider
 	 */
 	@Override
 	public ActionContext getActionContext(MouseEvent event) {
-		return new ActionContext(null, null);
+
+		Component c = getComponent();
+		KeyboardFocusManager kfm = KeyboardFocusManager.getCurrentKeyboardFocusManager();
+		Component focusedComponent = kfm.getFocusOwner();
+		if (focusedComponent != null && SwingUtilities.isDescendingFrom(focusedComponent, c)) {
+			c = focusedComponent;
+		}
+
+		if (event == null) {
+			return new ActionContext(null, c);
+		}
+
+		return new ActionContext(null, c).setSourceObject(event.getSource());
 	}
 
 	/**

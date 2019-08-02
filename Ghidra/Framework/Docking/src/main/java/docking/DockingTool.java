@@ -73,7 +73,9 @@ public interface DockingTool {
 	public void addComponentProvider(ComponentProvider componentProvider, boolean show);
 
 	/**
-	 * Removes the given ComponentProvider from the tool
+	 * Removes the given ComponentProvider from the tool.  When a provider has been removed 
+	 * from the tool it is considered disposed and should not be reused.
+	 * 
 	 * @param componentProvider the provider to remove from the tool
 	 */
 	public void removeComponentProvider(ComponentProvider componentProvider);
@@ -125,7 +127,8 @@ public interface DockingTool {
 	public void addAction(DockingActionIf action);
 
 	/**
-	 * Removes the given action from the tool
+	 * Removes the given action from the tool.  When an action is removed from the tool it will
+	 * be disposed and should not be reused.
 	 * @param action the action to be removed.
 	 */
 	public void removeAction(DockingActionIf action);

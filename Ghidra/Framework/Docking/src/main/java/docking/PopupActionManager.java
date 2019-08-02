@@ -24,7 +24,6 @@ import java.util.*;
 import javax.swing.JPopupMenu;
 
 import docking.action.*;
-import docking.actions.PopupActionProvider;
 import docking.menu.*;
 
 public class PopupActionManager implements PropertyChangeListener {
@@ -76,7 +75,7 @@ public class PopupActionManager implements PropertyChangeListener {
 			actionContext = new ActionContext();
 		}
 
-		actionContext.setSource(e.getSource());
+		actionContext.setSourceObject(e.getSource());
 		actionContext.setMouseEvent(e);
 
 		MenuHandler popupMenuHandler = new PopupMenuHandler(windowManager, actionContext);
@@ -145,27 +144,10 @@ public class PopupActionManager implements PropertyChangeListener {
 
 		Object source = actionContext.getSourceObject();
 
-		// this interface is deprecated in favor of the next block
+		// this interface is deprecated in favor the code that calls this method; this will be deleted
 		if (source instanceof DockingActionProviderIf) {
 			DockingActionProviderIf actionProvider = (DockingActionProviderIf) source;
 			List<DockingActionIf> dockingActions = actionProvider.getDockingActions();
-			for (DockingActionIf action : dockingActions) {
-				MenuData popupMenuData = action.getPopupMenuData();
-				if (popupMenuData != null && action.isValidContext(actionContext) &&
-					action.isAddToPopup(actionContext)) {
-					action.setEnabled(action.isEnabledForContext(actionContext));
-					menuMgr.addAction(action);
-				}
-			}
-		}
-
-		// note: this is temporary; there is only one client that needs this.  This will be
-		// removed in a future ticket when that client uses the standard tool action system
-		if (source instanceof PopupActionProvider) {
-			PopupActionProvider actionProvider = (PopupActionProvider) source;
-			DockingTool tool = windowManager.getTool();
-			List<DockingActionIf> dockingActions =
-				actionProvider.getPopupActions(tool, actionContext);
 			for (DockingActionIf action : dockingActions) {
 				MenuData popupMenuData = action.getPopupMenuData();
 				if (popupMenuData != null && action.isValidContext(actionContext) &&

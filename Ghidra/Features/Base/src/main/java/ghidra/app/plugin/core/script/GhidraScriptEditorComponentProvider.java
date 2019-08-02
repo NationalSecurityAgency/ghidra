@@ -651,7 +651,7 @@ public class GhidraScriptEditorComponentProvider extends ComponentProvider {
 
 	@Override
 	public ActionContext getActionContext(MouseEvent event) {
-		return new ActionContext(this, this);
+		return createContext(this);
 	}
 
 	@Override

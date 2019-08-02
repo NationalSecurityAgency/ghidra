@@ -387,7 +387,28 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 	 */
 	@Override
 	public ActionContext getActionContext(MouseEvent event) {
-		return new ActionContext(this, getComponent());
+		Component c = getComponent();
+		KeyboardFocusManager kfm = KeyboardFocusManager.getCurrentKeyboardFocusManager();
+		Component focusedComponent = kfm.getFocusOwner();
+		if (focusedComponent != null && SwingUtilities.isDescendingFrom(focusedComponent, c)) {
+			c = focusedComponent;
+		}
+		return createContext(c, null);
+	}
+
+	// TODO
+	protected ActionContext createContext() {
+		return new ActionContext(this);
+	}
+
+	// TODO
+	protected ActionContext createContext(Object payload) {
+		return new ActionContext(this).setContextObject(payload);
+	}
+
+	// TODO
+	protected ActionContext createContext(Component source, Object payload) {
+		return new ActionContext(this, source).setContextObject(payload);
 	}
 
 	/**

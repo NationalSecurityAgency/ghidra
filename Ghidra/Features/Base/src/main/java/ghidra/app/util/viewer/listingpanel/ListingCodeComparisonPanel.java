@@ -24,8 +24,7 @@ import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
-import docking.ActionContext;
-import docking.ComponentProvider;
+import docking.*;
 import docking.action.*;
 import docking.help.Help;
 import docking.help.HelpService;
@@ -700,7 +699,8 @@ public class ListingCodeComparisonPanel
 		NextDiffAction() {
 			super("Dual Listing Go To Next Area Marker", owner);
 			setEnabled(true);
-			setKeyBindingData(new KeyBindingData('N', InputEvent.CTRL_MASK | InputEvent.ALT_MASK));
+			setKeyBindingData(new KeyBindingData('N',
+				DockingUtils.CONTROL_KEY_MODIFIER_MASK | InputEvent.ALT_DOWN_MASK));
 			setDescription("Go to the next highlighted area.");
 			setPopupMenuData(new MenuData(new String[] { "Go To Next Highlighted Area" },
 				NEXT_DIFF_ICON, DIFF_NAVIGATE_GROUP));
@@ -738,7 +738,8 @@ public class ListingCodeComparisonPanel
 		PreviousDiffAction() {
 			super("Dual Listing Go To Previous Area Marker", owner);
 			setEnabled(true);
-			setKeyBindingData(new KeyBindingData('P', InputEvent.CTRL_MASK | InputEvent.ALT_MASK));
+			setKeyBindingData(new KeyBindingData('P',
+				DockingUtils.CONTROL_KEY_MODIFIER_MASK | InputEvent.ALT_DOWN_MASK));
 			setDescription("Go to the previous highlighted area.");
 			setPopupMenuData(new MenuData(new String[] { "Go To Previous Highlighted Area" },
 				PREVIOUS_DIFF_ICON, DIFF_NAVIGATE_GROUP));
@@ -796,9 +797,6 @@ public class ListingCodeComparisonPanel
 		}
 	}
 
-	/**
-	 * Returns true if the listings are showing the entire program.
-	 */
 	public boolean isEntireListingShowing() {
 		return isShowingEntireListing;
 	}
@@ -857,9 +855,6 @@ public class ListingCodeComparisonPanel
 		toggleHeaderAction.setSelected(show);
 	}
 
-	/**
-	 * Returns true if the listings are being displayed side by side.
-	 */
 	public boolean isSideBySide() {
 		return isSideBySide;
 	}
@@ -2024,18 +2019,18 @@ public class ListingCodeComparisonPanel
 
 		Object leftMarginContext = getContextForMarginPanels(leftPanel, event);
 		if (leftMarginContext != null) {
-			return new ActionContext(provider, leftMarginContext);
+			return new ActionContext(provider).setContextObject(leftMarginContext);
 		}
 		Object rightMarginContext = getContextForMarginPanels(rightPanel, event);
 		if (rightMarginContext != null) {
-			return new ActionContext(provider, rightMarginContext);
+			return new ActionContext(provider).setContextObject(rightMarginContext);
 		}
 
 		Object source = event.getSource();
 		if (source instanceof FieldHeaderComp) {
 			FieldHeaderLocation fieldHeaderLocation =
 				leftPanel.getFieldHeader().getFieldHeaderLocation(event.getPoint());
-			return new ActionContext(provider, fieldHeaderLocation);
+			return new ActionContext(provider).setContextObject(fieldHeaderLocation);
 		}
 
 		Navigatable focusedNavigatable = dualListingPanel.getFocusedNavigatable();
@@ -2043,7 +2038,7 @@ public class ListingCodeComparisonPanel
 			new DualListingActionContext(provider, focusedNavigatable);
 		myActionContext.setContextObject(this);
 		myActionContext.setCodeComparisonPanel(this);
-		myActionContext.setSource(source);
+		myActionContext.setSourceObject(source);
 		return myActionContext;
 	}
 
@@ -2607,13 +2602,13 @@ public class ListingCodeComparisonPanel
 			// Are we on a marker margin of the left listing? Return that margin's context.
 			Object sourceMarginContextObject = getContextObjectForMarginPanels(sourcePanel, event);
 			if (sourceMarginContextObject != null) {
-				return new ActionContext(provider, sourceMarginContextObject);
+				return new ActionContext(provider).setContextObject(sourceMarginContextObject);
 			}
 			// Are we on a marker margin of the right listing? Return that margin's context.
 			Object destinationMarginContextObject =
 				getContextObjectForMarginPanels(destinationPanel, event);
 			if (destinationMarginContextObject != null) {
-				return new ActionContext(provider, destinationMarginContextObject);
+				return new ActionContext(provider).setContextObject(destinationMarginContextObject);
 			}
 
 			// If the action is on the Field Header of the left listing panel return an
@@ -2621,7 +2616,7 @@ public class ListingCodeComparisonPanel
 			if (sourceComponent instanceof FieldHeaderComp) {
 				FieldHeaderLocation fieldHeaderLocation =
 					sourcePanel.getFieldHeader().getFieldHeaderLocation(event.getPoint());
-				return new ActionContext(provider, fieldHeaderLocation);
+				return new ActionContext(provider).setContextObject(fieldHeaderLocation);
 			}
 		}
 		return null;

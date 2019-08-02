@@ -32,7 +32,6 @@ import javax.swing.table.*;
 import docking.*;
 import docking.action.*;
 import docking.actions.KeyBindingUtils;
-import docking.actions.PopupActionProvider;
 import docking.widgets.OptionDialog;
 import docking.widgets.dialogs.SettingsDialog;
 import docking.widgets.filechooser.GhidraFileChooser;
@@ -70,12 +69,13 @@ import resources.ResourceManager;
  *
  * @see GTableFilterPanel
  */
-public class GTable extends JTable implements KeyStrokeConsumer, PopupActionProvider {
+public class GTable extends JTable implements KeyStrokeConsumer {
 
 	private static final String LAST_EXPORT_FILE = "LAST_EXPORT_DIR";
 
 	private int userDefinedRowHeight;
 
+	private boolean isInitialized;
 	private boolean allowActions;
 	private KeyListener autoLookupListener;
 	private long lastLookupTime;
@@ -96,14 +96,14 @@ public class GTable extends JTable implements KeyStrokeConsumer, PopupActionProv
 
 	/** A flag to signal that a copy operation is being performed. */
 	private boolean copying;
+
+	private static final String actionMenuGroup = "zzzTableGroup";
 	private DockingAction copyAction;
 	private DockingAction copyColumnsAction;
 	private DockingAction copyCurrentColumnAction;
 	private DockingAction selectAllAction;
 	private DockingAction exportAction;
 	private DockingAction exportColumnsAction;
-
-	private String actionMenuGroup = "zzzTableGroup";
 
 	private SelectionManager selectionManager;
 	private Integer visibleRowCount;
@@ -510,24 +510,6 @@ public class GTable extends JTable implements KeyStrokeConsumer, PopupActionProv
 		return autoLookupKeyStrokeConsumer.isKeyConsumed(keyStroke);
 	}
 
-	@Override
-	public List<DockingActionIf> getPopupActions(DockingTool tool, ActionContext context) {
-
-		// we want these top-level groups to all appear together, with no separator
-		tool.setMenuGroup(new String[] { "Copy" }, actionMenuGroup, "1");
-		tool.setMenuGroup(new String[] { "Export" }, actionMenuGroup, "2");
-		tool.setMenuGroup(new String[] { "Select All" }, actionMenuGroup, "3");
-
-		List<DockingActionIf> list = new ArrayList<>();
-		list.add(copyAction);
-		list.add(copyCurrentColumnAction);
-		list.add(copyColumnsAction);
-		list.add(selectAllAction);
-		list.add(exportAction);
-		list.add(exportColumnsAction);
-		return list;
-	}
-
 	private void init(boolean allowAutoEdit) {
 		ToolTipManager.sharedInstance().unregisterComponent(this);
 		ToolTipManager.sharedInstance().registerComponent(this);
@@ -576,8 +558,27 @@ public class GTable extends JTable implements KeyStrokeConsumer, PopupActionProv
 			}
 		});
 
-		createPopupActions();
+		// updating the row height requires the 'isInitialized' to be set, so do it first
+		isInitialized = true;
 		initializeRowHeight();
+
+		DockingWindowManager.registerComponentLoadedListener(this, (dwm, provider) -> {
+			DockingTool tool = dwm.getTool();
+			regiserActions(tool, provider);
+		});
+	}
+
+	private void regiserActions(DockingTool tool, ComponentProvider provider) {
+
+		tool.setMenuGroup(new String[] { "Copy" }, actionMenuGroup, "1");
+		tool.setMenuGroup(new String[] { "Export" }, actionMenuGroup, "2");
+		tool.setMenuGroup(new String[] { "Select All" }, actionMenuGroup, "3");
+
+		String owner = getClass().getSimpleName();
+		if (provider != null) {
+			owner = provider.getOwner();
+		}
+		installTableActions(tool, owner);
 	}
 
 	private void initializeHeader(JTableHeader header) {
@@ -600,7 +601,8 @@ public class GTable extends JTable implements KeyStrokeConsumer, PopupActionProv
 	}
 
 	private void adjustRowHeight() {
-		if (copyAction == null) { // crude test to know if our constructor has finished
+
+		if (!isInitialized) {
 			return; // must be initializing
 		}
 
@@ -1153,12 +1155,20 @@ public class GTable extends JTable implements KeyStrokeConsumer, PopupActionProv
 		return converted;
 	}
 
-	private void createPopupActions() {
+	/**
+	 * A method that subclasses can override to signal that they wish not to have this table's 
+	 * built-in popup actions.   Subclasses will almost never need to override this method.
+	 * 
+	 * @return true if popup actions are supported
+	 */
+	protected boolean supportsPopupActions() {
+		return true;
+	}
+
+	private void installTableActions(DockingTool tool, String owner) {
 
 		int subGroupIndex = 1; // order by insertion
-		String owner = getClass().getSimpleName();
-		owner = "GTable";
-		copyAction = new DockingAction("Table Data Copy", owner, KeyBindingType.SHARED) {
+		copyAction = new GTableAction("Table Data Copy", owner) {
 			@Override
 			public void actionPerformed(ActionContext context) {
 				copying = true;
@@ -1188,26 +1198,24 @@ public class GTable extends JTable implements KeyStrokeConsumer, PopupActionProv
 		copyAction.setHelpLocation(new HelpLocation("Tables", "Copy"));
 		//@formatter:on
 
-		copyCurrentColumnAction =
-			new DockingAction("Table Data Copy Current Column", owner, KeyBindingType.SHARED) {
-				@Override
-				public void actionPerformed(ActionContext context) {
+		copyCurrentColumnAction = new GTableAction("Table Data Copy Current Column", owner) {
+			@Override
+			public void actionPerformed(ActionContext context) {
 
-					int column = getSelectedColumn();
-
-					MouseEvent event = context.getMouseEvent();
-					if (event != null) {
-						column = columnAtPoint(event.getPoint());
-					}
-
-					if (column < 0) {
-						Msg.debug(this, "Copy failed--no column selected");
-						return;
-					}
-
-					copyColumns(column);
+				int column = getSelectedColumn();
+				MouseEvent event = context.getMouseEvent();
+				if (event != null) {
+					column = columnAtPoint(event.getPoint());
 				}
-			};
+
+				if (column < 0) {
+					Msg.debug(this, "Copy failed--no column selected");
+					return;
+				}
+
+				copyColumns(column);
+			}
+		};
 		//@formatter:off
 		copyCurrentColumnAction.setPopupMenuData(new MenuData(
 				new String[] { "Copy",
@@ -1226,18 +1234,17 @@ public class GTable extends JTable implements KeyStrokeConsumer, PopupActionProv
 		copyCurrentColumnAction.setHelpLocation(new HelpLocation("Tables", "Copy_Current_Column"));
 		//@formatter:on
 
-		copyColumnsAction =
-			new DockingAction("Table Data Copy by Columns", owner, KeyBindingType.SHARED) {
-				@Override
-				public void actionPerformed(ActionContext context) {
-					int[] userColumns = promptUserForColumns();
-					if (userColumns == null) {
-						return; // cancelled
-					}
-
-					copyColumns(userColumns);
+		copyColumnsAction = new GTableAction("Table Data Copy by Columns", owner) {
+			@Override
+			public void actionPerformed(ActionContext context) {
+				int[] userColumns = promptUserForColumns();
+				if (userColumns == null) {
+					return; // cancelled
 				}
-			};
+
+				copyColumns(userColumns);
+			}
+		};
 		//@formatter:off
 		copyColumnsAction.setPopupMenuData(new MenuData(
 				new String[] { "Copy", "Copy Columns..." },
@@ -1250,7 +1257,7 @@ public class GTable extends JTable implements KeyStrokeConsumer, PopupActionProv
 		copyColumnsAction.setHelpLocation(new HelpLocation("Tables", "Copy_Columns"));
 		//@formatter:on
 
-		exportAction = new DockingAction("Table Data CSV Export", owner, KeyBindingType.SHARED) {
+		exportAction = new GTableAction("Table Data CSV Export", owner) {
 			@Override
 			public void actionPerformed(ActionContext context) {
 				File file = chooseExportFile();
@@ -1271,27 +1278,26 @@ public class GTable extends JTable implements KeyStrokeConsumer, PopupActionProv
 		exportAction.setHelpLocation(new HelpLocation("Tables", "ExportCSV"));
 		//@formatter:on
 
-		exportColumnsAction =
-			new DockingAction("Table Data CSV Export (by Columns)", owner, KeyBindingType.SHARED) {
-				@Override
-				public void actionPerformed(ActionContext context) {
-					int[] userColumns = promptUserForColumns();
-					if (userColumns == null) {
-						return; // cancelled
-					}
-
-					File file = chooseExportFile();
-					if (file == null) {
-						return;
-					}
-
-					List<Integer> columnList = new ArrayList<>();
-					for (int userColumn : userColumns) {
-						columnList.add(userColumn);
-					}
-					GTableToCSV.writeCSVUsingColunns(file, GTable.this, columnList);
+		exportColumnsAction = new GTableAction("Table Data CSV Export (by Columns)", owner) {
+			@Override
+			public void actionPerformed(ActionContext context) {
+				int[] userColumns = promptUserForColumns();
+				if (userColumns == null) {
+					return; // cancelled
 				}
-			};
+
+				File file = chooseExportFile();
+				if (file == null) {
+					return;
+				}
+
+				List<Integer> columnList = new ArrayList<>();
+				for (int userColumn : userColumns) {
+					columnList.add(userColumn);
+				}
+				GTableToCSV.writeCSVUsingColunns(file, GTable.this, columnList);
+			}
+		};
 		//@formatter:off
 		exportColumnsAction.setPopupMenuData(new MenuData(
 				new String[] { "Export", "Export Columns to CSV..." },
@@ -1304,7 +1310,7 @@ public class GTable extends JTable implements KeyStrokeConsumer, PopupActionProv
 		exportColumnsAction.setHelpLocation(new HelpLocation("Tables", "ExportCSV_Columns"));
 		//@formatter:on
 
-		selectAllAction = new DockingAction("Table Select All", owner, KeyBindingType.SHARED) {
+		selectAllAction = new GTableAction("Table Select All", owner) {
 			@Override
 			public void actionPerformed(ActionContext context) {
 				selectAll();
@@ -1312,6 +1318,9 @@ public class GTable extends JTable implements KeyStrokeConsumer, PopupActionProv
 
 			@Override
 			public boolean isEnabledForContext(ActionContext context) {
+				if (!super.isEnabledForContext(context)) {
+					return false;
+				}
 				return getSelectionModel().getSelectionMode() != ListSelectionModel.SINGLE_SELECTION;
 			}
 		};
@@ -1332,9 +1341,20 @@ public class GTable extends JTable implements KeyStrokeConsumer, PopupActionProv
 		selectAllAction.setHelpLocation(new HelpLocation("Tables", "SelectAll"));
 		//@formatter:on
 
-		KeyBindingUtils.registerAction(this, copyAction);
-		KeyBindingUtils.registerAction(this, copyCurrentColumnAction);
-		KeyBindingUtils.registerAction(this, selectAllAction);
+		// remove any conflicting key bindings that Java has installed on this component
+		KeyBindingUtils.clearKeyBinding(this, copyAction);
+		KeyBindingUtils.clearKeyBinding(this, copyCurrentColumnAction);
+		KeyBindingUtils.clearKeyBinding(this, copyColumnsAction);
+		KeyBindingUtils.clearKeyBinding(this, selectAllAction);
+		KeyBindingUtils.clearKeyBinding(this, exportAction);
+		KeyBindingUtils.clearKeyBinding(this, exportColumnsAction);
+
+		tool.addAction(copyAction);
+		tool.addAction(copyCurrentColumnAction);
+		tool.addAction(copyColumnsAction);
+		tool.addAction(selectAllAction);
+		tool.addAction(exportAction);
+		tool.addAction(exportColumnsAction);
 	}
 
 	private void copyColumns(int... copyColumns) {
@@ -1478,4 +1498,18 @@ public class GTable extends JTable implements KeyStrokeConsumer, PopupActionProv
 			// ignored
 		}
 	}
+
+	private abstract class GTableAction extends DockingAction {
+
+		GTableAction(String name, String owner) {
+			super(name, owner, KeyBindingType.SHARED);
+		}
+
+		@Override
+		public boolean isEnabledForContext(ActionContext context) {
+			Component sourceComponent = context.getSourceComponent();
+			return sourceComponent == GTable.this;
+		}
+	}
+
 }

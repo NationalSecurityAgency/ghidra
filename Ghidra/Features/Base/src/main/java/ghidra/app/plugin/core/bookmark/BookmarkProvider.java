@@ -105,7 +105,7 @@ public class BookmarkProvider extends ComponentProviderAdapter {
 		if (program == null) {
 			return null;
 		}
-		return new ProgramActionContext(this, program);
+		return new ProgramActionContext(this, program, bookmarkTable);
 	}
 
 	void setGoToService(GoToService goToService) {

@@ -67,4 +67,9 @@ public class DummyToolActions implements DockingToolActions {
 	public void removeActions(ComponentProvider provider) {
 		// stub
 	}
+
+	@Override
+	public boolean containsAction(DockingActionIf action) {
+		return false;
+	}
 }

@@ -56,7 +56,7 @@ public class DialogComponentProviderPopupActionManager {
 		// If the source is null, must set it or we won't have 
 		// any popups shown.
 		if (actionContext.getSourceObject() == null) {
-			actionContext.setSource(e.getSource());
+			actionContext.setSourceObject(e.getSource());
 		}
 
 		MenuHandler popupMenuHandler = new PopupMenuHandler(actionContext);
@@ -152,7 +152,7 @@ public class DialogComponentProviderPopupActionManager {
 		public void processMenuAction(final DockingActionIf action, final ActionEvent event) {
 
 			DockingWindowManager.clearMouseOverHelp();
-			actionContext.setSource(event.getSource());
+			actionContext.setSourceObject(event.getSource());
 
 			// this gives the UI some time to repaint before executing the action
 			SwingUtilities.invokeLater(() -> {

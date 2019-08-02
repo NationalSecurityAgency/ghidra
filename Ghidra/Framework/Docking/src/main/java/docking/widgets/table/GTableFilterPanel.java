@@ -214,7 +214,7 @@ public class GTableFilterPanel<ROW_OBJECT> extends JPanel {
 		table.addPropertyChangeListener(badProgrammingPropertyChangeListener);
 
 		DockingWindowManager.registerComponentLoadedListener(this,
-			windowManager -> initialize(windowManager));
+			(windowManager, provider) -> initialize(windowManager));
 	}
 
 	private void initialize(DockingWindowManager windowManager) {
