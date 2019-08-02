@@ -1331,21 +1331,16 @@ imm20s: "#"value is l_simm20_20_23 & l_simm20_00_16
 
 :shad rm_04_07, rn_08_11   is opcode_12_15=0b0100 & rn_08_11 & rm_04_07 & opcode_00_03=0b1100
 {
-    local sgn = rm_04_07 & 0x80000000;
-    if (sgn == 0) goto <s0>;
-    if ((rm_04_07 & 0x0000001F) == 0) goto <s1_1>;
-
-    rn_08_11 = rn_08_11 >> (((~rm_04_07) & 0x0000001F)+1);
+    if (rm_04_07 s> 0) goto <shift_left>;
+    if (rm_04_07 s<= -32) goto <shift_right_32>;
+    # shift right
+    rn_08_11 = rn_08_11 s>> -rm_04_07;
     goto <end>;
-<s0>
+<shift_left>
     rn_08_11 = rn_08_11 << (rm_04_07 & 0x0000001F);
     goto <end>;
-<s1_1>
-    if ((rn_08_11 & 0x80000000) == 0) goto <s1_1_0>;
-    rn_08_11 = 0xffffffff;
-    goto <end>;
-<s1_1_0>
-    rn_08_11 = 0;
+<shift_right_32>
+    rn_08_11 = -1 * zext(rn_08_11 s< 0);
 <end>
 }
 
@@ -1366,17 +1361,16 @@ imm20s: "#"value is l_simm20_20_23 & l_simm20_00_16
 
 :shld  rm_04_07, rn_08_11   is opcode_12_15=0b0100 & rn_08_11 & rm_04_07 & opcode_00_03=0b1101
 {
-    local sgn = rm_04_07 & 0x80000000;
-    if (sgn == 0) goto <s0>;
-    if ((rm_04_07 & 0x0000001F) == 0) goto <rm_1f>;
-    rn_08_11 = rn_08_11 >> (((~rm_04_07) & 0x0000001F)+1);
+    if (rm_04_07 s> 0) goto <shift_left>;
+    if (rm_04_07 s<= -32) goto <shift_right_32>;
+    # shift right
+    rn_08_11 = rn_08_11 >> -rm_04_07;
     goto <end>;
-<rm_1f>
-    rn_08_11 = 0;
-    goto <end>;
-<s0>
+<shift_left>
     rn_08_11 = rn_08_11 << (rm_04_07 & 0x0000001F);
     goto <end>;
+<shift_right_32>
+    rn_08_11 = 0;
 <end>
 }
 
