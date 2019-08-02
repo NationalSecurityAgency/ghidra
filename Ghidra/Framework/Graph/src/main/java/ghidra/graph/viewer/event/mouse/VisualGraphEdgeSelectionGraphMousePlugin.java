@@ -76,11 +76,15 @@ public class VisualGraphEdgeSelectionGraphMousePlugin<V extends VisualVertex, E 
 	private void pickAndShowVertex(V vertex, PickedState<V> pickedVertexState,
 			GraphViewer<V, E> viewer) {
 
-		GPickedState<V> pickedStateWrapper = (GPickedState<V>) pickedVertexState;
-		pickedStateWrapper.pickToActivate(vertex);
-
 		VisualGraphViewUpdater<V, E> updater = viewer.getViewUpdater();
-		updater.moveVertexToCenterWithAnimation(vertex);
+		updater.moveVertexToCenterWithAnimation(vertex, isBusy -> {
+
+			// pick the vertex after the animation has run
+			if (!isBusy) {
+				GPickedState<V> pickedStateWrapper = (GPickedState<V>) pickedVertexState;
+				pickedStateWrapper.pickToActivate(vertex);
+			}
+		});
 	}
 
 	@Override

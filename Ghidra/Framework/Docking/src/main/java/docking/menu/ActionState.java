@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,15 +15,17 @@
  */
 package docking.menu;
 
+import javax.swing.Icon;
+
 import ghidra.util.HelpLocation;
 import ghidra.util.SystemUtilities;
 
-import javax.swing.Icon;
-
 /**
- * Note: this class overrides the {@ #equals(Object)} method} and relies upon the <tt>equals</tt>
+ * Note: this class overrides the <tt>equals(Object)</tt> and relies upon the <tt>equals</tt>
  * method of the <tt>userData</tt> object.  Thus, if it is important that equals work for you in 
- * the non-standard identity way, then you must override <tt>equals</tt> in your user data obejcts.
+ * the non-standard identity way, then you must override <tt>equals</tt> in your user data objects.
+ * 
+ * @param <T> the type of the action state
  */
 public class ActionState<T> {
 
@@ -32,55 +33,60 @@ public class ActionState<T> {
 	private final Icon icon;
 	private T userData;
 	private HelpLocation helpLocation;
-	
+
 	public ActionState(String name, Icon icon, T userData) {
 		this.name = name;
 		this.icon = icon;
-		this.userData = userData;	
+		this.userData = userData;
 	}
-	
+
 	public String getName() {
 		return name;
 	}
-	
+
 	public Icon getIcon() {
 		return icon;
 	}
-	
+
 	public T getUserData() {
 		return userData;
 	}
-	
-	public void setHelpLocation( HelpLocation helpLocation ) {
-	    this.helpLocation = helpLocation;
-	}
-	
-    public HelpLocation getHelpLocation() {
-        return helpLocation;
-    }
 
-    @Override
-    public boolean equals( Object other ) {
-        if ( other == null ) {
-            return false;
-        }
-        
-        Class<? extends Object> otherClass = other.getClass();
-        if ( !getClass().equals( otherClass ) ) {
-            return false;
-        }
-        
-        ActionState<?> otherState = (ActionState<?>) other;
-        
-        if ( !SystemUtilities.isEqual( userData, otherState.userData ) ) {
-            return false;
-        }
-        
-        return name.equals( otherState.name );
-    }
-    
-    @Override
-    public int hashCode() {
-        return name.hashCode() + ((userData == null) ? 0 : userData.hashCode());
-    }
+	public void setHelpLocation(HelpLocation helpLocation) {
+		this.helpLocation = helpLocation;
+	}
+
+	public HelpLocation getHelpLocation() {
+		return helpLocation;
+	}
+
+	@Override
+	public boolean equals(Object other) {
+		if (other == null) {
+			return false;
+		}
+
+		Class<? extends Object> otherClass = other.getClass();
+		if (!getClass().equals(otherClass)) {
+			return false;
+		}
+
+		ActionState<?> otherState = (ActionState<?>) other;
+
+		if (!SystemUtilities.isEqual(userData, otherState.userData)) {
+			return false;
+		}
+
+		return name.equals(otherState.name);
+	}
+
+	@Override
+	public int hashCode() {
+		return name.hashCode() + ((userData == null) ? 0 : userData.hashCode());
+	}
+
+	@Override
+	public String toString() {
+		return name + ": " + userData;
+	}
 }

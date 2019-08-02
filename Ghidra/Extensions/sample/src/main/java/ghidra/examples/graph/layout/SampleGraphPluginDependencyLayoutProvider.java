@@ -30,20 +30,21 @@ import resources.ResourceManager;
 public class SampleGraphPluginDependencyLayoutProvider
 		extends AbstractLayoutProvider<SampleVertex, SampleEdge, SampleGraph> {
 
+	private static final String NAME = "Plugin Dependency Layout";
 	private static final Icon DEFAULT_ICON = ResourceManager.loadImage("images/color_swatch.png");
 
 	@Override
 	public VisualGraphLayout<SampleVertex, SampleEdge> getLayout(SampleGraph g, TaskMonitor monitor)
 			throws CancelledException {
 
-		SampleGraphPluginDependencyLayout layout = new SampleGraphPluginDependencyLayout(g);
+		SampleGraphPluginDependencyLayout layout = new SampleGraphPluginDependencyLayout(g, NAME);
 		initVertexLocations(g, layout);
 		return layout;
 	}
 
 	@Override
 	public String getLayoutName() {
-		return "Plugin Dependency Layout";
+		return NAME;
 	}
 
 	// Note: each provider really should load its own icon so that the toolbar item can 

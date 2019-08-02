@@ -574,6 +574,17 @@ public class FGProvider extends VisualGraphComponentProvider<FGVertex, FGEdge, F
 		refresh(false);
 	}
 
+	/**
+	 * Tells the graph that some display data may have changed, but the changes are not worth 
+	 * performing a full rebuild
+	 */
+	public void refreshDisplayWithoutRebuilding() {
+		FGData functionGraphData = controller.getFunctionGraphData();
+		if (functionGraphData.hasResults()) {
+			controller.refreshDisplayWithoutRebuilding();
+		}
+	}
+
 	@Override
 	public void domainObjectChanged(DomainObjectChangedEvent ev) {
 		if (!isVisible()) {

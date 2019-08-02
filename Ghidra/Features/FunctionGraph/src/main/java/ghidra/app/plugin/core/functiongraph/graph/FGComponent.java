@@ -24,7 +24,6 @@ import org.jdom.Element;
 import edu.uci.ics.jung.algorithms.layout.Layout;
 import edu.uci.ics.jung.visualization.RenderContext;
 import edu.uci.ics.jung.visualization.picking.PickedState;
-import edu.uci.ics.jung.visualization.renderers.DefaultEdgeLabelRenderer;
 import edu.uci.ics.jung.visualization.renderers.Renderer;
 import edu.uci.ics.jung.visualization.util.Caching;
 import ghidra.app.plugin.core.functiongraph.graph.jung.renderer.FGEdgePaintTransformer;
@@ -37,6 +36,7 @@ import ghidra.graph.viewer.*;
 import ghidra.graph.viewer.layout.LayoutListener.ChangeType;
 import ghidra.graph.viewer.layout.LayoutProvider;
 import ghidra.graph.viewer.layout.VisualGraphLayout;
+import ghidra.graph.viewer.renderer.VisualGraphEdgeLabelRenderer;
 import ghidra.program.model.listing.Function;
 import ghidra.program.util.ProgramLocation;
 import ghidra.util.SystemUtilities;
@@ -208,7 +208,12 @@ public class FGComponent extends GraphComponent<FGVertex, FGEdge, FunctionGraph>
 		// edge label rendering
 		com.google.common.base.Function<FGEdge, String> edgeLabelTransformer = e -> e.getLabel();
 		renderContext.setEdgeLabelTransformer(edgeLabelTransformer);
-		DefaultEdgeLabelRenderer edgeLabelRenderer = new DefaultEdgeLabelRenderer(Color.ORANGE);
+
+		// note: this label renderer is the stamp for the label; we use another edge label 
+		//       renderer inside of the VisualGraphRenderer
+		VisualGraphEdgeLabelRenderer edgeLabelRenderer =
+			new VisualGraphEdgeLabelRenderer(Color.BLACK);
+		edgeLabelRenderer.setNonPickedForegroundColor(Color.LIGHT_GRAY);
 		edgeLabelRenderer.setRotateEdgeLabels(false);
 		renderContext.setEdgeLabelRenderer(edgeLabelRenderer);
 
