@@ -2037,7 +2037,7 @@ public class SymbolicPropogator {
 		}
 
 		// only want returns that can fit in a pointer!
-		returnLoc = conv.getReturnLocation(Undefined.getUndefinedDataType(pointerSize), program);
+		returnLoc = conv.getReturnLocation(new PointerDataType(Undefined.DEFAULT,pointerSize), program);
 
 		return returnLoc;
 	}
