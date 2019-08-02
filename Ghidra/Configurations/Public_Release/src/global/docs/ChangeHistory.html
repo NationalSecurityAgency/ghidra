@@ -6,6 +6,131 @@
   </HEAD>
 
 <BODY>
+<H1 align="center">Ghidra 9.1 Change History (August 2019)</H1>
+
+<blockquote><p><u>New Features</u></p></blockquote>
+<ul>
+ 
+<li><I>Data Types</I>. Added bitfield support to Structure and Union editor. An additional Bitfield Editor was also added for explicit bitfield placement within unaligned structures.</li>
+<li><I>Eclipse Integration</I>. Added a new SleighEditor Eclipse plugin.</li>
+<li><I>GUI</I>. Added method for turning off table sorting by control-clicking the only sorted table column. (Issue #87)</li>
+<li><I>GUI</I>. Hovering on an address will now show where the byte at that address came from in the imported file. (Issue #154)</li>
+<li><I>Importer:MachO</I>. Added new importer/loader for DYLD shared cache files.</li>
+<li><I>Languages</I>. Added contribution of Tricore processor specification submitted by "mumbel." (Issue #567)</li>
+<li><I>Memory</I>. Added new API to preserve imported program's original bytes and how they map to memory blocks.</li>
+<li><I>Program API</I>. Added Bitfield support for structures and unions. WARNING: Version upgrade will be forced on all modified programs and data type archives that are open for update.</li>
+</ul>
+
+<blockquote><p><u>Improvements</u></p></blockquote>
+<ul>
+
+<li><I>Basic Infrastructure</I>. Made bash scripts more portable, allowing Ghidra to be launched on additional platforms. (Issue #347)</li>
+<li><I>Build</I>. Created a new Gradle task that automates some installation procedures defined in DevGuide.md.</li>
+<li><I>Build</I>. The build now allows newer versions of Gradle to be used. (Issue #737)</li>
+<li><I>DWARF</I>. Corrected DWARF analysis to handle binaries that are imported at non-default locations. (Issue #637)</li>
+<li><I>Data Types</I>. All DataType archives have been regenerated to support the new bitfield functionality.</li>
+<li><I>Data Types</I>. CategoryPath now accepts forward slashes in its components.</li>
+<li><I>Decompiler</I>. Most forms of unnecessary or redundant copy statements are now removed from the decompiler output.</li>
+<li><I>Decompiler</I>. Added ability to double-click a Decompiler brace syntax token to navigate to the matching brace.</li>
+<li><I>Decompiler</I>. Updated the Decompiler to navigate to the label of the "go to" statement when that label is double-clicked.</li>
+<li><I>Decompiler</I>. Updated the Decompiler's Copy Action to the copy the symbol under the cursor when there is no selection. (Issue #411)</li>
+<li><I>Decompiler</I>. Fixed broken <I>External Navigation: Navigate to External Program</I> option.</li>
+<li><I>Decompiler</I>. The decompiler's logic for handling optimized division has been updated to recognize forms typically found in executables generated with more recent 64-bit compilers. (Issue #668)</li>
+<li><I>Decompiler</I>. Implemented call-fixp for x64 chkstk function. (Issue #670, 671)</li>
+<li><I>Decompiler</I>. The decompiler simplifies many new sign-bit extraction forms used in optimized division and comparison expressions.</li>
+<li><I>Documentation</I>. Fixed typos and other errors in GitHub-related documentation. (Issue #345, 361, 370, 375, 398)</li>
+<li><I>Documentation</I>. Added documentation to the dev guide on how to run unit/integration tests. (Issue #815, 832)</li>
+<li><I>Function Graph</I>. Updated the Function Graph to show the current program selection when zoomed-out.</li>
+<li><I>Function Graph</I>. Added an option to the Function Graph to allow more complex edge routing that will go around non-incident vertices. See the Tool Options for more information and to enable this feature. (Issue #811)</li>
+<li><I>GUI</I>. Added listener to Script Table Dialog that will get notified when the dialog closes.</li>
+<li><I>GUI</I>. Fixed global Tool <I>auto-save</I> option so that it persists between Ghidra sessions. (Issue #231)</li>
+<li><I>GUI</I>. Added the <I>apple.laf.useScreenmenuBar</I> option to hoist the menu bar out of the window on macOS. The option is off by default but can be activated in <I>support/launch.properties</I>. (Issue #562)</li>
+<li><I>GUI</I>. Updated the 'Repeat Text/Memory Search' menu item to show the search dialog for long searches. (Issue #585)</li>
+<li><I>GUI</I>. Updated Structure Editor to allow user key bindings to work. (Issue #504)</li>
+<li><I>GUI</I>. Python interpreter key bindings for sending reset and interrupt commands are now configurable. (Issue #588)</li>
+<li><I>GUI</I>. Tweaked default graphic settings in support/launch.properties to support a wider range of displays out-of-the-box. (Issue #341)</li>
+<li><I>GUI</I>. Added the ability to assign key bindings to show individual component providers. (Issue #539)</li>
+<li><I>GUI</I>. Fixed rendering issue in the Search Results table's Preview column. (Issue #550)</li>
+<li><I>Importer</I>. Updated x86 16-bit processor binding for IDA. (Issue #771)</li>
+<li><I>Importer:PE</I>. PeLoader better accounts for section alignment when laying out memory blocks, allowing additional bytes form the file to be loaded into memory. (Issue #327, 418)</li>
+<li><I>Importer:PE</I>. Removed out-of-place call to demangler and laying down of types from the PE Loader. This fix enables demangling and other analyzers to be applied correctly and in the proper order.</li>
+<li><I>Importer:PE</I>. PeLoader now adds TLS callback functions as entry points. (Issue #102)</li>
+<li><I>Languages</I>. Added new Task Monitor service to better handle user experience when there are delays in building languages.</li>
+<li><I>Languages</I>. Corrected ARM/Thumb instruction parsing for Thumb <I>bl</I> and <I>add</I> instructions. (Issue #362)</li>
+<li><I>Languages</I>. Added AVR8 manual index file. (Issue #346)</li>
+<li><I>Languages</I>. M68000 LSL.W, ASL.B, LSL.B, and ASL.W instructions now correctly set the CF flag. (Issue #619)</li>
+<li><I>Languages</I>. Updated x86 manual index files. (Issue #366)</li>
+<li><I>Languages</I>. Improved macro label-related error reporting in slaspec files. (Issue #522)<\li>
+<li><I>Languages</I>. Added MIPS special 0x1f patterns. (Issue #709)</li>
+<li><I>Multi-user</I>. Added a script to allow repository admins the ability to terminate multiple file checkouts belonging to an individual user.</li>
+<li><I>PDB</I>. Now using HTTPS for Microsoft symbol server URL. (Issue #369)</li>
+<li><I>PDB</I>. PDB processing can now store data types that contain forward slashes under a CategoryPath. (Issue #94, 182)</li>
+<li><I>Program API</I>. Added SHA256 hash to Program metadata and API. (Issue #331)</li>
+<li><I>Scripting</I>. Updated Script Table Chooser Dialog: to fix bug with tracking work items, to add new API methods for item removal and dialog closed notification, and to prevent the same item from being worked on more than once. (Issue #307)</li>
+<li><I>Testing:Junits</I>. <font face="courier">test.gradle getLogFileUrl()</font> no longer searches user <I>.dir</I> for <I>log4j</I> properties file. (Issue #499)</li>
+</ul>
+
+<blockquote><p><u>Bugs</u></p></blockquote>
+<ul>
+
+<li><I>DWARF</I>. Empty DWARF compilation unit sections will now be ignored. (Issue #690)</li>
+<li><I>Data Types</I>. Corrected string data default label generation when defined within uninitialized memory, which will now render as <font face="courier">STRING_&lt;address&gt;</font>. (Issue #272)</li>
+<li><I>Data Types</I>. Improved ASCII string data handling for processors with a char size greater than 1.</li>
+<li><I>Decompiler</I>. Fixed aliasing issue where the decompiler would sometimes drop initialization or other code writing to the stack.</li>
+<li><I>Decompiler</I>. Fixed bug causing the decompiler to incorrectly omit the display of infinite loops when they contained switch statements. (Issue #443)</li>
+<li><I>Decompiler</I>. Integer extension casts are no longer printed in the decompiler if the extension is implied.</li>
+<li><I>Decompiler</I>. Updated the Decompiler to place the cursor on the function signature when a function is decompiled.</li>
+<li><I>Decompiler</I>. Fixed a common source of "Datatype does not fit" errors when using the "Retype" actions in the decompiler.</li>
+<li><I>Decompiler</I>. Fixed equals() method in Varnode AST. (Issue #677)</li>
+<li><I>Decompiler</I>. Users can no longer rename undefined functions from the decompiler. (Issue #753)</li>
+<li><I>Decompiler:Java</I>. Updated Decompiler's hovers to show preview for data types on variables and return types.</li>
+<li><I>Decompiler:Java</I>. Fixed error involving decompilation of certain invokedynamic instructions in JVM class files. Made numerous minor improvements to decompilation of JVM bytecode. (Issue #287)</li>
+<li><I>Demangler</I>. Fixed a <font face="courier">NullPointerException</font> in DemangledFunctionPointer. (Issue #609)</li>
+<li><I>Exporter</I>. Negative memory references in <I>idaxml.py</I> no longer cause errors. (Issue #213)</li>
+<li><I>Exporter</I>. Fixed Intel Hex Exporter not to ignore the <I>Address Space</I> option value.</li>
+<li><I>Exporter</I>. Fixed cancellation behavior of the C/C++ exporter. (Issue #591)</li>
+<li><I>File Formats</I>. Fixed an out-of-memory error in the CPIO file system.</li>
+<li><I>File Formats</I>. DmgClientFileSystem no longer falsely matches zlib compressed files. (Issue #583)</li>
+<li><I>File System Browser</I>. Fixed <font face="courier">NullPointerException</font> when clicking "Get Info" on a directory in a zip file in the file system browser when the element was a directory that did not have a corresponding entry in the zip file.</li>
+<li><I>File System Browser</I>. Changed the 'Get Info' action to show information about both the highlighted file and any file system mounted from that file.</li>
+<li><I>File System Browser</I>. Fixed dialog stacking problem in File System Browser when double-clicking a container file to open the filesystem inside it.</li>
+<li><I>GUI</I>. Fixed stack trace when deleting large memory block that is in its own address space.</li>
+<li><I>GUI</I>. Changed Data Type Preview to allow adding string data types.</li>
+<li><I>GUI</I>. Fixed display of operand scalar values in tooltip popup of Decompiler and Listing windows. (Issue #120)</li>
+<li><I>GUI</I>. Fixed bug in Data Type Preview that caused a rendering error in <font face="courier">Structures</font> as primitive types were deleted.</li>
+<li><I>GUI</I>. Fixed Symbol Tree <font face="courier">ClassCastException</font> that happened when clicking a node while the tree was still loading. (Issue #96)</li>
+<li><I>GUI</I>. Fixed bug that prevented the XRef's Ref Type column from sorting correctly.</li>
+<li><I>GUI</I>. Updated Edit Function Signature dialog to have focus in the signature field when first opened. Also added undo/redo support. (Issue #635)</li>
+<li><I>GUI</I>. Fixed exception in the References Editor encountered when closing the editor with an active edit in the table.</li>
+<li><I>GUI</I>. Fixed bug where the Ghidra menu mnemonic was not being set by the & character in the last field of the menu path.</li>
+<li><I>GUI</I>. Updated the Component Providers' Close Button to allow for key bindings. (Issue #533)</li>
+<li><I>GUI</I>. Fixed tool navigation button enablement when using snapshot windows.</li>
+<li><I>Help</I>. Fixed <font face="courier">NullPointerException</font> when navigating the Help UI. (Issue #493)</li>
+<li><I>Importer</I>. Fixed issues in the MapLoader that prevented .map files from being added to an existing program. (Issue #762)</li>
+<li><I>Importer</I>. For batch import, fixed issue where last character of directory name was truncated on Windows workstations. (Issue #797)</li>
+<li><I>Importer:ELF</I>. Added ELF relocation handler for R_AARCH64_JUMP26. (Issue #775)</li>
+<li><I>Importer:ELF</I>. Improved ELF MIPS support for GP-relative relocations encountered in PIC compiled binaries. Also added support for R_MIPS_RPREL32 relocations. (Issue #764)</li> 
+<li><I>Languages</I>. Utilized <font face="courier">FLOAT_NEG</font> pcode op to simplify PowerPC <I>fneg</I> instructions. (Issue #387)</li>
+<li><I>Languages</I>. Added 6502 <font face="courier">I</font> status bit save and restore per PR-362. (Issue #469)</li>
+<li><I>Languages</I>. Corrected alternate register definition in z80 processor. (Issue #520)</li>
+<li><I>Languages</I>. Reviewed all processor modules for Sleigh-Editor syntax errors.</li>
+<li><I>Languages</I>. Added support for RD/WR/FS/GSBASE instructions in x86. (Issue #554, 555)</li>
+<li><I>Languages</I>. Fixed AAM x86 instruction.</li>
+<li><I>Listing</I>. Fixed potential infinite loop when editing long comments. (Issue #437)</li>
+<li><I>Listing</I>. Fixed potential ClassCastException in Listing comments.</li>
+<li><I>Listing</I>. Cursor in the listing now stays in the proper column after editing a field. (Issue #702)</li>
+<li><I>Multi-User:Ghidra Server</I>. Added proper Ghidra Server interface binding with new <I>-i</I> option. Corrected <I>-ip</I> option to strictly convey remote access hostname to clients. The updated server will only accept connections from Ghidra 9.1 and later clients due to the registry port now employing TLS. (Issue #101, 645)</li>
+<li><I>PDB</I>. Added char16_t and char32_t to PDB BASIC_TYPE_STRINGS. (Issue #685)</li> 
+<li><I>PDB</I>. Addressed memory leaks and string handling issues in pdb.exe. (Issue #674, 597, 598, 599, 600)</li>
+<li><I>PDB</I>. Can now recover stack variables from more recent Visual Studio version PDBs. </li>
+<li><I>Project Manager</I>. Fixed a problem with creating Ghidra projects in Windows root directories (e.g., Z:\)</li>
+<li><I>Project Manager</I>. Fixed a path traversal vulnerability that could occur through loading a malicious project. (Issue #789)</li>
+<li><I>Scripting</I>. <font face="courier">GhidraScript.askDomainFile()</font> now correctly throws a <font face="courier">CancelledException</font> when the cancel button is clicked.</li>
+<li><I>Scripting</I>. Removed scripting deprecated methods older than 5 releases.</li>
+<li><I>Sleigh</I>. Corrected Sleigh compiler bug which performed improper bounds checking for named register offset specification when space wordsize is not one (1). (Issue #831)</li>
+<li><I>Version Tracking</I>. Fixed <font face="courier">NullPointerException</font> in Version Tracking hashing algorithm.</li>
+</ul>
+
 <H1 align="center">Ghidra 9.0.4 Change History (May 2019)</H1>
 
 <blockquote><p><u>Bugs</u></p></blockquote>
