@@ -32,7 +32,7 @@ import docking.actions.ActionAdapter;
 import docking.actions.KeyBindingUtils;
 import docking.event.mouse.GMouseListenerAdapter;
 import docking.menu.DockingToolbarButton;
-import docking.util.*;
+import docking.util.AnimationUtils;
 import docking.widgets.label.GDHtmlLabel;
 import ghidra.util.*;
 import ghidra.util.exception.AssertException;
@@ -43,9 +43,8 @@ import utility.function.Callback;
  * Base class used for creating dialogs in Ghidra. Subclass this to create a dialog provider that has
  * all the gui elements to appear in the dialog, then use tool.showDialog() to display your dialog.
  */
-
 public class DialogComponentProvider
-		implements TaskListener, StatusListener, ActionContextProvider {
+		implements ActionContextProvider, StatusListener, TaskListener {
 
 	private static final Color WARNING_COLOR = new Color(0xff9900);
 
@@ -1369,5 +1368,4 @@ public class DialogComponentProvider
 		}
 
 	}
-
 }

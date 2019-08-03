@@ -807,7 +807,7 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 
 			DockingWindowManager myDwm = DockingWindowManager.getInstance(getComponent());
 			if (myDwm == null) {
-				// don't think this can happen
+				// this can happen when the tool loses focus
 				dockingTool.showComponentProvider(ComponentProvider.this, true);
 				return;
 			}

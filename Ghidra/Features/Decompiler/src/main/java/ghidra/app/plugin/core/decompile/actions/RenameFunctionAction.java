@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +15,10 @@
  */
 package ghidra.app.plugin.core.decompile.actions;
 
+import java.awt.event.KeyEvent;
+
+import docking.ActionContext;
+import docking.action.*;
 import ghidra.app.decompiler.ClangFuncNameToken;
 import ghidra.app.decompiler.ClangToken;
 import ghidra.app.decompiler.component.*;
@@ -24,11 +27,7 @@ import ghidra.app.util.AddEditDialog;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.listing.Function;
 import ghidra.util.Msg;
-
-import java.awt.event.KeyEvent;
-
-import docking.ActionContext;
-import docking.action.*;
+import ghidra.util.UndefinedFunction;
 
 public class RenameFunctionAction extends DockingAction {
 
@@ -58,7 +57,8 @@ public class RenameFunctionAction extends DockingAction {
 			return true;
 		}
 
-		return getFunction() != null;
+		Function func = getFunction();
+		return func != null && !(func instanceof UndefinedFunction);
 	}
 
 	@Override

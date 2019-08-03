@@ -191,6 +191,7 @@ public class TableChooserDialog extends DialogComponentProvider
 		if (navigatable != null) {
 			navigatable.removeNavigatableListener(this);
 		}
+		dispose();
 	}
 
 	@Override
@@ -317,6 +318,11 @@ public class TableChooserDialog extends DialogComponentProvider
 		int[] selectedRows = table.getSelectedRows();
 		List<AddressableRowObject> rowObjects = model.getRowObjects(selectedRows);
 		return rowObjects;
+	}
+
+	public void dispose() {
+		table.dispose();
+		workers.forEach(w -> w.cancel(true));
 	}
 
 //==================================================================================================

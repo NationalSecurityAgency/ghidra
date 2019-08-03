@@ -202,6 +202,20 @@ public class TableServicePlugin extends ProgramPlugin
 		}
 	}
 
+	void removeDialog(MyTableChooserDialog dialog) {
+		Iterator<Program> iter = programToDialogMap.keySet().iterator();
+		while (iter.hasNext()) {
+			Program p = iter.next();
+			List<TableChooserDialog> list = programToDialogMap.get(p);
+			if (list.remove(dialog)) {
+				if (list.size() == 0) {
+					programToDialogMap.remove(p);
+					return;
+				}
+			}
+		}
+	}
+
 	@Override
 	public void domainObjectChanged(DomainObjectChangedEvent ev) {
 		updateMgr.update();
@@ -263,17 +277,4 @@ public class TableServicePlugin extends ProgramPlugin
 		return dialog;
 	}
 
-	public void removeDialog(MyTableChooserDialog dialog) {
-		Iterator<Program> iter = programToDialogMap.keySet().iterator();
-		while (iter.hasNext()) {
-			Program p = iter.next();
-			List<TableChooserDialog> list = programToDialogMap.get(p);
-			if (list.remove(dialog)) {
-				if (list.size() == 0) {
-					programToDialogMap.remove(p);
-					return;
-				}
-			}
-		}
-	}
 }

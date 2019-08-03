@@ -97,7 +97,12 @@ public class KeyBindingsTest extends AbstractGhidraHeadedIntegrationTest {
 		//  verify that the description is displayed for the selected action
 
 		selectRowForAction(action1);
-		assertTrue(statusPane.getText().indexOf(action1.getDescription()) != -1);
+
+		String actualText = statusPane.getText();
+		assertTrue(
+			"Description is not updated for action '" + action1.getName() + "'; instead the " +
+				"description is '" + actualText + "'",
+			actualText.indexOf(action1.getDescription()) != -1);
 	}
 
 	@Test

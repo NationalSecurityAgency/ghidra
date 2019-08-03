@@ -1,4 +1,4 @@
-# sleigh specification file for Intel 6805
+# sleigh specification file for Motorola 6805
 @define SWI_VECTOR "0x3FFC"
 define endian=big;
 define alignment=1;
