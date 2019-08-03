@@ -331,6 +331,17 @@ task unitTestReport(type: TestReport) { t ->
 	outputs.upToDateWhen {false}
 }
 
+/*********************************************************************************
+ * INTEGRATION TEST REPORT
+ *
+ * Summary:	Runs all integration tests and generates a single report.
+ *
+ *********************************************************************************/
+task integrationTestReport(type: TestReport) { t ->
+	group "test"
+	destinationDir = file("$reportDir/integrationTests")
+	outputs.upToDateWhen {false}
+}
 
 
 /*********************************************************************************
