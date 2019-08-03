@@ -833,7 +833,8 @@ SymbolEntry *ActionConstantPtr::isPointer(AddrSpace *spc,Varnode *vn,PcodeOp *op
   bool needexacthit;
   Architecture *glb = data.getArch();
   Varnode *outvn;
-  if (vn->getType()->getMetatype() == TYPE_PTR) { // Are we explicitly marked as a pointer
+  if (vn->getType()->getMetatype() == TYPE_PTR ||
+      vn->getType()->getMetatype() == TYPE_CODE) { // Are we explicitly marked as a pointer
     rampoint = glb->resolveConstant(spc,vn->getOffset(),vn->getSize(),op->getAddr());
     needexacthit = false;
   }
