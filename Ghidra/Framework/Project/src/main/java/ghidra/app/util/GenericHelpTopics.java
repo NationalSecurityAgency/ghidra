@@ -45,6 +45,11 @@ public class GenericHelpTopics {
 	public final static String REPOSITORY = "Repository";
 
 	/**
+	 * Help Topic for the version control.
+	 */
+	public final static String VERSION_CONTROL = "VersionControl";
+
+	/**
 	 * Help Topic for tools.
 	 */
 	public final static String TOOL = ToolConstants.TOOL_HELP_TOPIC;

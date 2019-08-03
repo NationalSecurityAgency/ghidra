@@ -323,9 +323,15 @@ public class ParamEntry {
 				size = SpecXmlUtils.decodeInt(entry.getValue());
 			else if (name.equals("metatype")) {		// Not implemented at the moment
 				String meta = entry.getValue();
-				// TODO:  Currently only supporting "float" and "unknown" metatypes
-				if ((meta != null)&&(meta.equals("float")))
-					type = TYPE_FLOAT;
+				// TODO:  Currently only supporting "float", "ptr", and "unknown" metatypes
+				if ((meta != null)) {
+					if (meta.equals("float")) {
+						type = TYPE_FLOAT;
+					}
+					else if (meta.equals("ptr")) {
+						type = TYPE_PTR;
+					}
+				}
 			}
 			else if (name.equals("group"))		// Override the group
 				group = SpecXmlUtils.decodeInt(entry.getValue());

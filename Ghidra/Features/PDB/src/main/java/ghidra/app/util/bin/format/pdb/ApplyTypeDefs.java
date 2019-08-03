@@ -30,7 +30,7 @@ import ghidra.xml.XmlPullParser;
 
 class ApplyTypeDefs {
 
-	private PdbParserNEW pdbParser;
+	private PdbParser pdbParser;
 	private MessageLog log;
 	private List<XmlElement> todo = new ArrayList<>();
 
@@ -48,7 +48,7 @@ class ApplyTypeDefs {
 	 * @throws CancelledException if monitor is cancelled
 	 * @throws SAXParseException PDB XML parse failure
 	 */
-	ApplyTypeDefs(PdbParserNEW pdbParser, XmlPullParser xmlParser, TaskMonitor monitor,
+	ApplyTypeDefs(PdbParser pdbParser, XmlPullParser xmlParser, TaskMonitor monitor,
 			MessageLog log) throws CancelledException, SAXParseException {
 		this.pdbParser = pdbParser;
 		this.log = log;

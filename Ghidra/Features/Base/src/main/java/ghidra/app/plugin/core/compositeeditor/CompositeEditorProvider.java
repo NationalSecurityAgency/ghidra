@@ -64,6 +64,7 @@ public abstract class CompositeEditorProvider extends ComponentProviderAdapter
 		super(plugin.getTool(), "Composite Editor", plugin.getName());
 		this.plugin = plugin;
 		setIcon(EDITOR_ICON);
+		setTransient();
 		listeners = WeakDataStructureFactory.createSingleThreadAccessWeakSet();
 		initializeServices();
 	}

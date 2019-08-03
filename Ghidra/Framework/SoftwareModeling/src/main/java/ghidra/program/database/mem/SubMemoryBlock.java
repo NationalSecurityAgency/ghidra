@@ -26,7 +26,7 @@ import ghidra.program.model.mem.*;
  * Interface for the various types of memory block sections.  They are used by a {@link MemoryBlockDB}
  * to do the actual storing and fetching of the bytes that make up a MemoryBlock
  */
-abstract class SubMemoryBlock {
+abstract class SubMemoryBlock implements Comparable<SubMemoryBlock> {
 
 	protected final MemoryMapDBAdapter adapter;
 	protected final Record record;
@@ -216,6 +216,7 @@ abstract class SubMemoryBlock {
 	 * @throws IOException if a database error occurs.
 	 */
 	protected void setParentIdAndStartingOffset(long key, long startingOffset) throws IOException {
+		this.startingOffset = startingOffset;
 		record.setLongValue(MemoryMapDBAdapter.SUB_PARENT_ID_COL, key);
 		record.setLongValue(MemoryMapDBAdapter.SUB_START_OFFSET_COL, startingOffset);
 		adapter.updateSubBlockRecord(record);
@@ -248,4 +249,12 @@ abstract class SubMemoryBlock {
 	protected abstract ByteSourceRangeList getByteSourceRangeList(MemoryBlock block, Address start,
 			long memBlockOffset, long size);
 
+	@Override
+	public int compareTo(SubMemoryBlock o) {
+		long result = getStartingOffset() - o.getStartingOffset();
+		if (result == 0) {
+			return 0;
+		}
+		return result > 0 ? 1 : -1;
+	}
 }

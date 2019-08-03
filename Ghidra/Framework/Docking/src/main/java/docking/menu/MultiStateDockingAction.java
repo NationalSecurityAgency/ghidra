@@ -35,6 +35,11 @@ import resources.icons.EmptyIcon;
  * drop-down icon that allows users to change the state of the button.  Also, by default, as
  * the user presses the button, it will execute the action corresponding to the current 
  * state.
+ * 
+ * <p>Warning: if you use this action in a toolbar, then be sure to call the 
+ * {@link #MultiStateDockingAction(String, String, boolean) correct constructor}.  If you call
+ * another constructor, or pass false for this boolean above, your 
+ * {@link #doActionPerformed(ActionContext)} method will get called twice.
  *
  * @param <T> the type of the user data
  * @see MultiActionDockingAction
@@ -56,10 +61,25 @@ public abstract class MultiStateDockingAction<T> extends DockingAction {
 		// stub for toolbar actions
 	};
 
+	/**
+	 * Call this constructor with this action will not be added to a toolbar
+	 * 
+	 * @param name the action name
+	 * @param owner the owner
+	 * @see #MultiStateDockingAction(String, String, boolean)
+	 */
 	public MultiStateDockingAction(String name, String owner) {
 		this(name, owner, false);
 	}
 
+	/**
+	 * Use this constructor explicitly when this action is used in a toolbar, passing true 
+	 * for <code>isToolbarAction</code> (see the javadoc header note).
+	 * 
+	 * @param name the action name
+	 * @param owner the owner
+	 * @param isToolbarAction true if this action is a toolbar action
+	 */
 	protected MultiStateDockingAction(String name, String owner, boolean isToolbarAction) {
 		super(name, owner);
 		multiActionGenerator = context -> getStateActions();
@@ -87,6 +107,9 @@ public abstract class MultiStateDockingAction<T> extends DockingAction {
 	 * <p>
 	 * Also, if the parameter is true, then the button will behave like a button in terms of
 	 * mouse feedback.  If false, then the button will behave more like a label.
+	 * 
+	 * @param doPerformAction true to call {@link #doActionPerformed(ActionContext)} when the
+	 *        user presses the button for this action (not the drop-down menu; see above)
 	 */
 	public void setPerformActionOnPrimaryButtonClick(boolean doPerformAction) {
 		performActionOnPrimaryButtonClick = doPerformAction;
@@ -116,6 +139,8 @@ public abstract class MultiStateDockingAction<T> extends DockingAction {
 	 * This is the callback to be overridden when the child wishes to respond to user button
 	 * presses that are on the button and not the drop-down.  This will only be called if
 	 * {@link #performActionOnPrimaryButtonClick} is true.
+	 * 
+	 * @param context the action context 
 	 */
 	protected void doActionPerformed(ActionContext context) {
 		// override me to do work

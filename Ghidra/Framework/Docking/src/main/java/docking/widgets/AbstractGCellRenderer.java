@@ -41,12 +41,7 @@ public abstract class AbstractGCellRenderer extends GDHtmlLabel {
 	protected static boolean systemAlternateRowColors = getAlternateRowColors();
 
 	private static boolean getAlternateRowColors() {
-		String disable = System.getProperty(DISABLE_ALTERNATING_ROW_COLORS_PROPERTY);
-		if (disable == null) {
-			return true;
-		}
-
-		return !Boolean.parseBoolean(disable);
+		return !Boolean.getBoolean(DISABLE_ALTERNATING_ROW_COLORS_PROPERTY);
 	}
 
 	protected final Border focusBorder;

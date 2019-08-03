@@ -200,7 +200,6 @@ public class DeleteTableRowAction extends DockingAction {
 			// prevent this action from appearing in the toolbar, menus, etc
 			setToolBarData(null);
 			setPopupMenuData(null);
-			setKeyBindingData(null);
 
 			tool.addAction(this);
 		}

@@ -37,8 +37,8 @@ import ghidra.app.plugin.assembler.Assembler;
 import ghidra.app.plugin.assembler.Assemblers;
 import ghidra.app.plugin.assembler.sleigh.util.GhidraDBTransaction;
 import ghidra.app.plugin.core.assembler.AssemblyDualTextField.*;
-import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
 import ghidra.app.plugin.core.codebrowser.CodeViewerProvider;
+import ghidra.app.util.PluginConstants;
 import ghidra.app.util.viewer.field.ListingField;
 import ghidra.app.util.viewer.listingpanel.ListingModelAdapter;
 import ghidra.app.util.viewer.listingpanel.ListingPanel;
@@ -168,7 +168,7 @@ public class AssembleDockingAction extends DockingAction {
 	}
 
 	protected void onFirstInvocation() {
-		ComponentProvider prov = tool.getComponentProvider(CodeBrowserPlugin.class.getSimpleName());
+		ComponentProvider prov = tool.getComponentProvider(PluginConstants.CODE_BROWSER);
 		cv = (CodeViewerProvider) prov;
 		listpane = cv.getListingPanel();
 		codepane = listpane.getFieldPanel();

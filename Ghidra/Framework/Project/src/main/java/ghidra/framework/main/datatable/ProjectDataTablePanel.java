@@ -25,8 +25,7 @@ import java.util.List;
 
 import javax.swing.*;
 
-import docking.ActionContext;
-import docking.ComponentProvider;
+import docking.*;
 import docking.action.DockingActionIf;
 import docking.help.Help;
 import docking.help.HelpService;
@@ -490,7 +489,7 @@ public class ProjectDataTablePanel extends JPanel {
 		}
 
 		@Override
-		public List<DockingActionIf> getDockingActions() {
+		public List<DockingActionIf> getPopupActions(DockingTool tool, ActionContext context) {
 
 			// TODO we should at least add the 'copy' action
 

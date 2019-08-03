@@ -26,7 +26,7 @@ import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.core.analysis.AutoAnalysisManager;
 import ghidra.app.services.DataTypeManagerService;
 import ghidra.app.util.bin.format.pdb.PdbException;
-import ghidra.app.util.bin.format.pdb.PdbParserNEW;
+import ghidra.app.util.bin.format.pdb.PdbParser;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.program.model.listing.Program;
@@ -111,7 +111,7 @@ public class PdbPlugin extends Plugin {
 	}
 
 	private File getPdbFile(Program program) throws PdbException {
-		File pdbFile = PdbParserNEW.findPDB(program);
+		File pdbFile = PdbParser.findPDB(program);
 		if (pdbChooser == null) {
 			pdbChooser = new GhidraFileChooser(tool.getToolFrame());
 			pdbChooser.setTitle("Select PDB file to load:");

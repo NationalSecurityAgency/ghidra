@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,11 +14,6 @@
  * limitations under the License.
  */
 package ghidra.pcodeCPort.space;
-
-import ghidra.pcodeCPort.error.LowlevelError;
-import ghidra.pcodeCPort.pcoderaw.VarnodeData;
-import ghidra.pcodeCPort.translate.Translate;
-import ghidra.pcodeCPort.utils.*;
 
 import java.io.PrintStream;
 import java.util.StringTokenizer;
@@ -56,6 +50,11 @@ import org.jdom.Element;
 ///                       as a pool for temporary registers. (See UniqueSpace)
 ///
 
+import ghidra.pcodeCPort.error.LowlevelError;
+import ghidra.pcodeCPort.pcoderaw.VarnodeData;
+import ghidra.pcodeCPort.translate.Translate;
+import ghidra.pcodeCPort.utils.*;
+
 public class AddrSpace {
 
 	public static final AddrSpace MIN_SPACE = new AddrSpace("MIN_SPACE", -1);
@@ -82,7 +81,8 @@ public class AddrSpace {
 		this.index = index;
 	}
 
-	public AddrSpace(Translate t, spacetype tp, String nm, int size, int ws, int ind, int fl, int dl) {
+	public AddrSpace(Translate t, spacetype tp, String nm, int size, int ws, int ind, int fl,
+			int dl) {
 		trans = t;
 		type = tp;
 		name = nm;
@@ -155,7 +155,7 @@ public class AddrSpace {
 		return index;
 	}
 
-	int getWordSize() {
+	public int getWordSize() {
 		return wordsize;
 	}
 

@@ -45,7 +45,7 @@ import ghidra.xml.*;
 /**
  * Contains methods for finding .pdb files and parsing them.
  */
-public class PdbParserNEW {
+public class PdbParser {
 
 	private static final String PDB_EXE = "pdb.exe";
 	private static final String README_FILENAME =
@@ -94,12 +94,12 @@ public class PdbParserNEW {
 	private PdbDataTypeParser dataTypeParser;
 	private Map<SymbolPath, Boolean> namespaceMap = new TreeMap<>(); // false: simple namespace, true: class namespace
 
-	public PdbParserNEW(File pdbFile, Program program, DataTypeManagerService service,
+	public PdbParser(File pdbFile, Program program, DataTypeManagerService service,
 			boolean forceAnalysis, TaskMonitor monitor) {
 		this(pdbFile, program, service, getPdbAttributes(program), forceAnalysis, monitor);
 	}
 
-	public PdbParserNEW(File pdbFile, Program program, DataTypeManagerService service,
+	public PdbParser(File pdbFile, Program program, DataTypeManagerService service,
 			PdbProgramAttributes programAttributes, boolean forceAnalysis, TaskMonitor monitor) {
 		this.pdbFile = pdbFile;
 		this.pdbCategory = new CategoryPath(CategoryPath.ROOT, pdbFile.getName());
@@ -697,21 +697,21 @@ public class PdbParserNEW {
 		}
 	}
 
-	boolean isCorrectKind(DataType dt, PdbXmlKind kind) {
-		if (kind == PdbXmlKind.STRUCTURE) {
+	boolean isCorrectKind(DataType dt, PdbKind kind) {
+		if (kind == PdbKind.STRUCTURE) {
 			return (dt instanceof Structure);
 		}
-		else if (kind == PdbXmlKind.UNION) {
+		else if (kind == PdbKind.UNION) {
 			return (dt instanceof Union);
 		}
 		return false;
 	}
 
-	Composite createComposite(PdbXmlKind kind, String name) {
-		if (kind == PdbXmlKind.STRUCTURE) {
+	Composite createComposite(PdbKind kind, String name) {
+		if (kind == PdbKind.STRUCTURE) {
 			return createStructure(name, 0);
 		}
-		else if (kind == PdbXmlKind.UNION) {
+		else if (kind == PdbKind.UNION) {
 			return createUnion(name);
 		}
 		throw new IllegalArgumentException("unsupported kind: " + kind);
@@ -1361,8 +1361,6 @@ public class PdbParserNEW {
 
 	class PdbXmlMember extends DefaultPdbMember {
 
-		final PdbXmlKind kind;
-
 		PdbXmlMember(XmlTreeNode node) {
 			this(node.getStartElement());
 		}
@@ -1370,19 +1368,9 @@ public class PdbParserNEW {
 		PdbXmlMember(XmlElement element) {
 			super(SymbolUtilities.replaceInvalidChars(element.getAttribute("name"), false),
 				element.getAttribute("datatype"),
-				XmlUtilities.parseInt(element.getAttribute("offset")), getDataTypeParser());
-			kind = PdbXmlKind.parse(element.getAttribute("kind"));
+				XmlUtilities.parseInt(element.getAttribute("offset")),
+				PdbKind.parse(element.getAttribute("kind")), getDataTypeParser());
 		}
-
-		/**
-		 * Kind of member record.  Only those records with a Member kind
-		 * are currently considered for inclusion within a composite.
-		 * @return PDB kind
-		 */
-		public PdbXmlKind getKind() {
-			return kind;
-		}
-
 	}
 
 }

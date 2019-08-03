@@ -584,6 +584,40 @@ int4 RuleShiftBitops::applyOp(PcodeOp *op,Funcdata &data)
   return 1;
 }
 
+/// \class RuleRightShiftAnd
+/// \brief Simplify INT_RIGHT and INT_SRIGHT ops where an INT_AND mask becomes unnecessary
+///
+/// - `( V & 0xf000 ) >> 24   =>   V >> 24`
+/// - `( V & 0xf000 ) s>> 24  =>   V s>> 24`
+void RuleRightShiftAnd::getOpList(vector<uint4> &oplist) const
+
+{
+  oplist.push_back(CPUI_INT_RIGHT);
+  oplist.push_back(CPUI_INT_SRIGHT);
+}
+
+int4 RuleRightShiftAnd::applyOp(PcodeOp *op,Funcdata &data)
+
+{
+  Varnode *constVn = op->getIn(1);
+  if (!constVn->isConstant()) return 0;
+  Varnode *inVn = op->getIn(0);
+  if (!inVn->isWritten()) return 0;
+  PcodeOp *andOp = inVn->getDef();
+  if (andOp->code() != CPUI_INT_AND) return 0;
+  Varnode *maskVn = andOp->getIn(1);
+  if (!maskVn->isConstant()) return 0;
+
+  int4 sa = (int4)constVn->getOffset();
+  uintb mask = maskVn->getOffset() >> sa;
+  Varnode *rootVn = andOp->getIn(0);
+  uintb full = calc_mask(rootVn->getSize()) >> sa;
+  if (full != mask) return 0;
+  if (rootVn->isFree()) return 0;
+  data.opSetInput(op, rootVn, 0);	// Bypass the INT_AND
+  return 1;
+}
+
 /// \class RuleIntLessEqual
 /// \brief Convert LESSEQUAL to LESS:  `V <= c  =>  V < (c+1)`
 void RuleIntLessEqual::getOpList(vector<uint4> &oplist) const
@@ -3095,6 +3129,141 @@ int4 RuleTrivialShift::applyOp(PcodeOp *op,Funcdata &data)
   return 1;
 }
 
+/// \class RuleSignShift
+/// \brief Normalize sign-bit extraction:  `V >> 0x1f   =>  (V s>> 0x1f) * -1`
+///
+/// A logical shift of the sign-bit gets converted to an arithmetic shift if it is involved
+/// in an arithmetic expression or a comparison.
+void RuleSignShift::getOpList(vector<uint4> &oplist) const
+
+{
+  oplist.push_back(CPUI_INT_RIGHT);
+}
+
+int4 RuleSignShift::applyOp(PcodeOp *op,Funcdata &data)
+
+{
+  uintb val;
+  Varnode *constVn = op->getIn(1);
+  if (!constVn->isConstant()) return 0;
+  val = constVn->getOffset();
+  Varnode *inVn = op->getIn(0);
+  if (val != 8*inVn->getSize() -1) return 0;
+  if (inVn->isFree()) return 0;
+
+  bool doConversion = false;
+  Varnode *outVn = op->getOut();
+  list<PcodeOp *>::const_iterator iter = outVn->beginDescend();
+  while(iter != outVn->endDescend()) {
+    PcodeOp *arithOp = *iter;
+    ++iter;
+    switch(arithOp->code()) {
+      case CPUI_INT_EQUAL:
+      case CPUI_INT_NOTEQUAL:
+	if (arithOp->getIn(1)->isConstant())
+	  doConversion = true;
+	break;
+      case CPUI_INT_ADD:
+      case CPUI_INT_MULT:
+        doConversion = true;
+        break;
+      default:
+        break;
+    }
+    if (doConversion)
+      break;
+  }
+  if (!doConversion)
+    return 0;
+  PcodeOp *shiftOp = data.newOp(2,op->getAddr());
+  data.opSetOpcode(shiftOp, CPUI_INT_SRIGHT);
+  Varnode *uniqueVn = data.newUniqueOut(inVn->getSize(), shiftOp);
+  data.opSetInput(op,uniqueVn,0);
+  data.opSetInput(op,data.newConstant(inVn->getSize(),calc_mask(inVn->getSize())),1);
+  data.opSetOpcode(op, CPUI_INT_MULT);
+  data.opSetInput(shiftOp,inVn,0);
+  data.opSetInput(shiftOp,constVn,1);
+  data.opInsertBefore(shiftOp, op);
+  return 1;
+}
+
+/// \class RuleSignShift
+/// \brief Convert sign-bit test to signed comparison:  `(V s>> 0x1f) != 0   =>  V s< 0`
+void RuleTestSign::getOpList(vector<uint4> &oplist) const
+
+{
+  oplist.push_back(CPUI_INT_SRIGHT);
+}
+
+/// \brief Find INT_EQUAL or INT_NOTEQUAL taking the sign bit as input
+///
+/// Trace the given sign-bit varnode to any comparison operations and pass them
+/// back in the given array.
+/// \param vn is the given sign-bit varnode
+/// \param res is the array for holding the comparison op results
+void RuleTestSign::findComparisons(Varnode *vn,vector<PcodeOp *> &res)
+
+{
+  list<PcodeOp *>::const_iterator iter1;
+  iter1 = vn->beginDescend();
+  while(iter1 != vn->endDescend()) {
+    PcodeOp *op = *iter1;
+    ++iter1;
+    OpCode opc = op->code();
+    if (opc == CPUI_INT_EQUAL || opc == CPUI_INT_NOTEQUAL) {
+      if (op->getIn(1)->isConstant())
+	res.push_back(op);
+    }
+  }
+}
+
+int4 RuleTestSign::applyOp(PcodeOp *op,Funcdata &data)
+
+{
+  uintb val;
+  Varnode *constVn = op->getIn(1);
+  if (!constVn->isConstant()) return 0;
+  val = constVn->getOffset();
+  Varnode *inVn = op->getIn(0);
+  if (val != 8*inVn->getSize() -1) return 0;
+  Varnode *outVn = op->getOut();
+
+  if (inVn->isFree()) return 0;
+  vector<PcodeOp *> compareOps;
+  findComparisons(outVn, compareOps);
+  int4 resultCode = 0;
+  for(int4 i=0;i<compareOps.size();++i) {
+    PcodeOp *compareOp = compareOps[i];
+    Varnode *compVn = compareOp->getIn(0);
+    int4 compSize = compVn->getSize();
+
+    uintb offset = compareOp->getIn(1)->getOffset();
+    int4 sgn;
+    if (offset == 0)
+      sgn = 1;
+    else if (offset == calc_mask(compSize))
+      sgn = -1;
+    else
+      continue;
+    if (compareOp->code() == CPUI_INT_NOTEQUAL)
+      sgn = -sgn;	// Complement the domain
+
+    Varnode *zeroVn = data.newConstant(inVn->getSize(), 0);
+    if (sgn == 1) {
+      data.opSetInput(compareOp, inVn, 1);
+      data.opSetInput(compareOp, zeroVn, 0);
+      data.opSetOpcode(compareOp, CPUI_INT_SLESSEQUAL);
+    }
+    else {
+      data.opSetInput(compareOp, inVn, 0);
+      data.opSetInput(compareOp, zeroVn, 1);
+      data.opSetOpcode(compareOp, CPUI_INT_SLESS);
+    }
+    resultCode = 1;
+  }
+  return resultCode;
+}
+
 /// \class RuleIdentityEl
 /// \brief Collapse operations using identity element:  `V + 0  =>  V`
 ///
@@ -5102,91 +5271,134 @@ Varnode *RuleSLess2Zero::getHiBit(PcodeOp *op)
 }
 
 /// \class RuleSLess2Zero
-/// \brief Simplify INT_SLESS and INT_SLESSEQUAL applied to 0 or -1
+/// \brief Simplify INT_SLESS applied to 0 or -1
 ///
 /// Forms include:
 ///  - `0 s< V * -1  =>  V s< 0`
 ///  - `V * -1 s< 0  =>  0 s< V`
+///  - `-1 s< SUB(V,#hi) => -1 s< V`
+///  - `SUB(V,#hi) s< 0  => V s< 0`
+///  - `-1 s< ~V     => V s< 0`
+///  - `~V s< 0      => -1 s< V`
+///  - `(V & 0xf000) s< 0   =>  V s< 0`
+///  - `-1 s< (V & 0xf000)  =>  -1 s< V
+///  - `CONCAT(V,W) s< 0    =>  V s< 0`
+///  - `-1 s< CONCAT(V,W)   =>  -1 s> V`
 ///
 /// There is a second set of forms where one side of the comparison is
 /// built out of a high and low piece, where the high piece determines the
 /// sign bit:
-///  - `0 s<= (hi + lo)  =>  0 s<= hi`
 ///  - `-1 s< (hi + lo)  =>  -1 s< hi`
 ///  - `(hi + lo) s< 0   =>  hi s< 0`
-///  - `(hi + lo) s<= -1 =>  hi s<= -1`
+///
 void RuleSLess2Zero::getOpList(vector<uint4> &oplist) const
 
 {
   oplist.push_back(CPUI_INT_SLESS);
-  oplist.push_back(CPUI_INT_SLESSEQUAL);
 }
 
 int4 RuleSLess2Zero::applyOp(PcodeOp *op,Funcdata &data)
 
 {
   Varnode *lvn,*rvn,*coeff,*avn;
-  PcodeOp *multop;
+  PcodeOp *feedOp;
+  OpCode feedOpCode;
   lvn = op->getIn(0);
   rvn = op->getIn(1);
 
   if (lvn->isConstant()) {
     if (!rvn->isWritten()) return 0;
     if (lvn->getOffset() == 0) {
-      multop = rvn->getDef();
-      if (multop->code() == CPUI_INT_MULT) {
-	coeff = multop->getIn(1);
+      feedOp = rvn->getDef();
+      feedOpCode = feedOp->code();
+      if (feedOpCode == CPUI_INT_MULT) {
+	coeff = feedOp->getIn(1);
 	if (!coeff->isConstant()) return 0;
 	if (coeff->getOffset() != calc_mask(coeff->getSize())) return 0;
-	avn = multop->getIn(0);
+	avn = feedOp->getIn(0);
 	if (avn->isFree()) return 0;
 	data.opSetInput(op,avn,0);
 	data.opSetInput(op,lvn,1);
 	return 1;
       }
-      else if (op->code() == CPUI_INT_SLESSEQUAL) {
-	Varnode *hibit = getHiBit(multop);
-	if (hibit != (Varnode *)0) { // Test for   0 s<=  (hi ^ lo)
-	  if (hibit->isConstant())
-	    data.opSetInput(op,data.newConstant(hibit->getSize(),hibit->getOffset()),1);
-	  else
-	    data.opSetInput(op,hibit,1);
-	  data.opSetOpcode(op,CPUI_INT_EQUAL);
+    }
+    else if (lvn->getOffset() == calc_mask(lvn->getSize())) {
+      feedOp = rvn->getDef();
+      feedOpCode = feedOp->code();
+      Varnode *hibit = getHiBit(feedOp);
+      if (hibit != (Varnode *) 0) { // Test for -1 s<  (hi ^ lo)
+	if (hibit->isConstant())
+	  data.opSetInput(op, data.newConstant(hibit->getSize(), hibit->getOffset()), 1);
+	else
+	  data.opSetInput(op, hibit, 1);
+	data.opSetOpcode(op, CPUI_INT_EQUAL);
+	data.opSetInput(op, data.newConstant(hibit->getSize(), 0), 0);
+	return 1;
+      }
+      else if (feedOpCode == CPUI_SUBPIECE) {
+	avn = feedOp->getIn(0);
+	if (avn->isFree())
+	  return 0;
+	if (rvn->getSize() + (int4) feedOp->getIn(1)->getOffset() == avn->getSize()) {
+	  // We have -1 s< SUB( avn, #hi )
+	  data.opSetInput(op, avn, 1);
+	  data.opSetInput(op, data.newConstant(avn->getSize(), calc_mask(avn->getSize())), 0);
 	  return 1;
 	}
       }
-    }
-    else if (lvn->getOffset() == calc_mask(lvn->getSize())) {
-      if (op->code() == CPUI_INT_SLESS) {
-	Varnode *hibit = getHiBit(rvn->getDef());
-	if (hibit != (Varnode *)0) { // Test for -1 s<  (hi ^ lo)
-	  if (hibit->isConstant())
-	    data.opSetInput(op,data.newConstant(hibit->getSize(),hibit->getOffset()),1);
-	  else
-	    data.opSetInput(op,hibit,1);
-	  data.opSetOpcode(op,CPUI_INT_EQUAL);
-	  data.opSetInput(op,data.newConstant(hibit->getSize(),0),0);
-	  return 1;
+      else if (feedOpCode == CPUI_INT_NEGATE) {
+	// We have -1 s< ~avn
+	avn = feedOp->getIn(0);
+	if (avn->isFree())
+	  return 0;
+	data.opSetInput(op, avn, 0);
+	data.opSetInput(op, data.newConstant(avn->getSize(), 0), 1);
+	return 1;
+      }
+      else if (feedOpCode == CPUI_INT_AND) {
+	avn = feedOp->getIn(0);
+	if (avn->isFree() || rvn->loneDescend() == (PcodeOp *)0)
+	  return 0;
+
+	Varnode *maskVn = feedOp->getIn(1);
+	if (maskVn->isConstant()) {
+	  uintb mask = maskVn->getOffset();
+	  mask >>= (8 * avn->getSize() - 1);	// Fetch sign-bit
+	  if ((mask & 1) != 0) {
+	    // We have -1 s< avn & 0x8...
+	    data.opSetInput(op, avn, 1);
+	    return 1;
+	  }
 	}
+      }
+      else if (feedOpCode == CPUI_PIECE) {
+	// We have -1 s< CONCAT(V,W)
+	avn = feedOp->getIn(0);		// Most significant piece
+	if (avn->isFree())
+	  return 0;
+	data.opSetInput(op, avn, 1);
+	data.opSetInput(op, data.newConstant(avn->getSize(),calc_mask(avn->getSize())), 0);
+	return 1;
       }
     }
   }
   else if (rvn->isConstant()) {
     if (!lvn->isWritten()) return 0;
     if (rvn->getOffset() == 0) {
-      multop = lvn->getDef();
-      if (multop->code() == CPUI_INT_MULT) {
-	coeff = multop->getIn(1);
+      feedOp = lvn->getDef();
+      feedOpCode = feedOp->code();
+      if (feedOpCode == CPUI_INT_MULT) {
+	coeff = feedOp->getIn(1);
 	if (!coeff->isConstant()) return 0;
 	if (coeff->getOffset() != calc_mask(coeff->getSize())) return 0;
-	avn = multop->getIn(0);
+	avn = feedOp->getIn(0);
 	if (avn->isFree()) return 0;
 	data.opSetInput(op,avn,1);
 	data.opSetInput(op,rvn,0);
 	return 1;
       }
-      else if (op->code() == CPUI_INT_SLESS) {
-	Varnode *hibit = getHiBit(multop);
+      else {
+	Varnode *hibit = getHiBit(feedOp);
 	if (hibit != (Varnode *)0) { // Test for (hi ^ lo) s< 0
 	  if (hibit->isConstant())
 	    data.opSetInput(op,data.newConstant(hibit->getSize(),hibit->getOffset()),0);
@@ -5195,18 +5407,46 @@ int4 RuleSLess2Zero::applyOp(PcodeOp *op,Funcdata &data)
 	  data.opSetOpcode(op,CPUI_INT_NOTEQUAL);
 	  return 1;
 	}
-      }
-    }
-    else if (rvn->getOffset() == calc_mask(rvn->getSize())) {
-      if (op->code() == CPUI_INT_SLESSEQUAL) {
-	Varnode *hibit = getHiBit(lvn->getDef());
-	if (hibit != (Varnode *)0) { // Test for (hi ^ lo) s<= -1
-	  if (hibit->isConstant())
-	    data.opSetInput(op,data.newConstant(hibit->getSize(),hibit->getOffset()),0);
-	  else
-	    data.opSetInput(op,hibit,0);
-	  data.opSetOpcode(op,CPUI_INT_NOTEQUAL);
-	  data.opSetInput(op,data.newConstant(hibit->getSize(),0),1);
+	else if (feedOpCode == CPUI_SUBPIECE) {
+	  avn = feedOp->getIn(0);
+	  if (avn->isFree()) return 0;
+	  if (lvn->getSize() + (int4)feedOp->getIn(1)->getOffset() == avn->getSize()) {
+	    // We have SUB( avn, #hi ) s< 0
+	    data.opSetInput(op,avn,0);
+	    data.opSetInput(op,data.newConstant(avn->getSize(),0),1);
+	    return 1;
+	  }
+	}
+	else if (feedOpCode == CPUI_INT_NEGATE) {
+	  // We have ~avn s< 0
+	  avn = feedOp->getIn(0);
+	  if (avn->isFree()) return 0;
+	  data.opSetInput(op,avn,1);
+	  data.opSetInput(op,data.newConstant(avn->getSize(),calc_mask(avn->getSize())),0);
+	  return 1;
+	}
+	else if (feedOpCode == CPUI_INT_AND) {
+	  avn = feedOp->getIn(0);
+	  if (avn->isFree() || lvn->loneDescend() == (PcodeOp *)0)
+	    return 0;
+	  Varnode *maskVn = feedOp->getIn(1);
+	  if (maskVn->isConstant()) {
+	    uintb mask = maskVn->getOffset();
+	    mask >>= (8 * avn->getSize() - 1);	// Fetch sign-bit
+	    if ((mask & 1) != 0) {
+	      // We have avn & 0x8... s< 0
+	      data.opSetInput(op, avn, 0);
+	      return 1;
+	    }
+	  }
+	}
+	else if (feedOpCode == CPUI_PIECE) {
+	  // We have CONCAT(V,W) s< 0
+	  avn = feedOp->getIn(0);		// Most significant piece
+	  if (avn->isFree())
+	    return 0;
+	  data.opSetInput(op, avn, 0);
+	  data.opSetInput(op, data.newConstant(avn->getSize(), 0), 1);
 	  return 1;
 	}
       }
@@ -5289,6 +5529,7 @@ int4 RuleEqual2Zero::applyOp(PcodeOp *op,Funcdata &data)
 /// Forms include:
 ///  - `V * -1 == c  =>  V == -c`
 ///  - `V + c == d  =>  V == (d-c)`
+///  - `~V == c     =>  V == ~c`
 void RuleEqual2Constant::getOpList(vector<uint4> &oplist) const
 
 {
@@ -5307,19 +5548,24 @@ int4 RuleEqual2Constant::applyOp(PcodeOp *op,Funcdata &data)
   PcodeOp *leftop = lhs->getDef();
   Varnode *a;
   uintb newconst;
-  if (leftop->code() == CPUI_INT_ADD) {
+  OpCode opc = leftop->code();
+  if (opc == CPUI_INT_ADD) {
     Varnode *otherconst = leftop->getIn(1);
     if (!otherconst->isConstant()) return 0;
     newconst = cvn->getOffset() - otherconst->getOffset();
     newconst &= calc_mask(cvn->getSize());
   }
-  else if (leftop->code() == CPUI_INT_MULT) {
+  else if (opc == CPUI_INT_MULT) {
     Varnode *otherconst = leftop->getIn(1);
     if (!otherconst->isConstant()) return 0;
     // The only multiply we transform, is multiply by -1
     if (otherconst->getOffset() != calc_mask(otherconst->getSize())) return 0;
     newconst = cvn->getOffset();
     newconst = (-newconst) & calc_mask(otherconst->getSize());
+  }
+  else if (opc == CPUI_INT_NEGATE) {
+    newconst = cvn->getOffset();
+    newconst = (~newconst) & calc_mask(lhs->getSize());
   }
   else
     return 0;
@@ -6573,6 +6819,35 @@ uintb RuleDivOpt::calcDivisor(uintb n,uint8 y,int4 xsize)
   return (uintb)d;
 }
 
+/// \brief Replace sign-bit extractions from the first given Varnode with the second Varnode
+///
+/// Look for either:
+///  - `V >> 0x1f`
+///  - `V s>> 0x1f`
+///
+/// \param firstVn is the first given Varnode
+/// \param replaceVn is the Varnode to replace it with in each extraction
+/// \param data is the function holding the Varnodes
+void RuleDivOpt::moveSignBitExtraction(Varnode *firstVn,Varnode *replaceVn,Funcdata &data)
+
+{
+  list<PcodeOp *>::const_iterator iter = firstVn->beginDescend();
+  while(iter!=firstVn->endDescend()) {
+    PcodeOp *op = *iter;
+    ++iter;		// Increment before modifying the op
+    OpCode opc = op->code();
+    if (opc == CPUI_INT_RIGHT || opc == CPUI_INT_SRIGHT) {
+      Varnode *constVn = op->getIn(1);
+      if (constVn->isConstant()) {
+	int4 sa = firstVn->getSize() * 8 - 1;
+	if (sa == (int4)constVn->getOffset()) {
+	  data.opSetInput(op,replaceVn,0);
+	}
+      }
+    }
+  }
+}
+
 /// \class RuleDivOpt
 /// \brief Convert INT_MULT and shift forms into INT_DIV or INT_SDIV
 ///
@@ -6618,6 +6893,7 @@ int4 RuleDivOpt::applyOp(PcodeOp *op,Funcdata &data)
     data.opSetInput(op,resVn,0);
     data.opSetInput(op,data.newConstant(4, 0),1);
     op = newop;					// Main transform now changes newop
+    outSize = inVn->getSize();
   }
   if (extOpc == CPUI_INT_ZEXT) { // Unsigned division
     data.opSetInput(op,inVn,0);
@@ -6625,6 +6901,7 @@ int4 RuleDivOpt::applyOp(PcodeOp *op,Funcdata &data)
     data.opSetOpcode(op,CPUI_INT_DIV);
   }
   else {			// Sign division
+    moveSignBitExtraction(op->getOut(), inVn, data);
     PcodeOp *divop = data.newOp(2,op->getAddr());
     data.opSetOpcode(divop,CPUI_INT_SDIV);
     Varnode *newout = data.newUniqueOut(outSize,divop);
@@ -6634,9 +6911,9 @@ int4 RuleDivOpt::applyOp(PcodeOp *op,Funcdata &data)
     // Build the sign value correction
     PcodeOp *sgnop = data.newOp(2,op->getAddr());
     data.opSetOpcode(sgnop,CPUI_INT_SRIGHT);
-    Varnode *sgnvn = data.newUniqueOut(inVn->getSize(),sgnop);
+    Varnode *sgnvn = data.newUniqueOut(outSize,sgnop);
     data.opSetInput(sgnop,inVn,0);
-    data.opSetInput(sgnop,data.newConstant(inVn->getSize(),outSize*8-1),1);
+    data.opSetInput(sgnop,data.newConstant(outSize,outSize*8-1),1);
     data.opInsertBefore(sgnop,op);
     // Add the correction into the division op
     data.opSetInput(op,newout,0);

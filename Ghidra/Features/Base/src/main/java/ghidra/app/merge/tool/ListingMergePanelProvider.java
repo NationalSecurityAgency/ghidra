@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,19 +15,19 @@
  */
 package ghidra.app.merge.tool;
 
-import ghidra.app.util.viewer.listingpanel.ListingPanel;
-import ghidra.framework.plugintool.*;
-
 import java.awt.event.MouseEvent;
 import java.util.List;
 
 import javax.swing.JComponent;
 
-import docking.ActionContext;
-import docking.WindowPosition;
+import docking.*;
 import docking.action.DockingActionIf;
+import docking.actions.PopupActionProvider;
+import ghidra.app.util.viewer.listingpanel.ListingPanel;
+import ghidra.framework.plugintool.*;
 
-public class ListingMergePanelProvider extends ComponentProviderAdapter implements PopupListener {
+public class ListingMergePanelProvider extends ComponentProviderAdapter
+		implements PopupActionProvider {
 	private ListingMergePanel mergePanel;
 
 	public ListingMergePanelProvider(PluginTool tool, Plugin plugin, String owner,
@@ -37,7 +36,7 @@ public class ListingMergePanelProvider extends ComponentProviderAdapter implemen
 		setTitle("Listing Merge Tool");
 		setDefaultWindowPosition(WindowPosition.TOP);
 		this.mergePanel = mergePanel;
-		tool.addPopupListener(this);
+		tool.addPopupActionProvider(this);
 	}
 
 	@Override
@@ -52,10 +51,11 @@ public class ListingMergePanelProvider extends ComponentProviderAdapter implemen
 	}
 
 	void dispose() {
+		tool.removePopupActionProvider(this);
 	}
 
 	@Override
-	public List<DockingActionIf> getPopupActions(ActionContext context) {
+	public List<DockingActionIf> getPopupActions(DockingTool tool, ActionContext context) {
 		ListingPanel resultPanel = mergePanel.getResultPanel();
 		if (resultPanel != null) {
 			return resultPanel.getHeaderActions(getName());

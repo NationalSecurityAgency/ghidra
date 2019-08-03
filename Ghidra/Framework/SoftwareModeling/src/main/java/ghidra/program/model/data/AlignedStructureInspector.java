@@ -26,7 +26,8 @@ import ghidra.util.exception.DuplicateNameException;
 /**
  * <code>AlignedStructureInspector</code> provides a simple instance of a structure 
  * member container used to perform alignment operations without forcing modification
- * of the actual structure. 
+ * of the actual structure.  A wrapper is not used for the flexible array component
+ * which will not be modified by packer.
  */
 public class AlignedStructureInspector extends AlignedStructurePacker {
 
@@ -38,9 +39,6 @@ public class AlignedStructureInspector extends AlignedStructurePacker {
 		List<ReadOnlyComponentWrapper> list = new ArrayList<>();
 		for (DataTypeComponent c : structure.getComponents()) {
 			list.add(new ReadOnlyComponentWrapper(c));
-		}
-		if (structure.hasFlexibleArrayComponent()) {
-			list.add(new ReadOnlyComponentWrapper(structure.getFlexibleArrayComponent()));
 		}
 		return list;
 	}

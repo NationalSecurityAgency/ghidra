@@ -44,8 +44,8 @@ import ghidra.util.task.TaskMonitor;
  */
 public class BowTieLayout extends AbstractVisualGraphLayout<FcgVertex, FcgEdge> {
 
-	protected BowTieLayout(FunctionCallGraph graph) {
-		super(graph);
+	protected BowTieLayout(FunctionCallGraph graph, String name) {
+		super(graph, name);
 	}
 
 	@Override
@@ -58,7 +58,7 @@ public class BowTieLayout extends AbstractVisualGraphLayout<FcgVertex, FcgEdge> 
 					getClass().getSimpleName());
 		}
 
-		BowTieLayout newLayout = new BowTieLayout((FunctionCallGraph) newGraph);
+		BowTieLayout newLayout = new BowTieLayout((FunctionCallGraph) newGraph, getLayoutName());
 		return newLayout;
 	}
 

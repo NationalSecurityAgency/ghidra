@@ -168,6 +168,16 @@ public:
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
 };
+class RuleRightShiftAnd : public Rule {
+public:
+  RuleRightShiftAnd(const string &g) : Rule(g, 0, "rightshiftand") {}	///< Constructor
+  virtual Rule *clone(const ActionGroupList &grouplist) const {
+    if (!grouplist.contains(getGroup())) return (Rule *)0;
+    return new RuleRightShiftAnd(getGroup());
+  }
+  virtual void getOpList(vector<uint4> &oplist) const;
+  virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+};
 class RuleIntLessEqual : public Rule {
 public:
   RuleIntLessEqual(const string &g) : Rule(g, 0, "intlessequal") {}	///< Constructor
@@ -541,6 +551,27 @@ public:
   virtual Rule *clone(const ActionGroupList &grouplist) const {
     if (!grouplist.contains(getGroup())) return (Rule *)0;
     return new RuleTrivialShift(getGroup());
+  }
+  virtual void getOpList(vector<uint4> &oplist) const;
+  virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+};
+class RuleSignShift : public Rule {
+public:
+  RuleSignShift(const string &g) : Rule(g, 0, "signshift") {}		///< Constructor
+  virtual Rule *clone(const ActionGroupList &grouplist) const {
+    if (!grouplist.contains(getGroup())) return (Rule *)0;
+    return new RuleSignShift(getGroup());
+  }
+  virtual void getOpList(vector<uint4> &oplist) const;
+  virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+};
+class RuleTestSign : public Rule {
+  void findComparisons(Varnode *vn,vector<PcodeOp *> &res);
+public:
+  RuleTestSign(const string &g) : Rule(g, 0, "testsign") {}		///< Constructor
+  virtual Rule *clone(const ActionGroupList &grouplist) const {
+    if (!grouplist.contains(getGroup())) return (Rule *)0;
+    return new RuleTestSign(getGroup());
   }
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
@@ -1109,6 +1140,7 @@ public:
 
 class RuleDivOpt : public Rule {
   static uintb calcDivisor(uintb n,uint8 y,int4 xsize);		///< Calculate the divisor
+  static void moveSignBitExtraction(Varnode *firstVn,Varnode *replaceVn,Funcdata &data);
 public:
   RuleDivOpt(const string &g) : Rule( g, 0, "divopt") {}	///< Constructor
   virtual Rule *clone(const ActionGroupList &grouplist) const {

@@ -223,9 +223,10 @@ public class DyldCacheProgramBuilder extends MachoProgramBuilder {
 		// easier
 		monitor.setMessage("Parsing DYLIB's...");
 		monitor.initialize(dyldCacheHeader.getImageInfos().size());
-		List<DyldCacheMachoInfo> infoList = new ArrayList<>(dyldCacheHeader.getImageInfos().size());
+		TreeSet<DyldCacheMachoInfo> infoSet =
+			new TreeSet<>((a, b) -> a.headerAddr.compareTo(b.headerAddr));
 		for (DyldCacheImageInfo dyldCacheImageInfo : dyldCacheHeader.getImageInfos()) {
-			infoList.add(new DyldCacheMachoInfo(provider,
+			infoSet.add(new DyldCacheMachoInfo(provider,
 				dyldCacheImageInfo.getAddress() - dyldCacheHeader.getBaseAddress(),
 				space.getAddress(dyldCacheImageInfo.getAddress()), dyldCacheImageInfo.getPath()));
 			monitor.checkCanceled();
@@ -234,8 +235,8 @@ public class DyldCacheProgramBuilder extends MachoProgramBuilder {
 
 		// Markup DyldCache Mach-O headers 
 		monitor.setMessage("Marking up DYLIB headers...");
-		monitor.initialize(infoList.size());
-		for (DyldCacheMachoInfo info : infoList) {
+		monitor.initialize(infoSet.size());
+		for (DyldCacheMachoInfo info : infoSet) {
 			info.markupHeaders();
 			monitor.checkCanceled();
 			monitor.incrementProgress(1);
@@ -243,8 +244,8 @@ public class DyldCacheProgramBuilder extends MachoProgramBuilder {
 
 		// Add DyldCache Mach-O's to program tree
 		monitor.setMessage("Adding DYLIB's to program tree...");
-		monitor.initialize(infoList.size());
-		Iterator<DyldCacheMachoInfo> iter = infoList.iterator();
+		monitor.initialize(infoSet.size());
+		Iterator<DyldCacheMachoInfo> iter = infoSet.iterator();
 		if (iter.hasNext()) {
 			DyldCacheMachoInfo curr = iter.next();
 			do {
@@ -259,8 +260,8 @@ public class DyldCacheProgramBuilder extends MachoProgramBuilder {
 
 		// Process DyldCache DYLIB memory blocks.
 		monitor.setMessage("Processing DYLIB memory blocks...");
-		monitor.initialize(infoList.size());
-		for (DyldCacheMachoInfo info : infoList) {
+		monitor.initialize(infoSet.size());
+		for (DyldCacheMachoInfo info : infoSet) {
 			info.processMemoryBlocks();
 			monitor.checkCanceled();
 			monitor.incrementProgress(1);

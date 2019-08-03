@@ -17,6 +17,8 @@ package docking.action;
 
 import java.util.List;
 
+import docking.DockingTool;
+
 /**
  * An interface for objects (really Components) to implement that signals they provide actions 
  * for the Docking environment.  This interface will be called when the implementor is the source
@@ -25,8 +27,12 @@ import java.util.List;
  * As an example, a JTable that wishes to provide popup menu actions can implement this interface.
  * When the user right-clicks on said table, then Docking system will ask this object for its
  * actions.  Further, in this example, the actions given will be inserted into the popup menu
- * that is shown. 
+ * that is shown.
+ * 
+ * @deprecated use {@link DockingTool}
  */
+// Note: this API is not likely used by forward-facing clients and can be removed in the next release
+@Deprecated(since = "9.1", forRemoval = true)
 public interface DockingActionProviderIf {
 
 	/**

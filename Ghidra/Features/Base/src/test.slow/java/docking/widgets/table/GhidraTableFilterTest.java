@@ -51,7 +51,7 @@ public class GhidraTableFilterTest extends AbstractGhidraHeadedIntegrationTest {
 		filteredModel = filterPanel.getTableFilterModel();
 		table.setAutoLookupColumn(4);
 
-		winMgr = new DockingWindowManager(new DummyTool(), null, null);
+		winMgr = new DockingWindowManager(new DummyTool(), null);
 		winMgr.addComponent(new TestTableComponentProvider());
 		winMgr.setVisible(true);
 	}

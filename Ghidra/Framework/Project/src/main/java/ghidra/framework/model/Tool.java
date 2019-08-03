@@ -57,13 +57,6 @@ public interface Tool extends DockingTool, ToolListener {
 	public void exit();
 
 	/**
-	 * Suggests the tool to attempt to close().  This will be as though the user
-	 * selected the close menu option on the tool or hit the closeWindow x button in
-	 * the upper corner (Windows systems).
-	 */
-	public void close();
-
-	/**
 	 * Can this tool be closed?
 	 * @param isExiting true if all of Ghidra is closing, false if just this tool is closing.
 	 * @return true if the tool is in a state that it can be closed.

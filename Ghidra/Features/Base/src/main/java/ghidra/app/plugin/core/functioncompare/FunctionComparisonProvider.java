@@ -21,8 +21,10 @@ import java.util.*;
 import javax.swing.Icon;
 
 import docking.ActionContext;
+import docking.DockingTool;
 import docking.action.DockingAction;
 import docking.action.DockingActionIf;
+import docking.actions.PopupActionProvider;
 import docking.widgets.fieldpanel.internal.FieldPanelCoordinator;
 import ghidra.app.util.viewer.listingpanel.ListingCodeComparisonPanel;
 import ghidra.app.util.viewer.listingpanel.ListingPanel;
@@ -37,7 +39,7 @@ import resources.ResourceManager;
 /**
  * This is the dockable provider that displays a FunctionComparisonPanel.
  */
-public class FunctionComparisonProvider extends ComponentProviderAdapter implements PopupListener {
+public class FunctionComparisonProvider extends ComponentProviderAdapter implements PopupActionProvider {
 
 	private static final String HELP_TOPIC = "FunctionComparison";
 	private static final Icon ICON = ResourceManager.loadImage("images/page_white_c.png");
@@ -120,7 +122,7 @@ public class FunctionComparisonProvider extends ComponentProviderAdapter impleme
 		setTransient();
 		setTabText(functionComparisonPanel);
 		addSpecificCodeComparisonActions();
-		tool.addPopupListener(this);
+		tool.addPopupActionProvider(this);
 		setHelpLocation(new HelpLocation(HELP_TOPIC, "Function Comparison"));
 	}
 
@@ -178,7 +180,7 @@ public class FunctionComparisonProvider extends ComponentProviderAdapter impleme
 
 	@Override
 	public void removeFromTool() {
-		tool.removePopupListener(this);
+		tool.removePopupActionProvider(this);
 
 		super.removeFromTool();
 	}
@@ -220,7 +222,7 @@ public class FunctionComparisonProvider extends ComponentProviderAdapter impleme
 	}
 
 	@Override
-	public List<DockingActionIf> getPopupActions(ActionContext context) {
+	public List<DockingActionIf> getPopupActions(DockingTool tool, ActionContext context) {
 		if (context.getComponentProvider() == this) {
 			ListingCodeComparisonPanel dualListingPanel =
 				functionComparisonPanel.getDualListingPanel();

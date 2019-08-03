@@ -779,11 +779,32 @@ public class SleighCompile extends SleighBase {
 		return true;
 	}
 
+	private int bitsConsumedByUnitSize(int ws) {
+		int cnt = 0;
+		for (int test = ws - 1; test != 0; test >>= 1) {
+			++cnt;
+		}
+		return cnt;
+	}
+
 	public void newSpace(Location location, SpaceQuality qual) {
 		entry("newSpace", location, qual);
 		if (qual.size == 0) {
 			reportError(location, "Space definition missing size attribute");
 			return;
+		}
+
+		if (qual.size <= 0 || qual.size > 8) {
+			throw new SleighError("Space " + qual.name + " has unsupported size: " + 16, location);
+		}
+		if (qual.wordsize < 1 || qual.wordsize > 8) {
+			throw new SleighError(
+				"Space " + qual.name + " has unsupported wordsize: " + qual.wordsize, location);
+		}
+		int addressBits = bitsConsumedByUnitSize(qual.wordsize) + (8 * qual.size);
+		if (addressBits > 64) {
+			throw new SleighError("Space " + qual.name + " has unsupported dimensions, requires " +
+				addressBits + "-bits (limit is 64-bits)", location);
 		}
 
 		int delay = (qual.type == space_class.register_space) ? 0 : 1;
@@ -815,7 +836,7 @@ public class SleighCompile extends SleighBase {
 		alignment = val;
 	}
 
-	public void defineVarnodes(SpaceSymbol spacesym, long off, long size, VectorSTL<String> names,
+	public void defineVarnodes(SpaceSymbol spacesym, long off, int size, VectorSTL<String> names,
 			VectorSTL<Location> locations) {
 		entry("defineVarnodes", spacesym, off, size, names, locations);
 		AddrSpace spc = spacesym.getSpace();
@@ -823,7 +844,7 @@ public class SleighCompile extends SleighBase {
 		for (int i = 0; i < names.size(); ++i) {
 			Location location = locations.get(i);
 			if (!"_".equals(names.get(i))) {
-				addSymbol(new VarnodeSymbol(location, names.get(i), spc, myoff, (int) size));
+				addSymbol(new VarnodeSymbol(location, names.get(i), spc, myoff, size));
 			}
 			myoff += size;
 		}
@@ -1537,7 +1558,8 @@ public class SleighCompile extends SleighBase {
 		entry("buildMacro", sym, rtl);
 		String errstring = checkSymbols(symtab.getCurrentScope());
 		if (errstring.length() != 0) {
-			reportError(sym.getLocation(), " in definition of macro " + sym.getName() + ":" + errstring);
+			reportError(sym.getLocation(),
+				" in definition of macro " + sym.getName() + ":" + errstring);
 			return;
 		}
 		if (!expandMacros(rtl)) {

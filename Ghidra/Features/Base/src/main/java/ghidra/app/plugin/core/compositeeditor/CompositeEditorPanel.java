@@ -557,6 +557,7 @@ public abstract class CompositeEditorPanel extends JPanel
 			setVisible(false);
 		}
 		model.removeCompositeEditorModelListener(this);
+		table.dispose();
 	}
 
 	private void createTable() {

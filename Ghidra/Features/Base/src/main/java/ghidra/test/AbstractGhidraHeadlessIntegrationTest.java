@@ -15,7 +15,7 @@
  */
 package ghidra.test;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertNotNull;
 
 import java.io.File;
 import java.io.IOException;
@@ -55,7 +55,7 @@ public abstract class AbstractGhidraHeadlessIntegrationTest extends AbstractDock
 	public static final String PROJECT_NAME = createProjectName();
 
 	private static String createProjectName() {
-		File repoDirectory = TestApplicationUtils.getRepoContainerDirectory();
+		File repoDirectory = TestApplicationUtils.getInstallationDirectory();
 		return repoDirectory.getName() + PROJECT_NAME_SUFFIX;
 	}
 
