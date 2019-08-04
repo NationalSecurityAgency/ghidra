@@ -327,7 +327,8 @@ task parallelCombinedTestReport(type: TestReport) { t ->
  *********************************************************************************/
 task unitTestReport(type: TestReport) { t ->
 	group "test"
-	destinationDir = file("$reportDir/unitTests")
+    description "Run unit tests and save HTML report."
+    destinationDir = file("$reportDir/unitTests")
 	outputs.upToDateWhen {false}
 }
 
@@ -339,7 +340,8 @@ task unitTestReport(type: TestReport) { t ->
  *********************************************************************************/
 task integrationTestReport(type: TestReport) { t ->
 	group "test"
-	destinationDir = file("$reportDir/integrationTests")
+    description "Run unit integrtion tests and save HTML report."
+    destinationDir = file("$reportDir/integrationTests")
 	outputs.upToDateWhen {false}
 }
 
