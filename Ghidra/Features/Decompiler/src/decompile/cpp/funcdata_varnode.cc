@@ -479,6 +479,36 @@ void Funcdata::setHighLevel(void)
     assignHigh(*iter);
 }
 
+
+SegmentOp* Funcdata::canSegmentizeFarPtr(Datatype* typ, bool locked, int4 sz)
+{
+  if ((typ->getMetatype() == TYPE_PTR ||
+    typ->getMetatype() == TYPE_CODE) && locked) {
+    Architecture* glb = getArch();
+    AddrSpace* rspc = glb->getDefaultSpace();
+    bool arenearpointers = glb->hasNearPointers(rspc);
+    if (arenearpointers && rspc->getAddrSize() == sz)
+      return glb->userops.getSegmentOp(rspc->getIndex());
+    }
+  return (SegmentOp*)0;
+}
+
+Varnode* Funcdata::segmentizeFarPtr(int4 sz, PcodeOp* op, Varnode* segvn, Varnode* offvn)
+{
+  Architecture* glb = getArch();
+  AddrSpace* rspc = glb->getDefaultSpace();
+  SegmentOp* segdef = glb->userops.getSegmentOp(rspc->getIndex());
+  PcodeOp* newop = newOp(3, op->getAddr());
+  newUniqueOut(sz, newop);
+  opSetOpcode(newop, CPUI_CALLOTHER);
+  //endianness could matter here - e.g. CALLF addr16 on x86 uses segment(*:2 (ptr+2),*:2 ptr)
+  opSetInput(newop, newConstant(4, segdef->getIndex()), 0);
+  opSetInput(newop, segvn, 1); //need to check size of segment
+  opSetInput(newop, offvn, 2); //need to check size of offset
+  opInsertBefore(newop, op);
+  return newop->getOut();
+}
+
 /// \brief Create two new Varnodes which split the given Varnode
 ///
 /// Attributes are copied from the original into the split pieces if appropriate
