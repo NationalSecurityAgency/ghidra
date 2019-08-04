@@ -1262,10 +1262,15 @@ void ActionFuncLink::funcLinkOutput(FuncCallSpecs *fc,Funcdata &data)
       data.newVarnodeOut(sz,addr,fc->getOp());
       SegmentOp* segdef = data.canSegmentizeFarPtr(outparam->getType(),
         outparam->isTypeLocked(), sz);
-	if (segdef != (SegmentOp*)0) {
-	  data.segmentizeFarPtr(sz, fc->getOp(),
-	    data.newVarnode(segdef->getBaseSize(), addr + segdef->getInnerSize()),
-	    data.newVarnode(segdef->getInnerSize(), addr), fc->getOp()->getOut());
+      if (segdef != (SegmentOp*)0) {
+	  PcodeOp* op = data.newOp(1, fc->getOp()->getAddr());
+	  data.opSetOpcode(op, CPUI_COPY); //must because of join spaces
+	  data.newUniqueOut(sz, op);
+	  data.opSetInput(op, fc->getOp()->getOut(), 0);
+	  data.opInsertAfter(op, fc->getOp());
+	  data.segmentizeFarPtr(sz, op,
+	    data.newVarnode(segdef->getBaseSize(), op->getOut()->getAddr() + segdef->getInnerSize()),
+	    data.newVarnode(segdef->getInnerSize(), op->getOut()->getAddr()), data.newVarnode(sz, addr));
       }
       VarnodeData vdata;
       OpCode res = fc->assumedOutputExtension(addr,sz,vdata);
