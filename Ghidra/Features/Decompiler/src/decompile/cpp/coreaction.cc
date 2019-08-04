@@ -1212,14 +1212,13 @@ void ActionFuncLink::funcLinkInput(FuncCallSpecs *fc,Funcdata &data)
       AddrSpace *spc = param->getAddress().getSpace();
       uintb off = param->getAddress().getOffset();
       int4 sz = param->getSize();
+      SegmentOp* segdef = data.canSegmentizeFarPtr(param->getType(), param->isTypeLocked(), sz);
       if (spc->getType() == IPTR_SPACEBASE) { // Param is stack relative
 	Varnode* loadval;
-	SegmentOp* segdef = data.canSegmentizeFarPtr(param->getType(), param->isTypeLocked(), sz);
-	if (segdef != (SegmentOp*)0)
-	  loadval = data.segmentizeFarPtr(sz, op,
-	    data.opStackLoad(spc, off + segdef->getInnerSize(),
-	      segdef->getBaseSize(), op, (Varnode*)0, false),
-	    data.opStackLoad(spc, off, segdef->getInnerSize(), op, (Varnode*)0, false));
+	if (segdef != (SegmentOp*)0) loadval = data.segmentizeFarPtr(sz, op,
+	  data.opStackLoad(spc, off + segdef->getInnerSize(),
+	    segdef->getBaseSize(), op, (Varnode*)0, false),
+	  data.opStackLoad(spc, off, segdef->getInnerSize(), op, (Varnode*)0, false), (Varnode*)0);
 	else loadval = data.opStackLoad(spc, off, sz, op, (Varnode*)0, false);
 	data.opInsertInput(op,loadval,op->numInput());
 	if (!setplaceholder) {
@@ -1227,9 +1226,12 @@ void ActionFuncLink::funcLinkInput(FuncCallSpecs *fc,Funcdata &data)
 	  loadval->setSpacebasePlaceholder();
 	  spacebase = (AddrSpace *)0;	// With a locked stack parameter, we don't need a stackplaceholder
 	}
-      }
-      else
-	data.opInsertInput(op,data.newVarnode(param->getSize(),param->getAddress()),op->numInput());
+      } else if (segdef != (SegmentOp*)0) {
+	data.opInsertInput(op, data.segmentizeFarPtr(sz, op,
+	data.newVarnode(segdef->getBaseSize(), Address(spc, off + segdef->getInnerSize())),
+	data.newVarnode(segdef->getInnerSize(), param->getAddress()), (Varnode*)0), op->numInput());
+      } else
+        data.opInsertInput(op,data.newVarnode(param->getSize(),param->getAddress()),op->numInput());
     }
   }
   if (spacebase != (AddrSpace *)0) {	// If we need it, create the stackplaceholder
@@ -1258,6 +1260,13 @@ void ActionFuncLink::funcLinkOutput(FuncCallSpecs *fc,Funcdata &data)
       int4 sz = outparam->getSize();
       Address addr = outparam->getAddress();
       data.newVarnodeOut(sz,addr,fc->getOp());
+      SegmentOp* segdef = data.canSegmentizeFarPtr(outparam->getType(),
+        outparam->isTypeLocked(), sz);
+	if (segdef != (SegmentOp*)0) {
+	  data.segmentizeFarPtr(sz, fc->getOp(),
+	    data.newVarnode(segdef->getBaseSize(), addr + segdef->getInnerSize()),
+	    data.newVarnode(segdef->getInnerSize(), addr), fc->getOp()->getOut());
+      }
       VarnodeData vdata;
       OpCode res = fc->assumedOutputExtension(addr,sz,vdata);
       if (res == CPUI_PIECE) {		// Pick an extension based on type
