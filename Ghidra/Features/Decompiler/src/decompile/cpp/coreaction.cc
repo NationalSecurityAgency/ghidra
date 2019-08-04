@@ -1214,23 +1214,13 @@ void ActionFuncLink::funcLinkInput(FuncCallSpecs *fc,Funcdata &data)
       int4 sz = param->getSize();
       if (spc->getType() == IPTR_SPACEBASE) { // Param is stack relative
 	Varnode* loadval;
-	if ((param->getType()->getMetatype() == TYPE_PTR ||
-	  param->getType()->getMetatype() == TYPE_CODE) && param->isTypeLocked()) {
-	  Architecture* glb = data.getArch();
-	  AddrSpace* rspc = glb->getDefaultSpace();
-	  bool arenearpointers = glb->hasNearPointers(rspc);
-	  if (arenearpointers && rspc->getAddrSize() == param->getSize()) {
-	    SegmentOp* segdef = glb->userops.getSegmentOp(rspc->getIndex());
-	    PcodeOp* newop = data.newOp(3, op->getAddr());
-	    data.newUniqueOut(param->getSize(), newop);
-	    data.opSetOpcode(newop, CPUI_CALLOTHER);
-	    data.opSetInput(newop, data.newConstant(4, segdef->getIndex()), 0);
-	    data.opSetInput(newop, data.opStackLoad(spc, off + segdef->getBaseSize(), segdef->getInnerSize(), op, (Varnode*)0, false), 1); //need to check size of segment
-	    data.opSetInput(newop, data.opStackLoad(spc, off, segdef->getBaseSize(), op, (Varnode*)0, false), 2); //need to check size of offset
-	    data.opInsertBefore(newop, op);
-	    loadval = newop->getOut();
-	  } else loadval = data.opStackLoad(spc, off, sz, op, (Varnode*)0, false);
-	} else loadval = data.opStackLoad(spc, off, sz, op, (Varnode*)0, false);
+	SegmentOp* segdef = data.canSegmentizeFarPtr(param->getType(), param->isTypeLocked(), sz);
+	if (segdef != (SegmentOp*)0)
+	  loadval = data.segmentizeFarPtr(sz, op,
+	    data.opStackLoad(spc, off + segdef->getInnerSize(),
+	      segdef->getBaseSize(), op, (Varnode*)0, false),
+	    data.opStackLoad(spc, off, segdef->getInnerSize(), op, (Varnode*)0, false));
+	else loadval = data.opStackLoad(spc, off, sz, op, (Varnode*)0, false);
 	data.opInsertInput(op,loadval,op->numInput());
 	if (!setplaceholder) {
 	  setplaceholder = true;
