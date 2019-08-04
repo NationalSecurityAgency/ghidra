@@ -493,19 +493,20 @@ SegmentOp* Funcdata::canSegmentizeFarPtr(Datatype* typ, bool locked, int4 sz)
   return (SegmentOp*)0;
 }
 
-Varnode* Funcdata::segmentizeFarPtr(int4 sz, PcodeOp* op, Varnode* segvn, Varnode* offvn)
+Varnode* Funcdata::segmentizeFarPtr(int4 sz, PcodeOp* op,
+  Varnode* segvn, Varnode* offvn, Varnode* outvn)
 {
   Architecture* glb = getArch();
   AddrSpace* rspc = glb->getDefaultSpace();
   SegmentOp* segdef = glb->userops.getSegmentOp(rspc->getIndex());
   PcodeOp* newop = newOp(3, op->getAddr());
-  newUniqueOut(sz, newop);
+  outvn == (Varnode*)0 ? newUniqueOut(sz, newop) : opSetOutput(op, outvn);
   opSetOpcode(newop, CPUI_CALLOTHER);
   //endianness could matter here - e.g. CALLF addr16 on x86 uses segment(*:2 (ptr+2),*:2 ptr)
   opSetInput(newop, newConstant(4, segdef->getIndex()), 0);
   opSetInput(newop, segvn, 1); //need to check size of segment
   opSetInput(newop, offvn, 2); //need to check size of offset
-  opInsertBefore(newop, op);
+  outvn == (Varnode*)0 ? opInsertBefore(newop, op) : opInsertAfter(newop, op);
   return newop->getOut();
 }
 
