@@ -25,7 +25,7 @@ dependencies {
 		}	
 	}
 
-
+	compile project(path: ':GhidraServer')
 
 	// some tests use classes in Base/src/test and test.slow
 	testCompile project(path: ':Base', configuration: 'testArtifacts')
