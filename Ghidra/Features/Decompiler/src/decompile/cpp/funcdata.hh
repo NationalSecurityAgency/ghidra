@@ -370,8 +370,6 @@ public:
   }
   ParamActive *getActiveOutput(void) const { return activeoutput; }	///< Get the \e return prototype recovery object
   void setHighLevel(void);					///< Turn on HighVariable objects for all Varnodes
-  SegmentOp* canSegmentizeFarPtr(Datatype* typ, bool locked, int4 sz);
-  Varnode* segmentizeFarPtr(int4 sz, PcodeOp* op, Varnode* segvn, Varnode* offvn, Varnode* outvn);
   void clearDeadVarnodes(void);					///< Delete any dead Varnodes
   void calcNZMask(void);					///< Calculate \e non-zero masks for all Varnodes
   void clearDeadOps(void) { obank.destroyDead(); }		///< Delete any dead PcodeOps
