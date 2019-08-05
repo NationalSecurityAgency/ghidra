@@ -86,6 +86,9 @@ task pcodeTest (type: Test) { t ->
 rootProject.unitTestReport {
 	reportOn this.project.test
 }
+rootProject.integrationTestReport {
+	reportOn this.project.integrationTest
+}
 rootProject.pcodeTestReport {
 	reportOn this.project.pcodeTest
 }
