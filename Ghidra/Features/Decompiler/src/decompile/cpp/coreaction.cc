@@ -1212,24 +1212,14 @@ void ActionFuncLink::funcLinkInput(FuncCallSpecs *fc,Funcdata &data)
       AddrSpace *spc = param->getAddress().getSpace();
       uintb off = param->getAddress().getOffset();
       int4 sz = param->getSize();
-      SegmentOp* segdef = data.canSegmentizeFarPtr(param->getType(), param->isTypeLocked(), sz);
       if (spc->getType() == IPTR_SPACEBASE) { // Param is stack relative
-	Varnode* loadval;
-	if (segdef != (SegmentOp*)0) loadval = data.segmentizeFarPtr(sz, op,
-	  data.opStackLoad(spc, off + segdef->getInnerSize(),
-	    segdef->getBaseSize(), op, (Varnode*)0, false),
-	  data.opStackLoad(spc, off, segdef->getInnerSize(), op, (Varnode*)0, false), (Varnode*)0);
-	else loadval = data.opStackLoad(spc, off, sz, op, (Varnode*)0, false);
+	Varnode* loadval = data.opStackLoad(spc, off, sz, op, (Varnode*)0, false);
 	data.opInsertInput(op,loadval,op->numInput());
 	if (!setplaceholder) {
 	  setplaceholder = true;
 	  loadval->setSpacebasePlaceholder();
 	  spacebase = (AddrSpace *)0;	// With a locked stack parameter, we don't need a stackplaceholder
 	}
-      } else if (segdef != (SegmentOp*)0) {
-	data.opInsertInput(op, data.segmentizeFarPtr(sz, op,
-	data.newVarnode(segdef->getBaseSize(), Address(spc, off + segdef->getInnerSize())),
-	data.newVarnode(segdef->getInnerSize(), param->getAddress()), (Varnode*)0), op->numInput());
       } else
         data.opInsertInput(op,data.newVarnode(param->getSize(),param->getAddress()),op->numInput());
     }
@@ -1260,18 +1250,6 @@ void ActionFuncLink::funcLinkOutput(FuncCallSpecs *fc,Funcdata &data)
       int4 sz = outparam->getSize();
       Address addr = outparam->getAddress();
       data.newVarnodeOut(sz,addr,fc->getOp());
-      SegmentOp* segdef = data.canSegmentizeFarPtr(outparam->getType(),
-        outparam->isTypeLocked(), sz);
-      if (segdef != (SegmentOp*)0) {
-	  PcodeOp* op = data.newOp(1, fc->getOp()->getAddr());
-	  data.opSetOpcode(op, CPUI_COPY); //must because of join spaces
-	  data.newUniqueOut(sz, op);
-	  data.opSetInput(op, fc->getOp()->getOut(), 0);
-	  data.opInsertAfter(op, fc->getOp());
-	  data.segmentizeFarPtr(sz, op,
-	    data.newVarnode(segdef->getBaseSize(), op->getOut()->getAddr() + segdef->getInnerSize()),
-	    data.newVarnode(segdef->getInnerSize(), op->getOut()->getAddr()), data.newVarnode(sz, addr));
-      }
       VarnodeData vdata;
       OpCode res = fc->assumedOutputExtension(addr,sz,vdata);
       if (res == CPUI_PIECE) {		// Pick an extension based on type
@@ -4303,6 +4281,80 @@ int4 ActionInferTypes::apply(Funcdata &data)
     }
     return 0;
   }
+	
+  if (localcount == 0) {
+	  Datatype* ct;
+	  Varnode* vn;
+	  VarnodeLocSet::const_iterator iter;
+
+	  for (iter = data.beginLoc(); iter != data.endLoc(); ++iter) {
+		  vn = *iter;
+		  if (vn->isAnnotation()) continue;
+		  if ((!vn->isWritten()) && (vn->hasNoDescend())) continue;
+		  ct = vn->getLocalType();
+		  SegmentOp* segdef = (SegmentOp*)0;
+		  if ((ct->getMetatype() == TYPE_PTR ||
+			  ct->getMetatype() == TYPE_CODE) && vn->isTypeLock()) {
+			  Architecture* glb = data.getArch();
+			  AddrSpace* rspc = glb->getDefaultSpace();
+			  bool arenearpointers = glb->hasNearPointers(rspc);
+			  if (arenearpointers && rspc->getAddrSize() == vn->getSize())
+				  segdef = glb->userops.getSegmentOp(rspc->getIndex());
+		  }
+		  //need to go through every single time this varnode is written to
+		  if (segdef != (SegmentOp*)0 && vn->getDef() != (PcodeOp*)0 &&
+			  vn->getDef()->code() != CPUI_SEGMENTOP && vn->getDef()->code() != CPUI_CALLOTHER) {
+			  iter--;
+			  PcodeOp* segroot = vn->getDef();
+			  Varnode* outvn = data.newUnique(vn->getSize());
+			  data.opSetOutput(segroot, outvn);
+			  PcodeOp* piece1 = data.newOp(2, segroot->getAddr());
+			  data.opSetOpcode(piece1, CPUI_SUBPIECE);
+			  Varnode* vn1 = data.newUniqueOut(segdef->getBaseSize(), piece1);
+			  data.opSetInput(piece1, outvn, 0);
+			  data.opSetInput(piece1, data.newConstant(outvn->getSize(), segdef->getInnerSize()), 1);
+			  data.opInsertAfter(piece1, segroot);
+			  PcodeOp* piece2 = data.newOp(2, segroot->getAddr());
+			  data.opSetOpcode(piece2, CPUI_SUBPIECE);
+			  Varnode* vn2 = data.newUniqueOut(segdef->getInnerSize(), piece2);
+			  data.opSetInput(piece2, outvn, 0);
+			  data.opSetInput(piece2, data.newConstant(outvn->getSize(), 0), 1);
+			  data.opInsertAfter(piece2, piece1);
+			  PcodeOp* newop = data.newOp(3, segroot->getAddr());
+			  data.opSetOutput(newop, vn);
+			  data.opSetOpcode(newop, CPUI_CALLOTHER);
+			  //endianness could matter here - e.g. CALLF addr16 on x86 uses segment(*:2 (ptr+2),*:2 ptr)
+			  data.opSetInput(newop, data.newConstant(4, segdef->getIndex()), 0);
+			  data.opSetInput(newop, vn1, 1); //need to check size of segment
+			  data.opSetInput(newop, vn2, 2); //need to check size of offset
+			  data.opInsertAfter(newop, piece2);
+			  
+			  segroot = vn->getDef();
+			  vector<Varnode*> bindlist;
+			  bindlist.push_back((Varnode*)0);
+			  bindlist.push_back((Varnode*)0);
+			  if (!segdef->unify(data, segroot, bindlist)) {
+				  ostringstream err;
+				  err << "Segment op in wrong form at ";
+				  segroot->getAddr().printRaw(err);
+				  throw LowlevelError(err.str());
+			  }
+
+			  if (segdef->getNumVariableTerms() == 1)
+				  bindlist[1] = data.newConstant(4, 0);
+			  // Redefine the op as a segmentop
+			  data.opSetOpcode(segroot, CPUI_SEGMENTOP);
+			  data.opSetInput(segroot, data.newVarnodeSpace(segdef->getSpace()), 0);
+			  data.opSetInput(segroot, bindlist[1], 1);
+			  data.opSetInput(segroot, bindlist[0], 2);
+			  for (int4 j = segroot->numInput() - 1; j > 2; --j) // Remove anything else
+				  data.opRemoveInput(segroot, j);
+
+			  iter++;
+		  }
+	  }
+  }	
+	
   buildLocaltypes(data);	// Set up initial types (based on local info)
   for(iter=data.beginLoc();iter!=data.endLoc();++iter) {
     vn = *iter;
