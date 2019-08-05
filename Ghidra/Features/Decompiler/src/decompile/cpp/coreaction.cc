@@ -1213,7 +1213,7 @@ void ActionFuncLink::funcLinkInput(FuncCallSpecs *fc,Funcdata &data)
       uintb off = param->getAddress().getOffset();
       int4 sz = param->getSize();
       if (spc->getType() == IPTR_SPACEBASE) { // Param is stack relative
-	Varnode *loadval = data.opStackLoad(spc, off, sz, op, (Varnode*)0, false);
+	Varnode *loadval = data.opStackLoad(spc,off,sz,op,(Varnode *)0,false);
 	data.opInsertInput(op,loadval,op->numInput());
 	if (!setplaceholder) {
 	  setplaceholder = true;
@@ -1222,7 +1222,7 @@ void ActionFuncLink::funcLinkInput(FuncCallSpecs *fc,Funcdata &data)
 	}
       }
       else
-       data.opInsertInput(op,data.newVarnode(param->getSize(),param->getAddress()),op->numInput());
+	data.opInsertInput(op,data.newVarnode(param->getSize(),param->getAddress()),op->numInput());
     }
   }
   if (spacebase != (AddrSpace *)0) {	// If we need it, create the stackplaceholder
