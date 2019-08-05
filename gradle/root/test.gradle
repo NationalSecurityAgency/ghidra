@@ -340,7 +340,7 @@ task unitTestReport(type: TestReport) { t ->
  *********************************************************************************/
 task integrationTestReport(type: TestReport) { t ->
 	group "test"
-    description "Run unit integrtion tests and save HTML report."
+    description "Run integration tests and save HTML report."
     destinationDir = file("$reportDir/integrationTests")
 	outputs.upToDateWhen {false}
 }
