@@ -1329,6 +1329,7 @@ imm20s: "#"value is l_simm20_20_23 & l_simm20_00_16
     rn_08_11 = (rn_08_11 >> 1) | sext($(T_FLAG));
 }
 
+@if SH_VERSION == "2A"
 :shad rm_04_07, rn_08_11   is opcode_12_15=0b0100 & rn_08_11 & rm_04_07 & opcode_00_03=0b1100
 {
     if (rm_04_07 s> 0) goto <shift_left>;
@@ -1343,6 +1344,7 @@ imm20s: "#"value is l_simm20_20_23 & l_simm20_00_16
     rn_08_11 = -1 * zext(rn_08_11 s< 0);
 <end>
 }
+@endif
 
 :shal   rn_08_11  is opcode_12_15=0b0100 & rn_08_11 & opcode_00_07=0b00100000 
 {
@@ -1359,6 +1361,7 @@ imm20s: "#"value is l_simm20_20_23 & l_simm20_00_16
     rn_08_11 = rn_08_11 s>> 1;
 }
 
+@if SH_VERSION == "2A"
 :shld  rm_04_07, rn_08_11   is opcode_12_15=0b0100 & rn_08_11 & rm_04_07 & opcode_00_03=0b1101
 {
     if (rm_04_07 s> 0) goto <shift_left>;
@@ -1373,6 +1376,7 @@ imm20s: "#"value is l_simm20_20_23 & l_simm20_00_16
     rn_08_11 = 0;
 <end>
 }
+@endif
 
 :shll   rn_08_11  is opcode_12_15=0b0100 & rn_08_11 & opcode_00_07=0b00000000 
 {
