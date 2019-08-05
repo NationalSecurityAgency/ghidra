@@ -79,8 +79,8 @@ sourceSets {
 	screenShots {
 		java {
 			srcDir 'src/screen/java'
-			compileClasspath += main.output
-			runtimeClasspath += main.output
+			compileClasspath += main.output + test.output + integrationTest.output
+			runtimeClasspath += main.output + test.output + integrationTest.output
 		}
 	}
 	pcodeTest {
@@ -107,6 +107,7 @@ configurations {
 	pcodeTestCompile.extendsFrom compile
 	testArtifacts.extendsFrom testRuntime
 	integrationTestArtifacts.extendsFrom integrationTestRuntime
+	screenShotsCompile.extendsFrom integrationTestCompile
 }
 
 task testJar(type: Jar) {
