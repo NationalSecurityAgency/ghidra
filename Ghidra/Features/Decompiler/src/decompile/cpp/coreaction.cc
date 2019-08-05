@@ -1220,7 +1220,8 @@ void ActionFuncLink::funcLinkInput(FuncCallSpecs *fc,Funcdata &data)
 	  loadval->setSpacebasePlaceholder();
 	  spacebase = (AddrSpace *)0;	// With a locked stack parameter, we don't need a stackplaceholder
 	}
-      } else
+      }
+      else
         data.opInsertInput(op,data.newVarnode(param->getSize(),param->getAddress()),op->numInput());
     }
   }
@@ -4281,7 +4282,7 @@ int4 ActionInferTypes::apply(Funcdata &data)
     }
     return 0;
   }
-	
+
   if (localcount == 0) {
 	  Datatype* ct;
 	  Varnode* vn;
