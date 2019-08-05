@@ -15,10 +15,7 @@
  */
 package ghidra.formats.gfilesystem;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.util.List;
 
 import org.apache.commons.io.FilenameUtils;
@@ -523,9 +520,16 @@ public class FileSystemService {
 			fileCacheNameIndex.add(srcCFI.md5, derivedName, derivedFile.md5);
 		}
 		else {
-			Msg.info(null, "Found derived file in cache: " + fsrl + ", " + derivedName);
+			//Msg.info(null, "Found derived file in cache: " + fsrl + ", " + derivedName);
 		}
 		return derivedFile;
+	}
+
+	public boolean hasDerivedFile(FSRL fsrl, String derivedName, TaskMonitor monitor)
+			throws CancelledException, IOException {
+		FileCacheEntry srcCFI = getCacheFile(fsrl, monitor);
+		String derivedMD5 = fileCacheNameIndex.get(srcCFI.md5, derivedName);
+		return derivedMD5 != null;
 	}
 
 	/**
