@@ -136,7 +136,7 @@ public interface Memory extends AddressSetView {
 	 * Create an initialized memory block and add it to this Memory.
 	 * @param name block name
 	 * @param start start of the block
-	 * @param size block length
+	 * @param size block length (positive non-zero value required)
 	 * @param initialValue initialization value for every byte in the block.
 	 * @param monitor progress monitor, may be null.
 	 * @param overlay if true, the block will be created as an OVERLAY which means that a new
@@ -164,7 +164,7 @@ public interface Memory extends AddressSetView {
 	 * @param start starting address of the block
 	 * @param fileBytes the {@link FileBytes} object to use as the underlying source of bytes.
 	 * @param offset the offset into the FileBytes for the first byte of this memory block.
-	 * @param size block length
+	 * @param size block length (positive non-zero value required)
 	 * @param overlay if true, the block will be created as an OVERLAY which means that a new
 	 * overlay address space will be created and the block will have a starting address at the same
 	 * offset as the given start address parameter, but in the new address space.
@@ -174,8 +174,9 @@ public interface Memory extends AddressSetView {
 	 * space with the same name as this memory block 
 	 * @throws MemoryConflictException if the new block overlaps with a
 	 * previous block
-	 * @throws AddressOverflowException if the start is beyond the
-	 * address space
+	 * @throws AddressOverflowException if the start is beyond the address space
+	 * @throws IndexOutOfBoundsException if file bytes range specified by offset and size 
+	 * is out of bounds for the specified fileBytes.
 	 */
 	public MemoryBlock createInitializedBlock(String name, Address start, FileBytes fileBytes,
 			long offset, long size, boolean overlay) throws LockException, DuplicateNameException,
@@ -251,7 +252,7 @@ public interface Memory extends AddressSetView {
 			throws LockException, MemoryConflictException, AddressOverflowException;
 
 	/**
-	 * Remove the memory block
+	 * Remove the memory block.  
 	 *
 	 * @param block the block to be removed.
 	 * @param monitor monitor that is used to cancel the remove operation
@@ -743,9 +744,10 @@ public interface Memory extends AddressSetView {
 	/**
 	 * Deletes a stored sequence of file bytes.  The file bytes can only be deleted if there
 	 * are no memory block references to the file bytes.
+	 * 
 	 * @param fileBytes the FileBytes for the file bytes to be deleted.
-	 * @return true if the FileBytes was deleted.  If any memory blNoocks are reference this FileBytes,
-	 * then it will not be deleted and false will be returned.
+	 * @return true if the FileBytes was deleted.  If any memory blocks are referenced by this 
+	 * FileBytes or it is invalid then it will not be deleted and false will be returned.
 	 * @throws IOException if there was an error updating the database.
 	 */
 	public boolean deleteFileBytes(FileBytes fileBytes) throws IOException;
