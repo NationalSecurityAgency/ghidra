@@ -79,6 +79,9 @@ sourceSets {
 	screenShots {
 		java {
 			srcDir 'src/screen/java'
+			
+			// Screenshots are essentially tests, and depend on classes in several other
+			// test directories so they must be included here
 			compileClasspath += main.output + test.output + integrationTest.output
 			runtimeClasspath += main.output + test.output + integrationTest.output
 		}
