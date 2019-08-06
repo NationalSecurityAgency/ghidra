@@ -208,7 +208,6 @@ public abstract class ProcessorEmulatorTestAdapter extends TestCase implements E
 	private TestEnv env;
 	private LogData logData;
 
-	private ResourceFile myModuleRootDirectory;
 	private Collection<ResourceFile> applicationRootDirectories;
 	private File resourcesTestDataDir;
 
@@ -914,6 +913,9 @@ public abstract class ProcessorEmulatorTestAdapter extends TestCase implements E
 	}
 
 	private void findTestResourceDirectory(String relativeModulePath) {
+		if (relativeModulePath == null) {
+			return;
+		}
 		for (ResourceFile appRoot : applicationRootDirectories) {
 			File moduleRoot = new File(appRoot.getAbsolutePath(), relativeModulePath);
 			File dir = new File(moduleRoot, TEST_RESOURCE_PATH);
@@ -928,25 +930,38 @@ public abstract class ProcessorEmulatorTestAdapter extends TestCase implements E
 	protected void setUp() throws Exception {
 
 		env = new TestEnv();
-
-		myModuleRootDirectory = Application.getModuleContainingClass(getClass().getName());
 		applicationRootDirectories = Application.getApplicationRootDirectories();
 
-		String relativeModulePath = getRelativeModulePath();
-
-		resourcesTestDataDir = new File(myModuleRootDirectory.getFile(true), TEST_RESOURCE_PATH);
-
-		if (!resourcesTestDataDir.isDirectory()) {
-			findTestResourceDirectory(relativeModulePath);
+		ResourceFile myModuleRootDirectory =
+			Application.getModuleContainingClass(getClass().getName());
+		if (myModuleRootDirectory == null) {
+			if (SystemUtilities.isInReleaseMode()) {
+				Msg.warn(this, "Unable to identify pcodetest module directory!\n" +
+					"Project must contain Module.manifest file, and if developing module using Eclipse\n" +
+					"w/ GhidraDev the VM argument -Declipse.project.dir=<project-path> must be specified.");
+			}
+			else {
+				Msg.warn(this,
+					"Unable to identify pcodetest module directory! Project must contain Module.manifest file");
+			}
+		}
+		String relativeModulePath = null;
+		File myModuleRoot = myModuleRootDirectory.getFile(false);
+		if (myModuleRoot != null) {
+			resourcesTestDataDir = new File(myModuleRoot, TEST_RESOURCE_PATH);
+			if (!resourcesTestDataDir.isDirectory()) {
+				relativeModulePath = getRelativeModulePath(myModuleRootDirectory);
+				findTestResourceDirectory(relativeModulePath);
+			}
 		}
 
-		if (!resourcesTestDataDir.isDirectory()) {
+		if (resourcesTestDataDir == null || !resourcesTestDataDir.isDirectory()) {
 			findTestResourceDirectory(DEFAULT_PROCESSOR_TEST_MODULE);
 		}
 
 		if (!resourcesTestDataDir.isDirectory()) {
 			throw new RuntimeException(
-				"Failed to locate test resource directory: " + relativeModulePath);
+				"Failed to locate test resource directory: " + TEST_RESOURCE_PATH);
 		}
 
 		logData = initializeLog(getClass());
@@ -995,7 +1010,7 @@ public abstract class ProcessorEmulatorTestAdapter extends TestCase implements E
 		}
 	}
 
-	private String getRelativeModulePath() {
+	private String getRelativeModulePath(ResourceFile myModuleRootDirectory) {
 		String absolutePath = myModuleRootDirectory.getAbsolutePath();
 		for (ResourceFile appRoot : applicationRootDirectories) {
 			String rootPath = appRoot.getAbsolutePath();
@@ -1003,7 +1018,7 @@ public abstract class ProcessorEmulatorTestAdapter extends TestCase implements E
 				return absolutePath.substring(rootPath.length() + 1);
 			}
 		}
-		throw new RuntimeException("Failed to resolve relative module path");
+		return null;
 	}
 
 	private static class LogData {
