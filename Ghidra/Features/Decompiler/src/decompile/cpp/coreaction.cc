@@ -1214,6 +1214,7 @@ void ActionFuncLink::funcLinkInput(FuncCallSpecs *fc,Funcdata &data)
       int4 sz = param->getSize();
       if (spc->getType() == IPTR_SPACEBASE) { // Param is stack relative
 	Varnode *loadval = data.opStackLoad(spc,off,sz,op,(Varnode *)0,false);
+	data.segmentizeFarPtr(param->getType(), param->isTypeLocked(), loadval, false);
 	data.opInsertInput(op,loadval,op->numInput());
 	if (!setplaceholder) {
 	  setplaceholder = true;
@@ -1221,8 +1222,11 @@ void ActionFuncLink::funcLinkInput(FuncCallSpecs *fc,Funcdata &data)
 	  spacebase = (AddrSpace *)0;	// With a locked stack parameter, we don't need a stackplaceholder
 	}
       }
-      else
-	data.opInsertInput(op,data.newVarnode(param->getSize(),param->getAddress()),op->numInput());
+      else {
+		    Varnode* loadval = data.newVarnode(param->getSize(), param->getAddress());
+		    data.segmentizeFarPtr(param->getType(), param->isTypeLocked(), loadval, false);
+		    data.opInsertInput(op, loadval, op->numInput());
+	    }
     }
   }
   if (spacebase != (AddrSpace *)0) {	// If we need it, create the stackplaceholder
@@ -1251,6 +1255,7 @@ void ActionFuncLink::funcLinkOutput(FuncCallSpecs *fc,Funcdata &data)
       int4 sz = outparam->getSize();
       Address addr = outparam->getAddress();
       data.newVarnodeOut(sz,addr,fc->getOp());
+      data.segmentizeFarPtr(outparam->getType(), outparam->isTypeLocked(), fc->getOp()->getOut(), false);
       VarnodeData vdata;
       OpCode res = fc->assumedOutputExtension(addr,sz,vdata);
       if (res == CPUI_PIECE) {		// Pick an extension based on type
@@ -4292,66 +4297,10 @@ int4 ActionInferTypes::apply(Funcdata &data)
 		  if (vn->isAnnotation()) continue;
 		  if ((!vn->isWritten()) && (vn->hasNoDescend())) continue;
 		  ct = vn->getLocalType();
-		  SegmentOp* segdef = (SegmentOp*)0;
-		  if ((ct->getMetatype() == TYPE_PTR ||
-			  ct->getMetatype() == TYPE_CODE) && vn->isTypeLock()) {
-			  Architecture* glb = data.getArch();
-			  AddrSpace* rspc = glb->getDefaultSpace();
-			  bool arenearpointers = glb->hasNearPointers(rspc);
-			  if (arenearpointers && rspc->getAddrSize() == vn->getSize())
-				  segdef = glb->userops.getSegmentOp(rspc->getIndex());
-		  }
-		  //need to go through every single time this varnode is written to
-		  if (segdef != (SegmentOp*)0 && vn->getDef() != (PcodeOp*)0 &&
-			  vn->getDef()->code() != CPUI_SEGMENTOP && vn->getDef()->code() != CPUI_CALLOTHER) {
-			  iter--;
-			  PcodeOp* segroot = vn->getDef();
-			  Varnode* outvn = data.newUnique(vn->getSize());
-			  data.opSetOutput(segroot, outvn);
-			  PcodeOp* piece1 = data.newOp(2, segroot->getAddr());
-			  data.opSetOpcode(piece1, CPUI_SUBPIECE);
-			  Varnode* vn1 = data.newUniqueOut(segdef->getBaseSize(), piece1);
-			  data.opSetInput(piece1, outvn, 0);
-			  data.opSetInput(piece1, data.newConstant(outvn->getSize(), segdef->getInnerSize()), 1);
-			  data.opInsertAfter(piece1, segroot);
-			  PcodeOp* piece2 = data.newOp(2, segroot->getAddr());
-			  data.opSetOpcode(piece2, CPUI_SUBPIECE);
-			  Varnode* vn2 = data.newUniqueOut(segdef->getInnerSize(), piece2);
-			  data.opSetInput(piece2, outvn, 0);
-			  data.opSetInput(piece2, data.newConstant(outvn->getSize(), 0), 1);
-			  data.opInsertAfter(piece2, piece1);
-			  PcodeOp* newop = data.newOp(3, segroot->getAddr());
-			  data.opSetOutput(newop, vn);
-			  data.opSetOpcode(newop, CPUI_CALLOTHER);
-			  //endianness could matter here - e.g. CALLF addr16 on x86 uses segment(*:2 (ptr+2),*:2 ptr)
-			  data.opSetInput(newop, data.newConstant(4, segdef->getIndex()), 0);
-			  data.opSetInput(newop, vn1, 1); //need to check size of segment
-			  data.opSetInput(newop, vn2, 2); //need to check size of offset
-			  data.opInsertAfter(newop, piece2);
-			  
-			  segroot = vn->getDef();
-			  vector<Varnode*> bindlist;
-			  bindlist.push_back((Varnode*)0);
-			  bindlist.push_back((Varnode*)0);
-			  if (!segdef->unify(data, segroot, bindlist)) {
-				  ostringstream err;
-				  err << "Segment op in wrong form at ";
-				  segroot->getAddr().printRaw(err);
-				  throw LowlevelError(err.str());
-			  }
-
-			  if (segdef->getNumVariableTerms() == 1)
-				  bindlist[1] = data.newConstant(4, 0);
-			  // Redefine the op as a segmentop
-			  data.opSetOpcode(segroot, CPUI_SEGMENTOP);
-			  data.opSetInput(segroot, data.newVarnodeSpace(segdef->getSpace()), 0);
-			  data.opSetInput(segroot, bindlist[1], 1);
-			  data.opSetInput(segroot, bindlist[0], 2);
-			  for (int4 j = segroot->numInput() - 1; j > 2; --j) // Remove anything else
-				  data.opRemoveInput(segroot, j);
-
-			  iter++;
-		  }
+		  bool bBegin = false;
+		  if (iter == data.beginLoc()) bBegin = true; else iter--;
+		  data.segmentizeFarPtr(ct, vn->isTypeLock(), vn, true);
+		  if (bBegin) iter = data.beginLoc(); else iter++;
 	  }
   }	
 	
