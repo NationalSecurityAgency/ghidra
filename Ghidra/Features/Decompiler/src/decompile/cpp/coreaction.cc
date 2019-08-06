@@ -1222,7 +1222,7 @@ void ActionFuncLink::funcLinkInput(FuncCallSpecs *fc,Funcdata &data)
 	}
       }
       else
-	data.opInsertInput(op, data.newVarnode(param->getSize(), param->getAddress()), op->numInput());
+	data.opInsertInput(op,data.newVarnode(param->getSize(),param->getAddress()),op->numInput());
       data.segmentizeFarPtr(param->getType(), param->isTypeLocked(), op->getIn(op->numInput() - 1), false);
     }
   }
