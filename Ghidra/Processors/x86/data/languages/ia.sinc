@@ -2276,13 +2276,13 @@ Suffix3D: imm8        is imm8 [ suffix3D=imm8; ] { }
 :ADD AX,imm16		is vexMode=0 & opsize=0 & byte=0x5; AX & imm16			{ addflags(   AX,imm16);    AX =    AX + imm16; resultflags(   AX); }
 :ADD EAX,imm32		is vexMode=0 & opsize=1 & byte=0x5; EAX & check_EAX_dest & imm32			{ addflags(  EAX,imm32);   EAX =   EAX + imm32; build check_EAX_dest; resultflags(  EAX); }
 @ifdef IA64
-:ADD RAX,imm32     is vexMode=0 & opsize=2 & byte=0x5; RAX & imm32          { addflags(  RAX,imm32);   RAX =   RAX + imm32; resultflags(  RAX); }
+:ADD RAX,simm32     is vexMode=0 & opsize=2 & byte=0x5; RAX & simm32          { addflags(  RAX,simm32);   RAX =   RAX + simm32; resultflags(  RAX); }
 @endif
 :ADD spec_rm8,imm8		is vexMode=0 & (byte=0x80 | byte=0x82); spec_rm8 & reg_opcode=0 ...; imm8		{ addflags(  spec_rm8,imm8 );   spec_rm8 =   spec_rm8 +  imm8; resultflags(  spec_rm8); }
 :ADD spec_rm16,imm16		is vexMode=0 & opsize=0 & byte=0x81; spec_rm16 & reg_opcode=0 ...; imm16	{ addflags( spec_rm16,imm16);  spec_rm16 =  spec_rm16 + imm16; resultflags( spec_rm16); }
 :ADD spec_rm32,imm32		is vexMode=0 & opsize=1 & byte=0x81; spec_rm32 & check_rm32_dest ... & reg_opcode=0 ...; imm32	{ addflags( spec_rm32,imm32);  spec_rm32 =  spec_rm32 + imm32; build check_rm32_dest; resultflags( spec_rm32); }
 @ifdef IA64
-:ADD spec_rm64,imm32		is vexMode=0 & opsize=2 & byte=0x81; spec_rm64 & reg_opcode=0 ...; imm32	{ addflags( spec_rm64,imm32);  spec_rm64 =  spec_rm64 + imm32; resultflags( spec_rm64); }
+:ADD spec_rm64,simm32		is vexMode=0 & opsize=2 & byte=0x81; spec_rm64 & reg_opcode=0 ...; simm32	{ addflags( spec_rm64,simm32);  spec_rm64 =  spec_rm64 + simm32; resultflags( spec_rm64); }
 @endif
 :ADD spec_rm16,simm8_16		is vexMode=0 & opsize=0 & byte=0x83; spec_rm16 & reg_opcode=0 ...; simm8_16	{ addflags( spec_rm16,simm8_16);  spec_rm16 =  spec_rm16 + simm8_16; resultflags( spec_rm16); }
 :ADD spec_rm32,simm8_32		is vexMode=0 & opsize=1 & byte=0x83; spec_rm32 & check_rm32_dest ... & reg_opcode=0 ...; simm8_32	{ addflags( spec_rm32,simm8_32);  spec_rm32 =  spec_rm32 + simm8_32; build check_rm32_dest; resultflags( spec_rm32); }
@@ -2306,13 +2306,13 @@ Suffix3D: imm8        is imm8 [ suffix3D=imm8; ] { }
 :AND AX,imm16      is vexMode=0 & opsize=0 & byte=0x25; AX & imm16          { logicalflags();    AX =    AX & imm16; resultflags(   AX); }
 :AND EAX,imm32     is vexMode=0 & opsize=1 & byte=0x25; EAX & check_EAX_dest & imm32         { logicalflags();   EAX =   EAX & imm32; build check_EAX_dest; resultflags(  EAX); }
 @ifdef IA64
-:AND RAX,imm32     is vexMode=0 & opsize=2 & byte=0x25; RAX & imm32         { logicalflags();   RAX =   RAX & imm32; resultflags(  RAX); }
+:AND RAX,simm32     is vexMode=0 & opsize=2 & byte=0x25; RAX & simm32         { logicalflags();   RAX =   RAX & simm32; resultflags(  RAX); }
 @endif
 :AND rm8,imm8      is vexMode=0 & (byte=0x80 | byte=0x82); rm8 & reg_opcode=4 ...; imm8     { logicalflags();   rm8 =   rm8 &  imm8; resultflags(  rm8); }
 :AND rm16,imm16    is vexMode=0 & opsize=0 & byte=0x81; rm16 & reg_opcode=4 ...; imm16  { logicalflags();  rm16 =  rm16 & imm16; resultflags( rm16); }
 :AND rm32,imm32    is vexMode=0 & opsize=1 & byte=0x81; rm32 & check_rm32_dest ... & reg_opcode=4 ...; imm32  { logicalflags();  rm32 =  rm32 & imm32; build check_rm32_dest; resultflags( rm32); }
 @ifdef IA64
-:AND rm64,imm32    is vexMode=0 & opsize=2 & byte=0x81; rm64 & reg_opcode=4 ...; imm32  { logicalflags();  rm64 =  rm64 & imm32; resultflags( rm64); }
+:AND rm64,simm32    is vexMode=0 & opsize=2 & byte=0x81; rm64 & reg_opcode=4 ...; simm32  { logicalflags();  rm64 =  rm64 & simm32; resultflags( rm64); }
 @endif
 :AND rm16,usimm8_16		is vexMode=0 & opsize=0 & byte=0x83; rm16 & reg_opcode=4 ...; usimm8_16	{ logicalflags();  rm16 =  rm16 & usimm8_16; resultflags( rm16); }
 :AND rm32,usimm8_32		is vexMode=0 & opsize=1 & byte=0x83; rm32 & check_rm32_dest ... & reg_opcode=4 ...; usimm8_32	{ logicalflags();  rm32 =  rm32 & usimm8_32; build check_rm32_dest; resultflags( rm32); }
@@ -2787,13 +2787,13 @@ define pcodeop clzero;
 :CMP AX,imm16       is vexMode=0 & opsize=0 & byte=0x3d; AX & imm16         { subflags(   AX,imm16); local tmp =    AX -  imm16; resultflags(tmp); }
 :CMP EAX,imm32      is vexMode=0 & opsize=1 & byte=0x3d; EAX & imm32            { subflags(  EAX,imm32); local tmp =   EAX -  imm32; resultflags(tmp); }
 @ifdef IA64
-:CMP RAX,imm32      is vexMode=0 & opsize=2 & byte=0x3d; RAX & imm32            { subflags(  RAX,imm32); local tmp =   RAX -  imm32; resultflags(tmp); }
+:CMP RAX,simm32      is vexMode=0 & opsize=2 & byte=0x3d; RAX & simm32            { subflags(  RAX,simm32); local tmp =   RAX -  simm32; resultflags(tmp); }
 @endif
 :CMP spec_rm8,imm8       is vexMode=0 & (byte=0x80 | byte=0x82); spec_rm8 & reg_opcode=7 ...; imm8        { subflags(  spec_rm8,imm8 ); local tmp =   spec_rm8 -   imm8; resultflags(tmp); }
 :CMP spec_rm16,imm16     is vexMode=0 & opsize=0 & byte=0x81; spec_rm16 & reg_opcode=7 ...; imm16 { subflags( spec_rm16,imm16); local tmp =  spec_rm16 -  imm16; resultflags(tmp); }
 :CMP spec_rm32,imm32     is vexMode=0 & opsize=1 & byte=0x81; spec_rm32 & reg_opcode=7 ...; imm32 { subflags( spec_rm32,imm32); local tmp =  spec_rm32 -  imm32; resultflags(tmp); }
 @ifdef IA64
-:CMP spec_rm64,imm32     is vexMode=0 & opsize=2 & byte=0x81; spec_rm64 & reg_opcode=7 ...; imm32 { subflags( spec_rm64,imm32); local tmp =  spec_rm64 -  imm32; resultflags(tmp); }
+:CMP spec_rm64,simm32     is vexMode=0 & opsize=2 & byte=0x81; spec_rm64 & reg_opcode=7 ...; simm32 { subflags( spec_rm64,simm32); local tmp =  spec_rm64 -  simm32; resultflags(tmp); }
 @endif
 :CMP spec_rm16,simm8_16		is vexMode=0 & opsize=0 & byte=0x83; spec_rm16 & reg_opcode=7 ...; simm8_16	{ subflags( spec_rm16,simm8_16); local tmp =   spec_rm16 - simm8_16; resultflags(tmp); }
 :CMP spec_rm32,simm8_32		is vexMode=0 & opsize=1 & byte=0x83; spec_rm32 & reg_opcode=7 ...; simm8_32	{ subflags( spec_rm32,simm8_32); local tmp =   spec_rm32 - simm8_32; resultflags(tmp); }
@@ -4331,13 +4331,13 @@ define pcodeop skinit;
 :SUB  AX,imm16     is vexMode=0 & opsize=0 & byte=0x2d; AX & imm16              { subflags(   AX,imm16);    AX =    AX - imm16; resultflags(   AX); }
 :SUB  EAX,imm32        is vexMode=0 & opsize=1 & byte=0x2d; EAX & check_EAX_dest & imm32         { subflags(  EAX,imm32);   EAX =   EAX - imm32; build check_EAX_dest; resultflags(  EAX); }
 @ifdef IA64
-:SUB  RAX,imm32        is vexMode=0 & opsize=2 & byte=0x2d; RAX & imm32         { subflags(  RAX,imm32);   RAX =   RAX - imm32; resultflags(  RAX); }
+:SUB  RAX,simm32        is vexMode=0 & opsize=2 & byte=0x2d; RAX & simm32         { subflags(  RAX,simm32);   RAX =   RAX - simm32; resultflags(  RAX); }
 @endif
 :SUB  spec_rm8,imm8     is vexMode=0 & (byte=0x80 | byte=0x82); spec_rm8 & reg_opcode=5 ...; imm8     { subflags(  spec_rm8,imm8 );   spec_rm8 =   spec_rm8 -  imm8; resultflags(  spec_rm8); }
 :SUB  spec_rm16,imm16       is vexMode=0 & opsize=0 & byte=0x81; spec_rm16 & reg_opcode=5 ...; imm16  { subflags( spec_rm16,imm16);  spec_rm16 =  spec_rm16 - imm16; resultflags( spec_rm16); }
 :SUB  spec_rm32,imm32       is vexMode=0 & opsize=1 & byte=0x81; spec_rm32 & check_rm32_dest ... & reg_opcode=5 ...; imm32  { subflags( spec_rm32,imm32);  spec_rm32 =  spec_rm32 - imm32; build check_rm32_dest; resultflags( spec_rm32); }
 @ifdef IA64
-:SUB  spec_rm64,imm32       is vexMode=0 & opsize=2 & byte=0x81; spec_rm64 & reg_opcode=5 ...; imm32  { subflags( spec_rm64,imm32);  spec_rm64 =  spec_rm64 - imm32; resultflags( spec_rm64); }
+:SUB  spec_rm64,simm32       is vexMode=0 & opsize=2 & byte=0x81; spec_rm64 & reg_opcode=5 ...; simm32  { subflags( spec_rm64,simm32);  spec_rm64 =  spec_rm64 - simm32; resultflags( spec_rm64); }
 @endif
 :SUB  spec_rm16,simm8_16       is vexMode=0 & opsize=0 & byte=0x83; spec_rm16 & reg_opcode=5 ...; simm8_16  { subflags( spec_rm16,simm8_16);  spec_rm16 =  spec_rm16 - simm8_16; resultflags( spec_rm16); }
 :SUB  spec_rm32,simm8_32       is vexMode=0 & opsize=1 & byte=0x83; spec_rm32 & check_rm32_dest ... & reg_opcode=5 ...; simm8_32  { subflags( spec_rm32,simm8_32);  spec_rm32 =  spec_rm32 - simm8_32; build check_rm32_dest; resultflags( spec_rm32); }
