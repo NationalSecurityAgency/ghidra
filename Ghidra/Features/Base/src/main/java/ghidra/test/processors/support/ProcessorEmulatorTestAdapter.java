@@ -153,15 +153,11 @@ public abstract class ProcessorEmulatorTestAdapter extends TestCase implements E
 	private static final String GZF_FILE_EXT = ".gzf";
 	private static final String BINARY_FILE_EXT = ".out";
 
-	//private static final String MODULE_NAME = "ProcessorTest2";
-
-	// directory above application root which will contain the following outputs: cache, logs, results
+	// directory which will contain the following outputs: cache, logs, results
 	private static final String TEST_OUTPUT_PATH = "test-output";
 
 	private static final String GZF_CACHEDIR_NAME = "cache";
-
 	private static final String LOG_DIR_NAME = "logs";
-
 	private static final String RESULTS_DIR_NAME = "results";
 
 	static {
@@ -251,6 +247,9 @@ public abstract class ProcessorEmulatorTestAdapter extends TestCase implements E
 		if (BATCH_MODE_OUTPUT_DIR != null) {
 			// Use explicit output directory root if specified
 			outputRoot = BATCH_MODE_OUTPUT_DIR;
+		}
+		else if (!SystemUtilities.isInDevelopmentMode()) {
+			outputRoot = Application.getUserTempDirectory().getAbsolutePath();
 		}
 		else {
 			try {
@@ -935,7 +934,7 @@ public abstract class ProcessorEmulatorTestAdapter extends TestCase implements E
 		ResourceFile myModuleRootDirectory =
 			Application.getModuleContainingClass(getClass().getName());
 		if (myModuleRootDirectory == null) {
-			if (SystemUtilities.isInReleaseMode()) {
+			if (!SystemUtilities.isInDevelopmentMode()) {
 				Msg.warn(this, "Unable to identify pcodetest module directory!\n" +
 					"Project must contain Module.manifest file, and if developing module using Eclipse\n" +
 					"w/ GhidraDev the VM argument -Declipse.project.dir=<project-path> must be specified.");
@@ -945,13 +944,14 @@ public abstract class ProcessorEmulatorTestAdapter extends TestCase implements E
 					"Unable to identify pcodetest module directory! Project must contain Module.manifest file");
 			}
 		}
-		String relativeModulePath = null;
-		File myModuleRoot = myModuleRootDirectory.getFile(false);
-		if (myModuleRoot != null) {
-			resourcesTestDataDir = new File(myModuleRoot, TEST_RESOURCE_PATH);
-			if (!resourcesTestDataDir.isDirectory()) {
-				relativeModulePath = getRelativeModulePath(myModuleRootDirectory);
-				findTestResourceDirectory(relativeModulePath);
+
+		if (myModuleRootDirectory != null) {
+			File myModuleRoot = myModuleRootDirectory.getFile(false);
+			if (myModuleRoot != null) {
+				resourcesTestDataDir = new File(myModuleRoot, TEST_RESOURCE_PATH);
+				if (!resourcesTestDataDir.isDirectory()) {
+					findTestResourceDirectory(getRelativeModulePath(myModuleRootDirectory));
+				}
 			}
 		}
 
@@ -959,9 +959,9 @@ public abstract class ProcessorEmulatorTestAdapter extends TestCase implements E
 			findTestResourceDirectory(DEFAULT_PROCESSOR_TEST_MODULE);
 		}
 
-		if (!resourcesTestDataDir.isDirectory()) {
+		if (resourcesTestDataDir == null || !resourcesTestDataDir.isDirectory()) {
 			throw new RuntimeException(
-				"Failed to locate test resource directory: " + TEST_RESOURCE_PATH);
+				"Failed to locate pcodetest resource directory: " + TEST_RESOURCE_PATH);
 		}
 
 		logData = initializeLog(getClass());
