@@ -525,6 +525,16 @@ public class FileSystemService {
 		return derivedFile;
 	}
 
+	/**
+	 * Returns true if the specified derived file exists in the file cache.
+	 * 
+	 * @param fsrl {@link FSRL} of the container
+	 * @param derivedName name of the derived file inside of the container
+	 * @param monitor {@link TaskMonitor}
+	 * @return boolean true if file exists at time of query, false if file is not in cache
+	 * @throws CancelledException if user cancels
+	 * @throws IOException if other IO error
+	 */
 	public boolean hasDerivedFile(FSRL fsrl, String derivedName, TaskMonitor monitor)
 			throws CancelledException, IOException {
 		FileCacheEntry srcCFI = getCacheFile(fsrl, monitor);
