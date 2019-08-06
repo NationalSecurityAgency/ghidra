@@ -1214,7 +1214,7 @@ void ActionFuncLink::funcLinkInput(FuncCallSpecs *fc,Funcdata &data)
       int4 sz = param->getSize();
       if (spc->getType() == IPTR_SPACEBASE) { // Param is stack relative
 	Varnode *loadval = data.opStackLoad(spc,off,sz,op,(Varnode *)0,false);
-	data.segmentizeFarPtr(param->getType(), param->isTypeLocked(), loadval, false);
+	data.segmentizeFarPtr(param->getType(), param->isTypeLocked(), loadval, false, false);
 	data.opInsertInput(op,loadval,op->numInput());
 	if (!setplaceholder) {
 	  setplaceholder = true;
@@ -1224,7 +1224,7 @@ void ActionFuncLink::funcLinkInput(FuncCallSpecs *fc,Funcdata &data)
       }
       else {
 		    Varnode* loadval = data.newVarnode(param->getSize(), param->getAddress());
-		    data.segmentizeFarPtr(param->getType(), param->isTypeLocked(), loadval, false);
+		    data.segmentizeFarPtr(param->getType(), param->isTypeLocked(), loadval, false, false);
 		    data.opInsertInput(op, loadval, op->numInput());
 	    }
     }
@@ -1255,7 +1255,7 @@ void ActionFuncLink::funcLinkOutput(FuncCallSpecs *fc,Funcdata &data)
       int4 sz = outparam->getSize();
       Address addr = outparam->getAddress();
       data.newVarnodeOut(sz,addr,fc->getOp());
-      data.segmentizeFarPtr(outparam->getType(), outparam->isTypeLocked(), fc->getOp()->getOut(), false);
+      data.segmentizeFarPtr(outparam->getType(), outparam->isTypeLocked(), fc->getOp()->getOut(), false, true);
       VarnodeData vdata;
       OpCode res = fc->assumedOutputExtension(addr,sz,vdata);
       if (res == CPUI_PIECE) {		// Pick an extension based on type
@@ -4299,7 +4299,7 @@ int4 ActionInferTypes::apply(Funcdata &data)
 		  ct = vn->getLocalType();
 		  bool bBegin = false;
 		  if (iter == data.beginLoc()) bBegin = true; else iter--;
-		  data.segmentizeFarPtr(ct, vn->isTypeLock(), vn, true);
+		  data.segmentizeFarPtr(ct, vn->isTypeLock(), vn, true, true);
 		  if (bBegin) iter = data.beginLoc(); else iter++;
 	  }
   }	
