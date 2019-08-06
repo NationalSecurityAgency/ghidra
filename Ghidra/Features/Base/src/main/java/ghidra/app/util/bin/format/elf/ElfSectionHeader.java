@@ -107,57 +107,58 @@ public class ElfSectionHeader implements StructConverter, Writeable, MemoryLoada
 		this.reader = reader;
 		this.header = header;
 
-		this.sh_name = reader.readNextInt();
-		this.sh_type = reader.readNextInt();
+		sh_name = reader.readNextInt();
+		sh_type = reader.readNextInt();
 
 		if (header.is32Bit()) {
-			this.sh_flags = reader.readNextInt() & Conv.INT_MASK;
-			this.sh_addr = reader.readNextInt() & Conv.INT_MASK;
-			this.sh_offset = reader.readNextInt() & Conv.INT_MASK;
-			this.sh_size = reader.readNextInt() & Conv.INT_MASK;
+			sh_flags = reader.readNextInt() & Conv.INT_MASK;
+			sh_addr = reader.readNextInt() & Conv.INT_MASK;
+			sh_offset = reader.readNextInt() & Conv.INT_MASK;
+			sh_size = reader.readNextInt() & Conv.INT_MASK;
 		}
 		else if (header.is64Bit()) {
-			this.sh_flags = reader.readNextLong();
-			this.sh_addr = reader.readNextLong();
-			this.sh_offset = reader.readNextLong();
-			this.sh_size = reader.readNextLong();
+			sh_flags = reader.readNextLong();
+			sh_addr = reader.readNextLong();
+			sh_offset = reader.readNextLong();
+			sh_size = reader.readNextLong();
 		}
 
-		this.sh_link = reader.readNextInt();
-		this.sh_info = reader.readNextInt();
+		sh_link = reader.readNextInt();
+		sh_info = reader.readNextInt();
 
 		if (header.is32Bit()) {
-			this.sh_addralign = reader.readNextInt() & Conv.INT_MASK;
-			this.sh_entsize = reader.readNextInt() & Conv.INT_MASK;
+			sh_addralign = reader.readNextInt() & Conv.INT_MASK;
+			sh_entsize = reader.readNextInt() & Conv.INT_MASK;
 		}
 		else if (header.is64Bit()) {
-			this.sh_addralign = reader.readNextLong();
-			this.sh_entsize = reader.readNextLong();
+			sh_addralign = reader.readNextLong();
+			sh_entsize = reader.readNextLong();
 		}
-
 		//checkSize();
 	}
 
 	ElfSectionHeader(ElfHeader header, MemoryBlock block, int sh_name, long imageBase)
 			throws MemoryAccessException {
+
 		this.header = header;
 		this.sh_name = sh_name;
+
 		if (block.isInitialized()) {
-			this.sh_type = ElfSectionHeaderConstants.SHT_PROGBITS;
+			sh_type = ElfSectionHeaderConstants.SHT_PROGBITS;
 		}
 		else {
-			this.sh_type = ElfSectionHeaderConstants.SHT_NOBITS;
+			sh_type = ElfSectionHeaderConstants.SHT_NOBITS;
 		}
-		this.sh_flags = ElfSectionHeaderConstants.SHF_ALLOC | ElfSectionHeaderConstants.SHF_WRITE |
+		sh_flags = ElfSectionHeaderConstants.SHF_ALLOC | ElfSectionHeaderConstants.SHF_WRITE |
 			ElfSectionHeaderConstants.SHF_EXECINSTR;
-		this.sh_addr = block.getStart().getOffset();
-		this.sh_offset = block.getStart().getAddressableWordOffset() - imageBase;
-		this.sh_size = block.getSize();
-		this.sh_link = 0;
-		this.sh_info = 0;
-		this.sh_addralign = 0;
-		this.sh_entsize = 0;
-		this.name = block.getName();
+		sh_addr = block.getStart().getOffset();
+		sh_offset = block.getStart().getAddressableWordOffset() - imageBase;
+		sh_size = block.getSize();
+		sh_link = 0;
+		sh_info = 0;
+		sh_addralign = 0;
+		sh_entsize = 0;
+		name = block.getName();
 
 		data = new byte[(int) sh_size];
 		if (block.isInitialized()) {
@@ -169,21 +170,23 @@ public class ElfSectionHeader implements StructConverter, Writeable, MemoryLoada
 
 	ElfSectionHeader(ElfHeader header, String name, int sh_name, int type) {
 		this.header = header;
+		this.name = name;
 		this.sh_name = sh_name;
 		this.sh_type = type;
-		this.sh_flags = ElfSectionHeaderConstants.SHF_ALLOC | ElfSectionHeaderConstants.SHF_WRITE |
+
+		sh_flags = ElfSectionHeaderConstants.SHF_ALLOC | ElfSectionHeaderConstants.SHF_WRITE |
 			ElfSectionHeaderConstants.SHF_EXECINSTR;
-		this.sh_link = 0;
-		this.sh_info = 0;
-		this.sh_addralign = 0;
-		this.sh_entsize = 0;
-		this.name = name;
-		this.data = new byte[0];
-		this.sh_size = 0;
-		this.sh_addr = -1;
-		this.sh_offset = -1;
+		sh_link = 0;
+		sh_info = 0;
+		sh_addralign = 0;
+		sh_entsize = 0;
+
+		data = new byte[0];
+		sh_size = 0;
+		sh_addr = -1;
+		sh_offset = -1;
 	}
-	
+
 	/**
 	 * Return ElfHeader associated with this section
 	 * @return ElfHeader
@@ -337,37 +340,38 @@ public class ElfSectionHeader implements StructConverter, Writeable, MemoryLoada
 	}
 
 	void updateName() throws IOException {
-		if (sh_name == -1) {
-			return;
+		if (reader == null) {
+			throw new UnsupportedOperationException("This ElfSectionHeader does not have a reader");
 		}
+
 		ElfSectionHeader[] sections = header.getSections();
 		short e_shstrndx = header.e_shstrndx();
-		if (e_shstrndx >= sections.length) {
-			int index = 0;
-			for (int i = 0; i < sections.length; ++i) {//find this section's index
-				if (sections[i] == this) {
-					index = i;
-					break;
+		name = null;
+		try {
+			if (sh_name >= 0 && e_shstrndx >= 0 && e_shstrndx < sections.length) {
+				ElfSectionHeader stringTableSectionHeader = sections[e_shstrndx];
+				if (sh_name < stringTableSectionHeader.sh_size) {
+					// read section name from string table
+					long stringTableOffset = sections[e_shstrndx].getOffset();
+					if (stringTableOffset >= 0) {
+						name = reader.readAsciiString(stringTableOffset + sh_name);
+						if ("".equals(name)) {
+							name = null;
+						}
+					}
 				}
 			}
-			name = "SECTION" + index;
 		}
-		else {
-			if (reader == null) {
-				throw new UnsupportedOperationException(
-					"This ElfSectionHeader does not have a reader");
-			}
-			long stringTableOffset = sections[e_shstrndx].getOffset();
-			if (stringTableOffset + sh_name < 0) {
-				Msg.error(this, "Invalid name offset " + (stringTableOffset + sh_name));
-				return;
-			}
-			name = reader.readAsciiString(stringTableOffset + sh_name);
-			if ("".equals(name)) {
-				name = "EMPTYNAME_" + String.format("0x%x", sh_offset);
-			}
-			if (sh_type == ElfSectionHeaderConstants.SHT_SYMTAB_SHNDX) {
-				Msg.debug(this, "sh_type==SHT_SYMTAB_SHNDX");
+		catch (IOException e) {
+			// ignore
+		}
+		if (name == null) {
+			name = "NO-NAME";
+			for (int i = 0; i < sections.length; ++i) {//find this section's index
+				if (sections[i] == this) {
+					name = "SECTION" + i;
+					break;
+				}
 			}
 		}
 	}
@@ -422,7 +426,7 @@ public class ElfSectionHeader implements StructConverter, Writeable, MemoryLoada
 	public long getSize() {
 		return sh_size;
 	}
-	
+
 	/**
 	 * Get the adjusted size of the section in bytes (i.e., memory block) which relates to this section header; it may be zero
 	 * if no block should be created.  The returned value reflects any adjustment the ElfExtension may require
@@ -556,8 +560,8 @@ public class ElfSectionHeader implements StructConverter, Writeable, MemoryLoada
 	 */
 	public void setAddress(long addr) {
 		if (!header.isRelocatable() && sh_addr == 0) {
-			throw new RuntimeException("Attempting to place non-loaded section into memory :" +
-				name);
+			throw new RuntimeException(
+				"Attempting to place non-loaded section into memory :" + name);
 		}
 		this.sh_addr = header.unadjustAddressForPrelink(addr);
 	}
@@ -628,8 +632,8 @@ public class ElfSectionHeader implements StructConverter, Writeable, MemoryLoada
 
 	private void checkSize() {
 		if (sh_size > (Integer.MAX_VALUE & Conv.INT_MASK)) {
-			throw new UnsupportedOperationException("ELF Section is too large: 0x" +
-				Long.toHexString(sh_size));
+			throw new UnsupportedOperationException(
+				"ELF Section is too large: 0x" + Long.toHexString(sh_size));
 		}
 	}
 
