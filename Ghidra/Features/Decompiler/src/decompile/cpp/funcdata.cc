@@ -343,6 +343,71 @@ void Funcdata::spacebaseConstant(PcodeOp *op,int4 slot,SymbolEntry *entry,const 
   opSetInput(op,outvn,slot);
 }
 
+void Funcdata::segmentizeFarPtr(Datatype* ct, bool locked, Varnode* vn, bool segmentize)
+{
+	SegmentOp* segdef = (SegmentOp*)0;
+	if ((ct->getMetatype() == TYPE_PTR ||
+		ct->getMetatype() == TYPE_CODE) && locked) {
+		Architecture* glb = getArch();
+		AddrSpace* rspc = glb->getDefaultSpace();
+		bool arenearpointers = glb->hasNearPointers(rspc);
+		if (arenearpointers && rspc->getAddrSize() == vn->getSize())
+			segdef = glb->userops.getSegmentOp(rspc->getIndex());
+	}
+	//need to go through every single time this varnode is written to
+	if (segdef != (SegmentOp*)0 && vn->getDef() != (PcodeOp*)0 && !vn->isPtrCheck() &&
+		vn->getDef()->code() != CPUI_SEGMENTOP && vn->getDef()->code() != CPUI_CALLOTHER) {
+		PcodeOp* segroot = vn->getDef();
+		Varnode* outvn = newUnique(vn->getSize());
+		opSetOutput(segroot, outvn);
+		PcodeOp* piece1 = newOp(2, segroot->getAddr());
+		opSetOpcode(piece1, CPUI_SUBPIECE);
+		Varnode* vn1 = newUniqueOut(segdef->getBaseSize(), piece1);
+		opSetInput(piece1, outvn, 0);
+		opSetInput(piece1, newConstant(outvn->getSize(), segdef->getInnerSize()), 1);
+		opInsertAfter(piece1, segroot);
+		PcodeOp* piece2 = newOp(2, segroot->getAddr());
+		opSetOpcode(piece2, CPUI_SUBPIECE);
+		Varnode* vn2 = newUniqueOut(segdef->getInnerSize(), piece2);
+		opSetInput(piece2, outvn, 0);
+		opSetInput(piece2, newConstant(outvn->getSize(), 0), 1);
+		opInsertAfter(piece2, piece1);
+		PcodeOp* newop = newOp(3, segroot->getAddr());
+		opSetOutput(newop, vn);
+		opSetOpcode(newop, CPUI_CALLOTHER);
+		//endianness could matter here - e.g. CALLF addr16 on x86 uses segment(*:2 (ptr+2),*:2 ptr)
+		opSetInput(newop, newConstant(4, segdef->getIndex()), 0);
+		opSetInput(newop, vn1, 1); //need to check size of segment
+		opSetInput(newop, vn2, 2); //need to check size of offset
+		opInsertAfter(newop, piece2);
+		vn->setPtrCheck();
+		outvn->setPtrCheck();
+
+		if (segmentize) {//FuncLinkInput/FuncLinkOutput come before segmentize, the rest require at least Spacebase for type locks
+			segroot = vn->getDef();
+			vector<Varnode*> bindlist;
+			bindlist.push_back((Varnode*)0);
+			bindlist.push_back((Varnode*)0);
+			if (!segdef->unify(*this, segroot, bindlist)) {
+				ostringstream err;
+				err << "Segment op in wrong form at ";
+				segroot->getAddr().printRaw(err);
+				throw LowlevelError(err.str());
+			}
+
+			if (segdef->getNumVariableTerms() == 1)
+				bindlist[1] = newConstant(4, 0);
+			// Redefine the op as a segmentop
+			opSetOpcode(segroot, CPUI_SEGMENTOP);
+			opSetInput(segroot, newVarnodeSpace(segdef->getSpace()), 0);
+			opSetInput(segroot, bindlist[1], 1);
+			opSetInput(segroot, bindlist[0], 2);
+			for (int4 j = segroot->numInput() - 1; j > 2; --j) // Remove anything else
+				opRemoveInput(segroot, j);
+		}
+	}
+}
+
 void Funcdata::clearCallSpecs(void)
 
 {
