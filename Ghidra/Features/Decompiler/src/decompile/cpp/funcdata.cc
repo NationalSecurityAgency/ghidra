@@ -343,7 +343,7 @@ void Funcdata::spacebaseConstant(PcodeOp *op,int4 slot,SymbolEntry *entry,const 
   opSetInput(op,outvn,slot);
 }
 
-void Funcdata::segmentizeFarPtr(Datatype* ct, bool locked, Varnode* vn, bool segmentize, bool bAfter)
+void Funcdata::segmentizeFarPtr(Datatype* ct, bool locked, Varnode* vn, bool segmentize)
 {
 	SegmentOp* segdef = (SegmentOp*)0;
 	if ((ct->getMetatype() == TYPE_PTR ||
@@ -365,7 +365,7 @@ void Funcdata::segmentizeFarPtr(Datatype* ct, bool locked, Varnode* vn, bool seg
 		Varnode* vn1 = newUniqueOut(segdef->getBaseSize(), piece1);
 		opSetInput(piece1, outvn, 0);
 		opSetInput(piece1, newConstant(outvn->getSize(), segdef->getInnerSize()), 1);
-		if (bAfter) opInsertAfter(piece1, segroot); else opInsertBefore(piece1, segroot);
+		opInsertAfter(piece1, segroot);
 		PcodeOp* piece2 = newOp(2, segroot->getAddr());
 		opSetOpcode(piece2, CPUI_SUBPIECE);
 		Varnode* vn2 = newUniqueOut(segdef->getInnerSize(), piece2);
