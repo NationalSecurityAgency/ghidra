@@ -1214,7 +1214,6 @@ void ActionFuncLink::funcLinkInput(FuncCallSpecs *fc,Funcdata &data)
       int4 sz = param->getSize();
       if (spc->getType() == IPTR_SPACEBASE) { // Param is stack relative
 	Varnode *loadval = data.opStackLoad(spc,off,sz,op,(Varnode *)0,false);
-	data.segmentizeFarPtr(param->getType(), param->isTypeLocked(), loadval, false);
 	data.opInsertInput(op,loadval,op->numInput());
 	if (!setplaceholder) {
 	  setplaceholder = true;
@@ -1222,11 +1221,9 @@ void ActionFuncLink::funcLinkInput(FuncCallSpecs *fc,Funcdata &data)
 	  spacebase = (AddrSpace *)0;	// With a locked stack parameter, we don't need a stackplaceholder
 	}
       }
-      else {
-		    Varnode* loadval = data.newVarnode(param->getSize(), param->getAddress());
-		    data.segmentizeFarPtr(param->getType(), param->isTypeLocked(), loadval, false);
-		    data.opInsertInput(op, loadval, op->numInput());
-	    }
+      else
+	data.opInsertInput(op, data.newVarnode(param->getSize(), param->getAddress()), op->numInput());
+      data.segmentizeFarPtr(param->getType(), param->isTypeLocked(), op->getIn(op->numInput() - 1), false);
     }
   }
   if (spacebase != (AddrSpace *)0) {	// If we need it, create the stackplaceholder
