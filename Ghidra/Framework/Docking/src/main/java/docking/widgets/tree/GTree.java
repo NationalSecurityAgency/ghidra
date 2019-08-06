@@ -1324,10 +1324,6 @@ public class GTree extends JPanel implements BusyListener {
 		protected void setSelectedPathNow(TreePath path) {
 			GTreeSelectionModel selectionModel = (GTreeSelectionModel) gTree.getSelectionModel();
 			selectionModel.setSelectionPaths(new TreePath[] { path }, USER_GENERATED);
-
-			// If the user clicked on the same node as was already selected, no events are generated
-			// and the tree might be left unfocused.  Force the focus to the tree.
-			gTree.requestFocus();
 		}
 	}
 
