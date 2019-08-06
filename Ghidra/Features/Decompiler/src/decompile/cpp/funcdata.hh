@@ -196,7 +196,7 @@ public:
   Varnode *newSpacebasePtr(AddrSpace *id);	///< Construct a new \e spacebase register for a given address space
   Varnode *findSpacebaseInput(AddrSpace *id) const;
   void spacebaseConstant(PcodeOp *op,int4 slot,SymbolEntry *entry,const Address &rampoint,uintb origval,int4 origsize);
-  void segmentizeFarPtr(Datatype* ct, bool locked, Varnode* vn, bool segmentize, bool bAfter);
+  void segmentizeFarPtr(Datatype* ct, bool locked, Varnode* vn, bool segmentize);
 
   /// \brief Get the number of heritage passes performed for the given address space
   ///
