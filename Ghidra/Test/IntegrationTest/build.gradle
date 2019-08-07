@@ -14,18 +14,15 @@ dependencies {
 	rootProject.subprojects { p ->
 		p.plugins.withType(JavaPlugin) {
 			def projectPath = p.projectDir.path.replace(File.separator, "/")
-			if (projectPath.contains("ghidra/Ghidra")) {
-				if (projectPath.contains("/Framework/") ||
-			    	projectPath.contains("/Features/") ||
-			    	projectPath.contains("/Processors/")) {
-					
-					compile p
-				}
+			if (projectPath.startsWith(ghidraPath) && (
+				projectPath.contains("/Framework/") ||
+				projectPath.contains("/Features/") ||
+				projectPath.contains("/Processors/"))) {
+
+				compile p
 			}
 		}	
 	}
-
-
 
 	// some tests use classes in Base/src/test and test.slow
 	testCompile project(path: ':Base', configuration: 'testArtifacts')

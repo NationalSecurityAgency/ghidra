@@ -115,6 +115,15 @@ public abstract class MemorySectionResolver {
 	}
 
 	private String getUniqueSectionName(String baseName) {
+		if (baseName != null) {
+			baseName = baseName.trim();
+			if (baseName.length() == 0) {
+				baseName = "NO-NAME";
+			}
+		}
+		else {
+			baseName = "NO-NAME";
+		}
 		Memory mem = program.getMemory();
 		String name = baseName;
 		int index = 0;

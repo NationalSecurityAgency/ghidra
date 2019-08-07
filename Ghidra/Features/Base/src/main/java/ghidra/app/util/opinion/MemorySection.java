@@ -18,7 +18,7 @@ package ghidra.app.util.opinion;
 import ghidra.app.util.bin.format.MemoryLoadable;
 import ghidra.program.model.address.*;
 
-public class MemorySection {
+class MemorySection {
 
 	protected final MemoryLoadable key;
 
@@ -54,7 +54,7 @@ public class MemorySection {
 	 * @param isFragmentationOK if true this memory section may be fragmented due to 
 	 * conflict/overlap with other memory sections of higher precedence.
 	 */
-	protected MemorySection(MemoryLoadable key, boolean isInitialized, long fileOffset, long length,
+	MemorySection(MemoryLoadable key, boolean isInitialized, long fileOffset, long length,
 			AddressRange range, String sectionName, boolean isReadable, boolean isWritable,
 			boolean isExecute, String comment, boolean isFragmentationOK) {
 		AddressSpace space = range.getAddressSpace();
@@ -73,7 +73,7 @@ public class MemorySection {
 		this.comment = comment;
 		this.isFragmentationOK = isFragmentationOK;
 	}
-	
+
 	public MemoryLoadable getKey() {
 		return key;
 	}
