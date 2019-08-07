@@ -8,9 +8,9 @@ eclipse.project.name = '_Integration Test'
  * Build dependencies
  *********************************************************************************/
 dependencies {
-	// integration test module may depends on all other projects within this repo
-	def ghidraPath = projectDir.getParentFile().getParentFile().path.replace(File.separator, "/") + "/";
-
+	
+	// integrationtest module may depend on other projects in this repo; add them
+	// here 
 	rootProject.subprojects { p ->
 		p.plugins.withType(JavaPlugin) {
 			def projectPath = p.projectDir.path.replace(File.separator, "/")
@@ -26,6 +26,8 @@ dependencies {
 
 	// some tests use classes in Base/src/test and test.slow
 	testCompile project(path: ':Base', configuration: 'testArtifacts')
+	testCompile project(path: ':Base', configuration: 'integrationTestArtifacts')	
+	testCompile project(path: ':FunctionGraph', configuration: 'testArtifacts')
 }
 
 // For Java 9, we must explicitly export references to the internal classes we are using.
