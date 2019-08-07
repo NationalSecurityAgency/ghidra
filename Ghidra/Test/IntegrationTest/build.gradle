@@ -8,9 +8,10 @@ eclipse.project.name = '_Integration Test'
  * Build dependencies
  *********************************************************************************/
 dependencies {
-	
 	// integrationtest module may depend on other projects in this repo; add them
 	// here 
+	def ghidraPath = projectDir.getParentFile().getParentFile().path.replace(File.separator, "/") + "/";
+	
 	rootProject.subprojects { p ->
 		p.plugins.withType(JavaPlugin) {
 			def projectPath = p.projectDir.path.replace(File.separator, "/")
