@@ -9,6 +9,8 @@ eclipse.project.name = '_Integration Test'
  *********************************************************************************/
 dependencies {
 	
+	// integrationtest module may depend on other projects in this repo; add them
+	// here 
 	rootProject.subprojects { p ->
 		p.plugins.withType(JavaPlugin) {
 			def projectPath = p.projectDir.path.replace(File.separator, "/")
