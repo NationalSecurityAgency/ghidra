@@ -44,8 +44,7 @@ import ghidra.program.model.symbol.*;
 import ghidra.program.model.util.AddressSetPropertyMap;
 import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.util.*;
-import ghidra.util.exception.DuplicateNameException;
-import ghidra.util.exception.InvalidInputException;
+import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
 
 /**
@@ -94,7 +93,8 @@ public class PeLoader extends AbstractPeDebugLoader {
 
 	@Override
 	protected void load(ByteProvider provider, LoadSpec loadSpec, List<Option> options,
-			Program program, TaskMonitor monitor, MessageLog log) throws IOException {
+			Program program, TaskMonitor monitor, MessageLog log)
+			throws IOException, CancelledException {
 
 		if (monitor.isCancelled()) {
 			return;
@@ -112,7 +112,7 @@ public class PeLoader extends AbstractPeDebugLoader {
 		FileHeader fileHeader = ntHeader.getFileHeader();
 
 		monitor.setMessage("Completing PE header parsing...");
-		FileBytes fileBytes = MemoryBlockUtils.createFileBytes(program, provider);
+		FileBytes fileBytes = MemoryBlockUtils.createFileBytes(program, provider, monitor);
 		try {
 			Map<Integer, Address> sectionNumberToAddress =
 				processMemoryBlocks(pe, program, fileBytes, monitor, log);

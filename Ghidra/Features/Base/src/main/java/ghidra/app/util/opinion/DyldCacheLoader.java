@@ -49,7 +49,6 @@ public class DyldCacheLoader extends AbstractLibrarySupportLoader {
 	/** Default value for loader option to create memory blocks for DYLIB sections */
 	static final boolean CREATE_DYLIB_SECTIONS_OPTION_DEFAULT = false;
 
-
 	@Override
 	public Collection<LoadSpec> findSupportedLoadSpecs(ByteProvider provider) throws IOException {
 		List<LoadSpec> loadSpecs = new ArrayList<>();
@@ -84,8 +83,8 @@ public class DyldCacheLoader extends AbstractLibrarySupportLoader {
 
 		try {
 			DyldCacheProgramBuilder.buildProgram(program, provider,
-				MemoryBlockUtils.createFileBytes(program, provider), shouldProcessSymbols(options),
-				shouldCreateDylibSections(options), log, monitor);
+				MemoryBlockUtils.createFileBytes(program, provider, monitor),
+				shouldProcessSymbols(options), shouldCreateDylibSections(options), log, monitor);
 		}
 		catch (CancelledException e) {
 			return;
