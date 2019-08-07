@@ -33,7 +33,7 @@ import utilities.util.FileUtilities;
 @FileSystemInfo(type = "7zip", description = "7Zip", factory = SevenZipFileSystemFactory.class)
 public class SevenZipFileSystem implements GFileSystem {
 
-	private FileSystemService fsService;
+	private FileSystemService fileSystemService;
 	private FileSystemIndexHelper<ISimpleInArchiveItem> fsIndexHelper;
 	private FSRLRoot fsrl;
 	private FileSystemRefManager refManager = new FileSystemRefManager(this);
@@ -45,11 +45,21 @@ public class SevenZipFileSystem implements GFileSystem {
 	public SevenZipFileSystem(FSRLRoot fsrl) {
 		this.fsrl = fsrl;
 		this.fsIndexHelper = new FileSystemIndexHelper<>(this, fsrl);
-		this.fsService = FileSystemService.getInstance();
+		this.fileSystemService = FileSystemService.getInstance();
 	}
 
-	public void mount(File f, TaskMonitor monitor) throws CancelledException, IOException {
-		randomAccessFile = new RandomAccessFile(f, "r");
+	/**
+	 * Opens the specified sevenzip container file and initializes this file system with the
+	 * contents.
+	 *  
+	 * @param containerFile file to open
+	 * @param monitor {@link TaskMonitor} to allow the user to monitor and cancel
+	 * @throws CancelledException if user cancels
+	 * @throws IOException if error when reading data
+	 */
+	public void mount(File containerFile, TaskMonitor monitor)
+			throws CancelledException, IOException {
+		randomAccessFile = new RandomAccessFile(containerFile, "r");
 		try {
 			archive = SevenZip.openInArchive(null, new RandomAccessFileInStream(randomAccessFile));
 			archiveInterface = archive.getSimpleInterface();
@@ -139,7 +149,7 @@ public class SevenZipFileSystem implements GFileSystem {
 		return (entry != null) ? FSUtilities.infoMapToString(getInfoMap(entry)) : null;
 	}
 
-	public Map<String, String> getInfoMap(ISimpleInArchiveItem entry) {
+	private Map<String, String> getInfoMap(ISimpleInArchiveItem entry) {
 		Map<String, String> info = new LinkedHashMap<>();
 		try {
 			info.put("Name", entry.getPath());
@@ -151,7 +161,8 @@ public class SevenZipFileSystem implements GFileSystem {
 				compressedSize != null ? NumericUtilities.toHexString(compressedSize) : "NA");
 			info.put("Uncompressed Size", NumericUtilities.toHexString(getSize(entry)));
 			Integer crc = getCRC(entry);
-			info.put("CRC", crc != null ? NumericUtilities.toHexString(crc) : "NA");
+			info.put("CRC",
+				crc != null ? NumericUtilities.toHexString(crc.intValue() & 0xffffffffL) : "NA");
 			info.put("Compression Method", entry.getMethod());
 			Date creationTime = getCreateDate(entry);
 			info.put("Time", creationTime != null ? creationTime.toGMTString() : "NA");
@@ -249,15 +260,9 @@ public class SevenZipFileSystem implements GFileSystem {
 		}
 	}
 
-	private static long getSize(ISimpleInArchiveItem entry) {
-		try {
-			Long tempSize = entry.getSize();
-			return tempSize == null ? -1 : tempSize.intValue();
-		}
-		catch (SevenZipException e) {
-			//don't care
-		}
-		return -1;
+	private static long getSize(ISimpleInArchiveItem entry) throws SevenZipException {
+		Long tempSize = entry.getSize();
+		return tempSize == null ? -1 : tempSize.intValue();
 	}
 
 	private static Long getCompressedSize(ISimpleInArchiveItem entry) {
@@ -318,8 +323,8 @@ public class SevenZipFileSystem implements GFileSystem {
 
 		private TaskMonitor monitor;
 		private int currentIndex;
-		private File currentTmpFile;
-		private OutputStream currentTmpOs;
+		private File currentTempFile;
+		private OutputStream currentTempFileOutputStream;
 
 		public SZExtractCallback(TaskMonitor monitor) {
 			this.monitor = monitor;
@@ -328,8 +333,10 @@ public class SevenZipFileSystem implements GFileSystem {
 		@Override
 		public ISequentialOutStream getStream(int index, ExtractAskMode extractAskMode)
 				throws SevenZipException {
+			// STEP 1: SevenZip calls this method to get a object it can use to write the bytes to.
+			// If we return null, SZ treats it as a skip.
 			try {
-				if (!fsService.hasDerivedFile(fsrl.getContainer(), Integer.toString(index),
+				if (!fileSystemService.hasDerivedFile(fsrl.getContainer(), Integer.toString(index),
 					monitor)) {
 					this.currentIndex = index;
 					return this;
@@ -343,10 +350,12 @@ public class SevenZipFileSystem implements GFileSystem {
 
 		@Override
 		public void prepareOperation(ExtractAskMode extractAskMode) throws SevenZipException {
+			// STEP 2: SevenZip calls this method to further prepare to operate on the file.
+			// In our case, we only handle extract operations.
 			if (extractAskMode == ExtractAskMode.EXTRACT) {
 				try {
-					currentTmpFile = File.createTempFile("ghidra_sevenzip_", ".tmp");
-					currentTmpOs = new FileOutputStream(currentTmpFile);
+					currentTempFile = File.createTempFile("ghidra_sevenzip_", ".tmp");
+					currentTempFileOutputStream = new FileOutputStream(currentTempFile);
 				}
 				catch (IOException e) {
 					throw new SevenZipException(e);
@@ -355,38 +364,41 @@ public class SevenZipFileSystem implements GFileSystem {
 		}
 
 		@Override
+		public int write(byte[] data) throws SevenZipException {
+			// STEP 3: SevenZip calls this multiple times for all the bytes in the file.
+			// We write them to our temp file.
+			try {
+				currentTempFileOutputStream.write(data);
+				return data.length;
+			}
+			catch (IOException e) {
+				throw new SevenZipException(e);
+			}
+		}
+
+		@Override
 		public void setOperationResult(ExtractOperationResult extractOperationResult)
 				throws SevenZipException {
-			if (currentTmpOs != null) {
+			// STEP 4: SevenZip calls this to signal that the extract is done for this file.
+			if (currentTempFileOutputStream != null) {
 				try {
-					currentTmpOs.close();
+					currentTempFileOutputStream.close();
 					extractOperationResultToException(extractOperationResult);
-					fsService.getDerivedFilePush(fsrl.getContainer(),
+					fileSystemService.getDerivedFilePush(fsrl.getContainer(),
 						Integer.toString(currentIndex), (os) -> {
-							try (InputStream is = new FileInputStream(currentTmpFile)) {
+							try (InputStream is = new FileInputStream(currentTempFile)) {
 								FileUtilities.copyStreamToStream(is, os, monitor);
 							}
 						}, monitor);
-					currentTmpFile.delete();
+					currentTempFile.delete();
 				}
 				catch (IOException | CancelledException e) {
 					throw new SevenZipException(e);
 				}
 				finally {
-					currentTmpFile = null;
-					currentTmpOs = null;
+					currentTempFile = null;
+					currentTempFileOutputStream = null;
 				}
-			}
-		}
-
-		@Override
-		public int write(byte[] data) throws SevenZipException {
-			try {
-				currentTmpOs.write(data);
-				return data.length;
-			}
-			catch (IOException e) {
-				throw new SevenZipException(e);
 			}
 		}
 
