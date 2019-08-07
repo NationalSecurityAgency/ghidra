@@ -337,23 +337,25 @@ public class FileBytes {
 
 	@Override
 	public int hashCode() {
-		return (int) id;
+		return (int) (id ^ (id >>> 32));
 	}
 
 	@Override
 	public boolean equals(Object obj) {
-		if (this == obj) {
+		if (this == obj)
 			return true;
-		}
-		if (obj == null) {
+		if (obj == null)
 			return false;
-		}
-		if (getClass() != obj.getClass()) {
+		if (getClass() != obj.getClass())
 			return false;
-		}
 		FileBytes other = (FileBytes) obj;
-
-		return id == other.id;
+		if (memMap != other.memMap)
+			return false;
+		if (id != other.id)
+			return false;
+		if (invalid != other.invalid)
+			return false;
+		return true;
 	}
 
 	MemoryMapDB getMemMap() {

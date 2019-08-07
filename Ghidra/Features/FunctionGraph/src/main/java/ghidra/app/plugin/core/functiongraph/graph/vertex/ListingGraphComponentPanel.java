@@ -198,11 +198,22 @@ public class ListingGraphComponentPanel extends AbstractGraphComponentPanel {
 
 	private void createListingPanelToolTipComponent() {
 		JPanel panel = new JPanel(new BorderLayout());
-		previewListingPanel =
-			new FGVertexListingPanel(controller, getFormatManager(true), program, addressSet);
+
+		FunctionGraphOptions options = controller.getFunctionGraphOptions();
+		boolean useFullSizeTooltip = options.useFullSizeTooltip();
+		previewListingPanel = new FGVertexListingPanel(controller,
+			getFormatManager(useFullSizeTooltip), program, addressSet);
 		previewListingPanel.setTextBackgroundColor(FGVertex.TOOLTIP_BACKGROUND_COLOR);
 		//            previewListingPanel.getFieldPanel().setSelectionMode( FieldPanel.NO_SELECTION );
 		previewListingPanel.getFieldPanel().setCursorOn(false);
+
+		// keep the tooltip window from getting too big; use an arbitrary, reasonable max
+		Dimension maxSize = new Dimension(700, 400);
+		previewListingPanel.setMaximumSize(maxSize);
+		Dimension preferredSize = previewListingPanel.getPreferredSize();
+		preferredSize.width = Math.min(maxSize.width, preferredSize.width);
+		preferredSize.height = Math.min(maxSize.height, preferredSize.height);
+		previewListingPanel.setPreferredSize(preferredSize);
 
 		tooltipTitleLabel = new GDLabel();
 		tooltipTitleLabel.setHorizontalAlignment(SwingConstants.LEADING);
@@ -239,6 +250,7 @@ public class ListingGraphComponentPanel extends AbstractGraphComponentPanel {
 		// make sure the title stays up-to-date with the symbol at the start address
 		title = createTitle();
 		genericHeader.setTitle(title);
+		previewListingPanel = null;
 	}
 
 	@Override

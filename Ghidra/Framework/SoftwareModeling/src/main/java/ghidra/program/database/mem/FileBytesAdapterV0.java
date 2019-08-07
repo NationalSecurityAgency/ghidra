@@ -121,8 +121,9 @@ class FileBytesAdapterV0 extends FileBytesAdapter {
 
 	@Override
 	boolean deleteFileBytes(FileBytes fileBytes) throws IOException {
-		if (table.deleteRecord(fileBytes.getId())) {
-			fileBytesList.remove(fileBytes);
+		if (fileBytesList.remove(fileBytes)) {
+			table.deleteRecord(fileBytes.getId());
+			fileBytes.invalidate();
 			return true;
 		}
 		return false;

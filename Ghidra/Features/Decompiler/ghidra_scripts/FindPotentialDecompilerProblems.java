@@ -15,190 +15,195 @@
  */
 // Finds potential problems in code that will cause trouble for the decompiler.
 //
-// This script essentially runs the decompiler on each currently defined function.
-//  Any function that has potential issues in the decompiler output is flagged in a table with a suggestion.
+//  This script runs the decompiler on each currently defined function.
+//  Function that has potential issues in the decompiler output is flagged in a table with a suggestion.
 //  For example any references to "in_" variables, or "unaff_" are flagged with a potential solution.
-//  This is very prototype at this point, but it can help diagnose initial analysis of a binary for problems that
-//  affect decompiled output and thus the cleaness of code for follow on uses.  Things like unidentified
+//  This script is still a work in progress, but it can help diagnose initial analysis of a binary for problems that
+//  affect decompiled output and thus the cleanness of code for follow on uses.  Things like unidentified
 //  epilog functions that have side-effects on the stack will be uncovered.
 //
 // @category Analysis
 
-import java.util.ArrayList;
-import java.util.Iterator;
+import java.util.*;
+
+import com.google.common.collect.Iterators;
 
 import ghidra.app.decompiler.*;
+import ghidra.app.decompiler.parallel.*;
 import ghidra.app.script.GhidraScript;
 import ghidra.app.tablechooser.*;
-import ghidra.framework.options.ToolOptions;
-import ghidra.framework.plugintool.util.OptionsService;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.pcode.*;
 import ghidra.program.model.symbol.Reference;
 import ghidra.program.model.symbol.ReferenceIterator;
+import ghidra.util.task.TaskMonitor;
+import util.CollectionUtils;
 
 public class FindPotentialDecompilerProblems extends GhidraScript {
-
-	private IssueEntries entryList = null;
-
-	private DecompInterface decomplib;
-	DecompileResults lastResults = null;
 
 	@Override
 	public void run() throws Exception {
 
-		TableChooserDialog tableDialog = null;
-
-		TableChooserExecutor executor = null;
-
-		try {
-			if (this.isRunningHeadless()) {
-				entryList = new IssueEntryList();
-			}
-			else {
-				tableDialog =
-					createTableChooserDialog("Decompiler Inconsistency Problems", executor);
-				configureTableColumns(tableDialog);
-				tableDialog.show();
-				tableDialog.setMessage("Searching...");
-				entryList = new TableEntryList(tableDialog);
-			}
-
-			// get the decompiler context
-			// setup the decompiler
-			decomplib = setUpDecompiler(currentProgram);
-
-			FunctionIterator funcIter = currentProgram.getFunctionManager().getFunctions(true);
-			while (funcIter.hasNext() && !monitor.isCancelled()) {
-				Function func = funcIter.next();
-
-				// no real function here.
-				if (currentProgram.getListing().getInstructionAt(func.getEntryPoint()) == null) {
-					continue;
-				}
-
-				if (tableDialog != null) {
-					tableDialog.setMessage("Decompiling - " + func.getName());
-				}
-
-				DecompileResults decompResult = decompileFunction(func, decomplib);
-
-				HighFunction hf = decompResult.getHighFunction();
-				if (hf == null) {
-					entryList.add(new ProblemLocations(currentProgram, func.getEntryPoint(), null,
-						"", "Decompilation Error"));
-					continue;
-				}
-
-				Iterator<HighSymbol> symIter = hf.getLocalSymbolMap().getSymbols();
-				while (symIter.hasNext() && !monitor.isCancelled()) {
-					HighSymbol sym = symIter.next();
-					HighVariable highVar = sym.getHighVariable();
-					if (!(highVar instanceof HighLocal)) {
-						continue;
-					}
-
-					if (sym.getName().startsWith("in_") && !sym.getName().equals("in_FS_OFFSET")) {
-						// Has an input variable that is not a parameter
-						Address funcAddr =
-							getFirstFuncWithVar(func, sym.getHighVariable().getRepresentative());
-						String badness =
-							"Missing input register param, or bad register param defined in called function";
-						if (sym.getName().startsWith("in_stack_ff")) {
-							badness =
-								"Too many stack parameters defined in a called function.  May need to redefine in the called function.";
-						}
-						if (sym.getName().startsWith("in_stack_00")) {
-							badness =
-								"Too few stack parameters defined for this function.  May need to redfine parameters.";
-						}
-						entryList.add(new ProblemLocations(currentProgram, func.getEntryPoint(),
-							funcAddr, sym.getName(), badness));
-					}
-					if (sym.getName().startsWith("unaff_")) {
-						Address firstAddr = getFirstCalledFunction(func);
-						if (sym.getName().equals("unaff_EBP")) {
-							entryList.add(new ProblemLocations(currentProgram, firstAddr,
-								func.getEntryPoint(), sym.getName(),
-								"Suspect function is EH_PROLOG setup"));
-							continue;
-						}
-						// Has a sideffect variable
-						String possible = (firstAddr != null ? "Sideffect from a call"
-								: "Undefined paramter or global register save");
-						entryList.add(new ProblemLocations(currentProgram, func.getEntryPoint(),
-							sym.getPCAddress(), sym.getName(), possible));
-					}
-					if (sym.getName().startsWith("extraout")) {
-						// Has a sideffect variable
-						Address funcAddr =
-							getFirstFuncWithVar(func, sym.getHighVariable().getRepresentative());
-						if (funcAddr == null) {
-							funcAddr = sym.getHighVariable().getRepresentative().getAddress();
-						}
-						String possible = (funcAddr != null ? "Bad paramter in called function"
-								: "Extra return value, Global register, or Function register Sideffect");
-						if (sym.getName().startsWith("extraout_var")) {
-							possible =
-								"Called function does not return a Solid type.  Undefined4 might need to be int.";
-						}
-						entryList.add(new ProblemLocations(currentProgram, funcAddr,
-							func.getEntryPoint(), sym.getName(), possible));
-					}
-				}
-			}
-
-			if (this.isRunningHeadless()) {
-				// Do the cases, or just create a selection
-				IssueEntryList issueList = (IssueEntryList) entryList;
-				int numEntries = issueList.getNumEntries();
-				for (int i = 0; i < numEntries; i++) {
-					ProblemLocations entry = issueList.getEntry(i);
-					if (entry.isFixed()) {
-						continue;
-					}
-					println(entry.toString());
-					// this will actually do the fixup for all places currently
-					// calling this location
-					if (executor != null) {
-						executor.execute(entry);
-					}
-				}
-
-			}
-			else {
-				entryList.setMessage("Found Potential Problems");
-			}
+		if (isRunningHeadless()) {
+			printf("This script cannot be run in headless mode.\n");
+			return;
 		}
-		finally {
-			tableDialog.setMessage("Finished");
-			decomplib.dispose();
+
+		TableChooserDialog tableDialog = createTableChooserDialog(
+			"Possible Decompiler Problems: " + currentProgram.getName(), null);
+		configureTableColumns(tableDialog);
+		tableDialog.show();
+		IssueEntries entryList = new TableEntryList(tableDialog);
+
+		DecompilerCallback<Void> callback =
+			new DecompilerCallback<Void>(currentProgram, new BasicConfigurer(currentProgram)) {
+
+				@Override
+				public Void process(DecompileResults results, TaskMonitor tMonitor)
+						throws Exception {
+					for (ProblemLocation probLoc : processFunc(results)) {
+						entryList.add(probLoc);
+					}
+					return null;
+				}
+			};
+
+		Set<Function> funcsToDecompile = new HashSet<>();
+		FunctionIterator fIter = currentProgram.getFunctionManager().getFunctionsNoStubs(true);
+		Iterators.addAll(funcsToDecompile, fIter);
+
+		if (funcsToDecompile.isEmpty()) {
+			popup("No functions to decompile!");
+			return;
 		}
+
+		ParallelDecompiler.decompileFunctions(callback, currentProgram, funcsToDecompile, monitor);
+		monitor.checkCanceled();
+		tableDialog.setMessage("Finished");
 	}
 
+	private List<ProblemLocation> processFunc(DecompileResults decompResult) {
+
+		//TODO: skip if func name contains SEH_epilog or SEH_prolog?
+		//add general way to have architecture-specific messages?
+
+		List<ProblemLocation> problems = new ArrayList<>();
+		Function func = decompResult.getFunction();
+		HighFunction hf = decompResult.getHighFunction();
+		if (hf == null) {
+			problems.add(new ProblemLocation(currentProgram, func.getEntryPoint(),
+				func.getEntryPoint(), "", "Decompilation Error"));
+			return problems;
+		}
+
+		Iterator<HighSymbol> symIter = hf.getLocalSymbolMap().getSymbols();
+		while (symIter.hasNext() && !monitor.isCancelled()) {
+			HighSymbol sym = symIter.next();
+			HighVariable highVar = sym.getHighVariable();
+			if (!(highVar instanceof HighLocal)) {
+				continue;
+			}
+			if (sym.getName().startsWith("in_") && !sym.getName().equals("in_FS_OFFSET")) {
+				// Has an input variable that is not a parameter
+				String possible =
+					"Function signature missing register param, called function passed too many register params, or only a subpiece" +
+						" of a register actually used.";
+				if (!(hf.getFunction().getSymbol().isGlobal()) &&
+					!(hf.getFunction().getCallingConventionName().contains("thiscall"))) {
+					possible += " Function might need calling convention changed to thiscall";
+				}
+				if (sym.getName().startsWith("in_stack_ff")) {
+					possible =
+						"Too many stack parameters passed to a called function.  May need to redefine in the called function (could be varargs).";
+				}
+				if (sym.getName().startsWith("in_stack_00")) {
+					possible =
+						"Too few stack parameters defined for this function.  May need to redefine parameters.";
+				}
+
+				Address funcAddr =
+					getFirstFuncWithVar(func, sym.getHighVariable().getRepresentative());
+
+				//if we didn't find a good location for the cause of the problem, 
+				//just use the entry point of the function with the problem
+				if (funcAddr == null || funcAddr.equals(Address.NO_ADDRESS)) {
+					funcAddr = func.getEntryPoint();
+				}
+				problems.add(new ProblemLocation(currentProgram, func.getEntryPoint(), funcAddr,
+					sym.getName(), possible));
+			}
+
+			if (sym.getName().startsWith("unaff_")) {
+				Address firstAddr = getFirstCalledFunction(func);
+				if (sym.getName().equals("unaff_EBP")) {
+					problems.add(
+						new ProblemLocation(currentProgram, firstAddr, func.getEntryPoint(),
+							sym.getName(), "Suspect function is EH_PROLOG/EH_EPILOG"));
+					continue;
+				}
+				// Has a side effect variable
+				String possible = (firstAddr != null ? "Side effect from a call"
+						: "Undefined parameter or global register save");
+				//TODO: sym.getPCAddress() points outside of function bodies in certain cases...
+				problems.add(new ProblemLocation(currentProgram, func.getEntryPoint(),
+					sym.getPCAddress(), sym.getName(), possible));
+			}
+			//extraout_X: will sym.getHighVariable().getRepresentative return X?
+			if (sym.getName().startsWith("extraout")) {
+				// Has a side effect variable
+				Address funcAddr =
+					getFirstFuncWithVar(func, sym.getHighVariable().getRepresentative());
+
+				if (funcAddr.equals(Address.NO_ADDRESS)) {
+					funcAddr = func.getEntryPoint();
+				}
+
+				String possible =
+					"Bad parameter in called function or extra return value/global register/function register side effect";
+				if (sym.getName().startsWith("extraout_var")) {
+					possible = "Function containing problem may need return type adjusted.";
+				}
+				problems.add(new ProblemLocation(currentProgram, func.getEntryPoint(), funcAddr,
+					sym.getName(), possible));
+			}
+		}
+		return problems;
+	}
+
+	/**
+	 * Returns the target of the first (in address order) call in the body of {@code func}
+	 * which takes {@code vn} as a parameter.
+	 * @param func {@link Function} whose body to search for calls
+	 * @param vn {@link Varnode} representing required parameter
+	 * @return entry point of first function called by {@code func} which uses {@code vn}
+	 * as a parameter, or {@code Address.NO_ADDRESS} if no such function found.
+	 */
 	private Address getFirstFuncWithVar(Function func, Varnode vn) {
 		Address variableAddr = vn.getAddress();
 		if (variableAddr == null) {
 			return Address.NO_ADDRESS;
 		}
-		ReferenceIterator riter =
+
+		// Note: this handles some cases where functions consist of non-contiguous blocks,
+		// but since we start at the entry point we might miss things if part of the body of
+		// the function is before the entry point (in address order)
+		ReferenceIterator refIter =
 			func.getProgram().getReferenceManager().getReferenceIterator(func.getEntryPoint());
-		while (riter.hasNext()) {
-			Reference ref = riter.next();
+
+		Address maxAddr = func.getBody().getMaxAddress();
+
+		// return the first call to a function which takes vn as an argument
+		for (Reference ref : CollectionUtils.asIterable(refIter)) {
+			// check whether we are at an address not in the function
+			// only necessary in case func consists of non-contiguous blocks
+			// TODO: handle tail-call elimination
 			if (!func.getBody().contains(ref.getFromAddress())) {
-				return Address.NO_ADDRESS;
+				continue;
 			}
-			// return the first call for the function
-			if (ref.getReferenceType().isCall()) {
-				if (ref.getToAddress() == null) {
-					continue;
-				}
+			if (isValidCallReference(ref)) {
 				Function calledFunc =
-					func.getProgram().getFunctionManager().getFunctionAt(ref.getToAddress());
-				if (calledFunc == null) {
-					continue;
-				}
+					currentProgram.getFunctionManager().getFunctionAt(ref.getToAddress());
 				Parameter[] params = calledFunc.getParameters();
 				for (Parameter param : params) {
 					Address addr = param.getMinAddress();
@@ -207,65 +212,92 @@ public class FindPotentialDecompilerProblems extends GhidraScript {
 					}
 				}
 			}
-		}
-		return Address.NO_ADDRESS;
-	}
-
-	private Address getFirstCalledFunction(Function func) {
-		ReferenceIterator riter =
-			func.getProgram().getReferenceManager().getReferenceIterator(func.getEntryPoint());
-		while (riter.hasNext()) {
-			Reference ref = riter.next();
-			if (!func.getBody().contains(ref.getFromAddress())) {
+			// The references are sorted by their "from" addresses, so if this condition is true, 
+			// we've searched all the references from the body of func and haven't found anything.
+			// So, stop looking.
+			if (ref.getFromAddress().compareTo(maxAddr) > 0) {
 				return Address.NO_ADDRESS;
 			}
-			// return the first call for the function
-			if (ref.getReferenceType().isCall()) {
-				return ref.getToAddress();
-			}
 		}
+		//in case there are no references with "from" addresses after the body of func
 		return Address.NO_ADDRESS;
 	}
 
-	private Address lastDecompiledFuncAddr = null;
+	/**
+	 * Returns the address of first function called by {@code func}.  That is, the returned {@link Address}
+	 * is the target of the call instruction with the least address within the body of {@code func}. 
+	 * @param func the {@link Function} to search for calls
+	 * @return the {@link Address} of the first called function, or {@code Address.NO_ADDRESS} if
+	 * no calls are found.
+	 */
+	private Address getFirstCalledFunction(Function func) {
 
-	private DecompInterface setUpDecompiler(Program program) {
-		DecompInterface decompInterface = new DecompInterface();
+		//could be issues if func's body has addresses that are before the entry point of
+		//func - see the comment in getFirstFuncWithVar
+		ReferenceIterator refIter =
+			func.getProgram().getReferenceManager().getReferenceIterator(func.getEntryPoint());
 
-		DecompileOptions options;
-		options = new DecompileOptions();
-		OptionsService service = state.getTool().getService(OptionsService.class);
-		if (service != null) {
-			ToolOptions opt = service.getOptions("Decompiler");
-			options.grabFromToolAndProgram(null, opt, program);
+		Address maxAddr = func.getBody().getMaxAddress();
+
+		for (Reference ref : CollectionUtils.asIterable(refIter)) {
+			// check whether we are at an address not in the function
+			// only necessary in case func consists of non-contiguous blocks
+			// TODO: handle tail-call elimination
+			if (!func.getBody().contains(ref.getFromAddress())) {
+				continue;
+			}
+
+			// return the first call for the function
+			if (isValidCallReference(ref)) {
+				return ref.getToAddress();
+			}
+			// The references are sorted by their "from" addresses, so if this condition is true, 
+			// we've searched all the references from the body of func and haven't found anything.
+			// So, stop looking.
+			if (ref.getFromAddress().compareTo(maxAddr) > 0) {
+				return Address.NO_ADDRESS;
+			}
 		}
-		decompInterface.setOptions(options);
-
-		decompInterface.toggleCCode(true);
-		decompInterface.toggleSyntaxTree(true);
-		decompInterface.setSimplificationStyle("decompile");
-
-		decompInterface.openProgram(program);
-
-		return decompInterface;
+		//in case there are no references with "from" addresses after the body of func
+		return Address.NO_ADDRESS;
 	}
 
-	public DecompileResults decompileFunction(Function f, DecompInterface decompInterface) {
-		// don't decompile the function again if it was the same as the last one
-		//
-		if (f.getEntryPoint().equals(lastDecompiledFuncAddr)) {
-			return lastResults;
+	//returns true precisely when ref is a call reference to a defined function
+	private boolean isValidCallReference(Reference ref) {
+		if (!ref.getReferenceType().isCall()) {
+			return false;
+		}
+		if (ref.getToAddress() == null) {
+			return false;
+		}
+		if (currentProgram.getFunctionManager().getFunctionAt(ref.getToAddress()) != null) {
+			return true;
+		}
+		return false;
+
+	}
+
+	static class BasicConfigurer implements DecompileConfigurer {
+		private Program p;
+
+		public BasicConfigurer(Program prog) {
+			p = prog;
 		}
 
-		lastResults = null;
-
-		lastResults = decompInterface.decompileFunction(f,
-			decompInterface.getOptions().getDefaultTimeout(), monitor);
-
-		lastDecompiledFuncAddr = f.getEntryPoint();
-
-		return lastResults;
+		@Override
+		public void configure(DecompInterface decompiler) {
+			decompiler.toggleCCode(true);
+			decompiler.toggleSyntaxTree(true);
+			decompiler.setSimplificationStyle("decompile");
+			DecompileOptions opts = new DecompileOptions();
+			opts.grabFromProgram(p);
+			decompiler.setOptions(opts);
+		}
 	}
+
+	////////////////////////////////////////////////////////////////////////////////////
+	//                          table stuff                                           //
+	////////////////////////////////////////////////////////////////////////////////////
 
 	private void configureTableColumns(TableChooserDialog dialog) {
 		StringColumnDisplay explanationColumn = new StringColumnDisplay() {
@@ -276,7 +308,7 @@ public class FindPotentialDecompilerProblems extends GhidraScript {
 
 			@Override
 			public String getColumnValue(AddressableRowObject rowObject) {
-				ProblemLocations entry = (ProblemLocations) rowObject;
+				ProblemLocation entry = (ProblemLocation) rowObject;
 				return entry.getExplanation();
 			}
 		};
@@ -289,7 +321,7 @@ public class FindPotentialDecompilerProblems extends GhidraScript {
 
 			@Override
 			public String getColumnValue(AddressableRowObject rowObject) {
-				ProblemLocations entry = (ProblemLocations) rowObject;
+				ProblemLocation entry = (ProblemLocation) rowObject;
 				Function func = entry.getProgram().getFunctionManager().getFunctionContaining(
 					entry.getAddress());
 				if (func == null) {
@@ -299,28 +331,38 @@ public class FindPotentialDecompilerProblems extends GhidraScript {
 			}
 		};
 
-		ColumnDisplay<Address> probLocColumn = new AbstractComparableColumnDisplay<Address>() {
+		ColumnDisplay<Address> probLocColumn = new ColumnDisplay<Address>() {
 			@Override
 			public String getColumnName() {
-				return "Problem Loc";
+				return "Location of Possible Cause";
 			}
 
 			@Override
 			public Address getColumnValue(AddressableRowObject rowObject) {
-				ProblemLocations probLocation = (ProblemLocations) rowObject;
+				ProblemLocation probLocation = (ProblemLocation) rowObject;
 				return probLocation.getWhyAddr();
+			}
+
+			@Override
+			public int compare(AddressableRowObject o1, AddressableRowObject o2) {
+				return getColumnValue(o1).compareTo(getColumnValue(o2));
+			}
+
+			@Override
+			public Class<Address> getColumnClass() {
+				return Address.class;
 			}
 		};
 
 		StringColumnDisplay varNameColumn = new StringColumnDisplay() {
 			@Override
 			public String getColumnName() {
-				return "Var Name";
+				return "Problematic Variable";
 			}
 
 			@Override
 			public String getColumnValue(AddressableRowObject rowObject) {
-				ProblemLocations probLocation = (ProblemLocations) rowObject;
+				ProblemLocation probLocation = (ProblemLocation) rowObject;
 				return probLocation.getVarName();
 			}
 
@@ -330,49 +372,26 @@ public class FindPotentialDecompilerProblems extends GhidraScript {
 			}
 		};
 
-		StringColumnDisplay statusColumn = new StringColumnDisplay() {
-			@Override
-			public String getColumnName() {
-				return "Status";
-			}
-
-			@Override
-			public String getColumnValue(AddressableRowObject rowObject) {
-				ProblemLocations probLocation = (ProblemLocations) rowObject;
-				return probLocation.getStatus().toString();
-			}
-		};
-
 		dialog.addCustomColumn(funcColumn);
-		dialog.addCustomColumn(statusColumn);
 		dialog.addCustomColumn(probLocColumn);
 		dialog.addCustomColumn(varNameColumn);
 		dialog.addCustomColumn(explanationColumn);
 	}
 
-	class ProblemLocations implements AddressableRowObject {
+	class ProblemLocation implements AddressableRowObject {
 		private Program program;
-		private Address addr;
-		private Address whyAddr;
+		private Address problemAddress;
+		private Address causeAddress;
 		private String varName;
 		private String explanation;
-		private String status;
 
-		ProblemLocations(Program prog, Address suspectNoRetAddr, Address whyAddr, String varName,
+		ProblemLocation(Program prog, Address problemAddress, Address whyAddr, String varName,
 				String explanation) {
-			this.addr = suspectNoRetAddr;
-			this.whyAddr = whyAddr;
+			this.problemAddress = problemAddress;
+			this.causeAddress = whyAddr;
 			this.varName = varName;
 			this.explanation = explanation;
 			this.program = prog;
-		}
-
-		public boolean isFixed() {
-			return getStatus().equals("fixed");
-		}
-
-		public void setStatus(String status) {
-			this.status = status;
 		}
 
 		public Program getProgram() {
@@ -385,17 +404,17 @@ public class FindPotentialDecompilerProblems extends GhidraScript {
 		}
 
 		public Address getFuncAddr() {
-			if (addr == null) {
+			if (problemAddress == null) {
 				return Address.NO_ADDRESS;
 			}
-			return addr;
+			return problemAddress;
 		}
 
 		public Address getWhyAddr() {
-			if (whyAddr == null) {
+			if (causeAddress == null) {
 				return Address.NO_ADDRESS;
 			}
-			return whyAddr;
+			return causeAddress;
 		}
 
 		public String getVarName() {
@@ -404,14 +423,6 @@ public class FindPotentialDecompilerProblems extends GhidraScript {
 
 		public String getExplanation() {
 			return explanation;
-		}
-
-		public String getStatus() {
-			if (status != null) {
-				return status;
-			}
-
-			return "";
 		}
 
 		@Override
@@ -423,7 +434,7 @@ public class FindPotentialDecompilerProblems extends GhidraScript {
 
 	interface IssueEntries {
 
-		void add(ProblemLocations location);
+		void add(ProblemLocation location);
 
 		int getNumEntries();
 
@@ -440,7 +451,7 @@ public class FindPotentialDecompilerProblems extends GhidraScript {
 		}
 
 		@Override
-		public void add(ProblemLocations location) {
+		public void add(ProblemLocation location) {
 			tableDialog.add(location);
 		}
 
@@ -456,27 +467,4 @@ public class FindPotentialDecompilerProblems extends GhidraScript {
 
 	}
 
-	class IssueEntryList implements IssueEntries {
-
-		ArrayList<ProblemLocations> list = new ArrayList<ProblemLocations>();
-
-		@Override
-		public void add(ProblemLocations location) {
-			list.add(location);
-		}
-
-		@Override
-		public void setMessage(String string) {
-			// do nothing
-		}
-
-		@Override
-		public int getNumEntries() {
-			return list.size();
-		}
-
-		public ProblemLocations getEntry(int i) {
-			return list.get(i);
-		}
-	}
 }

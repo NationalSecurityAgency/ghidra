@@ -164,7 +164,6 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 		}
 	}
 
-
 	private void reloadAll() throws IOException {
 		synchronized (this) {
 			fileBytesAdapter.refresh();
@@ -261,7 +260,7 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 	void checkMemoryWrite(MemoryBlockDB block, Address start, long length)
 			throws MemoryAccessException {
 		checkRangeForInstructions(start, start.add(length - 1));
-		
+
 		Set<MemoryBlock> overlappingBlocks = getPotentialOverlappingBlocks();
 		ByteSourceRangeList changeingByteSource = block.getByteSourceRangeList(start, length);
 		if (overlappingBlocks.contains(block)) {
@@ -495,6 +494,8 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 				return newBlock;
 			}
 			catch (IOCancelledException e) {
+				// TODO: this could leave things in a bad state.  
+				// Canceling requires additional improvements (see GT-3064)
 				throw new CancelledException();
 			}
 			catch (IOException e) {
@@ -511,7 +512,7 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 	@Override
 	public MemoryBlock createInitializedBlock(String name, Address start, FileBytes fileBytes,
 			long offset, long length, boolean overlay) throws LockException, DuplicateNameException,
-			MemoryConflictException, AddressOverflowException {
+			MemoryConflictException, AddressOverflowException, IndexOutOfBoundsException {
 
 		Objects.requireNonNull(name);
 		lock.acquire();
@@ -527,9 +528,8 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 				checkRange(start, length);
 			}
 			try {
-				MemoryBlockDB newBlock =
-					adapter.createFileBytesBlock(name, start, length, fileBytes, offset,
-					MemoryBlock.READ);
+				MemoryBlockDB newBlock = adapter.createFileBytesBlock(name, start, length,
+					fileBytes, offset, MemoryBlock.READ);
 				initializeBlocks();
 				addBlockAddresses(newBlock);
 				fireBlockAdded(newBlock);
@@ -547,12 +547,13 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 	}
 
 	private void checkFileBytesRange(FileBytes fileBytes, long offset, long length) {
-		if (length < 0) {
-			throw new IllegalArgumentException("Length must be >= 0, got " + length);
+		if (length <= 0) {
+			throw new IllegalArgumentException("Length must be > 0, got " + length);
 		}
 		if (offset < 0 || offset >= fileBytes.getSize()) {
+			long limit = fileBytes.getSize() - 1;
 			throw new IndexOutOfBoundsException(
-				"Offset must be in range [0," + length + "], got " + offset);
+				"Offset must be in range [0," + limit + "], got " + offset);
 		}
 		if (offset + length > fileBytes.getSize()) {
 			throw new IndexOutOfBoundsException(
@@ -638,9 +639,8 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 			checkRange(start, length);
 			overlayAddress.addNoWrap(length - 1);// just to check if length fits in address space
 			try {
-				MemoryBlockDB newBlock =
-					adapter.createBlock(MemoryBlockType.BYTE_MAPPED, name, start, length,
-						overlayAddress, false, MemoryBlock.READ);
+				MemoryBlockDB newBlock = adapter.createBlock(MemoryBlockType.BYTE_MAPPED, name,
+					start, length, overlayAddress, false, MemoryBlock.READ);
 				initializeBlocks();
 				addBlockAddresses(newBlock);
 				fireBlockAdded(newBlock);
@@ -673,9 +673,8 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 					MemoryBlockSourceInfo info = block.getSourceInfos().get(0);
 					overlayAddr = info.getMappedRange().get().getMinAddress();
 				}
-				MemoryBlockDB newBlock =
-					adapter.createBlock(block.getType(), name, start, length, overlayAddr,
-					block.isInitialized(), block.getPermissions());
+				MemoryBlockDB newBlock = adapter.createBlock(block.getType(), name, start, length,
+					overlayAddr, block.isInitialized(), block.getPermissions());
 				initializeBlocks();
 				addBlockAddresses(newBlock);
 				fireBlockAdded(newBlock);
@@ -2005,6 +2004,7 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 		}
 		return null;
 	}
+
 	private void checkBlockSize(long newBlockLength, boolean initialized) {
 		if (newBlockLength > MAX_BLOCK_SIZE) {
 			throw new IllegalStateException(
@@ -2026,6 +2026,8 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 			throws IOException {
 		lock.acquire();
 		try {
+			// TODO: this should accept task monitor to permit cancellation although
+			// canceling requires additional improvements (see GT-3064)
 			return fileBytesAdapter.createFileBytes(filename, offset, size, is);
 		}
 		finally {
@@ -2039,17 +2041,23 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 		return Collections.unmodifiableList(allFileBytes);
 	}
 
-	@Override
-	public boolean deleteFileBytes(FileBytes fileBytes) throws IOException {
+	private void checkFileBytes(FileBytes fileBytes) {
 		if (fileBytes.getMemMap() != this) {
 			throw new IllegalArgumentException(
 				"Attempted to delete FileBytes that doesn't belong to this program");
 		}
+		fileBytes.checkValid();
+	}
+
+	@Override
+	public boolean deleteFileBytes(FileBytes fileBytes) throws IOException {
 		lock.acquire();
 		try {
+			checkFileBytes(fileBytes);
 			if (inUse(fileBytes)) {
 				return false;
 			}
+			// TODO: may need to generate a domain object event
 			return fileBytesAdapter.deleteFileBytes(fileBytes);
 		}
 		finally {

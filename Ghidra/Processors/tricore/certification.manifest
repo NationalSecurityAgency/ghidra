@@ -1,0 +1,19 @@
+##VERSION: 2.0
+.classpath||GHIDRA||||END|
+.project||GHIDRA||||END|
+Module.manifest||GHIDRA||||END|
+build.gradle||GHIDRA||||END|
+data/build.xml||GHIDRA||||END|
+data/languages/tc172x.pspec||GHIDRA||||END|
+data/languages/tc176x.pspec||GHIDRA||||END|
+data/languages/tc29x.pspec||GHIDRA||||END|
+data/languages/tricore.cspec||GHIDRA||||END|
+data/languages/tricore.dwarf||GHIDRA||||END|
+data/languages/tricore.ldefs||GHIDRA||||END|
+data/languages/tricore.opinion||GHIDRA||||END|
+data/languages/tricore.pcp.sinc||GHIDRA||||END|
+data/languages/tricore.pspec||GHIDRA||||END|
+data/languages/tricore.sinc||GHIDRA||||END|
+data/languages/tricore.slaspec||GHIDRA||||END|
+data/manuals/tricore.idx||GHIDRA||||END|
+data/manuals/tricore2.idx||GHIDRA||||END|

@@ -18,20 +18,30 @@ package ghidra.app.plugin.core.functiongraph.graph.layout;
 import ghidra.app.plugin.core.functiongraph.graph.FGEdge;
 import ghidra.app.plugin.core.functiongraph.graph.FunctionGraph;
 import ghidra.app.plugin.core.functiongraph.graph.vertex.FGVertex;
+import ghidra.framework.options.Options;
 import ghidra.graph.viewer.layout.LayoutProvider;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
-public interface FGLayoutProvider extends LayoutProvider<FGVertex, FGEdge, FunctionGraph> {
+public abstract class FGLayoutProvider implements LayoutProvider<FGVertex, FGEdge, FunctionGraph> {
+
+	public abstract FGLayout getFGLayout(FunctionGraph graph, TaskMonitor monitor)
+			throws CancelledException;
 
 	// Suppressing warning on the return type; we know our class is the right type
 	@Override
-	public default FGLayout getLayout(FunctionGraph graph, TaskMonitor monitor)
-			throws CancelledException {
-
+	public FGLayout getLayout(FunctionGraph graph, TaskMonitor monitor) throws CancelledException {
 		return getFGLayout(graph, monitor);
 	}
 
-	public FGLayout getFGLayout(FunctionGraph graph, TaskMonitor monitor) throws CancelledException;
-
+	/**
+	 * Creates an options object for layouts created by this provider. Returns null if there 
+	 * are not options for layouts created by this provider.
+	 * 
+	 * @param options the tool options into which layout options should be registered
+	 * @return the new options; null if there are no options
+	 */
+	public FGLayoutOptions createLayoutOptions(Options options) {
+		return null;
+	}
 }

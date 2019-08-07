@@ -34,8 +34,10 @@ import ghidra.util.task.TaskMonitor;
 
 public class EmptyLayout extends AbstractVisualGraphLayout<FGVertex, FGEdge> implements FGLayout {
 
+	private static final String NAME = "Empty Layout";
+
 	public EmptyLayout(FunctionGraph graph) {
-		super(graph);
+		super(graph, NAME);
 	}
 
 	@Override

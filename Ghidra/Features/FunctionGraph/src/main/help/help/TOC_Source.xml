@@ -63,6 +63,9 @@
 	        <tocdef id="Graph Actions" sortgroup="e" text="Graph Actions" target="help/topics/FunctionGraphPlugin/Function_Graph.html#Function_Graph_Actions" />
 	        <tocdef id="Popups" sortgroup="f" text="Popups" target="help/topics/FunctionGraphPlugin/Function_Graph.html#Popups" />
 	        <tocdef id="Zooming" sortgroup="g" text="Zooming" target="help/topics/FunctionGraphPlugin/Function_Graph.html#Zoom" />
+	        
+	        <tocdef id="Layouts" sortgroup="h" text="Layouts" target="help/topics/FunctionGraphPlugin/Function_Graph_Layouts.html" />
+	        
 	    </tocdef>	            
 	</tocref>
 
