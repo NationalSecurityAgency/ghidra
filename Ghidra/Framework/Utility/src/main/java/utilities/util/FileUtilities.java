@@ -727,11 +727,10 @@ public final class FileUtilities {
 	/**
 	 * Returns all of the lines in the given {@link InputStream} without any newline characters.
 	 * <p>
-	 * <b>
-	 * You must close the input stream!!!!!
-	 * </b>
-	 * @param is the input stream from which to read
-	 * @return a list of file lines
+	 * <b>The input stream is closed as a side-effect.</b>
+	 * 
+	 * @param is the input stream from which to read, as a side effect, it is closed
+	 * @return a {@link List} of strings representing the text lines of the file
 	 * @throws IOException if there are any issues reading the file
 	 */
 	public static List<String> getLines(InputStream is) throws IOException {
@@ -743,9 +742,9 @@ public final class FileUtilities {
 	 * <p>
 	 * EOL characters are normalized to simple '\n's.
 	 * <p>
-	 * Caller is responsible for closing the input stream, this method does not.
+	 * <b>The input stream is closed as a side-effect.</b>
 	 * <p>
-	 * @param is the input stream from which to read
+	 * @param is the input stream from which to read, as a side effect, it is closed
 	 * @return the content as a String
 	 * @throws IOException if there are any issues reading the file
 	 */
@@ -778,10 +777,12 @@ public final class FileUtilities {
 	}
 
 	/**
-	 * Returns all of the lines in the BufferedReader without any newline characters.
+	 * Returns all of the lines in the {@link BufferedReader} without any newline characters.
+	 * <p>
+	 * The BufferedReader is closed before returning.
 	 *
-	 * @param in BufferedReader input
-	 * @return a list of file lines
+	 * @param in BufferedReader to read lines from, as a side effect, it is closed
+	 * @return a {@link List} of strings representing the text lines of the file
 	 * @throws IOException if there are any issues reading the file
 	 */
 	public static List<String> getLines(BufferedReader in) throws IOException {
