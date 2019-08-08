@@ -616,17 +616,26 @@ public class DWARFDataTypeImporter {
 				continue;
 			}
 
+			String memberComment = null;
 			if (childDT.dataType instanceof Dynamic ||
 				childDT.dataType instanceof FactoryDataType) {
-				DWARFUtil.appendDescription(union, memberDesc("Missing member",
-					"dynamic length type", memberName, childDT, -1, bitSize, -1), "\n");
-				continue;
+				memberComment = "Unsupported dynamic size data type: " + childDT.dataType;
+				childDT.dataType = Undefined.getUndefinedDataType(1);
 			}
 			int dtLen = childDT.dataType.getLength();
 			if (unionSize != -1 && dtLen > unionSize) {
-				DWARFUtil.appendDescription(union, memberDesc("Missing member",
-					"data type larger than union", memberName, childDT, -1, bitSize, -1), "\n");
-				continue;
+				if (dtLen > 1) {
+					// replace problematic datatype with 1 byte undefined placeholder
+					memberComment =
+						"Data type larger than union's declared size: " + childDT.dataType;
+					childDT.dataType = Undefined.getUndefinedDataType(1);
+				}
+				else {
+					// can't do any fancy replacement, just add warning to union's description
+					DWARFUtil.appendDescription(union, memberDesc("Missing member",
+						"data type larger than union", memberName, childDT, -1, bitSize, -1), "\n");
+					continue;
+				}
 			}
 
 			if (isBitField) {
@@ -642,7 +651,7 @@ public class DWARFDataTypeImporter {
 				// DWARF has attributes (DWARFAttribute.DW_AT_data_bit_offset, DWARFAttribute.DW_AT_bit_offset)
 				// that specify the bit_offset of the field in the union.  We don't use them.
 				try {
-					union.addBitField(childDT.dataType, bitSize, memberName, null);
+					union.addBitField(childDT.dataType, bitSize, memberName, memberComment);
 				}
 				catch (InvalidDataTypeException e) {
 					Msg.error(this,
@@ -657,7 +666,7 @@ public class DWARFDataTypeImporter {
 				// just a normal field
 				try {
 					DataTypeComponent dataTypeComponent =
-						union.add(childDT.dataType, memberName, null);
+						union.add(childDT.dataType, memberName, memberComment);
 					// adding a member to a composite can cause a clone() of the datatype instance, so
 					// update the instance mapping to keep track of the new instance.
 					updateMapping(childDT.dataType, dataTypeComponent.getDataType());
@@ -821,12 +830,8 @@ public class DWARFDataTypeImporter {
 				}
 			}
 
-			if (childDT.dataType instanceof Dynamic ||
-				childDT.dataType instanceof FactoryDataType) {
-				DWARFUtil.appendDescription(structure, memberDesc("Missing member",
-					"dynamic length type", memberName, childDT, memberOffset, bitSize, -1), "\n");
-				continue;
-			}
+			boolean isDynamicSizedType = (childDT.dataType instanceof Dynamic ||
+				childDT.dataType instanceof FactoryDataType);
 
 			//if (childDT.getPathName().equals(structure.getPathName()) && childDT != structure) {
 			// The child we are adding has the exact same fullpath as us.
@@ -858,6 +863,12 @@ public class DWARFDataTypeImporter {
 			}
 
 			if (isBitField) {
+				if (isDynamicSizedType) {
+					DWARFUtil.appendDescription(structure, memberDesc("Missing member",
+						"dynamic length type", memberName, childDT, memberOffset, bitSize, -1),
+						"\n");
+					continue;
+				}
 				if (!BitFieldDataType.isValidBaseDataType(childDT.dataType)) {
 					DWARFUtil.appendDescription(structure,
 						memberDesc("Missing member",
@@ -920,6 +931,12 @@ public class DWARFDataTypeImporter {
 				}
 			}
 			else {
+				String memberComment = null;
+				if (isDynamicSizedType) {
+					memberComment = "Unsupported dynamic size data type: " + childDT.dataType;
+					childDT.dataType = Undefined.getUndefinedDataType(1);
+				}
+
 				int childLength = getUnpaddedDataTypeLength(childDT.dataType);
 				if (memberOffset + childLength > structure.getLength()) {
 					DWARFUtil.appendDescription(structure, memberDesc("Missing member",
@@ -941,7 +958,7 @@ public class DWARFDataTypeImporter {
 
 				try {
 					DataTypeComponent dtc = structure.replaceAtOffset(memberOffset,
-						childDT.dataType, childLength, memberName, null);
+						childDT.dataType, childLength, memberName, memberComment);
 
 					// struct.replaceAtOffset() clones the childDT, which will mess up our
 					// identity based mapping in currentImplDataTypeToDDT.
