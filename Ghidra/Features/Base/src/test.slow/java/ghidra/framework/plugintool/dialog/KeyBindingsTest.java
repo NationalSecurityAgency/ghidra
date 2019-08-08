@@ -109,10 +109,20 @@ public class KeyBindingsTest extends AbstractGhidraHeadedIntegrationTest {
 	public void testManagedKeyBindings() {
 		Set<DockingActionIf> list = tool.getAllActions();
 		for (DockingActionIf action : list) {
-			if (action.getKeyBindingType().isManaged()) {
-				assertTrue(actionInTable(action));
+			if (!ignoreAction(action)) {
+				boolean inTable = actionInKeyBindingsTable(action);
+				assertTrue("Action should be in the key bindingds table: " + action.getFullName(),
+					inTable);
 			}
 		}
+	}
+
+	private boolean ignoreAction(DockingActionIf action) {
+		if (!action.getKeyBindingType().isManaged()) {
+			return true;
+		}
+
+		return action.getFullName().contains("Table Data");
 	}
 
 	@Test
@@ -316,14 +326,14 @@ public class KeyBindingsTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	private boolean supportsKeyBindings(DockingActionIf action) {
-		return action.getKeyBindingType().isManaged();
+		return ignoreAction(action);
 	}
 
 	private DockingActionIf getKeyBindingPluginAction() {
 		Set<DockingActionIf> list = tool.getAllActions();
 		for (DockingActionIf action : list) {
 			KeyStroke ks = action.getKeyBinding();
-			if (action.getKeyBindingType().isManaged() && ks != null &&
+			if (ignoreAction(action) && ks != null &&
 				ks != KeyStroke.getKeyStroke(KeyEvent.VK_Z, 0)) {
 				return action;
 			}
@@ -331,7 +341,7 @@ public class KeyBindingsTest extends AbstractGhidraHeadedIntegrationTest {
 		return null;
 	}
 
-	private boolean actionInTable(DockingActionIf action) {
+	private boolean actionInKeyBindingsTable(DockingActionIf action) {
 		String actionName = action.getName();
 		KeyStroke ks = action.getKeyBinding();
 
@@ -373,15 +383,14 @@ public class KeyBindingsTest extends AbstractGhidraHeadedIntegrationTest {
 	private void setUpDialog() throws Exception {
 		runSwing(() -> {
 			panel = new KeyBindingsPanel(tool, tool.getOptions(DockingToolConstants.KEY_BINDINGS));
+			panel.setOptionsPropertyChangeListener(evt -> {
+				// stub
+			});
 
 			dialog = new JDialog(tool.getToolFrame(), "Test KeyBindings", false);
 			dialog.getContentPane().add(panel);
 			dialog.pack();
 			dialog.setVisible(true);
-			// set the dialog so that the panel can enable the apply button
-			panel.setOptionsPropertyChangeListener(evt -> {
-				// stub
-			});
 		});
 		table = findComponent(panel, JTable.class);
 		keyField = findComponent(panel, JTextField.class);
@@ -390,21 +399,26 @@ public class KeyBindingsTest extends AbstractGhidraHeadedIntegrationTest {
 		model = table.getModel();
 	}
 
+	// find 2 actions that do not have key bindings so that we can add and change the values
 	private void grabActionsWithoutKeybinding() {
 		Set<DockingActionIf> list = tool.getAllActions();
 		for (DockingActionIf action : list) {
-			if (!action.getKeyBindingType().isManaged()) {
+			if (ignoreAction(action)) {
 				continue;
 			}
 			if (action.getKeyBinding() != null) {
 				continue;
 			}
 
-			// good action
 			if (action1 == null) {
 				action1 = action;
 			}
 			else {
+
+				if (action.getName().equals(action1.getName())) {
+					continue; // same name, different owners; these are 'shared' actions--ignore
+				}
+
 				action2 = action;
 				return; // grabbed all actions--we are done
 			}

@@ -126,6 +126,10 @@ public class ActionToGuiMapper {
 		menuAndToolBarManager.contextChanged(placeHolder);
 	}
 
+	PopupActionManager getPopupActionManager() {
+		return popupActionManager;
+	}
+
 	public MenuGroupMap getMenuGroupMap() {
 		return menuGroupMap;
 	}

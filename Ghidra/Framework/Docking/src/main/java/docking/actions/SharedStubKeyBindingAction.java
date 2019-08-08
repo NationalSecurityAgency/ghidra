@@ -89,10 +89,16 @@ public class SharedStubKeyBindingAction extends DockingAction implements Options
 	@Override
 	public String getOwnerDescription() {
 		List<String> owners = getDistinctOwners();
-		Collections.sort(owners);
 		if (owners.size() == 1) {
 			return owners.get(0);
 		}
+
+		boolean hasTool = owners.remove(ToolConstants.TOOL_OWNER);
+		Collections.sort(owners);
+		if (hasTool) {
+			owners.add(0, ToolConstants.TOOL_OWNER);
+		}
+
 		return StringUtils.join(owners, ", ");
 	}
 

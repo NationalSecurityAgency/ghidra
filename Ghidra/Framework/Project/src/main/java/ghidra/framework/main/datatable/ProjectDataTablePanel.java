@@ -288,7 +288,7 @@ public class ProjectDataTablePanel extends JPanel {
 			list.add(info.getDomainFile());
 		}
 		return new ProjectDataActionContext(provider, projectData,
-			model.getRowObject(selectedRows[0]), null, list, table, true);
+			model.getRowObject(selectedRows[0]), null, list, gTable, true);
 	}
 
 	private void checkOpen(MouseEvent e) {

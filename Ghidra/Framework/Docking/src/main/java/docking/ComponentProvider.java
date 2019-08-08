@@ -396,19 +396,35 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 		return createContext(c, null);
 	}
 
-	// TODO
+	/**
+	 * A default method for creating an action context for this provider
+	 * @return the new context
+	 */
 	protected ActionContext createContext() {
 		return new ActionContext(this);
 	}
 
-	// TODO
-	protected ActionContext createContext(Object payload) {
-		return new ActionContext(this).setContextObject(payload);
+	/**
+	 * A default method for creating an action context for this provider, using the given
+	 * {@link ActionContext#getContextObject() context object}
+	 * 
+	 * @param contextObject the provider-specific context object
+	 * @return the new context
+	 */
+	protected ActionContext createContext(Object contextObject) {
+		return new ActionContext(this).setContextObject(contextObject);
 	}
 
-	// TODO
-	protected ActionContext createContext(Component source, Object payload) {
-		return new ActionContext(this, source).setContextObject(payload);
+	/**
+	 * A default method for creating an action context for this provider, using the given
+	 * {@link ActionContext#getContextObject() context object} and component
+	 * 
+	 * @param sourceComponent the component that is the target of the context being created
+	 * @param contextObject the provider-specific context object
+	 * @return the new context
+	 */
+	protected ActionContext createContext(Component sourceComponent, Object contextObject) {
+		return new ActionContext(this, sourceComponent).setContextObject(contextObject);
 	}
 
 	/**

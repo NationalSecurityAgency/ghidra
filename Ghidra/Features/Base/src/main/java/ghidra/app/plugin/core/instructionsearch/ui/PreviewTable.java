@@ -25,14 +25,17 @@ import java.util.*;
 import javax.swing.*;
 import javax.swing.table.TableCellRenderer;
 
-import docking.*;
-import docking.action.*;
+import docking.ActionContext;
+import docking.EmptyBorderToggleButton;
+import docking.action.DockingAction;
+import docking.action.MenuData;
 import docking.dnd.GClipboard;
 import docking.widgets.EmptyBorderButton;
 import ghidra.app.plugin.core.instructionsearch.InstructionSearchPlugin;
 import ghidra.app.plugin.core.instructionsearch.model.*;
 import ghidra.app.plugin.core.instructionsearch.ui.SelectionModeWidget.InputMode;
 import ghidra.app.plugin.core.instructionsearch.util.InstructionSearchUtils;
+import ghidra.framework.plugintool.PluginTool;
 import ghidra.util.Msg;
 import ghidra.util.exception.InvalidInputException;
 import ghidra.util.task.*;
@@ -78,6 +81,7 @@ public class PreviewTable extends AbstractInstructionTable {
 	 * 
 	 * @param numColumns the number of columns in the table
 	 * @param plugin the parent plugin
+	 * @param dialog the search dialog
 	 */
 	public PreviewTable(int numColumns, InstructionSearchPlugin plugin,
 			InstructionSearchDialog dialog) {
@@ -130,30 +134,6 @@ public class PreviewTable extends AbstractInstructionTable {
 		previewStringMap.put(index, previewText);
 		refreshView();
 	}
-
-	/**
-	 * Adds custom context-sensitive menus to the table. This does NOT modify
-	 * any existing menus; it simply adds to them.
-	 */
-
-	// TODO
-	// TODO 
-	// TODO 
-	// TODO   Change the custom menu items to be real Docking Actions 
-	// TODO 
-	// TODO 
-
-//	@Override
-//	public List<DockingActionIf> getPopupActions(DockingTool tool, ActionContext context) {
-//
-//		// Invoke the base class method to add default menu options.
-//		List<DockingActionIf> list = super.getPopupActions(tool, context);
-//
-//		// And now add our own.
-//		addCustomMenuItems(list);
-//
-//		return list;
-//	}
 
 	/**
 	 * Replaces the contents of the preview table at the given row with the
@@ -381,14 +361,6 @@ public class PreviewTable extends AbstractInstructionTable {
 		return binaryBtn;
 	}
 
-	private void addCustomMenuItems(List<DockingActionIf> list) {
-		DockingWindowManager dwm = DockingWindowManager.getInstance(this);
-		dwm.setMenuGroup(new String[] { "Copy Special" }, actionMenuGroup, "1");
-		list.add(copyNoSpacesAction);
-		list.add(copyInstructionAction);
-		list.add(copyInstructionWithCommentsAction);
-	}
-
 	/**
 	 * Gathers the search strings for each instruction and returns them as a
 	 * single string.
@@ -470,6 +442,10 @@ public class PreviewTable extends AbstractInstructionTable {
 	private void createContextMenuActions() {
 		String owner = getClass().getSimpleName();
 
+		InstructionSearchPlugin plugin = getPlugin();
+		PluginTool tool = plugin.getTool();
+		tool.setMenuGroup(new String[] { "Copy Special" }, actionMenuGroup, "1");
+
 		createCopyNoSpacesAction(owner);
 		copyNoSpacesAction.setPopupMenuData(
 			new MenuData(new String[] { "Copy Special", "Selected instructions (no spaces)" },
@@ -487,6 +463,10 @@ public class PreviewTable extends AbstractInstructionTable {
 			new MenuData(new String[] { "Copy Special", "Selected Instructions (with comments)" },
 				ResourceManager.loadImage("images/page_white_copy.png"), actionMenuGroup,
 				MenuData.NO_MNEMONIC, Integer.toString(1)));
+
+		dialog.addAction(copyNoSpacesAction);
+		dialog.addAction(copyInstructionAction);
+		dialog.addAction(copyInstructionWithCommentsAction);
 	}
 
 	/**
@@ -518,7 +498,14 @@ public class PreviewTable extends AbstractInstructionTable {
 					Clipboard clip = GClipboard.getSystemClipboard();
 					clip.setContents(sel, null);
 				}
+
+				@Override
+				public boolean isEnabledForContext(ActionContext context) {
+					return context.getSourceComponent() == PreviewTable.this;
+				}
 			};
+
+		copyInstructionWithCommentsAction.setHelpLocation(dialog.getHelpLocatdion());
 	}
 
 	/**
@@ -539,7 +526,14 @@ public class PreviewTable extends AbstractInstructionTable {
 				Clipboard clip = GClipboard.getSystemClipboard();
 				clip.setContents(sel, null);
 			}
+
+			@Override
+			public boolean isEnabledForContext(ActionContext context) {
+				return context.getSourceComponent() == PreviewTable.this;
+			}
 		};
+
+		copyInstructionAction.setHelpLocation(dialog.getHelpLocatdion());
 	}
 
 	/**
@@ -560,7 +554,14 @@ public class PreviewTable extends AbstractInstructionTable {
 				Clipboard clip = GClipboard.getSystemClipboard();
 				clip.setContents(sel, null);
 			}
+
+			@Override
+			public boolean isEnabledForContext(ActionContext context) {
+				return context.getSourceComponent() == PreviewTable.this;
+			}
 		};
+
+		copyNoSpacesAction.setHelpLocation(dialog.getHelpLocatdion());
 	}
 
 	private class BinaryAction extends AbstractAction {

@@ -21,6 +21,7 @@ import javax.swing.JToolBar;
 import javax.swing.table.TableCellRenderer;
 
 import docking.widgets.table.GTable;
+import ghidra.app.plugin.core.instructionsearch.InstructionSearchPlugin;
 import ghidra.app.plugin.core.instructionsearch.model.*;
 import ghidra.util.table.GhidraTable;
 
@@ -83,6 +84,10 @@ public abstract class AbstractInstructionTable extends GhidraTable {
 		// The default cell size is a bit small and makes the text a bit hard 
 		// to read, so increase it to provide some space around the text.
 		this.setRowHeight(this.getRowHeight() + CELL_HEIGHT_PADDING);
+	}
+
+	InstructionSearchPlugin getPlugin() {
+		return dialog.getPlugin();
 	}
 
 	/**

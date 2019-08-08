@@ -71,6 +71,7 @@ public class ToolActions implements DockingToolActions, PropertyChangeListener {
 		this.keyBindingOptions = tool.getOptions(DockingToolConstants.KEY_BINDINGS);
 
 		createReservedKeyBindings();
+		SharedActionRegistry.installSharedActions(tool, this);
 	}
 
 	private void createReservedKeyBindings() {
@@ -160,12 +161,7 @@ public class ToolActions implements DockingToolActions, PropertyChangeListener {
 
 			SharedStubKeyBindingAction newStub =
 				new SharedStubKeyBindingAction(name, keyBindingOptions);
-			newStub.addPropertyChangeListener(this);
-			keyBindingOptions.registerOption(newStub.getFullName(), OptionType.KEYSTROKE_TYPE,
-				defaultKeyStroke, null, null);
-
-			keyBindingsManager.addAction(provider, newStub);
-
+			registerStub(newStub, defaultKeyStroke);
 			return newStub;
 		});
 
@@ -175,6 +171,13 @@ public class ToolActions implements DockingToolActions, PropertyChangeListener {
 			// Auto-generated actions are temporary and should not receive key events
 			keyBindingsManager.addAction(provider, action);
 		}
+	}
+
+	private void registerStub(SharedStubKeyBindingAction stub, KeyStroke defaultKeyStroke) {
+		stub.addPropertyChangeListener(this);
+		keyBindingOptions.registerOption(stub.getFullName(), OptionType.KEYSTROKE_TYPE,
+			defaultKeyStroke, null, null);
+		keyBindingsManager.addAction(null, stub);
 	}
 
 	/**
@@ -403,11 +406,6 @@ public class ToolActions implements DockingToolActions, PropertyChangeListener {
 			}
 		}
 		return null;
-	}
-
-	@Override
-	public boolean containsAction(DockingActionIf action) {
-		return getActionStorage(action).contains(action);
 	}
 
 	public Action getAction(KeyStroke ks) {

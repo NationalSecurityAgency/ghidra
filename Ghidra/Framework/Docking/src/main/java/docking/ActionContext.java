@@ -25,7 +25,11 @@ import docking.action.DockingActionIf;
  * {@link DockingActionIf}s for them to decide if they are enabled for a given user action.  User
  * actions are toolbar button presses, menu bar item presses and popup menu item presses.   As
  * the user changes focus in the system, all actions are queried with the current context.  Thus,
- * toolbar buttons and menu items will enable and disable as the user interacts with the system.
+ * <b>toolbar buttons and menu items will enable and disable as the user interacts with the system.
+ * Further, popup menu items will not be added to popup menus when they report false for 
+ * {@link DockingActionIf#isAddToPopup(ActionContext)}; they will appear in the popup, but be 
+ * disabled if they report <tt>true</tt> for the above call, but <tt>false</tt> for 
+ * {@link DockingActionIf#isEnabledForContext(ActionContext)}.</b>
  * When the user executes an action, the current context will be passed to the backing 
  * {@link DockingActionIf}.   Ultimately, context serves to control action enablement and to 
  * allow plugins to share state with actions without having to store that state information 
