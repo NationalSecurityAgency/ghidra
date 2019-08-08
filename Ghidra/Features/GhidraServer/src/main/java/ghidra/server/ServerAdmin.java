@@ -289,16 +289,17 @@ public class ServerAdmin implements GhidraLaunchable {
 			System.exit(-1);
 		}
 		String sid = args[i];
-		if (!NamingUtilities.isValidName(sid) || sid.indexOf(' ') >= 0) {
+		if (!UserManager.isValidUserName(sid)) {
 			Msg.error(UserAdmin.class, "Invalid username/sid: " + sid);
 			System.exit(-1);
 		}
 	}
 
 	/**
-	 * Validate username/sid
+	 * Validate repository name
 	 * @param args
 	 * @param i argument index
+	 * @param rootDirFile base repository directory
 	 */
 	private void validateRepName(String[] args, int i, File rootDirFile) {
 		if (args.length < (i + 1)) {
