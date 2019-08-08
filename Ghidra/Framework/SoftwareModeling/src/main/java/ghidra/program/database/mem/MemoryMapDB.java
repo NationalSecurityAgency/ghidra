@@ -494,8 +494,10 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 				return newBlock;
 			}
 			catch (IOCancelledException e) {
-				// TODO: this could leave things in a bad state.  
-				// Canceling requires additional improvements (see GT-3064)
+				// this assumes the adapter has already cleaned up any partially created buffers.
+				if (overlay) {
+					checkRemoveAddressSpace(start.getAddressSpace());
+				}
 				throw new CancelledException();
 			}
 			catch (IOException e) {
@@ -2022,13 +2024,17 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 	}
 
 	@Override
-	public FileBytes createFileBytes(String filename, long offset, long size, InputStream is)
-			throws IOException {
+	public FileBytes createFileBytes(String filename, long offset, long size, InputStream is,
+			TaskMonitor monitor) throws IOException, CancelledException {
 		lock.acquire();
 		try {
-			// TODO: this should accept task monitor to permit cancellation although
-			// canceling requires additional improvements (see GT-3064)
+			if (monitor != null && is != null) {
+				is = new MonitoredInputStream(is, monitor);
+			}
 			return fileBytesAdapter.createFileBytes(filename, offset, size, is);
+		}
+		catch (IOCancelledException e) {
+			throw new CancelledException();
 		}
 		finally {
 			lock.release();

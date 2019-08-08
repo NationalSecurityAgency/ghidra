@@ -47,7 +47,7 @@ public class FileBytesTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testStoreAndRetrieveFileBytes() throws IOException {
+	public void testStoreAndRetrieveFileBytes() throws Exception {
 		int dataSize = MAX_BUFFER_SIZE_FOR_TESTING / 2;
 		FileBytes fileBytes = createFileBytes("testFile", dataSize);
 
@@ -186,13 +186,13 @@ public class FileBytesTest extends AbstractGenericTest {
 		}
 	}
 
-	private FileBytes createFileBytes(String name, int size) throws IOException {
+	private FileBytes createFileBytes(String name, int size) throws Exception {
 		byte[] bytes = new byte[size];
 		for (int i = 0; i < size; i++) {
 			bytes[i] = (byte) i;
 		}
 		try (ByteArrayInputStream is = new ByteArrayInputStream(bytes)) {
-			return mem.createFileBytes(name, 0, size, is);
+			return mem.createFileBytes(name, 0, size, is, TaskMonitor.DUMMY);
 		}
 	}
 

@@ -38,8 +38,7 @@ import ghidra.program.model.mem.*;
 import ghidra.program.model.symbol.*;
 import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.util.Msg;
-import ghidra.util.exception.InvalidInputException;
-import ghidra.util.exception.NotFoundException;
+import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
 
 public class CoffLoader extends AbstractLibrarySupportLoader {
@@ -183,7 +182,8 @@ public class CoffLoader extends AbstractLibrarySupportLoader {
 
 	@Override
 	protected void load(ByteProvider provider, LoadSpec loadSpec, List<Option> options,
-			Program program, TaskMonitor monitor, MessageLog log) throws IOException {
+			Program program, TaskMonitor monitor, MessageLog log)
+			throws IOException, CancelledException {
 
 		boolean performFakeLinking = performFakeLinking(options);
 
@@ -193,7 +193,7 @@ public class CoffLoader extends AbstractLibrarySupportLoader {
 		Map<CoffSectionHeader, Address> sectionsMap = new HashMap<>();
 		Map<CoffSymbol, Symbol> symbolsMap = new HashMap<>();
 
-		FileBytes fileBytes = MemoryBlockUtils.createFileBytes(program, provider);
+		FileBytes fileBytes = MemoryBlockUtils.createFileBytes(program, provider, monitor);
 
 		int id = program.startTransaction("loading program from COFF");
 		boolean success = false;

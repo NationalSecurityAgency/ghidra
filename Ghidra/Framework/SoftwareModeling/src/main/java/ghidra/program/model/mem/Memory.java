@@ -729,11 +729,14 @@ public interface Memory extends AddressSetView {
 	 * @param offset the offset into the file for the first byte in the input stream.
 	 * @param size the number of bytes to store from the input stream.
 	 * @param is the input stream that will supply the bytes to store in the program.
+	 * @param monitor 
 	 * @return a FileBytes that was created to access the bytes.
 	 * @throws IOException if there was an IOException saving the bytes to the program database.
+	 * @throws CancelledException if the user cancelled this operation. Note: the database will
+	 * be stable, but the buffers may contain 0s instead of the actual bytes.
 	 */
-	public FileBytes createFileBytes(String filename, long offset, long size, InputStream is)
-			throws IOException;
+	public FileBytes createFileBytes(String filename, long offset, long size, InputStream is,
+			TaskMonitor monitor) throws IOException, CancelledException;
 
 	/**
 	 * Returns a list of all the stored original file bytes objects
