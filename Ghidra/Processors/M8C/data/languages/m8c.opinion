@@ -1,0 +1,5 @@
+<opinions>
+    <constraint loader="XML" compilerSpecID="default">
+        <constraint primary="0"    processor="M8C"    endian="big"    size="16" />
+    </constraint>
+</opinions>
