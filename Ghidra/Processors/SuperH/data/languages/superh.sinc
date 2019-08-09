@@ -1479,8 +1479,10 @@ imm20s: "#"value is l_simm20_20_23 & l_simm20_00_16
 :bsrf   rm_08_11  is opcode_12_15=0b0000 & rm_08_11 & opcode_00_07=0b00000011 
 {
     pr = inst_start + 4;
+    local dest = rm_08_11 + inst_next;
+
     delayslot(1);
-    call [rm_08_11];
+    call [dest];
 }
 @endif
 
@@ -1493,10 +1495,8 @@ imm20s: "#"value is l_simm20_20_23 & l_simm20_00_16
 :jsr    @rm_08_11  is opcode_12_15=0b0100 & rm_08_11 & opcode_00_07=0b00001011 
 {
     pr = inst_start + 4;
-    local dest = rm_08_11 + inst_next;
-
     delayslot(1);
-    call [dest];
+    call [rm_08_11];
 }
 
 :rts  is opcode_00_15=0b0000000000001011 
