@@ -933,18 +933,6 @@ public abstract class ProcessorEmulatorTestAdapter extends TestCase implements E
 
 		ResourceFile myModuleRootDirectory =
 			Application.getModuleContainingClass(getClass().getName());
-		if (myModuleRootDirectory == null) {
-			if (!SystemUtilities.isInDevelopmentMode()) {
-				Msg.warn(this, "Unable to identify pcodetest module directory!\n" +
-					"Project must contain Module.manifest file, and if developing module using Eclipse\n" +
-					"w/ GhidraDev the VM argument -Declipse.project.dir=<project-path> must be specified.");
-			}
-			else {
-				Msg.warn(this,
-					"Unable to identify pcodetest module directory! Project must contain Module.manifest file");
-			}
-		}
-
 		if (myModuleRootDirectory != null) {
 			File myModuleRoot = myModuleRootDirectory.getFile(false);
 			if (myModuleRoot != null) {
@@ -953,6 +941,10 @@ public abstract class ProcessorEmulatorTestAdapter extends TestCase implements E
 					findTestResourceDirectory(getRelativeModulePath(myModuleRootDirectory));
 				}
 			}
+		}
+		else {
+			Msg.warn(this,
+				"Unable to identify pcodetest module directory! Project must contain Module.manifest file");
 		}
 
 		if (resourcesTestDataDir == null || !resourcesTestDataDir.isDirectory()) {

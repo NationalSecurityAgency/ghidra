@@ -22,6 +22,7 @@ import generic.jar.ResourceFile;
 import ghidra.framework.ApplicationProperties;
 import ghidra.framework.GModule;
 import ghidra.util.SystemUtilities;
+import utilities.util.FileUtilities;
 import utility.application.ApplicationLayout;
 import utility.application.ApplicationUtilities;
 import utility.module.ModuleUtilities;
@@ -141,24 +142,31 @@ public class GhidraApplicationLayout extends ApplicationLayout {
 		// Find standard module root directories from within the application root directories
 		Collection<ResourceFile> moduleRootDirectories =
 			ModuleUtilities.findModuleRootDirectories(applicationRootDirs, new ArrayList<>());
+		
+		// Examine the classpath to look for modules outside of the application root directories.
+		// These might exist if Ghidra was launched from an Eclipse project that resides
+		// external to the Ghidra installation.
+		for (String entry : System.getProperty("java.class.path", "").split(File.pathSeparator)) {
+			final ResourceFile classpathEntry = new ResourceFile(entry);
 
-		// If Ghidra was launched from our Eclipse GhidraDev plugin, we want to add the
-		// Eclipse module project (and it's dependent projects) to the list of module root 
-		// directories so Ghidra can discover them.
-		String eclipseProjectDirProperty = System.getProperty("eclipse.project.dir");
-		if (eclipseProjectDirProperty != null && !eclipseProjectDirProperty.isEmpty()) {
-			ResourceFile eclipseProjectDir = new ResourceFile(eclipseProjectDirProperty);
-			if (ModuleUtilities.isModuleDirectory(eclipseProjectDir)) {
-				moduleRootDirectories.add(eclipseProjectDir);
+			// We only care about directories (skip jars)
+			if (!classpathEntry.isDirectory()) {
+				continue;
 			}
-		}
-		String eclipseProjectDependencies = System.getProperty("eclipse.project.dependencies");
-		if (eclipseProjectDependencies != null && !eclipseProjectDependencies.isEmpty()) {
-			for (String path : eclipseProjectDependencies.split(File.pathSeparator)) {
-				ResourceFile eclipseProjectDir = new ResourceFile(path);
-				if (ModuleUtilities.isModuleDirectory(eclipseProjectDir)) {
-					moduleRootDirectories.add(eclipseProjectDir);
-				}
+
+			// Skip classpath entries that live in an application root directory...we've already
+			// found those.
+			if (applicationRootDirs.stream().anyMatch(dir -> FileUtilities.isPathContainedWithin(
+				dir.getFile(false), classpathEntry.getFile(false)))) {
+				continue;
+			}
+
+			// We are going to assume that the classpath entry is in a subdirectory of the module
+			// directory (i.e., bin/), so only check parent directory for the module.
+			ResourceFile classpathEntryParent = classpathEntry.getParentFile();
+			if (classpathEntryParent != null &&
+				ModuleUtilities.isModuleDirectory(classpathEntryParent)) {
+				moduleRootDirectories.add(classpathEntryParent);
 			}
 		}
 
