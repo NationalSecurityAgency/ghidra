@@ -1052,7 +1052,7 @@ public class GraphViewerUtils {
 		LinkedList<E> filteredEdges = new LinkedList<>();
 		if (useHover) {
 			for (E edge : edges) {
-				if (edge.isInActivePath()) {
+				if (edge.isInHoveredVertexPath()) {
 					filteredEdges.add(edge);
 				}
 			}
