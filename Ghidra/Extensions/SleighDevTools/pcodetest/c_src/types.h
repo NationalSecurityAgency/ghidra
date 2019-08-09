@@ -14,21 +14,29 @@
  * limitations under the License.
  */
 #if defined(__GNUC__) && !defined(__llvm__)
-#define HAS_GNU_ATTRIBUTES      1
-#define FUNCNAME __FUNCTION__
 
-#define NO_OPTIMIZE __attribute__((optimize("O0")))
-#elif defined(__llvm__)
 #define HAS_GNU_ATTRIBUTES      1
 #define FUNCNAME __FUNCTION__
 #define NO_OPTIMIZE __attribute__((optimize("O0")))
+
+#elif defined(__llvm__)
+
+#define HAS_GNU_ATTRIBUTES      1
+#define FUNCNAME __FUNCTION__
+#define NO_OPTIMIZE __attribute__((optimize("O0")))
+
 #elif defined(__SDCC)
+
 #define FUNCNAME __func__
 #define NO_OPTIMIZE
+#define __VERSION__  "version"
+
 #else
-#if !defined(__MSP430__)
-#define __VERSION__             "version"
+
+#ifndef __VERSION__
+#define __VERSION__  "version"
 #endif
+
 #define FUNCNAME __FUNCTION__
 #define NO_OPTIMIZE
 #endif
@@ -342,12 +350,6 @@ typedef i1 size_t;
 
 #ifdef HAS_LIBC
 #include <stdio.h>
-#endif
-
-#ifndef HAS_LIBC
-void *memcpy(void *dest, const void *src, size_t n);
-void *memset(void *s, int c, size_t n);
-int memcmp(void *s1, void *s2, size_t n);
 #endif
 
 #ifdef BUILD_EXE
