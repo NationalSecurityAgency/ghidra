@@ -215,6 +215,11 @@ public class DockingActionProxy
 	}
 
 	@Override
+	public void dispose() {
+		dockingAction.dispose();
+	}
+
+	@Override
 	public String getHelpInfo() {
 		return dockingAction.getHelpInfo();
 	}

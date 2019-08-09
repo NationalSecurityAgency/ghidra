@@ -31,7 +31,7 @@ import javax.swing.table.*;
 import org.jdom.Element;
 import org.junit.*;
 
-import docking.ActionContext;
+import docking.*;
 import docking.action.DockingActionIf;
 import docking.action.ToggleDockingAction;
 import docking.widgets.filter.*;
@@ -117,7 +117,7 @@ public class SymbolTablePluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 	@Test
 	public void testNavigation() throws Exception {
-		openProgram("notepad");
+		openProgram("sample");
 		int row = findRow("ghidra", "Global");
 
 		TableModel model = symbolTable.getModel();
@@ -128,7 +128,7 @@ public class SymbolTablePluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 	@Test
 	public void testSortingLabelColumn() throws Exception {
-		openProgram("notepad");
+		openProgram("sample");
 
 		Rectangle rect = symbolTableHeader.getHeaderRect(SymbolTableModel.LABEL_COL);
 
@@ -170,7 +170,7 @@ public class SymbolTablePluginTest extends AbstractGhidraHeadedIntegrationTest {
 		// Note: this is somewhat of a tripwire test--it is designed to catch a major breakage
 		//       to the DynamicTableColumn discovery mechanism.
 		//
-		openProgram("notepad");
+		openProgram("sample");
 
 		List<String> columnNames = new ArrayList<>();
 		int columnCount = symbolModel.getColumnCount();
@@ -203,7 +203,7 @@ public class SymbolTablePluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 	@Test
 	public void testSortingAddressColumn() throws Exception {
-		openProgram("notepad");
+		openProgram("sample");
 
 		Rectangle rect = symbolTableHeader.getHeaderRect(SymbolTableModel.LOCATION_COL);
 
@@ -239,7 +239,7 @@ public class SymbolTablePluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 	@Test
 	public void testSortingReferenceColumn() throws Exception {
-		openProgram("notepad");
+		openProgram("sample");
 
 		sortOnColumn(SymbolTableModel.REFS_COL);
 
@@ -267,7 +267,7 @@ public class SymbolTablePluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 	@Test
 	public void testFilter() throws Exception {
-		openProgram("notepad");
+		openProgram("sample");
 
 		performAction(setFilterAction, new ActionContext(), false);
 		waitForSwing();
@@ -331,15 +331,6 @@ public class SymbolTablePluginTest extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals(2, symbolTable.getRowCount());
 	}
 
-	private FilterDialog showFilterDialog() {
-
-		performAction(setFilterAction, false);
-
-		FilterDialog dialog = waitForDialogComponent(FilterDialog.class);
-		assertNotNull(dialog);
-		return dialog;
-	}
-
 	@Test
 	public void testFilterPersistence() throws Exception {
 
@@ -362,39 +353,9 @@ public class SymbolTablePluginTest extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals(savedXml, restoredXml);
 	}
 
-	private void changeSomeFilterSettings(NewSymbolFilter filter) {
-		//
-		// Change different filter types and values.  (This requires some guilty knowledge).
-		//
-		// Symbol type name and default state: 
-		// 
-		// Symbol Types: 
-		// 		Label filters:  instruction (active), data (active), function (active) 
-		//      Non-label filters: namespaces, classes, params, etc (all inactive)
-		// 
-		// Advanced filters: externals, globals, entry points, locals, etc (all inactive)
-		//
-		// Symbol Source Types: user defined (active), imported (active), 
-		//  		default label (inactive), default function, analysis (active) 
-		//
-
-		boolean active = true;
-		boolean inactive = false;
-		filter.setFilter("User Defined", inactive);
-		filter.setFilter("Default (Labels)", active);
-
-		filter.setFilter("Function Labels", inactive);
-
-		filter.setFilter("Local Variables", active);
-
-		filter.setFilter("Register Variables", active);
-		filter.setFilter("Subroutines", active);
-		filter.setFilter("Non-Primary Labels", active);
-	}
-
 	@Test
 	public void testEditing() throws Exception {
-		openProgram("notepad");
+		openProgram("sample");
 
 		waitForNotBusy(symbolTable);
 
@@ -421,7 +382,7 @@ public class SymbolTablePluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 	@Test
 	public void testQuickLookup() throws Exception {
-		openProgram("notepad");
+		openProgram("sample");
 
 		int id = prog.startTransaction(testName.getMethodName());
 		try {
@@ -440,7 +401,7 @@ public class SymbolTablePluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 		waitForNotBusy(symbolTable);
 
-		runSwing(() -> symbolTable.setRowSelectionInterval(0, 0));
+		selectRow(0);
 
 		triggerAutoLookup("a");
 		waitForNotBusy(symbolTable);
@@ -462,7 +423,7 @@ public class SymbolTablePluginTest extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals(findRow("abc1", "Global"), symbolTable.getSelectedRow());
 		Thread.sleep(GTable.KEY_TIMEOUT);
 
-		runSwing(() -> symbolTable.setRowSelectionInterval(0, 0));
+		selectRow(0);
 		waitForSwing();
 		triggerAutoLookup("abc12");
 		waitForNotBusy(symbolTable);
@@ -471,7 +432,7 @@ public class SymbolTablePluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 	@Test
 	public void testDeleting() throws Exception {
-		openProgram("notepad");
+		openProgram("sample");
 
 		int rowCount = symbolTable.getRowCount();
 		assertTrue(!deleteAction.isEnabled());
@@ -501,8 +462,7 @@ public class SymbolTablePluginTest extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals(rowCount, symbolTable.getRowCount());
 
 		final int anotherLocal_RowIndex = findRow("AnotherLocal", "Global");
-		runSwing(() -> symbolTable.setRowSelectionInterval(anotherLocal_RowIndex,
-			anotherLocal_RowIndex));
+		selectRow(anotherLocal_RowIndex);
 
 		int selectedRow = symbolTable.getSelectedRow();
 		assertEquals("Row was not selected!", anotherLocal_RowIndex, selectedRow);
@@ -538,10 +498,8 @@ public class SymbolTablePluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 		setupSymbolTableFilterToShowParameters();
 
-		final int row = getRowForSymbol(param1Symbol);
-
-		// select that row
-		runSwing(() -> symbolTable.setRowSelectionInterval(row, row));
+		int row = getRowForSymbol(param1Symbol);
+		selectRow(row);
 
 		// execute the delete action
 		performAction(deleteAction, true);
@@ -549,18 +507,28 @@ public class SymbolTablePluginTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	@Test
+	public void testBuiltInTableActionsAvailable() throws Exception {
+		openProgram("sample");
+
+		int row = 0;
+		selectRow(row);
+
+		JPopupMenu popup = triggerPopup(row);
+		List<JMenuItem> popupItems = getPopupMenuItems(popup);
+		assertMenuContains(popupItems, "Copy");
+		assertMenuContains(popupItems, "Export");
+		assertMenuContains(popupItems, "Select All");
+	}
+
+	@Test
 	public void testMakeSelection() throws Exception {
-		openProgram("notepad");
+		openProgram("sample");
 
 		assertTrue(!makeSelectionAction.isEnabled());
 
 		final int row = findRow("ghidra", "Global");
 		int rowCount = 3;
-		runSwing(() -> {
-			symbolTable.setRowSelectionInterval(row, row + 2);
-			Rectangle rect = symbolTable.getCellRect(row + 2, 0, true);
-			symbolTable.scrollRectToVisible(rect);
-		});
+		selectRow(row, row + 2);
 
 		assertTrue(makeSelectionAction.isEnabled());
 
@@ -590,14 +558,11 @@ public class SymbolTablePluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 	@Test
 	public void testSetAndClearPinnedAction() throws Exception {
-		openProgram("notepad");
+		openProgram("sample");
 
-		final int row = findRow("ADVAPI32.dll_IsTextUnicode", "Global");
-		runSwing(() -> {
-			symbolTable.setRowSelectionInterval(row, row + 2);
-			Rectangle rect = symbolTable.getCellRect(row + 2, 0, true);
-			symbolTable.scrollRectToVisible(rect);
-		});
+		int row = findRow("ADVAPI32.dll_IsTextUnicode", "Global");
+		selectRow(row, row + 2);
+
 		ActionContext actionContext = provider.getActionContext(null);
 		int[] selectedRows = symbolTable.getSelectedRows();
 		assertEquals(3, selectedRows.length);
@@ -626,14 +591,11 @@ public class SymbolTablePluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 	@Test
 	public void testSetPinnedActionNotEnabledForExternalSymbols() throws Exception {
-		openProgram("notepad");
+		openProgram("sample");
 
-		final int row = findRow("CharLowerW", "USER32.dll");
-		runSwing(() -> {
-			symbolTable.setRowSelectionInterval(row, row + 1);
-			Rectangle rect = symbolTable.getCellRect(row + 1, 0, true);
-			symbolTable.scrollRectToVisible(rect);
-		});
+		int row = findRow("CharLowerW", "USER32.dll");
+		selectRow(row, row + 1);
+
 		ActionContext actionContext = provider.getActionContext(null);
 		int[] selectedRows = symbolTable.getSelectedRows();
 
@@ -648,7 +610,7 @@ public class SymbolTablePluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 	@Test
 	public void testUpdateOnSymbolsAdded() throws Exception {
-		openProgram("notepad");
+		openProgram("sample");
 		Address sample = prog.getMinAddress();
 		SymbolTable st = prog.getSymbolTable();
 		Symbol sym = null;
@@ -673,7 +635,7 @@ public class SymbolTablePluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 	@Test
 	public void testSymbolsAddedWithFilterOn() throws Exception {
-		openProgram("notepad");
+		openProgram("sample");
 
 		final JTextField textField = getFilterTextField();
 		final JCheckBox checkBox = findComponent(filterPanel, JCheckBox.class);
@@ -709,7 +671,7 @@ public class SymbolTablePluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 	@Test
 	public void testDefaultFunctionToNamedFunctionWithFilterOn() throws Exception {
-		openProgram("notepad");
+		openProgram("sample");
 
 		performAction(setFilterAction, new ActionContext(), false);
 		waitForSwing();
@@ -742,7 +704,7 @@ public class SymbolTablePluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 	@Test
 	public void testUpdateOnSymbolsRemoved() throws Exception {
-		openProgram("notepad");
+		openProgram("sample");
 
 		SymbolTable st = prog.getSymbolTable();
 		Symbol sym = getUniqueSymbol(prog, "entry");
@@ -765,7 +727,7 @@ public class SymbolTablePluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 	@Test
 	public void testUpdateOnReferencesAdded() throws Exception {
-		openProgram("notepad");
+		openProgram("sample");
 		Address sample = prog.getMinAddress();
 
 		Symbol s = getUniqueSymbol(prog, "entry");
@@ -796,7 +758,7 @@ public class SymbolTablePluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 	@Test
 	public void testUpdateOnReferencesRemoved() throws Exception {
-		openProgram("notepad");
+		openProgram("sample");
 		Address sample = prog.getMinAddress();
 
 		Symbol s = getUniqueSymbol(prog, "doStuff");
@@ -836,7 +798,7 @@ public class SymbolTablePluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 	@Test
 	public void testUpdateOnProgramRestore() throws Exception {
-		openProgram("notepad");
+		openProgram("sample");
 
 		int id = prog.startTransaction(testName.getMethodName());
 		try {
@@ -959,7 +921,7 @@ public class SymbolTablePluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 	@Test
 	public void testReferences() throws Exception {
-		openProgram("notepad");
+		openProgram("sample");
 
 		showReferencesTable();
 
@@ -1020,7 +982,7 @@ public class SymbolTablePluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 	@Test
 	public void testFilterTextField() throws Exception {
-		openProgram("notepad");
+		openProgram("sample");
 
 		JTextField textField = getFilterTextField();
 
@@ -1167,7 +1129,7 @@ public class SymbolTablePluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 	@Test
 	public void testFilterTextFieldFindsAllMatches() throws Exception {
-		openProgram("notepad");
+		openProgram("sample");
 
 		JTextField textField = getFilterTextField();
 
@@ -1213,6 +1175,86 @@ public class SymbolTablePluginTest extends AbstractGhidraHeadedIntegrationTest {
 //==================================================================================================
 // Helper methods
 //==================================================================================================
+
+	private void assertMenuContains(List<JMenuItem> popupItems, String string) {
+		for (JMenuItem item : popupItems) {
+			String text = item.getText();
+			if (text.equals(string)) {
+				return; // found it
+			}
+		}
+		fail("'" + string + "' not in the popup menu!");
+	}
+
+	private List<JMenuItem> getPopupMenuItems(JPopupMenu popup) {
+		List<JMenuItem> list = new ArrayList<>();
+		Component[] children = popup.getComponents();
+		for (Component child : children) {
+			if (child instanceof JMenuItem) {
+				list.add((JMenuItem) child);
+			}
+		}
+		return list;
+	}
+
+	private JPopupMenu triggerPopup(int row) {
+		DockingWindowManager dwm = DockingWindowManager.getInstance(symbolTable);
+		ActionContext context = provider.getActionContext(null);
+		JPopupMenu popup =
+			runSwing(() -> DockingWindowManagerTestHelper.getPopupMenu(dwm, context));
+		return popup;
+	}
+
+	private void selectRow(int row) {
+		selectRow(row, row);
+	}
+
+	private void selectRow(int start, int end) {
+		runSwing(() -> {
+			symbolTable.setRowSelectionInterval(start, end);
+			Rectangle rect = symbolTable.getCellRect(end, 0, true);
+			symbolTable.scrollRectToVisible(rect);
+		});
+	}
+
+	private FilterDialog showFilterDialog() {
+
+		performAction(setFilterAction, false);
+
+		FilterDialog dialog = waitForDialogComponent(FilterDialog.class);
+		assertNotNull(dialog);
+		return dialog;
+	}
+
+	private void changeSomeFilterSettings(NewSymbolFilter filter) {
+		//
+		// Change different filter types and values.  (This requires some guilty knowledge).
+		//
+		// Symbol type name and default state: 
+		// 
+		// Symbol Types: 
+		// 		Label filters:  instruction (active), data (active), function (active) 
+		//      Non-label filters: namespaces, classes, params, etc (all inactive)
+		// 
+		// Advanced filters: externals, globals, entry points, locals, etc (all inactive)
+		//
+		// Symbol Source Types: user defined (active), imported (active), 
+		//  		default label (inactive), default function, analysis (active) 
+		//
+
+		boolean active = true;
+		boolean inactive = false;
+		filter.setFilter("User Defined", inactive);
+		filter.setFilter("Default (Labels)", active);
+
+		filter.setFilter("Function Labels", inactive);
+
+		filter.setFilter("Local Variables", active);
+
+		filter.setFilter("Register Variables", active);
+		filter.setFilter("Subroutines", active);
+		filter.setFilter("Non-Primary Labels", active);
+	}
 
 	private void triggerAutoLookup(String text) {
 

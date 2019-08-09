@@ -31,6 +31,7 @@ import docking.action.DockingActionIf;
 import docking.actions.ActionAdapter;
 import docking.actions.KeyBindingUtils;
 import docking.event.mouse.GMouseListenerAdapter;
+import docking.help.HelpService;
 import docking.menu.DockingToolbarButton;
 import docking.util.AnimationUtils;
 import docking.widgets.label.GDHtmlLabel;
@@ -991,6 +992,15 @@ public class DialogComponentProvider
 	}
 
 	/**
+	 * Returns the help location for this dialog
+	 * @return the help location
+	 */
+	public HelpLocation getHelpLocatdion() {
+		HelpService helpService = DockingWindowManager.getHelpService();
+		return helpService.getHelpLocation(rootPanel);
+	}
+
+	/**
 	 * Sets the button to make "Default" when the dialog is shown.  If no default button is
 	 * desired, then pass <tt>null</tt> as the <tt>button</tt> value.
 	 * @param button the button to make default enabled.
@@ -1127,7 +1137,23 @@ public class DialogComponentProvider
 	 */
 	@Override
 	public ActionContext getActionContext(MouseEvent event) {
-		return new ActionContext(null, null);
+
+		Component c = getComponent();
+		KeyboardFocusManager kfm = KeyboardFocusManager.getCurrentKeyboardFocusManager();
+		Component focusedComponent = kfm.getFocusOwner();
+		if (focusedComponent != null && SwingUtilities.isDescendingFrom(focusedComponent, c)) {
+			c = focusedComponent;
+		}
+
+		if (event == null) {
+			return new ActionContext(null, c);
+		}
+
+		Component sourceComponent = event.getComponent();
+		if (sourceComponent != null) {
+			c = sourceComponent;
+		}
+		return new ActionContext(null, c).setSourceObject(event.getSource());
 	}
 
 	/**

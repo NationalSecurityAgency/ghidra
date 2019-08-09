@@ -372,9 +372,8 @@ public abstract class DockingAction implements DockingActionIf {
 	/**
 	 * Cleans up any resources used by the action.
 	 */
+	@Override
 	public void dispose() {
-		// TODO this doesn't seem to be called by the framework.  Should't we call this when
-		//      an action is removed from the tool??
 		propertyListeners.clear();
 	}
 

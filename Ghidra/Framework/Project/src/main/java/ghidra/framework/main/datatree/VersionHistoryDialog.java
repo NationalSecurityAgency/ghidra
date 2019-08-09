@@ -135,7 +135,7 @@ public class VersionHistoryDialog extends DialogComponentProvider implements Pro
 
 	@Override
 	public ActionContext getActionContext(MouseEvent event) {
-		ActionContext actionContext = new ActionContext(null, versionPanel.getTable(), this);
+		ActionContext actionContext = new ActionContext(null, this, versionPanel.getTable());
 		actionContext.setMouseEvent(event);
 		return actionContext;
 	}

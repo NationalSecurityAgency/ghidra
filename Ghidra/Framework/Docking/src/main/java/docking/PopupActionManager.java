@@ -23,8 +23,9 @@ import java.util.*;
 
 import javax.swing.JPopupMenu;
 
+import org.apache.commons.collections4.IteratorUtils;
+
 import docking.action.*;
-import docking.actions.PopupActionProvider;
 import docking.menu.*;
 
 public class PopupActionManager implements PropertyChangeListener {
@@ -67,6 +68,7 @@ public class PopupActionManager implements PropertyChangeListener {
 	}
 
 	void popupMenu(ComponentPlaceholder info, MouseEvent e) {
+
 		if (e.isConsumed()) {
 			return;
 		}
@@ -76,27 +78,41 @@ public class PopupActionManager implements PropertyChangeListener {
 			actionContext = new ActionContext();
 		}
 
-		actionContext.setSource(e.getSource());
+		actionContext.setSourceObject(e.getSource());
 		actionContext.setMouseEvent(e);
 
-		MenuHandler popupMenuHandler = new PopupMenuHandler(windowManager, actionContext);
+		Iterator<DockingActionIf> localActions = info.getActions();
+		JPopupMenu popupMenu = createPopupMenu(localActions, actionContext);
+		if (popupMenu == null) {
+			return; // no matching actions
+		}
 
+		Component c = (Component) e.getSource();
+		popupMenu.show(c, e.getX(), e.getY());
+	}
+
+	JPopupMenu createPopupMenu(Iterator<DockingActionIf> localActions, ActionContext context) {
+
+		if (localActions == null) {
+			localActions = IteratorUtils.emptyIterator();
+		}
+
+		MenuHandler popupMenuHandler = new PopupMenuHandler(windowManager, context);
 		MenuManager menuMgr =
 			new MenuManager("Popup", '\0', null, true, popupMenuHandler, menuGroupMap);
-		populatePopupMenuActions(info, actionContext, menuMgr);
+		populatePopupMenuActions(localActions, context, menuMgr);
 		if (menuMgr.isEmpty()) {
-			return;
+			return null;
 		}
 
 		// Popup menu if items are available
 		JPopupMenu popupMenu = menuMgr.getPopupMenu();
-		Component c = (Component) e.getSource();
 		popupMenu.addPopupMenuListener(popupMenuHandler);
-		popupMenu.show(c, e.getX(), e.getY());
+		return popupMenu;
 	}
 
-	private void populatePopupMenuActions(ComponentPlaceholder info, ActionContext actionContext,
-			MenuManager menuMgr) {
+	void populatePopupMenuActions(Iterator<DockingActionIf> localActions,
+			ActionContext actionContext, MenuManager menuMgr) {
 
 		// Unregistered actions are those used by special-needs components, on-the-fly
 		addUnregisteredActions(actionContext, menuMgr);
@@ -130,9 +146,8 @@ public class PopupActionManager implements PropertyChangeListener {
 		}
 
 		// Include local actions for focused component
-		iter = info.getActions();
-		while (iter.hasNext()) {
-			DockingActionIf action = iter.next();
+		while (localActions.hasNext()) {
+			DockingActionIf action = localActions.next();
 			if (action.getPopupMenuData() != null && action.isValidContext(actionContext) &&
 				action.isAddToPopup(actionContext)) {
 				action.setEnabled(action.isEnabledForContext(actionContext));
@@ -145,27 +160,10 @@ public class PopupActionManager implements PropertyChangeListener {
 
 		Object source = actionContext.getSourceObject();
 
-		// this interface is deprecated in favor of the next block
+		// this interface is deprecated in favor the code that calls this method; this will be deleted
 		if (source instanceof DockingActionProviderIf) {
 			DockingActionProviderIf actionProvider = (DockingActionProviderIf) source;
 			List<DockingActionIf> dockingActions = actionProvider.getDockingActions();
-			for (DockingActionIf action : dockingActions) {
-				MenuData popupMenuData = action.getPopupMenuData();
-				if (popupMenuData != null && action.isValidContext(actionContext) &&
-					action.isAddToPopup(actionContext)) {
-					action.setEnabled(action.isEnabledForContext(actionContext));
-					menuMgr.addAction(action);
-				}
-			}
-		}
-
-		// note: this is temporary; there is only one client that needs this.  This will be
-		// removed in a future ticket when that client uses the standard tool action system
-		if (source instanceof PopupActionProvider) {
-			PopupActionProvider actionProvider = (PopupActionProvider) source;
-			DockingTool tool = windowManager.getTool();
-			List<DockingActionIf> dockingActions =
-				actionProvider.getPopupActions(tool, actionContext);
 			for (DockingActionIf action : dockingActions) {
 				MenuData popupMenuData = action.getPopupMenuData();
 				if (popupMenuData != null && action.isValidContext(actionContext) &&

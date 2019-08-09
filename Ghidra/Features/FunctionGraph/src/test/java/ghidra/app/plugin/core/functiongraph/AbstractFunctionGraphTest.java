@@ -619,7 +619,7 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 		assertNotNull(action);
 
 		FieldHeaderLocation fhLoc = createFieldHeaderLocation(provider);
-		ActionContext context = new ActionContext(null, fhLoc);
+		ActionContext context = createContext(fhLoc);
 		performAction(action, context, true);
 
 		waitForConditionWithoutFailing(() -> fieldIsVisible(provider, actionName));
@@ -723,7 +723,7 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 		assertNotNull(action);
 
 		FieldHeaderLocation fhLoc = createFieldHeaderLocation(provider);
-		ActionContext context = new ActionContext(null, fhLoc);
+		ActionContext context = createContext(fhLoc);
 		performAction(action, context, false);
 
 		Window dialog = waitForWindow("Reset All Formats?");

@@ -119,7 +119,7 @@ public class MultipleKeyAction extends DockingKeyBindingAction {
 		// Build list of actions which are valid in current context
 		ComponentProvider localProvider = tool.getActiveComponentProvider();
 		ActionContext localContext = getLocalContext(localProvider);
-		localContext.setSource(event.getSource());
+		localContext.setSourceObject(event.getSource());
 
 		ActionContext globalContext = tool.getGlobalContext();
 		List<ExecutableKeyActionAdapter> list = getValidContextActions(localContext, globalContext);

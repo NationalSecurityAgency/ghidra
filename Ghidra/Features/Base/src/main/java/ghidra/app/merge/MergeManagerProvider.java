@@ -87,7 +87,7 @@ class MergeManagerProvider extends ComponentProviderAdapter {
 		if (event != null && event.getSource() instanceof FieldHeaderComp) {
 			FieldHeaderComp comp = (FieldHeaderComp) event.getSource();
 			FieldHeaderLocation fieldHeaderLocation = comp.getFieldHeaderLocation(event.getPoint());
-			return new ActionContext(this, fieldHeaderLocation);
+			return createContext(fieldHeaderLocation);
 
 		}
 		if (mergeManager instanceof ProgramMultiUserMergeManager) {

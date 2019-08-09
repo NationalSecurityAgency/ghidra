@@ -152,7 +152,7 @@ public class ProviderNavigationPluginTest extends AbstractProgramBasedTest {
 	}
 
 	private void forceActivate(ComponentProvider provider) {
-		ActionContext context = new ActionContext(provider, provider);
+		ActionContext context = new ActionContext(provider);
 		for (DockingContextListener l : testContextListeners) {
 			l.contextChanged(context);
 		}

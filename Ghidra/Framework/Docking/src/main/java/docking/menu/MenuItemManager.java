@@ -197,21 +197,22 @@ class MenuItemManager implements ManagedMenuItem, PropertyChangeListener, Action
 	public void actionPerformed(ActionEvent e) {
 		if (menuHandler != null) {
 			menuHandler.processMenuAction(action, e);
+			return;
 		}
-		else {
-			try {
-				ActionContext context = new ActionContext(null, null, e.getSource());
-				if (action.isEnabledForContext(context)) {
-					if (action instanceof ToggleDockingActionIf) {
-						ToggleDockingActionIf toggleAction = ((ToggleDockingActionIf) action);
-						toggleAction.setSelected(!toggleAction.isSelected());
-					}
-					action.actionPerformed(context);
+
+		try {
+			ActionContext context = new ActionContext();
+			context.setSourceObject(e.getSource());
+			if (action.isEnabledForContext(context)) {
+				if (action instanceof ToggleDockingActionIf) {
+					ToggleDockingActionIf toggleAction = ((ToggleDockingActionIf) action);
+					toggleAction.setSelected(!toggleAction.isSelected());
 				}
+				action.actionPerformed(context);
 			}
-			catch (Throwable t) {
-				Msg.error(this, "Unexpected Exception: " + t.getMessage(), t);
-			}
+		}
+		catch (Throwable t) {
+			Msg.error(this, "Unexpected Exception: " + t.getMessage(), t);
 		}
 	}
 

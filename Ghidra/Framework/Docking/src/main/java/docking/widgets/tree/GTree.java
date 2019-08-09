@@ -112,7 +112,7 @@ public class GTree extends JPanel implements BusyListener {
 		init();
 
 		DockingWindowManager.registerComponentLoadedListener(this,
-			windowManager -> filterProvider.loadFilterPreference(windowManager,
+			(windowManager, provider) -> filterProvider.loadFilterPreference(windowManager,
 				uniquePreferenceKey));
 
 		filterUpdateManager = new SwingUpdateManager(1000, 30000, () -> performNodeFiltering());

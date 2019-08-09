@@ -426,7 +426,7 @@ public class VersionHistoryPanel extends JPanel implements Draggable {
 				return false;
 			}
 
-			if (context.getContextObject() != table) {
+			if (context.getSourceComponent() != table) {
 				return false;
 			}
 

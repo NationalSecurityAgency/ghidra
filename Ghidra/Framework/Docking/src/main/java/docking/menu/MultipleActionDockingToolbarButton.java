@@ -184,7 +184,7 @@ public class MultipleActionDockingToolbarButton extends EmptyBorderButton {
 			final DockingActionIf delegateAction = dockingAction;
 			item.addActionListener(e -> {
 				ActionContext context = getActionContext();
-				context.setSource(e.getSource());
+				context.setSourceObject(e.getSource());
 				if (delegateAction instanceof ToggleDockingAction) {
 					ToggleDockingAction toggleAction = (ToggleDockingAction) delegateAction;
 					toggleAction.setSelected(!toggleAction.isSelected());
