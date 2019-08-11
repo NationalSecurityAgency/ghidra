@@ -107,7 +107,7 @@ public class DoubleFormatModel implements UniversalDataFormatModel {
 
 	@Override
 	public boolean validateBytesPerLine(int bytesPerLine) {
-		return true;
+		return bytesPerLine % getUnitByteSize() == 0;
 	}
 
 	@Override
