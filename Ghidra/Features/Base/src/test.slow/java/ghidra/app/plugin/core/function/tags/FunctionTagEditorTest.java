@@ -15,15 +15,23 @@
  */
 package ghidra.app.plugin.core.function.tags;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 import java.awt.Dimension;
 import java.io.IOException;
-import java.util.*;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
 import javax.swing.AbstractButton;
 
-import org.junit.*;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
 import docking.ActionContext;
 import docking.action.DockingActionIf;
@@ -37,10 +45,13 @@ import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.database.function.FunctionDB;
 import ghidra.program.database.function.FunctionManagerDB;
 import ghidra.program.model.address.Address;
+import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.FunctionTag;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramLocation;
-import ghidra.test.*;
+import ghidra.test.AbstractGhidraHeadedIntegrationTest;
+import ghidra.test.ClassicSampleX86ProgramBuilder;
+import ghidra.test.TestEnv;
 import ghidra.util.exception.UsrException;
 
 /**
@@ -63,12 +74,10 @@ public class FunctionTagEditorTest extends AbstractGhidraHeadedIntegrationTest {
 	// dialog.
 	private DockingActionIf editFunctionTags;
 
-	private static final int DIALOG_WAIT_TIME = 3000;
-
-	// Define addresses for the first two functions in the test program;
-	// these will handle most cases we need to test.
 	private Address NON_FUNCTION_ADDRESS;
 	private Address FUNCTION_ENTRY_ADDRESS;
+	private Address FUNCTION_ENTRY_ADDRESS_2;
+	private Address FUNCTION_ENTRY_ADDRESS_3;
 
 	// The UI we're testing.
 	private FunctionTagsComponentProvider provider = null;
@@ -99,6 +108,8 @@ public class FunctionTagEditorTest extends AbstractGhidraHeadedIntegrationTest {
 
 		NON_FUNCTION_ADDRESS = addr("010022b8");
 		FUNCTION_ENTRY_ADDRESS = addr("01002239");
+		FUNCTION_ENTRY_ADDRESS_2 = addr("0100248f");
+		FUNCTION_ENTRY_ADDRESS_3 = addr("0100299e");
 
 		goToFunction(FUNCTION_ENTRY_ADDRESS);
 		showDialog();
@@ -144,20 +155,18 @@ public class FunctionTagEditorTest extends AbstractGhidraHeadedIntegrationTest {
 	 * non-immutable tags to the selection</li>
 	 * <li>Verify that the delete button will become enabled if we 
 	 * remove any immutable tags from the selection</li>
-	 * 
-	 * @throws UsrException if there's an error retrieving tag panel components
-	 * @throws IOException if there's an error retrieving tags from the database
+	 * @throws Exception if there is a problem selecting tags
 	 */
 	@Test
-	public void testDeleteImmutableTag() throws IOException, UsrException {
+	public void testDeleteImmutableTag() throws Exception {
 
-		FunctionTagList list = getTagListInPanel("sourcePanel");
+		FunctionTagTable table = getTagListInPanel("sourcePanel");
 
 		// Get an immutable tag from the source panel and set it to be selected. Verify that
 		// the delete button is disabled.
 		FunctionTagTemp immutableTag = getImmutableTag();
 		assertTrue("Must have at least one immutable tag for this test", immutableTag != null);
-		selectTagInList(immutableTag.getName(), list);
+		selectTagInList(immutableTag.getName(), table);
 		waitForSwing();
 		assertFalse(isButtonEnabled("deleteBtn"));
 
@@ -166,13 +175,13 @@ public class FunctionTagEditorTest extends AbstractGhidraHeadedIntegrationTest {
 		String tagName = "TAG 1";
 		createTag(tagName);
 		waitForSwing();
-		list.setSelectionInterval(0, list.getModel().getSize() - 1);
+		table.addRowSelectionInterval(0, table.getRowCount()-1);
 		waitForSwing();
 		assertFalse(isButtonEnabled("deleteBtn"));
 
 		// Select just the non-immutable tag and verify that the delete button is now
 		// enabled.
-		selectTagInList(tagName, list);
+		selectTagInList(tagName, table);
 		waitForSwing();
 		assertTrue(isButtonEnabled("deleteBtn"));
 	}
@@ -180,14 +189,12 @@ public class FunctionTagEditorTest extends AbstractGhidraHeadedIntegrationTest {
 	/**
 	 * Verifies that we can delete a previously immutable tag once it has been assigned
 	 * to a function.
-	 * 
-	 * @throws UsrException if there's an error retrieving tag panel components
-	 * @throws IOException if there's an error retrieving tags from the database
+	 * @throws Exception if there is a problem adding tags to functions
 	 */
 	@Test
-	public void testDeleteImmutableTagAfterUse() throws UsrException, IOException {
+	public void testDeleteImmutableTagAfterUse() throws Exception {
 
-		FunctionTagList list = getTagListInPanel("targetPanel");
+		FunctionTagTable table = getTagListInPanel("targetPanel");
 
 		// Get an immutable tag from the source panel.
 		FunctionTagTemp tag = getImmutableTag();
@@ -201,7 +208,7 @@ public class FunctionTagEditorTest extends AbstractGhidraHeadedIntegrationTest {
 		boolean inList = isTagNameInList(tag.getName(), getAllTags());
 		assertTrue(inList);
 
-		selectTagInList(tag.getName(), list);
+		selectTagInList(tag.getName(), table);
 		waitForSwing();
 		assertTrue(isButtonEnabled("deleteBtn"));
 	}
@@ -282,11 +289,11 @@ public class FunctionTagEditorTest extends AbstractGhidraHeadedIntegrationTest {
 
 	/**
 	 * Tests that we can add a tag to a function.
-	 *
-	 * @throws UsrException if there's an error adding the tag from the function
+	 * 
+	 * @throws Exception if there is a problem adding tags to functions
 	 */
 	@Test
-	public void testAddTagToFunction() throws UsrException {
+	public void testAddTagToFunction() throws Exception {
 		String name = "TEST";
 		createTag(name);
 		addTagToFunction(name, FUNCTION_ENTRY_ADDRESS);
@@ -295,16 +302,129 @@ public class FunctionTagEditorTest extends AbstractGhidraHeadedIntegrationTest {
 
 	/**
 	 * Tests that we can remove a tag from a function.
-	 *
-	 * @throws UsrException if there's an error adding or removing the tag from the function
+	 * @throws Exception if there is a problem adding/removing tags to functions
 	 */
 	@Test
-	public void testRemoveTagFromFunction() throws UsrException {
+	public void testRemoveTagFromFunction() throws Exception {
 		String name = "TEST";
 		createTag(name);
 		addTagToFunction(name, FUNCTION_ENTRY_ADDRESS);
 		removeTagFromFunction(name, FUNCTION_ENTRY_ADDRESS);
 		assertTrue(!isTagNameInList(name, getTagsForFunctionAt(FUNCTION_ENTRY_ADDRESS)));
+	}
+
+	/**
+	 * Verifies that the tags assigned to a function are visible in the function tag
+	 * panel
+	 * @throws Exception if there is a problem adding tags to functions
+	 */
+	@Test
+	public void testViewFunctionsForTag() throws Exception {
+
+		// Verify that the function panel is initially empty
+		AllFunctionsPanel functionsPanel = getFunctionsPanel();
+		List<Function> functions = functionsPanel.getFunctions();
+		assert (functions.isEmpty());
+
+		// Create a new tag and add it to a function
+		String tagName1 = "TAG 1";
+		createTag(tagName1);
+		addTagToFunction(tagName1, FUNCTION_ENTRY_ADDRESS);
+
+		// Select the tag in the target panel
+		FunctionTagTable table = getTagListInPanel("targetPanel");
+		selectTagInList(tagName1, table);
+		waitForTableModel(functionsPanel.getTableModel());
+
+		// Verify that the function is shown in the function panel (check that
+		// we have exactly 1 match, and that the address is for the correct
+		// function)
+		functions = functionsPanel.getFunctions();
+		assert (functions.size() == 1);
+		Function f = functions.get(0);
+		assert (f.getEntryPoint().equals(FUNCTION_ENTRY_ADDRESS));
+	}
+
+	/**
+	 * Verifies if a tag is assigned to multiple functions they will all be shown
+	 * in the function panel
+	 * 
+	 * @throws Exception if there's a problem adding tags to functions
+	 */
+	@Test
+	public void testMultipleFunctionsWithTag() throws Exception {
+
+		// Verify that the function panel is initially empty
+		AllFunctionsPanel functionsPanel = getFunctionsPanel();
+		List<Function> functions = functionsPanel.getFunctions();
+		assert (functions.isEmpty());
+
+		// Create a new tag and add it to both functions
+		String tagName1 = "TAG 1";
+		createTag(tagName1);
+		addTagToFunction(tagName1, FUNCTION_ENTRY_ADDRESS);
+		addTagToFunction(tagName1, FUNCTION_ENTRY_ADDRESS_2);
+
+		// Select the tag in the target panel
+		FunctionTagTable table = getTagListInPanel("targetPanel");
+		selectTagInList(tagName1, table);
+		waitForTableModel(functionsPanel.getTableModel());
+
+		// Verify that both functions are shown in the function panel (check that
+		// we have exactly 2 matches, and that the addresses are for the correct
+		// functions)
+		functions = functionsPanel.getFunctions();
+		assert (functions.size() == 2);
+		Function f1 = functions.get(0);
+		Function f2 = functions.get(1);
+		assert (f1.getEntryPoint().equals(FUNCTION_ENTRY_ADDRESS));
+		assert (f2.getEntryPoint().equals(FUNCTION_ENTRY_ADDRESS_2));
+	}
+
+	/**
+	 * Verifies if multiple tags are selected, all functions containing that tag
+	 * are displayed
+	 * 
+	 * @throws Exception if there's a problem adding tags to functions
+	 */
+	@Test
+	public void testViewMultipleFunctions() throws Exception {
+
+		// Verify that the function panel is initially empty
+		AllFunctionsPanel functionsPanel = getFunctionsPanel();
+		List<Function> functions = functionsPanel.getFunctions();
+		assert (functions.isEmpty());
+
+		// Create two new tags and add them to the functions
+		String tagName1 = "TAG 1";
+		createTag(tagName1);
+		addTagToFunction(tagName1, FUNCTION_ENTRY_ADDRESS);
+
+		String tagName2 = "TAG 2";
+		createTag(tagName2);
+		addTagToFunction(tagName2, FUNCTION_ENTRY_ADDRESS_2);
+		addTagToFunction(tagName2, FUNCTION_ENTRY_ADDRESS_3);
+		
+		// Select both tags and verify that 3 functions are listed in 
+		// the functions panel
+		goTo(tool, program, addr("00000000"));
+		FunctionTagTable table = getTagListInPanel("sourcePanel");
+		selectTagInList(tagName1, table);
+		int index = table.getSelectedRow();
+		table.addRowSelectionInterval(index, index+1);
+		clickTableRange(table, index, 2);
+		
+		waitForTableModel(functionsPanel.getTableModel());
+
+		// Verify that all 3 functions are in the function panel
+		functions = functionsPanel.getFunctions();
+		assert (functions.size() == 3);
+		Function f1 = functions.get(0);
+		Function f2 = functions.get(1);
+		Function f3 = functions.get(2);
+		assert (f1.getEntryPoint().equals(FUNCTION_ENTRY_ADDRESS));
+		assert (f2.getEntryPoint().equals(FUNCTION_ENTRY_ADDRESS_2));
+		assert (f3.getEntryPoint().equals(FUNCTION_ENTRY_ADDRESS_3));
 	}
 
 	/****************************************************************************************
@@ -333,14 +453,14 @@ public class FunctionTagEditorTest extends AbstractGhidraHeadedIntegrationTest {
 	 *
 	 * @param name the tag name to add
 	 * @param address the function entry point
-	 * @throws UsrException if there's an error retrieving the source panel instance
+	 * @throws Exception if there is a problem selecting tags or clicking buttons
 	 */
-	private void addTagToFunction(String name, Address address) throws UsrException {
+	private void addTagToFunction(String name, Address address) throws Exception {
 
 		cb.goTo(new ProgramLocation(program, address));
 		waitForSwing();
 
-		FunctionTagList list = getTagListInPanel("sourcePanel");
+		FunctionTagTable list = getTagListInPanel("sourcePanel");
 		selectTagInList(name, list);
 		clickButtonByName("addBtn");
 	}
@@ -350,54 +470,74 @@ public class FunctionTagEditorTest extends AbstractGhidraHeadedIntegrationTest {
 	 *
 	 * @param name the tag name to remove
 	 * @param address the function entry point
-	 * @throws UsrException if there's an error retrieving the target panel instance
+	 * @throws Exception if there is a problem selecting tags or clicking buttons
 	 */
-	private void removeTagFromFunction(String name, Address address) throws UsrException {
+	private void removeTagFromFunction(String name, Address address) throws Exception {
 
 		cb.goTo(new ProgramLocation(program, address));
 		waitForSwing();
 
-		FunctionTagList list = getTagListInPanel("targetPanel");
-		selectTagInList(name, list);
+		FunctionTagTable table = getTagListInPanel("targetPanel");
+		selectTagInList(name, table);
 		clickButtonByName("removeBtn");
 	}
 
 	/**
-	 * Gets the instance of the tag list in the given panel.
+	 * Gets the instance of the tag table in the given panel.
 	 *
 	 * @param panelName the name of the panel to search
 	 * @return the function tag list
 	 * @throws UsrException if there's an error retrieving the panel or tag list instances
 	 */
-	private FunctionTagList getTagListInPanel(String panelName) throws UsrException {
+	private FunctionTagTable getTagListInPanel(String panelName) throws UsrException {
 		Object comp = getInstanceField(panelName, provider);
 		if (comp == null) {
 			throw new UsrException("Error getting targetPanel field in provider");
 		}
 
-		TagListPanel panel = (TagListPanel) comp;
-		Object list = getInstanceField("list", panel);
-		if (list == null) {
-			throw new UsrException("Error getting list field in TargetTagsPanel");
+		Object table = getInstanceField("table", comp);
+		if (table == null) {
+			throw new UsrException("Error getting table in tag panel");
 		}
 
-		FunctionTagList tagList = (FunctionTagList) list;
-		return tagList;
+		FunctionTagTable tagTable = (FunctionTagTable) table;
+		return tagTable;
 	}
 
 	/**
-	 * Selects the item in the list with the given name.
+	 * Returns the functions panel
+	 * 
+	 * @return the functions panel
+	 */
+	private AllFunctionsPanel getFunctionsPanel() {
+		AllFunctionsPanel panel =
+			(AllFunctionsPanel) getInstanceField("allFunctionsPanel", provider);
+		return panel;
+	}
+
+	/**
+	 * Selects the item in the table with the given name.
 	 *
 	 * @param name the tag name to select
-	 * @param list the list to search
-	 * @throws UsrException if there's an error retrieving tag from the list
+	 * @param table the table to search
+	 * @throws Exception if there is a problem clicking cells in a list
 	 */
-	private void selectTagInList(String name, FunctionTagList list) throws UsrException {
-		FunctionTag tag = getListItemByName(name, list);
+	private void selectTagInList(String name, FunctionTagTable table) throws Exception {
+		FunctionTag tag = getListItemByName(name, table);
 		if (tag == null) {
 			throw new UsrException("Error retrieving tag with name: " + name);
 		}
-		list.setSelectedValue(tag, true);
+		
+		int row = 0;
+		for (int i=0; i<table.getRowCount(); i++) {
+			String tagname = (String) table.getValueAt(i, 0);
+			if (tagname.equals(name)) {
+				table.addRowSelectionInterval(i,i);
+				row = i;
+			}
+		}
+
+		clickTableCell(table, row, 0, 1);
 		waitForSwing();
 	}
 
@@ -438,12 +578,13 @@ public class FunctionTagEditorTest extends AbstractGhidraHeadedIntegrationTest {
 	 * Returns the list item (FunctionTag) that has the given tag name.
 	 *
 	 * @param name the tag name
-	 * @param list the list to search
+	 * @param table the table to search
 	 */
-	private FunctionTag getListItemByName(String name, FunctionTagList list) {
-		int count = list.getModel().getSize();
+	private FunctionTag getListItemByName(String name, FunctionTagTable table) {
+		int count = table.getRowCount();
 		for (int i = 0; i < count; i++) {
-			FunctionTag tag = list.getModel().getElementAt(i);
+			FunctionTagTableModel model = (FunctionTagTableModel)table.getModel();
+			FunctionTag tag = model.getTag(name);
 			if (tag.getName().equals(name)) {
 				return tag;
 			}
@@ -467,14 +608,10 @@ public class FunctionTagEditorTest extends AbstractGhidraHeadedIntegrationTest {
 
 	/**
 	 * Displays the function tag dialog.
-	 *
-	 * @return the dialog component provider
 	 */
 	private void showDialog() {
-
 		performAction(editFunctionTags, cb.getProvider(), false);
-		provider = waitForComponentProvider(tool.getToolFrame(),
-			FunctionTagsComponentProvider.class, DIALOG_WAIT_TIME);
+		provider = waitForComponentProvider(FunctionTagsComponentProvider.class);
 		tool.showComponentProvider(provider, true);
 	}
 
@@ -549,13 +686,11 @@ public class FunctionTagEditorTest extends AbstractGhidraHeadedIntegrationTest {
 	 */
 	private FunctionTagTemp getImmutableTag() throws UsrException {
 
-		FunctionTagList list = getTagListInPanel("sourcePanel");
-
-		for (int i = 0; i < list.getModel().getSize(); i++) {
-			FunctionTag tag = list.getModel().getElementAt(i);
-			if (tag instanceof FunctionTagTemp) {
-				return (FunctionTagTemp) tag;
-			}
+		FunctionTagTable table = getTagListInPanel("sourcePanel");
+		FunctionTagTableModel model = (FunctionTagTableModel)table.getModel();
+		Optional<FunctionTag> foundTag = model.getTags().stream().filter(t -> t instanceof FunctionTagTemp).findAny();
+		if (foundTag.isPresent()) {
+			return (FunctionTagTemp)foundTag.get();
 		}
 
 		return null;

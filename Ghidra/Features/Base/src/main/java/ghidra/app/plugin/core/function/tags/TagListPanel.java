@@ -18,49 +18,43 @@ package ghidra.app.plugin.core.function.tags;
 import java.awt.BorderLayout;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 
-import javax.swing.DefaultListModel;
+import javax.swing.BorderFactory;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
 
 import docking.DockingWindowManager;
 import docking.widgets.OptionDialog;
 import docking.widgets.dialogs.InputDialog;
-import docking.widgets.label.GLabel;
 import ghidra.app.cmd.function.ChangeFunctionTagCmd;
 import ghidra.app.cmd.function.DeleteFunctionTagCmd;
 import ghidra.framework.cmd.Command;
 import ghidra.framework.plugintool.PluginTool;
-import ghidra.program.model.listing.*;
+import ghidra.program.model.listing.Function;
+import ghidra.program.model.listing.FunctionTag;
+import ghidra.program.model.listing.Program;
 import ghidra.util.Msg;
 
 /**
- * Generic class for displaying {@link FunctionTag} objects in a list. 
+ * Base panel for displaying tags in the function tag window. 
  */
 public abstract class TagListPanel extends JPanel {
 
 	protected Program program;
-
-	// The list object containing the tag names.
-	protected FunctionTagList list;
-
-	// Currently-selected function in the listing.
 	protected Function function;
-
-	// Model representing all tags assigned to the selected function. This is the
-	// complete, unfiltered set of tags.
-	protected DefaultListModel<FunctionTag> model = new DefaultListModel<>();
-
-	// List of tags to be displayed in the panel. This is the full list with
-	// filtering applied.
-	protected DefaultListModel<FunctionTag> filteredModel = new DefaultListModel<>();
-
+	protected FunctionTagTable table;
 	protected PluginTool tool;
-
 	protected String filterString = "";
+	protected FunctionTagTableModel model;
+	protected FunctionTagTableModel filteredModel;
+	private JLabel titleLabel;
 
 	/**
-	 * Constructor. 
+	 * Constructor 
 	 * 
 	 * @param provider the display provider
 	 * @param tool the plugin tool
@@ -70,37 +64,43 @@ public abstract class TagListPanel extends JPanel {
 		this.tool = tool;
 
 		setLayout(new BorderLayout());
+		
+		model = new FunctionTagTableModel("", provider.getTool()) ;
+		filteredModel = new FunctionTagTableModel("", provider.getTool());
+		
+		table = new FunctionTagTable(filteredModel);				
+		table.addMouseListener(new MouseAdapter() {
 
-		// Set the model for the list to be the filtered model - we only ever want
-		// to show the model that has filtering applied.
-		list = new FunctionTagList(filteredModel);
-
-		// When a selection is made in the list, tell the provider so it can update
-		// the state of buttons, the other list, etc...
-		list.addListSelectionListener(e -> {
-			if (!e.getValueIsAdjusting()) {
+			@Override
+			public void mousePressed(MouseEvent e) {
+				// Click events aren't reliably captured for some reason,
+				// but presses are, so this is the best way to ensure that
+				// user selections are handled
 				provider.selectionChanged(TagListPanel.this);
 			}
-		});
 
-		// Mouse listener for handling the double-click event, which will bring up
-		// a dialog for editing the tag name and/or comment.
-		list.addMouseListener(new MouseAdapter() {
+			// Handles the double-click event on table rows, which will bring up
+			// a dialog for editing the tag name and/or comment.
 			@Override
 			public void mouseClicked(MouseEvent evt) {
-				FunctionTagList list = (FunctionTagList) evt.getSource();
+				
+				FunctionTagTable table = (FunctionTagTable)evt.getSource();
+				
 				if (evt.getClickCount() == 2) {
-
-					FunctionTag tag = list.getSelectedValue();
+					int row = table.getSelectedRow();
+					int nameCol = table.getColumnModel().getColumnIndex("Name");
+					String tagName = (String) table.getValueAt(row, nameCol);
+					FunctionTagTableModel model = (FunctionTagTableModel) table.getModel();
+					FunctionTag tag = model.getTag(tagName);
 					if (tag == null) {
 						return;
 					}
 
 					// If the tag is a temporary one, it's not editable. Show a message to the user.
 					if (tag instanceof FunctionTagTemp) {
-						Msg.showWarn(list, list, "Tag Not Editable", "Tag " + "\"" + tag.getName() +
+						Msg.showWarn(this, table, "Tag Not Editable", "Tag " + "\"" + tag.getName() +
 							"\"" +
-							" was loaded from an external source and cannot be edited or deleted");
+							" must be added to the program before it can be modified/deleted");
 						return;
 					}
 
@@ -121,7 +121,7 @@ public abstract class TagListPanel extends JPanel {
 						// If the name is empty, show a warning and don't allow it. A user should 
 						// never want to do this.
 						if (newName.isEmpty()) {
-							Msg.showWarn(this, list, "Empty Tag Name?", "Tag name cannot be empty");
+							Msg.showWarn(this, table, "Empty Tag Name?", "Tag name cannot be empty");
 							return false;
 						}
 
@@ -141,8 +141,7 @@ public abstract class TagListPanel extends JPanel {
 						return true;
 					});
 
-					dialog.setPreferredSize(400, 150);
-					DockingWindowManager.showDialog(list, dialog);
+					DockingWindowManager.showDialog(tool.getActiveWindow(), dialog);
 
 					if (dialog.isCanceled()) {
 						return;
@@ -150,17 +149,19 @@ public abstract class TagListPanel extends JPanel {
 				}
 			}
 		});
-
-		add(new GLabel(title), BorderLayout.NORTH);
-		add(list, BorderLayout.CENTER);
+		
+		titleLabel = new JLabel(title);
+		titleLabel.setBorder(BorderFactory.createEmptyBorder(3, 5, 0, 0));
+		add(titleLabel, BorderLayout.NORTH);
+		add(new JScrollPane(table), BorderLayout.CENTER);
 	}
-
+	
 	/******************************************************************************
 	 * PUBLIC METHODS
 	 ******************************************************************************/
 
 	/**
-	 * Clears the list and repopulates with a new data set. Clients should override this
+	 * Clears the list and repopulates it with a new data set. Clients should override this
 	 * to retrieve data for the given function.
 	 * 
 	 * @param function the currently selected function in the listing
@@ -168,16 +169,22 @@ public abstract class TagListPanel extends JPanel {
 	public abstract void refresh(Function function);
 
 	public void clearSelection() {
-		list.clearSelection();
+		table.clearSelection();
 	}
 
 	public void setProgram(Program program) {
 		this.program = program;
+		model.setProgram(program);
+		filteredModel.setProgram(program);
 	}
 
 	public void setFilterText(String text) {
 		filterString = text;
 		applyFilter();
+	}
+
+	public void setTitle(String title) {
+		titleLabel.setText(title);
 	}
 
 	/**
@@ -187,14 +194,7 @@ public abstract class TagListPanel extends JPanel {
 	 * @return true if the tag exists
 	 */
 	public boolean tagExists(String name) {
-		for (int i = 0; i < model.size(); i++) {
-			FunctionTag tag = model.getElementAt(i);
-			if (tag.getName().equals(name)) {
-				return true;
-			}
-		}
-
-		return false;
+		return model.isTagInModel(name);
 	}
 
 	/******************************************************************************
@@ -207,27 +207,27 @@ public abstract class TagListPanel extends JPanel {
 	 * @return true if the list has an item selected
 	 */
 	protected boolean hasSelection() {
-		return list.getSelectedIndices().length != 0;
+		return table.getSelectedRowCount() != 0;
 	}
 
 	/**
 	 * Returns true if at least one of the selected items in the list
-	 * is immutable (a temporary non-user-defined tag that can't be deleted).
+	 * is immutable (a temporary non-user-defined tag that can't be edited/deleted).
 	 *  
 	 * @return true if list contains an immutable tag
 	 */
 	protected boolean isSelectionImmutable() {
-		return list.getSelectedValuesList().stream().anyMatch(
-			val -> val instanceof FunctionTagTemp);
-	}
-
-	protected void sortList() {
-		List<FunctionTag> myList = Collections.list(model.elements());
-		Collections.sort(myList);
-		model.clear();
-		for (FunctionTag tag : myList) {
-			model.addElement(tag);
+		int[] selectedRows = table.getSelectedRows();
+		int nameCol = table.getColumnModel().getColumnIndex("Name");
+		for (int i=0; i<selectedRows.length; i++) {
+			String tagName = (String) table.getValueAt(i, nameCol);
+			FunctionTag tag = filteredModel.getTag(tagName);
+			if (tag instanceof FunctionTagTemp) {
+				return true;
+			}
 		}
+		
+		return false;
 	}
 
 	/**
@@ -261,41 +261,51 @@ public abstract class TagListPanel extends JPanel {
 	}
 
 	/**
-	 * Filters the list with the current filter settings.
+	 * Filters the list with the current filter settings
 	 */
 	protected void applyFilter() {
 		filteredModel.clear();
-
-		for (int i = 0; i < model.size(); i++) {
-			if (model.get(i).getName().toLowerCase().contains(filterString.toLowerCase())) {
-				filteredModel.addElement(model.get(i));
+		
+		for (FunctionTag tag : model.getTags()) {
+			if (filterString.isEmpty()) {
+				filteredModel.addTag(tag);
+			}
+			else if (tag.getName().toLowerCase().contains(filterString.toLowerCase())) {
+				filteredModel.addTag(tag);
 			}
 		}
+			
+		filteredModel.reload();	
 	}
 
 	/**
-	 * Retrieves all tags that have been assigned to the given function.
+	 * Retrieves all tags that have been assigned to the given function
 	 * 
+	 * @param func the function to get tags for
 	 * @return list of all tags assigned to this function
 	 */
-	protected List<FunctionTag> getAssignedTags(Function function) {
+	protected List<FunctionTag> getAssignedTags(Function func) {
 		List<FunctionTag> assignedTags = new ArrayList<>();
-		if (function != null) {
-			assignedTags.addAll(function.getTags());
+		if (func != null) {
+			assignedTags.addAll(func.getTags());
 		}
 		return assignedTags;
 	}
 
 	/**
-	 * Returns a list of all tags selected in the list.
+	 * Returns a list of all tags selected in the list
 	 * 
 	 * @return the list of function tags
 	 */
 	protected List<FunctionTag> getSelectedTags() {
 		List<FunctionTag> tags = new ArrayList<>();
-		int[] selectedIndices = list.getSelectedIndices();
+		int[] selectedIndices = table.getSelectedRows();
 		for (int i : selectedIndices) {
-			tags.add(filteredModel.getElementAt(i));
+			String tagName = (String) filteredModel.getValueAt(i, 0);
+			Optional<FunctionTag> tag = filteredModel.getTags().stream().filter(t -> t.getName().equals(tagName)).findAny();
+			if (tag.isPresent()) {
+				tags.add(tag.get());
+			}
 		}
 
 		return tags;
