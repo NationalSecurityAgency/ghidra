@@ -632,6 +632,17 @@ public class MemBlockDBTest extends AbstractGenericTest {
 	}
 
 	@Test
+	public void testSetBytesInSubBlocks() throws Exception {
+		FileBytes fileBytes = createFileBytes();
+		MemoryBlock block1 = createFileBytesBlock(fileBytes, addr(0), 0, 10);
+		MemoryBlock block2 = createFileBytesBlock(fileBytes, addr(10), 20, 10);
+		mem.join(block1, block2);
+		assertEquals(20, mem.getByte(addr(10)));
+		mem.setByte(addr(10), (byte) 0);
+		assertEquals(0, mem.getByte(addr(10)));
+	}
+
+	@Test
 	public void testBitMappedJoin() throws Exception {
 		FileBytes fileBytes = createFileBytes();
 		createFileBytesBlock(fileBytes, addr(0), 0, 50);
