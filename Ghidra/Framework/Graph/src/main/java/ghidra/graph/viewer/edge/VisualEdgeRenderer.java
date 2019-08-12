@@ -168,7 +168,7 @@ public abstract class VisualEdgeRenderer<V extends VisualVertex, E extends Visua
 		Color baseColor = getBaseColor(graph, e);
 		Color hoveredColor = highlightColor;
 		Color focusedColor = baseColor;
-		Color selectedColor = highlightColor.darker();
+		Color selectedColor = highlightColor.darker(); // note: we can do better for selected color
 		Color selectedAccentColor = highlightColor;
 
 		float scale = StrictMath.min(scalex, scaley);
@@ -223,38 +223,42 @@ public abstract class VisualEdgeRenderer<V extends VisualVertex, E extends Visua
 			// basic shape
 			g.setPaint(fillPaint);
 			g.fill(edgeShape);
-		}
 
-		if (isEmphasized) {
-			Stroke saveStroke = g.getStroke();
-			g.setPaint(fillPaint);
-			g.setStroke(empahsisStroke);
-			g.fill(edgeShape);
-			g.setStroke(saveStroke);
-		}
+			// Currently, graphs with complicated edge shapes (those with articulations) do not
+			// use a fill paint.  If we execute this code with articulated edges, the display 
+			// looks unusual.   So, for now, only 'fill' with these effects when the client has
+			// explicitly used a fill paint transformer.
+			if (isEmphasized) {
+				Stroke saveStroke = g.getStroke();
+				g.setPaint(fillPaint);
+				g.setStroke(empahsisStroke);
+				g.fill(edgeShape);
+				g.setStroke(saveStroke);
+			}
 
-		if (isInHoveredPath) {
-			Stroke saveStroke = g.getStroke();
-			g.setPaint(hoveredColor);
-			g.setStroke(hoverStroke);
-			g.fill(edgeShape);
-			g.setStroke(saveStroke);
-		}
+			if (isInHoveredPath) {
+				Stroke saveStroke = g.getStroke();
+				g.setPaint(hoveredColor);
+				g.setStroke(hoverStroke);
+				g.fill(edgeShape);
+				g.setStroke(saveStroke);
+			}
 
-		if (isInFocusedPath) {
-			Stroke saveStroke = g.getStroke();
-			g.setPaint(focusedColor);
-			g.setStroke(focusedStroke);
-			g.fill(edgeShape);
-			g.setStroke(saveStroke);
-		}
+			if (isInFocusedPath) {
+				Stroke saveStroke = g.getStroke();
+				g.setPaint(focusedColor);
+				g.setStroke(focusedStroke);
+				g.fill(edgeShape);
+				g.setStroke(saveStroke);
+			}
 
-		if (isSelected) {
-			Stroke saveStroke = g.getStroke();
-			g.setPaint(selectedColor);
-			g.setStroke(selectedStroke);
-			g.fill(edgeShape);
-			g.setStroke(saveStroke);
+			if (isSelected) {
+				Stroke saveStroke = g.getStroke();
+				g.setPaint(selectedColor);
+				g.setStroke(selectedStroke);
+				g.fill(edgeShape);
+				g.setStroke(saveStroke);
+			}
 		}
 
 		//
@@ -403,10 +407,10 @@ public abstract class VisualEdgeRenderer<V extends VisualVertex, E extends Visua
 	 * @param rc the render context for the graph
 	 * @param graph the graph
 	 * @param e the edge to shape
-	 * @param x1 the start vertex point x
-	 * @param y1 the start vertex point y
-	 * @param x2 the end vertex point x
-	 * @param y2 the end vertex point y
+	 * @param x1 the start vertex point x; layout space
+	 * @param y1 the start vertex point y; layout space
+	 * @param x2 the end vertex point x; layout space
+	 * @param y2 the end vertex point y; layout space
 	 * @param isLoop true if the start == end, which is a self-loop
 	 * @param vertexShape the vertex shape (used in the case of a loop to draw a circle from the 
 	 *              shape to itself)
@@ -417,7 +421,7 @@ public abstract class VisualEdgeRenderer<V extends VisualVertex, E extends Visua
 
 	private BasicStroke getHoveredPathStroke(E e, float scale) {
 		float width = HOVERED_PATH_STROKE_WIDTH / (float) Math.pow(scale, .80);
-		return new BasicStroke(width, BasicStroke.CAP_ROUND, BasicStroke.JOIN_BEVEL, 0f,
+		return new BasicStroke(width, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 0f,
 			new float[] { width * 1, width * 2 }, width * 3 * dashingPatternOffset);
 	}
 

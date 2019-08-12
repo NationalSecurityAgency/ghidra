@@ -57,9 +57,13 @@ public class ArticulatedEdgeRenderer<V extends VisualVertex, E extends VisualEdg
 				new Point2D.Float((float) point.getX() + offset, (float) point.getY() + offset);
 			point = rc.getMultiLayerTransformer().transform(Layer.LAYOUT, offsetPoint);
 			path.lineTo((float) point.getX(), (float) point.getY());
+			path.moveTo((float) point.getX(), (float) point.getY());
 		}
 
 		path.lineTo(x2, y2);
+		path.moveTo(x2, y2);
+		path.closePath();
+
 		return path;
 	}
 

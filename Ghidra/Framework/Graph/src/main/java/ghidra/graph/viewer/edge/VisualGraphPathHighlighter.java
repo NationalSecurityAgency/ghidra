@@ -149,6 +149,13 @@ public class VisualGraphPathHighlighter<V extends VisualVertex, E extends Visual
 			TaskMonitor timeoutMonitor = TimeoutTaskMonitor.timeoutIn(ALGORITHM_TIMEOUT,
 				TimeUnit.SECONDS, new TaskMonitorAdapter(true));
 
+			Set<V> sources = GraphAlgorithms.getSources(graph);
+			if (sources.isEmpty()) {
+				Msg.debug(this, "No sources found for graph; cannot calculate dominance: " +
+					graph.getClass().getSimpleName());
+				return null;
+			}
+
 			try {
 				// note: calling the constructor performs the work
 				return new ChkDominanceAlgorithm<>(graph, timeoutMonitor);
@@ -275,11 +282,11 @@ public class VisualGraphPathHighlighter<V extends VisualVertex, E extends Visual
 
 	public void setHoveredVertex(V hoveredVertex) {
 
-		if (workPauser.isPaused()) {
-			return; // hovers a transient, no need to remember the request
-		}
-
 		clearHoveredEdgesSwing();
+
+		if (workPauser.isPaused()) {
+			return; // hovers are transient, no need to remember the request
+		}
 
 		if (hoveredVertex == null) {
 			return;
@@ -629,9 +636,14 @@ public class VisualGraphPathHighlighter<V extends VisualVertex, E extends Visual
 			return;
 		}
 
-		if (!cf.isCompletedExceptionally()) {
-			// clear the contents of the future, as it is acting like a cache
-			clearer.accept(cf.getNow(null));
+		if (cf.isCompletedExceptionally()) {
+			return;
+		}
+
+		// clear the contents of the future, as it is acting like a cache
+		T result = cf.getNow(null);
+		if (result != null) {
+			clearer.accept(result);
 		}
 	}
 

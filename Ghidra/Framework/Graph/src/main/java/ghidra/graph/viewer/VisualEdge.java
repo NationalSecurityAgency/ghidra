@@ -150,10 +150,10 @@ public interface VisualEdge<V extends VisualVertex> extends GEdge<V> {
 	public void setAlpha(double alpha);
 
 	/**
-	* Get the alpha, which determines how much of the edge is visible/see through.  0 is 
-	* completely transparent.  This attribute allows transitional for animations.
-	* 
-	* @return the alpha value
-	*/
+	 * Get the alpha, which determines how much of the edge is visible/see through.  0 is 
+	 * completely transparent.  This attribute allows transitional for animations.
+	 * 
+	 * @return the alpha value
+	 */
 	public double getAlpha();
 }

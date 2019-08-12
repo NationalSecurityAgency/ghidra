@@ -38,7 +38,8 @@ public class FGEdgeImpl implements FGEdge {
 	private boolean inFocusedPath = false;
 	private boolean selected = false;
 	private double emphasis = 0D;
-	private double alpha = 1D;
+	private double defaultAlpha = 1D;
+	private double alpha = defaultAlpha;
 	private String edgeLabel = null;
 
 	public FGEdgeImpl(FGVertex startVertex, FGVertex destinationVertex, FlowType flowType,
@@ -101,6 +102,17 @@ public class FGEdgeImpl implements FGEdge {
 	}
 
 	@Override
+	public void setDefaultAlpha(double alpha) {
+		this.defaultAlpha = alpha;
+		this.alpha = alpha;
+	}
+
+	@Override
+	public double getDefaultAlpha() {
+		return defaultAlpha;
+	}
+
+	@Override
 	public List<Point2D> getArticulationPoints() {
 		return layoutArticulationPoints;
 	}
@@ -146,6 +158,7 @@ public class FGEdgeImpl implements FGEdge {
 		newEdge.layoutArticulationPoints = newPoints;
 
 		newEdge.alpha = alpha;
+		newEdge.defaultAlpha = defaultAlpha;
 		newEdge.inHoveredPath = inHoveredPath;
 		newEdge.inFocusedPath = inFocusedPath;
 		newEdge.selected = selected;
