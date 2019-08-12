@@ -1,0 +1,12 @@
+##VERSION: 2.0
+##MODULE IP: MIT
+LICENSE||MIT||||END|
+Module.manifest||MIT||||END|
+build.gradle||MIT||||END|
+data/languages/sh-1.slaspec||MIT||||END|
+data/languages/sh-2.slaspec||MIT||||END|
+data/languages/sh-2a.slaspec||MIT||||END|
+data/languages/superh.cspec||MIT||||END|
+data/languages/superh.ldefs||MIT||||END|
+data/languages/superh.pspec||MIT||||END|
+data/languages/superh.sinc||MIT||||END|
