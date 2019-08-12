@@ -3587,13 +3587,14 @@ cond1: "z" is  TOK_CCCC=0x2 { tmpBool:1 = (SRL_Z); export tmpBool; }
 
 define pcodeop pic30_div;
 define pcodeop pic30_rem;
+
 :div.sw   TOK_10_7_Wreg,TOK_3_0_Wreg is
           OP_23_20=0xD & OP_19_16=0x8 & OP_15=0x0 & TOK_10_7_Wreg & TOK_W=0 & OP_5_4=0x0 & TOK_3_0_Wreg {
-  local div:2 = pic30_div(sext(TOK_10_7_Wreg),sext(TOK_3_0_Wreg));
-  local rem:2 = pic30_rem(sext(TOK_10_7_Wreg),sext(TOK_3_0_Wreg));
+  local div:2 = pic30_div(TOK_10_7_Wreg,TOK_3_0_Wreg);
+  local rem:2 = pic30_rem(TOK_10_7_Wreg,TOK_3_0_Wreg);
 
-  W0 = div:1;
-  W1 = rem:1;
+  W0 = div;
+  W1 = rem;
   
   testSRL_N     ( W1 );
   # overflow as defined in note 2
@@ -3635,8 +3636,9 @@ define pcodeop isDivideOverflow;
   # overflow as defined in note 2
   SRL_OV = isDivideOverflow(TOK_10_8_Dreg, TOK_3_0_Wreg);
 
-  local div:4 = pic30_div(sext(TOK_10_8_Dreg),sext(TOK_3_0_Wreg));
-  local rem:4 = pic30_rem(sext(TOK_10_8_Dreg),sext(TOK_3_0_Wreg));
+  local div:4 = pic30_div(TOK_10_8_Dreg,TOK_3_0_Wreg);
+  local rem:4 = pic30_rem(TOK_10_8_Dreg,TOK_3_0_Wreg);
+  
   W0 = div:2;
   W1 = rem:2;
 
@@ -3677,11 +3679,11 @@ define pcodeop isDivideOverflow;
 :div.uw   TOK_10_7_Wreg,TOK_3_0_Wreg is
           OP_23_20=0xD & OP_19_16=0x8 & OP_15=0x1 & 
           TOK_10_7_Wreg & TOK_W=0 & OP_5_4=0x0 & TOK_3_0_Wreg {
-  local div:2 = pic30_div(zext(TOK_10_7_Wreg),zext(TOK_3_0_Wreg));
-  local rem:2 = pic30_rem(zext(TOK_10_7_Wreg),zext(TOK_3_0_Wreg));
+  local div:2 = pic30_div(TOK_10_7_Wreg,TOK_3_0_Wreg);
+  local rem:2 = pic30_rem(TOK_10_7_Wreg,TOK_3_0_Wreg);
 
-  W0 = div:1;
-  W1 = rem:1;
+  W0 = div;
+  W1 = rem;
 
   testSRL_N     ( W1 );
 
@@ -3723,8 +3725,8 @@ define pcodeop isDivideOverflow;
   # overflow as defined in note 2
   SRL_OV = isDivideOverflow(TOK_10_8_Dreg, TOK_3_0_Wreg);
   
-  local div:4 = pic30_div(zext(TOK_10_8_Dreg),zext(TOK_3_0_Wreg));
-  local rem:4 = pic30_rem(zext(TOK_10_8_Dreg),zext(TOK_3_0_Wreg));
+  local div:4 = pic30_div(TOK_10_8_Dreg,TOK_3_0_Wreg);
+  local rem:4 = pic30_rem(TOK_10_8_Dreg,TOK_3_0_Wreg);
   W0 = div:2;
   W1 = rem:2;
 
@@ -3769,10 +3771,10 @@ define pcodeop isDivideOverflow;
 
   # Note: this implementation is not iterative, like the actual op.
   # Rather, it will decompile accurately and emulate correctly using the Sleigh divide support.
-  dividend:4 	= (sext(TOK_14_11_Wreg) << 16);
-  local tmp0:4 		= pic30_div(dividend,zext(TOK_3_0_Wreg));
+  local dividend:4 	= (sext(TOK_14_11_Wreg) << 16);
+  local tmp0:4 		= pic30_div(dividend,TOK_3_0_Wreg);
   W0 			= tmp0:2;
-  local tmp1 			= pic30_rem(dividend,zext(TOK_3_0_Wreg));
+  local tmp1:4 		= pic30_rem(dividend,TOK_3_0_Wreg);
   W1 			= tmp1:2;
 
   testSRL_N     ( W1 );
