@@ -19,6 +19,7 @@ import java.awt.Rectangle;
 import java.awt.geom.Point2D;
 import java.util.*;
 
+import org.apache.commons.collections4.IterableUtils;
 import org.jdesktop.animation.timing.Animator;
 import org.jdesktop.animation.timing.interpolation.PropertySetter;
 
@@ -114,7 +115,19 @@ public class SplitVertexFunctionGraphJob extends AbstractAnimatorJob {
 
 		controller.synchronizeProgramLocationAfterEdit();
 
+		restoreEdgeDisplayAttributes();
+
 		viewer.repaint();
+	}
+
+	private void restoreEdgeDisplayAttributes() {
+
+		Iterable<FGEdge> edges =
+			IterableUtils.chainedIterable(getEdges(parentVertex), getEdges(childVertex));
+		for (FGEdge edge : edges) {
+			double alpha = edge.getDefaultAlpha();
+			edge.setAlpha(alpha);
+		}
 	}
 
 	public void setPercentComplete(double percentComplete) {
@@ -214,7 +227,11 @@ public class SplitVertexFunctionGraphJob extends AbstractAnimatorJob {
 
 		Collection<FGEdge> edges = getEdges(toSplitVertex);
 		for (FGEdge edge : edges) {
-			edge.setAlpha(oldComponentsAlpha);
+
+			// don't go past the alpha when removing
+			double defaultAlpha = edge.getDefaultAlpha();
+			double alpha = Math.min(oldComponentsAlpha, defaultAlpha);
+			edge.setAlpha(alpha);
 		}
 
 		double newComponentsAlpha = percentComplete;
@@ -223,12 +240,19 @@ public class SplitVertexFunctionGraphJob extends AbstractAnimatorJob {
 
 		edges = getEdges(parentVertex);
 		for (FGEdge edge : edges) {
-			edge.setAlpha(newComponentsAlpha);
+
+			// don't go past the alpha when adding
+			double defaultAlpha = edge.getDefaultAlpha();
+			double alpha = Math.min(newComponentsAlpha, defaultAlpha);
+			edge.setAlpha(alpha);
 		}
 
 		edges = getEdges(childVertex);
 		for (FGEdge edge : edges) {
-			edge.setAlpha(newComponentsAlpha);
+			// don't go past the alpha when adding
+			double defaultAlpha = edge.getDefaultAlpha();
+			double alpha = Math.min(newComponentsAlpha, defaultAlpha);
+			edge.setAlpha(alpha);
 		}
 	}
 

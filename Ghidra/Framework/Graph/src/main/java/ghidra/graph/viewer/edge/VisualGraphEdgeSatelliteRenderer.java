@@ -27,6 +27,8 @@ import ghidra.graph.viewer.VisualVertex;
  * A renderer designed to override default edge rendering to NOT paint emphasizing effects.  We
  * do this because space is limited in the satellite and because this rendering can take excess
  * processing time.
+ * @param <V> the vertex type
+ * @param <E> the edge type
  */
 public class VisualGraphEdgeSatelliteRenderer<V extends VisualVertex, E extends VisualEdge<V>>
 		extends VisualEdgeRenderer<V, E> {
@@ -38,7 +40,12 @@ public class VisualGraphEdgeSatelliteRenderer<V extends VisualVertex, E extends 
 	}
 
 	@Override
-	protected boolean isInActivePath(E e) {
+	protected boolean isInHoveredVertexPath(E e) {
+		return false;
+	}
+
+	@Override
+	protected boolean isInFocusedVertexPath(E e) {
 		return false;
 	}
 

@@ -17,7 +17,7 @@ package ghidra.app.plugin.core.functiongraph.graph.jung.renderer;
 
 import ghidra.app.plugin.core.functiongraph.graph.FGEdge;
 
-public class DecompilerDominanceArticulatedEdgeTransformer extends FGArticulatedEdgeTransformer {
+public class DNLArticulatedEdgeTransformer extends FGArticulatedEdgeTransformer {
 
 	@Override
 	public int getOverlapOffset(FGEdge edge) {

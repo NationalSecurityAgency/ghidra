@@ -25,7 +25,9 @@ import ghidra.graph.GEdge;
  * 
  * <P>An edge can be selected, which means that it has been clicked by the user.  Also, an 
  * edge can be part of an active path.  This allows the UI to paint the edge differently if it
- * is in the active path.
+ * is in the active path.   The active path concept applies to both hovered and focused vertices
+ * separately.  A hovered vertex is one that the user moves the mouse over; a focused vertex is
+ * one that is selected.
  * 
  * <A NAME="articulations"></A>
  * <P><U>Articulations</U> - The start and end points are always part of the
@@ -44,7 +46,7 @@ import ghidra.graph.GEdge;
 public interface VisualEdge<V extends VisualVertex> extends GEdge<V> {
 
 	/**
-	 * Sets this edge selected
+	 * Sets this edge selected.  This is usually in response to the user selecting the edge.
 	 * 
 	 * @param selected true to select this edge; false to de-select this vertex
 	 */
@@ -58,20 +60,36 @@ public interface VisualEdge<V extends VisualVertex> extends GEdge<V> {
 	public boolean isSelected();
 
 	/**
-	 * Sets this edge to be marked as in the active path
+	 * Sets this edge to be marked as in the active path of a currently hovered vertex
 	 * 
-	 * @param inActivePath true to be marked as in the active path; false to be marked as not 
+	 * @param inPath true to be marked as in the active path; false to be marked as not 
 	 *        in the active path
 	 */
-	public void setInActivePath(boolean inActivePath);
+	public void setInHoveredVertexPath(boolean inPath);
 
 	/**
-	 * Returns true if this edge is part of an active path (this allows the edge to be 
-	 * differently rendered)
+	 * Returns true if this edge is part of an active path for a currently hovered 
+	 * vertex (this allows the edge to be differently rendered)
 	 * 
 	 * @return true if this edge is part of the active path
 	 */
-	public boolean isInActivePath();
+	public boolean isInHoveredVertexPath();
+
+	/**
+	 * Sets this edge to be marked as in the active path of a currently focused/selected vertex
+	 * 
+	 * @param inPath true to be marked as in the active path; false to be marked as not 
+	 *        in the active path
+	 */
+	public void setInFocusedVertexPath(boolean inPath);
+
+	/**
+	 * Returns true if this edge is part of an active path for a currently focused/selected 
+	 * vertex (this allows the edge to be differently rendered)
+	 * 
+	 * @return true if this edge is part of the active path
+	 */
+	public boolean isInFocusedVertexPath();
 
 	/**
 	 * Returns the points (in {@link GraphViewerUtils} View Space) of the articulation
@@ -132,10 +150,10 @@ public interface VisualEdge<V extends VisualVertex> extends GEdge<V> {
 	public void setAlpha(double alpha);
 
 	/**
-	* Get the alpha, which determines how much of the edge is visible/see through.  0 is 
-	* completely transparent.  This attribute allows transitional for animations.
-	* 
-	* @return the alpha value
-	*/
+	 * Get the alpha, which determines how much of the edge is visible/see through.  0 is 
+	 * completely transparent.  This attribute allows transitional for animations.
+	 * 
+	 * @return the alpha value
+	 */
 	public double getAlpha();
 }

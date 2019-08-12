@@ -32,9 +32,10 @@ public abstract class AbstractVisualEdge<V extends VisualVertex> implements Visu
 	private V start;
 	private V end;
 
-	private boolean selected;
-	private boolean inActivePath;
+	private boolean inHoveredPath = false;
+	private boolean inFocusedPath = false;
 	private double alpha = 1.0;
+	private boolean selected;
 	private double emphasis;
 
 	private List<Point2D> articulations = new ArrayList<>();
@@ -65,13 +66,23 @@ public abstract class AbstractVisualEdge<V extends VisualVertex> implements Visu
 	}
 
 	@Override
-	public void setInActivePath(boolean inActivePath) {
-		this.inActivePath = inActivePath;
+	public boolean isInHoveredVertexPath() {
+		return inHoveredPath;
 	}
 
 	@Override
-	public boolean isInActivePath() {
-		return inActivePath;
+	public boolean isInFocusedVertexPath() {
+		return inFocusedPath;
+	}
+
+	@Override
+	public void setInHoveredVertexPath(boolean inPath) {
+		this.inHoveredPath = inPath;
+	}
+
+	@Override
+	public void setInFocusedVertexPath(boolean inPath) {
+		this.inFocusedPath = inPath;
 	}
 
 	@Override

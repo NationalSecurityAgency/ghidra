@@ -34,7 +34,7 @@ import ghidra.app.decompiler.DecompInterface;
 import ghidra.app.decompiler.DecompileOptions;
 import ghidra.app.plugin.core.functiongraph.graph.FGEdge;
 import ghidra.app.plugin.core.functiongraph.graph.FunctionGraph;
-import ghidra.app.plugin.core.functiongraph.graph.jung.renderer.DecompilerDominanceArticulatedEdgeTransformer;
+import ghidra.app.plugin.core.functiongraph.graph.jung.renderer.DNLArticulatedEdgeTransformer;
 import ghidra.app.plugin.core.functiongraph.graph.vertex.FGVertex;
 import ghidra.app.plugin.core.functiongraph.graph.vertex.GroupedFunctionGraphVertex;
 import ghidra.graph.VisualGraph;
@@ -103,7 +103,7 @@ public class DecompilerNestedLayout extends AbstractFGLayout {
 
 	@Override
 	public Function<FGEdge, Shape> getEdgeShapeTransformer() {
-		return new DecompilerDominanceArticulatedEdgeTransformer();
+		return new DNLArticulatedEdgeTransformer();
 	}
 
 	@Override
@@ -715,7 +715,7 @@ public class DecompilerNestedLayout extends AbstractFGLayout {
 		// assumption: edges that move to the left in this layout are return flows that happen
 		//             after the code block has been executed.  We dim those a bit so that they
 		//             produce less clutter.
-		e.setAlpha(.25);
+		e.setDefaultAlpha(.25);
 	}
 
 	private Column getOutermostCol(LayoutLocationMap<FGVertex, FGEdge> layoutLocations,
