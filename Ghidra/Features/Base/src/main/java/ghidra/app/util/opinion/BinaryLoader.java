@@ -23,16 +23,14 @@ import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.framework.model.DomainFolder;
 import ghidra.framework.model.DomainObject;
-import ghidra.framework.store.LockException;
 import ghidra.program.database.mem.FileBytes;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.Program;
-import ghidra.program.model.mem.*;
+import ghidra.program.model.mem.Memory;
 import ghidra.util.Msg;
 import ghidra.util.NumericUtilities;
 import ghidra.util.exception.CancelledException;
-import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.task.TaskMonitor;
 
 public class BinaryLoader extends AbstractProgramLoader {
@@ -91,7 +89,8 @@ public class BinaryLoader extends AbstractProgramLoader {
 	}
 
 	@Override
-	public String validateOptions(ByteProvider provider, LoadSpec loadSpec, List<Option> options) {
+	public String validateOptions(ByteProvider provider, LoadSpec loadSpec, List<Option> options,
+			Program program) {
 		Address baseAddr = null;
 		long length = 0;
 		long fileOffset = 0;
@@ -194,7 +193,12 @@ public class BinaryLoader extends AbstractProgramLoader {
 		if (length == -1) {
 			return "Invalid length specified";
 		}
-		return super.validateOptions(provider, loadSpec, options);
+		if (program != null) {
+			if (program.getMemory().intersects(baseAddr, baseAddr.add(length - 1))) {
+				return "Memory Conflict: Use <Options...> to change the base address!";
+			}
+		}
+		return super.validateOptions(provider, loadSpec, options, program);
 	}
 
 	private Address getBaseAddr(List<Option> options) {
@@ -322,27 +326,27 @@ public class BinaryLoader extends AbstractProgramLoader {
 			if (blockName == null || blockName.length() == 0) {
 				blockName = generateBlockName(prog, isOverlay, baseAddr.getAddressSpace());
 			}
-			try {
-				MemoryBlock block = prog.getMemory().createInitializedBlock(blockName, baseAddr,
-					fileBytes, 0, length, isOverlay);
-				block.setRead(true);
-				block.setWrite(isOverlay ? false : true);
-				block.setExecute(isOverlay ? false : true);
-				block.setSourceName("Binary Loader");
-				MemoryBlockUtils.adjustFragment(prog, block.getStart(), blockName);
-			}
-			catch (LockException | MemoryConflictException e) {
-				Msg.error(this, "Unexpected exception creating memory block", e);
-			}
+			createBlock(prog, isOverlay, blockName, baseAddr, fileBytes, length, log);
+
 			return true;
 		}
 		catch (AddressOverflowException e) {
 			throw new IllegalArgumentException("Invalid address range specified: start:" +
 				baseAddr + ", length:" + length + " - end address exceeds address space boundary!");
 		}
-		catch (DuplicateNameException e) {
-			throw new IllegalArgumentException("Duplicate block name specified: " + blockName);
+	}
+
+	private void createBlock(Program prog, boolean isOverlay, String blockName, Address baseAddr,
+			FileBytes fileBytes, long length, MessageLog log)
+			throws AddressOverflowException, IOException {
+
+		if (prog.getMemory().intersects(baseAddr, baseAddr.add(length - 1))) {
+			throw new IOException("Can't load " + length + " bytes at address " + baseAddr +
+				" since it conflicts with existing memory blocks!");
 		}
+		MemoryBlockUtils.createInitializedBlock(prog, isOverlay, blockName, baseAddr, fileBytes, 0,
+			length, null, "Binary Loader", true, !isOverlay, !isOverlay, log);
+
 	}
 
 	private long clipToMemorySpace(long length, MessageLog log, Program program) {

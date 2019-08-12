@@ -60,10 +60,12 @@ public class AddToProgramDialog extends ImporterDialog {
 		folderButton.setEnabled(false);
 		languageButton.setEnabled(false);
 		filenameTextField.setEnabled(false);
+		validateFormInput();
 	}
 
 	@Override
 	protected boolean validateFormInput() {
+
 		setOkEnabled(false);
 		optionsButton.setEnabled(false);
 		Loader loader = getSelectedLoader();
@@ -75,10 +77,20 @@ public class AddToProgramDialog extends ImporterDialog {
 			setStatusText(loader.getName() + " does not support add to program.");
 			return false;
 		}
+		optionsButton.setEnabled(true);
+
+		LoadSpec loadSpec = getSelectedLoadSpec(loader);
+
+		String result =
+			loader.validateOptions(byteProvider, loadSpec, getOptions(loadSpec), addToProgram);
+
+		if (result != null) {
+			setStatusText(result);
+			return false;
+		}
 
 		setStatusText("");
 		setOkEnabled(true);
-		optionsButton.setEnabled(true);
 		return true;
 	}
 
@@ -102,18 +114,18 @@ public class AddToProgramDialog extends ImporterDialog {
 			options = selectedLoader.getDefaultOptions(byteProvider, selectedLoadSpec, null, true);
 		}
 		TaskLauncher.launchNonModal("Import File", monitor -> {
-			ImporterUtilities.addContentToProgram(tool, addToProgram, fsrl, selectedLoadSpec, options,
-				monitor);
+			ImporterUtilities.addContentToProgram(tool, addToProgram, fsrl, selectedLoadSpec,
+				options, monitor);
 		});
 		close();
 	}
 
 	@Override
 	protected List<Option> getOptions(LoadSpec loadSpec) {
-		if (options == null) {
-			options = loadSpec.getLoader().getDefaultOptions(byteProvider, loadSpec, null, true);
+		if (options != null) {
+			return options;
 		}
-		return options;
+		return loadSpec.getLoader().getDefaultOptions(byteProvider, loadSpec, addToProgram, true);
 	}
 
 	/**

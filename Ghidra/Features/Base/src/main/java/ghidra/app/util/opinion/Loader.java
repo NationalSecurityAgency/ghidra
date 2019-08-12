@@ -124,10 +124,13 @@ public interface Loader extends ExtensionPoint, Comparable<Loader> {
 	 * @param provider The bytes of the thing being loaded.
 	 * @param loadSpec The proposed {@link LoadSpec}.
 	 * @param options The list of {@link Option}s to validate.
+	 * @param program existing program if the loader is adding to an existing program. If it is
+	 * a fresh import, then this will be null. 
 	 * @return null if all {@link Option}s are valid; otherwise, an error message describing the 
 	 *   problem is returned.
 	 */
-	public String validateOptions(ByteProvider provider, LoadSpec loadSpec, List<Option> options);
+	public String validateOptions(ByteProvider provider, LoadSpec loadSpec, List<Option> options,
+			Program program);
 
 	/**
 	 * Gets the {@link Loader}'s name, which is used both for display purposes, and to identify the 
