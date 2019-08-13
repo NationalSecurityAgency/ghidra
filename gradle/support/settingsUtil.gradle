@@ -31,8 +31,8 @@ ext.includeProjectNamed = { name, dirName, path, mustExist ->
 
 /**************************************************************************************
  * Method to add all projects in a single directory to this gradle build.  It looks
- * for all the directories (one leve down only) under the given path that contain a build.gradle file.  Then
- * for each of those, it call includeProject() to include that project.
+ * for all the directories (one leve down only) under the given path that contain a build.gradle 
+ * file.  Then for each of those, it call includeProject() to include that project.
  * 
  *	 Param path: The path relative to the root project directory
  *	
@@ -40,9 +40,17 @@ ext.includeProjectNamed = { name, dirName, path, mustExist ->
  *
  **************************************************************************************/
 ext.includeProjects = { path -> 
-	FileTree fileTree = fileTree(rootProject.projectDir.absolutePath + "/"+path)  {
+
+
+	String fullPath = path
+	if (!fullPath.startsWith(File.separator)) {
+		fullPath = rootProject.projectDir.absolutePath + "/" + path
+	}
+
+	FileTree fileTree = fileTree(fullPath)  {
 		include '*/build.gradle'
 	}
+	
 	fileTree.each { gradleBuildFile ->
 		String projectName = gradleBuildFile.parentFile.name
 		includeProject(projectName, path, true);
