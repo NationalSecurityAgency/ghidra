@@ -27,6 +27,7 @@ import javax.swing.table.TableModel;
 
 import org.junit.*;
 
+import docking.ActionContext;
 import docking.action.DockingActionIf;
 import ghidra.app.cmd.memory.*;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
@@ -100,11 +101,12 @@ public class MemoryMapPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		for (DockingActionIf action : actions) {
 			String name = action.getName();
 			if (name.equals("Add Block") || name.equals("Set Image Base") ||
-				name.equals("Memory Map") || name.equals("Close Window")) {
-				assertTrue(action.isEnabledForContext(provider.getActionContext(null)));
+				name.equals("Memory Map") || name.equals("Close Window") ||
+				name.contains("Table")) {
+				assertActionEnabled(action, getActionContext(), true);
 			}
 			else {
-				assertFalse(action.isEnabledForContext(provider.getActionContext(null)));
+				assertActionEnabled(action, getActionContext(), false);
 			}
 		}
 
@@ -121,8 +123,24 @@ public class MemoryMapPluginTest extends AbstractGhidraHeadedIntegrationTest {
 			if (name.equals("Memory Map") || name.equals("Close Window")) {
 				continue;
 			}
-			assertFalse(action.isEnabledForContext(provider.getActionContext(null)));
+			assertActionEnabled(action, getActionContext(), false);
 		}
+	}
+
+	private void assertActionEnabled(DockingActionIf action, ActionContext context,
+			boolean shouldBeEnabled) {
+
+		String text = shouldBeEnabled ? "should be enabled" : "should be disabled";
+		assertEquals("Action " + text + ", but is not: '" + action.getFullName() + "'",
+			shouldBeEnabled, action.isEnabledForContext(context));
+	}
+
+	private ActionContext getActionContext() {
+		ActionContext context = provider.getActionContext(null);
+		if (context == null) {
+			return new ActionContext();
+		}
+		return context;
 	}
 
 	@Test

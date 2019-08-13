@@ -67,10 +67,10 @@ public class KeyBindingsPanel extends JPanel {
 	private Options options;
 
 	private Map<String, List<DockingActionIf>> actionsByFullName;
-	private Map<String, List<String>> actionNamesByKeyStroke;
-	private Map<String, KeyStroke> keyStrokesByFullName;
-	private Map<String, KeyStroke> originalValues; // to know what has been changed
-	private List<DockingActionIf> tableActions;
+	private Map<String, List<String>> actionNamesByKeyStroke = new HashMap<>();
+	private Map<String, KeyStroke> keyStrokesByFullName = new HashMap<>();
+	private Map<String, KeyStroke> originalValues = new HashMap<>(); // to know what has been changed
+	private List<DockingActionIf> tableActions = new ArrayList<>();
 
 	private KeyEntryTextField ksField;
 	private boolean unappliedChanges;
@@ -83,8 +83,8 @@ public class KeyBindingsPanel extends JPanel {
 	public KeyBindingsPanel(PluginTool tool, Options options) {
 		this.tool = tool;
 		this.options = options;
-		tableActions = new ArrayList<>();
-		create();
+
+		createPanelComponents();
 		createActionMap();
 		addListeners();
 	}
@@ -97,11 +97,9 @@ public class KeyBindingsPanel extends JPanel {
 		tableFilterPanel.dispose();
 		tableModel.dispose();
 		actionTable.dispose();
+		propertyChangeListener = null;
 	}
 
-	/**
-	 * Apply the changes to the actions.
-	 */
 	public void apply() {
 		Iterator<String> iter = keyStrokesByFullName.keySet().iterator();
 		while (iter.hasNext()) {
@@ -160,9 +158,7 @@ public class KeyBindingsPanel extends JPanel {
 	}
 
 	private void createActionMap() {
-		keyStrokesByFullName = new HashMap<>();
-		actionNamesByKeyStroke = new HashMap<>();
-		originalValues = new HashMap<>();
+
 		String longestName = "";
 
 		actionsByFullName = KeyBindingUtils.getAllActionsByFullName(tool);
@@ -198,10 +194,7 @@ public class KeyBindingsPanel extends JPanel {
 		tableModel.fireTableDataChanged();
 	}
 
-	/**
-	 * Create the components in this panel.
-	 */
-	private void create() {
+	private void createPanelComponents() {
 		setLayout(new BorderLayout(10, 10));
 
 		tableModel = new KeyBindingsTableModel();
@@ -547,6 +540,7 @@ public class KeyBindingsPanel extends JPanel {
 		// add each new key stroke mapping
 		Iterator<String> iterator = keyBindingsMap.keySet().iterator();
 		while (iterator.hasNext()) {
+
 			String name = iterator.next();
 			KeyStroke keyStroke = keyBindingsMap.get(name);
 			keyStroke = KeyBindingUtils.validateKeyStroke(keyStroke);

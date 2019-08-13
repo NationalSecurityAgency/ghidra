@@ -61,7 +61,7 @@ public class ColorUtils {
 		// This can be addressed with some polar plotting:
 		// Let the hue be the degree, and the saturation be the radius, so that the range
 		// of values covers an area of a circle of radius 1. Let the circle be centered
-		// at the origin. Plot the two colors and compute their distance in euclidean
+		// at the origin. Plot the two colors and compute their distance in Euclidean
 		// space.
 
 		// Start by plotting the given background
@@ -76,7 +76,7 @@ public class ColorUtils {
 
 		// It's not pleasant to put two highly-saturated colors next to each other
 		// Because of this restriction, we know that the maximum distance the two plotted
-		// points can be from eachother is 1, because their total distance to the center
+		// points can be from each other is 1, because their total distance to the center
 		// is at most 1.
 		vals[1] = 1.0f - vals[1];
 

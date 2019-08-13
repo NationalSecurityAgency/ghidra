@@ -15,10 +15,7 @@
  */
 package ghidra.formats.gfilesystem;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.util.List;
 
 import org.apache.commons.io.FilenameUtils;
@@ -451,15 +448,16 @@ public class FileSystemService {
 	 * lambda will be called and it will be responsible for returning an {@link InputStream}
 	 * which has the derived contents, which will be added to the file cache for next time.
 	 * <p>
-	 * @param fsrl {@link FSRL} of the source file that this derived file is based on.
-	 * @param derivedName a unique string identifying the derived file.
+	 * @param fsrl {@link FSRL} of the source (or container) file that this derived file is based on
+	 * @param derivedName a unique string identifying the derived file inside the source (or container) file
 	 * @param producer a {@link DerivedFileProducer callback or lambda} that returns an
 	 * {@link InputStream} that will be streamed into a file and placed into the file cache.
+	 * Example: <pre>(file) -> { return new XYZDecryptorInputStream(file); }</pre>
 	 * @param monitor {@link TaskMonitor} that will be monitor for cancel requests and updated
-	 * with file io progress.
-	 * @return {@link FileCacheEntry} with file and md5 fields.
-	 * @throws CancelledException if the user cancels.
-	 * @throws IOException if there was an io error.
+	 * with file io progress
+	 * @return {@link FileCacheEntry} with file and md5 fields
+	 * @throws CancelledException if the user cancels
+	 * @throws IOException if there was an io error
 	 */
 	public FileCacheEntry getDerivedFile(FSRL fsrl, String derivedName,
 			DerivedFileProducer producer, TaskMonitor monitor)
@@ -470,18 +468,15 @@ public class FileSystemService {
 		// case should be okay as the only bad result will be extra
 		// work being performed recreating the contents of the same derived file a second
 		// time.
-		FileCacheEntry srcCFI = getCacheFile(fsrl, monitor);
-		String derivedMD5 = fileCacheNameIndex.get(srcCFI.md5, derivedName);
+		FileCacheEntry cacheEntry = getCacheFile(fsrl, monitor);
+		String derivedMD5 = fileCacheNameIndex.get(cacheEntry.md5, derivedName);
 		FileCacheEntry derivedFile = (derivedMD5 != null) ? fileCache.getFile(derivedMD5) : null;
 		if (derivedFile == null) {
 			monitor.setMessage(derivedName + " " + fsrl.getName());
-			try (InputStream is = producer.produceDerivedStream(srcCFI.file)) {
+			try (InputStream is = producer.produceDerivedStream(cacheEntry.file)) {
 				derivedFile = fileCache.addStream(is, monitor);
-				fileCacheNameIndex.add(srcCFI.md5, derivedName, derivedFile.md5);
+				fileCacheNameIndex.add(cacheEntry.md5, derivedName, derivedFile.md5);
 			}
-		}
-		else {
-			Msg.info(null, "Found derived file in cache: " + fsrl + ", " + derivedName);
 		}
 		return derivedFile;
 	}
@@ -495,15 +490,15 @@ public class FileSystemService {
 	 * lambda will be called and it will be responsible for producing and writing the derived
 	 * file's bytes to a {@link OutputStream}, which will be added to the file cache for next time.
 	 * <p>
-	 * @param fsrl {@link FSRL} of the source file that this derived file is based on.
-	 * @param derivedName a unique string identifying the derived file.
+	 * @param fsrl {@link FSRL} of the source (or container) file that this derived file is based on
+	 * @param derivedName a unique string identifying the derived file inside the source (or container) file
 	 * @param pusher a {@link DerivedFilePushProducer callback or lambda} that recieves a {@link OutputStream}.
 	 * Example: <pre>(os) -> { ...write to outputstream os here...; }</pre>
 	 * @param monitor {@link TaskMonitor} that will be monitor for cancel requests and updated
-	 * with file io progress.
-	 * @return {@link FileCacheEntry} with file and md5 fields.
-	 * @throws CancelledException if the user cancels.
-	 * @throws IOException if there was an io error.
+	 * with file io progress
+	 * @return {@link FileCacheEntry} with file and md5 fields
+	 * @throws CancelledException if the user cancels
+	 * @throws IOException if there was an io error
 	 */
 	public FileCacheEntry getDerivedFilePush(FSRL fsrl, String derivedName,
 			DerivedFilePushProducer pusher, TaskMonitor monitor)
@@ -514,18 +509,32 @@ public class FileSystemService {
 		// case should be okay as the only bad result will be extra
 		// work being performed recreating the contents of the same derived file a second
 		// time.
-		FileCacheEntry srcCFI = getCacheFile(fsrl, monitor);
-		String derivedMD5 = fileCacheNameIndex.get(srcCFI.md5, derivedName);
+		FileCacheEntry cacheEntry = getCacheFile(fsrl, monitor);
+		String derivedMD5 = fileCacheNameIndex.get(cacheEntry.md5, derivedName);
 		FileCacheEntry derivedFile = (derivedMD5 != null) ? fileCache.getFile(derivedMD5) : null;
 		if (derivedFile == null) {
 			monitor.setMessage("Caching " + fsrl.getName() + " " + derivedName);
 			derivedFile = fileCache.pushStream(pusher, monitor);
-			fileCacheNameIndex.add(srcCFI.md5, derivedName, derivedFile.md5);
-		}
-		else {
-			Msg.info(null, "Found derived file in cache: " + fsrl + ", " + derivedName);
+			fileCacheNameIndex.add(cacheEntry.md5, derivedName, derivedFile.md5);
 		}
 		return derivedFile;
+	}
+
+	/**
+	 * Returns true if the specified derived file exists in the file cache.
+	 * 
+	 * @param fsrl {@link FSRL} of the container
+	 * @param derivedName name of the derived file inside of the container
+	 * @param monitor {@link TaskMonitor}
+	 * @return boolean true if file exists at time of query, false if file is not in cache
+	 * @throws CancelledException if user cancels
+	 * @throws IOException if other IO error
+	 */
+	public boolean hasDerivedFile(FSRL fsrl, String derivedName, TaskMonitor monitor)
+			throws CancelledException, IOException {
+		FileCacheEntry cacheEntry = getCacheFile(fsrl, monitor);
+		String derivedMD5 = fileCacheNameIndex.get(cacheEntry.md5, derivedName);
+		return derivedMD5 != null;
 	}
 
 	/**

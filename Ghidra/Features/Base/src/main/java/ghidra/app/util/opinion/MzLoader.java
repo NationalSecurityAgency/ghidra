@@ -87,9 +87,9 @@ public class MzLoader extends AbstractLibrarySupportLoader {
 
 	@Override
 	public void load(ByteProvider provider, LoadSpec loadSpec, List<Option> options, Program prog,
-			TaskMonitor monitor, MessageLog log) throws IOException {
+			TaskMonitor monitor, MessageLog log) throws IOException, CancelledException {
 
-		FileBytes fileBytes = MemoryBlockUtils.createFileBytes(prog, provider);
+		FileBytes fileBytes = MemoryBlockUtils.createFileBytes(prog, provider, monitor);
 		AddressFactory af = prog.getAddressFactory();
 		if (!(af.getDefaultAddressSpace() instanceof SegmentedAddressSpace)) {
 			throw new IOException("Selected Language must have a segmented address space.");
@@ -350,7 +350,7 @@ public class MzLoader extends AbstractLibrarySupportLoader {
 		try {
 			Memory mem = prog.getMemory();
 			SegmentedAddressSpace space =
-					(SegmentedAddressSpace) prog.getAddressFactory().getDefaultAddressSpace();
+				(SegmentedAddressSpace) prog.getAddressFactory().getDefaultAddressSpace();
 
 			int relocationTableOffset = Conv.shortToInt(dos.e_lfarlc());
 			int csStart = INITIAL_SEGMENT_VAL;

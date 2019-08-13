@@ -600,7 +600,7 @@ PCodeTest({
     # Currently the 'omitted' option is only supported by the SDCC toolchain!
     # Causes a bit of funk with tpp.py still including references to these
     # tests in cunit_main.c but the compiler accepts it with a warning. 
-    'omitted': {'PointerManipulation', 'StructUnionManipulation'},
+    'skip_files': ['PointerManipulation.test', 'StructUnionManipulation.test'],
     # These tests are omitted because the SDCC compiler doesn't properly handle
     # structs in functions and requires a more strict format than ANSI C requires.
 })

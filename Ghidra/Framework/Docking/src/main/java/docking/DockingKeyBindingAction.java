@@ -62,7 +62,7 @@ public abstract class DockingKeyBindingAction extends AbstractAction {
 		tool.setStatusInfo("");
 		ComponentProvider provider = tool.getActiveComponentProvider();
 		ActionContext context = getLocalContext(provider);
-		context.setSource(e.getSource());
+		context.setSourceObject(e.getSource());
 		docakbleAction.actionPerformed(context);
 	}
 

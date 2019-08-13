@@ -187,7 +187,7 @@ public class PrelinkFileSystem extends GFileSystemBase implements GFileSystemPro
 		boolean success = false;
 		try {
 			FileBytes fileBytes = MemoryBlockUtils.createFileBytes(program, provider, offset,
-				provider.length() - offset);
+				provider.length() - offset, monitor);
 			ByteProvider providerWrapper =
 				new ByteProviderWrapper(provider, offset, provider.length() - offset);
 			MachoProgramBuilder.buildProgram(program, providerWrapper, fileBytes, new MessageLog(),

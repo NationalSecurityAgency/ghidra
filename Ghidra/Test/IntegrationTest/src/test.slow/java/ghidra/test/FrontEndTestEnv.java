@@ -339,6 +339,10 @@ public class FrontEndTestEnv {
 		return new ArrayList<>(Arrays.asList(tools));
 	}
 
+	public Set<DockingActionIf> getFrontEndActions() {
+		return AbstractDockingTest.getActionsByOwner(frontEndTool, "FrontEndPlugin");
+	}
+
 	public DockingActionIf getAction(String actionName) {
 		DockingActionIf action =
 			AbstractDockingTest.getAction(frontEndTool, "FrontEndPlugin", actionName);
@@ -409,7 +413,7 @@ public class FrontEndTestEnv {
 		waitForTasks();
 	}
 
-	protected void editProgram(Program program, ModifyProgramCallback modifyProgramCallback)
+	public void editProgram(Program program, ModifyProgramCallback modifyProgramCallback)
 			throws CancelledException, IOException {
 		int transactionID = program.startTransaction("test");
 		try {
@@ -424,7 +428,7 @@ public class FrontEndTestEnv {
 		}
 	}
 
-	protected void editProgram(DomainFile df, Object consumer, ModifyProgramCallback edit)
+	public void editProgram(DomainFile df, Object consumer, ModifyProgramCallback edit)
 			throws Exception {
 
 		Program program = (Program) df.getDomainObject(this, true, false, TaskMonitor.DUMMY);
@@ -438,7 +442,7 @@ public class FrontEndTestEnv {
 		}
 	}
 
-	interface ModifyProgramCallback {
+	public interface ModifyProgramCallback {
 		public void call(Program p) throws Exception;
 	}
 }

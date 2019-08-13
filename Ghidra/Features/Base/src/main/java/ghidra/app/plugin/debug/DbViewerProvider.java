@@ -15,12 +15,9 @@
  */
 package ghidra.app.plugin.debug;
 
-import java.awt.event.MouseEvent;
-
 import javax.swing.JComponent;
 
 import db.DBHandle;
-import docking.ActionContext;
 import docking.WindowPosition;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.framework.plugintool.Plugin;
@@ -75,11 +72,6 @@ public class DbViewerProvider extends ComponentProviderAdapter {
 			comp.dispose();
 			comp = null;
 		}
-	}
-
-	@Override
-	public ActionContext getActionContext(MouseEvent event) {
-		return new ActionContext(this, this);
 	}
 
 	@Override

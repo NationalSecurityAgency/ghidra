@@ -63,8 +63,13 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 	private static DockingActionIf actionUnderMouse;
 	private static Object objectUnderMouse;
 
-	public static final String TOOL_PREFERENCES_XML_NAME = "PREFERENCES";
+	/**
+	 * The owner name for docking windows actions.  
+	 * <p>Warning: Any action with this owner will get removed every time the 'Window' menu is
+	 * rebuilt, with the exception if reserved key bindings. 
+	 */
 	public static final String DOCKING_WINDOWS_OWNER = "DockingWindows";
+	public static final String TOOL_PREFERENCES_XML_NAME = "PREFERENCES";
 
 	/**
 	 * The helpService field should be set to the appropriate help service provider.
@@ -558,6 +563,25 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 			}
 		}
 		return list;
+	}
+
+	/**
+	 * Returns the component provider that is the conceptual parent of the given component.  More
+	 * precisely, this will return the component provider whose 
+	 * {@link ComponentProvider#getComponent() component} is the parent of the given component.
+	 * 
+	 * @param component the component for which to find a provider
+	 * @return the provider; null if the component is not the child of a provider
+	 */
+	private ComponentProvider getComponentProvider(Component component) {
+		Set<ComponentProvider> providers = placeholderManager.getActiveProviders();
+		for (ComponentProvider provider : providers) {
+			JComponent providerComponent = provider.getComponent();
+			if (SwingUtilities.isDescendingFrom(component, providerComponent)) {
+				return provider;
+			}
+		}
+		return null;
 	}
 
 	DockableComponent getDockableComponent(ComponentProvider provider) {
@@ -2165,7 +2189,8 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 				component.removeHierarchyListener(this);
 				DockingWindowManager dwm = getInstance(component);
 				if (dwm != null) {
-					listener.componentLoaded(dwm);
+					ComponentProvider provider = dwm.getComponentProvider(component);
+					listener.componentLoaded(dwm, provider);
 					return;
 				}
 

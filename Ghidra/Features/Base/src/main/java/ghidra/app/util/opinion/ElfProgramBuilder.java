@@ -120,7 +120,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 			ByteProvider byteProvider = elf.getReader().getByteProvider();
 			try (InputStream fileIn = byteProvider.getInputStream(0)) {
 				fileBytes = program.getMemory().createFileBytes(byteProvider.getName(), 0,
-					byteProvider.length(), fileIn);
+					byteProvider.length(), fileIn, monitor);
 			}
 
 			// process headers and define "section" within memory elfProgramBuilder
@@ -2984,7 +2984,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 		// Are we immune from such errors? If not, how should they be handled?
 
 		long revisedLength = checkBlockLimit(name, dataLength, false);
-		
+
 		if (start.isNonLoadedMemoryAddress()) {
 			r = false;
 			w = false;

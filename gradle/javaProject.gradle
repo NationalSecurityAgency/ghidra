@@ -79,8 +79,11 @@ sourceSets {
 	screenShots {
 		java {
 			srcDir 'src/screen/java'
-			compileClasspath += main.output
-			runtimeClasspath += main.output
+			
+			// Screenshots are essentially tests, and depend on classes in several other
+			// test directories so they must be included here
+			compileClasspath += main.output + test.output + integrationTest.output
+			runtimeClasspath += main.output + test.output + integrationTest.output
 		}
 	}
 	pcodeTest {
@@ -107,6 +110,7 @@ configurations {
 	pcodeTestCompile.extendsFrom compile
 	testArtifacts.extendsFrom testRuntime
 	integrationTestArtifacts.extendsFrom integrationTestRuntime
+	screenShotsCompile.extendsFrom integrationTestCompile
 }
 
 task testJar(type: Jar) {

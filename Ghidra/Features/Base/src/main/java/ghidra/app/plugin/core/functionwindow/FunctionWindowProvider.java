@@ -71,11 +71,7 @@ public class FunctionWindowProvider extends ComponentProviderAdapter {
 
 	@Override
 	public ActionContext getActionContext(MouseEvent event) {
-		if (event != null && event.getSource() == functionTable) {
-			return new ActionContext(this, functionTable);
-		}
-
-		return null;
+		return new ActionContext(this, functionTable);
 	}
 
 	@Override

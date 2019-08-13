@@ -504,13 +504,12 @@ public class InstructionSearchDialog extends DialogComponentProvider implements 
 		SystemUtilities.runSwingLater(runnable);
 	}
 
-	/**
-	 *
-	 * @param addr
-	 */
 	private void goToLocation(Address addr) {
 		GoToService gs = plugin.getTool().getService(GoToService.class);
 		gs.goTo(addr);
 	}
 
+	public InstructionSearchPlugin getPlugin() {
+		return plugin;
+	}
 }

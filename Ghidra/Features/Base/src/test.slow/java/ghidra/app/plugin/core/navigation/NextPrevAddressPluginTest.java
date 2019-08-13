@@ -331,26 +331,6 @@ public class NextPrevAddressPluginTest extends AbstractGhidraHeadedIntegrationTe
 		clickMouse(component, MouseEvent.BUTTON1, x, y, 1, 0);
 	}
 
-	private JPopupMenu getPopupMenu(Container parent) {
-		Component[] components = parent.getComponents();
-		for (Component component : components) {
-			if (component instanceof JPopupMenu) {
-				return (JPopupMenu) component;
-			}
-		}
-
-		for (Component component : components) {
-			if (component instanceof Container) {
-				JPopupMenu popupMenu = getPopupMenu((Container) component);
-				if (popupMenu != null) {
-					return popupMenu;
-				}
-			}
-		}
-
-		return null;
-	}
-
 	@SuppressWarnings("unchecked")
 	// let caution fly
 	private JButton findButtonForAction(DockingWindowManager windowManager, DockingAction action) {

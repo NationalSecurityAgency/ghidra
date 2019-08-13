@@ -122,7 +122,7 @@ public class SetFormatDialogComponentProvider extends DialogComponentProvider {
 		FieldHeader headerPanel = listingPanel.getFieldHeader();
 		if (headerPanel != null && headerPanel.isAncestorOf(event.getComponent())) {
 			FieldHeaderLocation fhLoc = headerPanel.getFieldHeaderLocation(event.getPoint());
-			return new ActionContext(null, fhLoc);
+			return new ActionContext().setContextObject(fhLoc);
 		}
 		return null;
 	}

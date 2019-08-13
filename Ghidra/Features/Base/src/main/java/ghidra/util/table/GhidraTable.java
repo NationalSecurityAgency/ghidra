@@ -51,66 +51,10 @@ public class GhidraTable extends GTable {
 
 	public GhidraTable() {
 		super();
-
 	}
 
 	public GhidraTable(TableModel model) {
 		super(model);
-
-	}
-
-	/**
-	 * Constructs a new GhidraTable using the specified table model.
-	 * If <code>allowAutoEdit</code> is true, then automatic editing is enabled.
-	 * Auto-editing implies that typing in an editable cell will automatically
-	 * force the cell into edit mode.
-	 * If <code>allowAutoEdit</code> is false, then <code>F2</code> must be hit before editing may commence.
-	 * @param dm the table model
-	 * @param allowAutoEdit true if auto-editing is allowed
-	 */
-	public GhidraTable(TableModel dm, boolean allowAutoEdit) {
-		super(dm, allowAutoEdit);
-
-	}
-
-	/**
-	 * Constructs a <code>GhidraTable</code> to display the values in the two dimensional array,
-	 * <code>rowData</code>, with column names, <code>columnNames</code>.
-	 * <code>rowData</code> is an array of rows, so the value of the cell at row 1,
-	 * column 5 can be obtained with the following code:
-	 * <p>
-	 * <pre> rowData[1][5]; </pre>
-	 * <p>
-	 * All rows must be of the same length as <code>columnNames</code>.
-	 * <p>
-	 * @param rowData           the data for the new table
-	 * @param columnNames       names of each column
-	 */
-	public GhidraTable(Object[][] rowData, Object[] columnNames) {
-		super(rowData, columnNames);
-	}
-
-	/**
-	 * Constructs a <code>GhidraTable</code> to display the values in the two dimensional array,
-	 * <code>rowData</code>, with column names, <code>columnNames</code>.
-	 * <code>rowData</code> is an array of rows, so the value of the cell at row 1,
-	 * column 5 can be obtained with the following code:
-	 * <p>
-	 * <pre> rowData[1][5]; </pre>
-	 * <p>
-	 * All rows must be of the same length as <code>columnNames</code>.
-	 * <p>
-	 * If <code>allowAutoEdit</code> is true, then automatic editing is enabled.
-	 * Auto-editing implies that typing in an editable cell will automatically
-	 * force the cell into edit mode.
-	 * If <code>allowAutoEdit</code> is false, then <code>F2</code> must be hit before editing may commence.
-	 * 
-	 * @param rowData           the data for the new table
-	 * @param columnNames       names of each column
-	 * @param allowAutoEdit     true if auto-editing is allowed
-	 */
-	public GhidraTable(Object[][] rowData, Object[] columnNames, boolean allowAutoEdit) {
-		super(rowData, columnNames, allowAutoEdit);
 	}
 
 	/** 

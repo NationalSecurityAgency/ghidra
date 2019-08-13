@@ -251,7 +251,7 @@ public class InstructionSearchPlugin extends ProgramPlugin {
 		};
 		searchAction.setHelpLocation(new HelpLocation("Search", "Instruction_Pattern_Search"));
 		searchAction.setMenuBarData(
-			new MenuData(new String[] { ToolConstants.MENU_SEARCH, "For Instruction Patterns..." },
+			new MenuData(new String[] { ToolConstants.MENU_SEARCH, "For Instruction Patterns" },
 				null, "search for"));
 		searchAction.setDescription("Construct searches using selected instructions");
 		tool.addAction(searchAction);

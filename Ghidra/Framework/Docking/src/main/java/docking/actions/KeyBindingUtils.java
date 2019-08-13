@@ -285,12 +285,31 @@ public class KeyBindingUtils {
 	}
 
 	/**
+	 * Allows the client to clear Java key bindings when the client is creating a docking 
+	 * action.   Without this call, any actions bound to the given component will prevent an
+	 * action with the same key binding from firing.  This is useful when your
+	 * application is using tool-level key bindings that share the same
+	 * keystroke as a built-in Java action, such as Ctrl-C for the copy action.
+	 * 
+	 * @param component the component for which to clear the key binding
+	 * @param action the action from which to get the key binding
+	 */
+	public static void clearKeyBinding(JComponent component, DockingActionIf action) {
+		KeyStroke keyBinding = action.getKeyBinding();
+		if (keyBinding == null) {
+			return;
+		}
+		clearKeyBinding(component, keyBinding);
+	}
+
+	/**
 	 * Allows clients to clear Java key bindings. This is useful when your
 	 * application is using tool-level key bindings that share the same
 	 * keystroke as a built-in Java action, such as Ctrl-C for the copy action.
 	 * <p>
-	 * Note: this method clears focus for the default
-	 * ({@link JComponent#WHEN_FOCUSED}) focus condition.
+	 * Note: this method clears the key binding for the 
+	 * {@link JComponent#WHEN_FOCUSED} and 
+	 * {@link JComponent#WHEN_ANCESTOR_OF_FOCUSED_COMPONENT} focus conditions.
 	 * 
 	 * @param component the component for which to clear the key binding
 	 * @param keyStroke the keystroke of the binding to be cleared
@@ -298,6 +317,7 @@ public class KeyBindingUtils {
 	 */
 	public static void clearKeyBinding(JComponent component, KeyStroke keyStroke) {
 		clearKeyBinding(component, keyStroke, JComponent.WHEN_FOCUSED);
+		clearKeyBinding(component, keyStroke, JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
 	}
 
 	/**
@@ -314,12 +334,9 @@ public class KeyBindingUtils {
 	public static void clearKeyBinding(JComponent component, KeyStroke keyStroke,
 			int focusCondition) {
 		InputMap inputMap = component.getInputMap(focusCondition);
-		ActionMap actionMap = component.getActionMap();
-		if (inputMap == null || actionMap == null) {
-			return;
+		if (inputMap != null) {
+			inputMap.put(keyStroke, "none");
 		}
-
-		inputMap.put(keyStroke, "none");
 	}
 
 	/**

@@ -122,7 +122,7 @@ public class ActionAdapter implements Action, PropertyChangeListener {
 		}
 		if (context == null) {
 			context = new ActionContext();
-			context.setSource(e.getSource());
+			context.setSourceObject(e.getSource());
 		}
 		if (dockingAction.isEnabledForContext(context)) {
 			dockingAction.actionPerformed(context);

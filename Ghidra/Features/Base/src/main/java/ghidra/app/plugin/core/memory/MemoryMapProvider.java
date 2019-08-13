@@ -652,7 +652,8 @@ class MemoryMapProvider extends ComponentProviderAdapter {
 
 	private class MemoryMapTable extends GhidraTable {
 		MemoryMapTable(TableModel model) {
-			super(model, true);
+			super(model);
+			setAutoEditEnabled(true);
 			setActionsEnabled(true);
 			setVisibleRowCount(10);
 		}

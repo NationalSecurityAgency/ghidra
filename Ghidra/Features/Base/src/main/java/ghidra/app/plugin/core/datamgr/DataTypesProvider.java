@@ -15,6 +15,7 @@
  */
 package ghidra.app.plugin.core.datamgr;
 
+import java.awt.Component;
 import java.awt.Point;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -333,7 +334,8 @@ public class DataTypesProvider extends ComponentProviderAdapter {
 
 			Object source = event.getSource();
 			if (source instanceof JTextField || source instanceof JTextPane) {
-				return new ActionContext(this, source, source);
+				Component component = (Component) source;
+				return new ActionContext(this, source, component);
 			}
 
 			Point point = event.getPoint();

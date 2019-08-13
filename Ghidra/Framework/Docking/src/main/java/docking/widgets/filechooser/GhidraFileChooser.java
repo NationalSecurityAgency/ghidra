@@ -579,18 +579,6 @@ public class GhidraFileChooser extends DialogComponentProvider
 //==================================================================================================
 
 	@Override
-	public ActionContext getActionContext(MouseEvent event) {
-		if (event == null) {
-			return super.getActionContext(event);
-		}
-
-		return new ActionContext(null, event.getSource());
-	}
-
-	/**
-	 * @see ghidra.util.filechooser.GhidraFileChooserListener#modelChanged()
-	 */
-	@Override
 	public void modelChanged() {
 		SystemUtilities.runSwingLater(() -> {
 			directoryListModel.update();
@@ -598,9 +586,6 @@ public class GhidraFileChooser extends DialogComponentProvider
 		});
 	}
 
-	/**
-	 * @see java.io.FileFilter#accept(java.io.File)
-	 */
 	@Override
 	public boolean accept(File file) {
 		if (!showDotFiles) {
