@@ -41,13 +41,7 @@ ext.includeProjectNamed = { name, dirName, path, mustExist ->
  **************************************************************************************/
 ext.includeProjects = { path -> 
 
-
-	String fullPath = path
-	if (!fullPath.startsWith(File.separator)) {
-		fullPath = rootProject.projectDir.absolutePath + "/" + path
-	}
-
-	FileTree fileTree = fileTree(fullPath)  {
+	FileTree fileTree = fileTree(rootProject.projectDir.absolutePath + "/" + path)  {
 		include '*/build.gradle'
 	}
 	
