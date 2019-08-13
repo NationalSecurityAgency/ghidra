@@ -113,7 +113,8 @@ public class SetCommentCmd implements Command {
 	}
 
 	/**
-	 * Creates the specified comment of the specified type at address.
+	 * Creates the specified comment of the specified type at address.  The current comment of
+	 * this commentType will be cleared.
 	 * 
 	 * @param program the program being analyzed
 	 * @param addr the address where data is created
