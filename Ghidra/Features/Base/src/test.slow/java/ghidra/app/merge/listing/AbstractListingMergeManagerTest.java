@@ -729,6 +729,7 @@ public abstract class AbstractListingMergeManagerTest extends AbstractMergeTest
 		Component mergePanel = getMergePanel(conflictPanelClass);
 		assertNotNull("Timed-out waiting for merge panel", mergePanel);
 		Window window = SwingUtilities.getWindowAncestor(mergePanel);
+		assertNotNull("Timed-out waiting for merge panel", mergePanel);
 		JComponent comp = findComponent(window, conflictPanelClass);
 		assertNotNull(comp);
 		Border border = comp.getBorder();
