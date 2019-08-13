@@ -300,4 +300,9 @@ public interface DockingActionIf extends HelpDescriptor {
 	 * @param newKeyBindingData the KeyBindingData to be used to assign this action to a keybinding
 	 */
 	public void setUnvalidatedKeyBindingData(KeyBindingData newKeyBindingData);
+
+	/**
+	 * Called when the action's owner is removed from the tool
+	 */
+	public void dispose();
 }

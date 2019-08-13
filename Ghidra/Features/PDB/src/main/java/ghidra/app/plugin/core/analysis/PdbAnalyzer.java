@@ -46,6 +46,16 @@ public class PdbAnalyzer extends AbstractAnalyzer {
 
 	private String symbolsRepositoryPath = SYMBOLPATH_OPTION_DEFAULT_VALUE;
 
+	//==============================================================================================
+	// Include the PE-Header-Specified PDB path for searching for appropriate PDB file.
+	private static final String OPTION_NAME_INCLUDE_PE_PDB_PATH =
+		"Unsafe: Include PE PDB Path in PDB Search";
+	private static final String OPTION_DESCRIPTION_INCLUDE_PE_PDB_PATH =
+		"If checked, specifically searching for PDB in PE-Header-Specified Location.";
+
+	private boolean includePeSpecifiedPdbPath = false;
+
+	//==============================================================================================
 	public PdbAnalyzer() {
 		super(NAME, DESCRIPTION, AnalyzerType.BYTE_ANALYZER);
 		setDefaultEnablement(true);
@@ -60,7 +70,7 @@ public class PdbAnalyzer extends AbstractAnalyzer {
 			return true;
 		}
 
-		File pdb = lookForPdb(program, log);
+		File pdb = lookForPdb(program, includePeSpecifiedPdbPath, log);
 
 		if (pdb == null) {
 			return false;
@@ -74,13 +84,13 @@ public class PdbAnalyzer extends AbstractAnalyzer {
 		// object existence indicates missing PDB has already been reported
 	}
 
-	File lookForPdb(Program program, MessageLog log) {
+	File lookForPdb(Program program, boolean includePeSpecifiedPdbPath, MessageLog log) {
 		String message = "";
 		File pdb;
 
 		try {
 
-			pdb = PdbParser.findPDB(program, symbolsRepositoryPath);
+			pdb = PdbParser.findPDB(program, includePeSpecifiedPdbPath, symbolsRepositoryPath);
 
 			if (pdb == null) {
 
@@ -182,6 +192,9 @@ public class PdbAnalyzer extends AbstractAnalyzer {
 			options.registerOption(SYMBOLPATH_OPTION_NAME, SYMBOLPATH_OPTION_DEFAULT_VALUE, null,
 				SYMBOLPATH_OPTION_DESCRIPTION);
 		}
+
+		options.registerOption(OPTION_NAME_INCLUDE_PE_PDB_PATH, includePeSpecifiedPdbPath, null,
+			OPTION_DESCRIPTION_INCLUDE_PE_PDB_PATH);
 	}
 
 	@Override
@@ -192,6 +205,9 @@ public class PdbAnalyzer extends AbstractAnalyzer {
 
 		Preferences.setProperty(PdbParser.PDB_STORAGE_PROPERTY, symbolPath);
 		Preferences.store();
+
+		includePeSpecifiedPdbPath =
+			options.getBoolean(OPTION_NAME_INCLUDE_PE_PDB_PATH, includePeSpecifiedPdbPath);
 	}
 
 	public void setSymbolsRepositoryPath(String symbolPath) {

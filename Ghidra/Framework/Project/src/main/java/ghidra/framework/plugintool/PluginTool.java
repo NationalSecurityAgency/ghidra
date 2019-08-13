@@ -441,6 +441,8 @@ public abstract class PluginTool extends AbstractDockingTool implements Tool, Se
 		winMgr.setVisible(false);
 		eventMgr.clearLastEvents();
 		pluginMgr.dispose();
+
+		toolActions.removeActions(ToolConstants.TOOL_OWNER);
 		toolActions.dispose();
 
 		if (project != null) {

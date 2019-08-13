@@ -196,11 +196,13 @@ public class ViewManagerComponentProvider extends ComponentProviderAdapter
 		if (currentProgram == null) {
 			return null;
 		}
+
 		if (event != null) {
-			return new ProgramActionContext(this, currentProgram, getActivePopupObject(event));
+			return new ProgramActionContext(this, currentProgram, viewPanel,
+				getActivePopupObject(event));
 		}
 
-		return new ProgramActionContext(this, currentProgram, getFocusedContext());
+		return new ProgramActionContext(this, currentProgram, viewPanel, getFocusedContext());
 	}
 
 	private Object getFocusedContext() {

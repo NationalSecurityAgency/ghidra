@@ -20,8 +20,6 @@ import java.awt.event.KeyEvent;
 import java.io.*;
 import java.util.*;
 
-import javax.swing.JMenuItem;
-
 import org.jdom.Element;
 import org.jdom.input.SAXBuilder;
 
@@ -511,7 +509,7 @@ class ToolActionManager implements ToolChestChangeListener {
 		ToolAction runAction = new ToolAction(toolName, "Run_Tool") {
 			@Override
 			public void actionPerformed(ActionContext context) {
-				String name = ((JMenuItem) context.getSourceObject()).getText();
+				String name = getName();
 				Workspace ws = plugin.getActiveWorkspace();
 				ToolChest toolChest = plugin.getActiveProject().getLocalToolChest();
 				ws.runTool(toolChest.getToolTemplate(name));
@@ -529,7 +527,7 @@ class ToolActionManager implements ToolChestChangeListener {
 		ToolAction deleteAction = new ToolAction(toolName, "Delete_Tool") {
 			@Override
 			public void actionPerformed(ActionContext context) {
-				String name = ((JMenuItem) context.getSourceObject()).getText();
+				String name = getName();
 				if (!plugin.confirmDelete(name + " from the project tool chest?")) {
 					return;
 				}
@@ -549,7 +547,7 @@ class ToolActionManager implements ToolChestChangeListener {
 		ToolAction exportAction = new ToolAction(toolName, "Export_Tool") {
 			@Override
 			public void actionPerformed(ActionContext context) {
-				String name = ((JMenuItem) context.getSourceObject()).getText();
+				String name = getName();
 				ToolChest toolChest = plugin.getActiveProject().getLocalToolChest();
 				plugin.exportToolConfig(toolChest.getToolTemplate(name), "Tool Menu");
 			}

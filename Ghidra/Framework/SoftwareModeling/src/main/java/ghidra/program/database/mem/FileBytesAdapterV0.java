@@ -20,6 +20,7 @@ import java.io.InputStream;
 import java.util.*;
 
 import db.*;
+import ghidra.util.exception.IOCancelledException;
 import ghidra.util.exception.VersionException;
 
 /**
@@ -121,8 +122,9 @@ class FileBytesAdapterV0 extends FileBytesAdapter {
 
 	@Override
 	boolean deleteFileBytes(FileBytes fileBytes) throws IOException {
-		if (table.deleteRecord(fileBytes.getId())) {
-			fileBytesList.remove(fileBytes);
+		if (fileBytesList.remove(fileBytes)) {
+			table.deleteRecord(fileBytes.getId());
+			fileBytes.invalidate();
 			return true;
 		}
 		return false;
@@ -157,9 +159,18 @@ class FileBytesAdapterV0 extends FileBytesAdapter {
 		}
 		buffers[bufCount - 1] = handle.createBuffer(sizeLastBuf);
 
-		for (DBBuffer buffer : buffers) {
-			buffer.fill(is);
+		try {
+			for (DBBuffer buffer : buffers) {
+				buffer.fill(is);
+			}
+		}
+		catch (IOCancelledException e) {
+			for (DBBuffer buffer : buffers) {
+				buffer.delete();
+			}
+			throw e;
 		}
 		return buffers;
+
 	}
 }

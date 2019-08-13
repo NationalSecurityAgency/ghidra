@@ -15,8 +15,6 @@
  */
 package ghidra.graph.graphs;
 
-import static com.google.common.collect.Iterables.concat;
-import static com.google.common.collect.Iterables.filter;
 import static util.CollectionUtils.nonNull;
 
 import java.awt.Point;
@@ -206,9 +204,11 @@ public abstract class DefaultVisualGraph<V extends VisualVertex,
 
 		Collection<E> outs = nonNull(getOutEdges(start));
 		Collection<E> ins = nonNull(getInEdges(end));
+		Set<E> unique = new HashSet<>();
+		unique.addAll(outs);
+		unique.addAll(ins);
 
-		Iterable<E> concatenated = concat(outs, ins);
-		Iterable<E> filtered = filter(concatenated, e -> {
+		Iterable<E> filtered = IterableUtils.filteredIterable(unique, e -> {
 			return e.getStart().equals(start) && e.getEnd().equals(end);
 		});
 		return filtered;

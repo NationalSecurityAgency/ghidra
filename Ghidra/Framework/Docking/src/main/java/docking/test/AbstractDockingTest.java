@@ -1326,7 +1326,7 @@ public abstract class AbstractDockingTest extends AbstractGenericTest {
 			}
 
 			actionContext = newContext;
-			actionContext.setSource(provider.getComponent());
+			actionContext.setSourceObject(provider.getComponent());
 
 			return actionContext;
 		});
@@ -1349,7 +1349,7 @@ public abstract class AbstractDockingTest extends AbstractGenericTest {
 		ActionContext context = runSwing(() -> {
 			ActionContext actionContext = provider.getActionContext(null);
 			if (actionContext != null) {
-				actionContext.setSource(provider.getComponent());
+				actionContext.setSourceObject(provider.getComponent());
 			}
 			return actionContext;
 		});
@@ -2186,6 +2186,25 @@ public abstract class AbstractDockingTest extends AbstractGenericTest {
 		AtomicBoolean ref = new AtomicBoolean();
 		runSwing(() -> ref.set(button.isSelected()));
 		return ref.get();
+	}
+
+	/**
+	 * Creates a generic action context with no provider, with the given payload
+	 * @param payload the generic object to put in the context
+	 * @return the new context
+	 */
+	public ActionContext createContext(Object payload) {
+		return new ActionContext().setContextObject(payload);
+	}
+
+	/**
+	 * Creates a generic action context with the given provider, with the given payload
+	 * @param provider the provider
+	 * @param payload the generic object to put in the context
+	 * @return the new context
+	 */
+	public ActionContext createContext(ComponentProvider provider, Object payload) {
+		return new ActionContext(provider).setContextObject(payload);
 	}
 
 //==================================================================================================

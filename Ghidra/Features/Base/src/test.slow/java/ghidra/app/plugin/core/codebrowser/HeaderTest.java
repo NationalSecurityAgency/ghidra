@@ -275,14 +275,14 @@ public class HeaderTest extends AbstractGhidraHeadedIntegrationTest {
 	public void testInsertDeleteRow() {
 		FieldFormatModel model = header.getHeaderTab().getModel();
 		InsertRowAction act = new InsertRowAction("Test", header);
-		act.isEnabledForContext(
-			new ActionContext(null, new FieldHeaderLocation(model, null, 0, 0)));
+		act.isEnabledForContext(new ActionContext(cb.getProvider()).setContextObject(
+			new FieldHeaderLocation(model, null, 0, 0)));
 		performAction(act, true);
 		assertEquals(8, model.getNumRows());
 		assertEquals(0, model.getNumFactorys(0));
 		RemoveRowAction act2 = new RemoveRowAction("Test", header);
-		act2.isEnabledForContext(
-			new ActionContext(null, new FieldHeaderLocation(model, null, 0, 0)));
+		act2.isEnabledForContext(new ActionContext(cb.getProvider()).setContextObject(
+			new FieldHeaderLocation(model, null, 0, 0)));
 		performAction(act2, true);
 		assertEquals(7, model.getNumRows());
 		assertEquals(2, model.getNumFactorys(0));
@@ -294,8 +294,8 @@ public class HeaderTest extends AbstractGhidraHeadedIntegrationTest {
 		ListingField bf = cb.getCurrentField();
 		int startX = bf.getStartX();
 		InsertRowAction act = new InsertRowAction("Test", header);
-		act.isEnabledForContext(
-			new ActionContext(null, new FieldHeaderLocation(model, null, 0, 0)));
+		act.isEnabledForContext(new ActionContext(cb.getProvider()).setContextObject(
+			new FieldHeaderLocation(model, null, 0, 0)));
 		performAction(act, true);
 		int width = bf.getWidth();
 		int dragX = startX + width / 2;

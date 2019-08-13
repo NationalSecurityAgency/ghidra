@@ -21,6 +21,7 @@ import java.awt.Color;
 import java.awt.geom.Point2D;
 import java.util.*;
 
+import org.apache.commons.collections4.IterableUtils;
 import org.junit.*;
 
 import docking.ActionContext;
@@ -37,6 +38,7 @@ import ghidra.framework.plugintool.util.PluginException;
 import ghidra.graph.viewer.options.RelayoutOption;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSetView;
+import util.CollectionUtils;
 
 public class FunctionGraphGroupVertices1Test extends AbstractFunctionGraphTest {
 
@@ -810,13 +812,40 @@ public class FunctionGraphGroupVertices1Test extends AbstractFunctionGraphTest {
 	}
 
 	@Test
+	public void testEdgeDefaultAlphaPersistsAfterGrouping() {
+
+		graphFunction("01002cf5");
+
+		FGVertex v1 = vertex("01002cf5");
+		FGVertex v2 = vertex("01002d0f");
+
+		FunctionGraph graph = getFunctionGraph();
+		Iterable<FGEdge> edges = graph.getEdges(v1, v2);
+		assertEquals(1, IterableUtils.size(edges));
+		FGEdge edge = CollectionUtils.any(edges);
+
+		Double alpha = edge.getAlpha();
+		assertTrue(alpha < 1.0); // this is the default flow 
+
+		GroupedFunctionGraphVertex group = group("A", v1, v2);
+		ungroup(group);
+
+		edges = graph.getEdges(v1, v2);
+		assertEquals(1, IterableUtils.size(edges));
+		edge = CollectionUtils.any(edges);
+
+		Double alphAfterGroup = edge.getAlpha();
+		assertEquals(alpha, alphAfterGroup);
+	}
+
+	@Test
 	public void testSymbolAddedWhenGrouped_SymbolOutsideOfGroupNode() {
 		// TODO
 	}
 
-	//==================================================================================================
-	// Private Methods
-	//==================================================================================================
+//==================================================================================================
+// Private Methods
+//==================================================================================================
 
 	// @formatter:off
 	@Override

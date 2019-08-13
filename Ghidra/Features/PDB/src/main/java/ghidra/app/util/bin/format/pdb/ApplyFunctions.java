@@ -73,7 +73,7 @@ class ApplyFunctions {
 				cmd.applyTo(program, monitor);
 			}
 
-			pdbParser.createSymbol(address, name, true, log, monitor);
+			pdbParser.createSymbol(address, name, true, log);
 
 			Function function = listing.getFunctionAt(address);
 			if (function == null) {

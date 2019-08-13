@@ -40,8 +40,7 @@ import ghidra.program.model.symbol.*;
 import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.util.Conv;
 import ghidra.util.Msg;
-import ghidra.util.exception.DuplicateNameException;
-import ghidra.util.exception.InvalidInputException;
+import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
 
 /**
@@ -84,7 +83,7 @@ public class NeLoader extends AbstractLibrarySupportLoader {
 
 	@Override
 	public void load(ByteProvider provider, LoadSpec loadSpec, List<Option> options, Program prog,
-			TaskMonitor monitor, MessageLog log) throws IOException {
+			TaskMonitor monitor, MessageLog log) throws IOException, CancelledException {
 
 		if (monitor.isCancelled()) {
 			return;
@@ -98,7 +97,7 @@ public class NeLoader extends AbstractLibrarySupportLoader {
 		// We don't use the file bytes to create block because the bytes are manipulated before
 		// forming the block.  Creating the FileBytes anyway in case later we want access to all
 		// the original bytes.
-		MemoryBlockUtils.createFileBytes(prog, provider);
+		MemoryBlockUtils.createFileBytes(prog, provider, monitor);
 
 		NewExecutable ne = new NewExecutable(factory, provider);
 		WindowsHeader wh = ne.getWindowsHeader();

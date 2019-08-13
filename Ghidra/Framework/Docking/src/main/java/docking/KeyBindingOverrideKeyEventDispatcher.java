@@ -408,8 +408,9 @@ class KeyBindingOverrideKeyEventDispatcher implements KeyEventDispatcher {
 
 		// ...next see if there is a key binding for when the component is the child of the focus
 		// owner
-		return KeyBindingUtils.getAction(jComponent, keyStroke,
+		action = KeyBindingUtils.getAction(jComponent, keyStroke,
 			JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+		return action;
 	}
 
 	/**

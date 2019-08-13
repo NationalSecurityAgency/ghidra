@@ -56,7 +56,7 @@ public class DialogComponentProviderPopupActionManager {
 		// If the source is null, must set it or we won't have 
 		// any popups shown.
 		if (actionContext.getSourceObject() == null) {
-			actionContext.setSource(e.getSource());
+			actionContext.setSourceObject(e.getSource());
 		}
 
 		MenuHandler popupMenuHandler = new PopupMenuHandler(actionContext);
@@ -88,43 +88,14 @@ public class DialogComponentProviderPopupActionManager {
 	private void populatePopupMenuActions(DockingWindowManager dwm, MenuManager menuMgr,
 			ActionContext actionContext) {
 
-		Iterator<DockingActionIf> iter = popupActions.iterator();
-		while (iter.hasNext()) {
-			DockingActionIf action = iter.next();
-			MenuData popupMenuData = action.getPopupMenuData();
-			if (popupMenuData != null && action.isValidContext(actionContext) &&
-				action.isAddToPopup(actionContext)) {
-
-				action.setEnabled(action.isEnabledForContext(actionContext));
-				menuMgr.addAction(action);
-			}
-		}
-
-		Object source = actionContext.getSourceObject();
-		if (source instanceof DockingActionProviderIf) {
-			DockingActionProviderIf actionProvider = (DockingActionProviderIf) source;
-			List<DockingActionIf> dockingActions = actionProvider.getDockingActions();
-			for (DockingActionIf action : dockingActions) {
-				MenuData popupMenuData = action.getPopupMenuData();
-				if (popupMenuData != null && action.isValidContext(actionContext) &&
-					action.isAddToPopup(actionContext)) {
-					action.setEnabled(action.isEnabledForContext(actionContext));
-					menuMgr.addAction(action);
-				}
-			}
-		}
-
-		List<DockingActionIf> tempActions = dwm.getTemporaryPopupActions(actionContext);
-		if (tempActions != null) {
-			for (DockingActionIf action : tempActions) {
-				MenuData popupMenuData = action.getPopupMenuData();
-				if (popupMenuData != null && action.isValidContext(actionContext) &&
-					action.isAddToPopup(actionContext)) {
-					action.setEnabled(action.isEnabledForContext(actionContext));
-					menuMgr.addAction(action);
-				}
-			}
-		}
+		// This is a bit of a kludge, but allows us to get generic actions, like 'copy' for
+		// tables.  This can go away if we ever convert DialogComponentProviders to use the
+		// primary action system (this was something we were going to do once).  If that happens, 
+		// then this entire class goes away.
+		ActionToGuiMapper actionManager = dwm.getActionToGuiMapper();
+		PopupActionManager toolPopupManager = actionManager.getPopupActionManager();
+		Iterator<DockingActionIf> localActions = popupActions.iterator();
+		toolPopupManager.populatePopupMenuActions(localActions, actionContext, menuMgr);
 	}
 
 //==================================================================================================
@@ -152,7 +123,7 @@ public class DialogComponentProviderPopupActionManager {
 		public void processMenuAction(final DockingActionIf action, final ActionEvent event) {
 
 			DockingWindowManager.clearMouseOverHelp();
-			actionContext.setSource(event.getSource());
+			actionContext.setSourceObject(event.getSource());
 
 			// this gives the UI some time to repaint before executing the action
 			SwingUtilities.invokeLater(() -> {

@@ -21,8 +21,7 @@ import java.util.List;
 
 import javax.swing.*;
 
-import docking.*;
-import docking.action.DockingActionIf;
+import docking.DockingWindowManager;
 import docking.widgets.EmptyBorderButton;
 import ghidra.app.plugin.core.instructionsearch.InstructionSearchPlugin;
 import ghidra.app.plugin.core.instructionsearch.model.*;
@@ -95,13 +94,9 @@ public class InstructionTable extends AbstractInstructionTable {
 		dialog.getSearchData().registerForGuiUpdates(this);
 	}
 
-	/**
-	 * Override from abstract class so we can remove the select and copy options
-	 * (which is all of them).
-	 */
 	@Override
-	public List<DockingActionIf> getPopupActions(DockingTool tool, ActionContext context) {
-		return null;
+	protected boolean supportsPopupActions() {
+		return false;
 	}
 
 	public InsertBytesWidget getInsertBytesWidget() {

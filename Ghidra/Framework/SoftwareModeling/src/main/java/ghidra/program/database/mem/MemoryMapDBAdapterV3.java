@@ -148,6 +148,8 @@ public class MemoryMapDBAdapterV3 extends MemoryMapDBAdapter {
 	@Override
 	MemoryBlockDB createInitializedBlock(String name, Address startAddr, InputStream is,
 			long length, int permissions) throws AddressOverflowException, IOException {
+
+		// TODO verify that it is necessary to pre-define all segments in the address map
 		updateAddressMapForAllAddresses(startAddr, length);
 
 		List<SubMemoryBlock> subBlocks = new ArrayList<>();
@@ -171,7 +173,7 @@ public class MemoryMapDBAdapterV3 extends MemoryMapDBAdapter {
 			Collections.sort(memoryBlocks);
 			return newBlock;
 		}
-		catch (IOException e) {
+		catch (IOCancelledException e) {
 			// clean up any created DBBufferss
 			for (SubMemoryBlock subMemoryBlock : subBlocks) {
 				BufferSubMemoryBlock bufferSubMemoryBlock = (BufferSubMemoryBlock) subMemoryBlock;

@@ -259,7 +259,7 @@ public class OpenVersionedFileDialog extends DataTreeDialog {
 			return context;
 		}
 
-		ActionContext actionContext = new ActionContext(null, event.getSource(), this);
+		ActionContext actionContext = new ActionContext(null, this, event.getComponent());
 		actionContext.setMouseEvent(event);
 
 		return actionContext;

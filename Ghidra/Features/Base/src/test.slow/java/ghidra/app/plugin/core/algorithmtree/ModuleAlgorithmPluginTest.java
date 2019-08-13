@@ -22,7 +22,6 @@ import java.util.Set;
 
 import org.junit.*;
 
-import docking.ActionContext;
 import docking.action.DockingActionIf;
 import ghidra.app.plugin.core.programtree.ProgramTreePlugin;
 import ghidra.app.plugin.core.programtree.ViewProviderService;
@@ -99,7 +98,7 @@ public class ModuleAlgorithmPluginTest extends AbstractGhidraHeadedIntegrationTe
 
 		getContextObject(vps);
 
-		performAction(CollectionUtils.any(actions), new ActionContext(null, context), true);
+		performAction(CollectionUtils.any(actions), createContext(context), true);
 
 		waitForTasks();
 		program.flushEvents();

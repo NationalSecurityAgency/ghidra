@@ -231,7 +231,6 @@ void assertU4(const char *file, int line, const char *func, u4 val, u4 expected)
 		MainInfo.lastErrorLine = line;
 		MainInfo.lastErrorFile = (char *) file;
 		breakOnError();
-		MainInfo.numfail++;
 	}
 	MainInfo.lastTestPos = line;
 	DO_PRINT_UINT(val == expected);

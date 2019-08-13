@@ -81,7 +81,7 @@ public class MachoLoader extends AbstractLibrarySupportLoader {
 			Program program, TaskMonitor monitor, MessageLog log) throws IOException {
 
 		try {
-			FileBytes fileBytes = MemoryBlockUtils.createFileBytes(program, provider);
+			FileBytes fileBytes = MemoryBlockUtils.createFileBytes(program, provider, monitor);
 
 			// A Mach-O file may contain PRELINK information.  If so, we use a special
 			// program builder that knows how to deal with it.
@@ -134,7 +134,7 @@ public class MachoLoader extends AbstractLibrarySupportLoader {
 				log.appendMsg("WARNING! No archives found in the UBI: " + libFile);
 				return false;
 			}
-			
+
 			for (FatArch architecture : architectures) {
 
 				// Note: The creation of the byte provider that we pass to the importer deserves a

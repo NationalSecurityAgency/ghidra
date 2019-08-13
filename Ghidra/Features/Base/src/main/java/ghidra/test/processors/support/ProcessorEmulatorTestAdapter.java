@@ -153,15 +153,11 @@ public abstract class ProcessorEmulatorTestAdapter extends TestCase implements E
 	private static final String GZF_FILE_EXT = ".gzf";
 	private static final String BINARY_FILE_EXT = ".out";
 
-	//private static final String MODULE_NAME = "ProcessorTest2";
-
-	// directory above application root which will contain the following outputs: cache, logs, results
+	// directory which will contain the following outputs: cache, logs, results
 	private static final String TEST_OUTPUT_PATH = "test-output";
 
 	private static final String GZF_CACHEDIR_NAME = "cache";
-
 	private static final String LOG_DIR_NAME = "logs";
-
 	private static final String RESULTS_DIR_NAME = "results";
 
 	static {
@@ -208,7 +204,6 @@ public abstract class ProcessorEmulatorTestAdapter extends TestCase implements E
 	private TestEnv env;
 	private LogData logData;
 
-	private ResourceFile myModuleRootDirectory;
 	private Collection<ResourceFile> applicationRootDirectories;
 	private File resourcesTestDataDir;
 
@@ -252,6 +247,9 @@ public abstract class ProcessorEmulatorTestAdapter extends TestCase implements E
 		if (BATCH_MODE_OUTPUT_DIR != null) {
 			// Use explicit output directory root if specified
 			outputRoot = BATCH_MODE_OUTPUT_DIR;
+		}
+		else if (!SystemUtilities.isInDevelopmentMode()) {
+			outputRoot = Application.getUserTempDirectory().getAbsolutePath();
 		}
 		else {
 			try {
@@ -914,6 +912,9 @@ public abstract class ProcessorEmulatorTestAdapter extends TestCase implements E
 	}
 
 	private void findTestResourceDirectory(String relativeModulePath) {
+		if (relativeModulePath == null) {
+			return;
+		}
 		for (ResourceFile appRoot : applicationRootDirectories) {
 			File moduleRoot = new File(appRoot.getAbsolutePath(), relativeModulePath);
 			File dir = new File(moduleRoot, TEST_RESOURCE_PATH);
@@ -928,25 +929,31 @@ public abstract class ProcessorEmulatorTestAdapter extends TestCase implements E
 	protected void setUp() throws Exception {
 
 		env = new TestEnv();
-
-		myModuleRootDirectory = Application.getModuleContainingClass(getClass().getName());
 		applicationRootDirectories = Application.getApplicationRootDirectories();
 
-		String relativeModulePath = getRelativeModulePath();
-
-		resourcesTestDataDir = new File(myModuleRootDirectory.getFile(true), TEST_RESOURCE_PATH);
-
-		if (!resourcesTestDataDir.isDirectory()) {
-			findTestResourceDirectory(relativeModulePath);
+		ResourceFile myModuleRootDirectory =
+			Application.getModuleContainingClass(getClass().getName());
+		if (myModuleRootDirectory != null) {
+			File myModuleRoot = myModuleRootDirectory.getFile(false);
+			if (myModuleRoot != null) {
+				resourcesTestDataDir = new File(myModuleRoot, TEST_RESOURCE_PATH);
+				if (!resourcesTestDataDir.isDirectory()) {
+					findTestResourceDirectory(getRelativeModulePath(myModuleRootDirectory));
+				}
+			}
+		}
+		else {
+			Msg.warn(this,
+				"Unable to identify pcodetest module directory! Project must contain Module.manifest file");
 		}
 
-		if (!resourcesTestDataDir.isDirectory()) {
+		if (resourcesTestDataDir == null || !resourcesTestDataDir.isDirectory()) {
 			findTestResourceDirectory(DEFAULT_PROCESSOR_TEST_MODULE);
 		}
 
-		if (!resourcesTestDataDir.isDirectory()) {
+		if (resourcesTestDataDir == null || !resourcesTestDataDir.isDirectory()) {
 			throw new RuntimeException(
-				"Failed to locate test resource directory: " + relativeModulePath);
+				"Failed to locate pcodetest resource directory: " + TEST_RESOURCE_PATH);
 		}
 
 		logData = initializeLog(getClass());
@@ -995,7 +1002,7 @@ public abstract class ProcessorEmulatorTestAdapter extends TestCase implements E
 		}
 	}
 
-	private String getRelativeModulePath() {
+	private String getRelativeModulePath(ResourceFile myModuleRootDirectory) {
 		String absolutePath = myModuleRootDirectory.getAbsolutePath();
 		for (ResourceFile appRoot : applicationRootDirectories) {
 			String rootPath = appRoot.getAbsolutePath();
@@ -1003,7 +1010,7 @@ public abstract class ProcessorEmulatorTestAdapter extends TestCase implements E
 				return absolutePath.substring(rootPath.length() + 1);
 			}
 		}
-		throw new RuntimeException("Failed to resolve relative module path");
+		return null;
 	}
 
 	private static class LogData {

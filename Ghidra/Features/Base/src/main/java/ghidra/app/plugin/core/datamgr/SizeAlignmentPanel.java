@@ -30,58 +30,62 @@ import ghidra.util.exception.NoValueException;
 import ghidra.util.table.GhidraTable;
 
 public class SizeAlignmentPanel extends JPanel {
-	
+
 	GhidraTable table;
 	DataOrganizationImpl dataOrganization;
 
 	public SizeAlignmentPanel() {
 		super(new BorderLayout());
 		TableModel tableModel = new SizeAlignmentTableModel();
-		table = new GhidraTable(tableModel, true);
-        JScrollPane sp = new JScrollPane(table);
-        table.setPreferredScrollableViewportSize(new Dimension(200, 80));
+		table = new GhidraTable(tableModel);
+		table.setAutoEditEnabled(true);
+		JScrollPane sp = new JScrollPane(table);
+		table.setPreferredScrollableViewportSize(new Dimension(200, 80));
 		add(sp, BorderLayout.CENTER);
 	}
 
 	public void setOrganization(DataOrganizationImpl dataOrganization) {
 		this.dataOrganization = dataOrganization;
-		((SizeAlignmentTableModel)table.getModel()).fireTableDataChanged();
+		((SizeAlignmentTableModel) table.getModel()).fireTableDataChanged();
 	}
-	
+
 	class SizeAlignmentTableModel extends AbstractTableModel {
-		
-		private final String[] columnNames = new String[] {"Size", "Alignment"};
+
+		private final String[] columnNames = new String[] { "Size", "Alignment" };
 		private final int SIZE_COLUMN = 0;
 		private final int ALIGNMENT_COLUMN = 1;
-		
+
 		SizeAlignmentTableModel() {
 			super();
 		}
 
 		@Override
-        public void addTableModelListener(TableModelListener l) {
+		public void addTableModelListener(TableModelListener l) {
 			// TODO Auto-generated method stub
-			
+
 		}
 
 		@Override
-        public Class<?> getColumnClass(int columnIndex) {
+		public Class<?> getColumnClass(int columnIndex) {
 			return Integer.class;
 		}
 
+		@Override
 		public int getColumnCount() {
 			return columnNames.length;
 		}
 
 		@Override
-        public String getColumnName(int columnIndex) {
+		public String getColumnName(int columnIndex) {
 			return columnNames[columnIndex];
 		}
 
+		@Override
 		public int getRowCount() {
 			return dataOrganization.getSizeAlignmentCount() + 1;
 		}
 
+		@Override
 		public Object getValueAt(int rowIndex, int columnIndex) {
 			int[] sizes = dataOrganization.getSizes();
 			if (rowIndex < sizes.length) {
@@ -92,7 +96,8 @@ public class SizeAlignmentPanel extends JPanel {
 				else if (columnIndex == ALIGNMENT_COLUMN) {
 					try {
 						return dataOrganization.getSizeAlignment(size);
-					} catch (NoValueException e) {
+					}
+					catch (NoValueException e) {
 						return null;
 					}
 				}
@@ -101,7 +106,7 @@ public class SizeAlignmentPanel extends JPanel {
 		}
 
 		@Override
-        public boolean isCellEditable(int rowIndex, int columnIndex) {
+		public boolean isCellEditable(int rowIndex, int columnIndex) {
 			if (rowIndex == dataOrganization.getSizeAlignmentCount()) {
 				return columnIndex == SIZE_COLUMN;
 			}
@@ -109,30 +114,31 @@ public class SizeAlignmentPanel extends JPanel {
 		}
 
 		@Override
-        public void removeTableModelListener(TableModelListener l) {
+		public void removeTableModelListener(TableModelListener l) {
 			// TODO Auto-generated method stub
-			
+
 		}
 
 		@Override
-        public void setValueAt(Object value, int rowIndex, int columnIndex) {
+		public void setValueAt(Object value, int rowIndex, int columnIndex) {
 			if (value == null) {
 				return;
 			}
 			int[] sizes = dataOrganization.getSizes();
 			if (rowIndex < sizes.length) {
-				int alignment = ((Integer)value).intValue();
+				int alignment = ((Integer) value).intValue();
 				int size = sizes[rowIndex];
 				dataOrganization.setSizeAlignment(size, alignment);
 			}
 			if (rowIndex == sizes.length) {
-				int size = ((Integer)value).intValue();
+				int size = ((Integer) value).intValue();
 				// Check that we don't already have this size.
 				try {
 					dataOrganization.getSizeAlignment(size);
-					setStatusMessage("An alignment is already defined for a size of "+size+".");
+					setStatusMessage("An alignment is already defined for a size of " + size + ".");
 					return;
-				} catch (NoValueException e) {
+				}
+				catch (NoValueException e) {
 					// Actually don't want to find a value so we can set one below.
 				}
 				int alignment = size; // Set the alignment to match the size initially.

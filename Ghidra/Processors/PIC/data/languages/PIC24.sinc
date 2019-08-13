@@ -250,6 +250,7 @@ define token instr(32)
   OP_11_7 =(7,11)
   OP_10_7 =(7,10)
   OP_31_4 =(4,31)
+  OP_31_0 =(0,31)
 
   OP_23_11=(11,23)
   OP_23_19=(19,23)
@@ -3561,15 +3562,18 @@ cond1: "z" is  TOK_CCCC=0x2 { tmpBool:1 = (SRL_Z); export tmpBool; }
 @endif
 
 @if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
-
-:div.sw   TOK_10_7_Wreg,TOK_3_0_Wreg is
+:repeat" 0x11 div.sw"   TOK_10_7_Wreg,TOK_3_0_Wreg is
+          OP_31_0=0x090011;
           OP_23_20=0xD & OP_19_16=0x8 & OP_15=0x0 & TOK_10_7_Wreg & TOK_W=0 & OP_5_4=0x0 & TOK_3_0_Wreg {
 
   # Note: this implementation is not iterative, like the actual op.
   # Rather, it will decompile accurately and emulate correctly using the Sleigh divide support.
-  W0 = TOK_10_7_Wreg s/ TOK_3_0_Wreg;
-  W1 = TOK_10_7_Wreg s% TOK_3_0_Wreg;
+  local div:2 = sext(TOK_10_7_Wreg) s/ sext(TOK_3_0_Wreg);
+  local rem:2 = sext(TOK_10_7_Wreg) s% sext(TOK_3_0_Wreg);
 
+  W0 = div:1;
+  W1 = rem:1;
+  
   testSRL_N     ( W1 );
 
   # overflow as defined in note 2
@@ -3581,9 +3585,30 @@ cond1: "z" is  TOK_CCCC=0x2 { tmpBool:1 = (SRL_Z); export tmpBool; }
   SRL_C  = 0;
 } 
 
+define pcodeop pic30_div;
+define pcodeop pic30_rem;
+
+:div.sw   TOK_10_7_Wreg,TOK_3_0_Wreg is
+          OP_23_20=0xD & OP_19_16=0x8 & OP_15=0x0 & TOK_10_7_Wreg & TOK_W=0 & OP_5_4=0x0 & TOK_3_0_Wreg {
+  local div:2 = pic30_div(TOK_10_7_Wreg,TOK_3_0_Wreg);
+  local rem:2 = pic30_rem(TOK_10_7_Wreg,TOK_3_0_Wreg);
+
+  W0 = div;
+  W1 = rem;
+  
+  testSRL_N     ( W1 );
+  # overflow as defined in note 2
+  SRL_OV = (TOK_10_7_Wreg == 0x8000) && (TOK_3_0_Wreg == 0xFFFF);
+  testSRL_Z     ( W1 );
+
+  # Carry is modified, but modification is not defined, just assign to 0 for data flow analysis
+  SRL_C  = 0;
+}
+
 define pcodeop isDivideOverflow;
 
-:div.sd  TOK_10_8_Dregn,TOK_3_0_Wreg is
+:repeat" 0x11 div.sd"  TOK_10_8_Dregn,TOK_3_0_Wreg is
+         OP_31_0=0x090011;
          OP_23_20=0xD & OP_19_16=0x8 & OP_15=0x0 &
          TOK_10_8_Dreg & TOK_10_8_Dregn & OP_7=0 & TOK_W=1 & OP_5_4=0x0 & TOK_3_0_Wreg {
 
@@ -3592,29 +3617,53 @@ define pcodeop isDivideOverflow;
   
   # Note: this implementation is not iterative, like the actual op.
   # Rather, it will decompile accurately and emulate correctly using the Sleigh divide support.
-  local tmp:4 = TOK_10_8_Dreg s/ sext(TOK_3_0_Wreg);
-  W0 = tmp:2;
-  tmp = TOK_10_8_Dreg s% sext(TOK_3_0_Wreg);
-  W1 = tmp:2;
+  local div:4 = TOK_10_8_Dreg s/ sext(TOK_3_0_Wreg);
+  local rem:4 = TOK_10_8_Dreg s% sext(TOK_3_0_Wreg);
+  W0 = div:2;
+  W1 = rem:2;
 
   testSRL_N     ( W1 );
   testSRL_Z     ( W1 );
 
   # Carry is modified, but modification is not defined, just assign to 0 for data flow analysis
   SRL_C  = 0;
-} 
+}
+
+:div.sd  TOK_10_8_Dregn,TOK_3_0_Wreg is
+         OP_23_20=0xD & OP_19_16=0x8 & OP_15=0x0 &
+         TOK_10_8_Dreg & TOK_10_8_Dregn & OP_7=0 & TOK_W=1 & OP_5_4=0x0 & TOK_3_0_Wreg {
+
+  # overflow as defined in note 2
+  SRL_OV = isDivideOverflow(TOK_10_8_Dreg, TOK_3_0_Wreg);
+
+  local div:4 = pic30_div(TOK_10_8_Dreg,TOK_3_0_Wreg);
+  local rem:4 = pic30_rem(TOK_10_8_Dreg,TOK_3_0_Wreg);
+  
+  W0 = div:2;
+  W1 = rem:2;
+
+  testSRL_N     ( W1 );
+  testSRL_Z     ( W1 );
+
+  # Carry is modified, but modification is not defined, just assign to 0 for data flow analysis
+  SRL_C  = 0;
+}
 @endif
 
 @if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
 
-:div.uw   TOK_10_7_Wreg,TOK_3_0_Wreg is
+:repeat" 0x11 div.uw"   TOK_10_7_Wreg,TOK_3_0_Wreg is
+          OP_31_0=0x090011;
           OP_23_20=0xD & OP_19_16=0x8 & OP_15=0x1 & 
           TOK_10_7_Wreg & TOK_W=0 & OP_5_4=0x0 & TOK_3_0_Wreg {
 
   # Note: this implementation is not iterative, like the actual op.
   # Rather, it will decompile accurately and emulate correctly using the Sleigh divide support.
-  W0 = TOK_10_7_Wreg / TOK_3_0_Wreg;
-  W1 = TOK_10_7_Wreg % TOK_3_0_Wreg;
+  local div:2 = zext(TOK_10_7_Wreg) / zext(TOK_3_0_Wreg);
+  local rem:2 = zext(TOK_10_7_Wreg) % zext(TOK_3_0_Wreg);
+
+  W0 = div:1;
+  W1 = rem:1;
 
   testSRL_N     ( W1 );
 
@@ -3627,8 +3676,28 @@ define pcodeop isDivideOverflow;
   SRL_C  = 0;
 } 
 
+:div.uw   TOK_10_7_Wreg,TOK_3_0_Wreg is
+          OP_23_20=0xD & OP_19_16=0x8 & OP_15=0x1 & 
+          TOK_10_7_Wreg & TOK_W=0 & OP_5_4=0x0 & TOK_3_0_Wreg {
+  local div:2 = pic30_div(TOK_10_7_Wreg,TOK_3_0_Wreg);
+  local rem:2 = pic30_rem(TOK_10_7_Wreg,TOK_3_0_Wreg);
 
-:div.ud  TOK_10_8_Dregn,TOK_3_0_Wreg is
+  W0 = div;
+  W1 = rem;
+
+  testSRL_N     ( W1 );
+
+  # overflow as defined in note 2
+  SRL_OV = 0;
+
+  testSRL_Z     ( W1 );
+
+  # Carry is modified, but modification is not defined, just assign to 0 for data flow analysis
+  SRL_C  = 0;
+} 
+
+:repeat" 0x11 div.ud"  TOK_10_8_Dregn,TOK_3_0_Wreg is
+         OP_31_0=0x090011;
          OP_23_20=0xD & OP_19_16=0x8 & OP_15=0x1 &
          TOK_10_8_Dreg & TOK_10_8_Dregn & OP_7=0 & TOK_W=1 & OP_5_4=0x0 & TOK_3_0_Wreg {
 
@@ -3637,22 +3706,43 @@ define pcodeop isDivideOverflow;
   
   # Note: this implementation is not iterative, like the actual op.
   # Rather, it will decompile accurately and emulate correctly using the Sleigh divide support.
-  local tmp:4 = TOK_10_8_Dreg / sext(TOK_3_0_Wreg);
-  W0 = tmp:2;
-  tmp = TOK_10_8_Dreg % sext(TOK_3_0_Wreg);
-  W1 = tmp:2;
+  local div:4 = TOK_10_8_Dreg / sext(TOK_3_0_Wreg);
+  local rem:4 = TOK_10_8_Dreg % sext(TOK_3_0_Wreg);
+  W0 = div:2;
+  W1 = rem:2;
 
   testSRL_N     ( W1 );
   testSRL_Z     ( W1 );
 
   # Carry is modified, but modification is not defined, just assign to 0 for data flow analysis
   SRL_C  = 0;
-} 
+}
+
+:div.ud  TOK_10_8_Dregn,TOK_3_0_Wreg is
+         OP_23_20=0xD & OP_19_16=0x8 & OP_15=0x1 &
+         TOK_10_8_Dreg & TOK_10_8_Dregn & OP_7=0 & TOK_W=1 & OP_5_4=0x0 & TOK_3_0_Wreg {
+
+  # overflow as defined in note 2
+  SRL_OV = isDivideOverflow(TOK_10_8_Dreg, TOK_3_0_Wreg);
+  
+  local div:4 = pic30_div(TOK_10_8_Dreg,TOK_3_0_Wreg);
+  local rem:4 = pic30_rem(TOK_10_8_Dreg,TOK_3_0_Wreg);
+  W0 = div:2;
+  W1 = rem:2;
+
+
+  testSRL_N     ( W1 );
+  testSRL_Z     ( W1 );
+
+  # Carry is modified, but modification is not defined, just assign to 0 for data flow analysis
+  SRL_C  = 0;
+}
 @endif
 
 @if  defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
 
-:divf  TOK_14_11_Wreg,TOK_3_0_Wreg is
+:repeat" 0x11 divf"  TOK_14_11_Wreg,TOK_3_0_Wreg is
+         OP_31_0=0x090011;
          OP_23_20=0xD & OP_19_16=0x9 & OP_15=0x0 &
          TOK_14_11_Wreg & OP_10_8=0x0 & OP_7_4=0x0 & TOK_3_0_Wreg {
 
@@ -3673,7 +3763,30 @@ define pcodeop isDivideOverflow;
 
   # Carry is modified, but modification is not defined, just assign to 0 for data flow analysis
   SRL_C  = 0;
-} 
+}
+
+:divf  TOK_14_11_Wreg,TOK_3_0_Wreg is
+         OP_23_20=0xD & OP_19_16=0x9 & OP_15=0x0 &
+         TOK_14_11_Wreg & OP_10_8=0x0 & OP_7_4=0x0 & TOK_3_0_Wreg {
+
+  # Note: this implementation is not iterative, like the actual op.
+  # Rather, it will decompile accurately and emulate correctly using the Sleigh divide support.
+  local dividend:4 	= (sext(TOK_14_11_Wreg) << 16);
+  local tmp0:4 		= pic30_div(dividend,TOK_3_0_Wreg);
+  W0 			= tmp0:2;
+  local tmp1:4 		= pic30_rem(dividend,TOK_3_0_Wreg);
+  W1 			= tmp1:2;
+
+  testSRL_N     ( W1 );
+
+  # overflow as defined in note 1
+  SRL_OV = (TOK_14_11_Wreg s>= TOK_3_0_Wreg);
+
+  testSRL_Z     ( W1 );
+
+  # Carry is modified, but modification is not defined, just assign to 0 for data flow analysis
+  SRL_C  = 0;
+}
 @endif
 
 @if  defined(dsPIC30F) || defined(dsPIC33F) 

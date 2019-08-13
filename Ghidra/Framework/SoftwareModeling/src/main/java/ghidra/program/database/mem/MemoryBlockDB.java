@@ -454,7 +454,7 @@ public class MemoryBlockDB implements MemoryBlock {
 		SubMemoryBlock subBlock = getSubBlock(offset);
 		memMap.lock.acquire();
 		try {
-			subBlock.putByte(offset - subBlock.getStartingOffset(), b);
+			subBlock.putByte(offset, b);
 		}
 		catch (IOException e) {
 			memMap.dbError(e);

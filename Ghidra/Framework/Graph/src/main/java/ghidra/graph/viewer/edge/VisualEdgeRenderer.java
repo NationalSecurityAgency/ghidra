@@ -81,14 +81,15 @@ import ghidra.graph.viewer.vertex.VisualGraphVertexShapeTransformer;
 public abstract class VisualEdgeRenderer<V extends VisualVertex, E extends VisualEdge<V>>
 		extends BasicEdgeRenderer<V, E> {
 
-	private static final float HOVERED_STROKE_WIDTH = 8.0f;
-	private static final float SELECTED_STROKE_WIDTH = 4.0f;
+	private static final float HOVERED_PATH_STROKE_WIDTH = 8.0f;
+	private static final float FOCUSED_PATH_STROKE_WIDTH = 4.0f;
+	private static final float SELECTED_STROKE_WIDTH = FOCUSED_PATH_STROKE_WIDTH + 2;
 	private static final float EMPHASIZED_STOKE_WIDTH = SELECTED_STROKE_WIDTH + 3.0f;
 
 	private float dashingPatternOffset;
 
-	private Color baseColor = Color.BLACK;
-	private Color highlightColor = Color.GRAY;
+	private Color defaultBaseColor = Color.BLACK;
+	private Color defaultHighlightColor = Color.GRAY;
 
 	/**
 	 * Sets the offset value for painting dashed lines.  This allows clients to animate the 
@@ -103,24 +104,29 @@ public abstract class VisualEdgeRenderer<V extends VisualVertex, E extends Visua
 	}
 
 	public void setBaseColor(Color color) {
-		this.baseColor = color;
+		this.defaultBaseColor = color;
 	}
 
 	public Color getBaseColor(Graph<V, E> g, E e) {
-		return baseColor;
+		return defaultBaseColor;
 	}
 
 	public void setHighlightColor(Color highlightColor) {
-		this.highlightColor = highlightColor;
+		this.defaultHighlightColor = highlightColor;
 	}
 
 	public Color getHighlightColor(Graph<V, E> g, E e) {
-		return highlightColor;
+		return defaultHighlightColor;
 	}
 
 	// template method
-	protected boolean isInActivePath(E e) {
-		return e.isInActivePath();
+	protected boolean isInHoveredVertexPath(E e) {
+		return e.isInHoveredVertexPath();
+	}
+
+	// template method
+	protected boolean isInFocusedVertexPath(E e) {
+		return e.isInFocusedVertexPath();
 	}
 
 	// template method
@@ -153,12 +159,17 @@ public abstract class VisualEdgeRenderer<V extends VisualVertex, E extends Visua
 		float scalex = (float) g.getTransform().getScaleX();
 		float scaley = (float) g.getTransform().getScaleY();
 
-		boolean isActive = isInActivePath(e);
+		boolean isInHoveredPath = isInHoveredVertexPath(e);
+		boolean isInFocusedPath = isInFocusedVertexPath(e);
 		boolean isSelected = isSelected(e);
 		boolean isEmphasized = isEmphasiszed(e);
 
-		Color hoveredColor = getHighlightColor(graph, e);
-		Color selectedColor = getHighlightColor(graph, e).darker();
+		Color highlightColor = getHighlightColor(graph, e);
+		Color baseColor = getBaseColor(graph, e);
+		Color hoveredColor = highlightColor;
+		Color focusedColor = baseColor;
+		Color selectedColor = highlightColor.darker(); // note: we can do better for selected color
+		Color selectedAccentColor = highlightColor;
 
 		float scale = StrictMath.min(scalex, scaley);
 
@@ -190,146 +201,199 @@ public abstract class VisualEdgeRenderer<V extends VisualVertex, E extends Visua
 
 		Context<Graph<V, E>, E> context = Context.<Graph<V, E>, E> getInstance(graph, e);
 		boolean edgeHit = vt.transform(edgeShape).intersects(deviceRectangle);
-		if (edgeHit) {
-
-			Paint oldPaint = g.getPaint();
-
-			// get Paints for filling and drawing
-			// (filling is done first so that drawing and label use same Paint)
-			Paint fillPaint = rc.getEdgeFillPaintTransformer().apply(e);
-			BasicStroke selectedStroke = getSelectedStroke(e, scale);
-			BasicStroke hoverStroke = getHoveredStroke(e, scale);
-			BasicStroke empahsisStroke = getEmphasisStroke(e, scale);
-
-			if (fillPaint != null) {
-				if (isActive) {
-					Stroke saveStroke = g.getStroke();
-					g.setPaint(hoveredColor);
-					g.setStroke(hoverStroke);
-					g.fill(edgeShape);
-					g.setStroke(saveStroke);
-				}
-
-				if (isSelected) {
-					Stroke saveStroke = g.getStroke();
-					g.setPaint(selectedColor);
-					g.setStroke(selectedStroke);
-					g.fill(edgeShape);
-					g.setStroke(saveStroke);
-				}
-
-				g.setPaint(fillPaint);
-				g.fill(edgeShape);
-			}
-
-			Paint drawPaint = rc.getEdgeDrawPaintTransformer().apply(e);
-			if (drawPaint != null) {
-				if (isEmphasized) {
-					Stroke saveStroke = g.getStroke();
-					g.setPaint(drawPaint);
-					g.setStroke(empahsisStroke);
-					g.draw(edgeShape);
-					g.setStroke(saveStroke);
-				}
-
-				if (isActive) {
-					Stroke saveStroke = g.getStroke();
-					g.setPaint(hoveredColor);
-					g.setStroke(hoverStroke);
-					g.draw(edgeShape);
-					g.setStroke(saveStroke);
-				}
-
-				if (isSelected) {
-					Stroke saveStroke = g.getStroke();
-					g.setPaint(selectedColor);
-					g.setStroke(selectedStroke);
-					g.draw(edgeShape);
-					g.setStroke(saveStroke);
-				}
-
-				g.setPaint(drawPaint);
-				g.draw(edgeShape);
-
-				// debug - draw a box around the edge
-				//Rectangle shapeBounds = edgeShape.getBounds();
-				//g.setPaint(Color.ORANGE);
-				//g.draw(shapeBounds);
-			}
-
-			Predicate<Context<Graph<V, E>, E>> predicate = rc.getEdgeArrowPredicate();
-			boolean drawArrow = predicate.apply(context);
-			if (drawArrow) {
-
-				Stroke new_stroke = rc.getEdgeArrowStrokeTransformer().apply(e);
-				Stroke old_stroke = g.getStroke();
-				if (new_stroke != null) {
-					g.setStroke(new_stroke);
-				}
-
-				Shape vs2 = getVertexShapeForArrow(rc, layout, v2);	// end vertex
-
-				boolean arrowHit = vt.transform(vs2).intersects(deviceRectangle);
-				Paint arrowFillPaint = rc.getArrowFillPaintTransformer().apply(e);
-				Paint arrowDrawPaint = rc.getArrowDrawPaintTransformer().apply(e);
-
-				if (arrowHit) {
-
-					EdgeArrowRenderingSupport<V, E> arrowRenderingSupport =
-						new BasicEdgeArrowRenderingSupport<>();
-
-					AffineTransform at =
-						arrowRenderingSupport.getArrowTransform(rc, edgeShape, vs2);
-					if (at == null) {
-						return;
-					}
-
-					Shape arrow = rc.getEdgeArrowTransformer().apply(context);
-					arrow = scaleArrowForBetterVisibility(rc, arrow);
-					arrow = at.createTransformedShape(arrow);
-
-					if (isEmphasized) {
-						Stroke saveStroke = g.getStroke();
-						g.setPaint(arrowDrawPaint);
-						g.setStroke(empahsisStroke);
-						g.fill(arrow);
-						g.draw(arrow);
-						g.setStroke(saveStroke);
-					}
-
-					if (isActive) {
-						Stroke saveStroke = g.getStroke();
-						g.setPaint(hoveredColor);
-						g.setStroke(hoverStroke);
-						g.fill(arrow);
-						g.draw(arrow);
-						g.setStroke(saveStroke);
-					}
-
-					if (isSelected) {
-						Stroke saveStroke = g.getStroke();
-						g.setPaint(selectedColor);
-						g.setStroke(selectedStroke);
-						g.fill(arrow);
-						g.draw(arrow);
-						g.setStroke(saveStroke);
-					}
-
-					g.setPaint(arrowFillPaint);
-					g.fill(arrow);
-					g.setPaint(arrowDrawPaint);
-					g.draw(arrow);
-				}
-
-				// restore paint and stroke
-				if (new_stroke != null) {
-					g.setStroke(old_stroke);
-				}
-			}
-
-			// restore old paint
-			g.setPaint(oldPaint);
+		if (!edgeHit) {
+			return;
 		}
+
+		Paint oldPaint = g.getPaint();
+
+		// get Paints for filling and drawing
+		// (filling is done first so that drawing and label use the same Paint)		
+		BasicStroke hoverStroke = getHoveredPathStroke(e, scale);
+		BasicStroke focusedStroke = getFocusedPathStroke(e, scale);
+		BasicStroke selectedStroke = getSelectedStroke(e, scale);
+		BasicStroke selectedAccentStroke = getSelectedAccentStroke(e, scale);
+		BasicStroke empahsisStroke = getEmphasisStroke(e, scale);
+
+		//
+		// Fill
+		// 
+		Paint fillPaint = rc.getEdgeFillPaintTransformer().apply(e);
+		if (fillPaint != null) {
+			// basic shape
+			g.setPaint(fillPaint);
+			g.fill(edgeShape);
+
+			// Currently, graphs with complicated edge shapes (those with articulations) do not
+			// use a fill paint.  If we execute this code with articulated edges, the display 
+			// looks unusual.   So, for now, only 'fill' with these effects when the client has
+			// explicitly used a fill paint transformer.
+			if (isEmphasized) {
+				Stroke saveStroke = g.getStroke();
+				g.setPaint(fillPaint);
+				g.setStroke(empahsisStroke);
+				g.fill(edgeShape);
+				g.setStroke(saveStroke);
+			}
+
+			if (isInHoveredPath) {
+				Stroke saveStroke = g.getStroke();
+				g.setPaint(hoveredColor);
+				g.setStroke(hoverStroke);
+				g.fill(edgeShape);
+				g.setStroke(saveStroke);
+			}
+
+			if (isInFocusedPath) {
+				Stroke saveStroke = g.getStroke();
+				g.setPaint(focusedColor);
+				g.setStroke(focusedStroke);
+				g.fill(edgeShape);
+				g.setStroke(saveStroke);
+			}
+
+			if (isSelected) {
+				Stroke saveStroke = g.getStroke();
+				g.setPaint(selectedColor);
+				g.setStroke(selectedStroke);
+				g.fill(edgeShape);
+				g.setStroke(saveStroke);
+			}
+		}
+
+		//
+		// Draw
+		//
+		Paint drawPaint = rc.getEdgeDrawPaintTransformer().apply(e);
+		if (drawPaint != null) {
+			// basic shape
+			g.setPaint(drawPaint);
+			g.draw(edgeShape);
+		}
+
+		if (isEmphasized) {
+			Stroke saveStroke = g.getStroke();
+			g.setPaint(drawPaint);
+			g.setStroke(empahsisStroke);
+			g.draw(edgeShape);
+			g.setStroke(saveStroke);
+		}
+
+		if (isInHoveredPath) {
+			Stroke saveStroke = g.getStroke();
+			g.setPaint(hoveredColor);
+			g.setStroke(hoverStroke);
+			g.draw(edgeShape);
+			g.setStroke(saveStroke);
+		}
+
+		if (isInFocusedPath) {
+			Stroke saveStroke = g.getStroke();
+			g.setPaint(focusedColor);
+			g.setStroke(focusedStroke);
+			g.draw(edgeShape);
+			g.setStroke(saveStroke);
+		}
+
+		if (isSelected) {
+			Stroke saveStroke = g.getStroke();
+
+			g.setPaint(selectedAccentColor);
+			g.setStroke(selectedAccentStroke);
+			g.draw(edgeShape);
+
+			g.setPaint(selectedColor);
+			g.setStroke(selectedStroke);
+			g.draw(edgeShape);
+			g.setStroke(saveStroke);
+		}
+
+		// debug - draw a box around the edge
+		//Rectangle shapeBounds = edgeShape.getBounds();
+		//g.setPaint(Color.ORANGE);
+		//g.draw(shapeBounds);
+
+		//
+		// Arrow Head
+		//
+		Predicate<Context<Graph<V, E>, E>> predicate = rc.getEdgeArrowPredicate();
+		boolean drawArrow = predicate.apply(context);
+		if (!drawArrow) {
+			g.setPaint(oldPaint);
+			return;
+		}
+
+		Stroke arrowStroke = rc.getEdgeArrowStrokeTransformer().apply(e);
+		Stroke oldArrowStroke = g.getStroke();
+		if (arrowStroke != null) {
+			g.setStroke(arrowStroke);
+		}
+
+		Shape vs2 = getVertexShapeForArrow(rc, layout, v2);	// end vertex
+		boolean arrowHit = vt.transform(vs2).intersects(deviceRectangle);
+		if (!arrowHit) {
+			g.setPaint(oldPaint);
+			return;
+		}
+
+		EdgeArrowRenderingSupport<V, E> arrowRenderingSupport =
+			new BasicEdgeArrowRenderingSupport<>();
+		AffineTransform at = arrowRenderingSupport.getArrowTransform(rc, edgeShape, vs2);
+		if (at == null) {
+			g.setPaint(oldPaint);
+			g.setStroke(oldArrowStroke);
+			return;
+		}
+
+		Paint arrowFillPaint = rc.getArrowFillPaintTransformer().apply(e);
+		Paint arrowDrawPaint = rc.getArrowDrawPaintTransformer().apply(e);
+		Shape arrow = rc.getEdgeArrowTransformer().apply(context);
+		arrow = scaleArrowForBetterVisibility(rc, arrow);
+		arrow = at.createTransformedShape(arrow);
+
+		// basic shape
+		g.setPaint(arrowFillPaint);
+		g.fill(arrow);
+		g.setPaint(arrowDrawPaint);
+		g.draw(arrow);
+
+		if (isEmphasized) {
+			Stroke saveStroke = g.getStroke();
+			g.setPaint(arrowDrawPaint);
+			g.setStroke(empahsisStroke);
+			g.fill(arrow);
+			g.draw(arrow);
+			g.setStroke(saveStroke);
+		}
+
+		if (isInHoveredPath) {
+			Stroke saveStroke = g.getStroke();
+			g.setPaint(hoveredColor);
+			g.setStroke(hoverStroke);
+			g.fill(arrow);
+			g.draw(arrow);
+			g.setStroke(saveStroke);
+		}
+
+		if (isInFocusedPath) {
+			Stroke saveStroke = g.getStroke();
+			g.setPaint(focusedColor);
+			g.setStroke(focusedStroke);
+			g.draw(edgeShape);
+			g.setStroke(saveStroke);
+		}
+
+		if (isSelected) {
+			Stroke saveStroke = g.getStroke();
+			g.setPaint(selectedColor);
+			g.setStroke(selectedStroke);
+			g.fill(arrow);
+			g.draw(arrow);
+			g.setStroke(saveStroke);
+		}
+
+		g.setStroke(oldArrowStroke);
+		g.setPaint(oldPaint);
 	}
 
 	protected Shape getVertexShapeForArrow(RenderContext<V, E> rc, Layout<V, E> layout, V v) {
@@ -343,10 +407,10 @@ public abstract class VisualEdgeRenderer<V extends VisualVertex, E extends Visua
 	 * @param rc the render context for the graph
 	 * @param graph the graph
 	 * @param e the edge to shape
-	 * @param x1 the start vertex point x
-	 * @param y1 the start vertex point y
-	 * @param x2 the end vertex point x
-	 * @param y2 the end vertex point y
+	 * @param x1 the start vertex point x; layout space
+	 * @param y1 the start vertex point y; layout space
+	 * @param x2 the end vertex point x; layout space
+	 * @param y2 the end vertex point y; layout space
 	 * @param isLoop true if the start == end, which is a self-loop
 	 * @param vertexShape the vertex shape (used in the case of a loop to draw a circle from the 
 	 *              shape to itself)
@@ -355,14 +419,24 @@ public abstract class VisualEdgeRenderer<V extends VisualVertex, E extends Visua
 	public abstract Shape getEdgeShape(RenderContext<V, E> rc, Graph<V, E> graph, E e, float x1,
 			float y1, float x2, float y2, boolean isLoop, Shape vertexShape);
 
-	private BasicStroke getHoveredStroke(E e, float scale) {
-		float width = HOVERED_STROKE_WIDTH / (float) Math.pow(scale, .80);
-		return new BasicStroke(width, BasicStroke.CAP_ROUND, BasicStroke.JOIN_BEVEL, 0f,
+	private BasicStroke getHoveredPathStroke(E e, float scale) {
+		float width = HOVERED_PATH_STROKE_WIDTH / (float) Math.pow(scale, .80);
+		return new BasicStroke(width, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 0f,
 			new float[] { width * 1, width * 2 }, width * 3 * dashingPatternOffset);
+	}
+
+	private BasicStroke getFocusedPathStroke(E e, float scale) {
+		float width = FOCUSED_PATH_STROKE_WIDTH / (float) Math.pow(scale, .80);
+		return new BasicStroke(width);
 	}
 
 	private BasicStroke getSelectedStroke(E e, float scale) {
 		float width = SELECTED_STROKE_WIDTH / (float) Math.pow(scale, .80);
+		return new BasicStroke(width);
+	}
+
+	private BasicStroke getSelectedAccentStroke(E e, float scale) {
+		float width = (SELECTED_STROKE_WIDTH + 2) / (float) Math.pow(scale, .80);
 		return new BasicStroke(width);
 	}
 

@@ -22,7 +22,6 @@ import java.util.*;
 
 import org.junit.*;
 
-import docking.ActionContext;
 import docking.action.DockingActionIf;
 import ghidra.app.plugin.core.programtree.ProgramTreePlugin;
 import ghidra.app.plugin.core.programtree.ViewProviderService;
@@ -113,7 +112,8 @@ public class ModuleSortPluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 		Object context = vps.getActivePopupObject(null);
 		for (DockingActionIf action : actions) {
-			assertTrue(action.isAddToPopup(new ActionContext(null, context)));
+
+			assertTrue(action.isAddToPopup(vps.getActionContext(null)));
 		}
 
 		gps = new GroupPath[1];
@@ -122,7 +122,7 @@ public class ModuleSortPluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 		context = vps.getActivePopupObject(null);
 		for (DockingActionIf action : actions) {
-			assertTrue(!action.isAddToPopup(new ActionContext(null, context)));
+			assertTrue(!action.isAddToPopup(vps.getActionContext(null)));
 		}
 	}
 
@@ -159,11 +159,10 @@ public class ModuleSortPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		ViewManagerService vmService = tool.getService(ViewManagerService.class);
 		ViewProviderService vps = vmService.getCurrentViewProvider();
 
-		Object context = vps.getActivePopupObject(null);
-
 		for (DockingActionIf action : actions) {
 			if (action.getName().indexOf("Name") > 0) {
-				action.actionPerformed(new ActionContext(null, context));
+
+				action.actionPerformed(vps.getActionContext(null));
 				break;
 			}
 		}
@@ -205,7 +204,7 @@ public class ModuleSortPluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 		for (DockingActionIf action : actions) {
 			if (action.getName().indexOf("Address") > 0) {
-				action.actionPerformed(new ActionContext(null, context));
+				action.actionPerformed(vps.getActionContext(null));
 				break;
 			}
 		}
@@ -232,7 +231,7 @@ public class ModuleSortPluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 		Object context = vps.getActivePopupObject(null);
 		for (DockingActionIf action : actions) {
-			assertTrue(!action.isAddToPopup(new ActionContext(null, context)));
+			assertTrue(!action.isAddToPopup(vps.getActionContext(null)));
 		}
 	}
 

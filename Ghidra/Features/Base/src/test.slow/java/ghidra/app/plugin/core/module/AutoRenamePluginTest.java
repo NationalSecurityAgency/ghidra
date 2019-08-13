@@ -109,21 +109,21 @@ public class AutoRenamePluginTest extends AbstractGhidraHeadedIntegrationTest {
 		ViewProviderService vps = vmService.getCurrentViewProvider();
 
 		Object context = vps.getActivePopupObject(null);
-		assertTrue(!renameAction.isEnabledForContext(new ActionContext(null, context)));
-		assertTrue(!labelAction.isEnabledForContext(new ActionContext(null, context)));
+
+		assertTrue(!renameAction.isEnabledForContext(createContext(context)));
+		assertTrue(!labelAction.isEnabledForContext(createContext(context)));
 
 		gps = new GroupPath[1];
 		gps[0] = new GroupPath(new String[] { root.getName(), "DLLs", "USER32.DLL" });
 		setSelection(gps);
 
 		context = vps.getActivePopupObject(null);
-		assertTrue(renameAction.isEnabledForContext(new ActionContext(null, context)));
-		assertTrue(!labelAction.isEnabledForContext(new ActionContext(null, context)));
+		assertTrue(renameAction.isEnabledForContext(createContext(context)));
+		assertTrue(!labelAction.isEnabledForContext(createContext(context)));
 
 		// fire Label program location
 		Address addr = getAddr(0x10033f6);
-		LabelFieldLocation loc =
-			new LabelFieldLocation(program, addr, "SUB_010033f6");
+		LabelFieldLocation loc = new LabelFieldLocation(program, addr, "SUB_010033f6");
 		tool.firePluginEvent(new ProgramLocationPluginEvent("test", loc, program));
 
 		ActionContext actionContext = cb.getProvider().getActionContext(null);
@@ -147,7 +147,7 @@ public class AutoRenamePluginTest extends AbstractGhidraHeadedIntegrationTest {
 		ViewManagerService vmService = tool.getService(ViewManagerService.class);
 		ViewProviderService vps = vmService.getCurrentViewProvider();
 		Object context = vps.getActivePopupObject(null);
-		performAction(renameAction, new ActionContext(null, context), true);
+		performAction(renameAction, createContext(context), true);
 		program.flushEvents();
 
 		assertNotNull(program.getListing().getFragment("Main Tree", s.getName()));
@@ -166,12 +166,8 @@ public class AutoRenamePluginTest extends AbstractGhidraHeadedIntegrationTest {
 			new LabelFieldLocation(program, addr, null, "SUB_010033f6", null, 0, 0);
 		cb.goTo(loc);
 
-		SwingUtilities.invokeAndWait(new Runnable() {
-			@Override
-			public void run() {
-				labelAction.actionPerformed(cb.getProvider().getActionContext(null));
-			}
-		});
+		SwingUtilities.invokeAndWait(
+			() -> labelAction.actionPerformed(cb.getProvider().getActionContext(null)));
 		program.flushEvents();
 		assertNull(program.getListing().getFragment("SUB_010033f6", origName));
 		assertEquals("SUB_010033f6", frag.getName());
@@ -182,22 +178,12 @@ public class AutoRenamePluginTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	private void setViewToMainTree() {
-		runSwing(new Runnable() {
-			@Override
-			public void run() {
-				service.setViewedTree("Main Tree");
-			}
-		});
+		runSwing(() -> service.setViewedTree("Main Tree"));
 	}
 
 	private void setSelection(final GroupPath[] gps) {
 
-		runSwing(new Runnable() {
-			@Override
-			public void run() {
-				service.setGroupSelection(gps);
-			}
-		});
+		runSwing(() -> service.setGroupSelection(gps));
 	}
 
 }

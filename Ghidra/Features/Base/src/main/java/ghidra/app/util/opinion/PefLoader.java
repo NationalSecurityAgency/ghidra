@@ -33,6 +33,7 @@ import ghidra.program.model.listing.Data;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.model.symbol.*;
+import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
 public class PefLoader extends AbstractLibrarySupportLoader {
@@ -68,9 +69,10 @@ public class PefLoader extends AbstractLibrarySupportLoader {
 
 	@Override
 	public void load(ByteProvider provider, LoadSpec loadSpec, List<Option> options,
-			Program program, TaskMonitor monitor, MessageLog log) throws IOException {
+			Program program, TaskMonitor monitor, MessageLog log)
+			throws IOException, CancelledException {
 
-		FileBytes fileBytes = MemoryBlockUtils.createFileBytes(program, provider);
+		FileBytes fileBytes = MemoryBlockUtils.createFileBytes(program, provider, monitor);
 
 		ImportStateCache importState = null;
 		try {
@@ -154,8 +156,8 @@ public class PefLoader extends AbstractLibrarySupportLoader {
 			}
 
 			if (mainSection.getSectionKind() == SectionKind.PackedData ||
-					mainSection.getSectionKind() == SectionKind.UnpackedData ||
-					mainSection.getSectionKind() == SectionKind.ExecutableData) {
+				mainSection.getSectionKind() == SectionKind.UnpackedData ||
+				mainSection.getSectionKind() == SectionKind.ExecutableData) {
 
 				CreateDataCmd cmd = new CreateDataCmd(mainAddress, new PointerDataType());
 				cmd.applyTo(program);
@@ -258,12 +260,13 @@ public class PefLoader extends AbstractLibrarySupportLoader {
 				}
 
 				if (symbolIndex % 100 == 0) {
-					monitor.setMessage("Processing import " + symbolIndex + " of " + symbols.size());
+					monitor.setMessage(
+						"Processing import " + symbolIndex + " of " + symbols.size());
 				}
 				++symbolIndex;
 
 				String symbolName =
-						SymbolUtilities.replaceInvalidChars(symbols.get(i).getName(), true);
+					SymbolUtilities.replaceInvalidChars(symbols.get(i).getName(), true);
 
 				boolean success = importState.createLibrarySymbol(library, symbolName, start);
 				if (!success) {
@@ -291,8 +294,8 @@ public class PefLoader extends AbstractLibrarySupportLoader {
 	private void addExternalReference(Program program, Address start, String libraryName,
 			String symbolName, MessageLog log) {
 		try {
-			program.getReferenceManager().addExternalReference(start, libraryName, symbolName,
-				null, SourceType.IMPORTED, 0, RefType.DATA);
+			program.getReferenceManager().addExternalReference(start, libraryName, symbolName, null,
+				SourceType.IMPORTED, 0, RefType.DATA);
 		}
 		catch (Exception e) {
 			log.appendMsg(e.getMessage());
@@ -324,7 +327,7 @@ public class PefLoader extends AbstractLibrarySupportLoader {
 				return;
 			}
 			RelocationState state =
-					new RelocationState(header, relocationHeader, program, importState);
+				new RelocationState(header, relocationHeader, program, importState);
 			List<Relocation> relocations = relocationHeader.getRelocations();
 			int relocationIndex = 0;
 			for (Relocation relocation : relocations) {
@@ -332,8 +335,8 @@ public class PefLoader extends AbstractLibrarySupportLoader {
 					return;
 				}
 				if (relocationIndex % 100 == 0) {
-					monitor.setMessage("Processing relocation " + relocationIndex + " of " +
-							relocations.size());
+					monitor.setMessage(
+						"Processing relocation " + relocationIndex + " of " + relocations.size());
 				}
 				++relocationIndex;
 
@@ -362,7 +365,7 @@ public class PefLoader extends AbstractLibrarySupportLoader {
 				MemoryBlock block = importState.getMemoryBlockForSection(section);
 				Address symbolAddr = block.getStart().add(symbol.getSymbolValue());
 				AddUniqueLabelCmd cmd =
-						new AddUniqueLabelCmd(symbolAddr, symbol.getName(), null, SourceType.IMPORTED);
+					new AddUniqueLabelCmd(symbolAddr, symbol.getName(), null, SourceType.IMPORTED);
 				if (!cmd.applyTo(program)) {
 					log.appendMsg(cmd.getStatusMsg());
 				}
@@ -372,7 +375,7 @@ public class PefLoader extends AbstractLibrarySupportLoader {
 
 	private void processSections(ContainerHeader header, Program program, FileBytes fileBytes,
 			ImportStateCache importState, MessageLog log, TaskMonitor monitor)
-					throws AddressOverflowException, IOException {
+			throws AddressOverflowException, IOException {
 
 		List<SectionHeader> sections = header.getSections();
 		for (SectionHeader section : sections) {

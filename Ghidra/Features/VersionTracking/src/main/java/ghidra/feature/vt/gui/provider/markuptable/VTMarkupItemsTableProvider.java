@@ -493,7 +493,7 @@ public class VTMarkupItemsTableProvider extends ComponentProviderAdapter
 						new VTListingContext(this, vtListingNavigator);
 					vtListingContext.setCodeComparisonPanel(dualListingPanel);
 					vtListingContext.setContextObject(dualListingPanel);
-					vtListingContext.setSource(source);
+					vtListingContext.setSourceObject(source);
 					return vtListingContext;
 				}
 			}

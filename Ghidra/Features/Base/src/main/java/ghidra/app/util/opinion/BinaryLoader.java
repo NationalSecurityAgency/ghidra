@@ -298,7 +298,7 @@ public class BinaryLoader extends AbstractProgramLoader {
 	@Override
 	protected boolean loadProgramInto(ByteProvider provider, LoadSpec loadSpec,
 			List<Option> options, MessageLog log, Program prog, TaskMonitor monitor)
-			throws IOException {
+			throws IOException, CancelledException {
 		long length = getLength(options);
 		//File file = provider.getFile();
 		long fileOffset = getFileOffset(options);
@@ -312,7 +312,8 @@ public class BinaryLoader extends AbstractProgramLoader {
 
 		length = clipToMemorySpace(length, log, prog);
 
-		FileBytes fileBytes = MemoryBlockUtils.createFileBytes(prog, provider, fileOffset, length);
+		FileBytes fileBytes =
+			MemoryBlockUtils.createFileBytes(prog, provider, fileOffset, length, monitor);
 		try {
 			AddressSpace space = prog.getAddressFactory().getDefaultAddressSpace();
 			if (baseAddr == null) {

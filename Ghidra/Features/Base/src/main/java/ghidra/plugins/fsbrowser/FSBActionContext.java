@@ -35,7 +35,7 @@ public class FSBActionContext extends ActionContext {
 	 * @param gTree {@link FileSystemBrowserPlugin} provider tree.
 	 */
 	public FSBActionContext(ComponentProvider provider, Object contextObject, GTree gTree) {
-		super(provider, contextObject);
+		super(provider, contextObject, gTree);
 		this.gTree = gTree;
 	}
 

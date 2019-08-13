@@ -114,8 +114,8 @@ class MyTestMemory extends AddressSet implements Memory {
 	}
 
 	@Override
-	public FileBytes createFileBytes(String filename, long offset, long size, InputStream is)
-			throws IOException {
+	public FileBytes createFileBytes(String filename, long offset, long size, InputStream is,
+			TaskMonitor monitor) throws IOException {
 		throw new UnsupportedOperationException();
 	}
 

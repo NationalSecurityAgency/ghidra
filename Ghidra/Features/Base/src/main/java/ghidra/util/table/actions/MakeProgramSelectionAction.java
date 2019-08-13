@@ -15,6 +15,8 @@
  */
 package ghidra.util.table.actions;
 
+import java.awt.Component;
+
 import javax.swing.KeyStroke;
 
 import docking.ActionContext;
@@ -36,10 +38,9 @@ import resources.Icons;
  */
 public class MakeProgramSelectionAction extends DockingAction {
 
-	private GhidraTable table;
-
 	// we will have one of these fields be non-null after construction
 	private Plugin plugin;
+	private GhidraTable table;
 
 	/**
 	 * Special constructor for clients that do not have a plugin.  Clients using this 
@@ -92,8 +93,8 @@ public class MakeProgramSelectionAction extends DockingAction {
 	@Override
 	public boolean isEnabledForContext(ActionContext context) {
 
-		Object contextObject = context.getContextObject();
-		if (contextObject != table) {
+		Component component = context.getSourceComponent();
+		if (component != table) {
 			return false;
 		}
 

@@ -18,7 +18,6 @@ package ghidra.program.database.mem;
 import static org.junit.Assert.*;
 
 import java.io.ByteArrayInputStream;
-import java.io.IOException;
 import java.util.List;
 
 import org.junit.*;
@@ -282,7 +281,8 @@ public class MemBlockDBTest extends AbstractGenericTest {
 	@Test
 	public void testCreateFileBytesBlockOutSideRange() throws Exception {
 		byte[] bytes = new byte[256];
-		FileBytes fileBytes = mem.createFileBytes("test", 0, 100, new ByteArrayInputStream(bytes));
+		FileBytes fileBytes =
+			mem.createFileBytes("test", 0, 100, new ByteArrayInputStream(bytes), TaskMonitor.DUMMY);
 		try {
 			mem.createInitializedBlock("test", addr(100), fileBytes, 10, 100, false);
 			fail(
@@ -378,7 +378,6 @@ public class MemBlockDBTest extends AbstractGenericTest {
 			mem.getByte(addr(i));
 		}
 	}
-
 
 	@Test
 	public void testJoinFileBytesBlockAndBufferBlock() throws Exception {
@@ -633,6 +632,17 @@ public class MemBlockDBTest extends AbstractGenericTest {
 	}
 
 	@Test
+	public void testSetBytesInSubBlocks() throws Exception {
+		FileBytes fileBytes = createFileBytes();
+		MemoryBlock block1 = createFileBytesBlock(fileBytes, addr(0), 0, 10);
+		MemoryBlock block2 = createFileBytesBlock(fileBytes, addr(10), 20, 10);
+		mem.join(block1, block2);
+		assertEquals(20, mem.getByte(addr(10)));
+		mem.setByte(addr(10), (byte) 0);
+		assertEquals(0, mem.getByte(addr(10)));
+	}
+
+	@Test
 	public void testBitMappedJoin() throws Exception {
 		FileBytes fileBytes = createFileBytes();
 		createFileBytesBlock(fileBytes, addr(0), 0, 50);
@@ -694,7 +704,6 @@ public class MemBlockDBTest extends AbstractGenericTest {
 
 		assertEquals(2, ranges.getRangeCount());  // we have two sublocks so two distinct ranges
 		assertEquals(10, ranges.get(0).getSize() + ranges.get(1).getSize());
-
 
 		ByteSourceRange range = ranges.get(0);
 		assertEquals(10, range.getStart().getOffset());
@@ -857,7 +866,7 @@ public class MemBlockDBTest extends AbstractGenericTest {
 		assertEquals(0, range.getOffset());
 	}
 
-	@Test 
+	@Test
 	public void testAddressSourceInfoForFileBytesBlock() throws Exception {
 		FileBytes fileBytes = createFileBytes();
 		mem.createInitializedBlock("block", addr(100), fileBytes, 10, 50, false);
@@ -919,12 +928,13 @@ public class MemBlockDBTest extends AbstractGenericTest {
 			false);
 	}
 
-	private FileBytes createFileBytes() throws IOException {
+	private FileBytes createFileBytes() throws Exception {
 		byte[] bytes = new byte[256];
 		for (int i = 0; i < 256; i++) {
 			bytes[i] = (byte) i;
 		}
-		FileBytes fileBytes = mem.createFileBytes("test", 0, 100, new ByteArrayInputStream(bytes));
+		FileBytes fileBytes =
+			mem.createFileBytes("test", 0, 100, new ByteArrayInputStream(bytes), TaskMonitor.DUMMY);
 		return fileBytes;
 	}
 
