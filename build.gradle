@@ -53,6 +53,13 @@ if (file("flatRepo").isDirectory()) {
 		}
 	}
 }
+else {
+	File f = new File("ghidra.repos.config");
+	if (!f.exists()) {
+		throw new GradleException("\n\nUnable to find the local maven repo." +  
+			"  Ensure you have created the ${f.getName()} file.\n\n");
+	}
+}
 
 /****************************************************************************
  * Create a set containing all the platforms we need when building native
