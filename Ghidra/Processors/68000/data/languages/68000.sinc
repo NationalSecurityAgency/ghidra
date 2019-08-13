@@ -294,6 +294,7 @@ attach variables [ fsrc fdst fdcos fdsin ]                     [ FP0 FP1 FP2 FP3
 
 @ifdef COLDFIRE
 attach variables [ reg03y ]    [ D0 D1 D2 D3 D4 D5 D6 D7 A0 A1 A2 A3 A4 A5 A6 SP ];
+attach values d911 [ -1 1 2 3 4 5 6 7 ];
 @endif
 
 attach values scale [ 1 2 4 8 ];
@@ -1109,12 +1110,11 @@ addrd32: d32			is d32								{ export *[ram]:4 d32; }
 
 @ifdef COLDFIRE
 
-d3bits: d911			is d911						{ export *[const]:1 d911; }
 :mvs.b: eab, reg9dn		is (op=0x7 & op68=4 & reg9dn )... &eab		{ reg9dn = sext(eab); }
 :mvs.w: eaw, reg9dn		is (op=0x7 & op68=5 & reg9dn )... &eaw		{ reg9dn = sext(eaw); }
 :mvz.b: eab, reg9dn		is (op=0x7 & op68=6 & reg9dn )... &eab		{ reg9dn = zext(eab); }
 :mvz.w: eaw, reg9dn		is (op=0x7 & op68=7 & reg9dn )... &eaw		{ reg9dn = zext(eaw); }
-:mov3q "#"^d3bits, eal		is (op=0xa & op68=5 & d3bits )... &eal		{ eal = zext(d3bits); }
+:mov3q "#"^d911, eal	is (op=0xa & op68=5 & d911 )  ... &eal		{ eal = d911; }
 
 :sats.l regdn			is opbig=0x4c & op37=0x10 & regdn	{ if (VF == 0) goto inst_next; regdn = (zext(regdn == 0 ) * 0x80000000) + (zext(regdn != 0) * 0x7fffffff); VF=0; CF=0; }
 
