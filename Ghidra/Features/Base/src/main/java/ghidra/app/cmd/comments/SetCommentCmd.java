@@ -75,9 +75,8 @@ public class SetCommentCmd implements Command {
 	public boolean applyTo(DomainObject obj) {
 		CodeUnit cu = getCodeUnit((Program) obj);
 		if (cu == null) {
-			message =
-				"No Instruction or Data found for address " + address.toString() +
-					"  Is this address valid?";
+			message = "No Instruction or Data found for address " + address.toString() +
+				"  Is this address valid?";
 			return false;
 		}
 		if (commentChanged(cu.getComment(commentType), comment)) {
@@ -111,6 +110,23 @@ public class SetCommentCmd implements Command {
 	@Override
 	public String getStatusMsg() {
 		return message;
+	}
+
+	/**
+	 * Creates the specified comment of the specified type at address.  The current comment of
+	 * this commentType will be cleared.
+	 * 
+	 * @param program the program being analyzed
+	 * @param addr the address where data is created
+	 * @param comment the comment about the data
+	 * @param commentType the type of comment ({@link CodeUnit#PLATE_COMMENT}, 
+	 * {@link CodeUnit#PRE_COMMENT}, {@link CodeUnit#EOL_COMMENT}, {@link CodeUnit#POST_COMMENT},
+	 * {@link CodeUnit#REPEATABLE_COMMENT}) 
+	 */
+	public static void createComment(Program program, Address addr, String comment,
+			int commentType) {
+		SetCommentCmd commentCmd = new SetCommentCmd(addr, commentType, comment);
+		commentCmd.applyTo(program);
 	}
 
 }
