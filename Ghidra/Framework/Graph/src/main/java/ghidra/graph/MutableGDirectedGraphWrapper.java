@@ -102,7 +102,14 @@ public class MutableGDirectedGraphWrapper<V, E extends GEdge<V>> implements GDir
 	@SuppressWarnings("unchecked")
 	@Override
 	public void addEdge(E e) {
-		mutatedGraph.addEdge((DefaultGEdge<Object>) e);
+		if (e instanceof DefaultGEdge) {
+			mutatedGraph.addEdge((DefaultGEdge<Object>) e);
+			return;
+		}
+
+		V start = e.getStart();
+		V end = e.getEnd();
+		addDummyEdge(start, end);
 	}
 
 	@SuppressWarnings("unchecked")
