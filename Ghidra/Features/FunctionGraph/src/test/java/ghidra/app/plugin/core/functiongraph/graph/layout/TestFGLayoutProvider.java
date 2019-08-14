@@ -227,7 +227,8 @@ public class TestFGLayoutProvider extends FGLayoutProvider {
 					break;
 				default:
 					if (!(parent.v instanceof GroupedFunctionGraphVertex)) {
-						Msg.debug(this, "\n\n\tMore than 2 edges????: " + parent);
+						// this can happen if a test adds another edge to a test vertex
+						Msg.debug(this, "\n\n\tMore than 2 edges?: " + parent);
 					}
 
 			}
