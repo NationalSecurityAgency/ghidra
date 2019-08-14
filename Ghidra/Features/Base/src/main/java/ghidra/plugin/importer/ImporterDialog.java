@@ -346,10 +346,9 @@ public class ImporterDialog extends DialogComponentProvider {
 			String programPath = removeTrailingSlashes(getName());
 			DomainFolder importFolder = getOrCreateImportFolder(destinationFolder, programPath);
 			String programName = FilenameUtils.getName(programPath);
-			List<Option> localOptions = getOptions(loadSpec);
 			TaskLauncher.launchNonModal("Import File", monitor -> {
 				ImporterUtilities.importSingleFile(tool, programManager, fsrl, importFolder,
-					loadSpec, programName, localOptions, monitor);
+					loadSpec, programName, getOptions(loadSpec), monitor);
 			});
 			close();
 		}
@@ -404,24 +403,24 @@ public class ImporterDialog extends DialogComponentProvider {
 			AddressFactory addressFactory = selectedLanguage.getLanguage().getAddressFactory();
 			LoadSpec loadSpec = getSelectedLoadSpec(loader);
 			OptionValidator validator =
-				optionList -> loader.validateOptions(byteProvider, loadSpec, optionList);
+				optionList -> loader.validateOptions(byteProvider, loadSpec, optionList, null);
 
 			AddressFactoryService service = () -> addressFactory;
 
-			List<Option> defaultOptions = getOptions(loadSpec);
-			if (defaultOptions.isEmpty()) {
+			List<Option> currentOptions = getOptions(loadSpec);
+			if (currentOptions.isEmpty()) {
 				Msg.showInfo(this, null, "Options", "There are no options for this importer!");
 				return;
 			}
 
-			OptionsDialog optionsDialog = new OptionsDialog(defaultOptions, validator, service);
+			OptionsDialog optionsDialog = new OptionsDialog(currentOptions, validator, service);
 			optionsDialog.setHelpLocation(
 				new HelpLocation("ImporterPlugin", getAnchorForSelectedLoader(loader)));
 			tool.showDialog(optionsDialog);
 			if (!optionsDialog.wasCancelled()) {
 				options = optionsDialog.getOptions();
 			}
-
+			validateFormInput();
 		}
 		catch (LanguageNotFoundException e) {
 			Msg.showError(this, null, "Language Error",

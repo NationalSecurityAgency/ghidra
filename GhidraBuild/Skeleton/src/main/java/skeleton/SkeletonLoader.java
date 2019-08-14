@@ -73,11 +73,11 @@ public class SkeletonLoader extends AbstractLibrarySupportLoader {
 	}
 
 	@Override
-	public String validateOptions(ByteProvider provider, LoadSpec loadSpec, List<Option> options) {
+	public String validateOptions(ByteProvider provider, LoadSpec loadSpec, List<Option> options, Program program) {
 
 		// TODO: If this loader has custom options, validate them here.  Not all options require
 		// validation.
 
-		return super.validateOptions(provider, loadSpec, options);
+		return super.validateOptions(provider, loadSpec, options, program);
 	}
 }

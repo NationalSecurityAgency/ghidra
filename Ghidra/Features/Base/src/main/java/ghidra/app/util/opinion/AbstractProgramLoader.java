@@ -188,7 +188,7 @@ public abstract class AbstractProgramLoader implements Loader {
 	}
 
 	@Override
-	public String validateOptions(ByteProvider provider, LoadSpec loadSpec, List<Option> options) {
+	public String validateOptions(ByteProvider provider, LoadSpec loadSpec, List<Option> options, Program program) {
 		if (options != null) {
 			for (Option option : options) {
 				String name = option.getName();
