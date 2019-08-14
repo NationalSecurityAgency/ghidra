@@ -936,11 +936,11 @@ Reg8:   reg8        is reg8                              { export reg8; }
 Reg16:  reg16       is reg16                             { export reg16; }
 Reg32:  reg32       is reg32                             { export reg32; }
 Rmr8:   r8          is r8                                { export r8; }
-CRmr8:  r8          is r8 { export r8; }
+CRmr8:  r8          is r8                                { export r8; }
 Rmr16:  r16         is r16                               { export r16; }
-CRmr16: r16         is r16 { export r16; }
+CRmr16: r16         is r16                               { export r16; }
 Rmr32:  r32         is r32                               { export r32; }
-CRmr32: r32         is r32 { export r32; }
+CRmr32: r32         is r32                               { export r32; }
 Base:   base        is base                              { export base; }
 Index:  index       is index                             { export index; }
 XmmReg:   xmmreg    is xmmreg                            { export xmmreg; }
@@ -948,8 +948,8 @@ XmmReg1:  xmmreg1   is xmmreg1                           { export xmmreg1; }
 XmmReg2:  xmmreg2   is xmmreg2                           { export xmmreg2; }
 YmmReg1:  ymmreg1   is ymmreg1                           { export ymmreg1; }
 YmmReg2:  ymmreg2   is ymmreg2                           { export ymmreg2; }
-Xmm_vsib:  xmm_vsib       is xmm_vsib                             { export xmm_vsib; }
-Ymm_vsib:  ymm_vsib       is ymm_vsib                             { export ymm_vsib; }
+Xmm_vsib:  xmm_vsib       is xmm_vsib                    { export xmm_vsib; }
+Ymm_vsib:  ymm_vsib       is ymm_vsib                    { export ymm_vsib; }
 @endif
 
 # signed immediate value subconstructors
