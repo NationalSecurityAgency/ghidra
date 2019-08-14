@@ -728,11 +728,11 @@ void VarnodeSymbol::getFixedHandle(FixedHandle &hand,ParserWalker &walker) const
   hand.size = fix.size;
 }
 
-void VarnodeSymbol::collectLocalValues(set<uintb> &results) const
+void VarnodeSymbol::collectLocalValues(vector<uintb> &results) const
 
 {
   if (fix.space->getType() == IPTR_INTERNAL)
-    results.insert(fix.offset);
+    results.push_back(fix.offset);
 }
 
 void VarnodeSymbol::saveXml(ostream &s) const
@@ -1041,7 +1041,7 @@ void OperandSymbol::print(ostream &s,ParserWalker &walker) const
   walker.popOperand();
 }
 
-void OperandSymbol::collectLocalValues(set<uintb> &results) const
+void OperandSymbol::collectLocalValues(vector<uintb> &results) const
 
 {
   if (triple != (TripleSymbol *)0)
@@ -1556,7 +1556,7 @@ void Constructor::markSubtableOperands(vector<int4> &check) const
   }
 }
 
-void Constructor::collectLocalExports(set<uintb> &results) const
+void Constructor::collectLocalExports(vector<uintb> &results) const
 
 {
   if (templ == (ConstructTpl *)0) return;
@@ -1565,11 +1565,11 @@ void Constructor::collectLocalExports(set<uintb> &results) const
   if (handle->getSpace().isConstSpace()) return;	// Even if the value is dynamic, the pointed to value won't get used
   if (handle->getPtrSpace().getType() != ConstTpl::real) {
     if (handle->getTempSpace().isUniqueSpace())
-      results.insert(handle->getTempOffset().getReal());
+      results.push_back(handle->getTempOffset().getReal());
     return;
   }
   if (handle->getSpace().isUniqueSpace()) {
-    results.insert(handle->getPtrOffset().getReal());
+    results.push_back(handle->getPtrOffset().getReal());
     return;
   }
   if (handle->getSpace().getType() == ConstTpl::handle) {
@@ -1899,7 +1899,7 @@ SubtableSymbol::~SubtableSymbol(void)
     delete *iter;
 }
 
-void SubtableSymbol::collectLocalValues(set<uintb> &results) const
+void SubtableSymbol::collectLocalValues(vector<uintb> &results) const
 
 {
   for(int4 i=0;i<construct.size();++i)

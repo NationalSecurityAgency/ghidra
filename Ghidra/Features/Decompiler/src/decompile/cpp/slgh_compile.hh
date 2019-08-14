@@ -105,7 +105,6 @@ class ConsistencyChecker {
   int4 recoverSize(const ConstTpl &sizeconst,Constructor *ct);
   bool checkOpMisuse(OpTpl *op,Constructor *ct);
   bool sizeRestriction(OpTpl *op,Constructor *ct);
-  bool checkLocalExports(Constructor *ct);
   bool checkConstructorSection(Constructor *ct,ConstructTpl *cttpl);
   bool checkVarnodeTruncation(Constructor *ct,int4 slot,OpTpl *op,VarnodeTpl *vn,bool isbigendian);
   bool checkSectionTruncations(Constructor *ct,ConstructTpl *cttpl,bool isbigendian);
@@ -196,6 +195,7 @@ private:
   bool warnunnecessarypcode;	// True if we warn of unnecessary ZEXT or SEXT
   bool warndeadtemps;		// True if we warn of temporaries that are written but not read
   bool lenientconflicterrors;	// True if we ignore most pattern conflict errors
+  bool warnalllocalcollisions;	// True if local export collisions generate individual warnings
   bool warnallnops;		// True if pcode NOPs generate individual warnings
   vector<string> noplist;	// List of individual NOP warnings
   int4 errors;
@@ -204,6 +204,9 @@ private:
   void buildDecisionTrees(void);
   void buildPatterns(void);
   void checkConsistency(void);
+  static int4 findCollision(map<uintb,int4> &local2Operand,const vector<uintb> &locals,int operand);
+  bool checkLocalExports(Constructor *ct);
+  void checkLocalCollisions(void);
   void checkNops(void);
   string checkSymbols(SymbolScope *scope);
   void addSymbol(SleighSymbol *sym);
@@ -225,6 +228,7 @@ public:
   void setDeadTempWarning(bool val) { warndeadtemps = val; }
   void setEnforceLocalKeyWord(bool val) { pcode.setEnforceLocalKey(val); }
   void setLenientConflict(bool val) { lenientconflicterrors = val; }
+  void setLocalCollisionWarning(bool val) { warnalllocalcollisions = val; }
   void setAllNopWarning(bool val) { warnallnops = val; }
   void process(void);
 
