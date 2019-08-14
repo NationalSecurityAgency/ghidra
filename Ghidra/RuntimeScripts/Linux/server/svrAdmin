@@ -47,6 +47,6 @@ if [ -z "${OWNER}" -o "${OWNER}" = "$(whoami)" ]; then
 	VMARGS="-DUserAdmin.invocation=$(basename "${SCRIPT_FILE}") -DUserAdmin.config=\"${CONFIG}\""
 	"${SCRIPT_DIR}"/../support/launch.sh fg svrAdmin "${MAXMEM}" "$VMARGS" ghidra.server.ServerAdmin "$@"
 else
- 	echo "Running svrAdmin with $SUDO as ${OWNER} ..."
- 	$SUDO -u $OWNER "$0" "${ARGS[@]}"
+	echo "Running svrAdmin with $SUDO as ${OWNER} ..."
+	$SUDO -u $OWNER "$0" "$@"
 fi
