@@ -346,9 +346,10 @@ public class ImporterDialog extends DialogComponentProvider {
 			String programPath = removeTrailingSlashes(getName());
 			DomainFolder importFolder = getOrCreateImportFolder(destinationFolder, programPath);
 			String programName = FilenameUtils.getName(programPath);
+			options = getOptions(loadSpec);  // make sure you get the options now, before the ByteProvider is closed.
 			TaskLauncher.launchNonModal("Import File", monitor -> {
 				ImporterUtilities.importSingleFile(tool, programManager, fsrl, importFolder,
-					loadSpec, programName, getOptions(loadSpec), monitor);
+					loadSpec, programName, options, monitor);
 			});
 			close();
 		}
