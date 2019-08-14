@@ -50,6 +50,7 @@ import ghidra.program.model.mem.*;
 import ghidra.program.model.symbol.*;
 import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.program.util.*;
+import ghidra.util.Msg;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
 
@@ -729,7 +730,11 @@ public abstract class AbstractListingMergeManagerTest extends AbstractMergeTest
 		Component mergePanel = getMergePanel(conflictPanelClass);
 		assertNotNull("Timed-out waiting for merge panel", mergePanel);
 		Window window = SwingUtilities.getWindowAncestor(mergePanel);
-		assertNotNull("Timed-out waiting for merge panel", mergePanel);
+		if (window == null) {
+			Msg.debug(this, "Unable to find conflict panel window for '" + conflictTitle + "'");
+			printOpenWindows();
+		}
+		assertNotNull("Timed-out waiting for merge panel", window);
 		JComponent comp = findComponent(window, conflictPanelClass);
 		assertNotNull(comp);
 		Border border = comp.getBorder();
