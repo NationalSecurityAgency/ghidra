@@ -788,6 +788,35 @@ void ConsistencyChecker::printOpError(OpTpl *op,Constructor *ct,int4 err1,int4 e
   cerr << " operator" << endl << "  " << msg << endl;
 }
 
+bool ConsistencyChecker::checkLocalExports(Constructor *ct)
+
+{
+  if (ct->getTempl() == (ConstructTpl *)0)
+    return true;		// No template, collisions impossible
+  if (ct->getTempl()->buildOnly())
+    return true;		// Operand exports aren't manipulated, so no collision is possible
+  if (ct->getNumOperands() < 2)
+    return true;		// Collision can only happen with multiple operands
+  bool noCollisions = true;
+  set<uintb> collect;
+  ct->getOperand(0)->collectLocalValues(collect);
+  for(int4 i=1;i<ct->getNumOperands();++i) {
+    set<uintb> newCollect;
+    ct->getOperand(i)->collectLocalValues(newCollect);
+    if (newCollect.empty()) continue;
+    int4 newSize = collect.size() + newCollect.size();
+    collect.insert(newCollect.begin(),newCollect.end());
+    if (newSize != collect.size()) {
+      noCollisions = false;
+      cerr << "Possible local export collision with symbol ";
+      cerr << ct->getOperand(i)->getName();
+      cerr << " in constructor starting at line " << dec << ct->getLineno() << endl;
+      break;	// Don't continue
+    }
+  }
+  return noCollisions;
+}
+
 bool ConsistencyChecker::checkConstructorSection(Constructor *ct,ConstructTpl *cttpl)
 
 { // Check all the OpTpl s within the given section for consistency, return true if all tests pass
@@ -866,6 +895,7 @@ bool ConsistencyChecker::checkSubtable(SubtableSymbol *sym)
 
   for(int4 i=0;i<numconstruct;++i) {
     ct = sym->getConstructor(i);
+    checkLocalExports(ct);
     if (!checkConstructorSection(ct,ct->getTempl()))
       testresult = false;
     int4 numsection = ct->getNumSections();

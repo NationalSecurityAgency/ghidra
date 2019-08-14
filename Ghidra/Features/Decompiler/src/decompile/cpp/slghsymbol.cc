@@ -728,6 +728,13 @@ void VarnodeSymbol::getFixedHandle(FixedHandle &hand,ParserWalker &walker) const
   hand.size = fix.size;
 }
 
+void VarnodeSymbol::collectLocalValues(set<uintb> &results) const
+
+{
+  if (fix.space->getType() == IPTR_INTERNAL)
+    results.insert(fix.offset);
+}
+
 void VarnodeSymbol::saveXml(ostream &s) const
 
 {
@@ -1032,6 +1039,13 @@ void OperandSymbol::print(ostream &s,ParserWalker &walker) const
       s << "-0x" << hex << -val;
   }
   walker.popOperand();
+}
+
+void OperandSymbol::collectLocalValues(set<uintb> &results) const
+
+{
+  if (triple != (TripleSymbol *)0)
+    triple->collectLocalValues(results);
 }
 
 void OperandSymbol::saveXml(ostream &s) const
@@ -1542,6 +1556,29 @@ void Constructor::markSubtableOperands(vector<int4> &check) const
   }
 }
 
+void Constructor::collectLocalExports(set<uintb> &results) const
+
+{
+  if (templ == (ConstructTpl *)0) return;
+  HandleTpl *handle = templ->getResult();
+  if (handle == (HandleTpl *)0) return;
+  if (handle->getSpace().isConstSpace()) return;	// Even if the value is dynamic, the pointed to value won't get used
+  if (handle->getPtrSpace().getType() != ConstTpl::real) {
+    if (handle->getTempSpace().isUniqueSpace())
+      results.insert(handle->getTempOffset().getReal());
+    return;
+  }
+  if (handle->getSpace().isUniqueSpace()) {
+    results.insert(handle->getPtrOffset().getReal());
+    return;
+  }
+  if (handle->getSpace().getType() == ConstTpl::handle) {
+    int4 handleIndex = handle->getSpace().getHandleIndex();
+    OperandSymbol *opSym = getOperand(handleIndex);
+    opSym->collectLocalValues(results);
+  }
+}
+
 bool Constructor::isRecursive(void) const
 
 { // Does this constructor cause recursion with its table
@@ -1860,6 +1897,13 @@ SubtableSymbol::~SubtableSymbol(void)
   vector<Constructor *>::iterator iter;
   for(iter=construct.begin();iter!=construct.end();++iter)
     delete *iter;
+}
+
+void SubtableSymbol::collectLocalValues(set<uintb> &results) const
+
+{
+  for(int4 i=0;i<construct.size();++i)
+    construct[i]->collectLocalExports(results);
 }
 
 void SubtableSymbol::saveXml(ostream &s) const

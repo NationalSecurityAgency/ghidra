@@ -105,6 +105,7 @@ class ConsistencyChecker {
   int4 recoverSize(const ConstTpl &sizeconst,Constructor *ct);
   bool checkOpMisuse(OpTpl *op,Constructor *ct);
   bool sizeRestriction(OpTpl *op,Constructor *ct);
+  bool checkLocalExports(Constructor *ct);
   bool checkConstructorSection(Constructor *ct,ConstructTpl *cttpl);
   bool checkVarnodeTruncation(Constructor *ct,int4 slot,OpTpl *op,VarnodeTpl *vn,bool isbigendian);
   bool checkSectionTruncations(Constructor *ct,ConstructTpl *cttpl,bool isbigendian);
