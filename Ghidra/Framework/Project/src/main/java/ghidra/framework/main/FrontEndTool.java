@@ -40,6 +40,7 @@ import docking.help.Help;
 import docking.help.HelpService;
 import docking.tool.ToolConstants;
 import docking.util.AnimationUtils;
+import docking.util.image.ToolIconURL;
 import docking.widgets.OptionDialog;
 import generic.jar.ResourceFile;
 import generic.util.WindowUtilities;
