@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +15,13 @@
  */
 package ghidra.pcodeCPort.slghsymbol;
 
+import java.io.PrintStream;
+import java.util.ArrayList;
+
 import ghidra.pcodeCPort.context.FixedHandle;
 import ghidra.pcodeCPort.context.ParserWalker;
 import ghidra.pcodeCPort.slghpatexpress.PatternExpression;
 import ghidra.sleigh.grammar.Location;
-
-import java.io.PrintStream;
 
 // This is the central sleigh object
 public abstract class TripleSymbol extends SleighSymbol {
@@ -43,6 +43,10 @@ public abstract class TripleSymbol extends SleighSymbol {
 	} // Size out of context
 
 	public abstract void print(PrintStream s, ParserWalker pos);
+
+	public void collectLocalValues(ArrayList<Long> results) {
+		// By default, assume symbol has no local exports
+	}
 
 	public Constructor resolve(ParserWalker pos) {
 		return null;

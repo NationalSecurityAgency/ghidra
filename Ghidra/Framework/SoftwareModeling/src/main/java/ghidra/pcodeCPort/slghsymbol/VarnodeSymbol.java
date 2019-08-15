@@ -16,6 +16,7 @@
 package ghidra.pcodeCPort.slghsymbol;
 
 import java.io.PrintStream;
+import java.util.ArrayList;
 
 import org.jdom.Element;
 
@@ -27,6 +28,7 @@ import ghidra.pcodeCPort.semantics.ConstTpl;
 import ghidra.pcodeCPort.semantics.VarnodeTpl;
 import ghidra.pcodeCPort.sleighbase.SleighBase;
 import ghidra.pcodeCPort.space.AddrSpace;
+import ghidra.pcodeCPort.space.spacetype;
 import ghidra.pcodeCPort.utils.XmlUtils;
 import ghidra.sleigh.grammar.Location;
 
@@ -55,6 +57,13 @@ public class VarnodeSymbol extends PatternlessSymbol {
 	@Override
 	public void print(PrintStream s, ParserWalker pos) {
 		s.append(getName());
+	}
+
+	@Override
+	public void collectLocalValues(ArrayList<Long> results) {
+		if (fix.space.getType() == spacetype.IPTR_INTERNAL) {
+			results.add(fix.offset);
+		}
 	}
 
 	@Override
