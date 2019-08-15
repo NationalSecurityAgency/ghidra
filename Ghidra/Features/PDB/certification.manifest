@@ -2,6 +2,14 @@
 Module.manifest||GHIDRA||||END|
 build.gradle||GHIDRA||||END|
 src/global/docs/README_PDB.html||GHIDRA||||END|
+src/main/help/help/TOC_Source.xml||GHIDRA||||END|
+src/main/help/help/topics/Pdb/PDB.htm||GHIDRA||||END|
+src/main/help/help/topics/Pdb/download_pdb_file.html||GHIDRA||||END|
+src/main/help/help/topics/Pdb/images/KnownSymbolServerURLsDialog.png||GHIDRA||||END|
+src/main/help/help/topics/Pdb/images/PdbOrXmlDialog.png||GHIDRA||||END|
+src/main/help/help/topics/Pdb/images/PeSpecifiedPathDialog.png||GHIDRA||||END|
+src/main/help/help/topics/Pdb/images/SuccessDialog.png||GHIDRA||||END|
+src/main/help/help/topics/Pdb/images/SymbolServerURLDialog.png||GHIDRA||||END|
 src/pdb/.editorconfig||GHIDRA||||END|
 src/pdb/README.txt||GHIDRA||||END|
 src/pdb/pdb.sln||GHIDRA||||END|

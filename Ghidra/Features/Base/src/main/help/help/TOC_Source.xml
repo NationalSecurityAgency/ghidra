@@ -333,11 +333,6 @@
                 <tocdef id="Query Results Window" sortgroup="h" text="Query Results Window" target="help/topics/Search/Query_Results_Dialog.htm" />
             </tocdef>
             
-            <tocdef id="PDB" sortgroup="q" text="PDB" target="help/topics/PDB/PDB.htm" >
-            	<tocdef id="README_PDB" sortgroup="a" text="PDB Parser (README_PDB)" target="docs/README_PDB.html" />
-                <tocdef id="Download PDB" sortgroup="b" text="Download PDB File"     target="help/topics/PDB/download_pdb_file.html" />
-            </tocdef>
-        
         </tocdef> <!-- End Program Annotation -->
         
         <tocdef id="Scripting" text="Scripting" target="help/topics/GhidraScriptMgrPlugin/GhidraScriptMgrPlugin.htm" >
