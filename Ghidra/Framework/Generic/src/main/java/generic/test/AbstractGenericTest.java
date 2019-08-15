@@ -62,6 +62,7 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 	private static File debugDirectory;
 
 	public static final String TESTDATA_DIRECTORY_NAME = "testdata";
+	public static final String DEFAULT_TOOL_NAME = "CodeBrowser";
 	public static final String DEFAULT_TEST_TOOL_NAME = "TestCodeBrowser";
 
 	private static boolean initialized = false;
