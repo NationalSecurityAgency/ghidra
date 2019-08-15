@@ -89,11 +89,13 @@ public class X86_64_ElfRelocationHandler extends ElfRelocationHandler {
 				int ivalue = (int) (symbolValue & 0xffffffff);
 				memory.setInt(relocationAddress, ivalue);
 				break;
-			// we punt on these because they're not linked yet!
 			case X86_64_ElfRelocationConstants.R_X86_64_GOT32:
+				value = symbolValue + addend;
+				memory.setInt(relocationAddress, (int) value);
+				break;
 			case X86_64_ElfRelocationConstants.R_X86_64_PLT32:
-				value = symbolValue;
-				memory.setLong(relocationAddress, value);
+				value = symbolValue + addend - offset;
+				memory.setInt(relocationAddress, (int) value);
 				break;
 			case X86_64_ElfRelocationConstants.R_X86_64_GLOB_DAT:
 			case X86_64_ElfRelocationConstants.R_X86_64_JUMP_SLOT:
