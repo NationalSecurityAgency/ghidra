@@ -381,16 +381,7 @@ public class TestEnv {
 		String projectDirectoryName = AbstractGTest.getTestDirectoryPath();
 		GhidraProject gp = GhidraProject.createProject(projectDirectoryName, projectName, true);
 
-		// 
-		// Unusual Code Alert: The default tool is not always found in the testing environment,  
-		// depending upon where the test lives.   This code maps the test tool to that tool name
-		// so that tests will have the default tool as needed.
-		// 
-		Project project = gp.getProject();
-		ToolChest toolChest = project.getLocalToolChest();
-		ToolTemplate template = getToolTemplate(AbstractGenericTest.DEFAULT_TEST_TOOL_NAME);
-		template.setName(AbstractGenericTest.DEFAULT_TOOL_NAME);
-		AbstractGenericTest.runSwing(() -> toolChest.replaceToolTemplate(template));
+		installDefaultTool(gp);
 
 		return gp;
 	}
@@ -408,6 +399,19 @@ public class TestEnv {
 		if (frontEndFile.exists()) {
 			frontEndFile.delete();
 		}
+	}
+
+	private static void installDefaultTool(GhidraProject gp) {
+		// 
+		// Unusual Code Alert: The default tool is not always found in the testing environment,  
+		// depending upon where the test lives.   This code maps the test tool to that tool name
+		// so that tests will have the default tool as needed.
+		// 
+		Project project = gp.getProject();
+		ToolChest toolChest = project.getLocalToolChest();
+		ToolTemplate template = getToolTemplate(AbstractGenericTest.DEFAULT_TEST_TOOL_NAME);
+		template.setName(AbstractGenericTest.DEFAULT_TOOL_NAME);
+		AbstractGenericTest.runSwing(() -> toolChest.replaceToolTemplate(template));
 	}
 
 	private void initializeSimpleTool() {
@@ -1241,5 +1245,7 @@ public class TestEnv {
 
 		DefaultProjectManager pm = gp.getProjectManager();
 		pm.addDefaultTools(tc);
+
+		installDefaultTool(gp);
 	}
 }
