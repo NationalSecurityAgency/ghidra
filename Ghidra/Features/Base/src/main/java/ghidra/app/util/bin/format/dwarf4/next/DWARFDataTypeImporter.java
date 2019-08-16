@@ -623,7 +623,10 @@ public class DWARFDataTypeImporter {
 				childDT.dataType = Undefined.getUndefinedDataType(1);
 			}
 			int dtLen = childDT.dataType.getLength();
-			if (unionSize != -1 && dtLen > unionSize) {
+			if (unionSize != -1 && !isBitField && dtLen > unionSize) {
+				// if we can, ensure that the member being added to the union isn't larger
+				// than what DWARF specifies.
+
 				if (dtLen > 1) {
 					// replace problematic datatype with 1 byte undefined placeholder
 					memberComment =
