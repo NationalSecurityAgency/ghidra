@@ -1,0 +1,5 @@
+# sleigh specification file for Freescale HC05 (6805, 68HC05)
+
+@define HC05 "1"
+
+@include "HCS_HC.sinc"

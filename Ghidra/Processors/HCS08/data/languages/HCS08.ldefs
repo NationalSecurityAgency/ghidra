@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<language_definitions>
+  <language processor="HCS08"
+            endian="big"
+            size="16"
+            variant="default"
+            version="1.0"
+            slafile="HCS08.sla"
+            processorspec="HCS08.pspec"
+            manualindexfile="../manuals/HCS08.idx"
+            id="HCS08:BE:16:default">
+    <description>HCS08 Microcontroller Family</description>
+    <compiler name="default" spec="HCS08.cspec" id="default"/>
+  </language>
+</language_definitions>
