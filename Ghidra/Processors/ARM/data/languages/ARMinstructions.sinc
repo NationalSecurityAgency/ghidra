@@ -687,7 +687,7 @@ define pcodeop coproc_moveto_FCSE_PID;
 define pcodeop coproc_moveto_Context_ID;
 define pcodeop coproc_moveto_User_RW_Thread_and_Process_ID;
 define pcodeop coproc_moveto_User_R_Thread_and_Process_ID;
-define pcodeop coproc_moveto_Privilaged_only_Thread_and_Process_ID;
+define pcodeop coproc_moveto_Privileged_only_Thread_and_Process_ID;
 define pcodeop coproc_moveto_Peripherial_Port_Memory_Remap;
 define pcodeop coproc_moveto_Feature_Identification;
 define pcodeop coproc_moveto_ISA_Feature_Identification;
@@ -737,7 +737,7 @@ define pcodeop coproc_movefrom_FCSE_PID;
 define pcodeop coproc_movefrom_Context_ID;
 define pcodeop coproc_movefrom_User_RW_Thread_and_Process_ID;
 define pcodeop coproc_movefrom_User_R_Thread_and_Process_ID;
-define pcodeop coproc_movefrom_Privilaged_only_Thread_and_Process_ID;
+define pcodeop coproc_movefrom_Privileged_only_Thread_and_Process_ID;
 define pcodeop coproc_movefrom_Peripherial_Port_Memory_Remap;
 define pcodeop coproc_movefrom_Feature_Identification;
 define pcodeop coproc_movefrom_ISA_Feature_Identification;
@@ -3131,7 +3131,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
         mcrOperands
 {
   build COND;
-  coproc_moveto_Privilaged_only_Thread_and_Process_ID(Rd);
+  coproc_moveto_Privileged_only_Thread_and_Process_ID(Rd);
 }
 
 
@@ -3811,7 +3811,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
         mcrOperands
 {
   build COND;
-  Rd = coproc_movefrom_Privilaged_only_Thread_and_Process_ID();
+  Rd = coproc_movefrom_Privileged_only_Thread_and_Process_ID();
 }
 
 
