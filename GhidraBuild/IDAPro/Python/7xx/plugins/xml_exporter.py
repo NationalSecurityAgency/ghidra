@@ -6,6 +6,7 @@ Plugin for IDA which exports a XML PROGRAM document file from a database.
 This file must be placed in the IDA plugins directory.
 The file idaxml.py must be placed in the IDA python directory.
 """
+from __future__ import print_function
 
 import ida_auto
 import ida_idaapi
@@ -57,12 +58,12 @@ class XmlExporterPlugin(ida_idaapi.plugin_t):
             except idaxml.Cancelled:
                 ida_kernwin.hide_wait_box()
                 msg = "XML Export cancelled!"
-                print "\n" + msg
+                print("\n" + msg)
                 idc.warning(msg)
             except:
                 ida_kernwin.hide_wait_box()
                 msg = "***** Exception occurred: XML Exporter failed! *****"
-                print "\n" + msg + "\n", sys.exc_type, sys.exc_value
+                print("\n" + msg + "\n", sys.exc_type, sys.exc_value)
                 idc.warning(msg)
         finally:
             xml.cleanup()

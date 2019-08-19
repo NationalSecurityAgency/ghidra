@@ -1,3 +1,4 @@
+from __future__ import print_function
 # An example of how to color the listing background 
 
 # DISCLAIMER: This is a recreation of a Java Ghidra script for example
@@ -14,13 +15,13 @@ from java.awt import Color
 
 service = state.getTool().getService(ColorizingService)
 if service is None:
-     print "Can't find ColorizingService service"
+     print("Can't find ColorizingService service")
 if currentSelection is not None:
      service.setBackgroundColor(currentSelection, Color(255, 200, 200))
 elif currentAddress is not None:
      service.setBackgroundColor(currentAddress, currentAddress, Color(255, 200, 200))
 else:
-     print "No selection or current address to color"
+     print("No selection or current address to color")
      
 anotherAddress = currentAddress.add(10)
 setBackgroundColor(anotherAddress, Color.YELLOW)

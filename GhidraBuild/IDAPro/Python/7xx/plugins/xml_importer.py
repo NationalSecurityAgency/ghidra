@@ -6,6 +6,7 @@ Plugin for IDA to import a XML PROGRAM file into an existing open database.
 This file must be placed in the IDA plugins directory.
 The file idaxml.py must be placed in the IDA python directory.
 """
+from __future__ import print_function
 
 import ida_idaapi
 import ida_pro
@@ -53,17 +54,17 @@ class XmlImporterPlugin(ida_idaapi.plugin_t):
                 xml.import_xml()
             except idaxml.Cancelled:
                 msg = "XML Import cancelled!"
-                print "\n" + msg
+                print("\n" + msg)
                 idc.warning(msg)
             except idaxml.MultipleAddressSpacesNotSupported:
                 msg  = "XML Import cancelled!"
                 msg += "\n\nXML Import does not currently support"
                 msg += "\nimporting multiple address spaces."
-                print "\n" + msg
+                print("\n" + msg)
                 idc.warning(msg)
             except:
                 msg = "***** Exception occurred: XML Importer failed! *****"
-                print "\n" + msg + "\n", sys.exc_type, sys.exc_value
+                print("\n" + msg + "\n", sys.exc_type, sys.exc_value)
                 idc.warning(msg)
         finally:
             xml.cleanup()

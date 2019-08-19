@@ -1,3 +1,4 @@
+from __future__ import print_function
 import os
 import shutil
 import subprocess
@@ -176,9 +177,9 @@ class BuildUtil(object):
     def log_close(self):
         if self.log:
             if self.num_errors > 0:
-                print '# ERROR: There were errors, see %s' % self.name
+                print('# ERROR: There were errors, see %s' % self.name)
             elif self.num_warnings > 0:
-                print '# WARNING: There were warnings, see %s' % self.name
+                print('# WARNING: There were warnings, see %s' % self.name)
             self.log.close()
         self.log = False
         self.name = False
@@ -190,7 +191,7 @@ class BuildUtil(object):
             self.log.write(what + '\n')
             self.log.flush()
         else:
-            print what
+            print(what)
             sys.stdout.flush()
 
     def log_err(self, what):

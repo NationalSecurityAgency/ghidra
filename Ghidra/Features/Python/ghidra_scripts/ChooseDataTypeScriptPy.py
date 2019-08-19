@@ -1,3 +1,4 @@
+from __future__ import print_function
 # Example of a script prompting the user for a data type.
 
 # DISCLAIMER: This is a recreation of a Java Ghidra script for example
@@ -18,4 +19,4 @@ selectionDialog = DataTypeSelectionDialog(tool, dtm, -1, AllowedDataTypes.FIXED_
 tool.showDialog(selectionDialog)
 dataType = selectionDialog.getUserChosenDataType()
 if dataType is not None:
-    print "Chosen data type: " + str(dataType)
+    print("Chosen data type: " + str(dataType))

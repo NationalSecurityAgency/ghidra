@@ -3,6 +3,7 @@
 #---------------------------------------------------------------------
 """
 """
+from __future__ import print_function
 
 import ida_auto
 import ida_bytes
@@ -2622,7 +2623,7 @@ class XmlImporter(IdaXml):
             if idc.is_mapped(addr) == False:
                 msg = ("import_bookmark: address %X not enabled in database"
                        % addr)
-                print msg
+                print(msg)
                 return
             self.update_counter(BOOKMARK)
             for slot in range(ida_moves.MAX_MARK_SLOT):
@@ -2632,7 +2633,7 @@ class XmlImporter(IdaXml):
                     break
         except:
             msg = "** Exception occurred in import_bookmark **"
-            print "\n" + msg + "\n", sys.exc_type, sys.exc_value
+            print("\n" + msg + "\n", sys.exc_type, sys.exc_value)
     
 
     def import_cmts(self, element, sid, typ):
@@ -2931,7 +2932,7 @@ class XmlImporter(IdaXml):
             if idc.is_mapped(entry_point) == False:
                 msg = ("import_function: address %X not enabled in database"
                        % entry_point)
-                print msg
+                print(msg)
                 return
             idc.add_func(entry_point, BADADDR)
             self.update_counter(FUNCTION)
@@ -2966,7 +2967,7 @@ class XmlImporter(IdaXml):
                 self.import_register_var(register_var, func)
         except:
             msg = "** Exception occurred in import_function **"
-            print "\n" + msg + "\n", sys.exc_type, sys.exc_value
+            print("\n" + msg + "\n", sys.exc_type, sys.exc_value)
 
 
     def import_function_def(self, function_def):
@@ -3217,7 +3218,7 @@ class XmlImporter(IdaXml):
         seg_str = ''
         if '::' in addrstr:
             # overlay - skip for now
-            print '  ** Overlayed memory block %s skipped **  ' % name
+            print('  ** Overlayed memory block %s skipped **  ' % name)
             msg  = 'Overlayed memory block %s skipped!' % name
             msg += "\n\nXML Import does not currently support"
             msg += "\noverlayed memory blocks."

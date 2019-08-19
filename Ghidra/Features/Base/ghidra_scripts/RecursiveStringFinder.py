@@ -1,3 +1,4 @@
+from __future__ import print_function
 #Given a function, find all strings used within all called funtions.
 # @category: Strings
 
@@ -69,11 +70,11 @@ class FunctionNode(ReferenceNode):
     def process(self, processed=[]):
         if self.fn is None:
             return processed
-        print "Processing %s -> %s" % (str(self.fromAddr), str(self.toAddr))
+        print("Processing %s -> %s" % (str(self.fromAddr), str(self.toAddr)))
         if self.getName() in processed:
             return processed
         addresses = self.getAddresses()
-        print str(type(addresses))
+        print(str(type(addresses)))
         while addresses.hasNext():
             #for a in addresses:
             a = addresses.next()
@@ -133,14 +134,14 @@ def getReferences(insn):
 
 bigfunc = getFunctionContaining(currentAddress)
 if bigfunc is None:
-    print "Please place the cursor within a function!"
+    print("Please place the cursor within a function!")
 else:
     AddrSetView = bigfunc.getBody()
     func = FunctionNode(None, AddrSetView.getMinAddress())
     func.process()
-    print str(func.indentedString())
+    print(str(func.indentedString()))
     #findStrings(func)
-    print "Done!"
+    print("Done!")
 
 
 

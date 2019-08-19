@@ -1,3 +1,4 @@
+from __future__ import print_function
 # Sets up IOPORT IN/OUT references for the Program
 #@category Instructions
 # Before running this script, you should have created an OVERLAY memory
@@ -15,15 +16,15 @@ def add_io_reference(instruction, opIndex, refType):
     of the given instruction."""
     # delete all current references from the port address field
     for ref in refMgr.getReferences(instruction.address, opIndex):
-        print "  Deleting reference to address", ref.toAddress
+        print("  Deleting reference to address", ref.toAddress)
         refMgr.delete(ref)
     # must use int() to avoid creating a long...
     # we only have 16 bits of I/O address space, and a long
     # would append an 'L' to the hex address
     ioAddr = int(instruction.getOpObjects(opIndex)[0].value)
     ioAddress = addrFactory.getAddress("IOMEM::" + hex(ioAddr))
-    print "  Adding", refType, "reference from", instruction.address, \
-          "to address", ioAddress
+    print("  Adding", refType, "reference from", instruction.address, \
+          "to address", ioAddress)
     # from, to, type, sourceType, opIndex
     refMgr.addMemoryReference(instruction.address, ioAddress,
                               refType, ANALYSIS, opIndex)

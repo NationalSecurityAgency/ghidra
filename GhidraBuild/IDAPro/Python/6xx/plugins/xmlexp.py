@@ -4,6 +4,7 @@
 """
 Plugin for IDA which exports a XML PROGRAM document file from a database.
 """
+from __future__ import print_function
 
 import idaapi
 import idautils
@@ -61,12 +62,12 @@ class XmlExporterPlugin(idaapi.plugin_t):
             except Cancelled:
                 idaapi.hide_wait_box()
                 msg = "XML Export cancelled!"
-                print "\n" + msg
+                print("\n" + msg)
                 idaapi.warning(msg)
             except:
                 idaapi.hide_wait_box()
                 msg = "***** Exception occurred: XML Exporter failed! *****"
-                print "\n" + msg + "\n", sys.exc_type, sys.exc_value
+                print("\n" + msg + "\n", sys.exc_type, sys.exc_value)
                 idaapi.warning(msg)
         finally:
             xml.cleanup()

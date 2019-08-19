@@ -4,6 +4,7 @@
 """
 Loader and plugin for IDA to import a XML PROGRAM file to a database.
 """
+from __future__ import print_function
 
 import idaapi
 import sys
@@ -62,19 +63,19 @@ def load_file(li, neflags, format):
         status = xml.import_xml()
     except Cancelled:
         msg = "XML PROGRAM import cancelled!"
-        print "\n" + msg
+        print("\n" + msg)
         idaapi.warning(msg)
     except MultipleAddressSpacesNotSupported:
         msg  = "XML Import cancelled!"
         msg += "\n\nXML Import does not currently support"
         msg += "\nimporting multiple address spaces."
-        print "\n" + msg
+        print("\n" + msg)
         idaapi.warning(msg)
     except:
-        print "\nHouston, we have a problem!"
+        print("\nHouston, we have a problem!")
         msg = "***** Exception occurred: XML loader failed! *****"
-        print "\n" + msg + "\n", sys.exc_type, sys.exc_value
-        print event, element.tag, element.attrib
+        print("\n" + msg + "\n", sys.exc_type, sys.exc_value)
+        print(event, element.tag, element.attrib)
         idaapi.warning(msg)
     finally:
         idaapi.setStat(st)
@@ -122,17 +123,17 @@ class XmlImporterPlugin(idaapi.plugin_t):
                 xml.import_xml()
             except Cancelled:
                 msg = "XML Import cancelled!"
-                print "\n" + msg
+                print("\n" + msg)
                 idaapi.warning(msg)
             except MultipleAddressSpacesNotSupported:
                 msg  = "XML Import cancelled!"
                 msg += "\n\nXML Import does not currently support"
                 msg += "\nimporting multiple address spaces."
-                print "\n" + msg
+                print("\n" + msg)
                 idaapi.warning(msg)
             except:
                 msg = "***** Exception occurred: XML Importer failed! *****"
-                print "\n" + msg + "\n", sys.exc_type, sys.exc_value
+                print("\n" + msg + "\n", sys.exc_type, sys.exc_value)
                 idaapi.warning(msg)
         finally:
             xml.cleanup()
@@ -266,7 +267,7 @@ class XmlImporter:
                 raise Cancelled
             
             if self.debug == True and event == 'start':
-                print element.tag, element.attrib, element.text
+                print(element.tag, element.attrib, element.text)
             
             if event in self.callbacks:
                 if element.tag in self.callbacks[event]:
@@ -675,7 +676,7 @@ class XmlImporter:
             if idaapi.isEnabled(addr) == False:
                 msg = ("import_bookmark: address %X not enabled in database"
                        % addr)
-                print msg
+                print(msg)
                 return
             self.update_counter(BOOKMARK)
             for slot in range(1,1025):
@@ -695,7 +696,7 @@ class XmlImporter:
                     break
         except:
             msg = "** Exception occurred in import_bookmark **"
-            print "\n" + msg + "\n", sys.exc_type, sys.exc_value
+            print("\n" + msg + "\n", sys.exc_type, sys.exc_value)
     
 
     def import_cmts(self, element, sid, typ):
@@ -1011,7 +1012,7 @@ class XmlImporter:
             if idaapi.isEnabled(entry_point) == False:
                 msg = ("import_function: address %X not enabled in database"
                        % entry_point)
-                print msg
+                print(msg)
                 return
             idaapi.add_func(entry_point, BADADDR)
             self.update_counter(FUNCTION)
@@ -1044,7 +1045,7 @@ class XmlImporter:
                 self.import_register_var(register_var, func)
         except:
             msg = "** Exception occurred in import_function **"
-            print "\n" + msg + "\n", sys.exc_type, sys.exc_value
+            print("\n" + msg + "\n", sys.exc_type, sys.exc_value)
 
 
     def import_function_def(self, function_def):
@@ -1283,7 +1284,7 @@ class XmlImporter:
         seg_str = ''
         if '::' in addrstr:
             # overlay - skip for now
-            print '  ** Overlayed memory block %s skipped **  ' % name
+            print('  ** Overlayed memory block %s skipped **  ' % name)
             msg  = 'Overlayed memory block %s skipped!' % name
             msg += "\n\nXML Import does not currently support"
             msg += "\noverlayed memory blocks."

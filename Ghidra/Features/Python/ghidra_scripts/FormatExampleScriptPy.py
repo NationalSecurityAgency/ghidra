@@ -1,3 +1,4 @@
+from __future__ import print_function
 # An example using the Python string formatting.
 # See FormatExampleScript.java for examples of using the printf() method.
 
@@ -9,20 +10,20 @@
 from time import *
 import java.util.Calendar
 
-print "The %s jumped over the %s" % ("cow", "moon")
+print("The %s jumped over the %s" % ("cow", "moon"))
 
-print "The %s jumped over the %s " % ("cow", "moon") + strftime("%X")
+print("The %s jumped over the %s " % ("cow", "moon") + strftime("%X"))
 
-print "The %s jumped over the %s - timestamp: %s" % ("cow", "moon", strftime("%c %Z"))
+print("The %s jumped over the %s - timestamp: %s" % ("cow", "moon", strftime("%c %Z")))
 
-print "The %s jumped over the %s at %s on %s" % ("cow", "moon", strftime("%I:%M%p"), strftime("%A, %b %d"))
+print("The %s jumped over the %s at %s on %s" % ("cow", "moon", strftime("%I:%M%p"), strftime("%A, %b %d")))
 
-print "Padding: %03d" % (1)
+print("Padding: %03d" % (1))
 
-print "Hex: 0x%x" % (10)
+print("Hex: 0x%x" % (10))
 
-print "Left-justified: %-10d" % (1)
-print "Right-justified: %10d" % (1)
+print("Left-justified: %-10d" % (1))
+print("Right-justified: %10d" % (1))
 
-print "String fill: '%10s'" % ("Fill")
-print "String fill, left justified: '%-10s'" % ("Fill")
+print("String fill: '%10s'" % ("Fill"))
+print("String fill, left justified: '%-10s'" % ("Fill"))

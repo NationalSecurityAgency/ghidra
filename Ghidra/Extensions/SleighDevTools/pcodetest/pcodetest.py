@@ -1,3 +1,4 @@
+from __future__ import print_function
 import os
 import glob
 import re
@@ -41,8 +42,8 @@ class PCodeTest(BuildUtil):
         pct = sorted(cls.list.iteritems(), key=lambda x: x[0].lower())
         
         for t,pcodetest in sorted(cls.list.iteritems(), key=lambda x: x[0].lower()):
-            print str(pcodetest)
-            if pcodetest.config.verbose: print pcodetest.config.dump()
+            print(str(pcodetest))
+            if pcodetest.config.verbose: print(pcodetest.config.dump())
 
     def __str__(self):
         cb = 'build-all:%-5s' % ('yes' if self.config.build_all else 'no')
