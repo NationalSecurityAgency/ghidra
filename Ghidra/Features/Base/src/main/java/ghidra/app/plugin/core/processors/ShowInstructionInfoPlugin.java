@@ -218,8 +218,8 @@ public class ShowInstructionInfoPlugin extends ProgramPlugin {
 
 		String pageNumber = entry.getPageNumber();
 		String fixedFilename = filename.replace(File.separatorChar, '/');
-		return new URL("file", "",
-			fixedFilename + (pageNumber == null ? "" : "#page=" + pageNumber));
+		return new URL(
+			"file://" + fixedFilename + (pageNumber == null ? "" : "#page=" + pageNumber));
 	}
 
 	ManualEntry locateManualEntry(ProgramActionContext context, Language language) {

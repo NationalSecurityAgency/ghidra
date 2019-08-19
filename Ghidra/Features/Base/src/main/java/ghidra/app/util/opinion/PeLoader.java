@@ -177,7 +177,7 @@ public class PeLoader extends AbstractPeDebugLoader {
 	}
 
 	@Override
-	public String validateOptions(ByteProvider provider, LoadSpec loadSpec, List<Option> options) {
+	public String validateOptions(ByteProvider provider, LoadSpec loadSpec, List<Option> options, Program program) {
 		if (options != null) {
 			for (Option option : options) {
 				String name = option.getName();
@@ -188,7 +188,7 @@ public class PeLoader extends AbstractPeDebugLoader {
 				}
 			}
 		}
-		return super.validateOptions(provider, loadSpec, options);
+		return super.validateOptions(provider, loadSpec, options, program);
 	}
 
 	@Override

@@ -90,14 +90,14 @@ public class ElfLoader extends AbstractLibrarySupportLoader {
 	}
 
 	@Override
-	public String validateOptions(ByteProvider provider, LoadSpec loadSpec, List<Option> options) {
+	public String validateOptions(ByteProvider provider, LoadSpec loadSpec, List<Option> options, Program program) {
 		if (options != null) {
 			String validationErrorStr = ElfLoaderOptionsFactory.validateOptions(loadSpec, options);
 			if (validationErrorStr != null) {
 				return validationErrorStr;
 			}
 		}
-		return super.validateOptions(provider, loadSpec, options);
+		return super.validateOptions(provider, loadSpec, options, program);
 	}
 
 	@Override

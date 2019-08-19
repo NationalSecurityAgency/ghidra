@@ -23,8 +23,12 @@ import java.util.Arrays;
 
 import org.junit.*;
 
+import ghidra.app.util.bin.ByteArrayProvider;
+import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.program.database.ProgramBuilder;
+import ghidra.program.database.mem.FileBytes;
+import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.MemoryAccessException;
@@ -72,8 +76,7 @@ public class MemoryBlockUtilTest extends AbstractGhidraHeadedIntegrationTest {
 		Arrays.fill(data, (byte) 0xb);
 		is = new ByteArrayInputStream(data);
 		MemoryBlockUtils.createInitializedBlock(prog, false, "b", space.getAddress(3500), is, 1000,
-			"bbbb", "b b b", false,
-			false, false, log, TaskMonitor.DUMMY);
+			"bbbb", "b b b", false, false, false, log, TaskMonitor.DUMMY);
 
 		MemoryBlock[] blocks = prog.getMemory().getBlocks();
 		assertEquals(2, blocks.length);
@@ -111,8 +114,8 @@ public class MemoryBlockUtilTest extends AbstractGhidraHeadedIntegrationTest {
 		byte[] cdata = new byte[1000];
 		Arrays.fill(cdata, (byte) 0xc);
 		MemoryBlockUtils.createInitializedBlock(prog, false, "c", space.getAddress(4000),
-			new ByteArrayInputStream(cdata),
-			1000, "Ccomment", "Csource", false, false, false, log, TaskMonitor.DUMMY);
+			new ByteArrayInputStream(cdata), 1000, "Ccomment", "Csource", false, false, false, log,
+			TaskMonitor.DUMMY);
 
 		MemoryBlock[] blocks = prog.getMemory().getBlocks();
 		assertEquals(2, blocks.length);
@@ -127,5 +130,30 @@ public class MemoryBlockUtilTest extends AbstractGhidraHeadedIntegrationTest {
 		assertTrue(blocks[1].isInitialized());
 	}
 
-	//TODO test bit blocks and code unit clearing...
+	private Address addr(long offset) {
+		return space.getAddress(offset);
+	}
+
+	@Test
+	public void testDuplicateExceptionHandling() throws Exception {
+		ByteProvider byteProvider = new ByteArrayProvider(new byte[1000]);
+		FileBytes fileBytes =
+			MemoryBlockUtils.createFileBytes(prog, byteProvider, TaskMonitor.DUMMY);
+
+		MemoryBlockUtils.createInitializedBlock(prog, true, "test", addr(0), fileBytes, 0, 10, "",
+			"", true, true, true, new MessageLog());
+		MemoryBlockUtils.createInitializedBlock(prog, true, "test", addr(0), fileBytes, 0, 10, "",
+			"", true, true, true, new MessageLog());
+		MemoryBlockUtils.createInitializedBlock(prog, true, "test", addr(0), fileBytes, 0, 10, "",
+			"", true, true, true, new MessageLog());
+
+		MemoryBlock[] blocks = prog.getMemory().getBlocks();
+		assertEquals(3, blocks.length);
+
+		assertEquals("test", blocks[0].getName());
+		assertEquals("test_1", blocks[1].getName());
+		assertEquals("test_2", blocks[2].getName());
+
+	}
+
 }

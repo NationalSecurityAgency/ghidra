@@ -22,8 +22,6 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
-import javax.swing.JFrame;
-
 import org.jdom.Element;
 
 import docking.ComponentProvider;
@@ -332,6 +330,7 @@ public class TestEnv {
 	 * <P>This method is considered sub-standard and users should prefer instead 
 	 * {@link #launchDefaultTool()} or {@link #launchDefaultTool(Program)}.
 	 * 
+	 * @param p the program
 	 * @return the newly shown tool
 	 */
 	public PluginTool showTool(Program p) {
@@ -357,7 +356,7 @@ public class TestEnv {
 
 	/**
 	 * Waits for the first window of the given class.  This method is the same as
-	 * {@link #waitForDialogComponent(Window, Class, int)} with the exception that the parent
+	 * {@link #waitForDialogComponent(Class, int)} with the exception that the parent
 	 * window is assumed to be this instance's tool frame.
 	 *
 	 * @param ghidraClass The class of the dialog the user desires
@@ -369,8 +368,7 @@ public class TestEnv {
 	@Deprecated
 	public <T extends DialogComponentProvider> T waitForDialogComponent(Class<T> ghidraClass,
 			int maxTimeMS) {
-		JFrame frame = lazyTool().getToolFrame();
-		return AbstractDockingTest.waitForDialogComponent(frame, ghidraClass, maxTimeMS);
+		return AbstractDockingTest.waitForDialogComponent(ghidraClass);
 	}
 
 	private static GhidraProject createGhidraTestProject(String projectName) throws IOException {
@@ -381,7 +379,11 @@ public class TestEnv {
 		deleteSavedFrontEndTool();
 
 		String projectDirectoryName = AbstractGTest.getTestDirectoryPath();
-		return GhidraProject.createProject(projectDirectoryName, projectName, true);
+		GhidraProject gp = GhidraProject.createProject(projectDirectoryName, projectName, true);
+
+		installDefaultTool(gp);
+
+		return gp;
 	}
 
 	private static void deleteOldTestTools() {
@@ -397,6 +399,19 @@ public class TestEnv {
 		if (frontEndFile.exists()) {
 			frontEndFile.delete();
 		}
+	}
+
+	private static void installDefaultTool(GhidraProject gp) {
+		// 
+		// Unusual Code Alert: The default tool is not always found in the testing environment,  
+		// depending upon where the test lives.   This code maps the test tool to that tool name
+		// so that tests will have the default tool as needed.
+		// 
+		Project project = gp.getProject();
+		ToolChest toolChest = project.getLocalToolChest();
+		ToolTemplate template = getToolTemplate(AbstractGenericTest.DEFAULT_TEST_TOOL_NAME);
+		template.setName(AbstractGenericTest.DEFAULT_TOOL_NAME);
+		AbstractGenericTest.runSwing(() -> toolChest.replaceToolTemplate(template));
 	}
 
 	private void initializeSimpleTool() {
@@ -466,6 +481,7 @@ public class TestEnv {
 	/**
 	 * This method differs from {@link #launchDefaultTool()} in that this method does not set the
 	 * <tt>tool</tt> variable in of this <tt>TestEnv</tt> instance.
+	 * @return the tool
 	 */
 	public PluginTool createDefaultTool() {
 		PluginTool newTool = launchDefaultToolByName(AbstractGenericTest.DEFAULT_TEST_TOOL_NAME);
@@ -497,15 +513,14 @@ public class TestEnv {
 		return tool;
 	}
 
-	protected PluginTool launchDefaultToolByName(final String toolName) {
-		AtomicReference<PluginTool> ref = new AtomicReference<>();
-		AbstractGenericTest.runSwing(() -> {
+	protected PluginTool launchDefaultToolByName(String toolName) {
 
-			ToolTemplate toolTemplate =
-				ToolUtils.readToolTemplate("defaultTools/" + toolName + ".tool");
+		return AbstractGenericTest.runSwing(() -> {
+
+			ToolTemplate toolTemplate = getToolTemplate(toolName);
 			if (toolTemplate == null) {
 				Msg.debug(this, "Unable to find tool: " + toolName);
-				return;
+				return null;
 			}
 
 			boolean wasErrorGUIEnabled = AbstractDockingTest.isUseErrorGUI();
@@ -515,11 +530,23 @@ public class TestEnv {
 			Project project = frontEndToolInstance.getProject();
 			ToolManager toolManager = project.getToolManager();
 			Workspace workspace = toolManager.getActiveWorkspace();
-			ref.set((PluginTool) workspace.runTool(toolTemplate));
 
 			AbstractDockingTest.setErrorGUIEnabled(wasErrorGUIEnabled);
+			return (PluginTool) workspace.runTool(toolTemplate);
 		});
-		return ref.get();
+	}
+
+	private static ToolTemplate getToolTemplate(String toolName) {
+
+		return AbstractGenericTest.runSwing(() -> {
+			ToolTemplate toolTemplate =
+				ToolUtils.readToolTemplate("defaultTools/" + toolName + ".tool");
+			if (toolTemplate == null) {
+				Msg.debug(TestEnv.class, "Unable to find tool: " + toolName);
+				return null;
+			}
+			return toolTemplate;
+		});
 	}
 
 	public ScriptTaskListener runScript(File script) throws PluginException {
@@ -550,6 +577,7 @@ public class TestEnv {
 
 	/**
 	 * Returns GhidraProject associated with this environment
+	 * @return the project
 	 */
 	public GhidraProject getGhidraProject() {
 		return gp;
@@ -559,6 +587,7 @@ public class TestEnv {
 	 * A convenience method to close and then reopen the default project created by this TestEnv
 	 * instance.  This will not delete the project between opening and closing and will restore
 	 * the project to its previous state.
+	 * @throws IOException if any exception occurs while saving and reopening
 	 */
 	public void closeAndReopenProject() throws IOException {
 		gp.setDeleteOnClose(false);
@@ -579,9 +608,6 @@ public class TestEnv {
 		return gp.getProjectManager();
 	}
 
-	/**
-	 * Returns Project associated with this environment
-	 */
 	public Project getProject() {
 		return gp.getProject();
 	}
@@ -646,6 +672,8 @@ public class TestEnv {
 	 * the only reason to use this method vice openProgram().
 	 *
 	 * @param programName the name of the program zip file without the ".gzf" extension.
+	 * @return the restored domain file
+	 * @throws FileNotFoundException if the program file cannot be found
 	 */
 	public DomainFile restoreProgram(String programName) throws FileNotFoundException {
 		DomainFile df = programManager.addProgramToProject(getProject(), programName);
@@ -674,12 +702,12 @@ public class TestEnv {
 	 * @param relativePathName This should be a pathname relative to the "test_resources/testdata"
 	 * 		  director or relative to the "typeinfo" directory. The name should
 	 *        include the ".gdt" suffix.
-	 * @param domainFolder the folder in the test project where the archive should be created.
-	 * @param monitor monitor for canceling this restore.
+	 * @param domainFolder the folder in the test project where the archive should be created
 	 * @return the domain file  that was created in the project
+	 * @throws Exception if an exception occurs
 	 */
 	public DomainFile restoreDataTypeArchive(String relativePathName, DomainFolder domainFolder)
-			throws InvalidNameException, IOException, VersionException {
+			throws Exception {
 
 		File gdtFile;
 		try {
@@ -738,10 +766,10 @@ public class TestEnv {
 	 * @param program program object
 	 * @param replace if true any existing cached database with the same name will be replaced
 	 * @param monitor task monitor
-	 * @throws DuplicateNameException if already cached
+	 * @throws Exception if already cached
 	 */
 	public void saveToCache(String progName, ProgramDB program, boolean replace,
-			TaskMonitor monitor) throws IOException, DuplicateNameException, CancelledException {
+			TaskMonitor monitor) throws Exception {
 
 		programManager.saveToCache(progName, program, replace, monitor);
 	}
@@ -826,7 +854,8 @@ public class TestEnv {
 	 * Launches a tool of the given name using the given domain file.
 	 * <p>
 	 * Note: the tool returned will have auto save disabled by default.
-	 *
+	 * 
+	 * @param toolName the tool's name
 	 * @return the tool that is launched
 	 */
 	public PluginTool launchTool(String toolName) {
@@ -1216,5 +1245,7 @@ public class TestEnv {
 
 		DefaultProjectManager pm = gp.getProjectManager();
 		pm.addDefaultTools(tc);
+
+		installDefaultTool(gp);
 	}
 }

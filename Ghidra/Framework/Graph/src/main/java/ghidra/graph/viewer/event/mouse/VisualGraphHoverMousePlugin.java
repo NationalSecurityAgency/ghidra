@@ -72,11 +72,6 @@ public class VisualGraphHoverMousePlugin<V extends VisualVertex, E extends Visua
 			return;
 		}
 
-		PathHighlightMode hoverMode = graphComponent.getVertexHoverPathHighlightMode();
-		if (hoverMode == PathHighlightMode.OFF) {
-			return;
-		}
-
 		GraphViewer<V, E> viewer = getGraphViewer(lastMouseEvent);
 		V newHoveredVertex =
 			GraphViewerUtils.getVertexFromPointInViewSpace(viewer, lastMouseEvent.getPoint());

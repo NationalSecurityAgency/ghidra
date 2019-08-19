@@ -15,7 +15,7 @@
  */
 package ghidra.app.plugin.core.functiongraph;
 
-import static ghidra.graph.viewer.GraphViewerUtils.getGraphScale;
+import static ghidra.graph.viewer.GraphViewerUtils.*;
 import static org.junit.Assert.*;
 
 import java.awt.*;
@@ -45,6 +45,7 @@ import edu.uci.ics.jung.graph.Graph;
 import edu.uci.ics.jung.visualization.VisualizationModel;
 import edu.uci.ics.jung.visualization.VisualizationViewer;
 import edu.uci.ics.jung.visualization.picking.PickedState;
+import generic.test.AbstractGenericTest;
 import generic.test.TestUtils;
 import ghidra.app.cmd.label.AddLabelCmd;
 import ghidra.app.cmd.label.SetLabelPrimaryCmd;
@@ -2322,6 +2323,14 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 		FGData graphData = getFunctionGraphData();
 		assertNotNull(graphData);
 		assertTrue("Unexpectedly received an empty FunctionGraphData", graphData.hasResults());
+	}
+
+	protected void swing(Runnable r) {
+		AbstractGenericTest.runSwing(r);
+	}
+
+	protected <T> T swing(Supplier<T> s) {
+		return AbstractGenericTest.runSwing(s);
 	}
 
 	static class DummyTransferable implements Transferable {

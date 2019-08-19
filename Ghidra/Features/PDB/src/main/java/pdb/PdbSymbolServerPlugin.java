@@ -19,16 +19,17 @@ import java.io.*;
 import java.net.*;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
-import java.util.*;
+import java.util.List;
+import java.util.Properties;
 
 import docking.action.MenuData;
 import docking.widgets.OptionDialog;
 import docking.widgets.filechooser.GhidraFileChooser;
+import docking.widgets.filechooser.GhidraFileChooserMode;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.context.ProgramActionContext;
 import ghidra.app.context.ProgramContextAction;
 import ghidra.app.plugin.PluginCategoryNames;
-import ghidra.app.script.AskDialog;
 import ghidra.app.services.DataTypeManagerService;
 import ghidra.app.util.bin.format.pdb.*;
 import ghidra.app.util.bin.format.pdb.PdbParser.PdbFileType;
@@ -79,7 +80,8 @@ public class PdbSymbolServerPlugin extends Plugin {
 	// Store last-selected value(s) for askXxx methods
 	private static String serverUrl = null;
 	private static File localDir = null;
-	static PdbFileType fileType = PdbFileType.PDB;
+	private PdbFileType fileType = PdbFileType.PDB;
+	private boolean includePePdbPath = false;
 
 	enum RetrieveFileType {
 		PDB, XML, CAB
@@ -96,6 +98,14 @@ public class PdbSymbolServerPlugin extends Plugin {
 		urlProperties = new Properties();
 		// Version # appears to be debugger version. 6.3.9600.17298
 		urlProperties.setProperty("User-Agent", "Microsoft-Symbol-Server/6.3.9600.17298");
+	}
+
+	/**
+	 * Sets the {@link PdbFileType}
+	 * @param fileType the {@link PdbFileType}
+	 */
+	public void setPdbFileType(PdbFileType fileType) {
+		this.fileType = fileType;
 	}
 
 	private void createActions() {
@@ -172,9 +182,9 @@ public class PdbSymbolServerPlugin extends Plugin {
 	 *
 	 * @param program  program for which to retrieve the PDB file
 	 * @return  the retrieved PDB file (could be in .pdb or .xml form)
-	 * @throws CancelledException
-	 * @throws IOException
-	 * @throws PdbException
+	 * @throws CancelledException upon user cancellation
+	 * @throws IOException if an I/O issue occurred
+	 * @throws PdbException if there was a problem with the PDB attributes
 	 */
 	private PdbFileAndStatus getPdbFile(Program program)
 			throws CancelledException, IOException, PdbException {
@@ -185,6 +195,9 @@ public class PdbSymbolServerPlugin extends Plugin {
 			// 1. Ask if user wants .pdb or .pdb.xml file
 			fileType = askForFileExtension();
 
+			// 1.5 Ask if should search PE-specified PDB path.
+			includePePdbPath = askIncludePeHeaderPdbPath();
+
 			String symbolEnv = System.getenv(symbolServerEnvVar);
 			if (symbolEnv != null) {
 				parseSymbolEnv(symbolEnv);
@@ -194,8 +207,8 @@ public class PdbSymbolServerPlugin extends Plugin {
 			localDir = askForLocalStorageLocation();
 
 			// 3. See if PDB can be found locally
-			File pdbFile =
-				PdbParser.findPDB(pdbAttributes, localDir.getAbsolutePath(), fileType);
+			File pdbFile = PdbParser.findPDB(pdbAttributes, includePePdbPath,
+				localDir.getAbsolutePath(), fileType);
 
 			// 4. If not found locally, ask if it should be retrieved
 			if (pdbFile != null && pdbFile.getName().endsWith(fileType.toString())) {
@@ -280,22 +293,35 @@ public class PdbSymbolServerPlugin extends Plugin {
 	}
 
 	private PdbFileType askForFileExtension() throws CancelledException {
-
 		//@formatter:off
-		AskDialog<PdbFileType> fileTypeDialog = new AskDialog<>(
+		int choice = OptionDialog.showOptionDialog(
 			null,
 			"pdb or pdb.xml",
 			"Download a .pdb or .pdb.xml file? (.pdb.xml can be processed on non-Windows systems)",
-			AskDialog.STRING,
-			Arrays.asList(PdbFileType.PDB, PdbFileType.XML),
-			fileType);
+			"PDB",
+			"XML");
 		//@formatter:on
 
-		if (fileTypeDialog.isCanceled()) {
+		if (choice == OptionDialog.CANCEL_OPTION) {
 			throw new CancelledException();
 		}
+		return (choice == OptionDialog.OPTION_ONE) ? PdbFileType.PDB : PdbFileType.XML;
+	}
 
-		return fileTypeDialog.getChoiceValue();
+	private boolean askIncludePeHeaderPdbPath() throws CancelledException {
+		//@formatter:off
+		int choice = OptionDialog.showOptionDialog(
+			null,
+			"PE-specified PDB Path",
+			"Unsafe: Include PE-specified PDB Path in search for existing PDB",
+			"Yes",
+			"No");
+		//@formatter:on
+
+		if (choice == OptionDialog.CANCEL_OPTION) {
+			throw new CancelledException();
+		}
+		return (choice == OptionDialog.OPTION_ONE);
 	}
 
 	String askForSymbolServerUrl() throws CancelledException {
@@ -384,7 +410,7 @@ public class PdbSymbolServerPlugin extends Plugin {
 
 				fileChooser.setTitle("Select Location to Save Retrieved File");
 				fileChooser.setApproveButtonText("OK");
-				fileChooser.setFileSelectionMode(GhidraFileChooser.DIRECTORIES_ONLY);
+				fileChooser.setFileSelectionMode(GhidraFileChooserMode.DIRECTORIES_ONLY);
 				chosenDir[0] = fileChooser.getSelectedFile();
 
 				if (chosenDir[0] != null) {
@@ -420,7 +446,8 @@ public class PdbSymbolServerPlugin extends Plugin {
 	 * @param fileUrl  URL from which to download the file
 	 * @param fileDestination  location at which to save the downloaded file
 	 * @return  whether download/save succeeded
-	 * @throws IOException
+	 * @throws IOException if an I/O issue occurred
+	 * @throws PdbException if issue with PKI certificate
 	 */
 	boolean retrieveFile(String fileUrl, File fileDestination) throws IOException, PdbException {
 		return retrieveFile(fileUrl, fileDestination, null);
@@ -433,7 +460,8 @@ public class PdbSymbolServerPlugin extends Plugin {
 	 * @param fileDestination  location at which to save the downloaded file
 	 * @param retrieveProperties  optional HTTP request header values to be included (may be null)
 	 * @return whether download/save succeeded
-	 * @throws IOException
+	 * @throws IOException if an I/O issue occurred
+	 * @throws PdbException if issue with PKI certificate
 	 */
 	boolean retrieveFile(String fileUrl, File fileDestination, Properties retrieveProperties)
 			throws IOException, PdbException {
@@ -534,8 +562,8 @@ public class PdbSymbolServerPlugin extends Plugin {
 	 * @param cabFile  file to expand/uncompress
 	 * @param targetFilename  file to save uncompressed *.pdb to
 	 * @return  the file that was uncompressed
-	 * @throws PdbException
-	 * @throws IOException
+	 * @throws PdbException if failure with cabinet extraction
+	 * @throws IOException if issue starting the {@link ProcessBuilder}
 	 */
 	File uncompressCabFile(File cabFile, String targetFilename) throws PdbException, IOException {
 
@@ -608,6 +636,18 @@ public class PdbSymbolServerPlugin extends Plugin {
 		return null;
 	}
 
+	/**
+	 * Download a file, then move it to its final destination. URL for download is created by
+	 * combining downloadURL and PDB file attributes. Final move destination is also determined
+	 * by the PDB file attributes.
+	 *
+	 * @param pdbAttributes PDB attributes (GUID, age, potential PDB locations, etc.)
+	 * @param downloadUrl Root URL to search for the PDB
+	 * @param saveToLocation Final root directory to save the file
+	 * @return the downloaded and moved file
+	 * @throws IOException if an I/O issue occurred
+	 * @throws PdbException if issue with PKI certificate or cabinet extraction
+	 */
 	private File attemptToDownloadPdb(PdbProgramAttributes pdbAttributes, String downloadUrl,
 			File saveToLocation) throws PdbException, IOException {
 
@@ -647,11 +687,10 @@ public class PdbSymbolServerPlugin extends Plugin {
 	 * @param downloadUrl  Root URL to search for the PDB
 	 * @param tempSaveDirectory  Temporary local directory to save downloaded file (which will be moved)
 	 * @param finalSaveDirectory  Final root directory to save the file
-	 * @param retrieveXml  Whether to retrieve a .pdb.xml file or not
-	 * @param retrieveCabFile  Whether to retrieve a .cab file or not
-	 * @return  the downloaded and moved file
-	 * @throws IOException
-	 * @throws PdbException
+	 * @param retrieveFileType the {@link RetrieveFileType}
+	 * @return the downloaded and moved file
+	 * @throws IOException if an I/O issue occurred
+	 * @throws PdbException if issue with PKI certificate or cabinet extraction
 	 */
 	File downloadExtractAndMoveFile(PdbProgramAttributes pdbAttributes, String downloadUrl,
 			File tempSaveDirectory, File finalSaveDirectory, RetrieveFileType retrieveFileType)

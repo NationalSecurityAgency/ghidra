@@ -15,6 +15,10 @@
  */
 package ghidra.app.plugin.core.comments;
 
+import java.awt.event.KeyEvent;
+
+import docking.ActionContext;
+import docking.action.*;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.cmd.comments.SetCommentCmd;
 import ghidra.app.cmd.comments.SetCommentsCmd;
@@ -29,11 +33,6 @@ import ghidra.program.model.listing.CodeUnit;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.*;
 import ghidra.util.HelpLocation;
-
-import java.awt.event.KeyEvent;
-
-import docking.ActionContext;
-import docking.action.*;
 
 /**
  * Class to handle end comments for a code unit in a program.
@@ -88,8 +87,8 @@ public class CommentsPlugin extends Plugin implements OptionsChangeListener {
 		HelpLocation helpLocation = new HelpLocation(getName(), "Comments_Option");
 		options.setOptionsHelpLocation(helpLocation);
 		options.registerOption(OPTION_NAME, dialog.getEnterMode(), helpLocation,
-			"Toggle for whether pressing the <Enter> key causes the comment to be entered,"
-				+ " versus adding a new line character in the comment.");
+			"Toggle for whether pressing the <Enter> key causes the comment to be entered," +
+				" versus adding a new line character in the comment.");
 
 		setOptions(options);
 		options.addOptionsChangeListener(this);
@@ -115,15 +114,16 @@ public class CommentsPlugin extends Plugin implements OptionsChangeListener {
 		plateComment = (plateComment.length() == 0) ? null : plateComment;
 		repeatableComment = (repeatableComment.length() == 0) ? null : repeatableComment;
 
-		Command cmd =
-			new SetCommentsCmd(cu.getMinAddress(), preComment, postComment, eolComment,
-				plateComment, repeatableComment);
+		Command cmd = new SetCommentsCmd(cu.getMinAddress(), preComment, postComment, eolComment,
+			plateComment, repeatableComment);
 
 		tool.execute(cmd, cu.getProgram());
 	}
 
 	/**
-	 * Called by the deleteAction to delete a comment.
+	 * Called by the deleteAction to delete an end-of-line comment.
+	 * @param program the {@link Program} for which to act
+	 * @param loc the {@link ProgramLocation} for which to delete the comment
 	 */
 	void deleteComments(Program program, ProgramLocation loc) {
 		int commentType = CommentType.getCommentType(null, loc, CodeUnit.EOL_COMMENT);
@@ -147,29 +147,24 @@ public class CommentsPlugin extends Plugin implements OptionsChangeListener {
 
 		editAction = CommentsActionFactory.getEditCommentsAction(dialog, name);
 		tool.addAction(editAction);
-		preCommentEditAction =
-			CommentsActionFactory.getSetCommentsAction(dialog, name, "Set Pre Comment",
-				CodeUnit.PRE_COMMENT);
+		preCommentEditAction = CommentsActionFactory.getSetCommentsAction(dialog, name,
+			"Set Pre Comment", CodeUnit.PRE_COMMENT);
 		tool.addAction(preCommentEditAction);
 
-		postCommentEditAction =
-			CommentsActionFactory.getSetCommentsAction(dialog, name, "Set Post Comment",
-				CodeUnit.POST_COMMENT);
+		postCommentEditAction = CommentsActionFactory.getSetCommentsAction(dialog, name,
+			"Set Post Comment", CodeUnit.POST_COMMENT);
 		tool.addAction(postCommentEditAction);
 
-		plateCommentEditAction =
-			CommentsActionFactory.getSetCommentsAction(dialog, name, "Set Plate Comment",
-				CodeUnit.PLATE_COMMENT);
+		plateCommentEditAction = CommentsActionFactory.getSetCommentsAction(dialog, name,
+			"Set Plate Comment", CodeUnit.PLATE_COMMENT);
 		tool.addAction(plateCommentEditAction);
 
-		eolCommentEditAction =
-			CommentsActionFactory.getSetCommentsAction(dialog, name, "Set EOL Comment",
-				CodeUnit.EOL_COMMENT);
+		eolCommentEditAction = CommentsActionFactory.getSetCommentsAction(dialog, name,
+			"Set EOL Comment", CodeUnit.EOL_COMMENT);
 		tool.addAction(eolCommentEditAction);
 
-		repeatableCommentEditAction =
-			CommentsActionFactory.getSetCommentsAction(dialog, name, "Set Repeatable Comment",
-				CodeUnit.REPEATABLE_COMMENT);
+		repeatableCommentEditAction = CommentsActionFactory.getSetCommentsAction(dialog, name,
+			"Set Repeatable Comment", CodeUnit.REPEATABLE_COMMENT);
 		tool.addAction(repeatableCommentEditAction);
 
 		deleteAction = new ListingContextAction("Delete Comments", pluginName) {

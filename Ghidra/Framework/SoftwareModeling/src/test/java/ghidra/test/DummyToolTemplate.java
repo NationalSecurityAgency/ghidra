@@ -19,8 +19,8 @@ import javax.swing.ImageIcon;
 
 import org.jdom.Element;
 
+import docking.util.image.ToolIconURL;
 import ghidra.framework.model.*;
-import ghidra.framework.project.tool.ToolIconURL;
 import ghidra.program.model.listing.Program;
 
 public class DummyToolTemplate implements ToolTemplate {

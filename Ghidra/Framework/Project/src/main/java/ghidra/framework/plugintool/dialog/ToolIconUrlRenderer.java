@@ -22,8 +22,8 @@ import javax.swing.BorderFactory;
 import javax.swing.JList;
 import javax.swing.border.Border;
 
+import docking.util.image.ToolIconURL;
 import docking.widgets.list.GListCellRenderer;
-import ghidra.framework.project.tool.ToolIconURL;
 
 class ToolIconUrlRenderer extends GListCellRenderer<ToolIconURL> {
 	private Border emptyBorder = BorderFactory.createEmptyBorder(5, 5, 5, 5);

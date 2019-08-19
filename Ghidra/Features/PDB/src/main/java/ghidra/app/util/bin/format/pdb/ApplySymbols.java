@@ -117,7 +117,7 @@ class ApplySymbols {
 
 			// Don't create label for Data since a separate symbol should also exist with a better name
 			if (!"Data".equals(tag) &&
-				!pdbParser.createSymbol(address, name, forcePrimary, log, monitor)) {
+				!pdbParser.createSymbol(address, name, forcePrimary, log)) {
 				log.appendMsg("Unable to create symbol " + name + " at " + address);
 			}
 
@@ -149,7 +149,7 @@ class ApplySymbols {
 			if (name.startsWith(MS_STRING_PREFIX)) {
 // TODO: Should this be handled by the demangler instead of here?
 				boolean isUnicode = isUnicode(name);
-				pdbParser.createString(isUnicode, address, log, monitor);
+				pdbParser.createString(isUnicode, address, log);
 			}
 			////////////
 			// Commented out the following for now, because it appears to be doing things it 
@@ -171,13 +171,13 @@ class ApplySymbols {
 //				}
 //			}
 			else if (isGuidLabel(name, address, program)) {
-				pdbParser.createData(address, new GuidDataType(), log, monitor);
+				pdbParser.createData(address, new GuidDataType(), log);
 			}
 			else if (tag.equals("Data")) {
 				if (datatype.length() == 0) {
 					continue;
 				}
-				pdbParser.createData(address, datatype, log, monitor);
+				pdbParser.createData(address, datatype, log);
 			}
 		}
 

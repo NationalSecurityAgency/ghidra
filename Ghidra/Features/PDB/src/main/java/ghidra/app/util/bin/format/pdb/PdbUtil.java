@@ -15,7 +15,7 @@
  */
 package ghidra.app.util.bin.format.pdb;
 
-import ghidra.app.cmd.comments.SetCommentsCmd;
+import ghidra.app.cmd.comments.SetCommentCmd;
 import ghidra.app.util.PseudoDisassembler;
 import ghidra.app.util.PseudoInstruction;
 import ghidra.program.model.address.Address;
@@ -29,6 +29,9 @@ final class PdbUtil {
 
 	/**
 	 * Returns an address using the relative offset + image base.
+	 * @param program the {@link Program} for which to act
+	 * @param relativeOffset the relative offset
+	 * @return the calculated {@link Address}
 	 */
 	final static Address reladdr(Program program, int relativeOffset) {
 		return reladdr(program, relativeOffset & Conv.INT_MASK);
@@ -36,6 +39,9 @@ final class PdbUtil {
 
 	/**
 	 * Returns an address using the relative offset + image base.
+	 * @param program the {@link Program} for which to act
+	 * @param relativeOffset the relative offset
+	 * @return the calculated {@link Address}
 	 */
 	final static Address reladdr(Program program, long relativeOffset) {
 		return program.getImageBase().add(relativeOffset);
@@ -59,13 +65,18 @@ final class PdbUtil {
 			text = comment + "\n" + text;
 		}
 
-		SetCommentsCmd.createComment(program, address, text, commentType);
+		SetCommentCmd.createComment(program, address, text, commentType);
 
 	}
 
 	/**
 	 * Returns true is this symbol represents a function.
 	 * For example, "FunctionName@4" or "MyFunction@22".
+	 * @param program the {@link Program} for which to check
+	 * @param symbol the symbol to check
+	 * @param addr {@link Address} of the symbol
+	 * @param length the length for the check
+	 * @return {@code true} upon success
 	 */
 	final static boolean isFunction(Program program, String symbol, Address addr, int length) {
 		int atpos = symbol.lastIndexOf('@');
@@ -143,6 +154,8 @@ final class PdbUtil {
 	 * ...
 	 * 23rd pass
 	 * etc.
+	 * @param pass the number value of the pass to make pretty
+	 * @return the string result
 	 */
 	final static String getPass(int pass) {
 		if (pass > 20) {

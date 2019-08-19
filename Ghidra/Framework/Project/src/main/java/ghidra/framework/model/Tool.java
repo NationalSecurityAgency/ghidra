@@ -21,8 +21,8 @@ import java.beans.PropertyVetoException;
 import org.jdom.Element;
 
 import docking.DockingTool;
+import docking.util.image.ToolIconURL;
 import ghidra.framework.plugintool.PluginEvent;
-import ghidra.framework.project.tool.ToolIconURL;
 
 /**
  * 

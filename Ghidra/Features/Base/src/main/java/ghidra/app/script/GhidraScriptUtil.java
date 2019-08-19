@@ -593,7 +593,7 @@ public class GhidraScriptUtil {
 	 * @param name the name of the script
 	 * @return the name as a '.java' file path (with '/'s and not '.'s)
 	 */
-	private static String fixupName(String name) {
+	static String fixupName(String name) {
 		if (name.endsWith(".java")) {
 			name = name.substring(0, name.length() - 5);
 		}

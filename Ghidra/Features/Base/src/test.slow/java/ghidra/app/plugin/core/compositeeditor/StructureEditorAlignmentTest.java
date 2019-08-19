@@ -92,6 +92,8 @@ public class StructureEditorAlignmentTest extends AbstractStructureEditorTest {
 		addDataType(new FloatDataType());
 		addDataType(arrayDt);
 
+		waitForSwing();
+
 		assertEquals(3, structureModel.getNumComponents());
 		assertEquals(4, structureModel.getRowCount());
 		checkRow(0, 0, 1, "db", new ByteDataType(), "", "");
@@ -155,6 +157,8 @@ public class StructureEditorAlignmentTest extends AbstractStructureEditorTest {
 		addDataType(new FloatDataType());
 		addDataType(arrayDt);
 
+		waitForSwing();
+
 		pressButtonByName(getPanel(), "Internally Aligned");
 		pressButtonByName(getPanel(), "Machine Minimum Alignment");
 
@@ -177,6 +181,8 @@ public class StructureEditorAlignmentTest extends AbstractStructureEditorTest {
 		addDataType(new ByteDataType());
 		addDataType(new FloatDataType());
 		addDataType(arrayDt);
+
+		waitForSwing();
 
 		pressButtonByName(editorPanel, "Internally Aligned");
 		JTextField minAlignField =

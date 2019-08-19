@@ -30,10 +30,10 @@ import docking.*;
 import docking.action.DockingActionIf;
 import docking.actions.DockingToolActions;
 import docking.actions.PopupActionProvider;
+import docking.util.image.ToolIconURL;
 import ghidra.framework.model.*;
 import ghidra.framework.options.ToolOptions;
 import ghidra.framework.plugintool.PluginEvent;
-import ghidra.framework.project.tool.ToolIconURL;
 import ghidra.program.model.listing.Program;
 
 public class DummyTool implements Tool {
@@ -361,8 +361,7 @@ public class DummyTool implements Tool {
 
 	@Override
 	public void setMenuGroup(String[] menuPath, String group, String menuSubGroup) {
-		// TODO Auto-generated method stub
-
+		//do nothing
 	}
 
 	@Override

@@ -15,7 +15,7 @@
  */
 package generic.test;
 
-import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.*;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -62,6 +62,7 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 	private static File debugDirectory;
 
 	public static final String TESTDATA_DIRECTORY_NAME = "testdata";
+	public static final String DEFAULT_TOOL_NAME = "CodeBrowser";
 	public static final String DEFAULT_TEST_TOOL_NAME = "TestCodeBrowser";
 
 	private static boolean initialized = false;
@@ -661,10 +662,10 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 		if (button == null) {
 			throw new AssertionError("Couldn't find button " + buttonText + ".");
 		}
-		if (!button.isShowing()) {
+		if (!runSwing(() -> button.isShowing())) {
 			throw new AssertionError("Button " + buttonText + " is not showing.");
 		}
-		if (!button.isEnabled()) {
+		if (!runSwing(() -> button.isEnabled())) {
 			throw new AssertionError("Button " + buttonText + " is not enabled.");
 		}
 		pressButton(button, waitForCompletion);
@@ -700,10 +701,10 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 		if (button == null) {
 			throw new AssertionError("Couldn't find button " + buttonName + ".");
 		}
-		if (!button.isVisible()) {
+		if (!runSwing(() -> button.isShowing())) {
 			throw new AssertionError("Button " + buttonName + " is not showing.");
 		}
-		if (!button.isEnabled()) {
+		if (!runSwing(() -> button.isEnabled())) {
 			throw new AssertionError("Button " + buttonName + " is not enabled.");
 		}
 		pressButton(button, waitForCompletion);
