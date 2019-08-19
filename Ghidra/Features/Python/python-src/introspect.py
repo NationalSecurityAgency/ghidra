@@ -16,21 +16,15 @@ import __main__
 from ghidra.python import PythonCodeCompletionFactory
 import java    # needed for java.lang.Class
 
-try:
-    True
-except NameError:
-    True = 1==1
-    False = 1==0
-
 #from java.lang.System.out import println
-    
+
 def getAutoCompleteList(command='', locals=None, includeMagic=1,
                         includeSingle=1, includeDouble=1):
     """Return list of auto-completion tuples for command.
-    
+
     First entry is the possible completions, and second entry is the
     of actual string that should be added to do the completion.
-    
+
     The list of options will be based on the locals namespace."""
     attributes = []
     object = None
@@ -45,7 +39,7 @@ def getAutoCompleteList(command='', locals=None, includeMagic=1,
 
     #println("root='" + root + "'")
     #println("filter='" + filter + "'")
-    
+
     if not root:
         # top-level?
         attributes = locals
@@ -83,7 +77,7 @@ def getAutoCompleteList(command='', locals=None, includeMagic=1,
 
 def compare_completions(comp1, comp2):
     return cmp(comp1.description, comp2.description)
-                       
+
 def getAttributeNames(object, includeMagic=1, includeSingle=1,
                       includeDouble=1):
     """Return list of unique attributes, including inherited, for object."""
@@ -133,7 +127,7 @@ def hasattrAlwaysReturnsTrue(object):
 
 def getAllAttributeNames(object):
     """Return dict of all attributes, including inherited, for an object.
-    
+
     Recursively walk through a class and all base classes.
     """
     attrdict = {}  # (object, technique, count): [list of attributes]
@@ -207,7 +201,7 @@ def getAllAttributeNames(object):
 
 def getCallTip(command='', locals=None):
     """For a command, return a tuple of object name, argspec, tip text.
-    
+
     The call tip information will be based on the locals namespace."""
     calltip = ('', '', '')  # object name, argspec, tip text.
     # Get the proper chunk of code from the command.
@@ -233,7 +227,7 @@ def getCallTip(command='', locals=None):
         pass
     elif inspect.isfunction(object):
         # tip1 is a string like: "getCallTip(command='', locals=None)"
-        argspec = apply(inspect.formatargspec, inspect.getargspec(object))
+        argspec = inspect.formatargspec(inspect.getargspec(object))
         if dropSelf:
             # Thh first parameter to a method is a reference to an
             # instance, usually coded as "self", and is usually passed
@@ -272,7 +266,7 @@ def getCallTip(command='', locals=None):
 
 def getRoot(command, terminator=None):
     """Return the rightmost root portion of an arbitrary Python command.
-    
+
     Return only the root portion that can be eval()ed without side
     effect.  The command would normally terminate with a '(' or
     '.'.  The terminator and anything after the terminator will be
@@ -291,7 +285,7 @@ def getRoot(command, terminator=None):
     if not tokens:
         return ''
     if terminator == '.' and \
-    (tokens[-1][1] <> '.' or tokens[-1][0] is not tokenize.OP):
+    (tokens[-1][1] != '.' or tokens[-1][0] is not tokenize.OP):
         # Trap decimals in numbers, versus the dot operator
         return ''
     else:
@@ -355,7 +349,7 @@ def getRootAndFilter(command, terminator=None):
     """Return the rightmost root portion of an arbitrary Python command.
     Also returns the filter, which is the fragment after the root and
     terminator.
-    
+
     Return only the root portion that can be eval()ed without side
     effect.  The command would normally terminate with a '(' or
     '.'.  The terminator and anything after the terminator will be
@@ -384,36 +378,36 @@ def getRootAndFilter(command, terminator=None):
         tokenstring = token[1]
         line = token[4]
         if tokentype is tokenize.ENDMARKER:
-            
+
             #println("Hit end marker; continuing")
-            
+
             continue
         if not terminator_seen:
             if not filter and tokentype in (tokenize.NAME, tokenize.STRING):
                 # okay, we think we've found our filter string
                 filter = tokenstring
-                
+
                 #println("hit filter string '" + filter + "'")
-                
+
             elif tokenstring == terminator:
                 # hooray, our terminator!
                 terminator_seen = True
             else:
                 # either we found another token before our already-set
                 # filter string, or we just found a bad token
-                
+
                 #println("No valid tokens found after terminator (at '" +
                 #        tokenstring + "'")
-                
+
                 break
         else:
             # we've seen the terminator -- continue adding valid tokens
             # until we hit a token that stops us
             if tokentype in (tokenize.NAME, tokenize.STRING, tokenize.NUMBER):
                 root = tokenstring + root
-                
+
                 #println("Added to root: '" + root + "'")
-            
+
             elif tokentype is tokenize.OP:
                 if tokenstring in op_mate.keys():
                     # found a closing bracket/paren
@@ -431,9 +425,9 @@ def getRootAndFilter(command, terminator=None):
                     pass
                 else:
                     break
-                
+
                 root = tokenstring + root
-                
+
                 #println("Added to root: '" + root + "'")
             else:
                 # hit a terminating token

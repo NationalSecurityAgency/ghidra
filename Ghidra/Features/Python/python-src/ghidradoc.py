@@ -1,6 +1,7 @@
 """
 Ties the Ghidra documentation into the builtin Python help.
 """
+from __future__ import print_function
 
 import __builtin__
 import java
@@ -11,6 +12,11 @@ import zipfile
 
 from ghidra.framework import Application
 from ghidra.util import SystemUtilities
+
+try:
+    long
+except NameError:
+    long = int
 
 class _Helper:
     def __init__(self):
@@ -44,7 +50,7 @@ class _Helper:
                 return "ghidra.app.script.GhidraScript", None
             class_name = None
             method_name = None
-            if type(param) in [type(1), type(1j), type(1L), type(1.0), type(None), type(True), type([]), type({}), type(()), type({1})]:
+            if type(param) in [type(1), type(1j), type(long(1)), type(1.0), type(None), type(True), type([]), type({}), type(()), type({1})]:
                 # These are instances of builtin types, so skip
                 pass
             elif type(param) == type(str):
@@ -141,27 +147,27 @@ class _Helper:
             try_again = True
             while try_again:
                 try_again = False
-                print "Searching API for " + class_name + ("" if method_name is None else "." + method_name + "()") + "..."
+                print("Searching API for " + class_name + ("" if method_name is None else "." + method_name + "()") + "...")
                 jsondoc = get_jsondoc(class_name)
                 if jsondoc is None:
-                    print "No API found for " + class_name
+                    print("No API found for " + class_name)
                 elif method_name is None:
-                    print "#####################################################"
-                    print format_class(jsondoc)
-                    print "#####################################################\n"
+                    print("#####################################################")
+                    print(format_class(jsondoc))
+                    print("#####################################################\n")
                     for field in jsondoc["fields"]:
-                        print format_field(field)
-                        print "-----------------------------------------------------"
+                        print(format_field(field))
+                        print("-----------------------------------------------------")
                     for method in jsondoc["methods"]:
-                        print format_method(method)
-                        print "-----------------------------------------------------"
+                        print(format_method(method))
+                        print("-----------------------------------------------------")
                 else:
                     found_method = False
                     for method in jsondoc["methods"]:
                         if method["name"] == method_name:
-                            print "-----------------------------------------------------"
-                            print format_method(method)
-                            print "-----------------------------------------------------"
+                            print("-----------------------------------------------------")
+                            print(format_method(method))
+                            print("-----------------------------------------------------")
                             found_method = True
                     if not found_method:
                         # The method may be inherited, so check for a super class and try again

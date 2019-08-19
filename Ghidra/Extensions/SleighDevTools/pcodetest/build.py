@@ -28,7 +28,7 @@ class BuildUtil(object):
         else:
             str = ' '.join(cmd);
             if stdout:
-                f = file(stdout, 'w+')
+                f = open(stdout, 'w+')
                 str += ' 1>%s 2>&1' % (stdout)
             else:
                 f = subprocess.PIPE
@@ -272,7 +272,7 @@ class Config(object):
         if isinstance(val, basestring) and '%' in val:
             return val % self.__dict__
         elif isinstance(val, dict):
-            return dict(map(lambda (k,v): (k,self.format(v)), val.iteritems()))
+            return dict(map(lambda k,v: (k,self.format(v)), val.iteritems()))
         else: return val
 
     def __getattr__(self, attr):
