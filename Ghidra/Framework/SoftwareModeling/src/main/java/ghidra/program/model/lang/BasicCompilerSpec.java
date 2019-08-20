@@ -255,16 +255,6 @@ public class BasicCompilerSpec implements CompilerSpec {
 	}
 
 	@Override
-	public int getCallStackMod() {
-		return defaultModel.getExtrapop();
-	}
-
-	@Override
-	public int getCallStackShift() {
-		return defaultModel.getStackshift();
-	}
-
-	@Override
 	public PrototypeModel[] getCallingConventions() {
 		return models;
 	}

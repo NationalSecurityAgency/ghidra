@@ -112,16 +112,17 @@ public class FunctionPrototype {
 		// function pointer, in which case forcing the void
 		// causes the decompiler to drop real parameters.
 		// At the moment, we turn on varargs if there are no params
-		if (voidimpliesdotdotdot && voidinputlock)
+		if (voidimpliesdotdotdot && voidinputlock) {
 			dotdotdot = true;
+		}
 	}
 
 	/**
 	 * Populate Function Prototype from information attached to a function in the Program DB.
 	 * 
 	 * @param f is the function to grab prototype from
-	 * @param default_extrapop
-	 * @param override_extrapop
+	 * @param default_extrapop is the default extrapop to use if the function's is unknown
+	 * @param override_extrapop is true if the extrapop should be overridden
 	 */
 	void grabFromFunction(Function f, int default_extrapop, boolean override_extrapop) {
 		modelname = f.getCallingConventionName();
@@ -134,10 +135,12 @@ public class FunctionPrototype {
 		returnstorage = returnparam.getVariableStorage();
 
 		SourceType sigSource = f.getSignatureSource();
-		if (sigSource != SourceType.DEFAULT)
+		if (sigSource != SourceType.DEFAULT) {
 			outputlock = DataType.DEFAULT != returntype;
-		else
+		}
+		else {
 			outputlock = false;
+		}
 
 		if ((returnstorage == null) || (!returnstorage.isValid())) {	// Unassigned or otherwise invalid storage
 			outputlock = false;
@@ -162,7 +165,11 @@ public class FunctionPrototype {
 			extrapop = default_extrapop;
 		}
 		else {
-			extrapop = purge + f.getProgram().getCompilerSpec().getCallStackShift();
+			PrototypeModel protoModel = f.getCallingConvention();
+			if (protoModel == null) {
+				protoModel = f.getProgram().getCompilerSpec().getDefaultCallingConvention();
+			}
+			extrapop = purge + protoModel.getStackshift();
 		}
 	}
 
@@ -187,8 +194,9 @@ public class FunctionPrototype {
 	 * @return the number of defined parameters for this function prototype
 	 */
 	public int getNumParams() {
-		if (localsyms != null)
+		if (localsyms != null) {
 			return localsyms.getNumParams();
+		}
 		return params.length;
 	}
 
@@ -198,8 +206,9 @@ public class FunctionPrototype {
 	 * if this prototype is not backed by a LocalSymbolMap
 	 */
 	public HighParam getParam(int i) {
-		if (localsyms != null)
+		if (localsyms != null) {
 			return localsyms.getParam(i);
+		}
 		return null;
 	}
 
@@ -299,36 +308,50 @@ public class FunctionPrototype {
 
 	/**
 	 * append an XML string representing this function prototype
+	 * @param res is where the string should be appended
+	 * @param dtmanage is the DataTypeManager for building type reference tags
 	 */
 	public void buildPrototypeXML(StringBuilder res, PcodeDataTypeManager dtmanage) {
 		res.append("<prototype");
-		if (extrapop == PrototypeModel.UNKNOWN_EXTRAPOP)
+		if (extrapop == PrototypeModel.UNKNOWN_EXTRAPOP) {
 			SpecXmlUtils.encodeStringAttribute(res, "extrapop", "unknown");
-		else
+		}
+		else {
 			SpecXmlUtils.encodeSignedIntegerAttribute(res, "extrapop", extrapop);
+		}
 		SpecXmlUtils.encodeStringAttribute(res, "model", modelname);
-		if (modellock)
+		if (modellock) {
 			SpecXmlUtils.encodeBooleanAttribute(res, "modellock", modellock);
-		if (dotdotdot)
+		}
+		if (dotdotdot) {
 			SpecXmlUtils.encodeBooleanAttribute(res, "dotdotdot", dotdotdot);
-		if (voidinputlock)
+		}
+		if (voidinputlock) {
 			SpecXmlUtils.encodeBooleanAttribute(res, "voidlock", voidinputlock);
-		if (isinline)
+		}
+		if (isinline) {
 			SpecXmlUtils.encodeBooleanAttribute(res, "inline", isinline);
-		if (noreturn)
+		}
+		if (noreturn) {
 			SpecXmlUtils.encodeBooleanAttribute(res, "noreturn", noreturn);
-		if (custom)
+		}
+		if (custom) {
 			SpecXmlUtils.encodeBooleanAttribute(res, "custom", custom);
-		if (hasThis)
+		}
+		if (hasThis) {
 			SpecXmlUtils.encodeBooleanAttribute(res, "hasthis", hasThis);
-		if (isConstruct)
+		}
+		if (isConstruct) {
 			SpecXmlUtils.encodeBooleanAttribute(res, "constructor", isConstruct);
-		if (isDestruct)
+		}
+		if (isDestruct) {
 			SpecXmlUtils.encodeBooleanAttribute(res, "destructor", isDestruct);
+		}
 		res.append(">\n");
 		res.append("  <returnsym");
-		if (outputlock)
+		if (outputlock) {
 			SpecXmlUtils.encodeBooleanAttribute(res, "typelock", outputlock);
+		}
 		res.append(">\n   ");
 		int sz = returntype.getLength();
 		if (sz < 0) {
@@ -338,14 +361,16 @@ public class FunctionPrototype {
 		if ((returnstorage != null) && returnstorage.isValid() &&
 			(!returnstorage.isVoidStorage())) {
 			int logicalsize = 0;		// Assume logicalsize of return matches datatype size
-			if (sz != returnstorage.size())	// If the sizes do not match
+			if (sz != returnstorage.size()) {	// If the sizes do no match
 				logicalsize = sz;		// force the logical size on the varnode
+			}
 			String addrstring = Varnode.buildXMLAddress(returnstorage.getVarnodes(), logicalsize);
 			res.append(addrstring).append("\n   ");
 		}
-		else
+		else {
 			// Decompiler will use model for storage
 			res.append("<addr/>\n   "); // Don't specify where return type is stored
+		}
 
 		res.append(dtmanage.buildTypeRef(returntype, sz));
 		res.append("  </returnsym>\n");
@@ -370,8 +395,9 @@ public class FunctionPrototype {
 				res.append("\">\n");
 				res.append("  <addr/>\n  "); // Blank address
 				sz = dt.getLength();
-				if (sz < 0)
+				if (sz < 0) {
 					sz = 1;
+				}
 				res.append(dtmanage.buildTypeRef(dt, sz));
 				res.append("</param>\n");
 			}
@@ -381,21 +407,22 @@ public class FunctionPrototype {
 	}
 
 	/**
-	 * Parse the function prototype from an XML tree node.
-	 * 
-	 * @param node XML tree node from a parsing of a larger XML document
-	 * 
-	 * @throws PcodeXMLException
+	 * Parse the function prototype from <prototype> tag.
+	 * @param parser is the XML document to parse
+	 * @param dtmanage is the DataTypeManager used to parse data-type tags
+	 * @throws PcodeXMLException for any problems parsing
 	 */
 	public void readPrototypeXML(XmlPullParser parser, PcodeDataTypeManager dtmanage)
 			throws PcodeXMLException {
 		XmlElement node = parser.start("prototype");
 		modelname = node.getAttribute("model");
 		String val = node.getAttribute("extrapop");
-		if (val.equals("unknown"))
+		if (val.equals("unknown")) {
 			extrapop = PrototypeModel.UNKNOWN_EXTRAPOP;
-		else
+		}
+		else {
 			extrapop = SpecXmlUtils.decodeInt(val);
+		}
 		modellock = false;
 		if (node.hasAttribute("modellock")) {
 			modellock = SpecXmlUtils.decodeBoolean(node.getAttribute("modellock"));
@@ -434,16 +461,18 @@ public class FunctionPrototype {
 		}
 		XmlElement retel = parser.start("returnsym");
 		outputlock = false;
-		if (retel.hasAttribute("typelock"))
+		if (retel.hasAttribute("typelock")) {
 			outputlock = SpecXmlUtils.decodeBoolean(retel.getAttribute("typelock"));
+		}
 		parser.discardSubTree();
 		returnstorage = null;		// For now don't use decompiler's return storage
 		returntype = dtmanage.readXMLDataType(parser);
 		parser.end(retel);
 
 		XmlElement peeknode = parser.peek();
-		if ((peeknode != null) && peeknode.isStart())
+		if ((peeknode != null) && peeknode.isStart()) {
 			parser.discardSubTree(); // The decompiler may return an <inject> tag
+		}
 		parser.end(node);
 	}
 

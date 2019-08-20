@@ -90,22 +90,6 @@ public interface CompilerSpec {
 	public AddressSpace getStackBaseSpace();
 
 	/**
-	 * Number of extra bytes popped from the stack on return
-	 * -1 if it is unknown.
-	 * @return # of bytes popped from the stack by a called function on return.
-	 */
-	public int getCallStackMod();
-
-	/**
-	 * Get the normal shift in the stack at the call to this routine.
-	 * This will be the things pushed on the stack as part of the calling
-	 * conventions.  Normally the return value.
-	 * 
-	 * @return entry stack shift or -1 if it is unknown
-	 */
-	public int getCallStackShift();
-
-	/**
 	 * Returns true if stack grows with negative offsets
 	 */
 	public boolean stackGrowsNegative();
