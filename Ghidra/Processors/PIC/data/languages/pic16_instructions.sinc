@@ -49,7 +49,7 @@ attach variables [ fregCore ] [
 
 @elif PROCESSOR == "PIC_16F"
 attach variables [ fregCore ] [
-	INDF0	INDF1	PCL		STATUS	FSR0L	FSR0H	FSR1L	FSR1H	BSR	WREG	PCLATH	INTCON	_ _ _ _
+	INDF0	INDF1	PCL		STATUS	FSR0L	FSR0H	FSR1L	FSR1H	BSR	W	PCLATH	INTCON	_ _ _ _
 ];
 
 attach names [IntConBits] [ IOCIF INTF TMR0IF IOCIE INTE TMR0IE PEIE GIE  ];
