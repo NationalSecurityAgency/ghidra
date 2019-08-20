@@ -35,11 +35,25 @@ public class PdbScreenShots extends GhidraScreenShotGenerator {
 
 		performAction("Download_PDB_File", "PdbSymbolServerPlugin", false);
 
-		Window pdbDialog = waitForWindow("pdb or pdb.xml", 2000);
+		Window pdbDialog = waitForWindow("pdb or pdb.xml");
 		pdbDialog.setSize(new Dimension(750, 200));
 		captureWindow(pdbDialog);
 
 		pressButtonByText(pdbDialog, "Cancel");
+	}
+
+	@Test
+	public void testPeSpecifiedPathDialog() throws Exception {
+
+		performAction("Download_PDB_File", "PdbSymbolServerPlugin", false);
+
+		Window pdbDialog = waitForWindow("pdb or pdb.xml");
+		pressButtonByText(pdbDialog, "PDB");
+
+		Window peSpecifiedPathDialog = waitForWindow("PE-specified PDB Path");
+		captureWindow(peSpecifiedPathDialog);
+
+		pressButtonByText(peSpecifiedPathDialog, "Cancel");
 	}
 
 	@Test
@@ -51,13 +65,16 @@ public class PdbScreenShots extends GhidraScreenShotGenerator {
 
 		performAction("Download_PDB_File", "PdbSymbolServerPlugin", false);
 
-		Window pdbDialog = waitForWindow("pdb or pdb.xml", 2000);
-		pressButtonByText(pdbDialog, "OK");
+		Window pdbDialog = waitForWindow("pdb or pdb.xml");
+		pressButtonByText(pdbDialog, "PDB");
 
-		Window saveLocationDialog = waitForWindow("Select Location to Save Retrieved File", 2000);
+		Window peSpecifiedPathDialog = waitForWindow("PE-specified PDB Path");
+		pressButtonByText(peSpecifiedPathDialog, "Yes");
+
+		Window saveLocationDialog = waitForWindow("Select Location to Save Retrieved File");
 		pressButtonByText(saveLocationDialog, "OK");
 
-		Window urlDialog = waitForWindow("Symbol Server URL", 2000);
+		Window urlDialog = waitForWindow("Symbol Server URL");
 		urlDialog.setSize(new Dimension(850, 135));
 
 		captureWindow(urlDialog);
@@ -68,13 +85,12 @@ public class PdbScreenShots extends GhidraScreenShotGenerator {
 	@Test
 	public void testKnownSymbolServerURLsDialog() throws Exception {
 
-		List<URLChoice> urlChoices = new ArrayList<URLChoice>();
+		List<URLChoice> urlChoices = new ArrayList<>();
 		urlChoices.add(new URLChoice("Internet", "https://msdl.microsoft.com/download/symbols"));
 		urlChoices.add(new URLChoice("My Network", "https://my_symbol_server.my.org"));
 
-		final ObjectChooserDialog<URLChoice> urlDialog =
-			new ObjectChooserDialog<URLChoice>("Choose a URL", URLChoice.class, urlChoices,
-				"getNetwork", "getUrl");
+		final ObjectChooserDialog<URLChoice> urlDialog = new ObjectChooserDialog<>("Choose a URL",
+			URLChoice.class, urlChoices, "getNetwork", "getUrl");
 
 		runSwing(() -> {
 			// Do nothing
@@ -91,10 +107,10 @@ public class PdbScreenShots extends GhidraScreenShotGenerator {
 		// Can't really get success message without actually downloading a file.
 		// So, fake out the message by showing the same sort of dialog the user would see.
 		Msg.showInfo(getClass(), null, "File Retrieved",
-			"Downloaded and saved file 'example.pdb' to \n"
-				+ "C:\\Symbols\\example.pdb\\1123A456B7889012C3DDFA4556789B011");
+			"Downloaded and saved file 'example.pdb' to \n" +
+				"C:\\Symbols\\example.pdb\\1123A456B7889012C3DDFA4556789B011");
 
-		Window successDialog = waitForWindow("File Retrieved", 2000);
+		Window successDialog = waitForWindow("File Retrieved");
 		captureWindow(successDialog);
 
 		pressButtonByText(successDialog, "OK");
