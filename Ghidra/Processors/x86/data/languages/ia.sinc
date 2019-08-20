@@ -3437,7 +3437,8 @@ enterFrames: low5 is low5 { tmp:1 = low5; export tmp; }
 :JMPF Mem       is vexMode=0 & opsize=2 & byte=0xff; Mem & reg_opcode=5 ...     { target:$(SIZE) = *:8 Mem; goto [target]; }
 @endif
 
-:LAHF           is vexMode=0 & byte=0x9f & bit64=0                      { AH=(SF<<7)|(ZF<<6)|(AF<<4)|(PF<<2)|2|CF; }
+# Initially disallowed in 64bit mode, but later reintroduced
+:LAHF           is vexMode=0 & byte=0x9f { AH=(SF<<7)|(ZF<<6)|(AF<<4)|(PF<<2)|2|CF; }
 
 :LAR Reg16,rm16     is vexMode=0 & opsize=0 & byte=0xf; byte=0x2; rm16 & Reg16 ...  { Reg16 = rm16 & 0xff00; ZF=1; }
 :LAR Reg32,rm32     is vexMode=0 & opsize=1 & byte=0xf; byte=0x2; rm32 & Reg32 ... & check_Reg32_dest ... { Reg32 = rm32 & 0xffff00; build check_Reg32_dest; ZF=1; }
@@ -4089,7 +4090,8 @@ define pcodeop rdtsc;
 define pcodeop smm_restore_state;
 :RSM            is vexMode=0 & byte=0xf; byte=0xaa                  { tmp:4 = smm_restore_state(); return [tmp]; }
 
-:SAHF           is vexMode=0 & byte=0x9e & bit64=0  { SF = (AH & 0x80) != 0;
+# Initially disallowed in 64bit mode, but later reintroduced
+:SAHF           is vexMode=0 & byte=0x9e { SF = (AH & 0x80) != 0;
                                           ZF = (AH & 0x40) != 0;
                                           AF = (AH & 0x10) != 0;
                                           PF = (AH & 0x04) != 0;
