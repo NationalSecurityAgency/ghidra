@@ -659,7 +659,7 @@ public class PostCommentFieldFactoryTest extends AbstractGhidraHeadedIntegration
 	}
 
 	@Test
-	public void testOverridingWithChangingDestination() {
+	public void testOverridingWithoutChangingDestination() {
 		assertFalse(cb.goToField(addr("1007000"), PostCommentFieldFactory.FIELD_NAME, 0, 1));
 		ReferenceManager refManager = program.getReferenceManager();
 		Reference defaultRef = refManager.getPrimaryReferenceFrom(addr("1007000"), 0);
