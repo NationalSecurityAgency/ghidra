@@ -48,7 +48,7 @@ import resources.ResourceManager;
 	packageName = CorePluginPackage.NAME,
 	category = PluginCategoryNames.GRAPH,
 	shortDescription = "Call Trees Plugin",
-	description = "This plugin shows incoming and outging calls for a give function.  " +
+	description = "This plugin shows incoming and outgoing calls for a give function.  " +
 			"More specifically, one tree of the plugin will show all callers of the " +
 			"function and the other tree of the plugin will show all calls made " +
 			"by the function"

@@ -38,7 +38,7 @@ import ghidra.framework.plugintool.util.PluginStatus;
 	packageName = CorePluginPackage.NAME,
 	category = PluginCategoryNames.PATCHING,
 	shortDescription = "Assembler",
-	description = "This plugin provides funcationality for assembly patching. " +
+	description = "This plugin provides functionality for assembly patching. " +
 			"The assembler supports most processor languages also supported by the " +
 			"disassembler. Depending on the particular processor, your mileage may vary. " +
 			"We are in the process of testing and improving support for all our processors. " +
