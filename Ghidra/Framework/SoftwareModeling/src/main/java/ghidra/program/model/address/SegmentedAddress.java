@@ -17,11 +17,15 @@ package ghidra.program.model.address;
 
 
 /**
- * Address class for dealing with intel 20 bit segmented addresses.
+ * Address class for dealing with (intel) segmented addresses.  The class itself is agnostic
+ * about the mapping from segmented encoding to flat address offset, it uses the
+ * SegmentedAddressSpace to perform this mapping. So the same class can be used to represent
+ * either a real-mode address or a protected-mode address.  The class uses the underlying
+ * offset field to hold the flat encoding.
  */
 public class SegmentedAddress extends GenericAddress {
 
-	private final int segment;
+	private final int segment;		// The specific segment value associated with this address
 
 	/**
 	 * Constructor for SegmentedAddress.

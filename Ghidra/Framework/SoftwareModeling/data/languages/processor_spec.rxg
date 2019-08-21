@@ -43,6 +43,9 @@
         <optional>
           <element name="segmented_address">
             <attribute name="space"/>
+            <optional>
+              <attribute name="type"/>
+            </optional>
           </element>
         </optional>
 

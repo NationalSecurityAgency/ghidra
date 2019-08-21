@@ -79,6 +79,7 @@ public class SleighLanguage implements Language {
 	 * Non-null if a space should yes segmented addressing
 	 */
 	String segmentedspace = "";
+	String segmentType = "";
 	AddressSet volatileAddresses;
 	private ContextCache contextcache = null;
 	/**
@@ -508,6 +509,10 @@ public class SleighLanguage implements Language {
 		if (nextElement != null) {
 			XmlElement element = parser.start(); // segmented_address element
 			segmentedspace = element.getAttribute("space");
+			segmentType = element.getAttribute("type");
+			if (segmentType == null) {
+				segmentType = "";
+			}
 		}
 		parser.dispose();
 	}
@@ -896,7 +901,12 @@ public class SleighLanguage implements Language {
 					throw new SleighException(
 						"Segmented space does not support truncation: " + name);
 				}
-				spc = new SegmentedAddressSpace(name, index);
+				if (segmentType.equals("protected")) {
+					spc = new ProtectedAddressSpace(name, index);
+				}
+				else {
+					spc = new SegmentedAddressSpace(name, index);
+				}
 			}
 			else {
 				if (truncateSpace) {

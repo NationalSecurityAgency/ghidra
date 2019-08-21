@@ -20,20 +20,46 @@ import org.apache.commons.lang3.StringUtils;
 import ghidra.util.NumericUtilities;
 
 /**
- * Address Space for dealing with Intel 20 bit segmented addresses.
+ * Address Space for dealing with (intel) segmented address spaces.
+ * It understands the mapping between the segmented encoding (seg:offset) and
+ * the flat address encoding necessary to produce an Address object that can be
+ * used by other analyses.  This mapping is inherent in protected methods:
+ *   - getDefaultOffsetFromFlat
+ *   - getDefaultSegmentFromFlat
+ *   - getFlatOffset
+ *   - getOffsetFromFlat
+ *   - getAddressInSegment
+ * 
+ * These 5 methods can be overridden to get a different mapping. This base class is
+ * set up to map as for x86 16-bit real-mode.
  */
 public class SegmentedAddressSpace extends GenericAddressSpace {
 
-	private final static int SIZE = 21;
+	private final static int REALMODE_SIZE = 21;
+	private final static long REALMODE_MAXOFFSET = 0x10FFEF;
 
 	/**
-	 * Constructs a new Segmented AddressSpace.
+	 * Constructor for larger size address spaces (than the real-mode space)
+	 * @param name is the name of the space
+	 * @param size is the number of bits in a (flat) address
+	 * @param unique is the unique id for the space
+	 */
+	protected SegmentedAddressSpace(String name, int size, int unique) {
+		super(name, size, TYPE_RAM, unique);
+		spaceSize = 1;
+		spaceSize <<= size;
+		maxOffset = spaceSize - 1;
+		maxAddress = getUncheckedAddress(maxOffset);
+	}
+
+	/**
+	 * Constructs a new Segmented AddressSpace for x86 real-mode, with 21-bit addresses.
 	 * @param name is the name of the space
 	 * @param unique is the unique id for the space.
 	 */
 	public SegmentedAddressSpace(String name, int unique) {
-		super(name, SIZE, TYPE_RAM, unique);
-		maxOffset = 0x10FFEF;
+		super(name, REALMODE_SIZE, TYPE_RAM, unique);
+		maxOffset = REALMODE_MAXOFFSET;
 		spaceSize = maxOffset + 1;
 		maxAddress = getUncheckedAddress(maxOffset);
 	}
