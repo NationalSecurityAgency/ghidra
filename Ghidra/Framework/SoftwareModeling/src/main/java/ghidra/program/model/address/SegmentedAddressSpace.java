@@ -216,9 +216,15 @@ public class SegmentedAddressSpace extends GenericAddressSpace {
 	private SegmentedAddress parseSegmented(String segStr, String offStr)
 			throws AddressFormatException {
 		int seg = -1;
-		int off = -1;
 		try {
 			seg = (int) parseString(segStr);
+		}
+		catch (NumberFormatException e) {
+			return null;
+		}
+
+		int off = -1;
+		try {
 			off = (int) parseString(offStr);
 		}
 		catch (NumberFormatException e) {
