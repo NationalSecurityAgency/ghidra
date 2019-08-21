@@ -60,7 +60,7 @@ public class PostCommentFieldFactoryTest extends AbstractGhidraHeadedIntegration
 	private ProgramDB buildProgram() throws Exception {
 		ToyProgramBuilder builder = new ToyProgramBuilder("notepad", true);
 
-		builder.createMemory(".text", "0x1001000", 0x6600);
+		builder.createMemory(".text", "0x1001000", 0x10000);
 		builder.createEmptyFunction(null, "1001000", 1000, null);
 		builder.createReturnInstruction("1001000");
 		builder.createJmpInstruction("1001010", "1001020");
@@ -107,6 +107,60 @@ public class PostCommentFieldFactoryTest extends AbstractGhidraHeadedIntegration
 		builder.createEmptyFunction("call_dest_3", "1007020", 10, null);
 		builder.createCallInstruction("1007000", "1007020");
 		builder.createReturnInstruction("1007002");
+
+		//create a function for testing basic CALLOTHER override
+		builder.createEmptyFunction("basic_callother_override", "1008000", 10, null);
+		builder.createEmptyFunction("call_dest_4", "1008020", 10, null);
+		builder.createEmptyFunction("call_dest_5", "1008040", 10, null);
+		builder.setBytes("1008000", "a3 00");
+		builder.disassemble("1008000", 2);
+		builder.createCallInstruction("1008002", "1008020");
+		builder.createCallInstruction("1008004", "1008040");
+		builder.createReturnInstruction("1008006");
+
+		//create a function for testing CALLOTHER_CALL_OVERRIDE having precedence
+		//over CALLOTHER_JUMP_OVERRIDE
+		builder.createEmptyFunction("precedence_test", "1009000", 10, null);
+		builder.createEmptyFunction("call_dest_6", "1009020", 10, null);
+		builder.setBytes("1009000", "a1 10");
+		builder.disassemble("1009000", 2);
+		builder.createCallInstruction("1009002", "1009020");
+		builder.createReturnInstruction("1009004");
+
+		//create a function for testing warning messages that there are additional
+		builder.createEmptyFunction("warning_test", "100a000", 10, null);
+		builder.createEmptyFunction("call_dest_7", "100a020", 10, null);
+		builder.setBytes("100a000", "a2 10");
+		builder.disassemble("100a000", 2);
+		builder.createReturnInstruction("100a002");
+
+		//add an overlay space
+		builder.createOverlayMemory("overlay", "0x1001000", 0x10000);
+
+		builder.createEmptyFunction("overlay_func", "overlay:100a020", 10, null);
+		builder.createEmptyFunction("call_into_overlay", "100b000", 10, null);
+		builder.createEmptyFunction("call_dest_8", "100b020", 10, null);
+		//call [r1]
+		builder.setBytes("100b000", "f6 10");
+		builder.disassemble("100b000", 2);
+		builder.createCallInstruction("100b002", "100b020");
+		builder.setBytes("100b004", "a3 00");
+		builder.disassemble("100b004", 2);
+		builder.createReturnInstruction("100b006");
+
+		builder.createEmptyFunction("multiple_ops1", "0x100c000", 10, null);
+		builder.createEmptyFunction("call_dest_9", "0x100c020", 10, null);
+		builder.setBytes("100c000", "a4 11");
+		builder.disassemble("100c000", 2);
+		builder.createReturnInstruction("100c002");
+
+		builder.createEmptyFunction("multiple_ops2", "0x100d000", 10, null);
+		builder.createEmptyFunction("call_dest_10", "0x100d020", 10, null);
+		builder.createEmptyFunction("call_dest_11", "0x100d030", 10, null);
+		builder.setBytes("100d000", "a5 20");
+		builder.disassemble("100d000", 2);
+		builder.createReturnInstruction("100d002");
+
 
 		return builder.getProgram();
 	}
@@ -688,7 +742,270 @@ public class PostCommentFieldFactoryTest extends AbstractGhidraHeadedIntegration
 		assertFalse(cb.goToField(addr("1007000"), PostCommentFieldFactory.FIELD_NAME, 0, 1));
 	}
 
-	//TODO: test overriding CALLOTHER ops
+	@Test
+	public void testBasicCallOtherOverrides() {
+		//initially no test comment
+		assertFalse(cb.goToField(addr("1008000"), PostCommentFieldFactory.FIELD_NAME, 0, 1));
+		ReferenceManager refManager = program.getReferenceManager();
+		int transactionID = program.startTransaction("override_callother_with_call_ref");
+		try {
+			Reference callOverride = refManager.addMemoryReference(addr("1008000"), addr("1008020"),
+				RefType.CALL_OVERRIDE_UNCONDITIONAL, SourceType.ANALYSIS, Reference.MNEMONIC);
+			refManager.setPrimary(callOverride, true);
+		}
+		finally {
+			program.endTransaction(transactionID, true);
+		}
+		//CALL_OVERRIDE_UNCONDITIONAL references should not cause a post comment
+		assertFalse(cb.goToField(addr("1008000"), PostCommentFieldFactory.FIELD_NAME, 0, 1));
+		transactionID = program.startTransaction("override_callother_with_unconditional_jump_ref");
+		try {
+			Reference jumpOverride = refManager.addMemoryReference(addr("1008000"), addr("1008020"),
+				RefType.JUMP_OVERRIDE_UNCONDITIONAL, SourceType.ANALYSIS, Reference.MNEMONIC);
+			refManager.setPrimary(jumpOverride, true);
+		}
+		finally {
+			program.endTransaction(transactionID, true);
+		}
+		//JUMP_OVERRIDE_UNCONDITIONAL references should also not do anything
+		assertFalse(cb.goToField(addr("1008000"), PostCommentFieldFactory.FIELD_NAME, 0, 1));
+		transactionID = program.startTransaction("override_callother_with_callother_override_call");
+		try {
+			Reference callOtherCallOverride =
+				refManager.addMemoryReference(addr("1008000"), addr("1008020"),
+					RefType.CALLOTHER_OVERRIDE_CALL, SourceType.ANALYSIS, Reference.MNEMONIC);
+			refManager.setPrimary(callOtherCallOverride, true);
+		}
+		finally {
+			program.endTransaction(transactionID, true);
+		}
+		//should now be a post comment about the CALLOTHER call override
+		assertTrue(cb.goToField(addr("1008000"), PostCommentFieldFactory.FIELD_NAME, 0, 1));
+		ListingTextField tf = (ListingTextField) cb.getCurrentField();
+		assertEquals("-- CALLOTHER(pcodeop_three) Call Override: call_dest_4 (01008020)",
+			tf.getText());
+		transactionID = program.startTransaction("override_callother_with_callother_override_jump");
+		try {
+			Reference callOtherCallOverride =
+				refManager.addMemoryReference(addr("1008000"), addr("1008004"),
+					RefType.CALLOTHER_OVERRIDE_JUMP, SourceType.ANALYSIS, Reference.MNEMONIC);
+			refManager.setPrimary(callOtherCallOverride, true);
+		}
+		finally {
+			program.endTransaction(transactionID, true);
+		}
+		//should now be a post comment about the CALLOTHER jump override
+		assertTrue(cb.goToField(addr("1008000"), PostCommentFieldFactory.FIELD_NAME, 0, 1));
+		tf = (ListingTextField) cb.getCurrentField();
+		assertEquals("-- CALLOTHER(pcodeop_three) Jump Override: LAB_01008004 (01008004)",
+			tf.getText());
+	}
+
+	//test: callother call overrides has precedence over callother jump overrides
+	//test: only one override of each type on a given native instruction
+	@Test
+	public void testPrecedence() {
+		assertFalse(cb.goToField(addr("1009000"), PostCommentFieldFactory.FIELD_NAME, 0, 1));
+		ReferenceManager refManager = program.getReferenceManager();
+		int transactionID = program.startTransaction("add_overriding_jump_ref");
+		try {
+			Reference callOtherJumpOverride =
+				refManager.addMemoryReference(addr("1009000"), addr("1009004"),
+					RefType.CALLOTHER_OVERRIDE_JUMP, SourceType.ANALYSIS, Reference.MNEMONIC);
+			refManager.setPrimary(callOtherJumpOverride, true);
+		}
+		finally {
+			program.endTransaction(transactionID, true);
+		}
+		//normal CALLOTHER_OVERRIDE_JUMP comment
+		assertTrue(cb.goToField(addr("1009000"), PostCommentFieldFactory.FIELD_NAME, 0, 1));
+		ListingTextField tf = (ListingTextField) cb.getCurrentField();
+		assertEquals("-- CALLOTHER(pcodeop_one) Jump Override: LAB_01009004 (01009004)",
+			tf.getText());
+
+		//now set another CALLOTHER_OVERRIDE_JUMP comment on operand 0, should no longer
+		//be a post comment since overrides only take effect if there is exactly one
+		transactionID = program.startTransaction("add_overriding_jump_ref2");
+		try {
+			Reference callOtherJumpOverride = refManager.addMemoryReference(addr("1009000"),
+				addr("1009006"), RefType.CALLOTHER_OVERRIDE_JUMP, SourceType.ANALYSIS, 0);
+			refManager.setPrimary(callOtherJumpOverride, true);
+		}
+		finally {
+			program.endTransaction(transactionID, true);
+		}
+		assertFalse(cb.goToField(addr("1009000"), PostCommentFieldFactory.FIELD_NAME, 0, 1));
+		//change the CALLOTHER_OVERRIDE_JUMP reference on operand 0 to a CALLOTHER_OVERRIDE_CALL
+		//reference
+		transactionID = program.startTransaction("add_callother_override_call_ref");
+		try {
+			Reference callOtherCallOverride = refManager.addMemoryReference(addr("1009000"),
+				addr("1009020"), RefType.CALLOTHER_OVERRIDE_CALL, SourceType.ANALYSIS, 0);
+			refManager.setPrimary(callOtherCallOverride, true);
+		}
+		finally {
+			program.endTransaction(transactionID, true);
+		}
+		assertTrue(cb.goToField(addr("1009000"), PostCommentFieldFactory.FIELD_NAME, 0, 1));
+		tf = (ListingTextField) cb.getCurrentField();
+		assertEquals("-- CALLOTHER(pcodeop_one) Call Override: call_dest_6 (01009020)",
+			tf.getText());
+		//now put a CALLOTHER_OVERRIDE_CALL ref on the mnemonic, should result in no post comment
+		//since there now two CALLOTHER_OVERRIDE_CALL references
+		transactionID = program.startTransaction("add_callother_override_call_ref2");
+		try {
+			Reference callOtherCallOverride =
+				refManager.addMemoryReference(addr("1009000"), addr("1009020"),
+					RefType.CALLOTHER_OVERRIDE_CALL, SourceType.ANALYSIS, Reference.MNEMONIC);
+			refManager.setPrimary(callOtherCallOverride, true);
+		}
+		finally {
+			program.endTransaction(transactionID, true);
+		}
+		assertFalse(cb.goToField(addr("1009000"), PostCommentFieldFactory.FIELD_NAME, 0, 1));
+	}
+
+	@Test
+	public void testWarningMessage() {
+		assertFalse(cb.goToField(addr("100a000"), PostCommentFieldFactory.FIELD_NAME, 0, 1));
+		ReferenceManager refManager = program.getReferenceManager();
+		int transactionID = program.startTransaction("add_callother_override_call_ref");
+		try {
+			Reference callOtherCallOverride = refManager.addMemoryReference(addr("100a000"),
+				addr("100a020"), RefType.CALLOTHER_OVERRIDE_CALL, SourceType.ANALYSIS, 0);
+			refManager.setPrimary(callOtherCallOverride, true);
+		}
+		finally {
+			program.endTransaction(transactionID, true);
+		}
+		assertTrue(cb.goToField(addr("100a000"), PostCommentFieldFactory.FIELD_NAME, 0, 1));
+		ListingField tf = cb.getCurrentField();
+		assertEquals(
+			"-- CALLOTHER(pcodeop_two) Call Override: call_dest_7 (0100a020) -- WARNING: additional CALLOTHER ops present",
+			tf.getText());
+	}
+
+	@Test
+	public void testOverridingCallIntoOverlay() {
+		int transactionID = program.startTransaction("override_indirect_call");
+		ReferenceManager refManager = program.getReferenceManager();
+		try {
+			Reference ref = refManager.addMemoryReference(addr("100b000"), addr("overlay:100a020"),
+				RefType.CALL_OVERRIDE_UNCONDITIONAL, SourceType.ANALYSIS, 0);
+			refManager.setPrimary(ref, true);
+		}
+		finally {
+			program.endTransaction(transactionID, true);
+		}
+		assertTrue(cb.goToField(addr("100b000"), PostCommentFieldFactory.FIELD_NAME, 0, 1));
+		ListingField tf = cb.getCurrentField();
+		assertEquals("-- Call Destination Override: overlay_func (overlay::0100a020)",
+			tf.getText());
+		transactionID = program.startTransaction("override_direct_call");
+		try {
+			Reference primaryRef = refManager.getPrimaryReferenceFrom(addr("100b002"), 0);
+			refManager.setPrimary(primaryRef, false);
+			Reference ref = refManager.addMemoryReference(addr("100b002"), addr("overlay:100a020"),
+				RefType.CALL_OVERRIDE_UNCONDITIONAL, SourceType.ANALYSIS, 0);
+			refManager.setPrimary(ref, true);
+		}
+		finally {
+			program.endTransaction(transactionID, true);
+		}
+		assertTrue(cb.goToField(addr("100b002"), PostCommentFieldFactory.FIELD_NAME, 0, 1));
+		tf = cb.getCurrentField();
+		assertEquals("-- Call Destination Override: overlay_func (overlay::0100a020)",
+			tf.getText());
+
+		transactionID = program.startTransaction("override_callother");
+		try {
+			Reference ref = refManager.addMemoryReference(addr("100b004"), addr("overlay:100a020"),
+				RefType.CALLOTHER_OVERRIDE_CALL, SourceType.ANALYSIS, Reference.MNEMONIC);
+			refManager.setPrimary(ref, true);
+		}
+		finally {
+			program.endTransaction(transactionID, true);
+		}
+		assertTrue(cb.goToField(addr("100b004"), PostCommentFieldFactory.FIELD_NAME, 0, 1));
+		tf = cb.getCurrentField();
+		assertEquals("-- CALLOTHER(pcodeop_three) Call Override: overlay_func (overlay::0100a020)",
+			tf.getText());
+	}
+
+	@Test
+	public void testMultipleOps1() {
+		assertFalse(cb.goToField(addr("100c000"), PostCommentFieldFactory.FIELD_NAME, 0, 1));
+		int transactionID = program.startTransaction("override_indirect_call");
+		ReferenceManager refManager = program.getReferenceManager();
+		try {
+			Reference ref = refManager.addMemoryReference(addr("100c000"), addr("100c020"),
+				RefType.CALL_OVERRIDE_UNCONDITIONAL, SourceType.ANALYSIS, 0);
+			refManager.setPrimary(ref, true);
+		}
+		finally {
+			program.endTransaction(transactionID, true);
+		}
+		transactionID = program.startTransaction("override_callother_call");
+		try {
+			Reference ref = refManager.addMemoryReference(addr("100c000"), addr("100c020"),
+				RefType.CALLOTHER_OVERRIDE_CALL, SourceType.ANALYSIS, Reference.MNEMONIC);
+			refManager.setPrimary(ref, true);
+		}
+		finally {
+			program.endTransaction(transactionID, true);
+		}
+		assertTrue(cb.goToField(addr("100c000"), PostCommentFieldFactory.FIELD_NAME, 0, 1));
+		ListingField tf = cb.getCurrentField();
+		assertEquals(
+			"-- CALLOTHER(pcodeop_one) Call Override: call_dest_9 (0100c020) -- WARNING: additional CALLOTHER ops present -- Call Destination Override: call_dest_9 (0100c020)",
+			tf.getText());
+		transactionID = program.startTransaction("override_callother_jump");
+		try {
+			Reference ref = refManager.addMemoryReference(addr("100c000"), addr("100c002"),
+				RefType.CALLOTHER_OVERRIDE_JUMP, SourceType.ANALYSIS, Reference.MNEMONIC);
+			refManager.setPrimary(ref, true);
+		}
+		finally {
+			program.endTransaction(transactionID, true);
+		}
+		assertTrue(cb.goToField(addr("100c000"), PostCommentFieldFactory.FIELD_NAME, 0, 1));
+		tf = cb.getCurrentField();
+		assertEquals(
+			"-- CALLOTHER(pcodeop_one) Jump Override: LAB_0100c002 (0100c002) -- WARNING: additional CALLOTHER ops present -- Call Destination Override: call_dest_9 (0100c020)",
+			tf.getText());
+	}
+
+	@Test
+	public void testMultipleOps2() {
+		assertFalse(cb.goToField(addr("100d000"), PostCommentFieldFactory.FIELD_NAME, 0, 1));
+		int transactionID = program.startTransaction("override_call_with_primary_ref");
+		ReferenceManager refManager = program.getReferenceManager();
+		try {
+			Reference primaryRef = refManager.getPrimaryReferenceFrom(addr("100d000"), 0);
+			refManager.setPrimary(primaryRef, false);
+			Reference ref = refManager.addMemoryReference(addr("100d000"), addr("100d030"),
+				RefType.UNCONDITIONAL_CALL, SourceType.ANALYSIS, 0);
+			refManager.setPrimary(ref, true);
+		}
+		finally {
+			program.endTransaction(transactionID, true);
+		}
+		transactionID = program.startTransaction("override_callother_call");
+		try {
+			Reference ref = refManager.addMemoryReference(addr("100d000"), addr("100d020"),
+				RefType.CALLOTHER_OVERRIDE_CALL, SourceType.ANALYSIS, Reference.MNEMONIC);
+			refManager.setPrimary(ref, true);
+		}
+		finally {
+			program.endTransaction(transactionID, true);
+		}
+		assertTrue(cb.goToField(addr("100d000"), PostCommentFieldFactory.FIELD_NAME, 0, 1));
+		ListingField tf = cb.getCurrentField();
+		//old way of overriding (With RefType.UNCONDITIONAL CALL) does not yield a post comment
+		assertEquals(
+			"-- CALLOTHER(pcodeop_three) Call Override: call_dest_10 (0100d020)",
+			tf.getText());
+	}
 
 	private void setCommentInFunction(Function function, String comment) {
 		CodeUnit cu = program.getListing().getCodeUnitAt(function.getEntryPoint());

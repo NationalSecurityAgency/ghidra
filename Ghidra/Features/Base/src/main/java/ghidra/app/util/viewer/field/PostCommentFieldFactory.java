@@ -221,7 +221,7 @@ public class PostCommentFieldFactory extends FieldFactory {
 						getOverridingCommentDestString(overrideData.getOverridingRef(),
 							instr.getProgram());
 				if (overrideData.hasMultipleCallOthers()) {
-					callOtherCallOverrideComment += "\nWARNING: additional CALLOTHER ops present";
+					comments.addFirst("-- WARNING: additional CALLOTHER ops present");
 				}
 				comments.addFirst(callOtherCallOverrideComment);
 			}
@@ -235,8 +235,7 @@ public class PostCommentFieldFactory extends FieldFactory {
 							") Jump Override: " + getOverridingCommentDestString(
 								overrideData.getOverridingRef(), instr.getProgram());
 					if (overrideData.hasMultipleCallOthers()) {
-						callOtherJumpOverrideComment +=
-							"\nWARNING: additional CALLOTHER ops present";
+						comments.addFirst("-- WARNING: additional CALLOTHER ops present");
 					}
 					comments.addFirst(callOtherJumpOverrideComment);
 				}
