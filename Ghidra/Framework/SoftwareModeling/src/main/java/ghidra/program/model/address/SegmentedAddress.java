@@ -21,70 +21,48 @@ package ghidra.program.model.address;
  */
 public class SegmentedAddress extends GenericAddress {
 
-	private static final long serialVersionUID = 0;
-	public static final int OFFSET_SIZE = 16;
-	public static final int SEGMENT_SIZE = 16;
-
-	private final SegmentedAddressSpace addrSpace;
 	private final int segment;
 
 	/**
 	 * Constructor for SegmentedAddress.
 	 * Offset is not validated against address space.
-	 * @param addrSpace address space for this address
-	 * @param offset offset into the space
+	 * @param addrSpace is the address space for this address
+	 * @param flat is the flat offset into the space
 	 */
-	SegmentedAddress(long offset, SegmentedAddressSpace addrSpace) {
-		super(adjustOffset(offset), addrSpace);
-		this.addrSpace = addrSpace;
-		if (offset > 0xFFFFF) {
-			this.segment = 0xFFFF;
-		} else {
-			this.segment = (int) ((offset >> 4) & 0xf000);
-		}
+	SegmentedAddress(long flat, SegmentedAddressSpace addrSpace) {
+		super(adjustOffset(flat, addrSpace), addrSpace);
+		segment = addrSpace.getSegmentFromFlat(flat);
 	}
 
 	/**
 	 * Constructor for SegmentedAddress.
-	 * @param addrSpace address space for this address
-	 * @param segmentOffset offset into the segment
-	 * @param overlayId overlay number
-	 * @param segment segment number
+	 * @param addrSpace is the address space for this address
+	 * @param segment is the segment number
+	 * @param segmentOffset is the offset into the segment
+	 * @throws AddressOutOfBoundsException if the  address does not fit in the space
 	 */
 	SegmentedAddress(SegmentedAddressSpace addrSpace, int segment, int segmentOffset)
 			throws AddressOutOfBoundsException {
-		super(addrSpace, (segment << 4) + segmentOffset);
-		this.addrSpace = addrSpace;
-		if (offset > 0xFFFFF) {
-			this.segment = 0xFFFF;
-		} else {
-			this.segment = segment;
-		}
+		super(addrSpace, addrSpace.getFlatOffset(segment, segmentOffset));
+		this.segment = segment;
 	}
 
 	/**
 	 * Constructor for SegmentedAddress.
 	 * @param addrSpace address space for this address
-	 * @param offset offset into the space
+	 * @param flat is the flat offset into the space
+	 * @throws AddressOutOfBoundsException if the flat address does not fit in the space
 	 */
-	SegmentedAddress(SegmentedAddressSpace addrSpace, long offset)
+	SegmentedAddress(SegmentedAddressSpace addrSpace, long flat)
 			throws AddressOutOfBoundsException {
-		super(addrSpace, adjustOffset(offset));
-		this.addrSpace = addrSpace;
-		if (offset > 0xFFFFF) {
-			this.segment = 0xFFFF;
-		} else {
-			this.segment = (int) ((offset >> 4) & 0xf000);
-		}
+		super(addrSpace, adjustOffset(flat, addrSpace));
+		segment = addrSpace.getSegmentFromFlat(flat);
 	}
 
-	private static long adjustOffset(long offset) {
-		// Decompiler treats segmented space as a 32-bit space and may produce an address offset
-		// of 0xffffffff for a first use offset (= 0 minus 1).
-		if (offset == 0x0ffffffffL) {
-			offset = 0x0fffffL;
-		}
-		return offset;
+	private static long adjustOffset(long flat, SegmentedAddressSpace addrSpace) {
+		int seg = addrSpace.getSegmentFromFlat(flat);
+		long offset = addrSpace.getOffsetFromFlat(flat);
+		return addrSpace.getFlatOffset(seg, offset);
 	}
 
 	/**
@@ -97,25 +75,24 @@ public class SegmentedAddress extends GenericAddress {
 
 	/**
 	 * Returns the offset within the segment.
+	 * @return the offset value
 	 */
 	public int getSegmentOffset() {
-		return (int) (offset - (segment << 4));
+		return (int) ((SegmentedAddressSpace) addrSpace).getOffsetFromFlat(offset);
 	}
 
 	/**
 	 * Returns a new address that is equivalent to this address using
 	 * the given segment number.
 	 * @param seg the seqment value to normalize to.
+	 * @return the new address
 	 */
 	public SegmentedAddress normalize(int seg) {
-		if ((seg << 4) > offset) {
+		SegmentedAddress res = ((SegmentedAddressSpace) addrSpace).getAddressInSegment(offset, seg);
+		if (res == null) {
 			return this;
 		}
-		int off = (int) (offset - (seg << 4));
-		if (off > 0xffff) {
-			return this;
-		}
-		return new SegmentedAddress(addrSpace, seg, off);
+		return res;
 	}
 
 	/**
@@ -124,8 +101,12 @@ public class SegmentedAddress extends GenericAddress {
 	 */
 	@Override
 	public Address getNewAddress(long byteOffset) {
-		SegmentedAddress segAddr = addrSpace.getAddress(byteOffset);
-		return segAddr.normalize(segment);
+		SegmentedAddress res =
+			((SegmentedAddressSpace) addrSpace).getAddressInSegment(byteOffset, segment);
+		if (res == null) {
+			return this;
+		}
+		return res;
 	}
 
 	@Override
@@ -174,33 +155,4 @@ public class SegmentedAddress extends GenericAddress {
 		}
 		return addr;
 	}
-
-	/**
-	 * @see ghidra.program.model.address.GenericAddress#next()
-	 */
-	/*
-	@Override
-	public Address next() {
-		if ((offset & SegmentedAddressSpace.MASK) == SegmentedAddressSpace.MASK) {
-			return null;
-		}
-		long newOffset = (offset + 1) & SegmentedAddressSpace.MASK;
-		return new SegmentedAddress(addrSpace, newOffset).normalize(segment);
-	}
-	*/
-
-	/**
-	 * @see ghidra.program.model.address.GenericAddress#previous()
-	 */
-	/*
-	@Override
-	public Address previous() {
-		if ((offset & SegmentedAddressSpace.MASK) == 0) {
-			return null;
-		}
-		long newOffset = (offset - 1) & SegmentedAddressSpace.MASK;
-		return new SegmentedAddress(addrSpace, newOffset).normalize(segment);
-	}
-	*/
-
 }
