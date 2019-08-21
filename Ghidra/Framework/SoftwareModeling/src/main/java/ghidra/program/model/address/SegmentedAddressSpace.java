@@ -52,11 +52,11 @@ public class SegmentedAddressSpace extends GenericAddressSpace {
 	}
 
 	/**
-	 * Given a flat address offset, extract the 16-bit segment portion
+	 * Given a flat address offset, extract the default 16-bit segment portion
 	 * @param flat is the flat offset
 	 * @return the segment value
 	 */
-	protected int getSegmentFromFlat(long flat) {
+	protected int getDefaultSegmentFromFlat(long flat) {
 		if (flat > 0xFFFFFL) {
 			return 0xFFFF;
 		}
@@ -64,15 +64,27 @@ public class SegmentedAddressSpace extends GenericAddressSpace {
 	}
 
 	/**
-	 * Given a flat address offset, extract the offset portion
+	 * Given a flat address offset, extract the offset portion assuming the
+	 * default segment.
 	 * @param flat is the flat offset
 	 * @return the offset value
 	 */
-	protected long getOffsetFromFlat(long flat) {
+	protected long getDefaultOffsetFromFlat(long flat) {
 		if (flat > 0xFFFFFL) {
 			return flat - 0xFFFF0;
 		}
 		return flat & 0xFFFFL;
+	}
+
+	/**
+	 * Given a flat address offset, extract a segment offset assuming a
+	 * specific segment value.
+	 * @param flat is the flat offset
+	 * @param segment is the specific segment value
+	 * @return the segment offset
+	 */
+	protected long getOffsetFromFlat(long flat, int segment) {
+		return flat - (segment << 4);
 	}
 
 	/**

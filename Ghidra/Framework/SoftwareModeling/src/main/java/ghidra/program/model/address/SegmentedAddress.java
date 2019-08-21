@@ -31,7 +31,7 @@ public class SegmentedAddress extends GenericAddress {
 	 */
 	SegmentedAddress(long flat, SegmentedAddressSpace addrSpace) {
 		super(adjustOffset(flat, addrSpace), addrSpace);
-		segment = addrSpace.getSegmentFromFlat(flat);
+		segment = addrSpace.getDefaultSegmentFromFlat(flat);
 	}
 
 	/**
@@ -56,12 +56,12 @@ public class SegmentedAddress extends GenericAddress {
 	SegmentedAddress(SegmentedAddressSpace addrSpace, long flat)
 			throws AddressOutOfBoundsException {
 		super(addrSpace, adjustOffset(flat, addrSpace));
-		segment = addrSpace.getSegmentFromFlat(flat);
+		segment = addrSpace.getDefaultSegmentFromFlat(flat);
 	}
 
 	private static long adjustOffset(long flat, SegmentedAddressSpace addrSpace) {
-		int seg = addrSpace.getSegmentFromFlat(flat);
-		long offset = addrSpace.getOffsetFromFlat(flat);
+		int seg = addrSpace.getDefaultSegmentFromFlat(flat);
+		long offset = addrSpace.getDefaultOffsetFromFlat(flat);
 		return addrSpace.getFlatOffset(seg, offset);
 	}
 
@@ -78,7 +78,7 @@ public class SegmentedAddress extends GenericAddress {
 	 * @return the offset value
 	 */
 	public int getSegmentOffset() {
-		return (int) ((SegmentedAddressSpace) addrSpace).getOffsetFromFlat(offset);
+		return (int) ((SegmentedAddressSpace) addrSpace).getOffsetFromFlat(offset, segment);
 	}
 
 	/**
