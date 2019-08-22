@@ -216,4 +216,5 @@ define pcodeop pcodeop_three;
 :user_one rs is $(INSTR_PHASE) op1215=0xa & op0811=0x01 & rs & op0003=0x0          { pcodeop_one(rs);}
 :user_two rs is $(INSTR_PHASE) op1215=0xa & op0811=0x02 & rs & op0003=0x0          { pcodeop_two(rs); pcodeop_three();}
 :user_three is $(INSTR_PHASE) op1215=0xa & op0811=0x03 & op0007=0x0                { pcodeop_three();}
-:user_four rs rt is $(INSTR_PHASE) op1215=0xa & op0811=0x04 & rs & rt              { pcodeop_one(rs); call [rt]; pcodeop_three();}   
+:user_four rs rt is $(INSTR_PHASE) op1215=0xa & op0811=0x04 & rs & rt              { pcodeop_one(rs); call [rt]; pcodeop_three();}  
+:user_five Rel8 is $(INSTR_PHASE) op1215=0xa & op0811=0x05 & Rel8                  { lr = inst_next; call Rel8; pcodeop_three();} 
