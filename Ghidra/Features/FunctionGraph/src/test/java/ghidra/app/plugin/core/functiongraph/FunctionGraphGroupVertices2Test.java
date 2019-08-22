@@ -447,6 +447,36 @@ public class FunctionGraphGroupVertices2Test extends AbstractFunctionGraphTest {
 		assertHovered(edges);
 	}
 
+	@Test
+	public void testFindForwardScopedFlow_WithoutGroup_IncomingEdgeToRoot() {
+
+		//
+		// Test the case that an ungrouped graph does not throw an exception if the root node
+		// is hovered when it has incoming edges.
+		//
+
+		create12345GraphWithTransaction();
+
+		FGVertex entry = vertex("100415a");
+		FGVertex v2 = vertex("1004178");
+
+		FunctionGraph graph = getFunctionGraph();
+		FGEdgeImpl edge = new FGEdgeImpl(v2, entry, RefType.UNCONDITIONAL_JUMP, graph.getOptions());
+		graph.addEdge(edge);
+
+		FGComponent graphComponent = getGraphComponent();
+		VisualGraphPathHighlighter<FGVertex, FGEdge> pathHighlighter =
+			graphComponent.getPathHighlighter();
+		pathHighlighter.setHoveredVertex(entry);
+		waitForPathHighligter();
+
+		Collection<FGEdge> edges = graph.getEdges();
+		assertHovered(edges);
+
+		pathHighlighter.setHoveredVertex(null);
+		assertHovered(Collections.emptySet());
+	}
+
 //==================================================================================================
 // Private Methods
 //==================================================================================================

@@ -50,6 +50,7 @@ public class FGPrimaryViewer extends GraphViewer<FGVertex, FGEdge> {
 
 		return new VisualGraphPathHighlighter<>(getVisualGraph(), listener) {
 
+			@Override
 			protected GDirectedGraph<FGVertex, FGEdge> getDominanceGraph(
 					VisualGraph<FGVertex, FGEdge> graph, boolean forward) {
 
