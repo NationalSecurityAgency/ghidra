@@ -306,11 +306,6 @@ public class NeLoader extends AbstractLibrarySupportLoader {
 		}
 	}
 
-	private int getNextAvailableSegment(Program program) {
-		Address addr = program.getMemory().getMaxAddress();
-		return ((int) addr.getOffset() >> 4) + 1;
-	}
-
 	private void processResourceTable(MessageLog log, Program program, ResourceTable rt,
 			SegmentedAddressSpace space, TaskMonitor monitor) throws IOException {
 		Listing listing = program.getListing();
@@ -326,7 +321,7 @@ public class NeLoader extends AbstractLibrarySupportLoader {
 			Resource[] resources = type.getResources();
 			for (Resource resource : resources) {
 
-				int segidx = getNextAvailableSegment(program);
+				int segidx = space.getNextOpenSegment(program.getMemory().getMaxAddress());
 				Address addr = space.getAddress(segidx, 0);
 
 				try {
@@ -417,7 +412,7 @@ public class NeLoader extends AbstractLibrarySupportLoader {
 		for (LengthStringSet name : names) {
 			String[] callnames = getCallNamesForModule(name.getString(), mrt, st, imp);
 			int length = callnames.length * pointerSize;
-			int segment = getNextAvailableSegment(program);
+			int segment = space.getNextOpenSegment(program.getMemory().getMaxAddress());
 			Address start = space.getAddress(segment, 0);
 			if (length > 0) {
 				// This isn't a real block, just place holder addresses, so don't create an initialized block

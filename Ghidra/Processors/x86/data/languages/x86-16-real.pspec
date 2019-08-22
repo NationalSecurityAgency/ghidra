@@ -1,13 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<!-- Set up x86 16-bit in protected mode -->
-
+<!-- Set up x86 16-bit in real mode -->
 <processor_spec>
   <properties>
     <property key="useOperandReferenceAnalyzerSwitchTables" value="true"/>
   </properties>
   <programcounter register="EIP"/>
-  <segmented_address space="ram" type="protected"/>
+  <segmented_address space="ram" type="real" />
   <context_data>
     <context_set space="ram">
       <set name="addrsize" val="0"/>

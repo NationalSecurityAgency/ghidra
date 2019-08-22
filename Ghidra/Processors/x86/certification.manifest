@@ -27,6 +27,7 @@ data/languages/rdseed.sinc||GHIDRA||||END|
 data/languages/sgx.sinc||GHIDRA||||END|
 data/languages/sha.sinc||GHIDRA||||END|
 data/languages/smx.sinc||GHIDRA||||END|
+data/languages/x86-16-real.pspec||GHIDRA||||END|
 data/languages/x86-16.cspec||GHIDRA||||END|
 data/languages/x86-16.pspec||GHIDRA||||END|
 data/languages/x86-64-gcc.cspec||GHIDRA||||END|

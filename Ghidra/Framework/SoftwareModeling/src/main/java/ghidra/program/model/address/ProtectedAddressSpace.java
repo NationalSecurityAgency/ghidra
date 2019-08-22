@@ -35,6 +35,7 @@ public class ProtectedAddressSpace extends SegmentedAddressSpace {
 		offsetMask = 1;
 		offsetMask <<= offsetSize;
 		offsetMask -= 1;
+		maxAddress = getUncheckedAddress(maxOffset);
 	}
 
 	@Override
@@ -63,5 +64,12 @@ public class ProtectedAddressSpace extends SegmentedAddressSpace {
 	@Override
 	protected SegmentedAddress getAddressInSegment(long flat, int preferredSegment) {
 		return null;	// The segment cannot be changed as the flat explicitly encodes it
+	}
+
+	@Override
+	public int getNextOpenSegment(Address addr) {
+		int res = getDefaultSegmentFromFlat(addr.getOffset());
+		res += 1;
+		return res;
 	}
 }

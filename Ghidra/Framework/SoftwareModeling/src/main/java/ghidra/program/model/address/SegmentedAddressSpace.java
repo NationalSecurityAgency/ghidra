@@ -46,10 +46,9 @@ public class SegmentedAddressSpace extends GenericAddressSpace {
 	 */
 	protected SegmentedAddressSpace(String name, int size, int unique) {
 		super(name, size, TYPE_RAM, unique);
-		spaceSize = 1;
-		spaceSize <<= size;
-		maxOffset = spaceSize - 1;
-		maxAddress = getUncheckedAddress(maxOffset);
+//		maxAddress = getUncheckedAddress(maxOffset);
+		// Constructors for derived classes that call this will
+		// need to reconstruct maxAddress themselves.
 	}
 
 	/**
@@ -316,6 +315,18 @@ public class SegmentedAddressSpace extends GenericAddressSpace {
 			throw new AddressOutOfBoundsException("Segment is too large.");
 		}
 		return new SegmentedAddress(this, segment, segmentOffset);
+	}
+
+	/**
+	 * Get the segment index for the first segment whose start address
+	 * comes after the given address
+	 * @param addr is the given address
+	 * @return the segment index
+	 */
+	public int getNextOpenSegment(Address addr) {
+		int res = (int) addr.getOffset();	// The "flat" offset (presumably real-mode encoded)
+		res = (res >> 4) + 1;
+		return res;
 	}
 
 	/**

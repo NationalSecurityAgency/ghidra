@@ -47,18 +47,30 @@
             variant="Real Mode"
             version="2.8"
             slafile="x86.sla"
-            processorspec="x86-16.pspec"
+            processorspec="x86-16-real.pspec"
             manualindexfile="../manuals/x86.idx"
             id="x86:LE:16:Real Mode">
     <description>Intel/AMD 16-bit x86 Real Mode</description>
     <compiler name="default" spec="x86-16.cspec" id="default"/>
 	<external_name tool="IDA-PRO" name="8086"/>
 	<external_name tool="IDA-PRO" name="8086r"/>
-	<external_name tool="IDA-PRO" name="8086p"/>
 	<external_name tool="IDA-PRO" name="80386r"/>
 	<external_name tool="IDA-PRO" name="80486r"/>
 	<external_name tool="IDA-PRO" name="80586r"/>
 	<external_name tool="IDA-PRO" name="metapc"/>
+    </language>
+  <language processor="x86"
+            endian="little"
+            size="16"
+            variant="Protected Mode"
+            version="2.8"
+            slafile="x86.sla"
+            processorspec="x86-16.pspec"
+            manualindexfile="../manuals/x86.idx"
+            id="x86:LE:16:Protected Mode">
+    <description>Intel/AMD 16-bit x86 Protected Mode</description>
+    <compiler name="default" spec="x86-16.cspec" id="default"/>
+	<external_name tool="IDA-PRO" name="8086p"/>
     </language>
     <language processor="x86"
             endian="little"

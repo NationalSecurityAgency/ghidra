@@ -1387,10 +1387,7 @@ check_Rmr32_dest:	is epsilon	{ }
 check_rm32_dest:	is epsilon	{ }
 check_EAX_dest:		is epsilon  { }
 
-# The far addresses listed here actually specify the CS segment to use
-# but we do not model changing the CS segment in protected mode
-# so we just use the offset portion of the address
-ptr1616: reloc is imm16; j16		[ reloc = j16*16 + imm16; ] { CS = j16; export *[ram]:4 reloc; }
+ptr1616: reloc is imm16; j16		[ reloc = j16*0x10000 + imm16; ] { CS = j16; export *[ram]:4 reloc; }
 ptr1632: j16":"imm32 is imm32; j16	{ CS = j16; export *:4 imm32; }
 
 
