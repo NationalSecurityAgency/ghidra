@@ -15,9 +15,9 @@
  */
 package ghidra.docking.util;
 
-import java.awt.Dimension;
-import java.awt.Font;
+import java.awt.*;
 import java.util.*;
+import java.util.List;
 import java.util.Map.Entry;
 
 import javax.swing.*;
@@ -206,8 +206,38 @@ public class DockingWindowsLookAndFeelUtils {
 				// This fix looks like it should not cause harm even if the bug is fixed on the jdk side.
 				UIDefaults defaults = lookAndFeel.getDefaults();
 				defaults.put("ScrollBar.minimumThumbSize", new Dimension(30, 30));
+
+				UIDefaults lafd = UIManager.getLookAndFeelDefaults();
+
+				Painter<JComponent> painterStub = new Painter<>() {
+					@Override
+					public void paint(Graphics2D g, JComponent c, int width, int height) {
+						// stub
+					}
+				};
+
+				// (see NimbusDefaults for key values)
+				// These settings disable tree row selection; when enable each tree row paints its
+				// selection independently from the renderer
+				lafd.put("Tree:TreeCell[Enabled+Selected].backgroundPainter", painterStub);
+				lafd.put("Tree:TreeCell[Focused+Selected].backgroundPainter", painterStub);
+
+				// These settings force the tree arrow icon painting to use the non-selected
+				// color.  We need this since we disabled the row selection painting above.
+				swapPainters(lafd, "Tree[Enabled].collapsedIconPainter",
+					"Tree[Enabled+Selected].collapsedIconPainter");
+				swapPainters(lafd, "Tree[Enabled].expandedIconPainter",
+					"Tree[Enabled+Selected].expandedIconPainter");
+
 				break;
 		}
+	}
+
+	private static void swapPainters(UIDefaults lafd, String from, String to) {
+
+		@SuppressWarnings("unchecked")
+		Painter<JComponent> newPainter = (Painter<JComponent>) lafd.get(from);
+		lafd.put(to, newPainter);
 	}
 
 	private static void installGlobalLookAndFeelAttributes() {

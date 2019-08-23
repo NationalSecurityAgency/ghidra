@@ -41,10 +41,6 @@ public class GTreeRenderer extends DefaultTreeCellRenderer implements GComponent
 		setHTMLRenderingEnabled(false);
 	}
 
-	/**
-	 * 
-	 * @see javax.swing.tree.DefaultTreeCellRenderer#getTreeCellRendererComponent(javax.swing.JTree, java.lang.Object, boolean, boolean, boolean, int, boolean)
-	 */
 	@Override
 	public Component getTreeCellRendererComponent(JTree tree, Object value, boolean selected1,
 			boolean expanded, boolean leaf, int row, boolean hasFocus1) {
@@ -55,6 +51,9 @@ public class GTreeRenderer extends DefaultTreeCellRenderer implements GComponent
 		String text = node.getName();
 		setText(text);
 		setToolTipText(node.getToolTip());
+
+		setOpaque(true);
+		setBackground(selected1 ? getBackgroundSelectionColor() : getBackgroundNonSelectionColor());
 
 		Icon icon = node.getIcon(expanded);
 		if (icon == null) {
