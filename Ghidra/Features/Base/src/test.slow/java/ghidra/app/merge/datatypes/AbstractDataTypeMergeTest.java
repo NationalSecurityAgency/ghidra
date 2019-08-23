@@ -104,7 +104,7 @@ public abstract class AbstractDataTypeMergeTest extends AbstractMergeTest {
 		if (option >= 0) {
 			dataTypeMergeManager.setConflictResolution(option);
 		}
-		dataTypeMergeManager.merge(TaskMonitorAdapter.DUMMY_MONITOR);
+		dataTypeMergeManager.merge(TaskMonitor.DUMMY);
 	}
 
 	private Window getMergeWindow(CountDownLatch doneLatch) {

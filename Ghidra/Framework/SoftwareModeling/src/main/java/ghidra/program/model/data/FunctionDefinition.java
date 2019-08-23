@@ -32,6 +32,7 @@ public interface FunctionDefinition extends DataType, FunctionSignature {
 	/**
 	 * Set the return data type for this function
 	 * @param type the return datatype to be set.
+	 * @throws IllegalArgumentException if data type is not a fixed length type
 	 */
 	public void setReturnType(DataType type);
 

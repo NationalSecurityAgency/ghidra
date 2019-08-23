@@ -15,13 +15,10 @@
  */
 package ghidra.program.model.data;
 
-import org.apache.commons.lang3.StringUtils;
-
 import ghidra.program.database.data.DataTypeUtilities;
 import ghidra.program.model.listing.Parameter;
 import ghidra.program.model.listing.Variable;
 import ghidra.program.model.symbol.SymbolUtilities;
-import ghidra.util.exception.InvalidInputException;
 
 public class ParameterDefinitionImpl implements ParameterDefinition {
 
@@ -49,13 +46,15 @@ public class ParameterDefinitionImpl implements ParameterDefinition {
 	 * @param ordinal the index of this parameter within the function signature.
 	 */
 	protected ParameterDefinitionImpl(String name, DataType dataType, String comment, int ordinal) {
-		this.dataType = checkDataType(dataType, null);
+		this.dataType = checkDataType(dataType, null, false);
 		this.name = name;
 		this.comment = comment;
 		this.ordinal = ordinal;
 	}
 
-	public static DataType checkDataType(DataType dataType, DataTypeManager dtMgr) {
+	public static DataType checkDataType(DataType dataType, DataTypeManager dtMgr, boolean isReturn)
+			throws IllegalArgumentException {
+		String kind = isReturn ? "Return" : "Parameter";
 		if (dataType == null) {
 			dataType = DataType.DEFAULT;
 		}
@@ -65,21 +64,23 @@ public class ParameterDefinitionImpl implements ParameterDefinition {
 		}
 		else if (dataType instanceof Dynamic || dataType instanceof FactoryDataType) {
 			throw new IllegalArgumentException(
-				"Parameter may not be defined with Dynamic or Factory data-type: " +
+				kind + " type may not be defined with Dynamic or Factory data-type: " +
 					dataType.getName());
 		}
 		dataType = dataType.clone(dtMgr != null ? dtMgr : dataType.getDataTypeManager());
 		if (!dataType.isDynamicallySized() && dataType.getLength() < 0) {
-			throw new IllegalArgumentException(
-				"Parameter must be specified with fixed-length data type: " + dataType.getName());
+			throw new IllegalArgumentException(kind +
+				" type must be specified with fixed-length data type: " + dataType.getName());
 		}
 		if (dataType instanceof VoidDataType) {
-			throw new IllegalArgumentException(
-				"Parameter may not specify the void datatype - empty parameter list should be used");
+			if (!isReturn) {
+				throw new IllegalArgumentException(
+					"Parameter type may not specify the void datatype - empty parameter list should be used");
+			}
 		}
-		if (!(dataType instanceof Composite) && dataType.getLength() == 0) {
-			throw new IllegalArgumentException(
-				"Parameter must be specified with fixed-length data type: " + dataType.getName());
+		else if (!(dataType instanceof Composite) && dataType.getLength() == 0) {
+			throw new IllegalArgumentException(kind +
+				" type must be specified with fixed-length data type: " + dataType.getName());
 		}
 		return dataType;
 	}
@@ -129,8 +130,8 @@ public class ParameterDefinitionImpl implements ParameterDefinition {
 	}
 
 	@Override
-	public void setDataType(DataType type) throws InvalidInputException {
-		this.dataType = checkDataType(type, dataType.getDataTypeManager());
+	public void setDataType(DataType type) {
+		this.dataType = checkDataType(type, dataType.getDataTypeManager(), false);
 	}
 
 	@Override
@@ -139,31 +140,6 @@ public class ParameterDefinitionImpl implements ParameterDefinition {
 			name = null;
 		}
 		this.name = name;
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		if (obj == null) {
-			return false;
-		}
-		if (obj == this) {
-			return true;
-		}
-		if (!(obj instanceof ParameterDefinition)) {
-			return false;
-		}
-
-		ParameterDefinition otherVar = (ParameterDefinition) obj;
-		if (ordinal != otherVar.getOrdinal()) {
-			return false;
-		}
-		if (!DataTypeUtilities.isSameOrEquivalentDataType(dataType, otherVar.getDataType())) {
-			return false;
-		}
-		if (!StringUtils.equals(getName(), otherVar.getName())) {
-			return false;
-		}
-		return StringUtils.equals(getComment(), otherVar.getComment());
 	}
 
 	@Override
