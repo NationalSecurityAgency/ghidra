@@ -101,6 +101,7 @@ public class CodeBrowserPlugin extends Plugin
 	private static final String CURSOR_COLOR = "Cursor.Cursor Color - Focused";
 	private static final String UNFOCUSED_CURSOR_COLOR = "Cursor.Cursor Color - Unfocused";
 	private static final String BLINK_CURSOR = "Cursor.Blink Cursor";
+	private static final String MOUSE_WHEEL_HORIZONTAL_SCROLLING = "Mouse.Horizontal Scrolling";
 
 	// - Icon -
 	private ImageIcon CURSOR_LOC_ICON =
@@ -621,16 +622,19 @@ public class CodeBrowserPlugin extends Plugin
 	public void optionsChanged(ToolOptions options, String optionName, Object oldValue,
 			Object newValue) {
 
+		ListingPanel listingPanel = connectedProvider.getListingPanel();
 		if (options.getName().equals(GhidraOptions.CATEGORY_BROWSER_DISPLAY)) {
 			if (optionName.equals(OptionsGui.BACKGROUND.getColorOptionName())) {
 				Color c = (Color) newValue;
-				connectedProvider.getListingPanel().setTextBackgroundColor(c);
+				listingPanel.setTextBackgroundColor(c);
 			}
 		}
 		else if (options.getName().equals(GhidraOptions.CATEGORY_BROWSER_FIELDS)) {
+
+			FieldPanel fieldPanel = listingPanel.getFieldPanel();
 			if (optionName.equals(GhidraOptions.OPTION_SELECTION_COLOR)) {
 				Color color = ((Color) newValue);
-				connectedProvider.getListingPanel().getFieldPanel().setSelectionColor(color);
+				fieldPanel.setSelectionColor(color);
 				MarkerSet selectionMarkers = getSelectionMarkers(currentProgram);
 				if (selectionMarkers != null) {
 					selectionMarkers.setMarkerColor(color);
@@ -642,7 +646,7 @@ public class CodeBrowserPlugin extends Plugin
 			}
 			else if (optionName.equals(GhidraOptions.OPTION_HIGHLIGHT_COLOR)) {
 				Color color = ((Color) newValue);
-				connectedProvider.getListingPanel().getFieldPanel().setHighlightColor(color);
+				fieldPanel.setHighlightColor(color);
 				MarkerSet highlightMarkers = getHighlightMarkers(currentProgram);
 				if (highlightMarkers != null) {
 					highlightMarkers.setMarkerColor(color);
@@ -650,15 +654,15 @@ public class CodeBrowserPlugin extends Plugin
 			}
 			else if (optionName.equals(CURSOR_COLOR)) {
 				Color color = ((Color) newValue);
-				connectedProvider.getListingPanel().getFieldPanel().setFocusedCursorColor(color);
+				fieldPanel.setFocusedCursorColor(color);
 			}
 			else if (optionName.equals(UNFOCUSED_CURSOR_COLOR)) {
 				Color color = ((Color) newValue);
-				connectedProvider.getListingPanel().getFieldPanel().setNonFocusCursorColor(color);
+				fieldPanel.setNonFocusCursorColor(color);
 			}
 			else if (optionName.equals(BLINK_CURSOR)) {
 				Boolean isBlinkCursor = ((Boolean) newValue);
-				connectedProvider.getListingPanel().getFieldPanel().setBlinkCursor(isBlinkCursor);
+				fieldPanel.setBlinkCursor(isBlinkCursor);
 			}
 			else if (optionName.equals(GhidraOptions.HIGHLIGHT_CURSOR_LINE_COLOR)) {
 				cursorHighlightColor = (Color) newValue;
@@ -672,6 +676,10 @@ public class CodeBrowserPlugin extends Plugin
 					currentCursorMarkers.setColoringBackground(isHighlightCursorLine);
 				}
 			}
+			else if (optionName.equals(MOUSE_WHEEL_HORIZONTAL_SCROLLING)) {
+				fieldPanel.setHorizontalScrollingEnabled((Boolean) newValue);
+			}
+
 			connectedProvider.fieldOptionChanged(optionName, newValue);
 		}
 
@@ -833,6 +841,11 @@ public class CodeBrowserPlugin extends Plugin
 		fieldOptions.registerOption(GhidraOptions.HIGHLIGHT_CURSOR_LINE, true, helpLocation,
 			"Toggles highlighting background color of line containing the cursor");
 
+		helpLocation = new HelpLocation(getName(), "Keyboard_Controls_Shift");
+		fieldOptions.registerOption(MOUSE_WHEEL_HORIZONTAL_SCROLLING, true, helpLocation,
+			"Enables horizontal scrolling by holding the Shift key while " +
+				"using the mouse scroll wheel");
+
 		Color color = fieldOptions.getColor(GhidraOptions.OPTION_SELECTION_COLOR,
 			GhidraOptions.DEFAULT_SELECTION_COLOR);
 
@@ -859,6 +872,10 @@ public class CodeBrowserPlugin extends Plugin
 
 		Boolean isBlinkCursor = fieldOptions.getBoolean(BLINK_CURSOR, true);
 		fieldPanel.setBlinkCursor(isBlinkCursor);
+
+		boolean horizontalScrollingEnabled =
+			fieldOptions.getBoolean(MOUSE_WHEEL_HORIZONTAL_SCROLLING, true);
+		fieldPanel.setHorizontalScrollingEnabled(horizontalScrollingEnabled);
 
 		cursorHighlightColor =
 			fieldOptions.getColor(GhidraOptions.HIGHLIGHT_CURSOR_LINE_COLOR, CURSOR_LINE_COLOR);
@@ -922,6 +939,12 @@ public class CodeBrowserPlugin extends Plugin
 			"SelectUtils"));
 		tableFromSelectionAction.setHelpLocation(
 			new HelpLocation("CodeBrowserPlugin", "Selection_Table"));
+
+		// don't add the actions initially if the service isn't there
+		TableService tableService = tool.getService(TableService.class);
+		if (tableService != null) {
+			tool.addAction(tableFromSelectionAction);
+		}
 	}
 
 	private GhidraProgramTableModel<Address> createTableModel(CodeUnitIterator iterator,
