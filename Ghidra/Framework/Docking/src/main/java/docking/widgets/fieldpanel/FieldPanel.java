@@ -15,7 +15,7 @@
  */
 package docking.widgets.fieldpanel;
 
-import static docking.widgets.EventTrigger.INTERNAL_ONLY;
+import static docking.widgets.EventTrigger.*;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -58,6 +58,7 @@ public class FieldPanel extends JPanel
 	private KeyHandler keyHandler = new KeyHandler();
 	private HoverHandler hoverHandler;
 	private SelectionHandler selectionHandler = new SelectionHandler();
+	private boolean horizontalScrollingEnabled = true;
 
 	private FieldLocation cursorPosition = new FieldLocation();
 	private FieldSelection selection = new FieldSelection();
@@ -333,6 +334,14 @@ public class FieldPanel extends JPanel
 
 	public void setBlinkCursor(Boolean blinkCursor) {
 		cursorHandler.setBlinkCursor(blinkCursor);
+	}
+
+	public void enableSelection(boolean b) {
+		selectionHandler.enableSelection(b);
+	}
+
+	public void setHorizontalScrollingEnabled(boolean enabled) {
+		horizontalScrollingEnabled = enabled;
 	}
 
 	/**
@@ -1171,15 +1180,11 @@ public class FieldPanel extends JPanel
 
 	private JViewport getViewport() {
 		Container c = getParent();
-		if (c == null) {
-			return null;
-		}
-		if (c instanceof JViewport) {
-			return (JViewport) c;
-		}
-		c = c.getParent();
-		if (c instanceof JViewport) {
-			return (JViewport) c;
+		while (c != null) {
+			if (c instanceof JViewport) {
+				return (JViewport) c;
+			}
+			c = c.getParent();
 		}
 		return null;
 	}
@@ -1429,19 +1434,27 @@ public class FieldPanel extends JPanel
 			else {
 				hoverHandler.stopHover();
 
-				if (e.isShiftDown()) {
-					// horizontal scroll (only move viewport)
-					if (viewport != null) {
-						Point pos = viewport.getViewPosition();
-						viewport.setViewPosition(
-							new Point(Math.max(0, pos.x + scrollAmount), pos.y));
-					}
+				if (e.isShiftDown() && horizontalScrollingEnabled) {
+					scrollViewHorizontally(scrollAmount);
 				}
 				else {
 					scrollView(scrollAmount);
 				}
 			}
 			e.consume();
+		}
+
+		private void scrollViewHorizontally(int scrollAmount) {
+
+			JViewport vp = getViewport();
+			if (vp == null) {
+				// this will happen for Field Panels not placed inside of scroll panes
+				return;
+			}
+
+			// horizontal scroll (only move viewport)
+			Point pos = vp.getViewPosition();
+			vp.setViewPosition(new Point(Math.max(0, pos.x + scrollAmount), pos.y));
 		}
 	}
 
@@ -2060,9 +2073,5 @@ public class FieldPanel extends JPanel
 				}
 			}
 		}
-	}
-
-	public void enableSelection(boolean b) {
-		selectionHandler.enableSelection(b);
 	}
 }
