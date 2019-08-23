@@ -8,6 +8,14 @@
   </properties>
   <programcounter register="EIP"/>
   <segmented_address space="ram" type="protected"/>
+  <segmentop space="ram" userop="segment" baseinsize="2" innerinsize="2" farpointer="yes">
+    <baseop code="INT_ZEXT"/>
+    <baseop code="INT_LEFT" value="16"/>
+    <innerop code="INT_ZEXT"/>
+    <constresolve>
+      <register name="DS"/>
+    </constresolve>
+  </segmentop>
   <context_data>
     <context_set space="ram">
       <set name="addrsize" val="0"/>

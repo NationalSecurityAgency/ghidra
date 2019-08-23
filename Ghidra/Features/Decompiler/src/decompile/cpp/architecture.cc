@@ -962,32 +962,35 @@ void Architecture::parseProcessorConfig(DocumentStorage &store)
   List::const_iterator iter;
   
   for(iter=list.begin();iter!=list.end();++iter) {
-    if ((*iter)->getName() == "programcounter") {
+    const string &elname( (*iter)->getName() );
+    if (elname == "programcounter") {
     }
-    else if ((*iter)->getName() == "volatile")
+    else if (elname == "volatile")
       parseVolatile(*iter);
-    else if ((*iter)->getName() == "incidentalcopy")
+    else if (elname == "incidentalcopy")
       parseIncidentalCopy(*iter);
-    else if ((*iter)->getName() == "context_data")
+    else if (elname == "context_data")
       context->restoreFromSpec(*iter,this);
-    else if ((*iter)->getName() == "jumpassist")
+    else if (elname == "jumpassist")
       userops.parseJumpAssist(*iter, this);
-    else if ((*iter)->getName() == "register_data") {
+    else if (elname == "segmentop")
+      userops.parseSegmentOp(*iter,this);
+    else if (elname == "register_data") {
     }
-    else if ((*iter)->getName() == "segmented_address") {
+    else if (elname == "segmented_address") {
     }
-    else if ((*iter)->getName() == "default_symbols") {
+    else if (elname == "default_symbols") {
     }
-    else if ((*iter)->getName() == "default_memory_blocks") {
+    else if (elname == "default_memory_blocks") {
     }
-    else if ((*iter)->getName() == "address_shift_amount") {
+    else if (elname == "address_shift_amount") {
     }
-    else if ((*iter)->getName() == "properties") {
+    else if (elname == "properties") {
     }
-    else if ((*iter)->getName() == "data_space") {
+    else if (elname == "data_space") {
     }
     else
-      throw LowlevelError("Unknown element in <processor_spec>: "+(*iter)->getName());
+      throw LowlevelError("Unknown element in <processor_spec>: "+elname);
   }
 }
 
