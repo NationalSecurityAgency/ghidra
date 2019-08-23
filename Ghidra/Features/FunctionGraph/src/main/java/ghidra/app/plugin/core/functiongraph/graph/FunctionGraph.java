@@ -604,7 +604,7 @@ public class FunctionGraph extends GroupingVisualGraph<FGVertex, FGEdge> {
 		for (FGVertex entry : entries) {
 			AbstractFunctionGraphVertex abstractVertex = (AbstractFunctionGraphVertex) entry;
 			FGController controller = abstractVertex.getController();
-			ListingFunctionGraphVertex newEntry = new ListingFunctionGraphVertex(controller,
+			ListingFunctionGraphVertex newEntry = new DummyListingFGVertex(controller,
 				abstractVertex.getAddresses(), RefType.UNCONDITIONAL_JUMP, true);
 			newEntry.setVertexType(FGVertexType.ENTRY);
 			FGVertex groupVertex = getVertexForAddress(entry.getVertexAddress());
