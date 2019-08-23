@@ -627,7 +627,7 @@
   	<register name="spr23c" group="SPR_UNNAMED"/>
   	<register name="spr23d" group="SPR_UNNAMED"/>
   	<register name="spr23e" rename="DSRR0" group="SPR"/>
-  	<register name="spr23f" rename="DSRR0" group="SPR"/>
+  	<register name="spr23f" rename="DSRR1" group="SPR"/>
 	
 	<register name="spr240" group="SPR_UNNAMED"/>
   	<register name="spr241" group="SPR_UNNAMED"/>
