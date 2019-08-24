@@ -8,6 +8,7 @@
       <data>1100.010 .0.....0 0x00</data>	<!-- RET(constant) -->
       <data>0xc390</data>					<!-- RET NOP -->
       <data>0xcb90</data>
+      <data>0xc3</data>
     </prepatterns>
     <postpatterns>
       <data>0x558bec</data>  				<!-- PUSH(BP) MOV(BP,SP) -->
