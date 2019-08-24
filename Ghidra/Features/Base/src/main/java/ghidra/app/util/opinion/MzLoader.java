@@ -258,6 +258,11 @@ public class MzLoader extends AbstractLibrarySupportLoader {
 			int dataStart = dos.e_cparhdr() << 4;
 
 			HashMap<Address, Address> segMap = new HashMap<Address, Address>();
+			SegmentedAddress codeAddress =
+				space.getAddress(Conv.shortToInt(dos.e_cs()) + csStart, 0);
+			segMap.put(codeAddress, codeAddress);
+			codeAddress = space.getAddress(csStart, 0);
+			segMap.put(codeAddress, codeAddress);			// This is there data starts loading
 			int numRelocationEntries = dos.e_crlc();
 			reader.setPointerIndex(relocationTableOffset);
 			for (int i = 0; i < numRelocationEntries; i++) {
@@ -290,17 +295,17 @@ public class MzLoader extends AbstractLibrarySupportLoader {
 			for (int i = 0; i < segStartList.size(); i++) {
 				SegmentedAddress start = (SegmentedAddress) segStartList.get(i);
 
-				int readLoc = (int) (start.getOffset() - csStartEffective) + dataStart;
+				int readLoc = ((start.getSegment() << 4) - csStartEffective) + dataStart;
 				if (readLoc < 0) {
 					Msg.error(this, "Invalid read location " + readLoc);
 					continue;
 				}
 
-				byte bytes[] = null;
 				int numBytes = 0;
 				if ((i + 1) < segStartList.size()) {
 					SegmentedAddress end = (SegmentedAddress) segStartList.get(i + 1);
-					numBytes = (int) end.subtract(start);
+					int nextLoc = ((end.getSegment() << 4) - csStartEffective) + dataStart;
+					numBytes = nextLoc - readLoc;
 				}
 				else {
 					// last segment length
@@ -317,7 +322,6 @@ public class MzLoader extends AbstractLibrarySupportLoader {
 					numUninitBytes = calcNumBytes - numBytes;
 				}
 				if (numBytes > 0) {
-					bytes = reader.readByteArray(readLoc, numBytes);
 					MemoryBlockUtils.createInitializedBlock(program, false, "Seg_" + i, start,
 						fileBytes, readLoc, numBytes, "", "mz", true, true, true, log);
 				}
@@ -399,6 +403,7 @@ public class MzLoader extends AbstractLibrarySupportLoader {
 			symbolTable.createLabel(addr, ENTRY_NAME, SourceType.IMPORTED);
 		}
 		catch (InvalidInputException e) {
+			// Just skip if we can't create
 		}
 
 		symbolTable.addExternalEntryPoint(addr);
