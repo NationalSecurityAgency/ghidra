@@ -46,6 +46,11 @@ public class BasicCompilerSpec implements CompilerSpec {
 
 	public static final String STACK_SPACE_NAME = "stack";
 	public static final String JOIN_SPACE_NAME = "join";
+	public static final String OTHER_SPACE_NAME = "OTHER";
+
+	//must match AddrSpace enum (see space.hh)
+	public static final int CONSTANT_SPACE_INDEX = 0;
+	public static final int OTHER_SPACE_INDEX = 1;
 
 	private final CompilerSpecDescription description;
 	private String sourceName;
@@ -117,8 +122,9 @@ public class BasicCompilerSpec implements CompilerSpec {
 			parseException = e;
 			Throwable cause = e.getCause();		// Recover the cause (from the validator exception)
 			if (cause != null) {
-				if (cause instanceof SAXException || cause instanceof IOException)
+				if (cause instanceof SAXException || cause instanceof IOException) {
 					parseException = (Exception) cause;
+				}
 			}
 		}
 		catch (FileNotFoundException e) {
@@ -360,6 +366,9 @@ public class BasicCompilerSpec implements CompilerSpec {
 		}
 		else {
 			space = language.getAddressFactory().getAddressSpace(spaceName);
+		}
+		if (spaceName.equals(OTHER_SPACE_NAME)) {
+			space = AddressSpace.OTHER_SPACE;
 		}
 		if (space == null) {
 			throw new SleighException("Unknown address space: " + spaceName);

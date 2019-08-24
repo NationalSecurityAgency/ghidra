@@ -406,8 +406,13 @@ public class Varnode {
 	public static void appendSpaceOffset(StringBuilder buf, Address addr) {
 		AddressSpace space = addr.getAddressSpace();
 		if (space.isOverlaySpace()) {
-			space = space.getPhysicalSpace();
-			addr = space.getAddress(addr.getOffset());
+			//if the address is contained within the overlay space, stay in the overlay
+			//otherwise default to the underlying space
+			if (addr.compareTo(space.getMinAddress()) < 0 ||
+				addr.compareTo(space.getMaxAddress()) > 0) {
+				space = space.getPhysicalSpace();
+				addr = space.getAddress(addr.getOffset());
+			}
 		}
 		SpecXmlUtils.encodeStringAttribute(buf, "space", space.getName());
 		SpecXmlUtils.encodeUnsignedIntegerAttribute(buf, "offset", addr.getUnsignedOffset());

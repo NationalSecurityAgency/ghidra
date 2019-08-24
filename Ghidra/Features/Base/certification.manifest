@@ -519,12 +519,6 @@ src/main/help/help/topics/OverviewPlugin/images/EntropyLegend.png||GHIDRA||||END
 src/main/help/help/topics/OverviewPlugin/images/EntropyOptions.png||GHIDRA||||END|
 src/main/help/help/topics/OverviewPlugin/images/Equation.png||GHIDRA||||END|
 src/main/help/help/topics/OverviewPlugin/images/OverviewPanel.png||GHIDRA||||END|
-src/main/help/help/topics/PDB/PDB.htm||GHIDRA||||END|
-src/main/help/help/topics/PDB/download_pdb_file.html||GHIDRA||||END|
-src/main/help/help/topics/PDB/images/KnownSymbolServerURLsDialog.png||GHIDRA||||END|
-src/main/help/help/topics/PDB/images/PdbOrXmlDialog.png||GHIDRA||||END|
-src/main/help/help/topics/PDB/images/SuccessDialog.png||GHIDRA||||END|
-src/main/help/help/topics/PDB/images/SymbolServerURLDialog.png||GHIDRA||||END|
 src/main/help/help/topics/PrintingPlugin/Printing.htm||GHIDRA||||END|
 src/main/help/help/topics/PrintingPlugin/images/PrintOptions.png||GHIDRA||||END|
 src/main/help/help/topics/Program/Ghidra_Programs.htm||GHIDRA||||END|

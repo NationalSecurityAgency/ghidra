@@ -31,6 +31,8 @@ public abstract class SleighBase extends Translate implements NamedSymbolProvide
 
 	// NOTE: restoreXml method removed as it is only used by the decompiler's implementation
 
+	public static final int SLA_FORMAT_VERSION = 2;	// What format of the .sla file this produces
+													// This value should always match SleighLanguage.SLA_FORMAT_VERSION
 	private VectorSTL<String> userop = new VectorSTL<>();
 	private address_set varnode_xref = new address_set(); // Cross-reference registers by address
 	protected SubtableSymbol root;
@@ -187,6 +189,7 @@ public abstract class SleighBase extends Translate implements NamedSymbolProvide
 
 	public void saveXml(PrintStream s) {
 		s.append("<sleigh");
+		XmlUtils.a_v_i(s, "version", SLA_FORMAT_VERSION);
 		XmlUtils.a_v_b(s, "bigendian", isBigEndian());
 		XmlUtils.a_v_i(s, "align", alignment);
 		XmlUtils.a_v_u(s, "uniqbase", getUniqueBase());

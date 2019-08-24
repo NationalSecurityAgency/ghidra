@@ -206,6 +206,7 @@ AddrSpace *Architecture::getSpaceBySpacebase(const Address &loc,int4 size) const
   int4 sz = numSpaces();
   for(int4 i=0;i<sz;++i) {
     id = getSpace(i);
+    if (id == (AddrSpace *)0) continue;
     int4 numspace = id->numSpacebase();
     for(int4 j=0;j<numspace;++j) {
       const VarnodeData &point(id->getSpacebase(j));
@@ -337,6 +338,7 @@ void Architecture::globalify(void)
 
   for(int4 i=0;i<nm;++i) {
     AddrSpace *spc = getSpace(i);
+    if (spc == (AddrSpace *)0) continue;
     if ((spc->getType() != IPTR_PROCESSOR)&&(spc->getType() != IPTR_SPACEBASE)) continue;
     symboltab->addRange(scope,spc,(uintb)0,spc->getHighest());
   }
@@ -707,7 +709,7 @@ void Architecture::parseGlobal(const Element *el)
   Scope *scope = buildGlobalScope();
   const List &list(el->getChildren());
   List::const_iterator iter;
-  
+
   for(iter=list.begin();iter!=list.end();++iter) {
     Range range;
     range.restoreXml(*iter,this);
@@ -716,11 +718,29 @@ void Architecture::parseGlobal(const Element *el)
       // We need to duplicate the range being marked as global into the overlay space(s)
       int4 num = numSpaces();
       for(int4 i=0;i<num;++i) {
-	OverlaySpace *ospc = (OverlaySpace *)getSpace(i);
-	if (!ospc->isOverlay()) continue;
-	if (ospc->getBaseSpace() != range.getSpace()) continue;
-	symboltab->addRange(scope,ospc,range.getFirst(),range.getLast());
+        OverlaySpace *ospc = (OverlaySpace *)getSpace(i);
+        if (ospc == (AddrSpace *)0 || !ospc->isOverlay()) continue;
+        if (ospc->getBaseSpace() != range.getSpace()) continue;
+        symboltab->addRange(scope,ospc,range.getFirst(),range.getLast());
       }
+    }
+  }
+}
+
+//explictly add the OTHER space and any overlays to the global scope
+void Architecture::addOtherSpace(void)
+
+{
+  Scope *scope = buildGlobalScope();
+  AddrSpace *otherSpace = getSpaceByName("OTHER");
+  symboltab->addRange(scope,otherSpace,0,otherSpace->getHighest());
+  if (otherSpace->isOverlayBase()) {
+	int4 num = numSpaces();
+	for(int4 i=0;i<num;++i){
+      OverlaySpace *ospc = (OverlaySpace *)getSpace(i);
+      if (ospc->getBaseSpace() != otherSpace) continue;
+      if (ospc->getBaseSpace() != otherSpace) continue;
+      symboltab->addRange(scope,ospc,0,otherSpace->getHighest());
     }
   }
 }
@@ -835,7 +855,7 @@ void Architecture::parseDeadcodeDelay(const Element *el)
   int4 delay = -1;
   s >> delay;
   if (delay >= 0)
-    setDeadcodeDelay(spc->getIndex(),delay);
+    setDeadcodeDelay(spc,delay);
   else
     throw LowlevelError("Bad <deadcodedelay> tag");
 }
@@ -1031,11 +1051,13 @@ void Architecture::parseCompilerConfig(DocumentStorage &store)
     else if (elname == "deadcodedelay")
       parseDeadcodeDelay(*iter);
   }
-                                        // <global> tags instantiate the base symbol table
-                                        // They need to know about all spaces, so it must come
-                                        // after parsing of <stackpointer> and <spacebase>
+  // <global> tags instantiate the base symbol table
+  // They need to know about all spaces, so it must come
+  // after parsing of <stackpointer> and <spacebase>
   for(int4 i=0;i<globaltags.size();++i)
     parseGlobal(globaltags[i]);
+
+  addOtherSpace();
       
   if (defaultfp == (ProtoModel *)0) {
     if (protoModels.size() == 1)

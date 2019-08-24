@@ -258,7 +258,7 @@ class AddBlockModel {
 		message = "";
 		isValid = hasValidName() && hasValidStartAddress() && hasValidLength() &&
 			hasNoMemoryConflicts() && hasMappedAddressIfNeeded() && hasUniqueNameIfOverlay() &&
-			hasInitialValueIfNeeded() && hasFileBytesInfoIfNeeded();
+			hasInitialValueIfNeeded() && hasFileBytesInfoIfNeeded() && isOverlayIfOtherSpace();
 	}
 
 	private boolean hasFileBytesInfoIfNeeded() {
@@ -313,6 +313,17 @@ class AddBlockModel {
 		return true;
 	}
 
+	private boolean isOverlayIfOtherSpace() {
+		if (startAddr.getAddressSpace().equals(AddressSpace.OTHER_SPACE)) {
+			if (blockType != MemoryBlockType.OVERLAY) {
+				message = "Blocks defined in the " + AddressSpace.OTHER_SPACE.getName() +
+					" space must be overlay blocks";
+				return false;
+			}
+		}
+		return true;
+	}
+
 	private boolean hasMappedAddressIfNeeded() {
 		if (blockType == MemoryBlockType.BIT_MAPPED || blockType == MemoryBlockType.BYTE_MAPPED) {
 			if (baseAddr == null) {
@@ -323,6 +334,7 @@ class AddBlockModel {
 		}
 		return true;
 	}
+
 	private boolean hasNoMemoryConflicts() {
 		if (blockType == MemoryBlockType.OVERLAY) {
 			return true;

@@ -28,6 +28,7 @@ import ghidra.pcodeCPort.pcoderaw.VarnodeData;
 import ghidra.pcodeCPort.space.*;
 import ghidra.pcodeCPort.utils.AddrSpaceToIdSymmetryMap;
 import ghidra.pcodeCPort.xml.DocumentStorage;
+import ghidra.program.model.lang.BasicCompilerSpec;
 
 public abstract class Translate implements BasicSpaceProvider {
 
@@ -245,6 +246,9 @@ public abstract class Translate implements BasicSpaceProvider {
 		else if ("space_unique".equals(tp)) {
 			res = new UniqueSpace(this);
 		}
+		else if ("space_other".equals(tp)) {
+			res = new OtherSpace(this);
+		}
 		else {
 			res = new AddrSpace(this, spacetype.IPTR_PROCESSOR);
 		}
@@ -255,7 +259,11 @@ public abstract class Translate implements BasicSpaceProvider {
 
 	protected void restoreXmlSpaces(Element el) {
 		// The first space should always be the constant space
-		insertSpace(new ConstantSpace(this, "const", 0));
+		insertSpace(new ConstantSpace(this, "const", BasicCompilerSpec.CONSTANT_SPACE_INDEX));
+
+		// The second space should always be the other space
+		insertSpace(new OtherSpace(this, BasicCompilerSpec.OTHER_SPACE_NAME,
+			BasicCompilerSpec.OTHER_SPACE_INDEX));
 
 		String defname = el.getAttributeValue("defaultspace");
 		List<?> children = el.getChildren();
@@ -399,6 +407,11 @@ public abstract class Translate implements BasicSpaceProvider {
 				}
 				// fallthru
 			case IPTR_PROCESSOR:
+				if (spc.isOtherSpace()) {
+					if (spc.getIndex() != BasicCompilerSpec.OTHER_SPACE_INDEX) {
+						throw new LowlevelError("OTHER space must be assigned index 1");
+					}
+				}
 				for (AddrSpace space : baselist) {
 					if (space.getName().equals(spc.getName())) {
 						duplicatedefine = true;

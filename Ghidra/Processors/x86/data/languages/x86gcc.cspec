@@ -24,6 +24,7 @@
   </data_organization>
   <global>
     <range space="ram"/>
+    <range space="OTHER"/>
   </global>
   <stackpointer register="ESP" space="ram"/>
   <returnaddress>

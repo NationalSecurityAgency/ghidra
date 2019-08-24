@@ -255,6 +255,7 @@ protected:
   void parseProtoEval(const Element *el);		///< Apply prototype evaluation configuration
   void parseDefaultProto(const Element *el);		///< Apply default prototype model configuration
   void parseGlobal(const Element *el);			///< Apply global space configuration
+  void addOtherSpace(void);                         ////add OTHER space and all of its overlays to the symboltab
   void parseReadOnly(const Element *el);		///< Apply read-only region configuration
   void parseVolatile(const Element *el);		///< Apply volatile region configuration
   void parseReturnAddress(const Element *el);		///< Apply return address configuration

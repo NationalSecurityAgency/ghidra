@@ -694,6 +694,76 @@
             <TD valign="top">Conditional jump flow from an instruction<BR>
             </TD>
           </TR>
+          
+           <TR>
+            <TD valign="top"><FONT color="#FF6600">CALL_OVERRIDE_UNCONDITIONAL<BR>
+            </FONT></TD>
+
+            <TD align="center" valign="top"><FONT color="#FF6600">M<BR>
+            </FONT></TD>
+
+            <TD align="center" valign="top"><FONT color="#FF6600">Flow<BR>
+            </FONT></TD>
+
+            <TD valign="top">Used to override the destination of a CALL or CALLIND pcode operation.  CALLIND operations are
+            changed to CALL operations.  The new call target is the "to" address of the reference.  The override only takes effect
+            when the reference is primary, and only when there is exactly one primary CALL_OVERRIDE_UNCONDITIONAL reference at the "from"
+            address of the reference. <BR>
+            </TD>
+          </TR>
+          
+          <TR>
+            <TD valign="top"><FONT color="#FF6600">JUMP_OVERRIDE_UNCONDITIONAL<BR>
+            </FONT></TD>
+
+            <TD align="center" valign="top"><FONT color="#FF6600">M<BR>
+            </FONT></TD>
+
+            <TD align="center" valign="top"><FONT color="#FF6600">Flow<BR>
+            </FONT></TD>
+
+            <TD valign="top">Used to override the destination of a BRANCH or CBRANCH pcode operation.  CBRANCH operations are
+            changed to BRANCH operations.  The new jump target is the "to" address of the reference.  The override only takes effect
+            when the reference is primary, and only when there is exactly one primary JUMP_OVERRIDE_UNCONDITIONAL reference at the "from"
+            address of the reference. <BR>
+            </TD>
+          </TR>
+          
+          <TR>
+            <TD valign="top"><FONT color="#FF6600">CALLOTHER_OVERRIDE_CALL<BR>
+            </FONT></TD>
+
+            <TD align="center" valign="top"><FONT color="#FF6600">M<BR>
+            </FONT></TD>
+
+            <TD align="center" valign="top"><FONT color="#FF6600">Flow<BR>
+            </FONT></TD>
+
+            <TD valign="top">Used to change CALLOTHER pcode operations to CALL operations. The new call target is the "to" address of the 
+            reference.  The override only takes effect when the reference is primary, and only when there is exactly one primary 
+            CALLOTHER_OVERRIDE_CALL reference at the "from" address of the reference. Only the first CALLOTHER operation at the "from"
+            address of the reference is changed.  Note that this reference override takes precedence over those of CALLOTHER_OVERRIDE_JUMP
+            references. <BR>
+            </TD>
+          </TR>
+          
+          <TR>
+            <TD valign="top"><FONT color="#FF6600">CALLOTHER_OVERRIDE_JUMP<BR>
+            </FONT></TD>
+
+            <TD align="center" valign="top"><FONT color="#FF6600">M<BR>
+            </FONT></TD>
+
+            <TD align="center" valign="top"><FONT color="#FF6600">Flow<BR>
+            </FONT></TD>
+
+            <TD valign="top">Used to change CALLOTHER pcode operations to BRANCH operations. The new jump target is the "to" address of the 
+            reference.  The override only takes effect when the reference is primary, and only when there is exactly one primary 
+            CALLOTHER_OVERRIDE_JUMP reference at the "from" address of the reference. Only the first CALLOTHER operation at the "from"
+            address of the reference is changed. <BR>
+            </TD>
+          </TR>
+          
         </TBODY>
       </TABLE>
     </BLOCKQUOTE>

@@ -1476,8 +1476,12 @@ void SleighCompile::predefinedSymbols(void)
 				// Some predefined symbols
   root = new SubtableSymbol("instruction"); // Base constructors
   symtab.addSymbol(root);
-  insertSpace(new ConstantSpace(this,this,"const",0));
+  insertSpace(new ConstantSpace(this,this,"const",AddrSpace::constant_space_index));
   SpaceSymbol *spacesym = new SpaceSymbol(getConstantSpace()); // Constant space
+  symtab.addSymbol(spacesym);
+  OtherSpace *otherSpace = new OtherSpace(this,this,"OTHER",AddrSpace::other_space_index);
+  insertSpace(otherSpace);
+  spacesym = new SpaceSymbol(otherSpace);
   symtab.addSymbol(spacesym);
   insertSpace(new UniqueSpace(this,this,"unique",numSpaces(),0));
   spacesym = new SpaceSymbol(getUniqueSpace()); // Temporary register space

@@ -2212,11 +2212,16 @@ void Heritage::buildInfoList(void)
 
 {
   if (!infolist.empty()) return;
-  AddrSpace *spc;
   const AddrSpaceManager *manage = fd->getArch();
+  infolist.resize(manage->numSpaces());
   for(int4 i=0;i<manage->numSpaces();++i) {
-    spc = manage->getSpace(i);
-    infolist.push_back(HeritageInfo(spc,spc->getDelay(),spc->getDeadcodeDelay()));
+    AddrSpace *spc = manage->getSpace(i);
+    if (spc == (AddrSpace *)0)
+      infolist[i].set((AddrSpace *)0,0,0);
+    else if (!spc->isHeritaged())
+      infolist[i].set((AddrSpace *)0,spc->getDelay(),spc->getDeadcodeDelay());
+    else
+      infolist[i].set(spc,spc->getDelay(),spc->getDeadcodeDelay());
   }
 }
 
@@ -2227,7 +2232,6 @@ void Heritage::heritage(void)
 
 {
   VarnodeLocSet::const_iterator iter,enditer;
-  AddrSpace *space;
   HeritageInfo *info;
   Varnode *vn;
   bool needwarning;
@@ -2235,7 +2239,6 @@ void Heritage::heritage(void)
   int4 reprocessStackCount = 0;
   AddrSpace *stackSpace = (AddrSpace *)0;
   vector<PcodeOp *> freeStores;
-  const AddrSpaceManager *manage = fd->getArch();
   PreferSplitManager splitmanage;
 
   if (maxdepth == -1)		// Has a restructure been forced
@@ -2246,21 +2249,20 @@ void Heritage::heritage(void)
     splitmanage.init(fd,&fd->getArch()->splitrecords);
     splitmanage.split();
   }
-  for(int4 i=0;i<manage->numSpaces();++i) {
-    space = manage->getSpace(i);
-    if (!space->isHeritaged()) continue;
-    info = getInfo(space);
+  for(int4 i=0;i<infolist.size();++i) {
+    info = &infolist[i];
+    if (!info->isHeritaged()) continue;
     if (pass < info->delay) continue; // It is too soon to heritage this space
     if (!info->loadGuardSearch) {
       info->loadGuardSearch = true;
       if (discoverIndexedStackPointers(info->space,freeStores,true)) {
-	reprocessStackCount += 1;
-	stackSpace = space;
+	    reprocessStackCount += 1;
+	    stackSpace = info->space;
       }
     }
     needwarning = false;
-    iter = fd->beginLoc(space);
-    enditer = fd->endLoc(space);
+    iter = fd->beginLoc(info->space);
+    enditer = fd->endLoc(info->space);
 
     while(iter != enditer) {
       vn = *iter++;
@@ -2343,7 +2345,7 @@ int4 Heritage::numHeritagePasses(AddrSpace *spc) const
 
 {
   const HeritageInfo *info = getInfo(spc);
-  if (info == (const HeritageInfo *)0)
+  if (!info->isHeritaged())
     throw LowlevelError("Trying to calculate passes for non-heritaged space");
   return (info->delay - pass);
 }
@@ -2355,8 +2357,6 @@ void Heritage::seenDeadCode(AddrSpace *spc)
 
 {
   HeritageInfo *info = getInfo(spc);
-  if (info == (HeritageInfo *)0)
-    throw LowlevelError("Informed of deadcode removal for non-heritaged space");
   info->deadremoved = 1;
 }
 
@@ -2369,8 +2369,6 @@ int4 Heritage::getDeadCodeDelay(AddrSpace *spc) const
 
 {
   const HeritageInfo *info = getInfo(spc);
-  if (info == (const HeritageInfo *)0)
-    throw LowlevelError("Could not get heritage delay for space: "+spc->getName());
   return info->deadcodedelay;
 }
 
@@ -2383,8 +2381,6 @@ void Heritage::setDeadCodeDelay(AddrSpace *spc,int4 delay)
 
 {
   HeritageInfo *info = getInfo(spc);
-  if (info == (HeritageInfo *)0)
-    throw LowlevelError("Setting heritage delay for non-heritaged space");
   if (delay < info->delay)
     throw LowlevelError("Illegal deadcode delay setting");
   info->deadcodedelay = delay;
@@ -2399,8 +2395,6 @@ bool Heritage::deadRemovalAllowed(AddrSpace *spc) const
 
 {
   const HeritageInfo *info = getInfo(spc);
-  if (info == (HeritageInfo *)0)
-    throw LowlevelError("Heritage query for non-heritaged space");
   return (pass > info->deadcodedelay);
 }
 
@@ -2415,8 +2409,6 @@ bool Heritage::deadRemovalAllowedSeen(AddrSpace *spc)
 
 {
   HeritageInfo *info = getInfo(spc);
-  if (info == (HeritageInfo *)0)
-    throw LowlevelError("Heritage query for non-heritaged space");
   bool res = (pass > info->deadcodedelay);
   if (res)
     info->deadremoved = 1;

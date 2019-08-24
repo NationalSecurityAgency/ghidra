@@ -53,11 +53,11 @@ if (file("flatRepo").isDirectory()) {
 		}
 	}
 }
-else {
-	File f = new File("ghidra.repos.config");
+else {	
+	File f = file("ghidra.repos.config")
 	if (!f.exists()) {
-		throw new GradleException("\n\nUnable to find the local maven repo." +  
-			"  Ensure you have created the ${f.getName()} file.\n\n");
+		throw new GradleException("\n\n\n\tUnable to find the local maven repo." +  
+			"  Ensure you have created the ${f.getName()} file.\n\n\n");
 	}
 }
 

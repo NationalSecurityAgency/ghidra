@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,23 +20,82 @@ package ghidra.program.model.symbol;
  * flows from one instruction to the next)
  */
 public final class FlowType extends RefType {
-    
-    private final boolean hasFall;
+
+	private final boolean hasFall;
 	private final boolean isCall;
 	private final boolean isJump;
-	private final boolean isTeminal;
+	private final boolean isTerminal;
 	private final boolean isConditional;
 	private final boolean isComputed;
+	private final boolean isOverride;
 
-	protected FlowType(byte type, String name, boolean hasFall, boolean isCall, boolean isJump, boolean isTeminal, boolean isComputed, boolean isConditional) {
-    	super(type, name);
-		this.hasFall = hasFall;
-		this.isCall = isCall;
-		this.isJump = isJump;
-		this.isTeminal = isTeminal;
-		this.isComputed = isComputed;
-		this.isConditional = isConditional;
-    }
+	protected static class Builder {
+		private byte type;
+		private String name;
+
+		private boolean hasFall = false;
+		private boolean isCall = false;
+		private boolean isJump = false;
+		private boolean isTerminal = false;
+		private boolean isComputed = false;
+		private boolean isConditional = false;
+		private boolean isOverride = false;
+
+		protected Builder(byte type, String name) {
+			this.type = type;
+			this.name = name;
+		}
+
+		protected Builder setHasFall() {
+			this.hasFall = true;
+			return this;
+		}
+
+		protected Builder setIsCall() {
+			this.isCall = true;
+			return this;
+		}
+
+		protected Builder setIsJump() {
+			this.isJump = true;
+			return this;
+		}
+
+		protected Builder setIsTerminal() {
+			this.isTerminal = true;
+			return this;
+		}
+
+		protected Builder setIsComputed() {
+			this.isComputed = true;
+			return this;
+		}
+
+		protected Builder setIsConditional() {
+			this.isConditional = true;
+			return this;
+		}
+
+		protected Builder setIsOverride() {
+			this.isOverride = true;
+			return this;
+		}
+
+		protected FlowType build() {
+			return new FlowType(this);
+		}
+	}
+
+	private FlowType(Builder builder) {
+		super(builder.type, builder.name);
+		this.hasFall = builder.hasFall;
+		this.isCall = builder.isCall;
+		this.isJump = builder.isJump;
+		this.isTerminal = builder.isTerminal;
+		this.isComputed = builder.isComputed;
+		this.isConditional = builder.isConditional;
+		this.isOverride = builder.isOverride;
+	}
 
 	@Override
 	public boolean hasFallthrough() {
@@ -71,12 +129,17 @@ public final class FlowType extends RefType {
 
 	@Override
 	public boolean isTerminal() {
-		return isTeminal;
+		return isTerminal;
 	}
 
 	@Override
 	public boolean isUnConditional() {
 		return !isConditional;
+	}
+
+	@Override
+	public boolean isOverride() {
+		return isOverride;
 	}
 
 }

@@ -216,7 +216,8 @@ public class DecompInterface {
 		// use static uniqueBase since we don't know how many dynamically generated 
 		// variables Ghidra may add to the language/compile-spec uniqueBase
 		long uniqueBase = 0x10000000;
-		String tspec = pcodelanguage.buildTranslatorTag(program.getAddressFactory(), uniqueBase, null);
+		String tspec =
+			pcodelanguage.buildTranslatorTag(program.getAddressFactory(), uniqueBase, null);
 		String coretypes = dtmanage.buildCoreTypes();
 		SleighLanguageDescription sleighdescription =
 			(SleighLanguageDescription) pcodelanguage.getLanguageDescription();
@@ -233,7 +234,8 @@ public class DecompInterface {
 		if (xmlOptions != null) {
 			decompProcess.setMaxResultSize(xmlOptions.getMaxPayloadMBytes());
 			decompProcess.setShowNamespace(xmlOptions.isDisplayNamespaces());
-			if (!decompProcess.sendCommand1Param("setOptions", xmlOptions.getXML(this)).toString().equals("t")) {
+			if (!decompProcess.sendCommand1Param("setOptions",
+				xmlOptions.getXML(this)).toString().equals("t")) {
 				throw new IOException("Did not accept decompiler options");
 			}
 		}
@@ -241,12 +243,14 @@ public class DecompInterface {
 			throw new IOException("Decompile action not specified");
 		}
 		if (!actionname.equals("decompile")) {
-			if (!decompProcess.sendCommand2Params("setAction", actionname, "").toString().equals("t")) {
+			if (!decompProcess.sendCommand2Params("setAction", actionname, "").toString().equals(
+				"t")) {
 				throw new IOException("Could not set decompile action");
 			}
 		}
 		if (!printSyntaxTree) {
-			if (!decompProcess.sendCommand2Params("setAction", "", "notree").toString().equals("t")) {
+			if (!decompProcess.sendCommand2Params("setAction", "", "notree").toString().equals(
+				"t")) {
 				throw new IOException("Could not turn off syntax tree");
 			}
 		}
@@ -256,12 +260,14 @@ public class DecompInterface {
 			}
 		}
 		if (sendParamMeasures) {
-			if (!decompProcess.sendCommand2Params("setAction", "", "parammeasures").toString().equals("t")) {
+			if (!decompProcess.sendCommand2Params("setAction", "",
+				"parammeasures").toString().equals("t")) {
 				throw new IOException("Could not turn on sending of parameter measures");
 			}
 		}
 		if (jumpLoad) {
-			if (!decompProcess.sendCommand2Params("setAction", "", "jumpload").toString().equals("t")) {
+			if (!decompProcess.sendCommand2Params("setAction", "", "jumpload").toString().equals(
+				"t")) {
 				throw new IOException("Could not turn on jumptable loads");
 			}
 		}
@@ -298,7 +304,7 @@ public class DecompInterface {
 			decompileMessage = "Language does not support PCode.";
 			return false;
 		}
-		pcodelanguage = (SleighLanguage)lang;
+		pcodelanguage = (SleighLanguage) lang;
 		CompilerSpec spec = prog.getCompilerSpec();
 		if (!(spec instanceof BasicCompilerSpec)) {
 			decompileMessage =
@@ -405,7 +411,8 @@ public class DecompInterface {
 		}
 		try {
 			verifyProcess();
-			return decompProcess.sendCommand2Params("setAction", actionstring, "").toString().equals("t");
+			return decompProcess.sendCommand2Params("setAction", actionstring,
+				"").toString().equals("t");
 		}
 		catch (IOException e) {
 			// don't care
@@ -441,7 +448,8 @@ public class DecompInterface {
 		String printstring = val ? "tree" : "notree";
 		try {
 			verifyProcess();
-			return decompProcess.sendCommand2Params("setAction", "", printstring).toString().equals("t");
+			return decompProcess.sendCommand2Params("setAction", "", printstring).toString().equals(
+				"t");
 		}
 		catch (IOException e) {
 			// don't care
@@ -478,7 +486,8 @@ public class DecompInterface {
 		String printstring = val ? "c" : "noc";
 		try {
 			verifyProcess();
-			return decompProcess.sendCommand2Params("setAction", "", printstring).toString().equals("t");
+			return decompProcess.sendCommand2Params("setAction", "", printstring).toString().equals(
+				"t");
 		}
 		catch (IOException e) {
 			// don't care
@@ -514,7 +523,8 @@ public class DecompInterface {
 		String printstring = val ? "parammeasures" : "noparammeasures";
 		try {
 			verifyProcess();
-			return decompProcess.sendCommand2Params("setAction", "", printstring).toString().equals("t");
+			return decompProcess.sendCommand2Params("setAction", "", printstring).toString().equals(
+				"t");
 		}
 		catch (IOException e) {
 			// don't care
@@ -543,7 +553,8 @@ public class DecompInterface {
 		String jumpstring = val ? "jumpload" : "nojumpload";
 		try {
 			verifyProcess();
-			return decompProcess.sendCommand2Params("setAction", "", jumpstring).toString().equals("t");
+			return decompProcess.sendCommand2Params("setAction", "", jumpstring).toString().equals(
+				"t");
 		}
 		catch (IOException e) {
 			// don't care
@@ -580,8 +591,8 @@ public class DecompInterface {
 			verifyProcess();
 			decompProcess.setMaxResultSize(xmlOptions.getMaxPayloadMBytes());
 			decompProcess.setShowNamespace(xmlOptions.isDisplayNamespaces());
-			return decompProcess.sendCommand1Param("setOptions", xmloptions.getXML(this)).toString().equals(
-				"t");
+			return decompProcess.sendCommand1Param("setOptions",
+				xmloptions.getXML(this)).toString().equals("t");
 		}
 		catch (IOException e) {
 			// don't care
@@ -630,22 +641,27 @@ public class DecompInterface {
 		return res;
 	}
 
-	public synchronized BlockGraph structureGraph(BlockGraph ingraph,AddressFactory factory,int timeoutSecs,TaskMonitor monitor) {
+	public synchronized BlockGraph structureGraph(BlockGraph ingraph, AddressFactory factory,
+			int timeoutSecs, TaskMonitor monitor) {
 		decompileMessage = "";
-		if (monitor != null && monitor.isCancelled())
+		if (monitor != null && monitor.isCancelled()) {
 			return null;
-		if (monitor != null)
+		}
+		if (monitor != null) {
 			monitor.addCancelledListener(monitorListener);
+		}
 		LimitedByteBuffer res = null;
 		BlockGraph resgraph = null;
 		try {
 			StringWriter writer = new StringWriter();
 			ingraph.saveXml(writer);
 			verifyProcess();
-			res = decompProcess.sendCommand1ParamTimeout("structureGraph", writer.toString(), timeoutSecs);
+			res = decompProcess.sendCommand1ParamTimeout("structureGraph", writer.toString(),
+				timeoutSecs);
 			decompileMessage = decompCallback.getNativeMessage();
 			if (res != null) {
-				XmlPullParser parser = HighFunction.stringTree(res.getInputStream(), HighFunction.getErrorHandler(this, "Results for structureGraph command"));
+				XmlPullParser parser = HighFunction.stringTree(res.getInputStream(),
+					HighFunction.getErrorHandler(this, "Results for structureGraph command"));
 				resgraph = new BlockGraph();
 				resgraph.restoreXml(parser, factory);
 				resgraph.transferObjectRef(ingraph);
@@ -661,6 +677,7 @@ public class DecompInterface {
 		}
 		return resgraph;
 	}
+
 	/**
 	 * Decompile function
 	 * @param func function to be decompiled
@@ -697,13 +714,13 @@ public class DecompInterface {
 			decompCallback.setFunction(func, funcEntry, debug);
 			String addrstring = Varnode.buildXMLAddress(funcEntry);
 			verifyProcess();
-			res =
-				decompProcess.sendCommand1ParamTimeout("decompileAt", addrstring.toString(),
-					timeoutSecs);
+			res = decompProcess.sendCommand1ParamTimeout("decompileAt", addrstring.toString(),
+				timeoutSecs);
 			decompileMessage = decompCallback.getNativeMessage();
 		}
 		catch (Exception ex) {
-			decompileMessage = "Exception while decompiling " +func.getEntryPoint() + ": "+ ex.getMessage() + '\n';
+			decompileMessage = "Exception while decompiling " + func.getEntryPoint() + ": " +
+				ex.getMessage() + '\n';
 		}
 		finally {
 			if (monitor != null) {
@@ -727,8 +744,9 @@ public class DecompInterface {
 		}
 
 		InputStream stream = null;
-		if (res != null)
+		if (res != null) {
 			stream = res.getInputStream();
+		}
 		return new DecompileResults(func, pcodelanguage, compilerSpec, dtmanage, decompileMessage,
 			stream, processState, isDisplayNamespace());
 	}
@@ -743,6 +761,20 @@ public class DecompInterface {
 	public void stopProcess() {
 		if (decompProcess != null) {
 			decompProcess.dispose();
+		}
+	}
+
+	/**
+	 * Resets the native decompiler process.  Call this method when the decompiler's view
+	 * of a program has been invalidated, such as when a new overlay space has been added.
+	 */
+	public void resetDecompiler() {
+		stopProcess();
+		try {
+			initializeProcess();
+		}
+		catch (IOException | DecompileException e) {
+			decompileMessage = "Exception while resetting decompiler: " + e.getMessage() + "\n";
 		}
 	}
 
@@ -772,4 +804,5 @@ public class DecompInterface {
 		}
 		return xmlOptions.isDisplayNamespaces();
 	}
+
 }
