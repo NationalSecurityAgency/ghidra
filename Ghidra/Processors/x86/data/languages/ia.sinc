@@ -251,7 +251,7 @@ define context contextreg
   opsize=(2,3)          # =0  16-bit operands    =1  32-bit operands     =2 64-bit operands
   segover=(4,6)         # 0=default 1=cs 2=ss 3=ds 4=es 5=fs 6=gs
   highseg=(4,4)         # high bit of segover will be set for ES, FS, GS
-#  sstype=(7,7)         # 0=DS default 1=SS default
+  protectedMode=(7,7)   # 0 for real mode, 1 for protected mode
 
   repneprefx=(8,8)      # 0xf2 REPNE prefix
   repprefx=(9,9)        # 0xf3 REP prefix
@@ -1387,7 +1387,8 @@ check_Rmr32_dest:	is epsilon	{ }
 check_rm32_dest:	is epsilon	{ }
 check_EAX_dest:		is epsilon  { }
 
-ptr1616: reloc is imm16; j16		[ reloc = j16*0x10000 + imm16; ] { CS = j16; export *[ram]:4 reloc; }
+ptr1616: reloc is protectedMode=0 & imm16; j16		[ reloc = j16*0x10 + imm16; ] { CS = j16; export *[ram]:4 reloc; }
+ptr1616: reloc is protectedMode=1 & imm16; j16		[ reloc = j16*0x10000 + imm16; ] { CS = j16; export *[ram]:4 reloc; }
 ptr1632: j16":"imm32 is imm32; j16	{ CS = j16; export *:4 imm32; }
 
 

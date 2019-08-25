@@ -19,6 +19,7 @@
     <context_set space="ram">
       <set name="addrsize" val="0"/>
       <set name="opsize" val="0"/>
+      <set name="protectedMode" val="0"/>
     </context_set>
     <tracked_set space="ram">
       <set name="DF" val="0"/>

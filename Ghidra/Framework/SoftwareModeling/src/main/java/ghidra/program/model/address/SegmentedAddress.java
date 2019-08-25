@@ -105,10 +105,10 @@ public class SegmentedAddress extends GenericAddress {
 	 */
 	@Override
 	public Address getNewAddress(long byteOffset) {
-		SegmentedAddress res =
-			((SegmentedAddressSpace) addrSpace).getAddressInSegment(byteOffset, segment);
+		SegmentedAddressSpace segSpace = (SegmentedAddressSpace) addrSpace;
+		SegmentedAddress res = segSpace.getAddressInSegment(byteOffset, segment);
 		if (res == null) {
-			return this;
+			return segSpace.getAddress(byteOffset);
 		}
 		return res;
 	}
