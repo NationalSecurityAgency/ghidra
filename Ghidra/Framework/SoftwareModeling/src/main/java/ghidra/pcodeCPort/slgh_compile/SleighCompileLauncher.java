@@ -47,14 +47,16 @@ public class SleighCompileLauncher implements GhidraLaunchable {
 		pathname -> pathname.getName().endsWith(".slaspec");
 
 	private static void initCompiler(SleighCompile compiler, Map<String, String> preprocs,
-			boolean unnecessaryPcodeWarning, boolean lenientConflict, boolean allNopWarning,
-			boolean deadTempWarning, boolean unusedFieldWarning, boolean enforceLocalKeyWord) {
+			boolean unnecessaryPcodeWarning, boolean lenientConflict, boolean allCollisionWarning,
+			boolean allNopWarning, boolean deadTempWarning, boolean unusedFieldWarning,
+			boolean enforceLocalKeyWord) {
 		Set<Entry<String, String>> entrySet = preprocs.entrySet();
 		for (Entry<String, String> entry : entrySet) {
 			compiler.setPreprocValue(entry.getKey(), entry.getValue());
 		}
 		compiler.setUnnecessaryPcodeWarning(unnecessaryPcodeWarning);
 		compiler.setLenientConflict(lenientConflict);
+		compiler.setLocalCollisionWarning(allCollisionWarning);
 		compiler.setAllNopWarning(allNopWarning);
 		compiler.setDeadTempWarning(deadTempWarning);
 		compiler.setUnusedFieldWarning(unusedFieldWarning);
@@ -107,6 +109,7 @@ public class SleighCompileLauncher implements GhidraLaunchable {
 			Msg.info(SleighCompile.class, "   -n                print warnings for all NOP constructors");
 			Msg.info(SleighCompile.class, "   -t                print warnings for dead temporaries");
 			Msg.info(SleighCompile.class, "   -e                enforce use of 'local' keyword for temporaries");
+			Msg.info(SleighCompile.class, "   -c                print warnings for all constructors with colliding operands");
 			Msg.info(SleighCompile.class, "   -f                print warnings for unused token fields");
 			Msg.info(SleighCompile.class, "   -DNAME=VALUE      defines a preprocessor macro NAME with value VALUE (option may be repeated)");
 			Msg.info(SleighCompile.class, "   -dMODULE          defines a preprocessor macro MODULE with a value of its module path (option may be repeated)");
@@ -117,6 +120,7 @@ public class SleighCompileLauncher implements GhidraLaunchable {
 
 		boolean unnecessaryPcodeWarning = false;
 		boolean lenientConflict = true;
+		boolean allCollisionWarning = false;
 		boolean allNopWarning = false;
 		boolean deadTempWarning = false;
 		boolean enforceLocalKeyWord = false;
@@ -172,6 +176,9 @@ public class SleighCompileLauncher implements GhidraLaunchable {
 			else if (args[i].charAt(1) == 'l') {
 				lenientConflict = false;
 			}
+			else if (args[i].charAt(1) == 'c') {
+				allCollisionWarning = true;
+			}
 			else if (args[i].charAt(1) == 'n') {
 				allNopWarning = true;
 			}
@@ -211,6 +218,7 @@ public class SleighCompileLauncher implements GhidraLaunchable {
 				System.out.println("Compiling " + input + ":");
 				SleighCompile compiler = new SleighCompile();
 				initCompiler(compiler, preprocs, unnecessaryPcodeWarning, lenientConflict,
+					allCollisionWarning,
 					allNopWarning, deadTempWarning, unusedFieldWarning, enforceLocalKeyWord);
 
 				String outname = input.getName().replace(".slaspec", ".sla");
@@ -238,7 +246,8 @@ public class SleighCompileLauncher implements GhidraLaunchable {
 
 		// single file compile
 		SleighCompile compiler = new SleighCompile();
-		initCompiler(compiler, preprocs, unnecessaryPcodeWarning, lenientConflict, allNopWarning,
+		initCompiler(compiler, preprocs, unnecessaryPcodeWarning, lenientConflict,
+			allCollisionWarning, allNopWarning,
 			deadTempWarning, unusedFieldWarning, enforceLocalKeyWord);
 		if (i == args.length) {
 			Msg.error(SleighCompile.class, "Missing input file name");

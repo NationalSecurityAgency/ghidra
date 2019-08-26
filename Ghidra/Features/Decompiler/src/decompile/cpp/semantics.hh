@@ -178,6 +178,7 @@ public:
   bool addOpList(const vector<OpTpl *> &oplist);
   void setResult(HandleTpl *t) { result = t; }
   int4 fillinBuild(vector<int4> &check,AddrSpace *const_space);
+  bool buildOnly(void) const;
   void changeHandleIndex(const vector<int4> &handmap);
   void setInput(VarnodeTpl *vn,int4 index,int4 slot);
   void setOutput(VarnodeTpl *vn,int4 index);
