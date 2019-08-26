@@ -158,7 +158,7 @@ public class FunctionDefinitionDataType extends GenericDataType implements Funct
 
 	@Override
 	public void setReturnType(DataType type) {
-		returnType = ParameterDefinitionImpl.checkDataType(type, dataMgr, true);
+		returnType = ParameterDefinitionImpl.validateDataType(type, dataMgr, true);
 	}
 
 	@Override
@@ -337,7 +337,7 @@ public class FunctionDefinitionDataType extends GenericDataType implements Funct
 	public void dataTypeReplaced(DataType oldDt, DataType newDt) {
 
 		if (newDt == this) {
-			// TODO: document why this is neccessary
+			// avoid creating circular dependency
 			newDt = DataType.DEFAULT;
 		}
 		DataType retType = getReturnType();

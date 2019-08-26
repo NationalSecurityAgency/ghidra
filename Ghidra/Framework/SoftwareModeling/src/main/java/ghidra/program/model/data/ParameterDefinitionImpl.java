@@ -31,8 +31,9 @@ public class ParameterDefinitionImpl implements ParameterDefinition {
 	 * Constructs a new ParameterImp with an unassigned ordinal.  The ordinal will be
 	 * established by the function definition.
 	 * @param name the name of the parameter.
-	 * @param dataType the datatype of the parameter
+	 * @param dataType the fixed-length datatype of the parameter
 	 * @param comment the comment to store about this parameter.
+	 * @throws IllegalArgumentException if invalid parameter datatype specified
 	 */
 	public ParameterDefinitionImpl(String name, DataType dataType, String comment) {
 		this(name, dataType, comment, Parameter.UNASSIGNED_ORDINAL);
@@ -41,19 +42,29 @@ public class ParameterDefinitionImpl implements ParameterDefinition {
 	/**
 	 * Constructs a new ParameterImp
 	 * @param name the name of the parameter.
-	 * @param dataType the datatype of the parameter
+	 * @param dataType the fixed-length datatype of the parameter
 	 * @param comment the comment to store about this parameter.
 	 * @param ordinal the index of this parameter within the function signature.
+	 * @throws IllegalArgumentException if invalid parameter datatype specified
 	 */
 	protected ParameterDefinitionImpl(String name, DataType dataType, String comment, int ordinal) {
-		this.dataType = checkDataType(dataType, null, false);
+		this.dataType = validateDataType(dataType, null, false);
 		this.name = name;
 		this.comment = comment;
 		this.ordinal = ordinal;
 	}
 
-	public static DataType checkDataType(DataType dataType, DataTypeManager dtMgr, boolean isReturn)
-			throws IllegalArgumentException {
+	/**
+	 * Validate the specified datatype based upon its' use as a parameter or return type.
+	 * Ensure that the datatype has been cloned to the specified datatype manager (dtMgr).  
+	 * @param dataType datatype to be validated
+	 * @param dtMgr target datatype manager
+	 * @param isReturn true if checking return datatype, false if parameter datatype.
+	 * @return datatype suitable for use within the target {@link FunctionDefinition}.
+	 * @throws IllegalArgumentException if invalid datatype specified
+	 */
+	public static DataType validateDataType(DataType dataType, DataTypeManager dtMgr,
+			boolean isReturn) throws IllegalArgumentException {
 		String kind = isReturn ? "Return" : "Parameter";
 		if (dataType == null) {
 			dataType = DataType.DEFAULT;
@@ -131,7 +142,7 @@ public class ParameterDefinitionImpl implements ParameterDefinition {
 
 	@Override
 	public void setDataType(DataType type) {
-		this.dataType = checkDataType(type, dataType.getDataTypeManager(), false);
+		this.dataType = validateDataType(type, dataType.getDataTypeManager(), false);
 	}
 
 	@Override

@@ -64,7 +64,7 @@ final class ParameterDefinitionDB implements ParameterDefinition {
 
 	@Override
 	public void setDataType(DataType type) {
-		type = ParameterDefinitionImpl.checkDataType(type, dataMgr, false);
+		type = ParameterDefinitionImpl.validateDataType(type, dataMgr, false);
 
 		getDataType().removeParent(parent);
 

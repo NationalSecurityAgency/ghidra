@@ -39,11 +39,11 @@ public interface ParameterDefinition extends Comparable<ParameterDefinition> {
 	public DataType getDataType();
 
 	/**
-	 * Set the Data Type of this variable. The given dataType must have a fixed length.
-	 * @param type the data type
-	 * @throws IllegalArgumentException if data type is not a fixed length type
+	 * Set the Data Type of this variable.
+	 * @param type dataType the fixed-length datatype of the parameter
+	 * @throws IllegalArgumentException if invalid parameter datatype specified
 	 */
-	public void setDataType(DataType type);
+	public void setDataType(DataType type) throws IllegalArgumentException;
 
 	/**
 	 * Get the Name of this variable.
@@ -79,9 +79,9 @@ public interface ParameterDefinition extends Comparable<ParameterDefinition> {
 	public void setComment(String comment);
 
 	/**
-	 * Determine if a variable corresponds to a parameter which is equivelent to 
+	 * Determine if a variable corresponds to a parameter which is equivalent to 
 	 * this parameter definition by both ordinal and datatype.  Name is not considered
-	 * relavent. 
+	 * relevant. 
 	 * @param variable variable to be compared with this parameter definition.
 	 * @return true if the specified variable represents the same parameter by ordinal
 	 * and dataType.  False will always be returned if specified variable is
@@ -90,8 +90,8 @@ public interface ParameterDefinition extends Comparable<ParameterDefinition> {
 	public boolean isEquivalent(Variable variable);
 
 	/**
-	 * Determine if parm is equivelent to this parameter definition by both ordinal 
-	 * and datatype.  Name is not considered relavent. 
+	 * Determine if parm is equivalent to this parameter definition by both ordinal 
+	 * and datatype.  Name is not considered relevant. 
 	 * @param parm parameter definition to be compared with this parameter definition.
 	 * @return true if the specified parameter definition represents the same parameter 
 	 * by ordinal and dataType.

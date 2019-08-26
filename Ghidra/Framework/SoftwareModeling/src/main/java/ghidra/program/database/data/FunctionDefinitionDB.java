@@ -41,7 +41,7 @@ class FunctionDefinitionDB extends DataTypeDB implements FunctionDefinition {
 		super(dataMgr, cache, record);
 		this.funDefAdapter = adapter;
 		this.paramAdapter = paramAdapter;
-		getParameters();
+		loadParameters();
 	}
 
 	@Override
@@ -54,7 +54,7 @@ class FunctionDefinitionDB extends DataTypeDB implements FunctionDefinition {
 		return record.getLongValue(FunctionDefinitionDBAdapter.FUNCTION_DEF_CAT_ID_COL);
 	}
 
-	private void getParameters() {
+	private void loadParameters() {
 		parameters = new ArrayList<>();
 		try {
 			long[] ids = paramAdapter.getParameterIdsInFunctionDef(key);
@@ -75,7 +75,7 @@ class FunctionDefinitionDB extends DataTypeDB implements FunctionDefinition {
 			Record rec = funDefAdapter.getRecord(key);
 			if (rec != null) {
 				record = rec;
-				getParameters();
+				loadParameters();
 				return super.refresh();
 			}
 		}
@@ -250,13 +250,13 @@ class FunctionDefinitionDB extends DataTypeDB implements FunctionDefinition {
 			parameters.clear();
 			for (int i = 0; i < args.length; i++) {
 				DataType type =
-					ParameterDefinitionImpl.checkDataType(args[i].getDataType(), dataMgr, false);
+					ParameterDefinitionImpl.validateDataType(args[i].getDataType(), dataMgr, false);
 				DataType resolvedDt = resolve(type);
 				paramAdapter.createRecord(dataMgr.getID(resolvedDt), key, i, args[i].getName(),
 					args[i].getComment(), args[i].getLength());
 				resolvedDt.addParent(this);
 			}
-			getParameters();
+			loadParameters();
 			funDefAdapter.updateRecord(record, true); // update last change time
 			dataMgr.dataTypeChanged(this);
 		}
@@ -270,7 +270,7 @@ class FunctionDefinitionDB extends DataTypeDB implements FunctionDefinition {
 
 	@Override
 	public void setReturnType(DataType type) {
-		type = ParameterDefinitionImpl.checkDataType(type, dataMgr, true);
+		type = ParameterDefinitionImpl.validateDataType(type, dataMgr, true);
 		lock.acquire();
 		try {
 			checkDeleted();
@@ -396,7 +396,7 @@ class FunctionDefinitionDB extends DataTypeDB implements FunctionDefinition {
 		try {
 			checkDeleted();
 			if (newDt == this) {
-				// TODO: document why this is neccessary
+				// avoid creating circular dependency
 				newDt = DataType.DEFAULT;
 			}
 			DataType retType = getReturnType();
@@ -454,7 +454,7 @@ class FunctionDefinitionDB extends DataTypeDB implements FunctionDefinition {
 			rdt.addParent(this);
 			paramAdapter.createRecord(dataMgr.getID(rdt), key, ordinal, name, comment,
 				dt.getLength());
-			getParameters();
+			loadParameters();
 		}
 		catch (IOException e) {
 			dataMgr.dbError(e);

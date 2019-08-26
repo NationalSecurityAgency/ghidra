@@ -2839,11 +2839,8 @@ public class DataTypeMergeManager implements MergeResolver {
 		try {
 			SwingUtilities.invokeAndWait(() -> Msg.showInfo(getClass(), null, title, msg));
 		}
-		catch (InterruptedException e) {
+		catch (InterruptedException | InvocationTargetException e) {
 			// ignore
-		}
-		catch (InvocationTargetException e) {
-			e.printStackTrace();
 		}
 	}
 
