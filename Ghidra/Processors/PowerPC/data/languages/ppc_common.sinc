@@ -1685,13 +1685,6 @@ macro loadReg(reg) {
 	tea = tea+4;
 }
 
-@ifdef BIT_64
-macro loadRegHigh(reg) {
-      reg[32,32] = *:4(tea);
-      tea = tea + 4;
-}
-@endif
-
 macro loadRegisterPartial(reg, ea, sa) {
         mask:$(REGISTER_SIZE) = 0xffffffff;
         sa = ((4-sa) & 3) * 8;
@@ -1722,14 +1715,6 @@ macro storeReg(reg) {
 @endif
 	tea = tea+4;
 }	
-
-@ifdef BIT_64
-macro storeRegHigh(reg) {
-      *:4(tea) = reg[32,32];
-      tea = tea + 4;
-}
-@endif
-
 
 macro storeRegisterPartial(reg, ea, sa) {
 @ifdef BIT_64

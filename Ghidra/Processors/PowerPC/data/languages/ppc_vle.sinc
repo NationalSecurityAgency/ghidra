@@ -213,33 +213,33 @@ IMM16B: val						is IMM_0_10_VLE & IMM_16_20_VLE [ val = (IMM_16_20_VLE << 11) |
 :e_ldmvcsrrw d8PlusRaOrZeroAddress is $(ISVLE) & OP=6 & d8PlusRaOrZeroAddress & XOP_8_VLE=0x10 & BITS_21_25=5
 {
 	tea = d8PlusRaOrZeroAddress;
-	loadRegHigh(spr03a);
-	loadRegHigh(spr03b);
+	loadReg(spr03a);
+	loadReg(spr03b);
 }
 
 # e_ldmvdsrrw 6 (0b0001_10) 0b00110 RA 0b0001_0000 D8
 :e_ldmvdsrrw d8PlusRaOrZeroAddress is $(ISVLE) & OP=6 & d8PlusRaOrZeroAddress & XOP_8_VLE=0x10 & BITS_21_25=6
 {
 	tea = d8PlusRaOrZeroAddress;
-	loadRegHigh(spr23e);
-	loadRegHigh(spr23f);
+	loadReg(spr23e);
+	loadReg(spr23f);
 }
 
 # e_ldmvgprw 6 (0b0001_10) 0b00000 RA 0b0001_0000 D8
 :e_ldmvgprw d8PlusRaOrZeroAddress is $(ISVLE) & OP=6 & d8PlusRaOrZeroAddress & XOP_8_VLE=0x10 & BITS_21_25=0
 {
 	tea = d8PlusRaOrZeroAddress;
-	loadRegHigh(r0);
-	loadRegHigh(r3);
-	loadRegHigh(r4);
-	loadRegHigh(r5);
-	loadRegHigh(r6);
-	loadRegHigh(r7);
-	loadRegHigh(r8);
-	loadRegHigh(r9);
-	loadRegHigh(r10);
-	loadRegHigh(r11);
-	loadRegHigh(r12);
+	loadReg(r0);
+	loadReg(r3);
+	loadReg(r4);
+	loadReg(r5);
+	loadReg(r6);
+	loadReg(r7);
+	loadReg(r8);
+	loadReg(r9);
+	loadReg(r10);
+	loadReg(r11);
+	loadReg(r12);
 }
 
 # e_ldmvsprw 6 (0b0001_10) 0b00001 RA 0b0001_0000 D8
@@ -249,7 +249,7 @@ IMM16B: val						is IMM_0_10_VLE & IMM_16_20_VLE [ val = (IMM_16_20_VLE << 11) |
 	#TODO  is there a better way to handle this, CR are 4 bit
 	#      so crall can't be used.  And not much code accesses
 	#      CR in this way, also CRM_CR seems backwards?
-	# loadRegHigh(CR);
+	# loadReg(CR);
 	local tmpCR:4 = *:4 tea;
 	cr0 = zext(tmpCR[0,4]);
 	cr1 = zext(tmpCR[4,4]);
@@ -260,17 +260,17 @@ IMM16B: val						is IMM_0_10_VLE & IMM_16_20_VLE [ val = (IMM_16_20_VLE << 11) |
 	cr6 = zext(tmpCR[24,4]);
 	cr7 = zext(tmpCR[28,4]);
 	tea = tea + 4;
-	loadRegHigh(LR);
-	loadRegHigh(CTR);
-	loadRegHigh(XER);
+	loadReg(LR);
+	loadReg(CTR);
+	loadReg(XER);
 }
 
 # e_ldmvsrrw 6 (0b0001_10) 0b00100 RA 0b0001_0000 D8
 :e_ldmvsrrw d8PlusRaOrZeroAddress is $(ISVLE) & OP=6 & d8PlusRaOrZeroAddress & XOP_8_VLE=0x10 & BITS_21_25=4
 {
 	tea = d8PlusRaOrZeroAddress;
-	loadRegHigh(SRR0);
-	loadRegHigh(SRR1);
+	loadReg(SRR0);
+	loadReg(SRR1);
 }
 
 :e_lha	D,dPlusRaOrZeroAddress	is $(ISVLE) & OP=14 & D & dPlusRaOrZeroAddress
@@ -348,33 +348,33 @@ IMM16B: val						is IMM_0_10_VLE & IMM_16_20_VLE [ val = (IMM_16_20_VLE << 11) |
 :e_stmvcsrrw d8PlusRaOrZeroAddress is $(ISVLE) & OP=6 & d8PlusRaOrZeroAddress & XOP_8_VLE=0x11 & BITS_21_25=5
 {
 	tea = d8PlusRaOrZeroAddress;
-	storeRegHigh(spr03a);
-	storeRegHigh(spr03b);
+	storeReg(spr03a);
+	storeReg(spr03b);
 }
 
 # e_stmvdsrrw 6 (0b0001_10) 0b00110 RA 0b0001_0001 D8
 :e_stmvdsrrw d8PlusRaOrZeroAddress is $(ISVLE) & OP=6 & d8PlusRaOrZeroAddress & XOP_8_VLE=0x11 & BITS_21_25=6
 {
 	tea = d8PlusRaOrZeroAddress;
-	storeRegHigh(spr23e);
-	storeRegHigh(spr23f);
+	storeReg(spr23e);
+	storeReg(spr23f);
 }
 
 # e_stmvgprw 6 (0b0001_10) 0b00000 RA 0b0001_0001 D8
 :e_stmvgprw d8PlusRaOrZeroAddress is $(ISVLE) & OP=6 & d8PlusRaOrZeroAddress & XOP_8_VLE=0x11 & BITS_21_25=0
 {
 	tea = d8PlusRaOrZeroAddress;
-	storeRegHigh(r0);
-	storeRegHigh(r3);
-	storeRegHigh(r4);
-	storeRegHigh(r5);
-	storeRegHigh(r6);
-	storeRegHigh(r7);
-	storeRegHigh(r8);
-	storeRegHigh(r9);
-	storeRegHigh(r10);
-	storeRegHigh(r11);
-	storeRegHigh(r12);
+	storeReg(r0);
+	storeReg(r3);
+	storeReg(r4);
+	storeReg(r5);
+	storeReg(r6);
+	storeReg(r7);
+	storeReg(r8);
+	storeReg(r9);
+	storeReg(r10);
+	storeReg(r11);
+	storeReg(r12);
 }
 
 # e_stmvsprw 6 (0b0001_10) 0b00001 RA 0b0001_0001 D8
@@ -382,7 +382,7 @@ IMM16B: val						is IMM_0_10_VLE & IMM_16_20_VLE [ val = (IMM_16_20_VLE << 11) |
 {
 	tea = d8PlusRaOrZeroAddress;
 	#TODO  SEE TODO in e_ldmvsprw
-	# storeRegHigh(CR);
+	# storeReg(CR);
 	local tmpCR:4 = 0;
 	tmpCR = tmpCR | zext((cr0 & 0xf) << 0);
 	tmpCR = tmpCR | zext((cr1 & 0xf) << 4);
@@ -394,17 +394,17 @@ IMM16B: val						is IMM_0_10_VLE & IMM_16_20_VLE [ val = (IMM_16_20_VLE << 11) |
 	tmpCR = tmpCR | zext((cr7 & 0xf) << 28);
 	*:4 tea = tmpCR;
 	tea = tea + 4;
-	storeRegHigh(LR);
-	storeRegHigh(CTR);
-	storeRegHigh(XER);
+	storeReg(LR);
+	storeReg(CTR);
+	storeReg(XER);
 }
 
 # e_stmvsrrw 6 (0b0001_10) 0b00100 RA 0b0001_0001 D8
 :e_stmvsrrw d8PlusRaOrZeroAddress is $(ISVLE) & OP=6 & d8PlusRaOrZeroAddress & XOP_8_VLE=0x11 & BITS_21_25=4
 {
 	tea = d8PlusRaOrZeroAddress;
-	storeRegHigh(SRR0);
-	storeRegHigh(SRR1);
+	storeReg(SRR0);
+	storeReg(SRR1);
 }
 
 :e_stw S,dPlusRaOrZeroAddress	is $(ISVLE) & OP=21 & S & dPlusRaOrZeroAddress
