@@ -69,7 +69,8 @@ public class ProtectedAddressSpace extends SegmentedAddressSpace {
 	@Override
 	public int getNextOpenSegment(Address addr) {
 		int res = getDefaultSegmentFromFlat(addr.getOffset());
-		res += 1;
+		// Advance the selector by 8, accounting for the descriptor table bit and the privilege level bits
+		res = (res + 8) & 0xfff8;
 		return res;
 	}
 }

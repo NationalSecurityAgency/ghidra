@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +17,9 @@ package ghidra.app.util.bin.format.ne;
 
 import java.io.IOException;
 
-import ghidra.app.util.bin.format.*;
+import ghidra.app.util.bin.format.FactoryBundledWithBinaryReader;
+import ghidra.program.model.address.SegmentedAddress;
+import ghidra.program.model.address.SegmentedAddressSpace;
 import ghidra.util.Conv;
 
 /**
@@ -28,7 +29,8 @@ import ghidra.util.Conv;
 public class SegmentTable {
     private Segment [] segments;
 
-    SegmentTable(FactoryBundledWithBinaryReader reader, short index, short segmentCount, short shiftAlignCount) throws IOException {
+	SegmentTable(FactoryBundledWithBinaryReader reader, SegmentedAddress baseAddr, short index,
+			short segmentCount, short shiftAlignCount) throws IOException {
         long oldIndex = reader.getPointerIndex();
         reader.setPointerIndex(Conv.shortToInt(index));
 
@@ -39,14 +41,29 @@ public class SegmentTable {
 
         segments = new Segment[segmentCountInt];
 
-        int startOffset = 0;
+		SegmentedAddressSpace space;
+		int curSegment;
+		if (baseAddr != null) {
+			space = (SegmentedAddressSpace) baseAddr.getAddressSpace();
+			curSegment = baseAddr.getSegment();
+		}
+		else {
+			space = null;
+			curSegment = 0;
+		}
         for (int i = 0 ; i < segmentCountInt ; ++i) {
-            segments[i] = new Segment(reader, shiftAlignCount, startOffset >> 4);
+			segments[i] = new Segment(reader, shiftAlignCount, curSegment);
             int size = segments[i].getMinAllocSize() & 0xffff;
             if (size == 0) {
             	size = 0x10000;
             }
-            startOffset = (startOffset + size + 0xf) & ~0xf;
+			if (space != null) {
+				SegmentedAddress endAddr = space.getAddress(curSegment, size - 1);
+				curSegment = space.getNextOpenSegment(endAddr);
+			}
+			else {
+				curSegment += 1;
+			}
         }
 
         reader.setPointerIndex(oldIndex);
