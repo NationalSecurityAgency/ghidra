@@ -137,8 +137,7 @@ public class GListCellRenderer<E> extends AbstractGCellRenderer implements ListC
 	 * @return a new Dimension containing a width and height value necessary to display the largest
 	 * element in the list
 	 */
-	public Dimension computePlainTextListCellDimensions(JList<? extends E> list,
-			List<E> items,
+	public Dimension computePlainTextListCellDimensions(JList<? extends E> list, List<E> items,
 			int minWidth, int minHeight) {
 		configureFont(list, list.getModel(), 0);
 		FontMetrics metrics = getFontMetrics(getFont());
