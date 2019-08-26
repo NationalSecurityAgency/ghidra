@@ -419,7 +419,10 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 
 	void updateTitle() {
 		String subTitle = program == null ? "" : ' ' + program.getDomainFile().getName();
-		String newTitle = isConnected() ? TITLE : "[" + TITLE + subTitle + "]";
+		String newTitle = TITLE + subTitle;
+		if (!isConnected()) {
+			newTitle = '[' + newTitle + ']';
+		}
 		setTitle(newTitle);
 	}
 
@@ -924,13 +927,6 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 
 	protected FieldNavigator getFieldNavigator() {
 		return fieldNavigator;
-	}
-
-	public void updateTitle(String programName) {
-		decorationPanel.updateTitle(programName);
-
-		String newTitle = isConnected() ? TITLE : "[" + TITLE + "]";
-		setTitle(newTitle + programName);
 	}
 
 	public void setView(AddressSetView view) {
