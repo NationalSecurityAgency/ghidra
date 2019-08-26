@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<compiler_spec>
+  <data_organization>  <!-- These tags need to be verified -->
+     <absolute_max_alignment value="0" />
+     <machine_alignment value="1" />
+     <default_alignment value="1" />
+     <default_pointer_alignment value="3" />
+     <pointer_size value="2" />
+     <wchar_size value="4" />
+     <short_size value="2" />
+     <integer_size value="4" />
+     <long_size value="4" />
+     <long_long_size value="8" />
+     <float_size value="4" />
+     <double_size value="8" />
+     <long_double_size value="8" />
+     <size_alignment_map>
+          <entry size="1" alignment="1" />
+          <entry size="2" alignment="2" />
+          <entry size="4" alignment="4" />
+          <entry size="8" alignment="8" />
+     </size_alignment_map>
+  </data_organization>
+
+  <global>
+    <range space="RAM" first="0x00"  last="0x0f"/>
+    <range space="RAM" first="0x11"  last="0x15"/>
+    <range space="RAM" first="0x18"  last="0x2f"/>
+    <range space="RAM" first="0x31"  last="0xffff"/>
+  </global>
+  <stackpointer register="SP" space="RAM" growth="negative"/>
+  <segmentop space="RAM" userop="segment" baseinsize="1" innerinsize="2" farpointer="no">
+    <baseop code="INT_ZEXT"/>
+    <baseop code="INT_LEFT" value="16"/>
+    <innerop code="INT_ZEXT"/>
+    <constresolve>
+      <register name="PPAGE"/>
+    </constresolve>
+  </segmentop>
+  <returnaddress>
+    <varnode space="stack" offset="0" size="3"/>
+  </returnaddress>
+  <default_proto>
+     <prototype name="__asmA" extrapop="2" stackshift="2" strategy="register">
+      <input>
+        <pentry minsize="1" maxsize="1">
+          <register name="A"/>
+        </pentry>
+        <pentry minsize="1" maxsize="1">
+          <register name="B"/>
+        </pentry>
+        <pentry minsize="1" maxsize="2">
+          <register name="D"/>
+        </pentry>
+        <pentry minsize="1" maxsize="2">
+          <register name="IY"/>
+        </pentry>
+        <pentry minsize="1" maxsize="2">
+          <register name="IX"/>
+        </pentry>
+        <pentry minsize="1" maxsize="500" align="2">
+          <addr offset="2" space="stack"/>
+        </pentry>
+      </input>
+       <output>
+        <pentry minsize="1" maxsize="2">
+          <register name="D"/>
+        </pentry>
+      </output>
+      <unaffected>
+        <register name="SP"/>
+        <register name="PPAGE"/>
+        <register name="RPAGE"/>
+        <register name="GPAGE"/>
+      </unaffected>
+    </prototype>
+  </default_proto>
+  
+  <prototype name="__asmA_longcall" extrapop="3" stackshift="3" strategy="register">
+	  <input>
+	    <pentry minsize="1" maxsize="1">
+	      <register name="A"/>
+	    </pentry>
+	    <pentry minsize="1" maxsize="1">
+	      <register name="B"/>
+	    </pentry>
+	    <pentry minsize="1" maxsize="2">
+	      <register name="D"/>
+	    </pentry>
+	    <pentry minsize="1" maxsize="2">
+	      <register name="IY"/>
+	    </pentry>
+	    <pentry minsize="1" maxsize="2">
+	      <register name="IX"/>
+	    </pentry>
+	    <pentry minsize="1" maxsize="500" align="2">
+	      <addr offset="2" space="stack"/>
+	    </pentry>
+	  </input>
+	   <output>
+	    <pentry minsize="1" maxsize="2">
+	      <register name="D"/>
+	    </pentry>
+	  </output>
+	  <unaffected>
+	    <register name="SP"/>
+	    <register name="PPAGE"/>
+	    <register name="RPAGE"/>
+	    <register name="GPAGE"/>
+	  </unaffected>
+  </prototype>
+ <prototype name="__asmA_xgate" extrapop="3" stackshift="3" strategy="register">
+	  <input>
+	    <pentry minsize="1" maxsize="2">
+	      <register name="R2"/>
+	    </pentry>
+	    <pentry minsize="1" maxsize="2">
+	      <register name="R3"/>
+	    </pentry>
+	    <pentry minsize="3" maxsize="4">
+	      <addr space="join" piece1="R2" piece2="R3"/>
+	    </pentry>
+	    <pentry minsize="1" maxsize="2">
+	      <register name="R4"/>
+	    </pentry>
+	    <pentry minsize="3" maxsize="4">
+	      <addr space="join" piece1="R3" piece2="R4"/>
+	    </pentry>
+	    <pentry minsize="1" maxsize="500" align="2">
+	      <addr offset="2" space="stack"/>
+	    </pentry>
+	  </input>
+	   <output>
+	    <pentry minsize="1" maxsize="2">
+	      <register name="R2"/>
+	    </pentry>
+	    <pentry minsize="4" maxsize="4">
+	      <addr space="join" piece1="R2" piece2="R3"/>
+	    </pentry>
+	  </output>
+  </prototype>
+</compiler_spec>
