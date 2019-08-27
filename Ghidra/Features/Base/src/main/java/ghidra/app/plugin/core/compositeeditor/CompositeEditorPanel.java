@@ -578,6 +578,14 @@ public abstract class CompositeEditorPanel extends JPanel
 				return;
 			}
 			model.setSelection(table.getSelectedRows());
+
+		});
+
+		table.getColumnModel().getSelectionModel().addListSelectionListener(e -> {
+			if (e.getValueIsAdjusting()) {
+				return;
+			}
+			model.setColumn(e.getFirstIndex());
 		});
 
 		JPanel tablePanel = new JPanel(new BorderLayout());
