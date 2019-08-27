@@ -17,8 +17,7 @@ package ghidra.app.cmd.function;
 
 import ghidra.framework.cmd.BackgroundCommand;
 import ghidra.framework.model.DomainObject;
-import ghidra.program.model.address.AddressSet;
-import ghidra.program.model.address.AddressSetView;
+import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Processor;
 import ghidra.program.model.lang.PrototypeModel;
 import ghidra.program.model.listing.*;
@@ -62,14 +61,14 @@ public class FunctionPurgeAnalysisCmd extends BackgroundCommand {
 		program = (Program) obj;
 
 		Processor processor = program.getLanguage().getProcessor();
-		int processorSize = program.getLanguage().getDefaultSpace().getSize();
-		if (processorSize > 32 ||
+		AddressSpace defaultSpace = program.getLanguage().getDefaultSpace();
+		if (defaultSpace.getSize() > 32 ||
 			!processor.equals(Processor.findOrPossiblyCreateProcessor("x86"))) {
 			Msg.error(this,
 				"Unsupported operation for language " + program.getLanguage().getLanguageID());
 			return false;
 		}
-		if (processorSize < 32) {	// For 16-bit x86, prepare to establish near/fear calling convention models
+		if (defaultSpace instanceof SegmentedAddressSpace) {	// For 16-bit x86, prepare to establish near/fear calling convention models
 			setupNearFarModels();
 		}
 
