@@ -76,10 +76,10 @@ task CheckToolChain {
 				project.ext.WINVER = "0x0601"
 			
 				// Rely on vcvars script to supply SDK versions
-				def COMMAND = "cmd /c ${VISUAL_STUDIO_VCVARS_CMD} > nul && cmd /c echo"
-				project.ext.MSVC_SDK_VERSION = "${COMMAND} %WINDOWSSDKVERSION%".execute().text.trim().replace('\\', '')
+				def COMMAND = "cmd /v:ON /c ${VISUAL_STUDIO_VCVARS_CMD} > nul && cmd /c echo"
+				project.ext.MSVC_SDK_VERSION = "${COMMAND} !WINDOWSSDKVERSION!".execute().text.trim().replace('\\', '')
 				println "Visual Studio SDK Version: ${MSVC_SDK_VERSION}"
-				project.ext.MSVC_TOOLS_VERSION = "${COMMAND} %VCTOOLSVERSION%".execute().text.trim().replace('\\', '')
+				project.ext.MSVC_TOOLS_VERSION = "${COMMAND} !VCTOOLSVERSION!".execute().text.trim().replace('\\', '')
 				println "Visual Studio VCTools Version: ${MSVC_TOOLS_VERSION}"
 			}
 		
