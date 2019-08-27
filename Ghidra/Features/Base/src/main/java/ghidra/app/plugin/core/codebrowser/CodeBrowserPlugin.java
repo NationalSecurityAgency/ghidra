@@ -939,12 +939,6 @@ public class CodeBrowserPlugin extends Plugin
 			"SelectUtils"));
 		tableFromSelectionAction.setHelpLocation(
 			new HelpLocation("CodeBrowserPlugin", "Selection_Table"));
-
-		// don't add the actions initially if the service isn't there
-		TableService tableService = tool.getService(TableService.class);
-		if (tableService != null) {
-			tool.addAction(tableFromSelectionAction);
-		}
 	}
 
 	private GhidraProgramTableModel<Address> createTableModel(CodeUnitIterator iterator,
