@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +15,11 @@
  */
 package ghidra.pcodeCPort.semantics;
 
+import java.io.PrintStream;
+import java.util.*;
+
+import org.jdom.Element;
+
 import generic.stl.*;
 import ghidra.pcodeCPort.opcodes.OpCode;
 import ghidra.pcodeCPort.space.AddrSpace;
@@ -23,11 +27,6 @@ import ghidra.pcodeCPort.translate.Translate;
 import ghidra.pcodeCPort.utils.XmlUtils;
 import ghidra.sleigh.grammar.Location;
 import ghidra.sleigh.grammar.LocationUtil;
-
-import java.io.PrintStream;
-import java.util.*;
-
-import org.jdom.Element;
 
 public class ConstructTpl {
 	public final Location loc;
@@ -136,6 +135,15 @@ public class ConstructTpl {
 			}
 		}
 		return new Pair<Integer, Location>(0, null);
+	}
+
+	public boolean buildOnly() {
+		for (OpTpl op : vec) {
+			if (op.getOpcode() != OpCode.CPUI_MULTIEQUAL) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 	public void changeHandleIndex(VectorSTL<Integer> handmap) {

@@ -250,7 +250,7 @@ public class x86AssemblyTest extends AbstractAssemblyTest {
 
 	@Test
 	public void testAssembly_AND_mRBP_n0x8m_0xffff0000() {
-		assertOneCompatRestExact("AND qword ptr [RBP + -0x8],0xffff0000",
+		assertOneCompatRestExact("AND qword ptr [RBP + -0x8],-0x10000",
 			"48:81:65:f8:00:00:ff:ff");
 	}
 

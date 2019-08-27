@@ -61,30 +61,6 @@ def findVsLocation(vsVersionCode, knownVersionEditions) {
 	}
 }
 
-if (org.gradle.internal.os.OperatingSystem.current().isWindows()) {
-	suportedVsVersionCodes.each { vsVersionCode ->
-		findVsLocation(vsVersionCode, editions)
-	}
-
-	if (project.ext.VISUAL_STUDIO_FOUND) {
-		println "Visual Studio Path: ${VISUAL_STUDIO_INSTALL_DIR}"
-
-		project.ext.VISUAL_STUDIO_VCVARS_CMD = "\"${VISUAL_STUDIO_INSTALL_DIR}\\VC\\Auxiliary\\Build\\vcvarsall.bat\" x86_amd64"
-	
-		// NOTE: Windows 7 targeting requires the use of the Windows 8.1 SDK and setting the
-		// WINVER property a value of "0x0601" which may be specified to the compiler/linker.
-		// If using a VS Solution this must be specified within the project file(s).
-		project.ext.WINVER = "0x0601"
-	
-		// Rely on vcvars script to supply SDK versions
-		def COMMAND = "cmd /c ${VISUAL_STUDIO_VCVARS_CMD} > nul && cmd /c echo"
-		project.ext.MSVC_SDK_VERSION = "${COMMAND} %WINDOWSSDKVERSION%".execute().text.trim().replace('\\', '')
-		println "Visual Studio SDK Version: ${MSVC_SDK_VERSION}"
-		project.ext.MSVC_TOOLS_VERSION = "${COMMAND} %VCTOOLSVERSION%".execute().text.trim().replace('\\', '')
-		println "Visual Studio VCTools Version: ${MSVC_TOOLS_VERSION}"
-	}
-}
-
 /****************************************************************************
  * Defines the platforms we have to support in Ghidra.  This model is used 
  * for all native builds and should be extended by each module as-needed.
@@ -119,6 +95,30 @@ task CheckToolChain {
 	// Native C/Cpp plugins will trigger failure if no tool chain found
 	doFirst {
 		if (org.gradle.internal.os.OperatingSystem.current().isWindows()) {
+		
+			suportedVsVersionCodes.each { vsVersionCode ->
+		    findVsLocation(vsVersionCode, editions)
+	    }
+
+			if (project.ext.VISUAL_STUDIO_FOUND) {
+		
+				println "Visual Studio Path: ${VISUAL_STUDIO_INSTALL_DIR}"
+		
+				project.ext.VISUAL_STUDIO_VCVARS_CMD = "\"${VISUAL_STUDIO_INSTALL_DIR}\\VC\\Auxiliary\\Build\\vcvarsall.bat\" x86_amd64"
+			
+				// NOTE: Windows 7 targeting requires the use of the Windows 8.1 SDK and setting the
+				// WINVER property a value of "0x0601" which may be specified to the compiler/linker.
+				// If using a VS Solution this must be specified within the project file(s).
+				project.ext.WINVER = "0x0601"
+			
+				// Rely on vcvars script to supply SDK versions
+				def COMMAND = "cmd /v:ON /c ${VISUAL_STUDIO_VCVARS_CMD} > nul && cmd /c echo"
+				project.ext.MSVC_SDK_VERSION = "${COMMAND} !WINDOWSSDKVERSION!".execute().text.trim().replace('\\', '')
+				println "Visual Studio SDK Version: ${MSVC_SDK_VERSION}"
+				project.ext.MSVC_TOOLS_VERSION = "${COMMAND} !VCTOOLSVERSION!".execute().text.trim().replace('\\', '')
+				println "Visual Studio VCTools Version: ${MSVC_TOOLS_VERSION}"
+			}
+		
 			// ensure that required MS Visual Studio is installed where expected
 			String msg = "Microsoft Visual Studio install not found: ${VISUAL_STUDIO_BASE_DIR}\n" + 
 				"Adjust path in Ghidra/GPL/nativeBuildProperties.gradle if needed."

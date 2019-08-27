@@ -256,6 +256,7 @@ public class SleighCompile extends SleighBase {
 	boolean warnunusedfields;   // True if fields are defined but not used
 	boolean enforcelocalkeyword;  // Force slaspec to use 'local' keyword when defining temporary varnodes
 	boolean lenientconflicterrors; // True if we ignore most pattern conflict errors
+	public boolean warnalllocalcollisions;
 	public boolean warnallnops;
 	public VectorSTL<String> noplist = new VectorSTL<>();
 
@@ -523,6 +524,79 @@ public class SleighCompile extends SleighBase {
 		}
 	}
 
+	static int findCollision(Map<Long, Integer> local2Operand, ArrayList<Long> locals,
+			int operand) {
+		Integer boxOperand = Integer.valueOf(operand);
+		for (int i = 0; i < locals.size(); ++i) {
+			Integer previous = local2Operand.putIfAbsent(locals.get(i), boxOperand);
+			if (previous != null) {
+				if (previous.intValue() != operand) {
+					return previous.intValue();
+				}
+			}
+		}
+		return -1;
+	}
+
+	boolean checkLocalExports(Constructor ct) {
+		if (ct.getTempl() == null) {
+			return true;		// No template, collisions impossible
+		}
+		if (ct.getTempl().buildOnly()) {
+			return true;		// Operand exports aren't manipulated, so no collision is possible
+		}
+		if (ct.getNumOperands() < 2) {
+			return true;		// Collisions can only happen with multiple operands
+		}
+		boolean noCollisions = true;
+		Map<Long, Integer> collect = new TreeMap<Long, Integer>();
+		for (int i = 0; i < ct.getNumOperands(); ++i) {
+			ArrayList<Long> newCollect = new ArrayList<Long>();
+			ct.getOperand(i).collectLocalValues(newCollect);
+			if (newCollect.isEmpty()) {
+				continue;
+			}
+			int collideOperand = findCollision(collect, newCollect, i);
+			if (collideOperand >= 0) {
+				noCollisions = false;
+				if (warnalllocalcollisions) {
+					Msg.warn(this, "Possible collision with symbol " +
+						ct.getOperand(collideOperand).getName() + " and " +
+						ct.getOperand(i).getName() + " in constructor from " + ct.getFilename() +
+						" starting at line " + Integer.toString(ct.getLineno()));
+				}
+				break;	// Don't continue
+			}
+		}
+		return noCollisions;
+	}
+
+	void checkLocalCollisions() {
+		int collisionCount = 0;
+		SubtableSymbol sym = root;	// Start with the instruction table
+		int i = -1;
+		for (;;) {
+			int numconst = sym.getNumConstructors();
+			for (int j = 0; j < numconst; ++j) {
+				if (!checkLocalExports(sym.getConstructor(j))) {
+					collisionCount += 1;
+				}
+			}
+			i += 1;
+			if (i >= tables.size()) {
+				break;
+			}
+			sym = tables.get(i);
+		}
+		if (collisionCount > 0) {
+			Msg.warn(this, "WARNING: " + Integer.toString(collisionCount) +
+				" constructors with local collisions between operands");
+			if (!warnalllocalcollisions) {
+				Msg.warn(this, "Use -c switch to list each individually");
+			}
+		}
+	}
+
 	// Make sure label symbols are used properly
 	String checkSymbols(SymbolScope scope) {
 		entry("checkSymbols", scope);
@@ -644,6 +718,11 @@ public class SleighCompile extends SleighBase {
 		lenientconflicterrors = val;
 	}
 
+	void setLocalCollisionWarning(boolean val) {
+		entry("setLocalCollisionWarning", val);
+		warnalllocalcollisions = val;
+	}
+
 	void setAllNopWarning(boolean val) {
 		entry("setAllNopWarning", val);
 		warnallnops = val;
@@ -659,6 +738,10 @@ public class SleighCompile extends SleighBase {
 			return;
 		}
 		checkConsistency();
+		if (errors > 0) {
+			return;
+		}
+		checkLocalCollisions();
 		if (errors > 0) {
 			return;
 		}
