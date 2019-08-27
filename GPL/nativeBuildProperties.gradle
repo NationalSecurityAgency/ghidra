@@ -17,13 +17,49 @@ apply plugin: 'c'
 
 // Unclear if we can rely on the VisualCpp plugin to identify the correct Visual Studio paths
 
-project.ext.VISUAL_STUDIO_BASE_DIR = "C:\\Program Files (x86)\\Microsoft Visual Studio\\2017"
+project.ext.VISUAL_STUDIO_BASE_DIR = "C:\\Program Files (x86)\\Microsoft Visual Studio"
 project.ext.WINDOWS_KITS_DIR = "C:\\Program Files (x86)\\Windows Kits\\10"
 
 project.ext.VISUAL_STUDIO_INSTALL_DIR = "/"
 project.ext.VISUAL_STUDIO_VCVARS_CMD = "UNKNOWN"
 project.ext.MSVC_SDK_VERSION = "UNKNOWN"
 project.ext.MSVC_TOOLS_VERSION = "UNKNOWN"
+project.ext.VISUAL_STUDIO_FOUND = false
+
+/*******************************************************************************************
+ * Well known SKU of Visual Studio.
+ ******************************************************************************************/
+def editions = ["Enterprise", "Professional", "Community", "Preview"]
+
+/*******************************************************************************************
+ * Supported version of VS by Ghidra
+ ******************************************************************************************/
+def suportedVsVersionCodes = ["2017", "2019"]
+
+/*******************************************************************************************
+ * Attempt to find location of specific version for VS. Lookup for specific version
+ * This function set VISUAL_STUDIO_FOUND property to true once found the VS location
+ * After that, subsequent calls do nothing.
+ ******************************************************************************************/
+def findVsLocation(vsVersionCode, knownVersionEditions) {
+	if (project.ext.VISUAL_STUDIO_FOUND) {
+		return
+	}
+
+	String base_path = project.ext.VISUAL_STUDIO_BASE_DIR + "\\$vsVersionCode\\"
+	knownVersionEditions.each { edition ->
+		if (project.ext.VISUAL_STUDIO_FOUND) {
+			return
+		}
+
+		String path = base_path + edition
+		if (file(path).exists()) {
+			project.ext.VISUAL_STUDIO_FOUND = true
+			project.ext.VISUAL_STUDIO_INSTALL_DIR = path
+			return
+		}
+	}
+}
 
 /****************************************************************************
  * Defines the platforms we have to support in Ghidra.  This model is used 
@@ -60,11 +96,11 @@ task CheckToolChain {
 	doFirst {
 		if (org.gradle.internal.os.OperatingSystem.current().isWindows()) {
 		
-			project.ext.VISUAL_STUDIO_INSTALL_DIR = project.ext.VISUAL_STUDIO_BASE_DIR + "\\Professional"
-			if (!file(project.ext.VISUAL_STUDIO_INSTALL_DIR).exists()) {
-				project.ext.VISUAL_STUDIO_INSTALL_DIR = project.ext.VISUAL_STUDIO_BASE_DIR + "\\Community"
-			}
-			if (file(project.ext.VISUAL_STUDIO_INSTALL_DIR).exists()) {
+			suportedVsVersionCodes.each { vsVersionCode ->
+		    findVsLocation(vsVersionCode, editions)
+	    }
+
+			if (project.ext.VISUAL_STUDIO_FOUND) {
 		
 				println "Visual Studio Path: ${VISUAL_STUDIO_INSTALL_DIR}"
 		
@@ -86,7 +122,7 @@ task CheckToolChain {
 			// ensure that required MS Visual Studio is installed where expected
 			String msg = "Microsoft Visual Studio install not found: ${VISUAL_STUDIO_BASE_DIR}\n" + 
 				"Adjust path in Ghidra/GPL/nativeBuildProperties.gradle if needed."
-			if (!file(VISUAL_STUDIO_BASE_DIR).exists() || !file(VISUAL_STUDIO_INSTALL_DIR).exists()) {
+			if (!VISUAL_STUDIO_FOUND) {
 				throw new GradleException(msg);
 			}	
 		}
