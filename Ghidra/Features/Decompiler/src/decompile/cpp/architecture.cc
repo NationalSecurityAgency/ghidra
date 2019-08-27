@@ -1138,7 +1138,7 @@ void Architecture::init(DocumentStorage &store)
   fillinReadOnlyFromLoader();
 }
 
-Address SegmentedResolver::resolve(uintb val,int4 sz,const Address &point)
+Address SegmentedResolver::resolve(uintb val,int4 sz,const Address &point,uintb &fullEncoding)
 
 {
   int4 innersz = segop->getInnerSize();
@@ -1148,6 +1148,7 @@ Address SegmentedResolver::resolve(uintb val,int4 sz,const Address &point)
   // (as with near pointers)
     if (segop->getResolve().space != (AddrSpace *)0) {
       uintb base = glb->context->getTrackedValue(segop->getResolve(),point);
+      fullEncoding = (base << 8 * innersz) + (val & calc_mask(innersz));
       vector<uintb> seginput;
       seginput.push_back(val);
       seginput.push_back(base);
@@ -1156,6 +1157,7 @@ Address SegmentedResolver::resolve(uintb val,int4 sz,const Address &point)
     }
   }
   else { // For anything else, consider it a "far" pointer
+    fullEncoding = val;
     int4 outersz = segop->getBaseSize();
     uintb base = (val >> 8*innersz) & calc_mask(outersz);
     val = val & calc_mask(innersz);

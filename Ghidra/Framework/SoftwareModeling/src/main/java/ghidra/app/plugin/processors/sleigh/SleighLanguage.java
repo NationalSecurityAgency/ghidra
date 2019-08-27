@@ -1393,8 +1393,8 @@ public class SleighLanguage implements Language {
 			SpecXmlUtils.encodeSignedIntegerAttribute(resBuf, "index", element.getUnique());
 
 			int size = element.getSize(); // Size in bits
-			if (size == 20) {
-				// TODO: SegmentedAddressSpace shouldn't really return 20
+			if (element instanceof SegmentedAddressSpace) {
+				// TODO: SegmentedAddressSpace shouldn't really return 21
 				size = 32;
 			}
 			if (size > 64) {

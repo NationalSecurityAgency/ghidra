@@ -17,15 +17,16 @@ package ghidra.app.cmd.function;
 
 import ghidra.framework.cmd.BackgroundCommand;
 import ghidra.framework.model.DomainObject;
-import ghidra.program.model.address.AddressSet;
-import ghidra.program.model.address.AddressSetView;
+import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Processor;
+import ghidra.program.model.lang.PrototypeModel;
 import ghidra.program.model.listing.*;
+import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.program.model.scalar.Scalar;
-import ghidra.program.model.symbol.FlowType;
-import ghidra.program.model.symbol.Reference;
+import ghidra.program.model.symbol.*;
 import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
+import ghidra.util.exception.InvalidInputException;
 import ghidra.util.task.TaskMonitor;
 
 /**
@@ -34,13 +35,17 @@ import ghidra.util.task.TaskMonitor;
 public class FunctionPurgeAnalysisCmd extends BackgroundCommand {
 	private AddressSetView entryPoints;
 	private Program program;
+	private PrototypeModel[] nearFarModels = null;
+
+	private static final int STDCALL_FAR = 0;
+	private static final int CDECL_FAR = 1;
+	private static final int STDCALL_NEAR = 2;
+	private static final int CDECL_NEAR = 3;
 
 	/**
 	 * Constructs a new command for analyzing the Stack.
 	 * @param entries and address set indicating the entry points of functions that have 
 	 * stacks to be analyzed.
-	 * @param forceProcessing flag to force processing of stack references even if the stack
-	 *           has already been defined.
 	 */
 	public FunctionPurgeAnalysisCmd(AddressSetView entries) {
 		super("Compute Function Purge", true, true, false);
@@ -56,11 +61,15 @@ public class FunctionPurgeAnalysisCmd extends BackgroundCommand {
 		program = (Program) obj;
 
 		Processor processor = program.getLanguage().getProcessor();
-		if (program.getLanguage().getDefaultSpace().getSize() > 32 ||
+		AddressSpace defaultSpace = program.getLanguage().getDefaultSpace();
+		if (defaultSpace.getSize() > 32 ||
 			!processor.equals(Processor.findOrPossiblyCreateProcessor("x86"))) {
 			Msg.error(this,
 				"Unsupported operation for language " + program.getLanguage().getLanguageID());
 			return false;
+		}
+		if (defaultSpace instanceof SegmentedAddressSpace) {	// For 16-bit x86, prepare to establish near/fear calling convention models
+			setupNearFarModels();
 		}
 
 		AddressSetView set = entryPoints;
@@ -96,6 +105,52 @@ public class FunctionPurgeAnalysisCmd extends BackgroundCommand {
 	}
 
 	/**
+	 * For x86 16-bit find the models stdcallnear, stdcallfar, cdeclnear, and cdeclfar so they can
+	 * be applied at the same time function purge is set.
+	 */
+	private void setupNearFarModels() {
+		int countModels = 0;
+		nearFarModels = new PrototypeModel[4];
+		nearFarModels[0] = null;
+		nearFarModels[1] = null;
+		nearFarModels[2] = null;
+		nearFarModels[3] = null;
+		PrototypeModel[] models = program.getCompilerSpec().getCallingConventions();
+		for (PrototypeModel model : models) {
+			if (model.isMerged()) {
+				continue;
+			}
+			int pos = -1;
+			if (model.getStackshift() == 4) {
+				if (model.getExtrapop() == PrototypeModel.UNKNOWN_EXTRAPOP) {
+					pos = STDCALL_FAR;
+				}
+				else if (model.getExtrapop() == 4) {
+					pos = CDECL_FAR;
+				}
+			}
+			else if (model.getStackshift() == 2) {
+				if (model.getExtrapop() == PrototypeModel.UNKNOWN_EXTRAPOP) {
+					pos = STDCALL_NEAR;
+				}
+				else if (model.getExtrapop() == 2) {
+					pos = CDECL_NEAR;
+				}
+			}
+			if (pos >= 0) {
+				if (nearFarModels[pos] == null) {
+					nearFarModels[pos] = model;
+					countModels += 1;
+				}
+			}
+		}
+		if (countModels < 4) {
+			Msg.warn(this,
+				"FunctionPurgeAnalysis is missing full range of near/far prototype models");
+		}
+	}
+
+	/**
 	 * Analyze a function to build a stack frame based on stack references.
 	 * @param function function to be analyzed
 	 * @param monitor the task monitor that is checked to see if the command has
@@ -104,39 +159,120 @@ public class FunctionPurgeAnalysisCmd extends BackgroundCommand {
 	 */
 	private void analyzeFunction(Function function, TaskMonitor monitor) throws CancelledException {
 
-		int purge = -1;
-
-		if (function != null) {
-			purge = function.getStackPurgeSize();
+		if (function == null) {
+			return;
 		}
+		int purge = function.getStackPurgeSize();
 		if (purge == -1 || purge > 128 || purge < -128) {
-			purge = locatePurgeReturn(program, function, monitor);
-			// if couldn't find it, don't set it!
-			if (purge != -1) {
-				function.setStackPurgeSize(purge);
+			Instruction purgeInstruction = locatePurgeInstruction(function, monitor);
+			if (purgeInstruction != null) {
+				purge = getPurgeValue(purgeInstruction);
+				// if couldn't find it, don't set it!
+				if (purge != -1) {
+					function.setStackPurgeSize(purge);
+				}
+				setPrototypeModel(function, purgeInstruction);
 			}
 		}
 	}
 
-	private int locatePurgeReturn(Program program, Function func, TaskMonitor monitor) {
-		AddressSetView body = func.getBody();
+	private void setPrototypeModel(Function function, Instruction purgeInstruction) {
+		if (nearFarModels == null) {
+			return;
+		}
+		if (purgeInstruction.getFlowType().isCall()) {
+			return;
+		}
+		if (function.getSignatureSource() != SourceType.DEFAULT) {
+			return;
+		}
+		PrototypeModel model = null;
+		try {
+			byte val = purgeInstruction.getBytes()[0];
+			if (val == (byte) 0xc3) {
+				model = nearFarModels[CDECL_NEAR];
+			}
+			else if (val == (byte) 0xcb) {
+				model = nearFarModels[CDECL_FAR];
+			}
+			else if (val == (byte) 0xc2) {
+				model = nearFarModels[STDCALL_NEAR];
+			}
+			else if (val == (byte) 0xca) {
+				model = nearFarModels[STDCALL_FAR];
+			}
+		}
+		catch (MemoryAccessException e) {
+			return;
+		}
+		if (model == null) {
+			return;
+		}
+		try {
+			function.setCallingConvention(model.getName());
+		}
+		catch (InvalidInputException e) {
+			// Ignore if we can't change it
+		}
+	}
 
-		int returnPurge = findReturnPurge(program, body);
-		if (returnPurge != -1) {
-			return returnPurge;
+	private Instruction locatePurgeInstruction(Function func, TaskMonitor monitor) {
+		AddressSetView body = func.getBody();
+		Instruction purgeInstruction;
+
+		purgeInstruction = findPurgeInstruction(body);
+		if (purgeInstruction != null) {
+			return purgeInstruction;
 		}
 
 		// look harder, maybe something wrong with body, compute with flow.
 		body = CreateFunctionCmd.getFunctionBody(program, func.getEntryPoint(), monitor);
-		returnPurge = findReturnPurge(program, body);
-
-		return returnPurge;
+		return findPurgeInstruction(body);
 	}
 
-	private int findReturnPurge(Program program, AddressSetView body) {
-		int tempPurge;
+	/**
+	 * Given a terminating instruction, discover the purge value encoded in it
+	 * @param instr is the terminating instruction
+	 * @return the purge value (or -1 if a value can't be found)
+	 */
+	private int getPurgeValue(Instruction instr) {
+		if (instr.getFlowType().isCall()) {
+			// is an override call-return, terminal/call
+			// find a reference to a function, and take it's purge
+			Reference[] referencesFrom = instr.getReferencesFrom();
+			for (Reference reference : referencesFrom) {
+				if (reference.getReferenceType().isFlow()) {
+					Function functionAt =
+						program.getFunctionManager().getFunctionAt(reference.getToAddress());
+					// don't take the purge of a non-returning function
+					if (functionAt != null && !functionAt.hasNoReturn()) {
+						return functionAt.getStackPurgeSize();
+					}
+				}
+			}
+		}
+		else {
+			int tempPurge = 0;
+			Scalar scalar = instr.getScalar(0);
+			if (scalar != null) {
+				tempPurge = (int) scalar.getSignedValue();
+			}
+			return tempPurge;
+		}
+		return -1;
+	}
+
+	/**
+	 * Find a terminating instruction in the given set of addresses with a purge encoded in it.
+	 * This routine prefers a RET instruction, but if none is available, it will use a
+	 * terminating CALL.
+	 * @param body is the set of addresses to look through
+	 * @return a terminating instruction or null
+	 */
+	private Instruction findPurgeInstruction(AddressSetView body) {
 		InstructionIterator iter = program.getListing().getInstructions(body, true);
 		int count = 2048;
+		Instruction backupPurge = null;
 		while (iter.hasNext() && count > 0) {
 			count--;
 			Instruction instr = iter.next();
@@ -144,33 +280,15 @@ public class FunctionPurgeAnalysisCmd extends BackgroundCommand {
 			FlowType ftype = instr.getFlowType();
 			if (ftype.isTerminal()) {
 				if (instr.getMnemonicString().compareToIgnoreCase("ret") == 0) {
-					tempPurge = 0;
-					Scalar scalar = instr.getScalar(0);
-					if (scalar != null) {
-						tempPurge = (int) scalar.getSignedValue();
-						return tempPurge;
-					}
-					return 0;
+					return instr;
 				}
 				else if (ftype.isCall()) {
-					// is an override call-return, terminal/call
-					// find a reference to a function, and take it's purge
-					Reference[] referencesFrom = instr.getReferencesFrom();
-					for (Reference reference : referencesFrom) {
-						if (reference.getReferenceType().isFlow()) {
-							Function functionAt = program.getFunctionManager().getFunctionAt(
-								reference.getToAddress());
-							// don't take the purge of a non-returning function
-							if (functionAt != null && !functionAt.hasNoReturn()) {
-								return functionAt.getStackPurgeSize();
-							}
-						}
-					}
+					backupPurge = instr;	// Use as last resort, if we can't find RET
 				}
 			}
 		}
 
-		return -1;
+		return backupPurge;
 	}
 
 }

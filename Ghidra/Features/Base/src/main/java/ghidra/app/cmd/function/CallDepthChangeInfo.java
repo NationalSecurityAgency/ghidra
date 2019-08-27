@@ -273,8 +273,7 @@ public class CallDepthChangeInfo {
 
 		PcodeOp[] pcode = instr.getPcode();
 		Varnode outVarNode = null;
-		for (int i = 0; i < pcode.length; i++) {
-			PcodeOp op = pcode[i];
+		for (PcodeOp op : pcode) {
 			Varnode input0 = op.getInput(0);
 			Varnode input1 = op.getInput(1);
 			Varnode output = op.getOutput();
@@ -317,9 +316,10 @@ public class CallDepthChangeInfo {
 					break;
 				case PcodeOp.INT_AND: // Assume this is a stack alignment and do the and
 					if (isStackPointer(input0)) {
-						if (currentStackDepth != Function.UNKNOWN_STACK_DEPTH_CHANGE)
+						if (currentStackDepth != Function.UNKNOWN_STACK_DEPTH_CHANGE) {
 							possibleDepthChange =
 								(int) (currentStackDepth & input1.getOffset()) - currentStackDepth;
+						}
 						outVarNode = output;
 					}
 					else if (input0.equals(outVarNode)) {
@@ -327,9 +327,10 @@ public class CallDepthChangeInfo {
 						outVarNode = output;
 					}
 					else if (isStackPointer(input1)) {
-						if (currentStackDepth != Function.UNKNOWN_STACK_DEPTH_CHANGE)
+						if (currentStackDepth != Function.UNKNOWN_STACK_DEPTH_CHANGE) {
 							possibleDepthChange =
 								(int) (currentStackDepth & input0.getOffset()) - currentStackDepth;
+						}
 						outVarNode = output;
 					}
 					else if (input1.equals(outVarNode)) {
@@ -385,7 +386,7 @@ public class CallDepthChangeInfo {
 
 		// TODO: Modify return by normal stack shift....
 		if (flowType.isTerminal()) {
-			depthChange -= program.getCompilerSpec().getCallStackShift();
+			depthChange -= program.getCompilerSpec().getDefaultCallingConvention().getStackshift();
 		}
 
 		// if the current stack depth is still bad, don't return a depth change.
@@ -419,8 +420,9 @@ public class CallDepthChangeInfo {
 	 * @return
 	 */
 	private int getDefaultStackDepthChange(int depth) {
-		int callStackMod = program.getCompilerSpec().getCallStackMod();
-		int callStackShift = program.getCompilerSpec().getCallStackShift();
+		PrototypeModel defaultModel = program.getCompilerSpec().getDefaultCallingConvention();
+		int callStackMod = defaultModel.getExtrapop();
+		int callStackShift = defaultModel.getStackshift();
 		if (callStackMod != PrototypeModel.UNKNOWN_EXTRAPOP && callStackShift >= 0) {
 			return callStackShift - callStackMod;
 		}
@@ -578,8 +580,8 @@ public class CallDepthChangeInfo {
 			FlowType flow = instr.getFlowType();
 			if (!flow.isCall()) {
 				Address[] flows = instr.getFlows();
-				for (int i = 0; i < flows.length; i++) {
-					st.push(flows[i]);
+				for (Address flow2 : flows) {
+					st.push(flow2);
 					st.push(new Integer(stackPointerDepth));
 					st.push(stackOK);
 				}
@@ -653,7 +655,7 @@ public class CallDepthChangeInfo {
 			return;
 		}
 
-		int purge = (short) program.getCompilerSpec().getCallStackMod();
+		int purge = (short) program.getCompilerSpec().getDefaultCallingConvention().getExtrapop();
 		final boolean possiblePurge = purge == -1 || purge > 3200 || purge < -3200;
 
 		// follow all flows building up context
@@ -948,8 +950,8 @@ public class CallDepthChangeInfo {
 			FlowType flow = instr.getFlowType();
 			if (!flow.isCall()) {
 				Address[] flows = instr.getFlows();
-				for (int i = 0; i < flows.length; i++) {
-					st.push(flows[i]);
+				for (Address flow2 : flows) {
+					st.push(flow2);
 					st.push(new Integer(stackPointerDepth));
 					st.push(stackOK);
 				}
@@ -1027,11 +1029,11 @@ public class CallDepthChangeInfo {
 		}
 
 		// try to find a call destination that the stack frame is known
-		for (int i = 0; i < flows.length; i++) {
-			if (flows[i] == null) {
+		for (Address flow : flows) {
+			if (flow == null) {
 				continue;
 			}
-			Function func = program.getListing().getFunctionAt(flows[i]);
+			Function func = program.getListing().getFunctionAt(flow);
 			if (func != null) {
 				int purge = func.getStackPurgeSize();
 				if (func.isStackPurgeSizeValid() && purge != Function.UNKNOWN_STACK_DEPTH_CHANGE &&

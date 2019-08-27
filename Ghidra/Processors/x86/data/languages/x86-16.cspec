@@ -85,7 +85,7 @@
       <register name="DF"/>
     </unaffected>
   </prototype>
-  <prototype name="__stdcall16far" extrapop="unknown" stackshift="2">
+  <prototype name="__stdcall16far" extrapop="unknown" stackshift="4">
     <input>
       <pentry minsize="1" maxsize="500" align="2">
         <addr offset="4" space="stack"/>
@@ -111,7 +111,7 @@
       <register name="DF"/>
     </unaffected>
   </prototype>
-  <prototype name="__cdecl16far" extrapop="4" stackshift="2">
+  <prototype name="__cdecl16far" extrapop="4" stackshift="4">
     <input>
       <pentry minsize="1" maxsize="500" align="2">
         <addr offset="4" space="stack"/>

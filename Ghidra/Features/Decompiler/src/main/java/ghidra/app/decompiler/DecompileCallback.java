@@ -80,7 +80,7 @@ public class DecompileCallback {
 		listing = program.getListing();
 		addrfactory = program.getAddressFactory();
 		dtmanage = dt;
-		default_extrapop = pcodecompilerspec.getCallStackMod();
+		default_extrapop = pcodecompilerspec.getDefaultCallingConvention().getExtrapop();
 		cpool = null;
 		nativeMessage = null;
 		debug = null;
