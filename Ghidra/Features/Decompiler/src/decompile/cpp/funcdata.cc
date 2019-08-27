@@ -208,6 +208,7 @@ void Funcdata::spacebase(void)
 
   for(j=0;j<glb->numSpaces();++j) {
     spc = glb->getSpace(j);
+    if (spc == (AddrSpace *)0) continue;
     numspace = spc->numSpacebase();
     for(i=0;i<numspace;++i) {
       const VarnodeData &point(spc->getSpacebase(i));
@@ -617,7 +618,7 @@ void Funcdata::saveXmlTree(ostream &s) const
   s << "<varnodes>\n";
   for(int4 i=0;i<glb->numSpaces();++i) {
     AddrSpace *base = glb->getSpace(i);
-    if (base->getType()==IPTR_IOP) continue;
+    if (base == (AddrSpace *)0 || base->getType()==IPTR_IOP) continue;
     VarnodeLocSet::const_iterator iter = vbank.beginLoc(base);
     VarnodeLocSet::const_iterator enditer = vbank.endLoc(base);
     saveVarnodeXml(s,iter,enditer);

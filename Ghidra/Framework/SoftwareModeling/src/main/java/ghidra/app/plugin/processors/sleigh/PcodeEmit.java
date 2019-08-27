@@ -29,6 +29,7 @@ import ghidra.program.model.listing.FlowOverride;
 import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.program.model.pcode.PcodeOp;
 import ghidra.program.model.pcode.PcodeOverride;
+import ghidra.program.model.symbol.RefType;
 import ghidra.util.exception.NotYetImplementedException;
 
 /**
@@ -738,42 +739,119 @@ public abstract class PcodeEmit {
 			return opcode;
 		}
 
-		//If there is an overriding reference on an indirect call, change the indirect
-		//call to a direct call
-		if (opcode == PcodeOp.CALLIND) {
-			Address callRef = override.getOverridingCallReference();
+		//If there is an overriding call reference on an indirect call, change it to  
+		//to a direct call, unless a call override has already been applied at this instruction
+		if (opcode == PcodeOp.CALLIND && !override.isCallOverrideRefApplied()) {
+			Address callRef = override.getOverridingReference(RefType.CALL_OVERRIDE_UNCONDITIONAL);
 			if (callRef != null) {
 				VarnodeData dest = in[0];
 				dest.space = callRef.getAddressSpace();
 				dest.offset = callRef.getOffset();
 				dest.size = dest.space.getPointerSize();
+				override.setCallOverrideRefApplied();
 				return PcodeOp.CALL;
 			}
 		}
 
-		// Simple call reference override - use primary call reference as destination
+		//CALLOTHER ops can be overridden with RefType.CALLOTHER_OVERRIDE_CALL 
+		//or RefType.CALLOTHER_OVERRIDE_JUMP  
+		//Call overrides take precedence over jump overrides
+		//override at most one callother pcode op per native instruction
+		boolean callOtherOverrideApplied = override.isCallOtherCallOverrideRefApplied() ||
+			override.isCallOtherJumpOverrideApplied();
+		if (opcode == PcodeOp.CALLOTHER && !callOtherOverrideApplied) {
+			Address overrideRef = override.getOverridingReference(RefType.CALLOTHER_OVERRIDE_CALL);
+			VarnodeData dest = in[0];
+			if (overrideRef != null) {
+				dest.space = overrideRef.getAddressSpace();
+				dest.offset = overrideRef.getOffset();
+				dest.size = dest.space.getPointerSize();
+				override.setCallOtherCallOverrideRefApplied();
+				return PcodeOp.CALL;
+			}
+			overrideRef = override.getOverridingReference(RefType.CALLOTHER_OVERRIDE_JUMP);
+			if (overrideRef != null) {
+				dest.space = overrideRef.getAddressSpace();
+				dest.offset = overrideRef.getOffset();
+				dest.size = dest.space.getPointerSize();
+				override.setCallOtherJumpOverrideRefApplied();
+				return PcodeOp.BRANCH;
+			}
+		}
+
+		// Simple call reference override - grab destination from appropriate reference
 		// Only perform reference override if destination function does not have a call-fixup		
-		if (opcode == PcodeOp.CALL &&
+		if (opcode == PcodeOp.CALL && !override.isCallOverrideRefApplied() &&
 			!override.hasCallFixup(in[0].space.getAddress(in[0].offset))) {
-			// Check for call reference (not supported if call-fixup exists for the instruction)
-			Address callRef = override.getOverridingCallReference();
-			if (callRef != null) {
-				VarnodeData dest = in[0];
+			VarnodeData dest = in[0];
+			//call to override.getPrimaryCallReference kept for backward compatibility with
+			//old call override mechanism
+			//old mechanism has precedence over new
+			Address callRef = override.getPrimaryCallReference();
+			boolean overridingRef = false;
+			if (callRef == null) {
+				callRef = override.getOverridingReference(RefType.CALL_OVERRIDE_UNCONDITIONAL);
+				overridingRef = true;
+			}
+			//every call instruction automatically has a call-type reference to the call target
+			//we don't want these references to count as overrides - only count as an override
+			//via explicitly changing the destination or using a CALL_OVERRIDE_UNCONDITIONAL reference
+			if (callRef != null && (overridingRef || actualOverride(dest, callRef))) {
 				dest.space = callRef.getAddressSpace();
 				dest.offset = callRef.getOffset();
 				dest.size = dest.space.getPointerSize();
+				override.setCallOverrideRefApplied();
+				return PcodeOp.CALL;
 			}
 		}
 
 		// Fall-through override - alter branch to next instruction
 		if (fallOverride != null && (opcode == PcodeOp.CBRANCH || opcode == PcodeOp.BRANCH)) {
+			//don't apply fallthrough overrides into the constant space
+			if (in[0].space.getType() == AddressSpace.TYPE_CONSTANT) {
+				return opcode;
+			}
 			VarnodeData dest = in[0];
 			if (defaultFallAddress.getOffset() == dest.offset) {
 				dest.space = fallOverride.getAddressSpace();
 				dest.offset = fallOverride.getOffset();
 				dest.size = dest.space.getPointerSize();
 			}
+			return opcode;
+		}
+
+		//if there is an overriding jump reference, change a conditional jump to an
+		//unconditional jump with the target given by the reference
+		if ((opcode == PcodeOp.BRANCH || opcode == PcodeOp.CBRANCH) &&
+			!override.isJumpOverrideRefApplied()) {
+			//if the destination varnode is in the const space, it's a pcode-relative branch.
+			//these should not be overridden
+			if (in[0].space.getType() == AddressSpace.TYPE_CONSTANT) {
+				return opcode;
+			}
+			Address overrideRef =
+				override.getOverridingReference(RefType.JUMP_OVERRIDE_UNCONDITIONAL);
+			if (overrideRef != null) {
+				VarnodeData dest = in[0];
+				dest.space = overrideRef.getAddressSpace();
+				dest.offset = overrideRef.getOffset();
+				dest.size = dest.space.getPointerSize();
+				override.setJumpOverrideRefApplied();
+				return PcodeOp.BRANCH;
+			}
 		}
 		return opcode;
+	}
+
+	// Used to check whether the address from a potentially overriding reference 
+	// actually changes the call destination
+	private boolean actualOverride(VarnodeData data, Address addr) {
+		if (!data.space.equals(addr.getAddressSpace())) {
+			return true;
+		}
+		if (data.offset != addr.getOffset()) {
+			return true;
+		}
+		return false;
 	}
 }

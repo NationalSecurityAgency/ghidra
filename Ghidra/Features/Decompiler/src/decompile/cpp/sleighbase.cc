@@ -15,6 +15,8 @@
  */
 #include "sleighbase.hh"
 
+const int4 SleighBase::SLA_FORMAT_VERSION = 2;
+
 SleighBase::SleighBase(void)
 
 {
@@ -146,6 +148,7 @@ void SleighBase::saveXml(ostream &s) const
 
 {
   s << "<sleigh";
+  a_v_i(s,"version",SLA_FORMAT_VERSION);
   a_v_b(s,"bigendian",isBigEndian());
   a_v_i(s,"align",alignment);
   a_v_u(s,"uniqbase",getUniqueBase());
@@ -162,6 +165,7 @@ void SleighBase::saveXml(ostream &s) const
   s << ">\n";
   for(int4 i=0;i<numSpaces();++i) {
     AddrSpace *spc = getSpace(i);
+    if (spc == (AddrSpace *)0) continue;
     if ((spc->getType()==IPTR_CONSTANT) || 
 	(spc->getType()==IPTR_FSPEC)||
 	(spc->getType()==IPTR_IOP)||
@@ -183,6 +187,7 @@ void SleighBase::restoreXml(const Element *el)
   maxdelayslotbytes = 0;
   unique_allocatemask = 0;
   numSections = 0;
+  int4 version = 0;
   setBigEndian(xml_readbool(el->getAttributeValue("bigendian")));
   {
     istringstream s(el->getAttributeValue("align"));
@@ -214,7 +219,14 @@ void SleighBase::restoreXml(const Element *el)
       s3.unsetf(ios::dec | ios::hex | ios::oct);
       s3 >> numSections;
     }
+    else if (attrname == "version") {
+      istringstream s(el->getAttributeValue(i));
+      s.unsetf(ios::dec | ios::hex | ios::oct);
+      s >> version;
+    }
   }
+  if (version != SLA_FORMAT_VERSION)
+    throw LowlevelError(".sla file has wrong format");
   const List &list(el->getChildren());
   List::const_iterator iter;
   iter = list.begin();

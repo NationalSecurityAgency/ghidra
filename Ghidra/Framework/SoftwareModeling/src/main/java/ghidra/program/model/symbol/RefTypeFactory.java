@@ -77,6 +77,14 @@ public class RefTypeFactory {
 		REFTYPE_LOOKUP_BY_TYPE_MAP.put(RefType.STACK_READ.getValue(), RefType.STACK_READ);
 		REFTYPE_LOOKUP_BY_TYPE_MAP.put(RefType.STACK_WRITE.getValue(), RefType.STACK_WRITE);
 		REFTYPE_LOOKUP_BY_TYPE_MAP.put(RefType.EXTERNAL_REF.getValue(), RefType.EXTERNAL_REF);
+		REFTYPE_LOOKUP_BY_TYPE_MAP.put(RefType.__CALL_OVERRIDE_UNCONDITIONAL,
+			RefType.CALL_OVERRIDE_UNCONDITIONAL);
+		REFTYPE_LOOKUP_BY_TYPE_MAP.put(RefType.__JUMP_OVERRIDE_UNCONDITIONAL,
+			RefType.JUMP_OVERRIDE_UNCONDITIONAL);
+		REFTYPE_LOOKUP_BY_TYPE_MAP.put(RefType.__CALLOTHER_OVERRIDE_CALL,
+			RefType.CALLOTHER_OVERRIDE_CALL);
+		REFTYPE_LOOKUP_BY_TYPE_MAP.put(RefType.__CALLOTHER_OVERRIDE_JUMP,
+			RefType.CALLOTHER_OVERRIDE_JUMP);
 	}
 
 	private static RefType[] memoryRefTypes = new RefType[] { RefType.INDIRECTION,
@@ -84,7 +92,9 @@ public class RefTypeFactory {
 		RefType.CONDITIONAL_JUMP, RefType.UNCONDITIONAL_CALL, RefType.UNCONDITIONAL_JUMP,
 		RefType.CONDITIONAL_COMPUTED_CALL, RefType.CONDITIONAL_COMPUTED_JUMP, RefType.PARAM,
 		RefType.DATA, RefType.DATA_IND, RefType.READ, RefType.READ_IND, RefType.WRITE,
-		RefType.WRITE_IND, RefType.READ_WRITE, RefType.READ_WRITE_IND };
+		RefType.WRITE_IND, RefType.READ_WRITE, RefType.READ_WRITE_IND,
+		RefType.CALL_OVERRIDE_UNCONDITIONAL, RefType.JUMP_OVERRIDE_UNCONDITIONAL,
+		RefType.CALLOTHER_OVERRIDE_CALL, RefType.CALLOTHER_OVERRIDE_JUMP };
 
 	private static HashSet<RefType> validMemRefTypes = new HashSet<>();
 	static {
@@ -99,13 +109,13 @@ public class RefTypeFactory {
 	private static RefType[] dataRefTypes = new RefType[] { RefType.DATA, RefType.PARAM,
 		RefType.READ, RefType.WRITE, RefType.READ_WRITE, };
 
-	private static RefType[] extRefTypes = new RefType[] {
-		// TODO: RefType.EXTERNAL_REF should be deprecated and RefType.DATA taking its place
-		RefType.COMPUTED_CALL, RefType.COMPUTED_JUMP, RefType.CONDITIONAL_CALL,
-		RefType.CONDITIONAL_JUMP, RefType.UNCONDITIONAL_CALL, RefType.UNCONDITIONAL_JUMP,
-		RefType.CONDITIONAL_COMPUTED_CALL, RefType.CONDITIONAL_COMPUTED_JUMP, RefType.DATA,
-		RefType.DATA_IND, RefType.READ, RefType.READ_IND, RefType.WRITE, RefType.WRITE_IND,
-		RefType.READ_WRITE, RefType.READ_WRITE_IND };
+	private static RefType[] extRefTypes =
+		new RefType[] { RefType.COMPUTED_CALL, RefType.COMPUTED_JUMP, RefType.CONDITIONAL_CALL,
+			RefType.CONDITIONAL_JUMP, RefType.UNCONDITIONAL_CALL, RefType.UNCONDITIONAL_JUMP,
+			RefType.CONDITIONAL_COMPUTED_CALL, RefType.CONDITIONAL_COMPUTED_JUMP, RefType.DATA,
+			RefType.DATA_IND, RefType.READ, RefType.READ_IND, RefType.WRITE, RefType.WRITE_IND,
+			RefType.READ_WRITE, RefType.READ_WRITE_IND, RefType.CALL_OVERRIDE_UNCONDITIONAL,
+			RefType.CALLOTHER_OVERRIDE_CALL, RefType.CALLOTHER_OVERRIDE_JUMP };
 
 	public static RefType[] getMemoryRefTypes() {
 		return memoryRefTypes;

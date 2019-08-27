@@ -149,8 +149,8 @@ public class VisualGraphPathHighlighter<V extends VisualVertex, E extends Visual
 			TaskMonitor timeoutMonitor = TimeoutTaskMonitor.timeoutIn(ALGORITHM_TIMEOUT,
 				TimeUnit.SECONDS, new TaskMonitorAdapter(true));
 
-			Set<V> sources = GraphAlgorithms.getSources(graph);
-			if (sources.isEmpty()) {
+			GDirectedGraph<V, E> dominanceGraph = getDominanceGraph(graph, true);
+			if (dominanceGraph == null) {
 				Msg.debug(this, "No sources found for graph; cannot calculate dominance: " +
 					graph.getClass().getSimpleName());
 				return null;
@@ -158,7 +158,7 @@ public class VisualGraphPathHighlighter<V extends VisualVertex, E extends Visual
 
 			try {
 				// note: calling the constructor performs the work
-				return new ChkDominanceAlgorithm<>(graph, timeoutMonitor);
+				return new ChkDominanceAlgorithm<>(dominanceGraph, timeoutMonitor);
 			}
 			catch (CancelledException e) {
 				// shouldn't happen
@@ -168,6 +168,17 @@ public class VisualGraphPathHighlighter<V extends VisualVertex, E extends Visual
 			return null;
 		}, executor);
 		return dominanceFuture;
+	}
+
+	protected GDirectedGraph<V, E> getDominanceGraph(VisualGraph<V, E> visualGraph,
+			boolean forward) {
+
+		Set<V> sources = GraphAlgorithms.getSources(visualGraph);
+		if (!sources.isEmpty()) {
+			return visualGraph;
+		}
+
+		return null;
 	}
 
 	private CompletableFuture<ChkDominanceAlgorithm<V, E>> lazyCreatePostDominanceFuture() {

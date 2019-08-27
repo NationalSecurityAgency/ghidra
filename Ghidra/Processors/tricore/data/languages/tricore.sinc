@@ -2879,7 +2879,7 @@ SC: [a10]const0815Z10zz is PCPMode=0 & a10 & const0815Z10zz & op0003=8 & op0404=
 {
 	#TODO  is this just a call w/o context switching?
 	a11 = inst_start + 4;
-	goto [off24pc];
+	call [off24pc];
 }
 
 # JLA disp24 (B)
@@ -2887,7 +2887,7 @@ SC: [a10]const0815Z10zz is PCPMode=0 & a10 & const0815Z10zz & op0003=8 & op0404=
 {
 	#TODO  is this just a call w/o context switching?
 	a11 = inst_start + 4;
-	goto [off24abs];
+	call [off24abs];
 }
 
 @if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
@@ -2904,7 +2904,7 @@ SC: [a10]const0815Z10zz is PCPMode=0 & a10 & const0815Z10zz & op0003=8 & op0404=
 {
 	a11 = inst_start + 4;
 	local tmp:4 = Ra0811 & 0xFFFFFFFE;
-	goto [tmp];
+	call [tmp];
 }
 @endif
 

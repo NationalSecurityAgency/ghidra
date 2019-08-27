@@ -19,6 +19,11 @@ import java.io.PrintStream;
 import java.util.StringTokenizer;
 
 import org.jdom.Element;
+
+import ghidra.pcodeCPort.error.LowlevelError;
+import ghidra.pcodeCPort.pcoderaw.VarnodeData;
+import ghidra.pcodeCPort.translate.Translate;
+import ghidra.pcodeCPort.utils.*;
 /// \brief A region where processor data is stored
 ///
 /// An AddrSpace (Address Space) is an arbitrary sequence of
@@ -59,9 +64,18 @@ public class AddrSpace {
 
 	public static final AddrSpace MIN_SPACE = new AddrSpace("MIN_SPACE", -1);
 	public static final AddrSpace MAX_SPACE = new AddrSpace("MAX_SPACE", Integer.MAX_VALUE);
-	protected static final int big_endian = 1;
-	protected static final int heritaged = 2;
-	public static final int hasphysical = 4;
+
+	//see space.hh
+	protected static final int big_endian = 1;		       // Space is big endian if set, little endian otherwise
+	protected static final int heritaged = 2;		       // This space is heritaged
+	protected static final int does_deadcode = 4;		   // Dead-code analysis is done on this space
+	protected static final int programspecific = 8;        // Space is specific to a particular loadimage
+	protected static final int reverse_justification = 16; // Justification within aligned word is opposite of endianness
+	protected static final int overlay = 32;		       // This space is an overlay of another space
+	protected static final int overlaybase = 64;		   // This is the base space for overlay space(s)
+	protected static final int truncated = 128;		       // Space is truncated from its original size, expect pointers larger than this size
+	public static final int hasphysical = 256;		       // Has physical memory associated with it
+	protected static final int is_otherspace = 512;  	   // Quick check for OtherSpace
 
 	private int flags;
 	private long highest;
@@ -186,6 +200,10 @@ public class AddrSpace {
 
 	public boolean isBigEndian() {
 		return ((flags & big_endian) != 0);
+	}
+
+	public boolean isOtherSpace() {
+		return ((flags & is_otherspace) != 0);
 	}
 
 	public AddrSpace getContain() {

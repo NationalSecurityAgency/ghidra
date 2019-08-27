@@ -1195,7 +1195,7 @@ class XmlExporter(IdaXml):
                 ida_ua.decode_insn(insn, addr)
                 target = (insn.ops[op].value - ri.tdelta + ri.base) & ((1 << 64) - 1)
             elif idc.is_data(f) == True:
-                target = self.get_data_value(addr) - ri.tdelta + ri.base;
+                target = (self.get_data_value(addr) - ri.tdelta + ri.base) & ((1 << 64) - 1)
             else:
                 return
         else:

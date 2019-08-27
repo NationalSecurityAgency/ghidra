@@ -1038,7 +1038,7 @@ Default:"default" addr is defaultbyte1; defaultbyte2; defaultbyte3; defaultbyte4
 	pop(_value);
 	_resultAsLong = sext(_value);
 	_resultAsDouble = int2float(_resultAsLong);
-	push(_resultAsDouble); 
+	push2(_resultAsDouble); 
 }
 
 :i2f	is (in_table_switch=0 & in_lookup_switch=0 & op=0x86) 

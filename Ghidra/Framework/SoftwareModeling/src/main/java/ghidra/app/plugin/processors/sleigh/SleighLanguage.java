@@ -52,6 +52,8 @@ import utilities.util.FileUtilities;
 
 public class SleighLanguage implements Language {
 
+	public static final int SLA_FORMAT_VERSION = 2;	// What format of the .sla file this expects
+													// This value should always match SleighBase.SLA_FORMAT_VERSION
 	private Map<CompilerSpecID, SleighCompilerSpecDescription> compilerSpecDescriptions;
 	private HashMap<CompilerSpecID, BasicCompilerSpec> compilerSpecs;
 	private List<InjectPayloadSleigh> additionalInject = null;
@@ -805,6 +807,10 @@ public class SleighLanguage implements Language {
 
 	private void restoreXml(XmlPullParser parser) throws UnknownInstructionException {
 		XmlElement el = parser.start("sleigh");
+		int version = SpecXmlUtils.decodeInt(el.getAttribute("version"));
+		if (version != SLA_FORMAT_VERSION) {
+			throw new SleighException(".sla file for " + getLanguageID() + " has the wrong format");
+		}
 		boolean isBigEndian = SpecXmlUtils.decodeBoolean(el.getAttribute("bigendian"));
 		// check the instruction endianess, not the program data endianess
 		if (isBigEndian ^ description.getInstructionEndian().isBigEndian()) {
@@ -840,8 +846,16 @@ public class SleighLanguage implements Language {
 		// Slot zero is always the constant space
 		AddressSpace constspc = new GenericAddressSpace("const", 64, AddressSpace.TYPE_CONSTANT, 0);
 		spacetable.put("const", constspc);
+		//spacetable.put("OTHER", AddressSpace.OTHER_SPACE);
 		default_space = null;
-		XmlElement subel;
+		XmlElement subel = parser.peek();
+		if (subel.getName().equals("space_other")) {	// tag must be present
+			parser.discardSubTree();	// We don't process it
+			// Instead the ProgramAddressFactory maps in the static OTHER_SPACE automatically 
+		}
+		else {
+			throw new SleighException(".sla file missing required OTHER space tag");
+		}
 		while ((subel = parser.softStart("space", "space_unique")) != null) {
 			String name = subel.getAttribute("name");
 			int index = SpecXmlUtils.decodeInt(subel.getAttribute("index"));
@@ -1319,14 +1333,13 @@ public class SleighLanguage implements Language {
 		int delay;
 		boolean physical;
 		boolean global;
-		int index = 1;
+
 		for (AddressSpace element : spclist) {
-			if ((element instanceof OverlayAddressSpace) &&
-				(element.getType() == AddressSpace.TYPE_RAM)) {
+			if ((element instanceof OverlayAddressSpace)) {
 				OverlayAddressSpace ospace = (OverlayAddressSpace) element;
 				resBuf.append("<space_overlay");
 				SpecXmlUtils.encodeStringAttribute(resBuf, "name", ospace.getName());
-				SpecXmlUtils.encodeSignedIntegerAttribute(resBuf, "index", index++);
+				SpecXmlUtils.encodeSignedIntegerAttribute(resBuf, "index", ospace.getUnique());
 				SpecXmlUtils.encodeStringAttribute(resBuf, "base",
 					ospace.getOverlayedSpace().getName());
 				resBuf.append("/>\n");
@@ -1351,12 +1364,18 @@ public class SleighLanguage implements Language {
 					physical = true;
 					global = false;
 					break;
+				case AddressSpace.TYPE_OTHER:
+					tag = "space_other";
+					delay = 0;
+					physical = true;
+					global = true;
+					break;
 				default:
 					continue;
 			}
 			resBuf.append("<").append(tag);
 			SpecXmlUtils.encodeStringAttribute(resBuf, "name", element.getName());
-			SpecXmlUtils.encodeSignedIntegerAttribute(resBuf, "index", index++);
+			SpecXmlUtils.encodeSignedIntegerAttribute(resBuf, "index", element.getUnique());
 
 			int size = element.getSize(); // Size in bits
 			if (size == 20) {

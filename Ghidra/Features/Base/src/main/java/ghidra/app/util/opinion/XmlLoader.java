@@ -335,7 +335,7 @@ public class XmlLoader extends AbstractProgramLoader {
 	}
 
 	@Override
-	public String validateOptions(ByteProvider provider, LoadSpec loadSpec, List<Option> options) {
+	public String validateOptions(ByteProvider provider, LoadSpec loadSpec, List<Option> options, Program program) {
 		// XXX will this work? is there other state that xmlOptions needs to
 		// know?
 		try {

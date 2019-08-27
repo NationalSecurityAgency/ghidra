@@ -15,7 +15,9 @@
  */
 package ghidra.app.plugin.core.compositeeditor;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
+
+import javax.swing.JTextField;
 
 import org.junit.Assert;
 
@@ -178,4 +180,8 @@ public abstract class AbstractStructureEditorTest extends AbstractEditorTest {
 		return (String) model.getValueAt(index, model.getMnemonicColumn());
 	}
 
+	protected void setText(String s) {
+		JTextField tf = getActiveEditorTextField();
+		setText(tf, s);
+	}
 }

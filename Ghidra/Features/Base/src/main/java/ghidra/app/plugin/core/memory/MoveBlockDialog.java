@@ -82,8 +82,8 @@ public class MoveBlockDialog extends DialogComponentProvider implements MoveBloc
 		changing = true;
 		if (!isVisible()) {
 			AddressFactory factory = model.getAddressFactory();
-			newStartField.setAddressFactory(factory, true);
-			newEndField.setAddressFactory(factory, true);
+			newStartField.setAddressFactory(factory, true, false);
+			newEndField.setAddressFactory(factory, true, false);
 		}
 		Address newStart = model.getNewStartAddress();
 		if (newStart != null) {

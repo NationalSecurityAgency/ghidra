@@ -27,6 +27,7 @@
 ///   - Reading the various SLEIGH specification files
 ///   - Building and writing out SLEIGH specification files
 class SleighBase : public Translate {
+  static const int4 SLA_FORMAT_VERSION;	///< Current version of the .sla file read/written by SleighBash
   vector<string> userop;		///< Names of user-define p-code ops for \b this Translate object
   map<VarnodeData,string> varnode_xref;	///< A map from Varnodes in the \e register space to register names
 protected:

@@ -17,19 +17,20 @@ package ghidra.app.plugin.core.functiongraph;
 
 import static org.junit.Assert.*;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 import org.junit.Before;
 import org.junit.Test;
 
 import edu.uci.ics.jung.graph.Graph;
-import ghidra.app.plugin.core.functiongraph.graph.FGEdge;
-import ghidra.app.plugin.core.functiongraph.graph.FunctionGraph;
+import ghidra.app.plugin.core.functiongraph.graph.*;
 import ghidra.app.plugin.core.functiongraph.graph.vertex.FGVertex;
 import ghidra.app.plugin.core.functiongraph.graph.vertex.GroupedFunctionGraphVertex;
 import ghidra.app.plugin.core.functiongraph.mvc.FGController;
 import ghidra.app.plugin.core.functiongraph.mvc.FGData;
+import ghidra.graph.viewer.edge.VisualGraphPathHighlighter;
+import ghidra.program.model.symbol.RefType;
+import util.CollectionUtils;
 
 public class FunctionGraphGroupVertices2Test extends AbstractFunctionGraphTest {
 
@@ -407,8 +408,105 @@ public class FunctionGraphGroupVertices2Test extends AbstractFunctionGraphTest {
 		assertInGroup(v2, v3, v4);
 	}
 
+	@Test
+	public void testFindForwardScopedFlowWhenGroupRemovesSourceNode() {
+
+		//
+		// Test the case that grouping the entry node will create a group that has incoming 
+		// edges.  In this case, there is no source node in the graph.  This will cause an 
+		// exception if the code does not create a fake source node before passing the graph
+		// the the algorithm for calculating dominance.
+		//
+
+		create12345GraphWithTransaction();
+
+		FGVertex entry = vertex("100415a");
+		FGVertex v2 = vertex("1004178");
+		FGVertex v3 = vertex("1004192");
+
+		FunctionGraph graph = getFunctionGraph();
+		FGEdgeImpl edge = new FGEdgeImpl(v3, v2, RefType.UNCONDITIONAL_JUMP, graph.getOptions());
+		graph.addEdge(edge);
+
+		FGComponent graphComponent = getGraphComponent();
+		VisualGraphPathHighlighter<FGVertex, FGEdge> pathHighlighter =
+			graphComponent.getPathHighlighter();
+		pathHighlighter.setHoveredVertex(entry);
+		waitForPathHighligter();
+
+		Collection<FGEdge> edges = graph.getEdges();
+		assertHovered(edges);
+
+		pathHighlighter.setHoveredVertex(null);
+		assertHovered(Collections.emptySet());
+
+		GroupedFunctionGraphVertex group = group("Entry in Group", entry, v2);
+
+		pathHighlighter.setHoveredVertex(group);
+		waitForPathHighligter();
+		assertHovered(edges);
+	}
+
+	@Test
+	public void testFindForwardScopedFlow_WithoutGroup_IncomingEdgeToRoot() {
+
+		//
+		// Test the case that an ungrouped graph does not throw an exception if the root node
+		// is hovered when it has incoming edges.
+		//
+
+		create12345GraphWithTransaction();
+
+		FGVertex entry = vertex("100415a");
+		FGVertex v2 = vertex("1004178");
+
+		FunctionGraph graph = getFunctionGraph();
+		FGEdgeImpl edge = new FGEdgeImpl(v2, entry, RefType.UNCONDITIONAL_JUMP, graph.getOptions());
+		graph.addEdge(edge);
+
+		FGComponent graphComponent = getGraphComponent();
+		VisualGraphPathHighlighter<FGVertex, FGEdge> pathHighlighter =
+			graphComponent.getPathHighlighter();
+		pathHighlighter.setHoveredVertex(entry);
+		waitForPathHighligter();
+
+		Collection<FGEdge> edges = graph.getEdges();
+		assertHovered(edges);
+
+		pathHighlighter.setHoveredVertex(null);
+		assertHovered(Collections.emptySet());
+	}
+
 //==================================================================================================
 // Private Methods
 //==================================================================================================
+
+	private void assertHovered(Collection<FGEdge> edges) {
+
+		FunctionGraph graph = getFunctionGraph();
+		Set<FGEdge> nonHoveredEdges = new HashSet<>(graph.getEdges());
+		Set<FGEdge> expectedEdges = CollectionUtils.asSet(edges);
+		nonHoveredEdges.removeAll(expectedEdges);
+
+		for (FGEdge e : expectedEdges) {
+			boolean isHovered = swing(() -> e.isInHoveredVertexPath());
+			assertTrue("Edge was not hovered: " + e, isHovered);
+		}
+
+		for (FGEdge e : nonHoveredEdges) {
+			boolean isHovered = swing(() -> e.isInHoveredVertexPath());
+			assertFalse("Edge hovered when it should not have been: " + e, isHovered);
+		}
+	}
+
+	private void waitForPathHighligter() {
+		waitForSwing();
+		FGComponent graphComponent = getGraphComponent();
+		VisualGraphPathHighlighter<FGVertex, FGEdge> highlighter =
+			graphComponent.getPathHighlighter();
+		waitForCondition(() -> !highlighter.isBusy(), "Timed-out waiting for Path Highlighter");
+		// waitForAnimation(); don't need to do this, as the edges are hovered while animating
+		waitForSwing();
+	}
 
 }

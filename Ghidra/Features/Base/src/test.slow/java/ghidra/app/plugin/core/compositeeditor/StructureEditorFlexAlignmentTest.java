@@ -72,6 +72,8 @@ public class StructureEditorFlexAlignmentTest extends AbstractStructureEditorTes
 		addDataType(CharDataType.dataType);
 		addFlexDataType(DWordDataType.dataType, null, null);
 
+		waitForSwing();
+
 		assertEquals(2, structureModel.getNumComponents());
 		assertEquals(4, structureModel.getRowCount());
 		checkRow(0, 0, 1, "db", ByteDataType.dataType, "", "");
@@ -101,6 +103,8 @@ public class StructureEditorFlexAlignmentTest extends AbstractStructureEditorTes
 		addDataType(CharDataType.dataType);
 		addFlexDataType(DWordDataType.dataType, null, null);
 
+		waitForSwing();
+
 		pressButtonByName(getPanel(), "Internally Aligned");
 		pressButtonByName(getPanel(), "Machine Minimum Alignment");
 
@@ -123,6 +127,8 @@ public class StructureEditorFlexAlignmentTest extends AbstractStructureEditorTes
 		addDataType(ByteDataType.dataType);
 		addDataType(CharDataType.dataType);
 		addFlexDataType(DWordDataType.dataType, null, null);
+
+		waitForSwing();
 
 		pressButtonByName(editorPanel, "Internally Aligned");
 		JTextField minAlignField =

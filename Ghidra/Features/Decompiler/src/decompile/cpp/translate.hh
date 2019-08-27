@@ -212,6 +212,8 @@ struct JoinRecordCompare {
 class AddrSpaceManager {
   vector<AddrSpace *> baselist; ///< Every space we know about for this architecture
   vector<AddressResolver *> resolvelist; ///< Special constant resolvers
+  map<string,AddrSpace *> name2Space;	///< Map from name -> space
+  map<int4,AddrSpace *> shortcut2Space;	///< Map from shortcut -> space
   AddrSpace *constantspace;	///< Quick reference to constant space
   AddrSpace *defaultspace;	///< Generally primary RAM, where assembly pointers point to
   AddrSpace *iopspace;		///< Space for internal pcode op pointers
@@ -227,6 +229,7 @@ protected:
   void restoreXmlSpaces(const Element *el,const Translate *trans); ///< Restore address spaces in the model from an XML tag
   void setDefaultSpace(int4 index); ///< Set the default address space
   void setReverseJustified(AddrSpace *spc); ///< Set reverse justified property on this space
+  void assignShortcut(AddrSpace *spc);	///< Select a shortcut character for a new space
   void insertSpace(AddrSpace *spc); ///< Add a new address space to the model
   void copySpaces(const AddrSpaceManager *op2);	///< Copy spaces from another manager
   void addSpacebasePointer(SpacebaseSpace *basespace,const VarnodeData &ptrdata,int4 truncSize,bool stackGrowth); ///< Set the base register of a spacebase space
@@ -234,7 +237,6 @@ protected:
 public:
   AddrSpaceManager(void);	///< Construct an empty address space manager
   virtual ~AddrSpaceManager(void); ///< Destroy the manager
-  char assignShortcut(spacetype tp) const; ///< Select a shortcut character for a new space
   int4 getDefaultSize(void) const; ///< Get size of addresses for the default space
   AddrSpace *getSpaceByName(const string &nm) const; ///< Get address space by name
   AddrSpace *getSpaceByShortcut(char sc) const;	///< Get address space from its shortcut
@@ -253,7 +255,7 @@ public:
   AddrSpace *getNextSpaceInOrder(AddrSpace *spc) const; ///< Get the next \e contiguous address space
   JoinRecord *findAddJoin(const vector<VarnodeData> &pieces,uint4 logicalsize); ///< Get (or create) JoinRecord for \e pieces
   JoinRecord *findJoin(uintb offset) const; ///< Find JoinRecord for \e offset in the join space
-  void setDeadcodeDelay(int4 spcnum,int4 delaydelta); ///< Set the deadcodedelay for a specific space
+  void setDeadcodeDelay(AddrSpace *spc,int4 delaydelta); ///< Set the deadcodedelay for a specific space
   void truncateSpace(const TruncationTag &tag);	///< Mark a space as truncated from its original size
 
   /// \brief Build a logically lower precision storage location for a bigger floating point register

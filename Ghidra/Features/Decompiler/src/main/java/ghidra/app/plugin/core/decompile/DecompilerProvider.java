@@ -44,8 +44,8 @@ import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.*;
-import ghidra.program.util.ProgramLocation;
-import ghidra.program.util.ProgramSelection;
+import ghidra.program.model.mem.MemoryBlock;
+import ghidra.program.util.*;
 import ghidra.util.HelpLocation;
 import ghidra.util.Swing;
 import ghidra.util.bean.field.AnnotatedTextFieldElement;
@@ -104,7 +104,7 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 
 	private ViewerPosition pendingViewerPosition;
 
-	private SwingUpdateManager swingUpdateManager;
+	private SwingUpdateManager redecompilerUpdater;
 	private ServiceListener serviceListener = new ServiceListener() {
 
 		@Override
@@ -156,7 +156,7 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 		setHelpLocation(new HelpLocation(plugin.getName(), "Decompiler"));
 		addToTool();
 
-		swingUpdateManager = new SwingUpdateManager(500, 5000, () -> doRefresh());
+		redecompilerUpdater = new SwingUpdateManager(500, 5000, () -> doRefresh());
 
 		plugin.getTool().addServiceListener(serviceListener);
 	}
@@ -282,7 +282,14 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 		if (!isVisible()) {
 			return;
 		}
-		swingUpdateManager.update();
+
+		if (ev.containsEvent(ChangeManager.DOCR_MEMORY_BLOCK_ADDED) ||
+			ev.containsEvent(ChangeManager.DOCR_MEMORY_BLOCK_REMOVED)) {
+			controller.resetDecompiler();
+		}
+
+		redecompilerUpdater.update();
+
 	}
 
 	private void doRefresh() {
@@ -326,7 +333,7 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 	public void dispose() {
 		super.dispose();
 
-		swingUpdateManager.dispose();
+		redecompilerUpdater.dispose();
 
 		if (clipboardService != null) {
 			clipboardService.deRegisterClipboardContentProvider(clipboardProvider);

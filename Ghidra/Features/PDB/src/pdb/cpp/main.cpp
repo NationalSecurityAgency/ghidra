@@ -17,6 +17,7 @@
 #include "pdb.h"
 #include "iterate.h"
 #include <signal.h>
+#include <memory>
 
 void segvHandler(int /*sig*/) {
 	exit(1);	// Just die - prevents OS from popping-up a dialog

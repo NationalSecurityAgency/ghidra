@@ -107,7 +107,7 @@ public class SetLabelPrimaryCmd implements Command {
 				errorMsg = "InvalidInputException: " + e.getMessage();
 			}
 			catch (CircularDependencyException e) {
-				errorMsg = "CuicularDependencyException: " + e.getMessage();
+				errorMsg = "CircularDependencyException: " + e.getMessage();
 			}
 			return false;
 		}

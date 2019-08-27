@@ -28,6 +28,7 @@ import org.junit.*;
 
 import docking.action.DockingActionIf;
 import docking.tool.ToolConstants;
+import docking.util.image.ToolIconURL;
 import docking.widgets.OptionDialog;
 import docking.widgets.filechooser.GhidraFileChooser;
 import generic.test.AbstractGTest;
@@ -46,7 +47,6 @@ import ghidra.framework.model.ToolTemplate;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.util.PluginException;
 import ghidra.framework.preferences.Preferences;
-import ghidra.framework.project.tool.ToolIconURL;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.test.TestEnv;
 import ghidra.util.exception.AssertException;

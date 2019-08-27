@@ -895,6 +895,7 @@ void IfcPrintSpaces::execute(istream &s)
   int4 num = manage->numSpaces();
   for(int4 i=0;i<num;++i) {
     AddrSpace *spc = manage->getSpace(i);
+    if (spc == (AddrSpace *)0) continue;
     *status->fileoptr << dec << spc->getIndex() << " : '" << spc->getShortcut() << "' " << spc->getName();
     if (spc->getType() == IPTR_CONSTANT)
       *status->fileoptr << " constant ";
@@ -1468,7 +1469,7 @@ void IfcDeadcodedelay::execute(istream &s)
     *status->optr << "Successfully overrided deadcode delay for single function" << endl;
   }
   else {
-    dcp->conf->setDeadcodeDelay(spc->getIndex(),delay);
+    dcp->conf->setDeadcodeDelay(spc,delay);
     *status->optr << "Successfully overrided deadcode delay for all functions" << endl;
   }
 }
