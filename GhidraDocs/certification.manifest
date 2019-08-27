@@ -39,6 +39,7 @@ GhidraClass/ExerciseFiles/Advanced/override.so||GHIDRA||||END|
 GhidraClass/ExerciseFiles/Advanced/setRegister||GHIDRA||||END|
 GhidraClass/ExerciseFiles/Advanced/sharedReturn||GHIDRA||||END|
 GhidraClass/ExerciseFiles/Advanced/switch||GHIDRA||||END|
+GhidraClass/ExerciseFiles/Advanced/write||GHIDRA||||END|
 GhidraClass/ExerciseFiles/Emulation/Source/README.txt||GHIDRA||||END|
 GhidraClass/ExerciseFiles/VersionTracking/WallaceSrc.exe||GHIDRA||||END|
 GhidraClass/ExerciseFiles/VersionTracking/WallaceVersion2.exe||GHIDRA||||END|

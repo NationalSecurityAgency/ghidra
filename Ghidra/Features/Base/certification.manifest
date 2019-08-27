@@ -72,6 +72,8 @@ data/typeinfo/win32/msvcrt/iids.txt||GHIDRA||reviewed||END|
 data/typeinfo/win32/msvcrt/syntaxes.txt||GHIDRA||||END|
 data/typeinfo/win32/windows_vs12_32.gdt||GHIDRA||||END|
 data/typeinfo/win32/windows_vs12_64.gdt||GHIDRA||||END|
+data/x64_linux_syscall_numbers||GHIDRA||||END|
+data/x86_linux_syscall_numbers||GHIDRA||||END|
 ghidra_scripts/AskScript.properties||GHIDRA||||END|
 ghidra_scripts/RecursiveStringFinder.py||GHIDRA||||END|
 ghidra_scripts/mark_in_out.py||GHIDRA||reviewed||END|
