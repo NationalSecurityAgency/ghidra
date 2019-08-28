@@ -15,16 +15,24 @@
  */
 package ghidra.app.tablechooser;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.junit.*;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
-import docking.test.AbstractDockingTest;
 import ghidra.app.nav.Navigatable;
 import ghidra.framework.plugintool.DummyPluginTool;
 import ghidra.program.model.address.Address;
@@ -34,7 +42,7 @@ import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.test.ToyProgramBuilder;
 import util.CollectionUtils;
 
-public class TableChooserDialogTest extends AbstractDockingTest {
+public class TableChooserDialogTest extends AbstractGhidraHeadedIntegrationTest {
 
 	private static final String OK_BUTTON_TEXT = "Do Work";
 	private static final TestExecutorDecision DEFAULT_DECISION = r -> true;
