@@ -102,9 +102,8 @@ public class MenuManager implements ManagedMenuItem {
 		checkForSwingThread();
 		resetMenus();
 		MenuData menuData = usePopupPath ? action.getPopupMenuData() : action.getMenuBarData();
-		String[] actionMenuPath = menuData.getMenuPath();
-		if (actionMenuPath.length > level + 1) {
-			MenuManager mgr = getMenuManager(menuData);
+		if (isSubMenu(menuData)) {
+			MenuManager mgr = getSubMenu(menuData);
 			mgr.addAction(action);
 		}
 		else {
@@ -112,47 +111,68 @@ public class MenuManager implements ManagedMenuItem {
 		}
 	}
 
-	private MenuManager getMenuManager(MenuData menuData) {
-
+	private boolean isSubMenu(MenuData menuData) {
 		String[] actionMenuPath = menuData.getMenuPath();
-		String parentMenuName = actionMenuPath[level];
-		String cleanParentMenuName = stripMnemonicAmp(parentMenuName);
-		MenuManager manager = subMenus.get(cleanParentMenuName);
-		if (manager != null) {
-			return manager;
-		}
-
-		int nextLevel = level + 1;
-		String[] parentPath = new String[nextLevel];
-		System.arraycopy(actionMenuPath, 0, parentPath, 0, nextLevel);
-
-		String parentMenuGroup = getParentMenuGroup(menuData, parentMenuName, parentPath);
-		char mnemonic = getMnemonicKey(parentMenuName);
-		manager = new MenuManager(cleanParentMenuName, parentPath, mnemonic, nextLevel,
-			parentMenuGroup, usePopupPath, menuHandler, menuGroupMap);
-		subMenus.put(cleanParentMenuName, manager);
-		managedMenuItems.add(manager);
-
-		return manager;
+		return actionMenuPath.length > level + 1;
 	}
 
-	private String getParentMenuGroup(MenuData menuData, String parentMenuName,
-			String[] parentPath) {
+	private MenuManager getSubMenu(MenuData menuData) {
 
-		// prefer the actual menu data
-		String parentMenuGroup = menuData.getParentMenuGroup();
-		if (parentMenuGroup != null) {
-			return parentMenuGroup;
+		String[] fullPath = menuData.getMenuPath();
+		String displayName = fullPath[level];
+		char mnemonic = getMnemonicKey(displayName);
+		String realName = stripMnemonicAmp(displayName);
+		MenuManager subMenu = subMenus.get(realName);
+		if (subMenu != null) {
+			return subMenu;
+		}
+
+		int subMenuLevel = level + 1;
+		String[] subMenuPath = new String[subMenuLevel];
+		System.arraycopy(fullPath, 0, subMenuPath, 0, subMenuLevel);
+
+		String subMenuGroup = getSubMenuGroup(menuData, realName, subMenuPath);
+		subMenu = new MenuManager(realName, subMenuPath, mnemonic, subMenuLevel, subMenuGroup,
+			usePopupPath, menuHandler, menuGroupMap);
+		subMenus.put(realName, subMenu);
+		managedMenuItems.add(subMenu);
+
+		return subMenu;
+	}
+
+	private String getSubMenuGroup(MenuData menuData, String menuName, String[] subMenuPath) {
+
+		// prefer the group defined in the menu data, if any
+		String pullRightGroup = getPullRightMenuGroup(menuData);
+		if (pullRightGroup != null) {
+			return pullRightGroup;
 		}
 
 		// check the global registry
-		parentMenuGroup = menuGroupMap.getMenuGroup(parentPath);
-		if (parentMenuGroup != null) {
-			return parentMenuGroup;
+		pullRightGroup = menuGroupMap.getMenuGroup(subMenuPath);
+		if (pullRightGroup != null) {
+			return pullRightGroup;
 		}
 
 		// default to the menu name
-		return parentMenuName;
+		return menuName;
+	}
+
+	private String getPullRightMenuGroup(MenuData menuData) {
+
+		// note: currently, the client can specify the group for the pull-right menu only for
+		//       the immediate parent of the menu item.  We can change this later if we find
+		//       we have a need for a multi-level cascaded menu that needs to specify groups for
+		//       each pull-right in the menu path
+
+		String[] actionMenuPath = menuData.getMenuPath();
+		int leafLevel = actionMenuPath.length - 1;
+		boolean isParentOfLeaf = level == (leafLevel - 1);
+		if (!isParentOfLeaf) {
+			return null;
+		}
+
+		return menuData.getParentMenuGroup();
 	}
 
 	public DockingActionIf getAction(String actionName) {

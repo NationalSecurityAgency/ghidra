@@ -62,6 +62,10 @@ public class FindReferencesToField extends CompositeEditorTableAction {
 
 	private String getFieldName() {
 		int[] rows = model.getSelectedComponentRows();
+		if (rows.length == 0) {
+			return null;
+		}
+
 		int row = rows[0];
 		DataTypeComponent dtComponet = model.getComponent(row);
 		String fieldName = dtComponet.getFieldName();
