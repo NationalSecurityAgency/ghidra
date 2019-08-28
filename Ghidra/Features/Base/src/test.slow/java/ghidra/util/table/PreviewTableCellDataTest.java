@@ -26,12 +26,29 @@ import ghidra.app.util.viewer.field.ArrayElementFieldLocation;
 import ghidra.app.util.viewer.field.BrowserCodeUnitFormat;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
-import ghidra.program.model.data.*;
-import ghidra.program.model.listing.*;
-import ghidra.program.util.*;
+import ghidra.program.model.data.ArrayDataType;
+import ghidra.program.model.data.CharDataType;
+import ghidra.program.model.data.Integer16DataType;
+import ghidra.program.model.data.StringDataType;
+import ghidra.program.model.data.StructureDataType;
+import ghidra.program.model.data.TerminatedStringDataType;
+import ghidra.program.model.data.UnicodeDataType;
+import ghidra.program.model.listing.CodeUnitFormat;
+import ghidra.program.model.listing.Function;
+import ghidra.program.model.listing.Program;
+import ghidra.program.model.listing.Variable;
+import ghidra.program.util.AddressFieldLocation;
+import ghidra.program.util.BytesFieldLocation;
+import ghidra.program.util.FunctionNameFieldLocation;
+import ghidra.program.util.LabelFieldLocation;
+import ghidra.program.util.MnemonicFieldLocation;
+import ghidra.program.util.OperandFieldLocation;
+import ghidra.program.util.ProgramLocation;
+import ghidra.program.util.RepeatableCommentFieldLocation;
+import ghidra.program.util.VariableNameFieldLocation;
+import ghidra.program.util.XRefFieldLocation;
 import ghidra.test.AbstractProgramBasedTest;
 import ghidra.test.ClassicSampleX86ProgramBuilder;
-import ghidra.util.table.PreviewTableCellData;
 
 public class PreviewTableCellDataTest extends AbstractProgramBasedTest {
 

@@ -24,7 +24,9 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import docking.test.AbstractDockingTest;
+import ghidra.test.AbstractGhidraHeadedIntegrationTest;
+import ghidra.util.BigEndianDataConverter;
+import ghidra.util.DataConverter;
 
 /**
  * 
@@ -34,7 +36,7 @@ import docking.test.AbstractDockingTest;
  * To enable and disable the creation of type comments go to
  * Window>Preferences>Java>Code Generation.
  */
-public class BigEndianConverterTest extends AbstractDockingTest {
+public class BigEndianConverterTest extends AbstractGhidraHeadedIntegrationTest {
 	private byte[] b;
 	private DataConverter dc;
 

@@ -22,13 +22,13 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import docking.test.AbstractDockingTest;
 import generic.test.AbstractGenericTest;
+import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 import utilities.util.FileUtilities;
 
-public class FileSystemServiceTest extends AbstractDockingTest {
+public class FileSystemServiceTest extends AbstractGhidraHeadedIntegrationTest {
 
 	private File fssTestDir;
 	private FileSystemService fsService;
