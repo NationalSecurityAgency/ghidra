@@ -19,10 +19,10 @@ import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
 
+import docking.test.AbstractDockingTest;
 import generic.util.UnsignedDataUtils;
-import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 
-public class UnsignedDataUtilsTest extends AbstractGhidraHeadedIntegrationTest {
+public class UnsignedDataUtilsTest extends AbstractDockingTest {
 
 	@Test
 	public void testByteGreaterThan() {

@@ -22,6 +22,7 @@ import java.util.Arrays;
 
 import org.junit.*;
 
+import docking.test.AbstractDockingTest;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 
 /**
@@ -32,7 +33,7 @@ import ghidra.test.AbstractGhidraHeadedIntegrationTest;
  * To enable and disable the creation of type comments go to
  * Window>Preferences>Java>Code Generation.
  */
-public class LittleEndianConverterTest extends AbstractGhidraHeadedIntegrationTest {
+public class LittleEndianConverterTest extends AbstractDockingTest {
 	private byte[] b;
 	private DataConverter dc;
 

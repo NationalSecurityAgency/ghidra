@@ -31,6 +31,7 @@ import ghidra.program.model.listing.*;
 import ghidra.program.util.*;
 import ghidra.test.AbstractProgramBasedTest;
 import ghidra.test.ClassicSampleX86ProgramBuilder;
+import ghidra.util.table.PreviewTableCellData;
 
 public class PreviewTableCellDataTest extends AbstractProgramBasedTest {
 

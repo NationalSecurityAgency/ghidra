@@ -18,15 +18,17 @@ package ghidra.formats.gfilesystem;
 import java.io.File;
 import java.io.IOException;
 
-import org.junit.*;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
+import docking.test.AbstractDockingTest;
 import generic.test.AbstractGenericTest;
-import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 import utilities.util.FileUtilities;
 
-public class FileSystemServiceTest extends AbstractGhidraHeadedIntegrationTest {
+public class FileSystemServiceTest extends AbstractDockingTest {
 
 	private File fssTestDir;
 	private FileSystemService fsService;

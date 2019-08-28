@@ -24,6 +24,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.*;
 
+import docking.test.AbstractDockingTest;
 import ghidra.app.nav.Navigatable;
 import ghidra.framework.plugintool.DummyPluginTool;
 import ghidra.program.model.address.Address;
@@ -33,7 +34,7 @@ import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.test.ToyProgramBuilder;
 import util.CollectionUtils;
 
-public class TableChooserDialogTest extends AbstractGhidraHeadedIntegrationTest {
+public class TableChooserDialogTest extends AbstractDockingTest {
 
 	private static final String OK_BUTTON_TEXT = "Do Work";
 	private static final TestExecutorDecision DEFAULT_DECISION = r -> true;

@@ -20,9 +20,11 @@ import static org.junit.Assert.assertEquals;
 import java.math.BigInteger;
 import java.util.Arrays;
 
-import org.junit.*;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
-import ghidra.test.AbstractGhidraHeadedIntegrationTest;
+import docking.test.AbstractDockingTest;
 
 /**
  * 
@@ -32,7 +34,7 @@ import ghidra.test.AbstractGhidraHeadedIntegrationTest;
  * To enable and disable the creation of type comments go to
  * Window>Preferences>Java>Code Generation.
  */
-public class BigEndianConverterTest extends AbstractGhidraHeadedIntegrationTest {
+public class BigEndianConverterTest extends AbstractDockingTest {
 	private byte[] b;
 	private DataConverter dc;
 
