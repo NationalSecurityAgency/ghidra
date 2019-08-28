@@ -27,7 +27,7 @@ import ghidra.program.model.data.CycleGroup;
  */
 public class CycleGroupAction extends CompositeEditorTableAction {
 
-	private final static String GROUP_NAME = CYCLE_ACTION_GROUP;
+	private final static String GROUP_NAME = DATA_ACTION_GROUP;
 	private CycleGroup cycleGroup;
 
 	public CycleGroupAction(CompositeEditorProvider provider, CycleGroup cycleGroup) {
@@ -35,7 +35,7 @@ public class CycleGroupAction extends CompositeEditorTableAction {
 			new String[] { "Cycle", cycleGroup.getName() },
 			new String[] { "Cycle", cycleGroup.getName() }, null, KeyBindingType.SHARED);
 		this.cycleGroup = cycleGroup;
-
+		getPopupMenuData().setParentMenuGroup(GROUP_NAME);
 		initKeyStroke(cycleGroup.getDefaultKeyStroke());
 	}
 

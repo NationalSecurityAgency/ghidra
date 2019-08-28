@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,10 +17,14 @@ package ghidra.app.plugin.core.decompile;
 
 import ghidra.app.context.NavigatableActionContext;
 import ghidra.app.context.RestrictedAddressSetContext;
+import ghidra.app.decompiler.ClangToken;
+import ghidra.app.decompiler.component.DecompilerPanel;
+import ghidra.app.decompiler.component.DecompilerUtils;
 import ghidra.program.model.address.Address;
+import ghidra.program.util.ProgramLocation;
 
-public class DecompilerActionContext extends NavigatableActionContext implements
-		RestrictedAddressSetContext {
+public class DecompilerActionContext extends NavigatableActionContext
+		implements RestrictedAddressSetContext {
 	private final Address functionEntryPoint;
 	private final boolean isDecompiling;
 
@@ -40,4 +43,34 @@ public class DecompilerActionContext extends NavigatableActionContext implements
 		return isDecompiling;
 	}
 
+	@Override
+	public DecompilerProvider getComponentProvider() {
+		return (DecompilerProvider) super.getComponentProvider();
+	}
+
+	public DecompilerPanel getDecompilerPanel() {
+		return getComponentProvider().getDecompilerPanel();
+	}
+
+	@Override
+	public ProgramLocation getLocation() {
+
+		// prefer the selection over the current location
+		DecompilerPanel decompilerPanel = getDecompilerPanel();
+		ClangToken token = decompilerPanel.getSelectedToken();
+		if (token == null) {
+			token = decompilerPanel.getTokenAtCursor();
+		}
+
+		if (token == null) {
+			return null;
+		}
+
+		Address address = DecompilerUtils.getClosestAddress(program, token);
+		if (address == null) {
+			return null;
+		}
+
+		return new ProgramLocation(program, address);
+	}
 }

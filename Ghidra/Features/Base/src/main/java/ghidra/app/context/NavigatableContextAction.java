@@ -19,11 +19,16 @@ import java.util.Set;
 
 import docking.ActionContext;
 import docking.action.DockingAction;
+import docking.action.KeyBindingType;
 
 public abstract class NavigatableContextAction extends DockingAction {
 
 	public NavigatableContextAction(String name, String owner) {
 		super(name, owner);
+	}
+
+	public NavigatableContextAction(String name, String owner, KeyBindingType type) {
+		super(name, owner, type);
 	}
 
 	@Override

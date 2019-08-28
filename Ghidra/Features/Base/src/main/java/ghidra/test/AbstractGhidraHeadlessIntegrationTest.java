@@ -15,7 +15,7 @@
  */
 package ghidra.test;
 
-import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -32,6 +32,7 @@ import ghidra.framework.cmd.Command;
 import ghidra.framework.model.UndoableDomainObject;
 import ghidra.framework.plugintool.Plugin;
 import ghidra.framework.plugintool.PluginTool;
+import ghidra.framework.plugintool.mgr.ServiceManager;
 import ghidra.program.database.ProgramBuilder;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.model.address.*;
@@ -525,26 +526,33 @@ public abstract class AbstractGhidraHeadlessIntegrationTest extends AbstractDock
 
 	/**
 	 * Replaces the given implementations of the provided service class with the given class.
-	 *
+	 * 
+	 * @param tool the tool whose services to update (optional)
 	 * @param service the service to override
 	 * @param replacement the new version of the service
+	 * @param <T> the service type
 	 */
 	@SuppressWarnings("unchecked")
-	public static <T> void replaceService(Class<? extends T> service,
-			Class<? extends T> replacement) {
+	public static <T> void replaceService(PluginTool tool, Class<? extends T> service,
+			T replacement) {
+
+		ServiceManager serviceManager = (ServiceManager) getInstanceField("serviceMgr", tool);
 
 		Set<Class<?>> extentions =
 			(Set<Class<?>>) getInstanceField("extensionPoints", ClassSearcher.class);
-		HashSet<Class<?>> set = new HashSet<>(extentions);
+		Set<Class<?>> set = new HashSet<>(extentions);
 		Iterator<Class<?>> iterator = set.iterator();
 		while (iterator.hasNext()) {
 			Class<?> c = iterator.next();
 			if (service.isAssignableFrom(c)) {
 				iterator.remove();
+				T instance = tool.getService(service);
+				serviceManager.removeService(service, instance);
 			}
 		}
 
-		set.add(replacement);
+		set.add(replacement.getClass());
+		serviceManager.addService(service, replacement);
 
 		Set<Class<?>> newExtensionPoints = new HashSet<>(set);
 		setInstanceField("extensionPoints", ClassSearcher.class, newExtensionPoints);
