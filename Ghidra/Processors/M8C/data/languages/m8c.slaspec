@@ -32,8 +32,6 @@ define context contextreg
 	regbank=(0,0)
 ;
 
-@define BANK "regbank"
-
 ################################################################
 # Tokens
 ################################################################
@@ -75,8 +73,6 @@ define token relinstr (16)
 define pcodeop halt;
 define pcodeop nop;
 define pcodeop syscall;
-define pcodeop setSP;
-
 
 macro push8(val)
 {
@@ -147,11 +143,10 @@ XAddr8:    [X+simm8] is X & simm8 & sign=0  { ptr:1 = X + simm8; export *[RAM]:1
 XAddr8:    [X+simm8] is X & simm8 & sign=1  { ptr:1 = X - ~simm8; export *[RAM]:1 ptr; }
 Addr8Incr: [Addr8]"++" is Addr8      { export Addr8; }
 
-# TODO: NEED TO ADDRESS REGISTER BANK based on RSB
-#RAddr8:    addr8   is addr8  { export *[BANK0]:1 addr8; }     
 RAddr8:    addr8   is addr8 & regbank=0  { export *[BANK0]:1 addr8; }     
 RAddr8:    addr8   is addr8 & regbank=1  { export *[BANK1]:1 addr8; }     
-RXAddr8:   [X+simm8] is X & simm8  { ptr:1 = X + simm8; export *[BANK0]:1 ptr; }
+RXAddr8:   [X+simm8] is X & simm8 & regbank=0 { ptr:1 = X + simm8; export *[BANK0]:1 ptr; }
+RXAddr8:   [X+simm8] is X & simm8 & regbank=1 { ptr:1 = X + simm8; export *[BANK1]:1 ptr; }
 
 Imm8:		    "#"imm8  is imm8       { export *[const]:1 imm8; }
 
@@ -305,8 +300,6 @@ IndexAddr:      indexaddr is srel12 [ indexaddr = inst_start + 2 + srel12;] { ex
 	zeroflag(tmp);
 }
 
-# THESE TWO NEED TO ADDRESS REGISTER SPACE
-
 :AND RAddr8, Imm8 is op8=0x41; RAddr8; Imm8 
 {
 	tmp:1 = RAddr8 & Imm8;
@@ -322,7 +315,7 @@ IndexAddr:      indexaddr is srel12 [ indexaddr = inst_start + 2 + srel12;] { ex
 }
 
 :AND F, imm8 is op8=0x70 & F; imm8 & rsb
-	[ regbank = rsb; globalset(inst_next, regbank); ]
+	[ regbank = regbank & rsb; globalset(inst_next, regbank); ]
 {
 	F = F & imm8;
 }
@@ -443,12 +436,12 @@ IndexAddr:      indexaddr is srel12 [ indexaddr = inst_start + 2 + srel12;] { ex
 	A = *[CODE]:1 ptr;
 }
 
-#:JACC RelAddr	is op4=0xE & RelAddr
-#{
-#	tmp:2 = sext(A);
-#	target:2 = RelAddr + sext(A);
-#	goto [target];
-#}
+:JACC RelAddr	is op4=0xE & RelAddr
+{
+	tmp:2 = sext(A);
+	target:2 = RelAddr + sext(A);
+	goto [target];
+}
 
 :JC RelAddr		is op4=0xC & RelAddr
 {
@@ -462,17 +455,17 @@ IndexAddr:      indexaddr is srel12 [ indexaddr = inst_start + 2 + srel12;] { ex
 
 :JNC RelAddr	is op4=0xD & RelAddr
 {
-	if ($(C) == 0:1) goto RelAddr;
+	if ($(C) == 0) goto RelAddr;
 }
 
 :JNZ RelAddr 	is op4=0xB & RelAddr
 {
-	if ($(Z) == 0:1) goto RelAddr;
+	if ($(Z) == 0) goto RelAddr;
 }
 
 :JZ RelAddr		is op4=0xA & RelAddr
 {
-	if ($(Z) == 1:1) goto RelAddr;
+	if ($(Z) == 1) goto RelAddr;
 }
 
 :LCALL Addr16	is op8=0x7C; Addr16
@@ -664,8 +657,6 @@ IndexAddr:      indexaddr is srel12 [ indexaddr = inst_start + 2 + srel12;] { ex
 	XAddr8 = tmp;
 }
 
-# TODO: THESE TWO NEED TO ADDRESS REGISTER SPACE
-
 :OR RAddr8, Imm8 is op8=0x43; RAddr8; Imm8 
 {
 	tmp:1 = RAddr8 | Imm8;
@@ -681,7 +672,7 @@ IndexAddr:      indexaddr is srel12 [ indexaddr = inst_start + 2 + srel12;] { ex
 }
 
 :OR F, imm8 is op8=0x71 & F; imm8 & rsb
-	[ regbank = rsb; globalset(inst_next, regbank); ]
+	[ regbank = regbank | rsb; globalset(inst_next, regbank); ]
 {
 	F = F | imm8;
 }
@@ -887,10 +878,9 @@ IndexAddr:      indexaddr is srel12 [ indexaddr = inst_start + 2 + srel12;] { ex
 
 :SWAP A, SP	is op8=0x4E & A & SP
 {
-#	tmp:1 = A;
-#	A = SP;
-#	SP = tmp;
-    setSP(A);
+	tmp:1 = A;
+	A = SP;
+	SP = tmp;
 }
 
 :TST Addr8, Imm8 is op8=0x47; Addr8; Imm8
@@ -963,8 +953,6 @@ IndexAddr:      indexaddr is srel12 [ indexaddr = inst_start + 2 + srel12;] { ex
 	XAddr8 = tmp;
 }
 
-# TODO: THESE TWO NEED TO ADDRESS REGISTER SPACE
-
 :XOR RAddr8, Imm8 is op8=0x45; RAddr8; Imm8 
 {
 	tmp:1 = RAddr8 ^ Imm8;
@@ -979,7 +967,8 @@ IndexAddr:      indexaddr is srel12 [ indexaddr = inst_start + 2 + srel12;] { ex
 	RXAddr8 = tmp;
 }
 
-:XOR F, imm8 is op8=0x72 & F; imm8
+:XOR F, imm8 is op8=0x72 & F; imm8 & rsb
+	[ regbank = regbank ^ rsb; globalset(inst_next, regbank); ]
 {
 	tmp:1 = F ^ imm8;
 	resultflags(tmp);
