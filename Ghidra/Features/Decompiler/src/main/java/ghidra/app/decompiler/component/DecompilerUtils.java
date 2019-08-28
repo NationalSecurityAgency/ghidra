@@ -216,7 +216,7 @@ public class DecompilerUtils {
 	 * Returns the function represented by the given token.  This will be either the 
 	 * decompiled function or a function referenced within the decompiled function.
 	 * 
-	 * @param program the progam
+	 * @param program the program
 	 * @param token the token
 	 * @return the function
 	 */
@@ -336,7 +336,14 @@ public class DecompilerUtils {
 		return addressSet.intersects(minAddress, maxAddress);
 	}
 
-	public static Address getClosestAddress(ClangToken token) {
+	public static Address getClosestAddress(Program program, ClangToken token) {
+
+		if (token instanceof ClangFuncNameToken) {
+			// special case: we know that name tokens do not have addresses
+			Function function = getFunction(program, (ClangFuncNameToken) token);
+			return function.getEntryPoint();
+		}
+
 		Address address = token.getMinAddress();
 		if (address != null) {
 			return address;

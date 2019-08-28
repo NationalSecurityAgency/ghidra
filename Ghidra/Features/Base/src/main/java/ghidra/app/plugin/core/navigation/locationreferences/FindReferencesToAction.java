@@ -118,8 +118,9 @@ public class FindReferencesToAction extends ListingContextAction {
 			menuName += itemName;
 		}
 
-		setPopupMenuData(new MenuData(new String[] { "References", menuName }, null,
-			"ShowReferencesTo", MenuData.NO_MNEMONIC, Integer.toString(subGroupPosition)));
+		setPopupMenuData(
+			new MenuData(new String[] { LocationReferencesService.MENU_GROUP, menuName }, null,
+				"ShowReferencesTo", MenuData.NO_MNEMONIC, Integer.toString(subGroupPosition)));
 	}
 
 	private String getMenuPrefix(LocationDescriptor descriptor) {

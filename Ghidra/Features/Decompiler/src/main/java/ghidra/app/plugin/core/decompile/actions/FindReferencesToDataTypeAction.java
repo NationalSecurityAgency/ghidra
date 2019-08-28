@@ -21,6 +21,7 @@ import ghidra.app.actions.AbstractFindReferencesDataTypeAction;
 import ghidra.app.decompiler.*;
 import ghidra.app.decompiler.component.*;
 import ghidra.app.plugin.core.decompile.DecompilerActionContext;
+import ghidra.app.plugin.core.navigation.locationreferences.LocationReferencesService;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.pcode.HighVariable;
@@ -36,7 +37,8 @@ public class FindReferencesToDataTypeAction extends AbstractFindReferencesDataTy
 		super(tool, NAME, owner, DEFAULT_KEY_STROKE);
 		this.controller = controller;
 
-		setPopupMenuData(new MenuData(new String[] { "Find Uses of " }));
+		setPopupMenuData(
+			new MenuData(new String[] { LocationReferencesService.MENU_GROUP, "Find Uses of " }));
 	}
 
 	@Override
@@ -136,7 +138,7 @@ public class FindReferencesToDataTypeAction extends AbstractFindReferencesDataTy
 		}
 
 		MenuData data = getPopupMenuData().cloneData();
-		data.setMenuPath(new String[] { menuName });
+		data.setMenuPath(new String[] { LocationReferencesService.MENU_GROUP, menuName });
 		setPopupMenuData(data);
 	}
 }

@@ -704,7 +704,7 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 		if (token == null) {
 			return null;
 		}
-		Address address = DecompilerUtils.getClosestAddress(token);
+		Address address = DecompilerUtils.getClosestAddress(getProgram(), token);
 		if (address == null) {
 			address = DecompilerUtils.findAddressBefore(layoutMgr.getFields(), token);
 		}

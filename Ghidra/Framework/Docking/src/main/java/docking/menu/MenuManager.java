@@ -104,31 +104,55 @@ public class MenuManager implements ManagedMenuItem {
 		MenuData menuData = usePopupPath ? action.getPopupMenuData() : action.getMenuBarData();
 		String[] actionMenuPath = menuData.getMenuPath();
 		if (actionMenuPath.length > level + 1) {
-			String subMenuName = actionMenuPath[level];
-			String cleanSubMenuName = stripMnemonicAmp(subMenuName);
-			MenuManager mgr = subMenus.get(cleanSubMenuName);
-
-			if (mgr == null) {
-				char mnemonic = getMnemonicKey(subMenuName);
-
-				int submenuLevel = level + 1;
-				String[] submenuPath = new String[submenuLevel];
-				System.arraycopy(actionMenuPath, 0, submenuPath, 0, submenuLevel);
-				String submenuGroup = menuGroupMap.getMenuGroup(submenuPath);
-				if (submenuGroup == null) {
-					submenuGroup = subMenuName;
-				}
-
-				mgr = new MenuManager(cleanSubMenuName, submenuPath, mnemonic, submenuLevel,
-					submenuGroup, usePopupPath, menuHandler, menuGroupMap);
-				subMenus.put(cleanSubMenuName, mgr);
-				managedMenuItems.add(mgr);
-			}
+			MenuManager mgr = getMenuManager(menuData);
 			mgr.addAction(action);
 		}
 		else {
 			managedMenuItems.add(new MenuItemManager(menuHandler, action, usePopupPath));
 		}
+	}
+
+	private MenuManager getMenuManager(MenuData menuData) {
+
+		String[] actionMenuPath = menuData.getMenuPath();
+		String parentMenuName = actionMenuPath[level];
+		String cleanParentMenuName = stripMnemonicAmp(parentMenuName);
+		MenuManager manager = subMenus.get(cleanParentMenuName);
+		if (manager != null) {
+			return manager;
+		}
+
+		int nextLevel = level + 1;
+		String[] parentPath = new String[nextLevel];
+		System.arraycopy(actionMenuPath, 0, parentPath, 0, nextLevel);
+
+		String parentMenuGroup = getParentMenuGroup(menuData, parentMenuName, parentPath);
+		char mnemonic = getMnemonicKey(parentMenuName);
+		manager = new MenuManager(cleanParentMenuName, parentPath, mnemonic, nextLevel,
+			parentMenuGroup, usePopupPath, menuHandler, menuGroupMap);
+		subMenus.put(cleanParentMenuName, manager);
+		managedMenuItems.add(manager);
+
+		return manager;
+	}
+
+	private String getParentMenuGroup(MenuData menuData, String parentMenuName,
+			String[] parentPath) {
+
+		// prefer the actual menu data
+		String parentMenuGroup = menuData.getParentMenuGroup();
+		if (parentMenuGroup != null) {
+			return parentMenuGroup;
+		}
+
+		// check the global registry
+		parentMenuGroup = menuGroupMap.getMenuGroup(parentPath);
+		if (parentMenuGroup != null) {
+			return parentMenuGroup;
+		}
+
+		// default to the menu name
+		return parentMenuName;
 	}
 
 	public DockingActionIf getAction(String actionName) {
@@ -158,17 +182,18 @@ public class MenuManager implements ManagedMenuItem {
 	}
 
 	/***
-	 * Removes the Mnemonic indicator character (&) from the text.
-	 * @param str the text to strip.
+	 * Removes the Mnemonic indicator character (&) from the text
+	 * @param text the text to strip
+	 * @return the stripped mnemonic
 	 */
-	public static String stripMnemonicAmp(String str) {
-		int ampLoc = str.indexOf('&');
+	public static String stripMnemonicAmp(String text) {
+		int ampLoc = text.indexOf('&');
 		if (ampLoc < 0) {
-			return str;
+			return text;
 		}
-		String s = str.substring(0, ampLoc);
-		if (ampLoc < (str.length() - 1)) {
-			s += str.substring(++ampLoc);
+		String s = text.substring(0, ampLoc);
+		if (ampLoc < (text.length() - 1)) {
+			s += text.substring(++ampLoc);
 		}
 		return s;
 	}
@@ -182,7 +207,8 @@ public class MenuManager implements ManagedMenuItem {
 	}
 
 	/**
-	 * Returns a Menu hierarchy of all the actions.
+	 * Returns a Menu hierarchy of all the actions
+	 * @return the menu
 	 */
 	public JMenu getMenu() {
 		if (menu == null) {
@@ -236,9 +262,6 @@ public class MenuManager implements ManagedMenuItem {
 		return menuSubGroup;
 	}
 
-	/**
-	 * @see docking.menu.ManagedMenuItem#dispose()
-	 */
 	@Override
 	public void dispose() {
 		for (ManagedMenuItem item : managedMenuItems) {
@@ -249,7 +272,8 @@ public class MenuManager implements ManagedMenuItem {
 	}
 
 	/**
-	 * Returns a JPopupMenu for the action hierarchy.
+	 * Returns a JPopupMenu for the action hierarchy
+	 * @return the popup menu
 	 */
 	public JPopupMenu getPopupMenu() {
 		if (popupMenu == null) {
