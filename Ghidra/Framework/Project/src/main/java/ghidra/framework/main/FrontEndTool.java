@@ -64,7 +64,8 @@ import ghidra.framework.plugintool.Plugin;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.util.*;
 import ghidra.framework.preferences.Preferences;
-import ghidra.framework.project.tool.*;
+import ghidra.framework.project.tool.GhidraTool;
+import ghidra.framework.project.tool.GhidraToolTemplate;
 import ghidra.util.*;
 import ghidra.util.bean.GGlassPane;
 import ghidra.util.classfinder.ClassSearcher;
@@ -108,6 +109,7 @@ public class FrontEndTool extends PluginTool implements OptionsChangeListener {
 
 	private static final String FRONT_END_TOOL_XML_NAME = "FRONTEND";
 	private static final String FRONT_END_FILE_NAME = "FrontEndTool.xml";
+	private static final String CONFIGURE_GROUP = "Configure";
 
 	private WeakSet<ProjectListener> listeners;
 	private FrontEndPlugin plugin;
@@ -316,8 +318,9 @@ public class FrontEndTool extends PluginTool implements OptionsChangeListener {
 	}
 
 	/**
-	 * NOTE: do not call this from a non-Swing thread.
+	 * NOTE: do not call this from a non-Swing thread
 	 * 
+	 * @param tool the tool
 	 * @return true if the repository is null or is connected.
 	 */
 	boolean checkRepositoryConnected(PluginTool tool) {
@@ -511,6 +514,7 @@ public class FrontEndTool extends PluginTool implements OptionsChangeListener {
 	}
 
 	private void addManageExtensionsAction() {
+
 		DockingAction installExtensionsAction = new DockingAction("Extensions", "Project Window") {
 			@Override
 			public void actionPerformed(ActionContext context) {
@@ -524,8 +528,11 @@ public class FrontEndTool extends PluginTool implements OptionsChangeListener {
 				return isConfigurable();
 			}
 		};
-		installExtensionsAction.setMenuBarData(new MenuData(
-			new String[] { ToolConstants.MENU_FILE, "Install Extensions..." }, null, "Extensions"));
+		MenuData menuData =
+			new MenuData(new String[] { ToolConstants.MENU_FILE, "Install Extensions..." }, null,
+				CONFIGURE_GROUP);
+		menuData.setMenuSubGroup(CONFIGURE_GROUP + 2);
+		installExtensionsAction.setMenuBarData(menuData);
 
 		installExtensionsAction.setHelpLocation(
 			new HelpLocation(GenericHelpTopics.FRONT_END, "Extensions"));
@@ -548,8 +555,11 @@ public class FrontEndTool extends PluginTool implements OptionsChangeListener {
 				return isConfigurable();
 			}
 		};
-		configureToolAction.setMenuBarData(new MenuData(
-			new String[] { ToolConstants.MENU_FILE, "Configure..." }, null, "Configure"));
+
+		MenuData menuData = new MenuData(new String[] { ToolConstants.MENU_FILE, "Configure..." },
+			null, CONFIGURE_GROUP);
+		menuData.setMenuSubGroup(CONFIGURE_GROUP + 1);
+		configureToolAction.setMenuBarData(menuData);
 
 		configureToolAction.setHelpLocation(
 			new HelpLocation(GenericHelpTopics.FRONT_END, "Configure"));
@@ -685,7 +695,7 @@ public class FrontEndTool extends PluginTool implements OptionsChangeListener {
 	/**
 	 * Get the int value for the given string.
 	 * 
-	 * @param value
+	 * @param value the string value to parse
 	 * @param defaultValue return this value if a NumberFormatException is
 	 *            thrown during the parseInt() method
 	 */
