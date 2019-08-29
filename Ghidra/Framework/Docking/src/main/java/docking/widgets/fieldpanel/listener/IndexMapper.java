@@ -17,21 +17,16 @@ package docking.widgets.fieldpanel.listener;
 
 import java.math.BigInteger;
 
-public interface LayoutModelListener {
+import docking.widgets.fieldpanel.FieldPanel;
 
-	/**
-	 * Called whenever the number of indexes changed
-	 * @param indexMapper Maps indexes from before the model size change to indexes after
-	 * the model size changed.
-	 */
-	void modelSizeChanged(IndexMapper indexMapper);
+/**
+ * Interface for mapping indexes when the LayoutModel changes. In other words, if the mapping
+ * of layout indexes to some data model changes and you want the {@link FieldPanel} to continue
+ * to display the same model data on the screen, the IndexMapper can be used to convert old
+ * indexes to new indexes.
+ */
+public interface IndexMapper {
+	public IndexMapper IDENTITY_MAPPER = new IdentityMapper();
 
-	/**
-	 * Called when the data at an index or range of indexes changes.
-	 * @param start the starting index for the region of data changes.
-	 * @param end the ending index (inclusive) for the region of data changes.
-	 *
-	 */
-	void dataChanged(BigInteger start, BigInteger end);
-
+	public BigInteger map(BigInteger value);
 }

@@ -21,10 +21,12 @@ import java.math.BigInteger;
 import docking.widgets.fieldpanel.Layout;
 import docking.widgets.fieldpanel.LayoutModel;
 import docking.widgets.fieldpanel.field.Field;
+import docking.widgets.fieldpanel.listener.IndexMapper;
 import docking.widgets.fieldpanel.listener.LayoutModelListener;
 import docking.widgets.fieldpanel.support.*;
 import ghidra.app.util.viewer.field.*;
 import ghidra.app.util.viewer.format.FormatManager;
+import ghidra.app.util.viewer.util.AddressBasedIndexMapper;
 import ghidra.app.util.viewer.util.AddressIndexMap;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.Array;
@@ -190,7 +192,7 @@ public class ListingModelAdapter implements LayoutModel, ListingModelListener {
 	public void modelSizeChanged() {
 		preferredViewSize = null;
 		for (LayoutModelListener listener : listeners) {
-			listener.modelSizeChanged();
+			listener.modelSizeChanged(IndexMapper.IDENTITY_MAPPER);
 		}
 	}
 
@@ -446,11 +448,16 @@ public class ListingModelAdapter implements LayoutModel, ListingModelListener {
 	}
 
 	protected void resetIndexMap() {
+		AddressIndexMap previous = addressToIndexMap.clone();
 		BigInteger indexCount = addressToIndexMap.getIndexCount();
 		addressToIndexMap.reset();
 		removeUnviewableAddressRanges();
 		if (!addressToIndexMap.getIndexCount().equals(indexCount)) {
-			modelSizeChanged();
+			AddressBasedIndexMapper mapper =
+				new AddressBasedIndexMapper(previous, addressToIndexMap);
+			for (LayoutModelListener listener : listeners) {
+				listener.modelSizeChanged(mapper);
+			}
 		}
 	}
 

@@ -961,21 +961,43 @@ public class FieldPanel extends JPanel
 
 	@Override
 	// BigLayoutModelListener
-	public void modelSizeChanged() {
-		BigInteger anchorIndex = layouts.isEmpty() ? BigInteger.ZERO : layouts.get(0).getIndex();
+	public void modelSizeChanged(IndexMapper indexMapper) {
+		BigInteger anchorIndex =
+			layouts.isEmpty() ? BigInteger.ZERO : indexMapper.map(layouts.get(0).getIndex());
 		int anchorOffset = layouts.isEmpty() ? 0 : layouts.get(0).getYPos();
 		Point cursorPoint = getCursorPoint();
-		AnchoredLayout layout = findLayoutOnScreen(cursorPosition.getIndex());
+		BigInteger cursorIndex = indexMapper.map(cursorPosition.getIndex());
+		AnchoredLayout layout = findLayoutOnScreen(cursorIndex);
 		if (layout != null) {
-			anchorIndex = cursorPosition.getIndex();
+			anchorIndex = cursorIndex;
 			anchorOffset = layout.getYPos();
 		}
 		notifyScrollListenerModelChanged();
 		layouts = layoutHandler.positionLayoutsAroundAnchor(anchorIndex, anchorOffset);
 
+		updateHighlight(indexMapper);
 		cursorHandler.updateCursor(cursorPoint);
 		notifyScrollListenerViewChangedAndRepaint();
 		invalidate();
+	}
+
+	private void updateHighlight(IndexMapper mapper) {
+		if (highlight.isEmpty()) {
+			return;
+		}
+		FieldSelection oldHighlight = highlight;
+		highlight = new FieldSelection();
+		for (FieldRange range : oldHighlight) {
+			FieldLocation start = range.getStart();
+			FieldLocation end = range.getEnd();
+			BigInteger startIndex = mapper.map(start.getIndex());
+			BigInteger endIndex = mapper.map(end.getIndex());
+			if (startIndex != null && endIndex != null) {
+				start.setIndex(startIndex);
+				end.setIndex(endIndex);
+				highlight.addRange(start, end);
+			}
+		}
 	}
 
 	@Override

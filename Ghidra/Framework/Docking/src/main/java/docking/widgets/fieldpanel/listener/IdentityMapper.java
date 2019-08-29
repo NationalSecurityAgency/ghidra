@@ -17,21 +17,14 @@ package docking.widgets.fieldpanel.listener;
 
 import java.math.BigInteger;
 
-public interface LayoutModelListener {
+/**
+ * IndexMapper that always maps an index back to itself.
+ */
+class IdentityMapper implements IndexMapper {
 
-	/**
-	 * Called whenever the number of indexes changed
-	 * @param indexMapper Maps indexes from before the model size change to indexes after
-	 * the model size changed.
-	 */
-	void modelSizeChanged(IndexMapper indexMapper);
-
-	/**
-	 * Called when the data at an index or range of indexes changes.
-	 * @param start the starting index for the region of data changes.
-	 * @param end the ending index (inclusive) for the region of data changes.
-	 *
-	 */
-	void dataChanged(BigInteger start, BigInteger end);
+	@Override
+	public BigInteger map(BigInteger value) {
+		return value;
+	}
 
 }

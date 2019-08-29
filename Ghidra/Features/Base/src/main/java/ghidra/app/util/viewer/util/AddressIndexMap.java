@@ -81,6 +81,19 @@ public class AddressIndexMap {
 		buildMapping();
 	}
 
+	private AddressIndexMap(AddressIndexMap source) {
+		this.numAddresses = source.numAddresses;
+		indexList = source.indexList;
+		addressList = source.addressList;
+		currentViewAddressSet = source.currentViewAddressSet;
+		originalAddressSet = source.getOriginalAddressSet();
+	}
+
+	@Override
+	public AddressIndexMap clone() {
+		return new AddressIndexMap(this);
+	}
+
 	/**
 	 * Returns the total number of addresses
 	 * @return the number of addresses in the view
