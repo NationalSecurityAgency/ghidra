@@ -35,8 +35,8 @@ import utility.function.Callback;
  */
 public class FilterTextField extends JPanel {
 
-	private static final Integer BASE_COMPONENT_LAYER = new Integer(1);
-	private static final Integer HOVER_COMPONENT_LAYER = new Integer(2);
+	private static final Integer BASE_COMPONENT_LAYER = 1;
+	private static final Integer HOVER_COMPONENT_LAYER = 2;
 
 	private static final long MINIMUM_TIME_BETWEEN_FLASHES_MS = 5000;
 	private static final int FLASH_FREQUENCY_MS = 250;
@@ -277,6 +277,7 @@ public class FilterTextField extends JPanel {
 	@Override
 	public void setEnabled(boolean enabled) {
 		textField.setEnabled(enabled);
+		updateField();
 	}
 
 	@Override
@@ -323,6 +324,44 @@ public class FilterTextField extends JPanel {
 		return textField;
 	}
 
+	private void updateField() {
+		String text = getText();
+		hasText = text.length() > 0;
+
+		updateFocusFlashing();
+
+		updateBackgroundColor();
+
+		fireFilterChanged(text);
+
+		boolean showFilterButton = hasText && textField.isEnabled();
+		updateFilterButton(showFilterButton);
+	}
+
+	private void updateFocusFlashing() {
+		if (hasText) {
+			// no need to flash focus when the user is typing in the filter field
+			stallFocusFlashing();
+		}
+		else {
+			stopFocusFlashing();
+		}
+	}
+
+	private void updateFilterButton(boolean showFilter) {
+
+		// Note: this must be run on the Swing thread.  When the filter button shows itself, 
+		//       it requires an AWT lock.  If called from a non-Swing thread, deadlocks!
+		SystemUtilities.runIfSwingOrPostSwingLater(() -> {
+			if (showFilter) {
+				clearLabel.showFilterButton();
+			}
+			else {
+				clearLabel.hideFilterButton();
+			}
+		});
+
+	}
 //==================================================================================================
 // Inner Classes
 //==================================================================================================
@@ -363,57 +402,18 @@ public class FilterTextField extends JPanel {
 	private class FilterDocumentListener implements DocumentListener {
 		@Override
 		public void changedUpdate(DocumentEvent e) {
-			textChanged();
+			updateField();
 		}
 
 		@Override
 		public void insertUpdate(DocumentEvent e) {
-			textChanged();
+			updateField();
 		}
 
 		@Override
 		public void removeUpdate(DocumentEvent e) {
-			textChanged();
+			updateField();
 		}
-
-		private void textChanged() {
-			String text = getText();
-			hasText = text.length() > 0;
-
-			updateFocusFlashing();
-
-			updateBackgroundColor();
-
-			fireFilterChanged(text);
-
-			updateFilterButton(hasText);
-		}
-
-		private void updateFocusFlashing() {
-			if (hasText) {
-				// no need to flash focus when the user is typing in the filter field
-				stallFocusFlashing();
-			}
-			else {
-				stopFocusFlashing();
-			}
-		}
-
-		private void updateFilterButton(boolean showFilter) {
-
-			// Note: this must be run on the Swing thread.  When the filter button shows itself, 
-			//       it requires an AWT lock.  If called from a non-Swing thread, deadlocks!
-			SystemUtilities.runIfSwingOrPostSwingLater(() -> {
-				if (showFilter) {
-					clearLabel.showFilterButton();
-				}
-				else {
-					clearLabel.hideFilterButton();
-				}
-			});
-
-		}
-
 	}
 
 	private class BackgroundFlashTimer extends Timer implements ActionListener {

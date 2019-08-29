@@ -19,6 +19,8 @@ import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.*;
 import javax.swing.tree.TreePath;
@@ -32,6 +34,8 @@ import ghidra.app.plugin.core.datamgr.DataTypeManagerPlugin;
 import ghidra.app.plugin.core.datamgr.tree.DataTypeArchiveGTree;
 import ghidra.app.plugin.core.datamgr.tree.DataTypeNode;
 import ghidra.program.model.data.DataType;
+import ghidra.util.exception.CancelledException;
+import ghidra.util.task.TaskMonitor;
 
 /**
  * A dialog that allows the user to choose from a tree of similarly named data types.
@@ -40,12 +44,13 @@ public class DataTypeChooserDialog extends DialogComponentProvider {
 	private DataTypeArchiveGTree tree;
 	private DataType selectedDataType;
 	private GLabel messageLabel;
+	boolean isFilterEditable;
 
 	public DataTypeChooserDialog(DataTypeManagerPlugin plugin) {
 		super("Data Type Chooser", true, true, true, false);
 
 		tree = new DataTypeArchiveGTree(plugin);
-		tree.setEditable(false);
+		tree.setEditable(isFilterEditable);
 
 		tree.addGTreeSelectionListener(e -> setOkEnabled(getSelectedNode() != null));
 
@@ -112,11 +117,14 @@ public class DataTypeChooserDialog extends DialogComponentProvider {
 	}
 
 	public void setFilterText(String filterText) {
-		boolean editable = (filterText == null);
-		if (!editable) {
+		isFilterEditable = (filterText == null);
+		if (!isFilterEditable) {
 			tree.setFilterText(filterText);
 		}
-		setEditable(editable);
+		setFilterFieldEditable(isFilterEditable);
+
+		// select a node so that the user can use the keyboard to make a selection
+		tree.runTask(new SelectNodeTask(tree));
 	}
 
 	public void setSelectedPath(TreePath selectedPath) {
@@ -125,10 +133,13 @@ public class DataTypeChooserDialog extends DialogComponentProvider {
 
 	@Override
 	public Component getFocusComponent() {
-		return tree.getFilterField();
+		if (isFilterEditable) {
+			return tree.getFilterField();
+		}
+		return null; // the tree will get the default focus
 	}
 
-	private void setEditable(boolean editable) {
+	private void setFilterFieldEditable(boolean editable) {
 		tree.setFilterFieldEnabled(editable);
 
 		if (!editable) {
@@ -143,5 +154,41 @@ public class DataTypeChooserDialog extends DialogComponentProvider {
 
 	public DataType getSelectedDataType() {
 		return selectedDataType;
+	}
+
+	private class SelectNodeTask extends GTreeTask {
+
+		protected SelectNodeTask(GTree tree) {
+			super(tree);
+		}
+
+		@Override
+		public void run(TaskMonitor monitor) throws CancelledException {
+
+			GTreeRootNode root = tree.getRootNode();
+			List<GTreeNode> dtNodes = new ArrayList<>();
+			getDataTypeNodes(root, dtNodes);
+
+			if (dtNodes.isEmpty()) {
+				// should not happen
+				return;
+			}
+
+			// pick any node
+			tree.setSelectedNode(dtNodes.get(0));
+		}
+
+		private void getDataTypeNodes(GTreeNode node, List<GTreeNode> dtNodes) {
+
+			if (node instanceof DataTypeNode) {
+				dtNodes.add(node);
+				return;
+			}
+
+			List<GTreeNode> children = node.getChildren();
+			for (GTreeNode child : children) {
+				getDataTypeNodes(child, dtNodes);
+			}
+		}
 	}
 }

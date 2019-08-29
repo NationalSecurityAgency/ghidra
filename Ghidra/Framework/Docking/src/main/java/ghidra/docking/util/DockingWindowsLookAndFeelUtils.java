@@ -206,6 +206,8 @@ public class DockingWindowsLookAndFeelUtils {
 				// This fix looks like it should not cause harm even if the bug is fixed on the jdk side.
 				UIDefaults defaults = lookAndFeel.getDefaults();
 				defaults.put("ScrollBar.minimumThumbSize", new Dimension(30, 30));
+
+				// (see NimbusDefaults for key values that can be changed here)
 				break;
 		}
 	}
@@ -308,6 +310,7 @@ public class DockingWindowsLookAndFeelUtils {
 	/**
 	 * Returns true if the given UI object is using the Aqua Look and Feel.  
 	 * @param UI the UI to examine.
+	 * @return true if the UI is using Aqua
 	 */
 	public static boolean isUsingAquaUI(ComponentUI UI) {
 		Class<? extends ComponentUI> clazz = UI.getClass();
@@ -315,4 +318,12 @@ public class DockingWindowsLookAndFeelUtils {
 		return name.startsWith("Aqua");
 	}
 
+	/**
+	 * Returns true if 'Nimbus' is the current Look and Feel  
+	 * @return true if 'Nimbus' is the current Look and Feel
+	 */
+	public static boolean isUsingNimbusUI() {
+		LookAndFeel lookAndFeel = UIManager.getLookAndFeel();
+		return NIMBUS_LOOK_AND_FEEL.equals(lookAndFeel.getName());
+	}
 }

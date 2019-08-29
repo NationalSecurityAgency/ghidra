@@ -122,7 +122,7 @@ public class DecompilerFindReferencesToActionTest
 		int line = 2;
 		int charPosition = 17;
 		setDecompilerLocation(line, charPosition);
-		perfomFindDataTypes();
+		performFindDataTypes();
 
 		assertFindAllReferencesToDataTypeWasCalled();
 	}
@@ -153,7 +153,7 @@ public class DecompilerFindReferencesToActionTest
 		int line = 5;
 		int charPosition = 2;
 		setDecompilerLocation(line, charPosition);
-		perfomFindDataTypes();
+		performFindDataTypes();
 
 		assertFindAllReferencesToDataTypeWasCalled();
 	}
@@ -184,9 +184,65 @@ public class DecompilerFindReferencesToActionTest
 		int line = 5;
 		int charPosition = 7;
 		setDecompilerLocation(line, charPosition);
-		perfomFindDataTypes();
+		performFindDataTypes();
 
 		assertFindAllReferencesToCompositeFieldWasCalled();
+	}
+
+	@Test
+	public void testFindDataTypeReferences_ToCastSymbol() throws Exception {
+
+		// void lzw_decompress(mytable *table,char *intstream,int len,char *output)
+		// output = (char *)output_string(output,&local_2c);
+
+		decompile(0x0804873f); // lzw_decompress()
+
+		int line = 18;
+		int charPosition = 11;
+		setDecompilerLocation(line, charPosition);
+		performFindDataTypes();
+
+		assertFindAllReferencesToDataTypeWasCalled();
+	}
+
+	@Test
+	public void testFindDataTypeReferences_ToCurrentAddress() throws Exception {
+
+		/*
+		 
+		 Decomp of 'init_string':
+		 
+		 	1|
+			2| void init_string(mystring *ptr)
+			3|
+			4| {
+			5|   ptr->alloc = 0;
+			6|   return;
+			7| }
+			8|
+		 */
+
+		decompile(INIT_STRING_ADDR);
+
+		int line = 5;
+		int charPosition = 7;
+		setDecompilerLocation(line, charPosition);
+		performFindReferencesToAddress();
+
+		assertFindAllReferencesToAddressWasCalled();
+	}
+
+	@Test
+	public void testFindDataTypeReferences_ToCurrentFunction() throws Exception {
+
+		decompile(INIT_STRING_ADDR);
+
+		int line = 2;
+		int charPosition = 10; // function name
+		setDecompilerLocation(line, charPosition);
+		performFindReferencesToSymbol();
+
+		assertFindAllReferencesToSymbolWasCalled();
 	}
 
 //==================================================================================================

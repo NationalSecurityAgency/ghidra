@@ -395,6 +395,13 @@ public abstract class DockingAction implements DockingActionIf {
 			buffer.append('\n');
 			buffer.append("        MENU GROUP:        ").append(menuBarData.getMenuGroup());
 			buffer.append('\n');
+
+			String parentGroup = popupMenuData.getParentMenuGroup();
+			if (parentGroup != null) {
+				buffer.append("        PARENT GROUP:         ").append(parentGroup);
+				buffer.append('\n');
+			}
+
 			Icon icon = menuBarData.getMenuIcon();
 			if (icon != null && icon instanceof ImageIconWrapper) {
 				ImageIconWrapper wrapper = (ImageIconWrapper) icon;
@@ -411,6 +418,12 @@ public abstract class DockingAction implements DockingActionIf {
 			buffer.append('\n');
 			buffer.append("        POPUP GROUP:      ").append(popupMenuData.getMenuGroup());
 			buffer.append('\n');
+
+			String parentGroup = popupMenuData.getParentMenuGroup();
+			if (parentGroup != null) {
+				buffer.append("        PARENT GROUP:         ").append(parentGroup);
+				buffer.append('\n');
+			}
 
 			String menuSubGroup = popupMenuData.getMenuSubGroup();
 			if (menuSubGroup != MenuData.NO_SUBGROUP) {

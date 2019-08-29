@@ -3650,7 +3650,7 @@ define pcodeop TaskRegister;
 @ifdef IA64
 :MOV spec_rm64,simm32     is vexMode=0 & opsize=2 & byte=0xc7; (spec_rm64 & reg_opcode=0 ...); simm32 { spec_rm64 = simm32; }
 @endif
-:MOV creg, Rmr32        is vexMode=0 &           byte=0xf; byte=0x22; Rmr32 & creg & mod=3      {
+:MOV creg, Rmr32        is vexMode=0 &           byte=0xf; byte=0x22; Rmr32 & creg      {
 @ifdef IA64
     creg=zext(Rmr32);
 @else

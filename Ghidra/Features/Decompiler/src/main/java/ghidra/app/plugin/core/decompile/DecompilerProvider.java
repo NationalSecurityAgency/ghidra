@@ -44,7 +44,6 @@ import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.*;
-import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.util.*;
 import ghidra.util.HelpLocation;
 import ghidra.util.Swing;
@@ -780,14 +779,35 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 		//
 		// Search
 		//
+
 		String searchGroup = "comment2 - Search Group";
 		subGroupPosition = 0; // reset for the next group
 
 		findAction = new FindAction(tool, controller, owner);
 		setGroupInfo(findAction, searchGroup, subGroupPosition++);
 
+		//
+		// References 
+		// 
+
+		// note: set the menu group so that the 'References' group is with the 'Find' action
+		String referencesParentGroup = searchGroup;
+
 		findReferencesAction = new FindReferencesToDataTypeAction(owner, tool, controller);
 		setGroupInfo(findReferencesAction, searchGroup, subGroupPosition++);
+		findReferencesAction.getPopupMenuData().setParentMenuGroup(referencesParentGroup);
+
+		FindReferencesToSymbolAction findReferencesToSymbolAction =
+			new FindReferencesToSymbolAction(tool, owner);
+		setGroupInfo(findReferencesToSymbolAction, searchGroup, subGroupPosition++);
+		findReferencesToSymbolAction.getPopupMenuData().setParentMenuGroup(referencesParentGroup);
+		addLocalAction(findReferencesToSymbolAction);
+
+		FindReferencesToAddressAction findReferencesToAdressAction =
+			new FindReferencesToAddressAction(tool, owner);
+		setGroupInfo(findReferencesToAdressAction, searchGroup, subGroupPosition++);
+		findReferencesToAdressAction.getPopupMenuData().setParentMenuGroup(referencesParentGroup);
+		addLocalAction(findReferencesToAdressAction);
 
 		//
 		// Options
@@ -839,7 +859,7 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 	private void setGroupInfo(DockingAction action, String group, int subGroupPosition) {
 		MenuData popupMenuData = action.getPopupMenuData();
 		popupMenuData.setMenuGroup(group);
-		popupMenuData.setMenuSubGroup(Integer.toString(subGroupPosition++));
+		popupMenuData.setMenuSubGroup(Integer.toString(subGroupPosition));
 	}
 
 	private void graphServiceRemoved() {

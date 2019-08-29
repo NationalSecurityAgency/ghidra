@@ -31,6 +31,7 @@ public class MenuData {
 	private Icon icon;
 	private int mnemonic = NO_MNEMONIC;
 	private String menuGroup;
+	private String parentMenuGroup;
 
 	/**
 	 * The subgroup string.  This string is used to sort items within a 
@@ -73,11 +74,14 @@ public class MenuData {
 		this.icon = menuData.icon;
 		this.menuGroup = menuData.menuGroup;
 		this.menuSubGroup = menuData.menuSubGroup;
+		this.parentMenuGroup = menuData.parentMenuGroup;
 		this.mnemonic = menuData.mnemonic;
 	}
 
 	public MenuData cloneData() {
-		return new MenuData(menuPath, icon, menuGroup, mnemonic, menuSubGroup);
+		MenuData newData = new MenuData(menuPath, icon, menuGroup, mnemonic, menuSubGroup);
+		newData.parentMenuGroup = parentMenuGroup;
+		return newData;
 	}
 
 	protected void firePropertyChanged(MenuData oldData) {
@@ -113,11 +117,20 @@ public class MenuData {
 	/**
 	 * Returns the icon assigned to this action's menu. Null indicates that this action does not 
 	 * have a menu icon
+	 * @return the icon
 	 */
 	public Icon getMenuIcon() {
 		return icon;
 	}
 
+	/**
+	 * Returns the group for the menu item created by this data.   This value determines which
+	 * section inside of the tool's popup menu the menu item will be placed.   If you need to
+	 * control the ordering <b>within a section</b>, then provide a value for 
+	 * {@link #setMenuSubGroup(String)}.
+	 * 
+	 * @return the group
+	 */
 	public String getMenuGroup() {
 		return menuGroup;
 	}
@@ -126,9 +139,22 @@ public class MenuData {
 	 * Returns the subgroup string.  This string is used to sort items within a 
 	 * {@link #getMenuGroup() toolbar group}.  This value is not required.  If not specified, 
 	 * then the value will effectively place this item at the end of its specified group.
+	 * @return the sub-group
 	 */
 	public String getMenuSubGroup() {
 		return menuSubGroup;
+	}
+
+	/**
+	 * Returns the group for the parent menu of the menu item created by this data.   That is, 
+	 * this value is effectively the same as {@link #getMenuGroup()}, but for the parent menu
+	 * item of this data's item.   Setting this value is only valid if the {@link #getMenuPath()}
+	 * has a length greater than 1.
+	 * 
+	 * @return the parent group
+	 */
+	public String getParentMenuGroup() {
+		return parentMenuGroup;
 	}
 
 	public void setIcon(Icon newIcon) {
@@ -154,9 +180,36 @@ public class MenuData {
 		if (SystemUtilities.isEqual(menuSubGroup, newSubGroup)) {
 			return;
 		}
+
+		if (newSubGroup == null) {
+			newSubGroup = NO_SUBGROUP;
+		}
+
 		MenuData oldData = cloneData();
 		menuSubGroup = newSubGroup;
 		firePropertyChanged(oldData);
+	}
+
+	/**
+	 * See the description in {@link #getParentMenuGroup()}
+	 * 
+	 * @param newParentMenuGroup the parent group
+	 */
+	public void setParentMenuGroup(String newParentMenuGroup) {
+		if (menuPath.length <= 1) {
+			throw new IllegalStateException(
+				"Cannot set the parent menu group for a menu item " + "that has no parent");
+		}
+
+		if (SystemUtilities.isEqual(parentMenuGroup, newParentMenuGroup)) {
+			return;
+		}
+
+		MenuData oldData = cloneData();
+		parentMenuGroup = newParentMenuGroup;
+		firePropertyChanged(oldData);
+
+		this.parentMenuGroup = newParentMenuGroup;
 	}
 
 	public void setMenuPath(String[] newPath) {

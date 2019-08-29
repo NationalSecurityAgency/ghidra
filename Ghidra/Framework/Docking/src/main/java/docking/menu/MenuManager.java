@@ -102,33 +102,77 @@ public class MenuManager implements ManagedMenuItem {
 		checkForSwingThread();
 		resetMenus();
 		MenuData menuData = usePopupPath ? action.getPopupMenuData() : action.getMenuBarData();
-		String[] actionMenuPath = menuData.getMenuPath();
-		if (actionMenuPath.length > level + 1) {
-			String subMenuName = actionMenuPath[level];
-			String cleanSubMenuName = stripMnemonicAmp(subMenuName);
-			MenuManager mgr = subMenus.get(cleanSubMenuName);
-
-			if (mgr == null) {
-				char mnemonic = getMnemonicKey(subMenuName);
-
-				int submenuLevel = level + 1;
-				String[] submenuPath = new String[submenuLevel];
-				System.arraycopy(actionMenuPath, 0, submenuPath, 0, submenuLevel);
-				String submenuGroup = menuGroupMap.getMenuGroup(submenuPath);
-				if (submenuGroup == null) {
-					submenuGroup = subMenuName;
-				}
-
-				mgr = new MenuManager(cleanSubMenuName, submenuPath, mnemonic, submenuLevel,
-					submenuGroup, usePopupPath, menuHandler, menuGroupMap);
-				subMenus.put(cleanSubMenuName, mgr);
-				managedMenuItems.add(mgr);
-			}
+		if (isSubMenu(menuData)) {
+			MenuManager mgr = getSubMenu(menuData);
 			mgr.addAction(action);
 		}
 		else {
 			managedMenuItems.add(new MenuItemManager(menuHandler, action, usePopupPath));
 		}
+	}
+
+	private boolean isSubMenu(MenuData menuData) {
+		String[] actionMenuPath = menuData.getMenuPath();
+		return actionMenuPath.length > level + 1;
+	}
+
+	private MenuManager getSubMenu(MenuData menuData) {
+
+		String[] fullPath = menuData.getMenuPath();
+		String displayName = fullPath[level];
+		char mnemonic = getMnemonicKey(displayName);
+		String realName = stripMnemonicAmp(displayName);
+		MenuManager subMenu = subMenus.get(realName);
+		if (subMenu != null) {
+			return subMenu;
+		}
+
+		int subMenuLevel = level + 1;
+		String[] subMenuPath = new String[subMenuLevel];
+		System.arraycopy(fullPath, 0, subMenuPath, 0, subMenuLevel);
+
+		String subMenuGroup = getSubMenuGroup(menuData, realName, subMenuPath);
+		subMenu = new MenuManager(realName, subMenuPath, mnemonic, subMenuLevel, subMenuGroup,
+			usePopupPath, menuHandler, menuGroupMap);
+		subMenus.put(realName, subMenu);
+		managedMenuItems.add(subMenu);
+
+		return subMenu;
+	}
+
+	private String getSubMenuGroup(MenuData menuData, String menuName, String[] subMenuPath) {
+
+		// prefer the group defined in the menu data, if any
+		String pullRightGroup = getPullRightMenuGroup(menuData);
+		if (pullRightGroup != null) {
+			return pullRightGroup;
+		}
+
+		// check the global registry
+		pullRightGroup = menuGroupMap.getMenuGroup(subMenuPath);
+		if (pullRightGroup != null) {
+			return pullRightGroup;
+		}
+
+		// default to the menu name
+		return menuName;
+	}
+
+	private String getPullRightMenuGroup(MenuData menuData) {
+
+		// note: currently, the client can specify the group for the pull-right menu only for
+		//       the immediate parent of the menu item.  We can change this later if we find
+		//       we have a need for a multi-level cascaded menu that needs to specify groups for
+		//       each pull-right in the menu path
+
+		String[] actionMenuPath = menuData.getMenuPath();
+		int leafLevel = actionMenuPath.length - 1;
+		boolean isParentOfLeaf = level == (leafLevel - 1);
+		if (!isParentOfLeaf) {
+			return null;
+		}
+
+		return menuData.getParentMenuGroup();
 	}
 
 	public DockingActionIf getAction(String actionName) {
@@ -158,17 +202,18 @@ public class MenuManager implements ManagedMenuItem {
 	}
 
 	/***
-	 * Removes the Mnemonic indicator character (&) from the text.
-	 * @param str the text to strip.
+	 * Removes the Mnemonic indicator character (&) from the text
+	 * @param text the text to strip
+	 * @return the stripped mnemonic
 	 */
-	public static String stripMnemonicAmp(String str) {
-		int ampLoc = str.indexOf('&');
+	public static String stripMnemonicAmp(String text) {
+		int ampLoc = text.indexOf('&');
 		if (ampLoc < 0) {
-			return str;
+			return text;
 		}
-		String s = str.substring(0, ampLoc);
-		if (ampLoc < (str.length() - 1)) {
-			s += str.substring(++ampLoc);
+		String s = text.substring(0, ampLoc);
+		if (ampLoc < (text.length() - 1)) {
+			s += text.substring(++ampLoc);
 		}
 		return s;
 	}
@@ -182,7 +227,8 @@ public class MenuManager implements ManagedMenuItem {
 	}
 
 	/**
-	 * Returns a Menu hierarchy of all the actions.
+	 * Returns a Menu hierarchy of all the actions
+	 * @return the menu
 	 */
 	public JMenu getMenu() {
 		if (menu == null) {
@@ -236,9 +282,6 @@ public class MenuManager implements ManagedMenuItem {
 		return menuSubGroup;
 	}
 
-	/**
-	 * @see docking.menu.ManagedMenuItem#dispose()
-	 */
 	@Override
 	public void dispose() {
 		for (ManagedMenuItem item : managedMenuItems) {
@@ -249,7 +292,8 @@ public class MenuManager implements ManagedMenuItem {
 	}
 
 	/**
-	 * Returns a JPopupMenu for the action hierarchy.
+	 * Returns a JPopupMenu for the action hierarchy
+	 * @return the popup menu
 	 */
 	public JPopupMenu getPopupMenu() {
 		if (popupMenu == null) {
