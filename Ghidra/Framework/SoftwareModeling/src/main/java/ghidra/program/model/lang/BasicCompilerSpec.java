@@ -163,29 +163,30 @@ public class BasicCompilerSpec implements CompilerSpec {
 			language.getProperty(GhidraLanguagePropertyKeys.PCODE_INJECT_LIBRARY_CLASS);
 		if (classname == null) {
 			pcodeInject = new PcodeInjectLibrary(language);		// This is the default implementation
-			return;
 		}
-		try {
-			Class<?> c = Class.forName(classname);
-			if (!PcodeInjectLibrary.class.isAssignableFrom(c)) {
+		else {
+			try {
+				Class<?> c = Class.forName(classname);
+				if (!PcodeInjectLibrary.class.isAssignableFrom(c)) {
+					Msg.error(this,
+						"Language " + language.getLanguageID() + " does not specify a valid " +
+							GhidraLanguagePropertyKeys.PCODE_INJECT_LIBRARY_CLASS);
+					throw new RuntimeException(classname + " does not implement interface " +
+						PcodeInjectLibrary.class.getName());
+				}
+				Class<? extends PcodeInjectLibrary> injectLibraryClass =
+					(Class<? extends PcodeInjectLibrary>) c;
+				Constructor<? extends PcodeInjectLibrary> constructor =
+					injectLibraryClass.getConstructor(SleighLanguage.class);
+				pcodeInject = constructor.newInstance(language);
+			}
+			catch (Exception e) {
 				Msg.error(this,
 					"Language " + language.getLanguageID() + " does not specify a valid " +
 						GhidraLanguagePropertyKeys.PCODE_INJECT_LIBRARY_CLASS);
-				throw new RuntimeException(classname + " does not implement interface " +
-					PcodeInjectLibrary.class.getName());
+				throw new RuntimeException("Failed to instantiate " + classname + " for language " +
+					language.getLanguageID(), e);
 			}
-			Class<? extends PcodeInjectLibrary> injectLibraryClass =
-				(Class<? extends PcodeInjectLibrary>) c;
-			Constructor<? extends PcodeInjectLibrary> constructor =
-				injectLibraryClass.getConstructor(SleighLanguage.class);
-			pcodeInject = constructor.newInstance(language);
-		}
-		catch (Exception e) {
-			Msg.error(this, "Language " + language.getLanguageID() + " does not specify a valid " +
-				GhidraLanguagePropertyKeys.PCODE_INJECT_LIBRARY_CLASS);
-			throw new RuntimeException(
-				"Failed to instantiate " + classname + " for language " + language.getLanguageID(),
-				e);
 		}
 		List<InjectPayloadSleigh> additionalInject = language.getAdditionalInject();
 		if (additionalInject != null) {

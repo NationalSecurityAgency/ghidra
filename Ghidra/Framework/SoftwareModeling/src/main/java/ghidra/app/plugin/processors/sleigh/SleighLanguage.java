@@ -599,6 +599,29 @@ public class SleighLanguage implements Language {
 		}
 	}
 
+	private void parseSegmentOp(XmlElement el, XmlPullParser parser) {
+		String name = el.getAttribute("userop");
+		if (name == null) {
+			name = "segment";
+		}
+		name = name + "_pcode";
+		String source = "pspec: " + getLanguageID().getIdAsString();
+		if (parser.peek().isStart()) {
+			if (parser.peek().getName().equals("pcode")) {
+				InjectPayloadSleigh payload =
+					new InjectPayloadSleigh(name, InjectPayload.EXECUTABLEPCODE_TYPE, source);
+				if (additionalInject == null) {
+					additionalInject = new ArrayList<>();
+				}
+				payload.restoreXml(parser);
+				additionalInject.add(payload);
+			}
+		}
+		while (parser.peek().isStart()) {
+			parser.discardSubTree();
+		}
+	}
+
 	private void read(XmlPullParser parser) {
 		Set<String> registerDataSet = new HashSet<>();
 
@@ -775,9 +798,7 @@ public class SleighLanguage implements Language {
 				}
 			}
 			else if (element.getName().equals("segmentop")) {
-				while (parser.peek().isStart()) {
-					parser.discardSubTree();
-				}
+				parseSegmentOp(element, parser);
 			}
 			// get rid of the end tag of whatever we started with at the top of the while
 			parser.end(element);
