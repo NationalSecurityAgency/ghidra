@@ -81,6 +81,14 @@ public class AddressIndexMap {
 		buildMapping();
 	}
 
+	private AddressIndexMap(AddressIndexMap source) {
+		this.numAddresses = source.numAddresses;
+		indexList = source.indexList;
+		addressList = source.addressList;
+		currentViewAddressSet = source.currentViewAddressSet;
+		originalAddressSet = source.getOriginalAddressSet();
+	}
+
 	/**
 	 * Returns the total number of addresses
 	 * @return the number of addresses in the view
@@ -354,9 +362,11 @@ public class AddressIndexMap {
 	/**
 	 * Resets the mapping to the entire original address set.
 	 */
-	public void reset() {
+	public AddressIndexMap reset() {
+		AddressIndexMap currentMap = new AddressIndexMap(this);
 		this.currentViewAddressSet = new AddressSet(originalAddressSet);
 		buildMapping();
+		return currentMap;
 	}
 
 	private void addToAddressSet(AddressSet set, BigInteger startIndex, BigInteger endIndex) {
