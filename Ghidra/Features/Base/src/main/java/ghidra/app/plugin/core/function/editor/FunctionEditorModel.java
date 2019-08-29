@@ -1173,9 +1173,9 @@ public class FunctionEditorModel {
 		setSignatureFieldText(getFunctionSignatureTextFromModel());
 	}
 
-	public void parseSignatureFieldText() throws ParseException {
+	public void parseSignatureFieldText() throws ParseException, CancelledException {
 		FunctionSignatureParser parser =
-			new FunctionSignatureParser(getProgram(), dataTypeManagerService);
+			new FunctionSignatureParser(program.getDataTypeManager(), dataTypeManagerService);
 		FunctionDefinitionDataType f = parser.parse(function.getSignature(), signatureFieldText);
 
 		setFunctionData(f);
