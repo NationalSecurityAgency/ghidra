@@ -34,11 +34,11 @@
             variant="System Management Mode"
             version="2.8"
             slafile="x86.sla"
-            processorspec="x86-smm.pspec"
+            processorspec="x86-16.pspec"
             manualindexfile="../manuals/x86.idx"
             id="x86:LE:32:System Management Mode">
     <description>Intel/AMD 32-bit x86 System Management Mode</description>
-    <compiler name="default" spec="x86-smm.cspec" id="default"/>
+    <compiler name="default" spec="x86-16.cspec" id="default"/>
     <external_name tool="DWARF.register.mapping.file" name="x86.dwarf"/>
   </language>
   <language processor="x86"

@@ -482,6 +482,12 @@ public class BasicCompilerSpec implements CompilerSpec {
 				evalCurrentPrototype = parser.start().getAttribute("name");
 				parser.end();
 			}
+			else if (name.equals("segmentop")) {
+				XmlElement el = parser.start();
+				InjectPayloadSleigh payload = language.parseSegmentOp(el, parser);
+				parser.end();
+				pcodeInject.registerInject(payload);
+			}
 			else {
 				XmlElement el = parser.start();
 				parser.discardSubTree(el);

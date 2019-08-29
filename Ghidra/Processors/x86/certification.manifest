@@ -35,8 +35,6 @@ data/languages/x86-64-win.cspec||GHIDRA||||END|
 data/languages/x86-64.dwarf||GHIDRA||||END|
 data/languages/x86-64.pspec||GHIDRA||||END|
 data/languages/x86-64.slaspec||GHIDRA||||END|
-data/languages/x86-smm.cspec||GHIDRA||||END|
-data/languages/x86-smm.pspec||GHIDRA||||END|
 data/languages/x86.dwarf||GHIDRA||||END|
 data/languages/x86.ldefs||GHIDRA||||END|
 data/languages/x86.opinion||GHIDRA||||END|

@@ -101,6 +101,13 @@ public class SleighLanguage implements Language {
 		initialize(description);
 	}
 
+	private void addAdditionInject(InjectPayloadSleigh payload) {
+		if (additionalInject == null) {
+			additionalInject = new ArrayList<>();
+		}
+		additionalInject.add(payload);
+	}
+
 	private void initialize(SleighLanguageDescription langDescription)
 			throws SAXException, IOException, UnknownInstructionException {
 		this.defaultSymbols = new ArrayList<>();
@@ -591,35 +598,32 @@ public class SleighLanguage implements Language {
 			}
 			InjectPayloadSleigh payload =
 				new InjectPayloadSleigh(subName, InjectPayload.EXECUTABLEPCODE_TYPE, source);
-			if (additionalInject == null) {
-				additionalInject = new ArrayList<>();
-			}
 			payload.restoreXml(parser);
-			additionalInject.add(payload);
+			addAdditionInject(payload);
 		}
 	}
 
-	private void parseSegmentOp(XmlElement el, XmlPullParser parser) {
+	public InjectPayloadSleigh parseSegmentOp(XmlElement el, XmlPullParser parser) {
 		String name = el.getAttribute("userop");
 		if (name == null) {
 			name = "segment";
 		}
 		name = name + "_pcode";
 		String source = "pspec: " + getLanguageID().getIdAsString();
+		InjectPayloadSleigh payload = null;
 		if (parser.peek().isStart()) {
 			if (parser.peek().getName().equals("pcode")) {
-				InjectPayloadSleigh payload =
-					new InjectPayloadSleigh(name, InjectPayload.EXECUTABLEPCODE_TYPE, source);
-				if (additionalInject == null) {
-					additionalInject = new ArrayList<>();
-				}
+				payload = new InjectPayloadSleigh(name, InjectPayload.EXECUTABLEPCODE_TYPE, source);
 				payload.restoreXml(parser);
-				additionalInject.add(payload);
 			}
 		}
 		while (parser.peek().isStart()) {
 			parser.discardSubTree();
 		}
+		if (payload == null) {
+			throw new SleighException("Missing <pcode> child for <segmentop> tag");
+		}
+		return payload;
 	}
 
 	private void read(XmlPullParser parser) {
@@ -798,7 +802,8 @@ public class SleighLanguage implements Language {
 				}
 			}
 			else if (element.getName().equals("segmentop")) {
-				parseSegmentOp(element, parser);
+				InjectPayloadSleigh payload = parseSegmentOp(element, parser);
+				addAdditionInject(payload);
 			}
 			// get rid of the end tag of whatever we started with at the top of the while
 			parser.end(element);
