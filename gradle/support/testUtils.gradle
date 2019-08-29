@@ -61,9 +61,10 @@ def Map<String, Map<String, Long>> getTestReport() {
 
 		testReport = new HashMap<String,Map>();
 		Map dockingConfigurationBucket = new HashMap<String, Long>();
-		Map headlessConfigurationBucket = new HashMap<String, Long>();
+		Map integrationConfigurationBucket = new HashMap<String, Long>();
 		Map appConfigurationBucket = new HashMap<String, Long>();
 		Map ghidraConfigurationBucket = new HashMap<String, Long>();
+		Map unknownConfigurationBucket = new HashMap<String, Long>();
 
 		File classesReportDir = new File(testTimeParserInputDir)
 		if(!classesReportDir.exists()) {
@@ -107,19 +108,137 @@ def Map<String, Map<String, Long>> getTestReport() {
 				
 				String javaFileContents = foundFile.text;
 				
-				if (javaFileContents.contains(shortName) && javaFileContents.contains(" extends ")) {
-					if (javaFileContents.contains("AbstractGhidraHeadlessIntegrationTest")) {
-						headlessConfigurationBucket.put(fqNameFromTestReport, durationInMillis);
+				List<String> integrationConfigs = new ArrayList<>();
+				List<String> dockingConfigs = new ArrayList<>();
+				List<String> appConfigs = new ArrayList<>();
+				List<String> ghidraConfigs = new ArrayList<>();
+				
+				integrationConfigs.add("AbstractGhidraHeadlessIntegrationTest");
+				integrationConfigs.add("AbstractGhidraHeadedIntegrationTest");
+				integrationConfigs.add("AbstractAddressMapDBTestClass");
+				integrationConfigs.add("AbstractGCodeBrowserNavigationTest");
+				integrationConfigs.add("AbstractCorrelatorTest");
+				integrationConfigs.add("AbstractCreateArchiveTest");
+				integrationConfigs.add("AbstractDataActionTest");
+				integrationConfigs.add("AbstractEditorTest");
+				integrationConfigs.add("AbstractFileFormatsTest");
+				integrationConfigs.add("AbstractFollowFlowTest");
+				integrationConfigs.add("AbstractFunctionGraphTest");
+				integrationConfigs.add("AbstractFunctionSignatureMarkupTest");
+				integrationConfigs.add("AbstractGFileSystemBaseTest");
+				integrationConfigs.add("AbstractGhidraScriptMgrPluginTest");
+				integrationConfigs.add("AbstractMergeTest");
+				integrationConfigs.add("AbstractProgramBasedTest");
+				integrationConfigs.add("AbstractProgramDiffTest");
+				integrationConfigs.add("AbstractProgramTreePluginTest");
+				integrationConfigs.add("AbstractScreenShotGenerator");
+				integrationConfigs.add("AbstractSelectByFlowPluginTest");
+				integrationConfigs.add("AbstractSymbolTreePluginExternalsTest");
+				integrationConfigs.add("AbstractToolSavingTest");
+				integrationConfigs.add("AbstractVersionControlActionTest");
+				integrationConfigs.add("AbstractVTCorrelatorTest");
+				integrationConfigs.add("AbstractVTMarkupItemTest");
+				
+				integrationConfigs.add("DiffApplyTestAdapter");
+				integrationConfigs.add("DiffEnablementTest");
+				integrationConfigs.add("DiffGet2Test");
+				integrationConfigs.add("DiffGetTest");
+				integrationConfigs.add("DiffTest");
+				integrationConfigs.add("DualProgramTest");
+				
+				integrationConfigs.add("DIEAMonitoredIteratorTest");
+				integrationConfigs.add("DWARFDataTypeImporterTest");
+				integrationConfigs.add("DWARFNameInfoTest");
+				
+				integrationConfigs.add("AbstractDbgTest");
+				integrationConfigs.add("AbstractGProtocolTest");
+				integrationConfigs.add("AbstractGProtocolClientServerTestBase");
+				
+				integrationConfigs.add("AbstractHeadlessAnalyzerTest");
+				
+				integrationConfigs.add("SuperListingTest");
+				integrationConfigs.add("SuperProgramTest");
+				
+				//---------------------
+				
+				dockingConfigs.add("AbstractGTest");
+				dockingConfigs.add("AbstractCompositeImplBitFieldTest");
+				dockingConfigs.add("AbstractGenericTest");
+				dockingConfigs.add("AbstractAssemblyTest");
+				dockingConfigs.add("AbstractChainedBufferTest");
+				dockingConfigs.add("AbstractCreateDataTypeModelTest");
+				dockingConfigs.add("AbstractGraphAlgorithmsTest");
+				dockingConfigs.add("AbstractHelpModuleLocationTest");
+				dockingConfigs.add("AbstractHelpTest");
+				dockingConfigs.add("AbstractLocalFileSystemTest");
+				dockingConfigs.add("AbstractOpBehaviorTest");
+				dockingConfigs.add("AbstractDockingTest");
+				dockingConfigs.add("AbstractEHTest");
+				dockingConfigs.add("AbstractRttiTest");
+				
+				dockingConfigs.add("AbstractCRIntegrationTest");
+				dockingConfigs.add("AbstractDropDownTextFieldTest<T>");
+				dockingConfigs.add("AbstractFcgTest");
+				dockingConfigs.add("AbstractGhidraTest");
+				dockingConfigs.add("AbstractTaskTest");
+				dockingConfigs.add("AbstractThreadedTableTest");
+				dockingConfigs.add("AbstractVisualGraphTest");
+				dockingConfigs.add("AbstractSimpleVisualGraphTest");
+				dockingConfigs.add("DefaultThreadedTableFilterTest");
+				dockingConfigs.add("ThreadedTableTest");
+				dockingConfigs.add("StorageEditorModelTest");
+				dockingConfigs.add("VTBaseTestCase");
+				
+				//---------------------
+				
+				appConfigs.add("?????");
+				
+				//---------------------
+				
+				ghidraConfigs.add("?????????");
+				
+				//-------------------------------------------------
+				
+				
+				if (javaFileContents.contains(shortName)) {
+				
+					// Match the word right after "extends", if there is one
+					Pattern p = Pattern.compile("extends\\W+(\\w+)");
+					Matcher m = p.matcher(contents);
+					String extendsClass = "";
+					while (m.find()) {
+						extendsClass = m.group(1);
+						break;
 					}
-					else if (javaFileContents.contains("AbstractDockingTest")) {
-						dockingConfigurationBucket.put(fqNameFromTestReport, durationInMillis);
+					
+					if (extendsClass.isEmpty()) {
+						unknownConfigurationBucket.put(fqNameFromTestReport, durationInMillis);
+					}
+					else {	
+						
+						if (integrationConfigs.contains(extendsClass)) {
+							integrationConfigurationBucket.put(fqNameFromTestReport, durationInMillis);
+						}
+						else if (dockingConfigs.contains(extendsClass)) {
+							dockingConfigurationBucket.put(fqNameFromTestReport, durationInMillis);
+						}
+						else if (appConfigs.contains(extendsClass)) {
+							appConfigurationBucket.put(fqNameFromTestReport, durationInMillis);
+						}
+						else if (ghidraConfigs.contains(extendsClass)) {
+							ghidraConfigurationBucket.put(fqNameFromTestReport, durationInMillis);
+						}
+						else {
+							unknownConfigurationBucket.put(fqNameFromTestReport, durationInMillis);
+						}
 					}
 				}		
 				
-				testReport.put("headless", headlessConfigurationBucket);
+				testReport.put("integration", integrationConfigurationBucket);
 				testReport.put("docking", dockingConfigurationBucket);
 				testReport.put("app", appConfigurationBucket);
 				testReport.put("ghidra", ghidraConfigurationBucket);
+				testReport.put("unknown", unknownConfigurationBucket);
 				
 				// END TEST
 
