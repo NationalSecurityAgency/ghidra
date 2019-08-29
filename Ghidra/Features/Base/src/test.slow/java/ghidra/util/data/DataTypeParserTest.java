@@ -15,7 +15,7 @@
  */
 package ghidra.util.data;
 
-import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.*;
 
 import org.junit.*;
 
@@ -175,7 +175,7 @@ public class DataTypeParserTest extends AbstractEditorTest {
 			DataType dt = parser.parse(dtString);
 			assertNotNull(dt);
 		}
-		catch (InvalidDataTypeException e) {
+		catch (Exception e) {
 			Assert.fail(e.getMessage());
 		}
 	}
@@ -187,7 +187,7 @@ public class DataTypeParserTest extends AbstractEditorTest {
 			DataType dt = parser.parse(dtString);
 			assertNotNull(dt);
 		}
-		catch (InvalidDataTypeException e) {
+		catch (Exception e) {
 			Assert.fail(e.getMessage());
 		}
 	}
@@ -202,6 +202,9 @@ public class DataTypeParserTest extends AbstractEditorTest {
 		catch (InvalidDataTypeException e) {
 			// good
 		}
+		catch (Exception e) {
+			Assert.fail(e.getMessage());
+		}
 	}
 
 	private void checkInvalidDt(String dtString, AllowedDataTypes allowableTypes) {
@@ -213,6 +216,9 @@ public class DataTypeParserTest extends AbstractEditorTest {
 		}
 		catch (InvalidDataTypeException e) {
 			// good
+		}
+		catch (Exception e) {
+			Assert.fail(e.getMessage());
 		}
 	}
 

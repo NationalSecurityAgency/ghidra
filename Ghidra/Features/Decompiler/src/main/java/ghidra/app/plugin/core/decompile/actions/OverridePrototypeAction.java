@@ -15,6 +15,12 @@
  */
 package ghidra.app.plugin.core.decompile.actions;
 
+import java.util.Iterator;
+
+import docking.ActionContext;
+import docking.action.DockingAction;
+import docking.action.MenuData;
+import docking.widgets.OptionDialog;
 import ghidra.app.decompiler.*;
 import ghidra.app.decompiler.component.DecompilerController;
 import ghidra.app.decompiler.component.DecompilerPanel;
@@ -27,13 +33,7 @@ import ghidra.program.model.listing.*;
 import ghidra.program.model.pcode.*;
 import ghidra.util.Msg;
 import ghidra.util.UndefinedFunction;
-
-import java.util.Iterator;
-
-import docking.ActionContext;
-import docking.action.DockingAction;
-import docking.action.MenuData;
-import docking.widgets.OptionDialog;
+import ghidra.util.exception.CancelledException;
 
 public class OverridePrototypeAction extends DockingAction {
 	private final DecompilerController controller;
@@ -50,7 +50,6 @@ public class OverridePrototypeAction extends DockingAction {
 			super(tool, "Override Signature", func);
 			setSignature(signature);
 			setCallingConvention(conv);
-			functionDefinition = null;
 		}
 
 		/**
@@ -60,13 +59,20 @@ public class OverridePrototypeAction extends DockingAction {
 		@Override
 		protected void okCallback() {
 			// only close the dialog if the user made valid changes
-			if (testResult())
+			if (parseFunctionDefinition())
 				close();
 		}
 
-		protected boolean testResult() {
+		private boolean parseFunctionDefinition() {
 
-			functionDefinition = parseSignature();
+			functionDefinition = null;
+
+			try {
+				functionDefinition = parseSignature();
+			}
+			catch (CancelledException e) {
+				// ignore
+			}
 
 			if (functionDefinition == null) {
 				return false;
@@ -129,12 +135,12 @@ public class OverridePrototypeAction extends DockingAction {
 		if (calledfunc != null)
 			varargs = calledfunc.hasVarArgs();
 		if ((op.getOpcode() == PcodeOp.CALL) && !varargs) {
-			if (OptionDialog.showOptionDialog(
-				controller.getDecompilerPanel(),
+			if (OptionDialog.showOptionDialog(controller.getDecompilerPanel(),
 				"Warning : Localized Override",
-				"Incorrect information entered here may hide other good information.\n"
-					+ "For direct calls, it is usually better to alter the prototype on the function\n"
-					+ "itself, rather than overriding the local call. Proceed anyway?", "Proceed") != 1)
+				"Incorrect information entered here may hide other good information.\n" +
+					"For direct calls, it is usually better to alter the prototype on the function\n" +
+					"itself, rather than overriding the local call. Proceed anyway?",
+				"Proceed") != 1)
 				return;
 		}
 		Address addr = op.getSeqnum().getTarget();

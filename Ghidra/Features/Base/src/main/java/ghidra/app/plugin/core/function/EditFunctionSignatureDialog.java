@@ -40,6 +40,7 @@ import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.SourceType;
 import ghidra.util.Msg;
+import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.InvalidInputException;
 
 /**
@@ -294,8 +295,13 @@ public class EditFunctionSignatureDialog extends DialogComponentProvider {
 	@Override
 	protected void okCallback() {
 		// only close the dialog if the user made valid changes
-		if (applyChanges()) {
-			close();
+		try {
+			if (applyChanges()) {
+				close();
+			}
+		}
+		catch (CancelledException e) {
+			// ignore - do not close
 		}
 	}
 
@@ -310,8 +316,9 @@ public class EditFunctionSignatureDialog extends DialogComponentProvider {
 	 * command and executed.
 	 *
 	 * @return true if the command was successfully created.
+	 * @throws CancelledException if operation cancelled by user
 	 */
-	protected boolean applyChanges() {
+	protected boolean applyChanges() throws CancelledException {
 		// create the command
 		Command command = createCommand();
 
@@ -329,9 +336,9 @@ public class EditFunctionSignatureDialog extends DialogComponentProvider {
 		return true;
 	}
 
-	protected FunctionDefinitionDataType parseSignature() {
-		FunctionSignatureParser parser = new FunctionSignatureParser(getProgram(),
-			tool.getService(DataTypeManagerService.class));
+	protected FunctionDefinitionDataType parseSignature() throws CancelledException {
+		FunctionSignatureParser parser = new FunctionSignatureParser(
+			getProgram().getDataTypeManager(), tool.getService(DataTypeManagerService.class));
 		try {
 			return parser.parse(getFunction().getSignature(), getSignature());
 		}
@@ -341,7 +348,7 @@ public class EditFunctionSignatureDialog extends DialogComponentProvider {
 		return null;
 	}
 
-	private Command createCommand() {
+	private Command createCommand() throws CancelledException {
 
 		Command cmd = null;
 		if (!getSignature().equals(this.oldFunctionSignature) || !isSameCallingConvention() ||

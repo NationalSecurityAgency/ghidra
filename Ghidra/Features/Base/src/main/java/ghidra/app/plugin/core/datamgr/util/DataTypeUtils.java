@@ -22,6 +22,7 @@ import java.util.List;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 
+import ghidra.app.services.DataTypeQueryService;
 import ghidra.app.services.DataTypeManagerService;
 import ghidra.program.model.data.*;
 import ghidra.program.model.data.Enum;
@@ -328,7 +329,7 @@ public class DataTypeUtils {
 	 *         string.
 	 */
 	public static List<DataType> getStartsWithMatchingDataTypes(String searchString,
-			DataTypeManagerService dataService) {
+			DataTypeQueryService dataService) {
 		return getMatchingSubList(searchString, searchString + END_CHAR,
 			dataService.getSortedDataTypeList());
 	}
@@ -343,7 +344,7 @@ public class DataTypeUtils {
 	 *         string. 
 	 */
 	public static List<DataType> getExactMatchingDataTypes(String searchString,
-			DataTypeManagerService dataService) {
+			DataTypeQueryService dataService) {
 		return getMatchingSubList(searchString, searchString + BEGIN_CHAR,
 			dataService.getSortedDataTypeList());
 	}
