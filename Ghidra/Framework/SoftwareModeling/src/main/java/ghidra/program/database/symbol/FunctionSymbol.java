@@ -264,6 +264,22 @@ public class FunctionSymbol extends SymbolDB {
 		return super.getName();
 	}
 
+	/**
+	 * @see ghidra.program.model.symbol.Symbol#getParentNamespace()
+	 */
+	@Override
+	public Namespace getParentNamespace() {
+		if (getSource() == SourceType.DEFAULT) {
+			// Check for thunk function
+			Symbol thunkedSymbol = getThunkedSymbol();
+			if (thunkedSymbol instanceof FunctionSymbol) {
+				FunctionSymbol thunkedFuncSym = (FunctionSymbol) thunkedSymbol;
+				return thunkedFuncSym.getParentNamespace();
+			}
+		}
+		return super.getParentNamespace();
+	}
+
 //	@Override
 //	public void setNameAndNamespace(String newName, Namespace newNamespace, SourceType source)
 //			throws DuplicateNameException, InvalidInputException, CircularDependencyException {
