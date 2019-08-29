@@ -448,11 +448,8 @@ public class ListingModelAdapter implements LayoutModel, ListingModelListener {
 	}
 
 	protected void resetIndexMap() {
-		AddressIndexMap previous = addressToIndexMap.clone();
-		BigInteger indexCount = addressToIndexMap.getIndexCount();
-		addressToIndexMap.reset();
-		removeUnviewableAddressRanges();
-		if (!addressToIndexMap.getIndexCount().equals(indexCount)) {
+		AddressIndexMap previous = addressToIndexMap.reset();
+		if (removeUnviewableAddressRanges()) {
 			AddressBasedIndexMapper mapper =
 				new AddressBasedIndexMapper(previous, addressToIndexMap);
 			for (LayoutModelListener listener : listeners) {
@@ -461,12 +458,15 @@ public class ListingModelAdapter implements LayoutModel, ListingModelListener {
 		}
 	}
 
-	private void removeUnviewableAddressRanges() {
+	private boolean removeUnviewableAddressRanges() {
+		boolean changed = false;
 		AddressSet set = findUnviewableAddressRanges();
 		while (!set.isEmpty()) {
+			changed = true;
 			addressToIndexMap.removeUnviewableAddressRanges(set);
 			set = findUnviewableAddressRanges();
 		}
+		return changed;
 	}
 
 	private AddressSet findUnviewableAddressRanges() {

@@ -26,7 +26,12 @@ import docking.widgets.fieldpanel.FieldPanel;
  * indexes to new indexes.
  */
 public interface IndexMapper {
-	public IndexMapper IDENTITY_MAPPER = new IdentityMapper();
+	public static final IndexMapper IDENTITY_MAPPER = new IndexMapper() {
+		@Override
+		public BigInteger map(BigInteger value) {
+			return value;
+		}
+	};
 
 	public BigInteger map(BigInteger value);
 }
