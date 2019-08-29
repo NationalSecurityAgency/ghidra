@@ -32,6 +32,7 @@ import utilities.util.FileUtilities;
  */
 public class ModuleUtilities {
 
+	private static final String BINARY_PATH = System.getProperty("binaryPath", "bin/main");
 	public static final String MANIFEST_FILE_NAME = "Module.manifest";
 	public static final String MANIFEST_FILE_NAME_UNINSTALLED = "Module.manifest.uninstalled";
 	public static final String MODULE_LIST = "MODULE_LIST";
@@ -186,15 +187,17 @@ public class ModuleUtilities {
 	}
 
 	/**
-	 * Gets the "bin" directories from the given modules.
+	 * Gets the directory locations of the .class files and resources from the given modules.
 	 * 
-	 * @param modules The modules to get the bin directories of.
-	 * @return A collection of bin directories from the given modules.
+	 * @param modules The modules to get the compiled .class and resources directories of.
+	 * @return A collection of directories containing classes and resources from the given modules.
 	 */
 	public static Collection<ResourceFile> getModuleBinDirectories(Map<String, GModule> modules) {
+		String[] binaryPathTokens = BINARY_PATH.split(":");
 		List<ResourceFile> binDirectories = new ArrayList<>();
 		for (GModule module : modules.values()) {
-			module.collectExistingModuleDirs(binDirectories, "bin/main");
+			Arrays.stream(binaryPathTokens).forEach(
+				token -> module.collectExistingModuleDirs(binDirectories, token));
 		}
 		return binDirectories;
 	}
