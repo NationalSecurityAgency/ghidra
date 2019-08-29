@@ -1,7 +1,12 @@
 import java.util.regex.*;
 import groovy.io.FileType;
+import java.lang.reflect.Constructor;
+import java.lang.*;
+import java.io.*;
 
-ext.testReport = null; // contains <classname, duration> from JUnit test report
+// This is a map of configuration type names (integration vs. non-integration vs. docking etc..)
+// to tests (test name, duration)
+ext.testReport = null; 
 
 /*
  * Checks if html test report for an individual test class has a valid name.
@@ -48,25 +53,31 @@ long getDurationFromTestReportClass(String fileContents, String fileName) {
 /*
  * Creates <fully qualified classname, duration> from JUnit test report
  */
-def HashMap<String, Long> getTestReport() {
+def Map<String, Map<String, Long>> getTestReport() {
 	// populate testReport only once per gradle configuration phase
 	if (project.testReport == null) {
+		
 		logger.debug("getTestReport: Populating 'testReport' using '$testTimeParserInputDir'")
 
-		testReport = new HashMap<String, Long>();
+		testReport = new HashMap<String,Map>();
+		Map dockingConfigurationBucket = new HashMap<String, Long>();
+		Map headlessConfigurationBucket = new HashMap<String, Long>();
+		Map appConfigurationBucket = new HashMap<String, Long>();
+		Map ghidraConfigurationBucket = new HashMap<String, Long>();
 
 		File classesReportDir = new File(testTimeParserInputDir)
 		if(!classesReportDir.exists()) {
 			logger.info("getTestReport: The path '$testTimeParserInputDir' does not exist on the file system." + 
 				" Returning empty testReport map.")
-			return project.testReport 
+			return Collections.emptyList(); 
 		}
 
 		int excludedHtmlFiles = 0 // counter
 		int totalHtmlFiles = 0
 		String excludedHtmlFileNames = "" // for log.info summary message
-
+		
 		classesReportDir.eachFileRecurse (FileType.FILES) { file ->
+		
 			totalHtmlFiles++
 			// Only read html file for a Test and not a test Suite
 			if(hasValidTestReportClassName(file.name)) {
@@ -76,10 +87,42 @@ def HashMap<String, Long> getTestReport() {
 			 	* <h1>Class ghidra.app.plugin.assembler.sleigh.BuilderTest</h1>
 			 	*/
 				String fqNameFromTestReport = fileContents.find("(?<=<h1>Class\\s).*?(?=</h1>)")
+				int nameIndex = fqNameFromTestReport.lastIndexOf('.')
+				String shortName = fqNameFromTestReport.substring(nameIndex+1);
 
 				long durationInMillis = getDurationFromTestReportClass(fileContents, file.name)
+				
+				
+				File rootDir = project.rootDir.getParentFile();
+				File foundFile;
+				fileTree(rootDir.getAbsolutePath()).visit { FileVisitDetails details ->
+					if (details.getName().contains(shortName + ".java")) {
+				    	foundFile = details.getFile();
+				    }
+				}
+				
+				if (!foundFile.exists()) {
+					// throw error
+				}
+				
+				String javaFileContents = foundFile.text;
+				
+				if (javaFileContents.contains(shortName) && javaFileContents.contains(" extends ")) {
+					if (javaFileContents.contains("AbstractGhidraHeadlessIntegrationTest")) {
+						headlessConfigurationBucket.put(fqNameFromTestReport, durationInMillis);
+					}
+					else if (javaFileContents.contains("AbstractDockingTest")) {
+						dockingConfigurationBucket.put(fqNameFromTestReport, durationInMillis);
+					}
+				}		
+				
+				testReport.put("headless", headlessConfigurationBucket);
+				testReport.put("docking", dockingConfigurationBucket);
+				testReport.put("app", appConfigurationBucket);
+				testReport.put("ghidra", ghidraConfigurationBucket);
+				
+				// END TEST
 
-				testReport.put(fqNameFromTestReport, durationInMillis)
 				logger.debug("getTestReport: Added to testReport: class name = '"
 					+ fqNameFromTestReport + "' and durationInMillis = '"+ durationInMillis
 					+"' from " + file.name)
@@ -99,6 +142,7 @@ def HashMap<String, Long> getTestReport() {
 			+ "\tExcluded html file names are: " + excludedHtmlFileNames + "\n"
 			+ "\tParsed test report located at " + testTimeParserInputDir)
 	}
+
 
 	return project.testReport
 }
@@ -141,11 +185,11 @@ String constructFullyQualifiedClassName(String fileContents, String fileName) {
  * Then traverses a test sourceSet for a subproject for a test to include and assigns a duration value.
  * Returns a sorted list of test classes for the sourceSet parameter.
  */
-def ArrayList getTestsForSubProject(SourceDirectorySet sourceDirectorySet) {
+def Map<String, Map> getTestsForSubProject(SourceDirectorySet sourceDirectorySet) {
 
 	assert (getTestReport() != null) : "getTestsForSubProject: testReport should not be null"
 
-	def testsForSubProject =  new LinkedHashMap<>();
+	def testsForSubProject = new HashMap<String,LinkedHashMap>();
 	
 	int includedClassFilesNotInTestReport = 0 // class in sourceSet but not in test report, 'bumped' to first task
 	int includedClassFilesInTestReport = 0    // class in sourceSet and in test report
@@ -155,6 +199,8 @@ def ArrayList getTestsForSubProject(SourceDirectorySet sourceDirectorySet) {
 
 	logger.debug("getTestsForSubProject: Found " + sourceDirectorySet.files.size()
 		+ " file(s) in source set to process.")
+		
+	Map<String,Map> testReports = getTestReport();
 
 	for (File file : sourceDirectorySet.getFiles()) {
 		logger.debug("getTestsForSubProject: Found file in sourceSet = " + file.name)
@@ -177,31 +223,57 @@ def ArrayList getTestsForSubProject(SourceDirectorySet sourceDirectorySet) {
 		}
 
 		String fqName = constructFullyQualifiedClassName( fileContents, file.name)
-		// Lookup the test duration
-		if (getTestReport().containsKey(fqName)) {
-			long duration = getTestReport().get(fqName)
-
-			// Some classes from test report have duration value of 0. Exclude these from running.
-			if (duration > 0) {
-				testsForSubProject.put(fqName, duration)
-				logger.debug("getTestsForSubProject: Adding '" + fqName + "'")
-				includedClassFilesInTestReport++
-			} else {
-				logger.debug("getTestsForSubProject: Excluding '" + fqName
-					+ "' because duration from test report is " + duration
-					+ "ms. Probably because all test methods are @Ignore'd." )
-				excludedClassAllTestsIgnored++
+		
+		boolean foundTest = false;
+		for (Map.Entry<String,Map> entry : testReports.entrySet()) {
+			String configName = entry.getKey();
+			Map<String,Long> tests = entry.getValue();
+			
+			if (tests.containsKey(fqName)) {
+				foundTest = true;
+				if (!testsForSubProject.containsKey(configName)) {
+					Map<String,Map> configToTestMap = new LinkedHashMap<>();
+					testsForSubProject.put(configName, configToTestMap);
+				}
+				
+				Map<String,Long> subTests = testsForSubProject.get(configName);
+				
+				long duration = tests.get(fqName);
+				
+				if (duration > 0) {
+					subTests.put(fqName,duration);
+					logger.debug("getTestsForSubProject: Adding '" + fqName + "'")
+					includedClassFilesInTestReport++
+				}
+				else {
+					logger.debug("getTestsForSubProject: Excluding '" + fqName
+						+ "' because duration from test report is " + duration
+						+ "ms. Probably because all test methods are @Ignore'd." )
+					excludedClassAllTestsIgnored++
+				}
 			}
-		} else {
+		}
+		if (!foundTest) {
+			// Don't know what this test is so put it in the "unknown" bucket
+			if (!testsForSubProject.containsKey("unknown")) {
+				Map<String,Map> configToTestMap = new LinkedHashMap<>();
+				testsForSubProject.put("unknown", configToTestMap);
+			}
+				
+			Map<String,Long> subTests = testsForSubProject.get("unknown");
+			
 			logger.debug("getTestsForSubProject: Found test class not in test report."
 				+ " Bumping to front of tasks '" + fqName + "'")
-			testsForSubProject.put(fqName, 3600000) // cheap way to bump to front of (eventually) sorted list
+			subTests.put(fqName, 3600000) // cheap way to bump to front of (eventually) sorted list
 			includedClassFilesNotInTestReport++
 		}
 	}
 
 	// Sort by duration
-	def sorted = testsForSubProject.sort { a, b -> b.value <=> a.value }
+	for (Map.Entry<String,Map> entry : testsForSubProject.entrySet()) {
+		Map<String,Long> testMap = entry.getValue();
+		testMap.sort { a, b -> b.value <=> a.value } 
+	}
 
 	logger.info ("getTestsForSubProject:\n"
 		+ "\tIncluding " + includedClassFilesInTestReport + " test classes for this sourceSet because they are in the test report.\n"
@@ -216,7 +288,7 @@ def ArrayList getTestsForSubProject(SourceDirectorySet sourceDirectorySet) {
 
 	assert sourceDirectorySet.files.size() ==  filesProcessed : "getTestsForSubProject did not process every file in sourceSet"
 	
-	return new ArrayList(sorted.keySet())
+	return testsForSubProject;
 }
 
 /*********************************************************************************
