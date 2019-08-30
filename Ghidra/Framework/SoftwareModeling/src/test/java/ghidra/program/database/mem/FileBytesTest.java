@@ -37,7 +37,11 @@ import ghidra.util.task.TaskMonitor;
 
 public class FileBytesTest extends AbstractGenericTest {
 
+	// Use of small buffer size will not exercise use of indexed ChainedBuffer,
+	// therefor those tests which need to exercise this should use a size which
+	// exceeds 16-KBytes.
 	private static final int MAX_BUFFER_SIZE_FOR_TESTING = 200;
+
 	private Program program;
 	private Memory mem;
 	private int transactionID;
@@ -184,6 +188,59 @@ public class FileBytesTest extends AbstractGenericTest {
 			assertEquals(i, original[i]);
 			assertEquals(i + 1, modified[i]);
 		}
+	}
+
+	@Test
+	public void testGetLayeredBytesAfterUndo() throws Exception {
+		// NOTE: need to induce use of indexed ChainedBuffer
+		FileBytesAdapter.setMaxBufferSize(FileBytesAdapter.MAX_BUF_SIZE);
+		FileBytes fileBytes = createFileBytes("file1", 20000);
+
+		program.endTransaction(transactionID, true);
+		transactionID = program.startTransaction("modify");
+
+		incrementFileBytes(fileBytes, 0, 10);
+		incrementFileBytes(fileBytes, 18999, 10);
+
+		// undo layered buffer changes
+		program.endTransaction(transactionID, true);
+		program.undo();
+		transactionID = program.startTransaction("resume");
+
+		// check that the layered bytes are unchanged from the originals
+		assertEquals(1, fileBytes.getOriginalByte(1));
+		assertEquals(1, fileBytes.getModifiedByte(1));
+
+		byte b = (byte) 19000;
+		assertEquals(b, fileBytes.getOriginalByte(19000));
+		assertEquals(b, fileBytes.getModifiedByte(19000));
+	}
+
+	@Test
+	public void testGetLayeredBytesAfterUndoRedo() throws Exception {
+		// NOTE: need to induce use of indexed ChainedBuffer
+		FileBytesAdapter.setMaxBufferSize(FileBytesAdapter.MAX_BUF_SIZE);
+		FileBytes fileBytes = createFileBytes("file1", 20000);
+
+		program.endTransaction(transactionID, true);
+		transactionID = program.startTransaction("modify");
+
+		incrementFileBytes(fileBytes, 0, 10);
+		incrementFileBytes(fileBytes, 18999, 10);
+
+		// undo layered buffer changes
+		program.endTransaction(transactionID, true);
+		program.undo();
+		program.redo();
+		transactionID = program.startTransaction("resume");
+
+		// check that the layered bytes are unchanged from the originals
+		assertEquals(1, fileBytes.getOriginalByte(1));
+		assertEquals(2, fileBytes.getModifiedByte(1));
+
+		byte b = (byte) 19000;
+		assertEquals(b, fileBytes.getOriginalByte(19000));
+		assertEquals((byte) (b + 1), fileBytes.getModifiedByte(19000));
 	}
 
 	private FileBytes createFileBytes(String name, int size) throws Exception {

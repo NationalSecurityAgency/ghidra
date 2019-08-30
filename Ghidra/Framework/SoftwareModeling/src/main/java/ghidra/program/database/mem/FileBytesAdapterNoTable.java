@@ -27,8 +27,8 @@ import db.DBHandle;
  */
 class FileBytesAdapterNoTable extends FileBytesAdapter {
 
-	public FileBytesAdapterNoTable(DBHandle handle, MemoryMapDB memMap) {
-		super(handle, memMap);
+	public FileBytesAdapterNoTable(DBHandle handle) {
+		super(handle);
 	}
 
 	@Override
