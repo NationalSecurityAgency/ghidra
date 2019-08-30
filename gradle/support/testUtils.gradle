@@ -275,7 +275,7 @@ def Map<String, Map<String, Long>> getTestReport() {
 
 		int processedFiles = 0;
 		for (Map.Entry<String,Map> entry : testReport.entrySet()) {
-			Map<String,long> testMap = entry.getValue();
+			Map<String,Long> testMap = entry.getValue();
 			processedFiles += testMap.size();
 		}
 		logger.info("====processed: " + processedFiles + "::" + totalHtmlFiles);
