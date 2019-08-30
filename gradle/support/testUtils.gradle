@@ -100,22 +100,42 @@ def Map<String, Map<String, Long>> getTestReport() {
 			String[] classes = grop.split("\n");
 			if (header.equals("HeadlessGhidraApplicationConfig")) {
 				for (int j=0;j<classes.size(); j++) {
-					integrationConfigs.add(classes[j]);
+					String cl = classes[j].trim();
+					if (cl.isEmpty()) {
+					  continue;
+					}
+					logger.info("adding " + cl + " to integrationConfigs");
+					integrationConfigs.add(cl);
 				}
 			}
 			else if (header.equals("DockingApplicationConfiguration")) {
 				for (int j=0;j<classes.size(); j++) {
-					dockingConfigs.add(classes[j]);
+					String cl = classes[j].trim();
+					if (cl.isEmpty()) {
+					  continue;
+					}
+					logger.info("adding " + cl + " to dockingConfigs");
+					dockingConfigs.add(cl);
 				}
 			}
 			else if (header.equals("ApplicationConfiguration")) {
 				for (int j=0;j<classes.size(); j++) {
-					appConfigs.add(classes[j]);
+					String cl = classes[j].trim();
+					if (cl.isEmpty()) {
+					  continue;
+					}
+					logger.info("adding " + cl + " to appConfigs");
+					appConfigs.add(cl);
 				}
 			}
 			else if (header.equals("GhidraAppConfiguration")) {
 				for (int j=0;j<classes.size(); j++) {
-					ghidraConfigs.add(classes[j]);
+					String cl = classes[j].trim();
+					if (cl.isEmpty()) {
+					  continue;
+					}
+					logger.info("adding " + cl + " to ghidraConfigs");
+					ghidraConfigs.add(cl);
 				}
 			}			
 		}		
