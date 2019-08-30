@@ -51,194 +51,193 @@ long getDurationFromTestReportClass(String fileContents, String fileName) {
 }
 
 /*
- * Creates <fully qualified classname, duration> from JUnit test report
+ * Creates a map of tests to their durations, organized by the type of
+ * application configuration they require. This gets the mapping from the
+ * resource file app_config_breakout.txt.
+ * 
+ * eg:  GhidraAppConfiguration -> DiffTestTypeAdapter, 0.135s
  */
 def Map<String, Map<String, Long>> getTestReport() {
-	// populate testReport only once per gradle configuration phase
-	if (project.testReport == null) {
-		
-		logger.debug("getTestReport: Populating 'testReport' using '$testTimeParserInputDir'")
 
-		testReport = new HashMap<String,Map>();
-		Map dockingConfigurationBucket = new HashMap<String, Long>();
-		Map integrationConfigurationBucket = new HashMap<String, Long>();
-		Map appConfigurationBucket = new HashMap<String, Long>();
-		Map ghidraConfigurationBucket = new HashMap<String, Long>();
-		Map unknownConfigurationBucket = new HashMap<String, Long>();
-
-		File classesReportDir = new File(testTimeParserInputDir)
-		if(!classesReportDir.exists()) {
-			logger.info("getTestReport: The path '$testTimeParserInputDir' does not exist on the file system." + 
-				" Returning empty testReport map.")
-			return Collections.emptyList(); 
-		}
-
-		int excludedHtmlFiles = 0 // counter
-		int totalHtmlFiles = 0
-		String excludedHtmlFileNames = "" // for log.info summary message
-		
-		// Read in the config settings and allocate test files to
-		// the appropriate buckets
-		
-		List<String> integrationConfigs = new ArrayList<>();
-		List<String> dockingConfigs = new ArrayList<>();
-		List<String> appConfigs = new ArrayList<>();
-		List<String> ghidraConfigs = new ArrayList<>();
-				
-		File f = new File(rootProject.projectDir, "gradle/support/app_config_breakout.txt");
-		String configLines = f.text;
-		String[] splitLines = configLines.split("###");
-		for (int i=0; i<splitLines.size(); i++) {
-			String grop = splitLines[i];
-			if (grop.isEmpty()) {
-			   continue;
-			}
+	if (project.testReport != null) {
+		return project.testReport;
+	}
 			
-			// Grab the header (and remove it from the main string)
-			String header = grop.substring(0,grop.indexOf("^"));
-			grop = grop.substring(header.length() + 1);
-			String[] classes = grop.split("\n");
-			if (header.equals("HeadlessGhidraApplicationConfig")) {
-				for (int j=0;j<classes.size(); j++) {
-					String cl = classes[j].trim();
-					if (cl.isEmpty()) {
-					  continue;
-					}
-					logger.info("adding " + cl + " to integrationConfigs");
-					integrationConfigs.add(cl);
-				}
-			}
-			else if (header.equals("DockingApplicationConfiguration")) {
-				for (int j=0;j<classes.size(); j++) {
-					String cl = classes[j].trim();
-					if (cl.isEmpty()) {
-					  continue;
-					}
-					logger.info("adding " + cl + " to dockingConfigs");
-					dockingConfigs.add(cl);
-				}
-			}
-			else if (header.equals("ApplicationConfiguration")) {
-				for (int j=0;j<classes.size(); j++) {
-					String cl = classes[j].trim();
-					if (cl.isEmpty()) {
-					  continue;
-					}
-					logger.info("adding " + cl + " to appConfigs");
-					appConfigs.add(cl);
-				}
-			}
-			else if (header.equals("GhidraAppConfiguration")) {
-				for (int j=0;j<classes.size(); j++) {
-					String cl = classes[j].trim();
-					if (cl.isEmpty()) {
-					  continue;
-					}
-					logger.info("adding " + cl + " to ghidraConfigs");
-					ghidraConfigs.add(cl);
-				}
-			}			
-		}		
-		
-		classesReportDir.eachFileRecurse (FileType.FILES) { file ->
-		
-			totalHtmlFiles++
-			// Only read html file for a Test and not a test Suite
-			if(hasValidTestReportClassName(file.name)) {
+	logger.debug("getTestReport: Populating 'testReport' using '$testTimeParserInputDir'")
 
-				String fileContents = file.text
-				/* The fully qualified class name appears in the test report as:
-			 	* <h1>Class ghidra.app.plugin.assembler.sleigh.BuilderTest</h1>
-			 	*/
-				String fqNameFromTestReport = fileContents.find("(?<=<h1>Class\\s).*?(?=</h1>)")
-				int nameIndex = fqNameFromTestReport.lastIndexOf('.')
-				String shortName = fqNameFromTestReport.substring(nameIndex+1);
+	testReport = new HashMap<String,Map>();
+	Map dockingConfigurationBucket = new HashMap<String, Long>();
+	Map integrationConfigurationBucket = new HashMap<String, Long>();
+	Map appConfigurationBucket = new HashMap<String, Long>();
+	Map ghidraConfigurationBucket = new HashMap<String, Long>();
+	Map unknownConfigurationBucket = new HashMap<String, Long>();
 
-				long durationInMillis = getDurationFromTestReportClass(fileContents, file.name)
-				
-				
-				File rootDir = project.rootDir.getParentFile();
-				File foundFile;
-				fileTree(rootDir.getAbsolutePath()).visit { FileVisitDetails details ->
-					if (details.getName().contains(shortName + ".java")) {
-				    	foundFile = details.getFile();
-				    }
-				}
-				
-				if (!foundFile.exists()) {
-					// throw error
-				}
-				
-				String javaFileContents = foundFile.text;
-				
-				if (javaFileContents.contains(shortName)) {
-				
-					// Match the word right after "extends", if there is one
-					Pattern p = Pattern.compile("extends\\W+(\\w+)");
-					Matcher m = p.matcher(javaFileContents);
-					String extendsClass = "";
-					while (m.find()) {
-						extendsClass = m.group(1);
-						break;
-					}
-					
-					if (extendsClass.isEmpty()) {
-						unknownConfigurationBucket.put(fqNameFromTestReport, durationInMillis);
-					}
-					else {	
-						
-						if (integrationConfigs.contains(extendsClass)) {
-							integrationConfigurationBucket.put(fqNameFromTestReport, durationInMillis);
-						}
-						else if (dockingConfigs.contains(extendsClass)) {
-							dockingConfigurationBucket.put(fqNameFromTestReport, durationInMillis);
-						}
-						else if (appConfigs.contains(extendsClass)) {
-							appConfigurationBucket.put(fqNameFromTestReport, durationInMillis);
-						}
-						else if (ghidraConfigs.contains(extendsClass)) {
-							ghidraConfigurationBucket.put(fqNameFromTestReport, durationInMillis);
-						}
-						else {
-							unknownConfigurationBucket.put(fqNameFromTestReport, durationInMillis);
-						}
-					}
-				}		
-				
-				testReport.put("integration", integrationConfigurationBucket);
-				testReport.put("docking", dockingConfigurationBucket);
-				testReport.put("app", appConfigurationBucket);
-				testReport.put("ghidra", ghidraConfigurationBucket);
-				testReport.put("unknown", unknownConfigurationBucket);
-				
-				// END TEST
-
-				logger.debug("getTestReport: Added to testReport: class name = '"
-					+ fqNameFromTestReport + "' and durationInMillis = '"+ durationInMillis
-					+"' from " + file.name)
-			} else {
-				logger.debug("getTestReport: Excluding " + file.name + " from test report parsing.")
-				excludedHtmlFileNames += file.name + ", "
-				excludedHtmlFiles++
-			}
-		}
-
-		int processedFiles = 0;
-		for (Map.Entry<String,Map> entry : testReport.entrySet()) {
-			Map<String,Long> testMap = entry.getValue();
-			processedFiles += testMap.size();
-		}
-		assert totalHtmlFiles != 0 : "getTestReport: Did not parse any valid html files in $testTimeParserInputDir. Directory might be empty"
-		assert totalHtmlFiles == (processedFiles + excludedHtmlFiles) : "Not all html files processed."
-
-		logger.info("getTestReport:\n" +
-			"\tIncluded " + testReport.size() + " and excluded " + excludedHtmlFiles
-			+ " html files out of " + totalHtmlFiles + " in Junit test report.\n"
-			+ "\tExcluded html file names are: " + excludedHtmlFileNames + "\n"
-			+ "\tParsed test report located at " + testTimeParserInputDir)
+	File classesReportDir = new File(testTimeParserInputDir)
+	if(!classesReportDir.exists()) {
+		logger.info("getTestReport: The path '$testTimeParserInputDir' does not exist on the file system." + 
+			" Returning empty testReport map.")
+		return Collections.emptyList(); 
 	}
 
-
+	int excludedHtmlFiles = 0 // counter
+	int totalHtmlFiles = 0
+	String excludedHtmlFileNames = "" // for log.info summary message
+		
+	// Read in the config settings and allocate test files to
+	// the appropriate buckets
+		
+	List<String> integrationConfigs = new ArrayList<>();
+	List<String> dockingConfigs = new ArrayList<>();
+	List<String> appConfigs = new ArrayList<>();
+	List<String> ghidraConfigs = new ArrayList<>();
+				
+	File f = new File(rootProject.projectDir, "gradle/support/app_config_breakout.txt");
+	String configLines = f.text;
+	String[] splitLines = configLines.split("###");
+	for (int i=0; i<splitLines.size(); i++) {
+		String grop = splitLines[i];
+		if (grop.isEmpty()) {
+		   continue;
+		}
+		
+		// Grab the header (and remove it from the main string)
+		String header = grop.substring(0,grop.indexOf("^"));
+		grop = grop.substring(header.length() + 1);
+		String[] classes = grop.split("\n");
+		if (header.equals("HeadlessGhidraApplicationConfig")) {
+			for (int j=0;j<classes.size(); j++) {
+				String cl = classes[j].trim();
+				if (cl.isEmpty()) {
+				  continue;
+				}
+				logger.info("adding " + cl + " to integrationConfigs");
+				integrationConfigs.add(cl);
+			}
+		}
+		else if (header.equals("DockingApplicationConfiguration")) {
+			for (int j=0;j<classes.size(); j++) {
+				String cl = classes[j].trim();
+				if (cl.isEmpty()) {
+				  continue;
+				}
+				logger.info("adding " + cl + " to dockingConfigs");
+				dockingConfigs.add(cl);
+			}
+		}
+		else if (header.equals("ApplicationConfiguration")) {
+			for (int j=0;j<classes.size(); j++) {
+				String cl = classes[j].trim();
+				if (cl.isEmpty()) {
+				  continue;
+				}
+				logger.info("adding " + cl + " to appConfigs");
+				appConfigs.add(cl);
+			}
+		}
+		else if (header.equals("GhidraAppConfiguration")) {
+			for (int j=0;j<classes.size(); j++) {
+				String cl = classes[j].trim();
+				if (cl.isEmpty()) {
+				  continue;
+				}
+				logger.info("adding " + cl + " to ghidraConfigs");
+				ghidraConfigs.add(cl);
+			}
+		}			
+	}		
+	
+	classesReportDir.eachFileRecurse (FileType.FILES) { file ->
+	
+		totalHtmlFiles++
+		// Only read html file for a Test and not a test Suite
+		if(hasValidTestReportClassName(file.name)) {
+				String fileContents = file.text
+			/* The fully qualified class name appears in the test report as:
+		 	* <h1>Class ghidra.app.plugin.assembler.sleigh.BuilderTest</h1>
+		 	*/
+			String fqNameFromTestReport = fileContents.find("(?<=<h1>Class\\s).*?(?=</h1>)")
+			int nameIndex = fqNameFromTestReport.lastIndexOf('.')
+			String shortName = fqNameFromTestReport.substring(nameIndex+1);
+			long durationInMillis = getDurationFromTestReportClass(fileContents, file.name)
+			
+			
+			File rootDir = project.rootDir.getParentFile();
+			File foundFile;
+			fileTree(rootDir.getAbsolutePath()).visit { FileVisitDetails details ->
+				if (details.getName().contains(shortName + ".java")) {
+			    	foundFile = details.getFile();
+			    }
+			}
+			
+			if (!foundFile.exists()) {
+				// throw error
+			}
+			
+			String javaFileContents = foundFile.text;
+			
+			if (javaFileContents.contains(shortName)) {
+			
+				// Match the word right after "extends", if there is one
+				Pattern p = Pattern.compile("extends\\W+(\\w+)");
+				Matcher m = p.matcher(javaFileContents);
+				String extendsClass = "";
+				while (m.find()) {
+					extendsClass = m.group(1);
+					break;
+				}
+				
+				if (extendsClass.isEmpty()) {
+					unknownConfigurationBucket.put(fqNameFromTestReport, durationInMillis);
+				}
+				else {		
+					if (integrationConfigs.contains(extendsClass)) {
+						integrationConfigurationBucket.put(fqNameFromTestReport, durationInMillis);
+					}
+					else if (dockingConfigs.contains(extendsClass)) {
+						dockingConfigurationBucket.put(fqNameFromTestReport, durationInMillis);
+					}
+					else if (appConfigs.contains(extendsClass)) {
+						appConfigurationBucket.put(fqNameFromTestReport, durationInMillis);
+					}
+					else if (ghidraConfigs.contains(extendsClass)) {
+						ghidraConfigurationBucket.put(fqNameFromTestReport, durationInMillis);
+					}
+					else {
+						unknownConfigurationBucket.put(fqNameFromTestReport, durationInMillis);
+					}
+				}
+			}		
+			
+			testReport.put("integration", integrationConfigurationBucket);
+			testReport.put("docking", dockingConfigurationBucket);
+			testReport.put("app", appConfigurationBucket);
+			testReport.put("ghidra", ghidraConfigurationBucket);
+			testReport.put("unknown", unknownConfigurationBucket);
+			
+			logger.debug("getTestReport: Added to testReport: class name = '"
+				+ fqNameFromTestReport + "' and durationInMillis = '"+ durationInMillis
+				+"' from " + file.name)
+		} 
+		else {
+			logger.debug("getTestReport: Excluding " + file.name + " from test report parsing.")
+			excludedHtmlFileNames += file.name + ", "
+			excludedHtmlFiles++
+		}
+	}
+	
+	int processedFiles = 0;
+	for (Map.Entry<String,Map> entry : testReport.entrySet()) {
+		Map<String,Long> testMap = entry.getValue();
+		processedFiles += testMap.size();
+	}
+	assert totalHtmlFiles != 0 : "getTestReport: Did not parse any valid html files in $testTimeParserInputDir. Directory might be empty"
+	assert totalHtmlFiles == (processedFiles + excludedHtmlFiles) : "Not all html files processed."
+		logger.info("getTestReport:\n" +
+		"\tIncluded " + testReport.size() + " and excluded " + excludedHtmlFiles
+		+ " html files out of " + totalHtmlFiles + " in Junit test report.\n"
+		+ "\tExcluded html file names are: " + excludedHtmlFileNames + "\n"
+		+ "\tParsed test report located at " + testTimeParserInputDir)
+	
 	return project.testReport
 }
 
@@ -282,8 +281,6 @@ String constructFullyQualifiedClassName(String fileContents, String fileName) {
  */
 def Map<String, Map> getTestsForSubProject(SourceDirectorySet sourceDirectorySet) {
 
-	assert (getTestReport() != null) : "getTestsForSubProject: testReport should not be null"
-
 	def testsForSubProject = new HashMap<String,LinkedHashMap>();
 	
 	int includedClassFilesNotInTestReport = 0 // class in sourceSet but not in test report, 'bumped' to first task
@@ -296,6 +293,7 @@ def Map<String, Map> getTestsForSubProject(SourceDirectorySet sourceDirectorySet
 		+ " file(s) in source set to process.")
 		
 	Map<String,Map> testReports = getTestReport();
+	assert (testReports != null) : "getTestsForSubProject: testReport should not be null"
 
 	for (File file : sourceDirectorySet.getFiles()) {
 		logger.debug("getTestsForSubProject: Found file in sourceSet = " + file.name)
