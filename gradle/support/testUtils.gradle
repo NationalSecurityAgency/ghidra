@@ -77,6 +77,49 @@ def Map<String, Map<String, Long>> getTestReport() {
 		int totalHtmlFiles = 0
 		String excludedHtmlFileNames = "" // for log.info summary message
 		
+		// Read in the config settings and allocate test files to
+		// the appropriate buckets
+		
+		List<String> integrationConfigs = new ArrayList<>();
+		List<String> dockingConfigs = new ArrayList<>();
+		List<String> appConfigs = new ArrayList<>();
+		List<String> ghidraConfigs = new ArrayList<>();
+				
+		File f = new File(rootProject.projectDir, "gradle/support/app_config_breakout.txt");
+		String configLines = f.text;
+		String[] splitLines = configLines.split("###");
+		for (int i=0; i<splitLines.size(); i++) {
+			String grop = splitLines[i];
+			if (grop.isEmpty()) {
+			   continue;
+			}
+			
+			// Grab the header (and remove it from the main string)
+			String header = grop.substring(0,grop.indexOf("^"));
+			grop = grop.substring(header + 1);
+			String[] classes = grop.split("\n");
+			if (header.equals("HeadlessGhidraApplicationConfig")) {
+				for (String class : classes) {
+					integrationConfigs.add(class);
+				}
+			}
+			else if (header.equals("DockingApplicationConfiguration")) {
+				for (String class : classes) {
+					dockingConfigs.add(class);
+				}
+			}
+			else if (header.equals("ApplicationConfiguration")) {
+				for (String class : classes) {
+					appConfigs.add(class);
+				}
+			}
+			else if (header.equals("GhidraAppConfiguration")) {
+				for (String class : classes) {
+					ghidraConfigs.add(class);
+				}
+			}			
+		}		
+		
 		classesReportDir.eachFileRecurse (FileType.FILES) { file ->
 		
 			totalHtmlFiles++
@@ -108,11 +151,12 @@ def Map<String, Map<String, Long>> getTestReport() {
 				
 				String javaFileContents = foundFile.text;
 				
+				/**
 				List<String> integrationConfigs = new ArrayList<>();
 				List<String> dockingConfigs = new ArrayList<>();
 				List<String> appConfigs = new ArrayList<>();
 				List<String> ghidraConfigs = new ArrayList<>();
-				
+								
 				// Creates HeadlessGhidraApplicationConfig
 				integrationConfigs.add("AbstractGhidraHeadlessIntegrationTest");
 				integrationConfigs.add("ProcessorEmulatorTestAdapter");
@@ -218,7 +262,7 @@ def Map<String, Map<String, Long>> getTestReport() {
 				ghidraConfigs.add("TutorialScreenShotGenerator");
 				ghidraConfigs.add("AbstractSearchScreenShots");
 				ghidraConfigs.add("DiffApplyTestAdapter");
-				
+				*/
 				//-------------------------------------------------
 				
 				if (javaFileContents.contains(shortName)) {
@@ -278,7 +322,6 @@ def Map<String, Map<String, Long>> getTestReport() {
 			Map<String,Long> testMap = entry.getValue();
 			processedFiles += testMap.size();
 		}
-		logger.info("====processed: " + processedFiles + "::" + totalHtmlFiles);
 		assert totalHtmlFiles != 0 : "getTestReport: Did not parse any valid html files in $testTimeParserInputDir. Directory might be empty"
 		assert totalHtmlFiles == (processedFiles + excludedHtmlFiles) : "Not all html files processed."
 
@@ -421,13 +464,14 @@ def Map<String, Map> getTestsForSubProject(SourceDirectorySet sourceDirectorySet
 		testMap.sort { a, b -> b.value <=> a.value } 
 	}
 
-	logger.info ("getTestsForSubProject:\n"
+/*	logger.info ("getTestsForSubProject:\n"
 		+ "\tIncluding " + includedClassFilesInTestReport + " test classes for this sourceSet because they are in the test report.\n"
 		+ "\tIncluding/bumping " + includedClassFilesNotInTestReport + " not in test report.\n"
 		+ "\tExcluding "+ excludedClassFilesBadName +" based on name not ending in 'Test' or contains 'Abstract' or 'Suite', " + excludedClassFilesCategory
 		+ " based on '@Category, " + excludedClassAllTestsIgnored + " because duration = 0ms.\n"
 		+ "\tReturning sorted list of size "+ sorted.size() + " out of " + sourceDirectorySet.files.size()
 		+ " total files found in sourceSet.")
+*/
 
 	int filesProcessed = includedClassFilesNotInTestReport + includedClassFilesInTestReport +
 						 excludedClassFilesBadName + excludedClassFilesCategory + excludedClassAllTestsIgnored

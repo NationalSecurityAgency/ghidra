@@ -354,15 +354,16 @@ task integrationTestReport(type: TestReport) { t ->
  *  
  *  @param subproject 
  *  @param testType - Either 'test' or 'integrationTest'. The sourceSets defined in setupJava.gradle
+ *  @param bucketName - the test category (appConfig, dockingConfig, integrationConfig, etc...)
  *  @param taskNameCounter - Number to append to task name.
  *  @param classesList - List of classes for this subproject.testType. Sorted by duration.
  *  @param classesListPosition - Start position in 'classesList'
  *  @param numMaxParallelForks - Number of concurrent tests to run.
  *********************************************************************************/
-def createTestTask(Project subproject, String testType, int taskNameCounter, ArrayList classesList,
+def createTestTask(Project subproject, String testType, String bucketName, int taskNameCounter, ArrayList classesList,
 	int classesListPosition, int numMaxParallelForks) {
 
-	subproject.task(testType+"_$taskNameCounter", type: Test) { t ->
+	subproject.task(testType+"_$taskNameCounter"+"_$bucketName", type: Test) { t ->
 		group "test"
 		testClassesDirs = files subproject.sourceSets["$testType"].output.classesDirs
 		classpath = subproject.sourceSets["$testType"].runtimeClasspath
@@ -392,10 +393,10 @@ def createTestTask(Project subproject, String testType, int taskNameCounter, Arr
 
 		// Current task mustRunAfter previous task (test_1 before test_2,etc.)
 		if (taskNameCounter > 1) {
-			def prevTaskName = "$testType" + "_" + (taskNameCounter -1)
+			def prevTaskName = "$testType" + "_" + (taskNameCounter -1) + "_$bucketName"
 			mustRunAfter prevTaskName
 		}
-		logger.info("createTestTask: Created $subproject.name" + ":$testType" + "_$taskNameCounter" 
+		logger.info("createTestTask: Created $subproject.name" + ":$testType" + "_$taskNameCounter" + "_$bucketName"
 			+ "\n\tincludes = \n" + t.getIncludes() + "\n\tinheriting excludes (overrides any 'includes') = \n"
 			+ t.excludes)
 	} // end task
@@ -422,6 +423,8 @@ configure(subprojects.findAll {parallelMode == true}) { subproject ->
 
 			for (Map.Entry<String,Map> classMap : testMap.entrySet()) {
 			
+				String bucketName = classMap.getKey();
+				
 				int classesListPosition = 0 // current position in classesList
 				int taskNameCounter = 1 // task suffix
 				int numMaxParallelForks = 40 // unit tests are fast; 40 seems to be a reasonable number
@@ -431,9 +434,9 @@ configure(subprojects.findAll {parallelMode == true}) { subproject ->
 				List<String> classesList = new ArrayList(sorted.keySet());
 				
 				while (classesListPosition < classesList.size()) {
-					createTestTask(subproject, "test", taskNameCounter, classesList, classesListPosition, numMaxParallelForks)
+					createTestTask(subproject, "test", bucketName, taskNameCounter, classesList, classesListPosition, numMaxParallelForks)
 					classesListPosition+=numMaxParallelForks
-					taskNameCounter+=1; // "test_1", "test_2, etc.
+					taskNameCounter+=1; // "test_1_appConfig", "test_2_appConfig, etc.
 				}
 			}
 		}
@@ -458,9 +461,9 @@ configure(subprojects.findAll {parallelMode == true}) { subproject ->
 				List<String> classesList = new ArrayList(sorted.keySet());
 				
 				while (classesListPosition < classesList.size()) {
-					createTestTask(subproject, "integrationTest", taskNameCounter, classesList, classesListPosition, numMaxParallelForks)
+					createTestTask(subproject, "integrationTest", bucketName, taskNameCounter, classesList, classesListPosition, numMaxParallelForks)
 					classesListPosition+=numMaxParallelForks
-					taskNameCounter+=1; // "integrationTest_1", "integrationTest_2, etc.
+					taskNameCounter+=1; // "integrationTest_1_appConfig", "integrationTest_2_appConfig, etc.
 				}
 			}
 		}
