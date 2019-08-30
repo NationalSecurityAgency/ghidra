@@ -448,6 +448,8 @@ configure(subprojects.findAll {parallelMode == true}) { subproject ->
 			
 			for (Map.Entry<String,Map> classMap : testMap.entrySet()) {
 			
+				String bucketName = classMap.getKey();
+			
 				int classesListPosition = 0 // current position in classesList
 				int taskNameCounter = 1 // task suffix
 				

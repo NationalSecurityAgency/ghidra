@@ -96,26 +96,26 @@ def Map<String, Map<String, Long>> getTestReport() {
 			
 			// Grab the header (and remove it from the main string)
 			String header = grop.substring(0,grop.indexOf("^"));
-			grop = grop.substring(header + 1);
+			grop = grop.substring(header.length() + 1);
 			String[] classes = grop.split("\n");
 			if (header.equals("HeadlessGhidraApplicationConfig")) {
-				for (String class : classes) {
-					integrationConfigs.add(class);
+				for (int j=0;j<classes.size(); j++) {
+					integrationConfigs.add(classes[j]);
 				}
 			}
 			else if (header.equals("DockingApplicationConfiguration")) {
-				for (String class : classes) {
-					dockingConfigs.add(class);
+				for (int j=0;j<classes.size(); j++) {
+					dockingConfigs.add(classes[j]);
 				}
 			}
 			else if (header.equals("ApplicationConfiguration")) {
-				for (String class : classes) {
-					appConfigs.add(class);
+				for (int j=0;j<classes.size(); j++) {
+					appConfigs.add(classes[j]);
 				}
 			}
 			else if (header.equals("GhidraAppConfiguration")) {
-				for (String class : classes) {
-					ghidraConfigs.add(class);
+				for (int j=0;j<classes.size(); j++) {
+					ghidraConfigs.add(classes[j]);
 				}
 			}			
 		}		
@@ -150,120 +150,6 @@ def Map<String, Map<String, Long>> getTestReport() {
 				}
 				
 				String javaFileContents = foundFile.text;
-				
-				/**
-				List<String> integrationConfigs = new ArrayList<>();
-				List<String> dockingConfigs = new ArrayList<>();
-				List<String> appConfigs = new ArrayList<>();
-				List<String> ghidraConfigs = new ArrayList<>();
-								
-				// Creates HeadlessGhidraApplicationConfig
-				integrationConfigs.add("AbstractGhidraHeadlessIntegrationTest");
-				integrationConfigs.add("ProcessorEmulatorTestAdapter");
-				integrationConfigs.add("SaveAsOutboundTest");
-				
-				// Extenders
-				integrationConfigs.add("AbstractDbgTest");
-				integrationConfigs.add("AbstractGProtocolTest");
-				integrationConfigs.add("GProtocolClientServerTestBase");
-				integrationConfigs.add("AbstractHeadlessAnalyzerTest");
-				integrationConfigs.add("SuperListingTest");
-				integrationConfigs.add("SuperProgramTest");
-				integrationConfigs.add("EmulatorTest");
-								
-				//---------------------
-				
-				// Creates DockingApplicationConfiguration
-				dockingConfigs.add("AbstractDockingTest");
-				
-				// Extenders
-				dockingConfigs.add("AbstractCRIntegrationTest");
-				dockingConfigs.add("AbstractDropDownTextFieldTest<T>");
-				dockingConfigs.add("AbstractFcgTest");
-				dockingConfigs.add("AbstractTaskTest");
-				dockingConfigs.add("AbstractThreadedTableTest");
-				dockingConfigs.add("DefaultThreadedTableFilterTest");
-				dockingConfigs.add("ThreadedTableTest");
-				dockingConfigs.add("AbstractVisualGraphTest");
-				dockingConfigs.add("AbstractSimpleVisualGraphTest");
-								
-				//---------------------
-				
-				// Creates ApplicationConfiguration
-				appConfigs.add("AbstractGenericTest");
-				appConfigs.add("SolverTest");
-				appConfigs.add("TestClassFileCreator");
-				
-				// Extenders
-				appConfigs.add("AbstractAssemblyTest");
-				appConfigs.add("AbstractChainedBufferTest");
-				appConfigs.add("AbstractCreateDataTypeModelTest");
-				appConfigs.add("AbstractGraphAlgorithmsTest");
-				appConfigs.add("AbstractHelpModuleLocationTest");
-				appConfigs.add("AbstractHelpTest");
-				appConfigs.add("AbstractLocalFileSystemTest");
-				appConfigs.add("AbstractOpBehaviorTest");
-				appConfigs.add("MDMangBaseTest");
-				appConfigs.add("StorageEditorModelTest");
-				appConfigs.add("VTBaseTestCase");
-				appConfigs.add("AbstractEHTest");
-				appConfigs.add("AbstractRttiTest");
-				
-				//---------------------
-				
-				// Creates GhidraAppConfiguration
-				ghidraConfigs.add("DataTypeSelectionTextFieldTest");  
-				ghidraConfigs.add("AbstractGhidraHeadedIntegrationTest");
-				
-				// Extenders
-				ghidraConfigs.add("AbstractAddressMapDBTestClass");
-				ghidraConfigs.add("AbstractCodeBrowserNavigationTest");
-				ghidraConfigs.add("AbstractCorrelatorTest");
-				ghidraConfigs.add("AbstractCreateArchiveTest");
-				ghidraConfigs.add("AbstractDataActionTest");
-				ghidraConfigs.add("AbstractEditorTest");
-				ghidraConfigs.add("AbstractFileFormatsTest");
-				ghidraConfigs.add("AbstractFollowFlowTest");
-				ghidraConfigs.add("AbstractFunctionGraphTest");
-				ghidraConfigs.add("AbstractFunctionSignatureMarkupTest");
-				ghidraConfigs.add("AbstractGFileSystemBaseTest");
-				ghidraConfigs.add("AbstractGhidraScriptMgrPluginTest");
-				ghidraConfigs.add("AbstractMergeTest");
-				ghidraConfigs.add("AbstractProgramBasedTest");
-				ghidraConfigs.add("AbstractProgramDiffTest");
-				ghidraConfigs.add("AbstractProgramTreePluginTest");
-				ghidraConfigs.add("AbstractScreenShotGenerator");
-				ghidraConfigs.add("AbstractSelectByFlowPluginTest");
-				ghidraConfigs.add("AbstractSymbolTreePluginExternalsTest");
-				ghidraConfigs.add("AbstractToolSavingTest");
-				ghidraConfigs.add("AbstractVersionControlActionTest");
-				ghidraConfigs.add("AbstractVTCorrelatorTest");
-				ghidraConfigs.add("AbstractVTMarkupItemTest");
-				ghidraConfigs.add("DiffTestAdapter");
-				ghidraConfigs.add("DWARFTestBase");
-				ghidraConfigs.add("AbstractSelfSimilarCorrelatorTest");
-				ghidraConfigs.add("AbstractStackEditorTest");
-				ghidraConfigs.add("AbstractStructureEditorTest");
-				ghidraConfigs.add("AbstractUnionEditorTest");
-				ghidraConfigs.add("AbstractStackEditorProviderTest");
-				ghidraConfigs.add("AbstractStructureEditorLockedActionsTest");
-				ghidraConfigs.add("AbstractStructureEditorUnlockedActionsTest");
-				ghidraConfigs.add("AbstractStructureEditorUnlockedCellEditTest");
-				ghidraConfigs.add("AbstractDataTypeMergeTest");
-				ghidraConfigs.add("AbstractProgramTreeMergeManagerTest");
-				ghidraConfigs.add("AbstractListingMergeManagerTest");
-				ghidraConfigs.add("AbstractExternalMergerTest");
-				ghidraConfigs.add("AbstractDecompilerTest");
-				ghidraConfigs.add("AbstractEquatePluginTest");
-				ghidraConfigs.add("AbstractLocationReferencesTest");
-				ghidraConfigs.add("AbstractMemSearchTest");
-				ghidraConfigs.add("AbstractDecompilerFindReferencesActionTest");
-				ghidraConfigs.add("GhidraScreenShotGenerator");
-				ghidraConfigs.add("TutorialScreenShotGenerator");
-				ghidraConfigs.add("AbstractSearchScreenShots");
-				ghidraConfigs.add("DiffApplyTestAdapter");
-				*/
-				//-------------------------------------------------
 				
 				if (javaFileContents.contains(shortName)) {
 				
