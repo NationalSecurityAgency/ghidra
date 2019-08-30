@@ -1,5 +1,5 @@
 Ghidra server startup parameters.
-Command line parameters: [-ip <hostname>] [-i #.#.#.#] [-p#] [-a#] [-d<ntDomain>] [-e<days>] [-u] [-n] <repository_path>
+Command line parameters: [-ip <hostname>] [-i #.#.#.#] [-p#] [-a#] [-d<ntDomain>] [-e<days>] [-u] [-jaas <path_to_jaas_config_file>] [-autoProvision] [-n] <repository_path>
  
    -ip <hostname> : identifies the remote access IPv4 address or hostname (FQDN) which should be 
    	                used by remote clients to access the server.
@@ -8,9 +8,10 @@ Command line parameters: [-ip <hostname>] [-i #.#.#.#] [-p#] [-a#] [-d<ntDomain>
 	
    -p# : base TCP port to be used (default: 13100) [see Note 1]
    
-   -a# : an optional authentication mode where # is a value 0 or 2
+   -a# : an optional authentication mode where # is a value 0 or 2 or 4
          0 - Private user password
          2 - PKI Authentication
+         4 - JAAS Authentication controlled by config file pointed to by -jaas
  
    -anonymous : enables anonymous repository access (see svrREADME.html for details)
  
@@ -19,6 +20,12 @@ Command line parameters: [-ip <hostname>] [-i #.#.#.#] [-p#] [-a#] [-d<ntDomain>
    -e<days> : specifies default password expiration time in days (-a0 mode only, default is 1-day)
 
    -u   : enable users to be prompted for user ID (does not apply to -a2 PKI mode)
+   
+   -jaas /path/to/jaas_config_file : specifies config file to use for JAAS (enabled by -a4)
+   
+   -autoProvision : enable the auto-creation of Ghidra users when the authenticator module 
+                    (ie. OS or other authentication method specified by JAAS) authenticates
+                    a new unknown user.
 
    -n   : enable reverse name lookup for IP addresses when logging (requires proper configuration 
           of reverse lookup by your DNS server)
@@ -36,3 +43,11 @@ NOTES:
 1. The server utilizes a total of 3 consecutive TCP ports starting with the 
    base port (default: 13100).  The wrapper.log can be examined for server 
    console output which will indicate the startup port assignments.                       
+
+2. Ghidra's JAAS authentication mode uses the "auth" section of the JAAS file pointed to by the -jaas
+   argument.
+   
+3. Example JAAS config files are included in the /server/jaas directory of the Ghidra distro.  It is the
+   system administrator's responsibility to create the necessary JAAS config for their system.
+   
+  
