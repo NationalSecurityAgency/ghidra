@@ -167,7 +167,7 @@ def Map<String, Map<String, Long>> getTestReport() {
 				
 				//---------------------
 				
-				// Creates GhidraAppConfig
+				// Creates GhidraAppConfiguration
 				ghidraConfigs.add("DataTypeSelectionTextFieldTest");  
 				ghidraConfigs.add("AbstractGhidraHeadedIntegrationTest");
 				
@@ -273,8 +273,14 @@ def Map<String, Map<String, Long>> getTestReport() {
 			}
 		}
 
+		int processedFiles = 0;
+		for (Map.Entry<String,Map> entry : testReport.entrySet()) {
+			Map<String,long> testMap = entry.getValue();
+			processedFiles += testMap.size();
+		}
+		logger.info("====processed: " + processedFiles + "::" + totalHtmlFiles);
 		assert totalHtmlFiles != 0 : "getTestReport: Did not parse any valid html files in $testTimeParserInputDir. Directory might be empty"
-		assert totalHtmlFiles == (testReport.size() + excludedHtmlFiles) : "Not all html files processed."
+		assert totalHtmlFiles == (processedFiles + excludedHtmlFiles) : "Not all html files processed."
 
 		logger.info("getTestReport:\n" +
 			"\tIncluded " + testReport.size() + " and excluded " + excludedHtmlFiles
