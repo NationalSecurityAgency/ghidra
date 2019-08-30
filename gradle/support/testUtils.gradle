@@ -113,98 +113,119 @@ def Map<String, Map<String, Long>> getTestReport() {
 				List<String> appConfigs = new ArrayList<>();
 				List<String> ghidraConfigs = new ArrayList<>();
 				
+				// Creates HeadlessGhidraApplicationConfig
 				integrationConfigs.add("AbstractGhidraHeadlessIntegrationTest");
-				integrationConfigs.add("AbstractGhidraHeadedIntegrationTest");
-				integrationConfigs.add("AbstractAddressMapDBTestClass");
-				integrationConfigs.add("AbstractGCodeBrowserNavigationTest");
-				integrationConfigs.add("AbstractCorrelatorTest");
-				integrationConfigs.add("AbstractCreateArchiveTest");
-				integrationConfigs.add("AbstractDataActionTest");
-				integrationConfigs.add("AbstractEditorTest");
-				integrationConfigs.add("AbstractFileFormatsTest");
-				integrationConfigs.add("AbstractFollowFlowTest");
-				integrationConfigs.add("AbstractFunctionGraphTest");
-				integrationConfigs.add("AbstractFunctionSignatureMarkupTest");
-				integrationConfigs.add("AbstractGFileSystemBaseTest");
-				integrationConfigs.add("AbstractGhidraScriptMgrPluginTest");
-				integrationConfigs.add("AbstractMergeTest");
-				integrationConfigs.add("AbstractProgramBasedTest");
-				integrationConfigs.add("AbstractProgramDiffTest");
-				integrationConfigs.add("AbstractProgramTreePluginTest");
-				integrationConfigs.add("AbstractScreenShotGenerator");
-				integrationConfigs.add("AbstractSelectByFlowPluginTest");
-				integrationConfigs.add("AbstractSymbolTreePluginExternalsTest");
-				integrationConfigs.add("AbstractToolSavingTest");
-				integrationConfigs.add("AbstractVersionControlActionTest");
-				integrationConfigs.add("AbstractVTCorrelatorTest");
-				integrationConfigs.add("AbstractVTMarkupItemTest");
+				integrationConfigs.add("ProcessorEmulatorTestAdapter");
+				integrationConfigs.add("SaveAsOutboundTest");
 				
-				integrationConfigs.add("DiffApplyTestAdapter");
-				integrationConfigs.add("DiffEnablementTest");
-				integrationConfigs.add("DiffGet2Test");
-				integrationConfigs.add("DiffGetTest");
-				integrationConfigs.add("DiffTest");
-				integrationConfigs.add("DualProgramTest");
-				
-				integrationConfigs.add("DIEAMonitoredIteratorTest");
-				integrationConfigs.add("DWARFDataTypeImporterTest");
-				integrationConfigs.add("DWARFNameInfoTest");
-				
+				// Extenders
 				integrationConfigs.add("AbstractDbgTest");
 				integrationConfigs.add("AbstractGProtocolTest");
-				integrationConfigs.add("AbstractGProtocolClientServerTestBase");
-				
+				integrationConfigs.add("GProtocolClientServerTestBase");
 				integrationConfigs.add("AbstractHeadlessAnalyzerTest");
-				
 				integrationConfigs.add("SuperListingTest");
 				integrationConfigs.add("SuperProgramTest");
-				
+				integrationConfigs.add("EmulatorTest");
+								
 				//---------------------
 				
-				dockingConfigs.add("AbstractGTest");
-				dockingConfigs.add("AbstractCompositeImplBitFieldTest");
-				dockingConfigs.add("AbstractGenericTest");
-				dockingConfigs.add("AbstractAssemblyTest");
-				dockingConfigs.add("AbstractChainedBufferTest");
-				dockingConfigs.add("AbstractCreateDataTypeModelTest");
-				dockingConfigs.add("AbstractGraphAlgorithmsTest");
-				dockingConfigs.add("AbstractHelpModuleLocationTest");
-				dockingConfigs.add("AbstractHelpTest");
-				dockingConfigs.add("AbstractLocalFileSystemTest");
-				dockingConfigs.add("AbstractOpBehaviorTest");
+				// Creates DockingApplicationConfiguration
 				dockingConfigs.add("AbstractDockingTest");
-				dockingConfigs.add("AbstractEHTest");
-				dockingConfigs.add("AbstractRttiTest");
 				
+				// Extenders
 				dockingConfigs.add("AbstractCRIntegrationTest");
 				dockingConfigs.add("AbstractDropDownTextFieldTest<T>");
 				dockingConfigs.add("AbstractFcgTest");
-				dockingConfigs.add("AbstractGhidraTest");
 				dockingConfigs.add("AbstractTaskTest");
 				dockingConfigs.add("AbstractThreadedTableTest");
-				dockingConfigs.add("AbstractVisualGraphTest");
-				dockingConfigs.add("AbstractSimpleVisualGraphTest");
 				dockingConfigs.add("DefaultThreadedTableFilterTest");
 				dockingConfigs.add("ThreadedTableTest");
-				dockingConfigs.add("StorageEditorModelTest");
-				dockingConfigs.add("VTBaseTestCase");
+				dockingConfigs.add("AbstractVisualGraphTest");
+				dockingConfigs.add("AbstractSimpleVisualGraphTest");
+								
+				//---------------------
+				
+				// Creates ApplicationConfiguration
+				appConfigs.add("AbstractGenericTest");
+				appConfigs.add("SolverTest");
+				appConfigs.add("TestClassFileCreator");
+				
+				// Extenders
+				appConfigs.add("AbstractAssemblyTest");
+				appConfigs.add("AbstractChainedBufferTest");
+				appConfigs.add("AbstractCreateDataTypeModelTest");
+				appConfigs.add("AbstractGraphAlgorithmsTest");
+				appConfigs.add("AbstractHelpModuleLocationTest");
+				appConfigs.add("AbstractHelpTest");
+				appConfigs.add("AbstractLocalFileSystemTest");
+				appConfigs.add("AbstractOpBehaviorTest");
+				appConfigs.add("MDMangBaseTest");
+				appConfigs.add("StorageEditorModelTest");
+				appConfigs.add("VTBaseTestCase");
+				appConfigs.add("AbstractEHTest");
+				appConfigs.add("AbstractRttiTest");
 				
 				//---------------------
 				
-				appConfigs.add("?????");
+				// Creates GhidraAppConfig
+				ghidraConfigs.add("DataTypeSelectionTextFieldTest");  
+				ghidraConfigs.add("AbstractGhidraHeadedIntegrationTest");
 				
-				//---------------------
-				
-				ghidraConfigs.add("?????????");
+				// Extenders
+				ghidraConfigs.add("AbstractAddressMapDBTestClass");
+				ghidraConfigs.add("AbstractCodeBrowserNavigationTest");
+				ghidraConfigs.add("AbstractCorrelatorTest");
+				ghidraConfigs.add("AbstractCreateArchiveTest");
+				ghidraConfigs.add("AbstractDataActionTest");
+				ghidraConfigs.add("AbstractEditorTest");
+				ghidraConfigs.add("AbstractFileFormatsTest");
+				ghidraConfigs.add("AbstractFollowFlowTest");
+				ghidraConfigs.add("AbstractFunctionGraphTest");
+				ghidraConfigs.add("AbstractFunctionSignatureMarkupTest");
+				ghidraConfigs.add("AbstractGFileSystemBaseTest");
+				ghidraConfigs.add("AbstractGhidraScriptMgrPluginTest");
+				ghidraConfigs.add("AbstractMergeTest");
+				ghidraConfigs.add("AbstractProgramBasedTest");
+				ghidraConfigs.add("AbstractProgramDiffTest");
+				ghidraConfigs.add("AbstractProgramTreePluginTest");
+				ghidraConfigs.add("AbstractScreenShotGenerator");
+				ghidraConfigs.add("AbstractSelectByFlowPluginTest");
+				ghidraConfigs.add("AbstractSymbolTreePluginExternalsTest");
+				ghidraConfigs.add("AbstractToolSavingTest");
+				ghidraConfigs.add("AbstractVersionControlActionTest");
+				ghidraConfigs.add("AbstractVTCorrelatorTest");
+				ghidraConfigs.add("AbstractVTMarkupItemTest");
+				ghidraConfigs.add("DiffTestAdapter");
+				ghidraConfigs.add("DWARFTestBase");
+				ghidraConfigs.add("AbstractSelfSimilarCorrelatorTest");
+				ghidraConfigs.add("AbstractStackEditorTest");
+				ghidraConfigs.add("AbstractStructureEditorTest");
+				ghidraConfigs.add("AbstractUnionEditorTest");
+				ghidraConfigs.add("AbstractStackEditorProviderTest");
+				ghidraConfigs.add("AbstractStructureEditorLockedActionsTest");
+				ghidraConfigs.add("AbstractStructureEditorUnlockedActionsTest");
+				ghidraConfigs.add("AbstractStructureEditorUnlockedCellEditTest");
+				ghidraConfigs.add("AbstractDataTypeMergeTest");
+				ghidraConfigs.add("AbstractProgramTreeMergeManagerTest");
+				ghidraConfigs.add("AbstractListingMergeManagerTest");
+				ghidraConfigs.add("AbstractExternalMergerTest");
+				ghidraConfigs.add("AbstractDecompilerTest");
+				ghidraConfigs.add("AbstractEquatePluginTest");
+				ghidraConfigs.add("AbstractLocationReferencesTest");
+				ghidraConfigs.add("AbstractMemSearchTest");
+				ghidraConfigs.add("AbstractDecompilerFindReferencesActionTest");
+				ghidraConfigs.add("GhidraScreenShotGenerator");
+				ghidraConfigs.add("TutorialScreenShotGenerator");
+				ghidraConfigs.add("AbstractSearchScreenShots");
+				ghidraConfigs.add("DiffApplyTestAdapter");
 				
 				//-------------------------------------------------
-				
 				
 				if (javaFileContents.contains(shortName)) {
 				
 					// Match the word right after "extends", if there is one
 					Pattern p = Pattern.compile("extends\\W+(\\w+)");
-					Matcher m = p.matcher(contents);
+					Matcher m = p.matcher(javaFileContents);
 					String extendsClass = "";
 					while (m.find()) {
 						extendsClass = m.group(1);
