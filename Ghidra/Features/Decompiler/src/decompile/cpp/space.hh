@@ -37,7 +37,7 @@ enum spacetype {
 
 class AddrSpace;
 class AddrSpaceManager;
-class VarnodeData;
+struct VarnodeData;
 class Translate;
 
 /// \brief A region where processor data is stored
