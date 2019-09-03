@@ -35,8 +35,7 @@ import ghidra.program.model.data.*;
 import ghidra.program.model.data.Enum;
 import ghidra.program.model.listing.*;
 import ghidra.util.*;
-import ghidra.util.exception.DuplicateNameException;
-import ghidra.util.exception.InvalidInputException;
+import ghidra.util.exception.*;
 
 /**
  * Manages program and archive data type editors.
@@ -615,7 +614,13 @@ public class DataTypeEditorManager
 		protected boolean applyChanges() {
 			// can't use a command here as we have to create a transaction on the datatypeManager
 			// (it might be an archive and the transaction on the program wouldn't work)
-			FunctionDefinitionDataType newDefinition = parseSignature();
+			FunctionDefinitionDataType newDefinition = null;
+			try {
+				newDefinition = parseSignature();
+			}
+			catch (CancelledException e1) {
+				// ignore
+			}
 
 			if (newDefinition == null) {
 				return false;

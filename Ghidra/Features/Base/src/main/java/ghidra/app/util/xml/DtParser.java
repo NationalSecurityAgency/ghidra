@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +18,7 @@ package ghidra.app.util.xml;
 import ghidra.program.model.data.*;
 import ghidra.util.data.DataTypeParser;
 import ghidra.util.data.DataTypeParser.AllowedDataTypes;
+import ghidra.util.exception.CancelledException;
 
 /**
  * DtParser
@@ -27,12 +27,12 @@ class DtParser {
 
 	private DataTypeManager dtManager;
 	private DataTypeParser parser;
-	
+
 	DtParser(DataTypeManager dtManager) {
 		this.dtManager = dtManager;
 		this.parser = new DataTypeParser(dtManager, dtManager, null, AllowedDataTypes.DYNAMIC);
 	}
-	
+
 	/**
 	 * Parse the specified dtName within the specified category.
 	 * @param dtName
@@ -44,7 +44,8 @@ class DtParser {
 		DataType dt;
 		try {
 			dt = parser.parse(dtName, category);
-		} catch (InvalidDataTypeException e) {
+		}
+		catch (InvalidDataTypeException | CancelledException e) {
 			return null;
 		}
 		if (size > 0 && size != dt.getLength()) {
@@ -62,13 +63,13 @@ class DtParser {
 	 */
 	private DataType adjustPointerDataTypes(int size, DataType dt) {
 		if (dt instanceof Pointer) {
-			Pointer p = (Pointer)dt;
+			Pointer p = (Pointer) dt;
 			dt = new PointerDataType(p.getDataType(), size, dtManager);
 		}
-		else if (dt instanceof Array && ((Array)dt).getDataType() instanceof Pointer) {
+		else if (dt instanceof Array && ((Array) dt).getDataType() instanceof Pointer) {
 // TODO: does not handle multi-dimensional pointer arrays
-			Array array = (Array)dt;
-			DataType pointerDt = ((Pointer)array.getDataType()).getDataType();
+			Array array = (Array) dt;
+			DataType pointerDt = ((Pointer) array.getDataType()).getDataType();
 			int pointerSize = size / array.getNumElements();
 			DataType pointer = new PointerDataType(pointerDt, pointerSize, dtManager);
 			dt = new ArrayDataType(pointer, array.getNumElements(), pointerSize, dtManager);

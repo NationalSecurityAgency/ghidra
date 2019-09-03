@@ -29,6 +29,7 @@ import ghidra.app.services.DataTypeManagerService;
 import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.program.model.data.*;
 import ghidra.util.data.DataTypeParser;
+import ghidra.util.exception.CancelledException;
 
 /**
  * An editor that is used to show the {@link DropDownSelectionTextField} for the entering of
@@ -355,7 +356,12 @@ public class DataTypeSelectionEditor extends AbstractCellEditor {
 		DataType newDataType = null;
 		DataTypeParser parser = new DataTypeParser(dataTypeManager, dataTypeManager,
 			dataTypeManagerService, allowedDataTypes);
-		newDataType = parser.parse(selectionField.getText(), getDataTypeRootForCurrentText());
+		try {
+			newDataType = parser.parse(selectionField.getText(), getDataTypeRootForCurrentText());
+		}
+		catch (CancelledException e) {
+			return false;
+		}
 		if (newDataType != null) {
 			if (maxSize >= 0 && newDataType.getLength() > newDataType.getLength()) {
 				throw new InvalidDataTypeException("data-type larger than " + maxSize + " bytes");
