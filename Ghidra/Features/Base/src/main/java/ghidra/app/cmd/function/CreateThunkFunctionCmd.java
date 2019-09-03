@@ -18,6 +18,7 @@ package ghidra.app.cmd.function;
 import java.math.BigInteger;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.StreamSupport;
 
 import ghidra.app.util.PseudoDisassembler;
 import ghidra.framework.cmd.BackgroundCommand;
@@ -26,6 +27,10 @@ import ghidra.program.database.function.OverlappingFunctionException;
 import ghidra.program.model.address.*;
 import ghidra.program.model.block.BasicBlockModel;
 import ghidra.program.model.block.CodeBlock;
+import ghidra.program.model.data.DataType;
+import ghidra.program.model.data.VoidDataType;
+import ghidra.program.model.lang.CompilerSpec;
+import ghidra.program.model.lang.PrototypeModel;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.lang.RegisterValue;
 import ghidra.program.model.listing.*;
@@ -518,9 +523,18 @@ public class CreateThunkFunctionCmd extends BackgroundCommand {
 		// small number of instructions, look at pcode, all loads, arith
 		// no branching other than final computed jump
 
-		// check if the first instruction is an indirect jump
-		Listing listing = program.getListing();
+		long maxInstructions = MAX_NUMBER_OF_THUNKING_INSTRUCTIONS;
 
+		Listing listing = program.getListing();
+		Function function = listing.getFunctionAt(entry);
+
+		// If a function exists at the address, revise the instruction limit accordingly.
+		if (!checkForSideEffects && function != null) {
+			maxInstructions = StreamSupport.stream(listing.getInstructions(
+					function.getBody(), true).spliterator(), false).count();
+		}
+
+		// check if the first instruction is an indirect jump
 		Instruction instr = listing.getInstructionAt(entry);
 		if (instr == null) {
 			return null;
@@ -555,7 +569,24 @@ public class CreateThunkFunctionCmd extends BackgroundCommand {
 		// add in the registers that are set at the beginning of the function
 		addSetRegisters(program, entry, setAtStartRegisters);
 
-		while (instr != null && numInstr++ <= MAX_NUMBER_OF_THUNKING_INSTRUCTIONS) {
+		if (!checkForSideEffects) {
+			/* If "ignoring" side-effects, add in the this pointer and allow
+			   a pointer return type for vector_deleting_destructor.
+			   This might not work for all architectures depending on storage.
+			   As an example, in a language with an address size of 4 and
+			   a long long size of 8, a virtual thunk for a long long getter
+			   may not be determined to be valid.								 */
+			PrototypeModel pModel = program.getCompilerSpec().getCallingConvention(
+				CompilerSpec.CALLING_CONVENTION_thiscall);
+			DataType[] dataTypes = new DataType[]{
+				program.getDataTypeManager().getPointer(VoidDataType.dataType)
+			};
+			for (VariableStorage storage : pModel.getStorageLocations(program, dataTypes, true)) {
+				setAtStartRegisters.add(storage.getFirstVarnode());
+			}
+		}
+
+		while (instr != null && numInstr++ <= maxInstructions) {
 			flowType = instr.getFlowType();
 
 			// Keep track of any read/writes to registers, need to see if there are any side-effects
@@ -588,6 +619,11 @@ public class CreateThunkFunctionCmd extends BackgroundCommand {
 			// keep going if flow target is right below, allow only a simple branch.
 			if (isLocalBranch(listing, instr, flowType)) {
 				continue;
+			}
+
+			// add all the set at start registers to the used registers
+			if (!checkForSideEffects) {
+				usedRegisters.addAll(setAtStartRegisters);
 			}
 
 			// reached a flow, end of the line, gotta see what we have
@@ -679,10 +715,14 @@ public class CreateThunkFunctionCmd extends BackgroundCommand {
 			flowType.equals(RefType.CALL_TERMINATOR)) && !flowType.isConditional()) {
 			// program counter should be assumed to be used
 
-			// assume PC is used when considering registers that have been set
+			// assume PC and stack pointer is used when considering registers that have been set
 			Register PC = program.getLanguage().getProgramCounter();
+			Register SP = program.getCompilerSpec().getStackPointer().getBaseRegister();
 			if (PC != null) {
 				usedRegisters.add(new Varnode(PC.getAddress(), PC.getMinimumByteSize()));
+			}
+			if (SP != null) {
+				usedRegisters.add(new Varnode(SP.getAddress(), SP.getMinimumByteSize()));
 			}
 			setRegisters.removeAll(usedRegisters);
 
