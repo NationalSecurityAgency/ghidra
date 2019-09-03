@@ -52,13 +52,25 @@ long getDurationFromTestReportClass(String fileContents, String fileName) {
 
 /*
  * Creates a map of tests to their durations, organized by the type of
- * application configuration they require. This gets the mapping from the
- * resource file app_config_breakout.txt.
+ * application configuration they require. 
+ *
+ * When creating groups of tests to run, we have to ensure that we not only
+ * group them by duration (to make the parallelization more efficient) but also
+ * by the type of application config they require (to avoid a catastrophic test
+ * failure). 
+ * 
+ * This timing information is gleaned by parsing the html results of a previous
+ * test run.
+ *
+ * The application config information is contained in the resource file
+ * app_config_breakout.txt.
  * 
  * eg:  GhidraAppConfiguration -> DiffTestTypeAdapter, 0.135s
  */
 def Map<String, Map<String, Long>> getTestReport() {
 
+    // If we have already created the test report, do not waste time creating
+    // it again. Just return it.
 	if (project.testReport != null) {
 		return project.testReport;
 	}
@@ -66,85 +78,31 @@ def Map<String, Map<String, Long>> getTestReport() {
 	logger.debug("getTestReport: Populating 'testReport' using '$testTimeParserInputDir'")
 
 	testReport = new HashMap<String,Map>();
-	Map dockingConfigurationBucket = new HashMap<String, Long>();
-	Map integrationConfigurationBucket = new HashMap<String, Long>();
-	Map appConfigurationBucket = new HashMap<String, Long>();
-	Map ghidraConfigurationBucket = new HashMap<String, Long>();
-	Map unknownConfigurationBucket = new HashMap<String, Long>();
-
+		
+	List<String> integrationConfigs = new ArrayList<>();
+	List<String> dockingConfigs = new ArrayList<>();
+	List<String> appConfigs = new ArrayList<>();
+	List<String> ghidraConfigs = new ArrayList<>();
+	parseApplicationConfigs(dockingConfigs, integrationConfigs, appConfigs, ghidraConfigs);
+	
 	File classesReportDir = new File(testTimeParserInputDir)
 	if(!classesReportDir.exists()) {
 		logger.info("getTestReport: The path '$testTimeParserInputDir' does not exist on the file system." + 
 			" Returning empty testReport map.")
 		return Collections.emptyList(); 
 	}
-
+	
+	// These are the configuration 'buckets' that each test class will be dumped
+	// into. Only tests in the same bucket will be run together.
+	Map dockingBucket = new HashMap<String, Long>();
+	Map integrationBucket = new HashMap<String, Long>();
+	Map appBucket = new HashMap<String, Long>();
+	Map ghidraBucket = new HashMap<String, Long>();
+	Map unknownBucket = new HashMap<String, Long>();
+	
 	int excludedHtmlFiles = 0 // counter
 	int totalHtmlFiles = 0
 	String excludedHtmlFileNames = "" // for log.info summary message
-		
-	// Read in the config settings and allocate test files to
-	// the appropriate buckets
-		
-	List<String> integrationConfigs = new ArrayList<>();
-	List<String> dockingConfigs = new ArrayList<>();
-	List<String> appConfigs = new ArrayList<>();
-	List<String> ghidraConfigs = new ArrayList<>();
-				
-	File f = new File(rootProject.projectDir, "gradle/support/app_config_breakout.txt");
-	String configLines = f.text;
-	String[] splitLines = configLines.split("###");
-	for (int i=0; i<splitLines.size(); i++) {
-		String grop = splitLines[i];
-		if (grop.isEmpty()) {
-		   continue;
-		}
-		
-		// Grab the header (and remove it from the main string)
-		String header = grop.substring(0,grop.indexOf("^"));
-		grop = grop.substring(header.length() + 1);
-		String[] classes = grop.split("\n");
-		if (header.equals("HeadlessGhidraApplicationConfig")) {
-			for (int j=0;j<classes.size(); j++) {
-				String cl = classes[j].trim();
-				if (cl.isEmpty()) {
-				  continue;
-				}
-				logger.info("adding " + cl + " to integrationConfigs");
-				integrationConfigs.add(cl);
-			}
-		}
-		else if (header.equals("DockingApplicationConfiguration")) {
-			for (int j=0;j<classes.size(); j++) {
-				String cl = classes[j].trim();
-				if (cl.isEmpty()) {
-				  continue;
-				}
-				logger.info("adding " + cl + " to dockingConfigs");
-				dockingConfigs.add(cl);
-			}
-		}
-		else if (header.equals("ApplicationConfiguration")) {
-			for (int j=0;j<classes.size(); j++) {
-				String cl = classes[j].trim();
-				if (cl.isEmpty()) {
-				  continue;
-				}
-				logger.info("adding " + cl + " to appConfigs");
-				appConfigs.add(cl);
-			}
-		}
-		else if (header.equals("GhidraAppConfiguration")) {
-			for (int j=0;j<classes.size(); j++) {
-				String cl = classes[j].trim();
-				if (cl.isEmpty()) {
-				  continue;
-				}
-				logger.info("adding " + cl + " to ghidraConfigs");
-				ghidraConfigs.add(cl);
-			}
-		}			
-	}		
 	
 	classesReportDir.eachFileRecurse (FileType.FILES) { file ->
 	
@@ -187,32 +145,32 @@ def Map<String, Map<String, Long>> getTestReport() {
 				}
 				
 				if (extendsClass.isEmpty()) {
-					unknownConfigurationBucket.put(fqNameFromTestReport, durationInMillis);
+					unknownBucket.put(fqNameFromTestReport, durationInMillis);
 				}
 				else {		
 					if (integrationConfigs.contains(extendsClass)) {
-						integrationConfigurationBucket.put(fqNameFromTestReport, durationInMillis);
+						integrationBucket.put(fqNameFromTestReport, durationInMillis);
 					}
 					else if (dockingConfigs.contains(extendsClass)) {
-						dockingConfigurationBucket.put(fqNameFromTestReport, durationInMillis);
+						dockingBucket.put(fqNameFromTestReport, durationInMillis);
 					}
 					else if (appConfigs.contains(extendsClass)) {
-						appConfigurationBucket.put(fqNameFromTestReport, durationInMillis);
+						appBucket.put(fqNameFromTestReport, durationInMillis);
 					}
 					else if (ghidraConfigs.contains(extendsClass)) {
-						ghidraConfigurationBucket.put(fqNameFromTestReport, durationInMillis);
+						ghidraBucket.put(fqNameFromTestReport, durationInMillis);
 					}
 					else {
-						unknownConfigurationBucket.put(fqNameFromTestReport, durationInMillis);
+						unknownBucket.put(fqNameFromTestReport, durationInMillis);
 					}
 				}
 			}		
 			
-			testReport.put("integration", integrationConfigurationBucket);
-			testReport.put("docking", dockingConfigurationBucket);
-			testReport.put("app", appConfigurationBucket);
-			testReport.put("ghidra", ghidraConfigurationBucket);
-			testReport.put("unknown", unknownConfigurationBucket);
+			testReport.put("integration", integrationBucket);
+			testReport.put("docking", dockingBucket);
+			testReport.put("app", appBucket);
+			testReport.put("ghidra", ghidraBucket);
+			testReport.put("unknown", unknownBucket);
 			
 			logger.debug("getTestReport: Added to testReport: class name = '"
 				+ fqNameFromTestReport + "' and durationInMillis = '"+ durationInMillis
@@ -239,6 +197,73 @@ def Map<String, Map<String, Long>> getTestReport() {
 		+ "\tParsed test report located at " + testTimeParserInputDir)
 	
 	return project.testReport
+}
+
+/**
+ * Parses the file containing the mapping of test classes to application configs and assigns those
+ * classes to the appropriate lists.
+ */
+def parseApplicationConfigs(List dockingConfigs, List integrationConfigs, List appConfigs, List ghidraConfigs) {
+				
+	File breakoutFile = new File(rootProject.projectDir, "gradle/support/app_config_breakout.txt");
+	String configLines = breakoutFile.text;
+		
+	// Ignore everything up to the first "###" (everything before that
+	// is documentation)
+	configLines = configLines.substring(configLines.indexOf("###"));
+		
+	String[] splitLines = configLines.split("###");
+	for (int i=0; i<splitLines.size(); i++) {
+		String block = splitLines[i];
+		if (block.isEmpty()) {
+		   continue;
+		}
+		
+		// Grab the header (and remove it from the main string)
+		String header = block.substring(0,block.indexOf("^"));
+		block = block.substring(header.length() + 1);
+		String[] classes = block.split("\n");
+		if (header.equals("HeadlessGhidraApplicationConfig")) {
+			for (int j=0;j<classes.size(); j++) {
+				String cl = classes[j].trim();
+				if (cl.isEmpty()) {
+				  continue;
+				}
+				logger.info("adding " + cl + " to integrationConfigs");
+				integrationConfigs.add(cl);
+			}
+		}
+		else if (header.equals("DockingApplicationConfiguration")) {
+			for (int j=0;j<classes.size(); j++) {
+				String cl = classes[j].trim();
+				if (cl.isEmpty()) {
+				  continue;
+				}
+				logger.info("adding " + cl + " to dockingConfigs");
+				dockingConfigs.add(cl);
+			}
+		}
+		else if (header.equals("ApplicationConfiguration")) {
+			for (int j=0;j<classes.size(); j++) {
+				String cl = classes[j].trim();
+				if (cl.isEmpty()) {
+				  continue;
+				}
+				logger.info("adding " + cl + " to appConfigs");
+				appConfigs.add(cl);
+			}
+		}
+		else if (header.equals("GhidraAppConfiguration")) {
+			for (int j=0;j<classes.size(); j++) {
+				String cl = classes[j].trim();
+				if (cl.isEmpty()) {
+				  continue;
+				}
+				logger.info("adding " + cl + " to ghidraConfigs");
+				ghidraConfigs.add(cl);
+			}
+		}			
+	}		
 }
 
 /*
