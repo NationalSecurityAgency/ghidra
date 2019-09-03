@@ -1,5 +1,8 @@
 Ghidra server startup parameters.
-Command line parameters: [-ip <hostname>] [-i #.#.#.#] [-p#] [-a#] [-d<ntDomain>] [-e<days>] [-u] [-jaas <path_to_jaas_config_file>] [-autoProvision] [-n] <repository_path>
+Command line parameters:
+						[-ip <hostname>] [-i #.#.#.#] [-p#] [-n]
+						[-a#] [-d<ntDomain>] [-e<days>] [-u] [-jaas <path_to_jaas_config_file>] [-autoProvision]
+						<repository_path>
  
    -ip <hostname> : identifies the remote access IPv4 address or hostname (FQDN) which should be 
    	                used by remote clients to access the server.
@@ -12,6 +15,7 @@ Command line parameters: [-ip <hostname>] [-i #.#.#.#] [-p#] [-a#] [-d<ntDomain>
          0 - Private user password
          2 - PKI Authentication
          4 - JAAS Authentication controlled by config file pointed to by -jaas
+         5 - Active Directory via Kerberos.  Requires -d<active_directory_domainname.tld>
  
    -anonymous : enables anonymous repository access (see svrREADME.html for details)
  

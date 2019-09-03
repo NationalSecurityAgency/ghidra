@@ -21,8 +21,7 @@ then
 	echo "Login failed: username has 'bad' in it: $NAME" 1>&2
 	exit 100
 else
-	echo "OK"
+	echo "Login successful" 1>&2
 fi
 
-echo "Returning from script" 1>&2
 

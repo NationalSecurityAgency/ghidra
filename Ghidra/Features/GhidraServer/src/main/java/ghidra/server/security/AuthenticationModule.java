@@ -26,6 +26,10 @@ public interface AuthenticationModule {
 	public static final String USERNAME_CALLBACK_PROMPT = "User ID";
 	public static final String PASSWORD_CALLBACK_PROMPT = "Password";
 
+	default void ensureConfig() {
+		// default nothing
+	}
+
 	/**
 	 * Complete the authentication process.
 	 * <p>
@@ -38,7 +42,7 @@ public interface AuthenticationModule {
 	 * the ones your module specified in its {@link #getAuthenticationCallbacks()}</li>
 	 * </ul>
 	 * <p>
-	 * 
+	 *
 	 * <p>
 	 * @param userMgr Ghidra server user manager
 	 * @param subject unauthenticated user ID (must be used if name callback not provided/allowed)
@@ -56,7 +60,7 @@ public interface AuthenticationModule {
 
 	/**
 	 * Allows an AuthenticationModule to deny default anonymous login steps.
-	 * <p> 
+	 * <p>
 	 * @return true if a separate AnonymousCallback is allowed and may be
 	 * added to the array returned by getAuthenticationCallbacks.
 	 * @see #getAuthenticationCallbacks()
@@ -83,7 +87,7 @@ public interface AuthenticationModule {
 			return null;
 		}
 
-		// dunno if this approach is warranted. the second loop with its isInstance() may be fine.  
+		// dunno if this approach is warranted. the second loop with its isInstance() may be fine.
 		for (Callback cb : callbackArray) {
 			if (callbackClass == cb.getClass()) {
 				return callbackClass.cast(cb);

@@ -42,7 +42,8 @@ import org.apache.logging.log4j.Logger;
 
 import generic.jar.ResourceFile;
 import generic.random.SecureRandomFactory;
-import ghidra.framework.*;
+import ghidra.framework.Application;
+import ghidra.framework.ApplicationConfiguration;
 import ghidra.framework.remote.*;
 import ghidra.net.ApplicationKeyManagerFactory;
 import ghidra.net.SSLContextInitializer;
@@ -85,7 +86,8 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 		OS_PASSWORD_LOGIN("OS Password"),
 		PKI_LOGIN("PKI"),
 		ALT_OS_PASSWORD_LOGIN("OS Password & Password File"),
-		JAAS_LOGIN("JAAS");
+		JAAS_LOGIN("JAAS"),
+		KRB5_AD("Active Directory via Kerberos");
 
 		private String description;
 
@@ -105,6 +107,7 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 				case 2: return PKI_LOGIN;
 				case 3: return ALT_OS_PASSWORD_LOGIN;
 				case 4: return JAAS_LOGIN;
+				case 5: return KRB5_AD;
 				default: return null;
 			}
 			//@formatter:on
@@ -165,22 +168,6 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 				requireExplicitPasswordReset = false;
 				authModule = new PasswordFileAuthenticationModule(allowUserToSpecifyName);
 				break;
-//			case ALT_OS_PASSWORD_LOGIN:
-//				supportLocalPasswords = true;
-//			case OS_PASSWORD_LOGIN:
-//				OperatingSystem os = OperatingSystem.CURRENT_OPERATING_SYSTEM;
-//				if (os == OperatingSystem.WINDOWS) {
-//					authModule = new NTPasswordAuthenticationModule(loginDomain,
-//						nameCallbackAllowed, authMode == ALT_OS_PASSWORD_LOGIN);
-//				}
-//				else if (os == UNIX) {
-//					authModule = new UnixPasswordAuthenticationModule(nameCallbackAllowed);
-//				}
-//				else {
-//					throw new IllegalArgumentException(
-//						"OS Password Authentication only supported for Microsoft Windows");
-//				}
-//				break;
 			case PKI_LOGIN:
 				if (altSSHLoginAllowed) {
 					log.warn("SSH authentication option ignored when PKI authentication used");
@@ -198,8 +185,20 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 			case JAAS_LOGIN:
 				authModule = new JAASAuthenticationModule("auth", allowUserToSpecifyName);
 				break;
+			case KRB5_AD:
+				if (loginDomain == null || loginDomain.isBlank()) {
+					throw new IllegalArgumentException("Missing login domain value -d<domainname>");
+				}
+				authModule = new Krb5ActiveDirectoryAuthenticationModule(loginDomain,
+					allowUserToSpecifyName);
+				break;
 			default:
 				throw new IllegalArgumentException("Unsupported Authentication mode: " + authMode);
+		}
+
+		if (authModule != null) {
+			// allow the auth modules to verify their configuration state before continuing
+			authModule.ensureConfig();
 		}
 
 		if (altSSHLoginAllowed) {
@@ -356,11 +355,6 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 				if (authModule instanceof PasswordFileAuthenticationModule) {
 					supportPasswordChange = true;
 				}
-//				else if (authModule instanceof NTPasswordAuthenticationModule) {
-//					supportPasswordChange =
-//						((NTPasswordAuthenticationModule) authModule).usingLocalAuthentication(
-//							authCallbacks);
-//				}
 			}
 			else if (!mgr.getUserManager().isValidUser(username)) {
 				FailedLoginException e = new FailedLoginException("Unknown user: " + username);
@@ -549,13 +543,6 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 				if (authMode == null) {
 					displayUsage("Invalid authentication mode: " + s);
 					System.exit(-1);
-				}
-				if (authMode == OS_PASSWORD_LOGIN || authMode == ALT_OS_PASSWORD_LOGIN) {
-					if (OperatingSystem.CURRENT_OPERATING_SYSTEM != OperatingSystem.WINDOWS) {
-						displayUsage("Authentication mode (" + authMode +
-							") only supported under Microsoft Windows");
-						System.exit(-1);
-					}
 				}
 			}
 			else if (s.startsWith("-ip")) { // setting server remote access hostname
