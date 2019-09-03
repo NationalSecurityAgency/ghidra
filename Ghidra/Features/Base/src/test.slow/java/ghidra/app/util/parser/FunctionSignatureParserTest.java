@@ -15,37 +15,83 @@
  */
 package ghidra.app.util.parser;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
+
+import java.util.*;
 
 import org.junit.Before;
 import org.junit.Test;
 
+import ghidra.app.plugin.core.analysis.DefaultDataTypeManagerService;
+import ghidra.app.services.DataTypeManagerService;
 import ghidra.app.util.cparser.C.ParseException;
 import ghidra.program.database.ProgramBuilder;
 import ghidra.program.database.ProgramDB;
-import ghidra.program.model.data.BuiltInDataTypeManager;
-import ghidra.program.model.data.DataType;
-import ghidra.program.model.data.FunctionDefinitionDataType;
-import ghidra.program.model.data.IntegerDataType;
-import ghidra.program.model.data.ParameterDefinition;
-import ghidra.program.model.data.ParameterDefinitionImpl;
-import ghidra.program.model.data.StructureDataType;
+import ghidra.program.model.data.*;
 import ghidra.program.model.listing.FunctionSignature;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.test.ToyProgramBuilder;
+import ghidra.util.exception.CancelledException;
 
 public class FunctionSignatureParserTest extends AbstractGhidraHeadedIntegrationTest {
 
 	private ProgramDB program;
 	private FunctionSignatureParser parser;
+	private int dtChoiceCount;
 
 	@Before
 	public void setUp() throws Exception {
 		ProgramBuilder builder = new ToyProgramBuilder("test", false);
+		StructureDataType s = new StructureDataType("StructA", 0);
+		s.setInternallyAligned(true);
+		s.add(IntegerDataType.dataType);
+		builder.addDataType(s);
 		program = builder.getProgram();
-		parser = new FunctionSignatureParser(program, null);
+
+		DataTypeManagerService service = new DefaultDataTypeManagerService() {
+			ArrayList<DataType> dtList; // assume types list will not change after requested during parse
+
+			@Override
+			public List<DataType> getSortedDataTypeList() {
+				if (dtList != null) {
+					return dtList;
+				}
+				// Default implementation only provides builtIn types which is not consistent 
+				// with Tool-based service.
+				dtList = new ArrayList<>(super.getSortedDataTypeList());
+				program.getDataTypeManager().getAllDataTypes(dtList);
+				Collections.sort(dtList, new NameComparator());
+				return dtList;
+			}
+
+			@Override
+			public DataType getDataType(String filterText) {
+				// method only called if no results or multiple results were found.
+				// Tool based implementation will prompt user, test will pick last one
+				ArrayList<DataType> list = new ArrayList<>();
+				program.getDataTypeManager().findDataTypes(filterText, list);
+				if (list.isEmpty()) {
+					return null;
+				}
+				int count = list.size();
+				assertTrue("Expected when required to choose from multiple types", count > 1);
+				++dtChoiceCount;
+				return list.get(count - 1);
+			}
+		};
+
+		parser = new FunctionSignatureParser(program.getDataTypeManager(), service);
+	}
+
+	private class NameComparator implements Comparator<DataType> {
+		@Override
+		public int compare(DataType d1, DataType d2) {
+			int c = d1.getName().compareTo(d2.getName());
+			if (c == 0) {
+				return d1.getCategoryPath().compareTo(d2.getCategoryPath());
+			}
+			return c;
+		}
 	}
 
 	@Test
@@ -102,13 +148,13 @@ public class FunctionSignatureParserTest extends AbstractGhidraHeadedIntegration
 	}
 
 	@Test
-	public void testParseSimple() throws ParseException {
+	public void testParseSimple() throws Exception {
 		FunctionDefinitionDataType dt = parser.parse(null, "int Bob(int a, float b)");
 		assertEquals("int Bob(int a, float b)", dt.getRepresentation(null, null, 0));
 	}
 
 	@Test
-	public void testParseWithFunkyFunctionName() throws ParseException {
+	public void testParseWithFunkyFunctionName() throws Exception {
 		FunctionSignature f = fun("int", "Bo<{}?>b", "int", "a", "float", "b");
 
 		FunctionDefinitionDataType dt = parser.parse(f, "int Bo<{}?>b(int a, int b)");
@@ -116,7 +162,7 @@ public class FunctionSignatureParserTest extends AbstractGhidraHeadedIntegration
 	}
 
 	@Test
-	public void testParseWithFunkyParamDataType() throws ParseException {
+	public void testParseWithFunkyParamDataType() throws Exception {
 		FunctionSignature f = fun("int", "Bob", "int", "a", "Bo<{()", "b");
 
 		FunctionDefinitionDataType dt = parser.parse(f, "int Bob(float a, Bo<{() b)");
@@ -124,7 +170,7 @@ public class FunctionSignatureParserTest extends AbstractGhidraHeadedIntegration
 	}
 
 	@Test
-	public void testParseWithFunkyParamName() throws ParseException {
+	public void testParseWithFunkyParamName() throws Exception {
 		FunctionSignature f = fun("int", "Bob", "int", "a()<>@", "int", "b");
 
 		FunctionDefinitionDataType dt = parser.parse(f, "int Bob(float a()<>@, int b)");
@@ -132,7 +178,7 @@ public class FunctionSignatureParserTest extends AbstractGhidraHeadedIntegration
 	}
 
 	@Test
-	public void testParseWithFunkyReturnType() throws ParseException {
+	public void testParseWithFunkyReturnType() throws Exception {
 		FunctionSignature f = fun("abc(d", "Bob", "int", "a");
 
 		FunctionDefinitionDataType dt = parser.parse(f, "abc(d Bob(int a, float b)");
@@ -140,7 +186,7 @@ public class FunctionSignatureParserTest extends AbstractGhidraHeadedIntegration
 	}
 
 	@Test
-	public void testParseWithMultiWordCtypes() throws ParseException {
+	public void testParseWithMultiWordCtypes() throws Exception {
 		FunctionSignature f = fun("int", "Bob");
 
 		FunctionDefinitionDataType dt =
@@ -152,18 +198,20 @@ public class FunctionSignatureParserTest extends AbstractGhidraHeadedIntegration
 	public void testSpacesNotAllowedInTypedFunctionName() {
 		FunctionSignature f = fun("int", "Bob", "int", "a");
 
-		FunctionDefinitionDataType dt;
 		try {
-			dt = parser.parse(f, "int bo b(int a, float b)");
+			parser.parse(f, "int bo b(int a, float b)");
 			fail("parsed name with space");
 		}
 		catch (ParseException e) {
 			assertTrue(e.getMessage().contains("Can't resolve"));
 		}
+		catch (CancelledException e) {
+			fail("Unexpected cancellation");
+		}
 	}
 
 	@Test
-	public void testVarArgs() throws ParseException {
+	public void testVarArgs() throws Exception {
 		FunctionSignature f = fun("int", "Bob", "int", "a");
 
 		FunctionDefinitionDataType dt = parser.parse(f, "int Bob(int a, float b, ...)");
@@ -172,7 +220,7 @@ public class FunctionSignatureParserTest extends AbstractGhidraHeadedIntegration
 	}
 
 	@Test
-	public void testNoArgs() throws ParseException {
+	public void testNoArgs() throws Exception {
 		FunctionSignature f = fun("int", "Bob", "int", "a");
 
 		FunctionDefinitionDataType dt = parser.parse(f, "int Bob()");
@@ -180,7 +228,7 @@ public class FunctionSignatureParserTest extends AbstractGhidraHeadedIntegration
 	}
 
 	@Test
-	public void testVoidArgs() throws ParseException {
+	public void testVoidArgs() throws Exception {
 		FunctionSignature f = fun("int", "Bob", "int", "a");
 
 		FunctionDefinitionDataType dt = parser.parse(f, "int Bob(void)");
@@ -188,23 +236,139 @@ public class FunctionSignatureParserTest extends AbstractGhidraHeadedIntegration
 	}
 
 	@Test
-	public void testNoParamNames() throws ParseException {
+	public void testMultiChoice() throws Exception {
+
+		int txId = program.startTransaction("Add Struct");
+		try {
+			StructureDataType s = new StructureDataType(new CategoryPath("/Test"), "StructA", 0);
+			s.setInternallyAligned(true);
+			s.add(ByteDataType.dataType);
+			program.getDataTypeManager().addDataType(s, null);
+		}
+		finally {
+			program.endTransaction(txId, true);
+		}
+
 		FunctionSignature f = fun("int", "Bob");
-		FunctionDefinitionDataType dt = parser.parse(f, "int Bob(int, float)");
+		FunctionDefinitionDataType dt = parser.parse(f, "int Foo(int, float, StructA *)");
+		assertTrue(dt.getReturnType() instanceof IntegerDataType);
+		assertEquals("Foo", dt.getName());
 		ParameterDefinition[] args = dt.getArguments();
-		assertEquals(2, args.length);
+		assertEquals(3, args.length);
+		assertTrue(args[0].getDataType() instanceof IntegerDataType);
 		assertEquals("", args[0].getName());
+		assertTrue(args[1].getDataType() instanceof FloatDataType);
 		assertEquals("", args[1].getName());
+		assertTrue(args[2].getDataType() instanceof Pointer);
+		assertEquals("", args[2].getName());
+		assertTrue("Expected structure choice to be made", dtChoiceCount == 1);
 	}
 
 	@Test
-	public void testMultiWordDataTypesWithNoParamNames() throws ParseException {
+	public void testTypeCaching() throws Exception {
 		FunctionSignature f = fun("int", "Bob");
-		FunctionDefinitionDataType dt = parser.parse(f, "int Bob(unsigned int, float)");
+		FunctionDefinitionDataType dt = parser.parse(f, "int Foo(int, StructA, StructA)");
+		assertTrue(dt.getReturnType() instanceof IntegerDataType);
+		assertEquals("Foo", dt.getName());
 		ParameterDefinition[] args = dt.getArguments();
-		assertEquals(2, args.length);
+		assertEquals(3, args.length);
+		assertTrue(args[0].getDataType() instanceof IntegerDataType);
 		assertEquals("", args[0].getName());
+		assertTrue(args[1].getDataType() instanceof Structure);
 		assertEquals("", args[1].getName());
+		assertTrue(args[2].getDataType() instanceof Structure);
+		assertEquals("", args[2].getName());
+		// Only a single call to the DTM service should occur for StructA choice
+		assertFalse("Unexpected datatype choice", dtChoiceCount == 1);
+		assertEquals(args[1].getDataType(), args[1].getDataType());
+	}
+
+	@Test
+	public void testNoParamNames() throws Exception {
+		FunctionSignature f = fun("int", "Bob");
+		FunctionDefinitionDataType dt = parser.parse(f, "int Foo(int, float, StructA)");
+		assertTrue(dt.getReturnType() instanceof IntegerDataType);
+		assertEquals("Foo", dt.getName());
+		ParameterDefinition[] args = dt.getArguments();
+		assertEquals(3, args.length);
+		assertTrue(args[0].getDataType() instanceof IntegerDataType);
+		assertEquals("", args[0].getName());
+		assertTrue(args[1].getDataType() instanceof FloatDataType);
+		assertEquals("", args[1].getName());
+		assertTrue(args[2].getDataType() instanceof Structure);
+		assertEquals("", args[2].getName());
+		assertFalse("Unexpected datatype choice", dtChoiceCount == 1);
+	}
+
+	@Test
+	public void testMultiWordDataTypesWithNoParamNames() throws Exception {
+		FunctionSignature f = fun("int", "Bob");
+		FunctionDefinitionDataType dt =
+			parser.parse(f, "unsigned long Foo(unsigned long long, signed int, StructA)");
+		assertTrue(dt.getReturnType() instanceof UnsignedLongDataType);
+		assertEquals("Foo", dt.getName());
+		ParameterDefinition[] args = dt.getArguments();
+		assertEquals(3, args.length);
+		assertTrue(args[0].getDataType() instanceof UnsignedLongLongDataType);
+		assertEquals("", args[0].getName());
+		assertTrue(args[1].getDataType() instanceof IntegerDataType);
+		assertEquals("", args[1].getName());
+		assertTrue(args[2].getDataType() instanceof Structure);
+		assertEquals("", args[2].getName());
+	}
+
+	@Test
+	public void testMultiWordModifiedDataTypesWithNoParamNames() throws Exception {
+		FunctionSignature f = fun("int", "Bob");
+		FunctionDefinitionDataType dt =
+			parser.parse(f, "unsigned long[3] Foo(unsigned long long *, signed int[3], StructA*)");
+		assertTrue((new ArrayDataType(UnsignedLongDataType.dataType, 3, -1)).isEquivalent(
+			dt.getReturnType()));
+		assertEquals("Foo", dt.getName());
+		ParameterDefinition[] args = dt.getArguments();
+		assertEquals(3, args.length);
+		assertTrue((new PointerDataType(UnsignedLongLongDataType.dataType)).isEquivalent(
+			args[0].getDataType()));
+		assertEquals("", args[0].getName());
+		assertTrue((new ArrayDataType(IntegerDataType.dataType, 3, -1)).isEquivalent(
+			args[1].getDataType()));
+		assertEquals("", args[1].getName());
+		assertTrue(args[2].getDataType() instanceof Pointer);
+		assertEquals("", args[2].getName());
+	}
+
+	@Test
+	public void testMultiWordDataTypesWithParamNames() throws Exception {
+		FunctionSignature f = fun("int", "Bob");
+		FunctionDefinitionDataType dt =
+			parser.parse(f, "unsigned long Foo(unsigned long long foo, signed int bar, StructA s)");
+		assertTrue(dt.getReturnType() instanceof UnsignedLongDataType);
+		assertEquals("Foo", dt.getName());
+		ParameterDefinition[] args = dt.getArguments();
+		assertEquals(3, args.length);
+		assertTrue(args[0].getDataType() instanceof UnsignedLongLongDataType);
+		assertEquals("foo", args[0].getName());
+		assertTrue(args[1].getDataType() instanceof IntegerDataType);
+		assertEquals("bar", args[1].getName());
+		assertTrue(args[2].getDataType() instanceof Structure);
+		assertEquals("s", args[2].getName());
+	}
+
+	@Test
+	public void testMultiWordModifiedDataTypesWithParamNames() throws Exception {
+		FunctionSignature f = fun("int", "Bob");
+		FunctionDefinitionDataType dt = parser.parse(f,
+			"unsigned long[3] Bob(unsigned long long *foo, signed int[3] bar, StructA *s)");
+		ParameterDefinition[] args = dt.getArguments();
+		assertEquals(3, args.length);
+		assertTrue((new PointerDataType(UnsignedLongLongDataType.dataType)).isEquivalent(
+			args[0].getDataType()));
+		assertEquals("foo", args[0].getName());
+		assertTrue((new ArrayDataType(IntegerDataType.dataType, 3, -1)).isEquivalent(
+			args[1].getDataType()));
+		assertEquals("bar", args[1].getName());
+		assertTrue(args[2].getDataType() instanceof Pointer);
+		assertEquals("s", args[2].getName());
 	}
 
 	@Test
@@ -217,10 +381,13 @@ public class FunctionSignatureParserTest extends AbstractGhidraHeadedIntegration
 		catch (ParseException e) {
 			//expected
 		}
+		catch (CancelledException e) {
+			fail("Unexpected cancellation");
+		}
 	}
 
 	@Test
-	public void testUnsignedLong() throws ParseException {
+	public void testUnsignedLong() throws Exception {
 		FunctionSignature f = fun("int", "Bob");
 		FunctionDefinitionDataType dt = parser.parse(f, "int Bob(unsigned long bob, float)");
 		assertEquals("int Bob(ulong bob, float )", dt.getRepresentation(null, null, 0));
@@ -228,10 +395,24 @@ public class FunctionSignatureParserTest extends AbstractGhidraHeadedIntegration
 	}
 
 	@Test
-	public void testPointerNoSpaceBeforeName() throws ParseException {
+	public void testPointerNoSpaceBeforeName() throws Exception {
 		FunctionSignature f = fun("int", "Bob");
 		FunctionDefinitionDataType dt = parser.parse(f, "int Bob(char *bob, float)");
 		assertEquals("int Bob(char * bob, float )", dt.getRepresentation(null, null, 0));
+	}
+
+	@Test
+	public void testDoublePointerNoSpaceBeforeName() throws Exception {
+		FunctionSignature f = fun("int", "Bob");
+		FunctionDefinitionDataType dt = parser.parse(f, "int Bob(char **bob, float)");
+		assertEquals("int Bob(char * * bob, float )", dt.getRepresentation(null, null, 0));
+	}
+
+	@Test
+	public void testArrayPointerNoSpaceBeforeName() throws Exception {
+		FunctionSignature f = fun("int", "Bob");
+		FunctionDefinitionDataType dt = parser.parse(f, "int Bob(char[2] *bob, float)");
+		assertEquals("int Bob(char[2] * bob, float )", dt.getRepresentation(null, null, 0));
 	}
 
 	private DataType createDataType(String name) {
