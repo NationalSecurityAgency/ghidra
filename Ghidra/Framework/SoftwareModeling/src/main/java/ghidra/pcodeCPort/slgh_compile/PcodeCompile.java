@@ -983,16 +983,19 @@ public abstract class PcodeCompile {
 			return createOpConst(location, OpCode.CPUI_INDIRECT, r.outvn.getOffset().getReal());
 		}
 		if ("cpool".equals(name)) {
-		    if (operands.size() >= 2) {		// At least two parameters
+			if (operands.size() >= 2) {
 				return createVariadic(location, OpCode.CPUI_CPOOLREF, operands);
-		    }
+			}
 			reportError(location,name+"() expects at least two arguments");
 		}
 		if ("newobject".equals(name)) {
-		    if (operands.size() >= 1) {		// At least one parameter
+			if (operands.size() >= 1) {
 				return createVariadic(location, OpCode.CPUI_NEW, operands);
-		    }
+			}
 			reportError(location,name+"() expects at least one argument");
+		}
+		if ("popcount".equals(name) && hasOperands(1, operands, location, name)) {
+			return createOp(location, OpCode.CPUI_POPCOUNT, r);
 		}
 
 		return null;
