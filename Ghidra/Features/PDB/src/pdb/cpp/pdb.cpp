@@ -61,7 +61,8 @@ int PDBApiContext::init(const std::wstring& szFilename, const std::wstring& szSi
 	}
 	else if (!szSignature.empty() && !szAge.empty()) {
 		GUID guid = {};
-		const HRESULT guidConv = CLSIDFromString(szSignature.c_str(), &guid);
+		std::wstring bracedGuidString = L"{" + szSignature + L"}";;
+		const HRESULT guidConv = CLSIDFromString(bracedGuidString.c_str(), &guid);
 
 		const DWORD age = wcstol(szAge.c_str(), NULL, 16);
 
