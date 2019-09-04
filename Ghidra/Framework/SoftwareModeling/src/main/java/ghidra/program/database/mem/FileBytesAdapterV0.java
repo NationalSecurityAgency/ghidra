@@ -154,18 +154,23 @@ class FileBytesAdapterV0 extends FileBytesAdapter {
 
 	private DBBuffer[] createBuffers(long size, InputStream is) throws IOException {
 		int maxBufSize = getMaxBufferSize();
-		int bufCount = (int) (size + maxBufSize - 1) / maxBufSize;
+		int bufCount = (int) (size / maxBufSize);
+		int sizeLastBuf = (int) (size % maxBufSize);
+
+		// there is a remainder then we have one additional buffer
+		if (sizeLastBuf > 0) {
+			bufCount++;
+		}
+		else {
+			// divides evenly, so sizeLastBuf is full maxBuffSize
+			sizeLastBuf = maxBufSize;
+		}
 
 		DBBuffer[] buffers = new DBBuffer[bufCount];
-		int bufSize = maxBufSize;
-		int lastBufSize = (int) (size % maxBufSize);
-
-		for (int i = 0; i < bufCount; i++) {
-			if (lastBufSize != 0 && i == (bufCount - 1)) {
-				bufSize = lastBufSize;
-			}
-			buffers[i] = handle.createBuffer(bufSize);
+		for (int i = 0; i < bufCount - 1; i++) {
+			buffers[i] = handle.createBuffer(maxBufSize);
 		}
+		buffers[bufCount - 1] = handle.createBuffer(sizeLastBuf);
 
 		try {
 			for (DBBuffer buffer : buffers) {

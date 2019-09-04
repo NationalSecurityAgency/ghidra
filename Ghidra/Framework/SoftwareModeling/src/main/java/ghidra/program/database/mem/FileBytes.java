@@ -191,7 +191,7 @@ public class FileBytes {
 		return getBytes(originalBuffers, offset, b, off, length);
 	}
 
-	synchronized void checkValid() {
+	void checkValid() {
 		if (invalid) {
 			throw new ConcurrentModificationException();
 		}
@@ -362,19 +362,25 @@ public class FileBytes {
 
 	@Override
 	public boolean equals(Object obj) {
-		if (this == obj)
+		if (this == obj) {
 			return true;
-		if (obj == null)
+		}
+		if (obj == null) {
 			return false;
-		if (getClass() != obj.getClass())
+		}
+		if (getClass() != obj.getClass()) {
 			return false;
+		}
 		FileBytes other = (FileBytes) obj;
-		if (adapter != other.adapter)
+		if (adapter != other.adapter) {
 			return false;
-		if (id != other.id)
+		}
+		if (id != other.id) {
 			return false;
-		if (invalid != other.invalid)
+		}
+		if (invalid != other.invalid) {
 			return false;
+		}
 		return true;
 	}
 

@@ -45,10 +45,7 @@ public class FileBytesTest extends AbstractGenericTest {
 	private Program program;
 	private Memory mem;
 	private int transactionID;
-
-	public FileBytesTest() {
-		super();
-	}
+	private File tempDir;
 
 	@Test
 	public void testStoreAndRetrieveFileBytes() throws Exception {
@@ -73,7 +70,7 @@ public class FileBytesTest extends AbstractGenericTest {
 
 		byte[] outBytes = new byte[200];
 
-		saveAndRestoreProgram();
+		saveAndRestoreProgram("A");
 
 		List<FileBytes> list = program.getMemory().getAllFileBytes();
 		fileBytes = list.get(0);
@@ -93,7 +90,7 @@ public class FileBytesTest extends AbstractGenericTest {
 		int dataSize = MAX_BUFFER_SIZE_FOR_TESTING + MAX_BUFFER_SIZE_FOR_TESTING / 2;
 		FileBytes fileBytes = createFileBytes("testFile", dataSize);
 
-		saveAndRestoreProgram();
+		saveAndRestoreProgram("A");
 
 		byte[] outBytes = new byte[400];
 		List<FileBytes> list = program.getMemory().getAllFileBytes();
@@ -118,7 +115,7 @@ public class FileBytesTest extends AbstractGenericTest {
 		createFileBytes("file2", 20);
 		createFileBytes("file3", 30);
 
-		saveAndRestoreProgram();
+		saveAndRestoreProgram("A");
 		List<FileBytes> fileBytesList = mem.getAllFileBytes();
 		assertEquals(3, fileBytesList.size());
 		assertEquals("file1", fileBytesList.get(0).getFilename());
@@ -135,12 +132,12 @@ public class FileBytesTest extends AbstractGenericTest {
 		createFileBytes("file2", 20);
 		createFileBytes("file3", 30);
 
-		saveAndRestoreProgram();
+		saveAndRestoreProgram("A");
 		List<FileBytes> fileBytes = mem.getAllFileBytes();
 
 		mem.deleteFileBytes(fileBytes.get(1));
 
-		saveAndRestoreProgram();
+		saveAndRestoreProgram("B");
 		List<FileBytes> fileBytesList = mem.getAllFileBytes();
 		assertEquals(2, fileBytesList.size());
 		assertEquals("file1", fileBytesList.get(0).getFilename());
@@ -253,17 +250,18 @@ public class FileBytesTest extends AbstractGenericTest {
 		}
 	}
 
-	private void saveAndRestoreProgram() throws Exception {
+	private void saveAndRestoreProgram(String dbName) throws Exception {
 		program.endTransaction(transactionID, true);
-		PrivateDatabase privateDatabase = saveProgram(program);
+		PrivateDatabase privateDatabase = saveProgram(program, dbName);
+		program.release(this);
 		program = restoreProgram(privateDatabase);
+
 		mem = program.getMemory();
 		transactionID = program.startTransaction("test");
 	}
 
-	private PrivateDatabase saveProgram(Program program) throws Exception {
-		File dir = createTempDirectory("program");
-		File dbDir = new File(dir, "program.db");
+	private PrivateDatabase saveProgram(Program program, String dbName) throws Exception {
+		File dbDir = new File(tempDir, dbName);
 
 		DBHandle dbh = ((ProgramDB) program).getDBHandle();
 		BufferFile bfile = PrivateDatabase.createDatabase(dbDir, null, dbh.getBufferSize());
@@ -278,6 +276,7 @@ public class FileBytesTest extends AbstractGenericTest {
 
 	@Before
 	public void setUp() throws Exception {
+		tempDir = createTempDirectory("FileBytesTest");
 		FileBytesAdapter.setMaxBufferSize(MAX_BUFFER_SIZE_FOR_TESTING);
 		Language language = getLanguage("Toy:BE:64:default");
 		CompilerSpec compilerSpec = language.getDefaultCompilerSpec();
