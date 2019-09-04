@@ -290,6 +290,9 @@ public:
   virtual void opSegmentOp(const PcodeOp *op);
   virtual void opCpoolRefOp(const PcodeOp *op);
   virtual void opNewOp(const PcodeOp *op);
+  virtual void opInsertOp(const PcodeOp *op);
+  virtual void opExtractOp(const PcodeOp *op);
+  virtual void opPopcountOp(const PcodeOp *op) { opFunc(op); }
 };
 
 #endif

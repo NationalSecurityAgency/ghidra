@@ -100,6 +100,9 @@ void TypeOp::registerInstructions(vector<TypeOp *> &inst,TypeFactory *tlst,
   inst[CPUI_SEGMENTOP] = new TypeOpSegment(tlst);
   inst[CPUI_CPOOLREF] = new TypeOpCpoolref(tlst);
   inst[CPUI_NEW] = new TypeOpNew(tlst);
+  inst[CPUI_INSERT] = new TypeOpInsert(tlst);
+  inst[CPUI_EXTRACT] = new TypeOpExtract(tlst);
+  inst[CPUI_POPCOUNT] = new TypeOpPopcount(tlst);
 }
 
 /// Change basic data-type info (signed vs unsigned) and operator names ( '>>' vs '>>>' )
@@ -1808,4 +1811,41 @@ void TypeOpNew::printRaw(ostream &s,const PcodeOp *op)
     op->getIn(i)->printRaw(s);
   }
   s << ')';
+}
+
+TypeOpInsert::TypeOpInsert(TypeFactory *t)
+  : TypeOpFunc(t,CPUI_INSERT,"INSERT",TYPE_UNKNOWN,TYPE_INT)
+{
+  opflags = PcodeOp::special;
+  behave = new OpBehavior(CPUI_INSERT,false,true);	// Dummy behavior
+}
+
+Datatype *TypeOpInsert::getInputLocal(const PcodeOp *op,int4 slot) const
+
+{
+  if (slot == 0)
+    return tlst->getBase(op->getIn(slot)->getSize(),TYPE_UNKNOWN);
+  return TypeOpFunc::getInputLocal(op, slot);
+}
+
+TypeOpExtract::TypeOpExtract(TypeFactory *t)
+  : TypeOpFunc(t,CPUI_EXTRACT,"EXTRACT",TYPE_INT,TYPE_INT)
+{
+  opflags = PcodeOp::special;
+  behave = new OpBehavior(CPUI_EXTRACT,false,true);	// Dummy behavior
+}
+
+Datatype *TypeOpExtract::getInputLocal(const PcodeOp *op,int4 slot) const
+
+{
+  if (slot == 0)
+    return tlst->getBase(op->getIn(slot)->getSize(),TYPE_UNKNOWN);
+  return TypeOpFunc::getInputLocal(op, slot);
+}
+
+TypeOpPopcount::TypeOpPopcount(TypeFactory *t)
+  : TypeOpFunc(t,CPUI_POPCOUNT,"POPCOUNT",TYPE_INT,TYPE_UNKNOWN)
+{
+  opflags = PcodeOp::unary;
+  behave = new OpBehaviorPopcount();
 }

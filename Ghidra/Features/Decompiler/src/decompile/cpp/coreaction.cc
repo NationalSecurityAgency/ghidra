@@ -3053,6 +3053,34 @@ void ActionDeadCode::propagateConsumed(vector<Varnode *> &worklist)
     pushConsumed(a,op->getIn(0),worklist);
     pushConsumed(a,op->getIn(1),worklist);
     break;
+  case CPUI_INSERT:
+    a = 1;
+    a <<= (int4)op->getIn(3)->getOffset();
+    a -= 1;	// Insert mask
+    pushConsumed(a,op->getIn(1),worklist);
+    a <<= (int4)op->getIn(2)->getOffset();
+    pushConsumed(outc & ~a, op->getIn(0), worklist);
+    b = (outc == 0) ? 0 : ~((uintb)0);
+    pushConsumed(b,op->getIn(2), worklist);
+    pushConsumed(b,op->getIn(3), worklist);
+    break;
+  case CPUI_EXTRACT:
+    a = 1;
+    a <<= (int4)op->getIn(2)->getOffset();
+    a -= 1;	// Extract mask
+    a &= outc;	// Consumed bits of mask
+    a <<= (int4)op->getIn(1)->getOffset();
+    pushConsumed(a,op->getIn(0),worklist);
+    b = (outc == 0) ? 0 : ~((uintb)0);
+    pushConsumed(b,op->getIn(1), worklist);
+    pushConsumed(b,op->getIn(2), worklist);
+    break;
+  case CPUI_POPCOUNT:
+    a = 16 * op->getIn(0)->getSize() - 1;	// Mask for possible bits that could be set
+    a &= outc;					// Of the bits that could be set, which are consumed
+    b = (a == 0) ? 0 : ~((uintb)0);		// if any consumed, treat all input bits as consumed
+    pushConsumed(b,op->getIn(0), worklist);
+    break;
   default:
     a = (outc==0) ? 0 : ~((uintb)0); // all or nothing
     for(int4 i=0;i<op->numInput();++i)

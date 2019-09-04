@@ -493,6 +493,11 @@ uintb PcodeOp::getNZMaskLocal(bool cliploop) const
     val = (getIn(1)->getNZMask()-1); // Result is less than modulus
     resmask = coveringmask(val);
     break;
+  case CPUI_POPCOUNT:
+    sz1 = popcount(getIn(0)->getNZMask());
+    resmask = coveringmask((uintb)sz1);
+    resmask &= fullmask;
+    break;
   case CPUI_SUBPIECE:
     resmask = getIn(0)->getNZMask();
     resmask >>= 8*getIn(1)->getOffset();

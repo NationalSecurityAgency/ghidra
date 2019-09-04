@@ -777,4 +777,28 @@ public:
   virtual void push(PrintLanguage *lng,const PcodeOp *op) const { lng->opNewOp(op); }
   virtual void printRaw(ostream &s,const PcodeOp *op);
 };
+
+/// \brief Information about the INSERT op-code
+class TypeOpInsert : public TypeOpFunc {
+public:
+  TypeOpInsert(TypeFactory *t);			///< Constructor
+  virtual Datatype *getInputLocal(const PcodeOp *op,int4 slot) const;
+  virtual void push(PrintLanguage *lng,const PcodeOp *op) const { lng->opInsertOp(op); }
+};
+
+/// \brief Information about the EXTRACT op-code
+class TypeOpExtract : public TypeOpFunc {
+public:
+  TypeOpExtract(TypeFactory *t);			///< Constructor
+  virtual Datatype *getInputLocal(const PcodeOp *op,int4 slot) const;
+  virtual void push(PrintLanguage *lng,const PcodeOp *op) const { lng->opExtractOp(op); }
+};
+
+/// \brief Information about the POPCOUNT op-code
+class TypeOpPopcount : public TypeOpFunc {
+public:
+  TypeOpPopcount(TypeFactory *t);			///< Constructor
+  virtual void push(PrintLanguage *lng,const PcodeOp *op) const { lng->opPopcountOp(op); }
+};
+
 #endif

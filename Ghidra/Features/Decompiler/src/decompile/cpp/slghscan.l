@@ -637,6 +637,7 @@ with   { BEGIN(pattern); withsection = 1; slgh->calcContextLayout(); return WITH
 <sem>trunc         { return OP_TRUNC; }
 <sem>cpool         { return OP_CPOOLREF; }
 <sem>newobject     { return OP_NEW; }
+<sem>popcount      { return OP_POPCOUNT; }
 <sem>if            { return IF_KEY; }
 <sem>goto          { return GOTO_KEY; }
 <sem>call          { return CALL_KEY; }

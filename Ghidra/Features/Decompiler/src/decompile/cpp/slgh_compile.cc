@@ -734,6 +734,9 @@ void ConsistencyChecker::printOpName(ostream &s,OpTpl *op)
   case CPUI_NEW:
     s << "New object(newobject)";
     break;
+  case CPUI_POPCOUNT:
+    s << "Count bits(popcount)";
+    break;
   default:
     break;
   }

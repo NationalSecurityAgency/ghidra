@@ -495,6 +495,7 @@ extern void byte_swap(intb &val,int4 size);		///< Swap bytes in the given value
 extern uintb byte_swap(uintb val,int4 size);		///< Return the given value with bytes swapped
 extern int4 leastsigbit_set(uintb val);			///< Return index of least significant bit set in given value
 extern int4 mostsigbit_set(uintb val);			///< Return index of most significant bit set in given value
+extern int4 popcount(uintb val);			///< Return the number of one bits in the given value
 extern int4 count_leading_zeros(uintb val);		///< Return the number of leading zero bits in the given value
 
 extern uintb coveringmask(uintb val);			///< Return a mask that \e covers the given value
