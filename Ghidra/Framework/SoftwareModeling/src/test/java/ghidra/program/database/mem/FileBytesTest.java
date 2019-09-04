@@ -37,14 +37,15 @@ import ghidra.util.task.TaskMonitor;
 
 public class FileBytesTest extends AbstractGenericTest {
 
+	// Use of small buffer size will not exercise use of indexed ChainedBuffer,
+	// therefor those tests which need to exercise this should use a size which
+	// exceeds 16-KBytes.
 	private static final int MAX_BUFFER_SIZE_FOR_TESTING = 200;
+
 	private Program program;
 	private Memory mem;
 	private int transactionID;
-
-	public FileBytesTest() {
-		super();
-	}
+	private File tempDir;
 
 	@Test
 	public void testStoreAndRetrieveFileBytes() throws Exception {
@@ -69,7 +70,7 @@ public class FileBytesTest extends AbstractGenericTest {
 
 		byte[] outBytes = new byte[200];
 
-		saveAndRestoreProgram();
+		saveAndRestoreProgram("A");
 
 		List<FileBytes> list = program.getMemory().getAllFileBytes();
 		fileBytes = list.get(0);
@@ -89,7 +90,7 @@ public class FileBytesTest extends AbstractGenericTest {
 		int dataSize = MAX_BUFFER_SIZE_FOR_TESTING + MAX_BUFFER_SIZE_FOR_TESTING / 2;
 		FileBytes fileBytes = createFileBytes("testFile", dataSize);
 
-		saveAndRestoreProgram();
+		saveAndRestoreProgram("A");
 
 		byte[] outBytes = new byte[400];
 		List<FileBytes> list = program.getMemory().getAllFileBytes();
@@ -114,7 +115,7 @@ public class FileBytesTest extends AbstractGenericTest {
 		createFileBytes("file2", 20);
 		createFileBytes("file3", 30);
 
-		saveAndRestoreProgram();
+		saveAndRestoreProgram("A");
 		List<FileBytes> fileBytesList = mem.getAllFileBytes();
 		assertEquals(3, fileBytesList.size());
 		assertEquals("file1", fileBytesList.get(0).getFilename());
@@ -131,12 +132,12 @@ public class FileBytesTest extends AbstractGenericTest {
 		createFileBytes("file2", 20);
 		createFileBytes("file3", 30);
 
-		saveAndRestoreProgram();
+		saveAndRestoreProgram("A");
 		List<FileBytes> fileBytes = mem.getAllFileBytes();
 
 		mem.deleteFileBytes(fileBytes.get(1));
 
-		saveAndRestoreProgram();
+		saveAndRestoreProgram("B");
 		List<FileBytes> fileBytesList = mem.getAllFileBytes();
 		assertEquals(2, fileBytesList.size());
 		assertEquals("file1", fileBytesList.get(0).getFilename());
@@ -186,6 +187,59 @@ public class FileBytesTest extends AbstractGenericTest {
 		}
 	}
 
+	@Test
+	public void testGetLayeredBytesAfterUndo() throws Exception {
+		// NOTE: need to induce use of indexed ChainedBuffer
+		FileBytesAdapter.setMaxBufferSize(FileBytesAdapter.MAX_BUF_SIZE);
+		FileBytes fileBytes = createFileBytes("file1", 20000);
+
+		program.endTransaction(transactionID, true);
+		transactionID = program.startTransaction("modify");
+
+		incrementFileBytes(fileBytes, 0, 10);
+		incrementFileBytes(fileBytes, 18999, 10);
+
+		// undo layered buffer changes
+		program.endTransaction(transactionID, true);
+		program.undo();
+		transactionID = program.startTransaction("resume");
+
+		// check that the layered bytes are unchanged from the originals
+		assertEquals(1, fileBytes.getOriginalByte(1));
+		assertEquals(1, fileBytes.getModifiedByte(1));
+
+		byte b = (byte) 19000;
+		assertEquals(b, fileBytes.getOriginalByte(19000));
+		assertEquals(b, fileBytes.getModifiedByte(19000));
+	}
+
+	@Test
+	public void testGetLayeredBytesAfterUndoRedo() throws Exception {
+		// NOTE: need to induce use of indexed ChainedBuffer
+		FileBytesAdapter.setMaxBufferSize(FileBytesAdapter.MAX_BUF_SIZE);
+		FileBytes fileBytes = createFileBytes("file1", 20000);
+
+		program.endTransaction(transactionID, true);
+		transactionID = program.startTransaction("modify");
+
+		incrementFileBytes(fileBytes, 0, 10);
+		incrementFileBytes(fileBytes, 18999, 10);
+
+		// undo layered buffer changes
+		program.endTransaction(transactionID, true);
+		program.undo();
+		program.redo();
+		transactionID = program.startTransaction("resume");
+
+		// check that the layered bytes are unchanged from the originals
+		assertEquals(1, fileBytes.getOriginalByte(1));
+		assertEquals(2, fileBytes.getModifiedByte(1));
+
+		byte b = (byte) 19000;
+		assertEquals(b, fileBytes.getOriginalByte(19000));
+		assertEquals((byte) (b + 1), fileBytes.getModifiedByte(19000));
+	}
+
 	private FileBytes createFileBytes(String name, int size) throws Exception {
 		byte[] bytes = new byte[size];
 		for (int i = 0; i < size; i++) {
@@ -196,17 +250,18 @@ public class FileBytesTest extends AbstractGenericTest {
 		}
 	}
 
-	private void saveAndRestoreProgram() throws Exception {
+	private void saveAndRestoreProgram(String dbName) throws Exception {
 		program.endTransaction(transactionID, true);
-		PrivateDatabase privateDatabase = saveProgram(program);
+		PrivateDatabase privateDatabase = saveProgram(program, dbName);
+		program.release(this);
 		program = restoreProgram(privateDatabase);
+
 		mem = program.getMemory();
 		transactionID = program.startTransaction("test");
 	}
 
-	private PrivateDatabase saveProgram(Program program) throws Exception {
-		File dir = createTempDirectory("program");
-		File dbDir = new File(dir, "program.db");
+	private PrivateDatabase saveProgram(Program program, String dbName) throws Exception {
+		File dbDir = new File(tempDir, dbName);
 
 		DBHandle dbh = ((ProgramDB) program).getDBHandle();
 		BufferFile bfile = PrivateDatabase.createDatabase(dbDir, null, dbh.getBufferSize());
@@ -221,6 +276,7 @@ public class FileBytesTest extends AbstractGenericTest {
 
 	@Before
 	public void setUp() throws Exception {
+		tempDir = createTempDirectory("FileBytesTest");
 		FileBytesAdapter.setMaxBufferSize(MAX_BUFFER_SIZE_FOR_TESTING);
 		Language language = getLanguage("Toy:BE:64:default");
 		CompilerSpec compilerSpec = language.getDefaultCompilerSpec();
