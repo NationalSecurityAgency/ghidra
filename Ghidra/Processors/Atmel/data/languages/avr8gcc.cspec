@@ -18,7 +18,7 @@
      <long_size value="4" />
      <long_long_size value="8" />
      <float_size value="4" />
-     <double_size value="4" />
+     <double_size value="4" /> <!-- non-standard -->
      <long_double_size value="4" />
      
      <size_alignment_map>
@@ -45,11 +45,17 @@
         <pentry minsize="1" maxsize="2">
           <register name="R23R22"/>
         </pentry>
+        <pentry minsize="3" maxsize="4">
+          <addr space="join" piece1="W" piece2="R23R22"/>
+        </pentry>
         <pentry minsize="1" maxsize="2">
           <register name="R21R20"/>
         </pentry>
         <pentry minsize="1" maxsize="2">
           <register name="R19R18"/>
+        </pentry>
+        <pentry minsize="3" maxsize="4">
+          <addr space="join" piece1="R21R20" piece2="R19R18"/>
         </pentry>
         <pentry minsize="1" maxsize="2">
           <register name="R17R16"/>
@@ -70,6 +76,9 @@
       <output>
         <pentry minsize="1" maxsize="2">
           <register name="W"/>
+        </pentry>
+        <pentry minsize="3" maxsize="4">
+          <addr space="join" piece1="W" piece2="R23R22"/>
         </pentry>
       </output>
       <unaffected>

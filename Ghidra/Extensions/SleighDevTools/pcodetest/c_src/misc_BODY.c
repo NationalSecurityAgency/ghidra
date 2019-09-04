@@ -121,13 +121,13 @@ i4 nalign_struct(big_struct_type * in)
 
 u4 pcode_memset(u1 *lhs, u1 val, u4 len)
 {
-	memset(lhs, val, len);
+	memset(lhs, val, (size_t) len);
 	return *(u4 *) lhs;
 }
 
 void *pcode_memcpy(u1 * lhs, u1 * rhs, u4 len)
 {
-	return memcpy(lhs, rhs, len);
+	return memcpy(lhs, rhs, (size_t) len);
 }
 
 u4 pcode_memcmp_u4(u4 lhs, u4 rhs)
@@ -137,7 +137,7 @@ u4 pcode_memcmp_u4(u4 lhs, u4 rhs)
 
 u4 pcode_memcmp_n(u1 * lhs, u1 * rhs, u4 len)
 {
-	return (u4) (memcmp(lhs, rhs, len) == 0 ? 0 : 1);
+	return (u4) (memcmp(lhs, rhs, (size_t) len) == 0 ? 0 : 1);
 }
 
 #if defined(HAS_FLOAT) && defined(HAS_DOUBLE) && defined(HAS_LONGLONG)

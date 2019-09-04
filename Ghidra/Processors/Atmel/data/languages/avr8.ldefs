@@ -37,7 +37,7 @@
     <language processor="AVR8"
             endian="little"
             size="16"
-            variant="Atmega256"
+            variant="avr6"
             version="1.3"
             slafile="avr8eind.sla"
             processorspec="atmega256.pspec"

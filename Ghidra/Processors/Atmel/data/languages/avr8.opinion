@@ -1,5 +1,29 @@
 <opinions>
-    <constraint loader="Executable and Linking Format (ELF)" compilerSpecID="gcc">      
-        <constraint primary="83" processor="AVR8"    endian="little" />       
+    <constraint loader="Executable and Linking Format (ELF)" compilerSpecID="gcc">
+        <constraint primary="83" processor="AVR8" endian="little" />
+        <!--
+Elf e_flags are used for the secondary attribute, the following are pulled from binutils include/elf/avr.h
+#define E_AVR_MACH_AVR1     1
+#define E_AVR_MACH_AVR2     2
+#define E_AVR_MACH_AVR25   25
+#define E_AVR_MACH_AVR3     3
+#define E_AVR_MACH_AVR31   31
+#define E_AVR_MACH_AVR35   35
+#define E_AVR_MACH_AVR4     4
+#define E_AVR_MACH_AVR5     5
+#define E_AVR_MACH_AVR51   51
+#define E_AVR_MACH_AVR6     6 
+#define E_AVR_MACH_AVRTINY 100
+#define E_AVR_MACH_XMEGA1  101
+#define E_AVR_MACH_XMEGA2  102
+#define E_AVR_MACH_XMEGA3  103
+#define E_AVR_MACH_XMEGA4  104
+#define E_AVR_MACH_XMEGA5  105
+#define E_AVR_MACH_XMEGA6  106
+#define E_AVR_MACH_XMEGA7  107
+        -->
+        <constraint primary="83" secondary= "31" processor="AVR8" size="16" variant="default"/>
+        <constraint primary="83" secondary= "51" processor="AVR8" size="16" variant="extended"/>
+        <constraint primary="83" secondary= "6" processor="AVR8" size="24"" variant="atmega256"/>
     </constraint>
 </opinions>
