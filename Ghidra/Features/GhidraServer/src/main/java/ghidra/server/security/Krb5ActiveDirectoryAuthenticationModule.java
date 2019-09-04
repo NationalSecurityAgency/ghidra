@@ -26,6 +26,7 @@ import javax.naming.directory.*;
 import javax.security.auth.Subject;
 import javax.security.auth.callback.*;
 import javax.security.auth.login.*;
+import javax.security.auth.spi.LoginModule;
 
 import com.sun.security.auth.module.Krb5LoginModule;
 
@@ -38,6 +39,7 @@ import ghidra.server.UserManager;
  * <p>
  * This auth module needs to know the Active Directory domain name, and then from there it can bootstrap
  * itself using DNS lookups to find the Kerberos server.
+ * <p>
  */
 public class Krb5ActiveDirectoryAuthenticationModule implements AuthenticationModule {
 
@@ -45,7 +47,8 @@ public class Krb5ActiveDirectoryAuthenticationModule implements AuthenticationMo
 	private String domainName;
 	private boolean stripDomainFromUsername = true;
 
-	public Krb5ActiveDirectoryAuthenticationModule(String domainName, boolean allowUserToSpecifyName) {
+	public Krb5ActiveDirectoryAuthenticationModule(String domainName,
+			boolean allowUserToSpecifyName) {
 		this.domainName = domainName;
 		this.allowUserToSpecifyName = allowUserToSpecifyName;
 	}
@@ -134,6 +137,11 @@ public class Krb5ActiveDirectoryAuthenticationModule implements AuthenticationMo
 
 	//--------------------------------------------------------------------------------------------------
 
+	/**
+	 * A JAAS {@link Configuration} helper that forces a simple JAAS setup of a single
+	 * 'required' {@link LoginModule}.  (instead of an external JAAS config file)
+	 *
+	 */
 	private static class JAASConfiguration extends Configuration {
 
 		private AppConfigurationEntry staticConfigEntry;
@@ -150,6 +158,12 @@ public class Krb5ActiveDirectoryAuthenticationModule implements AuthenticationMo
 			return new AppConfigurationEntry[] { staticConfigEntry };
 		}
 
+		/**
+		 * Allows adding options to the {@link LoginModule}
+		 *
+		 * @param name string name of the option
+		 * @param value value of the option
+		 */
 		public void addOption(String name, Object value) {
 			options.put(name, value);
 		}
@@ -157,6 +171,13 @@ public class Krb5ActiveDirectoryAuthenticationModule implements AuthenticationMo
 
 	private static final String SRV_RECORD_TYPE = "SRV";
 
+	/**
+	 * Returns the first Microsoft Active Directory domain controller for the specified domainName.
+	 *
+	 * @param domainName the local domain name of the MS Active Directory system
+	 * @return address of the domain controller, or null if not found
+	 * @throws NamingException
+	 */
 	private static InetSocketAddress getFirstDomainController(String domainName)
 			throws NamingException {
 

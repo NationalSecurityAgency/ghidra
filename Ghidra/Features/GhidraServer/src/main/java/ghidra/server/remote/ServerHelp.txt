@@ -11,7 +11,7 @@ Command line parameters:
 	
    -p# : base TCP port to be used (default: 13100) [see Note 1]
    
-   -a# : an optional authentication mode where # is a value 0 or 2 or 4
+   -a# : an optional authentication mode where # is a value of 0, 2, 4, or 5
          0 - Private user password
          2 - PKI Authentication
          4 - JAAS Authentication controlled by config file pointed to by -jaas

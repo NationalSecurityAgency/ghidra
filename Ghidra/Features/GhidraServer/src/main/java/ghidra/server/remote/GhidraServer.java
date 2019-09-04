@@ -87,7 +87,7 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 		PKI_LOGIN("PKI"),
 		ALT_OS_PASSWORD_LOGIN("OS Password & Password File"),
 		JAAS_LOGIN("JAAS"),
-		KRB5_AD("Active Directory via Kerberos");
+		KRB5_AD_LOGIN("Active Directory via Kerberos");
 
 		private String description;
 
@@ -107,7 +107,7 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 				case 2: return PKI_LOGIN;
 				case 3: return ALT_OS_PASSWORD_LOGIN;
 				case 4: return JAAS_LOGIN;
-				case 5: return KRB5_AD;
+				case 5: return KRB5_AD_LOGIN;
 				default: return null;
 			}
 			//@formatter:on
@@ -185,7 +185,7 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 			case JAAS_LOGIN:
 				authModule = new JAASAuthenticationModule("auth", allowUserToSpecifyName);
 				break;
-			case KRB5_AD:
+			case KRB5_AD_LOGIN:
 				if (loginDomain == null || loginDomain.isBlank()) {
 					throw new IllegalArgumentException("Missing login domain value -d<domainname>");
 				}
