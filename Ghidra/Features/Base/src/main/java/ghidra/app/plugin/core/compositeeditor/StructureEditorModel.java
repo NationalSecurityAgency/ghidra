@@ -181,7 +181,7 @@ class StructureEditorModel extends CompEditorModel {
 	@Override
 	public DataTypeComponent getComponent(int rowIndex) {
 		int numComponents = getNumComponents();
-		if (numComponents == 0 || rowIndex < 0 || rowIndex == numComponents) {
+		if (rowIndex < 0 || rowIndex == numComponents) {
 			return null;
 		}
 		Structure viewStruct = (Structure) viewComposite;
