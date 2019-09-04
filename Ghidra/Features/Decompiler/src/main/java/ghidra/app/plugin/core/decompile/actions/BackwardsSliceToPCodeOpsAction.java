@@ -15,43 +15,27 @@
  */
 package ghidra.app.plugin.core.decompile.actions;
 
+import java.util.Set;
+
+import docking.action.MenuData;
 import ghidra.app.decompiler.ClangToken;
 import ghidra.app.decompiler.component.*;
 import ghidra.app.plugin.core.decompile.DecompilerActionContext;
 import ghidra.program.model.pcode.PcodeOp;
 import ghidra.program.model.pcode.Varnode;
-import ghidra.util.Msg;
 
-import java.util.Set;
-
-import docking.ActionContext;
-import docking.action.DockingAction;
-import docking.action.MenuData;
-
-public class BackwardsSliceToPCodeOpsAction extends DockingAction {
+public class BackwardsSliceToPCodeOpsAction extends AbstractDecompilerAction {
 	private final DecompilerController controller;
 
-	public BackwardsSliceToPCodeOpsAction(String owner, DecompilerController controller) {
-		super("Highlight Backward Inst Slice", owner);
+	public BackwardsSliceToPCodeOpsAction(DecompilerController controller) {
+		super("Highlight Backward Inst Slice");
 		this.controller = controller;
-		setPopupMenuData(new MenuData(new String[] { "Highlight Backward Inst Slice" }, "Decompile"));
+		setPopupMenuData(
+			new MenuData(new String[] { "Highlight Backward Inst Slice" }, "Decompile"));
 	}
 
 	@Override
-	public boolean isEnabledForContext(ActionContext context) {
-		if (!(context instanceof DecompilerActionContext)) {
-			return false;
-		}
-
-		DecompilerActionContext decompilerActionContext = (DecompilerActionContext) context;
-		if (decompilerActionContext.isDecompiling()) {
-			// Let this through here and handle it in actionPerformed().  This lets us alert 
-			// the user that they have to wait until the decompile is finished.  If we are not
-			// enabled at this point, then the keybinding will be propagated to the global 
-			// actions, which is not what we want.
-			return true;
-		}
-
+	protected boolean isEnabledForDecompilerContext(DecompilerActionContext context) {
 		DecompilerPanel decompilerPanel = controller.getDecompilerPanel();
 		ClangToken tokenAtCursor = decompilerPanel.getTokenAtCursor();
 		Varnode varnode = DecompilerUtils.getVarnodeRef(tokenAtCursor);
@@ -59,17 +43,7 @@ public class BackwardsSliceToPCodeOpsAction extends DockingAction {
 	}
 
 	@Override
-	public void actionPerformed(ActionContext context) {
-		// Note: we intentionally do this check here and not in isEnabledForContext() so 
-		// that global events do not get triggered.
-		DecompilerActionContext decompilerActionContext = (DecompilerActionContext) context;
-		if (decompilerActionContext.isDecompiling()) {
-			Msg.showInfo(getClass(),
-				context.getComponentProvider().getComponent(),
-				"Decompiler Action Blocked", "You cannot perform Decompiler actions while the Decompiler is busy");
-			return;
-		}
-
+	protected void decompilerActionPerformed(DecompilerActionContext context) {
 		DecompilerPanel decompilerPanel = controller.getDecompilerPanel();
 		ClangToken tokenAtCursor = decompilerPanel.getTokenAtCursor();
 		Varnode varnode = DecompilerUtils.getVarnodeRef(tokenAtCursor);
@@ -78,7 +52,8 @@ public class BackwardsSliceToPCodeOpsAction extends DockingAction {
 			Set<PcodeOp> backwardSlice = DecompilerUtils.getBackwardSliceToPCodeOps(varnode);
 			backwardSlice.add(op);
 			decompilerPanel.clearHighlights();
-			decompilerPanel.addPcodeOpHighlights(backwardSlice, decompilerPanel.getDefaultHighlightColor());
+			decompilerPanel.addPcodeOpHighlights(backwardSlice,
+				decompilerPanel.getDefaultHighlightColor());
 			decompilerPanel.repaint();
 		}
 	}

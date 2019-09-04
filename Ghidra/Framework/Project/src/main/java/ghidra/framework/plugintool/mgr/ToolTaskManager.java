@@ -404,7 +404,7 @@ public class ToolTaskManager implements Runnable {
 		}
 		task.getCommand().taskCompleted();
 		double totalTime = (System.currentTimeMillis() - start_time) / 1000.00;
-		Msg.debug(this, "  task Complete (" + totalTime + " secs)");
+		Msg.debug(this, "  task complete (" + totalTime + " secs)");
 	}
 
 	/**

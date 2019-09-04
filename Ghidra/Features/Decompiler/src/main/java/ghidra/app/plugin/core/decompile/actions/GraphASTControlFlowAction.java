@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +15,7 @@
  */
 package ghidra.app.plugin.core.decompile.actions;
 
+import docking.action.MenuData;
 import ghidra.app.decompiler.component.DecompilerController;
 import ghidra.app.plugin.core.decompile.DecompilerActionContext;
 import ghidra.app.services.GraphService;
@@ -26,53 +26,25 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.pcode.HighFunction;
 import ghidra.util.Msg;
 import ghidra.util.task.TaskLauncher;
-import docking.ActionContext;
-import docking.action.DockingAction;
-import docking.action.MenuData;
 
-public class GraphASTControlFlowAction extends DockingAction {
+public class GraphASTControlFlowAction extends AbstractDecompilerAction {
 	private final DecompilerController controller;
 	private final PluginTool tool;
-	private final Plugin plugin;
 
-	public GraphASTControlFlowAction(String owner, Plugin plugin, DecompilerController controller) {
-		super("Graph AST Control Flow", owner);
-		this.plugin = plugin;
+	public GraphASTControlFlowAction(Plugin plugin, DecompilerController controller) {
+		super("Graph AST Control Flow");
 		this.tool = plugin.getTool();
 		this.controller = controller;
 		setMenuBarData(new MenuData(new String[] { "Graph AST Control Flow" }, "graph"));
-
 	}
 
 	@Override
-	public boolean isEnabledForContext(ActionContext context) {
-		if (!(context instanceof DecompilerActionContext)) {
-			return false;
-		}
-		DecompilerActionContext decompilerActionContext = (DecompilerActionContext) context;
-		if (decompilerActionContext.isDecompiling()) {
-			// Let this through here and handle it in actionPerformed().  This lets us alert 
-			// the user that they have to wait until the decompile is finished.  If we are not
-			// enabled at this point, then the keybinding will be propagated to the global 
-			// actions, which is not what we want.
-			return true;
-		}
-
+	protected boolean isEnabledForDecompilerContext(DecompilerActionContext context) {
 		return controller.getFunction() != null;
 	}
 
 	@Override
-	public void actionPerformed(ActionContext context) {
-		// Note: we intentionally do this check here and not in isEnabledForContext() so 
-		// that global events do not get triggered.
-		DecompilerActionContext decompilerActionContext = (DecompilerActionContext) context;
-		if (decompilerActionContext.isDecompiling()) {
-			Msg.showInfo(getClass(),
-				context.getComponentProvider().getComponent(),
-				"Decompiler Action Blocked", "You cannot perform Decompiler actions while the Decompiler is busy");
-			return;
-		}
-
+	protected void decompilerActionPerformed(DecompilerActionContext context) {
 		GraphService graphService = tool.getService(GraphService.class);
 		if (graphService == null) {
 			Msg.showError(this, tool.getToolFrame(), "AST Graph Failed",
@@ -86,9 +58,8 @@ public class GraphASTControlFlowAction extends DockingAction {
 		int codeLimitPerBlock = options.getInt("Max Code Lines Displayed", 10);
 		HighFunction highFunction = controller.getHighFunction();
 		Address locationAddr = controller.getLocation().getAddress();
-		ASTGraphTask task =
-			new ASTGraphTask(graphService, !reuseGraph, codeLimitPerBlock, locationAddr,
-				highFunction, ASTGraphTask.CONTROL_FLOW_GRAPH);
+		ASTGraphTask task = new ASTGraphTask(graphService, !reuseGraph, codeLimitPerBlock,
+			locationAddr, highFunction, ASTGraphTask.CONTROL_FLOW_GRAPH);
 		new TaskLauncher(task, tool.getToolFrame());
 	}
 

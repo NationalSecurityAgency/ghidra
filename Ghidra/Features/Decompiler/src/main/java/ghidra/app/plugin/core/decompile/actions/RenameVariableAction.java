@@ -15,6 +15,10 @@
  */
 package ghidra.app.plugin.core.decompile.actions;
 
+import java.awt.event.KeyEvent;
+
+import docking.action.KeyBindingData;
+import docking.action.MenuData;
 import ghidra.app.decompiler.*;
 import ghidra.app.decompiler.component.DecompilerController;
 import ghidra.app.decompiler.component.DecompilerPanel;
@@ -31,82 +35,17 @@ import ghidra.util.UndefinedFunction;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.exception.InvalidInputException;
 
-import java.awt.event.KeyEvent;
-
-import docking.ActionContext;
-import docking.action.*;
-
-public class RenameVariableAction extends DockingAction {
+public class RenameVariableAction extends AbstractDecompilerAction {
 	private final DecompilerController controller;
 	private final PluginTool tool;
 	private RenameTask nameTask = null;
 
-	public RenameVariableAction(String owner, PluginTool tool, DecompilerController controller) {
-		super("Rename Variable", owner);
+	public RenameVariableAction(PluginTool tool, DecompilerController controller) {
+		super("Rename Variable");
 		this.tool = tool;
 		this.controller = controller;
 		setPopupMenuData(new MenuData(new String[] { "Rename Variable" }, "Decompile"));
 		setKeyBindingData(new KeyBindingData(KeyEvent.VK_L, 0));
-	}
-
-	@Override
-	public boolean isEnabledForContext(ActionContext context) {
-		if (!(context instanceof DecompilerActionContext)) {
-			return false;
-		}
-
-		Function function = controller.getFunction();
-		if (function instanceof UndefinedFunction) {
-			return false;
-		}
-
-		DecompilerActionContext decompilerActionContext = (DecompilerActionContext) context;
-		if (decompilerActionContext.isDecompiling()) {
-			// Let this through here and handle it in actionPerformed().  This lets us alert 
-			// the user that they have to wait until the decompile is finished.  If we are not
-			// enabled at this point, then the keybinding will be propagated to the global 
-			// actions, which is not what we want.
-			return true;
-		}
-
-		DecompilerPanel decompilerPanel = controller.getDecompilerPanel();
-		ClangToken tokenAtCursor = decompilerPanel.getTokenAtCursor();
-		if (tokenAtCursor == null) {
-			return false;
-		}
-		if (tokenAtCursor instanceof ClangFieldToken) {
-			DataType dt = getStructDataType(tokenAtCursor);
-			if (dt == null) {
-				return false;
-			}
-			getPopupMenuData().setMenuItemName("Rename Field");
-			return true;
-		}
-		HighVariable variable = tokenAtCursor.getHighVariable();
-		if (variable == null) {
-			// not sure why variables with an & in front of them have no highVariable
-			Address storageAddress = getStorageAddress(tokenAtCursor, controller);
-			if (storageAddress == null) {
-				return false;
-			}
-			variable = forgeHighVariable(storageAddress, controller);
-			if (variable == null)
-				return false;
-		}
-		if (variable instanceof HighLocal) {
-			getPopupMenuData().setMenuItemName("Rename Variable");
-			return true;
-		}
-		else if (variable instanceof HighGlobal) {
-			getPopupMenuData().setMenuItemName("Rename Global");
-			return true;
-		}
-// TODO: Constant equates do not work properly with decompiler
-//		else if (variable instanceof HighConstant) {
-//			getPopupMenuData().setMenuItemName("Rename Constant");
-//			return true;
-//		}
-		return false;
 	}
 
 	public static Address getStorageAddress(ClangToken tokenAtCursor,
@@ -149,17 +88,17 @@ public class RenameVariableAction extends DockingAction {
 		if (addr.isStackAddress()) {
 			LocalSymbolMap lsym = hfunc.getLocalSymbolMap();
 			HighSymbol hsym = lsym.findLocal(addr, null);
-			if (hsym != null)
+			if (hsym != null) {
 				res = hsym.getHighVariable();
+			}
 		}
 		else {
 			Data data = program.getListing().getDataAt(addr);
 			if (data != null) {
 				DataType dt = data.getDataType();
 				try {
-					res =
-						new HighGlobal(data.getLabel(), dt, new Varnode(addr, dt.getLength()),
-							null, hfunc);
+					res = new HighGlobal(data.getLabel(), dt, new Varnode(addr, dt.getLength()),
+						null, hfunc);
 				}
 				catch (InvalidInputException e) {
 					Msg.error(RenameVariableAction.class, e.getMessage());
@@ -169,18 +108,87 @@ public class RenameVariableAction extends DockingAction {
 		return res;
 	}
 
+	/**
+	 * Get the structure associated with a field token
+	 * @param tok is the token representing a field
+	 * @return the structure which contains this field
+	 */
+	public static Structure getStructDataType(ClangToken tok) {
+		// We already know tok is a ClangFieldToken
+		ClangFieldToken fieldtok = (ClangFieldToken) tok;
+		DataType dt = fieldtok.getDataType();
+		if (dt == null) {
+			return null;
+		}
+		if (dt instanceof TypeDef) {
+			dt = ((TypeDef) dt).getBaseDataType();
+		}
+		if (dt instanceof Structure) {
+			return (Structure) dt;
+		}
+		return null;
+	}
+
+	/**
+	 * Get the offset of the field within its structure
+	 * @param tok is the display token associated with the field
+	 * @return the offset, in bytes, of that field within its structure
+	 */
+	public static int getDataTypeOffset(ClangToken tok) {
+		// Assume tok is already vetted as a structure carrying ClangFieldToken
+		return ((ClangFieldToken) tok).getOffset();
+	}
+
 	@Override
-	public void actionPerformed(ActionContext context) {
-		// Note: we intentionally do this check here and not in isEnabledForContext() so 
-		// that global events do not get triggered.
-		DecompilerActionContext decompilerActionContext = (DecompilerActionContext) context;
-		if (decompilerActionContext.isDecompiling()) {
-			Msg.showInfo(getClass(), context.getComponentProvider().getComponent(),
-				"Decompiler Action Blocked",
-				"You cannot perform Decompiler actions while the Decompiler is busy");
-			return;
+	protected boolean isEnabledForDecompilerContext(DecompilerActionContext context) {
+		Function function = controller.getFunction();
+		if (function instanceof UndefinedFunction) {
+			return false;
 		}
 
+		DecompilerPanel decompilerPanel = controller.getDecompilerPanel();
+		ClangToken tokenAtCursor = decompilerPanel.getTokenAtCursor();
+		if (tokenAtCursor == null) {
+			return false;
+		}
+		if (tokenAtCursor instanceof ClangFieldToken) {
+			DataType dt = getStructDataType(tokenAtCursor);
+			if (dt == null) {
+				return false;
+			}
+			getPopupMenuData().setMenuItemName("Rename Field");
+			return true;
+		}
+		HighVariable variable = tokenAtCursor.getHighVariable();
+		if (variable == null) {
+			// not sure why variables with an & in front of them have no highVariable
+			Address storageAddress = getStorageAddress(tokenAtCursor, controller);
+			if (storageAddress == null) {
+				return false;
+			}
+			variable = forgeHighVariable(storageAddress, controller);
+			if (variable == null) {
+				return false;
+			}
+		}
+		if (variable instanceof HighLocal) {
+			getPopupMenuData().setMenuItemName("Rename Variable");
+			return true;
+		}
+		else if (variable instanceof HighGlobal) {
+			getPopupMenuData().setMenuItemName("Rename Global");
+			return true;
+		}
+//TODO: Constant equates do not work properly with decompiler
+//	else if (variable instanceof HighConstant) {
+//		getPopupMenuData().setMenuItemName("Rename Constant");
+//		return true;
+//	}
+		return false;
+	}
+
+	@Override
+	protected void decompilerActionPerformed(DecompilerActionContext context) {
 		DecompilerPanel decompilerPanel = controller.getDecompilerPanel();
 		final ClangToken tokenAtCursor = decompilerPanel.getTokenAtCursor();
 		HighVariable variable = tokenAtCursor.getHighVariable();
@@ -191,13 +199,13 @@ public class RenameVariableAction extends DockingAction {
 				variable = forgeHighVariable(addr, controller);
 			}
 		}
-// TODO: Constant equates do not work properly with decompiler
-//		if (variable instanceof HighConstant) {
-//			nameTask =
-//				new RenameConstantTask(tool, tokenAtCursor.getText(), (HighConstant) variable,
-//					controller.getProgram());
-//		}
-//		else 
+//TODO: Constant equates do not work properly with decompiler
+//	if (variable instanceof HighConstant) {
+//		nameTask =
+//			new RenameConstantTask(tool, tokenAtCursor.getText(), (HighConstant) variable,
+//				controller.getProgram());
+//	}
+//	else 
 		if (variable instanceof HighLocal) {
 			nameTask =
 				new RenameVariableTask(tool, variable.getName(), controller.getHighFunction(),
@@ -210,9 +218,8 @@ public class RenameVariableAction extends DockingAction {
 					"Memory storage not found for global variable");
 				return;
 			}
-			nameTask =
-				new RenameGlobalVariableTask(tool, tokenAtCursor.getText(), addr,
-					controller.getProgram());
+			nameTask = new RenameGlobalVariableTask(tool, tokenAtCursor.getText(), addr,
+				controller.getProgram());
 		}
 		else if (tokenAtCursor instanceof ClangFieldToken) {
 			Structure dt = getStructDataType(tokenAtCursor);
@@ -254,33 +261,5 @@ public class RenameVariableAction extends DockingAction {
 				program.endTransaction(transaction, commit);
 			}
 		}
-	}
-
-	/**
-	 * Get the structure associated with a field token
-	 * @param tok is the token representing a field
-	 * @return the structure which contains this field
-	 */
-	public static Structure getStructDataType(ClangToken tok) {
-		// We already know tok is a ClangFieldToken
-		ClangFieldToken fieldtok = (ClangFieldToken) tok;
-		DataType dt = fieldtok.getDataType();
-		if (dt == null)
-			return null;
-		if (dt instanceof TypeDef)
-			dt = ((TypeDef) dt).getBaseDataType();
-		if (dt instanceof Structure)
-			return (Structure) dt;
-		return null;
-	}
-
-	/**
-	 * Get the offset of the field within its structure
-	 * @param tok is the display token associated with the field
-	 * @return the offset, in bytes, of that field within its structure
-	 */
-	public static int getDataTypeOffset(ClangToken tok) {
-		// Assume tok is already vetted as a structure carrying ClangFieldToken
-		return ((ClangFieldToken) tok).getOffset();
 	}
 }
