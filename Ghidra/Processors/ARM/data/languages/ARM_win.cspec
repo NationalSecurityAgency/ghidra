@@ -34,6 +34,7 @@
   <default_proto>
     <prototype name="__stdcall" extrapop="0" stackshift="0">
       <input>
+        <!-- we cannot accurately model the allocation scheme when parameters are larger than 4 bytes -->
         <pentry minsize="1" maxsize="4" metatype="float">
           <register name="s0"/>
         </pentry>
