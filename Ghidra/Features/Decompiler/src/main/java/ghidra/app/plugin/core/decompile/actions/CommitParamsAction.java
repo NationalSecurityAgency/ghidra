@@ -90,8 +90,9 @@ public class CommitParamsAction extends DockingAction {
 			if (hfunc.getFunction().getSignatureSource() == SourceType.USER_DEFINED) {
 				source = SourceType.USER_DEFINED;
 			}
-			HighFunctionDBUtil.commitParamsToDatabase(hfunc, true, source);
+			
 			HighFunctionDBUtil.commitReturnToDatabase(hfunc, source);
+			HighFunctionDBUtil.commitParamsToDatabase(hfunc, true, source);
 		}
 		catch (DuplicateNameException e) {
 			throw new AssertException("Unexpected exception", e);
