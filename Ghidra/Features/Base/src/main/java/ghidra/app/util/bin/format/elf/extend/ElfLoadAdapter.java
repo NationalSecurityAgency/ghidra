@@ -143,6 +143,29 @@ public class ElfLoadAdapter {
 		// segment is not marked execute, use the data space by default
 		return program.getLanguage().getDefaultDataSpace();
 	}
+	
+
+	/**
+	 * Get the preferred load address for a program segment
+	 * @param elfLoadHelper load helper object
+	 * @param elfProgramHeader elf program segment header
+	 * @return preferred load address
+	 */
+	public Address getPreferredSegmentAddress(ElfLoadHelper elfLoadHelper, ElfProgramHeader elfProgramHeader) {
+		
+		Program program = elfLoadHelper.getProgram();
+		
+		AddressSpace space =
+				getPreferredSegmentAddressSpace(elfLoadHelper, elfProgramHeader);
+
+			long addrWordOffset = elfProgramHeader.getVirtualAddress();
+
+			if (space == program.getAddressFactory().getDefaultAddressSpace()) {
+				addrWordOffset += elfLoadHelper.getImageBaseWordAdjustmentOffset();
+			}
+
+			return space.getTruncatedAddress(addrWordOffset, true);
+	}
 
 	/**
 	 * Get the default alignment within the default address space.
@@ -173,6 +196,27 @@ public class ElfLoadAdapter {
 		}
 		// segment is not marked execute, use the data space by default
 		return program.getLanguage().getDefaultDataSpace();
+	}
+	
+	/**
+	 * Get the preferred load address for a program section
+	 * @param elfLoadHelper load helper object
+	 * @param elfSectionHeader elf program section header
+	 * @return preferred load address
+	 */
+	public Address getPreferredSectionAddress(ElfLoadHelper elfLoadHelper,
+			ElfSectionHeader elfSectionHeader) {
+		Program program = elfLoadHelper.getProgram();
+		
+		AddressSpace space = getPreferredSectionAddressSpace(elfLoadHelper, elfSectionHeader);
+		
+		long addrWordOffset = elfSectionHeader.getAddress();
+
+		if (space == program.getAddressFactory().getDefaultAddressSpace()) {
+			addrWordOffset += elfLoadHelper.getImageBaseWordAdjustmentOffset();
+		}
+
+		return space.getTruncatedAddress(addrWordOffset, true);
 	}
 
 	/**
@@ -429,5 +473,4 @@ public class ElfLoadAdapter {
 	public Class<? extends ElfRelocation> getRelocationClass(ElfHeader elfHeader) {
 		return null;
 	}
-
 }

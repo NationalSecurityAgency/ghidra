@@ -5,7 +5,6 @@
      <absolute_max_alignment value="0" />
      <machine_alignment value="1" />
      <default_alignment value="1" />
-     <default_pointer_alignment value="3" />
      <pointer_size value="2" />
      <wchar_size value="4" />
      <short_size value="2" />
@@ -15,12 +14,6 @@
      <float_size value="4" />
      <double_size value="8" />
      <long_double_size value="8" />
-     <size_alignment_map>
-          <entry size="1" alignment="1" />
-          <entry size="2" alignment="2" />
-          <entry size="4" alignment="4" />
-          <entry size="8" alignment="8" />
-     </size_alignment_map>
   </data_organization>
 
   <global>
@@ -29,20 +22,11 @@
     <range space="RAM" first="0x18"  last="0x2f"/>
     <range space="RAM" first="0x31"  last="0xffff"/>
   </global>
+  
   <stackpointer register="SP" space="RAM" growth="negative"/>
-  <segmentop space="RAM" userop="segment" baseinsize="1" innerinsize="2" farpointer="no">
-    <baseop code="INT_ZEXT"/>
-    <baseop code="INT_LEFT" value="16"/>
-    <innerop code="INT_ZEXT"/>
-    <constresolve>
-      <register name="PPAGE"/>
-    </constresolve>
-  </segmentop>
-  <returnaddress>
-    <varnode space="stack" offset="0" size="3"/>
-  </returnaddress>
+  
   <default_proto>
-     <prototype name="__asmA" extrapop="2" stackshift="2" strategy="register">
+      <prototype name="__asmA" extrapop="2" stackshift="2" strategy="register">
       <input>
         <pentry minsize="1" maxsize="1">
           <register name="A"/>
@@ -50,7 +34,7 @@
         <pentry minsize="1" maxsize="1">
           <register name="B"/>
         </pentry>
-        <pentry minsize="1" maxsize="2">
+        <pentry minsize="2" maxsize="2">
           <register name="D"/>
         </pentry>
         <pentry minsize="1" maxsize="2">
@@ -59,7 +43,7 @@
         <pentry minsize="1" maxsize="2">
           <register name="IX"/>
         </pentry>
-        <pentry minsize="1" maxsize="500" align="2">
+        <pentry minsize="1" maxsize="500" align="1">
           <addr offset="2" space="stack"/>
         </pentry>
       </input>
@@ -70,6 +54,7 @@
       </output>
       <unaffected>
         <register name="SP"/>
+        <register name="EPAGE"/>
         <register name="PPAGE"/>
         <register name="RPAGE"/>
         <register name="GPAGE"/>
@@ -77,7 +62,8 @@
     </prototype>
   </default_proto>
   
-  <prototype name="__asmA_longcall" extrapop="3" stackshift="3" strategy="register">
+
+<prototype name="__asmA_longcall" extrapop="3" stackshift="3" strategy="register">
 	  <input>
 	    <pentry minsize="1" maxsize="1">
 	      <register name="A"/>
@@ -85,7 +71,7 @@
 	    <pentry minsize="1" maxsize="1">
 	      <register name="B"/>
 	    </pentry>
-	    <pentry minsize="1" maxsize="2">
+	    <pentry minsize="2" maxsize="2">
 	      <register name="D"/>
 	    </pentry>
 	    <pentry minsize="1" maxsize="2">
@@ -94,8 +80,8 @@
 	    <pentry minsize="1" maxsize="2">
 	      <register name="IX"/>
 	    </pentry>
-	    <pentry minsize="1" maxsize="500" align="2">
-	      <addr offset="2" space="stack"/>
+	    <pentry minsize="1" maxsize="500" align="1">
+	      <addr offset="3" space="stack"/>
 	    </pentry>
 	  </input>
 	   <output>
@@ -105,12 +91,22 @@
 	  </output>
 	  <unaffected>
 	    <register name="SP"/>
+	    <register name="EPAGE"/>
 	    <register name="PPAGE"/>
 	    <register name="RPAGE"/>
 	    <register name="GPAGE"/>
 	  </unaffected>
   </prototype>
- <prototype name="__asmA_xgate" extrapop="3" stackshift="3" strategy="register">
+  
+
+    
+<resolveprototype name="__asmA_longcall/__asmA">
+    <model name="__asmA_longcall"/>        <!-- The default case -->
+    <model name="__asmA"/>
+  </resolveprototype>
+  <eval_current_prototype name="__asmA_longcall/__asmA"/>
+  
+ <prototype name="__asm_xgate" extrapop="0" stackshift="0" strategy="register">
 	  <input>
 	    <pentry minsize="1" maxsize="2">
 	      <register name="R2"/>
@@ -139,5 +135,18 @@
 	      <addr space="join" piece1="R2" piece2="R3"/>
 	    </pentry>
 	  </output>
+	  <unaffected>
+	      <register name="R1"/>
+	      <register name="SP"/>
+	      <register name="R7"/>
+	      <register name="PPAGE"/>
+	   </unaffected>
+	   <pcode inject="uponentry">
+	   <!-- Special injection at start of function, really R7 is the stack pointer, but
+	           decompiler can only handle one stack pointer.  (Hack) -->
+	       <body>
+	           R7 = SP;
+	        </body>
+	   </pcode>
   </prototype>
 </compiler_spec>

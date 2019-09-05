@@ -5,10 +5,10 @@
 ################################################################
 
 # register R0 always contains the value 0
-define register offset=0x100 size=2 [R0 R1 R2 R3 R4 R5 R6 R7];
+define register offset=0x100 size=2 [R0             R1           R2            R3            R4            R5            R6            R7];
+define register offset=0x100 size=1 [R0.H R0.L R1.H R1.L R2.H R2.L R3.H R3.L R4.H R4.L R5.H R5.L R6.H R6.L R7.H R7.L];
 define register offset=0x110 size=2 [XPC XCCR];
 define register offset=0x120 size=1 [XC XV XZ XN];
-define register offset=0x130 size=3 [XG_BASE];
 
 # Individual status bits within the XCCR
 @define XN "XN" # XCCR[3,1] # Negative Flag
@@ -47,11 +47,13 @@ define token XOpWord16 (16)
 
 attach variables [reg8 reg5 reg2] [R0 R1 R2 R3 R4 R5 R6 R7];
 
+attach variables [reg8_lo ] [R0.L R1.L R2.L R3.L R4.L R5.L R6.L R7.L];
+attach variables [reg8_hi ] [R0.H R1.H R2.H R3.H R4.H R5.H R6.H R7.H];
+
 ################################################################
 # Pseudo Instructions
 ################################################################
-define pcodeop bfins;
-define pcodeop bfinsi;
+
 define pcodeop findFirstOne;
 define pcodeop leftShiftCarry;
 define pcodeop rightShiftCarry;
@@ -59,6 +61,7 @@ define pcodeop parity;
 define pcodeop clearSemaphore;
 define pcodeop setSemaphore;
 define pcodeop setInterruptFlag;
+define pcodeop TerminateThread;
 
 ################################################################
 # Macros Instructions
@@ -70,22 +73,6 @@ macro default_flags(result)
 	$(XN) = (result s< 0);
 	$(XV) = 0;
 	#$(XC) not affected
-}
-
-macro default_flagsH(result)
-{
-	$(XN) = (result s< 0);
-    $(XZ) = ((result & 0xff00) == 0);
-	$(XV) = 0;
-	#$(XC) not affected
-}
-
-macro default_flagsL(result)
-{
-	$(XN) = ((result & 0x0080) != 0);
-    $(XZ) = ((result & 0xff) == 0);
-	$(XV) = 0;
-	#$(XC) not affected	
 }
 
 macro addition_flags(operand1, operand2, result)
@@ -129,6 +116,22 @@ macro getbit(res,in,bitnum) {
   res = ((in >> bitnum) & 1) != 0;
 }
 
+#
+# computes a fake PPAGE page mapping based on the 16 bit input address
+# The XGATE memory is mapped to the pages of physical memory
+# Warning: This might not be the correct mapping on all XGATE processors
+#
+# 0000-07ff = 0x00_0000 - 0x00_07ff
+# 0800-7fff = 0x78_0800 - XGFLASH_HIGH
+# 8000-ffff = 0x0f_0800 - 0x0f_ffff
+#
+macro computePage(addr) {
+	local isReg:1 = addr < 0x800;
+	local isFlash:1 = addr >= 0x800 & addr < 0x7fff;
+	local isRam:1 = addr >= 0x8000;
+	physPage = (zext(isReg) * 0x0)+ (zext(isFlash) * (0x78 << 16)) + (zext(isRam) * (0xf<<16));
+}
+
 ################################################################
 # Constructors
 ################################################################
@@ -136,10 +139,10 @@ macro getbit(res,in,bitnum) {
 #rel9 defined in HCS_HC12.sinc
 # range -256 through +255
 with : XGATE=1 {
-rel9: reloc is immrel8   [ reloc = XG_BASE + inst_next + (immrel8 * 2); ]  { export * reloc; }
+rel9: reloc is immrel8   [ reloc = inst_next + (immrel8 * 2); ]  { export * reloc; }
 
 # range -512 through +512
-rel10: reloc is immrel9   [ reloc = XG_BASE + inst_next + (immrel9 * 2); ]  { export * reloc; }
+rel10: reloc is immrel9   [ reloc = inst_next + (immrel9 * 2); ]  { export * reloc; }
 
 rd : reg8 is reg8 { export reg8; }
 
@@ -148,6 +151,11 @@ rs1: reg5 is reg5 { export reg5; }
 
 rs2: reg2 is reg2 & reg2=0 { export 0:2; }
 rs2: reg2 is reg2 { export reg2; }
+
+
+rd_lo: reg8 is reg8 & reg8_lo { export reg8_lo; }
+rd_hi: reg8 is reg8 & reg8_hi { export reg8_hi; }
+
 
 
 # Add with carry
@@ -194,30 +202,25 @@ rs2: reg2 is reg2 { export reg2; }
 # Logical AND
 :AND rd, rs1, rs2 is opcode=0x2 & rd & rs1 & rs2 & op2=0x0
 {
-    local result:2 = rs1 & rs2;
-    rd = result;
+    rd = rs1 & rs2;
     
-    default_flags(result);
+    default_flags(rd);
 }
 
 # Logical AND immediate 8-bit constant (high byte)
-:ANDH rd, ximm8 is opcode=0x11 & rd & ximm8
+:ANDH rd, ximm8 is opcode=0x11 & rd & ximm8 & rd_hi
 {
-    local result:2 = (ximm8 << 8) | 0xff;
-    result = rd & result;
-    rd = result;
+    rd_hi = rd_hi & ximm8;
     
-	default_flagsH(result);
+	default_flags(rd_hi);
 }
 
 # Logical AND immediate 8-bit constant (low byte)
-:ANDL rd, ximm8 is opcode=0x10 & rd & ximm8
+:ANDL rd, ximm8 is opcode=0x10 & rd & ximm8 & rd_lo
 {
-    local result:2 = 0xff00 | ximm8;
-    result = rd & result;
-    rd = result;
+    rd_lo = rd_lo & ximm8;
     
-	default_flagsL(result);
+	default_flags(rd_lo);
 }
 
 # Arithmetic Shift Right
@@ -341,19 +344,17 @@ rs2: reg2 is reg2 { export reg2; }
 #:BHS rel9 is opcode=0x4 & op9_10=0x0 & rel9    see BCC
 
 # Bit Test immediate 8-bit constant (high byte)
-:BITH rd, ximm8 is opcode=0x13 & rd & ximm8
+:BITH rd, ximm8 is opcode=0x13 & rd & ximm8 & rd_hi
 {
-    local val:2 = rd >> 8;
-    val = val & ximm8;
+    local val = rd_hi & ximm8;
     
     default_flags(val);
 }
 
 # Bit Test immediate 8-bit constant (low byte)
-:BITL reg8, ximm8 is opcode=0x12 & reg8 & ximm8
+:BITL reg8, ximm8 is opcode=0x12 & reg8 & ximm8 & rd_lo
 {
-    local val:2 = reg8 & 0xff;
-    val = val & ximm8;
+    local val  = rd_lo & ximm8;
     
     default_flags(val);
 }
@@ -474,12 +475,13 @@ rs2: reg2 is reg2 { export reg2; }
 :CSEM rd is opcode=0x0 & rd & xop8=0xf0
 {
     # treat as NOP
-    clearSemaphore();
+    clearSemaphore(rd);
 }
 
 :CSEM imm3 is opcode=0x0 & imm3 & xop8=0xf1
 {
-    clearSemaphore();
+	local sem:1 = imm3;
+    clearSemaphore(sem);
 }
 
 
@@ -543,28 +545,34 @@ rs2: reg2 is reg2 { export reg2; }
 :JAL rd is opcode=0x0 & rd & xop8=0xf6
 {
 	local dest:2 = rd;
-	rd = XPC;
+	rd = inst_next;
 	call [dest];
 }
 
 # Load byte from memory (low byte)
 :LDB rd, (rs1, offs5) is opcode=0x8 & rd & rs1 & offs5
 {
-	dst:3 = XG_BASE + zext(rs1) + offs5;
+	local addr = rs1 + offs5;
+	computePage(addr);
+	local dst:3 = segment(PPAGE,addr);
 	local val:1 = *:1 (dst);
 	rd = (rd & 0xff00) | zext(val);
 }
 
 :LDB rd, (rs1, rs2)   is opcode=0xc & rd & rs1 & rs2 & op2=0x0
 {
-	dst:3 = XG_BASE + zext(rs1) + zext(rs2);
+	local addr = rs1 + rs2;
+	computePage(addr);
+	local dst:3 = segment(PPAGE,addr);
 	local val:1 = *:1 (dst);
 	rd = (rd & 0xff00) | zext(val);
 }
 
 :LDB rd, (rs1, rs2+)  is opcode=0xc & rd & rs1 & rs2 & op2=0x1
 {
-	dst:3 = XG_BASE + zext(rs1) + zext(rs2);
+	local addr = rs1 + rs2;
+	computePage(addr);
+	local dst:3 = segment(PPAGE,addr);
 	local val:1 = *:1 (dst);
 	rd = (rd & 0xff00) | zext(val);
 	rs1 = rs1 + 1;
@@ -573,43 +581,51 @@ rs2: reg2 is reg2 { export reg2; }
 :LDB rd, (rs1, -rs2)  is opcode=0xc & rd & rs1 & rs2 & op2=0x2
 {
 	rs2 = rs2 - 1;
-	dst:3 = XG_BASE + zext(rs1) + zext(rs2);
+	local addr = rs1 + rs2;
+	computePage(addr);
+	local dst:3 = segment(PPAGE,addr);
 	local val:1 = *:1 (dst);
 	rd = (rd & 0xff00) | zext(val);
 }
 
 
 # Load Immediate 8-bit constant (high byte)
-:LDH rd, ximm8 is opcode=0x1f & rd & ximm8
+:LDH rd, ximm8 is opcode=0x1f & rd & ximm8 & rd_hi
 {
-	rd = (rd & 0x00ff) | (ximm8 << 8);
+	rd_hi = ximm8 << 8;
 }
 
 
 # Load Immediate 8-bit constant (low byte)
 :LDL rd, ximm8 is opcode=0x1e & rd & ximm8
 {
-	rd = (rd & 0xff00) | ximm8;
+	rd = ximm8;
 }
 
 # Load Word from Memory
 :LDW rd, (rs1, offs5) is opcode=0x9 & rd & rs1 & offs5
 {
-	dst:3 = XG_BASE + zext(rs1) + offs5;
+	local addr = rs1 + offs5;
+	computePage(addr);
+	local dst:3 = segment(PPAGE,addr);
 	local val:2 = *:2 (dst);
 	rd = val;
 }
 
 :LDW rd, (rs1, rs2)   is opcode=0xd & rd & rs1 & rs2 & op2=0x0
 {
-	dst:3 = XG_BASE + zext(rs1) + zext(rs2);
+	local addr = rs1 + rs2;
+	computePage(addr);
+	local dst:3 = segment(PPAGE,addr);
 	local val:2 = *:2 (dst);
 	rd = val;	
 }
 
 :LDW rd, (rs1, rs2+)  is opcode=0xd & rd & rs1 & rs2 & op2=0x1
 {
-	dst:3 = XG_BASE + zext(rs1) + zext(rs2);
+	local addr = rs1 + rs2;
+	computePage(addr);
+	local dst:3 = segment(PPAGE,addr);
 	local val:2 = *:2 (dst);
 	rd = val;
 	rs1 = rs1 + 2;
@@ -617,7 +633,9 @@ rs2: reg2 is reg2 { export reg2; }
 :LDW rd, (rs1, -rs2)  is opcode=0xd & rd & rs1 & rs2 & op2=0x2
 {
 	rs2 = rs2 - 2;
-	dst:3 = XG_BASE + zext(rs1) + zext(rs2);
+	local addr = rs1 + rs2;
+	computePage(addr);
+	local dst:3 = segment(PPAGE,addr);
 	local val:2 = *:2 (dst);
 	rd = val;
 }
@@ -645,7 +663,7 @@ rs2: reg2 is reg2 { export reg2; }
 {
 	getbit($(XC), rd, ximm4-1);
 	local oldRd:2 = rd >> 15;
-	rd = rd << ximm4;
+	rd = rd >> ximm4;
 	shiftFlags(rd,oldRd);
 }
 
@@ -653,7 +671,7 @@ rs2: reg2 is reg2 { export reg2; }
 {
 	getbit($(XC), rd, rs1-1);
 	local oldRd:2 = (rd >> 15);
-	rd = rd << rs1;
+	rd = rd >> rs1;
 	shiftFlags(rd,oldRd);
 }
 
@@ -700,22 +718,19 @@ rs2: reg2 is reg2 { export reg2; }
 }
 
 # Logical OR Immediate 8-bit Constant (high byte)
-:ORH rd, ximm8 is opcode=0x15 & rd & ximm8
+:ORH rd, ximm8 is opcode=0x15 & rd & ximm8 & rd_hi
 {
-    local result:2 = (ximm8 << 8);
-    result = rd | result;
-    rd = result;
+    rd_hi = rd_hi | ximm8;
     
-	default_flagsH(result);
+	default_flags(rd_hi);
 }
 
 # Logical OR Immediate 8-bit Constant (low byte)
-:ORL rd, ximm8 is opcode=0x14 & rd & ximm8
+:ORL rd, ximm8 is opcode=0x14 & rd & ximm8 & rd_lo
 {
-    local result:2 = ximm8;
-    result = rd | result;
+    rd_lo = rd_lo | ximm8;
  
- 	default_flagsL(result);
+ 	default_flags(rd_lo);
 }
 
 # Calculate Parity
@@ -761,7 +776,10 @@ rs2: reg2 is reg2 { export reg2; }
 }
 # Return to Scheduler
 # Implement as NOP for now
-:RTS is xop16=0x0200 {}
+:RTS is xop16=0x0200 {
+	XPC = TerminateThread();
+	return [XPC];
+}
 
 # Subtract with Carry
 :SBC rd, rs1, rs2 is opcode=0x3 & rd & rs1 & rs2 & op2=0x1
@@ -795,32 +813,39 @@ rs2: reg2 is reg2 { export reg2; }
 # TODO: implement semaphores
 :SSEM imm3 is opcode=0x0 & imm3 & xop8=0xf2
 {
-	setSemaphore();
+	local sem:1 = imm3;
+	setSemaphore(sem);
 }
 
 :SSEM rd  is opcode=0x0 & rd & xop8=0xf3
 {
-	setSemaphore();
+	setSemaphore(rd);
 }
 
 # Store Byte to Memory (low byte)
 :STB rd, (rs1, offs5) is opcode=0xa & rd & rs1 & offs5
 {
-	dst:3 = XG_BASE + zext(rs1) + offs5;
+	local addr = rs1 + offs5;
+	computePage(addr);
+	local dst:3 = segment(PPAGE,addr);
 	local val:1 = rd:1;
 	*dst = val;
 }
 
 :STB rd, (rs1, rs2)   is opcode=0xe & rd & rs1 & rs2 & op2=0x0
 {
-	dst:3 = XG_BASE + zext(rs1) + zext(rs2);
+	local addr = rs1 + rs2;
+	computePage(addr);
+	local dst:3 = segment(PPAGE,addr);
 	local val:1 = rd:1;
 	*dst = val;
 }
 
 :STB rd, (rs1, rs2+)  is opcode=0xe & rd & rs1 & rs2 & op2=0x1
 {
-	dst:3 = XG_BASE + zext(rs1) + zext(rs2);
+	local addr = rs1 + rs2;
+	computePage(addr);
+	local dst:3 = segment(PPAGE,addr);
 	local val:1 = rd:1;
 	*dst = val;
 	rs2 = rs2 + 1;
@@ -829,7 +854,9 @@ rs2: reg2 is reg2 { export reg2; }
 :STB rd, (rs1, -rs2)  is opcode=0xe & rd & rs1 & rs2 & op2=0x2
 {
 	rs2 = rs2 - 1;
-	dst:3 = XG_BASE + zext(rs1) + zext(rs2);
+	local addr = rs1 + rs2;
+	computePage(addr);
+	local dst:3 = segment(PPAGE,addr);
 	local val:1 = rd:1;
 	*dst = val;
 }
@@ -837,14 +864,18 @@ rs2: reg2 is reg2 { export reg2; }
 # Store Word to Memory
 :STW rd, (rs1, offs5) is opcode=0xb & rd & rs1 & offs5
 {
-	dst:3 = XG_BASE + zext(rs1) + offs5;
+	local addr = rs1 + offs5;
+	computePage(addr);
+	local dst:3 = segment(PPAGE,addr);
 	local val:2 = rd;
 	*dst = val;
 }
 
 :STW rd, (rs1, rs2)   is opcode=0xf & rd & rs1 & rs2 & op2=0x0
 {
-	dst:3 = XG_BASE + zext(rs1) + zext(rs2);
+	local addr = rs1 + rs2;
+	computePage(addr);
+	local dst:3 = segment(PPAGE,addr);
 	local val:2 = rd;
 	*dst = val;
 	rs2 = rs2 + 1;
@@ -852,7 +883,9 @@ rs2: reg2 is reg2 { export reg2; }
 
 :STW rd, (rs1, rs2+)  is opcode=0xf & rd & rs1 & rs2 & op2=0x1
 {
-	dst:3 = XG_BASE + zext(rs1) + zext(rs2);
+	local addr = rs1 + rs2;
+	computePage(addr);
+	local dst:3 = segment(PPAGE,addr);
 	local val:2 = rd;
 	*dst = val;
 	rs2 = rs2 + 2;
@@ -861,7 +894,9 @@ rs2: reg2 is reg2 { export reg2; }
 :STW rd, (rs1, -rs2)  is opcode=0xf & rd & rs1 & rs2 & op2=0x2
 {
 	rs2 = rs2 - 2;
-	dst:3 = XG_BASE + zext(rs1) + zext(rs2);
+	local addr = rs1 + rs2;
+	computePage(addr);
+	local dst:3 = segment(PPAGE,addr);
 	local val:2 = rd;
 	*dst = val;
 }
@@ -918,7 +953,7 @@ rs2: reg2 is reg2 { export reg2; }
 
 :TFR rd, XPC  is opcode=0x0 & rd & xop8=0xfa & XPC
 {
-	rd = XPC + 2;
+	rd = inst_next + 2;
 }
 
 # Test Register
@@ -940,21 +975,19 @@ rs2: reg2 is reg2 { export reg2; }
 }
 
 # Logical Exclusive NOR Immediate 8-bit constant (high byte)
-:XNORH rd, ximm8 is opcode=0x17 & rd & ximm8
+:XNORH rd, ximm8 is opcode=0x17 & rd & ximm8 & rd_hi
 {
-    local result:2 = ximm8 << 0xff;
-    rd = ~(rd ^ result);
+    rd_hi = ~(rd_hi ^ ximm8);
     
-	default_flagsH(result);
+	default_flags(rd_hi);
 }
 
 # Logical Exclusive NOR Immediate 8-bit constant (low byte)
-:XNORL rd, ximm8 is opcode=0x16 & rd & ximm8
+:XNORL rd, ximm8 is opcode=0x16 & rd & ximm8 & rd_lo
 {
-    local result:2 = ximm8 | 0xff00;
-    rd = ~(rd ^ result);
+    rd_lo= ~(rd_lo^ ximm8);
     
-	default_flagsL(result);
+	default_flags(rd_lo);
 }
 
 }

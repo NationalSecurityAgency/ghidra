@@ -2170,16 +2170,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 	private Address getPreferredSegmentLoadAddress(ElfProgramHeader elfProgramHeader)
 			throws AddressOutOfBoundsException {
 
-		AddressSpace space =
-			elf.getLoadAdapter().getPreferredSegmentAddressSpace(this, elfProgramHeader);
-
-		long addrWordOffset = elfProgramHeader.getVirtualAddress();
-
-		if (space == getDefaultAddressSpace()) {
-			addrWordOffset += getImageBaseWordAdjustmentOffset();
-		}
-
-		return space.getTruncatedAddress(addrWordOffset, true);
+		return elf.getLoadAdapter().getPreferredSegmentAddress(this, elfProgramHeader);
 	}
 
 	/**
@@ -2216,15 +2207,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 	private Address getPreferredSectionLoadAddress(ElfSectionHeader elfSectionHeader)
 			throws AddressOutOfBoundsException {
 
-		AddressSpace space = getPreferredSectionAddressSpace(elfSectionHeader);
-
-		long addrWordOffset = elfSectionHeader.getAddress();
-
-		if (space == getDefaultAddressSpace()) {
-			addrWordOffset += getImageBaseWordAdjustmentOffset();
-		}
-
-		return space.getTruncatedAddress(addrWordOffset, true);
+		return elf.getLoadAdapter().getPreferredSectionAddress(this, elfSectionHeader);
 	}
 
 	@Override

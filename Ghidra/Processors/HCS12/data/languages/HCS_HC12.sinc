@@ -18,7 +18,7 @@ define register offset=0x00 size=2 [ D ];
 
 # IX also referred to as X or x; but must be distinct from X bit in CCR
 # IY also referred to as Y or y; made IY to be consistent with IX
-define register offset=0x10 size=2 [ IX IY TMP2 TMP3 TMP1 ];
+define register offset=0x10 size=2 [ IX        IY            TMP2           TMP3                 TMP1 ];
 define register offset=0x10 size=1 [ IXH IXL IYH IYL TMP2H TMP2L TMP3H TMP3L TMP1H TMP1L ];
 
 #define register offset=0x20 size=3 [ _  PCE _ SPE ];
@@ -30,6 +30,8 @@ define register offset=0x30 size=2 [ CCRW ];
 define register offset=0x30 size=1 [ CCRH ];
 
 define register offset=0x31 size=1 [ CCR ];
+
+define register offset = 0x32 size=3 [physPage];
 
 
 define RAM offset=0x10 size=1 [GPAGE];
@@ -154,7 +156,9 @@ define token data16 (16)
 	imm16  = (0,15)
 	imm16p = (12,15)
 	imm16e = (8,15)
-	imm16pv = (0,15)
+	imm16ev = (0,9)
+	imm16rv = (0,11)
+	imm16pv = (0,13)
 	simm16 = (0,15) signed
 ;
 
@@ -237,30 +241,54 @@ define pcodeop MinMaxRuleEvaluationWeightedCorrect;
 
 define pcodeop backgroundDebugMode;
 
+macro setHCSphysPage(addr) {
+	local a3:3 = zext(addr);
+	
+	local isReg:1         = (a3  & 0xfC00) == 0x0;
+	local isEpage:1      = (a3 & 0xfc00) ==0x800;
+	local isEpage_FF:1 = (a3 & 0xfc00) ==0xC00;
+	local isRpage:1      = (a3 & 0xf000) ==0x1000;
+	local isRpage_FE:1 = (a3 & 0xf000) ==0x2000;
+	local isRpage_FF:1 = (a3 & 0xf000) ==0x3000;
+	local isPpage_FD:1 = (a3 & 0xc000) ==0x4000;
+	local isPpage:1       = (a3 & 0xc000) ==0x8000;
+	local isPpage_FF:1 = (a3 & 0xc000) ==0xC000;
+	
+	physPage = (zext(isReg) *          0x0) +
+	                       (zext(isEpage) *      (0x100000 | ((zext(EPAGE) << 10) ^ 0x800))) +
+	                       (zext(isEpage_FF) * ((0x4FF << 10) ^ 0xC00)) +
+	                       (zext(isRpage) *      (((zext(RPAGE) << 12) ^ 0x1000))) +
+	                       (zext(isRpage_FE) * (((0xFE << 12) ^ 0x2000))) +
+	                       (zext(isRpage_FF) * (((0xFF << 12) ^ 0x3000))) +
+	                       (zext(isPpage_FD) * (0x400000 | ((0x3F4000) ^ 0x4000))) +
+	                       (zext(isPpage) *       (0x400000 | ((zext(PPAGE) << 14 ) ^ 0x8000))) +
+	                       (zext(isPpage_FF) * (0x400000 | ((0x3FC000) ^ 0xC000))) ;
+}
 
 macro Load1(value, addr) {
-#	paged:1 = (addr >= 0x8000) | (addr < 0xc000);
-#	local paddr:3 = (zext(paged * PPAGE) << 16 | zext(addr));
-    local paddr:3 = segment(PPAGE,addr);
-	value = *:2 paddr;
+	setHCSphysPage(addr);
+
+    local paddr:3 = segment(physPage, addr);
+	value = *:1 paddr;
 }
 macro Load2(value, addr) {
-#	paged:1 = (addr >= 0x8000) | (addr < 0xc000);
-#	local paddr:3 = (zext(paged * PPAGE) << 16 | zext(addr));
-    local paddr:3 = segment(PPAGE,addr);
+    setHCSphysPage(addr);
+    
+    local paddr:3 = segment(physPage, addr);
 	value = *:2 paddr;
 }
 
 macro GetPagedAddr(addr,paddr) {
-#	paged:1 = (addr >= 0x8000) | (addr < 0xc000);
-#	paddr = (zext(paged * PPAGE) << 16 | zext(addr));
-    paddr = segment(PPAGE,addr);
+    setHCSphysPage(addr);
+    
+    paddr = segment(physPage, addr);
 }
 
 macro Store(addr, value) {
-#	paged:1 = (addr >= 0x8000) | (addr < 0xc000);
-#	local paddr:3 = (zext(paged * PPAGE) << 16 | zext(addr));
-    local paddr:3 = segment(PPAGE,addr);
+    setHCSphysPage(addr);
+    
+    local paddr:3 = segment(physPage, addr);
+    
 	*paddr = value;
 }
 
@@ -274,24 +302,40 @@ macro Store(addr, value) {
 #    page register is always added in then will have to export as a constant
 #    since don't know the real address
 #
-# known PPAGE offsets
-opr16a:         imm16    is imm16p=0x8 & imm16 & imm16pv { local addr:3 = (zext(PPAGE) << 16) | imm16pv; export addr; }
-opr16a:         imm16    is imm16p=0x9 & imm16 & imm16pv { local addr:3 = (zext(PPAGE) << 16) | imm16pv; export addr; }
-opr16a:         imm16    is imm16p=0xa & imm16 & imm16pv { local addr:3 = (zext(PPAGE) << 16) | imm16pv; export addr; }
-opr16a:         imm16    is imm16p=0xb & imm16 & imm16pv { local addr:3 = (zext(PPAGE) << 16) | imm16pv; export addr; }
-# known RPAGE offsets
-opr16a:         imm16    is imm16p=0x1 & imm16 & imm16pv { local addr:3 = (zext(RPAGE) << 16) | imm16pv; export addr; }
-# known EPAGE offsets
-opr16a:         imm16    is imm16e=0x8 & imm16 & imm16pv { local addr:3 = (zext(EPAGE) << 16) | imm16pv; export addr; }
-opr16a:         imm16    is imm16e=0x9 & imm16 & imm16pv { local addr:3 = (zext(EPAGE) << 16) | imm16pv; export addr; }
-opr16a:         imm16    is imm16e=0xa & imm16 & imm16pv { local addr:3 = (zext(EPAGE) << 16) | imm16pv; export addr; }
-opr16a:         imm16    is imm16e=0xb & imm16 & imm16pv { local addr:3 = (zext(EPAGE) << 16) | imm16pv; export addr; }
 
-#opr16a:         imm16    is imm16p=0xc & imm16 & imm16pv { local addr:3 = ($(MAXFLASHPage) << 16) | imm16pv; export addr; }
-#opr16a:         imm16    is imm16p=0xd & imm16 & imm16pv { local addr:3 = ($(MAXFLASHPage) << 16) | imm16pv; export addr; }
-#opr16a:         imm16    is imm16p=0xe & imm16 & imm16pv { local addr:3 = ($(MAXFLASHPage) << 16) | imm16pv; export addr; }
-#opr16a:         imm16    is imm16p=0xf & imm16 & imm16pv { local addr:3 = ($(MAXFLASHPage) << 16) | imm16pv; export addr; }
-opr16a:			imm16    is imm16                        { local addr:3 = imm16; export addr; }
+# known EPAGE offsets
+opr16a:         imm16    is imm16e=0x8 & imm16 & imm16ev { local addr:3 = 0x100000 |  (zext(EPAGE) << 10) | imm16ev; export addr; }
+opr16a:         imm16    is imm16e=0x9 & imm16 & imm16ev { local addr:3 = 0x100000 |  (zext(EPAGE) << 10) | imm16ev; export addr; }
+opr16a:         imm16    is imm16e=0xa & imm16 & imm16ev { local addr:3 = 0x100000 |  (zext(EPAGE) << 10) | imm16ev; export addr; }
+opr16a:         imm16    is imm16e=0xb & imm16 & imm16ev { local addr:3 = 0x100000 |  (zext(EPAGE) << 10) | imm16ev; export addr; }
+
+opr16a:         imm16    is imm16e=0xc & imm16 & imm16ev { local addr:3 = (0xFF                        << 10) | imm16ev; export addr; }
+opr16a:         imm16    is imm16e=0xd & imm16 & imm16ev { local addr:3 = (0xFF                        << 10) | imm16ev; export addr; }
+opr16a:         imm16    is imm16e=0xe & imm16 & imm16ev { local addr:3 = (0xFF                        << 10) | imm16ev; export addr; }
+opr16a:         imm16    is imm16e=0xf & imm16 & imm16ev { local addr:3 = (0xFF                        << 10) | imm16ev; export addr; }
+
+# known RPAGE offsets
+opr16a:         imm16    is imm16p=0x1 & imm16 & imm16rv { local addr:3 = (zext(RPAGE) << 12) | imm16rv; export addr; }
+opr16a:         imm16    is imm16p=0x2 & imm16 & imm16rv { local addr:3 = (0xFE                << 12) | imm16rv; export addr; }
+opr16a:         imm16    is imm16p=0x3 & imm16 & imm16rv { local addr:3 = (0xFF                << 12) | imm16rv; export addr; }
+
+# known PPAGE offsets
+opr16a:         imm16    is imm16p=0x4 & imm16 & imm16pv { local addr:3 = 0x400000 |  (0xFD                << 14) | imm16pv; export addr; }
+opr16a:         imm16    is imm16p=0x5 & imm16 & imm16pv { local addr:3 = 0x400000 |  (0xFD                << 14) | imm16pv; export addr; }
+opr16a:         imm16    is imm16p=0x6 & imm16 & imm16pv { local addr:3 = 0x400000 |  (0xFD                << 14) | imm16pv; export addr; }
+opr16a:         imm16    is imm16p=0x7 & imm16 & imm16pv { local addr:3 = 0x400000 |  (0xFD                << 14) | imm16pv; export addr; }
+
+opr16a:         imm16    is imm16p=0x8 & imm16 & imm16pv { local addr:3 = 0x400000 |  (zext(PPAGE) << 14) | (imm16pv & 0x3fff); export addr; }
+opr16a:         imm16    is imm16p=0x9 & imm16 & imm16pv { local addr:3 = 0x400000 |  (zext(PPAGE) << 14) | (imm16pv & 0x3fff); export addr; }
+opr16a:         imm16    is imm16p=0xa & imm16 & imm16pv { local addr:3 = 0x400000 |  (zext(PPAGE) << 14) | (imm16pv & 0x3fff); export addr; }
+opr16a:         imm16    is imm16p=0xb & imm16 & imm16pv { local addr:3 = 0x400000 |  (zext(PPAGE) << 14) | (imm16pv & 0x3fff); export addr; }
+
+opr16a:         imm16    is imm16p=0xC & imm16 & imm16pv { local addr:3 = 0x400000 |  (0xFF                << 14) | imm16pv; export addr; }
+opr16a:         imm16    is imm16p=0xD & imm16 & imm16pv { local addr:3 = 0x400000 |  (0xFF                << 14) | imm16pv; export addr; }
+opr16a:         imm16    is imm16p=0xE & imm16 & imm16pv { local addr:3 = 0x400000 |  (0xFF                << 14) | imm16pv; export addr; }
+opr16a:         imm16    is imm16p=0xF & imm16 & imm16pv { local addr:3 = 0x400000 |  (0xFF                << 14) | imm16pv; export addr; }
+
+opr16a:			imm16    is imm16e & imm16                        { local addr:3 = imm16; export addr; }
 
 opr8a:			imm8    is imm8                        { export *[const]:3 imm8; }
 
@@ -310,15 +354,15 @@ iopr16i:			"#"imm16 is imm16      { export *[const]:2 imm16; }
 msk8:		    imm8     is imm8       { export *[const]:1 imm8; }
 page:		    imm8     is imm8       { export *[const]:1 imm8; }
 
-PageDest: dest    is imm16p=0x8 & imm16 & imm16pv ; imm8 [ dest = (imm8 << 16) | imm16; ] { 	 export *:1 dest; }
-PageDest: dest    is imm16p=0x9 & imm16 & imm16pv ; imm8 [ dest = (imm8 << 16) | imm16; ] { 	 export *:1 dest; }
-PageDest: dest    is imm16p=0xa & imm16 & imm16pv ; imm8 [ dest = (imm8 << 16) | imm16; ] { 	 export *:1 dest; }
-PageDest: dest    is imm16p=0xb & imm16 & imm16pv ; imm8 [ dest = (imm8 << 16) | imm16; ] { 	 export *:1 dest; }
+#PageDest: dest    is imm16p=0x8 & imm16 & imm16pv ; imm8 [ dest = (imm8 << 16) | imm16; ] { 	 export *:1 dest; }
+#PageDest: dest    is imm16p=0x9 & imm16 & imm16pv ; imm8 [ dest = (imm8 << 16) | imm16; ] { 	 export *:1 dest; }
+#PageDest: dest    is imm16p=0xa & imm16 & imm16pv ; imm8 [ dest = (imm8 << 16) | imm16; ] { 	 export *:1 dest; }
+#PageDest: dest    is imm16p=0xb & imm16 & imm16pv ; imm8 [ dest = (imm8 << 16) | imm16; ] { 	 export *:1 dest; }
 #PageDest: dest    is imm16p=0xc & imm16 & imm16pv ; imm8 [ dest = ($(MAXFLASHPage) << 16) | imm16; ] { 	 export *:1 dest; }
 #PageDest: dest    is imm16p=0xd & imm16 & imm16pv ; imm8 [ dest = ($(MAXFLASHPage) << 16) | imm16; ] { 	 export *:1 dest; }
 #PageDest: dest    is imm16p=0xe & imm16 & imm16pv ; imm8 [ dest = ($(MAXFLASHPage) << 16) | imm16; ] { 	 export *:1 dest; }
 #PageDest: dest    is imm16p=0xf & imm16 & imm16pv ; imm8 [ dest = ($(MAXFLASHPage) << 16) | imm16; ] { 	 export *:1 dest; }
-PageDest: imm16   is imm16; page  { 	 export *:1 imm16; }
+PageDest: opr16a   is opr16a; page  { 	 export opr16a; }
 
 #
 # Postbyte Code (xb) address decoding
@@ -587,42 +631,52 @@ op2_indexed2_1:	indexed2_1		is indexed2_1		{ export indexed2_1; }
 # Macros
 ################################################################
 
-macro addition_flags1(operand1, operand2, result) {
-	complement_result:1 = ~result;
-	
-	carries:1 = (operand1 & operand2) | (operand2 & complement_result) | (complement_result & operand1);
-	$(H) = ( carries & 0b00001000 ) != 0;
+
+
+macro additionWithCarry(operand1, operand2, result) {
+	local Ccopy = zext($(C));
+	local AFmask = -1 >> 4;
+	$(H) = (((operand1 & AFmask) + (operand2 & AFmask) + Ccopy) & (AFmask + 1)) != 0;
+	$(C) = carry(operand1, operand2);
+	local tempResult = operand1 + operand2;
+	$(C) = $(C) || carry(tempResult, Ccopy);
+	$(V) = $(V) ^^ scarry(tempResult, Ccopy);
+	result = tempResult + Ccopy;
 	$(N) = (result s< 0);
 	$(Z) = (result == 0);
-	$(V) = ( ((operand1 & operand2 & complement_result) | (~operand1 & ~operand2 & result)) & 0b10000000 ) != 0;
-	$(C) = ( carries & 0b10000000 ) != 0;
+}
+
+
+
+macro addition_flags1(operand1, operand2,result) {
+	local AFmask = -1 >> 4;
+	$(H) = (((operand1 & AFmask) + (operand2 & AFmask)) & (AFmask + 1)) != 0;
+	
+	$(N) = (result s< 0);
+	$(Z) = (result == 0);
+	$(V) = scarry(operand1,operand2);
+	$(C) = carry(operand1,operand2);
 }
 
 macro addition_flags2(operand1, operand2, result) {
-	complement_result:2 = ~result;
-	
 	$(N) = (result s< 0);
 	$(Z) = (result == 0);
-	$(V) = ( ((operand1 & operand2 & complement_result) | (~operand1 & ~operand2 & result)) & 0x8000 ) != 0;
-	$(C) = ( ((operand1 & operand2) | (operand2 & complement_result) | (complement_result & operand1)) & 0x8000 ) != 0;
+	$(V) = scarry(operand1,operand2);
+	$(C) = carry(operand1,operand2);
 }
 
-macro subtraction_flags1(register, operand, result) {
-	local complement_register = ~register;
-	
-	$(V) = ( ((register & ~operand & ~result) | (complement_register & operand & result)) & 0b10000000 ) != 0;
+macro subtraction_flags1(register, operand, result) {	
+	$(V) = sborrow(register,operand);
 	$(N) = (result s< 0);
 	$(Z) = (result == 0);
-	$(C) = ( ((complement_register & operand) | (operand & result) | (result & complement_register)) & 0b10000000 ) != 0;
+	$(C) = register < operand;
 }
 
 macro subtraction_flags2(register, operand, result) {
-	local complement_register = ~register;
-	
-	$(V) = ( ((register & ~operand & ~result) | (complement_register & operand & result)) & 0x8000 ) != 0;
+	$(V) = sborrow(register,operand);
 	$(N) = (result s< 0);
 	$(Z) = (result == 0);
-	$(C) = ( ((complement_register & operand) | (operand & result) | (result & complement_register)) & 0x8000 ) != 0;
+	$(C) = register < operand;
 }
 
 macro V_equals_0() {
@@ -637,59 +691,64 @@ macro V_equals_N_xor_C() {
 	$(V) = $(N) ^ $(C);	
 }
 
-macro V_CMP_flag(register, operand, result) {
-	$(V) = ( ((register & ~operand & ~result) | (~register & operand & result)) & 0b10000000 ) != 0;
+macro V_CMP_flag(register, operand) {
+	$(V) = sborrow(register,operand);
 }
 
-macro V_CPHX_flag(operand, result) {
-	$(V) = ( ((IX & ~operand & ~result) | (~IX & operand & result)) & 0x8000 ) != 0;
+macro V_DEC_flag(operand) {
+	$(V) = sborrow(operand,1);
 }
 
-macro V_DEC_flag(operand, result) {
-	$(V) = ( (~result & operand) & 0b10000000 ) != 0;
+macro V_DEC_flag2(operand) {
+	$(V) = sborrow(operand,1);
 }
 
-macro V_DEC_flag2(operand, result) {
-	$(V) = ( (~result & operand) & 0b1000000000000000) != 0;
+macro V_INC_flag(operand) {
+	$(V) = scarry(operand,1);
 }
 
-macro V_INC_flag(operand, result) {
-	$(V) = ( (~operand & result) & 0b10000000 ) != 0;
+macro V_INC_flag2(operand) {
+	$(V) = scarry(operand,1);
 }
 
-macro V_INC_flag2(operand, result) {
-	$(V) = ( (~operand & result) & 0b1000000000000000 ) != 0;
+macro V_NEG_flag(operand) {
+	$(V) = sborrow(0,operand);
 }
 
-macro V_NEG_flag(operand, result) {
-	$(V) = ( (operand & result) & 0b10000000 ) != 0;
-}
-
-macro V_NEG_flag2(operand, result) {
-	$(V) = ( (operand & result) & 0b1000000000000000) != 0;
+macro V_NEG_flag2(operand) {
+	$(V) = sborrow(0,operand);
 }
 
 macro Pull1(operand) {
-	paddr:3 = segment(PPAGE,SP);
+	setHCSphysPage(SP);
+	
+	paddr:3 = segment(physPage,SP);
 	operand = *paddr;
 	SP = SP + 1;
 }
 
 macro Pull2(operand) {
-	paddr:3 = segment(PPAGE,SP);
+	setHCSphysPage(SP);
+	
+	paddr:3 = segment(physPage,SP);
 	operand = *paddr;
 	SP = SP + 2;
 }
 
 macro Push1(operand) {
 	SP = SP - 1;
-	paddr:3 = segment(PPAGE,SP);
+	
+	setHCSphysPage(SP);
+	paddr:3 = segment(physPage,SP);
 	*paddr = operand;
 }
 
 macro Push2(operand) {
 	SP = SP - 2;
-	paddr:3 = segment(PPAGE,SP);
+
+	setHCSphysPage(SP);
+	
+	paddr:3 = segment(physPage,SP);
 	*paddr = operand;
 }
 
@@ -730,8 +789,9 @@ macro setCCRW( operand ) {
 {
 	op1:1 = iopr8i;
 
-	result:1 = A + op1 + $(C);
-	addition_flags1(A, op1, result);
+	local result:1;
+	additionWithCarry(A, op1, result);
+	
 	A = result;
 }
 
@@ -739,8 +799,9 @@ macro setCCRW( operand ) {
 {
 	op1:1 = opr8a_8;
 
-	result:1 = A + op1 + $(C);
-	addition_flags1(A, op1, result);
+	local result:1;
+	additionWithCarry(A, op1, result);
+	
 	A = result;
 }
 
@@ -748,8 +809,9 @@ macro setCCRW( operand ) {
 {
 	op1:1 = opr16a_8;
 
-	result:1 = A + op1 + $(C);
-	addition_flags1(A, op1, result);
+	local result:1;
+	additionWithCarry(A, op1, result);
+	
 	A = result;
 }
 
@@ -766,8 +828,9 @@ macro setCCRW( operand ) {
 {
 	op1:1 = iopr8i;
 
-	result:1 = B + op1 + $(C);
-	addition_flags1(B, op1, result);
+	local result:1;
+	additionWithCarry(A, op1, result);
+	
 	B = result;
 }
 
@@ -784,17 +847,19 @@ macro setCCRW( operand ) {
 {
 	op1:1 = opr16a_8;
 
-	result:1 = B + op1 + $(C);
-	addition_flags1(B, op1, result);
+	local result:1;
+	additionWithCarry(B, op1, result);
+	
 	B = result;
 }
 
 :ADCB indexed1_5                 is XGATE=0 & Prefix18=0 & (op8=0xE9); indexed1_5
 {
 	op1:1 = indexed1_5;
+	
+	local result:1;
+	additionWithCarry(B, op1, result);
 
-	result:1 = B + op1 + $(C);
-	addition_flags1(B, op1, result);
 	B = result;
 }
 
@@ -804,6 +869,7 @@ macro setCCRW( operand ) {
 
 	result:1 = A + op1;
 	addition_flags1(A, op1, result);
+
 	A = result;
 }
 
@@ -1691,7 +1757,7 @@ macro setCCRW( operand ) {
 
 :BLT rel8                 is XGATE=0 & Prefix18=0 & op8=0x2D; rel8
 {
-	if (($(N) ^ $(V)) == 1) goto rel8;
+	if (($(N) ^ $(V)) ==1) goto rel8;
 }
 
 :BMI rel8                 is XGATE=0 & Prefix18=0 & op8=0x2B; rel8
@@ -1840,15 +1906,25 @@ SkipNextInstr: dest is epsilon [ dest = inst_next + 1; ]  { export *[RAM]:1 dest
 	if ($(V) == 1) goto rel8;
 }
 
-:CALL  PageDest, imm8   is XGATE=0 & Prefix18=0 & op8=0x4A; (imm16; imm8) & PageDest
+CallDest:  PageDest, imm8 is (imm16; imm8) & PageDest {
+	PPAGE = imm8;
+
+	build PageDest;
+	
+	export PageDest;
+}
+
+:CALL  CallDest   is XGATE=0 & Prefix18=0 & op8=0x4A;   CallDest
 {
 	tmp:2 = inst_next;
 	Push2( tmp );
 
 	Push1( PPAGE );	
-	PPAGE = imm8;
 
-	call PageDest;
+    build CallDest;
+    
+    local dest:3 = CallDest;
+	call [dest];
 }
 
 :CALL indexed2_3, page    is XGATE=0 & Prefix18=0 & (op8=0x4B); indexed2_3; page 
@@ -1858,9 +1934,12 @@ SkipNextInstr: dest is epsilon [ dest = inst_next + 1; ]  { export *[RAM]:1 dest
 
 	Push1( PPAGE );
 	PPAGE = page;
+	
 	build indexed2_3;
 
-	call [indexed2_3];
+	local dest:3;	
+	GetPagedAddr(indexed2_3,dest);
+	call [dest];
 }
 
 :CALL indexed0_2    is XGATE=0 & Prefix18=0 & (op8=0x4B); indexed0_2 
@@ -1871,8 +1950,11 @@ SkipNextInstr: dest is epsilon [ dest = inst_next + 1; ]  { export *[RAM]:1 dest
 	Push1( PPAGE );
 	Load1(PPAGE, indexed0_2 + 2);
 
-	local dest:2 = 0;
-	Load2(dest,indexed0_2);
+	local addr:2;
+	Load2(addr,indexed0_2);
+	
+	local dest:3;	
+	GetPagedAddr(addr,dest);
 	call [dest];
 }
 
@@ -1881,7 +1963,7 @@ SkipNextInstr: dest is epsilon [ dest = inst_next + 1; ]  { export *[RAM]:1 dest
 	tmp:1 = A - B;
 	$(N) = (tmp s< 0);
 	$(Z) = (tmp == 0);
-	V_CMP_flag(A, B, tmp);
+	V_CMP_flag(A, B);
 	$(C) = (B > A);
 }
 
@@ -1986,7 +2068,7 @@ SkipNextInstr: dest is epsilon [ dest = inst_next + 1; ]  { export *[RAM]:1 dest
 	tmp:1 = A - op1;
 	$(N) = (tmp s< 0);
 	$(Z) = (tmp == 0);
-	V_CMP_flag(A, op1, tmp);
+	V_CMP_flag(A, op1);
 	$(C) = (op1 > A);
 }
 
@@ -1996,7 +2078,7 @@ SkipNextInstr: dest is epsilon [ dest = inst_next + 1; ]  { export *[RAM]:1 dest
 	tmp:1 = A - op1;
 	$(N) = (tmp s< 0);
 	$(Z) = (tmp == 0);
-	V_CMP_flag(A, op1, tmp);
+	V_CMP_flag(A, op1);
 	$(C) = (op1 > A);
 }
 
@@ -2006,7 +2088,7 @@ SkipNextInstr: dest is epsilon [ dest = inst_next + 1; ]  { export *[RAM]:1 dest
 	tmp:1 = A - op1;
 	$(N) = (tmp s< 0);
 	$(Z) = (tmp == 0);
-	V_CMP_flag(A, op1, tmp);
+	V_CMP_flag(A, op1);
 	$(C) = (op1 > A);
 }
 
@@ -2016,7 +2098,7 @@ SkipNextInstr: dest is epsilon [ dest = inst_next + 1; ]  { export *[RAM]:1 dest
 	tmp:1 = A - op1;
 	$(N) = (tmp s< 0);
 	$(Z) = (tmp == 0);
-	V_CMP_flag(A, op1, tmp);
+	V_CMP_flag(A, op1);
 	$(C) = (op1 > A);
 }
 
@@ -2026,7 +2108,7 @@ SkipNextInstr: dest is epsilon [ dest = inst_next + 1; ]  { export *[RAM]:1 dest
 	tmp:1 = B - op1;
 	$(N) = (tmp s< 0);
 	$(Z) = (tmp == 0);
-	V_CMP_flag(B, op1, tmp);
+	V_CMP_flag(B, op1);
 	$(C) = (op1 > B);
 }
 
@@ -2036,7 +2118,7 @@ SkipNextInstr: dest is epsilon [ dest = inst_next + 1; ]  { export *[RAM]:1 dest
 	tmp:1 = B - op1;
 	$(N) = (tmp s< 0);
 	$(Z) = (tmp == 0);
-	V_CMP_flag(B, op1, tmp);
+	V_CMP_flag(B, op1);
 	$(C) = (op1 > B);
 }
 
@@ -2046,7 +2128,7 @@ SkipNextInstr: dest is epsilon [ dest = inst_next + 1; ]  { export *[RAM]:1 dest
 	tmp:1 = B - op1;
 	$(N) = (tmp s< 0);
 	$(Z) = (tmp == 0);
-	V_CMP_flag(B, op1, tmp);
+	V_CMP_flag(B, op1);
 	$(C) = (op1 > B);
 }
 
@@ -2056,7 +2138,7 @@ SkipNextInstr: dest is epsilon [ dest = inst_next + 1; ]  { export *[RAM]:1 dest
 	tmp:1 = B - op1;
 	$(N) = (tmp s< 0);
 	$(Z) = (tmp == 0);
-	V_CMP_flag(B, op1, tmp);
+	V_CMP_flag(B, op1);
 	$(C) = (op1 > B);
 }
 
@@ -2151,7 +2233,7 @@ SkipNextInstr: dest is epsilon [ dest = inst_next + 1; ]  { export *[RAM]:1 dest
 	$(Z) = (tmp == 0);
 	$(N) = (tmp s< 0);
 	$(C) = (op1 > D);
-	V_CMP_flag(D, op1, tmp);
+	V_CMP_flag(D, op1);
 }
 
 :CPD opr8a_16                 is XGATE=0 & Prefix18=0 & (op8=0x9C); opr8a_16
@@ -2161,7 +2243,7 @@ SkipNextInstr: dest is epsilon [ dest = inst_next + 1; ]  { export *[RAM]:1 dest
 	$(Z) = (tmp == 0);
 	$(N) = (tmp s< 0);
 	$(C) = (op1 > D);
-	V_CMP_flag(D, op1, tmp);
+	V_CMP_flag(D, op1);
 }
 
 :CPD opr16a_16                 is XGATE=0 & Prefix18=0 & (op8=0xBC); opr16a_16
@@ -2171,7 +2253,7 @@ SkipNextInstr: dest is epsilon [ dest = inst_next + 1; ]  { export *[RAM]:1 dest
 	$(Z) = (tmp == 0);
 	$(N) = (tmp s< 0);
 	$(C) = (op1 > D);
-	V_CMP_flag(D, op1, tmp);
+	V_CMP_flag(D, op1);
 }
 
 :CPD indexed2_5                 is XGATE=0 & Prefix18=0 & (op8=0xAC); indexed2_5
@@ -2181,7 +2263,7 @@ SkipNextInstr: dest is epsilon [ dest = inst_next + 1; ]  { export *[RAM]:1 dest
 	$(Z) = (tmp == 0);
 	$(N) = (tmp s< 0);
 	$(C) = (op1 > D);
-	V_CMP_flag(D, op1, tmp);
+	V_CMP_flag(D, op1);
 }
 
 @if defined(HCS12X)
@@ -2192,7 +2274,7 @@ SkipNextInstr: dest is epsilon [ dest = inst_next + 1; ]  { export *[RAM]:1 dest
 	$(Z) = (tmp == 0);
 	$(N) = (tmp s< 0);
 	$(C) = (op1 > D);
-	V_CMP_flag(D, op1, tmp);
+	V_CMP_flag(D, op1);
 }
 @endif
 
@@ -2204,7 +2286,7 @@ SkipNextInstr: dest is epsilon [ dest = inst_next + 1; ]  { export *[RAM]:1 dest
 	$(Z) = (tmp == 0);
 	$(N) = (tmp s< 0);
 	$(C) = (op1 > D);
-	V_CMP_flag(D, op1, tmp);
+	V_CMP_flag(D, op1);
 }
 @endif
 
@@ -2216,7 +2298,7 @@ SkipNextInstr: dest is epsilon [ dest = inst_next + 1; ]  { export *[RAM]:1 dest
 	$(Z) = (tmp == 0);
 	$(N) = (tmp s< 0);
 	$(C) = (op1 > D);
-	V_CMP_flag(D, op1, tmp);
+	V_CMP_flag(D, op1);
 }
 @endif
 
@@ -2228,7 +2310,7 @@ SkipNextInstr: dest is epsilon [ dest = inst_next + 1; ]  { export *[RAM]:1 dest
 	$(Z) = (tmp == 0);
 	$(N) = (tmp s< 0);
 	$(C) = (op1 > D);
-	V_CMP_flag(D, op1, tmp);
+	V_CMP_flag(D, op1);
 }
 @endif
 
@@ -2240,7 +2322,7 @@ SkipNextInstr: dest is epsilon [ dest = inst_next + 1; ]  { export *[RAM]:1 dest
 	$(Z) = (tmp == 0);
 	$(N) = (tmp s< 0);
 	$(C) = (op1 > SP);
-	V_CMP_flag(SP, op1, tmp);
+	V_CMP_flag(SP, op1);
 }
 @endif
 
@@ -2252,7 +2334,7 @@ SkipNextInstr: dest is epsilon [ dest = inst_next + 1; ]  { export *[RAM]:1 dest
 	$(Z) = (tmp == 0);
 	$(N) = (tmp s< 0);
 	$(C) = (op1 > SP);
-	V_CMP_flag(SP, op1, tmp);
+	V_CMP_flag(SP, op1);
 }
 @endif
 
@@ -2264,7 +2346,7 @@ SkipNextInstr: dest is epsilon [ dest = inst_next + 1; ]  { export *[RAM]:1 dest
 	$(Z) = (tmp == 0);
 	$(N) = (tmp s< 0);
 	$(C) = (op1 > SP);
-	V_CMP_flag(SP, op1, tmp);
+	V_CMP_flag(SP, op1);
 }
 @endif
 
@@ -2276,7 +2358,7 @@ SkipNextInstr: dest is epsilon [ dest = inst_next + 1; ]  { export *[RAM]:1 dest
 	$(Z) = (tmp == 0);
 	$(N) = (tmp s< 0);
 	$(C) = (op1 > SP);
-	V_CMP_flag(SP, op1, tmp);
+	V_CMP_flag(SP, op1);
 }
 @endif
 
@@ -2288,7 +2370,7 @@ SkipNextInstr: dest is epsilon [ dest = inst_next + 1; ]  { export *[RAM]:1 dest
 	$(Z) = (tmp == 0);
 	$(N) = (tmp s< 0);
 	$(C) = (op1 > IX);
-	V_CMP_flag(IX, op1, tmp);
+	V_CMP_flag(IX, op1);
 }
 @endif
 
@@ -2300,7 +2382,7 @@ SkipNextInstr: dest is epsilon [ dest = inst_next + 1; ]  { export *[RAM]:1 dest
 	$(Z) = (tmp == 0);
 	$(N) = (tmp s< 0);
 	$(C) = (op1 > IX);
-	V_CMP_flag(IX, op1, tmp);
+	V_CMP_flag(IX, op1);
 }
 @endif
 
@@ -2312,7 +2394,7 @@ SkipNextInstr: dest is epsilon [ dest = inst_next + 1; ]  { export *[RAM]:1 dest
 	$(Z) = (tmp == 0);
 	$(N) = (tmp s< 0);
 	$(C) = (op1 > IX);
-	V_CMP_flag(IX, op1, tmp);
+	V_CMP_flag(IX, op1);
 }
 @endif
 
@@ -2324,7 +2406,7 @@ SkipNextInstr: dest is epsilon [ dest = inst_next + 1; ]  { export *[RAM]:1 dest
 	$(Z) = (tmp == 0);
 	$(N) = (tmp s< 0);
 	$(C) = (op1 > IX);
-	V_CMP_flag(IX, op1, tmp);
+	V_CMP_flag(IX, op1);
 }
 @endif
 
@@ -2336,7 +2418,7 @@ SkipNextInstr: dest is epsilon [ dest = inst_next + 1; ]  { export *[RAM]:1 dest
 	$(Z) = (tmp == 0);
 	$(N) = (tmp s< 0);
 	$(C) = (op1 > IY);
-	V_CMP_flag(IY, op1, tmp);
+	V_CMP_flag(IY, op1);
 }
 @endif
 
@@ -2348,7 +2430,7 @@ SkipNextInstr: dest is epsilon [ dest = inst_next + 1; ]  { export *[RAM]:1 dest
 	$(Z) = (tmp == 0);
 	$(N) = (tmp s< 0);
 	$(C) = (op1 > IY);
-	V_CMP_flag(IY, op1, tmp);
+	V_CMP_flag(IY, op1);
 }
 @endif
 
@@ -2360,7 +2442,7 @@ SkipNextInstr: dest is epsilon [ dest = inst_next + 1; ]  { export *[RAM]:1 dest
 	$(Z) = (tmp == 0);
 	$(N) = (tmp s< 0);
 	$(C) = (op1 > IY);
-	V_CMP_flag(IY, op1, tmp);
+	V_CMP_flag(IY, op1);
 }
 @endif
 
@@ -2372,7 +2454,7 @@ SkipNextInstr: dest is epsilon [ dest = inst_next + 1; ]  { export *[RAM]:1 dest
 	$(Z) = (tmp == 0);
 	$(N) = (tmp s< 0);
 	$(C) = (op1 > IY);
-	V_CMP_flag(IY, op1, tmp);
+	V_CMP_flag(IY, op1);
 }
 @endif
 
@@ -2386,7 +2468,7 @@ SkipNext2Bytes: dest is epsilon [ dest = inst_next + 2; ]  { export *[RAM]:1 des
 	$(Z) = (tmp == 0);
 	$(N) = (tmp s< 0);
 	$(C) = (op1 > SP);
-	V_CMP_flag(SP, op1, tmp);
+	V_CMP_flag(SP, op1);
 	goto SkipNext2Bytes;
 }
 
@@ -2397,7 +2479,7 @@ SkipNext2Bytes: dest is epsilon [ dest = inst_next + 2; ]  { export *[RAM]:1 des
 	$(Z) = (tmp == 0);
 	$(N) = (tmp s< 0);
 	$(C) = (op1 > SP);
-	V_CMP_flag(SP, op1, tmp);
+	V_CMP_flag(SP, op1);
 }
 
 :CPS loc                 is XGATE=0 & Prefix18=0 & (op8=0xBF) & SkipNext2Bytes [ loc = (inst_next & 0xffffff); ]
@@ -2409,7 +2491,7 @@ SkipNext2Bytes: dest is epsilon [ dest = inst_next + 2; ]  { export *[RAM]:1 des
 	$(Z) = (tmp == 0);
 	$(N) = (tmp s< 0);
 	$(C) = (op1 > SP);
-	V_CMP_flag(SP, op1, tmp);
+	V_CMP_flag(SP, op1);
 	goto SkipNext2Bytes;
 }
 
@@ -2420,7 +2502,7 @@ SkipNext2Bytes: dest is epsilon [ dest = inst_next + 2; ]  { export *[RAM]:1 des
 	$(Z) = (tmp == 0);
 	$(N) = (tmp s< 0);
 	$(C) = (op1 > SP);
-	V_CMP_flag(SP, op1, tmp);
+	V_CMP_flag(SP, op1);
 }
 
 :CPX iopr16i                 is XGATE=0 & Prefix18=0 & (op8=0x8E); iopr16i
@@ -2430,7 +2512,7 @@ SkipNext2Bytes: dest is epsilon [ dest = inst_next + 2; ]  { export *[RAM]:1 des
 	$(Z) = (tmp == 0);
 	$(N) = (tmp s< 0);
 	$(C) = (op1 > IX);
-	V_CMP_flag(IX, op1, tmp);
+	V_CMP_flag(IX, op1);
 }
 
 :CPX opr8a_16                 is XGATE=0 & Prefix18=0 & (op8=0x9E); opr8a_16
@@ -2440,7 +2522,7 @@ SkipNext2Bytes: dest is epsilon [ dest = inst_next + 2; ]  { export *[RAM]:1 des
 	$(Z) = (tmp == 0);
 	$(N) = (tmp s< 0);
 	$(C) = (op1 > IX);
-	V_CMP_flag(IX, op1, tmp);
+	V_CMP_flag(IX, op1);
 }
 
 :CPX opr16a_16                 is XGATE=0 & Prefix18=0 & (op8=0xBE); opr16a_16
@@ -2450,7 +2532,7 @@ SkipNext2Bytes: dest is epsilon [ dest = inst_next + 2; ]  { export *[RAM]:1 des
 	$(Z) = (tmp == 0);
 	$(N) = (tmp s< 0);
 	$(C) = (op1 > IX);
-	V_CMP_flag(IX, op1, tmp);
+	V_CMP_flag(IX, op1);
 }
 
 :CPX indexed2_5                 is XGATE=0 & Prefix18=0 & (op8=0xAE); indexed2_5
@@ -2460,7 +2542,7 @@ SkipNext2Bytes: dest is epsilon [ dest = inst_next + 2; ]  { export *[RAM]:1 des
 	$(Z) = (tmp == 0);
 	$(N) = (tmp s< 0);
 	$(C) = (op1 > IX);
-	V_CMP_flag(IX, op1, tmp);
+	V_CMP_flag(IX, op1);
 }
 
 :CPY iopr16i                 is XGATE=0 & Prefix18=0 & (op8=0x8D); iopr16i
@@ -2470,7 +2552,7 @@ SkipNext2Bytes: dest is epsilon [ dest = inst_next + 2; ]  { export *[RAM]:1 des
 	$(Z) = (tmp == 0);
 	$(N) = (tmp s< 0);
 	$(C) = (op1 > IY);
-	V_CMP_flag(IY, op1, tmp);
+	V_CMP_flag(IY, op1);
 }
 
 :CPY opr8a_16                 is XGATE=0 & Prefix18=0 & (op8=0x9D); opr8a_16
@@ -2480,7 +2562,7 @@ SkipNext2Bytes: dest is epsilon [ dest = inst_next + 2; ]  { export *[RAM]:1 des
 	$(Z) = (tmp == 0);
 	$(N) = (tmp s< 0);
 	$(C) = (op1 > IY);
-	V_CMP_flag(IY, op1, tmp);
+	V_CMP_flag(IY, op1);
 }
 
 :CPY opr16a_16                 is XGATE=0 & Prefix18=0 & (op8=0xBD); opr16a_16
@@ -2490,7 +2572,7 @@ SkipNext2Bytes: dest is epsilon [ dest = inst_next + 2; ]  { export *[RAM]:1 des
 	$(Z) = (tmp == 0);
 	$(N) = (tmp s< 0);
 	$(C) = (op1 > IY);
-	V_CMP_flag(IY, op1, tmp);
+	V_CMP_flag(IY, op1);
 }
 
 :CPY indexed2_5                 is XGATE=0 & Prefix18=0 & (op8=0xAD); indexed2_5
@@ -2500,7 +2582,7 @@ SkipNext2Bytes: dest is epsilon [ dest = inst_next + 2; ]  { export *[RAM]:1 des
 	$(Z) = (tmp == 0);
 	$(N) = (tmp s< 0);
 	$(C) = (op1 > IY);
-	V_CMP_flag(IY, op1, tmp);
+	V_CMP_flag(IY, op1);
 }
 
 :DAA                     is XGATE=0 & Prefix18=1 & op8=0x07 
@@ -2543,7 +2625,7 @@ SkipNext2Bytes: dest is epsilon [ dest = inst_next + 2; ]  { export *[RAM]:1 des
 	opr16a_8 = result;
 	$(Z) = (result == 0);
 	$(N) = (result s< 0);
-	V_DEC_flag(tmp, result);
+	V_DEC_flag(tmp);
 }
 
 :DEC indexed1_5                 is XGATE=0 & Prefix18=0 & (op8=0x63); indexed1_5 
@@ -2553,7 +2635,7 @@ SkipNext2Bytes: dest is epsilon [ dest = inst_next + 2; ]  { export *[RAM]:1 des
 	indexed1_5 = result;
 	$(Z) = (result == 0);
 	$(N) = (result s< 0);
-	V_DEC_flag(tmp, result);
+	V_DEC_flag(tmp);
 }
 
 :DECA                    is XGATE=0 & Prefix18=0 & op8=0x43 
@@ -2562,7 +2644,7 @@ SkipNext2Bytes: dest is epsilon [ dest = inst_next + 2; ]  { export *[RAM]:1 des
 	A = tmp - 1;
 	$(Z) = (A == 0);
 	$(N) = (A s< 0);
-	V_DEC_flag(tmp, A);
+	V_DEC_flag(tmp);
 }
 
 :DECB                    is XGATE=0 & Prefix18=0 & op8=0x53 
@@ -2571,7 +2653,7 @@ SkipNext2Bytes: dest is epsilon [ dest = inst_next + 2; ]  { export *[RAM]:1 des
 	B = tmp - 1;
 	$(Z) = (B == 0);
 	$(N) = (B s< 0);
-	V_DEC_flag(tmp, B);
+	V_DEC_flag(tmp);
 }
 
 @if defined(HCS12X)
@@ -2582,7 +2664,7 @@ SkipNext2Bytes: dest is epsilon [ dest = inst_next + 2; ]  { export *[RAM]:1 des
 	opr16a_16 = result;
 	$(Z) = (result == 0);
 	$(N) = (result s< 0);
-	V_DEC_flag2(tmp, result);
+	V_DEC_flag2(tmp);
 }
 @endif
 
@@ -2594,7 +2676,7 @@ SkipNext2Bytes: dest is epsilon [ dest = inst_next + 2; ]  { export *[RAM]:1 des
 	indexed2_5 = result;
 	$(Z) = (result == 0);
 	$(N) = (result s< 0);
-	V_DEC_flag2(tmp, result);
+	V_DEC_flag2(tmp);
 }
 @endif
 
@@ -2605,7 +2687,7 @@ SkipNext2Bytes: dest is epsilon [ dest = inst_next + 2; ]  { export *[RAM]:1 des
 	IX = tmp - 1;
 	$(Z) = (IX == 0);
 	$(N) = (IX s< 0);
-	V_DEC_flag2(tmp, IX);
+	V_DEC_flag2(tmp);
 }
 @endif
 
@@ -2616,7 +2698,7 @@ SkipNext2Bytes: dest is epsilon [ dest = inst_next + 2; ]  { export *[RAM]:1 des
 	IY = tmp - 1;
 	$(Z) = (IY == 0);
 	$(N) = (IY s< 0);
-	V_DEC_flag2(tmp, IY);
+	V_DEC_flag2(tmp);
 }
 @endif
 
@@ -3349,7 +3431,7 @@ SkipNext2Bytes: dest is epsilon [ dest = inst_next + 2; ]  { export *[RAM]:1 des
 	opr16a_8 = result;
 	$(Z) = (result == 0);
 	$(N) = (result s< 0);
-	V_INC_flag(tmp, result);
+	V_INC_flag(tmp);
 }
 
 :INC indexed1_5                 is XGATE=0 & Prefix18=0 & (op8=0x62); indexed1_5 
@@ -3359,7 +3441,7 @@ SkipNext2Bytes: dest is epsilon [ dest = inst_next + 2; ]  { export *[RAM]:1 des
 	indexed1_5 = result;
 	$(Z) = (result == 0);
 	$(N) = (result s< 0);
-	V_INC_flag(tmp, result);
+	V_INC_flag(tmp);
 }
 
 :INCA                    is XGATE=0 & Prefix18=0 & op8=0x42 
@@ -3368,7 +3450,7 @@ SkipNext2Bytes: dest is epsilon [ dest = inst_next + 2; ]  { export *[RAM]:1 des
 	A = tmp + 1;
 	$(Z) = (A == 0);
 	$(N) = (A s< 0);
-	V_INC_flag(tmp, A);
+	V_INC_flag(tmp);
 }
 
 :INCB                    is XGATE=0 & Prefix18=0 & op8=0x52 
@@ -3377,7 +3459,7 @@ SkipNext2Bytes: dest is epsilon [ dest = inst_next + 2; ]  { export *[RAM]:1 des
 	B = tmp + 1;
 	$(Z) = (B == 0);
 	$(N) = (B s< 0);
-	V_INC_flag(tmp, B);
+	V_INC_flag(tmp);
 }
 
 @if defined(HCS12X)
@@ -3388,7 +3470,7 @@ SkipNext2Bytes: dest is epsilon [ dest = inst_next + 2; ]  { export *[RAM]:1 des
 	opr16a_16 = result;
 	$(Z) = (result == 0);
 	$(N) = (result s< 0);
-	V_INC_flag2(tmp, result);
+	V_INC_flag2(tmp);
 }
 @endif
 
@@ -3400,7 +3482,7 @@ SkipNext2Bytes: dest is epsilon [ dest = inst_next + 2; ]  { export *[RAM]:1 des
 	indexed2_5 = result;
 	$(Z) = (result == 0);
 	$(N) = (result s< 0);
-	V_INC_flag2(tmp, result);
+	V_INC_flag2(tmp);
 }
 @endif
 
@@ -3411,7 +3493,7 @@ SkipNext2Bytes: dest is epsilon [ dest = inst_next + 2; ]  { export *[RAM]:1 des
 	IX = tmp + 1;
 	$(Z) = (IX == 0);
 	$(N) = (IX s< 0);
-	V_INC_flag2(tmp, IX);
+	V_INC_flag2(tmp);
 }
 @endif
 
@@ -3422,7 +3504,7 @@ SkipNext2Bytes: dest is epsilon [ dest = inst_next + 2; ]  { export *[RAM]:1 des
 	IY = tmp + 1;
 	$(Z) = (IY == 0);
 	$(N) = (IY s< 0);
-	V_INC_flag2(tmp, IY);
+	V_INC_flag2(tmp);
 }
 @endif
 
@@ -4125,7 +4207,7 @@ define pcodeop LoadStack;
 	$(C) = (result != 0);
 	$(Z) = (result == 0);
 	$(N) = (result s< 0);
-	V_NEG_flag(tmp, result); 
+	V_NEG_flag(tmp); 
 }
 
 :NEG indexed1_5                 is XGATE=0 & Prefix18=0 & (op8=0x60); indexed1_5 
@@ -4136,7 +4218,7 @@ define pcodeop LoadStack;
 	$(C) = (result != 0);
 	$(Z) = (result == 0);
 	$(N) = (result s< 0);
-	V_NEG_flag(tmp, result); 
+	V_NEG_flag(tmp); 
 }
 
 :NEGA                    is XGATE=0 & Prefix18=0 & op8=0x40 
@@ -4146,7 +4228,7 @@ define pcodeop LoadStack;
 	$(C) = (A != 0);
 	$(Z) = (A == 0);
 	$(N) = (A s< 0);
-	V_NEG_flag(tmp, A); 
+	V_NEG_flag(tmp); 
 }
 
 :NEGB                    is XGATE=0 & Prefix18=0 & op8=0x50 
@@ -4156,7 +4238,7 @@ define pcodeop LoadStack;
 	$(C) = (B != 0);
 	$(Z) = (B == 0);
 	$(N) = (B s< 0);
-	V_NEG_flag(tmp, B); 
+	V_NEG_flag(tmp); 
 }
 
 @if defined(HCS12X)
@@ -4168,7 +4250,7 @@ define pcodeop LoadStack;
 	$(C) = (result != 0);
 	$(Z) = (result == 0);
 	$(N) = (result s< 0);
-	V_NEG_flag2(tmp, result); 
+	V_NEG_flag2(tmp); 
 }
 
 @if defined(HCS12X)
@@ -4180,7 +4262,7 @@ define pcodeop LoadStack;
 	$(C) = (result != 0);
 	$(Z) = (result == 0);
 	$(N) = (result s< 0);
-	V_NEG_flag2(tmp, result); 
+	V_NEG_flag2(tmp); 
 }
 @endif
 
@@ -4192,7 +4274,7 @@ define pcodeop LoadStack;
 	$(C) = (IX != 0);
 	$(Z) = (IX == 0);
 	$(N) = (IX s< 0);
-	V_NEG_flag2(tmp, IX); 
+	V_NEG_flag2(tmp); 
 }
 @endif
 
@@ -4203,7 +4285,7 @@ define pcodeop LoadStack;
 	$(C) = (IY != 0);
 	$(Z) = (IY == 0);
 	$(N) = (IY s< 0);
-	V_NEG_flag2(tmp, IY); 
+	V_NEG_flag2(tmp); 
 }
 @endif
 
@@ -5602,7 +5684,8 @@ define pcodeop LoadStack;
 {
 	$(Z) = (B == 0);
 	$(N) = (B s< 0);
-	V_equals_0();	
+	$(V) = 0;
+	$(C) = 0;
 }
 
 @if defined(HCS12X)

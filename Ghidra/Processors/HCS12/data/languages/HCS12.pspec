@@ -5,17 +5,34 @@
 -->
 <processor_spec>
   <programcounter register="PC"/>
+  
+  <!-- Needs new segment op capability in 16-bit branch, uncomment when merged
+  <segmentop space="RAM" userop="segment" farpointer="no">
+    <pcode>
+      <input name="inner" size="2"/>
+      <input name="base" size="3"/>
+      <output name="res" size="3"/>
+      <body><![CDATA[
+        res = base ^ zext(inner);
+      ]]></body>
+    </pcode>
+    <constresolve>
+      <register name="physPage"/>
+    </constresolve>
+  </segmentop>
+  -->
+  
 <!-- TODO
   <volatile outputop="write_volatile" inputop="read_volatile">
     <range space="RAM" first="0x0"    last="0x03FF"/>
   </volatile>
 -->
+
   <context_data>
      <tracked_set space="RAM">
         <set name="PPAGE" val="0xfe"/>
         <set name="RPAGE" val="0xfd"/>
         <set name="EPAGE" val="0xfe"/>
-        <set name="XG_BASE" val="0xfe800"/>
      </tracked_set>
   </context_data>
   <default_symbols>
