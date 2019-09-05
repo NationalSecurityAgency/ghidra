@@ -87,6 +87,11 @@ public class Watchdog implements Closeable {
 		watchdogExpiresAt.set(b ? System.currentTimeMillis() + defaultWatchdogTimeoutMS : -1);
 	}
 
+	/**
+	 * Returns the status of the watchdog.
+	 *
+	 * @return true if the watchdog is armed, false if the watchdog is disarmed
+	 */
 	public boolean isEnabled() {
 		return watchdogExpiresAt.get() > 0;
 	}

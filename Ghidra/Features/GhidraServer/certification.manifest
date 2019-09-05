@@ -5,4 +5,6 @@
 Module.manifest||GHIDRA||||END|
 build.gradle||GHIDRA||||END|
 data/jaas-modules-src-1.0.3.zip||LGPL 2.1|||File corresponds to original distribution with all binary product files removed.|END|
+data/lib/readme.txt||GHIDRA||||END|
+data/os/readme.txt||GHIDRA||||END|
 src/main/java/ghidra/server/remote/ServerHelp.txt||GHIDRA||||END|

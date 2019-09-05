@@ -1216,10 +1216,26 @@ public final class FileUtilities {
 		Desktop.getDesktop().open(file);
 	}
 
+	/**
+	 * Processes each text line in a text file, in a separate thread.
+	 * <p>
+	 * Thread exits when EOF is reached.
+	 *
+	 * @param is {@link InputStream} to read
+	 * @param consumer code that will process each text of the text file.
+	 */
 	public static void asyncForEachLine(InputStream is, Consumer<String> consumer) {
 		asyncForEachLine(new BufferedReader(new InputStreamReader(is)), consumer);
 	}
 
+	/**
+	 * Processes each text line in a text file, in a separate thread.
+	 * <p>
+	 * Thread exits when EOF is reached.
+	 *
+	 * @param reader {@link BufferedReader} to read
+	 * @param consumer code that will process each text of the text file.
+	 */
 	public static void asyncForEachLine(BufferedReader reader, Consumer<String> consumer) {
 		new Thread(() -> {
 			try {

@@ -20,8 +20,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import javax.security.auth.Subject;
 import javax.security.auth.callback.*;
-import javax.security.auth.login.LoginContext;
-import javax.security.auth.login.LoginException;
+import javax.security.auth.login.*;
 import javax.security.auth.spi.LoginModule;
 
 import ghidra.framework.remote.GhidraPrincipal;
@@ -44,9 +43,26 @@ public class JAASAuthenticationModule implements AuthenticationModule {
 	private boolean allowUserToSpecifyName;
 	private String loginContextName;
 
-	public JAASAuthenticationModule(String loginContextName, boolean allowUserToSpecifyName) {
+	/**
+	 * Creates a new {@link JAASAuthenticationModule} instance.
+	 *
+	 * @param loginContextName the name of the configuration entry from the JAAS config to use
+	 * @param allowUserToSpecifyName flag, if true will include a {@link NameCallback} in the
+	 * {@link #getAuthenticationCallbacks()} list, which allows the user to specify a different
+	 * name than their {@link GhidraPrincipal}.
+	 * @throws IllegalArgumentException if the loginContextName is not present in the JAAS configuration
+	 */
+	public JAASAuthenticationModule(String loginContextName, boolean allowUserToSpecifyName)
+			throws IllegalArgumentException {
 		this.loginContextName = loginContextName;
 		this.allowUserToSpecifyName = allowUserToSpecifyName;
+
+		Configuration cfg = Configuration.getConfiguration();
+		AppConfigurationEntry[] authEntry = cfg.getAppConfigurationEntry(loginContextName);
+		if (authEntry == null) {
+			throw new IllegalArgumentException(
+				"Missing '" + loginContextName + "' entry in JAAS config file");
+		}
 	}
 
 	@Override
@@ -58,8 +74,18 @@ public class JAASAuthenticationModule implements AuthenticationModule {
 			loginName.set(copyCallbackValues(callbacks, loginModuleCallbacks, principal));
 		});
 
-		// this is where the callback is triggered
-		loginCtx.login();
+		try {
+			// this is where the callback is triggered
+			loginCtx.login();
+		}
+		catch (LoginException e) {
+			// Convert plain LoginExceptions to FailedLoginExceptions to enable
+			// the client to retry the login if desired.
+			if (e instanceof FailedLoginException) {
+				throw e;
+			}
+			throw new FailedLoginException(e.getMessage());
+		}
 
 		String loginNameResult = loginName.get();
 		return (loginNameResult != null) ? loginNameResult : principal.getName();

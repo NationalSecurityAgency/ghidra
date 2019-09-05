@@ -25,6 +25,7 @@ import ghidra.framework.Application;
 import ghidra.framework.Platform;
 import ghidra.util.Msg;
 import ghidra.util.SystemUtilities;
+import ghidra.util.timer.Watchdog;
 import utilities.util.FileUtilities;
 
 /**
@@ -296,7 +297,7 @@ class DmgServerProcessManager implements Closeable {
 		String pathValue = getLibraryPathVariable("PATH", "");
 		String ldLibraryPathValue = getLibraryPathVariable("LD_LIBRARY_PATH", "");
 
-		List<String> argList = new ArrayList<String>();
+		List<String> argList = new ArrayList<>();
 		Map<String, String> env = System.getenv();
 		Set<Entry<String, String>> entrySet = env.entrySet();
 		for (Entry<String, String> entry : entrySet) {
@@ -321,7 +322,7 @@ class DmgServerProcessManager implements Closeable {
 	}
 
 	private String getLibraryPathVariable(String pathKey, String pathValue) {
-		Set<String> libraryPaths = new HashSet<String>();
+		Set<String> libraryPaths = new HashSet<>();
 		addOSPaths(libraryPaths);
 
 		StringBuffer buffy = new StringBuffer();

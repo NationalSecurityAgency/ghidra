@@ -40,6 +40,9 @@ import ghidra.server.UserManager;
  * This auth module needs to know the Active Directory domain name, and then from there it can bootstrap
  * itself using DNS lookups to find the Kerberos server.
  * <p>
+ * As this class sets some global Kerberos system properties, only one copy of this class should
+ * be active in a JVM at a time.
+ *
  */
 public class Krb5ActiveDirectoryAuthenticationModule implements AuthenticationModule {
 
@@ -47,14 +50,22 @@ public class Krb5ActiveDirectoryAuthenticationModule implements AuthenticationMo
 	private String domainName;
 	private boolean stripDomainFromUsername = true;
 
+	/**
+	 * Creates a new {@link Krb5ActiveDirectoryAuthenticationModule} instance.
+	 * <p>
+	 *
+	 * @param domainName the Active Directory domain name (ie. "yourdomain.tld")
+	 * @param allowUserToSpecifyName flag, if true will include a {@link NameCallback} in the
+	 * {@link #getAuthenticationCallbacks()} list, which allows the user to specify a different
+	 * name than their {@link GhidraPrincipal}.
+	 * @throws IllegalArgumentException if domainName is null or blank, or if the Microsoft
+	 * Active Directory domain controller can not be looked-up in DNS.
+	 */
 	public Krb5ActiveDirectoryAuthenticationModule(String domainName,
-			boolean allowUserToSpecifyName) {
+			boolean allowUserToSpecifyName) throws IllegalArgumentException {
 		this.domainName = domainName;
 		this.allowUserToSpecifyName = allowUserToSpecifyName;
-	}
 
-	@Override
-	public void ensureConfig() {
 		if (domainName == null || domainName.isBlank()) {
 			throw new IllegalArgumentException("Missing domain name");
 		}
@@ -115,7 +126,18 @@ public class Krb5ActiveDirectoryAuthenticationModule implements AuthenticationMo
 
 			userName.set(tmpName);
 		}, new JAASConfiguration("com.sun.security.auth.module.Krb5LoginModule"));
-		lc.login();
+
+		try {
+			lc.login();
+		}
+		catch (LoginException e) {
+			// Convert plain LoginExceptions to FailedLoginExceptions to enable
+			// the client to retry the login if desired.
+			if (e instanceof FailedLoginException) {
+				throw e;
+			}
+			throw new FailedLoginException(e.getMessage());
+		}
 
 		return userName.get();
 	}

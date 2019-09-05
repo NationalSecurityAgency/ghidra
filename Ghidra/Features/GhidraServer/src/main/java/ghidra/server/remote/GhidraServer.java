@@ -15,7 +15,7 @@
  */
 package ghidra.server.remote;
 
-import static ghidra.server.remote.GhidraServer.AUTH_MODE.*;
+import static ghidra.server.remote.GhidraServer.AuthMode.*;
 
 import java.io.*;
 import java.net.*;
@@ -75,23 +75,21 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 
 	private static String HELP_FILE = "/ghidra/server/remote/ServerHelp.txt";
 	private static String USAGE_ARGS =
-		" [-p<port>] [-a<authMode>] [-d<domain>] [-u] [-anonymous] [-ssh] [-ip <hostname>] [-i <ipAddress>] [-e<expireDays>] [-jaas <path>] [-autoProvision] [-n] <serverPath>";
+		"[-ip <hostname>] [-i #.#.#.#] [-p#] [-n] [-a#] [-d<ad_domain>] [-e<days>] [-jaas <config_file>] [-u] [-autoProvision] [-anonymous] [-ssh] <repository_path>";
 
 	private static final String RMI_SERVER_PROPERTY = "java.rmi.server.hostname";
 
-	public enum AUTH_MODE {
+	enum AuthMode {
 
 		NO_AUTH_LOGIN("None"),
 		PASSWORD_FILE_LOGIN("Password File"),
-		OS_PASSWORD_LOGIN("OS Password"),
+		KRB5_AD_LOGIN("Active Directory via Kerberos"),
 		PKI_LOGIN("PKI"),
-		ALT_OS_PASSWORD_LOGIN("OS Password & Password File"),
-		JAAS_LOGIN("JAAS"),
-		KRB5_AD_LOGIN("Active Directory via Kerberos");
+		JAAS_LOGIN("JAAS");
 
 		private String description;
 
-		AUTH_MODE(String description) {
+		AuthMode(String description) {
 			this.description = description;
 		}
 
@@ -99,15 +97,13 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 			return description;
 		}
 
-		public static AUTH_MODE fromIndex(int index) {
+		public static AuthMode fromIndex(int index) {
 			//@formatter:off
 			switch ( index) {
 				case 0: return PASSWORD_FILE_LOGIN;
-				case 1: return OS_PASSWORD_LOGIN;
+				case 1: return KRB5_AD_LOGIN;
 				case 2: return PKI_LOGIN;
-				case 3: return ALT_OS_PASSWORD_LOGIN;
 				case 4: return JAAS_LOGIN;
-				case 5: return KRB5_AD_LOGIN;
 				default: return null;
 			}
 			//@formatter:on
@@ -141,7 +137,7 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 	 * authenticated users to the user manager if they don't already exist
 	 * @throws IOException
 	 */
-	GhidraServer(File rootDir, AUTH_MODE authMode, String loginDomain,
+	GhidraServer(File rootDir, AuthMode authMode, String loginDomain,
 			boolean allowUserToSpecifyName, boolean altSSHLoginAllowed,
 			int defaultPasswordExpirationDays, boolean allowAnonymousAccess,
 			boolean autoProvisionAuthedUsers) throws IOException, CertificateException {
@@ -187,18 +183,13 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 				break;
 			case KRB5_AD_LOGIN:
 				if (loginDomain == null || loginDomain.isBlank()) {
-					throw new IllegalArgumentException("Missing login domain value -d<domainname>");
+					throw new IllegalArgumentException("Missing login domain value -d<ad_domain>");
 				}
 				authModule = new Krb5ActiveDirectoryAuthenticationModule(loginDomain,
 					allowUserToSpecifyName);
 				break;
 			default:
 				throw new IllegalArgumentException("Unsupported Authentication mode: " + authMode);
-		}
-
-		if (authModule != null) {
-			// allow the auth modules to verify their configuration state before continuing
-			authModule.ensureConfig();
 		}
 
 		if (altSSHLoginAllowed) {
@@ -338,7 +329,7 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 								}
 							}
 							else {
-								throw new LoginException(
+								throw new FailedLoginException(
 									"User successfully authenticated, but does not exist in Ghidra user list: " +
 										username);
 							}
@@ -480,6 +471,23 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 		return hostname;
 	}
 
+	private static File getServerCfgFile(String cfgFileName) {
+		File tmp = new File(cfgFileName);
+		if (tmp.isAbsolute()) {
+			return tmp;
+		}
+
+		ResourceFile serverRoot = new ResourceFile(Application.getInstallationDirectory(),
+			SystemUtilities.isInDevelopmentMode() ? "ghidra/Ghidra/RuntimeScripts/Common/server"
+					: "ghidra/server");
+		if (serverRoot == null || serverRoot.getFile(false) == null) {
+			System.err.println(
+				"Failed to resolve installation root directory!: " + serverRoot.getAbsolutePath());
+			System.exit(-1);
+		}
+		return new File(serverRoot.getFile(false), cfgFileName);
+	}
+
 	/**
 	 * Main method for starting the Ghidra server.
 	 *
@@ -501,7 +509,7 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 		}
 
 		int basePort = DEFAULT_PORT;
-		AUTH_MODE authMode = NO_AUTH_LOGIN;
+		AuthMode authMode = NO_AUTH_LOGIN;
 		boolean nameCallbackAllowed = false;
 		boolean altSSHLoginAllowed = false;
 		boolean allowAnonymousAccess = false;
@@ -509,6 +517,7 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 		String rootPath = null;
 		int defaultPasswordExpiration = -1;
 		boolean autoProvision = false;
+		String jaasConfigFileStr = null;
 
 		// Network name resolution disabled by default
 		InetNameLookup.setLookupEnabled(false);
@@ -538,7 +547,7 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 					System.exit(-1);
 				}
 
-				authMode = AUTH_MODE.fromIndex(authModeNum);
+				authMode = AuthMode.fromIndex(authModeNum);
 
 				if (authMode == null) {
 					displayUsage("Invalid authentication mode: " + s);
@@ -620,16 +629,8 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 					displayUsage("Missing -jaas config file path argument");
 					System.exit(-1);
 				}
-				String jaasConfigFileStr = args[nextArgIndex];
+				jaasConfigFileStr = args[nextArgIndex];
 				i++;
-				File jaasConfigFile = new File(jaasConfigFileStr);
-				if (!jaasConfigFile.exists() || !jaasConfigFile.isFile()) {
-					displayUsage("JAAS config file does not exist or is not file: " +
-						(new File("./").getAbsolutePath()));
-					System.exit(-1);
-				}
-				// NOTE: there is a leading '=' char to force this path to be the one-and-only config file
-				System.setProperty("java.security.auth.login.config", "=" + jaasConfigFileStr);
 			}
 			else if (s.equals("-autoProvision")) {
 				autoProvision = true;
@@ -668,6 +669,23 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 				System.exit(-1);
 			}
 			serverRoot = new File(installRoot.getFile(false), rootPath);
+		}
+
+		if (authMode == JAAS_LOGIN) {
+			if (jaasConfigFileStr == null) {
+				displayUsage("JAAS config file argument (-jaas <configfile>) not specified");
+				System.exit(-1);
+			}
+			File jaasConfigFile = getServerCfgFile(jaasConfigFileStr);
+			if (!jaasConfigFile.exists() || !jaasConfigFile.isFile()) {
+				displayUsage(
+					"JAAS config file (-jaas <configfile>) does not exist or is not file: " +
+						jaasConfigFile.getAbsolutePath());
+				System.exit(-1);
+			}
+			// NOTE: there is a leading '=' char to force this path to be the one-and-only config file
+			System.setProperty("java.security.auth.login.config",
+				"=" + jaasConfigFile.getAbsolutePath());
 		}
 
 		try {

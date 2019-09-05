@@ -1,9 +1,7 @@
 ##VERSION: 2.0
 ##MODULE IP: Copyright Distribution Permitted
-Common/server/jaas/jaas_external_program.example.conf||GHIDRA||||END|
+Common/server/jaas/jaas.conf||GHIDRA||||END|
 Common/server/jaas/jaas_external_program.example.sh||GHIDRA||||END|
-Common/server/jaas/jaas_jpam.example.conf||GHIDRA||||END|
-Common/server/jaas/jaas_ldap_ad.example.conf||GHIDRA||||END|
 Common/server/server.conf||GHIDRA||||END|
 Common/server/svrREADME.html||GHIDRA||||END|
 Common/support/analyzeHeadlessREADME.html||GHIDRA||||END|

@@ -17,6 +17,7 @@ package ghidra.server.security;
 
 import javax.security.auth.Subject;
 import javax.security.auth.callback.*;
+import javax.security.auth.login.FailedLoginException;
 import javax.security.auth.login.LoginException;
 
 import ghidra.server.UserManager;
@@ -25,10 +26,6 @@ public interface AuthenticationModule {
 
 	public static final String USERNAME_CALLBACK_PROMPT = "User ID";
 	public static final String PASSWORD_CALLBACK_PROMPT = "Password";
-
-	default void ensureConfig() {
-		// default nothing
-	}
 
 	/**
 	 * Complete the authentication process.
@@ -42,13 +39,13 @@ public interface AuthenticationModule {
 	 * the ones your module specified in its {@link #getAuthenticationCallbacks()}</li>
 	 * </ul>
 	 * <p>
-	 *
-	 * <p>
 	 * @param userMgr Ghidra server user manager
 	 * @param subject unauthenticated user ID (must be used if name callback not provided/allowed)
 	 * @param callbacks authentication callbacks
 	 * @return authenticated user ID (may come from callbacks)
-	 * @throws LoginException
+	 * @throws LoginException if error during login.  Client should not retry authentication
+	 * @throws FailedLoginException if authentication was unsuccessful.  Client may
+	 * retry authentication
 	 */
 	String authenticate(UserManager userMgr, Subject subject, Callback[] callbacks)
 			throws LoginException;
@@ -59,7 +56,7 @@ public interface AuthenticationModule {
 	Callback[] getAuthenticationCallbacks();
 
 	/**
-	 * Allows an AuthenticationModule to deny default anonymous login steps.
+	 * Allows this AuthenticationModule to deny default anonymous login steps.
 	 * <p>
 	 * @return true if a separate AnonymousCallback is allowed and may be
 	 * added to the array returned by getAuthenticationCallbacks.
@@ -72,6 +69,12 @@ public interface AuthenticationModule {
 	 */
 	boolean isNameCallbackAllowed();
 
+	/**
+	 * Creates a standard pair of name and password callback instances.
+	 *
+	 * @param allowUserToSpecifyName boolean flag, if false, a name callback is not added to the results
+	 * @return an array of callbacks
+	 */
 	static Callback[] createSimpleNamePasswordCallbacks(boolean allowUserToSpecifyName) {
 		PasswordCallback passCb = new PasswordCallback(PASSWORD_CALLBACK_PROMPT + ":", false);
 		if (allowUserToSpecifyName) {
@@ -81,20 +84,22 @@ public interface AuthenticationModule {
 		return new Callback[] { passCb };
 	}
 
+	/**
+	 * Find the first callback of a specific type in the list and returns it.
+	 *
+	 * @param <T> the type of callback
+	 * @param callbackClass the callback class (ie. Namecallback.class)
+	 * @param callbackArray array of callbacks to search
+	 * @return callback instance that is of type T, or null if not found
+	 */
 	static <T extends Callback> T getFirstCallbackOfType(Class<T> callbackClass,
 			Callback[] callbackArray) {
 		if (callbackArray == null) {
 			return null;
 		}
 
-		// dunno if this approach is warranted. the second loop with its isInstance() may be fine.
 		for (Callback cb : callbackArray) {
 			if (callbackClass == cb.getClass()) {
-				return callbackClass.cast(cb);
-			}
-		}
-		for (Callback cb : callbackArray) {
-			if (callbackClass.isInstance(cb.getClass())) {
 				return callbackClass.cast(cb);
 			}
 		}
