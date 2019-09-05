@@ -79,11 +79,11 @@ public abstract class PcodeCompile {
 	public abstract SectionVector finalNamedSection(SectionVector vec, ConstructTpl section);
 
 	/**
-	 * 
-	 * @param location
-	 * @param sym MacroSymbol
-	 * @param param
-	 * @return
+	 * Handle a sleigh 'macro' invocation, returning the resulting p-code op templates (OpTpl)
+	 * @param location is the file/line where the macro is invoked
+	 * @param sym MacroSymbol is the macro symbol
+	 * @param param is the parsed list of operand expressions
+	 * @return a list of p-code op templates
 	 */
 	public abstract VectorSTL<OpTpl> createMacroUse(Location location, MacroSymbol sym,
 			VectorSTL<ExprTree> param);
@@ -904,7 +904,7 @@ public abstract class PcodeCompile {
 			return true;
 		}
 		if (o instanceof List) {
-			List l = (List) o;
+			List<?> l = (List<?>) o;
 			for (Object t : l) {
 				if (isLocationIsh(t)) {
 					return true;
@@ -912,7 +912,7 @@ public abstract class PcodeCompile {
 			}
 		}
 		if (o instanceof VectorSTL) {
-			VectorSTL v = (VectorSTL) o;
+			VectorSTL<?> v = (VectorSTL<?>) o;
 			for (Object t : v) {
 				if (isLocationIsh(t)) {
 					return true;
@@ -924,8 +924,12 @@ public abstract class PcodeCompile {
 
 	/**
 	 * EXTREMELY IMPORTANT: keep this up to date with isInternalFunction below!!!
-	 * @param name
-	 * @return
+	 * Lookup the given identifier as part of parsing p-code with functional syntax.
+	 * Build the resulting p-code expression object from the parsed operand expressions.
+	 * @param location identifies the file/line where the p-code is parsed from
+	 * @param name is the given functional identifier
+	 * @param operands is the ordered list of operand expressions
+	 * @return the new expression (ExprTree) object
 	 */
 	public Object findInternalFunction(Location location, String name, VectorSTL<ExprTree> operands) {
 		ExprTree r = null;
@@ -1013,8 +1017,10 @@ public abstract class PcodeCompile {
 
 	/**
 	 * EXTREMELY IMPORTANT: keep this up to date with findInternalFunction above!!!
-	 * @param name
-	 * @return
+	 * Determine if the given identifier is a sleigh internal function. Used to
+	 * prevent user-defined p-code names from colliding with internal names
+	 * @param name is the given identifier to check
+	 * @return true if the identifier is a reserved internal function
 	 */
 	public boolean isInternalFunction(String name) {
 		if ("zext".equals(name)) {
@@ -1066,6 +1072,9 @@ public abstract class PcodeCompile {
 			return true;
 		}
 		if ("newobject".equals(name)) {
+			return true;
+		}
+		if ("popcount".equals(name)) {
 			return true;
 		}
 
