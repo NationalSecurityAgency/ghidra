@@ -479,7 +479,7 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 
 		ResourceFile serverRoot = new ResourceFile(Application.getInstallationDirectory(),
 			SystemUtilities.isInDevelopmentMode() ? "ghidra/Ghidra/RuntimeScripts/Common/server"
-					: "ghidra/server");
+					: "server");
 		if (serverRoot == null || serverRoot.getFile(false) == null) {
 			System.err.println(
 				"Failed to resolve installation root directory!: " + serverRoot.getAbsolutePath());
