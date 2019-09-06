@@ -144,7 +144,7 @@ OP1: oprx8_8_X	is op4_6=6; oprx8_8_X    { export oprx8_8_X; }
 OP1: comma_X	is op4_6=7 & comma_X     { export comma_X; }
 
 @if  defined(HCS08) || defined(HC08)
-op2_opr8a: opr8a_8  is opr8a_8           { export opr8a_8; }
+op2_opr8a: imm8     is imm8       { export *:1 imm8; }
 @endif
 
 
@@ -167,48 +167,100 @@ NthBit: nthbit is nIndex  [ nthbit = (1 << nIndex); ] { export *[const]:1 nthbit
 # Macros
 ################################################################
 
+
 @if defined(HCS08) || defined(HC08)
-macro addition_flags(operand, result) {
-	complement_result:1 = ~result;
-	
-	$(V) = ( ((A & operand & complement_result) | (~A & ~operand & result))  & 0b10000000 ) != 0;
-	carries:1 = (A & operand) | (operand & complement_result) | (complement_result & A);
-	$(H) = ( carries & 0b00001000 ) != 0;
-	$(N) = (result s< 0);
+
+macro additionFlags(operand1, operand2, result) {
+	local AFmask = -1 >> 4;
+	$(H) = (((operand1 & AFmask) + (operand2 & AFmask)) & (AFmask + 1)) != 0;
+	$(V) = scarry(operand1, operand2);
+	$(N) = result s< 0;
+	$(C) = carry(operand1, operand2);
 	$(Z) = (result == 0);
-	$(C) = ( carries & 0b10000000 ) != 0;
 }
+
+macro additionWithCarry(operand1, operand2, result) {
+	local Ccopy = zext($(C));
+	local AFmask = -1 >> 4;
+	$(H) = (((operand1 & AFmask) + (operand2 & AFmask) + Ccopy) & (AFmask + 1)) != 0;
+	$(V) = scarry(operand1, operand2);
+	$(C) = carry(operand1, operand2);
+	local tempResult = operand1 + operand2;
+	$(C) = $(C) || carry(tempResult, Ccopy);
+	$(V) = $(V) ^^ scarry(tempResult, Ccopy);
+	result = tempResult + Ccopy;
+	$(N) =result s< 0;
+	$(Z) = (result == 0);
+}
+
 @elif defined(HC05)
-macro addition_flags(operand, result) {
-	complement_result:1 = ~result;
-	
-    # V is not implemented in HC05	
-	carries:1 = (A & operand) | (operand & complement_result) | (complement_result & A);
-	$(H) = ( carries & 0b00001000 ) != 0;
-	$(N) = (result s< 0);
-	$(Z) = (result == 0);
-	$(C) = ( carries & 0b10000000 ) != 0;
+
+# V is not implemented in HC05	
+
+macro additionFlags(operand1, operand2, result) {
+	local AFmask = -1 >> 4;
+	$(H) = (((operand1 & AFmask) + (operand2 & AFmask)) & (AFmask + 1)) != 0;
+    $(N) =result s< 0;
+    $(Z) = (result == 0);
+	$(C) = carry(operand1, operand2);
 }
+
+macro additionWithCarry(operand1, operand2, result) {
+	local Ccopy = zext($(C));
+	local AFmask = -1 >> 4;
+	$(H) = (((operand1 & AFmask) + (operand2 & AFmask) + Ccopy) & (AFmask + 1)) != 0;
+	$(C) = carry(operand1, operand2);
+	local tempResult = operand1 + operand2;
+	$(C) = $(C) || carry(tempResult, Ccopy);
+	result = tempResult + Ccopy;
+    $(N) =result s< 0;
+    $(Z) = (result == 0);
+}
+
 @endif
 
-@if defined(HCS08) || defined(HC08)
-macro subtraction_flags(operand, result) {
-	complement_A:1 = ~A;
-	
-	$(V) = ( ((A & ~operand & ~result) | (complement_A & operand & result)) & 0b10000000 ) != 0;
-	$(N) = (result s< 0);
-	$(Z) = (result == 0);
-	$(C) = ( ((complement_A & operand) | (operand & result) | (result & complement_A)) & 0b10000000 ) != 0;
-}
-@elif defined(HC05)
-macro subtraction_flags(operand, result) {
-	complement_A:1 = ~A;
 
-    # V is not implemented in HC05	
+@if defined(HCS08) || defined(HC08)
+
+macro subtractionFlags(operand1, operand2, result) {
+	$(V) = sborrow(operand1, operand2);
 	$(N) = (result s< 0);
 	$(Z) = (result == 0);
-	$(C) = ( ((complement_A & operand) | (operand & result) | (result & complement_A)) & 0b10000000 ) != 0;
+	$(C) = operand1 < operand2;
 }
+
+macro subtractWithCarry(operand1, operand2, result) {
+	local Ccopy = zext($(C));
+	$(V) = sborrow(operand1, operand2);
+
+	$(C) = operand1 < operand2;
+	local tempResult = operand1 - operand2;
+	$(C) = $(C) || (tempResult < Ccopy);
+	$(V) = $(V) ^^ sborrow(tempResult, Ccopy);
+	result = tempResult - Ccopy;
+	$(N) = result s< 0;
+}
+
+@elif defined(HC05)
+macro subtractionFlags(operand1, operand2, result) {
+    # V is not implemented in HC05	
+
+	$(N) = (result s< 0);
+	$(Z) = (result == 0);
+	$(C) = operand1 < operand2;
+}
+
+macro subtractWithCarry(operand1, operand2, result) {
+	local Ccopy = zext($(C));
+	# V is not implemented in HC05	
+
+	$(C) = operand1 < operand2;
+	local tempResult = operand1 - operand2;
+	$(C) = $(C) || (tempResult < Ccopy);
+	result = tempResult - Ccopy;
+	$(N) = result s< 0;
+}
+
 @endif
 
 @if defined(HCS08) || defined(HC08)
@@ -322,9 +374,7 @@ macro Push2(operand) {
 {
 	op1:1 = OP1;
 
-	result:1 = A + op1 + $(C);
-	addition_flags(op1, result);
-	A = result;
+	additionWithCarry(A, op1, A);
 }
 @endif
 
@@ -333,9 +383,7 @@ macro Push2(operand) {
 {
 	op1:1 = oprx16_8_SP;
 
-	result:1 = A + op1 + $(C);
-	addition_flags(op1, result);
-	A = result;
+	additionWithCarry(A, op1, A);
 }
 @endif
 
@@ -344,9 +392,7 @@ macro Push2(operand) {
 {
 	op1:1 = oprx8_8_SP;
 
-	result:1 = A + op1 + $(C);
-	addition_flags(op1, result);
-	A = result;
+	additionWithCarry(A, op1, A);
 }
 @endif
 
@@ -356,7 +402,7 @@ macro Push2(operand) {
 	op1:1 = OP1;
 
 	result:1 = A + op1;
-	addition_flags(op1, result);
+	additionFlags(A, op1,result);
 	A = result;
 }
 @endif
@@ -367,7 +413,7 @@ macro Push2(operand) {
 	op1:1 = oprx16_8_SP;
 
 	result:1 = A + op1;
-	addition_flags(op1, result);
+	additionFlags(A, op1,result);
 	A = result;
 }
 @endif
@@ -378,7 +424,7 @@ macro Push2(operand) {
 	op1:1 = oprx8_8_SP;
 
 	result:1 = A + op1;
-	addition_flags(op1, result);
+	additionFlags(A, op1,result);
 	A = result;
 }
 @endif
@@ -1761,9 +1807,7 @@ macro Push2(operand) {
 { 
 	op1:1 = OP1;
 	
-	result:1 = A - op1 - $(C);
-	subtraction_flags(op1, result);
-	A = result;
+	subtractWithCarry(A, op1, A);
 }
 @endif
 
@@ -1772,9 +1816,7 @@ macro Push2(operand) {
 { 
 	op1:1 = oprx16_8_SP;
 	
-	result:1 = A - op1 - $(C);
-	subtraction_flags(op1, result);
-	A = result;
+	subtractWithCarry(A, op1, A);
 }
 @endif
 
@@ -1783,9 +1825,7 @@ macro Push2(operand) {
 { 
 	op1:1 = oprx8_8_SP;
 	
-	result:1 = A - op1 - $(C);
-	subtraction_flags(op1, result);
-	A = result;
+	subtractWithCarry(A, op1, A);
 }
 @endif
 
@@ -1907,7 +1947,7 @@ macro Push2(operand) {
 	op1:1 = OP1;
 	
 	result:1 = A - op1;
-	subtraction_flags(op1, result);
+	subtractionFlags(A, op1,result);
 	A = result;
 }
 @endif
@@ -1918,7 +1958,7 @@ macro Push2(operand) {
 	op1:1 = oprx16_8_SP;
 	
 	result:1 = A - op1;
-	subtraction_flags(op1, result);
+	subtractionFlags(A, op1,result);
 	A = result;
 }
 @endif
@@ -1929,7 +1969,7 @@ macro Push2(operand) {
 	op1:1 = oprx8_8_SP;
 	
 	result:1 = A - op1;
-	subtraction_flags(op1, result);
+	subtractionFlags(A, op1,result);
 	A = result;
 }
 @endif
