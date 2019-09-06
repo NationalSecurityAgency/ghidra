@@ -114,30 +114,210 @@ define register offset=1024 size=4 [
 	GBR SR  SSR SPC VBR SGR DBR
 ];
 
+# SR component register fields (pseudo)
+define register offset=1536 size=1 [
+	MD    RB    BL    FD    M     Q     IMASK S     T
+];
+
 # System registers
 define register offset=2048 size=4 [
 	MACH  MACL  PR    PC    FPSCR FPUL
 ];
 
-@define T_FLAG  "SR[0,1]"
-@define S_FLAG  "SR[1,1]"
-@define IMASK   "SR[4,4]"
-@define Q_FLAG  "SR[8,1]"
-@define M_FLAG  "SR[9,1]"
-@define FD_FLAG "SR[15,1]"
-@define BL_FLAG "SR[28,1]"
-@define RB_FLAG "SR[29,1]"
-@define MD_FLAG "SR[30,1]"
+# FPSCR component register fields (pseudo)
+define register offset=2560 size=1 [
+	FPSCR_RM
+	FPSCR_FLAG
+	FPSCR_ENABLE
+	FPSCR_CAUSE
+	FPSCR_DN
+	FPSCR_PR
+	FPSCR_SZ
+	FPSCR_FR
+];
 
-@define FPSCR_RM "FPSCR[0,2]"
-@define FPSCR_FLAG "FPSCR[2,5]"
-@define FPSCR_ENABLE "FPSCR[7,5]"
-@define FPSCR_CAUSE "FPSCR[12,6]"
-@define FPSCR_DN "FPSCR[18,1]"
-@define FPSCR_PR "FPSCR[19,1]"
-@define FPSCR_SZ "FPSCR[20,1]"
-@define FPSCR_FR "FPSCR[21,1]"
+@define T_FLAG  "T"
+@define S_FLAG  "S"
+@define IMASK   "IMASK"
+@define Q_FLAG  "Q"
+@define M_FLAG  "M"
+@define FD_FLAG "FD"
+@define BL_FLAG "BL"
+@define RB_FLAG "RB"
+@define MD_FLAG "MD"
 
+@define FPSCR_RM "FPSCR_RM"
+@define FPSCR_FLAG "FPSCR_FLAG"
+@define FPSCR_ENABLE "FPSCR_ENABLE"
+@define FPSCR_CAUSE "FPSCR_CAUSE"
+@define FPSCR_DN "FPSCR_DN"
+@define FPSCR_PR "FPSCR_PR"
+@define FPSCR_SZ "FPSCR_SZ"
+@define FPSCR_FR "FPSCR_FR"
+
+#
+# SR pack and unpack support
+#
+
+# 0000 0000 0000 0000 0000 0000 0000 0001
+@define T_MASK           "0x00000001"
+
+# 0000 0000 0000 0000 0000 0000 0000 0010
+@define S_MASK           "0x00000002"
+
+# 0000 0000 0000 0000 0000 0000 1111 0000
+@define IMASK_MASK       "0x000000F0"
+
+# 0000 0000 0000 0000 0000 0001 0000 0000
+@define Q_MASK           "0x00000100"
+
+# 0000 0000 0000 0000 0000 0010 0000 0000
+@define M_MASK           "0x00000200"
+
+# 0000 0000 0000 0000 1000 0000 0000 0000
+@define FD_MASK          "0x00008000"
+
+# 0001 0000 0000 0000 0000 0000 0000 0000
+@define BL_MASK          "0x10000000"
+
+# 0010 0000 0000 0000 0000 0000 0000 0000
+@define RB_MASK          "0x20000000"
+
+# 0100 0000 0000 0000 0000 0000 0000 0000
+@define MD_MASK          "0x40000000"
+
+@define T_SHIFT          " 0"
+@define S_SHIFT          " 1"
+@define IMASK_SHIFT      " 4"
+@define Q_SHIFT          " 8"
+@define M_SHIFT          " 9"
+@define FD_SHIFT         "15"
+@define BL_SHIFT         "28"
+@define RB_SHIFT         "29"
+@define MD_SHIFT         "30"
+
+macro genSRregister() {
+
+	SR = 	
+    (zext(T)     << $(T_SHIFT))     |
+    (zext(S)     << $(S_SHIFT))     |
+    (zext(IMASK) << $(IMASK_SHIFT)) |
+    (zext(Q)     << $(Q_SHIFT))     |
+    (zext(M)     << $(M_SHIFT))     |
+    (zext(FD)    << $(FD_SHIFT))    |
+    (zext(BL)    << $(BL_SHIFT))    |
+    (zext(RB)    << $(RB_SHIFT))    |
+    (zext(MD)    << $(MD_SHIFT));
+}
+
+macro splitSRregister() {
+
+	splitTemp:4  = (SR & $(T_MASK))     >> $(T_SHIFT);
+	T            = splitTemp:1;
+
+	splitTemp    = (SR & $(S_MASK))     >> $(S_SHIFT);
+	S            = splitTemp:1;
+
+	splitTemp    = (SR & $(IMASK_MASK)) >> $(IMASK_SHIFT);
+	IMASK        = splitTemp:1;
+
+	splitTemp    = (SR & $(Q_MASK))     >> $(Q_SHIFT);
+	Q            = splitTemp:1;
+
+	splitTemp    = (SR & $(M_MASK))     >> $(M_SHIFT);
+	M            = splitTemp:1;
+
+	splitTemp    = (SR & $(FD_MASK))    >> $(FD_SHIFT);
+	FD           = splitTemp:1;
+
+	splitTemp    = (SR & $(BL_MASK))    >> $(BL_SHIFT);
+	BL           = splitTemp:1;
+
+	splitTemp    = (SR & $(RB_MASK))    >> $(RB_SHIFT);
+	RB           = splitTemp:1;
+
+	splitTemp    = (SR & $(MD_MASK))    >> $(MD_SHIFT);
+	MD           = splitTemp:1;
+}
+
+#
+# FPSCR pack and unpack support
+#
+@define  FPSCR_RM_SHIFT      " 0"
+@define  FPSCR_FLAG_SHIFT    " 2"
+@define  FPSCR_ENABLE_SHIFT  " 7"
+@define  FPSCR_CAUSE_SHIFT   "12"
+@define  FPSCR_DN_SHIFT      "18"
+@define  FPSCR_PR_SHIFT      "19"
+@define  FPSCR_SZ_SHIFT      "20"
+@define  FPSCR_FR_SHIFT      "21"
+
+
+# 0000 0000 0000 0000 0000 0000 0000 0011
+@define  FPSCR_RM_MASK       "0x00000003"
+
+# 0000 0000 0000 0000 0000 0000 0111 1100
+@define  FPSCR_FLAG_MASK     "0x0000007C"
+
+# 0000 0000 0000 0000 0000 1111 1000 0000
+@define  FPSCR_ENABLE_MASK   "0x00000F80"
+
+# 0000 0000 0000 0011 1111 0000 0000 0000
+@define  FPSCR_CAUSE_MASK    "0x0003F000"
+
+# 0000 0000 0000 0100 0000 0000 0000 0000
+@define  FPSCR_DN_MASK       "0x00040000"
+
+# 0000 0000 0000 1000 0000 0000 0000 0000
+@define  FPSCR_PR_MASK       "0x00080000"
+
+# 0000 0000 0001 0000 0000 0000 0000 0000
+@define  FPSCR_SZ_MASK       "0x00100000"
+
+# 0000 0000 0010 0000 0000 0000 0000 0000
+@define  FPSCR_FR_MASK       "0x00200000"
+
+# Bits 22-31 are not used
+
+macro genFPSCRregister() {
+
+	FPSCR = 	
+    (zext(FPSCR_RM)     << $(FPSCR_RM_SHIFT))     |
+    (zext(FPSCR_FLAG)   << $(FPSCR_FLAG_SHIFT))   |
+    (zext(FPSCR_ENABLE) << $(FPSCR_ENABLE_SHIFT)) |
+    (zext(FPSCR_CAUSE)  << $(FPSCR_CAUSE_SHIFT))  |
+    (zext(FPSCR_DN)     << $(FPSCR_DN_SHIFT))     |
+    (zext(FPSCR_PR)     << $(FPSCR_PR_SHIFT))     |
+    (zext(FPSCR_SZ)     << $(FPSCR_SZ_SHIFT))     |
+    (zext(FPSCR_FR)     << $(FPSCR_FR_SHIFT));
+}
+
+macro splitFPSCRregister() {
+
+	splitTemp:4  = (FPSCR & $(FPSCR_RM_MASK))     >> $(FPSCR_RM_SHIFT);
+	FPSCR_RM     = splitTemp:1;
+
+	splitTemp    = (FPSCR & $(FPSCR_FLAG_MASK))   >> $(FPSCR_FLAG_SHIFT);
+	FPSCR_FLAG   = splitTemp:1;
+
+	splitTemp    = (FPSCR & $(FPSCR_ENABLE_MASK)) >> $(FPSCR_ENABLE_SHIFT);
+	FPSCR_ENABLE = splitTemp:1;
+
+	splitTemp    = (FPSCR & $(FPSCR_CAUSE_MASK))  >> $(FPSCR_CAUSE_SHIFT);
+	FPSCR_CAUSE  = splitTemp:1;
+
+	splitTemp    = (FPSCR & $(FPSCR_DN_MASK))     >> $(FPSCR_DN_SHIFT);
+	FPSCR_DN     = splitTemp:1;
+
+	splitTemp    = (FPSCR & $(FPSCR_PR_MASK))     >> $(FPSCR_PR_SHIFT);
+	FPSCR_PR     = splitTemp:1;
+
+	splitTemp    = (FPSCR & $(FPSCR_SZ_MASK))     >> $(FPSCR_SZ_SHIFT);
+	FPSCR_SZ     = splitTemp:1;
+
+	splitTemp    = (FPSCR & $(FPSCR_FR_MASK))     >> $(FPSCR_FR_SHIFT);
+	FPSCR_FR     = splitTemp:1;
+}
 
 # Fields =================================================================================
 define token instr(16)
@@ -1479,6 +1659,7 @@ define pcodeop InvalidateCacheBlock;
 # arch    arch_sh_up
 :ldc N_0t_sr                is OP_0=0x4 & N_0t_sr & OP_4=0xe {
 
+	splitSRregister();
 	SR = (N_0t_sr & 0x700083f3);
 }
 
@@ -1545,6 +1726,7 @@ define pcodeop InvalidateCacheBlock;
 :ldc.l N_0t_sr1             is OP_0=0x4 & N_0t_sr1 & OP_4=0x7 {
 
 	SR = (*:4 ( N_0t_sr1 )) & 0x700083F3;
+	splitSRregister();
 	N_0t_sr1 = N_0t_sr1 + 4;
 }
 
@@ -1640,6 +1822,7 @@ define pcodeop InvalidateCacheBlock;
 :lds N_0t_fpscr             is OP_0=0x4 & N_0t_fpscr & OP_4=0x6a {
 
 	FPSCR = N_0t_fpscr & 0x003FFFFF;
+	splitFPSCRregister();
 }
 
 
@@ -1651,6 +1834,7 @@ define pcodeop InvalidateCacheBlock;
 :lds.l N_0t_fpscr1          is OP_0=0x4 & N_0t_fpscr1 & OP_4=0x66 {
 
 	FPSCR = (*:4 ( N_0t_fpscr1 )) & 0x003FFFFF;
+	splitFPSCRregister();
 	N_0t_fpscr1 = N_0t_fpscr1 + 4;
 }
 
@@ -2328,6 +2512,7 @@ define pcodeop CacheBlockWriteBack;
 :rte                        is OP_3=0x2b {
 
 	SR = SSR;
+	splitSRregister();
 	PC = SPC;
 	delayslot(1);
 	return [PC];
@@ -2511,6 +2696,7 @@ define pcodeop CacheBlockWriteBack;
 # arch    arch_sh_up
 :stc sr_N_0t                is OP_0=0x0 & sr_N_0t & OP_4=0x2 {
 
+	genSRregister();
 	sr_N_0t = SR;
 }
 
@@ -2588,6 +2774,7 @@ define pcodeop CacheBlockWriteBack;
 :stc.l sr_t,N_0t_at_neg     is OP_0=0x4 & N_0t_at_neg & OP_4=0x3 & sr_t {
 
 	N_0t_at_neg = N_0t_at_neg - 4;
+	genSRregister();
 	*:4 ( N_0t_at_neg ) = SR;
 }
 
@@ -2743,6 +2930,7 @@ define pcodeop CacheBlockWriteBack;
 # arch    arch_sh2e_up
 :sts fpscr_N_0t             is OP_0=0x0 & fpscr_N_0t & OP_4=0x6a {
 
+	genFPSCRregister();
 	fpscr_N_0t = FPSCR;
 }
 
@@ -2765,6 +2953,7 @@ define pcodeop CacheBlockWriteBack;
 :sts.l fpscr_t,N_0t_at_neg  is OP_0=0x4 & N_0t_at_neg & OP_4=0x62 & fpscr_t {
 
 	N_0t_at_neg = N_0t_at_neg - 4;
+	genFPSCRregister();
 	*:4 ( N_0t_at_neg ) = FPSCR;
 }
 
