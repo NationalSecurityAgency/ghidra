@@ -258,8 +258,9 @@ The Ghidra Server has been designed to support many  possible user authenticatio
     <br>
 	<LI><u>JAAS - Java Authentication and Authorization Service (<typewriter>-a4</typewriter>)</u> - 
 	user authentication is delegated to the JAAS subsystem.  The -jaas &lt;config_file&gt; argument
-	is required to specify the JAAS config file.  There is an example config file in the GhidraServer
-	directory called jaas.conf.
+	is required to specify the JAAS config file.  The JAAS config file supplied (<i>server/jaas.conf</i>i>)
+	contains various example configurations which may be used to establish an 'auth' configuration 
+	section.  None of the example configurations use the 'auth' name so they will be ignored by default.
 	<p>
 	JAAS is architected similar to Linux/Unix PAM, where a named authentication configuration is possibly
 	composed of several different modules.  Ghidra's support of JAAS only handles single simple
@@ -273,14 +274,14 @@ The Ghidra Server has been designed to support many  possible user authenticatio
 		</li>
 		<li><u>net.sf.jpam.jaas.JpamLoginModule</u> - (Linux/Unix server only) allows authentication against
 		the local PAM configuration.  You will need to download JPAM from SourceForce and install the
-		libraries in the necessary locations.  See the example in the jaas.conf file. 
+		libraries in the necessary locations.  See the example in the <i>jaas.conf</i>i> file. 
 		</li>
 		<li><u>ghidra.server.security.loginmodule.ExternalProgramLoginModule</u> - spawns an external
 		program for each authentication request, and uses the external program's exit code as the indicator
 		of successful authentication.
 		<p>
-		There is an example (and non-useful) implementation of an external authenticator in the GhidraServer
-		directory called jaas_external_program.example.sh.
+		There is an example (and non-useful) implementation of an external authenticator provided with
+		the Ghidra instalation called <i>server/jaas_external_program.example.sh</i>i>.
 		<p>
 		This login module strives to be compatible with Apache's mod_authnz_external API, and you should
 		be able to use any mod_authnz_external authenticator with Ghidra.
