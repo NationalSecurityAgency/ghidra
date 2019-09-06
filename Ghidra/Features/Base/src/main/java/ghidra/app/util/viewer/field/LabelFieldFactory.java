@@ -392,7 +392,7 @@ public class LabelFieldFactory extends FieldFactory {
 		}
 		Symbol symbol = symbols[symbolIndex];
 		SymbolType symbolType = symbol.getSymbolType();
-		if (symbolType != SymbolType.CODE && symbolType != SymbolType.FUNCTION) {
+		if (symbolType != SymbolType.LABEL && symbolType != SymbolType.FUNCTION) {
 			return null;
 		}
 		return symbol;

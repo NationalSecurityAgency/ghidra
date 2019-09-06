@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -116,7 +115,7 @@ class SymbolDatabaseAdapterV0 extends SymbolDatabaseAdapter {
 			record.getLongValue(V0_SYMBOL_ADDR_COL));
 		rec.setIntValue(SymbolDatabaseAdapter.SYMBOL_DATA2_COL,
 			record.getBooleanValue(V0_SYMBOL_PRIMARY_COL) ? 1 : 0);
-		rec.setByteValue(SymbolDatabaseAdapter.SYMBOL_TYPE_COL, SymbolType.CODE.getID());
+		rec.setByteValue(SymbolDatabaseAdapter.SYMBOL_TYPE_COL, SymbolType.LABEL.getID());
 		rec.setLongValue(SymbolDatabaseAdapter.SYMBOL_DATA1_COL, -1); // not applicable
 		rec.setLongValue(SymbolDatabaseAdapter.SYMBOL_PARENT_COL, Namespace.GLOBAL_NAMESPACE_ID);
 		rec.setByteValue(SymbolDatabaseAdapter.SYMBOL_FLAGS_COL,

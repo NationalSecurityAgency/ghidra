@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +15,20 @@
  */
 package docking;
 
+import java.awt.Component;
 
+/**
+ * A listener interface to know when a component has been 
+ * made {@link Component#isDisplayable() displayable}
+ */
 public interface ComponentLoadedListener {
-	public void componentLoaded(DockingWindowManager windowManager);
+
+	/**
+	 * Called when the component is made displayable
+	 * 
+	 * @param windowManager the window manager associated with the loaded component
+	 * @param provider the provider that is the parent of the given component; null if this
+	 *        component is not the child of a component provider
+	 */
+	public void componentLoaded(DockingWindowManager windowManager, ComponentProvider provider);
 }

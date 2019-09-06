@@ -158,7 +158,7 @@ define context contextreg
  temp32 = (64,95) noflow
 ;
 
-@define COMMON  "& phase=1 " 
+@define COMMON  "phase=1 " 
 
 # Instruction fields
 
@@ -214,6 +214,7 @@ define token instr(32)
     u			= (13,13)
     fpr1x		= (12,12)
     f			= (12,12)
+    fv			= (12,12)
     zero		= (12,12)
     one			= (12,12)
     subop1012	= (10,12)
@@ -437,7 +438,7 @@ attach names [ fusedfmt ] [
 
 # previous instruction was not a branch, but may have conditionally nullified this instruction
 :^instruction is phase=0 & branchEnable=0 & nullifyEnable=1 & instruction [ phase=1; ] {
-	wasNullified = nullifyCond;
+	local wasNullified = nullifyCond;
 	nullifyCond = 0;
 	nullifyNextCond=0;
 	if (wasNullified) goto <skip>;
@@ -462,7 +463,7 @@ immediateDest: is branchImmDest { export *:$(ADDRSIZE) branchImmDest; }
 :^instruction is phase=0 & branchEnable=1 & nullifyEnable=0 & branchType=0 & branchCouldBeNullified=1 & instruction & immediateDest [ phase=1; ] {
 	nullifyCond = 0;
 	nullifyNextCond = 0;
-	previousBranchExecuted = branchExecuted;
+	local previousBranchExecuted = branchExecuted;
         branchCond = 0;
 	branchExecuted = 0;
 	build instruction;
@@ -486,7 +487,7 @@ immediateDest: is branchImmDest { export *:$(ADDRSIZE) branchImmDest; }
 :^instruction is phase=0 & branchEnable=1 & nullifyEnable=0 & branchType=1 & branchCouldBeNullified=1 & instruction & immediateDest [ phase=1; ] {
 	nullifyCond = 0;
 	nullifyNextCond = 0;
-	previousBranchExecuted = branchExecuted;
+	local previousBranchExecuted = branchExecuted;
         branchCond = 0;
 	branchExecuted = 0;
 	build instruction;
@@ -514,9 +515,9 @@ immediateDest: is branchImmDest { export *:$(ADDRSIZE) branchImmDest; }
 :^instruction is phase=0 & branchEnable=1 & nullifyEnable=0 & branchType=2 & branchCouldBeNullified=1 & instruction & immediateDest [ phase=1; ] {
 	nullifyCond = 0;
 	nullifyNextCond=0;
-	previousBranchExecuted = branchExecuted;
+	local previousBranchExecuted = branchExecuted;
 	branchExecuted = 0;
-	previousBranchCond = branchCond;
+	local previousBranchCond = branchCond;
         branchCond = 0;
 	build instruction;
 	if (previousBranchCond && previousBranchExecuted) goto immediateDest;
@@ -531,7 +532,7 @@ immediateDest: is branchImmDest { export *:$(ADDRSIZE) branchImmDest; }
 	nullifyCond = 0;
 	nullifyNextCond = 0;
 	branchExecuted = 0;
-	previousBranchCond = branchCond;
+	local previousBranchCond = branchCond;
         branchCond = 0;
 	build instruction;
 	if (previousBranchCond) goto immediateDest;
@@ -540,8 +541,8 @@ immediateDest: is branchImmDest { export *:$(ADDRSIZE) branchImmDest; }
 # branchType = 3, conditional immediate call, (currently not used, may not exist in PA-RISC)
 :^instruction is phase=0 & branchEnable=1 & nullifyEnable=0 & branchType=3 & branchCouldBeNullified=1 & instruction & immediateDest [ phase=1; ] {
 	nullifyNextCond=0;
-	previousBranchExecuted = branchExecuted;
-	previousBranchCond = branchCond;
+	local previousBranchExecuted = branchExecuted;
+	local previousBranchCond = branchCond;
         branchCond = 0;
 	branchExecuted = 0;
 	build instruction;
@@ -554,7 +555,7 @@ immediateDest: is branchImmDest { export *:$(ADDRSIZE) branchImmDest; }
 # branchType = 3, conditional immediate call, (currently not used, may not exist in PA-RISC)
 :^instruction is phase=0 & branchEnable=1 & nullifyEnable=0 & branchType=3 & branchCouldBeNullified=0 & instruction & immediateDest [ phase=1; ] {
 	nullifyNextCond=0;
-	previousBranchCond = branchCond;
+	local previousBranchCond = branchCond;
         branchCond = 0;
 	branchExecuted = 0;
 	build instruction;
@@ -570,7 +571,7 @@ immediateDest: is branchImmDest { export *:$(ADDRSIZE) branchImmDest; }
 :^instruction is phase=0 & branchEnable=1 & nullifyEnable=0 & branchCouldBeNullified=1 & branchType=4 & instruction [ phase=1; ] {
 	nullifyCond = 0;
 	nullifyNextCond = 0;
-	previousBranchExecuted = branchExecuted;
+	local previousBranchExecuted = branchExecuted;
 	branchExecuted = 0;
 	build instruction;
 	if ( ! previousBranchExecuted ) goto <skip>;
@@ -604,7 +605,7 @@ immediateDest: is branchImmDest { export *:$(ADDRSIZE) branchImmDest; }
 :^instruction is phase=0 & branchEnable=1 & nullifyEnable=0 & branchType=5 & branchCouldBeNullified=1 & instruction [ phase=1; ] {
 	nullifyCond = 0;
 	nullifyNextCond = 0;
-	previousBranchExecuted = branchExecuted;
+	local previousBranchExecuted = branchExecuted;
 	branchExecuted = 0;
 	build instruction;
 	if ( ! previousBranchExecuted ) goto <skip>;
@@ -628,8 +629,8 @@ immediateDest: is branchImmDest { export *:$(ADDRSIZE) branchImmDest; }
 :^instruction is phase=0 & branchEnable=1 & nullifyEnable=0 & branchType=6 & branchCouldBeNullified=1 & instruction [ phase=1; ] {
 	nullifyCond = 0;
 	nullifyNextCond=0;
-	previousBranchExecuted = branchExecuted;
-	previousBranchCond = branchCond;
+	local previousBranchExecuted = branchExecuted;
+	local previousBranchCond = branchCond;
         branchCond = 0;
 	branchExecuted = 0;
 	build instruction;
@@ -646,7 +647,7 @@ immediateDest: is branchImmDest { export *:$(ADDRSIZE) branchImmDest; }
 	nullifyCond = 0;
 	nullifyNextCond=0;
 	branchExecuted = 0;
-	previousBranchCond = branchCond;
+	local previousBranchCond = branchCond;
         branchCond = 0;
 	build instruction;
 	if ( ! previousBranchCond ) goto <skip>;
@@ -659,8 +660,8 @@ immediateDest: is branchImmDest { export *:$(ADDRSIZE) branchImmDest; }
 :^instruction is phase=0 & branchEnable=1 & nullifyEnable=0 & branchType=7 & branchCouldBeNullified=1 & instruction [ phase=1; ] {
 	nullifyCond = 0;
 	nullifyNextCond=0;
-	previousBranchExecuted = branchExecuted;
-	previousBranchCond = branchCond;
+	local previousBranchExecuted = branchExecuted;
+	local previousBranchCond = branchCond;
         branchCond = 0;
 	branchExecuted = 0;
 	build instruction;
@@ -675,7 +676,7 @@ immediateDest: is branchImmDest { export *:$(ADDRSIZE) branchImmDest; }
 	nullifyCond = 0;
 	nullifyNextCond=0;
 	branchExecuted = 0;
-	previousBranchCond= branchCond;
+	local previousBranchCond= branchCond;
 	branchCond = 0;
 	build instruction;
 	if ( ! previousBranchCond) goto <skip>;
@@ -690,10 +691,10 @@ immediateDest: is branchImmDest { export *:$(ADDRSIZE) branchImmDest; }
 
 # branchType = 0, unconditional immediate branch
 :^instruction is phase=0 & branchEnable=1 & nullifyEnable=1 & branchType=0 & branchCouldBeNullified=1 & instruction & immediateDest [ phase=1; ] {
-	nullify = nullifyCond;
+	local nullify = nullifyCond;
 	nullifyCond = 0;
 	nullifyNextCond = 0;
-	previousBranchExecuted = branchExecuted;
+	local previousBranchExecuted = branchExecuted;
 	branchExecuted = 0;
 	if (nullify) goto <skip>;
 	build instruction;
@@ -704,7 +705,7 @@ immediateDest: is branchImmDest { export *:$(ADDRSIZE) branchImmDest; }
 
 # branchType = 0, unconditional immediate branch
 :^instruction is phase=0 & branchEnable=1 & nullifyEnable=1 & branchType=0 & branchCouldBeNullified=0 & instruction & immediateDest [ phase=1; ] {
-	nullify = nullifyCond;
+	local nullify = nullifyCond;
 	nullifyCond = 0;
 	nullifyNextCond = 0;
 	branchExecuted = 0;
@@ -716,10 +717,10 @@ immediateDest: is branchImmDest { export *:$(ADDRSIZE) branchImmDest; }
 
 # branchType = 1, unconditional immediate call
 :^instruction is phase=0 & branchEnable=1 & nullifyEnable=1 & branchType=1 & branchCouldBeNullified=1 & instruction & immediateDest [ phase=1; ] {
-	nullify = nullifyCond;
+	local nullify = nullifyCond;
 	nullifyCond = 0;
 	nullifyNextCond = 0;
-	previousBranchExecuted = branchExecuted;
+	local previousBranchExecuted = branchExecuted;
 	branchExecuted = 0;
 	if (nullify) goto <skip>;
 	build instruction;
@@ -732,7 +733,7 @@ immediateDest: is branchImmDest { export *:$(ADDRSIZE) branchImmDest; }
 
 # branchType = 1, unconditional immediate call
 :^instruction is phase=0 & branchEnable=1 & nullifyEnable=1 & branchType=1 & branchCouldBeNullified=0 & instruction & immediateDest [ phase=1; ] {
-	nullify = nullifyCond;
+	local nullify = nullifyCond;
 	nullifyCond = 0;
 	nullifyNextCond = 0;
 	branchExecuted = 0;
@@ -744,12 +745,12 @@ immediateDest: is branchImmDest { export *:$(ADDRSIZE) branchImmDest; }
 
 # branchType = 2, conditional immediate branch
 :^instruction is phase=0 & branchEnable=1 & nullifyEnable=1 & branchType=2 & branchCouldBeNullified=1 & instruction & immediateDest [ phase=1; ] {
-	nullify = nullifyCond;
+	local nullify = nullifyCond;
 	nullifyCond = 0;
 	nullifyNextCond=0;
-	previousBranchExecuted = branchExecuted;
+	local previousBranchExecuted = branchExecuted;
 	branchExecuted = 0;
-	previousBranchCond = branchCond;
+	local previousBranchCond = branchCond;
         branchCond = 0;
 	if (nullify) goto <skip>;
 	build instruction;
@@ -760,11 +761,11 @@ immediateDest: is branchImmDest { export *:$(ADDRSIZE) branchImmDest; }
 
 # branchType = 2, conditional immediate branch
 :^instruction is phase=0 & branchEnable=1 & nullifyEnable=1 & branchType=2 & branchCouldBeNullified=0 & instruction & immediateDest [ phase=1; ] {
-	nullify = nullifyCond;
+	local nullify = nullifyCond;
 	nullifyCond = 0;
 	nullifyNextCond=0;
 	branchExecuted = 0;
-	previousBranchCond = branchCond;
+	local previousBranchCond = branchCond;
 	branchCond = 0; # Need to reset branchCond
 	if (nullify) goto <skip>;
 	build instruction;
@@ -775,10 +776,10 @@ immediateDest: is branchImmDest { export *:$(ADDRSIZE) branchImmDest; }
 
 # branchType = 3, conditional immediate call
 :^instruction is phase=0 & branchEnable=1 & nullifyEnable=1 & branchType=3 & branchCouldBeNullified=1 & instruction & immediateDest [ phase=1; ] {
-	nullify = nullifyCond;
+	local nullify = nullifyCond;
 	nullifyNextCond=0;
-	previousBranchExecuted = branchExecuted;
-	previousBranchCond = branchCond;
+	local previousBranchExecuted = branchExecuted;
+	local previousBranchCond = branchCond;
         branchCond = 0;
 	branchExecuted = 0;
 	if (nullify) goto <wasnullified>;
@@ -792,9 +793,9 @@ immediateDest: is branchImmDest { export *:$(ADDRSIZE) branchImmDest; }
 
 # branchType = 3, conditional immediate call
 :^instruction is phase=0 & branchEnable=1 & nullifyEnable=1 & branchType=3 & branchCouldBeNullified=0 & instruction & immediateDest [ phase=1; ] {
-	nullify = nullifyCond;
+	local nullify = nullifyCond;
 	nullifyNextCond=0;
-	previousBranchCond = branchCond;
+	local previousBranchCond = branchCond;
         branchCond = 0;
 	branchExecuted = 0;
 	if (nullify) goto <wasnullified>;
@@ -808,10 +809,10 @@ immediateDest: is branchImmDest { export *:$(ADDRSIZE) branchImmDest; }
 
 # branchType = 4, unconditional indirect branch
 :^instruction is phase=0 & branchEnable=1 & nullifyEnable=1 & branchType=4 & branchCouldBeNullified=1 & instruction [ phase=1; ] {
-	nullify = nullifyCond;
+	local nullify = nullifyCond;
 	nullifyCond = 0;
 	nullifyNextCond = 0;
-	previousBranchExecuted = branchExecuted;
+	local previousBranchExecuted = branchExecuted;
 	branchExecuted = 0;
 	if (nullify) goto <wasnullified>;
 		build instruction;
@@ -824,7 +825,7 @@ immediateDest: is branchImmDest { export *:$(ADDRSIZE) branchImmDest; }
 
 # branchType = 4, unconditional indirect branch
 :^instruction is phase=0 & branchEnable=1 & nullifyEnable=1 & branchType=4 & branchCouldBeNullified=0 & instruction [ phase=1; ] {
-	nullify = nullifyCond;
+	local nullify = nullifyCond;
 	nullifyCond = 0;
 	nullifyNextCond = 0;
 	branchExecuted = 0;
@@ -836,10 +837,10 @@ immediateDest: is branchImmDest { export *:$(ADDRSIZE) branchImmDest; }
 
 # branchType = 5, unconditional indirect call
 :^instruction is phase=0 & branchEnable=1 & nullifyEnable=1 & branchType=5 & branchCouldBeNullified=1 & instruction [ phase=1; ] {
-	nullify = nullifyCond;
+	local nullify = nullifyCond;
 	nullifyCond = 0;
 	nullifyNextCond = 0;
-	previousBranchExecuted = branchExecuted;
+	local previousBranchExecuted = branchExecuted;
 	branchExecuted = 0;
 	if (nullify) goto <wasnullified>;
 		build instruction;
@@ -852,7 +853,7 @@ immediateDest: is branchImmDest { export *:$(ADDRSIZE) branchImmDest; }
 
 # branchType = 5, unconditional indirect call
 :^instruction is phase=0 & branchEnable=1 & nullifyEnable=1 & branchType=5 & branchCouldBeNullified=0 & instruction [ phase=1; ] {
-	nullify = nullifyCond;
+	local nullify = nullifyCond;
 	nullifyCond = 0;
 	nullifyNextCond = 0;
 	branchExecuted = 0;
@@ -864,12 +865,12 @@ immediateDest: is branchImmDest { export *:$(ADDRSIZE) branchImmDest; }
 
 # branchType = 6, conditional indirect branch
 :^instruction is phase=0 & branchEnable=1 & nullifyEnable=1 & branchType=6 & branchCouldBeNullified=1 & instruction [ phase=1; ] {
-	nullify = nullifyCond;
+	local nullify = nullifyCond;
 	nullifyCond = 0;
 	nullifyNextCond=0;
-	previousBranchExecuted = branchExecuted;
+	local previousBranchExecuted = branchExecuted;
 	branchExecuted = 0;
-	previousBranchCond = branchCond;
+	local previousBranchCond = branchCond;
         branchCond = 0;
 	if (nullify) goto <wasnullified>;
 		build instruction;
@@ -882,11 +883,11 @@ immediateDest: is branchImmDest { export *:$(ADDRSIZE) branchImmDest; }
 
 # branchType = 6, conditional indirect branch
 :^instruction is phase=0 & branchEnable=1 & nullifyEnable=1 & branchType=6 & branchCouldBeNullified=0 & instruction [ phase=1; ] {
-	nullify = nullifyCond;
+	local nullify = nullifyCond;
 	nullifyCond = 0;
 	nullifyNextCond=0;
 	branchExecuted = 0;
-	previousBranchCond = branchCond;
+	local previousBranchCond = branchCond;
         branchCond = 0;
 	if (nullify) goto <wasnullified>;
 		build instruction;
@@ -899,11 +900,11 @@ immediateDest: is branchImmDest { export *:$(ADDRSIZE) branchImmDest; }
 
 # branchType = 7, conditional indirect call
 :^instruction is phase=0 & branchEnable=1 & nullifyEnable=1 & branchType=7 & branchCouldBeNullified=1 & instruction [ phase=1; ] {
-	nullify = nullifyCond;
+	local nullify = nullifyCond;
 	nullifyNextCond=0;
-	previousBranchExecuted = branchExecuted;
+	local previousBranchExecuted = branchExecuted;
 	branchExecuted = 0;
-	previousBranchCond = branchCond;
+	local previousBranchCond = branchCond;
         branchCond = 0;
 	if (nullify) goto <wasnullified>;
 		build instruction;
@@ -916,10 +917,10 @@ immediateDest: is branchImmDest { export *:$(ADDRSIZE) branchImmDest; }
 
 # branchType = 7, conditional indirect call
 :^instruction is phase=0 & branchEnable=1 & nullifyEnable=1 & branchType=7 & branchCouldBeNullified=0 & instruction [ phase=1; ] {
-	nullify = nullifyCond;
+	local nullify = nullifyCond;
 	nullifyNextCond=0;
 	branchExecuted = 0;
-	previousBranchCond = branchCond;
+	local previousBranchCond = branchCond;
 	branchCond = 0;
 	if (nullify) goto <wasnullified>;
 		build instruction;
@@ -1271,10 +1272,10 @@ SRRB3bit: (SR3bit,RB)				is SR3bit & RB { }
 # this first one gets the value in the appropriate space register and returns it.
 # it is used by LDSID.
 SRVAL:	SR						is SR & RB & s=0 {
-								   selbits = (RB >> 30);
+								   local selbits = (RB >> 30);
 								   srreg:4 = &sr4 + 4 * selbits;
-								   space:4 = *[register] srreg;
-								   export space; 
+								   spc:4 = *[register] srreg;
+								   export spc; 
 }
 
 SRVAL: sr1						is sr1 & s=1  { export sr1; }
@@ -1284,10 +1285,10 @@ SRVAL: sr3						is sr3 & s=3  { export sr3; }
 # TODO This is broken until we decide on how to handle space registers and a 64 bit extended address space
 SPCBASE:		is SRVAL & RB {
 #								space:$(ADDRSIZE) = zext(SRVAL);
-								offset:$(ADDRSIZE) = zext(RB); # need to decide whether to remove the lower bits to hide privilege-- TODO & 0xFFFFFFFFFFFFFFFC;
+								off:$(ADDRSIZE) = zext(RB); # need to decide whether to remove the lower bits to hide privilege-- TODO & 0xFFFFFFFFFFFFFFFC;
 #								address:$(ADDRSIZE) = (space << 32) | offset;
 #								export address;
-								export offset; 
+								export off; 
 }				
 
 ###############################################
@@ -1384,25 +1385,25 @@ shiftCLen: shift			is im5 [ shift=32-im5; ] { amount:4 = shift; export amount; }
 
 #lse14: offset				is sim14 & bit0 [ offset = (-1 * bit0) * ( (sim14 >> 1) & 0x1FFF ); ] { temp:4 = offset; export temp; }
 #lse14: offset				is sim14 & bit0 [ offset = (-1 * 0x2000 * bit0) | ( (sim14 >> 1) & 0x1FFF ); ] { temp:4 = sext(offset:4); export temp; }
-lse14: offset				is im14less0 & bit0 [ offset = ((-1 * bit0) << 13) | im14less0; ] { temp:4 = sext(offset:4); export temp; }
+lse14: off				is im14less0 & bit0 [ off = ((-1 * bit0) << 13) | im14less0; ] { temp:4 = sext(off:4); export temp; }
 ####lse14: offset				is sim14 & bit0 [ offset = (0xFFFFFFFFFFFFE000 * bit0) | ( (sim14 >> 1) & 0x1FFF ); ] { temp:4 = offset; export temp; }
 
 #lse5: offset				is sim5 & bit0  [ offset = (-1 * 0x10 * bit0) | ( (sim5 >> 1) & 0xF ); ] { temp:1 = sext(offset:1); export temp; }
-lse5: offset				is im5less0 & bit0 [ offset = ((-1 * bit0) << 4) | im5less0; ] { temp:1 = sext(offset:1); export temp; }
+lse5: off				is im5less0 & bit0 [ off = ((-1 * bit0) << 4) | im5less0; ] { temp:1 = sext(off:1); export temp; }
 
 #highlse5: offset			is highIm5 & bit16 [ offset = (-1 * 0x10 * bit16) | ( (highIm5 >> 1) & 0xF ); ] { temp:1 = offset; export temp; }
-highlse5: offset			is highIm5less16 & bit16 [ offset = ((-1 * bit16) << 4) | highIm5less16; ] { temp:1 = offset; export temp; }
+highlse5: off			is highIm5less16 & bit16 [ off = ((-1 * bit16) << 4) | highIm5less16; ] { temp:1 = off; export temp; }
 
 #lse21: offset				is sim21 [ offset = ( ((sim21 & 0x1) * 0xFFFFFFFFFFF00000) | ((sim21 & 0xFFE) << 8) | ((sim21 & 0xC000) >> 7) | ((sim21 & 0x1F0000) >> 14) | ((sim21 & 0x3000) >> 12) ) << 11  ; ] { temp:$(REGSIZE) = offset; export temp; }
-lse21: offset				is im21less0 & bit0 & im21_1_12 & im21_12_14 & im21_14_16 & im21_16_21 [
-	offset = (
+lse21: off				is im21less0 & bit0 & im21_1_12 & im21_12_14 & im21_14_16 & im21_16_21 [
+	off = (
 		((-1 * bit0) << 20) |
 		(im21_1_12 << 9) |
 		(im21_14_16 << 7) |
 		(im21_16_21 << 2) |
 		im21_12_14
 	) << 11;
-] { temp:$(REGSIZE) = offset; export temp; }
+] { temp:$(REGSIZE) = off; export temp; }
 
 # Note for the im11 11-bit immediate, the sign is in bit 0, and the rest of the value is in bit 1 to 10.
 # Negative numbers are stored 2s complement, with bit0 set to 1.
@@ -1487,17 +1488,17 @@ RegUnitCond:		is c=4  { export 0:1; } # some digit carry -- TODO FIGURE OUT BCD
 RegUnitCond:		is c=6  { export 0:1; } # some byte carry -- TODO BCD
 RegUnitCond:		is c=7  { export 0:1; } # some halfword carry -- TODO BCD
 
-UnitCond:			is RegUnitCond & f=0 { export RegUnitCond; }
-UnitCond:			is RegUnitCond & f=1 { tmp:1 = ! RegUnitCond; export tmp; }
+UnitCond: ""			is RegUnitCond & fv=0 { export RegUnitCond; }
+UnitCond: ""			is RegUnitCond & fv=1 { tmp:1 = ! RegUnitCond; export tmp; }
 
-UnitCondNullify:	is c=0 & f=0 { }
+UnitCondNullify:	is c=0 & fv=0 { }
 UnitCondNullify:	is UnitCond [ nullifyEnable = 1; globalset(inst_next, nullifyEnable); ]
 {
 	nullifyNextCond = UnitCond;
 }
 
-UnitCondSym: RegUnitCondSym	is RegUnitCondSym & f=0 { }
-UnitCondSym: InvUnitCondSym	is InvUnitCondSym & f=1 { }
+UnitCondSym: RegUnitCondSym	is RegUnitCondSym & fv=0 { }
+UnitCondSym: InvUnitCondSym	is InvUnitCondSym & fv=1 { }
 
 #
 ##### The Add Conditions from table 5-4 on page 5-5
@@ -1511,17 +1512,17 @@ RegAddCond: 		is c = 5 & R1 & R2 { tmp:1 = (R1 + R2) == 0 ; export tmp; } # sum 
 RegAddCond: 		is c = 6 & R1 & R2 { tmp:1 = scarry(R1,R2); export tmp; } # signed sum overflows
 RegAddCond: 		is c = 7 & R1 & R2 { tmp:1 = ((R1+R2) & 0x1) == 0x1 ; export tmp; } # sum is odd
 
-AddCond:			is RegAddCond & f=0 { export RegAddCond; }
-AddCond:			is RegAddCond & f=1 { tmp:1 = ! RegAddCond; export tmp; }
+AddCond:			is RegAddCond & fv=0 { export RegAddCond; }
+AddCond:			is RegAddCond & fv=1 { tmp:1 = ! RegAddCond; export tmp; }
 
-AddCondNullify:	is c=0 & f=0 { }
+AddCondNullify:	is c=0 & fv=0 { }
 AddCondNullify:	is AddCond [ nullifyEnable=1; globalset(inst_next, nullifyEnable); ]
 {
 	nullifyNextCond = AddCond;
 }
 
-AddCondSym: RegAddCondSym	is RegAddCondSym & f=0 { }
-AddCondSym: InvAddCondSym	is InvAddCondSym & f=1 { }
+AddCondSym: RegAddCondSym	is RegAddCondSym & fv=0 { }
+AddCondSym: InvAddCondSym	is InvAddCondSym & fv=1 { }
 
 RegAddCondI: 		is c = 0 { export 0:1; } # never
 RegAddCondI: 		is c = 1 & highlse5 & R2 { val:$(REGSIZE) = sext(highlse5:1); tmp:1 = (val == -R2) ; export tmp; } # equal to negated
@@ -1571,10 +1572,10 @@ RegAddCondI11: is temp32 & c = 7 & lse11 & R2 {
 				val:8 = sext(temp32:2); tmp_R2:8 = sext(R2);
 				tmp:1 = ((val+tmp_R2) & 0x1) == 0x1 ; export tmp; } # sum is odd
 
-AddCondI11:		is RegAddCondI11 & f=0 { export RegAddCondI11; }
-AddCondI11:		is RegAddCondI11 & f=1 { temp:1 = ! RegAddCondI11; export temp; }
+AddCondI11:		is RegAddCondI11 & fv=0 { export RegAddCondI11; }
+AddCondI11:		is RegAddCondI11 & fv=1 { temp:1 = ! RegAddCondI11; export temp; }
 
-AddCondI11Nullify:	is c=0 & f=0 { }
+AddCondI11Nullify:	is c=0 & fv=0 { }
 AddCondI11Nullify:	is AddCondI11 [ nullifyEnable=1; globalset(inst_next, nullifyEnable); ]
 {
 	nullifyNextCond = AddCondI11;
@@ -1592,17 +1593,17 @@ RegCSCond: 		is c=5 & R1 & R2 { tmp:1 = (R1 <= R2) ; export tmp; } # unsigned le
 RegCSCond: 		is c=6 & R1 & R2 { tmp:1 = sborrow(R1,R2) ; export tmp; } # signed minus overflows (borrows)
 RegCSCond: 		is c=7 & R1 & R2 { tmp:1 = ((R1 - R2) & 0x1) == 1 ; export tmp; } # odd
 
-CSCond: 	is f=0 & RegCSCond { export RegCSCond; }
-CSCond: 	is f=1 & RegCSCond { tmp:1 = ! RegCSCond; export tmp; }
+CSCond: 	is fv=0 & RegCSCond { export RegCSCond; }
+CSCond: 	is fv=1 & RegCSCond { tmp:1 = ! RegCSCond; export tmp; }
 
-CSCondNullify:	is c=0 & f=0 { }
+CSCondNullify:	is c=0 & fv=0 { }
 CSCondNullify:	is CSCond [ nullifyEnable = 1; globalset(inst_next, nullifyEnable); ]
 {
 	nullifyNextCond = CSCond;
 }
 
-CSCondSym: RegCSCondSym	is RegCSCondSym & f=0 { }
-CSCondSym: InvCSCondSym	is InvCSCondSym & f=1 { }
+CSCondSym: RegCSCondSym	is RegCSCondSym & fv=0 { }
+CSCondSym: InvCSCondSym	is InvCSCondSym & fv=1 { }
 
 # The Compare or Subtract conditions compared with 5 bit immediates
 # This is used in the COMIB[TF] instructions. The inverted versions are never used.
@@ -1612,7 +1613,7 @@ RegCSCondI: 		is  c=2 & R2 & highlse5 { val:$(REGSIZE) = sext(highlse5); tmp:1 =
 RegCSCondI: 		is  c=3 & R2 & highlse5 { val:$(REGSIZE) = sext(highlse5); tmp:1 = (val s<= R2) ; export tmp; } # signed less than equal
 RegCSCondI: 		is  c=4 & R2 & highlse5 { val:$(REGSIZE) = sext(highlse5); tmp:1 = (val < R2) ; export tmp; } # unsigned less than 
 RegCSCondI: 		is  c=5 & R2 & highlse5 { val:$(REGSIZE) = sext(highlse5); tmp:1 = (val <= R2) ; export tmp; } # unsigned less than equal
-RegCSCondI: 		is  c=6 & R2 & highlse5 { val:$(REGSIZE) = sext(highlse5); diff = (val - R2); tmp:1 = (val s> 0 && R2 s> 0 && diff s< 0) || (val s< 0 && R2 s< 0 && diff s> 0)  ; export tmp; } # overflow
+RegCSCondI: 		is  c=6 & R2 & highlse5 { val:$(REGSIZE) = sext(highlse5); local diff = (val - R2); tmp:1 = (val s> 0 && R2 s> 0 && diff s< 0) || (val s< 0 && R2 s< 0 && diff s> 0)  ; export tmp; } # overflow
 RegCSCondI: 		is  c=7 & R2 & highlse5 { val:$(REGSIZE) = sext(highlse5); tmp:1 = ((val - R2) & 0x1) == 1 ; export tmp; } # odd
 
 # The Compare or Subtract conditions compared with 11 bit immediates. These are used with the SUBI[O] and COMICLR instructions. Both regular and inverted forms are used.
@@ -1622,13 +1623,13 @@ RegCSCondI11: 		is  c=2 & R2 & lse11 { val:$(REGSIZE) = sext(lse11); tmp:1 = (va
 RegCSCondI11: 		is  c=3 & R2 & lse11 { val:$(REGSIZE) = sext(lse11); tmp:1 = (val s<= R2) ; export tmp; } # signed less than equal
 RegCSCondI11: 		is  c=4 & R2 & lse11 { val:$(REGSIZE) = sext(lse11); tmp:1 = (val < R2) ; export tmp; } # unsigned less than 
 RegCSCondI11: 		is  c=5 & R2 & lse11 { val:$(REGSIZE) = sext(lse11); tmp:1 = (val <= R2) ; export tmp; } # unsigned less than equal
-RegCSCondI11: 		is  c=6 & R2 & lse11 { val:$(REGSIZE) = sext(lse11); diff = (val - R2); tmp:1 = (val s> 0 && R2 s> 0 && diff s< 0) || (val s< 0 && R2 s< 0 && diff s> 0)  ; export tmp; } # overflow
+RegCSCondI11: 		is  c=6 & R2 & lse11 { val:$(REGSIZE) = sext(lse11); local diff = (val - R2); tmp:1 = (val s> 0 && R2 s> 0 && diff s< 0) || (val s< 0 && R2 s< 0 && diff s> 0)  ; export tmp; } # overflow
 RegCSCondI11: 		is  c=7 & R2 & lse11 { val:$(REGSIZE) = sext(lse11); tmp:1 = ((val - R2) & 0x1) == 1 ; export tmp; } # odd
 
-CSCondI11:		is RegCSCondI11 & f=0 { export RegCSCondI11; }
-CSCondI11:		is RegCSCondI11 & f=1 { temp:1 = ! RegCSCondI11; export temp; }
+CSCondI11:		is RegCSCondI11 & fv=0 { export RegCSCondI11; }
+CSCondI11:		is RegCSCondI11 & fv=1 { temp:1 = ! RegCSCondI11; export temp; }
 
-CSCondI11Nullify:	is c=0 & f=0 { }
+CSCondI11Nullify:	is c=0 & fv=0 { }
 CSCondI11Nullify:	is CSCondI11 [ nullifyEnable = 1; globalset(inst_next, nullifyEnable); ]
 {
 	nullifyNextCond = CSCondI11;
@@ -1643,13 +1644,13 @@ RegLogicCond:		is c=2 & RT { tmp:1 = (RT & 0x80000000) != 0 ; export tmp; } # <,
 RegLogicCond:		is c=3 & RT { tmp:1 = ((RT & 0x80000000) != 0) || RT == 0 ; export tmp; } # <=, leftmost bit is 1 or all bits are zero
 RegLogicCond:		is c=7 & RT { tmp:1 = (RT & 0x1) == 0x1; export tmp; } # odd, rightmost bit is 1
 
-LogicCond:		is f=0 & RegLogicCond { tmp:1 = RegLogicCond; export tmp; }   # non-inverted cases
-LogicCond:		is f=1 & RegLogicCond { tmp:1 = ! RegLogicCond; export tmp; } # inverted cases
+LogicCond:		is fv=0 & RegLogicCond { tmp:1 = RegLogicCond; export tmp; }   # non-inverted cases
+LogicCond:		is fv=1 & RegLogicCond { tmp:1 = ! RegLogicCond; export tmp; } # inverted cases
 
-LogicCondSym: RegLogicCondSym	is RegLogicCondSym & f=0 { }
-LogicCondSym: InvLogicCondSym	is InvLogicCondSym & f=1 { }
+LogicCondSym: RegLogicCondSym	is RegLogicCondSym & fv=0 { }
+LogicCondSym: InvLogicCondSym	is InvLogicCondSym & fv=1 { }
 
-LogicCondNullify:	is c=0 & f=0 { }
+LogicCondNullify:	is c=0 & fv=0 { }
 LogicCondNullify:	is LogicCond [ nullifyEnable = 1; globalset(inst_next, nullifyEnable); ]
 {
 	nullifyNextCond = LogicCond;
@@ -1661,45 +1662,45 @@ LogicCondNullify:	is LogicCond [ nullifyEnable = 1; globalset(inst_next, nullify
 
 # Table 5-11 on page 5-22
 # The shifted form for byte doesn't shift, as byte addressing is single byte aligned
-indexedByteAccessCmplt: 					is u=0 & m=0 & RX & SPCBASE { offset:$(ADDRSIZE) = SPCBASE + sext(RX); export offset; } # none
-indexedByteAccessCmplt: ",M"				is u=0 & m=1 & RX & RB & SPCBASE { offset:$(ADDRSIZE) = SPCBASE; RB = RB + RX; export offset; } # M, modify, post inc by RX
-indexedByteAccessCmplt: ",S"				is u=1 & m=0 & RX & SPCBASE { offset:$(ADDRSIZE) = SPCBASE + sext(RX); export offset; } # S, shift left by 2
-indexedByteAccessCmplt: ",SM"				is u=1 & m=1 & RX & RB & SPCBASE { offset:$(ADDRSIZE) = SPCBASE; RB = RB + sext(RX); export offset; } # SM, shift and modify
+indexedByteAccessCmplt: 					is u=0 & m=0 & RX & SPCBASE { off:$(ADDRSIZE) = SPCBASE + sext(RX); export off; } # none
+indexedByteAccessCmplt: ",M"				is u=0 & m=1 & RX & RB & SPCBASE { off:$(ADDRSIZE) = SPCBASE; RB = RB + RX; export off; } # M, modify, post inc by RX
+indexedByteAccessCmplt: ",S"				is u=1 & m=0 & RX & SPCBASE { off:$(ADDRSIZE) = SPCBASE + sext(RX); export off; } # S, shift left by 2
+indexedByteAccessCmplt: ",SM"				is u=1 & m=1 & RX & RB & SPCBASE { off:$(ADDRSIZE) = SPCBASE; RB = RB + sext(RX); export off; } # SM, shift and modify
 
 # The shifted form for halfword shifts by 2 bytes, since that is the size of a halfword
-indexedHalfwordAccessCmplt: 					is u=0 & m=0 & RX & SPCBASE { offset:$(ADDRSIZE) = SPCBASE + sext(RX); export offset; } # none
-indexedHalfwordAccessCmplt: ",M"				is u=0 & m=1 & RX & RB & SPCBASE { offset:$(ADDRSIZE) = SPCBASE; RB = RB + RX; export offset; } # M, modify, post inc by RX
-indexedHalfwordAccessCmplt: ",S"				is u=1 & m=0 & RX & SPCBASE { offset:$(ADDRSIZE) = SPCBASE + sext((RX << 1)); export offset; } # S, shift left by 1
-indexedHalfwordAccessCmplt: ",SM"				is u=1 & m=1 & RX & RB & SPCBASE { offset:$(ADDRSIZE) = SPCBASE; RB = RB + sext(RX << 1); export offset; } # SM, shift and modify
+indexedHalfwordAccessCmplt: 					is u=0 & m=0 & RX & SPCBASE { off:$(ADDRSIZE) = SPCBASE + sext(RX); export off; } # none
+indexedHalfwordAccessCmplt: ",M"				is u=0 & m=1 & RX & RB & SPCBASE { off:$(ADDRSIZE) = SPCBASE; RB = RB + RX; export off; } # M, modify, post inc by RX
+indexedHalfwordAccessCmplt: ",S"				is u=1 & m=0 & RX & SPCBASE { off:$(ADDRSIZE) = SPCBASE + sext((RX << 1)); export off; } # S, shift left by 1
+indexedHalfwordAccessCmplt: ",SM"				is u=1 & m=1 & RX & RB & SPCBASE { off:$(ADDRSIZE) = SPCBASE; RB = RB + sext(RX << 1); export off; } # SM, shift and modify
 
 # The shifted form for words shifts by 2 (x4), since words are aligned on 4 and increment by 4
-indexedWordAccessCmplt: 					is u=0 & m=0 & RX & SPCBASE { offset:$(ADDRSIZE) = SPCBASE + sext(RX); export offset; } # none
-indexedWordAccessCmplt: ",M"				is u=0 & m=1 & RX & RB & SPCBASE { offset:$(ADDRSIZE) = SPCBASE; RB = RB + RX; export offset; } # M, modify, post inc by RX
-indexedWordAccessCmplt: ",S"				is u=1 & m=0 & RX & SPCBASE { offset:$(ADDRSIZE) = SPCBASE + sext((RX << 2)); export offset; } # S, shift left by 2
-indexedWordAccessCmplt: ",SM"				is u=1 & m=1 & RX & RB & SPCBASE { offset:$(ADDRSIZE) = SPCBASE; RB = RB + sext(RX << 2); export offset; } # SM, shift and modify
+indexedWordAccessCmplt: 					is u=0 & m=0 & RX & SPCBASE { off:$(ADDRSIZE) = SPCBASE + sext(RX); export off; } # none
+indexedWordAccessCmplt: ",M"				is u=0 & m=1 & RX & RB & SPCBASE { off:$(ADDRSIZE) = SPCBASE; RB = RB + RX; export off; } # M, modify, post inc by RX
+indexedWordAccessCmplt: ",S"				is u=1 & m=0 & RX & SPCBASE { off:$(ADDRSIZE) = SPCBASE + sext((RX << 2)); export off; } # S, shift left by 2
+indexedWordAccessCmplt: ",SM"				is u=1 & m=1 & RX & RB & SPCBASE { off:$(ADDRSIZE) = SPCBASE; RB = RB + sext(RX << 2); export off; } # SM, shift and modify
 
 # same as above, but shifts by 3 bits. Used for the LDCWX instruction
-indexedDoublewordAccessCmplt: 					is u=0 & m=0 & RX & SPCBASE { offset:$(ADDRSIZE) = SPCBASE + sext(RX); export offset; } # none
-indexedDoublewordAccessCmplt: ",M"				is u=0 & m=1 & RX & RB & SPCBASE { offset:$(ADDRSIZE) = SPCBASE; RB = RB + RX; export offset; } # M, modify, post inc by RX
-indexedDoublewordAccessCmplt: ",S"				is u=1 & m=0 & RX & SPCBASE { offset:$(ADDRSIZE) = SPCBASE + sext((RX << 3)); export offset; } # S, shift left by 3 NOTE YES THIS IS 3
-indexedDoublewordAccessCmplt: ",SM"			is u=1 & m=1 & RX & RB & SPCBASE { offset:$(ADDRSIZE) = SPCBASE; RB = RB + sext(RX << 3); export offset; } # SM, shift and modify
+indexedDoublewordAccessCmplt: 					is u=0 & m=0 & RX & SPCBASE { off:$(ADDRSIZE) = SPCBASE + sext(RX); export off; } # none
+indexedDoublewordAccessCmplt: ",M"				is u=0 & m=1 & RX & RB & SPCBASE { off:$(ADDRSIZE) = SPCBASE; RB = RB + RX; export off; } # M, modify, post inc by RX
+indexedDoublewordAccessCmplt: ",S"				is u=1 & m=0 & RX & SPCBASE { off:$(ADDRSIZE) = SPCBASE + sext((RX << 3)); export off; } # S, shift left by 3 NOTE YES THIS IS 3
+indexedDoublewordAccessCmplt: ",SM"			is u=1 & m=1 & RX & RB & SPCBASE { off:$(ADDRSIZE) = SPCBASE; RB = RB + sext(RX << 3); export off; } # SM, shift and modify
 
 # Table 5-12 on Page 5-24
 # these are for loads, e.g.  ldws
-shortDispCmplt: 						is m=0 & highlse5 & SPCBASE { offset:$(ADDRSIZE) = SPCBASE + sext(highlse5); export offset; } # no modification
-shortDispCmplt: ",MA"					is u=0 & m=1 & RB & RX & SPCBASE & highlse5 { offset:$(ADDRSIZE) = SPCBASE; RB = RB + sext(highlse5); export offset; } # modify after
-shortDispCmplt: ",MB"					is u=1 & m=1 & RB & RX & SPCBASE & highlse5 { lse = sext(highlse5); offset:$(ADDRSIZE) = SPCBASE + sext(lse); RB = RB + lse; export offset; } # modify before
+shortDispCmplt: 						is m=0 & highlse5 & SPCBASE { off:$(ADDRSIZE) = SPCBASE + sext(highlse5); export off; } # no modification
+shortDispCmplt: ",MA"					is u=0 & m=1 & RB & RX & SPCBASE & highlse5 { off:$(ADDRSIZE) = SPCBASE; RB = RB + sext(highlse5); export off; } # modify after
+shortDispCmplt: ",MB"					is u=1 & m=1 & RB & RX & SPCBASE & highlse5 { local lse = sext(highlse5); off:$(ADDRSIZE) = SPCBASE + sext(lse); RB = RB + lse; export off; } # modify before
 
 # short displacement for stores, e.g. stws
-storeShortDispCmplt: 						is m=0 & lse5 & SPCBASE { offset:$(ADDRSIZE) = SPCBASE + sext(lse5); export offset; } # no modification
-storeShortDispCmplt: ",MA"					is u=0 & m=1 & RB & RX & SPCBASE & lse5 { offset:$(ADDRSIZE) = SPCBASE; RB = RB + sext(lse5); export offset; } # modify after
-storeShortDispCmplt: ",MB"					is u=1 & m=1 & RB & RX & SPCBASE & lse5 { lse = sext(lse5); offset:$(ADDRSIZE) = SPCBASE + sext(lse); RB = RB + lse; export offset; } # modify before
+storeShortDispCmplt: 						is m=0 & lse5 & SPCBASE { off:$(ADDRSIZE) = SPCBASE + sext(lse5); export off; } # no modification
+storeShortDispCmplt: ",MA"					is u=0 & m=1 & RB & RX & SPCBASE & lse5 { off:$(ADDRSIZE) = SPCBASE; RB = RB + sext(lse5); export off; } # modify after
+storeShortDispCmplt: ",MB"					is u=1 & m=1 & RB & RX & SPCBASE & lse5 { local lse = sext(lse5); off:$(ADDRSIZE) = SPCBASE + sext(lse); RB = RB + lse; export off; } # modify before
 
 # Table 5-13 on page 5-26
-storeBytesShortCmplt: 					is u=0 & m=0 & SPCBASE & lse5 { offset:$(ADDRSIZE) = SPCBASE + sext(lse5); export offset; } # none / beginning, don't modify base register
-storeBytesShortCmplt: ",BM"				is u=0 & m=1 & SPCBASE & RR & lse5  { offset:$(ADDRSIZE) = SPCBASE + sext(lse5); RR = (RR + sext(lse5)) & 0xFFFFFFFC; export offset; } # beginning, modify base register
-storeBytesShortCmplt: ",E"				is u=1 & m=0 & SPCBASE & lse5 { offset:$(ADDRSIZE) = SPCBASE + sext(lse5); export offset; } # ending, don't modify
-storeBytesShortCmplt: ",EM"				is u=1 & m=1 & SPCBASE & RR & lse5 { offset:$(ADDRSIZE) = SPCBASE + sext(lse5); RR = (RR + sext(lse5)) & 0xFFFFFFFC; export offset; } # ending, modify
+storeBytesShortCmplt: 					is u=0 & m=0 & SPCBASE & lse5 { off:$(ADDRSIZE) = SPCBASE + sext(lse5); export off; } # none / beginning, don't modify base register
+storeBytesShortCmplt: ",BM"				is u=0 & m=1 & SPCBASE & RR & lse5  { off:$(ADDRSIZE) = SPCBASE + sext(lse5); RR = (RR + sext(lse5)) & 0xFFFFFFFC; export off; } # beginning, modify base register
+storeBytesShortCmplt: ",E"				is u=1 & m=0 & SPCBASE & lse5 { off:$(ADDRSIZE) = SPCBASE + sext(lse5); export off; } # ending, don't modify
+storeBytesShortCmplt: ",EM"				is u=1 & m=1 & SPCBASE & RR & lse5 { off:$(ADDRSIZE) = SPCBASE + sext(lse5); RR = (RR + sext(lse5)) & 0xFFFFFFFC; export off; } # ending, modify
 
 # u fixed at 0, Table 5-11 on page 5-22, for LPA and related system level opcodes
 sysCmplt: 							is m=0 { }

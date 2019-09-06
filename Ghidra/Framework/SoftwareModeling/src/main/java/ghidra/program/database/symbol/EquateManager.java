@@ -197,10 +197,10 @@ public class EquateManager implements EquateTable, ErrorHandler, ManagerDB {
 			return;
 		}
 
-		if (program.getDataManager().findDataTypeForID(enoom.getUniversalID()) == null) {
+		if (program.getDataTypeManager().findDataTypeForID(enoom.getUniversalID()) == null) {
 			int transactionID = program.startTransaction("Set Equate Dialog");
 			try {
-				enoom = (Enum) program.getDataManager().addDataType(enoom, null);
+				enoom = (Enum) program.getDataTypeManager().addDataType(enoom, null);
 			}
 			finally {
 				program.endTransaction(transactionID, true);

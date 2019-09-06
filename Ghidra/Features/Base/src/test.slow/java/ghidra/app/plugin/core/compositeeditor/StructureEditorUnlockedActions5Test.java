@@ -29,6 +29,7 @@ import org.junit.Test;
 import docking.widgets.dialogs.NumberInputDialog;
 import ghidra.program.model.data.*;
 import ghidra.util.exception.DuplicateNameException;
+import ghidra.util.exception.UsrException;
 
 public class StructureEditorUnlockedActions5Test
 		extends AbstractStructureEditorUnlockedActionsTest {
@@ -49,8 +50,14 @@ public class StructureEditorUnlockedActions5Test
 	@Test
 	public void testApplyNameChange() throws Exception {
 		init(complexStructure, pgmTestCat);
-
-		model.setName("FooBarStructure");
+		runSwing(() -> {
+			try {
+				model.setName("FooBarStructure");
+			}
+			catch (UsrException e) {
+				failWithException("Unexpected error", e);
+			}
+		});
 		DataType viewCopy = model.viewComposite.clone(null);
 
 		assertEquals("FooBarStructure", model.getCompositeName());

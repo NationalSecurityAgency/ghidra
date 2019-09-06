@@ -15,7 +15,7 @@
  */
 package ghidra.test;
 
-import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -32,7 +32,7 @@ import ghidra.framework.cmd.Command;
 import ghidra.framework.model.UndoableDomainObject;
 import ghidra.framework.plugintool.Plugin;
 import ghidra.framework.plugintool.PluginTool;
-import ghidra.generic.function.*;
+import ghidra.framework.plugintool.mgr.ServiceManager;
 import ghidra.program.database.ProgramBuilder;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.model.address.*;
@@ -47,6 +47,7 @@ import ghidra.util.exception.AssertException;
 import ghidra.util.exception.RollbackException;
 import junit.framework.AssertionFailedError;
 import utility.application.ApplicationLayout;
+import utility.function.*;
 
 public abstract class AbstractGhidraHeadlessIntegrationTest extends AbstractDockingTest {
 
@@ -55,7 +56,7 @@ public abstract class AbstractGhidraHeadlessIntegrationTest extends AbstractDock
 	public static final String PROJECT_NAME = createProjectName();
 
 	private static String createProjectName() {
-		File repoDirectory = TestApplicationUtils.getRepoContainerDirectory();
+		File repoDirectory = TestApplicationUtils.getInstallationDirectory();
 		return repoDirectory.getName() + PROJECT_NAME_SUFFIX;
 	}
 
@@ -525,28 +526,35 @@ public abstract class AbstractGhidraHeadlessIntegrationTest extends AbstractDock
 
 	/**
 	 * Replaces the given implementations of the provided service class with the given class.
-	 *
+	 * 
+	 * @param tool the tool whose services to update (optional)
 	 * @param service the service to override
 	 * @param replacement the new version of the service
+	 * @param <T> the service type
 	 */
 	@SuppressWarnings("unchecked")
-	public static <T> void replaceService(Class<? extends T> service,
-			Class<? extends T> replacement) {
+	public static <T> void replaceService(PluginTool tool, Class<? extends T> service,
+			T replacement) {
 
-		List<Class<?>> extentions =
-			(List<Class<?>>) getInstanceField("extensionPoints", ClassSearcher.class);
-		HashSet<Class<?>> set = new HashSet<>(extentions);
+		ServiceManager serviceManager = (ServiceManager) getInstanceField("serviceMgr", tool);
+
+		Set<Class<?>> extentions =
+			(Set<Class<?>>) getInstanceField("extensionPoints", ClassSearcher.class);
+		Set<Class<?>> set = new HashSet<>(extentions);
 		Iterator<Class<?>> iterator = set.iterator();
 		while (iterator.hasNext()) {
 			Class<?> c = iterator.next();
 			if (service.isAssignableFrom(c)) {
 				iterator.remove();
+				T instance = tool.getService(service);
+				serviceManager.removeService(service, instance);
 			}
 		}
 
-		set.add(replacement);
+		set.add(replacement.getClass());
+		serviceManager.addService(service, replacement);
 
-		List<Class<?>> newExtensionPoints = new ArrayList<>(set);
+		Set<Class<?>> newExtensionPoints = new HashSet<>(set);
 		setInstanceField("extensionPoints", ClassSearcher.class, newExtensionPoints);
 	}
 

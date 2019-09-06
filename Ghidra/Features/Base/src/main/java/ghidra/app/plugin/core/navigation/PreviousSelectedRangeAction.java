@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +20,6 @@ import ghidra.app.nav.PreviousRangeAction;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.util.HelpTopics;
 import ghidra.framework.plugintool.PluginTool;
-import ghidra.framework.plugintool.util.ToolConstants;
 import ghidra.program.util.ProgramSelection;
 import ghidra.util.HelpLocation;
 
@@ -32,6 +30,7 @@ import javax.swing.ImageIcon;
 
 import resources.ResourceManager;
 import docking.action.*;
+import docking.tool.ToolConstants;
 
 public class PreviousSelectedRangeAction extends PreviousRangeAction {
 

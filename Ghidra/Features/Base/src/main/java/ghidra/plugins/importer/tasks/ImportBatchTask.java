@@ -28,6 +28,7 @@ import ghidra.app.util.importer.MessageLog;
 import ghidra.app.util.opinion.LoadSpec;
 import ghidra.formats.gfilesystem.*;
 import ghidra.framework.model.*;
+import ghidra.framework.store.local.LocalFileSystem;
 import ghidra.plugin.importer.ImporterUtilities;
 import ghidra.plugin.importer.ProgramMappingService;
 import ghidra.plugins.importer.batch.*;
@@ -63,14 +64,13 @@ public class ImportBatchTask extends Task {
 	 * instance.
 	 * <p>
 	 * @param batchInfo {@link BatchInfo} state object
-	 * @param destFolder {@link DomainFolder} where to place imported files.
-	 * @param programManager {@link ProgramManager} to use when opening newly imported files, null ok.
-	 * each file is imported, null ok.
+	 * @param destFolder {@link DomainFolder} where to place imported files
+	 * @param programManager {@link ProgramManager} to use when opening newly imported files, null ok
 	 * @param stripLeading boolean true if each import source's leading path should be omitted
 	 * when creating the destination project folder path.
 	 * @param stripAllContainerPath boolean true if each imported file's parent container
 	 * source path should be completely omitted when creating the destination project folder path.
-	 * (the imported file's path within its container is still used).
+	 * (the imported file's path within its container is still used)
 	 */
 	public ImportBatchTask(BatchInfo batchInfo, DomainFolder destFolder,
 			ProgramManager programManager, boolean stripLeading, boolean stripAllContainerPath) {
@@ -145,10 +145,10 @@ public class ImportBatchTask extends Task {
 			Object consumer = new Object();
 			try {
 				MessageLog messageLog = new MessageLog();
-				List<DomainObject> importedObjects =
-					loadSpec.getLoader().load(byteProvider, destInfo.second, destInfo.first,
-						loadSpec, getOptionsFor(batchLoadConfig, loadSpec, byteProvider),
-						messageLog, consumer, monitor);
+				List<DomainObject> importedObjects = loadSpec.getLoader().load(byteProvider,
+					fixupProjectFilename(destInfo.second), destInfo.first, loadSpec,
+					getOptionsFor(batchLoadConfig, loadSpec, byteProvider), messageLog, consumer,
+					monitor);
 
 				// TODO: accumulate batch results
 				if (importedObjects != null) {
@@ -177,6 +177,16 @@ public class ImportBatchTask extends Task {
 		}
 	}
 
+	private String fixupProjectFilename(String filename) {
+		// replaces any invalid characters with underscores
+		StringBuilder sb = new StringBuilder();
+		for (int i = 0; i < filename.length(); i++) {
+			char ch = filename.charAt(i);
+			sb.append(LocalFileSystem.isValidNameCharacter(ch) ? ch : '_');
+		}
+		return sb.toString();
+	}
+
 	private void releaseAll(List<DomainObject> importedObjects, Object consumer) {
 		for (DomainObject obj : importedObjects) {
 			if (obj.isUsedBy(consumer)) {
@@ -199,8 +209,9 @@ public class ImportBatchTask extends Task {
 				ImporterUtilities.setProgramProperties(program, appInfo.getFSRL(), monitor);
 
 				if (programManager != null && totalObjsImported < MAX_PROGRAMS_TO_OPEN) {
-					programManager.openProgram(program, totalObjsImported == 0
-							? ProgramManager.OPEN_CURRENT : ProgramManager.OPEN_VISIBLE);
+					programManager.openProgram(program,
+						totalObjsImported == 0 ? ProgramManager.OPEN_CURRENT
+								: ProgramManager.OPEN_VISIBLE);
 				}
 
 				ProgramMappingService.createAssociation(appInfo.getFSRL(), program);
@@ -238,7 +249,8 @@ public class ImportBatchTask extends Task {
 		int leadEnd = Math.min(filename, userSrcPath.length());
 		String leading = (leadStart < filename) ? fullPath.substring(leadStart, leadEnd) : "";
 		String containerPath = container < filename && !stripInteriorContainerPath
-				? fullPath.substring(container, filename) : "";
+				? fullPath.substring(container, filename)
+				: "";
 		String filenameStr = fullPath.substring(filename);
 		String result = FSUtilities.appendPath(leading, containerPath, filenameStr);
 		return result;

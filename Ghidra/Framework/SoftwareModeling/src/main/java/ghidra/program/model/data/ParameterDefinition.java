@@ -15,8 +15,8 @@
  */
 package ghidra.program.model.data;
 
+import ghidra.program.model.listing.Parameter;
 import ghidra.program.model.listing.Variable;
-import ghidra.util.exception.InvalidInputException;
 
 /**
  * <code>ParameterDefinition</code> specifies a parameter which can be
@@ -25,7 +25,9 @@ import ghidra.util.exception.InvalidInputException;
 public interface ParameterDefinition extends Comparable<ParameterDefinition> {
 
 	/**
-	 * Returns the ordinal (index) of this parameter within the function signature.
+	 * Get the parameter ordinal
+	 * 
+	 * @return the ordinal (index) of this parameter within the function signature.
 	 */
 	int getOrdinal();
 
@@ -37,11 +39,11 @@ public interface ParameterDefinition extends Comparable<ParameterDefinition> {
 	public DataType getDataType();
 
 	/**
-	 * Set the Data Type of this variable. The given dataType must have a fixed length.
-	 * @param type the data type
-	 * @throws InvalidInputException if data type is not a fixed length or will not fit.
+	 * Set the Data Type of this variable.
+	 * @param type dataType the fixed-length datatype of the parameter
+	 * @throws IllegalArgumentException if invalid parameter datatype specified
 	 */
-	public void setDataType(DataType type) throws InvalidInputException;
+	public void setDataType(DataType type) throws IllegalArgumentException;
 
 	/**
 	 * Get the Name of this variable.
@@ -77,16 +79,22 @@ public interface ParameterDefinition extends Comparable<ParameterDefinition> {
 	public void setComment(String comment);
 
 	/**
-	 * Returns true if the specified variable
-	 * represents the same parameter by ordinal
-	 * and dataType
+	 * Determine if a variable corresponds to a parameter which is equivalent to 
+	 * this parameter definition by both ordinal and datatype.  Name is not considered
+	 * relevant. 
+	 * @param variable variable to be compared with this parameter definition.
+	 * @return true if the specified variable represents the same parameter by ordinal
+	 * and dataType.  False will always be returned if specified variable is
+	 * not a {@link Parameter}.
 	 */
 	public boolean isEquivalent(Variable variable);
 
 	/**
-	 * Returns true if the specified parameter definition
-	 * represents the same parameter by ordinal
-	 * and dataType
+	 * Determine if parm is equivalent to this parameter definition by both ordinal 
+	 * and datatype.  Name is not considered relevant. 
+	 * @param parm parameter definition to be compared with this parameter definition.
+	 * @return true if the specified parameter definition represents the same parameter 
+	 * by ordinal and dataType.
 	 */
 	public boolean isEquivalent(ParameterDefinition parm);
 }

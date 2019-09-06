@@ -17,7 +17,7 @@ package ghidra.graph.viewer.shape;
 
 import java.awt.Shape;
 import java.awt.geom.*;
-import java.util.*;
+import java.util.List;
 
 import edu.uci.ics.jung.visualization.decorators.ParallelEdgeShapeTransformer;
 import ghidra.graph.viewer.*;
@@ -26,6 +26,8 @@ import ghidra.util.SystemUtilities;
 
 /**
  * An edge shape that renders as a series of straight lines between articulation points.
+ * @param <V> the vertex type
+ * @param <E> the edge type
  */
 public class ArticulatedEdgeTransformer<V extends VisualVertex, E extends VisualEdge<V>>
 		extends ParallelEdgeShapeTransformer<V, E> {
@@ -75,38 +77,50 @@ public class ArticulatedEdgeTransformer<V extends VisualVertex, E extends Visual
 		final double originY = p1.getY();
 
 		int offset = getOverlapOffset(e);
-		GeneralPath generalPath = new GeneralPath();
-		generalPath.moveTo(0, 0);
+		GeneralPath path = new GeneralPath();
+		path.moveTo(0, 0);
 		for (Point2D pt : articulations) {
-			generalPath.lineTo((float) (pt.getX() - originX) + offset,
-				(float) (pt.getY() - originY) + offset);
+			float x = (float) (pt.getX() - originX) + offset;
+			float y = (float) (pt.getY() - originY) + offset;
+			path.lineTo(x, y);
+			path.moveTo(x, y);
 		}
 
-		generalPath.lineTo((float) (p2.getX() - originX), (float) (p2.getY() - originY));
+		float p2x = (float) (p2.getX() - originX);
+		float p2y = (float) (p2.getY() - originY);
+		path.lineTo(p2x, p2y);
+		path.moveTo(p2x, p2y);
+		path.closePath();
 
-		ArrayList<Point2D> reverse = new ArrayList<>(articulations);
-		Collections.reverse(reverse);
-		for (Point2D pt : reverse) {
-			generalPath.lineTo((float) (pt.getX() - originX) + offset,
-				(float) (pt.getY() - originY) + offset);
-		}
 		AffineTransform transform = new AffineTransform();
-
 		final double deltaY = p2.getY() - originY;
 		final double deltaX = p2.getX() - originX;
 		if (deltaX == 0 && deltaY == 0) {
 			// this implies the source and destination node are at the same location, which
 			// is possible if the user drags it there or during animations
-			return transform.createTransformedShape(generalPath);
+			return transform.createTransformedShape(path);
 		}
 
 		double theta = StrictMath.atan2(deltaY, deltaX);
 		transform.rotate(theta);
 		double scale = StrictMath.sqrt(deltaY * deltaY + deltaX * deltaX);
 		transform.scale(scale, 1.0f);
+
+		//
+		// TODO
+		// The current design and use of this transformer is a bit odd.   We currently have code
+		// to create the edge shape here and in the ArticulatedEdgeRenderer.  Ideally, this 
+		// class would be the only one that creates the edge shape.  Then, any clients of the
+		// edge transformer would have to take the shape and then transform it to the desired 
+		// space (the view or graph space).  The transformations could be done using the 
+		// GraphViewerUtils.
+		//
+
 		try {
+			// TODO it is not clear why this is using an inverse transform; why not just create
+			// the transform that we want?
 			AffineTransform inverse = transform.createInverse();
-			Shape transformedShape = inverse.createTransformedShape(generalPath);
+			Shape transformedShape = inverse.createTransformedShape(path);
 			return transformedShape;
 		}
 		catch (NoninvertibleTransformException e1) {

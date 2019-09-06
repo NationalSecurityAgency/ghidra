@@ -85,6 +85,13 @@ public class TestDummyGoToService implements GoToService {
 	}
 
 	@Override
+	public boolean goToExternalLocation(Navigatable navigatable, ExternalLocation externalLoc,
+			boolean checkNavigationOption) {
+		// stub
+		return false;
+	}
+
+	@Override
 	public boolean goToQuery(Address fromAddr, QueryData queryData, GoToServiceListener listener,
 			TaskMonitor monitor) {
 		// stub

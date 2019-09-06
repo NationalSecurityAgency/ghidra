@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import docking.action.MenuData;
+import docking.tool.ToolConstants;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.context.NavigatableActionContext;
 import ghidra.app.context.NavigatableContextAction;
@@ -28,7 +29,7 @@ import ghidra.app.services.GoToService;
 import ghidra.app.util.HelpTopics;
 import ghidra.framework.plugintool.PluginInfo;
 import ghidra.framework.plugintool.PluginTool;
-import ghidra.framework.plugintool.util.*;
+import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramSelection;
@@ -99,8 +100,7 @@ public class StringTablePlugin extends ProgramPlugin {
 	 */
 	@Override
 	public void dispose() {
-		ArrayList<StringTableProvider> list =
-			new ArrayList<>(transientProviders);
+		ArrayList<StringTableProvider> list = new ArrayList<>(transientProviders);
 
 		for (StringTableProvider stringTableProvider : list) {
 			stringTableProvider.closeComponent();
@@ -114,8 +114,7 @@ public class StringTablePlugin extends ProgramPlugin {
 		if (transientProviders.isEmpty()) {
 			return;
 		}
-		ArrayList<StringTableProvider> list =
-			new ArrayList<>(transientProviders);
+		ArrayList<StringTableProvider> list = new ArrayList<>(transientProviders);
 		for (StringTableProvider stringTableProvider : list) {
 			stringTableProvider.programClosed(program);
 		}

@@ -15,6 +15,8 @@
  */
 package ghidra.program.model.data;
 
+import java.util.*;
+
 import ghidra.docking.settings.Settings;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.mem.MemBuffer;
@@ -22,8 +24,6 @@ import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.util.Msg;
 import ghidra.util.classfinder.ClassTranslator;
 import ghidra.util.exception.DuplicateNameException;
-
-import java.util.*;
 
 public class DialogResourceDataType extends DynamicDataType {
 
@@ -67,20 +67,10 @@ public class DialogResourceDataType extends DynamicDataType {
 		return "Dialog";
 	}
 
-	//Dialog resource contains the following:
-	//   fixed length DLGTEMPLATE structure followed by the following three arrays and possibly a word and another array
-	//   variable length menu array for dialog box (word aligned) 0x0000=no menu in dialog, 0xFFFF = one additional element - the ordinal of the menu resource, else null term. unicode string
-	//   variable length class array for dialog box (word aligned) 0x0000=use predefined dialog box class, 0xFFFF = one additional element - the ordinal of predefined system window class, else null term. unicode string
-	//   variable length title array for dialog box (word aligned) 0x0000=no title, else null term. unicode string
-	//   if DS_SETFONT (0x40) is specified by the style member then these are followed by
-	//       word - font size
-	//       variable length font typeface array (word aligned)
-	//   Some number (defined by cedit value) of fixed length DLGITEMTEMPLATE structures (each must be on align 4 - one for each dialog box control item) each followed by the following three arrays - DWORD aligned
-	//   variable length class array for item (word aligned) 0xFFFF = one additional element - the ordinal of predefined system class, else  null term. unicode string
-	//				Ordinal values: 0x0080 Button, 0x0081 Edit, 0x0082 Static, 0x0083 List Box, 0x0084 Scroll Bar, 0x0085 Combo Box
-	//   variable length title''' array for item (word aligned) 0xFFFF = one additional element - the ordinal of resource, such as an icon, else  null term. unicode string
-	//   variable length data array for the item (word aligned) 0x0000 = no data, else first word is size including size word of the data array
-
+	//Dialog resource begins with either:
+	//   DLGTEMPLATE structure: https://docs.microsoft.com/en-us/windows/win32/api/winuser/ns-winuser-dlgtemplate
+	//   DLGTEMPLATEEX structure: https://docs.microsoft.com/en-us/windows/win32/dlgbox/dlgtemplateex
+	//Refer to those URL's for more information.
 	@Override
 	protected DataTypeComponent[] getAllComponents(MemBuffer mbIn) {
 		List<DataTypeComponent> comps = new ArrayList<>();
@@ -88,7 +78,12 @@ public class DialogResourceDataType extends DynamicDataType {
 		MemBuffer memBuffer = mbIn;
 
 		try {
-			tempOffset = addDlgTemplateStructure(memBuffer, comps, tempOffset);
+
+			// Determine if we are working with a DLGTEMPLATE or DLGTEMPLATEEX structure.
+			// The first 4 bytes will have specific values if it's a DLGTEMPLATEEX.
+			boolean ex = memBuffer.getShort(0) == 1 && memBuffer.getShort(2) == -1;
+
+			tempOffset = addDlgTemplateStructure(memBuffer, comps, tempOffset, ex);
 
 			tempOffset = addDialogMenuArray(memBuffer, comps, tempOffset);
 
@@ -103,14 +98,14 @@ public class DialogResourceDataType extends DynamicDataType {
 				tempOffset = addDialogFontSizeAndArray(memBuffer, comps, tempOffset);
 			}
 
-			//get cdit value at offset 8 of DLGTEMPLATE
-			//this determines how many DLGITEMTEMPLATE items their are
-			short numComponents = memBuffer.getShort(8);
+			//get cdit value at offset 8 of DLGTEMPLATE or offset 16 of DLGTEMPLATEEX
+			//this determines how many DLGITEMTEMPLATE(EX) items their are
+			short numComponents = memBuffer.getShort(ex ? 16 : 8);
 
 			//loop over DLGITEMTEMPLATES and add them
 			for (int i = 0; i < numComponents; i++) {
 
-				tempOffset = addDlgItemStructure(memBuffer, comps, tempOffset);
+				tempOffset = addDlgItemStructure(memBuffer, comps, tempOffset, ex);
 
 				tempOffset = addItemClassArray(memBuffer, comps, tempOffset);
 
@@ -127,13 +122,13 @@ public class DialogResourceDataType extends DynamicDataType {
 		return result;
 	}
 
-	//adds initial DLGITEMTEMPLATES structure
+	//adds initial DLGTEMPLATE(EX) structure
 	private int addDlgTemplateStructure(MemBuffer memBuffer, List<DataTypeComponent> comps,
-			int tempOffset) {
+			int tempOffset, boolean ex) {
 
 		tempOffset =
-			addComp(dlgTemplateStructure(), 18, "Dialog Template Structure",
-				memBuffer.getAddress(), comps, tempOffset);
+			addComp(ex ? dlgTemplateExStructure() : dlgTemplateStructure(), ex ? 26 : 18,
+				"Dialog Template Structure", memBuffer.getAddress(), comps, tempOffset);
 
 		return tempOffset;
 	}
@@ -217,10 +212,10 @@ public class DialogResourceDataType extends DynamicDataType {
 		return tempOffset;
 	}
 
-	//adds DLGITEMTEMPLATES structure - must start on 4 byte alignment
-	//the number of these is defined by the cdit value in the DLGTEMPLATE structure
+	//adds DLGITEMTEMPLATE(EX) structure - must start on 4 byte alignment
+	//the number of these is defined by the cdit/cDlgItems value in the DLGTEMPLATE/DLGTEMPLATEEX structure
 	private int addDlgItemStructure(MemBuffer memBuffer, List<DataTypeComponent> comps,
-			int tempOffset) {
+			int tempOffset, boolean ex) {
 
 		if ((memBuffer.getAddress().add(tempOffset).getOffset() % 4) != 0) {
 			tempOffset =
@@ -228,8 +223,8 @@ public class DialogResourceDataType extends DynamicDataType {
 					memBuffer.getAddress().add(tempOffset), comps, tempOffset);
 		}
 		tempOffset =
-			addComp(dlgItemTemplateStructure(), 18, "Dialog Item Structure",
-				memBuffer.getAddress().add(tempOffset), comps, tempOffset);
+			addComp(ex ? dlgItemTemplateExStructure() : dlgItemTemplateStructure(), ex ? 24 : 18,
+				"Dialog Item Structure", memBuffer.getAddress().add(tempOffset), comps, tempOffset);
 
 		return tempOffset;
 	}
@@ -289,6 +284,50 @@ public class DialogResourceDataType extends DynamicDataType {
 	}
 
 	//This is always the first structure in the dialog resource
+	private StructureDataType dlgTemplateExStructure() {
+		StructureDataType struct = new StructureDataType("DLGTEMPLATEEX", 0);
+
+		struct.add(WordDataType.dataType);
+		struct.add(WordDataType.dataType);
+		struct.add(DWordDataType.dataType);
+		struct.add(DWordDataType.dataType);
+		struct.add(DWordDataType.dataType);
+		struct.add(WordDataType.dataType);
+		struct.add(ShortDataType.dataType);
+		struct.add(ShortDataType.dataType);
+		struct.add(ShortDataType.dataType);
+		struct.add(ShortDataType.dataType);
+
+		try {
+			struct.getComponent(0).setFieldName("dlgVer");
+			struct.getComponent(1).setFieldName("signature");
+			struct.getComponent(2).setFieldName("helpId");
+			struct.getComponent(3).setFieldName("exStyle");
+			struct.getComponent(4).setFieldName("style");
+			struct.getComponent(5).setFieldName("cDlgItems");
+			struct.getComponent(6).setFieldName("x");
+			struct.getComponent(7).setFieldName("y");
+			struct.getComponent(8).setFieldName("cx");
+			struct.getComponent(9).setFieldName("cy");
+		}
+		catch (DuplicateNameException e) {
+			Msg.debug(this, "Unexpected exception building DLGTEMPLATEEX", e);
+		}
+		struct.getComponent(0).setComment("version (must be 1)");
+		struct.getComponent(1).setComment("signature (must be 0xffff)");
+		struct.getComponent(2).setComment("help context identifier");
+		struct.getComponent(3).setComment("extended styles for a window");
+		struct.getComponent(4).setComment("style of dialog box");
+		struct.getComponent(5).setComment("number of items in dialog box");
+		struct.getComponent(6).setComment("x-coordinate of upper-left corner of dialog");
+		struct.getComponent(7).setComment("y-coordinate of upper-left corner of dialog");
+		struct.getComponent(8).setComment("width of dialog box");
+		struct.getComponent(9).setComment("height of dialog box");
+
+		return struct;
+	}
+
+	//This is always the first structure in the dialog resource
 	private StructureDataType dlgTemplateStructure() {
 		StructureDataType struct = new StructureDataType("DLGTEMPLATE", 0);
 
@@ -319,6 +358,45 @@ public class DialogResourceDataType extends DynamicDataType {
 		struct.getComponent(4).setComment("y-coordinate of upper-left corner of dialog");
 		struct.getComponent(5).setComment("width of dialog box");
 		struct.getComponent(6).setComment("height of dialog box");
+
+		return struct;
+	}
+
+	//Each control item has one of these structures
+	private StructureDataType dlgItemTemplateExStructure() {
+		StructureDataType struct = new StructureDataType("DLGITEMTEMPLATEEX", 0);
+
+		try {
+			struct.add(DWordDataType.dataType);
+			struct.add(DWordDataType.dataType);
+			struct.add(DWordDataType.dataType);
+			struct.add(ShortDataType.dataType);
+			struct.add(ShortDataType.dataType);
+			struct.add(ShortDataType.dataType);
+			struct.add(ShortDataType.dataType);
+			struct.add(DWordDataType.dataType);
+
+			struct.getComponent(0).setFieldName("helpID");
+			struct.getComponent(1).setFieldName("exStyle");
+			struct.getComponent(2).setFieldName("style");
+			struct.getComponent(3).setFieldName("x");
+			struct.getComponent(4).setFieldName("y");
+			struct.getComponent(5).setFieldName("cx");
+			struct.getComponent(6).setFieldName("cy");
+			struct.getComponent(7).setFieldName("id");
+		}
+		catch (DuplicateNameException e) {
+			Msg.debug(this, "Unexpected exception building DLGITEMTEMPLATEEX", e);
+		}
+
+		struct.getComponent(0).setComment("help context identifier");
+		struct.getComponent(1).setComment("extended styles for a window");
+		struct.getComponent(2).setComment("style of control");
+		struct.getComponent(3).setComment("x-coordinate of upper-left corner of control");
+		struct.getComponent(4).setComment("y-coordinate of upper-left corner of control");
+		struct.getComponent(5).setComment("width of control");
+		struct.getComponent(6).setComment("height of control");
+		struct.getComponent(7).setComment("control identifier");
 
 		return struct;
 	}

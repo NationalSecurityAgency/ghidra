@@ -20,19 +20,25 @@ import static org.junit.Assert.*;
 import java.math.BigInteger;
 import java.util.*;
 
+import javax.swing.event.ChangeEvent;
+import javax.swing.table.TableCellEditor;
+
 import org.junit.*;
 
 import docking.ActionContext;
 import docking.action.DockingActionIf;
 import docking.action.MenuData;
+import docking.widgets.combobox.GComboBox;
 import docking.widgets.dialogs.StringChoices;
 import docking.widgets.table.AbstractSortedTableModel;
+import docking.widgets.table.GTable;
 import ghidra.app.LocationCallback;
 import ghidra.app.context.ListingActionContext;
 import ghidra.app.events.ProgramLocationPluginEvent;
 import ghidra.app.events.ProgramSelectionPluginEvent;
 import ghidra.app.plugin.core.clear.ClearCmd;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
+import ghidra.app.plugin.core.data.DataSettingsDialog.SettingsEditor;
 import ghidra.app.plugin.core.data.DataSettingsDialog.SettingsRowObject;
 import ghidra.app.plugin.core.navigation.NextPrevAddressPlugin;
 import ghidra.docking.settings.FormatSettingsDefinition;
@@ -134,6 +140,7 @@ public abstract class AbstractDataActionTest extends AbstractGhidraHeadedIntegra
 
 	@After
 	public void tearDown() {
+		closeAllWindows();
 		env.dispose();
 	}
 
@@ -165,7 +172,7 @@ public abstract class AbstractDataActionTest extends AbstractGhidraHeadedIntegra
 		builtInDataTypesManager.setFavorite(root.getDataType("word"), true);
 	}
 
-	protected void checkActions(List<DockingActionIf> actions, boolean enabled, String caseStr) {
+	protected void checkActions(Set<DockingActionIf> actions, boolean enabled, String caseStr) {
 		checkAction(actions, CREATE_STRUCTURE, enabled, caseStr);
 		checkAction(actions, EDIT_DATA_TYPE, enabled, caseStr);
 		checkAction(actions, CREATE_ARRAY, enabled, caseStr);
@@ -255,15 +262,20 @@ public abstract class AbstractDataActionTest extends AbstractGhidraHeadedIntegra
 			int settingsCol = model.findColumn("Settings");
 			int rowCnt = model.getRowCount();
 
-			for (int i = 0; i < rowCnt; i++) {
-				String name = (String) model.getValueAt(i, nameCol);
+			for (int row = 0; row < rowCnt; row++) {
+				String name = (String) model.getValueAt(row, nameCol);
 				int index = findSettingIndex(settingNames, name);
 				if (index != -1) {
-					Object v = model.getValueAt(i, settingsCol);
+					Object v = model.getValueAt(row, settingsCol);
 					if (v instanceof StringChoices) {
 						StringChoices choices = (StringChoices) v;
+
+						triggerEdit(dlg, row, settingsCol);
+						setComboValue(dlg, newValues[index]);
+						endEdit(dlg);
+
 						choices.setSelectedValue(newValues[index]);
-						model.setValueAt(choices, i, settingsCol);
+						model.setValueAt(choices, row, settingsCol);
 					}
 					else {
 						error = "Unsupported test setting: " + v.getClass();
@@ -281,6 +293,44 @@ public abstract class AbstractDataActionTest extends AbstractGhidraHeadedIntegra
 		pressButtonByText(dlg, "OK");
 
 		waitForSwing();
+	}
+
+	private void endEdit(DataSettingsDialog d) {
+		GTable table = d.getSettingsTable();
+		runSwing(() -> table.editingStopped(new ChangeEvent(table)));
+	}
+
+	private void setComboValue(DataSettingsDialog d, String string) {
+		GTable table = d.getSettingsTable();
+		TableCellEditor activeEditor = runSwing(() -> table.getCellEditor());
+		assertNotNull("Table should be editing, but is not", activeEditor);
+		assertTrue("Editor type is not correct", activeEditor instanceof SettingsEditor);
+
+		SettingsEditor settingsEditor = (SettingsEditor) activeEditor;
+		GComboBox<String> combo = settingsEditor.getComboBox();
+
+		int index = runSwing(() -> {
+			int n = combo.getItemCount();
+			for (int i = 0; i < n; i++) {
+				String item = combo.getItemAt(i);
+				if (item.equals(string)) {
+					return i;
+				}
+			}
+			return -1;
+		});
+
+		assertNotEquals("Combo does not contain item '" + string + "'", -1, index);
+
+		runSwing(() -> {
+			combo.setSelectedIndex(index);
+		});
+	}
+
+	private void triggerEdit(DataSettingsDialog d, int row, int col) {
+		GTable table = d.getSettingsTable();
+		boolean editStarted = runSwing(() -> table.editCellAt(row, col));
+		assertTrue("Unable to edit dialog table cell at " + row + ", " + col, editStarted);
 	}
 
 	protected int findSettingIndex(String[] settingNames, String name) {
@@ -949,7 +999,7 @@ public abstract class AbstractDataActionTest extends AbstractGhidraHeadedIntegra
 		}
 		String str = (new BigInteger(bytes)).toString(8).toUpperCase();
 		if (padded) {
-			int digits = 3 * byteCnt;
+			int digits = ((8 * byteCnt) + 2) / 3;
 			for (int i = str.length(); i < digits; i++) {
 				str = "0" + str;
 			}
@@ -1063,7 +1113,7 @@ public abstract class AbstractDataActionTest extends AbstractGhidraHeadedIntegra
 		ProgramSelection sel = getCurrentSelection();
 		boolean useSelection = (sel != null && !sel.isEmpty());
 
-		List<DockingActionIf> actions = tool.getDockingActionsByOwnerName(plugin.getName());
+		Set<DockingActionIf> actions = getActionsByOwner(tool, plugin.getName());
 
 		for (DockingActionIf element : actions) {
 			MenuData menuBarData = element.getMenuBarData();
@@ -1113,31 +1163,6 @@ public abstract class AbstractDataActionTest extends AbstractGhidraHeadedIntegra
 			}
 		}
 
-//		if (useSelection) {
-//
-//			checkAction(actions, CREATE_STRUCTURE, true, caseName);
-//			checkAction(actions, EDIT_STRUCTURE, false, caseName);
-//			checkAction(actions, CREATE_ARRAY, true, caseName);
-//			checkAction(actions, DEFAULT_DATA_SETTINGS, false, caseName);
-//			checkAction(actions, DATA_SETTINGS, false, caseName);
-//			checkAction(actions, CYCLE_FLOAT_DOUBLE, true, caseName);
-//			checkAction(actions, CYCLE_BYTE_WORD_DWORD_QWORD, true, caseName);
-//			checkAction(actions, CYCLE_CHAR_STRING_UNICODE, true, caseName);
-//			checkAction(actions, DEFINE_BYTE, true, caseName);
-//			checkAction(actions, DEFINE_WORD, true, caseName);
-//			checkAction(actions, DEFINE_DWORD, true, caseName);
-//			checkAction(actions, DEFINE_QWORD, true, caseName);
-//			checkAction(actions, DEFINE_FLOAT, true, caseName);
-//			checkAction(actions, DEFINE_DOUBLE, true, caseName);
-//			checkAction(actions, DEFINE_TERM_CSTRING, true, caseName);
-//			checkAction(actions, DEFINE_POINTER, true, caseName);
-//
-//			PluginAction recentlyUsedAction = getAction(RECENTLY_USED);
-//			if (recentlyUsedAction != null) {
-//				checkAction(recentlyUsedAction, false, caseName);
-//			}
-//			return;
-//		}
 		if (data != null) {
 
 			DataType dt = data.getDataType();
@@ -1184,10 +1209,10 @@ public abstract class AbstractDataActionTest extends AbstractGhidraHeadedIntegra
 
 	}
 
-	protected void checkOnUndefined(List<DockingActionIf> actions) {
+	protected void checkOnUndefined(Set<DockingActionIf> actions) {
 
 		if (actions == null) {
-			actions = tool.getDockingActionsByOwnerName(plugin.getName());
+			actions = getActionsByOwner(tool, plugin.getName());
 		}
 
 		Data data = getContextData();
@@ -1223,10 +1248,10 @@ public abstract class AbstractDataActionTest extends AbstractGhidraHeadedIntegra
 
 	}
 
-	protected void checkOnDefined(List<DockingActionIf> actions, Class<?> expectedDataType) {
+	protected void checkOnDefined(Set<DockingActionIf> actions, Class<?> expectedDataType) {
 
 		if (actions == null) {
-			actions = tool.getDockingActionsByOwnerName(plugin.getName());
+			actions = getActionsByOwner(tool, plugin.getName());
 		}
 
 		String dtName = expectedDataType.getName();
@@ -1287,10 +1312,10 @@ public abstract class AbstractDataActionTest extends AbstractGhidraHeadedIntegra
 		checkAction(actions, DEFINE_POINTER, true, caseName);
 	}
 
-	protected void checkOnArray(List<DockingActionIf> actions, DataType interiorDt, int arraySize) {
+	protected void checkOnArray(Set<DockingActionIf> actions, DataType interiorDt, int arraySize) {
 
 		if (actions == null) {
-			actions = tool.getDockingActionsByOwnerName(plugin.getName());
+			actions = getActionsByOwner(tool, plugin.getName());
 		}
 
 		Data d = getContextData();
@@ -1356,10 +1381,10 @@ public abstract class AbstractDataActionTest extends AbstractGhidraHeadedIntegra
 	 * @param actions
 	 * @param structSize structure size or -1 to disable size check
 	 */
-	protected void checkOnStructure(List<DockingActionIf> actions, int structSize) {
+	protected void checkOnStructure(Set<DockingActionIf> actions, int structSize) {
 
 		if (actions == null) {
-			actions = tool.getDockingActionsByOwnerName(plugin.getName());
+			actions = getActionsByOwner(tool, plugin.getName());
 		}
 
 		Data d = getContextData();
@@ -1400,7 +1425,7 @@ public abstract class AbstractDataActionTest extends AbstractGhidraHeadedIntegra
 	}
 
 	protected DockingActionIf getAction(String name) {
-		List<DockingActionIf> actions = tool.getDockingActionsByOwnerName(plugin.getName());
+		Set<DockingActionIf> actions = getActionsByOwner(tool, plugin.getName());
 		for (DockingActionIf element : actions) {
 			String actionName = element.getName();
 			int pos = actionName.indexOf(" (");
@@ -1439,7 +1464,7 @@ public abstract class AbstractDataActionTest extends AbstractGhidraHeadedIntegra
 
 	}
 
-	protected void checkAction(List<DockingActionIf> actions, String name, boolean isEnabled,
+	protected void checkAction(Set<DockingActionIf> actions, String name, boolean isEnabled,
 			String caseName) {
 		for (DockingActionIf element : actions) {
 			String actionName = element.getName();

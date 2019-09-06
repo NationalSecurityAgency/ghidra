@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,20 +30,23 @@ public class Integer5DataType extends AbstractIntegerDataType {
 		super("int5", true, dtm);
 	}
 
+	@Override
 	public String getDescription() {
 		return "Signed 5-Byte Integer";
 	}
 
+	@Override
 	public int getLength() {
 		return 5;
 	}
 
 	@Override
-	public DataType getOppositeSignednessDataType() {
-		return UnsignedInteger5DataType.dataType;
+	public UnsignedInteger5DataType getOppositeSignednessDataType() {
+		return UnsignedInteger5DataType.dataType.clone(getDataTypeManager());
 	}
 
-	public DataType clone(DataTypeManager dtm) {
+	@Override
+	public Integer5DataType clone(DataTypeManager dtm) {
 		if (dtm == getDataTypeManager()) {
 			return this;
 		}

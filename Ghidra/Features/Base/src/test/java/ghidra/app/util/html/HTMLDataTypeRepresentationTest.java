@@ -1407,11 +1407,11 @@ public class HTMLDataTypeRepresentationTest extends AbstractGenericTest {
 		String name = componentAtIndex.getFieldName();
 
 		if (optionalName != null) {
-			destinationComposite.insert(insertIndex, componentCopy, componentCopy.getLength(),
+			destinationComposite.insert(insertIndex, componentCopy, componentAtIndex.getLength(),
 				optionalName, null);
 		}
 		else {
-			destinationComposite.insert(insertIndex, componentCopy, componentCopy.getLength(),
+			destinationComposite.insert(insertIndex, componentCopy, componentAtIndex.getLength(),
 				name + " Copy", null);
 		}
 	}

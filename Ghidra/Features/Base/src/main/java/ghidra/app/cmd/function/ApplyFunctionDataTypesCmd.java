@@ -90,7 +90,7 @@ public class ApplyFunctionDataTypesCmd extends BackgroundCommand {
 		}
 		else {
 			getSymbols(symbolMap, symbolTable.getSymbols(addresses, SymbolType.FUNCTION, true));
-			getSymbols(symbolMap, symbolTable.getSymbols(addresses, SymbolType.CODE, true));
+			getSymbols(symbolMap, symbolTable.getSymbols(addresses, SymbolType.LABEL, true));
 		}
 		return symbolMap;
 	}
@@ -192,7 +192,7 @@ public class ApplyFunctionDataTypesCmd extends BackgroundCommand {
 	private void checkDoApplyFunctionDefinition(TaskMonitor monitor, String functionName,
 			FunctionDefinition fdef, Symbol sym) {
 
-		monitor.setMessage("Apply Function Signaure '" + functionName + "'");
+		monitor.setMessage("Apply Function Signature '" + functionName + "'");
 
 		// function
 		//    maybe change its signature

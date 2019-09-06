@@ -136,9 +136,8 @@ public class VersionControlScreenShots extends GhidraScreenShotGenerator {
 	@Test
 	public void testVersionHistory() throws Exception {
 
-		VersionHistoryDialog dialog = new VersionHistoryDialog();
 		DomainFile df = createDomainFile();
-		dialog.setDomainFile(df);
+		VersionHistoryDialog dialog = new VersionHistoryDialog(df);
 		runSwing(() -> tool.showDialog(dialog));
 
 		VersionHistoryDialog d = waitForDialogComponent(dialog.getClass());

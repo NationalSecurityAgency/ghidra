@@ -128,7 +128,7 @@ class SymbolTableXmlMgr {
 				continue;
 			}
 
-			if (symbolType != SymbolType.CODE && symbolType != SymbolType.FUNCTION) {
+			if (symbolType != SymbolType.LABEL && symbolType != SymbolType.FUNCTION) {
 				continue;
 			}
 

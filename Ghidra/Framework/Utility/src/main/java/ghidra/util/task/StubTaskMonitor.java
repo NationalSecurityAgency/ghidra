@@ -33,7 +33,11 @@ class StubTaskMonitor implements TaskMonitor {
 	@Override
 	public void setMessage(String message) {
 		// stub
+	}
 
+	@Override
+	public String getMessage() {
+		return null;
 	}
 
 	@Override
@@ -62,6 +66,11 @@ class StubTaskMonitor implements TaskMonitor {
 	@Override
 	public void setIndeterminate(boolean indeterminate) {
 		// stub
+	}
+
+	@Override
+	public boolean isIndeterminate() {
+		return false;
 	}
 
 	@Override

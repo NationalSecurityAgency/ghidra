@@ -52,6 +52,7 @@ public class StructureEditorUnlockedEnablementTest extends AbstractStructureEdit
 		runSwing(() -> {
 			installProvider(new StructureEditorProvider(plugin, structDt, false));
 			model = provider.getModel();
+			structureModel = (StructureEditorModel) model;
 //				model.setLocked(false);
 		});
 //		assertTrue(!model.isLocked());
@@ -80,11 +81,11 @@ public class StructureEditorUnlockedEnablementTest extends AbstractStructureEdit
 		assertEquals(model.getTypeName(), "Structure");
 
 		// Check enablement.
-		for (CompositeEditorAction action : actions) {
+		for (CompositeEditorTableAction action : actions) {
 			if ((action instanceof FavoritesAction) || (action instanceof CycleGroupAction) ||
 				(action instanceof EditFieldAction) || (action instanceof InsertUndefinedAction) ||
-				(action instanceof PointerAction) || (action instanceof HexNumbersAction) ||
-				(action instanceof ApplyAction)) {
+				(action instanceof AddBitFieldAction) || (action instanceof PointerAction) ||
+				(action instanceof HexNumbersAction) || (action instanceof ApplyAction)) {
 				checkEnablement(action, true);
 			}
 			else {
@@ -114,10 +115,11 @@ public class StructureEditorUnlockedEnablementTest extends AbstractStructureEdit
 		assertEquals(pgmBbCat.getCategoryPathName(), model.getOriginalCategoryPath().getPath());
 
 		// Check enablement on blank line selected.
-		for (CompositeEditorAction action : actions) {
+		for (CompositeEditorTableAction action : actions) {
 			if ((action instanceof FavoritesAction) || (action instanceof CycleGroupAction) ||
 				(action instanceof EditFieldAction) || (action instanceof InsertUndefinedAction) ||
-				(action instanceof PointerAction) || (action instanceof HexNumbersAction)) {
+				(action instanceof AddBitFieldAction) || (action instanceof PointerAction) ||
+				(action instanceof HexNumbersAction)) {
 				checkEnablement(action, true);
 			}
 			else {
@@ -141,10 +143,11 @@ public class StructureEditorUnlockedEnablementTest extends AbstractStructureEdit
 
 		// Check enablement on first component selected.
 		setSelection(new int[] { 0 });
-		for (CompositeEditorAction action : actions) {
+		for (CompositeEditorTableAction action : actions) {
 			if ((action instanceof EditFieldAction) ||
 				(action instanceof ShowComponentPathAction) ||
-				(action instanceof InsertUndefinedAction) || (action instanceof MoveDownAction) ||
+				(action instanceof InsertUndefinedAction) ||
+				(action instanceof AddBitFieldAction) || (action instanceof MoveDownAction) ||
 				(action instanceof ClearAction) || (action instanceof DuplicateAction) ||
 				(action instanceof DuplicateMultipleAction) || (action instanceof DeleteAction) ||
 				(action instanceof ArrayAction) || (action instanceof PointerAction) ||
@@ -180,10 +183,11 @@ public class StructureEditorUnlockedEnablementTest extends AbstractStructureEdit
 
 		// Check enablement on central component selected.
 		runSwing(() -> setSelection(new int[] { 1 }));
-		for (CompositeEditorAction action : actions) {
+		for (CompositeEditorTableAction action : actions) {
 			if ((action instanceof EditFieldAction) ||
 				(action instanceof ShowComponentPathAction) ||
-				(action instanceof InsertUndefinedAction) || (action instanceof MoveDownAction) ||
+				(action instanceof InsertUndefinedAction) ||
+				(action instanceof AddBitFieldAction) || (action instanceof MoveDownAction) ||
 				(action instanceof MoveUpAction) || (action instanceof ClearAction) ||
 				(action instanceof DeleteAction) || (action instanceof ArrayAction) ||
 				(action instanceof PointerAction) || (action instanceof HexNumbersAction) ||
@@ -218,10 +222,11 @@ public class StructureEditorUnlockedEnablementTest extends AbstractStructureEdit
 
 		// Check enablement on last component selected.
 		setSelection(new int[] { model.getNumComponents() - 1 });
-		for (CompositeEditorAction action : actions) {
+		for (CompositeEditorTableAction action : actions) {
 			if ((action instanceof EditFieldAction) ||
 				(action instanceof ShowComponentPathAction) ||
-				(action instanceof InsertUndefinedAction) || (action instanceof MoveUpAction) ||
+				(action instanceof InsertUndefinedAction) ||
+				(action instanceof AddBitFieldAction) || (action instanceof MoveUpAction) ||
 				(action instanceof ClearAction) || (action instanceof DuplicateAction) ||
 				(action instanceof DuplicateMultipleAction) || (action instanceof DeleteAction) ||
 				(action instanceof ArrayAction) || (action instanceof PointerAction) ||
@@ -261,10 +266,11 @@ public class StructureEditorUnlockedEnablementTest extends AbstractStructureEdit
 
 		// Check enablement on last component selected.
 		setSelection(new int[] { model.getNumComponents() });
-		for (CompositeEditorAction action : actions) {
+		for (CompositeEditorTableAction action : actions) {
 			if ((action instanceof FavoritesAction) || (action instanceof CycleGroupAction) ||
 				(action instanceof EditFieldAction) || (action instanceof InsertUndefinedAction) ||
-				(action instanceof PointerAction) || (action instanceof HexNumbersAction)) {
+				(action instanceof AddBitFieldAction) || (action instanceof PointerAction) ||
+				(action instanceof HexNumbersAction)) {
 				checkEnablement(action, true);
 			}
 			else {
@@ -274,36 +280,72 @@ public class StructureEditorUnlockedEnablementTest extends AbstractStructureEdit
 	}
 
 	@Test
-	public void testEditComponentEnablement() {
+	public void testEditComponentEnablement()
+			throws ArrayIndexOutOfBoundsException, InvalidDataTypeException {
 		init(complexStructure, pgmBbCat);
+
+		((Structure) structureModel.viewComposite).insertBitField(2, 1, 4, CharDataType.dataType, 2,
+			"bf1", null);
+
+		setSelection(new int[] { 2 });
+		assertEquals("char:2", getDataType(2).getDisplayName());
+		assertTrue(!editComponentAction.isEnabled());
+
+		setSelection(new int[] { 3 });
+		assertEquals("word", getDataType(3).getDisplayName());
+		assertTrue(!editComponentAction.isEnabled());
+
+		setSelection(new int[] { 5 });
+		assertEquals("simpleUnion", getDataType(5).getDisplayName());
+		assertTrue(editComponentAction.isEnabled());
+
+		setSelection(new int[] { 7 });
+		assertEquals("simpleStructure *", getDataType(7).getDisplayName());
+		assertTrue(editComponentAction.isEnabled());
+
+		setSelection(new int[] { 15 });
+		assertEquals("byte[7]", getDataType(15).getDisplayName());
+		assertTrue(!editComponentAction.isEnabled());
+
+		setSelection(new int[] { 20 });
+		assertEquals("simpleStructureTypedef", getDataType(20).getDisplayName());
+		assertTrue(editComponentAction.isEnabled());
+
+		setSelection(new int[] { 22 });
+		assertEquals("simpleStructure", getDataType(22).getDisplayName());
+		assertTrue(editComponentAction.isEnabled());
+
+		setSelection(new int[] { 24 });
+		assertEquals(24, model.getNumComponents());
+		assertTrue(!editComponentAction.isEnabled());
+	}
+
+	@Test
+	public void testEditBitfieldEnablement()
+			throws ArrayIndexOutOfBoundsException, InvalidDataTypeException {
+		init(complexStructure, pgmBbCat);
+
+		((Structure) structureModel.viewComposite).insertBitField(2, 1, 4, CharDataType.dataType, 2,
+			"bf1", null);
+
+		setSelection(new int[] { 2 });
+		assertEquals("char:2", getDataType(2).getDisplayName());
+		assertTrue(editBitFieldAction.isEnabled());
+
+		setSelection(new int[] { 3 });
+		assertEquals("word", getDataType(3).getDisplayName());
+		assertTrue(!editBitFieldAction.isEnabled());
+
+		structureModel.setAligned(true);
+
+		// Edit Bitfield action not enabled for Aligned mode
+		setSelection(new int[] { 1 });
+		assertEquals("char:2", getDataType(1).getDisplayName());
+		assertTrue(!editBitFieldAction.isEnabled());
 
 		setSelection(new int[] { 2 });
 		assertEquals("word", getDataType(2).getDisplayName());
-		assertTrue(!editComponentAction.isEnabled());
-
-		setSelection(new int[] { 4 });
-		assertEquals("simpleUnion", getDataType(4).getDisplayName());
-		assertTrue(editComponentAction.isEnabled());
-
-		setSelection(new int[] { 6 });
-		assertEquals("simpleStructure *", getDataType(6).getDisplayName());
-		assertTrue(editComponentAction.isEnabled());
-
-		setSelection(new int[] { 14 });
-		assertEquals("byte[7]", getDataType(14).getDisplayName());
-		assertTrue(!editComponentAction.isEnabled());
-
-		setSelection(new int[] { 19 });
-		assertEquals("simpleStructureTypedef", getDataType(19).getDisplayName());
-		assertTrue(editComponentAction.isEnabled());
-
-		setSelection(new int[] { 21 });
-		assertEquals("simpleStructure", getDataType(21).getDisplayName());
-		assertTrue(editComponentAction.isEnabled());
-
-		setSelection(new int[] { 23 });
-		assertEquals(23, model.getNumComponents());
-		assertTrue(!editComponentAction.isEnabled());
+		assertTrue(!editBitFieldAction.isEnabled());
 	}
 
 	@Test

@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +27,8 @@ import javax.swing.*;
 import javax.swing.event.*;
 import javax.swing.text.*;
 
-import docking.util.KeyBindingUtils;
+import docking.actions.KeyBindingUtils;
+import ghidra.util.Swing;
 
 class FunctionSignatureTextField extends JTextPane {
 	private static final String ENTER_ACTION_NAME = "ENTER";
@@ -139,30 +139,22 @@ class FunctionSignatureTextField extends JTextPane {
 	}
 
 	private void updateColors() {
-		SwingUtilities.invokeLater(new Runnable() {
-			@Override
-			public void run() {
-				String text = getText();
-				List<ColorField> computeColors = computeColors(text);
-				if (computeColors != null) {
-					doc.setCharacterAttributes(0, text.length(), defaultAttributes, true);
-					for (ColorField colorField : computeColors) {
-						doc.setCharacterAttributes(colorField.start, colorField.length(),
-							colorField.attributes, true);
-					}
+		Swing.runLater(() -> {
+			String text = getText();
+			List<ColorField> computeColors = computeColors(text);
+			if (computeColors != null) {
+				doc.setCharacterAttributes(0, text.length(), defaultAttributes, true);
+				for (ColorField colorField : computeColors) {
+					doc.setCharacterAttributes(colorField.start, colorField.length(),
+						colorField.attributes, true);
 				}
-				notifyChange();
 			}
+			notifyChange();
 		});
 	}
 
 	void clearAttributes(final int start, final int length) {
-		SwingUtilities.invokeLater(new Runnable() {
-			@Override
-			public void run() {
-				doc.setCharacterAttributes(start, length, defaultAttributes, true);
-			}
-		});
+		Swing.runLater(() -> doc.setCharacterAttributes(start, length, defaultAttributes, true));
 	}
 
 	void notifyChange() {
@@ -176,7 +168,7 @@ class FunctionSignatureTextField extends JTextPane {
 	}
 
 	List<ColorField> computeColors(String text) {
-		List<ColorField> list = new ArrayList<ColorField>();
+		List<ColorField> list = new ArrayList<>();
 		int functionRightParenIndex = text.lastIndexOf(')');
 		int functionLeftParenIndex = findMatchingLeftParenIndex(text, functionRightParenIndex);
 		if (functionLeftParenIndex < 0) {
@@ -191,13 +183,12 @@ class FunctionSignatureTextField extends JTextPane {
 
 		SubString substring = new SubString(text, 0, functionLeftParenIndex).trim();
 		SubString functionName = getLastWord(substring);
-//		SubString returnTypeString = getAllButLastWord(substring);
 		if (functionName == null) {
 			return null;
 		}
 
-		list.add(new ColorField(functionName.getStart(), functionName.getEnd(),
-			functionNameAttributes));
+		list.add(
+			new ColorField(functionName.getStart(), functionName.getEnd(), functionNameAttributes));
 		for (int i = 0; i < paramStartStopIndexes.size() - 1; i++) {
 			int start = paramStartStopIndexes.get(i) + 1;
 			int end = paramStartStopIndexes.get(i + 1);
@@ -234,16 +225,8 @@ class FunctionSignatureTextField extends JTextPane {
 		return string.substring(lastIndexOf + 1);
 	}
 
-//	private SubString getAllButLastWord(SubString string) {
-//		int lastIndexOf = string.lastIndexOf(' ');
-//		if (lastIndexOf < 0) {
-//			return null;
-//		}
-//		return string.substring(0, lastIndexOf).trim();
-//	}
-
 	private List<Integer> findParamStartStopindexes(String text, int startIndex, int endIndex) {
-		List<Integer> commaIndexes = new ArrayList<Integer>();
+		List<Integer> commaIndexes = new ArrayList<>();
 		int templateCount = 0;
 		commaIndexes.add(startIndex);
 		for (int i = startIndex + 1; i < endIndex; i++) {
@@ -300,7 +283,7 @@ class FunctionSignatureTextField extends JTextPane {
 
 	public static void main(String[] args) {
 		JFrame jFrame = new JFrame();
-		jFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		jFrame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
 		FunctionSignatureTextField field = new FunctionSignatureTextField();
 		JPanel panel = new JPanel(new BorderLayout());
 		panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
@@ -310,7 +293,7 @@ class FunctionSignatureTextField extends JTextPane {
 		jFrame.setVisible(true);
 	}
 
-	class SubString {
+	private class SubString {
 		private String text;
 		private int subStringStart;
 		private int subStringEnd;
@@ -341,22 +324,9 @@ class FunctionSignatureTextField extends JTextPane {
 			return new SubString(text, subStringStart + start, subStringEnd);
 		}
 
-		public SubString substring(int start, int end) {
-			return new SubString(text, subStringStart + start, subStringStart + end);
-		}
-
 		@Override
 		public String toString() {
 			return text.substring(subStringStart, subStringEnd);
-		}
-
-		public int indexOf(char c) {
-			for (int i = subStringStart; i < subStringEnd; i++) {
-				if (text.charAt(i) == c) {
-					return i - subStringStart;
-				}
-			}
-			return -1;
 		}
 
 		public int lastIndexOf(char c) {
@@ -386,12 +356,6 @@ class FunctionSignatureTextField extends JTextPane {
 	}
 
 	void setError(final int position, final int length) {
-		SwingUtilities.invokeLater(new Runnable() {
-
-			@Override
-			public void run() {
-				doc.setCharacterAttributes(position, length, errorAttributes, true);
-			}
-		});
+		Swing.runLater(() -> doc.setCharacterAttributes(position, length, errorAttributes, true));
 	}
 }

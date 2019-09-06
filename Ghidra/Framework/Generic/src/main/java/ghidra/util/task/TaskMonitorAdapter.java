@@ -68,6 +68,11 @@ public class TaskMonitorAdapter implements TaskMonitor {
 	}
 
 	@Override
+	public String getMessage() {
+		return null;
+	}
+
+	@Override
 	public void setProgress(long value) {
 		// do nothing
 	}
@@ -106,6 +111,11 @@ public class TaskMonitorAdapter implements TaskMonitor {
 	}
 
 	@Override
+	public boolean isIndeterminate() {
+		return false;
+	}
+
+	@Override
 	public synchronized void setCancelEnabled(boolean enable) {
 		cancelEnabled = enable;
 	}
@@ -134,6 +144,8 @@ public class TaskMonitorAdapter implements TaskMonitor {
 			}
 			cancelled = false;
 		}
+
+		// TODO this seems like a mistake, to notify of 'cancelled' when clearning 
 		notifyChangeListeners();
 	}
 

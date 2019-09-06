@@ -66,7 +66,7 @@ public class ClassSearcher {
 	static final Logger log = LogManager.getLogger(ClassSearcher.class);
 
 	private static ClassFinder searcher;
-	private static List<Class<?>> extensionPoints;
+	private static Set<Class<?>> extensionPoints;
 
 	private static WeakSet<ChangeListener> listenerList =
 		WeakDataStructureFactory.createCopyOnReadWeakSet();
@@ -142,20 +142,22 @@ public class ClassSearcher {
 			}
 			catch (InstantiationException e) {
 				Msg.showError(ClassSearcher.class, null, "Error Instantiating Extension Point",
-					"Error creating class " + clazz.getName() + " for extension " + c.getName() +
+					"Error creating class " + clazz.getSimpleName() + " for extension " +
+						c.getName() +
 						".  Discovered class is not a concrete implementation or does not " +
 						"have a nullary constructor!",
 					e);
 			}
 			catch (IllegalAccessException e) {
 				Msg.showError(ClassSearcher.class, null, "Error Instantiating Extension Point",
-					"Error creating class " + clazz.getName() + " for extension " + c.getName() +
+					"Error creating class " + clazz.getSimpleName() + " for extension " +
+						c.getName() +
 						".  Discovered class does not have a public, default constructor!",
 					e);
 			}
 			catch (SecurityException e) {
-				String message = "Error creating class " + clazz.getName() + " for extension " +
-					c.getName() + ".  Security Exception!";
+				String message = "Error creating class " + clazz.getSimpleName() +
+					" for extension " + c.getName() + ".  Security Exception!";
 				Msg.showError(ClassSearcher.class, null, "Error Instantiating Extension Point",
 					message, e);
 
@@ -163,7 +165,7 @@ public class ClassSearcher {
 			}
 			catch (Exception e) {
 				Msg.showError(ClassSearcher.class, null, "Error Creating Extension Point",
-					"Error creating class " + clazz.getName() +
+					"Error creating class " + clazz.getSimpleName() +
 						" when creating extension points for " + c.getName(),
 					e);
 			}
@@ -225,13 +227,13 @@ public class ClassSearcher {
 		extensionPoints = null;
 
 		long t = (new Date()).getTime();
-		log.trace("Searching for classes...");
 
+		log.trace("Searching for classes...");
 		List<String> searchPaths = gatherSearchPaths();
 		searcher = new ClassFinder(searchPaths, monitor);
 
 		monitor.setMessage("Loading classes...");
-		extensionPoints = searcher.getClasses(ExtensionPoint.class, monitor);
+		extensionPoints = searcher.getClasses(monitor);
 		log.trace("Found extension classes: " + extensionPoints);
 		if (extensionPoints.isEmpty()) {
 			throw new AssertException("Unable to location extension points!");
@@ -296,7 +298,7 @@ public class ClassSearcher {
 		ResourceFile extensionClassesFile = new ResourceFile(appRoot, "EXTENSION_POINT_CLASSES");
 		try {
 			List<String> classNames = FileUtilities.getLines(extensionClassesFile);
-			List<Class<?>> extensionClasses = new ArrayList<>();
+			Set<Class<?>> extensionClasses = new HashSet<>();
 			for (String className : classNames) {
 				try {
 					Class<?> clazz = Class.forName(className);
@@ -306,13 +308,12 @@ public class ClassSearcher {
 					Msg.warn(ClassSearcher.class, "Can't load extension point: " + className);
 				}
 			}
-			extensionPoints = Collections.unmodifiableList(extensionClasses);
+			extensionPoints = Collections.unmodifiableSet(extensionClasses);
 
 		}
 		catch (IOException e) {
 			throw new AssertException("Got unexpected IOException ", e);
 		}
-
 	}
 
 	private static void loadExtensionPointSuffixes() {

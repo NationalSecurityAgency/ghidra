@@ -13,69 +13,74 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+/// \file subflow.hh
+/// \brief Classes for reducing/splitting Varnodes containing smaller logical values
 #ifndef __SUBVARIABLE_FLOW__
 #define __SUBVARIABLE_FLOW__
 
 #include "funcdata.hh"
 
-// Structures for splitting big varnodes carrying smaller logical
-// variables.  Given a root within the syntax tree and dimensions
-// of a logical variable, this class traces the flow of this
-// logical variable through its containing varnodes.  It then
-// creates a subgraph of this flow, where there is a correspondence
-// between nodes in the subgraph and nodes in the original graph
-// containing the logical variable.  When doReplacement is called,
-// this subgraph is duplicated as a new separate piece within the
-// syntax tree.  Ops are replaced to reflect the manipulation of
-// of the logical variable, rather than the containing variable.
-// Operations in the original graph which pluck out the logical
-// variable from the containing variable, are replaced with copies
-// from the corresponding node in the new section of the graph,
-// which frequently causes the operations on the original container
-// varnodes to becomes deadcode.
-
+/// \brief Class for shrinking big Varnodes carrying smaller logical values
+///
+/// Given a root within the syntax tree and dimensions
+/// of a logical variable, this class traces the flow of this
+/// logical variable through its containing Varnodes.  It then
+/// creates a subgraph of this flow, where there is a correspondence
+/// between nodes in the subgraph and nodes in the original graph
+/// containing the logical variable.  When doReplacement is called,
+/// this subgraph is duplicated as a new separate piece within the
+/// syntax tree.  Ops are replaced to reflect the manipulation of
+/// of the logical variable, rather than the containing variable.
+/// Operations in the original graph which pluck out the logical
+/// variable from the containing variable, are replaced with copies
+/// from the corresponding node in the new section of the graph,
+/// which frequently causes the operations on the original container
+/// Varnodes to becomes dead code.
 class SubvariableFlow {
   class ReplaceOp;
+  /// \brief Placeholder node for Varnode holding a smaller logical value
   class ReplaceVarnode {
     friend class SubvariableFlow;
-    Varnode *vn;		// Varnode being split
-    Varnode *replacement;	// The new subvariable varnode
-    uintb mask;			// Bits of the logical subvariable
-    uintb val;			// Value of constant (vn==NULL)
-    ReplaceOp *def;		// Defining op for new varnode
-  };
-  
-  class ReplaceOp {
-    friend class SubvariableFlow;
-    PcodeOp *op;		// op getting paralleled
-    PcodeOp *replacement;	// The new op
-    OpCode opc;		// type of new op
-    int4 numparams;
-    ReplaceVarnode *output;	// varnode output
-    vector<ReplaceVarnode *> input; // varnode inputs
-  };
-  
-  class PatchRecord {		// Operation where logical value is part of input, but output remains as is
-    friend class SubvariableFlow;
-    int4 type;			// 0=COPY 1=compare 2=call 3=AND/SHIFT
-    PcodeOp *pullop;		// Op being affected
-    ReplaceVarnode *in1;	// The logical variable input
-    ReplaceVarnode *in2;	// (optional second parameter)
-    int4 slot;			// slot being affected or other parameter
+    Varnode *vn;		///< Varnode being shrunk
+    Varnode *replacement;	///< The new smaller Varnode
+    uintb mask;			///< Bits making up the logical sub-variable
+    uintb val;			///< Value of constant (when vn==NULL)
+    ReplaceOp *def;		///< Defining op for new Varnode
   };
 
-  int4 flowsize;			// Size of the data-flow
-  int4 bitsize;			// Number of bits in logical variable
-  bool returnsTraversed;	// Have we tried to flow logical value across CPUI_RETURNs
-  bool aggressive;		// Do we "know" initial seed point must be a sub variable
-  bool sextrestrictions;	// Check for logical variables that are always sign extended into their container
-  Funcdata *fd;
-  map<Varnode *,ReplaceVarnode> varmap;
-  list<ReplaceVarnode> newvarlist;
-  list<ReplaceOp> oplist;
-  list<PatchRecord> patchlist;	// Operations getting patched (but no flow thru)
-  vector<ReplaceVarnode *> worklist;
-  int4 pullcount;		// Number of instructions pulling out the logical value
+  /// \brief Placeholder node for PcodeOp operating on smaller logical values
+  class ReplaceOp {
+    friend class SubvariableFlow;
+    PcodeOp *op;		///< op getting paralleled
+    PcodeOp *replacement;	///< The new op
+    OpCode opc;			///< Opcode of the new op
+    int4 numparams;		///< Number of parameters in (new) op
+    ReplaceVarnode *output;	///< Varnode output
+    vector<ReplaceVarnode *> input; ///< Varnode inputs
+  };
+
+  /// \brief Operation with a new logical value as (part of) input, but output Varnode is unchanged
+  class PatchRecord {
+    friend class SubvariableFlow;
+    int4 type;			///< 0=COPY 1=compare 2=call 3=AND/SHIFT
+    PcodeOp *pullop;		///< Op being affected
+    ReplaceVarnode *in1;	///< The logical variable input
+    ReplaceVarnode *in2;	///< (optional second parameter)
+    int4 slot;			///< slot being affected or other parameter
+  };
+
+  int4 flowsize;		///< Size of the lgoical data-flow in bytes
+  int4 bitsize;			///< Number of bits in logical variable
+  bool returnsTraversed;	///< Have we tried to flow logical value across CPUI_RETURNs
+  bool aggressive;		///< Do we "know" initial seed point must be a sub variable
+  bool sextrestrictions;	///< Check for logical variables that are always sign extended into their container
+  Funcdata *fd;			///< Containing function
+  map<Varnode *,ReplaceVarnode> varmap;	///< Map from original Varnodes to the overlaying subgraph nodes
+  list<ReplaceVarnode> newvarlist;	///< Storage for subgraph variable nodes
+  list<ReplaceOp> oplist;		///< Storage for subgraph op nodes
+  list<PatchRecord> patchlist;	///< Operations getting patched (but with no flow thru)
+  vector<ReplaceVarnode *> worklist;	///< Subgraph variable nodes still needing to be traced
+  int4 pullcount;		///< Number of instructions pulling out the logical value
   static int4 doesOrSet(PcodeOp *orop,uintb mask);
   static int4 doesAndClear(PcodeOp *andop,uintb mask);
   Address getReplacementAddress(ReplaceVarnode *rvn) const;
@@ -86,10 +91,10 @@ class SubvariableFlow {
   bool tryCallPull(PcodeOp *op,ReplaceVarnode *rvn,int4 slot);
   bool tryReturnPull(PcodeOp *op,ReplaceVarnode *rvn,int4 slot);
   bool tryCallReturnPull(PcodeOp *op,ReplaceVarnode *rvn);
-  bool traceForward(ReplaceVarnode *rvn);
-  bool traceBackward(ReplaceVarnode *rvn);
-  bool traceForwardSext(ReplaceVarnode *rvn);
-  bool traceBackwardSext(ReplaceVarnode *rvn);
+  bool traceForward(ReplaceVarnode *rvn);	///< Trace the logical data-flow forward for the given subgraph variable
+  bool traceBackward(ReplaceVarnode *rvn);	///< Trace the logical data-flow backward for the given subgraph variable
+  bool traceForwardSext(ReplaceVarnode *rvn);	///< Trace logical data-flow forward assuming sign-extensions
+  bool traceBackwardSext(ReplaceVarnode *rvn);	///< Trace logical data-flow backward assuming sign-extensions
   bool createLink(ReplaceOp *rop,uintb mask,int4 slot,Varnode *vn);
   bool createCompareBridge(PcodeOp *op,ReplaceVarnode *inrvn,int4 slot,Varnode *othervn);
   void addTerminalPatch(PcodeOp *pullop,ReplaceVarnode *rvn);
@@ -102,7 +107,7 @@ class SubvariableFlow {
   void replaceInput(ReplaceVarnode *rvn);
   bool useSameAddress(ReplaceVarnode *rvn);
   Varnode *getReplaceVarnode(ReplaceVarnode *rvn);
-  bool processNextWork(void);
+  bool processNextWork(void);		///< Extend the subgraph from the next node in the worklist
 public:
   SubvariableFlow(Funcdata *f,Varnode *root,uintb mask,bool aggr,bool sext);
   bool doTrace(void);

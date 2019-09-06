@@ -15,7 +15,7 @@
  */
 package ghidra.app.util;
 
-import java.util.ConcurrentModificationException;
+import java.util.*;
 
 import ghidra.docking.settings.Settings;
 import ghidra.program.database.ProgramDB;
@@ -53,7 +53,7 @@ public class PseudoData extends PseudoCodeUnit implements Data {
 		this.dataType = dataType;
 		baseDataType = getBaseDataType(dataType);
 		if (program instanceof ProgramDB) {
-			dataMgr = ((ProgramDB) program).getDataManager();
+			dataMgr = ((ProgramDB) program).getDataTypeManager();
 		}
 	}
 
@@ -103,7 +103,7 @@ public class PseudoData extends PseudoCodeUnit implements Data {
 
 	}
 
-	/** 
+	/**
 	 * @see ghidra.program.model.listing.Data#getComponent(int)
 	 */
 	@Override
@@ -187,7 +187,7 @@ public class PseudoData extends PseudoCodeUnit implements Data {
 	}
 
 	/**
-	 * 
+	 *
 	 * @see ghidra.program.model.listing.CodeUnit#toString()
 	 */
 	@Override
@@ -384,6 +384,46 @@ public class PseudoData extends PseudoCodeUnit implements Data {
 		return null;
 	}
 
+	@Override
+	public List<Data> getComponentsContaining(int offset) {
+		List<Data> list = new ArrayList<>();
+		if (offset < 0 || offset >= length) {
+			return null;
+		}
+
+		if (baseDataType instanceof Array) {
+			Array array = (Array) baseDataType;
+			int elementLength = array.getElementLength();
+			int index = offset / elementLength;
+			list.add(getComponent(index));
+		}
+		else if (baseDataType instanceof Structure) {
+			Structure struct = (Structure) baseDataType;
+			DataTypeComponent dtc = struct.getComponentAt(offset);
+			// Logic handles overlapping bit-fields
+			while (dtc != null && offset <= (dtc.getOffset() + dtc.getLength() - 1)) {
+				int ordinal = dtc.getOrdinal();
+				list.add(getComponent(ordinal++));
+				dtc = ordinal < struct.getNumComponents() ? struct.getComponent(ordinal) : null;
+			}
+		}
+		else if (baseDataType instanceof DynamicDataType) {
+			DynamicDataType ddt = (DynamicDataType) baseDataType;
+			DataTypeComponent dtc = ddt.getComponentAt(offset, this);
+			if (dtc != null) {
+				list.add(getComponent(dtc.getOrdinal()));
+			}
+		}
+		else if (baseDataType instanceof Union) {
+			if (offset == 0) {
+				for (int i = 0; i < getNumComponents(); i++) {
+					list.add(getComponent(i));
+				}
+			}
+		}
+		return list;
+	}
+
 	/**
 	 * @see ghidra.program.model.listing.Data#getComponentIndex()
 	 */
@@ -431,14 +471,14 @@ public class PseudoData extends PseudoCodeUnit implements Data {
 //			for(int i=0;i<n;i++) {
 //				retData[i] = getComponent(i);
 //			}
-//        }	
+//        }
 //		else if (baseDataType instanceof Array) {
 //			Array array = (Array)baseDataType;
 //			int n = array.getNumElements();
 //			retData = new Data[n];
 //			for(int i=0;i<n;i++) {
 //				retData[i] = getComponent(i);
-//			}        
+//			}
 //		}
 //		else if (baseDataType instanceof DynamicDataType) {
 //			DynamicDataType ddt = (DynamicDataType)baseDataType;

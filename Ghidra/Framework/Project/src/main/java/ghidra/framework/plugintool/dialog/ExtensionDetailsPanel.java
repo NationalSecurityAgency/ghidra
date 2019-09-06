@@ -36,6 +36,7 @@ class ExtensionDetailsPanel extends AbstractDetailsPanel {
 	private static SimpleAttributeSet authorAttrSet;
 	private static SimpleAttributeSet createdOnAttrSet;
 	private static SimpleAttributeSet versionAttrSet;
+	private static SimpleAttributeSet pathAttrSet;
 
 	ExtensionDetailsPanel(ExtensionTablePanel tablePanel) {
 		super();
@@ -105,6 +106,12 @@ class ExtensionDetailsPanel extends AbstractDetailsPanel {
 			insertRowValue(buffer, version, versionAttrSet);
 		}
 
+		String installPath = details.getInstallPath();
+		if (installPath != null) {
+			insertRowTitle(buffer, "Install Path");
+			insertRowValue(buffer, installPath, pathAttrSet);
+		}
+
 		buffer.append("</TABLE>");
 
 		textLabel.setText(buffer.toString());
@@ -119,5 +126,6 @@ class ExtensionDetailsPanel extends AbstractDetailsPanel {
 		authorAttrSet = createAttributeSet(Color.BLUE);
 		createdOnAttrSet = createAttributeSet(Color.BLUE);
 		versionAttrSet = createAttributeSet(Color.BLUE);
+		pathAttrSet = createAttributeSet(Color.BLUE);
 	}
 }

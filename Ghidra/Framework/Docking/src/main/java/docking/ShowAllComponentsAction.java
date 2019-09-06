@@ -36,15 +36,13 @@ public class ShowAllComponentsAction extends ShowComponentAction {
 		winMgr.doSetMenuGroup(new String[] { MENU_WINDOW, subMenuName }, "Permanent");
 
 		setHelpLocation(new HelpLocation("DockingWindows", "Windows_Menu"));
-
-		this.winMgr = winMgr;
 	}
 
 	@Override
 	public void actionPerformed(ActionContext context) {
 		boolean focusMe = true;
 		for (ComponentPlaceholder info : infoList) {
-			winMgr.showComponent(info, true, focusMe);
+			winMgr.showComponent(info, true, focusMe, true);
 			focusMe = false;
 		}
 	}

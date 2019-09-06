@@ -23,6 +23,7 @@ import javax.swing.table.TableModel;
 import org.apache.commons.lang3.StringUtils;
 
 import docking.widgets.table.AbstractSortedTableModel;
+import ghidra.util.Msg;
 
 /**
  * An adapter between {@link BatchInfo} and a {@link TableModel}.
@@ -140,6 +141,8 @@ class BatchImportTableModel extends AbstractSortedTableModel<BatchGroup> {
 				boolean newValue = (Boolean) aValue;
 				// dont allow enable unless there is a lang chosen
 				if (newValue == true && row.getSelectedBatchGroupLoadSpec() == null) {
+					Msg.showWarn(this, null, "Missing language",
+						"Select a language for this group before enabling");
 					return;
 				}
 

@@ -114,6 +114,7 @@ public class DataTypeUtilsTest {
 	}
 
 	private class DataTypeDummy implements DataType {
+
 		String wrappedString;
 		UniversalID id;
 
@@ -130,6 +131,11 @@ public class DataTypeUtilsTest {
 		@Override
 		public DataTypeManager getDataTypeManager() {
 			return null;
+		}
+
+		@Override
+		public DataOrganization getDataOrganization() {
+			throw new UnsupportedOperationException();
 		}
 
 		@Override

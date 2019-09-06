@@ -26,15 +26,15 @@ import ghidra.util.xml.SpecXmlUtils;
  *
  */
 public abstract class ConstantPool {
-    public static final int PRIMITIVE = 0;			// Constant -value- of datatype -type-
-    public static final int STRING_LITERAL = 1;		// Constant reference to string in -token-
-    public static final int CLASS_REFERENCE = 2;	// Reference to (system level) class object
-    public static final int POINTER_METHOD = 3;		// Pointer to a method, name in -token-, signature in -type-
-    public static final int POINTER_FIELD = 4;		// Pointer to a field, name in -token-, datatype in -type-
-    public static final int ARRAY_LENGTH = 5;		// Integer length, -token- is language specific indicator, -type- is integral type
-    public static final int INSTANCE_OF = 6;		// boolean value, -token- is language specific indicator, -type- is boolean type
-    public static final int CHECK_CAST = 7;			// Pointer to object, new name in -token-, new datatype in -type-
-	
+	public static final int PRIMITIVE = 0;			// Constant -value- of datatype -type-
+	public static final int STRING_LITERAL = 1;		// Constant reference to string in -token-
+	public static final int CLASS_REFERENCE = 2;	// Reference to (system level) class object
+	public static final int POINTER_METHOD = 3;		// Pointer to a method, name in -token-, signature in -type-
+	public static final int POINTER_FIELD = 4;		// Pointer to a field, name in -token-, datatype in -type-
+	public static final int ARRAY_LENGTH = 5;		// Integer length, -token- is language specific indicator, -type- is integral type
+	public static final int INSTANCE_OF = 6;		// boolean value, -token- is language specific indicator, -type- is boolean type
+	public static final int CHECK_CAST = 7;			// Pointer to object, new name in -token-, new datatype in -type-
+
 	public static class Record {
 		public int tag;			// The type of the record
 		public String token;		// Name or token associated with object
@@ -43,31 +43,41 @@ public abstract class ConstantPool {
 		public DataType type;
 		public boolean hasThisPtr = false;
 		public boolean isConstructor = false;
-		
-		public StringBuilder build(long ref,PcodeDataTypeManager dtmanage) {
+
+		public StringBuilder build(long ref, PcodeDataTypeManager dtmanage) {
 			StringBuilder buf = new StringBuilder();
 			buf.append("<cpoolrec");
 			SpecXmlUtils.encodeUnsignedIntegerAttribute(buf, "ref", ref);
-			if (tag == STRING_LITERAL)
+			if (tag == STRING_LITERAL) {
 				SpecXmlUtils.encodeStringAttribute(buf, "tag", "string");
-			else if (tag == CLASS_REFERENCE)
+			}
+			else if (tag == CLASS_REFERENCE) {
 				SpecXmlUtils.encodeStringAttribute(buf, "tag", "classref");
-			else if (tag == POINTER_METHOD)
+			}
+			else if (tag == POINTER_METHOD) {
 				SpecXmlUtils.encodeStringAttribute(buf, "tag", "method");
-			else if (tag == POINTER_FIELD)
+			}
+			else if (tag == POINTER_FIELD) {
 				SpecXmlUtils.encodeStringAttribute(buf, "tag", "field");
-			else if (tag == ARRAY_LENGTH)
+			}
+			else if (tag == ARRAY_LENGTH) {
 				SpecXmlUtils.encodeStringAttribute(buf, "tag", "arraylength");
-			else if (tag == INSTANCE_OF)
+			}
+			else if (tag == INSTANCE_OF) {
 				SpecXmlUtils.encodeStringAttribute(buf, "tag", "instanceof");
-			else if (tag == CHECK_CAST)
+			}
+			else if (tag == CHECK_CAST) {
 				SpecXmlUtils.encodeStringAttribute(buf, "tag", "checkcast");
-			else
+			}
+			else {
 				SpecXmlUtils.encodeStringAttribute(buf, "tag", "primitive");
-			if (hasThisPtr)
+			}
+			if (hasThisPtr) {
 				SpecXmlUtils.encodeBooleanAttribute(buf, "hasthis", true);
-			if (isConstructor)
+			}
+			if (isConstructor) {
 				SpecXmlUtils.encodeBooleanAttribute(buf, "constructor", true);
+			}
 			buf.append(">\n");
 			if (tag == PRIMITIVE) {
 				buf.append("<value>");

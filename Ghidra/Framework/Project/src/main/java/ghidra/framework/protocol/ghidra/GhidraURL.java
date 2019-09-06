@@ -120,6 +120,9 @@ public class GhidraURL {
 		String path = localProjectURL.getPath();
 		int index = path.lastIndexOf('/');
 		String dirPath = path.substring(0, index);
+		if (dirPath.endsWith(":")) {
+			dirPath += "/";
+		}
 		if (dirPath.indexOf(":/") == 2) {
 			dirPath = dirPath.substring(1);
 			dirPath = dirPath.replace('/', File.separatorChar);

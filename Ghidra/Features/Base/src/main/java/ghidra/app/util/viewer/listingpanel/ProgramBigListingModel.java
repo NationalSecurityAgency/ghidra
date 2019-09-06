@@ -271,8 +271,8 @@ public class ProgramBigListingModel implements ListingModel, FormatModelListener
 			int offset = (int) address.subtract(parent.getMinAddress());
 			data = parent.getComponentAt(offset);
 
-			// Need to handle filler in aligned structures in a special way.
-			if (data == null && ((Structure) dt).isInternallyAligned()) {
+			// Need to handle filler in a special way.
+			if (data == null) {
 				// So look for next non-filler address.
 				offset++;
 				int length = dt.getLength();
@@ -280,7 +280,7 @@ public class ProgramBigListingModel implements ListingModel, FormatModelListener
 					// If not beyond structure's end, check for non-filler.
 					data = parent.getComponentAt(offset);
 					if (data != null) { // Found non filler address so return it.
-						return parent.getMinAddress().add(offset);
+						return data.getMinAddress();
 					}
 				}
 			}
@@ -315,9 +315,12 @@ public class ProgramBigListingModel implements ListingModel, FormatModelListener
 			}
 		}
 		else {
-			// otherwise just return the next dataComponent after this one
-			if (index < parent.getNumComponents() - 1) {
-				return parent.getComponent(index + 1).getMinAddress();
+			while (index < parent.getNumComponents() - 1) {
+				index++;
+				Data component = parent.getComponent(index);
+				if (address.compareTo(component.getMinAddress()) < 0) {
+					return component.getAddress();
+				}
 			}
 		}
 		return null;
@@ -369,7 +372,9 @@ public class ProgramBigListingModel implements ListingModel, FormatModelListener
 		}
 		else {
 			int offset = (int) addr.subtract(parent.getMinAddress());
-			data = parent.getComponentAt(offset - 1);
+			List<Data> componentsContaining = parent.getComponentsContaining(offset - 1);
+			data = componentsContaining.isEmpty() ? null
+					: componentsContaining.get(componentsContaining.size() - 1);
 		}
 		if (data == null) {
 			return addr.previous();
@@ -415,14 +420,18 @@ public class ProgramBigListingModel implements ListingModel, FormatModelListener
 					}
 				}
 			}
-			else {
-				Data tmpData = data.getComponentAt((int) addr.subtract(dataAddr));
-				if (tmpData != null) {
-					if (tmpData.getMinAddress().equals(addr)) {
-						list.add(tmpData);
-					}
-					if (tmpData.getNumComponents() > 0) {
-						addOpenData(list, tmpData, addr);
+			else { // Structure
+				List<Data> dataList = data.getComponentsContaining((int) addr.subtract(dataAddr));
+				if (dataList != null) {  // nested flex-arrays can cause odd behavior
+					for (Data subData : dataList) {
+						// The only case where more than one subData exists is for bit-fields.
+						// Depending upon the packing, bit-fields at different offsets may overlap
+						if (subData.getMinAddress().equals(addr)) {
+							list.add(subData);
+						}
+						if (subData.getNumComponents() > 0) {
+							addOpenData(list, subData, addr);
+						}
 					}
 				}
 			}

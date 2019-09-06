@@ -82,7 +82,12 @@ public:
     overlay = 32,		///< This space is an overlay of another space
     overlaybase = 64,		///< This is the base space for overlay space(s)
     truncated = 128,		///< Space is truncated from its original size, expect pointers larger than this size
-    hasphysical = 256		///< Has physical memory associated with it
+    hasphysical = 256,		///< Has physical memory associated with it
+    is_otherspace = 512		///< Quick check for the OtherSpace derived class
+  };
+  enum {
+    constant_space_index = 0,	///< Reserved index for the constant space
+    other_space_index = 1	///< Reserved index for the other space
   };
 private:
   spacetype type;		///< Type of space (PROCESSOR, CONSTANT, INTERNAL, ...)
@@ -100,7 +105,6 @@ protected:
   int4 delay;			///< Delay in heritaging this space
   int4 deadcodedelay;		///< Delay before deadcode removal is allowed on this space
   void calcScaleMask(void);	///< Calculate scale and mask
-  void assignShortcut(void);	///< Assign a shortcut character to the space
   void setFlags(uint4 fl);	///< Set a cached attribute
   void clearFlags(uint4 fl);	///< Clear a cached attribute
   void saveBasicAttributes(ostream &s) const; ///< Write the XML attributes of this space
@@ -121,7 +125,6 @@ public:
   uintb getHighest(void) const;  ///< Get the highest byte-scaled address
   uintb wrapOffset(uintb off) const; ///< Wrap -off- to the offset that fits into this space
   char getShortcut(void) const; ///< Get the shortcut character
-  bool contain(AddrSpace *id2) const; ///< Determine if this space contains another
   bool isHeritaged(void) const;	///< Return \b true if dataflow has been traced
   bool doesDeadcode(void) const; ///< Return \b true if dead code analysis should be done on this space
   bool hasPhysical(void) const;  ///< Return \b true if data is physically stored in this
@@ -129,8 +132,8 @@ public:
   bool isReverseJustified(void) const;  ///< Return \b true if alignment justification does not match endianness
   bool isOverlay(void) const;  ///< Return \b true if this is an overlay space
   bool isOverlayBase(void) const; ///< Return \b true if other spaces overlay this space
+  bool isOtherSpace(void) const;	///< Return \b true if \b this is the \e other address space
   bool isTruncated(void) const; ///< Return \b true if this space is truncated from its original size
-  uintm data2Uintm(const uint1 *ptr,int4 size) const;  ///< Convert a sequence of bytes into an integer value
   void printOffset(ostream &s,uintb offset) const;  ///< Write an address offset to a stream
 
   virtual int4 numSpacebase(void) const;	///< Number of base registers associated with this space
@@ -172,6 +175,15 @@ public:
   virtual void restoreXml(const Element *el);
 };
 
+/// \brief Special AddrSpace for special/user-defined address spaces
+class OtherSpace : public AddrSpace {
+public:
+  OtherSpace(AddrSpaceManager *m, const Translate *t, const string &nm, int4 ind);	///< Constructor
+  OtherSpace(AddrSpaceManager *m, const Translate *t);	///< For use with restoreXml
+  virtual void printRaw(ostream &s, uintb offset) const;
+  virtual void saveXml(ostream &s) const;
+};
+
 /// \brief The pool of temporary storage registers
 ///
 /// It is convenient both for modelling processor instructions
@@ -183,7 +195,7 @@ public:
 /// \b unique.  
 class UniqueSpace : public AddrSpace {
 public:
-  UniqueSpace(AddrSpaceManager *m,const Translate *t,const string &nm,int4 ind,uint4 fl);
+  UniqueSpace(AddrSpaceManager *m,const Translate *t,const string &nm,int4 ind,uint4 fl);	///< Constructor
   UniqueSpace(AddrSpaceManager *m,const Translate *t);	///< For use with restoreXml
   virtual void saveXml(ostream &s) const;
 };
@@ -392,6 +404,10 @@ inline bool AddrSpace::isOverlay(void) const {
 
 inline bool AddrSpace::isOverlayBase(void) const {
   return ((flags&overlaybase)!=0);
+}
+
+inline bool AddrSpace::isOtherSpace(void) const {
+  return ((flags&is_otherspace)!=0);
 }
 
 /// If this method returns \b true, the logical form of this space is truncated from its actual size

@@ -31,6 +31,8 @@ import org.jdom.output.XMLOutputter;
 import docking.*;
 import docking.action.DockingAction;
 import docking.action.MenuData;
+import docking.tool.ToolConstants;
+import docking.widgets.OkDialog;
 import docking.widgets.OptionDialog;
 import docking.widgets.dialogs.InputDialog;
 import docking.widgets.filechooser.GhidraFileChooser;
@@ -47,7 +49,6 @@ import ghidra.framework.model.*;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
-import ghidra.framework.plugintool.util.ToolConstants;
 import ghidra.framework.preferences.Preferences;
 import ghidra.framework.remote.User;
 import ghidra.util.*;
@@ -369,23 +370,23 @@ public class FrontEndPlugin extends Plugin
 			"\nserver may be forced to close as a result.";
 		// @formatter:on
 
-		OptionDialog info = new OptionDialog("Ghidra Server Error", message,
-			OptionDialog.PLAIN_MESSAGE, DISCONNECTED_ICON);
+		OkDialog info = new OkDialog("Ghidra Server Error", message, DISCONNECTED_ICON);
 		info.show(tool.getToolFrame());
 	}
 
 	/**
 	 * Set the project manager; try to reopen the last project that was
 	 * opened.
-	 * @param pm
+	 * @param pm the project manager
 	 */
 	void setProjectManager(ProjectManager pm) {
 		this.projectManager = pm;
 	}
 
 	/**
-	 * sets the handle to the activeProject, as well as updating the
+	 * Sets the handle to the activeProject, as well as updating the
 	 * active data tree to show the new active project's data
+	 * @param project the active project
 	 */
 	void setActiveProject(Project project) {
 
@@ -721,7 +722,8 @@ public class FrontEndPlugin extends Plugin
 	private GhidraFileChooser getFileChooser(ToolTemplate template) {
 		if (exportFileChooser == null) {
 			exportFileChooser = new GhidraFileChooser(tool.getToolFrame());
-			exportFileChooser.setFileFilter(new ExtensionFileFilter("tool", "Tools"));
+			exportFileChooser.setFileFilter(
+				new ExtensionFileFilter(ToolConstants.TOOL_HELP_TOPIC, "Tools"));
 			exportFileChooser.setApproveButtonText("Export");
 
 			// always prefer the last export directory...
@@ -969,7 +971,8 @@ public class FrontEndPlugin extends Plugin
 			}
 		};
 		exportToolAction.setPopupMenuData(new MenuData(new String[] { "Export..." }, "tool"));
-		exportToolAction.setHelpLocation(new HelpLocation("Tool", EXPORT_TOOL_ACTION_NAME));
+		exportToolAction.setHelpLocation(
+			new HelpLocation(ToolConstants.TOOL_HELP_TOPIC, EXPORT_TOOL_ACTION_NAME));
 
 		deleteToolAction = new ToolButtonAction(DELETE_TOOL_ACTION_NAME) {
 			@Override
@@ -985,7 +988,8 @@ public class FrontEndPlugin extends Plugin
 
 		};
 		deleteToolAction.setPopupMenuData(new MenuData(new String[] { "Delete..." }, "tool"));
-		deleteToolAction.setHelpLocation(new HelpLocation("Tool", DELETE_TOOL_ACTION_NAME));
+		deleteToolAction.setHelpLocation(
+			new HelpLocation(ToolConstants.TOOL_HELP_TOPIC, DELETE_TOOL_ACTION_NAME));
 
 		closeToolAction = new ToolButtonAction(CLOSE_TOOL_ACTION_NAME) {
 			@Override
@@ -1000,7 +1004,8 @@ public class FrontEndPlugin extends Plugin
 			}
 		};
 		closeToolAction.setPopupMenuData(new MenuData(new String[] { "Close" }, "tool"));
-		closeToolAction.setHelpLocation(new HelpLocation("Tool", CLOSE_TOOL_ACTION_NAME));
+		closeToolAction.setHelpLocation(
+			new HelpLocation(ToolConstants.TOOL_HELP_TOPIC, CLOSE_TOOL_ACTION_NAME));
 
 		renameToolAction = new ToolButtonAction("Rename Tool") {
 			@Override
@@ -1069,7 +1074,8 @@ public class FrontEndPlugin extends Plugin
 			}
 		};
 		renameToolAction.setPopupMenuData(new MenuData(new String[] { "Rename..." }, "tool"));
-		renameToolAction.setHelpLocation(new HelpLocation("Tool", "Rename Tool"));
+		renameToolAction.setHelpLocation(
+			new HelpLocation(ToolConstants.TOOL_HELP_TOPIC, "Rename Tool"));
 
 		propertiesAction = new ToolButtonAction(PROPERTIES_ACTION_NAME) {
 			@Override
@@ -1092,7 +1098,8 @@ public class FrontEndPlugin extends Plugin
 		propertiesAction.setPopupMenuData(
 			new MenuData(new String[] { "Configure Plugins..." }, "zproperties"));
 
-		propertiesAction.setHelpLocation(new HelpLocation("Tool", "Configure_Tool"));
+		propertiesAction.setHelpLocation(
+			new HelpLocation(ToolConstants.TOOL_HELP_TOPIC, "Configure_Tool"));
 
 		tool.addLocalAction(frontEndProvider, exportToolAction);
 		tool.addLocalAction(frontEndProvider, renameToolAction);

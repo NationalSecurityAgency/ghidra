@@ -184,6 +184,7 @@ public class CodeBrowserOptionsTest extends AbstractGhidraHeadedIntegrationTest 
 		assertEquals("Function Signature Field", groups[idx++]);
 		assertEquals("Labels Field", groups[idx++]);
 		assertEquals("Mnemonic Field", groups[idx++]);
+		assertEquals("Mouse", groups[idx++]);
 		assertEquals("Operands Field", groups[idx++]);
 		assertEquals("Pcode Field", groups[idx++]);
 		assertEquals("Plate Comment", groups[idx++]);

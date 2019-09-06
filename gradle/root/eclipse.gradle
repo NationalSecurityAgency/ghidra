@@ -102,17 +102,17 @@ eclipse {
        type = 'EXCLUDE_ALL'
        matcher {
          id = 'org.eclipse.ui.ide.multiFilter'
-         arguments = '1.0-name-matches-false-true-CabExtract'
+         arguments = '1.0-name-matches-false-false-GhidraDocs'
        }
-     }     
+     }
      resourceFilter {
        appliesTo = 'FILES_AND_FOLDERS'
        type = 'EXCLUDE_ALL'
        matcher {
          id = 'org.eclipse.ui.ide.multiFilter'
-         arguments = '1.0-name-matches-false-false-GhidraDocs'
+         arguments = '1.0-name-matches-false-true-CabExtract'
        }
-     }     
+     }      
      resourceFilter {
        appliesTo = 'FILES_AND_FOLDERS'
        type = 'EXCLUDE_ALL'
@@ -122,13 +122,28 @@ eclipse {
        }
      }
      resourceFilter {
-        appliesTo = 'FILES_AND_FOLDERS'
+       appliesTo = 'FILES_AND_FOLDERS'
        type = 'EXCLUDE_ALL'
        matcher {
          id = 'org.eclipse.ui.ide.multiFilter'
          arguments = '1.0-name-matches-false-false-DemanglerGnu'
        }
      }
+     resourceFilter {
+       appliesTo = 'FILES_AND_FOLDERS'
+       type = 'EXCLUDE_ALL'
+       matcher {
+         id = 'org.eclipse.ui.ide.multiFilter'
+         arguments = '1.0-name-matches-false-true-GnuDisassembler'
+       }
+     }
+     resourceFilter {
+       appliesTo = 'FOLDERS'
+       type = 'EXCLUDE_ALL'
+       matcher {
+         id = 'org.eclipse.ui.ide.multiFilter'
+         arguments = '1.0-name-matches-false-false-dist'
+       }
+	 }     
    }
  }
-

@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,7 +47,7 @@ public class PopupMenuHandler extends MenuHandler {
     public void processMenuAction(final DockingActionIf action, final ActionEvent event) {
         
 		DockingWindowManager.clearMouseOverHelp();
-		actionContext.setSource(event.getSource());
+		actionContext.setSourceObject(event.getSource());
 		
 		// this gives the UI some time to repaint before executing the action
         SwingUtilities.invokeLater( new Runnable() {

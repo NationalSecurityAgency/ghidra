@@ -25,16 +25,12 @@ import resources.ResourceManager;
 /**
  * ApplyAction is an action for applying editor changes. 
  */
-public class ApplyAction extends CompositeEditorAction {
+public class ApplyAction extends CompositeEditorTableAction {
 
 	private final static String GROUP_NAME = BASIC_ACTION_GROUP;
 	private final static ImageIcon APPLY_ICON = ResourceManager.loadImage("images/disk.png");
 	private final static String[] popupPath = new String[] { "Apply Edits" };
 
-	/**
-	 * Constructor
-	 * @param owner the plugin that owns this action
-	 */
 	public ApplyAction(CompositeEditorProvider provider) {
 		super(provider, EDIT_ACTION_PREFIX + "Apply Editor Changes", GROUP_NAME, popupPath, null,
 			APPLY_ICON);
@@ -43,9 +39,6 @@ public class ApplyAction extends CompositeEditorAction {
 		adjustEnablement();
 	}
 
-	/* (non-Javadoc)
-	 * @see java.awt.event.ActionListener#actionPerformed(java.awt.event.ActionEvent)
-	 */
 	@Override
 	public void actionPerformed(ActionContext context) {
 		if (!model.isValidName()) {

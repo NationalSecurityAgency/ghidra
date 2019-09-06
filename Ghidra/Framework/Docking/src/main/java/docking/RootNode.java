@@ -319,7 +319,7 @@ class RootNode extends WindowNode {
 			invalid = false;
 		}
 
-		winMgr.getActionManager().update();
+		winMgr.getActionToGuiMapper().update();
 		windowWrapper.validate();
 	}
 

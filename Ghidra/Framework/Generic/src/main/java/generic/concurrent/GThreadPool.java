@@ -174,7 +174,7 @@ public class GThreadPool {
 	 * 
 	 * @return the executor
 	 */
-	public GThreadPoolExecutor getExecutor() {
+	public Executor getExecutor() {
 		return executor;
 	}
 

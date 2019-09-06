@@ -22,7 +22,6 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.listing.CodeUnit;
 import ghidra.program.model.listing.Instruction;
-import ghidra.program.model.mem.MappedMemoryBlock;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.model.pcode.PcodeOp;
 import ghidra.program.model.pcode.Varnode;
@@ -78,14 +77,24 @@ public class RefTypeFactory {
 		REFTYPE_LOOKUP_BY_TYPE_MAP.put(RefType.STACK_READ.getValue(), RefType.STACK_READ);
 		REFTYPE_LOOKUP_BY_TYPE_MAP.put(RefType.STACK_WRITE.getValue(), RefType.STACK_WRITE);
 		REFTYPE_LOOKUP_BY_TYPE_MAP.put(RefType.EXTERNAL_REF.getValue(), RefType.EXTERNAL_REF);
+		REFTYPE_LOOKUP_BY_TYPE_MAP.put(RefType.__CALL_OVERRIDE_UNCONDITIONAL,
+			RefType.CALL_OVERRIDE_UNCONDITIONAL);
+		REFTYPE_LOOKUP_BY_TYPE_MAP.put(RefType.__JUMP_OVERRIDE_UNCONDITIONAL,
+			RefType.JUMP_OVERRIDE_UNCONDITIONAL);
+		REFTYPE_LOOKUP_BY_TYPE_MAP.put(RefType.__CALLOTHER_OVERRIDE_CALL,
+			RefType.CALLOTHER_OVERRIDE_CALL);
+		REFTYPE_LOOKUP_BY_TYPE_MAP.put(RefType.__CALLOTHER_OVERRIDE_JUMP,
+			RefType.CALLOTHER_OVERRIDE_JUMP);
 	}
 
 	private static RefType[] memoryRefTypes = new RefType[] { RefType.INDIRECTION,
 		RefType.COMPUTED_CALL, RefType.COMPUTED_JUMP, RefType.CONDITIONAL_CALL,
 		RefType.CONDITIONAL_JUMP, RefType.UNCONDITIONAL_CALL, RefType.UNCONDITIONAL_JUMP,
-		RefType.CONDITIONAL_COMPUTED_CALL, RefType.CONDITIONAL_COMPUTED_JUMP, RefType.PARAM, RefType.DATA,
-		RefType.DATA_IND, RefType.READ, RefType.READ_IND, RefType.WRITE, RefType.WRITE_IND,
-		RefType.READ_WRITE, RefType.READ_WRITE_IND };
+		RefType.CONDITIONAL_COMPUTED_CALL, RefType.CONDITIONAL_COMPUTED_JUMP, RefType.PARAM,
+		RefType.DATA, RefType.DATA_IND, RefType.READ, RefType.READ_IND, RefType.WRITE,
+		RefType.WRITE_IND, RefType.READ_WRITE, RefType.READ_WRITE_IND,
+		RefType.CALL_OVERRIDE_UNCONDITIONAL, RefType.JUMP_OVERRIDE_UNCONDITIONAL,
+		RefType.CALLOTHER_OVERRIDE_CALL, RefType.CALLOTHER_OVERRIDE_JUMP };
 
 	private static HashSet<RefType> validMemRefTypes = new HashSet<>();
 	static {
@@ -94,20 +103,19 @@ public class RefTypeFactory {
 		}
 	}
 
-	private static RefType[] stackRefTypes = new RefType[] { RefType.DATA, RefType.READ,
-		RefType.WRITE, RefType.READ_WRITE };
+	private static RefType[] stackRefTypes =
+		new RefType[] { RefType.DATA, RefType.READ, RefType.WRITE, RefType.READ_WRITE };
 
-	private static RefType[] dataRefTypes = new RefType[] { RefType.DATA, RefType.PARAM, RefType.READ,
-		RefType.WRITE, RefType.READ_WRITE, };
+	private static RefType[] dataRefTypes = new RefType[] { RefType.DATA, RefType.PARAM,
+		RefType.READ, RefType.WRITE, RefType.READ_WRITE, };
 
-	private static RefType[] extRefTypes = new RefType[] { 
-			// TODO: RefType.EXTERNAL_REF should be deprecated and RefType.DATA taking its place
-			RefType.COMPUTED_CALL, RefType.COMPUTED_JUMP, RefType.CONDITIONAL_CALL,
+	private static RefType[] extRefTypes =
+		new RefType[] { RefType.COMPUTED_CALL, RefType.COMPUTED_JUMP, RefType.CONDITIONAL_CALL,
 			RefType.CONDITIONAL_JUMP, RefType.UNCONDITIONAL_CALL, RefType.UNCONDITIONAL_JUMP,
 			RefType.CONDITIONAL_COMPUTED_CALL, RefType.CONDITIONAL_COMPUTED_JUMP, RefType.DATA,
 			RefType.DATA_IND, RefType.READ, RefType.READ_IND, RefType.WRITE, RefType.WRITE_IND,
-			RefType.READ_WRITE, RefType.READ_WRITE_IND
-	};
+			RefType.READ_WRITE, RefType.READ_WRITE_IND, RefType.CALL_OVERRIDE_UNCONDITIONAL,
+			RefType.CALLOTHER_OVERRIDE_CALL, RefType.CALLOTHER_OVERRIDE_JUMP };
 
 	public static RefType[] getMemoryRefTypes() {
 		return memoryRefTypes;
@@ -258,9 +266,8 @@ public class RefTypeFactory {
 				Varnode[] inputs = op.getInputs();
 				if (opCode == PcodeOp.COPY || opCode == PcodeOp.INT_ZEXT) {
 					if (addrs.contains(inputs[0].getAddress())) {
-						RefType rt =
-							getLoadStoreRefType(instrOps, opSeq + 1, op.getOutput().getAddress(),
-								refType);
+						RefType rt = getLoadStoreRefType(instrOps, opSeq + 1,
+							op.getOutput().getAddress(), refType);
 						if (rt == RefType.READ) {
 							if (refType == RefType.WRITE) {
 								return RefType.READ_WRITE;
@@ -395,7 +402,7 @@ public class RefTypeFactory {
 
 		if (toAddr != null && toAddr.isMemoryAddress()) {
 			MemoryBlock block = cu.getProgram().getMemory().getBlock(toAddr);
-			if (block instanceof MappedMemoryBlock) {
+			if (block != null && block.isMapped()) {
 				ignoreExistingReferences = true;
 				speculativeFlowNotAllowed = true;
 			}
@@ -446,8 +453,8 @@ public class RefTypeFactory {
 		}
 
 		if (!ignoreExistingReferences) {
-			Reference[] refs =
-				cu.getProgram().getReferenceManager().getReferencesFrom(cu.getMinAddress(), opIndex);
+			Reference[] refs = cu.getProgram().getReferenceManager().getReferencesFrom(
+				cu.getMinAddress(), opIndex);
 			for (Reference ref : refs) {
 				if (ref.getToAddress().equals(toAddr)) {
 					return ref.getReferenceType();

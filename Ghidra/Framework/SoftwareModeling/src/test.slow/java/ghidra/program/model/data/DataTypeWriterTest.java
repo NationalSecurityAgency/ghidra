@@ -22,11 +22,11 @@ import java.io.StringWriter;
 
 import org.junit.*;
 
-import generic.test.AbstractGenericTest;
+import generic.test.AbstractGTest;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitorAdapter;
 
-public class DataTypeWriterTest extends AbstractGenericTest {
+public class DataTypeWriterTest extends AbstractGTest {
 
 	private static String EOL = System.getProperty("line.separator");
 

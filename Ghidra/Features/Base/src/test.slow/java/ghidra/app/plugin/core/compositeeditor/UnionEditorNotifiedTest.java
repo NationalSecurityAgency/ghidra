@@ -28,6 +28,7 @@ import ghidra.program.model.data.*;
 import ghidra.program.model.data.Composite.AlignmentType;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.exception.UsrException;
+import ghidra.util.task.TaskMonitor;
 import ghidra.util.task.TaskMonitorAdapter;
 
 public class UnionEditorNotifiedTest extends AbstractUnionEditorTest {
@@ -118,11 +119,16 @@ public class UnionEditorNotifiedTest extends AbstractUnionEditorTest {
 
 	@Test
 	public void testEditedDtCategoryRemoved() throws Exception {
+
+		DataTypeManager dtm = complexUnion.getDataTypeManager();
+		Union refUnion = (Union) dtm.getDataType("/testCat/refUnion");
+		assertNotNull(refUnion);
+
 		Category tempCat;
 		try {
 			startTransaction("Modify Program");
 			tempCat = pgmRootCat.createCategory("Temp");
-			tempCat.moveDataType(complexUnion, DataTypeConflictHandler.DEFAULT_HANDLER);
+			tempCat.moveDataType(refUnion, DataTypeConflictHandler.DEFAULT_HANDLER);
 		}
 		finally {
 			endTransaction(true);
@@ -142,7 +148,7 @@ public class UnionEditorNotifiedTest extends AbstractUnionEditorTest {
 			});
 
 			waitForSwing();
-			// refUnion* gets removed since it has only a complexUnion* that was removed.
+			// refUnion* gets removed
 			assertEquals(num - 1, model.getNumComponents());
 			assertTrue(dt18.isEquivalent(getDataType(18)));
 			assertTrue(dt20.isEquivalent(getDataType(19)));
@@ -409,16 +415,31 @@ public class UnionEditorNotifiedTest extends AbstractUnionEditorTest {
 			init(complexUnion, pgmTestCat, false);
 
 			int num = model.getNumComponents();
+
 			// Clone the data types we want to hold onto for comparison later, since reload can close the viewDTM.
 			DataType dt18 = getDataType(18).clone(programDTM);
 			DataType dt20 = getDataType(20).clone(programDTM);
-			SwingUtilities.invokeLater(() -> complexUnion.getDataTypeManager().remove(complexUnion,
-				TaskMonitorAdapter.DUMMY_MONITOR));
+
+			DataTypeManager dtm = complexUnion.getDataTypeManager();
+			Union refUnion = (Union) dtm.getDataType("/testCat/refUnion");
+			assertNotNull(refUnion);
+
+			SwingUtilities.invokeLater(() -> dtm.remove(refUnion, TaskMonitor.DUMMY)); // remove refUnion
 			waitForSwing();
-			// refUnion* gets removed since it has only a complexUnion* that was removed.
-			assertEquals(num - 1, model.getNumComponents());
+
+			// refUnion* gets removed (1 component)
+			num -= 1;
+			assertEquals(num, model.getNumComponents());
 			assertTrue(dt18.isEquivalent(getDataType(18)));
 			assertTrue(dt20.isEquivalent(getDataType(19)));
+
+			SwingUtilities.invokeLater(
+				() -> simpleUnion.getDataTypeManager().remove(simpleUnion, TaskMonitor.DUMMY));
+			waitForSwing();
+
+			// All components (3 total) which were dependent upon simpleUnion are removed
+			num -= 3;
+			assertEquals(num, model.getNumComponents());
 		}
 		finally {
 			cleanup();

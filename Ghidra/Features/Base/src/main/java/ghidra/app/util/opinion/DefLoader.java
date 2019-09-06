@@ -21,7 +21,6 @@ import java.util.function.Consumer;
 
 import ghidra.app.util.Option;
 import ghidra.app.util.bin.ByteProvider;
-import ghidra.app.util.importer.MemoryConflictHandler;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.*;
@@ -81,9 +80,8 @@ public class DefLoader extends AbstractLibrarySupportLoader {
 	}
 
 	@Override
-	public void load(ByteProvider provider, LoadSpec loadSpec, List<Option> options,
-			Program prog, MemoryConflictHandler handler, TaskMonitor monitor, MessageLog log)
-			throws IOException {
+	public void load(ByteProvider provider, LoadSpec loadSpec, List<Option> options, Program prog,
+			TaskMonitor monitor, MessageLog log) throws IOException {
 
 		if (!prog.getExecutableFormat().equals(PeLoader.PE_NAME)) {
 			throw new IOException("Program must be a " + PeLoader.PE_NAME);

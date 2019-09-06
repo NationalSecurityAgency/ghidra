@@ -27,6 +27,7 @@ import docking.action.DockingAction;
 import docking.widgets.fieldpanel.FieldPanel;
 import docking.widgets.fieldpanel.internal.FieldPanelCoordinator;
 import docking.widgets.fieldpanel.support.FieldLocation;
+import docking.widgets.label.GDHtmlLabel;
 import ghidra.app.decompiler.DecompileOptions;
 import ghidra.app.util.viewer.listingpanel.ProgramLocationListener;
 import ghidra.app.util.viewer.util.CodeComparisonPanel;
@@ -255,8 +256,13 @@ public abstract class DecompilerCodeComparisonPanel<T extends DualDecompilerFiel
 
 		String leftTitle1 = FunctionUtility.getFunctionTitle(functions[LEFT]);
 		String rightTitle1 = FunctionUtility.getFunctionTitle(functions[RIGHT]);
-		titlePanels[LEFT] = new TitledPanel(leftTitle1, cPanels[LEFT], 5);
-		titlePanels[RIGHT] = new TitledPanel(rightTitle1, cPanels[RIGHT], 5);
+
+		// use mutable labels, as the titles update when functions are selected
+		GDHtmlLabel leftTitleLabel = new GDHtmlLabel(leftTitle1);
+		GDHtmlLabel rightTitleLabel = new GDHtmlLabel(rightTitle1);
+
+		titlePanels[LEFT] = new TitledPanel(leftTitleLabel, cPanels[LEFT], 5);
+		titlePanels[RIGHT] = new TitledPanel(rightTitleLabel, cPanels[RIGHT], 5);
 
 		// Set the MINIMUM_PANEL_WIDTH for the left and right panel to prevent the split pane's 
 		// divider from becoming locked (can't be moved) due to extra long title names.
@@ -522,13 +528,11 @@ public abstract class DecompilerCodeComparisonPanel<T extends DualDecompilerFiel
 
 	@Override
 	public ActionContext getActionContext(ComponentProvider provider, MouseEvent event) {
-		Object sourceObject = null;
-		if (event != null) {
-			sourceObject = event.getSource();
-		}
+
+		Component component = event == null ? null : event.getComponent();
 		CDisplayPanel focusedDecompilerPanel = getFocusedDecompilerPanel();
 		DualDecompilerActionContext dualDecompContext =
-			new DualDecompilerActionContext(provider, focusedDecompilerPanel, sourceObject);
+			new DualDecompilerActionContext(provider, focusedDecompilerPanel, component);
 		dualDecompContext.setCodeComparisonPanel(this);
 		return dualDecompContext;
 	}

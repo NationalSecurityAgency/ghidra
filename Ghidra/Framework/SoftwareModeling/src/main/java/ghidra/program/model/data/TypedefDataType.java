@@ -75,6 +75,10 @@ public class TypedefDataType extends GenericDataType implements TypeDef {
 	}
 
 	private void validate(DataType dt) {
+		if (dt instanceof BitFieldDataType) {
+			throw new IllegalArgumentException(
+				"TypeDef data-type may not be a bitfield: " + dt.getName());
+		}
 		if (dt instanceof FactoryDataType) {
 			throw new IllegalArgumentException(
 				"TypeDef data-type may not be a Factory data-type: " + dt.getName());

@@ -19,8 +19,7 @@ import static org.junit.Assert.*;
 
 import java.io.*;
 import java.net.URL;
-import java.util.Arrays;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -30,7 +29,7 @@ import org.junit.*;
 
 import docking.DialogComponentProvider;
 import docking.widgets.filechooser.GhidraFileChooser;
-import generic.test.AbstractGenericTest;
+import generic.test.AbstractGTest;
 import generic.test.TestUtils;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
 import ghidra.app.plugin.core.script.GhidraScriptMgrPlugin;
@@ -43,7 +42,7 @@ import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramLocation;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.test.TestEnv;
-import ghidra.util.task.TaskMonitorAdapter;
+import ghidra.util.task.TaskMonitor;
 import utilities.util.FileUtilities;
 
 public class GhidraScriptAskMethodsTest extends AbstractGhidraHeadedIntegrationTest {
@@ -123,7 +122,7 @@ public class GhidraScriptAskMethodsTest extends AbstractGhidraHeadedIntegrationT
 		assertByteArrayEquals(expectedBytes, myBytes);
 	}
 
-	/**
+	/*
 	 * Calling askProgram() would stacktrace if the user 1) didn't select a program in the 
 	 * tree and then 2) pressed the OK button.
 	 */
@@ -141,7 +140,7 @@ public class GhidraScriptAskMethodsTest extends AbstractGhidraHeadedIntegrationT
 			}
 		}, false);
 
-		DataTreeDialog dtd = waitForDialogComponent(null, DataTreeDialog.class, 2000);
+		DataTreeDialog dtd = waitForDialogComponent(DataTreeDialog.class);
 		JButton okButton = (JButton) getInstanceField("okButton", dtd);
 
 		runSwing(() -> okButton.doClick());
@@ -152,7 +151,7 @@ public class GhidraScriptAskMethodsTest extends AbstractGhidraHeadedIntegrationT
 		runSwing(() -> dtd.close());
 	}
 
-	/** 
+	/* 
 	 * For scripts with properties files in a different location (could be the case with subscripts),
 	 * tests that the .properties file is found in the default location and that the default value 
 	 * for the input field is provided by the .properties file in the alternate location. 
@@ -164,7 +163,7 @@ public class GhidraScriptAskMethodsTest extends AbstractGhidraHeadedIntegrationT
 
 		// Create a temporary .properties file and set the potentialPropertiesFileLocs to look 
 		// in that location
-		String tempDirPath = AbstractGenericTest.getTestDirectoryPath();
+		String tempDirPath = AbstractGTest.getTestDirectoryPath();
 		File tempDir = new File(tempDirPath);
 		File tempPropertiesFile = new File(tempDir, "GhidraScriptTest.properties");
 		tempPropertiesFile.delete();
@@ -200,8 +199,7 @@ public class GhidraScriptAskMethodsTest extends AbstractGhidraHeadedIntegrationT
 			}
 		});
 
-		AskDialog askDialog =
-			waitForDialogComponent(env.getTool().getToolFrame(), AskDialog.class, TIMEOUT_MILLIS);
+		AskDialog<?> askDialog = waitForDialogComponent(AskDialog.class);
 		assertNotNull(askDialog);
 		pressButtonByText(askDialog, "OK");
 		waitForSwing();
@@ -216,7 +214,7 @@ public class GhidraScriptAskMethodsTest extends AbstractGhidraHeadedIntegrationT
 
 		// Create a temporary files, then create a temporary .properties file that contains
 		// the path to one of the temporary file.
-		String tempDirPath = AbstractGenericTest.getTestDirectoryPath();
+		String tempDirPath = AbstractGTest.getTestDirectoryPath();
 		File tempDir = new File(tempDirPath);
 		File tempFile = new File(tempDir, "tempFile.exe");
 		File anotherTempFile = new File(tempDir, "MyTempFile.txt");
@@ -258,8 +256,7 @@ public class GhidraScriptAskMethodsTest extends AbstractGhidraHeadedIntegrationT
 			}
 		});
 
-		GhidraFileChooser fileChooser = waitForDialogComponent(env.getTool().getToolFrame(),
-			GhidraFileChooser.class, TIMEOUT_MILLIS * 2);
+		GhidraFileChooser fileChooser = waitForDialogComponent(GhidraFileChooser.class);
 
 		waitForUpdateOnDirectory(fileChooser);
 
@@ -281,8 +278,7 @@ public class GhidraScriptAskMethodsTest extends AbstractGhidraHeadedIntegrationT
 			}
 		});
 
-		fileChooser = waitForDialogComponent(env.getTool().getToolFrame(), GhidraFileChooser.class,
-			TIMEOUT_MILLIS * 2);
+		fileChooser = waitForDialogComponent(GhidraFileChooser.class);
 
 		fileChooser.setSelectedFile(anotherTempFile);
 		waitForUpdateOnDirectory(fileChooser);
@@ -300,8 +296,7 @@ public class GhidraScriptAskMethodsTest extends AbstractGhidraHeadedIntegrationT
 			}
 		});
 
-		fileChooser = waitForDialogComponent(env.getTool().getToolFrame(), GhidraFileChooser.class,
-			TIMEOUT_MILLIS * 2);
+		fileChooser = waitForDialogComponent(GhidraFileChooser.class);
 
 		fileChooser.setSelectedFile(anotherTempFile);
 		waitForUpdateOnDirectory(fileChooser);
@@ -324,7 +319,7 @@ public class GhidraScriptAskMethodsTest extends AbstractGhidraHeadedIntegrationT
 
 		// Create temporary directories, then create a temporary .properties file that contains
 		// the path to one of the temporary directory.
-		String tempDirPath = AbstractGenericTest.getTestDirectoryPath();
+		String tempDirPath = AbstractGTest.getTestDirectoryPath();
 		File tempDir = new File(tempDirPath);
 		File tempSubDir = new File(tempDir, TEMP_SUB_DIR);
 		File anotherTempSubDir = new File(tempDir, "anotherTempDir");
@@ -368,8 +363,7 @@ public class GhidraScriptAskMethodsTest extends AbstractGhidraHeadedIntegrationT
 			}
 		});
 
-		GhidraFileChooser fileChooser = waitForDialogComponent(env.getTool().getToolFrame(),
-			GhidraFileChooser.class, TIMEOUT_MILLIS * 2);
+		GhidraFileChooser fileChooser = waitForDialogComponent(GhidraFileChooser.class);
 		waitForUpdateOnDirectory(fileChooser);
 
 		assertNotNull(fileChooser);
@@ -390,8 +384,7 @@ public class GhidraScriptAskMethodsTest extends AbstractGhidraHeadedIntegrationT
 			}
 		});
 
-		fileChooser = waitForDialogComponent(env.getTool().getToolFrame(), GhidraFileChooser.class,
-			TIMEOUT_MILLIS * 2);
+		fileChooser = waitForDialogComponent(GhidraFileChooser.class);
 
 		fileChooser.setSelectedFile(anotherTempSubDir);
 		waitForUpdateOnDirectory(fileChooser);
@@ -409,8 +402,7 @@ public class GhidraScriptAskMethodsTest extends AbstractGhidraHeadedIntegrationT
 			}
 		});
 
-		fileChooser = waitForDialogComponent(env.getTool().getToolFrame(), GhidraFileChooser.class,
-			TIMEOUT_MILLIS * 2);
+		fileChooser = waitForDialogComponent(GhidraFileChooser.class);
 		waitForUpdateOnDirectory(fileChooser);
 
 		pressButtonByText(fileChooser, "Choose!");
@@ -444,8 +436,7 @@ public class GhidraScriptAskMethodsTest extends AbstractGhidraHeadedIntegrationT
 			}
 		}, false);
 
-		SelectLanguageDialog langDialog = waitForDialogComponent(env.getTool().getToolFrame(),
-			SelectLanguageDialog.class, TIMEOUT_MILLIS);
+		SelectLanguageDialog langDialog = waitForDialogComponent(SelectLanguageDialog.class);
 		assertNotNull(langDialog);
 		pressButtonByText(langDialog, "Give me a language:");
 		waitForSwing();
@@ -463,8 +454,7 @@ public class GhidraScriptAskMethodsTest extends AbstractGhidraHeadedIntegrationT
 			}
 		}, false);
 
-		langDialog = waitForDialogComponent(env.getTool().getToolFrame(),
-			SelectLanguageDialog.class, TIMEOUT_MILLIS);
+		langDialog = waitForDialogComponent(SelectLanguageDialog.class);
 
 		LanguageCompilerSpecPair chosenLang =
 			new LanguageCompilerSpecPair("68000:BE:32:Coldfire", "default");
@@ -484,8 +474,7 @@ public class GhidraScriptAskMethodsTest extends AbstractGhidraHeadedIntegrationT
 			}
 		}, false);
 
-		langDialog = waitForDialogComponent(env.getTool().getToolFrame(),
-			SelectLanguageDialog.class, TIMEOUT_MILLIS);
+		langDialog = waitForDialogComponent(SelectLanguageDialog.class);
 
 		pressButtonByText(langDialog, "Give me a language:");
 		waitForSwing();
@@ -510,7 +499,7 @@ public class GhidraScriptAskMethodsTest extends AbstractGhidraHeadedIntegrationT
 		assertEquals(10101, chosenInt);
 
 		// Now set int to some other value
-		Integer newInt = new Integer(123456);
+		Integer newInt = 123456;
 		chosenInt = ask_TextInput(Integer.toString(newInt), () -> {
 			return script.askInt("Ask Test", "Enter an integer:");
 		});
@@ -539,7 +528,7 @@ public class GhidraScriptAskMethodsTest extends AbstractGhidraHeadedIntegrationT
 		assertEquals((long) Math.pow(2, 18), chosenLong);
 
 		// Now set the long value to a different value
-		Long newLong = new Long((long) Math.pow(4, 28));
+		Long newLong = (long) Math.pow(4, 28);
 		chosenLong = ask_TextInput(Long.toString(newLong), () -> {
 			return script.askLong("Ask Test", "Enter a long:");
 		});
@@ -649,21 +638,21 @@ public class GhidraScriptAskMethodsTest extends AbstractGhidraHeadedIntegrationT
 		createScript();
 
 		// Compare default value to expected properties value
-		String[] choices = new String[] { "eenie", "meanie", "miney", "mo" };
+		List<String> choices = Arrays.asList("eenie", "meanie", "miney", "mo");
 		String chosen = ask_ComboInput(() -> {
 			return script.askChoice("Ask Test", "Choose one:", choices, "mo");
 		});
 		assertEquals("meanie", chosen);
 
 		// Set choice to a different value
-		String choice_eenie = choices[0];
+		String choice_eenie = choices.get(0);
 		chosen = ask_ComboInput(choice_eenie, () -> {
 			return script.askChoice("Ask Test", "Choose one:", choices, "mo");
 		});
 		assertEquals(choice_eenie, chosen);
 
 		// See if the last-set value is auto-populated
-		String choice_miney = choices[2];
+		String choice_miney = choices.get(2);
 		chosen = ask_ComboInput(() -> {
 			// Note: we are passing a default of 'miney', but expect the last choice of 'eenie'
 			return script.askChoice("Ask Test", "Choose one:", choices, choice_miney);
@@ -681,13 +670,13 @@ public class GhidraScriptAskMethodsTest extends AbstractGhidraHeadedIntegrationT
 	public void testAskChoiceDefaultValue() throws Exception {
 		createScript();
 
-		String[] choices = new String[] { "one fish", "two fish", "red fish", "blue fish" };
+		List<String> choices = Arrays.asList("one fish", "two fish", "red fish", "blue fish");
 		int choiceIndex = 2;
 		String chosen = ask_ComboInput(() -> {
 			return script.askChoice("Ask Default Choice Test",
-				"Which choice would you like to pick?", choices, choices[choiceIndex]);
+				"Which choice would you like to pick?", choices, choices.get(choiceIndex));
 		});
-		assertEquals(choices[choiceIndex], chosen);
+		assertEquals(choices.get(choiceIndex), chosen);
 	}
 
 	// TODO test for askChoices()	
@@ -739,8 +728,7 @@ public class GhidraScriptAskMethodsTest extends AbstractGhidraHeadedIntegrationT
 			}
 		}, false);
 
-		DialogComponentProvider askDialog = waitForDialogComponent(env.getTool().getToolFrame(),
-			DialogComponentProvider.class, TIMEOUT_MILLIS);
+		DialogComponentProvider askDialog = waitForDialogComponent(DialogComponentProvider.class);
 		assertNotNull(askDialog);
 
 		if (optionalValue != null) {
@@ -774,8 +762,7 @@ public class GhidraScriptAskMethodsTest extends AbstractGhidraHeadedIntegrationT
 			}
 		}, false);
 
-		DialogComponentProvider askDialog = waitForDialogComponent(env.getTool().getToolFrame(),
-			DialogComponentProvider.class, TIMEOUT_MILLIS);
+		DialogComponentProvider askDialog = waitForDialogComponent(DialogComponentProvider.class);
 		assertNotNull(askDialog);
 
 		if (optionalValue != null) {
@@ -808,8 +795,7 @@ public class GhidraScriptAskMethodsTest extends AbstractGhidraHeadedIntegrationT
 			}
 		}, false);
 
-		AskDialog askDialog =
-			waitForDialogComponent(env.getTool().getToolFrame(), AskDialog.class, TIMEOUT_MILLIS);
+		AskDialog<?> askDialog = waitForDialogComponent(AskDialog.class);
 		assertNotNull(askDialog);
 
 		if (optionalValue != null) {
@@ -890,7 +876,7 @@ public class GhidraScriptAskMethodsTest extends AbstractGhidraHeadedIntegrationT
 				// test stub
 			}
 		};
-		script.set(state, TaskMonitorAdapter.DUMMY_MONITOR, null);
+		script.set(state, TaskMonitor.DUMMY, null);
 
 		URL url = GhidraScriptTest.class.getResource("GhidraScriptAsk.properties");
 		assertNotNull("Test cannot run without properties file!", url);

@@ -15,19 +15,35 @@
  */
 package ghidra.app.merge.listing;
 
-import java.awt.*;
-import java.awt.event.*;
-import java.util.*;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Font;
+import java.awt.FontMetrics;
+import java.awt.Insets;
+import java.awt.event.ComponentEvent;
+import java.awt.event.ComponentListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.ListIterator;
 
-import javax.swing.*;
+import javax.swing.BorderFactory;
+import javax.swing.ButtonGroup;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JRadioButton;
+import javax.swing.SwingConstants;
 import javax.swing.border.Border;
 import javax.swing.border.TitledBorder;
 import javax.swing.event.ChangeListener;
 
 import docking.widgets.button.GRadioButton;
 import docking.widgets.checkbox.GCheckBox;
+import docking.widgets.label.GDHtmlLabel;
 import docking.widgets.label.GDLabel;
-import docking.widgets.label.GLabel;
 import ghidra.app.merge.util.ConflictUtility;
 import ghidra.util.HTMLUtilities;
 import ghidra.util.datastruct.LongArrayList;
@@ -55,7 +71,7 @@ public class VerticalChoicesPanel extends ConflictPanel {
 	final static int RADIO_BUTTON = 2;
 	final static int CHECK_BOX = 3;
 
-	private JLabel headerLabel;
+	private GDHtmlLabel headerLabel;
 	private JPanel rowPanel;
 	private ArrayList<ArrayList<JComponent>> rowComps;
 	private ArrayList<String[]> rows;
@@ -92,7 +108,7 @@ public class VerticalChoicesPanel extends ConflictPanel {
 		setBorder(BorderFactory.createTitledBorder("Resolve Conflict"));
 		setLayout(new BorderLayout());
 
-		headerLabel = new GDLabel(" ");
+		headerLabel = new GDHtmlLabel(" ");
 		headerLabel.setHorizontalAlignment(SwingConstants.CENTER);
 		add(headerLabel, BorderLayout.NORTH);
 
@@ -275,7 +291,7 @@ public class VerticalChoicesPanel extends ConflictPanel {
 		firstComp.addItemListener(itemListener);
 		setRowComponent(firstComp, row, 0, defaultInsets);
 		for (int i = 1; i < items.length; i++) {
-			JLabel newComp = new MyLabel(items[i]);
+			MyLabel newComp = new MyLabel(items[i]);
 			newComp.setName(getComponentName(row, i));
 			setRowComponent(newComp, row, i, textVsButtonInsets);
 		}
@@ -310,7 +326,7 @@ public class VerticalChoicesPanel extends ConflictPanel {
 		firstComp.addItemListener(itemListener);
 		setRowComponent(firstComp, row, 0, defaultInsets);
 		for (int i = 1; i < items.length; i++) {
-			JLabel newComp = new MyLabel(items[i]);
+			MyLabel newComp = new MyLabel(items[i]);
 			newComp.setName(getComponentName(row, i));
 			setRowComponent(newComp, row, i, textVsCheckBoxInsets);
 		}
@@ -455,7 +471,7 @@ public class VerticalChoicesPanel extends ConflictPanel {
 		return allChoicesAreResolved();
 	}
 
-	private class MyLabel extends GLabel {
+	private class MyLabel extends GDHtmlLabel {
 
 		/**
 		 * @param text the text of this label.

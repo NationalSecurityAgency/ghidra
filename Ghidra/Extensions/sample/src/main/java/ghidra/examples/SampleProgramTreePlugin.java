@@ -73,14 +73,15 @@ public class SampleProgramTreePlugin extends ProgramPlugin {
 			public void actionPerformed(ActionContext context) {
 				modularize();
 			}
+
+			@Override
+			public boolean isEnabledForContext(ActionContext context) {
+				return currentProgram != null;
+			}
 		};
 		action.setMenuBarData(
 			new MenuData(new String[] { "Misc", "Create Sample Tree" }, null, null));
-
-		action.setEnabled(false);
-
 		action.setDescription("Plugin to create a program tree and modularize accordingly");
-		enableOnProgram(action);
 		tool.addAction(action);
 
 	}// end of createActions()

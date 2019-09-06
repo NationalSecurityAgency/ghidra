@@ -116,17 +116,6 @@ VMARG_LIST+=" $(java -cp "${LS_CPATH}" LaunchSupport "${INSTALL_DIR}" -vmargs)"
 # Add extra macOS VM arguments
 if [ "$(uname -s)" = "Darwin" ]; then
 	VMARG_LIST+=" -Xdock:name=${APPNAME}"
-	VMARG_LIST+=" -Xdock:icon=\"${INSTALL_DIR}/Ghidra/Features/Base/os/osx64/ghidra.icns\""
-	
-	# Eclipse on macOS (Darwin) can have file locking issues if the user home directory is 
-	# networked.  Therefore, we will disable file locking by default for macOS. Comment the 
-	# following line out if Eclipse file locking is needed and known to work.
-	VMARG_LIST+=" -Declipse.filelock.disable=true"
-fi
-
-# Add extra Linux VM arguments
-if [ "$(uname -s)" = "Linux" ]; then
-	VMARG_LIST+=" -Dawt.useSystemAAFontSettings=on"
 fi
 
 # Set Max Heap Size if specified

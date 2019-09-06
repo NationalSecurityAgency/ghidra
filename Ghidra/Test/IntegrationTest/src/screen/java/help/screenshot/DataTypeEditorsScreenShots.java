@@ -229,7 +229,7 @@ public class DataTypeEditorsScreenShots extends GhidraScreenShotGenerator {
 	@Test
 	public void testStructureEditorAligned() {
 
-		createAlignedDetailedStructure(0x40d2b8, false);
+		createDetailedStructure(0x40d2b8, true, false);
 
 		goToListing(0x40d2b8, true);
 
@@ -241,13 +241,36 @@ public class DataTypeEditorsScreenShots extends GhidraScreenShotGenerator {
 	@Test
 	public void testStructureEditorWithFlexArray() {
 
-		createAlignedDetailedStructure(0x40d2b8, true);
+		createDetailedStructure(0x40d2b8, true, true);
 
 		goToListing(0x40d2b8, true);
 
 		performAction("Edit Data Type", "DataPlugin", true);
 
 		captureProvider(StructureEditorProvider.class);
+	}
+
+	@Test
+	public void testStructureEditBitfield() {
+
+		createDetailedStructure(0x40d2b8, false, true);
+
+		goToListing(0x40d2b8, true);
+
+		performAction("Edit Data Type", "DataPlugin", true);
+
+		ComponentProvider structureEditor = getProvider(StructureEditorProvider.class);
+
+		// get structure table and select a row
+		CompositeEditorPanel editorPanel =
+			(CompositeEditorPanel) getInstanceField("editorPanel", structureEditor);
+		JTable table = editorPanel.getTable();
+		selectRow(table, 4); // select byte:3 bitfield
+
+		performAction("Editor: Edit Bitfield", "DataTypeManagerPlugin", structureEditor, false);
+		waitForSwing();
+
+		captureDialog();
 	}
 
 	@Test
@@ -295,26 +318,38 @@ public class DataTypeEditorsScreenShots extends GhidraScreenShotGenerator {
 		waitForBusyTool(tool);
 	}
 
-	private void createAlignedDetailedStructure(long address, boolean includeFlexArray) {
+	private void createDetailedStructure(long address, boolean aligned,
+			boolean includeBitFieldsAndFlexArray) {
 
 		goToListing(address);
 
 		StructureDataType struct = new StructureDataType("MyAlignedStruct", 0);
+		struct.setInternallyAligned(true); // allow proper default packing
 		struct.add(new ByteDataType(), "myByteElement", "alignment 1");
 		struct.add(new ByteDataType(), "", "This is my undefined element");
 		struct.add(new WordDataType(), "myWordElement", "alignment 2");
+		if (includeBitFieldsAndFlexArray) {
+			try {
+				struct.addBitField(ByteDataType.dataType, 1, "myBitField1", "alignment 1");
+				struct.addBitField(ByteDataType.dataType, 2, "myBitField2", "alignment 1");
+				struct.addBitField(ByteDataType.dataType, 3, "myBitField3", "alignment 1");
+			}
+			catch (InvalidDataTypeException e) {
+				failWithException("Unexpected Error", e);
+			}
+		}
 		struct.add(new ByteDataType(), "myByteElement2", "alignment 1");
 		struct.add(new DWordDataType(), "myDWordElement", "alignment 4");
-		if (includeFlexArray) {
+		if (includeBitFieldsAndFlexArray) {
 			struct.setFlexibleArrayComponent(CharDataType.dataType, "flex",
 				"unsized flexible array");
 		}
 		struct.clearComponent(1);
-		struct.setDescription(
-			"Members internally aligned " + (includeFlexArray ? "with a flexible char array"
+		struct.setDescription("Members internally aligned " +
+			(includeBitFieldsAndFlexArray ? "with bitfields and a flexible char array"
 					: "according to their alignment size") +
-				". ");
-		struct.setInternallyAligned(true);
+			". ");
+		struct.setInternallyAligned(aligned);
 
 		CreateDataCmd createDataCmd = new CreateDataCmd(addr(address), struct);
 		tool.execute(createDataCmd, program);

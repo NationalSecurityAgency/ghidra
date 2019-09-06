@@ -42,6 +42,26 @@ public class ImageUtils {
 	}
 
 	/**
+	 * Creates an image of the given component
+	 * 
+	 * @param c the component
+	 * @return the image
+	 */
+	public static Image createImage(Component c) {
+
+		// prevent this from being called when the user has made the window too small to work
+		Rectangle bounds = c.getBounds();
+		int w = Math.max(bounds.width, 1);
+		int h = Math.max(bounds.height, 1);
+
+		BufferedImage bufferedImage = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
+		Graphics g = bufferedImage.getGraphics();
+		c.paint(g);
+		g.dispose();
+		return bufferedImage;
+	}
+
+	/**
 	 * Pads the given image with space in the amount given.
 	 * 
 	 * @param i the image to pad

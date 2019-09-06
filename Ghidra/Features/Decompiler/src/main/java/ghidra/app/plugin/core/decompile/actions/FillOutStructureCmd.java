@@ -85,7 +85,7 @@ public class FillOutStructureCmd extends BackgroundCommand {
 		super("Fill Out Structure", true, false, true);
 		this.tool = tool;
 		this.currentProgram = program;
-		this.currentLocation = location;
+		this.currentLocation = Objects.requireNonNull(location);
 	}
 
 	@Override

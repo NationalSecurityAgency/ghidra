@@ -21,22 +21,19 @@ import docking.action.*;
 import ghidra.app.actions.AbstractFindReferencesDataTypeAction;
 import ghidra.app.context.ListingActionContext;
 import ghidra.app.context.ListingContextAction;
-import ghidra.framework.options.*;
-import ghidra.framework.plugintool.PluginTool;
-import ghidra.framework.plugintool.util.ToolConstants;
 import ghidra.program.model.address.Address;
 import ghidra.program.util.ProgramLocation;
 
 /**
  * {@link LocationReferencesPlugin}'s action for finding references to a thing.
  */
-public class FindReferencesToAction extends ListingContextAction implements OptionsChangeListener {
+public class FindReferencesToAction extends ListingContextAction {
 
 	private LocationReferencesPlugin plugin;
 	private int subGroupPosition;
 
 	public FindReferencesToAction(LocationReferencesPlugin plugin, int subGroupPosition) {
-		super(AbstractFindReferencesDataTypeAction.NAME, plugin.getName(), false);
+		super(AbstractFindReferencesDataTypeAction.NAME, plugin.getName(), KeyBindingType.SHARED);
 		this.plugin = plugin;
 		this.subGroupPosition = subGroupPosition;
 
@@ -44,37 +41,16 @@ public class FindReferencesToAction extends ListingContextAction implements Opti
 
 		setDescription("Shows references to the item under the cursor");
 
-		//
-		// Shared keybinding setup
-		//
 		KeyStroke defaultkeyStroke = AbstractFindReferencesDataTypeAction.DEFAULT_KEY_STROKE;
-		PluginTool tool = plugin.getTool();
-		DockingAction action = new DummyKeyBindingsOptionsAction(
-			AbstractFindReferencesDataTypeAction.NAME, defaultkeyStroke);
-		tool.addAction(action);
-
-		// setup options to know when the dummy key binding is changed
-		ToolOptions options = tool.getOptions(ToolConstants.KEY_BINDINGS);
-		KeyStroke optionsKeyStroke = options.getKeyStroke(action.getFullName(), defaultkeyStroke);
-
-		if (!defaultkeyStroke.equals(optionsKeyStroke)) {
-			// user-defined keystroke
-			setUnvalidatedKeyBindingData(new KeyBindingData(optionsKeyStroke));
-		}
-		else {
-			setKeyBindingData(new KeyBindingData(optionsKeyStroke));
-		}
-
-		options.addOptionsChangeListener(this);
+		initKeyStroke(defaultkeyStroke);
 	}
 
-	@Override
-	public void optionsChanged(ToolOptions options, String name, Object oldValue, Object newValue) {
-		KeyStroke keyStroke = (KeyStroke) newValue;
-		String actionName = getName();
-		if (name.startsWith(actionName)) {
-			setUnvalidatedKeyBindingData(new KeyBindingData(keyStroke));
+	private void initKeyStroke(KeyStroke keyStroke) {
+		if (keyStroke == null) {
+			return;
 		}
+
+		setKeyBindingData(new KeyBindingData(keyStroke));
 	}
 
 	@Override
@@ -142,8 +118,9 @@ public class FindReferencesToAction extends ListingContextAction implements Opti
 			menuName += itemName;
 		}
 
-		setPopupMenuData(new MenuData(new String[] { "References", menuName }, null,
-			"ShowReferencesTo", MenuData.NO_MNEMONIC, Integer.toString(subGroupPosition)));
+		setPopupMenuData(
+			new MenuData(new String[] { LocationReferencesService.MENU_GROUP, menuName }, null,
+				"ShowReferencesTo", MenuData.NO_MNEMONIC, Integer.toString(subGroupPosition)));
 	}
 
 	private String getMenuPrefix(LocationDescriptor descriptor) {

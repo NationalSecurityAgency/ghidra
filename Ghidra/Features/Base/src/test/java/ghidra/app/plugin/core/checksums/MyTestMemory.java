@@ -15,13 +15,17 @@
  */
 package ghidra.app.plugin.core.checksums;
 
+import java.io.IOException;
 import java.io.InputStream;
+import java.util.List;
 
+import ghidra.framework.store.LockException;
+import ghidra.program.database.mem.AddressSourceInfo;
+import ghidra.program.database.mem.FileBytes;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.*;
-import ghidra.util.exception.CancelledException;
-import ghidra.util.exception.NotFoundException;
+import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
 
 class MyTestMemory extends AddressSet implements Memory {
@@ -54,6 +58,11 @@ class MyTestMemory extends AddressSet implements Memory {
 	}
 
 	@Override
+	public AddressSourceInfo getAddressSourceInfo(Address address) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
 	public boolean isBigEndian() {
 		return false;
 	}
@@ -70,8 +79,8 @@ class MyTestMemory extends AddressSet implements Memory {
 
 	@Override
 	public MemoryBlock createInitializedBlock(String name, Address start, InputStream is,
-			long length, TaskMonitor monitor, boolean overlay) throws MemoryConflictException,
-			AddressOverflowException, CancelledException {
+			long length, TaskMonitor monitor, boolean overlay)
+			throws MemoryConflictException, AddressOverflowException, CancelledException {
 		throw new UnsupportedOperationException();
 	}
 
@@ -101,6 +110,22 @@ class MyTestMemory extends AddressSet implements Memory {
 	@Override
 	public MemoryBlock createByteMappedBlock(String name, Address start, Address overlayAddress,
 			long length) throws MemoryConflictException, AddressOverflowException {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public FileBytes createFileBytes(String filename, long offset, long size, InputStream is,
+			TaskMonitor monitor) throws IOException {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public boolean deleteFileBytes(FileBytes descriptor) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public List<FileBytes> getAllFileBytes() {
 		throw new UnsupportedOperationException();
 	}
 
@@ -298,7 +323,8 @@ class MyTestMemory extends AddressSet implements Memory {
 	}
 
 	@Override
-	public void setShort(Address addr, short value, boolean bigEndian) throws MemoryAccessException {
+	public void setShort(Address addr, short value, boolean bigEndian)
+			throws MemoryAccessException {
 		throw new UnsupportedOperationException();
 	}
 
@@ -346,6 +372,13 @@ class MyTestMemory extends AddressSet implements Memory {
 			set.addRange(myMemoryBlock.getStart(), myMemoryBlock.getEnd());
 		}
 		return set;
+	}
+
+	@Override
+	public MemoryBlock createInitializedBlock(String name, Address start, FileBytes fileBytes,
+			long offset, long size, boolean overlay) throws LockException, DuplicateNameException,
+			MemoryConflictException, AddressOverflowException {
+		throw new UnsupportedOperationException();
 	}
 
 }

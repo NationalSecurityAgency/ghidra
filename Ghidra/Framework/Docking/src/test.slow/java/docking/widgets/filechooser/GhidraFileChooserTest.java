@@ -1571,9 +1571,7 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 	private ActionContext createDirListContext() {
 
 		DirectoryList dirlist = getDirectoryListViewOfFileChooser();
-		MouseEvent e = new MouseEvent(dirlist, 0, 0, 0, 0, 0, 1, false);
-		ActionContext context = chooser.getActionContext(e);
-		return context;
+		return new ActionContext(null, dirlist);
 	}
 
 	private boolean isEnabled(DockingAction action, ActionContext context) {

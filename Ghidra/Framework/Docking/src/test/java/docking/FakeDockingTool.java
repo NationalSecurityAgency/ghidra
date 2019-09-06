@@ -20,8 +20,7 @@ import java.util.List;
 
 import javax.swing.ImageIcon;
 
-import docking.action.DockingActionIf;
-import docking.actions.DockingToolActionManager;
+import docking.actions.ToolActions;
 import docking.framework.ApplicationInformationDisplayFactory;
 import ghidra.framework.options.ToolOptions;
 
@@ -33,11 +32,10 @@ public class FakeDockingTool extends AbstractDockingTool {
 
 	public FakeDockingTool() {
 
-		DockWinListener listener = new DummyListener();
 		List<Image> windowIcons = ApplicationInformationDisplayFactory.getWindowIcons();
-		winMgr = new DockingWindowManager("EMPTY", windowIcons, listener, false /*isModal*/,
-			true /*isDockable*/, true /*hasStatus*/, null /*DropTargetFactory*/);
-		actionMgr = new DockingToolActionManager(this, winMgr);
+		winMgr = new DockingWindowManager(this, windowIcons, false /*isModal*/, true /*isDockable*/,
+			true /*hasStatus*/, null /*DropTargetFactory*/);
+		toolActions = new ToolActions(this, new ActionToGuiHelper(winMgr));
 	}
 
 	@Override
@@ -60,18 +58,8 @@ public class FakeDockingTool extends AbstractDockingTool {
 		return opt;
 	}
 
-	private class DummyListener implements DockWinListener {
-
-		@Override
-		public void close() {
-			// stub
-		}
-
-		@Override
-		public List<DockingActionIf> getPopupActions(ActionContext context) {
-			return null;
-		}
-
+	@Override
+	public void close() {
+		// stub
 	}
-
 }

@@ -22,11 +22,11 @@ import javax.swing.ImageIcon;
 
 import docking.ActionContext;
 import docking.action.*;
+import docking.tool.ToolConstants;
 import docking.widgets.OptionDialog;
 import ghidra.app.plugin.core.codebrowser.OtherPanelContext;
 import ghidra.app.services.CodeViewerService;
 import ghidra.app.util.HelpTopics;
-import ghidra.framework.plugintool.util.ToolConstants;
 import ghidra.program.model.listing.Program;
 import ghidra.util.HTMLUtilities;
 import ghidra.util.HelpLocation;
@@ -51,7 +51,7 @@ class DiffActionManager {
 	static final String IGNORE_DIFFS_NEXT_ACTION = "Ignore Selection and Goto Next Difference";
 	static final String NEXT_DIFF_ACTION = "Next Difference";
 	static final String PREVIOUS_DIFF_ACTION = "Previous Difference";
-	static final String DIFF_DETAILS_ACTION = "Diff Location Details";
+	static final String DIFF_DETAILS_ACTION = "Show Diff Location Details";
 	static final String SHOW_DIFF_SETTINGS_ACTION = "Show Diff Apply Settings";
 	static final String GET_DIFFS_ACTION = "Get Differences";
 	static final String SELECT_ALL_DIFFS_ACTION = "Select All Differences";

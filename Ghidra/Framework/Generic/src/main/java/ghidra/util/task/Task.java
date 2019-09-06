@@ -220,28 +220,6 @@ public abstract class Task implements MonitoredRunnable {
 		return isModal;
 	}
 
-	public boolean isInterruptible() {
-		return isInterruptible;
-	}
-
-	public void setInterruptible(boolean interruptible) {
-		this.isInterruptible = interruptible;
-	}
-
-	/**
-	 * Returns true if this task should be left alone to die when cancelled, as opposed to being
-	 * interrupted
-	 * 
-	 * @return true if forgettable
-	 */
-	public boolean isForgettable() {
-		return isForgettable;
-	}
-
-	public void setForgettable(boolean isForgettable) {
-		this.isForgettable = isForgettable;
-	}
-
 	/**
 	 * Sets the task listener on this task.  It is a programming error to call this method more
 	 * than once or to call this method if a listener was passed into the constructor of this class.

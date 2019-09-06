@@ -15,24 +15,25 @@
  */
 package ghidra.app.util.opinion;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.*;
 
 import ghidra.app.cmd.data.CreateDataCmd;
 import ghidra.app.cmd.label.AddUniqueLabelCmd;
-import ghidra.app.util.MemoryBlockUtil;
+import ghidra.app.util.MemoryBlockUtils;
 import ghidra.app.util.Option;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.bin.format.pef.*;
-import ghidra.app.util.importer.MemoryConflictHandler;
 import ghidra.app.util.importer.MessageLog;
+import ghidra.program.database.mem.FileBytes;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.PointerDataType;
 import ghidra.program.model.listing.Data;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.model.symbol.*;
+import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
 public class PefLoader extends AbstractLibrarySupportLoader {
@@ -68,8 +69,10 @@ public class PefLoader extends AbstractLibrarySupportLoader {
 
 	@Override
 	public void load(ByteProvider provider, LoadSpec loadSpec, List<Option> options,
-			Program program,
-			MemoryConflictHandler handler, TaskMonitor monitor, MessageLog log) throws IOException {
+			Program program, TaskMonitor monitor, MessageLog log)
+			throws IOException, CancelledException {
+
+		FileBytes fileBytes = MemoryBlockUtils.createFileBytes(program, provider, monitor);
 
 		ImportStateCache importState = null;
 		try {
@@ -83,7 +86,7 @@ public class PefLoader extends AbstractLibrarySupportLoader {
 
 			program.setExecutableFormat(getName());
 
-			processSections(header, program, importState, log, monitor);
+			processSections(header, program, fileBytes, importState, log, monitor);
 			processExports(header, program, importState, log, monitor);
 			processImports(header, program, importState, log, monitor);
 			processRelocations(header, program, importState, log, monitor);
@@ -153,8 +156,8 @@ public class PefLoader extends AbstractLibrarySupportLoader {
 			}
 
 			if (mainSection.getSectionKind() == SectionKind.PackedData ||
-					mainSection.getSectionKind() == SectionKind.UnpackedData ||
-					mainSection.getSectionKind() == SectionKind.ExecutableData) {
+				mainSection.getSectionKind() == SectionKind.UnpackedData ||
+				mainSection.getSectionKind() == SectionKind.ExecutableData) {
 
 				CreateDataCmd cmd = new CreateDataCmd(mainAddress, new PointerDataType());
 				cmd.applyTo(program);
@@ -257,12 +260,13 @@ public class PefLoader extends AbstractLibrarySupportLoader {
 				}
 
 				if (symbolIndex % 100 == 0) {
-					monitor.setMessage("Processing import " + symbolIndex + " of " + symbols.size());
+					monitor.setMessage(
+						"Processing import " + symbolIndex + " of " + symbols.size());
 				}
 				++symbolIndex;
 
 				String symbolName =
-						SymbolUtilities.replaceInvalidChars(symbols.get(i).getName(), true);
+					SymbolUtilities.replaceInvalidChars(symbols.get(i).getName(), true);
 
 				boolean success = importState.createLibrarySymbol(library, symbolName, start);
 				if (!success) {
@@ -290,8 +294,8 @@ public class PefLoader extends AbstractLibrarySupportLoader {
 	private void addExternalReference(Program program, Address start, String libraryName,
 			String symbolName, MessageLog log) {
 		try {
-			program.getReferenceManager().addExternalReference(start, libraryName, symbolName,
-				null, SourceType.IMPORTED, 0, RefType.DATA);
+			program.getReferenceManager().addExternalReference(start, libraryName, symbolName, null,
+				SourceType.IMPORTED, 0, RefType.DATA);
 		}
 		catch (Exception e) {
 			log.appendMsg(e.getMessage());
@@ -323,7 +327,7 @@ public class PefLoader extends AbstractLibrarySupportLoader {
 				return;
 			}
 			RelocationState state =
-					new RelocationState(header, relocationHeader, program, importState);
+				new RelocationState(header, relocationHeader, program, importState);
 			List<Relocation> relocations = relocationHeader.getRelocations();
 			int relocationIndex = 0;
 			for (Relocation relocation : relocations) {
@@ -331,8 +335,8 @@ public class PefLoader extends AbstractLibrarySupportLoader {
 					return;
 				}
 				if (relocationIndex % 100 == 0) {
-					monitor.setMessage("Processing relocation " + relocationIndex + " of " +
-							relocations.size());
+					monitor.setMessage(
+						"Processing relocation " + relocationIndex + " of " + relocations.size());
 				}
 				++relocationIndex;
 
@@ -361,7 +365,7 @@ public class PefLoader extends AbstractLibrarySupportLoader {
 				MemoryBlock block = importState.getMemoryBlockForSection(section);
 				Address symbolAddr = block.getStart().add(symbol.getSymbolValue());
 				AddUniqueLabelCmd cmd =
-						new AddUniqueLabelCmd(symbolAddr, symbol.getName(), null, SourceType.IMPORTED);
+					new AddUniqueLabelCmd(symbolAddr, symbol.getName(), null, SourceType.IMPORTED);
 				if (!cmd.applyTo(program)) {
 					log.appendMsg(cmd.getStatusMsg());
 				}
@@ -369,11 +373,9 @@ public class PefLoader extends AbstractLibrarySupportLoader {
 		}
 	}
 
-	private void processSections(ContainerHeader header, Program program,
+	private void processSections(ContainerHeader header, Program program, FileBytes fileBytes,
 			ImportStateCache importState, MessageLog log, TaskMonitor monitor)
-					throws AddressOverflowException, IOException {
-
-		MemoryBlockUtil mbu = new MemoryBlockUtil(program, MemoryConflictHandler.ALWAYS_OVERWRITE);
+			throws AddressOverflowException, IOException {
 
 		List<SectionHeader> sections = header.getSections();
 		for (SectionHeader section : sections) {
@@ -390,16 +392,17 @@ public class PefLoader extends AbstractLibrarySupportLoader {
 			}
 
 			if (section.getSectionKind() == SectionKind.PackedData) {
-				mbu.createInitializedBlock(section.getName(), start,
-					section.getUnpackedData(monitor), section.getSectionKind().toString(), null,
-					section.isRead(), section.isWrite(), section.isExecute(), monitor);
+				byte[] unpackedData = section.getUnpackedData(monitor);
+				ByteArrayInputStream is = new ByteArrayInputStream(unpackedData);
+				MemoryBlockUtils.createInitializedBlock(program, false, section.getName(), start,
+					is, unpackedData.length, section.getSectionKind().toString(), null,
+					section.isRead(), section.isWrite(), section.isExecute(), log, monitor);
 			}
 			else {
-				try (InputStream sectionDataStream = section.getData()) {
-					mbu.createInitializedBlock(section.getName(), start, sectionDataStream,
-						section.getUnpackedLength(), section.getSectionKind().toString(), null,
-						section.isRead(), section.isWrite(), section.isExecute(), monitor);
-				}
+				MemoryBlockUtils.createInitializedBlock(program, false, section.getName(), start,
+					fileBytes, section.getContainerOffset(), section.getUnpackedLength(),
+					section.getSectionKind().toString(), null, section.isRead(), section.isWrite(),
+					section.isExecute(), log);
 			}
 
 			importState.setMemoryBlockForSection(section, program.getMemory().getBlock(start));
@@ -407,15 +410,12 @@ public class PefLoader extends AbstractLibrarySupportLoader {
 			if (section.getUnpackedLength() < section.getTotalLength()) {
 				start = start.add(section.getUnpackedLength());
 
-				mbu.createUninitializedBlock(false, section.getName(), start,
+				MemoryBlockUtils.createUninitializedBlock(program, false, section.getName(), start,
 					section.getTotalLength() - section.getUnpackedLength(),
 					section.getSectionKind().toString(), null, section.isRead(), section.isWrite(),
-					section.isExecute());
+					section.isExecute(), log);
 			}
 		}
-
-		log.appendMsg(mbu.getMessages());
-		mbu.dispose();
 	}
 
 	private Address getSectionAddressAligned(SectionHeader section, Program program) {

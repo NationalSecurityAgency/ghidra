@@ -57,6 +57,12 @@ public interface TaskMonitor {
 	public void setMessage(String message);
 
 	/**
+	 * Gets the last set message of this monitor
+	 * @return the message
+	 */
+	public String getMessage();
+
+	/**
 	 * Sets the current progress value
 	 * @param value progress value
 	 */
@@ -90,6 +96,12 @@ public interface TaskMonitor {
 	 * @param indeterminate true if indeterminate
 	 */
 	public void setIndeterminate(boolean indeterminate);
+
+	/**
+	 * Returns true if this monitor shows no progress
+	 * @return true if this monitor shows no progress
+	 */
+	public boolean isIndeterminate();
 
 	/**
 	 * Check to see if this monitor has been canceled

@@ -16,11 +16,9 @@
 package ghidra.app.plugin.core.symtable;
 
 import java.awt.Cursor;
-import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 
 import javax.swing.ImageIcon;
-import javax.swing.KeyStroke;
 
 import docking.ActionContext;
 import docking.action.*;
@@ -33,9 +31,9 @@ import ghidra.app.services.BlockModelService;
 import ghidra.app.services.GoToService;
 import ghidra.app.util.SymbolInspector;
 import ghidra.framework.model.*;
-import ghidra.framework.options.*;
+import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.*;
-import ghidra.framework.plugintool.util.*;
+import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Data;
 import ghidra.program.model.listing.Program;
@@ -45,6 +43,7 @@ import ghidra.program.util.ChangeManager;
 import ghidra.program.util.ProgramChangeRecord;
 import ghidra.util.table.GhidraTable;
 import ghidra.util.table.SelectionNavigationAction;
+import ghidra.util.table.actions.MakeProgramSelectionAction;
 import ghidra.util.task.SwingUpdateManager;
 import resources.Icons;
 import resources.ResourceManager;
@@ -69,19 +68,10 @@ import resources.ResourceManager;
 	eventsConsumed = { ProgramActivatedPluginEvent.class }
 )
 //@formatter:on
-public class SymbolTablePlugin extends Plugin
-		implements DomainObjectListener, OptionsChangeListener {
-
-	private static final String PLUGIN_NAME = "SymbolTablePlugin";
+public class SymbolTablePlugin extends Plugin implements DomainObjectListener {
 
 	final static Cursor WAIT_CURSOR = new Cursor(Cursor.WAIT_CURSOR);
 	final static Cursor NORM_CURSOR = new Cursor(Cursor.DEFAULT_CURSOR);
-
-	final static ImageIcon SYM_GIF = ResourceManager.loadImage("images/table.png");
-	final static ImageIcon REF_GIF = ResourceManager.loadImage("images/table_go.png");
-
-	private DockingAction viewSymTableAction;
-	private DockingAction viewRefTableAction;
 
 	private DockingAction openRefsAction;
 	private DockingAction deleteAction;
@@ -116,10 +106,6 @@ public class SymbolTablePlugin extends Plugin
 		symProvider = new SymbolProvider(this);
 		refProvider = new ReferenceProvider(this);
 
-		tool.addComponentProvider(symProvider, false);
-		tool.addComponentProvider(refProvider, false);
-
-		createActions();
 		createSymActions();
 		createRefActions();
 
@@ -136,8 +122,6 @@ public class SymbolTablePlugin extends Plugin
 		super.dispose();
 		swingMgr.dispose();
 
-		viewSymTableAction.dispose();
-		viewRefTableAction.dispose();
 		deleteAction.dispose();
 		makeSelectionAction.dispose();
 
@@ -360,38 +344,10 @@ public class SymbolTablePlugin extends Plugin
 		}
 	}
 
-	private void createActions() {
-		viewSymTableAction = new DockingAction("View Symbol Table", getName()) {
-			@Override
-			public void actionPerformed(ActionContext context) {
-				tool.showComponentProvider(symProvider, true);
-			}
-		};
-		viewSymTableAction.setToolBarData(
-			new ToolBarData(ResourceManager.loadImage("images/table.png"), "View"));
-		viewSymTableAction.setKeyBindingData(
-			new KeyBindingData(KeyEvent.VK_T, InputEvent.CTRL_DOWN_MASK));
-
-		viewSymTableAction.setDescription("Display Symbol Table");
-		tool.addAction(viewSymTableAction);
-
-		viewRefTableAction = new DockingAction("View Symbol References", getName()) {
-			@Override
-			public void actionPerformed(ActionContext context) {
-				tool.showComponentProvider(refProvider, true);
-			}
-		};
-		viewRefTableAction.setToolBarData(
-			new ToolBarData(ResourceManager.loadImage("images/table_go.png"), "View"));
-
-		viewRefTableAction.setDescription("Display Symbol References");
-		tool.addAction(viewRefTableAction);
-	}
-
 	private void createSymActions() {
 		String popupGroup = "1";
 
-		openRefsAction = new DockingAction("Symbol References", getName()) {
+		openRefsAction = new DockingAction("Symbol References", getName(), KeyBindingType.SHARED) {
 			@Override
 			public void actionPerformed(ActionContext context) {
 				refProvider.open();
@@ -403,7 +359,7 @@ public class SymbolTablePlugin extends Plugin
 			new MenuData(new String[] { "Symbol References" }, icon, popupGroup));
 		openRefsAction.setToolBarData(new ToolBarData(icon));
 
-		openRefsAction.setDescription("Symbol References");
+		openRefsAction.setDescription("Display Symbol References");
 		tool.addLocalAction(symProvider, openRefsAction);
 
 		deleteAction = new DockingAction("Delete Symbols", getName()) {
@@ -437,32 +393,8 @@ public class SymbolTablePlugin extends Plugin
 		DockingAction editExternalLocationAction = new EditExternalLocationAction(this);
 		tool.addLocalAction(symProvider, editExternalLocationAction);
 
-		makeSelectionAction = new DockingAction("Make Selection", getName(), false) {
-			@Override
-			public void actionPerformed(ActionContext context) {
-				symProvider.makeSelection();
-			}
-
-			@Override
-			public boolean isEnabledForContext(ActionContext context) {
-				GhidraTable table = symProvider.getTable();
-				return table.getSelectedRowCount() > 0;
-			}
-
-			@Override
-			public boolean isAddToPopup(ActionContext context) {
-				return true;
-			}
-		};
-		icon = ResourceManager.loadImage("images/text_align_justify.png");
-		makeSelectionAction.setPopupMenuData(
-			new MenuData(new String[] { "Make Selection" }, icon, popupGroup));
-		makeSelectionAction.setToolBarData(new ToolBarData(icon));
-
-		makeSelectionAction.setDescription("Make a selection using selected Symbol addresses");
-		makeSelectionAction.setEnabled(false);
-
-		installDummyAction(makeSelectionAction);
+		makeSelectionAction = new MakeProgramSelectionAction(this, symProvider.getTable());
+		makeSelectionAction.getPopupMenuData().setMenuGroup(popupGroup);
 
 		tool.addLocalAction(symProvider, makeSelectionAction);
 
@@ -478,8 +410,6 @@ public class SymbolTablePlugin extends Plugin
 			}
 		};
 		icon = Icons.CONFIGURE_FILTER_ICON;
-		setFilterAction.setPopupMenuData(
-			new MenuData(new String[] { "Configure Symbol Filter" }, icon, popupGroup));
 		setFilterAction.setToolBarData(new ToolBarData(icon));
 
 		setFilterAction.setDescription("Configure Symbol Filter");
@@ -503,29 +433,6 @@ public class SymbolTablePlugin extends Plugin
 
 		DockingAction clearPinnedAction = new ClearPinSymbolAction(getName(), pinnedPopupGroup);
 		tool.addAction(clearPinnedAction);
-	}
-
-	private void installDummyAction(DockingAction action) {
-		DummyKeyBindingsOptionsAction dummyAction =
-			new DummyKeyBindingsOptionsAction(action.getName(), null);
-		tool.addAction(dummyAction);
-
-		ToolOptions options = tool.getOptions(ToolConstants.KEY_BINDINGS);
-		options.addOptionsChangeListener(this);
-
-		KeyStroke keyStroke = options.getKeyStroke(dummyAction.getFullName(), null);
-		if (keyStroke != null) {
-			action.setUnvalidatedKeyBindingData(new KeyBindingData(keyStroke));
-		}
-	}
-
-	@Override
-	public void optionsChanged(ToolOptions options, String optionName, Object oldValue,
-			Object newValue) {
-		if (optionName.startsWith(makeSelectionAction.getName())) {
-			KeyStroke keyStroke = (KeyStroke) newValue;
-			makeSelectionAction.setUnvalidatedKeyBindingData(new KeyBindingData(keyStroke));
-		}
 	}
 
 	private void createRefActions() {

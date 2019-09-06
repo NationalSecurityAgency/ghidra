@@ -69,7 +69,7 @@ public class PinnedSymbolTest extends AbstractGhidraHeadlessIntegrationTest {
 		// check function symbol - function should move, but pinned label should remain.
 		Symbol symbol = symbolTable.getPrimarySymbol(addr(0xc));
 		assertNotNull(symbol);
-		assertEquals(SymbolType.CODE, symbol.getSymbolType());
+		assertEquals(SymbolType.LABEL, symbol.getSymbolType());
 		assertEquals("MyFunction", symbol.getName());
 		symbol = symbolTable.getPrimarySymbol(addr(0x10c));
 		assertNotNull(symbol);
@@ -100,7 +100,7 @@ public class PinnedSymbolTest extends AbstractGhidraHeadlessIntegrationTest {
 		// check function symbol - function should move, but pinned label should remain.
 		Symbol symbol = symbolTable.getPrimarySymbol(addr(0xc));
 		assertNotNull(symbol);
-		assertEquals(SymbolType.CODE, symbol.getSymbolType());
+		assertEquals(SymbolType.LABEL, symbol.getSymbolType());
 		assertEquals("MyFunction", symbol.getName());
 		symbol = symbolTable.getPrimarySymbol(addr(0x20c));
 		assertNotNull(symbol);
@@ -128,7 +128,7 @@ public class PinnedSymbolTest extends AbstractGhidraHeadlessIntegrationTest {
 		// check the pinned function symbol is now just a pinned code symbol
 		Symbol symbol = symbolTable.getPrimarySymbol(addr(0xc));
 		assertNotNull(symbol);
-		assertEquals(SymbolType.CODE, symbol.getSymbolType());
+		assertEquals(SymbolType.LABEL, symbol.getSymbolType());
 		assertEquals("MyFunction", symbol.getName());
 		assertTrue(symbol.isPinned());
 	}

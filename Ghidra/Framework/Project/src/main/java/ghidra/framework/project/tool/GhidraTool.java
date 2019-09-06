@@ -25,6 +25,7 @@ import docking.ActionContext;
 import docking.DockingWindowManager;
 import docking.action.DockingAction;
 import docking.action.MenuData;
+import docking.tool.ToolConstants;
 import docking.widgets.OptionDialog;
 import ghidra.app.util.FileOpenDropHandler;
 import ghidra.framework.main.FrontEndOnly;
@@ -83,7 +84,7 @@ public class GhidraTool extends PluginTool {
 	@Override
 	protected DockingWindowManager createDockingWindowManager(boolean isDockable, boolean hasStatus,
 			boolean isModal) {
-		return new DockingWindowManager("EMPTY", null, this, isModal, isDockable, hasStatus,
+		return new DockingWindowManager(this, null, isModal, isDockable, hasStatus,
 			new OpenFileDropHandlerFactory(this));
 	}
 
@@ -175,13 +176,14 @@ public class GhidraTool extends PluginTool {
 	}
 
 	private void addCloseAction() {
-		DockingAction closeAction = new DockingAction("Close Tool", "Tool") {
+		DockingAction closeAction = new DockingAction("Close Tool", ToolConstants.TOOL_OWNER) {
 			@Override
 			public void actionPerformed(ActionContext context) {
 				close();
 			}
 		};
-		closeAction.setHelpLocation(new HelpLocation("Tool", closeAction.getName()));
+		closeAction.setHelpLocation(
+			new HelpLocation(ToolConstants.TOOL_HELP_TOPIC, closeAction.getName()));
 		closeAction.setEnabled(true);
 
 		closeAction.setMenuBarData(
@@ -192,7 +194,7 @@ public class GhidraTool extends PluginTool {
 
 	protected void addManagePluginsAction() {
 
-		configureToolAction = new DockingAction("Configure Tool", "Tool") {
+		configureToolAction = new DockingAction("Configure Tool", ToolConstants.TOOL_OWNER) {
 			@Override
 			public void actionPerformed(ActionContext context) {
 				showConfig();

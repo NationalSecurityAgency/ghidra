@@ -17,6 +17,7 @@ package ghidra.program.model.mem;
 
 import java.io.InputStream;
 import java.io.Serializable;
+import java.util.List;
 
 import ghidra.framework.store.LockException;
 import ghidra.program.model.address.Address;
@@ -137,6 +138,14 @@ public interface MemoryBlock extends Serializable, Comparable<MemoryBlock> {
 	public void setExecute(boolean e);
 
 	/**
+	 * Sets the read, write, execute permissions on this block
+	 * @param read the read permission
+	 * @param write the write permission
+	 * @param execute the execute permission
+	 */
+	public void setPermissions(boolean read, boolean write, boolean execute);
+
+	/**
 	 * Returns the value of the volatile property associated with this block.
 	 * This attribute is generally associated with block of I/O regions of memory.
 	 */
@@ -249,9 +258,19 @@ public interface MemoryBlock extends Serializable, Comparable<MemoryBlock> {
 	/**
 	 * Returns true if this memory block is a real loaded block (i.e. RAM) and not a special block
 	 * containing file header data such as debug sections.
+	 * @return true if this is a loaded block and not a "special" block such as a file header.
 	 */
 	public boolean isLoaded();
-	
+
+	/**
+	 * Returns a list of {@link MemoryBlockSourceInfo} objects for this block.  A block may consist of 
+	 * multiple sequences of bytes from different sources.  Each such source of bytes is described
+	 * by its respective SourceInfo object.  Blocks may have multiple sources after two or more
+	 * memory blocks have been joined together and the underlying byte sources can't be joined.
+	 * @return a list of SourceInfo objects, one for each different source of bytes in this block.
+	 */
+	public List<MemoryBlockSourceInfo> getSourceInfos();
+
 	/**
 	 * Determine if the specified address is contained within the reserved EXTERNAL block.
 	 * @param address address of interest
@@ -266,4 +285,5 @@ public interface MemoryBlock extends Serializable, Comparable<MemoryBlock> {
 		MemoryBlock block = memory.getBlock(address);
 		return block != null && MemoryBlock.EXTERNAL_BLOCK_NAME.equals(block.getName());
 	}
+
 }

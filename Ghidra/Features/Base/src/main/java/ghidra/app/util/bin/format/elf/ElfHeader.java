@@ -384,6 +384,10 @@ public class ElfHeader implements StructConverter, Writeable {
 						" linked to symbol table section " + symbolTableSection.getNameAsString() +
 						" affecting " + relocaBaseName);
 
+				if (section.getOffset() < 0) {
+					return;
+				}
+
 				relocationTableList.add(ElfRelocationTable.createElfRelocationTable(reader, this,
 					section, section.getOffset(), section.getAddress(), section.getSize(),
 					section.getEntrySize(), addendTypeReloc, symbolTable, sectionToBeRelocated));
@@ -445,6 +449,9 @@ public class ElfHeader implements StructConverter, Writeable {
 			if (relocTableLoadHeader == null) {
 				Msg.warn(this, "Failed to locate " + relocTableAddrType.name + " in memory at 0x" +
 					Long.toHexString(relocTableAddr));
+				return;
+			}
+			if (relocTableLoadHeader.getOffset() < 0) {
 				return;
 			}
 
@@ -649,6 +656,9 @@ public class ElfHeader implements StructConverter, Writeable {
 			if (sectionHeaders[i].getType() == ElfSectionHeaderConstants.SHT_SYMTAB ||
 				sectionHeaders[i].getType() == ElfSectionHeaderConstants.SHT_DYNSYM) {
 				ElfSectionHeader symbolTableSectionHeader = sectionHeaders[i];
+				if (symbolTableSectionHeader.getOffset() < 0) {
+					continue;
+				}
 
 				ElfSectionHeader stringTableSectionHeader =
 					sectionHeaders[symbolTableSectionHeader.getLink()];

@@ -15,21 +15,23 @@
  */
 package ghidra.app.util.bin.format.pdb;
 
-import ghidra.app.cmd.comments.SetCommentsCmd;
+import ghidra.app.cmd.comments.SetCommentCmd;
 import ghidra.app.util.PseudoDisassembler;
 import ghidra.app.util.PseudoInstruction;
-import ghidra.app.util.importer.MessageLog;
 import ghidra.program.model.address.Address;
-import ghidra.program.model.data.*;
+import ghidra.program.model.data.Composite;
+import ghidra.program.model.data.Structure;
 import ghidra.program.model.listing.CodeUnit;
 import ghidra.program.model.listing.Program;
 import ghidra.util.Conv;
-import ghidra.util.task.TaskMonitor;
 
 final class PdbUtil {
 
 	/**
 	 * Returns an address using the relative offset + image base.
+	 * @param program the {@link Program} for which to act
+	 * @param relativeOffset the relative offset
+	 * @return the calculated {@link Address}
 	 */
 	final static Address reladdr(Program program, int relativeOffset) {
 		return reladdr(program, relativeOffset & Conv.INT_MASK);
@@ -37,6 +39,9 @@ final class PdbUtil {
 
 	/**
 	 * Returns an address using the relative offset + image base.
+	 * @param program the {@link Program} for which to act
+	 * @param relativeOffset the relative offset
+	 * @return the calculated {@link Address}
 	 */
 	final static Address reladdr(Program program, long relativeOffset) {
 		return program.getImageBase().add(relativeOffset);
@@ -60,13 +65,18 @@ final class PdbUtil {
 			text = comment + "\n" + text;
 		}
 
-		SetCommentsCmd.createComment(program, address, text, commentType);
+		SetCommentCmd.createComment(program, address, text, commentType);
 
 	}
 
 	/**
 	 * Returns true is this symbol represents a function.
 	 * For example, "FunctionName@4" or "MyFunction@22".
+	 * @param program the {@link Program} for which to check
+	 * @param symbol the symbol to check
+	 * @param addr {@link Address} of the symbol
+	 * @param length the length for the check
+	 * @return {@code true} upon success
 	 */
 	final static boolean isFunction(Program program, String symbol, Address addr, int length) {
 		int atpos = symbol.lastIndexOf('@');
@@ -95,31 +105,31 @@ final class PdbUtil {
 		return false;
 	}
 
-	final static void ensureSize(int expectedLength, Composite composite, MessageLog log) {
-		int actualLength = composite.getLength();
-		if (actualLength < expectedLength) {
-
-			composite.setInternallyAligned(false);
-			if (composite instanceof Structure) {
-				Structure struct = (Structure) composite;
-				// if this is an empty structure, the structure will lie to us
-				//    and say it has one element so add 1 to growth factor
-				struct.growStructure(
-					expectedLength - actualLength + (struct.isNotYetDefined() ? 1 : 0));
-			}
-			// must be a union data type
-			else {
-				DataType datatype = new ArrayDataType(DataType.DEFAULT, expectedLength,
-					DataType.DEFAULT.getLength());
-				composite.add(datatype);
-			}
-		}
-		else if (actualLength > expectedLength) {
-			log.appendMsg("Warning: Composite data type generated from PDB has size mismatch. " +
-				composite.getName() + ": expected 0x" + Integer.toHexString(expectedLength) +
-				", but was 0x" + Integer.toHexString(actualLength));
-		}
-	}
+//	final static void ensureSize(int expectedLength, Composite composite, MessageLog log) {
+//		int actualLength = composite.getLength();
+//		if (actualLength < expectedLength) {
+//
+//			composite.setInternallyAligned(false);
+//			if (composite instanceof Structure) {
+//				Structure struct = (Structure) composite;
+//				// if this is an empty structure, the structure will lie to us
+//				//    and say it has one element so add 1 to growth factor
+//				struct.growStructure(
+//					expectedLength - actualLength + (struct.isNotYetDefined() ? 1 : 0));
+//			}
+//			// must be a union data type
+//			else {
+//				DataType datatype = new ArrayDataType(DataType.DEFAULT, expectedLength,
+//					DataType.DEFAULT.getLength());
+//				composite.add(datatype);
+//			}
+//		}
+//		else if (actualLength > expectedLength) {
+//			log.appendMsg("Warning: Composite data type generated from PDB has size mismatch. " +
+//				composite.getName() + ": expected 0x" + Integer.toHexString(expectedLength) +
+//				", but was 0x" + Integer.toHexString(actualLength));
+//		}
+//	}
 
 	final static void clearComponents(Composite composite) {
 		if (composite instanceof Structure) {
@@ -144,6 +154,8 @@ final class PdbUtil {
 	 * ...
 	 * 23rd pass
 	 * etc.
+	 * @param pass the number value of the pass to make pretty
+	 * @return the string result
 	 */
 	final static String getPass(int pass) {
 		if (pass > 20) {
@@ -158,33 +170,6 @@ final class PdbUtil {
 				return pass + "rd pass";
 		}
 		return pass + "th pass";
-	}
-
-	final static void createMandatoryDataTypes(PdbParserNEW parser, TaskMonitor monitor) {
-
-		DataTypeManager dtm = parser.getProgramDataTypeManager();
-
-		parser.addDataType(new TypedefDataType("wchar", WideCharDataType.dataType));
-
-		parser.addDataType(
-			new TypedefDataType("__int8", AbstractIntegerDataType.getSignedDataType(1, dtm)));
-		parser.addDataType(
-			new TypedefDataType("__uint8", AbstractIntegerDataType.getUnsignedDataType(1, dtm)));
-
-		parser.addDataType(
-			new TypedefDataType("__int16", AbstractIntegerDataType.getSignedDataType(2, dtm)));
-		parser.addDataType(
-			new TypedefDataType("__uint16", AbstractIntegerDataType.getUnsignedDataType(2, dtm)));
-
-		parser.addDataType(
-			new TypedefDataType("__int32", AbstractIntegerDataType.getSignedDataType(4, dtm)));
-		parser.addDataType(
-			new TypedefDataType("__uint32", AbstractIntegerDataType.getUnsignedDataType(2, dtm)));
-
-		parser.addDataType(
-			new TypedefDataType("__int64", AbstractIntegerDataType.getSignedDataType(8, dtm)));
-		parser.addDataType(
-			new TypedefDataType("__uint64", AbstractIntegerDataType.getUnsignedDataType(8, dtm)));
 	}
 
 }

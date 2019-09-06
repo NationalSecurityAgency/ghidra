@@ -21,7 +21,8 @@ import java.util.*;
 import javax.swing.*;
 
 import docking.*;
-import ghidra.util.SystemUtilities;
+import docking.actions.KeyBindingUtils;
+import ghidra.util.Swing;
 
 /**
  * Action that manages multiple PluginActions mapped to this action's key binding.
@@ -31,35 +32,17 @@ public class MultipleKeyAction extends DockingKeyBindingAction {
 
 	private ActionDialog dialog;
 
-	class ActionData {
-		DockingActionIf action;
-		ComponentProvider provider;
-
-		ActionData(DockingActionIf action, ComponentProvider provider) {
-			this.action = action;
-			this.provider = provider;
-		}
-
-		boolean isGlobalAction() {
-			return provider == null;
-		}
-
-		boolean isMyProvider(ComponentProvider otherProvider) {
-			return provider == otherProvider;
-		}
-	}
-
 	/**
 	 * Creates new MultipleKeyAction
 	 *
-	 * @param winMgr window manager used to determine context.
+	 * @param tool used to determine context
 	 * @param provider the provider, if any, associated with the action
 	 * @param action action that will be added to the list of actions bound to a keystroke
 	 * @param keyStroke the keystroke, if any, associated with the action
 	 */
-	public MultipleKeyAction(DockingWindowManager winMgr, ComponentProvider provider,
-			DockingActionIf action, KeyStroke keyStroke) {
-		super(winMgr, action, keyStroke);
+	public MultipleKeyAction(DockingTool tool, ComponentProvider provider, DockingActionIf action,
+			KeyStroke keyStroke) {
+		super(tool, action, keyStroke);
 		addAction(provider, action);
 	}
 
@@ -80,6 +63,7 @@ public class MultipleKeyAction extends DockingKeyBindingAction {
 			throw new IllegalArgumentException(
 				"KeyStrokes don't match - was: " + keyStroke + " new: " + keyBinding);
 		}
+
 		actions.add(new ActionData(action, provider));
 	}
 
@@ -133,11 +117,11 @@ public class MultipleKeyAction extends DockingKeyBindingAction {
 	@Override
 	public void actionPerformed(final ActionEvent event) {
 		// Build list of actions which are valid in current context
-		ComponentProvider localProvider = winMgr.getActiveComponentProvider();
+		ComponentProvider localProvider = tool.getActiveComponentProvider();
 		ActionContext localContext = getLocalContext(localProvider);
-		localContext.setSource(event.getSource());
+		localContext.setSourceObject(event.getSource());
 
-		ActionContext globalContext = winMgr.getGlobalContext();
+		ActionContext globalContext = tool.getGlobalContext();
 		List<ExecutableKeyActionAdapter> list = getValidContextActions(localContext, globalContext);
 
 		// If menu active, disable all key bindings
@@ -146,11 +130,10 @@ public class MultipleKeyAction extends DockingKeyBindingAction {
 		}
 
 		// If more than one action, prompt user for selection
-		JFrame rootFrame = winMgr.getRootFrame();
 		if (list.size() > 1) {
 			// popup dialog to show multiple actions
 			if (dialog == null) {
-				dialog = new ActionDialog(parseKeyStroke(keyStroke), list);
+				dialog = new ActionDialog(KeyBindingUtils.parseKeyStroke(keyStroke), list);
 			}
 			else {
 				dialog.setActionList(list);
@@ -159,17 +142,16 @@ public class MultipleKeyAction extends DockingKeyBindingAction {
 			// doing the show in an invoke later seems to fix a strange swing bug that lock up 
 			// the program if you tried to invoke a new action too quickly after invoking
 			// it the first time
-			SystemUtilities.runSwingLater(() -> winMgr.showDialog(dialog));
+			Swing.runLater(() -> DockingWindowManager.showDialog(dialog));
 		}
 		else if (list.size() == 1) {
 			final ExecutableKeyActionAdapter actionProxy = list.get(0);
-			winMgr.setStatusText("");
+			tool.setStatusInfo("");
 			actionProxy.execute();
 		}
 		else {
 			String name = (String) getValue(Action.NAME);
-			winMgr.setStatusText("Action (" + name + ") not valid in this context!");
-			rootFrame.getToolkit().beep();
+			tool.setStatusInfo("Action (" + name + ") not valid in this context!", true);
 		}
 	}
 
@@ -231,9 +213,9 @@ public class MultipleKeyAction extends DockingKeyBindingAction {
 
 	@Override
 	public KeyBindingPrecedence getKeyBindingPrecedence() {
-		ComponentProvider localProvider = winMgr.getActiveComponentProvider();
+		ComponentProvider localProvider = tool.getActiveComponentProvider();
 		ActionContext localContext = getLocalContext(localProvider);
-		ActionContext globalContext = winMgr.getGlobalContext();
+		ActionContext globalContext = tool.getGlobalContext();
 		List<ExecutableKeyActionAdapter> validActions =
 			getValidContextActions(localContext, globalContext);
 
@@ -274,5 +256,29 @@ public class MultipleKeyAction extends DockingKeyBindingAction {
 		}
 
 		return buildy.toString();
+	}
+
+	private class ActionData {
+		DockingActionIf action;
+		ComponentProvider provider;
+
+		ActionData(DockingActionIf action, ComponentProvider provider) {
+			this.action = action;
+			this.provider = provider;
+		}
+
+		boolean isGlobalAction() {
+			return provider == null;
+		}
+
+		boolean isMyProvider(ComponentProvider otherProvider) {
+			return provider == otherProvider;
+		}
+
+		@Override
+		public String toString() {
+			String providerString = provider == null ? "" : provider.toString() + " - ";
+			return providerString + action;
+		}
 	}
 }

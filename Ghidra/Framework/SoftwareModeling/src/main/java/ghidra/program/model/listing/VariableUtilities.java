@@ -263,6 +263,9 @@ public class VariableUtilities {
 	 */
 	public static DataType checkDataType(DataType dataType, boolean voidOK, int defaultSize,
 			Program program) throws InvalidInputException {
+		if (dataType instanceof BitFieldDataType) {
+			throw new InvalidInputException("Bitfields not supported for variable");
+		}
 		if (dataType == null) {
 			if (voidOK) {
 				return VoidDataType.dataType;

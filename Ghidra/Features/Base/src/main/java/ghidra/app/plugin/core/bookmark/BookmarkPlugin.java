@@ -22,8 +22,9 @@ import javax.swing.Icon;
 import javax.swing.SwingUtilities;
 
 import docking.ActionContext;
-import docking.DockingUtils;
+import docking.DockingTool;
 import docking.action.*;
+import docking.actions.PopupActionProvider;
 import docking.widgets.table.GTable;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.events.ProgramSelectionPluginEvent;
@@ -61,7 +62,7 @@ import resources.*;
 )
 //@formatter:on
 public class BookmarkPlugin extends ProgramPlugin
-		implements DomainObjectListener, PopupListener, BookmarkService {
+		implements DomainObjectListener, PopupActionProvider, BookmarkService {
 
 	private final static int MAX_DELETE_ACTIONS = 10;
 
@@ -72,7 +73,6 @@ public class BookmarkPlugin extends ProgramPlugin
 
 	private BookmarkProvider provider;
 	private DockingAction addAction;
-	private DockingAction showAction;
 	private DockingAction deleteAction;
 	private CreateBookmarkDialog createDialog;
 	private GoToService goToService;
@@ -112,19 +112,6 @@ public class BookmarkPlugin extends ProgramPlugin
 		addAction = new AddBookmarkAction(this);
 		addAction.setEnabled(true);
 		tool.addAction(addAction);
-
-		showAction = new DockingAction("Show Bookmarks", getName()) {
-			@Override
-			public void actionPerformed(ActionContext context) {
-				tool.showComponentProvider(provider, true);
-			}
-		};
-
-		showAction.setKeyBindingData(
-			new KeyBindingData(KeyEvent.VK_B, DockingUtils.CONTROL_KEY_MODIFIER_MASK));
-		showAction.setToolBarData(new ToolBarData(BookmarkNavigator.NOTE_ICON, "View"));
-		showAction.setDescription("Display All Bookmarks");
-		tool.addAction(showAction);
 
 		MultiIconBuilder builder = new MultiIconBuilder(Icons.CONFIGURE_FILTER_ICON);
 		builder.addLowerRightIcon(ResourceManager.loadImage("images/check.png"));
@@ -205,17 +192,13 @@ public class BookmarkPlugin extends ProgramPlugin
 	public synchronized void dispose() {
 		navUpdater.dispose();
 
-		tool.removePopupListener(this);
+		tool.removePopupActionProvider(this);
 		if (repaintMgr != null) {
 			repaintMgr.dispose();
 		}
 		if (addAction != null) {
 			addAction.dispose();
 			addAction = null;
-		}
-		if (showAction != null) {
-			showAction.dispose();
-			showAction = null;
 		}
 		if (provider != null) {
 			provider.dispose();
@@ -246,7 +229,7 @@ public class BookmarkPlugin extends ProgramPlugin
 		provider.setGoToService(goToService);
 		markerService = tool.getService(MarkerService.class);
 
-		tool.addPopupListener(this);
+		tool.addPopupActionProvider(this);
 
 		navUpdater = new NavUpdater();
 		repaintMgr = new SwingUpdateManager(500, () -> provider.repaint());
@@ -511,7 +494,7 @@ public class BookmarkPlugin extends ProgramPlugin
 	}
 
 	@Override
-	public List<DockingActionIf> getPopupActions(ActionContext context) {
+	public List<DockingActionIf> getPopupActions(DockingTool tool, ActionContext context) {
 		Object contextObject = context.getContextObject();
 		if (!(contextObject instanceof MarkerLocation)) {
 			return null;

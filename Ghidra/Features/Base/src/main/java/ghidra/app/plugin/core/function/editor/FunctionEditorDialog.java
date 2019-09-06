@@ -27,8 +27,7 @@ import javax.swing.border.CompoundBorder;
 import javax.swing.event.*;
 import javax.swing.table.TableCellEditor;
 
-import docking.DialogComponentProvider;
-import docking.DockingUtils;
+import docking.*;
 import docking.widgets.OptionDialog;
 import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.combobox.GComboBox;
@@ -73,7 +72,10 @@ public class FunctionEditorDialog extends DialogComponentProvider implements Mod
 	private JCheckBox storageCheckBox;
 	private JScrollPane scroll;
 	private JPanel previewPanel;
+
 	private FunctionSignatureTextField signatureTextField;
+	private UndoRedoKeeper signatureFieldUndoRedoKeeper;
+
 	private MyGlassPane glassPane;
 	private JPanel centerPanel;
 
@@ -94,7 +96,6 @@ public class FunctionEditorDialog extends DialogComponentProvider implements Mod
 		addCancelButton();
 		glassPane = new MyGlassPane();
 		dataChanged();
-		setFocusComponent(nameField);
 	}
 
 	private static String createTitle(Function function) {
@@ -120,6 +121,23 @@ public class FunctionEditorDialog extends DialogComponentProvider implements Mod
 			}
 		}
 		return strBuilder.toString();
+	}
+
+	@Override
+	protected void dialogShown() {
+
+		// put user focus in the signature field, ready to take keyboard input
+		signatureTextField.requestFocus();
+		Swing.runLater(() -> {
+			int start = model.getFunctionNameStartPosition();
+			int end = model.getNameString().length();
+			signatureTextField.setCaretPosition(end);
+			signatureTextField.setSelectionStart(start);
+			signatureTextField.setSelectionEnd(start + end);
+
+			// reset any edits that happened before the user interacted with the field
+			signatureFieldUndoRedoKeeper.clear();
+		});
 	}
 
 	@Override
@@ -223,6 +241,9 @@ public class FunctionEditorDialog extends DialogComponentProvider implements Mod
 	private JComponent createSignatureTextPanel() {
 		JPanel panel = new JPanel(new BorderLayout());
 		signatureTextField = new FunctionSignatureTextField();
+
+		signatureFieldUndoRedoKeeper = DockingUtils.installUndoRedo(signatureTextField);
+
 		Font font = signatureTextField.getFont();
 		signatureTextField.setFont(font.deriveFont(18.0f));
 		panel.add(signatureTextField);
@@ -559,7 +580,13 @@ public class FunctionEditorDialog extends DialogComponentProvider implements Mod
 	private void updatePreviewField() {
 		String preview = model.getFunctionSignatureTextFromModel();
 		int caretPosition = signatureTextField.getCaretPosition();
-		signatureTextField.setText(preview);
+
+		// don't cause undo/redo updates if the text has not changed
+		String oldText = signatureTextField.getText();
+		if (!preview.equals(oldText)) {
+			signatureTextField.setText(preview);
+		}
+
 		if (!model.hasValidName()) {
 			signatureTextField.setError(model.getFunctionNameStartPosition(),
 				model.getNameString().length());

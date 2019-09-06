@@ -79,18 +79,7 @@ import ghidra.program.model.listing.Program;
  *   (Use/add to PcodeTextEmitter.java to actually emit pcode text)
  * See ConstantPoolJava.java for examples of the use of the CPOOL pcode op.
  * 
- * TODO:
- *   1) For the lookupswitch op, the disassembly is correct but the decompilation is not.
- *      There are several possible ways of modeling the instruction in pcode - either using
- *      injection (SwitchMethods.java) or pcode (JVM.slaspec).  In all cases, there seems to
- *      be an issue with getting the decompiler to follow pointers to the various switch clauses.
- *      The file LookupSwitchHex.java in the resource directory contains a class file with 
- *      4 methods with switch statements.  Currently the first method is modeled using a
- *      pcode loop and the last three are modeled using pcode injection (which is possible because
- *      there are actually 4 separate lookupswitch instructions, the only difference is the amount 
- *      of padding bytes).
- * 
- * possible improvements:
+  * possible improvements:
  *
  *   2) incorporate exceptions.
  *   6) decide how to display the information used in an invokedynamic instruction
@@ -121,7 +110,6 @@ public class PcodeInjectLibraryJava extends PcodeInjectLibrary {
 	public static final String LDC = "ldcCallOther";
 	public static final String LDC2_W = "ldc2_wCallOther";
 	public static final String LDC_W = "ldc_wCallOther";
-	public static final String LOOKUP_SWITCH = "lookupswitchCallOther";
 	public static final String MULTIANEWARRAY = "multianewarrayCallOther";
 
 	public static final String PUTFIELD = "putFieldCallOther";
@@ -149,7 +137,6 @@ public class PcodeInjectLibraryJava extends PcodeInjectLibrary {
 		implementedOps.add(LDC);
 		implementedOps.add(LDC2_W);
 		implementedOps.add(LDC_W);
-		implementedOps.add(LOOKUP_SWITCH);
 		implementedOps.add(MULTIANEWARRAY);
 		implementedOps.add(PUTFIELD);
 		implementedOps.add(PUTSTATIC);
@@ -170,8 +157,9 @@ public class PcodeInjectLibraryJava extends PcodeInjectLibrary {
 	@Override
 	protected InjectPayloadSleigh allocateInject(String sourceName, String name, int tp) {
 		InjectPayloadJava payload = null;
-		if (tp != InjectPayload.CALLOTHERFIXUP_TYPE)
+		if (tp != InjectPayload.CALLOTHERFIXUP_TYPE) {
 			return super.allocateInject(sourceName, name, tp);
+		}
 		switch (name) {
 			case GETFIELD:
 				payload = new InjectGetField(sourceName, language);
@@ -198,9 +186,6 @@ public class PcodeInjectLibraryJava extends PcodeInjectLibrary {
 			case LDC2_W:
 			case LDC_W:
 				payload = new InjectLdc(sourceName, language);
-				break;
-			case LOOKUP_SWITCH:
-				payload = new InjectLookupSwitch(sourceName, language);
 				break;
 			case MULTIANEWARRAY:
 				payload = new InjectMultiANewArray(sourceName, language);

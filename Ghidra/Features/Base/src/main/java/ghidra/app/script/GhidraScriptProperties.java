@@ -23,7 +23,7 @@ import generic.jar.ResourceFile;
 import ghidra.util.Msg;
 
 /**
- * Handles processing for a .properties files associated with a GhidraScript (.properties file and
+ * Handles processing for .properties files associated with a GhidraScript (.properties file and
  * script should share the same basename).
  * 
  * This should only be called/used by the GhidraScript class. 
@@ -43,6 +43,7 @@ public class GhidraScriptProperties {
 	 * 
 	 * @param scriptLocation  location of the GhidraScript
 	 * @param newBaseName  name of the GhidraScript (without the extension)
+	 * @throws IOException if there is an exception loading the properties file
 	 */
 	protected void loadGhidraScriptProperties(ResourceFile scriptLocation, String newBaseName)
 			throws IOException {
@@ -79,8 +80,9 @@ public class GhidraScriptProperties {
 	/**
 	 * Look for a .properties file corresponding to the basename in the given locations.
 	 * 
-	 * @param possibleLocations   possible locations where the .properties file can be found
-	 * @param basename	name of the GhidraScript (without the extension)
+	 * @param possibleLocations possible locations where the .properties file can be found
+	 * @param newBaseName name of the GhidraScript (without the extension)
+	 * @throws IOException if there is an exception loading the properties file
 	 */
 	protected void loadGhidraScriptProperties(List<ResourceFile> possibleLocations,
 			String newBaseName) throws IOException {
@@ -98,6 +100,7 @@ public class GhidraScriptProperties {
 	 * Load a .properties file.
 	 * 
 	 * @param file  the .properties file
+	 * @throws IOException if there is an exception loading the properties file
 	 */
 	protected void loadGhidraScriptProperties(ResourceFile file) throws IOException {
 

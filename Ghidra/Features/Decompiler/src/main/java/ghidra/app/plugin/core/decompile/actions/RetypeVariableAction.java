@@ -77,8 +77,9 @@ public class RetypeVariableAction extends DockingAction {
 		}
 		if (tokenAtCursor instanceof ClangFieldToken) {
 			DataType dt = RenameVariableAction.getStructDataType(tokenAtCursor);
-			if (dt == null)
+			if (dt == null) {
 				return false;
+			}
 			getPopupMenuData().setMenuItemName("Retype Field");
 			return true;
 		}
@@ -92,11 +93,13 @@ public class RetypeVariableAction extends DockingAction {
 		HighVariable variable = tokenAtCursor.getHighVariable();
 		if (variable == null) {
 			Address addr = RenameVariableAction.getStorageAddress(tokenAtCursor, controller);
-			if (addr == null)
+			if (addr == null) {
 				return false;
+			}
 			variable = RenameVariableAction.forgeHighVariable(addr, controller);
-			if (variable == null)
+			if (variable == null) {
 				return false;
+			}
 		}
 		if (variable instanceof HighConstant) {
 //			getPopupMenuData().setMenuItemName("Retype Constant");
@@ -146,10 +149,12 @@ public class RetypeVariableAction extends DockingAction {
 				return;
 			}
 			comp = struct.getComponentAt(offset);
-			if (comp == null)
+			if (comp == null) {
 				dataType = chooseDataType(DataType.DEFAULT);
-			else
+			}
+			else {
 				dataType = chooseDataType(comp.getDataType());
+			}
 		}
 		else if (tokenAtCursor.Parent() instanceof ClangReturnType) {
 			ClangReturnType parent = (ClangReturnType) tokenAtCursor.Parent();
@@ -164,24 +169,30 @@ public class RetypeVariableAction extends DockingAction {
 			variable = tokenAtCursor.getHighVariable();
 			if (variable == null) {
 				Address addr = RenameVariableAction.getStorageAddress(tokenAtCursor, controller);
-				if (addr == null)
+				if (addr == null) {
 					return;
+				}
 				variable = RenameVariableAction.forgeHighVariable(addr, controller);
-				if (variable == null)
+				if (variable == null) {
 					return;
+				}
 			}
 			dataType = chooseDataType(variable.getDataType());
 		}
-		if (dataType == null)
+		if (dataType == null) {
 			return;
-		if (struct != null)
+		}
+		if (struct != null) {
 			retypeStructVariable(struct, comp, dataType);
-		else
+		}
+		else {
 			retypeVariable(variable, tokenAtCursor.getVarnode(), dataType);
+		}
 	}
 
 	private void retypeReturnType(DataType dataType, ClangReturnType parent) {
 		Program program = controller.getProgram();
+		DataTypeManager dataTypeManager = program.getDataTypeManager();
 		HighFunction hfunction = getHighFunctionFromReturnTypeToken(parent);
 		if (hfunction == null) {
 			return;
@@ -199,8 +210,12 @@ public class RetypeVariableAction extends DockingAction {
 			}
 		}
 		Function function = hfunction.getFunction();
+		boolean successfulMod = false;
 		int transactionID = program.startTransaction("Retype return type");
 		try {
+			if (dataType.getDataTypeManager() != dataTypeManager) {
+				dataType = dataTypeManager.resolve(dataType, null);
+			}
 			if (commitRequired) {
 				try {
 					HighFunctionDBUtil.commitParamsToDatabase(hfunction, true,
@@ -214,12 +229,13 @@ public class RetypeVariableAction extends DockingAction {
 				}
 			}
 			function.setReturnType(dataType, SourceType.USER_DEFINED);
+			successfulMod = true;
 		}
 		catch (InvalidInputException e) {
 			Msg.showError(this, tool.getToolFrame(), "Retype Failed",
 				"Failed to re-type return type '" + getName() + "': " + e.getMessage());
 		}
-		program.endTransaction(transactionID, true);
+		program.endTransaction(transactionID, successfulMod);
 	}
 
 	private HighFunction getHighFunctionFromReturnTypeToken(ClangReturnType returnType) {
@@ -278,8 +294,13 @@ public class RetypeVariableAction extends DockingAction {
 			}
 		}
 		Program program = controller.getProgram();
+		DataTypeManager dataTypeManager = program.getDataTypeManager();
+		boolean successfulMod = false;
 		int transaction = program.startTransaction("Retype Variable");
 		try {
+			if (dt.getDataTypeManager() != dataTypeManager) {
+				dt = dataTypeManager.resolve(dt, null);
+			}
 			if (commitRequired) {
 				try {
 					HighFunctionDBUtil.commitParamsToDatabase(hfunction, true,
@@ -294,6 +315,7 @@ public class RetypeVariableAction extends DockingAction {
 				}
 			}
 			HighFunctionDBUtil.updateDBVariable(var, null, dt, SourceType.USER_DEFINED);
+			successfulMod = true;
 		}
 		catch (DuplicateNameException e) {
 			throw new AssertException("Unexpected exception", e);
@@ -303,7 +325,7 @@ public class RetypeVariableAction extends DockingAction {
 				"Failed to re-type variable '" + var.getName() + "': " + e.getMessage());
 		}
 		finally {
-			program.endTransaction(transaction, true);
+			program.endTransaction(transaction, successfulMod);
 		}
 	}
 
@@ -317,17 +339,17 @@ public class RetypeVariableAction extends DockingAction {
 	 */
 	private int getEndComponentIndex(Structure struct, DataTypeComponent comp, DataType newtype) {
 		int newlen = newtype.getLength();
-		if (newlen <= 0)
+		if (newlen <= 0) {
 			return -1; // Don't support variable length types
+		}
 		DataType curtype = comp.getDataType();
 		newlen -= curtype.getLength();
-		if (newlen < 0)
-			return -1; // new size is smaller than original size
 		int index = comp.getOrdinal();
 		while (newlen > 0) {
 			index += 1;
-			if (index >= struct.getNumComponents())
+			if (index >= struct.getNumComponents()) {
 				return -1; // Not enough space in the structure
+			}
 			comp = struct.getComponent(index);
 //			String nm = comp.getFieldName();
 //			if ((nm !=null)&&(nm.length()!=0))
@@ -335,17 +357,18 @@ public class RetypeVariableAction extends DockingAction {
 			curtype = comp.getDataType();
 //			if (!Undefined.isUndefined(curtype))
 //				return -1;						// Overlaps non-undefined datatype
-			if (curtype != DataType.DEFAULT)
+			if (curtype != DataType.DEFAULT) {
 				return -1; // Only allow overwrite of placeholder components
+			}
 			newlen -= curtype.getLength();
 		}
-		if (newlen < 0)
-			return -1; // Partial field
 		return index;
 	}
 
 	private void retypeStructVariable(Structure dt, DataTypeComponent comp, DataType newtype) {
 		Program program = controller.getProgram();
+		DataTypeManager dataTypeManager = program.getDataTypeManager();
+		boolean successfulMod = false;
 		if (comp == null) {
 			if (!dt.isNotYetDefined()) {
 				Msg.showError(this, tool.getToolFrame(), "Retype Failed",
@@ -355,72 +378,90 @@ public class RetypeVariableAction extends DockingAction {
 			// note if we reach here the offset must be zero, so assume we are inserting newtype
 			int transaction = program.startTransaction("Retype Structure Field");
 			try {
+				// Make sure datatype is using the program's data organization before testing fit
+				if (newtype.getDataTypeManager() != dataTypeManager) {
+					newtype = dataTypeManager.resolve(newtype, null);
+				}
 				dt.insert(0, newtype);
+				successfulMod = true;
 			}
 			finally {
-				program.endTransaction(transaction, true);
+				program.endTransaction(transaction, successfulMod);
 			}
-			return;
-		}
-		int startind = comp.getOrdinal();
-		int endind = getEndComponentIndex(dt, comp, newtype);
-		if (endind < 0) {
-			Msg.showError(this, tool.getToolFrame(), "Retype Failed",
-				"Failed to re-type structure '" + dt.getName() + "': Datatype did not fit");
 			return;
 		}
 		int transaction = program.startTransaction("Retype Structure Field");
 		try {
+			// Make sure datatype is using the program's data organization before testing fit
+			if (newtype.getDataTypeManager() != dataTypeManager) {
+				newtype = dataTypeManager.resolve(newtype, null);
+			}
+			int startind = comp.getOrdinal();
+			int endind = getEndComponentIndex(dt, comp, newtype);
+			if (endind < 0) {
+				Msg.showError(this, tool.getToolFrame(), "Retype Failed",
+					"Failed to re-type structure '" + dt.getName() + "': Datatype did not fit");
+				return;
+			}
 			for (int i = endind; i > startind; --i) { // Clear all but first field
 				dt.clearComponent(i);
 			}
 			dt.replaceAtOffset(comp.getOffset(), newtype, newtype.getLength(), comp.getFieldName(),
 				comp.getComment());
+			successfulMod = true;
 		}
 		finally {
-			program.endTransaction(transaction, true);
+			program.endTransaction(transaction, successfulMod);
 		}
 	}
 
 	/**
-	 * Compare a HighFunction's idea of what the signature is versus what the underlying Function thinks
-	 * and returns true if there is a difference.  If all the input parameters have the same storage and type,
-	 * @param var
-	 * @param hfunction
-	 * @return true if a full commit is required
+	 * Compare the given HighFunction's idea of the prototype with the Function's idea.
+	 * Return true if there is a difference. If a specific parameter is being changed,
+	 * it can be passed in indicating that slot can be skipped during the comparison.
+	 * @param var (if not null) is a specific parameter to skip the check for
+	 * @param hfunction is the given HighFunction
+	 * @return true if there is a difference (and a full commit is required)
 	 */
 	public static boolean checkFullCommit(HighVariable var, HighFunction hfunction) {
-		if ((var != null) && (!(var instanceof HighParam)))
+		if ((var != null) && (!(var instanceof HighParam))) {
 			return false;
+		}
 		Function function = hfunction.getFunction();
 		Parameter[] parameters = function.getParameters();
 		LocalSymbolMap localSymbolMap = hfunction.getLocalSymbolMap();
 		int numParams = localSymbolMap.getNumParams();
-		if (numParams != parameters.length)
+		if (numParams != parameters.length) {
 			return true;
+		}
 
 		int skipslot = -1;
-		if (var != null)
+		if (var != null) {
 			skipslot = ((HighParam) var).getSlot();
+		}
 		for (int i = 0; i < numParams; i++) {
 			HighParam param = localSymbolMap.getParam(i);
-			if (param.getSlot() != i)		// Slot must match
+			if (param.getSlot() != i) {
 				return true;
+			}
 			VariableStorage storage = param.getStorage();
-			if (!storage.equals(parameters[i].getVariableStorage()))		// Storage must match
+			if (!storage.equals(parameters[i].getVariableStorage())) {
 				return true;
+			}
 			if (skipslot != i) {	// Compare datatypes unless it is the specific -var- we are skipping
-				if (!param.getDataType().isEquivalent(parameters[i].getDataType()))
+				if (!param.getDataType().isEquivalent(parameters[i].getDataType())) {
 					return true;
+				}
 			}
 		}
 
-		if (var != null) {		// A null var indicates we are changing the returntype anyway, so we don't need to check it
+		if (var != null) {		// A null var indicates we are changing the return type anyway, so we don't need to check it
 			DataType funcReturnType = function.getReturnType();
 			if (funcReturnType != DataType.DEFAULT) {
 				DataType hfuncReturnType = hfunction.getFunctionPrototype().getReturnType();
-				if (!funcReturnType.equals(hfuncReturnType))
+				if (!funcReturnType.equals(hfuncReturnType)) {
 					return true;
+				}
 			}
 		}
 

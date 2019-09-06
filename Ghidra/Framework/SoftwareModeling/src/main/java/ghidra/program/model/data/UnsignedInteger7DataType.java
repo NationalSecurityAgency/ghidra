@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,20 +30,23 @@ public class UnsignedInteger7DataType extends AbstractIntegerDataType {
 		super("uint7", false, dtm);
 	}
 
+	@Override
 	public String getDescription() {
 		return "Unsigned 7-Byte Integer";
 	}
 
+	@Override
 	public int getLength() {
 		return 7;
 	}
 
 	@Override
-	public DataType getOppositeSignednessDataType() {
-		return Integer7DataType.dataType;
+	public Integer7DataType getOppositeSignednessDataType() {
+		return Integer7DataType.dataType.clone(getDataTypeManager());
 	}
 
-	public DataType clone(DataTypeManager dtm) {
+	@Override
+	public UnsignedInteger7DataType clone(DataTypeManager dtm) {
 		if (dtm == getDataTypeManager()) {
 			return this;
 		}

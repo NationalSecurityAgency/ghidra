@@ -24,7 +24,6 @@ import ghidra.app.plugin.processors.generic.MemoryBlockDefinition;
 import ghidra.app.util.Option;
 import ghidra.app.util.OptionUtils;
 import ghidra.app.util.bin.ByteProvider;
-import ghidra.app.util.importer.MemoryConflictHandler;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.framework.model.DomainFolder;
 import ghidra.framework.model.DomainObject;
@@ -89,14 +88,13 @@ public abstract class AbstractProgramLoader implements Loader {
 	 * @param messageLog The message log.
 	 * @param program The {@link Program} to load into.
 	 * @param monitor A cancelable task monitor.
-	 * @param memoryConflictHandler How to handle memory conflicts that occur during the load.
 	 * @return True if the file was successfully loaded; otherwise, false.
 	 * @throws IOException if there was an IO-related problem loading.
 	 * @throws CancelledException if the user cancelled the load.
 	 */
 	protected abstract boolean loadProgramInto(ByteProvider provider, LoadSpec loadSpec,
-			List<Option> options, MessageLog messageLog, Program program, TaskMonitor monitor,
-			MemoryConflictHandler memoryConflictHandler) throws IOException, CancelledException;
+			List<Option> options, MessageLog messageLog, Program program, TaskMonitor monitor)
+			throws IOException, CancelledException;
 
 	@Override
 	public final List<DomainObject> load(ByteProvider provider, String name, DomainFolder folder,
@@ -157,8 +155,8 @@ public abstract class AbstractProgramLoader implements Loader {
 
 	@Override
 	public final boolean loadInto(ByteProvider provider, LoadSpec loadSpec, List<Option> options,
-			MessageLog messageLog, Program program, TaskMonitor monitor,
-			MemoryConflictHandler memoryConflictHandler) throws IOException, CancelledException {
+			MessageLog messageLog, Program program, TaskMonitor monitor)
+			throws IOException, CancelledException {
 
 		if (!loadSpec.isComplete()) {
 			return false;
@@ -168,8 +166,7 @@ public abstract class AbstractProgramLoader implements Loader {
 		int transactionID = program.startTransaction("Loading - " + getName());
 		boolean success = false;
 		try {
-			success = loadProgramInto(provider, loadSpec, options, messageLog, program, monitor,
-				memoryConflictHandler);
+			success = loadProgramInto(provider, loadSpec, options, messageLog, program, monitor);
 			return success;
 		}
 		finally {
@@ -191,7 +188,7 @@ public abstract class AbstractProgramLoader implements Loader {
 	}
 
 	@Override
-	public String validateOptions(ByteProvider provider, LoadSpec loadSpec, List<Option> options) {
+	public String validateOptions(ByteProvider provider, LoadSpec loadSpec, List<Option> options, Program program) {
 		if (options != null) {
 			for (Option option : options) {
 				String name = option.getName();

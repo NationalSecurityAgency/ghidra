@@ -23,8 +23,6 @@ import java.util.*;
 import javax.swing.*;
 import javax.swing.tree.TreePath;
 
-import org.junit.Assert;
-
 import docking.*;
 import docking.action.DockingActionIf;
 import docking.test.AbstractDockingTest;
@@ -341,15 +339,14 @@ public class FrontEndTestEnv {
 		return new ArrayList<>(Arrays.asList(tools));
 	}
 
-	public List<DockingActionIf> getFrontEndActions() {
-		return frontEndTool.getDockingActionsByOwnerName("FrontEndPlugin");
+	public Set<DockingActionIf> getFrontEndActions() {
+		return AbstractDockingTest.getActionsByOwner(frontEndTool, "FrontEndPlugin");
 	}
 
 	public DockingActionIf getAction(String actionName) {
-		List<DockingActionIf> a =
-			frontEndTool.getDockingActionsByFullActionName(actionName + " (FrontEndPlugin)");
-		Assert.assertEquals(1, a.size());
-		return a.get(0);
+		DockingActionIf action =
+			AbstractDockingTest.getAction(frontEndTool, "FrontEndPlugin", actionName);
+		return action;
 	}
 
 	public void performFrontEndAction(DockingActionIf action) {
@@ -416,7 +413,7 @@ public class FrontEndTestEnv {
 		waitForTasks();
 	}
 
-	protected void editProgram(Program program, ModifyProgramCallback modifyProgramCallback)
+	public void editProgram(Program program, ModifyProgramCallback modifyProgramCallback)
 			throws CancelledException, IOException {
 		int transactionID = program.startTransaction("test");
 		try {
@@ -431,7 +428,7 @@ public class FrontEndTestEnv {
 		}
 	}
 
-	protected void editProgram(DomainFile df, Object consumer, ModifyProgramCallback edit)
+	public void editProgram(DomainFile df, Object consumer, ModifyProgramCallback edit)
 			throws Exception {
 
 		Program program = (Program) df.getDomainObject(this, true, false, TaskMonitor.DUMMY);
@@ -445,7 +442,7 @@ public class FrontEndTestEnv {
 		}
 	}
 
-	interface ModifyProgramCallback {
+	public interface ModifyProgramCallback {
 		public void call(Program p) throws Exception;
 	}
 }

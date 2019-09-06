@@ -134,7 +134,7 @@ public abstract class AbstractFunctionGraphVertex implements FGVertex {
 		return doGetComponent();
 	}
 
-	FGController getController() {
+	public FGController getController() {
 		return controller;
 	}
 

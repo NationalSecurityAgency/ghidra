@@ -20,14 +20,15 @@ import java.io.IOException;
 import java.util.*;
 
 import generic.continues.RethrowContinuesFactory;
+import ghidra.app.util.MemoryBlockUtils;
 import ghidra.app.util.Option;
 import ghidra.app.util.bin.*;
 import ghidra.app.util.bin.format.macho.*;
 import ghidra.app.util.bin.format.macho.prelink.PrelinkMap;
 import ghidra.app.util.bin.format.ubi.*;
-import ghidra.app.util.importer.MemoryConflictHandler;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.framework.model.DomainFolder;
+import ghidra.program.database.mem.FileBytes;
 import ghidra.program.model.listing.Program;
 import ghidra.util.LittleEndianDataConverter;
 import ghidra.util.exception.CancelledException;
@@ -77,19 +78,20 @@ public class MachoLoader extends AbstractLibrarySupportLoader {
 
 	@Override
 	public void load(ByteProvider provider, LoadSpec loadSpec, List<Option> options,
-			Program program, MemoryConflictHandler handler, TaskMonitor monitor, MessageLog log)
-			throws IOException {
+			Program program, TaskMonitor monitor, MessageLog log) throws IOException {
 
 		try {
+			FileBytes fileBytes = MemoryBlockUtils.createFileBytes(program, provider, monitor);
+
 			// A Mach-O file may contain PRELINK information.  If so, we use a special
 			// program builder that knows how to deal with it.
 			List<PrelinkMap> prelinkList = MachoPrelinkUtils.parsePrelinkXml(provider, monitor);
 			if (!prelinkList.isEmpty()) {
-				MachoPrelinkProgramBuilder.buildProgram(program, provider, prelinkList, log, handler,
-					monitor);
+				MachoPrelinkProgramBuilder.buildProgram(program, provider, fileBytes, prelinkList,
+					log, monitor);
 			}
 			else {
-				MachoProgramBuilder.buildProgram(program, provider, log, handler, monitor);
+				MachoProgramBuilder.buildProgram(program, provider, fileBytes, log, monitor);
 			}
 		}
 		catch (Exception e) {
@@ -132,7 +134,7 @@ public class MachoLoader extends AbstractLibrarySupportLoader {
 				log.appendMsg("WARNING! No archives found in the UBI: " + libFile);
 				return false;
 			}
-			
+
 			for (FatArch architecture : architectures) {
 
 				// Note: The creation of the byte provider that we pass to the importer deserves a

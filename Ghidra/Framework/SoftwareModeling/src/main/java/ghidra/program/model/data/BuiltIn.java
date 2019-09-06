@@ -30,27 +30,28 @@ import ghidra.util.exception.DuplicateNameException;
  * searched for in the classpath and added automatically to the available
  * data types in the data type manager.
  */
-public abstract class BuiltIn extends DataTypeImpl implements BuiltInDataType { 
-	
-	private static SettingsDefinition[] STANDARD_SETTINGS_DEFINITIONS = new SettingsDefinition[] {
-		MutabilitySettingsDefinition.DEF
-	};
-	
+public abstract class BuiltIn extends DataTypeImpl implements BuiltInDataType {
+
+	private static SettingsDefinition[] STANDARD_SETTINGS_DEFINITIONS =
+		new SettingsDefinition[] { MutabilitySettingsDefinition.DEF };
+
 	private SettingsDefinition[] settingDefs;
 
 	public BuiltIn(CategoryPath path, String name, DataTypeManager dataMgr) {
 		// Change any category path so that it is under the built in category.
-		super(path==null ? CategoryPath.ROOT : path, name, null, BuiltInSourceArchive.INSTANCE, NO_SOURCE_SYNC_TIME, NO_LAST_CHANGE_TIME, dataMgr);
+		super(path == null ? CategoryPath.ROOT : path, name, null, BuiltInSourceArchive.INSTANCE,
+			NO_SOURCE_SYNC_TIME, NO_LAST_CHANGE_TIME, dataMgr);
 	}
-	
+
 	/**
 	 * Returns a clone of this built-in DataType
 	 * @see ghidra.program.model.data.DataType#copy(ghidra.program.model.data.DataTypeManager)
 	 */
+	@Override
 	public final DataType copy(DataTypeManager dtm) {
 		return clone(dtm);
 	}
-	
+
 	/**
 	 * Gets a list of all the settingsDefinitions used by this datatype.
 	 * @return a list of the settingsDefinitions used by this datatype.
@@ -82,19 +83,19 @@ public abstract class BuiltIn extends DataTypeImpl implements BuiltInDataType {
 		}
 		return getClass() == dt.getClass();
 	}
-	
+
 	@Override
 	public void dataTypeSizeChanged(DataType dt) {
 		// Default implementation does nothing.
 	}
-	
+
 	@Override
 	public final void setCategoryPath(CategoryPath path) throws DuplicateNameException {
 		// Default implementation does nothing.
 	}
 
 	@Override
-	public final void setName(String name) throws InvalidNameException, DuplicateNameException {
+	public final void setName(String name) throws InvalidNameException {
 		// Default implementation does nothing.
 	}
 
@@ -105,12 +106,12 @@ public abstract class BuiltIn extends DataTypeImpl implements BuiltInDataType {
 	}
 
 	@Override
-    public final void addParent(DataType dt) {
+	public final void addParent(DataType dt) {
 		// Default implementation does nothing.
 	}
 
 	@Override
-    public final void removeParent(DataType dt) {
+	public final void removeParent(DataType dt) {
 		// Default implementation does nothing.
 	}
 
@@ -118,7 +119,7 @@ public abstract class BuiltIn extends DataTypeImpl implements BuiltInDataType {
 	public void dataTypeNameChanged(DataType dt, String oldName) {
 		// Default implementation does nothing.
 	}
-	
+
 	@Override
 	public void dataTypeReplaced(DataType oldDt, DataType newDt) {
 		// Default implementation does nothing.
@@ -137,12 +138,12 @@ public abstract class BuiltIn extends DataTypeImpl implements BuiltInDataType {
 //		dt.dataMgr = dataManager;
 //		return dt;
 //	}
-    
+
 	@Override
 	public boolean dependsOn(DataType dt) {
 		return false;
 	}
-	
+
 	@Override
 	public UniversalID getUniversalID() {
 		return null;
@@ -163,25 +164,29 @@ public abstract class BuiltIn extends DataTypeImpl implements BuiltInDataType {
 	}
 
 	protected String getCTypeDeclaration(String typeName, String ctypeName, boolean useDefine) {
-		return useDefine ?
-				"#define " + typeName + "    " + ctypeName :
-				"typedef " + ctypeName + "    " + typeName + ";";
+		return useDefine ? "#define " + typeName + "    " + ctypeName
+				: "typedef " + ctypeName + "    " + typeName + ";";
 	}
-	
-	protected String getCTypeDeclaration(String typeName, int typeLen, boolean signed, DataOrganization dataOrganization, boolean useDefine) {
-		return getCTypeDeclaration(typeName, dataOrganization.getIntegerCTypeApproximation(typeLen, signed), useDefine);
+
+	protected String getCTypeDeclaration(String typeName, int typeLen, boolean signed,
+			DataOrganization dataOrganization, boolean useDefine) {
+		return getCTypeDeclaration(typeName,
+			dataOrganization.getIntegerCTypeApproximation(typeLen, signed), useDefine);
 	}
-	
-	protected String getCTypeDeclaration(BuiltIn dt, boolean signed, DataOrganization dataOrganization, boolean useDefine) {
-		return getCTypeDeclaration(dt.getDecompilerDisplayName(DecompilerLanguage.C_LANGUAGE), dataOrganization.getIntegerCTypeApproximation(dt.getLength(), signed), useDefine);
+
+	protected String getCTypeDeclaration(BuiltIn dt, boolean signed,
+			DataOrganization dataOrganization, boolean useDefine) {
+		return getCTypeDeclaration(dt.getDecompilerDisplayName(DecompilerLanguage.C_LANGUAGE),
+			dataOrganization.getIntegerCTypeApproximation(dt.getLength(), signed), useDefine);
 	}
-	
+
 	/**
 	 * Returns null for FactoryDataType (which should never be used) and Dynamic types which should
 	 * generally be replaced by a primitive array (e.g., char[5]) or, a primitive pointer (e.g., char *).
 	 * For other types an appropriately sized unsigned integer typedef is returned.
 	 * @see ghidra.program.model.data.BuiltInDataType#getCTypeDeclaration(ghidra.program.model.data.DataOrganization)
 	 */
+	@Override
 	public String getCTypeDeclaration(DataOrganization dataOrganization) {
 		if ((this instanceof Dynamic) || (this instanceof FactoryDataType)) {
 			return null;

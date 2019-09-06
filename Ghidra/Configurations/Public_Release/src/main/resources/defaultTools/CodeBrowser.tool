@@ -10,7 +10,7 @@
             <INCLUDE CLASS="ghidra.app.plugin.core.interpreter.InterpreterPanelPlugin" />
             <INCLUDE CLASS="ghidra.app.plugin.core.editor.TextEditorManagerPlugin" />
         </PACKAGE>
-        <ROOT_NODE X_POS="409" Y_POS="179" WIDTH="1637" HEIGHT="931" EX_STATE="0" FOCUSED_OWNER="ProgramTreePlugin" FOCUSED_NAME="ProgramTreePlugin" FOCUSED_TITLE="Program Trees">
+        <ROOT_NODE X_POS="409" Y_POS="179" WIDTH="1637" HEIGHT="931" EX_STATE="0" FOCUSED_OWNER="CodeBrowserPlugin" FOCUSED_NAME="Listing" FOCUSED_TITLE="Listing: ">
             <SPLIT_NODE WIDTH="1621" HEIGHT="816" DIVIDER_LOCATION="148" ORIENTATION="VERTICAL">
                 <COMPONENT_NODE TOP_INFO="0">
                     <COMPONENT_INFO NAME="Entropy" OWNER="EntropyPlugin" TITLE="Entropy" ACTIVE="false" GROUP="Header" INSTANCE_ID="3207819926581772885" />
@@ -20,7 +20,7 @@
                     <SPLIT_NODE WIDTH="234" HEIGHT="822" DIVIDER_LOCATION="640" ORIENTATION="VERTICAL">
                         <SPLIT_NODE WIDTH="234" HEIGHT="524" DIVIDER_LOCATION="502" ORIENTATION="VERTICAL">
                             <COMPONENT_NODE TOP_INFO="0">
-                                <COMPONENT_INFO NAME="ProgramTreePlugin" OWNER="ProgramTreePlugin" TITLE="Program Trees" ACTIVE="true" GROUP="Default" INSTANCE_ID="3207819926581772895" />
+                                <COMPONENT_INFO NAME="Program Tree" OWNER="ProgramTreePlugin" TITLE="Program Trees" ACTIVE="true" GROUP="Default" INSTANCE_ID="3207819926581772895" />
                             </COMPONENT_NODE>
                             <COMPONENT_NODE TOP_INFO="0">
                                 <COMPONENT_INFO NAME="Symbol Tree" OWNER="SymbolTreePlugin" TITLE="Symbol Tree" ACTIVE="true" GROUP="Default" INSTANCE_ID="3207819977680978496" />
@@ -34,7 +34,7 @@
                         <SPLIT_NODE WIDTH="1386" HEIGHT="638" DIVIDER_LOCATION="705" ORIENTATION="VERTICAL">
                             <SPLIT_NODE WIDTH="1399" HEIGHT="642" DIVIDER_LOCATION="679" ORIENTATION="HORIZONTAL">
                                 <COMPONENT_NODE TOP_INFO="0">
-                                    <COMPONENT_INFO NAME="CodeBrowserPlugin" OWNER="CodeBrowserPlugin" TITLE="Listing: " ACTIVE="true" GROUP="Core" INSTANCE_ID="3207819926581772881" />
+                                    <COMPONENT_INFO NAME="Listing" OWNER="CodeBrowserPlugin" TITLE="Listing: " ACTIVE="true" GROUP="Core" INSTANCE_ID="3207819926581772881" />
                                 </COMPONENT_NODE>
                                 <COMPONENT_NODE TOP_INFO="0">
                                     <COMPONENT_INFO NAME="Decompiler" OWNER="DecompilePlugin" TITLE="Decompile" ACTIVE="true" GROUP="Default" INSTANCE_ID="3207819926581772879" />
@@ -57,7 +57,7 @@
                             </SPLIT_NODE>
                         </SPLIT_NODE>
                         <COMPONENT_NODE TOP_INFO="0">
-                            <COMPONENT_INFO NAME="ConsolePlugin" OWNER="ConsolePlugin" TITLE="Console" ACTIVE="true" GROUP="Default" INSTANCE_ID="3207819926581772894" />
+                            <COMPONENT_INFO NAME="Console" OWNER="ConsolePlugin" TITLE="Console" ACTIVE="true" GROUP="Default" INSTANCE_ID="3207819926581772894" />
                             <COMPONENT_INFO NAME="Bookmarks" OWNER="BookmarkPlugin" TITLE="Bookmarks" ACTIVE="false" GROUP="Core.Bookmarks" INSTANCE_ID="3207819977680978500" />
                         </COMPONENT_NODE>
                     </SPLIT_NODE>

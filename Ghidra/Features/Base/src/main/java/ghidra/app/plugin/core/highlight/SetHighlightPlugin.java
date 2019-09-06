@@ -19,6 +19,7 @@ import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 
 import docking.action.*;
+import docking.tool.ToolConstants;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.context.NavigatableActionContext;
 import ghidra.app.context.NavigatableContextAction;
@@ -28,7 +29,6 @@ import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.services.GoToService;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
-import ghidra.framework.plugintool.util.ToolConstants;
 import ghidra.program.util.InteriorSelection;
 import ghidra.program.util.ProgramSelection;
 

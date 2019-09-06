@@ -27,6 +27,7 @@ import javax.swing.ImageIcon;
 
 import docking.*;
 import docking.action.*;
+import docking.tool.ToolConstants;
 import docking.widgets.fieldpanel.support.Highlight;
 import docking.widgets.table.threaded.*;
 import ghidra.GhidraOptions;
@@ -49,7 +50,6 @@ import ghidra.framework.options.ToolOptions;
 import ghidra.framework.plugintool.PluginInfo;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.util.PluginStatus;
-import ghidra.framework.plugintool.util.ToolConstants;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.Memory;
@@ -277,11 +277,6 @@ public class SearchTextPlugin extends ProgramPlugin implements OptionsChangeList
 		searchDialog.executeProgressTask(task, 500);
 	}
 
-	/**
-	 * Search for all matches.
-	 *
-	 * @param queryString string to use in the label on the query dialog
-	 */
 	void searchAll(SearchOptions options) {
 
 		ProgramSelection selection = navigatable.getSelection();
@@ -362,6 +357,7 @@ public class SearchTextPlugin extends ProgramPlugin implements OptionsChangeList
 	}
 
 	void searched() {
+		tool.contextChanged(null);
 		searchedOnce = true;
 	}
 

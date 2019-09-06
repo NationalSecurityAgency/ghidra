@@ -15,10 +15,10 @@
  */
 package ghidra.javaclass.format.constantpool;
 
+import java.io.IOException;
+
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.StructConverter;
-
-import java.io.IOException;
 
 /**
  * NOTE: THE FOLLOWING TEXT EXTRACTED FROM JVMS7.PDF
@@ -46,7 +46,7 @@ public abstract class AbstractConstantPoolInfoJava implements StructConverter {
 	private long _offset;
 	private byte tag;
 
-	protected AbstractConstantPoolInfoJava( BinaryReader reader ) throws IOException {
+	protected AbstractConstantPoolInfoJava(BinaryReader reader) throws IOException {
 		_offset = reader.getPointerIndex();
 
 		tag = reader.readNextByte();

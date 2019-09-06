@@ -278,6 +278,11 @@ class CompositeViewerModel extends AbstractTableModel implements DataTypeManager
 	 * @param column the new column
 	 */
 	public void setColumn(int column) {
+		if (updatingSelection) {
+			// ignore transient events that happen while the table is being rebuilt, as these will
+			// clear our notion of the last selected column
+			return;
+		}
 		this.column = column;
 	}
 
@@ -1116,8 +1121,8 @@ class CompositeViewerModel extends AbstractTableModel implements DataTypeManager
 	boolean hasSubDtInCategory(Composite parentDt, String catPath) {
 		DataTypeComponent components[] = parentDt.getComponents();
 		// FUTURE Add a structure to keep track of which composites were searched so they aren't searched multiple times.
-		for (int i = 0; i < components.length; i++) {
-			DataType subDt = components[i].getDataType();
+		for (DataTypeComponent component : components) {
+			DataType subDt = component.getDataType();
 			String subCatPath = subDt.getCategoryPath().getPath();
 			if (subCatPath.startsWith(catPath)) {
 				return true;
@@ -1140,8 +1145,8 @@ class CompositeViewerModel extends AbstractTableModel implements DataTypeManager
 	 */
 	protected boolean hasSubDt(Composite parentDt, DataTypePath dtPath) {
 		DataTypeComponent components[] = parentDt.getComponents();
-		for (int i = 0; i < components.length; i++) {
-			DataType subDt = components[i].getDataType();
+		for (DataTypeComponent component : components) {
+			DataType subDt = component.getDataType();
 
 			String subDtPath = subDt.getPathName();
 			if (subDtPath.equals(dtPath)) {
@@ -1350,10 +1355,10 @@ class CompositeViewerModel extends AbstractTableModel implements DataTypeManager
 		}
 		FieldSelection tmpSelection = new FieldSelection();
 		int numComponents = viewComposite.getNumComponents();
-		for (int i = 0; i < rows.length; i++) {
+		for (int row2 : rows) {
 			// Only add valid component rows (i.e. don't include blank last line)
-			if (rows[i] < numComponents) {
-				tmpSelection.addRange(rows[i], rows[i] + 1);
+			if (row2 < numComponents) {
+				tmpSelection.addRange(row2, row2 + 1);
 			}
 		}
 		if (this.selection.equals(tmpSelection)) {

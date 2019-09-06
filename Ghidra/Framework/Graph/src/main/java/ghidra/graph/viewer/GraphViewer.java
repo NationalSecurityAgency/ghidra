@@ -29,6 +29,7 @@ import edu.uci.ics.jung.visualization.picking.MultiPickedState;
 import edu.uci.ics.jung.visualization.picking.PickedState;
 import generic.util.WindowUtilities;
 import ghidra.graph.VisualGraph;
+import ghidra.graph.viewer.edge.PathHighlightListener;
 import ghidra.graph.viewer.edge.VisualGraphPathHighlighter;
 import ghidra.graph.viewer.event.mouse.*;
 import ghidra.graph.viewer.event.picking.GPickedState;
@@ -91,14 +92,15 @@ public class GraphViewer<V extends VisualVertex, E extends VisualEdge<V>>
 
 	private void buildUpdater() {
 		viewUpdater = createViewUpdater();
-		pathHighlighter = new VisualGraphPathHighlighter<>(getVisualGraph(), hoverChange -> {
+		PathHighlightListener listener = hoverChange -> {
 			if (hoverChange) {
 				viewUpdater.animateEdgeHover();
 			}
 			else {
 				repaint();
 			}
-		});
+		};
+		pathHighlighter = createPathHighlighter(listener);
 
 		//
 		// The path highlighter is subordinate to the view updater in that the path highlighter
@@ -109,6 +111,11 @@ public class GraphViewer<V extends VisualVertex, E extends VisualEdge<V>>
 		// signal to the path updater to stop work while jobs may be mutating the graph
 		viewUpdater.addJobScheduledListener(() -> pathHighlighter.stop());
 		pathHighlighter.setWorkPauser(() -> viewUpdater.isMutatingGraph());
+	}
+
+	protected VisualGraphPathHighlighter<V, E> createPathHighlighter(
+			PathHighlightListener listener) {
+		return new VisualGraphPathHighlighter<>(getVisualGraph(), listener);
 	}
 
 	protected VisualGraphViewUpdater<V, E> createViewUpdater() {

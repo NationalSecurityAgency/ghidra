@@ -215,12 +215,19 @@ public class ListingHighlightProvider
 
 		List<String> registerNames = gatherRegisterNames(new ArrayList<String>(), register);
 
-		StringBuilder buffy = new StringBuilder();
 		for (String s : highlightStrings) {
 			if (s != null) {
-				buffy.append("\\Q").append(s).append("\\E|");
+				registerNames.add(s);
 			}
 		}
+
+		// Prioritize exact register matches by ensuring that the longest register name gets
+		// matched first
+		Collections.sort(registerNames, (a, b) -> {
+			return Integer.valueOf(b.length()).compareTo(Integer.valueOf(a.length()));
+		});
+
+		StringBuilder buffy = new StringBuilder();
 		for (String name : registerNames) {
 			buffy.append("\\Q").append(name).append("\\E|");
 		}

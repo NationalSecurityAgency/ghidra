@@ -15,6 +15,16 @@
  */
 package ghidra.app.plugin.core.progmgr;
 
+import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
+
+import javax.swing.KeyStroke;
+import javax.swing.Timer;
+
+import docking.ActionContext;
+import docking.DockingUtils;
+import docking.action.*;
+import docking.tool.ToolConstants;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.events.*;
 import ghidra.app.plugin.PluginCategoryNames;
@@ -25,15 +35,6 @@ import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.program.model.listing.Program;
 import ghidra.util.HelpLocation;
-
-import java.awt.event.*;
-
-import javax.swing.KeyStroke;
-import javax.swing.Timer;
-
-import docking.ActionContext;
-import docking.DockingUtils;
-import docking.action.*;
 
 /**
  * Plugin to show a "tab" for each open program; the selected tab is the activated program.
@@ -58,10 +59,10 @@ public class MultiTabPlugin extends Plugin implements DomainObjectListener {
 	// DockingUtils calls into Swing code.  Further, we don't want Swing code being accessed
 	// when the Plugin classes are loaded, as they get loaded in the headless environment.
 	// 
-	private final KeyStroke NEXT_TAB_KEYSTROKE = KeyStroke.getKeyStroke(KeyEvent.VK_F9,
-		DockingUtils.CONTROL_KEY_MODIFIER_MASK);
-	private final KeyStroke PREVIOUS_TAB_KEYSTROKE = KeyStroke.getKeyStroke(KeyEvent.VK_F8,
-		DockingUtils.CONTROL_KEY_MODIFIER_MASK);
+	private final KeyStroke NEXT_TAB_KEYSTROKE =
+		KeyStroke.getKeyStroke(KeyEvent.VK_F9, DockingUtils.CONTROL_KEY_MODIFIER_MASK);
+	private final KeyStroke PREVIOUS_TAB_KEYSTROKE =
+		KeyStroke.getKeyStroke(KeyEvent.VK_F8, DockingUtils.CONTROL_KEY_MODIFIER_MASK);
 
 	private MultiTabPanel tabPanel;
 	private ProgramManager progService;
@@ -92,14 +93,17 @@ public class MultiTabPlugin extends Plugin implements DomainObjectListener {
 				showProgramList();
 			}
 		};
-		goToProgramAction.setMenuBarData(new MenuData(new String[] { "Navigation",
-			"Go To Program..." }, null, "GoToProgram", MenuData.NO_MNEMONIC, firstGroup));
-		goToProgramAction.setKeyBindingData(new KeyBindingData(KeyEvent.VK_F7,
-			InputEvent.CTRL_DOWN_MASK));
+		goToProgramAction.setMenuBarData(
+			new MenuData(new String[] { ToolConstants.MENU_NAVIGATION, "Go To Program..." }, null,
+				ToolConstants.MENU_NAVIGATION_GROUP_WINDOWS, MenuData.NO_MNEMONIC, firstGroup));
+		goToProgramAction.setKeyBindingData(
+			new KeyBindingData(KeyEvent.VK_F7, InputEvent.CTRL_DOWN_MASK));
 
 		goToProgramAction.setEnabled(false);
-		goToProgramAction.setDescription("Shows the program selection dialog with the current program selected");
-		goToProgramAction.setHelpLocation(new HelpLocation("ProgramManagerPlugin", "Go_To_Program"));
+		goToProgramAction.setDescription(
+			"Shows the program selection dialog with the current program selected");
+		goToProgramAction.setHelpLocation(
+			new HelpLocation("ProgramManagerPlugin", "Go_To_Program"));
 
 		goToNextProgramAction = new DockingAction("Go To Next Program", getName()) {
 			@Override
@@ -109,10 +113,11 @@ public class MultiTabPlugin extends Plugin implements DomainObjectListener {
 			}
 		};
 		goToNextProgramAction.setEnabled(false);
-		goToNextProgramAction.setDescription("Highlights the next program tab and then switches to that program");
+		goToNextProgramAction.setDescription(
+			"Highlights the next program tab and then switches to that program");
 		goToNextProgramAction.setKeyBindingData(new KeyBindingData(NEXT_TAB_KEYSTROKE));
-		goToNextProgramAction.setHelpLocation(new HelpLocation("ProgramManagerPlugin",
-			"Go_To_Next_And_Previous_Program"));
+		goToNextProgramAction.setHelpLocation(
+			new HelpLocation("ProgramManagerPlugin", "Go_To_Next_And_Previous_Program"));
 
 		goToPreviousProgramAction = new DockingAction("Go To Previous Program", getName()) {
 			@Override
@@ -122,20 +127,14 @@ public class MultiTabPlugin extends Plugin implements DomainObjectListener {
 			}
 		};
 		goToPreviousProgramAction.setEnabled(false);
-		goToPreviousProgramAction.setMenuBarData(new MenuData(new String[] { "Navigation" }, null,
-			null));
 		goToPreviousProgramAction.setKeyBindingData(new KeyBindingData(PREVIOUS_TAB_KEYSTROKE));
-		goToPreviousProgramAction.setDescription("Highlights the previous program tab and then switches to that program");
-		goToPreviousProgramAction.setHelpLocation(new HelpLocation("ProgramManagerPlugin",
-			"Go_To_Next_And_Previous_Program"));
+		goToPreviousProgramAction.setDescription(
+			"Highlights the previous program tab and then switches to that program");
+		goToPreviousProgramAction.setHelpLocation(
+			new HelpLocation("ProgramManagerPlugin", "Go_To_Next_And_Previous_Program"));
 
 		// this timer is to give the user time to select successive programs before activating one 
-		selectHighlightedProgramTimer = new Timer(750, new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				selectHighlightedProgram();
-			}
-		});
+		selectHighlightedProgramTimer = new Timer(750, e -> selectHighlightedProgram());
 		selectHighlightedProgramTimer.setRepeats(false);
 
 		goToLastActiveProgramAction = new DockingAction("Go To Last Active Program", getName()) {
@@ -144,14 +143,16 @@ public class MultiTabPlugin extends Plugin implements DomainObjectListener {
 				switchToProgram(lastActiveProgram);
 			}
 		};
-		goToLastActiveProgramAction.setMenuBarData(new MenuData(new String[] { "Navigation",
-			"Go To Last Active Program" }, null, "GoToProgram", MenuData.NO_MNEMONIC, secondGroup));
-		goToLastActiveProgramAction.setKeyBindingData(new KeyBindingData(KeyEvent.VK_F6,
-			InputEvent.CTRL_DOWN_MASK));
+		goToLastActiveProgramAction.setMenuBarData(new MenuData(
+			new String[] { ToolConstants.MENU_NAVIGATION, "Go To Last Active Program" }, null,
+			ToolConstants.MENU_NAVIGATION_GROUP_WINDOWS, MenuData.NO_MNEMONIC, secondGroup));
+		goToLastActiveProgramAction.setKeyBindingData(
+			new KeyBindingData(KeyEvent.VK_F6, InputEvent.CTRL_DOWN_MASK));
 		goToLastActiveProgramAction.setEnabled(false);
-		goToLastActiveProgramAction.setDescription("Activates the last program used before the current program");
-		goToLastActiveProgramAction.setHelpLocation(new HelpLocation("ProgramManagerPlugin",
-			"Go_To_Last_Active_Program"));
+		goToLastActiveProgramAction.setDescription(
+			"Activates the last program used before the current program");
+		goToLastActiveProgramAction.setHelpLocation(
+			new HelpLocation("ProgramManagerPlugin", "Go_To_Last_Active_Program"));
 
 		tool.addAction(goToProgramAction);
 		tool.addAction(goToLastActiveProgramAction);

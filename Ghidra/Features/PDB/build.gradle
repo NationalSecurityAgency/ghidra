@@ -1,5 +1,6 @@
 apply from: "$rootProject.projectDir/gradle/distributableGhidraModule.gradle"
 apply from: "$rootProject.projectDir/gradle/javaProject.gradle"
+apply from: "$rootProject.projectDir/gradle/helpProject.gradle"
 apply from: "$rootProject.projectDir/gradle/jacocoProject.gradle"
 apply from: "$rootProject.projectDir/gradle/javaTestProject.gradle"
 apply from: "$rootProject.projectDir/gradle/nativeProject.gradle"
@@ -15,6 +16,13 @@ dependencies {
 	compile project(":Base")
     
     testCompile "org.jmockit:jmockit:1.44"	
+	
+    // Demangler Analyzer needs to find MicrosoftDemangler
+    compile project(":MicrosoftDemangler")
+	helpPath project(path: ':Base', configuration: 'helpPath')  // this module's help has links to Base help files
+
+    testCompile project(path: ':Base', configuration: 'testArtifacts')
+    testCompile project(path: ':SoftwareModeling', configuration: 'testArtifacts')
 }
 
 /**

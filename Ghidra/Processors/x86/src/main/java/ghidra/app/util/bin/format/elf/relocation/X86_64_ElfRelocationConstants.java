@@ -102,7 +102,14 @@ public class X86_64_ElfRelocationConstants {
 	public static final int R_X86_64_TLSDESC = 36; // TLS descriptor; word64  * 2
 	public static final int R_X86_64_IRELATIVE = 37; // Adjust indirectly by program base
 	public static final int R_X86_64_RELATIVE64 = 38; // 64-bit adjust by program base
-	public static final int R_X86_64_NUM = 39;
+	
+	public static final int  R_X86_64_PC32_BND  = 39; // deprecated
+	public static final int  R_X86_64_PLT32_BND  = 40; // deprecated
+	public static final int  R_X86_64_GOTPCRELX  = 41;  // G + GOT + A - P
+    public static final int  R_X86_64_REX_GOTPCRELX  = 42; //G + GOT + A - P
+	
+	public static final int R_X86_64_NUM = 43;
+	
 	public static final int R_X86_64_GNU_VTINHERIT = 250;
 	public static final int R_X86_64_GNU_VTENTRY = 251;
 

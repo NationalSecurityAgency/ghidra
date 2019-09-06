@@ -312,7 +312,7 @@ public class PcodeParser extends PcodeCompile {
 			// ANTLRUtil.debugNodeStream(nodes, System.out);
 			SleighCompiler walker = new SleighCompiler(nodes);
 
-			SectionVector rtl = walker.semantic(env, this, semantic.getTree(), false, false);
+			SectionVector rtl = walker.semantic(env, null, this, semantic.getTree(), false, false);
 
 			if (getErrors() != 0) {
 				return null;

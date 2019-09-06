@@ -40,6 +40,7 @@ public class DefaultDataType extends DataTypeImpl {
 	 * 
 	 * @see ghidra.program.model.data.DataType#getMnemonic(Settings)
 	 */
+	@Override
 	public String getMnemonic(Settings settings) {
 		return "??";
 	}
@@ -48,6 +49,7 @@ public class DefaultDataType extends DataTypeImpl {
 	 * 
 	 * @see ghidra.program.model.data.DataType#getLength()
 	 */
+	@Override
 	public int getLength() {
 		return 1;
 	}
@@ -55,6 +57,7 @@ public class DefaultDataType extends DataTypeImpl {
 	/**
 	 * @see ghidra.program.model.data.DataType#isDynamicallySized()
 	 */
+	@Override
 	public boolean isDynamicallySized() {
 		return false;
 	}
@@ -63,6 +66,7 @@ public class DefaultDataType extends DataTypeImpl {
 	 * 
 	 * @see ghidra.program.model.data.DataType#getDescription()
 	 */
+	@Override
 	public String getDescription() {
 		return "Undefined Byte";
 	}
@@ -71,6 +75,7 @@ public class DefaultDataType extends DataTypeImpl {
 	 * 
 	 * @see ghidra.program.model.data.DataType#getRepresentation(MemBuffer, Settings, int)
 	 */
+	@Override
 	public String getRepresentation(MemBuffer buf, Settings settings, int length) {
 		try {
 			int b = buf.getByte(0) & 0xff;
@@ -96,6 +101,7 @@ public class DefaultDataType extends DataTypeImpl {
 	 * @param length the number of bytes to get the value from.
 	 * @return the data Object.
 	 */
+	@Override
 	public Object getValue(MemBuffer buf, Settings settings, int length) {
 		try {
 			return new Scalar(8, buf.getByte(0));
@@ -105,10 +111,12 @@ public class DefaultDataType extends DataTypeImpl {
 		}
 	}
 
+	@Override
 	public DataType clone(DataTypeManager dtm) {
 		return this;
 	}
 
+	@Override
 	public DataType copy(DataTypeManager dtm) {
 		return this;
 	}
@@ -116,12 +124,14 @@ public class DefaultDataType extends DataTypeImpl {
 	/**
 	 * @see ghidra.program.model.data.DataType#dataTypeSizeChanged(ghidra.program.model.data.DataType)
 	 */
+	@Override
 	public void dataTypeSizeChanged(DataType dt) {
 	}
 
 	/**
 	 * @see ghidra.program.model.data.DataType#isEquivalent(ghidra.program.model.data.DataType)
 	 */
+	@Override
 	public boolean isEquivalent(DataType dt) {
 		return dt == this;
 	}
@@ -129,43 +139,50 @@ public class DefaultDataType extends DataTypeImpl {
 	/**
 	 * @see ghidra.program.model.data.DataType#setCategoryPath(ghidra.program.model.data.CategoryPath)
 	 */
+	@Override
 	public void setCategoryPath(CategoryPath path) throws DuplicateNameException {
 	}
 
 	/**
 	 * @see ghidra.program.model.data.DataType#setName(java.lang.String)
 	 */
-	public void setName(String name) throws InvalidNameException, DuplicateNameException {
+	@Override
+	public void setName(String name) {
 	}
 
 	/**
 	 * @see ghidra.program.model.data.DataType#setNameAndCategory(ghidra.program.model.data.CategoryPath, java.lang.String)
 	 */
-	public void setNameAndCategory(CategoryPath path, String name) throws InvalidNameException,
-			DuplicateNameException {
+	@Override
+	public void setNameAndCategory(CategoryPath path, String name)
+			throws InvalidNameException, DuplicateNameException {
 	}
 
 	/**
 	 * @see ghidra.program.model.data.DataType#dataTypeDeleted(ghidra.program.model.data.DataType)
 	 */
+	@Override
 	public void dataTypeDeleted(DataType dt) {
 	}
 
 	/**
 	 * @see ghidra.program.model.data.DataType#dataTypeNameChanged(ghidra.program.model.data.DataType, java.lang.String)
 	 */
+	@Override
 	public void dataTypeNameChanged(DataType dt, String oldName) {
 	}
 
 	/**
 	 * @see ghidra.program.model.data.DataType#dataTypeReplaced(ghidra.program.model.data.DataType, ghidra.program.model.data.DataType)
 	 */
+	@Override
 	public void dataTypeReplaced(DataType oldDt, DataType newDt) {
 	}
 
 	/**
 	 * @see ghidra.program.model.data.DataType#dependsOn(ghidra.program.model.data.DataType)
 	 */
+	@Override
 	public boolean dependsOn(DataType dt) {
 		return false;
 	}

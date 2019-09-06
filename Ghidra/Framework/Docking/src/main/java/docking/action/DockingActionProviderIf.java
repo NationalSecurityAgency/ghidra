@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +17,7 @@ package docking.action;
 
 import java.util.List;
 
-import docking.ActionContext;
+import docking.DockingTool;
 
 /**
  * An interface for objects (really Components) to implement that signals they provide actions 
@@ -28,13 +27,17 @@ import docking.ActionContext;
  * As an example, a JTable that wishes to provide popup menu actions can implement this interface.
  * When the user right-clicks on said table, then Docking system will ask this object for its
  * actions.  Further, in this example, the actions given will be inserted into the popup menu
- * that is shown. 
+ * that is shown.
+ * 
+ * @deprecated use {@link DockingTool}
  */
+// Note: this API is not likely used by forward-facing clients and can be removed in the next release
+@Deprecated(since = "9.1", forRemoval = true)
 public interface DockingActionProviderIf {
 
-    /**
-     * Returns actions that are compatible with the given context.
-     * @param context the current context of the Docking system
-     */
-    public List<DockingActionIf> getDockingActions( ActionContext context );
+	/**
+	 * Returns actions that are compatible with the given context.
+	 * @return the actions
+	 */
+	public List<DockingActionIf> getDockingActions();
 }

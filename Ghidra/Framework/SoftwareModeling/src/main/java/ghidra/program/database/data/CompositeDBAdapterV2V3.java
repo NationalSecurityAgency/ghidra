@@ -37,7 +37,7 @@ class CompositeDBAdapterV2V3 extends CompositeDBAdapter {
 	// Version bumped to 3 when flex-arrays support added to structures
 	// Version bumped to 4 when bitfields support added to composites
 
-	static final int VERSION = 3;
+	static final int VERSION = 4;
 	static final int MIN_READ_ONLY_VERSION = 2;
 
 	static final int V2_COMPOSITE_NAME_COL = 0;

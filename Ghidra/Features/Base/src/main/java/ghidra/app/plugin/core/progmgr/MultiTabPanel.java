@@ -24,7 +24,7 @@ import java.util.Map.Entry;
 import javax.swing.*;
 import javax.swing.border.*;
 
-import docking.util.KeyBindingUtils;
+import docking.actions.KeyBindingUtils;
 import docking.widgets.label.GDLabel;
 import docking.widgets.label.GIconLabel;
 import generic.util.WindowUtilities;

@@ -20,8 +20,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 import generic.jar.ResourceFile;
-import ghidra.framework.ApplicationProperties;
-import ghidra.framework.OperatingSystem;
+import ghidra.framework.*;
 import ghidra.util.Msg;
 import ghidra.util.SystemUtilities;
 
@@ -68,8 +67,7 @@ public class ApplicationUtilities {
 				}
 			}
 			catch (IOException e) {
-				Msg.error(ApplicationUtilities.class, "Invalid class path entry: " + pathEntry,
-					e);
+				Msg.error(ApplicationUtilities.class, "Invalid class path entry: " + pathEntry, e);
 			}
 		}
 		return null;
@@ -139,8 +137,8 @@ public class ApplicationUtilities {
 			throws FileNotFoundException {
 
 		// Look for preset cache directory
-		String cachedir = System.getProperty("application.cachedir");
-		if (cachedir != null && !cachedir.isEmpty()) {
+		String cachedir = System.getProperty("application.cachedir", "").trim();
+		if (!cachedir.isEmpty()) {
 			return new File(cachedir,
 				SystemUtilities.getUserName() + "-" + applicationProperties.getApplicationName());
 		}
@@ -181,23 +179,25 @@ public class ApplicationUtilities {
 	public static File getDefaultUserSettingsDir(ApplicationProperties applicationProperties,
 			ResourceFile installationDirectory) throws FileNotFoundException {
 
-		String userSettingsDir = System.getProperty("user.home");
-		if (userSettingsDir == null || userSettingsDir.isEmpty()) {
+		String homedir = System.getProperty("user.home");
+		if (homedir == null || homedir.isEmpty()) {
 			throw new FileNotFoundException("System property \"user.home\" is not set!");
 		}
 
-		String prefix =
-			"." + applicationProperties.getApplicationName().replaceAll("\\s", "").toLowerCase();
+		ApplicationIdentifier applicationIdentifier =
+			new ApplicationIdentifier(applicationProperties);
 
-		File applicationParentDir = new File(userSettingsDir, prefix);
-		String suffix = applicationProperties.getApplicationVersion();
+		File userSettingsParentDir =
+			new File(homedir, "." + applicationIdentifier.getApplicationName());
+
+		String userSettingsDirName = "." + applicationIdentifier;
 
 		if (SystemUtilities.isInDevelopmentMode()) {
-			// Add the appication's installation directory name to this variable, so that each 
+			// Add the application's installation directory name to this variable, so that each 
 			// branch's project user directory is unique.
-			suffix += "_location_" + installationDirectory.getName();
+			userSettingsDirName += "_location_" + installationDirectory.getName();
 		}
 
-		return new File(applicationParentDir, prefix + "-" + suffix);
+		return new File(userSettingsParentDir, userSettingsDirName);
 	}
 }

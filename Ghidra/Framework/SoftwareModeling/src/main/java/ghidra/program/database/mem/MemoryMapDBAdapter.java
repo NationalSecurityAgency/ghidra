@@ -17,6 +17,7 @@ package ghidra.program.database.mem;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.List;
 
 import db.*;
 import ghidra.program.model.address.Address;
@@ -28,41 +29,40 @@ import ghidra.util.task.TaskMonitor;
 
 abstract class MemoryMapDBAdapter {
 
-	static final String TABLE_NAME = "Memory Blocks";
+	static final int CURRENT_VERSION = MemoryMapDBAdapterV3.V3_VERSION;
 
-	static final int CURRENT_VERSION = 2;
+	static Schema BLOCK_SCHEMA = MemoryMapDBAdapterV3.V3_BLOCK_SCHEMA;
+	static Schema SUB_BLOCK_SCHEMA = MemoryMapDBAdapterV3.V3_SUB_BLOCK_SCHEMA;
 
-	static Schema BLOCK_SCHEMA = new Schema(CURRENT_VERSION, "Key",
-		new Class[] { StringField.class, StringField.class, StringField.class, ByteField.class,
-			LongField.class, ShortField.class, LongField.class, LongField.class, IntField.class,
-			IntField.class },
-		new String[] { "Name", "Comments", "Source Name", "Permissions", "Start Address",
-			"Block Type", "Overlay Address", "Length", "Chain Buffer ID", "Segment" });
+	public static final int NAME_COL = MemoryMapDBAdapterV3.V3_NAME_COL;
+	public static final int COMMENTS_COL = MemoryMapDBAdapterV3.V3_COMMENTS_COL;
+	public static final int SOURCE_COL = MemoryMapDBAdapterV3.V3_SOURCE_COL;
+	public static final int PERMISSIONS_COL = MemoryMapDBAdapterV3.V3_PERMISSIONS_COL;
+	public static final int START_ADDR_COL = MemoryMapDBAdapterV3.V3_START_ADDR_COL;
+	public static final int LENGTH_COL = MemoryMapDBAdapterV3.V3_LENGTH_COL;
+	public static final int SEGMENT_COL = MemoryMapDBAdapterV3.V3_SEGMENT_COL;
 
-	static final int NAME_COL = 0;
-	static final int COMMENTS_COL = 1;
-	static final int SOURCE_COL = 2;
-	static final int PERMISSIONS_COL = 3;
-	static final int START_ADDR_COL = 4;
-	static final int BLOCK_TYPE_COL = 5;
-	static final int OVERLAY_ADDR_COL = 6;
-	static final int LENGTH_COL = 7;
-	static final int CHAIN_BUF_COL = 8;
-	static final int SEGMENT_COL = 9;
+	public static final int SUB_PARENT_ID_COL = MemoryMapDBAdapterV3.V3_SUB_PARENT_ID_COL;
+	public static final int SUB_TYPE_COL = MemoryMapDBAdapterV3.V3_SUB_TYPE_COL;
+	public static final int SUB_LENGTH_COL = MemoryMapDBAdapterV3.V3_SUB_LENGTH_COL;
+	public static final int SUB_START_OFFSET_COL = MemoryMapDBAdapterV3.V3_SUB_START_OFFSET_COL;
+	public static final int SUB_SOURCE_ID_COL = MemoryMapDBAdapterV3.V3_SUB_SOURCE_ID_COL;
+	public static final int SUB_SOURCE_OFFSET_COL = MemoryMapDBAdapterV3.V3_SUB_SOURCE_OFFSET_COL;
 
-	static final int INITIALIZED = 0;
-	static final int UNINITIALIZED = 1;
-	static final int BIT_MAPPED = 2;
-	static final int BYTE_MAPPED = 4;
+	public static final byte SUB_TYPE_BIT_MAPPED = MemoryMapDBAdapterV3.V3_SUB_TYPE_BIT_MAPPED;
+	public static final byte SUB_TYPE_BYTE_MAPPED = MemoryMapDBAdapterV3.V3_SUB_TYPE_BYTE_MAPPED;
+	public static final byte SUB_TYPE_BUFFER = MemoryMapDBAdapterV3.V3_SUB_TYPE_BUFFER;
+	public static final byte SUB_TYPE_UNITIALIZED = MemoryMapDBAdapterV3.V3_SUB_TYPE_UNITIALIZED;
+	public static final byte SUB_TYPE_FILE_BYTES = MemoryMapDBAdapterV3.V3_SUB_TYPE_FILE_BYTES;
 
 	static MemoryMapDBAdapter getAdapter(DBHandle handle, int openMode, MemoryMapDB memMap,
 			TaskMonitor monitor) throws VersionException, IOException {
 
 		if (openMode == DBConstants.CREATE) {
-			return new MemoryMapDBAdapterV2(handle, memMap, true);
+			return new MemoryMapDBAdapterV3(handle, memMap, Memory.GBYTE, true);
 		}
 		try {
-			return new MemoryMapDBAdapterV2(handle, memMap, false);
+			return new MemoryMapDBAdapterV3(handle, memMap, Memory.GBYTE, false);
 		}
 		catch (VersionException e) {
 			if (!e.isUpgradable() || openMode == DBConstants.UPDATE) {
@@ -79,9 +79,16 @@ abstract class MemoryMapDBAdapter {
 	static MemoryMapDBAdapter findReadOnlyAdapter(DBHandle handle, MemoryMapDB memMap)
 			throws VersionException, IOException {
 		try {
+			return new MemoryMapDBAdapterV2(handle, memMap);
+		}
+		catch (VersionException e) {
+			// try next oldest version
+		}
+		try {
 			return new MemoryMapDBAdapterV1(handle, memMap);
 		}
 		catch (VersionException e) {
+			// try next oldest version
 		}
 		return new MemoryMapDBAdapterV0(handle, memMap);
 	}
@@ -91,40 +98,34 @@ abstract class MemoryMapDBAdapter {
 
 		try {
 			monitor.setMessage("Upgrading Memory Blocks...");
-			MemoryBlockDB[] blocks = oldAdapter.getMemoryBlocks();
-			monitor.initialize(blocks.length * 2);
+			List<MemoryBlockDB> blocks = oldAdapter.getMemoryBlocks();
+			oldAdapter.deleteTable(handle);
 
-			MemoryMapDBAdapter newAdapter = new MemoryMapDBAdapterV2(handle, memMap, true);
-			for (int i = 0; i < blocks.length; i++) {
-				MemoryBlockDB block = blocks[i];
+			monitor.initialize(blocks.size() * 2);
+
+			MemoryMapDBAdapter newAdapter =
+				new MemoryMapDBAdapterV3(handle, memMap, Memory.GBYTE, true);
+			for (MemoryBlockDB block : blocks) {
 				MemoryBlock newBlock = null;
-				if (blocks[i].isInitialized()) {
+				if (block.isInitialized()) {
 					DBBuffer buf = block.getBuffer();
 					newBlock = newAdapter.createInitializedBlock(block.getName(), block.getStart(),
-						buf, MemoryBlock.READ);
+						buf, block.getPermissions());
 				}
 				else {
 					Address mappedAddress = null;
-					MemoryBlockType type = block.getType();
-					if (type == MemoryBlockType.BIT_MAPPED || type == MemoryBlockType.BYTE_MAPPED) {
-						mappedAddress = ((MappedMemoryBlock) block).getOverlayedMinAddress();
+
+					if (block.isMapped()) {
+						MemoryBlockSourceInfo info = block.getSourceInfos().get(0);
+						mappedAddress = info.getMappedRange().get().getMinAddress();
 					}
-					newBlock = newAdapter.createBlock(block.getType(), block.getName(),
-						block.getStart(), block.getSize(), mappedAddress, false, MemoryBlock.READ);
+					newBlock =
+						newAdapter.createBlock(block.getType(), block.getName(), block.getStart(),
+							block.getSize(), mappedAddress, false, block.getPermissions());
 				}
 				newBlock.setComment(block.getComment());
 				newBlock.setSourceName(block.getSourceName());
-				if (block.isExecute()) {
-					newBlock.setExecute(true);
-				}
-				if (block.isWrite()) {
-					newBlock.setWrite(true);
-				}
-				if (block.isVolatile()) {
-					newBlock.setVolatile(true);
-				}
 			}
-			oldAdapter.deleteTable(handle);
 			newAdapter.refreshMemory();
 			return newAdapter;
 		}
@@ -134,20 +135,13 @@ abstract class MemoryMapDBAdapter {
 		}
 	}
 
-	static MemoryBlockDB getMemoryBlock(MemoryMapDBAdapter adapter, Record record, DBBuffer buf,
-			MemoryMapDB memMap) throws IOException {
-
-		int blockType = record.getShortValue(MemoryMapDBAdapter.BLOCK_TYPE_COL);
-		switch (blockType) {
-			case INITIALIZED:
-			case UNINITIALIZED:
-				return new MemoryBlockDB(adapter, record, buf, memMap);
-			case BIT_MAPPED:
-			case BYTE_MAPPED:
-				return new OverlayMemoryBlockDB(adapter, record, memMap);
-		}
-		throw new IllegalStateException("Bad block type");
-	}
+	/**
+	 * Returns a DBBuffer object for the given database buffer id
+	 * @param bufferID the id of the first buffer in the DBBuffer.
+	 * @return the DBBuffer for the given id.
+	 * @throws IOException if a database IO error occurs.
+	 */
+	abstract DBBuffer getBuffer(int bufferID) throws IOException;
 
 	abstract void deleteTable(DBHandle handle) throws IOException;
 
@@ -159,8 +153,9 @@ abstract class MemoryMapDBAdapter {
 
 	/**
 	 * Returns an array of memory blocks sorted on start Address
+	 * @return  all the memory blocks
 	 */
-	abstract MemoryBlockDB[] getMemoryBlocks();
+	abstract List<MemoryBlockDB> getMemoryBlocks();
 
 	/**
 	 * Creates a new initialized block object using data provided from an 
@@ -168,7 +163,7 @@ abstract class MemoryMapDBAdapter {
 	 * block data will be initialized to zero (0x00).
 	 * @param name the name of the block
 	 * @param startAddr the start address of the block.
-	 * @param is data source
+	 * @param is data source or null for zero initialization
 	 * @param length size of block
 	 * @param permissions the new block permissions
 	 * @return new memory block
@@ -209,30 +204,11 @@ abstract class MemoryMapDBAdapter {
 			throws AddressOverflowException, IOException;
 
 	/**
-	 * Splits a memory block at the given offset and create a new block at the split location.
-	 * @param block the the split.
-	 * @param offset the offset within the block at which to split off into a new block
-	 * @return the new memory block created.
-	 * @throws IOException if a database IO error occurs.
-	 */
-	abstract MemoryBlockDB splitBlock(MemoryBlockDB block, long offset) throws IOException;
-
-	/**
-	 * Combines two memory blocks into one.
-	 * @param block1 the first block 
-	 * @param block2 the second block
-	 * @return the block that contains the bytes of block1 and block2.
-	 * @throws IOException if a database IO error occurs.
-	 */
-	abstract MemoryBlockDB joinBlocks(MemoryBlockDB block1, MemoryBlockDB block2)
-			throws IOException;
-
-	/**
 	 * Deletes the given memory block.
-	 * @param block the block to delete.
+	 * @param key the key for the memory block record
 	 * @throws IOException if a database IO error occurs.
 	 */
-	abstract void deleteMemoryBlock(MemoryBlockDB block) throws IOException;
+	abstract void deleteMemoryBlock(long key) throws IOException;
 
 	/**
 	 * Updates the memory block record.
@@ -245,15 +221,74 @@ abstract class MemoryMapDBAdapter {
 	 * Creates a new DBuffer object with the given length and initial value.
 	 * @param length block/chunk buffer length (length limited by ChainedBuffer implementation)
 	 * @param initialValue fill value
+	 * @return a new DBuffer object with the given length and initial value.
 	 * @throws IOException if a database IO error occurs.
 	 */
 	abstract DBBuffer createBuffer(int length, byte initialValue) throws IOException;
 
 	/**
-	 * Returns a DBBuffer object for the given database buffer id
-	 * @param bufferID the id of the first buffer in the DBBuffer.
+	 * Returns the MemoryMap that owns this adapter.
+	 * @return  the MemoryMap that owns this adapter.
+	 */
+	abstract MemoryMapDB getMemoryMap();
+
+	/**
+	 * Deletes the sub block record for the given key.
+	 * @param key the record id of the sub block record to delete.
+	 * @throws IOException if a database error occurs.
+	 */
+	abstract void deleteSubBlock(long key) throws IOException;
+
+	/**
+	 * Updates the sub memory block record.
+	 * @param record the record to update.
 	 * @throws IOException if a database IO error occurs.
 	 */
-	abstract DBBuffer getBuffer(int bufferID) throws IOException;
+	protected abstract void updateSubBlockRecord(Record record) throws IOException;
 
+	/**
+	 * Creates a record for a new created sub block
+	 * @param memBlockId the id of the memory block that contains this sub block
+	 * @param startingOffset the starting offset relative to the containing memory block where this
+	 * sub block starts
+	 * @param length the length of this sub block
+	 * @param subType the type of the subBlock
+	 * @param sourceID if the type is a buffer, then this is the buffer id.  If the type is file bytes,
+	 * then this is the FileBytes id.  
+	 * @param sourceOffset if the type is file bytes, then this is the offset into the filebytes. If
+	 * the type is mapped, then this is the encoded mapped address.
+	 * @return the newly created record.
+	 * @throws IOException if a database error occurs
+	 */
+	abstract Record createSubBlockRecord(long memBlockId, long startingOffset, long length,
+			byte subType, int sourceID, long sourceOffset) throws IOException;
+
+	/**
+	 * Creates a new memory block.
+	 * @param name the name of the block
+	 * @param startAddress the start address of the block
+	 * @param length the length of the block
+	 * @param permissions the permissions for the block
+	 * @param splitBlocks the list of subBlock objects that make up this block
+	 * @return the new MemoryBlock
+	 * @throws IOException if a database error occurs
+	 */
+	protected abstract MemoryBlockDB createBlock(String name, Address startAddress, long length,
+			int permissions, List<SubMemoryBlock> splitBlocks) throws IOException;
+
+	/**
+	 * Creates a new memory block using a FileBytes
+	 * @param name the name of the block
+	 * @param startAddress the start address of the block
+	 * @param length the length of the block
+	 * @param fileBytes the {@link FileBytes} object that provides the bytes for this block
+	 * @param offset the offset into the {@link FileBytes} object
+	 * @param permissions the permissions for the block
+	 * @return the new MemoryBlock
+	 * @throws IOException if a database error occurs
+	 * @throws AddressOverflowException if block length is too large for the underlying space
+	 */
+	protected abstract MemoryBlockDB createFileBytesBlock(String name, Address startAddress,
+			long length, FileBytes fileBytes, long offset, int permissions)
+			throws IOException, AddressOverflowException;
 }

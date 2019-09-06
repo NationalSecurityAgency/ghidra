@@ -23,6 +23,17 @@ import javax.swing.*;
 import docking.ActionContext;
 import docking.help.HelpDescriptor;
 
+/**
+ * The base interface for clients that wish to create commands to be registered with a tool.
+ * 
+ * <p>An action may appear in a primary menu, a popup menu or a toolbar.   Further, an action 
+ * may have a key binding assigned.
+ * 
+ * <p>The particular support for key bindings is defined by {@link KeyBindingType}.   Almost all
+ * client actions will use the default setting of {@link KeyBindingType#INDIVIDUAL}.   To control
+ * the level of key binding support, you can pass the desired {@link KeyBindingType} to the
+ * base implementation of this interface.
+ */
 public interface DockingActionIf extends HelpDescriptor {
 	public static final String ENABLEMENT_PROPERTY = "enabled";
 	public static final String GLOBALCONTEXT_PROPERTY = "globalContext";
@@ -33,27 +44,40 @@ public interface DockingActionIf extends HelpDescriptor {
 	public static final String TOOLBAR_DATA_PROPERTY = "ToolBar";
 
 	/**
-	 * Returns the name of the action.
+	 * Returns the name of the action
+	 * @return the name
 	 */
-	public abstract String getName();
+	public String getName();
 
 	/**
-	 * Returns the owner of this action.  
+	 * Returns the owner of this action
+	 * @return the owner  
 	 */
-	public abstract String getOwner();
+	public String getOwner();
 
 	/**
-	 * Returns a short description of this action. Generally used for a tooltip.
+	 * Returns a description of this actions owner.  For most actions this will return the 
+	 * same value as {@link #getOwner()}.
+	 * 
+	 * @return the description
 	 */
-	public abstract String getDescription();
+	public default String getOwnerDescription() {
+		return getOwner();
+	}
 
 	/**
-	 * Adds a listener to be notified if any property changes.
+	 * Returns a short description of this action. Generally used for a tooltip
+	 * @return the description
+	 */
+	public String getDescription();
+
+	/**
+	 * Adds a listener to be notified if any property changes
 	 * @param listener The property change listener that will be notified of
 	 *        property change events.
-	 * @see   AbstractAction#addPropertyChangeListener(java.beans.PropertyChangeListener)
+	 * @see  Action#addPropertyChangeListener(java.beans.PropertyChangeListener)
 	 */
-	public abstract void addPropertyChangeListener(PropertyChangeListener listener);
+	public void addPropertyChangeListener(PropertyChangeListener listener);
 
 	/**
 	 * Removes a listener to be notified of property changes.
@@ -61,15 +85,15 @@ public interface DockingActionIf extends HelpDescriptor {
 	 * @param listener The property change listener that will be notified of
 	 *        property change events.
 	 * @see   #addPropertyChangeListener(PropertyChangeListener)
-	 * @see   AbstractAction#addPropertyChangeListener(java.beans.PropertyChangeListener)
+	 * @see  Action#addPropertyChangeListener(java.beans.PropertyChangeListener)
 	 */
-	public abstract void removePropertyChangeListener(PropertyChangeListener listener);
+	public void removePropertyChangeListener(PropertyChangeListener listener);
 
 	/**
-	 * Enables or disables the action.
+	 * Enables or disables the action
 	 *
-	 * @param newValue  true to enable the action, false to
-	 *                  disable it
+	 * @param newValue  true to enable the action, false to disable it
+	 * @return the enabled value of the action after this call
 	 */
 	public boolean setEnabled(boolean newValue);
 
@@ -111,6 +135,9 @@ public interface DockingActionIf extends HelpDescriptor {
 	/**
 	 * Returns the default {@link KeyBindingData} to be used to assign this action to a 
 	 * key binding.  The KeyBindingData will be null if the action is not set to have a keyBinding.
+	 * The value of this method is that which is set from a call to 
+	 * {@link #setKeyBindingData(KeyBindingData)}.
+	 * 
 	 * @return the {@link KeyBindingData} for the action or null if the action does not have a keyBinding.
 	 */
 	public KeyBindingData getDefaultKeyBindingData();
@@ -124,32 +151,34 @@ public interface DockingActionIf extends HelpDescriptor {
 
 	/**
 	 * Returns the full name (the action name combined with the owner name)
+	 * @return the full name
 	 */
-	public abstract String getFullName();
+	public String getFullName();
 
 	/**
 	 * method to actually perform the action logic for this action.
 	 * @param context the {@link ActionContext} object that provides information about where and how
 	 * this action was invoked.
 	 */
-	public abstract void actionPerformed(ActionContext context);
+	public void actionPerformed(ActionContext context);
 
 	/**
 	 * method is used to determine if this action should be displayed on the current popup.  This 
 	 * method will only be called if the action has popup {@link PopupMenuData} set.
 	 * <p>
 	 * Generally, actions don't need to override this method as the default implementation will 
-	 * defer to the {@link #isEnabledForContext()}, which will have the effect of adding the
-	 * action to the popup only if it is enabled for a given context.  By overriding this method,
+	 * defer to the {@link #isEnabledForContext(ActionContext)}, which will have the effect 
+	 * of adding the action to the popup only if it is enabled for a given context.  
+	 * By overriding this method,
 	 * you can change this behavior so that the action will be added to the popup, even if it is
 	 * disabled for the context, by having this method return true even if the 
-	 * {@link #isEnabledForContext()} method will return false, resulting in the action appearing
-	 * in the popup menu, but begin disabled.
+	 * {@link #isEnabledForContext(ActionContext)} method will return false, resulting in the 
+	 * action appearing in the popup menu, but begin disabled.
 	 * 
 	 * @param context the {@link ActionContext} from the active provider.
 	 * @return true if this action is appropriate for the given context.
 	 */
-	public abstract boolean isAddToPopup(ActionContext context);
+	public boolean isAddToPopup(ActionContext context);
 
 	/**
 	 * Method that actions implement to indicate if this action is valid (knows how to work with, is
@@ -162,7 +191,7 @@ public interface DockingActionIf extends HelpDescriptor {
 	 * @param context the {@link ActionContext} from the active provider.
 	 * @return true if this action is appropriate for the given context.
 	 */
-	public abstract boolean isValidContext(ActionContext context);
+	public boolean isValidContext(ActionContext context);
 
 	/**
 	 * Method that actions implement to indicate if this action is valid (knows how to work with, is
@@ -172,10 +201,10 @@ public interface DockingActionIf extends HelpDescriptor {
 	 * If you want a global action to only work on the global context, then override this method
 	 * and return false.
 	 * 
-	 * @param context the global {@link ActionContext} from the active provider.
+	 * @param globalContext the global {@link ActionContext} from the active provider.
 	 * @return true if this action is appropriate for the given context.
 	 */
-	public abstract boolean isValidGlobalContext(ActionContext globalContext);
+	public boolean isValidGlobalContext(ActionContext globalContext);
 
 	/**
 	 * Method used to determine if this action should be enabled for the given context.  
@@ -202,13 +231,14 @@ public interface DockingActionIf extends HelpDescriptor {
 	 * @param context the current {@link ActionContext} for the window.
 	 * @return true if the action should be enabled for the context or false otherwise.
 	 */
-	public abstract boolean isEnabledForContext(ActionContext context);
+	public boolean isEnabledForContext(ActionContext context);
 
 	/**
-	 * Returns a string that includes source file and line number information of where this action was
-	 * created.
+	 * Returns a string that includes source file and line number information of where 
+	 * this action was created
+	 * @return the inception information
 	 */
-	public abstract String getInceptionInformation();
+	public String getInceptionInformation();
 
 	/**
 	 * Returns a JButton that is suitable for this action.  For example, It creates a ToggleButton
@@ -239,10 +269,17 @@ public interface DockingActionIf extends HelpDescriptor {
 	public boolean shouldAddToWindow(boolean isMainWindow, Set<Class<?>> contextTypes);
 
 	/**
-	 * Returns true if this action can have its keybinding information changed by the user.  
-	 * @return true if this action can have its keybinding information changed by the user.
+	 * Returns this actions level of support for key binding accelerator keys
+	 * 
+	 * <p>Actions support key bindings by default.  Some reserved actions do not support 
+	 * key bindings, while others wish to share the same key bindings with multiple, equivalent
+	 * actions (this allows the user to set one binding that works in many different contexts).
+	 * 
+	 * @return the key binding support
 	 */
-	public boolean isKeyBindingManaged();
+	public default KeyBindingType getKeyBindingType() {
+		return KeyBindingType.INDIVIDUAL;
+	}
 
 	/**
 	 * Sets the {@link KeyBindingData} on an action to either assign a keybinding or remove it
@@ -250,7 +287,7 @@ public interface DockingActionIf extends HelpDescriptor {
 	 * @param keyBindingData if non-null, assigns a keybinding to the action. Otherwise, removes
 	 * any keybinding from the action.
 	 */
-	public abstract void setKeyBindingData(KeyBindingData keyBindingData);
+	public void setKeyBindingData(KeyBindingData keyBindingData);
 
 	/**
 	 * <b>Users creating actions should not call this method, but should instead call
@@ -258,13 +295,14 @@ public interface DockingActionIf extends HelpDescriptor {
 	 * <p>
 	 * Call this method when you wish to bypass the validation of 
 	 * {@link #setKeyBindingData(KeyBindingData)} so that keybindings are set exactly as they
-	 * are given.
+	 * are given (such as when set by the user and not by the programmer).
 	 * 
-	 * @param newKeyBindingData the KeyBindingData to be used to assign this action to a keybinding.
-	 * @param validate true signals that this method should convert keybindings to their 
-	 *                 OS-dependent form (for example, on Mac a <tt>Ctrl</tt> 
-	 *                 key is changed to the <tt>Command</tt> key).
+	 * @param newKeyBindingData the KeyBindingData to be used to assign this action to a keybinding
 	 */
-	public abstract void setUnvalidatedKeyBindingData(KeyBindingData newKeyBindingData);
+	public void setUnvalidatedKeyBindingData(KeyBindingData newKeyBindingData);
 
+	/**
+	 * Called when the action's owner is removed from the tool
+	 */
+	public void dispose();
 }

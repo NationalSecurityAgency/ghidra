@@ -34,7 +34,7 @@ public abstract class AbstractFunctionParameterMarkupItemTest extends AbstractVT
 //==================================================================================================
 
 	protected DataType createByteDataType(ProgramDB program) {
-		DataTypeManagerDB dataTypeManager = program.getDataManager();
+		DataTypeManagerDB dataTypeManager = program.getDataTypeManager();
 		DataType dataType = new ByteDataType(dataTypeManager);
 		return dataTypeManager.addDataType(dataType, DataTypeConflictHandler.DEFAULT_HANDLER);
 	}
@@ -43,7 +43,7 @@ public abstract class AbstractFunctionParameterMarkupItemTest extends AbstractVT
 		int transaction = -1;
 		try {
 			transaction = program.startTransaction("Test - Create Data Type");
-			DataTypeManagerDB dataTypeManager = program.getDataManager();
+			DataTypeManagerDB dataTypeManager = program.getDataTypeManager();
 			DataType dataType = new IntegerDataType(dataTypeManager);
 			return dataTypeManager.addDataType(dataType, DataTypeConflictHandler.DEFAULT_HANDLER);
 		}

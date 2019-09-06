@@ -1,0 +1,152 @@
+#include "pcode_test.h"
+
+TEST pcode_StandardPostIncDoWhileLoop_Main()
+{
+	extern i4 pcode_StandardPostIncDoWhileLoop();
+	ASSERTI4(pcode_StandardPostIncDoWhileLoop(), 30);
+}
+
+TEST pcode_StandardPreIncDoWhileLoop_Main()
+{
+	extern i4 pcode_StandardPreIncDoWhileLoop();
+	ASSERTI4(pcode_StandardPreIncDoWhileLoop(), 30);
+}
+
+TEST pcode_StandardPostDecDoWhileLoop_Main()
+{
+	extern i4 pcode_StandardPostDecDoWhileLoop();
+	ASSERTI4(pcode_StandardPostDecDoWhileLoop(), 30);
+}
+
+TEST pcode_StandardPreDecDoWhileLoop_Main()
+{
+	extern i4 pcode_StandardPreDecDoWhileLoop();
+	ASSERTI4(pcode_StandardPreDecDoWhileLoop(), 30);
+}
+
+TEST pcode_VarIncrementPostIncDoWhileLoop_Main()
+{
+	extern i4 pcode_VarIncrementPostIncDoWhileLoop(i4 kk);
+	ASSERTI4(pcode_VarIncrementPostIncDoWhileLoop(5), 30);
+}
+
+TEST pcode_VarIncrementPreIncDoWhileLoop_Main()
+{
+	extern i4 pcode_VarIncrementPreIncDoWhileLoop(i4 kk);
+	ASSERTI4(pcode_VarIncrementPreIncDoWhileLoop(5), 30);
+}
+
+TEST pcode_VarIncrementPostDecDoWhileLoop_Main()
+{
+	extern i4 pcode_VarIncrementPostDecDoWhileLoop(i4 kk);
+	ASSERTI4(pcode_VarIncrementPostDecDoWhileLoop(5), 30);
+}
+
+TEST pcode_VarIncrementPreDecDoWhileLoop_Main()
+{
+	extern i4 pcode_VarIncrementPreDecDoWhileLoop(i4 kk);
+	ASSERTI4(pcode_VarIncrementPreDecDoWhileLoop(5), 30);
+}
+
+TEST pcode_VarIterationPostIncDoWhileLoop_Main()
+{
+	extern i4 pcode_VarIterationPostIncDoWhileLoop(i4 nn);
+	ASSERTI4(pcode_VarIterationPostIncDoWhileLoop(5), 30);
+}
+
+TEST pcode_VarIterationPreIncDoWhileLoop_Main()
+{
+	extern i4 pcode_VarIterationPreIncDoWhileLoop(i4 nn);
+}
+
+TEST pcode_VarIterationPostDecDoWhileLoop_Main()
+{
+	extern i4 pcode_VarIterationPostDecDoWhileLoop(i4 nn);
+	ASSERTI4(pcode_VarIterationPostDecDoWhileLoop(5), 30);
+}
+
+TEST pcode_VarIterationPreDecDoWhileLoop_Main()
+{
+	extern i4 pcode_VarIterationPreDecDoWhileLoop(i4 nn);
+	ASSERTI4(pcode_VarIterationPreDecDoWhileLoop(5), 30);
+}
+
+TEST pcode_VariablePostIncDoWhileLoop_Main()
+{
+	extern i4 pcode_VariablePostIncDoWhileLoop(i4 kk, i4 nn);
+	ASSERTI4(pcode_VariablePostIncDoWhileLoop(5, 10), 55);
+}
+
+TEST pcode_VariablePreIncDoWhileLoop_Main()
+{
+	extern i4 pcode_VariablePreIncDoWhileLoop(i4 kk, i4 nn);
+	ASSERTI4(pcode_VariablePreIncDoWhileLoop(5, 10), 55);
+}
+
+TEST pcode_VariablePostDecDoWhileLoop_Main()
+{
+	extern i4 pcode_VariablePostDecDoWhileLoop(i4 kk, i4 nn);
+	ASSERTI4(pcode_VariablePostDecDoWhileLoop(5, 10), 55);
+}
+
+TEST pcode_VariablePreDecDoWhileLoop_Main()
+{
+	extern i4 pcode_VariablePreDecDoWhileLoop(i4 kk, i4 nn);
+	ASSERTI4(pcode_VariablePreDecDoWhileLoop(5, 10), 55);
+}
+
+TEST pcode_SwitchedDoWhileLoop_Main()
+{
+	extern i4 pcode_SwitchedDoWhileLoop(i4 type, i4 kk, i4 jj, i4 nn);
+	ASSERTI4(pcode_SwitchedDoWhileLoop(5, 10, 15, 20), 315);
+}
+
+TEST pcode_UnSwitchedDoWhileLoop_Main()
+{
+	extern i4 pcode_UnSwitchedDoWhileLoop(i4 type, i4 kk, i4 jj, i4 nn);
+	ASSERTI4(pcode_UnSwitchedDoWhileLoop(5, 10, 15, 20), 315);
+}
+
+TEST pcode_JammedDoWhileLoop_Main()
+{
+	extern i4 pcode_JammedDoWhileLoop(i4 kk, i4 jj, i4 nn);
+	ASSERTI4(pcode_JammedDoWhileLoop(5, 10, 15), 5243040);
+}
+
+TEST pcode_UnJammedDoWhileLoop_Main()
+{
+	extern i4 pcode_UnJammedDoWhileLoop(i4 kk, i4 jj, i4 nn);
+	ASSERTI4(pcode_UnJammedDoWhileLoop(5, 10, 15), 5243040);
+}
+
+TEST pcode_RolledDoWhileLoop_Main()
+{
+	extern i4 pcode_RolledDoWhileLoop(i4 array[], i4 nn);
+	i4 array[] = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
+	ASSERTI4(pcode_RolledDoWhileLoop(array, 10), 55);
+	ASSERTI4(pcode_RolledDoWhileLoop(array, 5), 15);
+	ASSERTI4(pcode_RolledDoWhileLoop(array, 1), 1);
+	ASSERTI4(pcode_RolledDoWhileLoop(array, 0), 1);
+}
+
+TEST pcode_Unrolled2DoWhileLoop_Main()
+{
+	extern i4 pcode_Unrolled2DoWhileLoop(i4 array[], i4 nn);
+	i4 array[] = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
+	ASSERTI4(pcode_Unrolled2DoWhileLoop(array, 10), 55);
+	ASSERTI4(pcode_Unrolled2DoWhileLoop(array, 5), 15);
+	ASSERTI4(pcode_Unrolled2DoWhileLoop(array, 1), 6);
+	ASSERTI4(pcode_Unrolled2DoWhileLoop(array, 0), 3);
+}
+
+TEST pcode_Unrolled4DoWhileLoop_Main()
+{
+	extern i4 pcode_Unrolled4DoWhileLoop(i4 array[], i4 nn);
+	i4 array[] = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
+	ASSERTI4(pcode_Unrolled4DoWhileLoop(array, 10), 55);
+	ASSERTI4(pcode_Unrolled4DoWhileLoop(array, 5), 15);
+	ASSERTI4(pcode_Unrolled4DoWhileLoop(array, 1), 15);
+	ASSERTI4(pcode_Unrolled4DoWhileLoop(array, 0), 10);
+}
+
+MAIN IterativeProcessingDoWhile_main() { }

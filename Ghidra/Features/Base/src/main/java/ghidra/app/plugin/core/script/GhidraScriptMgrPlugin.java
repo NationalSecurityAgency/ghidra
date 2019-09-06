@@ -19,9 +19,6 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.net.Socket;
 
-import docking.ActionContext;
-import docking.action.DockingAction;
-import docking.action.ToolBarData;
 import generic.jar.ResourceFile;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.plugin.PluginCategoryNames;
@@ -36,9 +33,7 @@ import ghidra.framework.plugintool.PluginInfo;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.program.model.listing.Program;
-import ghidra.util.HelpLocation;
 import ghidra.util.task.TaskListener;
-import resources.ResourceManager;
 
 //@formatter:off
 @PluginInfo(
@@ -54,7 +49,6 @@ import resources.ResourceManager;
 public class GhidraScriptMgrPlugin extends ProgramPlugin implements GhidraScriptService {
 
 	private GhidraScriptComponentProvider provider;
-	private DockingAction action;
 
 	public GhidraScriptMgrPlugin(PluginTool tool) {
 		super(tool, true, true, true);
@@ -63,30 +57,8 @@ public class GhidraScriptMgrPlugin extends ProgramPlugin implements GhidraScript
 	}
 
 	@Override
-	protected void init() {
-		super.init();
-
-		action = new DockingAction("Display Script Manager", getName()) {
-
-			@Override
-			public void actionPerformed(ActionContext context) {
-				tool.showComponentProvider(provider, true);
-			}
-		};
-
-		// ACTIONS - auto generated
-		action.setToolBarData(
-			new ToolBarData(ResourceManager.loadImage("images/play.png"), "View"));
-
-		action.setEnabled(true);
-		action.setHelpLocation(new HelpLocation(getName(), "Script_Manager"));
-		tool.addAction(action);
-	}
-
-	@Override
 	protected void dispose() {
 		super.dispose();
-		action.dispose();
 		provider.dispose();
 	}
 

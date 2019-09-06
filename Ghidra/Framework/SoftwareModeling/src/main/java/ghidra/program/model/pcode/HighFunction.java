@@ -184,7 +184,7 @@ public class HighFunction extends PcodeSyntaxTree {
 				}
 			}
 			else if (nm.equals("prt")) {
-				if (sym.getSymbolType() == SymbolType.CODE) {
+				if (sym.getSymbolType() == SymbolType.LABEL) {
 					DataTypeSymbol protover = HighFunctionDBUtil.readOverride(sym);
 					if (protover != null) {
 						if (protoOverrides == null) {
@@ -296,6 +296,12 @@ public class HighFunction extends PcodeSyntaxTree {
 			}
 			else if (subel.getName().equals("override")) {
 				// Do nothing with override at the moment
+				parser.discardSubTree();
+			}
+			else if (subel.getName().equals("scope")) {
+				// This must be a subscope of the local scope
+				// Currently this can only hold static variables of the function
+				// which ghidra already knows about
 				parser.discardSubTree();
 			}
 			else {

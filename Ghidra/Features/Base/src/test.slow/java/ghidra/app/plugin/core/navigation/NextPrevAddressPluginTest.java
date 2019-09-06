@@ -71,8 +71,7 @@ public class NextPrevAddressPluginTest extends AbstractGhidraHeadedIntegrationTe
 		NextPrevAddressPlugin plugin = env.getPlugin(NextPrevAddressPlugin.class);
 		previousAction =
 			(MultiActionDockingAction) TestUtils.getInstanceField("previousAction", plugin);
-		nextAction =
-			(MultiActionDockingAction) TestUtils.getInstanceField("nextAction", plugin);
+		nextAction = (MultiActionDockingAction) TestUtils.getInstanceField("nextAction", plugin);
 
 		GoToAddressLabelPlugin goToPlugin = env.getPlugin(GoToAddressLabelPlugin.class);
 		dialog = goToPlugin.getDialog();
@@ -332,32 +331,12 @@ public class NextPrevAddressPluginTest extends AbstractGhidraHeadedIntegrationTe
 		clickMouse(component, MouseEvent.BUTTON1, x, y, 1, 0);
 	}
 
-	private JPopupMenu getPopupMenu(Container parent) {
-		Component[] components = parent.getComponents();
-		for (Component component : components) {
-			if (component instanceof JPopupMenu) {
-				return (JPopupMenu) component;
-			}
-		}
-
-		for (Component component : components) {
-			if (component instanceof Container) {
-				JPopupMenu popupMenu = getPopupMenu((Container) component);
-				if (popupMenu != null) {
-					return popupMenu;
-				}
-			}
-		}
-
-		return null;
-	}
-
 	@SuppressWarnings("unchecked")
 	// let caution fly
 	private JButton findButtonForAction(DockingWindowManager windowManager, DockingAction action) {
-		Object actionManager = TestUtils.getInstanceField("actionManager", windowManager);
+		Object actionToGuiMapper = TestUtils.getInstanceField("actionToGuiMapper", windowManager);
 		Object menuAndToolBarManager =
-			TestUtils.getInstanceField("menuAndToolBarManager", actionManager);
+			TestUtils.getInstanceField("menuAndToolBarManager", actionToGuiMapper);
 		Map<WindowNode, WindowActionManager> map =
 			(Map<WindowNode, WindowActionManager>) TestUtils.getInstanceField(
 				"windowToActionManagerMap", menuAndToolBarManager);

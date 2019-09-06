@@ -15,7 +15,7 @@
  */
 package generic.test;
 
-import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.*;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -62,6 +62,7 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 	private static File debugDirectory;
 
 	public static final String TESTDATA_DIRECTORY_NAME = "testdata";
+	public static final String DEFAULT_TOOL_NAME = "CodeBrowser";
 	public static final String DEFAULT_TEST_TOOL_NAME = "TestCodeBrowser";
 
 	private static boolean initialized = false;
@@ -661,10 +662,10 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 		if (button == null) {
 			throw new AssertionError("Couldn't find button " + buttonText + ".");
 		}
-		if (!button.isShowing()) {
+		if (!runSwing(() -> button.isShowing())) {
 			throw new AssertionError("Button " + buttonText + " is not showing.");
 		}
-		if (!button.isEnabled()) {
+		if (!runSwing(() -> button.isEnabled())) {
 			throw new AssertionError("Button " + buttonText + " is not enabled.");
 		}
 		pressButton(button, waitForCompletion);
@@ -700,10 +701,10 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 		if (button == null) {
 			throw new AssertionError("Couldn't find button " + buttonName + ".");
 		}
-		if (!button.isVisible()) {
+		if (!runSwing(() -> button.isShowing())) {
 			throw new AssertionError("Button " + buttonName + " is not showing.");
 		}
-		if (!button.isEnabled()) {
+		if (!runSwing(() -> button.isEnabled())) {
 			throw new AssertionError("Button " + buttonName + " is not enabled.");
 		}
 		pressButton(button, waitForCompletion);
@@ -1092,6 +1093,26 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 		runSwing(runnable, true);
 	}
 
+	/**
+	 * Call this version of {@link #runSwing(Runnable)} when you expect your runnable to throw
+	 * an exception 
+	 * @param runnable the runnable
+	 * @param wait true signals to wait for the Swing operation to finish
+	 * @throws Throwable any excption that is thrown on the Swing thread
+	 */
+	public static void runSwingWithExceptions(Runnable runnable, boolean wait) throws Throwable {
+
+		if (Swing.isSwingThread()) {
+			throw new AssertException("Unexpectedly called from the Swing thread");
+		}
+
+		ExceptionHandlingRunner exceptionHandlingRunner = new ExceptionHandlingRunner(runnable);
+		Throwable throwable = exceptionHandlingRunner.getException();
+		if (throwable != null) {
+			throw throwable;
+		}
+	}
+
 	public static void runSwing(Runnable runnable, boolean wait) {
 		if (SwingUtilities.isEventDispatchThread()) {
 			runnable.run();
@@ -1115,7 +1136,6 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 		};
 
 		SwingUtilities.invokeLater(swingExceptionCatcher);
-
 	}
 
 	protected static class ExceptionHandlingRunner {

@@ -15,6 +15,7 @@
  */
 package ghidra.app.context;
 
+import java.awt.Component;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
@@ -27,14 +28,9 @@ public class ProgramSymbolActionContext extends ProgramActionContext {
 
 	private final long[] symbolIDs;
 
-	public ProgramSymbolActionContext(ComponentProvider provider, Program program,
-			long[] symbolIDs) {
-		this(provider, program, symbolIDs, null);
-	}
-
 	public ProgramSymbolActionContext(ComponentProvider provider, Program program, long[] symbolIDs,
-			Object contextObj) {
-		super(provider, program, contextObj);
+			Component sourceComponent) {
+		super(provider, program, sourceComponent);
 		this.symbolIDs = symbolIDs;
 	}
 

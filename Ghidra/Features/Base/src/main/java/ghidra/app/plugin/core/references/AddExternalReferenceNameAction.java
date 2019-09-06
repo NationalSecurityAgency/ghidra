@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,18 +15,16 @@
  */
 package ghidra.app.plugin.core.references;
 
-import ghidra.app.cmd.refs.AddExternalNameCmd;
-import ghidra.program.model.symbol.SourceType;
-import ghidra.util.HelpLocation;
-
-import java.awt.Dimension;
-
 import javax.swing.ImageIcon;
 
-import resources.ResourceManager;
 import docking.ActionContext;
 import docking.action.*;
 import docking.widgets.dialogs.InputDialog;
+import ghidra.app.cmd.refs.AddExternalNameCmd;
+import ghidra.program.model.symbol.SourceType;
+import ghidra.util.HelpLocation;
+import ghidra.util.Msg;
+import resources.ResourceManager;
 
 
 public class AddExternalReferenceNameAction extends DockingAction {
@@ -45,13 +42,16 @@ public class AddExternalReferenceNameAction extends DockingAction {
 	public void actionPerformed(ActionContext context) {
 		InputDialog dialog = new InputDialog("New External Program", "Enter Name");
 		dialog.setHelpLocation(new HelpLocation("ReferencesPlugin", "Add_External_Program_Name"));
-		Dimension preferredSize = dialog.getPreferredSize();
-		dialog.setPreferredSize(preferredSize.width+40, preferredSize.height);
 		provider.getTool().showDialog(dialog, provider);
 		if (dialog.isCanceled()) {
 			return;
 		}
 		String newExternalName = dialog.getValue().trim();
+		if (newExternalName.isEmpty()) {
+			Msg.showError(this, dialog.getComponent(), "Invalid Input",
+				"External program name cannot be empty");
+			return;
+		}
 		AddExternalNameCmd cmd = new AddExternalNameCmd(newExternalName, SourceType.USER_DEFINED);
 		provider.getTool().execute(cmd, provider.getProgram());
 	}

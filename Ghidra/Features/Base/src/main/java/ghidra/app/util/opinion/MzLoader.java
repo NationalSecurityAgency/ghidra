@@ -21,14 +21,16 @@ import java.util.*;
 
 import generic.continues.ContinuesFactory;
 import generic.continues.RethrowContinuesFactory;
-import ghidra.app.util.MemoryBlockUtil;
+import ghidra.app.util.MemoryBlockUtils;
 import ghidra.app.util.Option;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.bin.format.FactoryBundledWithBinaryReader;
 import ghidra.app.util.bin.format.mz.DOSHeader;
 import ghidra.app.util.bin.format.mz.OldStyleExecutable;
-import ghidra.app.util.importer.*;
+import ghidra.app.util.importer.MessageLog;
+import ghidra.app.util.importer.MessageLogContinuesFactory;
 import ghidra.framework.store.LockException;
+import ghidra.program.database.mem.FileBytes;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.listing.*;
@@ -85,8 +87,9 @@ public class MzLoader extends AbstractLibrarySupportLoader {
 
 	@Override
 	public void load(ByteProvider provider, LoadSpec loadSpec, List<Option> options, Program prog,
-			MemoryConflictHandler handler, TaskMonitor monitor, MessageLog log) throws IOException {
+			TaskMonitor monitor, MessageLog log) throws IOException, CancelledException {
 
+		FileBytes fileBytes = MemoryBlockUtils.createFileBytes(prog, provider, monitor);
 		AddressFactory af = prog.getAddressFactory();
 		if (!(af.getDefaultAddressSpace() instanceof SegmentedAddressSpace)) {
 			throw new IOException("Selected Language must have a segmented address space.");
@@ -98,55 +101,43 @@ public class MzLoader extends AbstractLibrarySupportLoader {
 		Memory memory = prog.getMemory();
 
 		ContinuesFactory factory = MessageLogContinuesFactory.create(log);
-		MemoryBlockUtil mbu = new MemoryBlockUtil(prog, handler);
-		try {
-			OldStyleExecutable ose = new OldStyleExecutable(factory, provider);
-			DOSHeader dos = ose.getDOSHeader();
-			FactoryBundledWithBinaryReader reader = ose.getBinaryReader();
+		OldStyleExecutable ose = new OldStyleExecutable(factory, provider);
+		DOSHeader dos = ose.getDOSHeader();
+		FactoryBundledWithBinaryReader reader = ose.getBinaryReader();
 
-			if (monitor.isCancelled()) {
-				return;
-			}
-			monitor.setMessage("Processing segments...");
-			processSegments(mbu, space, reader, dos, log, monitor);
-
-			if (monitor.isCancelled()) {
-				return;
-			}
-			monitor.setMessage("Adjusting segments...");
-			adjustSegmentStarts(prog);
-
-			if (monitor.isCancelled()) {
-				return;
-			}
-			monitor.setMessage("Processing relocations...");
-			doRelocations(prog, reader, dos);
-
-			if (monitor.isCancelled()) {
-				return;
-			}
-			monitor.setMessage("Processing symbols...");
-			createSymbols(space, symbolTable, dos);
-
-			if (monitor.isCancelled()) {
-				return;
-			}
-			monitor.setMessage("Setting registers...");
-
-			Symbol entrySymbol = SymbolUtilities.getLabelOrFunctionSymbol(prog, ENTRY_NAME,
-				err -> log.error("MZ", err));
-			setRegisters(context, entrySymbol, memory.getBlocks(), dos);
+		if (monitor.isCancelled()) {
+			return;
 		}
-		finally {
+		monitor.setMessage("Processing segments...");
+		processSegments(prog, fileBytes, space, reader, dos, log, monitor);
 
-			String messages = mbu.getMessages();
-			if (messages.length() != 0) {
-				log.appendMsg(messages);
-			}
-
-			mbu.dispose();
-			mbu = null;
+		if (monitor.isCancelled()) {
+			return;
 		}
+		monitor.setMessage("Adjusting segments...");
+		adjustSegmentStarts(prog);
+
+		if (monitor.isCancelled()) {
+			return;
+		}
+		monitor.setMessage("Processing relocations...");
+		doRelocations(prog, reader, dos);
+
+		if (monitor.isCancelled()) {
+			return;
+		}
+		monitor.setMessage("Processing symbols...");
+		createSymbols(space, symbolTable, dos);
+
+		if (monitor.isCancelled()) {
+			return;
+		}
+		monitor.setMessage("Setting registers...");
+
+		Symbol entrySymbol =
+			SymbolUtilities.getLabelOrFunctionSymbol(prog, ENTRY_NAME, err -> log.error("MZ", err));
+		setRegisters(context, entrySymbol, memory.getBlocks(), dos);
+
 	}
 
 	private void setRegisters(ProgramContext context, Symbol entry, MemoryBlock[] blocks,
@@ -258,7 +249,7 @@ public class MzLoader extends AbstractLibrarySupportLoader {
 		}
 	}
 
-	private void processSegments(MemoryBlockUtil mbu, SegmentedAddressSpace space,
+	private void processSegments(Program program, FileBytes fileBytes, SegmentedAddressSpace space,
 			FactoryBundledWithBinaryReader reader, DOSHeader dos, MessageLog log,
 			TaskMonitor monitor) {
 		try {
@@ -327,12 +318,12 @@ public class MzLoader extends AbstractLibrarySupportLoader {
 				}
 				if (numBytes > 0) {
 					bytes = reader.readByteArray(readLoc, numBytes);
-					mbu.createInitializedBlock("Seg_" + i, start, bytes, "", "mz", true, true, true,
-						monitor);
+					MemoryBlockUtils.createInitializedBlock(program, false, "Seg_" + i, start,
+						fileBytes, readLoc, numBytes, "", "mz", true, true, true, log);
 				}
 				if (numUninitBytes > 0) {
-					mbu.createUninitializedBlock(false, "Seg_" + i + "u", start.add(numBytes),
-						numUninitBytes, "", "mz", true, true, false);
+					MemoryBlockUtils.createUninitializedBlock(program, false, "Seg_" + i + "u",
+						start.add(numBytes), numUninitBytes, "", "mz", true, true, false, log);
 				}
 			}
 
@@ -359,7 +350,7 @@ public class MzLoader extends AbstractLibrarySupportLoader {
 		try {
 			Memory mem = prog.getMemory();
 			SegmentedAddressSpace space =
-					(SegmentedAddressSpace) prog.getAddressFactory().getDefaultAddressSpace();
+				(SegmentedAddressSpace) prog.getAddressFactory().getDefaultAddressSpace();
 
 			int relocationTableOffset = Conv.shortToInt(dos.e_lfarlc());
 			int csStart = INITIAL_SEGMENT_VAL;

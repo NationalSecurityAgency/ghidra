@@ -24,10 +24,13 @@ import java.util.regex.*;
 
 import javax.swing.JComponent;
 
+import org.apache.commons.lang3.StringUtils;
+
 import docking.widgets.SearchLocation;
 import docking.widgets.fieldpanel.Layout;
 import docking.widgets.fieldpanel.LayoutModel;
 import docking.widgets.fieldpanel.field.*;
+import docking.widgets.fieldpanel.listener.IndexMapper;
 import docking.widgets.fieldpanel.listener.LayoutModelListener;
 import docking.widgets.fieldpanel.support.*;
 import ghidra.app.decompiler.*;
@@ -37,7 +40,6 @@ import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.pcode.HighFunction;
 import ghidra.util.Msg;
-import ghidra.util.StringUtilities;
 
 /**
  * 
@@ -120,15 +122,15 @@ public class ClangLayoutController implements LayoutModel, LayoutModelListener {
 	}
 
 	@Override
-	public void modelSizeChanged() {
+	public void modelSizeChanged(IndexMapper mapper) {
 		for (int i = 0; i < listeners.size(); ++i) {
-			listeners.get(i).modelSizeChanged();
+			listeners.get(i).modelSizeChanged(mapper);
 		}
 	}
 
 	public void modelChanged() {
 		for (int i = 0; i < listeners.size(); ++i) {
-			listeners.get(i).modelSizeChanged();
+			listeners.get(i).modelSizeChanged(IndexMapper.IDENTITY_MAPPER);
 		}
 	}
 
@@ -522,7 +524,7 @@ public class ClangLayoutController implements LayoutModel, LayoutModelListener {
 
 			java.util.function.Function<String, SearchMatch> function = textLine -> {
 
-				int index = StringUtilities.indexOfIgnoreCase(textLine, searchString);
+				int index = StringUtils.indexOfIgnoreCase(textLine, searchString);
 				if (index == -1) {
 					return SearchMatch.NO_MATCH;
 				}
@@ -534,7 +536,7 @@ public class ClangLayoutController implements LayoutModel, LayoutModelListener {
 
 		java.util.function.Function<String, SearchMatch> function = textLine -> {
 
-			int index = StringUtilities.lastIndexOfIgnoreCase(textLine, searchString);
+			int index = StringUtils.lastIndexOfIgnoreCase(textLine, searchString);
 			if (index == -1) {
 				return SearchMatch.NO_MATCH;
 			}

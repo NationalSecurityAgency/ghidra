@@ -49,7 +49,6 @@ import ghidra.app.context.ListingActionContext;
  */
 import ghidra.app.services.DataTypeManagerService;
 import ghidra.framework.plugintool.PluginTool;
-import ghidra.generic.function.Callback;
 import ghidra.program.database.symbol.EquateManager;
 import ghidra.program.model.data.DataTypeManager;
 import ghidra.program.model.data.Enum;
@@ -62,6 +61,7 @@ import ghidra.util.UniversalID;
 import ghidra.util.layout.HorizontalLayout;
 import ghidra.util.layout.VerticalLayout;
 import ghidra.util.table.*;
+import utility.function.Callback;
 
 public class SetEquateDialog extends DialogComponentProvider {
 	public static final int CANCELED = 0;

@@ -73,6 +73,7 @@ public:
 };
 
 class Funcdata;
+class FuncCallSpecs;
 
 /// \brief Information about heritage passes performed for a specific address space
 ///
@@ -87,9 +88,48 @@ class HeritageInfo {
   int4 delay;			///< How many passes to delay heritage of this space
   int4 deadcodedelay;		///< How many passes to delay deadcode removal of this space
   int4 deadremoved;		///< >0 if Varnodes in this space have been eliminated
+  bool loadGuardSearch;		///< \b true if the search for LOAD ops to guard has been performed
   bool warningissued;		///< \b true if warning issued previously
-  HeritageInfo(AddrSpace *spc,int4 dl,int4 dcdl) {
-    space=spc; delay=dl; deadcodedelay=dcdl; deadremoved=0; warningissued=false; } ///< Constructor
+  void set(AddrSpace *spc,int4 dl,int4 dcdl) {
+    space=spc; delay=dl; deadcodedelay=dcdl; deadremoved=0; warningissued=false; loadGuardSearch = false; } ///< Set all fields
+  bool isHeritaged(void) const { return (space != (AddrSpace *)0); }
+  void reset(void) {
+    deadremoved = 0; deadcodedelay = delay; warningissued = false; loadGuardSearch = false; }	///< Reset
+};
+
+/// \brief Description of a LOAD operation that needs to be guarded
+///
+/// Heritage maintains a list of CPUI_LOAD ops that reference the stack dynamically. These
+/// can potentially alias stack Varnodes, so we maintain what (possibly limited) information
+/// we known about the range of stack addresses that can be referenced.
+class LoadGuard {
+  friend class Heritage;
+  PcodeOp *op;		///< The LOAD op
+  AddrSpace *spc;	///< The stack space being loaded from
+  uintb pointerBase;	///< Base offset of the pointer
+  uintb minimumOffset;	///< Minimum offset of the LOAD
+  uintb maximumOffset;	///< Maximum offset of the LOAD
+  int4 step;		///< Step of any access into this range (0=unknown)
+  int4 analysisState;	///< 0=unanalyzed, 1=analyzed(partial result), 2=analyzed(full result)
+  void establishRange(const ValueSetRead &valueSet);	///< Convert partial value set analysis into guard range
+  void finalizeRange(const ValueSetRead &valueSet);	///< Convert value set analysis to final guard range
+
+  /// \brief Set a new unanalyzed LOAD guard that initially guards everything
+  ///
+  /// \param o is the LOAD op
+  /// \param s is the (stack) space it is loading from
+  /// \param off is the base offset that is indexed from
+  void set(PcodeOp *o,AddrSpace *s,uintb off) {
+    op = o; spc = s; pointerBase=off; minimumOffset=0; maximumOffset=s->getHighest(); step=0; analysisState=0;
+  }
+public:
+  PcodeOp *getOp(void) const { return op; }	///< Get the PcodeOp being guarded
+  uintb getMinimum(void) const { return minimumOffset; }	///< Get minimum offset of the guarded range
+  uintb getMaximum(void) const { return maximumOffset; }	///< Get maximum offset of the guarded range
+  int4 getStep(void) const { return step; }		///< Get the calculated step associated with the range (or 0)
+  bool isGuarded(const Address &addr) const;		///< Does \b this guard apply to the given address
+  bool isRangeLocked(void) const { return (analysisState == 2); }	///< Return \b true if the range is fully determined
+  bool isValid(OpCode opc) const { return (!op->isDead() && op->code() == opc); }	///< Return \b true if the record still describes an active LOAD
 };
 
 /// \brief Manage the construction of Static Single Assignment (SSA) form
@@ -134,6 +174,30 @@ class Heritage {
     mark_node = 2,		///< Node has already been in queue
     merged_node = 4		///< Node has already been merged
   };
+
+  /// \brief Node for depth-first traversal of stack references
+  struct StackNode {
+    enum {
+      nonconstant_index = 1,
+      multiequal = 2
+    };
+    Varnode *vn;		///< Varnode being traversed
+    uintb offset;		///< Offset relative to base
+    uint4 traversals;		///< What kind of operations has this pointer accumulated
+    list<PcodeOp *>::const_iterator iter;	///< Next PcodeOp to follow
+
+    /// \brief Constructor
+    /// \param v is the Varnode being visited
+    /// \param o is the current offset from the base pointer
+    /// \param trav indicates what configurations were seen along the path to this Varnode
+    StackNode(Varnode *v,uintb o,uint4 trav) {
+      vn = v;
+      offset = o;
+      iter = v->beginDescend();
+      traversals = trav;
+    }
+  };
+
   Funcdata *fd;		        ///< The function \b this is controlling SSA construction 
   LocationMap globaldisjoint;	///< Disjoint cover of every heritaged memory location
   LocationMap disjoint;		///< Disjoint cover of memory locations currently being heritaged
@@ -147,6 +211,9 @@ class Heritage {
   PriorityQueue pq;		///< Priority queue for phi-node placement
   vector<FlowBlock *> merge;	///< Calculate merge points (blocks containing phi-nodes)
   vector<HeritageInfo> infolist; ///< Heritage status for individual address spaces
+  list<LoadGuard> loadGuard;	///< List of LOAD operations that need to be guarded
+  list<LoadGuard> storeGuard;	///< List of STORE operations taking an indexed pointer to the stack
+  vector<PcodeOp *> loadCopyOps;	///< List of COPY ops generated by load guards
   void clearInfoList(void);	 ///< Reset heritage status for all address spaces
 
   /// \brief Get the heritage status for the given address space
@@ -168,12 +235,22 @@ class Heritage {
   Varnode *normalizeWriteSize(Varnode *vn,const Address &addr,int4 size);
   Varnode *concatPieces(const vector<Varnode *> &vnlist,PcodeOp *insertop,Varnode *finalvn);
   void splitPieces(const vector<Varnode *> &vnlist,PcodeOp *insertop,const Address &addr,int4 size,Varnode *startvn);
+  void findAddressForces(vector<PcodeOp *> &copySinks,vector<PcodeOp *> &forces);
+  void propagateCopyAway(PcodeOp *op);
+  void handleNewLoadCopies(void);
+  void analyzeNewLoadGuards(void);
+  void generateLoadGuard(StackNode &node,PcodeOp *op,AddrSpace *spc);
+  void generateStoreGuard(StackNode &node,PcodeOp *op,AddrSpace *spc);
+  bool protectFreeStores(AddrSpace *spc,vector<PcodeOp *> &freeStores);
+  bool discoverIndexedStackPointers(AddrSpace *spc,vector<PcodeOp *> &freeStores,bool checkFreeStores);
+  void reprocessFreeStores(AddrSpace *spc,vector<PcodeOp *> &freeStores);
   void guard(const Address &addr,int4 size,vector<Varnode *> &read,vector<Varnode *> &write,vector<Varnode *> &inputvars);
   void guardInput(const Address &addr,int4 size,vector<Varnode *> &input);
+  void guardCallOverlappingInput(FuncCallSpecs *fc,const Address &addr,int4 size);
   void guardCalls(uint4 flags,const Address &addr,int4 size,vector<Varnode *> &write);
   void guardStores(const Address &addr,int4 size,vector<Varnode *> &write);
+  void guardLoads(uint4 flags,const Address &addr,int4 size,vector<Varnode *> &write);
   void guardReturns(uint4 flags,const Address &addr,int4 size,vector<Varnode *> &write);
-  //  void guardLoads(uint4 flags,const Address &addr,int4 size,vector<Varnode *> &write);
   static void buildRefinement(vector<int4> &refine,const Address &addr,int4 size,const vector<Varnode *> &vnlist);
   void splitByRefinement(Varnode *vn,const Address &addr,const vector<int4> &refine,vector<Varnode *> &split);
   void refineRead(Varnode *vn,const Address &addr,const vector<int4> &refine,vector<Varnode *> &newvn);
@@ -185,6 +262,8 @@ class Heritage {
   void calcMultiequals(const vector<Varnode *> &write);
   void renameRecurse(BlockBasic *bl,VariableStack &varstack);
   void bumpDeadcodeDelay(Varnode *vn);
+  void placeMultiequals(void);
+  void rename(void);
 public:
   Heritage(Funcdata *data);	///< Constructor
 
@@ -202,9 +281,10 @@ public:
   void buildInfoList(void);	                    ///< Initialize information for each space
   void forceRestructure(void) { maxdepth = -1; }    ///< Force regeneration of basic block structures
   void clear(void);				    ///< Reset all analysis of heritage
-  void placeMultiequals(void);
-  void rename(void);
   void heritage(void);				    ///< Perform one pass of heritage
+  const list<LoadGuard> &getLoadGuards(void) const { return loadGuard; }	///< Get list of LOAD ops that are guarded
+  const list<LoadGuard> &getStoreGuards(void) const { return storeGuard; }	///< Get list of STORE ops that are guarded
+  const LoadGuard *getStoreGuard(PcodeOp *op) const;	///< Get LoadGuard record associated with given PcodeOp
 };
 
 #endif

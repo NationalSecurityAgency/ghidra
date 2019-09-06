@@ -27,9 +27,12 @@ import javax.swing.border.Border;
 import org.junit.Before;
 import org.junit.Test;
 
-import docking.*;
+import docking.DialogComponentProvider;
+import docking.StatusBar;
 import docking.action.DockingActionIf;
-import docking.action.KeyEntryDialog;
+import docking.actions.KeyEntryDialog;
+import docking.actions.ToolActions;
+import docking.tool.ToolConstants;
 import docking.widgets.OptionDialog;
 import docking.widgets.table.GTable;
 import generic.jar.ResourceFile;
@@ -58,7 +61,7 @@ public class ToolScreenShots extends GhidraScreenShotGenerator {
 	public void testConfigTool() {
 
 		tool = env.launchDefaultTool();
-		performAction("Configure Tool", "Tool", false);
+		performAction("Configure Tool", ToolConstants.TOOL_OWNER, false);
 		captureDialog(600, 500);
 	}
 
@@ -66,7 +69,7 @@ public class ToolScreenShots extends GhidraScreenShotGenerator {
 	public void testConfigurePlugins() {
 
 		tool = env.launchDefaultTool();
-		performAction("Configure Tool", "Tool", false);
+		performAction("Configure Tool", ToolConstants.TOOL_OWNER, false);
 		performDialogAction("Configure All Plugins", false);
 		PluginInstallerDialog installerProvider =
 			(PluginInstallerDialog) getDialog(PluginInstallerDialog.class);
@@ -79,7 +82,7 @@ public class ToolScreenShots extends GhidraScreenShotGenerator {
 	@Test
 	public void testSaveTool() {
 		tool = env.launchDefaultTool();
-		performAction("Save Tool As", "Tool", false);
+		performAction("Save Tool As", ToolConstants.TOOL_OWNER, false);
 		captureDialog();
 	}
 
@@ -230,7 +233,7 @@ public class ToolScreenShots extends GhidraScreenShotGenerator {
 		}
 		FileUtilities.writeLinesToFile(file, lines2);
 
-		performFrontEndAction("Show Log", "Tool", false);
+		performFrontEndAction("Show Log", ToolConstants.TOOL_OWNER, false);
 		captureDialog("Ghidra User Log");
 	}
 
@@ -280,13 +283,10 @@ public class ToolScreenShots extends GhidraScreenShotGenerator {
 	public void testSetKeyBindings() {
 
 		tool = env.launchDefaultTool();
-		DockingWindowManager windowManager = tool.getWindowManager();
-		DockingActionManager actionMgr =
-			(DockingActionManager) getInstanceField("actionManager", windowManager);
-		String fullActionName = "Delete Function" + " (" + "FunctionPlugin" + ")";
-		List<DockingActionIf> actions = tool.getDockingActionsByFullActionName(fullActionName);
+		ToolActions toolActions = (ToolActions) getInstanceField("toolActions", tool);
 
-		final KeyEntryDialog keyEntryDialog = new KeyEntryDialog(actions.get(0), actionMgr);
+		DockingActionIf action = getAction(tool, "FunctionPlugin", "Delete Function");
+		final KeyEntryDialog keyEntryDialog = new KeyEntryDialog(action, toolActions);
 
 		runSwing(() -> tool.showDialog(keyEntryDialog), false);
 		captureDialog();

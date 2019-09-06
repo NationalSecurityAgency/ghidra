@@ -19,6 +19,7 @@ import static org.junit.Assert.*;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.List;
+import java.util.Set;
 
 import javax.swing.*;
 import javax.swing.table.TableModel;
@@ -841,7 +842,7 @@ public class EquatePlugin1Test extends AbstractEquatePluginTest {
 
 		putCursorOnOperand(0x010064ae, 1);
 
-		List<DockingActionIf> actions = tool.getDockingActionsByOwnerName("EquatePlugin");
+		Set<DockingActionIf> actions = getActionsByOwner(tool, "EquatePlugin");
 		int found = 0;
 		for (DockingActionIf action : actions) {
 			String name = action.getName();
@@ -892,7 +893,7 @@ public class EquatePlugin1Test extends AbstractEquatePluginTest {
 		putCursorOnOperand(0x010064a3, 0);
 
 		int found = 0;
-		List<DockingActionIf> actions = tool.getDockingActionsByOwnerName("EquatePlugin");
+		Set<DockingActionIf> actions = getActionsByOwner(tool, "EquatePlugin");
 		for (DockingActionIf action : actions) {
 			String name = action.getName();
 			if (!name.startsWith("Convert") || !action.isAddToPopup(getListingContext())) {
@@ -944,7 +945,7 @@ public class EquatePlugin1Test extends AbstractEquatePluginTest {
 		putCursorOnOperand(0x01003a94, 0);
 
 		int found = 0;
-		List<DockingActionIf> actions = tool.getDockingActionsByOwnerName("EquatePlugin");
+		Set<DockingActionIf> actions = getActionsByOwner(tool, "EquatePlugin");
 		for (DockingActionIf action : actions) {
 			String name = action.getName();
 			if (!name.startsWith("Convert") || !action.isAddToPopup(getListingContext())) {

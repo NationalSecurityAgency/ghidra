@@ -123,38 +123,36 @@ public abstract class ByteSequenceAnalyzerProvider extends DialogComponentProvid
 	}
 
 	private void addSendSelectedToClipboardAction() {
-		sendSelectedToClipboardAction =
-			new DockingAction("Send Selected to Clipboard", title, false) {
-				@Override
-				public void actionPerformed(ActionContext context) {
-					List<ByteSequenceRowObject> rows = byteSequenceTable.getLastSelectedObjects();
-					for (ByteSequenceRowObject row : rows) {
-						DittedBitSequence seq = new DittedBitSequence(row.getSequence(), true);
-						PatternInfoRowObject pattern =
-							new PatternInfoRowObject(type, seq, cRegFilter);
-						pattern.setNote(row.getDisassembly());
-						plugin.addPattern(pattern);
-					}
-					plugin.updateClipboard();
+		sendSelectedToClipboardAction = new DockingAction("Send Selected to Clipboard", title) {
+			@Override
+			public void actionPerformed(ActionContext context) {
+				List<ByteSequenceRowObject> rows = byteSequenceTable.getLastSelectedObjects();
+				for (ByteSequenceRowObject row : rows) {
+					DittedBitSequence seq = new DittedBitSequence(row.getSequence(), true);
+					PatternInfoRowObject pattern = new PatternInfoRowObject(type, seq, cRegFilter);
+					pattern.setNote(row.getDisassembly());
+					plugin.addPattern(pattern);
 				}
+				plugin.updateClipboard();
+			}
 
-				@Override
-				public boolean isEnabledForContext(ActionContext context) {
-					List<ByteSequenceRowObject> rows = byteSequenceTable.getLastSelectedObjects();
-					if (rows == null) {
-						return false;
-					}
-					if (rows.isEmpty()) {
-						return false;
-					}
-					return true;
+			@Override
+			public boolean isEnabledForContext(ActionContext context) {
+				List<ByteSequenceRowObject> rows = byteSequenceTable.getLastSelectedObjects();
+				if (rows == null) {
+					return false;
 				}
+				if (rows.isEmpty()) {
+					return false;
+				}
+				return true;
+			}
 
-				@Override
-				public boolean isAddToPopup(ActionContext context) {
-					return true;
-				}
-			};
+			@Override
+			public boolean isAddToPopup(ActionContext context) {
+				return true;
+			}
+		};
 
 		ImageIcon icon = ResourceManager.loadImage("images/2rightarrow.png");
 		sendSelectedToClipboardAction.setPopupMenuData(
@@ -168,7 +166,7 @@ public abstract class ByteSequenceAnalyzerProvider extends DialogComponentProvid
 	}
 
 	private void addMergeAction() {
-		mergeAction = new DockingAction("Merge Selected Rows", title, false) {
+		mergeAction = new DockingAction("Merge Selected Rows", title) {
 			@Override
 			public void actionPerformed(ActionContext context) {
 				merged = byteSequenceTable.mergeSelectedRows();
@@ -203,7 +201,7 @@ public abstract class ByteSequenceAnalyzerProvider extends DialogComponentProvid
 	}
 
 	private void addSendMergedToClipboardAction() {
-		sendMergedToClipboardAction = new DockingAction("Send Merged to Clipboard", title, false) {
+		sendMergedToClipboardAction = new DockingAction("Send Merged to Clipboard", title) {
 			@Override
 			public void actionPerformed(ActionContext context) {
 				if (merged != null) {

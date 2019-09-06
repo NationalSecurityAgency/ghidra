@@ -273,7 +273,7 @@ public class TestGraphAlgorithmSteppingViewerPanel<V, E extends GEdge<V>> extend
 			AbstractVisualGraphLayout<AlgorithmTestSteppingVertex<V>, AlgorithmTestSteppingEdge<V>> {
 
 		protected TestGraphLayout(TestGraph graph) {
-			super(graph);
+			super(graph, "Test Layout");
 		}
 
 		@SuppressWarnings("unchecked")

@@ -23,8 +23,7 @@ import javax.swing.*;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
 
-import docking.ActionContext;
-import docking.WindowPosition;
+import docking.*;
 import docking.action.*;
 import ghidra.app.services.*;
 import ghidra.framework.main.ConsoleTextPane;
@@ -41,6 +40,9 @@ import resources.ResourceManager;
 
 public class ConsoleComponentProvider extends ComponentProviderAdapter
 		implements ConsoleService, OptionsChangeListener {
+
+	private static final String OLD_NAME = "ConsolePlugin";
+	private static final String NAME = "Console";
 
 	private static final String CONSOLE_GIF = "images/monitor.png";
 	private static final String CLEAR_GIF = "images/erase16.png";
@@ -64,11 +66,14 @@ public class ConsoleComponentProvider extends ComponentProviderAdapter
 	private PrintWriter stdin;
 	private Program currentProgram;
 
-	public ConsoleComponentProvider(PluginTool tool, String name) {
-		super(tool, name, name);
+	public ConsoleComponentProvider(PluginTool tool, String owner) {
+		super(tool, "Console", owner);
+
+		// note: the owner has not changed, just the name; remove sometime after version 10
+		ComponentProvider.registerProviderNameOwnerChange(OLD_NAME, owner, NAME, owner);
 
 		setDefaultWindowPosition(WindowPosition.BOTTOM);
-		setHelpLocation(new HelpLocation(getName(), "console"));
+		setHelpLocation(new HelpLocation(owner, owner));
 		setIcon(ResourceManager.loadImage(CONSOLE_GIF));
 		setWindowMenuGroup("Console");
 		setSubTitle("Scripting");
@@ -94,7 +99,7 @@ public class ConsoleComponentProvider extends ComponentProviderAdapter
 
 	private void createOptions() {
 		ToolOptions options = tool.getOptions("Console");
-		HelpLocation help = new HelpLocation(getName(), "ConsolePlugin");
+		HelpLocation help = new HelpLocation(getOwner(), getOwner());
 		options.registerOption(FONT_OPTION_LABEL, DEFAULT_FONT, help, FONT_DESCRIPTION);
 		options.setOptionsHelpLocation(help);
 		font = options.getFont(FONT_OPTION_LABEL, DEFAULT_FONT);
@@ -216,7 +221,7 @@ public class ConsoleComponentProvider extends ComponentProviderAdapter
 	}
 
 	private ConsoleWord getWordSeparatedByWhitespace(Point p) {
-		int pos = textPane.viewToModel(p);
+		int pos = textPane.viewToModel2D(p);
 		Document doc = textPane.getDocument();
 		int startIndex = pos;
 		int endIndex = pos;
@@ -260,7 +265,7 @@ public class ConsoleComponentProvider extends ComponentProviderAdapter
 	}
 
 	private void createActions() {
-		clearAction = new DockingAction("Clear Console", getName()) {
+		clearAction = new DockingAction("Clear Console", getOwner()) {
 
 			@Override
 			public void actionPerformed(ActionContext context) {
@@ -273,7 +278,7 @@ public class ConsoleComponentProvider extends ComponentProviderAdapter
 
 		clearAction.setEnabled(true);
 
-		scrollAction = new ToggleDockingAction("Scroll Lock", getName()) {
+		scrollAction = new ToggleDockingAction("Scroll Lock", getOwner()) {
 			@Override
 			public void actionPerformed(ActionContext context) {
 				textPane.setScrollLock(isSelected());

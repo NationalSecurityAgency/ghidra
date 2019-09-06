@@ -15,12 +15,18 @@
  */
 package ghidra.app.util.viewer.util;
 
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.swing.*;
+import javax.swing.BorderFactory;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
 
+import docking.widgets.label.GDHtmlLabel;
 import docking.widgets.label.GDLabel;
 
 /**
@@ -28,7 +34,7 @@ import docking.widgets.label.GDLabel;
  * components (usually icon buttons)
  */
 public class TitledPanel extends JPanel {
-	private JLabel title;
+	private JLabel title; // GDLabel or GHtmlLabel
 	private JPanel titlePanel;
 	private JPanel iconPanel;
 	private JComponent bottomComp;
@@ -37,16 +43,27 @@ public class TitledPanel extends JPanel {
 	/**
 	 * Creates a new TitlePanel
 	 * @param name the name of the panel
-	 * @param panel the component to wrap.
-	 * @param margin the size of the margin to use.
+	 * @param panel the component to wrap
+	 * @param margin the size of the margin to use
 	 */
 	public TitledPanel(String name, JComponent panel, int margin) {
+		this(new GDHtmlLabel(name), panel, margin);
+	}
+
+	/**
+	 * Creates a new TitlePanel
+	 * 
+	 * @param titleLabel the title label for the panel; this allow clients to provide HTML-based
+	 *        title text.  Note: it is up to the client to escape this text as needed for safety
+	 * @param panel the component to wrap
+	 * @param margin the size of the margin to use
+	 */
+	public TitledPanel(JLabel titleLabel, JComponent panel, int margin) {
 		super(new BorderLayout());
 		titlePanel = new JPanel(new BorderLayout());
 		iconPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 4, 1));
 		iconPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
-		title = new GDLabel(name);
-		title.setToolTipText(name);
+		title = titleLabel;
 		JLabel filler = new GDLabel();
 		filler.setPreferredSize(new Dimension(margin, filler.getPreferredSize().height));
 		titlePanel.add(filler, BorderLayout.WEST);

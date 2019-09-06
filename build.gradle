@@ -2,14 +2,16 @@ apply plugin: 'eclipse'
 
 apply from: 'gradle/root/eclipse.gradle'
 apply from: "gradle/support/eclipseLauncher.gradle"
-
+apply from: "gradle/support/loadApplicationProperties.gradle"
 
 
 /***************************************************************************************
  * Make sure the correct version of gradle is being used
  ***************************************************************************************/
-if (gradle.gradleVersion != "5.0") {
-	throw new GradleException("Requires Gradle 5.0, but was run with $gradle.gradleVersion")
+import org.gradle.util.GradleVersion;
+final GradleVersion minimum_version = GradleVersion.version("${rootProject.GRADLE_MINIMUM_VERSION}")
+if (GradleVersion.current() < minimum_version) {
+	throw new GradleException("Requires at least $minimum_version, but was run with $gradle.gradleVersion")
 }
 
 /***************************************************************************************
@@ -40,10 +42,24 @@ allprojects {
 }
 
 /*********************************************************************************
- *  load properties from Ghidra/application.properties file
+ *  Use flat directory-style repository if flatRepo directory is present.
  *********************************************************************************/
-
-apply from: "gradle/support/loadApplicationProperties.gradle"
+if (file("flatRepo").isDirectory()) {
+	allprojects {
+		repositories {
+			mavenCentral()
+			jcenter()
+			flatDir name: "flat", dirs:["$rootProject.projectDir/flatRepo"]
+		}
+	}
+}
+else {	
+	File f = file("ghidra.repos.config")
+	if (!f.exists()) {
+		throw new GradleException("\n\n\n\tUnable to find the local maven repo." +  
+			"  Ensure you have created the ${f.getName()} file.\n\n\n");
+	}
+}
 
 /****************************************************************************
  * Create a set containing all the platforms we need when building native

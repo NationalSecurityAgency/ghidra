@@ -27,6 +27,7 @@ import javax.swing.event.*;
 
 import docking.DialogComponentProvider;
 import docking.options.editor.ButtonPanelFactory;
+import docking.util.image.ToolIconURL;
 import docking.widgets.OptionDialog;
 import docking.widgets.filechooser.GhidraFileChooser;
 import docking.widgets.label.GLabel;
@@ -34,7 +35,6 @@ import ghidra.framework.model.*;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.preferences.Preferences;
 import ghidra.framework.project.tool.GhidraToolTemplate;
-import ghidra.framework.project.tool.ToolIconURL;
 import ghidra.util.HelpLocation;
 import ghidra.util.NamingUtilities;
 import ghidra.util.filechooser.ExtensionFileFilter;

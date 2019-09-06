@@ -405,7 +405,7 @@ public class NewSymbolFilter implements SymbolFilter {
 		Filter instructionFilter = new Filter("Instruction Labels", true, true) {
 			@Override
 			boolean matches(Program program, Symbol symbol) {
-				if (symbol.getSymbolType() == SymbolType.CODE && !symbol.isExternal()) {
+				if (symbol.getSymbolType() == SymbolType.LABEL && !symbol.isExternal()) {
 					Listing l = program.getListing();
 					Address addr = symbol.getAddress();
 					CodeUnit cu = l.getCodeUnitContaining(addr);
@@ -428,7 +428,7 @@ public class NewSymbolFilter implements SymbolFilter {
 		Filter dataFilter = new Filter("Data Labels", true, true) {
 			@Override
 			boolean matches(Program program, Symbol symbol) {
-				if (symbol.getSymbolType() == SymbolType.CODE) {
+				if (symbol.getSymbolType() == SymbolType.LABEL) {
 					if (symbol.isExternal()) {
 						return true;
 					}
@@ -455,7 +455,7 @@ public class NewSymbolFilter implements SymbolFilter {
 		Filter functionFilter = new Filter("Function Labels", false, true) {
 			@Override
 			boolean matches(Program program, Symbol symbol) {
-				if (symbol.getSymbolType() == SymbolType.CODE && !symbol.isExternal()) {
+				if (symbol.getSymbolType() == SymbolType.LABEL && !symbol.isExternal()) {
 					return program.getFunctionManager().getFunctionAt(symbol.getAddress()) != null;
 				}
 				return (symbol.getSymbolType() == SymbolType.FUNCTION);
@@ -599,7 +599,7 @@ public class NewSymbolFilter implements SymbolFilter {
 			@Override
 			boolean isApplicable(Symbol symbol) {
 				SymbolType type = symbol.getSymbolType();
-				return type == SymbolType.CODE || type == SymbolType.CLASS ||
+				return type == SymbolType.LABEL || type == SymbolType.CLASS ||
 					type == SymbolType.FUNCTION || type == SymbolType.NAMESPACE ||
 					type == SymbolType.PARAMETER || type == SymbolType.LOCAL_VAR;
 			}
@@ -627,7 +627,7 @@ public class NewSymbolFilter implements SymbolFilter {
 			@Override
 			boolean isApplicable(Symbol symbol) {
 				SymbolType type = symbol.getSymbolType();
-				return type == SymbolType.CODE || type == SymbolType.CLASS ||
+				return type == SymbolType.LABEL || type == SymbolType.CLASS ||
 					type == SymbolType.FUNCTION || type == SymbolType.NAMESPACE ||
 					type == SymbolType.PARAMETER || type == SymbolType.LOCAL_VAR;
 			}
@@ -655,7 +655,7 @@ public class NewSymbolFilter implements SymbolFilter {
 			@Override
 			boolean isApplicable(Symbol symbol) {
 				SymbolType type = symbol.getSymbolType();
-				return type == SymbolType.CODE || type == SymbolType.CLASS ||
+				return type == SymbolType.LABEL || type == SymbolType.CLASS ||
 					type == SymbolType.FUNCTION || type == SymbolType.NAMESPACE;
 			}
 
@@ -681,7 +681,7 @@ public class NewSymbolFilter implements SymbolFilter {
 			@Override
 			boolean isApplicable(Symbol symbol) {
 				SymbolType type = symbol.getSymbolType();
-				return type == SymbolType.CODE || type == SymbolType.CLASS ||
+				return type == SymbolType.LABEL || type == SymbolType.CLASS ||
 					type == SymbolType.FUNCTION || type == SymbolType.NAMESPACE;
 			}
 
@@ -707,7 +707,7 @@ public class NewSymbolFilter implements SymbolFilter {
 			@Override
 			boolean isApplicable(Symbol symbol) {
 				SymbolType type = symbol.getSymbolType();
-				return type == SymbolType.CODE;
+				return type == SymbolType.LABEL;
 			}
 
 			@Override
@@ -729,7 +729,7 @@ public class NewSymbolFilter implements SymbolFilter {
 			@Override
 			boolean isApplicable(Symbol symbol) {
 				SymbolType type = symbol.getSymbolType();
-				return type == SymbolType.CODE || type == SymbolType.FUNCTION;
+				return type == SymbolType.LABEL || type == SymbolType.FUNCTION;
 			}
 
 			@Override
@@ -756,7 +756,7 @@ public class NewSymbolFilter implements SymbolFilter {
 			@Override
 			boolean isApplicable(Symbol symbol) {
 				SymbolType type = symbol.getSymbolType();
-				return type == SymbolType.CODE || type == SymbolType.FUNCTION;
+				return type == SymbolType.LABEL || type == SymbolType.FUNCTION;
 			}
 
 			@Override
@@ -778,7 +778,7 @@ public class NewSymbolFilter implements SymbolFilter {
 			@Override
 			boolean isApplicable(Symbol symbol) {
 				SymbolType type = symbol.getSymbolType();
-				return type == SymbolType.CODE || type == SymbolType.FUNCTION;
+				return type == SymbolType.LABEL || type == SymbolType.FUNCTION;
 			}
 
 			@Override
@@ -806,7 +806,7 @@ public class NewSymbolFilter implements SymbolFilter {
 			@Override
 			boolean isApplicable(Symbol symbol) {
 				SymbolType type = symbol.getSymbolType();
-				return type == SymbolType.CODE;
+				return type == SymbolType.LABEL;
 			}
 
 			@Override
@@ -826,7 +826,7 @@ public class NewSymbolFilter implements SymbolFilter {
 			@Override
 			boolean isApplicable(Symbol symbol) {
 				SymbolType type = symbol.getSymbolType();
-				return type == SymbolType.CODE || type == SymbolType.FUNCTION;
+				return type == SymbolType.LABEL || type == SymbolType.FUNCTION;
 			}
 
 			@Override
@@ -847,7 +847,7 @@ public class NewSymbolFilter implements SymbolFilter {
 			@Override
 			boolean isApplicable(Symbol symbol) {
 				SymbolType type = symbol.getSymbolType();
-				return type == SymbolType.CODE || type == SymbolType.FUNCTION;
+				return type == SymbolType.LABEL || type == SymbolType.FUNCTION;
 			}
 
 			@Override

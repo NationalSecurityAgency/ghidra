@@ -15,11 +15,12 @@
  */
 package ghidra.program.model.mem;
 
+import java.io.InputStream;
+import java.util.List;
+
 import ghidra.framework.store.LockException;
 import ghidra.program.model.address.Address;
 import ghidra.util.exception.DuplicateNameException;
-
-import java.io.InputStream;
 
 /**
  * MemoryBlockStub can be extended for use by tests. It throws an UnsupportedOperationException
@@ -114,6 +115,11 @@ public class MemoryBlockStub implements MemoryBlock {
 	}
 
 	@Override
+	public void setPermissions(boolean read, boolean write, boolean execute) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
 	public boolean isVolatile() {
 		throw new UnsupportedOperationException();
 	}
@@ -180,6 +186,11 @@ public class MemoryBlockStub implements MemoryBlock {
 
 	@Override
 	public boolean isLoaded() {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public List<MemoryBlockSourceInfo> getSourceInfos() {
 		throw new UnsupportedOperationException();
 	}
 

@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,10 +33,12 @@ public class SignedQWordDataType extends AbstractIntegerDataType {
 		super("sqword", true, dtm);
 	}
 
+	@Override
 	public String getDescription() {
 		return "Signed Quad-Word (sdq, 8-bytes)";
 	}
 
+	@Override
 	public int getLength() {
 		return 8;
 	}
@@ -48,11 +49,12 @@ public class SignedQWordDataType extends AbstractIntegerDataType {
 	}
 
 	@Override
-	public DataType getOppositeSignednessDataType() {
-		return QWordDataType.dataType;
+	public QWordDataType getOppositeSignednessDataType() {
+		return QWordDataType.dataType.clone(getDataTypeManager());
 	}
 
-	public DataType clone(DataTypeManager dtm) {
+	@Override
+	public SignedQWordDataType clone(DataTypeManager dtm) {
 		if (dtm == getDataTypeManager()) {
 			return this;
 		}

@@ -21,7 +21,7 @@ import java.awt.*;
 import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.util.Date;
-import java.util.List;
+import java.util.Set;
 
 import javax.swing.*;
 
@@ -30,6 +30,7 @@ import org.junit.*;
 import docking.*;
 import docking.action.DockingActionIf;
 import docking.action.ToggleDockingAction;
+import docking.tool.ToolConstants;
 import docking.widgets.fieldpanel.FieldPanel;
 import generic.test.AbstractGenericTest;
 import ghidra.app.events.ProgramLocationPluginEvent;
@@ -589,7 +590,7 @@ public class DiffTestAdapter extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	public static DockingActionIf getToolAction(PluginTool tool, String name) {
-		List<DockingActionIf> actions = tool.getDockingActionsByOwnerName("Tool");
+		Set<DockingActionIf> actions = getActionsByOwner(tool, ToolConstants.TOOL_OWNER);
 		for (DockingActionIf action : actions) {
 			if (name.equals(action.getName())) {
 				return action;

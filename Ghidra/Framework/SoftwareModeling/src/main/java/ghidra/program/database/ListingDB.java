@@ -595,7 +595,7 @@ class ListingDB implements Listing {
 	 */
 	@Override
 	public DataTypeManager getDataTypeManager() {
-		return program.getDataManager();
+		return program.getDataTypeManager();
 	}
 
 	/* (non-Javadoc)

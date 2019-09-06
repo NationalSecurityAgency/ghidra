@@ -24,19 +24,19 @@ import ghidra.util.Msg;
 /**
  * Factory that returns a DecompileProcess.
  */
-class DecompileProcessFactory {
+public class DecompileProcessFactory {
 
 	private static String exepath;
 	private static final String EXECNAME = "decompile";
 	private static final String WIN32_EXECNAME = "decompile.exe";
 
-	synchronized static DecompileProcess get() {
+	public synchronized static DecompileProcess get() {
 		getExePath();
 		DecompileProcess currentProcess = new DecompileProcess(exepath);
 		return currentProcess;
 	}
 
-	synchronized static void release(DecompileProcess dp) {
+	public synchronized static void release(DecompileProcess dp) {
 		dp.dispose();
 	}
 

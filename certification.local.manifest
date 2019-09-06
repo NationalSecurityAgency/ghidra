@@ -8,4 +8,5 @@ LICENSE||GHIDRA||||END|
 NOTICE||GHIDRA||||END|
 README.md||GHIDRA||||END|
 build.gradle||GHIDRA||||END|
+ghidra.repos.config||GHIDRA||||END|
 settings.gradle||GHIDRA||||END|

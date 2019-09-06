@@ -95,6 +95,22 @@ void Address::toPhysical(void)
      base = phys;
 }
 
+/// Return \b true if the range starting at \b this extending the given number of bytes
+/// is contained by the second given range.
+/// \param sz is the given number of bytes in \b this range
+/// \param op2 is the start of the second given range
+/// \param sz2 is the number of bytes in the second given range
+/// \return \b true if the second given range contains \b this range
+bool Address::containedBy(int4 sz,const Address &op2,int4 sz2) const
+
+{
+  if (base != op2.base) return false;
+  if (op2.offset > offset) return false;
+  uintb off1 = offset + (sz-1);
+  uintb off2 = op2.offset + (sz2-1);
+  return (off2 >= off1);
+}
+
 /// Return -1 if (\e op2,\e sz2) is not properly contained in (\e this,\e sz).
 /// If it is contained, return the endian aware offset of (\e op2,\e sz2) 
 /// I.e. if the least significant byte of the \e op2 range falls on the least significant
@@ -694,6 +710,34 @@ int4 mostsigbit_set(uintb val)
     sz >>= 1;
   } while(sz != 0);
   return res;
+}
+
+/// Count the number of more significant zero bits before the most significant
+/// one bit in the representation of the given value;
+/// \param val is the given value
+/// \return the number of zero bits
+int4 count_leading_zeros(uintb val)
+
+{
+  if (val == 0)
+    return 8*sizeof(uintb);
+  uintb mask = ~((uintb)0);
+  int4 maskSize = 4*sizeof(uintb);
+  mask &= (mask << maskSize);
+  int4 bit = 0;
+
+  do {
+    if ((mask & val)==0) {
+      bit += maskSize;
+      maskSize >>= 1;
+      mask |= (mask >> maskSize);
+    }
+    else {
+      maskSize >>= 1;
+      mask &= (mask << maskSize);
+    }
+  } while(maskSize != 0);
+  return bit;
 }
 
 /// Return smallest number of form 2^n-1, bigger or equal to the given value

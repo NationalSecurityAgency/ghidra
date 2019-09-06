@@ -28,6 +28,7 @@ import docking.widgets.filter.*;
 import docking.widgets.table.model.DirData;
 import docking.widgets.table.model.TestDataModel;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
+import ghidra.test.DummyTool;
 import ghidra.util.table.GhidraTable;
 
 public class GhidraTableFilterTest extends AbstractGhidraHeadedIntegrationTest {
@@ -50,7 +51,7 @@ public class GhidraTableFilterTest extends AbstractGhidraHeadedIntegrationTest {
 		filteredModel = filterPanel.getTableFilterModel();
 		table.setAutoLookupColumn(4);
 
-		winMgr = new DockingWindowManager("Tests", null, null);
+		winMgr = new DockingWindowManager(new DummyTool(), null);
 		winMgr.addComponent(new TestTableComponentProvider());
 		winMgr.setVisible(true);
 	}

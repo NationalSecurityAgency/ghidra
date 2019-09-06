@@ -15,13 +15,16 @@
  */
 package utilities.util;
 
-import static generic.test.AbstractGenericTest.assertListEqualsArrayOrdered;
+import static generic.test.AbstractGTest.assertListEqualsArrayOrdered;
+import static org.hamcrest.CoreMatchers.equalTo;
 import static org.junit.Assert.*;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
+import java.nio.charset.Charset;
+import java.util.Arrays;
 import java.util.List;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.Test;
 
@@ -158,5 +161,63 @@ public class FileUtilitiesTest {
 		assertFalse(FileUtilities.isPathContainedWithin(new File("/a/b"), new File("/c")));
 		assertFalse(FileUtilities.isPathContainedWithin(new File("/a/b"), new File("/a/b/../c")));
 		assertFalse(FileUtilities.isPathContainedWithin(new File("/a/b"), new File("/a/bc")));
+	}
+
+	@Test
+	public void copyFile_ResourceFile_To_ResourceFile() throws Exception {
+
+		File from = File.createTempFile("from.file", ".txt");
+		FileUtilities.writeLinesToFile(from, Arrays.asList("From file contents"));
+		from.deleteOnExit();
+
+		File to = File.createTempFile("to.file", ".txt");
+		to.deleteOnExit();
+		FileUtilities.writeLinesToFile(to, Arrays.asList("To file contents"));
+
+		FileUtilities.copyFile(new ResourceFile(from), new ResourceFile(to), null);
+
+		String text = FileUtils.readFileToString(to, Charset.defaultCharset());
+		assertThat(text, equalTo("From file contents\n"));
+	}
+
+	@Test(expected = IOException.class)
+	public void copyFile_ExceptionFromInputStream() throws Exception {
+
+		ResourceFile from = new ResourceFile(new File("/fake.from.file")) {
+			@Override
+			public InputStream getInputStream() throws IOException {
+				throw new IOException("Test Exception");
+			}
+		};
+
+		File to = File.createTempFile("to.file", ".txt");
+		to.deleteOnExit();
+
+		// should fail
+		FileUtilities.copyFile(from, new ResourceFile(to), null);
+	}
+
+	@Test(expected = IOException.class)
+	public void copyFile_ExceptionFromOutputStream() throws Exception {
+
+		File from = File.createTempFile("from.file", ".txt");
+		from.deleteOnExit();
+
+		ResourceFile to = new ResourceFile(new File("/to.from.file")) {
+
+			@Override
+			public OutputStream getOutputStream() throws FileNotFoundException {
+				throw new FileNotFoundException("Test Exception");
+			}
+		};
+
+		// should fail
+		FileUtilities.copyFile(new ResourceFile(from), to, null);
+	}
+
+	public void copyFile_WithMonitor() {
+		// too slow due to the nature of how the progress is reported in chunks--we would
+		// have to generate too much data, which would take seconds to test that progress
+		// is correctly reported
 	}
 }

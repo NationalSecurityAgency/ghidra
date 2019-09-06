@@ -1,5 +1,7 @@
 ##VERSION: 2.0
 README.txt||GHIDRA||||END|
+distributableGPLExtension.gradle||GHIDRA||||END|
+distributableGPLModule.gradle||GHIDRA||||END|
 distributableGhidraExtension.gradle||GHIDRA||||END|
 distributableGhidraModule.gradle||GHIDRA||||END|
 externalGhidraExtension.gradle||GHIDRA||||END|
@@ -16,9 +18,11 @@ root/prepDev.gradle||GHIDRA||||END|
 root/svg.gradle||GHIDRA||||END|
 root/test.gradle||GHIDRA||||END|
 root/usage.gradle||GHIDRA||||END|
+support/app_config_breakout.txt||GHIDRA||||END|
 support/distributionCommon.gradle||GHIDRA||||END|
 support/eclipseLauncher.gradle||GHIDRA||||END|
 support/extensionCommon.gradle||GHIDRA||||END|
+support/fetchDependencies.gradle||GHIDRA||||END|
 support/ip.gradle||GHIDRA||||END|
 support/jacoco.excludes.src.txt||GHIDRA||||END|
 support/loadApplicationProperties.gradle||GHIDRA||||END|

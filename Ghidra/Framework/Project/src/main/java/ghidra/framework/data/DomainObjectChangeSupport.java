@@ -49,7 +49,7 @@ class DomainObjectChangeSupport {
 	DomainObjectChangeSupport(DomainObject src, int timeInterval, int bufsize, Lock lock) {
 
 		this.src = src;
-		this.domainObjectLock = lock;
+		this.domainObjectLock = Objects.requireNonNull(lock);
 		changesQueue = new ArrayList<>(bufsize);
 
 		listeners = WeakDataStructureFactory.createCopyOnWriteWeakSet();
@@ -127,7 +127,7 @@ class DomainObjectChangeSupport {
 
 	void flush() {
 		Thread lockOwner = domainObjectLock.getOwner();
-		if (domainObjectLock != null && lockOwner == Thread.currentThread()) {
+		if (lockOwner == Thread.currentThread()) {
 
 			/*
 			 * We have decided that flushing events with a lock can lead to deadlocks.  There

@@ -18,8 +18,6 @@ package ghidra.app.plugin.core.memory;
 import java.awt.Cursor;
 
 import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 
 import docking.DialogComponentProvider;
 import docking.widgets.label.GDLabel;
@@ -31,9 +29,9 @@ import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressFactory;
 import ghidra.util.HelpLocation;
+import ghidra.util.Swing;
 import ghidra.util.layout.PairLayout;
-import ghidra.util.task.TaskLauncher;
-import ghidra.util.task.TaskMonitorAdapter;
+import ghidra.util.task.TaskBuilder;
 
 /**
  * Dialog that uses a model to validate the fields for moving a block of memory.
@@ -51,15 +49,6 @@ public class MoveBlockDialog extends DialogComponentProvider implements MoveBloc
 	private MoveBlockModel model;
 	private PluginTool tool;
 
-	/**
-	 * Constructor for MoveBlockDialog.
-	 * 
-	 * @param dialog
-	 * @param title
-	 * @param modal
-	 * @param includeStatus
-	 * @param includeButtons
-	 */
 	MoveBlockDialog(MoveBlockModel model, PluginTool tool) {
 		super("Move Memory Block");
 		this.model = model;
@@ -71,44 +60,30 @@ public class MoveBlockDialog extends DialogComponentProvider implements MoveBloc
 		addCancelButton();
 	}
 
-	/**
-	 * @see ghidra.app.plugin.contrib.memory.MoveBlockListener#moveBlockCompleted(boolean,
-	 *      java.lang.String)
-	 */
 	@Override
-	public void moveBlockCompleted(final MoveBlockTask cmd) {
-		Runnable r = new Runnable() {
-			@Override
-			public void run() {
-				if (cmd.getStatus()) {
-					close();
-					model.dispose();
-				}
-				else {
-					setCursor(Cursor.getDefaultCursor());
-					setOkEnabled(false);
-					if (cmd.isCancelled()) {
-						tool.setStatusInfo(getStatusText());
-						close();
-						model.dispose();
-					}
-				}
+	public void moveBlockCompleted(MoveBlockTask task) {
+
+		setCursor(Cursor.getDefaultCursor());
+		boolean success = task.wasSuccessful();
+		setOkEnabled(success);
+		setStatusText(task.getStatusMessage());
+
+		Swing.runLater(() -> {
+			if (success) {
+				close();
+				model.dispose();
 			}
-		};
-		SwingUtilities.invokeLater(r);
+		});
 	}
 
-	/**
-	 * @see ghidra.app.plugin.contrib.memory.MoveBlockListener#stateChanged()
-	 */
 	@Override
 	public void stateChanged() {
 		setOkEnabled(false);
 		changing = true;
 		if (!isVisible()) {
 			AddressFactory factory = model.getAddressFactory();
-			newStartField.setAddressFactory(factory, true);
-			newEndField.setAddressFactory(factory, true);
+			newStartField.setAddressFactory(factory, true, false);
+			newEndField.setAddressFactory(factory, true, false);
 		}
 		Address newStart = model.getNewStartAddress();
 		if (newStart != null) {
@@ -142,17 +117,21 @@ public class MoveBlockDialog extends DialogComponentProvider implements MoveBloc
 	protected void okCallback() {
 		setOkEnabled(false);
 		setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-		new TaskLauncher(model.makeTask(), new TaskMonitorAdapter() {
-			@Override
-			public void setMessage(String message) {
-				setStatusText(message);
-			}
-		});
+
+		MoveBlockTask task = model.makeTask();
+
+		//@formatter:off		
+		TaskBuilder.withTask(task)
+			.setParent(this.getComponent())
+			.launchModal()
+			;
+		//@formatter:on
 	}
 
 	@Override
 	protected void cancelCallback() {
 		close();
+		model.dispose();
 	}
 
 	private JPanel buildMainPanel() {
@@ -176,18 +155,8 @@ public class MoveBlockDialog extends DialogComponentProvider implements MoveBloc
 		newEndField = new AddressInput();
 		newEndField.setName("newEnd");
 
-		newStartField.addChangeListener(new ChangeListener() {
-			@Override
-			public void stateChanged(ChangeEvent e) {
-				startChanged();
-			}
-		});
-		newEndField.addChangeListener(new ChangeListener() {
-			@Override
-			public void stateChanged(ChangeEvent e) {
-				endChanged();
-			}
-		});
+		newStartField.addChangeListener(e -> startChanged());
+		newEndField.addChangeListener(e -> endChanged());
 
 		panel.add(new GLabel("Name:", SwingConstants.RIGHT));
 		panel.add(blockNameLabel);

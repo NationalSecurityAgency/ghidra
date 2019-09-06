@@ -15,7 +15,9 @@
  */
 package ghidra.app.plugin.core.compositeeditor;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
+
+import javax.swing.JTextField;
 
 import org.junit.Assert;
 
@@ -35,6 +37,7 @@ public abstract class AbstractStructureEditorTest extends AbstractEditorTest {
 	DuplicateAction duplicateAction;
 	DuplicateMultipleAction duplicateMultipleAction;
 	EditComponentAction editComponentAction;
+	EditBitFieldAction editBitFieldAction;
 	EditFieldAction editFieldAction;
 	MoveDownAction moveDownAction;
 	MoveUpAction moveUpAction;
@@ -99,6 +102,7 @@ public abstract class AbstractStructureEditorTest extends AbstractEditorTest {
 		duplicateAction = null;
 		duplicateMultipleAction = null;
 		editComponentAction = null;
+		editBitFieldAction = null;
 		editFieldAction = null;
 		moveDownAction = null;
 		moveUpAction = null;
@@ -111,7 +115,7 @@ public abstract class AbstractStructureEditorTest extends AbstractEditorTest {
 
 	void getActions() {
 		actions = provider.getActions();
-		for (CompositeEditorAction action : actions) {
+		for (CompositeEditorTableAction action : actions) {
 			if (action instanceof FavoritesAction) {
 				favorites.add((FavoritesAction) action);
 			}
@@ -141,6 +145,9 @@ public abstract class AbstractStructureEditorTest extends AbstractEditorTest {
 			}
 			else if (action instanceof EditComponentAction) {
 				editComponentAction = (EditComponentAction) action;
+			}
+			else if (action instanceof EditBitFieldAction) {
+				editBitFieldAction = (EditBitFieldAction) action;
 			}
 			else if (action instanceof EditFieldAction) {
 				editFieldAction = (EditFieldAction) action;
@@ -173,4 +180,8 @@ public abstract class AbstractStructureEditorTest extends AbstractEditorTest {
 		return (String) model.getValueAt(index, model.getMnemonicColumn());
 	}
 
+	protected void setText(String s) {
+		JTextField tf = getActiveEditorTextField();
+		setText(tf, s);
+	}
 }

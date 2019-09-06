@@ -20,8 +20,7 @@ import static org.junit.Assert.*;
 import java.awt.Window;
 import java.io.*;
 import java.lang.reflect.InvocationTargetException;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -60,9 +59,11 @@ import ghidra.util.exception.CancelledException;
 import ghidra.util.table.GhidraTable;
 import ghidra.util.table.GhidraTableFilterPanel;
 import ghidra.util.task.*;
+import util.CollectionUtils;
 import utilities.util.FileUtilities;
 
-public abstract class AbstractGhidraScriptMgrPluginTest extends AbstractGhidraHeadedIntegrationTest {
+public abstract class AbstractGhidraScriptMgrPluginTest
+		extends AbstractGhidraHeadedIntegrationTest {
 	protected static final int MAX_TIME = 4000;
 	protected static final int SCRIPT_TIMEOUT_SECS = 5;
 	protected TestEnv env;
@@ -190,6 +191,7 @@ public abstract class AbstractGhidraScriptMgrPluginTest extends AbstractGhidraHe
 	protected void selectCategory(String category) {
 
 		GTree categoryTree = (GTree) findComponentByName(provider.getComponent(), "CATEGORY_TREE");
+		waitForTree(categoryTree);
 		JTree jTree = (JTree) invokeInstanceMethod("getJTree", categoryTree);
 		assertNotNull(jTree);
 		GTreeNode child = categoryTree.getRootNode().getChild(category);
@@ -270,10 +272,18 @@ public abstract class AbstractGhidraScriptMgrPluginTest extends AbstractGhidraHe
 		assertTrue(message, fullText.contains(piece));
 	}
 
-	protected void assertRunLastActionEnabled(boolean enabled) {
-		final DockingActionIf runLastAction = getAction(plugin, "Rerun Last Script");
-		assertNotNull(runLastAction);
+	private DockingActionIf getRunLastScriptAction() {
+		// note: this provider adds 2 versions of the same action--pick either
+		Set<DockingActionIf> actions =
+			getActionsByOwnerAndName(plugin.getTool(), plugin.getName(), "Rerun Last Script");
+		assertFalse(actions.isEmpty());
+		DockingActionIf runLastAction = CollectionUtils.any(actions);
+		return runLastAction;
+	}
 
+	protected void assertRunLastActionEnabled(boolean enabled) {
+
+		DockingActionIf runLastAction = getRunLastScriptAction();
 		final AtomicReference<Boolean> ref = new AtomicReference<>();
 		runSwing(() -> ref.set(runLastAction.isEnabledForContext(new ActionContext())));
 		assertEquals("Run Last Action not enabled as expected", enabled, ref.get());
@@ -345,6 +355,7 @@ public abstract class AbstractGhidraScriptMgrPluginTest extends AbstractGhidraHe
 	 * This call will:
 	 * -open the file in an editor
 	 * -update the text area and buffer fields of this test
+	 * @param file the file to open
 	 */
 	protected void openInEditor(final ResourceFile file) {
 		runSwing(() -> editor = provider.editScriptInGhidra(file));
@@ -500,12 +511,8 @@ public abstract class AbstractGhidraScriptMgrPluginTest extends AbstractGhidraHe
 		buffer.append("Test text: ").append(testName.getMethodName());
 
 		runSwing(() -> {
-
-			// TODO editorTextArea.requestFocusInWindow()
 			editorTextArea.setText(buffer.toString());
 		});
-
-		//typeText(buffer.toString());
 
 		return buffer.toString();
 	}
@@ -558,17 +565,15 @@ public abstract class AbstractGhidraScriptMgrPluginTest extends AbstractGhidraHe
 	}
 
 	protected void pressRunLastScriptButton() {
-		DockingActionIf action =
-			getAction(plugin, GhidraScriptActionManager.RERUN_LAST_SHARED_ACTION_NAME);
-		performAction(action, false);
+		DockingActionIf runLastAction = getRunLastScriptAction();
+		performAction(runLastAction, false);
 		waitForSwing();
 	}
 
 	protected void performGlobalRunLastScriptAction() {
-		DockingActionIf action =
-			getAction(plugin, GhidraScriptActionManager.GLOBAL_RERUN_LAST_SHARED_ACTION_NAME);
-		performAction(action, false);
-		waitForSwing();
+		// note: this action used to be different from the 'run last script'; currently they are
+		// 		 the same
+		pressRunLastScriptButton();
 	}
 
 	protected KeyBindingInputDialog pressKeyBindingAction() {
@@ -692,8 +697,6 @@ public abstract class AbstractGhidraScriptMgrPluginTest extends AbstractGhidraHe
 		//@category name
 		contents = contents.replaceFirst("//@category \\w+", "//@category " + newCategory);
 
-		Msg.debug(this, "new category string: " + newCategory);
-
 		writeStringToFile(script, contents);
 
 		//
@@ -703,7 +706,8 @@ public abstract class AbstractGhidraScriptMgrPluginTest extends AbstractGhidraHe
 		//
 		File file = script.getFile(false);
 		long lastModified = file.lastModified();
-		file.setLastModified(lastModified + (1000 * System.currentTimeMillis()));
+		long inTheFuture = 10000 + System.currentTimeMillis();
+		file.setLastModified(lastModified + inTheFuture);
 
 		return newCategory;
 	}
@@ -1295,7 +1299,7 @@ public abstract class AbstractGhidraScriptMgrPluginTest extends AbstractGhidraHe
 	protected void assertToolKeyBinding(KeyStroke ks) {
 		String actionOwner = GhidraScriptMgrPlugin.class.getSimpleName();
 		PluginTool tool = env.getTool();
-		List<DockingActionIf> actions = tool.getDockingActionsByOwnerName(actionOwner);
+		Set<DockingActionIf> actions = getActionsByOwner(tool, actionOwner);
 		for (DockingActionIf action : actions) {
 			KeyStroke keyBinding = action.getKeyBinding();
 			if (keyBinding == null) {
@@ -1318,7 +1322,8 @@ public abstract class AbstractGhidraScriptMgrPluginTest extends AbstractGhidraHe
 		String parentClassName = parentScriptName.replaceAll("\\.java", "");
 
 		String importLine = (parentScriptPackage != null
-				? ("import " + parentScriptPackage + "." + parentClassName + ";\n\n") : "");
+				? ("import " + parentScriptPackage + "." + parentClassName + ";\n\n")
+				: "");
 
 		//@formatter:off
 		String newScript =

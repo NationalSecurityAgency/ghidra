@@ -23,6 +23,8 @@ import java.util.Map.Entry;
 
 import javax.swing.*;
 
+import org.apache.commons.lang3.StringUtils;
+
 import docking.*;
 import docking.action.ToggleDockingAction;
 import docking.action.ToolBarData;
@@ -34,7 +36,6 @@ import docking.widgets.filter.FilterTextField;
 import docking.widgets.label.GLabel;
 import ghidra.program.model.listing.Program;
 import ghidra.util.HelpLocation;
-import ghidra.util.StringUtilities;
 import ghidra.util.task.SwingUpdateManager;
 import resources.Icons;
 
@@ -351,7 +352,7 @@ class FilterAction extends ToggleDockingAction {
 					String curType = itr.next();
 					Boolean lEnabled = typeEnabledMap.get(curType);
 					StringBuffer buildMetaCurTypeBuff = new StringBuffer(curType);
-					int firstIndex = StringUtilities.indexOfIgnoreCase(curType, filteredText, 0);
+					int firstIndex = StringUtils.indexOfIgnoreCase(curType, filteredText, 0);
 					int lastIndex = firstIndex + filteredText.length();
 					buildMetaCurTypeBuff.insert(lastIndex, "</b>");//THIS MUST ALWAYS COME BEFORE FIRST INDEX (FOR NO MATH on INDEX)
 					buildMetaCurTypeBuff.insert(firstIndex, "<b>");
@@ -409,7 +410,7 @@ class FilterAction extends ToggleDockingAction {
 				while (iteratorIndex.hasNext()) {
 					Entry<String, Boolean> entry = iteratorIndex.next();
 					String checkboxName = entry.getKey();
-					if (StringUtilities.containsIgnoreCase(checkboxName, filteredText)) {
+					if (StringUtils.containsIgnoreCase(checkboxName, filteredText)) {
 						checkboxNameList.add(checkboxName);
 					}
 				}

@@ -28,6 +28,7 @@ import javax.swing.event.HyperlinkListener;
 
 import docking.DialogComponentProvider;
 import docking.DockingWindowManager;
+import docking.tool.ToolConstants;
 import docking.widgets.HyperlinkComponent;
 import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.combobox.GhidraComboBox;
@@ -39,7 +40,6 @@ import ghidra.framework.options.Options;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.Plugin;
 import ghidra.framework.plugintool.PluginTool;
-import ghidra.framework.plugintool.util.ToolConstants;
 import ghidra.program.model.address.Address;
 import ghidra.util.HelpLocation;
 import ghidra.util.task.TaskMonitorComponent;

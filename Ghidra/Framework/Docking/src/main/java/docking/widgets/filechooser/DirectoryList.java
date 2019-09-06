@@ -58,7 +58,8 @@ class DirectoryList extends GList<File> implements GhidraFileChooserDirectoryMod
 	private void build() {
 
 		setLayoutOrientation(JList.VERTICAL_WRAP);
-		setCellRenderer((cellRenderer = new FileListCellRenderer(getFont(), chooser)));
+		cellRenderer = new FileListCellRenderer(getFont(), chooser);
+		setCellRenderer(cellRenderer);
 		model.addListDataListener(new ListDataListener() {
 			@Override
 			public void contentsChanged(ListDataEvent e) {

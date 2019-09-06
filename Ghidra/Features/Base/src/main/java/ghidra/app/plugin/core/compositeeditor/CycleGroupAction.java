@@ -18,56 +18,35 @@ package ghidra.app.plugin.core.compositeeditor;
 import javax.swing.KeyStroke;
 
 import docking.ActionContext;
-import docking.action.DockingAction;
 import docking.action.KeyBindingData;
-import ghidra.framework.options.*;
-import ghidra.framework.plugintool.util.ToolConstants;
+import docking.action.KeyBindingType;
 import ghidra.program.model.data.CycleGroup;
 
 /**
- * Action to apply a data type cycle group.
- * For use in the composite data type editor.
- * This action has help associated with it.
+ * Action to apply a data type cycle group. For use in the composite data type editor.
  */
-public class CycleGroupAction extends CompositeEditorTableAction implements OptionsChangeListener {
+public class CycleGroupAction extends CompositeEditorTableAction {
 
-	private final static String GROUP_NAME = CYCLE_ACTION_GROUP;
+	private final static String GROUP_NAME = DATA_ACTION_GROUP;
 	private CycleGroup cycleGroup;
 
-	/**
-	 * Creates an action for applying a data type cycle group.
-	 * @param owner the plugin that owns this action
-	 * @param cycleGroup the data type cycle group
-	 */
 	public CycleGroupAction(CompositeEditorProvider provider, CycleGroup cycleGroup) {
 		super(provider, cycleGroup.getName(), GROUP_NAME,
 			new String[] { "Cycle", cycleGroup.getName() },
-			new String[] { "Cycle", cycleGroup.getName() }, null);
+			new String[] { "Cycle", cycleGroup.getName() }, null, KeyBindingType.SHARED);
 		this.cycleGroup = cycleGroup;
-
-		// register an action that allows users to edit keystrokes
-		DockingAction action = new DummyKeyBindingsOptionsAction(cycleGroup.getName(),
-			cycleGroup.getDefaultKeyStroke());
-		tool.addAction(action);
-		ToolOptions options = tool.getOptions(ToolConstants.KEY_BINDINGS);
-		KeyStroke defaultKeyStroke = cycleGroup.getDefaultKeyStroke();
-		KeyStroke keyStroke = options.getKeyStroke(action.getFullName(), defaultKeyStroke);
-		options.addOptionsChangeListener(this);
-
-		if (!defaultKeyStroke.equals(keyStroke)) {
-			// user-defined keystroke
-			setUnvalidatedKeyBindingData(new KeyBindingData(keyStroke));
-		}
-		else {
-			setKeyBindingData(new KeyBindingData(keyStroke));
-		}
-
-		adjustEnablement();
+		getPopupMenuData().setParentMenuGroup(GROUP_NAME);
+		initKeyStroke(cycleGroup.getDefaultKeyStroke());
 	}
 
-	/**
-	 * Gets the data type cycle group for this action.
-	 */
+	private void initKeyStroke(KeyStroke keyStroke) {
+		if (keyStroke == null) {
+			return;
+		}
+
+		setKeyBindingData(new KeyBindingData(keyStroke));
+	}
+
 	public CycleGroup getCycleGroup() {
 		return cycleGroup;
 	}
@@ -86,13 +65,5 @@ public class CycleGroupAction extends CompositeEditorTableAction implements Opti
 	@Override
 	public String getHelpName() {
 		return "Cycle";
-	}
-
-	@Override
-	public void optionsChanged(ToolOptions options, String name, Object oldValue, Object newValue) {
-		KeyStroke keyStroke = (KeyStroke) newValue;
-		if (name.startsWith(cycleGroup.getName())) {
-			setUnvalidatedKeyBindingData(new KeyBindingData(keyStroke));
-		}
 	}
 }

@@ -15,13 +15,11 @@
  */
 package ghidra.javaclass.format.constantpool;
 
-import ghidra.app.util.bin.BinaryReader;
-import ghidra.program.model.data.DataType;
-import ghidra.program.model.data.Structure;
-import ghidra.program.model.data.StructureDataType;
-import ghidra.util.exception.DuplicateNameException;
-
 import java.io.IOException;
+
+import ghidra.app.util.bin.BinaryReader;
+import ghidra.program.model.data.*;
+import ghidra.util.exception.DuplicateNameException;
 
 /**
  * NOTE: THE FOLLOWING TEXT EXTRACTED FROM JVMS7.PDF
@@ -56,8 +54,8 @@ public abstract class AbstractConstantPoolReferenceInfo extends AbstractConstant
 	 * <p>
 	 * @return a valid index into the constant_pool table
 	 */
-	public short getClassIndex() {
-		return classIndex;
+	public int getClassIndex() {
+		return classIndex & 0xffff;
 	}
 
 	/**
@@ -77,17 +75,17 @@ public abstract class AbstractConstantPoolReferenceInfo extends AbstractConstant
 	 * <p>
 	 * @return a valid index into the constant_pool table
 	 */
-	public short getNameAndTypeIndex() {
-		return nameAndTypeIndex;
+	public int getNameAndTypeIndex() {
+		return nameAndTypeIndex & 0xffff;
 	}
 
 	@Override
 	public DataType toDataType() throws DuplicateNameException, IOException {
 		String name = "unnamed";
-		Structure structure = new StructureDataType( name, 0 );
-		structure.add( BYTE, "tag", null );
-		structure.add( WORD, "class_index", null );
-		structure.add( WORD, "name_and_type_index", null );
+		Structure structure = new StructureDataType(name, 0);
+		structure.add(BYTE, "tag", null);
+		structure.add(WORD, "class_index", null);
+		structure.add(WORD, "name_and_type_index", null);
 		return structure;
 	}
 

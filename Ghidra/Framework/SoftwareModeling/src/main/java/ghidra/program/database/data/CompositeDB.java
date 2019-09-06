@@ -24,7 +24,6 @@ import ghidra.program.model.data.*;
 import ghidra.program.model.mem.MemBuffer;
 import ghidra.util.UniversalID;
 import ghidra.util.exception.AssertException;
-import ghidra.util.exception.InvalidInputException;
 
 /**
  * Database implementation for a structure or union.
@@ -67,6 +66,34 @@ abstract class CompositeDB extends DataTypeDB implements Composite {
 	 */
 	protected abstract void initialize();
 
+	/**
+	 * Get the preferred length for a new component.  For Unions and internally aligned
+	 * structures the preferred component length for a fixed-length dataType will be the 
+	 * length of that dataType.  Otherwise the length returned will be no larger than the
+	 * specified length.
+	 * @param dataType new component datatype
+	 * @param length constrained length or -1 to force use of dataType size.  Dynamic types
+	 * such as string must have a positive length specified.
+	 * @return preferred component length
+	 */
+	protected int getPreferredComponentLength(DataType dataType, int length) {
+		if ((isInternallyAligned() || (this instanceof Union)) && !(dataType instanceof Dynamic)) {
+			length = -1; // force use of datatype size
+		}
+		int dtLength = dataType.getLength();
+		if (length <= 0) {
+			length = dtLength;
+		}
+		else if (dtLength > 0 && dtLength < length) {
+			length = dtLength;
+		}
+		if (length <= 0) {
+			throw new IllegalArgumentException("Positive length must be specified for " +
+				dataType.getDisplayName() + " component");
+		}
+		return length;
+	}
+
 	@Override
 	protected String doGetName() {
 		return record.getString(CompositeDBAdapter.COMPOSITE_NAME_COL);
@@ -77,21 +104,46 @@ abstract class CompositeDB extends DataTypeDB implements Composite {
 		return record.getLongValue(CompositeDBAdapter.COMPOSITE_CAT_COL);
 	}
 
-	@Override
-	public DataTypeComponent add(DataType dataType) {
-		lock.acquire();
-		try {
-			checkDeleted();
-			int length = dataType.getLength();
-			if (dataType.getLength() < 1) {
-				throw new IllegalArgumentException("Minimum data type length is 1 byte");
+	/**
+	 * Handle replacement of datatype which may impact bitfield datatype.
+	 * @param bitfieldComponent bitfield component
+	 * @param oldDt affected datatype which has been removed or replaced
+	 * @param newDt replacement datatype
+	 * @param true if bitfield component was modified
+	 * @throws InvalidDataTypeException if bitfield was based upon oldDt but new datatype is 
+	 * invalid for a bitfield 
+	 */
+	protected boolean updateBitFieldDataType(DataTypeComponentDB bitfieldComponent, DataType oldDt,
+			DataType newDt) throws InvalidDataTypeException {
+		if (!bitfieldComponent.isBitFieldComponent()) {
+			throw new AssertException("expected bitfield component");
+		}
+
+		BitFieldDBDataType bitfieldDt = (BitFieldDBDataType) bitfieldComponent.getDataType();
+		if (bitfieldDt.getBaseDataType() != oldDt) {
+			return false;
+		}
+
+		if (newDt != null) {
+			BitFieldDataType.checkBaseDataType(newDt);
+			int maxBitSize = 8 * newDt.getLength();
+			if (bitfieldDt.getBitSize() > maxBitSize) {
+				throw new InvalidDataTypeException("Replacement datatype too small for bitfield");
 			}
-			DataTypeComponent addedComponent = add(dataType, length, null, null);
-			return addedComponent;
 		}
-		finally {
-			lock.release();
+
+		try {
+			BitFieldDBDataType newBitfieldDt = new BitFieldDBDataType(newDt,
+				bitfieldDt.getDeclaredBitSize(), bitfieldDt.getBitOffset());
+			bitfieldComponent.setDataType(newBitfieldDt);
+			oldDt.removeParent(this);
+			newDt.addParent(this);
 		}
+		catch (InvalidDataTypeException e) {
+			throw new AssertException("unexpected");
+		}
+
+		return true;
 	}
 
 	@Override
@@ -141,9 +193,6 @@ abstract class CompositeDB extends DataTypeDB implements Composite {
 		}
 	}
 
-	/**
-	 * @see ghidra.program.model.data.DataType#isDynamicallySized()
-	 */
 	@Override
 	public boolean isDynamicallySized() {
 		return isInternallyAligned();
@@ -155,35 +204,33 @@ abstract class CompositeDB extends DataTypeDB implements Composite {
 	}
 
 	@Override
-	public DataTypeComponent add(DataType dataType, int length) {
+	public final DataTypeComponent add(DataType dataType) {
+		return add(dataType, -1, null, null);
+	}
+
+	@Override
+	public final DataTypeComponent add(DataType dataType, int length) {
 		return add(dataType, length, null, null);
 	}
 
 	@Override
-	public DataTypeComponent add(DataType dataType, String fieldName, String comment) {
-		return add(dataType, dataType.getLength(), fieldName, comment);
+	public final DataTypeComponent add(DataType dataType, String fieldName, String comment) {
+		return add(dataType, -1, fieldName, comment);
 	}
 
 	@Override
-	public DataTypeComponent insert(int ordinal, DataType dataType, int length) {
+	public final DataTypeComponent insert(int ordinal, DataType dataType, int length) {
 		return insert(ordinal, dataType, length, null, null);
 	}
 
 	@Override
-	public DataTypeComponent insert(int ordinal, DataType dataType) {
-		return insert(ordinal, dataType, dataType.getLength(), null, null);
+	public final DataTypeComponent insert(int ordinal, DataType dataType) {
+		return insert(ordinal, dataType, -1, null, null);
 	}
 
 	@Override
 	public String getMnemonic(Settings settings) {
 		return getDisplayName();
-	}
-
-	/**
-	 * Notifies the composite data type that a component in it has changed.
-	 * @param component the component that changed.
-	 */
-	protected void componentChanged(DataTypeComponent component) {
 	}
 
 	@Override
@@ -236,6 +283,10 @@ abstract class CompositeDB extends DataTypeDB implements Composite {
 	 * @throws IllegalArgumentException if the data type is invalid.
 	 */
 	protected void validateDataType(DataType dataType) {
+		if (isInternallyAligned() && dataType == DataType.DEFAULT) {
+			throw new IllegalArgumentException(
+				"The DEFAULT data type is not allowed in an aligned composite data type.");
+		}
 		if (dataType instanceof FactoryDataType) {
 			throw new IllegalArgumentException("The \"" + dataType.getName() +
 				"\" data type is not allowed in a composite data type.");
@@ -350,7 +401,7 @@ abstract class CompositeDB extends DataTypeDB implements Composite {
 	}
 
 	@Override
-	public void setPackingValue(int packingValue) throws InvalidInputException {
+	public void setPackingValue(int packingValue) {
 		boolean changed = false;
 		if (!isInternallyAligned()) {
 			doSetInternallyAligned(true);
@@ -366,9 +417,9 @@ abstract class CompositeDB extends DataTypeDB implements Composite {
 		}
 	}
 
-	public void doSetPackingValue(int packingValue) throws InvalidInputException {
+	public void doSetPackingValue(int packingValue) {
 		if (packingValue < 0) {
-			throw new InvalidInputException(packingValue + "is not a valid packing value.");
+			packingValue = NOT_PACKING;
 		}
 		lock.acquire();
 		try {
@@ -432,7 +483,7 @@ abstract class CompositeDB extends DataTypeDB implements Composite {
 	}
 
 	@Override
-	public void setMinimumAlignment(int externalAlignment) throws InvalidInputException {
+	public void setMinimumAlignment(int externalAlignment) {
 		boolean changed = false;
 		if (!isInternallyAligned()) {
 			doSetInternallyAligned(true);
@@ -447,10 +498,9 @@ abstract class CompositeDB extends DataTypeDB implements Composite {
 		}
 	}
 
-	public boolean doSetMinimumAlignment(int externalAlignment) throws InvalidInputException {
-		if (externalAlignment <= 0) {
-			throw new InvalidInputException(externalAlignment +
-				" is not a valid external alignment. It must be greater than 0.");
+	public boolean doSetMinimumAlignment(int externalAlignment) {
+		if (externalAlignment < 1) {
+			externalAlignment = DEFAULT_ALIGNED;
 		}
 		return modifyAlignment(externalAlignment);
 	}
@@ -504,6 +554,11 @@ abstract class CompositeDB extends DataTypeDB implements Composite {
 					return false;
 				}
 			}
+			if (isDefaultAligned()) {
+				if (dbExternalAlignment == DEFAULT_ALIGNED) {
+					return false;
+				}
+			}
 			else if (dbExternalAlignment == getMinimumAlignment()) {
 				return false;
 			}
@@ -525,29 +580,15 @@ abstract class CompositeDB extends DataTypeDB implements Composite {
 	 * Notification that this composite data type's alignment has changed.
 	 */
 	protected void notifyAlignmentChanged() {
-		DataType[] dts = dataMgr.getParentDataTypes(key);
-		for (int i = 0; i < dts.length; i++) {
-			if (dts[i] instanceof Composite) {
-				Composite composite = (Composite) dts[i];
+		// TODO: This method is not properly invoked when new components are
+		// added which could change the alignment of this composite
+		for (DataType dt : dataMgr.getParentDataTypes(key)) {
+			if (dt instanceof Composite) {
+				Composite composite = (Composite) dt;
 				composite.dataTypeAlignmentChanged(this);
 			}
 		}
 		dataMgr.dataTypeChanged(this);
-	}
-
-	/**
-	 * Gets the data organization object for this data type. The data organization has the alignment
-	 * and size information for data types.
-	 * @return the data organization
-	 */
-	protected DataOrganization getDataOrganization() {
-		if (dataMgr != null) {
-			DataOrganization dataOrganization = dataMgr.getDataOrganization();
-			if (dataOrganization != null) {
-				return dataOrganization;
-			}
-		}
-		return DataOrganizationImpl.getDefaultOrganization();
 	}
 
 	@Override
@@ -593,12 +634,7 @@ abstract class CompositeDB extends DataTypeDB implements Composite {
 	protected void setAlignment(Composite composite, boolean notify) {
 		doSetInternallyAligned(composite.isInternallyAligned());
 
-		try {
-			doSetPackingValue(composite.getPackingValue());
-		}
-		catch (InvalidInputException e) {
-			throw new AssertException("Got bad pack value from existing composite.", e);
-		}
+		doSetPackingValue(composite.getPackingValue());
 
 		if (composite.isDefaultAligned()) {
 			doSetToDefaultAlignment();
@@ -607,12 +643,7 @@ abstract class CompositeDB extends DataTypeDB implements Composite {
 			doSetToMachineAlignment();
 		}
 		else {
-			try {
-				doSetMinimumAlignment(composite.getMinimumAlignment());
-			}
-			catch (InvalidInputException e) {
-				throw new AssertException("Got bad minimum alignment from existing composite.", e);
-			}
+			doSetMinimumAlignment(composite.getMinimumAlignment());
 		}
 		adjustInternalAlignment(notify);
 	}
@@ -628,7 +659,8 @@ abstract class CompositeDB extends DataTypeDB implements Composite {
 
 	@Override
 	public int getAlignment() {
-		return getDataOrganization().getAlignment(this, getLength());
+		// TODO: use cached value if available (requires DB change to facilitate)
+		return CompositeAlignmentHelper.getAlignment(getDataOrganization(), this);
 	}
 
 	/**
@@ -639,7 +671,14 @@ abstract class CompositeDB extends DataTypeDB implements Composite {
 	protected void dumpComponents(StringBuilder buffer, String pad) {
 		for (DataTypeComponent dtc : getComponents()) {
 			DataType dataType = dtc.getDataType();
+			buffer.append(pad + dtc.getOffset());
 			buffer.append(pad + dataType.getDisplayName());
+			if (dataType instanceof BitFieldDataType) {
+				BitFieldDataType bfDt = (BitFieldDataType) dataType;
+				buffer.append("(");
+				buffer.append(Integer.toString(bfDt.getBitOffset()));
+				buffer.append(")");
+			}
 			buffer.append(pad + dtc.getLength());
 			buffer.append(pad + dtc.getFieldName());
 			String comment = dtc.getComment();

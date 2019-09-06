@@ -46,16 +46,16 @@ public class DataTypeDependencyOrderer {
 	private DataTypeManager dtManager;
 
 	// A HashSet is chosen so that we have no duplicates.
-	private HashSet<Entry> inputSet = new HashSet<Entry>();
+	private HashSet<Entry> inputSet = new HashSet<>();
 
-	private HashSet<Entry> procSet = new HashSet<Entry>();
-	private HashSet<Entry> doneSet = new HashSet<Entry>();
-	private ArrayList<DataType> structList = new ArrayList<DataType>();
-	private ArrayList<DataType> orderedDependentsList = new ArrayList<DataType>();
+	private HashSet<Entry> procSet = new HashSet<>();
+	private HashSet<Entry> doneSet = new HashSet<>();
+	private ArrayList<DataType> structList = new ArrayList<>();
+	private ArrayList<DataType> orderedDependentsList = new ArrayList<>();
 
-	private HashMap<Entry, Set<Entry>> whoIDependOn = new HashMap<Entry, Set<Entry>>();
-	private HashMap<Entry, Set<Entry>> whoDependsOnMe = new HashMap<Entry, Set<Entry>>();
-	private LinkedList<Entry> noDependentsQueue = new LinkedList<Entry>();
+	private HashMap<Entry, Set<Entry>> whoIDependOn = new HashMap<>();
+	private HashMap<Entry, Set<Entry>> whoDependsOnMe = new HashMap<>();
+	private LinkedList<Entry> noDependentsQueue = new LinkedList<>();
 
 	/**
 	 * Associate a DataType with its ID (relative to the DataTypeManager) in an Entry
@@ -152,7 +152,7 @@ public class DataTypeDependencyOrderer {
 		if (processed == false) {
 			processDependencyLists();
 		}
-		return new Pair<ArrayList<DataType>, ArrayList<DataType>>(structList, orderedDependentsList);
+		return new Pair<>(structList, orderedDependentsList);
 	}
 
 	/**
@@ -189,8 +189,8 @@ public class DataTypeDependencyOrderer {
 			whoDependsOnMe.size() + "\n\n");
 		if (!orderedDependentsList.isEmpty()) {
 			for (DataType dt : orderedDependentsList) {
-				res.append("Ordered Dependents: " + dt.getName() + " " + dt.getClass().getName() +
-					"\n");
+				res.append(
+					"Ordered Dependents: " + dt.getName() + " " + dt.getClass().getName() + "\n");
 			}
 		}
 		res.append("\n");
@@ -260,9 +260,13 @@ public class DataTypeDependencyOrderer {
 				addDependent(entry, ((TypeDef) dataType).getDataType());
 			}
 			else if (dataType instanceof Structure) {
-				DataTypeComponent dtcomps[] = ((Structure) dataType).getComponents();
+				Structure struct = (Structure) dataType;
+				DataTypeComponent dtcomps[] = struct.getComponents();
 				for (DataTypeComponent dtcomp : dtcomps) {
 					addDependent(entry, dtcomp.getDataType());
+				}
+				if (struct.hasFlexibleArrayComponent()) {
+					addDependent(entry, struct.getFlexibleArrayComponent().getDataType());
 				}
 			}
 			else if (dataType instanceof Composite) {
@@ -331,6 +335,9 @@ public class DataTypeDependencyOrderer {
 		if ((entry == null) || (subType == null)) {
 			return;
 		}
+		if (subType instanceof BitFieldDataType) {
+			subType = ((BitFieldDataType) subType).getBaseDataType();
+		}
 		Entry subEntry = createEntry(subType);
 		if (!doneSet.contains(subEntry)) {
 			procSet.add(subEntry);
@@ -343,13 +350,13 @@ public class DataTypeDependencyOrderer {
 		}
 		Set<Entry> dependents = whoDependsOnMe.get(subEntry);
 		if (dependents == null) {
-			dependents = new HashSet<Entry>();
+			dependents = new HashSet<>();
 			whoDependsOnMe.put(subEntry, dependents);
 		}
 		dependents.add(entry); //ignores duplicates
 		Set<Entry> support = whoIDependOn.get(entry);
 		if (support == null) {
-			support = new HashSet<Entry>();
+			support = new HashSet<>();
 			whoIDependOn.put(entry, support);
 		}
 		support.add(subEntry); //ignores duplicates
@@ -361,10 +368,10 @@ public class DataTypeDependencyOrderer {
 		}
 		Set<Entry> dependents = whoDependsOnMe.get(entry);
 		if (dependents == null) {
-			dependents = new HashSet<Entry>();
+			dependents = new HashSet<>();
 			whoDependsOnMe.put(entry, dependents);
 		}
-		Set<Entry> support = new HashSet<Entry>();
+		Set<Entry> support = new HashSet<>();
 		whoIDependOn.put(entry, support);
 	}
 

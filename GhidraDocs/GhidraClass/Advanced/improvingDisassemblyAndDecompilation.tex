@@ -657,7 +657,134 @@ calling convention, it assumes that the call to \textbf{adjustStack} does not ch
 \end{block}
 \end{frame}
 
+\subsection{System Calls}
+\begin{frame}
+\begin{block}{System Calls}
+\begin{itemize}
+\item \textbf{System calls} are a way for a program to request a service from the operating system.
+\item Examples include process control, file management, device management,\ldots
+\item A typical implementation uses a special native instruction along with a designated register, which we'll call the
+\textbf{system call register}.
+\item When the special instruction is executed, the value in the system call register determines which function is called.
+\end{itemize}
+\end{block}
+\end{frame}
 
+\begin{frame}
+\begin{block}{Exercise: System Calls}
+\begin{enumerate}
+\item Open and analyze the file \textbf{write}, then navigate to \textbf{main}.
+\item[] Note: \textbf{main} prints \texttt{Hello World!} to the screen using the \textbf{write} system call.
+\end{enumerate}
+\begin{itemize}
+\item Before going further, let's examine what we see.
+\begin{itemize}
+\item In the decompiler, you should see \textbf{syscall()}, which looks like a function call but isn't (try clicking on it). 
+\item This is an example of a \textbf{user-defined Pcode op}.
+\item Such operations are used when implementing the Pcode for a particular instruction is too hard (or impossible).  
+\item These operations show up as \textbf{CALLOTHER} Pcode ops in the Pcode field in the Listing.  They can have inputs and outputs, but otherwise are treated
+as black boxes by the decompiler.
+\end{itemize}
+\end{itemize}
+\end{block}
+\end{frame}
+
+\begin{frame}
+\begin{block}{Exercise: System Calls}
+\begin{enumerate}
+\setcounter{enumi}{1}
+\item In the decompiler, why is the return value of \textbf{main} \texttt{undefined [16]}?
+\end{enumerate}
+\pause
+\begin{itemize}
+\item The \textbf{SYSCALL} instruction is translated to a single \textbf{CALLOTHER} Pcode op (named \textbf{syscall}).  The decompiler does not consider this operation to have any 
+side effects, so when it tries to automatically determine the return type it sees a move to \textbf{RDX} and a move to \textbf{RAX} before the \textbf{RET} instruction.  
+These registers form a register pair for this architecture, so the decompiler thinks the return value is 16 bytes.
+\item So how do we improve the decompilation?
+\end{itemize}
+\end{block}
+\end{frame}
+
+\begin{frame}
+\begin{block}{Exercise: System Calls}
+\begin{itemize}
+\item This system call is a call to \textbf{write} since \texttt{1} is written to the system call register (\textbf{RAX}) before the \textbf{syscall} 
+instruction is executed (search online for ``x64 Linux syscall table").
+\item We'd like the call to \textbf{write} to appear with the correct name, signature, and calling convention.
+\item We'd also like cross references, so that we can easily see all calls to \textbf{write}.
+\item During execution, the code for the \textbf{write} function is somewhere in the kernel and not in the program's address space.
+\item So what should the call target be in Ghidra?
+\item Answer: use \textbf{overlay blocks} on the \textbf{OTHER} space.
+\end{itemize}
+\end{block}
+\end{frame}
+
+\begin{frame}
+\begin{block}{Exercise: System Calls}
+\begin{itemize}
+\item Prior to Ghidra 9.1, the \textbf{OTHER} space was used to store data from a binary that does not get loaded into memory, such as the \texttt{.comment} section of an ELF file.
+\item In 9.1, we've extended the ability to make references into the \textbf{OTHER} space.
+\item You can't use this space directly, but you can create \textbf{overlay blocks} on the \textbf{OTHER} space.
+\item Overlays are a (sort of old school) technique to allow different blocks to be swapped in and out at the same address.  
+\item For our purposes, they allow us to put things in an artificial memory space without the possibility of conflicting with other uses of that space.
+\end{itemize}
+\end{block}
+\end{frame}
+
+\begin{frame}
+\begin{block}{Exercise: System Calls}
+\begin{enumerate}
+\setcounter{enumi}{2}
+\item Create an overlay of the \textbf{OTHER} space as follows:
+\begin{enumerate}[(i)]
+\item Bring up the \textbf{Memory Map} by clicking on the ram chip icon in the tool bar of the Code Browser.
+\item Click on the green plus to add a block.
+\item Call the block \textbf{syscall\_block}.  Have it start at address \texttt{0x0} of the \textbf{OTHER} space and have length \texttt{0x1000}.
+For Block Type, select \textbf{Overlay} from the drop-down menu.
+\end{enumerate}
+\end{enumerate}
+\end{block}
+\end{frame}
+
+\begin{frame}
+\begin{block}{Exercise: System Calls}
+\begin{enumerate}
+\setcounter{enumi}{3}
+\item Next, go to address \texttt{0x1} in \textbf{syscall\_block} and create a function (in the Listing, select both the address and the \texttt{??} and press \texttt{f}).
+\item Edit this new function to give it the name \textbf{write} and the \textbf{syscall} calling convention.
+\item If you happen to know the parameters and their types you can add them.  Altervatively, select the new function \textbf{write} in the Code Browser, right-click on 
+\textbf{generic\_clib\_64} in the \textbf{Data Type Manager}, and select \textbf{Apply Function Data Types}
+\item[] Note: the function we've created has no body. It's essentially an address to hang a function signature and to get cross-references.
+\end{enumerate}
+\end{block}
+\end{frame}
+
+\begin{frame}
+\begin{block}{Exercise: System Calls}
+\begin{enumerate}
+\setcounter{enumi}{6}
+\item Now, navigate back to the \textbf{syscall} instruction in \textbf{main}. 
+\item Click on the instruction in the Listing, then press \texttt{r} to bring up the \textbf{Reference Manager}.
+\item Click the green plus to add a reference.  Enter \textbf{syscall\_block::1} for the ``To Address'' and \textbf{CALLOTHER\_CALL\_OVERRIDE} for the Ref-Type.
+This reference type essentially transforms the \textbf{CALLOTHER} Pcode op to a \textbf{CALL} op before sending the Pcode to the decompiler.  The call target is the ``To Address''
+of the reference.
+\item[] The decompilation should now look as expected.
+\end{enumerate}
+\end{block}
+\end{frame}
+
+\begin{frame}
+\begin{block}{System Call Notes}
+\begin{enumerate}
+\item The script \texttt{ResolveX86orX64LinuxSyscallScript.java} will do all of this for you. You can run it on this file, but a better demonstration is to run it on a 
+libc shared object file.
+\item The script uses the \textbf{Symbolic Propagator} to determine the value of a register at a particular location.
+\item The script requires a mapping from system call numbers to system call names.  The x86 and x64 ones come with Ghidra, you will need to supply others.
+\item Also, the signatures of most Linux system calls are included with Ghidra (used in step 6 above).  The script shows you how to apply function data types programmatically,
+but you might have to supply your own data type archive.
+\end{enumerate}
+\end{block}
+\end{frame}
 
 
 \section{Improving Decompilation: Control Flow}
@@ -760,10 +887,22 @@ determine statically.
 \begin{block}{Exercise: Opaque Predicates}
 \begin{enumerate}
 \item Open and analyze the file \textbf{opaque}, then navigate to the function \textbf{main}.
-\item \textbf{main} contains an opaque predicate.  Find it and fix it with the instruction patcher by changing a conditional jump to an unconditional jump.
-\item To patch an instruction, right-click on it in the Listing and select \textbf{Patch Instruction}.
-\item Hint: The opaque predicate is based on the fact that if you square an integer and reduce mod 4, you can only ever get 0 or 1.  Look for a multiplication, modular reduction (optimized to a bitmask), and comparison in the assembly.
+\item \textbf{main} contains an opaque predicate.  Find it and fix it by either:
+\begin{enumerate}[(i)]
+\item Changing a conditional jump to an unconditional jump using the instruction patcher.  To patch an instruction, right-click on it in the Listing and select \textbf{Patch Instruction}.
+\item Adding a (primary) reference with Ref-Type \textbf{JUMP\_OVERRIDE\_UNCONDITIONAL} on the appropriate conditional jump. The ``To Address'' of the reference should be the jump target. 
+ To the decompiler, this will change the conditional jump to an unconditional jump.
 \end{enumerate}
+\item[] (hint on next slide)
+\end{enumerate}
+\end{block}
+\end{frame}
+
+\begin{frame}
+\begin{block}{Exercise: Opaque Predicates}
+\begin{itemize}
+\item Hint: The opaque predicate is based on the fact that if you square an integer and reduce mod 4, you can only ever get 0 or 1.  Look for a multiplication, modular reduction (optimized to a bitmask), and comparison in the assembly.
+\end{itemize}
 \end{block}
 \end{frame}
 

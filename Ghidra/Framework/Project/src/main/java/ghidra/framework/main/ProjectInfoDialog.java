@@ -557,6 +557,7 @@ public class ProjectInfoDialog extends DialogComponentProvider {
 		@Override
 		public void run(TaskMonitor monitor) {
 			try {
+				// NOTE: conversion of non-shared project will lose version history
 				project.getProjectData().updateRepositoryInfo(taskRepository, monitor);
 				status = true;
 			}

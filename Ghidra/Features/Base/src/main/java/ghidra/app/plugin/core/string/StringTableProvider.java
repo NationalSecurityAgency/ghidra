@@ -30,15 +30,12 @@ import docking.widgets.label.GLabel;
 import docking.widgets.table.*;
 import docking.widgets.table.threaded.ThreadedTableModel;
 import docking.widgets.textfield.IntegerTextField;
-import ghidra.app.events.ProgramSelectionPluginEvent;
 import ghidra.app.services.GoToService;
 import ghidra.app.util.HelpTopics;
 import ghidra.docking.settings.SettingsImpl;
 import ghidra.framework.model.DomainObjectChangedEvent;
 import ghidra.framework.model.DomainObjectListener;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
-import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressSet;
 import ghidra.program.model.data.StringDataInstance;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.DumbMemBufferImpl;
@@ -50,6 +47,7 @@ import ghidra.util.*;
 import ghidra.util.exception.AssertException;
 import ghidra.util.layout.VerticalLayout;
 import ghidra.util.table.*;
+import ghidra.util.table.actions.MakeProgramSelectionAction;
 import ghidra.util.task.TaskLauncher;
 import resources.ResourceManager;
 
@@ -304,19 +302,18 @@ public class StringTableProvider extends ComponentProviderAdapter implements Dom
 		makeCharArrayAction.setHelpLocation(makeStringHelp);
 		addLocalAction(makeCharArrayAction);
 
-		DockingAction selectAction =
-			new DockingAction("Make Selection", "AsciiFinderDialog", false) {
-				@Override
-				public void actionPerformed(ActionContext context) {
-					makeSelection();
-				}
-			};
-		selectAction.setDescription("Make a selection using selected rows");
-		selectAction.setEnabled(true);
-		Icon icon = ResourceManager.loadImage("images/text_align_justify.png");
-		selectAction.setToolBarData(new ToolBarData(icon));
-		selectAction.setPopupMenuData(new MenuData(new String[] { "Make Selection" }, icon));
-		selectAction.setHelpLocation(new HelpLocation(HelpTopics.SEARCH, "Make_Selection_Strings"));
+		DockingAction selectAction = new MakeProgramSelectionAction(plugin, table) {
+			@Override
+			protected ProgramSelection makeSelection(ActionContext context) {
+				ProgramSelection selection = super.makeSelection(context);
+
+				// Also make sure this plugin keeps track of the new selection, since it will
+				// not receive this new event.
+				// TODO this should not be necessary; old code perhaps?
+				plugin.setSelection(selection);
+				return selection;
+			}
+		};
 
 		selectionNavigationAction = new SelectionNavigationAction(plugin, table);
 		selectionNavigationAction.setHelpLocation(
@@ -325,37 +322,6 @@ public class StringTableProvider extends ComponentProviderAdapter implements Dom
 		addLocalAction(selectionNavigationAction);
 		addLocalAction(selectAction);
 
-	}
-
-	private void makeSelection() {
-		AddressSet set = new AddressSet();
-
-		addToAddressSet(set, table.getSelectedRows());
-
-		if (!set.isEmpty()) {
-
-			ProgramSelection ps = new ProgramSelection(set);
-
-			// This event is given this specific source name because AsciiFinderPlugin
-			// is looking for it, so it can circumvent
-			// some unwanted behavior.  See AsciiFinderPlugin.firePluginEvent for details.
-			plugin.firePluginEvent(new ProgramSelectionPluginEvent(
-				"AsciiFinderDialogFiredSelection", ps, currentProgram));
-
-			// Also make sure this plugin keeps track of the new selection, since it will
-			// not receive this new event.
-			plugin.setSelection(ps);
-		}
-	}
-
-	void addToAddressSet(AddressSet modifiableSet, int[] rows) {
-		for (int rowValue : rows) {
-			FoundString foundString = stringModel.getRowObject(rowValue);
-			Address addr = foundString.getAddress();
-			if (addr != null) {
-				modifiableSet.addRange(addr, addr.add(foundString.getLength() - 1));
-			}
-		}
 	}
 
 	private JPanel createMainPanel() {

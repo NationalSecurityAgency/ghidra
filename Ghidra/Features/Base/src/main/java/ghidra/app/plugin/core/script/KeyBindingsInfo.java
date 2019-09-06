@@ -17,7 +17,7 @@ package ghidra.app.plugin.core.script;
 
 import javax.swing.KeyStroke;
 
-import docking.DockingKeyBindingAction;
+import docking.actions.KeyBindingUtils;
 
 class KeyBindingsInfo implements Comparable<KeyBindingsInfo> {
 	boolean hasAction;
@@ -31,7 +31,7 @@ class KeyBindingsInfo implements Comparable<KeyBindingsInfo> {
 
 	KeyBindingsInfo(boolean hasAction, KeyStroke stroke) {
 		this.hasAction = hasAction;
-		this.keystroke = stroke == null ? "" : DockingKeyBindingAction.parseKeyStroke(stroke);
+		this.keystroke = stroke == null ? "" : KeyBindingUtils.parseKeyStroke(stroke);
 	}
 
 	@Override

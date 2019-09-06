@@ -76,6 +76,7 @@ public class MultiInstructionMemReference extends GhidraScript {
 	private Object[] resultObjects;
 	private Register singleRegister;
 	private boolean  registerInOut;
+	private boolean targetInDelaySlot = false;
 	
 	@Override
 	public void run() throws Exception {
@@ -171,6 +172,9 @@ public class MultiInstructionMemReference extends GhidraScript {
 
 			private boolean checkContext(boolean input, final int opIndex, VarnodeContext context, Instruction instr) {
 				if (instr.getMinAddress().equals(curInstrloc)) {
+					if (targetInDelaySlot && instr.getDelaySlotDepth() > 0) {
+						instr = instr.getNext();
+					}
 					if (checkInstructionMatch(opIndex, input, context, instr)) {
 						return true;
 					}
@@ -351,6 +355,7 @@ public class MultiInstructionMemReference extends GhidraScript {
 					instr = instr.getPrevious();
 					if (instr != null) {
 						curInstrloc = instr.getMinAddress();
+						targetInDelaySlot  = true;
 					}
 				}
 
@@ -384,12 +389,12 @@ public class MultiInstructionMemReference extends GhidraScript {
 	 * @param scalar used as offset into address space
 	 */
 	private void makeReference(Instruction instruction, int opIndex, Address addr) {
-		if (instruction.getPrototype().hasDelaySlots()) {
+		if (targetInDelaySlot && instruction.getPrototype().hasDelaySlots()) {
 			instruction = instruction.getNext();
 			if (instruction == null) {
 				return;
 			}
-		}
+		}		
 		if (opIndex == -1) {
 			for (int i = 0; i < instruction.getNumOperands(); i++) {
 				int opType = instruction.getOperandType(i);

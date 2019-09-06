@@ -43,6 +43,7 @@ import ghidra.app.services.DataTypeManagerService;
 import ghidra.app.util.datatype.DataTypeSelectionEditor;
 import ghidra.framework.model.*;
 import ghidra.framework.plugintool.PluginTool;
+import ghidra.framework.plugintool.util.PluginException;
 import ghidra.program.database.ProgramBuilder;
 import ghidra.program.model.data.*;
 import ghidra.program.model.data.Composite;
@@ -79,14 +80,10 @@ public abstract class AbstractEditorTest extends AbstractGhidraHeadedIntegration
 	protected int txId;
 	protected StatusListener listener;
 
-	protected CompositeEditorAction[] actions;
+	protected CompositeEditorTableAction[] actions;
 	protected ArrayList<FavoritesAction> favorites = new ArrayList<>();
 	protected ArrayList<CycleGroupAction> cycles = new ArrayList<>();
 
-	/**
-	 * Constructor for an EditorTest.
-	 * @param name the test case name.
-	 */
 	protected AbstractEditorTest() {
 		POINTER = new PointerDataType();
 		languageName = ProgramBuilder._TOY;
@@ -140,10 +137,7 @@ public abstract class AbstractEditorTest extends AbstractGhidraHeadedIntegration
 		runSwing(() -> removeTableCellEditorsFocusLostListener());
 	}
 
-	/**
-	 * Adds all plugins required for this test.
-	 */
-	protected void setUpPlugins() throws Exception {
+	protected void setUpPlugins() throws PluginException {
 		tool.addPlugin(DataTypeManagerPlugin.class.getName());
 		plugin = env.getPlugin(DataTypeManagerPlugin.class);
 		assertNotNull(plugin);
@@ -152,15 +146,13 @@ public abstract class AbstractEditorTest extends AbstractGhidraHeadedIntegration
 	@After
 	public void tearDown() throws Exception {
 
-		// stop any editing now before later dispose in order to avoid exceptions due to
-		// invokeLater()
 		runSwing(() -> {
 			if (model != null) {
 				model.endEditingField();
 			}
 		});
 
-		closeAllWindowsAndFrames();
+		closeAllWindows();
 
 		// this is an attempt to prevent stack traces when take down the environment out from
 		// under Swing
@@ -244,11 +236,6 @@ public abstract class AbstractEditorTest extends AbstractGhidraHeadedIntegration
 		return null;
 	}
 
-	/**
-	 *  Creates a selection on the indicated indices.
-	 *
-	 * @param indices the indices for the selection.
-	 */
 	protected FieldSelection createSelection(int[] indices) {
 		FieldSelection selection = new FieldSelection();
 		for (int indice : indices) {
@@ -257,16 +244,13 @@ public abstract class AbstractEditorTest extends AbstractGhidraHeadedIntegration
 		return selection;
 	}
 
-	/**
-	 * @param rows the rows in ascending order that are expected to make up the current selection.
-	 */
 	protected void checkSelection(int[] rows) {
 		int[] tRows = getTable().getSelectedRows();
 		if (!Arrays.equals(rows, tRows)) {
 			Assert.fail("Expected row selection (" + arrayToString(rows) + ") but was (" +
 				arrayToString(tRows) + ").");
 		}
-		assertEquals(createSelection(rows), model.getSelection());
+		assertEquals(createSelection(rows), runSwing(() -> model.getSelection()));
 	}
 
 	/**
@@ -389,28 +373,32 @@ public abstract class AbstractEditorTest extends AbstractGhidraHeadedIntegration
 		executeOnSwingWithoutBlocking(() -> button.doClick());
 	}
 
+	protected DataTypeComponent getComponent(int index) {
+		return runSwing(() -> model.getComponent(index));
+	}
+
 	protected int getOffset(int index) {
-		DataTypeComponent dtc = model.getComponent(index);
+		DataTypeComponent dtc = getComponent(index);
 		return (dtc != null) ? dtc.getOffset() : -1;
 	}
 
 	protected int getLength(int index) {
-		DataTypeComponent dtc = model.getComponent(index);
+		DataTypeComponent dtc = getComponent(index);
 		return (dtc != null) ? dtc.getLength() : -1;
 	}
 
 	protected DataType getDataType(int index) {
-		DataTypeComponent dtc = model.getComponent(index);
+		DataTypeComponent dtc = getComponent(index);
 		return (dtc != null) ? dtc.getDataType() : null;
 	}
 
 	protected String getFieldName(int index) {
-		DataTypeComponent dtc = model.getComponent(index);
+		DataTypeComponent dtc = getComponent(index);
 		return (dtc != null) ? dtc.getFieldName() : null;
 	}
 
 	protected String getComment(int index) {
-		DataTypeComponent dtc = model.getComponent(index);
+		DataTypeComponent dtc = getComponent(index);
 		return (dtc != null) ? dtc.getComment() : null;
 	}
 
@@ -458,10 +446,11 @@ public abstract class AbstractEditorTest extends AbstractGhidraHeadedIntegration
 	 * <br>Note: Handles upper and lowercase alphabetic characters,
 	 * numeric characters, and other standard keyboard characters that are
 	 * printable characters. It also handles '\n', '\t', and '\b'.
-	 * @param str
+	 * @param str the string
 	 */
 	protected void type(String str) {
 		triggerText(getActiveEditorTextField(), str);
+		waitForSwing();
 	}
 
 	protected void enter() {
@@ -527,9 +516,6 @@ public abstract class AbstractEditorTest extends AbstractGhidraHeadedIntegration
 	}
 
 	protected class RestoreListener implements DomainObjectListener {
-		/**
-		 * @see ghidra.framework.model.DomainObjectListener#domainObjectChanged(ghidra.framework.model.DomainObjectChangedEvent)
-		 */
 		@Override
 		public void domainObjectChanged(DomainObjectChangedEvent event) {
 			if (event.containsEvent(DomainObject.DO_OBJECT_RESTORED)) {
@@ -759,47 +745,64 @@ public abstract class AbstractEditorTest extends AbstractGhidraHeadedIntegration
 	}
 
 	protected void doubleClickTableCell(int row, int column) throws Exception {
+		clickTableCell(getTable(), row, column, 1);
+		waitForSwing();
 		clickTableCell(getTable(), row, column, 2);
 		// Double click a second time if not editing,
 		// since editing sometimes gets canceled by a selection event in the TestEnv
 		// if you have done a table.moveColumn().
-		if (!model.isEditingField()) {
+		if (!isEditing()) {
 			clickTableCell(getTable(), row, column, 2);
 		}
 	}
 
 	protected void assertIsEditingField(int row, int modelColumn) {
 		String info = "Should be editing [row,modelColumn] of [" + row + "," + modelColumn + "] ";
-		assertTrue(info + "but is not.", model.isEditingField());
-		assertEquals(info + "but row is: " + model.getRow(), row, model.getRow());
-		assertEquals(info + "but column is: " + model.getColumn(), modelColumn, model.getColumn());
+		assertTrue(info + "but is not.", isEditing());
+		assertEquals(info + "but row is: " + getRow(), row, getRow());
+		assertEquals(info + "but column is: " + getColumn(), modelColumn, getColumn());
 	}
 
 	protected void assertNotEditingField() {
-		assertTrue("Editing cell when it should not be.", !model.isEditingField());
+		assertTrue("Editing cell when it should not be.", !isEditing());
 	}
 
 	protected void assertStatus(String status) {
-		assertEquals(status, model.getStatus());
+		assertEquals(status, getStatus());
 	}
 
-	/**
-	 * @param string
-	 * @param row
-	 * @param modelColumn
-	 */
+	private int getRow() {
+		return runSwing(() -> model.getRow());
+	}
+
+	private int getColumn() {
+		return runSwing(() -> model.getColumn());
+	}
+
+	private String getStatus() {
+		return runSwing(() -> model.getStatus());
+	}
+
+	private boolean isEditing() {
+		return runSwing(() -> model.isEditingField());
+	}
+
+	private Object getValueAt(int row, int col) {
+		return runSwing(() -> model.getValueAt(row, col));
+	}
+
 	protected void assertCellString(String string, int row, int modelColumn) {
 		Class<?> columnClass = model.getColumnClass(modelColumn);
 		if (columnClass == DataTypeInstance.class) {
-			DataTypeInstance dti = (DataTypeInstance) model.getValueAt(row, modelColumn);
+			DataTypeInstance dti = (DataTypeInstance) getValueAt(row, modelColumn);
 			assertEquals(string, dti.getDataType().getDisplayName());
 		}
 		else {
-			assertEquals(string, model.getValueAt(row, modelColumn));
+			assertEquals(string, getValueAt(row, modelColumn));
 		}
 	}
 
-	protected void checkEnablement(CompositeEditorAction action, boolean expectedEnablement) {
+	protected void checkEnablement(CompositeEditorTableAction action, boolean expectedEnablement) {
 		AtomicBoolean result = new AtomicBoolean();
 		runSwing(() -> result.set(action.isEnabledForContext(provider.getActionContext(null))));
 		boolean actionEnablement = result.get();
@@ -831,4 +834,5 @@ public abstract class AbstractEditorTest extends AbstractGhidraHeadedIntegration
 	protected void assertLength(int value) {
 		assertEquals(value, ((CompEditorModel) model).getLength());
 	}
+
 }

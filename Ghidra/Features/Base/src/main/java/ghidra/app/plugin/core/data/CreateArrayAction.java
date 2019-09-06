@@ -27,16 +27,14 @@ import ghidra.app.cmd.data.CreateArrayCmd;
 import ghidra.app.cmd.data.CreateArrayInStructureCmd;
 import ghidra.app.context.ListingActionContext;
 import ghidra.framework.cmd.Command;
-import ghidra.framework.options.*;
 import ghidra.framework.plugintool.PluginTool;
-import ghidra.framework.plugintool.util.ToolConstants;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.util.*;
 
-class CreateArrayAction extends DockingAction implements OptionsChangeListener {
+class CreateArrayAction extends DockingAction {
 
 	private static final KeyStroke DEFAULT_KEY_STROKE =
 		KeyStroke.getKeyStroke(KeyEvent.VK_OPEN_BRACKET, 0);
@@ -46,31 +44,21 @@ class CreateArrayAction extends DockingAction implements OptionsChangeListener {
 	private DataPlugin plugin;
 
 	public CreateArrayAction(DataPlugin plugin) {
-		super("Define Array", plugin.getName(), false);
+		super("Define Array", plugin.getName(), KeyBindingType.SHARED);
 		this.plugin = plugin;
 
 		setPopupMenuData(new MenuData(CREATE_ARRAY_POPUP_MENU, "BasicData"));
 		setEnabled(true);
-		initializeKeybinding();
+
+		initKeyStroke(DEFAULT_KEY_STROKE);
 	}
 
-	private void initializeKeybinding() {
-		PluginTool tool = plugin.getTool();
-		DockingAction dummyKeybindingsAction =
-			new DummyKeyBindingsOptionsAction(getName(), DEFAULT_KEY_STROKE);
-		tool.addAction(dummyKeybindingsAction);
-		ToolOptions options = tool.getOptions(ToolConstants.KEY_BINDINGS);
-		options.addOptionsChangeListener(this);
-		KeyStroke keyStroke =
-			options.getKeyStroke(dummyKeybindingsAction.getFullName(), DEFAULT_KEY_STROKE);
+	private void initKeyStroke(KeyStroke keyStroke) {
+		if (keyStroke == null) {
+			return;
+		}
 
-		if (!DEFAULT_KEY_STROKE.equals(keyStroke)) {
-			// user-defined keystroke
-			setUnvalidatedKeyBindingData(new KeyBindingData(keyStroke));
-		}
-		else {
-			setKeyBindingData(new KeyBindingData(keyStroke));
-		}
+		setKeyBindingData(new KeyBindingData(keyStroke));
 	}
 
 	@Override
@@ -342,12 +330,4 @@ class CreateArrayAction extends DockingAction implements OptionsChangeListener {
 		return false;
 	}
 
-	@Override
-	public void optionsChanged(ToolOptions options, String optionName, Object oldValue,
-			Object newValue) {
-		KeyStroke keyStroke = (KeyStroke) newValue;
-		if (optionName.startsWith(getName())) {
-			setUnvalidatedKeyBindingData(new KeyBindingData(keyStroke));
-		}
-	}
 }

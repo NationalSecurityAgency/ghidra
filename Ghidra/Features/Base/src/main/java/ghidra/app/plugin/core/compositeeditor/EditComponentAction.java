@@ -15,11 +15,10 @@
  */
 package ghidra.app.plugin.core.compositeeditor;
 
+import docking.ActionContext;
 import ghidra.app.services.DataTypeManagerService;
 import ghidra.program.model.data.*;
 import ghidra.program.model.data.Enum;
-
-import docking.ActionContext;
 
 /**
  * Action for use in the composite data type editor.
@@ -34,16 +33,6 @@ public class EditComponentAction extends CompositeEditorTableAction {
 	private static String[] menuPath = new String[] { ACTION_NAME + "..." };
 	private DataTypeManagerService dtmService;
 
-	/**
-	 * @param id
-	 * @param group
-	 * @param owner
-	 * @param popupPath
-	 * @param menuPath
-	 * @param icon
-	 * @param useToolbar
-	 * @param checkBox
-	 */
 	public EditComponentAction(CompositeEditorProvider provider) {
 		super(provider, EDIT_ACTION_PREFIX + ACTION_NAME, GROUP_NAME, popupPath, menuPath, null);
 		this.dtmService = provider.dtmService;
@@ -51,9 +40,6 @@ public class EditComponentAction extends CompositeEditorTableAction {
 		adjustEnablement();
 	}
 
-	/* (non-Javadoc)
-	 * @see java.awt.event.ActionListener#actionPerformed(java.awt.event.ActionEvent)
-	 */
 	@Override
 	public void actionPerformed(ActionContext context) {
 		int row = model.getRow();
@@ -80,9 +66,6 @@ public class EditComponentAction extends CompositeEditorTableAction {
 		requestTableFocus();
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.datamanager.editor.CompositeEditorAction#adjustEnablement()
-	 */
 	@Override
 	public void adjustEnablement() {
 		setEnabled(model.isEditComponentAllowed());

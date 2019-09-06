@@ -3,6 +3,7 @@ ghidra.repos.config
 
 # Misc files produced while executing application
 repositories/
+flatRepo/
 Ghidra/.ghidraSvrKeys
 wrapper.log*
 
@@ -62,3 +63,9 @@ Release
 .project
 .classpath
 .settings/
+
+# Ignore XTEXT generated dirs/files
+*/*/*/*/xtend-gen
+*/*/*/*/src-gen
+*/*/*/*/model/generated
+*/*/*/*/test-bin

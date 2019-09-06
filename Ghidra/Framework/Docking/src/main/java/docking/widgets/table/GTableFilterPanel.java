@@ -40,7 +40,6 @@ import docking.widgets.table.columnfilter.ColumnBasedTableFilter;
 import docking.widgets.table.columnfilter.ColumnFilterSaveManager;
 import docking.widgets.table.constraint.dialog.ColumnFilterDialog;
 import ghidra.framework.options.PreferenceState;
-import ghidra.generic.function.Callback;
 import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
 import ghidra.util.datastruct.WeakDataStructureFactory;
@@ -50,6 +49,7 @@ import ghidra.util.task.SwingUpdateManager;
 import resources.Icons;
 import resources.ResourceManager;
 import utilities.util.reflection.ReflectionUtilities;
+import utility.function.Callback;
 
 /**
  * This class is a panel that provides a label and text field that allows users to input text that
@@ -203,9 +203,9 @@ public class GTableFilterPanel<ROW_OBJECT> extends JPanel {
 
 		transformer = new DefaultRowFilterTransformer<>(tableModel, table.getColumnModel());
 
-		buildPanel(filterLabel);
-
 		textFilterModel = installTableModel(tableModel);
+
+		buildPanel(filterLabel);
 
 		TableColumnModel columnModel = table.getColumnModel();
 		columnModel.addColumnModelListener(columnModelListener);
@@ -214,7 +214,7 @@ public class GTableFilterPanel<ROW_OBJECT> extends JPanel {
 		table.addPropertyChangeListener(badProgrammingPropertyChangeListener);
 
 		DockingWindowManager.registerComponentLoadedListener(this,
-			windowManager -> initialize(windowManager));
+			(windowManager, provider) -> initialize(windowManager));
 	}
 
 	private void initialize(DockingWindowManager windowManager) {
@@ -390,15 +390,11 @@ public class GTableFilterPanel<ROW_OBJECT> extends JPanel {
 	}
 
 	private boolean isTableColumnFilterableModel() {
-
 		return table.getModel() instanceof RowObjectFilterModel;
 	}
 
 	@SuppressWarnings("unchecked")
 	private JComponent buildColumnFilterStateButton() {
-		if (!isTableColumnFilterableModel()) {
-			return null;
-		}
 
 		RowObjectFilterModel<ROW_OBJECT> tableModel =
 			(RowObjectFilterModel<ROW_OBJECT>) table.getModel();

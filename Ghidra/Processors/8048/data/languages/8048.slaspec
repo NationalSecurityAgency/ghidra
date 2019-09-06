@@ -1,0 +1,539 @@
+# sleigh specification file for Intel 8048
+
+
+# Do not take BS into account when decompiling
+@define SINGLE_REGISTER_BANK ""
+
+# Treat R0-R7 as not memory mapped (implies SINGLE_REGISTER_BANK)
+@define INTERNAL_REGISTERS ""
+
+
+@ifdef INTERNAL_REGISTERS
+@define SINGLE_REGISTER_BANK ""
+@endif
+
+
+define endian=little;
+define alignment=1;
+
+define space CODE type=ram_space size=2 default;
+define space INTMEM type=ram_space size=1;
+define space EXTMEM type=ram_space size=1;
+define space PORT type=ram_space size=1;
+
+define space register type=register_space size=1;
+
+define register offset=0x00 size=1 [ A SP ];
+@ifdef INTERNAL_REGISTERS
+define register offset=0x10 size=1 [ R0 R1 R2 R3 R4 R5 R6 R7 ];
+@endif
+define register offset=0x20 size=2 [ PC ];
+define register offset=0x30 size=1 [ C AC F0 F1 BS DFB ];  # single bit
+
+
+################################################################
+# Tokens
+################################################################
+
+define token opbyte (8)
+   opfull   = (0,7)
+   oplo     = (0,3)
+   ophi     = (4,7)
+   rn       = (0,2) dec
+   rnfill   = (3,3)
+   ri       = (0,0) dec
+   rifill   = (1,3)
+   opaddr   = (5,7)
+   addrfill = (4,4)
+   pp       = (0,1) dec
+   xpp      = (0,1) dec
+   ppfill   = (2,3)
+   abit     = (5,7) dec
+   abfill   = (4,4)
+   dfb      = (4,4)
+   bs       = (4,4)
+;
+
+define token aopword (16)
+   aoplo     = (0,3)
+   aaddrfill = (4,4)
+   aopaddr   = (5,7)
+   adata     = (8,15)
+;
+
+define token ImmedByte (8)  data=(0,7);
+define token AddrOne (8)    addr8=(0,7);
+
+@ifdef INTERNAL_REGISTERS
+attach variables rn [ R0 R1 R2 R3 R4 R5 R6 R7 ];
+attach variables ri [ R0 R1 ];
+@else
+attach names rn [ R0 R1 R2 R3 R4 R5 R6 R7 ];
+attach names ri [ R0 R1 ];
+@endif
+attach names dfb     [ MB0 MB1 ];
+attach names bs      [ RB0 RB1 ];
+attach names pp      [ BUS P1 P2 _ ];
+attach names xpp     [ P4 P5 P6 P7 ];
+
+
+################################################################
+# Psuedo Instructions
+################################################################
+
+define pcodeop nop;
+define pcodeop enableExtInt;
+define pcodeop enableTCntInt;
+define pcodeop enableClockOutput;
+define pcodeop disableExtInt;
+define pcodeop disableTCntInt;
+define pcodeop startTimer;
+define pcodeop startEventCounter;
+define pcodeop stopTimerAndEventCounter;
+define pcodeop setTmr;
+define pcodeop getTmr;
+define pcodeop getT0;
+define pcodeop getT1;
+define pcodeop getTF;
+define pcodeop getExtInt;
+define pcodeop readPort;
+define pcodeop writePort;
+define pcodeop setBank;
+
+
+################################################################
+# Macros
+################################################################
+
+macro getPSW(reg) {
+  local tmp:1 = 0;
+  tmp[7,1] = C;
+  tmp[6,1] = AC;
+  tmp[5,1] = F0;
+  tmp[4,1] = BS;
+  tmp[3,1] = 1;
+  tmp[0,3] = (SP>>1)&7;
+  reg = tmp;
+}
+
+macro setPSW(reg) {
+  local tmp:1 = reg;
+  C  = tmp[7,1];
+  AC = tmp[6,1];
+  F0 = tmp[5,1];
+  BS = tmp[4,1];
+  SP = 2*tmp[0,3] + 8;
+}
+
+macro savePSWtoPC(pc) {
+  pc[15,1] = C;
+  pc[14,1] = AC;
+  pc[13,1] = F0;
+  pc[12,1] = BS;
+}
+
+macro restorePSWfromPC(pc) {
+  C  = pc[15,1];
+  AC = pc[14,1];
+  F0 = pc[13,1];
+  BS = pc[12,1];
+}
+
+macro push(v) {
+  *[INTMEM]:2 SP = v;
+  SP = SP + 2;
+}
+
+macro pop(v) {
+  SP = SP - 2;
+  v = *[INTMEM]:2 SP;
+}
+
+macro popPC(pc) {
+  pop(pc);
+  pc = pc & 0xfff;
+}
+
+macro popPCandPSW(pc) {
+  pop(pc);
+  restorePSWfromPC(pc);
+  pc = pc & 0xfff;
+}
+
+macro funcall(target) {
+  ret:2 = inst_next; 
+  savePSWtoPC(ret);
+  push(ret);
+  call target;
+}
+
+macro add(dest, op1, op2, cy_in) {
+  local result:1 = op1 + op2 + cy_in;
+  local half_result:1 = (op1 & 0xf) + (op2 & 0xf) + cy_in;
+  C  = carry(op1, op2) || carry(op1+op2, cy_in);
+  AC = (half_result > 0xf);
+  dest = result;
+}
+
+macro da(reg) {
+  local tmp:1 = reg;
+  local low:1 = 6*(AC || (tmp&0xf) > 9);
+  local cy1:1 = C || carry(tmp, low);
+  tmp = tmp + low;
+  local high:1 = 0x60*(cy1 || tmp > 0x99);
+  C = C || carry(tmp, high);
+  tmp = tmp + high;
+  reg = tmp;
+}
+
+macro rotc(cy, acc) {
+  local tmp:1 = cy;
+  A = acc;
+  C = tmp;
+}
+
+macro xch(node1, node2) {
+  local tmp:1 = node1;
+  node1 = node2;
+  node2 = tmp;
+}
+
+@ifdef SINGLE_REGISTER_BANK
+macro regbank(r) { }
+macro setbank(bs) {
+  BS = bs;
+  local tmp:1 = bs;
+  setBank(tmp);
+}
+@else
+macro regbank(r) {
+  r = r + BS*0x18;
+}
+macro setbank(bs) {
+  BS = bs;
+}
+@endif
+
+
+################################################################
+
+Psw: "PSW" is epsilon { }
+ExtInt: "I" is epsilon { }
+TCntInt: "TCNTI" is epsilon { }
+Clk: "CLK" is epsilon { }
+Tmr: "T" is epsilon { }
+Cnt: "CNT" is epsilon { }
+TmrCnt: "TCNT" is epsilon { }
+
+@ifdef INTERNAL_REGISTERS
+Rn: rn is rn & rnfill=1  {
+  export rn;
+}
+Rind: @ri is ri & rifill=0 {
+  export ri;
+}
+@else
+Rn: rn is rn & rnfill=1  {
+  local ptr:1 = rn; regbank(ptr); export *[INTMEM]:1 ptr;
+}
+Rind: @ri is ri & rifill=0 {
+  local ptr:1 = ri; regbank(ptr); export *[INTMEM]:1 ptr;
+}
+@endif
+Ri: Rind is Rind {
+  export *[INTMEM]:1 Rind;
+}
+RiX: Rind is Rind {
+  export *[EXTMEM]:1 Rind;
+}
+PData: @A is A {
+  local addr:2 = inst_next; addr[0,7] = A; export *[CODE]:1 addr;
+}
+P3Data: @A is A {
+  local addr:2 = 0x300; addr[0,7] = A; export *[CODE]:1 addr;
+}
+AddrInd: PData is PData {
+  local addr:2 = inst_next; addr[0,7] = PData; export *[CODE]:1 addr;
+}
+Ab: abit is abit {
+  local bit:1 = (A>>abit)&1; export bit;
+}
+Data: "#"^data is data {
+  export *[const]:1 data;
+}
+Imm: Data is oplo=3; Data {
+  export Data;
+}
+Addr8: addr is addr8 [ addr = (inst_next $and 0xf00)+addr8; ] {
+  export *[CODE]:1 addr;
+}
+Addr12: addr is aopaddr & adata [ addr = (DFB*2048)+(aopaddr*256)+adata; ] {
+  export *[CODE]:1 addr;
+}
+Bus: "BUS" is epsilon {
+  local tmp:1 = 0; export *[PORT]:1 tmp;
+}
+Pp: pp is pp & ppfill=2 {
+  export *[PORT]:1 pp;
+}
+Xpp: xpp is xpp & ppfill=3 {
+  local tmp:1 = xpp+4; export *[PORT]:1 tmp;
+}
+
+Cc: "C"   is ophi=15 {
+  export C;
+}
+Cc: "F0"  is ophi=11 {
+  export F0;
+}
+Cc: "F1"  is ophi=7 {
+  export F1;
+}
+Cc: "NC"  is ophi=14 {
+  tmp:1 = !C; export tmp;
+}
+Cc: "NI"  is ophi=8 {
+  tmp:1 = getExtInt(); tmp = !tmp; export tmp;
+}
+Cc: "NT0" is ophi=2 {
+  tmp:1 = getT0(); tmp = !tmp; export tmp;
+}
+Cc: "NT1" is ophi=4 {
+  tmp:1 = getT1(); tmp = !tmp; export tmp;
+}
+Cc: "NZ"  is ophi=9 {
+  tmp:1 = A!=0; export tmp;
+}
+Cc: "TF"  is ophi=1 {
+  tmp:1 = getTF(); export tmp;
+}
+Cc: "T0"  is ophi=3 {
+  tmp:1 = getT0(); export tmp;
+}
+Cc: "T1"  is ophi=5 {
+  tmp:1 = getT1(); export tmp;
+}
+Cc: "Z"   is ophi=12 {
+  tmp:1 = A==0; export tmp;
+}
+
+
+# Conventience tables for opcodes taking both Rn and Ri (and Imm)
+Rni: Rn is Rn {
+  export Rn;
+}
+Rni: Ri is Ri {
+  export Ri;
+}
+RniI: Rni is Rni {
+  export Rni;
+}
+RniI: Imm is Imm {
+  export Imm;
+}
+
+
+:ADD A,Rni      is ophi=6 & (rnfill=1 | rifill=0) & A & Rni {
+  add(A,A,Rni,0);
+}
+:ADD A,Imm      is (ophi=0 & A)... & Imm {
+  add(A,A,Imm,0);
+}
+:ADDC A,Rni     is ophi=7 & A & (rnfill=1 | rifill=0) & Rni {
+  add(A,A,Rni,C);
+}
+:ADDC A,Imm     is (ophi=1 & A)... & Imm {
+  add(A,A,Imm,C);
+}
+:ANL A,RniI     is (ophi=5 & (rnfill=1 | rifill=0 | oplo=3) & A)... & RniI {
+  A = A & RniI;
+}
+:ANL Pp,Data    is ophi=9 & ppfill=2 & Pp; Data {
+  Pp = Pp & Data;
+}
+:ANLD Xpp,A     is ophi=9 & ppfill=3 & Xpp & A {
+  Xpp = Xpp & (A & 0xf);
+}
+:CALL Addr12    is aopaddr & aaddrfill=1 & aoplo=4 & Addr12 {
+  funcall(Addr12);
+}
+:CLR A          is ophi=2 & oplo=7 & A {
+  A = 0;
+}
+:CLR C          is ophi=9 & oplo=7 & C {
+  C = 0;
+}
+:CLR F0         is ophi=8 & oplo=5 & F0 {
+  F0 = 0;
+}
+:CLR F1         is ophi=10 & oplo=5 & F1 {
+  F1 = 0;
+}
+:CPL A          is ophi=3 & oplo=7 & A {
+  A = ~A;
+}
+:CPL C          is ophi=10 & oplo=7 & C {
+  C = !C;
+}
+:CPL F0         is ophi=9 & oplo=5 & F0 {
+  F0 = !F0;
+}
+:CPL F1         is ophi=11 & oplo=5 & F1 {
+  F1 = !F1;
+}
+:DA A           is ophi=5 & oplo=7 & A {
+  da(A);
+}
+:DEC A          is ophi=0 & oplo=7 & A {
+  A = A - 1;
+}
+:DEC Rn         is ophi=12 & Rn {
+  Rn = Rn - 1;
+}
+:DIS ExtInt     is ophi=1 & oplo=5 & ExtInt {
+  disableExtInt();
+}
+:DIS TCntInt    is ophi=3 & oplo=5 & TCntInt {
+  disableTCntInt();
+}
+:DJNZ Rn,Addr8  is ophi=14 & Rn; Addr8 {
+  Rn = Rn - 1; if(Rn != 0) goto Addr8;
+}
+:EN ExtInt      is ophi=0 & oplo=5 & ExtInt {
+  enableExtInt();
+}
+:EN TCntInt     is ophi=2 & oplo=5 & TCntInt {
+  enableTCntInt();
+}
+:ENT0 Clk       is ophi=7 & oplo=5 & Clk {
+  enableClockOutput();
+}
+:IN A,Pp        is ophi=0 & pp!=0 & A & Pp {
+  A = Pp;
+}
+:INC A          is ophi=1 & oplo=7 & A {
+  A = A + 1;
+}
+:INC Rni        is ophi=1 & (rnfill=1 | rifill=0) & Rni {
+  Rni = Rni + 1;
+}
+:INS A,Bus      is ophi=0 & oplo=8 & A & Bus {
+  A = Bus;
+}
+:JB^Ab Addr8    is oplo=2 & opaddr & abfill=1 & Ab; Addr8 {
+  if(Ab) goto Addr8;
+}
+:J^Cc Addr8     is ophi & oplo=6 & Cc; Addr8 {
+  if(Cc) goto Addr8;
+}
+:JMP Addr12     is aopaddr & aaddrfill=0 & aoplo=4 & Addr12 {
+  goto Addr12;
+}
+:JMPP AddrInd   is ophi=11 & oplo=3 & AddrInd {
+  goto AddrInd;
+}
+:MOV A,Imm      is (ophi=2 & A)... & Imm {
+  A = Imm;
+}
+:MOV A,Psw      is ophi=12 & oplo=7 & A & Psw {
+  getPSW(A);
+}
+:MOV A,Rni      is ophi=15 & A & (rnfill=1 | rifill=0) & Rni {
+  A = Rni;
+}
+:MOV A,Tmr      is ophi=4 & oplo=2 & A & Tmr {
+  A = getTmr();
+}
+:MOV Psw,A      is ophi=13 & oplo=7 & Psw & A {
+  setPSW(A);
+}
+:MOV Rni,A      is ophi=10 & (rnfill=1 | rifill=0) & Rni & A {
+  Rni = A;
+}
+:MOV Rni,Data	is ophi=11 & (rnfill=1 | rifill=0) & Rni; Data {
+  Rni = Data;
+}
+:MOV Tmr,A      is ophi=6 & oplo=2 & Tmr & A {
+  setTmr(A);
+}
+:MOVD A,Xpp     is ophi=0 & Xpp & A {
+  A = (Xpp & 0xf);
+}
+:MOVD Xpp,A     is ophi=3 & Xpp & A {
+  Xpp = (A & 0xf);
+}
+:MOVP A,PData   is ophi=10 & oplo=3 & A & PData {
+  A = PData;
+}
+:MOVP3 A,P3Data is ophi=14 & oplo=3 & A & P3Data {
+  A = P3Data;
+}
+:MOVX A,RiX     is ophi=8 & A & RiX {
+  A = RiX;
+}
+:MOVX RiX,A     is ophi=9 & RiX & A {
+  RiX = A;
+}
+:NOP            is ophi=0 & oplo=0 {
+  nop();
+}
+:ORL A,RniI     is (ophi=4 & (rnfill=1 | rifill=0 | oplo=3) & A)... & RniI {
+  A = A | RniI;
+}
+:ORL Pp,Data    is ophi=8 & Pp; Data {
+  Pp = Pp | Data;
+}
+:ORLD Xpp,A     is ophi=8 & Xpp & A {
+  Xpp = Xpp | (A & 0xf);
+}
+:OUTL Bus,A     is ophi=0 & oplo=2 & Bus & A {
+  Bus = A;
+}
+:OUTL Pp,A      is ophi=3 & pp!=0 & Pp & A {
+  Pp = A;
+}
+:RET            is ophi=8 & oplo=3 {
+  pc:2 = 0; popPC(pc); return[pc];
+}
+:RETR           is ophi=9 & oplo=3 {
+  pc:2 = 0; popPCandPSW(pc); return[pc];
+}
+:RL A           is ophi=14 & oplo=7 & A {
+  A = (A<<1) | (A>>7);
+}
+:RLC A          is ophi=15 & oplo=7 & A {
+  rotc((A&0x80)>>7, (A<<1)|C);
+}
+:RR A           is ophi=7 & oplo=7 & A {
+  A = (A>>1) | (A<<7);
+}
+:RRC A          is ophi=6 & oplo=7 & A {
+  rotc(A&1, (A>>1)|(C<<7));
+}
+:SEL dfb        is (ophi=14 | ophi=15) & oplo=5 & dfb {
+  DFB = dfb;
+}
+:SEL bs         is (ophi=12 | ophi=13) & oplo=5 & bs {
+  setbank(bs);
+}
+:STOP TmrCnt    is ophi=6 & oplo=5 & TmrCnt {
+  stopTimerAndEventCounter();
+}
+:STRT Cnt       is ophi=4 & oplo=5 & Cnt {
+  startEventCounter();
+}
+:STRT Tmr       is ophi=5 & oplo=5 & Tmr {
+  startTimer();
+}
+:SWAP A         is ophi=4 & oplo=7 & A {
+  A = (A<<4)|(A>>4);
+}
+:XCH A,Rni      is ophi=2 & (rnfill=1 | rifill=0) & A & Rni {
+  xch(A, Rni);
+}
+:XCHD A,Ri      is ophi=3 & A & Ri {
+  xch(A[0,4], Ri[0,4]);
+}
+:XRL A,RniI     is (ophi=13 & (rnfill=1 | rifill=0 | oplo=3) & A)... & RniI {
+  A = A ^ RniI;
+}

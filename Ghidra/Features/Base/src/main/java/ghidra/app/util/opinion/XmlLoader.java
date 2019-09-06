@@ -27,7 +27,6 @@ import ghidra.app.plugin.core.analysis.AutoAnalysisManager;
 import ghidra.app.util.Option;
 import ghidra.app.util.OptionException;
 import ghidra.app.util.bin.ByteProvider;
-import ghidra.app.util.importer.MemoryConflictHandler;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.app.util.xml.*;
 import ghidra.framework.model.DomainFolder;
@@ -201,8 +200,7 @@ public class XmlLoader extends AbstractProgramLoader {
 			importerCompilerSpec, consumer);
 		boolean success = false;
 		try {
-			success = doImport(result.lastXmlMgr, options, log, prog, monitor,
-				MemoryConflictHandler.ALWAYS_OVERWRITE, false);
+			success = doImport(result.lastXmlMgr, options, log, prog, monitor, false);
 			if (success) {
 				createDefaultMemoryBlocks(prog, importerLanguage, log);
 			}
@@ -221,22 +219,22 @@ public class XmlLoader extends AbstractProgramLoader {
 
 	@Override
 	protected boolean loadProgramInto(ByteProvider provider, LoadSpec loadSpec,
-			List<Option> options, MessageLog log, Program prog, TaskMonitor monitor,
-			MemoryConflictHandler handler) throws IOException, CancelledException {
+			List<Option> options, MessageLog log, Program prog, TaskMonitor monitor)
+			throws IOException, CancelledException {
 		File file = provider.getFile();
-		return doImport(new ProgramXmlMgr(file), options, log, prog, monitor, handler, true);
+		return doImport(new ProgramXmlMgr(file), options, log, prog, monitor, true);
 	}
 
 	private boolean doImportWork(final ProgramXmlMgr mgr, final List<Option> options,
 			final MessageLog log, Program prog, TaskMonitor monitor,
-			final MemoryConflictHandler handler, final boolean isAddToProgram) throws IOException {
+			final boolean isAddToProgram) throws IOException {
 		MessageLog mgrLog = null;
 		boolean success = false;
 		try {
 			XmlProgramOptions xmlOptions = new XmlProgramOptions();
 			xmlOptions.setOptions(options);
 			xmlOptions.setAddToProgram(isAddToProgram);
-			mgrLog = mgr.read(prog, monitor, xmlOptions, handler);
+			mgrLog = mgr.read(prog, monitor, xmlOptions);
 			log.copyFrom(mgrLog);
 			success = true;
 		}
@@ -255,13 +253,13 @@ public class XmlLoader extends AbstractProgramLoader {
 	}
 
 	private boolean doImport(final ProgramXmlMgr mgr, final List<Option> options,
-			final MessageLog log, Program prog, TaskMonitor monitor,
-			final MemoryConflictHandler handler, final boolean isAddToProgram) throws IOException {
+			final MessageLog log, Program prog, TaskMonitor monitor, final boolean isAddToProgram)
+			throws IOException {
 
 		if (!AutoAnalysisManager.hasAutoAnalysisManager(prog)) {
 			int txId = prog.startTransaction("XML Import");
 			try {
-				return doImportWork(mgr, options, log, prog, monitor, handler, isAddToProgram);
+				return doImportWork(mgr, options, log, prog, monitor, isAddToProgram);
 			}
 			finally {
 				prog.endTransaction(txId, true);
@@ -280,8 +278,7 @@ public class XmlLoader extends AbstractProgramLoader {
 				@Override
 				public boolean analysisWorkerCallback(Program program, Object workerContext,
 						TaskMonitor taskMonitor) throws Exception, CancelledException {
-					return doImportWork(mgr, options, log, program, taskMonitor, handler,
-						isAddToProgram);
+					return doImportWork(mgr, options, log, program, taskMonitor, isAddToProgram);
 				}
 			}, null, false, monitor);
 
@@ -338,7 +335,7 @@ public class XmlLoader extends AbstractProgramLoader {
 	}
 
 	@Override
-	public String validateOptions(ByteProvider provider, LoadSpec loadSpec, List<Option> options) {
+	public String validateOptions(ByteProvider provider, LoadSpec loadSpec, List<Option> options, Program program) {
 		// XXX will this work? is there other state that xmlOptions needs to
 		// know?
 		try {

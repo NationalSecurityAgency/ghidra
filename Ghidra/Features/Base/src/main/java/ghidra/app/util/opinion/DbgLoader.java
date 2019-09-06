@@ -26,7 +26,8 @@ import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.bin.RandomAccessByteProvider;
 import ghidra.app.util.bin.format.pe.*;
 import ghidra.app.util.bin.format.pe.PortableExecutable.SectionLayout;
-import ghidra.app.util.importer.*;
+import ghidra.app.util.importer.MessageLog;
+import ghidra.app.util.importer.MessageLogContinuesFactory;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
 import ghidra.util.Conv;
@@ -72,9 +73,8 @@ public class DbgLoader extends AbstractPeDebugLoader {
 	}
 
 	@Override
-	public void load(ByteProvider provider, LoadSpec loadSpec, List<Option> options,
-			Program prog, MemoryConflictHandler handler, TaskMonitor monitor, MessageLog log)
-			throws IOException {
+	public void load(ByteProvider provider, LoadSpec loadSpec, List<Option> options, Program prog,
+			TaskMonitor monitor, MessageLog log) throws IOException {
 
 		GenericFactory factory = MessageLogContinuesFactory.create(log);
 

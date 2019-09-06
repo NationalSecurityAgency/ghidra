@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +15,13 @@
  */
 package ghidra.javaclass.format.attributes;
 
+import java.io.IOException;
+
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.StructConverter;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.data.StructureDataType;
 import ghidra.util.exception.DuplicateNameException;
-
-import java.io.IOException;
 
 /**
  * NOTE: THE FOLLOWING TEXT EXTRACTED FROM JVMS7.PDF
@@ -40,7 +39,7 @@ public class LineNumber implements StructConverter {
 	private short startPC;
 	private short lineNumber;
 
-	public LineNumber( BinaryReader reader ) throws IOException {
+	public LineNumber(BinaryReader reader) throws IOException {
 		startPC = reader.readNextShort();
 		lineNumber = reader.readNextShort();
 	}
@@ -53,23 +52,23 @@ public class LineNumber implements StructConverter {
 	 * item of the Code attribute of which this LineNumberTable is an attribute.
 	 * @return index into the code array at which the code for a new line in the original source file begins
 	 */
-	public short getStartPC() {
-		return startPC;
+	public int getStartPC() {
+		return startPC & 0xffff;
 	}
 
 	/**
 	 * The value of the line_number item must give the corresponding line number in the original source file.
 	 * @return the corresponding line number in the original source file
 	 */
-	public short getLineNumber() {
-		return lineNumber;
+	public int getLineNumber() {
+		return lineNumber & 0xffff;
 	}
 
 	@Override
 	public DataType toDataType() throws DuplicateNameException, IOException {
-		StructureDataType structure = new StructureDataType( "line_number", 0 );
-		structure.add( WORD, "start_pc", null );
-		structure.add( WORD, "line_number", null );
+		StructureDataType structure = new StructureDataType("line_number", 0);
+		structure.add(WORD, "start_pc", null);
+		structure.add(WORD, "line_number", null);
 		return structure;
 	}
 

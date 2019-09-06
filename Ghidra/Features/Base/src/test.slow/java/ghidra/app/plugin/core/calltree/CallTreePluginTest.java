@@ -46,7 +46,6 @@ import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.database.ProgramBuilder;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressFactory;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.data.PointerDataType;
 import ghidra.program.model.listing.Function;
@@ -62,7 +61,6 @@ public class CallTreePluginTest extends AbstractGhidraHeadedIntegrationTest {
 	private TestEnv env;
 	private CodeBrowserPlugin codeBrowserPlugin;
 	private PluginTool tool;
-	private ProgramDB program;
 	private CallTreePlugin callTreePlugin;
 	private CallTreeProvider provider;
 	private List<CallTreeProvider> providers;
@@ -70,14 +68,10 @@ public class CallTreePluginTest extends AbstractGhidraHeadedIntegrationTest {
 	private GTree incomingTree;
 	private GTree outgoingTree;
 
-	private DockingAction showProviderAction;
+	private ProgramBuilder builder;
+	private ProgramDB program;
 
 	private GoToService goToService;
-	private AddressFactory addressFactory;
-
-	public CallTreePluginTest() {
-		super();
-	}
 
 	@SuppressWarnings("unchecked")
 	// cast to list
@@ -91,7 +85,6 @@ public class CallTreePluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 		callTreePlugin = env.getPlugin(CallTreePlugin.class);
 		providers = (List<CallTreeProvider>) getInstanceField("providers", callTreePlugin);
-		showProviderAction = (DockingAction) getInstanceField("showProviderAction", callTreePlugin);
 
 		GoToServicePlugin goToPlugin = env.getPlugin(GoToServicePlugin.class);
 		goToService = (GoToService) invokeInstanceMethod("getGotoService", goToPlugin);
@@ -100,19 +93,17 @@ public class CallTreePluginTest extends AbstractGhidraHeadedIntegrationTest {
 		env.showTool();
 
 		program = createProgram();
-		addressFactory = program.getAddressFactory();
 		ProgramManager pm = tool.getService(ProgramManager.class);
 		pm.openProgram(program.getDomainFile());
 
 		// setup a good start location
 		goTo(addr("5000"));
 
-		provider = getProvider();
+		provider = callTreePlugin.getPrimaryProvider();
+		tool.showComponentProvider(provider, true);
 		incomingTree = (GTree) getInstanceField("incomingTree", provider);
 		outgoingTree = (GTree) getInstanceField("outgoingTree", provider);
 	}
-
-	ProgramBuilder builder;
 
 	private ProgramDB createProgram() throws Exception {
 
@@ -385,21 +376,21 @@ public class CallTreePluginTest extends AbstractGhidraHeadedIntegrationTest {
 		assertNotNull("Provider did not update its information when made visible",
 			providerFunction());
 
-		final ToggleDockingAction navigateIncomingLoctionsAction =
+		ToggleDockingAction navigateIncomingLoctionsAction =
 			(ToggleDockingAction) getAction("Navigation Incoming Location Changes");
-		assertTrue(!navigateIncomingLoctionsAction.isSelected());
+		setToggleActionSelected(navigateIncomingLoctionsAction, provider.getActionContext(null),
+			false);
 
 		assertEquals("Provider's location does not match that of the listing.", currentFunction(),
 			providerFunction());
 
 		goTo(addr("0x6000"));
 
-		assertTrue("Provider's location matches that of the listing when not following " +
-			"location changes.", !currentFunction().equals(providerFunction()));
-
+		assertNotEquals("Provider's location matches that of the listing when not following " +
+			"location changes", currentFunction(), providerFunction());
 		performAction(navigateIncomingLoctionsAction, true);
 
-		assertEquals("Provider's location does not match that of the listing.", currentFunction(),
+		assertEquals("Provider's location does not match that of the listing", currentFunction(),
 			providerFunction());
 	}
 
@@ -779,21 +770,6 @@ public class CallTreePluginTest extends AbstractGhidraHeadedIntegrationTest {
 		return functionManager.getFunctionAt(address);
 	}
 
-	private CallTreeProvider getProvider() {
-		final AtomicReference<CallTreeProvider> ref = new AtomicReference<>();
-
-		// run in swing, as two threads are accessing/manipulating a variable
-		runSwing(() -> {
-			if (providers.size() == 0) {
-				ref.set(showProvider());
-			}
-			else {
-				ref.set(providers.get(0));
-			}
-		});
-		return ref.get();
-	}
-
 	private CallTreeProvider getProvider(final String address) {
 		final CallTreeProvider[] providerBox = new CallTreeProvider[1];
 
@@ -939,13 +915,13 @@ public class CallTreePluginTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	private void fullyExpandIncomingNode(GTreeNode node) {
-		DockingActionIf expandAction = getAction(callTreePlugin, "Fully Expand Selected Nodes");
+		DockingActionIf expandAction = getLocalAction(provider, "Fully Expand Selected Nodes");
 		performAction(expandAction, new ActionContext(provider, incomingTree), false);
 		waitForTree(node.getTree());
 	}
 
 	private void fullyExpandOutgoingNode(GTreeNode node) {
-		DockingActionIf expandAction = getAction(callTreePlugin, "Fully Expand Selected Nodes");
+		DockingActionIf expandAction = getLocalAction(provider, "Fully Expand Selected Nodes");
 		performAction(expandAction, new ActionContext(provider, outgoingTree), false);
 		waitForTree(node.getTree());
 	}
@@ -1054,11 +1030,11 @@ public class CallTreePluginTest extends AbstractGhidraHeadedIntegrationTest {
 			String name = child.getName();
 			Integer integer = map.get(name);
 			if (integer == null) {
-				integer = new Integer(0);
+				integer = 0;
 			}
 			int asInt = integer;
 			asInt++;
-			map.put(name, new Integer(asInt));
+			map.put(name, asInt);
 		}
 		return map;
 	}
@@ -1088,12 +1064,8 @@ public class CallTreePluginTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	private DockingActionIf getAction(String actionName) {
-		// make sure there is a provider from which to get actions
-		getProvider();
-		String fullActionName = actionName + " (CallTreePlugin)";
-		List<DockingActionIf> actions = tool.getDockingActionsByFullActionName(fullActionName);
-		Assert.assertTrue("Could not find action: " + fullActionName, actions.size() > 0);
-		return actions.get(0);
+		DockingActionIf action = getLocalAction(provider, actionName);
+		return action;
 	}
 
 	private void myWaitForTree(GTree gTree, CallTreeProvider treeProvider) {
@@ -1123,19 +1095,13 @@ public class CallTreePluginTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	/**
-	 * Shows and returns a provider for the current address.
-	 */
-	private CallTreeProvider showProvider() {
-		performAction(showProviderAction, true);
-		return getProvider();
-	}
-
-	/**
 	 * Shows and returns a provider for the specified address.
 	 */
 	private CallTreeProvider showProvider(String address) {
 		goTo(addr(address));
-		performAction(showProviderAction, true);
+
+		DockingAction action = callTreePlugin.getShowCallTreeFromMenuAction();
+		performAction(action);
 		return getProvider(address);
 	}
 

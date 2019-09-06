@@ -31,29 +31,29 @@
     <prototype name="__stdcall" extrapop="8" stackshift="8">
       <!-- Derived from "System V Application Binary Interface AMD64 Architecture Processor Supplement" April 2016 -->
       <input>
-        <pentry minsize="4" maxsize="16" metatype="float">
-          <register name="XMM0"/>
+        <pentry minsize="4" maxsize="8" metatype="float">
+          <register name="XMM0_Qa"/>
         </pentry>
-        <pentry minsize="4" maxsize="16" metatype="float">
-          <register name="XMM1"/>
+        <pentry minsize="4" maxsize="8" metatype="float">
+          <register name="XMM1_Qa"/>
         </pentry>
-        <pentry minsize="4" maxsize="16" metatype="float">
-          <register name="XMM2"/>
+        <pentry minsize="4" maxsize="8" metatype="float">
+          <register name="XMM2_Qa"/>
         </pentry>
-        <pentry minsize="4" maxsize="16" metatype="float">
-          <register name="XMM3"/>
+        <pentry minsize="4" maxsize="8" metatype="float">
+          <register name="XMM3_Qa"/>
         </pentry>
-        <pentry minsize="4" maxsize="16" metatype="float">
-          <register name="XMM4"/>
+        <pentry minsize="4" maxsize="8" metatype="float">
+          <register name="XMM4_Qa"/>
         </pentry>
-        <pentry minsize="4" maxsize="16" metatype="float">
-          <register name="XMM5"/>
+        <pentry minsize="4" maxsize="8" metatype="float">
+          <register name="XMM5_Qa"/>
         </pentry>
-        <pentry minsize="4" maxsize="16" metatype="float">
-          <register name="XMM6"/>
+        <pentry minsize="4" maxsize="8" metatype="float">
+          <register name="XMM6_Qa"/>
         </pentry>
-        <pentry minsize="4" maxsize="16" metatype="float">
-          <register name="XMM7"/>
+        <pentry minsize="4" maxsize="8" metatype="float">
+          <register name="XMM7_Qa"/>
         </pentry>
         <pentry minsize="1" maxsize="8">
           <register name="RDI"/>
@@ -77,9 +77,9 @@
           <addr offset="8" space="stack"/>
         </pentry>
       </input>
-      <output killedbycall="true">
-        <pentry minsize="4" maxsize="16" metatype="float">
-          <register name="XMM0"/>
+      <output>
+        <pentry minsize="4" maxsize="8" metatype="float">
+          <register name="XMM0_Qa"/>
         </pentry>
         <pentry minsize="1" maxsize="8">
           <register name="RAX"/>
@@ -89,7 +89,9 @@
         </pentry>
       </output>
       <killedbycall>
+        <register name="RAX"/>
         <register name="RDX"/>
+        <register name="XMM0"/>
       </killedbycall>
       <unaffected>
         <register name="RBX"/>
@@ -132,7 +134,7 @@
 	      <addr offset="40" space="stack"/>
 	    </pentry>
 	  </input>
-	  <output killedbycall="true">
+	  <output>
 	    <pentry minsize="4" maxsize="8" metatype="float">
 	      <register name="XMM0_Qa"/>
 	    </pentry>
@@ -153,9 +155,61 @@
 	    <register name="R15"/>
 	    <register name="DF"/>
 	  </unaffected>
+      <killedbycall>
+        <register name="RAX"/>
+        <register name="XMM0"/>
+      </killedbycall>
 	  <localrange>
 	    <range space="stack" first="0xfffffffffff0bdc1" last="0xffffffffffffffff"/>
 	    <range space="stack" first="8" last="39"/>
 	  </localrange>
 	</prototype>
+	<prototype name="syscall" extrapop="8" stackshift="8">
+      <input pointermax="8">
+        <pentry minsize="1" maxsize="8">
+          <register name="RDI"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="RSI"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="RDX"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="R10"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="R8"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="R9"/>
+        </pentry>
+      </input>
+      <output killedbycall="true">
+        <pentry minsize="1" maxsize="8">
+          <register name="RAX"/>
+        </pentry>
+      </output>
+      <unaffected>
+        <varnode space="ram" offset="0" size="8"/>
+        <register name="RBX"/>
+        <register name="RDX"/>
+        <register name="RBP"/>
+        <register name="RDI"/>
+        <register name="RSI"/>
+        <register name="RSP"/>
+        <register name="R8"/>
+        <register name="R9"/>
+        <register name="R10"/>
+        <register name="R12"/>
+        <register name="R13"/>
+        <register name="R14"/>
+        <register name="R15"/>
+        <register name="DF"/>
+      </unaffected>
+      <killedbycall>
+        <register name="RCX"/>
+        <register name="R11"/>
+      </killedbycall>
+    </prototype>
 </compiler_spec>

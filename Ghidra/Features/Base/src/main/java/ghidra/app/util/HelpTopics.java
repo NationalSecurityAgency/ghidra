@@ -87,6 +87,11 @@ public interface HelpTopics {
 	public final static String EXPORTER = "ExporterPlugin";
 
 	/**
+	 * Help Topic for references searching
+	 */
+	public final static String FIND_REFERENCES = "LocationReferencesPlugin";
+
+	/**
 	 * Name of options for the help topic for the front end (Ghidra
 	 * Project Window).
 	 */

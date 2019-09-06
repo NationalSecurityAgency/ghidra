@@ -15,6 +15,9 @@
  */
 //@category CodeAnalysis
 
+import java.io.*;
+import java.util.ArrayList;
+
 import generic.jar.ResourceFile;
 import ghidra.app.analyzers.Patterns;
 import ghidra.app.script.GhidraScript;
@@ -23,9 +26,6 @@ import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.Memory;
 import ghidra.util.bytesearch.*;
 import ghidra.util.constraint.ProgramDecisionTree;
-
-import java.io.*;
-import java.util.ArrayList;
 
 public class DumpMissedStarts extends GhidraScript implements PatternFactory {
 	private static int bufsize = 20;
@@ -43,10 +43,10 @@ public class DumpMissedStarts extends GhidraScript implements PatternFactory {
 		return false;
 	}
 
-	private boolean detectThunk(Function func, CodeUnit cunit) {
-		if (cunit == null)
+	private boolean detectThunk(Function func, CodeUnit cu) {
+		if (cu == null)
 			return true;
-		if (cunit instanceof Data)
+		if (cu instanceof Data)
 			return true;
 		return false;
 	}
@@ -65,12 +65,12 @@ public class DumpMissedStarts extends GhidraScript implements PatternFactory {
 		File file =
 			Application.getModuleDataFile("BytePatterns", "funcstartsamples.txt").getFile(true);
 		dummyaction = new DummyMatchAction();
-		matchlist = new ArrayList<Match>();
+		matchlist = new ArrayList<>();
 		memory = currentProgram.getMemory();
 		bytebuffer = new byte[bufsize];
 		ProgramDecisionTree patternDecisionTree = Patterns.getPatternDecisionTree();
 		ResourceFile[] fileList = Patterns.findPatternFiles(currentProgram, patternDecisionTree);
-		ArrayList<Pattern> patternlist = new ArrayList<Pattern>();
+		ArrayList<Pattern> patternlist = new ArrayList<>();
 		for (int i = 0; i < fileList.length; ++i)
 			Pattern.readPostPatterns(fileList[i].getFile(true), patternlist, this);
 		FileWriter fileWriter = new FileWriter(file);
@@ -80,8 +80,8 @@ public class DumpMissedStarts extends GhidraScript implements PatternFactory {
 		FunctionIterator iter = functionManager.getFunctions(true);
 		while (iter.hasNext()) {
 			Function func = iter.next();
-			CodeUnit cunit = listing.getCodeUnitAt(func.getEntryPoint());
-			if (detectThunk(func, cunit))
+			CodeUnit cu = listing.getCodeUnitAt(func.getEntryPoint());
+			if (detectThunk(func, cu))
 				continue;
 			int numbytes = memory.getBytes(func.getEntryPoint(), bytebuffer);
 			if ((numbytes > 0) && (!functionMatchesPattern(bytebuffer, numbytes))) {

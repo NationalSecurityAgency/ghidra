@@ -22,6 +22,7 @@ import javax.swing.event.ChangeListener;
 
 import org.junit.*;
 
+import ghidra.app.plugin.core.memory.AddBlockModel.InitializedType;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.database.ProgramBuilder;
 import ghidra.program.model.address.Address;
@@ -92,10 +93,6 @@ public class AddBlockModelTest extends AbstractGhidraHeadedIntegrationTest
 
 		model.setBlockType(MemoryBlockType.DEFAULT);
 		assertTrue(model.isValidInfo());
-		assertTrue(model.isReadEnabled());
-		assertTrue(model.isWriteEnabled());
-		assertTrue(model.isExecuteEnabled());
-		assertTrue(model.isVolatileEnabled());
 
 		model.setInitialValue(0xa);
 		assertTrue(model.isValidInfo());
@@ -130,10 +127,6 @@ public class AddBlockModelTest extends AbstractGhidraHeadedIntegrationTest
 
 		model.setBlockType(MemoryBlockType.BIT_MAPPED);
 		assertTrue(!model.isValidInfo());
-		assertTrue(model.isReadEnabled());
-		assertTrue(model.isWriteEnabled());
-		assertTrue(model.isExecuteEnabled());
-		assertTrue(model.isVolatileEnabled());
 
 		model.setBaseAddress(getAddr(0x2000));
 		assertTrue(model.isValidInfo());
@@ -152,10 +145,6 @@ public class AddBlockModelTest extends AbstractGhidraHeadedIntegrationTest
 
 		model.setBlockType(MemoryBlockType.OVERLAY);
 		assertTrue(model.isValidInfo());
-		assertTrue(model.isReadEnabled());
-		assertTrue(model.isWriteEnabled());
-		assertTrue(model.isExecuteEnabled());
-		assertTrue(model.isVolatileEnabled());
 
 		model.setBaseAddress(getAddr(0x2000));
 		assertTrue(model.isValidInfo());
@@ -174,9 +163,13 @@ public class AddBlockModelTest extends AbstractGhidraHeadedIntegrationTest
 		model.setStartAddress(getAddr(0x100));
 		model.setLength(100);
 		model.setBlockType(MemoryBlockType.DEFAULT);
-		model.setIsInitialized(true);
+		model.setInitializedType(InitializedType.INITIALIZED_FROM_VALUE);
 		model.setInitialValue(0xa);
-		assertTrue(model.execute("Test", true, true, true, false));
+		model.setComment("Test");
+		model.setRead(true);
+		model.setWrite(true);
+		model.setExecute(true);
+		assertTrue(model.execute());
 		MemoryBlock block = program.getMemory().getBlock(getAddr(0x100));
 		assertNotNull(block);
 		assertEquals((byte) 0xa, block.getByte(getAddr(0x100)));
@@ -189,9 +182,9 @@ public class AddBlockModelTest extends AbstractGhidraHeadedIntegrationTest
 		model.setStartAddress(getAddr(0x100));
 		model.setLength(100);
 		model.setBlockType(MemoryBlockType.OVERLAY);
-		model.setIsInitialized(true);
+		model.setInitializedType(InitializedType.INITIALIZED_FROM_VALUE);
 		model.setInitialValue(0xa);
-		assertTrue(model.execute("Test", true, true, true, false));
+		assertTrue(model.execute());
 		MemoryBlock block = null;
 		AddressSpace[] spaces = program.getAddressFactory().getAddressSpaces();
 		AddressSpace ovSpace = null;
@@ -214,9 +207,9 @@ public class AddBlockModelTest extends AbstractGhidraHeadedIntegrationTest
 		model.setStartAddress(getAddr(0x01001000));
 		model.setLength(100);
 		model.setBlockType(MemoryBlockType.OVERLAY);
-		model.setIsInitialized(true);
+		model.setInitializedType(InitializedType.INITIALIZED_FROM_VALUE);
 		model.setInitialValue(0xa);
-		assertTrue(model.execute("Test", true, true, true, false));
+		assertTrue(model.execute());
 		MemoryBlock block = null;
 		AddressSpace[] spaces = program.getAddressFactory().getAddressSpaces();
 		AddressSpace ovSpace = null;
@@ -238,10 +231,10 @@ public class AddBlockModelTest extends AbstractGhidraHeadedIntegrationTest
 		model.setStartAddress(getAddr(0x100));
 		model.setLength(100);
 		model.setBlockType(MemoryBlockType.BIT_MAPPED);
-		assertTrue(!model.getInitializedState());
+		assertEquals(InitializedType.UNITIALIZED, model.getInitializedType());
 		model.setBaseAddress(getAddr(0x2000));
 
-		assertTrue(model.execute("Test", true, true, true, false));
+		assertTrue(model.execute());
 		MemoryBlock block = program.getMemory().getBlock(getAddr(0x100));
 		assertNotNull(block);
 		assertEquals(MemoryBlockType.BIT_MAPPED, block.getType());
@@ -253,10 +246,10 @@ public class AddBlockModelTest extends AbstractGhidraHeadedIntegrationTest
 		model.setStartAddress(getAddr(0x100));
 		model.setLength(100);
 		model.setBlockType(MemoryBlockType.BYTE_MAPPED);
-		assertTrue(!model.getInitializedState());
+		assertEquals(InitializedType.UNITIALIZED, model.getInitializedType());
 		model.setBaseAddress(getAddr(0x2000));
 
-		assertTrue(model.execute("Test", true, true, true, false));
+		assertTrue(model.execute());
 		MemoryBlock block = program.getMemory().getBlock(getAddr(0x100));
 		assertNotNull(block);
 		assertEquals(MemoryBlockType.BYTE_MAPPED, block.getType());
@@ -277,7 +270,7 @@ public class AddBlockModelTest extends AbstractGhidraHeadedIntegrationTest
 		model.setLength(100);
 		model.setBlockType(MemoryBlockType.DEFAULT);
 		model.setInitialValue(0xa);
-		assertTrue(!model.execute("Test", true, true, true, false));
+		assertFalse(model.execute());
 	}
 
 	@Test

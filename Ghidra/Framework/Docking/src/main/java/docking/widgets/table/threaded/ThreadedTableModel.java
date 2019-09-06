@@ -21,6 +21,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.event.TableModelEvent;
 
 import docking.widgets.table.*;
+import docking.widgets.table.sort.DefaultColumnComparator;
 import generic.concurrent.ConcurrentListenerSet;
 import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.util.SystemUtilities;
@@ -290,8 +291,15 @@ public abstract class ThreadedTableModel<ROW_OBJECT, DATA_SOURCE>
 
 	@Override
 	protected Comparator<ROW_OBJECT> createSortComparator(int columnIndex) {
+
 		Comparator<Object> columnComparator = createSortComparatorForColumn(columnIndex);
-		return new TableColumnComparator<>(this, columnComparator, columnIndex);
+		if (columnComparator != null) {
+			// the given column has its own comparator; wrap and us that
+			return new ThreadedTableColumnComparator<>(this, columnIndex, columnComparator);
+		}
+
+		return new ThreadedTableColumnComparator<>(this, columnIndex, new DefaultColumnComparator(),
+			new ThreadedBackupRowComparator<>(this, columnIndex));
 	}
 
 	@Override

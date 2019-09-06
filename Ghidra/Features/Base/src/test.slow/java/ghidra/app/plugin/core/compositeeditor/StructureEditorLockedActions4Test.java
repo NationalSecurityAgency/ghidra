@@ -28,8 +28,9 @@ public class StructureEditorLockedActions4Test extends AbstractStructureEditorLo
 	public void testArrayBeforeUndefineds() throws Exception {
 		init(simpleStructure, pgmBbCat);
 		NumberInputDialog dialog;
-		model.clearComponents(new int[] { 2, 3 });
-
+		runSwing(() -> {
+			getModel().clearComponents(new int[] { 2, 3 });
+		});
 		setSelection(new int[] { 1 });
 		DataType dt1 = getDataType(1);
 		DataType dt8 = getDataType(8);
@@ -86,8 +87,9 @@ public class StructureEditorLockedActions4Test extends AbstractStructureEditorLo
 	public void testCycleGroupAsciiLotsOfRoom() throws Exception {
 		init(complexStructure, pgmTestCat);
 		NumberInputDialog dialog;
-		getModel().clearComponents(new int[] { 2, 3, 4 });// clear 14 bytes
-
+		runSwing(() -> {
+			getModel().clearComponents(new int[] { 2, 3, 4 });// clear 14 bytes
+		});
 		DataType dt16 = getDataType(16);
 		int dt16Len = getLength(16);
 		int num = getModel().getNumComponents();
@@ -156,8 +158,9 @@ public class StructureEditorLockedActions4Test extends AbstractStructureEditorLo
 	public void testCycleGroupAsciiSomeRoom() throws Exception {
 		init(complexStructure, pgmTestCat);
 		NumberInputDialog dialog;
-		getModel().clearComponents(new int[] { 2, 3 });// clear 6 bytes
-
+		runSwing(() -> {
+			getModel().clearComponents(new int[] { 2, 3 });// clear 6 bytes
+		});
 		DataType dt8 = getDataType(8);
 		int dt8Len = getLength(8);
 		int num = getModel().getNumComponents();

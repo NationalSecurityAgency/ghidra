@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,10 +33,12 @@ public class DWordDataType extends AbstractIntegerDataType {
 		super("dword", false, dtm);
 	}
 
+	@Override
 	public String getDescription() {
 		return "Unsigned Double-Word (ddw, 4-bytes)";
 	}
 
+	@Override
 	public int getLength() {
 		return 4;
 	}
@@ -48,11 +49,12 @@ public class DWordDataType extends AbstractIntegerDataType {
 	}
 
 	@Override
-	public DataType getOppositeSignednessDataType() {
-		return SignedDWordDataType.dataType;
+	public SignedDWordDataType getOppositeSignednessDataType() {
+		return SignedDWordDataType.dataType.clone(getDataTypeManager());
 	}
 
-	public DataType clone(DataTypeManager dtm) {
+	@Override
+	public DWordDataType clone(DataTypeManager dtm) {
 		if (dtm == getDataTypeManager()) {
 			return this;
 		}

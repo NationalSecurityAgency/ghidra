@@ -155,21 +155,38 @@ public class GenericRunInfo {
 
 	/** 
 	 * This is the same as {@link #getUserSettingsDirsByTime()} except that it doesn't include the 
-	 * current installation.
+	 * current installation or installations with different release names.
 	 */
 	public static List<File> getPreviousApplicationSettingsDirsByTime() {
-		List<File> allApplicationDirs = getUserSettingsDirsByTime();
-		if (allApplicationDirs.isEmpty()) {
-			return allApplicationDirs;
-		}
+		List<File> applicationSettiingsDirs = new ArrayList<>();
 
-		File file = allApplicationDirs.get(0);
-		if (Application.getUserSettingsDirectory().getAbsolutePath().equals(
-			file.getAbsolutePath())) {
-			// remove the current application settings dir from the results
-			return allApplicationDirs.subList(1, allApplicationDirs.size());
+		ApplicationIdentifier myIdentifier = new ApplicationIdentifier(
+			Application.getApplicationLayout().getApplicationProperties());
+
+		for (File dir : getUserSettingsDirsByTime()) {
+			String dirName = dir.getName();
+
+			// Ignore the currently active user settings directory.
+			// By definition, it is not a previous one.
+			if (dirName.equals(Application.getUserSettingsDirectory().getName())) {
+				continue;
+			}
+
+			if (dirName.startsWith(".")) {
+				dirName = dirName.substring(1);
+			}
+			try {
+				// The current release name has to match for it to be considered
+				if (new ApplicationIdentifier(dirName).getApplicationReleaseName().equals(
+					myIdentifier.getApplicationReleaseName())) {
+					applicationSettiingsDirs.add(dir);
+				}
+			}
+			catch (IllegalArgumentException e) {
+				// The directory name didn't contain a valid application identifier...skip it
+			}
 		}
-		return allApplicationDirs;
+		return applicationSettiingsDirs;
 	}
 
 	/**

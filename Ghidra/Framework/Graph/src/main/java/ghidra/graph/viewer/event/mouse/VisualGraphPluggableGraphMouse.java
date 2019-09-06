@@ -95,6 +95,11 @@ public class VisualGraphPluggableGraphMouse<V extends VisualVertex, E extends Vi
 	}
 
 	public void dispose() {
+		for (GraphMousePlugin mp : mousePlugins) {
+			if (mp instanceof VisualGraphMousePlugin) {
+				((VisualGraphMousePlugin<?, ?>) mp).dispose();
+			}
+		}
 		mousePlugins.clear();
 	}
 

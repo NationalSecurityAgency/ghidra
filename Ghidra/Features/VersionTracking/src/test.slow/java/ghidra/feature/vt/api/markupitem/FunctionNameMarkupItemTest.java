@@ -521,7 +521,7 @@ public class FunctionNameMarkupItemTest extends AbstractVTMarkupItemTest {
 						Symbol otherSymbol = symbolTable.getGlobalSymbol(destinationName,
 							getDestinationMatchAddress());
 						assertNotNull(otherSymbol);
-						assertEquals(SymbolType.CODE, otherSymbol.getSymbolType());
+						assertEquals(SymbolType.LABEL, otherSymbol.getSymbolType());
 						assertEquals("Additional label was not applied", destinationName,
 							otherSymbol.getName());
 					}
@@ -532,7 +532,7 @@ public class FunctionNameMarkupItemTest extends AbstractVTMarkupItemTest {
 					Symbol destinationSymbol =
 						symbolTable.getGlobalSymbol(destinationName, getDestinationMatchAddress());
 					assertNotNull("Expected an additional label", destinationSymbol);
-					assertEquals(SymbolType.CODE, destinationSymbol.getSymbolType());
+					assertEquals(SymbolType.LABEL, destinationSymbol.getSymbolType());
 				}
 			}
 			else if (functionNameChoice == FunctionNameChoices.ADD) {
@@ -543,7 +543,7 @@ public class FunctionNameMarkupItemTest extends AbstractVTMarkupItemTest {
 						Symbol otherSymbol =
 							symbolTable.getGlobalSymbol(sourceName, getDestinationMatchAddress());
 						assertNotNull(otherSymbol);
-						assertEquals(SymbolType.CODE, otherSymbol.getSymbolType());
+						assertEquals(SymbolType.LABEL, otherSymbol.getSymbolType());
 					}
 				}
 				else if (!sourceIsDefault) {

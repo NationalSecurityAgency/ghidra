@@ -19,7 +19,7 @@ import javax.swing.ImageIcon;
 
 import org.jdom.Element;
 
-import ghidra.framework.project.tool.ToolIconURL;
+import docking.util.image.ToolIconURL;
 
 /**
  * Configuration of a tool that knows how to create tools.

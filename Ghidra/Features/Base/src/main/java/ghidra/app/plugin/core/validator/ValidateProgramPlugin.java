@@ -33,6 +33,7 @@ import java.util.*;
 import docking.ActionContext;
 import docking.action.DockingAction;
 import docking.action.MenuData;
+import docking.tool.ToolConstants;
 import docking.widgets.conditiontestpanel.ConditionTester;
 
 /**

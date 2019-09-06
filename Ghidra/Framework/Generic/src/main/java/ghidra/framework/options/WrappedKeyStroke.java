@@ -15,6 +15,8 @@
  */
 package ghidra.framework.options;
 
+import java.util.Objects;
+
 import javax.swing.KeyStroke;
 
 /**
@@ -83,5 +85,10 @@ class WrappedKeyStroke implements WrappedOption {
 	@Override
 	public OptionType getOptionType() {
 		return OptionType.KEYSTROKE_TYPE;
+	}
+
+	@Override
+	public String toString() {
+		return Objects.toString(keyStroke);
 	}
 }

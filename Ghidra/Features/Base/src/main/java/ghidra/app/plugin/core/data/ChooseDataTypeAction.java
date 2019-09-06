@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +15,15 @@
  */
 package ghidra.app.plugin.core.data;
 
+import java.awt.event.KeyEvent;
+
+import javax.swing.KeyStroke;
+
+import docking.ActionContext;
+import docking.action.*;
 import ghidra.app.context.ListingActionContext;
 import ghidra.app.util.datatype.DataTypeSelectionDialog;
-import ghidra.framework.options.*;
 import ghidra.framework.plugintool.PluginTool;
-import ghidra.framework.plugintool.util.ToolConstants;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressRange;
 import ghidra.program.model.data.*;
@@ -29,53 +32,28 @@ import ghidra.program.util.*;
 import ghidra.util.SystemUtilities;
 import ghidra.util.data.DataTypeParser.AllowedDataTypes;
 
-import java.awt.event.KeyEvent;
-
-import javax.swing.KeyStroke;
-
-import docking.ActionContext;
-import docking.action.DockingAction;
-import docking.action.KeyBindingData;
-
 /**
  * An action that allows the user to change or select a data type.
  */
-public class ChooseDataTypeAction extends DockingAction implements OptionsChangeListener {
+public class ChooseDataTypeAction extends DockingAction {
 
 	private DataPlugin plugin;
 	private static final KeyStroke KEY_BINDING = KeyStroke.getKeyStroke(KeyEvent.VK_T, 0);
 	private final static String ACTION_NAME = "Choose Data Type";
 
 	public ChooseDataTypeAction(DataPlugin plugin) {
-		super(ACTION_NAME, plugin.getName(), false);
-
+		super(ACTION_NAME, plugin.getName(), KeyBindingType.SHARED);
 		this.plugin = plugin;
 
-		PluginTool tool = plugin.getTool();
-		DockingAction action = new DummyKeyBindingsOptionsAction(ACTION_NAME, KEY_BINDING);
-		tool.addAction(action);
-
-		// setup options to know when the dummy key binding is changed
-		ToolOptions options = tool.getOptions(ToolConstants.KEY_BINDINGS);
-		KeyStroke keyStroke = options.getKeyStroke(action.getFullName(), KEY_BINDING);
-
-		if (!KEY_BINDING.equals(keyStroke)) {
-			// user-defined keystroke
-			setUnvalidatedKeyBindingData(new KeyBindingData(keyStroke));
-		}
-		else {
-			setKeyBindingData(new KeyBindingData(keyStroke));
-		}
-
-		options.addOptionsChangeListener(this);
+		initKeyStroke(KEY_BINDING);
 	}
 
-	@Override
-	public void optionsChanged(ToolOptions options, String name, Object oldValue, Object newValue) {
-		KeyStroke keyStroke = (KeyStroke) newValue;
-		if (name.startsWith(ACTION_NAME)) {
-			setUnvalidatedKeyBindingData(new KeyBindingData(keyStroke));
+	private void initKeyStroke(KeyStroke keyStroke) {
+		if (keyStroke == null) {
+			return;
 		}
+
+		setKeyBindingData(new KeyBindingData(keyStroke));
 	}
 
 	@Override
@@ -191,9 +169,8 @@ public class ChooseDataTypeAction extends DockingAction implements OptionsChange
 			int defaultPointerSize) {
 		PluginTool tool = plugin.getTool();
 		Data data = plugin.getDataUnit(context);
-		DataTypeSelectionDialog selectionDialog =
-			new DataTypeSelectionDialog(tool, data.getProgram().getDataTypeManager(), maxElements,
-				AllowedDataTypes.ALL);
+		DataTypeSelectionDialog selectionDialog = new DataTypeSelectionDialog(tool,
+			data.getProgram().getDataTypeManager(), maxElements, AllowedDataTypes.ALL);
 		DataType currentDataType = data.getBaseDataType();
 		selectionDialog.setInitialDataType(currentDataType);
 		tool.showDialog(selectionDialog);

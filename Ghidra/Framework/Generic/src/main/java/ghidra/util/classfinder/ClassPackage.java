@@ -15,7 +15,8 @@
  */
 package ghidra.util.classfinder;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileFilter;
 import java.util.*;
 
 import ghidra.util.Msg;
@@ -27,53 +28,47 @@ class ClassPackage {
 	private static final FileFilter CLASS_FILTER =
 		pathname -> pathname.getName().endsWith(".class");
 
-	private Set<String> classNames = new HashSet<>();
-	private Set<Class<?>> classes = null;
-	private List<ClassPackage> children = new ArrayList<>();
+	private Set<Class<?>> classes = new HashSet<>();
+	private Set<ClassPackage> children = new HashSet<>();
 	private File rootDir;
+	private File packageDir;
 	private String packageName;
 
 	ClassPackage(File rootDir, String packageName, TaskMonitor monitor) throws CancelledException {
 		monitor.checkCanceled();
 		this.rootDir = rootDir;
 		this.packageName = packageName;
+		this.packageDir = getPackageDir(rootDir, packageName);
 		scanClasses();
 		scanSubPackages(monitor);
 	}
 
 	private void scanClasses() {
 
-		classNames.clear();
-		classes = new HashSet<>();
-
 		String path = rootDir.getAbsolutePath();
-		List<String> allClassNames = getAllClassNames();
+		Set<String> allClassNames = getAllClassNames();
 		for (String className : allClassNames) {
-
 			Class<?> c = ClassFinder.loadExtensionPoint(path, className);
 			if (c != null) {
 				classes.add(c);
-				classNames.add(c.getName());
 			}
 		}
-
 	}
 
 	private void scanSubPackages(TaskMonitor monitor) throws CancelledException {
-		children.clear();
-		File dir = getPackageDir(rootDir, packageName);
-		File[] subdirs = dir.listFiles();
+
+		File[] subdirs = packageDir.listFiles();
 		if (subdirs == null) {
-			Msg.debug(this, "Directory does not exist: " + dir);
+			Msg.debug(this, "Directory does not exist: " + packageDir);
 			return;
 		}
 
 		for (File subdir : subdirs) {
+			monitor.checkCanceled();
 			if (!subdir.isDirectory()) {
 				continue;
 			}
 
-			monitor.checkCanceled();
 			String pkg = subdir.getName();
 			if (pkg.contains(".")) {
 				// java can't handle dir names with '.'-- it conflicts with the package structure
@@ -89,64 +84,6 @@ class ClassPackage {
 		}
 	}
 
-	void rescan(TaskMonitor monitor) throws CancelledException, FileNotFoundException {
-
-		monitor.checkCanceled();
-
-		scanClasses();
-
-		File dir = getPackageDir(rootDir, packageName);
-		String rootPath = rootDir.getAbsolutePath();
-		String dirPath = dir.getAbsolutePath();
-		dirPath = dirPath.substring(rootPath.length());
-
-		monitor.setMessage("scanning directory: " + rootDir.getName() + dirPath);
-		File[] subdirs = dir.listFiles();
-		if (subdirs == null) {
-			Msg.debug(this, "Directory does not exist: " + dir);
-			return;
-		}
-
-		Set<String> pkgNames = new HashSet<>();
-		for (File subdir : subdirs) {
-			monitor.checkCanceled();
-			if (!subdir.isDirectory()) {
-				continue;
-			}
-
-			String name = subdir.getName();
-			if (name.contains(".")) {
-				// java can't handle dir names with '.'-- it conflicts with the package structure
-				continue;
-			}
-
-			if (packageName.length() > 0) {
-				name = packageName + "." + name;
-			}
-			pkgNames.add(name);
-		}
-
-		Iterator<ClassPackage> classPackageIterator = children.iterator();
-		while (classPackageIterator.hasNext()) {
-			monitor.checkCanceled();
-			ClassPackage pkg = classPackageIterator.next();
-			if (!pkgNames.contains(pkg.packageName)) {
-				classPackageIterator.remove();
-			}
-			else {
-				pkg.rescan(monitor);
-				pkgNames.remove(pkg.packageName);
-			}
-		}
-
-		Iterator<String> packageNameIterator = pkgNames.iterator();
-		while (packageNameIterator.hasNext()) {
-			monitor.checkCanceled();
-			String pkgName = packageNameIterator.next();
-			children.add(new ClassPackage(rootDir, pkgName, monitor));
-		}
-	}
-
 	private File getPackageDir(File lRootDir, String lPackageName) {
 		return new File(lRootDir, lPackageName.replace('.', File.separatorChar));
 	}
@@ -154,22 +91,22 @@ class ClassPackage {
 	void getClasses(Set<Class<?>> set, TaskMonitor monitor) throws CancelledException {
 		set.addAll(classes);
 
-		Iterator<ClassPackage> classPackageIterator = children.iterator();
-		while (classPackageIterator.hasNext()) {
+		Iterator<ClassPackage> it = children.iterator();
+		while (it.hasNext()) {
 			monitor.checkCanceled();
-			ClassPackage subPkg = classPackageIterator.next();
+			ClassPackage subPkg = it.next();
 			subPkg.getClasses(set, monitor);
 		}
 	}
 
-	private List<String> getAllClassNames() {
-		File dir = getPackageDir(rootDir, packageName);
-		File[] files = dir.listFiles(CLASS_FILTER);
+	private Set<String> getAllClassNames() {
+
+		File[] files = packageDir.listFiles(CLASS_FILTER);
 		if (files == null) {
-			return Collections.emptyList();
+			return Collections.emptySet();
 		}
 
-		List<String> results = new ArrayList<>(files.length);
+		Set<String> results = new HashSet<>(files.length);
 		for (File file : files) {
 			String name = file.getName();
 			name = name.substring(0, name.length() - 6);

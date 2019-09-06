@@ -15,6 +15,8 @@
  */
 package ghidra.app.decompiler.component;
 
+import java.awt.Component;
+
 import docking.ActionContext;
 import docking.ComponentProvider;
 import docking.widgets.fieldpanel.internal.FieldPanelCoordinator;
@@ -34,11 +36,11 @@ public class DualDecompilerActionContext extends ActionContext
 	 * Creates an action context for a dual decompiler panel.
 	 * @param provider the provider for this context
 	 * @param cPanel the decompiler panel associated with this context
-	 * @param sourceObject the source of the action
+	 * @param source the source of the action
 	 */
 	public DualDecompilerActionContext(ComponentProvider provider, CDisplayPanel cPanel,
-			Object sourceObject) {
-		super(provider, cPanel, sourceObject);
+			Component source) {
+		super(provider, cPanel, source);
 	}
 
 	/**

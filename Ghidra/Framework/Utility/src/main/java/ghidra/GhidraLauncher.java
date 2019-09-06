@@ -17,6 +17,7 @@ package ghidra;
 
 import java.io.*;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import generic.jar.ResourceFile;
 import ghidra.framework.GModule;
@@ -59,7 +60,7 @@ public class GhidraLauncher {
 			addPatchPaths(classpathList, layout.getApplicationInstallationDir());
 			addModuleJarPaths(classpathList, layout.getModules());
 		}
-		classpathList = orderClasspath(classpathList);
+		classpathList = orderClasspath(classpathList, layout.getModules());
 
 		// Add the classpath to the class loader
 		GhidraClassLoader loader = (GhidraClassLoader) ClassLoader.getSystemClassLoader();
@@ -79,11 +80,11 @@ public class GhidraLauncher {
 	}
 
 	/**
-	 * Add patch jars to the given path list.  This should be done
-	 * first so they take precedence in the classpath.
+	 * Add patch jars to the given path list.  This should be done first so they take precedence in 
+	 * the classpath.
 	 * 
 	 * @param pathList The list of paths to add to.
-	 * @param appRootDirs The application root directories to search.
+	 * @param installDir The application installation directory.
 	 */
 	private static void addPatchPaths(List<String> pathList, ResourceFile installDir) {
 		ResourceFile patchDir = new ResourceFile(installDir, "Ghidra/patch");
@@ -160,6 +161,12 @@ public class GhidraLauncher {
 				}
 			}
 		}
+
+		if (pathSet.isEmpty()) {
+			throw new IllegalStateException(
+				"Files listed in '" + LIBDEPS + "' are incorrect--rebuild this file");
+		}
+
 		pathList.addAll(pathSet);
 	}
 
@@ -186,17 +193,26 @@ public class GhidraLauncher {
 	 * Updates the list of paths to make sure the order is correct for any class-loading dependencies.
 	 *  
 	 * @param pathList The list of paths to order.
+	 * @param modules The modules on the classpath.
 	 * @return A new list with the elements of the original list re-ordered as needed.
 	 */
-	private static List<String> orderClasspath(List<String> pathList) {
+	private static List<String> orderClasspath(List<String> pathList,
+			Map<String, GModule> modules) {
+
+		//@formatter:off
+		Set<String> flatJars = modules
+			.values()
+			.stream()
+			.flatMap(m -> m.getFatJars().stream())
+			.collect(Collectors.toSet());
+		//@formatter:on
 
 		List<String> orderedList = new ArrayList<String>(pathList);
 
 		for (String path : pathList) {
-			if (path.endsWith("Renoir.jar")) { // Renoir.jar must be after all other jars
+			if (flatJars.contains(new File(path).getName())) {
 				orderedList.remove(path);
 				orderedList.add(path);
-				break;
 			}
 		}
 
