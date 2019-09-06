@@ -13,14 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.file.formats.ios.dmg;
-
-import ghidra.util.Msg;
-import ghidra.util.timer.GTimer;
-import ghidra.util.timer.GTimerMonitor;
+package ghidra.util.timer;
 
 import java.io.Closeable;
 import java.util.concurrent.atomic.AtomicLong;
+
+import ghidra.util.Msg;
 
 /**
  * A reusable watchdog that will execute a callback if the watchdog is not disarmed before
@@ -87,6 +85,15 @@ public class Watchdog implements Closeable {
 
 	private void setEnabled(boolean b) {
 		watchdogExpiresAt.set(b ? System.currentTimeMillis() + defaultWatchdogTimeoutMS : -1);
+	}
+
+	/**
+	 * Returns the status of the watchdog.
+	 *
+	 * @return true if the watchdog is armed, false if the watchdog is disarmed
+	 */
+	public boolean isEnabled() {
+		return watchdogExpiresAt.get() > 0;
 	}
 
 	/**
