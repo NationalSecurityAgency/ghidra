@@ -74,7 +74,7 @@ public class FunctionSignatureParser {
 	public FunctionSignatureParser(DataTypeManager destDataTypeManager,
 			DataTypeQueryService service) {
 		this.destDataTypeManager = destDataTypeManager;
-		if (destDataTypeManager != null && service == null) {
+		if (destDataTypeManager == null && service == null) {
 			throw new IllegalArgumentException(
 				"Destination DataTypeManager or DataTypeManagerService provider required");
 		}
