@@ -343,7 +343,9 @@ public class DecompilerUtils {
 		if (token instanceof ClangFuncNameToken) {
 			// special case: we know that name tokens do not have addresses
 			Function function = getFunction(program, (ClangFuncNameToken) token);
-			return function.getEntryPoint();
+			if (function != null) {
+				return function.getEntryPoint();
+			}
 		}
 
 		Address address = token.getMinAddress();
