@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+     This is the processor specification for the MC9S12C and MC9S12GC processor families.
+     It is based upon the MC9S12C128 and MC9S12GC128 variants.
+-->
+<processor_spec>
+  <programcounter register="PC"/>
+  
+  <segmentop space="RAM" userop="segment" farpointer="no">
+    <pcode>
+      <input name="inner" size="2"/>
+      <input name="base" size="3"/>
+      <output name="res" size="3"/>
+      <body><![CDATA[
+        res = base ^ zext(inner);
+      ]]></body>
+    </pcode>
+    <constresolve>
+      <register name="physPage"/>
+    </constresolve>
+  </segmentop>
+
+  <context_data>
+     <tracked_set space="RAM">
+        <set name="PPAGE" val="0xfe"/>
+        <set name="RPAGE" val="0xfd"/>
+        <set name="EPAGE" val="0xfe"/>
+     </tracked_set>
+  </context_data>
+  <default_symbols>
+    <symbol name="VECTOR_Reset"                        address="FFFE" entry="true" type="code_ptr"/>
+    <symbol name="VECTOR_ClockMonitorFailReset"        address="FFFC" entry="true" type="code_ptr"/>
+    <symbol name="VECTOR_COPFailureReset"              address="FFFA" entry="true" type="code_ptr"/>
+    <symbol name="VECTOR_UnimplementedInstructionTrap" address="FFF8" entry="true" type="code_ptr"/>
+    <symbol name="VECTOR_SWI"                          address="FFF6" entry="true" type="code_ptr"/>
+    <symbol name="VECTOR_XIRQ"                         address="FFF4" entry="true" type="code_ptr"/>
+    <symbol name="VECTOR_IRQ"                          address="FFF2" entry="true" type="code_ptr"/>
+    <symbol name="VECTOR_RealTimeInterrupt"            address="FFF0" entry="true" type="code_ptr"/>
+    <symbol name="VECTOR_StandardTimerChannel0"        address="FFEE" entry="true" type="code_ptr"/>
+    <symbol name="VECTOR_StandardTimerChannel1"        address="FFEC" entry="true" type="code_ptr"/>
+    <symbol name="VECTOR_StandardTimerChannel2"        address="FFEA" entry="true" type="code_ptr"/>
+    <symbol name="VECTOR_StandardTimerChannel3"        address="FFE8" entry="true" type="code_ptr"/>
+    <symbol name="VECTOR_StandardTimerChannel4"        address="FFE6" entry="true" type="code_ptr"/>
+    <symbol name="VECTOR_StandardTimerChannel5"        address="FFE4" entry="true" type="code_ptr"/>
+    <symbol name="VECTOR_StandardTimerChannel6"        address="FFE2" entry="true" type="code_ptr"/>
+    <symbol name="VECTOR_StandardTimerChannel7"        address="FFE0" entry="true" type="code_ptr"/>
+    <symbol name="VECTOR_StandardTimerOverflow"        address="FFDE" entry="true" type="code_ptr"/>
+    <symbol name="VECTOR_PulseAccumulatorAOverflow"    address="FFDC" entry="true" type="code_ptr"/>
+    <symbol name="VECTOR_PulseAccumulatorInputEdge"    address="FFDA" entry="true" type="code_ptr"/>
+    <symbol name="VECTOR_SPI"                          address="FFD8" entry="true" type="code_ptr"/>
+    <symbol name="VECTOR_SCI"                          address="FFD6" entry="true" type="code_ptr"/>
+    <symbol name="VECTOR_Reserved_FFD4"                address="FFD4" entry="true" type="code_ptr"/>
+    <symbol name="VECTOR_ATD"                          address="FFD2" entry="true" type="code_ptr"/>
+    <symbol name="VECTOR_Reserved_FFD0"                address="FFD0" entry="true" type="code_ptr"/>
+    <symbol name="VECTOR_PortJ"                        address="FFCE" entry="true" type="code_ptr"/>
+    <symbol name="VECTOR_Reserved_FFCC"                address="FFCC" entry="true" type="code_ptr"/>
+    <symbol name="VECTOR_Reserved_FFCA"                address="FFCA" entry="true" type="code_ptr"/>
+    <symbol name="VECTOR_Reserved_FFC8"                address="FFC8" entry="true" type="code_ptr"/>
+    <symbol name="VECTOR_CRG_PLL_Lock"                 address="FFC6" entry="true" type="code_ptr"/>
+    <symbol name="VECTOR_CRGSelfClockMode"             address="FFC4" entry="true" type="code_ptr"/>
+    <symbol name="VECTOR_Reserved_FFC2"                address="FFC2" entry="true" type="code_ptr"/>
+    <symbol name="VECTOR_Reserved_FFC0"                address="FFC0" entry="true" type="code_ptr"/>
+    <symbol name="VECTOR_Reserved_FFBE"                address="FFBE" entry="true" type="code_ptr"/>
+    <symbol name="VECTOR_Reserved_FFBC"                address="FFBC" entry="true" type="code_ptr"/>
+    <symbol name="VECTOR_Reserved_FFBA"                address="FFBA" entry="true" type="code_ptr"/>
+    <symbol name="VECTOR_FLASH"                        address="FFB8" entry="true" type="code_ptr"/>
+    <symbol name="VECTOR_CANwake-up"                   address="FFB6" entry="true" type="code_ptr"/>
+    <symbol name="VECTOR_CANerrors"                    address="FFB4" entry="true" type="code_ptr"/>
+    <symbol name="VECTOR_CANreceive"                   address="FFB2" entry="true" type="code_ptr"/>
+    <symbol name="VECTOR_CANtransmit"                  address="FFB0" entry="true" type="code_ptr"/>
+    <symbol name="VECTOR_Reserved_FFAE"                address="FFAE" entry="true" type="code_ptr"/>
+    <symbol name="VECTOR_Reserved_FFAC"                address="FFAC" entry="true" type="code_ptr"/>
+    <symbol name="VECTOR_Reserved_FFAA"                address="FFAA" entry="true" type="code_ptr"/>
+    <symbol name="VECTOR_Reserved_FFA8"                address="FFA8" entry="true" type="code_ptr"/>
+    <symbol name="VECTOR_Reserved_FFA6"                address="FFA6" entry="true" type="code_ptr"/>
+    <symbol name="VECTOR_Reserved_FFA4"                address="FFA4" entry="true" type="code_ptr"/>
+    <symbol name="VECTOR_Reserved_FFA2"                address="FFA2" entry="true" type="code_ptr"/>
+    <symbol name="VECTOR_Reserved_FFA0"                address="FFA0" entry="true" type="code_ptr"/>
+    <symbol name="VECTOR_Reserved_FF9E"                address="FF9E" entry="true" type="code_ptr"/>
+    <symbol name="VECTOR_Reserved_FF9C"                address="FF9C" entry="true" type="code_ptr"/>
+    <symbol name="VECTOR_Reserved_FF9A"                address="FF9A" entry="true" type="code_ptr"/>
+    <symbol name="VECTOR_Reserved_FF98"                address="FF98" entry="true" type="code_ptr"/>
+    <symbol name="VECTOR_Reserved_FF96"                address="FF96" entry="true" type="code_ptr"/>
+    <symbol name="VECTOR_Reserved_FF94"                address="FF94" entry="true" type="code_ptr"/>
+    <symbol name="VECTOR_Reserved_FF92"                address="FF92" entry="true" type="code_ptr"/>
+    <symbol name="VECTOR_Reserved_FF90"                address="FF90" entry="true" type="code_ptr"/>
+    <symbol name="VECTOR_PortP"                        address="FF8E" entry="true" type="code_ptr"/>
+    <symbol name="VECTOR_PWM_EmergencyShutdown"        address="FF8C" entry="true" type="code_ptr"/>
+    <symbol name="VECTOR_VREG_LVI"                     address="FF8A" entry="true" type="code_ptr"/>
+    <symbol name="VECTOR_Reserved_FF88"                address="FF88" entry="true" type="code_ptr"/>
+    <symbol name="VECTOR_Reserved_FF86"                address="FF86" entry="true" type="code_ptr"/>
+    <symbol name="VECTOR_Reserved_FF84"                address="FF84" entry="true" type="code_ptr"/>
+    <symbol name="VECTOR_Reserved_FF82"                address="FF82" entry="true" type="code_ptr"/>
+    <symbol name="VECTOR_Reserved_FF80"                address="FF80" entry="true" type="code_ptr"/>
+  </default_symbols>
+</processor_spec>

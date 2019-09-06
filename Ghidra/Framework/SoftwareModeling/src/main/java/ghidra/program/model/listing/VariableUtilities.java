@@ -415,6 +415,8 @@ public class VariableUtilities {
 						" bytes: " + curStorage.toString());
 				}
 			}
+			
+			vnAddr = newReg.getAddress();
 			if (bigEndian) {
 				vnAddr = vnAddr.add(newReg.getMinimumByteSize() - size);
 				return new Varnode(vnAddr, size);
