@@ -58,33 +58,6 @@
 # so all addresses are raw.
 
 
-# NOTE: Implementation of pcode for floating point instructions.
-# The floating point code was originally designed to test the FPSCR_PR and PFSCR_SZ flags at run time and
-# do the correct floating point operation, but the decompiled code look very ugly, so we now allow compile
-# time choice of these options.
-
-#Note: Define TEST_FLOATS only during development!!! Not for production.
-# @define TEST_FLOATS "0"
-
-# Set FLOAT_TYPE to "RUNTIME_FLOAT" to get original behavior.
-# Set FLOAT_TYPE to "double" to always get double behavior.
-# Set FLOAT_TYPE to "float" to always get float behavior.
-# Set FLOAT_LENGTH to 8 to read and write floats in 8 byte values.
-# Set FLOAT_LENGTH to 4 to read and write floats in 4 byte values.
-
-# The three valid choices are:
-# FLOAT_TYPE double FLOAT_LENGTH 8
-# FLOAT_TYPE float  FLOAT_LENGTH 4
-# FLOAT_TYPE float  FLOAT_LENGTH 8
-
-@define FLOAT_TYPE   "RUNTIME_FLOAT"
-# @define FLOAT_TYPE "double"
-# @define FLOAT_TYPE "float"
-
-# @define FLOAT_LENGTH 8
-@define FLOAT_LENGTH 4
-
-
 # Basic ================================================================================
 
 define endian=$(ENDIAN); # Defined in file that includes this file
@@ -143,195 +116,29 @@ define register offset=1024 size=4 [
   GBR SR SSR SPC VBR SGR DBR
 ];
 
-# SR component register fields (pseudo)
-define register offset=1536 size=1 [
-  MD RB BL FD M Q IMASK S T
-];
-
 # System registers
 define register offset=2048 size=4 [
   MACH MACL PR PC FPSCR FPUL 
 ];
 
-# FPSCR component register fields (pseudo)
-define register offset=2560 size=1 [
-  FPSCR_RM
-  FPSCR_FLAG
-  FPSCR_ENABLE
-  FPSCR_CAUSE
-  FPSCR_DN
-  FPSCR_PR
-  FPSCR_SZ
-  FPSCR_FR
-];
- 
+@define T_FLAG  "SR[0,1]"
+@define S_FLAG  "SR[1,1]"
+@define IMASK   "SR[4,4]"
+@define Q_FLAG  "SR[8,1]"
+@define M_FLAG  "SR[9,1]"
+@define FD_FLAG "SR[15,1]"
+@define BL_FLAG "SR[28,1]"
+@define RB_FLAG "SR[29,1]"
+@define MD_FLAG "SR[30,1]"
 
-#
-# SR pack and unpack support
-#
-
-# 0000 0000 0000 0000 0000 0000 0000 0001
-@define T_MASK           "0x00000001"
-
-# 0000 0000 0000 0000 0000 0000 0000 0010
-@define S_MASK           "0x00000002"
-
-# 0000 0000 0000 0000 0000 0000 1111 0000
-@define IMASK_MASK       "0x000000F0"
-
-# 0000 0000 0000 0000 0000 0001 0000 0000
-@define Q_MASK           "0x00000100"
-
-# 0000 0000 0000 0000 0000 0010 0000 0000
-@define M_MASK           "0x00000200"
-
-# 0000 0000 0000 0000 1000 0000 0000 0000
-@define FD_MASK          "0x00008000"
-
-# 0001 0000 0000 0000 0000 0000 0000 0000
-@define BL_MASK          "0x10000000"
-
-# 0010 0000 0000 0000 0000 0000 0000 0000
-@define RB_MASK          "0x20000000"
-
-# 0100 0000 0000 0000 0000 0000 0000 0000
-@define MD_MASK          "0x40000000"
-
-@define T_SHIFT          " 0"
-@define S_SHIFT          " 1"
-@define IMASK_SHIFT      " 4"
-@define Q_SHIFT          " 8"
-@define M_SHIFT          " 9"
-@define FD_SHIFT         "15"
-@define BL_SHIFT         "28"
-@define RB_SHIFT         "29"
-@define MD_SHIFT         "30"
-
-macro genSRregister() {
-
-  SR = 	
-    (zext(T)     << $(T_SHIFT))     |
-    (zext(S)     << $(S_SHIFT))     |
-    (zext(IMASK) << $(IMASK_SHIFT)) |
-    (zext(Q)     << $(Q_SHIFT))     |
-    (zext(M)     << $(M_SHIFT))     |
-    (zext(FD)    << $(FD_SHIFT))    |
-    (zext(BL)    << $(BL_SHIFT))    |
-    (zext(RB)    << $(RB_SHIFT))    |
-    (zext(MD)    << $(MD_SHIFT));
-}
-
-macro splitSRregister() {
-	
-  splitTemp:4  = (SR & $(T_MASK))     >> $(T_SHIFT);
-  T            = splitTemp:1;
-
-  splitTemp    = (SR & $(S_MASK))     >> $(S_SHIFT);
-  S            = splitTemp:1;
-
-  splitTemp    = (SR & $(IMASK_MASK)) >> $(IMASK_SHIFT);
-  IMASK        = splitTemp:1;
-
-  splitTemp    = (SR & $(Q_MASK))     >> $(Q_SHIFT);
-  Q            = splitTemp:1;
-
-  splitTemp    = (SR & $(M_MASK))     >> $(M_SHIFT);
-  M            = splitTemp:1;
-
-  splitTemp    = (SR & $(FD_MASK))    >> $(FD_SHIFT);
-  FD           = splitTemp:1;
-
-  splitTemp    = (SR & $(BL_MASK))    >> $(BL_SHIFT);
-  BL           = splitTemp:1;
-
-  splitTemp    = (SR & $(RB_MASK))    >> $(RB_SHIFT);
-  RB           = splitTemp:1;
-
-  splitTemp    = (SR & $(MD_MASK))    >> $(MD_SHIFT);
-  MD           = splitTemp:1;
-}
-
-
-
-#
-# FPSCR pack and unpack support
-#
-
-@define  FPSCR_RM_SHIFT      " 0"
-@define  FPSCR_FLAG_SHIFT    " 2"
-@define  FPSCR_ENABLE_SHIFT  " 7"
-@define  FPSCR_CAUSE_SHIFT   "12"
-@define  FPSCR_DN_SHIFT      "18"
-@define  FPSCR_PR_SHIFT      "19"
-@define  FPSCR_SZ_SHIFT      "20"
-@define  FPSCR_FR_SHIFT      "21"
-
-
-# 0000 0000 0000 0000 0000 0000 0000 0011
-@define  FPSCR_RM_MASK       "0x00000003"
-
-# 0000 0000 0000 0000 0000 0000 0111 1100
-@define  FPSCR_FLAG_MASK     "0x0000007C"
-
-# 0000 0000 0000 0000 0000 1111 1000 0000
-@define  FPSCR_ENABLE_MASK   "0x00000F80"
-
-# 0000 0000 0000 0011 1111 0000 0000 0000
-@define  FPSCR_CAUSE_MASK    "0x0003F000"
-
-# 0000 0000 0000 0100 0000 0000 0000 0000
-@define  FPSCR_DN_MASK       "0x00040000"
-
-# 0000 0000 0000 1000 0000 0000 0000 0000
-@define  FPSCR_PR_MASK       "0x00080000"
-
-# 0000 0000 0001 0000 0000 0000 0000 0000
-@define  FPSCR_SZ_MASK       "0x00100000"
-
-# 0000 0000 0010 0000 0000 0000 0000 0000
-@define  FPSCR_FR_MASK       "0x00200000"
-
-# Bits 22-31 are not used
-
-macro genFPSCRregister() {
-
-  FPSCR = 	
-    (zext(FPSCR_RM)     << $(FPSCR_RM_SHIFT))     |
-    (zext(FPSCR_FLAG)   << $(FPSCR_FLAG_SHIFT))   |
-    (zext(FPSCR_ENABLE) << $(FPSCR_ENABLE_SHIFT)) |
-    (zext(FPSCR_CAUSE)  << $(FPSCR_CAUSE_SHIFT))  |
-    (zext(FPSCR_DN)     << $(FPSCR_DN_SHIFT))     |
-    (zext(FPSCR_PR)     << $(FPSCR_PR_SHIFT))     |
-    (zext(FPSCR_SZ)     << $(FPSCR_SZ_SHIFT))     |
-    (zext(FPSCR_FR)     << $(FPSCR_FR_SHIFT));
-}
-
-macro splitFPSCRregister() {
-	
-  splitTemp:4  = (FPSCR & $(FPSCR_RM_MASK))     >> $(FPSCR_RM_SHIFT);
-  FPSCR_RM     = splitTemp:1;
-
-  splitTemp    = (FPSCR & $(FPSCR_FLAG_MASK))   >> $(FPSCR_FLAG_SHIFT);
-  FPSCR_FLAG   = splitTemp:1;
-
-  splitTemp    = (FPSCR & $(FPSCR_ENABLE_MASK)) >> $(FPSCR_ENABLE_SHIFT);
-  FPSCR_ENABLE = splitTemp:1;
-
-  splitTemp    = (FPSCR & $(FPSCR_CAUSE_MASK))  >> $(FPSCR_CAUSE_SHIFT);
-  FPSCR_CAUSE  = splitTemp:1;
-
-  splitTemp    = (FPSCR & $(FPSCR_DN_MASK))     >> $(FPSCR_DN_SHIFT);
-  FPSCR_DN     = splitTemp:1;
-
-  splitTemp    = (FPSCR & $(FPSCR_PR_MASK))     >> $(FPSCR_PR_SHIFT);
-  FPSCR_PR     = splitTemp:1;
-
-  splitTemp    = (FPSCR & $(FPSCR_SZ_MASK))     >> $(FPSCR_SZ_SHIFT);
-  FPSCR_SZ     = splitTemp:1;
-
-  splitTemp    = (FPSCR & $(FPSCR_FR_MASK))     >> $(FPSCR_FR_SHIFT);
-  FPSCR_FR     = splitTemp:1;
-}
+@define FPSCR_RM "FPSCR[0,2]"
+@define FPSCR_FLAG "FPSCR[2,5]"
+@define FPSCR_ENABLE "FPSCR[7,5]"
+@define FPSCR_CAUSE "FPSCR[12,6]"
+@define FPSCR_DN "FPSCR[18,1]"
+@define FPSCR_PR "FPSCR[19,1]"
+@define FPSCR_SZ "FPSCR[20,1]"
+@define FPSCR_FR "FPSCR[21,1]"
 
 
 # Fields =================================================================================
@@ -358,6 +165,7 @@ define token instr(16)
     FRM_0=(4,7)         # float register id
     DRM_1=(5,7)         # double register id
     XDM_1=(5,7)         # double register id
+    XDRM=(4,7)          # double register id
     FVM_2=(8,9)         # fv register id
 
     N_0=(8,11)          # register id
@@ -366,6 +174,7 @@ define token instr(16)
     FRN_0=(8,11)        # float register id
     DRN_1=(9,11)        # double register id
     XDN_1=(9,11)        # double register id
+    XDRN=(8,11)         # float register id
     FVN_2=(10,11)       # fv register id
 
     I_0=(0,7)  signed   # immediate
@@ -380,11 +189,6 @@ define token instr(16)
 
 # Context variables ====================================================
 
-define context FPSCR
-  doublePrecMode = (19,19)         # floating point single/double precision operation mode and extended moves
-  doubleWidthMoveMode = (20,20)    # floating point single/double width moves
-;
-
 # Attach variables =====================================================
 
 # attach normal registers 
@@ -397,11 +201,6 @@ attach variables [ FRN_0 FRM_0] [
   fr0  fr1  fr2  fr3  fr4  fr5  fr6  fr7  fr8  fr9  fr10  fr11  fr12  fr13  fr14  fr15
 ];
 
-# attach extended float registers ????? support?
-#attach variables [ FRN_0 FRM_0] [
-#  xf0  xf1  xf2  xf3  xf4  xf5  xf6  xf7  xf8  xf9  xf10  xf11  xf12  xf13  xf14  xf15
-#];
-
 # attach double registers
 attach variables [ DRN_1 DRM_1 ] [
   dr0 dr2 dr4 dr6 dr8 dr10 dr12 dr14
@@ -410,6 +209,10 @@ attach variables [ DRN_1 DRM_1 ] [
 # attach extended double registers
 attach variables [ XDN_1 XDM_1 ] [
   xd0 xd2 xd4 xd6 xd8 xd10 xd12 xd14
+];
+
+attach variables [ XDRN XDRM ] [
+  dr0 xd0 dr2 xd2 dr4 xd4 dr6 xd6 dr8 xd8 dr10 xd10 dr12 xd12 dr14 xd14
 ];
 
 # attach vf registers
@@ -592,38 +395,6 @@ N_0txx: r0",@"^N_0 is r0 & N_0 { tmp:4 = N_0; export tmp; }
 
 
 
-# Special Test Only Constructors======================================================
-
-
-@ifdef TEST_FLOATS
-
-# Set FPSCR_PR=0 and FPSCR_SZ=0 
-# pattern 0000000010001000
-:__FPSCR_PR_0_SZ_0  is OP_3=0x88
-  [doublePrecMode=0; doubleWidthMoveMode=0; globalset(inst_next,doublePrecMode); globalset(inst_next,doubleWidthMoveMode);] {
-  FPSCR_PR = 0;
-  FPSCR_SZ = 0;
-}
-
-# Set FPSCR_PR=0 and FPSCR_SZ=1 
-# pattern 0000000100001000
-:__FPSCR_PR_0_SZ_1  is OP_3=0x108
-  [doublePrecMode=0; doubleWidthMoveMode=1; globalset(inst_next,doublePrecMode); globalset(inst_next,doubleWidthMoveMode);] {
-  FPSCR_PR = 0;
-  FPSCR_SZ = 1;
-}
-
-# Set FPSCR_PR=1 and FPSCR_SZ=0 
-# pattern 0000001000001000
-:__FPSCR_PR_1_SZ_0  is OP_3=0x208
-  [doublePrecMode=1; doubleWidthMoveMode=0; globalset(inst_next,doublePrecMode); globalset(inst_next,doubleWidthMoveMode);] {
-  FPSCR_PR = 1;
-  FPSCR_SZ = 0;
-}
-
-# end TEST_FLOATS
-@endif 
-
 # Constructors =======================================================================
 
 # Binary Addition
@@ -654,10 +425,10 @@ N_0txx: r0",@"^N_0 is r0 & N_0 { tmp:4 = N_0; export tmp; }
 
   tmp1:4 = N_0t + M_0t;
   tmp0:4 = N_0t;
-  N_0t   = tmp1 + zext(T);
-  T = (tmp0 > tmp1);
+  N_0t   = tmp1 + zext($(T_FLAG));
+  $(T_FLAG) = (tmp0 > tmp1);
   if (tmp1 <= N_0t) goto <skip>;
-    T = 1;
+    $(T_FLAG) = 1;
  <skip>
 }
 
@@ -679,7 +450,7 @@ N_0txx: r0",@"^N_0 is r0 & N_0 { tmp:4 = N_0; export tmp; }
   ans = ans + dest;
 
   bool:1 = ((src == 0) || (src == 2));
-  T = bool * (ans == 1) + !bool * ( 0 );
+  $(T_FLAG) = bool * (ans == 1) + !bool * ( 0 );
 }
 
 
@@ -717,7 +488,7 @@ N_0txx: r0",@"^N_0 is r0 & N_0 { tmp:4 = N_0; export tmp; }
 # arch    arch_sh_up
 :bf I_0tbranch is OP_2=0x8b & I_0tbranch {
 
-  if ( T == 0 ) goto I_0tbranch;
+  if ( $(T_FLAG) == 0 ) goto I_0tbranch;
 }
 
 
@@ -727,7 +498,7 @@ N_0txx: r0",@"^N_0 is r0 & N_0 { tmp:4 = N_0; export tmp; }
 # arch    arch_sh2_up
 :bf^"/s" I_0tbranch is OP_2=0x8f & I_0tbranch {
 
-  local cond = T;
+  local cond = $(T_FLAG);
   delayslot(1); 
   if ( cond == 0 ) goto I_0tbranch;
 } 
@@ -786,7 +557,7 @@ N_0txx: r0",@"^N_0 is r0 & N_0 { tmp:4 = N_0; export tmp; }
 # arch    arch_sh_up
 :bt I_0tbranch is OP_2=0x89 & I_0tbranch {
  
-  if ( T == 1 ) goto I_0tbranch;
+  if ( $(T_FLAG) == 1 ) goto I_0tbranch;
 }
 
 
@@ -795,7 +566,7 @@ N_0txx: r0",@"^N_0 is r0 & N_0 { tmp:4 = N_0; export tmp; }
 # text    bt/s <bdisp8>
 # arch    arch_sh2_up
 :bt^"/s" I_0tbranch is OP_2=0x8d & I_0tbranch {
-  local cond = T;
+  local cond = $(T_FLAG);
   delayslot(1);
   if ( cond == 1 ) goto I_0tbranch;
 }
@@ -818,7 +589,7 @@ N_0txx: r0",@"^N_0 is r0 & N_0 { tmp:4 = N_0; export tmp; }
 # arch    arch_sh_up
 :clrs  is OP_3=0x48 {
 
-  S = 0;
+  $(S_FLAG) = 0;
 }
 
 
@@ -828,7 +599,7 @@ N_0txx: r0",@"^N_0 is r0 & N_0 { tmp:4 = N_0; export tmp; }
 # arch    arch_sh_up
 :clrt  is OP_3=0x8 {
 
-  T = 0;
+  $(T_FLAG) = 0;
 }
 
 
@@ -838,7 +609,7 @@ N_0txx: r0",@"^N_0 is r0 & N_0 { tmp:4 = N_0; export tmp; }
 # arch    arch_sh_up
 :cmp^"/eq" M_0t,N_0t is OP_0=0x3 & N_0t & M_0t & OP_1=0x0 {
  
-  T = ( N_0t == M_0t );
+  $(T_FLAG) = ( N_0t == M_0t );
 } 
 
 
@@ -848,7 +619,7 @@ N_0txx: r0",@"^N_0 is r0 & N_0 { tmp:4 = N_0; export tmp; }
 # arch    arch_sh_up
 :cmp^"/ge" M_0t,N_0t is OP_0=0x3 & N_0t & M_0t & OP_1=0x3 {
  
-  T = ( N_0t s>= M_0t );
+  $(T_FLAG) = ( N_0t s>= M_0t );
 }
 
 # Compare
@@ -857,7 +628,7 @@ N_0txx: r0",@"^N_0 is r0 & N_0 { tmp:4 = N_0; export tmp; }
 # arch    arch_sh_up
 :cmp^"/gt" M_0t,N_0t is OP_0=0x3 & N_0t & M_0t & OP_1=0x7 {
  
-  T = ( N_0t s> M_0t);
+  $(T_FLAG) = ( N_0t s> M_0t);
 } 
 
 
@@ -867,7 +638,7 @@ N_0txx: r0",@"^N_0 is r0 & N_0 { tmp:4 = N_0; export tmp; }
 # arch    arch_sh_up
 :cmp^"/hi" M_0t,N_0t is OP_0=0x3 & N_0t & M_0t & OP_1=0x6 {
  
-  T = ( N_0t > M_0t );
+  $(T_FLAG) = ( N_0t > M_0t );
 }
 
 
@@ -877,7 +648,7 @@ N_0txx: r0",@"^N_0 is r0 & N_0 { tmp:4 = N_0; export tmp; }
 # arch    arch_sh_up
 :cmp^"/hs" M_0t,N_0t is OP_0=0x3 & N_0t & M_0t & OP_1=0x2 {
 
-  T = ( N_0t >= M_0t ); 
+  $(T_FLAG) = ( N_0t >= M_0t ); 
 }
 
 
@@ -887,7 +658,7 @@ N_0txx: r0",@"^N_0 is r0 & N_0 { tmp:4 = N_0; export tmp; }
 # arch    arch_sh_up
 :cmp^"/pl" N_0t is OP_0=0x4 & N_0t & OP_4=0x15 {
  
-  T = ( N_0t s> 0 );
+  $(T_FLAG) = ( N_0t s> 0 );
 }
 
 # Compare
@@ -896,7 +667,7 @@ N_0txx: r0",@"^N_0 is r0 & N_0 { tmp:4 = N_0; export tmp; }
 # arch    arch_sh_up
 :cmp^"/pz" N_0t is OP_0=0x4 & N_0t & OP_4=0x11 {
  
-  T = ( N_0t s>= 0 );
+  $(T_FLAG) = ( N_0t s>= 0 );
 }
 
 
@@ -911,7 +682,7 @@ N_0txx: r0",@"^N_0 is r0 & N_0 { tmp:4 = N_0; export tmp; }
   HL:4 = (temp & 0x00FF0000) >> 16;
   LH:4 = (temp & 0x0000FF00) >> 8;
   LL:4 =  temp & 0x000000FF;
-  T = !((HH:1) && (HL:1) && (LH:1) && (LL:1));
+  $(T_FLAG) = !((HH:1) && (HL:1) && (LH:1) && (LL:1));
 }
 
 
@@ -922,7 +693,7 @@ N_0txx: r0",@"^N_0 is r0 & N_0 { tmp:4 = N_0; export tmp; }
 # arch    arch_sh_up
 :cmp^"/eq" I_0t_r0 is OP_2=0x88 & I_0t_r0 {
 
-  T = ( r0 == I_0t_r0 );
+  $(T_FLAG) = ( r0 == I_0t_r0 );
 }
 
 
@@ -932,9 +703,9 @@ N_0txx: r0",@"^N_0 is r0 & N_0 { tmp:4 = N_0; export tmp; }
 # arch    arch_sh_up
 :div0s M_0t,N_0t is OP_0=0x2 & N_0t & M_0t & OP_1=0x7 {
  
-  Q = ( (N_0t & 0x80000000) != 0 );
-  M = ( (M_0t & 0x80000000) != 0 );
-  T = ( M != Q );
+  $(Q_FLAG) = ( (N_0t & 0x80000000) != 0 );
+  $(M_FLAG) = ( (M_0t & 0x80000000) != 0 );
+  $(T_FLAG) = ( $(M_FLAG) != $(Q_FLAG) );
 }
 
 
@@ -944,9 +715,9 @@ N_0txx: r0",@"^N_0 is r0 & N_0 { tmp:4 = N_0; export tmp; }
 # arch    arch_sh_up
 :div0u  is OP_3=0x19 {
 
-  M = 0;
-  Q = 0;
-  T = 0;
+  $(M_FLAG) = 0;
+  $(Q_FLAG) = 0;
+  $(T_FLAG) = 0;
 }
 
 
@@ -959,77 +730,77 @@ N_0txx: r0",@"^N_0 is r0 & N_0 { tmp:4 = N_0; export tmp; }
 @ifdef DIV1_ORIGINAL_IS_BROKEN
     tmp2:4  =   M_0t;
     N_0t    =   N_0t << 1;
-    N_0t    =   N_0t | zext(T); # ???
+    N_0t    =   N_0t | zext($(T_FLAG)); # ???
     tmp0:4  =   N_0t;
-    N_0t    =   N_0t - zext(((Q+M)!=1))*tmp2 + zext((Q+M)==1)*tmp2;
-    tmp1:1  =   ( ((Q+M)!=1)*(N_0t > tmp0) + ((Q+M)==1)*(N_0t < tmp0));
-    Q       =   ((0x80000000 & N_0t)!=0);
-    Q1:1    =   tmp1*(Q!=0) + (tmp1==0)*(Q==0);
-    Q2:1    =   tmp1*(Q==0) + (tmp1==0)*(Q!=0);
-    Q       =   ((M==1)*Q1 + (M!=1)*Q2);
-    T = (Q==M);
+    N_0t    =   N_0t - zext((($(Q_FLAG)+$(M_FLAG))!=1))*tmp2 + zext(($(Q_FLAG)+$(M_FLAG))==1)*tmp2;
+    tmp1:1  =   ( (($(Q_FLAG)+$(M_FLAG))!=1)*(N_0t > tmp0) + (($(Q_FLAG)+$(M_FLAG))==1)*(N_0t < tmp0));
+    $(Q_FLAG)       =   ((0x80000000 & N_0t)!=0);
+    Q1:1    =   tmp1*($(Q_FLAG)!=0) + (tmp1==0)*($(Q_FLAG)==0);
+    Q2:1    =   tmp1*($(Q_FLAG)==0) + (tmp1==0)*($(Q_FLAG)!=0);
+    $(Q_FLAG)       =   (($(M_FLAG)==1)*Q1 + ($(M_FLAG)!=1)*Q2);
+    $(T_FLAG) = ($(Q_FLAG)==$(M_FLAG));
 @endif  # DIV1_ORIGINAL_IS_BROKEN
 
 # DIV1_WITH_FORWARD_BRANCHES_WORKS_OK
 
 Rm:4 = M_0t;
 Rn:4 = N_0t;
-old_Q:1 = Q;
-Q = ((0x80000000 & Rn)!=0);
+old_Q:1 = $(Q_FLAG);
+$(Q_FLAG) = ((0x80000000 & Rn)!=0);
 tmp2:4 = Rm;
 Rn = Rn << 1;
-Rn = Rn | zext(T);
+Rn = Rn | zext($(T_FLAG));
 tmp0:4 = Rn;
 tmp1:1 = 0;
 
-if (old_Q == 0) && (M == 0) goto <section_1>;
-if (old_Q == 0) && (M == 1) goto <section_2>;
-if (old_Q == 1) && (M == 0) goto <section_3>;
-# if (old_Q == 1) && (M == 1) ...
+if (old_Q == 0) && ($(M_FLAG) == 0) goto <section_1>;
+if (old_Q == 0) && ($(M_FLAG) == 1) goto <section_2>;
+if (old_Q == 1) && ($(M_FLAG) == 0) goto <section_3>;
+# if (old_Q == 1) && ($(M_FLAG) == 1) ...
 Rn = Rn - tmp2;
 tmp1 = Rn > tmp0;
-if (Q == 0) goto <section_4a>;
-# (Q == 1)
-Q = tmp1;
+if ($(Q_FLAG) == 0) goto <section_4a>;
+# ($(Q_FLAG) == 1)
+$(Q_FLAG) = tmp1;
 goto <done>;
 <section_4a>
-Q = tmp1 == 0;
+$(Q_FLAG) = tmp1 == 0;
 goto <done>;
 
-<section_3> # (old_Q == 1) && (M == 0)
+<section_3> # (old_Q == 1) && ($(M_FLAG) == 0)
 Rn = Rn + tmp2;
 tmp1 = Rn < tmp0;
-if (Q == 0) goto <section_3a>;
-# (Q == 1)
-Q = tmp1 == 0;
+if ($(Q_FLAG) == 0) goto <section_3a>;
+# ($(Q_FLAG) == 1)
+$(Q_FLAG) = tmp1 == 0;
 goto <done>;
 <section_3a>
-Q = tmp1;
+$(Q_FLAG) = tmp1;
 goto <done>;
 
-<section_2> # (old_Q == 0) && (M == 1)
+<section_2> # (old_Q == 0) && ($(M_FLAG) == 1)
 Rn = Rn + tmp2;
 tmp1 = Rn < tmp0;
-if (Q == 0) goto <section_2a>;
-# (Q == 1)
-Q = tmp1;
+if ($(Q_FLAG) == 0) goto <section_2a>;
+# ($(Q_FLAG) == 1)
+$(Q_FLAG) = tmp1;
 goto <done>;
 <section_2a>
-Q = tmp1 == 0;
+$(Q_FLAG) = tmp1 == 0;
 goto <done>;
 
-<section_1> # (old_Q == 0) && (M == 0)
+<section_1> # (old_Q == 0) && ($(M_FLAG) == 0)
 Rn = Rn - tmp2;
 tmp1 = Rn > tmp0;
-if (Q == 0) goto <section_1a>;
-# (Q == 1)
-Q = tmp1 == 0;
+if ($(Q_FLAG) == 0) goto <section_1a>;
+# ($(Q_FLAG) == 1)
+$(Q_FLAG) = tmp1 == 0;
 goto <done>;
 <section_1a>
-Q = tmp1;
+$(Q_FLAG) = tmp1;
 
 <done>
-T = Q == M;
+$(T_FLAG) = $(Q_FLAG) == $(M_FLAG);
 N_0t = Rn;
 
 # DIV1_WITH_GOTOs_WORKS_OK
@@ -1039,29 +810,29 @@ N_0t = Rn;
 @ifdef DIV1_STRAIGHT_CODE # BROKEN
 Rm:4 = M_0t;
 Rn:4 = N_0t;
-old_Q:1 = Q;
-Q = ((0x80000000 & Rn)!=0);
+old_Q:1 = $(Q_FLAG);
+$(Q_FLAG) = ((0x80000000 & Rn)!=0);
 tmp2:4 = Rm;
 Rn = Rn << 1;
-Rn = Rn | zext(T);
+Rn = Rn | zext($(T_FLAG));
 tmp0:4 = Rn;
 
-oldQM_10_01_bool:1 = ( ( (old_Q == 1) && (M == 0) ) || ( (old_Q == 1) && (M == 0) ) );
+oldQM_10_01_bool:1 = ( ( (old_Q == 1) && ($(M_FLAG) == 0) ) || ( (old_Q == 1) && ($(M_FLAG) == 0) ) );
 oldQM_10_01:4 = zext(oldQM_10_01_bool) * 0xffffffff;
 
-oldQM_11_00_bool:1 = ( (old_Q == 1) && (M == 1) ) || ( (old_Q == 0) && (M == 0) );
+oldQM_11_00_bool:1 = ( (old_Q == 1) && ($(M_FLAG) == 1) ) || ( (old_Q == 0) && ($(M_FLAG) == 0) );
 oldQM_11_00:4 = zext(oldQM_11_00_bool) * 0xffffffff;
 
 Rn = (oldQM_10_01 & (Rn + tmp2)) | (oldQM_11_00 & (Rn - tmp2));
 
 tmp1:1 = ( (oldQM_11_00 != 0) && (Rn > tmp0) ) | ( (oldQM_10_01 != 0) && (Rn < tmp0) );
 
-QM_10_01:1 = ( ( (Q == 1) && (M == 0) ) || ( (Q == 1) && (M == 0) ) ) * 0xff;
-QM_11_00:1 = ( ( (Q == 1) && (M == 1) ) || ( (Q == 0) && (M == 0) ) ) * 0xff;
+QM_10_01:1 = ( ( ($(Q_FLAG) == 1) && ($(M_FLAG) == 0) ) || ( ($(Q_FLAG) == 1) && ($(M_FLAG) == 0) ) ) * 0xff;
+QM_11_00:1 = ( ( ($(Q_FLAG) == 1) && ($(M_FLAG) == 1) ) || ( ($(Q_FLAG) == 0) && ($(M_FLAG) == 0) ) ) * 0xff;
 
-Q = (QM_10_01 & tmp1) || (QM_11_00 & (tmp1 == 0));
+$(Q_FLAG) = (QM_10_01 & tmp1) || (QM_11_00 & (tmp1 == 0));
 
-T = Q == M;
+$(T_FLAG) = $(Q_FLAG) == $(M_FLAG);
 N_0t = Rn;
 @endif # DIV1_STRAIGHT_CODE
 }
@@ -1135,7 +906,7 @@ N_0t = Rn;
 :dt N_0t is OP_0=0x4 & N_0t & OP_4=0x10 {
 
   N_0t = N_0t - 1;
-  T = ( N_0t == 0 );
+  $(T_FLAG) = ( N_0t == 0 );
 }
 
 
@@ -1183,44 +954,14 @@ N_0t = Rn;
 # text    fabs <F_REG_N>
 # arch    arch_sh2e_up
 :fabs FRN_0 is
-      doublePrecMode = 0 &
       OP_0=0xf &  FRN_0 & DRN_1 & OP_4=0x5d { 
 
-@if (FLOAT_TYPE == "double") || FLOAT_TYPE == "RUNTIME_FLOAT"
-  if (!( FPSCR_PR == 0 )) goto <doublePrecision>;
-@endif
-@if (FLOAT_TYPE == "float") || FLOAT_TYPE == "RUNTIME_FLOAT"
+  if (!( $(FPSCR_PR) == 0 )) goto <doublePrecision>;
     FRN_0 = abs(FRN_0);
   goto <skip>;
-@endif
-
-@if (FLOAT_TYPE == "double") || FLOAT_TYPE == "RUNTIME_FLOAT"
   <doublePrecision>
     DRN_1 = abs(DRN_1);
-@endif
  <skip>
-}
-
-# pattern 1111nnn001011101
-# text    fabs <D_REG_N>
-# arch    arch_sh2a_or_sh4_up
-:fabs DRN_1 is 
-      doublePrecMode = 1 &
-      OP_0=0xf & DRN_1 & FRN_0 & OP_5=0x5d {
-
-@if (FLOAT_TYPE == "double") || FLOAT_TYPE == "RUNTIME_FLOAT"
-  if (!( FPSCR_PR == 0 )) goto <doublePrecision>;
-@endif
-@if (FLOAT_TYPE == "float") || FLOAT_TYPE == "RUNTIME_FLOAT"
-    FRN_0 = abs(FRN_0);
-  goto <skip>;
-@endif
-
-@if (FLOAT_TYPE == "double") || FLOAT_TYPE == "RUNTIME_FLOAT"
-  <doublePrecision>
-    DRN_1 = abs(DRN_1);
-@endif
-  <skip>
 }
 
 # Floating-Point Addition
@@ -1228,44 +969,13 @@ N_0t = Rn;
 # text    fadd <F_REG_M>,<F_REG_N>
 # arch    arch_sh2a_or_sh4_up
 :fadd FRM_0,FRN_0 is
-      doublePrecMode = 0 &
       OP_0=0xf & FRN_0 & DRN_1 & FRM_0 & DRM_1 & OP_1=0x0 {
 
-@if (FLOAT_TYPE == "double") || FLOAT_TYPE == "RUNTIME_FLOAT"
-  if (!( FPSCR_PR == 0 )) goto <doublePrecision>;
-@endif
-@if (FLOAT_TYPE == "float") || FLOAT_TYPE == "RUNTIME_FLOAT"
+  if (!( $(FPSCR_PR) == 0 )) goto <doublePrecision>;
     FRN_0 = FRN_0 f+ FRM_0;
   goto <skip>;
-@endif
-
-@if (FLOAT_TYPE == "double") || FLOAT_TYPE == "RUNTIME_FLOAT"
   <doublePrecision>
     DRN_1 = DRN_1 f+ DRM_1;
-@endif
-  <skip>
-}
-
-# Floating-Point Addition
-# pattern 1111nnn0mmm00000
-# text    fadd <D_REG_M>,<D_REG_N>
-# arch    arch_sh2e_up
-:fadd DRM_1,DRN_1 is
-      doublePrecMode = 1 &
-      OP_0=0xf & DRN_1 & FRN_0 & OP_6=0x0 & DRM_1 & FRM_0 & OP_7=0x0 {
-
-@if (FLOAT_TYPE == "double") || FLOAT_TYPE == "RUNTIME_FLOAT"
-  if (!( FPSCR_PR == 0 )) goto <doublePrecision>;
-@endif
-@if (FLOAT_TYPE == "float") || FLOAT_TYPE == "RUNTIME_FLOAT"
-    FRN_0 = FRN_0 f+ FRM_0;
-  goto <skip>;
-@endif
-
-@if (FLOAT_TYPE == "double") || FLOAT_TYPE == "RUNTIME_FLOAT"
-  <doublePrecision>
-    DRN_1 = DRN_1 f+ DRM_1;
-@endif
   <skip>
 }
 
@@ -1274,44 +984,13 @@ N_0t = Rn;
 # text    fcmp/eq <F_REG_M>,<F_REG_N>
 # arch    arch_sh2e_up
 :fcmp^"/eq" FRM_0t,FRN_0t is
-            doublePrecMode = 0 &
             OP_0=0xf & FRN_0t & DRN_1t & FRM_0t & DRM_1t & OP_6 & OP_10 & OP_1=0x4
 {
-@if (FLOAT_TYPE == "double") || FLOAT_TYPE == "RUNTIME_FLOAT"
-  if (!( FPSCR_PR == 0 ) ) && (OP_6:1 == 0) && (OP_10:1 == 0) goto <doublePrecision>;
-@endif
-@if (FLOAT_TYPE == "float") || FLOAT_TYPE == "RUNTIME_FLOAT"
-    T = ( FRN_0t f== FRM_0t );
+  if (!( $(FPSCR_PR) == 0 ) ) && (OP_6:1 == 0) && (OP_10:1 == 0) goto <doublePrecision>;
+    $(T_FLAG) = ( FRN_0t f== FRM_0t );
   goto <skip>;
-@endif
-
-@if (FLOAT_TYPE == "double") || FLOAT_TYPE == "RUNTIME_FLOAT"
   <doublePrecision>
-    T = ( DRN_1t f== DRM_1t );
-@endif
-  <skip>
-}
-
-# Floating-Point Comparison
-# pattern 1111nnn0mmm00100
-# text    fcmp/eq <D_REG_M>,<D_REG_N>
-# arch    arch_sh2a_or_sh4_up
-:fcmp^"/eq" DRM_1t,DRN_1t is
-            doublePrecMode = 1 &
-            OP_0=0xf & DRN_1t & FRN_0t & OP_6=0x0 & DRM_1t & FRM_0t & OP_7=0x4 {
-
-@if (FLOAT_TYPE == "double") || FLOAT_TYPE == "RUNTIME_FLOAT"
-  if (!( FPSCR_PR == 0 )) goto <doublePrecision>;
-@endif
-@if (FLOAT_TYPE == "float") || FLOAT_TYPE == "RUNTIME_FLOAT"
-    T = ( FRN_0t f== FRM_0t );
-  goto <skip>;
-@endif
-
-@if (FLOAT_TYPE == "double") || FLOAT_TYPE == "RUNTIME_FLOAT"
-  <doublePrecision>
-    T = ( DRN_1t f== DRM_1t );
-@endif
+    $(T_FLAG) = ( DRN_1t f== DRM_1t );
   <skip>
 }
 
@@ -1320,44 +999,13 @@ N_0t = Rn;
 # text    fcmp/gt <F_REG_M>,<F_REG_N>
 # arch    arch_sh2e_up
 :fcmp^"/gt" FRM_0t,FRN_0t is
-            doublePrecMode = 0 &
             OP_0=0xf & FRM_0t & DRM_1t & FRN_0t & DRN_1t & OP_1=0x5 {
 
-@if (FLOAT_TYPE == "double") || FLOAT_TYPE == "RUNTIME_FLOAT"
-  if (!( FPSCR_PR == 0 )) goto <doublePrecision>;
-@endif
-@if (FLOAT_TYPE == "float") || FLOAT_TYPE == "RUNTIME_FLOAT"
-    T = ( FRN_0t f> FRM_0t );
+  if (!( $(FPSCR_PR) == 0 )) goto <doublePrecision>;
+    $(T_FLAG) = ( FRN_0t f> FRM_0t );
   goto <skip>;
-@endif
-
-@if (FLOAT_TYPE == "double") || FLOAT_TYPE == "RUNTIME_FLOAT"
   <doublePrecision>
-    T = ( DRN_1t f> DRM_1t );
-@endif
-  <skip>
-}
-
-# Floating-Point Comparison
-# pattern 1111nnn0mmm00101
-# text    fcmp/gt <D_REG_M>,<D_REG_N>
-# arch    arch_sh2a_or_sh4_up
-:fcmp^"/gt" DRM_1t,DRN_1t is
-            doublePrecMode = 1 &
-            OP_0=0xf & DRM_1t & FRM_0t & OP_6=0x0 & DRN_1t & FRN_0t & OP_7=0x5 { 
-
-@if (FLOAT_TYPE == "double") || FLOAT_TYPE == "RUNTIME_FLOAT"
-  if (!( FPSCR_PR == 0 )) goto <doublePrecision>;
-@endif
-@if (FLOAT_TYPE == "float") || FLOAT_TYPE == "RUNTIME_FLOAT"
-    T = ( FRN_0t f> FRM_0t );
-  goto <skip>;
-@endif
-
-@if (FLOAT_TYPE == "double") || FLOAT_TYPE == "RUNTIME_FLOAT"
-  <doublePrecision>
-    T = ( DRN_1t f> DRM_1t );
-@endif
+    $(T_FLAG) = ( DRN_1t f> DRM_1t );
   <skip>
 }
 
@@ -1393,45 +1041,13 @@ N_0t = Rn;
 # text    fdiv <F_REG_M>,<F_REG_N>
 # arch    arch_sh2e_up
 :fdiv FRM_0t,FRN_0t is
-      doublePrecMode = 0 &
       OP_0=0xf & FRN_0t & DRN_1t & FRM_0t & DRM_1t & OP_1=0x3 {
 
-@if (FLOAT_TYPE == "double") || FLOAT_TYPE == "RUNTIME_FLOAT"
-  if (!( FPSCR_PR == 0 )) goto <doublePrecision>;
-@endif
-@if (FLOAT_TYPE == "float") || FLOAT_TYPE == "RUNTIME_FLOAT"
+  if (!( $(FPSCR_PR) == 0 )) goto <doublePrecision>;
     FRN_0t = ( FRN_0t f/ FRM_0t );
   goto <skip>;
-@endif
-
-@if (FLOAT_TYPE == "double") || FLOAT_TYPE == "RUNTIME_FLOAT"
   <doublePrecision>
     DRN_1t = ( DRN_1t f/ DRM_1t );
-@endif
-  <skip>
-}
-
-# Floating-Point Division
-# pattern 1111nnn0mmm00011
-# text    fdiv <D_REG_M>,<D_REG_N>
-# arch    arch_sh2a_or_sh4_up
-
-:fdiv DRM_1t,DRN_1t is 
-      doublePrecMode = 1 &
-      OP_0=0xf & DRN_1t & FRN_0t & OP_6=0x0 & DRM_1t & FRM_0t & OP_7=0x3 {
-
-@if (FLOAT_TYPE == "double") || FLOAT_TYPE == "RUNTIME_FLOAT"
-  if (!( FPSCR_PR == 0 )) goto <doublePrecision>;
-@endif
-@if (FLOAT_TYPE == "float") || FLOAT_TYPE == "RUNTIME_FLOAT"
-    FRN_0t = ( FRN_0t f/ FRM_0t );
-  goto <skip>;
-@endif
-
-@if (FLOAT_TYPE == "double") || FLOAT_TYPE == "RUNTIME_FLOAT"
-  <doublePrecision>
-    DRN_1t = ( DRN_1t f/ DRM_1t );
-@endif
   <skip>
 }
 
@@ -1445,10 +1061,7 @@ N_0t = Rn;
 
     # note: this instruction is undefined if not running in SinglePrec mode.
 
-@if (FLOAT_TYPE == "double") || FLOAT_TYPE == "RUNTIME_FLOAT"
-  if (!( FPSCR_PR == 0 )) goto <skip>;
-@endif
-@if (FLOAT_TYPE == "float") || FLOAT_TYPE == "RUNTIME_FLOAT"
+  if (!( $(FPSCR_PR) == 0 )) goto <skip>;
     # FVn dot FVm
     temp1:4 =          ( *[register]:4 (&:4 FVN_2t +  0) f* *[register]:4 (&:4 FVM_2t +  0) );
     temp1   = temp1 f+ ( *[register]:4 (&:4 FVN_2t +  4) f* *[register]:4 (&:4 FVM_2t +  4) );
@@ -1457,7 +1070,6 @@ N_0t = Rn;
 
     # summation goes to FR[n + 3]
     *[register]:4 (&:4 FVN_2t + 12) = temp1;
-@endif
   <skip>
 }
 
@@ -1501,52 +1113,19 @@ N_0t = Rn;
 # text    float FPUL,<F_REG_N>
 # arch    # arch_sh2e_up
 :float FPUL,FRN_0t is
-       doublePrecMode = 0 &
        OP_0=0xf & OP_6 & FRN_0t & DRN_1t & OP_4=0x2d & FPUL
 {
   # If bit 6 is set this this is an odd FP register number, so need to do single float operation.
   # This is not in the manual but this seems to be the correct behavior.
-  # if (!( FPSCR_PR == 0 ) && !(OP_6 == 0) ) goto <doublePrecision>;
-  # if (!( FPSCR_PR == 0 )) goto <doublePrecision>;
 
-@if (FLOAT_TYPE == "double") || FLOAT_TYPE == "RUNTIME_FLOAT"
-  if (!( FPSCR_PR == 0 ) ) && (OP_6:1 == 0x0) goto <doublePrecision>;
-@endif
-@if (FLOAT_TYPE == "float") || FLOAT_TYPE == "RUNTIME_FLOAT"
+
+  if (!( $(FPSCR_PR) == 0 ) ) && (OP_6:1 == 0x0) goto <doublePrecision>;
     FRN_0t = int2float( FPUL );
   goto <skip>;
-@endif
-
-@if (FLOAT_TYPE == "double") || FLOAT_TYPE == "RUNTIME_FLOAT"
   <doublePrecision>
     DRN_1t = int2float( FPUL );
-@endif
   <skip>
 }
-
-# Integer to Floating-Point Conversion
-# pattern 1111nnn000101101
-# text    float FPUL,<D_REG_N>
-# arch    arch_sh2a_or_sh4_up
-:float FPUL,DRN_1t is
-       doublePrecMode = 1 &
-       OP_0=0xf & DRN_1t & FRN_0t & OP_5=0x2d & FPUL {
-
-@if (FLOAT_TYPE == "double") || FLOAT_TYPE == "RUNTIME_FLOAT"
-  if (!( FPSCR_PR == 0 )) goto <doublePrecision>;
-@endif
-@if (FLOAT_TYPE == "float") || FLOAT_TYPE == "RUNTIME_FLOAT"
-    FRN_0t = int2float( FPUL );
-  goto <skip>;
-@endif
-
-@if (FLOAT_TYPE == "double") || FLOAT_TYPE == "RUNTIME_FLOAT"
-  <doublePrecision>
-    DRN_1t = int2float( FPUL );
-@endif
-  <skip>
-}
-
 
 # Floating-Point Multiply and Accumulate
 # pattern 1111nnnnmmmm1110
@@ -1554,17 +1133,13 @@ N_0t = Rn;
 # arch    arch_sh2e_up
 :fmac FR0_t,FRM_0t,FRN_0t is OP_0=0xf & FRN_0t & FRM_0t & OP_1=0xe & FR0_t {
 
-@if (FLOAT_TYPE == "double") || FLOAT_TYPE == "RUNTIME_FLOAT"
-  if (!( FPSCR_PR == 0 )) goto <skip>;
-@endif
-@if (FLOAT_TYPE == "float") || FLOAT_TYPE == "RUNTIME_FLOAT"
+  if (!( $(FPSCR_PR) == 0 )) goto <skip>;
     FRN_0t = ( FR0_t f* FRM_0t ) f+ FRN_0t;
-@endif
   <skip>
 }
 
-# Floating-Point Transfer #1a (related to Extended FMOV #7)
-# pattern 1111nnn1mmm11100
+# Floating-Point Transfer #1-4
+# pattern 1111nnnnmmmm1100
 # text    fmov <F_REG_M>,<F_REG_N>
 # arch    arch_sh2e_up
 #
@@ -1572,137 +1147,33 @@ N_0t = Rn;
 # to determine if this is a single or double float move. Ie, don't reference FPSCR_PR.
 #
 :fmov FRM_0,FRN_0 is
-      doublePrecMode=0 & doubleWidthMoveMode=0 &
-      OP_0=0xf & FRN_0 & XDN_1 & OP_6=0x1 & FRM_0 & XDM_1 & OP_10=0x1 & OP_1=0xc
+      OP_0=0xf & FRN_0 & XDRN & FRM_0 & XDRM & OP_1=0xc
 {
-@if (FLOAT_LENGTH == "8") || FLOAT_TYPE == "RUNTIME_FLOAT"
-  if (!( FPSCR_SZ == 0 )) goto <doubleWidth>;
-@endif
-@if (FLOAT_LENGTH == "4") || FLOAT_TYPE == "RUNTIME_FLOAT"
+  if (!( $(FPSCR_SZ) == 0 )) goto <doubleWidth>;
     FRN_0 = FRM_0;
   goto <skip>;
-@endif
-@if (FLOAT_LENGTH == "8") || FLOAT_TYPE == "RUNTIME_FLOAT"
   <doubleWidth>
-    XDN_1 = XDM_1;
-@endif
+    XDRN = XDRM;
   <skip>
 
-@ifdef FMOV_ORIGINAL
-@if (FLOAT_TYPE == "double") || FLOAT_TYPE == "RUNTIME_FLOAT"
-  if (!( FPSCR_PR == 0 )) goto <doubleWidthPR>;
-@endif
-@if (FLOAT_TYPE == "float") || FLOAT_TYPE == "RUNTIME_FLOAT"
-    FRN_0 = FRM_0;
-  goto <skip>;
-@endif
-
-@if (FLOAT_TYPE == "double") || FLOAT_TYPE == "RUNTIME_FLOAT"
-  <doubleWidthPR>
-    # Extended #7
-    XDN_1 = XDM_1;
-@endif
-  <skip>
-@endif
 }
 
-# Floating-Point Transfer #1b (related to Extended FMOV #8)
-# pattern 1111nnn0mmm11100
-# text    fmov <F_REG_M>,<F_REG_N>
+# Floating-Point Transfer #5-6
+# pattern 1111nnn0mmmm1000
+# text    fmov @<REG_M>,<F_REG_N>
 # arch    arch_sh2e_up
-:fmov FRM_0,FRN_0 is 
-      doublePrecMode=0 & doubleWidthMoveMode=0 &
-      OP_0=0xf & FRN_0 & DRN_1 & OP_6=0x0 & FRM_0 & XDM_1 & OP_10=0x1 & OP_1=0xc { 
+:fmov.s M_0t_at1,FRN_0 is
+      OP_0=0xf &  XDRN & FRN_0 & M_0t_at1 &  OP_1=0x8 {
 
-@if (FLOAT_TYPE == "double") || FLOAT_TYPE == "RUNTIME_FLOAT"
-#  if (!( FPSCR_PR == 0 )) goto <doubleWidthPR>;
-  if (!( FPSCR_SZ == 0 )) goto <doubleWidthPR>;
-@endif
-@if (FLOAT_TYPE == "float") || FLOAT_TYPE == "RUNTIME_FLOAT"
-    FRN_0 = FRM_0;
+  if (!( $(FPSCR_SZ) == 0 )) goto <doubleWidth>;
+     FRN_0 = *:4 M_0t_at1;
   goto <skip>;
-@endif
-
-@if (FLOAT_TYPE == "double") || FLOAT_TYPE == "RUNTIME_FLOAT"
-  <doubleWidthPR>
-    # Extended #8
-    DRN_1 = XDM_1;
-@endif
-  <skip>
-}
-
-# Floating-Point Transfer #1c (related to Extended FMOV #9)
-# pattern 1111nnn1mmm01100
-# text    fmov <F_REG_M>,<F_REG_N>
-# arch    arch_sh2e_up
-:fmov FRM_0,FRN_0 is
-      doublePrecMode=0 & doubleWidthMoveMode=0 &
-      OP_0=0xf & FRN_0 & XDN_1 & OP_6=0x1 & FRM_0 & DRM_1 & OP_10=0x0 & OP_1=0xc { 
-
-@if (FLOAT_TYPE == "double") || FLOAT_TYPE == "RUNTIME_FLOAT"
-#  if (!( FPSCR_PR == 0 )) goto <doubleWidthPR>;
-  if (!( FPSCR_SZ == 0 )) goto <doubleWidthPR>;
-@endif
-@if (FLOAT_TYPE == "float") || FLOAT_TYPE == "RUNTIME_FLOAT"
-    FRN_0 = FRM_0;
-  goto <skip>;
-@endif
-
-@if (FLOAT_TYPE == "double") || FLOAT_TYPE == "RUNTIME_FLOAT"
-  <doubleWidthPR>
-    # Extended #9
-    XDN_1 = DRM_1;
-@endif
-  <skip>
-}
-
-# Floating-Point Transfer #1d (No PR case, single precision operation mode only)
-# pattern 1111nnn0mmm01100
-# text    fmov <F_REG_M>,<F_REG_N>
-# arch    arch_sh2e_up
-:fmov FRM_0,FRN_0 is
-      doublePrecMode=0 & doubleWidthMoveMode=0 &
-      OP_0=0xf & FRN_0 & DRN_1 & OP_6=0x0 & FRM_0 & DRM_1 & OP_10=0x0 & OP_1=0xc { 
-
-@if (FLOAT_LENGTH == "8") || FLOAT_TYPE == "RUNTIME_FLOAT"
-  if (!( FPSCR_SZ == 0 )) goto <doubleWidthSZ>;
-@endif
-@if (FLOAT_LENGTH == "4") || FLOAT_TYPE == "RUNTIME_FLOAT"
-    FRN_0 = FRM_0;
-  goto <skip>;
-@endif
-
-@if (FLOAT_LENGTH == "8") || FLOAT_TYPE == "RUNTIME_FLOAT"
-  <doubleWidthSZ>
-    DRN_1 = DRM_1;
-@endif
-  <skip>
-}
-
-# Floating-Point Transfer #2 (derived)
-# pattern 1111nnn0mmm01100
-# text    fmov <F_REG_M>,<F_REG_N>
-# arch    arch_sh2e_up
-:fmov DRM_1,DRN_1 is
-      doublePrecMode=0 & doubleWidthMoveMode=1 &
-      OP_0=0xf & DRN_1 & FRN_0 & DRM_1 & FRM_0 & OP_1=0xc { 
-
-@if (FLOAT_LENGTH == "8") || FLOAT_TYPE == "RUNTIME_FLOAT"
-  if (!( FPSCR_SZ == 0 )) goto <doubleWidth>;
-@endif
-@if (FLOAT_LENGTH == "4") || FLOAT_TYPE == "RUNTIME_FLOAT"
-    FRN_0 = FRM_0;
-  goto <skip>;
-@endif
-
-@if (FLOAT_LENGTH == "8") || FLOAT_TYPE == "RUNTIME_FLOAT"
   <doubleWidth>
-    DRN_1 = DRM_1;
-@endif
+     XDRN = *:8 M_0t_at1;
   <skip>
 }
 
-# Floating-Point Transfer #3 (related to Extended FMOV #1)
+# Floating-Point Transfer #7-8
 # pattern 1111nnnnmmmm1010
 # text    fmov <F_REG_M>,@<REG_N>
 # arch    arch_sh2e_up
@@ -1710,455 +1181,78 @@ N_0t = Rn;
 # Note- Manual says to ignore FPSCR_PR but FPSCR_SZ must = 0
 #
 :fmov.s FRM_0,N_0t_at1 is
-      # doublePrecMode=0 & 
-	doubleWidthMoveMode=0 &
-      OP_0=0xf &  N_0t_at1 &  FRM_0 & DRM_1 &  XDM_1  &  OP_1=0xa
+
+      OP_0=0xf &  N_0t_at1 &  FRM_0 & XDRM &  OP_1=0xa
 {
-      *:4 N_0t_at1 = FRM_0;
-}
-
-# Floating-Point Transfer #4 (derived)
-# pattern 1111nnnnmmm01010
-# text    fmov <F_REG_M>,@<REG_N>
-# arch    arch_sh2e_up
-:fmov DRM_1,N_0t_at1 is
-      doublePrecMode=0 & doubleWidthMoveMode=1 &
-      OP_0=0xf &  N_0t_at1 &  DRM_1  & FRM_0  &  OP_7=0xa {
-
-@if (FLOAT_LENGTH == "8") || FLOAT_TYPE == "RUNTIME_FLOAT"
-  if (!( FPSCR_SZ == 0 )) goto <doubleWidth>;
-@endif
-@if (FLOAT_LENGTH == "4") || FLOAT_TYPE == "RUNTIME_FLOAT"
+  if (!( $(FPSCR_SZ) == 0 )) goto <doubleWidth>;
     *:4 N_0t_at1 = FRM_0;
   goto <skip>;
-@endif
-
-@if (FLOAT_LENGTH == "8") || FLOAT_TYPE == "RUNTIME_FLOAT"
   <doubleWidth>
-    *:8 N_0t_at1 = DRM_1;
-@endif
+    *:8 N_0t_at1 = XDRM;
   <skip>
 }
 
-# Floating-Point Transfer #5  (related to Extended FMOV #2)
-# pattern 1111nnnnmmmm1000
-# text    fmov @<REG_M>,<F_REG_N>
-# arch    arch_sh2e_up
-#
-# Note- Manual says to ignore FPSCR_PR but FPSCR_SZ must = 0
-#
-:fmov.s M_0t_at1,FRN_0 is
-      # doublePrecMode=0 &
-	doubleWidthMoveMode=0 &
-      OP_0=0xf &  FRN_0 & DRN_1 & XDN_1 &  M_0t_at1 &  OP_1=0x8
-{
-       FRN_0 = *:4 M_0t_at1;
-}
-
-# Floating-Point Transfer #6 (derived)
-# pattern 1111nnn0mmmm1000
-# text    fmov @<REG_M>,<F_REG_N>
-# arch    arch_sh2e_up
-:fmov M_0t_at1,DRN_1 is
-      doublePrecMode=0 & doubleWidthMoveMode=1 &
-      OP_0=0xf &  DRN_1 & FRN_0 & OP_6=0x0 & M_0t_at1 &  OP_1=0x8 {
-
-@if (FLOAT_LENGTH == "8") || FLOAT_TYPE == "RUNTIME_FLOAT"
-  if (!( FPSCR_SZ == 0 )) goto <doubleWidth>;
-@endif
-@if (FLOAT_LENGTH == "4") || FLOAT_TYPE == "RUNTIME_FLOAT"
-     FRN_0 = *:4 M_0t_at1;
-  goto <skip>;
-@endif
-
-@if (FLOAT_LENGTH == "8") || FLOAT_TYPE == "RUNTIME_FLOAT"
-  <doubleWidth>
-     DRN_1 = *:8 M_0t_at1;
-@endif
-  <skip>
-}
-
-# Floating-Point Transfer #7  (related to Extended FMOV #3)
+# Floating-Point Transfer #9-10
 # pattern 1111nnnnmmmm1001
 # text    fmov @<REG_M>+,<F_REG_N>
 # arch    arch_sh2e_up
-#
-# Note- Manual says to ignore FPSCR_PR but FPSCR_SZ must = 0
-#
 :fmov.s M_0t_at,FRN_0 is
-      # doublePrecMode=0 &
-	doubleWidthMoveMode=0 &
-      OP_0=0xf &  FRN_0 & DRN_1 & XDN_1 & M_0t_at &  OP_1=0x9
-{
-       FRN_0 = *:4 M_0t_at;
-       M_0t_at = M_0t_at + 4;
-}
+      OP_0=0xf &  XDRN & FRN_0 &  M_0t_at &  OP_1=0x9 {
 
-# Floating-Point Transfer #8 (derived)
-# pattern 1111nnnnmmmm1001
-# text    fmov @<REG_M>+,<F_REG_N>
-# arch    arch_sh2e_up
-:fmov M_0t_at,DRN_1 is
-      doublePrecMode=0 & doubleWidthMoveMode=1 &
-      OP_0=0xf &  DRN_1 & FRN_0 &  OP_6=0x0 &  M_0t_at &  OP_1=0x9 {
-
-@if (FLOAT_LENGTH == "8") || FLOAT_TYPE == "RUNTIME_FLOAT"
-  if (!( FPSCR_SZ == 0 )) goto <doubleWidth>;
-@endif
-@if (FLOAT_LENGTH == "4") || FLOAT_TYPE == "RUNTIME_FLOAT"
+  if (!( $(FPSCR_SZ) == 0 )) goto <doubleWidth>;
      FRN_0 = *:4 M_0t_at;
      M_0t_at = M_0t_at + 4;
   goto <skip>;
-@endif
-
-@if (FLOAT_LENGTH == "8") || FLOAT_TYPE == "RUNTIME_FLOAT"
   <doubleWidth>
-     DRN_1 = *:8 M_0t_at;
+     XDRN = *:8 M_0t_at;
      M_0t_at = M_0t_at + 8;
-@endif
   <skip>
 }
 
-# Floating-Point Transfer #9  (related to Extended FMOV #4)
-# pattern 1111nnnnmmmm1011
+# Floating-Point Transfer #11-12
+# pattern 1111nnnnmmm01011
 # text    fmov <F_REG_M>,@-<REG_N>
 # arch    arch_sh2e_up
-#
-# Note- Manual says to ignore FPSCR_PR but FPSCR_SZ must = 0
-#
-:fmov.s FRM_0,N_0t_at_neg is 
-      # doublePrecMode=0 &
-	doubleWidthMoveMode=0 &
-      OP_0=0xf &  N_0t_at_neg &  FRM_0 & DRM_1 & XDM_1 &  OP_1=0xb
-{
-      N_0t_at_neg = N_0t_at_neg - 4;
-      *:4 N_0t_at_neg = FRM_0;
-}
+:fmov.s FRM_0,N_0t_at_neg is
+      OP_0=0xf &  N_0t_at_neg &  XDRM & FRM_0 &  OP_1=0xb {
 
-# Floating-Point Transfer #10 (derived) 
-# pattern 1111nnnnmmmm1011
-# text    fmov <F_REG_M>,@-<REG_N>
-# arch    arch_sh2e_up
-:fmov DRM_1,N_0t_at_neg is
-      doublePrecMode=0 & doubleWidthMoveMode=1 &
-      OP_0=0xf &  N_0t_at_neg &  DRM_1 & FRM_0 &  OP_7=0xb {
-
-@if (FLOAT_LENGTH == "8") || FLOAT_TYPE == "RUNTIME_FLOAT"
-  if (!( FPSCR_SZ == 0 )) goto <doubleWidth>;
-@endif
-@if (FLOAT_LENGTH == "4") || FLOAT_TYPE == "RUNTIME_FLOAT"
+  if (!( $(FPSCR_SZ) == 0 )) goto <doubleWidth>;
     *:4 N_0t_at_neg = FRM_0;
     N_0t_at_neg = N_0t_at_neg - 4;
   goto <skip>;
-@endif
-
-@if (FLOAT_LENGTH == "8") || FLOAT_TYPE == "RUNTIME_FLOAT"
   <doubleWidth>
-    *:8 N_0t_at_neg = DRM_1;
+    *:8 N_0t_at_neg = XDRM;
     N_0t_at_neg = N_0t_at_neg - 8;
-@endif
   <skip>
 }
 
-# Floating-Point Transfer #11  (related to Extended FMOV #5)
+# Floating-Point Transfer #13-14
 # pattern 1111nnnnmmmm0110
 # text    fmov @(R0,<REG_M>),<F_REG_N>
 # arch    arch_sh2e_up
-#
-# Note- Manual says to ignore FPSCR_PR but FPSCR_SZ must = 0
-#
 :fmov.s M_0t_at_with_r0,FRN_0 is
-      # doublePrecMode=0 &
-	doubleWidthMoveMode=0 &
-      OP_0=0xf &  DRN_1 & FRN_0 & XDN_1 &  M_0t_at_with_r0 &  OP_1=0x6
-{
-       FRN_0 = *:4 (r0 + M_0t_at_with_r0);
-}
+      OP_0=0xf &  XDRN &  FRN_0 & M_0t_at_with_r0 &  OP_1=0x6 {
 
-# Floating-Point Transfer #12 (derived)
-# pattern 1111nnnnmmmm0110
-# text    fmov @(R0,<REG_M>),<F_REG_N>
-# arch    arch_sh2e_up
-:fmov M_0t_at_with_r0,DRN_1 is
-      doublePrecMode=0 & doubleWidthMoveMode=1 &
-      OP_0=0xf &  DRN_1 &  FRN_0 &  OP_6=0x0  &  M_0t_at_with_r0 &  OP_1=0x6 {
-
-@if (FLOAT_LENGTH == "8") || FLOAT_TYPE == "RUNTIME_FLOAT"
-  if (!( FPSCR_SZ == 0 )) goto <doubleWidth>;
-@endif
-@if (FLOAT_LENGTH == "4") || FLOAT_TYPE == "RUNTIME_FLOAT"
+  if (!( $(FPSCR_SZ) == 0 )) goto <doubleWidth>;
      FRN_0 = *:4 (r0 + M_0t_at_with_r0);
   goto <skip>;
-@endif
-
-@if (FLOAT_LENGTH == "8") || FLOAT_TYPE == "RUNTIME_FLOAT"
   <doubleWidth>
-     DRN_1 = *:8 (r0 + M_0t_at_with_r0);
-@endif
+     XDRN = *:8 (r0 + M_0t_at_with_r0);
   <skip>
 }
 
-# Floating-Point Transfer #13  (related to Extended FMOV #6)
+# Floating-Point Transfer #15-16
 # pattern 1111nnnnmmmm0111
-# text    fmov <F_REG_M>,@(R0,<REG_N>)
-# arch    arch_sh2e_up
-#
-# Note- Manual says to ignore FPSCR_PR but FPSCR_SZ must = 0
-#
-:fmov.s FRM_0,N_0t_at_with_r0 is
-      # doublePrecMode=0 &
-	doubleWidthMoveMode=0 &
-      OP_0=0xf & N_0t_at_with_r0 & FRM_0 & DRM_1 & XDM_1 & OP_1=0x7
-{
-        *:4 (r0 + N_0t_at_with_r0) = FRM_0;
-}
-
-# Floating-Point Transfer #14 (derived)
-# pattern 1111nnnnmmm00110
 # text    fmov @(R0,<REG_M>),<F_REG_N>
 # arch    arch_sh2e_up
-:fmov DRM_1,N_0t_at_with_r0 is
-      doublePrecMode=0 & doubleWidthMoveMode=1 &
-      OP_0=0xf  &  N_0t_at_with_r0 &  DRM_1 & FRM_0 &  OP_7=0x7 {
+:fmov FRM_0,N_0t_at_with_r0 is
+      OP_0=0xf  &  N_0t_at_with_r0 &  XDRM & FRM_0 &  OP_1=0x7 {
 
-@if (FLOAT_LENGTH == "8") || FLOAT_TYPE == "RUNTIME_FLOAT"
-  if (!( FPSCR_SZ == 0 )) goto <doubleWidth>;
-@endif
-@if (FLOAT_LENGTH == "4") || FLOAT_TYPE == "RUNTIME_FLOAT"
+  if (!( $(FPSCR_SZ) == 0 )) goto <doubleWidth>;
       *:4 (r0 + N_0t_at_with_r0) = FRM_0;
   goto <skip>;
-@endif
-
-@if (FLOAT_LENGTH == "8") || FLOAT_TYPE == "RUNTIME_FLOAT"
   <doubleWidth>
-      *:8 (r0 + N_0t_at_with_r0) = DRM_1;
-@endif
-  <skip>
-}
-
-# Floating-Point Transfer Extended #1 
-# pattern 1111nnnnmmm11010
-# text    fmov <DX_REG_M>,@<REG_N>
-# arch    arch_sh2a_or_sh4_up
-# Note: the use of both XDM_1 & FRM_0 in this constructor: modal ?????
-:fmov XDM_1,N_0t_at1 is
-      doublePrecMode=1 & doubleWidthMoveMode=0 &
-      OP_0=0xf &  N_0t_at1 &  XDM_1 &  FRM_0  &  OP_7=0x1a {
-
-@if (FLOAT_TYPE == "double") || FLOAT_TYPE == "RUNTIME_FLOAT"
-#  if (!( FPSCR_PR == 0 )) goto <doubleWidth>;
-  if (!( FPSCR_SZ == 0 )) goto <doubleWidth>;
-@endif
-@if (FLOAT_TYPE == "float") || FLOAT_TYPE == "RUNTIME_FLOAT"
-    *:4 N_0t_at1 = FRM_0;
-  goto <skip>;
-@endif
-
-@if (FLOAT_TYPE == "double") || FLOAT_TYPE == "RUNTIME_FLOAT"
-  <doubleWidth>
-    *:8 N_0t_at1 = XDM_1;
-@endif
-  <skip>
-}
-
-# Floating-Point Transfer Extended #2 (based upon FPT #5 above)
-# pattern 1111nnn1mmmm1000
-# text    fmov @<REG_M>,<DX_REG_N>
-# arch    arch_sh2a_or_sh4_up
-# Note: the use of both XDN_1 & FRN_0 in this constructor: modal ?????
-:fmov M_0t_at1,XDN_1 is
-      doublePrecMode=1 & doubleWidthMoveMode=0 &
-      OP_0=0xf &  XDN_1 &  FRN_0 & OP_6=0x1  &  M_0t_at1 &  OP_1=0x8 {
-
-@if (FLOAT_TYPE == "double") || FLOAT_TYPE == "RUNTIME_FLOAT"
-#  if (!( FPSCR_PR == 0 )) goto <doubleWidth>;
-  if (!( FPSCR_SZ == 0 )) goto <doubleWidth>;
-@endif
-@if (FLOAT_TYPE == "float") || FLOAT_TYPE == "RUNTIME_FLOAT"
-     FRN_0 = *:4 M_0t_at1;
-  goto <skip>;
-@endif
-
-@if (FLOAT_TYPE == "double") || FLOAT_TYPE == "RUNTIME_FLOAT"
-  <doubleWidth>
-     XDN_1 = *:8 M_0t_at1;
-@endif
-  <skip>
-}
-
-# Floating-Point Transfer Extended #3
-# pattern 1111nnn1mmmm1001
-# text    fmov @<REG_M>+,<DX_REG_N>
-# arch    arch_sh2a_or_sh4_up
-# Note: the use of both XDN_1 & FRN_0 in this constructor: modal ?????
-:fmov M_0t_at,XDN_1 is
-      doublePrecMode=1 & doubleWidthMoveMode=0 &
-      OP_0=0xf &  XDN_1 &  FRN_0 & OP_6=0x1  &  M_0t_at &  OP_1=0x9 {
-
-@if (FLOAT_TYPE == "double") || FLOAT_TYPE == "RUNTIME_FLOAT"
-#  if (!( FPSCR_PR == 0 )) goto <doubleWidth>;
-  if (!( FPSCR_SZ == 0 )) goto <doubleWidth>;
-@endif
-@if (FLOAT_TYPE == "float") || FLOAT_TYPE == "RUNTIME_FLOAT"
-     FRN_0 = *:4 M_0t_at;
-     M_0t_at = M_0t_at + 4;
-  goto <skip>;
-@endif
-
-@if (FLOAT_TYPE == "double") || FLOAT_TYPE == "RUNTIME_FLOAT"
-  <doubleWidth>
-     XDN_1 = *:8 M_0t_at;
-     M_0t_at = M_0t_at + 8;
-@endif
-  <skip>
-}
-
-# Floating-Point Transfer Extended #4 
-# pattern 1111nnnnmmm11011
-# text    fmov <DX_REG_M>,@-<REG_N>
-# arch    arch_sh2a_or_sh4_up
-# Note: the use of both XDM_1 & FRM_0 in this constructor: modal ?????
-:fmov XDM_1,N_0t_at_neg is
-      doublePrecMode=1 & doubleWidthMoveMode=0 &
-      OP_0=0xf &  N_0t_at_neg &  XDM_1 &  FRM_0  &  OP_7=0x1b {
-
-@if (FLOAT_TYPE == "double") || FLOAT_TYPE == "RUNTIME_FLOAT"
-#  if (!( FPSCR_PR == 0 )) goto <doubleWidth>;
-  if (!( FPSCR_SZ == 0 )) goto <doubleWidth>;
-@endif
-@if (FLOAT_TYPE == "float") || FLOAT_TYPE == "RUNTIME_FLOAT"
-    N_0t_at_neg = N_0t_at_neg - 4;
-    *:4 N_0t_at_neg = FRM_0;
-  goto <skip>;
-@endif
-
-@if (FLOAT_TYPE == "double") || FLOAT_TYPE == "RUNTIME_FLOAT"
-  <doubleWidth>
-    N_0t_at_neg = N_0t_at_neg - 8;
-    *:8 N_0t_at_neg = XDM_1;
-@endif
-  <skip>
-}
-
-# Floating-Point Transfer Extended #5 (based upon FPT #11 above)
-# pattern 1111nnn1mmmm0110
-# text    fmov @(R0,<REG_M>),<DX_REG_N>
-# arch    arch_sh2a_or_sh4_up
-# Note: the use of both XDN_1 & FRN_0 in this constructor: modal ?????
-:fmov M_0t_at_with_r0,XDN_1 is
-      doublePrecMode=1 & doubleWidthMoveMode=0 &
-      OP_0=0xf &  XDN_1 &  FRN_0 & OP_6=0x1  &  M_0t_at_with_r0 &  OP_1=0x6 {
-
-@if (FLOAT_TYPE == "double") || FLOAT_TYPE == "RUNTIME_FLOAT"
-#  if (!( FPSCR_PR == 0 )) goto <doubleWidth>;
-  if (!( FPSCR_SZ == 0 )) goto <doubleWidth>;
-@endif
-@if (FLOAT_TYPE == "float") || FLOAT_TYPE == "RUNTIME_FLOAT"
-     FRN_0 = *:4 (r0 + M_0t_at_with_r0);
-  goto <skip>;
-@endif
-
-@if (FLOAT_TYPE == "double") || FLOAT_TYPE == "RUNTIME_FLOAT"
-  <doubleWidth>
-     XDN_1 = *:8 (r0 + M_0t_at_with_r0);
-@endif
-  <skip>
-}
-
-# Floating-Point Transfer Extended #6 
-# pattern 1111nnnnmmm10111
-# text    fmov <DX_REG_M>,@(R0,<REG_N>)
-# arch    arch_sh2a_or_sh4_up
-# Note: the use of both XDM_1 & FRM_0 in this constructor: modal ?????
-:fmov XDM_1,N_0t_at_with_r0 is
-      doublePrecMode=1 & doubleWidthMoveMode=0 &
-      OP_0=0xf &  N_0t_at_with_r0 &  XDM_1 &  FRM_0  &  OP_7=0x17 {
-
-@if (FLOAT_TYPE == "double") || FLOAT_TYPE == "RUNTIME_FLOAT"
-#  if (!( FPSCR_PR == 0 )) goto <doubleWidth>;
-  if (!( FPSCR_SZ == 0 )) goto <doubleWidth>;
-@endif
-@if (FLOAT_TYPE == "float") || FLOAT_TYPE == "RUNTIME_FLOAT"
-    *:4 (r0 + N_0t_at_with_r0) = FRM_0;
-  goto <skip>;
-@endif
-
-@if (FLOAT_TYPE == "double") || FLOAT_TYPE == "RUNTIME_FLOAT"
-  <doubleWidth>
-    *:8 (r0 + N_0t_at_with_r0) = XDM_1;
-@endif
-  <skip>
-}
-
-# Floating-Point Transfer Extended #7 (based upon FPT #1a above)
-# pattern 1111nnn1mmm11100
-# text    fmov <DX_REG_M>,<DX_REG_N>
-# arch    arch_sh2a_or_sh4_up
-:fmov XDM_1,XDN_1 is
-      doublePrecMode=1 & doubleWidthMoveMode=0 &
-      OP_0=0xf &  XDN_1 &  FRN_0 & OP_6=0x1  &  XDM_1 &  FRM_0  & OP_10=0x1 & OP_1=0xc {
-
-@if (FLOAT_TYPE == "double") || FLOAT_TYPE == "RUNTIME_FLOAT"
-#  if (!( FPSCR_PR == 0 )) goto <doubleWidth>;
-  if (!( FPSCR_SZ == 0 )) goto <doubleWidth>;
-@endif
-@if (FLOAT_TYPE == "float") || FLOAT_TYPE == "RUNTIME_FLOAT"
-    FRN_0 = FRM_0;
-  goto <skip>;
-@endif
-
-@if (FLOAT_TYPE == "double") || FLOAT_TYPE == "RUNTIME_FLOAT"
-  <doubleWidth>
-    XDN_1 = XDM_1;
-@endif
-  <skip>
-}
-
-# Floating-Point Transfer Extended #8 (based upon FPT #1b above)
-# pattern 1111nnn0mmm11100
-# text    fmov <DX_REG_M>,<D_REG_N>
-# arch    arch_sh2a_or_sh4_up
-:fmov XDM_1,DRN_1 is
-      doublePrecMode=1 & doubleWidthMoveMode=0 &
-      OP_0=0xf & DRN_1 & FRN_0 & OP_6=0x0 & FRM_0 & XDM_1 & OP_10=0x1 & OP_1=0xc {
-
-@if (FLOAT_TYPE == "double") || FLOAT_TYPE == "RUNTIME_FLOAT"
-#  if (!( FPSCR_PR == 0 )) goto <doubleWidth>;
-  if (!( FPSCR_SZ == 0 )) goto <doubleWidth>;
-@endif
-@if (FLOAT_TYPE == "float") || FLOAT_TYPE == "RUNTIME_FLOAT"
-    FRN_0 = FRM_0;
-  goto <skip>;
-@endif
-
-@if (FLOAT_TYPE == "double") || FLOAT_TYPE == "RUNTIME_FLOAT"
-  <doubleWidth>
-    DRN_1 = XDM_1;
-@endif
-  <skip>
-}
-
-# Floating-Point Transfer Extended #9 (based upon FPT #1c above)
-# pattern 1111nnn0mmm11100
-# text    fmov <D_REG_M>,<DX_REG_N>
-# arch    arch_sh2a_or_sh4_up
-:fmov DRM_1,XDN_1 is
-      doublePrecMode=1 & doubleWidthMoveMode=0 &
-      OP_0=0xf & XDN_1 & FRN_0 & OP_6=0x1 & DRM_1 & FRM_0 & OP_10=0x0 & OP_1=0xc {
-
-@if (FLOAT_TYPE == "double") || FLOAT_TYPE == "RUNTIME_FLOAT"
-#  if (!( FPSCR_PR == 0 )) goto <doubleWidth>;
-  if (!( FPSCR_SZ == 0 )) goto <doubleWidth>;
-@endif
-@if (FLOAT_TYPE == "float") || FLOAT_TYPE == "RUNTIME_FLOAT"
-    FRN_0 = FRM_0;
-  goto <skip>;
-@endif
-
-@if (FLOAT_TYPE == "double") || FLOAT_TYPE == "RUNTIME_FLOAT"
-  <doubleWidth>
-    XDN_1 = DRM_1;
-@endif
+      *:8 (r0 + N_0t_at_with_r0) = XDRM;
   <skip>
 }
 
@@ -2167,44 +1261,13 @@ N_0t = Rn;
 # text    fmul <F_REG_M>,<F_REG_N>
 # arch    arch_sh2e_up
 :fmul FRM_0t,FRN_0t is
-      doublePrecMode = 0 &
       OP_0=0xf & FRN_0t & DRN_1t & FRM_0t & DRM_1t & OP_1=0x2 { 
 
-@if (FLOAT_TYPE == "double") || FLOAT_TYPE == "RUNTIME_FLOAT"
-  if (!( FPSCR_PR == 0 )) goto <doublePrecision>;
-@endif
-@if (FLOAT_TYPE == "float") || FLOAT_TYPE == "RUNTIME_FLOAT"
+  if (!( $(FPSCR_PR) == 0 )) goto <doublePrecision>;
     FRN_0t = FRN_0t f* FRM_0t;
   goto <skip>;
-@endif
-
-@if (FLOAT_TYPE == "double") || FLOAT_TYPE == "RUNTIME_FLOAT"
   <doublePrecision>
     DRN_1t = DRN_1t f* DRM_1t;
-@endif
-  <skip>
-}
-
-# Floating-Point Multiplication
-# pattern 1111nnn0mmm00010
-# text    fmul <D_REG_M>,<D_REG_N>
-# arch    arch_sh2a_or_sh4_up
-:fmul DRM_1t,DRN_1t is
-      doublePrecMode = 1 &
-      OP_0=0xf & DRN_1t & FRN_0t & OP_6=0x0 & DRM_1t & FRM_0t & OP_7=0x2 {
-
-@if (FLOAT_TYPE == "double") || FLOAT_TYPE == "RUNTIME_FLOAT"
-  if (!( FPSCR_PR == 0 )) goto <doublePrecision>;
-@endif
-@if (FLOAT_TYPE == "float") || FLOAT_TYPE == "RUNTIME_FLOAT"
-    FRN_0t = FRN_0t f* FRM_0t;
-  goto <skip>;
-@endif
-
-@if (FLOAT_TYPE == "double") || FLOAT_TYPE == "RUNTIME_FLOAT"
-  <doublePrecision>
-    DRN_1t = DRN_1t f* DRM_1t;
-@endif
   <skip>
 }
 
@@ -2213,44 +1276,13 @@ N_0t = Rn;
 # text    fneg <F_REG_N>
 # arch    arch_sh2e_up
 :fneg FRN_0t is
-      doublePrecMode = 0 &
       OP_0=0xf & FRN_0t & DRN_1t & OP_6 & OP_4=0x4d {
 
-@if (FLOAT_TYPE == "double") || FLOAT_TYPE == "RUNTIME_FLOAT"
-  if (!( FPSCR_PR == 0 )) && (OP_6:1 == 0) goto <doublePrecision>;
-@endif
-@if (FLOAT_TYPE == "float") || FLOAT_TYPE == "RUNTIME_FLOAT"
+  if (!( $(FPSCR_PR) == 0 )) && (OP_6:1 == 0) goto <doublePrecision>;
     FRN_0t = f- FRN_0t;
   goto <skip>;
-@endif
-
-@if (FLOAT_TYPE == "double") || FLOAT_TYPE == "RUNTIME_FLOAT"
   <doublePrecision>
     DRN_1t = f- DRN_1t;
-@endif
-  <skip>
-}
-
-# Floating-Point Sign Inversion
-# pattern 1111nnn001001101
-# text    fneg <D_REG_N>
-# arch    arch_sh2a_or_sh4_up
-:fneg DRN_1t is
-      doublePrecMode = 1 &
-      OP_0=0xf & DRN_1t & FRN_0t & OP_5=0x4d {
-
-@if (FLOAT_TYPE == "double") || FLOAT_TYPE == "RUNTIME_FLOAT"
-  if (!( FPSCR_PR == 0 )) goto <doublePrecision>;
-@endif
-@if (FLOAT_TYPE == "float") || FLOAT_TYPE == "RUNTIME_FLOAT"
-    FRN_0t = f- FRN_0t;
-  goto <skip>;
-@endif
-
-@if (FLOAT_TYPE == "double") || FLOAT_TYPE == "RUNTIME_FLOAT"
-  <doublePrecision>
-    DRN_1t = f- DRN_1t;
-@endif
   <skip>
 }
 
@@ -2259,16 +1291,11 @@ N_0t = Rn;
 # text    frchg
 # arch    # arch_sh4_up
 :frchg  is
-    doublePrecMode = 0 &
     OP_3=0xfbfd {
 
-@if (FLOAT_TYPE == "double") || FLOAT_TYPE == "RUNTIME_FLOAT"
-  if (!( FPSCR_PR == 0 )) goto <skip>;
-@endif
-@if (FLOAT_TYPE == "float") || FLOAT_TYPE == "RUNTIME_FLOAT"
-    FPSCR_FR = !FPSCR_FR;
+  if (!( $(FPSCR_PR) == 0 )) goto <skip>;
+    $(FPSCR_FR) = !$(FPSCR_FR);
     FPSCR = FPSCR ^ 0x00200000;
-@endif
   <skip>
 }
 
@@ -2278,16 +1305,10 @@ N_0t = Rn;
 # text    fschg
 # arch    arch_sh2a_or_sh4a_up (not in sh4)
 :fschg  is 
-    doublePrecMode = 0 &
-    OP_3=0xf3fd [ doubleWidthMoveMode = (1 - doubleWidthMoveMode); globalset(inst_next,doubleWidthMoveMode); ] {
+    OP_3=0xf3fd {
 
-@if (FLOAT_TYPE == "double") || FLOAT_TYPE == "RUNTIME_FLOAT"
-  if (!( FPSCR_PR == 0 )) goto <skip>;
-@endif
-@if (FLOAT_TYPE == "float") || FLOAT_TYPE == "RUNTIME_FLOAT"
-    FPSCR_SZ = !FPSCR_SZ;
+  if (!( $(FPSCR_PR) == 0 )) goto <skip>;
     FPSCR = FPSCR ^ 0x00100000;
-@endif
   <skip>
 }
 
@@ -2296,12 +1317,9 @@ N_0t = Rn;
 # text    fpchg
 # arch    arch_sh2a_or_sh4_up
 :fpchg  is
-    OP_3=0xf7fd [ doubleWidthMoveMode = (1 - doubleWidthMoveMode); globalset(inst_next,doubleWidthMoveMode); ]
+    OP_3=0xf7fd
 {
-@if (FLOAT_TYPE == "float") || FLOAT_TYPE == "RUNTIME_FLOAT"
-    FPSCR_PR = !FPSCR_PR;
     FPSCR = FPSCR ^ 0x00080000;
-@endif
 }
 
 # Floating-Point Square Root
@@ -2309,44 +1327,13 @@ N_0t = Rn;
 # text    fsqrt <F_REG_N>
 # arch    # arch_sh2a_or_sh3e_up
 :fsqrt FRN_0t is
-       doublePrecMode = 0 &
        OP_0=0xf & FRN_0t & DRN_1t & OP_4=0x6d {
 
-@if (FLOAT_TYPE == "double") || FLOAT_TYPE == "RUNTIME_FLOAT"
-  if (!( FPSCR_PR == 0 )) goto <doublePrecision>;
-@endif
-@if (FLOAT_TYPE == "float") || FLOAT_TYPE == "RUNTIME_FLOAT"
+  if (!( $(FPSCR_PR) == 0 )) goto <doublePrecision>;
     FRN_0t = sqrt( FRN_0t );
   goto <skip>;
-@endif
-
-@if (FLOAT_TYPE == "double") || FLOAT_TYPE == "RUNTIME_FLOAT"
   <doublePrecision>
     DRN_1t = sqrt( DRN_1t );
-@endif
-  <skip>
-}
-
-# Floating-Point Square Root
-# pattern 1111nnn001101101
-# text    fsqrt <D_REG_N>
-# arch    arch_sh2a_or_sh4_up
-:fsqrt DRN_1t is
-       doublePrecMode = 1 &
-       OP_0=0xf & DRN_1t & FRN_0t & OP_5=0x6d {
-
-@if (FLOAT_TYPE == "double") || FLOAT_TYPE == "RUNTIME_FLOAT"
-  if (!( FPSCR_PR == 0 )) goto <doublePrecision>;
-@endif
-@if (FLOAT_TYPE == "float") || FLOAT_TYPE == "RUNTIME_FLOAT"
-    FRN_0t = sqrt( FRN_0t );
-  goto <skip>;
-@endif
-
-@if (FLOAT_TYPE == "double") || FLOAT_TYPE == "RUNTIME_FLOAT"
-  <doublePrecision>
-    DRN_1t = sqrt( DRN_1t );
-@endif
   <skip>
 }
 
@@ -2364,47 +1351,15 @@ N_0t = Rn;
 # text    fsub <F_REG_M>,<F_REG_N>
 # arch    arch_sh2e_up
 :fsub FRM_0t,FRN_0t is
-      doublePrecMode = 0 &
       OP_0=0xf & FRN_0t & DRN_1t & FRM_0t & DRM_1t & OP_1=0x1 {
 
-@if (FLOAT_TYPE == "double") || FLOAT_TYPE == "RUNTIME_FLOAT"
-  if (!( FPSCR_PR == 0 )) goto <doublePrecision>;
-@endif
-@if (FLOAT_TYPE == "float") || FLOAT_TYPE == "RUNTIME_FLOAT"
+  if (!( $(FPSCR_PR) == 0 )) goto <doublePrecision>;
     FRN_0t = FRN_0t f- FRM_0t;
   goto <skip>;
-@endif
-
-@if (FLOAT_TYPE == "double") || FLOAT_TYPE == "RUNTIME_FLOAT"
   <doublePrecision>
     DRN_1t = DRN_1t f- DRM_1t;
-@endif
   <skip>
 }
-
-# Floating-Point Subtraction
-# pattern 1111nnn0mmm00001
-# text    fsub <D_REG_M>,<D_REG_N>
-# arch    arch_sh2a_or_sh4_up
-:fsub DRM_1t,DRN_1t is
-      doublePrecMode = 1 &
-      OP_0=0xf & DRN_1t & FRN_0t & OP_6=0x0 & DRM_1t & FRM_0t & OP_7=0x1 {
-
-@if (FLOAT_TYPE == "double") || FLOAT_TYPE == "RUNTIME_FLOAT"
-  if (!( FPSCR_PR == 0 )) goto <doublePrecision>;
-@endif
-@if (FLOAT_TYPE == "float") || FLOAT_TYPE == "RUNTIME_FLOAT"
-    FRN_0t = FRN_0t f- FRM_0t;
-  goto <skip>;
-@endif
-
-@if (FLOAT_TYPE == "double") || FLOAT_TYPE == "RUNTIME_FLOAT"
-  <doublePrecision>
-    DRN_1t = DRN_1t f- DRM_1t;
-@endif
-  <skip>
-}
-
 
 # Conversion to Integer
 # pattern 1111nnnn00111101
@@ -2412,44 +1367,13 @@ N_0t = Rn;
 # # arch    arch_sh2e_up
 # Note: Field usage indicates FR[n], not FR[m].
 :ftrc FRN_0t,FPUL is
-      doublePrecMode = 0 &
       OP_0=0xf & FRN_0t & DRN_1t & OP_4=0x3d & FPUL {
 
-@if (FLOAT_TYPE == "double") || FLOAT_TYPE == "RUNTIME_FLOAT"
-  if (!( FPSCR_PR == 0 )) goto <doublePrecision>;
-@endif
-@if (FLOAT_TYPE == "float") || FLOAT_TYPE == "RUNTIME_FLOAT"
+  if (!( $(FPSCR_PR) == 0 )) goto <doublePrecision>;
     FPUL = trunc( FRN_0t );
   goto <skip>;
-@endif
-
-@if (FLOAT_TYPE == "double") || FLOAT_TYPE == "RUNTIME_FLOAT"
   <doublePrecision>
     FPUL = trunc( DRN_1t );
-@endif
-  <skip>
-}
-
-# Conversion to Integer
-# pattern 1111nnn000111101
-# text    ftrc <D_REG_N>,FPUL
-# arch    arch_sh2e_up
-:ftrc DRN_1t,FPUL is
-      doublePrecMode = 1 &
-      OP_0=0xf & DRN_1t & FRN_0t & OP_5=0x3d & FPUL {
-
-@if (FLOAT_TYPE == "double") || FLOAT_TYPE == "RUNTIME_FLOAT"
-  if (!( FPSCR_PR == 0 )) goto <doublePrecision>;
-@endif
-@if (FLOAT_TYPE == "float") || FLOAT_TYPE == "RUNTIME_FLOAT"
-    FPUL = trunc( FRN_0t );
-  goto <skip>;
-@endif
-
-@if (FLOAT_TYPE == "double") || FLOAT_TYPE == "RUNTIME_FLOAT"
-  <doublePrecision>
-    FPUL = trunc( DRN_1t );
-@endif
   <skip>
 }
 
@@ -2459,10 +1383,7 @@ N_0t = Rn;
 # arch    # arch_sh4_up
 :ftrv XMTRX_t,FVN_2t is OP_0=0xf &  FVN_2t &  OP_8=0x1fd & XMTRX_t {
 
-@if (FLOAT_TYPE == "double") || FLOAT_TYPE == "RUNTIME_FLOAT"
-  if (!( FPSCR_PR == 0 )) goto <skip>;
-@endif
-@if (FLOAT_TYPE == "float") || FLOAT_TYPE == "RUNTIME_FLOAT"
+  if (!( $(FPSCR_PR) == 0 )) goto <skip>;
     temp1:4 =          ( xf0  f* *[register]:4 (&:4 FVN_2t +  0) );
     temp1   = temp1 f+ ( xf4  f* *[register]:4 (&:4 FVN_2t +  4) );
     temp1   = temp1 f+ ( xf8  f* *[register]:4 (&:4 FVN_2t +  8) );
@@ -2488,7 +1409,6 @@ N_0t = Rn;
     *[register]:4 (&:4 FVN_2t +  4) = temp2;
     *[register]:4 (&:4 FVN_2t +  8) = temp3;
     *[register]:4 (&:4 FVN_2t + 12) = temp4;
-@endif
   <skip>
 }
 
@@ -2537,7 +1457,6 @@ define pcodeop InvalidateCacheBlock;
 :ldc N_0t_sr is OP_0=0x4 & N_0t_sr & OP_4=0xe {
 
   SR = (N_0t_sr & 0x700083f3);
-  splitSRregister(); 
 }
 
 
@@ -2603,7 +1522,6 @@ define pcodeop InvalidateCacheBlock;
 :ldc.l N_0t_sr1 is OP_0=0x4 & N_0t_sr1 & OP_4=0x7 {
 
   SR = (*:4 ( N_0t_sr1 )) & 0x700083F3;
-  splitSRregister();
   N_0t_sr1 = N_0t_sr1 + 4;
 }
 
@@ -2699,7 +1617,6 @@ define pcodeop InvalidateCacheBlock;
 :lds N_0t_fpscr is OP_0=0x4 & N_0t_fpscr & OP_4=0x6a {
 
   FPSCR = N_0t_fpscr & 0x003FFFFF;
-  splitFPSCRregister();
 }
 
 
@@ -2711,7 +1628,6 @@ define pcodeop InvalidateCacheBlock;
 :lds.l N_0t_fpscr1 is OP_0=0x4 & N_0t_fpscr1 & OP_4=0x66 {
 
   FPSCR = (*:4 ( N_0t_fpscr1 )) & 0x003FFFFF;
-  splitFPSCRregister();
   N_0t_fpscr1 = N_0t_fpscr1 + 4;
 }
 
@@ -3201,7 +2117,7 @@ define pcodeop mac_wOp;
 # arch 
 :movt N_0t is OP_0=0x0 & N_0t & OP_4=0x29 {
 
-  N_0t = zext(T);
+  N_0t = zext($(T_FLAG));
 }
 
 
@@ -3252,10 +2168,10 @@ define pcodeop mac_wOp;
 :negc M_0t,N_0t is OP_0=0x6 & N_0t & M_0t & OP_1=0xa {
  
   temp:4 = -M_0t;
-  N_0t = temp - zext(T);
-  T = ( 0 < temp );
+  N_0t = temp - zext($(T_FLAG));
+  $(T_FLAG) = ( 0 < temp );
   if ( temp >= N_0t ) goto <skip>;
-    T = 1;
+    $(T_FLAG) = 1;
   <skip>
 }
 
@@ -3346,8 +2262,8 @@ define pcodeop CacheBlockWriteBack;
 :rotcl N_0t is OP_0=0x4 & N_0t & OP_4=0x24 {
 
   temp:1 = ( (N_0t & 0x80000000) != 0 );
-  N_0t   = (N_0t << 1) | zext(T);
-  T      = temp; 
+  N_0t   = (N_0t << 1) | zext($(T_FLAG));
+  $(T_FLAG)      = temp; 
 }
 
 # One-Bit Right Rotation through T Bit
@@ -3357,8 +2273,8 @@ define pcodeop CacheBlockWriteBack;
 :rotcr N_0t is OP_0=0x4 & N_0t & OP_4=0x25 {
 
   temp:1 = ( (N_0t & 0x00000001) != 0 );
-  N_0t   = ( N_0t >> 1 ) | ( zext(T) << 31 );
-  T      = temp;
+  N_0t   = ( N_0t >> 1 ) | ( zext($(T_FLAG)) << 31 );
+  $(T_FLAG)      = temp;
 }
 
 
@@ -3368,8 +2284,8 @@ define pcodeop CacheBlockWriteBack;
 # arch 
 :rotl N_0t is OP_0=0x4 & N_0t & OP_4=0x4{
 
-  T      = ( (N_0t & 0x80000000) != 0 );
-  N_0t   = (N_0t << 1) | zext(T);
+  $(T_FLAG)      = ( (N_0t & 0x80000000) != 0 );
+  N_0t   = (N_0t << 1) | zext($(T_FLAG));
 }
 
 
@@ -3379,8 +2295,8 @@ define pcodeop CacheBlockWriteBack;
 # arch 
 :rotr N_0t is OP_0=0x4 & N_0t & OP_4=0x5 {
 
-  T      = ( (N_0t & 0x00000001) != 0 );
-  N_0t   = ( N_0t >> 1 ) | ( zext(T) << 31 );
+  $(T_FLAG)      = ( (N_0t & 0x00000001) != 0 );
+  N_0t   = ( N_0t >> 1 ) | ( zext($(T_FLAG)) << 31 );
 }
 
 
@@ -3391,7 +2307,6 @@ define pcodeop CacheBlockWriteBack;
 :rte  is OP_3=0x2b {
 
   SR = SSR;
-  splitSRregister();
   PC = SPC;
   delayslot(1);
   return [PC];
@@ -3416,7 +2331,7 @@ define pcodeop CacheBlockWriteBack;
 # arch 
 :sets  is OP_3=0x58 {
 
-  S = 1;
+  $(S_FLAG) = 1;
 }
 
 
@@ -3426,7 +2341,7 @@ define pcodeop CacheBlockWriteBack;
 # arch 
 :sett  is OP_3=0x18 {
 
-  T = 1;
+  $(T_FLAG) = 1;
 }
 
 
@@ -3450,7 +2365,7 @@ define pcodeop CacheBlockWriteBack;
 # arch 
 :shal N_0t is OP_0=0x4 & N_0t & OP_4=0x20 {
 
-  T = ( ( N_0t & 0x80000000 ) != 0 );
+  $(T_FLAG) = ( ( N_0t & 0x80000000 ) != 0 );
   N_0t = N_0t << 1;
 }
 
@@ -3461,7 +2376,7 @@ define pcodeop CacheBlockWriteBack;
 # arch 
 :shar N_0t is OP_0=0x4 & N_0t & OP_4=0x21 {
 
-  T    = ( ( N_0t & 0x00000001 ) != 0 );
+  $(T_FLAG)    = ( ( N_0t & 0x00000001 ) != 0 );
   N_0t = N_0t s>> 1;
 }
 
@@ -3487,7 +2402,7 @@ define pcodeop CacheBlockWriteBack;
 # arch 
 :shll N_0t is OP_0=0x4 & N_0t & OP_4=0x0 {
 
-  T = ( ( N_0t & 0x80000000 ) != 0 );
+  $(T_FLAG) = ( ( N_0t & 0x80000000 ) != 0 );
   N_0t = N_0t << 1;
 }
 
@@ -3527,7 +2442,7 @@ define pcodeop CacheBlockWriteBack;
 # arch 
 :shlr N_0t is OP_0=0x4 & N_0t & OP_4=0x1 {
 
-  T = ( ( N_0t & 0x00000001 ) != 0 );
+  $(T_FLAG) = ( ( N_0t & 0x00000001 ) != 0 );
   N_0t = N_0t >> 1;
 }
 
@@ -3575,7 +2490,6 @@ define pcodeop CacheBlockWriteBack;
 # arch    arch_sh_up
 :stc sr_N_0t is OP_0=0x0 & sr_N_0t & OP_4=0x2  {
 
-  genSRregister();
   sr_N_0t = SR;
 }
 
@@ -3653,7 +2567,6 @@ define pcodeop CacheBlockWriteBack;
 :stc.l sr_t,N_0t_at_neg is OP_0=0x4 & N_0t_at_neg & OP_4=0x3 & sr_t {
 
   N_0t_at_neg = N_0t_at_neg - 4;
-  genSRregister();
   *:4 ( N_0t_at_neg ) = SR;
 }
 
@@ -3809,7 +2722,6 @@ define pcodeop CacheBlockWriteBack;
 # arch    arch_sh2e_up
 :sts fpscr_N_0t is OP_0=0x0 & fpscr_N_0t & OP_4=0x6a {
 
-  genFPSCRregister();
   fpscr_N_0t = FPSCR;
 }
 
@@ -3832,7 +2744,6 @@ define pcodeop CacheBlockWriteBack;
 :sts.l fpscr_t,N_0t_at_neg is OP_0=0x4 & N_0t_at_neg & OP_4=0x62 & fpscr_t {
 
   N_0t_at_neg = N_0t_at_neg - 4;
-  genFPSCRregister();
   *:4 ( N_0t_at_neg ) = FPSCR;
 }
 
@@ -3855,10 +2766,10 @@ define pcodeop CacheBlockWriteBack;
 
   tmp1:4 = N_0t - M_0t;
   tmp0:4 = N_0t;
-  N_0t   = tmp1 - zext(T);
-  T = ( tmp0 < tmp1 );
+  N_0t   = tmp1 - zext($(T_FLAG));
+  $(T_FLAG) = ( tmp0 < tmp1 );
   if ( tmp1 >= N_0t ) goto <skip>;
-    T = 1;
+    $(T_FLAG) = 1;
   <skip>
 }
 
@@ -3875,7 +2786,7 @@ define pcodeop CacheBlockWriteBack;
   N_0t = N_0t - M_0t;
   local ans  = ( N_0t s< 0 );
   ans  = ans + dest;
-  T    = ( (src == 1) && (ans == 1) );
+  $(T_FLAG)    = ( (src == 1) && (ans == 1) );
 }
 
 
@@ -3917,7 +2828,7 @@ define pcodeop SynchronizeDataOperation;
 :tas.b N_0t_at1 is OP_0=0x4 & N_0t_at1 & OP_4=0x1b {
 
   temp:1 = *:1 ( N_0t_at1 );
-  T = ( temp == 0 );
+  $(T_FLAG) = ( temp == 0 );
   temp = temp | 0x80;
   *:1 ( N_0t_at1 ) = temp;
 }
@@ -3937,7 +2848,7 @@ define pcodeop TrapAlways;
 # arch    arch_sh_up
 :tst M_0t,N_0t is OP_0=0x2 & N_0t & M_0t & OP_1=0x8 {
  
-    T = ( (N_0t & M_0t) == 0 );
+    $(T_FLAG) = ( (N_0t & M_0t) == 0 );
 }
 
 
@@ -3947,7 +2858,7 @@ define pcodeop TrapAlways;
 # arch    arch_sh_up
 :tst U_0t_r0 is OP_2=0xc8 & U_0t_r0 {
  
-   T = ( ( r0 & U_0t_r0 ) == 0 );
+   $(T_FLAG) = ( ( r0 & U_0t_r0 ) == 0 );
 }
 
 
@@ -3957,7 +2868,7 @@ define pcodeop TrapAlways;
 # arch    arch_sh_up
 :tst.b U_0t1 is OP_2=0xcc & U_0t1 {
 
-  T = ( ( (*:1 ( GBR + r0 )) & U_0t1 ) == 0 );
+  $(T_FLAG) = ( ( (*:1 ( GBR + r0 )) & U_0t1 ) == 0 );
 }
 
 
