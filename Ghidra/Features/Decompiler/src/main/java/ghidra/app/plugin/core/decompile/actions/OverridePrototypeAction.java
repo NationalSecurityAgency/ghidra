@@ -17,8 +17,6 @@ package ghidra.app.plugin.core.decompile.actions;
 
 import java.util.Iterator;
 
-import docking.ActionContext;
-import docking.action.DockingAction;
 import docking.action.MenuData;
 import docking.widgets.OptionDialog;
 import ghidra.app.decompiler.*;
@@ -35,7 +33,8 @@ import ghidra.util.Msg;
 import ghidra.util.UndefinedFunction;
 import ghidra.util.exception.CancelledException;
 
-public class OverridePrototypeAction extends DockingAction {
+public class OverridePrototypeAction extends AbstractDecompilerAction {
+
 	private final DecompilerController controller;
 	private final PluginTool tool;
 
@@ -59,8 +58,9 @@ public class OverridePrototypeAction extends DockingAction {
 		@Override
 		protected void okCallback() {
 			// only close the dialog if the user made valid changes
-			if (parseFunctionDefinition())
+			if (parseFunctionDefinition()) {
 				close();
+			}
 		}
 
 		private boolean parseFunctionDefinition() {
@@ -85,63 +85,128 @@ public class OverridePrototypeAction extends DockingAction {
 		}
 	}
 
-	public OverridePrototypeAction(String owner, PluginTool tool, DecompilerController controller) {
-		super("Override Signature", owner);
+	public OverridePrototypeAction(PluginTool tool, DecompilerController controller) {
+		super("Override Signature");
 		this.tool = tool;
 		this.controller = controller;
 		setPopupMenuData(new MenuData(new String[] { "Override Signature" }, "Decompile"));
 	}
 
-	@Override
-	public boolean isEnabledForContext(ActionContext context) {
-		if (!(context instanceof DecompilerActionContext)) {
-			return false;
+	/**
+	 * Try to find the PcodeOp representing the call the user has selected
+	 * @param controller the decompiler controller
+	 * @return the PcodeOp or null
+	 */
+	public static PcodeOp getCallOp(DecompilerController controller) {
+		DecompilerPanel decompilerPanel = controller.getDecompilerPanel();
+		ClangToken tokenAtCursor = decompilerPanel.getTokenAtCursor();
+		if (tokenAtCursor == null) {
+			return null;
+		}
+		if (tokenAtCursor instanceof ClangFuncNameToken) {
+			return ((ClangFuncNameToken) tokenAtCursor).getPcodeOp();
 		}
 
+		Address addr = tokenAtCursor.getMinAddress();
+		if (addr == null) {
+			return null;
+		}
+		Instruction instr = controller.getProgram().getListing().getInstructionAt(addr);
+		if (instr == null) {
+			return null;
+		}
+		if (!instr.getFlowType().isCall()) {
+			return null;
+		}
+		ClangFunction cfunc = tokenAtCursor.getClangFunction();
+		if (cfunc == null) {
+			return null;
+		}
+		HighFunction hfunc = cfunc.getHighFunction();
+		Iterator<PcodeOpAST> iter = hfunc.getPcodeOps(addr);
+		while (iter.hasNext()) {
+			PcodeOpAST op = iter.next();
+			if ((op.getOpcode() == PcodeOp.CALL) || (op.getOpcode() == PcodeOp.CALLIND)) {
+				return op;
+			}
+		}
+
+		return null;
+	}
+
+	private Function getCalledFunction(PcodeOp op) {
+		if (op.getOpcode() != PcodeOp.CALL) {
+			return null;
+		}
+		Address addr = op.getInput(0).getAddress();
+		Program program = controller.getProgram();
+		return program.getFunctionManager().getFunctionAt(addr);
+	}
+
+	private String generateSignature(PcodeOp op, String name) {
+		StringBuffer buf = new StringBuffer();
+		Varnode vn = op.getOutput();
+		DataType dt = null;
+		if (vn != null) {
+			dt = vn.getHigh().getDataType();
+		}
+		if (dt != null) {
+			buf.append(dt.getDisplayName());
+		}
+		else {
+			buf.append(DataType.VOID.getDisplayName());
+		}
+
+		buf.append(' ').append(name).append('(');
+		for (int i = 1; i < op.getNumInputs(); ++i) {
+			vn = op.getInput(i);
+			dt = null;
+			if (vn != null) {
+				dt = vn.getHigh().getDataType();
+			}
+			if (dt != null) {
+				buf.append(dt.getDisplayName());
+			}
+			else {
+				buf.append("BAD");
+			}
+			if (i != op.getNumInputs() - 1) {
+				buf.append(',');
+			}
+		}
+		buf.append(')');
+		return buf.toString();
+	}
+
+	@Override
+	protected boolean isEnabledForDecompilerContext(DecompilerActionContext context) {
 		Function function = controller.getFunction();
 		if (function == null || function instanceof UndefinedFunction) {
 			return false;
-		}
-
-		DecompilerActionContext decompilerActionContext = (DecompilerActionContext) context;
-		if (decompilerActionContext.isDecompiling()) {
-			// Let this through here and handle it in actionPerformed().  This lets us alert 
-			// the user that they have to wait until the decompile is finished.  If we are not
-			// enabled at this point, then the keybinding will be propagated to the global 
-			// actions, which is not what we want.
-			return true;
 		}
 
 		return getCallOp(controller) != null;
 	}
 
 	@Override
-	public void actionPerformed(ActionContext context) {
-		// Note: we intentionally do this check here and not in isEnabledForContext() so 
-		// that global events do not get triggered.
-		DecompilerActionContext decompilerActionContext = (DecompilerActionContext) context;
-		if (decompilerActionContext.isDecompiling()) {
-			Msg.showInfo(getClass(), context.getComponentProvider().getComponent(),
-				"Decompiler Action Blocked",
-				"You cannot perform Decompiler actions while the Decompiler is busy");
-			return;
-		}
-
+	protected void decompilerActionPerformed(DecompilerActionContext context) {
 		Function func = controller.getFunction();
 		Program program = func.getProgram();
 		PcodeOp op = getCallOp(controller);
 		Function calledfunc = getCalledFunction(op);
 		boolean varargs = false;
-		if (calledfunc != null)
+		if (calledfunc != null) {
 			varargs = calledfunc.hasVarArgs();
+		}
 		if ((op.getOpcode() == PcodeOp.CALL) && !varargs) {
 			if (OptionDialog.showOptionDialog(controller.getDecompilerPanel(),
 				"Warning : Localized Override",
 				"Incorrect information entered here may hide other good information.\n" +
 					"For direct calls, it is usually better to alter the prototype on the function\n" +
 					"itself, rather than overriding the local call. Proceed anyway?",
-				"Proceed") != 1)
+				"Proceed") != 1) {
 				return;
+			}
 		}
 		Address addr = op.getSeqnum().getTarget();
 		String name = "func"; // Default if we don't have a real name
@@ -156,8 +221,9 @@ public class OverridePrototypeAction extends DockingAction {
 		//     dialog.setHelpLocation( new HelpLocation( getOwner(), "Edit_Function_Signature" ) );
 		tool.showDialog(dialog);
 		FunctionDefinition fdef = dialog.getFunctionDefinition();
-		if (fdef == null)
+		if (fdef == null) {
 			return;
+		}
 		int transaction = program.startTransaction("Override Signature");
 		boolean commit = false;
 		try {
@@ -171,78 +237,5 @@ public class OverridePrototypeAction extends DockingAction {
 		finally {
 			program.endTransaction(transaction, commit);
 		}
-	}
-
-	/**
-	 * Try to find the PcodeOp representing the call the user has selected
-	 * @return the PcodeOp or null
-	 */
-	public static PcodeOp getCallOp(DecompilerController controller) {
-		DecompilerPanel decompilerPanel = controller.getDecompilerPanel();
-		ClangToken tokenAtCursor = decompilerPanel.getTokenAtCursor();
-		if (tokenAtCursor == null) {
-			return null;
-		}
-		if (tokenAtCursor instanceof ClangFuncNameToken) {
-			return ((ClangFuncNameToken) tokenAtCursor).getPcodeOp();
-		}
-
-		Address addr = tokenAtCursor.getMinAddress();
-		if (addr == null)
-			return null;
-		Instruction instr = controller.getProgram().getListing().getInstructionAt(addr);
-		if (instr == null)
-			return null;
-		if (!instr.getFlowType().isCall())
-			return null;
-		ClangFunction cfunc = tokenAtCursor.getClangFunction();
-		if (cfunc == null)
-			return null;
-		HighFunction hfunc = cfunc.getHighFunction();
-		Iterator<PcodeOpAST> iter = hfunc.getPcodeOps(addr);
-		while (iter.hasNext()) {
-			PcodeOpAST op = iter.next();
-			if ((op.getOpcode() == PcodeOp.CALL) || (op.getOpcode() == PcodeOp.CALLIND))
-				return op;
-		}
-
-		return null;
-	}
-
-	private Function getCalledFunction(PcodeOp op) {
-		if (op.getOpcode() != PcodeOp.CALL)
-			return null;
-		Address addr = op.getInput(0).getAddress();
-		Program program = controller.getProgram();
-		return program.getFunctionManager().getFunctionAt(addr);
-	}
-
-	private String generateSignature(PcodeOp op, String name) {
-		StringBuffer buf = new StringBuffer();
-		Varnode vn = op.getOutput();
-		DataType dt = null;
-		if (vn != null) {
-			dt = vn.getHigh().getDataType();
-		}
-		if (dt != null)
-			buf.append(dt.getDisplayName());
-		else
-			buf.append(DataType.VOID.getDisplayName());
-
-		buf.append(' ').append(name).append('(');
-		for (int i = 1; i < op.getNumInputs(); ++i) {
-			vn = op.getInput(i);
-			dt = null;
-			if (vn != null)
-				dt = vn.getHigh().getDataType();
-			if (dt != null)
-				buf.append(dt.getDisplayName());
-			else
-				buf.append("BAD");
-			if (i != op.getNumInputs() - 1)
-				buf.append(',');
-		}
-		buf.append(')');
-		return buf.toString();
 	}
 }

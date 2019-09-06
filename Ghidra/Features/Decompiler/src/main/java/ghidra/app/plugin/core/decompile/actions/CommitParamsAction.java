@@ -17,8 +17,8 @@ package ghidra.app.plugin.core.decompile.actions;
 
 import java.awt.event.KeyEvent;
 
-import docking.ActionContext;
-import docking.action.*;
+import docking.action.KeyBindingData;
+import docking.action.MenuData;
 import ghidra.app.decompiler.ClangFunction;
 import ghidra.app.decompiler.ClangToken;
 import ghidra.app.decompiler.component.DecompilerController;
@@ -34,13 +34,11 @@ import ghidra.util.Msg;
 import ghidra.util.UndefinedFunction;
 import ghidra.util.exception.*;
 
-public class CommitParamsAction extends DockingAction {
+public class CommitParamsAction extends AbstractDecompilerAction {
 	private final DecompilerController controller;
-	private final PluginTool tool;
 
-	public CommitParamsAction(String owner, PluginTool tool, DecompilerController controller) {
-		super("Commit Params/Return", owner);
-		this.tool = tool;
+	public CommitParamsAction(PluginTool tool, DecompilerController controller) {
+		super("Commit Params/Return");
 		this.controller = controller;
 		setPopupMenuData(new MenuData(new String[] { "Commit Params/Return" }, "Commit"));
 		setKeyBindingData(new KeyBindingData(KeyEvent.VK_P, 0));
@@ -48,20 +46,25 @@ public class CommitParamsAction extends DockingAction {
 			"Save Parameters/Return definitions to Program, locking them into their current type definitions");
 	}
 
-	@Override
-	public boolean isEnabledForContext(ActionContext context) {
-		if (!(context instanceof DecompilerActionContext)) {
-			return false;
+	private HighFunction getHighFunction() {
+		DecompilerPanel decompilerPanel = controller.getDecompilerPanel();
+		ClangToken tokenAtCursor = decompilerPanel.getTokenAtCursor();
+
+		// getTokenAtCursor can explicitly return null, so we must check here
+		// before dereferencing it.
+		if (tokenAtCursor == null) {
+			return null;
 		}
 
-		DecompilerActionContext decompilerActionContext = (DecompilerActionContext) context;
-		if (decompilerActionContext.isDecompiling()) {
-			// Let this through here and handle it in actionPerformed().  This lets us alert 
-			// the user that they have to wait until the decompile is finished.  If we are not
-			// enabled at this point, then the keybinding will be propagated to the global 
-			// actions, which is not what we want.
-			return true;
+		ClangFunction clfunc = tokenAtCursor.getClangFunction();
+		if (clfunc == null) {
+			return null;
 		}
+		return clfunc.getHighFunction();
+	}
+
+	@Override
+	protected boolean isEnabledForDecompilerContext(DecompilerActionContext context) {
 
 		Function function = controller.getFunction();
 		if (function == null || function instanceof UndefinedFunction) {
@@ -71,17 +74,7 @@ public class CommitParamsAction extends DockingAction {
 	}
 
 	@Override
-	public void actionPerformed(ActionContext context) {
-		// Note: we intentionally do this check here and not in isEnabledForContext() so 
-		// that global events do not get triggered.
-		DecompilerActionContext decompilerActionContext = (DecompilerActionContext) context;
-		if (decompilerActionContext.isDecompiling()) {
-			Msg.showInfo(getClass(), context.getComponentProvider().getComponent(),
-				"Decompiler Action Blocked",
-				"You cannot perform Decompiler actions while the Decompiler is busy");
-			return;
-		}
-
+	protected void decompilerActionPerformed(DecompilerActionContext context) {
 		Program program = controller.getProgram();
 		int transaction = program.startTransaction("Commit Params/Return");
 		try {
@@ -102,22 +95,6 @@ public class CommitParamsAction extends DockingAction {
 		finally {
 			program.endTransaction(transaction, true);
 		}
-	}
 
-	private HighFunction getHighFunction() {
-		DecompilerPanel decompilerPanel = controller.getDecompilerPanel();
-		ClangToken tokenAtCursor = decompilerPanel.getTokenAtCursor();
-
-		// getTokenAtCursor can explicitly return null, so we must check here
-		// before dereferencing it.
-		if (tokenAtCursor == null) {
-			return null;
-		}
-
-		ClangFunction clfunc = tokenAtCursor.getClangFunction();
-		if (clfunc == null) {
-			return null;
-		}
-		return clfunc.getHighFunction();
 	}
 }

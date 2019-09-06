@@ -120,13 +120,5 @@ public abstract class CreateStructureVariableAction extends DockingAction {
 
 		FillOutStructureCmd task = new FillOutStructureCmd(program, location, tool);
 		task.applyTo(program);
-
-//    	if (commitRequired) {
-//    		int resp = OptionDialog.showOptionDialog(tool.getToolFrame(), "Parameter Commit Required",
-//    				"Retyping a parameter requires all other parameters to be committed!\nContinue with retype?", "Continue");
-//    		if (resp != OptionDialog.OPTION_ONE) {
-//    			return;
-//    		}
-//    	}
 	}
 }

@@ -20,7 +20,9 @@ import java.util.*;
 import docking.widgets.fieldpanel.field.Field;
 import docking.widgets.fieldpanel.support.*;
 import ghidra.app.decompiler.*;
+import ghidra.app.plugin.core.decompile.DecompilerActionContext;
 import ghidra.program.model.address.*;
+import ghidra.program.model.data.DataType;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.pcode.*;
@@ -671,4 +673,42 @@ public class DecompilerUtils {
 		return lines;
 	}
 
+	/**
+	 * Returns the data type for the given context if the context pertains to a data type
+	 * 
+	 * @param context the context
+	 * @return the data type or null
+	 */
+	public static DataType getDataType(DecompilerActionContext context) {
+
+		DecompilerPanel decompilerPanel = context.getDecompilerPanel();
+
+		// prefer the selection over the current location
+		ClangToken token = decompilerPanel.getSelectedToken();
+		if (token == null) {
+			token = decompilerPanel.getTokenAtCursor();
+		}
+
+		Varnode varnode = DecompilerUtils.getVarnodeRef(token);
+		if (varnode != null) {
+			HighVariable highVariable = varnode.getHigh();
+			if (highVariable != null) {
+				DataType dataType = highVariable.getDataType();
+				return dataType;
+
+			}
+		}
+
+		if (token instanceof ClangTypeToken) {
+			DataType dataType = ((ClangTypeToken) token).getDataType();
+			return dataType;
+		}
+
+		if (token instanceof ClangFieldToken) {
+			DataType dataType = ((ClangFieldToken) token).getDataType();
+			return dataType;
+		}
+
+		return null;
+	}
 }
