@@ -1164,9 +1164,10 @@ int4 TypeSpacebase::compareDependency(const Datatype &op) const
 /// \param sz is the size of offset (as a pointer)
 /// \param point is a "context" reference for the request
 /// \return the referred to Address
-Address TypeSpacebase::getAddress(uintb off,int4 sz,const Address &point) const
+Address TypeSpacebase::getAddress(uintb off,int4 sz,const Address &point,bool ptrCheck) const
 
 {
+  if (ptrCheck) return Address(spaceid,off);
   return glb->resolveConstant(spaceid,off,sz,point);
 }
 
