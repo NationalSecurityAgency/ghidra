@@ -29,4 +29,9 @@
   	</compiler>
   </language>
   
+  <language id="x86:LE:16:Protected Mode">
+  	<compiler id="default">
+  		<patternfile>x86-16_default_patterns.xml</patternfile>
+  	</compiler>
+  </language>
 </patternconstraints>

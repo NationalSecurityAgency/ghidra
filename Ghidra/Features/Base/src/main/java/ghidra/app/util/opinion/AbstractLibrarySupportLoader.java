@@ -892,14 +892,14 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 				if (expSym.hasNoReturn()) {
 					extFunc.setNoReturn(true);
 				}
-				int stackShift = program.getCompilerSpec().getCallStackShift();
-				if (stackShift == -1) {
-					stackShift = 0;
-				}
+// TODO: This should not be done at time of import and should be done
+// by a late running analyzer (e.g., stack analyzer) if no signature
+// has been established
+//				int stackShift = program.getCompilerSpec().getDefaultCallingConvention().getStackshift();
+//				if (stackShift == -1) {
+//					stackShift = 0;
+//				}
 
-				// TODO: This should not be done at time of import and should be done
-				// by a late running analyzer (e.g., stack analyzer) if no signature
-				// has been established
 //				int numParams = expSym.getPurge() / 4;
 //				if (numParams > 0) {
 //					// HACK: assumes specific stack-based x86 convention

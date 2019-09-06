@@ -284,7 +284,7 @@ public:
   /// \param sp is the segmented space
   /// \param sop is the segment operator
   SegmentedResolver(Architecture *g,AddrSpace *sp,SegmentOp *sop) { glb=g; spc=sp; segop=sop; }
-  virtual Address resolve(uintb val,int4 sz,const Address &point);
+  virtual Address resolve(uintb val,int4 sz,const Address &point,uintb &fullEncoding);
 };
 
 /// The Translate object keeps track of address ranges for which

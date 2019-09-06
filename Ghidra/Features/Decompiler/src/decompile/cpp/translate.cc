@@ -485,15 +485,27 @@ AddrSpace *AddrSpaceManager::getSpaceByShortcut(char sc) const
   return (*iter).second;
 }
 
-Address AddrSpaceManager::resolveConstant(AddrSpace *spc,uintb val,int4 sz,const Address &point) const
+/// \brief Resolve a native constant into an Address
+///
+/// If there is a special resolver for the AddrSpace, this is invoked, otherwise
+/// basic wordsize conversion and wrapping is performed. If the address encoding is
+/// partial (as in a \e near pointer) and the full encoding can be recovered, it is passed back.
+/// \param spc is the space to generate the address from
+/// \param val is the constant encoding of the address
+/// \param sz is the size of the constant encoding
+/// \param point is the context address (for recovering full encoding info if necessary)
+/// \param fullEncoding is used to pass back the recovered full encoding of the pointer
+/// \return the formal Address associated with the encoding
+Address AddrSpaceManager::resolveConstant(AddrSpace *spc,uintb val,int4 sz,const Address &point,uintb &fullEncoding) const
 
 {
   int4 ind = spc->getIndex();
   if (ind < resolvelist.size()) {
     AddressResolver *resolve = resolvelist[ind];
     if (resolve != (AddressResolver *)0)
-      return resolve->resolve(val,sz,point);
+      return resolve->resolve(val,sz,point,fullEncoding);
   }
+  fullEncoding = val;
   val = AddrSpace::addressToByte(val,spc->getWordSize());
   val = spc->wrapOffset(val);
   return Address(spc,val);

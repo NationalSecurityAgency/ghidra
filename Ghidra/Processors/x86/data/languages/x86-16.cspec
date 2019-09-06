@@ -31,14 +31,6 @@
     <range space="ram"/>
   </global>
   <stackpointer register="SP" space="ram"/>
-  <segmentop space="ram" userop="segment" baseinsize="2" innerinsize="2" farpointer="yes">
-    <baseop code="INT_ZEXT"/>
-    <baseop code="INT_LEFT" value="4"/>
-    <innerop code="INT_ZEXT"/>
-    <constresolve>
-      <register name="DS"/>
-    </constresolve>
-  </segmentop>
   <default_proto>
     <prototype name="__stdcall16near" extrapop="unknown" stackshift="2">
       <input>
@@ -93,7 +85,7 @@
       <register name="DF"/>
     </unaffected>
   </prototype>
-  <prototype name="__stdcall16far" extrapop="unknown" stackshift="2">
+  <prototype name="__stdcall16far" extrapop="unknown" stackshift="4">
     <input>
       <pentry minsize="1" maxsize="500" align="2">
         <addr offset="4" space="stack"/>
@@ -119,7 +111,7 @@
       <register name="DF"/>
     </unaffected>
   </prototype>
-  <prototype name="__cdecl16far" extrapop="4" stackshift="2">
+  <prototype name="__cdecl16far" extrapop="4" stackshift="4">
     <input>
       <pentry minsize="1" maxsize="500" align="2">
         <addr offset="4" space="stack"/>

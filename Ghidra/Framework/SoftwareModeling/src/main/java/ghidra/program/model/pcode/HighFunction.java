@@ -54,7 +54,8 @@ public class HighFunction extends PcodeSyntaxTree {
 
 	/**
 	 * @param function  function associated with the higher level function abstraction.
-	 * @param langParser language parser used to disassemble/get info on the language
+	 * @param language  description of the processor language of the function
+	 * @param compilerSpec description of the compiler that produced the function
 	 * @param dtManager data type manager
 	 * @param showNamespace true signals to print function names with their namespace
 	 */
@@ -124,33 +125,20 @@ public class HighFunction extends PcodeSyntaxTree {
 	}
 
 	/**
-	 * Populate the information for the HighFunction from the information stored in Ghidra attached
-	 * to the function.
+	 * Populate the information for the HighFunction from the information in the
+	 * Function object.
 	 *
-	 * @param default_extrapop
-	 * @param includeDefaultNames
-	 * @param override_extrapop
+	 * @param overrideExtrapop is the value to use if extrapop is overridden
+	 * @param includeDefaultNames is true if default symbol names should be considered locked
+	 * @param doOverride is true if extrapop is overridden
 	 */
-	public void grabFromFunction(int default_extrapop, boolean includeDefaultNames,
-			boolean override_extrapop) {
+	public void grabFromFunction(int overrideExtrapop, boolean includeDefaultNames,
+			boolean doOverride) {
 		localSymbols.grabFromFunction(includeDefaultNames); // Locals must be read first
-		proto.grabFromFunction(func, default_extrapop, override_extrapop);
+		proto.grabFromFunction(func, overrideExtrapop, doOverride);
 		jumpTables = null;
 		protoOverrides = null;
 		grabOverrides();
-
-// This reads any old actions from the StringProperty
-// This is needed for backward compatibility
-//		String actstring = HighFunction.tagFindInclude("actionlist",funcstring);
-//		if (actstring != null) {
-//			try {
-//				Element el = stringTree(actstring);
-//				readActionXML(el,this);
-//			} catch (PcodeXMLException e) {
-//				Err.error(this, null, "Error", "Unexpected Exception: " + e.getMessage(), e);
-//			}
-//		}
-
 	}
 
 	/**
@@ -312,10 +300,10 @@ public class HighFunction extends PcodeSyntaxTree {
 	}
 
 	/**
-	 * Read in the Jump Table list for this function from an XML rep
+	 * Read in the Jump Table list for this function from XML
 	 *
-	 * @param el
-	 * @throws PcodeXMLException
+	 * @param parser is the XML stream
+	 * @throws PcodeXMLException for any format errors
 	 */
 	private void readJumpTableListXML(XmlPullParser parser) throws PcodeXMLException {
 		XmlElement el = parser.start("jumptablelist");
@@ -425,11 +413,9 @@ public class HighFunction extends PcodeSyntaxTree {
 	 * @param high is the HighVariable to split
 	 * @param vn is a representative of the merge group to split out
 	 * @return a HighVariable containing just the forced merge group of vn
-	 * @throws PcodeException
+	 * @throws PcodeException if the split can't be performed
 	 */
 	public HighVariable splitOutMergeGroup(HighVariable high, Varnode vn) throws PcodeException {
-//		if (high.isNameLocked() || high.isTypeLocked())
-//			return high; // Locked variable should not be speculatively merged
 		try {
 			ArrayList<Varnode> newinst = new ArrayList<Varnode>();
 			ArrayList<Varnode> oldinst = new ArrayList<Varnode>();
@@ -508,9 +494,13 @@ public class HighFunction extends PcodeSyntaxTree {
 	}
 
 	/**
-	 * Build an XML string that represents all the information about this HighFunction.
+	 * Build an XML string that represents all the information about this HighFunction. The
+	 * size describes how many bytes starting from the entry point are used by the function, but
+	 * this doesn't need to be strictly accurate as it is only used to associate the function with
+	 * addresses near its entry point.
 	 *
 	 * @param entryPoint pass null to use the function entryPoint, pass an address to force an entry point
+	 * @param size describes how many bytes the function occupies as code
 	 * @return the XML string
 	 */
 	public String buildFunctionXML(Address entryPoint, int size) {
@@ -587,28 +577,6 @@ public class HighFunction extends PcodeSyntaxTree {
 		resBuf.append("</function>\n");
 		return resBuf.toString();
 	}
-
-	/**
-	 * Convert old decompiler tags to new Register variables
-	 */
-//	public void updateVersion() {
-//		StringPropertyMap stringmap = func.getProgram().getUsrPropertyManager().getStringPropertyMap(DECOMPILER_TAG_MAP);
-//		String funcstring = null;
-//		if (stringmap != null)
-//			funcstring = stringmap.getString(func.getEntryPoint());
-//
-//		String actstring = HighFunction.tagFindInclude("actionlist",funcstring);
-//		if (actstring == null) return;
-//		try {
-//			Element el = stringTree(actstring);
-//			readActionXML(el,this);
-//		} catch (PcodeXMLException e) {
-//			Err.error(this, null, "Error", "Unexpected Exception: " + e.getMessage(), e);
-//		}
-//		locals.grabFromFunction();
-//		getLocalVariableMap().storeUnMappedToDatabase();
-//		updateProperties();
-//	}
 
 	public static ErrorHandler getErrorHandler(final Object errOriginator,
 			final String targetName) {
@@ -708,14 +676,15 @@ public class HighFunction extends PcodeSyntaxTree {
 	}
 
 	/**
-	 * Create and XML SAX parse tree from an input XML string
+	 * Create XML parse tree from an input XML string
 	 *
 	 * TODO: this probably doesn't belong here.
 	 *
-	 * @param xml string to parse
-	 * @return an XML tree element
+	 * @param xml is the XML string to parse
+	 * @param handler is the handler to use for parsing errors
+	 * @return the XML tree
 	 *
-	 * @throws PcodeXMLException
+	 * @throws PcodeXMLException for format errors in the XML
 	 */
 	static public XmlPullParser stringTree(InputStream xml, ErrorHandler handler)
 			throws PcodeXMLException {

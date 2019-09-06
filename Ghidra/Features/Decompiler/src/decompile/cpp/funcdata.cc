@@ -333,13 +333,22 @@ void Funcdata::spacebaseConstant(PcodeOp *op,int4 slot,SymbolEntry *entry,const 
     outvn = outvn2;
     opInsertBefore(extraop,op);
   }
-  if (sz != origsize) {		// There is a change in size from address -> varnode
+  if (sz < origsize) {		// The new constant is smaller than the original varnode, so we extend it
     PcodeOp *zextop = newOp(1,op->getAddr());
     Varnode *outvn2 = newUniqueOut(origsize,zextop);
     opSetOpcode(zextop,CPUI_INT_ZEXT); // Create an extension to get back to original varnode size
     opSetInput(zextop,outvn,0);
     opInsertBefore(zextop,op);
     outvn = outvn2;
+  }
+  else if (origsize < sz) {	// The new constant is bigger than the original varnode, truncate it
+    PcodeOp *subOp = newOp(2,op->getAddr());
+    Varnode *outvn3 = newUniqueOut(origsize,subOp);
+    opSetOpcode(subOp,CPUI_SUBPIECE);
+    opSetInput(subOp,outvn,0);
+    opSetInput(subOp,newConstant(4, 0), 1);	// Take least significant piece
+    opInsertBefore(subOp,op);
+    outvn = outvn3;
   }
   opSetInput(op,outvn,slot);
 }
