@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +15,8 @@
  */
 package ghidra.app.cmd.disassemble;
 
+import java.math.BigInteger;
+
 import ghidra.framework.model.DomainObject;
 import ghidra.program.disassemble.DisassemblerContextImpl;
 import ghidra.program.model.address.*;
@@ -24,8 +25,6 @@ import ghidra.program.model.lang.RegisterValue;
 import ghidra.program.model.listing.Program;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
-
-import java.math.BigInteger;
 
 /**
  * Command object for performing HCS12/XGate disassembly
