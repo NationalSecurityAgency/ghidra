@@ -140,7 +140,8 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 	GhidraServer(File rootDir, AuthMode authMode, String loginDomain,
 			boolean allowUserToSpecifyName, boolean altSSHLoginAllowed,
 			int defaultPasswordExpirationDays, boolean allowAnonymousAccess,
-			boolean autoProvisionAuthedUsers) throws IOException, CertificateException {
+			boolean autoProvisionAuthedUsers, File jaasConfigFile)
+			throws IOException, CertificateException {
 
 		super(ServerPortFactory.getRMISSLPort(), clientSocketFactory, serverSocketFactory);
 
@@ -179,7 +180,8 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 				}
 				break;
 			case JAAS_LOGIN:
-				authModule = new JAASAuthenticationModule("auth", allowUserToSpecifyName);
+				authModule =
+					new JAASAuthenticationModule("auth", allowUserToSpecifyName, jaasConfigFile);
 				break;
 			case KRB5_AD_LOGIN:
 				if (loginDomain == null || loginDomain.isBlank()) {
@@ -329,9 +331,15 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 								}
 							}
 							else {
-								throw new FailedLoginException(
+								RepositoryManager.log(null, null,
 									"User successfully authenticated, but does not exist in Ghidra user list: " +
-										username);
+										username,
+									null);
+								// Throw LoginException instead of FailedLoginException to prevent
+								// the user from being asked to retry the login, which might
+								// lead them to try older/different passwords and get their system
+								// account locked.
+								throw new LoginException("Unknown user: " + username);
 							}
 						}
 						RepositoryManager.log(null, null, "User '" + username + "' authenticated",
@@ -341,7 +349,11 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 				catch (LoginException e) {
 					RepositoryManager.log(null, null, "Login failed (" + e.getMessage() + ")",
 						username);
-					throw e;
+					// Create new exceptions so we don't leak config info to the client.
+					if (e instanceof FailedLoginException) {
+						throw new FailedLoginException("User authentication failed");
+					}
+					throw new LoginException("User login system failure");
 				}
 				if (authModule instanceof PasswordFileAuthenticationModule) {
 					supportPasswordChange = true;
@@ -671,21 +683,19 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 			serverRoot = new File(installRoot.getFile(false), rootPath);
 		}
 
+		File jaasConfigFile = null;
 		if (authMode == JAAS_LOGIN) {
 			if (jaasConfigFileStr == null) {
 				displayUsage("JAAS config file argument (-jaas <configfile>) not specified");
 				System.exit(-1);
 			}
-			File jaasConfigFile = getServerCfgFile(jaasConfigFileStr);
-			if (!jaasConfigFile.exists() || !jaasConfigFile.isFile()) {
+			jaasConfigFile = getServerCfgFile(jaasConfigFileStr);
+			if (!jaasConfigFile.isFile()) {
 				displayUsage(
 					"JAAS config file (-jaas <configfile>) does not exist or is not file: " +
 						jaasConfigFile.getAbsolutePath());
 				System.exit(-1);
 			}
-			// NOTE: there is a leading '=' char to force this path to be the one-and-only config file
-			System.setProperty("java.security.auth.login.config",
-				"=" + jaasConfigFile.getAbsolutePath());
 		}
 
 		try {
@@ -788,7 +798,7 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 
 			GhidraServer svr = new GhidraServer(serverRoot, authMode, loginDomain,
 				nameCallbackAllowed, altSSHLoginAllowed, defaultPasswordExpiration,
-				allowAnonymousAccess, autoProvision);
+				allowAnonymousAccess, autoProvision, jaasConfigFile);
 
 			log.info("Registering Ghidra Server...");
 

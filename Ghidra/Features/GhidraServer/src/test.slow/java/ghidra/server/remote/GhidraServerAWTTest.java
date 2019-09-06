@@ -55,7 +55,7 @@ public class GhidraServerAWTTest extends AbstractGenericTest {
 			// directly instantiate to avoid GhidraServer.main which may
 			// invoke System.exit
 			GhidraServer server = new GhidraServer(myTmpDir, GhidraServer.AuthMode.NO_AUTH_LOGIN,
-				null, true, true, -1, true, false);
+				null, true, true, -1, true, false, null);
 
 			// exercise server elements, including a repository and buffer file
 			RepositoryManager mgr = (RepositoryManager) getInstanceField("mgr", server);

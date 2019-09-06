@@ -259,7 +259,7 @@ The Ghidra Server has been designed to support many  possible user authenticatio
 	<LI><u>JAAS - Java Authentication and Authorization Service (<typewriter>-a4</typewriter>)</u> - 
 	user authentication is delegated to the JAAS subsystem.  The -jaas &lt;config_file&gt; argument
 	is required to specify the JAAS config file.  There is an example config file in the GhidraServer
-	directory called jaas/jaas.conf.
+	directory called jaas.conf.
 	<p>
 	JAAS is architected similar to Linux/Unix PAM, where a named authentication configuration is possibly
 	composed of several different modules.  Ghidra's support of JAAS only handles single simple
@@ -280,7 +280,7 @@ The Ghidra Server has been designed to support many  possible user authenticatio
 		of successful authentication.
 		<p>
 		There is an example (and non-useful) implementation of an external authenticator in the GhidraServer
-		directory called jaas/jaas_external_program.example.sh.
+		directory called jaas_external_program.example.sh.
 		<p>
 		This login module strives to be compatible with Apache's mod_authnz_external API, and you should
 		be able to use any mod_authnz_external authenticator with Ghidra.
@@ -367,17 +367,17 @@ public key files may be made without restarting the Ghidra Server.
 			<LI><typewriter>-jaas &lt;config_file&gt;</typewriter><br>Specifies the path to the JAAS
 			config file (when using -a4), relative to the ghidra/server directory (if not absolute).
 			<p>
-			See jaas/jaas.conf for examples and suggestions. It is the system administrator's 
+			See jaas.conf for examples and suggestions. It is the system administrator's 
 			responsibility to craft their own JAAS configuration directive when using the -a4 mode.</LI>
 			<br>
 			<LI><typewriter>-u</typewriter><br>Allows the server login user ID to be specified at time of 
 			login for <typewriter>-a0</typewriter> authentication mode.  Without this option, the users 
 			client-side login ID will be assumed.</LI>
 			<br>
-			<LI><typewriter>-autoProvision</typewriter><br>Enable the auto-creation of Ghidra users when
-			the authenticator module (ie. OS or other authentication method specified by JAAS) authenticates
-			a new unknown user. Users deleted in the OS or other source system will  need to be deleted
-			manually from the Ghidra system.</LI>
+			<LI><typewriter>-autoProvision</typewriter><br>Enable the auto-creation of new Ghidra Server
+			users when they successfully authenticate to the server (-a1 and -a4 modes only).
+			Users removed from the authentication provider (e.g., Active Directory) will need to be
+			deleted manually from the Ghidra Server using svrAdmin command.</LI>
 			<br>
 			<LI><typewriter>-anonymous</typewriter><br>Enable anonymous access support for Ghidra Server 
 			and its repositories.  Only those repositories which specifically enable anonymous access will be 

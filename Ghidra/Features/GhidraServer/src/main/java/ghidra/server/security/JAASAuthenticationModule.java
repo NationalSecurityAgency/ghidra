@@ -15,7 +15,11 @@
  */
 package ghidra.server.security;
 
+import java.io.File;
 import java.io.IOException;
+import java.net.URI;
+import java.security.NoSuchAlgorithmException;
+import java.security.URIParameter;
 import java.util.concurrent.atomic.AtomicReference;
 
 import javax.security.auth.Subject;
@@ -42,6 +46,7 @@ public class JAASAuthenticationModule implements AuthenticationModule {
 
 	private boolean allowUserToSpecifyName;
 	private String loginContextName;
+	private File jaasConfigFile;
 
 	/**
 	 * Creates a new {@link JAASAuthenticationModule} instance.
@@ -50,18 +55,42 @@ public class JAASAuthenticationModule implements AuthenticationModule {
 	 * @param allowUserToSpecifyName flag, if true will include a {@link NameCallback} in the
 	 * {@link #getAuthenticationCallbacks()} list, which allows the user to specify a different
 	 * name than their {@link GhidraPrincipal}.
-	 * @throws IllegalArgumentException if the loginContextName is not present in the JAAS configuration
+	 * @param jaasConfigFile JAAS config file
+	 * @throws IllegalArgumentException if the loginContextName is not present in the JAAS configuration or
+	 * if the JAAS config file does not exist
 	 */
-	public JAASAuthenticationModule(String loginContextName, boolean allowUserToSpecifyName)
-			throws IllegalArgumentException {
+	public JAASAuthenticationModule(String loginContextName, boolean allowUserToSpecifyName,
+			File jaasConfigFile) throws IllegalArgumentException {
+
 		this.loginContextName = loginContextName;
 		this.allowUserToSpecifyName = allowUserToSpecifyName;
+		this.jaasConfigFile = jaasConfigFile;
 
-		Configuration cfg = Configuration.getConfiguration();
-		AppConfigurationEntry[] authEntry = cfg.getAppConfigurationEntry(loginContextName);
-		if (authEntry == null) {
-			throw new IllegalArgumentException(
-				"Missing '" + loginContextName + "' entry in JAAS config file");
+		if (jaasConfigFile == null) {
+			throw new IllegalArgumentException("JAAS config file not specified");
+		}
+		if (!jaasConfigFile.exists() || !jaasConfigFile.isFile()) {
+			throw new IllegalArgumentException("JAAS config file does not exist or is not file: " +
+				jaasConfigFile.getAbsolutePath());
+		}
+		// force early check for valid config file
+		getJAASConfig();
+	}
+
+	private Configuration getJAASConfig() {
+		try {
+			URI jaasConfigFileUri = jaasConfigFile.toURI();
+			Configuration cfg =
+				Configuration.getInstance("JavaLoginConfig", new URIParameter(jaasConfigFileUri));
+			AppConfigurationEntry[] authEntry = cfg.getAppConfigurationEntry(loginContextName);
+			if (authEntry == null) {
+				throw new IllegalArgumentException("Missing '" + loginContextName +
+					"' entry in JAAS config file: " + jaasConfigFile);
+			}
+			return cfg;
+		}
+		catch (NoSuchAlgorithmException e) {
+			throw new RuntimeException("JAAS config error", e);
 		}
 	}
 
@@ -70,13 +99,19 @@ public class JAASAuthenticationModule implements AuthenticationModule {
 			throws LoginException {
 		GhidraPrincipal principal = GhidraPrincipal.getGhidraPrincipal(subject);
 		AtomicReference<String> loginName = new AtomicReference<>();
-		LoginContext loginCtx = new LoginContext(loginContextName, loginModuleCallbacks -> {
-			loginName.set(copyCallbackValues(callbacks, loginModuleCallbacks, principal));
-		});
 
 		try {
+			Configuration jaasCfg = getJAASConfig();
+			LoginContext loginCtx =
+				new LoginContext(loginContextName, null, loginModuleCallbacks -> {
+					loginName.set(copyCallbackValues(callbacks, loginModuleCallbacks, principal));
+				}, jaasCfg);
+
 			// this is where the callback is triggered
 			loginCtx.login();
+		}
+		catch (IllegalArgumentException e) {
+			throw new LoginException("JAAS configuration error: " + e.getMessage());
 		}
 		catch (LoginException e) {
 			// Convert plain LoginExceptions to FailedLoginExceptions to enable
