@@ -121,10 +121,10 @@ public class FunctionPrototype {
 	 * Populate Function Prototype from information attached to a function in the Program DB.
 	 * 
 	 * @param f is the function to grab prototype from
-	 * @param default_extrapop is the default extrapop to use if the function's is unknown
-	 * @param override_extrapop is true if the extrapop should be overridden
+	 * @param overrideExtrapop is the override value to use for extrapop
+	 * @param doOverride is true if the override value should be used
 	 */
-	void grabFromFunction(Function f, int default_extrapop, boolean override_extrapop) {
+	void grabFromFunction(Function f, int overrideExtrapop, boolean doOverride) {
 		modelname = f.getCallingConventionName();
 		modellock =
 			((modelname != null) && (modelname != Function.UNKNOWN_CALLING_CONVENTION_STRING));
@@ -160,16 +160,21 @@ public class FunctionPrototype {
 		// stackshift is the normal stack change because of a call.
 		//
 		int purge = f.getStackPurgeSize();
-		if (override_extrapop || purge == Function.INVALID_STACK_DEPTH_CHANGE ||
-			purge == Function.UNKNOWN_STACK_DEPTH_CHANGE) {
-			extrapop = default_extrapop;
+		if (doOverride) {
+			extrapop = overrideExtrapop;
 		}
 		else {
 			PrototypeModel protoModel = f.getCallingConvention();
 			if (protoModel == null) {
 				protoModel = f.getProgram().getCompilerSpec().getDefaultCallingConvention();
 			}
-			extrapop = purge + protoModel.getStackshift();
+			if (purge == Function.INVALID_STACK_DEPTH_CHANGE ||
+				purge == Function.UNKNOWN_STACK_DEPTH_CHANGE) {
+				extrapop = protoModel.getExtrapop();
+			}
+			else {
+				extrapop = purge + protoModel.getStackshift();
+			}
 		}
 	}
 
