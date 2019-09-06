@@ -10,6 +10,6 @@ sleighCompile {
 	args '-l'
 }
 
-dependencies {
-	compile project(':Base')
-}
+//dependencies {
+//	compile project(':Base')
+//}
