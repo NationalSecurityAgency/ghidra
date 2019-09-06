@@ -1,31 +1,34 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <compiler_spec>
+  <!-- Copied from AARCH.cspec and modified... 
+  See: https://docs.microsoft.com/en-us/cpp/build/arm64-windows-abi-conventions?view=vs-2019
+  The AARCH64 ABI refers to Windows ABI as LLP64 data model -->
   <data_organization>
      <absolute_max_alignment value="0" />
      <machine_alignment value="4" />
      <default_alignment value="1" />
      <default_pointer_alignment value="8" />
      <pointer_size value="8" />
-     <wchar_size value="4" />
+     <wchar_size value="2" />
      <short_size value="2" />
      <integer_size value="4" />
      <long_size value="4" />
      <long_long_size value="8" />
      <float_size value="4" />
      <double_size value="8" />
-     <long_double_size value="8" />
+     <long_double_size value="16" />
      <size_alignment_map>
           <entry size="1" alignment="1" />
           <entry size="2" alignment="2" />
           <entry size="4" alignment="4" />
           <entry size="8" alignment="8" />
+          <entry size="16" alignment="16" />
      </size_alignment_map>
   </data_organization>
   
   <global>
     <range space="ram"/>
-    <range space="register"  first="0x3000" last="0x3fff"/>
   </global>
   
   <stackpointer register="sp" space="ram"/>
@@ -187,14 +190,4 @@
     </prototype>
   </default_proto>
 
-
-  <callfixup name="PlaceHolderCallFixup">  <!-- This is here just to force call fixup and NoReturn fixup.  Will be fixed in Ghidra V6.0 -->
-    <target name="___NotARealFunctionName___"/>
-    <pcode>
-      <body><![CDATA[
-            tmpptr:4 = 0;
-      ]]></body>
-    </pcode>
-  </callfixup>
-  
 </compiler_spec>

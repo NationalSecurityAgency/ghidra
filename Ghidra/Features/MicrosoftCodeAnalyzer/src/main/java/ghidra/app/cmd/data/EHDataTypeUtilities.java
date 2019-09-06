@@ -17,6 +17,7 @@ package ghidra.app.cmd.data;
 
 import ghidra.app.cmd.disassemble.DisassembleCommand;
 import ghidra.app.cmd.function.CreateFunctionCmd;
+import ghidra.app.util.PseudoDisassembler;
 import ghidra.app.util.datatype.microsoft.DataApplyOptions;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressOutOfBoundsException;
@@ -323,6 +324,8 @@ public class EHDataTypeUtilities {
 	public static boolean createFunctionIfNeeded(Program program, Address functionAddress) {
 		// If there isn't an instruction at the function address yet, then disassemble there.
 		Listing listing = program.getListing();
+		functionAddress =
+			PseudoDisassembler.getNormalizedDisassemblyAddress(program, functionAddress);
 		Instruction inst = listing.getInstructionAt(functionAddress);
 		if (inst == null) {
 			DisassembleCommand cmd = new DisassembleCommand(functionAddress, null, true);
