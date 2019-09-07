@@ -685,7 +685,7 @@ rd_hi: reg8 is reg8 & reg8_hi { export reg8_hi; }
 }
 
 # Two's Complement
-:NEG rd, rs2 is opcode=0x3 & rd & reg5=0x0 & rs2 & op2=0x0
+:NEG rd, rs2 is opcode=0x3 & rd & reg8!=0 & reg5=0x0 & rs2 & op2=0x0
 {
 	local tmp:2 = -rs2;
 	rd = tmp;
