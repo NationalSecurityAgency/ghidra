@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+     This is the processor specification for the HC08 (68HC08) MC68HC908QY4 variant.
+-->
+<processor_spec>
+  <programcounter register="PC"/>
+  <volatile outputop="write_volatile" inputop="read_volatile">
+    <range space="RAM" first="0x0"    last="0x3F"/>
+    <range space="RAM" first="0xFE00" last="0xFE0F"/>
+  </volatile>
+  <default_symbols>
+    <symbol name="PTA"          address="0"/>
+    <symbol name="PTB"          address="1"/>
+    <symbol name="Reserved_02"  address="2"/>
+    <symbol name="Reserved_03"  address="3"/>
+    <symbol name="DDRA"         address="4"/>
+    <symbol name="DDRB"         address="5"/>
+    <symbol name="Reserved_06"  address="6"/>
+    <symbol name="Reserved_07"  address="7"/>
+    <symbol name="Reserved_08"  address="8"/>
+    <symbol name="Reserved_09"  address="9"/>
+    <symbol name="Reserved_0A"  address="A"/>
+    <symbol name="PTAPUE"       address="B"/>
+    <symbol name="PTBPUE"       address="C"/>
+    <symbol name="Reserved_0D"  address="D"/>
+    <symbol name="Reserved_0E"  address="E"/>
+    <symbol name="Reserved_0F"  address="F"/>
+    <symbol name="Reserved_10"  address="10"/>
+    <symbol name="Reserved_11"  address="11"/>
+    <symbol name="Reserved_12"  address="12"/>
+    <symbol name="Reserved_13"  address="13"/>
+    <symbol name="Reserved_14"  address="14"/>
+    <symbol name="Reserved_15"  address="15"/>
+    <symbol name="Reserved_16"  address="16"/>
+    <symbol name="Reserved_17"  address="17"/>
+    <symbol name="Reserved_18"  address="18"/>
+    <symbol name="Reserved_19"  address="19"/>
+    <symbol name="KBSCR"        address="1A"/>
+    <symbol name="KBIER"        address="1B"/>
+    <symbol name="Reserved_1C"  address="1C"/>
+    <symbol name="INTSCR"       address="1D"/>
+    <symbol name="CONFIG2"      address="1E"/>
+    <symbol name="CONFIG1"      address="1F"/>
+    <symbol name="TSC"          address="20"/>
+    <symbol name="TCNTH"        address="21"/>
+    <symbol name="TCNTL"        address="22"/>
+    <symbol name="TMODH"        address="23"/>
+    <symbol name="TMODL"        address="24"/>
+    <symbol name="TSC0"         address="25"/>
+    <symbol name="TCH0H"        address="26"/>
+    <symbol name="TCH0L"        address="27"/>
+    <symbol name="TSC1"         address="28"/>
+    <symbol name="TCH1H"        address="29"/>
+    <symbol name="TCH1L"        address="2A"/>
+    <symbol name="Reserved_2B"  address="2B"/>
+    <symbol name="Reserved_2C"  address="2C"/>
+    <symbol name="Reserved_2D"  address="2D"/>
+    <symbol name="Reserved_2E"  address="2E"/>
+    <symbol name="Reserved_2F"  address="2F"/>
+    <symbol name="Reserved_30"  address="30"/>
+    <symbol name="Reserved_31"  address="31"/>
+    <symbol name="Reserved_32"  address="32"/>
+    <symbol name="Reserved_33"  address="33"/>
+    <symbol name="Reserved_34"  address="34"/>
+    <symbol name="Reserved_35"  address="35"/>
+    <symbol name="OSCSTAT"      address="36"/>
+    <symbol name="Reserved_37"  address="37"/>
+    <symbol name="OSCTRIM"      address="38"/>
+    <symbol name="Reserved_39"  address="39"/>
+    <symbol name="Reserved_3A"  address="3A"/>
+    <symbol name="Reserved_3B"  address="3B"/>
+    <symbol name="ADSCR"        address="3C"/>
+    <symbol name="Reserved_3D"  address="3D"/>
+    <symbol name="ADR"          address="3E"/>
+    <symbol name="ADICLK"       address="3F"/>
+    <symbol name="BSR"             address="FE00"/>
+    <symbol name="SRSR"            address="FE01"/>
+    <symbol name="BRKAR"           address="FE02"/>
+    <symbol name="BFCR"            address="FE03"/>
+    <symbol name="INT1"            address="FE04"/>
+    <symbol name="INT2"            address="FE05"/>
+    <symbol name="INT3"            address="FE06"/>
+    <symbol name="Reserved_FE07"   address="FE07"/>
+    <symbol name="FLCR"            address="FE08"/>
+    <symbol name="BRKH"            address="FE09"/>
+    <symbol name="BRKL"            address="FE0A"/>
+    <symbol name="BRKSCR"          address="FE0B"/>
+    <symbol name="LVISR"           address="FE0C"/>
+    <symbol name="Reserved_FE0D"   address="FE0D"/>
+    <symbol name="Reserved_FE0E"   address="FE0E"/>
+    <symbol name="Reserved_FE0F"   address="FE0F"/>
+    <symbol name="FLBPR"             address="FFBE"/>
+    <symbol name="Reserved_FFBF"     address="FFBF"/>
+    <symbol name="IOSCTV_5V"         address="FFC0"/>
+    <symbol name="IOSCTV_3V"         address="FFC1"/>
+    <symbol name="COPCTL"            address="FFFF"/>
+    <symbol name="VECTOR_ADC_Conversion_Complete" address="FFDE" entry="true" type="code_ptr"/>
+    <symbol name="VECTOR_Keyboard"                address="FFE0" entry="true" type="code_ptr"/>
+    <symbol name="VECTOR_Not_Used_FFE2"           address="FFE2" entry="true" type="code_ptr"/>
+    <symbol name="VECTOR_Not_Used_FFE4"           address="FFE4" entry="true" type="code_ptr"/>
+    <symbol name="VECTOR_Not_Used_FFE6"           address="FFE6" entry="true" type="code_ptr"/>
+    <symbol name="VECTOR_Not_Used_FFE8"           address="FFE8" entry="true" type="code_ptr"/>
+    <symbol name="VECTOR_Not_Used_FFEA"           address="FFEA" entry="true" type="code_ptr"/>
+    <symbol name="VECTOR_Not_Used_FFEC"           address="FFEC" entry="true" type="code_ptr"/>
+    <symbol name="VECTOR_Not_Used_FFEE"           address="FFEE" entry="true" type="code_ptr"/>
+    <symbol name="VECTOR_Not_Used_FFF0"           address="FFF0" entry="true" type="code_ptr"/>
+    <symbol name="VECTOR_TIM_overflow"            address="FFF2" entry="true" type="code_ptr"/>
+    <symbol name="VECTOR_TIM_Channel_1"           address="FFF4" entry="true" type="code_ptr"/>
+    <symbol name="VECTOR_TIM_Channel_0"           address="FFF6" entry="true" type="code_ptr"/>
+    <symbol name="VECTOR_Not_Used_FFF8"           address="FFF8" entry="true" type="code_ptr"/>
+    <symbol name="VECTOR_IRQ"                     address="FFFA" entry="true" type="code_ptr"/>
+    <symbol name="VECTOR_SWI"                     address="FFFC" entry="true" type="code_ptr"/>
+    <symbol name="VECTOR_Reset"                   address="FFFE" entry="true" type="code_ptr"/>
+  </default_symbols>
+  <default_memory_blocks>
+    <memory_block name="DIRECT_PAGE_REGISTERS"  start_address="0x0000" length="0x0040" initialized="false"/>
+    <memory_block name="LOW_RAM"                start_address="0x0080" length="0x0080" initialized="false"/>
+    <memory_block name="HIGH_PAGE_REGISTERS"    start_address="0xFE00" length="0x0200" initialized="false"/>
+<!--
+    <memory_block name="ROM1"                   start_address="0x2800" length="0x0600" initialized="false"/>
+    <memory_block name="FLASH1"                 start_address="0xEE00" length="0x1000" initialized="false"/>
+    <memory_block name="ROM2"                   start_address="0xFE10" length="0x01A0" initialized="false"/>
+    <memory_block name="FLASH2"                 start_address="0xFFB0" length="0x000D" initialized="false"/>
+    <memory_block name="FLASH3"                 start_address="0xFFC2" length="0x000D" initialized="false"/>
+-->
+  </default_memory_blocks>
+</processor_spec>
