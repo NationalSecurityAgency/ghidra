@@ -15,14 +15,7 @@
  */
 package ghidra.app.util.bin.format.elf.extend;
 
-import ghidra.app.util.bin.format.elf.ElfConstants;
-import ghidra.app.util.bin.format.elf.ElfHeader;
-import ghidra.app.util.bin.format.elf.ElfLoadHelper;
-import ghidra.app.util.bin.format.elf.ElfProgramHeader;
-import ghidra.app.util.bin.format.elf.ElfProgramHeaderType;
-import ghidra.app.util.bin.format.elf.ElfSectionHeader;
-import ghidra.app.util.bin.format.elf.ElfSectionHeaderType;
-import ghidra.app.util.bin.format.elf.ElfSymbol;
+import ghidra.app.util.bin.format.elf.*;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.lang.Language;
@@ -54,105 +47,96 @@ public class HCS12X_ElfExtension extends ElfExtension {
 	public String getDataTypeSuffix() {
 		return "_HCS12";
 	}
-	
+
 	@Override
-	public Address getPreferredSegmentAddress(ElfLoadHelper elfLoadHelper, ElfProgramHeader elfProgramHeader) {
-		
-		AddressSpace space =
-				getPreferredSegmentAddressSpace(elfLoadHelper, elfProgramHeader);
-		
-		if (space.equals(AddressSpace.OTHER_SPACE)) {
-			return space.getAddress(elfProgramHeader.getVirtualAddress());
-		}
-		
+	public Address getPreferredSegmentAddress(ElfLoadHelper elfLoadHelper,
+			ElfProgramHeader elfProgramHeader) {
+
+		AddressSpace space = getPreferredSegmentAddressSpace(elfLoadHelper, elfProgramHeader);
+
 		Program program = elfLoadHelper.getProgram();
-		
+
 		long addrWordOffset = elfProgramHeader.getVirtualAddress();
 
 		if (space == program.getAddressFactory().getDefaultAddressSpace()) {
 			addrWordOffset += elfLoadHelper.getImageBaseWordAdjustmentOffset();
 		}
-		
+
 		addrWordOffset = hcs12TranslatePagedAddress(addrWordOffset);
 
 		return space.getTruncatedAddress(addrWordOffset, true);
 	}
-	
+
 	@Override
 	public Address getPreferredSectionAddress(ElfLoadHelper elfLoadHelper,
 			ElfSectionHeader elfSectionHeader) {
-		
-		// don't translate non-allocated sections
-		if (!elfSectionHeader.isAlloc()) {
-			return super.getPreferredSectionAddress(elfLoadHelper, elfSectionHeader);
-		}
-		
+
 		Program program = elfLoadHelper.getProgram();
-		
+
 		AddressSpace space = getPreferredSectionAddressSpace(elfLoadHelper, elfSectionHeader);
-		
+
 		long addrWordOffset = elfSectionHeader.getAddress();
 
 		if (space == program.getAddressFactory().getDefaultAddressSpace()) {
 			addrWordOffset += elfLoadHelper.getImageBaseWordAdjustmentOffset();
 		}
-		
+
 		addrWordOffset = hcs12TranslatePagedAddress(addrWordOffset);
 
 		return space.getTruncatedAddress(addrWordOffset, true);
 	}
 
 	private long hcs12TranslatePagedAddress(long addrWordOffset) {
-		
+
 		long page = (addrWordOffset >> 16) & 0xff;
-		
+
 		long addr = addrWordOffset & 0xffff;
 
 		// Register address
-		if ( (addr  & 0xfC00) == 0x0) {
+		if ((addr & 0xfC00) == 0x0) {
 			return addr;
 		}
-		
+
 		// EPage address
-		if ((addr & 0xfc00) ==0x800) {
-			return 0x100000 | ((page << 10)  | (addr & 0x3ff));
+		if ((addr & 0xfc00) == 0x800) {
+			return 0x100000 | ((page << 10) | (addr & 0x3ff));
 		}
-		
+
 		// EPage FF fixed address
-		if ((addr & 0xfc00) ==0xC00) {
+		if ((addr & 0xfc00) == 0xC00) {
 			return (0x4FF << 10) | (addr & 0x3ff);
 		}
-		
+
 		// RPage address
-		if ((addr & 0xf000) ==0x1000) {
+		if ((addr & 0xf000) == 0x1000) {
 			return (page << 12) | (addr & 0xfff);
 		}
-		
+
 		// RPage FE fixed address
-		if ((addr & 0xf000) ==0x2000) {
+		if ((addr & 0xf000) == 0x2000) {
 			return (0xFE << 12) | (addr & 0xfff);
 		}
-		
+
 		// RPage FF fixed address
-		if ((addr & 0xf000) ==0x3000) {
+		if ((addr & 0xf000) == 0x3000) {
 			return (0xFF << 12) | (addr & 0xfff);
 		}
 
 		// PPage FD fixed address
-		if ((addr & 0xc000) ==0x4000) {
+		if ((addr & 0xc000) == 0x4000) {
 			return 0x400000 | (0xFD << 14) | (addr & 0x3fff);
 		}
-		
+
 		// PPage address
-		if ((addr & 0xc000) ==0x8000) {
+		if ((addr & 0xc000) == 0x8000) {
 			return 0x400000 | (page << 14) | (addr & 0x3fff);
 		}
-		
+
 		// PPage FF fixed address
-		if ((addr & 0xc000) ==0xC000) {
+		if ((addr & 0xc000) == 0xC000) {
 			return 0x400000 | (0xFF << 14) | (addr & 0x3fff);
 		}
-		
+
 		return addr;
 	}
 
@@ -167,9 +151,9 @@ public class HCS12X_ElfExtension extends ElfExtension {
 		String symName = elfSymbol.getNameAsString();
 
 		long laddr = address.getOffset();
-		
+
 		laddr = hcs12TranslatePagedAddress(laddr);
-		
+
 		Address mappedAddr = address.getNewAddress(laddr);
 
 		return mappedAddr;

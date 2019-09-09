@@ -2159,16 +2159,33 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 	}
 
 	/**
+	 * Get the preferred load address space for a program segment
+	 * @param elfProgramHeader elf program segment header
+	 * @return preferred load address space or null to use default behavior
+	 */
+	private AddressSpace getPreferredSegmentAddressSpace(ElfProgramHeader elfProgramHeader) {
+		if (elfProgramHeader.getType() != ElfProgramHeaderConstants.PT_LOAD &&
+			elfProgramHeader.getVirtualAddress() == 0) {
+			return AddressSpace.OTHER_SPACE;
+		}
+		return elf.getLoadAdapter().getPreferredSegmentAddressSpace(this, elfProgramHeader);
+	}
+
+	/**
 	 * Determine segment preferred load address.
 	 * While this method can produce the intended load address, there is no guarantee that
 	 * the segment data did not get bumped into an overlay area due to a conflict with
 	 * another segment or section.
 	 * @param elfProgramHeader
 	 * @return address or null if range check failed.
-	 * @throws AddressOutOfBoundsException
 	 */
-	private Address getPreferredSegmentLoadAddress(ElfProgramHeader elfProgramHeader)
-			throws AddressOutOfBoundsException {
+	private Address getPreferredSegmentLoadAddress(ElfProgramHeader elfProgramHeader) {
+		AddressSpace space = getPreferredSegmentAddressSpace(elfProgramHeader);
+		if (!space.isLoadedMemorySpace()) {
+			// handle non-loaded sections into the OTHER space
+			long addrWordOffset = elfProgramHeader.getVirtualAddress();
+			return space.getTruncatedAddress(addrWordOffset, true);
+		}
 
 		return elf.getLoadAdapter().getPreferredSegmentAddress(this, elfProgramHeader);
 	}
@@ -2202,10 +2219,15 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 	 * Determine section's preferred load address
 	 * @param elfSectionHeader
 	 * @return preferred load address
-	 * @throws AddressOutOfBoundsException
 	 */
-	private Address getPreferredSectionLoadAddress(ElfSectionHeader elfSectionHeader)
-			throws AddressOutOfBoundsException {
+	private Address getPreferredSectionLoadAddress(ElfSectionHeader elfSectionHeader) {
+
+		AddressSpace space = getPreferredSectionAddressSpace(elfSectionHeader);
+		if (!space.isLoadedMemorySpace()) {
+			// handle non-loaded sections into the OTHER space
+			long addrWordOffset = elfSectionHeader.getAddress();
+			return space.getTruncatedAddress(addrWordOffset, true);
+		}
 
 		return elf.getLoadAdapter().getPreferredSectionAddress(this, elfSectionHeader);
 	}

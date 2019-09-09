@@ -125,17 +125,15 @@ public class ElfLoadAdapter {
 	}
 
 	/**
-	 * Get the preferred load address space for a program segment
+	 * Get the preferred load address space for an allocated program segment.
+	 * The OTHER space is reserved and should not be returned by this method.
 	 * @param elfLoadHelper load helper object
 	 * @param elfProgramHeader elf program segment header
 	 * @return preferred load address space or null to use default behavior
 	 */
 	public AddressSpace getPreferredSegmentAddressSpace(ElfLoadHelper elfLoadHelper,
 			ElfProgramHeader elfProgramHeader) {
-		if (elfProgramHeader.getType() != ElfProgramHeaderConstants.PT_LOAD &&
-			elfProgramHeader.getVirtualAddress() == 0) {
-			return AddressSpace.OTHER_SPACE;
-		}
+
 		Program program = elfLoadHelper.getProgram();
 		if (elfProgramHeader.isExecute()) {
 			return program.getAddressFactory().getDefaultAddressSpace();
@@ -143,7 +141,6 @@ public class ElfLoadAdapter {
 		// segment is not marked execute, use the data space by default
 		return program.getLanguage().getDefaultDataSpace();
 	}
-	
 
 	/**
 	 * Get the preferred load address for a program segment
@@ -151,20 +148,20 @@ public class ElfLoadAdapter {
 	 * @param elfProgramHeader elf program segment header
 	 * @return preferred load address
 	 */
-	public Address getPreferredSegmentAddress(ElfLoadHelper elfLoadHelper, ElfProgramHeader elfProgramHeader) {
-		
+	public Address getPreferredSegmentAddress(ElfLoadHelper elfLoadHelper,
+			ElfProgramHeader elfProgramHeader) {
+
 		Program program = elfLoadHelper.getProgram();
-		
-		AddressSpace space =
-				getPreferredSegmentAddressSpace(elfLoadHelper, elfProgramHeader);
 
-			long addrWordOffset = elfProgramHeader.getVirtualAddress();
+		AddressSpace space = getPreferredSegmentAddressSpace(elfLoadHelper, elfProgramHeader);
 
-			if (space == program.getAddressFactory().getDefaultAddressSpace()) {
-				addrWordOffset += elfLoadHelper.getImageBaseWordAdjustmentOffset();
-			}
+		long addrWordOffset = elfProgramHeader.getVirtualAddress();
 
-			return space.getTruncatedAddress(addrWordOffset, true);
+		if (space == program.getAddressFactory().getDefaultAddressSpace()) {
+			addrWordOffset += elfLoadHelper.getImageBaseWordAdjustmentOffset();
+		}
+
+		return space.getTruncatedAddress(addrWordOffset, true);
 	}
 
 	/**
@@ -183,10 +180,11 @@ public class ElfLoadAdapter {
 	}
 
 	/**
-	 * Get the preferred load address space for an allocated section.
+	 * Get the preferred load address space for an allocated section.   The OTHER space
+	 * is reserved and should not be returned by this method.
 	 * @param elfLoadHelper load helper object
 	 * @param elfSectionHeader elf section header
-	 * @return preferred load address space or null to use default behavior
+	 * @return preferred load address space
 	 */
 	public AddressSpace getPreferredSectionAddressSpace(ElfLoadHelper elfLoadHelper,
 			ElfSectionHeader elfSectionHeader) {
@@ -197,9 +195,9 @@ public class ElfLoadAdapter {
 		// segment is not marked execute, use the data space by default
 		return program.getLanguage().getDefaultDataSpace();
 	}
-	
+
 	/**
-	 * Get the preferred load address for a program section
+	 * Get the preferred load address for an allocated program section.  
 	 * @param elfLoadHelper load helper object
 	 * @param elfSectionHeader elf program section header
 	 * @return preferred load address
@@ -207,9 +205,9 @@ public class ElfLoadAdapter {
 	public Address getPreferredSectionAddress(ElfLoadHelper elfLoadHelper,
 			ElfSectionHeader elfSectionHeader) {
 		Program program = elfLoadHelper.getProgram();
-		
+
 		AddressSpace space = getPreferredSectionAddressSpace(elfLoadHelper, elfSectionHeader);
-		
+
 		long addrWordOffset = elfSectionHeader.getAddress();
 
 		if (space == program.getAddressFactory().getDefaultAddressSpace()) {
