@@ -39,6 +39,7 @@ if (hasProperty("eclipseDSL")) {
 	}
 }
 
+
 // We do not currently build the SleighEditor plugin at Ghidra build time so we must 
 // copy the prebuilt zip file from the BIN_REPO
 rootProject.assembleDistribution {
