@@ -12,6 +12,7 @@ define register offset=0 size=4
 
 define register offset=0x100 size=4 [sr gbr vbr mach macl pr pc];
 
+
 @if SH_VERSION == "2A"
 define register offset=0x180 size=4 [tbr];
 @endif
@@ -179,10 +180,12 @@ target00_11: target is sdisp_00_11 [ target = (sdisp_00_11 << 1) + inst_start + 
 {
     rn_08_11 = rm_04_07;
 }
+
+imm8: "#"^simm_00_07 is simm_00_07 { export *[const]:4 simm_00_07; }
     
-:mov simm_00_07,rn_08_11 is opcode_12_15=0b1110 & rn_08_11 & simm_00_07  
+:mov imm8,rn_08_11 is opcode_12_15=0b1110 & rn_08_11 & imm8  
 {
-    rn_08_11 = simm_00_07;
+    rn_08_11 = imm8;
 }
 
 disppc4: @(disp,pc) is disp_00_07 & pc
@@ -498,11 +501,11 @@ disppc2: @(disp,pc) is disp_00_07 & pc
 
 imm20: "#"value is l_simm20_20_23 & l_simm20_00_16
     [ value = ((l_simm20_20_23 << 16) | l_simm20_00_16); ]
-    { export *[ram]:4 value; }
+    { export *[const]:4 value; }
 
 imm20s: "#"value is l_simm20_20_23 & l_simm20_00_16
     [ value = ((l_simm20_20_23 << 16) | l_simm20_00_16) << 8; ]
-    { export *[ram]:4 value; }
+    { export *[const]:4 value; }
 
 # MOVI20 #imm20, Rn           0000nnnniiii0000 iiiiiiiiiiiiiiii     imm → sign extension → Rn
 :movi20 imm20, l_rn_24_27
@@ -518,80 +521,294 @@ imm20s: "#"value is l_simm20_20_23 & l_simm20_00_16
     l_rn_24_27 = imm20s;
 }
 
+#
+# movm* instuctions are only in SH2A.  They don't collide, but could be ifdef'ed for 2A only
+#
+
+macro loadRegister(reg, ea) {
+	reg = *:4(ea);
+	ea = ea+4;
+}
+
+macro storeRegister(reg, ea) {
+	ea = ea-4;
+	*:4(ea) = reg;
+}
+
+MovMLReg1_0:	rm_imm_08_11     is rm_imm_08_11 & rm_08_11=0 {  storeRegister(r0,r15); }
+MovMLReg1_0store:	     is   rm_imm_08_11 { storeRegister(r0,r15); }
+
+MovMLReg1_1:	MovMLReg1_0  	is MovMLReg1_0                         {  r0 = r0; }
+MovMLReg1_1:	rm_imm_08_11     is MovMLReg1_0store  & rm_imm_08_11 & rm_08_11=1 {  storeRegister(r1,r15); build MovMLReg1_0store;   }
+MovMLReg1_1store:	     is MovMLReg1_0store  & rm_imm_08_11  {  storeRegister(r1,r15); build MovMLReg1_0store;   }
+
+MovMLReg1_2:	MovMLReg1_1  	is MovMLReg1_1                         {  r0 = r0; }
+MovMLReg1_2:	rm_imm_08_11     is MovMLReg1_1store & rm_imm_08_11 & rm_08_11=2 {  storeRegister(r2,r15); build MovMLReg1_1store;   }
+MovMLReg1_2store:	     is MovMLReg1_1store & rm_imm_08_11  {  storeRegister(r2,r15); build MovMLReg1_1store;   }
+
+MovMLReg1_3:	MovMLReg1_2  	is MovMLReg1_2                         {  r0 = r0;  }
+MovMLReg1_3:	rm_imm_08_11     is MovMLReg1_2store & rm_imm_08_11 & rm_08_11=3 {  storeRegister(r3,r15); build MovMLReg1_2store;   }
+MovMLReg1_3store:	     is MovMLReg1_2store & rm_imm_08_11 {  storeRegister(r3,r15); build MovMLReg1_2store;   }
+
+MovMLReg1_4:	MovMLReg1_3  	is MovMLReg1_3                         { r0 = r0; }
+MovMLReg1_4:	rm_imm_08_11     is MovMLReg1_3store & rm_imm_08_11  & rm_08_11=4 {   storeRegister(r4,r15); build MovMLReg1_3store;  }
+MovMLReg1_4store:	     is MovMLReg1_3store & rm_imm_08_11 {   storeRegister(r4,r15); build MovMLReg1_3store;  }
+
+MovMLReg1_5:	MovMLReg1_4  	is MovMLReg1_4                         { r0 = r0;   }
+MovMLReg1_5:	rm_imm_08_11     is MovMLReg1_4store & rm_imm_08_11  & rm_08_11=5 {  storeRegister(r5,r15); build MovMLReg1_4store;   }
+MovMLReg1_5store:	     is MovMLReg1_4store & rm_imm_08_11 {  storeRegister(r5,r15); build MovMLReg1_4store;   }
+
+MovMLReg1_6:	MovMLReg1_5  	is MovMLReg1_5                         { r0 = r0;  }
+MovMLReg1_6:	rm_imm_08_11     is MovMLReg1_5store & rm_imm_08_11 & rm_08_11=6 {  storeRegister(r6,r15); build MovMLReg1_5store;   }
+MovMLReg1_6store:	     is MovMLReg1_5store & rm_imm_08_11 {  storeRegister(r6,r15); build MovMLReg1_5store;   }
+
+MovMLReg1_7:	MovMLReg1_6  	is MovMLReg1_6                         {  r0 = r0; }
+MovMLReg1_7:	rm_imm_08_11     is MovMLReg1_6store & rm_imm_08_11 & rm_08_11=7 {  storeRegister(r7,r15); build MovMLReg1_6store;   }
+MovMLReg1_7store:	     is MovMLReg1_6store & rm_imm_08_11 {  storeRegister(r7,r15); build MovMLReg1_6store;   }
+
+MovMLReg1_8:	MovMLReg1_7  	is MovMLReg1_7                         { r0 = r0; }
+MovMLReg1_8:	rm_imm_08_11     is MovMLReg1_7store & rm_imm_08_11 & rm_08_11=8 {  storeRegister(r8,r15); build MovMLReg1_7store;   }
+MovMLReg1_8store:	     is MovMLReg1_7store & rm_imm_08_11 {  storeRegister(r8,r15); build MovMLReg1_7store;   }
+
+MovMLReg1_9:	MovMLReg1_8  	is MovMLReg1_8                         { r0 = r0;  }
+MovMLReg1_9:	rm_imm_08_11     is MovMLReg1_8store & rm_imm_08_11 & rm_08_11=9 {  storeRegister(r9,r15); build MovMLReg1_8store;   }
+MovMLReg1_9store:	     is MovMLReg1_8store & rm_imm_08_11 {  storeRegister(r9,r15); build MovMLReg1_8store;   }
+
+MovMLReg1_10:	MovMLReg1_9  	is MovMLReg1_9                         { r0 = r0; }
+MovMLReg1_10:	rm_imm_08_11     is MovMLReg1_9store & rm_imm_08_11 & rm_08_11=10 {  storeRegister(r10,r15); build MovMLReg1_9store;   }
+MovMLReg1_10store:	     is MovMLReg1_9store & rm_imm_08_11  {  storeRegister(r10,r15); build MovMLReg1_9store;   }
+
+MovMLReg1_11:	MovMLReg1_10  	is MovMLReg1_10                         { r0 = r0;  }
+MovMLReg1_11:	rm_imm_08_11     is MovMLReg1_10store & rm_imm_08_11 & rm_08_11=11 {   storeRegister(r11,r15); build MovMLReg1_10store;   }
+MovMLReg1_11store:	     is MovMLReg1_10store & rm_imm_08_11 {   storeRegister(r11,r15); build MovMLReg1_10store;   }
+
+MovMLReg1_12:	MovMLReg1_11  	is MovMLReg1_11                         {  r0 = r0;  }
+MovMLReg1_12:	rm_imm_08_11     is MovMLReg1_11store & rm_imm_08_11 & rm_08_11=12 {   storeRegister(r12,r15); build MovMLReg1_11store;  }
+MovMLReg1_12store:	     is MovMLReg1_11store & rm_imm_08_11  {   storeRegister(r12,r15); build MovMLReg1_11store;  }
+
+MovMLReg1_13:	MovMLReg1_12	is MovMLReg1_12                            {  r0 = r0;  }
+MovMLReg1_13:	rm_imm_08_11     is MovMLReg1_12store & rm_imm_08_11 & rm_08_11=13 {  storeRegister(r13,r15); build MovMLReg1_12store;   }
+MovMLReg1_13store:	     is MovMLReg1_12store & rm_imm_08_11 {  storeRegister(r13,r15); build MovMLReg1_12store;   }
+
+MovMLReg1_14:	MovMLReg1_13	is MovMLReg1_13                                { r0 = r0;  }
+MovMLReg1_14: rm_imm_08_11	    is MovMLReg1_13store & rm_imm_08_11 & rm_08_11=14 {  storeRegister(r14,r15); build MovMLReg1_13store;   }
+MovMLReg1_14store: 	is MovMLReg1_13store & rm_imm_08_11  {  storeRegister(r14,r15); build MovMLReg1_13store;  }
+
+MovMLReg1_15:	MovMLReg1_14	is MovMLReg1_14                             { r0 = r0; }
+MovMLReg1_15:	rm_imm_08_11     is MovMLReg1_14store & rm_imm_08_11 & rm_08_11=15 {   storeRegister(pr,r15); build MovMLReg1_14store; }
+
+MovMLReg1:  MovMLReg1_15 is MovMLReg1_15 {
+	build MovMLReg1_15;
+}
+
 # MOVML.L Rm, @-R15           0100mmmm11110001
-:movml.l rm_imm_08_11, @-r15
-    is r15 & opcode_12_15=0b0100 & rm_imm_08_11 & opcode_00_07=0b11110001
+:movml.l MovMLReg1, @-r15
+    is r15 & opcode_12_15=0b0100 & rm_imm_08_11 & opcode_00_07=0b11110001 & MovMLReg1
 {
-    local i = rm_imm_08_11;
-    local val;
-<loop>
-    if (i == 15) goto <i15>;
-    val = *[register]:4 (&r0 + i*4);
-    goto <bend>;
-<i15>
-    val = pr;
-<bend>
-    r15 = r15 - 4;
-    *:4 (r15) = val;
-    i = i - 1;
-    if (i == 0) goto <loop_end>;
-    goto <loop>;
-<loop_end>
-    r15 = r15 - 4;
-    *:4 (r15) = r0;
+    build MovMLReg1;
 }
 
 
+MovMLReg2_0:	rm_imm_08_11   is rm_imm_08_11 & rm_08_11=0 { loadRegister(r0,r15); }
+
+MovMLReg2_0load:  is rm_imm_08_11 { loadRegister(r0,r15); }
+
+MovMLReg2_1:	MovMLReg2_0    is MovMLReg2_0                                     { r0 = r0; }
+MovMLReg2_1:	rm_imm_08_11   is MovMLReg2_0load  & rm_imm_08_11 & rm_08_11=1    { build MovMLReg2_0load; loadRegister(r1,r15); }
+MovMLReg2_1load:                        is MovMLReg2_0load  & rm_imm_08_11 { build MovMLReg2_0load; loadRegister(r1,r15); }
+
+MovMLReg2_2:	MovMLReg2_1    is MovMLReg2_1 { r0 = r0; }
+MovMLReg2_2:	rm_imm_08_11   is MovMLReg2_1load  & rm_imm_08_11 & rm_08_11=2    { build MovMLReg2_1load; loadRegister(r2,r15); }
+MovMLReg2_2load:  is MovMLReg2_1load  & rm_imm_08_11 { build MovMLReg2_1load; loadRegister(r2,r15); }
+
+MovMLReg2_3:	MovMLReg2_2    is MovMLReg2_2 { r0 = r0; }
+MovMLReg2_3:	rm_imm_08_11   is MovMLReg2_2load  & rm_imm_08_11 & rm_08_11=3    { build MovMLReg2_2load; loadRegister(r3,r15); }
+MovMLReg2_3load:                        is MovMLReg2_2load  & rm_imm_08_11 { build MovMLReg2_2load; loadRegister(r3,r15); }
+
+MovMLReg2_4:	MovMLReg2_3    is MovMLReg2_3                                     { r0 = r0; }
+MovMLReg2_4:	rm_imm_08_11   is MovMLReg2_3load  & rm_imm_08_11  & rm_08_11=4   { build MovMLReg2_3load; loadRegister(r4,r15); }
+
+MovMLReg2_4load:  is MovMLReg2_3load  & rm_imm_08_11 { build MovMLReg2_3load; loadRegister(r4,r15); }
+
+MovMLReg2_5:	MovMLReg2_4    is MovMLReg2_4                                     { r0 = r0; }
+MovMLReg2_5:	rm_imm_08_11   is MovMLReg2_4load  & rm_imm_08_11  & rm_08_11=5   { build MovMLReg2_4load; loadRegister(r5,r15); }
+
+MovMLReg2_5load:  is MovMLReg2_4load  & rm_imm_08_11 { build MovMLReg2_4load; loadRegister(r5,r15); }
+
+MovMLReg2_6:	MovMLReg2_5    is MovMLReg2_5                                     { r0 = r0; }
+MovMLReg2_6:	rm_imm_08_11   is MovMLReg2_5load  & rm_imm_08_11 & rm_08_11=6    { build MovMLReg2_5load; loadRegister(r6,r15); }
+
+MovMLReg2_6load:  is MovMLReg2_5load  & rm_imm_08_11 { build MovMLReg2_5load; loadRegister(r6,r15); }
+
+MovMLReg2_7:	MovMLReg2_6    is MovMLReg2_6                                     { r0 = r0; }
+MovMLReg2_7:	rm_imm_08_11   is MovMLReg2_6load  & rm_imm_08_11 & rm_08_11=7    { build MovMLReg2_6load; loadRegister(r7,r15); }
+
+MovMLReg2_7load:  is MovMLReg2_6load  & rm_imm_08_11 { build MovMLReg2_6load; loadRegister(r7,r15); }
+
+MovMLReg2_8:	MovMLReg2_7    is MovMLReg2_7                                     { r0 = r0; }
+MovMLReg2_8:	rm_imm_08_11   is MovMLReg2_7load  & rm_imm_08_11 & rm_08_11=8    { build MovMLReg2_7load; loadRegister(r8,r15); }
+
+MovMLReg2_8load:  is MovMLReg2_7load  & rm_imm_08_11 { build MovMLReg2_7load; loadRegister(r8,r15); }
+
+MovMLReg2_9:	MovMLReg2_8    is MovMLReg2_8                                     { r0 = r0; }
+MovMLReg2_9:	rm_imm_08_11   is MovMLReg2_8load  & rm_imm_08_11 & rm_08_11=9    { build MovMLReg2_8load; loadRegister(r9,r15); }
+
+MovMLReg2_9load:  is MovMLReg2_8load  & rm_imm_08_11 { build MovMLReg2_8load; loadRegister(r9,r15); }
+
+MovMLReg2_10:	MovMLReg2_9   is MovMLReg2_9                                     { r0 = r0; }
+MovMLReg2_10:	rm_imm_08_11  is MovMLReg2_9load  & rm_imm_08_11 & rm_08_11=10   { build MovMLReg2_9load; loadRegister(r10,r15); }
+
+MovMLReg2_10load:  is MovMLReg2_9load  & rm_imm_08_11 { build MovMLReg2_9load; loadRegister(r10,r15); }
+
+MovMLReg2_11:	MovMLReg2_10  is MovMLReg2_10                                    { r0 = r0; }
+MovMLReg2_11:	rm_imm_08_11  is MovMLReg2_10load  & rm_imm_08_11 & rm_08_11=11  { build MovMLReg2_10load; loadRegister(r11,r15); }
+MovMLReg2_11load:  is MovMLReg2_10load  & rm_imm_08_11 { build MovMLReg2_10load; loadRegister(r11,r15); }
+
+MovMLReg2_12:	MovMLReg2_11  is MovMLReg2_11                                    { r0 = r0; }
+MovMLReg2_12:	rm_imm_08_11  is MovMLReg2_11load  & rm_imm_08_11 & rm_08_11=12  { build MovMLReg2_11load; loadRegister(r12,r15); }
+
+MovMLReg2_12load:  is MovMLReg2_11load  & rm_imm_08_11 { build MovMLReg2_11load; loadRegister(r12,r15); }
+
+MovMLReg2_13:	MovMLReg2_12  is MovMLReg2_12                                    { r0 = r0; }
+MovMLReg2_13:	rm_imm_08_11  is MovMLReg2_12load  & rm_imm_08_11 & rm_08_11=13  { build MovMLReg2_12load; loadRegister(r13,r15); }
+
+MovMLReg2_13load:  is MovMLReg2_12load  & rm_imm_08_11 { build MovMLReg2_12load; loadRegister(r13,r15); }
+
+MovMLReg2_14:	MovMLReg2_13  is MovMLReg2_13                                    { r0 = r0; }
+MovMLReg2_14:  rm_imm_08_11  is MovMLReg2_13load   & rm_imm_08_11 & rm_08_11=14 { build MovMLReg2_13load; loadRegister(r14,r15); }
+
+MovMLReg2_14load:  is MovMLReg2_13load  & rm_imm_08_11 { build MovMLReg2_13load; loadRegister(r14,r15); }
+
+MovMLReg2_15:	MovMLReg2_14  is MovMLReg2_14                                    { r0 = r0; }
+MovMLReg2_15:	rm_imm_08_11  is MovMLReg2_14load  & rm_imm_08_11 & rm_08_11=15  { build MovMLReg2_14load; storeRegister(pr,r15); }
+
+MovMLReg2: MovMLReg2_15  is MovMLReg2_15 {
+	build MovMLReg2_15;
+}
+
 # MOVML.L @R15+, Rn             0100nnnn11110101 
-:movml.l @r15+, rn_imm_08_11
-    is r15 & opcode_12_15=0b0100 & rn_imm_08_11 & opcode_00_07=0b11110101
-{
-    local i = 0;
-<loop>
-    if (i == 15) goto <i15>;
-    *[register]:4 (&r0 + i*4) = *:4 (r15);
-    goto <bend>;
-<i15>
-    pr = *:4 (r15);
-<bend>
-    r15 = r15 + 4;
-    i = i + 1;
-    if (i > rn_imm_08_11) goto <loop_end>;
-    goto <loop>;
-<loop_end>
+:movml.l @r15+, MovMLReg2
+    is r15 & opcode_12_15=0b0100 & rn_imm_08_11 & opcode_00_07=0b11110101 & MovMLReg2 {
+	build MovMLReg2;
+}
+
+
+MovMUReg1_0:	rm_imm_08_11     is rm_imm_08_11 & rm_08_11=0 {  storeRegister(r0,r15); }
+
+MovMUReg1_1:	MovMUReg1_0  	is MovMUReg1_0                         {  storeRegister(r1,r15); build MovMUReg1_0; }
+MovMUReg1_1:	rm_imm_08_11     is rm_imm_08_11 & rm_08_11=1 {  storeRegister(r1,r15); }
+
+MovMUReg1_2:	MovMUReg1_1  	is MovMUReg1_1                         {  storeRegister(r2,r15); build MovMUReg1_1; }
+MovMUReg1_2:	rm_imm_08_11     is rm_imm_08_11 & rm_08_11=2 {  storeRegister(r2,r15); }
+
+MovMUReg1_3:	MovMUReg1_2  	is MovMUReg1_2                         {  storeRegister(r3,r15); build MovMUReg1_2; }
+MovMUReg1_3:	rm_imm_08_11     is rm_imm_08_11 & rm_08_11=3 {  storeRegister(r3,r15); }
+
+MovMUReg1_4:	MovMUReg1_3  	is MovMUReg1_3                         {  storeRegister(r4,r15); build MovMUReg1_3; }
+MovMUReg1_4:	rm_imm_08_11     is rm_imm_08_11 & rm_08_11=4 {  storeRegister(r4,r15); }
+
+MovMUReg1_5:	MovMUReg1_4  	is MovMUReg1_4                         {  storeRegister(r5,r15); build MovMUReg1_4; }
+MovMUReg1_5:	rm_imm_08_11     is rm_imm_08_11 & rm_08_11=5 {  storeRegister(r5,r15); }
+
+MovMUReg1_6:	MovMUReg1_5  	is MovMUReg1_5                         {  storeRegister(r6,r15); build MovMUReg1_5; }
+MovMUReg1_6:	rm_imm_08_11     is rm_imm_08_11 & rm_08_11=6 {  storeRegister(r6,r15); }
+
+MovMUReg1_7:	MovMUReg1_6  	is MovMUReg1_6                         {  storeRegister(r7,r15); build MovMUReg1_6; }
+MovMUReg1_7:	rm_imm_08_11     is rm_imm_08_11 & rm_08_11=7 {  storeRegister(r7,r15); }
+
+MovMUReg1_8:	MovMUReg1_7  	is MovMUReg1_7                         {  storeRegister(r8,r15); build MovMUReg1_7; }
+MovMUReg1_8:	rm_imm_08_11     is rm_imm_08_11 & rm_08_11=8 {  storeRegister(r8,r15); }
+
+MovMUReg1_9:	MovMUReg1_8  	is MovMUReg1_8                         {  storeRegister(r9,r15); build MovMUReg1_8; }
+MovMUReg1_9:	rm_imm_08_11     is rm_imm_08_11 & rm_08_11=9 {  storeRegister(r9,r15); }
+
+MovMUReg1_10:	MovMUReg1_9  	is MovMUReg1_9                         {  storeRegister(r10,r15); build MovMUReg1_9; }
+MovMUReg1_10:	rm_imm_08_11     is rm_imm_08_11 & rm_08_11=10 {  storeRegister(r10,r15); }
+
+MovMUReg1_11:	MovMUReg1_10  	is MovMUReg1_10                         {  storeRegister(r11,r15); build MovMUReg1_10; }
+MovMUReg1_11:	rm_imm_08_11     is rm_imm_08_11 & rm_08_11=11 {  storeRegister(r11,r15); }
+
+MovMUReg1_12:	MovMUReg1_11  	is MovMUReg1_11                         {  storeRegister(r12,r15); build MovMUReg1_11; }
+MovMUReg1_12:	rm_imm_08_11     is rm_imm_08_11 & rm_08_11=12 {  storeRegister(r12,r15); }
+
+MovMUReg1_13:	MovMUReg1_12	is MovMUReg1_12                            {  storeRegister(r13,r15); build MovMUReg1_12; }
+MovMUReg1_13:	rm_imm_08_11     is rm_imm_08_11 & rm_08_11=13 {  storeRegister(r13,r15); }
+
+MovMUReg1_14:	MovMUReg1_13	is MovMUReg1_13                            {  storeRegister(r14,r15); build MovMUReg1_13; }
+MovMUReg1_14:	rm_imm_08_11     is rm_imm_08_11 & rm_08_11=14 {  storeRegister(r14,r15); }
+
+MovMUReg1_15:	MovMUReg1_14	is MovMUReg1_14                             {  storeRegister(pr,r15); build MovMUReg1_14; }
+MovMUReg1_15:	rm_imm_08_11     is rm_imm_08_11 & rm_08_11=15 {  storeRegister(pr,r15); }
+
+MovMUReg1: MovMUReg1_15 is MovMUReg1_15 {
+	build MovMUReg1_15;
 }
 
 # MOVMU.L Rm, @-R15             0100mmmm11110000
-:movmu.l rm_imm_08_11, @-r15
-    is r15 & opcode_12_15=0b0100 & rm_imm_08_11 & opcode_00_07=0b11110000
+:movmu.l MovMUReg1, @-r15
+    is r15 & opcode_12_15=0b0100 & rm_imm_08_11 & opcode_00_07=0b11110000 & MovMUReg1
 {
-    r15 = r15 - 4;
-    *:4 (r15) = pr;
-    local i = 14;
-<loop>
-    r15 = r15 - 4;
-    *:4 (r15) = *[register]:4 (&r0 + i*4);
-    i = i + 1;
-    if (i > rm_imm_08_11) goto <loop_end>;
-    goto <loop>;
-<loop_end>
+    build MovMUReg1;
+}
+
+MovMUReg2_0:	rm_imm_08_11     is rm_imm_08_11 & rm_08_11=0 {  loadRegister(r0,r15); }
+
+MovMUReg2_1:	MovMUReg2_0  	is MovMUReg2_0                         {  build MovMUReg2_0; loadRegister(pr,r15); }
+MovMUReg2_1:	rm_imm_08_11     is rm_imm_08_11 & rm_08_11=1 {  loadRegister(r1,r15); }
+
+MovMUReg2_2:	MovMUReg2_1  	is MovMUReg2_1                         {  build MovMUReg2_1; loadRegister(pr,r15); }
+MovMUReg2_2:	rm_imm_08_11     is rm_imm_08_11 & rm_08_11=2 {  loadRegister(r2,r15); }
+
+MovMUReg2_3:	MovMUReg2_2  	is MovMUReg2_2                         {  build MovMUReg2_2; loadRegister(pr,r15); }
+MovMUReg2_3:	rm_imm_08_11     is rm_imm_08_11 & rm_08_11=3 {  loadRegister(r3,r15); }
+
+MovMUReg2_4:	MovMUReg2_3  	is MovMUReg2_3                         {  build MovMUReg2_3; loadRegister(pr,r15); }
+MovMUReg2_4:	rm_imm_08_11     is rm_imm_08_11 & rm_08_11=4 {  loadRegister(r4,r15); }
+
+MovMUReg2_5:	MovMUReg2_4  	is MovMUReg2_4                         {  build MovMUReg2_4; loadRegister(pr,r15); }
+MovMUReg2_5:	rm_imm_08_11     is rm_imm_08_11 & rm_08_11=5 {  loadRegister(r5,r15); }
+
+MovMUReg2_6:	MovMUReg2_5  	is MovMUReg2_5                         {  build MovMUReg2_5; loadRegister(pr,r15); }
+MovMUReg2_6:	rm_imm_08_11     is rm_imm_08_11 & rm_08_11=6 {  loadRegister(r6,r15); }
+
+MovMUReg2_7:	MovMUReg2_6  	is MovMUReg2_6                         { build MovMUReg2_6; loadRegister(pr,r15); }
+MovMUReg2_7:	rm_imm_08_11     is rm_imm_08_11 & rm_08_11=7 {  loadRegister(r7,r15); }
+
+MovMUReg2_8:	MovMUReg2_7  	is MovMUReg2_7                         {  build MovMUReg2_7; loadRegister(pr,r15); }
+MovMUReg2_8:	rm_imm_08_11     is rm_imm_08_11 & rm_08_11=8 {  loadRegister(r8,r15); }
+
+MovMUReg2_9:	MovMUReg2_8  	is MovMUReg2_8                         {  build MovMUReg2_8; loadRegister(pr,r15); }
+MovMUReg2_9:	rm_imm_08_11     is rm_imm_08_11 & rm_08_11=9 {  loadRegister(r9,r15); }
+
+MovMUReg2_10:	MovMUReg2_9  	is MovMUReg2_9                         {  build MovMUReg2_9; loadRegister(pr,r15); }
+MovMUReg2_10:	rm_imm_08_11     is rm_imm_08_11 & rm_08_11=10 {  loadRegister(r10,r15); }
+
+MovMUReg2_11:	MovMUReg2_10  	is MovMUReg2_10                         {  build MovMUReg2_10; loadRegister(pr,r15); }
+MovMUReg2_11:	rm_imm_08_11     is rm_imm_08_11 & rm_08_11=11 {  loadRegister(r11,r15); }
+
+MovMUReg2_12:	MovMUReg2_11  	is MovMUReg2_11                         {  build MovMUReg2_11; loadRegister(pr,r15); }
+MovMUReg2_12:	rm_imm_08_11     is rm_imm_08_11 & rm_08_11=12 {  loadRegister(r12,r15); }
+
+MovMUReg2_13:	MovMUReg2_12	is MovMUReg2_12                            {  build MovMUReg2_12; loadRegister(pr,r15); }
+MovMUReg2_13:	rm_imm_08_11     is rm_imm_08_11 & rm_08_11=13 {  loadRegister(r13,r15); }
+
+MovMUReg2_14:	MovMUReg2_13	is MovMUReg2_13                            {  build MovMUReg2_13; loadRegister(pr,r15); }
+MovMUReg2_14:	rm_imm_08_11     is rm_imm_08_11 & rm_08_11=14 {  loadRegister(r14,r15); }
+
+MovMUReg2_15:	MovMUReg2_14	is MovMUReg2_14                             {  build MovMUReg2_14; loadRegister(pr,r15); }
+MovMUReg2_15:	rm_imm_08_11     is rm_imm_08_11 & rm_08_11=15 {  loadRegister(pr,r15); }
+
+MovMUReg2: MovMUReg2_15 is MovMUReg2_15 {
+	build MovMUReg2_15;
 }
 
 # MOVMU.L @R15+, Rn             0100nnnn11110100
-:movmu.l @r15+, rn_imm_08_11
-    is r15 & opcode_12_15=0b0100 & rn_imm_08_11 & opcode_00_07=0b11110100
+:movmu.l @r15+, MovMUReg2
+    is r15 & opcode_12_15=0b0100 & rn_imm_08_11 & opcode_00_07=0b11110100 & MovMUReg2
 {
-    local i = rn_imm_08_11;
-<loop>
-    *[register]:4 (&r0 + i*4) = *:4 (r15);
-    r15 = r15 + 4;
-    i = i + 1;
-    if (i > 14) goto <loop_end>;
-    goto <loop>;
-<loop_end>
-    pr = *:4 (r15);
-    r15 = r15 + 4;
+	build MovMUReg2;
 }
+
 
 # MOVRT Rn                      0000nnnn00111001    ~ T → Rn
 :movrt rn_08_11 is opcode_12_15=0b0000 & rn_08_11 & opcode_00_07=0b00111001
@@ -1470,7 +1687,7 @@ imm20s: "#"value is l_simm20_20_23 & l_simm20_00_16
 
 :bsr    target00_11  is opcode_12_15=0b1011 & target00_11  
 {
-    pr = inst_start + 4;
+    pr = inst_next;
     delayslot(1);
     call target00_11;
 }
@@ -1478,7 +1695,7 @@ imm20s: "#"value is l_simm20_20_23 & l_simm20_00_16
 @if (SH_VERSION == "2") || (SH_VERSION == "2A")
 :bsrf   rm_08_11  is opcode_12_15=0b0000 & rm_08_11 & opcode_00_07=0b00000011 
 {
-    pr = inst_start + 4;
+    pr = inst_next;
     local dest = rm_08_11 + inst_next;
 
     delayslot(1);
@@ -1494,7 +1711,7 @@ imm20s: "#"value is l_simm20_20_23 & l_simm20_00_16
 
 :jsr    @rm_08_11  is opcode_12_15=0b0100 & rm_08_11 & opcode_00_07=0b00001011 
 {
-    pr = inst_start + 4;
+    pr = inst_next;
     delayslot(1);
     call [rm_08_11];
 }
@@ -1511,7 +1728,7 @@ imm20s: "#"value is l_simm20_20_23 & l_simm20_00_16
 :jsr"/n" @rm_08_11
     is opcode_12_15=0b0100 & rm_08_11 & opcode_00_07=0b01001011
 {
-    pr = inst_start + 2;
+    pr = inst_next;
     call [rm_08_11];
 }
 
@@ -1520,7 +1737,7 @@ imm20s: "#"value is l_simm20_20_23 & l_simm20_00_16
     is tbr & opcode_08_15=0b10000011 & disp_00_07
     [ disp = disp_00_07*4; ]
 {
-    pr = inst_start + 2;
+    pr = inst_next;
     call [tbr + disp*4];
 }
 
@@ -1560,9 +1777,9 @@ imm20s: "#"value is l_simm20_20_23 & l_simm20_00_16
     local cnt = *:4 (rm_08_11);
     local bn = (cnt & 0x0000FF80) >> 7;
     local en = (cnt & 0x0000007C) >> 2;
-    local offset = (bn * 80) + en * 4;
+    local off = (bn * 80) + en * 4;
 
-    local rb = &resbank_base + offset;
+    local rb = &resbank_base + off;
 
     r0 = *[register]:4 (rb);
 }
@@ -1572,9 +1789,9 @@ imm20s: "#"value is l_simm20_20_23 & l_simm20_00_16
     local cnt = *:4 (rn_08_11);
     local bn = (cnt & 0x0000FF80) >> 7;
     local en = (cnt & 0x0000007C) >> 2;
-    local offset = (bn * 80) + en * 4;
+    local off = (bn * 80) + en * 4;
 
-    local rb = &resbank_base + offset;
+    local rb = &resbank_base + off;
 
     *[register]:4 (rb) = r0;
 }
@@ -1633,16 +1850,8 @@ imm20s: "#"value is l_simm20_20_23 & l_simm20_00_16
     mach = rm_08_11;
 
 @if SH_VERSION == "1"
-    if((mach & 0x00000200) == 0) goto <ZERO_EXTEND>;
-
-    # sign extend
-    mach = mach | 0xFFFFFC00;
-    goto <END>;
-
-    <ZERO_EXTEND>
-    mach = mach & 0x000003FF;
-    
-    <END>
+    # sign extend 10 bit signed value from rm
+    mach = (mach << (32-10)) s>> (32-10);
 @endif
 }
 
@@ -1651,16 +1860,8 @@ imm20s: "#"value is l_simm20_20_23 & l_simm20_00_16
     mach = *rm_08_11;
     
 @if SH_VERSION == "1"
-    if((mach & 0x00000200) == 0) goto <ZERO_EXTEND>;
-
-    # sign extend
-    mach = mach | 0xFFFFFC00;
-    goto <END>;
-
-    <ZERO_EXTEND>
-    mach = mach & 0x000003FF;
-    
-    <END>
+    # sign extend 10 bit signed value from rm
+    mach = (mach << (32-10)) s>> (32-10);
 @endif
     
     rm_08_11 = rm_08_11 + 4;
@@ -1715,10 +1916,11 @@ imm20s: "#"value is l_simm20_20_23 & l_simm20_00_16
     $(T_FLAG) = 1;
 }
 
+define pcodeop Sleep_Standby;
+
 :sleep  is opcode_00_15=0b0000000000011011 
 {
-    # FIXME: call sleep();
-    r0 = r0;
+    Sleep_Standby();
 }
 
 :stc    sr,rn_08_11  is sr & opcode_12_15=0b0000 & rn_08_11 & opcode_00_07=0b00000010 
@@ -1766,16 +1968,8 @@ imm20s: "#"value is l_simm20_20_23 & l_simm20_00_16
     rn_08_11 = mach;
     
 @if SH_VERSION == "1"
-    if((rn_08_11 & 0x00000200) == 0) goto <ZERO_EXTEND>;
-
-    # sign extend
-    rn_08_11 = rn_08_11 | 0xFFFFFC00;
-    goto <END>;
-
-    <ZERO_EXTEND>
-    rn_08_11 = rn_08_11 & 0x000003FF;
-    
-    <END>
+    # sign extend 10 bit signed value from rm
+    rn_08_11 = (rn_08_11 << (32-10)) s>> (32-10);
 @endif
 }
 
@@ -1786,16 +1980,8 @@ imm20s: "#"value is l_simm20_20_23 & l_simm20_00_16
     local temp = mach;
 
 @if SH_VERSION == "1"
-    if((temp & 0x00000200) == 0) goto <ZERO_EXTEND>;
-
-    # sign extend
-    temp = temp | 0xFFFFFC00;
-    goto <END>;
-
-    <ZERO_EXTEND>
-    temp = temp & 0x000003FF;
-    
-    <END>
+    # sign extend 10 bit signed value from rm
+    temp = (temp << (32-10)) s>> (32-10);
 @endif
 
     *rn_08_11 = temp;
@@ -2246,11 +2432,11 @@ imm20s: "#"value is l_simm20_20_23 & l_simm20_00_16
 :bxor.b     "#"l_imm3_20_22, @(l_disp_00_11, l_rn_24_27)
     is l_opcode_28_31=0b0011 & l_rn_24_27 & l_opcode_23_23=0b0 & l_imm3_20_22 & l_opcode_16_19=0b1001 & l_opcode_12_15=0b0110 & l_disp_00_11
 {
+	# extract bit to test
     local b = *:1 (l_rn_24_27 + l_disp_00_11);
-    local abit = b & (1 << l_imm3_20_22);
-    if (abit == 0) goto <end>;
-    $(T_FLAG) = ~$(T_FLAG);
-<end>
+    local abit = (b >> l_imm3_20_22) & 1;
+    
+    $(T_FLAG) = $(T_FLAG) ^ abit;
 }
 
 @endif
