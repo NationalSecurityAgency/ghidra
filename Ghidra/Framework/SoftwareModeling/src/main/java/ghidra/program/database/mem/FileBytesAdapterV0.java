@@ -45,9 +45,8 @@ class FileBytesAdapterV0 extends FileBytesAdapter {
 	private Table table;
 	private List<FileBytes> fileBytesList = new ArrayList<>();
 
-	FileBytesAdapterV0(DBHandle handle, MemoryMapDB memMap, boolean create)
-			throws VersionException, IOException {
-		super(handle, memMap);
+	FileBytesAdapterV0(DBHandle handle, boolean create) throws VersionException, IOException {
+		super(handle);
 
 		if (create) {
 			table = handle.createTable(TABLE_NAME, SCHEMA);
@@ -66,7 +65,7 @@ class FileBytesAdapterV0 extends FileBytesAdapter {
 		RecordIterator iterator = table.iterator();
 		while (iterator.hasNext()) {
 			Record record = iterator.next();
-			fileBytesList.add(new FileBytes(this, memMap, record));
+			fileBytesList.add(new FileBytes(this, record));
 		}
 
 	}
@@ -85,7 +84,7 @@ class FileBytesAdapterV0 extends FileBytesAdapter {
 		record.setField(V0_BUF_IDS_COL, new BinaryCodedField(bufIds));
 		record.setField(V0_LAYERED_BUF_IDS_COL, new BinaryCodedField(layeredBufIds));
 		table.putRecord(record);
-		FileBytes fileBytes = new FileBytes(this, memMap, record);
+		FileBytes fileBytes = new FileBytes(this, record);
 		fileBytesList.add(fileBytes);
 		return fileBytes;
 	}
@@ -108,8 +107,15 @@ class FileBytesAdapterV0 extends FileBytesAdapter {
 		while (iterator.hasNext()) {
 			Record record = iterator.next();
 			FileBytes fileBytes = map.remove(record.getKey());
+			if (fileBytes != null) {
+				if (!fileBytes.refresh(record)) {
+					// FileBytes attributes changed
+					fileBytes.invalidate();
+					fileBytes = null;
+				}
+			}
 			if (fileBytes == null) {
-				fileBytes = new FileBytes(this, memMap, record);
+				fileBytes = new FileBytes(this, record);
 			}
 			newList.add(fileBytes);
 		}
@@ -150,9 +156,16 @@ class FileBytesAdapterV0 extends FileBytesAdapter {
 		int maxBufSize = getMaxBufferSize();
 		int bufCount = (int) (size / maxBufSize);
 		int sizeLastBuf = (int) (size % maxBufSize);
+
+		// there is a remainder then we have one additional buffer
 		if (sizeLastBuf > 0) {
 			bufCount++;
 		}
+		else {
+			// divides evenly, so sizeLastBuf is full maxBuffSize
+			sizeLastBuf = maxBufSize;
+		}
+
 		DBBuffer[] buffers = new DBBuffer[bufCount];
 		for (int i = 0; i < bufCount - 1; i++) {
 			buffers[i] = handle.createBuffer(maxBufSize);

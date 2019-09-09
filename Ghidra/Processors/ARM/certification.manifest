@@ -25,6 +25,7 @@ data/languages/ARMCortex.pspec||GHIDRA||||END|
 data/languages/ARMTHUMBinstructions.sinc||GHIDRA||||END|
 data/languages/ARM_v45.cspec||GHIDRA||||END|
 data/languages/ARM_v45.pspec||GHIDRA||||END|
+data/languages/ARM_win.cspec||GHIDRA||||END|
 data/languages/ARMinstructions.sinc||GHIDRA||||END|
 data/languages/ARMneon.dwarf||GHIDRA||||END|
 data/languages/ARMneon.sinc||GHIDRA||||END|

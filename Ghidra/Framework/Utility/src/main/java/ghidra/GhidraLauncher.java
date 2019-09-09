@@ -161,6 +161,12 @@ public class GhidraLauncher {
 				}
 			}
 		}
+
+		if (pathSet.isEmpty()) {
+			throw new IllegalStateException(
+				"Files listed in '" + LIBDEPS + "' are incorrect--rebuild this file");
+		}
+
 		pathList.addAll(pathSet);
 	}
 

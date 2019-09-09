@@ -79,7 +79,7 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 	private LayoutModelListener layoutModelListener = new LayoutModelListener() {
 
 		@Override
-		public void modelSizeChanged() {
+		public void modelSizeChanged(IndexMapper mapper) {
 			updateProviders();
 		}
 

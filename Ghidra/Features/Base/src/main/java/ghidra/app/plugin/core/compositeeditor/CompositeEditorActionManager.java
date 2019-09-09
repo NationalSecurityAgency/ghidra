@@ -15,15 +15,14 @@
  */
 package ghidra.app.plugin.core.compositeeditor;
 
-import ghidra.app.services.DataTypeManagerService;
-import ghidra.framework.options.Options;
-import ghidra.program.model.data.*;
-
 import java.util.*;
 
 import javax.swing.KeyStroke;
 
 import docking.action.KeyBindingData;
+import ghidra.app.services.DataTypeManagerService;
+import ghidra.framework.options.Options;
+import ghidra.program.model.data.*;
 
 /**
  * A CompositeEditorActionManager manages the actions for a single composite editor.
@@ -32,7 +31,8 @@ import docking.action.KeyBindingData;
  */
 public class CompositeEditorActionManager {
 	private CompositeEditorProvider provider;
-	private ArrayList<CompositeEditorTableAction> editorActions = new ArrayList<CompositeEditorTableAction>();
+	private ArrayList<CompositeEditorTableAction> editorActions =
+		new ArrayList<CompositeEditorTableAction>();
 	private ArrayList<CompositeEditorTableAction> favoritesActions =
 		new ArrayList<CompositeEditorTableAction>();
 	private ArrayList<CycleGroupAction> cycleGroupActions = new ArrayList<CycleGroupAction>();
@@ -46,9 +46,7 @@ public class CompositeEditorActionManager {
 	 * Constructor
 	 * <BR> NOTE: After constructing a manager, you must call setEditorModel() 
 	 * and setParentComponent() for the actions to work.
-	 * @param plugin the plugin that owns this composite editor action manager
-	 * @param program the associated program for obtaining data types.
-	 * @param dataTypeMgrService the data type manager service for the
+	 * @param provider the provider that owns this composite editor action manager
 	 * favorites and cycle groups.
 	 */
 	public CompositeEditorActionManager(CompositeEditorProvider provider) {
@@ -56,7 +54,8 @@ public class CompositeEditorActionManager {
 		this.dataTypeMgrService = provider.dtmService;
 		adapter = new DataTypeManagerChangeListenerAdapter() {
 			@Override
-			public void favoritesChanged(DataTypeManager dtm, DataTypePath path, boolean isFavorite) {
+			public void favoritesChanged(DataTypeManager dtm, DataTypePath path,
+					boolean isFavorite) {
 				setFavoritesActions(dataTypeMgrService.getFavorites());
 			}
 		};
@@ -192,8 +191,8 @@ public class CompositeEditorActionManager {
 	 */
 	public void setEditorActions(CompositeEditorTableAction[] actions) {
 		editorActions.clear();
-		for (int i = 0; i < actions.length; i++) {
-			editorActions.add(actions[i]);
+		for (CompositeEditorTableAction action : actions) {
+			editorActions.add(action);
 		}
 	}
 
@@ -226,20 +225,24 @@ public class CompositeEditorActionManager {
 	}
 
 	private void notifyActionsAdded(ArrayList<? extends CompositeEditorTableAction> actions) {
-		if (actions.size() <= 0)
+		if (actions.size() <= 0) {
 			return;
+		}
 		int length = listeners.size();
-		CompositeEditorTableAction[] cea = actions.toArray(new CompositeEditorTableAction[actions.size()]);
+		CompositeEditorTableAction[] cea =
+			actions.toArray(new CompositeEditorTableAction[actions.size()]);
 		for (int i = 0; i < length; i++) {
 			listeners.get(i).actionsAdded(cea);
 		}
 	}
 
 	private void notifyActionsRemoved(ArrayList<? extends CompositeEditorTableAction> actions) {
-		if (actions.size() <= 0)
+		if (actions.size() <= 0) {
 			return;
+		}
 		int length = listeners.size();
-		CompositeEditorTableAction[] cea = actions.toArray(new CompositeEditorTableAction[actions.size()]);
+		CompositeEditorTableAction[] cea =
+			actions.toArray(new CompositeEditorTableAction[actions.size()]);
 		for (int i = 0; i < length; i++) {
 			listeners.get(i).actionsRemoved(cea);
 		}
@@ -252,14 +255,14 @@ public class CompositeEditorActionManager {
 		// Update the editor actions here.
 		// The favorites and cycle groups get handled by stateChanged() and cyclegroupChanged().
 		CompositeEditorTableAction[] actions = getEditorActions();
-		for (int i = 0; i < actions.length; i++) {
-			String actionName = actions[i].getFullName();
+		for (CompositeEditorTableAction action : actions) {
+			String actionName = action.getFullName();
 			if (actionName.equals(name)) {
-				KeyStroke actionKs = actions[i].getKeyBinding();
+				KeyStroke actionKs = action.getKeyBinding();
 				KeyStroke oldKs = (KeyStroke) oldValue;
 				KeyStroke newKs = (KeyStroke) newValue;
 				if (actionKs == oldKs) {
-					actions[i].setUnvalidatedKeyBindingData(new KeyBindingData(newKs));
+					action.setUnvalidatedKeyBindingData(new KeyBindingData(newKs));
 				}
 				break;
 			}

@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- Set up x86 16-bit in real mode -->
+<processor_spec>
+  <properties>
+    <property key="useOperandReferenceAnalyzerSwitchTables" value="true"/>
+  </properties>
+  <programcounter register="EIP"/>
+  <segmented_address space="ram" type="real" />
+  <segmentop space="ram" userop="segment" farpointer="yes">
+    <pcode>
+      <input name="inner" size="2"/>
+      <input name="base" size="2"/>
+      <output name="res" size="4"/>
+      <body><![CDATA[
+        res = (zext(base) << 4) + zext(inner);
+      ]]></body>
+    </pcode>
+    <constresolve>
+      <register name="DS"/>
+    </constresolve>
+  </segmentop>
+  <context_data>
+    <context_set space="ram">
+      <set name="addrsize" val="0"/>
+      <set name="opsize" val="0"/>
+      <set name="protectedMode" val="0"/>
+    </context_set>
+    <tracked_set space="ram">
+      <set name="DF" val="0"/>
+    </tracked_set>
+  </context_data>
+</processor_spec>

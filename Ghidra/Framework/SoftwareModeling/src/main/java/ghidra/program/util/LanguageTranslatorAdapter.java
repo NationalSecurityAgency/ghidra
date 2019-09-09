@@ -540,16 +540,6 @@ class TemporaryCompilerSpec implements CompilerSpec {
 	}
 
 	@Override
-	public int getCallStackMod() {
-		return newCompilerSpec.getCallStackMod();
-	}
-
-	@Override
-	public int getCallStackShift() {
-		return newCompilerSpec.getCallStackShift();
-	}
-
-	@Override
 	public PrototypeModel[] getCallingConventions() {
 		return new PrototypeModel[0];
 	}

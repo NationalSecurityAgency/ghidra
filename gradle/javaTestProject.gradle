@@ -29,8 +29,11 @@ test { t ->
 	// the class searching environment.  This can have a negative impact
 	// on test results due to the inconsistent Application environment
 	// which may exist when all tests are run versus a single test.
-	// Based on this limitation we should only use the Integration base
-	// test classes within integrationTest regions (e.g., test.slow).
+	// 
+	// Based on this limitation, do not place tests that depend on integration
+	// base classes (eg: AbstractGhidraHeadlessIntegrationTest) in 'test'; they
+	// must go in 'test.slow'.
+	
 
 	doFirst {
 		startTestTimer(t)

@@ -124,31 +124,6 @@ SegmentOp::SegmentOp(Architecture *g,const string &nm,int4 ind)
   constresolve.space = (AddrSpace *)0;
 }
 
-/// \brief Execute a stream of operations (OpFollow) given a starting input value
-///
-/// Each operation is performed in turn, with output from the previous becoming
-/// input of the next.  The final output is returned.
-/// \param follow is the ordered set of operations to perform
-/// \param input is the constant input for the first operation
-/// \return the final constant output
-uintb SegmentOp::executeSide(const vector<OpFollow> &follow,uintb input)
-
-{
-  for(int4 i=0;i<follow.size();++i) {
-    switch(follow[i].opc) {
-    case CPUI_INT_AND:
-      input &= follow[i].val;
-      break;
-    case CPUI_INT_LEFT:
-      input <<= follow[i].val;
-      break;
-    default:
-      break;
-    }
-  }
-  return input;
-}
-
 bool SegmentOp::unify(Funcdata &data,PcodeOp *op,
 				 vector<Varnode *> &bindlist) const
 {
@@ -163,7 +138,7 @@ bool SegmentOp::unify(Funcdata &data,PcodeOp *op,
   if (op->getIn(0)->getOffset() != useropindex) return false;
   if (op->numInput() != 3) return false;
   innervn = op->getIn(1);
-  if (basepresent) {
+  if (baseinsize != 0) {
     basevn = op->getIn(1);
     innervn = op->getIn(2);
     if (basevn->isConstant())
@@ -181,40 +156,23 @@ bool SegmentOp::unify(Funcdata &data,PcodeOp *op,
 uintb SegmentOp::execute(const vector<uintb> &input) const
 
 {
-  uintb base,inner;
-  
-  if (basepresent)
-    base = executeSide(basefollow,input[1]);
-  else
-    base = 0;
-
-  inner = executeSide(innerfollow,input[0]);
-  return (base+inner);
+  ExecutablePcode *pcodeScript = (ExecutablePcode *)glb->pcodeinjectlib->getPayload(injectId);
+  return pcodeScript->evaluate(input);
 }
 
 void SegmentOp::restoreXml(const Element *el)
 
 {
   spc = glb->getSpaceByName(el->getAttributeValue("space"));
+  injectId = -1;
   baseinsize = 0;
   innerinsize = 0;
   bool userdefined = false;
-  forcesegment = true;
   supportsfarpointer = false;
   name = "segment"; 		// Default name, might be overridden by userop attribute
   for(int4 i=0;i<el->getNumAttributes();++i) {
     const string &nm(el->getAttributeName(i));
     if (nm == "space") continue;
-    else if (nm == "baseinsize") {
-      istringstream s(el->getAttributeValue(i));
-      s.unsetf(ios::dec | ios::hex | ios::oct);
-      s >> baseinsize;
-    }
-    else if (nm == "innerinsize") {
-      istringstream s1(el->getAttributeValue(i));
-      s1.unsetf(ios::dec | ios::hex | ios::oct);
-      s1 >> innerinsize;
-    }
     else if (nm == "farpointer")
       supportsfarpointer = true;
     else if (nm == "userop") {	// Based on existing sleigh op
@@ -227,28 +185,17 @@ void SegmentOp::restoreXml(const Element *el)
 	  throw LowlevelError("Redefining userop "+name);
       }
     }
-    else if (nm == "force")
-      forcesegment = xml_readbool(el->getAttributeValue(i));
     else
       throw LowlevelError("Bad segmentop tag attribute: "+nm);
   }
   if (!userdefined)
     throw LowlevelError("Missing userop attribute in segmentop tag");
-  basepresent = (baseinsize != 0);
 
   const List &list(el->getChildren());
   List::const_iterator iter;
   for(iter=list.begin();iter!=list.end();++iter) {
     const Element *subel = *iter;
-    if (subel->getName()=="baseop") {
-      basefollow.push_back(OpFollow());
-      basefollow.back().restoreXml(subel);
-    }
-    else if (subel->getName()=="innerop") {
-      innerfollow.push_back(OpFollow());
-      innerfollow.back().restoreXml(subel);
-    }
-    else if (subel->getName()=="constresolve") {
+    if (subel->getName()=="constresolve") {
       int4 sz;
       const List &sublist(subel->getChildren());
       if (!sublist.empty()) {
@@ -260,9 +207,28 @@ void SegmentOp::restoreXml(const Element *el)
 	constresolve.size = sz;
       }
     }
+    else if (subel->getName() == "pcode") {
+      string nm = name + "_pcode";
+      string source = "cspec";
+      injectId = glb->pcodeinjectlib->restoreXmlInject(source, nm, InjectPayload::EXECUTABLEPCODE_TYPE, subel);
+    }
     else
       throw LowlevelError("Bad segment pattern tag: "+subel->getName());
   }
+  if (injectId < 0)
+    throw LowlevelError("Missing <execute> child in <segmentop> tag");
+  InjectPayload *payload = glb->pcodeinjectlib->getPayload(injectId);
+  if (payload->sizeOutput() != 1)
+    throw LowlevelError("<execute> child of <segmentop> tag must declare one <output>");
+  if (payload->sizeInput() == 1) {
+    innerinsize = payload->getInput(0).getSize();
+  }
+  else if (payload->sizeInput() == 2) {
+    baseinsize = payload->getInput(0).getSize();
+    innerinsize = payload->getInput(1).getSize();
+  }
+  else
+    throw LowlevelError("<execute> child of <segmentop> tag must declare one or two <input> tags");
 }
 
 /// \param g is the Architecture owning this set of jump assist scripts

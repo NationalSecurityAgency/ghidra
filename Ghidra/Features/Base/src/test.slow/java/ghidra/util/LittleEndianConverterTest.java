@@ -20,7 +20,9 @@ import static org.junit.Assert.assertEquals;
 import java.math.BigInteger;
 import java.util.Arrays;
 
-import org.junit.*;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 
@@ -32,7 +34,7 @@ import ghidra.test.AbstractGhidraHeadedIntegrationTest;
  * To enable and disable the creation of type comments go to
  * Window>Preferences>Java>Code Generation.
  */
-public class BigEndianConverterTest extends AbstractGhidraHeadedIntegrationTest {
+public class LittleEndianConverterTest extends AbstractGhidraHeadedIntegrationTest {
 	private byte[] b;
 	private DataConverter dc;
 
@@ -40,7 +42,7 @@ public class BigEndianConverterTest extends AbstractGhidraHeadedIntegrationTest 
 	 * Constructor for BigEndianConverterTest.
 	 * @param arg0
 	 */
-	public BigEndianConverterTest() {
+	public LittleEndianConverterTest() {
 		super();
 	}
 
@@ -50,41 +52,41 @@ public class BigEndianConverterTest extends AbstractGhidraHeadedIntegrationTest 
 		for (int i = 0; i < b.length; i++) {
 			b[i] = (byte) i;
 		}
-		dc = new BigEndianDataConverter();
+		dc = new LittleEndianDataConverter();
 	}
 
 	@Test
 	public void testGet() {
-		assertEquals(0x0001, dc.getShort(b));
-		assertEquals(0x0102, dc.getShort(b, 1));
-		assertEquals(0x0203, dc.getShort(b, 2));
+		assertEquals(0x0100, dc.getShort(b));
+		assertEquals(0x0201, dc.getShort(b, 1));
+		assertEquals(0x0302, dc.getShort(b, 2));
 
-		assertEquals(0x00010203, dc.getInt(b));
-		assertEquals(0x01020304, dc.getInt(b, 1));
-		assertEquals(0x04050607, dc.getInt(b, 4));
+		assertEquals(0x03020100, dc.getInt(b));
+		assertEquals(0x04030201, dc.getInt(b, 1));
+		assertEquals(0x07060504, dc.getInt(b, 4));
 
-		assertEquals(0x0001020304050607L, dc.getLong(b));
-		assertEquals(0x0102030405060708L, dc.getLong(b, 1));
-		assertEquals(0x0405060708090a0bL, dc.getLong(b, 4));
+		assertEquals(0x0706050403020100L, dc.getLong(b));
+		assertEquals(0x0807060504030201L, dc.getLong(b, 1));
+		assertEquals(0x0b0a090807060504L, dc.getLong(b, 4));
 
-		assertEquals(0x0001L, dc.getValue(b, 2));
-		assertEquals(0x000102L, dc.getValue(b, 3));
-		assertEquals(0x0001020304050607L, dc.getValue(b, 8));
+		assertEquals(0x0100L, dc.getValue(b, 2));
+		assertEquals(0x020100L, dc.getValue(b, 3));
+		assertEquals(0x0706050403020100L, dc.getValue(b, 8));
 
-		assertEquals(0x0203L, dc.getValue(b, 2, 2));
-		assertEquals(0x020304L, dc.getValue(b, 2, 3));
-		assertEquals(0x0203040506070809L, dc.getValue(b, 2, 8));
+		assertEquals(0x0302L, dc.getValue(b, 2, 2));
+		assertEquals(0x040302L, dc.getValue(b, 2, 3));
+		assertEquals(0x0908070605040302L, dc.getValue(b, 2, 8));
 
-		assertEquals(0x0203, dc.getBigInteger(b, 2, 2, true).shortValue());
-		assertEquals(0x04050607, dc.getBigInteger(b, 4, 4, true).intValue());
-		assertEquals(0x0405060708090a0bL, dc.getBigInteger(b, 4, 8, true).longValue());
+		assertEquals(0x0302, dc.getBigInteger(b, 2, 2, true).shortValue());
+		assertEquals(0x07060504, dc.getBigInteger(b, 4, 4, true).intValue());
+		assertEquals(0x0b0a090807060504L, dc.getBigInteger(b, 4, 8, true).longValue());
 
 		BigInteger bint =
-			dc.getBigInteger(new byte[] { 0x01, 0x02, (byte) 0xff, 0x03 }, 2, 2, true);
+			dc.getBigInteger(new byte[] { 0x01, 0x02, 0x03, (byte) 0xff }, 2, 2, true);
 		assertEquals((short) 0xff03, bint.shortValue());// -253
 		assertEquals(0xffffff03, bint.intValue());
 
-		bint = dc.getBigInteger(new byte[] { 0x01, 0x02, (byte) 0xff, 0x03 }, 2, 2, false);
+		bint = dc.getBigInteger(new byte[] { 0x01, 0x02, 0x03, (byte) 0xff }, 2, 2, false);
 		assertEquals((short) 0xff03, bint.shortValue());
 		assertEquals(0x0000ff03, bint.intValue());
 
@@ -95,40 +97,40 @@ public class BigEndianConverterTest extends AbstractGhidraHeadedIntegrationTest 
 		byte[] b2 = new byte[12];
 
 		Arrays.fill(b2, (byte) -1);
-		dc.getBytes((short) 0x0001, b2);
+		dc.getBytes((short) 0x0100, b2);
 		testArray(b, b2, 0, 2);
 
 		Arrays.fill(b2, (byte) -1);
-		dc.getBytes((short) 0x0102, b2, 1);
+		dc.getBytes((short) 0x0201, b2, 1);
 		testArray(b, b2, 1, 2);
 
 		Arrays.fill(b2, (byte) -1);
-		dc.getBytes(0x00010203, b2);
+		dc.getBytes(0x03020100, b2);
 		testArray(b, b2, 0, 4);
 
 		Arrays.fill(b2, (byte) -1);
-		dc.getBytes(0x03040506, b2, 3);
+		dc.getBytes(0x06050403, b2, 3);
 		testArray(b, b2, 3, 4);
 
 		Arrays.fill(b2, (byte) -1);
-		dc.getBytes(0x0001020304050607L, b2);
+		dc.getBytes(0x0706050403020100L, b2);
 		testArray(b, b2, 0, 8);
 
 		Arrays.fill(b2, (byte) -1);
-		dc.getBytes(0x030405060708090aL, b2, 3);
+		dc.getBytes(0x0a09080706050403L, b2, 3);
 		testArray(b, b2, 3, 8);
 
 		Arrays.fill(b2, (byte) -1);
-		dc.getBytes(0x0102030405L, 3, b2, 3);
+		dc.getBytes(0x0a09080706050403L, 3, b2, 3);
 		testArray(b, b2, 3, 3);
 
 		Arrays.fill(b2, (byte) -1);
-		dc.getBytes(0x0102030405L, 5, b2, 1);
-		testArray(b, b2, 1, 5);
+		dc.getBytes(0x0a09080706L, 4, b2, 6);
+		testArray(b, b2, 6, 4);
 
 		Arrays.fill(b2, (byte) -1);
-		dc.getBytes(BigInteger.valueOf(0x0102030405L), 5, b2, 1);
-		testArray(b, b2, 1, 5);
+		dc.getBytes(BigInteger.valueOf(0x0a09080706050403L), 3, b2, 3);
+		testArray(b, b2, 3, 3);
 
 	}
 

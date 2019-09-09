@@ -30,6 +30,7 @@ import docking.widgets.SearchLocation;
 import docking.widgets.fieldpanel.Layout;
 import docking.widgets.fieldpanel.LayoutModel;
 import docking.widgets.fieldpanel.field.*;
+import docking.widgets.fieldpanel.listener.IndexMapper;
 import docking.widgets.fieldpanel.listener.LayoutModelListener;
 import docking.widgets.fieldpanel.support.*;
 import ghidra.app.decompiler.*;
@@ -121,15 +122,15 @@ public class ClangLayoutController implements LayoutModel, LayoutModelListener {
 	}
 
 	@Override
-	public void modelSizeChanged() {
+	public void modelSizeChanged(IndexMapper mapper) {
 		for (int i = 0; i < listeners.size(); ++i) {
-			listeners.get(i).modelSizeChanged();
+			listeners.get(i).modelSizeChanged(mapper);
 		}
 	}
 
 	public void modelChanged() {
 		for (int i = 0; i < listeners.size(); ++i) {
-			listeners.get(i).modelSizeChanged();
+			listeners.get(i).modelSizeChanged(IndexMapper.IDENTITY_MAPPER);
 		}
 	}
 

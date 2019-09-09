@@ -30,6 +30,7 @@ import docking.help.HelpService;
 import docking.widgets.fieldpanel.*;
 import docking.widgets.fieldpanel.field.EmptyTextField;
 import docking.widgets.fieldpanel.field.Field;
+import docking.widgets.fieldpanel.listener.IndexMapper;
 import docking.widgets.fieldpanel.listener.LayoutModelListener;
 import docking.widgets.fieldpanel.support.SingleRowLayout;
 import docking.widgets.fieldpanel.support.ViewerPosition;
@@ -759,7 +760,7 @@ public class ByteViewerPanel extends JPanel implements TableColumnModelListener,
 			indexPanelWidth = getIndexPanelWidth(blocks);
 		}
 		indexFactory.setIndexMap(indexMap, indexPanelWidth);
-		indexPanel.modelSizeChanged();
+		indexPanel.modelSizeChanged(IndexMapper.IDENTITY_MAPPER);
 	}
 
 	/**
@@ -968,7 +969,7 @@ public class ByteViewerPanel extends JPanel implements TableColumnModelListener,
 
 	void indexSetChanged() {
 		for (LayoutModelListener listener : layoutListeners) {
-			listener.modelSizeChanged();
+			listener.modelSizeChanged(IndexMapper.IDENTITY_MAPPER);
 		}
 	}
 

@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,8 +21,10 @@ public interface LayoutModelListener {
 
 	/**
 	 * Called whenever the number of indexes changed
+	 * @param indexMapper Maps indexes from before the model size change to indexes after
+	 * the model size changed.
 	 */
-    void modelSizeChanged();
+	void modelSizeChanged(IndexMapper indexMapper);
 
 	/**
 	 * Called when the data at an index or range of indexes changes.

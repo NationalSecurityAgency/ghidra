@@ -18,10 +18,9 @@ package ghidra.app.plugin.core.compositeeditor;
 public interface EditorAction extends CompositeEditorModelListener {
 
 	static final String BASIC_ACTION_GROUP = "1_BASIC_EDITOR_ACTION";
-	static final String FAVORITES_ACTION_GROUP = "2_FAVORITE_DT_EDITOR_ACTION";
-	static final String CYCLE_ACTION_GROUP = "3_CYCLE_DT_EDITOR_ACTION";
-	static final String COMPONENT_ACTION_GROUP = "4_COMPONENT_EDITOR_ACTION";
-	static final String BITFIELD_ACTION_GROUP = "5_COMPONENT_EDITOR_ACTION";
+	static final String DATA_ACTION_GROUP = "2_DATA_EDITOR_ACTION";
+	static final String COMPONENT_ACTION_GROUP = "3_COMPONENT_EDITOR_ACTION";
+	static final String BITFIELD_ACTION_GROUP = "4_COMPONENT_EDITOR_ACTION";
 
 	/**
 	 * Method to set the action's enablement based on the associated editor

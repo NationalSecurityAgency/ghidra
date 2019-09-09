@@ -27,7 +27,7 @@ import ghidra.util.task.TaskMonitor;
  * Database Adapter for storing and retrieving original file bytes.
  */
 abstract class FileBytesAdapter {
-	private static final int MAX_BUF_SIZE = 1_000_000_000;
+	static final int MAX_BUF_SIZE = 1_000_000_000;
 
 	public static final int FILENAME_COL = FileBytesAdapterV0.V0_FILENAME_COL;
 	public static final int OFFSET_COL = FileBytesAdapterV0.V0_OFFSET_COL;
@@ -40,40 +40,39 @@ abstract class FileBytesAdapter {
 
 	protected MemoryMapDB memMap;
 
-	FileBytesAdapter(DBHandle handle, MemoryMapDB memMap) {
+	FileBytesAdapter(DBHandle handle) {
 		this.handle = handle;
-		this.memMap = memMap;
 	}
 
-	static FileBytesAdapter getAdapter(DBHandle handle, int openMode, MemoryMapDB memMap,
-			TaskMonitor monitor) throws VersionException, IOException {
+	static FileBytesAdapter getAdapter(DBHandle handle, int openMode, TaskMonitor monitor)
+			throws VersionException, IOException {
 
 		if (openMode == DBConstants.CREATE) {
-			return new FileBytesAdapterV0(handle, memMap, true);
+			return new FileBytesAdapterV0(handle, true);
 		}
 		try {
-			return new FileBytesAdapterV0(handle, memMap, false);
+			return new FileBytesAdapterV0(handle, false);
 		}
 		catch (VersionException e) {
 			if (!e.isUpgradable() || openMode == DBConstants.UPDATE) {
 				throw e;
 			}
-			FileBytesAdapter adapter = findReadOnlyAdapter(handle, memMap);
+			FileBytesAdapter adapter = findReadOnlyAdapter(handle);
 			if (openMode == DBConstants.UPGRADE) {
-				adapter = upgrade(handle, memMap, adapter, monitor);
+				adapter = upgrade(handle, adapter, monitor);
 			}
 			return adapter;
 		}
 
 	}
 
-	private static FileBytesAdapter findReadOnlyAdapter(DBHandle handle, MemoryMapDB memMap) {
-		return new FileBytesAdapterNoTable(handle, memMap);
+	private static FileBytesAdapter findReadOnlyAdapter(DBHandle handle) {
+		return new FileBytesAdapterNoTable(handle);
 	}
 
-	private static FileBytesAdapter upgrade(DBHandle handle, MemoryMapDB memMap,
-			FileBytesAdapter oldAdapter, TaskMonitor monitor) throws VersionException, IOException {
-		return new FileBytesAdapterV0(handle, memMap, true);
+	private static FileBytesAdapter upgrade(DBHandle handle, FileBytesAdapter oldAdapter,
+			TaskMonitor monitor) throws VersionException, IOException {
+		return new FileBytesAdapterV0(handle, true);
 	}
 
 	abstract FileBytes createFileBytes(String filename, long offset, long size, InputStream is)

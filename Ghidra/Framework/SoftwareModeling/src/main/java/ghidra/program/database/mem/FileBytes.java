@@ -18,6 +18,8 @@ package ghidra.program.database.mem;
 import java.io.IOException;
 import java.util.ConcurrentModificationException;
 
+import org.apache.commons.lang3.StringUtils;
+
 import db.*;
 
 /**
@@ -26,22 +28,35 @@ import db.*;
  */
 public class FileBytes {
 
-	private final DBBuffer[] originalBuffers;
-	private final DBBuffer[] layeredBuffers;
-	private final String filename;
+	final FileBytesAdapter adapter;
+
 	private final long id;
+	private final String filename;
 	private final long fileOffset;
 	private final long size;
-	private boolean invalid = false;
-	private MemoryMapDB memMap;
 
-	public FileBytes(FileBytesAdapter adapter, MemoryMapDB memMap, Record record)
-			throws IOException {
-		this.memMap = memMap;
+	private DBBuffer[] originalBuffers;
+	private DBBuffer[] layeredBuffers;
+	private boolean invalid = false;
+
+	public FileBytes(FileBytesAdapter adapter, Record record) throws IOException {
+		this.adapter = adapter;
+		this.id = record.getKey();
 		this.filename = record.getString(FileBytesAdapter.FILENAME_COL);
 		this.fileOffset = record.getLongValue(FileBytesAdapter.OFFSET_COL);
 		this.size = record.getLongValue(FileBytesAdapter.SIZE_COL);
-		this.id = record.getKey();
+		refresh(record);
+	}
+
+	synchronized boolean refresh(Record record) throws IOException {
+
+		String f = record.getString(FileBytesAdapter.FILENAME_COL);
+		long offset = record.getLongValue(FileBytesAdapter.OFFSET_COL);
+		long sz = record.getLongValue(FileBytesAdapter.SIZE_COL);
+		if (offset != fileOffset || sz != size || !StringUtils.equals(f, filename)) {
+			return false;
+		}
+
 		BinaryField field = (BinaryField) record.getFieldValue(FileBytesAdapter.BUF_IDS_COL);
 
 		int[] bufferIds = new BinaryCodedField(field).getIntArray();
@@ -56,7 +71,11 @@ public class FileBytes {
 		for (int i = 0; i < bufferIds.length; i++) {
 			layeredBuffers[i] = adapter.getBuffer(bufferIds[i], originalBuffers[i]);
 		}
+		return true;
+	}
 
+	long getId() {
+		return id;
 	}
 
 	/**
@@ -93,7 +112,7 @@ public class FileBytes {
 	 * @throws IOException if there is a problem reading the database.
 	 * @throws IndexOutOfBoundsException if the given offset is invalid.
 	 */
-	public byte getModifiedByte(long offset) throws IOException {
+	public synchronized byte getModifiedByte(long offset) throws IOException {
 		return getByte(layeredBuffers, offset);
 	}
 
@@ -104,7 +123,7 @@ public class FileBytes {
 	 * @throws IOException if there is a problem reading the database.
 	 * @throws IndexOutOfBoundsException if the given offset is invalid.
 	 */
-	public byte getOriginalByte(long offset) throws IOException {
+	public synchronized byte getOriginalByte(long offset) throws IOException {
 		return getByte(originalBuffers, offset);
 	}
 
@@ -117,7 +136,7 @@ public class FileBytes {
 	 * @return the number of bytes actually populated.
 	 * @throws IOException if there is an error reading from the database
 	 */
-	public int getModifiedBytes(long offset, byte[] b) throws IOException {
+	public synchronized int getModifiedBytes(long offset, byte[] b) throws IOException {
 		return getBytes(layeredBuffers, offset, b, 0, b.length);
 	}
 
@@ -130,7 +149,7 @@ public class FileBytes {
 	 * @return the number of bytes actually populated.
 	 * @throws IOException if there is an error reading from the database
 	 */
-	public int getOriginalBytes(long offset, byte[] b) throws IOException {
+	public synchronized int getOriginalBytes(long offset, byte[] b) throws IOException {
 		return getBytes(originalBuffers, offset, b, 0, b.length);
 	}
 
@@ -148,7 +167,8 @@ public class FileBytes {
 	 * @throws IndexOutOfBoundsException if the destination offset and length would exceed the
 	 * size of the buffer b.
 	 */
-	public int getModifiedBytes(long offset, byte[] b, int off, int length) throws IOException {
+	public synchronized int getModifiedBytes(long offset, byte[] b, int off, int length)
+			throws IOException {
 		return getBytes(layeredBuffers, offset, b, off, length);
 	}
 
@@ -166,7 +186,8 @@ public class FileBytes {
 	 * @throws IndexOutOfBoundsException if the destination offset and length would exceed the
 	 * size of the buffer b.
 	 */
-	public int getOriginalBytes(long offset, byte[] b, int off, int length) throws IOException {
+	public synchronized int getOriginalBytes(long offset, byte[] b, int off, int length)
+			throws IOException {
 		return getBytes(originalBuffers, offset, b, off, length);
 	}
 
@@ -176,12 +197,8 @@ public class FileBytes {
 		}
 	}
 
-	void invalidate() {
+	synchronized void invalidate() {
 		invalid = true;
-	}
-
-	long getId() {
-		return id;
 	}
 
 	/**
@@ -193,12 +210,13 @@ public class FileBytes {
 	 * @param b the new byte value;
 	 * @throws IOException if the write to the database fails.
 	 */
-	void putByte(long offset, byte b) throws IOException {
+	synchronized void putByte(long offset, byte b) throws IOException {
+
+		checkValid();
+
 		if (offset < 0 || offset >= size) {
 			throw new IndexOutOfBoundsException();
 		}
-
-		checkValid();
 
 		// The max buffer size will be the size of the first buffer. (If more than
 		// one buffer exists, then the first buffer will be the true max size.  If only one buffer,
@@ -220,7 +238,7 @@ public class FileBytes {
 	 * @return the number of bytes written
 	 * @throws IOException if the write to the database fails.
 	 */
-	int putBytes(long offset, byte[] b) throws IOException {
+	synchronized int putBytes(long offset, byte[] b) throws IOException {
 		return putBytes(offset, b, 0, b.length);
 	}
 
@@ -236,7 +254,10 @@ public class FileBytes {
 	 * @return the number of bytes written
 	 * @throws IOException if the write to the database fails.
 	 */
-	int putBytes(long offset, byte[] b, int off, int length) throws IOException {
+	synchronized int putBytes(long offset, byte[] b, int off, int length) throws IOException {
+
+		checkValid();
+
 		if (b == null) {
 			throw new NullPointerException();
 		}
@@ -246,8 +267,6 @@ public class FileBytes {
 		else if (length == 0) {
 			return 0;
 		}
-
-		checkValid();
 
 		// adjust size if asking length is more than we have
 		length = (int) Math.min(length, size - offset);
@@ -276,11 +295,12 @@ public class FileBytes {
 	}
 
 	private byte getByte(DBBuffer[] buffers, long offset) throws IOException {
+
+		checkValid();
+
 		if (offset < 0 || offset >= size) {
 			throw new IndexOutOfBoundsException();
 		}
-
-		checkValid();
 
 		// The max buffer size will be the size of the first buffer. (If more than
 		// one buffer exists, then the first buffer will be the true max size.  If only one buffer,
@@ -295,14 +315,14 @@ public class FileBytes {
 	private int getBytes(DBBuffer[] buffers, long offset, byte[] b, int off, int length)
 			throws IOException {
 
+		checkValid();
+
 		if (off < 0 || length < 0 || length > b.length - off) {
 			throw new IndexOutOfBoundsException();
 		}
 		else if (length == 0) {
 			return 0;
 		}
-
-		checkValid();
 
 		// adjust size if asking length is more than we have
 		length = (int) Math.min(length, size - offset);
@@ -332,7 +352,7 @@ public class FileBytes {
 
 	@Override
 	public String toString() {
-		return filename;
+		return getFilename();
 	}
 
 	@Override
@@ -342,23 +362,26 @@ public class FileBytes {
 
 	@Override
 	public boolean equals(Object obj) {
-		if (this == obj)
+		if (this == obj) {
 			return true;
-		if (obj == null)
+		}
+		if (obj == null) {
 			return false;
-		if (getClass() != obj.getClass())
+		}
+		if (getClass() != obj.getClass()) {
 			return false;
+		}
 		FileBytes other = (FileBytes) obj;
-		if (memMap != other.memMap)
+		if (adapter != other.adapter) {
 			return false;
-		if (id != other.id)
+		}
+		if (id != other.id) {
 			return false;
-		if (invalid != other.invalid)
+		}
+		if (invalid != other.invalid) {
 			return false;
+		}
 		return true;
 	}
 
-	MemoryMapDB getMemMap() {
-		return memMap;
-	}
 }

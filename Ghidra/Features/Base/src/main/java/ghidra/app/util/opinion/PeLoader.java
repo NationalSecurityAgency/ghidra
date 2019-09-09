@@ -16,6 +16,7 @@
 package ghidra.app.util.opinion;
 
 import java.io.IOException;
+import java.math.BigInteger;
 import java.util.*;
 
 import generic.continues.GenericFactory;
@@ -36,6 +37,8 @@ import ghidra.framework.options.Options;
 import ghidra.program.database.mem.FileBytes;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
+import ghidra.program.model.lang.Register;
+import ghidra.program.model.lang.RegisterValue;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryAccessException;
@@ -132,6 +135,8 @@ public class PeLoader extends AbstractPeDebugLoader {
 					datadir.markup(program, false, monitor, log, ntHeader);
 				}
 			}
+
+			setProcessorContext(fileHeader, program, monitor, log);
 
 			processExports(optionalHeader, program, monitor, log);
 			processImports(optionalHeader, program, monitor, log);
@@ -462,6 +467,27 @@ public class PeLoader extends AbstractPeDebugLoader {
 
 		if (codeProp != null) {
 			codeProp.add(address, address);
+		}
+	}
+
+	private void setProcessorContext(FileHeader fileHeader, Program program, TaskMonitor monitor,
+			MessageLog log) {
+
+		try {
+			String machineName = fileHeader.getMachineName();
+			if ("450".equals(machineName) || "452".equals(machineName)) {
+				Register tmodeReg = program.getProgramContext().getRegister("TMode");
+				if (tmodeReg == null) {
+					return;
+				}
+				RegisterValue thumbMode = new RegisterValue(tmodeReg, BigInteger.ONE);
+				AddressSpace space = program.getAddressFactory().getDefaultAddressSpace();
+				program.getProgramContext().setRegisterValue(space.getMinAddress(),
+					space.getMaxAddress(), thumbMode);
+			}
+		}
+		catch (ContextChangeException e) {
+			throw new AssertException("instructions should not exist");
 		}
 	}
 

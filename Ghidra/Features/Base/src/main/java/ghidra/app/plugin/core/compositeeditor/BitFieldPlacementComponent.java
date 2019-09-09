@@ -276,7 +276,7 @@ public class BitFieldPlacementComponent extends JPanel {
 
 	void init(DataTypeComponent editDtc) {
 
-		if (editDtc == null) {
+		if (editDtc == null || editDtc.isFlexibleArrayComponent()) {
 			editMode = EditMode.NONE;
 			editOrdinal = -1;
 			this.editComponent = null;

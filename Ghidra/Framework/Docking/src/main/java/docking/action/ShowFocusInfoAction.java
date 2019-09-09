@@ -78,6 +78,11 @@ public class ShowFocusInfoAction extends DockingAction {
 		log.info("Active Java Window: " + printComp(kfm.getActiveWindow()));
 		log.info("Focused Java Window: " + printComp(kfm.getFocusedWindow()));
 		log.info("Focused Java Component: " + printComp(kfm.getFocusOwner()));
+
+		Object mouseOverObject = DockingWindowManager.getMouseOverObject();
+		if (mouseOverObject instanceof Component) {
+			log.info("Mouse-over Object: " + printComp((Component) mouseOverObject));
+		}
 		log.info("");
 	}
 

@@ -129,7 +129,7 @@ public class PdbSymbolServerPlugin extends Plugin {
 		downloadPdbAction.setMenuBarData(menuData);
 
 		downloadPdbAction.setEnabled(false);
-		downloadPdbAction.setHelpLocation(new HelpLocation("PDB", downloadPdbAction.getName()));
+		downloadPdbAction.setHelpLocation(new HelpLocation("Pdb", downloadPdbAction.getName()));
 		tool.addAction(downloadPdbAction);
 	}
 

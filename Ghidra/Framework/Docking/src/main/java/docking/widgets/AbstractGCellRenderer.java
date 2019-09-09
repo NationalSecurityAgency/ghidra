@@ -101,7 +101,7 @@ public abstract class AbstractGCellRenderer extends GDHtmlLabel {
 	protected Color getOSDependentBackgroundColor(JComponent parent, int row) {
 
 		if (!shouldAlternateRowBackgroundColor()) {
-			return parent.getBackground();
+			return getDefaultBackgroundColor();
 		}
 
 // For now we always alternate row colors--it actually makes the various LaFs look nicer
@@ -155,10 +155,14 @@ public abstract class AbstractGCellRenderer extends GDHtmlLabel {
 		return boldFont;
 	}
 
-	protected static Color getBackgroundColorForRow(int row) {
+	protected Color getDefaultBackgroundColor() {
+		return Color.WHITE;
+	}
+
+	protected Color getBackgroundColorForRow(int row) {
 
 		if ((row & 1) == 1) {
-			return Color.WHITE;
+			return getDefaultBackgroundColor();
 		}
 		return ALTERNATE_BACKGROUND_COLOR;
 	}

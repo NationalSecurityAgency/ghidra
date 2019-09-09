@@ -19,6 +19,7 @@ import java.awt.*;
 
 import javax.swing.Icon;
 import javax.swing.JTree;
+import javax.swing.plaf.ColorUIResource;
 import javax.swing.tree.DefaultTreeCellRenderer;
 
 import docking.widgets.GComponent;
@@ -26,7 +27,7 @@ import docking.widgets.tree.GTree;
 import docking.widgets.tree.GTreeNode;
 
 public class GTreeRenderer extends DefaultTreeCellRenderer implements GComponent {
-	private static final long serialVersionUID = 1L;
+
 	private static final Color VALID_DROP_TARGET_COLOR = new Color(200, 200, 255);
 	private static final int DEFAULT_MIN_ICON_WIDTH = 22;
 
@@ -41,17 +42,21 @@ public class GTreeRenderer extends DefaultTreeCellRenderer implements GComponent
 		setHTMLRenderingEnabled(false);
 	}
 
-	/**
-	 * 
-	 * @see javax.swing.tree.DefaultTreeCellRenderer#getTreeCellRendererComponent(javax.swing.JTree, java.lang.Object, boolean, boolean, boolean, int, boolean)
-	 */
 	@Override
 	public Component getTreeCellRendererComponent(JTree tree, Object value, boolean selected1,
 			boolean expanded, boolean leaf, int row, boolean hasFocus1) {
 
 		super.getTreeCellRendererComponent(tree, value, selected1, expanded, leaf, row, hasFocus1);
-		GTreeNode node = (GTreeNode) value;
 
+		setOpaque(true);
+		setBackground(selected1 ? getBackgroundSelectionColor() : getBackgroundNonSelectionColor());
+
+		if (!(value instanceof GTreeNode)) {
+			// not a GTree
+			return this;
+		}
+
+		GTreeNode node = (GTreeNode) value;
 		String text = node.getName();
 		setText(text);
 		setToolTipText(node.getToolTip());
@@ -74,6 +79,32 @@ public class GTreeRenderer extends DefaultTreeCellRenderer implements GComponent
 		boolean isBold = (filter != null) && filter.showFilterMatches() && filter.acceptsNode(node);
 		setFont(getFont(isBold));
 		return this;
+	}
+
+	@Override
+	public void setBackgroundSelectionColor(Color newColor) {
+		super.setBackgroundSelectionColor(fromUiResource(newColor));
+	}
+
+	@Override
+	public void setBackgroundNonSelectionColor(Color newColor) {
+		super.setBackgroundNonSelectionColor(fromUiResource(newColor));
+	}
+
+	/**
+	 * Converts the given color from a {@link ColorUIResource} to a {@link Color}.  This is used
+	 * to deal with the issue that some Look and Feels will not correctly paint with this 
+	 * renderer when using UI resource objects.  This behavior can be changed by overriding this 
+	 * method.
+	 * 
+	 * @param c the source color
+	 * @return the new color
+	 */
+	protected Color fromUiResource(Color c) {
+		if (c instanceof ColorUIResource) {
+			return new Color(c.getRGB());
+		}
+		return c;
 	}
 
 	protected void updateIconTextGap(Icon icon, int minWidth) {

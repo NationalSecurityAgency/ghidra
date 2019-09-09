@@ -198,24 +198,19 @@ struct OpFollow {
 /// The core routine that looks for the term-tree is unify().
 class SegmentOp : public TermPatternOp {
   AddrSpace *spc;		///< The physical address space into which a segmented pointer points
+  int4 injectId;		///< Id of InjectPayload that emulates \b this operation
   int4 baseinsize;		///< The size in bytes of the \e base or \e segment value
   int4 innerinsize;		///< The size in bytes of the \e near pointer value
-  bool basepresent;		///< Is \b true is a base value must be present in the raw p-code
-  bool forcesegment;		///< Is \b true if an exception is thrown when a segment op can't be unified
   bool supportsfarpointer;	///< Is \b true if the joined pair base:near acts as a \b far pointer
-  vector<OpFollow> basefollow;	///< Sequence of operations performed on the \b base value
-  vector<OpFollow> innerfollow;	///< Sequence of operations performed on the \b near value
   VarnodeData constresolve;	///< How to resolve constant near pointers
-  static uintb executeSide(const vector<OpFollow> &follow,uintb input);
 public:
   SegmentOp(Architecture *g,const string &nm,int4 ind);		///< Constructor
   AddrSpace *getSpace(void) const { return spc; }		///< Get the address space being pointed to
   bool hasFarPointerSupport(void) const { return supportsfarpointer; }	///< Return \b true, if \b this op supports far pointers
-  bool isForced(void) const { return forcesegment; }		///< Return \b true if exceptions are thrown for bad unification
   int4 getBaseSize(void) const { return baseinsize; }		///< Get size in bytes of the base/segment value
   int4 getInnerSize(void) const { return innerinsize; }		///< Get size in bytes of the near value
   const VarnodeData &getResolve(void) const { return constresolve; }	///< Get the default register for resolving indirect segments
-  virtual int4 getNumVariableTerms(void) const { if (basepresent) return 2; return 1; }
+  virtual int4 getNumVariableTerms(void) const { if (baseinsize!=0) return 2; return 1; }
   virtual bool unify(Funcdata &data,PcodeOp *op,vector<Varnode *> &bindlist) const;
   virtual uintb execute(const vector<uintb> &input) const;
   virtual void restoreXml(const Element *el);

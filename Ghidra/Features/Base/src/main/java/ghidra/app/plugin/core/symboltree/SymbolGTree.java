@@ -19,7 +19,6 @@ import java.awt.Color;
 import java.awt.Component;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
 import javax.swing.tree.TreePath;
 
 import docking.widgets.tree.*;
@@ -77,15 +76,12 @@ public class SymbolGTree extends GTree {
 		public Component getTreeCellRendererComponent(JTree tree, Object value, boolean isSelected,
 				boolean expanded, boolean leaf, int row, boolean isFocused) {
 
-			JLabel label =
-				(JLabel) super.getTreeCellRendererComponent(tree, value, isSelected, expanded,
-					leaf, row, isFocused);
+			JLabel label = (JLabel) super.getTreeCellRendererComponent(tree, value, isSelected,
+				expanded, leaf, row, isFocused);
 
 			if (label.getIcon() == null) {
 				label.setIcon(expanded ? OPEN_FOLDER_GROUP_ICON : CLOSED_FOLDER_GROUP_ICON);
 			}
-
-			label.setBorder(new EmptyBorder(1, 0, 0, 0)); // Force row padding
 
 			if (!isSelected && (value instanceof SymbolNode)) {
 				SymbolNode node = (SymbolNode) value;

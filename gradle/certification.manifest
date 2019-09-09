@@ -18,6 +18,7 @@ root/prepDev.gradle||GHIDRA||||END|
 root/svg.gradle||GHIDRA||||END|
 root/test.gradle||GHIDRA||||END|
 root/usage.gradle||GHIDRA||||END|
+support/app_config_breakout.txt||GHIDRA||||END|
 support/distributionCommon.gradle||GHIDRA||||END|
 support/eclipseLauncher.gradle||GHIDRA||||END|
 support/extensionCommon.gradle||GHIDRA||||END|
