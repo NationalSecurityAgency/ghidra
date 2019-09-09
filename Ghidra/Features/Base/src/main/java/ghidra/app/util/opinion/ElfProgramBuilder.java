@@ -2159,11 +2159,12 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 	}
 
 	/**
-	 * Get the preferred load address space for a program segment
+	 * Get the load address space for a program segment.
+	 * Non-allocated segments may return the OTHER space.
 	 * @param elfProgramHeader elf program segment header
-	 * @return preferred load address space or null to use default behavior
+	 * @return preferred load address space
 	 */
-	private AddressSpace getPreferredSegmentAddressSpace(ElfProgramHeader elfProgramHeader) {
+	private AddressSpace getSegmentAddressSpace(ElfProgramHeader elfProgramHeader) {
 		if (elfProgramHeader.getType() != ElfProgramHeaderConstants.PT_LOAD &&
 			elfProgramHeader.getVirtualAddress() == 0) {
 			return AddressSpace.OTHER_SPACE;
@@ -2177,10 +2178,10 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 	 * the segment data did not get bumped into an overlay area due to a conflict with
 	 * another segment or section.
 	 * @param elfProgramHeader
-	 * @return address or null if range check failed.
+	 * @return segment load address
 	 */
-	private Address getPreferredSegmentLoadAddress(ElfProgramHeader elfProgramHeader) {
-		AddressSpace space = getPreferredSegmentAddressSpace(elfProgramHeader);
+	private Address getSegmentLoadAddress(ElfProgramHeader elfProgramHeader) {
+		AddressSpace space = getSegmentAddressSpace(elfProgramHeader);
 		if (!space.isLoadedMemorySpace()) {
 			// handle non-loaded sections into the OTHER space
 			long addrWordOffset = elfProgramHeader.getVirtualAddress();
@@ -2192,11 +2193,12 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 
 	/**
 	 * Determine preferred section load address address space prior to load.
+	 * Non-allocated sections may return the OTHER space or an existing OTHER 
+	 * overlay established by a program header.
 	 * @param elfSectionHeader
-	 * @return address space targeted for load.  The OTHER address space signifies that
-	 * and overlay on the OTHER space should be used as the section is not really loaded.
+	 * @return section load address space
 	 */
-	private AddressSpace getPreferredSectionAddressSpace(ElfSectionHeader elfSectionHeader) {
+	private AddressSpace getSectionAddressSpace(ElfSectionHeader elfSectionHeader) {
 
 		if (!elfSectionHeader.isAlloc()) {
 
@@ -2216,13 +2218,13 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 	}
 
 	/**
-	 * Determine section's preferred load address
+	 * Determine section's load address.  
 	 * @param elfSectionHeader
-	 * @return preferred load address
+	 * @return section load address
 	 */
-	private Address getPreferredSectionLoadAddress(ElfSectionHeader elfSectionHeader) {
+	private Address getSectionLoadAddress(ElfSectionHeader elfSectionHeader) {
 
-		AddressSpace space = getPreferredSectionAddressSpace(elfSectionHeader);
+		AddressSpace space = getSectionAddressSpace(elfSectionHeader);
 		if (!space.isLoadedMemorySpace()) {
 			// handle non-loaded sections into the OTHER space
 			long addrWordOffset = elfSectionHeader.getAddress();
@@ -2269,7 +2271,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 			else if (section instanceof ElfSectionHeader) {
 				ElfSectionHeader s = (ElfSectionHeader) section;
 				if (s.isAlloc()) {
-					return getPreferredSectionLoadAddress(s);
+					return getSectionLoadAddress(s);
 				}
 			}
 
@@ -2377,7 +2379,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 
 				long loadSizeBytes = elfProgramHeader.getAdjustedLoadSize();
 				if (loadSizeBytes == 0) {
-					expandStart = getPreferredSegmentLoadAddress(elfProgramHeader);
+					expandStart = getSegmentLoadAddress(elfProgramHeader);
 					space = expandStart.getAddressSpace();
 				}
 				else {
@@ -2525,7 +2527,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 // occur for mapped memory regions as seen with some Harvard Architecture processors.  The
 // process-specific extension should control the outcome.
 
-		Address address = getPreferredSegmentLoadAddress(elfProgramHeader);
+		Address address = getSegmentLoadAddress(elfProgramHeader);
 		AddressSpace space = address.getAddressSpace();
 
 		long addr = elfProgramHeader.getVirtualAddress();
@@ -2668,7 +2670,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 				break;
 			}
 			if (elfSectionToLoad.isAlloc() && addr != 0) {
-				AddressSpace loadSpace = getPreferredSectionAddressSpace(elfSectionToLoad);
+				AddressSpace loadSpace = getSectionAddressSpace(elfSectionToLoad);
 				if (loadSpace.equals(defaultSpace)) {
 					long sectionByteLength = elfSectionToLoad.getAdjustedSize(); // size in bytes
 					long sectionLength = sectionByteLength / defaultSpace.getAddressableUnitSize();
@@ -2747,7 +2749,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 			// Check for and consume uninitialized portion of PT_LOAD segment if possible
 			ElfProgramHeader loadHeader = elf.getProgramLoadHeaderContaining(addr);
 			if (loadHeader != null) {
-				Address segmentStart = getPreferredSegmentLoadAddress(loadHeader);
+				Address segmentStart = getSegmentLoadAddress(loadHeader);
 				AddressSpace segmentSpace = segmentStart.getAddressSpace();
 				long loadSizeBytes = loadHeader.getAdjustedLoadSize();
 				long fullSizeBytes =
@@ -2771,7 +2773,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 		}
 
 		if (address == null) {
-			address = getPreferredSectionLoadAddress(elfSectionToLoad);
+			address = getSectionLoadAddress(elfSectionToLoad);
 		}
 		AddressSpace space = address.getAddressSpace();
 

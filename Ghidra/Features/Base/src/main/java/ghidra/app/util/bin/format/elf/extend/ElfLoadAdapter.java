@@ -129,7 +129,7 @@ public class ElfLoadAdapter {
 	 * The OTHER space is reserved and should not be returned by this method.
 	 * @param elfLoadHelper load helper object
 	 * @param elfProgramHeader elf program segment header
-	 * @return preferred load address space or null to use default behavior
+	 * @return preferred load address space
 	 */
 	public AddressSpace getPreferredSegmentAddressSpace(ElfLoadHelper elfLoadHelper,
 			ElfProgramHeader elfProgramHeader) {
