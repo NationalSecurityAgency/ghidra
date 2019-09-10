@@ -4470,6 +4470,8 @@ void FuncCallSpecs::deindirect(Funcdata &data,Funcdata *newfd)
   Varnode *vn = data.newVarnodeCallSpecs(this);
   data.opSetInput(op,vn,0);
   data.opSetOpcode(op,CPUI_CALL);
+  if (isOverride())	// If we are overridden at the call-site
+    return;		// Don't use the discovered function prototype
 
   // Try our best to merge existing prototype
   // with the one we have just been handed

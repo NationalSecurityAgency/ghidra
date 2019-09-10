@@ -1158,7 +1158,8 @@ class FuncProto {
     unknown_model = 512,	///< Set if the PrototypeModel isn't known
     is_constructor = 0x400,	///< Function is an (object-oriented) constructor
     is_destructor = 0x800,	///< Function is an (object-oriented) destructor
-    has_thisptr= 0x1000		///< Function is a method with a 'this' pointer as an argument
+    has_thisptr= 0x1000,	///< Function is a method with a 'this' pointer as an argument
+    is_override = 0x2000	///< Set if \b this prototype is created to override a single call site
   };
   ProtoModel *model;		///< Model of for \b this prototype
   ProtoStore *store;		///< Storage interface for parameters
@@ -1332,6 +1333,8 @@ public:
   bool isStackGrowsNegative(void) const { return model->isStackGrowsNegative(); }	///< Return \b true if the stack grows toward smaller addresses
   bool isDotdotdot(void) const { return ((flags&dotdotdot)!=0); }	///< Return \b true if \b this takes a variable number of arguments
   void setDotdotdot(bool val) { flags = val ? (flags|dotdotdot) : (flags & ~((uint4)dotdotdot)); }	///< Toggle whether \b this takes variable arguments
+  bool isOverride(void) const { return ((flags&is_override)!=0); }	///< Return \b true if \b this is a call site override
+  void setOverride(bool val) { flags = val ? (flags|is_override) : (flags & ~((uint4)is_override)); }	///< Toggle whether \b this is a call site override
   uint4 hasEffect(const Address &addr,int4 size) const;
   vector<EffectRecord>::const_iterator effectBegin(void) const;	///< Get iterator to front of EffectRecord list
   vector<EffectRecord>::const_iterator effectEnd(void) const;	///< Get iterator to end of EffectRecord list
