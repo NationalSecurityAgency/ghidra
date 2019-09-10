@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<language_translation>
+    <from_language version="1">SuperH4:BE:16:default</from_language>
+    <to_language version="1">SuperH4:BE:32:default</to_language>
+    <map_compiler_spec from="default" to="default" />
+</language_translation>
+
