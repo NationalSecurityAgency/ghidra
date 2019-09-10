@@ -94,49 +94,59 @@ public class Krb5ActiveDirectoryAuthenticationModule implements AuthenticationMo
 
 		AtomicReference<String> userName = new AtomicReference<>();
 
-		LoginContext lc = new LoginContext("", null, (loginmodule_callbacks) -> {
-			// The Krb5LoginModule tends to call this callback handler multiple times.
-			// Once for name, and then again for password.
-			PasswordCallback srcPcb = AuthenticationModule.getFirstCallbackOfType(
-				PasswordCallback.class, ghidra_callbacks);
-			NameCallback srcNcb =
-				AuthenticationModule.getFirstCallbackOfType(NameCallback.class, ghidra_callbacks);
-			String tmpName =
-				(allowUserToSpecifyName && srcNcb != null) ? srcNcb.getName() : principal.getName();
-			if (stripDomainFromUsername && tmpName.contains("\\")) {
-				tmpName = tmpName.replaceFirst("^.*\\\\", "");
-			}
+		NameCallback srcNcb =
+			AuthenticationModule.getFirstCallbackOfType(NameCallback.class, ghidra_callbacks);
 
-			if (tmpName == null || srcPcb == null || tmpName.isBlank()) {
-				throw new IOException("Missing username or password values");
-			}
-
-			NameCallback destNcb = AuthenticationModule.getFirstCallbackOfType(NameCallback.class,
-				loginmodule_callbacks);
-			PasswordCallback destPcb = AuthenticationModule.getFirstCallbackOfType(
-				PasswordCallback.class, loginmodule_callbacks);
-
-			if (destNcb != null) {
-				destNcb.setName(tmpName);
-			}
-
-			if (destPcb != null) {
-				destPcb.setPassword(srcPcb.getPassword());
-			}
-
-			userName.set(tmpName);
-		}, new JAASConfiguration("com.sun.security.auth.module.Krb5LoginModule"));
+		PasswordCallback srcPcb =
+			AuthenticationModule.getFirstCallbackOfType(PasswordCallback.class, ghidra_callbacks);
 
 		try {
-			lc.login();
-		}
-		catch (LoginException e) {
-			// Convert plain LoginExceptions to FailedLoginExceptions to enable
-			// the client to retry the login if desired.
-			if (e instanceof FailedLoginException) {
-				throw e;
+			LoginContext lc = new LoginContext("", null, (loginmodule_callbacks) -> {
+				// The Krb5LoginModule tends to call this callback handler multiple times.
+				// Once for name, and then again for password.
+
+				String tmpName = (allowUserToSpecifyName && srcNcb != null) ? srcNcb.getName()
+						: principal.getName();
+				if (stripDomainFromUsername && tmpName.contains("\\")) {
+					tmpName = tmpName.replaceFirst("^.*\\\\", "");
+				}
+
+				if (tmpName == null || srcPcb == null || tmpName.isBlank()) {
+					throw new IOException("Missing username or password values");
+				}
+
+				NameCallback destNcb = AuthenticationModule.getFirstCallbackOfType(
+					NameCallback.class, loginmodule_callbacks);
+				PasswordCallback destPcb = AuthenticationModule.getFirstCallbackOfType(
+					PasswordCallback.class, loginmodule_callbacks);
+
+				if (destNcb != null) {
+					destNcb.setName(tmpName);
+				}
+
+				if (destPcb != null) {
+					destPcb.setPassword(srcPcb.getPassword());
+				}
+
+				userName.set(tmpName);
+			}, new JAASConfiguration("com.sun.security.auth.module.Krb5LoginModule"));
+
+			try {
+				lc.login();
 			}
-			throw new FailedLoginException(e.getMessage());
+			catch (LoginException e) {
+				// Convert plain LoginExceptions to FailedLoginExceptions to enable
+				// the client to retry the login if desired.
+				if (e instanceof FailedLoginException) {
+					throw e;
+				}
+				throw new FailedLoginException(e.getMessage());
+			}
+		}
+		finally {
+			if (srcPcb != null) {
+				srcPcb.clearPassword();
+			}
 		}
 
 		return userName.get();

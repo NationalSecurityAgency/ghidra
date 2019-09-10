@@ -234,6 +234,8 @@ public class ExternalProgramLoginModule implements LoginModule {
 			throw new LoginException("Error executing external program");
 		}
 		finally {
+			Arrays.fill(password, '\0');
+			password = null;
 			Process p = process.get();
 			if (p != null && p.isAlive()) {
 				if (p.isAlive()) {

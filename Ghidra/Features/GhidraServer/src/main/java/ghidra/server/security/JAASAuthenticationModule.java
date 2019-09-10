@@ -121,6 +121,13 @@ public class JAASAuthenticationModule implements AuthenticationModule {
 			}
 			throw new FailedLoginException(e.getMessage());
 		}
+		finally {
+			PasswordCallback srcPcb =
+				AuthenticationModule.getFirstCallbackOfType(PasswordCallback.class, callbacks);
+			if (srcPcb != null) {
+				srcPcb.clearPassword();
+			}
+		}
 
 		String loginNameResult = loginName.get();
 		return (loginNameResult != null) ? loginNameResult : principal.getName();
