@@ -1,5 +1,4 @@
 ##VERSION: 2.0
-LICENSE||GHIDRA||||END|
 Module.manifest||GHIDRA||||END|
 build.gradle||GHIDRA||||END|
 data/languages/sh-1.slaspec||GHIDRA||||END|
