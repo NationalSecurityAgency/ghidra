@@ -27,7 +27,8 @@ import ghidra.program.model.lang.PrototypeModel;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.Namespace;
 import ghidra.program.model.symbol.SourceType;
-import ghidra.util.exception.*;
+import ghidra.util.exception.CancelledException;
+import ghidra.util.exception.InvalidInputException;
 import ghidra.util.task.TaskMonitor;
 
 public class FunctionManagerTestDouble implements FunctionManager {
@@ -73,7 +74,7 @@ public class FunctionManagerTestDouble implements FunctionManager {
 	@Override
 	public Function createThunkFunction(String name, Namespace nameSpace, Address entryPoint,
 			AddressSetView body, Function thunkedFunction, SourceType source)
-			throws DuplicateNameException, OverlappingFunctionException {
+			throws OverlappingFunctionException {
 		throw new UnsupportedOperationException();
 	}
 
