@@ -322,7 +322,7 @@ public class TableUpdateJob<T> {
 	/**
 	 * Calls the appropriate method to process the given state.
 	 * @param state the state to process.
-	 * @throws CancelledException 
+	 * @throws CancelledException if the job was cancelled
 	 */
 	private void processState(JobState state) throws CancelledException {
 		switch (state) {
