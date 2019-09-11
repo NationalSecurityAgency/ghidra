@@ -219,8 +219,8 @@ class OpenDomainFileTask extends Task {
 	}
 
 	private GTreeNode getNodeForArchive(GTree tree, Archive archive) {
-		GTreeNode rootNode = tree.getRootNode();
-		for (GTreeNode node : rootNode) {
+		GTreeNode rootNode = tree.getModelRoot();
+		for (GTreeNode node : rootNode.getChildren()) {
 			if (node instanceof ArchiveNode) {
 				ArchiveNode archiveNode = (ArchiveNode) node;
 				if (archiveNode.getArchive() == archive) {

@@ -37,7 +37,8 @@ import docking.widgets.filechooser.GhidraFileChooserMode;
 import docking.widgets.pathmanager.PathManager;
 import docking.widgets.pathmanager.PathManagerListener;
 import docking.widgets.table.*;
-import docking.widgets.tree.*;
+import docking.widgets.tree.GTree;
+import docking.widgets.tree.GTreeNode;
 import docking.widgets.tree.support.BreadthFirstIterator;
 import generic.jar.ResourceFile;
 import generic.util.Path;
@@ -619,7 +620,7 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 		}
 
 		List<GTreeNode> toDelete = new LinkedList<>();
-		Iterator<GTreeNode> nodes = new BreadthFirstIterator(scriptCategoryTree, scriptRoot);
+		Iterator<GTreeNode> nodes = new BreadthFirstIterator(scriptRoot);
 		for (GTreeNode node : CollectionUtils.asIterable(nodes)) {
 			String[] path = getCategoryPath(node);
 			List<String> category = Arrays.asList(path);
@@ -780,8 +781,9 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 			}
 		});
 
-		scriptCategoryTree.getSelectionModel().setSelectionMode(
-			TreeSelectionModel.SINGLE_TREE_SELECTION);
+		scriptCategoryTree.getSelectionModel()
+				.setSelectionMode(
+					TreeSelectionModel.SINGLE_TREE_SELECTION);
 
 		tableModel = new GhidraScriptTableModel(this);
 
@@ -1135,7 +1137,7 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 			// with a filter, only things in the available children match the root node (this is
 			// so filtering in the tree will show all matching results when the
 			// root is selected, instead of all results).
-			GTreeRootNode rootNode = scriptCategoryTree.getRootNode();
+			GTreeNode rootNode = scriptCategoryTree.getViewRoot();
 			List<GTreeNode> children = rootNode.getChildren();
 			for (GTreeNode node : children) {
 				String[] path = getCategoryPath(node);

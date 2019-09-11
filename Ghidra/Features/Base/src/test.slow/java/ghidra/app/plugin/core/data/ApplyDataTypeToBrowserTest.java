@@ -89,7 +89,7 @@ public class ApplyDataTypeToBrowserTest extends AbstractGhidraHeadedIntegrationT
 			conflictHandlerModesAction);
 		tree = provider.getGTree();
 		waitForTree();
-		archiveRootNode = (ArchiveRootNode) tree.getRootNode();
+		archiveRootNode = (ArchiveRootNode) tree.getViewRoot();
 		programNode = (ArchiveNode) archiveRootNode.getChild(PROGRAM_FILENAME);
 		assertNotNull("Did not successfully wait for the program node to load", programNode);
 

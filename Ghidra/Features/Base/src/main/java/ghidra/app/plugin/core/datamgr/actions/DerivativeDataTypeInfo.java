@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +15,9 @@
  */
 package ghidra.app.plugin.core.datamgr.actions;
 
+import java.util.List;
+
+import docking.widgets.tree.GTreeNode;
 import ghidra.app.plugin.core.datamgr.DataTypeManagerPlugin;
 import ghidra.app.plugin.core.datamgr.archive.Archive;
 import ghidra.app.plugin.core.datamgr.tree.ArchiveNode;
@@ -23,11 +25,6 @@ import ghidra.app.plugin.core.datamgr.tree.DataTypeArchiveGTree;
 import ghidra.program.model.data.*;
 import ghidra.util.SystemUtilities;
 import ghidra.util.exception.AssertException;
-
-import java.util.List;
-
-import docking.widgets.tree.GTreeNode;
-import docking.widgets.tree.GTreeRootNode;
 
 /**
  * A class to 1) hold related data for creating a new data type and 2) to validate the given 
@@ -82,7 +79,7 @@ class DerivativeDataTypeInfo {
 	private ArchiveNode getProgramArchiveNode(DataTypeArchiveGTree tree) {
 
 		DataTypeManager manager = plugin.getProgramDataTypeManager();
-		GTreeRootNode rootNode = tree.getRootNode();
+		GTreeNode rootNode = tree.getModelRoot();
 		List<GTreeNode> children = rootNode.getChildren();
 		for (GTreeNode node : children) {
 			ArchiveNode archiveNode = (ArchiveNode) node;

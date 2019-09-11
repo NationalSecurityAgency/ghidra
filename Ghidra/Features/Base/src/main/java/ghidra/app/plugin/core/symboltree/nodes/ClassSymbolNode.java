@@ -27,10 +27,10 @@ import ghidra.program.model.symbol.Symbol;
 import resources.ResourceManager;
 
 public class ClassSymbolNode extends SymbolNode {
-	static final DataFlavor LOCAL_DATA_FLAVOR = new SymbolTreeDataFlavor(
-		"Symbol Tree Data Flavor - Local Classes");
-	static final DataFlavor GLOBAL_DATA_FLAVOR = new SymbolTreeDataFlavor(
-		"Symbol Tree Data Flavor - Global Classes");
+	static final DataFlavor LOCAL_DATA_FLAVOR =
+		new SymbolTreeDataFlavor("Symbol Tree Data Flavor - Local Classes");
+	static final DataFlavor GLOBAL_DATA_FLAVOR =
+		new SymbolTreeDataFlavor("Symbol Tree Data Flavor - Global Classes");
 
 	private static Icon CLASS_ICON = ResourceManager.loadImage("images/class.png");
 	private static Icon DISABLED_CLASS_ICONDISABLED_CLASS_ICON =

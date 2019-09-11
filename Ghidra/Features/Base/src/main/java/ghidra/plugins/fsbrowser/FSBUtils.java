@@ -60,7 +60,7 @@ public class FSBUtils {
 	}
 
 	public static FSBRootNode getNodesRoot(FSBNode node) {
-		GTreeNode tmp = node;
+		GTreeNode tmp = (GTreeNode) node;
 		while (tmp != null && !(tmp instanceof FSBRootNode)) {
 			tmp = tmp.getParent();
 		}

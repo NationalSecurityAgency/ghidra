@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,19 +15,18 @@
  */
 package ghidra.app.plugin.core.datamgr.actions;
 
-import ghidra.app.plugin.core.datamgr.DataTypeManagerPlugin;
-import ghidra.app.plugin.core.datamgr.archive.Archive;
-import ghidra.app.plugin.core.datamgr.archive.ArchiveFileChooser;
-import ghidra.app.plugin.core.datamgr.tree.DataTypeArchiveGTree;
-import ghidra.util.Msg;
-
 import java.io.File;
 
 import docking.ActionContext;
 import docking.action.DockingAction;
 import docking.action.MenuData;
 import docking.widgets.OptionDialog;
-import docking.widgets.tree.GTreeRootNode;
+import docking.widgets.tree.GTreeNode;
+import ghidra.app.plugin.core.datamgr.DataTypeManagerPlugin;
+import ghidra.app.plugin.core.datamgr.archive.Archive;
+import ghidra.app.plugin.core.datamgr.archive.ArchiveFileChooser;
+import ghidra.app.plugin.core.datamgr.tree.DataTypeArchiveGTree;
+import ghidra.util.Msg;
 
 public class CreateArchiveAction extends DockingAction {
 	private final DataTypeManagerPlugin plugin;
@@ -64,7 +62,8 @@ public class CreateArchiveAction extends DockingAction {
 			Msg.trace(this, "Need to overwrite--showing dialog");
 			if (OptionDialog.showYesNoDialogWithNoAsDefaultButton(gTree,
 				"Overwrite Existing File?",
-				"Do you want to overwrite existing file\n" + file.getAbsolutePath()) != OptionDialog.OPTION_ONE) {
+				"Do you want to overwrite existing file\n" +
+					file.getAbsolutePath()) != OptionDialog.OPTION_ONE) {
 				Msg.trace(this, "\tdo not overwrite was chosen");
 				return;
 			}
@@ -79,7 +78,7 @@ public class CreateArchiveAction extends DockingAction {
 	}
 
 	private void selectNewArchive(final Archive archive, final DataTypeArchiveGTree gTree) {
-		GTreeRootNode rootNode = gTree.getRootNode();
+		GTreeNode rootNode = gTree.getModelRoot();
 		gTree.setSelectedNodeByNamePath(new String[] { rootNode.getName(), archive.getName() });
 	}
 }

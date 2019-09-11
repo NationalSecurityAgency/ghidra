@@ -188,7 +188,7 @@ public class DataTypeSelectionDialogTest extends AbstractGhidraHeadedIntegration
 		assertTrue("Did not find the data type chooser tree",
 			(provider instanceof DataTypeChooserDialog));
 		GTree gTree = (GTree) getInstanceField("tree", provider);
-		GTreeNode rootNode = gTree.getRootNode();
+		GTreeNode rootNode = gTree.getModelRoot();
 		waitForTree(gTree);
 		final GTreeNode builtInNode = rootNode.getChild("BuiltInTypes");
 		final DataTypeNode doubleNode = (DataTypeNode) builtInNode.getChild("double");
@@ -743,7 +743,7 @@ public class DataTypeSelectionDialogTest extends AbstractGhidraHeadedIntegration
 
 	private void pickSingleDataType(DataTypeChooserDialog chooserDialog) {
 		GTree gTree = (GTree) getInstanceField("tree", chooserDialog);
-		GTreeNode rootNode = gTree.getRootNode();
+		GTreeNode rootNode = gTree.getModelRoot();
 		waitForTree(gTree);
 		List<GTreeNode> children = rootNode.getChildren();
 		assertEquals(1, children.size());// one archive
@@ -764,7 +764,7 @@ public class DataTypeSelectionDialogTest extends AbstractGhidraHeadedIntegration
 
 	private void pickFromMultipleDataTypes(DataTypeChooserDialog chooserDialog) {
 		GTree gTree = (GTree) getInstanceField("tree", chooserDialog);
-		GTreeNode rootNode = gTree.getRootNode();
+		GTreeNode rootNode = gTree.getModelRoot();
 		waitForTree(gTree);
 		List<GTreeNode> children = rootNode.getChildren();
 		assertEquals(2, children.size());// two archives

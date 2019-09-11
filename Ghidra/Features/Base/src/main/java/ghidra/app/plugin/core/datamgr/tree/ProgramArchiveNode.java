@@ -21,8 +21,8 @@ import ghidra.util.HTMLUtilities;
 
 public class ProgramArchiveNode extends DomainFileArchiveNode {
 
-	public ProgramArchiveNode(ProgramArchive archive) {
-		super(archive);
+	public ProgramArchiveNode(ProgramArchive archive, ArrayPointerFilterState filterState) {
+		super(archive, filterState);
 	}
 
 	@Override
@@ -33,5 +33,4 @@ public class ProgramArchiveNode extends DomainFileArchiveNode {
 		}
 		return "[Unsaved New Program Archive]";
 	}
-
 }

@@ -13,28 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.plugins.fsbrowser;
+package docking.widgets.tree;
 
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.Icon;
 
-import docking.widgets.tree.GTreeNode;
-import ghidra.formats.gfilesystem.FSRL;
-import ghidra.util.exception.CancelledException;
-import ghidra.util.task.TaskMonitor;
-
 /**
- * GTreeNode that represents a file on a filesystem.
- * <p>
- * Visible to just this package.
+ * Class for testing {@link GTreeLazyNode}
  */
-public class FSBFileNode extends FSBNode {
-	protected FSRL fsrl;
+public class LazyGTestNode extends GTreeLazyNode {
+	private String name;
+	private int depth;
 
-	FSBFileNode(FSRL fsrl) {
-		this.fsrl = fsrl;
+	LazyGTestNode(String name, int depth) {
+		this.name = name;
+		this.depth = depth;
+	}
+
+	@Override
+	public String getName() {
+		return name;
 	}
 
 	@Override
@@ -43,33 +43,27 @@ public class FSBFileNode extends FSBNode {
 	}
 
 	@Override
-	public String getName() {
-		return fsrl.getName();
-	}
-
-	@Override
-	public FSRL getFSRL() {
-		return fsrl;
-	}
-
-	@Override
 	public String getToolTip() {
-		return fsrl.getName();
+		return "tooltip: " + name;
 	}
 
 	@Override
 	public boolean isLeaf() {
-		return true;
+		return depth == 0;
 	}
 
 	@Override
-	public int hashCode() {
-		return fsrl.hashCode();
-	}
+	protected List<GTreeNode> generateChildren() {
+		List<GTreeNode> list = new ArrayList<>();
+		if (depth == 0) {
+			return list;
+		}
 
-	@Override
-	public List<GTreeNode> generateChildren(TaskMonitor monitor) throws CancelledException {
-		return Collections.emptyList();
+		for (int i = 0; i < 3; i++) {
+			String childName = name + "_" + i;
+			list.add(new LazyGTestNode(childName, depth - 1));
+		}
+		return list;
 	}
 
 }

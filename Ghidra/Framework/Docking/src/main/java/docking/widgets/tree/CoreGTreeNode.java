@@ -15,385 +15,199 @@
  */
 package docking.widgets.tree;
 
-import ghidra.util.SystemUtilities;
-
 import java.util.*;
-
-import javax.swing.SwingUtilities;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import docking.widgets.tree.internal.InProgressGTreeNode;
+import ghidra.util.Swing;
 
 /**
- * This class is not meant to be subclassed directly.  Instead, you should extend 
- * {@link AbstractGTreeNode}.
- * <p>
- * This class is responsible for mutating/managing the children and parent of this node.  These
- * items are sensitive to threading issues, which this class is designed to handle.
- * <p>
- * The pattern used by this class is to create <tt>doXXX</tt> methods for the public mutator 
- * methods of the {@link GTreeNode} interface.
+ * This class exists to help prevent threading errors in {@link GTreeNode} and subclasses,
+ * by privately maintaining synchronous access to the parent and children of a node. 
+ * <P>
+ * This implementation uses a {@link CopyOnWriteArrayList} to store its children. The theory is
+ * that this will allow direct thread-safe access to the children without having to worry about
+ * {@link ConcurrentModificationException}s.  Also, the assumption is that accessing the children 
+ * will occur much more frequently than modifying the children.  This should only be a problem if
+ * a direct descendent of AbstractGTreeNode creates it children by calling
+ * addNode many times. But in that case, the tree should be using Lazy or 
+ * SlowLoading nodes which always load into another list first and all the children will be set 
+ * on a node in a single operation.
+ * <P>
+ * Subclasses that need access to the children
+ * can call the {@link #children()} method which will ensure that the children are
+ * loaded (not null). Since this class uses a {@link CopyOnWriteArrayList}, subclasses that call
+ * the {@link #children()} method can safely operate and iterate on the list they get back without
+ * having to worry about getting a {@link ConcurrentModificationException}.  
+ * <P>
+ * This class uses synchronization to assure that the parent/children relationship is stable across
+ * threads.  To avoid deadlocks, the sychronization strategy is that if you have the lock on
+ * a parent node, you can safely acquire the lock on any of its descendants, put never its 
+ * ancestors.  To facilitate this strategy, the {@link #getParent()} is not synchronized, but it
+ * is made volatile to assure the current value is always used.
  */
-abstract class CoreGTreeNode implements GTreeNode {
-	private static InProgressGTreeNode IN_PROGRESS_NODE = new InProgressGTreeNode();
-	private static List<GTreeNode> IN_PROGRESS_CHILDREN =
-		Collections.unmodifiableList(Arrays.asList(new GTreeNode[] { IN_PROGRESS_NODE }));
+abstract class CoreGTreeNode implements Cloneable {
+	// the parent is volatile to facilitate the synchronization strategy (see comments above)
+	private volatile GTreeNode parent;
+	private List<GTreeNode> children;
 
-	private GTreeNode parent;
-	private List<GTreeNode> allChildrenList = null;
-	private List<GTreeNode> activeChildrenList = null;
-
-	@Override
-	public synchronized GTreeNode getParent() {
+	/**
+	 * Returns the parent of this node.
+	 * 
+	 * Note: this method is deliberately not synchronized (See comments above)
+	 * @return the parent of this node.
+	 */
+	public final GTreeNode getParent() {
 		return parent;
 	}
 
+	/**
+	 * Sets the parent of this node.  This method should only be used by a parent
+	 * node when a new child is added to that parent node.
+	 * @param parent the node that this node is being added to.
+	 */
+	synchronized final void setParent(GTreeNode parent) {
+		if (this.parent != null) {
+			throw new IllegalStateException(
+				"Attempted to assign a node to a parent more than once!");
+		}
+		this.parent = parent;
+	}
+
+	// provides direct access to the children list 
+	protected final List<GTreeNode> children() {
+		synchronized (this) {
+			if (isLoaded()) {
+				return children;
+			}
+		}
+
+		// The generateChildren must be called outside the synchronized scope because
+		// if it is slow it will lock out other threads. Keep in mind that if this is
+		// called outside the swing thread then this doesn't return
+		// until the work is completed (even for slow loading nodes - they only offload
+		// the children loading in another task if called on the swing thread)
+		List<GTreeNode> newChildren = generateChildren();
+
+		synchronized (this) {
+			// null implies cancelled
+			if (newChildren == null) {
+				return Collections.emptyList();
+			}
+
+			// This can be tricky. If we are in the swing thread and the generate children
+			// is deferred to a background thread and we are about to set an in-progress node,
+			// then it is possible that the background thread got here first and we are about
+			// to overwrite the actual children with an in-progress node. Check for that case.
+			if (isInProgress(newChildren) && children != null) {
+				return children;
+			}
+
+			doSetChildren(newChildren);
+
+			return children;
+		}
+	}
+
+	/**
+	 * Subclasses implement this method to initially load the children.
+	 * @return a list of the initial children for this node. 
+	 */
+	protected abstract List<GTreeNode> generateChildren();
+
+	protected synchronized void doSetChildren(List<GTreeNode> childList) {
+		List<GTreeNode> oldChildren = children;
+		children = null;
+
+		if (oldChildren != null) {
+			for (GTreeNode node : oldChildren) {
+				node.setParent(null);
+			}
+		}
+
+		if (childList != null) {
+			for (GTreeNode node : childList) {
+				node.setParent((GTreeNode) this);
+			}
+			children = new CopyOnWriteArrayList<GTreeNode>(childList);
+		}
+
+		if (oldChildren != null) {
+			for (GTreeNode node : oldChildren) {
+				node.dispose();
+			}
+		}
+	}
+
+	/**
+	 * Creates a clone of this node.  The clone should contain a shallow copy of all the node's
+	 * attributes except that the parent and children are null.
+	 * @return the clone of this object.
+	 * @throws CloneNotSupportedException if some implementation prevents itself from being cloned.
+	 */
 	@Override
+	public GTreeNode clone() throws CloneNotSupportedException {
+		CoreGTreeNode clone = (GTreeNode) super.clone();
+		clone.parent = null;
+		clone.children = null;
+		return (GTreeNode) clone;
+	}
+
 	public void dispose() {
-		parent = null;
-		if (allChildrenList == null) {
-			return;
+
+		List<GTreeNode> oldChildren;
+		synchronized (this) {
+			oldChildren = children;
+			children = null;
+			parent = null;
 		}
-		for (GTreeNode node : allChildrenList) {
-			node.dispose();
+
+		if (oldChildren != null) {
+			for (GTreeNode node : oldChildren) {
+				node.dispose();
+			}
+			oldChildren.clear();
 		}
-		allChildrenList = null;
-		activeChildrenList = null;
-	}
-
-	@Override
-	public synchronized boolean isInProgress() {
-		return activeChildrenList == IN_PROGRESS_CHILDREN;
-	}
-
-	protected void setInProgress() {
-		doSetActiveChildren(IN_PROGRESS_CHILDREN);
-	}
-
-	public synchronized boolean isChildrenLoadedOrInProgress() {
-		return activeChildrenList != null;
-	}
-
-	protected synchronized boolean isChildrenLoaded() {
-		return allChildrenList != null;
-	}
-
-	protected synchronized int doGetChildCount() {
-		if (activeChildrenList != null) {
-			return activeChildrenList.size();
-		}
-		return 0;
-	}
-
-	protected synchronized int doGetAllChildCount() {
-		if (allChildrenList != null) {
-			return allChildrenList.size();
-		}
-		return 0;
-	}
-
-	protected synchronized List<GTreeNode> doGetAllChildren() {
-		if (allChildrenList == null) {
-			return Collections.emptyList();
-		}
-		return new ArrayList<GTreeNode>(allChildrenList);
-	}
-
-	protected synchronized List<GTreeNode> doGetActiveChildren() {
-		if (activeChildrenList == null) {
-			return Collections.emptyList();
-		}
-		return new ArrayList<GTreeNode>(activeChildrenList);
-	}
-
-	protected synchronized GTreeNode doGetChild(int index) {
-		if (activeChildrenList == null) {
-			return null;
-		}
-		if (index < 0 || index >= activeChildrenList.size()) {
-			return null;
-		}
-		return activeChildrenList.get(index);
-	}
-
-	protected synchronized int doGetIndexOfChild(GTreeNode node) {
-		if (activeChildrenList == null) {
-			return -1;
-		}
-		return activeChildrenList.indexOf(node);
 	}
 
 	/**
-	 * Subclasses can override this method to perform faster lookups of a node; for 
-	 * example, if the subclass has a sorted list of children, then a binary search can
-	 * be used. 
-	 * 
-	 * @param node the node whose index we seek
-	 * @param children the children who contain the given node (may be null)
-	 * @return the index of the given child in the given list
+	 * Returns true if the node is in the process of loading its children. 
+	 * See {@link GTreeSlowLoadingNode}
+	 * @return true if the node is in the process of loading its children.
 	 */
-	protected synchronized int doGetIndexOfChild(GTreeNode node, List<GTreeNode> children) {
+	public synchronized final boolean isInProgress() {
+		return isInProgress(children);
+	}
+
+	/**
+	 * True if the children for this node have been loaded yet.  Some GTree nodes are lazy in that they
+	 * don't load their children until needed. Nodes that have the IN_PROGRESS node as it child
+	 * is considered loaded if in the swing thread, otherwise they are considered not loaded. 
+	 * @return true if the children for this node have been loaded.
+	 */
+	public synchronized boolean isLoaded() {
 		if (children == null) {
-			return -1;
+			return false;
 		}
-		return children.indexOf(node);
-	}
-
-//==================================================================================================
-// Setter/Mutator Methods
-//==================================================================================================	
-
-	protected void doAddNode(final int index, final GTreeNode child) {
-
-		if (SwingUtilities.isEventDispatchThread()) {
-			swingAddNode(index, child);
-			return;
+		if (Swing.isSwingThread()) {
+			return true;
 		}
-
-		SystemUtilities.runSwingNow(new Runnable() {
-			@Override
-			public void run() {
-				swingAddNode(index, child);
-			}
-		});
-	}
-
-	private void swingAddNode(int index, GTreeNode child) {
-		//
-		// The following code is 'Swing Atomic'--it all (manipulation and notification) happens
-		// in the Swing thread together, which synchronizes it with other Swing operations.
-		//
-
-		// Synchronized so that the accessor methods do not try to read while we are writing.
-		synchronized (this) {
-			if (allChildrenList == null) {
-				allChildrenList = new ArrayList<GTreeNode>();
-				activeChildrenList = allChildrenList;
-			}
-			if (allChildrenList.contains(child)) {
-				return;
-			}
-			((CoreGTreeNode) child).parent = this;
-
-			if (index < 0 || index >= allChildrenList.size()) {
-				index = allChildrenList.size();
-			}
-			allChildrenList.add(index, child);
-		}
-
-		// can't be in synchronized block!
-		fireNodeAdded(this, child);
-	}
-
-	@Override
-	public void removeNode(final GTreeNode node) {
-
-		if (SwingUtilities.isEventDispatchThread()) {
-			swingRemoveNode(node);
-			return;
-		}
-
-		SystemUtilities.runSwingNow(new Runnable() {
-			@Override
-			public void run() {
-				swingRemoveNode(node);
-			}
-		});
-	}
-
-	private void swingRemoveNode(GTreeNode node) {
-		int index;
-		synchronized (this) {
-			((CoreGTreeNode) node).parent = null;
-			if (activeChildrenList == null) {
-				return;
-			}
-
-			index = activeChildrenList.indexOf(node);
-			if (index >= 0) {
-				activeChildrenList.remove(index);
-			}
-			if (allChildrenList != activeChildrenList && allChildrenList != null) {
-				allChildrenList.remove(node);
-			}
-		}
-
-		// can't be in synchronized block!
-		if (index >= 0) {
-			fireNodeRemoved(this, node, index);
-		}
-	}
-
-	protected void doSetChildren(final List<GTreeNode> childList, final boolean notify) {
-
-		if (SwingUtilities.isEventDispatchThread()) {
-			swingSetChildren(childList, notify, false);
-			return;
-		}
-
-		SystemUtilities.runSwingNow(new Runnable() {
-			@Override
-			public void run() {
-				swingSetChildren(childList, notify, false);
-			}
-		});
-	}
-
-	protected void swingSetChildren(List<GTreeNode> childList, boolean notify,
-			boolean onlyIfInProgress) {
-		//
-		// The following code is 'Swing Atomic'--it all (manipulation and notification) happens
-		// in the Swing thread together, which synchronizes it with other Swing operations.
-		//
-
-		// Synchronized so that the accessor methods do not try to read while we are writing.
-		synchronized (this) {
-			if (childList == null) {
-				allChildrenList = null;
-				activeChildrenList = null;
-			}
-			else {
-				if (onlyIfInProgress && !isInProgress()) {
-					return;
-				}
-
-				for (GTreeNode child : childList) {
-					((CoreGTreeNode) child).parent = this;
-				}
-
-				allChildrenList = new ArrayList<GTreeNode>(childList);
-				activeChildrenList = allChildrenList;
-			}
-		}
-
-		// can't be in synchronized block!
-		if (notify) {
-			notifyNodeStructureChanged(this);
-		}
-	}
-
-	protected void doSetActiveChildren(final List<GTreeNode> childList) {
-
-		if (SwingUtilities.isEventDispatchThread()) {
-			swingSetActiveChilren(childList);
-			return;
-		}
-
-		SystemUtilities.runSwingNow(new Runnable() {
-			@Override
-			public void run() {
-				swingSetActiveChilren(childList);
-			}
-		});
-	}
-
-	private void swingSetActiveChilren(List<GTreeNode> childList) {
-		//
-		// The following code is 'Swing Atomic'--it all (manipulation and notification) happens
-		// in the Swing thread together, which synchronizes it with other Swing operations.
-		//
-
-		// Synchronized so that the accessor methods do not try to read while we are writing.
-		synchronized (this) {
-			activeChildrenList = childList;
-		}
-
-		// can't be in synchronized block!
-		notifyNodeStructureChanged(this);
+		return !isInProgress(children);
 	}
 
 	/**
-	 * Convenience method to clear any filtered items by restoring the active children of this
-	 * node to be the complete set of children.
+	 * Returns true if the node is in the process of loading its children.  For nodes
+	 * that directly extend GTreeNode, this is always false.  See {@link GTreeSlowLoadingNode}
+	 * for information on nodes that that can be in the progress of loading.
+	 * @param childList the list to test.
+	 * @return true if the node is in the progress of loading its children.
 	 */
-	protected void doResetActiveChildren() {
-		doSetActiveChildren(allChildrenList);
-	}
-
-//==================================================================================================
-// Utility Methods
-//==================================================================================================	
-
-	@Override
-	public void fireNodeChanged(final GTreeNode parentNode, final GTreeNode node) {
-
-		SystemUtilities.runIfSwingOrPostSwingLater(new Runnable() {
-			@Override
-			public void run() {
-				notifyNodeChanged(parentNode, node);
-			}
-		});
-	}
-
-	private void notifyNodeChanged(GTreeNode parentNode, GTreeNode node) {
-		if (isAnyAncestorInProgress()) {
-			return;
-		}
-
-		GTree tree = getTree();
-		if (isInValidTree(tree)) {
-			tree.getModel().fireNodeDataChanged(parentNode, node);
-		}
-	}
-
-	private boolean isInValidTree(GTree tree) {
-		return tree != null && !tree.isDisposed();
-	}
-
-	@Override
-	public void fireNodeStructureChanged(final GTreeNode node) {
-
-		SystemUtilities.runIfSwingOrPostSwingLater(new Runnable() {
-			@Override
-			public void run() {
-				notifyNodeStructureChanged(node);
-			}
-		});
-	}
-
-	private void notifyNodeStructureChanged(GTreeNode node) {
-		if (isAnyAncestorInProgress()) {
-			return;
-		}
-
-		GTree tree = getTree();
-		if (isInValidTree(tree)) {
-			tree.getModel().fireNodeStructureChanged(node);
-		}
-	}
-
-	private void fireNodeAdded(GTreeNode parentNode, GTreeNode newNode) {
-		// assumption: we are always called in the Swing thread.
-		if (!isAnyAncestorInProgress()) {
-			GTree tree = getTree();
-			if (isInValidTree(tree)) {
-				tree.getModel().fireNodeAdded(parentNode, newNode);
-			}
-		}
-	}
-
-	private void fireNodeRemoved(GTreeNode parentNode, GTreeNode removedNode, int deletedChildIndex) {
-		// assumption: we are always called in the Swing thread.
-		if (!isAnyAncestorInProgress()) {
-			GTree tree = getTree();
-			if (isInValidTree(tree)) {
-				tree.getModel().fireNodeRemoved(parentNode, removedNode, deletedChildIndex);
-			}
-		}
-	}
-
-	private boolean isAnyAncestorInProgress() {
-		GTreeNode node = this;
-		while (node != null) {
-			if (node.isInProgress()) {
-				return true;
-			}
-			node = node.getParent();
+	private boolean isInProgress(List<GTreeNode> childList) {
+		if (childList != null && childList.size() == 1 &&
+			childList.get(0) instanceof InProgressGTreeNode) {
+			return true;
 		}
 		return false;
 	}
-
-//==================================================================================================
-// End Utility Methods
-//==================================================================================================	
 
 }

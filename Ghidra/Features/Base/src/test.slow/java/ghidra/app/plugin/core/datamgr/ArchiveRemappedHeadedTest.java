@@ -234,7 +234,7 @@ public class ArchiveRemappedHeadedTest extends AbstractGhidraHeadedIntegrationTe
 		assertNotNull(archiveDtm);
 		assertEquals("windows_vs12_32", archiveDtm.getName());
 
-		ArchiveRootNode archiveRootNode = (ArchiveRootNode) tree.getRootNode();
+		ArchiveRootNode archiveRootNode = (ArchiveRootNode) tree.getModelRoot();
 		ArchiveNode archiveNode = (ArchiveNode) archiveRootNode.getChild("windows_vs12_32");
 		assertNotNull(archiveNode);
 		ArchiveNode programNode = (ArchiveNode) archiveRootNode.getChild(program.getName());

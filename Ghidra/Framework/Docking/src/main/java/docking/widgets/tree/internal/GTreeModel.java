@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +15,6 @@
  */
 package docking.widgets.tree.internal;
 
-import ghidra.util.SystemUtilities;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -27,13 +24,14 @@ import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
 
 import docking.widgets.tree.GTreeNode;
-import docking.widgets.tree.GTreeRootNode;
+import ghidra.util.SystemUtilities;
 
 public class GTreeModel implements TreeModel {
 
-	private GTreeRootNode root;
+	private GTreeNode root;
 	private List<TreeModelListener> listeners = new ArrayList<TreeModelListener>();
 	private boolean isFiringNodeStructureChanged;
+	private volatile boolean eventsEnabled = true;
 
 	/**
 	 * Constructs a GTreeModel with the given root node.
@@ -42,64 +40,72 @@ public class GTreeModel implements TreeModel {
 	 * @param isThreaded True signals to perform all tree tasks in a threaded environment to 
 	 *        avoid hanging the swing thread.
 	 */
-	public GTreeModel(GTreeRootNode root) {
+	public GTreeModel(GTreeNode root) {
 		this.root = root;
 	}
 
-	public void setRootNode(GTreeRootNode root) {
+	public void setRootNode(GTreeNode root) {
 		this.root = root;
 		fireRootChanged();
 	}
 
+	@Override
 	public Object getRoot() {
 		return root;
 	}
 
-	public GTreeRootNode getModelRoot() {
+	public GTreeNode getModelRoot() {
 		return root;
 	}
 
+	@Override
 	public void addTreeModelListener(TreeModelListener l) {
 		listeners.add(l);
 	}
 
+	@Override
 	public void removeTreeModelListener(TreeModelListener l) {
 		listeners.remove(l);
 	}
 
+	@Override
 	public Object getChild(Object parent, int index) {
 		GTreeNode gTreeParent = (GTreeNode) parent;
 		return gTreeParent.getChild(index);
 	}
 
+	@Override
 	public int getChildCount(Object parent) {
 		GTreeNode gTreeParent = (GTreeNode) parent;
 		return gTreeParent.getChildCount();
 	}
 
+	@Override
 	public int getIndexOfChild(Object parent, Object child) {
 		GTreeNode gTreeParent = (GTreeNode) parent;
 		return gTreeParent.getIndexOfChild((GTreeNode) child);
 	}
 
+	@Override
 	public boolean isLeaf(Object node) {
 		GTreeNode gTreeNode = (GTreeNode) node;
 		return gTreeNode.isLeaf();
 	}
 
+	@Override
 	public void valueForPathChanged(TreePath path, Object newValue) {
 		GTreeNode node = (GTreeNode) path.getLastPathComponent();
 		node.valueChanged(newValue);
 	}
 
 	public void fireNodeStructureChanged(final GTreeNode changedNode) {
-		if (isFiringNodeStructureChanged) {
+		if (!eventsEnabled || isFiringNodeStructureChanged) {
 			return;
 		}
 		try {
 			isFiringNodeStructureChanged = true;
-			SystemUtilities.assertThisIsTheSwingThread("GTreeModel.fireNodeStructuredChanged() must be "
-				+ "called from the AWT thread");
+			SystemUtilities.assertThisIsTheSwingThread(
+				"GTreeModel.fireNodeStructuredChanged() must be " + "called from the AWT thread");
 
 			TreeModelEvent event = new TreeModelEvent(this, changedNode.getTreePath());
 			for (TreeModelListener listener : listeners) {
@@ -112,7 +118,11 @@ public class GTreeModel implements TreeModel {
 	}
 
 	public void fireRootChanged() {
+		if (!eventsEnabled) {
+			return;
+		}
 		SystemUtilities.runIfSwingOrPostSwingLater(new Runnable() {
+			@Override
 			public void run() {
 				GTreeNode rootNode = root;
 				if (rootNode != null) {
@@ -123,8 +133,11 @@ public class GTreeModel implements TreeModel {
 	}
 
 	public void fireNodeDataChanged(final GTreeNode parentNode, final GTreeNode changedNode) {
-		SystemUtilities.assertThisIsTheSwingThread("GTreeModel.fireNodeChanged() must be "
-			+ "called from the AWT thread");
+		if (!eventsEnabled) {
+			return;
+		}
+		SystemUtilities.assertThisIsTheSwingThread(
+			"GTreeModel.fireNodeDataChanged() must be " + "called from the AWT thread");
 
 		TreeModelEvent event;
 		if (parentNode == null) { // special case when root node changes.
@@ -145,8 +158,11 @@ public class GTreeModel implements TreeModel {
 	}
 
 	public void fireNodeAdded(final GTreeNode parentNode, final GTreeNode newNode) {
-		SystemUtilities.assertThisIsTheSwingThread("GTreeModel.fireNodeAdded() must be "
-			+ "called from the AWT thread");
+		if (!eventsEnabled) {
+			return;
+		}
+		SystemUtilities.assertThisIsTheSwingThread(
+			"GTreeModel.fireNodeAdded() must be " + "called from the AWT thread");
 
 		int indexInParent = newNode.getIndexInParent();
 		if (indexInParent < 0) {
@@ -164,8 +180,8 @@ public class GTreeModel implements TreeModel {
 	public void fireNodeRemoved(final GTreeNode parentNode, final GTreeNode removedNode,
 			final int oldIndexInParent) {
 
-		SystemUtilities.assertThisIsTheSwingThread("GTreeModel.fireNodeRemoved() must be "
-			+ "called from the AWT thread");
+		SystemUtilities.assertThisIsTheSwingThread(
+			"GTreeModel.fireNodeRemoved() must be " + "called from the AWT thread");
 
 		TreeModelEvent event =
 			new TreeModelEvent(this, parentNode.getTreePath(), new int[] { oldIndexInParent },
@@ -177,5 +193,9 @@ public class GTreeModel implements TreeModel {
 
 	public void dispose() {
 		root = null;
+	}
+
+	public void setEventsEnabled(boolean b) {
+		eventsEnabled = b;
 	}
 }

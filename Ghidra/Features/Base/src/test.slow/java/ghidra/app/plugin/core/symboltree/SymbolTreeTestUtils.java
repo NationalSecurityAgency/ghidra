@@ -15,11 +15,10 @@
  */
 package ghidra.app.plugin.core.symboltree;
 
-import static generic.test.AbstractGTest.waitForCondition;
+import static generic.test.AbstractGTest.*;
 import static generic.test.AbstractGenericTest.*;
-import static ghidra.test.AbstractGhidraHeadedIntegrationTest.getAction;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static ghidra.test.AbstractGhidraHeadedIntegrationTest.*;
+import static org.junit.Assert.*;
 
 import java.awt.Container;
 import java.awt.datatransfer.Clipboard;
@@ -38,7 +37,8 @@ import docking.ActionContext;
 import docking.action.DockingActionIf;
 import docking.action.ToggleDockingAction;
 import docking.test.AbstractDockingTest;
-import docking.widgets.tree.*;
+import docking.widgets.tree.GTree;
+import docking.widgets.tree.GTreeNode;
 import docking.widgets.tree.support.GTreeNodeTransferable;
 import ghidra.app.plugin.core.symboltree.nodes.*;
 import ghidra.app.services.ProgramManager;
@@ -58,7 +58,7 @@ class SymbolTreeTestUtils {
 	private SymbolTreePlugin plugin;
 	private DockingActionIf symTreeAction;
 	private SymbolGTree tree;
-	private GTreeRootNode rootGTreeNode;
+	private GTreeNode rootGTreeNode;
 	private SymbolTreeProvider provider;
 	private DockingActionIf renameAction;
 	private DockingActionIf cutAction;
@@ -224,7 +224,7 @@ class SymbolTreeTestUtils {
 	}
 
 	void collapseTree() {
-		GTreeRootNode root = tree.getRootNode();
+		GTreeNode root = tree.getViewRoot();
 		List<GTreeNode> topLevelNodes = root.getChildren();
 		topLevelNodes.forEach(n -> tree.collapseAll(n));
 		waitForTree();
@@ -334,7 +334,7 @@ class SymbolTreeTestUtils {
 		provider = plugin.getProvider();
 		tree = findComponent(provider.getComponent(), SymbolGTree.class);
 		waitForTree();
-		rootGTreeNode = tree.getRootNode();
+		rootGTreeNode = tree.getViewRoot();
 		renameAction = getAction(plugin, "Rename Symbol");
 		assertNotNull(renameAction);
 		cutAction = getAction(plugin, "Cut SymbolTree Node");
@@ -406,7 +406,7 @@ class SymbolTreeTestUtils {
 	}
 
 	public static GTreeNode getNode(GTree tree, String... path) {
-		GTreeRootNode rootNode = tree.getRootNode();
+		GTreeNode rootNode = tree.getModelRoot();
 		String rootName = path[0];
 		if (!rootNode.getName().equals(rootName)) {
 			throw new RuntimeException(

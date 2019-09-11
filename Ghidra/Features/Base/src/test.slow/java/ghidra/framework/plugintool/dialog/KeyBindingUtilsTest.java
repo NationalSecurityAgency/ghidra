@@ -37,6 +37,7 @@ import docking.options.editor.OptionsPanel;
 import docking.tool.util.DockingToolConstants;
 import docking.widgets.filechooser.GhidraFileChooser;
 import docking.widgets.tree.GTree;
+import docking.widgets.tree.GTreeNode;
 import generic.io.NullWriter;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
 import ghidra.app.plugin.core.data.DataPlugin;
@@ -367,7 +368,7 @@ public class KeyBindingUtilsTest extends AbstractGhidraHeadedIntegrationTest {
 
 		// this is an instance of OptionsNode
 		GTree tree = (GTree) getInstanceField("gTree", optionsPanel);
-		Object keyBindingsNode = getGTreeNode(tree.getRootNode(), "Key Bindings");
+		Object keyBindingsNode = getGTreeNode(tree.getModelRoot(), "Key Bindings");
 		selectNode(tree, keyBindingsNode);
 
 		debug("ee");
@@ -407,17 +408,18 @@ public class KeyBindingUtilsTest extends AbstractGhidraHeadedIntegrationTest {
 		SwingUtilities.invokeAndWait(() -> tree.setSelectionPath(path));
 	}
 
-	private Object getGTreeNode(Object parent, String nodeName) throws Exception {
-		List<?> children = (List<?>) getInstanceField("allChildrenList", parent);
-		if (children == null) {
+	private GTreeNode getGTreeNode(GTreeNode parent, String nodeName) throws Exception {
+		if (!parent.isLoaded()) {
 			return null;
 		}
-		for (Object rootChild : children) {
+
+		List<GTreeNode> children = parent.getChildren();
+		for (GTreeNode rootChild : children) {
 			String name = (String) invokeInstanceMethod("getName", rootChild);
 			if (nodeName.equals(name)) {
 				return rootChild;
 			}
-			Object foundNode = getGTreeNode(rootChild, nodeName);
+			GTreeNode foundNode = getGTreeNode(rootChild, nodeName);
 			if (foundNode != null) {
 				return foundNode;
 			}

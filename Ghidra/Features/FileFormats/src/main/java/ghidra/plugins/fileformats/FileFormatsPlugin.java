@@ -115,8 +115,9 @@ public class FileFormatsPlugin extends Plugin implements FrontEndable {
 					if (outputDirectory == null) {
 						return;
 					}
-					fsbContext.getTree().runTask(
-						monitor -> doExportToEclipse(fsrl, outputDirectory, monitor));
+					fsbContext.getTree()
+							.runTask(
+								monitor -> doExportToEclipse(fsrl, outputDirectory, monitor));
 				}
 			}
 
@@ -278,7 +279,7 @@ public class FileFormatsPlugin extends Plugin implements FrontEndable {
 			writer.open();
 			try {
 				// gTree.expandAll( node );
-				writeFile(writer, node.getAllChildren());
+				writeFile(writer, node.getChildren());
 			}
 			finally {
 				writer.close();
@@ -303,7 +304,7 @@ public class FileFormatsPlugin extends Plugin implements FrontEndable {
 				writer.write(childFSRL.getName());
 			}
 			else {
-				writeFile(writer, child.getAllChildren());
+				writeFile(writer, child.getChildren());
 			}
 		}
 	}

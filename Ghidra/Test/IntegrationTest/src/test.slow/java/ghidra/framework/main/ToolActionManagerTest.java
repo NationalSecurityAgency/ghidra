@@ -35,7 +35,6 @@ import docking.widgets.OptionDialog;
 import docking.widgets.filechooser.GhidraFileChooser;
 import docking.widgets.table.GTable;
 import docking.widgets.tree.GTreeNode;
-import docking.widgets.tree.GTreeRootNode;
 import docking.wizard.WizardManager;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
 import ghidra.framework.GenericRunInfo;
@@ -233,7 +232,7 @@ public class ToolActionManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		rootFolder.createFile("notepad", p, TaskMonitor.DUMMY);
 		env.release(p);
 
-		GTreeRootNode rootNode = tree.getRootNode();
+		GTreeNode rootNode = tree.getViewRoot();
 		waitForTree(tree);
 		waitForSwing();
 

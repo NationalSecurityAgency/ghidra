@@ -15,7 +15,7 @@
  */
 package ghidra.app.plugin.core.datamgr;
 
-import static org.hamcrest.CoreMatchers.startsWith;
+import static org.hamcrest.CoreMatchers.*;
 import static org.junit.Assert.*;
 
 import java.awt.Container;
@@ -110,7 +110,7 @@ public class DataTypeManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 		tree = provider.getGTree();
 		jTree = (JTree) invokeInstanceMethod("getJTree", tree);
 		waitForTree();
-		ArchiveRootNode archiveRootNode = (ArchiveRootNode) tree.getRootNode();
+		ArchiveRootNode archiveRootNode = (ArchiveRootNode) tree.getModelRoot();
 		programNode = (ArchiveNode) archiveRootNode.getChild(PROGRAM_FILENAME);
 		assertNotNull("Did not successfully wait for the program node to load", programNode);
 
@@ -187,7 +187,7 @@ public class DataTypeManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 		runSwing(() -> invokeInstanceMethod("openArchives", managerHandler,
 			new Class[] { String[].class }, new Object[] { invalidNames }));
 
-		GTreeNode rootNode = tree.getRootNode();
+		GTreeNode rootNode = tree.getModelRoot();
 		GTreeNode invalidChild = rootNode.getChild("BADARCHIVENAME");
 		assertNull("Tree did not close invalid archive.", invalidChild);
 	}
@@ -523,7 +523,7 @@ public class DataTypeManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 
 		DataTypeNode myStructNode = (DataTypeNode) cat2Node.getChild("MyStruct");
 
-		GTreeNode rootNode = tree.getRootNode();
+		GTreeNode rootNode = tree.getModelRoot();
 		GTreeNode builtInNode = rootNode.getChild("BuiltInTypes");
 
 		selectNode(myStructNode);
@@ -550,7 +550,7 @@ public class DataTypeManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 		GTreeNode cat2Node = cat1Node.getChild("Category2");
 		expandNode(cat2Node);
 
-		GTreeNode rootNode = tree.getRootNode();
+		GTreeNode rootNode = tree.getModelRoot();
 		GTreeNode builtInNode = rootNode.getChild("BuiltInTypes");
 
 		selectNode(cat2Node);
@@ -575,14 +575,14 @@ public class DataTypeManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 			ProgramManager pm = tool.getService(ProgramManager.class);
 			pm.closeProgram();
 		});
-		GTreeNode rootNode = tree.getRootNode();
+		GTreeNode rootNode = tree.getModelRoot();
 		assertEquals(1, rootNode.getChildCount());
 	}
 
 	@Test
 	public void testExpandAll() throws Exception {
 
-		GTreeNode rootNode = tree.getRootNode();
+		GTreeNode rootNode = tree.getModelRoot();
 		selectNode(rootNode);
 		DockingActionIf expandAction = getAction(plugin, "Expand All");
 		assertTrue(expandAction.isEnabledForContext(treeContext));
@@ -608,7 +608,7 @@ public class DataTypeManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 	@Test
 	public void testCollapseAll() throws Exception {
 
-		GTreeNode rootNode = tree.getRootNode();
+		GTreeNode rootNode = tree.getModelRoot();
 		selectNode(rootNode);
 		DockingActionIf collapseAction = getAction(plugin, "Collapse All");
 		assertTrue(collapseAction.isEnabledForContext(treeContext));
@@ -645,7 +645,7 @@ public class DataTypeManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 
 	@Test
 	public void testRefreshBuiltins() throws Exception {
-		GTreeNode treeRoot = tree.getRootNode();
+		GTreeNode treeRoot = tree.getModelRoot();
 		GTreeNode builtInNode = treeRoot.getChild("BuiltInTypes");
 
 		assertNull("Test setup Error: ghidra.app.test.TestDataType was not removed!",
@@ -850,7 +850,7 @@ public class DataTypeManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 	}
 
 	private ArchiveNode getBuiltInNode() {
-		ArchiveRootNode archiveRootNode = (ArchiveRootNode) tree.getRootNode();
+		ArchiveRootNode archiveRootNode = (ArchiveRootNode) tree.getModelRoot();
 		ArchiveNode builtinNode = (ArchiveNode) archiveRootNode.getChild(BUILTIN_NAME);
 		assertNotNull(builtinNode);
 		return builtinNode;
@@ -936,7 +936,7 @@ public class DataTypeManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 	}
 
 	private void assertSingleFilterMatch(String[] path) {
-		GTreeNode rootNode = tree.getRootNode();
+		GTreeNode rootNode = tree.getViewRoot();
 
 		GTreeNode node = rootNode;
 		for (int i = 0; i < path.length; i++) {
@@ -962,7 +962,7 @@ public class DataTypeManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 	}
 
 	private void assertEmptyTree() {
-		final GTreeNode rootNode = tree.getRootNode();
+		final GTreeNode rootNode = tree.getViewRoot();
 		final Integer[] box = new Integer[1];
 		runSwing(() -> box[0] = rootNode.getChildCount());
 		assertEquals("Root node is not empty as expected", 0, (int) box[0]);
@@ -1061,7 +1061,7 @@ public class DataTypeManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 	}
 
 	private void checkNodesCollapsed(GTreeNode parent) {
-		if (parent != tree.getRootNode()) {
+		if (parent != tree.getModelRoot()) {
 			assertTrue(!tree.isExpanded(parent.getTreePath()));
 		}
 

@@ -121,5 +121,4 @@ public class LibrarySymbolNode extends SymbolNode {
 	public Namespace getNamespace() {
 		return (Library) symbol.getObject();
 	}
-
 }

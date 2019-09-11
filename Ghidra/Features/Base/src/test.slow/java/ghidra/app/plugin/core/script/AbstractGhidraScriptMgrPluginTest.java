@@ -40,7 +40,8 @@ import docking.widgets.filter.FilterTextField;
 import docking.widgets.pathmanager.PathManager;
 import docking.widgets.table.GDynamicColumnTableModel;
 import docking.widgets.table.RowObjectTableModel;
-import docking.widgets.tree.*;
+import docking.widgets.tree.GTree;
+import docking.widgets.tree.GTreeNode;
 import generic.jar.ResourceFile;
 import generic.test.TestUtils;
 import generic.util.Path;
@@ -194,7 +195,7 @@ public abstract class AbstractGhidraScriptMgrPluginTest
 		waitForTree(categoryTree);
 		JTree jTree = (JTree) invokeInstanceMethod("getJTree", categoryTree);
 		assertNotNull(jTree);
-		GTreeNode child = categoryTree.getRootNode().getChild(category);
+		GTreeNode child = categoryTree.getModelRoot().getChild(category);
 		categoryTree.setSelectedNode(child);
 		waitForTree(categoryTree);
 		TreePath path = child.getTreePath();
@@ -716,7 +717,7 @@ public abstract class AbstractGhidraScriptMgrPluginTest
 		GTree tree = (GTree) getInstanceField("scriptCategoryTree", provider);
 		waitForTree(tree);
 
-		GTreeNode parentNode = tree.getRootNode();
+		GTreeNode parentNode = tree.getModelRoot();
 
 		String[] parts = newCategory.split("\\.");
 		for (String category : parts) {
@@ -726,7 +727,7 @@ public abstract class AbstractGhidraScriptMgrPluginTest
 	}
 
 	protected GTreeNode findChildByName(GTreeNode node, String name) {
-		List<GTreeNode> children = node.getAllChildren();
+		List<GTreeNode> children = node.getChildren();
 		for (GTreeNode child : children) {
 			if (child.getName().equals(name)) {
 				return child;
@@ -739,8 +740,8 @@ public abstract class AbstractGhidraScriptMgrPluginTest
 		GTree tree = (GTree) getInstanceField("scriptCategoryTree", provider);
 		waitForTree(tree);
 
-		GTreeRootNode rootNode = tree.getRootNode();
-		List<GTreeNode> children = rootNode.getAllChildren();
+		GTreeNode rootNode = tree.getModelRoot();
+		List<GTreeNode> children = rootNode.getChildren();
 		for (GTreeNode node : children) {
 			if (node.getName().equals(oldCategory)) {
 				Assert.fail("Category in tree when expected not to be: " + oldCategory);

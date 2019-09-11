@@ -19,14 +19,14 @@ import java.util.List;
 
 import javax.swing.Icon;
 
-import docking.widgets.tree.AbstractGTreeRootNode;
+import docking.widgets.tree.GTreeNode;
 import docking.widgets.tree.GTreeNode;
 import generic.jar.ResourceFile;
 import ghidra.app.script.GhidraScriptUtil;
 import ghidra.app.script.ScriptInfo;
 import resources.ResourceManager;
 
-class RootNode extends AbstractGTreeRootNode {
+class RootNode extends GTreeNode {
 	private static Icon icon = ResourceManager.loadImage("images/play.png");
 
 	@Override
@@ -65,7 +65,7 @@ class RootNode extends AbstractGTreeRootNode {
 	}
 
 	private GTreeNode getChildRegardlessOfFilter(GTreeNode parent, String name) {
-		List<GTreeNode> children = parent.getAllChildren();
+		List<GTreeNode> children = parent.getChildren();
 		for (GTreeNode child : children) {
 			if (child.getName().equals(name)) {
 				return child;
@@ -75,7 +75,7 @@ class RootNode extends AbstractGTreeRootNode {
 	}
 
 	private void insertSorted(GTreeNode parent, GTreeNode newChild) {
-		List<GTreeNode> allChildren = parent.getAllChildren();
+		List<GTreeNode> allChildren = parent.getChildren();
 		for (GTreeNode child : allChildren) {
 			String nodeName = child.getName();
 			String newNodeName = newChild.getName();

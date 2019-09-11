@@ -15,7 +15,7 @@
  */
 package docking.widgets.tree;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -36,13 +36,11 @@ public class GTreeFilterTest extends AbstractDockingTest {
 	private GTree gTree;
 	private FilterTextField filterField;
 
-	private GTreeRootNode root;
-
 	private DockingWindowManager winMgr;
 
 	@Before
 	public void setUp() throws Exception {
-		root = new TestRootNode();
+		GTreeNode root = new TestRootNode();
 		gTree = new GTree(root);
 
 		filterField = (FilterTextField) gTree.getFilterField();
@@ -63,10 +61,11 @@ public class GTreeFilterTest extends AbstractDockingTest {
 	public void testContains() {
 		setFilterOptions(TextFilterStrategy.CONTAINS, false);
 		// no filter text - make sure all 5 nodes are there
-		assertEquals(5, root.getChildCount());
+		assertEquals(5, viewRoot().getChildCount());
 
 		setFilterText("ABC");
-		assertEquals("Expected 4 of nodes to be in filtered tree!", 4, root.getChildCount());
+		assertEquals("Expected 4 of nodes to be in filtered tree!", 4,
+			viewRoot().getChildCount());
 
 		checkContainsNode("ABC");
 		checkContainsNode("XABC");
@@ -74,34 +73,38 @@ public class GTreeFilterTest extends AbstractDockingTest {
 		checkContainsNode("XABCX");
 
 		setFilterText("MMM");
-		assertEquals("Expected 4 of nodes to be in filtered tree!", 0, root.getChildCount());
+		assertEquals("Expected 4 of nodes to be in filtered tree!", 0, viewRoot().getChildCount());
 
 		setFilterText("");
-		assertEquals("Expected all 5 nodes to be back", 5, root.getChildCount());
+		assertEquals("Expected all 5 nodes to be back", 5, viewRoot().getChildCount());
+	}
+
+	private GTreeNode viewRoot() {
+		return gTree.getViewRoot();
 	}
 
 	@Test
 	public void testMultiWordContains() {
 		setFilterOptions(TextFilterStrategy.CONTAINS, false);
 		// no filter text - make sure all 5 nodes are there
-		assertEquals(5, root.getChildCount());
+		assertEquals(5, viewRoot().getChildCount());
 
 		setFilterOptions(TextFilterStrategy.CONTAINS, false, true, ' ',
 			MultitermEvaluationMode.AND);
 
 		setFilterText("CX AB");
-		assertEquals(2, root.getChildCount());
+		assertEquals(2, viewRoot().getChildCount());
 
 		setFilterOptions(TextFilterStrategy.CONTAINS, false, true, ' ', MultitermEvaluationMode.OR);
 
 		setFilterText("CX AB");
-		assertEquals(4, root.getChildCount());
+		assertEquals(4, viewRoot().getChildCount());
 
 		checkContainsNode("ABCX");
 		checkContainsNode("XABCX");
 
 		setFilterText("");
-		assertEquals("Expected all 5 nodes to be back", 5, root.getChildCount());
+		assertEquals("Expected all 5 nodes to be back", 5, viewRoot().getChildCount());
 	}
 
 	@Test
@@ -109,26 +112,26 @@ public class GTreeFilterTest extends AbstractDockingTest {
 
 		setFilterOptions(TextFilterStrategy.CONTAINS, false);
 		// no filter text - make sure all 5 nodes are there
-		assertEquals(5, root.getChildCount());
+		assertEquals(5, viewRoot().getChildCount());
 
 		for (char delim : FilterOptions.VALID_MULTITERM_DELIMITERS.toCharArray()) {
 			setFilterOptions(TextFilterStrategy.CONTAINS, false, true, delim,
 				MultitermEvaluationMode.AND);
 
 			setFilterText("CX" + delim + "AB");
-			assertEquals(2, root.getChildCount());
+			assertEquals(2, viewRoot().getChildCount());
 
 			setFilterOptions(TextFilterStrategy.CONTAINS, false, true, delim,
 				MultitermEvaluationMode.OR);
 
 			setFilterText("CX" + delim + "AB");
-			assertEquals(4, root.getChildCount());
+			assertEquals(4, viewRoot().getChildCount());
 
 			checkContainsNode("ABCX");
 			checkContainsNode("XABCX");
 
 			setFilterText("");
-			assertEquals("Expected all 5 nodes to be back", 5, root.getChildCount());
+			assertEquals("Expected all 5 nodes to be back", 5, viewRoot().getChildCount());
 		}
 
 	}
@@ -138,7 +141,7 @@ public class GTreeFilterTest extends AbstractDockingTest {
 
 		setFilterOptions(TextFilterStrategy.CONTAINS, false);
 		// no filter text - make sure all 5 nodes are there
-		assertEquals(5, root.getChildCount());
+		assertEquals(5, viewRoot().getChildCount());
 
 		String delimPad = StringUtilities.pad("", ' ', 1);
 
@@ -149,19 +152,19 @@ public class GTreeFilterTest extends AbstractDockingTest {
 			String delimStr = delimPad + delim;
 
 			setFilterText("CX" + delimStr + "AB");
-			assertEquals(2, root.getChildCount());
+			assertEquals(2, viewRoot().getChildCount());
 
 			setFilterOptions(TextFilterStrategy.CONTAINS, false, true, delim,
 				MultitermEvaluationMode.OR);
 
 			setFilterText("CX" + delimStr + "AB");
-			assertEquals(4, root.getChildCount());
+			assertEquals(4, viewRoot().getChildCount());
 
 			checkContainsNode("ABCX");
 			checkContainsNode("XABCX");
 
 			setFilterText("");
-			assertEquals("Expected all 5 nodes to be back", 5, root.getChildCount());
+			assertEquals("Expected all 5 nodes to be back", 5, viewRoot().getChildCount());
 
 		}
 	}
@@ -171,7 +174,7 @@ public class GTreeFilterTest extends AbstractDockingTest {
 
 		setFilterOptions(TextFilterStrategy.CONTAINS, false);
 		// no filter text - make sure all 5 nodes are there
-		assertEquals(5, root.getChildCount());
+		assertEquals(5, viewRoot().getChildCount());
 
 		String delimPad = StringUtilities.pad("", ' ', 1);
 
@@ -182,19 +185,19 @@ public class GTreeFilterTest extends AbstractDockingTest {
 			String delimStr = delim + delimPad;
 
 			setFilterText("CX" + delimStr + "AB");
-			assertEquals(2, root.getChildCount());
+			assertEquals(2, viewRoot().getChildCount());
 
 			setFilterOptions(TextFilterStrategy.CONTAINS, false, true, delim,
 				MultitermEvaluationMode.OR);
 
 			setFilterText("CX" + delimStr + "AB");
-			assertEquals(4, root.getChildCount());
+			assertEquals(4, viewRoot().getChildCount());
 
 			checkContainsNode("ABCX");
 			checkContainsNode("XABCX");
 
 			setFilterText("");
-			assertEquals("Expected all 5 nodes to be back", 5, root.getChildCount());
+			assertEquals("Expected all 5 nodes to be back", 5, viewRoot().getChildCount());
 
 		}
 	}
@@ -204,7 +207,7 @@ public class GTreeFilterTest extends AbstractDockingTest {
 
 		setFilterOptions(TextFilterStrategy.CONTAINS, false);
 		// no filter text - make sure all 5 nodes are there
-		assertEquals(5, root.getChildCount());
+		assertEquals(5, viewRoot().getChildCount());
 
 		String delimPad = StringUtilities.pad("", ' ', 1);
 
@@ -215,19 +218,19 @@ public class GTreeFilterTest extends AbstractDockingTest {
 			String delimStr = delimPad + delim + delimPad;
 
 			setFilterText("CX" + delimStr + "AB");
-			assertEquals(2, root.getChildCount());
+			assertEquals(2, viewRoot().getChildCount());
 
 			setFilterOptions(TextFilterStrategy.CONTAINS, false, true, delim,
 				MultitermEvaluationMode.OR);
 
 			setFilterText("CX" + delimStr + "AB");
-			assertEquals(4, root.getChildCount());
+			assertEquals(4, viewRoot().getChildCount());
 
 			checkContainsNode("ABCX");
 			checkContainsNode("XABCX");
 
 			setFilterText("");
-			assertEquals("Expected all 5 nodes to be back", 5, root.getChildCount());
+			assertEquals("Expected all 5 nodes to be back", 5, viewRoot().getChildCount());
 
 		}
 	}
@@ -236,10 +239,10 @@ public class GTreeFilterTest extends AbstractDockingTest {
 	public void testInvertedContains() {
 		setFilterOptions(TextFilterStrategy.CONTAINS, true);
 
-		assertEquals(5, root.getChildCount());
+		assertEquals(5, viewRoot().getChildCount());
 
 		setFilterText("ABC");
-		assertEquals(1, root.getChildCount());
+		assertEquals(1, viewRoot().getChildCount());
 
 		checkDoesNotContainsNode("ABC");
 		checkDoesNotContainsNode("XABC");
@@ -247,167 +250,168 @@ public class GTreeFilterTest extends AbstractDockingTest {
 		checkDoesNotContainsNode("XABCX");
 
 		setFilterText("MMM");
-		assertEquals(5, root.getChildCount());
+		assertEquals(5, viewRoot().getChildCount());
 
 		setFilterText("");
-		assertEquals("Expected all 5 nodes to be back", 5, root.getChildCount());
+		assertEquals("Expected all 5 nodes to be back", 5, viewRoot().getChildCount());
 	}
 
 	@Test
 	public void testInvertedMultiWordContains() {
 		setFilterOptions(TextFilterStrategy.CONTAINS, true, true, ' ', MultitermEvaluationMode.AND);
 		// no filter text - make sure all 5 nodes are there
-		assertEquals(5, root.getChildCount());
+		assertEquals(5, viewRoot().getChildCount());
 
 		setFilterText("CX AB");
 
 		checkDoesNotContainsNode("ABCX");
 		checkDoesNotContainsNode("XABCX");
-		assertEquals(3, root.getChildCount());
+		assertEquals(3, viewRoot().getChildCount());
 
 		setFilterOptions(TextFilterStrategy.CONTAINS, true, true, ' ', MultitermEvaluationMode.OR);
 		setFilterText("");
 		// no filter text - make sure all 5 nodes are there
-		assertEquals(5, root.getChildCount());
+		assertEquals(5, viewRoot().getChildCount());
 
 		setFilterText("CX AB");
 
 		checkDoesNotContainsNode("ABCX");
 		checkDoesNotContainsNode("XABCX");
-		assertEquals(1, root.getChildCount());
+		assertEquals(1, viewRoot().getChildCount());
 
 		setFilterText("");
-		assertEquals("Expected all 5 nodes to be back", 5, root.getChildCount());
+		assertEquals("Expected all 5 nodes to be back", 5, viewRoot().getChildCount());
 	}
 
 	@Test
 	public void testStartsWith() {
 		setFilterOptions(TextFilterStrategy.STARTS_WITH, false);
 		// no filter text - make sure all 5 nodes are there
-		assertEquals(5, root.getChildCount());
+		assertEquals(5, viewRoot().getChildCount());
 
 		setFilterText("ABC");
 		checkContainsNode("ABC");
 		checkContainsNode("ABCX");
-		assertEquals(2, root.getChildCount());
+		assertEquals(2, viewRoot().getChildCount());
 
 		setFilterText("MMM");
-		assertEquals(0, root.getChildCount());
+		assertEquals(0, viewRoot().getChildCount());
 
 		setFilterText("");
-		assertEquals("Expected all 5 nodes to be back", 5, root.getChildCount());
+		assertEquals("Expected all 5 nodes to be back", 5, viewRoot().getChildCount());
 	}
 
 	@Test
 	public void testInvertedStartsWith() {
 		setFilterOptions(TextFilterStrategy.STARTS_WITH, true);
 		// no filter text - make sure all 5 nodes are there
-		assertEquals(5, root.getChildCount());
+		assertEquals(5, viewRoot().getChildCount());
 
 		setFilterText("ABC");
 		checkDoesNotContainsNode("ABC");
 		checkDoesNotContainsNode("ABCX");
-		assertEquals(3, root.getChildCount());
+		assertEquals(3, viewRoot().getChildCount());
 
 		setFilterText("MMM");
-		assertEquals(5, root.getChildCount());
+		assertEquals(5, viewRoot().getChildCount());
 
 		setFilterText("");
-		assertEquals("Expected all 5 nodes to be back", 5, root.getChildCount());
+		assertEquals("Expected all 5 nodes to be back", 5, viewRoot().getChildCount());
 	}
 
 	@Test
 	public void testExactMatch() {
 		setFilterOptions(TextFilterStrategy.MATCHES_EXACTLY, false);
 		// no filter text - make sure all 5 nodes are there
-		assertEquals(5, root.getChildCount());
+		assertEquals(5, viewRoot().getChildCount());
 
 		setFilterText("ABC");
 		checkContainsNode("ABC");
-		assertEquals(1, root.getChildCount());
+		assertEquals(1, viewRoot().getChildCount());
 
 		setFilterText("MMM");
-		assertEquals(0, root.getChildCount());
+		assertEquals(0, viewRoot().getChildCount());
 
 		setFilterText("");
-		assertEquals("Expected all 5 nodes to be back", 5, root.getChildCount());
+		assertEquals("Expected all 5 nodes to be back", 5, viewRoot().getChildCount());
 	}
 
 	@Test
 	public void testInvertedExactMatch() {
 		setFilterOptions(TextFilterStrategy.MATCHES_EXACTLY, true);
 		// no filter text - make sure all 5 nodes are there
-		assertEquals(5, root.getChildCount());
+		assertEquals(5, viewRoot().getChildCount());
 
 		setFilterText("ABC");
 		checkDoesNotContainsNode("ABC");
-		assertEquals(4, root.getChildCount());
+		assertEquals(4, viewRoot().getChildCount());
 
 		setFilterText("MMM");
-		assertEquals(5, root.getChildCount());
+		assertEquals(5, viewRoot().getChildCount());
 
 		setFilterText("");
-		assertEquals("Expected all 5 nodes to be back", 5, root.getChildCount());
+		assertEquals("Expected all 5 nodes to be back", 5, viewRoot().getChildCount());
 	}
 
 	@Test
 	public void testRegExMatch() {
 		setFilterOptions(TextFilterStrategy.REGULAR_EXPRESSION, false);
 		// no filter text - make sure all 5 nodes are there
-		assertEquals(5, root.getChildCount());
+		assertEquals(5, viewRoot().getChildCount());
 
 		setFilterText("^ABC$");
 		checkContainsNode("ABC");
-		assertEquals("Expected 1 node match exacly match ABC!", 1, root.getChildCount());
+		assertEquals("Expected 1 node match exacly match ABC!", 1, viewRoot().getChildCount());
 
 		setFilterText("ABC");
 		checkContainsNode("ABC");
 		checkContainsNode("XABC");
 		checkContainsNode("ABCX");
 		checkContainsNode("XABCX");
-		assertEquals("Expected 4 of nodes that contain the text ABC!", 4, root.getChildCount());
+		assertEquals("Expected 4 of nodes that contain the text ABC!", 4,
+			viewRoot().getChildCount());
 
 		setFilterText("XA.{0,2}X");
 		checkContainsNode("XABCX");
-		assertEquals(1, root.getChildCount());
+		assertEquals(1, viewRoot().getChildCount());
 
 		setFilterText("X{0,1}A.{0,2}X");
 		checkContainsNode("XABCX");
 		checkContainsNode("ABCX");
-		assertEquals(2, root.getChildCount());
+		assertEquals(2, viewRoot().getChildCount());
 
 		setFilterText("");
-		assertEquals("Expected all 5 nodes to be back", 5, root.getChildCount());
+		assertEquals("Expected all 5 nodes to be back", 5, viewRoot().getChildCount());
 	}
 
 	@Test
 	public void testInvertedRegExMatch() {
 		setFilterOptions(TextFilterStrategy.REGULAR_EXPRESSION, true);
 		// no filter text - make sure all 5 nodes are there
-		assertEquals(5, root.getChildCount());
+		assertEquals(5, viewRoot().getChildCount());
 
 		setFilterText("^ABC$");
 		checkDoesNotContainsNode("ABC");
-		assertEquals(4, root.getChildCount());
+		assertEquals(4, viewRoot().getChildCount());
 
 		setFilterText("ABC");
 		checkDoesNotContainsNode("ABC");
 		checkDoesNotContainsNode("XABC");
 		checkDoesNotContainsNode("ABCX");
 		checkDoesNotContainsNode("XABCX");
-		assertEquals(1, root.getChildCount());
+		assertEquals(1, viewRoot().getChildCount());
 
 		setFilterText("XA.{0,2}X");
 		checkDoesNotContainsNode("XABCX");
-		assertEquals(4, root.getChildCount());
+		assertEquals(4, viewRoot().getChildCount());
 
 		setFilterText("X{0,1}A.{0,2}X");
 		checkDoesNotContainsNode("XABCX");
 		checkDoesNotContainsNode("ABCX");
-		assertEquals(3, root.getChildCount());
+		assertEquals(3, viewRoot().getChildCount());
 
 		setFilterText("");
-		assertEquals("Expected all 5 nodes to be back", 5, root.getChildCount());
+		assertEquals("Expected all 5 nodes to be back", 5, viewRoot().getChildCount());
 	}
 
 	@Test
@@ -416,14 +420,14 @@ public class GTreeFilterTest extends AbstractDockingTest {
 		setFilterText("ABC");
 		checkContainsNode("ABC");
 		checkContainsNode("ABCX");
-		assertEquals(2, root.getChildCount());
+		assertEquals(2, viewRoot().getChildCount());
 
 		setFilterOptions(TextFilterStrategy.MATCHES_EXACTLY, false);
 		checkContainsNode("ABC");
-		assertEquals(1, root.getChildCount());
+		assertEquals(1, viewRoot().getChildCount());
 
 		setFilterOptions(TextFilterStrategy.CONTAINS, false);
-		assertEquals("Expected 4 of nodes to be in filtered tree!", 4, root.getChildCount());
+		assertEquals("Expected 4 of nodes to be in filtered tree!", 4, viewRoot().getChildCount());
 		checkContainsNode("ABC");
 		checkContainsNode("XABC");
 		checkContainsNode("ABCX");
@@ -436,20 +440,20 @@ public class GTreeFilterTest extends AbstractDockingTest {
 		setFilterOptions(TextFilterStrategy.MATCHES_EXACTLY, false);
 		setFilterText("ABC");
 		checkContainsNode("ABC");
-		assertEquals(1, root.getChildCount());
+		assertEquals(1, viewRoot().getChildCount());
 
 		Object originalValue = getInstanceField("uniquePreferenceKey", gTree);
 		setInstanceField("preferenceKey", gTree.getFilterProvider(), "XYZ");
 		setFilterOptions(TextFilterStrategy.STARTS_WITH, false);
 		checkContainsNode("ABC");
 		checkContainsNode("ABCX");
-		assertEquals(2, root.getChildCount());
+		assertEquals(2, viewRoot().getChildCount());
 
 		setInstanceField("preferenceKey", gTree.getFilterProvider(), originalValue);
 		setInstanceField("optionsSet", gTree.getFilterProvider(), false);
 		restorePreferences();
 		checkContainsNode("ABC");
-		assertEquals(1, root.getChildCount());
+		assertEquals(1, viewRoot().getChildCount());
 
 	}
 
@@ -465,7 +469,7 @@ public class GTreeFilterTest extends AbstractDockingTest {
 	}
 
 	private void checkContainsNode(String string) {
-		List<GTreeNode> children = root.getChildren();
+		List<GTreeNode> children = viewRoot().getChildren();
 		for (GTreeNode gTreeNode : children) {
 			if (gTreeNode.getName().equals(string)) {
 				return;
@@ -475,7 +479,7 @@ public class GTreeFilterTest extends AbstractDockingTest {
 	}
 
 	private void checkDoesNotContainsNode(String string) {
-		List<GTreeNode> children = root.getChildren();
+		List<GTreeNode> children = viewRoot().getChildren();
 		for (GTreeNode gTreeNode : children) {
 			if (gTreeNode.getName().equals(string)) {
 				Assert.fail("Expected node " + string +
@@ -517,7 +521,7 @@ public class GTreeFilterTest extends AbstractDockingTest {
 		waitForTree(gTree);
 	}
 
-	private class TestRootNode extends AbstractGTreeRootNode {
+	private class TestRootNode extends GTreeNode {
 
 		TestRootNode() {
 			List<GTreeNode> children = new ArrayList<>();
@@ -553,7 +557,7 @@ public class GTreeFilterTest extends AbstractDockingTest {
 	/**
 	 * A basic leaf node 
 	 */
-	private class LeafNode extends AbstractGTreeNode {
+	private class LeafNode extends GTreeNode {
 
 		private final String name;
 
