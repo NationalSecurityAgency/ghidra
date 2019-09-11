@@ -340,14 +340,6 @@ public class DecompilerUtils {
 
 	public static Address getClosestAddress(Program program, ClangToken token) {
 
-		if (token instanceof ClangFuncNameToken) {
-			// special case: we know that name tokens do not have addresses
-			Function function = getFunction(program, (ClangFuncNameToken) token);
-			if (function != null) {
-				return function.getEntryPoint();
-			}
-		}
-
 		Address address = token.getMinAddress();
 		if (address != null) {
 			return address;
