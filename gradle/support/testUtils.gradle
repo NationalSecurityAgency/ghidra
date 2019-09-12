@@ -89,7 +89,7 @@ def Map<String, Map<String, Long>> getTestReport() {
 	if(!classesReportDir.exists()) {
 		logger.info("getTestReport: The path '$testTimeParserInputDir' does not exist on the file system." + 
 			" Returning empty testReport map.")
-		return Collections.emptyList(); 
+		return Collections.emptyMap(); 
 	}
 	
 	// These are the configuration 'buckets' that each test class will be dumped
