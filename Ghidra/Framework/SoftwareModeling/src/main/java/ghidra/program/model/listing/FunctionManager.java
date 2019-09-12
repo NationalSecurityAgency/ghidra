@@ -107,13 +107,12 @@ public interface FunctionManager {
 	 * @param thunkedFunction referenced function (required is creating a thunk function)
 	 * @param source the source of this function
 	 * @return new function or null if one or more functions overlap the specified body address set.
-	 * @throws DuplicateNameException if a function with the same thunk name already exists
 	 * @throws OverlappingFunctionException if the address set of the body overlaps an existing
 	 *             function
 	 */
 	public Function createThunkFunction(String name, Namespace nameSpace, Address entryPoint,
 			AddressSetView body, Function thunkedFunction, SourceType source)
-			throws DuplicateNameException, OverlappingFunctionException;
+			throws OverlappingFunctionException;
 
 	/**
 	 * Returns the total number of functions in the program including external functions.
