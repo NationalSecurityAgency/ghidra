@@ -117,7 +117,8 @@ void Override::insertProtoOverride(const Address &callpoint,FuncProto *p)
   if (iter != protoover.end())	// Check for pre-existing override
     delete (*iter).second;	// and delete it
 
-  protoover[callpoint] = p;
+  p->setOverride(true);		// Mark this as an override
+  protoover[callpoint] = p;	// Take ownership of the object
 }
 
 /// \brief Flag an indirect jump for multistage analysis

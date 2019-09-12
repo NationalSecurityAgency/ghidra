@@ -29,6 +29,7 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.pcode.*;
+import ghidra.program.model.symbol.Reference;
 import ghidra.util.Msg;
 import ghidra.util.UndefinedFunction;
 import ghidra.util.exception.CancelledException;
@@ -140,7 +141,22 @@ public class OverridePrototypeAction extends AbstractDecompilerAction {
 		}
 		Address addr = op.getInput(0).getAddress();
 		Program program = controller.getProgram();
-		return program.getFunctionManager().getFunctionAt(addr);
+		FunctionManager functionManager = program.getFunctionManager();
+		Function function = functionManager.getFunctionAt(addr);
+		if (function != null) {
+			return function;
+		}
+		Address opAddr = op.getSeqnum().getTarget();
+		Reference[] references = program.getReferenceManager().getFlowReferencesFrom(opAddr);
+		for (Reference ref : references) {
+			if (ref.getReferenceType().isCall()) {
+				function = functionManager.getFunctionAt(ref.getToAddress());
+				if (function != null) {
+					return function;
+				}
+			}
+		}
+		return null;
 	}
 
 	private String generateSignature(PcodeOp op, String name) {
