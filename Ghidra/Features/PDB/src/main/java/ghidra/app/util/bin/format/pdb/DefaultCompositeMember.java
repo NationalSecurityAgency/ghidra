@@ -1084,6 +1084,7 @@ class DefaultCompositeMember extends CompositeMember {
 		// must remove sibling bit fields at same offset but must leave
 		// first one behind to facilitate subsequent component swap.
 		boolean skipIfEqual = true;
+		int truncateOrdinal = -1;
 		for (DataTypeComponent component : parentStruct.getComponents()) {
 			int offset = component.getOffset();
 			if (offset >= memberOffset) {
@@ -1091,9 +1092,16 @@ class DefaultCompositeMember extends CompositeMember {
 					skipIfEqual = false;
 				}
 				else {
-					parentStruct.clearComponent(component.getOrdinal());
+					if (truncateOrdinal < 0) {
+						truncateOrdinal = component.getOrdinal();
+					}
 					parent.structureMemberOffsetMap.remove(offset);
 				}
+			}
+		}
+		if (truncateOrdinal >= 0) {
+			while (parentStruct.getNumComponents() > truncateOrdinal) {
+				parentStruct.delete(truncateOrdinal);
 			}
 		}
 
