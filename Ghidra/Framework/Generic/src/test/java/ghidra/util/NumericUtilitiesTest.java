@@ -15,8 +15,7 @@
  */
 package ghidra.util;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -284,7 +283,7 @@ public class NumericUtilitiesTest {
 	}
 
 	@Test
-	public void testGetUnsigndeAlignedValue() {
+	public void testGetUnsignedAlignedValue() {
 
 		assertEquals(0, NumericUtilities.getUnsignedAlignedValue(0xffffffffffffffffL, 8));
 		assertEquals(0xfffffffffffffff8L,
