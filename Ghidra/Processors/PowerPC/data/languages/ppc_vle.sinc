@@ -591,7 +591,7 @@ IMM16B: val						is IMM_0_10_VLE & IMM_16_20_VLE [ val = (IMM_16_20_VLE << 11) |
 
 :se_cmpli RX_VLE,OIMM		is $(ISVLE) & OP6_VLE=8 & BIT9_VLE=1 & RX_VLE & OIMM {
 	tmpA:4 = RX_VLE:4;
-	tmpB:4 = OIMM:4 & 0x1f;
+	tmpB:4 = OIMM:4;
 	cr0 = ((tmpA < tmpB) << 3) | ((tmpA > tmpB) << 2) | ((tmpA == tmpB) << 1) | (xer_so & 1);			
 }
 
