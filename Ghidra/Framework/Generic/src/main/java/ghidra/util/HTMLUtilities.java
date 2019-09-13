@@ -25,8 +25,6 @@ import javax.swing.JLabel;
 import javax.swing.plaf.basic.BasicHTML;
 import javax.swing.text.View;
 
-import org.apache.commons.lang3.StringUtils;
-
 import generic.text.TextLayoutGraphics;
 import ghidra.util.html.HtmlLineSplitter;
 import utilities.util.reflection.ReflectionUtilities;
@@ -143,7 +141,6 @@ public class HTMLUtilities {
 
 	public static String HTML_SPACE = "&nbsp;";
 	public static String HTML_NEW_LINE = BR;
-	private static String HTML_TAB = StringUtils.repeat(HTML_SPACE, 4);
 
 	public static final String MAROON = "#990000";
 	public static final String GREEN = "#009900";
@@ -604,11 +601,9 @@ public class HTMLUtilities {
 	 * <p>
 	 * Does not otherwise modify the input text or wrap lines.
 	 * <p>
-	 * Calling this twice will result in text being double-escaped, which will not display 
-	 * correctly.
+	 * Calling this twice will result in text being double-escaped, which will not display correctly.
 	 * <p>
-	 * See also <code>StringEscapeUtils#escapeHtml3(String)</code> if you need quote-safe html 
-	 * encoding.
+	 * See also <code>StringEscapeUtils#escapeHtml3(String)</code> if you need quote-safe html encoding.
 	 * <p>
 	 *  
 	 * @param text plain-text that might have some characters that should NOT be interpreted as HTML
@@ -628,22 +623,8 @@ public class HTMLUtilities {
 				case '>':
 					buffer.append("&gt;");
 					break;
-				case '\n':
-					// Note: it is not clear why we are escaping characters less than space.  We
-					//       have client code calling this method that relies on newlines and tabs
-					//       getting displayed.   This method needs to document how it works with
-					//       characters that get escaped.   Further, if this method should escape
-					//       all characters as is done below, then we have to look at every use
-					//       of this method to ensure that if it needs whitespace fixup, that 
-					//       it calls friendlyEncodeHTML().
-					buffer.append(BR);
-					break;
-				case '\t':
-					// (see the above note)
-					buffer.append(HTML_TAB);
-					break;
 				default:
-					if (cp < ' ' || cp >= 0x7F) {
+					if (charNeedsHTMLEscaping(cp)) {
 						buffer.append("&#x");
 						buffer.append(Integer.toString(cp, 16).toUpperCase());
 						buffer.append(";");
@@ -656,6 +637,21 @@ public class HTMLUtilities {
 		});
 
 		return buffer.toString();
+	}
+
+	/**
+	 * Tests a unicode code point (i.e., 32 bit character) to see if it needs to be escaped before 
+	 * being added to a HTML document because it is non-printable or a non-standard control 
+	 * character
+	 * 
+	 * @param codePoint character to test
+	 * @return boolean true if character should be escaped
+	 */
+	public static boolean charNeedsHTMLEscaping(int codePoint) {
+		if (codePoint == '\n' || codePoint == '\t' || (' ' <= codePoint && codePoint < 0x7F)) {
+			return false;
+		}
+		return true;
 	}
 
 	/**
