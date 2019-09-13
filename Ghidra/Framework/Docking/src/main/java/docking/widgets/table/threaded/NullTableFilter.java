@@ -40,6 +40,11 @@ public class NullTableFilter<ROW_OBJECT> implements TableFilter<ROW_OBJECT> {
 	}
 
 	@Override
+	public boolean isEmpty() {
+		return true;
+	}
+
+	@Override
 	public boolean equals(Object obj) {
 		if (this == obj) {
 			return true;
