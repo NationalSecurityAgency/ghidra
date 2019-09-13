@@ -425,8 +425,7 @@ public class MIPS_ElfRelocationHandler extends ElfRelocationHandler {
 				}
 				// TODO: cross-mode jump detection/handling is unsupported
 				if (elfSymbol.isLocal()) {
-					value = (int) ((addend |
-						((offset + 4) & (0xfc000000 << shift)) + symbolValue) >> shift);
+					value = ((int) addend + (int) symbolValue) >> shift;
 				}
 				else {
 					value = (signExtend((int) addend, 26 + shift) + (int) symbolValue) >> shift;
