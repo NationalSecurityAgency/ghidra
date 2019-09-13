@@ -742,8 +742,10 @@
             <TD valign="top">Used to change CALLOTHER pcode operations to CALL operations. The new call target is the "to" address of the 
             reference.  The override only takes effect when the reference is primary, and only when there is exactly one primary 
             CALLOTHER_OVERRIDE_CALL reference at the "from" address of the reference. Only the first CALLOTHER operation at the "from"
-            address of the reference is changed.  Note that this reference override takes precedence over those of CALLOTHER_OVERRIDE_JUMP
-            references. <BR>
+            address of the reference is changed. <EM> Applying this override to instances of a CALLOTHER op that have output is not recommended 
+            and can adversely affect decompilation. </EM>  You can see whether a particular instance has an output by enabling the "PCode" field 
+            of the Listing. Note that this reference override takes precedence over those of CALLOTHER_OVERRIDE_JUMP
+            references. <BR> 
             </TD>
           </TR>
           
@@ -760,7 +762,8 @@
             <TD valign="top">Used to change CALLOTHER pcode operations to BRANCH operations. The new jump target is the "to" address of the 
             reference.  The override only takes effect when the reference is primary, and only when there is exactly one primary 
             CALLOTHER_OVERRIDE_JUMP reference at the "from" address of the reference. Only the first CALLOTHER operation at the "from"
-            address of the reference is changed. <BR>
+            address of the reference is changed. <EM> Applying this override to an instance of a CALLOTHER op with output is not recommended </EM> (see
+            the discussion above about CALLOTHER_OVERRIDE_CALL references).<BR>
             </TD>
           </TR>
           
