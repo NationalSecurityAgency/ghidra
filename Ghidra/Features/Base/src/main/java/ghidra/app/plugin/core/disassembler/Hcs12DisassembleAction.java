@@ -24,6 +24,7 @@ import ghidra.app.context.ListingContextAction;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.Program;
+import ghidra.util.HelpLocation;
 
 
 /**
@@ -39,6 +40,11 @@ class Hcs12DisassembleAction extends ListingContextAction {
 		
 		this.plugin = plugin;
 		this.disassembleXgate = disassembleXgate;
+
+		// Need to override the default help location since this action doesn't have its own
+		// section in the help.
+		HelpLocation location = new HelpLocation("DisassemblerPlugin", "Disassemble");
+		this.setHelpLocation(location);
 		
 		setPopupMenuData( new MenuData( 
 			new String[]{"Disassemble - "+ (disassembleXgate ? "XGate" : "HCS12") }, 
