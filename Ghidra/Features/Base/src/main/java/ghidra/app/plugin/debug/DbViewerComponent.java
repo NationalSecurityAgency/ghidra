@@ -200,12 +200,12 @@ class DbViewerComponent extends JPanel {
 		GTable gTable = new GTable();
 		if (table.getRecordCount() <= 10000) {
 			model = new DbSmallTableModel(table);
-			gTable.setDefaultRenderer(Long.class, new LongRenderer());
 		}
 		else {
 			model = new DbLargeTableModel(table);
 		}
 		gTable.setModel(model);
+		gTable.setDefaultRenderer(Long.class, new LongRenderer());
 
 		JScrollPane scroll = new JScrollPane(gTable);
 		panel.add(scroll, BorderLayout.CENTER);
