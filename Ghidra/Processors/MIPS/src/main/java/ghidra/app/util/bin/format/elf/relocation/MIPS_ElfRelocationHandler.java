@@ -419,21 +419,15 @@ public class MIPS_ElfRelocationHandler extends ElfRelocationHandler {
 			case MIPS_ElfRelocationConstants.R_MICROMIPS_26_S1:
 				int shift = (relocType == MIPS_ElfRelocationConstants.R_MICROMIPS_26_S1) ? 1 : 2;
 				if (mipsRelocationContext.extractAddend()) {
-					addend = oldValue;
-					addend &= MIPS_ElfRelocationConstants.MIPS_LOW26;
-					addend <<= shift;
+					addend = (oldValue & MIPS_ElfRelocationConstants.MIPS_LOW26) << shift;
+				}
+				if (!elfSymbol.isLocal() && !elfSymbol.isSection()) {
+					addend = signExtend((int) addend, 26 + shift);
 				}
 				// TODO: cross-mode jump detection/handling is unsupported
-				if (elfSymbol.isLocal()) {
-					value = (int) ((addend |
-						((offset + 4) & (0xfc000000 << shift)) + symbolValue) >> shift);
-				}
-				else {
-					value = (signExtend((int) addend, 26 + shift) + (int) symbolValue) >> shift;
-				}
-				value &= MIPS_ElfRelocationConstants.MIPS_LOW26;
-
-				newValue = (oldValue & ~MIPS_ElfRelocationConstants.MIPS_LOW26) | value;
+				value = (int) (addend + symbolValue) >> shift;
+				newValue = (oldValue & ~MIPS_ElfRelocationConstants.MIPS_LOW26) |
+					(value & MIPS_ElfRelocationConstants.MIPS_LOW26);
 				writeNewValue = true;
 				break;
 
