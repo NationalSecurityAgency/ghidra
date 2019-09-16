@@ -25,8 +25,6 @@ import javax.swing.JLabel;
 import javax.swing.plaf.basic.BasicHTML;
 import javax.swing.text.View;
 
-import org.apache.commons.lang3.StringEscapeUtils;
-
 import generic.text.TextLayoutGraphics;
 import ghidra.util.html.HtmlLineSplitter;
 import utilities.util.reflection.ReflectionUtilities;
@@ -522,7 +520,7 @@ public class HTMLUtilities {
 	}
 
 	/**
-	 * @see {@link #friendlyEncodeHTML(String)}
+	 * See {@link #friendlyEncodeHTML(String)}
 	 * 
 	 * @param text string to be encoded
 	 * @param skipLeadingWhitespace  true signals to ignore any leading whitespace characters.
@@ -605,7 +603,7 @@ public class HTMLUtilities {
 	 * <p>
 	 * Calling this twice will result in text being double-escaped, which will not display correctly.
 	 * <p>
-	 * See also {@link StringEscapeUtils#escapeHtml3(String)} if you need quote-safe html encoding.
+	 * See also <code>StringEscapeUtils#escapeHtml3(String)</code> if you need quote-safe html encoding.
 	 * <p>
 	 *  
 	 * @param text plain-text that might have some characters that should NOT be interpreted as HTML
@@ -626,7 +624,7 @@ public class HTMLUtilities {
 					buffer.append("&gt;");
 					break;
 				default:
-					if (cp < ' ' || cp >= 0x7F) {
+					if (charNeedsHTMLEscaping(cp)) {
 						buffer.append("&#x");
 						buffer.append(Integer.toString(cp, 16).toUpperCase());
 						buffer.append(";");
@@ -639,6 +637,21 @@ public class HTMLUtilities {
 		});
 
 		return buffer.toString();
+	}
+
+	/**
+	 * Tests a unicode code point (i.e., 32 bit character) to see if it needs to be escaped before 
+	 * being added to a HTML document because it is non-printable or a non-standard control 
+	 * character
+	 * 
+	 * @param codePoint character to test
+	 * @return boolean true if character should be escaped
+	 */
+	public static boolean charNeedsHTMLEscaping(int codePoint) {
+		if (codePoint == '\n' || codePoint == '\t' || (' ' <= codePoint && codePoint < 0x7F)) {
+			return false;
+		}
+		return true;
 	}
 
 	/**
