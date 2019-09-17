@@ -33,7 +33,8 @@ public class RenameVariableTask extends RenameTask {
 	private Program program;
 	private Function function;
 	private boolean commitRequired; // Set to true if all parameters are committed before renaming
-	private SourceType srctype;
+	private SourceType srctype;		// Desired source type for the variable being renamed
+	private SourceType signatureSrcType;	// Signature source type of the function (which will be preserved)
 
 	public RenameVariableTask(PluginTool tool, String old, HighFunction hfunc, HighVariable v,
 			Varnode ex, SourceType st) {
@@ -44,13 +45,16 @@ public class RenameVariableTask extends RenameTask {
 		function = hfunc.getFunction();
 		program = function.getProgram();
 		srctype = st;
+		signatureSrcType = function.getSignatureSource();
 	}
 
 	@Override
 	public void commit() throws DuplicateNameException, InvalidInputException {
 		if (commitRequired) {
-			HighFunctionDBUtil.commitParamsToDatabase(hfunction, true, srctype);
-			HighFunctionDBUtil.commitReturnToDatabase(hfunction, srctype);
+			HighFunctionDBUtil.commitParamsToDatabase(hfunction, false, signatureSrcType);
+			if (signatureSrcType != SourceType.DEFAULT) {
+				HighFunctionDBUtil.commitReturnToDatabase(hfunction, signatureSrcType);
+			}
 		}
 		HighFunctionDBUtil.updateDBVariable(var, newName, null, srctype);
 	}
