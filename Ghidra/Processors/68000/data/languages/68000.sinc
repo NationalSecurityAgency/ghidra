@@ -1061,16 +1061,20 @@ addrd32: d32			is d32								{ export *[ram]:4 d32; }
 :link.w regan,d16		is opbig=0x4e & op37=10 & regan; d16				{ SP=SP-4; *:4 SP = regan; regan=SP; SP = SP + d16; }
 :link.l regan,d32		is opbig=0x48 & op37=1 & regan; d32				{ SP=SP-4; *:4 SP = regan; regan=SP; SP = SP + d32; }
 
-:lsl.b cntreg,regdnb		is op=14 & cntreg & op8=1 & op67=0 & op34=1 & regdnb		{ getbit(CF,regdnb,8-cntreg); regdnb=regdnb<<cntreg; resflags(regdnb);}
-:lsl.w cntreg,regdnw		is op=14 & cntreg & op8=1 & op67=1 & op34=1 & regdnw		{ getbit(CF,regdnw,16-cntreg); regdnw=regdnw<<cntreg; resflags(regdnw);}
-:lsl.l cntreg,regdn		is op=14 & cntreg & op8=1 & op67=2 & op34=1 & regdn		{ getbit(CF,regdn,32-cntreg); regdn=regdn<<cntreg; resflags(regdn); }
-:lsl eaw			is (opbig=0xe3 & op67=3 & $(MEM_ALTER_ADDR_MODES))... & eaw				{ getbit(CF,eaw,31); eaw=eaw<<1; resflags(eaw); }
+macro shiftCXFlags(cntreg) {
+		CF = CF * (cntreg != 0);
+		XF = CF * (cntreg != 0) + XF * (cntreg == 0);
+}
 
-:lsr.b cntreg,regdnb		is op=14 & cntreg & op8=0 & op67=0 & op34=1 & regdnb		{ getbit(CF,regdnb,cntreg-1);regdnb=regdnb >>cntreg; resflags(regdnb);}
-:lsr.w cntreg,regdnw		is op=14 & cntreg & op8=0 & op67=1 & op34=1 & regdnw		{ getbit(CF,regdnw,cntreg-1);regdnw=regdnw >>cntreg; resflags(regdnw);}
-:lsr.l cntreg,regdn		is op=14 & cntreg & op8=0 & op67=2 & op34=1 & regdn		{ getbit(CF,regdn,cntreg-1); regdn=regdn >>cntreg; resflags(regdn); }
-:lsr eaw			is (opbig=0xe2 & op67=3 & $(MEM_ALTER_ADDR_MODES))... & eaw				{ getbit(CF,eaw,0); eaw=eaw >>1; resflags(eaw); }
+:lsl.b cntreg,regdnb               is op=14 & cntreg & op8=1 & op67=0 & op34=1 & regdnb		{ getbit(CF,regdnb,8-cntreg); shiftCXFlags(cntreg); regdnb=regdnb<<cntreg; resflags(regdnb);}
+:lsl.w cntreg,regdnw               is op=14 & cntreg & op8=1 & op67=1 & op34=1 & regdnw		{ getbit(CF,regdnw,16-cntreg); shiftCXFlags(cntreg); regdnw=regdnw<<cntreg; resflags(regdnw);}
+:lsl.l cntreg,regdn                is op=14 & cntreg & op8=1 & op67=2 & op34=1 & regdn		{ getbit(CF,regdn,32-cntreg); shiftCXFlags(cntreg); regdn=regdn<<cntreg; resflags(regdn); }
+:lsl eaw                           is (opbig=0xe3 & op67=3 & $(MEM_ALTER_ADDR_MODES))... & eaw				{ getbit(CF,eaw,31); shiftCXFlags(eaw); eaw=eaw<<1; resflags(eaw); }
 
+:lsr.b cntreg,regdnb               is op=14 & cntreg & op8=0 & op67=0 & op34=1 & regdnb		{ getbit(CF,regdnb,cntreg-1); shiftCXFlags(cntreg); regdnb=regdnb >>cntreg; resflags(regdnb);}
+:lsr.w cntreg,regdnw               is op=14 & cntreg & op8=0 & op67=1 & op34=1 & regdnw		{ getbit(CF,regdnw,cntreg-1); shiftCXFlags(cntreg); regdnw=regdnw >>cntreg; resflags(regdnw);}
+:lsr.l cntreg,regdn                is op=14 & cntreg & op8=0 & op67=2 & op34=1 & regdn		{ getbit(CF,regdn,cntreg-1); shiftCXFlags(cntreg); regdn=regdn >>cntreg; resflags(regdn); }
+:lsr eaw                           is (opbig=0xe2 & op67=3 & $(MEM_ALTER_ADDR_MODES))... & eaw	{ getbit(CF,eaw,0); shiftCXFlags(eaw); eaw=eaw >>1; resflags(eaw); }
 
 :move.b eab,e2b			is (op=1 & $(DAT_ALTER_ADDR_MODES2))... & eab ; e2b	{ build eab; build e2b; e2b = eab; resflags(eab); logflags(); }
 :move.w eaw,e2w			is (op=3 & $(DAT_ALTER_ADDR_MODES2))... & eaw ; e2w	{ build eaw; build e2w; e2w = eaw; resflags(eaw); logflags(); }
