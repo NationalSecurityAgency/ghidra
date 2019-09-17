@@ -800,37 +800,37 @@ IMM16B: val						is IMM_0_10_VLE & IMM_16_20_VLE [ val = (IMM_16_20_VLE << 11) |
 }
 
 # The manual uses MB instead of NB here, but because the "MB" symbol is already taken, NB it is
-:e_rlwimi A,S,SHL,NB,ME			is $(ISVLE) & OP=29 & BIT_0=0 & NB & ME & A & SHL & S {
+:e_rlwimi A,S,SHL,MBL,ME			is $(ISVLE) & OP=29 & BIT_0=0 & MBL & ME & A & SHL & S {
 	tmpS:4 = S:4;
 	tmpA:4 = (tmpS << SHL) | (tmpS >> (32 - SHL));
 	tmpM:4 = ~0:4;
-	if (ME:1 < NB:1) goto <invert>;
-	tmpM = tmpM << NB;
-	tmpM = tmpM >> ((31-ME) + NB);
+	if (ME:1 < MBL:1) goto <invert>;
+	tmpM = tmpM << MBL;
+	tmpM = tmpM >> ((31-ME) + MBL);
 	tmpM = tmpM << (31-ME);
 	goto <finish>;
 <invert>
 	tmpM = tmpM << ME;
-	tmpM = tmpM >> ((31-NB) + ME);
-	tmpM = tmpM << (31-NB);
+	tmpM = tmpM >> ((31-MBL) + ME);
+	tmpM = tmpM << (31-MBL);
 	tmpM = ~tmpM;
 <finish>
 	A = zext(tmpA & tmpM) | (A & zext(~tmpM));	
 }
 
-:e_rlwinm A,S,SHL,NB,ME			is $(ISVLE) & OP=29 & BIT_0=1 & NB & ME & A & SHL & S {
+:e_rlwinm A,S,SHL,MBL,ME			is $(ISVLE) & OP=29 & BIT_0=1 & MBL & ME & A & SHL & S {
 	tmpS:4 = S:4;
 	tmpA:4 = (tmpS << SHL) | (tmpS >> (32 - SHL));
 	tmpM:4 = ~0:4;
-	if (ME:1 < NB:1) goto <invert>;
-	tmpM = tmpM << NB;
-	tmpM = tmpM >> ((31-ME) + NB);
+	if (ME:1 < MBL:1) goto <invert>;
+	tmpM = tmpM << MBL;
+	tmpM = tmpM >> ((31-ME) + MBL);
 	tmpM = tmpM << (31-ME);
 	goto <finish>;
 <invert>
 	tmpM = tmpM << ME;
-	tmpM = tmpM >> ((31-NB) + ME);
-	tmpM = tmpM << (31-NB);
+	tmpM = tmpM >> ((31-MBL) + ME);
+	tmpM = tmpM << (31-MBL);
 	tmpM = ~tmpM;
 <finish>
 	A = zext(tmpA & tmpM);		
