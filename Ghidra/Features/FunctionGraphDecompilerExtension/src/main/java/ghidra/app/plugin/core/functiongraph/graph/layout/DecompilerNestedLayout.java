@@ -569,17 +569,26 @@ public class DecompilerNestedLayout extends AbstractFGLayout {
 			startRow = end.rowIndex;
 		}
 
+		List<Vertex2d> toCheck = new LinkedList<>();
 		for (int row = startRow + 1; row < endRow; row++) {
-
 			// assume any other vertex in our column can clip (it will not clip when
 			// the 'spacing' above pushes the edge away from this column, like for
 			// large row delta values)
 			Vertex2d otherVertex = vertex2dFactory.get(row, column);
-			if (otherVertex == null) {
-				continue; // no vertex in this cell
+			if (otherVertex != null) {
+				toCheck.add(otherVertex);
 			}
+		}
 
-			int delta = endRow - startRow;
+		// always process the vertices from the start vertex so that the articulation adjustments
+		// are correct
+		if (!goingDown) {
+			Collections.reverse(toCheck);
+		}
+
+		int delta = endRow - startRow;
+		for (Vertex2d otherVertex : toCheck) {
+
 			int padding = VERTEX_TO_EDGE_AVOIDANCE_PADDING;
 			int distanceSpacing = padding + delta; // adding the delta makes overlap less likely
 
@@ -607,8 +616,7 @@ public class DecompilerNestedLayout extends AbstractFGLayout {
 			// no need to check the 'y' value, as the end vertex is above/below this one
 			if (vertexClipper.isClippingX(otherVertex, edgeX)) {
 
-				/*
-				 
+				/*				 
 					 Must route around this vertex - new points:
 					 -p1 - just above the intersection point
 					 -p2 - just past the left edge
