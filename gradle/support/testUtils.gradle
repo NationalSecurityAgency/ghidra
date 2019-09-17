@@ -8,6 +8,11 @@ import java.io.*;
 // to tests (test name, duration)
 ext.testReport = null; 
 
+ext.integrationConfigs = new ArrayList<>();
+ext.dockingConfigs = new ArrayList<>();
+ext.appConfigs = new ArrayList<>();
+ext.ghidraConfigs = new ArrayList<>();
+
 /*
  * Checks if html test report for an individual test class has a valid name.
  */
@@ -67,6 +72,7 @@ long getDurationFromTestReportClass(String fileContents, String fileName) {
  * 
  * eg:  GhidraAppConfiguration -> DiffTestTypeAdapter, 0.135s
  */
+
 def Map<String, Map<String, Long>> getTestReport() {
 
     // If we have already created the test report, do not waste time creating
@@ -79,10 +85,6 @@ def Map<String, Map<String, Long>> getTestReport() {
 
 	testReport = new HashMap<String,Map>();
 		
-	List<String> integrationConfigs = new ArrayList<>();
-	List<String> dockingConfigs = new ArrayList<>();
-	List<String> appConfigs = new ArrayList<>();
-	List<String> ghidraConfigs = new ArrayList<>();
 	parseApplicationConfigs(dockingConfigs, integrationConfigs, appConfigs, ghidraConfigs);
 	
 	File classesReportDir = new File(testTimeParserInputDir)
@@ -117,7 +119,6 @@ def Map<String, Map<String, Long>> getTestReport() {
 			int nameIndex = fqNameFromTestReport.lastIndexOf('.')
 			String shortName = fqNameFromTestReport.substring(nameIndex+1);
 			long durationInMillis = getDurationFromTestReportClass(fileContents, file.name)
-			
 			
 			File rootDir = project.rootDir.getParentFile();
 			File foundFile;
@@ -171,6 +172,12 @@ def Map<String, Map<String, Long>> getTestReport() {
 			testReport.put("app", appBucket);
 			testReport.put("ghidra", ghidraBucket);
 			testReport.put("unknown", unknownBucket);
+			
+			logger.debug("integration bucket: " + integrationBucket)
+			logger.debug("docking bucket: " + dockingBucket)
+			logger.debug("app bucket: " + appBucket)
+			logger.debug("ghidra bucket: " + ghidraBucket)
+			logger.debug("unknown bucket: " + unknownBucket)
 			
 			logger.debug("getTestReport: Added to testReport: class name = '"
 				+ fqNameFromTestReport + "' and durationInMillis = '"+ durationInMillis
@@ -304,7 +311,7 @@ String constructFullyQualifiedClassName(String fileContents, String fileName) {
  * Then traverses a test sourceSet for a subproject for a test to include and assigns a duration value.
  * Returns a sorted list of test classes for the sourceSet parameter.
  */
-def Map<String, Map> getTestsForSubProject(SourceDirectorySet sourceDirectorySet) {
+def Map<String, List> getTestsForSubProject(SourceDirectorySet sourceDirectorySet) {
 
 	def testsForSubProject = new HashMap<String,LinkedHashMap>();
 	
@@ -317,9 +324,18 @@ def Map<String, Map> getTestsForSubProject(SourceDirectorySet sourceDirectorySet
 	logger.debug("getTestsForSubProject: Found " + sourceDirectorySet.files.size()
 		+ " file(s) in source set to process.")
 		
-	Map<String,Map> testReports = getTestReport();
-	assert (testReports != null) : "getTestsForSubProject: testReport should not be null"
+	//Map<String,Map> testReports = getTestReport();
+	
+	parseApplicationConfigs(dockingConfigs, integrationConfigs, appConfigs, ghidraConfigs);
+	
+	//assert (testReports != null) : "getTestsForSubProject: testReport should not be null"
 
+	List dockingBucket = new ArrayList<String>();
+	List integrationBucket = new ArrayList<String>();
+	List appBucket = new ArrayList<String>();
+	List ghidraBucket = new ArrayList<String>();
+	List unknownBucket = new ArrayList<String>();
+		
 	for (File file : sourceDirectorySet.getFiles()) {
 		logger.debug("getTestsForSubProject: Found file in sourceSet = " + file.name)
 
@@ -331,7 +347,7 @@ def Map<String, Map> getTestsForSubProject(SourceDirectorySet sourceDirectorySet
 		}
 
 		String fileContents = file.text
-
+		
 		// Must not have a Category annotation
 		if (hasCategoryExcludes(fileContents)) {
 			logger.debug("getTestsForSubProject: Found category exclude for '"
@@ -339,38 +355,100 @@ def Map<String, Map> getTestsForSubProject(SourceDirectorySet sourceDirectorySet
 			excludedClassFilesCategory++
 			continue
 		}
-
-		String fqName = constructFullyQualifiedClassName( fileContents, file.name)
 		
-		boolean foundTest = false;
-		for (Map.Entry<String,Map> entry : testReports.entrySet()) {
-			String configName = entry.getKey();
-			Map<String,Long> tests = entry.getValue();
+		// Get any extending class so we can see what bucket it belongs to
+		// Match the word right after "extends", if there is one
+		Pattern p = Pattern.compile("extends\\W+(\\w+)");
+		Matcher m = p.matcher(fileContents);
+		String extendsClass = "";
+		while (m.find()) {
+			extendsClass = m.group(1);
+			break;
+		}
+		
+		
+		//String absFilename = file.getAbsolutePath();
+		
+		// Get full package name of the class - this is what needs to go in the bucket
+		Pattern p2 = Pattern.compile("package\\s+([a-zA_Z_][\\.\\w]*);");
+		Matcher m2 = p2.matcher(fileContents);
+		String packageName = "";
+		while (m2.find()) {
+			packageName = m2.group(1);
+			break;
+		}
+		
+		String className = packageName + "." + file.name
+		className = className.replace(".java", "")
 			
-			if (tests.containsKey(fqName)) {
-				foundTest = true;
-				if (!testsForSubProject.containsKey(configName)) {
-					Map<String,Map> configToTestMap = new LinkedHashMap<>();
-					testsForSubProject.put(configName, configToTestMap);
-				}
-				
-				Map<String,Long> subTests = testsForSubProject.get(configName);
-				
-				long duration = tests.get(fqName);
-				
-				if (duration > 0) {
-					subTests.put(fqName,duration);
-					logger.debug("getTestsForSubProject: Adding '" + fqName + "'")
-					includedClassFilesInTestReport++
-				}
-				else {
-					logger.debug("getTestsForSubProject: Excluding '" + fqName
-						+ "' because duration from test report is " + duration
-						+ "ms. Probably because all test methods are @Ignore'd." )
-					excludedClassAllTestsIgnored++
-				}
+		if (extendsClass.isEmpty()) {
+			unknownBucket.add(className);
+		}
+		else {		
+			if (integrationConfigs.contains(extendsClass)) {
+				integrationBucket.add(className);
+			}
+			else if (dockingConfigs.contains(extendsClass)) {
+				dockingBucket.add(className);
+			}
+			else if (appConfigs.contains(extendsClass)) {
+				appBucket.add(className);
+			}
+			else if (ghidraConfigs.contains(extendsClass)) {
+				ghidraBucket.add(className);
+			}
+			else {
+				unknownBucket.add(className);
 			}
 		}
+	}
+		
+	testReport = new HashMap<String,List>();
+	testReport.put("docking", dockingBucket)
+	testReport.put("integration", integrationBucket)
+	testReport.put("app", appBucket)
+	testReport.put("ghidra", ghidraBucket)
+	testReport.put("unknown", unknownBucket)
+		
+	logger.debug("integration bucket: " + integrationBucket)
+	logger.debug("docking bucket: " + dockingBucket)
+	logger.debug("app bucket: " + appBucket)
+	logger.debug("ghidra bucket: " + ghidraBucket)
+	logger.debug("unknown bucket: " + unknownBucket)
+	
+	return testReport;
+	
+	/**String fqName = constructFullyQualifiedClassName( fileContents, file.name)
+		
+	boolean foundTest = false;
+	for (Map.Entry<String,List> entry : testReport.entrySet()) {
+		String configName = entry.getKey();
+		List<String> tests = entry.getValue();
+			
+		if (tests.contains(fqName)) {
+			foundTest = true;
+			if (!testsForSubProject.containsKey(configName)) {
+				Map<String,Map> configToTestMap = new LinkedHashMap<>();
+				testsForSubProject.put(configName, configToTestMap);
+			}
+				
+			Map<String,Long> subTests = testsForSubProject.get(configName);
+				
+			long duration = tests.get(fqName);
+				
+			if (duration > 0) {
+				subTests.put(fqName,duration);
+				logger.debug("getTestsForSubProject: Adding '" + fqName + "'")
+				includedClassFilesInTestReport++
+			}
+			else {
+				logger.debug("getTestsForSubProject: Excluding '" + fqName
+					+ "' because duration from test report is " + duration
+					+ "ms. Probably because all test methods are @Ignore'd." )
+				excludedClassAllTestsIgnored++
+			}
+		}
+	}
 		if (!foundTest) {
 			// Don't know what this test is so put it in the "unknown" bucket
 			if (!testsForSubProject.containsKey("unknown")) {
@@ -393,21 +471,13 @@ def Map<String, Map> getTestsForSubProject(SourceDirectorySet sourceDirectorySet
 		testMap.sort { a, b -> b.value <=> a.value } 
 	}
 
-/*	logger.info ("getTestsForSubProject:\n"
-		+ "\tIncluding " + includedClassFilesInTestReport + " test classes for this sourceSet because they are in the test report.\n"
-		+ "\tIncluding/bumping " + includedClassFilesNotInTestReport + " not in test report.\n"
-		+ "\tExcluding "+ excludedClassFilesBadName +" based on name not ending in 'Test' or contains 'Abstract' or 'Suite', " + excludedClassFilesCategory
-		+ " based on '@Category, " + excludedClassAllTestsIgnored + " because duration = 0ms.\n"
-		+ "\tReturning sorted list of size "+ sorted.size() + " out of " + sourceDirectorySet.files.size()
-		+ " total files found in sourceSet.")
-*/
-
 	int filesProcessed = includedClassFilesNotInTestReport + includedClassFilesInTestReport +
 						 excludedClassFilesBadName + excludedClassFilesCategory + excludedClassAllTestsIgnored
 
 	assert sourceDirectorySet.files.size() ==  filesProcessed : "getTestsForSubProject did not process every file in sourceSet"
 	
 	return testsForSubProject;
+	*/
 }
 
 /*********************************************************************************

@@ -367,6 +367,15 @@ def createTestTask(Project subproject, String testType, String bucketName, int t
 		group "test"
 		testClassesDirs = files subproject.sourceSets["$testType"].output.classesDirs
 		classpath = subproject.sourceSets["$testType"].runtimeClasspath
+		
+		logger.info("********TEST CREATION")
+		logger.info("  " + subproject)
+		logger.info("  " + testType)
+		logger.info("  " + bucketName)
+		logger.info("  " + taskNameCounter)
+		logger.info("  " + classesList)
+		logger.info("  " + classesListPosition)
+		logger.info("  " + numMaxParallelForks)
 
 		maxParallelForks = numMaxParallelForks
 
@@ -419,9 +428,9 @@ configure(subprojects.findAll {parallelMode == true}) { subproject ->
 		if (!shouldSkipTestTaskCreation(subproject)) {
 			logger.info("parallelCombinedTestReport: Creating 'test' tasks for " + subproject.name + " subproject.")
 
-			Map<String,Map> testMap = getTestsForSubProject(subproject.sourceSets.test.java)
+			Map<String,List> testMap = getTestsForSubProject(subproject.sourceSets.test.java)
 
-			for (Map.Entry<String,Map> classMap : testMap.entrySet()) {
+			for (Map.Entry<String,List> classMap : testMap.entrySet()) {
 			
 				String bucketName = classMap.getKey();
 				
@@ -429,12 +438,10 @@ configure(subprojects.findAll {parallelMode == true}) { subproject ->
 				int taskNameCounter = 1 // task suffix
 				int numMaxParallelForks = 40 // unit tests are fast; 40 seems to be a reasonable number
 			
-				Map<String,Long> tests = classMap.getValue();
-				def sorted = tests.sort { a, b -> b.value <=> a.value };
-				List<String> classesList = new ArrayList(sorted.keySet());
+				List<String> tests = classMap.getValue();
 				
-				while (classesListPosition < classesList.size()) {
-					createTestTask(subproject, "test", bucketName, taskNameCounter, classesList, classesListPosition, numMaxParallelForks)
+				while (classesListPosition < tests.size()) {
+					createTestTask(subproject, "test", bucketName, taskNameCounter, tests, classesListPosition, numMaxParallelForks)
 					classesListPosition+=numMaxParallelForks
 					taskNameCounter+=1; // "test_1_appConfig", "test_2_appConfig, etc.
 				}
@@ -444,10 +451,12 @@ configure(subprojects.findAll {parallelMode == true}) { subproject ->
 		if (!shouldSkipIntegrationTestTaskCreation(subproject)) {
 			logger.info("parallelCombinedTestReport: Creating 'integrationTest' tasks for " + subproject.name + " subproject.")
 
-			Map<String,Map> testMap = getTestsForSubProject(subproject.sourceSets.integrationTest.java)
+			Map<String,List> testMap = getTestsForSubProject(subproject.sourceSets.integrationTest.java)
+			logger.info("====CREATING TASKS FOR: " + subproject)
 			
-			for (Map.Entry<String,Map> classMap : testMap.entrySet()) {
+			for (Map.Entry<String,List> classMap : testMap.entrySet()) {
 			
+				logger.info("    bucket: " + classMap.getKey())
 				String bucketName = classMap.getKey();
 			
 				int classesListPosition = 0 // current position in classesList
@@ -458,12 +467,12 @@ configure(subprojects.findAll {parallelMode == true}) { subproject ->
 				// 20 seems like a good balance of throughput vs resource usage for ghidratest server.
 				int numMaxParallelForks = 20 
 			
-				Map<String,Long> tests = classMap.getValue();
-				def sorted = tests.sort { a, b -> b.value <=> a.value };
-				List<String> classesList = new ArrayList(sorted.keySet());
+				List<String> tests = classMap.getValue();
 				
-				while (classesListPosition < classesList.size()) {
-					createTestTask(subproject, "integrationTest", bucketName, taskNameCounter, classesList, classesListPosition, numMaxParallelForks)
+				logger.info("       tests: " + tests)
+				
+				while (classesListPosition < tests.size()) {
+					createTestTask(subproject, "integrationTest", bucketName, taskNameCounter, tests, classesListPosition, numMaxParallelForks)
 					classesListPosition+=numMaxParallelForks
 					taskNameCounter+=1; // "integrationTest_1_appConfig", "integrationTest_2_appConfig, etc.
 				}
