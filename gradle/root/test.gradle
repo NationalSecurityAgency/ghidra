@@ -368,15 +368,6 @@ def createTestTask(Project subproject, String testType, String bucketName, int t
 		testClassesDirs = files subproject.sourceSets["$testType"].output.classesDirs
 		classpath = subproject.sourceSets["$testType"].runtimeClasspath
 		
-		logger.info("********TEST CREATION")
-		logger.info("  " + subproject)
-		logger.info("  " + testType)
-		logger.info("  " + bucketName)
-		logger.info("  " + taskNameCounter)
-		logger.info("  " + classesList)
-		logger.info("  " + classesListPosition)
-		logger.info("  " + numMaxParallelForks)
-
 		maxParallelForks = numMaxParallelForks
 
 		initTestJVM(t, testRootDirName)
@@ -420,10 +411,6 @@ def createTestTask(Project subproject, String testType, String bucketName, int t
  *********************************************************************************/
 configure(subprojects.findAll {parallelMode == true}) { subproject ->
 	afterEvaluate {
-		// "subprojects { afterEvaluate { evaluate()"
-		// forces evaluation of subproject configuration. Needed for inheriting excludes
-		// from non-parallel counterpart.
-//		subproject.evaluate() 
 
 		if (!shouldSkipTestTaskCreation(subproject)) {
 			logger.info("parallelCombinedTestReport: Creating 'test' tasks for " + subproject.name + " subproject.")
@@ -452,11 +439,9 @@ configure(subprojects.findAll {parallelMode == true}) { subproject ->
 			logger.info("parallelCombinedTestReport: Creating 'integrationTest' tasks for " + subproject.name + " subproject.")
 
 			Map<String,List> testMap = getTestsForSubProject(subproject.sourceSets.integrationTest.java)
-			logger.info("====CREATING TASKS FOR: " + subproject)
 			
 			for (Map.Entry<String,List> classMap : testMap.entrySet()) {
 			
-				logger.info("    bucket: " + classMap.getKey())
 				String bucketName = classMap.getKey();
 			
 				int classesListPosition = 0 // current position in classesList
@@ -468,9 +453,7 @@ configure(subprojects.findAll {parallelMode == true}) { subproject ->
 				int numMaxParallelForks = 20 
 			
 				List<String> tests = classMap.getValue();
-				
-				logger.info("       tests: " + tests)
-				
+								
 				while (classesListPosition < tests.size()) {
 					createTestTask(subproject, "integrationTest", bucketName, taskNameCounter, tests, classesListPosition, numMaxParallelForks)
 					classesListPosition+=numMaxParallelForks
