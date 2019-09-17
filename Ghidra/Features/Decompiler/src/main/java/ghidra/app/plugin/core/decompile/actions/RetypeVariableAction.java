@@ -157,10 +157,17 @@ public class RetypeVariableAction extends AbstractDecompilerAction {
 				dt = dataTypeManager.resolve(dt, null);
 			}
 			if (commitRequired) {
+				// Don't use datatypes of other parameters if the datatypes were floating.
+				// Datatypes were floating if signature source was DEFAULT
+				boolean useDataTypes =
+					hfunction.getFunction().getSignatureSource() != SourceType.DEFAULT;
 				try {
-					HighFunctionDBUtil.commitParamsToDatabase(hfunction, true,
+					HighFunctionDBUtil.commitParamsToDatabase(hfunction, useDataTypes,
 						SourceType.USER_DEFINED);
-					HighFunctionDBUtil.commitReturnToDatabase(hfunction, SourceType.USER_DEFINED);
+					if (useDataTypes) {
+						HighFunctionDBUtil.commitReturnToDatabase(hfunction,
+							SourceType.USER_DEFINED);
+					}
 				}
 				catch (DuplicateNameException e) {
 					throw new AssertException("Unexpected exception", e);
