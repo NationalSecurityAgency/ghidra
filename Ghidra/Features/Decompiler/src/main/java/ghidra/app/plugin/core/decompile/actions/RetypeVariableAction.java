@@ -129,13 +129,13 @@ public class RetypeVariableAction extends AbstractDecompilerAction {
 
 		boolean commitRequired = checkFullCommit(var, hfunction);
 		if (commitRequired) {
-			int resp = OptionDialog.showOptionDialog(tool.getToolFrame(),
-				"Parameter Commit Required",
-				"Retyping a parameter requires all other parameters to be committed!\nContinue with retype?",
-				"Continue");
-			if (resp != OptionDialog.OPTION_ONE) {
-				return;
-			}
+//			int resp = OptionDialog.showOptionDialog(tool.getToolFrame(),
+//				"Parameter Commit Required",
+//				"Retyping a parameter requires all other parameters to be committed!\nContinue with retype?",
+//				"Continue");
+//			if (resp != OptionDialog.OPTION_ONE) {
+//				return;
+//			}
 			exactSpot = null;		// Don't try to split out if commit is required
 		}
 
