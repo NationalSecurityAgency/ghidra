@@ -96,8 +96,8 @@ class DbViewerComponent extends JPanel {
 			tableStats.clear();
 			dbh = null;
 			dbListener = null;
-			invalidate();
-			getParent().repaint();
+
+			revalidate();
 		}
 	}
 
@@ -127,10 +127,10 @@ class DbViewerComponent extends JPanel {
 
 	/**
 	 * Get the statistics for the specified table.
-	 * @param table
+	 * @param table the table
 	 * @return arrays containing statistics. Element 0 provides
-	 * statsitics for primary table, element 1 provides combined
-	 * statsitics for all index tables.  Remaining array elements 
+	 * statistics for primary table, element 1 provides combined
+	 * statistics for all index tables.  Remaining array elements 
 	 * should be ignored since they have been combined into element 1.
 	 */
 	private TableStatistics[] getStats(Table table) {
@@ -189,9 +189,7 @@ class DbViewerComponent extends JPanel {
 			southPanel = createSouthPanel(t.table);
 			add(southPanel, BorderLayout.CENTER);
 		}
-		//invalidate();
-		validate();
-		//repaint();
+		revalidate();
 	}
 
 	private JPanel createSouthPanel(Table table) {
