@@ -502,6 +502,9 @@ public class DecompilerNestedLayout extends AbstractFGLayout {
 		// 
 
 		int delta = end.rowIndex - start.rowIndex;
+		if (delta < 0) {
+			delta = -delta; // going up
+		}
 		int multiplier = EDGE_ENDPOINT_DISTANCE_MULTIPLIER;
 		if (useSimpleRouting()) {
 			multiplier = 1; // we allow edges to overlap with 'simple routing'
