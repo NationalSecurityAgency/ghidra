@@ -54,8 +54,8 @@ public class GhidraServerAWTTest extends AbstractGenericTest {
 
 			// directly instantiate to avoid GhidraServer.main which may
 			// invoke System.exit
-			GhidraServer server =
-				new GhidraServer(myTmpDir, GhidraServer.NO_AUTH_LOGIN, null, true, true, -1, true);
+			GhidraServer server = new GhidraServer(myTmpDir, GhidraServer.AuthMode.NO_AUTH_LOGIN,
+				null, true, true, -1, true, false, null);
 
 			// exercise server elements, including a repository and buffer file
 			RepositoryManager mgr = (RepositoryManager) getInstanceField("mgr", server);
@@ -66,7 +66,7 @@ public class GhidraServerAWTTest extends AbstractGenericTest {
 			RepositoryHandle repoHandle = new RepositoryHandleImpl("test", repo);
 
 			// The server will perform a timer-based file handle check once per second in test mode and
-			// force disposal of all disconnected handles if a getEvents has not be serviced since the 
+			// force disposal of all disconnected handles if a getEvents has not be serviced since the
 			// previous check
 			eventReaderThread = new Thread(() -> {
 				try {

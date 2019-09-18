@@ -15,6 +15,7 @@
  */
 package ghidra.app.plugin.core.decompile.actions;
 
+import docking.action.MenuData;
 import ghidra.app.decompiler.ClangToken;
 import ghidra.app.decompiler.component.DecompilerController;
 import ghidra.app.decompiler.component.DecompilerPanel;
@@ -28,67 +29,14 @@ import ghidra.program.model.pcode.HighFunction;
 import ghidra.program.model.symbol.*;
 import ghidra.util.Msg;
 import ghidra.util.UndefinedFunction;
-import docking.ActionContext;
-import docking.action.DockingAction;
-import docking.action.MenuData;
 
-public class DeletePrototypeOverrideAction extends DockingAction {
+public class DeletePrototypeOverrideAction extends AbstractDecompilerAction {
 	private final DecompilerController controller;
 
-	public DeletePrototypeOverrideAction(String owner, PluginTool tool,
-			DecompilerController controller) {
-		super("Remove Signature Override", owner);
+	public DeletePrototypeOverrideAction(PluginTool tool, DecompilerController controller) {
+		super("Remove Signature Override");
 		this.controller = controller;
 		setPopupMenuData(new MenuData(new String[] { "Remove Signature Override" }, "Decompile"));
-	}
-
-	@Override
-	public boolean isEnabledForContext(ActionContext context) {
-		if (!(context instanceof DecompilerActionContext)) {
-			return false;
-		}
-
-		Function function = controller.getFunction();
-		if (function == null || function instanceof UndefinedFunction) {
-			return false;
-		}
-
-		DecompilerActionContext decompilerActionContext = (DecompilerActionContext) context;
-		if (decompilerActionContext.isDecompiling()) {
-			// Let this through here and handle it in actionPerformed().  This lets us alert 
-			// the user that they have to wait until the decompile is finished.  If we are not
-			// enabled at this point, then the keybinding will be propagated to the global 
-			// actions, which is not what we want.
-			return true;
-		}
-
-		return getSymbol(controller) != null;
-	}
-
-	@Override
-	public void actionPerformed(ActionContext context) {
-		// Note: we intentionally do this check here and not in isEnabledForContext() so 
-		// that global events do not get triggered.
-		DecompilerActionContext decompilerActionContext = (DecompilerActionContext) context;
-		if (decompilerActionContext.isDecompiling()) {
-			Msg.showInfo(getClass(),
-				context.getComponentProvider().getComponent(),
-				"Decompiler Action Blocked", "You cannot perform Decompiler actions while the Decompiler is busy");
-			return;
-		}
-
-		CodeSymbol sym = getSymbol(controller);
-		Function func = controller.getFunction();
-		Program program = func.getProgram();
-		SymbolTable symtab = program.getSymbolTable();
-		int transaction = program.startTransaction("Remove Override Signature");
-		boolean commit = true;
-		if (!symtab.removeSymbolSpecial(sym)) {
-			commit = false;
-			Msg.showError(getClass(),
-				controller.getDecompilerPanel(), "Removing Override Signature Failed", "Error removing override signature");
-		}
-		program.endTransaction(transaction, commit);
 	}
 
 	public static CodeSymbol getSymbol(DecompilerController controller) {
@@ -98,25 +46,58 @@ public class DeletePrototypeOverrideAction extends DockingAction {
 			return null;
 		}
 		Address addr = tokenAtCursor.getMinAddress();
-		if (addr == null)
+		if (addr == null) {
 			return null;
+		}
 		Function func = controller.getFunction();
 		Namespace overspace = HighFunction.findOverrideSpace(func);
-		if (overspace == null)
+		if (overspace == null) {
 			return null;
+		}
 		SymbolTable symtab = func.getProgram().getSymbolTable();
 		SymbolIterator iter = symtab.getSymbols(overspace);
 		while (iter.hasNext()) {
 			Symbol sym = iter.next();
-			if (!sym.getName().startsWith("prt"))
+			if (!sym.getName().startsWith("prt")) {
 				continue;
-			if (!(sym instanceof CodeSymbol))
+			}
+			if (!(sym instanceof CodeSymbol)) {
 				continue;
-			if (!sym.getAddress().equals(addr))
+			}
+			if (!sym.getAddress().equals(addr)) {
 				continue;
+			}
 			return (CodeSymbol) sym;
 		}
 		return null;
+
+	}
+
+	@Override
+	protected boolean isEnabledForDecompilerContext(DecompilerActionContext context) {
+
+		Function function = controller.getFunction();
+		if (function == null || function instanceof UndefinedFunction) {
+			return false;
+		}
+
+		return getSymbol(controller) != null;
+	}
+
+	@Override
+	protected void decompilerActionPerformed(DecompilerActionContext context) {
+		CodeSymbol sym = getSymbol(controller);
+		Function func = controller.getFunction();
+		Program program = func.getProgram();
+		SymbolTable symtab = program.getSymbolTable();
+		int transaction = program.startTransaction("Remove Override Signature");
+		boolean commit = true;
+		if (!symtab.removeSymbolSpecial(sym)) {
+			commit = false;
+			Msg.showError(getClass(), controller.getDecompilerPanel(),
+				"Removing Override Signature Failed", "Error removing override signature");
+		}
+		program.endTransaction(transaction, commit);
 
 	}
 }

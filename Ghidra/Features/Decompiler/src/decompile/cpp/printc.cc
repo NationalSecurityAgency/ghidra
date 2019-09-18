@@ -1403,7 +1403,8 @@ bool PrintC::pushPtrCharConstant(uintb val,const TypePointer *ct,const Varnode *
 {
   if (val==0) return false;
   AddrSpace *spc = glb->getDefaultSpace();
-  Address stringaddr = glb->resolveConstant(spc,val,ct->getSize(),op->getAddr());
+  uintb fullEncoding;
+  Address stringaddr = glb->resolveConstant(spc,val,ct->getSize(),op->getAddr(),fullEncoding);
   if (stringaddr.isInvalid()) return false;
   if (!glb->symboltab->getGlobalScope()->isReadOnly(stringaddr,1,Address()))
     return false;	     // Check that string location is readonly

@@ -434,16 +434,17 @@ void iterateSegments(IDiaEnumSegments * pSegments) {
  */
 void iterateSections(PDBApiContext& ctx, IDiaEnumSectionContribs& secContribs) {
 	DWORD celt = 0;
-	CComPtr<IDiaSymbol> pSym ;
-	CComPtr<IDiaSectionContrib> pSecContrib;
 
 	while ( 1 ) {
+		CComPtr<IDiaSectionContrib> pSecContrib;
 		if (secContribs.Next( 1, &pSecContrib, &celt ) != S_OK ) {
 			break;
 		}
 		if (celt != 1) {
 			break;
 		}
+
+		CComPtr<IDiaSymbol> pSym;
 		DWORD rva = 0;
 		if (pSecContrib->get_relativeVirtualAddress( &rva ) == S_OK) {
 			if (ctx.Session().findSymbolByRVA( rva, SymTagNull, &pSym ) != S_OK ) {

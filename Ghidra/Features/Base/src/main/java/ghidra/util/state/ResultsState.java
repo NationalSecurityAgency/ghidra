@@ -46,14 +46,17 @@ public class ResultsState {
 
 	private static final Iterator<ContextState> emptyContextStateIterator =
 		new Iterator<ContextState>() {
+			@Override
 			public boolean hasNext() {
 				return false;
 			}
 
+			@Override
 			public ContextState next() {
 				return null;
 			}
 
+			@Override
 			public void remove() {
 			}
 		};
@@ -168,10 +171,12 @@ public class ResultsState {
 
 		stackGrowsNegative = program.getCompilerSpec().stackGrowsNegative();
 		Long stackOffset = currentPrototype.getStackParameterOffset();
-		if (stackOffset != null)
+		if (stackOffset != null) {
 			paramBaseStackOffset = stackOffset - currentPrototype.getStackshift();
-		else
+		}
+		else {
 			paramBaseStackOffset = null;
+		}
 
 		todoList.add(new BranchDestination(null, entryPt, entryState));
 	}
@@ -253,9 +258,10 @@ public class ResultsState {
 					currentState = null;
 				}
 
-				if (DEBUG)
+				if (DEBUG) {
 					Msg.debug(this, ">>> At " + nextSeq.getTarget() + "/" + nextSeq.getTime() +
 						" " + instr);
+				}
 
 				SequenceNumber lastSeq = flowFrom;
 
@@ -272,9 +278,10 @@ public class ResultsState {
 							if (existingStates.containsKey(flowFrom)) {
 								// TODO: We have processed this flow before 
 								// TODO: Should we compare existingState with dest.initialState ?
-								if (DEBUG)
+								if (DEBUG) {
 									Msg.debug(this, "Flow ignored - already processed: " +
 										flowFrom + " -> " + pcodeOp.getSeqnum());
+								}
 								instr = null; // signal - abort current flow
 								break;
 							}
@@ -284,9 +291,10 @@ public class ResultsState {
 									// Re-use existing state where register values match
 									addState(flowFrom, otherEntryState);
 									instr = null; // signal - abort current flow
-									if (DEBUG)
+									if (DEBUG) {
 										Msg.debug(this, "Flow combined - similar state: " +
 											flowFrom + " -> " + pcodeOp.getSeqnum());
+									}
 									break;
 								}
 							}
@@ -385,6 +393,7 @@ public class ResultsState {
 
 	private static Comparator<Object> CONTEXT_STATE_SET_SEQUENCE_COMPARATOR =
 		new Comparator<Object>() {
+			@Override
 			public int compare(Object o1, Object o2) {
 				ContextStateSet set = (ContextStateSet) o1;
 				SequenceNumber seq = (SequenceNumber) o2;
@@ -468,14 +477,16 @@ public class ResultsState {
 	private ContextState performInlineCall(Address inlineCallAddress, ContextState currentState,
 			TaskMonitor monitor) throws CancelledException {
 
-		if (DEBUG)
+		if (DEBUG) {
 			Msg.debug(this, "*** Start Inline Call to " + inlineCallAddress + " ***");
+		}
 		ResultsState inlineState =
 			new ResultsState(new SequenceNumber(inlineCallAddress, 0), null, currentState,
 				maintainInstructionResults);
 		inlineState.processFunction(monitor);
-		if (DEBUG)
+		if (DEBUG) {
 			Msg.debug(this, "*** End Inline Call to " + inlineCallAddress + " ***");
+		}
 
 // TODO: How should multiple return states be handled ??
 
@@ -746,9 +757,10 @@ public class ResultsState {
 
 				if (values[1].isConstant() && values[1].getOffset() == 0) {
 // TODO: This is a problem, since branch case may never be evaluated!
-					if (DEBUG)
+					if (DEBUG) {
 						Msg.debug(this, "Conditional Branch to " + inputs[0].getAddress() +
 							" - Not taken due to false condition value");
+					}
 					break;  // Fall-through case - assume that a pre-condition is steering the execution
 				}
 
@@ -762,16 +774,18 @@ public class ResultsState {
 					SequenceNumber dest =
 						new SequenceNumber(seq.getTarget(), seq.getTime() +
 							(int) inputs[0].getOffset());
-					if (DEBUG)
+					if (DEBUG) {
 						Msg.debug(this, "Internal " +
 							(pcodeOp.getOpcode() == PcodeOp.CBRANCH ? "Conditional " : "") +
 							"Branch to " + dest);
+					}
 					todoList.add(new BranchDestination(pcodeOp.getSeqnum(), dest, currentState));
 				}
 				else if (inputs[0].isAddress()) {
-					if (DEBUG)
+					if (DEBUG) {
 						Msg.debug(this, (pcodeOp.getOpcode() == PcodeOp.CBRANCH ? "Conditional "
 								: "") + "Branch to " + inputs[0].getAddress());
+					}
 					handleDirectFlow(pcodeOp, inputs[0].getAddress(), currentState, monitor);
 				}
 				else {
@@ -786,8 +800,9 @@ public class ResultsState {
 					AddressSpace space = currentState.getEntryPoint().getTarget().getAddressSpace();
 					Address destAddr =
 						space.getAddress(getUnsignedOffset(values[0], space.getPointerSize()));
-					if (DEBUG)
+					if (DEBUG) {
 						Msg.debug(this, "Branch to " + destAddr);
+					}
 					handleDirectFlow(pcodeOp, destAddr, currentState, monitor);
 				}
 				else if (values[0].isAddress()) {
@@ -798,32 +813,36 @@ public class ResultsState {
 							currentState.getEntryPoint().getTarget().getAddressSpace();
 						Address destAddr =
 							space.getAddress(getUnsignedOffset(brOffset, space.getPointerSize()));
-						if (DEBUG)
+						if (DEBUG) {
 							Msg.debug(this, "Indirect Branch to [" + values[0].getAddress() +
 								"] -> " + destAddr);
+						}
 						handleDirectFlow(pcodeOp, destAddr, currentState, monitor);
 					}
 					else {
-						if (DEBUG)
+						if (DEBUG) {
 							Msg.debug(this,
 								"Indirect Branch to [" + values[0].toString(program.getLanguage()) +
 									"]");
+						}
 						handleIndirectFlow(pcodeOp, values[0], currentState, monitor);
 					}
 				}
 				else {
-					if (DEBUG)
+					if (DEBUG) {
 						Msg.debug(this,
 							"Indirect Branch to [" + values[0].toString(program.getLanguage()) +
 								"]");
+					}
 					handleIndirectFlow(pcodeOp, values[0], currentState, monitor);
 				}
 				return false;
 
 			case PcodeOp.CALL:		        // A call with absolute address	  
 				if (inputs[0].isAddress()) {
-					if (DEBUG)
+					if (DEBUG) {
 						Msg.debug(this, "Call to " + inputs[0].getAddress());
+					}
 					handleCall(pcodeOp, null, inputs[0].getAddress(), currentState, monitor);
 				}
 				else {
@@ -839,8 +858,9 @@ public class ResultsState {
 					AddressSpace space = currentState.getEntryPoint().getTarget().getAddressSpace();
 					Address destAddr =
 						space.getAddress(getUnsignedOffset(values[0], space.getPointerSize()));
-					if (DEBUG)
+					if (DEBUG) {
 						Msg.debug(this, "Call to " + destAddr);
+					}
 					handleCall(pcodeOp, indirectPtr, destAddr, currentState, monitor);
 				}
 				else if (values[0].isAddress()) {
@@ -852,23 +872,26 @@ public class ResultsState {
 							currentState.getEntryPoint().getTarget().getAddressSpace();
 						Address destAddr =
 							space.getAddress(getUnsignedOffset(callOffset, space.getPointerSize()));
-						if (DEBUG)
+						if (DEBUG) {
 							Msg.debug(this, "Indirect Call to [" + values[0].getAddress() +
 								"] -> " + destAddr);
+						}
 						handleCall(pcodeOp, indirectPtr, destAddr, currentState, monitor);
 					}
 					else {
-						if (DEBUG)
+						if (DEBUG) {
 							Msg.debug(this,
 								"Indirect Call to [" + values[0].toString(program.getLanguage()) +
 									"]");
+						}
 						handleIndirectCall(pcodeOp, indirectPtr, values[0], currentState, monitor);
 					}
 				}
 				else {
-					if (DEBUG)
+					if (DEBUG) {
 						Msg.debug(this,
 							"Indirect Call to [" + values[0].toString(program.getLanguage()) + "]");
+					}
 					handleIndirectCall(pcodeOp, indirectPtr, values[0], currentState, monitor);
 				}
 				return false;
@@ -1737,8 +1760,9 @@ public class ResultsState {
 				BookmarkType.ERROR, "Instruction Expected", "Expected instruction at " + address);
 			return;
 		}
-		if (DEBUG)
+		if (DEBUG) {
 			Msg.debug(this, "Disassemble at " + address);
+		}
 		DisassembleCommand cmd = new DisassembleCommand(address, null, true);
 		cmd.applyTo(program, monitor);
 		monitor.checkCanceled();
@@ -1772,8 +1796,9 @@ public class ResultsState {
 			return;
 		}
 		if (addRegister(reg, registersModified)) {
-			if (DEBUG)
+			if (DEBUG) {
 				Msg.debug(this, "MODIFIED: " + reg + " = " + value);
+			}
 		}
 		else {
 			Msg.debug(this, "SET: " + output + " = " + value);
@@ -2068,10 +2093,11 @@ public class ResultsState {
 		}
 
 		if (func == null) {
-			if (DEBUG)
+			if (DEBUG) {
 				Msg.debug(this, "Function not found at " + indirectPtr +
 					" indirectly called from " + pcodeOp.getSeqnum().getTarget() +
 					" - call affects unknown");
+			}
 			return;
 		}
 
@@ -2104,9 +2130,10 @@ public class ResultsState {
 		}
 
 		if (func == null) {
-			if (DEBUG)
+			if (DEBUG) {
 				Msg.debug(this, "Function not found at " + destAddr + " called from " +
 					pcodeOp.getSeqnum().getTarget() + " - call affects unknown");
+			}
 			return;
 		}
 
@@ -2133,10 +2160,11 @@ public class ResultsState {
 		// Must invalidate return varnode
 		DataType returnType = null;
 		if (func == null) {
-			if (DEBUG)
+			if (DEBUG) {
 				Msg.debug(this,
 					"No function at " + destAddr + " called from " + calledFrom.getTarget() +
 						" - default return/affects assumed");
+			}
 		}
 		else {
 			returnType = func.getReturnType();
@@ -2147,8 +2175,9 @@ public class ResultsState {
 
 		VariableStorage retStorage = callingConvention.getReturnLocation(returnType, program);
 		Varnode varnode = null;
-		if (retStorage.isValid() && (retStorage.getVarnodeCount()==1))
+		if (retStorage.isValid() && (retStorage.getVarnodeCount()==1)) {
 			varnode = retStorage.getFirstVarnode();
+		}
 		if (varnode != null) {
 			// invalidate stored value
 			currentState.store(varnode, getInvalidatedVarnode(calledFrom, varnode));
@@ -2183,9 +2212,10 @@ public class ResultsState {
 		if (purge == Function.UNKNOWN_STACK_DEPTH_CHANGE ||
 			purge == Function.INVALID_STACK_DEPTH_CHANGE) {
 			String name = func != null ? func.getName() : ("at " + destAddr);
-			if (DEBUG)
+			if (DEBUG) {
 				Msg.debug(this, "Stack purge unknown for function " + name + " called from " +
 					calledFrom.getTarget() + " - stack pointer invalidated");
+			}
 			currentState.store(getStackPointerVarnode(),
 				getInvalidatedVarnode(calledFrom, getStackPointerVarnode()));
 			return;
@@ -2255,8 +2285,9 @@ public class ResultsState {
 	 * @return
 	 */
 	private static int getDefaultStackDepthChange(Program depthProgram, int depth) {
-		int callStackMod = depthProgram.getCompilerSpec().getCallStackMod();
-		int callStackShift = depthProgram.getCompilerSpec().getCallStackShift();
+		PrototypeModel defaultModel = depthProgram.getCompilerSpec().getDefaultCallingConvention();
+		int callStackMod = defaultModel.getExtrapop();
+		int callStackShift = defaultModel.getStackshift();
 		if (callStackMod != PrototypeModel.UNKNOWN_EXTRAPOP && callStackShift >= 0) {
 			return callStackShift - callStackMod;
 		}

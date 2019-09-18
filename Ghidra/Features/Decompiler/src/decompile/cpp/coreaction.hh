@@ -162,7 +162,7 @@ public:
 /// \brief Check for constants, with pointer type, that correspond to global symbols
 class ActionConstantPtr : public Action {
   int4 localcount;		///< Number of passes made for this function
-  static SymbolEntry *isPointer(AddrSpace *spc,Varnode *vn,PcodeOp *op,Address &rampoint,Funcdata &data);
+  static SymbolEntry *isPointer(AddrSpace *spc,Varnode *vn,PcodeOp *op,Address &rampoint,uintb &fullEncoding,Funcdata &data);
 public:
   ActionConstantPtr(const string &g) : Action(0,"constantptr",g) {}	///< Constructor
   virtual void reset(Funcdata &data) { localcount = 0; }

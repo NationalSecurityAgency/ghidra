@@ -6,7 +6,7 @@ The following is a list of dependencies, in no particular order.
 This guide includes instructions for obtaining many of these at the relevant step(s).
 You may not need all of these, depending on which portions you are building or developing.
 
-* Java JDK 11 - Free long term support (LTS) versions of JDK 11 are provided by:
+* Java JDK 11 (64-bit) - Free long term support (LTS) versions of JDK 11 are provided by:
     - AdoptOpenJDK
       - https://adoptopenjdk.net/releases.html?variant=openjdk11&jvmVariant=hotspot
     - Amazon Corretto

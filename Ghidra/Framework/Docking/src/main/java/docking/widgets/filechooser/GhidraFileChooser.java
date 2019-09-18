@@ -72,6 +72,7 @@ import util.HistoryList;
 public class GhidraFileChooser extends DialogComponentProvider
 		implements GhidraFileChooserListener, FileFilter {
 
+	static final String UP_BUTTON_NAME = "UP_BUTTON";
 	private static final Color FOREROUND_COLOR = Color.BLACK;
 	private static final Color BACKGROUND_COLOR = Color.WHITE;
 	static final String PREFERENCES_PREFIX = "G_FILE_CHOOSER";
@@ -494,7 +495,7 @@ public class GhidraFileChooser extends DialogComponentProvider
 		forwardButton.addActionListener(e -> goForward());
 
 		upLevelButton = new EmptyBorderButton(upIcon);
-		upLevelButton.setName("UP_BUTTON");
+		upLevelButton.setName(UP_BUTTON_NAME);
 		upLevelButton.setToolTipText("Up one level");
 		upLevelButton.addActionListener(e -> goUpOneDirectoryLevel());
 
@@ -800,12 +801,16 @@ public class GhidraFileChooser extends DialogComponentProvider
 		// the current dir, then we need to update
 		if (force || !directory.equals(currentDirectory)) {
 			worker.schedule(new UpdateDirectoryContentsJob(directory, null, addToHistory));
+			return;
 		}
-		// we only get here if the given dir is the current directory and we are not forcing
-		// an update
-		else {
-			setSelectedFileAndUpdateDisplay((isFilesOnly() ? null : directory));
-		}
+
+		// we only get here if the new dir is the current dir and we are not forcing an update
+		// TODO this code causes unexpected behavior when in 'directories only' mode in that 
+		// this will cause the current directory to change.  The behavior can be seen by 
+		// putting this code back in and then running the tests.   No tests are failing with this
+		// code removed.  We are leaving this code here for a couple releases in case we find 
+		// a code path that requires it.
+		// setSelectedFileAndUpdateDisplay((isFilesOnly() ? null : directory));
 	}
 
 	boolean pendingUpdate() {
@@ -1012,6 +1017,7 @@ public class GhidraFileChooser extends DialogComponentProvider
 		validatedFiles.setFile(null);
 		initialFile = selectedFiles.getFile();
 		initialFileToSelect = initialFile;
+
 		SystemUtilities.runSwingLater(() -> {
 			File selectedFile = selectedFiles.getFile();
 			if (!fileExists(selectedFile)) {

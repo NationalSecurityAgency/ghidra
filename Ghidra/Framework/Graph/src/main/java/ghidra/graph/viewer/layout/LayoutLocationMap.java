@@ -103,10 +103,10 @@ public class LayoutLocationMap<V, E> {
 		Column column = null;
 		Collection<Column> values = columnsByIndex.values();
 		for (Column nextColumn : values) {
-			column = nextColumn;
-			if (x < column.x) {
+			if (x < nextColumn.x) {
 				return column;
 			}
+			column = nextColumn;
 		}
 		return column;
 	}

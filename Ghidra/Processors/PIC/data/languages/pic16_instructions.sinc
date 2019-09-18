@@ -737,10 +737,12 @@ srcFSRk: sk6"["fsrk"]" is fsrk & sk6 {
 
 :MOVIW srcFSR			is op11=2 & srcFSR {
 	W = srcFSR;
+	setResultFlags(W);
 }
 
 :MOVIW srcFSRk			is op7=0x7e & srcFSRk {
 	W = srcFSRk;
+	setResultFlags(W);
 }
 
 :MOVWI srcFSR			is op11=3 & srcFSR {

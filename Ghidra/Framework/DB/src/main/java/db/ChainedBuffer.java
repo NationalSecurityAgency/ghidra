@@ -115,7 +115,7 @@ public class ChainedBuffer implements Buffer {
 	 * Construct a new chained buffer with optional obfuscation and uninitialized data source.
 	 * This method may only be invoked while a database transaction 
 	 * is in progress. 
-	 * @param size buffer size 
+	 * @param size buffer size (0 < size <= 0x7fffffff)
 	 * @param enableObfuscation true to enable xor-ing of stored data to facilitate data obfuscation.
 	 * @param uninitializedDataSource optional data source for uninitialized data.  This should be a 
 	 * read-only buffer which will always be used when re-instantiating the same stored ChainedBuffer.
@@ -131,6 +131,9 @@ public class ChainedBuffer implements Buffer {
 		this.size = size;
 		this.useXORMask = enableObfuscation;
 
+		if (size == 0) {
+			throw new IllegalArgumentException("Zero length buffer not permitted");
+		}
 		if (size < 0) {
 			throw new IllegalArgumentException(
 				"Maximum bufer size is " + Integer.MAX_VALUE + "; given size of " + size);
@@ -165,7 +168,7 @@ public class ChainedBuffer implements Buffer {
 	 * Construct a new chained buffer with optional obfuscation.
 	 * This method may only be invoked while a database transaction 
 	 * is in progress. 
-	 * @param size buffer size 
+	 * @param size buffer size (0 < size <= 0x7fffffff)
 	 * @param enableObfuscation true to enable xor-ing of stored data to facilitate data obfuscation.
 	 * @param bufferMgr database buffer manager
 	 * @throws IOException
@@ -178,7 +181,7 @@ public class ChainedBuffer implements Buffer {
 	/**
 	 * Construct a new chained buffer.
 	 * This method may only be invoked while a database transaction is in progress.
-	 * @param size buffer size 
+	 * @param size buffer size (0 < size <= 0x7fffffff)
 	 * @param bufferMgr database buffer manager
 	 * @throws IOException
 	 */

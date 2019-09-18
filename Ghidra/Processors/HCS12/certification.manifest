@@ -1,0 +1,13 @@
+##VERSION: 2.0
+.project||NONE||||END|
+Module.manifest||GHIDRA||||END|
+build.gradle||GHIDRA||||END|
+data/build.xml||GHIDRA||||END|
+data/languages/HCS12.cspec||GHIDRA||||END|
+data/languages/HCS12.ldefs||GHIDRA||||END|
+data/languages/HCS12.opinion||GHIDRA||||END|
+data/languages/HCS12.pspec||GHIDRA||||END|
+data/languages/HCS12.slaspec||GHIDRA||||END|
+data/languages/HCS_HC12.sinc||GHIDRA||||END|
+data/languages/XGATE.sinc||GHIDRA||||END|
+data/manuals/HCS12.idx||GHIDRA||||END|

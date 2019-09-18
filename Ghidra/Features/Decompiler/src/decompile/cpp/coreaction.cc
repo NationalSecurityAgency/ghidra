@@ -827,14 +827,14 @@ int4 ActionShadowVar::apply(Funcdata &data)
 /// \param rampoint will hold the Address of the resolved symbol
 /// \param data is the function being analyzed
 /// \return the recovered symbol or NULL
-SymbolEntry *ActionConstantPtr::isPointer(AddrSpace *spc,Varnode *vn,PcodeOp *op,Address &rampoint,Funcdata &data)
+SymbolEntry *ActionConstantPtr::isPointer(AddrSpace *spc,Varnode *vn,PcodeOp *op,Address &rampoint,uintb &fullEncoding,Funcdata &data)
 
 {
   bool needexacthit;
   Architecture *glb = data.getArch();
   Varnode *outvn;
   if (vn->getType()->getMetatype() == TYPE_PTR) { // Are we explicitly marked as a pointer
-    rampoint = glb->resolveConstant(spc,vn->getOffset(),vn->getSize(),op->getAddr());
+    rampoint = glb->resolveConstant(spc,vn->getOffset(),vn->getSize(),op->getAddr(),fullEncoding);
     needexacthit = false;
   }
   else {
@@ -881,7 +881,7 @@ SymbolEntry *ActionConstantPtr::isPointer(AddrSpace *spc,Varnode *vn,PcodeOp *op
     // Check if the constant looks like a single bit or mask
     if (bit_transitions(vn->getOffset(),vn->getSize()) < 3)
       return (SymbolEntry *)0;
-    rampoint = glb->resolveConstant(spc,vn->getOffset(),vn->getSize(),op->getAddr());
+    rampoint = glb->resolveConstant(spc,vn->getOffset(),vn->getSize(),op->getAddr(),fullEncoding);
   }
 
   if (rampoint.isInvalid()) return (SymbolEntry *)0;
@@ -943,10 +943,11 @@ int4 ActionConstantPtr::apply(Funcdata &data)
     else if ((opc == CPUI_PTRSUB)||(opc==CPUI_PTRADD))
       continue;
     Address rampoint;
-    entry = isPointer(rspc,vn,op,rampoint,data);
+    uintb fullEncoding;
+    entry = isPointer(rspc,vn,op,rampoint,fullEncoding,data);
     vn->setPtrCheck();		// Set check flag AFTER searching for symbol
     if (entry != (SymbolEntry *)0) {
-      data.spacebaseConstant(op,slot,entry,rampoint,vn->getOffset(),vn->getSize());
+      data.spacebaseConstant(op,slot,entry,rampoint,fullEncoding,vn->getSize());
       if ((opc == CPUI_INT_ADD)&&(slot==1))
 	data.opSwapInput(op,0,1);
       count += 1;
@@ -2150,11 +2151,11 @@ void ActionNameVars::makeRec(ProtoParameter *param,Varnode *vn,map<HighVariable 
     PcodeOp *castop = vn->getDef();
     if (castop->code() == CPUI_CAST) {
       vn = castop->getIn(0);
-      ct = (Datatype *)0;	// Indicate that this is a less prefered name
+      ct = (Datatype *)0;	// Indicate that this is a less preferred name
     }
   }
   HighVariable *high = vn->getHigh();
-  if (!high->isMark()) return;	// Not one of the 
+  if (!high->isMark()) return;	// Not one of the variables needing a name
 
   map<HighVariable *,OpRecommend>::iterator iter = recmap.find(high);
   if (iter != recmap.end()) {	// We have seen this varnode before
@@ -2191,6 +2192,7 @@ void ActionNameVars::lookForFuncParamNames(Funcdata &data,const vector<Varnode *
   for(uint4 i=0;i<varlist.size();++i) {	// Mark all the varnodes that can accept a name from a parameter
     Varnode *vn = varlist[i];
     if (vn->isFree()) continue;
+    if (vn->isInput()) continue;	// Don't override unaffected or input naming strategy
     Symbol *sym = vn->getHigh()->getSymbol();
     if (sym == (Symbol *)0) continue;
     if (!sym->isNameUndefined()) continue;

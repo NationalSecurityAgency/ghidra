@@ -15,7 +15,7 @@
  */
 package ghidra.app.plugin.core.decompile;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 import java.util.List;
 
@@ -74,8 +74,8 @@ public abstract class AbstractDecompilerTest extends AbstractProgramBasedTest {
 	}
 
 	protected void setDecompilerLocation(int line, int charPosition) {
-		runSwing(() -> provider.setCursorLocation(line, charPosition));
 
+		runSwing(() -> provider.setCursorLocation(line, charPosition));
 		DecompilerPanel panel = provider.getDecompilerPanel();
 		FieldPanel fp = panel.getFieldPanel();
 		click(fp, 1, true);

@@ -43,8 +43,15 @@
         <optional>
           <element name="segmented_address">
             <attribute name="space"/>
+            <optional>
+              <attribute name="type"/>
+            </optional>
           </element>
         </optional>
+
+        <zeroOrMore>
+          <ref name="segmentop_type"/>
+        </zeroOrMore>
 
         <!-- see language_common.rxg -->
         <optional>

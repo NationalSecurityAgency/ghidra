@@ -1,0 +1,12 @@
+<opinions>
+    <constraint loader="Portable Executable (PE)" compilerSpecID="windows">
+        <constraint primary="422"  processor="SuperH4"    endian="little"    size="32" />
+    </constraint>
+    <constraint loader="MS Common Object File Format (COFF)" compilerSpecID="windows">
+         <constraint primary="422"  processor="SuperH4"    endian="little"    size="32" />
+    </constraint>
+    <constraint loader="Executable and Linking Format (ELF)" compilerSpecID="default">
+        <constraint primary="42"     processor="SuperH4"    endian="little"    size="32" />
+        <constraint primary="42"     processor="SuperH4"    endian="big"       size="32" />
+    </constraint>
+</opinions>

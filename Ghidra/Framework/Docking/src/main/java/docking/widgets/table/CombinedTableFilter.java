@@ -51,6 +51,11 @@ public class CombinedTableFilter<T> implements TableFilter<T> {
 		return true;
 	}
 
+	@Override
+	public boolean isEmpty() {
+		return filters.isEmpty();
+	}
+
 	/**
 	 * Returns the number of sub-filters in this combined filter.
 	 *

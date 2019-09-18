@@ -281,8 +281,6 @@ public class ImporterPlugin extends Plugin
 		};
 		addToProgramAction.setMenuBarData(new MenuData(new String[] { "&File", title + "..." },
 			null, IMPORT_MENU_GROUP, MenuData.NO_MNEMONIC, "zz"));
-		addToProgramAction.setKeyBindingData(
-			new KeyBindingData(KeyEvent.VK_I, InputEvent.ALT_DOWN_MASK));
 		addToProgramAction.setDescription(IMPORTER_PLUGIN_DESC);
 		addToProgramAction.setEnabled(false);
 

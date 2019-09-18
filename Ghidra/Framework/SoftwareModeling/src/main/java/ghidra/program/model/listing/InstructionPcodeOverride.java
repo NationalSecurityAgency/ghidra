@@ -47,7 +47,7 @@ public class InstructionPcodeOverride implements PcodeOverride {
 
 		primaryOverridingReferences = new ArrayList<>();
 		for (Reference ref : instr.getReferencesFrom()) {
-			if (!ref.isPrimary()) {
+			if (!ref.isPrimary() || !ref.getToAddress().isMemoryAddress()) {
 				continue;
 			}
 			RefType type = ref.getReferenceType();

@@ -326,7 +326,7 @@ public class FunctionManagerDB implements ManagerDB, FunctionManager {
 	@Override
 	public Function createThunkFunction(String name, Namespace nameSpace, Address entryPoint,
 			AddressSetView body, Function thunkedFunction, SourceType source)
-			throws DuplicateNameException, OverlappingFunctionException {
+			throws OverlappingFunctionException {
 		try {
 			return createFunction(name, nameSpace, entryPoint, body, thunkedFunction, source);
 		}

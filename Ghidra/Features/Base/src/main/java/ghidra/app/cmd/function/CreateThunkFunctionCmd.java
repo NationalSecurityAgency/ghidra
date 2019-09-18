@@ -228,11 +228,6 @@ public class CreateThunkFunctionCmd extends BackgroundCommand {
 			thunkFunction = functionMgr.createThunkFunction(name, namespace, entry, body,
 				referencedFunction, source);
 		}
-		catch (DuplicateNameException e) {
-			Msg.error(this, "Dynamically generated thunk name conlict: " + e.getMessage());
-			setStatusMsg("Thunk name conflict: " + e.getMessage());
-			return false;
-		}
 		catch (OverlappingFunctionException e) {
 			setStatusMsg("Specified body overlaps existing function(s): " + e.getMessage());
 			return false;

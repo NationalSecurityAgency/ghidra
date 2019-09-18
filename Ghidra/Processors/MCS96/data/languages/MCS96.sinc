@@ -1,0 +1,1367 @@
+
+define endian=little;
+
+define alignment=1;
+
+define space RAM      type=ram_space      size=2  wordsize=1 default;
+define space register type=register_space size=1;
+
+################################################################
+# Registers
+################################################################
+define register offset=0x00 size=2 [ PSW ];
+
+define register offset=0x10 size=2 [ PC ];
+
+define register offset=0x18 size=2 [ SP ];
+
+# Special registers
+define RAM offset=0x00 size=1
+[
+	ZRlo        ZRhi        AD_resultlo AD_resulthi HSI_timelo  HSI_timehi
+	HSI_status  SBUF        INT_MASK    INT_PEND    TIMER1lo    TIMER1hi
+	TIMER2lo    TIMER2hi    PORT0       PORT1       PORT2       SP_STAT     INT_PEND1
+	INT_MASK1   WSR         IOS0        IOS1        IOS2
+];
+
+define RAM offset=0x00 size=2
+[
+	ZR        AD_result HSI_time
+	HSI_SBUF  INTERRUPT TIMER1
+	TIMER2    PORT01    PORT2_SPS INT1
+	WSR_IOS0  IOS12
+];
+
+define RAM offset=0x00 size=4
+[
+	ZR_AD         HSI           INT_TIMER1
+	TIMER2_PORT01 PORT2_INT1
+	WSR_IOS012
+];
+
+# Stack pointer
+define RAM offset=0x18 size=1 [ SPlo SPhi];
+define RAM offset=0x18 size=2 [ SPR ];
+define RAM offset=0x18 size=4 [ SPR1A ];
+
+
+# Byte registers
+define RAM offset=0x1a size=1
+[
+	R1A  R1B  R1C  R1D  R1E  R1F
+	R20  R21  R22  R23  R24  R25  R26  R27
+	R28  R29  R2A  R2B  R2C  R2D  R2E  R2F
+	R30  R31  R32  R33  R34  R35  R36  R37
+	R38  R39  R3A  R3B  R3C  R3D  R3E  R3F
+	R40  R41  R42  R43  R44  R45  R46  R47
+	R48  R49  R4A  R4B  R4C  R4D  R4E  R4F
+	R50  R51  R52  R53  R54  R55  R56  R57
+	R58  R59  R5A  R5B  R5C  R5D  R5E  R5F
+	R60  R61  R62  R63  R64  R65  R66  R67
+	R68  R69  R6A  R6B  R6C  R6D  R6E  R6F
+	R70  R71  R72  R73  R74  R75  R76  R77
+	R78  R79  R7A  R7B  R7C  R7D  R7E  R7F
+	R80  R81  R82  R83  R84  R85  R86  R87
+	R88  R89  R8A  R8B  R8C  R8D  R8E  R8F
+	R90  R91  R92  R93  R94  R95  R96  R97
+	R98  R99  R9A  R9B  R9C  R9D  R9E  R9F
+	RA0  RA1  RA2  RA3  RA4  RA5  RA6  RA7
+	RA8  RA9  RAA  RAB  RAC  RAD  RAE  RAF
+	RB0  RB1  RB2  RB3  RB4  RB5  RB6  RB7
+	RB8  RB9  RBA  RBB  RBC  RBD  RBE  RBF
+	RC0  RC1  RC2  RC3  RC4  RC5  RC6  RC7
+	RC8  RC9  RCA  RCB  RCC  RCD  RCE  RCF
+	RD0  RD1  RD2  RD3  RD4  RD5  RD6  RD7
+	RD8  RD9  RDA  RDB  RDC  RDD  RDE  RDF
+	RE0  RE1  RE2  RE3  RE4  RE5  RE6  RE7
+	RE8  RE9  REA  REB  REC  RED  REE  REF
+	RF0  RF1  RF2  RF3  RF4  RF5  RF6  RF7
+	RF8  RF9  RFA  RFB  RFC  RFD  RFE  RFF
+	R100 R101 R102 R103 R104 R105 R106 R107
+	R108 R109 R10A R10B R10C R10D R10E R10F
+	R110 R111 R112 R113 R114 R115 R116 R117
+	R118 R119 R11A R11B R11C R11D R11E R11F
+	R120 R121 R122 R123 R124 R125 R126 R127
+	R128 R129 R12A R12B R12C R12D R12E R12F
+	R130 R131 R132 R133 R134 R135 R136 R137
+	R138 R139 R13A R13B R13C R13D R13E R13F
+	R140 R141 R142 R143 R144 R145 R146 R147
+	R148 R149 R14A R14B R14C R14D R14E R14F
+	R150 R151 R152 R153 R154 R155 R156 R157
+	R158 R159 R15A R15B R15C R15D R15E R15F
+	R160 R161 R162 R163 R164 R165 R166 R167
+	R168 R169 R16A R16B R16C R16D R16E R16F
+	R170 R171 R172 R173 R174 R175 R176 R177
+	R178 R179 R17A R17B R17C R17D R17E R17F
+	R180 R181 R182 R183 R184 R185 R186 R187
+	R188 R189 R18A R18B R18C R18D R18E R18F
+	R190 R191 R192 R193 R194 R195 R196 R197
+	R198 R199 R19A R19B R19C R19D R19E R19F
+	R1A0 R1A1 R1A2 R1A3 R1A4 R1A5 R1A6 R1A7
+	R1A8 R1A9 R1AA R1AB R1AC R1AD R1AE R1AF
+	R1B0 R1B1 R1B2 R1B3 R1B4 R1B5 R1B6 R1B7
+	R1B8 R1B9 R1BA R1BB R1BC R1BD R1BE R1BF
+	R1C0 R1C1 R1C2 R1C3 R1C4 R1C5 R1C6 R1C7
+	R1C8 R1C9 R1CA R1CB R1CC R1CD R1CE R1CF
+	R1D0 R1D1 R1D2 R1D3 R1D4 R1D5 R1D6 R1D7
+	R1D8 R1D9 R1DA R1DB R1DC R1DD R1DE R1DF
+	R1E0 R1E1 R1E2 R1E3 R1E4 R1E5 R1E6 R1E7
+	R1E8 R1E9 R1EA R1EB R1EC R1ED R1EE R1EF
+	R1F0 R1F1 R1F2 R1F3 R1F4 R1F5 R1F6 R1F7
+	R1F8 R1F9 R1FA R1FB R1FC R1FD R1FE R1FF
+];
+
+# Word registers
+define RAM offset=0x1a size=2
+[
+	RW1A  RW1C  RW1E
+	RW20  RW22  RW24  RW26  RW28  RW2A  RW2C  RW2E
+	RW30  RW32  RW34  RW36  RW38  RW3A  RW3C  RW3E
+	RW40  RW42  RW44  RW46  RW48  RW4A  RW4C  RW4E
+	RW50  RW52  RW54  RW56  RW58  RW5A  RW5C  RW5E
+	RW60  RW62  RW64  RW66  RW68  RW6A  RW6C  RW6E
+	RW70  RW72  RW74  RW76  RW78  RW7A  RW7C  RW7E
+	RW80  RW82  RW84  RW86  RW88  RW8A  RW8C  RW8E
+	RW90  RW92  RW94  RW96  RW98  RW9A  RW9C  RW9E
+	RWA0  RWA2  RWA4  RWA6  RWA8  RWAA  RWAC  RWAE
+	RWB0  RWB2  RWB4  RWB6  RWB8  RWBA  RWBC  RWBE
+	RWC0  RWC2  RWC4  RWC6  RWC8  RWCA  RWCC  RWCE
+	RWD0  RWD2  RWD4  RWD6  RWD8  RWDA  RWDC  RWDE
+	RWE0  RWE2  RWE4  RWE6  RWE8  RWEA  RWEC  RWEE
+	RWF0  RWF2  RWF4  RWF6  RWF8  RWFA  RWFC  RWFE
+	RW100 RW102 RW104 RW106 RW108 RW10A RW10C RW10E
+	RW110 RW112 RW114 RW116 RW118 RW11A RW11C RW11E
+	RW120 RW122 RW124 RW126 RW128 RW12A RW12C RW12E
+	RW130 RW132 RW134 RW136 RW138 RW13A RW13C RW13E
+	RW140 RW142 RW144 RW146 RW148 RW14A RW14C RW14E
+	RW150 RW152 RW154 RW156 RW158 RW15A RW15C RW15E
+	RW160 RW162 RW164 RW166 RW168 RW16A RW16C RW16E
+	RW170 RW172 RW174 RW176 RW178 RW17A RW17C RW17E
+	RW180 RW182 RW184 RW186 RW188 RW18A RW18C RW18E
+	RW190 RW192 RW194 RW196 RW198 RW19A RW19C RW19E
+	RW1A0 RW1A2 RW1A4 RW1A6 RW1A8 RW1AA RW1AC RW1AE
+	RW1B0 RW1B2 RW1B4 RW1B6 RW1B8 RW1BA RW1BC RW1BE
+	RW1C0 RW1C2 RW1C4 RW1C6 RW1C8 RW1CA RW1CC RW1CE
+	RW1D0 RW1D2 RW1D4 RW1D6 RW1D8 RW1DA RW1DC RW1DE
+	RW1E0 RW1E2 RW1E4 RW1E6 RW1E8 RW1EA RW1EC RW1EE
+	RW1F0 RW1F2 RW1F4 RW1F6 RW1F8 RW1FA RW1FC RW1FE
+];
+
+# Double-word registers
+define RAM offset=0x1c size=4
+[
+	RL1C
+	RL20  RL24  RL28  RL2C  RL30  RL34  RL38  RL3C
+	RL40  RL44  RL48  RL4C  RL50  RL54  RL58  RL5C
+	RL60  RL64  RL68  RL6C  RL70  RL74  RL78  RL7C
+	RL80  RL84  RL88  RL8C  RL90  RL94  RL98  RL9C
+	RLA0  RLA4  RLA8  RLAC  RLB0  RLB4  RLB8  RLBC
+	RLC0  RLC4  RLC8  RLCC  RLD0  RLD4  RLD8  RLDC
+	RLE0  RLE4  RLE8  RLEC  RLF0  RLF4  RLF8  RLFC
+	RL100 RL104 RL108 RL10C RL110 RL114 RL118 RL11C
+	RL120 RL124 RL128 RL12C RL130 RL134 RL138 RL13C
+	RL140 RL144 RL148 RL14C RL150 RL154 RL158 RL15C
+	RL160 RL164 RL168 RL16C RL170 RL174 RL178 RL17C
+	RL180 RL184 RL188 RL18C RL190 RL194 RL198 RL19C
+	RL1A0 RL1A4 RL1A8 RL1AC RL1B0 RL1B4 RL1B8 RL1BC
+	RL1C0 RL1C4 RL1C8 RL1CC RL1D0 RL1D4 RL1D8 RL1DC
+	RL1E0 RL1E4 RL1E8 RL1EC RL1F0 RL1F4 RL1F8 RL1FC
+];
+
+# Individual status bits within the Program Status Word
+@define Z		"PSW[7,1]"		# Zero Flag
+@define N		"PSW[6,1]"		# Negative Flag
+@define V		"PSW[5,1]"		# Overflow Flag
+@define VT		"PSW[4,1]"		# Overflow Trap Flag
+@define C		"PSW[3,1]"		# Carry Flag
+@define PSE		"PSW[2,1]"		# Peripheral Transaction Server flag
+@define I		"PSW[1,1]"		# global Interrupt disable bit
+@define ST		"PSW[0,1]" # STicky bit Flag
+
+################################################################
+# Tokens
+################################################################
+# All instructions have a single-byte opcode except for a
+# handful of multiplication/division instructions which have
+# a two-byte op-code with the first byte as 'FE'
+define token opbyte (8)
+	op8     = (0,7)
+	op6     = (2,7)
+	op5     = (3,7)
+	cond    = (0,3)
+	op4     = (4,7)
+	aa      = (0,1)
+	bitno   = (0,2)
+	highb   = (4,7)
+	imm8    = (0,7) signed # immediate
+	simm8   = (0,7) signed # immediate
+	baop    = (0,7) # byte register
+	breg8   = (0,7) # byte register
+	dbreg   = (0,7) # byte register
+	waop    = (0,7) # word register
+	wreg8   = (0,7) # word register
+	dwreg   = (0,7) # word register
+	lreg    = (0,7) # long/double register
+	dlreg   = (0,7) # long/double register
+	imm7    = (1,7)
+	iwreg7  = (1,7)
+	addbit8 = (0,0)
+;
+
+define token opword (16)
+	imm16 = ( 0, 15 )
+	disp16 =  (0,15) signed
+	op16   = (3,7)
+	jmp11_hi = (0,2) signed #relative offset
+	jmp11_lo = (8,15)
+;
+
+attach variables [ baop breg8 dbreg ]
+[
+ ZRlo ZRhi AD_resultlo AD_resulthi HSI_timelo HSI_timehi
+ HSI_status SBUF INT_MASK INT_PEND TIMER1lo TIMER1hi
+ TIMER2lo TIMER2hi PORT0 PORT1 PORT2 SP_STAT INT_PEND1
+ INT_MASK1 WSR IOS0 IOS1 IOS2 SPlo SPhi
+ R1A R1B R1C R1D R1E R1F
+ R20 R21 R22 R23 R24 R25 R26 R27
+ R28 R29 R2A R2B R2C R2D R2E R2F
+ R30 R31 R32 R33 R34 R35 R36 R37
+ R38 R39 R3A R3B R3C R3D R3E R3F
+ R40 R41 R42 R43 R44 R45 R46 R47
+ R48 R49 R4A R4B R4C R4D R4E R4F
+ R50 R51 R52 R53 R54 R55 R56 R57
+ R58 R59 R5A R5B R5C R5D R5E R5F
+ R60 R61 R62 R63 R64 R65 R66 R67
+ R68 R69 R6A R6B R6C R6D R6E R6F
+ R70 R71 R72 R73 R74 R75 R76 R77
+ R78 R79 R7A R7B R7C R7D R7E R7F
+ R80 R81 R82 R83 R84 R85 R86 R87
+ R88 R89 R8A R8B R8C R8D R8E R8F
+ R90 R91 R92 R93 R94 R95 R96 R97
+ R98 R99 R9A R9B R9C R9D R9E R9F
+ RA0 RA1 RA2 RA3 RA4 RA5 RA6 RA7
+ RA8 RA9 RAA RAB RAC RAD RAE RAF
+ RB0 RB1 RB2 RB3 RB4 RB5 RB6 RB7
+ RB8 RB9 RBA RBB RBC RBD RBE RBF
+ RC0 RC1 RC2 RC3 RC4 RC5 RC6 RC7
+ RC8 RC9 RCA RCB RCC RCD RCE RCF
+ RD0 RD1 RD2 RD3 RD4 RD5 RD6 RD7
+ RD8 RD9 RDA RDB RDC RDD RDE RDF
+ RE0 RE1 RE2 RE3 RE4 RE5 RE6 RE7
+ RE8 RE9 REA REB REC RED REE REF
+ RF0 RF1 RF2 RF3 RF4 RF5 RF6 RF7
+ RF8 RF9 RFA RFB RFC RFD RFE RFF
+];
+
+attach variables [ waop wreg8 dwreg ]
+[
+ ZR _ AD_result _ HSI_time _
+ HSI_SBUF _ INTERRUPT _ TIMER1 _
+ TIMER2 _ PORT01 _ PORT2_SPS _ INT1 _
+ WSR_IOS0 _ IOS12 _ SP _
+ RW1A _ RW1C _ RW1E _
+ RW20 _ RW22 _ RW24 _ RW26 _ RW28 _ RW2A _ RW2C _ RW2E _
+ RW30 _ RW32 _ RW34 _ RW36 _ RW38 _ RW3A _ RW3C _ RW3E _
+ RW40 _ RW42 _ RW44 _ RW46 _ RW48 _ RW4A _ RW4C _ RW4E _
+ RW50 _ RW52 _ RW54 _ RW56 _ RW58 _ RW5A _ RW5C _ RW5E _
+ RW60 _ RW62 _ RW64 _ RW66 _ RW68 _ RW6A _ RW6C _ RW6E _
+ RW70 _ RW72 _ RW74 _ RW76 _ RW78 _ RW7A _ RW7C _ RW7E _
+ RW80 _ RW82 _ RW84 _ RW86 _ RW88 _ RW8A _ RW8C _ RW8E _
+ RW90 _ RW92 _ RW94 _ RW96 _ RW98 _ RW9A _ RW9C _ RW9E _
+ RWA0 _ RWA2 _ RWA4 _ RWA6 _ RWA8 _ RWAA _ RWAC _ RWAE _
+ RWB0 _ RWB2 _ RWB4 _ RWB6 _ RWB8 _ RWBA _ RWBC _ RWBE _
+ RWC0 _ RWC2 _ RWC4 _ RWC6 _ RWC8 _ RWCA _ RWCC _ RWCE _
+ RWD0 _ RWD2 _ RWD4 _ RWD6 _ RWD8 _ RWDA _ RWDC _ RWDE _
+ RWE0 _ RWE2 _ RWE4 _ RWE6 _ RWE8 _ RWEA _ RWEC _ RWEE _
+ RWF0 _ RWF2 _ RWF4 _ RWF6 _ RWF8 _ RWFA _ RWFC _ RWFE _
+];
+
+attach variables [iwreg7]
+[
+ ZR AD_result HSI_time
+ HSI_SBUF INTERRUPT TIMER1
+ TIMER2 PORT01 PORT2_SPS INT1
+ WSR_IOS0 IOS12 SP
+ RW1A RW1C RW1E
+ RW20 RW22 RW24 RW26 RW28 RW2A RW2C RW2E
+ RW30 RW32 RW34 RW36 RW38 RW3A RW3C RW3E
+ RW40 RW42 RW44 RW46 RW48 RW4A RW4C RW4E
+ RW50 RW52 RW54 RW56 RW58 RW5A RW5C RW5E
+ RW60 RW62 RW64 RW66 RW68 RW6A RW6C RW6E
+ RW70 RW72 RW74 RW76 RW78 RW7A RW7C RW7E
+ RW80 RW82 RW84 RW86 RW88 RW8A RW8C RW8E
+ RW90 RW92 RW94 RW96 RW98 RW9A RW9C RW9E
+ RWA0 RWA2 RWA4 RWA6 RWA8 RWAA RWAC RWAE
+ RWB0 RWB2 RWB4 RWB6 RWB8 RWBA RWBC RWBE
+ RWC0 RWC2 RWC4 RWC6 RWC8 RWCA RWCC RWCE
+ RWD0 RWD2 RWD4 RWD6 RWD8 RWDA RWDC RWDE
+ RWE0 RWE2 RWE4 RWE6 RWE8 RWEA RWEC RWEE
+ RWF0 RWF2 RWF4 RWF6 RWF8 RWFA RWFC RWFE
+];
+
+attach variables [ lreg dlreg ]
+[
+ ZR_AD _ _ _ HSI _ _ _ INT_TIMER1 _ _ _
+ TIMER2_PORT01 _ _ _ PORT2_INT1 _ _ _
+ WSR_IOS012 _ _ _ SPR1A _ _ _
+ RL1C _ _ _
+ RL20 _ _ _ RL24 _ _ _ RL28 _ _ _ RL2C _ _ _ RL30 _ _ _ RL34 _ _ _ RL38 _ _ _ RL3C _ _ _
+ RL40 _ _ _ RL44 _ _ _ RL48 _ _ _ RL4C _ _ _ RL50 _ _ _ RL54 _ _ _ RL58 _ _ _ RL5C _ _ _
+ RL60 _ _ _ RL64 _ _ _ RL68 _ _ _ RL6C _ _ _ RL70 _ _ _ RL74 _ _ _ RL78 _ _ _ RL7C _ _ _
+ RL80 _ _ _ RL84 _ _ _ RL88 _ _ _ RL8C _ _ _ RL90 _ _ _ RL94 _ _ _ RL98 _ _ _ RL9C _ _ _
+ RLA0 _ _ _ RLA4 _ _ _ RLA8 _ _ _ RLAC _ _ _ RLB0 _ _ _ RLB4 _ _ _ RLB8 _ _ _ RLBC _ _ _
+ RLC0 _ _ _ RLC4 _ _ _ RLC8 _ _ _ RLCC _ _ _ RLD0 _ _ _ RLD4 _ _ _ RLD8 _ _ _ RLDC _ _ _
+ RLE0 _ _ _ RLE4 _ _ _ RLE8 _ _ _ RLEC _ _ _ RLF0 _ _ _ RLF4 _ _ _ RLF8 _ _ _ RLFC _ _ _
+];
+
+immed8:  imm8    is imm8                                                     { export *[const]:1 imm8; }
+
+simmed8: simm8  is simm8 { export *[const]:1 simm8; }
+
+immed16: imm16  is imm16  { export *[const]:2 imm16; }
+
+baop8: baop  is baop & baop=0 { export 0:1; }
+baop8: baop  is baop & baop=1 { export 0:1; }
+baop8: baop  is baop          { export baop; }
+
+waop16: waop  is waop & waop=0 { export 0:2; }
+waop16: waop  is waop          { export waop; }
+
+iwreg: iwreg7  is iwreg7 & iwreg7=0 { export 0:2; }
+iwreg: iwreg7  is iwreg7            { export iwreg7; }
+
+breg: breg8  is breg8 & breg8=0 { export 0:1; }
+breg: breg8  is breg8 & breg8=1 { export 0:1; }
+breg: breg8  is breg8           { export breg8; }
+
+wreg: wreg8  is wreg8 & wreg8=0 { export 0:2; }
+wreg: wreg8  is wreg8           { export wreg8; }
+
+# See reference manual pp. 29-30 and note 1 on page 113
+# 1-byte operands
+oper8:   baop8                       is aa=0x0; baop8                       { export baop8; } #direct
+oper8:   "#"immed8                   is aa=0x1; immed8                      { export immed8; } #immediate
+oper8:   "["iwreg"]"                 is aa=0x2; iwreg & addbit8=0           {
+	local tmp = iwreg;
+	export *[RAM]:1 tmp;
+} #indirect
+oper8:   "["iwreg"]+"                is aa=0x2; iwreg & addbit8=1           {
+	local tmp = iwreg;
+	iwreg = iwreg + 1;
+	export *[RAM]:1 tmp;
+} #indirect+
+oper8:   simmed8"["iwreg"]"          is aa=0x3; iwreg & addbit8=0; simmed8  {
+	local tmp = iwreg;
+	tmp = tmp + sext(simmed8);
+	export *[RAM]:1 tmp;
+} #indexed short
+oper8:   immed16", LOOKUP["iwreg"]"  is aa=0x3; iwreg & addbit8=1; immed16  {
+	local tmp = iwreg;
+	tmp = tmp + immed16;
+	export *[RAM]:1 tmp;
+} #indexed long
+
+# 2-byte operands
+oper16:  waop16                     is aa=0x0; waop16                      { export waop16; } #direct
+oper16:  "#"immed16                 is aa=0x1; immed16                     { export immed16; } #immediate
+oper16:  "["iwreg"]"                is aa=0x2; iwreg & addbit8=0           {
+	local tmp = iwreg;
+	export *[RAM]:2 tmp;
+} #indirect
+oper16:  "["iwreg"]+"               is aa=0x2; iwreg & addbit8=1           {
+	local tmp = iwreg;
+	iwreg = iwreg + 2;
+	export *[RAM]:2 tmp;
+} #indirect
+oper16:  simmed8"["iwreg"]"         is aa=0x3; iwreg & addbit8=0; simmed8  {
+	local tmp = iwreg;
+	tmp = tmp + sext(simmed8);
+	export *[RAM]:2 tmp;
+} #indexed short
+oper16:  immed16", TABLE["iwreg"]"  is aa=0x3 ; iwreg & addbit8=1; immed16 {
+	local tmp = iwreg;
+	tmp = tmp + immed16;
+	export *[RAM]:2 tmp;
+} #indexed long
+
+# range -128 through +127
+jmpdest: reloc    is simm8 [ reloc = inst_next + simm8; ]                              { export *:1 reloc; }
+
+# range -1023 through 1024
+jmpdest11: reloc  is jmp11_hi & jmp11_lo  [reloc = inst_next + ((jmp11_hi << 8) | jmp11_lo);]                                { export *:2 reloc; }
+jmpdest16: reloc  is disp16 [reloc = inst_next + disp16;] { export *:2 reloc; }
+
+################################################################
+# Pseudo Instructions
+################################################################
+#define pcodeop blockMove;
+define pcodeop idlePowerdown;
+define pcodeop normalize;
+
+################################################################
+# Macros
+################################################################
+macro push(val) {
+	SP = SP - 2;
+	*:2 SP = val;
+}
+
+macro pop(val) {
+	val = *:2 SP;
+	SP = SP + 2;
+}
+
+macro resetFlags() {
+	PSW = 0;
+}
+
+macro resultFlags(res) {
+	$(Z) = (res == 0);
+	$(N) = (res s< 0);
+	$(C) = 0;
+	$(V) = 0;
+}
+
+macro additionFlags(op1, op2, res) {
+	$(Z) = (res == 0);
+	$(N) = (res s< 0);
+	$(C) = carry(op1, op2);
+	$(V) = scarry(op1, op2);
+	$(VT) = $(V) | $(VT);
+}
+
+macro subtractFlags(op1, op2, res) {
+	$(N) = (res s< 0);
+	$(Z) = (res == 0);
+	$(C) = (op1 < op2) == 0;
+	$(V) = sborrow(op1, op2);
+	$(VT) = $(VT) | $(V);
+}
+
+macro stickyFlagW(source, shift) {
+	local mask:2 = -1;
+	mask = (mask >> (16 - shift + 1)) * zext(shift > 1);
+	local result:2 = source & mask;
+
+	$(ST) = (result != 0);
+}
+
+macro stickyFlagB(source, shift) {
+	local mask:1 = -1;
+	mask = (mask >> (8 - shift + 1)) * (shift > 1);
+	local result:1 = source & mask;
+
+	$(ST) = (result != 0);
+}
+
+macro stickyFlagL(source, shift) {
+	local mask:4 = -1;
+	mask = (mask >> (32 - shift + 1)) * zext(shift > 1);
+	local result:4 = source & mask;
+
+	$(ST) = (result != 0);
+}
+
+macro blockMove(ptrs, cntreg) {
+	local tsptr:4 = (ptrs & 0xffff0000) >> 0x10;
+	local srcPtr:2 = tsptr(2);
+	local dstPtr:2 = ptrs(2);
+	local cnt = cntreg;
+	<loop>
+	local data:2 = *srcPtr;
+	*dstPtr = data;
+	srcPtr = srcPtr + 2;
+	dstPtr = dstPtr + 2;
+	cnt = cnt - 1;
+	if cnt != 0 goto <loop>;
+	ptrs = zext(dstPtr) | (zext(srcPtr) << 0x10);
+}
+
+macro setShiftLeftCarryFlag(shiftee,amount) {
+	shifting:1 = amount != 0;
+	local tmp = ((shiftee >> (16-amount)) & 1);
+	$(C) = (shifting & tmp:1);
+}
+
+macro setShiftRightCarryFlag(shiftee,amount) {
+	shifting:1 = amount != 0;
+	local tmp = (shiftee >> (amount-1)) & 1;
+	$(C) = (shifting & tmp:1);
+}
+
+macro setSignedShiftRightCarryFlag(shiftee,amount) {
+	shifting:1 = amount != 0;
+	local tmp = (shiftee s>> (amount-1)) & 1;
+	$(C) = (shifting & tmp:1);
+}
+
+################################################################
+# Constructors
+################################################################
+# 2-op
+:ADD wreg, oper16                   is op6=0x19 ... & oper16; wreg {
+	local tmpD = wreg + oper16;
+	additionFlags(wreg, oper16, tmpD);
+	wreg = tmpD;
+}
+
+# 3 op
+:ADD dwreg, wreg, oper16            is op6=0x11 ... & oper16; wreg; dwreg {
+	local tmpD = wreg + oper16;
+	dwreg = tmpD;
+	additionFlags(wreg, oper16, tmpD);
+}
+
+# 2-op
+:ADDB breg, oper8                   is op6=0x1d ... & oper8; breg {
+	local tmp = breg + oper8;
+	additionFlags(breg, oper8, tmp);
+	breg = tmp;
+}
+
+:ADDB dbreg, breg, oper8            is op6=0x15 ... & oper8; breg; dbreg {
+	local tmp = breg + oper8;
+	dbreg = tmp;
+	additionFlags(breg, oper8, tmp);
+}
+
+:ADDC wreg, oper16                  is op6=0x29 ... & oper16; wreg {
+	local tmp = oper16 + zext($(C));
+	local res = wreg + tmp;
+	local oldz = $(Z);
+	additionFlags(wreg, tmp, res);
+	$(Z) = oldz & $(Z); # only cleared, not set
+	wreg = res;
+}
+
+:ADDCB breg, oper8                  is op6=0x2d ... & oper8; breg {
+	local tmp = oper8 + $(C);
+	local res =breg + tmp;
+	local oldz = $(Z);
+	additionFlags(breg, tmp, res);
+	$(Z) = oldz & $(Z); # only cleared, not set
+	breg = res;
+}
+
+# 2-op
+:AND wreg, oper16                   is op6=0x18 ... & oper16; wreg {
+	wreg = wreg & oper16;
+	resultFlags(wreg);
+}
+
+# 3-op
+:AND dwreg, wreg, oper16            is op6=0x10 ... & oper16; wreg; dwreg {
+	dwreg = wreg & oper16;
+	resultFlags(dwreg);
+}
+
+:ANDB breg, oper8                   is op6=0x1c ... & oper8; breg {
+	breg = breg & oper8;
+	resultFlags(breg);
+}
+
+:ANDB dbreg, breg, oper8            is op6=0x14 ... & oper8; breg; dbreg {
+	dbreg = breg & oper8;
+	resultFlags(dbreg);
+}
+
+:BMOV lreg, wreg                    is op8=0xc1; wreg ; lreg {
+	blockMove(lreg, wreg);
+}
+
+:BMOVI lreg, wreg                   is op8=0xcd; wreg; lreg {
+	blockMove(lreg, wreg);
+}
+
+:BR [ wreg ]                        is op8=0xe3; wreg {
+	goto [wreg];
+}
+
+:CLR wreg                           is op8=0x1; wreg {
+	wreg = 0;
+	$(Z) = 1;
+	$(N) = 0;
+	$(C) = 0;
+	$(V) = 0;
+}
+
+:CLRB breg                          is op8=0x11; breg {
+	breg = 0;
+	$(Z) = 1;
+	$(N) = 0;
+	$(C) = 0;
+	$(V) = 0;
+}
+
+:CLRC                               is op8=0xf8 {
+	$(C) = 0;
+}
+
+:CLRVT                              is op8=0xfc {
+	$(VT) = 0;
+}
+
+:CMP wreg, oper16                   is op6=0x22 ... & oper16; wreg {
+	op1:2 = oper16;
+	tmp:2 = wreg - op1;
+	subtractFlags(wreg, op1, tmp);
+}
+
+:CMPB breg, oper8                   is op6=0x26 ... & oper8; breg {
+	op1:1 = oper8;
+	tmp:1 = breg - op1;
+	subtractFlags(breg, op1, tmp);
+}
+
+@if defined(C196KB) || defined(C196KC)
+:CMPL dlreg, lreg                   is op8=0xc5; lreg; dlreg {
+	op1:4 = lreg;
+	tmp:4 = dlreg - op1;
+	$(N) = (tmp s< 0);
+	$(Z) = (tmp == 0);
+	$(C) = scarry(dlreg, op1);
+	$(V) = (((dlreg & ~op1 & ~tmp) | (~dlreg & op1 & tmp)) & 0x80000000 ) != 0;
+	$(VT) = $(VT) | $(V);
+}
+
+@endif
+
+:DEC wreg                           is op8=0x05; wreg {
+	local tmp = wreg - 1;
+	subtractFlags(wreg, 1, tmp);
+	wreg = tmp;
+}
+
+:DECB breg                          is op8=0x15; breg {
+	local tmp = breg - 1;
+	subtractFlags(breg, 1, tmp);
+	breg = tmp;
+}
+
+:DI                                 is op8=0xfa {
+	$(I) = 0;
+}
+
+:DIV lreg, oper16                   is op8=0xfe; op6=0x23 ... & oper16; lreg {
+	local num = lreg;
+	local den = oper16;
+	local div = num s/ sext(den);
+	local rem = num s% sext(den);
+	lreg = zext(div:2 << 16) | rem;
+@if defined(C196KB) || defined(C196KC)
+	$(V) = ((div s> 0x7fff) | (div s< 0x8001));
+@endif
+	$(VT) = $(VT) | $(V);
+}
+
+:DIVB wreg, oper8                   is op8=0xfe; op6=0x27 ... & oper8; wreg {
+	local num = wreg;
+	local den = oper8;
+	local div = num s/ sext(den);
+	local rem = num s% sext(den);
+	wreg = zext(div:1 << 8) | rem;
+@if defined(C196KB) || defined(C196KC)
+	$(V) = ((div s> 0x7f) | (div s< 0x81));
+@endif
+	$(VT) = $(VT) | $(V);
+}
+
+:DIVU lreg, oper16                  is op6=0x23 ... & oper16; lreg {
+	local num = lreg;
+	local den = oper16;
+	local div = num / zext(den);
+	local rem = num % zext(den);
+	lreg = zext(div:2 << 16) | rem;
+	$(V) = (div > 0xffff);
+	$(VT) = $(VT) | $(V);
+}
+
+:DIVUB wreg, oper8                  is op6=0x27 ... & oper8; wreg {
+	local num = wreg;
+	local den = oper8;
+	local div = num / zext(den);
+	local rem = num % zext(den);
+	wreg = zext(div:1 << 8) | rem;
+	$(V) = (div > 0xff);
+	$(VT) = $(VT) | $(V);
+}
+
+:DJNZ breg, jmpdest                 is op8=0xe0; breg; jmpdest {
+	breg = breg - 1;
+	if (breg != 0) goto jmpdest;
+}
+
+@if defined(C196KB) || defined(C196KC)
+:DJNZW wreg, jmpdest                is op8=0xe1; wreg; jmpdest {
+	wreg = wreg - 1;
+	if (wreg != 0) goto jmpdest;
+}
+
+@endif
+
+@if defined(C196KC)
+:DPTS                               is op8=0xec {
+	$(PSE) = 0;
+}
+
+@endif
+
+:EI                                 is op8=0xfb {
+	$(I) = 1;
+}
+
+@if defined(C196KC)
+:EPTS                               is op8=0xed {
+	$(PSE) = 1;
+}
+
+@endif
+
+:EXT lreg                           is op8=0x6; lreg {
+	tmp:4 = lreg & 0xffff;
+	lreg = sext(tmp);
+	resultFlags(lreg);
+}
+
+:EXTB wreg                          is op8=0x16; wreg {
+	tmp:2 = wreg & 0xff;
+	wreg = sext(tmp);
+	resultFlags(wreg);
+}
+
+:INC wreg                           is op8=0x7; wreg {
+	local tmp = wreg + 1;
+	additionFlags(wreg, 1, tmp);
+	wreg = tmp;
+}
+
+:INCB breg                          is op8=0x17; breg {
+	local tmp = breg + 1;
+	additionFlags(breg, 1, tmp);
+	breg = tmp;
+}
+
+@if defined(C196KB) || defined(C196KC)
+:IDLPD "#"immed8                    is op8=0xf6; immed8 {
+	idlePowerdown();
+	$(Z) = 0;
+	$(N) = 0;
+	$(C) = 0;
+	$(V) = 0;
+	$(VT) = 0;
+	$(ST) = 0;
+}
+
+@endif
+
+:JBC breg, bitno, jmpdest           is op5=0x6 & bitno; breg; jmpdest {
+	local bit = (breg >> bitno) & 0x1;
+	if (bit == 0) goto jmpdest;
+}
+
+:JBS breg, bitno, jmpdest           is op5=0x7 & bitno; breg; jmpdest {
+	local bit = (breg >> bitno) & 0x1;
+	if (bit == 1) goto jmpdest;
+}
+
+cc: "NST"  is cond=0  { tmp:1 = ($(ST) == 0); export tmp; }
+cc: "NH"   is cond=1  { tmp:1 = (($(C) == 0) | ($(Z) == 1)); export tmp; }
+cc: "GT"   is cond=2  { tmp:1 = (($(N) == 0) & ($(Z) == 0)); export tmp; }
+cc: "NC"   is cond=3  { tmp:1 = ($(C) == 0); export tmp; }
+cc: "NVT"  is cond=4  { tmp:1 = ($(VT) == 0); $(VT) = 0; export tmp; }
+cc: "NV"   is cond=5  { tmp:1 = ($(V) == 0); export tmp; }
+cc: "GE"   is cond=6  { tmp:1 = ($(N) == 0); export tmp; }
+cc: "NE"   is cond=7  { tmp:1 = ($(Z) == 0); export tmp; }
+cc: "ST"   is cond=8  { tmp:1 = ($(ST) == 1); export tmp; }
+cc: "H"    is cond=9  { tmp:1 = (($(C) == 1) & ($(Z) == 0)); export tmp; }
+cc: "LE"   is cond=10 { tmp:1 = (($(N) == 1) | ($(Z) == 1)); export tmp; }
+cc: "C"    is cond=11 { tmp:1 = ($(C) == 1); export tmp; }
+cc: "VT"   is cond=12 { tmp:1 = ($(VT) == 1); $(VT) = 0; export tmp; }
+cc: "V"    is cond=13 { tmp:1 = ($(V) == 1); export tmp; }
+cc: "LT"   is cond=14 { tmp:1 = ($(N) == 1); export tmp; }
+cc: "E"    is cond=15 { tmp:1 = ($(Z) == 1); export tmp; }
+
+:J^cc jmpdest                       is op4=0xd & cc; jmpdest
+{if (cc) goto jmpdest;}
+
+
+:LCALL jmpdest16                    is op8=0xef; jmpdest16 {
+	ret:2 = inst_next;
+	push(ret);
+	call jmpdest16;
+} 
+
+:LD wreg, oper16                    is op6=0x28 ... & oper16; wreg {
+	wreg = oper16;
+}
+
+:LDB breg, oper8                    is op6=0x2c ... & oper8; breg {
+	breg = oper8;
+}
+
+:LDBSE wreg, oper8                  is op6=0x2f ... & oper8; wreg {
+	wreg = sext(oper8);
+}
+
+:LDBZE wreg, oper8                  is op6=0x2b ... & oper8; wreg {
+	wreg = zext(oper8);
+}
+
+:LJMP jmpdest16                     is op8=0xe7; jmpdest16 {
+	goto jmpdest16;
+}
+
+# 2-op
+:MUL lreg, oper16                   is op8=0xfe; op6=0x1b ... & oper16; lreg {
+	tmpD:4 = sext(lreg:2);
+	tmpS:4 = sext(oper16);
+	tmpD = tmpD * tmpS;
+	lreg = tmpD;
+}
+
+# 3-op
+:MUL lreg, wreg, oper16             is op8=0xfe; op6=0x13 ... & oper16; wreg; lreg {
+	tmpD:4 = sext(wreg);
+	tmpS:4 = sext(oper16);
+	tmpD = tmpD * tmpS;
+	lreg = tmpD;
+}
+
+# 2-op
+:MULB wreg, oper8                   is op8=0xfe; op6=0x1f ... & oper8; wreg {
+	tmpD:2 = sext(wreg:1);
+	tmpS:2 = sext(oper8);
+	tmpD = tmpD * tmpS;
+	wreg = tmpD;
+}
+
+# 3-op
+:MULB wreg, breg, oper8             is op8=0xfe; op6=0x17 ... & oper8; breg; wreg {
+	tmpD:2 = sext(breg);
+	tmpS:2 = sext(oper8);
+	tmpD = tmpD * tmpS;
+	wreg = tmpD;
+}
+
+# 2-op
+:MULU lreg, oper16                  is op6=0x1b ... & oper16; lreg {
+	tmpD:4 = zext(lreg:2);
+	tmpS:4 = zext(oper16);
+	tmpD = tmpD * tmpS;
+	lreg = tmpD;
+}
+
+# 3-op
+:MULU lreg, wreg, oper16            is op6=0x13 ... & oper16; wreg; lreg {
+	tmpD:4 = zext(wreg);
+	tmpS:4 = zext(oper16);
+	tmpD = tmpD * tmpS;
+	lreg = tmpD;
+}
+
+# 2-op
+:MULUB wreg, oper8                  is op6=0x1f ... & oper8; wreg {
+	tmpD:2 = zext(wreg:1);
+	tmpS:2 = zext(oper8);
+	tmpD = tmpD * tmpS;
+	wreg = tmpD;
+}
+
+# 3-op
+:MULUB wreg, breg, oper8            is op6=0x17 ... & oper8; breg; wreg {
+	local tmpD:2 = zext(breg);
+	local tmpS:2 = zext(oper8);
+	tmpD = tmpD * tmpS;
+	wreg = tmpD;
+}
+
+:NEG wreg                           is op8=0x03; wreg {
+	local tmp:2 = -wreg;
+	local zero:2 = 0;
+	subtractFlags(zero, wreg, tmp);
+	wreg = tmp;
+}
+
+:NEGB breg                          is op8=0x13; breg {
+	local tmp:1 = -breg;
+	local zero:1 = 0;
+	subtractFlags(zero, breg, tmp);
+	breg = tmp;
+}
+
+:NOP                                is op8=0xfd { } #NOP
+
+:NORML lreg, breg                   is op8=0xf; breg; lreg {
+	#The LONG-INTEGER operand is normalized; i.e., it is shifted to the left until its
+	#most significant bit is 1. If the most significant bit is still 0 after 31 shifts, the
+	#process stops and the zero flag is set. The number of shifts actually performed
+	#is stored in the second operand.
+	normalize(lreg, breg);
+	$(Z) = (lreg == 0);
+	$(C) = 0;
+# $(N) is undefined
+}
+
+:NOT wreg                           is op8 = 0x2; wreg {
+	wreg = ~wreg;
+	resultFlags(wreg);
+}
+
+:NOTB breg                          is op8=0x12; breg {
+	breg = ~breg;
+	resultFlags(breg);
+}
+
+:OR wreg, oper16                    is op6=0x20 ... & oper16; wreg {
+	tmpD:2 = wreg;
+	tmpS:2 = oper16;
+	tmpD = tmpD | tmpS;
+	wreg = tmpD;
+	resultFlags(wreg);
+}
+
+:ORB breg, oper8                    is op6=0x24 ... & oper8; breg {
+	tmpD:1 = breg;
+	tmpS:1 = oper8;
+	tmpD = tmpD | tmpS;
+	breg = tmpD;
+	resultFlags(breg);
+}
+
+:POP oper16                         is op6=0x33 ... & oper16 {
+	local result:2 = 0;
+	pop(result);
+	oper16 = result;
+}
+
+@if defined(C196KB) || defined(C196KC)
+:POPA                               is op8=0xf5 {
+	local result:2 = 0;
+	pop(result);
+	WSR = result:1 & 0xff;
+	local resultHi = result >> 8;
+	INT_MASK1 = resultHi:1;
+	pop(result);
+	INT_MASK = result:1 & 0xff;
+	resultHi = result >> 8;
+	PSW = resultHi:1;
+}
+
+@endif
+
+:POPF                               is op8=0xf3 {
+	local result:2 = 0;
+	pop(result);
+	PSW = result:1;
+	local resultHi = result >> 8;
+	INT_MASK = resultHi:1;
+}
+
+:PUSH oper16                        is op6=0x32 ... & oper16 {
+	val:2 = oper16;
+	push(val);
+}
+
+@if defined(C196KB) || defined(C196KC)
+:PUSHA                              is op8=0xf4 {
+	local val:2 = (zext(INT_MASK) << 8) | zext(WSR);
+	push(val);
+	val = (zext(INT_MASK) << 8) | zext(PSW);
+	push(val);
+	resetFlags();
+}
+
+@endif
+
+:PUSHF                              is op8=0xf2 {
+	val:2 = (zext(INT_MASK) << 8) | zext(PSW);
+	push(val);
+	resetFlags();
+}
+
+:RET                                is op8=0xf0 {
+	local retDest:2 = 0;
+	pop(retDest);
+	return [retDest];
+}
+
+:RST                                is op8=0xff {
+	resetFlags();
+	PC = 0x2080;
+	goto [PC];
+}
+
+:SCALL jmpdest11                    is op16=0x5 & jmpdest11 {
+	ret:2 = inst_next;
+	push(ret);
+	call jmpdest11;
+}
+
+:SETC                               is op8=0xf9 {
+	$(C) = 1;
+}
+
+:SHL wreg, "#"immed8                is op8=0x09; immed8 & (highb = 0x0); wreg {
+	local source = wreg;
+	local shift = immed8;
+	setShiftLeftCarryFlag(source, shift);
+	local res = source << shift;
+	$(Z) = (res == 0);
+	$(V) = 0;
+	$(VT) = $(VT) | $(V);
+	wreg = res;
+}
+
+:SHL wreg, breg                     is op8=0x09; breg & (highb != 0x0); wreg {
+	local source = wreg;
+	local shift = breg;
+	setShiftLeftCarryFlag(source, shift);
+	local res = source << shift;
+	$(Z) = (res == 0);
+	$(V) = 0;
+	$(VT) = $(VT) | $(V);
+	wreg = res;
+}
+
+:SHLB dbreg, "#"immed8              is op8=0x19; immed8 & (highb = 0x0); dbreg {
+	local source = dbreg;
+	local shift = immed8;
+	setShiftLeftCarryFlag(source, shift);
+	local res = source << shift;
+	$(Z) = (res == 0);
+	$(V) = 0;
+	$(VT) = $(VT) | $(V);
+	dbreg = res;
+}
+
+:SHLB dbreg, breg                   is op8=0x19; breg & (highb != 0x0); dbreg {
+	local source = dbreg;
+	local shift = breg;
+	setShiftLeftCarryFlag(source, shift);
+	local res = source << shift;
+	$(Z) = (res == 0);
+	$(V) = 0;
+	$(VT) = $(VT) | $(V);
+	dbreg = res;
+}
+
+:SHLL lreg, "#"immed8               is op8=0x0d; immed8 & (highb = 0x0); lreg {
+	local source = lreg;
+	local shift = immed8;
+	setShiftLeftCarryFlag(source, shift);
+	local res = source << shift;
+	$(Z) = (res == 0);
+	$(V) = 0;
+	$(VT) = $(VT) | $(V);
+	lreg = res;
+}
+
+:SHLL lreg, breg                    is op8=0x0d; breg & (highb != 0x0); lreg {
+	local source = lreg;
+	local shift = breg;
+	setShiftLeftCarryFlag(source, shift);
+	local res = source << shift;
+	$(Z) = (res == 0);
+	$(V) = 0;
+	$(VT) = $(VT) | $(V);
+	lreg = res;
+}
+
+:SHR wreg, "#"immed8                is op8=0x08; immed8 & (highb = 0x0); wreg {
+	local source = wreg;
+	local shift = immed8;
+	$(ST) = 0;
+	setShiftRightCarryFlag(source, shift);
+	local res = source >> shift;
+	$(Z) = (res == 0);
+	$(N) = 0;
+	$(V) = 0;
+	wreg = res;
+	stickyFlagW(source, shift);
+}
+
+:SHR wreg, breg                     is op8=0x08; breg & (highb != 0x0); wreg {
+	local source = wreg;
+	local shift = breg;
+	setShiftRightCarryFlag(source, shift);
+	local res = source >> shift;
+	$(Z) = (res == 0);
+	$(N) = 0;
+	$(V) = 0;
+	wreg = res;
+	stickyFlagW(source, shift);
+}
+
+:SHRA wreg, "#"immed8               is op8=0x0a; immed8 & (highb = 0x0); wreg {
+	local source = wreg;
+	local shift = immed8;
+	setSignedShiftRightCarryFlag(source, shift);
+	local res = source s>> shift;
+	$(Z) = (res == 0);
+	$(N) = (res s< 0);
+	$(V) = 0;
+	wreg = res;
+	stickyFlagW(source, shift);
+}
+
+:SHRA wreg, breg                    is op8=0x0a; breg & (highb != 0x0); wreg {
+	local source = wreg;
+	local shift = breg;
+	setSignedShiftRightCarryFlag(source, shift);
+	local res = source s>> shift;
+	$(Z) = (res == 0);
+	$(N) = (res s< 0);
+	$(V) = 0;
+	wreg = res;
+	stickyFlagW(source, shift);
+}
+
+:SHRAB dbreg, "#"immed8             is op8=0x1a; immed8 & (highb = 0x0); dbreg {
+	local source = dbreg;
+	local shift = immed8;
+	setSignedShiftRightCarryFlag(source, shift);
+	local res = source s>> shift;
+	$(Z) = (res == 0);
+	$(N) = (res s< 0);
+	$(V) = 0;
+	dbreg = res;
+	stickyFlagB(source, shift);
+}
+
+:SHRAB dbreg, breg                  is op8=0x1a; breg & (highb != 0x0); dbreg {
+	local source = dbreg;
+	local shift = breg;
+	setSignedShiftRightCarryFlag(source, shift);
+	local res = source s>> shift;
+	$(Z) = (res == 0);
+	$(N) = (res s< 0);
+	$(V) = 0;
+	dbreg = res;
+	stickyFlagB(source, shift);
+}
+
+:SHRAL lreg, "#"immed8              is op8=0x0e; immed8 & (highb = 0x0); lreg {
+	local source = lreg;
+	local shift = immed8;
+	setSignedShiftRightCarryFlag(source, shift);
+	local res = source s>> shift;
+	$(Z) = (res == 0);
+	$(N) = (res s< 0);
+	$(V) = 0;
+	lreg = res;
+	stickyFlagL(source, shift);
+}
+
+:SHRAL lreg, breg                   is op8=0x0e; breg & (highb != 0x0); lreg {
+	local source = lreg;
+	local shift = breg;
+	setSignedShiftRightCarryFlag(source, shift);
+	local res = source s>> shift;
+	$(Z) = (res == 0);
+	$(N) = (res s< 0);
+	$(V) = 0;
+	lreg = res;
+	stickyFlagL(source, shift);
+}
+
+:SHRB dbreg, "#"immed8              is op8=0x18; immed8 & (highb = 0x0); dbreg {
+	local source = dbreg;
+	local shift = immed8;
+	setShiftRightCarryFlag(source, shift);
+	local res = source >> shift;
+	$(Z) = (res == 0);
+	$(N) = 0;
+	$(V) = 0;
+	dbreg = res;
+	stickyFlagB(source, shift);
+}
+
+:SHRB dbreg, breg                   is op8=0x18; breg & (highb != 0x0); dbreg {
+	local source = dbreg;
+	local shift = breg;
+	setShiftRightCarryFlag(source, shift);
+	local res = source >> shift;
+	$(Z) = (res == 0);
+	$(N) = 0;
+	$(V) = 0;
+	dbreg = res;
+	stickyFlagB(source, shift);
+}
+
+:SHRL lreg, "#"immed8               is op8=0x0c; immed8 & (highb = 0x0); lreg {
+	local source = lreg;
+	local shift = immed8;
+	setShiftRightCarryFlag(source, shift);
+	local res = source >> shift;
+	$(Z) = (res == 0);
+	$(N) = 0;
+	$(V) = 0;
+	lreg = res;
+	stickyFlagL(source, shift);
+}
+
+:SHRL lreg, breg                    is op8=0x0c; breg & (highb != 0x0); lreg {
+	local source = lreg;
+	local shift = breg;
+	setShiftRightCarryFlag(source, shift);
+	local res = source >> shift;
+	$(Z) = (res == 0);
+	$(N) = 0;
+	$(V) = 0;
+	lreg = res;
+	stickyFlagL(source, shift);
+}
+
+:SJMP jmpdest11                     is op16=0x4 & jmpdest11 {
+	goto jmpdest11;
+}
+
+:SKIP                               is op8=0x00 {
+	local tmp:1 = 0;
+} #2-byte NOP
+
+:ST wreg, oper16                    is op6=0x30 ... & oper16; wreg {
+	oper16 = wreg;
+}
+
+:STB breg, oper8                    is op6=0x31 ... & oper8; breg {
+	oper8 = breg;
+}
+
+# 2-op
+:SUB wreg, oper16                   is op6=0x1a ... & oper16; wreg {
+	local tmp = wreg - oper16;
+	subtractFlags(wreg, oper16, tmp);
+	wreg = tmp;
+}
+
+# 3 op
+:SUB dwreg, wreg, oper16            is op6=0x12 ... & oper16; wreg; dwreg {
+	dwreg = wreg - oper16;
+	subtractFlags(wreg, oper16, dwreg);
+}
+
+# 2-op
+:SUBB breg, oper8                   is op6=0x1e ... & oper8; breg {
+	local tmp = breg - oper8;
+	subtractFlags(breg, oper8, tmp);
+}
+
+:SUBB dbreg, breg, oper8            is op6=0x16 ... & oper8; breg; dbreg {
+	dbreg = breg - oper8;
+	subtractFlags(breg, oper8, dbreg);
+}
+
+:SUBC wreg, oper16                  is op6=0x2a ... & oper16; wreg {
+	local tmp = wreg - oper16 - zext(1 - $(C));
+	local oldz = $(Z);
+	subtractFlags(wreg, oper16-zext(1-$(C)), tmp);
+	wreg = tmp;
+	$(Z) = oldz & $(Z);
+}
+
+:SUBCB breg, oper8                  is op6=0x2e ... & oper8; breg {
+	local tmp = breg - oper8 - zext(1 - $(C));
+	local oldz = $(Z);
+	subtractFlags(breg, oper8-zext(1-$(C)), tmp);
+	breg = tmp;
+	$(Z) = oldz & $(Z);
+}
+
+@if defined(C196KC)
+:TIJMP dwreg, "["wreg"]" "#"immed8  is op8=0xe2; wreg; immed8; dwreg {
+	local index = *wreg;
+	local jmpOffset = zext(index & immed8);
+	local tBase = dwreg;
+	local destX = (jmpOffset << 1) + tBase;
+	local jmpDest = *:2 destX;
+
+	goto [jmpDest];
+}
+
+@endif
+
+:TRAP                               is op8=0xf7 {
+	ret:2 = inst_next;
+	push(ret);
+	trapv:2 = 0x2010;
+	PC = *trapv;
+	goto [PC];
+}
+
+:XOR wreg, oper16                   is op6=0x21 ... & oper16; wreg {
+	tmpD:2 = wreg;
+	tmpS:2 = oper16;
+	tmpD = tmpD ^ tmpS;
+	wreg = tmpD;
+	resultFlags(wreg);
+}
+
+@if defined(C196KC)
+:XCH wreg, waop16                   is op8=0x04; waop16; wreg {
+	local tmp = wreg;
+	wreg = waop16;
+	waop16 = tmp;
+}
+
+:XCH wreg, immed8", TABLE["iwreg"]" is op8=0x0b; iwreg & addbit8=0; immed8; wreg {
+	local tmp = iwreg;
+	tmp = tmp + sext(immed8);
+	local val = *[RAM]:2 tmp;
+
+	local wreg_tmp = wreg;
+	wreg = val;
+	*[RAM]:2 tmp = wreg_tmp;
+}
+
+:XCH wreg, immed16", TABLE["iwreg"]"  is op8=0x0b; iwreg & addbit8=1; immed16; wreg {
+	local tmp = iwreg;
+	tmp = tmp + immed16;
+	local val = *[RAM]:2 tmp;
+
+	local wreg_tmp = wreg;
+	wreg = val;
+	*[RAM]:2 tmp = wreg_tmp;
+}
+
+@endif
+
+@if defined(C196KC)
+:XCHB breg, baop8                   is op8=0x14 ; baop8; breg {
+	local tmp = breg;
+	breg = baop8;
+	baop8 = tmp;
+}
+
+:XCHB breg, immed8", TABLE["iwreg"]"  is op8=0x1b ; iwreg & addbit8=0; immed8; breg {
+	local tmp = iwreg;
+	tmp = tmp + sext(immed8);
+	local val = *[RAM]:1 tmp;
+
+	local wreg_tmp = breg;
+	breg = val;
+	*[RAM]:1 tmp = wreg_tmp;
+}
+
+:XCHB breg, immed16", TABLE["iwreg"]"  is op8=0x1b ; iwreg & addbit8=1; immed16; breg {
+	local tmp = iwreg;
+	tmp = tmp + sext(immed16);
+	local val = *[RAM]:1 tmp;
+
+	local wreg_tmp = breg;
+	breg = val;
+	*[RAM]:1 tmp = wreg_tmp;
+}
+
+@endif
+
+:XORB breg, oper8                   is op6=0x25 ... & oper8; breg {
+	tmpD:1 = breg;
+	tmpS:1 = oper8;
+	tmpD = tmpD ^ tmpS;
+	breg = tmpD;
+	resultFlags(breg);
+}
+
+
+

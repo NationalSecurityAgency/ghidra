@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +15,10 @@
  */
 package ghidra.app.util.bin.format.ne;
 
-import ghidra.app.util.bin.format.*;
 import java.io.IOException;
+
+import ghidra.app.util.bin.format.FactoryBundledWithBinaryReader;
+import ghidra.program.model.address.SegmentedAddress;
 
 /**
  * A class to represent and parse the 
@@ -39,20 +40,22 @@ public class WindowsHeader {
     private NonResidentNameTable nonResNameTable;
 
     /**
-     * Constructor
-     * @param reader the binary reader
-     * @param index the index where the windows headers begins
-     * @throws InvalidWindowsHeaderException if the bytes defined in the binary reader at
-     * the specified index do not constitute a valid windows header.
-     */
-    public WindowsHeader(FactoryBundledWithBinaryReader reader, short index) throws InvalidWindowsHeaderException, IOException {
+	 * Constructor
+	 * @param reader the binary reader
+	 * @param baseAddr the image base address
+	 * @param index the index where the windows headers begins
+	 * @throws InvalidWindowsHeaderException if the bytes defined in the binary reader at
+	 * the specified index do not constitute a valid windows header.
+	 * @throws IOException for problems reading the header bytes
+	 */
+	public WindowsHeader(FactoryBundledWithBinaryReader reader, SegmentedAddress baseAddr,
+			short index) throws InvalidWindowsHeaderException, IOException {
         this.infoBlock = new InformationBlock(reader, index);
 
         short segTableIndex = (short)(infoBlock.getSegmentTableOffset() + index);
         this.segTable = new SegmentTable(reader,
-                                        segTableIndex,
-                                        infoBlock.getSegmentCount(),
-                                        infoBlock.getSegmentAlignmentShiftCount());
+			baseAddr, segTableIndex, infoBlock.getSegmentCount(),
+			infoBlock.getSegmentAlignmentShiftCount());
 
         //if resource table offset == resident name table offset, then
         //we do not have any resources...

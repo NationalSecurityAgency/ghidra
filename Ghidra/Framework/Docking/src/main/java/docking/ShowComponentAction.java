@@ -60,7 +60,6 @@ class ShowComponentAction extends DockingAction
 		this.info = placeholder;
 		this.winMgr = winMgr;
 		this.title = truncateTitleAsNeeded(placeholder.getTitle());
-		String group = isTransient ? "Transient" : "Permanent";
 
 		Icon icon = placeholder.getIcon();
 		if (icon == null) {
@@ -71,7 +70,6 @@ class ShowComponentAction extends DockingAction
 			setMenuBarData(
 				new MenuData(new String[] { MENU_WINDOW, subMenuName, placeholder.getFullTitle() },
 					icon, "Permanent"));
-			winMgr.doSetMenuGroup(new String[] { MENU_WINDOW, subMenuName }, group);
 		}
 		else {
 			setMenuBarData(new MenuData(new String[] { MENU_WINDOW, title }, icon, "Permanent"));

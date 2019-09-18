@@ -20,28 +20,118 @@ import org.apache.commons.lang3.StringUtils;
 import ghidra.util.NumericUtilities;
 
 /**
- * Address Space for dealing with Intel 20 bit segmented addresses.
+ * Address Space for dealing with (intel) segmented address spaces.
+ * It understands the mapping between the segmented encoding (seg:offset) and
+ * the flat address encoding necessary to produce an Address object that can be
+ * used by other analyses.  This mapping is inherent in protected methods:
+ *   - getDefaultOffsetFromFlat
+ *   - getDefaultSegmentFromFlat
+ *   - getFlatOffset
+ *   - getOffsetFromFlat
+ *   - getAddressInSegment
+ * 
+ * These 5 methods can be overridden to get a different mapping. This base class is
+ * set up to map as for x86 16-bit real-mode.
  */
 public class SegmentedAddressSpace extends GenericAddressSpace {
 
-	private final static int SIZE = 21;
-
-	//private final static int SEGMENT_OFFSET_MASK = 0xffff;
-	//final static long MASK = (1L << SIZE) - 1;
+	private final static int REALMODE_SIZE = 21;
+	private final static long REALMODE_MAXOFFSET = 0x10FFEF;
 
 	/**
-	 * Constructs a new Segmented AddressSpace.
-	 * 
-	 * @param name
-	 *            the name of the space
-	 * @param unique
-	 *            the unique id for the space.
+	 * Constructor for larger size address spaces (than the real-mode space)
+	 * @param name is the name of the space
+	 * @param size is the number of bits in a (flat) address
+	 * @param unique is the unique id for the space
+	 */
+	protected SegmentedAddressSpace(String name, int size, int unique) {
+		super(name, size, TYPE_RAM, unique);
+//		maxAddress = getUncheckedAddress(maxOffset);
+		// Constructors for derived classes that call this will
+		// need to reconstruct maxAddress themselves.
+	}
+
+	/**
+	 * Constructs a new Segmented AddressSpace for x86 real-mode, with 21-bit addresses.
+	 * @param name is the name of the space
+	 * @param unique is the unique id for the space.
 	 */
 	public SegmentedAddressSpace(String name, int unique) {
-		super(name, SIZE, TYPE_RAM, unique);
-		maxOffset = 0x10FFEF;
+		super(name, REALMODE_SIZE, TYPE_RAM, unique);
+		maxOffset = REALMODE_MAXOFFSET;
 		spaceSize = maxOffset + 1;
 		maxAddress = getUncheckedAddress(maxOffset);
+	}
+
+	/**
+	 * Given a 16-bit segment and an offset, produce the flat address offset
+	 * @param segment is the segment value
+	 * @param offset is the 16-bit offset into the segment
+	 * @return the encoded flat offset
+	 */
+	protected long getFlatOffset(int segment, long offset) {
+		long res = segment;
+		res <<= 4;
+		res += offset;
+		return res;
+	}
+
+	/**
+	 * Given a flat address offset, extract the default 16-bit segment portion
+	 * @param flat is the flat offset
+	 * @return the segment value
+	 */
+	protected int getDefaultSegmentFromFlat(long flat) {
+		if (flat > 0xFFFFFL) {
+			return 0xFFFF;
+		}
+		return (int) ((flat >> 4) & 0xF000);
+	}
+
+	/**
+	 * Given a flat address offset, extract the offset portion assuming the
+	 * default segment.
+	 * @param flat is the flat offset
+	 * @return the offset value
+	 */
+	protected long getDefaultOffsetFromFlat(long flat) {
+		if (flat > 0xFFFFFL) {
+			return flat - 0xFFFF0;
+		}
+		return flat & 0xFFFFL;
+	}
+
+	/**
+	 * Given a flat address offset, extract a segment offset assuming a
+	 * specific segment value.
+	 * @param flat is the flat offset
+	 * @param segment is the specific segment value
+	 * @return the segment offset
+	 */
+	protected long getOffsetFromFlat(long flat, int segment) {
+		return flat - (segment << 4);
+	}
+
+	/**
+	 * Given a flat address offset and a preferred segment, try
+	 * to create an address that maps to the offset and is in the segment. For
+	 * architectures like x86 real-mode, multiple address encodings can map to
+	 * the same flat address offset.  This method tries to select between the different
+	 * encodings.  If the flat offset cannot be encoded with the preferred segment,
+	 * null is returned.
+	 * 
+	 * @param flat is the flat offset
+	 * @param preferredSegment is the 16-bit preferred segment value
+	 * @return the segment encoded address or null
+	 */
+	protected SegmentedAddress getAddressInSegment(long flat, int preferredSegment) {
+		if ((preferredSegment << 4) <= flat) {
+			int off = (int) (flat - (preferredSegment << 4));
+			if (off <= 0xffff) {
+				return new SegmentedAddress(this, preferredSegment, off);
+			}
+		}
+		return null;
 	}
 
 	/**
@@ -98,61 +188,15 @@ public class SegmentedAddressSpace extends GenericAddressSpace {
 		long off = addr.getOffset() - displacement;
 		if (off >= 0) {
 			SegmentedAddress saddr = (SegmentedAddress) addr;
-			return new SegmentedAddress(this, off).normalize(saddr.getSegment());
+			Address resaddr = getAddressInSegment(off, saddr.getSegment());
+			if (resaddr == null) {	// Could not map into desired segment
+				resaddr = new SegmentedAddress(this, off);	// just use default
+			}
+			return resaddr;
 		}
 		throw new AddressOutOfBoundsException(
 			"Address Overflow in subtract: " + addr + " + " + displacement);
 	}
-
-	/**
-	 * 
-	 * @see ghidra.program.model.address.AddressSpace#subtractWrap(ghidra.program.model.address.Address,
-	 *      long)
-	 */
-	/*
-	@Override
-	public Address subtractWrap(Address addr, long displacement) {
-	
-		testAddressSpace(addr);
-		SegmentedAddress saddr = (SegmentedAddress) addr;
-	
-		int segOffset = (int) ((saddr.getSegmentOffset() - displacement) & SEGMENT_OFFSET_MASK);
-		return new SegmentedAddress(this, saddr.getSegment(), segOffset);
-	}
-	*/
-
-	/**
-	 * @see ghidra.program.model.address.AbstractAddressSpace#subtractWrapSpace(ghidra.program.model.address.Address, long)
-	 */
-	/*
-	@Override
-	public Address subtractWrapSpace(Address addr, long displacement) {
-		testAddressSpace(addr);
-		return new SegmentedAddress(this, (addr.getOffset() - displacement) & MASK);
-	}
-	*/
-
-	/**
-	 * 
-	 * @see ghidra.program.model.address.AddressSpace#subtractNoWrap(ghidra.program.model.address.Address,
-	 *      long)
-	 */
-	/*
-	@Override
-	public Address subtractNoWrap(Address addr, long displacement) throws AddressOverflowException {
-	
-		testAddressSpace(addr);
-		SegmentedAddress saddr = (SegmentedAddress) addr;
-	
-		long off = addr.getOffset() - displacement;
-		if ((off & MASK) != off) {
-			throw new AddressOverflowException();
-		}
-	
-		return new SegmentedAddress(this, off).normalize(saddr.getSegment());
-	
-	}
-	*/
 
 	/**
 	 * 
@@ -175,81 +219,34 @@ public class SegmentedAddressSpace extends GenericAddressSpace {
 		//if ((off & MASK) == off) {
 		if (off >= 0 && off <= maxOffset) {
 			SegmentedAddress saddr = (SegmentedAddress) addr;
-			return new SegmentedAddress(this, off).normalize(saddr.getSegment());
+			Address resaddr = getAddressInSegment(off, saddr.getSegment());
+			if (resaddr == null) {	// Could not map into desired segment
+				resaddr = new SegmentedAddress(this, off);	// just use default
+			}
+			return resaddr;
 		}
 		throw new AddressOutOfBoundsException(
 			"Address Overflow in add: " + addr + " + " + displacement);
 	}
-
-	/**
-	 * 
-	 * @see ghidra.program.model.address.AddressSpace#addWrap(ghidra.program.model.address.Address,
-	 *      long)
-	 */
-	/*
-	@Override
-	public Address addWrap(Address addr, long displacement) {
-		testAddressSpace(addr);
-		SegmentedAddress saddr = (SegmentedAddress) addr;
-	
-		int segOffset = (int) ((saddr.getSegmentOffset() + displacement) & SEGMENT_OFFSET_MASK);
-		return new SegmentedAddress(this, saddr.getSegment(), segOffset);
-	}
-	*/
-
-	/**
-	 * @see ghidra.program.model.address.AddressSpace#addWrapSpace(ghidra.program.model.address.Address,
-	 *      long)
-	 */
-	/*
-	@Override
-	public Address addWrapSpace(Address addr, long displacement) {
-		testAddressSpace(addr);
-		return new SegmentedAddress(this, (addr.getOffset() + displacement) & MASK);
-	}
-	*/
-
-	/**
-	 * 
-	 * @see ghidra.program.model.address.AddressSpace#addNoWrap(ghidra.program.model.address.Address,
-	 *      long)
-	 */
-	/*
-	@Override
-	public Address addNoWrap(Address addr, long displacement) throws AddressOverflowException {
-	
-		SegmentedAddress saddr = (SegmentedAddress) addr;
-		testAddressSpace(addr);
-	
-		long off = addr.getOffset() + displacement;
-		if ((off & MASK) != off) {
-			throw new AddressOverflowException();
-		}
-	
-		return new SegmentedAddress(this, off).normalize(saddr.getSegment());
-	}
-	*/
 
 	private long parseString(String addr) {
 		if (addr.startsWith("0x") || addr.startsWith("0X")) {
 			return NumericUtilities.parseHexLong(addr.substring(2));
 		}
 		return NumericUtilities.parseHexLong(addr);
-
 	}
 
 	private SegmentedAddress parseNonSegmented(String offStr) throws AddressFormatException {
 
 		try {
 			long off = (int) parseString(offStr);
-			if (off < 0 || off > 0xfffff) {
-				throw new AddressFormatException("Offset is outside the range 0 to 0xfffff");
-			}
 			return new SegmentedAddress(this, off);
-
 		}
 		catch (NumberFormatException e) {
 			throw new AddressFormatException("Cannot parse (" + offStr + ") as a number.");
+		}
+		catch (AddressOutOfBoundsException e) {
+			throw new AddressFormatException(e.getMessage());
 		}
 	}
 
@@ -262,22 +259,21 @@ public class SegmentedAddressSpace extends GenericAddressSpace {
 		catch (NumberFormatException e) {
 			return null;
 		}
-		if (seg < 0 || seg > 0xffff) {
-			throw new AddressFormatException("Segment is outside the range 0 to 0xffff");
+
+		int off = -1;
+		try {
+			off = (int) parseString(offStr);
+		}
+		catch (NumberFormatException e) {
+			throw new AddressFormatException(
+				"Cannot parse (" + segStr + ':' + offStr + ") as a number.");
 		}
 
 		try {
-			int off = (int) parseString(offStr);
-			if (off < 0 || off > 0xffff) {
-				throw new AddressFormatException("Offset is outside the range 0 to 0xffff");
-			}
-			return new SegmentedAddress(this, seg, off);
+			return getAddress(seg, off);
 		}
 		catch (AddressOutOfBoundsException e) {
 			throw new AddressFormatException(e.getMessage());
-		}
-		catch (NumberFormatException e) {
-			throw new AddressFormatException("Cannot parse (" + offStr + ") as a number.");
 		}
 	}
 
@@ -315,10 +311,22 @@ public class SegmentedAddressSpace extends GenericAddressSpace {
 		if (segmentOffset > 0xffff) {
 			throw new AddressOutOfBoundsException("Offset is too large.");
 		}
-		if ((segment << 4) + segmentOffset > maxOffset) {
-			throw new AddressOutOfBoundsException("Segmented address is too large.");
+		if (segment > 0xffff) {
+			throw new AddressOutOfBoundsException("Segment is too large.");
 		}
 		return new SegmentedAddress(this, segment, segmentOffset);
+	}
+
+	/**
+	 * Get the segment index for the first segment whose start address
+	 * comes after the given address
+	 * @param addr is the given address
+	 * @return the segment index
+	 */
+	public int getNextOpenSegment(Address addr) {
+		int res = (int) addr.getOffset();	// The "flat" offset (presumably real-mode encoded)
+		res = (res >> 4) + 1;
+		return res;
 	}
 
 	/**

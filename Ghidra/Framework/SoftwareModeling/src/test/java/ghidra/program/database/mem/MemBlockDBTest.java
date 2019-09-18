@@ -64,7 +64,7 @@ public class MemBlockDBTest extends AbstractGenericTest {
 
 		MemoryMapDBAdapter adapter =
 			new MemoryMapDBAdapterV3(handle, mem, MAX_SUB_BLOCK_SIZE, true);
-		FileBytesAdapter fileBytesAdapter = new FileBytesAdapterV0(handle, mem, true);
+		FileBytesAdapter fileBytesAdapter = new FileBytesAdapterV0(handle, true);
 
 		mem.init(adapter, fileBytesAdapter);
 		mem.setProgram(program);

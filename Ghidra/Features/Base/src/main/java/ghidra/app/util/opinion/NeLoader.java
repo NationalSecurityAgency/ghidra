@@ -30,6 +30,7 @@ import ghidra.app.util.bin.format.ne.Resource;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.app.util.importer.MessageLogContinuesFactory;
 import ghidra.framework.options.Options;
+import ghidra.program.database.function.OverlappingFunctionException;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
 import ghidra.program.model.lang.Register;
@@ -51,6 +52,7 @@ public class NeLoader extends AbstractLibrarySupportLoader {
 
 	private static final String TAB = "    ";
 	private static final long MIN_BYTE_LENGTH = 4;
+	private static final int SEGMENT_START = 0x1000;
 
 	private ArrayList<Address> entryPointList = new ArrayList<>();
 	private Comparator<String> comparator = new CallNameComparator();
@@ -65,7 +67,7 @@ public class NeLoader extends AbstractLibrarySupportLoader {
 		if (provider.length() < MIN_BYTE_LENGTH) {
 			return loadSpecs;
 		}
-		NewExecutable ne = new NewExecutable(RethrowContinuesFactory.INSTANCE, provider);
+		NewExecutable ne = new NewExecutable(RethrowContinuesFactory.INSTANCE, provider, null);
 		WindowsHeader wh = ne.getWindowsHeader();
 		if (wh != null) {
 			List<QueryResult> results = QueryOpinionService.query(getName(),
@@ -99,7 +101,9 @@ public class NeLoader extends AbstractLibrarySupportLoader {
 		// the original bytes.
 		MemoryBlockUtils.createFileBytes(prog, provider, monitor);
 
-		NewExecutable ne = new NewExecutable(factory, provider);
+		SegmentedAddressSpace space =
+			(SegmentedAddressSpace) prog.getAddressFactory().getDefaultAddressSpace();
+		NewExecutable ne = new NewExecutable(factory, provider, space.getAddress(SEGMENT_START, 0));
 		WindowsHeader wh = ne.getWindowsHeader();
 		InformationBlock ib = wh.getInformationBlock();
 		SegmentTable st = wh.getSegmentTable();
@@ -113,8 +117,6 @@ public class NeLoader extends AbstractLibrarySupportLoader {
 		Listing listing = prog.getListing();
 		SymbolTable symbolTable = prog.getSymbolTable();
 		Memory memory = prog.getMemory();
-		SegmentedAddressSpace space =
-			(SegmentedAddressSpace) prog.getAddressFactory().getDefaultAddressSpace();
 		ProgramContext context = prog.getProgramContext();
 		RelocationTable relocTable = prog.getRelocationTable();
 
@@ -306,11 +308,6 @@ public class NeLoader extends AbstractLibrarySupportLoader {
 		}
 	}
 
-	private int getNextAvailableSegment(Program program) {
-		Address addr = program.getMemory().getMaxAddress();
-		return ((int) addr.getOffset() >> 4) + 1;
-	}
-
 	private void processResourceTable(MessageLog log, Program program, ResourceTable rt,
 			SegmentedAddressSpace space, TaskMonitor monitor) throws IOException {
 		Listing listing = program.getListing();
@@ -326,7 +323,7 @@ public class NeLoader extends AbstractLibrarySupportLoader {
 			Resource[] resources = type.getResources();
 			for (Resource resource : resources) {
 
-				int segidx = getNextAvailableSegment(program);
+				int segidx = space.getNextOpenSegment(program.getMemory().getMaxAddress());
 				Address addr = space.getAddress(segidx, 0);
 
 				try {
@@ -405,54 +402,60 @@ public class NeLoader extends AbstractLibrarySupportLoader {
 			ImportedNameTable imp, Program program, SegmentedAddressSpace space, MessageLog log,
 			TaskMonitor monitor) throws IOException {
 
-		int pointerSize = space.getAddress(0, 0).getPointerSize();
+		int thunkBodySize = 4;
 
-		PointerDataType ptr = new PointerDataType();
-		String comment = "";
-		String source = "";
-		Listing listing = program.getListing();
-		SymbolTable symbolTable = program.getSymbolTable();
+		ExternalManager externalManager = program.getExternalManager();
+		FunctionManager functionManager = program.getFunctionManager();
+		Namespace globalNamespace = program.getGlobalNamespace();
 
 		LengthStringSet[] names = mrt.getNames();
-		for (LengthStringSet name : names) {
-			String[] callnames = getCallNamesForModule(name.getString(), mrt, st, imp);
-			int length = callnames.length * pointerSize;
-			int segment = getNextAvailableSegment(program);
-			Address start = space.getAddress(segment, 0);
-			if (length > 0) {
-				// This isn't a real block, just place holder addresses, so don't create an initialized block
-				MemoryBlockUtils.createUninitializedBlock(program, false, name.getString(), start,
-					length, comment, source, true, false, false, log);
-			}
-			Address addr = start;
-			for (String callname : callnames) {
-				try {
-					listing.createData(addr, ptr, pointerSize);
-				}
-				catch (CodeUnitInsertionException e) {
-					log.appendMsg(e.getMessage() + "\n");
-					continue;
-				}
-				catch (DataTypeConflictException e) {
-					log.appendMsg(e.getMessage() + "\n");
-					continue;
-				}
-				try {
+		String[][] mod2proclist = new String[names.length][];
+		int length = 0;
+		for (int i = 0; i < names.length; ++i) {
+			String moduleName = names[i].getString();
+			String[] callnames = getCallNamesForModule(moduleName, mrt, st, imp);
+			mod2proclist[i] = callnames;
+			length += callnames.length * thunkBodySize;
+		}
+		if (length == 0) {
+			return;
+		}
+		int segment = space.getNextOpenSegment(program.getMemory().getMaxAddress());
+		Address addr = space.getAddress(segment, 0);
+		String comment = "";
+		String source = "";
+		// This isn't a real block, just place holder addresses, so don't create an initialized block
+		MemoryBlockUtils.createUninitializedBlock(program, false, MemoryBlock.EXTERNAL_BLOCK_NAME,
+			addr, length, comment, source, true, false, false, log);
 
-					program.getReferenceManager().addExternalReference(addr, name.getString(),
-						callname, null, SourceType.IMPORTED, 0, RefType.EXTERNAL_REF);
-					symbolTable.createLabel(addr, name.getString() + "_" + callname,
-						SourceType.IMPORTED);
+		for (int i = 0; i < names.length; ++i) {
+			String moduleName = names[i].getString();
+			String[] callnames = mod2proclist[i];
+			for (String callname : callnames) {
+				Function refFunction = null;
+				try {
+					ExternalLocation loc;
+					loc = externalManager.addExtFunction(moduleName, callname, null, SourceType.IMPORTED);
+					refFunction = loc.getFunction();
 				}
 				catch (DuplicateNameException e) {
-					log.appendMsg(e.getMessage() + "\n");
+					log.appendMsg(e.getMessage() + '\n');
 					continue;
 				}
 				catch (InvalidInputException e) {
-					log.appendMsg(e.getMessage() + "\n");
+					log.appendMsg(e.getMessage() + '\n');
 					continue;
 				}
-				addr = addr.addWrap(pointerSize);
+				AddressSet body = new AddressSet();
+				body.add(addr, addr.add(thunkBodySize - 1));
+				try {
+					functionManager.createThunkFunction(null, globalNamespace, addr, body,
+						refFunction, SourceType.IMPORTED);
+				}
+				catch (OverlappingFunctionException e) {
+					log.appendMsg(e.getMessage() + '\n');
+				}
+				addr = addr.addWrap(thunkBodySize);
 			}
 		}
 	}
@@ -559,9 +562,28 @@ public class NeLoader extends AbstractLibrarySupportLoader {
 		createSymbols(rnt.getNames(), symbolTable);
 	}
 
+	private SegmentedAddress getImportSymbolByName(SymbolTable symbolTable, String modname,
+			String procname) {
+		Namespace libnamespace = symbolTable.getNamespace(modname, null);
+		List<Symbol> symbols = symbolTable.getSymbols(procname, libnamespace);
+		if (symbols.isEmpty()) {
+			return null;
+		}
+		Symbol symbol = symbols.get(0);
+		if (symbol.getSymbolType() == SymbolType.FUNCTION && symbol.isExternal()) {
+			Function func = (Function) symbol.getObject();
+			Address[] thunkAddresses = func.getFunctionThunkAddresses();
+			if (thunkAddresses != null && thunkAddresses.length != 0) {
+				return (SegmentedAddress) thunkAddresses[0];
+			}
+		}
+		return null;
+	}
+
 	private void processRelocations(SegmentTable st, ImportedNameTable imp,
 			ModuleReferenceTable mrt, RelocationTable relocTable, Program program, Memory memory,
 			SegmentedAddressSpace space, MessageLog log, TaskMonitor monitor) throws IOException {
+		SymbolTable symbolTable = program.getSymbolTable();
 		Segment[] segments = st.getSegments();
 		for (int s = 0; s < segments.length; ++s) {
 			if (monitor.isCancelled()) {
@@ -590,17 +612,13 @@ public class NeLoader extends AbstractLibrarySupportLoader {
 				else if (reloc.isImportName()) {
 					String modname = getRelocationModuleName(mrt, reloc);
 					String procname = imp.getNameAt(reloc.getTargetOffset()).getString();
-					Symbol symbol = SymbolUtilities.getLabelOrFunctionSymbol(program,
-						modname + "_" + procname, err -> log.error("NE", err));
-					relocAddr = symbol == null ? null : (SegmentedAddress) symbol.getAddress();
+					relocAddr = getImportSymbolByName(symbolTable, modname, procname);
 				}
 				else if (reloc.isImportOrdinal()) {
 					String modname = getRelocationModuleName(mrt, reloc);
 					int ordinal = Conv.shortToInt(reloc.getTargetOffset());
-					Symbol symbol = SymbolUtilities.getLabelOrFunctionSymbol(program,
-						modname + "_" + SymbolUtilities.ORDINAL_PREFIX + ordinal,
-						err -> log.error("NE", err));
-					relocAddr = symbol == null ? null : (SegmentedAddress) symbol.getAddress();
+					String procname = SymbolUtilities.ORDINAL_PREFIX + ordinal;
+					relocAddr = getImportSymbolByName(symbolTable, modname, procname);
 				}
 				else if (reloc.isOpSysFixup()) {
 					// short fixupType = relocs[r].getTargetSegment();

@@ -147,8 +147,9 @@ public:
   /// \param val is constant to be resolved to an address
   /// \param sz is the size of \e val in context.
   /// \param point is the address at which this constant is being used
+  /// \param fullEncoding is used to hold the full pointer encoding if \b val is a partial encoding
   /// \return the resolved Address
-  virtual Address resolve(uintb val,int4 sz,const Address &point)=0;
+  virtual Address resolve(uintb val,int4 sz,const Address &point,uintb &fullEncoding)=0;
 };
 
 /// \brief A virtual space \e stack space
@@ -249,7 +250,7 @@ public:
   AddrSpace *getConstantSpace(void) const; ///< Get the constant space
   Address getConstant(uintb val) const; ///< Get a constant encoded as an Address
   Address createConstFromSpace(AddrSpace *spc) const; ///< Create a constant address encoding an address space
-  Address resolveConstant(AddrSpace *spc,uintb val,int4 sz,const Address &point) const; ///< Resolve native constant to address
+  Address resolveConstant(AddrSpace *spc,uintb val,int4 sz,const Address &point,uintb &fullEncoding) const;
   int4 numSpaces(void) const; ///< Get the number of address spaces for this processor
   AddrSpace *getSpace(int4 i) const; ///< Get an address space via its index
   AddrSpace *getNextSpaceInOrder(AddrSpace *spc) const; ///< Get the next \e contiguous address space
