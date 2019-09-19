@@ -34,7 +34,6 @@ import ghidra.program.model.data.Enum;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.listing.Function.FunctionUpdateType;
-import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.model.pcode.Varnode;
 import ghidra.program.model.symbol.*;
 import ghidra.program.model.util.CodeUnitInsertionException;
@@ -444,9 +443,8 @@ public class DWARFFunctionImporter {
 				}
 
 				boolean external = diea.getBool(DWARFAttribute.DW_AT_external, false);
-				DataType storageType = dwarfDTM.getStorageDataType(diea.getTypeRef(), dvar.type);
 
-				outputGlobal(staticVariableAddress, dvar.type, storageType, external,
+				outputGlobal(staticVariableAddress, dvar.type, external,
 					DWARFSourceInfo.create(diea), dvar.dni);
 			}
 			else {
@@ -750,33 +748,28 @@ public class DWARFFunctionImporter {
 		return false;
 	}
 
-	private Data createVariable(Address address, DataType origDataType, DataType dataType,
-			DWARFNameInfo dni) {
+	private Data createVariable(Address address, DataType dataType, DWARFNameInfo dni) {
 		try {
-			MemoryBlock block = currentProgram.getMemory().getBlock(address);
-			if (dataType.getLength() <= 0 && !block.isInitialized()) {
-				// fall back to the original data type, which shouldn't have any dynamic sized (ie. string) data types
-				dataType = origDataType;
+			String eolComment = null;
+			if (dataType instanceof Dynamic || dataType instanceof FactoryDataType) {
+				eolComment = "Unsupported dynamic data type: " + dataType;
+				dataType = Undefined.getUndefinedDataType(1);
 			}
-			if (dataType.getLength() < 0) {
-				Data result = DataUtilities.createData(currentProgram, address, dataType, -1, false,
-					ClearDataMode.CLEAR_ALL_UNDEFINED_CONFLICT_DATA);
-				variablesProcesesed.add(address);
-				return result;
-			}
-			if (isDataTypeCompatibleWithExistingData(dataType, address)) {
-				Data result = DataUtilities.createData(currentProgram, address, dataType, -1, false,
-					ClearDataMode.CLEAR_ALL_CONFLICT_DATA);
-				variablesProcesesed.add(address);
-				return result;
-			}
-			else {
-				Msg.warn(this,
-					"Could not place static variable " +
-						dni.getNamespacePath().asFormattedString() + " : " + dataType + " at " +
-						address + " because existing data type conflicts.");
+			if (!isDataTypeCompatibleWithExistingData(dataType, address)) {
+				appendComment(address, CodeUnit.EOL_COMMENT,
+					"Could not place DWARF static variable " +
+						dni.getNamespacePath().asFormattedString() + " : " + dataType +
+						" because existing data type conflicts.",
+					"\n");
 				return null;
 			}
+			Data result = DataUtilities.createData(currentProgram, address, dataType, -1, false,
+				ClearDataMode.CLEAR_ALL_CONFLICT_DATA);
+			variablesProcesesed.add(address);
+			if (eolComment != null) {
+				appendComment(address, CodeUnit.EOL_COMMENT, eolComment, "\n");
+			}
+			return result;
 		}
 		catch (CodeUnitInsertionException | DataTypeConflictException e) {
 			Msg.error(this, "Error creating data object at " + address, e);
@@ -784,8 +777,8 @@ public class DWARFFunctionImporter {
 		return null;
 	}
 
-	private void outputGlobal(Address address, DataType origDataType, DataType baseDataType,
-			boolean external, DWARFSourceInfo sourceInfo, DWARFNameInfo dni) {
+	private void outputGlobal(Address address, DataType baseDataType, boolean external,
+			DWARFSourceInfo sourceInfo, DWARFNameInfo dni) {
 
 		Namespace namespace = dni.getParentNamespace(currentProgram);
 
@@ -803,12 +796,11 @@ public class DWARFFunctionImporter {
 
 		setExternalEntryPoint(external, address);
 
-		Data varData = createVariable(address, origDataType, baseDataType, dni);
+		Data varData = createVariable(address, baseDataType, dni);
 		importSummary.globalVarsAdded++;
 
 		if (sourceInfo != null) {
-			currentProgram.getListing().setComment(address, CodeUnit.EOL_COMMENT,
-				sourceInfo.getDescriptionStr());
+			appendComment(address, CodeUnit.EOL_COMMENT, sourceInfo.getDescriptionStr(), "\n");
 
 			if (varData != null) {
 				moveIntoFragment(dni.getName(), varData.getMinAddress(), varData.getMaxAddress(),
