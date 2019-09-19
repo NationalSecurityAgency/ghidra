@@ -1,0 +1,800 @@
+#
+# x86 FMA instructions
+#
+
+# VFIXUPIMMSD 5-120 PAGE 1944 LINE 101211
+define pcodeop vfmadd132pd_fma ;
+:VFMADD132PD XmmReg1, vexVVVV_XmmReg, XmmReg2_m128 is $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W1) & vexVVVV_XmmReg; byte=0x98; (XmmReg1 & YmmReg1) ... & XmmReg2_m128
+{
+	local tmp:16 = vfmadd132pd_fma( XmmReg1, vexVVVV_XmmReg, XmmReg2_m128 );
+	YmmReg1 = zext(tmp);
+	# TODO ZmmReg1 = zext(XmmReg1)
+}
+
+# VFIXUPIMMSD 5-120 PAGE 1944 LINE 101214
+define pcodeop vfmadd213pd_fma ;
+:VFMADD213PD XmmReg1, vexVVVV_XmmReg, XmmReg2_m128 is $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W1) & vexVVVV_XmmReg; byte=0xA8; (XmmReg1 & YmmReg1) ... & XmmReg2_m128
+{
+	local tmp:16 = vfmadd213pd_fma( XmmReg1, vexVVVV_XmmReg, XmmReg2_m128 );
+	YmmReg1 = zext(tmp);
+	# TODO ZmmReg1 = zext(XmmReg1)
+}
+
+# VFIXUPIMMSD 5-120 PAGE 1944 LINE 101217
+define pcodeop vfmadd231pd_fma ;
+:VFMADD231PD XmmReg1, vexVVVV_XmmReg, XmmReg2_m128 is $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W1) & vexVVVV_XmmReg; byte=0xB8; (XmmReg1 & YmmReg1) ... & XmmReg2_m128
+{
+	local tmp:16 = vfmadd231pd_fma( XmmReg1, vexVVVV_XmmReg, XmmReg2_m128 );
+	YmmReg1 = zext(tmp);
+	# TODO ZmmReg1 = zext(XmmReg1)
+}
+
+# VFIXUPIMMSD 5-120 PAGE 1944 LINE 101220
+:VFMADD132PD YmmReg1, vexVVVV_YmmReg, YmmReg2_m256 is $(VEX_L256) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W1) & vexVVVV_YmmReg; byte=0x98; YmmReg1 ... & YmmReg2_m256
+{
+	YmmReg1 = vfmadd132pd_fma( YmmReg1, vexVVVV_YmmReg, YmmReg2_m256 );
+	# TODO ZmmReg1 = zext(YmmReg1)
+}
+
+# VFIXUPIMMSD 5-120 PAGE 1944 LINE 101223
+:VFMADD213PD YmmReg1, vexVVVV_YmmReg, YmmReg2_m256 is $(VEX_L256) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W1) & vexVVVV_YmmReg; byte=0xA8; YmmReg1 ... & YmmReg2_m256
+{
+	YmmReg1 = vfmadd213pd_fma( YmmReg1, vexVVVV_YmmReg, YmmReg2_m256 );
+	# TODO ZmmReg1 = zext(YmmReg1)
+}
+
+# VFIXUPIMMSD 5-120 PAGE 1944 LINE 101226
+:VFMADD231PD YmmReg1, vexVVVV_YmmReg, YmmReg2_m256 is $(VEX_L256) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W1) & vexVVVV_YmmReg; byte=0xB8; YmmReg1 ... & YmmReg2_m256
+{
+	YmmReg1 = vfmadd231pd_fma( YmmReg1, vexVVVV_YmmReg, YmmReg2_m256 );
+	# TODO ZmmReg1 = zext(YmmReg1)
+}
+
+# VFIXUPIMMSS 5-127 PAGE 1951 LINE 101572
+define pcodeop vfmadd132ps_fma ;
+:VFMADD132PS XmmReg1, vexVVVV_XmmReg, XmmReg2_m128 is $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_XmmReg; byte=0x98; (XmmReg1 & YmmReg1) ... & XmmReg2_m128
+{
+	local tmp:16 = vfmadd132ps_fma( XmmReg1, vexVVVV_XmmReg, XmmReg2_m128 );
+	YmmReg1 = zext(tmp);
+	# TODO ZmmReg1 = zext(XmmReg1)
+}
+
+# VFIXUPIMMSS 5-127 PAGE 1951 LINE 101575
+define pcodeop vfmadd213ps_fma ;
+:VFMADD213PS XmmReg1, vexVVVV_XmmReg, XmmReg2_m128 is $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_XmmReg; byte=0xA8; (XmmReg1 & YmmReg1) ... & XmmReg2_m128
+{
+	local tmp:16 = vfmadd213ps_fma( XmmReg1, vexVVVV_XmmReg, XmmReg2_m128 );
+	YmmReg1 = zext(tmp);
+	# TODO ZmmReg1 = zext(XmmReg1)
+}
+
+# VFIXUPIMMSS 5-127 PAGE 1951 LINE 101578
+define pcodeop vfmadd231ps_fma ;
+:VFMADD231PS XmmReg1, vexVVVV_XmmReg, XmmReg2_m128 is $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_XmmReg; byte=0xB8; (XmmReg1 & YmmReg1) ... & XmmReg2_m128
+{
+	local tmp:16 = vfmadd231ps_fma( XmmReg1, vexVVVV_XmmReg, XmmReg2_m128 );
+	YmmReg1 = zext(tmp);
+	# TODO ZmmReg1 = zext(XmmReg1)
+}
+
+# VFIXUPIMMSS 5-127 PAGE 1951 LINE 101581
+:VFMADD132PS YmmReg1, vexVVVV_YmmReg, YmmReg2_m256 is $(VEX_L256) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_YmmReg; byte=0x98; YmmReg1 ... & YmmReg2_m256
+{
+	YmmReg1 = vfmadd132ps_fma( YmmReg1, vexVVVV_YmmReg, YmmReg2_m256 );
+	# TODO ZmmReg1 = zext(YmmReg1)
+}
+
+# VFIXUPIMMSS 5-127 PAGE 1951 LINE 101584
+:VFMADD213PS YmmReg1, vexVVVV_YmmReg, YmmReg2_m256 is $(VEX_L256) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_YmmReg; byte=0xA8; YmmReg1 ... & YmmReg2_m256
+{
+	YmmReg1 = vfmadd213ps_fma( YmmReg1, vexVVVV_YmmReg, YmmReg2_m256 );
+	# TODO ZmmReg1 = zext(YmmReg1)
+}
+
+# VFIXUPIMMSS 5-127 PAGE 1951 LINE 101587
+# WARNING: did not recognize VEX field 0 for "VFMADD231PS ymm1, ymm2, ymm3/m256"
+:VFMADD231PS YmmReg1, vexVVVV_YmmReg, YmmReg2_m256 is $(VEX_L256) & $(VEX_PRE_66) & $(VEX_0F38) & vexVVVV_YmmReg; byte=0xB8; YmmReg1 ... & YmmReg2_m256
+{
+	YmmReg1 = vfmadd231ps_fma( YmmReg1, vexVVVV_YmmReg, YmmReg2_m256 );
+	# TODO ZmmReg1 = zext(YmmReg1)
+}
+
+# VFMADD132PS/VFMADD213PS/VFMADD231PS 5-134 PAGE 1958 LINE 101931
+define pcodeop vfmadd132sd_fma ;
+:VFMADD132SD XmmReg1, vexVVVV_XmmReg, XmmReg2_m64 is $(VEX_LIG) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W1) & vexVVVV_XmmReg; byte=0x99; (XmmReg1 & YmmReg1) ... & XmmReg2_m64
+{
+	local tmp:16 = vfmadd132sd_fma( XmmReg1, vexVVVV_XmmReg, XmmReg2_m64 );
+	YmmReg1 = zext(tmp);
+	# TODO ZmmReg1 = zext(XmmReg1)
+}
+
+# VFMADD132PS/VFMADD213PS/VFMADD231PS 5-134 PAGE 1958 LINE 101934
+define pcodeop vfmadd213sd_fma ;
+:VFMADD213SD XmmReg1, vexVVVV_XmmReg, XmmReg2_m64 is $(VEX_LIG) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W1) & vexVVVV_XmmReg; byte=0xA9; (XmmReg1 & YmmReg1) ... & XmmReg2_m64
+{
+	local tmp:16 = vfmadd213sd_fma( XmmReg1, vexVVVV_XmmReg, XmmReg2_m64 );
+	YmmReg1 = zext(tmp);
+	# TODO ZmmReg1 = zext(XmmReg1)
+}
+
+# VFMADD132PS/VFMADD213PS/VFMADD231PS 5-134 PAGE 1958 LINE 101937
+define pcodeop vfmadd231sd_fma ;
+:VFMADD231SD XmmReg1, vexVVVV_XmmReg, XmmReg2_m64 is $(VEX_LIG) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W1) & vexVVVV_XmmReg; byte=0xB9; (XmmReg1 & YmmReg1) ... & XmmReg2_m64
+{
+	local tmp:16 = vfmadd231sd_fma( XmmReg1, vexVVVV_XmmReg, XmmReg2_m64 );
+	YmmReg1 = zext(tmp);
+	# TODO ZmmReg1 = zext(XmmReg1)
+}
+
+# VFMADD132SS/VFMADD213SS/VFMADD231SS 5-137 PAGE 1961 LINE 102099
+define pcodeop vfmadd132ss_fma ;
+:VFMADD132SS XmmReg1, vexVVVV_XmmReg, XmmReg2_m32 is $(VEX_LIG) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_XmmReg; byte=0x99; (XmmReg1 & YmmReg1) ... & XmmReg2_m32
+{
+	local tmp:16 = vfmadd132ss_fma( XmmReg1, vexVVVV_XmmReg, XmmReg2_m32 );
+	YmmReg1 = zext(tmp);
+	# TODO ZmmReg1 = zext(XmmReg1)
+}
+
+# VFMADD132SS/VFMADD213SS/VFMADD231SS 5-137 PAGE 1961 LINE 102102
+define pcodeop vfmadd213ss_fma ;
+:VFMADD213SS XmmReg1, vexVVVV_XmmReg, XmmReg2_m32 is $(VEX_LIG) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_XmmReg; byte=0xA9; (XmmReg1 & YmmReg1) ... & XmmReg2_m32
+{
+	local tmp:16 = vfmadd213ss_fma( XmmReg1, vexVVVV_XmmReg, XmmReg2_m32 );
+	YmmReg1 = zext(tmp);
+	# TODO ZmmReg1 = zext(XmmReg1)
+}
+
+# VFMADD132SS/VFMADD213SS/VFMADD231SS 5-137 PAGE 1961 LINE 102105
+define pcodeop vfmadd231ss_fma ;
+:VFMADD231SS XmmReg1, vexVVVV_XmmReg, XmmReg2_m32 is $(VEX_LIG) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_XmmReg; byte=0xB9; (XmmReg1 & YmmReg1) ... & XmmReg2_m32
+{
+	local tmp:16 = vfmadd231ss_fma( XmmReg1, vexVVVV_XmmReg, XmmReg2_m32 );
+	YmmReg1 = zext(tmp);
+	# TODO ZmmReg1 = zext(XmmReg1)
+}
+
+# VFMADDSUB132PD/VFMADDSUB213PD/VFMADDSUB231PD 5-140 PAGE 1964 LINE 102272
+define pcodeop vfmaddsub132pd_fma ;
+:VFMADDSUB132PD XmmReg1, vexVVVV_XmmReg, XmmReg2_m128 is $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W1) & vexVVVV_XmmReg; byte=0x96; (XmmReg1 & YmmReg1) ... & XmmReg2_m128
+{
+	local tmp:16 = vfmaddsub132pd_fma( XmmReg1, vexVVVV_XmmReg, XmmReg2_m128 );
+	YmmReg1 = zext(tmp);
+	# TODO ZmmReg1 = zext(XmmReg1)
+}
+
+# VFMADDSUB132PD/VFMADDSUB213PD/VFMADDSUB231PD 5-140 PAGE 1964 LINE 102275
+define pcodeop vfmaddsub213pd_fma ;
+:VFMADDSUB213PD XmmReg1, vexVVVV_XmmReg, XmmReg2_m128 is $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W1) & vexVVVV_XmmReg; byte=0xA6; (XmmReg1 & YmmReg1) ... & XmmReg2_m128
+{
+	local tmp:16 = vfmaddsub213pd_fma( XmmReg1, vexVVVV_XmmReg, XmmReg2_m128 );
+	YmmReg1 = zext(tmp);
+	# TODO ZmmReg1 = zext(XmmReg1)
+}
+
+# VFMADDSUB132PD/VFMADDSUB213PD/VFMADDSUB231PD 5-140 PAGE 1964 LINE 102278
+define pcodeop vfmaddsub231pd_fma ;
+:VFMADDSUB231PD XmmReg1, vexVVVV_XmmReg, XmmReg2_m128 is $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W1) & vexVVVV_XmmReg; byte=0xB6; (XmmReg1 & YmmReg1) ... & XmmReg2_m128
+{
+	local tmp:16 = vfmaddsub231pd_fma( XmmReg1, vexVVVV_XmmReg, XmmReg2_m128 );
+	YmmReg1 = zext(tmp);
+	# TODO ZmmReg1 = zext(XmmReg1)
+}
+
+# VFMADDSUB132PD/VFMADDSUB213PD/VFMADDSUB231PD 5-140 PAGE 1964 LINE 102281
+:VFMADDSUB132PD YmmReg1, vexVVVV_YmmReg, YmmReg2_m256 is $(VEX_L256) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W1) & vexVVVV_YmmReg; byte=0x96; YmmReg1 ... & YmmReg2_m256
+{
+	YmmReg1 = vfmaddsub132pd_fma( YmmReg1, vexVVVV_YmmReg, YmmReg2_m256 );
+	# TODO ZmmReg1 = zext(YmmReg1)
+}
+
+# VFMADDSUB132PD/VFMADDSUB213PD/VFMADDSUB231PD 5-140 PAGE 1964 LINE 102284
+:VFMADDSUB213PD YmmReg1, vexVVVV_YmmReg, YmmReg2_m256 is $(VEX_L256) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W1) & vexVVVV_YmmReg; byte=0xA6; YmmReg1 ... & YmmReg2_m256
+{
+	YmmReg1 = vfmaddsub213pd_fma( YmmReg1, vexVVVV_YmmReg, YmmReg2_m256 );
+	# TODO ZmmReg1 = zext(YmmReg1)
+}
+
+# VFMADDSUB132PD/VFMADDSUB213PD/VFMADDSUB231PD 5-140 PAGE 1964 LINE 102287
+:VFMADDSUB231PD YmmReg1, vexVVVV_YmmReg, YmmReg2_m256 is $(VEX_L256) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W1) & vexVVVV_YmmReg; byte=0xB6; YmmReg1 ... & YmmReg2_m256
+{
+	YmmReg1 = vfmaddsub231pd_fma( YmmReg1, vexVVVV_YmmReg, YmmReg2_m256 );
+	# TODO ZmmReg1 = zext(YmmReg1)
+}
+
+# VFMADD132SS/VFMADD213SS/VFMADD231SS 5-150 PAGE 1974 LINE 102711
+define pcodeop vfmaddsub132ps_fma ;
+:VFMADDSUB132PS XmmReg1, vexVVVV_XmmReg, XmmReg2_m128 is $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_XmmReg; byte=0x96; (XmmReg1 & YmmReg1) ... & XmmReg2_m128
+{
+	local tmp:16 = vfmaddsub132ps_fma( XmmReg1, vexVVVV_XmmReg, XmmReg2_m128 );
+	YmmReg1 = zext(tmp);
+	# TODO ZmmReg1 = zext(XmmReg1)
+}
+
+# VFMADD132SS/VFMADD213SS/VFMADD231SS 5-150 PAGE 1974 LINE 102714
+define pcodeop vfmaddsub213ps_fma ;
+:VFMADDSUB213PS XmmReg1, vexVVVV_XmmReg, XmmReg2_m128 is $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_XmmReg; byte=0xA6; (XmmReg1 & YmmReg1) ... & XmmReg2_m128
+{
+	local tmp:16 = vfmaddsub213ps_fma( XmmReg1, vexVVVV_XmmReg, XmmReg2_m128 );
+	YmmReg1 = zext(tmp);
+	# TODO ZmmReg1 = zext(XmmReg1)
+}
+
+# VFMADD132SS/VFMADD213SS/VFMADD231SS 5-150 PAGE 1974 LINE 102717
+define pcodeop vfmaddsub231ps_fma ;
+:VFMADDSUB231PS XmmReg1, vexVVVV_XmmReg, XmmReg2_m128 is $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_XmmReg; byte=0xB6; (XmmReg1 & YmmReg1) ... & XmmReg2_m128
+{
+	local tmp:16 = vfmaddsub231ps_fma( XmmReg1, vexVVVV_XmmReg, XmmReg2_m128 );
+	YmmReg1 = zext(tmp);
+	# TODO ZmmReg1 = zext(XmmReg1)
+}
+
+# VFMADD132SS/VFMADD213SS/VFMADD231SS 5-150 PAGE 1974 LINE 102720
+:VFMADDSUB132PS YmmReg1, vexVVVV_YmmReg, YmmReg2_m256 is $(VEX_L256) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_YmmReg; byte=0x96; YmmReg1 ... & YmmReg2_m256
+{
+	YmmReg1 = vfmaddsub132ps_fma( YmmReg1, vexVVVV_YmmReg, YmmReg2_m256 );
+	# TODO ZmmReg1 = zext(YmmReg1)
+}
+
+# VFMADD132SS/VFMADD213SS/VFMADD231SS 5-150 PAGE 1974 LINE 102723
+:VFMADDSUB213PS YmmReg1, vexVVVV_YmmReg, YmmReg2_m256 is $(VEX_L256) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_YmmReg; byte=0xA6; YmmReg1 ... & YmmReg2_m256
+{
+	YmmReg1 = vfmaddsub213ps_fma( YmmReg1, vexVVVV_YmmReg, YmmReg2_m256 );
+	# TODO ZmmReg1 = zext(YmmReg1)
+}
+
+# VFMADD132SS/VFMADD213SS/VFMADD231SS 5-150 PAGE 1974 LINE 102726
+:VFMADDSUB231PS YmmReg1, vexVVVV_YmmReg, YmmReg2_m256 is $(VEX_L256) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_YmmReg; byte=0xB6; YmmReg1 ... & YmmReg2_m256
+{
+	YmmReg1 = vfmaddsub231ps_fma( YmmReg1, vexVVVV_YmmReg, YmmReg2_m256 );
+	# TODO ZmmReg1 = zext(YmmReg1)
+}
+
+# VFMSUBADD132PD/VFMSUBADD213PD/VFMSUBADD231PD 5-159 PAGE 1983 LINE 103141
+define pcodeop vfmsubadd132pd_fma ;
+:VFMSUBADD132PD XmmReg1, vexVVVV_XmmReg, XmmReg2_m128 is $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W1) & vexVVVV_XmmReg; byte=0x97; (XmmReg1 & YmmReg1) ... & XmmReg2_m128
+{
+	local tmp:16 = vfmsubadd132pd_fma( XmmReg1, vexVVVV_XmmReg, XmmReg2_m128 );
+	YmmReg1 = zext(tmp);
+	# TODO ZmmReg1 = zext(XmmReg1)
+}
+
+# VFMSUBADD132PD/VFMSUBADD213PD/VFMSUBADD231PD 5-159 PAGE 1983 LINE 103144
+define pcodeop vfmsubadd213pd_fma ;
+:VFMSUBADD213PD XmmReg1, vexVVVV_XmmReg, XmmReg2_m128 is $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W1) & vexVVVV_XmmReg; byte=0xA7; (XmmReg1 & YmmReg1) ... & XmmReg2_m128
+{
+	local tmp:16 = vfmsubadd213pd_fma( XmmReg1, vexVVVV_XmmReg, XmmReg2_m128 );
+	YmmReg1 = zext(tmp);
+	# TODO ZmmReg1 = zext(XmmReg1)
+}
+
+# VFMSUBADD132PD/VFMSUBADD213PD/VFMSUBADD231PD 5-159 PAGE 1983 LINE 103147
+define pcodeop vfmsubadd231pd_fma ;
+:VFMSUBADD231PD XmmReg1, vexVVVV_XmmReg, XmmReg2_m128 is $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W1) & vexVVVV_XmmReg; byte=0xB7; (XmmReg1 & YmmReg1) ... & XmmReg2_m128
+{
+	local tmp:16 = vfmsubadd231pd_fma( XmmReg1, vexVVVV_XmmReg, XmmReg2_m128 );
+	YmmReg1 = zext(tmp);
+	# TODO ZmmReg1 = zext(XmmReg1)
+}
+
+# VFMSUBADD132PD/VFMSUBADD213PD/VFMSUBADD231PD 5-159 PAGE 1983 LINE 103150
+:VFMSUBADD132PD YmmReg1, vexVVVV_YmmReg, YmmReg2_m256 is $(VEX_L256) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W1) & vexVVVV_YmmReg; byte=0x97; YmmReg1 ... & YmmReg2_m256
+{
+	YmmReg1 = vfmsubadd132pd_fma( YmmReg1, vexVVVV_YmmReg, YmmReg2_m256 );
+	# TODO ZmmReg1 = zext(YmmReg1)
+}
+
+# VFMSUBADD132PD/VFMSUBADD213PD/VFMSUBADD231PD 5-159 PAGE 1983 LINE 103153
+:VFMSUBADD213PD YmmReg1, vexVVVV_YmmReg, YmmReg2_m256 is $(VEX_L256) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W1) & vexVVVV_YmmReg; byte=0xA7; YmmReg1 ... & YmmReg2_m256
+{
+	YmmReg1 = vfmsubadd213pd_fma( YmmReg1, vexVVVV_YmmReg, YmmReg2_m256 );
+	# TODO ZmmReg1 = zext(YmmReg1)
+}
+
+# VFMSUBADD132PD/VFMSUBADD213PD/VFMSUBADD231PD 5-159 PAGE 1983 LINE 103156
+:VFMSUBADD231PD YmmReg1, vexVVVV_YmmReg, YmmReg2_m256 is $(VEX_L256) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W1) & vexVVVV_YmmReg; byte=0xB7; YmmReg1 ... & YmmReg2_m256
+{
+	YmmReg1 = vfmsubadd231pd_fma( YmmReg1, vexVVVV_YmmReg, YmmReg2_m256 );
+	# TODO ZmmReg1 = zext(YmmReg1)
+}
+
+# VFMSUBADD132PS/VFMSUBADD213PS/VFMSUBADD231PS 5-169 PAGE 1993 LINE 103581
+define pcodeop vfmsubadd132ps_fma ;
+:VFMSUBADD132PS XmmReg1, vexVVVV_XmmReg, XmmReg2_m128 is $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_XmmReg; byte=0x97; (XmmReg1 & YmmReg1) ... & XmmReg2_m128
+{
+	local tmp:16 = vfmsubadd132ps_fma( XmmReg1, vexVVVV_XmmReg, XmmReg2_m128 );
+	YmmReg1 = zext(tmp);
+	# TODO ZmmReg1 = zext(XmmReg1)
+}
+
+# VFMSUBADD132PS/VFMSUBADD213PS/VFMSUBADD231PS 5-169 PAGE 1993 LINE 103584
+define pcodeop vfmsubadd213ps_fma ;
+:VFMSUBADD213PS XmmReg1, vexVVVV_XmmReg, XmmReg2_m128 is $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_XmmReg; byte=0xA7; (XmmReg1 & YmmReg1) ... & XmmReg2_m128
+{
+	local tmp:16 = vfmsubadd213ps_fma( XmmReg1, vexVVVV_XmmReg, XmmReg2_m128 );
+	YmmReg1 = zext(tmp);
+	# TODO ZmmReg1 = zext(XmmReg1)
+}
+
+# VFMSUBADD132PS/VFMSUBADD213PS/VFMSUBADD231PS 5-169 PAGE 1993 LINE 103587
+define pcodeop vfmsubadd231ps_fma ;
+:VFMSUBADD231PS XmmReg1, vexVVVV_XmmReg, XmmReg2_m128 is $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_XmmReg; byte=0xB7; (XmmReg1 & YmmReg1) ... & XmmReg2_m128
+{
+	local tmp:16 = vfmsubadd231ps_fma( XmmReg1, vexVVVV_XmmReg, XmmReg2_m128 );
+	YmmReg1 = zext(tmp);
+	# TODO ZmmReg1 = zext(XmmReg1)
+}
+
+# VFMSUBADD132PS/VFMSUBADD213PS/VFMSUBADD231PS 5-169 PAGE 1993 LINE 103590
+:VFMSUBADD132PS YmmReg1, vexVVVV_YmmReg, YmmReg2_m256 is $(VEX_L256) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_YmmReg; byte=0x97; YmmReg1 ... & YmmReg2_m256
+{
+	YmmReg1 = vfmsubadd132ps_fma( YmmReg1, vexVVVV_YmmReg, YmmReg2_m256 );
+	# TODO ZmmReg1 = zext(YmmReg1)
+}
+
+# VFMSUBADD132PS/VFMSUBADD213PS/VFMSUBADD231PS 5-169 PAGE 1993 LINE 103593
+:VFMSUBADD213PS YmmReg1, vexVVVV_YmmReg, YmmReg2_m256 is $(VEX_L256) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_YmmReg; byte=0xA7; YmmReg1 ... & YmmReg2_m256
+{
+	YmmReg1 = vfmsubadd213ps_fma( YmmReg1, vexVVVV_YmmReg, YmmReg2_m256 );
+	# TODO ZmmReg1 = zext(YmmReg1)
+}
+
+# VFMSUBADD132PS/VFMSUBADD213PS/VFMSUBADD231PS 5-169 PAGE 1993 LINE 103596
+:VFMSUBADD231PS YmmReg1, vexVVVV_YmmReg, YmmReg2_m256 is $(VEX_L256) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_YmmReg; byte=0xB7; YmmReg1 ... & YmmReg2_m256
+{
+	YmmReg1 = vfmsubadd231ps_fma( YmmReg1, vexVVVV_YmmReg, YmmReg2_m256 );
+	# TODO ZmmReg1 = zext(YmmReg1)
+}
+
+# VFMSUB132PD/VFMSUB213PD/VFMSUB231PD 5-179 PAGE 2003 LINE 104019
+define pcodeop vfmsub132pd_fma ;
+:VFMSUB132PD XmmReg1, vexVVVV_XmmReg, XmmReg2_m128 is $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W1) & vexVVVV_XmmReg; byte=0x9A; (XmmReg1 & YmmReg1) ... & XmmReg2_m128
+{
+	local tmp:16 = vfmsub132pd_fma( XmmReg1, vexVVVV_XmmReg, XmmReg2_m128 );
+	YmmReg1 = zext(tmp);
+	# TODO ZmmReg1 = zext(XmmReg1)
+}
+
+# VFMSUB132PD/VFMSUB213PD/VFMSUB231PD 5-179 PAGE 2003 LINE 104022
+define pcodeop vfmsub213pd_fma ;
+:VFMSUB213PD XmmReg1, vexVVVV_XmmReg, XmmReg2_m128 is $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W1) & vexVVVV_XmmReg; byte=0xAA; (XmmReg1 & YmmReg1) ... & XmmReg2_m128
+{
+	local tmp:16 = vfmsub213pd_fma( XmmReg1, vexVVVV_XmmReg, XmmReg2_m128 );
+	YmmReg1 = zext(tmp);
+	# TODO ZmmReg1 = zext(XmmReg1)
+}
+
+# VFMSUB132PD/VFMSUB213PD/VFMSUB231PD 5-179 PAGE 2003 LINE 104025
+define pcodeop vfmsub231pd_fma ;
+:VFMSUB231PD XmmReg1, vexVVVV_XmmReg, XmmReg2_m128 is $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W1) & vexVVVV_XmmReg; byte=0xBA; (XmmReg1 & YmmReg1) ... & XmmReg2_m128
+{
+	local tmp:16 = vfmsub231pd_fma( XmmReg1, vexVVVV_XmmReg, XmmReg2_m128 );
+	YmmReg1 = zext(tmp);
+	# TODO ZmmReg1 = zext(XmmReg1)
+}
+
+# VFMSUB132PD/VFMSUB213PD/VFMSUB231PD 5-179 PAGE 2003 LINE 104028
+:VFMSUB132PD YmmReg1, vexVVVV_YmmReg, YmmReg2_m256 is $(VEX_L256) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W1) & vexVVVV_YmmReg; byte=0x9A; YmmReg1 ... & YmmReg2_m256
+{
+	YmmReg1 = vfmsub132pd_fma( YmmReg1, vexVVVV_YmmReg, YmmReg2_m256 );
+	# TODO ZmmReg1 = zext(YmmReg1)
+}
+
+# VFMSUB132PD/VFMSUB213PD/VFMSUB231PD 5-179 PAGE 2003 LINE 104031
+:VFMSUB213PD YmmReg1, vexVVVV_YmmReg, YmmReg2_m256 is $(VEX_L256) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W1) & vexVVVV_YmmReg; byte=0xAA; YmmReg1 ... & YmmReg2_m256
+{
+	YmmReg1 = vfmsub213pd_fma( YmmReg1, vexVVVV_YmmReg, YmmReg2_m256 );
+	# TODO ZmmReg1 = zext(YmmReg1)
+}
+
+# VFMSUB132PD/VFMSUB213PD/VFMSUB231PD 5-179 PAGE 2003 LINE 104034
+:VFMSUB231PD YmmReg1, vexVVVV_YmmReg, YmmReg2_m256 is $(VEX_L256) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W1) & vexVVVV_YmmReg; byte=0xBA; YmmReg1 ... & YmmReg2_m256
+{
+	YmmReg1 = vfmsub231pd_fma( YmmReg1, vexVVVV_YmmReg, YmmReg2_m256 );
+	# TODO ZmmReg1 = zext(YmmReg1)
+}
+
+# VFMSUB132PS/VFMSUB213PS/VFMSUB231PS 5-186 PAGE 2010 LINE 104379
+define pcodeop vfmsub132ps_fma ;
+:VFMSUB132PS XmmReg1, vexVVVV_XmmReg, XmmReg2_m128 is $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_XmmReg; byte=0x9A; (XmmReg1 & YmmReg1) ... & XmmReg2_m128
+{
+	local tmp:16 = vfmsub132ps_fma( XmmReg1, vexVVVV_XmmReg, XmmReg2_m128 );
+	YmmReg1 = zext(tmp);
+	# TODO ZmmReg1 = zext(XmmReg1)
+}
+
+# VFMSUB132PS/VFMSUB213PS/VFMSUB231PS 5-186 PAGE 2010 LINE 104382
+define pcodeop vfmsub213ps_fma ;
+:VFMSUB213PS XmmReg1, vexVVVV_XmmReg, XmmReg2_m128 is $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_XmmReg; byte=0xAA; (XmmReg1 & YmmReg1) ... & XmmReg2_m128
+{
+	local tmp:16 = vfmsub213ps_fma( XmmReg1, vexVVVV_XmmReg, XmmReg2_m128 );
+	YmmReg1 = zext(tmp);
+	# TODO ZmmReg1 = zext(XmmReg1)
+}
+
+# VFMSUB132PS/VFMSUB213PS/VFMSUB231PS 5-186 PAGE 2010 LINE 104385
+define pcodeop vfmsub231ps_fma ;
+:VFMSUB231PS XmmReg1, vexVVVV_XmmReg, XmmReg2_m128 is $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_XmmReg; byte=0xBA; (XmmReg1 & YmmReg1) ... & XmmReg2_m128
+{
+	local tmp:16 = vfmsub231ps_fma( XmmReg1, vexVVVV_XmmReg, XmmReg2_m128 );
+	YmmReg1 = zext(tmp);
+	# TODO ZmmReg1 = zext(XmmReg1)
+}
+
+# VFMSUB132PS/VFMSUB213PS/VFMSUB231PS 5-186 PAGE 2010 LINE 104388
+:VFMSUB132PS YmmReg1, vexVVVV_YmmReg, YmmReg2_m256 is $(VEX_L256) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_YmmReg; byte=0x9A; YmmReg1 ... & YmmReg2_m256
+{
+	YmmReg1 = vfmsub132ps_fma( YmmReg1, vexVVVV_YmmReg, YmmReg2_m256 );
+	# TODO ZmmReg1 = zext(YmmReg1)
+}
+
+# VFMSUB132PS/VFMSUB213PS/VFMSUB231PS 5-186 PAGE 2010 LINE 104391
+:VFMSUB213PS YmmReg1, vexVVVV_YmmReg, YmmReg2_m256 is $(VEX_L256) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_YmmReg; byte=0xAA; YmmReg1 ... & YmmReg2_m256
+{
+	YmmReg1 = vfmsub213ps_fma( YmmReg1, vexVVVV_YmmReg, YmmReg2_m256 );
+	# TODO ZmmReg1 = zext(YmmReg1)
+}
+
+# VFMSUB132PS/VFMSUB213PS/VFMSUB231PS 5-186 PAGE 2010 LINE 104394
+# WARNING: did not recognize VEX field 0 for "VFMSUB231PS ymm1, ymm2, ymm3/m256"
+:VFMSUB231PS YmmReg1, vexVVVV_YmmReg, YmmReg2_m256 is $(VEX_L256) & $(VEX_PRE_66) & $(VEX_0F38) & vexVVVV_YmmReg; byte=0xBA; YmmReg1 ... & YmmReg2_m256
+{
+	YmmReg1 = vfmsub231ps_fma( YmmReg1, vexVVVV_YmmReg, YmmReg2_m256 );
+	# TODO ZmmReg1 = zext(YmmReg1)
+}
+
+# VFMSUB132SD/VFMSUB213SD/VFMSUB231SD 5-193 PAGE 2017 LINE 104738
+define pcodeop vfmsub132sd_fma ;
+:VFMSUB132SD XmmReg1, vexVVVV_XmmReg, XmmReg2_m64 is $(VEX_LIG) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W1) & vexVVVV_XmmReg; byte=0x9B; (XmmReg1 & YmmReg1) ... & XmmReg2_m64
+{
+	local tmp:16 = vfmsub132sd_fma( XmmReg1, vexVVVV_XmmReg, XmmReg2_m64 );
+	YmmReg1 = zext(tmp);
+	# TODO ZmmReg1 = zext(XmmReg1)
+}
+
+# VFMSUB132SD/VFMSUB213SD/VFMSUB231SD 5-193 PAGE 2017 LINE 104741
+define pcodeop vfmsub213sd_fma ;
+:VFMSUB213SD XmmReg1, vexVVVV_XmmReg, XmmReg2_m64 is $(VEX_LIG) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W1) & vexVVVV_XmmReg; byte=0xAB; (XmmReg1 & YmmReg1) ... & XmmReg2_m64
+{
+	local tmp:16 = vfmsub213sd_fma( XmmReg1, vexVVVV_XmmReg, XmmReg2_m64 );
+	YmmReg1 = zext(tmp);
+	# TODO ZmmReg1 = zext(XmmReg1)
+}
+
+# VFMSUB132SD/VFMSUB213SD/VFMSUB231SD 5-193 PAGE 2017 LINE 104744
+define pcodeop vfmsub231sd_fma ;
+:VFMSUB231SD XmmReg1, vexVVVV_XmmReg, XmmReg2_m64 is $(VEX_LIG) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W1) & vexVVVV_XmmReg; byte=0xBB; (XmmReg1 & YmmReg1) ... & XmmReg2_m64
+{
+	local tmp:16 = vfmsub231sd_fma( XmmReg1, vexVVVV_XmmReg, XmmReg2_m64 );
+	YmmReg1 = zext(tmp);
+	# TODO ZmmReg1 = zext(XmmReg1)
+}
+
+# VFMSUB132SS/VFMSUB213SS/VFMSUB231SS 5-196 PAGE 2020 LINE 104913
+define pcodeop vfmsub132ss_fma ;
+:VFMSUB132SS XmmReg1, vexVVVV_XmmReg, XmmReg2_m32 is $(VEX_LIG) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_XmmReg; byte=0x9B; (XmmReg1 & YmmReg1) ... & XmmReg2_m32
+{
+	local tmp:16 = vfmsub132ss_fma( XmmReg1, vexVVVV_XmmReg, XmmReg2_m32 );
+	YmmReg1 = zext(tmp);
+	# TODO ZmmReg1 = zext(XmmReg1)
+}
+
+# VFMSUB132SS/VFMSUB213SS/VFMSUB231SS 5-196 PAGE 2020 LINE 104916
+define pcodeop vfmsub213ss_fma ;
+:VFMSUB213SS XmmReg1, vexVVVV_XmmReg, XmmReg2_m32 is $(VEX_LIG) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_XmmReg; byte=0xAB; (XmmReg1 & YmmReg1) ... & XmmReg2_m32
+{
+	local tmp:16 = vfmsub213ss_fma( XmmReg1, vexVVVV_XmmReg, XmmReg2_m32 );
+	YmmReg1 = zext(tmp);
+	# TODO ZmmReg1 = zext(XmmReg1)
+}
+
+# VFMSUB132SS/VFMSUB213SS/VFMSUB231SS 5-196 PAGE 2020 LINE 104919
+define pcodeop vfmsub231ss_fma ;
+:VFMSUB231SS XmmReg1, vexVVVV_XmmReg, XmmReg2_m32 is $(VEX_LIG) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_XmmReg; byte=0xBB; (XmmReg1 & YmmReg1) ... & XmmReg2_m32
+{
+	local tmp:16 = vfmsub231ss_fma( XmmReg1, vexVVVV_XmmReg, XmmReg2_m32 );
+	YmmReg1 = zext(tmp);
+	# TODO ZmmReg1 = zext(XmmReg1)
+}
+
+# VFNMADD132PD/VFNMADD213PD/VFNMADD231PD 5-199 PAGE 2023 LINE 105088
+define pcodeop vfnmadd132pd_fma ;
+:VFNMADD132PD XmmReg1, vexVVVV_XmmReg, XmmReg2_m128 is $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W1) & vexVVVV_XmmReg; byte=0x9C; (XmmReg1 & YmmReg1) ... & XmmReg2_m128
+{
+	local tmp:16 = vfnmadd132pd_fma( XmmReg1, vexVVVV_XmmReg, XmmReg2_m128 );
+	YmmReg1 = zext(tmp);
+	# TODO ZmmReg1 = zext(XmmReg1)
+}
+
+# VFNMADD132PD/VFNMADD213PD/VFNMADD231PD 5-199 PAGE 2023 LINE 105091
+define pcodeop vfnmadd213pd_fma ;
+:VFNMADD213PD XmmReg1, vexVVVV_XmmReg, XmmReg2_m128 is $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W1) & vexVVVV_XmmReg; byte=0xAC; (XmmReg1 & YmmReg1) ... & XmmReg2_m128
+{
+	local tmp:16 = vfnmadd213pd_fma( XmmReg1, vexVVVV_XmmReg, XmmReg2_m128 );
+	YmmReg1 = zext(tmp);
+	# TODO ZmmReg1 = zext(XmmReg1)
+}
+
+# VFNMADD132PD/VFNMADD213PD/VFNMADD231PD 5-199 PAGE 2023 LINE 105094
+define pcodeop vfnmadd231pd_fma ;
+:VFNMADD231PD XmmReg1, vexVVVV_XmmReg, XmmReg2_m128 is $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W1) & vexVVVV_XmmReg; byte=0xBC; (XmmReg1 & YmmReg1) ... & XmmReg2_m128
+{
+	local tmp:16 = vfnmadd231pd_fma( XmmReg1, vexVVVV_XmmReg, XmmReg2_m128 );
+	YmmReg1 = zext(tmp);
+	# TODO ZmmReg1 = zext(XmmReg1)
+}
+
+# VFNMADD132PD/VFNMADD213PD/VFNMADD231PD 5-199 PAGE 2023 LINE 105097
+:VFNMADD132PD YmmReg1, vexVVVV_YmmReg, YmmReg2_m256 is $(VEX_L256) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W1) & vexVVVV_YmmReg; byte=0x9C; YmmReg1 ... & YmmReg2_m256
+{
+	YmmReg1 = vfnmadd132pd_fma( YmmReg1, vexVVVV_YmmReg, YmmReg2_m256 );
+	# TODO ZmmReg1 = zext(YmmReg1)
+}
+
+# VFNMADD132PD/VFNMADD213PD/VFNMADD231PD 5-199 PAGE 2023 LINE 105100
+:VFNMADD213PD YmmReg1, vexVVVV_YmmReg, YmmReg2_m256 is $(VEX_L256) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W1) & vexVVVV_YmmReg; byte=0xAC; YmmReg1 ... & YmmReg2_m256
+{
+	YmmReg1 = vfnmadd213pd_fma( YmmReg1, vexVVVV_YmmReg, YmmReg2_m256 );
+	# TODO ZmmReg1 = zext(YmmReg1)
+}
+
+# VFNMADD132PD/VFNMADD213PD/VFNMADD231PD 5-199 PAGE 2023 LINE 105103
+:VFNMADD231PD YmmReg1, vexVVVV_YmmReg, YmmReg2_m256 is $(VEX_L256) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W1) & vexVVVV_YmmReg; byte=0xBC; YmmReg1 ... & YmmReg2_m256
+{
+	YmmReg1 = vfnmadd231pd_fma( YmmReg1, vexVVVV_YmmReg, YmmReg2_m256 );
+	# TODO ZmmReg1 = zext(YmmReg1)
+}
+
+# VFNMADD132PS/VFNMADD213PS/VFNMADD231PS 5-206 PAGE 2030 LINE 105447
+define pcodeop vfnmadd132ps_fma ;
+:VFNMADD132PS XmmReg1, vexVVVV_XmmReg, XmmReg2_m128 is $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_XmmReg; byte=0x9C; (XmmReg1 & YmmReg1) ... & XmmReg2_m128
+{
+	local tmp:16 = vfnmadd132ps_fma( XmmReg1, vexVVVV_XmmReg, XmmReg2_m128 );
+	YmmReg1 = zext(tmp);
+	# TODO ZmmReg1 = zext(XmmReg1)
+}
+
+# VFNMADD132PS/VFNMADD213PS/VFNMADD231PS 5-206 PAGE 2030 LINE 105450
+define pcodeop vfnmadd213ps_fma ;
+:VFNMADD213PS XmmReg1, vexVVVV_XmmReg, XmmReg2_m128 is $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_XmmReg; byte=0xAC; (XmmReg1 & YmmReg1) ... & XmmReg2_m128
+{
+	local tmp:16 = vfnmadd213ps_fma( XmmReg1, vexVVVV_XmmReg, XmmReg2_m128 );
+	YmmReg1 = zext(tmp);
+	# TODO ZmmReg1 = zext(XmmReg1)
+}
+
+# VFNMADD132PS/VFNMADD213PS/VFNMADD231PS 5-206 PAGE 2030 LINE 105453
+define pcodeop vfnmadd231ps_fma ;
+:VFNMADD231PS XmmReg1, vexVVVV_XmmReg, XmmReg2_m128 is $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_XmmReg; byte=0xBC; (XmmReg1 & YmmReg1) ... & XmmReg2_m128
+{
+	local tmp:16 = vfnmadd231ps_fma( XmmReg1, vexVVVV_XmmReg, XmmReg2_m128 );
+	YmmReg1 = zext(tmp);
+	# TODO ZmmReg1 = zext(XmmReg1)
+}
+
+# VFNMADD132PS/VFNMADD213PS/VFNMADD231PS 5-206 PAGE 2030 LINE 105456
+:VFNMADD132PS YmmReg1, vexVVVV_YmmReg, YmmReg2_m256 is $(VEX_L256) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_YmmReg; byte=0x9C; YmmReg1 ... & YmmReg2_m256
+{
+	YmmReg1 = vfnmadd132ps_fma( YmmReg1, vexVVVV_YmmReg, YmmReg2_m256 );
+	# TODO ZmmReg1 = zext(YmmReg1)
+}
+
+# VFNMADD132PS/VFNMADD213PS/VFNMADD231PS 5-206 PAGE 2030 LINE 105459
+:VFNMADD213PS YmmReg1, vexVVVV_YmmReg, YmmReg2_m256 is $(VEX_L256) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_YmmReg; byte=0xAC; YmmReg1 ... & YmmReg2_m256
+{
+	YmmReg1 = vfnmadd213ps_fma( YmmReg1, vexVVVV_YmmReg, YmmReg2_m256 );
+	# TODO ZmmReg1 = zext(YmmReg1)
+}
+
+# VFNMADD132PS/VFNMADD213PS/VFNMADD231PS 5-206 PAGE 2030 LINE 105462
+# WARNING: did not recognize VEX field 0 for "VFNMADD231PS ymm1, ymm2, ymm3/m256"
+:VFNMADD231PS YmmReg1, vexVVVV_YmmReg, YmmReg2_m256 is $(VEX_L256) & $(VEX_PRE_66) & $(VEX_0F38) & vexVVVV_YmmReg; byte=0xBC; YmmReg1 ... & YmmReg2_m256
+{
+	YmmReg1 = vfnmadd231ps_fma( YmmReg1, vexVVVV_YmmReg, YmmReg2_m256 );
+	# TODO ZmmReg1 = zext(YmmReg1)
+}
+
+# VFNMADD132SD/VFNMADD213SD/VFNMADD231SD 5-212 PAGE 2036 LINE 105794
+define pcodeop vfnmadd132sd_fma ;
+:VFNMADD132SD XmmReg1, vexVVVV_XmmReg, XmmReg2_m64 is $(VEX_LIG) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W1) & vexVVVV_XmmReg; byte=0x9D; (XmmReg1 & YmmReg1) ... & XmmReg2_m64
+{
+	local tmp:16 = vfnmadd132sd_fma( XmmReg1, vexVVVV_XmmReg, XmmReg2_m64 );
+	YmmReg1 = zext(tmp);
+	# TODO ZmmReg1 = zext(XmmReg1)
+}
+
+# VFNMADD132SD/VFNMADD213SD/VFNMADD231SD 5-212 PAGE 2036 LINE 105797
+define pcodeop vfnmadd213sd_fma ;
+:VFNMADD213SD XmmReg1, vexVVVV_XmmReg, XmmReg2_m64 is $(VEX_LIG) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W1) & vexVVVV_XmmReg; byte=0xAD; (XmmReg1 & YmmReg1) ... & XmmReg2_m64
+{
+	local tmp:16 = vfnmadd213sd_fma( XmmReg1, vexVVVV_XmmReg, XmmReg2_m64 );
+	YmmReg1 = zext(tmp);
+	# TODO ZmmReg1 = zext(XmmReg1)
+}
+
+# VFNMADD132SD/VFNMADD213SD/VFNMADD231SD 5-212 PAGE 2036 LINE 105800
+define pcodeop vfnmadd231sd_fma ;
+:VFNMADD231SD XmmReg1, vexVVVV_XmmReg, XmmReg2_m64 is $(VEX_LIG) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W1) & vexVVVV_XmmReg; byte=0xBD; (XmmReg1 & YmmReg1) ... & XmmReg2_m64
+{
+	local tmp:16 = vfnmadd231sd_fma( XmmReg1, vexVVVV_XmmReg, XmmReg2_m64 );
+	YmmReg1 = zext(tmp);
+	# TODO ZmmReg1 = zext(XmmReg1)
+}
+
+# VFNMADD132SS/VFNMADD213SS/VFNMADD231SS 5-215 PAGE 2039 LINE 105966
+define pcodeop vfnmadd132ss_fma ;
+:VFNMADD132SS XmmReg1, vexVVVV_XmmReg, XmmReg2_m32 is $(VEX_LIG) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_XmmReg; byte=0x9D; (XmmReg1 & YmmReg1) ... & XmmReg2_m32
+{
+	local tmp:16 = vfnmadd132ss_fma( XmmReg1, vexVVVV_XmmReg, XmmReg2_m32 );
+	YmmReg1 = zext(tmp);
+	# TODO ZmmReg1 = zext(XmmReg1)
+}
+
+# VFNMADD132SS/VFNMADD213SS/VFNMADD231SS 5-215 PAGE 2039 LINE 105969
+define pcodeop vfnmadd213ss_fma ;
+:VFNMADD213SS XmmReg1, vexVVVV_XmmReg, XmmReg2_m32 is $(VEX_LIG) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_XmmReg; byte=0xAD; (XmmReg1 & YmmReg1) ... & XmmReg2_m32
+{
+	local tmp:16 = vfnmadd213ss_fma( XmmReg1, vexVVVV_XmmReg, XmmReg2_m32 );
+	YmmReg1 = zext(tmp);
+	# TODO ZmmReg1 = zext(XmmReg1)
+}
+
+# VFNMADD132SS/VFNMADD213SS/VFNMADD231SS 5-215 PAGE 2039 LINE 105972
+define pcodeop vfnmadd231ss_fma ;
+:VFNMADD231SS XmmReg1, vexVVVV_XmmReg, XmmReg2_m32 is $(VEX_LIG) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_XmmReg; byte=0xBD; (XmmReg1 & YmmReg1) ... & XmmReg2_m32
+{
+	local tmp:16 = vfnmadd231ss_fma( XmmReg1, vexVVVV_XmmReg, XmmReg2_m32 );
+	YmmReg1 = zext(tmp);
+	# TODO ZmmReg1 = zext(XmmReg1)
+}
+
+# VFNMSUB132PD/VFNMSUB213PD/VFNMSUB231PD 5-218 PAGE 2042 LINE 106138
+define pcodeop vfnmsub132pd_fma ;
+:VFNMSUB132PD XmmReg1, vexVVVV_XmmReg, XmmReg2_m128 is $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W1) & vexVVVV_XmmReg; byte=0x9E; (XmmReg1 & YmmReg1) ... & XmmReg2_m128
+{
+	local tmp:16 = vfnmsub132pd_fma( XmmReg1, vexVVVV_XmmReg, XmmReg2_m128 );
+	YmmReg1 = zext(tmp);
+	# TODO ZmmReg1 = zext(XmmReg1)
+}
+
+# VFNMSUB132PD/VFNMSUB213PD/VFNMSUB231PD 5-218 PAGE 2042 LINE 106141
+define pcodeop vfnmsub213pd_fma ;
+:VFNMSUB213PD XmmReg1, vexVVVV_XmmReg, XmmReg2_m128 is $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W1) & vexVVVV_XmmReg; byte=0xAE; (XmmReg1 & YmmReg1) ... & XmmReg2_m128
+{
+	local tmp:16 = vfnmsub213pd_fma( XmmReg1, vexVVVV_XmmReg, XmmReg2_m128 );
+	YmmReg1 = zext(tmp);
+	# TODO ZmmReg1 = zext(XmmReg1)
+}
+
+# VFNMSUB132PD/VFNMSUB213PD/VFNMSUB231PD 5-218 PAGE 2042 LINE 106144
+define pcodeop vfnmsub231pd_fma ;
+:VFNMSUB231PD XmmReg1, vexVVVV_XmmReg, XmmReg2_m128 is $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W1) & vexVVVV_XmmReg; byte=0xBE; (XmmReg1 & YmmReg1) ... & XmmReg2_m128
+{
+	local tmp:16 = vfnmsub231pd_fma( XmmReg1, vexVVVV_XmmReg, XmmReg2_m128 );
+	YmmReg1 = zext(tmp);
+	# TODO ZmmReg1 = zext(XmmReg1)
+}
+
+# VFNMSUB132PD/VFNMSUB213PD/VFNMSUB231PD 5-218 PAGE 2042 LINE 106147
+:VFNMSUB132PD YmmReg1, vexVVVV_YmmReg, YmmReg2_m256 is $(VEX_L256) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W1) & vexVVVV_YmmReg; byte=0x9E; YmmReg1 ... & YmmReg2_m256
+{
+	YmmReg1 = vfnmsub132pd_fma( YmmReg1, vexVVVV_YmmReg, YmmReg2_m256 );
+	# TODO ZmmReg1 = zext(YmmReg1)
+}
+
+# VFNMSUB132PD/VFNMSUB213PD/VFNMSUB231PD 5-218 PAGE 2042 LINE 106150
+:VFNMSUB213PD YmmReg1, vexVVVV_YmmReg, YmmReg2_m256 is $(VEX_L256) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W1) & vexVVVV_YmmReg; byte=0xAE; YmmReg1 ... & YmmReg2_m256
+{
+	YmmReg1 = vfnmsub213pd_fma( YmmReg1, vexVVVV_YmmReg, YmmReg2_m256 );
+	# TODO ZmmReg1 = zext(YmmReg1)
+}
+
+# VFNMSUB132PD/VFNMSUB213PD/VFNMSUB231PD 5-218 PAGE 2042 LINE 106153
+:VFNMSUB231PD YmmReg1, vexVVVV_YmmReg, YmmReg2_m256 is $(VEX_L256) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W1) & vexVVVV_YmmReg; byte=0xBE; YmmReg1 ... & YmmReg2_m256
+{
+	YmmReg1 = vfnmsub231pd_fma( YmmReg1, vexVVVV_YmmReg, YmmReg2_m256 );
+	# TODO ZmmReg1 = zext(YmmReg1)
+}
+
+# VFNMSUB132PS/VFNMSUB213PS/VFNMSUB231PS 5-224 PAGE 2048 LINE 106487
+define pcodeop vfnmsub132ps_fma ;
+:VFNMSUB132PS XmmReg1, vexVVVV_XmmReg, XmmReg2_m128 is $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_XmmReg; byte=0x9E; (XmmReg1 & YmmReg1) ... & XmmReg2_m128
+{
+	local tmp:16 = vfnmsub132ps_fma( XmmReg1, vexVVVV_XmmReg, XmmReg2_m128 );
+	YmmReg1 = zext(tmp);
+	# TODO ZmmReg1 = zext(XmmReg1)
+}
+
+# VFNMSUB132PS/VFNMSUB213PS/VFNMSUB231PS 5-224 PAGE 2048 LINE 106490
+define pcodeop vfnmsub213ps_fma ;
+:VFNMSUB213PS XmmReg1, vexVVVV_XmmReg, XmmReg2_m128 is $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_XmmReg; byte=0xAE; (XmmReg1 & YmmReg1) ... & XmmReg2_m128
+{
+	local tmp:16 = vfnmsub213ps_fma( XmmReg1, vexVVVV_XmmReg, XmmReg2_m128 );
+	YmmReg1 = zext(tmp);
+	# TODO ZmmReg1 = zext(XmmReg1)
+}
+
+# VFNMSUB132PS/VFNMSUB213PS/VFNMSUB231PS 5-224 PAGE 2048 LINE 106493
+define pcodeop vfnmsub231ps_fma ;
+:VFNMSUB231PS XmmReg1, vexVVVV_XmmReg, XmmReg2_m128 is $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_XmmReg; byte=0xBE; (XmmReg1 & YmmReg1) ... & XmmReg2_m128
+{
+	local tmp:16 = vfnmsub231ps_fma( XmmReg1, vexVVVV_XmmReg, XmmReg2_m128 );
+	YmmReg1 = zext(tmp);
+	# TODO ZmmReg1 = zext(XmmReg1)
+}
+
+# VFNMSUB132PS/VFNMSUB213PS/VFNMSUB231PS 5-224 PAGE 2048 LINE 106496
+:VFNMSUB132PS YmmReg1, vexVVVV_YmmReg, YmmReg2_m256 is $(VEX_L256) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_YmmReg; byte=0x9E; YmmReg1 ... & YmmReg2_m256
+{
+	YmmReg1 = vfnmsub132ps_fma( YmmReg1, vexVVVV_YmmReg, YmmReg2_m256 );
+	# TODO ZmmReg1 = zext(YmmReg1)
+}
+
+# VFNMSUB132PS/VFNMSUB213PS/VFNMSUB231PS 5-224 PAGE 2048 LINE 106499
+:VFNMSUB213PS YmmReg1, vexVVVV_YmmReg, YmmReg2_m256 is $(VEX_L256) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_YmmReg; byte=0xAE; YmmReg1 ... & YmmReg2_m256
+{
+	YmmReg1 = vfnmsub213ps_fma( YmmReg1, vexVVVV_YmmReg, YmmReg2_m256 );
+	# TODO ZmmReg1 = zext(YmmReg1)
+}
+
+# VFNMSUB132PS/VFNMSUB213PS/VFNMSUB231PS 5-224 PAGE 2048 LINE 106502
+# WARNING: did not recognize VEX field 0 for "VFNMSUB231PS ymm1, ymm2, ymm3/m256"
+:VFNMSUB231PS YmmReg1, vexVVVV_YmmReg, YmmReg2_m256 is $(VEX_L256) & $(VEX_PRE_66) & $(VEX_0F38) & vexVVVV_YmmReg; byte=0xBE; YmmReg1 ... & YmmReg2_m256
+{
+	YmmReg1 = vfnmsub231ps_fma( YmmReg1, vexVVVV_YmmReg, YmmReg2_m256 );
+	# TODO ZmmReg1 = zext(YmmReg1)
+}
+
+# VFNMSUB132SD/VFNMSUB213SD/VFNMSUB231SD 5-230 PAGE 2054 LINE 106832
+define pcodeop vfnmsub132sd_fma ;
+:VFNMSUB132SD XmmReg1, vexVVVV_XmmReg, XmmReg2_m64 is $(VEX_LIG) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W1) & vexVVVV_XmmReg; byte=0x9F; (XmmReg1 & YmmReg1) ... & XmmReg2_m64
+{
+	local tmp:16 = vfnmsub132sd_fma( XmmReg1, vexVVVV_XmmReg, XmmReg2_m64 );
+	YmmReg1 = zext(tmp);
+	# TODO ZmmReg1 = zext(XmmReg1)
+}
+
+# VFNMSUB132SD/VFNMSUB213SD/VFNMSUB231SD 5-230 PAGE 2054 LINE 106835
+define pcodeop vfnmsub213sd_fma ;
+:VFNMSUB213SD XmmReg1, vexVVVV_XmmReg, XmmReg2_m64 is $(VEX_LIG) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W1) & vexVVVV_XmmReg; byte=0xAF; (XmmReg1 & YmmReg1) ... & XmmReg2_m64
+{
+	local tmp:16 = vfnmsub213sd_fma( XmmReg1, vexVVVV_XmmReg, XmmReg2_m64 );
+	YmmReg1 = zext(tmp);
+	# TODO ZmmReg1 = zext(XmmReg1)
+}
+
+# VFNMSUB132SD/VFNMSUB213SD/VFNMSUB231SD 5-230 PAGE 2054 LINE 106838
+define pcodeop vfnmsub231sd_fma ;
+:VFNMSUB231SD XmmReg1, vexVVVV_XmmReg, XmmReg2_m64 is $(VEX_LIG) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W1) & vexVVVV_XmmReg; byte=0xBF; (XmmReg1 & YmmReg1) ... & XmmReg2_m64
+{
+	local tmp:16 = vfnmsub231sd_fma( XmmReg1, vexVVVV_XmmReg, XmmReg2_m64 );
+	YmmReg1 = zext(tmp);
+	# TODO ZmmReg1 = zext(XmmReg1)
+}
+
+# VFNMSUB132SS/VFNMSUB213SS/VFNMSUB231SS 5-233 PAGE 2057 LINE 107004
+define pcodeop vfnmsub132ss_fma ;
+:VFNMSUB132SS XmmReg1, vexVVVV_XmmReg, XmmReg2_m32 is $(VEX_LIG) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_XmmReg; byte=0x9F; (XmmReg1 & YmmReg1) ... & XmmReg2_m32
+{
+	local tmp:16 = vfnmsub132ss_fma( XmmReg1, vexVVVV_XmmReg, XmmReg2_m32 );
+	YmmReg1 = zext(tmp);
+	# TODO ZmmReg1 = zext(XmmReg1)
+}
+
+# VFNMSUB132SS/VFNMSUB213SS/VFNMSUB231SS 5-233 PAGE 2057 LINE 107007
+define pcodeop vfnmsub213ss_fma ;
+:VFNMSUB213SS XmmReg1, vexVVVV_XmmReg, XmmReg2_m32 is $(VEX_LIG) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_XmmReg; byte=0xAF; (XmmReg1 & YmmReg1) ... & XmmReg2_m32
+{
+	local tmp:16 = vfnmsub213ss_fma( XmmReg1, vexVVVV_XmmReg, XmmReg2_m32 );
+	YmmReg1 = zext(tmp);
+	# TODO ZmmReg1 = zext(XmmReg1)
+}
+
+# VFNMSUB132SS/VFNMSUB213SS/VFNMSUB231SS 5-233 PAGE 2057 LINE 107010
+define pcodeop vfnmsub231ss_fma ;
+:VFNMSUB231SS XmmReg1, vexVVVV_XmmReg, XmmReg2_m32 is $(VEX_LIG) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_XmmReg; byte=0xBF; (XmmReg1 & YmmReg1) ... & XmmReg2_m32
+{
+	local tmp:16 = vfnmsub231ss_fma( XmmReg1, vexVVVV_XmmReg, XmmReg2_m32 );
+	YmmReg1 = zext(tmp);
+	# TODO ZmmReg1 = zext(XmmReg1)
+}
+
