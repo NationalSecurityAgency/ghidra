@@ -577,6 +577,6 @@ anysymbol: SPACESYM		{ $$ = $1; }
 int yyerror(const char *s)
 
 {
-  slgh->reportError(s,true);
+  slgh->reportError(s);
   return 0;
 }

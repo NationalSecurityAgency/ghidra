@@ -18,6 +18,7 @@ package ghidra.pcodeCPort.sleighbase;
 import java.io.PrintStream;
 
 import generic.stl.*;
+import ghidra.pcode.utils.MessageFormattingUtils;
 import ghidra.pcodeCPort.context.SleighError;
 import ghidra.pcodeCPort.pcoderaw.VarnodeData;
 import ghidra.pcodeCPort.slghpatexpress.ContextField;
@@ -26,10 +27,13 @@ import ghidra.pcodeCPort.space.AddrSpace;
 import ghidra.pcodeCPort.space.spacetype;
 import ghidra.pcodeCPort.translate.Translate;
 import ghidra.pcodeCPort.utils.XmlUtils;
+import ghidra.sleigh.grammar.Location;
+import ghidra.util.Msg;
 
 public abstract class SleighBase extends Translate implements NamedSymbolProvider {
 
-	// NOTE: restoreXml method removed as it is only used by the decompiler's implementation
+	// NOTE: restoreXml method removed as it is only used by the decompiler's
+	// implementation
 
 	public static final int SLA_FORMAT_VERSION = 2;	// What format of the .sla file this produces
 													// This value should always match SleighLanguage.SLA_FORMAT_VERSION
@@ -65,6 +69,18 @@ public abstract class SleighBase extends Translate implements NamedSymbolProvide
 		return (root != null);
 	}
 
+	public void reportError(Location location, String msg) {
+		Msg.error(this, MessageFormattingUtils.format(location, msg));
+	}
+
+	public void reportError(Location location, String msg, Throwable t) {
+		Msg.error(this, MessageFormattingUtils.format(location, msg), t);
+	}
+
+	public void reportWarning(Location location, String msg) {
+		Msg.warn(this, MessageFormattingUtils.format(location, msg));
+	}
+
 	protected void buildXrefs() {
 		SymbolScope glb = symtab.getGlobalScope();
 		int errors = 0;
@@ -74,29 +90,26 @@ public abstract class SleighBase extends Translate implements NamedSymbolProvide
 		for (iter = glb.begin(); !iter.isEnd(); iter.increment()) {
 			SleighSymbol sym = iter.get();
 			if (sym.getType() == symbol_type.varnode_symbol) {
-				Pair<IteratorSTL<VarnodeSymbol>, Boolean> res =
-					varnode_xref.insert((VarnodeSymbol) sym);
+				Pair<IteratorSTL<VarnodeSymbol>, Boolean> res = varnode_xref.insert((VarnodeSymbol) sym);
 				if (!res.second) {
-					buffer.append("Duplicate (offset,size) pair for registers: ");
-					buffer.append(sym.getName());
-					buffer.append(" (");
-					buffer.append(sym.getLocation());
-					buffer.append(") and ");
-					buffer.append(res.first.get().getName());
-					buffer.append(" (");
-					buffer.append(res.first.get().getLocation());
-					buffer.append(")\n");
+
+					String msg = String.format("Duplicate (offset,size) pair for registers: %s (%s) and %s (%s)",
+							sym.getName(), sym.getLocation(), res.first.get().getName(), res.first.get().getLocation());
+
+					buffer.append(msg + "\n");
+
+					reportError(sym.getLocation(), msg);
+					reportError(res.first.get().getLocation(), msg);
+
 					errors += 1;
 				}
-			}
-			else if (sym.getType() == symbol_type.userop_symbol) {
+			} else if (sym.getType() == symbol_type.userop_symbol) {
 				int index = ((UserOpSymbol) sym).getIndex();
 				while (userop.size() <= index) {
 					userop.push_back("");
 				}
 				userop.set(index, sym.getName());
-			}
-			else if (sym.getType() == symbol_type.context_symbol) {
+			} else if (sym.getType() == symbol_type.context_symbol) {
 				ContextSymbol csym = (ContextSymbol) sym;
 				ContextField field = (ContextField) csym.getPatternValue();
 				int startbit = field.getStartBit();
@@ -137,10 +150,10 @@ public abstract class SleighBase extends Translate implements NamedSymbolProvide
 	public VarnodeData getRegister(String nm) {
 		VarnodeSymbol sym = (VarnodeSymbol) findSymbol(nm);
 		if (sym == null) {
-			throw new SleighError("Unknown register name: " + nm, null);
+			throw new SleighError("Unknown register name '" + nm + "'", null);
 		}
 		if (sym.getType() != symbol_type.varnode_symbol) {
-			throw new SleighError("Symbol is not a register: " + nm, null);
+			throw new SleighError("Symbol is not a register '" + nm + "'", sym.location);
 		}
 		return sym.getFixedVarnode();
 	}
@@ -208,8 +221,8 @@ public abstract class SleighBase extends Translate implements NamedSymbolProvide
 		s.append(">\n");
 		for (int i = 0; i < numSpaces(); ++i) {
 			AddrSpace spc = getSpace(i);
-			if ((spc.getType() == spacetype.IPTR_CONSTANT) ||
-				(spc.getType() == spacetype.IPTR_FSPEC) || (spc.getType() == spacetype.IPTR_IOP)) {
+			if ((spc.getType() == spacetype.IPTR_CONSTANT) || (spc.getType() == spacetype.IPTR_FSPEC)
+					|| (spc.getType() == spacetype.IPTR_IOP)) {
 				continue;
 			}
 			spc.saveXml(s);

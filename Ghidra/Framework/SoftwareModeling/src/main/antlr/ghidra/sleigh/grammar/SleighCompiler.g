@@ -66,7 +66,7 @@ scope Block {
 	}
 
 	private void redefinedError(SleighSymbol sym, Tree t, String what) {
-	    String msg = "symbol " + sym.getName() + " (from " + sym.getLocation() + ") redefined as " + what;
+	    String msg = "symbol '" + sym.getName() + "' (from " + sym.getLocation() + ") redefined as " + what;
 	    reportError(find(t), msg);
 	}
 
@@ -76,17 +76,17 @@ scope Block {
 	}
 
 	private void wrongSymbolTypeError(SleighSymbol sym, Location where, String type, String purpose) {
-	    String msg = sym.getType() + " " + sym + " (defined at " + sym.getLocation() + ") is wrong type (should be " + type + ") in " + purpose;
+	    String msg = sym.getType() + " '" + sym + "' (defined at " + sym.getLocation() + ") is wrong type (should be " + type + ") in " + purpose;
 	    reportError(where, msg);
 	}
 
 	private void undeclaredSymbolError(SleighSymbol sym, Location where, String purpose) {
-	    String msg = sym + " (used in " + purpose + ") is not declared in the pattern list";
+	    String msg = "'" + sym + "' (used in " + purpose + ") is not declared in the pattern list";
 	    reportError(where, msg);
 	}
 
 	private void unknownSymbolError(String text, Location loc, String type, String purpose) {
-	    String msg = "unknown " + type + " " + text + " in " + purpose;
+	    String msg = "unknown " + type + " '" + text + "' in " + purpose;
 	    reportError(loc, msg);
 	}
 
@@ -205,7 +205,7 @@ fielddef
                 long start = $s.value.longValue();
                 long finish = $e.value.longValue();
                 if (finish < start) {
-                    reportError(find($t), "field " + $n.value.getText() + " starts at " + start + " and ends at " + finish);
+                    reportError(find($t), "field '" + $n.value.getText() + "' starts at " + start + " and ends at " + finish);
                 }
                 $fielddef::fieldQuality = new FieldQuality($n.value.getText(), find($t), $s.value.longValue(), $e.value.longValue());
 			}
@@ -426,7 +426,7 @@ typemod
 					space_class type = space_class.valueOf(typeName);
 					$spacedef::quality.type = type;
 				} catch(IllegalArgumentException e) {
-					reportError(find(n), "invalid space type " + typeName);
+					reportError(find(n), "invalid space type '" + typeName + "'");
 				}
 			}
 		}
@@ -829,7 +829,7 @@ pattern_symbol[String purpose] returns [PatternExpression expr]
             } else if(sym.getType() == symbol_type.operand_symbol) {
                 OperandSymbol os = (OperandSymbol) sym;
                 if (os.getDefiningSymbol() != null && os.getDefiningSymbol().getType() == symbol_type.subtable_symbol) {
-                    reportError(find($s), "Subtable symbol " + sym.getName() + " is not allowed in context block");
+                    reportError(find($s), "Subtable symbol '" + sym.getName() + "' is not allowed in context block");
                 }
                 $expr = os.getPatternExpression();
 			} else if(sym.getType() == symbol_type.start_symbol
@@ -847,7 +847,7 @@ pattern_symbol[String purpose] returns [PatternExpression expr]
 					FamilySymbol z = (FamilySymbol) sym;
 					$expr = z.getPatternValue();
 				} else {
-					reportError(find($s), "Global symbol " + sym.getName() + " is not allowed in action expression");
+					reportError(find($s), "Global symbol '" + sym.getName() + "' is not allowed in action expression");
 				}
 			} else {
 				wrongSymbolTypeError(sym, find($s), "start, end, operand, epsilon, or varnode", purpose);
@@ -908,7 +908,7 @@ cstatement[VectorSTL<ContextChange> r]
 			} else if(sym.getType() == symbol_type.context_symbol) {
 				ContextSymbol t = (ContextSymbol) sym;
 				if (!sc.contextMod(r, t, e)) {
-					reportError(find($id), "Cannot use 'inst_next' to set context variable: " + t.getName());
+					reportError(find($id), "Cannot use 'inst_next' to set context variable: '" + t.getName() + "'");
 				}
 			} else if(sym.getType() == symbol_type.operand_symbol) {
 				OperandSymbol t = (OperandSymbol) sym;
@@ -919,7 +919,7 @@ cstatement[VectorSTL<ContextChange> r]
 		}
 	|	^(OP_APPLY ^(OP_IDENTIFIER id=.) ^(OP_IDENTIFIER arg1=.) ^(OP_IDENTIFIER arg2=.)) {
 			if (!"globalset".equals(id.getText())) {
-				reportError(find($id), "unknown context block function " + id.getText());
+				reportError(find($id), "unknown context block function '" + id.getText() + "'");
 			} else {
 				SleighSymbol sym = sc.findSymbol($arg2.getText());
 				if (sym == null) {

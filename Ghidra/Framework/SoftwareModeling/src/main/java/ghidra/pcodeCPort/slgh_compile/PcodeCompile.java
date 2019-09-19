@@ -15,13 +15,16 @@
  */
 package ghidra.pcodeCPort.slgh_compile;
 
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import generic.stl.IteratorSTL;
 import generic.stl.VectorSTL;
+import ghidra.pcode.utils.MessageFormattingUtils;
 import ghidra.pcodeCPort.context.SleighError;
 import ghidra.pcodeCPort.opcodes.OpCode;
 import ghidra.pcodeCPort.semantics.*;
@@ -89,12 +92,9 @@ public abstract class PcodeCompile {
 
 	public void reportError(Location location, String msg) {
 		entry("reportError", location, msg);
-		if (location == null) {
-			log.error(msg);
-		}
-		else {
-			log.error(location + ": " + msg);
-		}
+
+		log.error(MessageFormattingUtils.format(location, msg));
+
 		++errors;
 	}
 
@@ -104,12 +104,9 @@ public abstract class PcodeCompile {
 
 	public void reportWarning(Location location, String msg) {
 		entry("reportWarning", location, msg);
-		if (location == null) {
-			log.warn(msg);
-		}
-		else {
-			log.warn(location + ": " + msg);
-		}
+
+		log.warn(MessageFormattingUtils.format(location, msg));
+
 		++warnings;
 	}
 
@@ -147,7 +144,8 @@ public abstract class PcodeCompile {
 					if ((size.getType() == ConstTpl.const_type.real) &&
 						(vn.getSize().getType() == ConstTpl.const_type.real) &&
 						(vn.getSize().getReal() != 0) && (vn.getSize().getReal() != size.getReal())) {
-						throw new SleighError("Localtemp size mismatch", null);
+						throw new SleighError(String.format("Localtemp size mismatch: %d vs %d",
+							vn.getSize().getReal(), size.getReal()), op.location);
 					}
 					vn.setSize(size);
 				}
@@ -158,7 +156,8 @@ public abstract class PcodeCompile {
 					if ((size.getType() == ConstTpl.const_type.real) &&
 						(vn.getSize().getType() == ConstTpl.const_type.real) &&
 						(vn.getSize().getReal() != 0) && (vn.getSize().getReal() != size.getReal())) {
-						throw new SleighError("Localtemp size mismatch", null);
+						throw new SleighError(String.format("Input size mismatch: %d vs %d",
+							vn.getSize().getReal(), size.getReal()), op.location);
 					}
 					vn.setSize(size);
 				}
@@ -189,9 +188,8 @@ public abstract class PcodeCompile {
 	public VectorSTL<OpTpl> placeLabel(Location location, LabelSymbol labsym) {
 		entry("placeLabel", location, labsym);
 		if (labsym.isPlaced()) {
-			String errmsg = "Label " + labsym.getName();
-			errmsg += " is placed more than once";
-			reportError(labsym.getLocation(), errmsg);
+			reportError(labsym.getLocation(),
+				String.format("Label '%s' is placed more than once", labsym.getName()));
 		}
 		labsym.setPlaced();
 		VectorSTL<OpTpl> res = new VectorSTL<OpTpl>();
@@ -272,7 +270,7 @@ public abstract class PcodeCompile {
 				tmpvn.getOffset().getReal(), (int) tmpvn.getSize().getReal());
 		addSymbol(sym);
 		if ((!usesLocalKey) && enforceLocalKey) {
-			reportError(location, "Must use 'local' keyword to define symbol: " + varname);
+			reportError(location, "Must use 'local' keyword to define symbol '" + varname + "'");
 		}
 		return ExprTree.toVector(rhs);
 	}
@@ -465,7 +463,8 @@ public abstract class PcodeCompile {
 				return null;
 			}
 			if (byteoffset + numbytes > fullsz) {
-				throw new SleighError("Requested bit range out of bounds", loc);
+				throw new SleighError(String.format("Requested bit range out of bounds -- %d > %d",
+					(byteoffset + numbytes), fullsz), loc);
 			}
 		}
 
@@ -841,10 +840,12 @@ public abstract class PcodeCompile {
 				}
 				break;
 			case CPUI_CPOOLREF:
-				if (op.getOut().isZeroSize() && (!op.getIn(0).isZeroSize()))
+				if (op.getOut().isZeroSize() && (!op.getIn(0).isZeroSize())) {
 					force_size(op.getOut(),op.getIn(0).getSize(),ops);
-				if (op.getIn(0).isZeroSize() && (!op.getOut().isZeroSize()))
+				}
+				if (op.getIn(0).isZeroSize() && (!op.getOut().isZeroSize())) {
 					force_size(op.getIn(0),op.getOut().getSize(),ops);
+				}
 				for(i=1;i<op.numInput();++i) {
 					force_size(op.getIn(i), new ConstTpl(ConstTpl.const_type.real, 8), ops);
 				}
@@ -891,19 +892,10 @@ public abstract class PcodeCompile {
 
 	public static void entry(String name, Object... args) {
 		StringBuilder sb = new StringBuilder();
-		sb.append(name);
-		sb.append("(");
-		int argsSoFar = 0;
-		for (int ii = 0; ii < args.length; ++ii) {
-			if (!isLocationIsh(args[ii])) {
-				if (argsSoFar > 0) {
-					sb.append(", ");
-				}
-				sb.append(args[ii]);
-				++argsSoFar;
-			}
-		}
+		sb.append(name).append("(");
+		sb.append(Arrays.stream(args).map(Object::toString).collect(Collectors.joining(", ")));
 		sb.append(")");
+
 		log.trace(sb.toString());
 	}
 
@@ -991,13 +983,15 @@ public abstract class PcodeCompile {
 			return createOpConst(location, OpCode.CPUI_INDIRECT, r.outvn.getOffset().getReal());
 		}
 		if ("cpool".equals(name)) {
-			if (operands.size() >= 2)		// At least two parameters
+		    if (operands.size() >= 2) {		// At least two parameters
 				return createVariadic(location, OpCode.CPUI_CPOOLREF, operands);
+		    }
 			reportError(location,name+"() expects at least two arguments");
 		}
 		if ("newobject".equals(name)) {
-			if (operands.size() >= 1)		// At least one parameter
+		    if (operands.size() >= 1) {		// At least one parameter
 				return createVariadic(location, OpCode.CPUI_NEW, operands);
+		    }
 			reportError(location,name+"() expects at least one argument");
 		}
 

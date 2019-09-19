@@ -171,7 +171,7 @@ public class ParserContext {
 	}
 
 	public int getInstructionBytes(int bytestart, int size, int off) {
-		// Get bytes from the instruction stream into a intm
+		// Get bytes from the instruction stream into an int
 		// (assuming big endian format)
 		off += bytestart;
 		if (off >= 16) {

@@ -52,44 +52,76 @@ int4 TokenPattern::resolveTokens(const TokenPattern &tok1,const TokenPattern &to
       throw SleighError("Right/left ellipsis");
     else if (tok2.leftellipsis)
       leftellipsis = true;
-    else if (tok1.toklist.size() != minsize)
-      throw SleighError("Mismatched pattern sizes");
+    else if (tok1.toklist.size() != minsize) {
+      ostringstream msg;
+      msg << "Mismatched pattern sizes -- " << dec << tok1.toklist.size()
+	  << " != "
+	  << dec << minsize;
+      throw SleighError(msg.str());
+    }
     else if (tok1.toklist.size()==tok2.toklist.size())
-      throw SleighError("Pattern size cannot vary (missing ... ?)");
+      throw SleighError("Pattern size cannot vary (missing '...'?)");
   }
   else if (tok1.rightellipsis) {
     if (tok2.leftellipsis)
       throw SleighError("Left/right ellipsis");
     else if (tok2.rightellipsis)
       rightellipsis = true;
-    else if (tok1.toklist.size() != minsize)
-      throw SleighError("Mismatched pattern sizes");
+    else if (tok1.toklist.size() != minsize) {
+      ostringstream msg;
+      msg << "Mismatched pattern sizes -- " << dec << tok1.toklist.size()
+	  << " != "
+	  << dec << minsize;
+      throw SleighError(msg.str());
+    }
     else if (tok1.toklist.size()==tok2.toklist.size())
-      throw SleighError("Pattern size cannot vary (missing ... ?)");
+      throw SleighError("Pattern size cannot vary (missing '...'?)");
   }
   else {
     if (tok2.leftellipsis) {
       reversedirection = true;
-      if (tok2.toklist.size() != minsize)
-	throw SleighError("Mismatched pattern sizes");
+      if (tok2.toklist.size() != minsize) {
+	ostringstream msg;
+	msg << "Mismatched pattern sizes -- " << dec << tok2.toklist.size()
+	    << " != "
+	    << dec << minsize;
+	throw SleighError(msg.str());
+      }
       else if (tok1.toklist.size()==tok2.toklist.size())
-	throw SleighError("Pattern size cannot vary (missing ... ?)");
+	throw SleighError("Pattern size cannot vary (missing '...'?)");
     }
     else if (tok2.rightellipsis) {
-      if (tok2.toklist.size() != minsize)
-	throw SleighError("Mismatched pattern sizes");
+      if (tok2.toklist.size() != minsize) {
+	ostringstream msg;
+	msg << "Mismatched pattern sizes -- " << dec << tok2.toklist.size()
+	    << " != "
+	    << dec << minsize;
+	throw SleighError(msg.str());
+      }
       else if (tok1.toklist.size()==tok2.toklist.size())
-	throw SleighError("Pattern size cannot vary (missing ... ?)");
+	throw SleighError("Pattern size cannot vary (missing '...'?)");
     }
     else {
-      if (tok2.toklist.size() != tok1.toklist.size())
-	throw SleighError("Mismatched pattern sizes");
+      if (tok2.toklist.size() != tok1.toklist.size()) {
+	ostringstream msg;
+	msg << "Mismatched pattern sizes -- " << dec << tok2.toklist.size()
+	    << " != "
+	    << dec << tok1.toklist.size();
+	throw SleighError(msg.str());
+      }
     }
   }
   if (reversedirection) {
     for(int4 i=0;i<minsize;++i)
-      if (tok1.toklist[tok1.toklist.size()-1-i] != tok2.toklist[tok2.toklist.size()-1-i])
-	throw SleighError("Mismatched tokens when combining patterns");
+      if (tok1.toklist[tok1.toklist.size()-1-i] != tok2.toklist[tok2.toklist.size()-1-i]) {
+
+	ostringstream msg;
+	msg << "Mismatched tokens when combining patterns -- "
+	    << dec << tok1.toklist[tok1.toklist.size()-1-i]
+	    << " != "
+	    << dec << tok2.toklist[tok2.toklist.size()-1-i];
+	throw SleighError(msg.str());
+      }
     if (tok1.toklist.size() <= tok2.toklist.size())
       for(int4 i=minsize;i<tok2.toklist.size();++i)
 	ressa += tok2.toklist[tok2.toklist.size()-1-i]->getSize();
@@ -101,8 +133,14 @@ int4 TokenPattern::resolveTokens(const TokenPattern &tok1,const TokenPattern &to
   }
   else {
     for(int4 i=0;i<minsize;++i)
-      if (tok1.toklist[i] != tok2.toklist[i])
-	throw SleighError("Mismatched tokens when combining patterns");
+      if (tok1.toklist[i] != tok2.toklist[i]) {
+		ostringstream msg;
+	msg << "Mismatched tokens when combining patterns -- "
+	    << dec << tok1.toklist[i]
+	    << " != "
+	    << dec << tok2.toklist[i];
+	throw SleighError(msg.str());
+      }
   }
 				// Save the results into -this-
   if (tok1.toklist.size() <= tok2.toklist.size())
@@ -126,7 +164,7 @@ PatternBlock *TokenPattern::buildSingle(int4 startbit,int4 endbit,uintm byteval)
     offset += 1;
     startbit -= 8;
     endbit -= 8;
-  }    
+  }
   mask = (~((uintm)0)) << (sizeof(uintm)*8-size);
   byteval = (byteval << (sizeof(uintm)*8-size))& mask;
   mask >>= startbit;
@@ -1645,4 +1683,3 @@ void EquationRightEllipsis::operandOrder(Constructor *ct,vector<OperandSymbol *>
 {
   eq->operandOrder(ct,order);	// List operands
 }
-

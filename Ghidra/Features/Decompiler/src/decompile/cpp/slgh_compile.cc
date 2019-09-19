@@ -183,15 +183,26 @@ SubtableSymbol *WithBlock::getCurrentSubtable(const list<WithBlock> &stack)
   return (SubtableSymbol *)0;
 }
 
-ConsistencyChecker::ConsistencyChecker(SubtableSymbol *rt,bool un,bool warndead)
+ConsistencyChecker::ConsistencyChecker(SleighCompile *sleigh,SubtableSymbol *rt,bool un,bool warndead)
 
 {
+  slgh = sleigh;
   root_symbol = rt;
   unnecessarypcode = 0;
   readnowrite = 0;
   writenoread = 0;
   printextwarning = un;
   printdeadwarning = warndead;
+}
+
+void ConsistencyChecker::reportError(const Location *loc, const string &msg)
+{
+  slgh->reportError(loc, msg);
+}
+
+void ConsistencyChecker::reportWarning(const Location *loc, const string &msg)
+{
+  slgh->reportWarning(loc, msg);
 }
 
 int4 ConsistencyChecker::recoverSize(const ConstTpl &sizeconst,Constructor *ct)
@@ -231,9 +242,10 @@ void ConsistencyChecker::dealWithUnnecessaryExt(OpTpl *op,Constructor *ct)
 { // Deal with detected extension (SEXT or ZEXT) where the
   // input size is the same as the output size
   if (printextwarning) {
-    cerr << "Unnecessary ";
-    printOpName(cerr,op);
-    cerr << " in constructor starting at line " << dec << ct->getLineno() << endl;
+    ostringstream msg;
+    msg << "Unnecessary ";
+    printOpName(msg,op);
+    reportWarning(slgh->getLocation(ct), msg.str());
   }
   op->setOpcode(CPUI_COPY);	// Equivalent to copy
   unnecessarypcode += 1;
@@ -243,9 +255,10 @@ void ConsistencyChecker::dealWithUnnecessaryTrunc(OpTpl *op,Constructor *ct)
 
 {
   if (printextwarning) {
-    cerr << "Unnecessary ";
-    printOpName(cerr,op);
-    cerr << " in constructor starting at line " << dec << ct->getLineno() << endl;
+    ostringstream msg;
+    msg << "Unnecessary ";
+    printOpName(msg,op);
+    reportWarning(slgh->getLocation(ct), msg.str());
   }
   op->setOpcode(CPUI_COPY);	// Equivalent to copy
   op->removeInput(1);
@@ -260,7 +273,7 @@ bool ConsistencyChecker::checkOpMisuse(OpTpl *op,Constructor *ct)
     {
       VarnodeTpl *vn = op->getIn(1);
       if (vn->getSpace().isConstSpace() && vn->getOffset().isZero()) {
-	cerr << "Unsigned comparison with zero is always false in constructor starting at line " << dec << ct->getLineno() << endl;
+	reportError(slgh->getLocation(ct), "Unsigned comparison with zero is always false");
       }
     }
     break;
@@ -771,21 +784,23 @@ void ConsistencyChecker::printOpError(OpTpl *op,Constructor *ct,int4 err1,int4 e
     op2 = getOperandSymbol(err2,op,ct);
   else
     op2 = (OperandSymbol *)0;
-  cerr << "Size restriction error in table \"" << sym->getName() << "\"" << endl;
-  cerr << "  in constructor starting at line " << dec << ct->getLineno() << endl;
-  if ((op1 != (OperandSymbol *)0)&&(op2 != (OperandSymbol *)0)) {
-    cerr << "  Problem with \"" << op1->getName();
-    cerr << "\" and \"" << op2->getName() << "\"";
-  }
+
+  ostringstream msgBuilder;
+
+  msgBuilder << "Size restriction error in table '" << sym->getName() << "'" << endl;
+  if ((op1 != (OperandSymbol *)0)&&(op2 != (OperandSymbol *)0))
+    msgBuilder << "  Problem with operands '" << op1->getName() << "' and '" << op2->getName() << "'";
   else if (op1 != (OperandSymbol *)0)
-    cerr << "  Problem with \"" << op1->getName() << "\"";
+    msgBuilder << "  Problem with operand 1 '" << op1->getName() << "'";
   else if (op2 != (OperandSymbol *)0)
-    cerr << "  Problem with \"" << op2->getName() << "\"";
+    msgBuilder << "  Problem with operand 2 '" << op2->getName() << "'";
   else
-    cerr << "  Problem";
-  cerr << " in ";
-  printOpName(cerr,op);
-  cerr << " operator" << endl << "  " << msg << endl;
+    msgBuilder << "  Problem";
+  msgBuilder << " in ";
+  printOpName(msgBuilder,op);
+  msgBuilder << " operator" << endl << "  " << msg;
+
+  reportError(slgh->getLocation(ct), msgBuilder.str());
 }
 
 bool ConsistencyChecker::checkConstructorSection(Constructor *ct,ConstructTpl *cttpl)
@@ -878,8 +893,10 @@ bool ConsistencyChecker::checkSubtable(SubtableSymbol *sym)
     HandleTpl *exportres = ct->getTempl()->getResult();
     if (exportres != (HandleTpl *)0) {
       if (seenemptyexport && (!seennonemptyexport)) {
-	cerr << "Table " << sym->getName() << " exports inconsistently" << endl;
-	cerr << "Constructor starting at line " << dec << ct->getLineno() << " is first inconsistency" << endl;
+	ostringstream msg;
+	msg << "Table '" << sym->getName() << "' exports inconsistently; ";
+	msg << "Constructor starting at line " << dec << ct->getLineno() << " is first inconsistency";
+	reportError(slgh->getLocation(ct), msg.str());
 	testresult = false;
       }
       seennonemptyexport = true;
@@ -887,23 +904,28 @@ bool ConsistencyChecker::checkSubtable(SubtableSymbol *sym)
       if (tablesize == 0)
 	tablesize = exsize;
       if ((exsize!=0)&&(exsize != tablesize)) {
-	cerr << "Table " << sym->getName() << " has inconsistent export size." << endl;
-	cerr << "Constructor starting at line " << dec << ct->getLineno() << " is first conflict" << endl;
+	ostringstream msg;
+	msg << "Table '" << sym->getName() << "' has inconsistent export size; ";
+	msg << "Constructor starting at line " << dec << ct->getLineno() << " is first conflict";
+	reportError(slgh->getLocation(ct), msg.str());
 	testresult = false;
       }
     }
     else {
       if (seennonemptyexport && (!seenemptyexport)) {
-	cerr << "Table " << sym->getName() << " exports inconsistently" << endl;
-	cerr << "Constructor starting at line " << dec << ct->getLineno() << " is first inconsistency" << endl;
+	ostringstream msg;
+	msg << "Table '" << sym->getName() << "' exports inconsistently; ";
+	msg << "Constructor starting at line " << dec << ct->getLineno() << " is first inconsistency";
+	reportError(slgh->getLocation(ct), msg.str());
 	testresult = false;
       }
       seenemptyexport = true;
     }
   }
   if (seennonemptyexport) {
-    if (tablesize == 0)
-      cerr << "Warning: Table " << sym->getName() << " exports size 0" << endl;
+    if (tablesize == 0) {
+      reportWarning(slgh->getLocation(sym), "Table '" + sym->getName() + "' exports size 0");
+    }
     sizemap[sym] = tablesize;	// Remember recovered size
   }
   else
@@ -1212,11 +1234,11 @@ void ConsistencyChecker::checkUnusedTemps(Constructor *ct,const map<uintb,Optimi
     const OptimizeRecord &currec( (*iter).second );
     if (currec.readcount == 0) {
       if (printdeadwarning)
-	cerr << "Warning: temporary is written but not read in constructor starting at line " << dec << ct->getLineno() << endl;
+	reportWarning(slgh->getLocation(ct), "Temporary is written but not read");
       writenoread += 1;
     }
     else if (currec.writecount == 0) {
-      cerr << "Error: temporary is read but not written in constructor starting at line " << dec << ct->getLineno() << endl;
+      reportError(slgh->getLocation(ct), "Temporary is read but not written");
       readnowrite += 1;
     }
     ++iter;
@@ -1318,10 +1340,10 @@ void MacroBuilder::free(void)
   params.clear();
 }
 
-void MacroBuilder::reportError(const string &val)
+void MacroBuilder::reportError(const Location* loc, const string &val)
 
 {
-  slgh->reportError(val,false);
+  slgh->reportError(loc, val);
   haserror = true;
 }
 
@@ -1351,7 +1373,7 @@ bool MacroBuilder::transferOp(OpTpl *op,vector<HandleTpl *> &params)
   if (outvn != (VarnodeTpl *)0) {
     plus = outvn->transfer(params);
     if (plus >= 0) {
-      reportError("Cannot currently assign to bitrange of macro parameter that is a temporary");
+      reportError((const Location *)0, "Cannot currently assign to bitrange of macro parameter that is a temporary");
       return false;
     }
   }
@@ -1365,7 +1387,7 @@ bool MacroBuilder::transferOp(OpTpl *op,vector<HandleTpl *> &params)
     plus = vn->transfer(params);
     if (plus >= 0) {
       if (!hasrealsize) {
-	reportError("Problem with bit range operator in macro");
+	reportError((const Location *)0, "Problem with bit range operator in macro");
 	return false;
       }
       uintb newtemp = slgh->getUniqueAddr(); // Generate a new temporary location
@@ -1441,10 +1463,22 @@ uintb SleighPcode::allocateTemp(void)
   return compiler->getUniqueAddr();
 }
 
-void SleighPcode::reportError(const string &msg)
+const Location *SleighPcode::getLocation(SleighSymbol *sym) const
 
 {
-  return compiler->reportError(msg,true);
+  return compiler->getLocation(sym);
+}
+
+void SleighPcode::reportError(const Location *loc, const string &msg)
+
+{
+  return compiler->reportError(loc, msg);
+}
+
+void SleighPcode::reportWarning(const Location *loc, const string &msg)
+
+{
+  return compiler->reportWarning(loc, msg);
 }
 
 void SleighPcode::addSymbol(SleighSymbol *sym)
@@ -1506,7 +1540,7 @@ int4 SleighCompile::calcContextVarLayout(int4 start,int4 sz,int4 numbits)
   int4 maxbits;
   
   if ((sym->getSize()) % 4 != 0)
-    reportError("Invalid size of context register: "+sym->getName()+" : must be a multiple of 4 bytes",false);
+    reportError(getCurrentLocation(), "Invalid size of context register '"+sym->getName()+"': must be a multiple of 4 bytes");
   maxbits = sym->getSize() * 8 -1;
   i = 0;
   while(i<sz) {
@@ -1515,9 +1549,9 @@ int4 SleighCompile::calcContextVarLayout(int4 start,int4 sz,int4 numbits)
     int4 min = qual->low;
     int4 max = qual->high;
     if ((max - min) > (8*sizeof(uintm)))
-      reportError("Size of bitfield " + qual->name + " larger than 32-bits",false);
+      reportError(getCurrentLocation(), "Size of bitfield '" + qual->name + "' larger than 32 bits");
     if (max > maxbits)
-      reportError("Scope of bitfield " + qual->name + " extends beyond the size of context register",false);
+      reportError(getCurrentLocation(), "Scope of bitfield '" + qual->name + "' extends beyond the size of context register");
     j = i+1;
     // Find union of fields overlapping with first field
     while(j<sz) {
@@ -1563,17 +1597,27 @@ void SleighCompile::buildDecisionTrees(void)
   for(int4 i=0;i<tables.size();++i)
     tables[i]->buildDecisionTree(props);
 
-  const vector<string> &ierrors( props.getIdentErrors() );
-  for(int4 i=0;i<ierrors.size();++i) {
-    errors += 1;
-    cerr << ierrors[i];
+  const vector<pair<Constructor*, Constructor*>> &ierrors( props.getIdentErrors() );
+  if (ierrors.size() != 0) {
+    string identMsg = "Constructor has identical pattern to constructor at ";
+    for(int4 i=0;i<ierrors.size();++i) {
+      errors += 1;
+      const Location* locA = getLocation(ierrors[i].first);
+      const Location* locB = getLocation(ierrors[i].second);
+      reportError(locA, identMsg + locB->format());
+      reportError(locB, identMsg + locA->format());
+    }
   }
 
-  if (!lenientconflicterrors) {
-    const vector<string> &cerrors( props.getConflictErrors() );
+  const vector<pair<Constructor *, Constructor*>> &cerrors( props.getConflictErrors() );
+  if (!lenientconflicterrors && cerrors.size() != 0) {
+    string conflictMsg = "Constructor pattern cannot be distinguished from constructor at ";
     for(int4 i=0;i<cerrors.size();++i) {
       errors += 1;
-      cerr << cerrors[i];
+      const Location* locA = getLocation(cerrors[i].first);
+      const Location* locB = getLocation(cerrors[i].second);
+      reportError(locA, conflictMsg + locB->format());
+      reportError(locB, conflictMsg + locA->format());
     }
   }
 }
@@ -1582,23 +1626,28 @@ void SleighCompile::buildPatterns(void)
 
 {
   if (root == 0) {
-    reportError("No patterns to match.",false);
+    reportError(nullptr, "No patterns to match.");
     return;
   }
-  root->buildPattern(cerr);	// This should recursively hit everything
-  if (root->isError()) errors += 1;
+  ostringstream msg;
+  root->buildPattern(msg);	// This should recursively hit everything
+  if (root->isError()) {
+    reportError(getLocation(root), msg.str());
+    errors += 1;
+  }
   for(int4 i=0;i<tables.size();++i) {
     if (tables[i]->isError())
       errors += 1;
-    if (tables[i]->getPattern() == (TokenPattern *)0)
-      reportWarning("Unreferenced table: "+tables[i]->getName(),false);
+    if (tables[i]->getPattern() == (TokenPattern *)0) {
+      reportWarning(getLocation(tables[i]), "Unreferenced table '"+tables[i]->getName() + "'");
+    }
   }
 }
 
 void SleighCompile::checkConsistency(void)
 
 {
-  ConsistencyChecker checker(root,warnunnecessarypcode,warndeadtemps);
+  ConsistencyChecker checker(this, root,warnunnecessarypcode,warndeadtemps);
 
   if (!checker.test()) {
     errors += 1;
@@ -1609,9 +1658,11 @@ void SleighCompile::checkConsistency(void)
     return;
   }
   if ((!warnunnecessarypcode)&&(checker.getNumUnnecessaryPcode() > 0)) {
-    cerr << dec << checker.getNumUnnecessaryPcode();
-    cerr << " unnecessary extensions/truncations were converted to copies" << endl;
-    cerr << "Use -u switch to list each individually" << endl;
+    ostringstream msg;
+    msg << dec << checker.getNumUnnecessaryPcode();
+    msg << " unnecessary extensions/truncations were converted to copies" << endl;
+    msg << "Use -u switch to list each individually";
+    reportInfo(msg.str());
   }
   checker.optimizeAll();
   if (checker.getNumReadNoWrite() > 0) {
@@ -1619,9 +1670,11 @@ void SleighCompile::checkConsistency(void)
     return;
   }
   if ((!warndeadtemps)&&(checker.getNumWriteNoRead() > 0)) {
-    cerr << dec << checker.getNumWriteNoRead();
-    cerr << " operations wrote to temporaries that were not read" << endl;
-    cerr << "Use -t switch to list each individually" << endl;
+    ostringstream msg;
+    msg << dec << checker.getNumWriteNoRead();
+    msg << " operations wrote to temporaries that were not read" << endl;
+    msg << "Use -t switch to list each individually";
+    reportInfo(msg.str());
   }
 }
 
@@ -1659,10 +1712,10 @@ bool SleighCompile::checkLocalExports(Constructor *ct)
     if (collideOperand >= 0) {
       noCollisions = false;
       if (warnalllocalcollisions) {
-	cerr << "Possible collision with symbols ";
-	cerr << ct->getOperand(collideOperand)->getName();
-	cerr << " and " << ct->getOperand(i)->getName();
-	cerr << " in constructor starting at line " << dec << ct->getLineno() << endl;
+	reportWarning(getLocation(ct), "Possible operand collision between symbols '"
+		      + ct->getOperand(collideOperand)->getName()
+		      + "' and '"
+		      + ct->getOperand(i)->getName() + "'");
       }
       break;	// Don't continue
     }
@@ -1687,9 +1740,11 @@ void SleighCompile::checkLocalCollisions(void)
     sym = tables[i];
   }
   if (collisionCount > 0) {
-    cerr << "WARNING: " << dec << collisionCount << " constructors with local collisions between operands" << endl;
+    ostringstream msg;
+    msg << dec << collisionCount << " constructors with local collisions between operands";
     if (!warnalllocalcollisions)
-      cerr << "Use -c switch to list each individually" << endl;
+      msg << endl << "Use -c switch to list each individually";
+    reportInfo(msg.str());
   }
 }
 
@@ -1699,28 +1754,30 @@ void SleighCompile::checkNops(void)
   if (noplist.size() > 0) {
     if (warnallnops) {
       for(int4 i=0;i<noplist.size();++i)
-	cerr << noplist[i] << endl;
+	reportWarning(noplist[i]);
     }
-    cerr << dec << (int4)noplist.size() << " NOP constructors found" << endl;
+    ostringstream msg;
+    msg << dec << noplist.size() << " NOP constructors found";
     if (!warnallnops)
-      cerr << "Use -n switch to list each individually" << endl;
+      msg << endl << "Use -n switch to list each individually";
+    reportInfo(msg.str());
   }
 }
 
 string SleighCompile::checkSymbols(SymbolScope *scope)
 
 { // Make sure label symbols are used properly
-  ostringstream s;
+  ostringstream msg;
   SymbolTree::const_iterator iter;
   for(iter=scope->begin();iter!=scope->end();++iter) {
     LabelSymbol *sym = (LabelSymbol *)*iter;
     if (sym->getType() != SleighSymbol::label_symbol) continue;
     if (sym->getRefCount() == 0)
-      s << "   Label <" << sym->getName() << "> was placed but not used\n";
+      msg << "   Label <" << sym->getName() << "> was placed but not used" << endl;
     else if (!sym->isPlaced())
-      s << "   Label <" << sym->getName() << "> was referenced but never placed\n";
+      msg << "   Label <" << sym->getName() << "> was referenced but never placed" << endl;
   }
-  return s.str();
+  return msg.str();
 }
 
 void SleighCompile::addSymbol(SleighSymbol *sym)
@@ -1728,33 +1785,79 @@ void SleighCompile::addSymbol(SleighSymbol *sym)
 {				// Make sure symbol table errors are caught
   try {
     symtab.addSymbol(sym);
+    symbolLocationMap[sym] = *getCurrentLocation();
   }
   catch(SleighError &err) {
-    reportError(err.explain,true);
+    reportError(err.explain);
   }
 }
 
-void SleighCompile::reportError(const string &msg,bool includeline)
+const Location *SleighCompile::getLocation(Constructor *ctor) const
 
 {
-  cerr << "Error in " << filename.back() << ' ';
-  if (includeline)
-    cerr << "at line " << dec << lineno.back() << ": ";
-  cerr << msg << endl;
+  return &ctorLocationMap.at(ctor);
+}
+
+const Location *SleighCompile::getLocation(SleighSymbol *sym) const
+
+{
+  return &symbolLocationMap.at(sym);
+}
+
+const Location *SleighCompile::getCurrentLocation(void) const
+
+{
+  // Update the location cache field
+  currentLocCache = Location(filename.back(), lineno.back());
+  return &currentLocCache;
+}
+
+string SleighCompile::formatStatusMessage(const Location* loc, const string &msg)
+{
+  ostringstream s;
+  if (loc != (Location*)0) {
+    s << loc->format();
+    s << ": ";
+  }
+  s << msg;
+  return s.str();
+}
+
+void SleighCompile::reportError(const Location* loc, const string &msg)
+{
+  reportError(formatStatusMessage(loc, msg));
+}
+
+void SleighCompile::reportError(const string &msg)
+{
+  cerr << "ERROR   " << msg << endl;
   errors += 1;
-  if (errors >50) {
+  if (errors > 1000000) {
     cerr << "Too many errors: Aborting" << endl;
     exit(2);
   }
 }
 
-void SleighCompile::reportWarning(const string &msg,bool includeline)
+void SleighCompile::reportWarning(const Location* loc, const string &msg)
+{
+  reportWarning(formatStatusMessage(loc, msg));
+}
+
+void SleighCompile::reportWarning(const string &msg)
 
 {
-  cerr << "Warning in " << filename.back() << ' ';
-  if (includeline)
-    cerr << "at line " << dec << lineno.back() << ": ";
-  cerr << msg << endl;
+  cerr << "WARNING " << msg << endl;
+}
+
+void SleighCompile::reportInfo(const Location* loc, const string &msg)
+{
+  reportInfo(formatStatusMessage(loc, msg));
+}
+
+void SleighCompile::reportInfo(const string &msg)
+
+{
+  cerr << "INFO    " << msg << endl;
 }
 
 uintb SleighCompile::getUniqueAddr(void)
@@ -1770,7 +1873,7 @@ void SleighCompile::process(void)
 {				// Do all post processing on the parsed data structures
   checkNops();
   if (getDefaultSpace() == (AddrSpace *)0)
-    reportError("No default space specified",false);
+    reportError("No default space specified");
   if (errors>0) return;
   checkConsistency();
   if (errors>0) return;
@@ -1783,8 +1886,7 @@ void SleighCompile::process(void)
   try {
     buildXrefs();		// Make sure we can build crossrefs properly
   } catch(SleighError &err) {
-    cerr << err.explain << endl;
-    errors += 1;
+    reportError(err.explain);
     return;
   }
   checkUniqueAllocation();
@@ -1893,7 +1995,7 @@ TokenSymbol *SleighCompile::defineToken(string *name,uintb *sz)
   uint4 size = *sz;
   delete sz;
   if ((size&7)!=0) {
-    reportError(*name+"token size must be multiple of 8",true);
+    reportError(getCurrentLocation(), "'" + *name + "': token size must be multiple of 8");
     size = (size/8)+1;
   }
   else
@@ -1928,7 +2030,7 @@ void SleighCompile::newSpace(SpaceQuality *qual)
 
 {
   if (qual->size == 0) {
-    reportError("Space definition missing size attribute",true);
+    reportError(getCurrentLocation(), "Space definition '" + qual->name  + "' missing size attribute");
     delete qual;
     return;
   }
@@ -1938,7 +2040,7 @@ void SleighCompile::newSpace(SpaceQuality *qual)
   insertSpace(spc);
   if (qual->isdefault) {
     if (getDefaultSpace() != (AddrSpace *)0)
-      reportError("Multiple default spaces",true);
+      reportError(getCurrentLocation(), "Multiple default spaces -- '" + getDefaultSpace()->getName() + "', '" + qual->name + "'");
     else {
       setDefaultSpace(spc->getIndex());	// Make the flagged space the default
       pcode.setDefaultSpace(spc);
@@ -1955,7 +2057,7 @@ SectionSymbol *SleighCompile::newSectionSymbol(const string &nm)
   try {
     symtab.addGlobalSymbol(sym);
   } catch(SleighError &err) {
-    reportError(err.explain,true);
+    reportError(getCurrentLocation(), err.explain);
   }
   sections.push_back(sym);
   numSections = sections.size();
@@ -1995,11 +2097,11 @@ void SleighCompile::defineBitrange(string *name,VarnodeSymbol *sym,uint4 bitoffs
   delete name;
   uint4 size = 8*sym->getSize(); // Number of bits
   if (numb == 0) {
-    reportError("Size of bitrange is zero for: "+namecopy,true);
+    reportError(getCurrentLocation(), "'" + namecopy + "': size of bitrange is zero");
     return;
   }
   if ((bitoffset >= size)||((bitoffset+numb)>size)) {
-    reportError("Bad bitrange for: "+namecopy,true);
+    reportError(getCurrentLocation(), "'" + namecopy + "': bad bitrange");
     return;
   }
   if ((bitoffset%8 == 0)&&(numb%8 == 0)) {
@@ -2050,13 +2152,13 @@ void SleighCompile::attachValues(vector<SleighSymbol *> *symlist,vector<intb> *n
 {
   SleighSymbol *dupsym = dedupSymbolList(symlist);
   if (dupsym != (SleighSymbol *)0)
-    reportWarning("\"attach values\" list contains duplicate entries: "+dupsym->getName(),true);
+    reportWarning(getCurrentLocation(), "'attach values' list contains duplicate entries: "+dupsym->getName());
   for(int4 i=0;i<symlist->size();++i) {
     ValueSymbol *sym = (ValueSymbol *)(*symlist)[i];
     if (sym == (ValueSymbol *)0) continue;
     PatternValue *patval = sym->getPatternValue();
     if (patval->maxValue() + 1 != numlist->size()) {
-      reportError("Attach value " + sym->getName() + " is wrong size for list", true);
+      reportError(getCurrentLocation(), "Attach value '" + sym->getName() + "' is wrong size for list");
     }
     symtab.replaceSymbol(sym, new ValueMapSymbol(sym->getName(),patval,*numlist));
   }
@@ -2069,13 +2171,13 @@ void SleighCompile::attachNames(vector<SleighSymbol *> *symlist,vector<string> *
 {
   SleighSymbol *dupsym = dedupSymbolList(symlist);
   if (dupsym != (SleighSymbol *)0)
-    reportWarning("\"attach names\" list contains duplicate entries: "+dupsym->getName(),true);
+    reportWarning(getCurrentLocation(), "'attach names' list contains duplicate entries: "+dupsym->getName());
   for(int4 i=0;i<symlist->size();++i) {
     ValueSymbol *sym = (ValueSymbol *)(*symlist)[i];
     if (sym == (ValueSymbol *)0) continue;
     PatternValue *patval = sym->getPatternValue();
     if (patval->maxValue() + 1 != names->size()) {
-      reportError("Attach name " + sym->getName() + " is wrong size for list", true);
+      reportError(getCurrentLocation(), "Attach name '" + sym->getName() + "' is wrong size for list");
     }
     symtab.replaceSymbol(sym,new NameSymbol(sym->getName(),patval,*names));
   }
@@ -2088,13 +2190,13 @@ void SleighCompile::attachVarnodes(vector<SleighSymbol *> *symlist,vector<Sleigh
 {
   SleighSymbol *dupsym = dedupSymbolList(symlist);
   if (dupsym != (SleighSymbol *)0)
-    reportWarning("\"attach variables\" list contains duplicate entries: "+dupsym->getName(),true);
+    reportWarning(getCurrentLocation(), "'attach variables' list contains duplicate entries: "+dupsym->getName());
   for(int4 i=0;i<symlist->size();++i) {
     ValueSymbol *sym = (ValueSymbol *)(*symlist)[i];
     if (sym == (ValueSymbol *)0) continue;
     PatternValue *patval = sym->getPatternValue();
     if (patval->maxValue() + 1 != varlist->size()) {
-      reportError("Attach varnode " + sym->getName() + " is wrong size for list", true);
+      reportError(getCurrentLocation(), "Attach varnode '" + sym->getName() + "' is wrong size for list");
     }
     int4 sz = 0;      
     for(int4 j=0;j<varlist->size();++j) {
@@ -2103,7 +2205,9 @@ void SleighCompile::attachVarnodes(vector<SleighSymbol *> *symlist,vector<Sleigh
 	if (sz == 0)
 	  sz = vsym->getFixedVarnode().size;
 	else if (sz != vsym->getFixedVarnode().size) {
-	  reportError("Attach statement contains varnodes of different sizes",true);
+	  ostringstream msg;
+	  msg << "Attach statement contains varnodes of different sizes -- "  << dec << sz << " != " << dec << vsym->getFixedVarnode().size;
+	  reportError(getCurrentLocation(), msg.str());
 	  break;
 	}
       }
@@ -2160,7 +2264,7 @@ void SleighCompile::defineOperand(OperandSymbol *sym,PatternExpression *patexp)
 				// the operand's offset is irrelevant
   }
   catch(SleighError &err) {
-    reportError(err.explain,true);
+    reportError(getCurrentLocation(), err.explain);
     PatternExpression::release(patexp);
   }
 }
@@ -2184,7 +2288,7 @@ PatternEquation *SleighCompile::defineInvisibleOperand(TripleSymbol *sym)
     }
   }
   catch(SleighError &err) {
-    reportError(err.explain,true);
+    reportError(getCurrentLocation(), err.explain);
   }
   return res;
 }
@@ -2194,7 +2298,7 @@ void SleighCompile::selfDefine(OperandSymbol *sym)
 {				// Define operand as global symbol of same name
   TripleSymbol *glob = dynamic_cast<TripleSymbol *>(symtab.findSymbol(sym->getName(),1));
   if (glob == (TripleSymbol *)0) {
-    reportError(sym->getName()+": No matching global symbol",true);
+    reportError(getCurrentLocation(), "No matching global symbol '" + sym->getName() + "'");
     return;
   }
   SleighSymbol::symbol_type tp = glob->getType();
@@ -2206,7 +2310,7 @@ void SleighCompile::selfDefine(OperandSymbol *sym)
       sym->defineOperand(glob);
   }
   catch(SleighError &err) {
-    reportError(err.explain,true);
+    reportError(getCurrentLocation(), err.explain);
   }
 }
 
@@ -2306,12 +2410,9 @@ vector<OpTpl *> *SleighCompile::createMacroUse(MacroSymbol *sym,vector<ExprTree 
 
 { // Create macro build directive, given symbol and parameters
   if (sym->getNumOperands() != param->size()) {
-    string errmsg = "Invocation of macro \"" + sym->getName();
-    if (param->size() > sym->getNumOperands())
-      errmsg += "\" passes too many parameters";
-    else
-      errmsg += "\" passes too few parameters";
-    reportError(errmsg,true);
+    bool tooManyParams = param->size() > sym->getNumOperands();
+    string errmsg = "Invocation of macro '" + sym->getName() + "' passes too " + (tooManyParams ? "many" : "few") + " parameters";
+    reportError(getCurrentLocation(), errmsg);
     return new vector<OpTpl *>;
   }
   compareMacroParams(sym,*param);
@@ -2394,6 +2495,7 @@ Constructor *SleighCompile::createConstructor(SubtableSymbol *sym)
   curmacro = (MacroSymbol *)0;	// Not currently defining a macro
   curct = new Constructor(sym);
   curct->setLineno(lineno.back());
+  ctorLocationMap[curct] = *getCurrentLocation();
   sym->addConstructor(curct);
   symtab.addScope();		// Make a new symbol scope for our constructor
   pcode.resetLabelCount();
@@ -2448,7 +2550,9 @@ bool SleighCompile::finalizeSections(Constructor *big,SectionVector *vec)
     string errstring;
 
     errstring = checkSymbols(cur.scope); // Check labels in the section's scope
-    if (errstring.size()==0) {
+    if (errstring.size()!=0) {
+      errors.push_back(sectionstring + errstring);
+    } else {
       if (!expandMacros(cur.section,macrotable))
 	errors.push_back(sectionstring + "Could not expand macros");
       vector<int4> check;
@@ -2472,10 +2576,11 @@ bool SleighCompile::finalizeSections(Constructor *big,SectionVector *vec)
     }
     if (cur.section->delaySlot() != 0) { // Delay slot is present in this constructor
       if (root != big->getParent()) { // it is not in a root constructor
-	reportWarning("Delay slot used in",false);
-	cerr << "   ";
-	big->printInfo(cerr);
-	cerr << endl;
+	ostringstream msg;
+	msg << "Delay slot used in non-root constructor ";
+	big->printInfo(msg);
+	msg << endl;
+	reportWarning(getLocation(big), msg.str());
       }
       if (cur.section->delaySlot() > maxdelayslotbytes)	// Keep track of maximum delayslot parameter
 	maxdelayslotbytes = cur.section->delaySlot();
@@ -2494,9 +2599,9 @@ bool SleighCompile::finalizeSections(Constructor *big,SectionVector *vec)
     ostringstream s;
     s << "in ";
     big->printInfo(s);
-    reportError(s.str(),false);
+    reportError(getLocation(big), s.str());
     for(int4 j=0;j<errors.size();++j)
-      cerr << errors[j] << endl;
+      reportError(getLocation(big), errors[j]);
     return false;
   }
   return true;
@@ -2637,12 +2742,11 @@ void SleighCompile::buildMacro(MacroSymbol *sym,ConstructTpl *rtl)
 {
   string errstring = checkSymbols(symtab.getCurrentScope());
   if (errstring.size() != 0) {
-    reportError(" in definition of macro "+sym->getName(),false);
-    cerr << errstring;
+    reportError(getCurrentLocation(), "In definition of macro '"+sym->getName() + "': " + errstring);
     return;
   }
   if (!expandMacros(rtl,macrotable)) {
-    reportError("Could not expand submacro in definition of macro "+sym->getName(),true);
+    reportError(getCurrentLocation(), "Could not expand submacro in definition of macro '" + sym->getName() + "'");
     return;
   }
   PcodeCompile::propagateSize(rtl); // Propagate size information (as much as possible)
@@ -2654,9 +2758,9 @@ void SleighCompile::buildMacro(MacroSymbol *sym,ConstructTpl *rtl)
 void SleighCompile::recordNop(void)
 
 {
-  ostringstream s;
-  s << "NOP detected at " << filename.back() << ':' << dec << lineno.back();
-  noplist.push_back(s.str());
+  string msg = formatStatusMessage(getCurrentLocation(), "NOP detected");
+
+  noplist.push_back(msg);
 }
 
 static int4 run_compilation(const char *filein,const char *fileout,SleighCompile &compiler)
@@ -2853,9 +2957,9 @@ int main(int argc,char **argv)
       enableAllCollisionWarning = true;
     else if (argv[i][1] == 'n')
       enableAllNopWarning = true;
-    else if (argv[1][1] == 't')
+    else if (argv[i][1] == 't')
       enableDeadTempWarning = true;
-    else if (argv[1][1] == 'e')
+    else if (argv[i][1] == 'e')
       enforceLocalKeyWord = true;
 #ifdef YYDEBUG
     else if (argv[i][1] == 'x')
@@ -2880,10 +2984,10 @@ int main(int argc,char **argv)
     if (i != argc)
       dirStr = argv[i];
     findSlaSpecs(slaspecs, dirStr,SLASPECEXT);
-    cout << "Compiling " << slaspecs.size() << " slaspec files in " << dirStr << "\n";
+    cout << "Compiling " << dec << slaspecs.size() << " slaspec files in " << dirStr << endl;
     for(int4 j=0;j<slaspecs.size();++j) {
       string slaspec = slaspecs[j];
-      cout << "Compiling (" << (j+1) << " of " << slaspecs.size() << ") " << slaspec << "\n";
+      cout << "Compiling (" << dec << (j+1) << " of " << dec << slaspecs.size() << ") " << slaspec << endl;
       string sla = slaspec;
       sla.replace(slaspec.length() - slaspecExtLen, slaspecExtLen, SLAEXT);
       SleighCompile compiler;
@@ -2904,8 +3008,10 @@ int main(int argc,char **argv)
     }
     
     string fileinExamine(argv[i]);
+
     string::size_type extInPos = fileinExamine.find(SLASPECEXT);
     bool autoExtInSet = false;
+    bool extIsSLASPECEXT = false;
     string fileinPreExt = "";
     if (extInPos == string::npos) { //No Extension Given...
       fileinPreExt = fileinExamine;
@@ -2913,6 +3019,7 @@ int main(int argc,char **argv)
       autoExtInSet = true;
     } else {
       fileinPreExt = fileinExamine.substr(0,extInPos);
+      extIsSLASPECEXT = true;
     }
     
     if (i< argc-2) {
@@ -2934,7 +3041,7 @@ int main(int argc,char **argv)
       retval = run_compilation(fileinExamine.c_str(),fileoutExamine.c_str(),compiler);
     }else{
       //First determine whether or not to use Run_XML...
-      if (autoExtInSet) { //Assumed format of at least "sleigh file" -> "sleigh file.slaspec file.sla"
+      if (autoExtInSet || extIsSLASPECEXT) { //Assumed format of at least "sleigh file" -> "sleigh file.slaspec file.sla"
 	string fileoutSTR = fileinPreExt;
 	fileoutSTR.append(SLAEXT);
 	retval = run_compilation(fileinExamine.c_str(),fileoutSTR.c_str(),compiler);
