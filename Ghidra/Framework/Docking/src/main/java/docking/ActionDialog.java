@@ -24,7 +24,6 @@ import javax.swing.*;
 import docking.action.DockingActionIf;
 import docking.widgets.label.GIconLabel;
 import docking.widgets.label.GLabel;
-import resources.ResourceManager;
 
 /**
  * Dialog to show multiple actions that are mapped to the same keystroke;
@@ -39,10 +38,8 @@ public class ActionDialog extends DialogComponentProvider {
 
 	/**
 	 * Constructor
-	 * @param parent parent to this dialog
 	 * @param keystrokeName keystroke name
-	 * @param list list of PluginActions
-	 * @param event event to pass the selected action
+	 * @param list list of actions
 	 */
 	public ActionDialog(String keystrokeName, List<ExecutableKeyActionAdapter> list) {
 		super("Select Action", true);
@@ -68,10 +65,8 @@ public class ActionDialog extends DialogComponentProvider {
 	}
 
 	/**
-	 * Set the list of actions that are enabled.
-	 * @param list list of actions
-	 * @param event event to pass to the action that is
-	 * selected.
+	 * Set the list of actions that are enabled
+	 * @param list list of actions selected
 	 */
 	public void setActionList(List<ExecutableKeyActionAdapter> list) {
 		okButton.setEnabled(false);
@@ -84,8 +79,6 @@ public class ActionDialog extends DialogComponentProvider {
 		}
 		actionList.setSelectedIndex(0);
 	}
-
-	/////////////////////////////////////////////////////////////////////////
 
 	private void init() {
 		this.addWorkPanel(buildMainPanel());
@@ -107,7 +100,9 @@ public class ActionDialog extends DialogComponentProvider {
 		innerPanel.setBorder(BorderFactory.createTitledBorder("Actions"));
 
 		JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-		panel.add(new GIconLabel(ResourceManager.loadImage("images/warning.png")));
+
+		Icon icon = UIManager.getIcon("OptionPane.warningIcon");
+		panel.add(new GIconLabel(icon));
 		panel.add(labelPanel);
 
 		listModel = new DefaultListModel<>();
@@ -139,7 +134,7 @@ public class ActionDialog extends DialogComponentProvider {
 		return mainPanel;
 	}
 
-	void addListeners() {
+	private void addListeners() {
 		actionList.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseClicked(MouseEvent e) {
