@@ -28,6 +28,7 @@ import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.Symbol;
 import ghidra.util.HelpLocation;
+import ghidra.util.Swing;
 import ghidra.util.table.GhidraTable;
 import resources.ResourceManager;
 
@@ -141,7 +142,11 @@ class ReferenceProvider extends ComponentProviderAdapter {
 	@Override
 	public void componentShown() {
 		referenceKeyModel.setProgram(plugin.getProgram());
-		plugin.openSymbolProvider();
+
+		// Note: this is a bit of a hack--if we do this during a tool's restore process, then
+		//       there is a chance that the Symbol Provider has not yet been re-loaded.   This
+		//       is only needed due to the odd dependency of this provider upon the Symbol Provider.
+		Swing.runLater(plugin::openSymbolProvider);
 	}
 
 	@Override
