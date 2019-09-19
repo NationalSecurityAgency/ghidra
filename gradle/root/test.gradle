@@ -286,7 +286,7 @@ def initTestJVM(Task task, String rootDirName) {
 			'-XX:ParallelGCThreads=8',
 			'-XX:+UseParallelGC',
 			'-Djava.awt.headless=false',
-			'-DDecompilerFunctionAnalyzer.enabled=false', // prvent long-winded analysis when testing (see DecompilerFunctionAnalyzer)
+			'-DDecompilerFunctionAnalyzer.enabled=false', // prevent long-winded analysis when testing (see DecompilerFunctionAnalyzer)
 			'-Dfile.encoding=UTF8',
 			'-Duser.country=US',
 			'-Duser.language=en',
