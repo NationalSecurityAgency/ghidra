@@ -1587,7 +1587,7 @@ void SleighCompile::buildDecisionTrees(void)
   for(int4 i=0;i<tables.size();++i)
     tables[i]->buildDecisionTree(props);
 
-  const vector<pair<Constructor*, Constructor*>> &ierrors( props.getIdentErrors() );
+  const vector<pair<Constructor*, Constructor*> > &ierrors( props.getIdentErrors() );
   if (ierrors.size() != 0) {
     string identMsg = "Constructor has identical pattern to constructor at ";
     for(int4 i=0;i<ierrors.size();++i) {
@@ -1599,7 +1599,7 @@ void SleighCompile::buildDecisionTrees(void)
     }
   }
 
-  const vector<pair<Constructor *, Constructor*>> &cerrors( props.getConflictErrors() );
+  const vector<pair<Constructor *, Constructor*> > &cerrors( props.getConflictErrors() );
   if (!lenientconflicterrors && cerrors.size() != 0) {
     string conflictMsg = "Constructor pattern cannot be distinguished from constructor at ";
     for(int4 i=0;i<cerrors.size();++i) {
@@ -1616,7 +1616,7 @@ void SleighCompile::buildPatterns(void)
 
 {
   if (root == 0) {
-    reportError(nullptr, "No patterns to match.");
+    reportError((const Location *)0, "No patterns to match.");
     return;
   }
   ostringstream msg;

@@ -525,13 +525,13 @@ public:
 };
 
 class DecisionProperties {
-  vector<pair<Constructor *, Constructor *>> identerrors;
-  vector<pair<Constructor *, Constructor *>> conflicterrors;
+  vector<pair<Constructor *, Constructor *> > identerrors;
+  vector<pair<Constructor *, Constructor *> > conflicterrors;
 public:
   void identicalPattern(Constructor *a,Constructor *b);
   void conflictingPattern(Constructor *a,Constructor *b);
-  const vector<pair<Constructor *, Constructor *>> &getIdentErrors(void) const { return identerrors; }
-  const vector<pair<Constructor *, Constructor *>> &getConflictErrors(void) const { return conflicterrors; }
+  const vector<pair<Constructor *, Constructor *> > &getIdentErrors(void) const { return identerrors; }
+  const vector<pair<Constructor *, Constructor *> > &getConflictErrors(void) const { return conflicterrors; }
 };
 
 class DecisionNode {
