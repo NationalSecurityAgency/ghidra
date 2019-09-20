@@ -499,7 +499,7 @@ public class SleighCompile extends SleighBase {
 	void checkConsistency() {
 		entry("checkConsistency");
 		ConsistencyChecker checker =
-			new ConsistencyChecker(root, warnunnecessarypcode, warndeadtemps);
+			new ConsistencyChecker(this, root, warnunnecessarypcode, warndeadtemps);
 
 		if (!checker.test()) {
 			errors += 1;
@@ -650,26 +650,23 @@ public class SleighCompile extends SleighBase {
 	}
 
 
-	@Override
 	public void reportError(Location location, String msg) {
 		entry("reportError", location, msg);
-		super.reportError(location, msg);
+		Msg.error(this, MessageFormattingUtils.format(location, msg));
 
 		errors += 1;
 	}
 
-	@Override
 	public void reportError(Location location, String msg, Throwable t) {
 		entry("reportError", location, msg);
-		super.reportError(location, msg, t);
+		Msg.error(this, MessageFormattingUtils.format(location, msg), t);
 
 		errors += 1;
 	}
 
-	@Override
 	public void reportWarning(Location location, String msg) {
 		entry("reportWarning", location, msg);
-		super.reportWarning(location, msg);
+		Msg.warn(this, MessageFormattingUtils.format(location, msg));
 
 		warnings += 1;
 	}
@@ -757,11 +754,19 @@ public class SleighCompile extends SleighBase {
 		if (errors > 0) {
 			return;
 		}
-		try {
-			buildXrefs(); // Make sure we can build crossrefs properly
-		}
-		catch (SleighError err) {
-			Msg.error(this, err.location + ": " + err.getMessage(), err);
+		ArrayList<SleighSymbol> errorPairs = new ArrayList<SleighSymbol>();
+		buildXrefs(errorPairs);			// Make sure we can build crossrefs properly
+		if (!errorPairs.isEmpty()) {
+			for (int i = 0; i < errorPairs.size(); i += 2) {
+				SleighSymbol sym1 = errorPairs.get(i);
+				SleighSymbol sym2 = errorPairs.get(i + 1);
+				String msg =
+					String.format("Duplicate (offset,size) pair for registers: %s (%s) and %s (%s)",
+						sym1.getName(), sym1.getLocation(), sym2.getName(), sym2.getLocation());
+
+				reportError(sym1.getLocation(), msg);
+				reportError(sym2.getLocation(), msg);
+			}
 			errors += 1;
 			return;
 		}

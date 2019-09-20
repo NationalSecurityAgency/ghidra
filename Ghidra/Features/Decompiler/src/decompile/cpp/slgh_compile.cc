@@ -186,23 +186,13 @@ SubtableSymbol *WithBlock::getCurrentSubtable(const list<WithBlock> &stack)
 ConsistencyChecker::ConsistencyChecker(SleighCompile *sleigh,SubtableSymbol *rt,bool un,bool warndead)
 
 {
-  slgh = sleigh;
+  compiler = sleigh;
   root_symbol = rt;
   unnecessarypcode = 0;
   readnowrite = 0;
   writenoread = 0;
   printextwarning = un;
   printdeadwarning = warndead;
-}
-
-void ConsistencyChecker::reportError(const Location *loc, const string &msg)
-{
-  slgh->reportError(loc, msg);
-}
-
-void ConsistencyChecker::reportWarning(const Location *loc, const string &msg)
-{
-  slgh->reportWarning(loc, msg);
 }
 
 int4 ConsistencyChecker::recoverSize(const ConstTpl &sizeconst,Constructor *ct)
@@ -245,7 +235,7 @@ void ConsistencyChecker::dealWithUnnecessaryExt(OpTpl *op,Constructor *ct)
     ostringstream msg;
     msg << "Unnecessary ";
     printOpName(msg,op);
-    reportWarning(slgh->getLocation(ct), msg.str());
+    compiler->reportWarning(compiler->getLocation(ct), msg.str());
   }
   op->setOpcode(CPUI_COPY);	// Equivalent to copy
   unnecessarypcode += 1;
@@ -258,7 +248,7 @@ void ConsistencyChecker::dealWithUnnecessaryTrunc(OpTpl *op,Constructor *ct)
     ostringstream msg;
     msg << "Unnecessary ";
     printOpName(msg,op);
-    reportWarning(slgh->getLocation(ct), msg.str());
+    compiler->reportWarning(compiler->getLocation(ct), msg.str());
   }
   op->setOpcode(CPUI_COPY);	// Equivalent to copy
   op->removeInput(1);
@@ -273,7 +263,7 @@ bool ConsistencyChecker::checkOpMisuse(OpTpl *op,Constructor *ct)
     {
       VarnodeTpl *vn = op->getIn(1);
       if (vn->getSpace().isConstSpace() && vn->getOffset().isZero()) {
-	reportError(slgh->getLocation(ct), "Unsigned comparison with zero is always false");
+	compiler->reportError(compiler->getLocation(ct), "Unsigned comparison with zero is always false");
       }
     }
     break;
@@ -800,7 +790,7 @@ void ConsistencyChecker::printOpError(OpTpl *op,Constructor *ct,int4 err1,int4 e
   printOpName(msgBuilder,op);
   msgBuilder << " operator" << endl << "  " << msg;
 
-  reportError(slgh->getLocation(ct), msgBuilder.str());
+  compiler->reportError(compiler->getLocation(ct), msgBuilder.str());
 }
 
 bool ConsistencyChecker::checkConstructorSection(Constructor *ct,ConstructTpl *cttpl)
@@ -896,7 +886,7 @@ bool ConsistencyChecker::checkSubtable(SubtableSymbol *sym)
 	ostringstream msg;
 	msg << "Table '" << sym->getName() << "' exports inconsistently; ";
 	msg << "Constructor starting at line " << dec << ct->getLineno() << " is first inconsistency";
-	reportError(slgh->getLocation(ct), msg.str());
+	compiler->reportError(compiler->getLocation(ct), msg.str());
 	testresult = false;
       }
       seennonemptyexport = true;
@@ -907,7 +897,7 @@ bool ConsistencyChecker::checkSubtable(SubtableSymbol *sym)
 	ostringstream msg;
 	msg << "Table '" << sym->getName() << "' has inconsistent export size; ";
 	msg << "Constructor starting at line " << dec << ct->getLineno() << " is first conflict";
-	reportError(slgh->getLocation(ct), msg.str());
+	compiler->reportError(compiler->getLocation(ct), msg.str());
 	testresult = false;
       }
     }
@@ -916,7 +906,7 @@ bool ConsistencyChecker::checkSubtable(SubtableSymbol *sym)
 	ostringstream msg;
 	msg << "Table '" << sym->getName() << "' exports inconsistently; ";
 	msg << "Constructor starting at line " << dec << ct->getLineno() << " is first inconsistency";
-	reportError(slgh->getLocation(ct), msg.str());
+	compiler->reportError(compiler->getLocation(ct), msg.str());
 	testresult = false;
       }
       seenemptyexport = true;
@@ -924,7 +914,7 @@ bool ConsistencyChecker::checkSubtable(SubtableSymbol *sym)
   }
   if (seennonemptyexport) {
     if (tablesize == 0) {
-      reportWarning(slgh->getLocation(sym), "Table '" + sym->getName() + "' exports size 0");
+      compiler->reportWarning(compiler->getLocation(sym), "Table '" + sym->getName() + "' exports size 0");
     }
     sizemap[sym] = tablesize;	// Remember recovered size
   }
@@ -1234,11 +1224,11 @@ void ConsistencyChecker::checkUnusedTemps(Constructor *ct,const map<uintb,Optimi
     const OptimizeRecord &currec( (*iter).second );
     if (currec.readcount == 0) {
       if (printdeadwarning)
-	reportWarning(slgh->getLocation(ct), "Temporary is written but not read");
+	compiler->reportWarning(compiler->getLocation(ct), "Temporary is written but not read");
       writenoread += 1;
     }
     else if (currec.writecount == 0) {
-      reportError(slgh->getLocation(ct), "Temporary is read but not written");
+      compiler->reportError(compiler->getLocation(ct), "Temporary is read but not written");
       readnowrite += 1;
     }
     ++iter;
@@ -1883,10 +1873,15 @@ void SleighCompile::process(void)
   if (errors>0) return;
   buildDecisionTrees();
   if (errors>0) return;
-  try {
-    buildXrefs();		// Make sure we can build crossrefs properly
-  } catch(SleighError &err) {
-    reportError(err.explain);
+  vector<string> errorPairs;
+  buildXrefs(errorPairs);		// Make sure we can build crossrefs properly
+  if (!errorPairs.empty()) {
+    for(int4 i=0;i<errorPairs.size();i+=2) {
+      ostringstream s;
+      s << "Duplicate (offset,size) pair for registers: ";
+      s << errorPairs[i] << " and " << errorPairs[i+1] << endl;
+      reportError(s.str());
+    }
     return;
   }
   checkUniqueAllocation();

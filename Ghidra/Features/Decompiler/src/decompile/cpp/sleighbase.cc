@@ -28,13 +28,12 @@ SleighBase::SleighBase(void)
 
 /// Assuming the symbol table is populated, iterate through the table collecting
 /// registers (for the map), user-op names, and context fields.
-void SleighBase::buildXrefs(void)
+void SleighBase::buildXrefs(vector<string> &errorPairs)
 
 {
   SymbolScope *glb = symtab.getGlobalScope();
   SymbolTree::const_iterator iter;
   SleighSymbol *sym;
-  int4 errors = 0;
   ostringstream s;
 
   for(iter=glb->begin();iter!=glb->end();++iter) {
@@ -43,9 +42,8 @@ void SleighBase::buildXrefs(void)
       pair<VarnodeData,string> ins(((VarnodeSymbol *)sym)->getFixedVarnode(),sym->getName());
       pair<map<VarnodeData,string>::iterator,bool> res = varnode_xref.insert(ins);
       if (!res.second) {
-	s << "Duplicate (offset,size) pair for registers: ";
-	s << sym->getName() << " and " << (*(res.first)).second << '\n';
-	errors += 1;
+	errorPairs.push_back(sym->getName());
+	errorPairs.push_back((*(res.first)).second);
       }
     }
     else if (sym->getType() == SleighSymbol::userop_symbol) {
@@ -62,8 +60,6 @@ void SleighBase::buildXrefs(void)
       registerContext(csym->getName(),startbit,endbit);
     }
   }
-  if (errors > 0)
-    throw SleighError(s.str());
 }
 
 /// If \b this SleighBase is being reused with a new program, the context
@@ -239,5 +235,8 @@ void SleighBase::restoreXml(const Element *el)
   iter++;
   symtab.restoreXml(*iter,this);
   root = (SubtableSymbol *)symtab.getGlobalScope()->findSymbol("instruction");
-  buildXrefs();
+  vector<string> errorPairs;
+  buildXrefs(errorPairs);
+  if (!errorPairs.empty())
+    throw SleighError("Duplicate register pairs");
 }

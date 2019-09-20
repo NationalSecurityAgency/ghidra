@@ -16,9 +16,9 @@
 package ghidra.pcodeCPort.sleighbase;
 
 import java.io.PrintStream;
+import java.util.ArrayList;
 
 import generic.stl.*;
-import ghidra.pcode.utils.MessageFormattingUtils;
 import ghidra.pcodeCPort.context.SleighError;
 import ghidra.pcodeCPort.pcoderaw.VarnodeData;
 import ghidra.pcodeCPort.slghpatexpress.ContextField;
@@ -27,8 +27,6 @@ import ghidra.pcodeCPort.space.AddrSpace;
 import ghidra.pcodeCPort.space.spacetype;
 import ghidra.pcodeCPort.translate.Translate;
 import ghidra.pcodeCPort.utils.XmlUtils;
-import ghidra.sleigh.grammar.Location;
-import ghidra.util.Msg;
 
 public abstract class SleighBase extends Translate implements NamedSymbolProvider {
 
@@ -69,39 +67,17 @@ public abstract class SleighBase extends Translate implements NamedSymbolProvide
 		return (root != null);
 	}
 
-	public void reportError(Location location, String msg) {
-		Msg.error(this, MessageFormattingUtils.format(location, msg));
-	}
-
-	public void reportError(Location location, String msg, Throwable t) {
-		Msg.error(this, MessageFormattingUtils.format(location, msg), t);
-	}
-
-	public void reportWarning(Location location, String msg) {
-		Msg.warn(this, MessageFormattingUtils.format(location, msg));
-	}
-
-	protected void buildXrefs() {
+	protected void buildXrefs(ArrayList<SleighSymbol> errorPairs) {
 		SymbolScope glb = symtab.getGlobalScope();
-		int errors = 0;
 		glb.begin();
 		IteratorSTL<SleighSymbol> iter;
-		StringBuffer buffer = new StringBuffer();
 		for (iter = glb.begin(); !iter.isEnd(); iter.increment()) {
 			SleighSymbol sym = iter.get();
 			if (sym.getType() == symbol_type.varnode_symbol) {
 				Pair<IteratorSTL<VarnodeSymbol>, Boolean> res = varnode_xref.insert((VarnodeSymbol) sym);
 				if (!res.second) {
-
-					String msg = String.format("Duplicate (offset,size) pair for registers: %s (%s) and %s (%s)",
-							sym.getName(), sym.getLocation(), res.first.get().getName(), res.first.get().getLocation());
-
-					buffer.append(msg + "\n");
-
-					reportError(sym.getLocation(), msg);
-					reportError(res.first.get().getLocation(), msg);
-
-					errors += 1;
+					errorPairs.add(sym);
+					errorPairs.add(res.first.get());
 				}
 			} else if (sym.getType() == symbol_type.userop_symbol) {
 				int index = ((UserOpSymbol) sym).getIndex();
@@ -116,9 +92,6 @@ public abstract class SleighBase extends Translate implements NamedSymbolProvide
 				int endbit = field.getEndBit();
 				registerContext(csym.getName(), startbit, endbit);
 			}
-		}
-		if (errors > 0) {
-			throw new SleighError(buffer.toString(), null);
 		}
 	}
 

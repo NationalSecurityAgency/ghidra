@@ -25,8 +25,6 @@ import ghidra.pcodeCPort.semantics.ConstTpl.const_type;
 import ghidra.pcodeCPort.semantics.ConstTpl.v_field;
 import ghidra.pcodeCPort.slghsymbol.*;
 import ghidra.pcodeCPort.space.AddrSpace;
-import ghidra.sleigh.grammar.Location;
-import ghidra.util.Msg;
 
 class ConsistencyChecker {
 
@@ -35,6 +33,7 @@ class ConsistencyChecker {
 	int writenoread;
 	boolean printextwarning;
 	boolean printdeadwarning;
+	SleighCompile compiler;
 	SubtableSymbol root_symbol;
 	VectorSTL<SubtableSymbol> postorder = new VectorSTL<>();
 
@@ -480,30 +479,6 @@ class ConsistencyChecker {
 		}
 	}
 
-	private void reportError(Location location, CharSequence message) {
-		if (location == null) {
-			Msg.error(this, message);
-			return;
-		}
-		StringBuilder sb = new StringBuilder();
-		sb.append(location).append(": ").append(message);
-
-		Msg.error(this, sb.toString());
-	}
-
-	private void reportWarning(Location location, CharSequence message) {
-		if (location == null) {
-			Msg.warn(this, message);
-			return;
-		}
-
-		StringBuilder sb = new StringBuilder();
-
-		sb.append(location).append(": ").append(message);
-
-		Msg.warn(this, sb.toString());
-	}
-
 	void printOpError(OpTpl op, Constructor ct, int err1, int err2, String message) {
 		SubtableSymbol sym = ct.getParent();
 		OperandSymbol op1, op2;
@@ -537,7 +512,7 @@ class ConsistencyChecker {
 
 		sb.append("\n  ").append(message);
 
-		reportError(op.location, sb);
+		compiler.reportError(op.location, sb.toString());
 
 	}
 
@@ -576,7 +551,7 @@ class ConsistencyChecker {
 	}
 
 	private void handle(String msg, Constructor ct) {
-		reportError(ct.location, " Unsigned comparison with " + msg + " in constructor");
+		compiler.reportError(ct.location, " Unsigned comparison with " + msg + " in constructor");
 	}
 
 	private void handleZero(String trueOrFalse, Constructor ct) {
@@ -740,7 +715,7 @@ class ConsistencyChecker {
 			HandleTpl exportres = ct.getTempl().getResult();
 			if (exportres != null) {
 				if (seenemptyexport && (!seennonemptyexport)) {
-					reportError(ct.location, String.format(
+					compiler.reportError(ct.location, String.format(
 						"Table '%s' exports inconsistently; Constructor at %s is first inconsitency",
 						sym.getName(), ct.location));
 					testresult = false;
@@ -751,7 +726,7 @@ class ConsistencyChecker {
 					tablesize = exsize;
 				}
 				if ((exsize != 0) && (exsize != tablesize)) {
-					reportError(ct.location, String.format(
+					compiler.reportError(ct.location, String.format(
 						"Table '%s' has inconsistent export size; Constructor at %s is first conflict",
 						sym.getName(), ct.location));
 					testresult = false;
@@ -759,7 +734,7 @@ class ConsistencyChecker {
 			}
 			else {
 				if (seennonemptyexport && (!seenemptyexport)) {
-					reportError(ct.location, String.format(
+					compiler.reportError(ct.location, String.format(
 						"Table '%s' exports inconsistently; Constructor at %s is first inconsitency",
 						sym.getName(), ct.location));
 					testresult = false;
@@ -769,7 +744,8 @@ class ConsistencyChecker {
 		}
 		if (seennonemptyexport) {
 			if (tablesize == 0) {
-				reportWarning(sym.location, "Table '" + sym.getName() + "' exports size 0");
+				compiler.reportWarning(sym.location,
+					"Table '" + sym.getName() + "' exports size 0");
 
 			}
 			sizemap.put(sym, tablesize);	// Remember recovered size
@@ -785,7 +761,7 @@ class ConsistencyChecker {
 	// input size is the same as the output size
 	void dealWithUnnecessaryExt(OpTpl op, Constructor ct) {
 		if (printextwarning) {
-			reportWarning(op.location, "Unnecessary '" + getOpName(op) + "'");
+			compiler.reportWarning(op.location, "Unnecessary '" + getOpName(op) + "'");
 		}
 		op.setOpcode(OpCode.CPUI_COPY); // Equivalent to copy
 		unnecessarypcode += 1;
@@ -793,7 +769,7 @@ class ConsistencyChecker {
 
 	void dealWithUnnecessaryTrunc(OpTpl op, Constructor ct) {
 		if (printextwarning) {
-			reportWarning(op.location, "Unnecessary '" + getOpName(op) + "'");
+			compiler.reportWarning(op.location, "Unnecessary '" + getOpName(op) + "'");
 		}
 		op.setOpcode(OpCode.CPUI_COPY); // Equivalent to copy
 		op.removeInput(1);
@@ -1144,12 +1120,12 @@ class ConsistencyChecker {
 			OptimizeRecord currec = pair.second;
 			if (currec.readcount == 0) {
 				if (printdeadwarning) {
-					reportWarning(ct.location, "Temporary is written but not read");
+					compiler.reportWarning(ct.location, "Temporary is written but not read");
 				}
 				writenoread += 1;
 			}
 			else if (currec.writecount == 0) {
-				reportError(ct.location, "Temporary is read but not written");
+				compiler.reportError(ct.location, "Temporary is read but not written");
 				readnowrite += 1;
 			}
 			iter.increment();
@@ -1175,7 +1151,8 @@ class ConsistencyChecker {
 		checkUnusedTemps(ct, recs);
 	}
 
-	ConsistencyChecker(SubtableSymbol rt, boolean unnecessary, boolean warndead) {
+	ConsistencyChecker(SleighCompile cp, SubtableSymbol rt, boolean unnecessary, boolean warndead) {
+		compiler = cp;
 		root_symbol = rt;
 		unnecessarypcode = 0;
 		readnowrite = 0;

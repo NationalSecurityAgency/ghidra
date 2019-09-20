@@ -93,7 +93,7 @@ class ConsistencyChecker {
     OptimizeRecord(void) {
       writeop = -1; readop = -1; inslot=-1; writecount=0; readcount=0; writesection=-2; readsection=-2; opttype=-1; }
   };
-  SleighCompile *slgh;
+  SleighCompile *compiler;
   int4 unnecessarypcode;
   int4 readnowrite;
   int4 writenoread;
@@ -102,8 +102,6 @@ class ConsistencyChecker {
   SubtableSymbol *root_symbol;
   vector<SubtableSymbol *> postorder;
   map<SubtableSymbol *,int4> sizemap; // Sizes associated with tables
-  void reportError(const Location* loc, const string &msg);
-  void reportWarning(const Location* loc, const string &msg);
   OperandSymbol *getOperandSymbol(int4 slot,OpTpl *op,Constructor *ct);
   void printOpName(ostream &s,OpTpl *op);
   void printOpError(OpTpl *op,Constructor *ct,int4 err1,int4 err2,const string &message);
