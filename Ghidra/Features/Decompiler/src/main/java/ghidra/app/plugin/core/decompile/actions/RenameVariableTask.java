@@ -15,7 +15,6 @@
  */
 package ghidra.app.plugin.core.decompile.actions;
 
-import docking.widgets.OptionDialog;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
@@ -33,7 +32,8 @@ public class RenameVariableTask extends RenameTask {
 	private Program program;
 	private Function function;
 	private boolean commitRequired; // Set to true if all parameters are committed before renaming
-	private SourceType srctype;
+	private SourceType srctype;		// Desired source type for the variable being renamed
+	private SourceType signatureSrcType;	// Signature source type of the function (which will be preserved)
 
 	public RenameVariableTask(PluginTool tool, String old, HighFunction hfunc, HighVariable v,
 			Varnode ex, SourceType st) {
@@ -44,13 +44,16 @@ public class RenameVariableTask extends RenameTask {
 		function = hfunc.getFunction();
 		program = function.getProgram();
 		srctype = st;
+		signatureSrcType = function.getSignatureSource();
 	}
 
 	@Override
 	public void commit() throws DuplicateNameException, InvalidInputException {
 		if (commitRequired) {
-			HighFunctionDBUtil.commitParamsToDatabase(hfunction, true, srctype);
-			HighFunctionDBUtil.commitReturnToDatabase(hfunction, srctype);
+			HighFunctionDBUtil.commitParamsToDatabase(hfunction, false, signatureSrcType);
+			if (signatureSrcType != SourceType.DEFAULT) {
+				HighFunctionDBUtil.commitReturnToDatabase(hfunction, signatureSrcType);
+			}
 		}
 		HighFunctionDBUtil.updateDBVariable(var, newName, null, srctype);
 	}
@@ -65,13 +68,6 @@ public class RenameVariableTask extends RenameTask {
 		}
 		commitRequired = RetypeVariableAction.checkFullCommit(var, hfunction);
 		if (commitRequired) {
-			int resp =
-				OptionDialog.showOptionDialog(tool.getToolFrame(), "Parameter Commit Required",
-					"Renaming a parameter requires all other parameters to be committed!\nContinue with rename?",
-					"Continue");
-			if (resp != OptionDialog.OPTION_ONE) {
-				return false;
-			}
 			exactSpot = null; // Don't try to split out if we need to commit
 		}
 

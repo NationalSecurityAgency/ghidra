@@ -129,13 +129,13 @@ public class RetypeVariableAction extends AbstractDecompilerAction {
 
 		boolean commitRequired = checkFullCommit(var, hfunction);
 		if (commitRequired) {
-			int resp = OptionDialog.showOptionDialog(tool.getToolFrame(),
-				"Parameter Commit Required",
-				"Retyping a parameter requires all other parameters to be committed!\nContinue with retype?",
-				"Continue");
-			if (resp != OptionDialog.OPTION_ONE) {
-				return;
-			}
+//			int resp = OptionDialog.showOptionDialog(tool.getToolFrame(),
+//				"Parameter Commit Required",
+//				"Retyping a parameter requires all other parameters to be committed!\nContinue with retype?",
+//				"Continue");
+//			if (resp != OptionDialog.OPTION_ONE) {
+//				return;
+//			}
 			exactSpot = null;		// Don't try to split out if commit is required
 		}
 
@@ -157,10 +157,17 @@ public class RetypeVariableAction extends AbstractDecompilerAction {
 				dt = dataTypeManager.resolve(dt, null);
 			}
 			if (commitRequired) {
+				// Don't use datatypes of other parameters if the datatypes were floating.
+				// Datatypes were floating if signature source was DEFAULT
+				boolean useDataTypes =
+					hfunction.getFunction().getSignatureSource() != SourceType.DEFAULT;
 				try {
-					HighFunctionDBUtil.commitParamsToDatabase(hfunction, true,
+					HighFunctionDBUtil.commitParamsToDatabase(hfunction, useDataTypes,
 						SourceType.USER_DEFINED);
-					HighFunctionDBUtil.commitReturnToDatabase(hfunction, SourceType.USER_DEFINED);
+					if (useDataTypes) {
+						HighFunctionDBUtil.commitReturnToDatabase(hfunction,
+							SourceType.USER_DEFINED);
+					}
 				}
 				catch (DuplicateNameException e) {
 					throw new AssertException("Unexpected exception", e);
@@ -290,10 +297,6 @@ public class RetypeVariableAction extends AbstractDecompilerAction {
 			return true;
 		}
 
-		int skipslot = -1;
-		if (var != null) {
-			skipslot = ((HighParam) var).getSlot();
-		}
 		for (int i = 0; i < numParams; i++) {
 			HighParam param = localSymbolMap.getParam(i);
 			if (param.getSlot() != i) {
@@ -302,21 +305,6 @@ public class RetypeVariableAction extends AbstractDecompilerAction {
 			VariableStorage storage = param.getStorage();
 			if (!storage.equals(parameters[i].getVariableStorage())) {
 				return true;
-			}
-			if (skipslot != i) {	// Compare datatypes unless it is the specific -var- we are skipping
-				if (!param.getDataType().isEquivalent(parameters[i].getDataType())) {
-					return true;
-				}
-			}
-		}
-
-		if (var != null) {		// A null var indicates we are changing the return type anyway, so we don't need to check it
-			DataType funcReturnType = function.getReturnType();
-			if (funcReturnType != DataType.DEFAULT) {
-				DataType hfuncReturnType = hfunction.getFunctionPrototype().getReturnType();
-				if (!funcReturnType.equals(hfuncReturnType)) {
-					return true;
-				}
 			}
 		}
 

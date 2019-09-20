@@ -2056,9 +2056,7 @@ string ScopeInternal::buildVariableName(const Address &addr,
       s << "in_" << regname;
   }
   else if ((flags & Varnode::input)!=0) { // Regular parameter
-    if (ct != (Datatype *)0)
-      ct->printNameBase(s);
-    s << "Parm" << dec << index;
+    s << "param_" << dec << index;
   }
   else if ((flags & Varnode::addrtied)!=0) {
     if (ct != (Datatype *)0)
