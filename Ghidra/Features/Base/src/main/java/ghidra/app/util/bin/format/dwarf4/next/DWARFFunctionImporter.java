@@ -710,6 +710,9 @@ public class DWARFFunctionImporter {
 		if (!(dataDT instanceof Enum || dataDT instanceof AbstractIntegerDataType)) {
 			return false;
 		}
+		if (dataDT instanceof BooleanDataType) {
+			return false;
+		}
 		if (dataDT.getLength() != enumDT.getLength()) {
 			return false;
 		}

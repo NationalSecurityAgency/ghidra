@@ -15,6 +15,8 @@
  */
 package ghidra.program.model.data;
 
+import java.math.BigInteger;
+
 import ghidra.docking.settings.Settings;
 import ghidra.docking.settings.SettingsDefinition;
 import ghidra.program.model.lang.DecompilerLanguage;
@@ -24,7 +26,7 @@ import ghidra.program.model.mem.MemoryAccessException;
 /**
  * Provides a definition of an Ascii byte in a program.
  */
-public class BooleanDataType extends BuiltIn {
+public class BooleanDataType extends AbstractIntegerDataType {
 
 	private final static long serialVersionUID = 1;
 
@@ -40,7 +42,7 @@ public class BooleanDataType extends BuiltIn {
 	}
 
 	public BooleanDataType(DataTypeManager dtm) {
-		super(null, "bool", dtm);
+		super("bool", false, dtm);
 	}
 
 	@Override
@@ -52,6 +54,11 @@ public class BooleanDataType extends BuiltIn {
 	public String getDecompilerDisplayName(DecompilerLanguage language) {
 		if (language == DecompilerLanguage.JAVA_LANGUAGE)
 			return "boolean";
+		return name;
+	}
+
+	@Override
+	public String getCDeclaration() {
 		return name;
 	}
 
@@ -94,9 +101,11 @@ public class BooleanDataType extends BuiltIn {
 		return b.booleanValue() ? "TRUE" : "FALSE";
 	}
 
-	/**
-	 * @see ghidra.program.model.data.BuiltIn#getBuiltInSettingsDefinitions()
-	 */
+	@Override
+	public String getRepresentation(BigInteger bigInt, Settings settings, int bitLength) {
+		return BigInteger.ZERO.equals(bigInt) ? "FALSE" : "TRUE";
+	}
+
 	@Override
 	protected SettingsDefinition[] getBuiltInSettingsDefinitions() {
 		return SETTINGS_DEFS;
@@ -110,6 +119,12 @@ public class BooleanDataType extends BuiltIn {
 	@Override
 	public String getDefaultLabelPrefix() {
 		return "BOOL";
+	}
+
+	@Override
+	public AbstractIntegerDataType getOppositeSignednessDataType() {
+		// TODO: only unsigned supported
+		return this;
 	}
 
 }
