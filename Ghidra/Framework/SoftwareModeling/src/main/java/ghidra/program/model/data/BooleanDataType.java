@@ -103,8 +103,7 @@ public class BooleanDataType extends AbstractIntegerDataType {
 
 	@Override
 	public String getRepresentation(BigInteger bigInt, Settings settings, int bitLength) {
-		return bigInt.testBit(0) ? "TRUE" : "FALSE";
-
+		return BigInteger.ZERO.equals(bigInt) ? "FALSE" : "TRUE";
 	}
 
 	@Override

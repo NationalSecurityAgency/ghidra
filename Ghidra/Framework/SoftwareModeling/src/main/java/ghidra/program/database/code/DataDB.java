@@ -323,9 +323,6 @@ class DataDB extends CodeUnitDB implements Data {
 			if (obj instanceof Scalar) {
 				return (Scalar) obj;
 			}
-			else if (obj instanceof Boolean) {
-				return new Scalar(getLength() * 8, ((Boolean) obj).booleanValue() ? 1 : 0);
-			}
 			else if (obj instanceof Address) {
 				Address addrObj = (Address) obj;
 				long offset = addrObj.getAddressableWordOffset();

@@ -56,6 +56,8 @@ public class RenameConstantTask extends RenameTask {
 	 */
 	@Override
 	public boolean runDialog() {
+		// NOTE: acstion must ensure that HighConstant datatype produces Scalar value and is integer type
+		// BooleanDataType and CharDataType do not produce scalar values in assembly listing.
 		SetEquateDialog setEquateDialog = new SetEquateDialog(tool, program, high.getScalar());
 		setEquateDialog.setHelpLocation(new HelpLocation("EquatesPlugin", "Set_Equate"));
 
