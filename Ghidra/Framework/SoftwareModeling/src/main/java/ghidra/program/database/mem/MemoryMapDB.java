@@ -86,7 +86,7 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 		this.lock = lock;
 		defaultEndian = isBigEndian ? BIG_ENDIAN : LITTLE_ENDIAN;
 		adapter = MemoryMapDBAdapter.getAdapter(handle, openMode, this, monitor);
-		fileBytesAdapter = FileBytesAdapter.getAdapter(handle, openMode, this, monitor);
+		fileBytesAdapter = FileBytesAdapter.getAdapter(handle, openMode, monitor);
 		initializeBlocks();
 		buildAddressSets();
 	}
@@ -2049,7 +2049,7 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 	}
 
 	private void checkFileBytes(FileBytes fileBytes) {
-		if (fileBytes.getMemMap() != this) {
+		if (fileBytes.adapter != fileBytesAdapter) {
 			throw new IllegalArgumentException(
 				"Attempted to delete FileBytes that doesn't belong to this program");
 		}

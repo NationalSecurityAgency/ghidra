@@ -71,6 +71,11 @@ else {
 
 project.ext.set("OS_NAMES", ["osx64", "win32", "win64", "linux64"])
 
+/****************************************************************************
+ * Establish Visual Studio configuration environment for Windows native builds
+ ****************************************************************************/
+apply from: "GPL/vsconfig.gradle"
+
 /*********************************************************************************
  * Imports
  *  For these tasks to be available on all subprojects, this MUST be placed 

@@ -25,6 +25,7 @@ import java.nio.file.FileSystem;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.*;
+import java.util.function.Consumer;
 
 import generic.jar.ResourceFile;
 import ghidra.util.*;
@@ -728,7 +729,7 @@ public final class FileUtilities {
 	 * Returns all of the lines in the given {@link InputStream} without any newline characters.
 	 * <p>
 	 * <b>The input stream is closed as a side-effect.</b>
-	 * 
+	 *
 	 * @param is the input stream from which to read, as a side effect, it is closed
 	 * @return a {@link List} of strings representing the text lines of the file
 	 * @throws IOException if there are any issues reading the file
@@ -1214,4 +1215,46 @@ public final class FileUtilities {
 		}
 		Desktop.getDesktop().open(file);
 	}
+
+	/**
+	 * Processes each text line in a text file, in a separate thread.
+	 * <p>
+	 * Thread exits when EOF is reached.
+	 *
+	 * @param is {@link InputStream} to read
+	 * @param consumer code that will process each text of the text file.
+	 */
+	public static void asyncForEachLine(InputStream is, Consumer<String> consumer) {
+		asyncForEachLine(new BufferedReader(new InputStreamReader(is)), consumer);
+	}
+
+	/**
+	 * Processes each text line in a text file, in a separate thread.
+	 * <p>
+	 * Thread exits when EOF is reached.
+	 *
+	 * @param reader {@link BufferedReader} to read
+	 * @param consumer code that will process each text of the text file.
+	 */
+	public static void asyncForEachLine(BufferedReader reader, Consumer<String> consumer) {
+		new Thread(() -> {
+			try {
+				while (true) {
+					String line = reader.readLine();
+					if (line == null) {
+						break;
+					}
+					consumer.accept(line);
+				}
+			}
+			catch (IOException ioe) {
+				// ignore io errors while reading because thats normal when hitting EOF
+			}
+			catch (Exception e) {
+				Msg.error(FileUtilities.class, "Exception while reading", e);
+			}
+
+		}, "Threaded Stream Reader Thread").start();
+	}
+
 }

@@ -2,7 +2,17 @@
 // BIN_REPO only useable in full Ghidra source configuration
 project.ext.BIN_REPO = file("../../../ghidra.bin").absolutePath
 
+/****************************************************************************
+ * Create a set containing all the platforms we need when building native
+ * artifacts.
+ ****************************************************************************/
 project.ext.set("OS_NAMES", ["osx64", "win32", "win64", "linux64"])
+
+/****************************************************************************
+ * Establish Visual Studio configuration environment for Windows native builds
+ * NOTE: vsconfig.gradle path is relative to each GPL project module
+ ****************************************************************************/
+apply from: "../vsconfig.gradle"
 
 /*********************************************************************************
  * Returns the local platform name.

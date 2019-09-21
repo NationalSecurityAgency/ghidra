@@ -251,7 +251,7 @@ define context contextreg
   opsize=(2,3)          # =0  16-bit operands    =1  32-bit operands     =2 64-bit operands
   segover=(4,6)         # 0=default 1=cs 2=ss 3=ds 4=es 5=fs 6=gs
   highseg=(4,4)         # high bit of segover will be set for ES, FS, GS
-#  sstype=(7,7)         # 0=DS default 1=SS default
+  protectedMode=(7,7)   # 0 for real mode, 1 for protected mode
 
   repneprefx=(8,8)      # 0xf2 REPNE prefix
   repprefx=(9,9)        # 0xf3 REP prefix
@@ -1056,7 +1056,9 @@ addr64: [Base64 + Index64*ss]			is mod=2 & r_m=4; Index64 & Base64 & ss; imm32=0
 addr64: [Base64]						is mod=2 & r_m=4; rexXprefix=0 & index64=4 & Base64; imm32=0      { export Base64; }
 @endif
 
-
+currentCS: CS is protectedMode=0 & CS { tmp:4 = (inst_next >> 4) & 0xf000; CS = tmp:2; export CS; }
+currentCS: CS is protectedMode=1 & CS { tmp:4 = (inst_next >> 16) & 0xffff; CS = tmp:2; export CS; }
+ 
 segWide: is segover=0		        { export 0:$(SIZE); }
 segWide: CS: is segover=1 & CS	{ export 0:$(SIZE); }
 segWide: SS: is segover=2 & SS	{ export 0:$(SIZE); }
@@ -1066,7 +1068,7 @@ segWide: FS: is segover=5 & FS	{ export FS_OFFSET; }
 segWide: GS: is segover=6 & GS	{ export GS_OFFSET; }
 
 seg16: 	   is segover=0			{ export DS; }
-seg16: CS: is segover=1 & CS	{ export CS; }
+seg16: currentCS: is segover=1 & currentCS	{ export currentCS; }
 seg16: SS: is segover=2 & SS	{ export SS; }
 seg16: DS: is segover=3 & DS	{ export DS; }
 seg16: ES: is segover=4 & ES	{ export ES; }
@@ -1387,10 +1389,8 @@ check_Rmr32_dest:	is epsilon	{ }
 check_rm32_dest:	is epsilon	{ }
 check_EAX_dest:		is epsilon  { }
 
-# The far addresses listed here actually specify the CS segment to use
-# but we do not model changing the CS segment in protected mode
-# so we just use the offset portion of the address
-ptr1616: reloc is imm16; j16		[ reloc = j16*16 + imm16; ] { CS = j16; export *[ram]:4 reloc; }
+ptr1616: reloc is protectedMode=0 & imm16; j16		[ reloc = j16*0x10 + imm16; ] { CS = j16; export *[ram]:4 reloc; }
+ptr1616: reloc is protectedMode=1 & imm16; j16		[ reloc = j16*0x10000 + imm16; ] { CS = j16; export *[ram]:4 reloc; }
 ptr1632: j16":"imm32 is imm32; j16	{ CS = j16; export *:4 imm32; }
 
 
@@ -2711,7 +2711,7 @@ Suffix3D: imm8        is imm8 [ suffix3D=imm8; ] { }
 @ifdef IA64
 :CALL rel32     is vexMode=0 & addrsize=2 & (opsize=1 | opsize=2) & byte=0xe8; simm32=0 & rel32      { push88(&:8 inst_next); goto rel32; }
 @endif
-:CALL rm16	is addrsize=0 & opsize=0 & byte=0xff; rm16 & reg_opcode=2 ...	{ push22(&:2 inst_next); tmp:4 = segment(CS,rm16); call [tmp]; }
+:CALL rm16	is addrsize=0 & opsize=0 & byte=0xff & currentCS; rm16 & reg_opcode=2 ...	{ push22(&:2 inst_next); tmp:4 = segment(currentCS,rm16); call [tmp]; }
 :CALL rm16      is vexMode=0 & addrsize=1 & opsize=0 & byte=0xff; rm16 & reg_opcode=2 ...   { push42(&:2 inst_next); call [rm16]; }
 @ifdef IA64
 :CALL rm16      is vexMode=0 & addrsize=2 & opsize=0 & byte=0xff; rm16 & reg_opcode=2 ...   { push82(&:2 inst_next); tmp:8 = inst_next + zext(rm16); call [tmp]; }
@@ -3415,7 +3415,7 @@ enterFrames: low5 is low5 { tmp:1 = low5; export tmp; }
 :JMP rel16      is vexMode=0 & opsize=0 & byte=0xe9; rel16                      { goto rel16; }
 :JMP rel32      is vexMode=0 & opsize=1 & byte=0xe9; rel32                      { goto rel32; }
 :JMP rel32      is vexMode=0 & opsize=2 & byte=0xe9; rel32                      { goto rel32; }
-:JMP rm16	is vexMode=0 & addrsize=0 & opsize=0 & byte=0xff; rm16 & reg_opcode=4 ...	{ target:4 = segment(CS,rm16); goto [target]; }
+:JMP rm16	is vexMode=0 & addrsize=0 & opsize=0 & byte=0xff & currentCS; rm16 & reg_opcode=4 ...	{ target:4 = segment(currentCS,rm16); goto [target]; }
 :JMP rm16	is vexMode=0 & addrsize=1 & opsize=0 & byte=0xff; rm16 & reg_opcode=4 ...	{ goto [rm16]; }
 :JMP rm32       is vexMode=0 & addrsize=1 & opsize=1 & byte=0xff; rm32 & reg_opcode=4 ...    { goto [rm32]; }
 @ifdef IA64

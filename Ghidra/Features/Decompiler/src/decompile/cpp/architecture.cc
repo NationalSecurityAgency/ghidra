@@ -962,32 +962,35 @@ void Architecture::parseProcessorConfig(DocumentStorage &store)
   List::const_iterator iter;
   
   for(iter=list.begin();iter!=list.end();++iter) {
-    if ((*iter)->getName() == "programcounter") {
+    const string &elname( (*iter)->getName() );
+    if (elname == "programcounter") {
     }
-    else if ((*iter)->getName() == "volatile")
+    else if (elname == "volatile")
       parseVolatile(*iter);
-    else if ((*iter)->getName() == "incidentalcopy")
+    else if (elname == "incidentalcopy")
       parseIncidentalCopy(*iter);
-    else if ((*iter)->getName() == "context_data")
+    else if (elname == "context_data")
       context->restoreFromSpec(*iter,this);
-    else if ((*iter)->getName() == "jumpassist")
+    else if (elname == "jumpassist")
       userops.parseJumpAssist(*iter, this);
-    else if ((*iter)->getName() == "register_data") {
+    else if (elname == "segmentop")
+      userops.parseSegmentOp(*iter,this);
+    else if (elname == "register_data") {
     }
-    else if ((*iter)->getName() == "segmented_address") {
+    else if (elname == "segmented_address") {
     }
-    else if ((*iter)->getName() == "default_symbols") {
+    else if (elname == "default_symbols") {
     }
-    else if ((*iter)->getName() == "default_memory_blocks") {
+    else if (elname == "default_memory_blocks") {
     }
-    else if ((*iter)->getName() == "address_shift_amount") {
+    else if (elname == "address_shift_amount") {
     }
-    else if ((*iter)->getName() == "properties") {
+    else if (elname == "properties") {
     }
-    else if ((*iter)->getName() == "data_space") {
+    else if (elname == "data_space") {
     }
     else
-      throw LowlevelError("Unknown element in <processor_spec>: "+(*iter)->getName());
+      throw LowlevelError("Unknown element in <processor_spec>: "+elname);
   }
 }
 
@@ -1135,7 +1138,7 @@ void Architecture::init(DocumentStorage &store)
   fillinReadOnlyFromLoader();
 }
 
-Address SegmentedResolver::resolve(uintb val,int4 sz,const Address &point)
+Address SegmentedResolver::resolve(uintb val,int4 sz,const Address &point,uintb &fullEncoding)
 
 {
   int4 innersz = segop->getInnerSize();
@@ -1145,6 +1148,7 @@ Address SegmentedResolver::resolve(uintb val,int4 sz,const Address &point)
   // (as with near pointers)
     if (segop->getResolve().space != (AddrSpace *)0) {
       uintb base = glb->context->getTrackedValue(segop->getResolve(),point);
+      fullEncoding = (base << 8 * innersz) + (val & calc_mask(innersz));
       vector<uintb> seginput;
       seginput.push_back(val);
       seginput.push_back(base);
@@ -1153,6 +1157,7 @@ Address SegmentedResolver::resolve(uintb val,int4 sz,const Address &point)
     }
   }
   else { // For anything else, consider it a "far" pointer
+    fullEncoding = val;
     int4 outersz = segop->getBaseSize();
     uintb base = (val >> 8*innersz) & calc_mask(outersz);
     val = val & calc_mask(innersz);

@@ -396,7 +396,7 @@ public abstract class DockingAction implements DockingActionIf {
 			buffer.append("        MENU GROUP:        ").append(menuBarData.getMenuGroup());
 			buffer.append('\n');
 
-			String parentGroup = popupMenuData.getParentMenuGroup();
+			String parentGroup = menuBarData.getParentMenuGroup();
 			if (parentGroup != null) {
 				buffer.append("        PARENT GROUP:         ").append(parentGroup);
 				buffer.append('\n');

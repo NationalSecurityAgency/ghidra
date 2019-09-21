@@ -324,7 +324,7 @@ public class OmfLoader extends AbstractLibrarySupportLoader {
 			}
 			else if (segment.hasNonZeroData()) {
 				block = MemoryBlockUtils.createInitializedBlock(program, false, segment.getName(),
-					segmentAddr, segment.getRawDataStream(reader), segmentSize,
+					segmentAddr, segment.getRawDataStream(reader, log), segmentSize,
 					"Address:0x" + Long.toHexString(segmentAddr.getOffset()) + " " + "Size:0x" +
 						Long.toHexString(segmentSize),
 					null/*source*/, segment.isReadable(), segment.isWritable(),

@@ -44,6 +44,9 @@ public class ChooseDataTypeAction extends DockingAction {
 		super(ACTION_NAME, plugin.getName(), KeyBindingType.SHARED);
 		this.plugin = plugin;
 
+		setPopupMenuData(new MenuData(
+			new String[] { FunctionPlugin.SET_DATA_TYPE_PULLRIGHT, "Choose Data Type..." }, null,
+			"Array"));
 		setHelpLocation(new HelpLocation("DataTypeEditors", "DataTypeSelectionDialog"));
 
 		initKeyStroke(KEY_BINDING);
@@ -68,18 +71,17 @@ public class ChooseDataTypeAction extends DockingAction {
 		if (!(actionContext.getContextObject() instanceof ListingActionContext)) {
 			return false;
 		}
-		ListingActionContext context = (ListingActionContext) actionContext.getContextObject();
 
+		ListingActionContext context = (ListingActionContext) actionContext.getContextObject();
 		if (context.hasSelection()) {
 			return false;
 		}
+
 		ProgramLocation location = context.getLocation();
 		if (plugin.isValidDataLocation(location)) {
-			setPopupMenu(plugin.getDataActionMenuName(location), true);
 			return true;
 		}
 		if (location instanceof VariableLocation) {
-			setPopupMenu(plugin.getDataActionMenuName(location), false);
 			return true;
 		}
 		return false;
@@ -135,11 +137,5 @@ public class ChooseDataTypeAction extends DockingAction {
 		selectionDialog.setInitialDataType(currentDataType);
 		tool.showDialog(selectionDialog);
 		return selectionDialog;
-	}
-
-	private void setPopupMenu(String name, boolean isSignatureAction) {
-		setPopupMenuData(new MenuData(
-			new String[] { FunctionPlugin.SET_DATA_TYPE_PULLRIGHT, "Choose Data Type..." }, null,
-			"Array"));
 	}
 }

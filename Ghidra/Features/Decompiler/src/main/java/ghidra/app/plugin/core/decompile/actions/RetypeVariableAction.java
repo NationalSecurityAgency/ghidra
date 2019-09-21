@@ -18,8 +18,8 @@ package ghidra.app.plugin.core.decompile.actions;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 
-import docking.ActionContext;
-import docking.action.*;
+import docking.action.KeyBindingData;
+import docking.action.MenuData;
 import docking.widgets.OptionDialog;
 import ghidra.app.decompiler.*;
 import ghidra.app.decompiler.component.DecompilerController;
@@ -37,157 +37,17 @@ import ghidra.util.UndefinedFunction;
 import ghidra.util.data.DataTypeParser.AllowedDataTypes;
 import ghidra.util.exception.*;
 
-public class RetypeVariableAction extends DockingAction {
+public class RetypeVariableAction extends AbstractDecompilerAction {
 	private final DecompilerController controller;
 	private final PluginTool tool;
 
-	public RetypeVariableAction(String owner, PluginTool tool, DecompilerController controller) {
-		super("Retype Variable", owner);
+	public RetypeVariableAction(PluginTool tool, DecompilerController controller) {
+		super("Retype Variable");
 		this.tool = tool;
 		this.controller = controller;
 		setPopupMenuData(new MenuData(new String[] { "Retype Variable" }, "Decompile"));
 		setKeyBindingData(new KeyBindingData(KeyEvent.VK_L, InputEvent.CTRL_DOWN_MASK));
 
-	}
-
-	@Override
-	public boolean isEnabledForContext(ActionContext context) {
-		if (!(context instanceof DecompilerActionContext)) {
-			return false;
-		}
-
-		Function function = controller.getFunction();
-		if (function instanceof UndefinedFunction) {
-			return false;
-		}
-
-		DecompilerActionContext decompilerActionContext = (DecompilerActionContext) context;
-		if (decompilerActionContext.isDecompiling()) {
-			// Let this through here and handle it in actionPerformed().  This lets us alert 
-			// the user that they have to wait until the decompile is finished.  If we are not
-			// enabled at this point, then the keybinding will be propagated to the global 
-			// actions, which is not what we want.
-			return true;
-		}
-
-		DecompilerPanel decompilerPanel = controller.getDecompilerPanel();
-		ClangToken tokenAtCursor = decompilerPanel.getTokenAtCursor();
-		if (tokenAtCursor == null) {
-			return false;
-		}
-		if (tokenAtCursor instanceof ClangFieldToken) {
-			DataType dt = RenameVariableAction.getStructDataType(tokenAtCursor);
-			if (dt == null) {
-				return false;
-			}
-			getPopupMenuData().setMenuItemName("Retype Field");
-			return true;
-		}
-		if (tokenAtCursor.Parent() instanceof ClangReturnType) {
-			getPopupMenuData().setMenuItemName("Retype Return");
-			return true;
-		}
-		if (!tokenAtCursor.isVariableRef()) {
-			return false;
-		}
-		HighVariable variable = tokenAtCursor.getHighVariable();
-		if (variable == null) {
-			Address addr = RenameVariableAction.getStorageAddress(tokenAtCursor, controller);
-			if (addr == null) {
-				return false;
-			}
-			variable = RenameVariableAction.forgeHighVariable(addr, controller);
-			if (variable == null) {
-				return false;
-			}
-		}
-		if (variable instanceof HighConstant) {
-//			getPopupMenuData().setMenuItemName("Retype Constant");
-//			return true;
-		}
-		else if (variable instanceof HighLocal) {
-			getPopupMenuData().setMenuItemName("Retype Variable");
-			return true;
-		}
-		else if (variable instanceof HighGlobal) {
-			getPopupMenuData().setMenuItemName("Retype Global");
-			return true;
-		}
-		return false;
-	}
-
-	@Override
-	public void actionPerformed(ActionContext context) {
-		// Note: we intentionally do this check here and not in isEnabledForContext() so 
-		// that global events do not get triggered.
-		DecompilerActionContext decompilerActionContext = (DecompilerActionContext) context;
-		if (decompilerActionContext.isDecompiling()) {
-			Msg.showInfo(getClass(), context.getComponentProvider().getComponent(),
-				"Decompiler Action Blocked",
-				"You cannot perform Decompiler actions while the Decompiler is busy");
-			return;
-		}
-
-		DecompilerPanel decompilerPanel = controller.getDecompilerPanel();
-		ClangToken tokenAtCursor = decompilerPanel.getTokenAtCursor();
-		HighVariable variable = null;
-		Structure struct = null;
-		DataTypeComponent comp = null;
-
-		DataType dataType = null;
-		if (tokenAtCursor instanceof ClangFieldToken) {
-			struct = RenameVariableAction.getStructDataType(tokenAtCursor);
-			int offset = RenameVariableAction.getDataTypeOffset(tokenAtCursor);
-			if (struct == null) {
-				Msg.showError(this, tool.getToolFrame(), "Retype Failed",
-					"Failed to re-type structure");
-				return;
-			}
-			if (offset < 0 || offset >= struct.getLength()) {
-				Msg.showError(this, tool.getToolFrame(), "Retype Failed",
-					"Failed to re-type structure: " + struct.getName());
-				return;
-			}
-			comp = struct.getComponentAt(offset);
-			if (comp == null) {
-				dataType = chooseDataType(DataType.DEFAULT);
-			}
-			else {
-				dataType = chooseDataType(comp.getDataType());
-			}
-		}
-		else if (tokenAtCursor.Parent() instanceof ClangReturnType) {
-			ClangReturnType parent = (ClangReturnType) tokenAtCursor.Parent();
-			dataType = chooseDataType(parent.getDataType());
-			if (dataType == null) {
-				return;
-			}
-			retypeReturnType(dataType, parent);
-			return;
-		}
-		else {
-			variable = tokenAtCursor.getHighVariable();
-			if (variable == null) {
-				Address addr = RenameVariableAction.getStorageAddress(tokenAtCursor, controller);
-				if (addr == null) {
-					return;
-				}
-				variable = RenameVariableAction.forgeHighVariable(addr, controller);
-				if (variable == null) {
-					return;
-				}
-			}
-			dataType = chooseDataType(variable.getDataType());
-		}
-		if (dataType == null) {
-			return;
-		}
-		if (struct != null) {
-			retypeStructVariable(struct, comp, dataType);
-		}
-		else {
-			retypeVariable(variable, tokenAtCursor.getVarnode(), dataType);
-		}
 	}
 
 	private void retypeReturnType(DataType dataType, ClangReturnType parent) {
@@ -199,12 +59,10 @@ public class RetypeVariableAction extends DockingAction {
 		}
 		boolean commitRequired = checkFullCommit(null, hfunction);
 		if (commitRequired) {
-			int resp =
-				OptionDialog.showOptionDialog(
-					tool.getToolFrame(),
-					"Parameter Commit Required",
-					"Retyping the return value requires all other parameters to be committed!\nContinue with retype?",
-					"Continue");
+			int resp = OptionDialog.showOptionDialog(tool.getToolFrame(),
+				"Parameter Commit Required",
+				"Retyping the return value requires all other parameters to be committed!\nContinue with retype?",
+				"Continue");
 			if (resp != OptionDialog.OPTION_ONE) {
 				return;
 			}
@@ -259,9 +117,8 @@ public class RetypeVariableAction extends DockingAction {
 	private DataType chooseDataType(DataType currentDataType) {
 		Program program = controller.getProgram();
 		DataTypeManager dataTypeManager = program.getDataTypeManager();
-		DataTypeSelectionDialog chooserDialog =
-			new DataTypeSelectionDialog(tool, dataTypeManager, Integer.MAX_VALUE,
-				AllowedDataTypes.FIXED_LENGTH);
+		DataTypeSelectionDialog chooserDialog = new DataTypeSelectionDialog(tool, dataTypeManager,
+			Integer.MAX_VALUE, AllowedDataTypes.FIXED_LENGTH);
 		chooserDialog.setInitialDataType(currentDataType);
 		tool.showDialog(chooserDialog);
 		return chooserDialog.getUserChosenDataType();
@@ -272,12 +129,10 @@ public class RetypeVariableAction extends DockingAction {
 
 		boolean commitRequired = checkFullCommit(var, hfunction);
 		if (commitRequired) {
-			int resp =
-				OptionDialog.showOptionDialog(
-					tool.getToolFrame(),
-					"Parameter Commit Required",
-					"Retyping a parameter requires all other parameters to be committed!\nContinue with retype?",
-					"Continue");
+			int resp = OptionDialog.showOptionDialog(tool.getToolFrame(),
+				"Parameter Commit Required",
+				"Retyping a parameter requires all other parameters to be committed!\nContinue with retype?",
+				"Continue");
 			if (resp != OptionDialog.OPTION_ONE) {
 				return;
 			}
@@ -372,7 +227,7 @@ public class RetypeVariableAction extends DockingAction {
 		if (comp == null) {
 			if (!dt.isNotYetDefined()) {
 				Msg.showError(this, tool.getToolFrame(), "Retype Failed",
-						"Could not find component of '" + dt.getName() + "' to retype");
+					"Could not find component of '" + dt.getName() + "' to retype");
 				return;
 			}
 			// note if we reach here the offset must be zero, so assume we are inserting newtype
@@ -466,5 +321,123 @@ public class RetypeVariableAction extends DockingAction {
 		}
 
 		return false;
+	}
+
+	@Override
+	protected boolean isEnabledForDecompilerContext(DecompilerActionContext context) {
+		Function function = controller.getFunction();
+		if (function instanceof UndefinedFunction) {
+			return false;
+		}
+
+		DecompilerPanel decompilerPanel = controller.getDecompilerPanel();
+		ClangToken tokenAtCursor = decompilerPanel.getTokenAtCursor();
+		if (tokenAtCursor == null) {
+			return false;
+		}
+		if (tokenAtCursor instanceof ClangFieldToken) {
+			DataType dt = RenameVariableAction.getStructDataType(tokenAtCursor);
+			if (dt == null) {
+				return false;
+			}
+			getPopupMenuData().setMenuItemName("Retype Field");
+			return true;
+		}
+		if (tokenAtCursor.Parent() instanceof ClangReturnType) {
+			getPopupMenuData().setMenuItemName("Retype Return");
+			return true;
+		}
+		if (!tokenAtCursor.isVariableRef()) {
+			return false;
+		}
+		HighVariable variable = tokenAtCursor.getHighVariable();
+		if (variable == null) {
+			Address addr = RenameVariableAction.getStorageAddress(tokenAtCursor, controller);
+			if (addr == null) {
+				return false;
+			}
+			variable = RenameVariableAction.forgeHighVariable(addr, controller);
+			if (variable == null) {
+				return false;
+			}
+		}
+		if (variable instanceof HighConstant) {
+//		getPopupMenuData().setMenuItemName("Retype Constant");
+//		return true;
+		}
+		else if (variable instanceof HighLocal) {
+			getPopupMenuData().setMenuItemName("Retype Variable");
+			return true;
+		}
+		else if (variable instanceof HighGlobal) {
+			getPopupMenuData().setMenuItemName("Retype Global");
+			return true;
+		}
+		return false;
+	}
+
+	@Override
+	protected void decompilerActionPerformed(DecompilerActionContext context) {
+		DecompilerPanel decompilerPanel = controller.getDecompilerPanel();
+		ClangToken tokenAtCursor = decompilerPanel.getTokenAtCursor();
+		HighVariable variable = null;
+		Structure struct = null;
+		DataTypeComponent comp = null;
+
+		DataType dataType = null;
+		if (tokenAtCursor instanceof ClangFieldToken) {
+			struct = RenameVariableAction.getStructDataType(tokenAtCursor);
+			int offset = RenameVariableAction.getDataTypeOffset(tokenAtCursor);
+			if (struct == null) {
+				Msg.showError(this, tool.getToolFrame(), "Retype Failed",
+					"Failed to re-type structure");
+				return;
+			}
+			if (offset < 0 || offset >= struct.getLength()) {
+				Msg.showError(this, tool.getToolFrame(), "Retype Failed",
+					"Failed to re-type structure: " + struct.getName());
+				return;
+			}
+			comp = struct.getComponentAt(offset);
+			if (comp == null) {
+				dataType = chooseDataType(DataType.DEFAULT);
+			}
+			else {
+				dataType = chooseDataType(comp.getDataType());
+			}
+		}
+		else if (tokenAtCursor.Parent() instanceof ClangReturnType) {
+			ClangReturnType parent = (ClangReturnType) tokenAtCursor.Parent();
+			dataType = chooseDataType(parent.getDataType());
+			if (dataType == null) {
+				return;
+			}
+			retypeReturnType(dataType, parent);
+			return;
+		}
+		else {
+			variable = tokenAtCursor.getHighVariable();
+			if (variable == null) {
+				Address addr = RenameVariableAction.getStorageAddress(tokenAtCursor, controller);
+				if (addr == null) {
+					return;
+				}
+				variable = RenameVariableAction.forgeHighVariable(addr, controller);
+				if (variable == null) {
+					return;
+				}
+			}
+			dataType = chooseDataType(variable.getDataType());
+		}
+
+		if (dataType == null) {
+			return;
+		}
+		if (struct != null) {
+			retypeStructVariable(struct, comp, dataType);
+		}
+		else {
+			retypeVariable(variable, tokenAtCursor.getVarnode(), dataType);
+		}
 	}
 }

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+     This is the processor specification for the HC08 (68HC08) processor family.
+-->
+<processor_spec>
+  <programcounter register="PC"/>
+  <default_symbols>
+     <symbol name="BRKAR"           address="FE02"/>
+    <symbol name="BFCR"            address="FE03"/>
+    <symbol name="INT1"            address="FE04"/>
+    <symbol name="INT2"            address="FE05"/>
+    <symbol name="COPCTL"            address="FFFF"/>
+    <symbol name="VECTOR_IRQ"                     address="FFFA" entry="true" type="code_ptr"/>
+    <symbol name="VECTOR_SWI"                     address="FFFC" entry="true" type="code_ptr"/>
+    <symbol name="VECTOR_Reset"                   address="FFFE" entry="true" type="code_ptr"/>
+  </default_symbols>
+</processor_spec>

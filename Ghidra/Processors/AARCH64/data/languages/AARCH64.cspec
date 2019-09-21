@@ -5,7 +5,7 @@
      <absolute_max_alignment value="0" />
      <machine_alignment value="4" />
      <default_alignment value="1" />
-     <default_pointer_alignment value="4" />
+     <default_pointer_alignment value="8" />
      <pointer_size value="8" />
      <wchar_size value="4" />
      <short_size value="2" />
@@ -129,7 +129,6 @@
         </pentry>
       </output>
       <unaffected>
-        <register name="x8"/>    
         <register name="x19"/>
         <register name="x20"/>
         <register name="x21"/>
@@ -143,17 +142,48 @@
         <register name="x29"/>
         <register name="x30"/>
         <register name="sp"/>
+        <!-- vectors -->
+        <register name="d8"/>
+        <register name="d9"/>
+        <register name="d10"/>
+        <register name="d11"/>
+        <register name="d12"/>
+        <register name="d13"/>
+        <register name="d14"/>
+        <register name="d15"/>
       </unaffected>
       <killedbycall>
-        <register name="x1"/>
+        <!-- x8: indirect result location register, which is not
+         reflected in the pentry list -->
+        <register name="x8"/>
         <register name="x9"/>
         <register name="x10"/>
         <register name="x11"/>
-        <register name="x12"/> 
-        <register name="x13"/> 
-        <register name="x14"/> 
-        <register name="x15"/> 
-      </killedbycall>
+        <register name="x12"/>
+        <register name="x13"/>
+        <register name="x14"/>
+        <register name="x15"/>
+        <register name="x16"/>
+        <register name="x17"/>
+        <register name="x18"/>
+        <!-- vectors -->
+        <register name="d16"/>
+        <register name="d17"/>
+        <register name="d18"/>
+        <register name="d19"/>
+        <register name="d20"/>
+        <register name="d21"/>
+        <register name="d22"/>
+        <register name="d23"/>
+        <register name="d24"/>
+        <register name="d25"/>
+        <register name="d26"/>
+        <register name="d27"/>
+        <register name="d28"/>
+        <register name="d29"/>
+        <register name="d30"/>
+        <register name="d31"/>
+        </killedbycall>
     </prototype>
   </default_proto>
 

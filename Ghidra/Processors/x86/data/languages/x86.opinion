@@ -37,7 +37,7 @@
         <constraint primary="23117" processor="x86" endian="little" size="16" variant="Real Mode"/>
     </constraint>
     <constraint loader="New Executable (NE)" compilerSpecID="default">
-        <constraint primary="17742" processor="x86" endian="little" size="16" variant="Real Mode"/>
+        <constraint primary="17742" processor="x86" endian="little" size="16" variant="Protected Mode"/>
     </constraint>
     <constraint loader="Mac OS X Mach-O" compilerSpecID="gcc">
         <constraint primary="7"        processor="x86"     endian="little" size="32" />

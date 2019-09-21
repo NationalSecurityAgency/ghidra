@@ -11,14 +11,6 @@
     <range space="io"/>
   </global>
   <stackpointer register="SP" space="ram"/>
-  <segmentop space="ram" userop="segment" baseinsize="2" innerinsize="2" farpointer="yes">
-    <baseop code="INT_ZEXT"/>
-    <baseop code="INT_LEFT" value="12"/>
-    <innerop code="INT_ZEXT"/>
-    <constresolve>
-      <register name="rBBR"/>
-    </constresolve>
-  </segmentop>
   <default_proto>
     <prototype name="__asmA" extrapop="2" stackshift="2" strategy="register">
       <input>

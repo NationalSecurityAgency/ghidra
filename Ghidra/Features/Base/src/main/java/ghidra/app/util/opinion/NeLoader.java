@@ -51,6 +51,7 @@ public class NeLoader extends AbstractLibrarySupportLoader {
 
 	private static final String TAB = "    ";
 	private static final long MIN_BYTE_LENGTH = 4;
+	private static final int SEGMENT_START = 0x1000;
 
 	private ArrayList<Address> entryPointList = new ArrayList<>();
 	private Comparator<String> comparator = new CallNameComparator();
@@ -65,7 +66,7 @@ public class NeLoader extends AbstractLibrarySupportLoader {
 		if (provider.length() < MIN_BYTE_LENGTH) {
 			return loadSpecs;
 		}
-		NewExecutable ne = new NewExecutable(RethrowContinuesFactory.INSTANCE, provider);
+		NewExecutable ne = new NewExecutable(RethrowContinuesFactory.INSTANCE, provider, null);
 		WindowsHeader wh = ne.getWindowsHeader();
 		if (wh != null) {
 			List<QueryResult> results = QueryOpinionService.query(getName(),
@@ -99,7 +100,9 @@ public class NeLoader extends AbstractLibrarySupportLoader {
 		// the original bytes.
 		MemoryBlockUtils.createFileBytes(prog, provider, monitor);
 
-		NewExecutable ne = new NewExecutable(factory, provider);
+		SegmentedAddressSpace space =
+			(SegmentedAddressSpace) prog.getAddressFactory().getDefaultAddressSpace();
+		NewExecutable ne = new NewExecutable(factory, provider, space.getAddress(SEGMENT_START, 0));
 		WindowsHeader wh = ne.getWindowsHeader();
 		InformationBlock ib = wh.getInformationBlock();
 		SegmentTable st = wh.getSegmentTable();
@@ -113,8 +116,6 @@ public class NeLoader extends AbstractLibrarySupportLoader {
 		Listing listing = prog.getListing();
 		SymbolTable symbolTable = prog.getSymbolTable();
 		Memory memory = prog.getMemory();
-		SegmentedAddressSpace space =
-			(SegmentedAddressSpace) prog.getAddressFactory().getDefaultAddressSpace();
 		ProgramContext context = prog.getProgramContext();
 		RelocationTable relocTable = prog.getRelocationTable();
 
@@ -306,11 +307,6 @@ public class NeLoader extends AbstractLibrarySupportLoader {
 		}
 	}
 
-	private int getNextAvailableSegment(Program program) {
-		Address addr = program.getMemory().getMaxAddress();
-		return ((int) addr.getOffset() >> 4) + 1;
-	}
-
 	private void processResourceTable(MessageLog log, Program program, ResourceTable rt,
 			SegmentedAddressSpace space, TaskMonitor monitor) throws IOException {
 		Listing listing = program.getListing();
@@ -326,7 +322,7 @@ public class NeLoader extends AbstractLibrarySupportLoader {
 			Resource[] resources = type.getResources();
 			for (Resource resource : resources) {
 
-				int segidx = getNextAvailableSegment(program);
+				int segidx = space.getNextOpenSegment(program.getMemory().getMaxAddress());
 				Address addr = space.getAddress(segidx, 0);
 
 				try {
@@ -417,7 +413,7 @@ public class NeLoader extends AbstractLibrarySupportLoader {
 		for (LengthStringSet name : names) {
 			String[] callnames = getCallNamesForModule(name.getString(), mrt, st, imp);
 			int length = callnames.length * pointerSize;
-			int segment = getNextAvailableSegment(program);
+			int segment = space.getNextOpenSegment(program.getMemory().getMaxAddress());
 			Address start = space.getAddress(segment, 0);
 			if (length > 0) {
 				// This isn't a real block, just place holder addresses, so don't create an initialized block

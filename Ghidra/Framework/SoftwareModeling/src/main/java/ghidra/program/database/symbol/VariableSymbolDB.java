@@ -109,6 +109,13 @@ public class VariableSymbolDB extends SymbolDB {
 		return type;
 	}
 
+	@Override
+	protected boolean refresh(Record rec) {
+		boolean isValid = super.refresh(rec);
+		variableStorage = null;
+		return isValid;
+	}
+
 	/**
 	 * @see ghidra.program.database.symbol.SymbolDB#equals(java.lang.Object)
 	 */

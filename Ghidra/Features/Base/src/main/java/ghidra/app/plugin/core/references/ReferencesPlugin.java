@@ -179,7 +179,8 @@ public class ReferencesPlugin extends Plugin {
 		createAction.setPopupMenuData(new MenuData(
 			new String[] { SUBMENU_NAME, CreateDefaultReferenceAction.DEFAULT_MENU_ITEM_NAME },
 			null, SHOW_REFS_GROUP));
-		createAction.setKeyBindingData(new KeyBindingData(KeyEvent.VK_R, InputEvent.ALT_DOWN_MASK));
+		createAction.setKeyBindingData(new KeyBindingData(KeyEvent.VK_R,
+			InputEvent.CTRL_DOWN_MASK | InputEvent.ALT_DOWN_MASK));
 
 		createAction.setDescription("Create default forward reference");
 		tool.addAction(createAction);

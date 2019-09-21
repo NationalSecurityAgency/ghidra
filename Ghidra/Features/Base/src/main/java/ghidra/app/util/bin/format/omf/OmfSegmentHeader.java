@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 
 import ghidra.app.util.bin.BinaryReader;
+import ghidra.app.util.importer.MessageLog;
 import ghidra.app.util.opinion.OmfLoader;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
@@ -226,11 +227,12 @@ public class OmfSegmentHeader extends OmfRecord {
 	/**
 	 * Get an InputStream that reads in the raw data for this segment
 	 * @param reader is the image file reader
+	 * @param log the log
 	 * @return the InputStream
 	 * @throws IOException for problems reading from the image file
 	 */
-	public InputStream getRawDataStream(BinaryReader reader) throws IOException {
-		return new SectionStream(reader);
+	public InputStream getRawDataStream(BinaryReader reader, MessageLog log) throws IOException {
+		return new SectionStream(reader, log);
 	}
 	
 	/**
@@ -358,14 +360,16 @@ public class OmfSegmentHeader extends OmfRecord {
 	 */
 	public class SectionStream extends InputStream {
 		private BinaryReader reader;
+		private MessageLog log;
 		private long pointer;		// Overall position within segment, relative to starting address
 		private byte[] buffer;		// Current buffer
 		private int bufferpointer;	// current index into buffer
 		private int dataUpNext;		// Index of next data section OmfIteratedData/OmfEnumeratedData to be buffered 
 		
-		public SectionStream(BinaryReader reader) throws IOException {
+		public SectionStream(BinaryReader reader, MessageLog log) throws IOException {
 			super();
 			this.reader = reader;
+			this.log = log;
 			pointer = 0;
 			dataUpNext = 0;
 			if (pointer < segmentLength) {
@@ -396,14 +400,17 @@ public class OmfSegmentHeader extends OmfRecord {
 				else if (pointer == data.getDataOffset()) {
 					buffer = data.getByteArray(reader);
 					bufferpointer = 0;
-					dataUpNext += 1;
+					dataUpNext++;
 					if (buffer.length == 0) {
 						continue;
 					}
 					return;
 				}
 				else {
-					throw new IOException("Bad OMF data");
+					dataUpNext++;
+					throw new IOException(String.format(
+						"Segment %s:%s has bad data offset (0x%x) in data block %d...skipping.",
+						segmentName, className, data.getDataOffset(), dataUpNext - 1));
 				}
 			}
 			// We may have filler after the last block
@@ -422,12 +429,17 @@ public class OmfSegmentHeader extends OmfRecord {
 		public int read() throws IOException {
 			if (pointer < segmentLength) {
 				if (bufferpointer < buffer.length) {
-					pointer += 1;
+					pointer++;
 					return buffer[bufferpointer++] & 0xff;
 				}
-				establishNextBuffer();
-				pointer += 1;
-				return buffer[bufferpointer++] & 0xff;		// Don't allow sign-extension to happen
+				try {
+					establishNextBuffer();
+					pointer++;
+					return buffer[bufferpointer++] & 0xff;		// Don't allow sign-extension to happen
+				}
+				catch (IOException e) {
+					log.appendMsg(e.getMessage());
+				}
 			}
 			return -1;
 		}

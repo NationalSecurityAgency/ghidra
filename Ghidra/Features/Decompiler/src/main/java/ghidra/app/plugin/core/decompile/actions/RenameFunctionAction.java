@@ -17,8 +17,8 @@ package ghidra.app.plugin.core.decompile.actions;
 
 import java.awt.event.KeyEvent;
 
-import docking.ActionContext;
-import docking.action.*;
+import docking.action.KeyBindingData;
+import docking.action.MenuData;
 import ghidra.app.decompiler.ClangFuncNameToken;
 import ghidra.app.decompiler.ClangToken;
 import ghidra.app.decompiler.component.*;
@@ -26,57 +26,20 @@ import ghidra.app.plugin.core.decompile.DecompilerActionContext;
 import ghidra.app.util.AddEditDialog;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.listing.Function;
-import ghidra.util.Msg;
 import ghidra.util.UndefinedFunction;
 
-public class RenameFunctionAction extends DockingAction {
+public class RenameFunctionAction extends AbstractDecompilerAction {
 
 	private final DecompilerController controller;
 	private final PluginTool tool;
 
-	public RenameFunctionAction(String owner, PluginTool tool, DecompilerController controller) {
-		super("Rename Function", owner);
+	public RenameFunctionAction(PluginTool tool, DecompilerController controller) {
+		super("Rename Function");
 		this.tool = tool;
 		this.controller = controller;
 
 		setKeyBindingData(new KeyBindingData(KeyEvent.VK_L, 0));
 		setPopupMenuData(new MenuData(new String[] { "Rename Function" }, "Decompile"));
-	}
-
-	@Override
-	public boolean isEnabledForContext(ActionContext context) {
-		if (!(context instanceof DecompilerActionContext)) {
-			return false;
-		}
-		DecompilerActionContext decompilerActionContext = (DecompilerActionContext) context;
-		if (decompilerActionContext.isDecompiling()) {
-			// Let this through here and handle it in actionPerformed().  This lets us alert 
-			// the user that they have to wait until the decompile is finished.  If we are not
-			// enabled at this point, then the keybinding will be propagated to the global 
-			// actions, which is not what we want.
-			return true;
-		}
-
-		Function func = getFunction();
-		return func != null && !(func instanceof UndefinedFunction);
-	}
-
-	@Override
-	public void actionPerformed(ActionContext context) {
-
-		// Note: we intentionally do this check here and not in isEnabledForContext() so 
-		// that global events do not get triggered.
-		DecompilerActionContext decompilerActionContext = (DecompilerActionContext) context;
-		if (decompilerActionContext.isDecompiling()) {
-			Msg.showInfo(getClass(),
-				context.getComponentProvider().getComponent(),
-				"Decompiler Action Blocked", "You cannot perform Decompiler actions while the Decompiler is busy");
-			return;
-		}
-
-		Function function = getFunction();
-		AddEditDialog dialog = new AddEditDialog("Edit Function Name", tool);
-		dialog.editLabel(function.getSymbol(), controller.getProgram());
 	}
 
 	private Function getFunction() {
@@ -89,5 +52,18 @@ public class RenameFunctionAction extends DockingAction {
 				(ClangFuncNameToken) tokenAtCursor);
 		}
 		return null;
+	}
+
+	@Override
+	protected boolean isEnabledForDecompilerContext(DecompilerActionContext context) {
+		Function func = getFunction();
+		return func != null && !(func instanceof UndefinedFunction);
+	}
+
+	@Override
+	protected void decompilerActionPerformed(DecompilerActionContext context) {
+		Function function = getFunction();
+		AddEditDialog dialog = new AddEditDialog("Edit Function Name", tool);
+		dialog.editLabel(function.getSymbol(), controller.getProgram());
 	}
 }

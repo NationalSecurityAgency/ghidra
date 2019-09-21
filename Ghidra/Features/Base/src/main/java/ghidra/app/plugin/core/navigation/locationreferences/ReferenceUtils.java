@@ -329,23 +329,7 @@ public final class ReferenceUtils {
 	 * @return The highest level data type for the given data type.
 	 */
 	public static DataType getBaseDataType(DataType dataType) {
-		if (dataType instanceof Array) {
-			return getBaseDataType(((Array) dataType).getDataType());
-		}
-		else if (dataType instanceof Pointer) {
-			DataType baseDataType = ((Pointer) dataType).getDataType();
-			if (baseDataType != null) {
-				return getBaseDataType(baseDataType);
-			}
-		}
-
-		// NOTE: we do not unroll TypeDefs.  This allows clients of this API to search for
-		//       TypeDefs.  If we get the base type, then the client cannot search for them.
-		//else if (dataType instanceof TypeDef) {
-		//	DataType baseDataType = ((TypeDef) dataType).getBaseDataType();
-		//	return getBaseDataType(baseDataType);
-		//}
-		return dataType;
+		return getBaseDataType(dataType, false);
 	}
 
 	/**
@@ -365,17 +349,17 @@ public final class ReferenceUtils {
 	 */
 	public static DataType getBaseDataType(DataType dataType, boolean includeTypedefs) {
 		if (dataType instanceof Array) {
-			return getBaseDataType(((Array) dataType).getDataType());
+			return getBaseDataType(((Array) dataType).getDataType(), includeTypedefs);
 		}
 		else if (dataType instanceof Pointer) {
 			DataType baseDataType = ((Pointer) dataType).getDataType();
 			if (baseDataType != null) {
-				return getBaseDataType(baseDataType);
+				return getBaseDataType(baseDataType, includeTypedefs);
 			}
 		}
-		else if (dataType instanceof TypeDef) {
+		else if (includeTypedefs && dataType instanceof TypeDef) {
 			DataType baseDataType = ((TypeDef) dataType).getBaseDataType();
-			return getBaseDataType(baseDataType);
+			return getBaseDataType(baseDataType, includeTypedefs);
 		}
 		return dataType;
 	}

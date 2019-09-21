@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,8 +19,8 @@ import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.util.List;
 
-import docking.ActionContext;
-import docking.action.*;
+import docking.action.KeyBindingData;
+import docking.action.MenuData;
 import docking.widgets.*;
 import docking.widgets.fieldpanel.field.Field;
 import docking.widgets.fieldpanel.support.FieldLocation;
@@ -29,58 +28,19 @@ import ghidra.app.decompiler.component.*;
 import ghidra.app.plugin.core.decompile.DecompilerActionContext;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.util.HelpLocation;
-import ghidra.util.Msg;
 
-public class FindAction extends DockingAction {
+public class FindAction extends AbstractDecompilerAction {
 	private FindDialog findDialog;
 	private final DecompilerPanel decompilerPanel;
 	private final PluginTool tool;
 
-	public FindAction(PluginTool tool, DecompilerController controller, String owner) {
-		super("Find", owner);
+	public FindAction(PluginTool tool, DecompilerController controller) {
+		super("Find");
 		this.tool = tool;
 		this.decompilerPanel = controller.getDecompilerPanel();
 		setPopupMenuData(new MenuData(new String[] { "Find..." }, "Decompile"));
 		setKeyBindingData(new KeyBindingData(KeyEvent.VK_F, InputEvent.CTRL_DOWN_MASK));
 		setEnabled(true);
-	}
-
-	@Override
-	public boolean isEnabledForContext(ActionContext context) {
-		if (!(context instanceof DecompilerActionContext)) {
-			return false;
-		}
-		DecompilerActionContext decompilerActionContext = (DecompilerActionContext) context;
-		if (decompilerActionContext.isDecompiling()) {
-			// Let this through here and handle it in actionPerformed().  This lets us alert 
-			// the user that they have to wait until the decompile is finished.  If we are not
-			// enabled at this point, then the keybinding will be propagated to the global 
-			// actions, which is not what we want.
-			return true;
-		}
-		return true;
-	}
-
-	@Override
-	public void actionPerformed(ActionContext context) {
-		// Note: we intentionally do this check here and not in isEnabledForContext() so 
-		// that global events do not get triggered.
-		DecompilerActionContext decompilerActionContext = (DecompilerActionContext) context;
-		if (decompilerActionContext.isDecompiling()) {
-			Msg.showInfo(getClass(), context.getComponentProvider().getComponent(),
-				"Decompiler Action Blocked",
-				"You cannot perform Decompiler actions while the Decompiler is busy");
-			return;
-		}
-
-		FindDialog dialog = getFindDialog();
-		String text = decompilerPanel.getHighlightedText();
-		if (text != null) {
-			dialog.setSearchText(text);
-		}
-
-		// show over the root frame, so the user can still see the Decompiler window
-		tool.showDialog(dialog);
 	}
 
 	protected FindDialog getFindDialog() {
@@ -150,5 +110,22 @@ public class FindAction extends DockingAction {
 					: decompilerPanel.searchText(text, fieldLocation, searchForward);
 		}
 
+	}
+
+	@Override
+	protected boolean isEnabledForDecompilerContext(DecompilerActionContext context) {
+		return true;
+	}
+
+	@Override
+	protected void decompilerActionPerformed(DecompilerActionContext context) {
+		FindDialog dialog = getFindDialog();
+		String text = decompilerPanel.getHighlightedText();
+		if (text != null) {
+			dialog.setSearchText(text);
+		}
+
+		// show over the root frame, so the user can still see the Decompiler window
+		tool.showDialog(dialog);
 	}
 }

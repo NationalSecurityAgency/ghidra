@@ -79,6 +79,7 @@ public class SleighLanguage implements Language {
 	 * Non-null if a space should yes segmented addressing
 	 */
 	String segmentedspace = "";
+	String segmentType = "";
 	AddressSet volatileAddresses;
 	private ContextCache contextcache = null;
 	/**
@@ -98,6 +99,13 @@ public class SleighLanguage implements Language {
 	SleighLanguage(SleighLanguageDescription description)
 			throws SAXException, IOException, UnknownInstructionException {
 		initialize(description);
+	}
+
+	private void addAdditionInject(InjectPayloadSleigh payload) {
+		if (additionalInject == null) {
+			additionalInject = new ArrayList<>();
+		}
+		additionalInject.add(payload);
 	}
 
 	private void initialize(SleighLanguageDescription langDescription)
@@ -508,6 +516,10 @@ public class SleighLanguage implements Language {
 		if (nextElement != null) {
 			XmlElement element = parser.start(); // segmented_address element
 			segmentedspace = element.getAttribute("space");
+			segmentType = element.getAttribute("type");
+			if (segmentType == null) {
+				segmentType = "";
+			}
 		}
 		parser.dispose();
 	}
@@ -586,12 +598,32 @@ public class SleighLanguage implements Language {
 			}
 			InjectPayloadSleigh payload =
 				new InjectPayloadSleigh(subName, InjectPayload.EXECUTABLEPCODE_TYPE, source);
-			if (additionalInject == null) {
-				additionalInject = new ArrayList<>();
-			}
 			payload.restoreXml(parser);
-			additionalInject.add(payload);
+			addAdditionInject(payload);
 		}
+	}
+
+	public InjectPayloadSleigh parseSegmentOp(XmlElement el, XmlPullParser parser) {
+		String name = el.getAttribute("userop");
+		if (name == null) {
+			name = "segment";
+		}
+		name = name + "_pcode";
+		String source = "pspec: " + getLanguageID().getIdAsString();
+		InjectPayloadSleigh payload = null;
+		if (parser.peek().isStart()) {
+			if (parser.peek().getName().equals("pcode")) {
+				payload = new InjectPayloadSleigh(name, InjectPayload.EXECUTABLEPCODE_TYPE, source);
+				payload.restoreXml(parser);
+			}
+		}
+		while (parser.peek().isStart()) {
+			parser.discardSubTree();
+		}
+		if (payload == null) {
+			throw new SleighException("Missing <pcode> child for <segmentop> tag");
+		}
+		return payload;
 	}
 
 	private void read(XmlPullParser parser) {
@@ -599,7 +631,7 @@ public class SleighLanguage implements Language {
 
 		XmlElement element = parser.start("processor_spec");
 		while (!parser.peek().isEnd()) {
-			element = parser.start("properties", "segmented_address", "programcounter",
+			element = parser.start("properties", "segmented_address", "segmentop", "programcounter",
 				"data_space", "context_data", "volatile", "jumpassist", "incidentalcopy",
 				"register_data", "default_symbols", "default_memory_blocks");
 			if (element.getName().equals("properties")) {
@@ -769,6 +801,10 @@ public class SleighLanguage implements Language {
 					parser.discardSubTree();
 				}
 			}
+			else if (element.getName().equals("segmentop")) {
+				InjectPayloadSleigh payload = parseSegmentOp(element, parser);
+				addAdditionInject(payload);
+			}
 			// get rid of the end tag of whatever we started with at the top of the while
 			parser.end(element);
 		}
@@ -896,7 +932,12 @@ public class SleighLanguage implements Language {
 					throw new SleighException(
 						"Segmented space does not support truncation: " + name);
 				}
-				spc = new SegmentedAddressSpace(name, index);
+				if (segmentType.equals("protected")) {
+					spc = new ProtectedAddressSpace(name, index);
+				}
+				else {
+					spc = new SegmentedAddressSpace(name, index);
+				}
 			}
 			else {
 				if (truncateSpace) {
@@ -1378,8 +1419,8 @@ public class SleighLanguage implements Language {
 			SpecXmlUtils.encodeSignedIntegerAttribute(resBuf, "index", element.getUnique());
 
 			int size = element.getSize(); // Size in bits
-			if (size == 20) {
-				// TODO: SegmentedAddressSpace shouldn't really return 20
+			if (element instanceof SegmentedAddressSpace) {
+				// TODO: SegmentedAddressSpace shouldn't really return 21
 				size = 32;
 			}
 			if (size > 64) {

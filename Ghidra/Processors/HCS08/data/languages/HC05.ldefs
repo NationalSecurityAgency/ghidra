@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<language_definitions>
+  <language processor="HC05"
+            endian="big"
+            size="16"
+            variant="default"
+            version="1.0"
+            slafile="HC08.sla"
+            processorspec="HC05.pspec"
+            manualindexfile="../manuals/HC05.idx"
+            id="HC05:BE:16:default">
+    <description>HC05 (6805) Microcontroller Family</description>
+    <compiler name="default" spec="HCS08.cspec" id="default"/>
+  </language>
+    <language processor="HC05"
+            endian="big"
+            size="16"
+            variant="M68HC05TB"
+            version="1.0"
+            slafile="HC08.sla"
+            processorspec="HC05-M68HC05TB.pspec"
+            manualindexfile="../manuals/HC05.idx"
+            id="HC05:BE:16:M68HC05TB">
+    <description>HC05 (6805) Microcontroller Family - M68HC05TB</description>
+    <compiler name="default" spec="HCS08.cspec" id="default"/>
+  </language>
+</language_definitions>

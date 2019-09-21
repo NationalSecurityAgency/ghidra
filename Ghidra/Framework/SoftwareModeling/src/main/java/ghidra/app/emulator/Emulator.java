@@ -30,7 +30,6 @@ import ghidra.program.model.listing.Instruction;
 import ghidra.util.*;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
-import ghidra.util.task.TaskMonitorAdapter;
 
 public class Emulator {
 
@@ -51,7 +50,7 @@ public class Emulator {
 	private boolean isExecuting = false;
 
 	private boolean writeBack = false;
-	private int pageSize;
+	private int pageSize;				// The preferred page size for a paged memory state
 
 	private String pcName;
 	private long initialPC;
@@ -97,19 +96,32 @@ public class Emulator {
 		}
 	}
 
+	/**
+	 * Get the page size to use with a specific AddressSpace. The page containers (MemoryBank)
+	 * assume page size is always power of 2. Any address space is assigned at least 8-bits of
+	 * addressable locations, so at the very least, the size is divisible by 256. Starting with this
+	 * minimum, this method finds the power of 2 that is closest to the preferred page size (pageSize)
+	 * but that still divides the size of the space.
+	 * @param space is the specific AddressSpace
+	 * @return the page size to use
+	 */
 	private int getValidPageSize(AddressSpace space) {
-		int ps = pageSize;
-		long maxOffset = space.getMaxAddress().getOffset();
-		if (ps > maxOffset && maxOffset > 0) {
-			ps = (int) maxOffset;
+		int ps = 256;	// Minimum page size supported
+		long spaceSize = space.getMaxAddress().getOffset() + 1;	// Number of bytes in the space (0 if 2^64 bytes)
+		if ((spaceSize & 0xff) != 0) {
+			Msg.warn(this, "Emulator using page size of 256 bytes for " + space.getName() +
+				" which is NOT a multiple of 256");
+			return ps;
 		}
-		else {
-			ps -= (ps % space.getAddressableUnitSize());
+		spaceSize >>>= 8;	// Divide required size by 256 (evenly)
+		while (ps < pageSize) {	// If current page size is smaller than preferred page size
+			if ((spaceSize & 1) != 0) {
+				break;			// a bigger page size does not divide the space size evenly, so use current size
+			}
+			ps <<= 1;	// Bump up current page size to next power of 2
+			spaceSize >>>= 1;	// Divide (evenly) by 2
 		}
-		if (pageSize != ps) {
-			Msg.warn(this, "Emulator using adjusted page size of " + ps + " bytes for " +
-				space.getName() + " address space");
-		}
+
 		return ps;
 	}
 
@@ -169,10 +181,12 @@ public class Emulator {
 			for (int i = 0; i < vals.size(); i++) {
 				String useKey = "";
 				if (key.equals("GDTR") || key.equals("IDTR") || key.equals("LDTR")) {
-					if (i == 0)
+					if (i == 0) {
 						useKey = key + "_Limit";
-					if (i == 1)
+					}
+					if (i == 1) {
 						useKey = key + "_Address";
+					}
 				}
 				else if (key.equals("S.base")) {
 					Integer lval = conv.getInt(vals.get(i));
@@ -230,8 +244,8 @@ public class Emulator {
 	private String dumpBytesAsSingleValue(byte[] bytes) {
 		StringBuffer buf = new StringBuffer("0x");
 		if (language.isBigEndian()) {
-			for (int i = 0; i < bytes.length; i++) {
-				String byteStr = Integer.toHexString(bytes[i] & 0xff);
+			for (byte b : bytes) {
+				String byteStr = Integer.toHexString(b & 0xff);
 				if (byteStr.length() == 1) {
 					buf.append('0');
 				}
@@ -372,7 +386,7 @@ public class Emulator {
 		EmulateMemoryStateBuffer memBuffer = new EmulateMemoryStateBuffer(memState, addr);
 
 		Disassembler disassembler = Disassembler.getDisassembler(language, addrFactory,
-			TaskMonitorAdapter.DUMMY_MONITOR, null);
+			TaskMonitor.DUMMY, null);
 
 		boolean stopOnError = false;
 
@@ -421,6 +435,7 @@ public class Emulator {
 	 * parsed/executed.  The context value returned will feed into the next 
 	 * instruction to be parsed with its non-flowing bits cleared and
 	 * any future context state merged in.
+	 * @return context as a RegisterValue object
 	 */
 	public RegisterValue getContextRegisterValue() {
 		return emulator.getContextRegisterValue();
@@ -435,7 +450,7 @@ public class Emulator {
 	 * take precedence over context set using this method.  This method
 	 * is primarily intended to be used to establish the initial 
 	 * context state.
-	 * @param regValue
+	 * @param regValue is the value to set context to
 	 */
 	public void setContextRegisterValue(RegisterValue regValue) {
 		emulator.setContextRegisterValue(regValue);

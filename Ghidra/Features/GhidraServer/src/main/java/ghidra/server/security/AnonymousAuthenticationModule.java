@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +15,11 @@
  */
 package ghidra.server.security;
 
-import ghidra.framework.remote.AnonymousCallback;
-
 import java.util.*;
 
 import javax.security.auth.callback.Callback;
+
+import ghidra.framework.remote.AnonymousCallback;
 
 public class AnonymousAuthenticationModule {
 
@@ -34,15 +33,9 @@ public class AnonymousAuthenticationModule {
 	}
 
 	public boolean anonymousAccessRequested(Callback[] callbacks) {
-		if (callbacks != null) {
-			for (int i = 0; i < callbacks.length; i++) {
-				if (callbacks[i] instanceof AnonymousCallback) {
-					AnonymousCallback anonCb = (AnonymousCallback) callbacks[i];
-					return anonCb.anonymousAccessRequested();
-				}
-			}
-		}
-		return false;
+		AnonymousCallback anonCb =
+			AuthenticationModule.getFirstCallbackOfType(AnonymousCallback.class, callbacks);
+		return anonCb != null && anonCb.anonymousAccessRequested();
 	}
 
 }
