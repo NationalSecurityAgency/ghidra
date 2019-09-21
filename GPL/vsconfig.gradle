@@ -10,8 +10,18 @@ if (!hasProperty("VISUAL_STUDIO_BASE_DIR")) {
 	configureVisualStudio()
 }
 
-def configureVisualStudio() { 
+def configureVisualStudio() {
+	/*******************************************************************************************
+	* Well known SKU of Visual Studio.
+	******************************************************************************************/
+	def editions = ["Enterprise", "Professional", "Community", "Preview"]
 
+	/*******************************************************************************************
+	* Supported version of VS by Ghidra
+	******************************************************************************************/
+	def suportedVsVersionCodes = ["2017", "2019"]
+
+	rootProject.ext.VISUAL_STUDIO_INSTALL_ROOT_DIR = "C:\\Program Files (x86)\\Microsoft Visual Studio"
 	rootProject.ext.VISUAL_STUDIO_BASE_DIR = "C:\\Program Files (x86)\\Microsoft Visual Studio\\2017"
 	rootProject.ext.WINDOWS_KITS_DIR = "C:\\Program Files (x86)\\Windows Kits\\10"
 	
@@ -19,14 +29,14 @@ def configureVisualStudio() {
 	rootProject.ext.VISUAL_STUDIO_VCVARS_CMD = "UNKNOWN"
 	rootProject.ext.MSVC_SDK_VERSION = "UNKNOWN"
 	rootProject.ext.MSVC_TOOLS_VERSION = "UNKNOWN"
+	rootProject.ext.VISUAL_STUDIO_FOUND = false
 	
 	if (org.gradle.internal.os.OperatingSystem.current().isWindows()) {
-			
-		rootProject.ext.VISUAL_STUDIO_INSTALL_DIR = "${VISUAL_STUDIO_BASE_DIR}\\Professional"
-		if (!file(rootProject.ext.VISUAL_STUDIO_INSTALL_DIR).exists()) {
-			rootProject.ext.VISUAL_STUDIO_INSTALL_DIR = "${VISUAL_STUDIO_BASE_DIR}\\Community"
+		suportedVsVersionCodes.each { vsVersionCode ->
+			findVsLocation(vsVersionCode, editions)
 		}
-		if (file(rootProject.ext.VISUAL_STUDIO_INSTALL_DIR).exists()) {
+
+		if (rootProject.ext.VISUAL_STUDIO_FOUND) {
 	
 			println "Visual Studio Path: ${VISUAL_STUDIO_INSTALL_DIR}"
 	
@@ -43,6 +53,32 @@ def configureVisualStudio() {
 			println "Visual Studio SDK Version: ${MSVC_SDK_VERSION}"
 			rootProject.ext.MSVC_TOOLS_VERSION = "${COMMAND} !VCTOOLSVERSION!".execute().text.trim().replace('\\', '')
 			println "Visual Studio VCTools Version: ${MSVC_TOOLS_VERSION}"
+		}
+	}
+}
+
+/*******************************************************************************************
+ * Attempt to find location of specific version for VS. Lookup for specific version
+ * This function set VISUAL_STUDIO_FOUND property to true once found the VS location
+ * After that, subsequent calls do nothing.
+ ******************************************************************************************/
+def findVsLocation(vsVersionCode, knownVersionEditions) {
+	if (rootProject.ext.VISUAL_STUDIO_FOUND) {
+		return
+	}
+
+	String base_path = project.ext.VISUAL_STUDIO_INSTALL_ROOT_DIR + "\\$vsVersionCode\\"
+	knownVersionEditions.each { edition ->
+		if (project.ext.VISUAL_STUDIO_FOUND) {
+			return
+		}
+
+		String path = base_path + edition
+		if (file(path).exists()) {
+			rootProject.ext.VISUAL_STUDIO_BASE_DIR = base_path
+			rootProject.ext.VISUAL_STUDIO_FOUND = true
+			rootProject.ext.VISUAL_STUDIO_INSTALL_DIR = path
+			return
 		}
 	}
 }
