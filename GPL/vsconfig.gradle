@@ -10,6 +10,14 @@ if (!hasProperty("VISUAL_STUDIO_BASE_DIR")) {
 	configureVisualStudio()
 }
 
+// Works around blocking I/O issues, and passes stderr through, see
+// https://stackoverflow.com/questions/25300550/difference-in-collecting-output-of-executing-external-command-in-groovy
+def runCommand(String cmd) {
+	def outStream = new StringBuffer()
+	cmd.execute().waitForProcessOutput(outStream, System.err)
+	return outStream.toString()
+}
+
 def configureVisualStudio() { 
 
 	rootProject.ext.VISUAL_STUDIO_BASE_DIR = "C:\\Program Files (x86)\\Microsoft Visual Studio\\2017"
@@ -39,9 +47,9 @@ def configureVisualStudio() {
 		
 			// Rely on vcvars script to supply SDK versions
 			def COMMAND = "cmd /v:ON /c ${VISUAL_STUDIO_VCVARS_CMD} > nul && cmd /c echo"
-			rootProject.ext.MSVC_SDK_VERSION = "${COMMAND} !WINDOWSSDKVERSION!".execute().text.trim().replace('\\', '')
+			rootProject.ext.MSVC_SDK_VERSION = runCommand("${COMMAND} !WINDOWSSDKVERSION!").trim().replace('\\', '')
 			println "Visual Studio SDK Version: ${MSVC_SDK_VERSION}"
-			rootProject.ext.MSVC_TOOLS_VERSION = "${COMMAND} !VCTOOLSVERSION!".execute().text.trim().replace('\\', '')
+			rootProject.ext.MSVC_TOOLS_VERSION = runCommand("${COMMAND} !VCTOOLSVERSION!").trim().replace('\\', '')
 			println "Visual Studio VCTools Version: ${MSVC_TOOLS_VERSION}"
 		}
 	}
