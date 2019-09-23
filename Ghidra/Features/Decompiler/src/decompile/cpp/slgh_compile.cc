@@ -263,7 +263,7 @@ bool ConsistencyChecker::checkOpMisuse(OpTpl *op,Constructor *ct)
     {
       VarnodeTpl *vn = op->getIn(1);
       if (vn->getSpace().isConstSpace() && vn->getOffset().isZero()) {
-	compiler->reportError(compiler->getLocation(ct), "Unsigned comparison with zero is always false");
+	compiler->reportWarning(compiler->getLocation(ct), "Unsigned comparison with zero is always false");
       }
     }
     break;

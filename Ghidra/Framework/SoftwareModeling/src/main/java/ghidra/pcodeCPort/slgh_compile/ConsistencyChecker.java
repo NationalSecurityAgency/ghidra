@@ -551,7 +551,7 @@ class ConsistencyChecker {
 	}
 
 	private void handle(String msg, Constructor ct) {
-		compiler.reportError(ct.location, " Unsigned comparison with " + msg + " in constructor");
+		compiler.reportWarning(ct.location, " Unsigned comparison with " + msg + " in constructor");
 	}
 
 	private void handleZero(String trueOrFalse, Constructor ct) {
