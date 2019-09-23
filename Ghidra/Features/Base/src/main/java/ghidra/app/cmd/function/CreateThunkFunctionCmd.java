@@ -685,7 +685,9 @@ public class CreateThunkFunctionCmd extends BackgroundCommand {
 			for (Iterator<Varnode> iterator = setRegisters.iterator(); iterator.hasNext();) {
 				Varnode rvnode = iterator.next();
 				Register reg = program.getRegister(rvnode);
-				if (reg.isHidden()) {
+				// the register pcode access could have fallen in the middle of a valid register
+				//  thus no register will exist at the varnode
+				if (reg != null && reg.isHidden()) {
 					iterator.remove();
 				}
 			}
