@@ -48,11 +48,13 @@
 	<P>This release includes many new features and capabilities, performance improvements, quite a few bug fixes, and pull-request
 	contributions.  Many thanks to all those who have contributed their time, thoughts, and code. The Ghidra user community
 	thanks you too!</P>
-	
+
 	<P>NOTE: The Ghidra 9.0 server is compatible with Ghidra 9.0 and 9.1 clients, however the 9.1 server
-	now uses a TLS connection.  If the Ghidra multi-user server is upgraded to 9.1, then all clients must
-	upgrade to 9.1.  A 9.1 Ghidra client will fall back to a non-TLS connection when connecting to a 9.0
-	server.</P>
+	now requires clients to use a TLS secure connection for the initial RMI registry port access.  
+	If the Ghidra multi-user server is upgraded to 9.1, then all clients must
+	upgrade to 9.1.  A 9.1 Ghidra client will fall back to a non-TLS connection when accessing the RMI Registry on
+	a 9.0 server.  Note that all other server interaction including authentication were and continue to be 
+	performed over a secure TLS connection.</P>
 	
 	<P>Minor Note: Ghidra compiled .sla files are not backwards compatible due to the newly added OTHER space for syscalls
 	support.  In the pre-built ghidra all .sla files are re-built from scratch.  However if you have local processor modules,
@@ -102,14 +104,16 @@
 		to ELF files, which includes tracking the origin of the program bytes from the initial import binary.</P>
 
 	<H2>Ghidra Server</H2>
-	    <P>The Ghidra server now requires the use of a TLS connection between the client and server.
-	    As noted above a 9.1 client can connect to a 9.0 or 9.1 server.  However, a 9.0 client
-	    cannot connect to a 9.1 server.</P>
+	    <P>The Ghidra server now requires the client to use a TLS secure connection for the initial RMI registry port access.  
+	    Previously, TLS was used for all remote object interactions and data transfers on the two other ports.  This change will 
+	    now ensure that all connections to the Ghidra Server utilize TLS.
+	    As noted above a 9.1 clients can connect to a 9.0 or 9.1 server, while clients prior to 9.1 will be unable to
+	    connect to a 9.1 server.</P>
 	    
 	    <P>The Ghidra server has two additional authentication methods, Active Directory using
 	    Kerberos and Plugable Authentication Modules(PAM) using JAAS.  To utilize these new
 	    methods you must configure the server.conf file and use either -a1 for windows authentication
-	    or -a4 along with -jaas.</P>
+	    or -a4 along with -jaas.  The JAAS mode will require setup of an additional configuration file (jaas.conf).</P>
 	
 	<H2>Import</H2>
 	    <P>When importing files, the origin of all imported bytes can be tracked back to their offset
