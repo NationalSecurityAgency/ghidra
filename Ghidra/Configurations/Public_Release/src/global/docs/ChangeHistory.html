@@ -152,6 +152,7 @@
     <li><I>Importer</I>. Fixed issues in the MapLoader that prevented <B>.map</B> files from being added to an existing program. (GT-2972, Issue #762)</li>
     <li><I>Importer</I>. For batch import, fixed issue where last character of directory name was truncated on Windows workstations. (GT-3012, Issue #797)</li>
     <li><I>Importer</I>. Fixed a bug in how the NE importer creates External Function symbols for the procedures it imports, allowing the decompiler to properly access any available information. (GT-3140, Issue #770)</li>
+    <li><I>Importer</I>. Fixed a bug that prevented some old-style Windows executables from getting loaded by the MzLoader. (GT-3180, Issue #1054)</li>
     <li><I>Importer:ELF</I>. Added ELF relocation handler for <code>R_AARCH64_JUMP26</code>. (GT-2999, Issue #775)</li>
     <li><I>Importer:ELF</I>. Improved ELF MIPS support for GP-relative relocations encountered in PIC compiled binaries.  Also added support for <code>R_MIPS_RPREL32</code> relocation. (GT-3026, Issue #764)</li>
     <li><I>Importer:ELF</I>. ELF x86-64 relocations <code>R_X86_64_GOT32</code>, <code>R_X86_64_PLT32</code>, <code>R_X86_64_SIZE32</code>, <code>R_X86_64_SIZE64</code>, and <code>R_X86_64_GOTPC32</code> have been fixed to relocate correctly. Additional ELF x86-64 relocations, found mostly in unlinked <B>.o</B> files, have been added. (GT-3089, Issue #910)</li>
