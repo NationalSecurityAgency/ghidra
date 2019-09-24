@@ -43,14 +43,14 @@
     <li><I>Decompiler</I>. Updated the Decompiler's <B>Copy</B> action to copy the symbol under the cursor when there is no selection. (GT-2914, Issue #411)</li>
     <li><I>Decompiler</I>. Fixed broken <B>External Navigation: Navigate to External Program</B> option found in <B>Edit -> Tool Options...</B>. (GT-2932)</li>
     <li><I>Decompiler</I>. The decompiler's logic for handling optimized division has been updated to recognize forms typically found in executables generated with more recent 64-bit compilers. (GT-2968, Issue #668)</li>
-    <li><I>Decompiler</I>. Implemented call-fixup for x64 <code>__chkstk</code> function. (GT-3006, Issue #670, 671)</li>
+    <li><I>Decompiler</I>. Implemented call-fixup for x64 <code>__chkstk</code> function. (GT-3006, Issue #670, #671)</li>
     <li><I>Decompiler</I>. The decompiler simplifies many new sign-bit extraction forms used in optimized division and comparison expressions. (GT-3036)</li>
     <li><I>Decompiler</I>. Ghidra now supports protected mode addressing when analyzing 16-bit x86 programs. This is the default variant when analyzing NE format executables, but it can also be used for MZ (and other) formats. (GT-3090, Issue #98)</li>
-    <li><I>Decompiler</I>. Added the <B>Show References to Address</B> and <B>Find References to <I>Symbol</I></B> actions to the Decompiler.  Added <B>Find Uses of <I>Field</I></B> action to the Structure Editor. (GT-3115, Issue #474, 542, 543)</li>
+    <li><I>Decompiler</I>. Added the <B>Show References to Address</B> and <B>Find References to <I>Symbol</I></B> actions to the Decompiler.  Added <B>Find Uses of <I>Field</I></B> action to the Structure Editor. (GT-3115, Issue #474, #542, #543)</li>
     <li><I>Decompiler</I>. Updated the Decompiler's <B>Edit Data Type</B> action to work on more fields. (GT-3116, Issue #275,  511)</li>
     <li><I>Decompiler</I>. Renaming a single parameter within the decompiler window no longer prevents the data types of parameters from floating. Retyping a single parameter locks the data type for that parameter but no longer prevents the data types of other parameters from floating. (GT-3162)</li>
-    <li><I>Documentation</I>. Fixed typos and other errors in GitHub-related documentation. (GT-2748, Issue #345, 361, 370, 375, 398)</li>
-    <li><I>Documentation</I>. Added documentation to the <B>DevGuide.md</B> on how to run unit/integration tests. (GT-3046, Issue #815, 832)</li>
+    <li><I>Documentation</I>. Fixed typos and other errors in GitHub-related documentation. (GT-2748, Issue #345, #361, #370, #375, #398)</li>
+    <li><I>Documentation</I>. Added documentation to the <B>DevGuide.md</B> on how to run unit/integration tests. (GT-3046, Issue #815, #832)</li>
     <li><I>DWARF</I>. Corrected DWARF analysis to handle binaries that are imported at non-default locations. (GT-2963, Issue #637)</li>
     <li><I>Emulator</I>. Added improved emulation support at the API level including a simplified API exposed via the EmulatorHelper class.  Sample GhidraScripts, which utilize this API, have been provided. (GT-3066)</li>
     <li><I>Function Graph</I>. Updated the Function Graph to show the current program selection when zoomed out. (GT-2735)</li>
@@ -69,7 +69,7 @@
     <li><I>GUI</I>. Fixed NullPointerException in the DB Viewer component. (GT-3163, Issue #1023)</li>
     <li><I>Importer</I>. Updated x86 16-bit processor binding for IDA. (GT-3004, Issue #771)</li>
     <li><I>Importer:ELF</I>. Improved ELF loader ability to cope with malformed headers including negative file offsets and missing section names. (GT-2933, Issue #35)</li>
-    <li><I>Importer:PE</I>. PeLoader better accounts for section alignment when laying out memory blocks, allowing additional bytes from the file to be loaded into memory. (GT-2827, Issue #327, 418)</li>
+    <li><I>Importer:PE</I>. PeLoader better accounts for section alignment when laying out memory blocks, allowing additional bytes from the file to be loaded into memory. (GT-2827, Issue #327, #418)</li>
     <li><I>Importer:PE</I>. Removed out-of-place call to demangler and laying down of types from PeLoader. This fix enables demangling and other analyzers to be applied correctly and in the proper order. (GT-2849)</li>
     <li><I>Importer:PE</I>. PeLoader now adds TLS callback functions as entry points. (GT-2898, Issue #102)</li>
     <li><I>Languages</I>. Added new Task Monitor service to better handle user experience when there are delays in building languages. (GT-2376)</li>
@@ -122,7 +122,7 @@
     <li><I>Decompiler:Java</I>. Fixed error involving decompilation of certain <code>invokedynamic</code> instructions in JVM class files.  Made numerous minor improvements to decompilation of JVM bytecode. (GT-2757, Issue #287)</li>
     <li><I>Demangler</I>. Fixed a NullPointerException in DemangledFunctionPointer. (GT-2948, Issue #609)</li>
     <li><I>DWARF</I>. Empty DWARF compilation unit sections will now be ignored. (GT-2939, Issue #690)</li>
-    <li><I>Exporter</I>. Negative memory references in <B>idaxml.py</B> no longer cause errors. (GT-2696, Issue #213, 885)</li>
+    <li><I>Exporter</I>. Negative memory references in <B>idaxml.py</B> no longer cause errors. (GT-2696, Issue #213, #885)</li>
     <li><I>Exporter</I>. Fixed Intel Hex Exporter to not ignore the <B>Address Space</B> option value. (GT-2749)</li>
     <li><I>Exporter</I>. Fixed cancellation behavior of the C/C++ exporter. (GT-2881, Issue #591)</li>
     <li><I>File Formats</I>. Fixed an out-of-memory error in the CPIO file system. (GT-2912)</li>
@@ -159,7 +159,7 @@
     <li><I>Languages</I>. Added 6502 <code>I</code> status bit save and restore. (GT-2826, Issue #469)</li>
     <li><I>Languages</I>. Corrected alternate register definitions in z80 processor. (GT-2876, Issue #520)</li>
     <li><I>Languages</I>. Reviewed all processor modules for GhidraSleighEditor syntax errors. (GT-2902)</li>
-    <li><I>Languages</I>. Added support for <code>RD</code>, <code>WR</code>, <code>FS</code>, and <code>GSBASE</code> instructions in x86. (GT-2940, Issue #554, 555)</li>
+    <li><I>Languages</I>. Added support for <code>RD</code>, <code>WR</code>, <code>FS</code>, and <code>GSBASE</code> instructions in x86. (GT-2940, Issue #554, #555)</li>
     <li><I>Languages</I>. Added fixes for sign extension of <code>ADD</code>, <code>AND</code>, <code>CMP</code>, and <code>SUB</code> instructions on x86-64bit. (GT-2955, Issue #881)</li>
     <li><I>Languages</I>. Updated PIC-30 division pcode to correct decompilation issue. (GT-3008)</li>
     <li><I>Languages</I>. Fixed x86 <code>AAM</code> instruction. (GT-3015)</li>
@@ -177,11 +177,11 @@
     <li><I>Listing</I>. Cursor in the listing now stays in the proper column after editing a field. (GT-3045, Issue #702)</li>
     <li><I>Listing</I>. Fixed a problem with register highlighting that could occur on certain register/sub-register combinations. (GT-3071, Issue #810)</li>
     <li><I>Multi-User</I>. Corrected terminate checkout from viewed checkout list which was always terminating first row range based upon number of selected rows and not the actual selected rows. (GT-2903)</li>
-    <li><I>Multi-User:Ghidra Server</I>. Added proper Ghidra Server interface binding with new <code><B>-i</B></code> option.  Corrected <code><B>-ip</B></code> option to strictly convey remote access hostname to clients.  The updated server will only accept connections from Ghidra 9.1 and later clients due to the registry port now employing TLS. (GT-2685, Issue #101, 645)</li>
+    <li><I>Multi-User:Ghidra Server</I>. Added proper Ghidra Server interface binding with new <code><B>-i</B></code> option.  Corrected <code><B>-ip</B></code> option to strictly convey remote access hostname to clients.  The updated server will only accept connections from Ghidra 9.1 and later clients due to the registry port now employing TLS. (GT-2685, Issue #101, #645)</li>
     <li><I>Multi-User:Ghidra Server</I>. Fixed argument passing bug in svrAdmin script. (GT-3082, Issue #907)</li>
     <li><I>Multi-User:Merge</I>. Corrected merge problem affecting modified Function Definition datatypes which could result in a NullPointerException. (GT-2922)</li>
     <li><I>PDB</I>. Added <code>char16_t</code> and <code>char32_t</code> to PDB <code>BASIC_TYPE_STRINGS</code>. (GT-2952, Issue #685)</li>
-    <li><I>PDB</I>. Addressed memory leaks and string handling issues in <B>pdb.exe</B>. (GT-2975, Issue #674, 597, 598, 599, 600)</li>
+    <li><I>PDB</I>. Addressed memory leaks and string handling issues in <B>pdb.exe</B>. (GT-2975, Issue #674, #597, #598, #599, #600)</li>
     <li><I>PDB</I>. Can now recover stack variables from more recent Visual Studio version PDBs. (GT-3014)</li>
     <li><I>Program API</I>. Corrected parameter storage which failed to properly refresh after undo/redo. (GT-3130, Issue #960)</li>
     <li><I>Project Manager</I>. Fixed a problem with creating Ghidra projects in Windows root directories (e.g., Z:\). (GT-2585)</li>
