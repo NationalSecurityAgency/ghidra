@@ -24,7 +24,6 @@ import ghidra.app.plugin.core.symboltree.SymbolCategory;
 import ghidra.program.model.address.AddressIterator;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.Symbol;
-import ghidra.program.model.symbol.SymbolType;
 import ghidra.util.task.TaskMonitor;
 import resources.ResourceManager;
 
@@ -69,11 +68,9 @@ class ExportsCategoryNode extends SymbolCategoryNode {
 
 	@Override
 	protected boolean supportsSymbol(Symbol symbol) {
-		SymbolType symbolType = symbol.getSymbolType();
-		if (symbolType == symbolCategory.getSymbolType()) {
-			return true;
+		if (!symbol.isPrimary()) {
+			return false;
 		}
-
 		return symbol.isExternalEntryPoint() || symbol.getParentSymbol().isExternalEntryPoint();
 	}
 }
