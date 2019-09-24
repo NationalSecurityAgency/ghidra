@@ -2444,9 +2444,9 @@ SectionVector *SleighCompile::nextNamedSection(SectionVector *vec,ConstructTpl *
 
 { // Add additional named p-code sections
   sym->incrementDefineCount();
+  SymbolScope *curscope = symtab.getCurrentScope();
   symtab.popScope();		// Pop the scope of the last named section
-  SymbolScope *curscope = symtab.getCurrentScope(); // This should now be the Constructor scope
-  SymbolScope *parscope = curscope->getParent();
+  SymbolScope *parscope = symtab.getCurrentScope()->getParent();
   if (parscope != symtab.getGlobalScope())
     throw LowlevelError("nextNamedSection called when not in section scope"); // Unrecoverable
   symtab.addScope();		// Add new scope under the Constructor scope (not the last section scope)

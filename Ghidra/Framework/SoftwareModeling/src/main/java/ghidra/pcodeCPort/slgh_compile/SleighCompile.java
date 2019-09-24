@@ -352,9 +352,9 @@ public class SleighCompile extends SleighBase {
 		entry("nextNamedSection", vec, section, sym);
 		// Add additional named p-code sections
 		sym.incrementDefineCount();
+		SymbolScope curscope = symtab.getCurrentScope();
 		symtab.popScope();		// Pop the scope of the last named section
-		SymbolScope curscope = symtab.getCurrentScope(); // This should now be the Constructor scope
-		SymbolScope parscope = curscope.getParent();
+		SymbolScope parscope = symtab.getCurrentScope().getParent();
 		if (parscope != symtab.getGlobalScope()) {
 			throw new LowlevelError("nextNamedSection called when not in section scope"); // Unrecoverable
 		}
@@ -603,7 +603,7 @@ public class SleighCompile extends SleighBase {
 	// Make sure label symbols are used properly
 	String checkSymbols(SymbolScope scope) {
 		entry("checkSymbols", scope);
-		List<String> errors = new ArrayList<>();
+		List<String> symbolErrors = new ArrayList<>();
 		IteratorSTL<SleighSymbol> iter;
 		for (iter = scope.begin(); !iter.equals(scope.end()); iter.increment()) {
 			SleighSymbol sym = iter.get();
@@ -612,15 +612,15 @@ public class SleighCompile extends SleighBase {
 			}
 			LabelSymbol labsym = (LabelSymbol) sym;
 			if (labsym.getRefCount() == 0) {
-				errors.add(MessageFormattingUtils.format(labsym.location,
+				symbolErrors.add(MessageFormattingUtils.format(labsym.location,
 					String.format("Label <%s> was placed but never used", sym.getName())));
 			}
 			else if (!labsym.isPlaced()) {
-				errors.add(MessageFormattingUtils.format(labsym.location,
+				symbolErrors.add(MessageFormattingUtils.format(labsym.location,
 					String.format("Label <%s> was referenced but never placed", sym.getName())));
 			}
 		}
-		return errors.stream().collect(Collectors.joining("  "));
+		return symbolErrors.stream().collect(Collectors.joining("  "));
 	}
 
 	// Make sure symbol table errors are caught
@@ -1701,9 +1701,9 @@ public class SleighCompile extends SleighBase {
 	 * compiler without using the launcher.  The full SoftwareModeling classpath 
 	 * must be established including any dependencies.
 	 * @param args compiler command line arguments
-	 * @throws JDOMException
-	 * @throws IOException
-	 * @throws RecognitionException
+	 * @throws JDOMException for XML errors
+	 * @throws IOException for file access errors
+	 * @throws RecognitionException for parsing errors
 	 */
 	public static void main(String[] args) throws JDOMException, IOException, RecognitionException {
 		System.exit(SleighCompileLauncher.runMain(args, new HashMap<String, String>()));
