@@ -1135,13 +1135,13 @@ MovMUReg2: MovMUReg2_15 is MovMUReg2_15 {
 
 :exts.b rm_04_07,rn_08_11  is opcode_12_15=0b0110 & rn_08_11 & rm_04_07 & opcode_00_03=0b1110 
 {
-    local temp:1 = rm_04_07(1);
+    local temp:1 = rm_04_07:1;
     rn_08_11 = sext(temp);
 }
 
 :exts.w rm_04_07,rn_08_11  is opcode_12_15=0b0110 & rn_08_11 & rm_04_07 & opcode_00_03=0b1111 
 {
-    local temp:2 = rm_04_07(2);
+    local temp:2 = rm_04_07:2;
     rn_08_11 = sext(temp);
 }
 
