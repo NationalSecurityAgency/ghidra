@@ -634,15 +634,25 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 					System.out.println("Default password expiration has been disbaled.");
 				}
 			}
-			else if (s.equals("-jaas")) {
-				int nextArgIndex = i + 1;
-				if (!(nextArgIndex < args.length - 1)) {
-					// length - 1 -> don't count mandatory repo path, which is always last arg
+			else if (s.startsWith("-jaas")) {
+				if (s.length() == 5) {
+					int nextArgIndex = i + 1;
+					if (!(nextArgIndex < args.length - 1)) {
+						// length - 1 -> don't count mandatory repo path, which is always last arg
+						displayUsage("Missing -jaas config file path argument");
+						System.exit(-1);
+					}
+					jaasConfigFileStr = args[nextArgIndex];
+					i++;
+				}
+				else {
+					jaasConfigFileStr = s.substring(5);
+				}
+				jaasConfigFileStr = jaasConfigFileStr.trim();
+				if (jaasConfigFileStr.isEmpty()) {
 					displayUsage("Missing -jaas config file path argument");
 					System.exit(-1);
 				}
-				jaasConfigFileStr = args[nextArgIndex];
-				i++;
 			}
 			else if (s.equals("-autoProvision")) {
 				autoProvision = true;
