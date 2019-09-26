@@ -872,8 +872,8 @@ is b_31=1 & b_2630=0x05 & Addr26
 :blr Rn_GPR64
 is b_2531=0x6b & b_2324=0 & b_2122=1 & b_1620=0x1f & b_1015=0 & Rn_GPR64 & b_0004=0
 {
-	x30 = inst_start + 4;
 	pc = Rn_GPR64;
+	x30 = inst_start + 4;
 	call [pc];
 }
 
