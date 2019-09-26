@@ -608,9 +608,9 @@ public class FunctionEditorModel {
 				ParamInfo paramInfo = parameters.get(i);
 				DataType dt = paramInfo.getDataType();
 				VariableStorage storage = paramInfo.getStorage();
+				signatureTransformed |= storage.isAutoStorage();
 				paramInfo.setFormalDataType(dt);
 				paramInfo.setStorage(storage.clone(program));
-				signatureTransformed = true;
 			}
 		}
 		catch (InvalidInputException e) {
