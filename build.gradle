@@ -22,7 +22,7 @@ if (System.env.JAVA_HOME) {
 	project.ext.JAVA_HOME = System.env.JAVA_HOME;
 }
 else {
-	project.ext.JAVA_HOME = "${System.properties.'java.home'}/../"
+	project.ext.JAVA_HOME = "${System.properties.'java.home'}"
 }
 
 /***************************************************************************************
