@@ -15,8 +15,7 @@
  */
 package ghidra.app.plugin.core.script;
 
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 import java.io.*;
 
@@ -55,49 +54,6 @@ public class GhidraScriptMgrPlugin2Test extends AbstractGhidraScriptMgrPluginTes
 		String consoleText = getConsoleText();
 		assertTrue("ConsoleText was \"" + consoleText + "\".",
 			consoleText.indexOf("> Hello World") >= 0);
-	}
-
-	@Test
-	public void testRunLastScriptActionWithDifferentRowSelected() throws Exception {
-
-		//
-		// Run a script once...
-		//
-		String scriptName = "HelloWorldScript.java";
-		selectScript(scriptName);
-		String fullOutput = runScript(scriptName);
-		String expectedOutput = "Hello World";
-		assertTrue("Script did not run - output: " + fullOutput,
-			fullOutput.indexOf(expectedOutput) != -1);
-
-		selectScript("PrintStructureScript.java");// note: this script will error out
-
-		//
-		// Run the script again
-		//
-		fullOutput = runLastScript(scriptName);
-		assertTrue("Did not rerun last run script", fullOutput.indexOf(expectedOutput) != -1);
-	}
-
-	@Test
-	public void testRunLastScriptActionWithScriptProviderClosed() throws Exception {
-		//
-		// Run a script once...
-		//
-		String scriptName = "HelloWorldScript.java";
-		selectScript(scriptName);
-		String fullOutput = runScript(scriptName);
-		String expectedOutput = "Hello World";
-		assertTrue("Script did not run - output: " + fullOutput,
-			fullOutput.indexOf(expectedOutput) != -1);
-
-		closeScriptProvider();
-
-		//
-		// Run the script again
-		//
-		fullOutput = runGlobalLastScriptAction(scriptName);
-		assertTrue("Did not rerun last run script", fullOutput.indexOf(expectedOutput) != -1);
 	}
 
 	@Test
