@@ -816,8 +816,8 @@ public abstract class PcodeEmit {
 				dest.space = fallOverride.getAddressSpace();
 				dest.offset = fallOverride.getOffset();
 				dest.size = dest.space.getPointerSize();
+				return opcode;
 			}
-			return opcode;
 		}
 
 		//if there is an overriding jump reference, change a conditional jump to an
