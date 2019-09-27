@@ -25,7 +25,6 @@ import org.junit.Test;
 
 import docking.action.DockingActionIf;
 import docking.widgets.OptionDialog;
-import docking.widgets.dialogs.InputWithChoicesDialog;
 import docking.widgets.filechooser.GhidraFileChooser;
 import ghidra.framework.ToolUtils;
 import ghidra.framework.plugintool.PluginTool;
@@ -86,10 +85,6 @@ public class ToolSaving3Test extends AbstractToolSavingTest {
 		PluginTool tool1 = launchTool(DEFAULT_TEST_TOOL_NAME);
 		DockingActionIf exportAction = getAction(tool1, "Export Default Tool");
 		performAction(exportAction, false);
-
-		InputWithChoicesDialog chooseToolDialog =
-			waitForDialogComponent(InputWithChoicesDialog.class);
-		pressButtonByText(chooseToolDialog, "OK");
 
 		GhidraFileChooser chooser = waitForDialogComponent(GhidraFileChooser.class);
 		File exportedFile = createTempFile("ExportedDefaultTool", ToolUtils.TOOL_EXTENSION);

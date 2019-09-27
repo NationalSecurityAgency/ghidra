@@ -642,18 +642,33 @@ public class FrontEndPlugin extends Plugin
 	 */
 	void exportToolConfig(ToolTemplate template, String msgSource) {
 
+		ToolTemplate updatedTeplate = getUpToDateTemplate(template);
 		ToolServices services = activeProject.getToolServices();
 
 		try {
-			File savedFile = services.exportTool(template);
+			File savedFile = services.exportTool(updatedTeplate);
 			if (savedFile != null) {
-				Msg.info(this, msgSource + ": Successfully exported " + template.getName() +
+				Msg.info(this, msgSource + ": Successfully exported " + updatedTeplate.getName() +
 					" to " + savedFile.getAbsolutePath());
 			}
 		}
 		catch (Exception e) {
-			Msg.showError(this, null, "Error", "Error exporting tool tool", e);
+			Msg.showError(this, null, "Error Exporting Tool", "Error exporting tool tool", e);
 		}
+	}
+
+	private ToolTemplate getUpToDateTemplate(ToolTemplate template) {
+
+		ToolManager toolManager = activeProject.getToolManager();
+		Tool[] runningTools = toolManager.getRunningTools();
+		String templateName = template.getName();
+		for (Tool runningTool : runningTools) {
+			if (runningTool.getName().equals(templateName)) {
+				return runningTool.getToolTemplate(true);
+			}
+		}
+
+		return template;
 	}
 
 	private void updateConnectionPanel(Project project) {

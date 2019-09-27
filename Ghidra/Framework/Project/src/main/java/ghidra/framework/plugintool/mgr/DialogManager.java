@@ -16,25 +16,19 @@
 package ghidra.framework.plugintool.mgr;
 
 import java.io.File;
-import java.util.Arrays;
-import java.util.List;
-import java.util.stream.Collectors;
 
-import docking.widgets.OptionDialog;
-import docking.widgets.filechooser.GhidraFileChooser;
-import ghidra.framework.model.*;
+import ghidra.framework.model.ToolServices;
+import ghidra.framework.model.ToolTemplate;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.dialog.SaveToolConfigDialog;
 import ghidra.util.Msg;
 
 /**
- * Helper class to manage actions for saving and exporting the tool. 
- *
+ * Helper class to manage actions for saving and exporting the tool
  */
 public class DialogManager {
 	private PluginTool tool;
 	private SaveToolConfigDialog saveToolDialog;
-	private GhidraFileChooser ghidraFileChooser;
 
 	public DialogManager(PluginTool tool) {
 		this.tool = tool;
@@ -43,7 +37,7 @@ public class DialogManager {
 	/**
 	 * Show the "Save Tool" dialog.  Returns true if the user performed a 'save as'; returns false
 	 * if the user cancelled.
-	 *
+	 * @return false if the user cancelled
 	 */
 	public boolean saveToolAs() {
 		if (saveToolDialog == null) {
@@ -62,6 +56,15 @@ public class DialogManager {
 		exportTool(template);
 	}
 
+	/**
+	 * Exports a version of our tool without any config settings.  This is useful for making a
+	 * new 'default' tool to be shared with others, which will not contain any user settings.
+	 */
+	public void exportDefaultTool() {
+		ToolTemplate template = tool.getToolTemplate(false);
+		exportTool(template);
+	}
+
 	private void exportTool(ToolTemplate template) {
 		ToolServices services = tool.getProject().getToolServices();
 		try {
@@ -75,35 +78,4 @@ public class DialogManager {
 			Msg.showError(this, null, "Error", "Error exporting tool tool", e);
 		}
 	}
-
-	/**
-	 * Exports a version of our tool without any config settings.  This is useful for making a
-	 * new 'default' tool to be shared with others, which will not contain any user settings.
-	 */
-	public void exportDefaultTool() {
-
-		Project project = tool.getProject();
-		ToolChest toolChest = project.getLocalToolChest();
-		ToolTemplate[] templates = toolChest.getToolTemplates();
-		List<String> namesList =
-			Arrays.stream(templates).map(t -> t.getName()).collect(Collectors.toList());
-		if (namesList.isEmpty()) {
-			Msg.showInfo(this, null, "No Tools", "There are no tools to export");
-			return;
-		}
-
-		String[] names = namesList.toArray(new String[namesList.size()]);
-		String choice = OptionDialog.showInputChoiceDialog(null, "Choose Tool", "Choose Tool",
-			names, null, OptionDialog.QUESTION_MESSAGE);
-		if (choice == null) {
-			return;
-		}
-
-		ToolTemplate template = toolChest.getToolTemplate(choice);
-		Tool templateTool = template.createTool(project);
-		ToolTemplate defaultTemplate = templateTool.getToolTemplate(false);
-
-		exportTool(defaultTemplate);
-	}
-
 }

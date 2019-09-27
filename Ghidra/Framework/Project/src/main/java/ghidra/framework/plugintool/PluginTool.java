@@ -972,6 +972,12 @@ public abstract class PluginTool extends AbstractDockingTool implements Tool, Se
 	}
 
 	protected void addExportToolAction() {
+
+		String menuGroup = "Tool";
+		String exportPullright = "Export";
+		setMenuGroup(new String[] { ToolConstants.MENU_FILE, exportPullright }, menuGroup);
+
+		int subGroup = 1;
 		DockingAction exportToolAction =
 			new DockingAction("Export Tool", ToolConstants.TOOL_OWNER) {
 				@Override
@@ -979,11 +985,10 @@ public abstract class PluginTool extends AbstractDockingTool implements Tool, Se
 					dialogMgr.exportTool();
 				}
 			};
-		MenuData menuData =
-			new MenuData(new String[] { ToolConstants.MENU_FILE, "Export Tool..." }, null, "Tool");
-		menuData.setMenuSubGroup("3Tool");
+		MenuData menuData = new MenuData(
+			new String[] { ToolConstants.MENU_FILE, exportPullright, "Export Tool..." });
+		menuData.setMenuSubGroup(Integer.toString(subGroup++));
 		exportToolAction.setMenuBarData(menuData);
-
 		exportToolAction.setHelpLocation(
 			new HelpLocation(ToolConstants.TOOL_HELP_TOPIC, "Export_Tool"));
 		addAction(exportToolAction);
@@ -995,8 +1000,10 @@ public abstract class PluginTool extends AbstractDockingTool implements Tool, Se
 					dialogMgr.exportDefaultTool();
 				}
 			};
-		exportDefautToolAction.setMenuBarData(new MenuData(
-			new String[] { ToolConstants.MENU_TOOLS, "Export Default Tool..." }, null, "Tool"));
+		menuData = new MenuData(
+			new String[] { ToolConstants.MENU_FILE, exportPullright, "Export Default Tool..." });
+		menuData.setMenuSubGroup(Integer.toString(subGroup++));
+		exportDefautToolAction.setMenuBarData(menuData);
 		exportDefautToolAction.setHelpLocation(
 			new HelpLocation(ToolConstants.TOOL_HELP_TOPIC, "Export_Default_Tool"));
 
