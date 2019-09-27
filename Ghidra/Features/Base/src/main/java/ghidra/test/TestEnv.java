@@ -540,7 +540,7 @@ public class TestEnv {
 
 		return AbstractGenericTest.runSwing(() -> {
 			ToolTemplate toolTemplate =
-				ToolUtils.readToolTemplate("defaultTools/" + toolName + ".tool");
+				ToolUtils.readToolTemplate("defaultTools/" + toolName + ToolUtils.TOOL_EXTENSION);
 			if (toolTemplate == null) {
 				Msg.debug(TestEnv.class, "Unable to find tool: " + toolName);
 				return null;

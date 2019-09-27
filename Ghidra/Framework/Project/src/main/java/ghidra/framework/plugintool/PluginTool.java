@@ -15,8 +15,7 @@
  */
 package ghidra.framework.plugintool;
 
-import static ghidra.framework.model.ToolTemplate.TOOL_INSTANCE_NAME_XML_NAME;
-import static ghidra.framework.model.ToolTemplate.TOOL_NAME_XML_NAME;
+import static ghidra.framework.model.ToolTemplate.*;
 
 import java.awt.*;
 import java.awt.event.KeyEvent;
@@ -102,7 +101,6 @@ public abstract class PluginTool extends AbstractDockingTool implements Tool, Se
 
 	protected ToolIconURL iconURL = new ToolIconURL("view_detailed.png");
 
-	private DockingAction exportToolAction;
 	private ToolServices toolServices;
 
 	private boolean isConfigurable = true;
@@ -974,21 +972,35 @@ public abstract class PluginTool extends AbstractDockingTool implements Tool, Se
 	}
 
 	protected void addExportToolAction() {
-		exportToolAction = new DockingAction("Export Tool", ToolConstants.TOOL_OWNER) {
-			@Override
-			public void actionPerformed(ActionContext context) {
-				dialogMgr.exportTool();
-			}
-		};
+		DockingAction exportToolAction =
+			new DockingAction("Export Tool", ToolConstants.TOOL_OWNER) {
+				@Override
+				public void actionPerformed(ActionContext context) {
+					dialogMgr.exportTool();
+				}
+			};
 		MenuData menuData =
 			new MenuData(new String[] { ToolConstants.MENU_FILE, "Export Tool..." }, null, "Tool");
 		menuData.setMenuSubGroup("3Tool");
 		exportToolAction.setMenuBarData(menuData);
 
-		exportToolAction.setEnabled(true);
 		exportToolAction.setHelpLocation(
-			new HelpLocation(ToolConstants.TOOL_HELP_TOPIC, "Export Tool"));
+			new HelpLocation(ToolConstants.TOOL_HELP_TOPIC, "Export_Tool"));
 		addAction(exportToolAction);
+
+		DockingAction exportDefautToolAction =
+			new DockingAction("Export Default Tool", ToolConstants.TOOL_OWNER) {
+				@Override
+				public void actionPerformed(ActionContext e) {
+					dialogMgr.exportDefaultTool();
+				}
+			};
+		exportDefautToolAction.setMenuBarData(new MenuData(
+			new String[] { ToolConstants.MENU_TOOLS, "Export Default Tool..." }, null, "Tool"));
+		exportDefautToolAction.setHelpLocation(
+			new HelpLocation(ToolConstants.TOOL_HELP_TOPIC, "Export_Default_Tool"));
+
+		addAction(exportDefautToolAction);
 	}
 
 	protected void addHelpActions() {
