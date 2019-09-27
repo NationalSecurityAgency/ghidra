@@ -18,6 +18,8 @@ package ghidra.app.util.opinion;
 import java.util.*;
 
 import ghidra.app.util.bin.format.pdb.*;
+import ghidra.app.util.bin.format.pe.FileHeader;
+import ghidra.app.util.bin.format.pe.SectionHeader;
 import ghidra.app.util.bin.format.pe.debug.*;
 import ghidra.app.util.datatype.microsoft.GUID;
 import ghidra.app.util.demangler.DemangledObject;
@@ -27,8 +29,7 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.data.DWordDataType;
 import ghidra.program.model.data.StringDataType;
 import ghidra.program.model.listing.*;
-import ghidra.program.model.symbol.SourceType;
-import ghidra.program.model.symbol.SymbolTable;
+import ghidra.program.model.symbol.*;
 import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.util.Conv;
 import ghidra.util.Msg;
@@ -80,8 +81,8 @@ abstract class AbstractPeDebugLoader extends AbstractLibrarySupportLoader {
 		return list;
 	}
 
-	protected void processDebug(DebugDirectoryParser parser,
-			Map<Integer, Address> sectionNumberToAddress, Program program, TaskMonitor monitor) {
+	protected void processDebug(DebugDirectoryParser parser, FileHeader fileHeader,
+			Map<SectionHeader, Address> sectionToAddress, Program program, TaskMonitor monitor) {
 
 		if (parser == null) {
 			return;
@@ -94,15 +95,16 @@ abstract class AbstractPeDebugLoader extends AbstractLibrarySupportLoader {
 		processDebugFixup(parser.getDebugFixup());
 
 		monitor.setMessage("Processing code view debug...");
-		processDebugCodeView(parser.getDebugCodeView(), sectionNumberToAddress, program, monitor);
+		processDebugCodeView(parser.getDebugCodeView(), fileHeader, sectionToAddress, program,
+			monitor);
 
 		monitor.setMessage("Processing coff debug...");
-		processDebugCOFF(parser.getDebugCOFFSymbolsHeader(), sectionNumberToAddress, program,
+		processDebugCOFF(parser.getDebugCOFFSymbolsHeader(), fileHeader, sectionToAddress, program,
 			monitor);
 	}
 
-	private void processDebugCodeView(DebugCodeView dcv,
-			Map<Integer, Address> sectionNumberToAddress, Program program, TaskMonitor monitor) {
+	private void processDebugCodeView(DebugCodeView dcv, FileHeader fileHeader,
+			Map<SectionHeader, Address> sectionToAddress, Program program, TaskMonitor monitor) {
 
 		if (dcv == null) {
 			return;
@@ -174,8 +176,9 @@ abstract class AbstractPeDebugLoader extends AbstractLibrarySupportLoader {
 
 			OMFSrcModuleFile[] files = module.getOMFSrcModuleFiles();
 			for (OMFSrcModuleFile file : files) {
-				processFiles(file, segs[segIndex++], sectionNumberToAddress, monitor);
-				processLineNumbers(sectionNumberToAddress, file.getOMFSrcModuleLines(), monitor);
+				processFiles(file, segs[segIndex++], fileHeader, sectionToAddress, monitor);
+				processLineNumbers(fileHeader, sectionToAddress, file.getOMFSrcModuleLines(),
+					monitor);
 
 				if (monitor.isCancelled()) {
 					return;
@@ -226,7 +229,7 @@ abstract class AbstractPeDebugLoader extends AbstractLibrarySupportLoader {
 					continue;
 				}
 
-				Address address = sectionNumberToAddress.get(Conv.shortToInt(segVal));
+				Address address = sectionToAddress.get(fileHeader.getSectionHeader(segVal - 1));
 				if (address != null) {
 					address = address.add(Conv.intToLong(offVal));
 
@@ -265,8 +268,8 @@ abstract class AbstractPeDebugLoader extends AbstractLibrarySupportLoader {
 		}
 	}
 
-	private void processFiles(OMFSrcModuleFile file, short segment,
-			Map<Integer, Address> sectionNumberToAddress, TaskMonitor monitor) {
+	private void processFiles(OMFSrcModuleFile file, short segment, FileHeader fileHeader,
+			Map<SectionHeader, Address> sectionToAddress, TaskMonitor monitor) {
 
 		int[] starts = file.getStarts();
 		int[] ends = file.getEnds();
@@ -276,7 +279,7 @@ abstract class AbstractPeDebugLoader extends AbstractLibrarySupportLoader {
 				continue;
 			}
 
-			Address addr = sectionNumberToAddress.get(Conv.shortToInt(segment));
+			Address addr = sectionToAddress.get(fileHeader.getSectionHeader(segment - 1));
 			if (addr == null) {
 				continue;
 			}
@@ -295,13 +298,15 @@ abstract class AbstractPeDebugLoader extends AbstractLibrarySupportLoader {
 		}
 	}
 
-	private void processLineNumbers(Map<Integer, Address> sectionNumberToAddress,
-			OMFSrcModuleLine[] lines, TaskMonitor monitor) {//TODO revisit this method for accuracy
+	private void processLineNumbers(FileHeader fileHeader,
+			Map<SectionHeader, Address> sectionToAddress, OMFSrcModuleLine[] lines,
+			TaskMonitor monitor) {//TODO revisit this method for accuracy
 		for (OMFSrcModuleLine line : lines) {
 			if (monitor.isCancelled()) {
 				return;
 			}
-			Address addr = sectionNumberToAddress.get(Conv.shortToInt(line.getSegmentIndex()));
+			Address addr =
+				sectionToAddress.get(fileHeader.getSectionHeader(line.getSegmentIndex() - 1));
 			if (addr != null) {
 				int[] offsets = line.getOffsets();
 				short[] lineNumbers = line.getLinenumbers();
@@ -324,8 +329,8 @@ abstract class AbstractPeDebugLoader extends AbstractLibrarySupportLoader {
 		}
 	}
 
-	private void processDebugCOFF(DebugCOFFSymbolsHeader dcsh,
-			Map<Integer, Address> sectionNumberToAddress, Program program, TaskMonitor monitor) {
+	private void processDebugCOFF(DebugCOFFSymbolsHeader dcsh, FileHeader fileHeader,
+			Map<SectionHeader, Address> sectionToAddress, Program program, TaskMonitor monitor) {
 		if (dcsh == null) {
 			return;
 		}
@@ -339,7 +344,7 @@ abstract class AbstractPeDebugLoader extends AbstractLibrarySupportLoader {
 			if (monitor.isCancelled()) {
 				return;
 			}
-			if (!processDebugCoffSymbol(symbol, sectionNumberToAddress, program, monitor)) {
+			if (!processDebugCoffSymbol(symbol, fileHeader, sectionToAddress, program, monitor)) {
 				++errorCount;
 			}
 		}
@@ -368,8 +373,9 @@ abstract class AbstractPeDebugLoader extends AbstractLibrarySupportLoader {
 		}
 	}
 
-	protected boolean processDebugCoffSymbol(DebugCOFFSymbol symbol,
-			Map<Integer, Address> sectionNumberToAddress, Program program, TaskMonitor monitor) {
+	protected boolean processDebugCoffSymbol(DebugCOFFSymbol symbol, FileHeader fileHeader,
+			Map<SectionHeader, Address> sectionToAddress, Program program,
+			TaskMonitor monitor) {
 
 		if (symbol.getSectionNumber() == 0) {
 			return true;
@@ -393,17 +399,27 @@ abstract class AbstractPeDebugLoader extends AbstractLibrarySupportLoader {
 			return true;
 		}
 
-		long symbolOffset = Conv.intToLong(val);
-		Address address = sectionNumberToAddress.get(symbol.getSectionNumber());
-		if (address != null) {
-			address = address.add(symbolOffset);
+		SectionHeader section = fileHeader.getSectionHeader(symbol.getSectionNumber() - 1);
+		if (section == null) {
+			return false;
 		}
-		else {
+		Address address = sectionToAddress.get(section);
+		if (address == null) {
 			return false;
 		}
 
+		address = address.add(Conv.intToLong(val));
+
 		try {
-			program.getSymbolTable().createLabel(address, sym, SourceType.IMPORTED);
+			Symbol newSymbol =
+				program.getSymbolTable().createLabel(address, sym, SourceType.IMPORTED);
+
+			// Force non-section symbols to be primary.  We never want section symbols (.text, 
+			// .text$func_name) to be primary because we don't want to use them for function names
+			// or demangling.
+			if (!sym.equals(section.getName()) && !sym.startsWith(section.getName() + "$")) {
+				newSymbol.setPrimary();
+			}
 		}
 		catch (InvalidInputException e) {
 			Msg.error(this, "Error creating label named " + sym + " at address " + address + ": " +
