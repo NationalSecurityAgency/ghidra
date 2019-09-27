@@ -700,6 +700,7 @@ public class CParser {
             System.out.println("C Parser:  Java program parsed successfully.");
         } catch (ParseException e) {
             System.out.println("C Parser:  Encountered errors during parse.");
+            System.out.println(e);
         }
     }
     
@@ -2288,43 +2289,53 @@ void AsmStatement() :
   (
     <ASM> [TypeQualifier(dec)]
     (
-//      ("(" AsmLine() ")" )
-//    |
-//      ("{" AsmLine() "}" )
-//    |
-      ( AsmLine() )
+      ("(" GnuAsm() ")" )
     )
   )
 }
 
-void AsmLine() :
+// TODO:
+// Microsoft asm as per https://docs.microsoft.com/en-us/cpp/assembler/inline/asm?view=vs-2019
+// with MASM syntax taken from:
+// https://docs.microsoft.com/en-us/cpp/assembler/masm/directives-reference?view=vs-2019
+// https://docs.microsoft.com/en-us/cpp/assembler/masm/symbols-reference?view=vs-2019
+// https://docs.microsoft.com/en-us/cpp/assembler/masm/operators-reference?view=vs-2019
+// NOTE:
+// This synatx is highly irregular(?), e.g. the "__asm int 3  __asm ret" style would require huge changes in the parses ... possibly CPP.jj as well
+// Also "__asm {int 3; ret }" will require large changes as "int", "3" and "ret" are already tokens so we can't do:
+// ( "{" ( ~ "}" ) * "}" )
+
+// GNU Asm as per https://gcc.gnu.org/onlinedocs/gcc/Extended-Asm.html#OutputOperands
+void GnuAsm() : {}
 {
-	Declaration dec = new Declaration();
+    ( <STRING_LITERAL> )+
+    [ ":" [ GnuAsmOperandList() ]
+	    [ ":" [ GnuAsmOperandList() ]
+    		[ ":" [ GnuAsmClobberList() ] ] ] ]
 }
+
+void GnuAsmOperandList() : {}
 {
-  (<IDENTIFIER> | <STRING_LITERAL> | <INTEGER_LITERAL> | <ATTRIBUTE> | BuiltInTypeSpecifier(dec) | "#" | "+" | "-" | "," | ":" | ("[" AsmLine() "]") | ( "(" AsmLine() ")" ) | ( "{" AsmLine() "}" ) )+
+	(
+		GnuAsmOperand() ( ","  GnuAsmOperand() )*
+	)
 }
 
+void GnuAsmOperand() : {}
+{
+	(
+		// in output operands the Expression() should be LValue()
+		// but Expression is more permissive so we can use GnuAsmOperand() for both input and ouput operands
+		[ "[" <IDENTIFIER> "]" ] ( <STRING_LITERAL> )+  "(" Expression() ")"
+	)
+}
 
-//void AsmStatement() : {}
-//{
-//	( <ASM> (
-//	    ( "{" SubAsm() "}" )
-//	    |
-//	    ( "(" SubAsm() ")" )
-//	    |
-//	    ( <IDENTIFIER> | "," | "[" | "]" | "(" | ")" | "%" | <INTEGER_LITERAL> | <CHARACTER_LITERAL> )+ ("\r" | "\n)+
-//	  )
-//	)
-//}
-
-//void SubAsm() : {}
-//{
-//    ( "(" SubAsm() ")" ) |
-//    ( <IDENTIFIER> | "," | "[" | "]" | "%" | <INTEGER_LITERAL> | <CHARACTER_LITERAL> )+
-//         ( [ "(" SubAsm() ")" ] [ SubAsm() ] ) 
-//    )
-//}
+void GnuAsmClobberList() : {}
+{
+	(
+		<STRING_LITERAL> ( "," <STRING_LITERAL> )*
+	)
+}
 
 
 void SelectionStatement() : {}
