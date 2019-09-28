@@ -663,31 +663,6 @@ PcodeOp *Funcdata::newIndirectOp(PcodeOp *indeffect,const Address &addr,int4 siz
   return newop;
 }
 
-/// \brief Turn given PcodeOp into a CPUI_INDIRECT that \e indirectly \e creates a Varnode
-///
-/// An \e indirectly \e created Varnode effectively has no data-flow before the INDIRECT op
-/// that defines it, and the value contained by the Varnode is not explicitly calculable.
-/// \param op is the given PcodeOp to convert to a CPUI_INDIRECT
-/// \param indeffect is the p-code causing the indirect effect
-/// \param outvn is the (preexisting) Varnode that will be marked as \e created by the INDIRECT
-/// \param possibleout is \b true if the output should be treated as a \e directwrite.
-void Funcdata::setIndirectCreation(PcodeOp *op,PcodeOp *indeffect,Varnode *outvn,bool possibleout)
-
-{
-  Varnode *newin;
-
-  newin = newConstant(outvn->getSize(),0);
-  op->flags |= PcodeOp::indirect_creation;
-  opSetOutput(op,outvn);
-  if (!possibleout)
-    newin->flags |= Varnode::indirect_creation;
-  outvn->flags |= Varnode::indirect_creation;
-  opSetOpcode(op,CPUI_INDIRECT);
-  opSetInput(op,newin,0);
-  opSetInput(op,newVarnodeIop(indeffect),1);
-  opInsertBefore(op,indeffect);
-}
-
 /// \brief Build a CPUI_INDIRECT op that \e indirectly \e creates a Varnode
 ///
 /// An \e indirectly \e created Varnode effectively has no data-flow before the INDIRECT op
@@ -718,22 +693,24 @@ PcodeOp *Funcdata::newIndirectCreation(PcodeOp *indeffect,const Address &addr,in
   return newop;
 }
 
-/// Data-flow through the given CPUI_INDIRECT op is truncated causing the output Varnode
-/// to be \e indirectly \e created.
+/// Data-flow through the given CPUI_INDIRECT op is marked so that the output Varnode
+/// is considered \e indirectly \e created.
 /// An \e indirectly \e created Varnode effectively has no data-flow before the INDIRECT op
 /// that defines it, and the value contained by the Varnode is not explicitly calculable.
 /// \param indop is the given CPUI_INDIRECT op
-void Funcdata::truncateIndirect(PcodeOp *indop)
+/// \param possibleOutput is \b true if INDIRECT should be marked as a possible call output
+void Funcdata::markIndirectCreation(PcodeOp *indop,bool possibleOutput)
 
 {
   Varnode *outvn = indop->getOut();
-  Varnode *newin = newConstant(outvn->getSize(),0);
+  Varnode *in0 = indop->getIn(0);
 
   indop->flags |= PcodeOp::indirect_creation;
-  newin->flags |= Varnode::indirect_creation;
+  if (!in0->isConstant())
+    throw LowlevelError("Indirect creation not properly formed");
+  if (!possibleOutput)
+    in0->flags |= Varnode::indirect_creation;
   outvn->flags |= Varnode::indirect_creation;
-
-  opSetInput(indop,newin,0);
 }
 
 /// \brief Generate raw p-code for the function

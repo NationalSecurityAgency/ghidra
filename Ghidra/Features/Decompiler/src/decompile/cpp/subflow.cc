@@ -206,7 +206,12 @@ void SubvariableFlow::patchIndirect(PcodeOp *newop,PcodeOp *oldop, ReplaceVarnod
   PcodeOp *indop = PcodeOp::getOpFromConst(oldop->getIn(1)->getAddr());
   bool possibleout = !oldop->getIn(0)->isIndirectZero();
   Varnode *outvn = getReplaceVarnode(out);
-  fd->setIndirectCreation(newop,indop,outvn,possibleout);
+  fd->opSetOutput(newop,outvn);
+  fd->opSetOpcode(newop, CPUI_INDIRECT);
+  fd->opSetInput(newop,fd->newConstant(outvn->getSize(),0),0);
+  fd->opSetInput(newop,fd->newVarnodeIop(indop),1);
+  fd->markIndirectCreation(newop,possibleout);
+  fd->opInsertBefore(newop, indop);
   FuncCallSpecs *fc = fd->getCallSpecs(indop);
   if (fc == (FuncCallSpecs *)0) return;
   if (fc->isOutputActive()) {

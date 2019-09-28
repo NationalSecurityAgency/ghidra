@@ -1860,8 +1860,11 @@ int4 ActionLikelyTrash::apply(Funcdata &data)
 
     for(uint4 i=0;i<indlist.size();++i) {
       PcodeOp *op = indlist[i];
-      if (op->code() == CPUI_INDIRECT)
-	data.truncateIndirect(indlist[i]);
+      if (op->code() == CPUI_INDIRECT) {
+	// Trucate data-flow through INDIRECT, turning it into indirect creation
+	data.opSetInput(op,data.newConstant(op->getOut()->getSize(), 0),0);
+	data.markIndirectCreation(op,false);
+      }
       else if (op->code() == CPUI_INT_AND) {
 	data.opSetInput(op,data.newConstant(op->getIn(1)->getSize(),0),1);
       }
