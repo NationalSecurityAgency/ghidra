@@ -165,18 +165,20 @@ public class RttiAnalyzer extends AbstractAnalyzer {
 	private void processRtti4sForRtti0(Program program, Address rtti0Address, TaskMonitor monitor)
 			throws CancelledException {
 
-		List<MemoryBlock> rDataBlocks = ProgramMemoryUtil.getMemoryBlocksStartingWithName(program,
-			program.getMemory(), ".rdata", monitor);
+		List<MemoryBlock> dataBlocks =
+				ProgramMemoryUtil.getMemoryBlocksStartingWithName(program, program.getMemory(), ".data", monitor);
+		dataBlocks.addAll(ProgramMemoryUtil.getMemoryBlocksStartingWithName(program,
+			program.getMemory(), ".rdata", monitor));
 
 		List<Address> rtti4Addresses =
-			getRtti4Addresses(program, rDataBlocks, rtti0Address, validationOptions, monitor);
+			getRtti4Addresses(program, dataBlocks, rtti0Address, validationOptions, monitor);
 
 		for (Address rtti4Address : rtti4Addresses) {
 
 			monitor.checkCanceled();
 
 			CreateRtti4BackgroundCmd cmd =
-				new CreateRtti4BackgroundCmd(rtti4Address, rDataBlocks, validationOptions,
+				new CreateRtti4BackgroundCmd(rtti4Address, dataBlocks, validationOptions,
 					applyOptions);
 			cmd.applyTo(program, monitor);
 		}
