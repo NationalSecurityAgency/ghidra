@@ -41,7 +41,7 @@ public class DbViewerProvider extends ComponentProviderAdapter {
 		setHelpLocation(new HelpLocation(plugin.getName(), "DbViewer"));
 	}
 
-	void closeDatabase() {
+	public void closeDatabase() {
 		if (comp != null) {
 			comp.closeDatabase();
 		}
@@ -53,7 +53,7 @@ public class DbViewerProvider extends ComponentProviderAdapter {
 	 * @param databaseName the name of the database.
 	 * @param handle the DBHandle for the open database
 	 */
-	void openDatabase(String databaseName, DBHandle handle) {
+	public void openDatabase(String databaseName, DBHandle handle) {
 		if (comp != null) {
 			comp.openDatabase(databaseName, handle);
 		}
