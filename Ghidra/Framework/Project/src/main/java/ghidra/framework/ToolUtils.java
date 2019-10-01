@@ -36,6 +36,7 @@ import resources.ResourceManager;
 
 public class ToolUtils {
 
+	public static final String TOOL_EXTENSION = ".tool";
 	private static final Logger LOGGER = LogManager.getLogger(ToolUtils.class);
 	private static final File USER_TOOLS_DIR = new File(getApplicationToolDirPath());
 

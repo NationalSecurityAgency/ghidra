@@ -39,6 +39,7 @@ import docking.widgets.tree.GTreeRootNode;
 import docking.wizard.WizardManager;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
 import ghidra.framework.GenericRunInfo;
+import ghidra.framework.ToolUtils;
 import ghidra.framework.data.ContentHandler;
 import ghidra.framework.main.datatree.DataTree;
 import ghidra.framework.model.*;
@@ -172,8 +173,8 @@ public class ToolActionManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		int count = tc.getToolCount();
 
 		String toolNamePrefix = "TestCodeBrowser";
-		final File cbFile =
-			ResourceManager.getResourceFile("defaultTools/" + toolNamePrefix + ".tool");
+		final File cbFile = ResourceManager.getResourceFile(
+			"defaultTools/" + toolNamePrefix + ToolUtils.TOOL_EXTENSION);
 		assertNotNull(cbFile);
 
 		DockingActionIf importAction = getAction("Import Tool");
