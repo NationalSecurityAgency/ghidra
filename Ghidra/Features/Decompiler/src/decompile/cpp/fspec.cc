@@ -113,16 +113,19 @@ int4 ParamEntry::justifiedContain(const Address &addr,int4 sz) const
     return entry.justifiedContain(size,addr,sz,((flags&force_left_justify)!=0));
   }
   if (spaceid != addr.getSpace()) return -1;
-  if (addr.getOffset() < addressbase) return -1;
-  uintb endaddr = addr.getOffset() + sz - 1;
-  if (endaddr < addr.getOffset()) return -1; // Don't allow wrap around
+  uintb startaddr = addr.getOffset();
+  if (startaddr < addressbase) return -1;
+  uintb endaddr = startaddr + sz - 1;
+  if (endaddr < startaddr) return -1; // Don't allow wrap around
   if (endaddr > (addressbase+size-1)) return -1;
+  startaddr -= addressbase;
+  endaddr -= addressbase;
   if (!isLeftJustified()) {   // For right justified (big endian), endaddr must be aligned
     int4 res = (int4)((endaddr+1) % alignment);
     if (res==0) return 0;
     return (alignment-res);
   }
-  return (int4)(addr.getOffset() % alignment);
+  return (int4)(startaddr % alignment);
 }
 
 /// \brief Calculate the containing memory range
@@ -160,7 +163,7 @@ bool ParamEntry::getContainer(const Address &addr,int4 sz,VarnodeData &res) cons
     res.size = size;
     return true;
   }
-  uintb al = addr.getOffset() % alignment;
+  uintb al = (addr.getOffset() - addressbase) % alignment;
   res.space = spaceid;
   res.offset = addr.getOffset() - al;
   res.size = (int4)(endaddr.getOffset()-res.offset) + 1;
@@ -203,7 +206,8 @@ OpCode ParamEntry::assumedExtension(const Address &addr,int4 sz,VarnodeData &res
   }
   else {	// Otherwise take up whole alignment
     res.space = spaceid;
-    res.offset = addr.getOffset() - addr.getOffset() % alignment;
+    int4 alignAdjust = (addr.getOffset() - addressbase) % alignment;
+    res.offset = addr.getOffset() - alignAdjust;
     res.size = alignment;
   }
   if ((flags & smallsize_zext)!=0)
@@ -229,7 +233,7 @@ int4 ParamEntry::getSlot(const Address &addr,int4 skip) const
 {
   int4 res = group;
   if (alignment != 0) {
-    uintb diff = addr.getOffset() + skip - addressbase;	// Assume addressbase % alignment == 0
+    uintb diff = addr.getOffset() + skip - addressbase;
     int4 baseslot = (int4)diff / alignment;
     if (isReverseStack())
       res += (numslots -1) - baseslot;
@@ -365,8 +369,8 @@ void ParamEntry::restoreXml(const Element *el,const AddrSpaceManager *manage,boo
   spaceid = addr.getSpace();
   addressbase = addr.getOffset();
   if (alignment != 0) {
-    if ((addressbase % alignment) != 0)
-      throw LowlevelError("Stack <pentry> address must match alignment");
+//    if ((addressbase % alignment) != 0)
+//      throw LowlevelError("Stack <pentry> address must match alignment");
     numslots = size / alignment;
   }
   if (spaceid->isReverseJustified()) {
@@ -890,8 +894,8 @@ bool ParamListStandard::checkJoin(const Address &hiaddr,int4 hisize,const Addres
   if (entryHi->getGroup() == entryLo->getGroup()) {
     if (entryHi->isExclusion()||entryLo->isExclusion()) return false;
     if (!hiaddr.isContiguous(hisize,loaddr,losize)) return false;
-    if ((hiaddr.getOffset() % entryHi->getAlign()) != 0) return false;
-    if ((loaddr.getOffset() % entryLo->getAlign()) != 0) return false;
+    if (((hiaddr.getOffset() - entryHi->getBase()) % entryHi->getAlign()) != 0) return false;
+    if (((loaddr.getOffset() - entryLo->getBase()) % entryLo->getAlign()) != 0) return false;
     return true;
   }
   else {
