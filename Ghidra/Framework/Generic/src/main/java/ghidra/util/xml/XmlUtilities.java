@@ -27,6 +27,7 @@ import javax.xml.parsers.SAXParserFactory;
 
 import org.jdom.*;
 import org.jdom.input.SAXBuilder;
+import org.jdom.output.Format;
 import org.jdom.output.XMLOutputter;
 import org.xml.sax.*;
 
@@ -214,6 +215,23 @@ public class XmlUtilities {
 	 */
 	public static void writeDocToFile(Document doc, File dest) throws IOException {
 		XMLOutputter outputter = new XMLOutputter();
+		try (FileWriter fw = new FileWriter(dest)) {
+			outputter.output(doc, fw);
+		}
+	}
+
+	/**
+	 * Writes a JDOM XML {@link Document} to a {@link File}, with a prettier
+	 * format than {@link #writeDocToFile(Document, File)}.
+	 * <p>
+	 * 
+	 * @param doc JDOM XML {@link Document} to write.
+	 * @param dest {@link File} to write to.
+	 * @throws IOException if error when writing file.
+	 */
+	public static void writePrettyDocToFile(Document doc, File dest) throws IOException {
+		XMLOutputter outputter = new XMLOutputter();
+		outputter.setFormat(Format.getPrettyFormat());
 		try (FileWriter fw = new FileWriter(dest)) {
 			outputter.output(doc, fw);
 		}

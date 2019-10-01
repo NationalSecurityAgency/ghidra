@@ -166,7 +166,9 @@ public class ContextRegisterInfo {
 
 		Element e = new Element(XML_ELEMENT_NAME);
 		e.setAttribute("contextRegister", contextRegister);
-		e.setAttribute("value", value);
+		if (value != null) {
+			e.setAttribute("value", value);
+		}
 
 		return e;
 	}

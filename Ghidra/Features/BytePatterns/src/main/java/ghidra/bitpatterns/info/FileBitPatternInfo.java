@@ -287,7 +287,7 @@ public class FileBitPatternInfo {
 		Element rootEle = toXml();
 		Document doc = new Document(rootEle);
 
-		XmlUtilities.writeDocToFile(doc, destFile);
+		XmlUtilities.writePrettyDocToFile(doc, destFile);
 	}
 
 	/**
