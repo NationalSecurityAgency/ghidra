@@ -34,7 +34,8 @@ import ghidra.app.services.*;
 import ghidra.framework.cmd.CompoundCmd;
 import ghidra.framework.model.*;
 import ghidra.framework.options.SaveState;
-import ghidra.framework.plugintool.*;
+import ghidra.framework.plugintool.PluginInfo;
+import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.*;
@@ -297,6 +298,11 @@ public class BookmarkPlugin extends ProgramPlugin
 
 	@Override
 	public synchronized void domainObjectChanged(DomainObjectChangedEvent ev) {
+
+		if (!provider.isVisible()) {
+			return; // don't do work if not showing
+		}
+
 		if (ev.containsEvent(DomainObject.DO_OBJECT_RESTORED) ||
 			ev.containsEvent(ChangeManager.DOCR_MEMORY_BLOCK_MOVED) ||
 			ev.containsEvent(ChangeManager.DOCR_MEMORY_BLOCK_REMOVED)) {
