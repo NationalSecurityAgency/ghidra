@@ -968,6 +968,9 @@ public class SleighInstructionPrototype implements InstructionPrototype {
 				new PcodeEmitObjects(walker, context, fallOffset, override, uniqueFactory);
 			emit.build(walker.getConstructor().getTempl(), -1);
 			emit.resolveRelatives();
+			if (!isindelayslot) {
+				emit.resolveFinalFallthrough();
+			}
 			protoContext.setDelaySlotLength(0);
 			return emit.getPcodeOp();
 		}
@@ -1016,6 +1019,9 @@ public class SleighInstructionPrototype implements InstructionPrototype {
 
 			emit.build(walker.getConstructor().getTempl(), -1);
 			emit.resolveRelatives();
+			if (!isindelayslot) {
+				emit.resolveFinalFallthrough();
+			}
 			protoContext.setDelaySlotLength(0);
 			emit.write(PcodeEmitPacked.end_tag); // Terminate the inst_tag
 			return emit.getPackedBytes();
@@ -1048,6 +1054,9 @@ public class SleighInstructionPrototype implements InstructionPrototype {
 				PcodeEmitObjects emit = new PcodeEmitObjects(walker);
 				emit.build(walker.getConstructor().getTempl(), -1);
 				emit.resolveRelatives();
+				if (!isindelayslot) {
+					emit.resolveFinalFallthrough();
+				}
 				return emit.getPcodeOp();
 			}
 		}

@@ -185,6 +185,34 @@ public abstract class PcodeEmit {
 	 */
 	public abstract void resolveRelatives();
 
+	/**
+	 * Now that all pcode has been generated, including special
+	 * overrides and injections, ensure that a fallthrough override
+	 * adds a final branch to prevent dropping out the bottom.  This
+	 * addresses both fall-through cases:
+	 * <ul>
+	 * <li>last pcode op has fall-through</li>
+	 * <li>internal label used to branch beyond last pcode op</li>
+	 * </ul>
+	 */
+	void resolveFinalFallthrough() {
+		try {
+			if (fallOverride == null || fallOverride.equals(getStartAddress().add(fallOffset))) {
+				return;
+			}
+		}
+		catch (AddressOutOfBoundsException e) {
+			// ignore
+		}
+
+		VarnodeData dest = new VarnodeData();
+		dest.space = fallOverride.getAddressSpace().getPhysicalSpace();
+		dest.offset = fallOverride.getOffset();
+		dest.size = dest.space.getPointerSize();
+
+		dump(startAddress, PcodeOp.BRANCH, new VarnodeData[] { dest }, 1, null);
+	}
+
 	abstract void dump(Address instrAddr, int opcode, VarnodeData[] in, int isize, VarnodeData out);
 
 	private boolean dumpBranchOverride(OpTpl opt) {
