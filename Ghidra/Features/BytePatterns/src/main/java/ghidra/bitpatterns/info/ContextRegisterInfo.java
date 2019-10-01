@@ -17,10 +17,15 @@ package ghidra.bitpatterns.info;
 
 import java.math.BigInteger;
 
+import org.jdom.Element;
+
 /**
  * class for representing the values a specific context register assumes within a function body. 
  */
 public class ContextRegisterInfo {
+
+	static final String XML_ELEMENT_NAME = "ContextRegisterInfo";
+
 	String contextRegister;//the context register
 	String value;//the value it assumes (needed because a BigInteger will not serialize to xml)
 	BigInteger valueAsBigInteger;//the value it assumes
@@ -132,5 +137,37 @@ public class ContextRegisterInfo {
 		hashCode = 31 * hashCode + contextRegister.hashCode();
 		hashCode = 31 * hashCode + value.hashCode();
 		return hashCode;
+	}
+
+	/**
+	 * Creates a {@link ContextRegisterInfo} object using data in the supplied XML node.
+	 * 
+	 * @param ele xml Element
+	 * @return new {@link ContextRegisterInfo} object, never null
+	 */
+	public static ContextRegisterInfo fromXml(Element ele) {
+
+		String contextRegister = ele.getAttributeValue("contextRegister");
+		String value = ele.getAttributeValue("value");
+
+		ContextRegisterInfo result = new ContextRegisterInfo();
+		result.setContextRegister(contextRegister);
+		result.setValue(value);
+
+		return result;
+	}
+
+	/**
+	 * Converts this object into XML
+	 * 
+	 * @return new jdom Element
+	 */
+	public Element toXml() {
+
+		Element e = new Element(XML_ELEMENT_NAME);
+		e.setAttribute("contextRegister", contextRegister);
+		e.setAttribute("value", value);
+
+		return e;
 	}
 }

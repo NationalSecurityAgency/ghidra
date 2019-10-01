@@ -17,6 +17,7 @@ package ghidra.util.xml;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -32,6 +33,7 @@ import org.xml.sax.*;
 import generic.jar.ResourceFile;
 import ghidra.util.Msg;
 import ghidra.util.NumericUtilities;
+import util.CollectionUtils;
 
 /**
  * A set of utility methods for working with XML.
@@ -601,6 +603,41 @@ public class XmlUtilities {
 				"Missing required attribute: '" + attrName + "' in " + toString(ele));
 		}
 		return value;
+	}
+
+	/**
+	 * Sets a string attribute on the specified element.
+	 * 
+	 * @param ele JDom element
+	 * @param attrName name of attribute
+	 * @param attrValue value of attribute, null ok
+	 */
+	public static void setStringAttr(Element ele, String attrName, String attrValue) {
+		if (attrValue != null) {
+			ele.setAttribute(attrName, attrValue);
+		}
+	}
+
+	/**
+	 * Sets an integer attribute on the specified element.
+	 * 
+	 * @param ele JDom element
+	 * @param attrName name of attribute
+	 * @param attrValue value of attribute
+	 */
+	public static void setIntAttr(Element ele, String attrName, int attrValue) {
+		ele.setAttribute(attrName, Integer.toString(attrValue));
+	}
+
+	/**
+	 * Type-safe way of getting a list of {@link Element}s from JDom.
+	 * 
+	 * @param ele the parent element
+	 * @param childName the name of the children elements to return
+	 * @return List<Element> of elements
+	 */
+	public static List<Element> getChildren(Element ele, String childName) {
+		return CollectionUtils.asList(ele.getChildren(childName), Element.class);
 	}
 
 	/**
