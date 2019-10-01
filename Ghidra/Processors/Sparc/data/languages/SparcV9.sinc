@@ -28,7 +28,8 @@ define register offset=0x3000 size=1 [ x_nf x_zf x_vf x_cf i_nf i_zf i_vf i_cf ]
 define register offset=0x4000 size=1 [ ASI _ _ _ _ _ _ _ fprs _ _ _ _ _ _ _ ];
 define register offset=0x4000 size=$(SIZE)  [ ASIext            fprsext ];
 
-define register offset=0x5000 size=1 [ fcc0 fcc1 fcc2 fcc3 ];
+define register offset=0x5000 size=2 [ fsr ];
+define register offset=0x5002 size=1 [ fcc0 fcc1 fcc2 fcc3 ];
 define register offset=0x5010 size=1 [ didrestore ];
 
 
@@ -109,6 +110,21 @@ w710 w711 w712 w713 w714 w715 w716 w717
 w720 w721 w722 w723 w724 w725 w726 w727 
 w730 w731 w732 w733 w734 w735 w736 w737 
 ];
+
+# Floating-point registers
+define register offset=0x2000 size=4 [ fs0  fs1  fs2  fs3  fs4  fs5  fs6  fs7
+                                       fs8  fs9  fs10 fs11 fs12 fs13 fs14 fs15
+                                       fs16 fs17 fs18 fs19 fs20 fs21 fs22 fs23
+                                       fs24 fs25 fs26 fs27 fs28 fs29 fs30 fs31 ];
+                                       
+define register offset=0x2000 size=8 [fd0  fd2  fd4  fd6  fd8  fd10 fd12 fd14
+                                      fd16 fd18 fd20 fd22 fd24 fd26 fd28 fd30
+                                      fd32 fd34 fd36 fd38 fd40 fd42 fd44 fd46
+                                      fd48 fd50 fd52 fd54 fd56 fd58 fd60 fd62 ];
+                                       
+define register offset=0x2000 size=16 [fq0   fq4  fq8  fq12 fq16 fq20 fq24 fq28
+                                       fq32  fq36 fq40 fq44 fq48 fq52 fq56 fq60 ];
+
 
 define pcodeop segment;
 define pcodeop popc;
@@ -1008,22 +1024,10 @@ define pcodeop IllegalInstructionTrap;
 :restored is op = 2 & fcn=1 & op3 = 0x31 {}
 :saved is op = 2 & fcn = 0 & op3 = 0x31 {}
 
-#---- TO DO: floating point
+# TODO: floating point
 
-define register offset=0x2000 size=4 [ fs0  fs1  fs2  fs3  fs4  fs5  fs6  fs7
-                                       fs8  fs9  fs10 fs11 fs12 fs13 fs14 fs15
-                                       fs16 fs17 fs18 fs19 fs20 fs21 fs22 fs23
-                                       fs24 fs25 fs26 fs27 fs28 fs29 fs30 fs31 ];
-                                       
-define register offset=0x2000 size=8 [fd0  fd2  fd4  fd6  fd8  fd10 fd12 fd14
-                                      fd16 fd18 fd20 fd22 fd24 fd26 fd28 fd30
-                                      fd32 fd34 fd36 fd38 fd40 fd42 fd44 fd46
-                                      fd48 fd50 fd52 fd54 fd56 fd58 fd60 fd62 ];
-                                       
-define register offset=0x2000 size=16 [fq0   fq4  fq8  fq12 fq16 fq20 fq24 fq28
-                                       fq32  fq36 fq40 fq44 fq48 fq52 fq56 fq60 ];
-                                       
 
+   
 attach variables [fsrd fsrs1 fsrs2 ] [ fs0  fs1  fs2  fs3  fs4  fs5  fs6  fs7
                                        fs8  fs9  fs10 fs11 fs12 fs13 fs14 fs15
                                        fs16 fs17 fs18 fs19 fs20 fs21 fs22 fs23
@@ -1036,52 +1040,6 @@ attach variables [fdrd fdrs1 fdrs2 ] [ fd0  fd32 fd2  fd34 fd4  fd36 fd6  fd38
                                        
 attach variables [fqrd fqrs1 fqrs2 ] [ fq0  _ fq32 _ fq4  _ fq36 _ fq8  _ fq40 _ fq12 _ fq44
                                        _ fq16 _ fq48 _ fq20 _ fq52 _ fq24 _ fq56 _ fq28 _ fq60 _];
-define pcodeop fabss;
-define pcodeop fabsd;
-define pcodeop fabsq;
-define pcodeop fadds;
-define pcodeop faddd;
-define pcodeop faddq;
-define pcodeop fdivs;
-define pcodeop fdivd;
-define pcodeop fdivq;
-define pcodeop fdmulq;
-define pcodeop fitos;
-define pcodeop fitod;
-define pcodeop fitoq;
-define pcodeop fmovs;
-define pcodeop fmovd;
-define pcodeop fmovq;
-define pcodeop fmuls;
-define pcodeop fmuld;
-define pcodeop fmulq;
-define pcodeop fnegs;
-define pcodeop fnegd;
-define pcodeop fnegq;
-define pcodeop fsmuld;
-define pcodeop fsubs;
-define pcodeop fsubd;
-define pcodeop fsubq;
-define pcodeop fxtos;
-define pcodeop fxtod;
-define pcodeop fxtoq;
-
-define pcodeop fstoi;
-define pcodeop fdtoi;
-define pcodeop fqtoi;
-define pcodeop fstox;
-define pcodeop fdtox;
-define pcodeop fqtox;
-define pcodeop fstod;
-define pcodeop fstoq;
-define pcodeop fdtos;
-define pcodeop fdtoq;
-define pcodeop fqtos;
-define pcodeop fqtod;
-
-define pcodeop fsqrts;
-define pcodeop fsqrtd;
-define pcodeop fsqrtq;
 
 define pcodeop ld;
 define pcodeop ldd;
@@ -1104,71 +1062,111 @@ define pcodeop sta;
 define pcodeop stda;
 define pcodeop stqa;
 
-:fabss  fsrs2,fsrd is op=0x2 & fsrd & op3=0x34 & opf=0x9 & fsrs2 { fsrd = fabss(fsrs2); }
-:fabsd  fdrs2,fdrd is op=0x2 & fdrd & op3=0x34 & opf=0xa & fdrs2 { fdrd = fabss(fdrs2); }
-:fabsq  fqrs2,fqrd is op=0x2 & fqrd & op3=0x34 & opf=0xb & fqrs2 { fqrd = fabss(fqrs2); }
-:fadds  fsrs1,fsrs2,fsrd is op=0x2 & fsrd & op3=0x34 & fsrs1 & opf=0x41 & fsrs2 { fsrd = fadds(fsrs1, fsrs2); }
-:faddd  fsrs1,fdrs2,fdrd is op=0x2 & fdrd & op3=0x34 & fsrs1 & opf=0x42 & fdrs2 { fdrd = faddd(fsrs1, fdrs2); }
-:faddq  fsrs1,fqrs2,fqrd is op=0x2 & fqrd & op3=0x34 & fsrs1 & opf=0x43 & fqrs2 { fqrd = faddq(fsrs1, fqrs2); }
-:fdivs  fsrs1,fsrs2,fsrd is op=0x2 & fsrd & op3=0x34 & fsrs1 & opf=0x4d & fsrs2 { fsrd = fdivs(fsrs1, fsrs2); }
-:fdivd  fsrs1,fdrs2,fdrd is op=0x2 & fdrd & op3=0x34 & fsrs1 & opf=0x4e & fdrs2 { fdrd = fdivd(fsrs1, fdrs2); }
-:fdivq  fsrs1,fqrs2,fqrd is op=0x2 & fqrd & op3=0x34 & fsrs1 & opf=0x4f & fqrs2 { fqrd = fdivq(fsrs1, fqrs2); }
-:fdmulq  fdrs1,fdrs2,fqrd is op=0x2 & fqrd & op3=0x34 & fdrs1 & opf=0x6e & fdrs2 { fqrd = fdmulq(fdrs1, fdrs2); }
-:fitos  fsrs2,fsrd is op=0x2 & fsrd & op3=0x34 & opf=0xc4 & fsrs2 { fsrd = fitos(fsrs2); }
-:fitod  fdrs2,fdrd is op=0x2 & fdrd & op3=0x34 & opf=0xc8 & fdrs2 { fdrd = fitod(fdrs2); }
-:fitoq  fqrs2,fqrd is op=0x2 & fqrd & op3=0x34 & opf=0xcc & fqrs2 { fqrd = fitoq(fqrs2); }
-:fmovs  fsrs2,fsrd is op=0x2 & fsrd & op3=0x34 & opf=0x1 & fsrs2 { fsrd = fmovs(fsrs2); }
-:fmovd  fdrs2,fdrd is op=0x2 & fdrd & op3=0x34 & opf=0x2 & fdrs2 { fdrd = fmovd(fdrs2); }
-:fmovq  fqrs2,fqrd is op=0x2 & fqrd & op3=0x34 & opf=0x3 & fqrs2 { fqrd = fmovq(fqrs2); }
-:fmuls  fsrs1,fsrs2,fsrd is op=0x2 & fsrd & op3=0x34 & fsrs1 & opf=0x49 & fsrs2 { fsrd = fmuls(fsrs1, fsrs2); }
-:fmuld  fsrs1,fdrs2,fdrd is op=0x2 & fdrd & op3=0x34 & fsrs1 & opf=0x4a & fdrs2 { fdrd = fmuld(fsrs1, fdrs2); }
-:fmulq  fsrs1,fqrs2,fqrd is op=0x2 & fqrd & op3=0x34 & fsrs1 & opf=0x4b & fqrs2 { fqrd = fmulq(fsrs1, fqrs2); }
-:fnegs  fsrs2,fsrd is op=0x2 & fsrd & op3=0x34 & opf=0x5 & fsrs2 { fsrd = fnegs(fsrs2); }
-:fnegd  fdrs2,fdrd is op=0x2 & fdrd & op3=0x34 & opf=0x6 & fdrs2 { fdrd = fnegd(fdrs2); }
-:fnegq  fqrs2,fqrd is op=0x2 & fqrd & op3=0x34 & opf=0x7 & fqrs2 { fqrd = fnegq(fqrs2); }
-:fsmuld  fsrs1,fsrs2,fdrd is op=0x2 & fdrd & op3=0x34 & fsrs1 & opf=0x69 & fsrs2 { fdrd = fsmuld(fsrs1, fsrs2); }
-:fsubs  fsrs1,fsrs2,fsrd is op=0x2 & fsrd & op3=0x34 & fsrs1 & opf=0x45 & fsrs2 { fsrd = fsubs(fsrs1, fsrs2); }
-:fsubd  fsrs1,fdrs2,fdrd is op=0x2 & fdrd & op3=0x34 & fsrs1 & opf=0x46 & fdrs2 { fdrd = fsubd(fsrs1, fdrs2); }
-:fsubq  fsrs1,fqrs2,fqrd is op=0x2 & fqrd & op3=0x34 & fsrs1 & opf=0x47 & fqrs2 { fqrd = fsubq(fsrs1, fqrs2); }
-:fxtos  fsrs2,fsrd is op=0x2 & fsrd & op3=0x34 & opf=0x84 & fsrs2 { fsrd = fxtos(fsrs2); }
-:fxtod  fdrs2,fdrd is op=0x2 & fdrd & op3=0x34 & opf=0x88 & fdrs2 { fdrd = fxtod(fdrs2); }
-:fxtoq  fqrs2,fqrd is op=0x2 & fqrd & op3=0x34 & opf=0x8c & fqrs2 { fqrd = fxtoq(fqrs2); }
+:fabss  fsrs2,fsrd is op=0x2 & fsrd & op3=0x34 & opf=0x9 & fsrs2 { fsrd = abs(fsrs2); }
+:fabsd  fdrs2,fdrd is op=0x2 & fdrd & op3=0x34 & opf=0xa & fdrs2 { fdrd = abs(fdrs2); }
+:fabsq  fqrs2,fqrd is op=0x2 & fqrd & op3=0x34 & opf=0xb & fqrs2 { fqrd = abs(fqrs2); }
 
-:fstoi  fsrs2,fsrd is op=0x2 & fsrd & op3=0x34 & opf=0xd1 & fsrs2 { fsrd = fstoi(fsrs2); }
-:fdtoi  fdrs2,fdrd is op=0x2 & fdrd & op3=0x34 & opf=0xd2 & fdrs2 { fdrd = fdtoi(fdrs2); }
-:fqtoi  fqrs2,fqrd is op=0x2 & fqrd & op3=0x34 & opf=0xd3 & fqrs2 { fqrd = fqtoi(fqrs2); }
-:fstox  fsrs2,fsrd is op=0x2 & fsrd & op3=0x34 & opf=0x81 & fsrs2 { fsrd = fstox(fsrs2); }
-:fdtox  fdrs2,fdrd is op=0x2 & fdrd & op3=0x34 & opf=0x82 & fdrs2 { fdrd = fdtox(fdrs2); }
-:fqtox  fqrs2,fqrd is op=0x2 & fqrd & op3=0x34 & opf=0x83 & fqrs2 { fqrd = fqtox(fqrs2); }
-:fstod  fsrs2,fsrd is op=0x2 & fsrd & op3=0x34 & opf=0xc9 & fsrs2 { fsrd = fstod(fsrs2); }
-:fstoq  fdrs2,fdrd is op=0x2 & fdrd & op3=0x34 & opf=0xcd & fdrs2 { fdrd = fstoq(fdrs2); }
-:fdtos  fqrs2,fqrd is op=0x2 & fqrd & op3=0x34 & opf=0xc6 & fqrs2 { fqrd = fdtos(fqrs2); }
-:fdtoq  fsrs2,fsrd is op=0x2 & fsrd & op3=0x34 & opf=0xce & fsrs2 { fsrd = fdtoq(fsrs2); }
-:fqtos  fdrs2,fdrd is op=0x2 & fdrd & op3=0x34 & opf=0xc7 & fdrs2 { fdrd = fqtos(fdrs2); }
-:fqtod  fqrs2,fqrd is op=0x2 & fqrd & op3=0x34 & opf=0xcb & fqrs2 { fqrd = fqtod(fqrs2); }
+:fadds  fsrs1,fsrs2,fsrd is op=0x2 & fsrd & op3=0x34 & fsrs1 & opf=0x41 & fsrs2 { fsrd = fsrs1 f+ fsrs2; }
+:faddd  fsrs1,fdrs2,fdrd is op=0x2 & fdrd & op3=0x34 & fsrs1 & opf=0x42 & fdrs2
+{
+	tmp1:8 = float2float(fsrs1);
+	fdrd = tmp1 f+ fdrs2;
+}
+:faddq  fsrs1,fqrs2,fqrd is op=0x2 & fqrd & op3=0x34 & fsrs1 & opf=0x43 & fqrs2
+{
+	tmp1:16 = float2float(fsrs1);
+	fqrd = tmp1 f+ fqrs2;
+}
 
-:fsqrts  fsrs2,fsrd is op=0x2 & fsrd & op3=0x34 & opf=0x29 & fsrs2 { fsrd = fsqrts(fsrs2); }
-:fsqrtd  fdrs2,fdrd is op=0x2 & fdrd & op3=0x34 & opf=0x2a & fdrs2 { fdrd = fsqrtd(fdrs2); }
-:fsqrtq  fqrs2,fqrd is op=0x2 & fqrd & op3=0x34 & opf=0x2b & fqrs2 { fqrd = fsqrtq(fqrs2); }
+:fdivs  fsrs1,fsrs2,fsrd is op=0x2 & fsrd & op3=0x34 & fsrs1 & opf=0x4d & fsrs2 { fsrd = fsrs1 f/ fsrs2; }
+:fdivd  fsrs1,fdrs2,fdrd is op=0x2 & fdrd & op3=0x34 & fsrs1 & opf=0x4e & fdrs2
+{
+	tmp1:8 = float2float(fsrs1);
+	fdrd = tmp1 f/ fdrs2;
+}
+:fdivq  fsrs1,fqrs2,fqrd is op=0x2 & fqrd & op3=0x34 & fsrs1 & opf=0x4f & fqrs2
+{
+	tmp1:16 = float2float(fsrs1);
+	fqrd = tmp1 f/ fqrs2;
+}
 
-:ld  ea,fsrd is op=3 & fsrd & op3=0x20 & ea { fsrd = ld(ea); }
-:ldd ea,fdrd is op=3 & fdrd & op3=0x23 & ea { fdrd = ldd(ea); }
-:ldq ea,fqrd is op=3 & fqrd & op3=0x22 & ea { fqrd = ldq(ea); }
-:ld  ea,"%fsr"  is op=3 & op3=0x21 & rd=0 & ea { ld_fsr(ea); }
-:ldx ea,"%fsr"  is op=3 & op3=0x21 & rd=1 & ea { ldx_fsr(ea); }
-:lda  ea_alt,fsrd is op=3 & fsrd & op3=0x30 & ea_alt { fsrd = lda(ea_alt); }
-:ldda ea_alt,fdrd is op=3 & fdrd & op3=0x33 & ea_alt { fdrd = ldda(ea_alt); }
-:ldqa ea_alt,fqrd is op=3 & fqrd & op3=0x32 & ea_alt { fqrd = ldqa(ea_alt); }
+:fdmulq  fdrs1,fdrs2,fqrd is op=0x2 & fqrd & op3=0x34 & fdrs1 & opf=0x6e & fdrs2
+{
+	tmp1:16 = float2float(fdrs1);
+	tmp2:16 = float2float(fdrs2);
+	fqrd = tmp1 f* tmp2;
+}
+:fsmuld  fsrs1,fsrs2,fdrd is op=0x2 & fdrd & op3=0x34 & fsrs1 & opf=0x69 & fsrs2
+{
+	tmp1:8 = float2float(fsrs1);
+	tmp2:8 = float2float(fsrs2);
+	fdrd = tmp1 f* tmp2;
+}
 
-:st  fsrd,ea is op=3 & fsrd & op3=0x24 & ea { ea = st(fsrd); }
-:std fdrd,ea is op=3 & fdrd & op3=0x27 & ea { ea = std(fdrd); }
-:stq fqrd,ea is op=3 & fqrd & op3=0x26 & ea { ea = stq(fqrd); }
-:st  "%fsr",ea  is op=3 & op3=0x25 & rd=0 & ea { ea = st_fsr(); }
-:stx "%fsr",ea  is op=3 & op3=0x25 & rd=1 & ea { ea = stx_fsr(); }
+:fitos  fsrs2,fsrd is op=0x2 & fsrd & op3=0x34 & opf=0xc4 & fsrs2 { fsrd = int2float(fsrs2); }
+:fitod  fdrs2,fdrd is op=0x2 & fdrd & op3=0x34 & opf=0xc8 & fdrs2 { fdrd = int2float(fdrs2); }
+:fitoq  fqrs2,fqrd is op=0x2 & fqrd & op3=0x34 & opf=0xcc & fqrs2 { fqrd = int2float(fqrs2); }
 
-:sta  fsrd,ea_alt is op=3 & fsrd & op3=0x34 & ea_alt { ea_alt = sta(fsrd); }
-:stda fdrd,ea_alt is op=3 & fdrd & op3=0x37 & ea_alt { ea_alt = stda(fdrd); }
-:stqa fqrd,ea_alt is op=3 & fqrd & op3=0x36 & ea_alt { ea_alt = stqa(fqrd); }
+:fmovs  fsrs2,fsrd is op=0x2 & fsrd & op3=0x34 & opf=0x1 & fsrs2 { fsrd = fsrs2; }
+:fmovd  fdrs2,fdrd is op=0x2 & fdrd & op3=0x34 & opf=0x2 & fdrs2 { fdrd = fdrs2; }
+:fmovq  fqrs2,fqrd is op=0x2 & fqrd & op3=0x34 & opf=0x3 & fqrs2 { fqrd = fqrs2; }
+
+:fmuls  fsrs1,fsrs2,fsrd is op=0x2 & fsrd & op3=0x34 & fsrs1 & opf=0x49 & fsrs2 { fsrd = fsrs1 f* fsrs2; }
+:fmuld  fdrs1,fdrs2,fdrd is op=0x2 & fdrd & op3=0x34 & fdrs1 & opf=0x4a & fdrs2 { fdrd = fdrs1 f* fdrs2; }
+:fmulq  fqrs1,fqrs2,fqrd is op=0x2 & fqrd & op3=0x34 & fqrs1 & opf=0x4b & fqrs2 { fqrd = fqrs1 f* fqrs2; }
+
+:fnegs  fsrs2,fsrd is op=0x2 & fsrd & op3=0x34 & opf=0x5 & fsrs2 { fsrd = f- fsrs2; }
+:fnegd  fdrs2,fdrd is op=0x2 & fdrd & op3=0x34 & opf=0x6 & fdrs2 { fdrd = f- fdrs2; }
+:fnegq  fqrs2,fqrd is op=0x2 & fqrd & op3=0x34 & opf=0x7 & fqrs2 { fqrd = f- fqrs2; }
+
+:fsubs  fsrs1,fsrs2,fsrd is op=0x2 & fsrd & op3=0x34 & fsrs1 & opf=0x45 & fsrs2 { fsrd = fsrs1 f- fsrs2; }
+:fsubd  fdrs1,fdrs2,fdrd is op=0x2 & fdrd & op3=0x34 & fdrs1 & opf=0x46 & fdrs2 { fdrd = fdrs1 f- fdrs2; }
+:fsubq  fqrs1,fqrs2,fqrd is op=0x2 & fqrd & op3=0x34 & fqrs1 & opf=0x47 & fqrs2 { fqrd = fqrs1 f- fqrs2; }
+
+:fxtos  fsrs2,fsrd is op=0x2 & fsrd & op3=0x34 & opf=0x84 & fsrs2 { fsrd = int2float(fsrs2); }
+:fxtod  fdrs2,fdrd is op=0x2 & fdrd & op3=0x34 & opf=0x88 & fdrs2 { fdrd = int2float(fdrs2); }
+:fxtoq  fqrs2,fqrd is op=0x2 & fqrd & op3=0x34 & opf=0x8c & fqrs2 { fqrd = int2float(fqrs2); }
+
+:fstoi  fsrs2,fsrd is op=0x2 & fsrd & op3=0x34 & opf=0xd1 & fsrs2 { fsrd = trunc(fsrs2); }
+:fdtoi  fdrs2,fdrd is op=0x2 & fdrd & op3=0x34 & opf=0xd2 & fdrs2 { fdrd = trunc(fdrs2); }
+:fqtoi  fqrs2,fqrd is op=0x2 & fqrd & op3=0x34 & opf=0xd3 & fqrs2 { fqrd = trunc(fqrs2); }
+
+:fstox  fsrs2,fsrd is op=0x2 & fsrd & op3=0x34 & opf=0x81 & fsrs2 { fsrd = trunc(fsrs2); }
+:fdtox  fdrs2,fdrd is op=0x2 & fdrd & op3=0x34 & opf=0x82 & fdrs2 { fdrd = trunc(fdrs2); }
+:fqtox  fqrs2,fqrd is op=0x2 & fqrd & op3=0x34 & opf=0x83 & fqrs2 { fqrd = trunc(fqrs2); }
+
+:fstod  fsrs2,fsrd is op=0x2 & fsrd & op3=0x34 & opf=0xc9 & fsrs2 { fsrd = trunc(fsrs2); }
+:fstoq  fdrs2,fdrd is op=0x2 & fdrd & op3=0x34 & opf=0xcd & fdrs2 { fdrd = trunc(fdrs2); }
+
+:fdtos  fqrs2,fqrd is op=0x2 & fqrd & op3=0x34 & opf=0xc6 & fqrs2 { fqrd = trunc(fqrs2); }
+:fdtoq  fsrs2,fsrd is op=0x2 & fsrd & op3=0x34 & opf=0xce & fsrs2 { fsrd = trunc(fsrs2); }
+
+:fqtos  fdrs2,fdrd is op=0x2 & fdrd & op3=0x34 & opf=0xc7 & fdrs2 { fdrd = trunc(fdrs2); }
+:fqtod  fqrs2,fqrd is op=0x2 & fqrd & op3=0x34 & opf=0xcb & fqrs2 { fqrd = trunc(fqrs2); }
+
+:fsqrts  fsrs2,fsrd is op=0x2 & fsrd & op3=0x34 & opf=0x29 & fsrs2 { fsrd = sqrt(fsrs2); }
+:fsqrtd  fdrs2,fdrd is op=0x2 & fdrd & op3=0x34 & opf=0x2a & fdrs2 { fdrd = sqrt(fdrs2); }
+:fsqrtq  fqrs2,fqrd is op=0x2 & fqrd & op3=0x34 & opf=0x2b & fqrs2 { fqrd = sqrt(fqrs2); }
+
+:ld  ea,fsrd is op=3 & fsrd & op3=0x20 & ea { fsrd = *:4 ea; }
+:ldd ea,fdrd is op=3 & fdrd & op3=0x23 & ea { fdrd = *:8 ea; }
+:ldq ea,fqrd is op=3 & fqrd & op3=0x22 & ea { fqrd = *:16 ea; }
+:ld  ea,"%fsr"  is op=3 & op3=0x21 & rd=0 & ea { fsr = *:2 ea; }
+:ldx ea,"%fsr"  is op=3 & op3=0x21 & rd=1 & ea { fsr = *:2 ea; }
+
+:lda  ea_alt,fsrd is op=3 & fsrd & op3=0x30 & ea_alt { fsrd = *:4 ea_alt; }
+:ldda ea_alt,fdrd is op=3 & fdrd & op3=0x33 & ea_alt { fdrd = *:8 ea_alt; }
+:ldqa ea_alt,fqrd is op=3 & fqrd & op3=0x32 & ea_alt { fqrd = *:16 ea_alt; }
+
+:st  fsrd,ea is op=3 & fsrd & op3=0x24 & ea { *ea = fsrd:4; }
+:std fdrd,ea is op=3 & fdrd & op3=0x27 & ea { *ea = fdrd:8; }
+:stq fqrd,ea is op=3 & fqrd & op3=0x26 & ea { *ea = fqrd:16; }
+:st  "%fsr",ea  is op=3 & op3=0x25 & rd=0 & ea { *ea = fsr; }
+:stx "%fsr",ea  is op=3 & op3=0x25 & rd=1 & ea { *ea = fsr; }
+
+:sta  fsrd,ea_alt is op=3 & fsrd & op3=0x34 & ea_alt { *ea_alt = fsrd:4; }
+:stda fdrd,ea_alt is op=3 & fdrd & op3=0x37 & ea_alt { *ea_alt = fdrd:8; }
+:stqa fqrd,ea_alt is op=3 & fqrd & op3=0x36 & ea_alt { *ea_alt = fqrd:16; }
 
 fcc0_or_fccn:   is op2=6 { export fcc0; }
 fcc0_or_fccn:   is op2=5 & fccn {export fccn; }
@@ -1201,19 +1199,22 @@ fcc: "o"   is cond=0xf & fcc0_or_fccn { tmp:1=(fcc0_or_fccn == 0 || fcc0_or_fccn
 :fb^fcc^predict "%"fccn,reloff64 is op=0x0 & op2=0x5 & a=0x0 & fcc & reloff64 & predict & fccn { delayslot(1); if (fcc) goto reloff64; }
 :fb^fcc^",a"^predict "%"^fccn,reloff64 is op=0x0 & op2=0x5 & a=0x1 & fcc & reloff64 & predict & fccn { if (!fcc) goto inst_next; delayslot(1); goto reloff64; }
 
-define pcodeop fcmps;
-define pcodeop fcmpd;
-define pcodeop fcmpq;
-define pcodeop fcmpes;
-define pcodeop fcmped;
-define pcodeop fcmpeq;
+macro fcmp(f1, f2, fccn)
+{
+	# fcc value | relation
+	#     0     | f1 = f2
+	#     1     | f1 < f2
+	#     2     | f1 > f2
+	#     3     | f1 or f2 NaN
+	fccn = (1*(f1 s< f2)) + (2*(f1 s> f2)) + (3*(nan(f1) || nan(f2)));
+}
 
-:fcmps  %fccn2,fsrs1,fsrs2 is op=0x2 & fpc=0 & fccn2 & op3=0x35 & opf=0x51 & fsrs1 & fsrs2  { fcmps(fsrs1, fsrs2); }
-:fcmpd  %fccn2,fdrs1,fdrs2 is op=0x2 & fpc=0 & fccn2 & op3=0x35 & opf=0x52 & fdrs1 & fdrs2  { fcmpd(fdrs1, fdrs2); }
-:fcmpq  %fccn2,fqrs1,fqrs2 is op=0x2 & fpc=0 & fccn2 & op3=0x35 & opf=0x53 & fqrs1 & fqrs2  { fcmpq(fqrs1, fqrs2); }
-:fcmpes  %fccn2,fsrs1,fsrs2 is op=0x2 & fpc=0 & fccn2 & op3=0x35 & opf=0x55 & fsrs1 & fsrs2  { fcmpes(fsrs1, fsrs2); }
-:fcmped  %fccn2,fdrs1,fdrs2 is op=0x2 & fpc=0 & fccn2 & op3=0x35 & opf=0x56 & fdrs1 & fdrs2  { fcmped(fdrs1, fdrs2); }
-:fcmpeq  %fccn2,fqrs1,fqrs2 is op=0x2 & fpc=0 & fccn2 & op3=0x35 & opf=0x57 & fqrs1 & fqrs2  { fcmpeq(fqrs1, fqrs2); }
+:fcmps  %fccn2,fsrs1,fsrs2 is op=0x2 & fpc=0 & fccn2 & op3=0x35 & opf=0x51 & fsrs1 & fsrs2  { fcmp(fsrs1, fsrs2, fccn2); }
+:fcmpd  %fccn2,fdrs1,fdrs2 is op=0x2 & fpc=0 & fccn2 & op3=0x35 & opf=0x52 & fdrs1 & fdrs2  { fcmp(fdrs1, fdrs2, fccn2); }
+:fcmpq  %fccn2,fqrs1,fqrs2 is op=0x2 & fpc=0 & fccn2 & op3=0x35 & opf=0x53 & fqrs1 & fqrs2  { fcmp(fqrs1, fqrs2, fccn2); }
+:fcmpes  %fccn2,fsrs1,fsrs2 is op=0x2 & fpc=0 & fccn2 & op3=0x35 & opf=0x55 & fsrs1 & fsrs2  { fcmp(fsrs1, fsrs2, fccn2); }
+:fcmped  %fccn2,fdrs1,fdrs2 is op=0x2 & fpc=0 & fccn2 & op3=0x35 & opf=0x56 & fdrs1 & fdrs2  { fcmp(fdrs1, fdrs2, fccn2); }
+:fcmpeq  %fccn2,fqrs1,fqrs2 is op=0x2 & fpc=0 & fccn2 & op3=0x35 & opf=0x57 & fqrs1 & fqrs2  { fcmp(fqrs1, fqrs2, fccn2); }
 
 
 Z:  is opf_cc=4 { export i_zf; }
@@ -1267,16 +1268,19 @@ fmfcc: "o"   is cond4=0xf & fccn_4 { tmp:1=(fccn_4 == 0 || fccn_4 == 1 || fccn_4
 fmfcc_or_fmicc: fmfcc is bit18=0 & fmfcc { export fmfcc; }
 fmfcc_or_fmicc: fmicc is bit18=1 & fmicc { export fmicc; }
 
-fcc_icc_xcc: "%"^fccn_4 is bit18=0 & fccn_4 {}
-fcc_icc_xcc: "%icc" is bit18=1 & opf_cc=4 {}
-fcc_icc_xcc: "%xcc" is bit18=1 & opf_cc=6 {}
+fcc_icc_xcc: "%"^fccn_4 is bit18=0 & fccn_4 { }
+fcc_icc_xcc: "%icc" is bit18=1 & opf_cc=4 { }
+fcc_icc_xcc: "%xcc" is bit18=1 & opf_cc=6 { }
 
-:fmovs^fmfcc_or_fmicc  fcc_icc_xcc,fsrs2,fsrd  is op=2 & op3=0x35 & bit18=0 & fmfcc_or_fmicc & fcc_icc_xcc & opf_low=1 & fsrs2 & fsrd { fsrd = fmovs(fcc_icc_xcc, fsrs2); }
-:fmovd^fmfcc_or_fmicc  fcc_icc_xcc,fdrs2,fdrd  is op=2 & op3=0x35 & bit18=0 & fmfcc_or_fmicc & fcc_icc_xcc & opf_low=2 & fdrs2 & fdrd { fdrd = fmovd(fcc_icc_xcc, fdrs2); }
-:fmovq^fmfcc_or_fmicc  fcc_icc_xcc,fqrs2,fqrd  is op=2 & op3=0x35 & bit18=0 & fmfcc_or_fmicc & fcc_icc_xcc & opf_low=3 & fqrs2 & fqrd { fqrd = fmovq(fcc_icc_xcc, fqrs2); }
+:fmovs^fmfcc_or_fmicc  fcc_icc_xcc,fsrs2,fsrd  is op=2 & op3=0x35 & bit18=0 & fmfcc_or_fmicc & fcc_icc_xcc & opf_low=1 & fsrs2 & fsrd
+                                                        { if !(fmfcc_or_fmicc) goto inst_next; fsrd = fsrs2; }
+:fmovd^fmfcc_or_fmicc  fcc_icc_xcc,fdrs2,fdrd  is op=2 & op3=0x35 & bit18=0 & fmfcc_or_fmicc & fcc_icc_xcc & opf_low=2 & fdrs2 & fdrd
+                                                        { if !(fmfcc_or_fmicc) goto inst_next; fdrd = fdrs2; }
+:fmovq^fmfcc_or_fmicc  fcc_icc_xcc,fqrs2,fqrd  is op=2 & op3=0x35 & bit18=0 & fmfcc_or_fmicc & fcc_icc_xcc & opf_low=3 & fqrs2 & fqrd
+                                                        { if !(fmfcc_or_fmicc) goto inst_next; fqrd = fqrs2; }
 
 :movf^fmfcc_or_fmicc  fcc_icc_xcc,regorimm11,rd  is op=2 & rd & op3=0x2c & bit18=0 & fmfcc_or_fmicc & fcc_icc_xcc & regorimm11
-                                                        { if (fmfcc_or_fmicc) goto inst_next; rd = regorimm11; }
+                                                        { if !(fmfcc_or_fmicc) goto inst_next; rd = regorimm11; }
 
 fmovrcc: "z"    is rcond3=0x1 & RS1 {tmp:1 = (RS1 f== 0); export tmp;}
 fmovrcc: "lez"  is rcond3=0x2 & RS1 {tmp:1 = (RS1 f<= 0); export tmp;}
@@ -1285,14 +1289,12 @@ fmovrcc: "nz"	is rcond3=0x5 & RS1 {tmp:1 = (RS1 f!= 0); export tmp;}
 fmovrcc: "gz"	is rcond3=0x6 & RS1 {tmp:1 = (RS1 f>  0); export tmp;}
 fmovrcc: "gez"  is rcond3=0x7 & RS1 {tmp:1 = (RS1 f>= 0); export tmp;}
 
-
-define pcodeop fmovrs;
-define pcodeop fmovrd;
-define pcodeop fmovrq;
-
-:fmovrs^fmovrcc RS1,fsrs2,fsrd is op=2 & fsrd & op3=0x35 & bit13=0 & RS1 & fmovrcc & opf_low=0x5 & fsrs2 { fsrd = fmovrs(RS1, fsrs2); }
-:fmovrd^fmovrcc RS1,fdrs2,fdrd is op=2 & fdrd & op3=0x35 & bit13=0 & RS1 & fmovrcc & opf_low=0x6 & fdrs2 { fdrd = fmovrd(RS1, fdrs2); }
-:fmovrq^fmovrcc RS1,fqrs2,fqrd is op=2 & fqrd & op3=0x35 & bit13=0 & RS1 & fmovrcc & opf_low=0x7 & fqrs2 { fqrd = fmovrq(RS1, fqrs2); }
+:fmovrs^fmovrcc RS1,fsrs2,fsrd is op=2 & fsrd & op3=0x35 & bit13=0 & RS1 & fmovrcc & opf_low=0x5 & fsrs2
+                                                        { if !(fmovrcc) goto inst_next; fsrd = fsrs2; }
+:fmovrd^fmovrcc RS1,fdrs2,fdrd is op=2 & fdrd & op3=0x35 & bit13=0 & RS1 & fmovrcc & opf_low=0x6 & fdrs2
+                                                        { if !(fmovrcc) goto inst_next; fdrd = fdrs2; }
+:fmovrq^fmovrcc RS1,fqrs2,fqrd is op=2 & fqrd & op3=0x35 & bit13=0 & RS1 & fmovrcc & opf_low=0x7 & fqrs2
+                                                        { if !(fmovrcc) goto inst_next; fqrd = fqrs2; }
 
 # Include support for the VIS1 vector instructions
 @include "SparcVIS.sinc"
