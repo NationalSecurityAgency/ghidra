@@ -27,8 +27,7 @@ public class ContextRegisterInfo {
 	static final String XML_ELEMENT_NAME = "ContextRegisterInfo";
 
 	String contextRegister;//the context register
-	String value;//the value it assumes (needed because a BigInteger will not serialize to xml)
-	BigInteger valueAsBigInteger;//the value it assumes
+	BigInteger value;//the value it assumes
 
 	/**
 	 * Default constructor (used by XMLEncoder)
@@ -61,21 +60,11 @@ public class ContextRegisterInfo {
 	}
 
 	/**
-	 * Returns the value associated with this {@link ContextRegisterInfo} object as a 
-	 * {@link BigInteger}.
-	 * @return
-	 */
-	public BigInteger getValueAsBigInteger() {
-		return valueAsBigInteger;
-	}
-
-	/**
 	 * Sets the value associated with this {@link ContextRegisterInfo} object
-	 * @param valueAsBigInteger
+	 * @param value
 	 */
-	public void setValue(BigInteger valueAsBigInteger) {
-		this.valueAsBigInteger = valueAsBigInteger;
-		this.value = valueAsBigInteger.toString();
+	public void setValue(BigInteger value) {
+		this.value = value;
 
 	}
 
@@ -84,17 +73,8 @@ public class ContextRegisterInfo {
 	 * {@link String}.
 	 * @return
 	 */
-	public String getValue() {
+	public BigInteger getValue() {
 		return value;
-	}
-
-	/**
-	 * Sets the value associated with this {@link ContextRegisterInfo} object
-	 * @param value
-	 */
-	public void setValue(String value) {
-		this.value = value;
-		this.valueAsBigInteger = new BigInteger(value);
 	}
 
 	@Override
@@ -152,7 +132,7 @@ public class ContextRegisterInfo {
 
 		ContextRegisterInfo result = new ContextRegisterInfo();
 		result.setContextRegister(contextRegister);
-		result.setValue(value);
+		result.setValue(value != null ? new BigInteger(value) : null);
 
 		return result;
 	}
@@ -167,7 +147,7 @@ public class ContextRegisterInfo {
 		Element e = new Element(XML_ELEMENT_NAME);
 		e.setAttribute("contextRegister", contextRegister);
 		if (value != null) {
-			e.setAttribute("value", value);
+			e.setAttribute("value", value.toString());
 		}
 
 		return e;
