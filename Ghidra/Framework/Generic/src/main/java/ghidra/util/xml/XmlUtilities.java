@@ -17,6 +17,7 @@ package ghidra.util.xml;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -26,12 +27,14 @@ import javax.xml.parsers.SAXParserFactory;
 
 import org.jdom.*;
 import org.jdom.input.SAXBuilder;
+import org.jdom.output.Format;
 import org.jdom.output.XMLOutputter;
 import org.xml.sax.*;
 
 import generic.jar.ResourceFile;
 import ghidra.util.Msg;
 import ghidra.util.NumericUtilities;
+import util.CollectionUtils;
 
 /**
  * A set of utility methods for working with XML.
@@ -212,6 +215,23 @@ public class XmlUtilities {
 	 */
 	public static void writeDocToFile(Document doc, File dest) throws IOException {
 		XMLOutputter outputter = new XMLOutputter();
+		try (FileWriter fw = new FileWriter(dest)) {
+			outputter.output(doc, fw);
+		}
+	}
+
+	/**
+	 * Writes a JDOM XML {@link Document} to a {@link File}, with a prettier
+	 * format than {@link #writeDocToFile(Document, File)}.
+	 * <p>
+	 * 
+	 * @param doc JDOM XML {@link Document} to write.
+	 * @param dest {@link File} to write to.
+	 * @throws IOException if error when writing file.
+	 */
+	public static void writePrettyDocToFile(Document doc, File dest) throws IOException {
+		XMLOutputter outputter = new XMLOutputter();
+		outputter.setFormat(Format.getPrettyFormat());
 		try (FileWriter fw = new FileWriter(dest)) {
 			outputter.output(doc, fw);
 		}
@@ -601,6 +621,41 @@ public class XmlUtilities {
 				"Missing required attribute: '" + attrName + "' in " + toString(ele));
 		}
 		return value;
+	}
+
+	/**
+	 * Sets a string attribute on the specified element.
+	 * 
+	 * @param ele JDom element
+	 * @param attrName name of attribute
+	 * @param attrValue value of attribute, null ok
+	 */
+	public static void setStringAttr(Element ele, String attrName, String attrValue) {
+		if (attrValue != null) {
+			ele.setAttribute(attrName, attrValue);
+		}
+	}
+
+	/**
+	 * Sets an integer attribute on the specified element.
+	 * 
+	 * @param ele JDom element
+	 * @param attrName name of attribute
+	 * @param attrValue value of attribute
+	 */
+	public static void setIntAttr(Element ele, String attrName, int attrValue) {
+		ele.setAttribute(attrName, Integer.toString(attrValue));
+	}
+
+	/**
+	 * Type-safe way of getting a list of {@link Element}s from JDom.
+	 * 
+	 * @param ele the parent element
+	 * @param childName the name of the children elements to return
+	 * @return List<Element> of elements
+	 */
+	public static List<Element> getChildren(Element ele, String childName) {
+		return CollectionUtils.asList(ele.getChildren(childName), Element.class);
 	}
 
 	/**
