@@ -235,10 +235,13 @@ public class FileHeader implements StructConverter {
 	/**
 	 * Returns the section header at the specified position in the array.
 	 * @param index index of section header to return
-	 * @return the section header at the specified position in the array
+	 * @return the section header at the specified position in the array, or null if invalid
 	 */
     public SectionHeader getSectionHeader(int index) {
-        return sectionHeaders[index];
+		if (index >= 0 && index < sectionHeaders.length) {
+    		return sectionHeaders[index];
+    	}
+    	return null;
     }
 
 	/**

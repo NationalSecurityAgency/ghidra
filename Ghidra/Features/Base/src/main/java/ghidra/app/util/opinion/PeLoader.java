@@ -117,7 +117,7 @@ public class PeLoader extends AbstractPeDebugLoader {
 		monitor.setMessage("Completing PE header parsing...");
 		FileBytes fileBytes = MemoryBlockUtils.createFileBytes(program, provider, monitor);
 		try {
-			Map<Integer, Address> sectionNumberToAddress =
+			Map<SectionHeader, Address> sectionToAddress =
 				processMemoryBlocks(pe, program, fileBytes, monitor, log);
 
 			monitor.setCancelEnabled(false);
@@ -141,10 +141,10 @@ public class PeLoader extends AbstractPeDebugLoader {
 			processExports(optionalHeader, program, monitor, log);
 			processImports(optionalHeader, program, monitor, log);
 			processRelocations(optionalHeader, program, monitor, log);
-			processDebug(optionalHeader, sectionNumberToAddress, program, monitor);
+			processDebug(optionalHeader, fileHeader, sectionToAddress, program, monitor);
 			processProperties(optionalHeader, program, monitor);
 			processComments(program.getListing(), monitor);
-			processSymbols(fileHeader, sectionNumberToAddress, program, monitor, log);
+			processSymbols(fileHeader, sectionToAddress, program, monitor, log);
 
 			processEntryPoints(ntHeader, program, monitor);
 			String compiler = CompilerOpinion.getOpinion(pe, provider).toString();
@@ -262,12 +262,12 @@ public class PeLoader extends AbstractPeDebugLoader {
 		}
 	}
 
-	private void processSymbols(FileHeader fileHeader, Map<Integer, Address> sectionNumberToAddress,
+	private void processSymbols(FileHeader fileHeader, Map<SectionHeader, Address> sectionToAddress,
 			Program program, TaskMonitor monitor, MessageLog log) {
 		List<DebugCOFFSymbol> symbols = fileHeader.getSymbols();
 		int errorCount = 0;
 		for (DebugCOFFSymbol symbol : symbols) {
-			if (!processDebugCoffSymbol(symbol, sectionNumberToAddress, program, monitor)) {
+			if (!processDebugCoffSymbol(symbol, fileHeader, sectionToAddress, program, monitor)) {
 				++errorCount;
 			}
 		}
@@ -589,16 +589,16 @@ public class PeLoader extends AbstractPeDebugLoader {
 		}
 	}
 
-	private Map<Integer, Address> processMemoryBlocks(PortableExecutable pe, Program prog,
+	private Map<SectionHeader, Address> processMemoryBlocks(PortableExecutable pe, Program prog,
 			FileBytes fileBytes, TaskMonitor monitor, MessageLog log)
 			throws AddressOverflowException, IOException {
 
 		AddressFactory af = prog.getAddressFactory();
 		AddressSpace space = af.getDefaultAddressSpace();
-		Map<Integer, Address> sectionNumberToAddress = new HashMap<>();
+		Map<SectionHeader, Address> sectionToAddress = new HashMap<>();
 
 		if (monitor.isCancelled()) {
-			return sectionNumberToAddress;
+			return sectionToAddress;
 		}
 		monitor.setMessage("[" + prog.getName() + "]: processing memory blocks...");
 
@@ -626,7 +626,7 @@ public class PeLoader extends AbstractPeDebugLoader {
 		try {
 			for (int i = 0; i < sections.length; ++i) {
 				if (monitor.isCancelled()) {
-					return sectionNumberToAddress;
+					return sectionToAddress;
 				}
 
 				addr = sections[i].getVirtualAddress() + optionalHeader.getImageBase();
@@ -657,7 +657,7 @@ public class PeLoader extends AbstractPeDebugLoader {
 						MemoryBlockUtils.createInitializedBlock(prog, false,
 							sections[i].getReadableName(), address, fileBytes, offset, dataSize, "",
 							"", r, w, x, log);
-						sectionNumberToAddress.put(i + 1, address);
+						sectionToAddress.put(sections[i], address);
 					}
 					if (rawDataSize == virtualSize) {
 						continue;
@@ -686,7 +686,7 @@ public class PeLoader extends AbstractPeDebugLoader {
 					if (dataSize > 0) {
 						MemoryBlockUtils.createUninitializedBlock(prog, false,
 							sections[i].getReadableName(), address, dataSize, "", "", r, w, x, log);
-						sectionNumberToAddress.put(i + 1, address);
+						sectionToAddress.put(sections[i], address);
 					}
 				}
 
@@ -699,7 +699,7 @@ public class PeLoader extends AbstractPeDebugLoader {
 			Msg.warn(this, "Section header processing aborted");
 		}
 
-		return sectionNumberToAddress;
+		return sectionToAddress;
 	}
 
 	private int getVirtualSize(PortableExecutable pe, SectionHeader[] sections,
@@ -761,8 +761,8 @@ public class PeLoader extends AbstractPeDebugLoader {
 		symTable.addExternalEntryPoint(entryAddr);
 	}
 
-	private void processDebug(OptionalHeader optionalHeader,
-			Map<Integer, Address> sectionNumberToAddress, Program program, TaskMonitor monitor) {
+	private void processDebug(OptionalHeader optionalHeader, FileHeader fileHeader,
+			Map<SectionHeader, Address> sectionToAddress, Program program, TaskMonitor monitor) {
 		if (monitor.isCancelled()) {
 			return;
 		}
@@ -784,7 +784,7 @@ public class PeLoader extends AbstractPeDebugLoader {
 			return;
 		}
 
-		processDebug(parser, sectionNumberToAddress, program, monitor);
+		processDebug(parser, fileHeader, sectionToAddress, program, monitor);
 	}
 
 	@Override
