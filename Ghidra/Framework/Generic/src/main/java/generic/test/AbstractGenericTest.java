@@ -32,6 +32,7 @@ import java.util.regex.Pattern;
 
 import javax.swing.*;
 import javax.swing.table.TableCellEditor;
+import javax.swing.table.TableCellRenderer;
 import javax.swing.text.JTextComponent;
 import javax.swing.tree.*;
 
@@ -1305,6 +1306,36 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 		TableCellEditor editor = table.getCellEditor(row, col);
 		assertNotNull("Unable to edit table cell at " + row + ", " + col, editor);
 		return editor;
+	}
+
+	/**
+	 * Gets the rendered value for the specified table cell.  The actual value at the cell may
+	 * not be a String.  This method will get the String display value, as created by the table.
+	 * 
+	 * @param table the table to query
+	 * @param row the row to query
+	 * @param column the column to query
+	 * @return the String value
+	 * @throws IllegalArgumentException if there is no renderer or the rendered component is
+	 *         something from which this method can get a String (such as a JLabel)
+	 */
+	public static String getRenderedTableCellValue(JTable table, int row, int column) {
+
+		return runSwing(() -> {
+
+			TableCellRenderer renderer = table.getCellRenderer(row, column);
+			if (renderer == null) {
+				throw new IllegalArgumentException(
+					"No renderer registered for row/col: " + row + '/' + column);
+			}
+			Component component = table.prepareRenderer(renderer, row, column);
+			if (!(component instanceof JLabel)) {
+				throw new IllegalArgumentException(
+					"Do not know how to get text from a renderer " + "that is not a JLabel");
+			}
+
+			return ((JLabel) component).getText();
+		});
 	}
 
 	public static <T> void setComboBoxSelection(final JComboBox<T> comboField, final T selection) {
