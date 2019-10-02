@@ -63,7 +63,6 @@ public abstract class PcodeEmit {
 	private long uniquemask;
 	private long uniqueoffset;
 	private AddressSpace overlayspace = null;
-	private AddressSpace overlayedspace = null;
 
 	/**
 	 * Pcode emitter constructor for empty or unimiplemented instructions
@@ -89,8 +88,8 @@ public abstract class PcodeEmit {
 		AddressSpace myspace = startAddress.getAddressSpace();
 		if (myspace.isOverlaySpace()) {
 			overlayspace = myspace;
-			overlayedspace = ((OverlayAddressSpace) myspace).getOverlayedSpace();
-			startAddress = overlayedspace.getAddress(startAddress.getOffset());
+			startAddress = ((OverlayAddressSpace) myspace).getOverlayedSpace().getAddress(
+				startAddress.getOffset());
 		}
 		this.fallOffset = fallOffset;
 		this.uniqueFactory = uniqueFactory;
@@ -730,18 +729,18 @@ public abstract class PcodeEmit {
 	}
 
 	void checkOverlays(int opcode, VarnodeData[] in, int isize, VarnodeData out) {
-		if (uniqueFactory == null) {
-			return;
-		}
-		if ((opcode == PcodeOp.LOAD) || (opcode == PcodeOp.STORE)) {
-			int spaceId = (int) in[0].offset;
-			AddressSpace space = uniqueFactory.getAddressFactory().getAddressSpace(spaceId);
-			if (space.isOverlaySpace()) {
-				space = ((OverlayAddressSpace) space).getOverlayedSpace();
-				in[0].offset = space.getBaseSpaceID();
-			}
-		}
 		if (overlayspace != null) {
+			if (uniqueFactory == null) {
+				return;
+			}
+			if ((opcode == PcodeOp.LOAD) || (opcode == PcodeOp.STORE)) {
+				int spaceId = (int) in[0].offset;
+				AddressSpace space = uniqueFactory.getAddressFactory().getAddressSpace(spaceId);
+				if (space.isOverlaySpace()) {
+					space = ((OverlayAddressSpace) space).getOverlayedSpace();
+					in[0].offset = space.getBaseSpaceID();
+				}
+			}
 			for (int i = 0; i < isize; ++i) {
 				VarnodeData v = in[0];
 				if (v.space.equals(overlayspace)) {
