@@ -773,27 +773,6 @@ public class GTreeTest extends AbstractDockingTest {
 		return path;
 	}
 
-	@Override
-	protected void testFailed(Throwable e) {
-		StringBuilder buffy = new StringBuilder();
-		printTree(gTree.getRootNode(), 0, buffy);
-		System.err.println("GTree state: ");
-		System.err.println(buffy.toString());
-	}
-
-	private void printTree(GTreeNode node, int indentLevel, StringBuilder buffy) {
-		buffy.append('\n');
-		for (int i = 0; i < indentLevel; i++) {
-			buffy.append('\t');
-		}
-		buffy.append("node: " + node.getName());
-		int nextIndentLevel = indentLevel + 1;
-		List<GTreeNode> children = node.getChildren();
-		for (GTreeNode child : children) {
-			printTree(child, nextIndentLevel, buffy);
-		}
-	}
-
 	private void assertProgressPanel(boolean isShowing) {
 		JComponent panel = (JComponent) getInstanceField("progressPanel", gTree);
 		if (!isShowing) {
