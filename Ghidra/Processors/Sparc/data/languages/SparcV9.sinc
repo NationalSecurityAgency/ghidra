@@ -53,20 +53,20 @@ define register offset=0x6000 size=$(SIZE) [ HPSTATE1 HPSTATE2 HPSTATE3 HPSTATE4
                                              HSTICK_CMPR1 HSTICK_CMPR2 HSTICK_CMPR3 HSTICK_CMPR4 
                                               ];
 
-# A window is 24 registers (96 or 192 bytes), must processors have 7 or 8. (g0->g7,o0->o7,l0->o7,i0->i7)
+# A window is 24 registers (96 or 192 bytes), most processors have 7 or 8. (g0->g7,o0->o7,l0->o7,i0->i7)
 # When the window is overflowed the data must be purged to some backup memory, via user 
-#    suppied function attached to a signal handler.
+#    supplied function attached to a signal handler.
 # When the window is underflowed the data must be read from some backup memory, via user
-#    suppied function attached to a signal handler.
+#    supplied function attached to a signal handler.
 
 # There are 2 basic strategies we figured for this.
 #   One, create a bank of register space and read and write to it in a way that simulates 
-#       how the sparc would really work, but the symboic names become indexes.
+#       how the sparc would really work, but the symbolic names become indexes.
 #   Two, save and restore logic does all the work.
 
 # window index is ((CWP+1)%NWINDOWS)
-# CWP is an index from 0 to N of the wondows.
-# Size of CWP is implimination depedent (must be > 5 bits).
+# CWP is an index from 0 to N of the windows.
+# Size of CWP is implementation dependent (must be > 5 bits).
 
 # inputs i0 i1 i2 i3 i4 i5 fp i7
 # locals l0 l1 l2 l3 l4 l5 l6 l7
@@ -245,26 +245,26 @@ attach variables [ rs1_3 ] [ Y     _          CCR   _   TICK        PC       _  
 # CWP++
 macro save() {    
 
-@if SIZE=="4"
-#    # Save inputs 
-#    *[register]:$(SIZE) (&w010 + (CWP*$(REGWINSZ)+0)*$(SIZE)) = i0;
-#    *[register]:$(SIZE) (&w010 + (CWP*$(REGWINSZ)+1)*$(SIZE)) = i1;
-#    *[register]:$(SIZE) (&w010 + (CWP*$(REGWINSZ)+2)*$(SIZE)) = i2;
-#    *[register]:$(SIZE) (&w010 + (CWP*$(REGWINSZ)+3)*$(SIZE)) = i3;
-#    *[register]:$(SIZE) (&w010 + (CWP*$(REGWINSZ)+4)*$(SIZE)) = i4;
-#    *[register]:$(SIZE) (&w010 + (CWP*$(REGWINSZ)+5)*$(SIZE)) = i5;
-#    *[register]:$(SIZE) (&w010 + (CWP*$(REGWINSZ)+6)*$(SIZE)) = fp;
-#    *[register]:$(SIZE) (&w010 + (CWP*$(REGWINSZ)+7)*$(SIZE)) = i7;
-#    
-#    # Save local
-#    *[register]:$(SIZE) (&w010 + (CWP*$(REGWINSZ)+0+$(LOCALOFF))*$(SIZE)) = l0;
-#    *[register]:$(SIZE) (&w010 + (CWP*$(REGWINSZ)+1+$(LOCALOFF))*$(SIZE)) = l1;
-#    *[register]:$(SIZE) (&w010 + (CWP*$(REGWINSZ)+2+$(LOCALOFF))*$(SIZE)) = l3;
-#    *[register]:$(SIZE) (&w010 + (CWP*$(REGWINSZ)+3+$(LOCALOFF))*$(SIZE)) = l3;
-#    *[register]:$(SIZE) (&w010 + (CWP*$(REGWINSZ)+4+$(LOCALOFF))*$(SIZE)) = l4;
-#    *[register]:$(SIZE) (&w010 + (CWP*$(REGWINSZ)+5+$(LOCALOFF))*$(SIZE)) = l5;
-#    *[register]:$(SIZE) (&w010 + (CWP*$(REGWINSZ)+6+$(LOCALOFF))*$(SIZE)) = l6;
-#    *[register]:$(SIZE) (&w010 + (CWP*$(REGWINSZ)+7+$(LOCALOFF))*$(SIZE)) = l7;
+@if SIZE=="4" || SIZE == "8"
+    # Save inputs 
+    *[register]:$(SIZE) (&w010 + (CWP:4*$(REGWINSZ)+0)*$(SIZE)) = i0;
+    *[register]:$(SIZE) (&w010 + (CWP:4*$(REGWINSZ)+1)*$(SIZE)) = i1;
+    *[register]:$(SIZE) (&w010 + (CWP:4*$(REGWINSZ)+2)*$(SIZE)) = i2;
+    *[register]:$(SIZE) (&w010 + (CWP:4*$(REGWINSZ)+3)*$(SIZE)) = i3;
+    *[register]:$(SIZE) (&w010 + (CWP:4*$(REGWINSZ)+4)*$(SIZE)) = i4;
+    *[register]:$(SIZE) (&w010 + (CWP:4*$(REGWINSZ)+5)*$(SIZE)) = i5;
+    *[register]:$(SIZE) (&w010 + (CWP:4*$(REGWINSZ)+6)*$(SIZE)) = fp;
+    *[register]:$(SIZE) (&w010 + (CWP:4*$(REGWINSZ)+7)*$(SIZE)) = i7;
+    
+    # Save local
+    *[register]:$(SIZE) (&w010 + (CWP:4*$(REGWINSZ)+0+$(LOCALOFF))*$(SIZE)) = l0;
+    *[register]:$(SIZE) (&w010 + (CWP:4*$(REGWINSZ)+1+$(LOCALOFF))*$(SIZE)) = l1;
+    *[register]:$(SIZE) (&w010 + (CWP:4*$(REGWINSZ)+2+$(LOCALOFF))*$(SIZE)) = l3;
+    *[register]:$(SIZE) (&w010 + (CWP:4*$(REGWINSZ)+3+$(LOCALOFF))*$(SIZE)) = l3;
+    *[register]:$(SIZE) (&w010 + (CWP:4*$(REGWINSZ)+4+$(LOCALOFF))*$(SIZE)) = l4;
+    *[register]:$(SIZE) (&w010 + (CWP:4*$(REGWINSZ)+5+$(LOCALOFF))*$(SIZE)) = l5;
+    *[register]:$(SIZE) (&w010 + (CWP:4*$(REGWINSZ)+6+$(LOCALOFF))*$(SIZE)) = l6;
+    *[register]:$(SIZE) (&w010 + (CWP:4*$(REGWINSZ)+7+$(LOCALOFF))*$(SIZE)) = l7;
 
     # what was outputs become inputs
     i0 = o0;
@@ -332,7 +332,7 @@ macro save() {
 macro restore() {
     CWP = CWP - 1;
 
-@if SIZE=="4"
+@if SIZE=="4" || SIZE == "8"
     # inputs once again become outputs
     o0 = i0; # API return value
     o1 = i1;
@@ -343,25 +343,25 @@ macro restore() {
     sp = fp;
     o7 = i7; # address of CALLer address
 
-#    # restore original inputs
-#    i0 = *[register]:$(SIZE) ((&:$(SIZE) w010) + ((CWP*$(REGWINSZ)+0)*$(SIZE)));
-#    i1 = *[register]:$(SIZE) ((&:$(SIZE) w010) + ((CWP*$(REGWINSZ)+1)*$(SIZE)));
-#    i2 = *[register]:$(SIZE) ((&:$(SIZE) w010) + ((CWP*$(REGWINSZ)+2)*$(SIZE)));
-#    i3 = *[register]:$(SIZE) ((&:$(SIZE) w010) + ((CWP*$(REGWINSZ)+3)*$(SIZE)));
-#    i4 = *[register]:$(SIZE) ((&:$(SIZE) w010) + ((CWP*$(REGWINSZ)+4)*$(SIZE)));
-#    i5 = *[register]:$(SIZE) ((&:$(SIZE) w010) + ((CWP*$(REGWINSZ)+5)*$(SIZE)));
-#    fp = *[register]:$(SIZE) ((&:$(SIZE) w010) + ((CWP*$(REGWINSZ)+6)*$(SIZE)));
-#    i7 = *[register]:$(SIZE) ((&:$(SIZE) w010) + ((CWP*$(REGWINSZ)+7)*$(SIZE))); # address of CALLer address
-#
-#    # restore original locals
-#    l0 = *[register]:$(SIZE) ((&:$(SIZE) w010) + ((CWP*$(REGWINSZ)+0+$(LOCALOFF))*$(SIZE)));
-#    l1 = *[register]:$(SIZE) ((&:$(SIZE) w010) + ((CWP*$(REGWINSZ)+1+$(LOCALOFF))*$(SIZE)));
-#    l2 = *[register]:$(SIZE) ((&:$(SIZE) w010) + ((CWP*$(REGWINSZ)+2+$(LOCALOFF))*$(SIZE)));
-#    l3 = *[register]:$(SIZE) ((&:$(SIZE) w010) + ((CWP*$(REGWINSZ)+3+$(LOCALOFF))*$(SIZE)));
-#    l4 = *[register]:$(SIZE) ((&:$(SIZE) w010) + ((CWP*$(REGWINSZ)+4+$(LOCALOFF))*$(SIZE)));
-#    l5 = *[register]:$(SIZE) ((&:$(SIZE) w010) + ((CWP*$(REGWINSZ)+5+$(LOCALOFF))*$(SIZE)));
-#    l6 = *[register]:$(SIZE) ((&:$(SIZE) w010) + ((CWP*$(REGWINSZ)+6+$(LOCALOFF))*$(SIZE)));
-#    l7 = *[register]:$(SIZE) ((&:$(SIZE) w010) + ((CWP*$(REGWINSZ)+6+$(LOCALOFF))*$(SIZE)));
+    # restore original inputs
+    i0 = *[register]:$(SIZE) ((&w010) + ((CWP:4*$(REGWINSZ)+0)*$(SIZE)));
+    i1 = *[register]:$(SIZE) ((&w010) + ((CWP:4*$(REGWINSZ)+1)*$(SIZE)));
+    i2 = *[register]:$(SIZE) ((&w010) + ((CWP:4*$(REGWINSZ)+2)*$(SIZE)));
+    i3 = *[register]:$(SIZE) ((&w010) + ((CWP:4*$(REGWINSZ)+3)*$(SIZE)));
+    i4 = *[register]:$(SIZE) ((&w010) + ((CWP:4*$(REGWINSZ)+4)*$(SIZE)));
+    i5 = *[register]:$(SIZE) ((&w010) + ((CWP:4*$(REGWINSZ)+5)*$(SIZE)));
+    fp = *[register]:$(SIZE) ((&w010) + ((CWP:4*$(REGWINSZ)+6)*$(SIZE)));
+    i7 = *[register]:$(SIZE) ((&w010) + ((CWP:4*$(REGWINSZ)+7)*$(SIZE))); # address of CALLer address
+
+    # restore original locals
+    l0 = *[register]:$(SIZE) ((&w010) + ((CWP:4*$(REGWINSZ)+0+$(LOCALOFF))*$(SIZE)));
+    l1 = *[register]:$(SIZE) ((&w010) + ((CWP:4*$(REGWINSZ)+1+$(LOCALOFF))*$(SIZE)));
+    l2 = *[register]:$(SIZE) ((&w010) + ((CWP:4*$(REGWINSZ)+2+$(LOCALOFF))*$(SIZE)));
+    l3 = *[register]:$(SIZE) ((&w010) + ((CWP:4*$(REGWINSZ)+3+$(LOCALOFF))*$(SIZE)));
+    l4 = *[register]:$(SIZE) ((&w010) + ((CWP:4*$(REGWINSZ)+4+$(LOCALOFF))*$(SIZE)));
+    l5 = *[register]:$(SIZE) ((&w010) + ((CWP:4*$(REGWINSZ)+5+$(LOCALOFF))*$(SIZE)));
+    l6 = *[register]:$(SIZE) ((&w010) + ((CWP:4*$(REGWINSZ)+6+$(LOCALOFF))*$(SIZE)));
+    l7 = *[register]:$(SIZE) ((&w010) + ((CWP:4*$(REGWINSZ)+6+$(LOCALOFF))*$(SIZE)));
 @else
     o0 = i0;
     o1 = i1;
@@ -1067,28 +1067,12 @@ define pcodeop stqa;
 :fabsq  fqrs2,fqrd is op=0x2 & fqrd & op3=0x34 & opf=0xb & fqrs2 { fqrd = abs(fqrs2); }
 
 :fadds  fsrs1,fsrs2,fsrd is op=0x2 & fsrd & op3=0x34 & fsrs1 & opf=0x41 & fsrs2 { fsrd = fsrs1 f+ fsrs2; }
-:faddd  fsrs1,fdrs2,fdrd is op=0x2 & fdrd & op3=0x34 & fsrs1 & opf=0x42 & fdrs2
-{
-	tmp1:8 = float2float(fsrs1);
-	fdrd = tmp1 f+ fdrs2;
-}
-:faddq  fsrs1,fqrs2,fqrd is op=0x2 & fqrd & op3=0x34 & fsrs1 & opf=0x43 & fqrs2
-{
-	tmp1:16 = float2float(fsrs1);
-	fqrd = tmp1 f+ fqrs2;
-}
+:faddd  fdrs1,fdrs2,fdrd is op=0x2 & fdrd & op3=0x34 & fdrs1 & opf=0x42 & fdrs2 { fdrd = fdrs1 f+ fdrs2; }
+:faddq  fqrs1,fqrs2,fqrd is op=0x2 & fqrd & op3=0x34 & fqrs1 & opf=0x43 & fqrs2 { fqrd = fqrs1 f+ fqrs2; }
 
 :fdivs  fsrs1,fsrs2,fsrd is op=0x2 & fsrd & op3=0x34 & fsrs1 & opf=0x4d & fsrs2 { fsrd = fsrs1 f/ fsrs2; }
-:fdivd  fsrs1,fdrs2,fdrd is op=0x2 & fdrd & op3=0x34 & fsrs1 & opf=0x4e & fdrs2
-{
-	tmp1:8 = float2float(fsrs1);
-	fdrd = tmp1 f/ fdrs2;
-}
-:fdivq  fsrs1,fqrs2,fqrd is op=0x2 & fqrd & op3=0x34 & fsrs1 & opf=0x4f & fqrs2
-{
-	tmp1:16 = float2float(fsrs1);
-	fqrd = tmp1 f/ fqrs2;
-}
+:fdivd  fdrs1,fdrs2,fdrd is op=0x2 & fdrd & op3=0x34 & fdrs1 & opf=0x4e & fdrs2 { fdrd = fdrs1 f/ fdrs2; }
+:fdivq  fqrs1,fqrs2,fqrd is op=0x2 & fqrd & op3=0x34 & fqrs1 & opf=0x4f & fqrs2 { fqrd = fqrs1 f/ fqrs2; }
 
 :fdmulq  fdrs1,fdrs2,fqrd is op=0x2 & fqrd & op3=0x34 & fdrs1 & opf=0x6e & fdrs2
 {
