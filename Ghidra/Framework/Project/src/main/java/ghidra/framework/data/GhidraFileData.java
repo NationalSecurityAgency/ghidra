@@ -893,6 +893,11 @@ public class GhidraFileData {
 			catch (InvalidNameException e) {
 				throw new AssertException("Unexpected error", e);
 			}
+			finally {
+				if (folderItem == null) {
+					versionedFolderItem.terminateCheckout(checkout.getCheckoutId(), false);
+				}
+			}
 			folderItem.setCheckout(checkout.getCheckoutId(), exclusive, checkoutVersion,
 				folderItem.getCurrentVersion());
 

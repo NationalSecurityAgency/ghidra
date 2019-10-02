@@ -314,7 +314,8 @@ public class BlockStreamServer extends Thread {
 						": failed to read stream header");
 				}
 				else if (!(e instanceof EOFException)) { // silent on closed connection
-					log.error("file block stream failed from " + socket.getInetAddress(), e);
+					log.error("file block stream failed from " + socket.getInetAddress() + ": " +
+						e.getMessage());
 				}
 			}
 			finally {

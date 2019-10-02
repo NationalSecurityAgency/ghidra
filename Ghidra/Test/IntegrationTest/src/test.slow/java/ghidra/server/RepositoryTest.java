@@ -15,17 +15,16 @@
  */
 package ghidra.server;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.*;
 
 import java.io.File;
 
 import org.junit.*;
 
+import ghidra.framework.client.ClientUtil;
 import ghidra.framework.remote.User;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.util.NamingUtilities;
-import ghidra.util.SystemUtilities;
 import ghidra.util.exception.UserAccessException;
 import utilities.util.FileUtilities;
 
@@ -41,7 +40,7 @@ public class RepositoryTest extends AbstractGhidraHeadedIntegrationTest {
 	@Before
 	public void setUp() throws Exception {
 
-		userName = SystemUtilities.getUserName();
+		userName = ClientUtil.getUserName();
 
 		File parent = createTempDirectory(getClass().getSimpleName());
 
