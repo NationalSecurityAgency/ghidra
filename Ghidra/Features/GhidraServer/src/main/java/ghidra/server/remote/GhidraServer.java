@@ -636,14 +636,7 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 			}
 			else if (s.startsWith("-jaas")) {
 				if (s.length() == 5) {
-					int nextArgIndex = i + 1;
-					if (!(nextArgIndex < args.length - 1)) {
-						// length - 1 -> don't count mandatory repo path, which is always last arg
-						displayUsage("Missing -jaas config file path argument");
-						System.exit(-1);
-					}
-					jaasConfigFileStr = args[nextArgIndex];
-					i++;
+					jaasConfigFileStr = ((i + 1) < args.length - 1) ? args[++i] : "";
 				}
 				else {
 					jaasConfigFileStr = s.substring(5);
