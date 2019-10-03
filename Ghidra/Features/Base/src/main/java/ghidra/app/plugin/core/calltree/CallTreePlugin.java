@@ -70,6 +70,7 @@ public class CallTreePlugin extends ProgramPlugin {
 
 		createActions();
 		primaryProvider = new CallTreeProvider(this, true);
+		providers.add(primaryProvider);
 	}
 
 	@Override
@@ -108,8 +109,12 @@ public class CallTreePlugin extends ProgramPlugin {
 		}
 	}
 
-	private CallTreeProvider findProviderForLocation(ProgramLocation location) {
+	CallTreeProvider findTransientProviderForLocation(ProgramLocation location) {
 		for (CallTreeProvider provider : providers) {
+			if (!provider.isTransient()) {
+				continue;
+			}
+
 			if (provider.isShowingLocation(location)) {
 				return provider;
 			}
@@ -177,7 +182,7 @@ public class CallTreePlugin extends ProgramPlugin {
 			return; // no program; cannot show tool
 		}
 
-		CallTreeProvider provider = findProviderForLocation(location);
+		CallTreeProvider provider = findTransientProviderForLocation(location);
 		if (provider != null) {
 			tool.showComponentProvider(provider, true);
 			return;

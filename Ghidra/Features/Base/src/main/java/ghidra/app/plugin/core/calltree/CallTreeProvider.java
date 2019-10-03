@@ -107,8 +107,13 @@ public class CallTreeProvider extends ComponentProviderAdapter implements Domain
 		setWindowMenuGroup(TITLE);
 		setDefaultWindowPosition(WindowPosition.BOTTOM);
 
+		if (isPrimary) {
+			addToToolbar();
+		}
+		else {
+			setTransient();
+		}
 		setIcon(CallTreePlugin.PROVIDER_ICON);
-		addToToolbar();
 		setHelpLocation(new HelpLocation(plugin.getName(), "Call_Tree_Plugin"));
 
 		addToTool();
