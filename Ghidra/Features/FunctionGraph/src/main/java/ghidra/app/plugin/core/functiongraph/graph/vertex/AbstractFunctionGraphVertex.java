@@ -74,7 +74,7 @@ public abstract class AbstractFunctionGraphVertex implements FGVertex {
 		this.location = new Point2D.Double();
 	}
 
-	/** Copy constructor */
+	/* Copy constructor */
 	AbstractFunctionGraphVertex(FGController controller, AbstractFunctionGraphVertex vertex) {
 		this.controller = controller;
 		this.program = vertex.program;
@@ -154,8 +154,8 @@ public abstract class AbstractFunctionGraphVertex implements FGVertex {
 	}
 
 	@Override
-	public boolean containsProgramLocation(ProgramLocation location) {
-		return addressSet.contains(location.getAddress());
+	public boolean containsProgramLocation(ProgramLocation pl) {
+		return addressSet.contains(pl.getAddress());
 	}
 
 	@Override
@@ -210,7 +210,9 @@ public abstract class AbstractFunctionGraphVertex implements FGVertex {
 
 	@Override
 	public boolean isEntry() {
-		return isEntry;
+		// note: not sure if we need the second check; this check will catch any case where
+		//       the vertex was manually marked as an entry
+		return isEntry || (vertexType != null && vertexType.isEntry());
 	}
 
 	@Override

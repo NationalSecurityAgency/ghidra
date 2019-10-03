@@ -479,7 +479,7 @@ public class FunctionGraph extends GroupingVisualGraph<FGVertex, FGEdge> {
 		HashSet<FGVertex> result = new LinkedHashSet<>();
 		for (FGVertex vertex : getVertices()) {
 			FGVertexType vertexType = vertex.getVertexType();
-			if (vertexType.isEntry()) {
+			if (vertex.isEntry()) {
 				result.add(vertex);
 			}
 			else if (vertexType == FGVertexType.GROUP) {
@@ -495,7 +495,7 @@ public class FunctionGraph extends GroupingVisualGraph<FGVertex, FGEdge> {
 		Set<FGVertex> groupVertices = vertex.getVertices();
 		for (FGVertex groupedVertex : groupVertices) {
 			FGVertexType vertexType = groupedVertex.getVertexType();
-			if (vertexType.isEntry()) {
+			if (vertex.isEntry()) {
 				return true;
 			}
 			else if (vertexType == FGVertexType.GROUP) {
