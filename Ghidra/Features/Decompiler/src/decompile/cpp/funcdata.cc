@@ -145,6 +145,7 @@ void Funcdata::stopProcessing(void)
 
 {
   flags |= processing_complete;
+  obank.destroyDead();		// Free up anything in the dead list
 #ifdef CPUI_STATISTICS
   glb->stats->process(*this);
 #endif
