@@ -397,7 +397,7 @@ public class GHelpHTMLEditorKit extends HTMLEditorKit {
 		 * anything.    
 		 * 
 		 * To get the base class to use our image, we override getImage().  However, we should 
-		 * only return our image when the base class is finished loaded.  (See the base class'
+		 * only return our image when the base class is finished loading.  (See the base class'
 		 * paint() method for why we need to do this.)
 		 * 
 		 * Note: if we start seeing unusual behavior, like images not rendering, or any size

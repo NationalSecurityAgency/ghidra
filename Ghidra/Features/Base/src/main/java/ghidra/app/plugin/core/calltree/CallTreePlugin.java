@@ -111,8 +111,8 @@ public class CallTreePlugin extends ProgramPlugin {
 
 	CallTreeProvider findTransientProviderForLocation(ProgramLocation location) {
 		for (CallTreeProvider provider : providers) {
-			if (provider == primaryProvider) {
-				continue; // not transient
+			if (!provider.isTransient()) {
+				continue;
 			}
 
 			if (provider.isShowingLocation(location)) {
