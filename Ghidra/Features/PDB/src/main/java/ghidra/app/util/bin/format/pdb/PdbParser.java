@@ -177,6 +177,9 @@ public class PdbParser {
 				}
 			}
 		}
+		else { // only for .pdb.xml files.
+			verifyPdbSignature();
+		}
 		parsed = true;
 	}
 
@@ -550,18 +553,15 @@ public class PdbParser {
 		catch (SAXException e) {
 			throw new IOException(e.getMessage());
 		}
-
-		verifyPdbSignature(in);
 	}
 
 	/**
 	 * Check to see if GUID and age in XML file matches GUID/Signature and age of binary
 	 *
-	 * @param in  InputStream for XML file
 	 * @throws IOException If an I/O error occurs
 	 * @throws PdbException If error parsing the PDB.XML data
 	 */
-	private void verifyPdbSignature(InputStream in) throws IOException, PdbException {
+	private void verifyPdbSignature() throws IOException, PdbException {
 
 		XmlElement xmlelem;
 
