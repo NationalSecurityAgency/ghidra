@@ -826,7 +826,7 @@ public class FunctionDB extends DatabaseObject implements Function {
 				DataType dt = VariableUtilities.getAutoDataType(this,
 					returnParam.getFormalDataType(), storage);
 				try {
-					autoParams.add(new AutoParameterImpl(dt, autoIndex, storage, this));
+					autoParams.add(new AutoParameterImpl(dt, autoIndex++, storage, this));
 				}
 				catch (InvalidInputException e) {
 					Msg.error(this,
