@@ -40,6 +40,25 @@ public:
   bool operator==(const AddressUsePointPair &op2) const;	///< Test for equality
 };
 
+/// \brief A name recommendation for a particular dynamic location
+///
+/// A recommendation for a symbol name whose storage is dynamic. The storage
+/// is identified using the DynamicHash mechanism and may or may not exist.
+class DynamicRecommend {
+  Address usePoint;		///< Use point of the Symbol
+  uint8 hash;			///< Hash encoding the Symbols environment
+  string name;			///< The local symbol name recommendation
+public:
+  DynamicRecommend(const Address &addr,uint8 h,const string &nm) :
+    usePoint(addr) {
+    hash = h;
+    name = nm;
+  }	///< Constructor
+  const Address &getAddress(void) const { return usePoint; }	///< Get the use point address
+  uint8 getHash(void) const { return hash; }			///< Get the dynamic hash
+  string getName(void) const { return name; }			///< Get the recommended name
+};
+
 /// \brief Partial data-type information mapped to a specific range of bytes
 ///
 /// This object gives a hint about the data-type for a sequence of bytes
@@ -160,6 +179,7 @@ class ScopeLocal : public ScopeInternal {
   AddrSpace *space;		///< Address space containing the local stack
   RangeList localRange;		///< The set of addresses that might hold mapped locals (not parameters)
   map<AddressUsePointPair,string> nameRecommend;	///< Symbol name recommendations for specific addresses
+  list<DynamicRecommend> dynRecommend;		///< Symbol name recommendations for dynamic locations
   bool stackGrowsNegative;	///< Marked \b true if the stack is considered to \e grow towards smaller offsets
   bool rangeLocked;		///< True if the subset of addresses \e mapped to \b this scope has been locked
   bool adjustFit(RangeHint &a) const;	///< Make the given RangeHint fit in the current Symbol map
@@ -167,6 +187,8 @@ class ScopeLocal : public ScopeInternal {
   bool restructure(MapState &state);	///< Merge hints into a formal Symbol layout of the address space
   void markUnaliased(const vector<uintb> &alias);	///< Mark all local symbols for which there are no aliases
   void fakeInputSymbols(void);		///< Make sure all stack inputs have an associated Symbol
+  void addRecommendName(const Address &addr,const Address &usepoint,const string &nm,int4 sz);
+  void addDynamicRecommend(const Address &usepoint,uint8 hash,const string &nm);
   void collectNameRecs(void);		///< Collect names of unlocked Symbols on the stack
 public:
   ScopeLocal(AddrSpace *spc,Funcdata *fd,Architecture *g);	///< Constructor
@@ -193,7 +215,6 @@ public:
   void restructureVarnode(bool aliasyes);	///< Layout mapped symbols based on Varnode information
   void restructureHigh(void);			///< Layout mapped symbols based on HighVariable information
   void makeNameRecommendationsForSymbols(vector<string> &resname,vector<Symbol *> &ressym) const;
-  void addRecommendName(const Address &addr,const Address &usepoint,const string &nm,int4 sz);
 };
 
 #endif

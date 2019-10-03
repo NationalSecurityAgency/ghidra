@@ -26,7 +26,7 @@ import ghidra.util.SystemUtilities;
  * encapsulates the actual data, along with any filter applied, any sort applied, along with 
  * some convenience methods for performing operations on this group of data.
  *
- * @param <ROW_OBJECT>
+ * @param <ROW_OBJECT> the row type
  */
 public class TableData<ROW_OBJECT> implements Iterable<ROW_OBJECT> {
 

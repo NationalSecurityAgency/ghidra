@@ -63,12 +63,14 @@ public class SettingsDialog extends DialogComponentProvider {
 		this.settingsDefs = newSettingsDefs;
 		this.settings = newSettings;
 		setTitle(title);
-		settingsTableModel.fireTableDataChanged();
+
+		settingsTableModel.setSettingsDefinitions(settingsDefs);
 		DockingWindowManager.showDialog(parent, this);
 	}
 
 	public void dispose() {
 		settingsTable.editingStopped(null);
+		settingsTable.dispose();
 
 		close();
 		settingsDefs = null;
@@ -79,7 +81,7 @@ public class SettingsDialog extends DialogComponentProvider {
 		JPanel workPanel = new JPanel(new BorderLayout());
 		workPanel.setBorder(new EmptyBorder(10, 10, 10, 10));
 
-		settingsTableModel = new SettingsTableModel(settingsDefs);
+		settingsTableModel = new SettingsTableModel();
 		settingsTable = new GTable(settingsTableModel);
 		settingsTable.setAutoscrolls(true);
 		settingsTable.setRowSelectionAllowed(false);
@@ -104,6 +106,10 @@ public class SettingsDialog extends DialogComponentProvider {
 	@Override
 	protected void cancelCallback() {
 		dispose();
+	}
+
+	public GTable getTable() {
+		return settingsTable;
 	}
 
 //==================================================================================================
@@ -161,10 +167,12 @@ public class SettingsDialog extends DialogComponentProvider {
 
 		private List<SettingsRowObject> rows = new ArrayList<>();
 
-		SettingsTableModel(SettingsDefinition[] settingsDefs) {
+		void setSettingsDefinitions(SettingsDefinition[] settingsDefs) {
 			for (SettingsDefinition sd : settingsDefs) {
 				rows.add(new SettingsRowObject(sd));
 			}
+
+			settingsTableModel.fireTableDataChanged();
 		}
 
 		@Override
@@ -199,6 +207,17 @@ public class SettingsDialog extends DialogComponentProvider {
 					return "Name";
 				case 1:
 					return "Settings";
+			}
+			return null;
+		}
+
+		@Override
+		public Class<?> getColumnClass(int col) {
+			switch (col) {
+				case 0:
+					return String.class;
+				case 1:
+					return Settings.class;
 			}
 			return null;
 		}

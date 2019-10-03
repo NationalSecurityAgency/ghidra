@@ -15,6 +15,7 @@
  */
 package ghidra.app.plugin.core.decompile.actions;
 
+import docking.ActionContext;
 import docking.action.MenuData;
 import ghidra.app.actions.AbstractFindReferencesToAddressAction;
 import ghidra.app.context.NavigatableActionContext;
@@ -40,5 +41,25 @@ public class FindReferencesToAddressAction extends AbstractFindReferencesToAddre
 			return null;
 		}
 		return context.getLocation();
+	}
+
+	@Override
+	public boolean isEnabledForContext(ActionContext context) {
+		if (!(context instanceof DecompilerActionContext)) {
+			return false;
+		}
+
+		DecompilerActionContext decompilerContext = (DecompilerActionContext) context;
+		return decompilerContext.checkActionEnablement(() -> {
+			return super.isEnabledForContext(context);
+		});
+	}
+
+	@Override
+	public void actionPerformed(ActionContext context) {
+		DecompilerActionContext decompilerContext = (DecompilerActionContext) context;
+		decompilerContext.performAction(() -> {
+			super.actionPerformed(context);
+		});
 	}
 }

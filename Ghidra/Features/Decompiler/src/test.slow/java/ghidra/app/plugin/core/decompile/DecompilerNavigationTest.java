@@ -157,6 +157,26 @@ public class DecompilerNavigationTest extends AbstractDecompilerTest {
 		assertEquals(addr(thunkAddress), codeBrowser.getCurrentAddress());
 	}
 
+	@Test
+	public void testSingleClickingFunctionCallDoesNotMoveListingToThatFunction() {
+
+		decompile("1002cf5"); // 'ghidra'
+
+		// 22: FUN_01002c93(param_3,param_4,iVar1);
+		int line = 22;
+		int character = 5;
+		assertToken("FUN_01002c93", line, character);
+		setDecompilerLocation(line, character);
+
+		assertListingAddress(addr("01002d32"));
+	}
+
+	private void assertListingAddress(Address expected) {
+		ProgramLocation cbLocation = codeBrowser.getCurrentLocation();
+		assertEquals("The Listing is not at the expected address", expected,
+			cbLocation.getAddress());
+	}
+
 	private void assertExternalNavigationPerformed() {
 		// going to the 'external linkage' means we went to the thunk function and not the
 		// external program

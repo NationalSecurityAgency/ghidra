@@ -406,10 +406,7 @@ public class Varnode {
 	public static void appendSpaceOffset(StringBuilder buf, Address addr) {
 		AddressSpace space = addr.getAddressSpace();
 		if (space.isOverlaySpace()) {
-			//if the address is contained within the overlay space, stay in the overlay
-			//otherwise default to the underlying space
-			if (addr.compareTo(space.getMinAddress()) < 0 ||
-				addr.compareTo(space.getMaxAddress()) > 0) {
+			if (space.getType() != AddressSpace.TYPE_OTHER) {
 				space = space.getPhysicalSpace();
 				addr = space.getAddress(addr.getOffset());
 			}

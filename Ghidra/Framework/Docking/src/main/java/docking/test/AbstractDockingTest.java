@@ -15,8 +15,7 @@
  */
 package docking.test;
 
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 
 import java.awt.*;
 import java.awt.datatransfer.*;
@@ -2221,7 +2220,7 @@ public abstract class AbstractDockingTest extends AbstractGenericTest {
 	 * @param name the file name suffix
 	 * @throws Exception if there is any issue capturing the component
 	 */
-	public void capture(JComponent c, String name) throws Exception {
+	public void capture(Component c, String name) throws Exception {
 
 		// old way of grabbing images--still need this if you want to capture a window's
 		// decorations

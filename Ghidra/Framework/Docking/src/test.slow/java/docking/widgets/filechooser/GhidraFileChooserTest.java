@@ -19,8 +19,7 @@
 package docking.widgets.filechooser;
 
 import static docking.widgets.filechooser.GhidraFileChooserMode.*;
-import static org.hamcrest.Matchers.empty;
-import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.*;
 
 import java.awt.Dimension;
@@ -205,16 +204,16 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 
 	@Test
 	public void testUp() throws Exception {
-		final File testDir = new File(getTestDirectoryPath());
-		setFile(testDir);
+		File testDir = new File(getTestDirectoryPath());
+		setDir(testDir);
 
-		pressButtonByName(chooser.getComponent(), "UP_BUTTON");
+		pressButtonByName(chooser.getComponent(), GhidraFileChooser.UP_BUTTON_NAME);
 
 		// We set the selected file to be a dir, so the start directory is that dir's parent.  We
 		// hit the up button, which will move the dir up past that parent.
-		File expectedFile = testDir.getParentFile().getParentFile();
+		File expectedFile = testDir.getParentFile();
 		assertEquals(expectedFile, getCurrentDirectory());
-		pressButtonByName(chooser.getComponent(), "UP_BUTTON");
+		pressButtonByName(chooser.getComponent(), GhidraFileChooser.UP_BUTTON_NAME);
 		assertEquals(expectedFile.getParentFile(), getCurrentDirectory());
 
 		// now keep pressing up--it should fail eventually
@@ -223,7 +222,7 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 		while (upCount < magicStopValue) {
 			upCount++;
 			try {
-				pressButtonByName(chooser.getComponent(), "UP_BUTTON");
+				pressButtonByName(chooser.getComponent(), GhidraFileChooser.UP_BUTTON_NAME);
 			}
 			catch (AssertionError e) {
 				// good!
@@ -456,7 +455,7 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 		assertTrue(!newFile.equals(getCurrentDirectory()));
 	}
 
-	/**
+	/*
 	 * The user should be able to enter a directory into the text field and navigate to that
 	 * directory by pressing Enter or OK.
 	 * <p>
@@ -532,7 +531,7 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 		FileUtilities.deleteDir(tempSubDir);
 	}
 
-	/**
+	/*
 	 * The user should be able to enter a directory into the text field and navigate to that
 	 * directory by pressing Enter or OK.
 	 * <p>
@@ -593,10 +592,8 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 			chooser.isShowing());
 
 		// re-launch the closed chooser
-		runSwing(() -> {
-			chooser.setCurrentDirectory(absoluteTempDir);
-			chooser.show();
-		}, false);
+		setDir(absoluteTempDir);
+		runSwing(() -> chooser.show(), false);
 		waitForSwing();
 		waitForNewDirLoad(absoluteTempDir);
 
@@ -611,13 +608,13 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 		waitForChooser();
 		selectedDir = getSelectedFile();
 		assertEquals(
-			"Entering a relative dir path and pressing Enter did not " + "chooser that directory!",
+			"Entering a relative dir path and pressing Enter did not chooser that directory!",
 			tempSubDir, selectedDir);
 		assertFalse("File chooser did not close when selecting a valid, relative subdirectory!",
 			chooser.isShowing());
 	}
 
-	/**
+	/*
 	 * The user should be able to enter a directory into the text field and navigate to that
 	 * directory by pressing Enter or OK.
 	 * <p>
@@ -678,10 +675,8 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 			!chooser.isShowing());
 
 		// re-launch the closed chooser
-		runSwing(() -> {
-			chooser.setCurrentDirectory(absoluteTempDir);
-			chooser.show();
-		}, false);
+		setDir(absoluteTempDir);
+		runSwing(() -> chooser.show(), false);
 		waitForSwing();
 		waitForNewDirLoad(absoluteTempDir);
 
@@ -788,7 +783,7 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 		assertEquals(file.getAbsolutePath(), selectedFile.getAbsolutePath());
 	}
 
-	/**
+	/*
 	 * Test that an update/refresh of the current directory does not interfere with the user's
 	 * editing of the text field, which may include the drop-down selection window.
 	 */
@@ -940,8 +935,7 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 
 		// Force chooser into user's home directory as it always exists
 		File testDir = getHomeDir();
-		chooser.setCurrentDirectory(testDir);
-		waitForChooser();
+		setDir(testDir);
 
 		setMode(FILES_AND_DIRECTORIES);
 
@@ -1097,7 +1091,7 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 			chooser.isShowing());
 	}
 
-	/**
+	/*
 	 *  NOTE: make sure this test matches the features described by
 	 *  {@link GhidraFileChooser#setSelectedFile(File)}
 	 */

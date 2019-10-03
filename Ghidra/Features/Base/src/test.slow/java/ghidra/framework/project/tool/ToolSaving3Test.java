@@ -15,11 +15,20 @@
  */
 package ghidra.framework.project.tool;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.List;
 
 import org.junit.Test;
 
+import docking.action.DockingActionIf;
+import docking.widgets.OptionDialog;
+import docking.widgets.filechooser.GhidraFileChooser;
+import ghidra.framework.ToolUtils;
 import ghidra.framework.plugintool.PluginTool;
+import utilities.util.FileUtilities;
 
 public class ToolSaving3Test extends AbstractToolSavingTest {
 
@@ -64,6 +73,75 @@ public class ToolSaving3Test extends AbstractToolSavingTest {
 		PluginTool newTool = launchTool(DEFAULT_TEST_TOOL_NAME);
 
 		assertEquals("Changed tool was not saved", !isSet, getBooleanFooOptions(newTool));
+	}
+
+	@Test
+	public void testExportDefaultTool() throws Exception {
+
+		//
+		// Verify a 'default' tool does not contain 'config state' when written
+		//
+
+		PluginTool tool1 = launchTool(DEFAULT_TEST_TOOL_NAME);
+		DockingActionIf exportAction = getAction(tool1, "Export Default Tool");
+		performAction(exportAction, false);
+
+		GhidraFileChooser chooser = waitForDialogComponent(GhidraFileChooser.class);
+		File exportedFile = createTempFile("ExportedDefaultTool", ToolUtils.TOOL_EXTENSION);
+		chooser.setSelectedFile(exportedFile);
+		waitForUpdateOnChooser(chooser);
+		pressButtonByText(chooser, "Export");
+
+		OptionDialog overwriteDialog = waitForDialogComponent(OptionDialog.class);
+		pressButtonByText(overwriteDialog, "Overwrite");
+		waitForCondition(() -> exportedFile.length() > 0);
+
+		assertExportedFileDoesNotContainsLine(exportedFile, "PLUGIN_STATE");
+	}
+
+	@Test
+	public void testExportedToolContainsConfigSettings() throws Exception {
+
+		//
+		// Regression test: ensure that an exported tool contains config settings
+		//
+
+		PluginTool tool1 = launchTool(DEFAULT_TEST_TOOL_NAME);
+		DockingActionIf exportAction = getAction(tool1, "Export Tool");
+		performAction(exportAction, false);
+
+		GhidraFileChooser chooser = waitForDialogComponent(GhidraFileChooser.class);
+		File exportedFile = createTempFile("ExportedTool", ToolUtils.TOOL_EXTENSION);
+		chooser.setSelectedFile(exportedFile);
+		waitForUpdateOnChooser(chooser);
+		pressButtonByText(chooser, "Export");
+
+		OptionDialog overwriteDialog = waitForDialogComponent(OptionDialog.class);
+		pressButtonByText(overwriteDialog, "Overwrite");
+		waitForCondition(() -> exportedFile.length() > 0);
+
+		assertExportedFileContainsLine(exportedFile, "PLUGIN_STATE");
+	}
+
+	private void assertExportedFileContainsLine(File file, String line) throws IOException {
+
+		List<String> exportedLines = FileUtilities.getLines(file);
+		for (String fileLine : exportedLines) {
+			if (fileLine.contains(line)) {
+				return;
+			}
+		}
+
+		fail("File text does not have a line containing '" + line + "'");
+	}
+
+	private void assertExportedFileDoesNotContainsLine(File file, String line) throws Exception {
+		List<String> exportedLines = FileUtilities.getLines(file);
+		for (String fileLine : exportedLines) {
+			if (fileLine.contains(line)) {
+				fail("File text should not have a line containing '" + line + "'");
+			}
+		}
 	}
 
 }

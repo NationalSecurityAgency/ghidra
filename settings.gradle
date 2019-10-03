@@ -27,7 +27,7 @@ includeProject('RuntimeScripts', 'Ghidra', true)
 includeProject('IDAPro', 'GhidraBuild', true)
 includeProject('GhidraDocs', '.', true)
 includeProjects('GhidraBuild/EclipsePlugins/GhidraDev') // requires Eclipse PDE
-includeProjects('GhidraBuild/EclipsePlugins/SleighEditor') // requires Eclipse DSL
+includeProjects('GhidraBuild/EclipsePlugins/GhidraSleighEditor') // requires Eclipse DSL
 
 /*******************************************************************************************
  * Apply additional Ghidra respositories

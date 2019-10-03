@@ -16,7 +16,6 @@
 package ghidra.bitpatterns.info;
 
 import java.awt.Component;
-import java.beans.XMLDecoder;
 import java.io.*;
 import java.util.*;
 
@@ -184,23 +183,19 @@ public class FileBitPatternInfoReader {
 		numFiles++;
 
 		FileBitPatternInfo fileInfo = null;
-		try (XMLDecoder xmlDecoder = new XMLDecoder(new FileInputStream(dataFile))) {
-			fileInfo = (FileBitPatternInfo) xmlDecoder.readObject();
-		}
-		catch (ArrayIndexOutOfBoundsException e) {
-			// Probably wrong type of XML file...skip
+		try {
+			fileInfo = FileBitPatternInfo.fromXmlFile(dataFile);
 		}
 		catch (IOException e) {
-			Msg.error(this, "IOException", e);
-		}
-		if (fileInfo == null) {
-			Msg.info(this, "null FileBitPatternInfo for " + dataFile);
+			Msg.error(this, "Error reading FileBitPatternInfo file " + dataFile, e);
 			return;
 		}
+
 		if (fileInfo.getFuncBitPatternInfo() == null) {
 			Msg.info(this, "fList.getFuncBitPatternInfoList null for " + dataFile);
 			return;
 		}
+
 		if (params == null) {
 			//TODO: this will set the params to the params of the first valid file
 			//these should agree with the parameters for all of the files

@@ -202,22 +202,27 @@ public class MzLoader extends AbstractLibrarySupportLoader {
 
 		MemoryBlock[] blocks = mem.getBlocks();
 		for (int i = 1; i < blocks.length; i++) {
-			if (!blocks[i].isInitialized()) {
+			MemoryBlock block = blocks[i];
+			if (!block.isInitialized()) {
 				continue;
 			}
 			//scan the first 0x10 bytes of this block
 			//if a FAR RETURN exists, then move that code
 			//to the preceding block...
-			for (int mIndex = 15; mIndex >= 0; mIndex--) {
+			int mIndex = 15;
+			if (block.getSize() <= 16) {
+				mIndex = (int) block.getSize() - 2;
+			}
+			for (; mIndex >= 0; mIndex--) {
 				try {
-					Address offAddr = blocks[i].getStart().add(mIndex);
-					int val = blocks[i].getByte(offAddr);
+					Address offAddr = block.getStart().add(mIndex);
+					int val = block.getByte(offAddr);
 					val &= 0xff;
 					if (val == FAR_RETURN_OPCODE) {
 						// split here and join to previous
 						Address splitAddr = offAddr.add(1);
-						String oldName = blocks[i].getName();
-						mem.split(blocks[i], splitAddr);
+						String oldName = block.getName();
+						mem.split(block, splitAddr);
 						mem.join(blocks[i - 1], blocks[i]);
 						blocks = mem.getBlocks();
 						try {

@@ -312,23 +312,26 @@ ScopeLocal::ScopeLocal(AddrSpace *spc,Funcdata *fd,Architecture *g) : ScopeInter
 void ScopeLocal::collectNameRecs(void)
 
 {
-  SymbolNameTree::iterator iter;
-
   nameRecommend.clear();	// Clear out any old name recommendations
+  dynRecommend.clear();
 
-  iter = nametree.begin();
+  SymbolNameTree::iterator iter = nametree.begin();
   while(iter!=nametree.end()) {
     Symbol *sym = *iter++;
     if (sym->isNameLocked()&&(!sym->isTypeLocked())) {
       SymbolEntry *entry = sym->getFirstWholeMap();
       if (entry != (SymbolEntry *)0) {
-	if (entry->isDynamic()) continue; // Don't collect names for dynamic mappings
-	Address usepoint;
-	if (!entry->getUseLimit().empty()) {
-	  const Range *range = entry->getUseLimit().getFirstRange();
-	  usepoint = Address(range->getSpace(),range->getFirst());
+	if (entry->isDynamic()) {
+	  addDynamicRecommend(entry->getFirstUseAddress(), entry->getHash(), sym->getName());
 	}
-	addRecommendName( entry->getAddr(), usepoint, sym->getName(), entry->getSize() );
+	else {
+	  Address usepoint;
+	  if (!entry->getUseLimit().empty()) {
+	    const Range *range = entry->getUseLimit().getFirstRange();
+	    usepoint = Address(range->getSpace(),range->getFirst());
+	  }
+	  addRecommendName( entry->getAddr(), usepoint, sym->getName(), entry->getSize() );
+	}
 	if (sym->getCategory()<0)
 	  removeSymbol(sym);
       }
@@ -1218,6 +1221,25 @@ void ScopeLocal::makeNameRecommendationsForSymbols(vector<string> &resname,vecto
       ++biter;
     }
   }
+
+  if (dynRecommend.empty()) return;
+
+  list<DynamicRecommend>::const_iterator dyniter;
+  DynamicHash dhash;
+  for(dyniter=dynRecommend.begin();dyniter!=dynRecommend.end();++dyniter) {
+    dhash.clear();
+    const DynamicRecommend &dynEntry(*dyniter);
+    Varnode *vn = dhash.findVarnode(fd, dynEntry.getAddress(), dynEntry.getHash());
+    if (vn == (Varnode *)0) continue;
+    if (vn->isAnnotation()) continue;
+    Symbol *sym = vn->getHigh()->getSymbol();
+    if (sym != (Symbol *)0) {
+      if (sym->isNameUndefined()) {
+	resname.push_back( dynEntry.getName() );
+	ressym.push_back(sym);
+      }
+    }
+  }
 }
 
 /// \brief Add a new recommended name to the list
@@ -1232,4 +1254,17 @@ void ScopeLocal::addRecommendName(const Address &addr,const Address &usepoint,co
 
 {
   nameRecommend[ AddressUsePointPair(addr,usepoint,sz) ] = nm;
+}
+
+/// \brief Add a new recommended name for a dynamic storage location to the list
+///
+/// This recommended name is assigned a storage location via the DynamicHash mechanism.
+/// The name may be reattached to a Symbol after decompilation.
+/// \param addr is the address of the code use point
+/// \param hash is the hash encoding context for identifying the storage location
+/// \param nm is the recommended name
+void ScopeLocal::addDynamicRecommend(const Address &usepoint,uint8 hash,const string &nm)
+
+{
+  dynRecommend.push_back(DynamicRecommend(usepoint,hash,nm));
 }

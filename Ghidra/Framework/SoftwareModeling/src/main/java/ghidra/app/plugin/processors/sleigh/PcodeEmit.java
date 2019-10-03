@@ -63,7 +63,6 @@ public abstract class PcodeEmit {
 	private long uniquemask;
 	private long uniqueoffset;
 	private AddressSpace overlayspace = null;
-	private AddressSpace overlayedspace = null;
 
 	/**
 	 * Pcode emitter constructor for empty or unimiplemented instructions
@@ -89,8 +88,8 @@ public abstract class PcodeEmit {
 		AddressSpace myspace = startAddress.getAddressSpace();
 		if (myspace.isOverlaySpace()) {
 			overlayspace = myspace;
-			overlayedspace = ((OverlayAddressSpace) myspace).getOverlayedSpace();
-			startAddress = overlayedspace.getAddress(startAddress.getOffset());
+			startAddress = ((OverlayAddressSpace) myspace).getOverlayedSpace().getAddress(
+				startAddress.getOffset());
 		}
 		this.fallOffset = fallOffset;
 		this.uniqueFactory = uniqueFactory;
@@ -184,6 +183,34 @@ public abstract class PcodeEmit {
 	 * addresses
 	 */
 	public abstract void resolveRelatives();
+
+	/**
+	 * Now that all pcode has been generated, including special
+	 * overrides and injections, ensure that a fallthrough override
+	 * adds a final branch to prevent dropping out the bottom.  This
+	 * addresses both fall-through cases:
+	 * <ul>
+	 * <li>last pcode op has fall-through</li>
+	 * <li>internal label used to branch beyond last pcode op</li>
+	 * </ul>
+	 */
+	void resolveFinalFallthrough() {
+		try {
+			if (fallOverride == null || fallOverride.equals(getStartAddress().add(fallOffset))) {
+				return;
+			}
+		}
+		catch (AddressOutOfBoundsException e) {
+			// ignore
+		}
+
+		VarnodeData dest = new VarnodeData();
+		dest.space = fallOverride.getAddressSpace().getPhysicalSpace();
+		dest.offset = fallOverride.getOffset();
+		dest.size = dest.space.getPointerSize();
+
+		dump(startAddress, PcodeOp.BRANCH, new VarnodeData[] { dest }, 1, null);
+	}
 
 	abstract void dump(Address instrAddr, int opcode, VarnodeData[] in, int isize, VarnodeData out);
 
@@ -702,18 +729,18 @@ public abstract class PcodeEmit {
 	}
 
 	void checkOverlays(int opcode, VarnodeData[] in, int isize, VarnodeData out) {
-		if (uniqueFactory == null) {
-			return;
-		}
-		if ((opcode == PcodeOp.LOAD) || (opcode == PcodeOp.STORE)) {
-			int spaceId = (int) in[0].offset;
-			AddressSpace space = uniqueFactory.getAddressFactory().getAddressSpace(spaceId);
-			if (space.isOverlaySpace()) {
-				space = ((OverlayAddressSpace) space).getOverlayedSpace();
-				in[0].offset = space.getBaseSpaceID();
-			}
-		}
 		if (overlayspace != null) {
+			if (uniqueFactory == null) {
+				return;
+			}
+			if ((opcode == PcodeOp.LOAD) || (opcode == PcodeOp.STORE)) {
+				int spaceId = (int) in[0].offset;
+				AddressSpace space = uniqueFactory.getAddressFactory().getAddressSpace(spaceId);
+				if (space.isOverlaySpace()) {
+					space = ((OverlayAddressSpace) space).getOverlayedSpace();
+					in[0].offset = space.getBaseSpaceID();
+				}
+			}
 			for (int i = 0; i < isize; ++i) {
 				VarnodeData v = in[0];
 				if (v.space.equals(overlayspace)) {
@@ -816,8 +843,8 @@ public abstract class PcodeEmit {
 				dest.space = fallOverride.getAddressSpace();
 				dest.offset = fallOverride.getOffset();
 				dest.size = dest.space.getPointerSize();
+				return opcode;
 			}
-			return opcode;
 		}
 
 		//if there is an overriding jump reference, change a conditional jump to an

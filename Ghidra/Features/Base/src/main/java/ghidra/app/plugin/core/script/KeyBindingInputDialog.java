@@ -73,9 +73,6 @@ class KeyBindingInputDialog extends DialogComponentProvider implements KeyEntryL
 		return isCancelled;
 	}
 
-	/**
-	 * @see docking.KeyEntryListener#processEntry(javax.swing.KeyStroke)
-	 */
 	@Override
 	public void processEntry(KeyStroke keyStroke) {
 		ks = keyStroke;
@@ -83,5 +80,9 @@ class KeyBindingInputDialog extends DialogComponentProvider implements KeyEntryL
 
 	KeyStroke getKeyStroke() {
 		return ks;
+	}
+
+	void setKeyStroke(KeyStroke ks) {
+		kbField.setKeyStroke(ks);
 	}
 }

@@ -33,8 +33,6 @@ import ghidra.util.StringFormat;
  */
 public abstract class AbstractIntegerDataType extends BuiltIn implements ArrayStringable {
 
-	private static final long serialVersionUID = 1L;
-
 	static final String C_SIGNED_CHAR = "signed char";
 	static final String C_UNSIGNED_CHAR = "unsigned char";
 	static final String C_SIGNED_SHORT = "short";
@@ -59,7 +57,7 @@ public abstract class AbstractIntegerDataType extends BuiltIn implements ArraySt
 	/**
 	 * Constructor
 	 * @param name a unique signed/unsigned data-type name (also used as the mnemonic)
-	 * @param signed
+	 * @param signed true if signed, false if unsigned
 	 * @param dtm data-type manager whose data organization should be used
 	 */
 	public AbstractIntegerDataType(String name, boolean signed, DataTypeManager dtm) {
@@ -92,7 +90,7 @@ public abstract class AbstractIntegerDataType extends BuiltIn implements ArraySt
 	}
 
 	/**
-	 * Returns true if this is a signed integer data-type
+	 * @return true if this is a signed integer data-type
 	 */
 	public boolean isSigned() {
 		return signed;
@@ -116,7 +114,7 @@ public abstract class AbstractIntegerDataType extends BuiltIn implements ArraySt
 	}
 
 	/**
-	 * Returns the Assembly style data-type declaration
+	 * @return the Assembly style data-type declaration
 	 * for this data-type.
 	 */
 	public String getAssemblyMnemonic() {
@@ -124,7 +122,7 @@ public abstract class AbstractIntegerDataType extends BuiltIn implements ArraySt
 	}
 
 	/**
-	 * Returns the C style data-type mnemonic
+	 * @return the C style data-type mnemonic
 	 * for this data-type.
 	 * NOTE: currently the same as getCDeclaration().
 	 */
@@ -134,7 +132,7 @@ public abstract class AbstractIntegerDataType extends BuiltIn implements ArraySt
 	}
 
 	/**
-	 * Returns the C style data-type declaration
+	 * @return the C style data-type declaration
 	 * for this data-type.  Null is returned if
 	 * no appropriate declaration exists.
 	 */
@@ -158,28 +156,6 @@ public abstract class AbstractIntegerDataType extends BuiltIn implements ArraySt
 		}
 		if (size == dataOrganization.getLongLongSize()) {
 			return signed ? C_SIGNED_LONGLONG : C_UNSIGNED_LONGLONG;
-		}
-		return null;
-	}
-
-	/**
-	 * Get the value of integer data as a BigInteger
-	 * @param buf the data buffer.
-	 * @param settings the settings to use.
-	 * @return BigInteger data value
-	 */
-	public BigInteger getBigIntegerValue(MemBuffer buf, Settings settings) {
-		Object value = getValue(buf, settings, getLength());
-		if (value instanceof Scalar) {
-			Scalar s = (Scalar) value;
-			return s.getBigInteger();
-		}
-		if (value instanceof BigInteger) {
-			return (BigInteger) value;
-		}
-		if (value instanceof Character) {
-			// FIXME: consider flipping around getValue and getBigIntegerValue
-			return BigInteger.valueOf((Character) value);
 		}
 		return null;
 	}
@@ -233,9 +209,6 @@ public abstract class AbstractIntegerDataType extends BuiltIn implements ArraySt
 		return Scalar.class;
 	}
 
-	/**
-	 * @see ghidra.program.model.data.DataType#getRepresentation(ghidra.program.model.mem.MemBuffer, ghidra.docking.settings.Settings, int)
-	 */
 	@Override
 	public String getRepresentation(MemBuffer buf, Settings settings, int length) {
 
@@ -269,6 +242,7 @@ public abstract class AbstractIntegerDataType extends BuiltIn implements ArraySt
 	 * Get integer representation of the big-endian value.
 	 * @param bigInt BigInteger value with the appropriate sign
 	 * @param settings integer format settings (PADDING, FORMAT, etc.)
+	 * @param bitLength number of value bits to be used from bigInt
 	 * @return formatted integer string
 	 */
 	public String getRepresentation(BigInteger bigInt, Settings settings, int bitLength) {
@@ -382,7 +356,7 @@ public abstract class AbstractIntegerDataType extends BuiltIn implements ArraySt
 	 * the element at index <code>i</code> points to the datatype of size <code>i+1</code>,
 	 * with additional types with no size restriction appended after the first 8.
 	 *
-	 * @return
+	 * @return array of all signed integer types (char and bool types excluded)
 	 */
 	private static AbstractIntegerDataType[] getSignedTypes() {
 		if (signedTypes == null) {
@@ -400,7 +374,7 @@ public abstract class AbstractIntegerDataType extends BuiltIn implements ArraySt
 	 * the element at index <code>i</code> points to the datatype of size <code>i+1</code>,
 	 * with additional types with no size restriction appended after the first 8.
 	 *
-	 * @return
+	 * @return array of all unsigned integer types (char and bool types excluded)
 	 */
 	private static AbstractIntegerDataType[] getUnsignedTypes() {
 		if (unsignedTypes == null) {
@@ -455,6 +429,7 @@ public abstract class AbstractIntegerDataType extends BuiltIn implements ArraySt
 	 * Returns all built-in signed integer data-types.
 	 * @param dtm optional program data-type manager, if specified
 	 * generic data-types will be returned in place of fixed-sized data-types.
+	 * @return array of all signed integer types (char and bool types excluded)
 	 */
 	public static AbstractIntegerDataType[] getSignedDataTypes(DataTypeManager dtm) {
 		AbstractIntegerDataType[] dataTypes = getSignedTypes().clone();
@@ -524,6 +499,7 @@ public abstract class AbstractIntegerDataType extends BuiltIn implements ArraySt
 	 * Returns all built-in unsigned integer data-types
 	 * @param dtm optional program data-type manager, if specified
 	 * generic data-types will be returned in place of fixed-sized data-types.
+	 * @return array of all unsigned integer types (char and bool types excluded)
 	 */
 	public static AbstractIntegerDataType[] getUnsignedDataTypes(DataTypeManager dtm) {
 		AbstractIntegerDataType[] dataTypes = getUnsignedTypes().clone();

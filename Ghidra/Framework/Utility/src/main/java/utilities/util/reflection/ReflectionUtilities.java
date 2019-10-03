@@ -27,6 +27,7 @@ public class ReflectionUtilities {
 
 	private static final String JAVA_AWT_PATTERN = "java.awt";
 	private static final String JAVA_REFLECT_PATTERN = "java.lang.reflect";
+	private static final String JDK_INTERNAL_REFLECT_PATTERN = "jdk.internal.reflect";
 	private static final String SWING_JAVA_PATTERN = "java.swing";
 	private static final String SWING_JAVAX_PATTERN = "javax.swing";
 	private static final String SUN_AWT_PATTERN = "sun.awt";
@@ -351,6 +352,23 @@ public class ReflectionUtilities {
 	}
 
 	/**
+	 * A convenience method to create a throwable, filtering boiler-plate Java-related 
+	 * lines (e.g., AWT, Swing, Security, etc).  
+	 * This can be useful for emitting diagnostic stack traces with reduced noise.  
+	 * 
+	 * <p>This method differs from {@link #createJavaFilteredThrowable()} in that this method
+	 * returns a String, which is useful when printing log messages without having to directly
+	 * print the stack trace.
+	 * 
+	 * @return the new throwable
+	 */
+	public static String createJavaFilteredThrowableString() {
+		Throwable t = createThrowableWithStackOlderThan();
+		Throwable filtered = filterJavaThrowable(t);
+		return stackTraceToString(filtered);
+	}
+
+	/**
 	 * A convenience method to take a throwable, filter boiler-plate Java-related 
 	 * lines (e.g., AWT, Swing, Security, etc).  
 	 * This can be useful for emitting diagnostic stack traces with reduced noise.
@@ -361,8 +379,9 @@ public class ReflectionUtilities {
 	public static Throwable filterJavaThrowable(Throwable t) {
 		StackTraceElement[] trace = t.getStackTrace();
 		StackTraceElement[] filtered = filterStackTrace(trace, JAVA_AWT_PATTERN,
-			JAVA_REFLECT_PATTERN, SWING_JAVA_PATTERN, SWING_JAVAX_PATTERN, SECURITY_PATTERN,
-			SUN_AWT_PATTERN, SUN_REFLECT_PATTERN, MOCKIT_PATTERN, JUNIT_PATTERN);
+			JAVA_REFLECT_PATTERN, JDK_INTERNAL_REFLECT_PATTERN, SWING_JAVA_PATTERN,
+			SWING_JAVAX_PATTERN, SECURITY_PATTERN, SUN_AWT_PATTERN, SUN_REFLECT_PATTERN,
+			MOCKIT_PATTERN, JUNIT_PATTERN);
 		t.setStackTrace(filtered);
 		return t;
 	}

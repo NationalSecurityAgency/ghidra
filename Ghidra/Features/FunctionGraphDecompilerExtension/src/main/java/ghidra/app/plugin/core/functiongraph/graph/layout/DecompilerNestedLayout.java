@@ -253,14 +253,11 @@ public class DecompilerNestedLayout extends AbstractFGLayout {
 
 			Vertex2d start = vertex2dFactory.get(startVertex);
 			Vertex2d end = vertex2dFactory.get(endVertex);
-
-			Address startAddress = startVertex.getVertexAddress();
-			Address endAddress = endVertex.getVertexAddress();
-			int compareResult = startAddress.compareTo(endAddress);
-			boolean goingUp = compareResult > 0;
+			boolean goingUp = start.rowIndex > end.rowIndex;
 
 			if (goingUp) {
-
+				// we paint loops going back up differently than other edges so the user can
+				// visually pick out the loops much easier
 				DecompilerBlock block = blockGraphRoot.getBlock(endVertex);
 				DecompilerBlock loop = block.getParentLoop();
 
@@ -383,8 +380,7 @@ public class DecompilerNestedLayout extends AbstractFGLayout {
 		double y2 = y1;
 		articulations.add(new Point2D.Double(x2, y2));
 
-		Column column = vertex2dFactory.getColumn(x1);
-		routeAroundColumnVertices(start, end, column.index, vertex2dFactory, articulations, x2);
+		routeAroundColumnVertices(start, end, vertex2dFactory, articulations, x2);
 
 		double x3 = x2;
 		double y3 = end.getBottom() - VERTEX_BORDER_THICKNESS;
@@ -424,6 +420,11 @@ public class DecompilerNestedLayout extends AbstractFGLayout {
 		routeAroundColumnVertices(start, end, vertex2dFactory, articulations, x3);
 
 		articulations.add(new Point2D.Double(x3, y3));
+
+		double x4 = end.getX();
+		double y4 = y3;
+		articulations.add(new Point2D.Double(x4, y4)); // point is hidden behind the vertex
+
 	}
 
 	private void routeToTheLeft(Vertex2d start, Vertex2d end, FGEdge e,
@@ -501,6 +502,9 @@ public class DecompilerNestedLayout extends AbstractFGLayout {
 		// 
 
 		int delta = end.rowIndex - start.rowIndex;
+		if (delta < 0) {
+			delta = -delta; // going up
+		}
 		int multiplier = EDGE_ENDPOINT_DISTANCE_MULTIPLIER;
 		if (useSimpleRouting()) {
 			multiplier = 1; // we allow edges to overlap with 'simple routing'
@@ -538,19 +542,28 @@ public class DecompilerNestedLayout extends AbstractFGLayout {
 		y2 = Math.min(y2, endYLimit);
 		articulations.add(new Point2D.Double(x2, y2));
 
-		// have not yet seen an example of vertex/edge clipping when routing to the right
-		// routeAroundColumnVertices(start, end, vertex2dFactory, articulations, x2);
+		routeAroundColumnVertices(start, end, vertex2dFactory, articulations, x2);
 
-		double x3 = end.getX();
-		double y3 = y2;
+		double x3 = x2;
+		double y3 = end.getY();
 		articulations.add(new Point2D.Double(x3, y3)); // point is hidden behind the vertex
+
+		double x4 = end.getX();
+		double y4 = y3;
+		articulations.add(new Point2D.Double(x4, y4)); // point is hidden behind the vertex
 	}
 
 	private void routeAroundColumnVertices(Vertex2d start, Vertex2d end,
 			Vertex2dFactory vertex2dFactory, List<Point2D> articulations, double edgeX) {
 
-		int column = end.columnIndex;
-		routeAroundColumnVertices(start, end, column, vertex2dFactory, articulations, edgeX);
+		Column column = vertex2dFactory.getColumn(edgeX);
+		int columnIndex = 0;
+		if (column != null) {
+			// a null column happens with a negative x value that is outside of any column
+			columnIndex = column.index;
+		}
+
+		routeAroundColumnVertices(start, end, columnIndex, vertex2dFactory, articulations, edgeX);
 	}
 
 	private void routeAroundColumnVertices(Vertex2d start, Vertex2d end, int column,
@@ -569,17 +582,26 @@ public class DecompilerNestedLayout extends AbstractFGLayout {
 			startRow = end.rowIndex;
 		}
 
+		List<Vertex2d> toCheck = new LinkedList<>();
 		for (int row = startRow + 1; row < endRow; row++) {
-
 			// assume any other vertex in our column can clip (it will not clip when
 			// the 'spacing' above pushes the edge away from this column, like for
 			// large row delta values)
 			Vertex2d otherVertex = vertex2dFactory.get(row, column);
-			if (otherVertex == null) {
-				continue; // no vertex in this cell
+			if (otherVertex != null) {
+				toCheck.add(otherVertex);
 			}
+		}
 
-			int delta = endRow - startRow;
+		// always process the vertices from the start vertex so that the articulation adjustments
+		// are correct
+		if (!goingDown) {
+			Collections.reverse(toCheck);
+		}
+
+		int delta = endRow - startRow;
+		for (Vertex2d otherVertex : toCheck) {
+
 			int padding = VERTEX_TO_EDGE_AVOIDANCE_PADDING;
 			int distanceSpacing = padding + delta; // adding the delta makes overlap less likely
 
@@ -607,8 +629,7 @@ public class DecompilerNestedLayout extends AbstractFGLayout {
 			// no need to check the 'y' value, as the end vertex is above/below this one
 			if (vertexClipper.isClippingX(otherVertex, edgeX)) {
 
-				/*
-				 
+				/*				 
 					 Must route around this vertex - new points:
 					 -p1 - just above the intersection point
 					 -p2 - just past the left edge

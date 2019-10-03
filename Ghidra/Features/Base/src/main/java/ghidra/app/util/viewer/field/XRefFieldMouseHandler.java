@@ -114,8 +114,6 @@ public class XRefFieldMouseHandler implements FieldMouseHandlerExtension {
 		Program program = navigatable.getProgram();
 
 		CodeUnit cu = getImmediateDataContaining(location, program);
-//		CodeUnit cu = getImmediateDataContaining(toAddress, program);
-
 		if (cu == null) {
 			Listing listing = program.getListing();
 			cu = listing.getCodeUnitContaining(toAddress);

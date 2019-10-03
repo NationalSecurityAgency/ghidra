@@ -35,8 +35,8 @@ class BuildUtil(object):
             try:
                 sp = subprocess.Popen(cmd, stdout=f, stderr=subprocess.PIPE)
             except OSError as e:
-                self.log_err(cmd)
-                self.log_err(e)
+                self.log_err("Command: " + str)
+                self.log_err(e.message)
                 return 0,e.message#raise
             if stdout: f.close()
             out, err = sp.communicate()
@@ -185,25 +185,30 @@ class BuildUtil(object):
         self.num_errors = 0
         self.num_warnings = 0
 
-    def log_pr(self, what):
+    def log_pr(self, prefix, what):
+        if isinstance(what, basestring):
+            log_string = prefix + what
+        else:
+            log_string = prefix + repr(what)
+
         if self.log:
-            self.log.write(what + '\n')
+            self.log.write(log_string + '\n')
             self.log.flush()
         else:
-            print what
+            print log_string
             sys.stdout.flush()
 
     def log_err(self, what):
-        self.log_pr('# ERROR: ' + what)
+        self.log_pr('# ERROR: ', what)
         self.num_errors += 1
 
     def log_warn(self, what):
-        self.log_pr('# WARNING: ' + what)
+        self.log_pr('# WARNING: ', what)
         self.num_warnings += 1
 
     def log_info(self, what):
-        self.log_pr('# INFO: ' + what)
-
+        self.log_pr('# INFO: ', what)
+        
     # create a file with size, type, and symbol info
     # the function is here because it is useful and has no dependencies
 

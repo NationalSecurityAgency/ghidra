@@ -493,7 +493,12 @@ public class PcodeDataTypeManager {
 			FunctionPrototype fproto = new FunctionPrototype(fdef, cspec, voidInputIsVarargs);
 			fproto.buildPrototypeXML(resBuf, this);
 		}
-		else if (type instanceof AbstractIntegerDataType) {
+		else if (type instanceof BooleanDataType) {
+			SpecXmlUtils.encodeStringAttribute(resBuf, "metatype", "bool");
+			SpecXmlUtils.encodeSignedIntegerAttribute(resBuf, "size", type.getLength());
+			resBuf.append('>');
+		}
+		else if (type instanceof AbstractIntegerDataType) { // must handle char and bool above
 			boolean signed = ((AbstractIntegerDataType) type).isSigned();
 			int sz = type.getLength();
 			if (sz <= 0) {
@@ -501,11 +506,6 @@ public class PcodeDataTypeManager {
 			}
 			SpecXmlUtils.encodeStringAttribute(resBuf, "metatype", signed ? "int" : "uint");
 			SpecXmlUtils.encodeSignedIntegerAttribute(resBuf, "size", sz);
-			resBuf.append('>');
-		}
-		else if (type instanceof BooleanDataType) {
-			SpecXmlUtils.encodeStringAttribute(resBuf, "metatype", "bool");
-			SpecXmlUtils.encodeSignedIntegerAttribute(resBuf, "size", type.getLength());
 			resBuf.append('>');
 		}
 		else if (type instanceof AbstractFloatDataType) {

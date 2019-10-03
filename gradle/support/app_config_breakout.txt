@@ -82,6 +82,7 @@ AbstractToolSavingTest
 AbstractVersionControlActionTest  
 AbstractVTCorrelatorTest  
 AbstractVTMarkupItemTest  
+CallTreePluginTest
 DiffTestAdapter  
 DWARFTestBase  
 AbstractSelfSimilarCorrelatorTest  

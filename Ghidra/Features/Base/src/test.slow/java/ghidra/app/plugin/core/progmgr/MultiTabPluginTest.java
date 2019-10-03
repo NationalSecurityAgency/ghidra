@@ -517,7 +517,17 @@ public class MultiTabPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		System.out.println("Total width: " + totalWidth + " out of " + panelWidth);
 	}
 
-	private void assertShowing(Program p) {
+	private void assertShowing(Program p) throws Exception {
+		waitForConditionWithoutFailing(() -> {
+			boolean isHidden = runSwing(() -> panel.isHidden(p));
+			return !isHidden;
+		});
+
+		boolean isHidden = runSwing(() -> panel.isHidden(p));
+		if (isHidden) {
+			capture(tool.getToolFrame(), "multi.tabs.program2.should.be.showing");
+		}
+
 		assertFalse(runSwing(() -> panel.isHidden(p)));
 	}
 

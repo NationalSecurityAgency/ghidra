@@ -168,6 +168,10 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 		scriptTable.repaint();
 	}
 
+	void keyBindingUpdated() {
+		scriptTable.repaint();
+	}
+
 	void renameScript() {
 		ResourceFile script = getSelectedScript();
 		ResourceFile directory = script.getParentFile();

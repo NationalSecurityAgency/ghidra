@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +15,10 @@
  */
 package ghidra.framework.plugintool;
 
-import ghidra.framework.model.*;
-
 import java.io.*;
 import java.util.Set;
+
+import ghidra.framework.model.*;
 
 public class ToolServicesAdapter implements ToolServices {
 
@@ -43,8 +42,8 @@ public class ToolServicesAdapter implements ToolServices {
 	}
 
 	@Override
-	public void exportTool(File location, Tool tool) throws FileNotFoundException, IOException {
-		// override
+	public File exportTool(ToolTemplate tool) throws FileNotFoundException, IOException {
+		return null;
 	}
 
 	@Override

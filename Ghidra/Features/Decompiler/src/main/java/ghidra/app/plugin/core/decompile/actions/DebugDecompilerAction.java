@@ -15,60 +15,33 @@
  */
 package ghidra.app.plugin.core.decompile.actions;
 
-import ghidra.app.decompiler.component.DecompilerController;
-import ghidra.app.plugin.core.decompile.DecompilerActionContext;
-import ghidra.util.Msg;
-import ghidra.util.filechooser.ExtensionFileFilter;
-
 import java.io.File;
 
 import javax.swing.JComponent;
 
-import docking.ActionContext;
-import docking.action.DockingAction;
 import docking.action.MenuData;
 import docking.widgets.OptionDialog;
 import docking.widgets.filechooser.GhidraFileChooser;
+import ghidra.app.decompiler.component.DecompilerController;
+import ghidra.app.plugin.core.decompile.DecompilerActionContext;
+import ghidra.util.filechooser.ExtensionFileFilter;
 
-public class DebugDecompilerAction extends DockingAction {
+public class DebugDecompilerAction extends AbstractDecompilerAction {
 	private final DecompilerController controller;
 
-	public DebugDecompilerAction(String owner, DecompilerController controller) {
-		super("Debug Function Decompilation", owner);
+	public DebugDecompilerAction(DecompilerController controller) {
+		super("Debug Function Decompilation");
 		this.controller = controller;
 		setMenuBarData(new MenuData(new String[] { "Debug Function Decompilation" }, "xDebug"));
 	}
 
 	@Override
-	public boolean isEnabledForContext(ActionContext context) {
-		if (!(context instanceof DecompilerActionContext)) {
-			return false;
-		}
-
-		DecompilerActionContext decompilerActionContext = (DecompilerActionContext) context;
-		if (decompilerActionContext.isDecompiling()) {
-			// Let this through here and handle it in actionPerformed().  This lets us alert 
-			// the user that they have to wait until the decompile is finished.  If we are not
-			// enabled at this point, then the keybinding will be propagated to the global 
-			// actions, which is not what we want.
-			return true;
-		}
-
+	protected boolean isEnabledForDecompilerContext(DecompilerActionContext context) {
 		return controller.getFunction() != null;
 	}
 
 	@Override
-	public void actionPerformed(ActionContext context) {
-		// Note: we intentionally do this check here and not in isEnabledForContext() so 
-		// that global events do not get triggered.
-		DecompilerActionContext decompilerActionContext = (DecompilerActionContext) context;
-		if (decompilerActionContext.isDecompiling()) {
-			Msg.showInfo(getClass(),
-				context.getComponentProvider().getComponent(),
-				"Decompiler Action Blocked", "You cannot perform Decompiler actions while the Decompiler is busy");
-			return;
-		}
-
+	protected void decompilerActionPerformed(DecompilerActionContext context) {
 		JComponent parentComponent = controller.getDecompilerPanel();
 		GhidraFileChooser fileChooser = new GhidraFileChooser(parentComponent);
 		fileChooser.setTitle("Please Choose Output File");

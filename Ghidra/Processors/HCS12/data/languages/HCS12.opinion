@@ -1,0 +1,6 @@
+<opinions>
+    <constraint loader="Executable and Linking Format (ELF)" compilerSpecID="default">
+        <constraint primary="53"    processor="HCS12"   endian="big"    size="24" variant="default"/>
+    </constraint>
+</opinions>
+

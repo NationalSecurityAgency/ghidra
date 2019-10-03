@@ -21,6 +21,8 @@ import java.io.RandomAccessFile;
 import ghidra.app.util.bin.StructConverter;
 import ghidra.app.util.bin.format.FactoryBundledWithBinaryReader;
 import ghidra.app.util.bin.format.Writeable;
+import ghidra.app.util.bin.format.ne.InvalidWindowsHeaderException;
+import ghidra.app.util.bin.format.ne.WindowsHeader;
 import ghidra.program.model.data.*;
 import ghidra.util.DataConverter;
 import ghidra.util.exception.DuplicateNameException;
@@ -248,14 +250,23 @@ public class DOSHeader implements StructConverter, Writeable {
     public int e_lfanew() {
         return e_lfanew;
     }
-    /**
-     * Returns true if a new EXE header exists.
-     * @return true if a new EXE header exists
-     */
-    public boolean hasNewExeHeader() {
+    
+	/**
+	 * Returns true if a new EXE header exists.
+	 * @return true if a new EXE header exists
+	 */
+	public boolean hasNewExeHeader() {
         if (e_lfanew >= 0 && e_lfanew <= 0x10000) {
         	if (e_lfarlc == 0x40) {
-        		return true;
+				// There are some non-NE files out there than may have e_lfarlc == 0x40, so we need 
+				// to actually read the bytes at e_lfanew and check for the required NE signature.
+				try {
+					new WindowsHeader(reader, null, (short) e_lfanew);
+					return true;
+				}
+				catch (InvalidWindowsHeaderException | IOException e) {
+					return false;
+				}
         	}
         }
         return false;
@@ -271,7 +282,8 @@ public class DOSHeader implements StructConverter, Writeable {
     /**
      * @see ghidra.app.util.bin.StructConverter#toDataType()
      */
-    public DataType toDataType() throws DuplicateNameException {
+    @Override
+	public DataType toDataType() throws DuplicateNameException {
 		StructureDataType struct = new StructureDataType(NAME, 0);
         struct.add(new ArrayDataType(ASCII,2,1));
         for (int i=1; i <= 13; i++) {
@@ -407,6 +419,7 @@ public class DOSHeader implements StructConverter, Writeable {
 	/**
 	 * @see ghidra.app.util.bin.format.Writeable#write(java.io.RandomAccessFile, ghidra.util.DataConverter)
 	 */
+	@Override
 	public void write(RandomAccessFile raf, DataConverter dc) throws IOException {
 		raf.write(dc.getBytes(e_magic));
 		raf.write(dc.getBytes(e_cblp));

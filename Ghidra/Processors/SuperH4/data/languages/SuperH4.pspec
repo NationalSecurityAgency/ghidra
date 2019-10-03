@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<processor_spec>
+  <properties>
+    <property key="assemblyRating:SuperH4:BE:32:default" value="PLATINUM"/>
+    <property key="assemblyRating:SuperH4:LE:32:default" value="PLATINUM"/>
+  </properties>
+  <programcounter register="PC"/>
+    <context_data>
+    <tracked_set space="register">
+      <set name="FPSCR" val="0x40001"/>
+    </tracked_set>
+  </context_data>
+</processor_spec>

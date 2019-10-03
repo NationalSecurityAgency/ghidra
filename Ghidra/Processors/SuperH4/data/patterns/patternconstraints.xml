@@ -1,0 +1,5 @@
+<patternconstraints>
+  <language id="SuperH4:LE:32:*">
+    <patternfile>SuperH4_patterns.xml</patternfile>
+  </language>
+</patternconstraints>

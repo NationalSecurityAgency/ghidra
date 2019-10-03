@@ -197,6 +197,25 @@
         jar file in one of the <A href=
         "help/topics/FrontEndPlugin/Edit_Plugin_Path.htm#SearchOrder">locations</A> where Ghidra
         will search for available Plugins.</I>&nbsp;</P>
+        
+        
+        <H4><A name="Export_Default_Tool"></A>Export Default Tool</H4>
+
+	      <BLOCKQUOTE>
+	        <P>Exports the chosen tool <b>without including user configuration information</b>.
+	        This allows the user to export a tool without including personal settings.  This
+	        may be helpful if the user is going to share the exported tool with others.	        
+	        </P>
+	        <P>This action is only available from within a running tool via 
+	        <B><FONT size="4">
+	           File <IMG src="../../shared/arrow.gif"> 
+	           Export <IMG src="../../shared/arrow.gif"> 
+	           Export Default Tool...
+	           </FONT>
+	           </B>
+	        </P>
+	      </BLOCKQUOTE>
+        
       </BLOCKQUOTE>
 
       <H3>Import Tool</H3>
@@ -204,55 +223,56 @@
       <BLOCKQUOTE>
         <H4><A name="Import_Tool"></A>Import Tool to Tool Chest</H4>
 
-        <P>Use the Import Tool option to import an <A href="#Export_Tool">exported tool</A>&nbsp;
-        into Ghidra.&nbsp; The imported tool will appear in your <A href=
-        "help/topics/FrontEndPlugin/Ghidra_Front_end.htm#ToolChest">Tool Chest</A> with the other
-        tools. If the name of the imported tool already exists, a one-up number is assigned to the
-        newly imported tool to make the name unique.</P>
+		<BLOCKQUOTE>
+	        <P>Use the Import Tool option to import an <A href="#Export_Tool">exported tool</A>&nbsp;
+	        into Ghidra.&nbsp; The imported tool will appear in your <A href=
+	        "help/topics/FrontEndPlugin/Ghidra_Front_end.htm#ToolChest">Tool Chest</A> with the other
+	        tools. If the name of the imported tool already exists, a one-up number is assigned to the
+	        newly imported tool to make the name unique.</P>
+	
+	        <P>To import a tool,</P>
+	
+	        <OL>
+	          <LI>From the Ghidra Project Window, select <B><FONT size="4">Tools</FONT></B><IMG src=
+	          "../../shared/arrow.gif"> <B><FONT size="4">Import Tool to Tool Chest...</FONT></B></LI>
+	
+	          <LI>Select a file with a ".tool" or ".obj" extension.</LI>
+	
+	          <LI>Click on the <B><FONT size="4">Import</FONT></B> button.</LI>
+	        </OL>
+	
+	        <P>If the import was successful, an icon for the tool is added to the Tool Chest panel. Any
+	        errors during the import are reported in the <A href=
+	        "help/topics/FrontEndPlugin/Ghidra_Front_end.htm#StatusWindow">Status</A> area on the
+	        Ghidra Project Window.</P>
+	
+	        <P><I><IMG src="../../shared/note.png"> If the tool that you are importing contains Plugins
+	        that are not part of Ghidra, you must have the jar file containing the class files for the
+	        Plugins. Place the jar file in one of the <A href=
+	        "help/topics/FrontEndPlugin/Edit_Plugin_Path.htm#SearchOrder">locations</A> where Ghidra
+	        will search for available Plugins and restart Ghidra.</I></P>
+      	</BLOCKQUOTE>
 
-        <P>To import a tool,</P>
-
-        <OL>
-          <LI>From the Ghidra Project Window, select <B><FONT size="4">Tools</FONT></B><IMG src=
-          "../../shared/arrow.gif"> <B><FONT size="4">Import Tool to Tool Chest...</FONT></B></LI>
-
-          <LI>Select a file with a ".tool" or ".obj" extension.</LI>
-
-          <LI>Click on the <B><FONT size="4">Import</FONT></B> button.</LI>
-        </OL>
-
-        <P>If the import was successful, an icon for the tool is added to the Tool Chest panel. Any
-        errors during the import are reported in the <A href=
-        "help/topics/FrontEndPlugin/Ghidra_Front_end.htm#StatusWindow">Status</A> area on the
-        Ghidra Project Window.</P>
-
-        <P><I><IMG src="../../shared/note.png"> If the tool that you are importing contains Plugins
-        that are not part of Ghidra, you must have the jar file containing the class files for the
-        Plugins. Place the jar file in one of the <A href=
-        "help/topics/FrontEndPlugin/Edit_Plugin_Path.htm#SearchOrder">locations</A> where Ghidra
-        will search for available Plugins and restart Ghidra.</I></P>
-      </BLOCKQUOTE>
-
-      <H4><A name="Import_Ghidra_Tools"></A>Import Default Tools to Tool Chest</H4>
-
-      <BLOCKQUOTE>
-        <P>The default tool for the <A href="help/topics/CodeBrowserPlugin/CodeBrowser.htm">Code
-        Browser</A> is part of the Ghidra installation, and can be added to your Tool Chest at any
-        time. So if you <A href="#Delete_Tool">delete</A> the default tool from your Tool Chest,
-        you can always recover them by using the <B><FONT size="4">Import Default Tools to Tool
-        Chest</FONT></B> option.</P>
-
-        <P>To import default tools,</P>
-
-        <OL>
-          <LI>From the <A href="help/topics/FrontEndPlugin/Ghidra_Front_end.htm">Ghidra Project
-          Window</A>, select <B><FONT size="4">Tools</FONT></B><IMG src="../../shared/arrow.gif">
-          <FONT size="4"><B>Import Default...</B>.</FONT></LI>
-
-          <LI><FONT size="4">A dialog is displayed that allows you to selectively import default
-          tools. Select the tools you want to import and then select <B>OK</B>.</FONT></LI>
-        </OL>
-      </BLOCKQUOTE>
+	      <H4><A name="Import_Ghidra_Tools"></A>Import Default Tools to Tool Chest</H4>
+	
+	      <BLOCKQUOTE>
+	        <P>The default tool for the <A href="help/topics/CodeBrowserPlugin/CodeBrowser.htm">Code
+	        Browser</A> is part of the Ghidra installation, and can be added to your Tool Chest at any
+	        time. So if you <A href="#Delete_Tool">delete</A> the default tool from your Tool Chest,
+	        you can always recover them by using the <B><FONT size="4">Import Default Tools to Tool
+	        Chest</FONT></B> option.</P>
+	
+	        <P>To import default tools,</P>
+	
+	        <OL>
+	          <LI>From the <A href="help/topics/FrontEndPlugin/Ghidra_Front_end.htm">Ghidra Project
+	          Window</A>, select <B><FONT size="4">Tools</FONT></B><IMG src="../../shared/arrow.gif">
+	          <FONT size="4"><B>Import Default...</B>.</FONT></LI>
+	
+	          <LI><FONT size="4">A dialog is displayed that allows you to selectively import default
+	          tools. Select the tools you want to import and then select <B>OK</B>.</FONT></LI>
+	        </OL>
+	      </BLOCKQUOTE>
 
       <DIV align="center">
         <IMG src="images/ImportDefaultToolsDialog.png"><BR>
@@ -265,6 +285,10 @@
           CodeBrowser_1.</LI>
         </OL>
       </BLOCKQUOTE>
+      </BLOCKQUOTE>
+
+
+
 
       <H3><A name="Run_Tool"></A>Run Tool</H3>
 

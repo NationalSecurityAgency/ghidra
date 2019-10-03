@@ -109,6 +109,9 @@ rootProject.assembleDistribution {
 		with yajswCopySpec
 		from generateGhidraServerClasspath
 	}
+	into (getZipPath(this.project) + "/os") {
+		from (projectDir.toString() + "/os")
+	}
 }
 
 /*********************************************************************************

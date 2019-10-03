@@ -183,7 +183,9 @@ class LocationReferencesHighlighter {
 		DataType locationDataType = null;
 		if (enable) {
 			locationDataType = dataTypeDescriptor.getSourceDataType();
+			locationDataType = ReferenceUtils.getBaseDataType(locationDataType);
 		}
+
 		dataTypeManagerService.setDataTypeSelected(locationDataType);
 	}
 

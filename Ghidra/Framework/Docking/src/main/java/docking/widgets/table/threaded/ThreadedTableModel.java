@@ -162,7 +162,7 @@ public abstract class ThreadedTableModel<ROW_OBJECT, DATA_SOURCE>
 	 * 
 	 * @param monitor the monitor
 	 * @return the loaded data
-	 * @throws CancelledException 
+	 * @throws CancelledException if the load was cancelled
 	 */
 	final List<ROW_OBJECT> load(TaskMonitor monitor) throws CancelledException {
 		if (loadIncrementally) {
@@ -371,7 +371,7 @@ public abstract class ThreadedTableModel<ROW_OBJECT, DATA_SOURCE>
 	 */
 	public boolean hasFitler() {
 		TableFilter<ROW_OBJECT> currentFilter = getTableFilter();
-		return !(currentFilter instanceof NullTableFilter);
+		return !currentFilter.isEmpty();
 	}
 
 	/**
@@ -772,7 +772,7 @@ public abstract class ThreadedTableModel<ROW_OBJECT, DATA_SOURCE>
 	 * Adds a listener that will be notified of the first table load of this model.  After the
 	 * initial load, the listener is removed.
 	 *
-	 * @param listener
+	 * @param listener the listener
 	 */
 	public void addInitialLoadListener(ThreadedTableModelListener listener) {
 		listeners.add(new OneTimeListenerWrapper(listener));

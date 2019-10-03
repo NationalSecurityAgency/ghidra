@@ -100,6 +100,9 @@ public class ScalarOperandListingHover extends AbstractScalarOperandHover
 		InstructionPrototype prototype = instruction.getPrototype();
 		List<Object> list =
 			prototype.getOpRepresentationList(opIndex, instruction.getInstructionContext());
+		if (list == null) {
+			return null;
+		}
 		return list.get(loc.getSubOperandIndex());
 	}
 

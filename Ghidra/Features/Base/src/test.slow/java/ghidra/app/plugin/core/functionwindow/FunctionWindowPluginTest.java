@@ -15,11 +15,17 @@
  */
 package ghidra.app.plugin.core.functionwindow;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
+
+import javax.swing.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.table.*;
 
 import org.junit.*;
 
 import docking.ComponentProvider;
+import docking.widgets.combobox.GComboBox;
+import docking.widgets.dialogs.SettingsDialog;
 import docking.widgets.table.GTable;
 import docking.widgets.table.threaded.ThreadedTableModel;
 import ghidra.app.plugin.core.clear.ClearCmd;
@@ -97,6 +103,84 @@ public class FunctionWindowPluginTest extends AbstractGhidraHeadedIntegrationTes
 
 		assertEquals(functionTable.getRowCount(), 0);
 		loadProgram("notepad");
+	}
+
+	@Test
+	public void testChangeSettings() throws Exception {
+		//
+		// This test is for a regression bug.  There were multiple exceptions happening when
+		// executing the code paths below.
+		//
+
+		int row = 0;
+		int column = getColumnIndex("Function Size");
+		String startValue = getRenderedTableCellValue(functionTable, row, column);
+
+		JPopupMenu menu = functionTable.getTableColumnPopupMenu(column);
+		JMenuItem item = (JMenuItem) menu.getComponent(1);
+		assertEquals("Column Settings...", item.getText());
+
+		pressButton(item, false);
+
+		SettingsDialog dialog = waitForDialogComponent(SettingsDialog.class);
+		int editRow = getFormatRow(dialog);
+		//triggerEdit(dialog, editRow, 1);
+		editCell(dialog.getTable(), editRow, 1);
+		setComboValue(dialog, "hex");
+		endEdit(dialog);
+		pressButtonByText(dialog, "Dismiss");
+
+		String endValue = getRenderedTableCellValue(functionTable, row, column);
+		assertNotEquals("Changing the format did not change the view", startValue, endValue);
+	}
+
+	private int getFormatRow(SettingsDialog dialog) {
+		GTable table = dialog.getTable();
+		int column = getColumnIndex(table, "Name");
+		int n = table.getRowCount();
+		for (int i = 0; i < n; i++) {
+			int row = i;
+			Object name = runSwing(() -> table.getValueAt(row, column));
+			if ("Format".equals(name)) {
+				return i;
+			}
+		}
+
+		fail("Unable to find the 'Format' row in the Settings Dialog");
+		return -1;
+	}
+
+	private int getColumnIndex(String text) {
+		return getColumnIndex(functionTable, text);
+	}
+
+	private int getColumnIndex(JTable table, String text) {
+		TableColumnModel columnModel = table.getColumnModel();
+		int n = columnModel.getColumnCount();
+		for (int i = 0; i < n; i++) {
+			TableColumn column = columnModel.getColumn(i);
+			if (text.equals(column.getIdentifier().toString())) {
+				return i;
+			}
+		}
+		fail("Could not find column '" + text + "'");
+		return -1;
+	}
+
+	private void setComboValue(SettingsDialog d, String string) {
+		GTable table = d.getTable();
+		TableCellEditor activeEditor = runSwing(() -> table.getCellEditor());
+		assertNotNull("Table should be editing, but is not", activeEditor);
+
+		assertTrue(activeEditor.getClass().getSimpleName().contains("SettingsEditor"));
+		@SuppressWarnings("unchecked")
+		GComboBox<String> combo = (GComboBox<String>) getInstanceField("comboBox", activeEditor);
+		setComboBoxSelection(combo, string);
+	}
+
+	private void endEdit(SettingsDialog d) {
+		GTable table = d.getTable();
+		runSwing(() -> table.editingStopped(new ChangeEvent(table)));
 	}
 
 	private void waitForNotBusy(GTable table) {

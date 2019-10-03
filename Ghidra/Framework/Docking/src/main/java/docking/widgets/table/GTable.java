@@ -15,9 +15,9 @@
  */
 package docking.widgets.table;
 
-import static docking.DockingUtils.CONTROL_KEY_MODIFIER_MASK;
-import static docking.action.MenuData.NO_MNEMONIC;
-import static java.awt.event.InputEvent.SHIFT_DOWN_MASK;
+import static docking.DockingUtils.*;
+import static docking.action.MenuData.*;
+import static java.awt.event.InputEvent.*;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -448,8 +448,15 @@ public class GTable extends JTable implements KeyStrokeConsumer {
 	}
 
 	/**
-	 * Enables the keyboard actions to pass through this table
-	 * and up the component hierarchy.
+	 * Enables the keyboard actions to pass through this table and up the component hierarchy.
+	 * Specifically, passing true to this method allows unmodified keystrokes to work
+	 * in the tool when this table is focused.  Modified keystrokes, like <code>
+	 * Ctrl-C</code>, will work at all times.   Finally, if true is passed to this
+	 * method, then the {@link #setAutoLookupColumn(int) auto lookup} feature is
+	 * disabled.
+	 * 
+	 * <p>The default state is for actions to be disabled.
+	 * 
 	 * @param b true allows keyboard actions to pass up the component hierarchy.
 	 */
 	public void setActionsEnabled(boolean b) {
@@ -1496,7 +1503,8 @@ public class GTable extends JTable implements KeyStrokeConsumer {
 		}
 	}
 
-	private abstract static class GTableAction extends DockingAction {
+	private abstract static class GTableAction extends DockingAction
+			implements ComponentBasedDockingAction {
 
 		GTableAction(String name, String owner) {
 			super(name, owner);
@@ -1513,6 +1521,12 @@ public class GTable extends JTable implements KeyStrokeConsumer {
 
 		@Override
 		public boolean isEnabledForContext(ActionContext context) {
+			Component sourceComponent = context.getSourceComponent();
+			return sourceComponent instanceof GTable;
+		}
+
+		@Override
+		public boolean isValidComponentContext(ActionContext context) {
 			Component sourceComponent = context.getSourceComponent();
 			return sourceComponent instanceof GTable;
 		}

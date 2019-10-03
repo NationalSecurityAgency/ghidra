@@ -15,8 +15,7 @@
  */
 package ghidra.app.script;
 
-import static ghidra.util.HTMLUtilities.HTML_NEW_LINE;
-import static ghidra.util.HTMLUtilities.HTML_SPACE;
+import static ghidra.util.HTMLUtilities.*;
 
 import java.io.*;
 import java.util.List;
@@ -30,7 +29,6 @@ import org.apache.commons.lang3.StringUtils;
 
 import docking.actions.KeyBindingUtils;
 import generic.jar.ResourceFile;
-import ghidra.util.HTMLUtilities;
 import ghidra.util.Msg;
 import resources.ResourceManager;
 
@@ -431,41 +429,39 @@ public class ScriptInfo {
 	}
 
 	/**
-	 * Returns a string designed to be used as a tool tip
-	 * for describing this script.
+	 * Returns a string designed to be used as a tool tip for describing this script
 	 * @return a string designed to be used as a tool tip
 	 */
 	public String getToolTipText() {
-		String htmlDescription = (description == null) ? "No Description"
-				: HTMLUtilities.escapeHTML(description).replaceAll("\n",
-					HTML_NEW_LINE + HTML_SPACE);
-		String htmlAuthor = HTMLUtilities.bold("Author:") + HTML_SPACE +
-			HTMLUtilities.escapeHTML(toToolTip(author));
-		String htmlCategory = HTMLUtilities.bold("Category:") + HTML_SPACE +
-			HTMLUtilities.escapeHTML(toToolTip(StringUtils.join(category, DELIMITTER)));
+		String htmlDescription = "No Description";
+		if (description != null) {
+			htmlDescription = escapeHTML(description);
+			htmlDescription = htmlDescription.replaceAll("\n", HTML_NEW_LINE + HTML_SPACE);
+		}
 
-		String htmlKeyBinding =
-			HTMLUtilities.bold("Key Binding:") + HTML_SPACE + getKeybindingToolTip();
-		String htmlMenuPath = HTMLUtilities.bold("Menu Path:") + HTML_SPACE +
-			HTMLUtilities.escapeHTML(toToolTip(StringUtils.join(menupath, DELIMITTER)));
+		String space = HTML_SPACE;
+		String htmlAuthor = bold("Author:") + space + escapeHTML(toString(author));
+		String htmlCategory = bold("Category:") + space + escapeHTML(toString(category));
+
+		String htmlKeyBinding = bold("Key Binding:") + space + getKeybindingToolTip();
+		String htmlMenuPath = bold("Menu Path:") + space + escapeHTML(toString(menupath));
 
 		StringBuilder buffer = new StringBuilder();
-		buffer.append("<h3>").append(HTML_SPACE).append(HTMLUtilities.escapeHTML(getName())).append(
-			"</h3>");
+		buffer.append("<h3>").append(space).append(escapeHTML(getName())).append("</h3>");
 		buffer.append(HTML_NEW_LINE);
-		buffer.append(HTML_SPACE).append(htmlDescription);
-		buffer.append(HTML_NEW_LINE);
-		buffer.append(HTML_NEW_LINE);
-		buffer.append(HTML_SPACE).append(htmlAuthor);
-		buffer.append(HTML_NEW_LINE);
-		buffer.append(HTML_SPACE).append(htmlCategory);
-		buffer.append(HTML_NEW_LINE);
-		buffer.append(HTML_SPACE).append(htmlKeyBinding);
-		buffer.append(HTML_NEW_LINE);
-		buffer.append(HTML_SPACE).append(htmlMenuPath);
+		buffer.append(space).append(htmlDescription);
 		buffer.append(HTML_NEW_LINE);
 		buffer.append(HTML_NEW_LINE);
-		return HTMLUtilities.wrapAsHTML(buffer.toString());
+		buffer.append(space).append(htmlAuthor);
+		buffer.append(HTML_NEW_LINE);
+		buffer.append(space).append(htmlCategory);
+		buffer.append(HTML_NEW_LINE);
+		buffer.append(space).append(htmlKeyBinding);
+		buffer.append(HTML_NEW_LINE);
+		buffer.append(space).append(htmlMenuPath);
+		buffer.append(HTML_NEW_LINE);
+		buffer.append(HTML_NEW_LINE);
+		return wrapAsHTML(buffer.toString());
 	}
 
 	private String getKeybindingToolTip() {
@@ -482,11 +478,13 @@ public class ScriptInfo {
 		return KeyBindingUtils.parseKeyStroke(keyStroke);
 	}
 
-	private String toToolTip(String string) {
-		if (string == null || string.length() == 0) {
-			return "";
-		}
-		return string;
+	private String toString(String string) {
+		return StringUtils.defaultString(string);
+	}
+
+	private String toString(String[] path) {
+		String joined = StringUtils.join(path, DELIMITTER);
+		return StringUtils.defaultString(joined);
 	}
 
 	public boolean hasErrors() {

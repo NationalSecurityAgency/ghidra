@@ -56,7 +56,7 @@ public class ContextRegisterFilter {
 	public boolean allows(List<ContextRegisterInfo> contextRegisterInfos) {
 		for (ContextRegisterInfo cInfo : contextRegisterInfos) {
 			if (contextRegisters.contains(cInfo.getContextRegister())) {
-				if (!values.get(cInfo.getContextRegister()).equals(cInfo.getValueAsBigInteger())) {
+				if (!values.get(cInfo.getContextRegister()).equals(cInfo.getValue())) {
 					return false;
 				}
 			}

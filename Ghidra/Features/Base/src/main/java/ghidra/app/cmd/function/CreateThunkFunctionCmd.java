@@ -228,11 +228,6 @@ public class CreateThunkFunctionCmd extends BackgroundCommand {
 			thunkFunction = functionMgr.createThunkFunction(name, namespace, entry, body,
 				referencedFunction, source);
 		}
-		catch (DuplicateNameException e) {
-			Msg.error(this, "Dynamically generated thunk name conlict: " + e.getMessage());
-			setStatusMsg("Thunk name conflict: " + e.getMessage());
-			return false;
-		}
 		catch (OverlappingFunctionException e) {
 			setStatusMsg("Specified body overlaps existing function(s): " + e.getMessage());
 			return false;
@@ -690,7 +685,9 @@ public class CreateThunkFunctionCmd extends BackgroundCommand {
 			for (Iterator<Varnode> iterator = setRegisters.iterator(); iterator.hasNext();) {
 				Varnode rvnode = iterator.next();
 				Register reg = program.getRegister(rvnode);
-				if (reg.isHidden()) {
+				// the register pcode access could have fallen in the middle of a valid register
+				//  thus no register will exist at the varnode
+				if (reg != null && reg.isHidden()) {
 					iterator.remove();
 				}
 			}
