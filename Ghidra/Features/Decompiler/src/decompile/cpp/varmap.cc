@@ -289,7 +289,7 @@ bool RangeHint::compareRanges(const RangeHint *a,const RangeHint *b)
   type_metatype bmeta = b->type->getMetatype();
   if (ameta != bmeta)
     return (ameta < bmeta);		// Order more specific types first
-  return true;
+  return false; //comp(x, x) must be false for strict weak ordering
 }
 
 /// \param spc is the (stack) address space associated with this function's local variables
