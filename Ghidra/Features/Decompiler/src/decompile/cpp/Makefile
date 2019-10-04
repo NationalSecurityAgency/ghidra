@@ -33,6 +33,16 @@ ifeq ($(OS),Darwin)
   OSDIR=osx64
 endif
 
+ifeq ($(OS),OpenBSD)
+ifeq ($(ARCH),x86_64)
+  ARCH_TYPE=-m64
+  OSDIR=openbsd64
+else
+  ARCH_TYPE=-m32
+  OSDIR=openbsd32
+endif
+endif
+
 CC=gcc
 CXX=g++
 
@@ -313,7 +323,7 @@ tags:
 
 # Rules to build the different dependency files
 com_dbg/depend:	$(COMMANDLINE_NAMES:%=%.cc)
-	mkdir -p com_dbg 
+	mkdir -p com_dbg
 	@set -e; rm -f $@; \
 	$(CXX) -MM $(COMMANDLINE_DEBUG) $^ > $@.$$$$; \
 	sed 's,\(.*\)\.o[ :]*,com_dbg/\1.o $@ : ,g' < $@.$$$$ > $@; \
@@ -334,7 +344,7 @@ ghi_dbg/depend:	$(GHIDRA_NAMES_DBG:%=%.cc)
 	rm -f $@.$$$$
 
 ghi_opt/depend:	$(GHIDRA_NAMES:%=%.cc)
-	mkdir -p ghi_opt 
+	mkdir -p ghi_opt
 	@set -e; rm -f $@; \
 	$(CXX) -MM $(GHIDRA_OPT) $^ > $@.$$$$; \
 	sed 's,\(.*\)\.o[ :]*,ghi_opt/\1.o $@ : ,g' < $@.$$$$ > $@; \
@@ -380,9 +390,8 @@ clean:
 resetgcov:
 	rm -f *.gcov com_dbg/*.gcda
 
-reallyclean:	clean	
+reallyclean:	clean
 	rm -rf coreext_*.cc coreext_*.hh ghidraext_*.cc ghidraext_*.hh consoleext_*.cc consoleext_*.hh
 	rm -rf grammar.cc xml.cc pcodeparse.cc slghparse.cc slghparse.tab.hh slghscan.cc ruleparse.cc ruleparse.tab.hh
 	rm -rf com_dbg com_opt ghi_dbg ghi_opt sla_dbg sla_opt
 	rm -f $(EXECS) TAGS *~
-

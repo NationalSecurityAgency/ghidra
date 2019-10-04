@@ -6,7 +6,7 @@
 
 defaultTasks 'assemble'
 
-ext.supportedPlatforms = ['osx64', 'linux64']
+ext.supportedPlatforms = ['osx64', 'linux64', 'openbsd64']
 
 ext.binutilsResource = new File("${binutilsLocation}/${binutils}.tar.bz2")
 
@@ -31,6 +31,10 @@ model {
 			architecture 'x86_64'
 			operatingSystem 'osx'
 		}
+                openbsd64 {
+                        architecture 'x86_64'
+                        operatingSystem 'openbsd64'
+                }
 	}	
 	
 	components {
@@ -66,7 +70,9 @@ model {
 	tasks.compileGdisLinux64ExecutableGdisC {
 		dependsOn 'copyBinutilsArtifcats_linux64'
 	}
-	
+        tasks.compileGdisOpenBSD64ExecutableGdisC {
+                dependsOn 'copyBinutilsArtifacts_openbsd64'
+        }
 }
 
 // change gdis linker output directory to build/os/<platform>

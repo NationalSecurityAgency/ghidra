@@ -39,6 +39,10 @@ model {
 			architecture 'x86_64'
 			operatingSystem 'osx'
 		}
+                openbsd64 {
+                        architecture 'x86_64'
+                        operatingSystem 'openbsd'
+                }
 	}	
 }
 

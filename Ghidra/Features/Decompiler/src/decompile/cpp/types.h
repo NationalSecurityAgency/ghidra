@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -87,6 +87,21 @@ typedef uint4 uintp;
 #endif
 
 #if defined (__linux__) && defined (__x86_64__)
+#define HOST_ENDIAN 0
+typedef unsigned int uintm;
+typedef int intm;
+typedef unsigned long uint8;
+typedef long int8;
+typedef unsigned int uint4;
+typedef int int4;
+typedef unsigned short uint2;
+typedef short int2;
+typedef unsigned char uint1;
+typedef char int1;
+typedef uint8 uintp;
+#endif
+
+#if defined (__OpenBSD__) && defined (__x86_64__)
 #define HOST_ENDIAN 0
 typedef unsigned int uintm;
 typedef int intm;
@@ -203,18 +218,18 @@ typedef uint8 uintp;
   we subdivide the integer types into three classes:
 
   Small integers:   Integers that never come close to overflowing their (machine word)
-                    precision. We will always use int4 or uint4 (or smaller) for
-                    these so that the precision is explicitly given.
+		    precision. We will always use int4 or uint4 (or smaller) for
+		    these so that the precision is explicitly given.
 
   Machine word integers:   These integers exactly match the largest precision that
-                           will fit in a general purpose register.  They should be
-                           used exclusively by in implementations of larger
-                           precision objects.  Use intm or uintm
+			   will fit in a general purpose register.  They should be
+			   used exclusively by in implementations of larger
+			   precision objects.  Use intm or uintm
 
   Big integers: These are intended to be arbitrary precison integers. However
-                for efficiency, these will always be implemented as fixed precision.
-                So for coding purposes, these should be interpreted as fixed
-                precision integers that store as big a number as you would ever need.
+		for efficiency, these will always be implemented as fixed precision.
+		So for coding purposes, these should be interpreted as fixed
+		precision integers that store as big a number as you would ever need.
 */
 
 /* Specify that unsigned big ints are coded with 8 bytes */
@@ -233,7 +248,7 @@ typedef uint4 uintb;
 Other compilation flags
 
 CPUI_DEBUG        --    This is the ONE debug switch that should be passed in
-                        from the compiler, all others are controlled below
+			from the compiler, all others are controlled below
 */
 
 #ifdef CPUI_DEBUG

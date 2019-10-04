@@ -58,7 +58,7 @@ task configureCabExtract (type: Exec) {
  * The cabextract tool requires that its 'configure' script is called before make.
  *********************************************************************************/
 def currentPlatform = getCurrentPlatformName()
-if (['linux64', 'osx64'].contains(currentPlatform)) {
+if (['linux64', 'osx64', 'openbsd64'].contains(currentPlatform)) {
 		
 	def makeName = "${currentPlatform}CabExtractMake" // native Make task found automatically
 

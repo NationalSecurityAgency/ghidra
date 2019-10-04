@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -54,6 +54,21 @@ public enum Platform {
 	 * Identifies a Linux OS, the architecture for which we do not know or have not encountered
 	 */
 	LINUX_UKNOWN(OperatingSystem.LINUX, Architecture.UNKNOWN, "linux32", ".so", ""),
+
+	/**
+	 * Identifies an OpenBSD OS.
+	 */
+	OPENBSD(OperatingSystem.OPENBSD, Architecture.X86, "openbsd32", ".so", ""),
+
+	/**
+	 * Identifies an OpenBSD OS.
+	 */
+	OPENBSD_64(OperatingSystem.OPENBSD, Architecture.X86_64, "openbsd64", ".so", ""),
+
+	/**
+	 * Identifies an OpenBSD OS, the architecture for which we do not know or have not encountered
+	 */
+	OPENBSD_UNKNOWN(OperatingSystem.OPENBSD, Architecture.UNKNOWN, "openbsd32", ".so", ""),
 
 	/**
 	 * Identifies a Mac OS X for the Intel x86 32-bit platform.
@@ -129,7 +144,7 @@ public enum Platform {
 	}
 
 	/**
-	 * Based on the current platform, 
+	 * Based on the current platform,
 	 * returns an operating system specific
 	 * library paths that are not found on the
 	 * PATH environment variable.
