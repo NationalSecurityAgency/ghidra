@@ -161,6 +161,12 @@ public class PostCommentFieldFactoryTest extends AbstractGhidraHeadedIntegration
 		builder.disassemble("100d000", 2);
 		builder.createReturnInstruction("100d002");
 
+		builder.createEmptyFunction("override_warning", "0x100e000", 10, null);
+		builder.setBytes("100e000", "a6 00");
+		builder.disassemble("100e000", 2);
+		builder.createReturnInstruction("100e002");
+		builder.createEmptyFunction("call_dest_12", "0x100e020", 10, null);
+
 
 		return builder.getProgram();
 	}
@@ -1005,6 +1011,57 @@ public class PostCommentFieldFactoryTest extends AbstractGhidraHeadedIntegration
 		assertEquals(
 			"-- CALLOTHER(pcodeop_three) Call Override: call_dest_10 (0100d020)",
 			tf.getText());
+	}
+
+	@Test
+	public void testOverrideWarnings() {
+		assertFalse(cb.goToField(addr("100e000"), PostCommentFieldFactory.FIELD_NAME, 0, 1));
+		//verify CALLOTHER_OVERRIDE_CALL warning
+		int transactionID = program.startTransaction("call_warning");
+		ReferenceManager refManager = program.getReferenceManager();
+		Reference ref = null;
+		try {
+			ref = refManager.addMemoryReference(addr("100e000"), addr("100e020"),
+				RefType.CALLOTHER_OVERRIDE_CALL, SourceType.ANALYSIS, 0);
+			refManager.setPrimary(ref, true);
+		}
+		finally {
+			program.endTransaction(transactionID, true);
+		}
+		assertTrue(cb.goToField(addr("100e000"), PostCommentFieldFactory.FIELD_NAME, 0, 1));
+		ListingField tf = cb.getCurrentField();
+		assertEquals("WARNING: Output of pcodeop_one destroyed by override!", tf.getText());
+		//set ref non-primary, verify that warning goes away
+		transactionID = program.startTransaction("turn_off_call_warning");
+		try {
+			refManager.setPrimary(ref, false);
+		}
+		finally {
+			program.endTransaction(transactionID, true);
+		}
+		assertFalse(cb.goToField(addr("100e000"), PostCommentFieldFactory.FIELD_NAME, 0, 1));
+		//verify CALLOTHER_OVERRIDE_JUMP warning
+		transactionID = program.startTransaction("jump_warning");
+		try {
+			ref = refManager.addMemoryReference(addr("100e000"), addr("100e020"),
+				RefType.CALLOTHER_OVERRIDE_JUMP, SourceType.ANALYSIS, 0);
+			refManager.setPrimary(ref, true);
+		}
+		finally {
+			program.endTransaction(transactionID, true);
+		}
+		assertTrue(cb.goToField(addr("100e000"), PostCommentFieldFactory.FIELD_NAME, 0, 1));
+		assertEquals("WARNING: Output of pcodeop_one destroyed by override!", tf.getText());
+		//set ref non-primary, verify that warning goes away
+		transactionID = program.startTransaction("turn_off_jump_warning");
+		try {
+			refManager.setPrimary(ref, false);
+		}
+		finally {
+			program.endTransaction(transactionID, true);
+		}
+		assertFalse(cb.goToField(addr("100e000"), PostCommentFieldFactory.FIELD_NAME, 0, 1));
+
 	}
 
 	private void setCommentInFunction(Function function, String comment) {
