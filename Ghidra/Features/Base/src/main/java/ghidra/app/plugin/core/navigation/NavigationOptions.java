@@ -20,8 +20,11 @@ import ghidra.framework.options.OptionsChangeListener;
 import ghidra.framework.options.ToolOptions;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.util.OptionsService;
+import ghidra.util.HelpLocation;
 
 public class NavigationOptions implements OptionsChangeListener {
+
+	static final String NAVIGATION_TOPIC = "Navigation";
 
 	static final String NAVIGATION_OPTIONS = GhidraOptions.NAVIGATION_OPTIONS;
 
@@ -51,7 +54,7 @@ public class NavigationOptions implements OptionsChangeListener {
 	static final String EXTERNAL_NAVIGATION_OPTION = GhidraOptions.EXTERNAL_NAVIGATION_OPTION;
 
 	static final String EXTERNAL_NAVIGATION_DESCRIPTION =
-		"Determines the bahavior for navigation to external symbols and references. " +
+		"Determines the behavior for navigation to external symbols and references. " +
 			"By default, navigating to an external will attempt to navigate within the " +
 			"current program to the first linkage reference (pointer or thunk).  " +
 			"Alternatively, if an external program has been associated with an " +
@@ -78,12 +81,12 @@ public class NavigationOptions implements OptionsChangeListener {
 		GhidraOptions.FOLLOW_INDIRECTION_NAVIGATION_OPTION;
 
 	static final String FOLLOW_INDIRECTION_NAVIGATION_DESCRIPTION =
-		"Determines the bahavior for navigation on indirect flow references. " +
+		"Determines the behavior for navigation on indirect flow references. " +
 			"By default, this option is disabled providing navigation to the " +
 			"referenced pointer data.  If enabled, the pointer will be followed " +
 			"to its referenced destination if contained within the program's memory.";
 
-	static final String ASSUME_CURRENT_ADDRESS_SPACE = "Prefer current Address Space";
+	static final String ASSUME_CURRENT_ADDRESS_SPACE = "Prefer Current Address Space";
 	private static final String ASSUME_CURRENT_ADDRESS_SPACE_DESCRIPTION =
 		"Determines if the 'Go To' action prefers the current address space when entering address offsets. " +
 			"For example, if your program has multiple address spaces such as 'RAM' or 'DATA' and you  " +
@@ -92,7 +95,7 @@ public class NavigationOptions implements OptionsChangeListener {
 			"cursor location.  Otherwise, it will show a list of possible addresses for the given offset. " +
 			"The default is on for this option.";
 
-	private final String RESTRICT_GOTO_CURRENT_TAB = "'Go To' in current program only";
+	private final String RESTRICT_GOTO_CURRENT_TAB = "'Go To' in Current Program Only";
 	private static final String RESTRICT_GOTO_CURRENT_TAB_DESCRIPTION = "Determines if the " +
 		"'Go To' service will only search for and navigate to labels in the current program. " +
 		"If this option is off and the search label is not found in the current program, the " +
@@ -120,32 +123,33 @@ public class NavigationOptions implements OptionsChangeListener {
 
 		this.options = options;
 
+		HelpLocation help = new HelpLocation(NAVIGATION_TOPIC, "Navigation_Options");
 		options.registerOption(NavigationOptions.NAVIGATION_RANGE_OPTION,
-			RangeNavigationEnum.TopOfRangeOnly, null,
+			RangeNavigationEnum.TopOfRangeOnly, help,
 			NavigationOptions.NAVIGATION_RANGE_DESCRIPTION);
 		RangeNavigationEnum rangeNavigationOption = options.getEnum(
 			NavigationOptions.NAVIGATION_RANGE_OPTION, RangeNavigationEnum.TopOfRangeOnly);
 		gotoTopAndBottom = (rangeNavigationOption == RangeNavigationEnum.TopAndBottomOfRange);
 
 		options.registerOption(NavigationOptions.EXTERNAL_NAVIGATION_OPTION,
-			ExternalNavigationEnum.NavigateToLinkage, null,
+			ExternalNavigationEnum.NavigateToLinkage, help,
 			NavigationOptions.EXTERNAL_NAVIGATION_DESCRIPTION);
 		ExternalNavigationEnum externalNavigationOption = options.getEnum(
 			NavigationOptions.EXTERNAL_NAVIGATION_OPTION, ExternalNavigationEnum.NavigateToLinkage);
 		gotoExternalProgram =
 			(externalNavigationOption == ExternalNavigationEnum.NavigateToExternalProgram);
 
-		options.registerOption(NavigationOptions.FOLLOW_INDIRECTION_NAVIGATION_OPTION, false, null,
+		options.registerOption(NavigationOptions.FOLLOW_INDIRECTION_NAVIGATION_OPTION, false, help,
 			NavigationOptions.FOLLOW_INDIRECTION_NAVIGATION_DESCRIPTION);
 		followIndirectReferences =
 			options.getBoolean(NavigationOptions.FOLLOW_INDIRECTION_NAVIGATION_OPTION, false);
 
-		options.registerOption(ASSUME_CURRENT_ADDRESS_SPACE, true, null,
+		options.registerOption(ASSUME_CURRENT_ADDRESS_SPACE, true, help,
 			ASSUME_CURRENT_ADDRESS_SPACE_DESCRIPTION);
 
 		preferCurrentAddressSpace = options.getBoolean(ASSUME_CURRENT_ADDRESS_SPACE, true);
 
-		options.registerOption(RESTRICT_GOTO_CURRENT_TAB, true, null,
+		options.registerOption(RESTRICT_GOTO_CURRENT_TAB, true, help,
 			RESTRICT_GOTO_CURRENT_TAB_DESCRIPTION);
 
 		restrictGotoToCurrentProgram = options.getBoolean(RESTRICT_GOTO_CURRENT_TAB, true);
@@ -158,7 +162,7 @@ public class NavigationOptions implements OptionsChangeListener {
 	}
 
 	@Override
-	public void optionsChanged(ToolOptions options, String optionName, Object oldValue,
+	public void optionsChanged(ToolOptions toolOptions, String optionName, Object oldValue,
 			Object newValue) {
 		if (NavigationOptions.NAVIGATION_RANGE_OPTION.equals(optionName)) {
 			RangeNavigationEnum rangeNavigationOption = (RangeNavigationEnum) newValue;

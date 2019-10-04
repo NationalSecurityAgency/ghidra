@@ -1780,12 +1780,14 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 		 		2) A component provider's code
 		 		3) A dialog provider's code
 		 		4) A background thread
+		 		5) The help window
 		 		
 		 	It seems like the parent should be the active window for 1-2.  
 		 	Case 3 should probably use the window of the dialog provider.
 		 	Case 4 should probably use the main tool frame, since the user may be 
 		 	moving between windows while the thread is working.  So, rather than using the 
 		 	active window, we can default to the tool's frame.
+		 	Case 5 should use the help window.
 		 	
 		 	We have not yet solidified how we should parent.  This documentation is meant to 
 		 	move us towards clarity as we find Use Cases that don't make sense.  (Once we 
@@ -1828,7 +1830,7 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 
 		Component c = parent;
 		while (c != null) {
-			if (c instanceof Frame) {
+			if (c instanceof Window) {
 				return (Window) c;
 			}
 			c = c.getParent();

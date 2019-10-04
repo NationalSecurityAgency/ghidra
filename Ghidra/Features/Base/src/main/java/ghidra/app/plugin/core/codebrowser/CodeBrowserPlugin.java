@@ -135,7 +135,7 @@ public class CodeBrowserPlugin extends Plugin
 			GhidraOptions.CATEGORY_BROWSER_POPUPS);
 		ToolOptions displayOptions = tool.getOptions(GhidraOptions.CATEGORY_BROWSER_DISPLAY);
 		ToolOptions fieldOptions = tool.getOptions(GhidraOptions.CATEGORY_BROWSER_FIELDS);
-		displayOptions.registerOptionsEditor(new ListingDisplayOptionsEditor(this, displayOptions));
+		displayOptions.registerOptionsEditor(new ListingDisplayOptionsEditor(displayOptions));
 		displayOptions.setOptionsHelpLocation(
 			new HelpLocation(getName(), GhidraOptions.CATEGORY_BROWSER_DISPLAY));
 		fieldOptions.setOptionsHelpLocation(

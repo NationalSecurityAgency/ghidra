@@ -15,11 +15,11 @@
  */
 package ghidra.app.plugin.core.codebrowser;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import org.junit.*;
 
@@ -45,6 +45,8 @@ import ghidra.program.model.symbol.SourceType;
 import ghidra.program.util.BytesFieldLocation;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.test.TestEnv;
+import ghidra.util.HelpLocation;
+import util.CollectionUtils;
 
 public class CodeBrowserOptionsTest extends AbstractGhidraHeadedIntegrationTest {
 	private TestEnv env;
@@ -967,6 +969,38 @@ public class CodeBrowserOptionsTest extends AbstractGhidraHeadedIntegrationTest 
 		btf = (ListingTextField) cb.getCurrentField();
 		assertEquals(3, btf.getNumRows());
 		assertTrue(btf.getText().endsWith("[more]"));
+	}
+
+	@Test
+	public void testEveryOptionHasHelp() throws Exception {
+		showTool(tool);
+
+		List<String> missing = new ArrayList<>();
+		ToolOptions[] toolOptions = tool.getOptions();
+		for (ToolOptions options : toolOptions) {
+
+			HelpLocation helpLocation = options.getOptionsHelpLocation();
+			if (helpLocation != null) {
+				continue; // this is a top-level help location for all sub-options
+			}
+
+			if (CollectionUtils.isOneOf(options.getName(), "Key Bindings", "Listing Display")) {
+				continue;
+			}
+
+			List<String> optionNames = options.getOptionNames();
+			for (String name : optionNames) {
+				HelpLocation hl = options.getHelpLocation(name);
+				if (hl == null) {
+					missing.add(options.getName() + "." + name);
+				}
+			}
+		}
+
+		if (!missing.isEmpty()) {
+			fail(missing.size() + " Tool Options is missing help\n" +
+				missing.stream().collect(Collectors.joining("\n")));
+		}
 	}
 
 	enum DUMMY {

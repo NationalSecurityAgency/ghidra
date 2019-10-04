@@ -116,6 +116,9 @@ public class ToolOptions extends AbstractOptions {
 	 * Return an XML element for the option names and values.
 	 * Note: only those options which have been explicitly set
 	 * will be included.
+	 * 
+	 * @param includeDefaultBindings true to include default key binding values in the xml 
+	 * @return the xml root element
 	 */
 	public Element getXmlRoot(boolean includeDefaultBindings) {
 		SaveState saveState = new SaveState(XML_ELEMENT_NAME);
@@ -268,7 +271,7 @@ public class ToolOptions extends AbstractOptions {
 
 	/**
 	 * Adds all the options name/value pairs to this Options.
-	 * @param newOptions
+	 * @param newOptions the new options into which the current options values will be placed
 	 */
 	public void copyOptions(Options newOptions) {
 		List<String> optionNames = newOptions.getOptionNames();

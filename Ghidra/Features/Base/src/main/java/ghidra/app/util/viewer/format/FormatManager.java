@@ -45,6 +45,7 @@ public class FormatManager implements OptionsChangeListener {
 		HIGHLIGHT_GROUP + Options.DELIMITER + "Alternate Highlight Color";
 	public final static String ARRAY_DISPLAY_OPTIONS =
 		OPTIONS_GROUP + Options.DELIMITER + "Array Display Options";
+	public final static String ARRAY_DISPLAY_DESCRIPTION = "Adjusts the Array Field display";
 
 	private static final int NUM_MODELS = 7;
 
@@ -94,7 +95,8 @@ public class FormatManager implements OptionsChangeListener {
 
 	private void getArrayDisplayOptions(Options options) {
 		options.registerOption(ARRAY_DISPLAY_OPTIONS, OptionType.CUSTOM_TYPE,
-			new ArrayElementWrappedOption(), null, null, new ArrayElementPropertyEditor());
+			new ArrayElementWrappedOption(), null, ARRAY_DISPLAY_DESCRIPTION,
+			new ArrayElementPropertyEditor());
 		CustomOption option = options.getCustomOption(ARRAY_DISPLAY_OPTIONS, null);
 		if (option instanceof ArrayElementWrappedOption) {
 			ArrayElementWrappedOption arrayOption = (ArrayElementWrappedOption) option;

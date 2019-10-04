@@ -319,14 +319,15 @@ public class OptionsPanel extends JPanel {
 			return; // not sure this can happen
 		}
 
+		HelpService help = Help.getHelpService();
 		HelpLocation location = options.getOptionsHelpLocation();
 		if (location == null) {
 			// The tree node may or may not have help.  The leaf options should all have help.
-			return;
+			help.clearHelp(this);
 		}
-
-		HelpService help = Help.getHelpService();
-		help.registerHelp(this, location);
+		else {
+			help.registerHelp(this, location);
+		}
 	}
 
 	private OptionsEditor getOptionsEditor(OptionsTreeNode node) {

@@ -85,7 +85,7 @@ public class PostCommentFieldFactory extends FieldFactory {
 	/**
 	 * Constructor
 	 * @param model the model that the field belongs to.
-	 * @param hsProvider the HightLightStringProvider.
+	 * @param hlProvider the HightLightStringProvider.
 	 * @param displayOptions the Options for display properties.
 	 * @param fieldOptions the Options for field specific properties.
 	 */
@@ -93,9 +93,12 @@ public class PostCommentFieldFactory extends FieldFactory {
 			Options displayOptions, Options fieldOptions) {
 		super(FIELD_NAME, model, hlProvider, displayOptions, fieldOptions);
 
-		fieldOptions.registerOption(FLAG_FUNCTION_EXIT_OPTION, false, null, null);
-		fieldOptions.registerOption(FLAG_TERMINATOR_OPTION, false, null, null);
-		fieldOptions.registerOption(LINES_AFTER_BLOCKS_OPTION, 0, null, null);
+		fieldOptions.registerOption(FLAG_FUNCTION_EXIT_OPTION, false, null,
+			"Toggles the display of a post-comment for a function exit");
+		fieldOptions.registerOption(FLAG_TERMINATOR_OPTION, false, null,
+			"Toggles the display of a jump/return post-comments");
+		fieldOptions.registerOption(LINES_AFTER_BLOCKS_OPTION, 0, null,
+			"The number of lines to display after basic blocks");
 
 		flagFunctionExits = fieldOptions.getBoolean(FLAG_FUNCTION_EXIT_OPTION, false);
 		flagJMPsRETs = fieldOptions.getBoolean(FLAG_TERMINATOR_OPTION, false);
@@ -226,9 +229,8 @@ public class PostCommentFieldFactory extends FieldFactory {
 				comments.addFirst(callOtherCallOverrideComment);
 			}
 			else {
-				overrideData =
-					getOverrideCommentData(instr, RefType.CALLOTHER_OVERRIDE_JUMP, pcodeOps,
-						pCodeOverride);
+				overrideData = getOverrideCommentData(instr, RefType.CALLOTHER_OVERRIDE_JUMP,
+					pcodeOps, pCodeOverride);
 				if (overrideData != null) {
 					String callOtherJumpOverrideComment =
 						"-- CALLOTHER(" + overrideData.getOverriddenCallOther() +
@@ -313,8 +315,8 @@ public class PostCommentFieldFactory extends FieldFactory {
 
 	@Override
 	public FieldFactory newInstance(FieldFormatModel formatModel, HighlightProvider provider,
-			ToolOptions displayOptions, ToolOptions fieldOptions) {
-		return new PostCommentFieldFactory(formatModel, provider, displayOptions, fieldOptions);
+			ToolOptions toolOptions, ToolOptions fieldOptions) {
+		return new PostCommentFieldFactory(formatModel, provider, toolOptions, fieldOptions);
 	}
 
 	@Override
@@ -525,7 +527,8 @@ public class PostCommentFieldFactory extends FieldFactory {
 				"at a jump or a return instruction.");
 		options.registerOption(LINES_AFTER_BLOCKS_OPTION, 0, null,
 			"Number of lines to display in the post comment after a code block.");
-		options.registerOption(ENABLE_ALWAYS_SHOW_AUTOMATIC_MSG, true, null, null);
+		options.registerOption(ENABLE_ALWAYS_SHOW_AUTOMATIC_MSG, true, null,
+			"Toggles the display of the automatic post-comment");
 
 		isWordWrap = options.getBoolean(ENABLE_WORD_WRAP_MSG, false);
 		alwaysShowAutomatic = options.getBoolean(ENABLE_ALWAYS_SHOW_AUTOMATIC_MSG, true);
@@ -557,6 +560,7 @@ public class PostCommentFieldFactory extends FieldFactory {
 			return next;
 		}
 		catch (AddressOverflowException e) {
+			// don't care
 		}
 		return null;
 	}

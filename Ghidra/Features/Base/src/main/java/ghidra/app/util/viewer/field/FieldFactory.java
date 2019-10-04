@@ -87,10 +87,11 @@ public abstract class FieldFactory implements ExtensionPoint {
 		baseFont = SystemUtilities.adjustForFontSizeOverride(
 			displayOptions.getFont(FONT_OPTION_NAME, DEFAULT_FIELD_FONT));
 		// For most fields (defined in optionsGui) these will be set. But "ad hoc" fields won't,
-		//so register something.  A second registration won't change the original
+		// so register something.  A second registration won't change the original
 
-		displayOptions.registerOption(colorOptionName, Color.BLACK, null, null);
-		displayOptions.registerOption(styleOptionName, -1, null, null);
+		displayOptions.registerOption(colorOptionName, Color.BLACK, null,
+			"Sets the " + colorOptionName);
+		displayOptions.registerOption(styleOptionName, -1, null, "Sets the " + style);
 
 		color = displayOptions.getColor(colorOptionName, getDefaultColor());
 		style = displayOptions.getInt(styleOptionName, -1);

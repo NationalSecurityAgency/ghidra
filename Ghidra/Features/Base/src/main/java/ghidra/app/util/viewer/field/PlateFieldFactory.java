@@ -654,11 +654,11 @@ public class PlateFieldFactory extends FieldFactory {
 			"Number of lines to displayed before a plate comment." +
 				" This setting has precedence over Lines Before Labels.");
 
+		help = new HelpLocation(HelpTopics.CODE_BROWSER, "Function_Pointers");
 		options.registerOption(ListingModel.DISPLAY_EXTERNAL_FUNCTION_POINTER_OPTION_NAME, true,
-			help, null);
+			help, "Shows/hides function header format for pointers to external functions");
 		options.registerOption(ListingModel.DISPLAY_NONEXTERNAL_FUNCTION_POINTER_OPTION_NAME, false,
-			help, null);
-
+			help, "Shows/hides function header format for pointers to non-external functions");
 	}
 
 //==================================================================================================
