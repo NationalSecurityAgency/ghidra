@@ -9,6 +9,7 @@
   <context_data>
     <tracked_set space="ram">
       <set name="didrestore" val="0"/>
+      <set name="DECOMPILE_MODE" val="1"/>
     </tracked_set>
   </context_data>
   
