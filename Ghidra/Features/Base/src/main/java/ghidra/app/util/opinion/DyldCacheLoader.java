@@ -47,7 +47,7 @@ public class DyldCacheLoader extends AbstractLibrarySupportLoader {
 	static final String CREATE_DYLIB_SECTIONS_OPTION_NAME = "Create DYLIB section memory blocks";
 
 	/** Default value for loader option to create memory blocks for DYLIB sections */
-	static final boolean CREATE_DYLIB_SECTIONS_OPTION_DEFAULT = false;
+	static final boolean CREATE_DYLIB_SECTIONS_OPTION_DEFAULT = true;
 
 	@Override
 	public Collection<LoadSpec> findSupportedLoadSpecs(ByteProvider provider) throws IOException {
