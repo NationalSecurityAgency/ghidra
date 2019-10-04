@@ -359,12 +359,13 @@ public class HighFunctionDBUtil {
 	}
 
 	/**
-	 * Get database parameter which corresponds to HighParam committing all parameters to
-	 * database if necessary
-	 * @param param
-	 * @return matching parameter or null if not found
-	 * @throws DuplicateNameException
-	 * @throws InvalidInputException
+	 * Get database parameter which corresponds to HighParam, where we anticipate that
+	 * the parameter will be modified to match the HighParam. The entire prototype is
+	 * committed to the database if necessary. An exception is thrown if a modifiable parameter
+	 * can't be found/created.
+	 * @param param is the HighParam describing the desired function parameter
+	 * @return the matching parameter that can be modified
+	 * @throws InvalidInputException if the desired parameter cannot be modified
 	 */
 	private static Parameter getDatabaseParameter(HighParam param) throws InvalidInputException {
 
@@ -373,6 +374,12 @@ public class HighFunctionDBUtil {
 
 		int slot = param.getSlot();
 		Parameter[] parameters = function.getParameters();
+		if (slot < parameters.length) {
+			if (parameters[slot].isAutoParameter()) {
+				throw new InvalidInputException(
+					"Cannot modify auto-parameter: " + parameters[slot].getName());
+			}
+		}
 		if (slot >= parameters.length ||
 			!parameters[slot].getVariableStorage().equals(param.getStorage())) {
 			try {
