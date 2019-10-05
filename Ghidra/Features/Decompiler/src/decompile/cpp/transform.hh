@@ -33,12 +33,13 @@ public:
     constant_iop = 5,		///< Special iop constant encoding a PcodeOp reference
   };
 private:
-  Varnode *vn;		///< Original \b big Varnode of which \b this is a component
-  Varnode *replacement;	///< The new explicit lane Varnode
-  int4 size;			///< Size of the lane Varnode in bytes
-  uintb val;			///< Value of constant or position within the original big Varnode
-  TransformOp *def;		///< Defining op for new Varnode
+  Varnode *vn;			///< Original \b big Varnode of which \b this is a component
+  Varnode *replacement;		///< The new explicit lane Varnode
   uint4 type;			///< Type of new Varnode
+  int4 byteSize;		///< Size of the lane Varnode in bytes
+  int4 bitSize;			///< Size of the logical value in bits
+  uintb val;			///< Value of constant or (bit) position within the original big Varnode
+  TransformOp *def;		///< Defining op for new Varnode
   void createReplacement(Funcdata *fd);	///< Create the new/modified variable this placeholder represents
 };
 
@@ -110,18 +111,20 @@ class TransformManager {
   void placeInputs(void);	///< Set input Varnodes for all new ops
 public:
   TransformManager(Funcdata *f) { fd = f; }	///< Constructor
+  virtual ~TransformManager(void) {}
+  virtual bool preserveAddress(Varnode *vn,int4 bitSize,int4 lsbOffset) const;
   TransformVar *newPreexistingVarnode(Varnode *vn);	///< Make placeholder for preexisting Varnode
   TransformVar *newUnique(int4 size);		///< Make placeholder for new unique space Varnode
   TransformVar *newConstant(int4 size,uintb val);	///< Make placeholder for constant Varnode
   TransformVar *newIop(Varnode *vn);	///< Make placeholder for special iop constant
-  TransformVar *newPiece(Varnode *vn,int4 size,int4 lsbOffset);	///< Make placeholder for piece of a Varnode
+  TransformVar *newPiece(Varnode *vn,int4 bitSize,int4 lsbOffset);	///< Make placeholder for piece of a Varnode
   void newSplit(vector<TransformVar *> &res,Varnode *vn,const LaneDescription &description);
   TransformOp *newOpReplace(int4 numParams,OpCode opc,PcodeOp *replace);
   TransformOp *newOp(int4 numParams,OpCode opc,TransformOp *follow);
   TransformOp *newPreexistingOp(int4 numParams,OpCode opc,PcodeOp *originalOp);
 
   TransformVar *getPreexistingVarnode(Varnode *vn);	///< Get (or create) placeholder for preexisting Varnode
-  TransformVar *getPiece(Varnode *vn,int4 size,int4 lsbOffset);	///< Get (or create) placeholder piece
+  TransformVar *getPiece(Varnode *vn,int4 bitSize,int4 lsbOffset);	///< Get (or create) placeholder piece
   void getSplit(vector<TransformVar *> &res,Varnode *vn,const LaneDescription &description);
   void opSetInput(TransformOp *rop,TransformVar *rvn,int4 slot);	///< Mark given variable as input to given op
   void opSetOutput(TransformOp *rop,TransformVar *rvn);		///< Mark given variable as output of given op

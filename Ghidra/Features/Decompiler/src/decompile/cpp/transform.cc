@@ -29,21 +29,28 @@ void TransformVar::createReplacement(Funcdata *fd)
       replacement = vn;
       break;
     case TransformVar::constant:
-      replacement = fd->newConstant(size,val);
+      replacement = fd->newConstant(byteSize,val);
       break;
     case TransformVar::normal_temp:
       if (def == (TransformOp *)0)
-	replacement = fd->newUnique(size);
+	replacement = fd->newUnique(byteSize);
       else
-	replacement = fd->newUniqueOut(size,def->replacement);
+	replacement = fd->newUniqueOut(byteSize,def->replacement);
       break;
     case TransformVar::piece:
     {
-      Address addr = vn->getAddr() + (int4)val;
+      int4 bytePos = (int4)val;
+      if ((bytePos & 7) != 0)
+	throw LowlevelError("Varnode piece is not byte aligned");
+      bytePos >>= 3;
+      if (vn->getSpace()->isBigEndian())
+	bytePos = vn->getSize() - bytePos - byteSize;
+      Address addr = vn->getAddr() + bytePos;
       if (def == (TransformOp *)0)
-	replacement = fd->newVarnode(size,addr);
+	replacement = fd->newVarnode(byteSize,addr);
       else
-	replacement = fd->newVarnodeOut(size, addr, def->replacement);
+	replacement = fd->newVarnodeOut(byteSize, addr, def->replacement);
+      // TODO: fd->preserveProperties(vn,replacement,bytePos);
       break;
     }
     case TransformVar::constant_iop:
@@ -97,6 +104,24 @@ bool TransformOp::attemptInsertion(Funcdata *fd)
   return true;		// Already inserted
 }
 
+/// \brief Should the address of the given Varnode be preserved when constructing a piece
+///
+/// A new Varnode will be created that represents a logical piece of the given Varnode.
+/// This routine determines whether the new Varnode should be constructed using
+/// storage which overlaps the given Varnode. It returns \b true if overlapping storage
+/// should be used, \b false if the new Varnode should be constructed as a unique temporary.
+/// \param vn is the given Varnode
+/// \param bitSize is the logical size of the Varnode piece being constructed
+/// \param lsbOffset is the least significant bit position of the logical value within the given Varnode
+/// \return \b true if overlapping storage should be used in construction
+bool TransformManager::preserveAddress(Varnode *vn,int4 bitSize,int4 lsbOffset) const
+
+{
+  if ((lsbOffset & 7) != 0) return false;	// Logical value not aligned
+  if (vn->getSpace()->getType() == IPTR_INTERNAL) return false;
+  return true;
+}
+
 /// \param vn is the preexisting Varnode to create a placeholder for
 /// \return the new placeholder node
 TransformVar *TransformManager::newPreexistingVarnode(Varnode *vn)
@@ -106,7 +131,8 @@ TransformVar *TransformManager::newPreexistingVarnode(Varnode *vn)
   TransformVar *res = &newVarnodes.back();
   res->vn = vn;
   res->replacement = (Varnode *)0;
-  res->size = vn->getSize();
+  res->byteSize = vn->getSize();
+  res->bitSize = res->byteSize * 8;
   res->def = (TransformOp *)0;
   res->type = TransformVar::preexisting;
   MapKey key(vn->getCreateIndex(),0);
@@ -122,7 +148,8 @@ TransformVar *TransformManager::newUnique(int4 size)
   newVarnodes.push_back(TransformVar());
   TransformVar *res = &newVarnodes.back();
   res->replacement = (Varnode *)0;
-  res->size = size;
+  res->byteSize = size;
+  res->bitSize = size * 8;
   res->def = (TransformOp *)0;
   res->type = TransformVar::normal_temp;
   return res;
@@ -137,7 +164,7 @@ TransformVar *TransformManager::newConstant(int4 size,uintb val)
   newVarnodes.push_back(TransformVar());
   TransformVar *res = &newVarnodes.back();
   res->replacement = (Varnode *)0;
-  res->size = size;
+  res->byteSize = size;
   res->val = val;
   res->def = (TransformOp *)0;
   res->type = TransformVar::constant;
@@ -151,7 +178,8 @@ TransformVar *TransformManager::newIop(Varnode *vn)
   TransformVar *res = &newVarnodes.back();
   res->vn = (Varnode *)0;
   res->replacement = (Varnode *)0;
-  res->size = vn->getSize();
+  res->byteSize = vn->getSize();
+  res->bitSize = res->byteSize * 8;
   res->val = vn->getOffset();	// The encoded iop
   res->def = (TransformOp *)0;
   res->type = TransformVar::constant_iop;
@@ -161,19 +189,24 @@ TransformVar *TransformManager::newIop(Varnode *vn)
 /// Given a single logical value within a larger Varnode, create a placeholder for
 /// that logical value.
 /// \param vn is the large Varnode
-/// \param size is the size of the logical value in bytes
-/// \param lsbOffset is the number of least significant bytes of the Varnode dropped from the value
+/// \param bitSize is the size of the logical value in bits
+/// \param lsbOffset is the number of least significant bits of the Varnode dropped from the value
 /// \return the placeholder variable
-TransformVar *TransformManager::newPiece(Varnode *vn,int4 size,int4 lsbOffset)
+TransformVar *TransformManager::newPiece(Varnode *vn,int4 bitSize,int4 lsbOffset)
 
 {
   newVarnodes.push_back(TransformVar());
   TransformVar *res = &newVarnodes.back();
   res->vn = vn;
   res->replacement = (Varnode *)0;
-  res->size = size;
+  res->bitSize = bitSize;
+  res->byteSize = (bitSize + 7) / 8;
   res->def = (TransformOp *)0;
-  res->type = TransformVar::piece;
+  if (preserveAddress(vn, bitSize, lsbOffset))
+    res->type = TransformVar::piece;
+  else
+    res->type = TransformVar::normal_temp;
+  res->val = lsbOffset;
   MapKey key(vn->getCreateIndex(),lsbOffset);
   pieceMap[key] = res;
   return res;
@@ -192,14 +225,17 @@ void TransformManager::newSplit(vector<TransformVar *> &res,Varnode *vn,const La
   int4 num = description.getNumLanes();
   res.resize(num,(TransformVar *)0);
   for(int4 i=0;i<num;++i) {
+    int4 bitpos = description.getPosition(i) * 8;
     newVarnodes.push_back(TransformVar());
     TransformVar *newVar = &newVarnodes.back();
     newVar->vn = vn;
     newVar->replacement = (Varnode *)0;
-    newVar->size = description.getSize(i);
+    newVar->byteSize = description.getSize(i);
+    newVar->bitSize = newVar->byteSize * 8;
     newVar->def = (TransformOp *)0;
     newVar->type = TransformVar::piece;
-    MapKey key(vn->getCreateIndex(),description.getPosition(i));
+    newVar->val = bitpos;
+    MapKey key(vn->getCreateIndex(),bitpos);
     pieceMap[key] = newVar;
     res[i] = newVar;
   }
@@ -292,10 +328,10 @@ TransformVar *TransformManager::getPreexistingVarnode(Varnode *vn)
 /// Given a big Varnode, find the placeholder corresponding to the logical value
 /// given by a size and significance offset.  If it doesn't exist, create it.
 /// \param vn is the big Varnode containing the logical value
-/// \param size is the size of the logical value in bytes
+/// \param bitSize is the size of the logical value in bytes
 /// \param lsbOffset is the signficance offset of the logical value within the Varnode
 /// \return the found/created placeholder
-TransformVar *TransformManager::getPiece(Varnode *vn,int4 size,int4 lsbOffset)
+TransformVar *TransformManager::getPiece(Varnode *vn,int4 bitSize,int4 lsbOffset)
 
 {
   map<MapKey,TransformVar *>::const_iterator iter;
@@ -304,7 +340,7 @@ TransformVar *TransformManager::getPiece(Varnode *vn,int4 size,int4 lsbOffset)
   if (iter != pieceMap.end()) {
     return (*iter).second;
   }
-  return newPiece(vn,size,lsbOffset);
+  return newPiece(vn,bitSize,lsbOffset);
 }
 
 /// \brief Find (or create) placeholder nodes splitting a Varnode into its lanes
