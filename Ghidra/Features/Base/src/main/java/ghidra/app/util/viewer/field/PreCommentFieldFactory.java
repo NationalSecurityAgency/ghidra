@@ -46,7 +46,7 @@ public class PreCommentFieldFactory extends FieldFactory {
 	public static final String FIELD_NAME = "Pre-Comment";
 
 	private final static String GROUP_TITLE = "Format Code";
-	private final static String FIELD_GROUP_TITLE = "Pre-Comment";
+	private final static String FIELD_GROUP_TITLE = "Pre-comments Field";
 	public final static String ENABLE_WORD_WRAP_MSG =
 		FIELD_GROUP_TITLE + Options.DELIMITER + "Enable Word Wrapping";
 	public final static String ENABLE_ALWAYS_SHOW_AUTOMATIC_MSG =

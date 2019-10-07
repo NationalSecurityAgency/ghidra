@@ -44,7 +44,7 @@ public class PlateFieldFactory extends FieldFactory {
 	private static final String EMPTY_STRING = "";
 	public static final String FIELD_NAME = "Plate Comment";
 	public static final Color DEFAULT_COLOR = Color.BLUE;
-	private final static String FIELD_GROUP_TITLE = "Plate Comment";
+	private final static String FIELD_GROUP_TITLE = "Plate Comments Field";
 	public final static String ENABLE_WORD_WRAP_MSG =
 		FIELD_GROUP_TITLE + Options.DELIMITER + "Enable Word Wrapping";
 
@@ -107,7 +107,7 @@ public class PlateFieldFactory extends FieldFactory {
 	/**
 	 * Constructor
 	 * @param model the model that the field belongs to.
-	 * @param hsProvider the HightLightStringProvider.
+	 * @param hlProvider the HightLightStringProvider.
 	 * @param displayOptions the Options for display properties.
 	 * @param fieldOptions the Options for field specific properties.
 	 */
@@ -249,7 +249,7 @@ public class PlateFieldFactory extends FieldFactory {
 	 * Generate a text line for the plate text.
 	 * Text will be left justified between two '*' and padded based upon the
 	 * available field width.
-	 * @param text plate text string
+	 * @param elements the field elements that may get updated
 	 * @return formatted plate text line
 	 */
 	private boolean addSideBorders(List<FieldElement> elements) {
@@ -504,8 +504,8 @@ public class PlateFieldFactory extends FieldFactory {
 
 	@Override
 	public FieldFactory newInstance(FieldFormatModel formatModel, HighlightProvider hsProvider,
-			ToolOptions displayOptions, ToolOptions fieldOptions) {
-		return new PlateFieldFactory(formatModel, hsProvider, displayOptions, fieldOptions);
+			ToolOptions toolOptions, ToolOptions fieldOptions) {
+		return new PlateFieldFactory(formatModel, hsProvider, toolOptions, fieldOptions);
 	}
 
 	@Override

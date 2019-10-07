@@ -23,7 +23,10 @@ import java.util.stream.Collectors;
 
 import org.junit.*;
 
+import docking.help.Help;
+import docking.help.HelpService;
 import docking.widgets.fieldpanel.field.*;
+import generic.test.TestUtils;
 import ghidra.GhidraOptions;
 import ghidra.app.cmd.comments.SetCommentCmd;
 import ghidra.app.cmd.data.CreateDataCmd;
@@ -32,6 +35,7 @@ import ghidra.app.cmd.refs.AddMemRefCmd;
 import ghidra.app.cmd.refs.AddRegisterRefCmd;
 import ghidra.app.services.ProgramManager;
 import ghidra.app.util.viewer.field.*;
+import ghidra.base.help.GhidraHelpService;
 import ghidra.framework.cmd.Command;
 import ghidra.framework.options.Options;
 import ghidra.framework.options.ToolOptions;
@@ -974,33 +978,67 @@ public class CodeBrowserOptionsTest extends AbstractGhidraHeadedIntegrationTest 
 	@Test
 	public void testEveryOptionHasHelp() throws Exception {
 		showTool(tool);
-
+		loadProgram();
 		List<String> missing = new ArrayList<>();
 		ToolOptions[] toolOptions = tool.getOptions();
+		GhidraHelpService.install();
 		for (ToolOptions options : toolOptions) {
 
-			HelpLocation helpLocation = options.getOptionsHelpLocation();
-			if (helpLocation != null) {
-				continue; // this is a top-level help location for all sub-options
-			}
-
+			HelpLocation optionsHelp = options.getOptionsHelpLocation();
+			boolean hasParentHelp = optionsHelp != null;
 			if (CollectionUtils.isOneOf(options.getName(), "Key Bindings", "Listing Display")) {
-				continue;
+				continue; // these custom widgets are known to have help
 			}
 
 			List<String> optionNames = options.getOptionNames();
 			for (String name : optionNames) {
+
 				HelpLocation hl = options.getHelpLocation(name);
 				if (hl == null) {
-					missing.add(options.getName() + "." + name);
+					if (!hasParentHelp) {
+						missing.add("Option missing help: " + options.getName() + "." + name);
+					}
+				}
+
+				List<HelpLocation> nestedHelp = getParentHelpLocations(options, name);
+				for (HelpLocation help : nestedHelp) {
+					if (help != null && !isValidHelpLocation(help)) {
+						missing.add("Bad help location: " + help.toString());
+					}
+				}
+
+				// it has a help location; is it valid?
+				if (hl != null && !isValidHelpLocation(hl)) {
+					missing.add(name + "." + name);
 				}
 			}
 		}
 
 		if (!missing.isEmpty()) {
-			fail(missing.size() + " Tool Options is missing help\n" +
+			fail(missing.size() + " Tool Options is missing/invalid help\n" +
 				missing.stream().collect(Collectors.joining("\n")));
 		}
+	}
+
+	private List<HelpLocation> getParentHelpLocations(ToolOptions options, String name) {
+
+		List<HelpLocation> list = new LinkedList<>();
+		List<String> parts = CollectionUtils.asList(name.split("\\."));
+		Collections.reverse(parts); // put lowest-level first
+		for (String optionName : parts) {
+			Options parentOption = options.getOptions(optionName);
+			HelpLocation help = parentOption.getOptionsHelpLocation();
+			list.add(help);
+		}
+		return list;
+	}
+
+	private boolean isValidHelpLocation(HelpLocation helpLocation) {
+
+		HelpService help = Help.getHelpService();
+		boolean isValid =
+			(boolean) TestUtils.invokeInstanceMethod("isValidHelpLocation", help, helpLocation);
+		return isValid;
 	}
 
 	enum DUMMY {

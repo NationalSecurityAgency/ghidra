@@ -71,7 +71,7 @@ public class ArrayValuesFieldFactory extends FieldFactory {
 			FormatManager.ARRAY_DISPLAY_OPTIONS, new ArrayElementWrappedOption());
 
 		HelpLocation hl = new HelpLocation("CodeBrowserPlugin", "Array_Options");
-		fieldOptions.getOptions(FormatManager.OPTIONS_GROUP).setOptionsHelpLocation(hl);
+		fieldOptions.getOptions(FormatManager.ARRAY_OPTIONS_GROUP).setOptionsHelpLocation(hl);
 		fieldOptions.getOptions(FormatManager.ARRAY_DISPLAY_OPTIONS).setOptionsHelpLocation(hl);
 
 		if (!(wrappedOption instanceof ArrayElementWrappedOption)) {
