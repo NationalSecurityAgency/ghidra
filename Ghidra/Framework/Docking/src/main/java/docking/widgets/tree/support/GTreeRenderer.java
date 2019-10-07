@@ -48,6 +48,10 @@ public class GTreeRenderer extends DefaultTreeCellRenderer implements GComponent
 
 		super.getTreeCellRendererComponent(tree, value, selected1, expanded, leaf, row, hasFocus1);
 
+		// Important - make sure this happens before the setBackground() call, otherwise we will
+		//             paint the previously dragged-over node as the drop target.
+		paintDropTarget = (value == dropTarget);
+		
 		setOpaque(true);
 		setBackground(selected1 ? getBackgroundSelectionColor() : getBackgroundNonSelectionColor());
 
@@ -70,8 +74,6 @@ public class GTreeRenderer extends DefaultTreeCellRenderer implements GComponent
 		}
 
 		updateIconTextGap(icon, minIconWidth);
-
-		paintDropTarget = (value == dropTarget);
 
 		GTree gtree = node.getTree();
 
