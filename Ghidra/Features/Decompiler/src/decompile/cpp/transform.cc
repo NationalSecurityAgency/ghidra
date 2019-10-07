@@ -16,6 +16,39 @@
 #include "transform.hh"
 #include "funcdata.hh"
 
+/// Create lanes that are all the same size
+/// \param origSize is the size of the whole in bytes
+/// \param sz is the size of a lane in bytes
+LaneDescription::LaneDescription(int4 origSize,int4 sz)
+
+{
+  wholeSize = origSize;
+  int4 numLanes = origSize / sz;
+  laneSize.resize(numLanes);
+  lanePosition.resize(numLanes);
+  int4 pos = 0;
+  for(int4 i=0;i<numLanes;++i) {
+    laneSize[i] = sz;
+    lanePosition[i] = pos;
+    pos += sz;
+  }
+}
+
+/// \param origSize is the size of the whole in bytes
+/// \param lo is the size of the least significant lane in bytes
+/// \param hi is the size of the most significant lane in bytes
+LaneDescription::LaneDescription(int4 origSize,int4 lo,int4 hi)
+
+{
+  wholeSize = origSize;
+  laneSize.resize(2);
+  lanePosition.resize(2);
+  laneSize[0] = lo;
+  laneSize[1] = hi;
+  lanePosition[0] = 0;
+  lanePosition[1] = lo;
+}
+
 /// Create the Varnode object (constant, unique, vector piece) described by the
 /// given placeholder. If the Varnode is an output, assume the op already exists
 /// and create the Varnode as an output. Set the \b replacement field with the
@@ -134,6 +167,18 @@ bool TransformManager::preserveAddress(Varnode *vn,int4 bitSize,int4 lsbOffset) 
   return true;
 }
 
+void TransformManager::clearVarnodeMarks(void)
+
+{
+  map<int4,TransformVar *>::const_iterator iter;
+  for(iter=pieceMap.begin();iter!=pieceMap.end();++iter) {
+    Varnode *vn = (*iter).second->vn;
+    if (vn == (Varnode *)0)
+      continue;
+    vn->clearMark();
+  }
+}
+
 /// \param vn is the preexisting Varnode to create a placeholder for
 /// \return the new placeholder node
 TransformVar *TransformManager::newPreexistingVarnode(Varnode *vn)
@@ -158,6 +203,7 @@ TransformVar *TransformManager::newUnique(int4 size)
 {
   newVarnodes.push_back(TransformVar());
   TransformVar *res = &newVarnodes.back();
+  res->vn = (Varnode *)0;
   res->replacement = (Varnode *)0;
   res->byteSize = size;
   res->bitSize = size * 8;
@@ -167,17 +213,22 @@ TransformVar *TransformManager::newUnique(int4 size)
   return res;
 }
 
+/// Create a new constant in the transform view.  A piece of an existing constant
+/// can be created  by giving the existing value and the least significant offset.
 /// \param size is the size in bytes of the new constant
-/// \param val is the value of the new constant
+/// \param lsbOffset is the number of bits to strip off of the existing value
+/// \param val is the value of the constant
 /// \return the new placeholder node
-TransformVar *TransformManager::newConstant(int4 size,uintb val)
+TransformVar *TransformManager::newConstant(int4 size,int4 lsbOffset,uintb val)
 
 {
   newVarnodes.push_back(TransformVar());
   TransformVar *res = &newVarnodes.back();
+  res->vn = (Varnode *)0;
   res->replacement = (Varnode *)0;
   res->byteSize = size;
-  res->val = val;
+  res->bitSize = size * 8;
+  res->val = (val >> lsbOffset) & calc_mask(size);
   res->def = (TransformOp *)0;
   res->type = TransformVar::constant;
   res->flags = 0;
@@ -246,9 +297,15 @@ TransformVar *TransformManager::newSplit(Varnode *vn,const LaneDescription &desc
     newVar->byteSize = description.getSize(i);
     newVar->bitSize = newVar->byteSize * 8;
     newVar->def = (TransformOp *)0;
-    newVar->type = TransformVar::piece;
     newVar->flags = 0;
-    newVar->val = bitpos;
+    if (vn->isConstant()) {
+      newVar->type = TransformVar::constant;
+      newVar->val = (vn->getOffset() >> bitpos) & calc_mask(newVar->byteSize);
+    }
+    else {
+      newVar->type = TransformVar::piece;
+      newVar->val = bitpos;
+    }
   }
   res[num-1].flags = TransformVar::split_terminator;
   return res;
@@ -373,12 +430,6 @@ TransformVar *TransformManager::getSplit(Varnode *vn,const LaneDescription &desc
     return (*iter).second;
   }
   return newSplit(vn,description);
-}
-
-void TransformManager::opSetInput(TransformOp *rop,TransformVar *rvn,int4 slot)
-
-{
-  rop->input[slot] = rvn;
 }
 
 /// \brief Handle some special PcodeOp marking

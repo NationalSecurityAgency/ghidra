@@ -23,6 +23,7 @@ class TransformOp;
 /// \brief Placeholder node for Varnode that will exist after a transform is applied to a function
 class TransformVar {
   friend class TransformManager;
+  friend class TransformOp;
 public:
   /// \brief Types of replacement Varnodes
   enum {
@@ -48,11 +49,15 @@ private:
   uintb val;			///< Value of constant or (bit) position within the original big Varnode
   TransformOp *def;		///< Defining op for new Varnode
   void createReplacement(Funcdata *fd);	///< Create the new/modified variable this placeholder represents
+public:
+  Varnode *getOriginal(void) const { return vn; }
+  TransformOp *getDef(void) const { return def; }
 };
 
 /// \brief Placeholder node for PcodeOp that will exist after a transform is applied to a function
 class TransformOp {
   friend class TransformManager;
+  friend class TransformVar;
 public:
   /// Special annotations on new pcode ops
   enum {
@@ -71,6 +76,9 @@ private:
   TransformOp *follow;		///< The following op after \b this (if not null)
   void createReplacement(Funcdata *fd);	///< Create the new/modified op this placeholder represents
   bool attemptInsertion(Funcdata *fd);	///< Try to put the new PcodeOp into its basic block
+public:
+  TransformVar *getOut(void) const { return output; }
+  TransformVar *getIn(int4 i) const { return input[i]; }
 };
 
 /// \brief Description of logical lanes within a \b big Varnode
@@ -79,13 +87,16 @@ private:
 /// Varnode are disjoint. In general, we expect a Varnode to be tiled with
 /// lanes all of the same size, but the API allows for possibly non-uniform lanes.
 class LaneDescription {
-  int4 size;		///< Size of (all) lanes
-  int4 numLanes;	///< Number of distinct lanes
+  int4 wholeSize;		///< Size of the region being split in bytes
+  vector<int4> laneSize;	///< Size of lanes in bytes
+  vector<int4> lanePosition;	///< Significance positions of lanes in bytes
 public:
-  LaneDescription(int4 origSize,int4 sz) { size = sz; numLanes = origSize / sz; }	///< Constructor
-  int4 getNumLanes(void) const { return numLanes; }	///< Get the total number of lanes
-  int4 getSize(int4 i) const { return size; }		///< Get the size of the i-th lane
-  int4 getPosition(int4 i) const { return size * i; }	///< Get the significance offset of the i-th lane
+  LaneDescription(int4 origSize,int4 sz);	///< Construct uniform lanes
+  LaneDescription(int4 origSize,int4 lo,int4 hi);	///< Construct two lanes of arbitrary size
+  int4 getNumLanes(void) const { return laneSize.size(); }	///< Get the total number of lanes
+  int4 getWholeSize(void) const { return wholeSize; }		///< Get the size of the region being split
+  int4 getSize(int4 i) const { return laneSize[i]; }		///< Get the size of the i-th lane
+  int4 getPosition(int4 i) const { return lanePosition[i]; }	///< Get the significance offset of the i-th lane
 };
 
 /// \brief Class for splitting larger registers holding smaller logical lanes
@@ -110,9 +121,10 @@ public:
   TransformManager(Funcdata *f) { fd = f; }	///< Constructor
   virtual ~TransformManager(void);		///< Destructor
   virtual bool preserveAddress(Varnode *vn,int4 bitSize,int4 lsbOffset) const;
+  void clearVarnodeMarks(void);			///< Clear mark for all Varnodes in the map
   TransformVar *newPreexistingVarnode(Varnode *vn);	///< Make placeholder for preexisting Varnode
   TransformVar *newUnique(int4 size);		///< Make placeholder for new unique space Varnode
-  TransformVar *newConstant(int4 size,uintb val);	///< Make placeholder for constant Varnode
+  TransformVar *newConstant(int4 size,int4 lsbOffset,uintb val);	///< Make placeholder for constant Varnode
   TransformVar *newIop(Varnode *vn);	///< Make placeholder for special iop constant
   TransformVar *newPiece(Varnode *vn,int4 bitSize,int4 lsbOffset);	///< Make placeholder for piece of a Varnode
   TransformVar *newSplit(Varnode *vn,const LaneDescription &description);
