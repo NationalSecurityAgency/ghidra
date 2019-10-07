@@ -1830,7 +1830,11 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 
 		Component c = parent;
 		while (c != null) {
-			if (c instanceof Window) {
+			// Note: using a Frame here means that we will not find and use a dialog that is a			
+			//       parent of 'c' if it itself is parented to a Frame.   The issue is that 			
+			//       Use Case 'C' above may not work correctly.  If we find that to be the case, 
+			//       then we can try changing 'Frame' to 'Window' here.
+			if (c instanceof Frame) {
 				return (Window) c;
 			}
 			c = c.getParent();

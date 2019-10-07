@@ -222,7 +222,7 @@ public class MultipleKeyAction extends DockingKeyBindingAction {
 				if (isValidAndEnabled(actionData, localContext)) {
 					list.add(new ExecutableKeyActionAdapter(actionData.action, localContext));
 				}
-				else if (isValidAndEnabled(actionData, globalContext)) {
+				else if (isValidAndEnabledGlobally(actionData, globalContext)) {
 					list.add(new ExecutableKeyActionAdapter(actionData.action, globalContext));
 				}
 			}
@@ -233,6 +233,11 @@ public class MultipleKeyAction extends DockingKeyBindingAction {
 	private boolean isValidAndEnabled(ActionData actionData, ActionContext localContext) {
 		DockingActionIf a = actionData.action;
 		return a.isValidContext(localContext) && a.isEnabledForContext(localContext);
+	}
+
+	private boolean isValidAndEnabledGlobally(ActionData actionData, ActionContext globalContext) {
+		DockingActionIf a = actionData.action;
+		return a.isValidGlobalContext(globalContext) && a.isEnabledForContext(globalContext);
 	}
 
 	@Override
