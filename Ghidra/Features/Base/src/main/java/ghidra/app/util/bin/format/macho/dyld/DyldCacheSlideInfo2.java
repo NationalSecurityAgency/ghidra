@@ -37,7 +37,45 @@ public class DyldCacheSlideInfo2 extends DyldCacheSlideInfoCommon {
 	private int page_extras_count;
 	private long delta_mask;
 	private long value_add;
+	private short page_starts_entries[];
+	private short page_extras_entries[];
 
+	public int getPageSize() {
+		return page_size;
+	}
+
+	public int getPageStartsOffset() {
+		return page_starts_offset;
+	}
+
+	public int getPageStartsCount() {
+		return page_starts_count;
+	}
+
+	public int getPageExtrasOffset() {
+		return page_extras_offset;
+	}
+
+	public int getPageExtrasCount() {
+		return page_extras_count;
+	}
+
+	public long getDeltaMask() {
+		return delta_mask;
+	}
+
+	public long getValueAdd() {
+		return value_add;
+	}
+	
+	public short[] getPageStartsEntries() {
+		return page_starts_entries;
+	}
+	
+	public short[] getPageExtrasEntries() {
+		return page_extras_entries;
+	}
+	
 	/**
 	 * Create a new {@link DyldCacheSlideInfo2}.
 	 * 
@@ -53,6 +91,8 @@ public class DyldCacheSlideInfo2 extends DyldCacheSlideInfoCommon {
 		page_extras_count = reader.readNextInt();
 		delta_mask = reader.readNextLong();
 		value_add = reader.readNextLong();
+		page_starts_entries = reader.readNextShortArray(page_starts_count);
+		page_extras_entries = reader.readNextShortArray(page_extras_count);
 	}
 
 	@Override

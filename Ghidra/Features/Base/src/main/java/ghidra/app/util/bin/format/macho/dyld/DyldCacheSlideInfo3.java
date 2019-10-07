@@ -35,6 +35,22 @@ public class DyldCacheSlideInfo3 extends DyldCacheSlideInfoCommon {
 	private long auth_value_add;
 	private short page_starts[];
 
+	public int getPageSize() {
+		return page_size;
+	}
+
+	public int getPageStartsCount() {
+		return page_starts_count;
+	}
+
+	public long getAuthValueAdd() {
+		return auth_value_add;
+	}
+
+	public short[] getPageStarts() {
+		return page_starts;
+	}
+
 	/**
 	 * Create a new {@link DyldCacheSlideInfo3}.
 	 * 

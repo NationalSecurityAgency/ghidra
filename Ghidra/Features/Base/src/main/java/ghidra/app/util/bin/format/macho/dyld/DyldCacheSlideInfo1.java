@@ -36,6 +36,26 @@ public class DyldCacheSlideInfo1 extends DyldCacheSlideInfoCommon {
 	private int entries_count;
 	private int entries_size;
 
+	public int getTocOffset() {
+		return toc_offset;
+	}
+
+	public int getTocCount() {
+		return toc_count;
+	}
+
+	public int getEntriesOffset() {
+		return entries_offset;
+	}
+
+	public int getEntriesCount() {
+		return entries_count;
+	}
+
+	public int getEntriesSize() {
+		return entries_size;
+	}
+
 	/**
 	 * Create a new {@link DyldCacheSlideInfo1}.
 	 * 
