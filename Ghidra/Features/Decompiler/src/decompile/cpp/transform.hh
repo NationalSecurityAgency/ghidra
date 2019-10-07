@@ -24,18 +24,25 @@ class TransformOp;
 class TransformVar {
   friend class TransformManager;
 public:
-  /// Types of replacement Varnodes
+  /// \brief Types of replacement Varnodes
   enum {
     piece = 1,			///< New Varnode is a piece of an original Varnode
     preexisting = 2,		///< Varnode preexisted in the original data-flow
     normal_temp = 3,		///< A new temporary (unique space) Varnode
-    constant = 4,		///< A new constant Varnode
-    constant_iop = 5,		///< Special iop constant encoding a PcodeOp reference
+    piece_temp = 4,		///< A temporary representing a piece of an original Varnode
+    constant = 5,		///< A new constant Varnode
+    constant_iop = 6,		///< Special iop constant encoding a PcodeOp reference
+  };
+  /// \brief Flags for a TransformVar
+  enum {
+    split_terminator = 1,	///< The last (most significant piece) of a split array
+    def_traverse = 2		///< The op defining this Varnode has already been traversed
   };
 private:
   Varnode *vn;			///< Original \b big Varnode of which \b this is a component
   Varnode *replacement;		///< The new explicit lane Varnode
   uint4 type;			///< Type of new Varnode
+  uint4 flags;			///< Boolean properties of the placeholder
   int4 byteSize;		///< Size of the lane Varnode in bytes
   int4 bitSize;			///< Size of the logical value in bits
   uintb val;			///< Value of constant or (bit) position within the original big Varnode
@@ -88,18 +95,8 @@ public:
 /// If the interpretation is consistent for data-flow involving the Varnode, split
 /// Varnode and data-flow into explicit operations on the lanes.
 class TransformManager {
-  /// \brief Key for mapping from a \b big Varnode to its pieces
-  class MapKey {
-    uint4 create_index;		///< Creation index of Varnode being split
-    int4 position;		///< Position within the Varnode
-  public:
-    MapKey(uint4 index,int4 pos) { create_index = index; position = pos; }	///< Constructor
-    uint4 getCreateIndex(void) const { return create_index; }	///< Return the creation index part of \b this key
-    bool operator<(const MapKey &op2) const;	///< Comparator function for \b this key
-  };
-
   Funcdata *fd;					///< Function being operated on
-  map<MapKey,TransformVar *> pieceMap;	///< Map from large Varnodes to their new pieces
+  map<int4,TransformVar *> pieceMap;		///< Map from large Varnodes to their new pieces
   list<TransformVar> newVarnodes;		///< Storage for Varnode placeholder nodes
   list<TransformOp> newOps;			///< Storage for PcodeOp placeholder nodes
 
@@ -111,36 +108,26 @@ class TransformManager {
   void placeInputs(void);	///< Set input Varnodes for all new ops
 public:
   TransformManager(Funcdata *f) { fd = f; }	///< Constructor
-  virtual ~TransformManager(void) {}
+  virtual ~TransformManager(void);		///< Destructor
   virtual bool preserveAddress(Varnode *vn,int4 bitSize,int4 lsbOffset) const;
   TransformVar *newPreexistingVarnode(Varnode *vn);	///< Make placeholder for preexisting Varnode
   TransformVar *newUnique(int4 size);		///< Make placeholder for new unique space Varnode
   TransformVar *newConstant(int4 size,uintb val);	///< Make placeholder for constant Varnode
   TransformVar *newIop(Varnode *vn);	///< Make placeholder for special iop constant
   TransformVar *newPiece(Varnode *vn,int4 bitSize,int4 lsbOffset);	///< Make placeholder for piece of a Varnode
-  void newSplit(vector<TransformVar *> &res,Varnode *vn,const LaneDescription &description);
+  TransformVar *newSplit(Varnode *vn,const LaneDescription &description);
   TransformOp *newOpReplace(int4 numParams,OpCode opc,PcodeOp *replace);
   TransformOp *newOp(int4 numParams,OpCode opc,TransformOp *follow);
   TransformOp *newPreexistingOp(int4 numParams,OpCode opc,PcodeOp *originalOp);
 
   TransformVar *getPreexistingVarnode(Varnode *vn);	///< Get (or create) placeholder for preexisting Varnode
   TransformVar *getPiece(Varnode *vn,int4 bitSize,int4 lsbOffset);	///< Get (or create) placeholder piece
-  void getSplit(vector<TransformVar *> &res,Varnode *vn,const LaneDescription &description);
+  TransformVar *getSplit(Varnode *vn,const LaneDescription &description);
   void opSetInput(TransformOp *rop,TransformVar *rvn,int4 slot);	///< Mark given variable as input to given op
   void opSetOutput(TransformOp *rop,TransformVar *rvn);		///< Mark given variable as output of given op
 
   void apply(void);		///< Apply the full transform to the function
 };
-
-/// \param op2 is the other key to compare with \b this
-/// \return \b true if \b this should come before the other key
-inline bool TransformManager::MapKey::operator<(const TransformManager::MapKey &op2) const
-
-{
-  if (create_index != op2.create_index)
-    return (create_index < op2.create_index);
-  return (position < op2.position);
-}
 
 /// \param rop is the given placeholder op whose input is set
 /// \param rvn is the placeholder variable to set

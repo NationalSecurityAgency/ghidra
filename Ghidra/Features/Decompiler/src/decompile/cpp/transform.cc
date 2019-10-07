@@ -24,6 +24,8 @@
 void TransformVar::createReplacement(Funcdata *fd)
 
 {
+  if (replacement != (Varnode *)0)
+    return;			// Replacement already created
   switch(type) {
     case TransformVar::preexisting:
       replacement = vn;
@@ -32,6 +34,7 @@ void TransformVar::createReplacement(Funcdata *fd)
       replacement = fd->newConstant(byteSize,val);
       break;
     case TransformVar::normal_temp:
+    case TransformVar::piece_temp:
       if (def == (TransformOp *)0)
 	replacement = fd->newUnique(byteSize);
       else
@@ -104,6 +107,15 @@ bool TransformOp::attemptInsertion(Funcdata *fd)
   return true;		// Already inserted
 }
 
+TransformManager::~TransformManager(void)
+
+{
+  map<int4,TransformVar *>::iterator iter;
+  for(iter=pieceMap.begin();iter!=pieceMap.end();++iter) {
+    delete [] (*iter).second;
+  }
+}
+
 /// \brief Should the address of the given Varnode be preserved when constructing a piece
 ///
 /// A new Varnode will be created that represents a logical piece of the given Varnode.
@@ -127,16 +139,15 @@ bool TransformManager::preserveAddress(Varnode *vn,int4 bitSize,int4 lsbOffset) 
 TransformVar *TransformManager::newPreexistingVarnode(Varnode *vn)
 
 {
-  newVarnodes.push_back(TransformVar());
-  TransformVar *res = &newVarnodes.back();
+  TransformVar *res = new TransformVar[1];
+  pieceMap[vn->getCreateIndex()] = res;	// Enter preexisting Varnode into map, so we don't make another placeholder
   res->vn = vn;
   res->replacement = (Varnode *)0;
   res->byteSize = vn->getSize();
   res->bitSize = res->byteSize * 8;
   res->def = (TransformOp *)0;
   res->type = TransformVar::preexisting;
-  MapKey key(vn->getCreateIndex(),0);
-  pieceMap[key] = res;		// Enter preexisting Varnode into map, so we don't make another placeholder
+  res->flags = TransformVar::split_terminator;
   return res;
 }
 
@@ -152,6 +163,7 @@ TransformVar *TransformManager::newUnique(int4 size)
   res->bitSize = size * 8;
   res->def = (TransformOp *)0;
   res->type = TransformVar::normal_temp;
+  res->flags = 0;
   return res;
 }
 
@@ -168,6 +180,7 @@ TransformVar *TransformManager::newConstant(int4 size,uintb val)
   res->val = val;
   res->def = (TransformOp *)0;
   res->type = TransformVar::constant;
+  res->flags = 0;
   return res;
 }
 
@@ -183,6 +196,7 @@ TransformVar *TransformManager::newIop(Varnode *vn)
   res->val = vn->getOffset();	// The encoded iop
   res->def = (TransformOp *)0;
   res->type = TransformVar::constant_iop;
+  res->flags = 0;
   return res;
 }
 
@@ -195,8 +209,8 @@ TransformVar *TransformManager::newIop(Varnode *vn)
 TransformVar *TransformManager::newPiece(Varnode *vn,int4 bitSize,int4 lsbOffset)
 
 {
-  newVarnodes.push_back(TransformVar());
-  TransformVar *res = &newVarnodes.back();
+  TransformVar *res = new TransformVar[1];
+  pieceMap[vn->getCreateIndex()] = res;
   res->vn = vn;
   res->replacement = (Varnode *)0;
   res->bitSize = bitSize;
@@ -205,10 +219,9 @@ TransformVar *TransformManager::newPiece(Varnode *vn,int4 bitSize,int4 lsbOffset
   if (preserveAddress(vn, bitSize, lsbOffset))
     res->type = TransformVar::piece;
   else
-    res->type = TransformVar::normal_temp;
+    res->type = TransformVar::piece_temp;
+  res->flags = TransformVar::split_terminator;
   res->val = lsbOffset;
-  MapKey key(vn->getCreateIndex(),lsbOffset);
-  pieceMap[key] = res;
   return res;
 }
 
@@ -216,29 +229,29 @@ TransformVar *TransformManager::newPiece(Varnode *vn,int4 bitSize,int4 lsbOffset
 ///
 /// Given a big Varnode and a lane description, create placeholders for all the explicit pieces
 /// that the big Varnode will be split into.
-/// \param res will hold references to the new placeholders in significance order
 /// \param vn is the big Varnode to split
 /// \param description shows how the big Varnode will be split
-void TransformManager::newSplit(vector<TransformVar *> &res,Varnode *vn,const LaneDescription &description)
+/// \return an array of the new TransformVar placeholders from least to most significant
+TransformVar *TransformManager::newSplit(Varnode *vn,const LaneDescription &description)
 
 {
   int4 num = description.getNumLanes();
-  res.resize(num,(TransformVar *)0);
+  TransformVar *res = new TransformVar[num];
+  pieceMap[vn->getCreateIndex()] = res;
   for(int4 i=0;i<num;++i) {
     int4 bitpos = description.getPosition(i) * 8;
-    newVarnodes.push_back(TransformVar());
-    TransformVar *newVar = &newVarnodes.back();
+    TransformVar *newVar = &res[i];
     newVar->vn = vn;
     newVar->replacement = (Varnode *)0;
     newVar->byteSize = description.getSize(i);
     newVar->bitSize = newVar->byteSize * 8;
     newVar->def = (TransformOp *)0;
     newVar->type = TransformVar::piece;
+    newVar->flags = 0;
     newVar->val = bitpos;
-    MapKey key(vn->getCreateIndex(),bitpos);
-    pieceMap[key] = newVar;
-    res[i] = newVar;
   }
+  res[num-1].flags = TransformVar::split_terminator;
+  return res;
 }
 
 /// \brief Create a new placeholder op intended to replace an existing op
@@ -317,9 +330,8 @@ TransformOp *TransformManager::newPreexistingOp(int4 numParams,OpCode opc,PcodeO
 TransformVar *TransformManager::getPreexistingVarnode(Varnode *vn)
 
 {
-  map<MapKey,TransformVar *>::const_iterator iter;
-  MapKey key(vn->getCreateIndex(),0);
-  iter = pieceMap.find(key);
+  map<int4,TransformVar *>::const_iterator iter;
+  iter = pieceMap.find(vn->getCreateIndex());
   if (iter != pieceMap.end())
     return (*iter).second;
   return newPreexistingVarnode(vn);
@@ -334,11 +346,13 @@ TransformVar *TransformManager::getPreexistingVarnode(Varnode *vn)
 TransformVar *TransformManager::getPiece(Varnode *vn,int4 bitSize,int4 lsbOffset)
 
 {
-  map<MapKey,TransformVar *>::const_iterator iter;
-  MapKey key(vn->getCreateIndex(),lsbOffset);
-  iter = pieceMap.find(key);
+  map<int4,TransformVar *>::const_iterator iter;
+  iter = pieceMap.find(vn->getCreateIndex());
   if (iter != pieceMap.end()) {
-    return (*iter).second;
+    TransformVar *res = (*iter).second;
+    if (res->bitSize != bitSize || res->val != lsbOffset)
+      throw LowlevelError("Cannot create multiple pieces for one Varnode through getPiece");
+    return res;
   }
   return newPiece(vn,bitSize,lsbOffset);
 }
@@ -347,25 +361,18 @@ TransformVar *TransformManager::getPiece(Varnode *vn,int4 bitSize,int4 lsbOffset
 ///
 /// Given a big Varnode and a lane description, look up placeholders for all its
 /// explicit pieces. If they don't exist, create them.
-/// \param res will hold the array of recovered placeholders in significance order
 /// \param vn is the big Varnode to split
 /// \param description shows how the big Varnode will be split
-void TransformManager::getSplit(vector<TransformVar *> &res,Varnode *vn,const LaneDescription &description)
+/// \return an array of the TransformVar placeholders from least to most significant
+TransformVar *TransformManager::getSplit(Varnode *vn,const LaneDescription &description)
 
 {
-  map<MapKey,TransformVar *>::const_iterator iter;
-  MapKey key(vn->getCreateIndex(),0);
-  iter = pieceMap.lower_bound(key);
-  if (iter != pieceMap.end() && (*iter).first.getCreateIndex() == vn->getCreateIndex()) {
-    int4 num = description.getNumLanes();
-    res.resize(num,(TransformVar *)0);
-    for(int4 i=0;i<num;++i) {
-      res[i] = (*iter).second;
-      ++iter;
-    }
-    return;
+  map<int4,TransformVar *>::const_iterator iter;
+  iter = pieceMap.find(vn->getCreateIndex());
+  if (iter != pieceMap.end()) {
+    return (*iter).second;
   }
-  newSplit(res,vn,description);
+  return newSplit(vn,description);
 }
 
 void TransformManager::opSetInput(TransformOp *rop,TransformVar *rvn,int4 slot)
@@ -408,6 +415,15 @@ void TransformManager::createOps(void)
 void TransformManager::createVarnodes(void)
 
 {
+  map<int4,TransformVar *>::iterator piter;
+  for(piter=pieceMap.begin();piter!=pieceMap.end();++piter) {
+    TransformVar *vArray = (*piter).second;
+    for(int4 i=0;;++i) {
+      vArray[i].createReplacement(fd);
+      if ((vArray[i].flags & TransformVar::split_terminator)!=0)
+	break;
+    }
+  }
   list<TransformVar>::iterator iter;
   for(iter=newVarnodes.begin();iter!=newVarnodes.end();++iter) {
     (*iter).createReplacement(fd);
