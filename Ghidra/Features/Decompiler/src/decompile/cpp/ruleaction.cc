@@ -7334,7 +7334,7 @@ int4 RuleSplitFlow::applyOp(PcodeOp *op,Funcdata &data)
     return 0;
   SplitFlow splitFlow(&data,vn,loSize);
   if (!splitFlow.doTrace()) return 0;
-  splitFlow.doReplacement();
+  splitFlow.apply();
   return 1;
 }
 

@@ -18,6 +18,7 @@
 #ifndef __SUBVARIABLE_FLOW__
 #define __SUBVARIABLE_FLOW__
 
+#include "transform.hh"
 #include "funcdata.hh"
 
 /// \brief Class for shrinking big Varnodes carrying smaller logical values
@@ -115,54 +116,17 @@ public:
 };
 
 // Class for splitting up varnodes that hold 2 logical variables
-class SplitFlow {
-  class ReplaceVarnode {
-    friend class SplitFlow;
-    Varnode *vn;		// Varnode being split
-    Varnode *replaceLo;		// Replacement holding least significant part of original
-    Varnode *replaceHi;		// Replacement holding most significant part
-    bool defTraversed;		// Has the defining op been traversed
-  public:
-    ReplaceVarnode(void);
-  };
-  class ReplaceOp {
-    friend class SplitFlow;
-    PcodeOp *op;		// Original op being split
-    OpCode opcode;			// Replacement opcode
-    PcodeOp *loOp;		// Replacement for least sig part
-    PcodeOp *hiOp;		// Replacement for most sig part
-    int4 numParams;
-    bool doDelete;		// Original operation should be deleted
-    bool isLogicalInput;	// Op is putting a logical value into the whole, as opposed to pulling one out
-    ReplaceVarnode *output;	// Output varnode(s) if needed
-  public:
-    ReplaceOp(bool isLogic,PcodeOp *o,OpCode opc,int4 num);
-  };
-  int4 concatSize;		// Size of combined logicals
-  int4 loSize;			// Size of logical piece in least sig part of combined
-  int4 hiSize;			// Size of logical piece in most sig part of combined
-  Funcdata *fd;
-  map<Varnode *,ReplaceVarnode> varmap;
-  list<ReplaceOp> oplist;
-  vector<ReplaceVarnode *> worklist;
-  void assignReplaceOp(bool isLogicalInput,PcodeOp *op,OpCode opc,int4 numParam,ReplaceVarnode *outrvn);
-  void assignLogicalPieces(ReplaceVarnode *rvn);
-  void buildReplaceOutputs(ReplaceOp *rop);
-  void replacePiece(ReplaceOp *rop);
-  void replaceZext(ReplaceOp *rop);
-  void replaceLeftInput(ReplaceOp *rop);
-  void replaceLeftTerminal(ReplaceOp *rop);
-  void replaceOp(ReplaceOp *rop);
-  ReplaceVarnode *setReplacement(Varnode *vn,bool &inworklist);
-  bool addOpOutput(PcodeOp *op);
-  bool addOpInputs(PcodeOp *op,ReplaceVarnode *outrvn,int4 numParam);
-  bool traceForward(ReplaceVarnode *rvn);
-  bool traceBackward(ReplaceVarnode *rvn);
-  bool processNextWork(void);
+class SplitFlow : public TransformManager {
+  LaneDescription laneDescription;	///< Description of how to split Varnodes
+  vector<TransformVar *> worklist;	///< Pending work list of Varnodes to push the split through
+  TransformVar *setReplacement(Varnode *vn);
+  bool addOp(PcodeOp *op,TransformVar *rvn,int4 slot);
+  bool traceForward(TransformVar *rvn);
+  bool traceBackward(TransformVar *rvn);
+  bool processNextWork(void);		///< Process the next logical value on the worklist
 public:
-  SplitFlow(Funcdata *f,Varnode *root,int4 lowSize);
-  void doReplacement(void);
-  bool doTrace(void);
+  SplitFlow(Funcdata *f,Varnode *root,int4 lowSize);	///< Constructor
+  bool doTrace(void);			///< Trace split through data-flow, constructing transform
 };
 
 // Structures for tracing floating point variables if they are

@@ -1342,253 +1342,100 @@ void SubvariableFlow::doReplacement(void)
   }
 }
 
-SplitFlow::ReplaceVarnode::ReplaceVarnode(void)
+/// \brief Find or build the placeholder objects for a Varnode that needs to be split
+///
+/// Mark the Varnode so it doesn't get revisited.
+/// Decide if the Varnode needs to go into the worklist.
+/// \param vn is the Varnode that needs to be split
+/// \return the array of placeholders describing the split or null
+TransformVar *SplitFlow::setReplacement(Varnode *vn)
 
 {
-  replaceLo = (Varnode *)0;
-  replaceHi = (Varnode *)0;
-  defTraversed = false;
-}
-
-SplitFlow::ReplaceOp::ReplaceOp(bool isLogic,PcodeOp *o,OpCode opc,int4 num)
-
-{
-  op = o;
-  opcode = opc;
-  loOp = (PcodeOp *)0;
-  hiOp = (PcodeOp *)0;
-  numParams = num;
-  doDelete = false;
-  isLogicalInput = isLogic;
-  output = (ReplaceVarnode *)0;
-}
-
-void SplitFlow::assignReplaceOp(bool isLogicalInput,PcodeOp *op,OpCode opc,int4 numParam,ReplaceVarnode *outrvn)
-
-{
-  if (outrvn != (ReplaceVarnode *)0) {
-    if (!outrvn->defTraversed) {
-      oplist.push_back(ReplaceOp(isLogicalInput,op,opc,numParam));
-      oplist.back().output = outrvn;
-      outrvn->defTraversed = true;
-    }
-  }
-  else {
-    oplist.push_back(ReplaceOp(isLogicalInput,op,opc,numParam));
-  }
-}
-
-void SplitFlow::assignLogicalPieces(ReplaceVarnode *rvn)
-
-{ // Create the logical pieces of -rvn- as actual Varnodes
-  if (rvn->replaceLo != (Varnode *)0) return;
-  if (rvn->vn->isConstant()) {
-    uintb val1 = rvn->vn->getOffset() & calc_mask(loSize);
-    uintb val2 = (rvn->vn->getOffset() >> (loSize * 8)) & calc_mask(hiSize);
-    rvn->replaceLo = fd->newConstant(loSize,val1);
-    rvn->replaceHi = fd->newConstant(hiSize,val2);
-    return;
-  }
-  if (rvn->vn->getSpace()->getType() == IPTR_INTERNAL) {
-    rvn->replaceLo = fd->newUnique(loSize);
-    rvn->replaceHi = fd->newUnique(hiSize);
-    return;
-  }
-  fd->splitVarnode(rvn->vn,loSize,rvn->replaceLo,rvn->replaceHi);
-  if (rvn->vn->isInput()) {		// Right now this shouldn't happen
-    fd->setInputVarnode(rvn->replaceLo);
-    fd->setInputVarnode(rvn->replaceHi);
-  }
-}
-
-void SplitFlow::buildReplaceOutputs(ReplaceOp *rop)
-
-{
-  if (rop->output == (ReplaceVarnode *)0) return;
-  assignLogicalPieces(rop->output);
-  rop->loOp = fd->newOp(rop->numParams,rop->op->getAddr());
-  rop->hiOp = fd->newOp(rop->numParams,rop->op->getAddr());
-  fd->opSetOpcode(rop->loOp,rop->opcode);
-  fd->opSetOpcode(rop->hiOp,rop->opcode);
-  fd->opSetOutput(rop->loOp,rop->output->replaceLo);
-  fd->opSetOutput(rop->hiOp,rop->output->replaceHi);
-}
-
-void SplitFlow::replacePiece(ReplaceOp *rop)
-
-{ // Finish replacing the CPUI_PIECE operation with two COPY operations
-  PcodeOp *op = rop->op;
-  Varnode *invn0 = op->getIn(0);
-  Varnode *invn1 = op->getIn(1);
-  fd->opUnsetInput(op,0);
-  fd->opUnsetInput(op,1);
-  fd->opSetInput(rop->loOp,invn1,0);
-  fd->opSetInput(rop->hiOp,invn0,0);
-  fd->opInsertBefore(rop->loOp,op);	// insert at the same place as original op
-  fd->opInsertBefore(rop->hiOp,op);
-  rop->doDelete = true;		// Mark this op to be deleted
-}
-
-void SplitFlow::replaceZext(ReplaceOp *rop)
-
-{ // Finish replacing the CPUI_INT_ZEXT operation with a COPY and a COPY zero
-  PcodeOp *op = rop->op;
-  Varnode *invn0 = op->getIn(0);
-  fd->opUnsetInput(op,0);
-  fd->opSetInput(rop->loOp,invn0,0);		// Input to first COPY is original input to ZEXT
-  fd->opSetInput(rop->hiOp,fd->newConstant(hiSize,0),0);	// Input to second COPY is 0 constant
-  fd->opInsertBefore(rop->loOp,op);		// insert at the same place as original op
-  fd->opInsertBefore(rop->hiOp,op);
-  rop->doDelete = true;		// Mark this op to be deleted
-}
-
-void SplitFlow::replaceLeftInput(ReplaceOp *rop)
-
-{
-  PcodeOp *op = rop->op;
-  // Presence of ZEXT operation has already been verified
-  Varnode *invn0 = op->getIn(0)->getDef()->getIn(0);	// Grab the input to ZEXT
-  fd->opUnsetInput(op,0);
-  fd->opSetInput(rop->loOp,fd->newConstant(loSize,0),0);	// Input to first COPY is 0 constant
-  fd->opSetInput(rop->hiOp,invn0,0);				// Input to second COPY is original input to ZEXT
-  fd->opInsertBefore(rop->loOp,op);		// insert at the same place as original op
-  fd->opInsertBefore(rop->hiOp,op);
-  rop->doDelete = true;
-}
-
-void SplitFlow::replaceLeftTerminal(ReplaceOp *rop)
-
-{
-  PcodeOp *op = rop->op;
-  ReplaceVarnode *rvn1 = &varmap[op->getIn(0)];
-  assignLogicalPieces(rvn1);
-  PcodeOp *otherOp = fd->newOp(1,op->getAddr());
-  Varnode *otherVn = fd->newUniqueOut(concatSize,otherOp);
-  fd->opSetOpcode(otherOp,CPUI_INT_ZEXT);			// Extension of low piece
-  fd->opSetInput(otherOp,rvn1->replaceLo,0);
-  fd->opInsertBefore(otherOp,op);
-  fd->opSetInput(op,otherVn,0);				// Original shift is unchanged
-}
-
-void SplitFlow::replaceOp(ReplaceOp *rop)
-
-{ // Finish splitting -rop- into two separate operations on the logical pieces at the same point in the code
-  // Build the logical Varnodes or reuse previously built ones as necessary
-  // going through ReplaceVarnodes and -varmap-
-  vector<ReplaceVarnode *> inputs;
-
-  PcodeOp *op = rop->op;
-  int4 numParam = op->numInput();
-  if (op->code() == CPUI_INDIRECT)		// Slightly special handling if this is an INDIRECT
-    numParam = 1;				// We don't split the "indirect effect" varnode
-  for(int4 i=0;i<numParam;++i) {
-    ReplaceVarnode *invn = &varmap[op->getIn(i)];
-    assignLogicalPieces(invn);			// Make sure logical pieces are built
-    inputs.push_back(invn);
-  }
-  for(int4 i=0;i<numParam;++i) {
-    ReplaceVarnode *invn = inputs[i];
-    fd->opSetInput(rop->loOp,invn->replaceLo,i);	// Set inputs of component ops
-    fd->opSetInput(rop->hiOp,invn->replaceHi,i);
-  }
-  if (op->code() == CPUI_INDIRECT) {
-    PcodeOp *indeffect = PcodeOp::getOpFromConst(op->getIn(1)->getAddr());
-    fd->opSetInput(rop->loOp,fd->newVarnodeIop(indeffect),1);		// Add in the "indirect effect" parameter
-    fd->opSetInput(rop->hiOp,fd->newVarnodeIop(indeffect),1);
-    fd->opInsertBefore(rop->loOp,indeffect);				// Insert right before the indirect effect
-    fd->opInsertBefore(rop->hiOp,indeffect);
-  }
-  else if (op->code() == CPUI_MULTIEQUAL) {
-    BlockBasic *bb = op->getParent();		// Make sure MULTIEQUALs get inserted at the beginning of the block
-    fd->opInsertBegin(rop->loOp,bb);
-    fd->opInsertBegin(rop->hiOp,bb);
-  }
-  else {
-    fd->opInsertBefore(rop->loOp,op);		// Otherwise, insert at the same place as original op
-    fd->opInsertBefore(rop->hiOp,op);
-  }
-  rop->doDelete = true;		// Mark this op to be deleted
-}
-
-SplitFlow::ReplaceVarnode *SplitFlow::setReplacement(Varnode *vn,bool &inworklist)
-
-{ // Find the matching placeholder object for a varnode that needs to be split, OR build the placeholder object
-  // Mark the varnode so it doesn't get revisited
-  // Decide if the varnode needs to go into the worklist by setting -inworklist-
-  // Return null if this won't work
-  ReplaceVarnode *res;
+  TransformVar *res;
   if (vn->isMark()) {		// Already seen before
-    map<Varnode *,ReplaceVarnode>::iterator iter;
-    iter = varmap.find(vn);
-    res = &(*iter).second;
-    inworklist = false;
+    res = getSplit(vn, laneDescription);
     return res;
   }
 
   if (vn->isTypeLock())
-    return (ReplaceVarnode *)0;
+    return (TransformVar *)0;
   if (vn->isInput())
-    return (ReplaceVarnode *)0;		// Right now we can't split inputs
+    return (TransformVar *)0;		// Right now we can't split inputs
   if (vn->isFree() && (!vn->isConstant()))
-    return (ReplaceVarnode *)0;		// Abort
+    return (TransformVar *)0;		// Abort
 
-  res = & varmap[ vn ];			// Create new ReplaceVarnode and put it in map
+  res = newSplit(vn, laneDescription);	// Create new ReplaceVarnode and put it in map
   vn->setMark();
-  res->vn = vn;
-  inworklist = !vn->isConstant();
+  if (!vn->isConstant())
+    worklist.push_back(res);
 
   return res;
 }
 
-bool SplitFlow::addOpOutput(PcodeOp *op)
+/// \brief Split given op into its lanes.
+///
+/// We assume op is a logical operation, or a COPY, or an INDIRECT. It must have an output.
+/// All inputs and output have their placeholders generated and added to the worklist
+/// if appropriate.
+/// \param op is the given op
+/// \param rvn is a known parameter of the op
+/// \param slot is the incoming slot of the known parameter (-1 means parameter is output)
+/// \return \b true if the op is successfully split
+bool SplitFlow::addOp(PcodeOp *op,TransformVar *rvn,int4 slot)
 
-{ // Save off -op- for replacement
-  // Make sure the output will be replaced and add it to the worklist
-  // Return false if this is not possible
-  bool inworklist;
-  ReplaceVarnode *newvn = setReplacement(op->getOut(),inworklist);
-  if (newvn == (ReplaceVarnode *)0)
-    return false;
-  assignReplaceOp(false,op,op->code(),op->numInput(),newvn);
-  if (inworklist)
-    worklist.push_back(newvn);
-  return true;
-}
-
-bool SplitFlow::addOpInputs(PcodeOp *op,ReplaceVarnode *outrvn,int4 numParam)
-
-{ // Save off -op- for replacement
-  // Make sure the inputs will be replaced and add them to the worklist
-  // Return false if this is not possible
-  bool inworklist;
-  ReplaceVarnode *newvn;
-
-  for(int4 i=0;i<numParam;++i) {
-    Varnode *vn = op->getIn(i);
-    newvn = setReplacement(vn,inworklist);
-    if (newvn == (ReplaceVarnode *)0)
+{
+  TransformVar *outvn;
+  if (slot == -1)
+    outvn = rvn;
+  else {
+    outvn = setReplacement(op->getOut());
+    if (outvn == (TransformVar *)0)
       return false;
-    if (inworklist)
-      worklist.push_back(newvn);
   }
-  assignReplaceOp(false,op,op->code(),op->numInput(),outrvn);
+
+  if (outvn->getDef() != (TransformOp *)0)
+    return true;	// Already traversed
+
+  TransformOp *loOp = newOpReplace(op->numInput(), op->code(), op);
+  TransformOp *hiOp = newOpReplace(op->numInput(), op->code(), op);
+  int4 numParam = op->numInput();
+  if (op->code() == CPUI_INDIRECT) {
+    opSetInput(loOp,newIop(op->getIn(1)),1);
+    opSetInput(hiOp,newIop(op->getIn(1)),1);
+    numParam = 1;
+  }
+  for(int4 i=0;i<numParam;++i) {
+    TransformVar *invn;
+    if (i == slot)
+      invn = rvn;
+    else {
+      invn = setReplacement(op->getIn(i));
+      if (invn == (TransformVar *)0)
+	return false;
+    }
+    opSetInput(loOp,invn,i);		// Low piece with low op
+    opSetInput(hiOp,invn+1,i);		// High piece with high op
+  }
+  opSetOutput(loOp,outvn);
+  opSetOutput(hiOp,outvn+1);
   return true;
 }
 
-bool SplitFlow::traceForward(ReplaceVarnode *rvn)
+/// \brief Try to trace the pair of logical values, forward, through ops that read them
+///
+/// Try to trace pieces of TransformVar pair forward, through reading ops, update worklist
+/// \param rvn is the TransformVar pair to trace, as an array
+/// \return \b true if logical pieces can be naturally traced, \b false otherwise
+bool SplitFlow::traceForward(TransformVar *rvn)
 
-{ // Try to trace pieces of -rvn- forward, through reading ops, update worklist
-  // Return true if logical pieces can be naturally traced, false otherwise
-  PcodeOp *op;
-  Varnode *outvn,*tmpvn;
-  uintb val;
-
+{
+  Varnode *origvn = rvn->getOriginal();
   list<PcodeOp *>::const_iterator iter,enditer;
-  iter = rvn->vn->beginDescend();
-  enditer = rvn->vn->endDescend();
+  iter = origvn->beginDescend();
+  enditer = origvn->endDescend();
   while(iter != enditer) {
-    op = *iter++;
-    outvn = op->getOut();
+    PcodeOp *op = *iter++;
+    Varnode *outvn = op->getOut();
     if ((outvn!=(Varnode *)0)&&(outvn->isMark()))
       continue;
     switch(op->code()) {
@@ -1599,37 +1446,65 @@ bool SplitFlow::traceForward(ReplaceVarnode *rvn)
     case CPUI_INT_OR:
     case CPUI_INT_XOR:
   //  case CPUI_INT_NEGATE:
-      if (!addOpOutput(op))
+      if (!addOp(op,rvn,op->getSlot(origvn)))
 	return false;
       break;
     case CPUI_SUBPIECE:
-      val = op->getIn(1)->getOffset();
-      if ((val==0)&&(outvn->getSize() == loSize))
-	assignReplaceOp(false,op,CPUI_COPY,1,(ReplaceVarnode *)0);	// Grabs the low piece
-      else if ((val == loSize)&&(outvn->getSize() == hiSize))
-	assignReplaceOp(false,op,CPUI_COPY,1,(ReplaceVarnode *)0);	// Grabs the high piece
+    {
+      uintb val = op->getIn(1)->getOffset();
+      if ((val==0)&&(outvn->getSize() == laneDescription.getSize(0))) {
+	TransformOp *rop = newPreexistingOp(1,CPUI_COPY,op);	// Grabs the low piece
+	opSetInput(rop, rvn, 0);
+      }
+      else if ((val == laneDescription.getSize(0))&&(outvn->getSize() == laneDescription.getSize(1))) {
+	TransformOp *rop = newPreexistingOp(1,CPUI_COPY,op);	// Grabs the high piece
+	opSetInput(rop, rvn+1, 0);
+      }
       else
 	return false;
       break;
+    }
     case CPUI_INT_LEFT:
-      tmpvn = op->getIn(1);
+    {
+      Varnode *tmpvn = op->getIn(1);
       if (!tmpvn->isConstant())
 	return false;
-      val = tmpvn->getOffset();
-      if (val < hiSize * 8)
+      uintb val = tmpvn->getOffset();
+      if (val < laneDescription.getSize(1) * 8)
 	return false;			// Must obliterate all high bits
-      assignReplaceOp(false,op,CPUI_INT_LEFT,2,(ReplaceVarnode *)0);	// Good, but terminating op
+      TransformOp *rop = newPreexistingOp(2,CPUI_INT_LEFT,op);		// Keep original shift
+      TransformOp *zextrop = newOp(1, CPUI_INT_ZEXT, rop);
+      opSetInput(zextrop, rvn, 0);		// Input is just the low piece
+      opSetOutput(zextrop, newUnique(laneDescription.getWholeSize()));
+      opSetInput(rop, zextrop->getOut(), 0);
+      opSetInput(rop, newConstant(op->getIn(1)->getSize(), 0, op->getIn(1)->getOffset()), 1);	// Original shift amount
       break;
+    }
     case CPUI_INT_SRIGHT:
     case CPUI_INT_RIGHT:
-      tmpvn = op->getIn(1);
+    {
+      Varnode *tmpvn = op->getIn(1);
       if (!tmpvn->isConstant())
 	return false;
-      val = tmpvn->getOffset();
-      if (val < loSize * 8)
+      uintb val = tmpvn->getOffset();
+      if (val < laneDescription.getSize(0) * 8)
 	return false;
-      assignReplaceOp(false,op,(op->code() == CPUI_INT_RIGHT) ? CPUI_INT_ZEXT : CPUI_INT_SEXT,2,(ReplaceVarnode *)0);		// Good, but terminating op
+      OpCode extOpCode = (op->code() == CPUI_INT_RIGHT) ? CPUI_INT_ZEXT : CPUI_INT_SEXT;
+      if (val == laneDescription.getSize(0) * 8) {	// Shift of exactly loSize bytes
+	TransformOp *rop = newPreexistingOp(1,extOpCode,op);
+	opSetInput(rop, rvn+1, 0);	// Input is the high piece
+      }
+      else {
+	uintb remainShift = val - laneDescription.getSize(0) * 8;
+	TransformOp *rop = newPreexistingOp(2,op->code(),op);
+	TransformOp *extrop = newOp(1, extOpCode, rop);
+	opSetInput(extrop, rvn+1, 0);	// Input is the high piece
+	opSetOutput(extrop, newUnique(laneDescription.getWholeSize()));
+	opSetInput(rop, extrop->getOut(), 0);
+	opSetInput(rop, newConstant(op->getIn(1)->getSize(), 0, remainShift), 1);	// Shift any remaining bits
+      }
       break;
+    }
     default:
       return false;
     }
@@ -1637,12 +1512,15 @@ bool SplitFlow::traceForward(ReplaceVarnode *rvn)
   return true;
 }
 
-bool SplitFlow::traceBackward(ReplaceVarnode *rvn)
+/// \brief Try to trace the pair of logical values, backward, through the defining op
+///
+/// Create part of transform related to the defining op, and update the worklist as necessary.
+/// \param rvn is the logical value to examine
+/// \return \b false if the trace is not possible
+bool SplitFlow::traceBackward(TransformVar *rvn)
 
-{ // Try to trace the pair of logical values, backward, through the op defining -rvn-
-  // Update list of Varnodes and PcodeOps to replace and the worklist as necessary
-  // Return false if this is not possible
-  PcodeOp *op = rvn->vn->getDef();
+{
+  PcodeOp *op = rvn->getOriginal()->getDef();
   if (op == (PcodeOp *)0) return true; // If vn is input
 
   switch(op->code()) {
@@ -1651,43 +1529,59 @@ bool SplitFlow::traceBackward(ReplaceVarnode *rvn)
   case CPUI_INT_AND:
   case CPUI_INT_OR:
   case CPUI_INT_XOR:
-//  case CPUI_INT_NEGATE:
-    if (!addOpInputs(op,rvn,op->numInput()))
-      return false;
-    break;
   case CPUI_INDIRECT:
-    if (!addOpInputs(op,rvn,1))		// Only backtrack through the first input
+//  case CPUI_INT_NEGATE:
+    if (!addOp(op,rvn,-1))
       return false;
     break;
   case CPUI_PIECE:
-    if (op->getIn(0)->getSize() != hiSize)
+  {
+    if (op->getIn(0)->getSize() != laneDescription.getSize(1))
       return false;
-    if (op->getIn(1)->getSize() != loSize)
+    if (op->getIn(1)->getSize() != laneDescription.getSize(0))
       return false;
-    assignReplaceOp(true,op,CPUI_COPY,1,rvn);
+    TransformOp *loOp = newOpReplace(1, CPUI_COPY, op);
+    TransformOp *hiOp = newOpReplace(1, CPUI_COPY, op);
+    opSetInput(loOp,newPreexistingVarnode(op->getIn(1)),0);
+    opSetOutput(loOp,rvn);	// Least sig -> low
+    opSetInput(hiOp,newPreexistingVarnode(op->getIn(0)),0);
+    opSetOutput(hiOp,rvn+1);	// Most sig -> high
     break;
+  }
   case CPUI_INT_ZEXT:
-    if (op->getIn(0)->getSize() != loSize)
+  {
+    if (op->getIn(0)->getSize() != laneDescription.getSize(0))
       return false;
-    if (op->getOut()->getSize() != (loSize + hiSize))
+    if (op->getOut()->getSize() != laneDescription.getWholeSize())
       return false;
-    assignReplaceOp(true,op,CPUI_COPY,1,rvn);
+    TransformOp *loOp = newOpReplace(1, CPUI_COPY, op);
+    TransformOp *hiOp = newOpReplace(1, CPUI_COPY, op);
+    opSetInput(loOp,newPreexistingVarnode(op->getIn(0)),0);
+    opSetOutput(loOp,rvn);	// ZEXT input -> low
+    opSetInput(hiOp,newConstant(laneDescription.getSize(1), 0, 0), 0);
+    opSetOutput(hiOp,rvn+1);	// zero -> high
     break;
+  }
   case CPUI_INT_LEFT:
-    {
-      Varnode *cvn = op->getIn(1);
-      if (!cvn->isConstant()) return false;
-      if (cvn->getOffset() != loSize * 8) return false;
-      Varnode *invn = op->getIn(0);
-      if (!invn->isWritten()) return false;
-      PcodeOp *zextOp = invn->getDef();
-      if (zextOp->code() != CPUI_INT_ZEXT) return false;
-      invn = zextOp->getIn(0);
-      if (invn->getSize() != hiSize) return false;
-      if (invn->isFree()) return false;
-      assignReplaceOp(true,op,CPUI_COPY,1,rvn);
-    }
+  {
+    Varnode *cvn = op->getIn(1);
+    if (!cvn->isConstant()) return false;
+    if (cvn->getOffset() != laneDescription.getSize(0) * 8) return false;
+    Varnode *invn = op->getIn(0);
+    if (!invn->isWritten()) return false;
+    PcodeOp *zextOp = invn->getDef();
+    if (zextOp->code() != CPUI_INT_ZEXT) return false;
+    invn = zextOp->getIn(0);
+    if (invn->getSize() != laneDescription.getSize(1)) return false;
+    if (invn->isFree()) return false;
+    TransformOp *loOp = newOpReplace(1, CPUI_COPY, op);
+    TransformOp *hiOp = newOpReplace(1, CPUI_COPY, op);
+    opSetInput(loOp,newConstant(laneDescription.getSize(0), 0, 0), 0);
+    opSetOutput(loOp, rvn);	// zero -> low
+    opSetInput(hiOp,newPreexistingVarnode(invn), 0);
+    opSetOutput(hiOp, rvn+1);	// invn -> high
     break;
+  }
 //  case CPUI_LOAD:		// We could split into two different loads
   default:
     return false;
@@ -1695,10 +1589,11 @@ bool SplitFlow::traceBackward(ReplaceVarnode *rvn)
   return true;
 }
 
+/// \return \b true if the logical split was successfully pushed through its local operators
 bool SplitFlow::processNextWork(void)
 
 {
-  ReplaceVarnode *rvn = worklist.back();
+  TransformVar *rvn = worklist.back();
 
   worklist.pop_back();
 
@@ -1707,110 +1602,29 @@ bool SplitFlow::processNextWork(void)
 }
 
 SplitFlow::SplitFlow(Funcdata *f,Varnode *root,int4 lowSize)
+  : TransformManager(f), laneDescription(root->getSize(),lowSize,root->getSize()-lowSize)
 
 {
-  fd = f;
-  concatSize = root->getSize();
-  loSize = lowSize;
-  hiSize = concatSize - loSize;
-  bool inworklist;
-  ReplaceVarnode *rvn = setReplacement(root,inworklist);
-  if (rvn == (ReplaceVarnode *)0)
-    return;
-  if (inworklist)
-    worklist.push_back(rvn);
+  setReplacement(root);
 }
 
-void SplitFlow::doReplacement(void)
-
-{
-  ReplaceVarnode *rvn1;
-
-  list<ReplaceOp>::iterator iter;
-  for(iter=oplist.begin();iter!=oplist.end();++iter) {
-    buildReplaceOutputs(&(*iter));		// Build the raw replacement ops for anything needing an output
-  }
-
-  for(iter=oplist.begin();iter!=oplist.end();++iter) {
-    ReplaceOp *rop = &(*iter);
-    PcodeOp *op = rop->op;
-    switch(op->code()) {
-    case CPUI_SUBPIECE:
-      rvn1 = &varmap[op->getIn(0)];
-      assignLogicalPieces(rvn1);
-      fd->opSetOpcode(op,CPUI_COPY);		// This becomes a COPY
-      if (op->getIn(1)->getOffset() == 0)	// Grabbing the low piece
-	fd->opSetInput(op,rvn1->replaceLo,0);
-      else
-	fd->opSetInput(op,rvn1->replaceHi,0);	// Grabbing the high piece
-      fd->opRemoveInput(op,1);
-      break;
-    case CPUI_INT_LEFT:
-      if (rop->isLogicalInput)
-	replaceLeftInput(rop);
-      else
-	replaceLeftTerminal(rop);
-      break;
-    case CPUI_INT_RIGHT:
-    case CPUI_INT_SRIGHT:
-      rvn1 = &varmap[op->getIn(0)];
-      assignLogicalPieces(rvn1);
-      if (op->getIn(1)->getOffset() == loSize * 8) {			// Shift of exactly loSize bytes
-	fd->opSetOpcode(op,rop->opcode);				// is equivalent to an extension
-	fd->opRemoveInput(op,1);
-	fd->opSetInput(op,rvn1->replaceHi,0);				//    of the high part
-      }
-      else {
-	PcodeOp *otherOp = fd->newOp(1,op->getAddr());
-	Varnode *otherVn = fd->newUniqueOut(concatSize,otherOp);
-	uintb remainShift = op->getIn(1)->getOffset() - loSize * 8;
-	fd->opSetOpcode(otherOp,rop->opcode);			// Extension of high piece
-	fd->opSetInput(otherOp,rvn1->replaceHi,0);		// Equivalent of INT_RIGHT by loSize * 8
-	fd->opInsertBefore(otherOp,op);
-	fd->opSetInput(op,otherVn,0);				// Original shift
-	fd->opSetInput(op,fd->newConstant(4,remainShift),1);	//   now shifts any remaining bits
-      }
-      break;
-    case CPUI_PIECE:
-      replacePiece(rop);
-      break;
-    case CPUI_INT_ZEXT:
-      replaceZext(rop);
-      break;
-    default:
-      replaceOp(rop);
-      break;
-    }
-  }
-
-  for(iter=oplist.begin();iter!=oplist.end();++iter) {
-    if ((*iter).doDelete) {		// Marked for deletion
-      fd->opDestroy((*iter).op);
-    }
-  }
-}
-
+/// Push the logical split around, setting up the explicit transforms as we go.
+/// If at any point, the split cannot be naturally pushed, return \b false.
+/// \return \b true if a full transform has been constructed that can perform the split
 bool SplitFlow::doTrace(void)
 
-{ // Process worklist until its done
+{
   if (worklist.empty())
     return false;		// Nothing to do
-  bool retval = false;
-  if (fd != (Funcdata *)0) {
-    retval = true;
-    while(!worklist.empty()) {
-      if (!processNextWork()) {
-	retval = false;
-	break;
-      }
+  bool retval = true;
+  while(!worklist.empty()) {	// Process the worklist until its done
+    if (!processNextWork()) {
+      retval = false;
+      break;
     }
   }
 
-  // Clear marks
-  map<Varnode *,ReplaceVarnode>::iterator iter;
-  for(iter=varmap.begin();iter!=varmap.end();++iter)
-    (*iter).first->clearMark();
-
+  clearVarnodeMarks();
   if (!retval) return false;
   return true;
 }
