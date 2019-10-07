@@ -537,20 +537,19 @@ macro unpackflags(ccr) {
 # size = 4, but this extended store insn needs to write 8 bytes
 :stx RD,ea                           is op=3 & RD & rd_d & op3=0x0e & ea
 {
-	# There is a bug in the sleigh compiler that implements the tmp_hi:4 = rd_d[32,32] instruction incorrectly
-	#tmp_lo:4 = rd_d[0,32];
-	#tmp_hi:4 = rd_d[32,32];
-	#tmp:8 = zext(tmp_lo) + zext(tmp_hi << 32);
-	*ea = rd_d;#tmp;
+	tmp_lo:4 = rd_d[0,32];
+	tmp_hi:4 = rd_d[32,32];
+	tmp:8 = zext(tmp_lo) + (zext(tmp_hi) << 32);
+	*ea = tmp;
 }
 :clrx ea                             is op=3 & rd=0 & op3=0x0e & ea { *ea = 0:8; }
 
 :std RD,ea                           is op=3 & RD & rd_d & op3=0x07 & ea
 {
-	#tmp_lo:4 = rd_d[0,32];
-	#tmp_hi:4 = rd_d[32,32];
-	#tmp:8 = zext(tmp_lo) + zext(tmp_hi << 32);
-	*ea = rd_d;#tmp;
+	tmp_lo:4 = rd_d[0,32];
+	tmp_hi:4 = rd_d[32,32];
+	tmp:8 = zext(tmp_lo) + (zext(tmp_hi) << 32);
+	*ea = tmp;
 }
 :clrd ea                             is op=3 & rd=0 & op3=0x07 & ea { *ea = 0:8; }
 
