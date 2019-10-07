@@ -271,7 +271,7 @@ class SelectProjectPanel extends AbstractWizardJPanel {
 				projectName =
 					projectName.substring(0, projectName.length() - PROJECT_EXTENSION.length());
 			}
-			if (projectName.length() == 0 || !NamingUtilities.isValidName(projectName)) {
+			if (projectName.length() == 0 || !NamingUtilities.isValidProjectName(projectName)) {
 				msg = "Please specify valid project name";
 			}
 			else {
