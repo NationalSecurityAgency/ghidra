@@ -21,8 +21,7 @@ import ghidra.framework.store.local.LocalFileSystem;
 import util.CollectionUtils;
 
 /**
- * Utility class with static methods for validating project file names and converting
- * strings to numbers, etc.
+ * Utility class with static methods for validating project file names.
  */
 public final class NamingUtilities {
 

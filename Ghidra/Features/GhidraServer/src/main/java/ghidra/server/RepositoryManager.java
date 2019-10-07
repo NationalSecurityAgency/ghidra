@@ -225,10 +225,11 @@ public class RepositoryManager {
 	}
 
 	/**
-	 * Get list of all users to be returned to specified currentUser.
-	 * Anonymous user will be returned an empty list.
+	 * Get all defined users. If currentUser is an
+	 * Anonymous user an empty array will be returned.
 	 * @param currentUser current user
-	 * @return array of users known to this manager.
+	 * @return array of users known to this manager or empty array if 
+	 * we should not reveal to currentUser.
 	 */
 	public synchronized String[] getAllUsers(String currentUser) throws IOException {
 		if (isAnonymousUser(currentUser)) {
@@ -243,9 +244,6 @@ public class RepositoryManager {
 		}
 	}
 
-	/**
-	 * @return UserManager object
-	 */
 	public UserManager getUserManager() {
 		return userMgr;
 	}
