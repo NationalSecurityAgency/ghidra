@@ -479,34 +479,22 @@ void Funcdata::setHighLevel(void)
     assignHigh(*iter);
 }
 
-/// \brief Create two new Varnodes which split the given Varnode
+/// \brief Copy properties from an existing Varnode to a new Varnode
 ///
-/// Attributes are copied from the original into the split pieces if appropriate
-/// \param vn is the given Varnode
-/// \param lowsize is the desired size in bytes of the least significant portion
-/// \param vnlo will hold the least significant portion
-/// \param vnhi will hold the most significant portion
-void Funcdata::splitVarnode(Varnode *vn,int4 lowsize,Varnode *& vnlo,Varnode *& vnhi)
+/// The new Varnode is assumed to overlap the storage of the existing Varnode.
+/// Properties like boolean flags and \e consume bits are copied as appropriate.
+/// \param vn is the existing Varnode
+/// \param newVn is the new Varnode that has its properties set
+/// \param lsbOffset is the significance offset of the new Varnode within the exising
+void Funcdata::transferVarnodeProperties(Varnode *vn,Varnode *newVn,int4 lsbOffset)
 
 {
-  int4 highsize = vn->getSize() - lowsize;
-  Address addrhi = vn->getAddr();
-  Address addrlo = addrhi;
-  uintb consumehi = vn->getConsume() >> 8*lowsize;
-  uintb consumelo = vn->getConsume() & calc_mask(lowsize);
-  if (vn->getSpace()->isBigEndian())
-    addrlo = addrhi + highsize;
-  else
-    addrhi = addrhi + lowsize;
+  uintb newConsume = (vn->getConsume() >> 8*lsbOffset) & calc_mask(newVn->getSize());
 
-  uint4 vnflags = vn->getFlags() & (Varnode::directwrite|Varnode::addrforce|Varnode::auto_live);
-  vnhi = newVarnode(highsize,addrhi);
-  vnlo = newVarnode(lowsize,addrlo);
+  uint4 vnFlags = vn->getFlags() & (Varnode::directwrite|Varnode::addrforce|Varnode::auto_live);
 
-  vnhi->setFlags(vnflags);	// Preserve addrforce setting
-  vnlo->setFlags(vnflags);
-  vnhi->setConsume(consumehi);
-  vnlo->setConsume(consumelo);
+  newVn->setFlags(vnFlags);	// Preserve addrforce setting
+  newVn->setConsume(newConsume);
 }
 
 /// Treat the given Varnode as read-only, look up its value in LoadImage
