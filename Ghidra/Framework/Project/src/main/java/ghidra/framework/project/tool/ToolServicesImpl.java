@@ -102,9 +102,10 @@ class ToolServicesImpl implements ToolServices {
 			if (!exportFile.getName().endsWith(ToolUtils.TOOL_EXTENSION)) {
 				exportFile = new File(exportFile.getAbsolutePath() + ToolUtils.TOOL_EXTENSION);
 			}
+
 			if (exportFile.exists()) {
 				int result = OptionDialog.showOptionDialog(null, "Overwrite?",
-					"Overwrite existing file, " + exportFile.getName() + "?", "Overwrite",
+					"Overwrite existing file: '" + exportFile.getName() + "'?", "Overwrite",
 					OptionDialog.QUESTION_MESSAGE);
 				if (result != OptionDialog.OPTION_ONE) {
 					exportFile = null; // user chose not to overwrite
