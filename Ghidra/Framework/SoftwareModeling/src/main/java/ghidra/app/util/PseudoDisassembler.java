@@ -71,6 +71,8 @@ public class PseudoDisassembler {
 
 	private boolean respectExecuteFlag = false;
 
+	private AddressSetView executeSet;
+
 	/**
 	 * Create a pseudo disassembler for the given program.
 	 */
@@ -78,6 +80,8 @@ public class PseudoDisassembler {
 		this.program = program;
 
 		memory = program.getMemory();
+		
+		executeSet = memory.getExecuteSet();
 
 		this.language = program.getLanguage();
 
@@ -615,8 +619,6 @@ public class PseudoDisassembler {
 			return false;
 		}
 
-		AddressSetView executeSet = memory.getExecuteSet();
-
 		RepeatInstructionByteTracker repeatInstructionByteTracker =
 			new RepeatInstructionByteTracker(MAX_REPEAT_BYTES_LIMIT, null);
 
@@ -878,7 +880,6 @@ public class PseudoDisassembler {
 		}
 
 		// check that body does not wander into non-executable memory
-		AddressSetView executeSet = program.getMemory().getExecuteSet();
 		if (respectExecuteFlag && !executeSet.isEmpty() && !body.subtract(executeSet).isEmpty()) {
 			return false;
 		}
