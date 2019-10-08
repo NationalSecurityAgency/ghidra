@@ -1542,9 +1542,9 @@ bool SplitFlow::traceBackward(TransformVar *rvn)
       return false;
     TransformOp *loOp = newOpReplace(1, CPUI_COPY, op);
     TransformOp *hiOp = newOpReplace(1, CPUI_COPY, op);
-    opSetInput(loOp,newPreexistingVarnode(op->getIn(1)),0);
+    opSetInput(loOp,getPreexistingVarnode(op->getIn(1)),0);
     opSetOutput(loOp,rvn);	// Least sig -> low
-    opSetInput(hiOp,newPreexistingVarnode(op->getIn(0)),0);
+    opSetInput(hiOp,getPreexistingVarnode(op->getIn(0)),0);
     opSetOutput(hiOp,rvn+1);	// Most sig -> high
     break;
   }
@@ -1556,7 +1556,7 @@ bool SplitFlow::traceBackward(TransformVar *rvn)
       return false;
     TransformOp *loOp = newOpReplace(1, CPUI_COPY, op);
     TransformOp *hiOp = newOpReplace(1, CPUI_COPY, op);
-    opSetInput(loOp,newPreexistingVarnode(op->getIn(0)),0);
+    opSetInput(loOp,getPreexistingVarnode(op->getIn(0)),0);
     opSetOutput(loOp,rvn);	// ZEXT input -> low
     opSetInput(hiOp,newConstant(laneDescription.getSize(1), 0, 0), 0);
     opSetOutput(hiOp,rvn+1);	// zero -> high
@@ -1578,7 +1578,7 @@ bool SplitFlow::traceBackward(TransformVar *rvn)
     TransformOp *hiOp = newOpReplace(1, CPUI_COPY, op);
     opSetInput(loOp,newConstant(laneDescription.getSize(0), 0, 0), 0);
     opSetOutput(loOp, rvn);	// zero -> low
-    opSetInput(hiOp,newPreexistingVarnode(invn), 0);
+    opSetInput(hiOp,getPreexistingVarnode(invn), 0);
     opSetOutput(hiOp, rvn+1);	// invn -> high
     break;
   }
