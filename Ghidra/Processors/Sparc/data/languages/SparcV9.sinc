@@ -252,7 +252,7 @@ attach variables [ rs1_3 ] [ Y     _          CCR   _   TICK        PC       _  
 # CWP++
 macro save() {    
 
-if (!DECOMPILE_MODE) goto <skip_rotate>;
+if (DECOMPILE_MODE) goto <skip_rotate>;
 	# Save inputs 
 	*[register]:$(SIZE) (&w010 + (CWP:4*$(REGWINSZ)+0)*$(SIZE)) = i0;
 	*[register]:$(SIZE) (&w010 + (CWP:4*$(REGWINSZ)+1)*$(SIZE)) = i1;
@@ -312,7 +312,7 @@ macro restore() {
 	sp = fp;
 	o7 = i7; # address of CALLer address
 
-if (!DECOMPILE_MODE) goto <skip_rotate>;	
+if (DECOMPILE_MODE) goto <skip_rotate>;	
 	# restore original inputs
 	i0 = *[register]:$(SIZE) ((&w010) + ((CWP:4*$(REGWINSZ)+0)*$(SIZE)));
 	i1 = *[register]:$(SIZE) ((&w010) + ((CWP:4*$(REGWINSZ)+1)*$(SIZE)));

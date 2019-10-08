@@ -15,6 +15,8 @@
  */
 package ghidra.test.processors;
 
+import ghidra.program.model.listing.Program;
+import ghidra.test.processors.support.EmulatorTestRunner;
 import ghidra.test.processors.support.ProcessorEmulatorTestAdapter;
 import junit.framework.Test;
 
@@ -34,6 +36,10 @@ public class SparcV9_64_O0_EmulatorTest extends ProcessorEmulatorTestAdapter {
 		return "sparcV9_64_GCC_O0";
 	}
 
+	protected void initializeState(EmulatorTestRunner testRunner, Program program) throws Exception {
+		testRunner.setRegister("DECOMPILE_MODE", 0x0);  // turn decompile mode off
+	}
+	
 	public static Test suite() {
 		return ProcessorEmulatorTestAdapter.buildEmulatorTestSuite(SparcV9_64_O0_EmulatorTest.class);
 	}
