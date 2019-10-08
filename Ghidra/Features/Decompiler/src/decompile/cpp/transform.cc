@@ -86,7 +86,7 @@ void TransformVar::createReplacement(Funcdata *fd)
 	replacement = fd->newVarnode(byteSize,addr);
       else
 	replacement = fd->newVarnodeOut(byteSize, addr, def->replacement);
-      // TODO: fd->preserveProperties(vn,replacement,bytePos);
+      fd->transferVarnodeProperties(vn,replacement,bytePos);
       break;
     }
     case TransformVar::constant_iop:
