@@ -119,8 +119,12 @@ void TransformOp::createReplacement(Funcdata *fd)
     fd->opSetOpcode(replacement, opc);
     if (output != (TransformVar *)0)
       output->createReplacement(fd);
-    if (follow == (TransformOp *)0)		// Can be inserted immediately
-      fd->opInsertBefore(replacement, op);
+    if (follow == (TransformOp *)0) {		// Can be inserted immediately
+      if (opc == CPUI_MULTIEQUAL)
+	fd->opInsertBegin(replacement, op->getParent());
+      else
+	fd->opInsertBefore(replacement, op);
+    }
   }
 }
 
@@ -131,7 +135,10 @@ bool TransformOp::attemptInsertion(Funcdata *fd)
 {
   if (follow != (TransformOp *)0) {
     if (follow->follow == (TransformOp *)0) {	// Check if the follow is inserted
-      fd->opInsertBefore(replacement,follow->replacement);
+      if (opc == CPUI_MULTIEQUAL)
+	fd->opInsertBegin(replacement, follow->replacement->getParent());
+      else
+	fd->opInsertBefore(replacement,follow->replacement);
       follow = (TransformOp *)0;	// Mark that this has been inserted
       return true;
     }
@@ -501,27 +508,36 @@ void TransformManager::removeOld(void)
 void TransformManager::transformInputVarnodes(void)
 
 {
-  list<TransformVar>::iterator iter;
-  vector<Varnode *> deadList;
+  map<int4,TransformVar *>::iterator iter;
+  vector<TransformVar *> deadList;
 
-  for(iter=newVarnodes.begin();iter!=newVarnodes.end();++iter) {
-    TransformVar &rvn(*iter);
-    if (rvn.type == TransformVar::piece && rvn.def == (TransformOp *)0) {
-      if (!rvn.vn->isMark()) {
-	rvn.vn->setMark();
-	deadList.push_back(rvn.vn);
+  for(iter=pieceMap.begin();iter!=pieceMap.end();++iter) {
+    TransformVar *vArray = (*iter).second;
+    for(int4 i=0;;++i) {
+      TransformVar *rvn = vArray + i;
+      if (rvn->type == TransformVar::piece) {
+	Varnode *vn = rvn->vn;
+	if (vn->isInput()) {
+	  deadList.push_back(rvn);
+	  if (vn->isMark()) {
+	    rvn->vn = (Varnode *)0;	// Zero out if more than one TransformVar referencing input
+	  }
+	  else {
+	    vn->setMark();
+	  }
+	}
       }
+      if ((rvn->flags & TransformVar::split_terminator)!=0)
+	break;
     }
   }
 
-  for(int4 i=0;i<deadList.size();++i)
-    fd->deleteVarnode(deadList[i]);
-
-  for(iter=newVarnodes.begin();iter!=newVarnodes.end();++iter) {
-    TransformVar &rvn(*iter);
-    if (rvn.type == TransformVar::piece && rvn.def == (TransformOp *)0) {
-      rvn.replacement = fd->setInputVarnode(rvn.replacement);
-    }
+  for(int4 i=0;i<deadList.size();++i) {
+    TransformVar *rvn = deadList[i];
+    Varnode *vn = rvn->vn;
+    if (vn != (Varnode *)0)
+      fd->deleteVarnode(vn);
+    rvn->replacement = fd->setInputVarnode(rvn->replacement);
   }
 }
 
