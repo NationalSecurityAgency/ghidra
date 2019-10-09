@@ -268,6 +268,7 @@ public class DyldCacheProgramBuilder extends MachoProgramBuilder {
 		long valueAdd = slideInfo2.getValueAdd();
 		
 		short[] pageEntries = slideInfo2.getPageStartsEntries();
+		short[] extraEntries = slideInfo2.getPageExtrasEntries();
 
 		monitor.setMessage("Fixing chained data page pointers...");
 		
@@ -284,15 +285,20 @@ public class DyldCacheProgramBuilder extends MachoProgramBuilder {
 				continue;
 			}
 			if (pageEntry == DYLD_CACHE_SLIDE_PAGE_ATTR_EXTRA ) {
-				continue; // TODO: handle extras
+				// go into extras and process list of chain entries for the same page
+			    int extraIndex = (pageEntry & CHAIN_OFFSET_MASK);
+				do {
+					pageEntry = ((int) extraEntries[extraIndex]) & 0xffff;
+					long pageOffset = (pageEntry & CHAIN_OFFSET_MASK) * BYTES_PER_CHAIN_OFFSET;
+	                
+	    			fixedAddresses.addAll(processPointerChain(page, pageOffset, deltaMask, deltaShift, valueAdd));
+	    			extraIndex++;
+				} while ((pageEntry & DYLD_CACHE_SLIDE_PAGE_ATTR_EXTRA) == 0);
 			}
             else {
                 long pageOffset = (pageEntry & CHAIN_OFFSET_MASK) * BYTES_PER_CHAIN_OFFSET;
                 
-                Address chainHead = memory.getProgram().getImageBase();
-                chainHead = chainHead.getNewAddress(page);
-                
-    			fixedAddresses.addAll(processPointerChain(chainHead, pageOffset, deltaMask, deltaShift, valueAdd));
+    			fixedAddresses.addAll(processPointerChain(page, pageOffset, deltaMask, deltaShift, valueAdd));
             }
 		}
 
@@ -314,8 +320,11 @@ public class DyldCacheProgramBuilder extends MachoProgramBuilder {
 	 * @throws MemoryAccessException
 	 * @throws CancelledException 
 	 */
-	private List<Address> processPointerChain(Address chainStart,  long nextOff, long deltaMask, long deltaShift, long valueAdd)
+	private List<Address> processPointerChain(long page,  long nextOff, long deltaMask, long deltaShift, long valueAdd)
 			throws MemoryAccessException, CancelledException {
+        Address chainStart = memory.getProgram().getImageBase();
+        chainStart = chainStart.getNewAddress(page);
+		
 		List<Address> fixedAddresses = new ArrayList<>();
 
 		byte origBytes[] = new byte[8];
