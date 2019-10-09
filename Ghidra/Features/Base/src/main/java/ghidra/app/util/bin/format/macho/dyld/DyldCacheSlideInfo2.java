@@ -27,7 +27,6 @@ import ghidra.util.exception.DuplicateNameException;
  * 
  * @see <a href="https://opensource.apple.com/source/dyld/dyld-625.13/launch-cache/dyld_cache_format.h.auto.html">launch-cache/dyld_cache_format.h</a> 
  */
-@SuppressWarnings("unused")
 public class DyldCacheSlideInfo2 extends DyldCacheSlideInfoCommon {
 
 	private int page_size;

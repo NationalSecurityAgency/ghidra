@@ -18,7 +18,6 @@ package ghidra.app.util.opinion;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.TreeSet;
@@ -28,9 +27,7 @@ import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.bin.format.macho.MachException;
 import ghidra.app.util.bin.format.macho.MachHeader;
-import ghidra.app.util.bin.format.macho.Section;
 import ghidra.app.util.bin.format.macho.commands.NList;
-import ghidra.app.util.bin.format.macho.commands.SegmentNames;
 import ghidra.app.util.bin.format.macho.dyld.DyldCacheHeader;
 import ghidra.app.util.bin.format.macho.dyld.DyldCacheImageInfo;
 import ghidra.app.util.bin.format.macho.dyld.DyldCacheLocalSymbolsInfo;
@@ -51,6 +48,7 @@ import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.program.model.symbol.SourceType;
 import ghidra.program.model.symbol.SymbolUtilities;
 import ghidra.program.model.util.CodeUnitInsertionException;
+import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
 /**
@@ -58,13 +56,15 @@ import ghidra.util.task.TaskMonitor;
  */
 public class DyldCacheProgramBuilder extends MachoProgramBuilder {
 
+	private static final int BYTES_PER_CHAIN_OFFSET = 4;
+	private static final int CHAIN_OFFSET_MASK = 0x3fff;
 	private static final int DYLD_CACHE_SLIDE_PAGE_ATTR_NO_REBASE = 0x4000;
 	private static final int DYLD_CACHE_SLIDE_PAGE_ATTR_EXTRA = 0x8000;
 	
 	protected DyldCacheHeader dyldCacheHeader;
 	private boolean shouldProcessSymbols;
 	private boolean shouldCreateDylibSections;
-	private boolean addRelocationEntries;
+	private boolean shouldAddRelocationEntries;
 
 	/**
 	 * Creates a new {@link DyldCacheProgramBuilder} based on the given information.
@@ -75,18 +75,18 @@ public class DyldCacheProgramBuilder extends MachoProgramBuilder {
 	 * @param shouldProcessSymbols True if symbols should be processed; otherwise, false
 	 * @param shouldCreateDylibSections True if memory blocks should be created for DYLIB sections; 
 	 *   otherwise, false
-	 * @param addRelocationEntries True to create a relocation entry for each fixed up pointer in pointer chain
+	 * @param shouldAddRelocationEntries True to create a relocation entry for each fixed up pointer in pointer chain
 	 * @param log The log
 	 * @param monitor A cancelable task monitor
 	 */
 	protected DyldCacheProgramBuilder(Program program, ByteProvider provider, FileBytes fileBytes,
 			boolean shouldProcessSymbols, boolean shouldCreateDylibSections,
-			boolean addRelocationEntries, MessageLog log,
+			boolean shouldAddRelocationEntries, MessageLog log,
 			TaskMonitor monitor) {
 		super(program, provider, fileBytes, log, monitor);
 		this.shouldProcessSymbols = shouldProcessSymbols;
 		this.shouldCreateDylibSections = shouldCreateDylibSections;
-		this.addRelocationEntries = addRelocationEntries;
+		this.shouldAddRelocationEntries = shouldAddRelocationEntries;
 	}
 
 	/**
@@ -244,14 +244,14 @@ public class DyldCacheProgramBuilder extends MachoProgramBuilder {
 	 * Fixes any chained pointers within each of the data pages.
 	 * 
 	 * @throws MemoryAccessException if there was a problem reading/writing memory.
+	 * @throws CancelledException 
 	 */
-	private void fixPageChains() throws Exception {
-		// Fixup any chained pointers
+	private void fixPageChains() throws MemoryAccessException, CancelledException {
 		List<Address> fixedAddresses = new ArrayList<>();
 		
 		// locate slide Info
 		DyldCacheSlideInfoCommon slideInfo = dyldCacheHeader.getSlideInfo();
-		if (slideInfo.getVersion() != 2) {
+		if (slideInfo == null || !(slideInfo instanceof DyldCacheSlideInfo2)) {
 			log.appendMsg("Can't handle version " +slideInfo.getVersion() + " slide info, only version 2");
 			return;
 		}
@@ -272,7 +272,8 @@ public class DyldCacheProgramBuilder extends MachoProgramBuilder {
 		monitor.setMessage("Fixing chained data page pointers...");
 		
 		monitor.setMaximum(pageStartsCount);
-		for (int index=0; index < pageStartsCount && !monitor.isCancelled(); index++) {
+		for (int index=0; index < pageStartsCount; index++) {
+			monitor.checkCanceled();
 			
 			long page = dataPageStart + (pageSize * index);
 			
@@ -286,7 +287,7 @@ public class DyldCacheProgramBuilder extends MachoProgramBuilder {
 				continue; // TODO: handle extras
 			}
             else {
-                long pageOffset = (pageEntry & 0x3fff) * 4;
+                long pageOffset = (pageEntry & CHAIN_OFFSET_MASK) * BYTES_PER_CHAIN_OFFSET;
                 
                 Address chainHead = memory.getProgram().getImageBase();
                 chainHead = chainHead.getNewAddress(page);
@@ -311,9 +312,10 @@ public class DyldCacheProgramBuilder extends MachoProgramBuilder {
 	 * 
 	 * @return list of addresses where pointer chains were fixed
 	 * @throws MemoryAccessException
+	 * @throws CancelledException 
 	 */
 	private List<Address> processPointerChain(Address chainStart,  long nextOff, long deltaMask, long deltaShift, long valueAdd)
-			throws MemoryAccessException {
+			throws MemoryAccessException, CancelledException {
 		List<Address> fixedAddresses = new ArrayList<>();
 
 		byte origBytes[] = new byte[8];
@@ -321,7 +323,9 @@ public class DyldCacheProgramBuilder extends MachoProgramBuilder {
 		long valueMask = ~deltaMask;
 		
 		long delta = -1;
-		while (delta != 0 && !monitor.isCancelled()) {
+		while (delta != 0) {
+			monitor.checkCanceled();
+			
 			Address chainLoc = chainStart.add(nextOff);
 			long chainValue = memory.getLong(chainLoc);
 
@@ -331,7 +335,7 @@ public class DyldCacheProgramBuilder extends MachoProgramBuilder {
 		    	chainValue += valueAdd;
 		    }
 		    
-		    if (addRelocationEntries) {
+		    if (shouldAddRelocationEntries) {
 				// Add entry to relocation table for the pointer fixup
 				memory.getBytes(chainLoc, origBytes);
 				program.getRelocationTable().add(chainLoc, (int) 1,

@@ -91,7 +91,7 @@ public class DyldCacheLoader extends AbstractLibrarySupportLoader {
 			DyldCacheProgramBuilder.buildProgram(program, provider,
 				MemoryBlockUtils.createFileBytes(program, provider, monitor),
 				shouldProcessSymbols(options), shouldCreateDylibSections(options),
-				addRelocationEntries(options), log, monitor);
+				shouldAddRelocationEntries(options), log, monitor);
 		}
 		catch (CancelledException e) {
 			return;
@@ -143,7 +143,7 @@ public class DyldCacheLoader extends AbstractLibrarySupportLoader {
 		return CREATE_DYLIB_SECTIONS_OPTION_DEFAULT;
 	}
 
-	private boolean addRelocationEntries(List<Option> options) {
+	private boolean shouldAddRelocationEntries(List<Option> options) {
 		if (options != null) {
 			for (Option option : options) {
 				String optName = option.getName();
