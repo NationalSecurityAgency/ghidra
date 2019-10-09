@@ -37,7 +37,7 @@ public:
   /// \brief Flags for a TransformVar
   enum {
     split_terminator = 1,	///< The last (most significant piece) of a split array
-    def_traverse = 2		///< The op defining this Varnode has already been traversed
+    input_duplicate = 2		///< This is a piece of an input that has already been visited
   };
 private:
   Varnode *vn;			///< Original \b big Varnode of which \b this is a component
@@ -113,9 +113,9 @@ class TransformManager {
 
   void specialHandling(TransformOp &rop);
   void createOps(void);		///< Create a new op for each placeholder
-  void createVarnodes(void);	///< Create a Varnode for each placeholder
+  void createVarnodes(vector<TransformVar *> &inputList);	///< Create a Varnode for each placeholder
   void removeOld(void);		///< Remove old preexisting PcodeOps and Varnodes that are now obsolete
-  void transformInputVarnodes(void);	///< Remove old input Varnodes, mark new input Varnodes
+  void transformInputVarnodes(vector<TransformVar *> &inputList);	///< Remove old input Varnodes, mark new input Varnodes
   void placeInputs(void);	///< Set input Varnodes for all new ops
 public:
   TransformManager(Funcdata *f) { fd = f; }	///< Constructor

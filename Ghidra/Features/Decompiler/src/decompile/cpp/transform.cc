@@ -310,7 +310,10 @@ TransformVar *TransformManager::newSplit(Varnode *vn,const LaneDescription &desc
       newVar->val = (vn->getOffset() >> bitpos) & calc_mask(newVar->byteSize);
     }
     else {
-      newVar->type = TransformVar::piece;
+      if (preserveAddress(vn, newVar->bitSize, bitpos))
+	newVar->type = TransformVar::piece;
+      else
+	newVar->type = TransformVar::piece_temp;
       newVar->val = bitpos;
     }
   }
@@ -470,15 +473,28 @@ void TransformManager::createOps(void)
   } while(followCount != 0);
 }
 
-void TransformManager::createVarnodes(void)
+/// Record any input vars in the given container
+/// \param inputList will hold any inputs
+void TransformManager::createVarnodes(vector<TransformVar *> &inputList)
 
 {
   map<int4,TransformVar *>::iterator piter;
   for(piter=pieceMap.begin();piter!=pieceMap.end();++piter) {
     TransformVar *vArray = (*piter).second;
     for(int4 i=0;;++i) {
-      vArray[i].createReplacement(fd);
-      if ((vArray[i].flags & TransformVar::split_terminator)!=0)
+      TransformVar *rvn = vArray + i;
+      if (rvn->type == TransformVar::piece) {
+	Varnode *vn = rvn->vn;
+	if (vn->isInput()) {
+	  inputList.push_back(rvn);
+	  if (vn->isMark())
+	    rvn->flags |= TransformVar::input_duplicate;
+	  else
+	    vn->setMark();
+	}
+      }
+      rvn->createReplacement(fd);
+      if ((rvn->flags & TransformVar::split_terminator)!=0)
 	break;
     }
   }
@@ -501,42 +517,16 @@ void TransformManager::removeOld(void)
   }
 }
 
-/// Collect all the Varnodes that are inputs and are getting replaced.
-/// There may be multiple references so we dedup with marks.
-/// Remove all the replaced input Varnodes.
+/// Remove all input Varnodes from the given container.
 /// Mark all the replacement Varnodes as inputs.
-void TransformManager::transformInputVarnodes(void)
+/// \param inputList is the given container of input placeholders
+void TransformManager::transformInputVarnodes(vector<TransformVar *> &inputList)
 
 {
-  map<int4,TransformVar *>::iterator iter;
-  vector<TransformVar *> deadList;
-
-  for(iter=pieceMap.begin();iter!=pieceMap.end();++iter) {
-    TransformVar *vArray = (*iter).second;
-    for(int4 i=0;;++i) {
-      TransformVar *rvn = vArray + i;
-      if (rvn->type == TransformVar::piece) {
-	Varnode *vn = rvn->vn;
-	if (vn->isInput()) {
-	  deadList.push_back(rvn);
-	  if (vn->isMark()) {
-	    rvn->vn = (Varnode *)0;	// Zero out if more than one TransformVar referencing input
-	  }
-	  else {
-	    vn->setMark();
-	  }
-	}
-      }
-      if ((rvn->flags & TransformVar::split_terminator)!=0)
-	break;
-    }
-  }
-
-  for(int4 i=0;i<deadList.size();++i) {
-    TransformVar *rvn = deadList[i];
-    Varnode *vn = rvn->vn;
-    if (vn != (Varnode *)0)
-      fd->deleteVarnode(vn);
+  for(int4 i=0;i<inputList.size();++i) {
+    TransformVar *rvn = inputList[i];
+    if ((rvn->flags & TransformVar::input_duplicate)==0)
+      fd->deleteVarnode(rvn->vn);
     rvn->replacement = fd->setInputVarnode(rvn->replacement);
   }
 }
@@ -560,9 +550,10 @@ void TransformManager::placeInputs(void)
 void TransformManager::apply(void)
 
 {
+  vector<TransformVar *> inputList;
   createOps();
-  createVarnodes();
+  createVarnodes(inputList);
   removeOld();
-  transformInputVarnodes();
+  transformInputVarnodes(inputList);
   placeInputs();
 }
