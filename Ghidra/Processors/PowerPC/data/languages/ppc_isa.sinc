@@ -2573,23 +2573,24 @@ define pcodeop InstructionCacheBlockLockSetX;
 	D = inst_next + sext(OFF16SH);
 }
 
-:cmpeqb BF2,A,B			is $(NOTVLE) & OP=31 & BITS_21_22=0 & BIT_0=0 & XOP_1_10=224 & A & B & BF2 {
+:cmpeqb BF_CR,A,B			is $(NOTVLE) & OP=31 & BITS_21_22=0 & BIT_0=0 & XOP_1_10=224 & A & B & BF_CR {
 	tmpa:1 = A:1;
 	tmps:1 = (tmpa == B[0,8]) | (tmpa == B[8,8]) | (tmpa == B[16,8]) | (tmpa == B[24,8]);
 @if REGISTER_SIZE == "8"
 	tmps = tmps | (tmpa == B[32,8]) | (tmpa == B[40,8]) | (tmpa == B[48,8]) | (tmpa == B[56,8]);
 @endif
-	tmpc:8 = zext(tmps);
-	crall = crall | (tmpc << ((BF2*8) + 2));	
+	
+	BF_CR = tmps;	
 }
 
-:cmprb BF2,L2,A,B		is $(NOTVLE) & OP=31 & BIT_22=0 & BIT_0=0 & XOP_1_10=192 & A & B & BF2 & L2 {
+:cmprb BF_CR,L2,A,B		is $(NOTVLE) & OP=31 & BIT_22=0 & BIT_0=0 & XOP_1_10=192 & A & B & BF_CR & L2 {
 	tmpin:1 = A:1;
 	tmp1lo:1 = B[16,8];
 	tmp1hi:1 = B[24,8];
 	tmp2lo:1 = B[0,8];
 	tmp2hi:1 = B[8,8];
 	tmps:1 = ((tmpin >= tmp2lo) & (tmpin <= tmp2hi)) | (((tmpin >= tmp1lo) & (tmpin <= tmp1hi)) * L2:1);
+	BF_CR = tmps;
 }
 
 :cnttzw A,S				is OP=31 & S & A & BITS_11_15=0 & XOP_1_10=538 & Rc=0 {
@@ -2685,10 +2686,9 @@ define pcodeop InstructionCacheBlockLockSetX;
 	D = tmpp:8;
 }
 
-:mcrxrx BF2				is $(NOTVLE) & OP=31 & BITS_11_22=0 & BIT_0=0 & XOP_1_10=576 & BF2 {
+:mcrxrx BF_CR			is $(NOTVLE) & OP=31 & BITS_11_22=0 & BIT_0=0 & XOP_1_10=576 & BF_CR {
 	tmp:1 = (xer_ov << 3) | (xer_ov32 << 2) | (xer_ca << 1) | (xer_ca32);
-	tmp2:8 = zext(tmp);
-	crall = crall | (tmp2 << (8*BF2:1));
+	BF_CR = tmp;
 }
 
 :modsd D,A,B			is $(NOTVLE) & OP=31 & D & A & B & XOP_1_10=777 & BIT_0=0 {
