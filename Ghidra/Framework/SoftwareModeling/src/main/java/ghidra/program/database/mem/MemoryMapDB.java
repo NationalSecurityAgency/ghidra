@@ -59,6 +59,10 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 	private AddressSet allInitializedAddrSet = new AddressSet();
 	private MemoryBlock lastBlock;// the last accessed block
 	private LiveMemoryHandler liveMemory;
+	
+	// lazy hashmap of block names to blocks, must be reloaded if blocks are removed or added
+	private HashMap<String,MemoryBlock> nameBlockMap = new HashMap<String, MemoryBlock>();
+	private static MemoryBlock NoBlock = new MemoryBlockStub();  // placeholder for no block, not given out
 
 	Lock lock;
 	private Set<MemoryBlock> potentialOverlappingBlocks;
@@ -182,6 +186,7 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 		lastBlock = null;
 		blocks = newBlocks;
 		addrMap.memoryMapChanged(this);
+		nameBlockMap = new HashMap<>();
 	}
 
 	public void setLanguage(Language newLanguage) {
@@ -302,11 +307,22 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 	 */
 	@Override
 	public synchronized MemoryBlock getBlock(String blockName) {
+		// find block that might have been cached from previous call
+		MemoryBlock memoryBlock = nameBlockMap.get(blockName);
+		if (memoryBlock == NoBlock) {
+			// found placeholder, have searched and found nothing before
+			return null;
+		}
+
 		for (MemoryBlock block : blocks) {
 			if (block.getName().equals(blockName)) {
+				nameBlockMap.put(blockName, block);
 				return block;
 			}
 		}
+
+		// store placeholder there is no memory block with that name
+		nameBlockMap.put(blockName, NoBlock);
 		return null;
 	}
 
@@ -374,6 +390,9 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 		if (program != null) {
 			program.setChanged(ChangeManager.DOCR_MEMORY_BLOCK_CHANGED, block, null);
 		}
+		
+		// name could have changed
+		nameBlockMap = new HashMap<>();
 	}
 
 	void fireBytesChanged(Address addr, int count) {
