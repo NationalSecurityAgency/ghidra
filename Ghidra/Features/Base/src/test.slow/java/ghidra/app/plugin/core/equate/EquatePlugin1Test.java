@@ -40,6 +40,7 @@ import ghidra.app.util.viewer.field.ListingTextField;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSet;
 import ghidra.program.model.data.*;
+import ghidra.program.model.data.Enum;
 import ghidra.program.model.listing.Data;
 import ghidra.program.model.listing.Instruction;
 import ghidra.program.model.scalar.Scalar;
@@ -819,6 +820,35 @@ public class EquatePlugin1Test extends AbstractEquatePluginTest {
 
 		data = program.getListing().getDataAt(addr);
 		assertTrue(data.getDataType() instanceof SignedWordDataType);
+	}
+
+	@Test
+	public void testNoConvertOnData() throws Exception {
+		Address addr = addr(0x01003384);
+
+		// action should not apply to BooleanDataType which produces Scalar value
+		createData(addr, BooleanDataType.dataType);
+		Data data = program.getListing().getDataAt(addr);
+		assertTrue(data.getDataType() instanceof BooleanDataType);
+
+		goTo(addr);
+		DockingActionIf action = getAction(equatePlugin, "Convert To Signed Decimal");
+
+		assertFalse(action.isAddToPopup(getListingContext()));
+		assertFalse(action.isEnabledForContext(getListingContext()));
+
+		// action should not apply to Enum which produces Scalar value
+		EnumDataType myEnum = new EnumDataType("Joe", 2);
+		myEnum.add("ValFFFF", -1);
+
+		createData(addr, myEnum);
+		data = program.getListing().getDataAt(addr);
+		assertTrue(data.getDataType() instanceof Enum);
+
+		goTo(addr);
+
+		assertFalse(action.isAddToPopup(getListingContext()));
+		assertFalse(action.isEnabledForContext(getListingContext()));
 	}
 
 	@Test
