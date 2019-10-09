@@ -309,9 +309,12 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 	public synchronized MemoryBlock getBlock(String blockName) {
 		// find block that might have been cached from previous call
 		MemoryBlock memoryBlock = nameBlockMap.get(blockName);
-		if (memoryBlock == NoBlock) {
-			// found placeholder, have searched and found nothing before
-			return null;
+		if (memoryBlock != null) {
+			if (memoryBlock == NoBlock) {
+				// found placeholder, have searched and found nothing before
+				return null;
+			}
+			return memoryBlock;
 		}
 
 		for (MemoryBlock block : blocks) {

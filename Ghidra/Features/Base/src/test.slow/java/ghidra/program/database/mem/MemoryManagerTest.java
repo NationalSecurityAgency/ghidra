@@ -366,8 +366,13 @@ public class MemoryManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		block = mem.getBlock("NoExist");
 		assertNull(block);
 		
+		program.endTransaction(transactionID, true);
+		transactionID = program.startTransaction("Test");	
+		
 		// now exists
 		mem.getBlock("Test1").setName("NoExist");
+		// Test1 no longer exists
+		assertNull("block deleted", mem.getBlock("Test1"));
 		block = mem.getBlock("NoExist");
 		assertEquals("NoExist", block.getName());
 
@@ -375,11 +380,22 @@ public class MemoryManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		block = mem.getBlock("NoExist");
 		assertNull("block should be deleted", block);
 		
+		// Test1 still doesn't exist
 		block = mem.getBlock("Test1");
 		assertNull("block deleted", block);
 		
 		block = mem.getBlock("Test2");
 		assertEquals("Test2", block.getName());
+		
+		program.endTransaction(transactionID, true);
+		
+		program.undo();
+		
+		// Test1 still doesn't exist
+		block = mem.getBlock("Test1");
+		assertNotNull("Undo, Test1 exists again", block);
+		
+		transactionID = program.startTransaction("Test");
 	}
 
 	@Test
