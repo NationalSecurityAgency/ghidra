@@ -29,14 +29,22 @@
 import generic.jar.ResourceFile;
 import ghidra.app.script.GhidraScript;
 import ghidra.app.util.opinion.LibraryLookupTable;
+import ghidra.util.Msg;
+import ghidra.util.SystemUtilities;
 
 public class CreateExportFileForDLL extends GhidraScript {
 
 	@Override
 	public void run() throws Exception {
+
+		if (currentProgram == null) {
+			Msg.error(this, "Script requires active program");
+		}
+
 		// push this .dll into the location of the system .exports files.
 		// must have write permissions.
-		ResourceFile file = LibraryLookupTable.createFile(currentProgram, false, true, monitor);
+		ResourceFile file = LibraryLookupTable.createFile(currentProgram, false,
+			SystemUtilities.isInDevelopmentMode(), monitor);
 
 		println("Created .exports file : " + file.getAbsolutePath());
 	}
