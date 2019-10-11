@@ -129,74 +129,24 @@ public:
   bool doTrace(void);			///< Trace split through data-flow, constructing transform
 };
 
-// Structures for tracing floating point variables if they are
-// stored at points in a higher precision encoding.  This is nearly identical
-// in spirit to the SubvariableFlow class, but it performs on floating point
-// variables contained in higher precision storage, rather than integers stored
-// as a subfield of a bigger integer
-
-// This the floating point version of SubvariablFlow, it follows the flow of a logical lower
-// precision value stored in higher precision locations
-class SubfloatFlow {
-  class ReplaceOp;
-  class ReplaceVarnode {
-    friend class SubfloatFlow;
-    Varnode *vn;		// Varnode being split
-    Varnode *replacement;	// The new subvariable varnode
-    ReplaceOp *def;		// Defining op for new varnode
-  };
-  
-  class ReplaceOp {
-    friend class SubfloatFlow;
-    PcodeOp *op;		// op getting paralleled
-    PcodeOp *replacement;	// The new op
-    OpCode opc;		// type of new op
-    int4 numparams;
-    ReplaceVarnode *output;	// varnode output
-    vector<ReplaceVarnode *> input; // varnode inputs
-  };
-  
-  class PulloutRecord {		// Node where logical variable is getting pulled out into a real varnode
-    friend class SubfloatFlow;
-    OpCode opc;			// (possibly) new opcode
-    PcodeOp *pullop;		// Op producing the real output
-    ReplaceVarnode *input;	// The logical variable input
-  };
-
-  class CompareRecord {
-    friend class SubfloatFlow;
-    ReplaceVarnode *in1;
-    ReplaceVarnode *in2;
-    PcodeOp *compop;
-  };
-
-  int4 precision;		// Number of bytes of precision in the logical flow
-  Funcdata *fd;
-  const FloatFormat *format;
-  map<Varnode *,ReplaceVarnode> varmap;
-  list<ReplaceVarnode> newvarlist;
-  list<ReplaceOp> oplist;
-  list<PulloutRecord> pulllist;
-  list<CompareRecord> complist;
-  vector<ReplaceVarnode *> worklist;
-  ReplaceVarnode *setReplacement(Varnode *vn,bool &inworklist);
-  ReplaceVarnode *setReplacementNoFlow(Varnode *vn);
-  ReplaceOp *createOp(OpCode opc,int4 numparam,ReplaceVarnode *outrvn);
-  ReplaceOp *createOpDown(OpCode opc,int4 numparam,PcodeOp *op,ReplaceVarnode *inrvn,int4 slot);
-  bool traceForward(ReplaceVarnode *rvn);
-  bool traceBackward(ReplaceVarnode *rvn);
-  bool createLink(ReplaceOp *rop,int4 slot,Varnode *vn);
-  void addtopulllist(PcodeOp *pullop,ReplaceVarnode *rvn);
-  bool addtopushlist(PcodeOp *pushop,ReplaceVarnode *rvn);
-  void addtocomplist(ReplaceVarnode *in1,ReplaceVarnode *in2,PcodeOp *op);
-  ReplaceVarnode *addConstant(Varnode *vn);
-  void replaceInput(ReplaceVarnode *rvn);
-  Varnode *getReplaceVarnode(ReplaceVarnode *rvn);
+/// \brief Class for tracing changes of precision in floating point variables
+///
+/// It follows the flow of a logical lower precision value stored in higher precision locations
+/// and then rewrites the data-flow in terms of the lower precision, eliminating the
+/// precision conversions.
+class SubfloatFlow : public TransformManager {
+  int4 precision;		///< Number of bytes of precision in the logical flow
+  int4 terminatorCount;		///< Number of terminating nodes reachable via the root
+  const FloatFormat *format;	///< The floating-point format of the logical value
+  vector<TransformVar *> worklist;	///< Current list of placeholders that still need to be traced
+  TransformVar *setReplacement(Varnode *vn);
+  bool traceForward(TransformVar *rvn);
+  bool traceBackward(TransformVar *rvn);
   bool processNextWork(void);
 public:
   SubfloatFlow(Funcdata *f,Varnode *root,int4 prec);
-  bool doTrace(void);
-  void doReplacement(void);
+  virtual bool preserveAddress(Varnode *vn,int4 bitSize,int4 lsbOffset) const;
+  bool doTrace(void);		///< Trace logical value as far as possible
 };
 
 #endif

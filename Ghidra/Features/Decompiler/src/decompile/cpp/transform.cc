@@ -200,6 +200,7 @@ TransformVar *TransformManager::newPreexistingVarnode(Varnode *vn)
   res->def = (TransformOp *)0;
   res->type = TransformVar::preexisting;
   res->flags = TransformVar::split_terminator;
+  res->val = 0;		// Treat this as "piece" of itself at offset 0, allows getPiece() to find this
   return res;
 }
 
@@ -397,6 +398,8 @@ TransformOp *TransformManager::newPreexistingOp(int4 numParams,OpCode opc,PcodeO
 TransformVar *TransformManager::getPreexistingVarnode(Varnode *vn)
 
 {
+  if (vn->isConstant())
+    return newConstant(vn->getSize(), 0, vn->getOffset());
   map<int4,TransformVar *>::const_iterator iter;
   iter = pieceMap.find(vn->getCreateIndex());
   if (iter != pieceMap.end())

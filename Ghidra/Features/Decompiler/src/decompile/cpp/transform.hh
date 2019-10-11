@@ -121,6 +121,7 @@ public:
   TransformManager(Funcdata *f) { fd = f; }	///< Constructor
   virtual ~TransformManager(void);		///< Destructor
   virtual bool preserveAddress(Varnode *vn,int4 bitSize,int4 lsbOffset) const;
+  Funcdata *getFunction(void) const { return fd; }
   void clearVarnodeMarks(void);			///< Clear mark for all Varnodes in the map
   TransformVar *newPreexistingVarnode(Varnode *vn);	///< Make placeholder for preexisting Varnode
   TransformVar *newUnique(int4 size);		///< Make placeholder for new unique space Varnode

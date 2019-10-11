@@ -7699,13 +7699,13 @@ int4 RuleSubfloatConvert::applyOp(PcodeOp *op,Funcdata &data)
   if (outsize > insize) {
     SubfloatFlow subflow(&data,outvn,insize);
     if (!subflow.doTrace()) return 0;
-    subflow.doReplacement();
+    subflow.apply();
     return 1;
   }
   else {
     SubfloatFlow subflow(&data,invn,outsize);
     if (!subflow.doTrace()) return 0;
-    subflow.doReplacement();
+    subflow.apply();
     return 1;
   }
   return 0;

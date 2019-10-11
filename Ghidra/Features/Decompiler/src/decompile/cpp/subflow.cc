@@ -1235,7 +1235,7 @@ SubvariableFlow::SubvariableFlow(Funcdata *f,Varnode *root,uintb mask,bool aggr,
 
 bool SubvariableFlow::doTrace(void)
 
-{ // Process worklist until its done
+{
   pullcount = 0;
   bool retval = false;
   if (fd != (Funcdata *)0) {
@@ -1629,135 +1629,77 @@ bool SplitFlow::doTrace(void)
   return true;
 }
 
-SubfloatFlow::ReplaceVarnode *SubfloatFlow::setReplacement(Varnode *vn,bool &inworklist)
+/// \brief Create and return a placeholder associated with the given Varnode
+///
+/// Add the placeholder to the worklist if it hasn't been visited before
+/// \param vn is the given Varnode
+/// \return the placeholder or null if the Varnode is not suitable for replacement
+TransformVar *SubfloatFlow::setReplacement(Varnode *vn)
 
-{ // Create and return a ReplaceVarnode associated with vn, if vn is suitable for replacement
-  // Set inworklist to true if the varnode has not been in the worklist before
-  // Return NULL if the vn is not suitable for replacement
-  ReplaceVarnode *res;
-  if (vn->isMark()) {		// Already seen before
-    map<Varnode *,ReplaceVarnode>::iterator iter;
-    iter = varmap.find(vn);
-    res = &(*iter).second;
-    inworklist = false;
-    return res;
-  }
+{
+  if (vn->isMark())		// Already seen before
+    return getPiece(vn, precision*8, 0);
 
   if (vn->isConstant()) {
-    inworklist = false;
-    return addConstant(vn);
+    const FloatFormat *form2 = getFunction()->getArch()->translate->getFloatFormat(vn->getSize());
+    if (form2 == (const FloatFormat *)0)
+      return (TransformVar *)0;	// Unsupported constant format
+    // Return the converted form of the constant
+    return newConstant(precision, 0, format->convertEncoding(vn->getOffset(),form2));
   }
 
   if (vn->isFree())
-    return (ReplaceVarnode *)0; // Abort
+    return (TransformVar *)0; // Abort
 
   if (vn->isAddrForce() && (vn->getSize() != precision))
-    return (ReplaceVarnode *)0;
+    return (TransformVar *)0;
 
   if (vn->isTypeLock()) {
     int4 sz = vn->getType()->getSize();
     if (sz != precision)
-      return (ReplaceVarnode *)0;
+      return (TransformVar *)0;
   }
 
   if (vn->isInput()) {		// Must be careful with inputs
-    if (vn->getSize() != precision) return (ReplaceVarnode *)0;
+    if (vn->getSize() != precision) return (TransformVar *)0;
   }
 
-  res = & varmap[ vn ];
   vn->setMark();
-  res->vn = vn;
-  res->replacement = (Varnode *)0;
-  res->def = (ReplaceOp *)0;
-  inworklist = true;
+  TransformVar *res;
   // Check if vn already represents the logical variable being traced
-  if (vn->getSize() == precision) {
-    inworklist = false;
-    res->replacement = vn;
+  if (vn->getSize() == precision)
+    res = newPreexistingVarnode(vn);
+  else {
+    res = newPiece(vn, precision*8, 0);
+    worklist.push_back(res);
   }
   return res;
 }
 
-SubfloatFlow::ReplaceVarnode *SubfloatFlow::setReplacementNoFlow(Varnode *vn)
+/// \brief Try to trace logical variable through descendant Varnodes
+///
+/// Given a Varnode placeholder, look at all descendent PcodeOps and create
+/// placeholders for the op and its output Varnode.  If appropriate add the
+/// output placeholder to the worklist.
+/// \param rvn is the given Varnode placeholder
+/// \return \b true if tracing the logical variable forward was possible
+bool SubfloatFlow::traceForward(TransformVar *rvn)
 
-{ // Create and return a ReplaceVarnode associated with vn, where we assume -vn- is not going to change
-  // and there will be no further logical flow through -vn-
-  ReplaceVarnode *res;
-  if (vn->isMark()) {		// Already seen before
-    map<Varnode *,ReplaceVarnode>::iterator iter;
-    iter = varmap.find(vn);
-    res = &(*iter).second;
-    return res;
-  }
-
-  if (!vn->isConstant()) {
-    if (vn->isFree())		// If we have an unheritaged value
-      return (ReplaceVarnode *)0; // Abort
-  }
-
-  res = &varmap[ vn ];
-  vn->setMark();
-  res->vn = vn;
-  res->replacement = vn;	// NOTE: we set replacement as itself, even if it is a constant
-  res->def = (ReplaceOp *)0;
-  return res;
-}
-
-SubfloatFlow::ReplaceOp *SubfloatFlow::createOp(OpCode opc,int4 numparam,ReplaceVarnode *outrvn)
-
-{ // Create record for replacement op, given its replacement varnode output
-  if (outrvn->def != (ReplaceOp *)0)
-    return outrvn->def;
-  oplist.push_back(ReplaceOp());
-  ReplaceOp *rop = &oplist.back();
-  outrvn->def = rop;
-  rop->op = outrvn->vn->getDef();
-  rop->numparams = numparam;
-  rop->opc = opc;
-  rop->output = outrvn;
-
-  return rop;
-}
-
-SubfloatFlow::ReplaceOp *SubfloatFlow::createOpDown(OpCode opc,int4 numparam,PcodeOp *op,ReplaceVarnode *inrvn,int4 slot)
-
-{ // Create record for replacement op, given one of its input replacement varnodes
-  oplist.push_back(ReplaceOp());
-  ReplaceOp *rop = &oplist.back();
-  rop->op = op;
-  rop->opc = opc;
-  rop->numparams = numparam;
-  rop->output = (ReplaceVarnode *)0;
-  while(rop->input.size() <= slot)
-    rop->input.push_back((ReplaceVarnode *)0);
-  rop->input[slot] = inrvn;
-  return rop;
-}
-
-bool SubfloatFlow::traceForward(ReplaceVarnode *rvn)
-
-{ // Try to trace logical variable through descendant varnodes
-  // updating list/map of replace_ops and replace_varnodes
-  // and the worklist
-  ReplaceVarnode *rvn2;
-  ReplaceOp *rop;
-  PcodeOp *op;
-  Varnode *outvn;
-  int4 slot;
-  bool inworklist;
+{
   int4 dcount = 0;
   int4 hcount = 0;
 
   list<PcodeOp *>::const_iterator iter,enditer;
-  iter = rvn->vn->beginDescend();
-  enditer = rvn->vn->endDescend();
+  Varnode *vn = rvn->getOriginal();
+  iter = vn->beginDescend();
+  enditer = vn->endDescend();
   while(iter != enditer) {
-    op = *iter++;
-    outvn = op->getOut();
+    PcodeOp *op = *iter++;
+    Varnode *outvn = op->getOut();
     if ((outvn!=(Varnode *)0)&&(outvn->isMark()))
       continue;
     dcount += 1;		// Count this descendant
-    slot = op->getSlot(rvn->vn);
+    int4 slot = op->getSlot(vn);
     switch(op->code()) {
     case CPUI_COPY:
     case CPUI_FLOAT_CEIL:
@@ -1771,54 +1713,77 @@ bool SubfloatFlow::traceForward(ReplaceVarnode *rvn)
     case CPUI_FLOAT_MULT:
     case CPUI_FLOAT_DIV:
     case CPUI_MULTIEQUAL:
-      rop = createOpDown(op->code(),op->numInput(),op,rvn,slot);
-      if (!createLink(rop,-1,outvn)) return false;
+    {
+      TransformOp *rop = newOpReplace(op->numInput(), op->code(), op);
+      TransformVar *outrvn = setReplacement(outvn);
+      if (outrvn == (TransformVar *)0) return false;
+      opSetInput(rop,rvn,slot);
+      opSetOutput(rop,outrvn);
       hcount += 1;		// Dealt with this descendant
       break;
+    }
     case CPUI_FLOAT_FLOAT2FLOAT:
+    {
       if (outvn->getSize() < precision)
 	return false;
-      addtopulllist(op,rvn);
+      TransformOp *rop = newPreexistingOp(1, (outvn->getSize() == precision) ? CPUI_COPY : CPUI_FLOAT_FLOAT2FLOAT, op);
+      opSetInput(rop,rvn,0);
       hcount += 1;		// Dealt with this descendant
+      terminatorCount += 1;
       break;
+    }
     case CPUI_FLOAT_EQUAL:
     case CPUI_FLOAT_NOTEQUAL:
     case CPUI_FLOAT_LESS:
     case CPUI_FLOAT_LESSEQUAL:
-      rvn2 = setReplacement(op->getIn(1-slot),inworklist);
-      if (rvn2 == (ReplaceVarnode *)0) return false;
-      if (inworklist)
-	worklist.push_back(rvn2);
-      if (slot == 0)
-	addtocomplist(rvn,rvn2,op);
-      else
-	addtocomplist(rvn2,rvn,op);
+    {
+      TransformVar *rvn2 = setReplacement(op->getIn(1-slot));
+      if (rvn2 == (TransformVar *)0) return false;
+      TransformOp *rop = newPreexistingOp(2, op->code(), op);
+      if (slot == 0) {
+	opSetInput(rop,rvn,0);
+	opSetInput(rop,rvn2,1);
+      }
+      else {
+	opSetInput(rop,rvn2,0);
+	opSetInput(rop,rvn,1);
+      }
       hcount += 1;		// Dealt with this descendant
+      terminatorCount += 1;
       break;
+    }
     case CPUI_FLOAT_TRUNC:
     case CPUI_FLOAT_NAN:
-      addtopulllist(op,rvn);
+    {
+      TransformOp *rop = newPreexistingOp(1,op->code(), op);
+      opSetInput(rop,rvn,0);
       hcount += 1;
+      terminatorCount += 1;
       break;
+    }
     default:
       return false;
     }
   }
   if (dcount != hcount) {
     // Must account for all descendants of an input
-    if (rvn->vn->isInput()) return false;
+    if (vn->isInput()) return false;
   }
   return true;
 }
 
-bool SubfloatFlow::traceBackward(ReplaceVarnode *rvn)
+/// \brief Trace a logical value backward through defining op one level
+///
+/// Given an existing variable placeholder look at the op defining it and
+/// define placeholder variables for all its inputs.  Put the new placeholders
+/// onto the worklist if appropriate.
+/// \param rvn is the given variable placeholder
+/// \return \b true if the logical value can be traced properly
+bool SubfloatFlow::traceBackward(TransformVar *rvn)
 
-{ // Trace backward through defining op one level
-  // Update worklist, varmap, and oplist
-  // return false if the trace is aborted
-  PcodeOp *op = rvn->vn->getDef();
+{
+  PcodeOp *op = rvn->getOriginal()->getDef();
   if (op == (PcodeOp *)0) return true; // If vn is input
-  ReplaceOp *rop;
 
   switch(op->code()) {
   case CPUI_COPY:
@@ -1833,20 +1798,56 @@ bool SubfloatFlow::traceBackward(ReplaceVarnode *rvn)
   case CPUI_FLOAT_MULT:
   case CPUI_FLOAT_DIV:
   case CPUI_MULTIEQUAL:
-    rop = createOp(op->code(),op->numInput(),rvn);
-    for(int4 i=0;i<op->numInput();++i)
-      if (!createLink(rop,i,op->getIn(i))) // Same inputs and mask
-	return false;
+  {
+    TransformOp *rop = rvn->getDef();
+    if (rop == (TransformOp *)0) {
+      rop = newOpReplace(op->numInput(), op->code(), op);
+      opSetOutput(rop, rvn);
+    }
+    for(int4 i=0;i<op->numInput();++i) {
+      TransformVar *newvar = rop->getIn(i);
+      if (newvar == (TransformVar *)0) {
+	newvar = setReplacement(op->getIn(i));
+	if (newvar == (TransformVar *)0)
+	  return false;
+      }
+    }
     return true;
+  }
   case CPUI_FLOAT_INT2FLOAT:
-    if (addtopushlist(op,rvn))
-      return true;
+  {
+    Varnode *vn = op->getIn(0);
+    if (!vn->isConstant() && vn->isFree())
+      return false;
+    TransformOp *rop = newOpReplace(1, CPUI_FLOAT_INT2FLOAT, op);
+    TransformVar *newvar = getPreexistingVarnode(vn);
+    opSetInput(rop,newvar,0);
     break;
+  }
   case CPUI_FLOAT_FLOAT2FLOAT:
-    //    if ((op->getIn(0)->getSize() <= precision)||op->getIn(0)->isConstant())
-    if (addtopushlist(op,rvn))
-      return true;
+  {
+    Varnode *vn = op->getIn(0);
+    TransformVar *newvar;
+    OpCode opc;
+    if (vn->isConstant()) {
+      opc = CPUI_COPY;
+      if (vn->getSize() == precision)
+	newvar = newConstant(precision, 0, vn->getOffset());
+      else {
+	newvar = setReplacement(vn);	// Convert constant to precision size
+	if (newvar == (TransformVar *)0)
+	  return false;			// Unsupported float format
+      }
+    }
+    else {
+      if (vn->isFree()) return false;
+      opc = (vn->getSize() == precision) ? CPUI_COPY : CPUI_FLOAT_FLOAT2FLOAT;
+      newvar = getPreexistingVarnode(vn);
+    }
+    TransformOp *rop = newOpReplace(1, opc, op);
+    opSetInput(rop,newvar,0);
     break;
+  }
   default:
     break;			// Everything else we abort
   }
@@ -1854,143 +1855,16 @@ bool SubfloatFlow::traceBackward(ReplaceVarnode *rvn)
   return false;
 }
 
-bool SubfloatFlow::createLink(ReplaceOp *rop,int4 slot,Varnode *vn)
-
-{ // Add a new varnode (and the edge which traced to it) to the worklist
-  bool inworklist;
-  ReplaceVarnode *rep = setReplacement(vn,inworklist);
-  if (rep == (ReplaceVarnode *)0) return false;
-
-  if (rop != (ReplaceOp *)0) {
-    if (slot == -1) {
-      rop->output = rep;
-      rep->def = rop;
-    }
-    else {
-      while(rop->input.size() <= slot)
-	rop->input.push_back((ReplaceVarnode *)0);
-      rop->input[slot] = rep;
-    }
-  }
-
-  if (inworklist)
-    worklist.push_back(rep);
-  return true;
-}
-
-SubfloatFlow::ReplaceVarnode *SubfloatFlow::addConstant(Varnode *vn)
-
-{ // Add a constant to the replacement tree
-  const FloatFormat *form2 = fd->getArch()->translate->getFloatFormat(vn->getSize());
-  if (form2 == (const FloatFormat *)0)
-    return (ReplaceVarnode *)0;	// Unsupported constant format
-  newvarlist.push_back(ReplaceVarnode());
-  ReplaceVarnode *res = &newvarlist.back();
-  res->vn = vn;
-  res->replacement = (Varnode *)0;
-  res->def = (ReplaceOp *)0;
-  return res;
-}
-
-void SubfloatFlow::addtopulllist(PcodeOp *pullop,ReplaceVarnode *rvn)
-
-{ // Exit point of the logical flow
-  // Add a reference to the logical variable getting pulled
-  // out of container flow
-  pulllist.push_back(PulloutRecord());
-  pulllist.back().pullop = pullop;	// Operation pulling the variable out
-  if (pullop->code() == CPUI_FLOAT_FLOAT2FLOAT) {
-    if (pullop->getOut()->getSize() == precision)
-      pulllist.back().opc = CPUI_COPY;
-    else
-      pulllist.back().opc = CPUI_FLOAT_FLOAT2FLOAT;
-  }
-  else
-    pulllist.back().opc = pullop->code();
-  pulllist.back().input = rvn;	// Point in container flow for pull
-}
-
-bool SubfloatFlow::addtopushlist(PcodeOp *pushop,ReplaceVarnode *rvn)
-
-{				// Entry point of the logical flow
-  Varnode *invn = pushop->getIn(0);
-  OpCode opc = pushop->code();
-  if (opc == CPUI_FLOAT_FLOAT2FLOAT) {
-    if ((invn->getSize() == precision)||invn->isConstant())
-      opc = CPUI_COPY;
-  }
-  ReplaceOp *rop = createOp(opc,1,rvn);
-  if ((opc == CPUI_FLOAT_INT2FLOAT)||
-      ((opc == CPUI_FLOAT_FLOAT2FLOAT)&&(invn->getSize() > precision))) {
-    // We do not want to create a new input replacement, but want to keep the old
-    ReplaceVarnode *rvn = setReplacementNoFlow(invn);
-    if (rvn == (ReplaceVarnode *)0)
-      return false;
-    rop->input.push_back(rvn);
-    return true;
-  }
-  return createLink(rop,0,invn);
-}
-
-void SubfloatFlow::addtocomplist(ReplaceVarnode *in1,ReplaceVarnode *in2,PcodeOp *op)
-
-{
-  complist.push_back(CompareRecord());
-  complist.back().in1 = in1;
-  complist.back().in2 = in2;
-  complist.back().compop = op;
-}
-
-void SubfloatFlow::replaceInput(ReplaceVarnode *rvn)
-
-{ // Replace ORIGINAL input in the subgraph with temporaries, so
-  // we don't get overlapping varnode errors
-  Varnode *newvn = fd->newUnique(rvn->vn->getSize());
-  newvn = fd->setInputVarnode(newvn);
-  fd->totalReplace(rvn->vn,newvn);
-  fd->deleteVarnode(rvn->vn);
-  rvn->vn = newvn;
-}
-
-Varnode *SubfloatFlow::getReplaceVarnode(ReplaceVarnode *rvn)
-
-{ // Get the actual varnode associated with a replacement varnode
-  // either by recycling a previously built one or creating
-  // one on the spot
-  if (rvn->replacement != (Varnode *)0) {
-    if (!rvn->replacement->isConstant())
-      return rvn->replacement;
-    // if replacement is a constant (this was generated in setReplacementNoFlow) create copy of original constant
-    return fd->newConstant(rvn->replacement->getSize(),rvn->replacement->getOffset());
-  }
-  if (rvn->vn->isConstant()) { // A constant
-    const FloatFormat *formin = fd->getArch()->translate->getFloatFormat(rvn->vn->getSize());
-    // addConstant makes sure that formin is not null
-    return fd->newConstant(precision,format->convertEncoding(rvn->vn->getOffset(),formin));
-  }
-
-  bool isinput = rvn->vn->isInput();
-  if (isinput) {
-    Address addr = rvn->vn->getAddr();
-    // This is sort of fundemental problem:  how do we represent an input variable that
-    // is lower precision than its storage location
-    // Here we artificially truncate the location, which isn't realistic
-    if (addr.isBigEndian())
-      addr = addr + (rvn->vn->getSize() - precision);
-    replaceInput(rvn);	// Replace input to avoid overlap errors
-    rvn->replacement = fd->newVarnode(precision,addr);
-  }
-  else
-    rvn->replacement = fd->newUnique(precision);
-  if (isinput)	// Is this an input
-    rvn->replacement = fd->setInputVarnode(rvn->replacement);
-  return rvn->replacement;
-}
-
+/// \brief Push the trace one hop from the placeholder at the top of the worklist
+///
+/// The logical value for the value on top of the worklist stack is pushed back
+/// to the input Varnodes of the operation defining it.  Then the value is pushed
+/// forward through all operations that read it.
+/// \return \b true if the trace is successfully pushed
 bool SubfloatFlow::processNextWork(void)
 
 {
-  ReplaceVarnode *rvn = worklist.back();
+  TransformVar *rvn = worklist.back();
 
   worklist.pop_back();
 
@@ -1998,84 +1872,46 @@ bool SubfloatFlow::processNextWork(void)
   return traceForward(rvn);
 }
 
+/// \param f is the function being transformed
+/// \param root is the start Varnode containing the logical value
+/// \param prec is the precision to assume for the logical value
 SubfloatFlow::SubfloatFlow(Funcdata *f,Varnode *root,int4 prec)
+  : TransformManager(f)
+{
+  precision = prec;
+  format = f->getArch()->translate->getFloatFormat(precision);
+  if (format == (const FloatFormat *)0)
+    return;
+  setReplacement(root);
+}
+
+bool SubfloatFlow::preserveAddress(Varnode *vn,int4 bitSize,int4 lsbOffset) const
 
 {
-  fd = f;
-  precision = prec;
-  format = fd->getArch()->translate->getFloatFormat(precision);
-  createLink((ReplaceOp *)0,0,root);
+  return vn->isInput();		// Only try to preserve address for input varnodes
 }
 
+/// The interpretation that the root Varnode contains a logical value with
+/// smaller precision is pushed through the data-flow.  If the interpretation is
+/// inconsistent, \b false is returned.  Otherwise a transform is constructed that
+/// makes the smaller precision the explicit size of Varnodes within the data-flow.
+/// \return \b true if a transform consistent with the given precision can be built
 bool SubfloatFlow::doTrace(void)
 
-{ // Process worklist until its done
-  bool retval = false;
-  if ((fd != (Funcdata *)0)&&
-      (format != (const FloatFormat *)0)) {
-    retval = true;
-    while(!worklist.empty()) {
-      if (!processNextWork()) {
-	retval = false;
-	break;
-      }
+{
+  if (format == (const FloatFormat *)0)
+    return false;
+  bool retval = true;
+  while(!worklist.empty()) {
+    if (!processNextWork()) {
+      retval = false;
+      break;
     }
   }
 
-  // Clear marks
-  map<Varnode *,ReplaceVarnode>::iterator iter;
-  for(iter=varmap.begin();iter!=varmap.end();++iter)
-    (*iter).first->clearMark();
+  clearVarnodeMarks();
 
   if (!retval) return false;
-  if (pulllist.empty()&&complist.empty()) return false;
+  if (terminatorCount == 0) return false;
   return true;
 }
-
-void SubfloatFlow::doReplacement(void)
-
-{ // Create the actual replacement data-flow with -fd-
-  list<ReplaceOp>::iterator iter;
-
-  // Define all the outputs first
-  for(iter=oplist.begin();iter!=oplist.end();++iter) {
-    PcodeOp *newop = fd->newOp((*iter).numparams,(*iter).op->getAddr());
-    (*iter).replacement = newop;
-    fd->opSetOpcode(newop,(*iter).opc);
-    ReplaceVarnode *rout = (*iter).output;
-    if (rout != (ReplaceVarnode *)0) {
-      if (rout->replacement == (Varnode *)0)
-	rout->replacement = fd->newUniqueOut(precision,newop);
-      else
-	fd->opSetOutput(newop,rout->replacement);
-    }
-    fd->opInsertAfter(newop,(*iter).op);
-  }
-
-  // Set all the inputs
-  for(iter=oplist.begin();iter!=oplist.end();++iter) {
-    PcodeOp *newop = (*iter).replacement;
-    for(uint4 i=0;i<(*iter).input.size();++i)
-      fd->opSetInput(newop,getReplaceVarnode((*iter).input[i]),i);
-  }
-
-  // These are operations that carry flow from the small variable into an existing
-  // variable of the correct size
-  list<PulloutRecord>::iterator piter;
-  for(piter=pulllist.begin();piter!=pulllist.end();++piter) {
-    PcodeOp *pullop = (*piter).pullop;
-    while(pullop->numInput() > 1)
-      fd->opRemoveInput(pullop,pullop->numInput()-1);
-    fd->opSetInput(pullop,getReplaceVarnode((*piter).input),0);
-    if (pullop->code() != (*piter).opc)
-      fd->opSetOpcode(pullop,(*piter).opc);
-  }
-
-  list<CompareRecord>::iterator citer;
-  for(citer=complist.begin();citer!=complist.end();++citer) {
-    PcodeOp *op = (*citer).compop;
-    fd->opSetInput(op,getReplaceVarnode((*citer).in1),0);
-    fd->opSetInput(op,getReplaceVarnode((*citer).in2),1);
-  }
-}
-
