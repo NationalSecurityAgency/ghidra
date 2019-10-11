@@ -1820,9 +1820,10 @@ bool SubfloatFlow::traceBackward(TransformVar *rvn)
     if (!vn->isConstant() && vn->isFree())
       return false;
     TransformOp *rop = newOpReplace(1, CPUI_FLOAT_INT2FLOAT, op);
+    opSetOutput(rop, rvn);
     TransformVar *newvar = getPreexistingVarnode(vn);
     opSetInput(rop,newvar,0);
-    break;
+    return true;
   }
   case CPUI_FLOAT_FLOAT2FLOAT:
   {
@@ -1845,8 +1846,9 @@ bool SubfloatFlow::traceBackward(TransformVar *rvn)
       newvar = getPreexistingVarnode(vn);
     }
     TransformOp *rop = newOpReplace(1, opc, op);
+    opSetOutput(rop, rvn);
     opSetInput(rop,newvar,0);
-    break;
+    return true;
   }
   default:
     break;			// Everything else we abort
