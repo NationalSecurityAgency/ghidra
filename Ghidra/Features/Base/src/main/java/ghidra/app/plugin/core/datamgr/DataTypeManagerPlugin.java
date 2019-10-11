@@ -205,9 +205,9 @@ public class DataTypeManagerPlugin extends ProgramPlugin
 	}
 
 	/**
-	 * Add project pathname to recently opened list.
-	 * @param projectName
-	 * @param pathname
+	 * Add project archive name to recently opened list
+	 * @param projectName the project name
+	 * @param pathname the pathname 
 	 */
 	public void addRecentlyOpenedProjectArchive(String projectName, String pathname) {
 		String projectPathname = DataTypeManagerHandler.getProjectPathname(projectName, pathname);
@@ -239,8 +239,8 @@ public class DataTypeManagerPlugin extends ProgramPlugin
 
 	/**
 	 * Get a project archive file by project name and pathname
-	 * @param projectName
-	 * @param pathname
+	 * @param projectName the project name
+	 * @param pathname the project pathname
 	 * @return project archive domain file or null if it does not exist
 	 * or can not be found (e.g., projectName is not the active project)
 	 */
@@ -272,10 +272,6 @@ public class DataTypeManagerPlugin extends ProgramPlugin
 		dataTypeManagerHandler.dispose();
 	}
 
-	/**
-	 * Tells the Plugin to read its data-independant (preferences)
-	 * properties from the input stream.
-	 */
 	@Override
 	public void readConfigState(SaveState saveState) {
 		dataTypeManagerHandler.restore(saveState);
@@ -311,10 +307,6 @@ public class DataTypeManagerPlugin extends ProgramPlugin
 		dataTypePropertyManager.programClosed(program);
 	}
 
-	/**
-	 * Program was opened.
-	 * @param program
-	 */
 	@Override
 	protected void programActivated(Program program) {
 		program.addListener(this);
@@ -574,7 +566,6 @@ public class DataTypeManagerPlugin extends ProgramPlugin
 			openDialog.addOkActionListener(listener);
 		}
 		tool.showDialog(openDialog);
-//        updateActions();
 	}
 
 	@Override

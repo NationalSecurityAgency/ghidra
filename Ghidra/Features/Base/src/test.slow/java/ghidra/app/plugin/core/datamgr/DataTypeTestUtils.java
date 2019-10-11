@@ -31,6 +31,7 @@ import ghidra.app.plugin.core.datamgr.tree.DataTypeArchiveGTree;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.Program;
 import ghidra.util.Msg;
+import ghidra.util.Swing;
 import ghidra.util.task.TaskMonitor;
 import utilities.util.FileUtilities;
 
@@ -146,20 +147,18 @@ public class DataTypeTestUtils {
 	static void closeArchive(final ArchiveNode archiveNode, final boolean deleteFile)
 			throws Exception {
 
-		final Exception[] container = new Exception[1];
-
-		SwingUtilities.invokeAndWait(() -> {
+		Exception exception = Swing.runNow(() -> {
 			try {
 				doCloseArchive(archiveNode, deleteFile);
+				return null;
 			}
 			catch (Exception e) {
-				container[0] = e;
+				return e;
 			}
 		});
 
-		if (container[0] != null) {
-			throw new RuntimeException("Exception closing archive on Swing thread!: ",
-				container[0]);
+		if (exception != null) {
+			throw new RuntimeException("Exception closing archive on Swing thread!: ", exception);
 		}
 	}
 

@@ -23,6 +23,7 @@ import javax.swing.Icon;
 import docking.ActionContext;
 import docking.action.*;
 import docking.menu.MultiActionDockingAction;
+import ghidra.app.util.datatype.DataTypeIdUrl;
 import ghidra.base.actions.HorizontalRuleAction;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.data.DataTypeManager;
@@ -38,7 +39,7 @@ class NextPreviousDataTypeAction extends MultiActionDockingAction {
 	private boolean isNext;
 	private String owner;
 	private DataTypesProvider provider;
-	private HistoryList<DataType> history;
+	private HistoryList<DataTypeIdUrl> history;
 
 	public NextPreviousDataTypeAction(DataTypesProvider provider, String owner, boolean isNext) {
 		super(isNext ? "Next Data Type in History" : "Previous Data Type in History", owner);
@@ -92,19 +93,19 @@ class NextPreviousDataTypeAction extends MultiActionDockingAction {
 
 		DataTypeManager lastDtm = null;
 		List<DockingActionIf> results = new ArrayList<>();
-		List<DataType> types =
+		List<DataTypeIdUrl> types =
 			isNext ? history.getNextHistoryItems() : history.getPreviousHistoryItems();
 
-		for (DataType dt : types) {
+		for (DataTypeIdUrl url : types) {
 
+			DataType dt = url.getDataType(provider.getPlugin());
 			DataTypeManager dtm = dt.getDataTypeManager();
-
 			if (dtm != lastDtm && !results.isEmpty()) {
 				// add a separator to show the user they are navigating across managers
 				results.add(createHorizontalRule(lastDtm, dtm));
 			}
 
-			results.add(new NavigationAction(dt));
+			results.add(new NavigationAction(dt.getDisplayName()));
 			lastDtm = dtm;
 		}
 
@@ -122,10 +123,10 @@ class NextPreviousDataTypeAction extends MultiActionDockingAction {
 
 	private class NavigationAction extends DockingAction {
 
-		private NavigationAction(DataType dt) {
+		private NavigationAction(String dtDisplayName) {
 			super("DataTypeNavigationAction_" + ++navigationActionIdCount, owner);
 
-			setMenuBarData(new MenuData(new String[] { dt.getDisplayName() }));
+			setMenuBarData(new MenuData(new String[] { dtDisplayName }));
 			setEnabled(true);
 			setHelpLocation(new HelpLocation("DataTypeManagerPlugin", "Navigation_Actions"));
 		}
