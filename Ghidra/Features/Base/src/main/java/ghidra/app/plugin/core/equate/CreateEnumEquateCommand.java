@@ -37,8 +37,7 @@ public class CreateEnumEquateCommand extends BackgroundCommand {
 	 * @param program The program to use
 	 * @param addresses The addresses to apply an enum to
 	 * @param enoom The enum to apply equates with
-	 * @param shouldIncludeTypes True if the equate name should include the enum name.
-	 * @param shouldDoOnSubOps True if the enum should also be applied to the sub-operands.
+	 * @param shouldDoOnSubOps true if the enum should also be applied to the sub-operands.
 	 */
 	public CreateEnumEquateCommand(Program program, AddressSetView addresses, Enum enoom,
 			boolean shouldDoOnSubOps) {
@@ -65,5 +64,4 @@ public class CreateEnumEquateCommand extends BackgroundCommand {
 	public String getName() {
 		return "Create Enum Equate Command";
 	}
-
 }

@@ -27,7 +27,6 @@ import ghidra.program.database.*;
 import ghidra.program.database.map.AddressKeyAddressIterator;
 import ghidra.program.database.map.AddressMap;
 import ghidra.program.model.address.*;
-import ghidra.program.model.data.DataTypeManager;
 import ghidra.program.model.data.Enum;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.scalar.Scalar;
@@ -40,9 +39,7 @@ import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * Implementation for the Equate Table.
- *
- *
+ * Implementation of the Equate Table
  */
 public class EquateManager implements EquateTable, ErrorHandler, ManagerDB {
 
@@ -60,14 +57,12 @@ public class EquateManager implements EquateTable, ErrorHandler, ManagerDB {
 	/**
 	 * Constructor
 	 * @param handle database handle
-	 * @param addrMap map that converts addresses to longs and longs to
-	 * addresses
+	 * @param addrMap map that converts addresses to longs and longs to addresses
 	 * @param openMode one of ProgramDB.CREATE, UPDATE, UPGRADE, or READ_ONLY
 	 * @param lock the program synchronization lock
 	 * @param monitor the progress monitor used when upgrading.
 	 * @throws VersionException if the database version doesn't match the current version.
 	 * @throws IOException if a database error occurs.
-	 * @throws CancelledException if the user cancels the upgrade.
 	 */
 	public EquateManager(DBHandle handle, AddressMap addrMap, int openMode, Lock lock,
 			TaskMonitor monitor) throws VersionException, IOException {
@@ -103,26 +98,17 @@ public class EquateManager implements EquateTable, ErrorHandler, ManagerDB {
 		}
 	}
 
-	/**
-	 * @see ghidra.program.database.ManagerDB#setProgram(ghidra.program.database.ProgramDB)
-	 */
 	@Override
 	public void setProgram(ProgramDB program) {
 		this.program = program;
 	}
 
-	/**
-	 * @see ghidra.program.database.ManagerDB#programReady(int, int, ghidra.util.task.TaskMonitor)
-	 */
 	@Override
 	public void programReady(int openMode, int currentRevision, TaskMonitor monitor)
 			throws IOException, CancelledException {
 		// Nothing to do
 	}
 
-	/**
-	 * @see db.util.ErrorHandler#dbError(java.io.IOException)
-	 */
 	@Override
 	public void dbError(IOException e) {
 		program.dbError(e);
@@ -167,12 +153,9 @@ public class EquateManager implements EquateTable, ErrorHandler, ManagerDB {
 		InstructionIterator it = listing.getInstructions(addresses, true);
 		Stream<Instruction> instructions = StreamSupport.stream(it.spliterator(), false);
 
-		DataTypeManager dtm = program.getDataTypeManager();
 		try {
 			lock.acquire();
-			int id = dtm.startTransaction("Apply Enum");
 			instructions.forEach(applyEquates);
-			dtm.endTransaction(id, true);
 		}
 		finally {
 			lock.release();
@@ -198,13 +181,7 @@ public class EquateManager implements EquateTable, ErrorHandler, ManagerDB {
 		}
 
 		if (program.getDataTypeManager().findDataTypeForID(enoom.getUniversalID()) == null) {
-			int transactionID = program.startTransaction("Set Equate Dialog");
-			try {
-				enoom = (Enum) program.getDataTypeManager().addDataType(enoom, null);
-			}
-			finally {
-				program.endTransaction(transactionID, true);
-			}
+			enoom = (Enum) program.getDataTypeManager().addDataType(enoom, null);
 		}
 
 		Address addr = instruction.getAddress();
@@ -243,9 +220,6 @@ public class EquateManager implements EquateTable, ErrorHandler, ManagerDB {
 		return equate;
 	}
 
-	/**
-	 * @see ghidra.program.model.symbol.EquateTable#createEquate(java.lang.String, long)
-	 */
 	@Override
 	public Equate createEquate(String name, long value)
 			throws DuplicateNameException, InvalidInputException {
@@ -271,9 +245,6 @@ public class EquateManager implements EquateTable, ErrorHandler, ManagerDB {
 		return null;
 	}
 
-	/**
-	 * @see ghidra.program.model.symbol.EquateTable#getEquate(ghidra.program.model.address.Address, int, long)
-	 */
 	@Override
 	public Equate getEquate(Address reference, int opIndex, long scalarValue) {
 		lock.acquire();
@@ -302,9 +273,6 @@ public class EquateManager implements EquateTable, ErrorHandler, ManagerDB {
 		return null;
 	}
 
-	/**
-	 * @see ghidra.program.model.symbol.EquateTable#getEquates(ghidra.program.model.address.Address, int)
-	 */
 	@Override
 	public List<Equate> getEquates(Address reference, int opIndex) {
 		List<Equate> ret = new LinkedList<>();
@@ -331,9 +299,6 @@ public class EquateManager implements EquateTable, ErrorHandler, ManagerDB {
 		return ret;
 	}
 
-	/**
-	 * @see ghidra.program.model.symbol.EquateTable#getEquates(ghidra.program.model.address.Address)
-	 */
 	@Override
 	public List<Equate> getEquates(Address reference) {
 		List<Equate> ret = new LinkedList<>();
@@ -358,9 +323,6 @@ public class EquateManager implements EquateTable, ErrorHandler, ManagerDB {
 		return ret;
 	}
 
-	/**
-	 * @see ghidra.program.model.symbol.EquateTable#getEquate(java.lang.String)
-	 */
 	@Override
 	public Equate getEquate(String name) {
 		lock.acquire();
@@ -369,6 +331,7 @@ public class EquateManager implements EquateTable, ErrorHandler, ManagerDB {
 			return getEquateDB(equateID);
 		}
 		catch (NotFoundException e) {
+			// just return null below
 		}
 		catch (IOException e) {
 			program.dbError(e);
@@ -379,9 +342,6 @@ public class EquateManager implements EquateTable, ErrorHandler, ManagerDB {
 		return null;
 	}
 
-	/**
-	 * @see ghidra.program.model.symbol.EquateTable#getEquateAddresses()
-	 */
 	@Override
 	public AddressIterator getEquateAddresses() {
 
@@ -395,9 +355,6 @@ public class EquateManager implements EquateTable, ErrorHandler, ManagerDB {
 		return new EmptyAddressIterator();
 	}
 
-	/**
-	 * @see ghidra.program.model.symbol.EquateTable#getEquateAddresses(ghidra.program.model.address.Address)
-	 */
 	@Override
 	public AddressIterator getEquateAddresses(Address startAddr) {
 		try {
@@ -421,9 +378,6 @@ public class EquateManager implements EquateTable, ErrorHandler, ManagerDB {
 		return new EmptyAddressIterator();
 	}
 
-	/**
-	 * @see ghidra.program.model.symbol.EquateTable#getEquateAddresses(ghidra.program.model.address.AddressSetView)
-	 */
 	@Override
 	public AddressIterator getEquateAddresses(AddressSetView set) {
 		try {
@@ -436,9 +390,6 @@ public class EquateManager implements EquateTable, ErrorHandler, ManagerDB {
 		return new EmptyAddressIterator();
 	}
 
-	/**
-	 * @see ghidra.program.model.symbol.EquateTable#getEquates()
-	 */
 	@Override
 	public Iterator<Equate> getEquates() {
 		try {
@@ -451,9 +402,6 @@ public class EquateManager implements EquateTable, ErrorHandler, ManagerDB {
 		return new EquateIterator(null);
 	}
 
-	/**
-	 * @see ghidra.program.model.symbol.EquateTable#getEquates(long)
-	 */
 	@Override
 	public List<Equate> getEquates(long value) {
 		ArrayList<Equate> list = new ArrayList<>();
@@ -473,9 +421,6 @@ public class EquateManager implements EquateTable, ErrorHandler, ManagerDB {
 		return list;
 	}
 
-	/**
-	 * @see ghidra.program.database.ManagerDB#deleteAddressRange(ghidra.program.model.address.Address, ghidra.program.model.address.Address, ghidra.util.task.TaskMonitor)
-	 */
 	@Override
 	public void deleteAddressRange(Address startAddr, Address endAddr, TaskMonitor monitor)
 			throws CancelledException {
@@ -516,9 +461,6 @@ public class EquateManager implements EquateTable, ErrorHandler, ManagerDB {
 		}
 	}
 
-	/**
-	 * @see ghidra.program.model.symbol.EquateTable#removeEquate(java.lang.String)
-	 */
 	@Override
 	public boolean removeEquate(String name) {
 		if (name == null) {
@@ -562,30 +504,18 @@ public class EquateManager implements EquateTable, ErrorHandler, ManagerDB {
 		}
 	}
 
-	/**
-	 * Return the address map.
-	 */
 	AddressMap getAddressMap() {
 		return addrMap;
 	}
 
-	/**
-	 * Get the database adapter for equate table.
-	 */
 	EquateDBAdapter getEquateDatabaseAdapter() {
 		return equateAdapter;
 	}
 
-	/**
-	 * Get the database adapter for the equate references table.
-	 */
 	EquateRefDBAdapter getRefDatabaseAdapter() {
 		return refAdapter;
 	}
 
-	/**
-	 * Add a reference for an equate at the given operand position.
-	 */
 	void addReference(long equateID, Address address, int opIndex, long dynamicHash)
 			throws IOException {
 		lock.acquire();
@@ -622,9 +552,6 @@ public class EquateManager implements EquateTable, ErrorHandler, ManagerDB {
 		}
 	}
 
-	/**
-	 * Get the references for the given equate ID.
-	 */
 	EquateRefDB[] getReferences(long equateID) throws IOException {
 		long[] keys = refAdapter.getRecordKeysForEquateID(equateID);
 		EquateRefDB[] refs = new EquateRefDB[keys.length];
@@ -634,19 +561,10 @@ public class EquateManager implements EquateTable, ErrorHandler, ManagerDB {
 		return refs;
 	}
 
-	/**
-	 * Get the number of references for the given equate ID.
-	 */
 	int getReferenceCount(long equateID) throws IOException {
 		return getReferences(equateID).length;
 	}
 
-	/**
-	 * Remove the reference.
-	 * @param equateDB equate
-	 * @param refAddr ref address to remove
-	 * @param opIndex operand index
-	 */
 	void removeReference(EquateDB equateDB, Address refAddr, short opIndex) throws IOException {
 
 		long[] keys = refAdapter.getRecordKeysForEquateID(equateDB.getKey());
@@ -659,13 +577,6 @@ public class EquateManager implements EquateTable, ErrorHandler, ManagerDB {
 		}
 	}
 
-	/**
-	 * Remove the reference.
-	 * @param equateDB equate
-	 * @param dynamicHash hash value
-	 * @param refAddr ref address to remove
-	 * @param opIndex operand index
-	 */
 	void removeReference(EquateDB equateDB, long dynamicHash, Address refAddr) throws IOException {
 
 		long[] keys = refAdapter.getRecordKeysForEquateID(equateDB.getKey());
@@ -678,10 +589,6 @@ public class EquateManager implements EquateTable, ErrorHandler, ManagerDB {
 		}
 	}
 
-	/**
-	 * Verify that the name is not null and not the empty string.
-	 * @throws InvalidInputException if the name is null or is empty
-	 */
 	void validateName(String name) throws InvalidInputException {
 		if (name == null) {
 			throw new InvalidInputException("Name is null");
@@ -693,7 +600,7 @@ public class EquateManager implements EquateTable, ErrorHandler, ManagerDB {
 	}
 
 	/**
-	 * Send notification that the equate name changed.
+	 * Send notification that the equate name changed
 	 * @param oldName old name
 	 * @param newName new name
 	 */
@@ -784,66 +691,10 @@ public class EquateManager implements EquateTable, ErrorHandler, ManagerDB {
 			null);
 	}
 
-	//////////////////////////////////////////////////////////////////////
-	private class EquateIterator implements Iterator<Equate> {
-		private RecordIterator iter;
-
-		private EquateIterator(RecordIterator iter) {
-			this.iter = iter;
-		}
-
-		/**
-		 * @see java.util.Iterator#hasNext()
-		 */
-		@Override
-		public boolean hasNext() {
-			if (iter != null) {
-				try {
-					return iter.hasNext();
-				}
-				catch (IOException e) {
-					program.dbError(e);
-				}
-			}
-			return false;
-		}
-
-		/**
-		 * @see java.util.Iterator#next()
-		 */
-		@Override
-		public Equate next() {
-			if (iter != null) {
-				try {
-					Record record = iter.next();
-					if (record != null) {
-						return getEquateDB(record.getKey());
-					}
-				}
-				catch (IOException e) {
-					program.dbError(e);
-				}
-			}
-			return null;
-		}
-
-		/**
-		 * @see java.util.Iterator#remove()
-		 */
-		@Override
-		public void remove() {
-			throw new UnsupportedOperationException("remove is not supported.");
-		}
-
-	}
-
 	Lock getLock() {
 		return lock;
 	}
 
-	/**
-	 * @see ghidra.program.database.ManagerDB#invalidateCache(boolean)
-	 */
 	@Override
 	public void invalidateCache(boolean all) {
 		lock.acquire();
@@ -856,9 +707,6 @@ public class EquateManager implements EquateTable, ErrorHandler, ManagerDB {
 		}
 	}
 
-	/**
-	 * @see ghidra.program.database.ManagerDB#moveAddressRange(ghidra.program.model.address.Address, ghidra.program.model.address.Address, long, ghidra.util.task.TaskMonitor)
-	 */
 	@Override
 	public void moveAddressRange(Address fromAddr, Address toAddr, long length, TaskMonitor monitor)
 			throws CancelledException {
@@ -879,7 +727,7 @@ public class EquateManager implements EquateTable, ErrorHandler, ManagerDB {
 	 * Formats a string to the equate format given the enum UUID and the value for the equate. The
 	 * formatted strings are used when setting equates from datatypes so that information can be
 	 * stored with an equate to point back to that datatype.
-	 * @param dtID The enums data type UUID
+	 * @param dtID The enum's data type UUID
 	 * @param equateValue The value intended for the equate
 	 * @return The formatted equate name
 	 */
@@ -921,5 +769,52 @@ public class EquateManager implements EquateTable, ErrorHandler, ManagerDB {
 			return Long.parseLong(formattedEquateName.split(FORMAT_DELIMITER)[2]);
 		}
 		return -1;
+	}
+
+//==================================================================================================
+// Inner Classes
+//==================================================================================================
+
+	private class EquateIterator implements Iterator<Equate> {
+		private RecordIterator iter;
+
+		private EquateIterator(RecordIterator iter) {
+			this.iter = iter;
+		}
+
+		@Override
+		public boolean hasNext() {
+			if (iter != null) {
+				try {
+					return iter.hasNext();
+				}
+				catch (IOException e) {
+					program.dbError(e);
+				}
+			}
+			return false;
+		}
+
+		@Override
+		public Equate next() {
+			if (iter != null) {
+				try {
+					Record record = iter.next();
+					if (record != null) {
+						return getEquateDB(record.getKey());
+					}
+				}
+				catch (IOException e) {
+					program.dbError(e);
+				}
+			}
+			return null;
+		}
+
+		@Override
+		public void remove() {
+			throw new UnsupportedOperationException("remove is not supported.");
+		}
+
 	}
 }
