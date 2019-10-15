@@ -643,8 +643,10 @@ public class IndexedLocalFileSystem extends LocalFileSystem {
 	static int verifyIndexedFileStructure(File root) throws IndexReadException {
 		int itemCount = 0;
 		for (File f : root.listFiles()) {
-			if (f.isDirectory() && !isHiddenDirName(f.getName())) {
-				itemCount += verifyIndexedDirectory(f);
+			if (f.isDirectory()) {
+				if (!isHiddenDirName(f.getName())) {
+					itemCount += verifyIndexedDirectory(f);
+				}
 			}
 			else {
 				String fname = f.getName();

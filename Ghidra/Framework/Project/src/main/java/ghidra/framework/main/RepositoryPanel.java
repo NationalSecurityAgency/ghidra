@@ -86,9 +86,8 @@ public class RepositoryPanel extends AbstractWizardJPanel {
 			if (name.length() == 0) {
 				return false;
 			}
-			if (!NamingUtilities.isValidName(name)) {
-				panelManager.getWizardManager().setStatusMessage(
-					name + " contains invalid characters");
+			if (!NamingUtilities.isValidProjectName(name)) {
+				panelManager.getWizardManager().setStatusMessage("Invalid project repository name");
 				return false;
 			}
 			//
@@ -218,9 +217,8 @@ public class RepositoryPanel extends AbstractWizardJPanel {
 		if (createRepButton.isSelected()) {
 			String name = nameField.getText();
 			if (name.length() != 0) {
-
-				if (!NamingUtilities.isValidName(name)) {
-					msg = name + " contains invalid characters";
+				if (!NamingUtilities.isValidProjectName(name)) {
+					msg = "Invalid project repository name";
 				}
 				else if (listModel.contains(name)) {
 					msg = name + " already exists";

@@ -27,6 +27,7 @@ import javax.swing.text.Document;
 
 import docking.options.editor.ButtonPanelFactory;
 import docking.widgets.filechooser.GhidraFileChooser;
+import docking.widgets.filechooser.GhidraFileChooserMode;
 import docking.widgets.label.GDLabel;
 import docking.wizard.AbstractWizardJPanel;
 import docking.wizard.WizardManager;
@@ -256,7 +257,7 @@ class SelectProjectPanel extends AbstractWizardJPanel {
 			wm.setStatusMessage("");
 		}
 		projectLocator = null;
-		ProjectLocator projectLocator = null;
+		ProjectLocator locator = null;
 		String msg = null;
 		String dir = directoryField.getText().trim();
 		if (dir.length() == 0) {
@@ -271,30 +272,29 @@ class SelectProjectPanel extends AbstractWizardJPanel {
 				projectName =
 					projectName.substring(0, projectName.length() - PROJECT_EXTENSION.length());
 			}
-			if (projectName.length() == 0 || !NamingUtilities.isValidName(projectName)) {
+			if (!NamingUtilities.isValidProjectName(projectName)) {
 				msg = "Please specify valid project name";
 			}
 			else {
 				try {
-					projectLocator = new ProjectLocator(dir, projectName);
+					locator = new ProjectLocator(dir, projectName);
 				}
 				catch (IllegalArgumentException e) {
 					msg = e.getMessage();
 				}
 			}
 		}
-		if (projectLocator != null) {
+		if (locator != null) {
 			File parentDir = new File(dir);
 			if (!parentDir.isDirectory()) {
 				msg = "Please specify a Project Directory";
 			}
-			else if (projectLocator.getMarkerFile().exists() ||
-				projectLocator.getProjectDir().exists()) {
-				msg = getProjectName("A project named " + projectLocator.getName() +
+			else if (locator.getMarkerFile().exists() || locator.getProjectDir().exists()) {
+				msg = getProjectName("A project named " + locator.getName() +
 					" already exists in " + parentDir.getAbsolutePath());
 			}
 			else {
-				this.projectLocator = projectLocator;
+				this.projectLocator = locator;
 			}
 		}
 		wm.validityChanged();
@@ -342,7 +342,7 @@ class SelectProjectPanel extends AbstractWizardJPanel {
 		if (lastDirSelected != null) {
 			projectDirectory = new File(lastDirSelected);
 		}
-		fileChooser.setFileSelectionMode(GhidraFileChooser.DIRECTORIES_ONLY);
+		fileChooser.setFileSelectionMode(GhidraFileChooserMode.DIRECTORIES_ONLY);
 		fileChooser.setFileFilter(new GhidraFileFilter() {
 			@Override
 			public String getDescription() {

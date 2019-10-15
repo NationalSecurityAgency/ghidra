@@ -175,7 +175,7 @@ public class MultipleKeyAction extends DockingKeyBindingAction {
 		for (ActionData actionData : actions) {
 			if (actionData.isMyProvider(localContext)) {
 				hasLocalActionsForKeyBinding = true;
-				if (actionData.action.isEnabledForContext(localContext)) {
+				if (isValidAndEnabled(actionData, localContext)) {
 					list.add(new ExecutableKeyActionAdapter(actionData.action, localContext));
 				}
 			}
@@ -199,7 +199,7 @@ public class MultipleKeyAction extends DockingKeyBindingAction {
 				(ComponentBasedDockingAction) actionData.action;
 			if (componentAction.isValidComponentContext(localContext)) {
 				hasLocalActionsForKeyBinding = true;
-				if (actionData.action.isEnabledForContext(localContext)) {
+				if (isValidAndEnabled(actionData, localContext)) {
 					list.add(new ExecutableKeyActionAdapter(actionData.action, localContext));
 				}
 			}
@@ -219,19 +219,25 @@ public class MultipleKeyAction extends DockingKeyBindingAction {
 				// When looking for context matches, we prefer local context, even though this
 				// is a 'global' action.  This allows more specific context to be used when
 				// available
-				if (actionData.action.isValidContext(localContext)) {
-					if (actionData.action.isEnabledForContext(localContext)) {
-						list.add(new ExecutableKeyActionAdapter(actionData.action, localContext));
-					}
+				if (isValidAndEnabled(actionData, localContext)) {
+					list.add(new ExecutableKeyActionAdapter(actionData.action, localContext));
 				}
-				else if (actionData.action.isValidGlobalContext(globalContext)) {
-					if (actionData.action.isEnabledForContext(globalContext)) {
-						list.add(new ExecutableKeyActionAdapter(actionData.action, globalContext));
-					}
+				else if (isValidAndEnabledGlobally(actionData, globalContext)) {
+					list.add(new ExecutableKeyActionAdapter(actionData.action, globalContext));
 				}
 			}
 		}
 		return list;
+	}
+
+	private boolean isValidAndEnabled(ActionData actionData, ActionContext localContext) {
+		DockingActionIf a = actionData.action;
+		return a.isValidContext(localContext) && a.isEnabledForContext(localContext);
+	}
+
+	private boolean isValidAndEnabledGlobally(ActionData actionData, ActionContext globalContext) {
+		DockingActionIf a = actionData.action;
+		return a.isValidGlobalContext(globalContext) && a.isEnabledForContext(globalContext);
 	}
 
 	@Override

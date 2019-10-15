@@ -84,12 +84,11 @@ public class AutoAnalysisPlugin extends Plugin implements AutoAnalysisManagerLis
 		// get the option so that an owner is associated with it, otherwise
 		// it will not show up in the Options dialog for the tool.
 		Options options = tool.getOptions(GhidraOptions.CATEGORY_AUTO_ANALYSIS);
-		String description =
-			"This option forces the analysis options"
-				+ " dialog to appear whenever auto-analysis action is invoked.";
+		String description = "This option forces the analysis options" +
+			" dialog to appear whenever auto-analysis action is invoked.";
 
 		helpLocation = new HelpLocation("AutoAnalysisPlugin", "AnalysisOptions");
-
+		options.setOptionsHelpLocation(helpLocation);
 		options.registerOption(SHOW_ANALYSIS_OPTIONS, true, helpLocation, description);
 	}
 
@@ -266,8 +265,8 @@ public class AutoAnalysisPlugin extends Plugin implements AutoAnalysisManagerLis
 
 		Options options = program.getOptions(Program.ANALYSIS_PROPERTIES);
 		options.registerOptionsEditor(new AnalysisOptionsEditor(program));
-		options.setOptionsHelpLocation(new HelpLocation("AutoAnalysisPlugin",
-			"Auto_Analysis_Option"));
+		options.setOptionsHelpLocation(
+			new HelpLocation("AutoAnalysisPlugin", "Auto_Analysis_Option"));
 	}
 
 	private void programActivated(final Program program) {
@@ -316,9 +315,8 @@ public class AutoAnalysisPlugin extends Plugin implements AutoAnalysisManagerLis
 	public void analysisEnded(AutoAnalysisManager manager) {
 		MessageLog log = manager.getMessageLog();
 		if (log.getMsgCount() > 0) {
-			MultiLineMessageDialog dialog =
-				new MultiLineMessageDialog("Auto Analysis Summary",
-					"There were warnings/errors issued during analysis.", log.toString(),
+			MultiLineMessageDialog dialog = new MultiLineMessageDialog("Auto Analysis Summary",
+				"There were warnings/errors issued during analysis.", log.toString(),
 				MultiLineMessageDialog.WARNING_MESSAGE, false);//modal?
 			DockingWindowManager.showDialog(null, dialog);
 		}
@@ -332,9 +330,8 @@ public class AutoAnalysisPlugin extends Plugin implements AutoAnalysisManagerLis
 		public OneShotAnalyzerAction(Analyzer analyzer) {
 			super(analyzer.getName(), AutoAnalysisPlugin.this.getName());
 			this.analyzer = analyzer;
-			setMenuBarData(new MenuData(
-				new String[] { "Analysis", "One Shot", analyzer.getName() }, null,
-				ANALYZE_GROUP_NAME));
+			setMenuBarData(new MenuData(new String[] { "Analysis", "One Shot", analyzer.getName() },
+				null, ANALYZE_GROUP_NAME));
 			setHelpLocation(new HelpLocation("AutoAnalysisPlugin", "Auto_Analyzers"));
 
 			setEnabled(false);

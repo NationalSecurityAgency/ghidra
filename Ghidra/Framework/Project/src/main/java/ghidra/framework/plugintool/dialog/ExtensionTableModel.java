@@ -126,7 +126,7 @@ class ExtensionTableModel extends ThreadedTableModel<ExtensionDetails, List<Exte
 		ResourceFile installDir = Application.getApplicationLayout().getExtensionInstallationDir();
 		if (!installDir.canWrite()) {
 			Msg.showError(this, null, "Permissions Error",
-				"Cannot install/uninstall extensions: Invalid write permissions on installion directory.\n" +
+				"Cannot install/uninstall extensions: Invalid write permissions on installation directory.\n" +
 					"See the \"Ghidra Extension Notes\" section of the Ghidra Installation Guide for more information.");
 			return;
 		}

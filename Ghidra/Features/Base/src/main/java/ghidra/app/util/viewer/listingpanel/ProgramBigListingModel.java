@@ -69,11 +69,6 @@ public class ProgramBigListingModel implements ListingModel, FormatModelListener
 	}
 
 	private void initOptions() {
-		fieldOptions.registerOption(DISPLAY_EXTERNAL_FUNCTION_POINTER_OPTION_NAME, true, null,
-			"Shows/hides function header format for pointers to external functions");
-		fieldOptions.registerOption(DISPLAY_NONEXTERNAL_FUNCTION_POINTER_OPTION_NAME, false, null,
-			"Shows/hides function header format for pointers to non-external functions");
-
 		showExternalFunctionPointerFormat =
 			fieldOptions.getBoolean(DISPLAY_EXTERNAL_FUNCTION_POINTER_OPTION_NAME, true);
 		showNonExternalFunctionPointerFormat =

@@ -37,14 +37,15 @@ import ghidra.util.exception.AssertException;
  * Class to manage the set of format models.
  */
 public class FormatManager implements OptionsChangeListener {
-	public static final String OPTIONS_GROUP = "Array Options";
+	public static final String ARRAY_OPTIONS_GROUP = "Array Options";
 	private static final String HIGHLIGHT_GROUP = "Cursor Text Highlight";
 	public static final String HIGHLIGHT_COLOR_NAME =
 		HIGHLIGHT_GROUP + Options.DELIMITER + "Highlight Color";
 	public static final String HIGHLIGHT_ALT_COLOR_NAME =
 		HIGHLIGHT_GROUP + Options.DELIMITER + "Alternate Highlight Color";
 	public final static String ARRAY_DISPLAY_OPTIONS =
-		OPTIONS_GROUP + Options.DELIMITER + "Array Display Options";
+		ARRAY_OPTIONS_GROUP + Options.DELIMITER + "Array Display Options";
+	public final static String ARRAY_DISPLAY_DESCRIPTION = "Adjusts the Array Field display";
 
 	private static final int NUM_MODELS = 7;
 
@@ -94,7 +95,8 @@ public class FormatManager implements OptionsChangeListener {
 
 	private void getArrayDisplayOptions(Options options) {
 		options.registerOption(ARRAY_DISPLAY_OPTIONS, OptionType.CUSTOM_TYPE,
-			new ArrayElementWrappedOption(), null, null, new ArrayElementPropertyEditor());
+			new ArrayElementWrappedOption(), null, ARRAY_DISPLAY_DESCRIPTION,
+			new ArrayElementPropertyEditor());
 		CustomOption option = options.getCustomOption(ARRAY_DISPLAY_OPTIONS, null);
 		if (option instanceof ArrayElementWrappedOption) {
 			ArrayElementWrappedOption arrayOption = (ArrayElementWrappedOption) option;
