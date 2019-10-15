@@ -149,7 +149,7 @@ public class VTPlugin extends Plugin {
 
 	private void initializeOptions() {
 		Options options = tool.getOptions(GhidraOptions.CATEGORY_BROWSER_DISPLAY);
-		options.registerOptionsEditor(new ListingDisplayOptionsEditor(this, options));
+		options.registerOptionsEditor(new ListingDisplayOptionsEditor(options));
 		options.setOptionsHelpLocation(new HelpLocation(CodeBrowserPlugin.class.getSimpleName(),
 			GhidraOptions.CATEGORY_BROWSER_DISPLAY));
 
