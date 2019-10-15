@@ -507,7 +507,7 @@ public class FrontEndPlugin extends Plugin
 						"Cannot open '" + file.getName() + "' as a Ghidra Project");
 					continue;
 				}
-				if (!NamingUtilities.isValidName(filename)) {
+				if (!NamingUtilities.isValidProjectName(filename)) {
 					Msg.showError(getClass(), tool.getToolFrame(), "Invalid Project Name",
 						filename + " is not a valid project name");
 					continue;
