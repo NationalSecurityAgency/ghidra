@@ -371,7 +371,7 @@ void Funcdata::spacebaseConstant(PcodeOp *op,int4 slot,SymbolEntry *entry,const 
       opInsertBefore(zextOp,op);
     }
     else
-      opSetOpcode(extraOp,CPUI_INT_ZEXT);
+      opSetOpcode(zextOp,CPUI_INT_ZEXT);
     opSetInput(zextOp,outvn,0);
     outvn = zextOp->getOut();
   }
