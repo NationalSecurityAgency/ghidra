@@ -116,23 +116,25 @@ define register offset=0x7000 size=$(SIZE) [
 
 # Floating-point registers
 define register offset=0x2000 size=4 [
-	fs3  fs2  fs1  fs0  fs7  fs6  fs5  fs4
-	fs11 fs10 fs9  fs8  fs15 fs14 fs13 fs12
-	fs19 fs18 fs17 fs16 fs23 fs22 fs21 fs20
-	fs27 fs26 fs25 fs24 fs31 fs30 fs29 fs28
+	fs0  fs1  fs2  fs3  fs4  fs5  fs6  fs7
+    fs8  fs9  fs10 fs11 fs12 fs13 fs14 fs15
+    fs16 fs17 fs18 fs19 fs20 fs21 fs22 fs23
+    fs24 fs25 fs26 fs27 fs28 fs29 fs30 fs31
 ];
                                        
 define register offset=0x2000 size=8 [
-	fd2  fd0  fd6  fd4  fd10  fd8 fd14 fd12
-	fd18 fd16 fd22 fd20 fd26 fd24 fd30 fd28
-	fd32 fd34 fd36 fd38 fd40 fd42 fd44 fd46
-	fd48 fd50 fd52 fd54 fd56 fd58 fd60 fd62
+	fd0  fd2  fd4  fd6  fd8  fd10 fd12 fd14
+    fd16 fd18 fd20 fd22 fd24 fd26 fd28 fd30
+    fd32 fd34 fd36 fd38 fd40 fd42 fd44 fd46
+    fd48 fd50 fd52 fd54 fd56 fd58 fd60 fd62
 ];
                                        
 define register offset=0x2000 size=16 [
-	fq0  fq4  fq8  fq12 fq16 fq20 fq24 fq28
-	fq32 fq36 fq40 fq44 fq48 fq52 fq56 fq60
+	fq0   fq4  fq8  fq12 fq16 fq20 fq24 fq28
+    fq32  fq36 fq40 fq44 fq48 fq52 fq56 fq60
 ];
+                                       
+
 
 define pcodeop segment;
 define pcodeop popc;
@@ -503,14 +505,8 @@ macro unpackflags(ccr) {
 
 @if SIZE=="8"
 :ldd ea,rd                           is op=3 & rd & op3=0x03 & ea { rd = *:$(SIZE) ea; }
-
 @else
-:ldd ea,rd                           is op=3 & rd & rd_d & op3=0x03 & ea
-{
-	tmp:8 = *:8 ea;
-	rd_d[32,32] = tmp(4);
-	rd_d[0,32] = tmp(0);
-}
+:ldd ea,rd                           is op=3 & rd & rd_d & op3=0x03 & ea { rd_d = *:8 ea; }
 
 @endif
 
@@ -532,28 +528,14 @@ macro unpackflags(ccr) {
 @if SIZE=="8"
 :stx RD,ea                           is op=3 & RD & op3=0x0e & ea { *ea = RD; }
 :std RD,ea                           is op=3 & RD & op3=0x07 & ea { *ea = RD; }
-
 @else
-# size = 4, but this extended store insn needs to write 8 bytes
-:stx RD,ea                           is op=3 & RD & rd_d & op3=0x0e & ea
-{
-	tmp_lo:4 = rd_d[0,32];
-	tmp_hi:4 = rd_d[32,32];
-	tmp:8 = zext(tmp_lo) + (zext(tmp_hi) << 32);
-	*ea = tmp;
-}
-:clrx ea                             is op=3 & rd=0 & op3=0x0e & ea { *ea = 0:8; }
-
-:std RD,ea                           is op=3 & RD & rd_d & op3=0x07 & ea
-{
-	tmp_lo:4 = rd_d[0,32];
-	tmp_hi:4 = rd_d[32,32];
-	tmp:8 = zext(tmp_lo) + (zext(tmp_hi) << 32);
-	*ea = tmp;
-}
-:clrd ea                             is op=3 & rd=0 & op3=0x07 & ea { *ea = 0:8; }
-
+# size = 4, but this extended store instruction needs to write 8 bytes
+:stx RD,ea                           is op=3 & RD & rd_d & op3=0x0e & ea { *ea = rd_d; }
+:std RD,ea                           is op=3 & RD & rd_d & op3=0x07 & ea { *ea = rd_d; }
 @endif
+
+:clrx ea                             is op=3 & rd=0 & op3=0x0e & ea { *ea = 0:8; }
+:clrd ea                             is op=3 & rd=0 & op3=0x07 & ea { *ea = 0:8; }
 
 :stba RD,ea_alt                      is op=3 & RD & op3=0x15 & ea_alt { *ea_alt = RD:1; } 
 :stha RD,ea_alt                      is op=3 & RD & op3=0x16 & ea_alt { *ea_alt = RD:2; } 
