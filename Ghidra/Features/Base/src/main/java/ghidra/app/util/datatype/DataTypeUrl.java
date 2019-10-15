@@ -31,7 +31,7 @@ import ghidra.util.UniversalID;
  * where the first number is the ID of the {@link DataTypeManager} and the second number is 
  * the {@link DataType} ID.
  */
-public class DataTypeIdUrl {
+public class DataTypeUrl {
 
 	// see javadoc for format
 	private static String PROTOCOL = "datatype";
@@ -46,7 +46,7 @@ public class DataTypeIdUrl {
 	 * Constructs a url from the given data type
 	 * @param dt the data type; cannot be null
 	 */
-	public DataTypeIdUrl(DataType dt) {
+	public DataTypeUrl(DataType dt) {
 		DataTypeManager dtm = dt.getDataTypeManager();
 		dataTypeManagerId = Objects.requireNonNull(dtm.getUniversalID());
 		dataTypeId = dt.getUniversalID();
@@ -60,7 +60,7 @@ public class DataTypeIdUrl {
 	 * @throws IllegalArgumentException if the url does not match the expected {@link #URL_PATTERN}
 	 *         or if there is an issue parsing the id within the given url
 	 */
-	public DataTypeIdUrl(String url) throws IllegalArgumentException {
+	public DataTypeUrl(String url) throws IllegalArgumentException {
 
 		Matcher matcher = URL_PATTERN.matcher(url);
 		if (!matcher.matches()) {
@@ -69,6 +69,14 @@ public class DataTypeIdUrl {
 
 		String dtmId = matcher.group(1);
 		String dtId = matcher.group(2);
+
+		if (dtmId.isBlank()) {
+			throw new IllegalArgumentException("Data Type Manager ID cannot be blank");
+		}
+
+		if (dtId.isBlank()) {
+			throw new IllegalArgumentException("Data Type ID cannot be blank");
+		}
 
 		try {
 			dataTypeManagerId = new UniversalID(Long.parseLong(dtmId));
@@ -156,7 +164,7 @@ public class DataTypeIdUrl {
 			return false;
 		}
 
-		DataTypeIdUrl other = (DataTypeIdUrl) obj;
+		DataTypeUrl other = (DataTypeUrl) obj;
 		if (!Objects.equals(dataTypeId, other.dataTypeId)) {
 			return false;
 		}

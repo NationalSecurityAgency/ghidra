@@ -42,7 +42,7 @@ import ghidra.app.plugin.core.datamgr.archive.*;
 import ghidra.app.plugin.core.datamgr.tree.*;
 import ghidra.app.plugin.core.datamgr.util.DataTypeUtils;
 import ghidra.app.util.ToolTipUtils;
-import ghidra.app.util.datatype.DataTypeIdUrl;
+import ghidra.app.util.datatype.DataTypeUrl;
 import ghidra.framework.main.datatree.ArchiveProvider;
 import ghidra.framework.main.datatree.VersionControlDataTypeArchiveUndoCheckoutAction;
 import ghidra.framework.main.projectdata.actions.*;
@@ -83,7 +83,7 @@ public class DataTypesProvider extends ComponentProviderAdapter {
 	private HelpLocation helpLocation;
 	private DataTypeManagerPlugin plugin;
 
-	private HistoryList<DataTypeIdUrl> navigationHistory = new HistoryList<>(15, url -> {
+	private HistoryList<DataTypeUrl> navigationHistory = new HistoryList<>(15, url -> {
 		DataType dt = url.getDataType(plugin);
 		setDataTypeSelected(dt);
 	});
@@ -462,12 +462,12 @@ public class DataTypesProvider extends ComponentProviderAdapter {
 	private DataType locateDataType(HyperlinkEvent event) {
 		String href = event.getDescription();
 
-		DataTypeIdUrl url = null;
+		DataTypeUrl url = null;
 		try {
-			url = new DataTypeIdUrl(href);
+			url = new DataTypeUrl(href);
 		}
 		catch (IllegalArgumentException e) {
-			Msg.debug(this, "Could not parse Data Type ID URL '" + href + "'", e);
+			Msg.debug(this, "Could not parse Data Type URL '" + href + "'", e);
 			return null;
 		}
 
@@ -859,7 +859,7 @@ public class DataTypesProvider extends ComponentProviderAdapter {
 		return dt;
 	}
 
-	HistoryList<DataTypeIdUrl> getNavigationHistory() {
+	HistoryList<DataTypeUrl> getNavigationHistory() {
 		return navigationHistory;
 	}
 
@@ -881,11 +881,12 @@ public class DataTypesProvider extends ComponentProviderAdapter {
 			return; // Ignore events from the GTree's housekeeping
 		}
 
+		// the data type is null when a non-data type node is selected, like a category node
 		if (dt == null) {
 			return;
 		}
 
-		navigationHistory.add(new DataTypeIdUrl(dt));
+		navigationHistory.add(new DataTypeUrl(dt));
 		contextChanged();
 	}
 }

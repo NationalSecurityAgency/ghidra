@@ -23,7 +23,7 @@ import javax.swing.Icon;
 import docking.ActionContext;
 import docking.action.*;
 import docking.menu.MultiActionDockingAction;
-import ghidra.app.util.datatype.DataTypeIdUrl;
+import ghidra.app.util.datatype.DataTypeUrl;
 import ghidra.base.actions.HorizontalRuleAction;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.data.DataTypeManager;
@@ -39,7 +39,7 @@ class NextPreviousDataTypeAction extends MultiActionDockingAction {
 	private boolean isNext;
 	private String owner;
 	private DataTypesProvider provider;
-	private HistoryList<DataTypeIdUrl> history;
+	private HistoryList<DataTypeUrl> history;
 
 	public NextPreviousDataTypeAction(DataTypesProvider provider, String owner, boolean isNext) {
 		super(isNext ? "Next Data Type in History" : "Previous Data Type in History", owner);
@@ -93,12 +93,18 @@ class NextPreviousDataTypeAction extends MultiActionDockingAction {
 
 		DataTypeManager lastDtm = null;
 		List<DockingActionIf> results = new ArrayList<>();
-		List<DataTypeIdUrl> types =
+		List<DataTypeUrl> types =
 			isNext ? history.getNextHistoryItems() : history.getPreviousHistoryItems();
 
-		for (DataTypeIdUrl url : types) {
+		for (DataTypeUrl url : types) {
 
 			DataType dt = url.getDataType(provider.getPlugin());
+			if (dt == null) {
+				// The type may have been removed; maybe an undo happened.  Leave the item in
+				// the list in case a redo is performed
+				continue;
+			}
+
 			DataTypeManager dtm = dt.getDataTypeManager();
 			if (dtm != lastDtm && !results.isEmpty()) {
 				// add a separator to show the user they are navigating across managers
