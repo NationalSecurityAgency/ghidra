@@ -17,9 +17,6 @@ package ghidra.program.database.symbol;
 
 import java.io.IOException;
 import java.util.*;
-import java.util.function.Consumer;
-import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
 
 import db.*;
 import db.util.ErrorHandler;
@@ -27,14 +24,12 @@ import ghidra.program.database.*;
 import ghidra.program.database.map.AddressKeyAddressIterator;
 import ghidra.program.database.map.AddressMap;
 import ghidra.program.model.address.*;
-import ghidra.program.model.data.Enum;
-import ghidra.program.model.listing.*;
-import ghidra.program.model.scalar.Scalar;
 import ghidra.program.model.symbol.Equate;
 import ghidra.program.model.symbol.EquateTable;
 import ghidra.program.util.ChangeManager;
 import ghidra.program.util.EquateInfo;
-import ghidra.util.*;
+import ghidra.util.Lock;
+import ghidra.util.UniversalID;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
 
@@ -112,112 +107,6 @@ public class EquateManager implements EquateTable, ErrorHandler, ManagerDB {
 	@Override
 	public void dbError(IOException e) {
 		program.dbError(e);
-	}
-
-	@Override
-	public void applyEnum(AddressSetView addresses, Enum enoom, TaskMonitor monitor,
-			boolean shouldDoOnSubOps) throws CancelledException {
-
-		if (addresses == null) {
-			throw new IllegalArgumentException("Can't apply Enum over null addresses");
-		}
-
-		if (enoom == null) {
-			throw new IllegalArgumentException("Data Type is null");
-		}
-
-		Consumer<Instruction> applyEquates = instruction -> {
-
-			if (monitor.isCancelled()) {
-				return;
-			}
-
-			for (int opIndex = 0; opIndex < instruction.getNumOperands(); opIndex++) {
-
-				if (!shouldDoOnSubOps) {
-					// Only apply equates to scalars that are not contained in sub operands.
-					Scalar scalar = instruction.getScalar(opIndex);
-					maybeCreateEquateOnScalar(enoom, instruction, opIndex, scalar);
-				}
-				else {
-					// Apply equates to scalars in the sub operands as well.
-					List<?> subOperands = instruction.getDefaultOperandRepresentationList(opIndex);
-					for (Object subOp : subOperands) {
-						maybeCreateEquateOnScalar(enoom, instruction, opIndex, subOp);
-					}
-				}
-			}
-		};
-
-		Listing listing = program.getListing();
-		InstructionIterator it = listing.getInstructions(addresses, true);
-		Stream<Instruction> instructions = StreamSupport.stream(it.spliterator(), false);
-
-		try {
-			lock.acquire();
-			instructions.forEach(applyEquates);
-		}
-		finally {
-			lock.release();
-		}
-	}
-
-	private void maybeCreateEquateOnScalar(Enum enoom, Instruction instruction, int opIndex,
-			Object operandRepresentation) {
-
-		if (!(operandRepresentation instanceof Scalar)) {
-			return;
-		}
-
-		Scalar scalar = (Scalar) operandRepresentation;
-
-		int enoomLength = enoom.getLength();
-		boolean anyValuesMatch = Arrays.stream(enoom.getValues()).anyMatch(enumValue -> {
-			return scalar.equals(new Scalar(enoomLength * 8, enumValue, scalar.isSigned()));
-		});
-
-		if (!anyValuesMatch) {
-			return;
-		}
-
-		if (program.getDataTypeManager().findDataTypeForID(enoom.getUniversalID()) == null) {
-			enoom = (Enum) program.getDataTypeManager().addDataType(enoom, null);
-		}
-
-		Address addr = instruction.getAddress();
-		removeUnusedEquates(opIndex, scalar, addr);
-
-		long value = scalar.getValue();
-		String equateName = EquateManager.formatNameForEquate(enoom.getUniversalID(), value);
-		Equate equate = getOrCreateEquate(equateName, value);
-		equate.addReference(addr, opIndex);
-	}
-
-	private void removeUnusedEquates(int opIndex, Scalar scalar, Address addr) {
-		Equate existingEquate = getEquate(addr, opIndex, scalar.getValue());
-		if (existingEquate != null) {
-			if (existingEquate.getReferenceCount() <= 1) {
-				removeEquate(existingEquate.getName());
-			}
-		}
-	}
-
-	private Equate getOrCreateEquate(String name, long value) {
-		Equate equate = getEquate(name);
-		if (equate != null) {
-			return equate;
-		}
-
-		try {
-			equate = createEquate(name, value);
-		}
-		catch (DuplicateNameException | InvalidInputException e) {
-			// These should not happen:
-			// Duplicate will not happen since we checked for the existence first; Invalid 
-			// can't happen since we built the name ourselves (we are assuming)
-			Msg.error(this, "Unexpected error creating equate", e);  // just in case
-		}
-		return equate;
 	}
 
 	@Override
