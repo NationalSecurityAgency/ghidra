@@ -84,7 +84,9 @@ public class InstructionSequence {
 			current.append(":");
 			current.append(sizes[currentInst]);
 			current.append("(");
-			current.append(commaSeparatedOperands[currentInst]);
+			if (commaSeparatedOperands[currentInst] != null) {
+				current.append(commaSeparatedOperands[currentInst]);
+			}
 			current.append(")");
 			current.append(" ");
 			if (inOrder) {
