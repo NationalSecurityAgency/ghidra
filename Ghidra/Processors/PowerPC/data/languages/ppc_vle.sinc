@@ -720,9 +720,8 @@ IMM16B: val						is IMM_0_10_VLE & IMM_16_20_VLE [ val = (IMM_16_20_VLE << 11) |
 
 :se_bmaski RX_VLE,OIM5_VLE		is $(ISVLE) & OP6_VLE=11 & BIT9_VLE=0 & RX_VLE & OIM5_VLE {
 	RX_VLE = ~0;
-	tmp:1 = OIM5_VLE;
-	if (tmp == 0) goto inst_next;
-	RX_VLE = RX_VLE >> ($(REGISTER_SIZE) - tmp);
+	sa:4 = (8 * $(REGISTER_SIZE) - OIM5_VLE) * zext( OIM5_VLE != 0:1 );
+	RX_VLE = RX_VLE >> sa;
 }
 
 :se_bseti RX_VLE,OIM5_VLE		is $(ISVLE) & OP6_VLE=25 & BIT9_VLE=0 & RX_VLE & OIM5_VLE {
