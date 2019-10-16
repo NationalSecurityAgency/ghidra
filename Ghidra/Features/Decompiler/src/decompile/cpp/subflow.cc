@@ -1686,9 +1686,6 @@ TransformVar *SubfloatFlow::setReplacement(Varnode *vn)
 bool SubfloatFlow::traceForward(TransformVar *rvn)
 
 {
-  int4 dcount = 0;
-  int4 hcount = 0;
-
   list<PcodeOp *>::const_iterator iter,enditer;
   Varnode *vn = rvn->getOriginal();
   iter = vn->beginDescend();
@@ -1698,7 +1695,6 @@ bool SubfloatFlow::traceForward(TransformVar *rvn)
     Varnode *outvn = op->getOut();
     if ((outvn!=(Varnode *)0)&&(outvn->isMark()))
       continue;
-    dcount += 1;		// Count this descendant
     int4 slot = op->getSlot(vn);
     switch(op->code()) {
     case CPUI_COPY:
@@ -1719,7 +1715,6 @@ bool SubfloatFlow::traceForward(TransformVar *rvn)
       if (outrvn == (TransformVar *)0) return false;
       opSetInput(rop,rvn,slot);
       opSetOutput(rop,outrvn);
-      hcount += 1;		// Dealt with this descendant
       break;
     }
     case CPUI_FLOAT_FLOAT2FLOAT:
@@ -1728,7 +1723,6 @@ bool SubfloatFlow::traceForward(TransformVar *rvn)
 	return false;
       TransformOp *rop = newPreexistingOp(1, (outvn->getSize() == precision) ? CPUI_COPY : CPUI_FLOAT_FLOAT2FLOAT, op);
       opSetInput(rop,rvn,0);
-      hcount += 1;		// Dealt with this descendant
       terminatorCount += 1;
       break;
     }
@@ -1748,7 +1742,6 @@ bool SubfloatFlow::traceForward(TransformVar *rvn)
 	opSetInput(rop,rvn2,0);
 	opSetInput(rop,rvn,1);
       }
-      hcount += 1;		// Dealt with this descendant
       terminatorCount += 1;
       break;
     }
@@ -1757,17 +1750,12 @@ bool SubfloatFlow::traceForward(TransformVar *rvn)
     {
       TransformOp *rop = newPreexistingOp(1,op->code(), op);
       opSetInput(rop,rvn,0);
-      hcount += 1;
       terminatorCount += 1;
       break;
     }
     default:
       return false;
     }
-  }
-  if (dcount != hcount) {
-    // Must account for all descendants of an input
-    if (vn->isInput()) return false;
   }
   return true;
 }
@@ -1810,6 +1798,7 @@ bool SubfloatFlow::traceBackward(TransformVar *rvn)
 	newvar = setReplacement(op->getIn(i));
 	if (newvar == (TransformVar *)0)
 	  return false;
+	opSetInput(rop,newvar,i);
       }
     }
     return true;
@@ -1903,6 +1892,7 @@ bool SubfloatFlow::doTrace(void)
 {
   if (format == (const FloatFormat *)0)
     return false;
+  terminatorCount = 0;	// Have seen no terminators
   bool retval = true;
   while(!worklist.empty()) {
     if (!processNextWork()) {
@@ -1914,6 +1904,6 @@ bool SubfloatFlow::doTrace(void)
   clearVarnodeMarks();
 
   if (!retval) return false;
-  if (terminatorCount == 0) return false;
+  if (terminatorCount == 0) return false;	// Must see at least 1 terminator
   return true;
 }
