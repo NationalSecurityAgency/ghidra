@@ -56,6 +56,7 @@ import ghidra.util.task.TaskMonitor;
  */
 public class DyldCacheProgramBuilder extends MachoProgramBuilder {
 
+	private static final int DATA_PAGE_MAP_ENTRY = 1;
 	private static final int BYTES_PER_CHAIN_OFFSET = 4;
 	private static final int CHAIN_OFFSET_MASK = 0x3fff;
 	private static final int DYLD_CACHE_SLIDE_PAGE_ATTR_NO_REBASE = 0x4000;
@@ -247,7 +248,7 @@ public class DyldCacheProgramBuilder extends MachoProgramBuilder {
 	 * @throws CancelledException 
 	 */
 	private void fixPageChains() throws MemoryAccessException, CancelledException {
-		List<Address> fixedAddresses = new ArrayList<>();
+		long fixedAddressCount = 0;
 		
 		// locate slide Info
 		DyldCacheSlideInfoCommon slideInfo = dyldCacheHeader.getSlideInfo();
@@ -258,7 +259,7 @@ public class DyldCacheProgramBuilder extends MachoProgramBuilder {
 		DyldCacheSlideInfo2 slideInfo2 = (DyldCacheSlideInfo2) slideInfo;
 		
 		List<DyldCacheMappingInfo> mappingInfos = dyldCacheHeader.getMappingInfos();
-		DyldCacheMappingInfo dyldCacheMappingInfo = mappingInfos.get(1);
+		DyldCacheMappingInfo dyldCacheMappingInfo = mappingInfos.get(DATA_PAGE_MAP_ENTRY);
 		long dataPageStart = dyldCacheMappingInfo.getAddress();
 		long pageSize = slideInfo2.getPageSize();
 		long pageStartsCount = slideInfo2.getPageStartsCount();
@@ -291,20 +292,20 @@ public class DyldCacheProgramBuilder extends MachoProgramBuilder {
 					pageEntry = ((int) extraEntries[extraIndex]) & 0xffff;
 					long pageOffset = (pageEntry & CHAIN_OFFSET_MASK) * BYTES_PER_CHAIN_OFFSET;
 	                
-	    			fixedAddresses.addAll(processPointerChain(page, pageOffset, deltaMask, deltaShift, valueAdd));
+	    			fixedAddressCount += processPointerChain(page, pageOffset, deltaMask, deltaShift, valueAdd);
 	    			extraIndex++;
 				} while ((pageEntry & DYLD_CACHE_SLIDE_PAGE_ATTR_EXTRA) == 0);
 			}
             else {
                 long pageOffset = (pageEntry & CHAIN_OFFSET_MASK) * BYTES_PER_CHAIN_OFFSET;
                 
-    			fixedAddresses.addAll(processPointerChain(page, pageOffset, deltaMask, deltaShift, valueAdd));
+                fixedAddressCount += processPointerChain(page, pageOffset, deltaMask, deltaShift, valueAdd);
             }
 		}
 
-		log.appendMsg("Fixed " + fixedAddresses.size() + " chained pointers.  Creating Pointers");
+		log.appendMsg("Fixed " + fixedAddressCount + " chained pointers.  Creating Pointers");
 		
-		monitor.setMessage("Created "  + fixedAddresses.size() + " chained pointers");
+		monitor.setMessage("Created "  + fixedAddressCount + " chained pointers");
 	}
 	
 	/**
@@ -316,16 +317,17 @@ public class DyldCacheProgramBuilder extends MachoProgramBuilder {
 	 * @param deltaShift shift needed for the deltaMask to extract the next offset
 	 * @param valueAdd value to be added to each chain pointer
 	 * 
-	 * @return list of addresses where pointer chains were fixed
+	 * @return count of number of addresses fixed
 	 * @throws MemoryAccessException
 	 * @throws CancelledException 
 	 */
-	private List<Address> processPointerChain(long page,  long nextOff, long deltaMask, long deltaShift, long valueAdd)
+	private long processPointerChain(long page,  long nextOff, long deltaMask, long deltaShift, long valueAdd)
 			throws MemoryAccessException, CancelledException {
-        Address chainStart = memory.getProgram().getImageBase();
-        chainStart = chainStart.getNewAddress(page);
+		// TODO: should the image base be used to perform the ASLR slide on the pointers.
+		//        currently image is kept at it's initial location with no ASLR.
+        Address chainStart = memory.getProgram().getLanguage().getDefaultSpace().getAddress(page);
 		
-		List<Address> fixedAddresses = new ArrayList<>();
+        long fixedAddressCount = 0;
 
 		byte origBytes[] = new byte[8];
 		
@@ -362,12 +364,12 @@ public class DyldCacheProgramBuilder extends MachoProgramBuilder {
 				// No worries, something presumably more important was there already
 			}
 		    
-			fixedAddresses.add(chainLoc);
+			fixedAddressCount++;
 
 			nextOff += (delta * 4);
 		}
 
-		return fixedAddresses;
+		return fixedAddressCount;
 	}
 	
 

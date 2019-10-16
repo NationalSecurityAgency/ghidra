@@ -39,24 +39,24 @@ public class DyldCacheSlideInfo2 extends DyldCacheSlideInfoCommon {
 	private short page_starts_entries[];
 	private short page_extras_entries[];
 
-	public int getPageSize() {
-		return page_size;
+	public long getPageSize() {
+		return ((long)page_size) & 0xffffffff;
 	}
 
-	public int getPageStartsOffset() {
-		return page_starts_offset;
+	public long getPageStartsOffset() {
+		return ((long) page_starts_offset) & 0xffffffff;
 	}
 
-	public int getPageStartsCount() {
-		return page_starts_count;
+	public long getPageStartsCount() {
+		return ((long) page_starts_count) & 0xffffffff;
 	}
 
-	public int getPageExtrasOffset() {
-		return page_extras_offset;
+	public long getPageExtrasOffset() {
+		return ((long) page_extras_offset) & 0xffffffff;
 	}
 
-	public int getPageExtrasCount() {
-		return page_extras_count;
+	public long getPageExtrasCount() {
+		return ((long) page_extras_count) & 0xffffffff;
 	}
 
 	public long getDeltaMask() {

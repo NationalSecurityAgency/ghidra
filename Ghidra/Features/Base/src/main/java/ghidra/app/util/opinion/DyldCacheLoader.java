@@ -20,6 +20,7 @@ import java.util.*;
 
 import ghidra.app.util.MemoryBlockUtils;
 import ghidra.app.util.Option;
+import ghidra.app.util.OptionUtils;
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.bin.format.macho.dyld.DyldArchitecture;
@@ -120,39 +121,15 @@ public class DyldCacheLoader extends AbstractLibrarySupportLoader {
 	}
 
 	private boolean shouldProcessSymbols(List<Option> options) {
-		if (options != null) {
-			for (Option option : options) {
-				String optName = option.getName();
-				if (optName.equals(PROCESS_SYMBOLS_OPTION_NAME)) {
-					return (Boolean) option.getValue();
-				}
-			}
-		}
-		return PROCESS_SYMBOLS_OPTION_DEFAULT;
+		return OptionUtils.getOption(PROCESS_SYMBOLS_OPTION_NAME, options, PROCESS_SYMBOLS_OPTION_DEFAULT);
 	}
 
 	private boolean shouldCreateDylibSections(List<Option> options) {
-		if (options != null) {
-			for (Option option : options) {
-				String optName = option.getName();
-				if (optName.equals(CREATE_DYLIB_SECTIONS_OPTION_NAME)) {
-					return (Boolean) option.getValue();
-				}
-			}
-		}
-		return CREATE_DYLIB_SECTIONS_OPTION_DEFAULT;
+		return OptionUtils.getOption(CREATE_DYLIB_SECTIONS_OPTION_NAME, options, CREATE_DYLIB_SECTIONS_OPTION_DEFAULT);
 	}
 
 	private boolean shouldAddRelocationEntries(List<Option> options) {
-		if (options != null) {
-			for (Option option : options) {
-				String optName = option.getName();
-				if (optName.equals(ADD_RELOCATION_ENTRIES_OPTION_NAME)) {
-					return (Boolean) option.getValue();
-				}
-			}
-		}
-		return ADD_RELOCATION_ENTRIES_OPTION_DEFAULT;
+		return OptionUtils.getOption(ADD_RELOCATION_ENTRIES_OPTION_NAME, options, ADD_RELOCATION_ENTRIES_OPTION_DEFAULT);
 	}
 	
 	@Override
