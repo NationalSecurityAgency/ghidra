@@ -311,7 +311,7 @@ public class DyldCacheProgramBuilder extends MachoProgramBuilder {
 	/**
 	 * Fixes up any chained pointers, starting at the given address.
 	 * 
-	 * @param chainStart pointer to start of chained page
+	 * @param page within data pages that has pointers to be unchained
 	 * @param nextOff offset within the page that is the chain start
 	 * @param deltaMask delta offset mask for each value
 	 * @param deltaShift shift needed for the deltaMask to extract the next offset
