@@ -90,18 +90,6 @@ public class PseudoDisassembler {
 		this.programContext = program.getProgramContext();
 	}
 
-	public PseudoDisassembler(Language lang, Memory mem) {
-		program = null;
-
-		this.language = lang;
-
-		this.memory = mem;
-
-		pointerSize = language.getDefaultSpace().getPointerSize();
-
-		programContext = new ProgramContextImpl(language.getRegisters());
-	}
-
 	/**
 	 * Set the maximum number of instructions to check
 	 * 
