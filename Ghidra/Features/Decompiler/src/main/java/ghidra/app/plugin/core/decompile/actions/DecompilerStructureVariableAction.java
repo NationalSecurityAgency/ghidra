@@ -45,7 +45,7 @@ public class DecompilerStructureVariableAction extends CreateStructureVariableAc
 		return decompilerContext.checkActionEnablement(() -> {
 
 			Function function = controller.getFunction();
-			if (function instanceof UndefinedFunction) {
+			if (function == null || function instanceof UndefinedFunction) {
 				return false;
 			}
 
@@ -58,13 +58,14 @@ public class DecompilerStructureVariableAction extends CreateStructureVariableAc
 			if (tokenAtCursor == null) {
 				return false;
 			}
+			int maxPointerSize = controller.getProgram().getDefaultPointerSize();
 			HighVariable var = tokenAtCursor.getHighVariable();
 			if (var != null && !(var instanceof HighConstant)) {
 				dt = var.getDataType();
 				isThisParam = testForAutoParameterThis(var, function);
 			}
 
-			if (dt == null) {
+			if (dt == null || dt.getLength() > maxPointerSize) {
 				return false;
 			}
 

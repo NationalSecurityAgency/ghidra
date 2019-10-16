@@ -15,6 +15,8 @@
  */
 package ghidra.app.plugin.core.decompile.actions;
 
+import docking.ActionContext;
+import docking.action.MenuData;
 import ghidra.app.context.ListingActionContext;
 import ghidra.app.decompiler.component.DecompilerController;
 import ghidra.app.plugin.core.function.FunctionPlugin;
@@ -22,8 +24,6 @@ import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.listing.*;
 import ghidra.program.util.*;
-import docking.ActionContext;
-import docking.action.MenuData;
 
 public class ListingStructureVariableAction extends CreateStructureVariableAction {
 
@@ -55,16 +55,18 @@ public class ListingStructureVariableAction extends CreateStructureVariableActio
 			VariableLocation varLoc = (VariableLocation) location;
 			Variable variable = varLoc.getVariable();
 			if (variable instanceof Parameter) {
-				if (((Parameter) variable).getAutoParameterType() == AutoParameterType.THIS)
+				if (((Parameter) variable).getAutoParameterType() == AutoParameterType.THIS) {
 					isThisParam = true;
+				}
 			}
 			dt = variable.getDataType();
 		}
 		else if (location instanceof FunctionParameterFieldLocation) {
 			FunctionParameterFieldLocation funcPFL = (FunctionParameterFieldLocation) location;
 			Parameter parameter = funcPFL.getParameter();
-			if (parameter.getAutoParameterType() == AutoParameterType.THIS)
+			if (parameter.getAutoParameterType() == AutoParameterType.THIS) {
 				isThisParam = true;
+			}
 			dt = parameter.getDataType();
 		}
 		else if (location instanceof FunctionReturnTypeFieldLocation) {
@@ -74,7 +76,8 @@ public class ListingStructureVariableAction extends CreateStructureVariableActio
 			dt = func.getReturnType();
 		}
 
-		if (dt == null) {
+		int maxPointerSize = currentProgram.getDefaultPointerSize();
+		if (dt == null || dt.getLength() > maxPointerSize) {
 			return false;
 		}
 
