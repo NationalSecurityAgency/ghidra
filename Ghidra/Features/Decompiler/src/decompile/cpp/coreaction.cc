@@ -820,12 +820,16 @@ int4 ActionShadowVar::apply(Funcdata &data)
 
 /// \brief Determine if given Varnode might be a pointer constant.
 ///
-/// If it is a pointer, return the symbol it points to, or NULL otherwise.
+/// If it is a pointer, return the symbol it points to, or NULL otherwise. If it is determined
+/// that the Varnode is a pointer to a specific symbol, the encoding of the full pointer is passed back.
+/// Usually this is just the constant value of the Varnode, but in this case of partial pointers
+/// (like \e near pointers) the full pointer may contain additional information.
 /// \param spc is the address space being pointed to
 /// \param vn is the given Varnode
 /// \param op is the lone descendant of the Varnode
 /// \param slot is the slot index of the Varnode
 /// \param rampoint will hold the Address of the resolved symbol
+/// \param fullEncoding will hold the full pointer encoding being passed back
 /// \param data is the function being analyzed
 /// \return the recovered symbol or NULL
 SymbolEntry *ActionConstantPtr::isPointer(AddrSpace *spc,Varnode *vn,PcodeOp *op,int4 slot,

@@ -3216,7 +3216,7 @@ int4 RuleSignShift::applyOp(PcodeOp *op,Funcdata &data)
   return 1;
 }
 
-/// \class RuleSignShift
+/// \class RuleTestSign
 /// \brief Convert sign-bit test to signed comparison:  `(V s>> 0x1f) != 0   =>  V s< 0`
 void RuleTestSign::getOpList(vector<uint4> &oplist) const
 

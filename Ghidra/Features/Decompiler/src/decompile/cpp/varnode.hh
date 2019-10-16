@@ -137,9 +137,9 @@ private:
   list<PcodeOp *> descend;		///< List of every op using this varnode as input
   mutable Cover *cover;		///< Addresses covered by the def->use of this Varnode
   mutable union {
-    Datatype *dataType;		///< For type propagate algorithm
-    ValueSet *valueSet;
-  } temp;
+    Datatype *dataType;		///< Temporary data-type associated with \b this for use in type propagate algorithm
+    ValueSet *valueSet;		///< Value set associated with \b this when performing Value Set Analysis
+  } temp;			///< Temporary storage for analysis algorithms
   uintb consumed;		///< What parts of this varnode are used
   uintb nzm;			///< Which bits do we know are zero
   friend class VarnodeBank;

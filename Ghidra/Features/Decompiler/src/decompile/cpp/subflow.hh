@@ -110,12 +110,17 @@ class SubvariableFlow {
   Varnode *getReplaceVarnode(ReplaceVarnode *rvn);
   bool processNextWork(void);		///< Extend the subgraph from the next node in the worklist
 public:
-  SubvariableFlow(Funcdata *f,Varnode *root,uintb mask,bool aggr,bool sext);
-  bool doTrace(void);
-  void doReplacement(void);
+  SubvariableFlow(Funcdata *f,Varnode *root,uintb mask,bool aggr,bool sext);	///< Constructor
+  bool doTrace(void);			///< Trace logical value through data-flow, constructing transform
+  void doReplacement(void);		///< Perform the discovered transform, making logical values explicit
 };
 
-// Class for splitting up varnodes that hold 2 logical variables
+/// \brief Class for splitting up Varnodes that hold 2 logical variables
+///
+/// Starting from a \e root Varnode provided to the constructor, \b this class looks for data-flow
+/// that consistently holds 2 logical values in a single Varnode. If doTrace() returns \b true,
+/// a consistent view has been created and invoking apply() will split all Varnodes  and PcodeOps
+/// involved in the data-flow into their logical pieces.
 class SplitFlow : public TransformManager {
   LaneDescription laneDescription;	///< Description of how to split Varnodes
   vector<TransformVar *> worklist;	///< Pending work list of Varnodes to push the split through

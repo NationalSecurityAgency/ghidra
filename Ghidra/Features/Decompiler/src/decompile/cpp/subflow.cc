@@ -170,10 +170,11 @@ SubvariableFlow::ReplaceOp *SubvariableFlow::createOp(OpCode opc,int4 numparam,R
 }
 
 
-/// \brief Create a logical subraph operator node given one of its input variable nodes
+/// \brief Create a logical subgraph operator node given one of its input variable nodes
 ///
 /// \param opc is the opcode of the new logical operator
 /// \param numparam is the number of parameters in the new operator
+/// \param op is the original PcodeOp being replaced
 /// \param inrvn is the given input variable node
 /// \param slot is the input slot of the variable node
 /// \return the new logical subgraph operator objects
@@ -1045,7 +1046,7 @@ void SubvariableFlow::addTerminalPatchSameOp(PcodeOp *pullop,ReplaceVarnode *rvn
 ///
 /// This doesn't count as a Varnode holding a logical value that needs to be patched (by itself).
 /// A PatchRecord terminating the logical subgraph along the given edge is created.
-/// \param pullup is the operation taking the boolean input
+/// \param pullop is the operation taking the boolean input
 /// \param rvn is the given bit variable
 /// \param slot is the input slot of the variable to the operation
 void SubvariableFlow::addBooleanPatch(PcodeOp *pullop,ReplaceVarnode *rvn,int4 slot)
@@ -1206,6 +1207,11 @@ bool SubvariableFlow::processNextWork(void)
   return traceForward(rvn);
 }
 
+/// \param f is the function to attempt the subvariable transform on
+/// \param root is a starting Varnode containing a smaller logical value
+/// \param mask is a mask where 1 bits indicate the position of the logical value within the \e root Varnode
+/// \param aggr is \b true if we should use aggressive (less restrictive) tests during the trace
+/// \param sext is \b true if we should assume sign extensions from the logical value into its container
 SubvariableFlow::SubvariableFlow(Funcdata *f,Varnode *root,uintb mask,bool aggr,bool sext)
 
 {
@@ -1233,6 +1239,10 @@ SubvariableFlow::SubvariableFlow(Funcdata *f,Varnode *root,uintb mask,bool aggr,
   createLink((ReplaceOp *)0,mask,0,root);
 }
 
+/// Push the logical value around, setting up explicit transforms as we go that convert them
+/// into explicit Varnodes. If at any point, we cannot naturally interpret the flow of the
+/// logical value, return \b false.
+/// \return \b true if a full transform has been constructed that can make logical values into explicit Varnodes
 bool SubvariableFlow::doTrace(void)
 
 {
@@ -1260,7 +1270,7 @@ bool SubvariableFlow::doTrace(void)
 
 void SubvariableFlow::doReplacement(void)
 
-{ // Create the actual replacement data-flow with -fd-
+{
   list<ReplaceOp>::iterator iter;
 
   // Define all the outputs first

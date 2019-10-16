@@ -50,8 +50,8 @@ private:
   TransformOp *def;		///< Defining op for new Varnode
   void createReplacement(Funcdata *fd);	///< Create the new/modified variable this placeholder represents
 public:
-  Varnode *getOriginal(void) const { return vn; }
-  TransformOp *getDef(void) const { return def; }
+  Varnode *getOriginal(void) const { return vn; }	///< Get the original Varnode \b this placeholder models
+  TransformOp *getDef(void) const { return def; }	///< Get the operator that defines this placeholder variable
 };
 
 /// \brief Placeholder node for PcodeOp that will exist after a transform is applied to a function
@@ -77,8 +77,8 @@ private:
   void createReplacement(Funcdata *fd);	///< Create the new/modified op this placeholder represents
   bool attemptInsertion(Funcdata *fd);	///< Try to put the new PcodeOp into its basic block
 public:
-  TransformVar *getOut(void) const { return output; }
-  TransformVar *getIn(int4 i) const { return input[i]; }
+  TransformVar *getOut(void) const { return output; }	///< Get the output placeholder variable for \b this operator
+  TransformVar *getIn(int4 i) const { return input[i]; }	///< Get the i-th input placeholder variable for \b this
 };
 
 /// \brief Description of logical lanes within a \b big Varnode
@@ -121,7 +121,7 @@ public:
   TransformManager(Funcdata *f) { fd = f; }	///< Constructor
   virtual ~TransformManager(void);		///< Destructor
   virtual bool preserveAddress(Varnode *vn,int4 bitSize,int4 lsbOffset) const;
-  Funcdata *getFunction(void) const { return fd; }
+  Funcdata *getFunction(void) const { return fd; }	///< Get function being transformed
   void clearVarnodeMarks(void);			///< Clear mark for all Varnodes in the map
   TransformVar *newPreexistingVarnode(Varnode *vn);	///< Make placeholder for preexisting Varnode
   TransformVar *newUnique(int4 size);		///< Make placeholder for new unique space Varnode
