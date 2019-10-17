@@ -73,7 +73,7 @@ public class CreateEnumEquateCommand extends BackgroundCommand {
 		return true;
 	}
 
-	public void applyEnum(TaskMonitor monitor) throws CancelledException {
+	private void applyEnum(TaskMonitor monitor) throws CancelledException {
 
 		Listing listing = program.getListing();
 		InstructionIterator it = listing.getInstructions(addresses, true);
