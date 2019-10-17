@@ -69,29 +69,13 @@ public class DataTypeUrl {
 
 		String dtmId = matcher.group(1);
 		String dtId = matcher.group(2);
+		dataTypeName = matcher.group(3);
 
-		if (dtmId.isBlank()) {
-			throw new IllegalArgumentException("Data Type Manager ID cannot be blank");
-		}
+		dataTypeManagerId = new UniversalID(Long.parseLong(dtmId));
 
-		if (dtId.isBlank()) {
-			throw new IllegalArgumentException("Data Type ID cannot be blank");
-		}
-
-		try {
-			dataTypeManagerId = new UniversalID(Long.parseLong(dtmId));
-		}
-		catch (NumberFormatException e) {
-			throw new IllegalArgumentException("Exception parsing Data Type Manager ID: ", e);
-		}
-
-		try {
+		if (!dtId.isBlank()) {
 			dataTypeId = new UniversalID(Long.parseLong(dtId));
 		}
-		catch (NumberFormatException e) {
-			throw new IllegalArgumentException("Exception parsing Data Type ID: ", e);
-		}
-		dataTypeName = matcher.group(3);
 	}
 
 	public UniversalID getDataTypeManagerId() {
@@ -100,6 +84,10 @@ public class DataTypeUrl {
 
 	public UniversalID getDataTypeId() {
 		return dataTypeId;
+	}
+
+	public String getDataTypeName() {
+		return dataTypeName;
 	}
 
 	/**
