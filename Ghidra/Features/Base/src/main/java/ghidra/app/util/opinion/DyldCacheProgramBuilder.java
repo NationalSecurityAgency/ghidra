@@ -282,10 +282,10 @@ public class DyldCacheProgramBuilder extends MachoProgramBuilder {
 			monitor.setProgress(index);
 			
 			int pageEntry = ((int)pageEntries[index]) & 0xffff;
-			if (pageEntry == DYLD_CACHE_SLIDE_PAGE_ATTR_NO_REBASE ) {
+			if (pageEntry == DYLD_CACHE_SLIDE_PAGE_ATTR_NO_REBASE) {
 				continue;
 			}
-			if (pageEntry == DYLD_CACHE_SLIDE_PAGE_ATTR_EXTRA ) {
+			if ((pageEntry & DYLD_CACHE_SLIDE_PAGE_ATTR_EXTRA) != 0) {
 				// go into extras and process list of chain entries for the same page
 			    int extraIndex = (pageEntry & CHAIN_OFFSET_MASK);
 				do {
@@ -297,7 +297,7 @@ public class DyldCacheProgramBuilder extends MachoProgramBuilder {
 				} while ((pageEntry & DYLD_CACHE_SLIDE_PAGE_ATTR_EXTRA) == 0);
 			}
             else {
-                long pageOffset = (pageEntry & CHAIN_OFFSET_MASK) * BYTES_PER_CHAIN_OFFSET;
+                long pageOffset = pageEntry * BYTES_PER_CHAIN_OFFSET;
                 
                 fixedAddressCount += processPointerChain(page, pageOffset, deltaMask, deltaShift, valueAdd);
             }
