@@ -16,6 +16,15 @@
 #include "transform.hh"
 #include "funcdata.hh"
 
+/// \param op2 is the lane description to copy from
+LaneDescription::LaneDescription(const LaneDescription &op2)
+
+{
+  wholeSize = op2.wholeSize;
+  laneSize = op2.laneSize;
+  lanePosition = op2.lanePosition;
+}
+
 /// Create lanes that are all the same size
 /// \param origSize is the size of the whole in bytes
 /// \param sz is the size of a lane in bytes

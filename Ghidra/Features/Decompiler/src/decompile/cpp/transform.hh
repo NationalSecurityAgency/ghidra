@@ -94,6 +94,7 @@ class LaneDescription {
   vector<int4> laneSize;	///< Size of lanes in bytes
   vector<int4> lanePosition;	///< Significance positions of lanes in bytes
 public:
+  LaneDescription(const LaneDescription &op2);	///< Copy constructor
   LaneDescription(int4 origSize,int4 sz);	///< Construct uniform lanes
   LaneDescription(int4 origSize,int4 lo,int4 hi);	///< Construct two lanes of arbitrary size
   int4 getNumLanes(void) const { return laneSize.size(); }	///< Get the total number of lanes
