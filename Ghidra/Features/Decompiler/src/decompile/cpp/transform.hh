@@ -143,6 +143,7 @@ public:
   TransformVar *getPreexistingVarnode(Varnode *vn);	///< Get (or create) placeholder for preexisting Varnode
   TransformVar *getPiece(Varnode *vn,int4 bitSize,int4 lsbOffset);	///< Get (or create) placeholder piece
   TransformVar *getSplit(Varnode *vn,const LaneDescription &description);
+  TransformVar *getSplit(Varnode *vn,const LaneDescription &description,int4 numLanes,int4 startLane);
   void opSetInput(TransformOp *rop,TransformVar *rvn,int4 slot);	///< Mark given variable as input to given op
   void opSetOutput(TransformOp *rop,TransformVar *rvn);		///< Mark given variable as output of given op
 

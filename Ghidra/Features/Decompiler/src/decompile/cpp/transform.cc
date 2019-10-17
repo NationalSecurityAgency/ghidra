@@ -373,8 +373,9 @@ TransformVar *TransformManager::newSplit(Varnode *vn,const LaneDescription &desc
 {
   TransformVar *res = new TransformVar[numLanes];
   pieceMap[vn->getCreateIndex()] = res;
+  int4 baseBitPos = description.getPosition(startLane) * 8;
   for(int4 i=0;i<numLanes;++i) {
-    int4 bitpos = description.getPosition(startLane + i) * 8;
+    int4 bitpos = description.getPosition(startLane + i) * 8 - baseBitPos;
     int4 byteSize = description.getSize(startLane + i);
     TransformVar *newVar = &res[i];
     if (vn->isConstant())
@@ -509,6 +510,26 @@ TransformVar *TransformManager::getSplit(Varnode *vn,const LaneDescription &desc
     return (*iter).second;
   }
   return newSplit(vn,description);
+}
+
+/// \brief Find (or create) placeholder nodes splitting a Varnode into a subset of lanes from a description
+///
+/// Given a big Varnode and a specific subset of a lane description, look up placeholders
+/// for all the explicit pieces. If they don't exist, create them.
+/// \param vn is the big Varnode to split
+/// \param description describes all the possible lanes
+/// \param numLanes is the number of lanes in the subset
+/// \param startLane is the starting (least significant) lane in the subset
+/// \return an array of the TransformVar placeholders from least to most significant
+TransformVar *TransformManager::getSplit(Varnode *vn,const LaneDescription &description,int4 numLanes,int4 startLane)
+
+{
+  map<int4,TransformVar *>::const_iterator iter;
+  iter = pieceMap.find(vn->getCreateIndex());
+  if (iter != pieceMap.end()) {
+    return (*iter).second;
+  }
+  return newSplit(vn,description,numLanes,startLane);
 }
 
 /// \brief Handle some special PcodeOp marking
