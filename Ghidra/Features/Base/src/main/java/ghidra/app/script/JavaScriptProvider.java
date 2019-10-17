@@ -17,13 +17,14 @@ package ghidra.app.script;
 
 import java.io.*;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import javax.tools.*;
 import javax.tools.JavaCompiler.CompilationTask;
 import javax.tools.JavaFileObject.Kind;
 
 import generic.io.NullPrintWriter;
-import generic.jar.*;
+import generic.jar.ResourceFile;
 import ghidra.app.util.headless.HeadlessScript;
 import ghidra.util.Msg;
 
@@ -335,21 +336,18 @@ public class JavaScriptProvider extends GhidraScriptProvider {
 	}
 
 	private String getSourcePath() {
-		String classpath = System.getProperty("java.class.path");
-		List<ResourceFile> dirs = GhidraScriptUtil.getScriptSourceDirectories();
-		for (ResourceFile dir : dirs) {
-			classpath += (System.getProperty("path.separator") + dir.getAbsolutePath());
-		}
-		return classpath;
+		return GhidraScriptUtil.getScriptSourceDirectories()
+				.stream()
+				.map(f -> f.getAbsolutePath())
+				.collect(Collectors.joining(File.pathSeparator));
 	}
 
 	private String getClassPath() {
-		String classpath = System.getProperty("java.class.path");
-		List<ResourceFile> dirs = GhidraScriptUtil.getScriptBinDirectories();
-		for (ResourceFile dir : dirs) {
-			classpath += (System.getProperty("path.separator") + dir.getAbsolutePath());
-		}
-		return classpath;
+		String scriptBinDirs = GhidraScriptUtil.getScriptBinDirectories()
+				.stream()
+				.map(f -> f.getAbsolutePath())
+				.collect(Collectors.joining(File.pathSeparator));
+		return System.getProperty("java.class.path") + File.pathSeparator + scriptBinDirs;
 	}
 
 	@Override

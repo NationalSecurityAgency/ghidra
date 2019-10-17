@@ -218,4 +218,15 @@ public class ResourceFileJavaFileManager implements JavaFileManager {
 		return fileManager.listLocationsForModules(location);
 	}
 
+	@Override
+	public boolean contains(Location location, FileObject fo) throws IOException {
+		return fileManager.contains(location, fo);
+	}
+
+	@Override
+	public <S> ServiceLoader<S> getServiceLoader(Location location, Class<S> service)
+			throws IOException {
+		return fileManager.getServiceLoader(location, service);
+	}
+
 }
