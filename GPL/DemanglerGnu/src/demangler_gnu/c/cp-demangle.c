@@ -35,6 +35,8 @@
    					CHANGE NOTICE:
 This file was changed on July 1st, 2014.			
 
+   					CHANGE NOTICE:
+This file was changed on July 4th, 2019.
 */
 
 /* This code implements a demangler for the g++ V3 ABI.  The ABI is
