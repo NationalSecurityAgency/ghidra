@@ -154,4 +154,32 @@ public:
   bool doTrace(void);		///< Trace logical value as far as possible
 };
 
+class LaneDivide : public TransformManager {
+  /// \brief Description of a large Varnode that needs to be traced (in the worklist)
+  class WorkNode {
+    friend class LaneDivide;
+    Varnode *vn;	///< The underlying Varnode with lanes
+    TransformVar *lanes;	///< Lane placeholders for underyling Varnode
+    int4 numLanes;	///< Number of lanes in the particular Varnode
+    int4 skipLanes;	///< Number of lanes to skip in the global description
+  };
+
+  LaneDescription description;	///< Global description of lanes that need to be split
+  vector<WorkNode> workList;	///< List of Varnodes still left to trace
+
+  TransformVar *setReplacement(Varnode *vn,int4 numLanes,int4 skipLanes);
+  void buildUnaryOp(OpCode opc,PcodeOp *op,TransformVar *inVars,TransformVar *outVars,int4 numLanes);
+  void buildBinaryOp(OpCode opc,PcodeOp *op,TransformVar *in0Vars,TransformVar *in1Vars,TransformVar *outVars,int4 numLanes);
+  bool buildPiece(PcodeOp *op,TransformVar *outVars,int4 numLanes,int4 skipLanes);
+  bool buildMultiequal(PcodeOp *op,TransformVar *outVars,int4 numLanes,int4 skipLanes);
+  bool buildStore(PcodeOp *op,int4 numLanes,int4 skipLanes);
+  bool buildLoad(PcodeOp *op,TransformVar *outVars,int4 numLanes,int4 skipLanes);
+  bool traceForward(TransformVar *rvn,int4 numLanes,int4 skipLanes);
+  bool traceBackward(TransformVar *rvn,int4 numLanes,int4 skipLanes);
+  bool processNextWork(void);		///< Process the next Varnode on the work list
+public:
+  LaneDivide(Funcdata *f,Varnode *root,const LaneDescription &desc);	///< Constructor
+  bool doTrace(void);		///< Trace lanes as far as possible from the root Varnode
+};
+
 #endif

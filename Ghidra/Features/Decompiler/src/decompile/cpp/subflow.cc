@@ -1917,3 +1917,441 @@ bool SubfloatFlow::doTrace(void)
   if (terminatorCount == 0) return false;	// Must see at least 1 terminator
   return true;
 }
+
+/// \brief Find or build the placeholder objects for a Varnode that needs to be split into lanes
+///
+/// The Varnode is split based on the given subset of the lane description.
+/// Constants can be split. Decide if the Varnode needs to go into the work list.
+/// If the Varnode cannot be acceptably split, return null.
+/// \param vn is the Varnode that needs to be split
+/// \param numLanes is the number of lanes in the subset
+/// \param skipLanes is the start (least significant) lane in the subset
+/// \return the array of placeholders describing the split or null
+TransformVar *LaneDivide::setReplacement(Varnode *vn,int4 numLanes,int4 skipLanes)
+
+{
+  if (vn->isMark())		// Already seen before
+    return getSplit(vn, description, numLanes, skipLanes);
+
+  if (vn->isConstant()) {
+    return newSplit(vn,description, numLanes, skipLanes);
+  }
+
+  if (vn->isFree())
+    return (TransformVar *)0; // Abort
+
+  if (vn->isTypeLock())
+    return (TransformVar *)0;
+
+  vn->setMark();
+  TransformVar *res = newSplit(vn, description, numLanes, skipLanes);
+  workList.push_back(WorkNode());
+  workList.back().lanes = res;
+  workList.back().numLanes = numLanes;
+  workList.back().skipLanes = skipLanes;
+  return res;
+}
+
+/// \brief Build unary op placeholders with the same opcode across a set of lanes
+///
+/// We assume the input and output placeholder variables have already been collected
+/// \param opc is the desired opcode for the new op placeholders
+/// \param op is the PcodeOp getting replaced
+/// \param inVars is the array of input variables, 1 for each unary op
+/// \param outVars is the array of output variables, 1 for each unary op
+/// \param numLanes is the number of unary ops to create
+void LaneDivide::buildUnaryOp(OpCode opc,PcodeOp *op,TransformVar *inVars,TransformVar *outVars,int4 numLanes)
+
+{
+  for(int4 i=0;i<numLanes;++i) {
+    TransformVar *outVn = outVars + i;
+    TransformOp *rop = newOpReplace(1, opc, op);
+    opSetOutput(rop, outVn);
+    opSetInput(rop,inVars + i,0);
+  }
+}
+
+/// \brief Build binary op placeholders with the same opcode across a set of lanes
+///
+/// We assume the input and output placeholder variables have already been collected
+/// \param opc is the desired opcode for the new op placeholders
+/// \param op is the PcodeOp getting replaced
+/// \param in0Vars is the array of input[0] variables, 1 for each binary op
+/// \param in1Vars is the array of input[1] variables, 1 for each binar op
+/// \param outVars is the array of output variables, 1 for each binary op
+/// \param numLanes is the number of binary ops to create
+void LaneDivide::buildBinaryOp(OpCode opc,PcodeOp *op,TransformVar *in0Vars,TransformVar *in1Vars,
+			       TransformVar *outVars,int4 numLanes)
+{
+  for(int4 i=0;i<numLanes;++i) {
+    TransformOp *rop = newOpReplace(2, opc, op);
+    opSetOutput(rop, outVars + i);
+    opSetInput(rop,in0Vars + i, 0);
+    opSetInput(rop,in1Vars + i, 1);
+  }
+}
+
+/// \brief Convert a CPUI_PIECE operation into copies between placeholders, given the output lanes
+///
+/// Model the given CPUI_PIECE either as either copies from preexisting Varnodes into the
+/// output lanes, or as copies from placeholder variables into the output lanes.  Return \b false
+/// if the operation cannot be modeled as natural copies between lanes.
+/// \param op is the original CPUI_PIECE PcodeOp
+/// \param outVars is the placeholder variables making up the lanes of the output
+/// \param numLanes is the number of lanes in the output
+/// \param skipLanes is the index of the least significant output lane within the global description
+/// \return \b true if the CPUI_PIECE was modeled as natural lane copies
+bool LaneDivide::buildPiece(PcodeOp *op,TransformVar *outVars,int4 numLanes,int4 skipLanes)
+
+{
+  int4 highLanes,highSkip;
+  int4 lowLanes,lowSkip;
+  TransformVar *highVars,*lowVars;
+  Varnode *outVn = op->getOut();
+  Varnode *highVn = op->getIn(0);
+  Varnode *lowVn = op->getIn(1);
+
+  if (!description.restriction(numLanes,skipLanes,lowVn->getSize(),outVn->getSize(),highLanes,highSkip))
+    return false;
+  if (!description.restriction(numLanes,skipLanes,0,outVn->getSize(),lowLanes,lowSkip))
+    return false;
+  if (highLanes == 1) {
+    TransformVar *highRvn = getPreexistingVarnode(highVn);
+    TransformOp *rop = newOpReplace(1, CPUI_COPY, op);
+    opSetInput(rop,highRvn,0);
+    opSetOutput(rop,outVars + (numLanes-1));
+  }
+  else {	// Multi-lane high
+    TransformVar *highRvn = setReplacement(highVn, highLanes, highSkip);
+    if (highRvn == (TransformVar *)0) return false;
+    int4 outHighStart = numLanes - highLanes;
+    for(int4 i=0;i<highLanes;++i) {
+      TransformOp *rop = newOpReplace(1, CPUI_COPY, op);
+      opSetInput(rop,highRvn+i,0);
+      opSetOutput(rop,outVars + (outHighStart + i));
+    }
+  }
+  if (lowLanes == 1) {
+    TransformVar *lowRvn = getPreexistingVarnode(lowVn);
+    TransformOp *rop = newOpReplace(1, CPUI_COPY, op);
+    opSetInput(rop,lowRvn,0);
+    opSetOutput(rop,outVars);
+  }
+  else {	// Multi-lane low
+    TransformVar *lowRvn = setReplacement(lowVn, lowLanes, lowSkip);
+    if (lowRvn == (TransformVar *)0) return false;
+    for(int4 i=0;i<lowLanes;++i) {
+      TransformOp *rop = newOpReplace(1, CPUI_COPY, op);
+      opSetInput(rop,lowRvn+i,0);
+      opSetOutput(rop,outVars + i);
+    }
+  }
+  return true;
+}
+
+/// \brief Split a given CPUI_MULTIEQUAL operation into placeholders given the output lanes
+///
+/// Model the single given CPUI_MULTIEQUAL as a sequence of smaller MULTIEQUALs on
+/// each individual lane. Return \b false if the operation cannot be modeled as naturally.
+/// \param op is the original CPUI_MULTIEQUAL PcodeOp
+/// \param outVars is the placeholder variables making up the lanes of the output
+/// \param numLanes is the number of lanes in the output
+/// \param skipLanes is the index of the least significant output lane within the global description
+/// \return \b true if the operation was fully modeled
+bool LaneDivide::buildMultiequal(PcodeOp *op,TransformVar *outVars,int4 numLanes,int4 skipLanes)
+
+{
+  vector<TransformVar *> inVarSets;
+  int4 numInput = op->numInput();
+  for(int4 i=0;i<numInput;++i) {
+    TransformVar *inVn = setReplacement(op->getIn(i), numLanes, skipLanes);
+    if (inVn == (TransformVar *)0) return false;
+    inVarSets.push_back(inVn);
+  }
+  for(int4 i=0;i<numLanes;++i) {
+    TransformOp *rop = newOpReplace(numInput, CPUI_MULTIEQUAL, op);
+    opSetOutput(rop, outVars + i);
+    for(int4 j=0;j<numInput;++j)
+      opSetInput(rop, inVarSets[j] + i, j);
+  }
+  return true;
+}
+
+/// \brief Split a given CPUI_STORE operation into a sequence of STOREs of individual lanes
+///
+/// A new pointer is constructed for each individual lane into a temporary, then a
+/// STORE is created using the pointer that stores an individual lane.
+/// \param op is the given CPUI_STORE PcodeOp
+/// \param numLanes is the number of lanes the STORE is split into
+/// \param skipLanes is the starting lane (within the global description) of the value being stored
+/// \return \b true if the CPUI_STORE was successfully modeled on lanes
+bool LaneDivide::buildStore(PcodeOp *op,int4 numLanes,int4 skipLanes)
+
+{
+  TransformVar *inVars = setReplacement(op->getIn(2), numLanes, skipLanes);
+  if (inVars == (TransformVar *)0) return false;
+  uintb spaceConst = op->getIn(0)->getOffset();
+  int4 spaceConstSize = op->getIn(0)->getSize();
+  AddrSpace *spc = Address::getSpaceFromConst(op->getIn(0)->getAddr());	// Address space being stored to
+  Varnode *origPtr = op->getIn(1);
+  if (origPtr->isFree()) {
+    if (!origPtr->isConstant()) return false;
+  }
+  TransformVar *basePtr = getPreexistingVarnode(origPtr);
+  int4 ptrSize = origPtr->getSize();
+  Varnode *valueVn = op->getIn(2);
+  for(int4 i=0;i<numLanes;++i) {
+    TransformOp *ropStore = newOpReplace(3, CPUI_STORE, op);
+    int4 bytePos = description.getPosition(skipLanes + i);
+    int4 sz = description.getSize(skipLanes + i);
+    if (spc->isBigEndian())
+      bytePos = valueVn->getSize() - (bytePos + sz);	// Convert position to address order
+
+    // Construct the pointer
+    TransformVar *ptrVn;
+    if (bytePos == 0)
+      ptrVn = basePtr;
+    else {
+      ptrVn = newUnique(ptrSize);
+      TransformOp *addOp = newOp(2, CPUI_INT_ADD, ropStore);
+      opSetOutput(addOp,ptrVn);
+      opSetInput(addOp,basePtr,0);
+      opSetInput(addOp,newConstant(ptrSize, 0, bytePos), 1);
+    }
+
+    opSetInput(ropStore,newConstant(spaceConstSize,0,spaceConst),0);
+    opSetInput(ropStore,ptrVn,1);
+    opSetInput(ropStore,inVars+i,2);
+  }
+  return true;
+}
+
+/// \brief Split a given CPUI_LOAD operation into a sequence of LOADs of individual lanes
+///
+/// A new pointer is constructed for each individual lane into a temporary, then a
+/// LOAD is created using the pointer that loads an individual lane.
+/// \param op is the given CPUI_LOAD PcodeOp
+/// \param outVars is the output placeholders for the LOAD
+/// \param numLanes is the number of lanes the LOAD is split into
+/// \param skipLanes is the starting lane (within the global description) of the value being loaded
+/// \return \b true if the CPUI_LOAD was successfully modeled on lanes
+bool LaneDivide::buildLoad(PcodeOp *op,TransformVar *outVars,int4 numLanes,int4 skipLanes)
+
+{
+  uintb spaceConst = op->getIn(0)->getOffset();
+  int4 spaceConstSize = op->getIn(0)->getSize();
+  AddrSpace *spc = Address::getSpaceFromConst(op->getIn(0)->getAddr());	// Address space being stored to
+  Varnode *origPtr = op->getIn(1);
+  if (origPtr->isFree()) {
+    if (!origPtr->isConstant()) return false;
+  }
+  TransformVar *basePtr = getPreexistingVarnode(origPtr);
+  int4 ptrSize = origPtr->getSize();
+  int4 outSize = op->getOut()->getSize();
+  for(int4 i=0;i<numLanes;++i) {
+    TransformOp *ropLoad = newOpReplace(2, CPUI_LOAD, op);
+    int4 bytePos = description.getPosition(skipLanes + i);
+    int4 sz = description.getSize(skipLanes + i);
+    if (spc->isBigEndian())
+      bytePos = outSize - (bytePos + sz);	// Convert position to address order
+
+    // Construct the pointer
+    TransformVar *ptrVn;
+    if (bytePos == 0)
+      ptrVn = basePtr;
+    else {
+      ptrVn = newUnique(ptrSize);
+      TransformOp *addOp = newOp(2, CPUI_INT_ADD, ropLoad);
+      opSetOutput(addOp,ptrVn);
+      opSetInput(addOp,basePtr,0);
+      opSetInput(addOp,newConstant(ptrSize, 0, bytePos), 1);
+    }
+
+    opSetInput(ropLoad,newConstant(spaceConstSize,0,spaceConst),0);
+    opSetInput(ropLoad,ptrVn,1);
+    opSetOutput(ropLoad,outVars+i);
+  }
+  return true;
+}
+
+/// \brief Push the logical lanes forward through any PcodeOp reading the given variable
+///
+/// Determine if the logical lanes can be pushed forward naturally, and create placeholder
+/// variables and ops representing the logical data-flow.  Update the worklist with any
+/// new Varnodes that the lanes get pushed into.
+/// \param rvn is the placeholder variable to push forward from
+/// \param numLanes is the number of lanes represented by the placeholder variable
+/// \param skipLanes is the index of the starting lane within the global description of the placeholder variable
+/// \return \b true if the lanes can be naturally pushed forward
+bool LaneDivide::traceForward(TransformVar *rvn,int4 numLanes,int4 skipLanes)
+
+{
+  Varnode *origvn = rvn->getOriginal();
+  list<PcodeOp *>::const_iterator iter,enditer;
+  iter = origvn->beginDescend();
+  enditer = origvn->endDescend();
+  while(iter != enditer) {
+    PcodeOp *op = *iter++;
+    Varnode *outvn = op->getOut();
+    if ((outvn!=(Varnode *)0)&&(outvn->isMark()))
+      continue;
+    switch(op->code()) {
+      case CPUI_SUBPIECE:
+      {
+	int4 bytePos = (int4)op->getIn(1)->getOffset();
+	int4 outLanes,outSkip;
+	if (!description.restriction(numLanes, skipLanes, bytePos, outvn->getSize(), outLanes, outSkip))
+	  return false;
+	if (outLanes == 1) {
+	  TransformOp *rop = newPreexistingOp(1, CPUI_COPY, op);
+	  opSetInput(rop,rvn + (outLanes-skipLanes), 0);
+	}
+	else {
+	  TransformVar *outRvn = setReplacement(outvn,outLanes,outSkip);
+	  if (outRvn == (TransformVar *)0) return false;
+	  buildUnaryOp(CPUI_COPY,op,rvn + (outLanes-skipLanes),outRvn,outLanes);
+	}
+	break;
+      }
+      case CPUI_PIECE:
+      {
+	int4 outLanes,outSkip;
+	int4 bytePos = (op->getIn(0) == origvn) ? op->getIn(1)->getSize() : 0;
+	if (!description.extension(numLanes, skipLanes, bytePos, outvn->getSize(), outLanes, outSkip))
+	  return false;
+	TransformVar *outRvn = setReplacement(outvn,outLanes,outSkip);
+	if (outRvn == (TransformVar *)0) return false;
+	// Don't create the placeholder ops, let traceBackward make them
+	break;
+      }
+      case CPUI_COPY:
+      case CPUI_INT_NEGATE:
+      case CPUI_INT_AND:
+      case CPUI_INT_OR:
+      case CPUI_INT_XOR:
+      case CPUI_MULTIEQUAL:
+      {
+	TransformVar *outRvn = setReplacement(outvn,numLanes,skipLanes);
+	if (outRvn == (TransformVar *)0) return false;
+	// Don't create the placeholder ops, let traceBackward make them
+	break;
+      }
+      case CPUI_STORE:
+	if (op->getIn(2) != origvn) return false;	// Can only propagate through value being stored
+	if (!buildStore(op,numLanes,skipLanes))
+	  return false;
+	break;
+      default:
+	return false;
+    }
+  }
+}
+
+/// \brief Pull the logical lanes back through the defining PcodeOp of the given variable
+///
+/// Determine if the logical lanes can be pulled back naturally, and create placeholder
+/// variables and ops representing the logical data-flow.  Update the worklist with any
+/// new Varnodes that the lanes get pulled back into.
+/// \param rvn is the placeholder variable to pull back
+/// \param numLanes is the number of lanes represented by the placeholder variable
+/// \param skipLanes is the index of the starting lane within the global description of the placeholder variable
+/// \return \b true if the lanes can be naturally pulled back
+bool LaneDivide::traceBackward(TransformVar *rvn,int4 numLanes,int4 skipLanes)
+
+{
+  PcodeOp *op = rvn->getOriginal()->getDef();
+  if (op == (PcodeOp *)0) return true; // If vn is input
+
+  switch(op->code()) {
+    case CPUI_INT_NEGATE:
+    case CPUI_COPY:
+    {
+      TransformVar *inVars = setReplacement(op->getIn(0),numLanes,skipLanes);
+      if (inVars == (TransformVar *)0) return false;
+      buildUnaryOp(op->code(), op, inVars, rvn, numLanes);
+      break;
+    }
+    case CPUI_INT_AND:
+    case CPUI_INT_OR:
+    case CPUI_INT_XOR:
+    {
+      TransformVar *in0Vars = setReplacement(op->getIn(0),numLanes,skipLanes);
+      if (in0Vars == (TransformVar *)0) return false;
+      TransformVar *in1Vars = setReplacement(op->getIn(1),numLanes,skipLanes);
+      if (in1Vars == (TransformVar *)0) return false;
+      buildBinaryOp(op->code(),op,in0Vars,in1Vars,rvn,numLanes);
+      break;
+    }
+    case CPUI_MULTIEQUAL:
+      if (!buildMultiequal(op, rvn, numLanes, skipLanes))
+	return false;
+      break;
+    case CPUI_SUBPIECE:
+    {
+      Varnode *inVn = op->getIn(0);
+      int4 bytePos = (int4)op->getIn(1)->getOffset();
+      int4 inLanes,inSkip;
+      if (!description.extension(numLanes, skipLanes, bytePos, inVn->getSize(), inLanes, inSkip))
+	return false;
+      TransformVar *inVars = setReplacement(inVn,inLanes,inSkip);
+      if (inVars == (TransformVar *)0) return false;
+      buildUnaryOp(CPUI_COPY,op,inVars + (skipLanes - inSkip), rvn, inLanes);
+      break;
+    }
+    case CPUI_PIECE:
+      if (!buildPiece(op, rvn, numLanes, skipLanes))
+	return false;
+      break;
+    case CPUI_LOAD:
+      if (!buildLoad(op, rvn, numLanes, skipLanes))
+	return false;
+      break;
+    default:
+      return false;
+  }
+  return true;
+}
+
+/// \return \b true if the lane split for the top Varnode on the work list is propagated through local operators
+bool LaneDivide::processNextWork(void)
+
+{
+  TransformVar *rvn = workList.back();
+  int4 numLanes = workList.back().numLanes;
+  int4 skipLanes = workList.back().skipLanes;
+
+  workList.pop_back();
+
+  if (!traceBackward(rvn,numLanes,skipLanes)) return false;
+  return traceForward(rvn,numLanes,skipLanes);
+}
+
+/// \param f is the function being transformed
+/// \param root is the root Varnode to start tracing lanes from
+/// \param desc is a description of the lanes on the root Varnode
+LaneDivide::LaneDivide(Funcdata *f,Varnode *root,const LaneDescription &desc)
+  : TransformManager(f), description(desc)
+{
+   setReplacement(root, desc.getNumLanes(), 0);
+}
+
+/// Push the lanes around from the root, setting up the explicit transforms as we go.
+/// If at any point, the lanes cannot be naturally pushed, return \b false.
+/// \return \b true if a full transform has been constructed that can split into explicit lanes
+bool LaneDivide::doTrace(void)
+
+{
+  if (workList.empty())
+    return false;		// Nothing to do
+  bool retval = true;
+  while(!workList.empty()) {	// Process the work list until its done
+    if (!processNextWork()) {
+      retval = false;
+      break;
+    }
+  }
+
+  clearVarnodeMarks();
+  if (!retval) return false;
+  return true;
+}
