@@ -30,6 +30,7 @@
 #include "comment.hh"
 #include "userop.hh"
 #include "options.hh"
+#include "transform.hh"
 #include "prefersplit.hh"
 
 #ifdef CPUI_STATISTICS
@@ -151,6 +152,7 @@ public:
   vector<TypeOp *> inst;	///< Registered p-code instructions
   UserOpManage userops;		///< Specifically registered user-defined p-code ops
   vector<PreferSplitRecord> splitrecords; ///< registers that we would prefer to see split for this processor
+  list<AllowedLanes> lanerecords;	///< Vector registers that have preferred lane sizes
   ActionDatabase allacts;	///< Actions that can be applied in this architecture
   bool loadersymbols_parsed;	///< True if loader symbols have been read
 #ifdef CPUI_STATISTICS
@@ -260,6 +262,7 @@ protected:
   void parseVolatile(const Element *el);		///< Apply volatile region configuration
   void parseReturnAddress(const Element *el);		///< Apply return address configuration
   void parseIncidentalCopy(const Element *el);		///< Apply incidental copy configuration
+  void parseLaneSizes(const Element *el);		///< Apply lane size configuration
   void parseStackPointer(const Element *el);		///< Apply stack pointer configuration
   void parseDeadcodeDelay(const Element *el);		///< Apply dead-code delay configuration
   void parseFuncPtrAlign(const Element *el);		///< Apply function pointer alignment configuration

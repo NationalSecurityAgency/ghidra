@@ -811,6 +811,24 @@ void Architecture::parseIncidentalCopy(const Element *el)
   }
 }
 
+/// Look for \<register> tags that have a \e vector_lane_size attribute.
+/// Record these so that the decompiler can split large registers into appropriate lane size pieces.
+/// \param el is the XML element
+void Architecture::parseLaneSizes(const Element *el)
+
+{
+  const List &list(el->getChildren());
+  List::const_iterator iter;
+
+  AllowedLanes allowedLanes;		// Only allocate once
+  for(iter=list.begin();iter!=list.end();++iter) {
+    if (allowedLanes.restoreXml(*iter, this)) {
+      lanerecords.push_back(allowedLanes);
+    }
+  }
+  lanerecords.sort();
+}
+
 /// Create a stack space and a stack-pointer register from this \<stackpointer> element
 /// \param el is the XML element
 void Architecture::parseStackPointer(const Element *el)
@@ -976,6 +994,7 @@ void Architecture::parseProcessorConfig(DocumentStorage &store)
     else if (elname == "segmentop")
       userops.parseSegmentOp(*iter,this);
     else if (elname == "register_data") {
+      parseLaneSizes(*iter);
     }
     else if (elname == "segmented_address") {
     }

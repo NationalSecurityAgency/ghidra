@@ -18,7 +18,6 @@
 #ifndef __SUBVARIABLE_FLOW__
 #define __SUBVARIABLE_FLOW__
 
-#include "transform.hh"
 #include "funcdata.hh"
 
 /// \brief Class for shrinking big Varnodes carrying smaller logical values

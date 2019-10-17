@@ -231,6 +231,48 @@ bool TransformOp::attemptInsertion(Funcdata *fd)
   return true;		// Already inserted
 }
 
+/// Read XML of the form \<register name=".." vector_lane_sizes=".."/>
+/// \param el is the particular \e register tag
+/// \param manage is used to map register names to storage info
+/// \return \b true if the XML description provides lane sizes
+bool AllowedLanes::restoreXml(const Element *el,const AddrSpaceManager *manage)
+
+{
+  string laneSizes;
+  for(int4 i=0;i<el->getNumAttributes();++i) {
+    if (el->getAttributeName(i) == "vector_lane_sizes") {
+      laneSizes = el->getAttributeValue(i);
+      break;
+    }
+  }
+  if (laneSizes.empty()) return false;
+  storage.space = (AddrSpace *)0;
+  storage.restoreXml(el, manage);
+  sizes.clear();
+  string::size_type pos = 0;
+  while(pos != string::npos) {
+    string::size_type nextPos = laneSizes.find(',',pos);
+    string value;
+    if (nextPos == string::npos) {
+      value = laneSizes.substr(pos);	// To the end of the string
+      pos = nextPos;
+    }
+    else {
+      value = laneSizes.substr(pos,(nextPos - pos));
+      pos = nextPos + 1;
+      if (pos >= laneSizes.size())
+	pos = string::npos;
+    }
+    istringstream s(value);
+    s.unsetf(ios::dec | ios::hex | ios::oct);
+    int4 sz = -1;
+    s >> sz;
+    if (sz < 0) return false;
+    sizes.push_back(sz);
+  }
+  return true;
+}
+
 TransformManager::~TransformManager(void)
 
 {

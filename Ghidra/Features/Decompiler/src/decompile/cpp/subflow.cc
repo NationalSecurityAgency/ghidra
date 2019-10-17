@@ -2006,7 +2006,6 @@ bool LaneDivide::buildPiece(PcodeOp *op,TransformVar *outVars,int4 numLanes,int4
 {
   int4 highLanes,highSkip;
   int4 lowLanes,lowSkip;
-  TransformVar *highVars,*lowVars;
   Varnode *outVn = op->getOut();
   Varnode *highVn = op->getIn(0);
   Varnode *lowVn = op->getIn(1);
@@ -2245,6 +2244,7 @@ bool LaneDivide::traceForward(TransformVar *rvn,int4 numLanes,int4 skipLanes)
 	return false;
     }
   }
+  return true;
 }
 
 /// \brief Pull the logical lanes back through the defining PcodeOp of the given variable
@@ -2316,7 +2316,7 @@ bool LaneDivide::traceBackward(TransformVar *rvn,int4 numLanes,int4 skipLanes)
 bool LaneDivide::processNextWork(void)
 
 {
-  TransformVar *rvn = workList.back();
+  TransformVar *rvn = workList.back().lanes;
   int4 numLanes = workList.back().numLanes;
   int4 skipLanes = workList.back().skipLanes;
 

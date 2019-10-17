@@ -84,6 +84,19 @@ public:
   TransformVar *getIn(int4 i) const { return input[i]; }	///< Get the i-th input placeholder variable for \b this
 };
 
+/// \brief Describes a (register) storage location and the ways it might be split into lanes
+class AllowedLanes {
+  VarnodeData storage;		///< Defining characteristics of the register
+  vector<int4> sizes;		///< Size of individual lane (in bytes) for each possible lane splitting
+public:
+  AllowedLanes(void) {}		///< Constructor for use with restoreXml
+  bool restoreXml(const Element *el,const AddrSpaceManager *manage);	///< Restore object from XML stream
+  const VarnodeData &getStorage(void) const { return storage; }		///< Get VarnodeData for storage
+  int4 numSplittings(void) const { return sizes.size(); }		///< Get the number of different lane splittings
+  int4 getBaseLaneSize(int4 i) const { return sizes[i]; }		///< Get the base lane size for the i-th splitting
+  bool operator<(const AllowedLanes &op2) const { return (storage < op2.storage); }	///< Compare based on VarnodeData
+};
+
 /// \brief Description of logical lanes within a \b big Varnode
 ///
 /// A \b lane is a byte offset and size within a Varnode. Lanes within a
