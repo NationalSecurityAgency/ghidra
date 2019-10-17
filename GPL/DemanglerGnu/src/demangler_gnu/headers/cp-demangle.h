@@ -1,6 +1,5 @@
 /* ###
  * IP: GPL 3 Linking Permitted
- * REVIEWED: YES
  */
 /* Internal demangler interface for g++ V3 ABI.
    Copyright (C) 2003, 2004, 2005, 2006, 2007, 2010
