@@ -49,6 +49,81 @@ LaneDescription::LaneDescription(int4 origSize,int4 lo,int4 hi)
   lanePosition[1] = lo;
 }
 
+/// Position 0 will map to index 0 and a position equal to whole size will
+/// map to the number of lanes.  Positions that are out of bounds or that do
+/// not fall on a lane boundary will return -1.
+/// \param bytePos is the given byte position to test
+/// \return the index of the lane that start at the given position
+int4 LaneDescription::getBoundary(int4 bytePos) const
+
+{
+  if (bytePos < 0 || bytePos > wholeSize)
+    return -1;
+  if (bytePos == wholeSize)
+    return lanePosition.size();
+  int4 min = 0;
+  int4 max = lanePosition.size() - 1;
+  while(min < max) {
+    int4 index = (min + max) / 2;
+    int4 pos = lanePosition[index];
+    if (pos == bytePos) return index;
+    if (pos < bytePos)
+      min = pos + 1;
+    else
+      max = pos - 1;
+  }
+  return -1;
+}
+
+/// \brief Decide if a given truncation is natural for \b this description
+///
+/// A subset of lanes are specified and a truncation (given by a byte position and byte size).
+/// If the truncation, relative to the subset, contains at least 1 lane and does not split any
+/// lanes, then return \b true and pass back the number of lanes and starting lane of the truncation.
+/// \param numLanes is the number of lanes in the original subset
+/// \param skipLanes is the starting (least significant) lane index of the original subset
+/// \param bytePos is the number of bytes to truncate from the front (least significant portion) of the subset
+/// \param size is the number of bytes to include in the truncation
+/// \param resNumLanes will hold the number of lanes in the truncation
+/// \param resSkipLanes will hold the starting lane in the truncation
+/// \return \b true if the truncation is natural
+bool LaneDescription::restriction(int4 numLanes,int4 skipLanes,int4 bytePos,int4 size,
+				  int4 &resNumLanes,int4 &resSkipLanes) const
+
+{
+  resSkipLanes = getBoundary(lanePosition[skipLanes] + bytePos);
+  if (resSkipLanes < 0) return false;
+  int4 finalIndex = getBoundary(lanePosition[skipLanes] + bytePos + size);
+  if (finalIndex < 0) return false;
+  resNumLanes = finalIndex - resSkipLanes;
+  return (resNumLanes != 0);
+}
+
+/// \brief Decide if a given subset of lanes can be extended naturally for \b this description
+///
+/// A subset of lanes are specified and their position within an extension (given by a byte position).
+/// The size in bytes of the extension is also given. If the extension is contained within \b this description,
+/// and the boundaries of the extension don't split any lanes, then return \b true and pass back
+/// the number of lanes and starting lane of the extension.
+/// \param numLanes is the number of lanes in the original subset
+/// \param skipLanes is the starting (least significant) lane index of the original subset
+/// \param bytePos is the number of bytes to truncate from the front (least significant portion) of the extension
+/// \param size is the number of bytes in the extension
+/// \param resNumLanes will hold the number of lanes in the extension
+/// \param resSkipLanes will hold the starting lane in the extension
+/// \return \b true if the extension is natural
+bool LaneDescription::extension(int4 numLanes,int4 skipLanes,int4 bytePos,int4 size,
+				int4 &resNumLanes,int4 &resSkipLanes) const
+
+{
+  resSkipLanes = getBoundary(lanePosition[skipLanes] - bytePos);
+  if (resSkipLanes < 0) return false;
+  int4 finalIndex = getBoundary(lanePosition[skipLanes] - bytePos + size);
+  if (finalIndex < 0) return false;
+  resNumLanes = finalIndex - resSkipLanes;
+  return (resNumLanes != 0);
+}
+
 /// Create the Varnode object (constant, unique, vector piece) described by the
 /// given placeholder. If the Varnode is an output, assume the op already exists
 /// and create the Varnode as an output. Set the \b replacement field with the
@@ -193,14 +268,10 @@ TransformVar *TransformManager::newPreexistingVarnode(Varnode *vn)
 {
   TransformVar *res = new TransformVar[1];
   pieceMap[vn->getCreateIndex()] = res;	// Enter preexisting Varnode into map, so we don't make another placeholder
-  res->vn = vn;
-  res->replacement = (Varnode *)0;
-  res->byteSize = vn->getSize();
-  res->bitSize = res->byteSize * 8;
-  res->def = (TransformOp *)0;
-  res->type = TransformVar::preexisting;
+
+  // value of 0 treats this as "piece" of itself at offset 0, allows getPiece() to find it
+  res->initialize(TransformVar::preexisting,vn,vn->getSize()*8,vn->getSize(),0);
   res->flags = TransformVar::split_terminator;
-  res->val = 0;		// Treat this as "piece" of itself at offset 0, allows getPiece() to find this
   return res;
 }
 
@@ -211,13 +282,7 @@ TransformVar *TransformManager::newUnique(int4 size)
 {
   newVarnodes.push_back(TransformVar());
   TransformVar *res = &newVarnodes.back();
-  res->vn = (Varnode *)0;
-  res->replacement = (Varnode *)0;
-  res->byteSize = size;
-  res->bitSize = size * 8;
-  res->def = (TransformOp *)0;
-  res->type = TransformVar::normal_temp;
-  res->flags = 0;
+  res->initialize(TransformVar::normal_temp,(Varnode *)0,size*8,size,0);
   return res;
 }
 
@@ -232,30 +297,19 @@ TransformVar *TransformManager::newConstant(int4 size,int4 lsbOffset,uintb val)
 {
   newVarnodes.push_back(TransformVar());
   TransformVar *res = &newVarnodes.back();
-  res->vn = (Varnode *)0;
-  res->replacement = (Varnode *)0;
-  res->byteSize = size;
-  res->bitSize = size * 8;
-  res->val = (val >> lsbOffset) & calc_mask(size);
-  res->def = (TransformOp *)0;
-  res->type = TransformVar::constant;
-  res->flags = 0;
+  res->initialize(TransformVar::constant,(Varnode *)0,size*8,size,(val >> lsbOffset) & calc_mask(size));
   return res;
 }
 
+/// Used for creating INDIRECT placeholders.
+/// \param vn is the original iop parameter to the INDIRECT
+/// \return the new placeholder node
 TransformVar *TransformManager::newIop(Varnode *vn)
 
 {
   newVarnodes.push_back(TransformVar());
   TransformVar *res = &newVarnodes.back();
-  res->vn = (Varnode *)0;
-  res->replacement = (Varnode *)0;
-  res->byteSize = vn->getSize();
-  res->bitSize = res->byteSize * 8;
-  res->val = vn->getOffset();	// The encoded iop
-  res->def = (TransformOp *)0;
-  res->type = TransformVar::constant_iop;
-  res->flags = 0;
+  res->initialize(TransformVar::constant_iop,(Varnode *)0,vn->getSize()*8,vn->getSize(),vn->getOffset());
   return res;
 }
 
@@ -270,17 +324,10 @@ TransformVar *TransformManager::newPiece(Varnode *vn,int4 bitSize,int4 lsbOffset
 {
   TransformVar *res = new TransformVar[1];
   pieceMap[vn->getCreateIndex()] = res;
-  res->vn = vn;
-  res->replacement = (Varnode *)0;
-  res->bitSize = bitSize;
-  res->byteSize = (bitSize + 7) / 8;
-  res->def = (TransformOp *)0;
-  if (preserveAddress(vn, bitSize, lsbOffset))
-    res->type = TransformVar::piece;
-  else
-    res->type = TransformVar::piece_temp;
+  int4 byteSize = (bitSize + 7) / 8;
+  uint4 type = preserveAddress(vn, bitSize, lsbOffset) ? TransformVar::piece : TransformVar::piece_temp;
+  res->initialize(type, vn, bitSize, byteSize, lsbOffset);
   res->flags = TransformVar::split_terminator;
-  res->val = lsbOffset;
   return res;
 }
 
@@ -300,25 +347,44 @@ TransformVar *TransformManager::newSplit(Varnode *vn,const LaneDescription &desc
   for(int4 i=0;i<num;++i) {
     int4 bitpos = description.getPosition(i) * 8;
     TransformVar *newVar = &res[i];
-    newVar->vn = vn;
-    newVar->replacement = (Varnode *)0;
-    newVar->byteSize = description.getSize(i);
-    newVar->bitSize = newVar->byteSize * 8;
-    newVar->def = (TransformOp *)0;
-    newVar->flags = 0;
-    if (vn->isConstant()) {
-      newVar->type = TransformVar::constant;
-      newVar->val = (vn->getOffset() >> bitpos) & calc_mask(newVar->byteSize);
-    }
+    int4 byteSize = description.getSize(i);
+    if (vn->isConstant())
+      newVar->initialize(TransformVar::constant,vn,byteSize * 8,byteSize, (vn->getOffset() >> bitpos) & calc_mask(byteSize));
     else {
-      if (preserveAddress(vn, newVar->bitSize, bitpos))
-	newVar->type = TransformVar::piece;
-      else
-	newVar->type = TransformVar::piece_temp;
-      newVar->val = bitpos;
+      uint4 type = preserveAddress(vn, byteSize * 8, bitpos) ? TransformVar::piece : TransformVar::piece_temp;
+      newVar->initialize(type,vn,byteSize * 8, byteSize, bitpos);
     }
   }
   res[num-1].flags = TransformVar::split_terminator;
+  return res;
+}
+
+/// \brief Create placeholder nodes splitting a Varnode into a subset of lanes in the given description
+///
+/// Given a big Varnode and specific subset of a lane description, create placeholders for all
+/// the explicit pieces that the big Varnode will be split into.
+/// \param vn is the big Varnode to split
+/// \param description gives a list of potentional lanes
+/// \param numLanes is the number of lanes in the subset
+/// \param startLane is the starting (least significant) lane in the subset
+/// \return an array of the new TransformVar placeholders from least to most significant
+TransformVar *TransformManager::newSplit(Varnode *vn,const LaneDescription &description,int4 numLanes,int4 startLane)
+
+{
+  TransformVar *res = new TransformVar[numLanes];
+  pieceMap[vn->getCreateIndex()] = res;
+  for(int4 i=0;i<numLanes;++i) {
+    int4 bitpos = description.getPosition(startLane + i) * 8;
+    int4 byteSize = description.getSize(startLane + i);
+    TransformVar *newVar = &res[i];
+    if (vn->isConstant())
+      newVar->initialize(TransformVar::constant,vn,byteSize * 8, byteSize, (vn->getOffset() >> bitpos) & calc_mask(byteSize));
+    else {
+      uint4 type = preserveAddress(vn, byteSize * 8, bitpos) ? TransformVar::piece : TransformVar::piece_temp;
+      newVar->initialize(type,vn,byteSize * 8, byteSize, bitpos);
+    }
+  }
+  res[numLanes-1].flags = TransformVar::split_terminator;
   return res;
 }
 

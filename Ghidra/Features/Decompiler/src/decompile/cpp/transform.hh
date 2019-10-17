@@ -13,6 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+/// \file transform.hh
+/// \brief Classes for building large scale transforms of function data-flow
 #ifndef __TRANSFORM__
 #define __TRANSFORM__
 
@@ -49,6 +51,7 @@ private:
   uintb val;			///< Value of constant or (bit) position within the original big Varnode
   TransformOp *def;		///< Defining op for new Varnode
   void createReplacement(Funcdata *fd);	///< Create the new/modified variable this placeholder represents
+  void initialize(uint4 tp,Varnode *v,int4 bits,int4 bytes,uintb value);
 public:
   Varnode *getOriginal(void) const { return vn; }	///< Get the original Varnode \b this placeholder models
   TransformOp *getDef(void) const { return def; }	///< Get the operator that defines this placeholder variable
@@ -97,6 +100,9 @@ public:
   int4 getWholeSize(void) const { return wholeSize; }		///< Get the size of the region being split
   int4 getSize(int4 i) const { return laneSize[i]; }		///< Get the size of the i-th lane
   int4 getPosition(int4 i) const { return lanePosition[i]; }	///< Get the significance offset of the i-th lane
+  int4 getBoundary(int4 bytePos) const;		///< Get index of lane that starts at the given byte position
+  bool restriction(int4 numLanes,int4 skipLanes,int4 bytePos,int4 size,int4 &resNumLanes,int4 &resSkipLanes) const;
+  bool extension(int4 numLanes,int4 skipLanes,int4 bytePos,int4 size,int4 &resNumLanes,int4 &resSkipLanes) const;
 };
 
 /// \brief Class for splitting larger registers holding smaller logical lanes
@@ -129,6 +135,7 @@ public:
   TransformVar *newIop(Varnode *vn);	///< Make placeholder for special iop constant
   TransformVar *newPiece(Varnode *vn,int4 bitSize,int4 lsbOffset);	///< Make placeholder for piece of a Varnode
   TransformVar *newSplit(Varnode *vn,const LaneDescription &description);
+  TransformVar *newSplit(Varnode *vn,const LaneDescription &description,int4 numLanes,int4 startLane);
   TransformOp *newOpReplace(int4 numParams,OpCode opc,PcodeOp *replace);
   TransformOp *newOp(int4 numParams,OpCode opc,TransformOp *follow);
   TransformOp *newPreexistingOp(int4 numParams,OpCode opc,PcodeOp *originalOp);
@@ -141,6 +148,26 @@ public:
 
   void apply(void);		///< Apply the full transform to the function
 };
+
+/// \brief Initialize \b this variable from raw data
+///
+/// \param tp is the type of variable to create
+/// \param v is the underlying Varnode of which this is a piece (may be null)
+/// \param bits is the number of bits in the variable
+/// \param bytes is the number of bytes in the variable
+/// \param value is the associated value
+inline void TransformVar::initialize(uint4 tp,Varnode *v,int4 bits,int4 bytes,uintb value)
+
+{
+  type = tp;
+  vn = v;
+  val = value;
+  bitSize = bits;
+  byteSize = bytes;
+  flags = 0;
+  def = (TransformOp *)0;
+  replacement = (Varnode *)0;
+}
 
 /// \param rop is the given placeholder op whose input is set
 /// \param rvn is the placeholder variable to set
