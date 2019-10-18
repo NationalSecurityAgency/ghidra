@@ -27,7 +27,6 @@ import ghidra.util.exception.DuplicateNameException;
  * 
  * @see <a href="https://opensource.apple.com/source/dyld/dyld-625.13/launch-cache/dyld_cache_format.h.auto.html">launch-cache/dyld_cache_format.h</a> 
  */
-@SuppressWarnings("unused")
 public class DyldCacheSlideInfo2 extends DyldCacheSlideInfoCommon {
 
 	private int page_size;
@@ -37,7 +36,45 @@ public class DyldCacheSlideInfo2 extends DyldCacheSlideInfoCommon {
 	private int page_extras_count;
 	private long delta_mask;
 	private long value_add;
+	private short page_starts_entries[];
+	private short page_extras_entries[];
 
+	public long getPageSize() {
+		return ((long)page_size) & 0xffffffff;
+	}
+
+	public long getPageStartsOffset() {
+		return ((long) page_starts_offset) & 0xffffffff;
+	}
+
+	public long getPageStartsCount() {
+		return ((long) page_starts_count) & 0xffffffff;
+	}
+
+	public long getPageExtrasOffset() {
+		return ((long) page_extras_offset) & 0xffffffff;
+	}
+
+	public long getPageExtrasCount() {
+		return ((long) page_extras_count) & 0xffffffff;
+	}
+
+	public long getDeltaMask() {
+		return delta_mask;
+	}
+
+	public long getValueAdd() {
+		return value_add;
+	}
+	
+	public short[] getPageStartsEntries() {
+		return page_starts_entries;
+	}
+	
+	public short[] getPageExtrasEntries() {
+		return page_extras_entries;
+	}
+	
 	/**
 	 * Create a new {@link DyldCacheSlideInfo2}.
 	 * 
@@ -53,6 +90,8 @@ public class DyldCacheSlideInfo2 extends DyldCacheSlideInfoCommon {
 		page_extras_count = reader.readNextInt();
 		delta_mask = reader.readNextLong();
 		value_add = reader.readNextLong();
+		page_starts_entries = reader.readNextShortArray(page_starts_count);
+		page_extras_entries = reader.readNextShortArray(page_extras_count);
 	}
 
 	@Override
