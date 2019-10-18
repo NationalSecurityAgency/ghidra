@@ -58,6 +58,36 @@ LaneDescription::LaneDescription(int4 origSize,int4 lo,int4 hi)
   lanePosition[1] = lo;
 }
 
+/// Given a subrange, specified as an offset into the whole and size,
+/// throw out any lanes in \b this that aren't in the subrange, so that the
+/// size of whole is the size of the subrange.  If the subrange intersects partially
+/// with any of the lanes, return \b false.
+/// \param lsbOffset is the number of bytes to remove from the front of the description
+/// \param size is the number of bytes in the subrange
+/// \return \b true if \b this was successfully transformed to the subrange
+bool LaneDescription::subset(int4 lsbOffset,int4 size)
+
+{
+  if (lsbOffset == 0 && size == wholeSize)
+    return true;			// subrange is the whole range
+  int4 firstLane = getBoundary(lsbOffset);
+  if (firstLane < 0) return false;
+  int4 lastLane = getBoundary(lsbOffset + size);
+  if (lastLane < 0) return false;
+  vector<int4> newLaneSize;
+  lanePosition.clear();
+  int4 newPosition = 0;
+  for(int4 i=firstLane;i<lastLane;++i) {
+    int4 sz = laneSize[i];
+    lanePosition.push_back(newPosition);
+    newLaneSize.push_back(sz);
+    newPosition += sz;
+  }
+  wholeSize = size;
+  laneSize = newLaneSize;
+  return true;
+}
+
 /// Position 0 will map to index 0 and a position equal to whole size will
 /// map to the number of lanes.  Positions that are out of bounds or that do
 /// not fall on a lane boundary will return -1.
@@ -235,7 +265,7 @@ bool TransformOp::attemptInsertion(Funcdata *fd)
 /// \param el is the particular \e register tag
 /// \param manage is used to map register names to storage info
 /// \return \b true if the XML description provides lane sizes
-bool AllowedLanes::restoreXml(const Element *el,const AddrSpaceManager *manage)
+bool LanedRegister::restoreXml(const Element *el,const AddrSpaceManager *manage)
 
 {
   string laneSizes;
@@ -248,7 +278,7 @@ bool AllowedLanes::restoreXml(const Element *el,const AddrSpaceManager *manage)
   if (laneSizes.empty()) return false;
   storage.space = (AddrSpace *)0;
   storage.restoreXml(el, manage);
-  sizes.clear();
+  sizeBitMask = 0;
   string::size_type pos = 0;
   while(pos != string::npos) {
     string::size_type nextPos = laneSizes.find(',',pos);
@@ -267,8 +297,9 @@ bool AllowedLanes::restoreXml(const Element *el,const AddrSpaceManager *manage)
     s.unsetf(ios::dec | ios::hex | ios::oct);
     int4 sz = -1;
     s >> sz;
-    if (sz < 0) return false;
-    sizes.push_back(sz);
+    if (sz < 0 || sz > 16)
+      throw LowlevelError("Bad lane size: " + value);
+    addSize(sz);
   }
   return true;
 }

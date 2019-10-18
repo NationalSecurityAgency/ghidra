@@ -97,6 +97,24 @@ public:
   virtual int4 apply(Funcdata &data);
 };
 
+/// \brief Find Varnodes with a vectorized lane scheme and attempt to split the lanes
+///
+/// The Architecture lists (vector) registers that may be used to perform parallelized operations
+/// on \b lanes within the register. This action looks for these registers as Varnodes, determines
+/// if a particular lane scheme makes sense in terms of the function's data-flow, and then
+/// rewrites the data-flow so that the lanes become explicit Varnodes.
+class ActionLaneDivide : public Action {
+  bool processVarnode(Funcdata &data,Varnode *vn,const LanedRegister &lanedRegister);
+  void processLane(Funcdata &data,const LanedRegister &lanedRegister,VarnodeLocSet::const_iterator iter);
+public:
+  ActionLaneDivide(const string &g) : Action(rule_onceperfunc,"lanedivide",g) {}	///< Constructor
+  virtual Action *clone(const ActionGroupList &grouplist) const {
+    if (!grouplist.contains(getGroup())) return (Action *)0;
+    return new ActionLaneDivide(getGroup());
+  }
+  virtual int4 apply(Funcdata &data);
+};
+
 /// \brief Make sure pointers into segmented spaces have the correct form.
 ///
 /// Convert user-defined ops defined as segment p-code ops by a cspec tag into the internal CPUI_SEGMENTOP

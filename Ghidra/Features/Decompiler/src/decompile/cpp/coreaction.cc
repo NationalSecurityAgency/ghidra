@@ -16,6 +16,7 @@
 #include "coreaction.hh"
 #include "condexe.hh"
 #include "double.hh"
+#include "subflow.hh"
 
 /// \brief A stack equation
 struct StackEqn {
@@ -490,6 +491,94 @@ int4 ActionStackPtrFlow::apply(Funcdata &data)
   if (numchange == 0) {
     analyzeExtraPop(data,stackspace,0);
     analysis_finished = true;
+  }
+  return 0;
+}
+
+/// \brief Try to divide a single Varnode into lanes
+///
+/// Look for a CPUI_SUBPIECE op that takes the given Varnode as the input.  If
+/// the output size is an acceptable lane size, try to split data-flow through
+/// this Varnode using this lane scheme. Try a split for every output size of such a
+/// SUBPIECE op until one succeeds.
+/// \param data is the function being transformed
+/// \param vn is the given single Varnode
+/// \param lanedRegister is acceptable set of lane sizes for the Varnode
+bool ActionLaneDivide::processVarnode(Funcdata &data,Varnode *vn,const LanedRegister &lanedRegister)
+
+{
+  list<PcodeOp *>::const_iterator iter = vn->beginDescend();
+  LanedRegister checkedLanes;
+  while(iter != vn->endDescend()) {
+    PcodeOp *op = *iter;
+    ++iter;
+    if (op->code() != CPUI_SUBPIECE) continue;
+    int4 curSize = op->getOut()->getSize();
+    if (lanedRegister.contains(curSize)) {
+      if (checkedLanes.contains(curSize)) continue;
+      checkedLanes.addSize(curSize);		// Only check this scheme once
+      LaneDescription description(lanedRegister.getStorage().size,curSize);	// Lane scheme dictated by curSize
+      int4 bytePos = (int4)(lanedRegister.getStorage().offset - vn->getOffset());
+      if (lanedRegister.getStorage().space->isBigEndian()) {
+	bytePos = lanedRegister.getStorage().size - (bytePos + vn->getSize());	// Convert to significance order
+      }
+      if (!description.subset(bytePos,vn->getSize()))		// Try to restrict lane scheme to actual Varnode
+	continue;
+      LaneDivide laneDivide(&data,op->getIn(0),description);
+      if (laneDivide.doTrace()) {
+	laneDivide.apply();
+	count += 1;		// Indicate a change was made
+	return true;
+      }
+    }
+  }
+  return false;
+}
+
+/// \brief Search for and attempt to split Varnodes that match the given laned vector register
+///
+/// \param data is the function being modified
+/// \param lanedRegister is the given register and acceptable lane schemes
+/// \param iter is an iterator to the first Varnode that matches the vector register
+void ActionLaneDivide::processLane(Funcdata &data,const LanedRegister &lanedRegister,VarnodeLocSet::const_iterator iter)
+
+{
+  int4 fullSize = lanedRegister.getStorage().size;
+  Address startAddress(lanedRegister.getStorage().getAddr());
+  Address lastAddress(startAddress + (fullSize-1));
+  VarnodeLocSet::const_iterator enditer = data.endLoc();
+  while(iter != enditer) {
+    Varnode *vn = *iter;
+    ++iter;
+    if (lastAddress < vn->getAddr())
+      break;
+    int4 diff = (int4)(vn->getOffset() - startAddress.getOffset());
+    if (diff + vn->getSize() > fullSize)	// Must be contained by full register
+      continue;
+    if (diff != 0 && diff != fullSize/2)	// Must be all or half of full register
+      continue;
+    if (processVarnode(data,vn,lanedRegister)) {
+      // If changes were made, iterator may no longer be valid, generate a new one
+      iter = data.beginLoc(startAddress);
+    }
+  }
+}
+
+int4 ActionLaneDivide::apply(Funcdata &data)
+
+{
+  if (data.getArch()->lanerecords.empty())
+    return 0;
+  const LanedRegister &lastRecord( data.getArch()->lanerecords.back() );
+  Address lastAddress( lastRecord.getStorage().getAddr() + lastRecord.getStorage().size - 1);
+  list<LanedRegister>::const_iterator iter;
+  for(iter=data.getArch()->lanerecords.begin();iter!=data.getArch()->lanerecords.end();++iter) {
+    const LanedRegister &lanedRegister( *iter );
+    VarnodeLocSet::const_iterator viter = data.beginLoc(lanedRegister.getStorage().getAddr());
+    if (viter == data.endLoc()) break;
+    Varnode *vn = *viter;
+    if (lastAddress < vn->getAddr()) break;
+    processLane(data,lanedRegister,viter);
   }
   return 0;
 }
@@ -4505,6 +4594,7 @@ void universal_action(Architecture *conf)
       //      actmainloop->addAction( new ActionParamShiftStop("paramshift") );
       actmainloop->addAction( new ActionRestrictLocal("localrecovery") ); // Do before dead code removed
       actmainloop->addAction( new ActionDeadCode("deadcode") );
+      actmainloop->addAction( new ActionLaneDivide("base") );
       actmainloop->addAction( new ActionDynamicMapping("dynamic") ); // Must come before restructurevarnode and infertypes
       actmainloop->addAction( new ActionRestructureVarnode("localrecovery") );
       actmainloop->addAction( new ActionSpacebase("base") );	// Must come before infertypes and nonzeromask

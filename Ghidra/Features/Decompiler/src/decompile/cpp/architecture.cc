@@ -820,10 +820,10 @@ void Architecture::parseLaneSizes(const Element *el)
   const List &list(el->getChildren());
   List::const_iterator iter;
 
-  AllowedLanes allowedLanes;		// Only allocate once
+  LanedRegister lanedRegister;		// Only allocate once
   for(iter=list.begin();iter!=list.end();++iter) {
-    if (allowedLanes.restoreXml(*iter, this)) {
-      lanerecords.push_back(allowedLanes);
+    if (lanedRegister.restoreXml(*iter, this)) {
+      lanerecords.push_back(lanedRegister);
     }
   }
   lanerecords.sort();

@@ -85,16 +85,16 @@ public:
 };
 
 /// \brief Describes a (register) storage location and the ways it might be split into lanes
-class AllowedLanes {
+class LanedRegister {
   VarnodeData storage;		///< Defining characteristics of the register
-  vector<int4> sizes;		///< Size of individual lane (in bytes) for each possible lane splitting
+  uint4 sizeBitMask;		///< A 1-bit for every permissible lane size
 public:
-  AllowedLanes(void) {}		///< Constructor for use with restoreXml
+  LanedRegister(void) { sizeBitMask = 0; }	///< Constructor
   bool restoreXml(const Element *el,const AddrSpaceManager *manage);	///< Restore object from XML stream
   const VarnodeData &getStorage(void) const { return storage; }		///< Get VarnodeData for storage
-  int4 numSplittings(void) const { return sizes.size(); }		///< Get the number of different lane splittings
-  int4 getBaseLaneSize(int4 i) const { return sizes[i]; }		///< Get the base lane size for the i-th splitting
-  bool operator<(const AllowedLanes &op2) const { return (storage < op2.storage); }	///< Compare based on VarnodeData
+  void addSize(int4 size) { sizeBitMask |= ((uint4)1 << size); }	///< Add a new \e size to the allowed list
+  bool contains(int4 size) const { return (((sizeBitMask >> size) & 1) != 0); }	///< Is \e size among the allowed lane sizes
+  bool operator<(const LanedRegister &op2) const { return (storage < op2.storage); }	///< Compare based on VarnodeData
 };
 
 /// \brief Description of logical lanes within a \b big Varnode
@@ -110,6 +110,7 @@ public:
   LaneDescription(const LaneDescription &op2);	///< Copy constructor
   LaneDescription(int4 origSize,int4 sz);	///< Construct uniform lanes
   LaneDescription(int4 origSize,int4 lo,int4 hi);	///< Construct two lanes of arbitrary size
+  bool subset(int4 lsbOffset,int4 size);	///< Trim \b this to a subset of the original lanes
   int4 getNumLanes(void) const { return laneSize.size(); }	///< Get the total number of lanes
   int4 getWholeSize(void) const { return wholeSize; }		///< Get the size of the region being split
   int4 getSize(int4 i) const { return laneSize[i]; }		///< Get the size of the i-th lane

@@ -152,7 +152,7 @@ public:
   vector<TypeOp *> inst;	///< Registered p-code instructions
   UserOpManage userops;		///< Specifically registered user-defined p-code ops
   vector<PreferSplitRecord> splitrecords; ///< registers that we would prefer to see split for this processor
-  list<AllowedLanes> lanerecords;	///< Vector registers that have preferred lane sizes
+  list<LanedRegister> lanerecords;	///< Vector registers that have preferred lane sizes
   ActionDatabase allacts;	///< Actions that can be applied in this architecture
   bool loadersymbols_parsed;	///< True if loader symbols have been read
 #ifdef CPUI_STATISTICS
