@@ -17,7 +17,10 @@ package ghidra.app.util.opinion;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.TreeSet;
 
 import ghidra.app.util.MemoryBlockUtils;
 import ghidra.app.util.bin.BinaryReader;
@@ -25,15 +28,28 @@ import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.bin.format.macho.MachException;
 import ghidra.app.util.bin.format.macho.MachHeader;
 import ghidra.app.util.bin.format.macho.commands.NList;
-import ghidra.app.util.bin.format.macho.dyld.*;
+import ghidra.app.util.bin.format.macho.dyld.DyldCacheHeader;
+import ghidra.app.util.bin.format.macho.dyld.DyldCacheImageInfo;
+import ghidra.app.util.bin.format.macho.dyld.DyldCacheLocalSymbolsInfo;
+import ghidra.app.util.bin.format.macho.dyld.DyldCacheMappingInfo;
+import ghidra.app.util.bin.format.macho.dyld.DyldCacheSlideInfo2;
+import ghidra.app.util.bin.format.macho.dyld.DyldCacheSlideInfoCommon;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.app.util.importer.MessageLogContinuesFactory;
 import ghidra.program.database.mem.FileBytes;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
-import ghidra.program.model.listing.*;
+import ghidra.program.model.data.DataUtilities;
+import ghidra.program.model.data.Pointer64DataType;
+import ghidra.program.model.listing.CodeUnit;
+import ghidra.program.model.listing.Data;
+import ghidra.program.model.listing.Program;
+import ghidra.program.model.listing.ProgramFragment;
+import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.program.model.symbol.SourceType;
 import ghidra.program.model.symbol.SymbolUtilities;
+import ghidra.program.model.util.CodeUnitInsertionException;
+import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
 /**
@@ -41,9 +57,16 @@ import ghidra.util.task.TaskMonitor;
  */
 public class DyldCacheProgramBuilder extends MachoProgramBuilder {
 
+	private static final int DATA_PAGE_MAP_ENTRY = 1;
+	private static final int BYTES_PER_CHAIN_OFFSET = 4;
+	private static final int CHAIN_OFFSET_MASK = 0x3fff;
+	private static final int DYLD_CACHE_SLIDE_PAGE_ATTR_NO_REBASE = 0x4000;
+	private static final int DYLD_CACHE_SLIDE_PAGE_ATTR_EXTRA = 0x8000;
+	
 	protected DyldCacheHeader dyldCacheHeader;
 	private boolean shouldProcessSymbols;
 	private boolean shouldCreateDylibSections;
+	private boolean shouldAddRelocationEntries;
 
 	/**
 	 * Creates a new {@link DyldCacheProgramBuilder} based on the given information.
@@ -54,15 +77,18 @@ public class DyldCacheProgramBuilder extends MachoProgramBuilder {
 	 * @param shouldProcessSymbols True if symbols should be processed; otherwise, false
 	 * @param shouldCreateDylibSections True if memory blocks should be created for DYLIB sections; 
 	 *   otherwise, false
+	 * @param shouldAddRelocationEntries True to create a relocation entry for each fixed up pointer in pointer chain
 	 * @param log The log
 	 * @param monitor A cancelable task monitor
 	 */
 	protected DyldCacheProgramBuilder(Program program, ByteProvider provider, FileBytes fileBytes,
-			boolean shouldProcessSymbols, boolean shouldCreateDylibSections, MessageLog log,
+			boolean shouldProcessSymbols, boolean shouldCreateDylibSections,
+			boolean shouldAddRelocationEntries, MessageLog log,
 			TaskMonitor monitor) {
 		super(program, provider, fileBytes, log, monitor);
 		this.shouldProcessSymbols = shouldProcessSymbols;
 		this.shouldCreateDylibSections = shouldCreateDylibSections;
+		this.shouldAddRelocationEntries = shouldAddRelocationEntries;
 	}
 
 	/**
@@ -74,15 +100,17 @@ public class DyldCacheProgramBuilder extends MachoProgramBuilder {
 	 * @param shouldProcessSymbols True if symbols should be processed; otherwise, false
 	 * @param shouldCreateDylibSections True if memory blocks should be created for DYLIB sections; 
 	 *   otherwise, false
+	 * @param addRelocationEntries True to create a relocation entry for each fixed up pointer in pointer chain
 	 * @param log The log
 	 * @param monitor A cancelable task monitor
 	 * @throws Exception if a problem occurs
 	 */
 	public static void buildProgram(Program program, ByteProvider provider, FileBytes fileBytes,
-			boolean shouldProcessSymbols, boolean shouldCreateDylibSections, MessageLog log,
-			TaskMonitor monitor) throws Exception {
+			boolean shouldProcessSymbols, boolean shouldCreateDylibSections, boolean addRelocationEntries,
+			MessageLog log, TaskMonitor monitor) throws Exception {
 		DyldCacheProgramBuilder dyldCacheProgramBuilder = new DyldCacheProgramBuilder(program,
-			provider, fileBytes, shouldProcessSymbols, shouldCreateDylibSections, log, monitor);
+			provider, fileBytes, shouldProcessSymbols, shouldCreateDylibSections,
+			addRelocationEntries, log, monitor);
 		dyldCacheProgramBuilder.build();
 	}
 
@@ -97,9 +125,11 @@ public class DyldCacheProgramBuilder extends MachoProgramBuilder {
 
 		setDyldCacheImageBase();
 		processDyldCacheMemoryBlocks();
+		fixPageChains();
 		markupHeaders();
 		markupBranchIslands();
 		createSymbols();
+
 		processDylibs();
 	}
 
@@ -211,6 +241,138 @@ public class DyldCacheProgramBuilder extends MachoProgramBuilder {
 			}
 		}
 	}
+
+	/**
+	 * Fixes any chained pointers within each of the data pages.
+	 * 
+	 * @throws MemoryAccessException if there was a problem reading/writing memory.
+	 * @throws CancelledException 
+	 */
+	private void fixPageChains() throws MemoryAccessException, CancelledException {
+		long fixedAddressCount = 0;
+		
+		// locate slide Info
+		DyldCacheSlideInfoCommon slideInfo = dyldCacheHeader.getSlideInfo();
+		if (slideInfo == null || !(slideInfo instanceof DyldCacheSlideInfo2)) {
+			log.appendMsg("Can't handle version " +slideInfo.getVersion() + " slide info, only version 2");
+			return;
+		}
+		DyldCacheSlideInfo2 slideInfo2 = (DyldCacheSlideInfo2) slideInfo;
+		
+		List<DyldCacheMappingInfo> mappingInfos = dyldCacheHeader.getMappingInfos();
+		DyldCacheMappingInfo dyldCacheMappingInfo = mappingInfos.get(DATA_PAGE_MAP_ENTRY);
+		long dataPageStart = dyldCacheMappingInfo.getAddress();
+		long pageSize = slideInfo2.getPageSize();
+		long pageStartsCount = slideInfo2.getPageStartsCount();
+	
+		long deltaMask = slideInfo2.getDeltaMask();
+		long deltaShift = Long.numberOfTrailingZeros(deltaMask);
+		long valueAdd = slideInfo2.getValueAdd();
+		
+		short[] pageEntries = slideInfo2.getPageStartsEntries();
+		short[] extraEntries = slideInfo2.getPageExtrasEntries();
+
+		monitor.setMessage("Fixing chained data page pointers...");
+		
+		monitor.setMaximum(pageStartsCount);
+		for (int index=0; index < pageStartsCount; index++) {
+			monitor.checkCanceled();
+			
+			long page = dataPageStart + (pageSize * index);
+			
+			monitor.setProgress(index);
+			
+			int pageEntry = ((int)pageEntries[index]) & 0xffff;
+			if (pageEntry == DYLD_CACHE_SLIDE_PAGE_ATTR_NO_REBASE) {
+				continue;
+			}
+			if ((pageEntry & DYLD_CACHE_SLIDE_PAGE_ATTR_EXTRA) != 0) {
+				// go into extras and process list of chain entries for the same page
+			    int extraIndex = (pageEntry & CHAIN_OFFSET_MASK);
+				do {
+					pageEntry = ((int) extraEntries[extraIndex]) & 0xffff;
+					long pageOffset = (pageEntry & CHAIN_OFFSET_MASK) * BYTES_PER_CHAIN_OFFSET;
+	                
+	    			fixedAddressCount += processPointerChain(page, pageOffset, deltaMask, deltaShift, valueAdd);
+	    			extraIndex++;
+				} while ((pageEntry & DYLD_CACHE_SLIDE_PAGE_ATTR_EXTRA) == 0);
+			}
+            else {
+                long pageOffset = pageEntry * BYTES_PER_CHAIN_OFFSET;
+                
+                fixedAddressCount += processPointerChain(page, pageOffset, deltaMask, deltaShift, valueAdd);
+            }
+		}
+
+		log.appendMsg("Fixed " + fixedAddressCount + " chained pointers.  Creating Pointers");
+		
+		monitor.setMessage("Created "  + fixedAddressCount + " chained pointers");
+	}
+	
+	/**
+	 * Fixes up any chained pointers, starting at the given address.
+	 * 
+	 * @param page within data pages that has pointers to be unchained
+	 * @param nextOff offset within the page that is the chain start
+	 * @param deltaMask delta offset mask for each value
+	 * @param deltaShift shift needed for the deltaMask to extract the next offset
+	 * @param valueAdd value to be added to each chain pointer
+	 * 
+	 * @return count of number of addresses fixed
+	 * @throws MemoryAccessException
+	 * @throws CancelledException 
+	 */
+	private long processPointerChain(long page,  long nextOff, long deltaMask, long deltaShift, long valueAdd)
+			throws MemoryAccessException, CancelledException {
+		// TODO: should the image base be used to perform the ASLR slide on the pointers.
+		//        currently image is kept at it's initial location with no ASLR.
+        Address chainStart = memory.getProgram().getLanguage().getDefaultSpace().getAddress(page);
+		
+        long fixedAddressCount = 0;
+
+		byte origBytes[] = new byte[8];
+		
+		long valueMask = ~deltaMask;
+		
+		long delta = -1;
+		while (delta != 0) {
+			monitor.checkCanceled();
+			
+			Address chainLoc = chainStart.add(nextOff);
+			long chainValue = memory.getLong(chainLoc);
+
+			delta = (chainValue & deltaMask) >> deltaShift;
+		    chainValue = chainValue & valueMask;
+		    if (chainValue != 0) {
+		    	chainValue += valueAdd;
+		    }
+		    
+		    if (shouldAddRelocationEntries) {
+				// Add entry to relocation table for the pointer fixup
+				memory.getBytes(chainLoc, origBytes);
+				program.getRelocationTable().add(chainLoc, (int) 1,
+					new long[] { chainValue }, origBytes, null);			
+		    }
+		    
+		    memory.setLong(chainLoc, chainValue);
+		    
+		    // create a pointer at the fixed up chain pointer location
+			try {
+				// don't use data utilities. does too much extra checking work
+				listing.createData(chainLoc, Pointer64DataType.dataType);
+			}
+			catch (CodeUnitInsertionException e) {
+				// No worries, something presumably more important was there already
+			}
+		    
+			fixedAddressCount++;
+
+			nextOff += (delta * 4);
+		}
+
+		return fixedAddressCount;
+	}
+	
 
 	/**
 	 * Processes the DYLD Cache's DYLIB files.  This will mark up the DYLIB files, added them to the
