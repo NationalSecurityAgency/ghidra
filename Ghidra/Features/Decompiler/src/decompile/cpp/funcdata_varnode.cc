@@ -523,6 +523,9 @@ bool Funcdata::fillinReadOnly(Varnode *vn)
     return false;		// No change was made
   }
 
+  if (vn->getSize() > sizeof(uintb))
+    return false;		// Constant will exceed precision
+
   uintb res;
   uint1 bytes[32];
   try {

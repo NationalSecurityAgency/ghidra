@@ -1937,18 +1937,21 @@ TransformVar *LaneDivide::setReplacement(Varnode *vn,int4 numLanes,int4 skipLane
     return newSplit(vn,description, numLanes, skipLanes);
   }
 
-  if (vn->isFree())
-    return (TransformVar *)0; // Abort
+  // Allow free varnodes to be split
+//  if (vn->isFree())
+//    return (TransformVar *)0;
 
   if (vn->isTypeLock())
     return (TransformVar *)0;
 
   vn->setMark();
   TransformVar *res = newSplit(vn, description, numLanes, skipLanes);
-  workList.push_back(WorkNode());
-  workList.back().lanes = res;
-  workList.back().numLanes = numLanes;
-  workList.back().skipLanes = skipLanes;
+  if (!vn->isFree()) {
+    workList.push_back(WorkNode());
+    workList.back().lanes = res;
+    workList.back().numLanes = numLanes;
+    workList.back().skipLanes = skipLanes;
+  }
   return res;
 }
 
