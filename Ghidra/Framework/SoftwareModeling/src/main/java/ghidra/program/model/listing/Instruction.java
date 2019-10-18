@@ -100,6 +100,8 @@ public interface Instruction extends CodeUnit, ProcessorContext {
 	 *
 	 * @param opIndex the index of the operand. (zero based)
 	 * @return the type of the operand.
+	 *
+	 * @see OperandType
 	 */
 	public int getOperandType(int opIndex);
 
