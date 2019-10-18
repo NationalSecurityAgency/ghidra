@@ -303,7 +303,7 @@ public class BitFieldEditorPanel extends JPanel {
 			if (!placementComponent.getVisibleRect().contains(p)) {
 				BitAttributes bitAttributes = placementComponent.getBitAttributes(e.getPoint());
 				if (bitAttributes != null) {
-					placementComponent.scrollRectToVisible(bitAttributes.rectangle);
+					placementComponent.scrollRectToVisible(bitAttributes.getRectangle());
 				}
 			}
 
@@ -331,7 +331,7 @@ public class BitFieldEditorPanel extends JPanel {
 
 	private JPanel createPlacementPanel() {
 
-		placementComponent = new BitFieldPlacementComponent(composite);
+		placementComponent = new BitFieldPlacementComponent(composite, true);
 		placementComponent.setFont(UIManager.getFont("TextField.font"));
 		placementComponent.addMouseWheelListener(e -> bitSizeInput.mouseWheelMoved(e));
 
