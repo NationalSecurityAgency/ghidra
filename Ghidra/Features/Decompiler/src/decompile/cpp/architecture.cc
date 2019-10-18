@@ -817,16 +817,33 @@ void Architecture::parseIncidentalCopy(const Element *el)
 void Architecture::parseLaneSizes(const Element *el)
 
 {
-  const List &list(el->getChildren());
+  const List &childList(el->getChildren());
   List::const_iterator iter;
 
   LanedRegister lanedRegister;		// Only allocate once
-  for(iter=list.begin();iter!=list.end();++iter) {
+  for(iter=childList.begin();iter!=childList.end();++iter) {
     if (lanedRegister.restoreXml(*iter, this)) {
       lanerecords.push_back(lanedRegister);
     }
   }
+  if (lanerecords.empty()) return;
   lanerecords.sort();
+
+  // Dedup records that are contained by (the following) records
+  list<LanedRegister>::const_iterator viter = lanerecords.begin();
+  list<LanedRegister>::const_iterator nextiter = viter;
+  ++nextiter;
+  while(nextiter != lanerecords.end()) {
+    if ((*viter).contains(*nextiter)) {
+      lanerecords.erase(nextiter);
+      nextiter = viter;
+      ++nextiter;
+    }
+    else {
+      ++viter;
+      ++nextiter;
+    }
+  }
 }
 
 /// Create a stack space and a stack-pointer register from this \<stackpointer> element

@@ -93,7 +93,8 @@ public:
   bool restoreXml(const Element *el,const AddrSpaceManager *manage);	///< Restore object from XML stream
   const VarnodeData &getStorage(void) const { return storage; }		///< Get VarnodeData for storage
   void addSize(int4 size) { sizeBitMask |= ((uint4)1 << size); }	///< Add a new \e size to the allowed list
-  bool contains(int4 size) const { return (((sizeBitMask >> size) & 1) != 0); }	///< Is \e size among the allowed lane sizes
+  bool allowedLane(int4 size) const { return (((sizeBitMask >> size) & 1) != 0); }	///< Is \e size among the allowed lane sizes
+  bool contains(const LanedRegister &op2) const;		///< Does \b this contain the given register and its possible lanes
   bool operator<(const LanedRegister &op2) const { return (storage < op2.storage); }	///< Compare based on VarnodeData
 };
 

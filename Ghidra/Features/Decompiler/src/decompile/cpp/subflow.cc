@@ -1964,9 +1964,8 @@ void LaneDivide::buildUnaryOp(OpCode opc,PcodeOp *op,TransformVar *inVars,Transf
 
 {
   for(int4 i=0;i<numLanes;++i) {
-    TransformVar *outVn = outVars + i;
     TransformOp *rop = newOpReplace(1, opc, op);
-    opSetOutput(rop, outVn);
+    opSetOutput(rop, outVars + i);
     opSetInput(rop,inVars + i,0);
   }
 }
@@ -2203,7 +2202,7 @@ bool LaneDivide::traceForward(TransformVar *rvn,int4 numLanes,int4 skipLanes)
 	  return false;
 	if (outLanes == 1) {
 	  TransformOp *rop = newPreexistingOp(1, CPUI_COPY, op);
-	  opSetInput(rop,rvn + (outLanes-skipLanes), 0);
+	  opSetInput(rop,rvn + (outSkip-skipLanes), 0);
 	}
 	else {
 	  TransformVar *outRvn = setReplacement(outvn,outLanes,outSkip);

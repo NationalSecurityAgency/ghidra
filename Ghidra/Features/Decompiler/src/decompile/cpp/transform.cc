@@ -102,14 +102,14 @@ int4 LaneDescription::getBoundary(int4 bytePos) const
     return lanePosition.size();
   int4 min = 0;
   int4 max = lanePosition.size() - 1;
-  while(min < max) {
+  while(min <= max) {
     int4 index = (min + max) / 2;
     int4 pos = lanePosition[index];
     if (pos == bytePos) return index;
     if (pos < bytePos)
-      min = pos + 1;
+      min = index + 1;
     else
-      max = pos - 1;
+      max = index - 1;
   }
   return -1;
 }
@@ -302,6 +302,18 @@ bool LanedRegister::restoreXml(const Element *el,const AddrSpaceManager *manage)
     addSize(sz);
   }
   return true;
+}
+
+/// In order to return \b true, the storage for \b this must contain the storage for the other
+/// LanedRegister, and every lane scheme of the other LanedRegister must also be a lane scheme
+/// for \b this.
+/// \param op2 is the other LanedRegister to check for containment
+/// \return \b true if \b this contains the other register
+bool LanedRegister::contains(const LanedRegister &op2) const
+
+{
+  if (!storage.contains(op2.storage)) return false;
+  return ((sizeBitMask & op2.sizeBitMask) == op2.sizeBitMask);	// Check for containment of lane size sets
 }
 
 TransformManager::~TransformManager(void)

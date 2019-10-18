@@ -514,8 +514,8 @@ bool ActionLaneDivide::processVarnode(Funcdata &data,Varnode *vn,const LanedRegi
     ++iter;
     if (op->code() != CPUI_SUBPIECE) continue;
     int4 curSize = op->getOut()->getSize();
-    if (lanedRegister.contains(curSize)) {
-      if (checkedLanes.contains(curSize)) continue;
+    if (lanedRegister.allowedLane(curSize)) {
+      if (checkedLanes.allowedLane(curSize)) continue;
       checkedLanes.addSize(curSize);		// Only check this scheme once
       LaneDescription description(lanedRegister.getStorage().size,curSize);	// Lane scheme dictated by curSize
       int4 bytePos = (int4)(lanedRegister.getStorage().offset - vn->getOffset());
@@ -552,10 +552,10 @@ void ActionLaneDivide::processLane(Funcdata &data,const LanedRegister &lanedRegi
     ++iter;
     if (lastAddress < vn->getAddr())
       break;
+    if (vn->getSize() <= 8)		// Varnode not big enough to be vector register
+      continue;
     int4 diff = (int4)(vn->getOffset() - startAddress.getOffset());
     if (diff + vn->getSize() > fullSize)	// Must be contained by full register
-      continue;
-    if (diff != 0 && diff != fullSize/2)	// Must be all or half of full register
       continue;
     if (processVarnode(data,vn,lanedRegister)) {
       // If changes were made, iterator may no longer be valid, generate a new one
