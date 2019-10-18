@@ -159,8 +159,14 @@ public class ElfHeader implements StructConverter, Writeable {
 			e_ehsize = reader.readNextShort();
 			e_phentsize = reader.readNextShort();
 			e_phnum = reader.readNextShort();
+			if (e_phnum < 0) {
+				e_phnum = 0; // protect against stripped program headers
+			}
 			e_shentsize = reader.readNextShort();
 			e_shnum = reader.readNextShort();
+			if (e_shnum < 0) {
+				e_shnum = 0; // protect against stripped section headers (have seen -1)
+			}
 			e_shstrndx = reader.readNextShort();
 		}
 		catch (IOException e) {
