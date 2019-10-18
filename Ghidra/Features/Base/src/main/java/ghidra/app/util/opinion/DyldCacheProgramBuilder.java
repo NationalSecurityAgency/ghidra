@@ -42,6 +42,7 @@ import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.data.DataUtilities;
 import ghidra.program.model.data.Pointer64DataType;
 import ghidra.program.model.listing.CodeUnit;
+import ghidra.program.model.listing.Data;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.listing.ProgramFragment;
 import ghidra.program.model.mem.MemoryAccessException;
@@ -357,8 +358,8 @@ public class DyldCacheProgramBuilder extends MachoProgramBuilder {
 		    
 		    // create a pointer at the fixed up chain pointer location
 			try {
-				DataUtilities.createData(program,chainLoc, Pointer64DataType.dataType, -1, false,
-					DataUtilities.ClearDataMode.CLEAR_ALL_UNDEFINED_CONFLICT_DATA);
+				// don't use data utilities. does too much extra checking work
+				listing.createData(chainLoc, Pointer64DataType.dataType);
 			}
 			catch (CodeUnitInsertionException e) {
 				// No worries, something presumably more important was there already
