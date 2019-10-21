@@ -2008,13 +2008,12 @@ bool LaneDivide::buildPiece(PcodeOp *op,TransformVar *outVars,int4 numLanes,int4
 {
   int4 highLanes,highSkip;
   int4 lowLanes,lowSkip;
-  Varnode *outVn = op->getOut();
   Varnode *highVn = op->getIn(0);
   Varnode *lowVn = op->getIn(1);
 
-  if (!description.restriction(numLanes,skipLanes,lowVn->getSize(),outVn->getSize(),highLanes,highSkip))
+  if (!description.restriction(numLanes,skipLanes,lowVn->getSize(),highVn->getSize(),highLanes,highSkip))
     return false;
-  if (!description.restriction(numLanes,skipLanes,0,outVn->getSize(),lowLanes,lowSkip))
+  if (!description.restriction(numLanes,skipLanes,0,lowVn->getSize(),lowLanes,lowSkip))
     return false;
   if (highLanes == 1) {
     TransformVar *highRvn = getPreexistingVarnode(highVn);
@@ -2175,6 +2174,43 @@ bool LaneDivide::buildLoad(PcodeOp *op,TransformVar *outVars,int4 numLanes,int4 
   return true;
 }
 
+/// \brief Check that a CPUI_INT_RIGHT respects the lanes then generate lane placeholders
+///
+/// For the given lane scheme, check that the RIGHT shift is copying whole lanes to each other.
+/// If so, generate the placeholder COPYs that model the shift.
+/// \param op is the given CPUI_INT_RIGHT PcodeOp
+/// \param outVars is the output placeholders for the RIGHT shift
+/// \param numLanes is the number of lanes the shift is split into
+/// \param skipLanes is the starting lane (within the global description) of the value being loaded
+/// \return \b true if the CPUI_INT_RIGHT was successfully modeled on lanes
+bool LaneDivide::buildRightShift(PcodeOp *op,TransformVar *outVars,int4 numLanes,int4 skipLanes)
+
+{
+  if (!op->getIn(1)->isConstant()) return false;
+  int4 shiftSize = (int4)op->getIn(1)->getOffset();
+  if ((shiftSize & 7) != 0) return false;		// Not a multiple of 8
+  shiftSize /= 8;
+  int4 startPos = shiftSize + description.getPosition(skipLanes);
+  int4 startLane = description.getBoundary(startPos);
+  if (startLane < 0) return false;		// Shift does not end on a lane boundary
+  int4 srcLane = startLane;
+  int4 destLane = skipLanes;
+  while(srcLane - skipLanes < numLanes) {
+    if (description.getSize(srcLane) != description.getSize(destLane)) return false;
+    srcLane += 1;
+    destLane += 1;
+  }
+  TransformVar *inVars = setReplacement(op->getIn(0), numLanes, skipLanes);
+  if (inVars == (TransformVar *)0) return false;
+  buildUnaryOp(CPUI_COPY, op, inVars + (startLane - skipLanes), outVars, numLanes - (startLane - skipLanes));
+  for(int4 zeroLane=numLanes - (startLane - skipLanes);zeroLane < numLanes;++zeroLane) {
+    TransformOp *rop = newOpReplace(1, CPUI_COPY, op);
+    opSetOutput(rop,outVars + zeroLane);
+    opSetInput(rop,newConstant(description.getSize(zeroLane), 0, 0),0);
+  }
+  return true;
+}
+
 /// \brief Push the logical lanes forward through any PcodeOp reading the given variable
 ///
 /// Determine if the logical lanes can be pushed forward naturally, and create placeholder
@@ -2233,6 +2269,14 @@ bool LaneDivide::traceForward(TransformVar *rvn,int4 numLanes,int4 skipLanes)
       case CPUI_MULTIEQUAL:
       {
 	TransformVar *outRvn = setReplacement(outvn,numLanes,skipLanes);
+	if (outRvn == (TransformVar *)0) return false;
+	// Don't create the placeholder ops, let traceBackward make them
+	break;
+      }
+      case CPUI_INT_RIGHT:
+      {
+	if (!op->getIn(1)->isConstant()) return false;	// Trace must come through op->getIn(0)
+	TransformVar *outRvn = setReplacement(outvn, numLanes, skipLanes);
 	if (outRvn == (TransformVar *)0) return false;
 	// Don't create the placeholder ops, let traceBackward make them
 	break;
@@ -2297,7 +2341,7 @@ bool LaneDivide::traceBackward(TransformVar *rvn,int4 numLanes,int4 skipLanes)
 	return false;
       TransformVar *inVars = setReplacement(inVn,inLanes,inSkip);
       if (inVars == (TransformVar *)0) return false;
-      buildUnaryOp(CPUI_COPY,op,inVars + (skipLanes - inSkip), rvn, inLanes);
+      buildUnaryOp(CPUI_COPY,op,inVars + (skipLanes - inSkip), rvn, numLanes);
       break;
     }
     case CPUI_PIECE:
@@ -2306,6 +2350,10 @@ bool LaneDivide::traceBackward(TransformVar *rvn,int4 numLanes,int4 skipLanes)
       break;
     case CPUI_LOAD:
       if (!buildLoad(op, rvn, numLanes, skipLanes))
+	return false;
+      break;
+    case CPUI_INT_RIGHT:
+      if (!buildRightShift(op, rvn, numLanes, skipLanes))
 	return false;
       break;
     default:

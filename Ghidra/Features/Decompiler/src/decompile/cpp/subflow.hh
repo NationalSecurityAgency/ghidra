@@ -173,6 +173,7 @@ class LaneDivide : public TransformManager {
   bool buildMultiequal(PcodeOp *op,TransformVar *outVars,int4 numLanes,int4 skipLanes);
   bool buildStore(PcodeOp *op,int4 numLanes,int4 skipLanes);
   bool buildLoad(PcodeOp *op,TransformVar *outVars,int4 numLanes,int4 skipLanes);
+  bool buildRightShift(PcodeOp *op,TransformVar *outVars,int4 numLanes,int4 skipLanes);
   bool traceForward(TransformVar *rvn,int4 numLanes,int4 skipLanes);
   bool traceBackward(TransformVar *rvn,int4 numLanes,int4 skipLanes);
   bool processNextWork(void);		///< Process the next Varnode on the work list
