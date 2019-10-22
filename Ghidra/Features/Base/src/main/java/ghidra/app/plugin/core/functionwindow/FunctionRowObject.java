@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +15,20 @@
  */
 package ghidra.app.plugin.core.functionwindow;
 
+import ghidra.program.model.listing.Function;
+
 class FunctionRowObject implements Comparable<FunctionRowObject> {
 
+	private final Function function;
 	private final long key;
 
-	FunctionRowObject(long key) {
-		this.key = key;
+	FunctionRowObject(Function function) {
+		this.function = function;
+		this.key = function.getID();
+	}
+
+	Function getFunction() {
+		return function;
 	}
 
 	@Override
@@ -34,15 +41,19 @@ class FunctionRowObject implements Comparable<FunctionRowObject> {
 
 	@Override
 	public boolean equals(Object obj) {
-		if (this == obj)
+		if (this == obj) {
 			return true;
-		if (obj == null)
+		}
+		if (obj == null) {
 			return false;
-		if (getClass() != obj.getClass())
+		}
+		if (getClass() != obj.getClass()) {
 			return false;
+		}
 		FunctionRowObject other = (FunctionRowObject) obj;
-		if (key != other.key)
+		if (key != other.key) {
 			return false;
+		}
 		return true;
 	}
 

@@ -239,7 +239,7 @@ public abstract class ThreadedTableModel<ROW_OBJECT, DATA_SOURCE>
 	}
 
 	void initializeCache() {
-		threadLocalColumnCache.set(new LRUMap<ROW_OBJECT, Map<Integer, Object>>(20000));
+		threadLocalColumnCache.set(new LRUMap<ROW_OBJECT, Map<Integer, Object>>(1000000));
 	}
 
 	void clearCache() {
@@ -745,10 +745,6 @@ public abstract class ThreadedTableModel<ROW_OBJECT, DATA_SOURCE>
 
 	long getMaxDelay() {
 		return maxUpdateDelayMillis;
-	}
-
-	protected Class<?> getSortedColumnClass(int columnIndex) {
-		return getColumnClass(columnIndex);
 	}
 
 	ThreadedTableModelUpdateMgr<ROW_OBJECT> getUpdateManager() {

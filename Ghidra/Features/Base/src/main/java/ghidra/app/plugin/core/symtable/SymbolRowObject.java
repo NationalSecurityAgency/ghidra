@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +15,28 @@
  */
 package ghidra.app.plugin.core.symtable;
 
+import ghidra.program.model.symbol.Symbol;
+
 class SymbolRowObject implements Comparable<SymbolRowObject> {
 
+	// symbol can be null after it is deleted
+	private final Symbol symbol;
 	private final long key;
 
-	SymbolRowObject(long key) {
-		this.key = key;
+	SymbolRowObject(Symbol s) {
+		this.symbol = s;
+		this.key = s.getID();
+	}
+
+	// this constructor is used to create a row object to serve as a key for deleting items
+	// in the model after a symbol has been deleted
+	SymbolRowObject(long symbolId) {
+		this.symbol = null;
+		this.key = symbolId;
+	}
+
+	Symbol getSymbol() {
+		return symbol;
 	}
 
 	long getKey() {
@@ -38,15 +53,19 @@ class SymbolRowObject implements Comparable<SymbolRowObject> {
 
 	@Override
 	public boolean equals(Object obj) {
-		if (this == obj)
+		if (this == obj) {
 			return true;
-		if (obj == null)
+		}
+		if (obj == null) {
 			return false;
-		if (getClass() != obj.getClass())
+		}
+		if (getClass() != obj.getClass()) {
 			return false;
+		}
 		SymbolRowObject other = (SymbolRowObject) obj;
-		if (key != other.key)
+		if (key != other.key) {
 			return false;
+		}
 		return true;
 	}
 

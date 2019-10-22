@@ -190,7 +190,10 @@ public class SymbolTablePlugin extends Plugin implements DomainObjectListener {
 		if (!symProvider.isVisible()) {
 			return;
 		}
-		if (ev.containsEvent(DomainObject.DO_OBJECT_RESTORED)) {
+		if (ev.containsEvent(DomainObject.DO_OBJECT_RESTORED) ||
+			ev.containsEvent(ChangeManager.DOCR_MEMORY_BLOCK_ADDED) ||
+			ev.containsEvent(ChangeManager.DOCR_MEMORY_BLOCK_REMOVED)) {
+
 			symProvider.reload();
 			refProvider.reload();
 			return;
@@ -223,7 +226,7 @@ public class SymbolTablePlugin extends Plugin implements DomainObjectListener {
 					Address addAddr = rec.getStart();
 					Symbol primaryAtAdd = currentProgram.getSymbolTable().getPrimarySymbol(addAddr);
 					if (primaryAtAdd != null && primaryAtAdd.isDynamic()) {
-						symProvider.symbolRemoved(primaryAtAdd.getID());
+						symProvider.symbolRemoved(primaryAtAdd);
 					}
 					symbol = (Symbol) rec.getNewValue();
 					symProvider.symbolAdded(symbol);
@@ -301,13 +304,6 @@ public class SymbolTablePlugin extends Plugin implements DomainObjectListener {
 						refProvider.symbolChanged(element);
 					}
 					break;
-
-				case ChangeManager.DOCR_MEMORY_BLOCK_ADDED:
-				case ChangeManager.DOCR_MEMORY_BLOCK_REMOVED:
-					symProvider.reload();
-					refProvider.reload();
-					break;
-
 			}
 		}
 	}

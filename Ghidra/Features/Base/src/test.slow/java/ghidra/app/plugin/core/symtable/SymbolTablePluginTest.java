@@ -18,7 +18,8 @@ package ghidra.app.plugin.core.symtable;
 import static org.junit.Assert.*;
 
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -26,7 +27,8 @@ import java.util.function.BiConsumer;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
-import javax.swing.table.*;
+import javax.swing.table.JTableHeader;
+import javax.swing.table.TableModel;
 
 import org.jdom.Element;
 import org.junit.*;
@@ -130,38 +132,47 @@ public class SymbolTablePluginTest extends AbstractGhidraHeadedIntegrationTest {
 	public void testSortingLabelColumn() throws Exception {
 		openProgram("sample");
 
-		Rectangle rect = symbolTableHeader.getHeaderRect(SymbolTableModel.LABEL_COL);
-
-		clickMouse(symbolTableHeader, MouseEvent.BUTTON1, rect.x + 10, rect.y + 10, 1, 0);
-		waitForNotBusy(symbolTable);
-
-		clickMouse(symbolTableHeader, MouseEvent.BUTTON1, rect.x + 10, rect.y + 10, 1, 0);
-		waitForNotBusy(symbolTable);
-
-		TableColumn column =
-			symbolTableHeader.getColumnModel().getColumn(SymbolTableModel.LABEL_COL);
-		GTableHeaderRenderer renderer = (GTableHeaderRenderer) column.getHeaderRenderer();
-		assertTrue(renderer.isSortedAscending());
+		sortAscending(SymbolTableModel.LABEL_COL);
 
 		TableModel model = symbolTable.getModel();
 		for (int i = 0; i < model.getRowCount() - 1; ++i) {
-			Symbol sym1 = (Symbol) model.getValueAt(i + 0, SymbolTableModel.LABEL_COL);
-			Symbol sym2 = (Symbol) model.getValueAt(i + 1, SymbolTableModel.LABEL_COL);
+			Symbol sym1 = getSymbol(i);
+			Symbol sym2 = getSymbol(i + 1);
 			int compare = sym1.getName().compareToIgnoreCase(sym2.getName());
 			assertTrue("row " + i + " not sorted correctly", (compare < 0 || compare == 0));
 		}
 
-		clickMouse(symbolTableHeader, MouseEvent.BUTTON1, rect.x + 10, rect.y + 10, 1, 0);
-		waitForNotBusy(symbolTable);
-		assertTrue(!renderer.isSortedAscending());
+		sortDescending(SymbolTableModel.LABEL_COL);
 
 		model = symbolTable.getModel();
 		for (int i = 0; i < model.getRowCount() - 1; ++i) {
-			Symbol sym1 = (Symbol) model.getValueAt(i + 0, SymbolTableModel.LABEL_COL);
-			Symbol sym2 = (Symbol) model.getValueAt(i + 1, SymbolTableModel.LABEL_COL);
+			Symbol sym1 = getSymbol(i);
+			Symbol sym2 = getSymbol(i + 1);
 			int compare = sym1.getName().compareToIgnoreCase(sym2.getName());
 			assertTrue("row " + i + " not sorted correctly", (compare > 0 || compare == 0));
 		}
+	}
+
+	private void sortAscending(int column) {
+		runSwing(() -> symbolModel.setTableSortState(
+			TableSortState.createDefaultSortState(column, true)));
+		waitForTableModel(symbolModel);
+
+		waitForCondition(() -> {
+			TableSortState sort = runSwing(() -> symbolModel.getTableSortState());
+			return sort.getColumnSortState(column).isAscending();
+		});
+	}
+
+	private void sortDescending(int column) {
+		runSwing(() -> symbolModel.setTableSortState(
+			TableSortState.createDefaultSortState(column, false)));
+		waitForTableModel(symbolModel);
+
+		waitForCondition(() -> {
+			TableSortState sort = runSwing(() -> symbolModel.getTableSortState());
+			return !sort.getColumnSortState(column).isAscending();
+		});
 	}
 
 	@Test
@@ -205,35 +216,21 @@ public class SymbolTablePluginTest extends AbstractGhidraHeadedIntegrationTest {
 	public void testSortingAddressColumn() throws Exception {
 		openProgram("sample");
 
-		Rectangle rect = symbolTableHeader.getHeaderRect(SymbolTableModel.LOCATION_COL);
-
-		clickMouse(symbolTableHeader, MouseEvent.BUTTON1, rect.x + 10, rect.y + 10, 1, 0);
-		waitForNotBusy(symbolTable);
-
-		TableColumn column =
-			symbolTableHeader.getColumnModel().getColumn(SymbolTableModel.LOCATION_COL);
-		GTableHeaderRenderer renderer = (GTableHeaderRenderer) column.getHeaderRenderer();
-		assertTrue(renderer.isSortedAscending());
+		sortAscending(SymbolTableModel.LOCATION_COL);
 
 		SymbolTableModel model = (SymbolTableModel) symbolTable.getModel();
 		for (int i = 0; i < model.getRowCount() - 1; ++i) {
-			AddressBasedLocation refs1 =
-				(AddressBasedLocation) model.getValueAt(i + 0, SymbolTableModel.LOCATION_COL);
-			AddressBasedLocation refs2 =
-				(AddressBasedLocation) model.getValueAt(i + 1, SymbolTableModel.LOCATION_COL);
-			assertTrue(refs1.compareTo(refs2) <= 0);
+			AddressBasedLocation loc1 = getLocation(i);
+			AddressBasedLocation loc2 = getLocation(i + 0);
+			assertTrue(loc1.compareTo(loc2) <= 0);
 		}
 
-		clickMouse(symbolTableHeader, MouseEvent.BUTTON1, rect.x + 10, rect.y + 10, 1, 0);
-		waitForNotBusy(symbolTable);
-		assertTrue(!renderer.isSortedAscending());
+		sortDescending(SymbolTableModel.LOCATION_COL);
 
 		for (int i = 0; i < model.getRowCount() - 1; ++i) {
-			AddressBasedLocation refs1 =
-				(AddressBasedLocation) model.getValueAt(i + 0, SymbolTableModel.LOCATION_COL);
-			AddressBasedLocation refs2 =
-				(AddressBasedLocation) model.getValueAt(i + 1, SymbolTableModel.LOCATION_COL);
-			assertTrue(refs1.compareTo(refs2) >= 0);
+			AddressBasedLocation loc1 = getLocation(i);
+			AddressBasedLocation loc2 = getLocation(i + 0);
+			assertTrue(loc1.compareTo(loc2) >= 0);
 		}
 	}
 
@@ -241,26 +238,20 @@ public class SymbolTablePluginTest extends AbstractGhidraHeadedIntegrationTest {
 	public void testSortingReferenceColumn() throws Exception {
 		openProgram("sample");
 
-		sortOnColumn(SymbolTableModel.REFS_COL);
-
-		TableColumn column =
-			symbolTableHeader.getColumnModel().getColumn(SymbolTableModel.REFS_COL);
-		GTableHeaderRenderer renderer = (GTableHeaderRenderer) column.getHeaderRenderer();
-		assertTrue(renderer.isSortedAscending());
+		sortAscending(SymbolTableModel.REFS_COL);
 
 		TableModel model = symbolTable.getModel();
 		for (int i = 0; i < model.getRowCount() - 1; ++i) {
-			Integer refs1 = (Integer) model.getValueAt(i + 0, SymbolTableModel.REFS_COL);
-			Integer refs2 = (Integer) model.getValueAt(i + 1, SymbolTableModel.REFS_COL);
+			Integer refs1 = getRefCount(i);
+			Integer refs2 = getRefCount(i + 1);
 			assertTrue(refs1.compareTo(refs2) <= 0);
 		}
 
-		sortOnColumn(SymbolTableModel.REFS_COL);
-		assertTrue(!renderer.isSortedAscending());
+		sortDescending(SymbolTableModel.REFS_COL);
 
 		for (int i = 0; i < model.getRowCount() - 1; ++i) {
-			Integer refs1 = (Integer) model.getValueAt(i + 0, SymbolTableModel.REFS_COL);
-			Integer refs2 = (Integer) model.getValueAt(i + 1, SymbolTableModel.REFS_COL);
+			Integer refs1 = getRefCount(i);
+			Integer refs2 = getRefCount(i + 1);
 			assertTrue(refs1.compareTo(refs2) >= 0);
 		}
 	}
@@ -359,7 +350,8 @@ public class SymbolTablePluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 		waitForNotBusy(symbolTable);
 
-		int row = findRow("ghidra", "Global");
+		String symbolName = "ghidra";
+		int row = findRow(symbolName, "Global");
 
 		doubleClick(symbolTable, row, SymbolTableModel.LABEL_COL);
 		waitForSwing();
@@ -368,6 +360,9 @@ public class SymbolTablePluginTest extends AbstractGhidraHeadedIntegrationTest {
 		Component editor = symbolTable.getEditorComponent();
 		assertNotNull(editor);
 		JTextField textField = (JTextField) editor;
+		String currentText = getText(textField);
+		assertEquals(symbolName, currentText);
+
 		triggerActionKey(textField, 0, KeyEvent.VK_END);
 		myTypeText(editor, ".Is.Cool");
 		runSwing(() -> symbolTable.editingStopped(new ChangeEvent(symbolTable)));
@@ -376,7 +371,7 @@ public class SymbolTablePluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 		assertTrue(!symbolTable.isEditing());
 
-		Symbol s = (Symbol) symbolTable.getValueAt(row, SymbolTableModel.LABEL_COL);
+		Symbol s = getSymbol(row);
 		assertEquals("ghidra.Is.Cool", s.getName());
 	}
 
@@ -567,7 +562,7 @@ public class SymbolTablePluginTest extends AbstractGhidraHeadedIntegrationTest {
 		int[] selectedRows = symbolTable.getSelectedRows();
 		assertEquals(3, selectedRows.length);
 		for (int selectedRow : selectedRows) {
-			Symbol symbol = (Symbol) symbolTable.getValueAt(selectedRow, 0);
+			Symbol symbol = getSymbol(selectedRow);
 			assertTrue(!symbol.isPinned());
 		}
 		assertTrue(setPinnedAction.isEnabledForContext(actionContext));
@@ -576,14 +571,14 @@ public class SymbolTablePluginTest extends AbstractGhidraHeadedIntegrationTest {
 		performAction(setPinnedAction, actionContext, true);
 		waitForSwing();
 		for (int selectedRow : selectedRows) {
-			Symbol symbol = (Symbol) symbolTable.getValueAt(selectedRow, 0);
+			Symbol symbol = getSymbol(selectedRow);
 			assertTrue(symbol.isPinned());
 		}
 
 		performAction(clearPinnedAction, actionContext, true);
 		waitForSwing();
 		for (int selectedRow : selectedRows) {
-			Symbol symbol = (Symbol) symbolTable.getValueAt(selectedRow, 0);
+			Symbol symbol = getSymbol(selectedRow);
 			assertTrue(!symbol.isPinned());
 		}
 
@@ -600,11 +595,11 @@ public class SymbolTablePluginTest extends AbstractGhidraHeadedIntegrationTest {
 		int[] selectedRows = symbolTable.getSelectedRows();
 
 		for (int selectedRow : selectedRows) {
-			Symbol symbol = (Symbol) symbolTable.getValueAt(selectedRow, 0);
-			assertTrue(!symbol.isPinned());
+			Symbol symbol = getSymbol(selectedRow);
+			assertFalse(symbol.isPinned());
 		}
-		assertTrue(!setPinnedAction.isEnabledForContext(actionContext));
-		assertTrue(!clearPinnedAction.isEnabledForContext(actionContext));
+		assertFalse(setPinnedAction.isEnabledForContext(actionContext));
+		assertFalse(clearPinnedAction.isEnabledForContext(actionContext));
 
 	}
 
@@ -620,13 +615,13 @@ public class SymbolTablePluginTest extends AbstractGhidraHeadedIntegrationTest {
 			sym = st.createLabel(sample.getNewAddress(0x01007000), "Zeus", SourceType.USER_DEFINED);
 			waitForNotBusy(symbolTable);
 			assertEquals(rowCount + 1, symbolTable.getRowCount());
-			assertTrue(symbolModel.getRowIndex(new SymbolRowObject(sym.getID())) >= 0);
+			assertTrue(symbolModel.getRowIndex(new SymbolRowObject(sym)) >= 0);
 
 			sym =
 				st.createLabel(sample.getNewAddress(0x01007100), "Athena", SourceType.USER_DEFINED);
 			waitForNotBusy(symbolTable);
 			assertEquals(rowCount + 2, symbolTable.getRowCount());
-			assertTrue(symbolModel.getRowIndex(new SymbolRowObject(sym.getID())) >= 0);
+			assertTrue(symbolModel.getRowIndex(new SymbolRowObject(sym)) >= 0);
 		}
 		finally {
 			prog.endTransaction(id, true);
@@ -659,7 +654,7 @@ public class SymbolTablePluginTest extends AbstractGhidraHeadedIntegrationTest {
 			sym =
 				st.createLabel(sample.getNewAddress(0x01007000), "saaaa", SourceType.USER_DEFINED);
 			waitForNotBusy(symbolTable);
-			assertTrue(symbolModel.getRowIndex(new SymbolRowObject(sym.getID())) >= 0);
+			assertTrue(symbolModel.getRowIndex(new SymbolRowObject(sym)) >= 0);
 		}
 		finally {
 			prog.endTransaction(id, true);
@@ -722,7 +717,8 @@ public class SymbolTablePluginTest extends AbstractGhidraHeadedIntegrationTest {
 		// entry symbol replaced by dynamic External Entry symbol
 		assertNull(getUniqueSymbol(prog, "entry"));
 		assertNotNull(getUniqueSymbol(prog, "EXT_00000051"));
-		assertTrue(symbolModel.getRowIndex(new SymbolRowObject(sym.getID())) == -1);
+		assertTrue("Deleted symbol not removed from table",
+			symbolModel.getRowIndex(new SymbolRowObject(sym)) < 0);
 	}
 
 	@Test
@@ -732,8 +728,8 @@ public class SymbolTablePluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 		Symbol s = getUniqueSymbol(prog, "entry");
 
-		int row = symbolModel.getRowIndex(new SymbolRowObject(s.getID()));
-		Integer refCount = (Integer) symbolTable.getValueAt(row, SymbolTableModel.REFS_COL);
+		int row = symbolModel.getRowIndex(new SymbolRowObject(s));
+		Integer refCount = getRefCount(row);
 		assertNotNull(refCount);
 		assertEquals(3, refCount.intValue());
 
@@ -749,9 +745,9 @@ public class SymbolTablePluginTest extends AbstractGhidraHeadedIntegrationTest {
 		}
 		waitForNotBusy(symbolTable);
 
-		row = symbolModel.getRowIndex(new SymbolRowObject(s.getID()));
+		row = symbolModel.getRowIndex(new SymbolRowObject(s));
 
-		refCount = (Integer) symbolTable.getValueAt(row, SymbolTableModel.REFS_COL);
+		refCount = getRefCount(row);
 		assertNotNull(refCount);
 		assertEquals(4, refCount.intValue());
 	}
@@ -763,9 +759,9 @@ public class SymbolTablePluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 		Symbol s = getUniqueSymbol(prog, "doStuff");
 
-		int row = symbolModel.getRowIndex(new SymbolRowObject(s.getID()));
+		int row = symbolModel.getRowIndex(new SymbolRowObject(s));
 
-		Integer refCount = (Integer) symbolTable.getValueAt(row, SymbolTableModel.REFS_COL);
+		Integer refCount = getRefCount(row);
 		assertNotNull(refCount);
 		assertEquals(4, refCount.intValue());
 
@@ -791,7 +787,7 @@ public class SymbolTablePluginTest extends AbstractGhidraHeadedIntegrationTest {
 		}
 		waitForNotBusy(symbolTable);
 
-		refCount = (Integer) symbolTable.getValueAt(row, SymbolTableModel.REFS_COL);
+		refCount = getRefCount(row);
 		assertNotNull(refCount);
 		assertEquals(3, refCount.intValue());
 	}
@@ -853,23 +849,12 @@ public class SymbolTablePluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 		/************** LABEL **********************/
 
-		Rectangle rect = symbolTableHeader.getHeaderRect(SymbolTableModel.LABEL_COL);
-
-		clickMouse(symbolTableHeader, MouseEvent.BUTTON1, rect.x + 10, rect.y + 10, 1, 0);
-		waitForNotBusy(symbolTable);
-
-		clickMouse(symbolTableHeader, MouseEvent.BUTTON1, rect.x + 10, rect.y + 10, 1, 0);
-		waitForNotBusy(symbolTable);
-
-		TableColumn column =
-			symbolTableHeader.getColumnModel().getColumn(SymbolTableModel.LABEL_COL);
-		GTableHeaderRenderer renderer = (GTableHeaderRenderer) column.getHeaderRenderer();
-		assertTrue(renderer.isSortedAscending());
+		sortAscending(SymbolTableModel.LABEL_COL);
 
 		TableModel model = symbolTable.getModel();
 		for (int i = 0; i < model.getRowCount() - 1; ++i) {
-			Symbol sym1 = (Symbol) model.getValueAt(i + 0, SymbolTableModel.LABEL_COL);
-			Symbol sym2 = (Symbol) model.getValueAt(i + 1, SymbolTableModel.LABEL_COL);
+			Symbol sym1 = getSymbol(i);
+			Symbol sym2 = getSymbol(i + 1);
 			int compare = sym1.getName().compareToIgnoreCase(sym2.getName());
 			assertTrue("Symbol \"" + sym1 + "\" is not sorted as less than symbol \"" + sym2 + "\"",
 				compare <= 0);
@@ -877,21 +862,12 @@ public class SymbolTablePluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 		/************** ADDRESS **********************/
 
-		rect = symbolTableHeader.getHeaderRect(SymbolTableModel.LOCATION_COL);
-
-		clickMouse(symbolTableHeader, MouseEvent.BUTTON1, rect.x + 10, rect.y + 10, 1, 0);
-		waitForNotBusy(symbolTable);
-
-		column = symbolTableHeader.getColumnModel().getColumn(SymbolTableModel.LOCATION_COL);
-		renderer = (GTableHeaderRenderer) column.getHeaderRenderer();
-		assertTrue(renderer.isSortedAscending());
+		sortAscending(SymbolTableModel.LOCATION_COL);
 
 		model = symbolTable.getModel();
 		for (int i = 0; i < model.getRowCount() - 1; ++i) {
-			AddressBasedLocation loc1 =
-				(AddressBasedLocation) model.getValueAt(i, SymbolTableModel.LOCATION_COL);
-			AddressBasedLocation loc2 =
-				(AddressBasedLocation) model.getValueAt(i + 1, SymbolTableModel.LOCATION_COL);
+			AddressBasedLocation loc1 = getLocation(i);
+			AddressBasedLocation loc2 = getLocation(i + 1);
 			int compare = SystemUtilities.compareTo(loc1, loc2);
 			assertTrue(
 				"Location1 \"" + loc1 + "\"is not sorted as less than location2 \"" + loc2 + "\"",
@@ -900,18 +876,12 @@ public class SymbolTablePluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 		/************** REFERENCES **********************/
 
-		rect = symbolTableHeader.getHeaderRect(SymbolTableModel.REFS_COL);
-		clickMouse(symbolTableHeader, MouseEvent.BUTTON1, rect.x + 10, rect.y + 10, 1, 0);
-		waitForNotBusy(symbolTable);
-
-		column = symbolTableHeader.getColumnModel().getColumn(SymbolTableModel.REFS_COL);
-		renderer = (GTableHeaderRenderer) column.getHeaderRenderer();
-		assertTrue(renderer.isSortedAscending());
+		sortAscending(SymbolTableModel.REFS_COL);
 
 		model = symbolTable.getModel();
 		for (int i = 0; i < model.getRowCount() - 1; ++i) {
-			Integer refs1 = (Integer) model.getValueAt(i + 0, SymbolTableModel.REFS_COL);
-			Integer refs2 = (Integer) model.getValueAt(i + 1, SymbolTableModel.REFS_COL);
+			Integer refs1 = getRefCount(i);
+			Integer refs2 = getRefCount(i + 1);
 			assertTrue(
 				"The number of references (\"" + refs1 + "\") for row did not " +
 					"compare as less than the number for the following row (\"" + refs2 + "\")",
@@ -1035,7 +1005,7 @@ public class SymbolTablePluginTest extends AbstractGhidraHeadedIntegrationTest {
 		deleteText(textField);
 
 		// sort on a different column to trigger the other kind of filtering
-		sortOnColumn(SymbolTableModel.REFS_COL);
+		sortAscending(SymbolTableModel.REFS_COL);
 
 		text = "_";
 		myTypeText(textField, text);
@@ -1106,7 +1076,7 @@ public class SymbolTablePluginTest extends AbstractGhidraHeadedIntegrationTest {
 		deleteText(textField);
 
 		// sort on a different column to trigger the other kind of filtering
-		sortOnColumn(SymbolTableModel.LOCATION_COL);
+		sortAscending(SymbolTableModel.LOCATION_COL);
 
 		text = "_";
 		myTypeText(textField, text);
@@ -1285,17 +1255,29 @@ public class SymbolTablePluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 	}
 
+	private Symbol getSymbol(int row) {
+		SymbolRowObject rowObject = symbolModel.getRowObject(row);
+		return rowObject.getSymbol();
+	}
+
+	private Integer getRefCount(int row) {
+		Integer count =
+			runSwing(() -> (Integer) symbolModel.getValueAt(row, SymbolTableModel.REFS_COL));
+		return count;
+	}
+
+	private AddressBasedLocation getLocation(int row) {
+		AddressBasedLocation location =
+			runSwing(() -> (AddressBasedLocation) symbolModel.getValueAt(row,
+				SymbolTableModel.LOCATION_COL));
+		return location;
+	}
+
 	private void assertReferencesAddressColumnValue(int row, long value) {
 		Address addr =
 			(Address) referenceTable.getValueAt(row, SymbolReferenceModel.ADDRESS_COLUMN);
 		assertEquals("Address in row " + row + " is not the expected value", value,
 			addr.getOffset());
-	}
-
-	private void sortOnColumn(int column) throws Exception {
-		Rectangle rect = symbolTableHeader.getHeaderRect(column);
-		clickMouse(symbolTableHeader, MouseEvent.BUTTON1, rect.x + 10, rect.y + 10, 1, 0);
-		waitForNotBusy(symbolTable);
 	}
 
 	private void deleteText(JTextField field) throws Exception {
@@ -1328,14 +1310,10 @@ public class SymbolTablePluginTest extends AbstractGhidraHeadedIntegrationTest {
 		}
 	}
 
-	private void setFilterOptions(TextFilterStrategy filterStrategy, boolean caseSensitive) {
+	private void setFilterOptions(TextFilterStrategy filterStrategy, boolean caseSensitive)
+			throws Exception {
 		filterPanel.setFilterOptions(new FilterOptions(filterStrategy, true, caseSensitive, false));
-		waitForTable();
-
-	}
-
-	private void waitForTable() {
-		waitForSwing();
+		waitForNotBusy(symbolTable);
 	}
 
 	private JTextField getFilterTextField() {
@@ -1376,12 +1354,12 @@ public class SymbolTablePluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 	private int getRowForSymbol(Symbol symbol) {
 		for (int i = 0; i < symbolTable.getRowCount(); i++) {
-			Object name = symbolTable.getValueAt(i, 0);
-			if (name.toString().equals(symbol.getName())) {
-				Object namespace = symbolTable.getValueAt(i, 4);
-				if (namespace.toString().equals(symbol.getParentNamespace().getName())) {
-					return i;
-				}
+			Symbol rowSymbol = getSymbol(i);
+			if (rowSymbol.equals(symbol)) {
+//				if (rowSymbol.getParentNamespace().equals(symbol.getParentNamespace())) {
+//					return i;
+//				}
+				return i;
 			}
 		}
 		Assert.fail("Didn't find symbol in symbol table: " + symbol.getName());
@@ -1478,7 +1456,7 @@ public class SymbolTablePluginTest extends AbstractGhidraHeadedIntegrationTest {
 				"There are no filtered matches as expected from filter string: " + filterString,
 				rowCount > 0);
 			for (int i = 0; i < rowCount; i++) {
-				Symbol symbol = (Symbol) symbolModel.getValueAt(i, SymbolTableModel.LABEL_COL);
+				Symbol symbol = getSymbol(i);
 				assertTrue(
 					"Found an entry in the symbol table model that " + "does not match the given " +
 						"filter: " + filterString + " and symbol: " + symbol.getName(),
@@ -1495,7 +1473,7 @@ public class SymbolTablePluginTest extends AbstractGhidraHeadedIntegrationTest {
 		String filterText = string;
 
 		for (int i = 0; i < rowCount; i++) {
-			Symbol symbol = (Symbol) symbolModel.getValueAt(i, SymbolTableModel.LABEL_COL);
+			Symbol symbol = getSymbol(i);
 			assertTrue(
 				"Found an entry in the symbol table model that does not match the given " +
 					"filter: " + string + " and symbol: " + symbol.getName(),
@@ -1504,8 +1482,7 @@ public class SymbolTablePluginTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	private void waitForNotBusy(GTable table) throws Exception {
-		prog.flushEvents();
-
+		waitForProgram(prog);
 		ThreadedTableModel<?, ?> model = (ThreadedTableModel<?, ?>) table.getModel();
 		waitForTableModel(model);
 	}
@@ -1632,6 +1609,8 @@ public class SymbolTablePluginTest extends AbstractGhidraHeadedIntegrationTest {
 		waitForNotBusy(symbolTable);
 
 		symbolTableHeader = symbolTable.getTableHeader();
+
+		sortAscending(SymbolTableModel.LABEL_COL);
 	}
 
 	private void showReferencesTable() {
@@ -1679,7 +1658,9 @@ public class SymbolTablePluginTest extends AbstractGhidraHeadedIntegrationTest {
 	private int findRow(String symbolName, String namespace) {
 		int max = symbolTable.getRowCount();
 		for (int i = 0; i < max; i++) {
-			Symbol s = (Symbol) symbolTable.getValueAt(i, SymbolTableModel.LABEL_COL);
+			SymbolTableNameValue symbolNameValue =
+				(SymbolTableNameValue) symbolTable.getValueAt(i, SymbolTableModel.LABEL_COL);
+			Symbol s = symbolNameValue.getSymbol();
 			if (symbolName.equals(s.getName()) &&
 				namespace.equals(s.getParentNamespace().getName())) {
 				return i;

@@ -92,8 +92,8 @@ public abstract class AbstractSortedTableModel<T> extends AbstractGTableModel<T>
 	}
 
 	/**
-	 * Returns the index of the given row object in this model; -1 if the model does not contain
-	 * the given object.  
+	 * Returns the index of the given row object in this model; a negative value if the model 
+	 * does not contain the given object.  
 	 * 
 	 * <p>Warning: if the this model has no sort applied, then performance will be O(n).  If 
 	 * sorted, then performance is O(log n).  You can call {@link #isSorted()} to know when 
@@ -132,6 +132,9 @@ public abstract class AbstractSortedTableModel<T> extends AbstractGTableModel<T>
 
 	@Override
 	public int getPrimarySortColumnIndex() {
+		if (sortState.isUnsorted()) {
+			return -1;
+		}
 		return sortState.iterator().next().getColumnModelIndex();
 	}
 

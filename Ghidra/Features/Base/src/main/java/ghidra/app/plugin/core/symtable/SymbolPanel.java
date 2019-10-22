@@ -37,7 +37,7 @@ import ghidra.util.table.*;
 
 class SymbolPanel extends JPanel {
 
-	private static final boolean FILTER_NAME_ONLY_DEFAULT = false;
+	private static final boolean FILTER_NAME_ONLY_DEFAULT = true;
 
 	private static final String FILTER_SETTINGS_ELEMENT_NAME = "FILTER_SETTINGS";
 
@@ -46,7 +46,6 @@ class SymbolPanel extends JPanel {
 	private GhidraTable symTable;
 	private TableModelListener listener;
 	private FilterDialog filterDialog;
-	private PluginTool tool;
 	private GhidraThreadedTablePanel<SymbolRowObject> threadedTablePanel;
 	private GhidraTableFilterPanel<SymbolRowObject> tableFilterPanel;
 
@@ -54,7 +53,7 @@ class SymbolPanel extends JPanel {
 			final PluginTool tool, GoToService gotoService) {
 
 		super(new BorderLayout());
-		this.tool = tool;
+
 		this.symProvider = provider;
 		this.tableModel = model;
 
@@ -174,14 +173,12 @@ class SymbolPanel extends JPanel {
 
 		if (selectedRowCount == 1) {
 			int selectedRow = symTable.getSelectedRow();
-			Object obj = symTable.getValueAt(selectedRow,
-				symTable.convertColumnIndexToView(SymbolTableModel.LABEL_COL));
-			if (obj instanceof Symbol) {
-				symProvider.setCurrentSymbol((Symbol) obj);
-				return;
-			}
+			Symbol symbol = symProvider.getSymbolForRow(selectedRow);
+			symProvider.setCurrentSymbol(symbol);
 		}
-		symProvider.setCurrentSymbol(null);
+		else {
+			symProvider.setCurrentSymbol(null);
+		}
 	}
 
 	int getActualSymbolCount() {
@@ -212,9 +209,10 @@ class SymbolPanel extends JPanel {
 		@Override
 		public List<String> transform(SymbolRowObject rowObject) {
 			list.clear();
-			Symbol symbol = model.getSymbolForRowObject(rowObject);
-			if (symbol != null) {
-				list.add(symbol.getName());
+			Object value = model.getColumnValueForRow(rowObject, SymbolTableModel.LABEL_COL);
+			if (value != null) {
+				// the toString() returns the value for the symbol, which may be cached
+				list.add(value.toString());
 			}
 			return list;
 		}

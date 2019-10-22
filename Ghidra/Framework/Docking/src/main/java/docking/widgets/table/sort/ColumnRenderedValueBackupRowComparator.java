@@ -20,6 +20,7 @@ import java.util.Comparator;
 import docking.widgets.table.*;
 import ghidra.docking.settings.Settings;
 import ghidra.util.table.column.GColumnRenderer;
+import ghidra.util.table.column.GColumnRenderer.ColumnConstraintFilterMode;
 
 /**
  * A special version of the backup comparator that uses the column's rendered value for 
@@ -33,10 +34,25 @@ public class ColumnRenderedValueBackupRowComparator<T> implements Comparator<T> 
 	protected int sortColumn;
 	protected DynamicColumnTableModel<T> model;
 
+	// columns do not support sorting via their rendered value if the are marked
+	// for column filtering only
+	private boolean supportsColumnSorting = true;
+
 	public ColumnRenderedValueBackupRowComparator(DynamicColumnTableModel<T> model,
 			int sortColumn) {
 		this.model = model;
 		this.sortColumn = sortColumn;
+
+		DynamicTableColumn<T, ?, ?> column = model.getColumn(sortColumn);
+		@SuppressWarnings("unchecked")
+		GColumnRenderer<Object> renderer = (GColumnRenderer<Object>) column.getColumnRenderer();
+		if (renderer != null) {
+			if (renderer.getColumnConstraintFilterMode() == ColumnConstraintFilterMode.USE_COLUMN_CONSTRAINTS_ONLY) {
+				// this implies that the column has signaled that it does not support 
+				// filtering/sorting using its rendered value
+				supportsColumnSorting = false;
+			}
+		}
 	}
 
 	@Override
@@ -61,9 +77,13 @@ public class ColumnRenderedValueBackupRowComparator<T> implements Comparator<T> 
 	@SuppressWarnings("unchecked")
 	private String getRenderedColumnStringValue(T t) {
 
+		if (!supportsColumnSorting) {
+			return null;
+		}
+
 		DynamicTableColumn<T, ?, ?> column = model.getColumn(sortColumn);
 		GColumnRenderer<Object> renderer = (GColumnRenderer<Object>) column.getColumnRenderer();
-		Object o = model.getColumnValueForRow(t, sortColumn);
+		Object o = getColumnValue(t);
 		if (renderer == null) {
 			return o == null ? null : o.toString();
 		}
@@ -72,6 +92,7 @@ public class ColumnRenderedValueBackupRowComparator<T> implements Comparator<T> 
 		return renderer.getFilterString(o, settings);
 	}
 
+	// this may be overridden to use caching
 	protected Object getColumnValue(T t) {
 		return model.getColumnValueForRow(t, sortColumn);
 	}

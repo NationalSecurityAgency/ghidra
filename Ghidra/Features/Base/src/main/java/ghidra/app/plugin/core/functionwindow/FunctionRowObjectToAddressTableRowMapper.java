@@ -17,16 +17,17 @@ package ghidra.app.plugin.core.functionwindow;
 
 import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.program.model.address.Address;
-import ghidra.program.model.listing.*;
+import ghidra.program.model.listing.Function;
+import ghidra.program.model.listing.Program;
 import ghidra.util.table.ProgramLocationTableRowMapper;
 
-public class FunctionRowObjectToAddressTableRowMapper extends
-		ProgramLocationTableRowMapper<FunctionRowObject, Address> {
+public class FunctionRowObjectToAddressTableRowMapper
+		extends ProgramLocationTableRowMapper<FunctionRowObject, Address> {
 
 	@Override
-	public Address map(FunctionRowObject rowObject, Program program, ServiceProvider serviceProvider) {
-		FunctionManager functionManager = program.getFunctionManager();
-		Function function = functionManager.getFunction(rowObject.getKey());
+	public Address map(FunctionRowObject rowObject, Program program,
+			ServiceProvider serviceProvider) {
+		Function function = rowObject.getFunction();
 		if (function == null) {
 			return null;
 		}

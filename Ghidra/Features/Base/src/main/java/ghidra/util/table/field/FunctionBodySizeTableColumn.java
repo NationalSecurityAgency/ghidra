@@ -15,13 +15,18 @@
  */
 package ghidra.util.table.field;
 
+import docking.widgets.table.GTableCellRenderer;
 import ghidra.docking.settings.Settings;
 import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
+import ghidra.util.table.column.AbstractWrapperTypeColumnRenderer;
+import ghidra.util.table.column.GColumnRenderer;
 
 public class FunctionBodySizeTableColumn
 		extends ProgramBasedDynamicTableColumnExtensionPoint<Function, Integer> {
+
+	private FunctionBodySizeRenderer renderer = new FunctionBodySizeRenderer();
 
 	@Override
 	public String getColumnName() {
@@ -34,4 +39,15 @@ public class FunctionBodySizeTableColumn
 		return (int) rowObject.getBody().getNumAddresses();
 	}
 
+	@Override
+	public GColumnRenderer<Integer> getColumnRenderer() {
+		return renderer;
+	}
+
+	// this renderer disables the default text filtering; this column is only filterable
+	// via the column constraint filtering
+	private class FunctionBodySizeRenderer extends GTableCellRenderer
+			implements AbstractWrapperTypeColumnRenderer<Integer> {
+		// body is handled by parents
+	}
 }

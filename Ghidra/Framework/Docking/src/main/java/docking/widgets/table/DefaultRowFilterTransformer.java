@@ -57,6 +57,13 @@ public class DefaultRowFilterTransformer<ROW_OBJECT> implements RowFilterTransfo
 			}
 		}
 
+		if (columnUsesConstraintFilteringOnly(column)) {
+			// This allows columns to be ignored for default text filtering while still being
+			// filterable through the column constraints API
+			return null;
+		}
+
+		// note: this call can be slow when columns dynamically calculate values from the database
 		Object value = model.getColumnValueForRow(rowObject, column);
 		if (value == null) {
 			return null;
@@ -96,7 +103,22 @@ public class DefaultRowFilterTransformer<ROW_OBJECT> implements RowFilterTransfo
 		return value.toString();
 	}
 
-	@SuppressWarnings("unchecked")
+	private boolean columnUsesConstraintFilteringOnly(int column) {
+		if (!(model instanceof DynamicColumnTableModel)) {
+			return false;
+		}
+
+		DynamicColumnTableModel<ROW_OBJECT> columnBasedModel =
+			(DynamicColumnTableModel<ROW_OBJECT>) model;
+		GColumnRenderer<Object> renderer = getColumnRenderer(columnBasedModel, column);
+		if (renderer == null) {
+			return false;
+		}
+
+		ColumnConstraintFilterMode mode = renderer.getColumnConstraintFilterMode();
+		return mode == ColumnConstraintFilterMode.USE_COLUMN_CONSTRAINTS_ONLY;
+	}
+
 	private String getRenderedColumnValue(Object columnValue, int columnIndex) {
 
 		if (!(model instanceof DynamicColumnTableModel)) {
@@ -108,11 +130,6 @@ public class DefaultRowFilterTransformer<ROW_OBJECT> implements RowFilterTransfo
 		GColumnRenderer<Object> renderer = getColumnRenderer(columnBasedModel, columnIndex);
 		if (renderer == null) {
 			return null;
-		}
-
-		ColumnConstraintFilterMode mode = renderer.getColumnConstraintFilterMode();
-		if (mode == ColumnConstraintFilterMode.USE_COLUMN_CONSTRAINTS_ONLY) {
-			return null; // this renderer does not support text
 		}
 
 		Settings settings = columnBasedModel.getColumnSettings(columnIndex);

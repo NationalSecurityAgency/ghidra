@@ -100,6 +100,10 @@ class SymbolProvider extends ComponentProviderAdapter {
 		return null;
 	}
 
+	Symbol getSymbolForRow(int row) {
+		return symbolKeyModel.getRowObject(row).getSymbol();
+	}
+
 	void setCurrentSymbol(Symbol symbol) {
 		plugin.getReferenceProvider().setCurrentSymbol(symbol);
 	}
@@ -126,9 +130,15 @@ class SymbolProvider extends ComponentProviderAdapter {
 		}
 	}
 
-	void symbolRemoved(long symbolID) {
+	void symbolRemoved(Symbol s) {
 		if (isVisible()) {
-			symbolKeyModel.symbolRemoved(symbolID);
+			symbolKeyModel.symbolRemoved(s);
+		}
+	}
+
+	void symbolRemoved(long symbolId) {
+		if (isVisible()) {
+			symbolKeyModel.symbolRemoved(symbolId);
 		}
 	}
 
