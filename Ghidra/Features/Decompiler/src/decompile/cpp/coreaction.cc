@@ -2877,14 +2877,24 @@ void ActionDeadCode::propagateConsumed(vector<Varnode *> &worklist)
 
   switch(op->code()) {
   case CPUI_INT_MULT:
+    b = coveringmask(outc);
+    if (op->getIn(1)->isConstant()) {
+      int4 leastSet = leastsigbit_set(op->getIn(1)->getOffset());
+      if (leastSet >= 0) {
+	a = calc_mask(vn->getSize()) >> leastSet;
+	a &= b;
+      }
+      else
+	a = 0;
+    }
+    else
+      a = b;
+    pushConsumed(a,op->getIn(0),worklist);
+    pushConsumed(b,op->getIn(1),worklist);
+    break;
   case CPUI_INT_ADD:
   case CPUI_INT_SUB:
-    a = outc | (outc>>1);	// Make sure all 1 bits below
-    a = a | (a>>2);		// highest 1 bit are set
-    a = a | (a>>4);
-    a = a | (a>>8);		
-    a = a | (a>>16);
-    a = a | (a>>32);
+    a = coveringmask(outc);	// Make sure value is filled out as a contiguous mask
     pushConsumed(a,op->getIn(0),worklist);
     pushConsumed(a,op->getIn(1),worklist);
     break;
