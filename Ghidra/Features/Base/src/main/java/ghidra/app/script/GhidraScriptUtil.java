@@ -378,11 +378,11 @@ public class GhidraScriptUtil {
 			//    /some/path/Ghidra/Features/Module/ghidra_scripts
 			// 
 			// Desired path:
-			//    /some/path/Ghidra/Features/Module/bin
+			//    /some/path/Ghidra/Features/Module/bin/scripts
 
 			ResourceFile scriptDir = path.getPath();
 			ResourceFile moduleDir = scriptDir.getParentFile();
-			dirs.add(new ResourceFile(moduleDir, BIN_DIR_NAME));
+			dirs.add(new ResourceFile(moduleDir, BIN_DIR_NAME + File.separator + "scripts"));
 		}
 		return dirs;
 	}
