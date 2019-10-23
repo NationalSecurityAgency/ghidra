@@ -399,7 +399,7 @@ public class ElfHeader implements StructConverter, Writeable {
 					section, section.getOffset(), section.getAddress(), section.getSize(),
 					section.getEntrySize(), addendTypeReloc, symbolTable, sectionToBeRelocated));
 			} 
-			else if (sectionHeaderType == ElfSectionHeaderConstants.SHT_ANDROID_RELA ||
+			else if (sectionHeaderType == ElfSectionHeaderConstants.SHT_ANDROID_REL ||
 					   sectionHeaderType == ElfSectionHeaderConstants.SHT_ANDROID_RELA) {
 
 				for (ElfRelocationTable relocTable : relocationTableList) {
