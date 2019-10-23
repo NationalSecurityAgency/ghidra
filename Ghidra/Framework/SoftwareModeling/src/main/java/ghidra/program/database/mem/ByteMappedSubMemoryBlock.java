@@ -46,13 +46,14 @@ class ByteMappedSubMemoryBlock extends SubMemoryBlock {
 	}
 
 	@Override
-	public byte getByte(long offset) throws MemoryAccessException, IOException {
+	public byte getByte(long offsetInMemBlock) throws MemoryAccessException, IOException {
+		long offsetInSubBlock = offsetInMemBlock - subBlockOffset;
 		if (ioPending) {
 			new MemoryAccessException("Cyclic Access");
 		}
 		try {
 			ioPending = true;
-			return memMap.getByte(mappedAddress.addNoWrap(offset - startingOffset));
+			return memMap.getByte(mappedAddress.addNoWrap(offsetInSubBlock));
 		}
 		catch (AddressOverflowException e) {
 			throw new MemoryAccessException("No memory at address");
@@ -63,15 +64,17 @@ class ByteMappedSubMemoryBlock extends SubMemoryBlock {
 	}
 
 	@Override
-	public int getBytes(long offset, byte[] b, int off, int len)
+	public int getBytes(long offsetInMemBlock, byte[] b, int off, int len)
 			throws MemoryAccessException, IOException {
+		long offsetInSubBlock = offsetInMemBlock - subBlockOffset;
+		long available = subBlockLength - offsetInSubBlock;
+		len = (int) Math.min(len, available);
 		if (ioPending) {
 			new MemoryAccessException("Cyclic Access");
 		}
 		try {
 			ioPending = true;
-			len = (int) Math.min(len, length - (offset - startingOffset));
-			return memMap.getBytes(mappedAddress.addNoWrap(offset), b, off, len);
+			return memMap.getBytes(mappedAddress.addNoWrap(offsetInSubBlock), b, off, len);
 		}
 		catch (AddressOverflowException e) {
 			throw new MemoryAccessException("No memory at address");
@@ -82,13 +85,14 @@ class ByteMappedSubMemoryBlock extends SubMemoryBlock {
 	}
 
 	@Override
-	public void putByte(long offset, byte b) throws MemoryAccessException, IOException {
+	public void putByte(long offsetInMemBlock, byte b) throws MemoryAccessException, IOException {
+		long offsetInSubBlock = offsetInMemBlock - subBlockOffset;
 		try {
 			if (ioPending) {
 				new MemoryAccessException("Cyclic Access");
 			}
 			ioPending = true;
-			memMap.setByte(mappedAddress.addNoWrap(offset - startingOffset), b);
+			memMap.setByte(mappedAddress.addNoWrap(offsetInSubBlock), b);
 		}
 		catch (AddressOverflowException e) {
 			throw new MemoryAccessException("No memory at address");
@@ -100,15 +104,18 @@ class ByteMappedSubMemoryBlock extends SubMemoryBlock {
 	}
 
 	@Override
-	public int putBytes(long offset, byte[] b, int off, int len)
+	public int putBytes(long offsetInMemBlock, byte[] b, int off, int len)
 			throws MemoryAccessException, IOException {
+		long offsetInSubBlock = offsetInMemBlock - subBlockOffset;
+		long available = subBlockLength - offsetInSubBlock;
+		len = (int) Math.min(len, available);
 		try {
 			if (ioPending) {
 				new MemoryAccessException("Cyclic Access");
 			}
 			ioPending = true;
-			len = (int) Math.min(len, length - (offset - startingOffset));
-			memMap.setBytes(mappedAddress.addNoWrap(offset - startingOffset), b, off, len);
+			memMap.setBytes(mappedAddress.addNoWrap(offsetInSubBlock), b, off,
+				len);
 			return len;
 		}
 		catch (AddressOverflowException e) {
@@ -120,7 +127,7 @@ class ByteMappedSubMemoryBlock extends SubMemoryBlock {
 	}
 
 	public AddressRange getMappedRange() {
-		Address endMappedAddress = mappedAddress.add(length - 1);
+		Address endMappedAddress = mappedAddress.add(subBlockLength - 1);
 		return new AddressRangeImpl(mappedAddress, endMappedAddress);
 	}
 
@@ -142,10 +149,10 @@ class ByteMappedSubMemoryBlock extends SubMemoryBlock {
 	@Override
 	protected SubMemoryBlock split(long memBlockOffset) throws IOException {
 		// convert from offset in block to offset in this sub block
-		int offset = (int) (memBlockOffset - startingOffset);
-		long newLength = length - offset;
-		length = offset;
-		record.setLongValue(MemoryMapDBAdapter.SUB_LENGTH_COL, length);
+		int offset = (int) (memBlockOffset - subBlockOffset);
+		long newLength = subBlockLength - offset;
+		subBlockLength = offset;
+		record.setLongValue(MemoryMapDBAdapter.SUB_LENGTH_COL, subBlockLength);
 		adapter.updateSubBlockRecord(record);
 
 		Address newAddr = mappedAddress.add(offset);
@@ -167,7 +174,7 @@ class ByteMappedSubMemoryBlock extends SubMemoryBlock {
 	protected ByteSourceRangeList getByteSourceRangeList(MemoryBlock block, Address start,
 			long offset, long size) {
 		ByteSourceRangeList result = new ByteSourceRangeList();
-		long relativeOffset = offset - startingOffset;
+		long relativeOffset = offset - subBlockOffset;
 		Address startAddress = mappedAddress.add(relativeOffset);
 		Address endAddress = startAddress.add(size - 1);
 		List<MemoryBlockDB> blocks = memMap.getBlocks(startAddress, endAddress);
