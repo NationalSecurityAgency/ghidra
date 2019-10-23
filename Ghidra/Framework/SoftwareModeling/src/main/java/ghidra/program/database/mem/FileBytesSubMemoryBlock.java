@@ -41,24 +41,31 @@ class FileBytesSubMemoryBlock extends SubMemoryBlock {
 	}
 
 	@Override
-	public byte getByte(long memBlockOffset) throws IOException {
-		return fileBytes.getModifiedByte(fileBytesOffset + memBlockOffset - startingOffset);
+	public byte getByte(long offsetInMemBlock) throws IOException {
+		long offsetInSubBlock = offsetInMemBlock - subBlockOffset;
+		return fileBytes.getModifiedByte(fileBytesOffset + offsetInSubBlock);
 	}
 
 	@Override
-	public int getBytes(long memBlockOffset, byte[] b, int off, int len) throws IOException {
-		return fileBytes.getModifiedBytes(fileBytesOffset + memBlockOffset - startingOffset, b, off,
-			len);
+	public int getBytes(long offsetInMemBlock, byte[] b, int off, int len) throws IOException {
+		long offsetInSubBlock = offsetInMemBlock - subBlockOffset;
+		long available = subBlockLength - offsetInSubBlock;
+		len = (int) Math.min(len, available);
+		return fileBytes.getModifiedBytes(fileBytesOffset + offsetInSubBlock, b, off, len);
 	}
 
 	@Override
-	public void putByte(long memBlockOffset, byte b) throws MemoryAccessException, IOException {
-		fileBytes.putByte(fileBytesOffset + memBlockOffset - startingOffset, b);
+	public void putByte(long offsetInMemBlock, byte b) throws MemoryAccessException, IOException {
+		long offsetInSubBlock = offsetInMemBlock - subBlockOffset;
+		fileBytes.putByte(fileBytesOffset + offsetInSubBlock, b);
 	}
 
 	@Override
-	public int putBytes(long memBlockOffset, byte[] b, int off, int len) throws IOException {
-		return fileBytes.putBytes(fileBytesOffset + memBlockOffset - startingOffset, b, off, len);
+	public int putBytes(long offsetInMemBlock, byte[] b, int off, int len) throws IOException {
+		long offsetInSubBlock = offsetInMemBlock - subBlockOffset;
+		long available = subBlockLength - offsetInSubBlock;
+		len = (int) Math.min(len, available);
+		return fileBytes.putBytes(fileBytesOffset + offsetInSubBlock, b, off, len);
 	}
 
 	@Override
@@ -71,11 +78,11 @@ class FileBytesSubMemoryBlock extends SubMemoryBlock {
 			return false;
 		}
 		// are the two block consecutive in the fileBytes space?
-		if (other.fileBytesOffset != fileBytesOffset + length) {
+		if (other.fileBytesOffset != fileBytesOffset + subBlockLength) {
 			return false;
 		}
 		// ok we can join them
-		setLength(length + other.length);
+		setLength(subBlockLength + other.subBlockLength);
 		adapter.deleteSubBlock(other.record.getKey());
 		return true;
 	}
@@ -96,10 +103,10 @@ class FileBytesSubMemoryBlock extends SubMemoryBlock {
 	@Override
 	protected SubMemoryBlock split(long memBlockOffset) throws IOException {
 		// convert from offset in block to offset in this sub block
-		int offset = (int) (memBlockOffset - startingOffset);
-		long newLength = length - offset;
-		length = offset;
-		record.setLongValue(MemoryMapDBAdapter.SUB_LENGTH_COL, length);
+		int offset = (int) (memBlockOffset - subBlockOffset);
+		long newLength = subBlockLength - offset;
+		subBlockLength = offset;
+		record.setLongValue(MemoryMapDBAdapter.SUB_LENGTH_COL, subBlockLength);
 		adapter.updateSubBlockRecord(record);
 
 		int fileBytesID = record.getIntValue(MemoryMapDBAdapter.SUB_SOURCE_ID_COL);
@@ -128,9 +135,8 @@ class FileBytesSubMemoryBlock extends SubMemoryBlock {
 			long size) {
 		long sourceId = fileBytes.getId();
 		ByteSourceRange bsRange = new ByteSourceRange(block, start, size, sourceId,
-			fileBytesOffset + memBlockOffset - startingOffset);
+			fileBytesOffset + memBlockOffset - subBlockOffset);
 		return new ByteSourceRangeList(bsRange);
 	}
 
 }
-

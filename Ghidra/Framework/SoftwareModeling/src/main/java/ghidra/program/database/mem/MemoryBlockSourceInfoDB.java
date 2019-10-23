@@ -40,7 +40,7 @@ class MemoryBlockSourceInfoDB implements MemoryBlockSourceInfo {
 	 */
 	@Override
 	public long getLength() {
-		return subBlock.length;
+		return subBlock.subBlockLength;
 	}
 
 	/**
@@ -48,7 +48,7 @@ class MemoryBlockSourceInfoDB implements MemoryBlockSourceInfo {
 	 */
 	@Override
 	public Address getMinAddress() {
-		return block.getStart().add(subBlock.startingOffset);
+		return block.getStart().add(subBlock.subBlockOffset);
 	}
 
 	/**
@@ -56,7 +56,7 @@ class MemoryBlockSourceInfoDB implements MemoryBlockSourceInfo {
 	 */
 	@Override
 	public Address getMaxAddress() {
-		return block.getStart().add(subBlock.startingOffset + subBlock.length - 1);
+		return block.getStart().add(subBlock.subBlockOffset + subBlock.subBlockLength - 1);
 	}
 
 	/**
@@ -104,7 +104,7 @@ class MemoryBlockSourceInfoDB implements MemoryBlockSourceInfo {
 	public long getFileBytesOffset(Address address) {
 		if (subBlock instanceof FileBytesSubMemoryBlock && contains(address)) {
 			long blockOffset = address.subtract(getMinAddress());
-			long subBlockOffset = blockOffset - subBlock.startingOffset;
+			long subBlockOffset = blockOffset - subBlock.subBlockOffset;
 			return ((FileBytesSubMemoryBlock) subBlock).getFileBytesOffset() + subBlockOffset;
 		}
 		return -1;

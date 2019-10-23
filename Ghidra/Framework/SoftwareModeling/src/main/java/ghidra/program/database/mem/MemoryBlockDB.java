@@ -631,7 +631,7 @@ public class MemoryBlockDB implements MemoryBlock {
 		long startingOffset = 0;
 		for (SubMemoryBlock subBlock : subBlocks) {
 			subBlock.setParentIdAndStartingOffset(id, startingOffset);
-			startingOffset += subBlock.length;
+			startingOffset += subBlock.subBlockLength;
 		}
 	}
 
@@ -692,7 +692,7 @@ public class MemoryBlockDB implements MemoryBlock {
 		size = Math.min(size, length - offset);
 
 		SubMemoryBlock subBlock = getSubBlock(offset);
-		long subSize = Math.min(size, subBlock.length - (offset - subBlock.getStartingOffset()));
+		long subSize = Math.min(size, subBlock.subBlockLength - (offset - subBlock.getStartingOffset()));
 		if (subSize == size) {
 			return subBlock.getByteSourceRangeList(this, address, offset, size);
 		}
@@ -702,7 +702,7 @@ public class MemoryBlockDB implements MemoryBlock {
 		long total = subSize;
 		while (total < size) {
 			subBlock = getSubBlock(offset + total);
-			subSize = Math.min(size - total, subBlock.length);
+			subSize = Math.min(size - total, subBlock.subBlockLength);
 			start = address.add(total);
 			set.add(subBlock.getByteSourceRangeList(this, start, offset + total, subSize));
 			total += subSize;
