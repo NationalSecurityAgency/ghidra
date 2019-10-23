@@ -80,7 +80,8 @@ abstract class SubMemoryBlock implements Comparable<SubMemoryBlock> {
 	 * @return true if the offset is valid for this block
 	 */
 	public final boolean contains(long memBlockOffset) {
-		return memBlockOffset >= subBlockOffset && memBlockOffset < subBlockOffset + subBlockLength;
+		return (memBlockOffset >= subBlockOffset) &&
+			(memBlockOffset < subBlockOffset + subBlockLength);
 	}
 
 	/**

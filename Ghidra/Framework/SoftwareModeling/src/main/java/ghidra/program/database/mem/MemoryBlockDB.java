@@ -688,23 +688,26 @@ public class MemoryBlockDB implements MemoryBlock {
 	}
 
 	ByteSourceRangeList getByteSourceRangeList(Address address, long size) {
-		long offset = address.subtract(startAddress);
-		size = Math.min(size, length - offset);
+		long blockOffset = address.subtract(startAddress);
+		size = Math.min(size, length - blockOffset);
 
-		SubMemoryBlock subBlock = getSubBlock(offset);
-		long subSize = Math.min(size, subBlock.subBlockLength - (offset - subBlock.getStartingOffset()));
+		SubMemoryBlock subBlock = getSubBlock(blockOffset);
+		long subBlockOffset = blockOffset - subBlock.getStartingOffset();
+		long available = subBlock.subBlockLength - subBlockOffset;
+		long subSize = Math.min(size, available);
 		if (subSize == size) {
-			return subBlock.getByteSourceRangeList(this, address, offset, size);
+			return subBlock.getByteSourceRangeList(this, address, blockOffset, size);
 		}
 		Address start = address;
-		ByteSourceRangeList set = subBlock.getByteSourceRangeList(this, start, offset, subSize);
+		ByteSourceRangeList set =
+			subBlock.getByteSourceRangeList(this, start, blockOffset, subSize);
 
 		long total = subSize;
 		while (total < size) {
-			subBlock = getSubBlock(offset + total);
+			subBlock = getSubBlock(blockOffset + total);
 			subSize = Math.min(size - total, subBlock.subBlockLength);
 			start = address.add(total);
-			set.add(subBlock.getByteSourceRangeList(this, start, offset + total, subSize));
+			set.add(subBlock.getByteSourceRangeList(this, start, blockOffset + total, subSize));
 			total += subSize;
 		}
 		return set;
