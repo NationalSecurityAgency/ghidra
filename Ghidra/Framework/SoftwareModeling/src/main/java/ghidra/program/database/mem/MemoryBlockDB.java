@@ -477,7 +477,7 @@ public class MemoryBlockDB implements MemoryBlock {
 		int totalCopied = 0;
 		try {
 			while (totalCopied < len) {
-				SubMemoryBlock subBlock = getSubBlock(offset);
+				SubMemoryBlock subBlock = getSubBlock(offset + totalCopied);
 				totalCopied += subBlock.putBytes(offset + totalCopied, b, off + totalCopied,
 					len - totalCopied);
 			}
