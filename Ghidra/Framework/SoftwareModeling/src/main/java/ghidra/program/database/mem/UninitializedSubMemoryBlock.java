@@ -28,7 +28,7 @@ class UninitializedSubMemoryBlock extends SubMemoryBlock {
 
 	UninitializedSubMemoryBlock(MemoryMapDBAdapter adapter, Record record) {
 		super(adapter, record);
-		startingOffset = record.getLongValue(MemoryMapDBAdapter.SUB_START_OFFSET_COL);
+		subBlockOffset = record.getLongValue(MemoryMapDBAdapter.SUB_START_OFFSET_COL);
 	}
 
 	@Override
@@ -38,10 +38,10 @@ class UninitializedSubMemoryBlock extends SubMemoryBlock {
 
 	@Override
 	public byte getByte(long offset) throws MemoryAccessException {
-		if (offset < startingOffset || offset >= startingOffset + length) {
+		if (offset < subBlockOffset || offset >= subBlockOffset + subBlockLength) {
 			throw new IllegalArgumentException(
-				"Offset " + offset + "is out of bounds. Should be in [" + startingOffset + "," +
-					(startingOffset + length - 1));
+				"Offset " + offset + "is out of bounds. Should be in [" + subBlockOffset + "," +
+					(subBlockOffset + subBlockLength - 1));
 		}
 		throw new MemoryAccessException("Attempted to read from uninitialized block");
 	}
@@ -66,7 +66,7 @@ class UninitializedSubMemoryBlock extends SubMemoryBlock {
 		if (!(block instanceof UninitializedSubMemoryBlock)) {
 			return false;
 		}
-		setLength(length + block.length);
+		setLength(subBlockLength + block.subBlockLength);
 		adapter.deleteSubBlock(block.record.getKey());
 		return true;
 	}
@@ -79,10 +79,10 @@ class UninitializedSubMemoryBlock extends SubMemoryBlock {
 	@Override
 	protected SubMemoryBlock split(long memBlockOffset) throws IOException {
 		// convert from offset in block to offset in this sub block
-		long offset = memBlockOffset - startingOffset;
-		long newLength = length - offset;
-		length = offset;
-		record.setLongValue(MemoryMapDBAdapter.SUB_LENGTH_COL, length);
+		long offset = memBlockOffset - subBlockOffset;
+		long newLength = subBlockLength - offset;
+		subBlockLength = offset;
+		record.setLongValue(MemoryMapDBAdapter.SUB_LENGTH_COL, subBlockLength);
 		adapter.updateSubBlockRecord(record);
 
 		Record newSubRecord = adapter.createSubBlockRecord(-1, 0, newLength,

@@ -18,6 +18,7 @@ package ghidra.program.database.mem;
 import static org.junit.Assert.*;
 
 import java.io.ByteArrayInputStream;
+import java.util.Arrays;
 import java.util.List;
 
 import org.junit.*;
@@ -313,6 +314,27 @@ public class MemBlockDBTest extends AbstractGenericTest {
 		for (int i = 0; i < 100; i++) {
 			assertEquals(i + 10, b[i]);
 		}
+	}
+
+	@Test
+	public void testWriteBytesAcrossSubBlocks() throws Exception {
+		FileBytes fileBytes = createFileBytes();
+		MemoryBlock block1 = createFileBytesBlock(fileBytes, addr(10), 25, 10);
+		MemoryBlock block2 = createFileBytesBlock(fileBytes, addr(20), 50, 10);
+		mem.join(block1, block2);
+		byte[] bytes = createBytes(20);
+		mem.setBytes(addr(10), bytes);
+		byte[] readBytes = new byte[20];
+		mem.getBytes(addr(10), readBytes);
+		assertTrue(Arrays.equals(bytes, readBytes));
+	}
+
+	private byte[] createBytes(int size) {
+		byte[] bytes = new byte[size];
+		for (int i = 0; i < size; i++) {
+			bytes[i] = (byte) i;
+		}
+		return bytes;
 	}
 
 	@Test

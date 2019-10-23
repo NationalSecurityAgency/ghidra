@@ -249,7 +249,7 @@ public class MemoryMapDBAdapterV3 extends MemoryMapDBAdapter {
 		long startingOffset = 0;
 		for (SubMemoryBlock subMemoryBlock : splitBlocks) {
 			subMemoryBlock.setParentIdAndStartingOffset(key, startingOffset);
-			startingOffset += subMemoryBlock.length;
+			startingOffset += subMemoryBlock.subBlockLength;
 		}
 
 		memBlockTable.putRecord(blockRecord);

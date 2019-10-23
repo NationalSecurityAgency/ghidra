@@ -30,14 +30,14 @@ abstract class SubMemoryBlock implements Comparable<SubMemoryBlock> {
 
 	protected final MemoryMapDBAdapter adapter;
 	protected final Record record;
-	protected long length;
-	protected long startingOffset;
+	protected long subBlockLength;
+	protected long subBlockOffset;
 
 	protected SubMemoryBlock(MemoryMapDBAdapter adapter, Record record) {
 		this.adapter = adapter;
 		this.record = record;
-		this.startingOffset = record.getLongValue(MemoryMapDBAdapter.SUB_START_OFFSET_COL);
-		this.length = record.getLongValue(MemoryMapDBAdapter.SUB_LENGTH_COL);
+		this.subBlockOffset = record.getLongValue(MemoryMapDBAdapter.SUB_START_OFFSET_COL);
+		this.subBlockLength = record.getLongValue(MemoryMapDBAdapter.SUB_LENGTH_COL);
 	}
 
 	/**
@@ -62,7 +62,7 @@ abstract class SubMemoryBlock implements Comparable<SubMemoryBlock> {
 	 * @return the starting offset for this sub block.
 	 */
 	public final long getStartingOffset() {
-		return startingOffset;
+		return subBlockOffset;
 	}
 
 	/**
@@ -70,7 +70,7 @@ abstract class SubMemoryBlock implements Comparable<SubMemoryBlock> {
 	 * @return the length of this sub block
 	 */
 	public final long getLength() {
-		return length;
+		return subBlockLength;
 	}
 
 	/**
@@ -80,7 +80,8 @@ abstract class SubMemoryBlock implements Comparable<SubMemoryBlock> {
 	 * @return true if the offset is valid for this block
 	 */
 	public final boolean contains(long memBlockOffset) {
-		return memBlockOffset >= startingOffset && memBlockOffset < startingOffset + length;
+		return (memBlockOffset >= subBlockOffset) &&
+			(memBlockOffset < subBlockOffset + subBlockLength);
 	}
 
 	/**
@@ -158,7 +159,7 @@ abstract class SubMemoryBlock implements Comparable<SubMemoryBlock> {
 	 * @throws IOException if a database error occurs
 	 */
 	protected void setLength(long length) throws IOException {
-		this.length = length;
+		this.subBlockLength = length;
 		record.setLongValue(MemoryMapDBAdapter.SUB_LENGTH_COL, length);
 		adapter.updateSubBlockRecord(record);
 	}
@@ -216,7 +217,7 @@ abstract class SubMemoryBlock implements Comparable<SubMemoryBlock> {
 	 * @throws IOException if a database error occurs.
 	 */
 	protected void setParentIdAndStartingOffset(long key, long startingOffset) throws IOException {
-		this.startingOffset = startingOffset;
+		this.subBlockOffset = startingOffset;
 		record.setLongValue(MemoryMapDBAdapter.SUB_PARENT_ID_COL, key);
 		record.setLongValue(MemoryMapDBAdapter.SUB_START_OFFSET_COL, startingOffset);
 		adapter.updateSubBlockRecord(record);

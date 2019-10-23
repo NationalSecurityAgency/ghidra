@@ -45,13 +45,14 @@ class BitMappedSubMemoryBlock extends SubMemoryBlock {
 	}
 
 	@Override
-	public byte getByte(long offset) throws MemoryAccessException, IOException {
+	public byte getByte(long offsetInMemBlock) throws MemoryAccessException, IOException {
+		long offsetInSubBlock = offsetInMemBlock - subBlockOffset;
 		if (ioPending) {
 			throw new MemoryAccessException("Cyclic Access");
 		}
 		try {
 			ioPending = true;
-			return getBitOverlayByte(offset);
+			return getBitOverlayByte(offsetInSubBlock);
 		}
 		catch (AddressOverflowException e) {
 			throw new MemoryAccessException("No memory at address");
@@ -62,21 +63,23 @@ class BitMappedSubMemoryBlock extends SubMemoryBlock {
 	}
 
 	public AddressRange getMappedRange() {
-		Address endMappedAddress = mappedAddress.add((length - 1) / 8);
+		Address endMappedAddress = mappedAddress.add((subBlockLength - 1) / 8);
 		return new AddressRangeImpl(mappedAddress, endMappedAddress);
 	}
 
 	@Override
-	public int getBytes(long offset, byte[] b, int off, int len)
+	public int getBytes(long offsetInMemBlock, byte[] b, int off, int len)
 			throws MemoryAccessException, IOException {
+		long offsetInSubBlock = offsetInMemBlock - subBlockOffset;
+		long available = subBlockLength - offsetInSubBlock;
+		len = (int) Math.min(len, available);
 		if (ioPending) {
 			new MemoryAccessException("Cyclic Access");
 		}
 		try {
 			ioPending = true;
-			len = (int) Math.min(len, length - offset);
 			for (int i = 0; i < len; i++) {
-				b[i + off] = getBitOverlayByte(offset++);
+				b[i + off] = getBitOverlayByte(offsetInMemBlock++);
 			}
 			return len;
 		}
@@ -89,13 +92,15 @@ class BitMappedSubMemoryBlock extends SubMemoryBlock {
 	}
 
 	@Override
-	public void putByte(long offset, byte b) throws MemoryAccessException, IOException {
+	public void putByte(long offsetInMemBlock, byte b) throws MemoryAccessException, IOException {
+		long offsetInSubBlock = offsetInMemBlock - subBlockOffset;
 		try {
 			if (ioPending) {
 				new MemoryAccessException("Cyclic Access");
 			}
 			ioPending = true;
-			doPutByte(mappedAddress.addNoWrap(offset / 8), (int) (offset % 8), b);
+			doPutByte(mappedAddress.addNoWrap(offsetInSubBlock / 8), (int) (offsetInSubBlock % 8),
+				b);
 		}
 		catch (AddressOverflowException e) {
 			new MemoryAccessException("No memory at address");
@@ -107,17 +112,20 @@ class BitMappedSubMemoryBlock extends SubMemoryBlock {
 	}
 
 	@Override
-	public int putBytes(long offset, byte[] b, int off, int len)
+	public int putBytes(long offsetInMemBlock, byte[] b, int off, int len)
 			throws MemoryAccessException, IOException {
+		long offsetInSubBlock = offsetInMemBlock - subBlockOffset;
+		long available = subBlockLength - offsetInSubBlock;
+		len = (int) Math.min(len, available);
 		try {
 			if (ioPending) {
 				new MemoryAccessException("Cyclic Access");
 			}
 			ioPending = true;
-			len = (int) Math.min(len, length - offset);
 			for (int i = 0; i < len; i++) {
-				doPutByte(mappedAddress.addNoWrap(offset / 8), (int) (offset % 8), b[off + i]);
-				offset++;
+				doPutByte(mappedAddress.addNoWrap(offsetInSubBlock / 8),
+					(int) (offsetInSubBlock % 8), b[off + i]);
+				offsetInSubBlock++;
 			}
 			return len;
 		}

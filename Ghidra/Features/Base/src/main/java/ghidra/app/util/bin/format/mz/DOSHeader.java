@@ -23,6 +23,9 @@ import ghidra.app.util.bin.format.FactoryBundledWithBinaryReader;
 import ghidra.app.util.bin.format.Writeable;
 import ghidra.app.util.bin.format.ne.InvalidWindowsHeaderException;
 import ghidra.app.util.bin.format.ne.WindowsHeader;
+import ghidra.app.util.bin.format.pe.InvalidNTHeaderException;
+import ghidra.app.util.bin.format.pe.NTHeader;
+import ghidra.app.util.bin.format.pe.PortableExecutable.SectionLayout;
 import ghidra.program.model.data.*;
 import ghidra.util.DataConverter;
 import ghidra.util.exception.DuplicateNameException;
@@ -271,6 +274,27 @@ public class DOSHeader implements StructConverter, Writeable {
         }
         return false;
     }
+
+	/**
+	 * Returns true if a PE header exists.
+	 * @return true if a PE header exists
+	 */
+	public boolean hasPeHeader() {
+		if (e_lfanew >= 0 && e_lfanew <= 0x1000000) {
+			try {
+				NTHeader ntHeader =
+					NTHeader.createNTHeader(reader, e_lfanew, SectionLayout.FILE, false, false);
+				if (ntHeader != null && ntHeader.getOptionalHeader() != null) {
+					return true;
+				}
+			}
+			catch (InvalidNTHeaderException | IOException e) {
+				// Fall through and return false
+			}
+		}
+		return false;
+	}
+
     /**
      * Returns true if the DOS magic number is correct
      * @return true if the DOS magic number is correct
