@@ -4542,6 +4542,7 @@ void universal_action(Architecture *conf)
 	actprop->addRule( new RuleHumptyOr("analysis") );
 	actprop->addRule( new RuleNegateIdentity("analysis") );
 	actprop->addRule( new RuleSubNormal("analysis") );
+	actprop->addRule( new RulePositiveDiv("analysis") );
 	actprop->addRule( new RuleDivTermAdd("analysis") );
 	actprop->addRule( new RuleDivTermAdd2("analysis") );
 	actprop->addRule( new RuleDivOpt("analysis") );

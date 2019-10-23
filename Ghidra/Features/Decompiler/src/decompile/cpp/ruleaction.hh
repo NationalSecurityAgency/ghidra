@@ -1115,6 +1115,17 @@ public:
 //   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
 // };
 
+class RulePositiveDiv : public Rule {
+public:
+  RulePositiveDiv(const string &g) : Rule( g, 0, "positivediv") {}	///< Constructor
+  virtual Rule *clone(const ActionGroupList &grouplist) const {
+    if (!grouplist.contains(getGroup())) return (Rule *)0;
+    return new RulePositiveDiv(getGroup());
+  }
+  virtual void getOpList(vector<uint4> &oplist) const;
+  virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+};
+
 class RuleDivTermAdd : public Rule {
 public:
   RuleDivTermAdd(const string &g) : Rule( g, 0, "divtermadd") {}	///< Constructor
