@@ -100,6 +100,16 @@ public class ElfDynamicType {
 		"DT_PREINIT_ARRAYSZ", "Size in bytes of DT_PREINIT_ARRAY", ElfDynamicValueType.VALUE);
 
 	// OS-specific range: 0x6000000d - 0x6ffff000
+	
+	public static ElfDynamicType DT_ANDROID_REL =
+		addDefaultDynamicType(0x6000000F, "DT_ANDROID_REL", "Address of Rel relocs", ElfDynamicValueType.ADDRESS);
+	public static ElfDynamicType DT_ANDROID_RELSZ = addDefaultDynamicType(0x60000010, "DT_ANDROID_RELSZ",
+		"Total size of Rel relocs", ElfDynamicValueType.VALUE);
+
+	public static ElfDynamicType DT_ANDROID_RELA =
+		addDefaultDynamicType(0x60000011, "DT_ANDROID_RELA", "Address of Rela relocs", ElfDynamicValueType.ADDRESS);
+	public static ElfDynamicType DT_ANDROID_RELASZ = addDefaultDynamicType(0x60000012, "DT_ANDROID_RELASZ",
+		"Total size of Rela relocs", ElfDynamicValueType.VALUE);		
 
 	// Value Range (??): 0x6ffffd00 - 0x6ffffdff
 

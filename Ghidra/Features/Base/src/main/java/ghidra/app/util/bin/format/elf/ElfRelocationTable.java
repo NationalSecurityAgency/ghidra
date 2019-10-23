@@ -22,9 +22,11 @@ import java.util.List;
 import generic.continues.GenericFactory;
 import ghidra.app.util.bin.ByteArrayConverter;
 import ghidra.app.util.bin.format.FactoryBundledWithBinaryReader;
+import ghidra.app.util.bin.format.dwarf4.LEB128;
 import ghidra.program.model.data.ArrayDataType;
 import ghidra.program.model.data.DataType;
 import ghidra.util.DataConverter;
+import ghidra.util.Msg;
 
 /**
  * A container class to hold ELF relocations.
@@ -73,6 +75,17 @@ public class ElfRelocationTable implements ElfFileSection, ByteArrayConverter {
 		return elfRelocationTable;
 	}
 
+	static ElfRelocationTable createAndroidElfRelocationTable(FactoryBundledWithBinaryReader reader,
+			ElfHeader header, ElfSectionHeader relocTableSection, long fileOffset, long addrOffset,
+			long length, long entrySize, boolean addendTypeReloc, ElfSymbolTable symbolTable,
+			ElfSectionHeader sectionToBeRelocated) throws IOException {
+		ElfRelocationTable elfRelocationTable =
+			(ElfRelocationTable) reader.getFactory().create(ElfRelocationTable.class);
+		elfRelocationTable.initAndroidElfRelocationTable(reader, header, relocTableSection, fileOffset,
+			addrOffset, length, entrySize, addendTypeReloc, symbolTable, sectionToBeRelocated);
+		return elfRelocationTable;
+	}
+
 	/**
 	 * DO NOT USE THIS CONSTRUCTOR, USE create*(GenericFactory ...) FACTORY METHODS INSTEAD.
 	 */
@@ -111,6 +124,110 @@ public class ElfRelocationTable implements ElfFileSection, ByteArrayConverter {
 
 		relocs = new ElfRelocation[relocList.size()];
 		relocList.toArray(relocs);
+	}
+
+	private void initAndroidElfRelocationTable(FactoryBundledWithBinaryReader reader, ElfHeader header,
+			ElfSectionHeader relocTableSection, long fileOffset, long addrOffset, long length,
+			long entrySize, boolean addendTypeReloc, ElfSymbolTable symbolTable,
+			ElfSectionHeader sectionToBeRelocated) throws IOException {
+
+		this.relocTableSection = relocTableSection;
+		this.fileOffset = fileOffset;
+		this.addrOffset = addrOffset;
+		this.length = length;
+		this.entrySize = entrySize;
+		this.addendTypeReloc = addendTypeReloc;
+		this.elfHeader = header;
+		this.factory = reader.getFactory();
+
+		this.sectionToBeRelocated = sectionToBeRelocated;
+		this.symbolTable = symbolTable;
+
+		long ptr = reader.getPointerIndex();
+		reader.setPointerIndex(fileOffset);
+
+		String identifier = reader.readNextAsciiString(4);
+		if (!"APS2".equals(identifier)) {
+			Msg.error(this, "Invalid indentifier value for Android packed relocation table: " + identifier);
+			return;
+		}
+
+		List<ElfRelocation> relocList = parseAndroidRelocations(reader, header);
+
+		reader.setPointerIndex(ptr);
+
+		relocs = new ElfRelocation[relocList.size()];
+		relocList.toArray(relocs);
+	}
+
+	private List<ElfRelocation> parseAndroidRelocations(FactoryBundledWithBinaryReader reader, ElfHeader header) {
+		List<ElfRelocation> relocations = new ArrayList<>();
+		
+		try {		
+			long RELOCATION_GROUPED_BY_INFO_FLAG = 1;
+			long RELOCATION_GROUPED_BY_OFFSET_DELTA_FLAG = 2;
+			long RELOCATION_GROUPED_BY_ADDEND_FLAG = 4;
+			long RELOCATION_GROUP_HAS_ADDEND_FLAG = 8;
+	
+			int relocationIndex = 0;
+			long remainingRelocations = LEB128.decode(reader, true);
+			long offset = LEB128.decode(reader, true);
+			long addend = 0;
+	
+			while (remainingRelocations > 0) {
+				long groupSize = LEB128.decode(reader, true);
+	
+				if (groupSize > remainingRelocations) {
+					Msg.warn(this, "Group relocation count " + groupSize + " exceeded total count " + remainingRelocations);
+					break;
+				}
+	
+				long groupFlags = LEB128.decode(reader, true);
+				boolean groupedByInfo = (groupFlags & RELOCATION_GROUPED_BY_INFO_FLAG) != 0;
+				boolean groupedByDelta = (groupFlags & RELOCATION_GROUPED_BY_OFFSET_DELTA_FLAG) != 0;
+				boolean groupedByAddend = (groupFlags & RELOCATION_GROUPED_BY_ADDEND_FLAG) != 0;
+				boolean groupHasAddend = (groupFlags & RELOCATION_GROUP_HAS_ADDEND_FLAG) != 0;
+	
+				long groupOffsetDelta = groupedByDelta ? LEB128.decode(reader, true) : 0;
+				long groupRInfo = groupedByInfo ? LEB128.decode(reader, true) : 0;
+	
+				if (groupedByAddend && groupHasAddend) {
+					addend += LEB128.decode(reader, true);
+				}
+	
+				for (int i = 0; i < groupSize; i++) {
+					offset += groupedByDelta ? groupOffsetDelta : LEB128.decode(reader, true);
+					long info = groupedByInfo ? groupRInfo : LEB128.decode(reader, true);
+	
+					long rAddend = 0;
+					if (groupHasAddend) {
+						if (!groupedByAddend) {
+							addend += LEB128.decode(reader, true);
+						}
+						rAddend = addend;
+					}
+	
+					try {
+						relocations.add(ElfRelocation.createElfRelocation(reader, header, relocationIndex, addendTypeReloc,
+								offset, info, rAddend));
+					} catch (IOException e) {
+						Msg.error(this, "Error creating relocation entry");
+					}
+	
+					relocationIndex++;
+				}
+	
+				if (!groupHasAddend) {
+					addend = 0;
+				}
+	
+				remainingRelocations -= groupSize;
+			}
+		} catch (IOException e) {
+			Msg.error(this, "Error reading relocations.", e);
+		}
+		
+		return relocations;
 	}
 
 	/**
@@ -199,6 +316,11 @@ public class ElfRelocationTable implements ElfFileSection, ByteArrayConverter {
 	 */
 	@Override
 	public DataType toDataType() {
+		if (relocTableSection.getType() == ElfSectionHeaderConstants.SHT_ANDROID_REL ||
+			relocTableSection.getType() == ElfSectionHeaderConstants.SHT_ANDROID_RELA ) {
+			return new AndroidPackedRelocationTableDataType(relocs, (int) length);
+		}
+		
 		ElfRelocation relocationRepresentative =
 			ElfRelocation.createElfRelocation(factory, elfHeader, -1, addendTypeReloc);
 		DataType relocEntryDataType = relocationRepresentative.toDataType();
