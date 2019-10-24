@@ -18,7 +18,8 @@ package ghidra.app.plugin.core.datamgr.util;
 import java.util.*;
 import java.util.Map.Entry;
 
-import docking.widgets.tree.*;
+import docking.widgets.tree.GTreeNode;
+import docking.widgets.tree.GTreeState;
 import ghidra.app.plugin.core.datamgr.DataTypeManagerPlugin;
 import ghidra.app.plugin.core.datamgr.DataTypesProvider;
 import ghidra.app.plugin.core.datamgr.archive.Archive;
@@ -122,8 +123,8 @@ public class DataTypeTreeDeleteTask extends Task {
 	}
 
 	private void collapseArchives(DataTypeArchiveGTree tree) {
-		GTreeRootNode root = tree.getRootNode();
-		List<GTreeNode> children = root.getAllChildren();
+		GTreeNode root = tree.getModelRoot();
+		List<GTreeNode> children = root.getChildren();
 		for (GTreeNode archive : children) {
 			tree.collapseAll(archive);
 		}

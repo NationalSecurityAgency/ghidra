@@ -105,7 +105,7 @@ public class ProjectDataNewFolderAction extends ProjectDataContextAction {
 	private GTreeNode findNodeForFolder(DataTree tree, DomainFolder newFolder) {
 		List<String> folderPathList = new ArrayList<>();
 		getFolderPath(newFolder, folderPathList);
-		GTreeNode node = tree.getRootNode();
+		GTreeNode node = tree.getModelRoot();
 		for (int i = 0; node != null && i < folderPathList.size(); i++) {
 			node = node.getChild(folderPathList.get(i));
 		}

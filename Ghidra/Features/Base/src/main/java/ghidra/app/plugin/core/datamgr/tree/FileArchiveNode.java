@@ -32,8 +32,8 @@ public class FileArchiveNode extends ArchiveNode {
 
 	FileArchive fileArchive; // casted reference for easy access
 
-	public FileArchiveNode(FileArchive archive) {
-		super(archive);
+	public FileArchiveNode(FileArchive archive, ArrayPointerFilterState filterState) {
+		super(archive, filterState);
 		this.fileArchive = archive;
 	}
 

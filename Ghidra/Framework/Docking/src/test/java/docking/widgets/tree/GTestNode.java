@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +15,36 @@
  */
 package docking.widgets.tree;
 
+import javax.swing.Icon;
+
 /**
- * Root nodes must implement this interface.  They only have one additional responsibility
- * and that is they must support saving off the tree that they belong to.
- *
+ * GTreeNode implementation used for testing the GTree
  */
-public interface GTreeRootNode extends GTreeNode {
-	public void setGTree(GTree tree);
-	public GTree getGTree();
+public class GTestNode extends GTreeNode {
+	private String name;
+
+	public GTestNode(String name) {
+		this.name = name;
+	}
+
+	@Override
+	public String getName() {
+		return name;
+	}
+
+	@Override
+	public Icon getIcon(boolean expanded) {
+		return null;
+	}
+
+	@Override
+	public String getToolTip() {
+		return "tooltip: " + name;
+	}
+
+	@Override
+	public boolean isLeaf() {
+		return false;
+	}
+
 }

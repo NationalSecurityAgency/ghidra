@@ -297,7 +297,7 @@ public class SymbolTreePlugin3Test extends AbstractGhidraHeadedIntegrationTest {
 			}
 		}
 
-		List<GTreeNode> children = nsParentNode.getAllChildren();
+		List<GTreeNode> children = nsParentNode.getChildren();
 
 		//@formatter:off
 		List<String> symbolNames = 
@@ -342,7 +342,7 @@ public class SymbolTreePlugin3Test extends AbstractGhidraHeadedIntegrationTest {
 		util.waitForTree();
 
 		GTreeNode cnode = rootNode.getChild(4);
-		List<GTreeNode> children = cnode.getAllChildren();
+		List<GTreeNode> children = cnode.getChildren();
 
 		//@formatter:off
 		List<String> symbolNames = 

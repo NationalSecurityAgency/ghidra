@@ -82,7 +82,7 @@ public class SetLanguageTest extends AbstractGhidraHeadedIntegrationTest {
 		GTree tree = findComponent(frontEndTool.getToolFrame(), GTree.class);
 		waitForTree(tree);
 
-		GTreeNode rootNode = tree.getRootNode();
+		GTreeNode rootNode = tree.getViewRoot();
 		xyzFolderNode = rootNode.getChild(0);
 		notepadNode = rootNode.getChild(1);
 		notepadFile = ((DomainFileNode) notepadNode).getDomainFile();
@@ -254,8 +254,10 @@ public class SetLanguageTest extends AbstractGhidraHeadedIntegrationTest {
 		try {
 			int txId = p.startTransaction("set Language");
 
-			Function f = p.getListing().createFunction("BOB", addr("0x10041a8"),
-				new AddressSet(addr("0x10041a8"), addr("0x10041c0")), SourceType.USER_DEFINED);
+			Function f = p.getListing()
+					.createFunction("BOB", addr("0x10041a8"),
+						new AddressSet(addr("0x10041a8"), addr("0x10041c0")),
+						SourceType.USER_DEFINED);
 			f.setCustomVariableStorage(true);
 			ParameterImpl param = new ParameterImpl("PARAM_ONE", null, eax, p);
 			f.addParameter(param, SourceType.USER_DEFINED);
@@ -265,10 +267,12 @@ public class SetLanguageTest extends AbstractGhidraHeadedIntegrationTest {
 			f.addLocalVariable(local1, SourceType.USER_DEFINED);
 			f.addLocalVariable(local2, SourceType.USER_DEFINED);
 
-			p.getReferenceManager().addRegisterReference(addr("0x10041b2"), 0, esi, RefType.DATA,
-				SourceType.USER_DEFINED);
-			p.getReferenceManager().addRegisterReference(addr("0x10041b3"), 0, edi, RefType.DATA,
-				SourceType.USER_DEFINED);
+			p.getReferenceManager()
+					.addRegisterReference(addr("0x10041b2"), 0, esi, RefType.DATA,
+						SourceType.USER_DEFINED);
+			p.getReferenceManager()
+					.addRegisterReference(addr("0x10041b3"), 0, edi, RefType.DATA,
+						SourceType.USER_DEFINED);
 
 			p.endTransaction(txId, true);
 

@@ -18,12 +18,13 @@ package ghidra.plugins.fsbrowser;
 import java.util.*;
 
 import docking.widgets.tree.GTreeNode;
+import docking.widgets.tree.GTreeSlowLoadingNode;
 import ghidra.formats.gfilesystem.*;
 
 /**
  * Base interface for all filesystem browser gtree nodes.
  */
-public interface FSBNode extends GTreeNode {
+public abstract class FSBNode extends GTreeSlowLoadingNode {
 
 	/**
 	 * Returns the {@link FSRL} of the filesystem object that this node represents.
@@ -32,7 +33,7 @@ public interface FSBNode extends GTreeNode {
 	 *
 	 * @return {@link FSRL} of the filesystem object.
 	 */
-	FSRL getFSRL();
+	public abstract FSRL getFSRL();
 
 	/**
 	 * Returns the {@link FSBRootNode} that represents the root of the file system that
@@ -61,7 +62,7 @@ public interface FSBNode extends GTreeNode {
 
 		Collections.sort(files, FSUtilities.GFILE_NAME_TYPE_COMPARATOR);
 		for (GFile child : files) {
-			nodes.add(getNodeFromFile(child));
+			nodes.add((GTreeNode) getNodeFromFile(child));
 		}
 		return nodes;
 	}

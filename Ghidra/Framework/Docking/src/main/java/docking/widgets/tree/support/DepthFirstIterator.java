@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,44 +15,51 @@
  */
 package docking.widgets.tree.support;
 
-import java.util.ConcurrentModificationException;
 import java.util.Iterator;
+import java.util.Stack;
 
-import docking.widgets.tree.GTree;
+import org.apache.commons.collections4.IteratorUtils;
+
 import docking.widgets.tree.GTreeNode;
 
+/**
+ * Implements an iterator over all GTreeNodes in some gTree (or subtree).  The nodes are
+ * return in depth first order.
+ */
 public class DepthFirstIterator implements Iterator<GTreeNode> {
-	private GTreeNode root;
-	private GTreeNode next;
+	private Stack<Iterator<GTreeNode>> stack = new Stack<>();
+	private Iterator<GTreeNode> it;
 	private GTreeNode lastNode;
-	private final GTree tree;
-	private final long mod;
-	public DepthFirstIterator(GTree tree, GTreeNode node) {
-		this.tree = tree;
-		this.root = node;
-		this.next = node;
-		this.mod = tree.getModificationID();
+
+	public DepthFirstIterator(GTreeNode node) {
+		it = IteratorUtils.singletonIterator(node);
 	}
 
+	@Override
 	public boolean hasNext() {
-		return next != null;
+		return !stack.isEmpty() || it.hasNext();
 	}
 
+	@Override
 	public GTreeNode next() {
-		checkForConcurrentModification();
-		lastNode = next;
-		next = findNext(next);
+		if (!it.hasNext()) {
+			if (stack.isEmpty()) {
+				return null;
+			}
+			it = stack.pop();
+		}
+		lastNode = it.next();
+		if (lastNode.getChildCount() > 0) {
+			if (it.hasNext()) {
+				stack.push(it);
+			}
+			it = lastNode.getChildren().iterator();
+		}
 		return lastNode;
 	}
 
-	private void checkForConcurrentModification() {
-		if (tree.getModificationID() != mod) {
-			throw new ConcurrentModificationException();
-		}
-	}
-
+	@Override
 	public void remove() {
-		checkForConcurrentModification();
 		GTreeNode parent = lastNode.getParent();
 		if (parent == null) {
 			throw new IllegalArgumentException("Can't delete root node!");
@@ -61,18 +67,4 @@ public class DepthFirstIterator implements Iterator<GTreeNode> {
 		parent.removeNode(lastNode);
 	}
 
-	private GTreeNode findNext(GTreeNode node) {
-		if (node.getChildCount() > 0) {
-			return node.getChild(0);
-		}
-		while(node != root) {
-			GTreeNode parent = node.getParent();
-			int nextIndexInParent = node.getIndexInParent()+1;
-			if (nextIndexInParent < parent.getChildCount()) {
-				return parent.getChild(nextIndexInParent);
-			}
-			node = parent;
-		}
-		return null;
-	}
 }

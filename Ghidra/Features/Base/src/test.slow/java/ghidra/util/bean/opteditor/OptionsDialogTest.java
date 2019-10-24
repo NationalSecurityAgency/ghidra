@@ -40,7 +40,8 @@ import docking.tool.ToolConstants;
 import docking.widgets.MultiLineLabel;
 import docking.widgets.filechooser.GhidraFileChooser;
 import docking.widgets.table.RowObjectFilterModel;
-import docking.widgets.tree.*;
+import docking.widgets.tree.GTree;
+import docking.widgets.tree.GTreeNode;
 import generic.test.TestUtils;
 import ghidra.GhidraOptions;
 import ghidra.app.plugin.core.console.ConsolePlugin;
@@ -836,8 +837,8 @@ public class OptionsDialogTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	private void waitForThreadedModel() throws InterruptedException {
-		GTreeRootNode root = (GTreeRootNode) treeModel.getRoot();
-		GTree gTree = root.getGTree();
+		GTreeNode root = (GTreeNode) treeModel.getRoot();
+		GTree gTree = root.getTree();
 		while (gTree.isBusy()) {
 			Thread.sleep(50);
 		}

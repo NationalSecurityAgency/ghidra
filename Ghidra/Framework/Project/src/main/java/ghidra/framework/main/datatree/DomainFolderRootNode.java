@@ -21,19 +21,16 @@ import javax.swing.Icon;
 import javax.swing.ImageIcon;
 
 import docking.tool.ToolConstants;
-import docking.widgets.tree.GTree;
-import docking.widgets.tree.GTreeRootNode;
 import ghidra.framework.client.RepositoryAdapter;
 import ghidra.framework.model.*;
 import resources.ResourceManager;
 
-public class DomainFolderRootNode extends DomainFolderNode implements GTreeRootNode {
+public class DomainFolderRootNode extends DomainFolderNode {
 	private static final ImageIcon CLOSED_PROJECT =
 		ResourceManager.loadImage("images/closedSmallFolder.png");
 	private static final ImageIcon OPEN_PROJECT =
 		ResourceManager.loadImage("images/openSmallFolder.png");
 
-	private GTree tree;
 	private String projectName;
 	private String toolTipText;
 
@@ -58,19 +55,8 @@ public class DomainFolderRootNode extends DomainFolderNode implements GTreeRootN
 	}
 
 	@Override
-	public GTree getGTree() {
-		return tree;
-	}
-
-	@Override
-	public void setGTree(GTree tree) {
-		this.tree = tree;
-	}
-
-	@Override
 	public void dispose() {
 		super.dispose();
-		tree = null;
 	}
 
 	@Override

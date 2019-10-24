@@ -13,23 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package docking.widgets.tree.tasks;
+package docking.widgets.tree;
 
-import docking.widgets.tree.*;
 import docking.widgets.tree.support.GTreeFilter;
+import docking.widgets.tree.tasks.*;
+import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
 public class GTreeFilterTask extends GTreeTask {
 
-	private final GTreeNode node;
 	private final GTreeFilter filter;
 	private final GTreeState defaultRestoreState;
 	private boolean cancelledProgramatically;
 
-	public GTreeFilterTask(GTree tree, GTreeNode node, GTreeFilter filter) {
+	public GTreeFilterTask(GTree tree, GTreeFilter filter) {
 		super(tree);
-		this.node = node;
 		this.filter = filter;
 
 		// save this now, before we modify the tree
@@ -39,31 +38,44 @@ public class GTreeFilterTask extends GTreeTask {
 	@Override
 	public void run(TaskMonitor monitor) {
 		if (filter == null) {
-			node.clearFilter();
+			tree.restoreNonFilteredRootNode();
 			restoreInSameTask(monitor);
 			return;
 		}
 
-		monitor.setMessage("Filtering...");
-		monitor.initialize(1000000000);
-
+		GTreeNode root = tree.getModelRoot();
 		try {
-			node.filter(filter, monitor, 0, 1000000000);
+			monitor.setMessage("Loading/Organizing Tree ....");
 
+			// disable tree events while loading to prevent unnecessary events from slowing
+			// down the operation
+			tree.setEventsEnabled(false);
+			int nodeCount = root.loadAll(monitor);
+			tree.setEventsEnabled(true);
+			monitor.setMessage("Filtering...");
+			monitor.initialize(nodeCount);
+			GTreeNode filtered = root.filter(filter, monitor);
+			runOnSwingThread(() -> tree.setFilteredRootNode(filtered));
 			if (filter.showFilterMatches()) {
-				expandInSameTask(monitor);
+				expandInSameTask(monitor, filtered);
 				restoreInSameTask(monitor);
 			}
+		}
+		catch (CloneNotSupportedException e) {
+			Msg.error(this, "Got Unexpected CloneNotSupportedException", e);
 		}
 		catch (CancelledException e) {
 			if (!cancelledProgramatically) {
 				tree.runTask(new GTreeClearTreeFilterTask(tree));
 			}
 		}
+		finally {
+			tree.setEventsEnabled(true);
+		}
 	}
 
-	private void expandInSameTask(TaskMonitor monitor) {
-		GTreeExpandAllTask expandTask = new GTreeExpandAllTask(tree, node);
+	private void expandInSameTask(TaskMonitor monitor, GTreeNode filtered) {
+		GTreeExpandAllTask expandTask = new GTreeExpandAllTask(tree, filtered);
 		expandTask.run(monitor);
 	}
 

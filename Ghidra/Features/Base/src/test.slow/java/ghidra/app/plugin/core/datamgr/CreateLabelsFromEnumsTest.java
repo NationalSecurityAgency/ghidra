@@ -89,7 +89,7 @@ public class CreateLabelsFromEnumsTest extends AbstractGhidraHeadedIntegrationTe
 		provider = plugin.getProvider();
 		tree = provider.getGTree();
 		waitForTree();
-		archiveRootNode = (ArchiveRootNode) tree.getRootNode();
+		archiveRootNode = (ArchiveRootNode) tree.getModelRoot();
 		programNode = (ArchiveNode) archiveRootNode.getChild(testName.getMethodName());
 		assertNotNull("Did not successfully wait for the program node to load", programNode);
 

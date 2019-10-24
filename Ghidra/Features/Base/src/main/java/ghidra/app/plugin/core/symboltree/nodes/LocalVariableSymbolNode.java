@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,29 +15,28 @@
  */
 package ghidra.app.plugin.core.symboltree.nodes;
 
-import ghidra.program.model.listing.Program;
-import ghidra.program.model.symbol.Symbol;
-
 import javax.swing.Icon;
 
+import ghidra.program.model.listing.Program;
+import ghidra.program.model.symbol.Symbol;
 import resources.ResourceManager;
-
 
 public class LocalVariableSymbolNode extends SymbolNode {
 
-    public static final Icon LOCAL_VARIABLE_ICON = ResourceManager.loadImage("images/LocalVariable.gif");
-    
-    LocalVariableSymbolNode(Program program, Symbol symbol) {
-        super( program, symbol );
-    }
+	public static final Icon LOCAL_VARIABLE_ICON =
+		ResourceManager.loadImage("images/LocalVariable.gif");
 
-    @Override
-    public Icon getIcon(boolean expanded) {
-        return LOCAL_VARIABLE_ICON;
-    }
-    
-    @Override
-    public void setNodeCut(boolean isCut) {
-        throw new UnsupportedOperationException( "Cannot cut a local variable node" );
-    }
+	LocalVariableSymbolNode(Program program, Symbol symbol) {
+		super(program, symbol);
+	}
+
+	@Override
+	public Icon getIcon(boolean expanded) {
+		return LOCAL_VARIABLE_ICON;
+	}
+
+	@Override
+	public void setNodeCut(boolean isCut) {
+		throw new UnsupportedOperationException("Cannot cut a local variable node");
+	}
 }

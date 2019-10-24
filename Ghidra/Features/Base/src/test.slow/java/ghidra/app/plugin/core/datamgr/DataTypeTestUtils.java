@@ -103,7 +103,7 @@ public class DataTypeTestUtils {
 		waitForTree(plugin);
 
 		GTree tree = plugin.getProvider().getGTree();
-		GTreeNode rootNode = tree.getRootNode();
+		GTreeNode rootNode = tree.getModelRoot();
 		return (ArchiveNode) rootNode.getChild(trimFullArchiveName(archiveName));
 	}
 
@@ -138,7 +138,7 @@ public class DataTypeTestUtils {
 		dataTypeManagerHandler.openArchive(file, checkout, isUserAction);
 
 		archiveTree = plugin.getProvider().getGTree();
-		GTreeNode rootNode = archiveTree.getRootNode();
+		GTreeNode rootNode = archiveTree.getViewRoot();
 		waitForTree(plugin);
 		return (ArchiveNode) rootNode.getChild(trimFullArchiveName(archiveName));
 	}
@@ -196,7 +196,7 @@ public class DataTypeTestUtils {
 
 		String archiveNodeName = trimFullArchiveName(archiveName);
 		GTree tree = plugin.getProvider().getGTree();
-		GTreeNode rootNode = tree.getRootNode();
+		GTreeNode rootNode = tree.getModelRoot();
 		ArchiveNode archiveNode = (ArchiveNode) rootNode.getChild(archiveNodeName);
 		if (archiveNode == null) {
 			throw new IllegalArgumentException(

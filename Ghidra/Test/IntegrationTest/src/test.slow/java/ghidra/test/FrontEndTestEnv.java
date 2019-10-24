@@ -27,7 +27,8 @@ import docking.*;
 import docking.action.DockingActionIf;
 import docking.test.AbstractDockingTest;
 import docking.widgets.OptionDialog;
-import docking.widgets.tree.*;
+import docking.widgets.tree.GTree;
+import docking.widgets.tree.GTreeNode;
 import generic.test.AbstractGTest;
 import generic.test.AbstractGenericTest;
 import ghidra.framework.main.FrontEndTool;
@@ -62,7 +63,7 @@ public class FrontEndTestEnv {
 	protected FrontEndTool frontEndTool;
 	protected DataTree tree;
 	protected DomainFolder rootFolder;
-	protected GTreeRootNode rootNode;
+	protected GTreeNode rootNode;
 
 	public FrontEndTestEnv() throws Exception {
 		this(false);
@@ -86,7 +87,7 @@ public class FrontEndTestEnv {
 		rootFolder.createFile(PROGRAM_A, p, TaskMonitor.DUMMY);
 		p.release(this);
 
-		rootNode = tree.getRootNode();
+		rootNode = tree.getViewRoot();
 		waitForTree();
 	}
 
@@ -133,7 +134,7 @@ public class FrontEndTestEnv {
 	}
 
 	public GTreeNode getRootNode() {
-		return tree.getRootNode();
+		return tree.getModelRoot();
 	}
 
 	/** 

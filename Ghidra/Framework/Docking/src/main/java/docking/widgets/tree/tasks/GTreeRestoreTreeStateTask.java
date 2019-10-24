@@ -99,7 +99,7 @@ public class GTreeRestoreTreeStateTask extends GTreeTask {
 
 	private void expandPathsInThisTask(GTreeState treeState, TaskMonitor monitor) {
 		List<TreePath> expandedPaths = treeState.getExpandedPaths();
-		GTreeExpandPathsTask task = new GTreeExpandPathsTask(tree, jTree, expandedPaths);
+		GTreeExpandPathsTask task = new GTreeExpandPathsTask(tree, expandedPaths);
 		task.run(monitor);
 	}
 }

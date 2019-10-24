@@ -15,7 +15,8 @@
  */
 package docking.widgets.tree.tasks;
 
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 import javax.swing.CellEditor;
 import javax.swing.JTree;
@@ -28,6 +29,7 @@ import ghidra.util.Msg;
 import ghidra.util.SystemUtilities;
 import ghidra.util.exception.AssertException;
 import ghidra.util.task.TaskMonitor;
+import util.CollectionUtils;
 
 public class GTreeStartEditingTask extends GTreeTask {
 
@@ -68,7 +70,7 @@ public class GTreeStartEditingTask extends GTreeTask {
 		}
 
 		TreePath path = child.getTreePath();
-		final List<GTreeNode> childrenBeforeEdit = parent.getChildren();
+		final Set<GTreeNode> childrenBeforeEdit = new HashSet<>(parent.getChildren());
 
 		final CellEditor cellEditor = tree.getCellEditor();
 		cellEditor.addCellEditorListener(new CellEditorListener() {
@@ -121,7 +123,7 @@ public class GTreeStartEditingTask extends GTreeTask {
 			}
 
 			private void doReselectNodeHandlingPotentialChildChange() {
-				List<GTreeNode> childrenAfterEdit = parent.getChildren();
+				Set<GTreeNode> childrenAfterEdit = new HashSet<>(parent.getChildren());
 				if (childrenAfterEdit.equals(childrenBeforeEdit)) {
 					reselectNode(); // default re-select--the original child is still there
 					return;
@@ -133,7 +135,7 @@ public class GTreeStartEditingTask extends GTreeTask {
 					return; // no way for us to figure out the correct child to edit
 				}
 
-				GTreeNode newChild = childrenAfterEdit.get(0);
+				GTreeNode newChild = CollectionUtils.any(childrenAfterEdit);
 				tree.setSelectedNode(newChild);
 			}
 		});

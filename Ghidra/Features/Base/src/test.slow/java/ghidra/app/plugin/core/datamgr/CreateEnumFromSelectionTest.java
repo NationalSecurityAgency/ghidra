@@ -72,7 +72,7 @@ public class CreateEnumFromSelectionTest extends AbstractGhidraHeadedIntegration
 		provider = plugin.getProvider();
 		tree = provider.getGTree();
 		waitForTree();
-		archiveRootNode = (ArchiveRootNode) tree.getRootNode();
+		archiveRootNode = (ArchiveRootNode) tree.getModelRoot();
 		programNode = (ArchiveNode) archiveRootNode.getChild(PROGRAM_FILENAME);
 		assertNotNull("Did not successfully wait for the program node to load", programNode);
 

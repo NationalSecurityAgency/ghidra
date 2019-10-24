@@ -2071,7 +2071,7 @@ public abstract class AbstractDockingTest extends AbstractGenericTest {
 	}
 
 	public static GTreeNode getNode(GTree tree, String... path) {
-		GTreeRootNode rootNode = tree.getRootNode();
+		GTreeNode rootNode = tree.getModelRoot();
 		String rootName = path[0];
 		if (!rootNode.getName().equals(rootName)) {
 			throw new RuntimeException(

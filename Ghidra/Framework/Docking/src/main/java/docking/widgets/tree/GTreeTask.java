@@ -60,7 +60,7 @@ public abstract class GTreeTask extends PriorityJob {
 		// note: call this on the Swing thread, since the Swing thread maintains the node state
 		//       (we have seen errors where the tree will return nodes that are in the process
 		//       of being disposed)
-		GTreeNode nodeForPath = SystemUtilities.runSwingNow(() -> tree.getNodeForPath(path));
+		GTreeNode nodeForPath = SystemUtilities.runSwingNow(() -> tree.getViewNodeForPath(path));
 		if (nodeForPath != null) {
 			return nodeForPath.getTreePath();
 		}

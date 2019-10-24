@@ -34,7 +34,6 @@ import docking.action.ToggleDockingAction;
 import docking.test.AbstractDockingTest;
 import docking.widgets.OptionDialog;
 import docking.widgets.tree.GTreeNode;
-import docking.widgets.tree.GTreeRootNode;
 import docking.widgets.tree.support.*;
 import ghidra.framework.data.DomainObjectAdapter;
 import ghidra.framework.main.FrontEndTool;
@@ -58,7 +57,7 @@ public class FrontEndPluginActionsTest extends AbstractGhidraHeadedIntegrationTe
 	private TestEnv env;
 	private DataTree tree;
 	private DomainFolder rootFolder;
-	private GTreeRootNode rootNode;
+	private GTreeNode rootNode;
 
 	@Before
 	public void setUp() throws Exception {
@@ -82,7 +81,7 @@ public class FrontEndPluginActionsTest extends AbstractGhidraHeadedIntegrationTe
 		rootFolder.createFile("tms", p, TaskMonitor.DUMMY);
 		p.release(this);
 
-		rootNode = tree.getRootNode();
+		rootNode = tree.getModelRoot();
 		waitForSwing();
 	}
 
@@ -717,7 +716,7 @@ public class FrontEndPluginActionsTest extends AbstractGhidraHeadedIntegrationTe
 		performAction(selectAction, getDomainFileActionContext(), true);
 		waitForTree();
 
-		BreadthFirstIterator it = new BreadthFirstIterator(tree, rootNode);
+		BreadthFirstIterator it = new BreadthFirstIterator(rootNode);
 		while (it.hasNext()) {
 			GTreeNode node = it.next();
 			assertTrue(tree.isPathSelected(node.getTreePath()));

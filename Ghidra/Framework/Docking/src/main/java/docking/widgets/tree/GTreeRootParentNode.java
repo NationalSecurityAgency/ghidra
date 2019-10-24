@@ -15,23 +15,42 @@
  */
 package docking.widgets.tree;
 
+import javax.swing.Icon;
+
 /**
- * Simple base class for GTRootNodes.  If your root node has different internal logic
- * than other nodes, then extend this class.  If you root node has the same internal
- * logic as other nodes, then it is probably better to extend your other node class and
- * implement the getGTree() and setGTree() methods yourself.
- *
+ * Artificial node used by the GTree to set as a parent on the real root node of a GTree.  It allows
+ * nodes to access the GTree because it overrides getTree to return the GTree. This eliminates the
+ * need for clients to create special root nodes that have getTree/setTree
  */
-public abstract class AbstractGTreeRootNode extends AbstractGTreeNode implements GTreeRootNode {
+class GTreeRootParentNode extends GTreeNode {
 	private GTree tree;
 
-	@Override
-	public void setGTree(GTree tree) {
+	GTreeRootParentNode(GTree tree) {
 		this.tree = tree;
 	}
 
 	@Override
-	public GTree getGTree() {
+	public GTree getTree() {
 		return tree;
+	}
+
+	@Override
+	public String getName() {
+		return null;
+	}
+
+	@Override
+	public Icon getIcon(boolean expanded) {
+		return null;
+	}
+
+	@Override
+	public String getToolTip() {
+		return null;
+	}
+
+	@Override
+	public boolean isLeaf() {
+		return false;
 	}
 }
