@@ -67,10 +67,6 @@ abstract class CoreGTreeNode implements Cloneable {
 	 * @param parent the node that this node is being added to.
 	 */
 	synchronized final void setParent(GTreeNode parent) {
-		if (this.parent != null) {
-			throw new IllegalStateException(
-				"Attempted to assign a node to a parent more than once!");
-		}
 		this.parent = parent;
 	}
 
