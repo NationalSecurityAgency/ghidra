@@ -270,9 +270,12 @@ public class BitFieldPlacementComponent extends JPanel implements Scrollable {
 	}
 
 	/**
-	 * Update 
-	 * @param bitSize
-	 * @param bitOffset
+	 * Refresh the bitfield allocation following an {@link #editMode} change.
+	 * When {@link #editMode} is not {@link EditMode#NONE} the specified
+	 * bitSize and bitOffset specify the active edit bitfield.
+	 * @param bitSize component bitsize
+	 * @param bitOffset component lsb bit offset from lsb of allocation unit 
+	 * (allocation unit size is determine by current {@link #allocationByteSize}).
 	 */
 	void refresh(int bitSize, int bitOffset) {
 		bitFieldAllocation = new BitFieldAllocation(bitSize, bitOffset);
@@ -280,6 +283,16 @@ public class BitFieldPlacementComponent extends JPanel implements Scrollable {
 		repaint();
 	}
 
+	/**
+	 * Refresh the bitfield allocation following an {@link #editMode} change or
+	 * change in allocation unit size/offset.
+	 * When {@link #editMode} is not {@link EditMode#NONE} the specified
+	 * bitSize and bitOffset specify the active edit bitfield.
+	 * @param byteSize allocation unit byte size
+	 * @param byteOffset allocation unit byte offset within composite
+	 * @param bitSize component bitsize
+	 * @param bitOffset component lsb bit offset from lsb of allocation unit.
+	 */
 	void refresh(int byteSize, int byteOffset, int bitSize, int bitOffset) {
 		this.allocationByteOffset = byteOffset;
 		this.allocationByteSize = byteSize;
@@ -776,7 +789,7 @@ public class BitFieldPlacementComponent extends JPanel implements Scrollable {
 
 	/**
 	 * <code>BitFieldPlacement</code> provides the ability to translate a 
-	 * compsoite component to bit-level placement within the allocation
+	 * composite component to a bit-level placement within the allocation
 	 * range including the notion of clipped edges when one or both sides 
 	 * extend beyond the allocation range.
 	 */
@@ -1051,7 +1064,7 @@ public class BitFieldPlacementComponent extends JPanel implements Scrollable {
 
 		/**
 		 * Allocate {@link #bitAttributes} for the specified component within
-		 * the byte range covered by {@link #allocationBytes}.
+		 * the byte range covered by {@link #allocationBytes}. 
 		 * @param dtc composite component
 		 * @param leftBit left bit index within the full {@link #allocationByteSize}
 		 *                where 0 is the left-most bit index.
@@ -1073,7 +1086,8 @@ public class BitFieldPlacementComponent extends JPanel implements Scrollable {
 			leftBit -= adjust;
 			rightBit -= adjust;
 
-			// compute start and end bit index within allocationBytes
+			// compute start and end bit index within allocationBytes which
+			// may have been reduced from allocationByteSize based upon visibility.
 			int startIndex = Math.max(0, leftBit);
 			int endIndex = Math.min((8 * allocationBytes) - 1, rightBit);
 
@@ -1095,6 +1109,10 @@ public class BitFieldPlacementComponent extends JPanel implements Scrollable {
 		}
 
 		private void allocateZeroBitField(DataTypeComponent dtc, int bitIndex) {
+
+			// determine placement attribute index within allocationBytes which
+			// may have been reduced from allocationByteSize based upon visibility.
+
 			int index = bitIndex - (8 * rightChopBytes);
 			if (index >= 0 && index < bitAttributes.length) {
 				bitAttributes[index] = new BitAttributes(dtc, bitAttributes[index]);
