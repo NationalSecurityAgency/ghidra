@@ -155,6 +155,9 @@ public class BitFieldPlacementComponent extends JPanel implements Scrollable {
 		}
 		allocationByteOffset = 0;
 		allocationByteSize = 1;
+		if (!editUseEnabled) {
+			allocationByteSize = composite.getLength();
+		}
 		init(null);
 	}
 
@@ -981,10 +984,6 @@ public class BitFieldPlacementComponent extends JPanel implements Scrollable {
 				bitAttributes = new BitAttributes[0];
 				return;
 			}
-
-			leftChopBytes = getLeftByteChop();
-			rightChopBytes = getRightByteChop();
-			allocationBytes = allocationByteSize - leftChopBytes - rightChopBytes;
 
 			bitAttributes = new BitAttributes[8 * allocationBytes];
 
