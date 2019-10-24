@@ -668,6 +668,9 @@ loopend: dwRb   is dwHasImmB=0 & dwRb    { export dwRb; }
 loopend: dwImmB is dwHasImmB=1 & dwImmB
 	{ local tmp:4 = dwImmB; export tmp; }
 
+disploopend: dwRb   is dwHasImmB=0 & dwRb    {}
+disploopend: dwImmB is dwHasImmB=1 & dwImmB  {}
+
 looprel: rel10 is dwHasImmB=0 & rel10 { export rel10; }
 looprel: rel8  is dwHasImmB=1 & rel8  { export rel8; }
 
@@ -709,15 +712,15 @@ with loopchkcond: {
 loopcond: dwCc is dwCc & loopchkcond { export loopchkcond; }
 
 with : dwOp4=0x8 {
-  :addcmpb^loopcond dwRd, loopinc, loopend, looprel
-	is loopcond & dwRd & loopinc & loopend & looprel {
+  :addcmpb^loopcond dwRd, loopinc, disploopend, looprel
+	is loopcond & dwRd & loopinc & disploopend & looprel {
     dwRd = dwRd + loopinc;
     build loopcond;
     if (loopcond)
       goto looprel;
   }
-  :b^loopcond dwRd, loopend, looprel
-	is loopcond & dwRd & dwHasImmA=1 & dwImmA=0 & loopend & looprel {
+  :b^loopcond dwRd, disploopend, looprel
+	is loopcond & dwRd & dwHasImmA=1 & dwImmA=0 & disploopend & looprel {
     if (loopcond)
       goto looprel;
   }
