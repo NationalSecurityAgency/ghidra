@@ -59,7 +59,7 @@ public class DemangledDataType extends DemangledType {
 	public final static String INT = "int";
 	public final static String INT0_T = "int0_t";//TODO
 	public final static String LONG = "long";
-	public final static String LONG_LONG = "long long";
+	public final static String LONG_LONG = "long_long";
 	public final static String FLOAT = "float";
 	public final static String DOUBLE = "double";
 	public final static String INT8 = "__int8";
@@ -68,7 +68,7 @@ public class DemangledDataType extends DemangledType {
 	public final static String INT64 = "__int64";
 	public final static String INT128 = "__int128";//TODO
 	public final static String FLOAT128 = "__float128";//TODO
-	public final static String LONG_DOUBLE = "long double";
+	public final static String LONG_DOUBLE = "long_double";
 	public final static String PTR64 = "__ptr64";
 	public final static String STRING = "string";
 	public final static String UNDEFINED = "undefined";
