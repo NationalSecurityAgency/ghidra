@@ -1194,13 +1194,8 @@ with aluinst: {
     argd = arga + (argb << 4);
   }
   :"signext"^ccsfx args is ccsfx & aluop=24 & args & argd & arga & argb {
-    local mask:4 = ((1 << argb) - 1);
-    local tmp:4 = arga & mask;
-    if ((tmp & (1 << (argb - 1))) == 0)
-      goto <done>;
-    tmp = tmp | ~mask;
-  <done>
-    argd = tmp;
+    local shift:4 = 32 - argb;
+    argd = (arga << shift) s>> shift;
   }
   :"neg"^ccsfx argd, argb is ccsfx & aluop=25 & args & argd & argb {
     argd = -argb;
