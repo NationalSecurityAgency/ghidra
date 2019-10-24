@@ -52,10 +52,6 @@ class SymbolRenderer extends GhidraTableCellRenderer {
 		if (value == null && column == SymbolTableModel.LABEL_COL) {
 			setText("<< REMOVED >>");
 		}
-		else if (value instanceof SymbolTableNameValue) {
-			Symbol symbol = ((SymbolTableNameValue) value).getSymbol();
-			handleSymbol(symbol, isSelected);
-		}
 		else if (value instanceof Symbol) {
 			handleSymbol(value, isSelected);
 		}

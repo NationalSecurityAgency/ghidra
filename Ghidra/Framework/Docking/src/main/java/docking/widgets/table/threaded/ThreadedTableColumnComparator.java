@@ -17,6 +17,7 @@ package docking.widgets.table.threaded;
 
 import java.util.Comparator;
 
+import docking.widgets.table.sort.BackupColumnComparator;
 import docking.widgets.table.sort.RowToColumnComparator;
 
 /**
@@ -55,7 +56,7 @@ public class ThreadedTableColumnComparator<T> extends RowToColumnComparator<T> {
 	 * @see RowToColumnComparator
 	 */
 	public ThreadedTableColumnComparator(ThreadedTableModel<T, ?> model, int sortColumn,
-			Comparator<Object> comparator, Comparator<T> backupRowComparator) {
+			Comparator<Object> comparator, BackupColumnComparator<T> backupRowComparator) {
 		super(model, sortColumn, comparator, backupRowComparator);
 		this.threadedModel = model;
 	}

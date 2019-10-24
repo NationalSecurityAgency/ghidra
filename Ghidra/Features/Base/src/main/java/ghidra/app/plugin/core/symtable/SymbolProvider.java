@@ -74,17 +74,18 @@ class SymbolProvider extends ComponentProviderAdapter {
 		if (program == null) {
 			return null;
 		}
-		List<SymbolRowObject> rowObjects = symbolPanel.getSelectedSymbolKeys();
+
+		List<Symbol> rowObjects = symbolPanel.getSelectedSymbolKeys();
 		long[] symbolIDs = new long[rowObjects.size()];
 		int index = 0;
-		for (SymbolRowObject obj : rowObjects) {
-			symbolIDs[index++] = obj.getKey();
+		for (Symbol obj : rowObjects) {
+			symbolIDs[index++] = obj.getID();
 		}
 		return new ProgramSymbolActionContext(this, program, symbolIDs, getTable());
 	}
 
 	void deleteSymbols() {
-		List<SymbolRowObject> rowObjects = symbolPanel.getSelectedSymbolKeys();
+		List<Symbol> rowObjects = symbolPanel.getSelectedSymbolKeys();
 		symbolKeyModel.delete(rowObjects);
 	}
 
@@ -93,15 +94,15 @@ class SymbolProvider extends ComponentProviderAdapter {
 	}
 
 	Symbol getCurrentSymbol() {
-		List<SymbolRowObject> rowObjects = symbolPanel.getSelectedSymbolKeys();
+		List<Symbol> rowObjects = symbolPanel.getSelectedSymbolKeys();
 		if (rowObjects != null && rowObjects.size() >= 1) {
-			return symbolKeyModel.getSymbol(rowObjects.get(0).getKey());
+			return rowObjects.get(0);
 		}
 		return null;
 	}
 
 	Symbol getSymbolForRow(int row) {
-		return symbolKeyModel.getRowObject(row).getSymbol();
+		return symbolKeyModel.getRowObject(row);
 	}
 
 	void setCurrentSymbol(Symbol symbol) {
@@ -133,12 +134,6 @@ class SymbolProvider extends ComponentProviderAdapter {
 	void symbolRemoved(Symbol s) {
 		if (isVisible()) {
 			symbolKeyModel.symbolRemoved(s);
-		}
-	}
-
-	void symbolRemoved(long symbolId) {
-		if (isVisible()) {
-			symbolKeyModel.symbolRemoved(symbolId);
 		}
 	}
 

@@ -897,7 +897,11 @@ public class SymbolUtilities {
 			if (symbol.isExternal()) {
 				return "External Function";
 			}
+
 			Function func = (Function) symbol.getObject();
+			if (func == null) {
+				return null; // symbol deleted
+			}
 			if (func.isThunk()) {
 				return "Thunk Function";
 			}

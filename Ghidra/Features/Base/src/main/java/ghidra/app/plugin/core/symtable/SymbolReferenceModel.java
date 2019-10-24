@@ -131,8 +131,8 @@ public class SymbolReferenceModel extends AddressBasedTableModel<Reference> {
 		checkRefs(symbol);
 	}
 
-	void symbolRemoved(long symbolID) {
-		if (currentSymbol != null && currentSymbol.getID() == symbolID) {
+	void symbolRemoved(Symbol symbol) {
+		if (currentSymbol != null && currentSymbol.getID() == symbol.getID()) {
 			setCurrentSymbol(null);
 		}
 	}

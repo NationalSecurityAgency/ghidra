@@ -15,8 +15,7 @@
  */
 package ghidra.app.plugin.core.symtable;
 
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
 import docking.widgets.table.*;
 import ghidra.app.cmd.function.DeleteFunctionCmd;
@@ -41,7 +40,12 @@ import ghidra.util.table.column.*;
 import ghidra.util.table.field.*;
 import ghidra.util.task.TaskMonitor;
 
-class SymbolTableModel extends AddressBasedTableModel<SymbolRowObject> {
+class SymbolTableModel extends AddressBasedTableModel<Symbol> {
+
+	private static final Comparator<Symbol> NAME_COL_COMPARATOR = (s1, s2) -> {
+		return s1.toString().compareToIgnoreCase(s2.toString());
+	};
+
 	static final int LABEL_COL = 0;
 	static final int LOCATION_COL = 1;
 	static final int TYPE_COL = 2;
@@ -62,17 +66,14 @@ class SymbolTableModel extends AddressBasedTableModel<SymbolRowObject> {
 		this.provider = provider;
 		this.tool = tool;
 		this.filter = new NewSymbolFilter();
-
-		// leave off default sorting, as this can be slow; the user can sort as desired
-		setDefaultTableSortState(null);
 	}
 
 	@Override
-	protected TableColumnDescriptor<SymbolRowObject> createTableColumnDescriptor() {
-		TableColumnDescriptor<SymbolRowObject> descriptor = new TableColumnDescriptor<>();
+	protected TableColumnDescriptor<Symbol> createTableColumnDescriptor() {
+		TableColumnDescriptor<Symbol> descriptor = new TableColumnDescriptor<>();
 
-		descriptor.addVisibleColumn(new NameTableColumn(), 1, true);
-		descriptor.addVisibleColumn(new LocationTableColumn());
+		descriptor.addVisibleColumn(new NameTableColumn());
+		descriptor.addVisibleColumn(new LocationTableColumn(), 1, true);
 		descriptor.addVisibleColumn(new SymbolTypeTableColumn());
 		descriptor.addHiddenColumn(new DataTypeTableColumn());
 		descriptor.addVisibleColumn(new NamespaceTableColumn());
@@ -136,7 +137,7 @@ class SymbolTableModel extends AddressBasedTableModel<SymbolRowObject> {
 	}
 
 	@Override
-	protected void doLoad(Accumulator<SymbolRowObject> accumulator, TaskMonitor monitor)
+	protected void doLoad(Accumulator<Symbol> accumulator, TaskMonitor monitor)
 			throws CancelledException {
 		if (symbolTable == null) {
 			return;
@@ -156,7 +157,7 @@ class SymbolTableModel extends AddressBasedTableModel<SymbolRowObject> {
 			monitor.checkCanceled();
 			Symbol s = it.next();
 			if (filter.accepts(s, getProgram())) {
-				accumulator.add(new SymbolRowObject(s));
+				accumulator.add(s);
 			}
 		}
 		if (filter.acceptsDefaultLabelSymbols()) {
@@ -168,7 +169,7 @@ class SymbolTableModel extends AddressBasedTableModel<SymbolRowObject> {
 				Address a = addrIt.next();
 				Symbol s = symbolTable.getPrimarySymbol(a);
 				if (s.isDynamic() && filter.accepts(s, getProgram())) {
-					accumulator.add(new SymbolRowObject(s));
+					accumulator.add(s);
 				}
 			}
 		}
@@ -193,8 +194,7 @@ class SymbolTableModel extends AddressBasedTableModel<SymbolRowObject> {
 			return;
 		}
 
-		SymbolRowObject rowObject = filteredData.get(row);
-		Symbol symbol = symbolTable.getSymbol(rowObject.getKey());
+		Symbol symbol = filteredData.get(row);
 		if (symbol == null) {
 			return;
 		}
@@ -215,9 +215,9 @@ class SymbolTableModel extends AddressBasedTableModel<SymbolRowObject> {
 
 	@Override
 	public ProgramLocation getProgramLocation(int row, int column) {
-		SymbolTableNameValue s = (SymbolTableNameValue) getValueAt(row, LABEL_COL);
+		Symbol s = (Symbol) getValueAt(row, LABEL_COL);
 		if (s != null) {
-			return s.getSymbol().getProgramLocation();
+			return s.getProgramLocation();
 		}
 		return null;
 	}
@@ -246,7 +246,7 @@ class SymbolTableModel extends AddressBasedTableModel<SymbolRowObject> {
 
 	void symbolAdded(Symbol s) {
 		if (filter.accepts(s, getProgram())) {
-			addObject(new SymbolRowObject(s));
+			addObject(s);
 			lastSymbol = s;
 		}
 	}
@@ -255,27 +255,20 @@ class SymbolTableModel extends AddressBasedTableModel<SymbolRowObject> {
 		if (lastSymbol != null && lastSymbol.getID() == s.getID()) {
 			lastSymbol = null;
 		}
-		removeObject(new SymbolRowObject(s));
-	}
-
-	void symbolRemoved(long symbolId) {
-		if (lastSymbol != null && lastSymbol.getID() == symbolId) {
-			lastSymbol = null;
-		}
-		removeObject(new SymbolRowObject(symbolId));
+		removeObject(s);
 	}
 
 	void symbolChanged(Symbol s) {
-		SymbolRowObject symbolRowObject = new SymbolRowObject(s);
+		Symbol Symbol = s;
 		if (filter.accepts(s, getProgram())) {
-			updateObject(symbolRowObject);
+			updateObject(Symbol);
 		}
 		else {
-			removeObject(symbolRowObject);
+			removeObject(Symbol);
 		}
 	}
 
-	void delete(List<SymbolRowObject> rowObjects) {
+	void delete(List<Symbol> rowObjects) {
 		if (rowObjects == null || rowObjects.size() == 0) {
 			return;
 		}
@@ -283,11 +276,7 @@ class SymbolTableModel extends AddressBasedTableModel<SymbolRowObject> {
 		tool.setStatusInfo("");
 		List<Symbol> deleteList = new LinkedList<>();
 		CompoundCmd cmd = new CompoundCmd("Delete symbol(s)");
-		for (int i = 0; i < rowObjects.size(); i++) {
-			Symbol symbol = symbolTable.getSymbol(rowObjects.get(i).getKey());
-			if (symbol == null) {
-				continue;
-			}
+		for (Symbol symbol : rowObjects) {
 			if (symbol.isDynamic()) {
 				Symbol[] symbols = symbolTable.getSymbols(symbol.getAddress());
 				if (symbols.length == 1) {
@@ -296,7 +285,7 @@ class SymbolTableModel extends AddressBasedTableModel<SymbolRowObject> {
 				}
 			}
 
-			deleteList.add(rowObjects.get(i).getSymbol());
+			deleteList.add(symbol);
 			String label = symbol.getName();
 			if (symbol.getSymbolType() == SymbolType.FUNCTION) {
 				Function function = (Function) symbol.getObject();
@@ -316,9 +305,10 @@ class SymbolTableModel extends AddressBasedTableModel<SymbolRowObject> {
 		if (cmd.size() == 0) {
 			return;
 		}
+
 		if (tool.execute(cmd, getProgram())) {
-			for (int k = 0; k < deleteList.size(); k++) {
-				removeObject(new SymbolRowObject(deleteList.get(k)));
+			for (Symbol s : deleteList) {
+				removeObject(s);
 			}
 			updateNow();
 		}
@@ -334,15 +324,14 @@ class SymbolTableModel extends AddressBasedTableModel<SymbolRowObject> {
 
 	@Override
 	public Address getAddress(int row) {
-		Symbol symbol = symbolTable.getSymbol(getRowObject(row).getKey());
+		Symbol symbol = getRowObject(row);
 		if (symbol == null) {
 			return null;
 		}
 		return symbol.getAddress();
 	}
 
-	private AddressBasedLocation getSymbolLocation(SymbolRowObject rowObject) {
-		Symbol s = rowObject.getSymbol();
+	private AddressBasedLocation getSymbolLocation(Symbol s) {
 		if (s == null) {
 			return new AddressBasedLocation();
 		}
@@ -350,17 +339,36 @@ class SymbolTableModel extends AddressBasedTableModel<SymbolRowObject> {
 		if (type == SymbolType.PARAMETER || type == SymbolType.LOCAL_VAR) {
 			// Must use special location object for variables which renders variable storage
 			// location since this can't be obtained from just a variable storage address
-			return new VariableSymbolLocation((Variable) s.getObject());
+			Variable object = (Variable) s.getObject();
+			if (object == null) {
+				return null;
+			}
+			return new VariableSymbolLocation(object);
 		}
 		return new AddressBasedLocation(program, s.getAddress());
+	}
+
+	@Override
+	protected Comparator<Symbol> createSortComparator(int columnIndex) {
+		DynamicTableColumn<Symbol, ?, ?> column = getColumn(columnIndex);
+		if (column instanceof NameTableColumn) {
+			// note: we use our own name comparator to increase sorting speed for the name 
+			//       column.  This works because this comparator is called for each *row object* 
+			//       allowing the comparator to compare the Symbols based on name instead of 
+			//       having to use the table model's code for getting a column value for the
+			//       row object.   The code for retrieving a column value is slower than just
+			//       working with the row object directly.  See 
+			//       ThreadedTableModel.getCachedColumnValueForRow for more info.
+			return NAME_COL_COMPARATOR;
+		}
+		return super.createSortComparator(columnIndex);
 	}
 
 //==================================================================================================
 // Table Column Classes
 //==================================================================================================
 
-	private class NameTableColumn
-			extends AbstractProgramBasedDynamicTableColumn<SymbolRowObject, SymbolTableNameValue> {
+	private class NameTableColumn extends AbstractProgramBasedDynamicTableColumn<Symbol, Symbol> {
 
 		@Override
 		public String getColumnName() {
@@ -368,25 +376,18 @@ class SymbolTableModel extends AddressBasedTableModel<SymbolRowObject> {
 		}
 
 		@Override
-		public SymbolTableNameValue getValue(SymbolRowObject rowObject, Settings settings,
-				Program p, ServiceProvider svcProvider) throws IllegalArgumentException {
+		public Symbol getValue(Symbol symbol, Settings settings, Program p,
+				ServiceProvider svcProvider) throws IllegalArgumentException {
 
-			Symbol s = rowObject.getSymbol();
-			if (s == null) {
+			if (!symbol.checkIsValid()) {
 				return null;
 			}
-
-			// Note: this call is slow, especially for dynamic symbols.  Caching the dynamic 
-			// symbols in the SymbolRowObject *greatly* increases sorting and filtering performance.
-			// For now we assume that most users are not loading dynamic labels.  If we add 
-			// caching, then we have to deal with the stickiness of when to clear/update the cache
-			String name = s.toString();
-			return new SymbolTableNameValue(s, name);
+			return symbol;
 		}
 	}
 
 	private class PinnedTableColumn
-			extends AbstractProgramBasedDynamicTableColumn<SymbolRowObject, Boolean> {
+			extends AbstractProgramBasedDynamicTableColumn<Symbol, Boolean> {
 
 		private PinnedRenderer renderer = new PinnedRenderer();
 
@@ -396,10 +397,10 @@ class SymbolTableModel extends AddressBasedTableModel<SymbolRowObject> {
 		}
 
 		@Override
-		public Boolean getValue(SymbolRowObject rowObject, Settings settings, Program p,
+		public Boolean getValue(Symbol symbol, Settings settings, Program p,
 				ServiceProvider svcProvider) throws IllegalArgumentException {
-			Symbol symbol = rowObject.getSymbol();
-			if (symbol == null) {
+
+			if (!symbol.checkIsValid()) {
 				return null;
 			}
 			return symbol.isPinned();
@@ -417,7 +418,7 @@ class SymbolTableModel extends AddressBasedTableModel<SymbolRowObject> {
 	}
 
 	private class LocationTableColumn
-			extends AbstractProgramLocationTableColumn<SymbolRowObject, AddressBasedLocation> {
+			extends AbstractProgramLocationTableColumn<Symbol, AddressBasedLocation> {
 
 		@Override
 		public String getColumnName() {
@@ -425,16 +426,16 @@ class SymbolTableModel extends AddressBasedTableModel<SymbolRowObject> {
 		}
 
 		@Override
-		public AddressBasedLocation getValue(SymbolRowObject rowObject, Settings settings,
-				Program p, ServiceProvider svcProvider) throws IllegalArgumentException {
-			return getSymbolLocation(rowObject);
+		public AddressBasedLocation getValue(Symbol symbol, Settings settings, Program p,
+				ServiceProvider svcProvider) throws IllegalArgumentException {
+			return getSymbolLocation(symbol);
 		}
 
 		@Override
-		public ProgramLocation getProgramLocation(SymbolRowObject rowObject, Settings settings,
-				Program p, ServiceProvider svcProvider) {
-			Symbol symbol = rowObject.getSymbol();
-			if (symbol == null) {
+		public ProgramLocation getProgramLocation(Symbol symbol, Settings settings, Program p,
+				ServiceProvider svcProvider) {
+
+			if (!symbol.checkIsValid()) {
 				return null;
 			}
 			return symbol.getProgramLocation();
@@ -442,7 +443,7 @@ class SymbolTableModel extends AddressBasedTableModel<SymbolRowObject> {
 	}
 
 	private class SymbolTypeTableColumn
-			extends AbstractProgramBasedDynamicTableColumn<SymbolRowObject, String> {
+			extends AbstractProgramBasedDynamicTableColumn<Symbol, String> {
 
 		@Override
 		public String getColumnName() {
@@ -450,17 +451,16 @@ class SymbolTableModel extends AddressBasedTableModel<SymbolRowObject> {
 		}
 
 		@Override
-		public String getValue(SymbolRowObject rowObject, Settings settings, Program p,
+		public String getValue(Symbol symbol, Settings settings, Program p,
 				ServiceProvider svcProvider) throws IllegalArgumentException {
 
-			Symbol s = rowObject.getSymbol();
-			if (s == null) {
+			if (!symbol.checkIsValid()) {
 				return null;
 			}
 
 			// Note: this call is slow.  If we decide that filtering/sorting on this value is
 			//       important, then this should be cached
-			return SymbolUtilities.getSymbolTypeDisplayName(s);
+			return SymbolUtilities.getSymbolTypeDisplayName(symbol);
 		}
 	}
 
@@ -472,7 +472,7 @@ class SymbolTableModel extends AddressBasedTableModel<SymbolRowObject> {
 	}
 
 	private class DataTypeTableColumn
-			extends AbstractProgramBasedDynamicTableColumn<SymbolRowObject, String> {
+			extends AbstractProgramBasedDynamicTableColumn<Symbol, String> {
 
 		@Override
 		public String getColumnName() {
@@ -480,11 +480,10 @@ class SymbolTableModel extends AddressBasedTableModel<SymbolRowObject> {
 		}
 
 		@Override
-		public String getValue(SymbolRowObject rowObject, Settings settings, Program p,
+		public String getValue(Symbol symbol, Settings settings, Program p,
 				ServiceProvider svcProvider) throws IllegalArgumentException {
 
-			Symbol symbol = rowObject.getSymbol();
-			if (symbol == null) {
+			if (!symbol.checkIsValid()) {
 				return null;
 			}
 
@@ -510,7 +509,7 @@ class SymbolTableModel extends AddressBasedTableModel<SymbolRowObject> {
 	}
 
 	private class NamespaceTableColumn
-			extends AbstractProgramBasedDynamicTableColumn<SymbolRowObject, String> {
+			extends AbstractProgramBasedDynamicTableColumn<Symbol, String> {
 
 		@Override
 		public String getColumnName() {
@@ -518,19 +517,18 @@ class SymbolTableModel extends AddressBasedTableModel<SymbolRowObject> {
 		}
 
 		@Override
-		public String getValue(SymbolRowObject rowObject, Settings settings, Program p,
+		public String getValue(Symbol symbol, Settings settings, Program p,
 				ServiceProvider svcProvider) throws IllegalArgumentException {
-			Symbol symbol = rowObject.getSymbol();
-			if (symbol == null) {
+
+			if (!symbol.checkIsValid()) {
 				return null;
 			}
-
 			return symbol.getParentNamespace().getName(true);
 		}
 	}
 
 	private class SourceTableColumn
-			extends AbstractProgramBasedDynamicTableColumn<SymbolRowObject, SourceType> {
+			extends AbstractProgramBasedDynamicTableColumn<Symbol, SourceType> {
 
 		private GColumnRenderer<SourceType> renderer = new AbstractGColumnRenderer<SourceType>() {
 			@Override
@@ -558,9 +556,9 @@ class SymbolTableModel extends AddressBasedTableModel<SymbolRowObject> {
 		}
 
 		@Override
-		public SourceType getValue(SymbolRowObject rowObject, Settings settings, Program p,
+		public SourceType getValue(Symbol symbol, Settings settings, Program p,
 				ServiceProvider svcProvider) throws IllegalArgumentException {
-			Symbol symbol = rowObject.getSymbol();
+
 			if (symbol == null) {
 				return null;
 			}
@@ -570,7 +568,7 @@ class SymbolTableModel extends AddressBasedTableModel<SymbolRowObject> {
 	}
 
 	private class ReferenceCountTableColumn
-			extends AbstractProgramBasedDynamicTableColumn<SymbolRowObject, Integer> {
+			extends AbstractProgramBasedDynamicTableColumn<Symbol, Integer> {
 
 		private ReferenceCountRenderer renderer = new ReferenceCountRenderer();
 
@@ -580,13 +578,11 @@ class SymbolTableModel extends AddressBasedTableModel<SymbolRowObject> {
 		}
 
 		@Override
-		public Integer getValue(SymbolRowObject rowObject, Settings settings, Program p,
+		public Integer getValue(Symbol symbol, Settings settings, Program p,
 				ServiceProvider svcProvider) throws IllegalArgumentException {
-			Symbol symbol = rowObject.getSymbol();
-			if (symbol == null) {
+			if (!symbol.checkIsValid()) {
 				return null;
 			}
-
 			return Integer.valueOf(symbol.getReferenceCount());
 		}
 
@@ -604,7 +600,7 @@ class SymbolTableModel extends AddressBasedTableModel<SymbolRowObject> {
 	}
 
 	private class OffcutReferenceCountTableColumn
-			extends AbstractProgramBasedDynamicTableColumn<SymbolRowObject, Integer> {
+			extends AbstractProgramBasedDynamicTableColumn<Symbol, Integer> {
 
 		private OffcutReferenceCountRenderer renderer = new OffcutReferenceCountRenderer();
 
@@ -614,11 +610,9 @@ class SymbolTableModel extends AddressBasedTableModel<SymbolRowObject> {
 		}
 
 		@Override
-		public Integer getValue(SymbolRowObject rowObject, Settings settings, Program p,
+		public Integer getValue(Symbol symbol, Settings settings, Program p,
 				ServiceProvider svcProvider) throws IllegalArgumentException {
-
-			Symbol symbol = rowObject.getSymbol();
-			if (symbol == null) {
+			if (!symbol.checkIsValid()) {
 				return null;
 			}
 
@@ -655,8 +649,7 @@ class SymbolTableModel extends AddressBasedTableModel<SymbolRowObject> {
 		}
 	}
 
-	private class UserTableColumn
-			extends AbstractProgramBasedDynamicTableColumn<SymbolRowObject, String> {
+	private class UserTableColumn extends AbstractProgramBasedDynamicTableColumn<Symbol, String> {
 
 		@Override
 		public String getColumnName() {
@@ -669,11 +662,10 @@ class SymbolTableModel extends AddressBasedTableModel<SymbolRowObject> {
 		}
 
 		@Override
-		public String getValue(SymbolRowObject rowObject, Settings settings, Program p,
+		public String getValue(Symbol symbol, Settings settings, Program p,
 				ServiceProvider svcProvider) throws IllegalArgumentException {
 
-			Symbol symbol = rowObject.getSymbol();
-			if (symbol == null) {
+			if (!symbol.checkIsValid()) {
 				return null;
 			}
 
@@ -694,7 +686,7 @@ class SymbolTableModel extends AddressBasedTableModel<SymbolRowObject> {
 	}
 
 	private class OriginalNameColumn
-			extends AbstractProgramBasedDynamicTableColumn<SymbolRowObject, String> {
+			extends AbstractProgramBasedDynamicTableColumn<Symbol, String> {
 
 		@Override
 		public String getColumnName() {
@@ -707,13 +699,17 @@ class SymbolTableModel extends AddressBasedTableModel<SymbolRowObject> {
 		}
 
 		@Override
-		public String getValue(SymbolRowObject rowObject, Settings settings, Program p,
+		public String getValue(Symbol symbol, Settings settings, Program p,
 				ServiceProvider svcProvider) throws IllegalArgumentException {
 
-			Symbol symbol = rowObject.getSymbol();
-			if (symbol == null || !symbol.isExternal()) {
+			if (!symbol.checkIsValid()) {
 				return null;
 			}
+
+			if (!symbol.isExternal()) {
+				return null;
+			}
+
 			SymbolType symbolType = symbol.getSymbolType();
 			if (symbolType != SymbolType.FUNCTION && symbolType != SymbolType.LABEL) {
 				return null;

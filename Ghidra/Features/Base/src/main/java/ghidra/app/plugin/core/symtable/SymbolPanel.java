@@ -46,8 +46,8 @@ class SymbolPanel extends JPanel {
 	private GhidraTable symTable;
 	private TableModelListener listener;
 	private FilterDialog filterDialog;
-	private GhidraThreadedTablePanel<SymbolRowObject> threadedTablePanel;
-	private GhidraTableFilterPanel<SymbolRowObject> tableFilterPanel;
+	private GhidraThreadedTablePanel<Symbol> threadedTablePanel;
+	private GhidraTableFilterPanel<Symbol> tableFilterPanel;
 
 	SymbolPanel(SymbolProvider provider, SymbolTableModel model, SymbolRenderer renderer,
 			final PluginTool tool, GoToService gotoService) {
@@ -116,9 +116,9 @@ class SymbolPanel extends JPanel {
 		return tableFilterPanel;
 	}
 
-	protected RowFilterTransformer<SymbolRowObject> updateRowDataTransformer(boolean nameOnly) {
+	protected RowFilterTransformer<Symbol> updateRowDataTransformer(boolean nameOnly) {
 		if (nameOnly) {
-			return new NameOnlyRowTransformer(tableModel);
+			return new NameOnlyRowTransformer();
 		}
 
 		return new DefaultRowFilterTransformer<>(tableModel, symTable.getColumnModel());
@@ -185,7 +185,7 @@ class SymbolPanel extends JPanel {
 		return symTable.getRowCount();
 	}
 
-	List<SymbolRowObject> getSelectedSymbolKeys() {
+	List<Symbol> getSelectedSymbolKeys() {
 		int[] rows = symTable.getSelectedRows();
 		return tableModel.getRowObjects(rows);
 	}
@@ -198,21 +198,16 @@ class SymbolPanel extends JPanel {
 // Inner Classes
 //==================================================================================================
 
-	private static class NameOnlyRowTransformer implements RowFilterTransformer<SymbolRowObject> {
+	private static class NameOnlyRowTransformer implements RowFilterTransformer<Symbol> {
 		private List<String> list = new ArrayList<>();
-		private SymbolTableModel model;
-
-		NameOnlyRowTransformer(SymbolTableModel model) {
-			this.model = model;
-		}
 
 		@Override
-		public List<String> transform(SymbolRowObject rowObject) {
+		public List<String> transform(Symbol rowObject) {
 			list.clear();
-			Object value = model.getColumnValueForRow(rowObject, SymbolTableModel.LABEL_COL);
-			if (value != null) {
-				// the toString() returns the value for the symbol, which may be cached
-				list.add(value.toString());
+			if (rowObject != null) {
+				// The toString() returns the name for the symbol, which may be cached.  Calling
+				// toString() will also avoid locking for cached values.
+				list.add(rowObject.toString());
 			}
 			return list;
 		}

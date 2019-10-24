@@ -32,7 +32,8 @@ public class RowToColumnComparator<T> implements Comparator<T> {
 	protected RowObjectTableModel<T> model;
 	protected int sortColumn;
 	protected Comparator<Object> columnComparator;
-	protected Comparator<T> backupRowComparator = TableComparators.getNoSortComparator();
+	protected BackupColumnComparator<T> backupRowComparator =
+		BackupColumnComparator.getNoSortComparator();
 
 	/**
 	 * Constructs this class with the given column comparator that will get called after the
@@ -60,7 +61,7 @@ public class RowToColumnComparator<T> implements Comparator<T> {
 	 * @param backupRowComparator the backup row comparator
 	 */
 	public RowToColumnComparator(RowObjectTableModel<T> model, int sortColumn,
-			Comparator<Object> comparator, Comparator<T> backupRowComparator) {
+			Comparator<Object> comparator, BackupColumnComparator<T> backupRowComparator) {
 		this.model = model;
 		this.sortColumn = sortColumn;
 		this.columnComparator = Objects.requireNonNull(comparator);
@@ -97,7 +98,7 @@ public class RowToColumnComparator<T> implements Comparator<T> {
 		// backup comparator is not a stub and will do something reasonable for the sort, 
 		// depending upon how the model created this class.
 		//
-		return backupRowComparator.compare(t1, t2);
+		return backupRowComparator.compare(t1, t2, value1, value2);
 	}
 
 	protected Object getColumnValue(T t) {

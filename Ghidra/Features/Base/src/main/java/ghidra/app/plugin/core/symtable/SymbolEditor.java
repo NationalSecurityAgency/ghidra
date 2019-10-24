@@ -39,9 +39,9 @@ class SymbolEditor extends DefaultCellEditor {
 	@Override
 	public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected,
 			int row, int column) {
-		if (value instanceof SymbolTableNameValue) {
-			SymbolTableNameValue cellValue = (SymbolTableNameValue) value;
-			Symbol symbol = cellValue.getSymbol();
+
+		Symbol symbol = (Symbol) value;
+		if (symbol != null) {
 			symbolField.setText(symbol.getName());
 		}
 		else {

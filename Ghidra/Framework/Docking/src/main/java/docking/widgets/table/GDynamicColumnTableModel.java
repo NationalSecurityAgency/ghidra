@@ -441,7 +441,6 @@ public abstract class GDynamicColumnTableModel<ROW_TYPE, DATA_SOURCE>
 		}
 
 		return column.getValue(t, columnSettings.get(column), dataSource, serviceProvider);
-
 	}
 
 	/**

@@ -54,7 +54,7 @@ public class GlobalVariableSymbolDB extends VariableSymbolDB {
 	}
 
 	@Override
-	public String getName() {
+	protected String doGetName() {
 		if (!checkIsValid()) {
 			// TODO: SCR 
 			return "[Invalid VariableSymbol - Deleted!]";
@@ -63,7 +63,7 @@ public class GlobalVariableSymbolDB extends VariableSymbolDB {
 		if (storage == null) {
 			return Function.DEFAULT_LOCAL_PREFIX + "_!BAD!";
 		}
-		return super.getName();
+		return super.doGetName();
 	}
 
 }
