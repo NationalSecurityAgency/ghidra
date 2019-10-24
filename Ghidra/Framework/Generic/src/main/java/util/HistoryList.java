@@ -176,6 +176,18 @@ public class HistoryList<T> {
 	}
 
 	/**
+	 * Performs a {@link #goBack()} until the given item becomes the current item.  This is 
+	 * useful if you wish to go backward to a specific item in the list.
+	 * 
+	 * @param t the item
+	 */
+	public void goBackTo(T t) {
+		while (!getCurrentHistoryItem().equals(t) && hasPrevious()) {
+			goBack();
+		}
+	}
+
+	/**
 	 * Moves this history list's current item pointer forward one and then calls the user-provided
 	 * callback to signal the newly selected item.
 	 * 
@@ -188,6 +200,18 @@ public class HistoryList<T> {
 
 		T t = historyStack.get(++historyIndex);
 		broadcast(t);
+	}
+
+	/**
+	 * Performs a {@link #goForward()} until the given item becomes the current item.  This is 
+	 * useful if you wish to go forward to a specific item in the list.
+	 * 
+	 * @param t the item
+	 */
+	public void goForwardTo(T t) {
+		while (!getCurrentHistoryItem().equals(t) && hasNext()) {
+			goForward();
+		}
 	}
 
 	/**
