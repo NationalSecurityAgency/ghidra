@@ -55,11 +55,6 @@ public class DomainFolderRootNode extends DomainFolderNode {
 	}
 
 	@Override
-	public void dispose() {
-		super.dispose();
-	}
-
-	@Override
 	public String getToolTip() {
 		return toolTipText;
 	}

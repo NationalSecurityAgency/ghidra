@@ -45,7 +45,7 @@ public class DataTypeNode extends DataTypeTreeNode {
 	public DataTypeNode(DataType dataType) {
 		this.dataType = dataType;
 		this.name = dataType.getName();
-		this.displayName = dataType.getName();
+		this.displayName = getCurrentDisplayName();
 	}
 
 	@Override

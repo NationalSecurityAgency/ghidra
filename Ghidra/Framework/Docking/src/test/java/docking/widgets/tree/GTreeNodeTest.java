@@ -70,6 +70,9 @@ public class GTreeNodeTest {
 	public void testGetParent() {
 		assertEquals(root, node0.getParent());
 		assertEquals(node0, node0_0.getParent());
+
+		root.setParent(new GTreeRootParentNode(null));
+		assertEquals(null, root.getParent());
 	}
 
 	@Test
@@ -281,7 +284,7 @@ public class GTreeNodeTest {
 		assertNull(node1.getParent());
 		assertEquals(1, events.size());
 		TestEvent event = events.get(0);
-		assertEquals(EventType.STRUCTURE_CHANGED, event.type);
+		assertEquals(EventType.NODE_REMOVED, event.type);
 		assertEquals(root, event.node);
 	}
 
@@ -444,8 +447,8 @@ public class GTreeNodeTest {
 		}
 
 		@Override
-		protected void fireNodeRemoved(GTreeNode parentNode, GTreeNode removedNode, int index) {
-			events.add(new TestEvent(EventType.NODE_REMOVED, parentNode, removedNode, index));
+		protected void fireNodeRemoved(GTreeNode parentNode, GTreeNode removedNode) {
+			events.add(new TestEvent(EventType.NODE_REMOVED, null, parentNode, -1));
 		}
 	}
 

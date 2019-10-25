@@ -23,6 +23,7 @@ import javax.swing.event.TreeModelListener;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
 
+import docking.widgets.tree.GTree;
 import docking.widgets.tree.GTreeNode;
 import ghidra.util.SystemUtilities;
 
@@ -70,8 +71,15 @@ public class GTreeModel implements TreeModel {
 
 	@Override
 	public Object getChild(Object parent, int index) {
-		GTreeNode gTreeParent = (GTreeNode) parent;
-		return gTreeParent.getChild(index);
+		try {
+			GTreeNode gTreeParent = (GTreeNode) parent;
+			return gTreeParent.getChild(index);
+		}
+		catch (IndexOutOfBoundsException e) {
+			// children must have be changed outside of swing thread, should get another event
+			// to fix things up, so just return an in-progress node
+			return new InProgressGTreeNode();
+		}
 	}
 
 	@Override
@@ -107,6 +115,14 @@ public class GTreeModel implements TreeModel {
 			SystemUtilities.assertThisIsTheSwingThread(
 				"GTreeModel.fireNodeStructuredChanged() must be " + "called from the AWT thread");
 
+			GTreeNode node = convertToViewNode(changedNode);
+			if (node == null) {
+				return;
+			}
+			if (node != changedNode) {
+				node.setChildren(null);
+			}
+
 			TreeModelEvent event = new TreeModelEvent(this, changedNode.getTreePath());
 			for (TreeModelListener listener : listeners) {
 				listener.treeStructureChanged(event);
@@ -141,15 +157,21 @@ public class GTreeModel implements TreeModel {
 
 		TreeModelEvent event;
 		if (parentNode == null) { // special case when root node changes.
-			event = new TreeModelEvent(this, changedNode.getTreePath(), null, null);
+			event = new TreeModelEvent(this, root.getTreePath(), null, null);
 		}
 		else {
-			int indexInParent = changedNode.getIndexInParent();
+			GTreeNode node = convertToViewNode(changedNode);
+			if (node == null) {
+				return;
+			}
+
+			int indexInParent = node.getIndexInParent();
 			if (indexInParent < 0) {
-				return; // node is filtered
+				return;
 			}
 			event =
-				new TreeModelEvent(this, parentNode.getTreePath(), new int[] { indexInParent },
+				new TreeModelEvent(this, node.getParent().getTreePath(),
+					new int[] { indexInParent },
 					new Object[] { changedNode });
 		}
 		for (TreeModelListener listener : listeners) {
@@ -164,30 +186,33 @@ public class GTreeModel implements TreeModel {
 		SystemUtilities.assertThisIsTheSwingThread(
 			"GTreeModel.fireNodeAdded() must be " + "called from the AWT thread");
 
-		int indexInParent = newNode.getIndexInParent();
-		if (indexInParent < 0) {
+		GTreeNode node = convertToViewNode(parentNode);
+		if (node == null) {
 			return;
 		}
 
-		TreeModelEvent event =
-			new TreeModelEvent(this, parentNode.getTreePath(), new int[] { indexInParent },
-				new Object[] { newNode });
+		TreeModelEvent event = new TreeModelEvent(this, node.getTreePath());
 		for (TreeModelListener listener : listeners) {
-			listener.treeNodesInserted(event);
+			listener.treeStructureChanged(event);
 		}
 	}
 
-	public void fireNodeRemoved(final GTreeNode parentNode, final GTreeNode removedNode,
-			final int oldIndexInParent) {
+	public void fireNodeRemoved(final GTreeNode parentNode, final GTreeNode removedNode) {
 
 		SystemUtilities.assertThisIsTheSwingThread(
 			"GTreeModel.fireNodeRemoved() must be " + "called from the AWT thread");
 
-		TreeModelEvent event =
-			new TreeModelEvent(this, parentNode.getTreePath(), new int[] { oldIndexInParent },
-				new Object[] { removedNode });
+		GTreeNode node = convertToViewNode(parentNode);
+		if (node == null) {
+			return;
+		}
+		if (node != parentNode) {
+			node.removeNode(removedNode);
+		}
+
+		TreeModelEvent event = new TreeModelEvent(this, node.getTreePath());
 		for (TreeModelListener listener : listeners) {
-			listener.treeNodesRemoved(event);
+			listener.treeStructureChanged(event);
 		}
 	}
 
@@ -197,5 +222,16 @@ public class GTreeModel implements TreeModel {
 
 	public void setEventsEnabled(boolean b) {
 		eventsEnabled = b;
+	}
+
+	private GTreeNode convertToViewNode(GTreeNode node) {
+		if (node.getRoot() == root) {
+			return node;
+		}
+		GTree tree = root.getTree();
+		if (tree != null) {
+			return tree.getViewNodeForPath(node.getTreePath());
+		}
+		return null;
 	}
 }

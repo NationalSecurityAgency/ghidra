@@ -63,7 +63,6 @@ public class ArchiveNode extends CategoryNode {
 		if (dataTypeManager == null) {
 			return; // some nodes do not have DataTypeManagers, like InvalidFileArchives
 		}
-
 		dataTypeManager.removeDataTypeManagerListener(listener);
 		dataTypeManager = archive.getDataTypeManager();
 		listener = new ArchiveNodeCategoryChangeListener();

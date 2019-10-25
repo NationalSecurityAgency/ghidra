@@ -765,10 +765,11 @@ public class GTree extends JPanel implements BusyListener {
 	}
 
 	void setFilteredRootNode(GTreeNode filteredRootNode) {
+		filteredRootNode.setParent(rootParent);
 		GTreeNode currentRoot = (GTreeNode) model.getRoot();
 		model.setRootNode(filteredRootNode);
 		if (currentRoot != realRootNode) {
-			currentRoot.dispose();
+			currentRoot.disposeClones();
 		}
 	}
 
@@ -776,7 +777,7 @@ public class GTree extends JPanel implements BusyListener {
 		GTreeNode currentRoot = (GTreeNode) model.getRoot();
 		model.setRootNode(realRootNode);
 		if (currentRoot != realRootNode) {
-			currentRoot.dispose();
+			currentRoot.disposeClones();
 		}
 	}
 

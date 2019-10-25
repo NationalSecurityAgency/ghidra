@@ -58,7 +58,14 @@ abstract class CoreGTreeNode implements Cloneable {
 	 * @return the parent of this node.
 	 */
 	public final GTreeNode getParent() {
-		return parent;
+		GTreeNode localParent = parent;
+
+		// Do not return the GTree's fake root node parent.  From the client's perspective,
+		// this node does not exist.		
+		if (localParent instanceof GTreeRootParentNode) {
+			return null;
+		}
+		return localParent;
 	}
 
 	/**
@@ -166,6 +173,22 @@ abstract class CoreGTreeNode implements Cloneable {
 		}
 	}
 
+	final void disposeClones() {
+		List<GTreeNode> oldChildren;
+		synchronized (this) {
+			oldChildren = children;
+			children = null;
+			parent = null;
+		}
+
+		if (oldChildren != null) {
+			for (GTreeNode node : oldChildren) {
+				node.disposeClones();
+			}
+			oldChildren.clear();
+		}
+	}
+
 	/**
 	 * Returns true if the node is in the process of loading its children. 
 	 * See {@link GTreeSlowLoadingNode}
@@ -189,6 +212,19 @@ abstract class CoreGTreeNode implements Cloneable {
 			return true;
 		}
 		return !isInProgress(children);
+	}
+
+	/**
+	 * Returns the GTree that this node is attached to
+	 * @return the GTree that this node is attached to
+	 */
+	public GTree getTree() {
+		// here we want to use the parent variable, not getParent() which
+		// filters out GTreeRootParentNodes which is what actually can provide the tree
+		if (parent != null) {
+			return parent.getTree();
+		}
+		return null;
 	}
 
 	/**

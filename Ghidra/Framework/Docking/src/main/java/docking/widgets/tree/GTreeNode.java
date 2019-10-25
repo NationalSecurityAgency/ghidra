@@ -50,27 +50,27 @@ public abstract class GTreeNode extends CoreGTreeNode implements Comparable<GTre
 
 	/**
 	 * Returns the name of the node to be displayed in the tree
-	 * @return the name of the node.
+	 * @return the name of the node
 	 */
 	public abstract String getName();
 
 	/**
-	 * Returns the Icon to be displayed for this node in the tree.
-	 * @param expanded true if the node is expanded.
-	 * @return the icon to be displayed for this node in the tree.
+	 * Returns the Icon to be displayed for this node in the tree
+	 * @param expanded true if the node is expanded
+	 * @return the icon to be displayed for this node in the tree
 	 */
 	public abstract Icon getIcon(boolean expanded);
 
 	/**
 	 * Returns the string to be displayed as a tooltip when the user 
-	 * hovers the mouse on this node in the tree.
-	 * @return the tooltip to be displayed.
+	 * hovers the mouse on this node in the tree
+	 * @return the tooltip to be displayed
 	 */
 	public abstract String getToolTip();
 
 	/**
-	 * Returns true if this node never has children.
-	 * @return true if this node is a leaf.
+	 * Returns true if this node never has children
+	 * @return true if this node is a leaf
 	 */
 	public abstract boolean isLeaf();
 
@@ -82,7 +82,7 @@ public abstract class GTreeNode extends CoreGTreeNode implements Comparable<GTre
 	/**
 	 * Adds the given node as a child to this node.  Note: this method may be inefficient so if you
 	 * have many nodes to add, you should use either {@link #addNodes(List)} or {@link #setChildren(List)}
-	 * @param node the node to add as a child. 
+	 * @param node the node to add as a child
 	 */
 	public void addNode(GTreeNode node) {
 		children().add(node);
@@ -91,8 +91,8 @@ public abstract class GTreeNode extends CoreGTreeNode implements Comparable<GTre
 	}
 
 	/**
-	 * Adds the given nodes as children to this node. 
-	 * @param nodes the nodes to add.
+	 * Adds the given nodes as children to this node
+	 * @param nodes the nodes to add
 	 */
 	public void addNodes(List<GTreeNode> nodes) {
 		for (GTreeNode node : nodes) {
@@ -103,9 +103,9 @@ public abstract class GTreeNode extends CoreGTreeNode implements Comparable<GTre
 	}
 
 	/**
-	 * Adds the given node at the given index as a child to this node.
-	 * @param index the index to place the node.
-	 * @param node the node to add as a child of this node.
+	 * Adds the given node at the given index as a child to this node
+	 * @param index the index to place the node
+	 * @param node the node to add as a child of this node
 	 */
 	public void addNode(int index, GTreeNode node) {
 		children().add(index, node);
@@ -126,8 +126,8 @@ public abstract class GTreeNode extends CoreGTreeNode implements Comparable<GTre
 
 	/**
 	 * Returns the number of <b>visible</b> children of this node.  Does not include
-	 * nodes that are current filtered out.
-	 * @return the number of <b>visible</b> children of this node.
+	 * nodes that are current filtered out
+	 * @return the number of <b>visible</b> children of this node
 	 */
 	public int getChildCount() {
 		return children().size();
@@ -135,8 +135,8 @@ public abstract class GTreeNode extends CoreGTreeNode implements Comparable<GTre
 
 	/**
 	 * Returns the child node of this node with the given name.
-	 * @param name the name of the child to be returned.
-	 * @return the child with the given name.
+	 * @param name the name of the child to be returned
+	 * @return the child with the given name
 	 */
 	public GTreeNode getChild(String name) {
 		for (GTreeNode node : children()) {
@@ -150,8 +150,8 @@ public abstract class GTreeNode extends CoreGTreeNode implements Comparable<GTre
 	/**
 	 * Returns the child node at the given index. Returns null if the index is out of
 	 * bounds.
-	 * @param index the index of the child to be returned.
-	 * @return the child at the given index.
+	 * @param index the index of the child to be returned
+	 * @return the child at the given index
 	 */
 	public GTreeNode getChild(int index) {
 		return children().get(index);
@@ -160,7 +160,7 @@ public abstract class GTreeNode extends CoreGTreeNode implements Comparable<GTre
 	/**
 	 * Returns the total number of nodes in the subtree rooted at this node.  Leaf
 	 * nodes return 1.
-	 * @return the number of nodes from this node downward.
+	 * @return the number of nodes from this node downward
 	 */
 	public int getNodeCount() {
 		int count = 1;
@@ -171,8 +171,8 @@ public abstract class GTreeNode extends CoreGTreeNode implements Comparable<GTre
 	}
 
 	/**
-	 * Returns the total number of leaf nodes in the subtree from this node.
-	 * @return the total number of leaf nodes in the subtree from this node.
+	 * Returns the total number of leaf nodes in the subtree from this node
+	 * @return the total number of leaf nodes in the subtree from this node
 	 */
 	public int getLeafCount() {
 		int count = 0;
@@ -183,8 +183,8 @@ public abstract class GTreeNode extends CoreGTreeNode implements Comparable<GTre
 	}
 
 	/**
-	 * Returns the index of this node within its parent node.
-	 * @return the index of this node within its parent node.
+	 * Returns the index of this node within its parent node
+	 * @return the index of this node within its parent node
 	 */
 	public int getIndexInParent() {
 		GTreeNode parent = getParent();
@@ -197,16 +197,16 @@ public abstract class GTreeNode extends CoreGTreeNode implements Comparable<GTre
 	/**
 	 * Returns the index of the given node within this node.  -1 is returned
 	 * if the node is not a child of this node.
-	 * @param node whose index we want.
-	 * @return the index of the given node within this node.
+	 * @param node whose index we want
+	 * @return the index of the given node within this node
 	 */
 	public int getIndexOfChild(GTreeNode node) {
 		return children().indexOf(node);
 	}
 
 	/**
-	 * Returns the TreePath for this node.
-	 * @return the TreePath for this node.
+	 * Returns the TreePath for this node
+	 * @return the TreePath for this node
 	 */
 	public TreePath getTreePath() {
 		return new TreePath(getPathToRoot(this, 0));
@@ -230,8 +230,8 @@ public abstract class GTreeNode extends CoreGTreeNode implements Comparable<GTre
 	}
 
 	/**
-	 * Remove the given node from this node.
-	 * @param node the to be removed.
+	 * Remove the given node from this node
+	 * @param node the to be removed
 	 */
 	public void removeNode(GTreeNode node) {
 		if (!isLoaded()) {
@@ -240,13 +240,13 @@ public abstract class GTreeNode extends CoreGTreeNode implements Comparable<GTre
 		List<GTreeNode> children = children();
 		if (children.remove(node)) {
 			node.setParent(null);
-			fireNodeStructureChanged(this);
+			fireNodeRemoved(this, node);
 		}
 	}
 
 	/**
 	 * Sets the children on this node.  Any existing current children will be dispose.
-	 * @param childList this list of nodes to be set as children of this node.
+	 * @param childList this list of nodes to be set as children of this node
 	 */
 	public void setChildren(List<GTreeNode> childList) {
 		doSetChildren(childList);
@@ -256,7 +256,7 @@ public abstract class GTreeNode extends CoreGTreeNode implements Comparable<GTre
 	/**
 	 * Returns true if the given node is a child of this node or one of its children.
 	 * @param node the potential descendant node to check
-	 * @return  true if the given node is a child of this node or one of its children.
+	 * @return  true if the given node is a child of this node or one of its children
 	 */
 	public boolean isAncestor(GTreeNode node) {
 		GTreeNode nodeParent = node.getParent();
@@ -273,7 +273,7 @@ public abstract class GTreeNode extends CoreGTreeNode implements Comparable<GTre
 	 * Notification method called when a cell editor completes editing to notify this
 	 * node that its value has changed.  If you override this method you must also override 
 	 * {@link #isEditable()}.
-	 * @param newValue the new value provided by the cell editor.
+	 * @param newValue the new value provided by the cell editor
 	 * @see #isEditable()
 	 */
 	public void valueChanged(Object newValue) {
@@ -284,7 +284,7 @@ public abstract class GTreeNode extends CoreGTreeNode implements Comparable<GTre
 	 * Returns true if this node is allowed to be edited in the tree.  You must override this
 	 * method to allow a node to be edited.  You must also override {@link #valueChanged(Object)}
 	 * to handle the result of the edit.
-	 * @return true if this node is allowed to be edited in the tree.
+	 * @return true if this node is allowed to be edited in the tree
 	 * @see #valueChanged(Object)
 	 */
 	public boolean isEditable() {
@@ -293,8 +293,8 @@ public abstract class GTreeNode extends CoreGTreeNode implements Comparable<GTre
 
 	/**
 	 * Returns the rootNode for this tree or null if there is no parent path to a
-	 * GTRootNode.
-	 * @return the rootNode for this tree. 
+	 * GTRootNode
+	 * @return the rootNode for this tree
 	 */
 	public GTreeNode getRoot() {
 		GTreeNode myParent = getParent();
@@ -313,30 +313,18 @@ public abstract class GTreeNode extends CoreGTreeNode implements Comparable<GTre
 	}
 
 	/**
-	 * Returns the GTree that this node is attached to
-	 * @return the GTree that this node is attached to
-	 */
-	public GTree getTree() {
-		GTreeNode parent = getParent();
-		if (parent != null) {
-			return parent.getTree();
-		}
-		return null;
-	}
-
-	/**
 	 * Generates a filtered copy of this node and its children.
 	 * <P>
 	 * A node will be included if it or any of its descendants are accepted by the filter.
 	 * NOTE: the filter will only be applied to a nodes children if they are loaded. So to 
 	 * perform a filter on all the nodes in the tree, the {@link #loadAll(TaskMonitor)} should
 	 * be called before the filter call. 
-	 * @param filter the filter being applied.
-	 * @param monitor a TaskMonitor for tracking the progress and cancelling.
+	 * @param filter the filter being applied
+	 * @param monitor a TaskMonitor for tracking the progress and cancelling
 	 * @return A copy of this node and its children that matches the filter or null 
-	 * if this node and none of its children match the filter. 
-	 * @throws CancelledException if the operation is cancelled via the TaskMonitor.
-	 * @throws CloneNotSupportedException if any nodes in the tree explicitly prevents cloning.
+	 * if this node and none of its children match the filter.
+	 * @throws CancelledException if the operation is cancelled via the TaskMonitor
+	 * @throws CloneNotSupportedException if any nodes in the tree explicitly prevents cloning
 	 */
 
 	public GTreeNode filter(GTreeFilter filter, TaskMonitor monitor)
@@ -367,8 +355,8 @@ public abstract class GTreeNode extends CoreGTreeNode implements Comparable<GTre
 	 * is fully loaded. Nodes that are already loaded (including normal nodes which are always loaded)
 	 * do nothing except recursively call {@link #loadAll(TaskMonitor)} on their children.
 	 * @param monitor the TaskMonitor to monitor progress and provide cancel checking
-	 * @return the total number of nodes in the subtree of this node.
-	 * @throws CancelledException if the operation is cancelled using the monitor.
+	 * @return the total number of nodes in the subtree of this node
+	 * @throws CancelledException if the operation is cancelled using the monitor
 	 */
 	public int loadAll(TaskMonitor monitor) throws CancelledException {
 		List<GTreeNode> children = children();
@@ -403,43 +391,18 @@ public abstract class GTreeNode extends CoreGTreeNode implements Comparable<GTre
 	}
 
 	/**
-	 * Notifies the tree that the node has different children.  This method 
-	 * @param node the node that has changed.
-	 */
-	public void fireNodeStructureChanged(GTreeNode node) {
-		GTree tree = getTree();
-		if (tree != null) {
-			Swing.runNow(() -> tree.getModel().fireNodeStructureChanged(node));
-			tree.refilterLater();
-		}
-	}
-
-	/**
-	 * Notifies the tree that a node has changed.
-	 * @param parentNode the node that contains the node that was changed.
-	 * @param node the that changed.
-	 */
-	public void fireNodeChanged(GTreeNode parentNode, GTreeNode node) {
-		GTree tree = getTree();
-		if (tree != null) {
-			Swing.runNow(() -> tree.getModel().fireNodeDataChanged(parentNode, node));
-			tree.refilterLater();
-		}
-	}
-
-	/**
-	 * Returns a stream of the GTree nodes in the subtree of this node.
+	 * Returns a stream of the GTree nodes in the subtree of this node
 	 * @param depthFirst if true, the nodes will be streamed in depth-first order, otherwise breadth-first order
-	 * @return a stream of the GTree nodes in the subtree of this node.
+	 * @return a stream of the GTree nodes in the subtree of this node
 	 */
 	public Stream<GTreeNode> stream(boolean depthFirst) {
 		return CollectionUtils.asStream(iterator(depthFirst));
 	}
 
 	/**
-	 * Returns an iterator of the GTree nodes in the subtree of this node.
+	 * Returns an iterator of the GTree nodes in the subtree of this node
 	 * @param depthFirst if true, the nodes will be returned in depth-first order, otherwise breadth-first order
-	 * @return an iterator of the GTree nodes in the subtree of this node.
+	 * @return an iterator of the GTree nodes in the subtree of this node
 	 */
 	public Iterator<GTreeNode> iterator(boolean depthFirst) {
 		if (depthFirst) {
@@ -462,6 +425,31 @@ public abstract class GTreeNode extends CoreGTreeNode implements Comparable<GTre
 		return id;
 	}
 
+	/**
+	 * Notifies the tree that the node has different children.  This method 
+	 * @param node the node that has changed.
+	 */
+	public void fireNodeStructureChanged(GTreeNode node) {
+		GTree tree = getTree();
+		if (tree != null) {
+			Swing.runNow(() -> tree.getModel().fireNodeStructureChanged(node));
+			tree.refilterLater();
+		}
+	}
+
+	/**
+	 * Notifies the tree that a node has changed
+	 * @param parentNode the node that contains the node that was changed
+	 * @param node the that changed
+	 */
+	public void fireNodeChanged(GTreeNode parentNode, GTreeNode node) {
+		GTree tree = getTree();
+		if (tree != null) {
+			Swing.runNow(() -> tree.getModel().fireNodeDataChanged(parentNode, node));
+			tree.refilterLater();
+		}
+	}
+
 	protected void fireNodeAdded(GTreeNode parentNode, GTreeNode newNode) {
 		GTree tree = getTree();
 		if (tree != null) {
@@ -470,13 +458,12 @@ public abstract class GTreeNode extends CoreGTreeNode implements Comparable<GTre
 		}
 	}
 
-	protected void fireNodeRemoved(GTreeNode parentNode, GTreeNode removedNode,
-			int deletedChildIndex) {
+	protected void fireNodeRemoved(GTreeNode parentNode, GTreeNode removedNode) {
 
 		GTree tree = getTree();
 		if (tree != null) {
 			Swing.runNow(
-				() -> tree.getModel().fireNodeRemoved(parentNode, removedNode, deletedChildIndex));
+				() -> tree.getModel().fireNodeRemoved(parentNode, removedNode));
 		}
 	}
 

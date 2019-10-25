@@ -17,15 +17,11 @@ package docking.widgets.tree;
 
 import static org.junit.Assert.*;
 
-import java.util.ArrayList;
 import java.util.List;
-
-import javax.swing.Icon;
-import javax.swing.JComponent;
 
 import org.junit.*;
 
-import docking.*;
+import docking.DockingWindowManager;
 import docking.test.AbstractDockingTest;
 import docking.widgets.filter.*;
 import ghidra.test.DummyTool;
@@ -46,7 +42,7 @@ public class GTreeFilterTest extends AbstractDockingTest {
 		filterField = (FilterTextField) gTree.getFilterField();
 
 		winMgr = new DockingWindowManager(new DummyTool(), null);
-		winMgr.addComponent(new TestTreeComponentProvider());
+		winMgr.addComponent(new TestTreeComponentProvider(gTree));
 		winMgr.setVisible(true);
 
 		waitForTree();
@@ -519,90 +515,6 @@ public class GTreeFilterTest extends AbstractDockingTest {
 
 	private void waitForTree() {
 		waitForTree(gTree);
-	}
-
-	private class TestRootNode extends GTreeNode {
-
-		TestRootNode() {
-			List<GTreeNode> children = new ArrayList<>();
-			children.add(new LeafNode("XYZ"));
-			children.add(new LeafNode("ABC"));
-			children.add(new LeafNode("ABCX"));
-			children.add(new LeafNode("XABC"));
-			children.add(new LeafNode("XABCX"));
-			setChildren(children);
-		}
-
-		@Override
-		public Icon getIcon(boolean expanded) {
-			return null;
-		}
-
-		@Override
-		public String getName() {
-			return "Root";
-		}
-
-		@Override
-		public String getToolTip() {
-			return null;
-		}
-
-		@Override
-		public boolean isLeaf() {
-			return false;
-		}
-	}
-
-	/**
-	 * A basic leaf node 
-	 */
-	private class LeafNode extends GTreeNode {
-
-		private final String name;
-
-		LeafNode(String name) {
-			this.name = name;
-		}
-
-		@Override
-		public Icon getIcon(boolean expanded) {
-			return null;
-		}
-
-		@Override
-		public String getName() {
-			return name;
-		}
-
-		@Override
-		public String getToolTip() {
-			return null;
-		}
-
-		@Override
-		public boolean isLeaf() {
-			return true;
-		}
-	}
-
-	class TestTreeComponentProvider extends ComponentProvider {
-
-		public TestTreeComponentProvider() {
-			super(null, "Test", "Test");
-			setDefaultWindowPosition(WindowPosition.STACK);
-			setTabText("Test");
-		}
-
-		@Override
-		public JComponent getComponent() {
-			return gTree;
-		}
-
-		@Override
-		public String getTitle() {
-			return "Test Tree";
-		}
 	}
 
 }
