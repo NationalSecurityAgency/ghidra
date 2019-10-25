@@ -165,6 +165,7 @@ class LaneDivide : public TransformManager {
 
   LaneDescription description;	///< Global description of lanes that need to be split
   vector<WorkNode> workList;	///< List of Varnodes still left to trace
+  bool allowSubpieceTerminator;	///< \b true if we allow lanes to be cast (via SUBPIECE) to a smaller integer size
 
   TransformVar *setReplacement(Varnode *vn,int4 numLanes,int4 skipLanes);
   void buildUnaryOp(OpCode opc,PcodeOp *op,TransformVar *inVars,TransformVar *outVars,int4 numLanes);
@@ -178,7 +179,7 @@ class LaneDivide : public TransformManager {
   bool traceBackward(TransformVar *rvn,int4 numLanes,int4 skipLanes);
   bool processNextWork(void);		///< Process the next Varnode on the work list
 public:
-  LaneDivide(Funcdata *f,Varnode *root,const LaneDescription &desc);	///< Constructor
+  LaneDivide(Funcdata *f,Varnode *root,const LaneDescription &desc,bool allowDowncast);	///< Constructor
   bool doTrace(void);		///< Trace lanes as far as possible from the root Varnode
 };
 

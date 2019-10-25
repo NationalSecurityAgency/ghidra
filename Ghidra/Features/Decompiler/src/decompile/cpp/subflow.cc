@@ -2237,8 +2237,21 @@ bool LaneDivide::traceForward(TransformVar *rvn,int4 numLanes,int4 skipLanes)
       {
 	int4 bytePos = (int4)op->getIn(1)->getOffset();
 	int4 outLanes,outSkip;
-	if (!description.restriction(numLanes, skipLanes, bytePos, outvn->getSize(), outLanes, outSkip))
+	if (!description.restriction(numLanes, skipLanes, bytePos, outvn->getSize(), outLanes, outSkip)) {
+	  if (allowSubpieceTerminator) {
+	    int4 laneIndex = description.getBoundary(bytePos);
+	    if (laneIndex < 0 || laneIndex >= description.getNumLanes())	// Does piece start on lane boundary?
+	      return false;
+	    if (description.getSize(laneIndex) <= outvn->getSize())		// Is the piece smaller than a lane?
+	      return false;
+	    // Treat SUBPIECE as terminating
+	    TransformOp *rop = newPreexistingOp(2, CPUI_SUBPIECE, op);
+	    opSetInput(rop, rvn + (laneIndex - skipLanes), 0);
+	    opSetInput(rop, newConstant(4, 0, 0), 1);
+	    break;
+	  }
 	  return false;
+	}
 	if (outLanes == 1) {
 	  TransformOp *rop = newPreexistingOp(1, CPUI_COPY, op);
 	  opSetInput(rop,rvn + (outSkip-skipLanes), 0);
@@ -2379,10 +2392,12 @@ bool LaneDivide::processNextWork(void)
 /// \param f is the function being transformed
 /// \param root is the root Varnode to start tracing lanes from
 /// \param desc is a description of the lanes on the root Varnode
-LaneDivide::LaneDivide(Funcdata *f,Varnode *root,const LaneDescription &desc)
+/// \param allowDowncast is \b true if we all SUBPIECE to be treated as terminating
+LaneDivide::LaneDivide(Funcdata *f,Varnode *root,const LaneDescription &desc,bool allowDowncast)
   : TransformManager(f), description(desc)
 {
-   setReplacement(root, desc.getNumLanes(), 0);
+  allowSubpieceTerminator = allowDowncast;
+  setReplacement(root, desc.getNumLanes(), 0);
 }
 
 /// Push the lanes around from the root, setting up the explicit transforms as we go.

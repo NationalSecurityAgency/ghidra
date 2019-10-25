@@ -504,7 +504,8 @@ int4 ActionStackPtrFlow::apply(Funcdata &data)
 /// \param data is the function being transformed
 /// \param vn is the given single Varnode
 /// \param lanedRegister is acceptable set of lane sizes for the Varnode
-bool ActionLaneDivide::processVarnode(Funcdata &data,Varnode *vn,const LanedRegister &lanedRegister)
+/// \param allowDowncast is \b true if we allow lane systems with SUBPIECE terminators
+bool ActionLaneDivide::processVarnode(Funcdata &data,Varnode *vn,const LanedRegister &lanedRegister,bool allowDowncast)
 
 {
   list<PcodeOp *>::const_iterator iter = vn->beginDescend();
@@ -524,7 +525,7 @@ bool ActionLaneDivide::processVarnode(Funcdata &data,Varnode *vn,const LanedRegi
       }
       if (!description.subset(bytePos,vn->getSize()))		// Try to restrict lane scheme to actual Varnode
 	continue;
-      LaneDivide laneDivide(&data,op->getIn(0),description);
+      LaneDivide laneDivide(&data,op->getIn(0),description,allowDowncast);
       if (laneDivide.doTrace()) {
 	laneDivide.apply();
 	count += 1;		// Indicate a change was made
@@ -537,16 +538,23 @@ bool ActionLaneDivide::processVarnode(Funcdata &data,Varnode *vn,const LanedRegi
 
 /// \brief Search for and attempt to split Varnodes that match the given laned vector register
 ///
+/// All varnodes (bigger than 8 bytes) that are contained in the vector register are processed,
+/// looking for a working lane scheme, and splitting based on that scheme. Return \b false if there
+/// is at least one eligible Varnode that could not be split.
 /// \param data is the function being modified
 /// \param lanedRegister is the given register and acceptable lane schemes
+/// \param allowDowncast is \b true if SUBPIECE terminators are allowed in the schemes
 /// \param iter is an iterator to the first Varnode that matches the vector register
-void ActionLaneDivide::processLane(Funcdata &data,const LanedRegister &lanedRegister,VarnodeLocSet::const_iterator iter)
+/// \return \b true if all varnodes were successfully split
+bool ActionLaneDivide::processLane(Funcdata &data,const LanedRegister &lanedRegister,bool allowDowncast,
+				   VarnodeLocSet::const_iterator iter)
 
 {
   int4 fullSize = lanedRegister.getStorage().size;
   Address startAddress(lanedRegister.getStorage().getAddr());
   Address lastAddress(startAddress + (fullSize-1));
   VarnodeLocSet::const_iterator enditer = data.endLoc();
+  bool res = true;
   while(iter != enditer) {
     Varnode *vn = *iter;
     ++iter;
@@ -557,11 +565,15 @@ void ActionLaneDivide::processLane(Funcdata &data,const LanedRegister &lanedRegi
     int4 diff = (int4)(vn->getOffset() - startAddress.getOffset());
     if (diff + vn->getSize() > fullSize)	// Must be contained by full register
       continue;
-    if (processVarnode(data,vn,lanedRegister)) {
+    if (processVarnode(data,vn,lanedRegister,allowDowncast)) {
       // If changes were made, iterator may no longer be valid, generate a new one
       iter = data.beginLoc(startAddress);
+      res = true;	// We may have eliminated a previous failure
     }
+    else
+      res = false;	// Note the failure
   }
+  return res;
 }
 
 int4 ActionLaneDivide::apply(Funcdata &data)
@@ -578,7 +590,8 @@ int4 ActionLaneDivide::apply(Funcdata &data)
     if (viter == data.endLoc()) break;
     Varnode *vn = *viter;
     if (lastAddress < vn->getAddr()) break;
-    processLane(data,lanedRegister,viter);
+    if (!processLane(data,lanedRegister,false,viter))	// Try without SUBPIECE terminators
+      processLane(data,lanedRegister,true,viter);	// If we fail, try with SUBPIECE terminators
   }
   return 0;
 }
@@ -4594,7 +4607,6 @@ void universal_action(Architecture *conf)
       //      actmainloop->addAction( new ActionParamShiftStop("paramshift") );
       actmainloop->addAction( new ActionRestrictLocal("localrecovery") ); // Do before dead code removed
       actmainloop->addAction( new ActionDeadCode("deadcode") );
-      actmainloop->addAction( new ActionLaneDivide("base") );
       actmainloop->addAction( new ActionDynamicMapping("dynamic") ); // Must come before restructurevarnode and infertypes
       actmainloop->addAction( new ActionRestructureVarnode("localrecovery") );
       actmainloop->addAction( new ActionSpacebase("base") );	// Must come before infertypes and nonzeromask
@@ -4725,6 +4737,7 @@ void universal_action(Architecture *conf)
 	conf->extra_pool_rules.clear(); // Rules are now absorbed into universal
       }
       actstackstall->addAction( actprop );
+      actstackstall->addAction( new ActionLaneDivide("base") );
       actstackstall->addAction( new ActionMultiCse("analysis") );
       actstackstall->addAction( new ActionShadowVar("analysis") );
       actstackstall->addAction( new ActionDeindirect("deindirect") );
