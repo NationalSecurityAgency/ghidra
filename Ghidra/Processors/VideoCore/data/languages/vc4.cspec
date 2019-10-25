@@ -83,4 +83,51 @@
       </killedbycall>
     </prototype>
   </default_proto>
+  <prototype name="__noclobber" extrapop="0" stackshift="0">
+    <input>
+      <pentry minsize="1" maxsize="4">
+	<register name="r0"/>
+      </pentry>
+    </input>
+    <output>
+      <pentry minsize="1" maxsize="4">
+	<register name="r0"/>
+      </pentry>
+    </output>
+    <unaffected>
+      <register name="r1"/>
+      <register name="r2"/>
+      <register name="r3"/>
+      <register name="r4"/>
+      <register name="r5"/>
+      <register name="r6"/>
+      <register name="r7"/>
+      <register name="r8"/>
+      <register name="r9"/>
+      <register name="r10"/>
+      <register name="r11"/>
+      <register name="r12"/>
+      <register name="r13"/>
+      <register name="r14"/>
+      <register name="r15"/>
+      <register name="r16"/>
+      <register name="r17"/>
+      <register name="r18"/>
+      <register name="r19"/>
+      <register name="r20"/>
+      <register name="r21"/>
+      <register name="r22"/>
+      <register name="r23"/>
+      <register name="gp"/>
+      <register name="sp"/>
+      <register name="lr"/>
+      <register name="r27"/>
+      <register name="r28"/>
+      <register name="r29"/>
+    </unaffected>
+    <killedbycall>
+      <register name="r0"/>
+      <register name="sr"/>
+    </killedbycall>
+  </prototype>
 </compiler_spec>
