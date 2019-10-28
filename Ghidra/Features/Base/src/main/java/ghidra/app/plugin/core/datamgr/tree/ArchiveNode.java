@@ -223,7 +223,7 @@ public class ArchiveNode extends CategoryNode {
 			return null;
 		}
 
-		CategoryNode node = findCategoryNode(parentCategory);
+		CategoryNode node = findCategoryNode(parentCategory, loadChildren);
 		if (node == null) {
 			return null;
 		}

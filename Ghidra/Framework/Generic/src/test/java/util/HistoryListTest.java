@@ -15,7 +15,7 @@
  */
 package util;
 
-import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.*;
 import static org.junit.Assert.*;
 
 import java.util.LinkedList;
@@ -423,6 +423,32 @@ public class HistoryListTest {
 		assertCurrentItem(D);
 		assertPreviousItems(C, B, A);
 		assertNextItems();
+	}
+
+	@Test
+	public void testBackToItem() {
+
+		addHistory(A);
+		addHistory(B);
+		addHistory(C);
+
+		historyList.goBackTo(A);
+		assertCurrentItem(A);
+	}
+
+	@Test
+	public void testForwardToItem() {
+
+		addHistory(A);
+		addHistory(B);
+		addHistory(C);
+		goBack();
+		goBack();
+		goBack();
+		assertCurrentItem(A);
+
+		historyList.goForwardTo(C);
+		assertCurrentItem(C);
 	}
 
 //==================================================================================================

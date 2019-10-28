@@ -42,7 +42,7 @@ import ghidra.app.plugin.core.datamgr.archive.*;
 import ghidra.app.plugin.core.datamgr.tree.*;
 import ghidra.app.plugin.core.datamgr.util.DataTypeUtils;
 import ghidra.app.util.ToolTipUtils;
-import ghidra.app.util.datatype.DataTypeIdUrl;
+import ghidra.app.util.datatype.DataTypeUrl;
 import ghidra.framework.main.datatree.ArchiveProvider;
 import ghidra.framework.main.datatree.VersionControlDataTypeArchiveUndoCheckoutAction;
 import ghidra.framework.main.projectdata.actions.*;
@@ -83,7 +83,8 @@ public class DataTypesProvider extends ComponentProviderAdapter {
 	private HelpLocation helpLocation;
 	private DataTypeManagerPlugin plugin;
 
-	private HistoryList<DataType> navigationHistory = new HistoryList<>(15, dt -> {
+	private HistoryList<DataTypeUrl> navigationHistory = new HistoryList<>(15, url -> {
+		DataType dt = url.getDataType(plugin);
 		setDataTypeSelected(dt);
 	});
 	private MultiActionDockingAction nextAction;
@@ -462,39 +463,16 @@ public class DataTypesProvider extends ComponentProviderAdapter {
 	private DataType locateDataType(HyperlinkEvent event) {
 		String href = event.getDescription();
 
-		DataTypeIdUrl url = null;
+		DataTypeUrl url = null;
 		try {
-			url = new DataTypeIdUrl(href);
+			url = new DataTypeUrl(href);
 		}
-		catch (NumberFormatException e) {
-			Msg.debug(this, "Could not parse Data Type ID URL '" + href + "'");
+		catch (IllegalArgumentException e) {
+			Msg.debug(this, "Could not parse Data Type URL '" + href + "'", e);
 			return null;
 		}
 
-		DataTypeManager manager = getManager(url);
-		if (manager == null) {
-			// this shouldn't be possible, unless the url is old and the manager has been closed
-			Msg.debug(this, "Could not find data type for " + event.getDescription());
-			return null;
-		}
-
-		DataType dt = manager.findDataTypeForID(url.getDataTypeId());
-		return dt;
-	}
-
-	private DataTypeManager getManager(DataTypeIdUrl url) {
-		UniversalID id = url.getDataTypeManagerId();
-		return getManager(id);
-	}
-
-	private DataTypeManager getManager(UniversalID id) {
-		DataTypeManager[] mgs = plugin.getDataTypeManagers();
-		for (DataTypeManager dtm : mgs) {
-			if (dtm.getUniversalID().equals(id)) {
-				return dtm;
-			}
-		}
-		return null;
+		return url.getDataType(plugin);
 	}
 
 	private void updatePreviewPane() {
@@ -551,6 +529,7 @@ public class DataTypesProvider extends ComponentProviderAdapter {
 	void dispose() {
 		previewUpdateManager.dispose();
 		archiveGTree.dispose();
+		navigationHistory.clear();
 	}
 
 	@Override
@@ -862,6 +841,10 @@ public class DataTypesProvider extends ComponentProviderAdapter {
 		return conflictMode.getHandler();
 	}
 
+	DataTypeManagerPlugin getPlugin() {
+		return plugin;
+	}
+
 	private DataType getDataTypeFrom(TreePath path) {
 		if (path == null) {
 			return null;
@@ -877,7 +860,7 @@ public class DataTypesProvider extends ComponentProviderAdapter {
 		return dt;
 	}
 
-	HistoryList<DataType> getNavigationHistory() {
+	HistoryList<DataTypeUrl> getNavigationHistory() {
 		return navigationHistory;
 	}
 
@@ -899,7 +882,12 @@ public class DataTypesProvider extends ComponentProviderAdapter {
 			return; // Ignore events from the GTree's housekeeping
 		}
 
-		navigationHistory.add(dt);
+		// the data type is null when a non-data type node is selected, like a category node
+		if (dt == null) {
+			return;
+		}
+
+		navigationHistory.add(new DataTypeUrl(dt));
 		contextChanged();
 	}
 }

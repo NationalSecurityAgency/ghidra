@@ -20,7 +20,7 @@ import static ghidra.util.HTMLUtilities.friendlyEncodeHTML;
 import java.awt.Color;
 import java.util.*;
 
-import ghidra.app.util.datatype.DataTypeIdUrl;
+import ghidra.app.util.datatype.DataTypeUrl;
 import ghidra.app.util.html.diff.*;
 import ghidra.program.model.data.*;
 import ghidra.util.HTMLUtilities;
@@ -283,7 +283,7 @@ public class CompositeDataTypeHTMLRepresentation extends HTMLDataTypeRepresentat
 		// Markup the name with info for later hyperlink capability, as needed by the client
 		//
 		DataType dt = line.getDataType();
-		DataTypeIdUrl url = new DataTypeIdUrl(dt);
+		DataTypeUrl url = new DataTypeUrl(dt);
 		String wrapped = HTMLUtilities.wrapWithLinkPlaceholder(type, url.toString());
 		return wrapped;
 	}

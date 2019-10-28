@@ -24,7 +24,8 @@ import java.awt.event.KeyEvent;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.net.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -39,10 +40,6 @@ import docking.action.DockingActionIf;
 import docking.action.ToggleDockingActionIf;
 import docking.actions.KeyBindingUtils;
 import docking.widgets.OptionDialog;
-import docking.widgets.combobox.GhidraComboBox;
-import docking.widgets.dialogs.InputWithChoicesDialog;
-import docking.widgets.fieldpanel.support.Highlight;
-import docking.widgets.table.threaded.ThreadedTableModel;
 import docking.widgets.tree.GTreeNode;
 import ghidra.app.context.ProgramActionContext;
 import ghidra.app.plugin.core.datamgr.actions.CreateTypeDefDialog;
@@ -50,23 +47,15 @@ import ghidra.app.plugin.core.datamgr.archive.Archive;
 import ghidra.app.plugin.core.datamgr.archive.DataTypeManagerHandler;
 import ghidra.app.plugin.core.datamgr.tree.*;
 import ghidra.app.plugin.core.function.EditFunctionSignatureDialog;
-import ghidra.app.plugin.core.navigation.locationreferences.LocationReferencesPlugin;
-import ghidra.app.plugin.core.navigation.locationreferences.LocationReferencesProvider;
 import ghidra.app.plugin.core.programtree.ProgramTreePlugin;
-import ghidra.app.services.CodeViewerService;
 import ghidra.app.services.ProgramManager;
-import ghidra.app.util.HighlightProvider;
 import ghidra.app.util.datatype.DataTypeSelectionEditor;
-import ghidra.app.util.viewer.field.*;
-import ghidra.app.util.viewer.format.FormatManager;
 import ghidra.framework.plugintool.Plugin;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.database.ProgramBuilder;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.database.data.ProgramDataTypeManager;
-import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
-import ghidra.program.model.listing.*;
 import ghidra.test.*;
 import ghidra.util.Msg;
 import ghidra.util.classfinder.ClassFilter;
@@ -854,85 +843,6 @@ public class DataTypeManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 		ArchiveNode builtinNode = (ArchiveNode) archiveRootNode.getChild(BUILTIN_NAME);
 		assertNotNull(builtinNode);
 		return builtinNode;
-	}
-
-	private void findReferencesToField(String choice) {
-		DockingActionIf searchAction = getAction(plugin, "Find Uses of Field");
-		assertTrue(searchAction.isEnabledForContext(treeContext));
-		DataTypeTestUtils.performAction(searchAction, tree, false);
-
-		InputWithChoicesDialog d = waitForDialogComponent(InputWithChoicesDialog.class);
-		@SuppressWarnings("unchecked")
-		GhidraComboBox<String> combo = (GhidraComboBox<String>) getInstanceField("combo", d);
-		setComboBoxSelection(combo, choice);
-		pressButtonByText(d, "OK");
-
-		waitForSearchResults();
-	}
-
-	@SuppressWarnings("unchecked")
-	private LocationReferencesProvider getLocationReferencesProvider() {
-		LocationReferencesPlugin locationRefsPlugin =
-			getPlugin(tool, LocationReferencesPlugin.class);
-
-		List<LocationReferencesProvider> providerList =
-			(List<LocationReferencesProvider>) getInstanceField("providerList", locationRefsPlugin);
-		if (providerList.size() == 0) {
-			return null;
-		}
-		return providerList.get(0);
-	}
-
-	private ThreadedTableModel<?, ?> getTableModel() {
-
-		waitForCondition(() -> getLocationReferencesProvider() != null);
-
-		LocationReferencesProvider refsProvider = getLocationReferencesProvider();
-		Object referencesPanel = getInstanceField("referencesPanel", refsProvider);
-		return (ThreadedTableModel<?, ?>) getInstanceField("tableModel", referencesPanel);
-	}
-
-	private void waitForSearchResults() {
-		ThreadedTableModel<?, ?> model = getTableModel();
-		waitForTableModel(model);
-	}
-
-	private HighlightProvider getHighlightProvider() {
-		CodeViewerService service = tool.getService(CodeViewerService.class);
-		FormatManager fm = (FormatManager) getInstanceField("formatMgr", service);
-		return (HighlightProvider) getInstanceField("highlightProvider", fm);
-	}
-
-	private void assertOperandHighlight(String rep, Address addr) {
-		assertHighlight(OperandFieldFactory.class, rep, addr);
-	}
-
-	private void assertFieldNameHighlight(String rep, Address addr) {
-		assertHighlight(FieldNameFieldFactory.class, rep, addr);
-	}
-
-	private void assertHighlight(Class<? extends FieldFactory> clazz, String rep, Address addr) {
-		Listing listing = program.getListing();
-		CodeUnit cu = listing.getCodeUnitContaining(addr);
-		if (cu instanceof Data) {
-			Data data = (Data) cu;
-			Address minAddress = data.getMinAddress();
-			long offset = addr.subtract(minAddress);
-			if (offset != 0) {
-				Data subData = data.getComponentAt((int) offset);
-				cu = subData;
-			}
-		}
-		HighlightProvider highlighter = getHighlightProvider();
-		Highlight[] highlights = highlighter.getHighlights(rep, cu, clazz, -1);
-		assertNotNull(highlights);
-		assertTrue(highlights.length != 0);
-	}
-
-	private Address addr(long offset) {
-		AddressFactory addrMap = program.getAddressFactory();
-		AddressSpace space = addrMap.getDefaultAddressSpace();
-		return space.getAddress(offset);
 	}
 
 	private void assertSingleFilterMatch(String[] path) {
