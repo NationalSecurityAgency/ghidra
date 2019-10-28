@@ -86,7 +86,7 @@ void SymbolTable::addGlobalSymbol(SleighSymbol *a)
   a->scopeid = scope->getId();
   SleighSymbol *res = scope->addSymbol(a);
   if (res != a)
-    throw SleighError("Duplicate symbol name: "+a->getName());
+    throw SleighError("Duplicate symbol name '" + a->getName() + "'");
 }
 
 void SymbolTable::addSymbol(SleighSymbol *a)
@@ -2017,13 +2017,8 @@ void DecisionProperties::identicalPattern(Constructor *a,Constructor *b)
   if ((!a->isError())&&(!b->isError())) {
     a->setError(true);
     b->setError(true);
-    ostringstream s;
-    s << "Constructors with identical patterns: \n   ";
-    a->printInfo(s);
-    s << "\n   ";
-    b->printInfo(s);
-    s << endl;
-    identerrors.push_back(s.str());
+
+    identerrors.push_back(make_pair(a, b));
   }
 }
 
@@ -2033,13 +2028,8 @@ void DecisionProperties::conflictingPattern(Constructor *a,Constructor *b)
   if ((!a->isError())&&(!b->isError())) {
     a->setError(true);
     b->setError(true);
-    ostringstream s;
-    s << "Constructor patterns cannot be distinguished: \n   ";
-    a->printInfo(s);
-    s << "\n   ";
-    b->printInfo(s);
-    s << endl;
-    conflicterrors.push_back(s.str());
+
+    conflicterrors.push_back(make_pair(a, b));
   }
 }
 

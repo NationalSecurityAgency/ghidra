@@ -15,7 +15,15 @@
  */
 #include "pcodecompile.hh"
 
-ExprTree::ExprTree(VarnodeTpl *vn)
+string Location::format(void) const
+
+{
+  ostringstream s;
+  s << filename << ":" << dec << lineno;
+  return s.str();
+}
+
+  ExprTree::ExprTree(VarnodeTpl *vn)
 
 {
   outvn = vn;
@@ -305,9 +313,7 @@ vector<OpTpl *> *PcodeCompile::placeLabel(LabelSymbol *labsym)
 
 { // Create placeholder OpTpl for a label
   if (labsym->isPlaced()) {
-    string errmsg = "Label " + labsym->getName();
-    errmsg += " is placed more than once";
-    reportError(errmsg);
+    reportError(getLocation(labsym), "Label '" + labsym->getName() + "' is placed more than once");
   }
   labsym->setPlaced();
   vector<OpTpl *> *res = new vector<OpTpl *>;
@@ -335,7 +341,7 @@ vector<OpTpl *> *PcodeCompile::newOutput(bool usesLocalKey,ExprTree *rhs,string 
   sym = new VarnodeSymbol(*varname,tmpvn->getSpace().getSpace(),tmpvn->getOffset().getReal(),tmpvn->getSize().getReal()); // Create new symbol regardless
   addSymbol(sym);
   if ((!usesLocalKey) && enforceLocalKey)
-	  reportError("Must use 'local' keyword to define symbol: "+*varname);
+    reportError(getLocation(sym), "Must use 'local' keyword to define symbol '"+*varname + "'");
   delete varname;
   return ExprTree::toVector(rhs);
 }
@@ -633,7 +639,7 @@ vector<OpTpl *> *PcodeCompile::assignBitRange(VarnodeTpl *vn,uint4 bitoffset,uin
   }
 
   if (errmsg.size()>0) {	// Was there an error condition
-    reportError(errmsg);	// Report the error
+    reportError((const Location *)0, errmsg);	// Report the error
     delete vn;			// Clean up
     vector<OpTpl *> *resops = rhs->ops; // Passthru old expression
     rhs->ops = (vector<OpTpl *> *)0;
@@ -647,6 +653,7 @@ vector<OpTpl *> *PcodeCompile::assignBitRange(VarnodeTpl *vn,uint4 bitoffset,uin
   ExprTree *res;
   VarnodeTpl *finalout = buildTruncatedVarnode(vn,bitoffset,numbits);
   if (finalout != (VarnodeTpl *)0) {
+    delete vn;	// Don't keep the original Varnode object
     res = createOpOutUnary(finalout,CPUI_COPY,rhs);
   }
   else {
@@ -663,7 +670,7 @@ vector<OpTpl *> *PcodeCompile::assignBitRange(VarnodeTpl *vn,uint4 bitoffset,uin
     res = createOpOut(finalout,CPUI_INT_OR,res,rhs);
   }
   if (errmsg.size() > 0)
-    reportError(errmsg);
+    reportError((const Location *)0, errmsg);
   vector<OpTpl *> *resops = res->ops;
   res->ops = (vector<OpTpl *> *)0;
   delete res;
@@ -737,7 +744,7 @@ ExprTree *PcodeCompile::createBitRange(SpecificSymbol *sym,uint4 bitoffset,uint4
   ExprTree *res = new ExprTree(vn);
 
   if (errmsg.size()>0) {	// Check for error condition
-    reportError(errmsg);
+    reportError(getLocation(sym), errmsg);
     return res;
   }
 
@@ -774,4 +781,3 @@ VarnodeTpl *PcodeCompile::addressOf(VarnodeTpl *var,uint4 size)
   delete var;
   return res;
 }
-
