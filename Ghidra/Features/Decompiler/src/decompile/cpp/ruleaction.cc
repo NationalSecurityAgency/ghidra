@@ -543,6 +543,7 @@ int4 RuleShiftBitops::applyOp(PcodeOp *op,Funcdata &data)
   if (!constvn->isConstant()) return 0;	// Must be a constant shift
   Varnode *vn = op->getIn(0);
   if (!vn->isWritten()) return 0;
+  if (vn->getSize() > sizeof(uintb)) return 0;	// FIXME: Can't exceed uintb precision
   int4 sa;
   bool leftshift;
 
@@ -4972,6 +4973,7 @@ int4 RuleEmbed::applyOp(PcodeOp *op,Funcdata &data)
   PcodeOp *subop;
   int4 i;
 
+  if (op->getOut()->getSize() > sizeof(uintb)) return 0;	// FIXME: Can't exceed uintb precision
   for(i=0;i<2;++i) {
     subout = op->getIn(i);
     if (!subout->isWritten()) continue;
@@ -5001,8 +5003,6 @@ int4 RuleEmbed::applyOp(PcodeOp *op,Funcdata &data)
       }
     }
 
-    // Be careful of precision limit when constructing mask
-    if (subout->getSize() + c > sizeof(uintb)) continue;
     uintb mask = calc_mask(subout->getSize());
     mask <<= 8*c;
 
