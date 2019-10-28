@@ -75,17 +75,12 @@ class SymbolProvider extends ComponentProviderAdapter {
 			return null;
 		}
 
-		List<Symbol> rowObjects = symbolPanel.getSelectedSymbolKeys();
-		long[] symbolIDs = new long[rowObjects.size()];
-		int index = 0;
-		for (Symbol obj : rowObjects) {
-			symbolIDs[index++] = obj.getID();
-		}
-		return new ProgramSymbolActionContext(this, program, symbolIDs, getTable());
+		List<Symbol> symbols = symbolPanel.getSelectedSymbols();
+		return new ProgramSymbolActionContext(this, program, symbols, getTable());
 	}
 
 	void deleteSymbols() {
-		List<Symbol> rowObjects = symbolPanel.getSelectedSymbolKeys();
+		List<Symbol> rowObjects = symbolPanel.getSelectedSymbols();
 		symbolKeyModel.delete(rowObjects);
 	}
 
@@ -94,7 +89,7 @@ class SymbolProvider extends ComponentProviderAdapter {
 	}
 
 	Symbol getCurrentSymbol() {
-		List<Symbol> rowObjects = symbolPanel.getSelectedSymbolKeys();
+		List<Symbol> rowObjects = symbolPanel.getSelectedSymbols();
 		if (rowObjects != null && rowObjects.size() >= 1) {
 			return rowObjects.get(0);
 		}

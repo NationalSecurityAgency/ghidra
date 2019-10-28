@@ -15,16 +15,16 @@
  */
 package docking.widgets.table.threaded;
 
-import docking.widgets.table.sort.ColumnRenderedValueBackupRowComparator;
-import docking.widgets.table.sort.RowToColumnComparator;
+import docking.widgets.table.sort.ColumnRenderedValueBackupComparator;
+import docking.widgets.table.sort.RowBasedColumnComparator;
 
 /**
- * A version of {@link ColumnRenderedValueBackupRowComparator} that uses the 
+ * A version of {@link ColumnRenderedValueBackupComparator} that uses the 
  * {@link ThreadedTableModel}'s cache for column lookups
  *
  * @param <T> the row type
  */
-public class ThreadedBackupRowComparator<T> extends ColumnRenderedValueBackupRowComparator<T> {
+public class ThreadedBackupRowComparator<T> extends ColumnRenderedValueBackupComparator<T> {
 
 	private ThreadedTableModel<T, ?> threadedModel;
 
@@ -34,7 +34,7 @@ public class ThreadedBackupRowComparator<T> extends ColumnRenderedValueBackupRow
 	 * 
 	 * @param model the table model using this comparator
 	 * @param sortColumn the column being sorted
-	 * @see RowToColumnComparator
+	 * @see RowBasedColumnComparator
 	 */
 	public ThreadedBackupRowComparator(ThreadedTableModel<T, ?> model, int sortColumn) {
 		super(model, sortColumn);

@@ -15,6 +15,8 @@
  */
 package docking.widgets.table.sort;
 
+import java.util.Comparator;
+
 import docking.widgets.table.*;
 import ghidra.docking.settings.Settings;
 import ghidra.util.table.column.GColumnRenderer;
@@ -27,7 +29,7 @@ import ghidra.util.table.column.GColumnRenderer.ColumnConstraintFilterMode;
  * 
  * @param <T> the row type 
  */
-public class ColumnRenderedValueBackupRowComparator<T> implements BackupColumnComparator<T> {
+public class ColumnRenderedValueBackupComparator<T> implements Comparator<Object> {
 
 	protected int sortColumn;
 	protected DynamicColumnTableModel<T> model;
@@ -36,7 +38,7 @@ public class ColumnRenderedValueBackupRowComparator<T> implements BackupColumnCo
 	// for column filtering only
 	private boolean supportsColumnSorting = true;
 
-	public ColumnRenderedValueBackupRowComparator(DynamicColumnTableModel<T> model,
+	public ColumnRenderedValueBackupComparator(DynamicColumnTableModel<T> model,
 			int sortColumn) {
 		this.model = model;
 		this.sortColumn = sortColumn;
@@ -54,8 +56,8 @@ public class ColumnRenderedValueBackupRowComparator<T> implements BackupColumnCo
 	}
 
 	@Override
-	public int compare(T t1, T t2, Object c1, Object c2) {
-		if (t1 == t2) {
+	public int compare(Object c1, Object c2) {
+		if (c1 == c2) {
 			return 0;
 		}
 

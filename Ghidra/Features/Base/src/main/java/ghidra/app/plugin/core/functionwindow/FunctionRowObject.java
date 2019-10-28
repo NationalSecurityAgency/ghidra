@@ -20,11 +20,9 @@ import ghidra.program.model.listing.Function;
 class FunctionRowObject implements Comparable<FunctionRowObject> {
 
 	private final Function function;
-	private final long key;
 
 	FunctionRowObject(Function function) {
 		this.function = function;
-		this.key = function.getID();
 	}
 
 	Function getFunction() {
@@ -33,10 +31,7 @@ class FunctionRowObject implements Comparable<FunctionRowObject> {
 
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + (int) (key ^ (key >>> 32));
-		return result;
+		return (int) function.getID();
 	}
 
 	@Override
@@ -50,19 +45,21 @@ class FunctionRowObject implements Comparable<FunctionRowObject> {
 		if (getClass() != obj.getClass()) {
 			return false;
 		}
+
+		long key = function.getID();
 		FunctionRowObject other = (FunctionRowObject) obj;
-		if (key != other.key) {
+		if (key != other.function.getID()) {
 			return false;
 		}
 		return true;
 	}
 
 	long getKey() {
-		return key;
+		return function.getID();
 	}
 
 	@Override
 	public int compareTo(FunctionRowObject o) {
-		return ((Long) key).compareTo(o.key);
+		return ((Long) function.getID()).compareTo(o.function.getID());
 	}
 }

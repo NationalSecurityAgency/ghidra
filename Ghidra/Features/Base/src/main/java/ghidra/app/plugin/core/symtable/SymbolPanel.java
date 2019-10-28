@@ -185,7 +185,7 @@ class SymbolPanel extends JPanel {
 		return symTable.getRowCount();
 	}
 
-	List<Symbol> getSelectedSymbolKeys() {
+	List<Symbol> getSelectedSymbols() {
 		int[] rows = symTable.getSelectedRows();
 		return tableModel.getRowObjects(rows);
 	}

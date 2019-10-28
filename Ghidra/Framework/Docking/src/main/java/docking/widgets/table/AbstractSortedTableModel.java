@@ -20,7 +20,8 @@ import java.util.*;
 import javax.swing.event.TableModelEvent;
 import javax.swing.table.TableModel;
 
-import docking.widgets.table.sort.*;
+import docking.widgets.table.sort.DefaultColumnComparator;
+import docking.widgets.table.sort.RowBasedColumnComparator;
 import ghidra.util.Swing;
 import ghidra.util.datastruct.WeakDataStructureFactory;
 import ghidra.util.datastruct.WeakSet;
@@ -329,7 +330,7 @@ public abstract class AbstractSortedTableModel<T> extends AbstractGTableModel<T>
 	 * @return the comparator 
 	 */
 	protected Comparator<T> createSortComparator(int columnIndex) {
-		return new RowToColumnComparator<>(this, columnIndex, new DefaultColumnComparator(),
+		return new RowBasedColumnComparator<>(this, columnIndex, new DefaultColumnComparator(),
 			new StringBasedBackupRowToColumnComparator());
 	}
 
@@ -469,11 +470,11 @@ public abstract class AbstractSortedTableModel<T> extends AbstractGTableModel<T>
 		}
 	}
 
-	private class StringBasedBackupRowToColumnComparator implements BackupColumnComparator<T> {
+	private class StringBasedBackupRowToColumnComparator implements Comparator<Object> {
 
 		@Override
-		public int compare(T t1, T t2, Object c1, Object c2) {
-			if (t1 == t2) {
+		public int compare(Object c1, Object c2) {
+			if (c1 == c2) {
 				return 0;
 			}
 
