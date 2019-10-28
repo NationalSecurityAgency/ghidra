@@ -128,6 +128,9 @@ public class VerticalPixelAddressMapImpl implements VerticalPixelAddressMap {
 
 	@Override
 	public AddressSetView getAddressSet() {
+		if (layouts.isEmpty()) {
+			return null;
+		}
 		if (viewedAddresses == null) {
 			viewedAddresses =
 				map.getOriginalAddressSet().intersectRange(getStartAddress(), getEndAddress());

@@ -937,8 +937,8 @@ public class CodeBrowserPlugin extends Plugin
 		tableFromSelectionAction.setMenuBarData(new MenuData(
 			new String[] { ToolConstants.MENU_SELECTION, "Create Table From Selection" }, null,
 			"SelectUtils"));
-		tableFromSelectionAction.setHelpLocation(
-			new HelpLocation("CodeBrowserPlugin", "Selection_Table"));
+		tableFromSelectionAction
+				.setHelpLocation(new HelpLocation("CodeBrowserPlugin", "Selection_Table"));
 	}
 
 	private GhidraProgramTableModel<Address> createTableModel(CodeUnitIterator iterator,
@@ -1013,8 +1013,8 @@ public class CodeBrowserPlugin extends Plugin
 	public boolean goToField(Address a, String fieldName, int occurrence, int row, int col,
 			boolean scroll) {
 
-		boolean result = SystemUtilities.runSwingNow(
-			() -> doGoToField(a, fieldName, occurrence, row, col, scroll));
+		boolean result = SystemUtilities
+				.runSwingNow(() -> doGoToField(a, fieldName, occurrence, row, col, scroll));
 		return result;
 	}
 
@@ -1133,6 +1133,16 @@ public class CodeBrowserPlugin extends Plugin
 			return (ListingField) f;
 		}
 		return null;
+	}
+
+	@Override
+	public void addListingDisplayListener(ListingDisplayListener listener) {
+		connectedProvider.addListingDisplayListener(listener);
+	}
+
+	@Override
+	public void removeListingDisplayListener(ListingDisplayListener listener) {
+		connectedProvider.removeListingDisplayListener(listener);
 	}
 
 	public String getCurrentFieldText() {

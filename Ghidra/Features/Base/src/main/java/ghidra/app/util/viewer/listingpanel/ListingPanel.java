@@ -88,6 +88,7 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 			// don't care
 		}
 	};
+	private List<ListingDisplayListener> displayListeners = new ArrayList<>();
 
 	/**
 	 * Constructs a new ListingPanel using the given FormatManager and ServiceProvider.
@@ -460,6 +461,12 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 		this.pixmap = new VerticalPixelAddressMapImpl(layouts, layoutModel.getAddressIndexMap());
 		for (MarginProvider element : marginProviders) {
 			element.setPixelMap(pixmap);
+		}
+		if (!displayListeners.isEmpty()) {
+			AddressSetView displayAddresses = pixmap.getAddressSet();
+			for (ListingDisplayListener listener : displayListeners) {
+				listener.visibleAddressesChanged(displayAddresses);
+			}
 		}
 	}
 
@@ -843,8 +850,8 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 		FieldLocation dropLoc = new FieldLocation();
 		ListingField field = (ListingField) fieldPanel.getFieldAt(point.x, point.y, dropLoc);
 		if (field != null) {
-			return field.getFieldFactory().getProgramLocation(dropLoc.getRow(), dropLoc.getCol(),
-				field);
+			return field.getFieldFactory()
+					.getProgramLocation(dropLoc.getRow(), dropLoc.getCol(), field);
 		}
 		return null;
 	}
@@ -1091,4 +1098,11 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 		layoutModel.dataChanged(true);
 	}
 
+	public void addListingDisplayListener(ListingDisplayListener listener) {
+		displayListeners.add(listener);
+	}
+
+	public void removeListingDisplayListener(ListingDisplayListener listener) {
+		displayListeners.remove(listener);
+	}
 }

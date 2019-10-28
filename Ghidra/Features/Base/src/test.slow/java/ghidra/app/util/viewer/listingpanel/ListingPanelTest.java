@@ -50,6 +50,7 @@ public class ListingPanelTest extends AbstractGhidraHeadedIntegrationTest {
 	private Program program;
 	private AddressFactory addrFactory;
 	private AddressSpace space;
+	private AddressSetView addresses = null;
 
 	public ListingPanelTest() {
 		super();
@@ -302,6 +303,30 @@ public class ListingPanelTest extends AbstractGhidraHeadedIntegrationTest {
 
 		int offset = f.screenLocationToTextOffset(1, 0);
 		assertEquals("I want", f.getText().substring(offset, offset + 6));
+
+	}
+
+	@Test
+	public void testListingDisplayListener() {
+		showTool(tool);
+		CodeViewerService cvs = tool.getService(CodeViewerService.class);
+		cvs.addListingDisplayListener(new ListingDisplayListener() {
+			@Override
+			public void visibleAddressesChanged(AddressSetView visibleAddresses) {
+				addresses = visibleAddresses;
+			}
+		});
+
+		assertNull(addresses);
+		cvs.goTo(new ProgramLocation(program, addr(0x1008000)), false);
+		assertNotNull(addresses);
+		assertTrue(addresses.contains(addr(0x1008000)));
+		assertFalse(addresses.contains(addr(0x1001000)));
+
+		cvs.goTo(new ProgramLocation(program, addr(0x1001000)), false);
+		assertNotNull(addresses);
+		assertFalse(addresses.contains(addr(0x1008000)));
+		assertTrue(addresses.contains(addr(0x1001000)));
 
 	}
 
