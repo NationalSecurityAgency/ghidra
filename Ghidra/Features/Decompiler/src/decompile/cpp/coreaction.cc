@@ -824,10 +824,12 @@ int4 ActionShadowVar::apply(Funcdata &data)
 /// \param spc is the address space being pointed to
 /// \param vn is the given Varnode
 /// \param op is the lone descendant of the Varnode
+/// \param slot is the slot index of the Varnode
 /// \param rampoint will hold the Address of the resolved symbol
 /// \param data is the function being analyzed
 /// \return the recovered symbol or NULL
-SymbolEntry *ActionConstantPtr::isPointer(AddrSpace *spc,Varnode *vn,PcodeOp *op,Address &rampoint,uintb &fullEncoding,Funcdata &data)
+SymbolEntry *ActionConstantPtr::isPointer(AddrSpace *spc,Varnode *vn,PcodeOp *op,int4 slot,
+					  Address &rampoint,uintb &fullEncoding,Funcdata &data)
 
 {
   bool needexacthit;
@@ -849,7 +851,7 @@ SymbolEntry *ActionConstantPtr::isPointer(AddrSpace *spc,Varnode *vn,PcodeOp *op
       // A constant parameter or return value could be a pointer
       if (!glb->infer_pointers)
 	return (SymbolEntry *)0;
-      if (op->getSlot(vn)==0)
+      if (slot==0)
 	return (SymbolEntry *)0;
       break;
     case CPUI_COPY:
@@ -862,7 +864,6 @@ SymbolEntry *ActionConstantPtr::isPointer(AddrSpace *spc,Varnode *vn,PcodeOp *op
     case CPUI_INT_ADD:
       outvn = op->getOut();
       if (outvn->getType()->getMetatype()==TYPE_PTR) {
-	int4 slot = op->getSlot(vn);
 	// Is there another pointer base in this expression
 	if (op->getIn(1-slot)->getType()->getMetatype()==TYPE_PTR)
 	  return (SymbolEntry *)0; // If so, we are not a pointer
@@ -870,6 +871,10 @@ SymbolEntry *ActionConstantPtr::isPointer(AddrSpace *spc,Varnode *vn,PcodeOp *op
 	needexacthit = false;
       }
       else if (!glb->infer_pointers)
+	return (SymbolEntry *)0;
+      break;
+    case CPUI_STORE:
+      if (slot != 2)
 	return (SymbolEntry *)0;
       break;
     default:
@@ -944,7 +949,7 @@ int4 ActionConstantPtr::apply(Funcdata &data)
       continue;
     Address rampoint;
     uintb fullEncoding;
-    entry = isPointer(rspc,vn,op,rampoint,fullEncoding,data);
+    entry = isPointer(rspc,vn,op,slot,rampoint,fullEncoding,data);
     vn->setPtrCheck();		// Set check flag AFTER searching for symbol
     if (entry != (SymbolEntry *)0) {
       data.spacebaseConstant(op,slot,entry,rampoint,fullEncoding,vn->getSize());
