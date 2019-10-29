@@ -15,8 +15,7 @@
  */
 package docking;
 
-import static docking.KeyBindingPrecedence.ActionMapLevel;
-import static docking.KeyBindingPrecedence.DefaultLevel;
+import static docking.KeyBindingPrecedence.*;
 
 import java.awt.*;
 import java.awt.event.KeyEvent;
@@ -37,7 +36,7 @@ import ghidra.util.exception.AssertException;
  * {@link #install()} must be called in order to install this <tt>Singleton</tt> into Java's 
  * key event processing system.
  */
-class KeyBindingOverrideKeyEventDispatcher implements KeyEventDispatcher {
+public class KeyBindingOverrideKeyEventDispatcher implements KeyEventDispatcher {
 
 	private static KeyBindingOverrideKeyEventDispatcher instance = null;
 
@@ -66,7 +65,7 @@ class KeyBindingOverrideKeyEventDispatcher implements KeyEventDispatcher {
 	 * Installs this key event dispatcher into Java's key event processing system.  Calling this
 	 * method more than once has no effect.
 	 */
-	public static void install() {
+	static void install() {
 		if (instance == null) {
 			instance = new KeyBindingOverrideKeyEventDispatcher();
 			KeyboardFocusManager kfm = KeyboardFocusManager.getCurrentKeyboardFocusManager();
@@ -221,15 +220,6 @@ class KeyBindingOverrideKeyEventDispatcher implements KeyEventDispatcher {
 		if (activeWindow instanceof DockingDialog) {
 			return false; // we don't want to process our key bindings when in DockingDialogs
 		}
-
-		Component focusOwner = focusProvider.getFocusOwner();
-		if (focusOwner instanceof KeyStrokeConsumer) {
-			KeyStrokeConsumer keyStrokeConsumer = (KeyStrokeConsumer) focusOwner;
-			if (keyStrokeConsumer.isKeyConsumed(keyStroke)) {
-				return false;
-			}
-		}
-
 		return true; // default case; allow it through
 	}
 

@@ -26,6 +26,7 @@ import com.google.common.base.Function;
 
 import docking.DockingUtils;
 import docking.DockingWindowManager;
+import docking.actions.KeyBindingUtils;
 import docking.help.HelpService;
 import docking.widgets.EmptyBorderButton;
 import docking.widgets.PopupWindow;
@@ -1028,15 +1029,8 @@ public class GraphComponent<V extends VisualVertex, E extends VisualEdge<V>, G e
 				return;
 			}
 
-			KeyboardFocusManager kfm = KeyboardFocusManager.getCurrentKeyboardFocusManager();
-			KeyEvent clonedKeyEvent = cloneKeyEvent(e, focusedVertex.getComponent());
-			kfm.redispatchEvent(focusedVertex.getComponent(), clonedKeyEvent);
-
+			KeyBindingUtils.retargetEvent(focusedVertex.getComponent(), e);
 			viewer.repaint();
-
-			if (clonedKeyEvent.isConsumed()) {
-				e.consume();
-			}
 		}
 
 		@Override
@@ -1046,15 +1040,8 @@ public class GraphComponent<V extends VisualVertex, E extends VisualEdge<V>, G e
 				return;
 			}
 
-			KeyboardFocusManager kfm = KeyboardFocusManager.getCurrentKeyboardFocusManager();
-			KeyEvent clonedKeyEvent = cloneKeyEvent(e, focusedVertex.getComponent());
-			kfm.redispatchEvent(focusedVertex.getComponent(), clonedKeyEvent);
-
+			KeyBindingUtils.retargetEvent(focusedVertex.getComponent(), e);
 			viewer.repaint();
-
-			if (clonedKeyEvent.isConsumed()) {
-				e.consume();
-			}
 		}
 
 		@Override
@@ -1064,21 +1051,8 @@ public class GraphComponent<V extends VisualVertex, E extends VisualEdge<V>, G e
 				return;
 			}
 
-			KeyboardFocusManager kfm = KeyboardFocusManager.getCurrentKeyboardFocusManager();
-			KeyEvent clonedKeyEvent = cloneKeyEvent(e, focusedVertex.getComponent());
-			kfm.redispatchEvent(focusedVertex.getComponent(), clonedKeyEvent);
-
+			KeyBindingUtils.retargetEvent(focusedVertex.getComponent(), e);
 			viewer.repaint();
-
-			if (clonedKeyEvent.isConsumed()) {
-				e.consume();
-			}
-		}
-
-		private KeyEvent cloneKeyEvent(KeyEvent keyEvent, Component newSource) {
-			return new KeyEvent(newSource, keyEvent.getID(), keyEvent.getWhen(),
-				keyEvent.getModifiersEx(), keyEvent.getKeyCode(), keyEvent.getKeyChar(),
-				keyEvent.getKeyLocation());
 		}
 	}
 

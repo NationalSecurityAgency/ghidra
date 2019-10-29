@@ -70,7 +70,7 @@ import resources.ResourceManager;
  *
  * @see GTableFilterPanel
  */
-public class GTable extends JTable implements KeyStrokeConsumer {
+public class GTable extends JTable {
 
 	private static final KeyStroke COPY_KEY_STROKE =
 		KeyStroke.getKeyStroke(KeyEvent.VK_C, CONTROL_KEY_MODIFIER_MASK);
@@ -89,8 +89,6 @@ public class GTable extends JTable implements KeyStrokeConsumer {
 	private long lastLookupTime;
 	private String lookupString;
 	private int lookupColumn = -1;
-	private AutoLookupKeyStrokeConsumer autoLookupKeyStrokeConsumer =
-		new AutoLookupKeyStrokeConsumer();
 
 	/** A list of default renderers created by this table */
 	protected List<TableCellRenderer> defaultGTableRendererList = new ArrayList<>();
@@ -397,6 +395,10 @@ public class GTable extends JTable implements KeyStrokeConsumer {
 			autoLookupListener = new KeyAdapter() {
 				@Override
 				public void keyPressed(KeyEvent e) {
+					if (!allowActions) {
+						return;
+					}
+
 					if (getRowCount() == 0) {
 						return;
 					}
@@ -421,21 +423,6 @@ public class GTable extends JTable implements KeyStrokeConsumer {
 					}
 					lastLookupTime = when;
 				}
-
-				private boolean isIgnorableKeyEvent(KeyEvent event) {
-					// ignore modified keys
-					if (event.isAltDown() || event.isAltGraphDown() || event.isControlDown() ||
-						event.isMetaDown()) {
-						return true;
-					}
-
-					if (event.isActionKey() || event.getKeyChar() == KeyEvent.CHAR_UNDEFINED ||
-						Character.isISOControl(event.getKeyChar())) {
-						return true;
-					}
-
-					return false;
-				}
 			};
 		}
 
@@ -445,6 +432,30 @@ public class GTable extends JTable implements KeyStrokeConsumer {
 		else {
 			removeKeyListener(autoLookupListener);
 		}
+	}
+
+	private boolean isIgnorableKeyEvent(KeyEvent event) {
+
+		// ignore modified keys, except for SHIFT
+		if (!isUnmodifiedOrShift(event.getModifiersEx())) {
+			return true;
+		}
+
+		if (event.isActionKey() || event.getKeyChar() == KeyEvent.CHAR_UNDEFINED ||
+			Character.isISOControl(event.getKeyChar())) {
+			return true;
+		}
+
+		return false;
+	}
+
+	private boolean isUnmodifiedOrShift(int modifiers) {
+		if (modifiers == 0) {
+			return true;
+		}
+
+		int shift = InputEvent.SHIFT_DOWN_MASK;
+		return (modifiers | shift) != shift;
 	}
 
 	/**
@@ -461,24 +472,6 @@ public class GTable extends JTable implements KeyStrokeConsumer {
 	 */
 	public void setActionsEnabled(boolean b) {
 		allowActions = b;
-	}
-
-	/**
-	 * This method is implemented to signal interest in any typed text that may help the user
-	 * change the row in the table.  For example, if the user types 'a', then the table will move
-	 * to the first symbol that begins with the letter 'a'.  This method also wants to handle
-	 * text when the 'shift' key is down.  This method will return false if the control key is
-	 * pressed.
-	 *
-	 * @see docking.KeyStrokeConsumer#isKeyConsumed(javax.swing.KeyStroke)
-	 */
-	@Override
-	public boolean isKeyConsumed(KeyStroke keyStroke) {
-		if (allowActions) {
-			return false;
-		}
-
-		return autoLookupKeyStrokeConsumer.isKeyConsumed(keyStroke);
 	}
 
 	/**
