@@ -16,16 +16,18 @@
 package ghidra.app.plugin.core.functionwindow;
 
 import ghidra.framework.plugintool.ServiceProvider;
-import ghidra.program.model.listing.*;
+import ghidra.program.model.listing.Function;
+import ghidra.program.model.listing.Program;
 import ghidra.util.table.ProgramLocationTableRowMapper;
 
-public class FunctionRowObjectToFunctionTableRowMapper extends
-		ProgramLocationTableRowMapper<FunctionRowObject, Function> {
+public class FunctionRowObjectToFunctionTableRowMapper
+		extends ProgramLocationTableRowMapper<FunctionRowObject, Function> {
 
 	@Override
-	public Function map(FunctionRowObject rowObject, Program program, ServiceProvider serviceProvider) {
-		FunctionManager functionManager = program.getFunctionManager();
-		return functionManager.getFunction(rowObject.getKey());
+	public Function map(FunctionRowObject rowObject, Program program,
+			ServiceProvider serviceProvider) {
+		Function function = rowObject.getFunction();
+		return function;
 	}
 
 }

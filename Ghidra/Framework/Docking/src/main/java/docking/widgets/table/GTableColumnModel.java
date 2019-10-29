@@ -33,7 +33,7 @@ import ghidra.util.datastruct.WeakSet;
 public class GTableColumnModel
 		implements TableColumnModel, PropertyChangeListener, ListSelectionListener {
 
-	private List<TableColumn> visibleList = new ArrayList<>();
+	private VisibleColumns visibleColumns = new VisibleColumns();
 	private List<TableColumn> completeList = new ArrayList<>();
 	private int totalColumnWidth;
 	private int columnMargin;
@@ -67,18 +67,8 @@ public class GTableColumnModel
 
 	void removeAllColumns() {
 
-		TableColumn[] asArray = visibleList.toArray(new TableColumn[visibleList.size()]);
-		for (int i = 0; i < asArray.length; i++) {
-			TableColumn column = asArray[i];
-			visibleList.remove(column);
-			fireColumnRemoved(new TableColumnModelEvent(this, i, i));
-		}
-
-		/*
-		 	TODO replace the above snippet with this code, after the upcoming release
-		fireColumnRemoved(new TableColumnModelEvent(this, 0, visibleList.size() - 1));
-		visibleList.clear();
-		*/
+		fireColumnRemoved(new TableColumnModelEvent(this, 0, visibleColumns.size() - 1));
+		visibleColumns.clear();
 
 		// no need to fire the removed event for items in the complete list, as the clients
 		// only know about the visible columns
@@ -90,7 +80,7 @@ public class GTableColumnModel
 
 	void dispose() {
 		listeners.clear();
-		visibleList.clear();
+		visibleColumns.clear();
 		completeList.clear();
 		columnModelState.dispose();
 	}
@@ -101,7 +91,7 @@ public class GTableColumnModel
 	 * @return true if the given column is visible.
 	 */
 	public boolean isVisible(TableColumn column) {
-		return visibleList.contains(column);
+		return visibleColumns.contains(column);
 	}
 
 	/**
@@ -119,7 +109,7 @@ public class GTableColumnModel
 	}
 
 	public void setVisible(TableColumn column, boolean visible) {
-		boolean isVisible = visibleList.contains(column);
+		boolean isVisible = visibleColumns.contains(column);
 
 		if (visible == isVisible) {
 			return;
@@ -127,12 +117,12 @@ public class GTableColumnModel
 
 		if (visible) {
 			int insertIndex = findVisibleInsertionIndex(column);
-			visibleList.add(insertIndex, column);
+			visibleColumns.add(insertIndex, column);
 			fireColumnAdded(new TableColumnModelEvent(this, insertIndex, insertIndex));
 		}
 		else {
-			int columnIndex = visibleList.indexOf(column);
-			visibleList.remove(columnIndex);
+			int columnIndex = visibleColumns.indexOf(column);
+			visibleColumns.remove(columnIndex);
 			// Adjust for the selection
 			if (selectionModel != null) {
 				selectionModel.removeIndexInterval(columnIndex, columnIndex);
@@ -146,12 +136,12 @@ public class GTableColumnModel
 	}
 
 	private int findVisibleInsertionIndex(TableColumn column) {
-		int completeIndex = completeList.indexOf(column);
+		int completeIndex = visibleColumns.indexOf(column);
 
-		int size = visibleList.size();
+		int size = visibleColumns.size();
 		for (int i = completeIndex + 1; i < size; i++) {
 			TableColumn nextColumn = completeList.get(i);
-			int visibleIndex = visibleList.indexOf(nextColumn);
+			int visibleIndex = visibleColumns.indexOf(nextColumn);
 			if (visibleIndex != -1) {
 				return visibleIndex;
 			}
@@ -169,7 +159,7 @@ public class GTableColumnModel
 		removeColumnWithModelIndex(aColumn.getModelIndex()); // dedup
 
 		completeList.add(aColumn);
-		visibleList.add(aColumn);
+		visibleColumns.add(aColumn);
 
 		aColumn.addPropertyChangeListener(this);
 
@@ -205,7 +195,7 @@ public class GTableColumnModel
 		}
 
 		completeList.remove(tableColumn);
-		visibleList.remove(tableColumn);
+		visibleColumns.remove(tableColumn);
 		tableColumn.removePropertyChangeListener(this);
 	}
 
@@ -216,15 +206,15 @@ public class GTableColumnModel
 
 	@Override
 	public TableColumn getColumn(int columnIndex) {
-		if ((columnIndex < 0) || (columnIndex >= visibleList.size())) {
+		if ((columnIndex < 0) || (columnIndex >= visibleColumns.size())) {
 			return null;
 		}
-		return visibleList.get(columnIndex);
+		return visibleColumns.get(columnIndex);
 	}
 
 	@Override
 	public int getColumnCount() {
-		return visibleList.size();
+		return visibleColumns.size();
 	}
 
 	@Override
@@ -232,8 +222,8 @@ public class GTableColumnModel
 		if (columnIdentifier == null) {
 			throw new IllegalArgumentException("Identifier is null");
 		}
-		for (int i = 0; i < visibleList.size(); i++) {
-			TableColumn tableColumn = visibleList.get(i);
+		for (int i = 0; i < visibleColumns.size(); i++) {
+			TableColumn tableColumn = visibleColumns.get(i);
 			if (columnIdentifier.equals(tableColumn.getIdentifier())) {
 				return i;
 			}
@@ -271,7 +261,7 @@ public class GTableColumnModel
 
 	@Override
 	public Enumeration<TableColumn> getColumns() {
-		return Collections.enumeration(visibleList);
+		return visibleColumns.toEnumeration();
 	}
 
 	/**
@@ -355,8 +345,8 @@ public class GTableColumnModel
 		}
 
 		// update the visible list
-		TableColumn movedColumn = visibleList.remove(columnIndex);
-		visibleList.add(newIndex, movedColumn);
+		TableColumn movedColumn = visibleColumns.remove(columnIndex);
+		visibleColumns.add(newIndex, movedColumn);
 
 		// update the complete list
 		completeList.remove(movedColumn);
@@ -364,7 +354,7 @@ public class GTableColumnModel
 
 			// get the item at the index after the new index (since we are moving up, we know
 			// that there are columns below the new index)
-			TableColumn column = visibleList.get(newIndex + 1);
+			TableColumn column = visibleColumns.get(newIndex + 1);
 
 			// find this column in the complete list and then place the moved column before that
 			// position in the complete list
@@ -375,7 +365,7 @@ public class GTableColumnModel
 
 			// get the item at the index before the new index (since we are moving down, we know
 			// that there are columns above the new index)
-			TableColumn column = visibleList.get(newIndex - 1);
+			TableColumn column = visibleColumns.get(newIndex - 1);
 
 			// find this column in the complete list and then place the moved column after that
 			// position in the complete list
@@ -402,9 +392,9 @@ public class GTableColumnModel
 	public void removeColumn(TableColumn column) {
 		completeList.remove(column);
 
-		int index = visibleList.indexOf(column);
+		int index = visibleColumns.indexOf(column);
 		if (index >= 0) {
-			visibleList.remove(index);
+			visibleColumns.remove(index);
 			// Adjust for the selection
 			if (selectionModel != null) {
 				selectionModel.removeIndexInterval(index, index);
@@ -459,7 +449,7 @@ public class GTableColumnModel
 	 */
 	private void recalcWidthCache() {
 		totalColumnWidth = 0;
-		for (TableColumn tableColumn : visibleList) {
+		for (TableColumn tableColumn : visibleColumns.getColumns()) {
 			totalColumnWidth += tableColumn.getWidth();
 		}
 	}
@@ -471,7 +461,7 @@ public class GTableColumnModel
 	void restoreState(List<TableColumn> newCompleteList, List<Settings> newSettingsList,
 			List<TableColumn> newVisibleList) {
 		this.completeList = newCompleteList;
-		this.visibleList = newVisibleList;
+		this.visibleColumns = new VisibleColumns(newVisibleList);
 
 		TableModel model = table.getModel();
 		if (model instanceof ConfigurableColumnTableModel) {
@@ -483,10 +473,6 @@ public class GTableColumnModel
 			}
 			configurableModel.setAllColumnSettings(columnIndexAndSettings);
 		}
-
-		// TODO: at some point in the future (like a year or more) we can remove this, when
-		//       we know the new code below it works
-//		fireColumnMarginChanged(); // let the system know to rebuild the GUI (Java HACK!)
 
 		// signal a change; we've added/removed columns, but we don't need to be specific
 		TableColumnModelEvent e = new TableColumnModelEvent(this, 0, getColumnCount() - 1);
@@ -513,6 +499,74 @@ public class GTableColumnModel
 		}
 
 		return oldValue;
+	}
+
+	/*
+	 * A small class to provide a method to quickly see if a column is visible by calling contains
+	 * on a hash set
+	 */
+	private class VisibleColumns {
+		private Set<TableColumn> visibleSet = new HashSet<>();
+		private List<TableColumn> visibleList = new ArrayList<>();
+
+		public VisibleColumns() {
+		}
+
+		public VisibleColumns(List<TableColumn> newVisibleList) {
+			this.visibleList = newVisibleList;
+			visibleSet.addAll(visibleList);
+		}
+
+		List<TableColumn> getColumns() {
+			return visibleList;
+		}
+
+		int size() {
+			return visibleList.size();
+		}
+
+		public void remove(TableColumn column) {
+			visibleList.remove(column);
+			visibleSet.remove(column);
+		}
+
+		public void add(TableColumn column) {
+			visibleList.add(column);
+			visibleSet.add(column);
+		}
+
+		public Enumeration<TableColumn> toEnumeration() {
+			return Collections.enumeration(visibleList);
+		}
+
+		public TableColumn get(int index) {
+			return visibleList.get(index);
+		}
+
+		public int indexOf(TableColumn column) {
+			return visibleList.indexOf(column);
+		}
+
+		public TableColumn remove(int index) {
+
+			TableColumn column = visibleList.remove(index);
+			visibleSet.remove(column);
+			return column;
+		}
+
+		public void add(int insertIndex, TableColumn column) {
+			visibleList.add(insertIndex, column);
+			visibleSet.add(column);
+		}
+
+		void clear() {
+			visibleList.clear();
+			visibleSet.clear();
+		}
+
+		boolean contains(TableColumn c) {
+			return visibleSet.contains(c);
+		}
 	}
 
 //==================================================================================================

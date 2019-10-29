@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,11 +33,24 @@ public class AddRemoveListItem<T> {
 	public boolean isRemove() {
 		return isRemove;
 	}
+
 	public boolean isChange() {
 		return isAdd && isRemove;
 	}
 
 	public T getValue() {
 		return value;
+	}
+
+	@Override
+	public String toString() {
+
+		//@formatter:off
+		return "{\n" + 
+			"\tvalue: " + value +",\n" +
+			"\tisAdd: " + isAdd +",\n" +
+			"\tisRemove: " + isRemove +"\n" +
+		"}";
+		//@formatter:on
 	}
 }

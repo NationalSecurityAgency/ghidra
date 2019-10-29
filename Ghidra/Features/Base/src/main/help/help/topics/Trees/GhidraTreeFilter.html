@@ -15,7 +15,11 @@
 
     <BLOCKQUOTE>
       <P>Most trees and tables in Ghidra support filtering and have a text filter located at the
-      bottom of the tree or table. Below is an example from the Data Type Manager. The filter is
+      bottom of the tree or table.   Tables also support the concept of 
+      <A HREF="#Column_Filters">Column Filters</A> described below. 
+      </P>
+      
+      <P>Below is an example from the Data Type Manager. The filter is
       currently set to "Starts With", but you can select a different filter strategy.</P>
 
       <CENTER>
@@ -270,6 +274,17 @@
     <BLOCKQUOTE>
       <P>Most filterable tables in Ghidra support advanced filtering based on column values. This
       allows for complex filtering where you can logically combine column specific clauses.</P>
+      
+      
+      <BLOCKQUOTE>
+	      <P><IMG src="../../shared/warning.png">
+	      Some columns in tables are not filterable via the filter text field below the table.
+	      For example, many numeric columns are ignored by the text filter because they can be 
+	      slow to calculate and they are better filtered by using a range filter, as is available
+	      using column filters.
+	      </p>
+       </BLOCKQUOTE>
+      
       <BR>
        
 
@@ -458,5 +473,20 @@
         filter.</P>
       </BLOCKQUOTE>
     </BLOCKQUOTE>
+    
+    
+      <!-- extra space at the bottom of the page (for readability) -->
+  <br>
+  <br>
+  <br>
+  <br>
+  
+      <P class="relatedtopic">Related Topics</P>
+
+    <UL>
+      <LI><A href="help/topics/Tables/GhidraTableHeaders.html">Table Sorting</A></LI>
+    </UL>
+  
+    
   </BODY>
 </HTML>

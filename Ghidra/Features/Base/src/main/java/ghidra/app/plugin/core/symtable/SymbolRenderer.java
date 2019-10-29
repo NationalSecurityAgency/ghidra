@@ -44,7 +44,7 @@ class SymbolRenderer extends GhidraTableCellRenderer {
 	public Component getTableCellRendererComponent(GTableCellRenderingData data) {
 
 		super.getTableCellRendererComponent(data);
-		
+
 		Object value = data.getValue();
 		int column = data.getColumnModelIndex();
 		boolean isSelected = data.isSelected();

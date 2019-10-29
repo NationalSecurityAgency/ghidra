@@ -17,7 +17,7 @@ package docking.widgets.table.threaded;
 
 import java.util.Comparator;
 
-import docking.widgets.table.sort.RowToColumnComparator;
+import docking.widgets.table.sort.RowBasedColumnComparator;
 
 /**
  * A comparator for comparing table column values for threaded table models.  This comparator
@@ -25,7 +25,7 @@ import docking.widgets.table.sort.RowToColumnComparator;
  *
  * @param <T> the row type
  */
-public class ThreadedTableColumnComparator<T> extends RowToColumnComparator<T> {
+public class ThreadedTableColumnComparator<T> extends RowBasedColumnComparator<T> {
 	private ThreadedTableModel<T, ?> threadedModel;
 
 	/**
@@ -35,7 +35,7 @@ public class ThreadedTableColumnComparator<T> extends RowToColumnComparator<T> {
 	 * @param model the table model using this comparator
 	 * @param sortColumn the column being sorted
 	 * @param comparator the column comparator to use for sorting
-	 * @see RowToColumnComparator
+	 * @see RowBasedColumnComparator
 	 */
 	public ThreadedTableColumnComparator(ThreadedTableModel<T, ?> model, int sortColumn,
 			Comparator<Object> comparator) {
@@ -52,10 +52,10 @@ public class ThreadedTableColumnComparator<T> extends RowToColumnComparator<T> {
 	 * @param sortColumn the column being sorted
 	 * @param comparator the column comparator to use for sorting
 	 * @param backupRowComparator the backup row comparator
-	 * @see RowToColumnComparator
+	 * @see RowBasedColumnComparator
 	 */
 	public ThreadedTableColumnComparator(ThreadedTableModel<T, ?> model, int sortColumn,
-			Comparator<Object> comparator, Comparator<T> backupRowComparator) {
+			Comparator<Object> comparator, Comparator<Object> backupRowComparator) {
 		super(model, sortColumn, comparator, backupRowComparator);
 		this.threadedModel = model;
 	}

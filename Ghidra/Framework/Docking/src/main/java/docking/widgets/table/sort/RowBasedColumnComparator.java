@@ -27,12 +27,12 @@ import docking.widgets.table.TableComparators;
  * 
  * @param <T> the row type
  */
-public class RowToColumnComparator<T> implements Comparator<T> {
+public class RowBasedColumnComparator<T> implements Comparator<T> {
 
 	protected RowObjectTableModel<T> model;
 	protected int sortColumn;
 	protected Comparator<Object> columnComparator;
-	protected Comparator<T> backupRowComparator = TableComparators.getNoSortComparator();
+	protected Comparator<Object> backupRowComparator = TableComparators.getNoSortComparator();
 
 	/**
 	 * Constructs this class with the given column comparator that will get called after the
@@ -42,7 +42,7 @@ public class RowToColumnComparator<T> implements Comparator<T> {
 	 * @param sortColumn the column being sorted
 	 * @param comparator the column comparator to use for sorting
 	 */
-	public RowToColumnComparator(RowObjectTableModel<T> model, int sortColumn,
+	public RowBasedColumnComparator(RowObjectTableModel<T> model, int sortColumn,
 			Comparator<Object> comparator) {
 		this.model = model;
 		this.sortColumn = sortColumn;
@@ -59,8 +59,8 @@ public class RowToColumnComparator<T> implements Comparator<T> {
 	 * @param comparator the column comparator to use for sorting
 	 * @param backupRowComparator the backup row comparator
 	 */
-	public RowToColumnComparator(RowObjectTableModel<T> model, int sortColumn,
-			Comparator<Object> comparator, Comparator<T> backupRowComparator) {
+	public RowBasedColumnComparator(RowObjectTableModel<T> model, int sortColumn,
+			Comparator<Object> comparator, Comparator<Object> backupRowComparator) {
 		this.model = model;
 		this.sortColumn = sortColumn;
 		this.columnComparator = Objects.requireNonNull(comparator);
@@ -97,7 +97,7 @@ public class RowToColumnComparator<T> implements Comparator<T> {
 		// backup comparator is not a stub and will do something reasonable for the sort, 
 		// depending upon how the model created this class.
 		//
-		return backupRowComparator.compare(t1, t2);
+		return backupRowComparator.compare(value1, value2);
 	}
 
 	protected Object getColumnValue(T t) {

@@ -178,11 +178,11 @@ public abstract class GDynamicColumnTableModel<ROW_TYPE, DATA_SOURCE>
 		Comparator<Object> columnComparator = createSortComparatorForColumn(columnIndex);
 		if (columnComparator != null) {
 			// the given column has its own comparator; wrap and us that
-			return new RowToColumnComparator<>(this, columnIndex, columnComparator);
+			return new RowBasedColumnComparator<>(this, columnIndex, columnComparator);
 		}
 
-		return new RowToColumnComparator<>(this, columnIndex, new DefaultColumnComparator(),
-			new ColumnRenderedValueBackupRowComparator<>(this, columnIndex));
+		return new RowBasedColumnComparator<>(this, columnIndex, new DefaultColumnComparator(),
+			new ColumnRenderedValueBackupComparator<>(this, columnIndex));
 	}
 
 	/**
@@ -441,7 +441,6 @@ public abstract class GDynamicColumnTableModel<ROW_TYPE, DATA_SOURCE>
 		}
 
 		return column.getValue(t, columnSettings.get(column), dataSource, serviceProvider);
-
 	}
 
 	/**

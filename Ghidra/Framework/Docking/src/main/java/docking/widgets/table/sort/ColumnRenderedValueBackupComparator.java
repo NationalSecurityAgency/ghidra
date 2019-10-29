@@ -20,6 +20,7 @@ import java.util.Comparator;
 import docking.widgets.table.*;
 import ghidra.docking.settings.Settings;
 import ghidra.util.table.column.GColumnRenderer;
+import ghidra.util.table.column.GColumnRenderer.ColumnConstraintFilterMode;
 
 /**
  * A special version of the backup comparator that uses the column's rendered value for 
@@ -28,25 +29,40 @@ import ghidra.util.table.column.GColumnRenderer;
  * 
  * @param <T> the row type 
  */
-public class ColumnRenderedValueBackupRowComparator<T> implements Comparator<T> {
+public class ColumnRenderedValueBackupComparator<T> implements Comparator<Object> {
 
 	protected int sortColumn;
 	protected DynamicColumnTableModel<T> model;
 
-	public ColumnRenderedValueBackupRowComparator(DynamicColumnTableModel<T> model,
+	// columns do not support sorting via their rendered value if the are marked
+	// for column filtering only
+	private boolean supportsColumnSorting = true;
+
+	public ColumnRenderedValueBackupComparator(DynamicColumnTableModel<T> model,
 			int sortColumn) {
 		this.model = model;
 		this.sortColumn = sortColumn;
+
+		DynamicTableColumn<T, ?, ?> column = model.getColumn(sortColumn);
+		@SuppressWarnings("unchecked")
+		GColumnRenderer<Object> renderer = (GColumnRenderer<Object>) column.getColumnRenderer();
+		if (renderer != null) {
+			if (renderer.getColumnConstraintFilterMode() == ColumnConstraintFilterMode.USE_COLUMN_CONSTRAINTS_ONLY) {
+				// this implies that the column has signaled that it does not support 
+				// filtering/sorting using its rendered value
+				supportsColumnSorting = false;
+			}
+		}
 	}
 
 	@Override
-	public int compare(T t1, T t2) {
-		if (t1 == t2) {
+	public int compare(Object c1, Object c2) {
+		if (c1 == c2) {
 			return 0;
 		}
 
-		String s1 = getRenderedColumnStringValue(t1);
-		String s2 = getRenderedColumnStringValue(t2);
+		String s1 = getRenderedColumnStringValue(c1);
+		String s2 = getRenderedColumnStringValue(c2);
 
 		if (s1 == null || s2 == null) {
 			return TableComparators.compareWithNullValues(s1, s2);
@@ -59,19 +75,23 @@ public class ColumnRenderedValueBackupRowComparator<T> implements Comparator<T> 
 	// unsafe.  We happen know that we retrieved the value from the column that we are passing
 	// it to, so the casting and usage is indeed safe.
 	@SuppressWarnings("unchecked")
-	private String getRenderedColumnStringValue(T t) {
+	private String getRenderedColumnStringValue(Object columnValue) {
+
+		if (!supportsColumnSorting) {
+			return null;
+		}
 
 		DynamicTableColumn<T, ?, ?> column = model.getColumn(sortColumn);
 		GColumnRenderer<Object> renderer = (GColumnRenderer<Object>) column.getColumnRenderer();
-		Object o = model.getColumnValueForRow(t, sortColumn);
 		if (renderer == null) {
-			return o == null ? null : o.toString();
+			return columnValue == null ? null : columnValue.toString();
 		}
 
 		Settings settings = model.getColumnSettings(sortColumn);
-		return renderer.getFilterString(o, settings);
+		return renderer.getFilterString(columnValue, settings);
 	}
 
+	// this may be overridden to use caching
 	protected Object getColumnValue(T t) {
 		return model.getColumnValueForRow(t, sortColumn);
 	}
