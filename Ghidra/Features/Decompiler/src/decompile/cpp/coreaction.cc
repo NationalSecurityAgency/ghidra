@@ -4482,6 +4482,7 @@ void universal_action(Architecture *conf)
 	actprop->addRule( new RuleIdentityEl("analysis") );
 	actprop->addRule( new RuleOrMask("analysis") );
 	actprop->addRule( new RuleAndMask("analysis") );
+	actprop->addRule( new RuleOrConsume("analysis") );
 	actprop->addRule( new RuleOrCollapse("analysis") );
 	actprop->addRule( new RuleAndOrLump("analysis") );
 	actprop->addRule( new RuleShiftBitops("analysis") );

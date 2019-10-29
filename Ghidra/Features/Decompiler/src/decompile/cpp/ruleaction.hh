@@ -128,6 +128,16 @@ public:
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
 };
+class RuleOrConsume : public Rule {
+public:
+  RuleOrConsume(const string &g) : Rule(g, 0, "orconsume") {}	///< Constructor
+  virtual Rule *clone(const ActionGroupList &grouplist) const {
+    if (!grouplist.contains(getGroup())) return (Rule *)0;
+    return new RuleOrConsume(getGroup());
+  }
+  virtual void getOpList(vector<uint4> &oplist) const;
+  virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+};
 class RuleOrCollapse : public Rule {
 public:
   RuleOrCollapse(const string &g) : Rule(g, 0, "orcollapse") {}	///< Constructor
