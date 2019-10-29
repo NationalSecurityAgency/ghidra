@@ -1,16 +1,21 @@
+apply from: "$rootProject.projectDir/gradle/javaProject.gradle"
+apply from: "$rootProject.projectDir/gradle/jacocoProject.gradle"
+apply from: "$rootProject.projectDir/gradle/javaTestProject.gradle"
+apply from: "$rootProject.projectDir/gradle/nativeProject.gradle"
+apply from: "$rootProject.projectDir/gradle/helpProject.gradle"
+apply from: "$rootProject.projectDir/gradle/distributableGhidraModule.gradle"
 apply plugin: 'eclipse'
+
 eclipse.project.name = 'Features Decompiler'
 
-apply from: "$rootProject.projectDir/gradleScripts/nativeBuildProperties.gradle"
-apply from: "$rootProject.projectDir/gradleScripts/buildHelp.gradle"
-apply from: "$rootProject.projectDir/gradleScripts/ghidraScripts.gradle"
+
 
 dependencies {
 	compile project(':Base')
 	compile project(':SoftwareModeling')
 	
 	// include Base src/test/resources when running decompiler integration tests (uses defaultTools)
-	integrationTestRuntime project(':Base').sourceSets.test.output
+	integrationTestRuntime project(path: ':Base', configuration: 'testArtifacts')
 	testCompile "org.jmockit:jmockit:1.44"
 	
     helpPath project(path: ":Base", configuration: 'helpPath')
@@ -60,9 +65,9 @@ task yaccSleigh {
 	ext.headerDir = file("build/generated/sleighlex")  
 }
 
-// Relative to the 'workingDir' Exec task property.
-def installPoint = "../../../../../Configurations/Public_Release/src/global/docs/languages" 
-def buildDir = "../../../build"
+def buildDir = "../../../build" // Relative to the 'workingDir' Exec task property.
+
+def installPoint = "$rootDir/GhidraDocs/languages/html"
 
 /**
  * Build the pdfs docs for the decompiler and place them in the '$buildDir' directory.
@@ -72,11 +77,9 @@ def buildDir = "../../../build"
  * There is an associated, auto-generated clean task.
  */
 task buildDecompilerDocumentationPdfs(type: Exec) {
-
 	// Check the OS before enabling task.
 	if (!(org.gradle.internal.os.OperatingSystem.current().isLinux() 
 		|| org.gradle.internal.os.OperatingSystem.current().isMacOsX())) {
-			println "The '$it.name' task only works on Linux or Mac Os X and is therefore disabled."
 			it.enabled = false
 	}
 
@@ -102,7 +105,7 @@ task buildDecompilerDocumentationPdfs(type: Exec) {
 		which fop 2>&1
 		which xsltproc 2>&1
 		mkdir -p $buildDir 2>&1
-		cp $installPoint/html/Diagram*.png $buildDir 2>&1
+		cp $installPoint/Diagram*.png $buildDir 2>&1
 
 		echo '** Building sleigh.fo **'
 		xsltproc --output $buildDir/sleigh.fo sleigh_pdf.xsl sleigh.xml 2>&1
@@ -174,11 +177,11 @@ task buildDecompilerDocumentationHtml(type: Exec) {
 		echo '** Building html/sleigh.html **'
 		xsltproc --stringparam base.dir $buildDir/html/ --stringparam root.filename sleigh sleigh_html.xsl sleigh.xml 2>&1
 		sed -i -e '/Frontpage.css/ { p; s/Frontpage.css/languages.css/; }' $buildDir/html/sleigh*.html
-		cp $installPoint/html/Frontpage.css $buildDir/html 2>&1
-		cp $installPoint/html/languages.css $buildDir/html
-		cp $installPoint/html/Diagram1.png $buildDir/html
-		cp $installPoint/html/Diagram2.png $buildDir/html
-		cp $installPoint/html/Diagram3.png $buildDir/html
+		cp $installPoint/Frontpage.css $buildDir/html 2>&1
+		cp $installPoint/languages.css $buildDir/html
+		cp $installPoint/Diagram1.png $buildDir/html
+		cp $installPoint/Diagram2.png $buildDir/html
+		cp $installPoint/Diagram3.png $buildDir/html
 
 		echo '** Building html/pcoderef.html **'
 		xsltproc --stringparam base.dir $buildDir/html/ --stringparam root.filename pcoderef pcoderef_html.xsl pcoderef.xml  2>&1
@@ -186,13 +189,13 @@ task buildDecompilerDocumentationHtml(type: Exec) {
 		sed -i -e '/Frontpage.css/ { p; s/Frontpage.css/languages.css/; }' $buildDir/html/pcodedescription.html
 		sed -i -e '/Frontpage.css/ { p; s/Frontpage.css/languages.css/; }' $buildDir/html/pseudo-ops.html
 		sed -i -e '/Frontpage.css/ { p; s/Frontpage.css/languages.css/; }' $buildDir/html/reference.html
-		cp $installPoint/html/Frontpage.css $buildDir/html
-		cp $installPoint/html/languages.css $buildDir/html
+		cp $installPoint/Frontpage.css $buildDir/html
+		cp $installPoint/languages.css $buildDir/html
 
 		echo '** Installing html documentation. **'
 		cp $buildDir/index.html $installPoint/index.html
-		rm $installPoint/html/*.html $installPoint/html/*.png
-		cp $buildDir/html/*.html $buildDir/html/*.png $installPoint/html
+		rm $installPoint/*.html $installPoint/*.png
+		cp $buildDir/html/*.html $buildDir/html/*.png $installPoint/
 		echo '** Done. **'
 		"""
 
@@ -510,4 +513,24 @@ Task createLexTask(String filename, String binaryName) {
 	}
 }
 
+rootProject.createInstallationZip {
+	dependsOn buildDecompilerDocumentationPdfs
+	
+	
+	def decompilerPdfZipPath = rootProject.ext.ZIP_DIR_PREFIX + "/docs/languages/"
 
+	// Add decompiler pdf files to zip. If the pdf files do not exist during execution time 
+	// (if there was an error or wrong platform), the zip task will move on.
+	buildDecompilerDocumentationPdfs.outputs.each { output ->
+		output.files.each { file ->
+			if (file.name.endsWith("pdf")) {
+				logger.debug("$project.name: Adding Decompiler documentation (if it exists) $file.name to $decompilerPdfZipPath")
+				rootProject.createInstallationZip.from (file) {
+					into {
+						decompilerPdfZipPath
+					}
+				}
+			}
+		}
+	}
+}

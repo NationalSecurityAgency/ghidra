@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +15,12 @@
  */
 package ghidra.javaclass.format.attributes;
 
+import java.io.IOException;
+
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.data.StructureDataType;
 import ghidra.util.exception.DuplicateNameException;
-
-import java.io.IOException;
 
 /**
  * NOTE: THE FOLLOWING TEXT EXTRACTED FROM JVMS7.PDF
@@ -46,8 +45,8 @@ public class EnclosingMethodAttribute extends AbstractAttributeInfo {
 	private short classIndex;
 	private short methodIndex;
 
-	public EnclosingMethodAttribute( BinaryReader reader ) throws IOException {
-		super( reader );
+	public EnclosingMethodAttribute(BinaryReader reader) throws IOException {
+		super(reader);
 
 		classIndex = reader.readNextShort();
 		methodIndex = reader.readNextShort();
@@ -60,8 +59,8 @@ public class EnclosingMethodAttribute extends AbstractAttributeInfo {
 	 * encloses the declaration of the current class.
 	 * @return a valid index into the constant_pool table
 	 */
-	public short getClassIndex() {
-		return classIndex;
+	public int getClassIndex() {
+		return classIndex & 0xffff;
 	}
 
 	/**
@@ -74,15 +73,15 @@ public class EnclosingMethodAttribute extends AbstractAttributeInfo {
 	 * type of a method in the class referenced by the class_index attribute above.
 	 * @return a valid index into the constant_pool table, or zero
 	 */
-	public short getMethodIndex() {
-		return methodIndex;
+	public int getMethodIndex() {
+		return methodIndex & 0xffff;
 	}
 
 	@Override
 	public DataType toDataType() throws DuplicateNameException, IOException {
-		StructureDataType structure = getBaseStructure( "EnclosingMethod_attribute" );
-		structure.add( WORD, "class_index", null );
-		structure.add( WORD, "method_index", null );
+		StructureDataType structure = getBaseStructure("EnclosingMethod_attribute");
+		structure.add(WORD, "class_index", null);
+		structure.add(WORD, "method_index", null);
 		return structure;
 	}
 

@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +15,6 @@
  */
 package ghidra.app.plugin.core.comments;
 
-import ghidra.app.util.viewer.field.AnnotatedStringHandler;
-import ghidra.app.util.viewer.field.Annotation;
-import ghidra.framework.plugintool.PluginTool;
-import ghidra.program.model.listing.CodeUnit;
-import ghidra.util.HelpLocation;
-
 import java.awt.BorderLayout;
 import java.awt.event.*;
 import java.util.*;
@@ -33,6 +26,13 @@ import javax.swing.text.JTextComponent;
 
 import docking.*;
 import docking.widgets.OptionDialog;
+import docking.widgets.checkbox.GCheckBox;
+import docking.widgets.combobox.GComboBox;
+import ghidra.app.util.viewer.field.AnnotatedStringHandler;
+import ghidra.app.util.viewer.field.Annotation;
+import ghidra.framework.plugintool.PluginTool;
+import ghidra.program.model.listing.CodeUnit;
+import ghidra.util.HelpLocation;
 
 /**
  * Dialog for setting the comments for a CodeUnit.
@@ -45,8 +45,7 @@ public class CommentsDialog extends DialogComponentProvider implements KeyListen
 	private JTextArea plateField;
 	private JTextArea repeatableField;
 
-	private Map<Document, UndoRedoKeeper> documentUndoRedoMap =
-		new HashMap<Document, UndoRedoKeeper>(9);
+	private Map<Document, UndoRedoKeeper> documentUndoRedoMap = new HashMap<>(9);
 
 	private String preComment;
 	private String postComment;
@@ -62,7 +61,7 @@ public class CommentsDialog extends DialogComponentProvider implements KeyListen
 	private boolean wasChanged;
 
 	private boolean enterMode = false;
-	private JCheckBox enterBox = new JCheckBox("Enter accepts comment", enterMode);
+	private JCheckBox enterBox = new GCheckBox("Enter accepts comment", enterMode);
 	{
 		enterBox.addChangeListener(new ChangeListener() {
 			@Override
@@ -168,9 +167,8 @@ public class CommentsDialog extends DialogComponentProvider implements KeyListen
 	protected void cancelCallback() {
 
 		if (wasChanged) {
-			int result =
-				OptionDialog.showYesNoCancelDialog(getComponent(), "Save Changes?",
-					"Some comments were modified.\nSave Changes?");
+			int result = OptionDialog.showYesNoCancelDialog(getComponent(), "Save Changes?",
+				"Some comments were modified.\nSave Changes?");
 			if (result == OptionDialog.OPTION_ONE) {
 				applyCallback();
 			}
@@ -267,9 +265,9 @@ public class CommentsDialog extends DialogComponentProvider implements KeyListen
 		JPanel auxiliaryControlPanel = new JPanel(new BorderLayout());
 		auxiliaryControlPanel.add(enterBox, BorderLayout.SOUTH);
 
-		final AnnotationAdapterWrapper[] annotations = getAnnotationAdapterWrappers();
+		AnnotationAdapterWrapper[] annotations = getAnnotationAdapterWrappers();
 		Arrays.sort(annotations);
-		final JComboBox annotationsComboBox = new JComboBox(annotations);
+		GComboBox<AnnotationAdapterWrapper> annotationsComboBox = new GComboBox<>(annotations);
 		JButton addAnnotationButton = new JButton("Add Annotation");
 		addAnnotationButton.addActionListener(new ActionListener() {
 			@Override
@@ -277,7 +275,8 @@ public class CommentsDialog extends DialogComponentProvider implements KeyListen
 				JTextArea currentTextArea = getSelectedTextArea();
 				AnnotationAdapterWrapper aaw =
 					(AnnotationAdapterWrapper) annotationsComboBox.getSelectedItem();
-				currentTextArea.insert(aaw.getPrototypeString(), currentTextArea.getCaretPosition());
+				currentTextArea.insert(aaw.getPrototypeString(),
+					currentTextArea.getCaretPosition());
 				currentTextArea.setCaretPosition(currentTextArea.getCaretPosition() - 1);
 			}
 		});
@@ -289,6 +288,7 @@ public class CommentsDialog extends DialogComponentProvider implements KeyListen
 		panel.add(auxiliaryControlPanel, BorderLayout.SOUTH);
 
 		preField = new JTextArea(5, 80) {
+			@Override
 			public boolean getScrollableTracksViewportWidth() {
 				boolean b = super.getScrollableTracksViewportWidth();
 				return b;

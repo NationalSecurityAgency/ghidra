@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +20,8 @@ import java.awt.event.KeyListener;
 
 import javax.swing.JTextField;
 import javax.swing.KeyStroke;
+
+import docking.actions.KeyBindingUtils;
 
 /**
  * Text field captures key strokes and notifies a listener to process the key entry.
@@ -43,21 +44,31 @@ public class KeyEntryTextField extends JTextField {
 	}
 
 	/**
-	 * Get the current key stroke.
+	 * Get the current key stroke
+	 * @return the key stroke
 	 */
-	public KeyStroke getCurrentKeyStroke() {
+	public KeyStroke getKeyStroke() {
 		return currentKeyStroke;
 	}
 
 	/**
-	 * Converts the toString() form of the keyStroke, e.g., Ctrl-M
-	 * is returned as "keyCode CtrlM-P" and we want it to look like:
-	 * "Ctrl-M"
-	 * @param ks the keystroke to parse.
-	 * @return the parse string for the keystroke.
+	 * Sets the current key stroke
+	 * @param ks the new key stroke
+	 */
+	public void setKeyStroke(KeyStroke ks) {
+		processEntry(ks);
+		setText(parseKeyStroke(ks));
+	}
+
+	/**
+	 * Converts the toString() form of the keyStroke, e.g., Ctrl-M is returned as 
+	 * "keyCode CtrlM-P" and we want it to look like: "Ctrl-M"
+	 * 
+	 * @param ks the keystroke to parse
+	 * @return the parse string for the keystroke
 	 */
 	public static String parseKeyStroke(KeyStroke ks) {
-		return DockingKeyBindingAction.parseKeyStroke(ks);
+		return KeyBindingUtils.parseKeyStroke(ks);
 	}
 
 	public void clearField() {
@@ -65,8 +76,6 @@ public class KeyEntryTextField extends JTextField {
 		setText("");
 		currentKeyStroke = null;
 	}
-
-	//////////////////////////////////////////////////////////////////////
 
 	private void processEntry(KeyStroke ks) {
 		ksName = null;
@@ -78,7 +87,7 @@ public class KeyEntryTextField extends JTextField {
 			char keyChar = ks.getKeyChar();
 			if (!Character.isWhitespace(keyChar) &&
 				Character.getType(keyChar) != Character.DIRECTIONALITY_LEFT_TO_RIGHT_OVERRIDE) {
-				ksName = DockingKeyBindingAction.parseKeyStroke(ks);
+				ksName = KeyBindingUtils.parseKeyStroke(ks);
 			}
 		}
 		listener.processEntry(ks);
@@ -111,7 +120,7 @@ public class KeyEntryTextField extends JTextField {
 
 			KeyStroke keyStroke = null;
 			if (!isClearKey(keyCode) && !isModifiersOnly(e)) {
-				keyStroke = KeyStroke.getKeyStroke(keyCode, e.getModifiersEx() | e.getModifiers());
+				keyStroke = KeyStroke.getKeyStroke(keyCode, e.getModifiersEx());
 			}
 
 			processEntry(keyStroke);

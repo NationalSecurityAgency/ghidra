@@ -15,7 +15,6 @@
  */
 package ghidra.app.util.bin.format.elf;
 
-import ghidra.app.util.MemoryBlockUtil;
 import ghidra.app.util.bin.format.MemoryLoadable;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.program.model.address.Address;
@@ -43,12 +42,6 @@ public interface ElfLoadHelper {
 	 * @return ELF Header object
 	 */
 	ElfHeader getElfHeader();
-
-	/**
-	 * Memory block utility (program memory may be accessed directly if preferred)
-	 * @return memory block utility associated with program load
-	 */
-	MemoryBlockUtil getMemoryBlockUtil();
 
 	/**
 	 * Get the message log

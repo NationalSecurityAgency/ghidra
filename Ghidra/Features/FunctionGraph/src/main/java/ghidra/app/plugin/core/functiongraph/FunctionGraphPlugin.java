@@ -21,15 +21,14 @@ import javax.swing.ImageIcon;
 
 import org.jdom.Element;
 
-import docking.ActionContext;
-import docking.action.DockingAction;
-import docking.action.ToolBarData;
 import ghidra.GhidraOptions;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.events.*;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.ProgramPlugin;
 import ghidra.app.plugin.core.colorizer.ColorizingService;
+import ghidra.app.plugin.core.functiongraph.graph.layout.FGLayoutOptions;
+import ghidra.app.plugin.core.functiongraph.graph.layout.FGLayoutProvider;
 import ghidra.app.plugin.core.functiongraph.mvc.FunctionGraphOptions;
 import ghidra.app.services.*;
 import ghidra.app.util.viewer.format.FormatManager;
@@ -43,7 +42,7 @@ import ghidra.graph.viewer.options.VisualGraphOptions;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramLocation;
 import ghidra.program.util.ProgramSelection;
-import ghidra.util.HelpLocation;
+import ghidra.util.exception.AssertException;
 import resources.ResourceManager;
 
 //@formatter:off
@@ -75,8 +74,6 @@ public class FunctionGraphPlugin extends ProgramPlugin implements OptionsChangeL
 	private static final String PROGRAM_PATH_ID = "Program Path";
 	private static final String DISCONNECTED_COUNT_ID = "Disconnected Count";
 
-	private DockingAction showFunctionGraphAction;
-
 	private FGProvider connectedProvider;
 	private List<FGProvider> disconnectedProviders = new ArrayList<>();
 	private FormatManager userDefinedFormatManager;
@@ -84,11 +81,10 @@ public class FunctionGraphPlugin extends ProgramPlugin implements OptionsChangeL
 	private FunctionGraphOptions functionGraphOptions = new FunctionGraphOptions();
 
 	private FGColorProvider colorProvider;
+	private List<FGLayoutProvider> layoutProviders;
 
 	public FunctionGraphPlugin(PluginTool tool) {
 		super(tool, true, true, true);
-
-		createActions();
 
 		colorProvider = new IndependentColorProvider(tool);
 	}
@@ -96,6 +92,9 @@ public class FunctionGraphPlugin extends ProgramPlugin implements OptionsChangeL
 	@Override
 	protected void init() {
 		super.init();
+
+		layoutProviders = loadLayoutProviders();
+
 		createNewProvider();
 		initializeOptions();
 
@@ -133,28 +132,59 @@ public class FunctionGraphPlugin extends ProgramPlugin implements OptionsChangeL
 		}
 	}
 
+	private List<FGLayoutProvider> loadLayoutProviders() {
+
+		FGLayoutFinder layoutFinder = new DiscoverableFGLayoutFinder();
+		Set<FGLayoutProvider> instances = layoutFinder.findLayouts();
+		if (instances.isEmpty()) {
+			throw new AssertException("Could not find any layout providers. You project may not " +
+				"be configured properly.");
+		}
+
+		List<FGLayoutProvider> layouts = new ArrayList<>(instances);
+		Collections.sort(layouts, (o1, o2) -> -o1.getPriorityLevel() + o2.getPriorityLevel());
+		return layouts;
+	}
+
 	private void initializeOptions() {
 		ToolOptions options = tool.getOptions(PLUGIN_OPTIONS_NAME);
 		options.addOptionsChangeListener(this);
-		functionGraphOptions.initializeOptions(this, options);
-		functionGraphOptions.loadOptions(this, options);
+		functionGraphOptions.registerOptions(options);
+		functionGraphOptions.loadOptions(options);
+
+		for (FGLayoutProvider layoutProvider : layoutProviders) {
+			String layoutName = layoutProvider.getLayoutName();
+			Options layoutToolOptions = options.getOptions(layoutName);
+			FGLayoutOptions layoutOptions = layoutProvider.createLayoutOptions(layoutToolOptions);
+			if (layoutOptions == null) {
+				continue; // many layouts do not have options
+			}
+
+			layoutOptions.registerOptions(layoutToolOptions);
+			layoutOptions.loadOptions(layoutToolOptions);
+			functionGraphOptions.setLayoutOptions(layoutName, layoutOptions);
+		}
 	}
 
 	@Override
 	public void optionsChanged(ToolOptions options, String optionName, Object oldValue,
 			Object newValue) {
-		functionGraphOptions.loadOptions(this, options);
-		connectedProvider.getComponent().repaint();
-		for (FGProvider provider : disconnectedProviders) {
-			provider.getComponent().repaint();
-		}
 
-		if (VisualGraphOptions.USE_CONDENSED_LAYOUT.equals(optionName)) {
-			// the condensed setting requires us to reposition the graph
+		functionGraphOptions.loadOptions(options);
+
+		if (functionGraphOptions.optionChangeRequiresRelayout(optionName)) {
 			connectedProvider.refreshAndKeepPerspective();
 		}
 		else if (VisualGraphOptions.VIEW_RESTORE_OPTIONS_KEY.equals(optionName)) {
 			connectedProvider.clearViewSettings();
+		}
+		else {
+			connectedProvider.refreshDisplayWithoutRebuilding();
+		}
+
+		connectedProvider.getComponent().repaint();
+		for (FGProvider provider : disconnectedProviders) {
+			provider.getComponent().repaint();
 		}
 	}
 
@@ -214,21 +244,6 @@ public class FunctionGraphPlugin extends ProgramPlugin implements OptionsChangeL
 				removeProvider(provider);
 			}
 		}
-	}
-
-	private void createActions() {
-		showFunctionGraphAction = new DockingAction("Display Function Graph", getName()) {
-			@Override
-			public void actionPerformed(ActionContext context) {
-				showProvider();
-			}
-		};
-		showFunctionGraphAction.setToolBarData(new ToolBarData(ICON, "View"));
-
-		showFunctionGraphAction.setHelpLocation(
-			new HelpLocation("FunctionGraphPlugin", "Function_Graph_Plugin"));
-
-		tool.addAction(showFunctionGraphAction);
 	}
 
 	void showProvider() {
@@ -406,14 +421,6 @@ public class FunctionGraphPlugin extends ProgramPlugin implements OptionsChangeL
 		}
 	}
 
-	@Override
-	public void dataStateRestoreCompleted() {
-		super.dataStateRestoreCompleted();
-//        ProgramLocation location = ProgramLocation.getLocation( 
-//            currentProgram, dataSaveState, null );
-
-	}
-
 	public FGColorProvider getColorProvider() {
 		return colorProvider;
 	}
@@ -422,4 +429,7 @@ public class FunctionGraphPlugin extends ProgramPlugin implements OptionsChangeL
 		return functionGraphOptions;
 	}
 
+	public List<FGLayoutProvider> getLayoutProviders() {
+		return Collections.unmodifiableList(layoutProviders);
+	}
 }

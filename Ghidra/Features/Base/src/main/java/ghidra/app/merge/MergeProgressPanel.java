@@ -22,6 +22,8 @@ import java.util.HashMap;
 import javax.swing.*;
 import javax.swing.border.Border;
 
+import docking.widgets.label.GIconLabel;
+import docking.widgets.label.GLabel;
 import ghidra.util.Msg;
 import ghidra.util.layout.VerticalLayout;
 import resources.ResourceManager;
@@ -36,7 +38,7 @@ public class MergeProgressPanel extends JPanel {
 	public static ImageIcon IN_PROGRESS_ICON = ResourceManager.loadImage("images/right.png");
 	public static ImageIcon COMPLETED_ICON =
 		ResourceManager.loadImage("images/checkmark_green.gif");
-	private HashMap<String, JLabel> imageMap = new HashMap<String, JLabel>();
+	private HashMap<String, JLabel> imageMap = new HashMap<>();
 	private static int INDENT_IN_PIXELS = 20;
 
 	/**
@@ -56,18 +58,18 @@ public class MergeProgressPanel extends JPanel {
 		BoxLayout bl = new BoxLayout(phasesTitlePanel, BoxLayout.X_AXIS);
 		phasesTitlePanel.setLayout(bl);
 		phasesTitlePanel.add(Box.createHorizontalStrut(5));
-		phasesTitlePanel.add(new JLabel("Merge Status"));
+		phasesTitlePanel.add(new GLabel("Merge Status"));
 		phasesTitlePanel.add(Box.createHorizontalStrut(15));
-		phasesTitlePanel.add(new JLabel("( "));
-		phasesTitlePanel.add(new JLabel(DEFINED_ICON));
-		phasesTitlePanel.add(new JLabel(" = Pending"));
+		phasesTitlePanel.add(new GLabel("( "));
+		phasesTitlePanel.add(new GIconLabel(DEFINED_ICON));
+		phasesTitlePanel.add(new GLabel(" = Pending"));
 		phasesTitlePanel.add(Box.createHorizontalStrut(10));
-		phasesTitlePanel.add(new JLabel(IN_PROGRESS_ICON));
-		phasesTitlePanel.add(new JLabel(" = In Progress"));
+		phasesTitlePanel.add(new GIconLabel(IN_PROGRESS_ICON));
+		phasesTitlePanel.add(new GLabel(" = In Progress"));
 		phasesTitlePanel.add(Box.createHorizontalStrut(10));
-		phasesTitlePanel.add(new JLabel(COMPLETED_ICON));
-		phasesTitlePanel.add(new JLabel(" = Completed"));
-		phasesTitlePanel.add(new JLabel(" )"));
+		phasesTitlePanel.add(new GIconLabel(COMPLETED_ICON));
+		phasesTitlePanel.add(new GLabel(" = Completed"));
+		phasesTitlePanel.add(new GLabel(" )"));
 		phasesTitlePanel.add(Box.createHorizontalStrut(5));
 		return phasesTitlePanel;
 	}
@@ -83,8 +85,7 @@ public class MergeProgressPanel extends JPanel {
 	 */
 	public JPanel addInfo(String[] phase) {
 		int phaseDepth = phase.length - 1;
-		JLabel imageLabel = new JLabel(DEFINED_ICON);
-		JLabel infoLabel = new JLabel(phase[phaseDepth]);
+		JLabel imageLabel = new GIconLabel(DEFINED_ICON);
 		JPanel labelPanel = new JPanel();
 		labelPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
 		BoxLayout bl = new BoxLayout(labelPanel, BoxLayout.X_AXIS);
@@ -93,7 +94,7 @@ public class MergeProgressPanel extends JPanel {
 		labelPanel.add(Box.createHorizontalStrut(5));
 		labelPanel.add(imageLabel);
 		labelPanel.add(Box.createHorizontalStrut(5));
-		labelPanel.add(infoLabel);
+		labelPanel.add(new GLabel(phase[phaseDepth]));
 		imageMap.put(getPhaseString(phase), imageLabel);
 		add(labelPanel);
 		return labelPanel;

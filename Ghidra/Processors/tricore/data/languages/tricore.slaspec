@@ -1,0 +1,13 @@
+@define Tricore ""
+
+@define TRICORE_GENERIC ""
+#@define TRICORE_RIDER_D ""
+#@define TRICORE_RIDER_B ""
+
+@define TRICORE_V2 ""
+
+#@define TRICORE_VERBOSE ""
+
+define endian=little;
+
+@include "tricore.sinc"

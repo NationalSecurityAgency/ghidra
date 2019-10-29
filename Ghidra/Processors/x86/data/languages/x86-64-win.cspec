@@ -27,6 +27,9 @@
           <entry size="4" alignment="4" />
           <entry size="8" alignment="8" />
      </size_alignment_map>
+     <bitfield_packing>
+     	  <use_MS_convention value="true"/>
+     </bitfield_packing>
   </data_organization>
   
   <global>
@@ -64,7 +67,7 @@
           <addr offset="40" space="stack"/>
         </pentry>
       </input>
-      <output killedbycall="true">
+      <output>
         <pentry minsize="4" maxsize="8" metatype="float">
           <register name="XMM0_Qa"/>
         </pentry>
@@ -85,6 +88,10 @@
         <register name="R15"/>
         <register name="DF"/>
       </unaffected>
+      <killedbycall>
+        <register name="RAX"/>
+        <register name="XMM0"/>
+      </killedbycall>
       <localrange>
         <range space="stack" first="0xfffffffffff0bdc1" last="0xffffffffffffffff"/>
         <range space="stack" first="8" last="39"/>
@@ -121,7 +128,7 @@
         <addr offset="40" space="stack"/>
       </pentry>
     </input>
-    <output killedbycall="true">
+    <output>
       <pentry minsize="4" maxsize="8" metatype="float">
         <register name="XMM0_Qa"/>
       </pentry>
@@ -142,11 +149,26 @@
         <register name="R15"/>
         <register name="DF"/>
     </unaffected>
+    <killedbycall>
+      <register name="RAX"/>
+      <register name="XMM0"/>
+    </killedbycall>
     <localrange>
       <range space="stack" first="0xfffffffffff0bdc1" last="0xffffffffffffffff"/>
       <range space="stack" first="8" last="39"/>
     </localrange>
   </prototype>
+  <callfixup name="alloca_probe">
+    <target name="__alloca_probe"/>
+    <target name="__alloca_probe_8"/>
+    <target name="__alloca_probe_16"/>
+    <target name="__chkstk"/>
+    <pcode>
+     <body><![CDATA[
+       RSP = RSP + 8 - RAX;
+     ]]></body>
+    </pcode>
+  </callfixup>
   <callfixup name="guard_dispatch_icall">
     <target name="_guard_dispatch_icall"/>
     <pcode>

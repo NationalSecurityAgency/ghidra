@@ -99,6 +99,18 @@ public class LayoutLocationMap<V, E> {
 		return doGetColumn(gridX);
 	}
 
+	public Column getColumnContaining(int x) {
+		Column column = null;
+		Collection<Column> values = columnsByIndex.values();
+		for (Column nextColumn : values) {
+			if (x < nextColumn.x) {
+				return column;
+			}
+			column = nextColumn;
+		}
+		return column;
+	}
+
 	private Column doGetColumn(int index) {
 		Column column = columnsByIndex.get(index);
 		if (column == null) {
@@ -342,4 +354,5 @@ public class LayoutLocationMap<V, E> {
 			offset += column.getPaddedWidth(isCondensed);
 		}
 	}
+
 }

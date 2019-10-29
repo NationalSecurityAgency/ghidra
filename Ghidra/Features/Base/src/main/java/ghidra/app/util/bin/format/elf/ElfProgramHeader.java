@@ -64,7 +64,7 @@ import ghidra.util.*;
  */
 public class ElfProgramHeader
 		implements StructConverter, Comparable<ElfProgramHeader>, Writeable, MemoryLoadable {
-	
+
 	protected ElfHeader header;
 
 	private int p_type;
@@ -98,24 +98,24 @@ public class ElfProgramHeader
 		this.reader = reader;
 
 		if (header.is32Bit()) {
-			this.p_type = reader.readNextInt();
-			this.p_offset = reader.readNextInt() & Conv.INT_MASK;
-			this.p_vaddr = reader.readNextInt() & Conv.INT_MASK;
-			this.p_paddr = reader.readNextInt() & Conv.INT_MASK;
-			this.p_filesz = reader.readNextInt() & Conv.INT_MASK;
-			this.p_memsz = reader.readNextInt() & Conv.INT_MASK;
-			this.p_flags = reader.readNextInt();
-			this.p_align = reader.readNextInt() & Conv.INT_MASK;
+			p_type = reader.readNextInt();
+			p_offset = reader.readNextInt() & Conv.INT_MASK;
+			p_vaddr = reader.readNextInt() & Conv.INT_MASK;
+			p_paddr = reader.readNextInt() & Conv.INT_MASK;
+			p_filesz = reader.readNextInt() & Conv.INT_MASK;
+			p_memsz = reader.readNextInt() & Conv.INT_MASK;
+			p_flags = reader.readNextInt();
+			p_align = reader.readNextInt() & Conv.INT_MASK;
 		}
 		else if (header.is64Bit()) {
-			this.p_type = reader.readNextInt();
-			this.p_flags = reader.readNextInt();
-			this.p_offset = reader.readNextLong();
-			this.p_vaddr = reader.readNextLong();
-			this.p_paddr = reader.readNextLong();
-			this.p_filesz = reader.readNextLong();
-			this.p_memsz = reader.readNextLong();
-			this.p_align = reader.readNextLong();
+			p_type = reader.readNextInt();
+			p_flags = reader.readNextInt();
+			p_offset = reader.readNextLong();
+			p_vaddr = reader.readNextLong();
+			p_paddr = reader.readNextLong();
+			p_filesz = reader.readNextLong();
+			p_memsz = reader.readNextLong();
+			p_align = reader.readNextLong();
 		}
 
 		if (p_memsz > p_filesz) {
@@ -134,15 +134,15 @@ public class ElfProgramHeader
 	 */
 	public ElfProgramHeader(ElfHeader header, int type) {
 		this.header = header;
-		this.p_type = type;
-		this.p_flags =
-			ElfProgramHeaderConstants.PF_R | ElfProgramHeaderConstants.PF_W |
-				ElfProgramHeaderConstants.PF_X;
-		this.p_align = 0x1000;
-		this.p_paddr = 0xffffffff;
-		this.p_vaddr = 0xffffffff;
+
+		p_type = type;
+		p_flags = ElfProgramHeaderConstants.PF_R | ElfProgramHeaderConstants.PF_W |
+			ElfProgramHeaderConstants.PF_X;
+		p_align = 0x1000;
+		p_paddr = 0xffffffff;
+		p_vaddr = 0xffffffff;
 	}
-	
+
 	/**
 	 * Return ElfHeader associated with this program header
 	 * @return ElfHeader
@@ -286,7 +286,7 @@ public class ElfProgramHeader
 	public long getMemorySize() {
 		return p_memsz;
 	}
-	
+
 	/**
 	 * Get the adjusted memory size in bytes of the memory block which relates to this program header; it may be zero
 	 * if no block should be created.  The returned value reflects any adjustment the ElfExtension may require
@@ -297,7 +297,7 @@ public class ElfProgramHeader
 	public long getAdjustedMemorySize() {
 		return header.getLoadAdapter().getAdjustedMemorySize(this);
 	}
-	
+
 	/**
 	 * Get the adjusted file load size (i.e., filtered load size) to be loaded into memory block which relates to 
 	 * this program header; it may be zero if no block should be created.  The returned value reflects any adjustment 
@@ -325,7 +325,7 @@ public class ElfProgramHeader
 	public long getOffset() {
 		return p_offset;
 	}
-	
+
 	/**
 	 * Compute the file offset associated with the specified loaded virtual address 
 	 * defined by this PT_LOAD program header.  This can be useful when attempting to locate
@@ -346,7 +346,7 @@ public class ElfProgramHeader
 		long addressableUnitSize = p_filesz / p_memsz; // FIXME: verify unit size computation approach !
 		return (addressableUnitSize * (virtualAddress - getVirtualAddress())) + p_offset;
 	}
-	
+
 	/**
 	 * Set the offset. This value is the byte offset into
 	 * the ELF file.
@@ -497,8 +497,7 @@ public class ElfProgramHeader
 		}
 		ElfProgramHeader other = (ElfProgramHeader) obj;
 		return reader == other.reader && p_type == other.p_type && p_flags == other.p_flags &&
-			p_offset == other.p_offset &&
-			p_vaddr == other.p_vaddr && p_paddr == other.p_paddr && p_filesz == other.p_filesz &&
-			p_memsz == other.p_memsz && p_align == other.p_align;
+			p_offset == other.p_offset && p_vaddr == other.p_vaddr && p_paddr == other.p_paddr &&
+			p_filesz == other.p_filesz && p_memsz == other.p_memsz && p_align == other.p_align;
 	}
 }

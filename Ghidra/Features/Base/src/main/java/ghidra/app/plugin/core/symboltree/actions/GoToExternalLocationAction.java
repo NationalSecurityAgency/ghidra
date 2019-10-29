@@ -45,7 +45,7 @@ public class GoToExternalLocationAction extends ProgramSymbolContextAction {
 		if (symbol == null) {
 			return false;
 		}
-		if (symbol.getSymbolType() == SymbolType.CODE ||
+		if (symbol.getSymbolType() == SymbolType.LABEL ||
 			symbol.getSymbolType() == SymbolType.FUNCTION) {
 			return symbol.isExternal();
 		}

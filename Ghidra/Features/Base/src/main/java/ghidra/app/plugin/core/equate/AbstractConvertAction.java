@@ -23,7 +23,9 @@ import javax.swing.JMenuItem;
 import docking.action.MenuData;
 import ghidra.app.context.ListingActionContext;
 import ghidra.app.context.ListingContextAction;
-import ghidra.program.model.data.*;
+import ghidra.docking.settings.FormatSettingsDefinition;
+import ghidra.program.model.data.AbstractIntegerDataType;
+import ghidra.program.model.data.DataType;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.scalar.Scalar;
 import ghidra.program.util.OperandFieldLocation;
@@ -65,7 +67,11 @@ public abstract class AbstractConvertAction extends ListingContextAction {
 				// unsupported data action
 				return false;
 			}
-			DataType dataType = ((Data) cu).getBaseDataType();
+			Data data = (Data) cu;
+			if (!data.isDefined()) {
+				return false;
+			}
+			DataType dataType = data.getBaseDataType();
 			if (!(dataType instanceof AbstractIntegerDataType)) {
 				return false;
 			}

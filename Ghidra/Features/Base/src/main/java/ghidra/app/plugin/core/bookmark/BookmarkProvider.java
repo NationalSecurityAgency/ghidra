@@ -17,6 +17,7 @@ package ghidra.app.plugin.core.bookmark;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.util.*;
 
@@ -24,8 +25,8 @@ import javax.swing.*;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.TableColumn;
 
-import docking.ActionContext;
-import docking.WindowPosition;
+import docking.*;
+import docking.action.KeyBindingData;
 import docking.widgets.combobox.GhidraComboBox;
 import docking.widgets.table.GTable;
 import ghidra.app.context.ProgramActionContext;
@@ -58,6 +59,9 @@ public class BookmarkProvider extends ComponentProviderAdapter {
 		super(tool, "Bookmarks", plugin.getName(), ProgramActionContext.class);
 
 		setIcon(BookmarkNavigator.NOTE_ICON);
+		addToToolbar();
+		setKeyBinding(new KeyBindingData(KeyEvent.VK_B, DockingUtils.CONTROL_KEY_MODIFIER_MASK));
+
 		model = new BookmarkTableModel(tool, null);
 		threadedTablePanel = new GhidraThreadedTablePanel<>(model);
 
@@ -101,7 +105,7 @@ public class BookmarkProvider extends ComponentProviderAdapter {
 		if (program == null) {
 			return null;
 		}
-		return new ProgramActionContext(this, program);
+		return new ProgramActionContext(this, program, bookmarkTable);
 	}
 
 	void setGoToService(GoToService goToService) {

@@ -15,8 +15,7 @@
  */
 package help.screenshot;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.*;
 
 import java.awt.*;
 import java.math.BigInteger;
@@ -25,8 +24,7 @@ import java.util.List;
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.*;
 
 import docking.widgets.indexedscrollpane.IndexedScrollPane;
 import generic.test.TestUtils;
@@ -69,7 +67,7 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 		super();
 	}
 
-	// FIXME: JUnit4 ??
+	@Before
 	@Override
 	public void setUp() throws Exception {
 		super.setUp();
@@ -78,7 +76,7 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 		env = mtf.getTestEnvironment();
 	}
 
-	// FIXME: JUnit4 ??
+	@After
 	@Override
 	public void tearDown() throws Exception {
 		mtfGenerator.showResults();

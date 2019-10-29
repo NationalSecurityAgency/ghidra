@@ -1,4 +1,9 @@
+apply from: "$rootProject.projectDir/gradle/distributableGhidraModule.gradle"
+apply from: "$rootProject.projectDir/gradle/javaProject.gradle"
+apply from: "$rootProject.projectDir/gradle/jacocoProject.gradle"
+apply from: "$rootProject.projectDir/gradle/javaTestProject.gradle"
 apply plugin: 'eclipse'
+
 eclipse.project.name = 'Framework Graph'
 
 dependencies {
@@ -13,5 +18,5 @@ dependencies {
 	compile "net.sf.jung:jung-visualization:2.1.1"
 	
 	// These have abstract test classes and stubs needed by this module	
-	testCompile project(':Docking').sourceSets.test.output
+	testCompile project(path: ':Docking', configuration: 'testArtifacts')
 }

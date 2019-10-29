@@ -30,10 +30,8 @@ import ghidra.util.task.TaskMonitor;
 /**
  * TODO: Provide class-level documentation that describes what this file system does.
  */
-@FileSystemInfo(
-		type = "fstypegoeshere", // ([a-z0-9]+ only)
-		description = "File system description goes here",
-		factory = SkeletonFileSystem.MyFileSystemFactory.class)
+@FileSystemInfo(type = "fstypegoeshere", // ([a-z0-9]+ only)
+		description = "File system description goes here", factory = SkeletonFileSystem.MyFileSystemFactory.class)
 public class SkeletonFileSystem implements GFileSystem {
 
 	private final FSRLRoot fsFSRL;
@@ -130,7 +128,7 @@ public class SkeletonFileSystem implements GFileSystem {
 	}
 
 	@Override
-	public String getInfo(GFile file, TaskMonitor monitor) throws IOException {
+	public String getInfo(GFile file, TaskMonitor monitor) {
 		MyMetadata metadata = fsih.getMetadata(file);
 		return (metadata == null) ? null : FSUtilities.infoMapToString(getInfoMap(metadata));
 	}

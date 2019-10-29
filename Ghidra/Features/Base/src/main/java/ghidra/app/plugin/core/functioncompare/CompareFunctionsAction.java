@@ -15,13 +15,9 @@
  */
 package ghidra.app.plugin.core.functioncompare;
 
-import java.awt.event.InputEvent;
-import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 
 import docking.ActionContext;
-import docking.DockingUtils;
-import docking.action.KeyBindingData;
 import docking.action.MenuData;
 import ghidra.app.context.*;
 import ghidra.program.model.listing.*;
@@ -51,12 +47,6 @@ public class CompareFunctionsAction extends ProgramContextAction {
 		setPopupMenuData(new MenuData(new String[] { "Compare Selected Functions..." }, null,
 			FunctionComparisonPlugin.FUNCTION_MENU_SUBGROUP, MenuData.NO_MNEMONIC,
 			"Z_End" /* See the FunctionPlugin for this value */));
-
-		// TODO this binding needs to be revisited; probably needs to be more modified, like
-		//      Ctrl-Shift-F; it currently interferes with other uses of Ctrl-F, usually when 
-		//      performing a find function.
-		setKeyBindingData(new KeyBindingData(KeyEvent.VK_F,
-			DockingUtils.CONTROL_KEY_MODIFIER_MASK | InputEvent.SHIFT_DOWN_MASK));
 
 		setHelpLocation(new HelpLocation("FunctionComparison", "Compare_Selected_Functions"));
 	}

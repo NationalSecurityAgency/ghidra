@@ -23,12 +23,6 @@ import ghidra.util.task.TaskMonitor;
  * Each data type resides in a given a category.
  */
 public interface Category extends Comparable<Category> {
-	public static final char DELIMITER_CHAR = '/'; // delimeter between categories
-
-	public static final String NAME_DELIMITER = "/"; // delimiter between names
-
-	public static final String DELIMITER_STRING = "" + DELIMITER_CHAR; // delimeter between categories
-
 	/**
 	 * Get the name of this category.
 	 */

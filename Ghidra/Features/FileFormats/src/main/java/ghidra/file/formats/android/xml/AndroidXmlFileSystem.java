@@ -97,11 +97,6 @@ public class AndroidXmlFileSystem extends GFileSystemBase {
 	}
 
 	@Override
-	public String getInfo(GFile file, TaskMonitor monitor) throws IOException {
-		return null;
-	}
-
-	@Override
 	public List<GFile> getListing(GFile directory) throws IOException {
 		List<GFile> tmp = new ArrayList<>();
 		tmp.add(payloadFile);

@@ -59,7 +59,7 @@ public class ConflictHandlerTest extends AbstractGhidraHeadedIntegrationTest {
 	@Before
 	public void setUp() throws Exception {
 		program = createDefaultProgram(testName.getMethodName(), ProgramBuilder._TOY, this);
-		dataMgr = program.getDataManager();
+		dataMgr = program.getDataTypeManager();
 		startTransaction();
 	}
 

@@ -51,7 +51,7 @@ public class StringDataInstance {
 	 * @return boolean true if string data.
 	 */
 	public static boolean isString(Data data) {
-		if (data == null) {
+		if (data == null || !data.isInitializedMemory()) {
 			return false;
 		}
 		DataType dt = data.getBaseDataType();
@@ -89,36 +89,38 @@ public class StringDataInstance {
 			return ((AbstractStringDataType) dt).getStringDataInstance(data, data,
 				data.getLength());
 		}
-		if (dt instanceof Array) {
+		if (dt instanceof Array && !data.isInitializedMemory()) {
 			ArrayStringable arrayStringable =
 				ArrayStringable.getArrayStringable(((Array) dt).getDataType());
-			return arrayStringable.getStringDataInstance(data, data, data.getLength());
+			if (arrayStringable != null && arrayStringable.hasStringValue(data)) {
+				return new StringDataInstance(arrayStringable, data, data, data.getLength());
+			}
 		}
 		return NULL_INSTANCE;
+
 	}
 
 	/**
 	 * Returns a new {@link StringDataInstance} using the bytes in the MemBuffer.
 	 * <p>
-	 * @param stringDataType {@link DataType} of the bytes in the buffer.
+	 * @param dataType {@link DataType} of the bytes in the buffer.
 	 * @param buf memory buffer containing the bytes.
 	 * @param settings the Settings object
 	 * @param length the length of the data.
 	 * @return new {@link StringDataInstance}, never NULL.  See {@link #NULL_INSTANCE}.
 	 */
-	public static StringDataInstance getStringDataInstance(DataType stringDataType, MemBuffer buf,
+	public static StringDataInstance getStringDataInstance(DataType dataType, MemBuffer buf,
 			Settings settings, int length) {
-		if (stringDataType instanceof AbstractStringDataType) {
-			return ((AbstractStringDataType) stringDataType).getStringDataInstance(buf, settings,
-				length);
+		if (dataType instanceof AbstractStringDataType) {
+			return ((AbstractStringDataType) dataType).getStringDataInstance(buf, settings, length);
 		}
-		if (stringDataType instanceof Array &&
-			((Array) stringDataType).getDataType() instanceof ArrayStringable) {
-			stringDataType = ((Array) stringDataType).getDataType();
+		if (dataType instanceof Array) {
+			dataType = ArrayStringable.getArrayStringable(((Array) dataType).getDataType());
 		}
-		if (stringDataType instanceof ArrayStringable &&
-			((ArrayStringable) stringDataType).hasStringValue(settings)) {
-			return ((ArrayStringable) stringDataType).getStringDataInstance(buf, settings, length);
+		if (dataType instanceof ArrayStringable &&
+			((ArrayStringable) dataType).hasStringValue(settings) && buf.isInitializedMemory()) {
+
+			return new StringDataInstance(dataType, settings, buf, length);
 		}
 		return NULL_INSTANCE;
 	}
@@ -187,11 +189,10 @@ public class StringDataInstance {
 		this.buf = buf;
 		this.charsetName = getCharsetNameFromDataTypeOrSettings(dataType, settings);
 		this.charSize = CharsetInfo.getInstance().getCharsetCharSize(charsetName);
-		// TODO: determine padding of char data type from the dataOrg()
-		this.paddedCharSize = charSize; // stringDataType.getPaddedCharSize(charSize);
-
+		// NOTE: for now only handle padding for charSize == 1 
+		this.paddedCharSize =
+			charSize == 1 ? getDataOrganization(dataType).getCharSize() : charSize;
 		this.stringLayout = getLayoutFromDataType(dataType);
-
 		this.showTranslation = TRANSLATION.isShowTranslated(settings);
 		this.translatedValue = TRANSLATION.getTranslatedValue(settings);
 		this.renderSetting = RENDER.getEnumValue(settings);
@@ -212,6 +213,17 @@ public class StringDataInstance {
 		this.length = newLen;
 		this.buf = newBuf;
 		this.endianSetting = copyFrom.endianSetting;
+	}
+
+	private static DataOrganization getDataOrganization(DataType dataType) {
+		// The dataType should be correspond to the target program
+		if (dataType != null) {
+			DataTypeManager dtm = dataType.getDataTypeManager();
+			if (dtm != null) {
+				return dtm.getDataOrganization();
+			}
+		}
+		return DataOrganizationImpl.getDefaultOrganization();
 	}
 
 	private static StringLayoutEnum getLayoutFromDataType(DataType dataType) {
@@ -410,7 +422,7 @@ public class StringDataInstance {
 	}
 
 	private String getStringValueNoTrim() {
-		if (isProbe() || isBadCharSize()) {
+		if (isProbe() || isBadCharSize() || !buf.isInitializedMemory()) {
 			return null;
 		}
 		byte[] stringBytes = convertPaddedToUnpadded(getStringBytes());
@@ -613,7 +625,7 @@ public class StringDataInstance {
 	 */
 	public String getStringRepresentation() {
 
-		if (isProbe() || isBadCharSize()) {
+		if (isProbe() || isBadCharSize() || !buf.isInitializedMemory()) {
 			return UNKNOWN;
 		}
 
@@ -883,7 +895,10 @@ public class StringDataInstance {
 		}
 
 		String str = getStringValue();
-		if (str == null || str.length() == 0) {
+		if (str == null) {
+			return defaultStr;
+		}
+		if (str.length() == 0) {
 			return prefixStr;
 		}
 

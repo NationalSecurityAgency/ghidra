@@ -449,6 +449,16 @@ public class ComponentPlaceholder {
 		}
 	}
 
+	void removeAllActions() {
+		if (comp != null) {
+			for (DockingActionIf action : actions) {
+				comp.actionRemoved(action);
+			}
+		}
+
+		actions.clear();
+	}
+
 	/**
 	 * Removes an action from this component
 	 * @param action the action to be removed.

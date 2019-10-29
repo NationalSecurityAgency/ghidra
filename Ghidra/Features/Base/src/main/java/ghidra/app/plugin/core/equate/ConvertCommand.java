@@ -95,7 +95,8 @@ public class ConvertCommand extends BackgroundCommand {
 		DataType dt = data.getBaseDataType();
 		Settings settings = data;
 		Settings defaultSettings = dt.getDefaultSettings();
-		if (!(dt instanceof AbstractIntegerDataType)) {
+		if (!(Scalar.class.equals(data.getValueClass())) ||
+			!(dt instanceof AbstractIntegerDataType)) {
 			msg = "Unsupported data type for convert: " + data.getDataType().getDisplayName();
 			return false;
 		}

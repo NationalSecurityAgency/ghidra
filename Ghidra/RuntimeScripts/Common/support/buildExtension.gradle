@@ -181,7 +181,7 @@ task indexHelp(type: JavaExec) {
 	}
 	
 	group "private"
-	description "indexes the helps files for this module.  [gradleScripts/buildHelp.gradle]"
+	description "indexes the helps files for this module.  [gradle/helpProject.gradle]"
 }
 
 // task for building Ghidra help files - depends on the output from the help indexer
@@ -209,7 +209,7 @@ task buildHelp(type: JavaExec, dependsOn: indexHelp) {
 		}
 		args "${helpRootDir.absolutePath}"		// tell the help builder what help dir to process
 	}
-	description "      Builds the help for this module.  [gradleScripts/buildHelp.gradle]\n"	
+	description "      Builds the help for this module.  [gradle/helpProject.gradle]\n"	
 }
 
 // include the help into the module's jar

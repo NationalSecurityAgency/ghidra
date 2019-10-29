@@ -1124,13 +1124,17 @@ Datatype *TypeSpacebase::getSubType(uintb off,uintb *newoff) const
 
 {
   Scope *scope = getMap();
-  //  uintb unoff = (uintb)(intb)off; // Make sure this is a sign-extension
-  Address addr(spaceid,spaceid->wrapOffset(off));
+  off = AddrSpace::byteToAddress(off, spaceid->getWordSize());	// Convert from byte offset to address unit
+  // It should always be the case that given offset represents a full encoding of the
+  // pointer, so the point of context is unused
+  Address nullPoint;
+  uintb fullEncoding;
+  Address addr = glb->resolveConstant(spaceid, off, spaceid->getAddrSize(), nullPoint, fullEncoding);
   SymbolEntry *smallest;
 
   // Assume symbol being referenced is address tied,
   // so we use empty usepoint
-  smallest = scope->queryContainer(addr,1,Address());
+  smallest = scope->queryContainer(addr,1,nullPoint);
   
   if (smallest == (SymbolEntry *)0) {
     *newoff = 0;
@@ -1167,7 +1171,8 @@ int4 TypeSpacebase::compareDependency(const Datatype &op) const
 Address TypeSpacebase::getAddress(uintb off,int4 sz,const Address &point) const
 
 {
-  return glb->resolveConstant(spaceid,off,sz,point);
+  uintb fullEncoding;
+  return glb->resolveConstant(spaceid,off,sz,point,fullEncoding);
 }
 
 void TypeSpacebase::saveXml(ostream &s) const

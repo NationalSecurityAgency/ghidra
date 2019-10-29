@@ -15,12 +15,17 @@
  */
 package ghidra.file.formats.ios.dyldcache;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.*;
 
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.bin.format.macho.MachException;
+import ghidra.app.util.bin.format.macho.dyld.DyldCacheHeader;
+import ghidra.app.util.bin.format.macho.dyld.DyldCacheImageInfo;
+import ghidra.app.util.importer.MessageLog;
+import ghidra.app.util.opinion.DyldCacheUtils;
 import ghidra.formats.gfilesystem.*;
 import ghidra.formats.gfilesystem.annotations.FileSystemInfo;
 import ghidra.formats.gfilesystem.factory.GFileSystemBaseFactory;
@@ -32,7 +37,7 @@ import ghidra.util.task.TaskMonitor;
 public class DyldCacheFileSystem extends GFileSystemBase {
 
 	private DyldCacheHeader header;
-	private Map<GFile, DyldCacheData> map = new HashMap<>();
+	private Map<GFile, DyldCacheImageInfo> map = new HashMap<>();
 
 	public DyldCacheFileSystem(String fileSystemName, ByteProvider provider) {
 		super(fileSystemName, provider);
@@ -46,11 +51,11 @@ public class DyldCacheFileSystem extends GFileSystemBase {
 
 	@Override
 	protected InputStream getData(GFile file, TaskMonitor monitor) throws IOException {
-		DyldCacheData data = map.get(file);
+		DyldCacheImageInfo data = map.get(file);
 		if (data == null) {
 			return null;
 		}
-		long machHeaderStartIndexInProvider = data.getLibraryOffset() - header.getBaseAddress();
+		long machHeaderStartIndexInProvider = data.getAddress() - header.getBaseAddress();
 		try {
 			/*
 			 * //check to make sure mach-o header is valid MachHeader header =
@@ -64,8 +69,7 @@ public class DyldCacheFileSystem extends GFileSystemBase {
 			 */
 
 			FixupMacho32bitArmOffsets fixer = new FixupMacho32bitArmOffsets();
-			File fixedFile = fixer.fix(file, machHeaderStartIndexInProvider, provider, monitor);
-			return new FileInputStream(fixedFile);
+			return fixer.fix(file, machHeaderStartIndexInProvider, provider, monitor);
 		}
 		catch (MachException e) {
 			throw new IOException("Invalid Mach-O header detected at 0x" +
@@ -112,11 +116,6 @@ public class DyldCacheFileSystem extends GFileSystemBase {
 */
 
 	@Override
-	public String getInfo(GFile file, TaskMonitor monitor) throws IOException {
-		return null;
-	}
-
-	@Override
 	public List<GFile> getListing(GFile directory) throws IOException {
 		if (directory == null || directory.equals(root)) {
 			List<GFile> roots = new ArrayList<>();
@@ -141,11 +140,7 @@ public class DyldCacheFileSystem extends GFileSystemBase {
 
 	@Override
 	public boolean isValid(TaskMonitor monitor) throws IOException {
-		BinaryReader reader = new BinaryReader(provider, true);
-
-		DyldCacheHeader header = new DyldCacheHeader(reader);
-
-		return DyldCacheUtil.isDyldCache(new String(header.getVersion()).trim());
+		return DyldCacheUtils.isDyldCache(provider);
 	}
 
 	@Override
@@ -155,13 +150,13 @@ public class DyldCacheFileSystem extends GFileSystemBase {
 		BinaryReader reader = new BinaryReader(provider, true);
 
 		header = new DyldCacheHeader(reader);
-		header.parse(monitor);
+		header.parseFromFile(false, new MessageLog(), monitor);
 
-		List<DyldCacheData> dataList = header.getDataList();
+		List<DyldCacheImageInfo> dataList = header.getImageInfos();
 
 		monitor.initialize(dataList.size());
 
-		for (DyldCacheData data : dataList) {
+		for (DyldCacheImageInfo data : dataList) {
 
 			if (monitor.isCancelled()) {
 				break;
@@ -173,11 +168,11 @@ public class DyldCacheFileSystem extends GFileSystemBase {
 				0/*TODO compute length?*/ );
 			storeFile(file, data);
 
-			file.setLength(provider.length() - (data.getLibraryOffset() - header.getBaseAddress()));
+			file.setLength(provider.length() - (data.getAddress() - header.getBaseAddress()));
 		}
 	}
 
-	private void storeFile(GFile file, DyldCacheData data) {
+	private void storeFile(GFile file, DyldCacheImageInfo data) {
 		if (file == null) {
 			return;
 		}

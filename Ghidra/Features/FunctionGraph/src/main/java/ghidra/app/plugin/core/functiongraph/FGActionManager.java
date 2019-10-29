@@ -48,7 +48,6 @@ import ghidra.program.model.listing.Function;
 import ghidra.program.util.ProgramLocation;
 import ghidra.program.util.ProgramSelection;
 import ghidra.util.*;
-import ghidra.util.exception.AssertException;
 import resources.Icons;
 import resources.ResourceManager;
 
@@ -72,7 +71,6 @@ class FGActionManager {
 	private MultiStateDockingAction<EdgeDisplayType> vertexHoverModeAction;
 	private MultiStateDockingAction<EdgeDisplayType> vertexFocusModeAction;
 
-	private FGLayoutFinder layoutFinder = new DiscoverableFGLayoutFinder();
 	private MultiStateDockingAction<Class<? extends FGLayoutProvider>> layoutAction;
 
 	FGActionManager(FunctionGraphPlugin plugin, FGController controller, FGProvider provider) {
@@ -857,8 +855,7 @@ class FGActionManager {
 		HelpLocation layoutHelpLocation =
 			new HelpLocation("FunctionGraphPlugin", "Function_Graph_Action_Layout");
 
-		layoutAction = new MultiStateDockingAction<Class<? extends FGLayoutProvider>>(
-			"Relayout Graph", plugin.getName()) {
+		layoutAction = new MultiStateDockingAction<>("Relayout Graph", plugin.getName(), true) {
 
 			@Override
 			protected void doActionPerformed(ActionContext context) {
@@ -901,20 +898,12 @@ class FGActionManager {
 
 	private List<ActionState<Class<? extends FGLayoutProvider>>> loadActionStatesForLayoutProviders() {
 
-		Set<FGLayoutProvider> instances = layoutFinder.findLayouts();
-		if (instances.isEmpty()) {
-			throw new AssertException("Could not find any layout providers. You project may not " +
-				"be configured properly.");
-		}
-
-		List<FGLayoutProvider> layoutInstances = new ArrayList<>(instances);
-		Collections.sort(layoutInstances,
-			(o1, o2) -> -o1.getPriorityLevel() + o2.getPriorityLevel());
-
+		List<FGLayoutProvider> layoutInstances = plugin.getLayoutProviders();
 		List<ActionState<Class<? extends FGLayoutProvider>>> list = new ArrayList<>();
 		HelpLocation layoutHelpLocation =
 			new HelpLocation("FunctionGraphPlugin", "Function_Graph_Action_Layout");
 		for (FGLayoutProvider layout : layoutInstances) {
+
 			ActionState<Class<? extends FGLayoutProvider>> layoutState = new ActionState<>(
 				layout.getLayoutName(), layout.getActionIcon(), layout.getClass());
 			layoutState.setHelpLocation(layoutHelpLocation);
@@ -996,7 +985,7 @@ class FGActionManager {
 		offState.setHelpLocation(pathHelpLocation);
 
 		vertexHoverModeAction =
-			new MultiStateDockingAction<EdgeDisplayType>("Block Hover Mode", plugin.getName()) {
+			new MultiStateDockingAction<>("Block Hover Mode", plugin.getName()) {
 
 				@Override
 				public void actionStateChanged(ActionState<EdgeDisplayType> newActionState,
@@ -1065,7 +1054,7 @@ class FGActionManager {
 		offState.setHelpLocation(pathHelpLocation);
 
 		vertexFocusModeAction =
-			new MultiStateDockingAction<EdgeDisplayType>("Block Focus Mode", plugin.getName()) {
+			new MultiStateDockingAction<>("Block Focus Mode", plugin.getName()) {
 
 				@Override
 				public void actionStateChanged(ActionState<EdgeDisplayType> newActionState,
@@ -1202,10 +1191,6 @@ class FGActionManager {
 		for (FGVertex vertex : vertices) {
 			functionGraph.removeFromGroupHistory(vertex);
 		}
-	}
-
-	void setLayoutFinder(FGLayoutFinder layoutFinder) {
-		this.layoutFinder = layoutFinder;
 	}
 
 	void setEdgeFocusMode(EdgeDisplayType edgeDisplayType) {

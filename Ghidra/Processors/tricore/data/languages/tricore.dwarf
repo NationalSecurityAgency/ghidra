@@ -1,0 +1,27 @@
+<dwarf>
+	<register_mappings>
+		<register_mapping dwarf="0" ghidra="d0" auto_count="16"/> <!-- d0..d15 -->
+		<register_mapping dwarf="16" ghidra="a0" auto_count="10"/> <!-- d0.d9 -->
+		<register_mapping dwarf="26" ghidra="a10" stackpointer="true"/>
+		<register_mapping dwarf="27" ghidra="a11" auto_count="5"/> <!-- d11..d15 -->
+		<register_mapping dwarf="32" ghidra="e0"/>
+		<register_mapping dwarf="33" ghidra="e2"/>
+		<register_mapping dwarf="34" ghidra="e4"/>
+		<register_mapping dwarf="35" ghidra="e6"/>
+		<register_mapping dwarf="36" ghidra="e8"/>
+		<register_mapping dwarf="37" ghidra="e10"/>
+		<register_mapping dwarf="38" ghidra="e12"/>
+		<register_mapping dwarf="39" ghidra="e14"/>
+		<register_mapping dwarf="40" ghidra="PSW"/>
+		<register_mapping dwarf="41" ghidra="PCXI"/>
+		<register_mapping dwarf="42" ghidra="PC"/>
+		<register_mapping dwarf="43" ghidra="FCX"/>
+		<register_mapping dwarf="44" ghidra="LCX"/>
+		<register_mapping dwarf="45" ghidra="ISP"/>
+		<register_mapping dwarf="46" ghidra="ICR"/>
+		<register_mapping dwarf="47" ghidra="PIPN"/>
+		<register_mapping dwarf="48" ghidra="BIV"/>
+		<register_mapping dwarf="49" ghidra="BTV"/>
+	</register_mappings>
+	<call_frame_cfa value="4"/>
+</dwarf>

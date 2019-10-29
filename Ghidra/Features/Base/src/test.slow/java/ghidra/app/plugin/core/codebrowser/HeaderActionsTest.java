@@ -131,7 +131,7 @@ public class HeaderActionsTest extends AbstractGhidraHeadedIntegrationTest {
 
 		DockingAction headerAction = getHeaderAction("Remove All Fields");
 		FieldHeaderLocation loc = new FieldHeaderLocation(functionFormat, factorys[0], 0, 0);
-		ActionContext context = new ActionContext(provider, loc);
+		ActionContext context = createContext(provider, loc);
 		performAction(headerAction, context, false);
 		pressContinueOnResetFormatDialog("Remove All Fields?");
 
@@ -151,7 +151,7 @@ public class HeaderActionsTest extends AbstractGhidraHeadedIntegrationTest {
 
 		selectHeaderField(factories[0]);
 		FieldHeaderLocation loc = new FieldHeaderLocation(functionFormat, factories[0], 0, 0);
-		ActionContext context = new ActionContext(provider, loc);
+		ActionContext context = createContext(provider, loc);
 
 		DockingAction headerAction = getHeaderAction("Add Spacer Field");
 		performAction(headerAction, context, true);
@@ -173,7 +173,7 @@ public class HeaderActionsTest extends AbstractGhidraHeadedIntegrationTest {
 		selectHeaderField(factories[0]);
 
 		FieldHeaderLocation loc = new FieldHeaderLocation(functionFormat, factories[0], 0, 0);
-		ActionContext context = new ActionContext(provider, loc);
+		ActionContext context = createContext(provider, loc);
 
 		DockingAction headerAction = getHeaderAction("SetTextAction");
 		performAction(headerAction, context, false);
@@ -200,7 +200,7 @@ public class HeaderActionsTest extends AbstractGhidraHeadedIntegrationTest {
 		assertTrue(factories[1].isEnabled());
 
 		FieldHeaderLocation loc = new FieldHeaderLocation(functionFormat, factories[1], 0, 0);
-		ActionContext context = new ActionContext(provider, loc);
+		ActionContext context = createContext(provider, loc);
 
 		DockingAction headerAction = getHeaderAction("Disable Field");
 		performAction(headerAction, context, true);
@@ -222,7 +222,7 @@ public class HeaderActionsTest extends AbstractGhidraHeadedIntegrationTest {
 		assertTrue(factories[1] instanceof FunctionSignatureFieldFactory);
 
 		FieldHeaderLocation loc = new FieldHeaderLocation(functionFormat, factories[1], 0, 1);
-		ActionContext context = new ActionContext(provider, loc);
+		ActionContext context = createContext(provider, loc);
 
 		DockingAction headerAction = getHeaderAction("Remove Field");
 		performAction(headerAction, context, true);
@@ -242,7 +242,7 @@ public class HeaderActionsTest extends AbstractGhidraHeadedIntegrationTest {
 		functionFormat.removeAllFactories();
 
 		FieldHeaderLocation loc = new FieldHeaderLocation(functionFormat, factories[1], 0, 1);
-		ActionContext context = new ActionContext(provider, loc);
+		ActionContext context = createContext(provider, loc);
 
 		DockingAction headerAction = getHeaderAction("Add All Field");
 		performAction(headerAction, context, true);
@@ -272,8 +272,7 @@ public class HeaderActionsTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	private void enterTextIntoDialog(String input) {
-		InputDialog dialog =
-			waitForDialogComponent(null, InputDialog.class, DEFAULT_WINDOW_TIMEOUT);
+		InputDialog dialog = waitForDialogComponent(InputDialog.class);
 		assertNotNull("Never found the spacer text input dialog", dialog);
 		JTextComponent textField =
 			(JTextComponent) findComponentByName(dialog, "input.dialog.text.field.0");
@@ -291,7 +290,7 @@ public class HeaderActionsTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	private void pressContinueOnResetFormatDialog(String title) {
-		Window window = waitForWindow(title, DEFAULT_WINDOW_TIMEOUT);
+		Window window = waitForWindow(title);
 		assertNotNull("Never found the dialog: " + title, window);
 		pressButtonByText(window, "Continue");
 		waitForSwing();

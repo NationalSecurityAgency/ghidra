@@ -30,6 +30,8 @@ import ghidra.program.model.listing.*;
 import ghidra.program.util.ProgramLocation;
 import ghidra.util.exception.AssertException;
 import util.CollectionUtils;
+import utility.function.ExceptionalConsumer;
+import utility.function.ExceptionalFunction;
 
 /**
  * A convenience base class for creating tests that use the default tool and open a program.
@@ -68,6 +70,7 @@ public abstract class AbstractProgramBasedTest extends AbstractGhidraHeadedInteg
 	 * Override this method if you need to build your own program.
 	 * 
 	 * @return the program to use for this test.
+	 * @throws Exception if an exception is thrown opening the program
 	 */
 	protected Program getProgram() throws Exception {
 		return env.getProgram(getProgramName());
@@ -163,13 +166,13 @@ public abstract class AbstractProgramBasedTest extends AbstractGhidraHeadedInteg
 	 * 
 	 * @param callback the code to execute
 	 */
-	public void modifyProgram(ExceptionalCallback<Program> callback) {
+	public <E extends Exception> void modifyProgram(ExceptionalConsumer<Program, E> callback) {
 		assertNotNull("Program cannot be null", program);
 
 		boolean commit = false;
 		int tx = program.startTransaction("Test");
 		try {
-			callback.call(program);
+			callback.accept(program);
 			commit = true;
 		}
 		catch (Exception e) {
@@ -187,7 +190,7 @@ public abstract class AbstractProgramBasedTest extends AbstractGhidraHeadedInteg
 	 * @param f the function for modifying the program and creating the desired result
 	 * @return the result
 	 */
-	public <R> R createInProgram(ExceptionalFunction<Program, R> f) {
+	public <R, E extends Exception> R createInProgram(ExceptionalFunction<Program, R, E> f) {
 		assertNotNull("Program cannot be null", program);
 
 		R result = null;
@@ -204,19 +207,5 @@ public abstract class AbstractProgramBasedTest extends AbstractGhidraHeadedInteg
 			program.endTransaction(tx, commit);
 		}
 		return result;
-	}
-
-//==================================================================================================
-// Inner Classes
-//==================================================================================================
-
-	// TODO promote this functional interface (do this later; there is an outstanding branch
-	//      that has other functional interfaces with which to fraternize)
-	public interface ExceptionalCallback<T> {
-		public void call(T t) throws Exception;
-	}
-
-	public interface ExceptionalFunction<T, R> {
-		public R apply(T t) throws Exception;
 	}
 }

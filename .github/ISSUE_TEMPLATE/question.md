@@ -1,10 +1,8 @@
 ---
 name: Question
-about: Ask a question from the developers
+about: Ask the developers a question
 title: ''
 labels: question
 assignees: ''
 
 ---
-
-

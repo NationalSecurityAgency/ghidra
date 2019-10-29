@@ -16,7 +16,6 @@
 package ghidra.app.plugin.core.symboltree.actions;
 
 import javax.swing.KeyStroke;
-import javax.swing.SwingUtilities;
 import javax.swing.tree.TreePath;
 
 import docking.action.*;
@@ -26,18 +25,16 @@ import ghidra.app.plugin.core.navigation.locationreferences.LocationReferencesSe
 import ghidra.app.plugin.core.symboltree.SymbolTreeActionContext;
 import ghidra.app.plugin.core.symboltree.nodes.*;
 import ghidra.app.services.CodeViewerService;
-import ghidra.framework.options.*;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.util.ServiceListener;
-import ghidra.framework.plugintool.util.ToolConstants;
 import ghidra.program.database.symbol.FunctionSymbol;
 import ghidra.program.model.symbol.Symbol;
 import ghidra.program.util.FunctionSignatureFieldLocation;
 import ghidra.program.util.ProgramLocation;
 import ghidra.util.Msg;
+import ghidra.util.Swing;
 
-public class ShowSymbolReferencesAction extends SymbolTreeContextAction
-		implements OptionsChangeListener {
+public class ShowSymbolReferencesAction extends SymbolTreeContextAction {
 
 	private PluginTool tool;
 
@@ -53,40 +50,29 @@ public class ShowSymbolReferencesAction extends SymbolTreeContextAction
 		public void serviceAdded(Class<?> interfaceClass, Object service) {
 			if (interfaceClass.equals(LocationReferencesService.class)) {
 				setHelpLocation(((LocationReferencesService) service).getHelpLocation());
-				SwingUtilities.invokeLater(() -> tool.removeServiceListener(this));
+				Swing.runLater(() -> tool.removeServiceListener(this));
 			}
 		}
 	};
 
 	public ShowSymbolReferencesAction(PluginTool tool, String owner) {
-		super(AbstractFindReferencesDataTypeAction.NAME, owner);
+		super(AbstractFindReferencesDataTypeAction.NAME, owner, KeyBindingType.SHARED);
 		this.tool = tool;
 
 		setPopupMenuData(new MenuData(new String[] { "Show References to" }, "0Middle"));
 
 		installHelpLocation();
 
-		//
-		// Shared keybinding setup
-		//
 		KeyStroke defaultkeyStroke = AbstractFindReferencesDataTypeAction.DEFAULT_KEY_STROKE;
-		DockingAction action = new DummyKeyBindingsOptionsAction(
-			AbstractFindReferencesDataTypeAction.NAME, defaultkeyStroke);
-		tool.addAction(action);
+		initKeyStroke(defaultkeyStroke);
+	}
 
-		// setup options to know when the dummy key binding is changed
-		ToolOptions options = tool.getOptions(ToolConstants.KEY_BINDINGS);
-		KeyStroke optionsKeyStroke = options.getKeyStroke(action.getFullName(), defaultkeyStroke);
-
-		if (!defaultkeyStroke.equals(optionsKeyStroke)) {
-			// user-defined keystroke
-			setUnvalidatedKeyBindingData(new KeyBindingData(optionsKeyStroke));
-		}
-		else {
-			setKeyBindingData(new KeyBindingData(optionsKeyStroke));
+	private void initKeyStroke(KeyStroke keyStroke) {
+		if (keyStroke == null) {
+			return;
 		}
 
-		options.addOptionsChangeListener(this);
+		setKeyBindingData(new KeyBindingData(keyStroke));
 	}
 
 	private void installHelpLocation() {
@@ -100,15 +86,6 @@ public class ShowSymbolReferencesAction extends SymbolTreeContextAction
 
 		// this action is really just a pass through for the service
 		setHelpLocation(locationReferencesService.getHelpLocation());
-	}
-
-	@Override
-	public void optionsChanged(ToolOptions options, String name, Object oldValue, Object newValue) {
-		KeyStroke keyStroke = (KeyStroke) newValue;
-		String actionName = getName();
-		if (name.startsWith(actionName)) {
-			setUnvalidatedKeyBindingData(new KeyBindingData(keyStroke));
-		}
 	}
 
 	@Override

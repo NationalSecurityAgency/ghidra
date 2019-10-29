@@ -22,8 +22,8 @@ import org.junit.*;
 import ghidra.app.plugin.core.datamgr.DataTypeManagerPlugin;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.database.ProgramDB;
-import ghidra.program.model.TestDoubleFunctionSignature;
 import ghidra.program.model.FunctionTestDouble;
+import ghidra.program.model.TestDoubleFunctionSignature;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
@@ -51,7 +51,7 @@ public class EditFunctionSignatureDialogTest extends AbstractGhidraHeadedIntegra
 	}
 
 	@Test
-	public void testParseSignature_Good() {
+	public void testParseSignature_Good() throws Exception {
 
 		String signature = "void bob(int a)";
 		Function f = function("bob", signature);
@@ -62,7 +62,7 @@ public class EditFunctionSignatureDialogTest extends AbstractGhidraHeadedIntegra
 	}
 
 	@Test
-	public void testParseSignature_Bad_AtSignInName() {
+	public void testParseSignature_Bad_AtSignInName() throws Exception {
 
 		String signature = "void bob@12(int a)";
 		Function f = function("bob@12", signature);
@@ -73,7 +73,7 @@ public class EditFunctionSignatureDialogTest extends AbstractGhidraHeadedIntegra
 	}
 
 	@Test
-	public void testParseSignature_Bad_ExtraParensAtEnd() {
+	public void testParseSignature_Bad_ExtraParensAtEnd() throws Exception {
 
 		String signature = "void bob(int a)()";
 		Function f = function("bob", signature);
@@ -86,7 +86,7 @@ public class EditFunctionSignatureDialogTest extends AbstractGhidraHeadedIntegra
 	}
 
 	@Test
-	public void testParseSignature_Bad_MissingParen() {
+	public void testParseSignature_Bad_MissingParen() throws Exception {
 
 		String signature = "void bob(int a";
 		Function f = function("bob", signature);
@@ -96,7 +96,7 @@ public class EditFunctionSignatureDialogTest extends AbstractGhidraHeadedIntegra
 	}
 
 	@Test
-	public void testParseSignature_Bad_MissingReturnType() {
+	public void testParseSignature_Bad_MissingReturnType() throws Exception {
 
 		String signature = "bob(int a)";
 		Function f = function("bob", signature);

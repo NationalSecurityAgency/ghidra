@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<language_definitions>
+  <language processor="SuperH"
+            endian="big"
+            size="32"
+            variant="SH-2A"
+            version="1.0"
+            slafile="sh-2a.sla"
+            processorspec="superh.pspec"
+            id="SuperH:BE:32:SH-2A">
+    <description>SuperH SH-2A processor 32-bit big-endian</description>
+    <compiler name="default" spec="superh.cspec" id="default"/>
+  </language>
+  <language processor="SuperH"
+            endian="big"
+            size="32"
+            variant="SH-2"
+            version="1.0"
+            slafile="sh-2.sla"
+            processorspec="superh.pspec"
+            id="SuperH:BE:32:SH-2">
+    <description>SuperH SH-2 processor 32-bit big-endian</description>
+    <compiler name="default" spec="superh.cspec" id="default"/>
+  </language>
+  <language processor="SuperH"
+            endian="big"
+            size="32"
+            variant="SH-1"
+            version="1.0"
+            slafile="sh-1.sla"
+            processorspec="superh.pspec"
+            id="SuperH:BE:32:SH-1">
+    <description>SuperH SH-1 processor 32-bit big-endian</description>
+    <compiler name="default" spec="superh.cspec" id="default"/>
+  </language>
+</language_definitions>

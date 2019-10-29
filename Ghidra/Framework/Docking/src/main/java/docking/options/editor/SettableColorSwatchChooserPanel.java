@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +15,6 @@
  */
 package docking.options.editor;
 
-import ghidra.util.layout.VerticalLayout;
-
 import java.awt.*;
 import java.awt.event.*;
 import java.io.Serializable;
@@ -26,6 +23,10 @@ import java.util.List;
 import javax.swing.*;
 import javax.swing.border.*;
 import javax.swing.colorchooser.AbstractColorChooserPanel;
+
+import docking.widgets.label.GHtmlLabel;
+import docking.widgets.label.GLabel;
+import ghidra.util.layout.VerticalLayout;
 
 public class SettableColorSwatchChooserPanel extends AbstractColorChooserPanel {
 	SwatchPanel swatchPanel;
@@ -129,7 +130,7 @@ public class SettableColorSwatchChooserPanel extends AbstractColorChooserPanel {
 		recentSwatchPanel.addMouseListener(recentSwatchListener);
 		recentSwatchPanel.setBorder(border);
 		JPanel recentLabelHolder = new JPanel(new BorderLayout());
-		JLabel l = new JLabel(recentStr);
+		JLabel l = new GHtmlLabel(recentStr);
 		l.setLabelFor(recentSwatchPanel);
 		recentLabelHolder.add(l, BorderLayout.NORTH);
 		gbc.weighty = 0.0;
@@ -144,7 +145,7 @@ public class SettableColorSwatchChooserPanel extends AbstractColorChooserPanel {
 		historySwatchPanel.addMouseListener(historySwatchListener);
 		historySwatchPanel.setBorder(border);
 		JPanel historyLabelHolder = new JPanel(new BorderLayout());
-		JLabel historyLabel = new JLabel("History:");
+		JLabel historyLabel = new GLabel("History:");
 		historyLabel.setLabelFor(historySwatchPanel);
 		historyLabelHolder.add(historyLabel, BorderLayout.NORTH);
 		gbc.weighty = 0.0;
@@ -251,10 +252,10 @@ class SwatchPanel extends JPanel {
 				int y = row * (swatchSize.height + gap.height);
 				g.fillRect(x, y, swatchSize.width, swatchSize.height);
 				g.setColor(Color.black);
-				g.drawLine(x + swatchSize.width - 1, y, x + swatchSize.width - 1, y +
-					swatchSize.height - 1);
-				g.drawLine(x, y + swatchSize.height - 1, x + swatchSize.width - 1, y +
-					swatchSize.height - 1);
+				g.drawLine(x + swatchSize.width - 1, y, x + swatchSize.width - 1,
+					y + swatchSize.height - 1);
+				g.drawLine(x, y + swatchSize.height - 1, x + swatchSize.width - 1,
+					y + swatchSize.height - 1);
 			}
 		}
 	}

@@ -36,8 +36,7 @@ import ghidra.framework.cmd.CompoundBackgroundCommand;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.program.model.address.*;
-import ghidra.program.model.data.DataType;
-import ghidra.program.model.data.DataTypeManager;
+import ghidra.program.model.data.*;
 import ghidra.program.model.data.Enum;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.scalar.Scalar;
@@ -163,6 +162,10 @@ public class EquatePlugin extends Plugin {
 		if (cu instanceof Data) {
 			Data data = (Data) cu;
 			if (!data.isDefined()) {
+				return false;
+			}
+			DataType dataType = data.getBaseDataType();
+			if (!(dataType instanceof AbstractIntegerDataType)) {
 				return false;
 			}
 		}
@@ -802,7 +805,7 @@ public class EquatePlugin extends Plugin {
 
 			@Override
 			protected boolean isEnabledForContext(ListingActionContext context) {
-				return context.hasSelection() || isEquatePermitted(context);
+				return context.hasSelection();
 			}
 		};
 		applyEnumAction.setHelpLocation(new HelpLocation("EquatePlugin", "Apply_Enum"));

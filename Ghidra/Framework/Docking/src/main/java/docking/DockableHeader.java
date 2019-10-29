@@ -19,24 +19,29 @@ import java.awt.*;
 import java.awt.dnd.*;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseListener;
-import java.awt.image.BufferedImage;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
+import java.util.List;
+import java.util.stream.Collectors;
 
-import javax.swing.JFrame;
-import javax.swing.SwingUtilities;
+import javax.swing.*;
 
 import org.jdesktop.animation.timing.Animator;
+import org.jdesktop.animation.timing.Animator.RepeatBehavior;
+import org.jdesktop.animation.timing.TimingTargetAdapter;
+import org.jdesktop.animation.timing.interpolation.PropertySetter;
 
 import docking.help.Help;
 import docking.help.HelpService;
 import docking.util.AnimationUtils;
 import generic.util.WindowUtilities;
+import generic.util.image.ImageUtils;
 import ghidra.framework.OperatingSystem;
 import ghidra.framework.Platform;
 import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
 import ghidra.util.bean.GGlassPane;
+import ghidra.util.bean.GGlassPanePainter;
+import resources.ResourceManager;
 
 /**
  * Component for providing component titles and toolbar. Also provides Drag
@@ -46,54 +51,18 @@ public class DockableHeader extends GenericHeader
 		implements DragGestureListener, DragSourceListener {
 
 	private DockableComponent dockComp;
-	private static Cursor leftCursor;
-	private static Cursor rightCursor;
-	private static Cursor topCursor;
-	private static Cursor bottomCursor;
-	private static Cursor stackCursor;
-	private static Cursor newWindowCursor;
-	private static Cursor noDropCursor = DragSource.DefaultMoveNoDrop;
-
-	static {
-		Toolkit tk = Toolkit.getDefaultToolkit();
-
-		BufferedImage image = new BufferedImage(32, 32, BufferedImage.TYPE_INT_ARGB);
-		drawLeftArrow(image);
-		leftCursor = tk.createCustomCursor(image, new Point(0, 6), "LEFT");
-
-		image = new BufferedImage(32, 32, BufferedImage.TYPE_INT_ARGB);
-		drawRightArrow(image);
-		rightCursor = tk.createCustomCursor(image, new Point(31, 6), "RIGHT");
-
-		image = new BufferedImage(32, 32, BufferedImage.TYPE_INT_ARGB);
-		drawTopArrow(image);
-		topCursor = tk.createCustomCursor(image, new Point(6, 0), "TOP");
-
-		image = new BufferedImage(32, 32, BufferedImage.TYPE_INT_ARGB);
-		drawBottomArrow(image);
-		bottomCursor = tk.createCustomCursor(image, new Point(6, 31), "BOTTOM");
-
-		image = new BufferedImage(32, 32, BufferedImage.TYPE_INT_ARGB);
-		drawStack(image);
-		stackCursor = tk.createCustomCursor(image, new Point(8, 8), "STACK");
-
-		image = new BufferedImage(32, 32, BufferedImage.TYPE_INT_ARGB);
-		drawNewWindow(image);
-		newWindowCursor = tk.createCustomCursor(image, new Point(0, 0), "NEW_WINDOW");
-	}
 
 	private DragCursorManager dragCursorManager = createDragCursorManager();
 	private DragSource dragSource = null;
 	private boolean isDocking;
 
 	private Animator focusAnimator;
-	private int focusToggle = -1;
 
 	/**
 	 * Constructs a new DockableHeader for the given dockableComponent.
 	 * 
-	 * @param dockableComp
-	 *            the dockableComponent that this header is for.
+	 * @param dockableComp the dockableComponent that this header is for.
+	 * @param isDocking true means this widget can be dragged and docked by the user
 	 */
 	DockableHeader(DockableComponent dockableComp, boolean isDocking) {
 		this.dockComp = dockableComp;
@@ -173,17 +142,63 @@ public class DockableHeader extends GenericHeader
 	}
 
 	protected Animator createEmphasizingAnimator(JFrame parentFrame) {
-		focusToggle += 1;
-		switch (focusToggle) {
+
+		double random = Math.random();
+		int choices = 7;
+		int value = (int) (choices * random);
+
+		switch (value) {
 			case 0:
 				return AnimationUtils.shakeComponent(component);
 			case 1:
 				return AnimationUtils.rotateComponent(component);
 			case 2:
-				return raiseComponent(parentFrame);
-			default:
-				focusToggle = -1;
 				return AnimationUtils.pulseComponent(component);
+			case 3:
+				return AnimationUtils.showTheDragonOverComponent(component);
+			case 4:
+				return AnimationUtils.focusComponent(component);
+			case 5:
+				return emphasizeDockableComponent();
+			default:
+				return raiseComponent(parentFrame);
+		}
+	}
+
+	private Animator emphasizeDockableComponent() {
+
+		ComponentPlaceholder placeholder = dockComp.getComponentWindowingPlaceholder();
+		ComponentNode node = placeholder.getNode();
+		WindowNode windowNode = node.getTopLevelNode();
+		Set<ComponentNode> componentNodes = new HashSet<>();
+		getComponents(windowNode, componentNodes);
+
+		//@formatter:off
+		Set<Component> components = componentNodes.stream()
+			  .map(cn -> cn.getComponent())
+			  .filter(c -> c != null)
+			  .filter(c -> !SwingUtilities.isDescendingFrom(component, c))
+			  .collect(Collectors.toSet())
+			  ;
+		//@formatter:on
+
+		components.remove(component);
+
+		EmphasizeDockableComponentAnimationDriver driver =
+			new EmphasizeDockableComponentAnimationDriver(component, components);
+		return driver.animator;
+	}
+
+	private void getComponents(Node node, Set<ComponentNode> results) {
+
+		List<Node> children = node.getChildren();
+		for (Node child : children) {
+			if (child instanceof ComponentNode) {
+				results.add((ComponentNode) child);
+			}
+			else {
+				getComponents(child, results);
+			}
 		}
 	}
 
@@ -226,15 +241,15 @@ public class DockableHeader extends GenericHeader
 		if (!isDocking) {
 			return;
 		}
-		// check input event: if any button other than MB1 is pressed,
-		// don't attempt to process the drag and drop event.
+
+		// if any button other than MB1 is pressed, don't attempt to process the drag and drop event
 		InputEvent ie = event.getTriggerEvent();
-		int modifiers = ie.getModifiers();
-		if ((modifiers & InputEvent.BUTTON2_MASK) != 0 ||
-			(modifiers & InputEvent.BUTTON3_MASK) != 0) {
+		int modifiers = ie.getModifiersEx();
+		if ((modifiers & InputEvent.BUTTON2_DOWN_MASK) != 0 ||
+			(modifiers & InputEvent.BUTTON3_DOWN_MASK) != 0) {
 			return;
 		}
-		DockableComponent.DROP_CODE = DockableComponent.DropCode.WINDOW;
+		DockableComponent.DROP_CODE = DropCode.WINDOW;
 		DockableComponent.DROP_CODE_SET = true;
 		DockableComponent.SOURCE_INFO = dockComp.getComponentWindowingPlaceholder();
 
@@ -251,7 +266,7 @@ public class DockableHeader extends GenericHeader
 
 		ComponentPlaceholder info = dockComp.getComponentWindowingPlaceholder();
 		DockingWindowManager winMgr = info.getNode().winMgr;
-		if (DockableComponent.DROP_CODE == DockableComponent.DropCode.INVALID) {
+		if (DockableComponent.DROP_CODE == DropCode.INVALID) {
 			return;
 		}
 
@@ -261,28 +276,12 @@ public class DockableHeader extends GenericHeader
 //		    return;
 //		}
 //		else
-		if (DockableComponent.DROP_CODE == DockableComponent.DropCode.WINDOW) {
+		if (DockableComponent.DROP_CODE == DropCode.WINDOW) {
 			winMgr.movePlaceholder(info, event.getLocation());
 		}
 		else {
-			winMgr.movePlaceholder(info, DockableComponent.TARGET_INFO, getWindowPosition());
-		}
-	}
-
-	private WindowPosition getWindowPosition() {
-		switch (DockableComponent.DROP_CODE) {
-			case BOTTOM:
-				return WindowPosition.BOTTOM;
-			case LEFT:
-				return WindowPosition.LEFT;
-			case RIGHT:
-				return WindowPosition.RIGHT;
-			case STACK:
-				return WindowPosition.STACK;
-			case TOP:
-				return WindowPosition.TOP;
-			default:
-				return WindowPosition.STACK;
+			winMgr.movePlaceholder(info, DockableComponent.TARGET_INFO,
+				DockableComponent.DROP_CODE.getWindowPosition());
 		}
 	}
 
@@ -313,34 +312,7 @@ public class DockableHeader extends GenericHeader
 //		}
 
 		DockableComponent.DROP_CODE_SET = false;
-		Cursor c = noDropCursor;
-		switch (DockableComponent.DROP_CODE) {
-			case LEFT:
-				c = leftCursor;
-				break;
-			case RIGHT:
-				c = rightCursor;
-				break;
-			case TOP:
-				c = topCursor;
-				break;
-			case BOTTOM:
-				c = bottomCursor;
-				break;
-			case STACK:
-				c = stackCursor;
-				break;
-			case ROOT:
-				c = stackCursor;
-				break;
-			case WINDOW:
-				c = newWindowCursor;
-				break;
-			case INVALID:
-				break;
-
-		}
-
+		Cursor c = DockableComponent.DROP_CODE.getCursor();
 		dragCursorManager.setCursor(event, c);
 	}
 
@@ -466,129 +438,196 @@ public class DockableHeader extends GenericHeader
 		}
 	}
 
-//==================================================================================================
-// Static Methods
-//==================================================================================================
+	public static class EmphasizeDockableComponentAnimationDriver {
 
-	/**
-	 * Draws the left arrow cursor image.
-	 * 
-	 * @param image the image object to draw into.
-	 */
-	private static void drawLeftArrow(BufferedImage image) {
-		int v = 0xff000000;
-		int y = 6;
-		for (int i = 0; i < 6; i++) {
-			for (int j = 0; j < 2 * i + 1; j++) {
-				image.setRGB(i, y - i + j, v);
+		private Animator animator;
+		private GGlassPane glassPane;
+		private EmphasizeDockableComponentPainter rotatePainter;
+
+		EmphasizeDockableComponentAnimationDriver(Component component, Set<Component> others) {
+
+			glassPane = AnimationUtils.getGlassPane(component);
+			rotatePainter = new EmphasizeDockableComponentPainter(component, others);
+
+			double start = 0;
+			double max = 1;
+			int duration = 1000;
+			animator = PropertySetter.createAnimator(duration, this, "percentComplete", start, max);
+
+			animator.setAcceleration(0.2f);
+			animator.setDeceleration(0.8f);
+
+			animator.setRepeatCount(2);
+			animator.setRepeatBehavior(RepeatBehavior.REVERSE);
+
+			animator.addTarget(new TimingTargetAdapter() {
+				@Override
+				public void end() {
+					done();
+				}
+			});
+
+			glassPane.addPainter(rotatePainter);
+
+			animator.start();
+		}
+
+		public void setPercentComplete(double percentComplete) {
+			rotatePainter.setPercentComplete(percentComplete);
+			glassPane.repaint();
+		}
+
+		void done() {
+			glassPane.repaint();
+			glassPane.removePainter(rotatePainter);
+		}
+	}
+
+	private static class EmphasizeDockableComponentPainter implements GGlassPanePainter {
+
+		private Set<ComponentPaintInfo> otherComponentInfos = new HashSet<>();
+		private Image image;
+
+		private Component component;
+		private Rectangle cBounds;
+		private double percentComplete = 0.0;
+
+		EmphasizeDockableComponentPainter(Component component, Set<Component> otherComponents) {
+			this.component = component;
+			this.image = ImageUtils.createImage(component);
+
+			for (Component otherComponent : otherComponents) {
+				ComponentPaintInfo info = new ComponentPaintInfo(otherComponent);
+				otherComponentInfos.add(info);
 			}
 		}
-		for (int i = 6; i < 12; i++) {
-			for (int j = 0; j < 3; j++) {
-				image.setRGB(i, y - 1 + j, v);
+
+		private class ComponentPaintInfo {
+
+			private Component myComponent;
+			private Image myImage;
+
+			ComponentPaintInfo(Component component) {
+				this.myComponent = component;
+				this.myImage = ImageUtils.createImage(component);
+			}
+
+			Image getImage() {
+				return myImage;
+			}
+
+			Rectangle getRelativeBounds(Component other) {
+				Rectangle r = myComponent.getBounds();
+				return SwingUtilities.convertRectangle(myComponent.getParent(), r, other);
+			}
+		}
+
+		void setPercentComplete(double percent) {
+			percentComplete = percent;
+		}
+
+		@Override
+		public void paint(GGlassPane glassPane, Graphics g) {
+
+			Graphics2D g2d = (Graphics2D) g;
+			g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
+				RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+
+			Color background = new Color(218, 232, 250);
+			g.setColor(background);
+
+			Rectangle othersBounds = null;
+			for (ComponentPaintInfo info : otherComponentInfos) {
+
+				Rectangle b = info.getRelativeBounds(glassPane);
+				if (othersBounds == null) {
+					othersBounds = b;
+				}
+				else {
+					othersBounds.add(b);
+				}
+			}
+
+			if (othersBounds == null) {
+				// No other components in this window.  In this case, use the bounds of the 
+				// active component.  This has the effect of showing the image behind the 
+				// active component.
+				Rectangle componentBounds = component.getBounds();
+				componentBounds = SwingUtilities.convertRectangle(component.getParent(),
+					componentBounds, glassPane);
+				othersBounds = componentBounds;
+
+				othersBounds = new Rectangle();
+			}
+
+			g2d.fillRect(othersBounds.x, othersBounds.y, othersBounds.width, othersBounds.height);
+
+			ImageIcon ghidra = ResourceManager.loadImage("images/GhidraIcon256.png");
+			Image ghidraImage = ghidra.getImage();
+
+			double scale = percentComplete * 7;
+			int gw = ghidraImage.getWidth(null);
+			int gh = ghidraImage.getHeight(null);
+			int w = (int) (gw * scale);
+			int h = (int) (gh * scale);
+
+			Rectangle gpBounds = glassPane.getBounds();
+			double cx = gpBounds.getCenterX();
+			double cy = gpBounds.getCenterY();
+			int offsetX = (int) (cx - (w >> 1));
+			int offsetY = (int) (cy - (h >> 1));
+
+			Shape originalClip = g2d.getClip();
+			if (!othersBounds.isEmpty()) {
+				// restrict the icon to the 'others' area; otherwise, place it behind the provider
+				g2d.setClip(othersBounds);
+			}
+			g2d.drawImage(ghidraImage, offsetX, offsetY, w, h, null);
+			g2d.setClip(originalClip);
+
+			paintOthers(glassPane, (Graphics2D) g, background);
+
+			Rectangle b = component.getBounds();
+			Point p = new Point(b.getLocation());
+			p = SwingUtilities.convertPoint(component.getParent(), p, glassPane);
+
+			g2d.setRenderingHints(new RenderingHints(null));
+			g2d.drawImage(image, p.x, p.y, b.width, b.height, null);
+		}
+
+		private void paintOthers(GGlassPane glassPane, Graphics2D g2d, Color background) {
+
+			if (cBounds == null) {
+				cBounds = component.getBounds();
+				cBounds =
+					SwingUtilities.convertRectangle(component.getParent(), cBounds, glassPane);
+			}
+
+			double destinationX = cBounds.getCenterX();
+			double destinationY = cBounds.getCenterY();
+
+			g2d.setColor(background);
+			for (ComponentPaintInfo info : otherComponentInfos) {
+
+				Rectangle b = info.getRelativeBounds(glassPane);
+				double scale = 1 - percentComplete;
+				int w = (int) (b.width * scale);
+				int h = (int) (b.height * scale);
+
+				int offsetX = b.x - ((w - b.width) >> 1);
+				int offsetY = b.y - ((h - b.height) >> 1);
+
+				double deltaX = destinationX - offsetX;
+				double deltaY = destinationY - offsetY;
+
+				double moveX = percentComplete * deltaX;
+				double moveY = percentComplete * deltaY;
+				offsetX += moveX;
+				offsetY += moveY;
+
+				g2d.drawImage(info.getImage(), offsetX, offsetY, w, h, null);
 			}
 		}
 	}
 
-	/**
-	 * Draws the right arrow cursor image.
-	 * 
-	 * @param image the image object to draw into.
-	 */
-	private static void drawRightArrow(BufferedImage image) {
-		int v = 0xff000000;
-		int y = 6;
-		for (int i = 0; i < 6; i++) {
-			for (int j = 0; j < 2 * i + 1; j++) {
-				image.setRGB(31 - i, y - i + j, v);
-			}
-		}
-		for (int i = 6; i < 12; i++) {
-			for (int j = 0; j < 3; j++) {
-				image.setRGB(31 - i, y - 1 + j, v);
-			}
-		}
-	}
-
-	/**
-	 * Draws the up arrow cursor image.
-	 * 
-	 * @param image the image object to draw into.
-	 */
-	private static void drawTopArrow(BufferedImage image) {
-		int v = 0xff000000;
-		int x = 6;
-		for (int i = 0; i < 6; i++) {
-			for (int j = 0; j < 2 * i + 1; j++) {
-				image.setRGB(x - i + j, i, v);
-			}
-		}
-		for (int i = 6; i < 12; i++) {
-			for (int j = 0; j < 3; j++) {
-				image.setRGB(x - 1 + j, i, v);
-			}
-		}
-	}
-
-	/**
-	 * Draws the down arrow cursor image.
-	 * 
-	 * @param image the image object to draw into.
-	 */
-	private static void drawBottomArrow(BufferedImage image) {
-		int v = 0xff000000;
-		int x = 6;
-		for (int i = 0; i < 6; i++) {
-			for (int j = 0; j < 2 * i + 1; j++) {
-				image.setRGB(x - i + j, 31 - i, v);
-			}
-		}
-		for (int i = 6; i < 12; i++) {
-			for (int j = 0; j < 3; j++) {
-				image.setRGB(x - 1 + j, 31 - i, v);
-			}
-		}
-	}
-
-	/**
-	 * Draws the stack cursor image.
-	 * 
-	 * @param image the image object to draw into.
-	 */
-	private static void drawStack(BufferedImage image) {
-		int v = 0xff000000;
-		for (int i = 0; i < 3; i++) {
-			int x = i * 3;
-			int y = 6 - i * 3;
-			for (int j = 0; j < 10; j++) {
-				image.setRGB(x, y + j, v);
-				image.setRGB(x + 10, y + j, v);
-				image.setRGB(x + j, y, v);
-				image.setRGB(x + j, y + 10, v);
-			}
-
-		}
-	}
-
-	/**
-	 * Draws the "new window" cursor image.
-	 * 
-	 * @param image the image object to draw into.
-	 */
-	private static void drawNewWindow(BufferedImage image) {
-		int v = 0xff000000;
-		for (int i = 0; i < 5; i++) {
-			for (int j = 0; j < 14; j++) {
-				image.setRGB(j, i, 0xff0000ff);
-			}
-		}
-		for (int i = 0; i < 14; i++) {
-			image.setRGB(i, 0, v);
-			image.setRGB(i, 10, v);
-		}
-		for (int i = 0; i < 10; i++) {
-			image.setRGB(0, i, v);
-			image.setRGB(14, i, v);
-		}
-	}
 }

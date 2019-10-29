@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +25,7 @@ import javax.swing.tree.TreeSelectionModel;
 
 public class JTreeMouseListenerDelegate extends MouseAdapter {
 
-	private final Set<MouseListener> listeners = new CopyOnWriteArraySet<MouseListener>();
+	private final Set<MouseListener> listeners = new CopyOnWriteArraySet<>();
 	private final JTree tree;
 
 	private boolean consumedPressed;
@@ -87,11 +86,21 @@ public class JTreeMouseListenerDelegate extends MouseAdapter {
 		if (isPotentialDragSelection(e)) {
 			e.consume();
 			consumedPressed = true;
+
+			// ensure the tree has focus in this case, since we consumed the event, which can
+			// prevent the normal focus updating done by Swing
+			fixFocus();
 		}
 		else {
 			consumedPressed = false;
 		}
 		fireMousePressed(e);
+	}
+
+	private void fixFocus() {
+		if (!tree.hasFocus()) {
+			tree.requestFocus();
+		}
 	}
 
 	@Override

@@ -39,9 +39,6 @@ public class SelectionAction extends SymbolTreeContextAction {
 
 	@Override
 	protected boolean isEnabledForContext(SymbolTreeActionContext context) {
-//		if (context.getSymbolCount() == 0) {
-//			return false;
-//		}
 		for (Symbol s : context.getSymbols()) {
 			if (!s.isExternal()) {
 				return true;

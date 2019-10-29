@@ -22,6 +22,9 @@ import java.awt.event.ItemListener;
 import javax.swing.*;
 import javax.swing.event.ChangeListener;
 
+import docking.widgets.button.GRadioButton;
+import docking.widgets.label.GDLabel;
+import docking.widgets.label.GIconLabel;
 import ghidra.app.merge.MergeConstants;
 import ghidra.program.model.listing.Program;
 import resources.ResourceManager;
@@ -58,17 +61,15 @@ class NameConflictsPanel extends JPanel {
 			text = "Use name '" + latestName + "' (" + MergeConstants.LATEST_TITLE + ")";
 		}
 		else {
-			text =
-				"Use '" + latestName + "' (" + MergeConstants.LATEST_TITLE + ") & lose '" + myName +
-					"' (" + MergeConstants.MY_TITLE + ")";
+			text = "Use '" + latestName + "' (" + MergeConstants.LATEST_TITLE + ") & lose '" +
+				myName + "' (" + MergeConstants.MY_TITLE + ")";
 		}
 		keepOtherRB.setText(text);
 
 		String myText;
 		if (myName.equals(latestName)) {
-			myText =
-				"Add '" + myName + "' (" + MergeConstants.MY_TITLE + ") as '" +
-					ProgramTreeMergeManager.getUniqueTreeName(resultProgram, myName) + "'";
+			myText = "Add '" + myName + "' (" + MergeConstants.MY_TITLE + ") as '" +
+				ProgramTreeMergeManager.getUniqueTreeName(resultProgram, myName) + "'";
 		}
 		else {
 			myText = "Add tree '" + myName + "' (" + MergeConstants.MY_TITLE + ")";
@@ -82,15 +83,13 @@ class NameConflictsPanel extends JPanel {
 		}
 		else {
 			if (origName.equals(latestName)) {
-				origText =
-					"Restore '" + origName + "' (" + MergeConstants.ORIGINAL_TITLE + ") as '" +
-						ProgramTreeMergeManager.getUniqueTreeName(resultProgram, origName) + "'" +
-						" & lose '" + myName + "' (" + MergeConstants.MY_TITLE + ")";
+				origText = "Restore '" + origName + "' (" + MergeConstants.ORIGINAL_TITLE +
+					") as '" + ProgramTreeMergeManager.getUniqueTreeName(resultProgram, origName) +
+					"'" + " & lose '" + myName + "' (" + MergeConstants.MY_TITLE + ")";
 			}
 			else {
-				origText =
-					"Restore '" + origName + "' (" + MergeConstants.ORIGINAL_TITLE + ") & lose '" +
-						myName + "' (" + MergeConstants.MY_TITLE + ")";
+				origText = "Restore '" + origName + "' (" + MergeConstants.ORIGINAL_TITLE +
+					") & lose '" + myName + "' (" + MergeConstants.MY_TITLE + ")";
 			}
 		}
 		originalRB.setText(origText);
@@ -129,16 +128,16 @@ class NameConflictsPanel extends JPanel {
 		JPanel iconPanel = new JPanel();
 		iconPanel.setLayout(new BoxLayout(iconPanel, BoxLayout.X_AXIS));
 
-		conflictsLabel = new JLabel("'My' name already exists in Latest Version");
+		conflictsLabel = new GDLabel("'My' name already exists in Latest Version");
 		ImageIcon icon = ResourceManager.loadImage("images/information.png");
-		iconPanel.add(new JLabel(icon));
+		iconPanel.add(new GIconLabel(icon));
 		iconPanel.add(Box.createHorizontalStrut(5));
 		iconPanel.add(conflictsLabel);
 		iconPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 10, 0));
 
-		keepOtherRB = new JRadioButton("Keep 'Other' Name");
-		addOrRenameRB = new JRadioButton("Rename 'My' name to My.username");
-		originalRB = new JRadioButton("Use 'Original' name");
+		keepOtherRB = new GRadioButton("Keep 'Other' Name");
+		addOrRenameRB = new GRadioButton("Rename 'My' name to My.username");
+		originalRB = new GRadioButton("Use 'Original' name");
 
 		keepOtherRB.setName(ProgramTreeMergePanel.KEEP_OTHER_BUTTON_NAME);
 		addOrRenameRB.setName(ProgramTreeMergePanel.RENAME_PRIVATE_BUTTON_NAME);

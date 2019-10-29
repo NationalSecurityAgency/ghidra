@@ -27,7 +27,7 @@ public class FunctionParameterFieldLocation extends FunctionSignatureFieldLocati
 	/**
 	 * Construct a new FunctionParameterFieldLocation object.
 	 * 
-	 * @param the program of the location
+	 * @param program the program of the location
 	 * @param locationAddr the address of the listing location (i.e., referent code unit)
 	 * @param functionAddr the function address
 	 * @param charOffset the position within the function signature string for this location.
@@ -38,7 +38,10 @@ public class FunctionParameterFieldLocation extends FunctionSignatureFieldLocati
 			Address functionAddr, int charOffset, String signature, Parameter parameter) {
 		super(program, locationAddr, functionAddr, charOffset, signature);
 		this.parameter = parameter;
-		this.ordinal = parameter.getOrdinal();
+
+		// note: the parameter can be null if it is deleted in the background while this
+		//       location is being created
+		this.ordinal = parameter == null ? -1 : parameter.getOrdinal();
 	}
 
 	/**
@@ -51,7 +54,7 @@ public class FunctionParameterFieldLocation extends FunctionSignatureFieldLocati
 	/**
 	 * Returns the parameter associated with this location.  This value can be null if the 
 	 * parameters are deleted from the function associated with the address of the parameter.
-	 * @return
+	 * @return the parameter
 	 */
 	public Parameter getParameter() {
 		return parameter;

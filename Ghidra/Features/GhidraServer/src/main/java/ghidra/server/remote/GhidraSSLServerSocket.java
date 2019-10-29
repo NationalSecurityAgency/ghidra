@@ -16,10 +16,8 @@
 package ghidra.server.remote;
 
 import java.io.IOException;
-import java.net.ServerSocket;
-import java.net.Socket;
+import java.net.*;
 import java.security.NoSuchAlgorithmException;
-import java.security.Principal;
 
 import javax.net.ssl.*;
 
@@ -28,17 +26,6 @@ import javax.net.ssl.*;
  * for SSL server sockets used with Ghidra Server RMI connection.
  */
 public class GhidraSSLServerSocket extends ServerSocket {
-
-	private static ThreadLocal<Principal> pricipalContext = new ThreadLocal<Principal>();
-
-	/**
-	 * Get the peer principal corresponding to the RMI client connection established
-	 * with the current thread.
-	 * @return RMI client peer principal
-	 */
-	public static Principal getThreadClientPrincipal() {
-		return pricipalContext.get();
-	}
 
 	private final SSLSocketFactory sslSocketFactory;
 	private final String[] enabledCipherSuites;
@@ -53,9 +40,9 @@ public class GhidraSSLServerSocket extends ServerSocket {
 	 * @param needClientAuth if true client authentication is required
 	 * @throws IOException
 	 */
-	GhidraSSLServerSocket(int port, String[] enabledCipherSuites, String[] enabledProtocols, boolean needClientAuth)
-			throws IOException {
-		super(port);
+	GhidraSSLServerSocket(int port, InetAddress bindAddress, String[] enabledCipherSuites,
+			String[] enabledProtocols, boolean needClientAuth) throws IOException {
+		super(port, 0, bindAddress);
 		this.enabledCipherSuites = enabledCipherSuites;
 		this.enabledProtocols = enabledProtocols;
 		this.needClientAuth = needClientAuth;

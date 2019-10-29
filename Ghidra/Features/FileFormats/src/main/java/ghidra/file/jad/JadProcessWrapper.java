@@ -22,7 +22,6 @@ import java.util.List;
 
 import ghidra.framework.Application;
 import ghidra.framework.Platform;
-import ghidra.util.Msg;
 
 /**
  * Wrapper class for JAD, a JAva Decompiler.
@@ -142,14 +141,8 @@ public class JadProcessWrapper {
 				}
 			}
 			catch (IOException ioe) {
-				Msg.debug(JadProcessWrapper.class, ioe.getMessage());
 				// fall thru
 			}
-			Msg.debug(JadProcessWrapper.class,
-				"Java Decompiler (JAD) not present, some features not available until installed in:");
-			Msg.debug(JadProcessWrapper.class,
-				"  Ghidra/Features/FileFormats/os/[your_os]/jad[.exe]");
-			Msg.debug(JadProcessWrapper.class, "and Ghidra is restarted");
 			return false;
 		}
 	}

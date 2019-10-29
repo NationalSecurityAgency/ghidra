@@ -19,7 +19,6 @@ import java.awt.Desktop;
 
 import ghidra.framework.OperatingSystem;
 import ghidra.framework.Platform;
-import ghidra.util.SystemUtilities;
 
 /**
  * A plugin-level quit handler that serves as the callback from the Dock's 'Quit' popup action.
@@ -41,24 +40,20 @@ public class PluginToolMacQuitHandler {
 	 * 
 	 * @param tool The tool to close, which should result in the desired quit behavior.
 	 */
-	public static void install(PluginTool tool) {
+	public static synchronized void install(PluginTool tool) {
 
 		if (installed) {
 			return;
 		}
+		installed = true;
 
 		if (Platform.CURRENT_PLATFORM.getOperatingSystem() != OperatingSystem.MAC_OS_X) {
 			return;
 		}
 
-		// These calls should all be in the Swing thread; thus, no need for locking.
-		SystemUtilities.assertThisIsTheSwingThread("Must install quit handler in the Swing thread");
-
 		Desktop.getDesktop().setQuitHandler((evt, response) -> {
-			response.cancelQuit(); // we will allow our tool to quit the application instead of the OS
+			response.cancelQuit(); // allow our tool to quit the application instead of the OS
 			tool.close();
 		});
-
-		installed = true;
 	}
 }

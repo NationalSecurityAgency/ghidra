@@ -18,7 +18,6 @@ package ghidra.framework.project.tool;
 import static org.junit.Assert.*;
 
 import java.awt.Window;
-import java.util.List;
 
 import org.junit.*;
 
@@ -56,7 +55,7 @@ public class CloseToolTest extends AbstractGhidraHeadedIntegrationTest {
 	public void tearDown() throws Exception {
 		executeOnSwingWithoutBlocking(() -> env.dispose());
 
-		closeAllWindowsAndFrames();
+		closeAllWindows();
 
 	}
 
@@ -138,7 +137,7 @@ public class CloseToolTest extends AbstractGhidraHeadedIntegrationTest {
 		closeTool(tool);
 
 		// check for warning dialog
-		Window window = waitForWindow(tool.getToolFrame(), "Tool Busy", 2000);
+		Window window = waitForWindow("Tool Busy");
 		assertNotNull("Did not get tool busy dialog", window);
 		closeWindow(window);
 
@@ -146,7 +145,7 @@ public class CloseToolTest extends AbstractGhidraHeadedIntegrationTest {
 		closeProgram(tool, program);
 
 		// check for warning dialog
-		window = waitForWindow(tool.getToolFrame(), "Close notepad Failed", 2000);
+		window = waitForWindow("Close notepad Failed");
 		assertNotNull("Did not get \"close failed\" dialog", window);
 		closeWindow(window);
 
@@ -169,11 +168,9 @@ public class CloseToolTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	private void closeProgram(final PluginTool tool, final ProgramDB program) {
-		List<DockingActionIf> actionList =
-			tool.getDockingActionsByFullActionName("Close File (ProgramManagerPlugin)");
-		assertTrue(!actionList.isEmpty());
 
-		performAction(actionList.get(0), new ProgramActionContext(null, program), false);
+		DockingActionIf action = getAction(tool, "ProgramManagerPlugin", "Close File");
+		performAction(action, new ProgramActionContext(null, program), false);
 
 		waitForPostedSwingRunnables();
 	}

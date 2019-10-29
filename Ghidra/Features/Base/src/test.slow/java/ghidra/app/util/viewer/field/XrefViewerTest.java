@@ -15,7 +15,7 @@
  */
 package ghidra.app.util.viewer.field;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 import org.junit.*;
 
@@ -39,6 +39,7 @@ import ghidra.program.model.symbol.SourceType;
 import ghidra.program.util.XRefHeaderFieldLocation;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.test.TestEnv;
+import ghidra.util.table.GhidraProgramTableModel;
 
 /**
  * Tests that references are displayed correctly when selecting the XRef field in
@@ -76,7 +77,7 @@ public class XrefViewerTest extends AbstractGhidraHeadedIntegrationTest {
 	 */
 	@Test
 	public void testViewReferencesToData() {
-		doubleClickXRef("1001007");
+		doubleClickXRef("1001007", "XREF[2]: ");
 		ComponentProvider comp = waitForComponentProvider(TableComponentProvider.class);
 		TableComponentProvider<?> table = (TableComponentProvider<?>) comp;
 		assertEquals(2, table.getModel().getRowCount());
@@ -87,7 +88,7 @@ public class XrefViewerTest extends AbstractGhidraHeadedIntegrationTest {
 	 */
 	@Test
 	public void testViewReferencesToFunction() {
-		doubleClickXRef("1001005");
+		doubleClickXRef("1001005", "XREF[1]: ");
 		ComponentProvider comp = waitForComponentProvider(TableComponentProvider.class);
 		TableComponentProvider<?> table = (TableComponentProvider<?>) comp;
 		assertEquals(1, table.getModel().getRowCount());
@@ -113,10 +114,10 @@ public class XrefViewerTest extends AbstractGhidraHeadedIntegrationTest {
 		// We have 3 structure refs: 1 to the top-level parent, 1 to the nested structure, 1 to
 		// the parent struct's 2 second element.  The top-level will report all 3 refs.  The
 		// child structure will report only 2.
-		doubleClickXRef("100101b"); // parent structure XRef field
+		doubleClickXRef("100101b", "XREF[1,2]: "); // parent structure XRef field
 		assertTableXRefCount(3);
 
-		doubleClickXRef("100101b", 0 /* second row at child structure */);
+		doubleClickXRef("100101b", 0 /* second row at child structure */, "XREF[1,1]: ");
 		assertTableXRefCount(2);
 	}
 
@@ -126,10 +127,12 @@ public class XrefViewerTest extends AbstractGhidraHeadedIntegrationTest {
 
 	private void assertTableXRefCount(int expectedRowCount) {
 		ComponentProvider comp = waitForComponentProvider(TableComponentProvider.class);
-		TableComponentProvider<?> table = (TableComponentProvider<?>) comp;
-		int actualRowCount = runSwing(() -> table.getModel().getRowCount());
+		TableComponentProvider<?> provider = (TableComponentProvider<?>) comp;
+		GhidraProgramTableModel<?> model = provider.getModel();
+		waitForTableModel(model);
+		int actualRowCount = runSwing(() -> provider.getModel().getRowCount());
 		assertEquals(expectedRowCount, actualRowCount);
-		runSwing(() -> table.closeComponent()); // remove for follow-up checks
+		runSwing(() -> provider.closeComponent()); // remove for follow-up checks
 	}
 
 	/**
@@ -167,7 +170,7 @@ public class XrefViewerTest extends AbstractGhidraHeadedIntegrationTest {
 		}
 	}
 
-	/**
+	/*
 	 * Builds a simple program that has the following attributes:
 	 *
 	 *  - reference to data
@@ -227,13 +230,17 @@ public class XrefViewerTest extends AbstractGhidraHeadedIntegrationTest {
 		return addressFactory.getAddress(address);
 	}
 
-	private void doubleClickXRef(String addr) {
+	private void doubleClickXRef(String addr, String expectedFieldText) {
 		runSwing(() -> cb.goToField(addr(addr), "XRef Header", 0, 2));
+		ListingField currentField = cb.getCurrentField();
+		String actualText = currentField.getText();
+		assertEquals("The Listing is not on the expected field", expectedFieldText, actualText);
+
 		click(cb, 2);
 		waitForSwing();
 	}
 
-	private void doubleClickXRef(String addr, int row) {
+	private void doubleClickXRef(String addr, int row, String expectedFieldText) {
 
 		int[] path = new int[row + 1];
 		for (int i = 0; i < row; i++) {
@@ -241,10 +248,13 @@ public class XrefViewerTest extends AbstractGhidraHeadedIntegrationTest {
 		}
 
 		XRefHeaderFieldLocation loc = new XRefHeaderFieldLocation(program, addr(addr), path, 0);
-
 		ProgramLocationPluginEvent event = new ProgramLocationPluginEvent("Test", loc, program);
 		tool.firePluginEvent(event);
 		waitForSwing();
+
+		ListingField currentField = cb.getCurrentField();
+		String actualText = currentField.getText();
+		assertEquals("The Listing is not on the expected field", expectedFieldText, actualText);
 
 		click(cb, 2);
 	}

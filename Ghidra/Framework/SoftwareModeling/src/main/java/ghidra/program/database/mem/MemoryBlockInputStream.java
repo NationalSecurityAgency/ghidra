@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +17,8 @@ package ghidra.program.database.mem;
 
 import java.io.IOException;
 import java.io.InputStream;
+
+import ghidra.program.model.mem.MemoryAccessException;
 
 /**
  * Maps a MemoryBlockDB into an InputStream.
@@ -92,7 +93,12 @@ class MemoryBlockInputStream extends InputStream {
 		if (index >= numBytes) {
 			return -1;
 		}
-		return block.getByte(index++) & 0xff;
+		try {
+			return block.getByte(index++) & 0xff;
+		}
+		catch (MemoryAccessException e) {
+			throw new IOException(e);
+		}
 	}
 
 	@Override
@@ -104,9 +110,14 @@ class MemoryBlockInputStream extends InputStream {
 		if (remaining < len) {
 			len = (int) remaining;
 		}
-		len = block.getBytes(index, b, off, len);
-		index += len;
-		return len;
+		try {
+			len = block.getBytes(index, b, off, len);
+			index += len;
+			return len;
+		}
+		catch (MemoryAccessException e) {
+			throw new IOException(e);
+		}
 	}
 
 }

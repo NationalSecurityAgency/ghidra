@@ -15,14 +15,14 @@
  */
 package ghidra.javaclass.format.attributes;
 
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.data.StructureDataType;
 import ghidra.util.exception.DuplicateNameException;
-
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * NOTE: THE FOLLOWING TEXT EXTRACTED FROM JVMS7.PDF
@@ -65,22 +65,24 @@ public class RuntimeParameterAnnotationsAttribute extends AbstractAttributeInfo 
 	private boolean _isVisible;
 
 	private byte numberOfParameters;
-	private Map<Integer, AnnotationJava []> parameterAnnotations = new HashMap<Integer, AnnotationJava []>();
+	private Map<Integer, AnnotationJava[]> parameterAnnotations =
+		new HashMap<Integer, AnnotationJava[]>();
 
-	public RuntimeParameterAnnotationsAttribute( BinaryReader reader, boolean isVisible ) throws IOException {
-		super( reader );
+	public RuntimeParameterAnnotationsAttribute(BinaryReader reader, boolean isVisible)
+			throws IOException {
+		super(reader);
 
 		_isVisible = isVisible;
 
 		numberOfParameters = reader.readNextByte();
 
-		for ( int i = 0 ; i < numberOfParameters ; ++i ) {
+		for (int i = 0; i < getNumberOfParameters(); ++i) {
 			short numberOfAnnotations = reader.readNextShort();
-			AnnotationJava [] annotations = new AnnotationJava[ numberOfAnnotations ];
-			for ( int a = 0 ; a < numberOfAnnotations ; ++a ) {
-				annotations[ a ] = new AnnotationJava( reader );
+			AnnotationJava[] annotations = new AnnotationJava[(numberOfAnnotations & 0xffff)];
+			for (int a = 0; a < (numberOfAnnotations & 0xffff); ++a) {
+				annotations[a] = new AnnotationJava(reader);
 			}
-			parameterAnnotations.put( i, annotations );
+			parameterAnnotations.put(i, annotations);
 		}
 	}
 
@@ -100,8 +102,8 @@ public class RuntimeParameterAnnotationsAttribute extends AbstractAttributeInfo 
 	 * (This duplicates information that could be extracted from the method descriptor.)
 	 * @return the number of parameters for this method
 	 */
-	public byte getNumberOfParameters() {
-		return numberOfParameters;
+	public int getNumberOfParameters() {
+		return numberOfParameters & 0xff;
 	}
 
 	/**
@@ -120,23 +122,23 @@ public class RuntimeParameterAnnotationsAttribute extends AbstractAttributeInfo 
 	 * @param parameter the parameter index
 	 * @return the annotations for the given parameter
 	 */
-	public AnnotationJava [] getParameterAnnotations( int parameter ) {
-		return parameterAnnotations.get( parameter );
+	public AnnotationJava[] getParameterAnnotations(int parameter) {
+		return parameterAnnotations.get(parameter);
 	}
 
 	@Override
 	public DataType toDataType() throws DuplicateNameException, IOException {
-		String name = _isVisible ? 
-							"RuntimeVisibleParameterAnnotations_attribute"   + "|" + numberOfParameters + "|" :
-							"RuntimeInvisibleParameterAnnotations_attribute" + "|" + numberOfParameters + "|";
+		String name = _isVisible
+				? "RuntimeVisibleParameterAnnotations_attribute" + "|" + numberOfParameters + "|"
+				: "RuntimeInvisibleParameterAnnotations_attribute" + "|" + numberOfParameters + "|";
 
-		StructureDataType structure = getBaseStructure( name );
-		structure.add( BYTE, "num_parameters", null );
-		for ( int i = 0 ; i < numberOfParameters ; ++i ) {
-			structure.add( WORD, "num_annotations_" + i, null );
-			AnnotationJava [] annotations = parameterAnnotations.get( i );
-			for ( int a = 0 ; a < annotations.length ; ++a ) {
-				structure.add( annotations[ a ].toDataType(), "annotations_" + i + "_" + a, null );
+		StructureDataType structure = getBaseStructure(name);
+		structure.add(BYTE, "num_parameters", null);
+		for (int i = 0; i < numberOfParameters; ++i) {
+			structure.add(WORD, "num_annotations_" + i, null);
+			AnnotationJava[] annotations = parameterAnnotations.get(i);
+			for (int a = 0; a < annotations.length; ++a) {
+				structure.add(annotations[a].toDataType(), "annotations_" + i + "_" + a, null);
 			}
 		}
 

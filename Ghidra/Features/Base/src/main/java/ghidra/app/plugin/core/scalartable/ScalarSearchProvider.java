@@ -23,15 +23,13 @@ import javax.swing.*;
 import javax.swing.border.Border;
 
 import docking.*;
-import docking.action.*;
 import docking.help.HelpService;
-import docking.tool.util.DockingToolConstants;
+import docking.widgets.label.GLabel;
 import docking.widgets.table.GTableFilterPanel;
 import docking.widgets.table.TableFilter;
 import ghidra.app.events.ProgramSelectionPluginEvent;
 import ghidra.app.plugin.core.scalartable.RangeFilterTextField.FilterType;
 import ghidra.app.services.GoToService;
-import ghidra.framework.options.*;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
@@ -39,6 +37,8 @@ import ghidra.program.model.scalar.Scalar;
 import ghidra.program.util.ProgramSelection;
 import ghidra.util.HelpLocation;
 import ghidra.util.table.*;
+import ghidra.util.table.actions.DeleteTableRowAction;
+import ghidra.util.table.actions.MakeProgramSelectionAction;
 import resources.ResourceManager;
 
 /**
@@ -48,8 +48,7 @@ import resources.ResourceManager;
  * <li>The range filter that allows the user to filter the scalar table via a min and max value.
  * </ul>
  */
-public class ScalarSearchProvider extends ComponentProviderAdapter
-		implements OptionsChangeListener {
+public class ScalarSearchProvider extends ComponentProviderAdapter {
 
 	public static final ImageIcon ICON = ResourceManager.loadImage("images/dataW.gif");
 
@@ -61,8 +60,6 @@ public class ScalarSearchProvider extends ComponentProviderAdapter
 	private JPanel mainPanel;
 	private GhidraTable scalarTable;
 	private ScalarSearchModel scalarModel;
-
-	private DockingAction selectAction;
 
 	private ProgramSelection currentSelection;
 	private Program program;
@@ -140,15 +137,6 @@ public class ScalarSearchProvider extends ComponentProviderAdapter
 		int minValue = minField.getLimitValue();
 		int maxValue = maxField.getLimitValue();
 		return min.equals(Integer.toString(minValue)) && max.equals(Integer.toString(maxValue));
-	}
-
-	@Override
-	public void optionsChanged(ToolOptions options, String optionName, Object oldValue,
-			Object newValue) {
-		if (optionName.startsWith(selectAction.getName())) {
-			KeyStroke keyStroke = (KeyStroke) newValue;
-			selectAction.setUnvalidatedKeyBindingData(new KeyBindingData(keyStroke));
-		}
 	}
 
 	private void selectDataInProgramFromTable(ProgramSelection selection) {
@@ -267,53 +255,11 @@ public class ScalarSearchProvider extends ComponentProviderAdapter
 
 	private void createActions() {
 
-		selectAction = new DockingAction("Make Selection", getName(), false) {
-			@Override
-			public void actionPerformed(ActionContext context) {
-				selectDataInProgramFromTable(getSelection());
-			}
-
-			@Override
-			public boolean isEnabledForContext(ActionContext context) {
-				if (!(context instanceof ScalarSearchContext)) {
-					return false;
-				}
-				ScalarSearchContext scalarWindowContext = (ScalarSearchContext) context;
-				GhidraTable table = scalarWindowContext.getScalarTable();
-				return table.getSelectedRows().length > 0;
-			}
-		};
-		selectAction.setEnabled(false);
-		ImageIcon icon = ResourceManager.loadImage("images/text_align_justify.png");
-		selectAction.setPopupMenuData(new MenuData(new String[] { "Make Selection" }, icon));
-		selectAction.setDescription("Selects currently selected scalar(s) in table");
-		selectAction.setToolBarData(new ToolBarData(icon));
-		selectAction.setHelpLocation(new HelpLocation(plugin.getName(), "Make_Selection"));
-
-		installDummyAction(selectAction);
-
-		tool.addLocalAction(this, selectAction);
-
-		DockingAction selectionAction = new SelectionNavigationAction(plugin, getTable());
-		tool.addLocalAction(this, selectionAction);
+		tool.addLocalAction(this, new MakeProgramSelectionAction(plugin, scalarTable));
+		tool.addLocalAction(this, new SelectionNavigationAction(plugin, getTable()));
 
 		GhidraTable table = threadedTablePanel.getTable();
-		DockingAction removeItemsAction = new DeleteTableRowAction(tool, table, plugin.getName());
-		tool.addLocalAction(this, removeItemsAction);
-	}
-
-	private void installDummyAction(DockingAction action) {
-		DummyKeyBindingsOptionsAction dummyAction =
-			new DummyKeyBindingsOptionsAction(action.getName(), null);
-		tool.addAction(dummyAction);
-
-		ToolOptions options = tool.getOptions(DockingToolConstants.KEY_BINDINGS);
-		options.addOptionsChangeListener(this);
-
-		KeyStroke keyStroke = options.getKeyStroke(dummyAction.getFullName(), null);
-		if (keyStroke != null) {
-			action.setUnvalidatedKeyBindingData(new KeyBindingData(keyStroke));
-		}
+		tool.addLocalAction(this, new DeleteTableRowAction(table, plugin.getName()));
 	}
 
 //==================================================================================================
@@ -331,7 +277,7 @@ public class ScalarSearchProvider extends ComponentProviderAdapter
 			setBorder(lowerBorder);
 
 			add(Box.createHorizontalStrut(4));
-			add(new JLabel("Min:"));
+			add(new GLabel("Min:"));
 			add(Box.createHorizontalStrut(19));
 
 			minField = createFilterWidget(FilterType.MIN);
@@ -339,7 +285,7 @@ public class ScalarSearchProvider extends ComponentProviderAdapter
 
 			add(Box.createHorizontalStrut(10));
 
-			add(new JLabel("Max:"));
+			add(new GLabel("Max:"));
 			add(Box.createHorizontalStrut(5));
 			maxField = createFilterWidget(FilterType.MAX);
 			add(maxField.getComponent());

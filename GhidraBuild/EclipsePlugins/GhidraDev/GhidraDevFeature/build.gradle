@@ -1,8 +1,12 @@
-apply plugin: 'eclipse'
-eclipse {
-	project {
-		name = 'Eclipse GhidraDevFeature'
-		buildCommand 'org.eclipse.pde.FeatureBuilder'
-		natures 'org.eclipse.pde.FeatureNature'
+//This project requires the eclpse PDE plugin. To create eclipse files for this project, run 
+//	"gradle eclipse -PeclipsePDE" 
+if (hasProperty("eclipsePDE")) {
+	apply plugin: 'eclipse'
+	eclipse {
+		project {
+			name = 'Eclipse GhidraDevFeature'
+			buildCommand 'org.eclipse.pde.FeatureBuilder'
+			natures 'org.eclipse.pde.FeatureNature'
+		}
 	}
 }

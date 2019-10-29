@@ -14,104 +14,42 @@
  * limitations under the License.
  */
 #include "xml.h"
+#include <string>
 
-char* indent(size_t nSpaces) {
-	switch (nSpaces) {
-	case  1: return " ";
-	case  2: return "  ";
-	case  4: return "    ";
-	case  6: return "      ";
-	case  8: return "        ";
-	case 10: return "          ";
-	case 12: return "            ";
-	}
-
-	// NOTE: memory leak if following code is hit, but luckily there are no callers
-	// that use indent() that would trigger this.
-	// Probably would be better to throw an error if a non-standard nSpaces value is used.
-	if (nSpaces < 0) {
-		nSpaces = 0;
-	}
-	char* indent = (char*)calloc(nSpaces + 1, sizeof(char));
-	if (indent != NULL) {
-		for (int i = 0; i < nSpaces; ++i) {
-			indent[i] = ' ';
-		}
-	}
-	return indent;
+std::wstring indent(size_t nSpaces) {
+	return std::wstring(nSpaces, ' ');
 }
 
-BSTR escapeXmlEntities(BSTR bstr) {
-	WCHAR * str = (WCHAR *)bstr;
-	size_t len = wcslen(str);
-	if (len == 0) return str;
-	size_t destLen = 0;
+std::wstring escapeXmlEntities(const std::wstring& str) {
 	
-	// Scan source str for problematic characters that need escaping.
-	// Calculate how many characters we will need in new string.
-	// The cases in this switch() statement need to match the cases in the following switch()
-	// statement. 
-	for (int i = 0 ; i < len ; ++i) {
-		switch (str[i]) {
-			case '&' :
-				destLen += 5;	// length of: "&amp;"
-				break;
-			case '<' :
-			case '>' :
-				destLen += 4;	// length of: "&lt;" or "&gt;" 
-				break;
-			case '\'' :
-			case '"' :
-				destLen += 6;	// length of: "&apos;" or "&quot;"
-				break;
-			case 0x7F :
-				break;
-			default :
-				destLen++;
-				break;
-		}
-	}
-	destLen += 1;
+	std::wstring escaped;
+	// Setting initial space; string operators will get more if needed.
+	escaped.reserve(str.length() * 2);
 
-	WCHAR * newstr = (WCHAR *)calloc(destLen, sizeof(WCHAR));
-	if (newstr == NULL) {
-		return newstr;
-	}
-	WCHAR * tmp = newstr;
-	
-	for (int i = 0 ; i < len ; ++i) {
+	for (int i = 0 ; i < str.length(); ++i) {
 		switch (str[i]) {
 			case '&' :
-				wcscpy_s(tmp, destLen, L"&amp;");
-				tmp += 5;
+				escaped += L"&amp;";
 				break;
 			case '<' :
-				wcscpy_s(tmp, destLen, L"&lt;");
-				tmp += 4;
+				escaped += L"&lt;";
 				break;
 			case '>' :
-				wcscpy_s(tmp, destLen, L"&gt;");
-				tmp += 4;
+				escaped += L"&gt;";
 				break;
 			case '\'' :
-				wcscpy_s(tmp, destLen, L"&apos;");
-				tmp += 6;
+				escaped += L"&apos;";
 				break;
 			case '"' :
-				wcscpy_s(tmp, destLen, L"&quot;");
-				tmp += 6;
+				escaped += L"&quot;";
 				break;
 			case 0x7F :
 				break;
+
 			default :
-				*tmp = str[i];
-				++tmp;
+				escaped += str[i];
 				break;
 		}
 	}
-	
-	// add null term at end of string.  Not strictly necessary since we are using calloc
-	*tmp = 0;
-	
-	return newstr;
+	return escaped;
 }

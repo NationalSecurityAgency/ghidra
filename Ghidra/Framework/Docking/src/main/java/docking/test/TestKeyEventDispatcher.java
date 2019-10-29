@@ -55,7 +55,8 @@ public class TestKeyEventDispatcher {
 		//
 		focusProvider.focusOwner = event.getComponent();
 		try {
-			return systemDispatcher.dispatchKeyEvent(event);
+			boolean success = systemDispatcher.dispatchKeyEvent(event);
+			return success;
 		}
 		finally {
 			focusProvider.focusOwner = null;
@@ -105,6 +106,9 @@ public class TestKeyEventDispatcher {
 				return null;
 			}
 
+			if (focusOwner instanceof Window) {
+				return (Window) focusOwner;
+			}
 			return SwingUtilities.windowForComponent(focusOwner);
 		}
 

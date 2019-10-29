@@ -54,10 +54,6 @@ public class MemoryMapProvider4Test extends AbstractGhidraHeadedIntegrationTest 
 	private JTable table;
 	private TableModel model;
 
-	public MemoryMapProvider4Test() {
-		super();
-	}
-
 	private Program buildProgram(String programName) throws Exception {
 		ProgramBuilder builder = new ProgramBuilder(programName, ProgramBuilder._TOY);
 		builder.createMemory(".text", Long.toHexString(0x1001000), 0x6600);
@@ -247,7 +243,7 @@ public class MemoryMapProvider4Test extends AbstractGhidraHeadedIntegrationTest 
 	}
 
 	private void showProvider() {
-		DockingActionIf action = getAction(plugin, "View Memory Map");
+		DockingActionIf action = getAction(plugin, "Memory Map");
 		performAction(action, true);
 		waitForPostedSwingRunnables();
 		provider = plugin.getMemoryMapProvider();

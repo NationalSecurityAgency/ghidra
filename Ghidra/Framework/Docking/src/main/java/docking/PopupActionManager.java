@@ -23,11 +23,13 @@ import java.util.*;
 
 import javax.swing.JPopupMenu;
 
+import org.apache.commons.collections4.IteratorUtils;
+
 import docking.action.*;
 import docking.menu.*;
 
 public class PopupActionManager implements PropertyChangeListener {
-	private List<DockingActionIf> popupActions = new ArrayList<DockingActionIf>();
+	private List<DockingActionIf> popupActions = new ArrayList<>();
 	private DockingWindowManager windowManager;
 	private MenuGroupMap menuGroupMap;
 
@@ -66,6 +68,7 @@ public class PopupActionManager implements PropertyChangeListener {
 	}
 
 	void popupMenu(ComponentPlaceholder info, MouseEvent e) {
+
 		if (e.isConsumed()) {
 			return;
 		}
@@ -75,42 +78,44 @@ public class PopupActionManager implements PropertyChangeListener {
 			actionContext = new ActionContext();
 		}
 
-		actionContext.setSource(e.getSource());
+		actionContext.setSourceObject(e.getSource());
 		actionContext.setMouseEvent(e);
 
-		MenuHandler popupMenuHandler = new PopupMenuHandler(windowManager, actionContext);
+		Iterator<DockingActionIf> localActions = info.getActions();
+		JPopupMenu popupMenu = createPopupMenu(localActions, actionContext);
+		if (popupMenu == null) {
+			return; // no matching actions
+		}
 
+		Component c = (Component) e.getSource();
+		popupMenu.show(c, e.getX(), e.getY());
+	}
+
+	JPopupMenu createPopupMenu(Iterator<DockingActionIf> localActions, ActionContext context) {
+
+		if (localActions == null) {
+			localActions = IteratorUtils.emptyIterator();
+		}
+
+		MenuHandler popupMenuHandler = new PopupMenuHandler(windowManager, context);
 		MenuManager menuMgr =
 			new MenuManager("Popup", '\0', null, true, popupMenuHandler, menuGroupMap);
-		populatePopupMenuActions(info, actionContext, menuMgr);
+		populatePopupMenuActions(localActions, context, menuMgr);
 		if (menuMgr.isEmpty()) {
-			return;
+			return null;
 		}
 
 		// Popup menu if items are available
 		JPopupMenu popupMenu = menuMgr.getPopupMenu();
-		Component c = (Component) e.getSource();
 		popupMenu.addPopupMenuListener(popupMenuHandler);
-		popupMenu.show(c, e.getX(), e.getY());
+		return popupMenu;
 	}
 
-	private void populatePopupMenuActions(ComponentPlaceholder info,
+	void populatePopupMenuActions(Iterator<DockingActionIf> localActions,
 			ActionContext actionContext, MenuManager menuMgr) {
 
-		// Include unregistered actions 
-		Object source = actionContext.getSourceObject();
-		if (source instanceof DockingActionProviderIf) {
-			DockingActionProviderIf actionProvider = (DockingActionProviderIf) source;
-			List<DockingActionIf> dockingActions = actionProvider.getDockingActions(actionContext);
-			for (DockingActionIf action : dockingActions) {
-				MenuData popupMenuData = action.getPopupMenuData();
-				if (popupMenuData != null && action.isValidContext(actionContext) &&
-					action.isAddToPopup(actionContext)) {
-					action.setEnabled(action.isEnabledForContext(actionContext));
-					menuMgr.addAction(action);
-				}
-			}
-		}
+		// Unregistered actions are those used by special-needs components, on-the-fly
+		addUnregisteredActions(actionContext, menuMgr);
 
 		// Include temporary actions
 		List<DockingActionIf> tempActions = windowManager.getTemporaryPopupActions(actionContext);
@@ -133,7 +138,7 @@ public class PopupActionManager implements PropertyChangeListener {
 			MenuData popupMenuData = action.getPopupMenuData();
 			if (popupMenuData != null && action.isValidContext(actionContext) &&
 				action.isAddToPopup(actionContext)) {
-				
+
 				boolean isEnabled = action.isEnabledForContext(actionContext);
 				action.setEnabled(isEnabled);
 				menuMgr.addAction(action);
@@ -141,13 +146,31 @@ public class PopupActionManager implements PropertyChangeListener {
 		}
 
 		// Include local actions for focused component
-		iter = info.getActions();
-		while (iter.hasNext()) {
-			DockingActionIf action = iter.next();
+		while (localActions.hasNext()) {
+			DockingActionIf action = localActions.next();
 			if (action.getPopupMenuData() != null && action.isValidContext(actionContext) &&
 				action.isAddToPopup(actionContext)) {
 				action.setEnabled(action.isEnabledForContext(actionContext));
 				menuMgr.addAction(action);
+			}
+		}
+	}
+
+	private void addUnregisteredActions(ActionContext actionContext, MenuManager menuMgr) {
+
+		Object source = actionContext.getSourceObject();
+
+		// this interface is deprecated in favor the code that calls this method; this will be deleted
+		if (source instanceof DockingActionProviderIf) {
+			DockingActionProviderIf actionProvider = (DockingActionProviderIf) source;
+			List<DockingActionIf> dockingActions = actionProvider.getDockingActions();
+			for (DockingActionIf action : dockingActions) {
+				MenuData popupMenuData = action.getPopupMenuData();
+				if (popupMenuData != null && action.isValidContext(actionContext) &&
+					action.isAddToPopup(actionContext)) {
+					action.setEnabled(action.isEnabledForContext(actionContext));
+					menuMgr.addAction(action);
+				}
 			}
 		}
 	}

@@ -1,31 +1,45 @@
+apply from: "$rootProject.projectDir/gradle/javaProject.gradle"
+apply from: "$rootProject.projectDir/gradle/javaTestProject.gradle"
 apply plugin: 'eclipse'
 eclipse.project.name = '_Integration Test'
 
-ext.excludeFromBuild = true
 
 /*********************************************************************************
  * Build dependencies
  *********************************************************************************/
+
+// There are tests in this module that require resources in Base:test. This
+// is a on-off type of situation so just add to the resources source set here.
+sourceSets {
+   integrationTest {
+     resources {
+       srcDirs += [project(':Base').sourceSets.test.resources]
+     }
+   }
+}
+
 dependencies {
-
-	// integration test module may depends on all other projects within this repo
+	// integrationtest module may depend on other projects in this repo; add them
+	// here 
 	def ghidraPath = projectDir.getParentFile().getParentFile().path.replace(File.separator, "/") + "/";
-
-	rootProject.subprojects.each { p ->
-
-		def projectPath = p.projectDir.path.replace(File.separator, "/")
-
-		if (projectPath.startsWith(ghidraPath) && (
+	
+	rootProject.subprojects { p ->
+		p.plugins.withType(JavaPlugin) {
+			def projectPath = p.projectDir.path.replace(File.separator, "/")
+			if (projectPath.startsWith(ghidraPath) && (
 				projectPath.contains("/Framework/") ||
-		    	projectPath.contains("/Features/") ||
-		    	projectPath.contains("/Processors/"))) {
-			compile p
-		}
+				projectPath.contains("/Features/") ||
+				projectPath.contains("/Processors/"))) {
+
+				compile p
+			}
+		}	
 	}
 
-
 	// some tests use classes in Base/src/test and test.slow
-	testCompile project(':Base').sourceSets.test.output
+	testCompile project(path: ':Base', configuration: 'testArtifacts')
+	testCompile project(path: ':Base', configuration: 'integrationTestArtifacts')	
+	testCompile project(path: ':FunctionGraph', configuration: 'testArtifacts')	
 }
 
 // For Java 9, we must explicitly export references to the internal classes we are using.

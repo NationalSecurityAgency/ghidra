@@ -19,6 +19,7 @@ import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.util.*;
 
+import javax.swing.Icon;
 import javax.swing.ImageIcon;
 
 import docking.ActionContext;
@@ -195,8 +196,9 @@ public class NextPrevAddressPlugin extends Plugin {
 				}
 
 				Navigatable navigatable = getNavigatable(context);
-				return historyService.hasNext(navigatable) ||
-					historyService.hasPrevious(navigatable);
+				boolean hasNext = historyService.hasNext(navigatable);
+				boolean hasPrevious = historyService.hasPrevious(navigatable);
+				return hasNext || hasPrevious;
 			}
 		};
 		clearAction.setHelpLocation(new HelpLocation(HelpTopics.NAVIGATION, clearAction.getName()));
@@ -289,11 +291,9 @@ public class NextPrevAddressPlugin extends Plugin {
 		return null;
 	}
 
-	//////////////////////////////////////////////////////////////////////
-	//                                                                  //
-	// Inner Classes                                                    //
-	//                                                                  //
-	//////////////////////////////////////////////////////////////////////
+//==================================================================================================
+// Inner Classes
+//==================================================================================================
 
 	private class NextPreviousAction extends MultiActionDockingAction {
 
@@ -311,7 +311,12 @@ public class NextPrevAddressPlugin extends Plugin {
 
 		@Override
 		public boolean isValidContext(ActionContext context) {
-			return (context instanceof NavigatableActionContext);
+			return false;
+		}
+
+		@Override
+		public boolean isValidGlobalContext(ActionContext globalContext) {
+			return (globalContext instanceof NavigatableActionContext);
 		}
 
 		@Override
@@ -368,14 +373,15 @@ public class NextPrevAddressPlugin extends Plugin {
 
 		private NavigationAction(Navigatable navigatable, LocationMemento location, boolean isNext,
 				NavigationHistoryService service, CodeUnitFormat formatter) {
-			super("NavigationAction: " + ++idCount, NextPrevAddressPlugin.this.getName(), false);
+			super("NavigationAction: " + ++idCount, NextPrevAddressPlugin.this.getName());
 			this.location = location;
 			this.isNext = isNext;
 			this.service = service;
 			this.navigatable = navigatable;
 
-			setMenuBarData(new MenuData(new String[] { buildActionName(location, formatter) },
-				navigatable.getNavigatableIcon()));
+			Icon navIcon = navigatable.getNavigatableIcon();
+			setMenuBarData(
+				new MenuData(new String[] { buildActionName(location, formatter) }, navIcon));
 			setEnabled(true);
 		}
 

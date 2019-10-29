@@ -23,8 +23,8 @@ import java.io.InputStream;
  */
 public class DBBuffer {
 
-	private DBHandle dbh;
-	private ChainedBuffer buf;
+	final DBHandle dbh;
+	final ChainedBuffer buf;
 
 	/**
 	 * Constructor for an existing ChainedBuffer.

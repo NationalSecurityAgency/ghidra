@@ -21,13 +21,14 @@ import java.util.Iterator;
 import ghidra.app.plugin.core.datamgr.archive.SourceArchive;
 import ghidra.docking.settings.Settings;
 import ghidra.program.model.mem.MemBuffer;
+import ghidra.util.Msg;
 import ghidra.util.UniversalID;
 
 /**
  * Basic implementation of the union data type
  */
 public class UnionDataType extends CompositeDataTypeImpl implements Union {
-	private ArrayList<DataTypeComponent> components;
+	private ArrayList<DataTypeComponentImpl> components;
 	private int unionLength;
 
 	/**
@@ -68,9 +69,6 @@ public class UnionDataType extends CompositeDataTypeImpl implements Union {
 		this(CategoryPath.ROOT, name);
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.program.model.data.DataType#getRepresentation(ghidra.program.model.mem.MemBuffer, ghidra.util.settings.Settings, int)
-	 */
 	@Override
 	public String getRepresentation(MemBuffer buf, Settings settings, int length) {
 		if (isNotYetDefined()) {
@@ -84,111 +82,113 @@ public class UnionDataType extends CompositeDataTypeImpl implements Union {
 		return components.size() == 0;
 	}
 
-	/**
-	 * 
-	 * @see ghidra.program.model.data.Composite#getComponent(int)
-	 */
 	@Override
 	public DataTypeComponent getComponent(int ordinal) {
 		return components.get(ordinal);
 	}
 
-	/**
-	 * 
-	 * @see ghidra.program.model.data.Composite#getComponents()
-	 */
 	@Override
 	public DataTypeComponent[] getComponents() {
 		return components.toArray(new DataTypeComponent[components.size()]);
 	}
 
-	/**
-	 * 
-	 * @see ghidra.program.model.data.Composite#getNumComponents()
-	 */
 	@Override
 	public int getNumComponents() {
 		return components.size();
 	}
 
-	/**
-	 * 
-	 * @see ghidra.program.model.data.Composite#add(ghidra.program.model.data.DataType, int, java.lang.String, java.lang.String)
-	 */
 	@Override
 	public DataTypeComponent add(DataType dataType, int length, String componentName,
 			String comment) {
-		int oldLength = unionLength;
 		DataTypeComponent dtc = doAdd(dataType, length, componentName, comment);
-		adjustInternalAlignment();
-		if (oldLength != unionLength) {
-			notifySizeChanged();
-		}
+		adjustLength(true);
 		return dtc;
+	}
+
+	private int getBitFieldAllocation(BitFieldDataType bitfieldDt) {
+
+		BitFieldPacking bitFieldPacking = getBitFieldPacking();
+		if (bitFieldPacking.useMSConvention()) {
+			return bitfieldDt.getBaseTypeSize();
+		}
+
+		if (bitfieldDt.getBitSize() == 0) {
+			return 0;
+		}
+
+		int length = bitfieldDt.getBaseTypeSize();
+		int packValue = getPackingValue();
+		if (packValue != NOT_PACKING && length > packValue) {
+			length =
+				DataOrganizationImpl.getLeastCommonMultiple(bitfieldDt.getStorageSize(), packValue);
+		}
+		return length;
 	}
 
 	DataTypeComponent doAdd(DataType dataType, int length, String componentName, String comment) {
+
 		validateDataType(dataType);
 
+		dataType = adjustBitField(dataType);
+
+		dataType = dataType.clone(dataMgr);
 		checkAncestry(dataType);
 
-		if (length < 1) {
-			throw new IllegalArgumentException("Length must be >= 1!");
-		}
+		length = getPreferredComponentLength(dataType, length);
 
-		dataType = dataType.clone(getDataTypeManager());
-
-		// TODO Is this the right place to adjust the length?
-		int dtLength = dataType.getLength();
-		if (dtLength > 0 && dtLength < length) {
-			length = dtLength;
-		}
-
-		DataTypeComponent dtc = new DataTypeComponentImpl(dataType, this, length, components.size(),
-			0, componentName, comment);
+		DataTypeComponentImpl dtc = new DataTypeComponentImpl(dataType, this, length,
+			components.size(), 0, componentName, comment);
 		dataType.addParent(this);
 		components.add(dtc);
-		unionLength = Math.max(unionLength, length);
+
 		return dtc;
 	}
 
-	/**
-	 * 
-	 * @see ghidra.program.model.data.Composite#insert(int, ghidra.program.model.data.DataType, int, java.lang.String, java.lang.String)
-	 */
 	@Override
 	public DataTypeComponent insert(int ordinal, DataType dataType, int length,
 			String componentName, String comment) {
 
 		validateDataType(dataType);
+
+		dataType = adjustBitField(dataType);
+
+		dataType = dataType.clone(dataMgr);
 		checkAncestry(dataType);
 
-		dataType = dataType.clone(getDataTypeManager());
+		length = getPreferredComponentLength(dataType, length);
 
-		// TODO Is this the right place to adjust the length?
-		int dtLength = dataType.getLength();
-		if (dtLength > 0 && dtLength < length) {
-			length = dtLength;
-		}
-
-		DataTypeComponent dtc =
+		DataTypeComponentImpl dtc =
 			new DataTypeComponentImpl(dataType, this, length, ordinal, 0, componentName, comment);
 		dataType.addParent(this);
 		shiftOrdinals(ordinal, 1);
 		components.add(ordinal, dtc);
-		int oldLength = unionLength;
-		unionLength = Math.max(unionLength, length);
-		adjustInternalAlignment();
-		if (oldLength != unionLength) {
-			notifySizeChanged();
-		}
+
+		adjustLength(true);
 		return dtc;
 	}
 
-	/**
-	 * 
-	 * @see ghidra.program.model.data.DataType#getLength()
-	 */
+	@Override
+	public DataTypeComponent addBitField(DataType baseDataType, int bitSize, String componentName,
+			String comment) throws InvalidDataTypeException {
+		return insertBitField(components.size(), baseDataType, bitSize, componentName, comment);
+	}
+
+	@Override
+	public DataTypeComponent insertBitField(int ordinal, DataType baseDataType, int bitSize,
+			String componentName, String comment)
+			throws InvalidDataTypeException, ArrayIndexOutOfBoundsException {
+
+		if (ordinal < 0 || ordinal > components.size()) {
+			throw new ArrayIndexOutOfBoundsException(ordinal);
+		}
+
+		BitFieldDataType.checkBaseDataType(baseDataType);
+		baseDataType = baseDataType.clone(dataMgr);
+
+		BitFieldDataType bitFieldDt = new BitFieldDataType(baseDataType, bitSize);
+		return insert(ordinal, bitFieldDt, bitFieldDt.getStorageSize(), componentName, comment);
+	}
+
 	@Override
 	public int getLength() {
 		if (unionLength == 0) {
@@ -199,7 +199,7 @@ public class UnionDataType extends CompositeDataTypeImpl implements Union {
 
 	@Override
 	public DataType clone(DataTypeManager dtm) {
-		if (getDataTypeManager() == dtm) {
+		if (dataMgr == dtm) {
 			return this;
 		}
 		UnionDataType union = new UnionDataType(getCategoryPath(), getName(), getUniversalID(),
@@ -217,20 +217,12 @@ public class UnionDataType extends CompositeDataTypeImpl implements Union {
 		return union;
 	}
 
-	/**
-	 * @see ghidra.program.model.data.Composite#delete(int)
-	 */
 	@Override
 	public void delete(int ordinal) {
-		int oldLength = unionLength;
 		DataTypeComponent dtc = components.remove(ordinal);
 		dtc.getDataType().removeParent(this);
 		shiftOrdinals(ordinal, -1);
-		computeUnionLength();
-		adjustInternalAlignment();
-		if (oldLength != unionLength) {
-			notifySizeChanged();
-		}
+		adjustLength(true);
 	}
 
 	@Override
@@ -240,17 +232,68 @@ public class UnionDataType extends CompositeDataTypeImpl implements Union {
 		}
 	}
 
-	private void computeUnionLength() {
+	private DataType adjustBitField(DataType dataType) {
+
+		if (!(dataType instanceof BitFieldDataType)) {
+			return dataType;
+		}
+
+		BitFieldDataType bitfieldDt = (BitFieldDataType) dataType;
+
+		DataType baseDataType = bitfieldDt.getBaseDataType();
+		baseDataType = baseDataType.clone(dataMgr);
+
+		// Both aligned and unaligned bitfields use same adjustment
+		// unaligned must force bitfield placement at byte offset 0 
+		int bitSize = bitfieldDt.getDeclaredBitSize();
+		int effectiveBitSize =
+			BitFieldDataType.getEffectiveBitSize(bitSize, baseDataType.getLength());
+
+		// little-endian always uses bit offset of 0 while
+		// big-endian offset must be computed
+		boolean bigEndian = getDataOrganization().isBigEndian();
+		int storageBitOffset = 0;
+		if (bigEndian) {
+			if (bitSize == 0) {
+				storageBitOffset = 7;
+			}
+			else {
+				int storageSize = BitFieldDataType.getMinimumStorageSize(effectiveBitSize);
+				storageBitOffset = (8 * storageSize) - effectiveBitSize;
+			}
+		}
+
+		if (effectiveBitSize != bitfieldDt.getBitSize() ||
+			storageBitOffset != bitfieldDt.getBitOffset()) {
+			try {
+				bitfieldDt = new BitFieldDataType(baseDataType, effectiveBitSize, storageBitOffset);
+			}
+			catch (InvalidDataTypeException e) {
+				// unexpected since deriving from existing bitfield,
+				// ignore and use existing bitfield
+			}
+		}
+		return bitfieldDt;
+	}
+
+	private void adjustLength(boolean notify) {
+		int oldLength = unionLength;
 		unionLength = 0;
-		for (int i = 0; i < components.size(); i++) {
-			unionLength = Math.max(unionLength, (components.get(i)).getLength());
+		for (DataTypeComponent dtc : components) {
+
+			int length = dtc.getLength();
+			if (isInternallyAligned() && dtc.isBitFieldComponent()) {
+				// revise length to reflect compiler bitfield allocation rules
+				length = getBitFieldAllocation((BitFieldDataType) dtc.getDataType());
+			}
+
+			unionLength = Math.max(length, unionLength);
+		}
+		if (notify && oldLength != unionLength) {
+			notifySizeChanged();
 		}
 	}
 
-	/**
-	 * 
-	 * @see ghidra.program.model.data.DataType#isEquivalent(ghidra.program.model.data.DataType)
-	 */
 	@Override
 	public boolean isEquivalent(DataType dt) {
 		if (dt == this) {
@@ -288,85 +331,109 @@ public class UnionDataType extends CompositeDataTypeImpl implements Union {
 
 	private void shiftOrdinals(int ordinal, int deltaOrdinal) {
 		for (int i = ordinal; i < components.size(); i++) {
-			DataTypeComponentImpl dtc = (DataTypeComponentImpl) components.get(i);
+			DataTypeComponentImpl dtc = components.get(i);
 			dtc.setOrdinal(dtc.getOrdinal() + deltaOrdinal);
 		}
 	}
 
 	@Override
 	public void dataTypeAlignmentChanged(DataType dt) {
-		// TODO I don't think we need to do anything here.
-		adjustInternalAlignment();
+		if (isInternallyAligned()) {
+			adjustInternalAlignment();
+		}
 	}
 
-	/**
-	 * @see ghidra.program.model.data.DataType#dataTypeSizeChanged(ghidra.program.model.data.DataType)
-	 */
 	@Override
 	public void dataTypeSizeChanged(DataType dt) {
-		int oldLength = unionLength;
-		unionLength = 0;
-		for (int i = 0; i < components.size(); i++) {
-			DataTypeComponentImpl dtc = (DataTypeComponentImpl) components.get(i);
-			DataType tmpDt = dtc.getDataType();
-			int tmpLen = tmpDt.getLength();
-			if ((tmpDt.isEquivalent(dt)) && (tmpLen > 0) && (tmpLen != dtc.getLength())) {
-				dtc.setLength(tmpLen);
-			}
-			unionLength = Math.max(unionLength, dtc.getLength());
-		}
-		adjustInternalAlignment();
-		if (oldLength != unionLength) {
-			notifySizeChanged();
-		}
-	}
-
-	/* (non-Javadoc)
-	 * @see ghidra.program.model.data.DataType#dataTypeReplaced(ghidra.program.model.data.DataType, ghidra.program.model.data.DataType)
-	 */
-	@Override
-	public void dataTypeReplaced(DataType oldDt, DataType newDt) {
-		try {
-			validateDataType(newDt);
-			checkAncestry(newDt);
-		}
-		catch (Exception e) {
-			newDt = DataType.DEFAULT;
-		}
-		int oldLength = unionLength;
-		unionLength = 0;
 		boolean changed = false;
-		for (int i = 0; i < components.size(); i++) {
-			DataTypeComponentImpl dtc = (DataTypeComponentImpl) components.get(i);
-			if (dtc.getDataType() == oldDt) {
-				oldDt.removeParent(this);
-				dtc.setDataType(newDt);
-				newDt.addParent(this);
-				int len = newDt.getLength();
-				if (len > 0) {
-					dtc.setLength(len);
-				}
+		for (DataTypeComponentImpl dtc : components) {
+			int length = dtc.getLength();
+			if (dtc.getDataType() == dt) {
+				length = getPreferredComponentLength(dt, length);
+				dtc.setLength(length);
 				changed = true;
 			}
 		}
 		if (changed) {
-			computeUnionLength();
-			adjustInternalAlignment();
-			if (oldLength != unionLength) {
-				notifySizeChanged();
-			}
+			adjustLength(true);
 		}
 	}
 
-	/**
-	 * @see ghidra.program.model.data.DataType#dataTypeDeleted(ghidra.program.model.data.DataType)
-	 */
+	@Override
+	public void dataTypeReplaced(DataType oldDt, DataType newDt) {
+		DataType replacementDt = newDt;
+		try {
+			validateDataType(replacementDt);
+			if (replacementDt.getDataTypeManager() != dataMgr) {
+				replacementDt = replacementDt.clone(dataMgr);
+			}
+			checkAncestry(replacementDt);
+		}
+		catch (Exception e) {
+			// TODO: should we use Undefined instead since we do not support
+			// DEFAULT in Unions
+			replacementDt = DataType.DEFAULT;
+		}
+		boolean changed = false;
+		for (int i = components.size() - 1; i >= 0; i--) {
+
+			DataTypeComponentImpl dtc = components.get(i);
+
+			boolean remove = false;
+			if (dtc.isBitFieldComponent()) {
+				try {
+					changed |= updateBitFieldDataType(dtc, oldDt, replacementDt);
+				}
+				catch (InvalidDataTypeException e) {
+					Msg.error(this,
+						"Invalid bitfield replacement type " + newDt.getName() +
+							", removing bitfield " + dtc.getDataType().getName() + ": " +
+							getPathName());
+					remove = true;
+				}
+			}
+			else if (dtc.getDataType() == oldDt) {
+				if (replacementDt == DEFAULT) {
+					Msg.error(this,
+						"Invalid replacement type " + newDt.getName() + ", removing component " +
+							dtc.getDataType().getName() + ": " + getPathName());
+					remove = true;
+				}
+				else {
+					oldDt.removeParent(this);
+					dtc.setDataType(replacementDt);
+					replacementDt.addParent(this);
+					int len = replacementDt.getLength();
+					if (len > 0) {
+						dtc.setLength(len);
+					}
+					changed = true;
+				}
+			}
+			if (remove) {
+				// error case - remove component
+				oldDt.removeParent(this);
+				components.remove(i);
+				shiftOrdinals(i, -1);
+				changed = true;
+			}
+		}
+		if (changed) {
+			adjustLength(true);
+		}
+	}
+
 	@Override
 	public void dataTypeDeleted(DataType dt) {
 		boolean didDelete = false;
-		for (int i = components.size() - 1; i >= 0; i--) {
-			DataTypeComponent dtc = components.get(i);
-			if (dtc.getDataType() == dt) {
+		for (int i = components.size() - 1; i >= 0; i--) { // reverse order
+			DataTypeComponentImpl dtc = components.get(i);
+			boolean removeBitFieldComponent = false;
+			if (dtc.isBitFieldComponent()) {
+				BitFieldDataType bitfieldDt = (BitFieldDataType) dtc.getDataType();
+				removeBitFieldComponent = bitfieldDt.getBaseDataType() == dt;
+			}
+			if (removeBitFieldComponent || dtc.getDataType() == dt) {
 				dt.removeParent(this);
 				components.remove(i);
 				shiftOrdinals(i, -1);
@@ -374,12 +441,7 @@ public class UnionDataType extends CompositeDataTypeImpl implements Union {
 			}
 		}
 		if (didDelete) {
-			int oldLength = unionLength;
-			computeUnionLength();
-			adjustInternalAlignment();
-			if (oldLength != unionLength) {
-				notifySizeChanged();
-			}
+			adjustLength(true);
 		}
 	}
 
@@ -398,48 +460,33 @@ public class UnionDataType extends CompositeDataTypeImpl implements Union {
 		if (!(dataType instanceof Union)) {
 			throw new IllegalArgumentException();
 		}
-		int oldLength = unionLength;
-		doReplaceWith((Union) dataType);
-		if (oldLength != unionLength) {
-			notifySizeChanged();
-		}
-	}
 
-	private void doReplaceWith(Union union) {
-		Iterator<DataTypeComponent> it = components.iterator();
+		Union union = (Union) dataType;
+
+		Iterator<DataTypeComponentImpl> it = components.iterator();
 		while (it.hasNext()) {
 			DataTypeComponent dtc = it.next();
 			dtc.getDataType().removeParent(this);
 		}
 		components.clear();
 
-		unionLength = 0;
+		setAlignment(union);
 
 		DataTypeComponent[] compArray = union.getComponents();
 		for (int i = 0; i < compArray.length; i++) {
 			DataTypeComponent dtc = compArray[i];
 			DataType dt = dtc.getDataType();
-			validateDataType(dt);
-			dt = dt.clone(getDataTypeManager());
-			int dtLength = dt.getLength();
-			if (dtLength <= 0) {
-				dtLength = dtc.getLength();
-			}
-			doAdd(dt, dtLength, dtc.getFieldName(), dtc.getComment());
+			doAdd(dt, dtc.getLength(), dtc.getFieldName(), dtc.getComment());
 		}
-		setDataAlignmentInfo(union);
+
+		adjustLength(true);
 	}
 
-	/**
-	 * @see ghidra.program.model.data.DataType#dataTypeNameChanged(ghidra.program.model.data.DataType, java.lang.String)
-	 */
 	@Override
 	public void dataTypeNameChanged(DataType dt, String oldName) {
+		// ignored
 	}
 
-	/**
-	 * @see ghidra.program.model.data.DataType#dependsOn(ghidra.program.model.data.DataType)
-	 */
 	@Override
 	public boolean dependsOn(DataType dt) {
 		if (getNumComponents() == 1) {
@@ -454,33 +501,16 @@ public class UnionDataType extends CompositeDataTypeImpl implements Union {
 		return "UNION_" + getName();
 	}
 
-	public void align(DataOrganization dataOrganization) {
-		// TODO Auto-generated method stub
-	}
-
-	private void adjustLength() {
-		// TODO WHat should we do here?
-	}
-
 	@Override
-	public int getPackingValue() {
-		return packingValue;
-	}
-
-	@Override
-	public void setPackingValue(int packingValue) {
-		this.packingValue = packingValue;
-		adjustInternalAlignment();
+	public void realign() {
+		if (isInternallyAligned()) {
+			adjustInternalAlignment();
+		}
 	}
 
 	@Override
 	public void adjustInternalAlignment() {
-		adjustLength();
-	}
-
-	@Override
-	public void realign() {
-		adjustInternalAlignment();
+		adjustLength(true);
 	}
 
 }

@@ -728,6 +728,13 @@ void VarnodeSymbol::getFixedHandle(FixedHandle &hand,ParserWalker &walker) const
   hand.size = fix.size;
 }
 
+void VarnodeSymbol::collectLocalValues(vector<uintb> &results) const
+
+{
+  if (fix.space->getType() == IPTR_INTERNAL)
+    results.push_back(fix.offset);
+}
+
 void VarnodeSymbol::saveXml(ostream &s) const
 
 {
@@ -1032,6 +1039,13 @@ void OperandSymbol::print(ostream &s,ParserWalker &walker) const
       s << "-0x" << hex << -val;
   }
   walker.popOperand();
+}
+
+void OperandSymbol::collectLocalValues(vector<uintb> &results) const
+
+{
+  if (triple != (TripleSymbol *)0)
+    triple->collectLocalValues(results);
 }
 
 void OperandSymbol::saveXml(ostream &s) const
@@ -1542,6 +1556,29 @@ void Constructor::markSubtableOperands(vector<int4> &check) const
   }
 }
 
+void Constructor::collectLocalExports(vector<uintb> &results) const
+
+{
+  if (templ == (ConstructTpl *)0) return;
+  HandleTpl *handle = templ->getResult();
+  if (handle == (HandleTpl *)0) return;
+  if (handle->getSpace().isConstSpace()) return;	// Even if the value is dynamic, the pointed to value won't get used
+  if (handle->getPtrSpace().getType() != ConstTpl::real) {
+    if (handle->getTempSpace().isUniqueSpace())
+      results.push_back(handle->getTempOffset().getReal());
+    return;
+  }
+  if (handle->getSpace().isUniqueSpace()) {
+    results.push_back(handle->getPtrOffset().getReal());
+    return;
+  }
+  if (handle->getSpace().getType() == ConstTpl::handle) {
+    int4 handleIndex = handle->getSpace().getHandleIndex();
+    OperandSymbol *opSym = getOperand(handleIndex);
+    opSym->collectLocalValues(results);
+  }
+}
+
 bool Constructor::isRecursive(void) const
 
 { // Does this constructor cause recursion with its table
@@ -1862,6 +1899,13 @@ SubtableSymbol::~SubtableSymbol(void)
     delete *iter;
 }
 
+void SubtableSymbol::collectLocalValues(vector<uintb> &results) const
+
+{
+  for(int4 i=0;i<construct.size();++i)
+    construct[i]->collectLocalExports(results);
+}
+
 void SubtableSymbol::saveXml(ostream &s) const
 
 {
@@ -2062,10 +2106,10 @@ int4 DecisionNode::getNumFixed(int4 low,int4 size,bool context)
 double DecisionNode::getScore(int4 low,int4 size,bool context)
 
 {
-  int4 numBins = 1 << size;
+  int4 numBins = 1 << size;		// size is between 1 and 8
   int4 i;
   uintm val,mask;
-  uintm m = (size==8*sizeof(uintm)) ? 0 : (((uintm)1)<<size);
+  uintm m = ((uintm)1)<<size;
   m = m-1;
 
   int4 total = 0;

@@ -26,20 +26,11 @@ import ghidra.program.model.data.DataType;
 @Category(NightlyCategory.class)
 public class DataAction3Test extends AbstractDataActionTest {
 
-	/**
-	 * Constructor for FallThroughActionTest.
-	 * @param arg0
-	 */
-	public DataAction3Test() {
-		super();
-	}
-
 	@Test
 	public void testAllDefaultDataSettings() throws Exception {
 
 		List<DataType> builtIns = getBuiltInDataTypesAsFavorites();
 		for (DataType type : builtIns) {
-//if (!(type instanceof UnicodeDataType)) continue;
 			String actionName = "Define " + type.getName();
 			manipulateAllSettings(true, false, false, actionName);
 		}

@@ -346,7 +346,7 @@ define register offset=0x2700 size=$(REGSIZE) [
 ];
 
 # Some other internal registers
-define register offset=0x3000 size=$(REGSIZE) [ hi lo tsp ];
+define register offset=0x3000 size=$(REGSIZE) [ hi lo hi1 lo1 hi2 lo2 hi3 lo3 tsp ];
 
 define register offset=0x3F00 size=1 [ ISAModeSwitch ];
 
@@ -431,6 +431,7 @@ define context contextreg
 define token instr(32)
     prime       = (26,31)
     bit25       = (25,25)
+    zero2325    = (23,25)
     zero1       = (22,25)
     rs32        = (21,25)
     frD         = (21,25)
@@ -440,19 +441,21 @@ define token instr(32)
     format      = (21,25)
     copop       = (21,25)
     mfmc0       = (21,25)
-    zero21		= (21,25)
-    jsub		= (21,25)
+    zero21	= (21,25)
+    jsub	= (21,25)
+    acflo       = (21,22)
+    acfhi       = (21,22)
     breakcode   = (6,25)
-    off26      = (0,25) signed			# 26 bit signed offset, e.g. balc, bc
-    ind26      = (0,25)				# 26 bit unsigned index, e.g. jal
+    off26       = (0,25) signed			# 26 bit signed offset, e.g. balc, bc
+    ind26       = (0,25)				# 26 bit unsigned index, e.g. jal
     copfill     = (6,24)
     cofun       = (0,24)
-    off21		= (0,20) signed		# 21 bit signed offset in conditional branch/link
-    off16		= (0,15) signed		# 16 bit signed offset in conditional branch/link
+    off21	= (0,20) signed		# 21 bit signed offset in conditional branch/link
+    off16	= (0,15) signed		# 16 bit signed offset in conditional branch/link
     bit21       = (21,21)
-    bitz19		= (19,20)
-    pcrel		= (19,20)
-    pcrel2		= (18,20)
+    bitz19	= (19,20)
+    pcrel	= (19,20)
+    pcrel2	= (18,20)
     cc          = (18,20)
     rt32        = (16,20)
     rt          = (16,20)
@@ -464,10 +467,13 @@ define token instr(32)
     synci       = (16,20)  
     cond        = (16,20)
     op          = (16,20)
+    zero1620    = (16,20)
     nd          = (17,17)
     tf          = (16,16)
+    zero1320    = (13,20)
+    zero1315    = (13,15)
     szero       = (11,25)
-    baser6		= (11,15)
+    baser6	= (11,15)
     rd32        = (11,15)
     rd          = (11,15)
     rd0_0       = (11,15)
@@ -488,15 +494,17 @@ define token instr(32)
     cp2cprSel7	= (11,15)
     fsD         = (11,15)
     fs          = (11,15)
-    fs_unk		= (11,15)
-    fs_fcr		= (11,15)
+    fs_unk	= (11,15)
+    fs_fcr	= (11,15)
     zero4       = (11,15)
     msbd        = (11,15)
+    aclo        = (11,12)
+    achi        = (11,12)
     code        = (6,15)
     bit10       = (10,10)
-    spec2		= (9,10)
-    spec3		= (8,10)
-    simmed9		= (7,15)
+    spec2	= (9,10)
+    spec3	= (8,10)
+    simmed9	= (7,15)
     zero2       = (7,10)
     fdD         = (6,10)
     fd          = (6,10)
@@ -523,7 +531,7 @@ define token instr(32)
     simmed18	= (0,17) signed
     immed       = (0,15)
     simmed      = (0,15) signed
-    simmseq		= (6,15) signed
+    simmseq	= (6,15) signed
     simmed11	= (0,10)
 ;
 
@@ -667,12 +675,15 @@ attach variables [ rd0_7 ] [
     DataLo.7        DataHi.7        cop0_reg30.7    cop0_reg31.7
 ];
 
+attach variables [ aclo acflo ] [ lo lo1 lo2 lo3 ];
+attach variables [ achi acfhi ] [ hi hi1 hi2 hi3 ];
+
 attach names hint [ 
     "load" "store" "hint2" "hint3" "load_streamed" "store_streamed" "load_retained" "store_retained"
     "hint8" "hint9" "hint10" "hint11" "hint12" "hint13" "hint14" "hint15"
     "hint16" "hint17" "hint18" "hint19" "hint20" "hint21" "hint22" "hint23" "hint24"
     "writeback_invalidate" "hint26" "hint27" "hint28" "hint29" "PrepareForStore" "hint31" ];
-    
+
 
 # Subconstructors
 RD0: rd0_0  is rd0_0 & sel=0  { export rd0_0; }

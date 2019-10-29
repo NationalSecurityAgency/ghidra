@@ -13,11 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.SwingUtilities;
@@ -83,8 +82,8 @@ public class FixLangId extends GhidraScript {
 		dbh.close();
 	}
 
-	private boolean modifyLanguage(DomainFile df, DBHandle dbh) throws IOException,
-			ImproperUseException {
+	private boolean modifyLanguage(DomainFile df, DBHandle dbh)
+			throws IOException, ImproperUseException {
 
 		// TODO: Check for address map and overlay entries which could break from
 		// changing the memory model !!
@@ -104,9 +103,9 @@ public class FixLangId extends GhidraScript {
 		LanguageDescription desc = null;
 		List<LanguageDescription> descriptions =
 			DefaultLanguageService.getLanguageService().getLanguageDescriptions(true);
-		String[] choices = new String[descriptions.size()];
-		for (int i = 0; i < choices.length; i++) {
-			choices[i] = descriptions.get(i).getLanguageID().getIdAsString();
+		List<String> choices = new ArrayList<>(descriptions.size());
+		for (int i = 0; i < choices.size(); i++) {
+			choices.add(descriptions.get(i).getLanguageID().getIdAsString());
 		}
 
 		try {
@@ -114,9 +113,8 @@ public class FixLangId extends GhidraScript {
 			if (langId != null) {
 				Msg.warn(this, "Changing language ID from '" + record.getString(0) + "' to '" +
 					langId + "' for program: " + df.getName());
-				desc =
-					DefaultLanguageService.getLanguageService().getLanguageDescription(
-						new LanguageID(langId));
+				desc = DefaultLanguageService.getLanguageService().getLanguageDescription(
+					new LanguageID(langId));
 				long txId = dbh.startTransaction();
 				try {
 					record.setString(0, langId);
@@ -140,20 +138,12 @@ public class FixLangId extends GhidraScript {
 	public DomainFile askProgramFile(String title) {
 		final DomainFile[] domainFile = new DomainFile[] { null };
 		final DataTreeDialog dtd = new DataTreeDialog(null, title, DataTreeDialog.OPEN);
-		dtd.addOkActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				dtd.close();
-				domainFile[0] = dtd.getDomainFile();
-			}
+		dtd.addOkActionListener(e -> {
+			dtd.close();
+			domainFile[0] = dtd.getDomainFile();
 		});
 		try {
-			SwingUtilities.invokeAndWait(new Runnable() {
-				@Override
-				public void run() {
-					dtd.showComponent();
-				}
-			});
+			SwingUtilities.invokeAndWait(() -> dtd.showComponent());
 		}
 		catch (Exception e) {
 			return null;

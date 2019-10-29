@@ -214,6 +214,8 @@ public:
   const FlowBlock *getFrontLeaf(void) const;				///< Get the first leaf FlowBlock
   FlowBlock *getFrontLeaf(void);					///< Get the first leaf FlowBlock
   int4 calcDepth(const FlowBlock *leaf) const;		///< Get the depth of the given component FlowBlock
+  bool dominates(const FlowBlock *subBlock) const;	///< Does \b this block dominate the given block
+  bool restrictedByConditional(const FlowBlock *cond) const;
   int4 sizeOut(void) const { return outofthis.size(); }	///< Get the number of out edges
   int4 sizeIn(void) const { return intothis.size(); }	///< Get the number of in edges
   bool hasLoopIn(void) const;				///< Is there a looping edge coming into \b this block
@@ -256,6 +258,7 @@ public:
   static bool compareBlockIndex(const FlowBlock *bl1,const FlowBlock *bl2);	///< Compare FlowBlock by index
   static bool compareFinalOrder(const FlowBlock *bl1,const FlowBlock *bl2);	///< Final FlowBlock comparison
   static FlowBlock *findCommonBlock(FlowBlock *bl1,FlowBlock *bl2);	///< Find the common dominator of two FlowBlocks
+  static FlowBlock *findCommonBlock(const vector<FlowBlock *> &blockSet);	///< Find common dominator of multiple FlowBlocks
 };
 
 /// \brief A control-flow block built out of sub-components
@@ -324,7 +327,7 @@ public:
   BlockWhileDo *newBlockWhileDo(FlowBlock *cond,FlowBlock *cl);			///< Build a new BlockWhileDo
   BlockDoWhile *newBlockDoWhile(FlowBlock *condcl);				///< Build a new BlockDoWhile
   BlockInfLoop *newBlockInfLoop(FlowBlock *body);				///< Build a new BlockInfLoop
-  BlockSwitch *newBlockSwitch(const vector<FlowBlock *> &cs);			///< Build a new BlockSwitch
+  BlockSwitch *newBlockSwitch(const vector<FlowBlock *> &cs,bool hasExit);	///< Build a new BlockSwitch
 
   void orderBlocks(void) {	///< Sort blocks using the final ordering
     if (list.size()!=1) sort(list.begin(),list.end(),compareFinalOrder); }

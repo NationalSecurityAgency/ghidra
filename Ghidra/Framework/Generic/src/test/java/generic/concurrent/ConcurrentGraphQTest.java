@@ -23,6 +23,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import generic.test.AbstractGenericTest;
+import ghidra.util.graph.AbstractDependencyGraph;
 import ghidra.util.graph.DependencyGraph;
 import ghidra.util.task.TaskMonitor;
 
@@ -32,11 +33,11 @@ public class ConcurrentGraphQTest extends AbstractGenericTest {
 		super();
 	}
 
-@Test
-    public void test() throws InterruptedException, Exception {
-		final ArrayList<String> completionOrder = new ArrayList<String>();
+	@Test
+	public void test() throws InterruptedException, Exception {
+		final ArrayList<String> completionOrder = new ArrayList<>();
 
-		DependencyGraph<String> graph = new DependencyGraph<String>();
+		AbstractDependencyGraph<String> graph = new DependencyGraph<>();
 		graph.addDependency("@0", "A8");
 		graph.addDependency("@1", "A1");
 		graph.addDependency("@2", "A7");
@@ -71,10 +72,10 @@ public class ConcurrentGraphQTest extends AbstractGenericTest {
 
 		assertTrue(!graph.hasCycles());
 
-		DependencyGraph<String> savedGraph = graph.copy();
+		AbstractDependencyGraph<String> savedGraph = graph.copy();
 
 		GThreadPool pool = GThreadPool.getPrivateThreadPool("ConcurrentGraphQ Test");
-		QRunnable<String> runnable = new QRunnable<String>() {
+		QRunnable<String> runnable = new QRunnable<>() {
 
 			@Override
 			public void run(String item, TaskMonitor monitor) throws Exception {
@@ -87,7 +88,7 @@ public class ConcurrentGraphQTest extends AbstractGenericTest {
 			}
 		};
 
-		ConcurrentGraphQ<String> queue = new ConcurrentGraphQ<String>(runnable, graph, pool, null);
+		ConcurrentGraphQ<String> queue = new ConcurrentGraphQ<>(runnable, graph, pool, null);
 		queue.execute();
 		checkOrderSatisfiesDependencies(savedGraph, completionOrder);
 	}
@@ -101,7 +102,7 @@ public class ConcurrentGraphQTest extends AbstractGenericTest {
 	 * @param visitedOrder the actual execution order to be tested
 	 * @return
 	 */
-	public void checkOrderSatisfiesDependencies(DependencyGraph<String> dependencyGraph,
+	public void checkOrderSatisfiesDependencies(AbstractDependencyGraph<String> dependencyGraph,
 			List<String> visitedOrder) {
 
 		if (visitedOrder.size() > dependencyGraph.size()) {
@@ -111,12 +112,12 @@ public class ConcurrentGraphQTest extends AbstractGenericTest {
 			Assert.fail("Not all items in the graph were visited");
 		}
 
-		HashSet<String> items = new HashSet<String>(visitedOrder);
+		HashSet<String> items = new HashSet<>(visitedOrder);
 		if (items.size() != visitedOrder.size()) {
 			Assert.fail("duplicate item(s) in linearOrder\n");
 		}
 
-		HashMap<String, Integer> visitedOrderMap = new HashMap<String, Integer>();
+		HashMap<String, Integer> visitedOrderMap = new HashMap<>();
 		for (int i = 0; i < visitedOrder.size(); i++) {
 			visitedOrderMap.put(visitedOrder.get(i), i);
 		}

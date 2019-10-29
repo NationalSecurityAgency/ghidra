@@ -33,6 +33,7 @@ import docking.ActionContext;
 import docking.action.*;
 import docking.dnd.DropTgtAdapter;
 import docking.dnd.Droppable;
+import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.table.*;
 import ghidra.app.events.ProgramSelectionPluginEvent;
 import ghidra.app.util.SelectionTransferData;
@@ -560,6 +561,9 @@ public class EditReferencesProvider extends ComponentProviderAdapter
 
 	@Override
 	public void closeComponent() {
+
+		// end any table editing; this prevents exceptions on focus changes when closing this editor
+		refsTable.editingStopped(new ChangeEvent(refsTable));
 		super.closeComponent();
 		plugin.providerClosed(this);
 	}
@@ -667,7 +671,7 @@ public class EditReferencesProvider extends ComponentProviderAdapter
 		col.setMaxWidth(80);
 		col.setResizable(false);
 
-		docking.ToolTipManager.sharedInstance().registerComponent(refsTable);
+		ToolTipManager.sharedInstance().registerComponent(refsTable);
 
 		dropTargetAdapter = new DropTgtAdapter(dropHandler, DnDConstants.ACTION_COPY_OR_MOVE,
 			ACCEPTABLE_DROP_FLAVORS);
@@ -894,7 +898,7 @@ public class EditReferencesProvider extends ComponentProviderAdapter
 				comboBox.addItem(rt);
 			}
 			if (selectedIndex < 0) {
-				comboBox.insertItemAt(value, 0);
+				comboBox.insertItemAt((RefType) value, 0);
 				selectedIndex = 0;
 			}
 			comboBox.setSelectedIndex(selectedIndex);
@@ -903,18 +907,12 @@ public class EditReferencesProvider extends ComponentProviderAdapter
 		}
 	}
 
-	private class CellEditComboBox extends JComboBox {
+	private class CellEditComboBox extends JComboBox<RefType> {
 
-		/**
-		 * Constructor for MemRefComboBox.
-		 */
 		public CellEditComboBox() {
 			super();
 		}
 
-		/**
-		 * @see javax.swing.JComboBox#setSelectedIndex(int)
-		 */
 		@Override
 		public void setSelectedIndex(int anIndex) {
 			if (refsTable.getRowCount() == 0) {
@@ -976,7 +974,7 @@ public class EditReferencesProvider extends ComponentProviderAdapter
 		private JCheckBox checkbox;
 
 		RefCellBooleanEditor() {
-			super(new JCheckBox());
+			super(new GCheckBox());
 			setClickCountToStart(1);
 			checkbox = (JCheckBox) editorComponent;
 			checkbox.setOpaque(false);

@@ -121,7 +121,7 @@ public class RepositoryManager {
 
 		validateUser(currentUser);
 
-		if (!NamingUtilities.isValidName(name)) {
+		if (!NamingUtilities.isValidProjectName(name)) {
 			throw new IOException("Invalid repository name: " + name);
 		}
 		if (repositoryMap.containsKey(name)) {
@@ -225,7 +225,11 @@ public class RepositoryManager {
 	}
 
 	/**
-	 * Return array of users known to this manager.
+	 * Get all defined users. If currentUser is an
+	 * Anonymous user an empty array will be returned.
+	 * @param currentUser current user
+	 * @return array of users known to this manager or empty array if 
+	 * we should not reveal to currentUser.
 	 */
 	public synchronized String[] getAllUsers(String currentUser) throws IOException {
 		if (isAnonymousUser(currentUser)) {
@@ -240,9 +244,6 @@ public class RepositoryManager {
 		}
 	}
 
-	/**
-	 * Returns UserManager object
-	 */
 	public UserManager getUserManager() {
 		return userMgr;
 	}

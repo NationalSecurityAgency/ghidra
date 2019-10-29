@@ -1,9 +1,7 @@
 ##VERSION: 2.0
 ##MODULE IP: BSD
-##MODULE IP: Oxygen Icons - LGPL 3.0
 ##MODULE IP: FAMFAMFAM Icons - CC 2.5
-.classpath||GHIDRA||||END|
-.project||GHIDRA||||END|
+##MODULE IP: Oxygen Icons - LGPL 3.0
 Module.manifest||GHIDRA||||END|
 build.gradle||GHIDRA||||END|
 src/main/docs/README.txt||GHIDRA||||END|

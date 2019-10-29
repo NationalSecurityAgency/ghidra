@@ -1,0 +1,244 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+     This is the processor specification for the HCS08 (68HCS08) MC9S08GB60 variant.
+-->
+<processor_spec>
+  <programcounter register="PC"/>
+  <volatile outputop="write_volatile" inputop="read_volatile">
+    <range space="RAM" first="0x0"    last="0x7F"/>
+    <range space="RAM" first="0x1800" last="0x182B"/>
+  </volatile>
+  <default_symbols>
+    <symbol name="PTAD"    address="0"/>
+    <symbol name="PTAPE"   address="1"/>
+    <symbol name="PTASE"   address="2"/>
+    <symbol name="PTADD"   address="3"/>
+    <symbol name="PTBD"    address="4"/>
+    <symbol name="PTBPE"   address="5"/>
+    <symbol name="PTBSE"   address="6"/>
+    <symbol name="PTBDD"   address="7"/>
+    <symbol name="PTCD"    address="8"/>
+    <symbol name="PTCPE"   address="9"/>
+    <symbol name="PTCSE"   address="A"/>
+    <symbol name="PTCDD"   address="B"/>
+    <symbol name="PTDD"    address="C"/>
+    <symbol name="PTDPE"   address="D"/>
+    <symbol name="PTDSE"   address="E"/>
+    <symbol name="PTDDD"   address="F"/>
+    <symbol name="PTED"    address="10"/>
+    <symbol name="PTEPE"   address="11"/>
+    <symbol name="PTESE"   address="12"/>
+    <symbol name="PTEDD"   address="13"/>
+    <symbol name="IRQSC"   address="14"/>
+    <symbol name="Reserved_15"  address="15"/>
+    <symbol name="KBI1SC"   address="16"/>
+    <symbol name="KBI1PE"   address="17"/>
+    <symbol name="SCI1BDH" address="18"/>
+    <symbol name="SCI1BDL" address="19"/>
+    <symbol name="SCI1C1"  address="1A"/>
+    <symbol name="SCI1C2"  address="1B"/>
+    <symbol name="SCI1S1"  address="1C"/>
+    <symbol name="SCI1S2"  address="1D"/>
+    <symbol name="SCI1C3"  address="1E"/>
+    <symbol name="SCI1D"   address="1F"/>
+    <symbol name="SCI2BDH" address="20"/>
+    <symbol name="SCI2BDL" address="21"/>
+    <symbol name="SCI2C1"  address="22"/>
+    <symbol name="SCI2C2"  address="23"/>
+    <symbol name="SCI2S1"  address="24"/>
+    <symbol name="SCI2S2"  address="25"/>
+    <symbol name="SCI2C3"  address="26"/>
+    <symbol name="SCI2D"   address="27"/>
+    <symbol name="SPI1C1"   address="28"/>
+    <symbol name="SPI1C2"   address="29"/>
+    <symbol name="SPI1BR"   address="2A"/>
+    <symbol name="SPI1S"    address="2B"/>
+    <symbol name="Reserved_2C"  address="2C"/>
+    <symbol name="SPI1D"    address="2D"/>
+    <symbol name="Reserved_2E"  address="2E"/>
+    <symbol name="Reserved_2F"  address="2F"/>
+    <symbol name="TPM1SC"    address="30"/>
+    <symbol name="TPM1CNTH"  address="31"/>
+    <symbol name="TPM1CNTL"  address="32"/>
+    <symbol name="TPM1MODH"  address="33"/>
+    <symbol name="TPM1MODL"  address="34"/>
+    <symbol name="TPM1C0SC"  address="35"/>
+    <symbol name="TPM1C0VH"  address="36"/>
+    <symbol name="TPM1COVL"  address="37"/>
+    <symbol name="TPM1C1SC"  address="38"/>
+    <symbol name="TPM1C1VH"  address="39"/>
+    <symbol name="TPM1C1VL"  address="3A"/>
+    <symbol name="TPM1C2SC"  address="3B"/>
+    <symbol name="TPM1C2VH"  address="3C"/>
+    <symbol name="TPM1C2VL"  address="3D"/>
+    <symbol name="Reserved_3E"  address="3E"/>
+    <symbol name="Reserved_3F"  address="3F"/>
+    <symbol name="PTFD"     address="40"/>
+    <symbol name="PTFPE"    address="41"/>
+    <symbol name="PTFSE"    address="42"/>
+    <symbol name="PTFDD"    address="43"/>
+    <symbol name="PTGD"     address="44"/>
+    <symbol name="PTGPE"    address="45"/>
+    <symbol name="PTGSE"    address="46"/>
+    <symbol name="PTGDD"    address="47"/>
+    <symbol name="ICGC1"    address="48"/>
+    <symbol name="ICGC2"    address="49"/>
+    <symbol name="ICGS1"    address="4A"/>
+    <symbol name="ICGS2"    address="4B"/>
+    <symbol name="ICGFLTU"  address="4C"/>
+    <symbol name="ICGFLTL"  address="4D"/>
+    <symbol name="ICGTRM"   address="4E"/>
+    <symbol name="Reserved_4F"   address="4F"/>
+    <symbol name="ATD1C"     address="50"/>
+    <symbol name="ATD1SC"    address="51"/>
+    <symbol name="ATD1RH"    address="52"/>
+    <symbol name="ATD1RL"    address="53"/>
+    <symbol name="ATD1PE"    address="54"/>
+    <symbol name="Reserved_55"  address="55"/>
+    <symbol name="Reserved_56"  address="56"/>
+    <symbol name="Reserved_57"  address="57"/>
+    <symbol name="IIC1A"     address="58"/>
+    <symbol name="IIC1F"     address="59"/>
+    <symbol name="IIC1C"     address="5A"/>
+    <symbol name="IIC1S"     address="5B"/>
+    <symbol name="IIC1D"     address="5C"/>
+    <symbol name="Reserved_5D"  address="5D"/>
+    <symbol name="Reserved_5E"  address="5E"/>
+    <symbol name="Reserved_5F"  address="5F"/>
+    <symbol name="TPM2SC"    address="60"/>
+    <symbol name="TPM2CNTH"  address="61"/>
+    <symbol name="TPM2CNTL"  address="62"/>
+    <symbol name="TPM2MODH"  address="63"/>
+    <symbol name="TPM2MODL"  address="64"/>
+    <symbol name="TPM2C0SC"  address="65"/>
+    <symbol name="TPM2C0VH"  address="66"/>
+    <symbol name="TPM2C0VL"  address="67"/>
+    <symbol name="TPM2C1SC"  address="68"/>
+    <symbol name="TPM2C1VH"  address="69"/>
+    <symbol name="TPM2C1VL"  address="6A"/>
+    <symbol name="TPM2C2SC"  address="6B"/>
+    <symbol name="TPM2C2VH"  address="6C"/>
+    <symbol name="TPM2C2VL"  address="6D"/>
+    <symbol name="TPM2C3SC"  address="6E"/>
+    <symbol name="TPM2C3VH"  address="6F"/>
+    <symbol name="TPM2C3VL"  address="70"/>
+    <symbol name="TPM2C4SC"  address="71"/>
+    <symbol name="TPM2C4VH"  address="72"/>
+    <symbol name="TPM2C4VL"  address="73"/>
+    <symbol name="Reserved_74"  address="74"/>
+    <symbol name="Reserved_75"  address="75"/>
+    <symbol name="Reserved_76"  address="76"/>
+    <symbol name="Reserved_77"  address="77"/>
+    <symbol name="Reserved_78"  address="78"/>
+    <symbol name="Reserved_79"  address="79"/>
+    <symbol name="Reserved_7A"  address="7A"/>
+    <symbol name="Reserved_7B"  address="7B"/>
+    <symbol name="Reserved_7C"  address="7C"/>
+    <symbol name="Reserved_7D"  address="7D"/>
+    <symbol name="Reserved_7E"  address="7E"/>
+    <symbol name="Reserved_7F"  address="7F"/>
+    <symbol name="SRS"    address="1800"/>
+    <symbol name="SBDFR"   address="1801"/>
+    <symbol name="SOPT"   address="1802"/>
+    <symbol name="Reserved_1803"   address="1803"/>
+    <symbol name="Reserved_1804"    address="1804"/>
+    <symbol name="Reserved_1805"   address="1805"/>
+    <symbol name="SDIDH"   address="1806"/>
+    <symbol name="SDIDL"   address="1807"/>
+    <symbol name="SRTISC"    address="1808"/>
+    <symbol name="SPMSC1"   address="1809"/>
+    <symbol name="SPMSC2"   address="180A"/>
+    <symbol name="Reserved_180B"   address="180B"/>
+    <symbol name="Reserved_180C"   address="180C"/>
+    <symbol name="Reserved_180D"   address="180D"/>
+    <symbol name="Reserved_180E"   address="180E"/>
+    <symbol name="Reserved_180F"   address="180F"/>
+    <symbol name="DBGCAH"    address="1810"/>
+    <symbol name="DBGCAL"   address="1811"/>
+    <symbol name="DBGCBH"   address="1812"/>
+    <symbol name="DBGCBL"   address="1813"/>
+    <symbol name="DBGFH"   address="1814"/>
+    <symbol name="DBGFL"  address="1815"/>
+    <symbol name="DBGC"   address="1816"/>
+    <symbol name="DBGT"   address="1817"/>
+    <symbol name="DBGS"   address="1818"/>
+    <symbol name="Reserved_1819"  address="1819"/>
+    <symbol name="Reserved_181A"  address="181A"/>
+    <symbol name="Reserved_181B"  address="181B"/>
+    <symbol name="Reserved_181C"  address="181C"/>
+    <symbol name="Reserved_181D"  address="181D"/>
+    <symbol name="Reserved_181E"  address="181E"/>
+    <symbol name="Reserved_181F"  address="181F"/>
+    <symbol name="FCDIV" address="1820"/>
+    <symbol name="FOPT" address="1821"/>
+    <symbol name="Reserved_1822"  address="1822"/>
+    <symbol name="FCNFG"  address="1823"/>
+    <symbol name="FPROT"  address="1824"/>
+    <symbol name="FSTAT"  address="1825"/>
+    <symbol name="FCMD"   address="1826"/>
+    <symbol name="Reserved_1827"   address="1827"/>
+    <symbol name="Reserved_1828"   address="1828"/>
+    <symbol name="Reserved_1829"   address="1829"/>
+    <symbol name="Reserved_182A"   address="182A"/>
+    <symbol name="Reserved_182B"   address="182B"/>
+    <symbol name="NVBACKKEY0"   address="FFB0"/>
+    <symbol name="NVBACKKEY1"   address="FFB1"/>
+    <symbol name="NVBACKKEY2"   address="FFB2"/>
+    <symbol name="NVBACKKEY3"   address="FFB3"/>
+    <symbol name="NVBACKKEY4"   address="FFB4"/>
+    <symbol name="NVBACKKEY5"   address="FFB5"/>
+    <symbol name="NVBACKKEY6"   address="FFB6"/>
+    <symbol name="NVBACKKEY7"   address="FFB7"/>
+    <symbol name="Reserved_FFB8"   address="FFB8"/>
+    <symbol name="Reserved_FFB9"   address="FFB9"/>
+    <symbol name="Reserved_FFBA"   address="FFBA"/>
+    <symbol name="Reserved_FFBB"   address="FFBB"/>
+    <symbol name="Reserved_FFBC"   address="FFBC"/>
+    <symbol name="NVPROT"   address="FFBD"/>
+    <symbol name="Reserved_FFBE"   address="FFBE"/>
+    <symbol name="NVOPT"   address="FFBF"/>
+    <symbol name="VECTOR_USER_FFC0"            address="FFC0" entry="true" type="code_ptr"/>
+    <symbol name="VECTOR_USER_FFC2"            address="FFC2" entry="true" type="code_ptr"/>
+    <symbol name="VECTOR_USER_FFC4"            address="FFC4" entry="true" type="code_ptr"/>
+    <symbol name="VECTOR_USER_FFC6"            address="FFC6" entry="true" type="code_ptr"/>
+    <symbol name="VECTOR_USER_FFC8"            address="FFC8" entry="true" type="code_ptr"/>
+    <symbol name="VECTOR_USER_FFCA"            address="FFCA" entry="true" type="code_ptr"/>
+    <symbol name="VECTOR_RTI"                  address="FFCC" entry="true" type="code_ptr"/>
+    <symbol name="VECTOR_IIC"                  address="FFCE" entry="true" type="code_ptr"/>
+    <symbol name="VECTOR_ATD_Conversion"       address="FFD0" entry="true" type="code_ptr"/>
+    <symbol name="VECTOR_Keyboard"             address="FFD2" entry="true" type="code_ptr"/>
+    <symbol name="VECTOR_SCI2_Transmit"        address="FFD4" entry="true" type="code_ptr"/>
+    <symbol name="VECTOR_SCI2_Receive"         address="FFD6" entry="true" type="code_ptr"/>
+    <symbol name="VECTOR_SCI2_Error"           address="FFD8" entry="true" type="code_ptr"/>
+    <symbol name="VECTOR_SCI1_Transmit"        address="FFDA" entry="true" type="code_ptr"/>
+    <symbol name="VECTOR_SCI1_Receive"         address="FFDC" entry="true" type="code_ptr"/>
+    <symbol name="VECTOR_SCI1_Error"           address="FFDE" entry="true" type="code_ptr"/>
+    <symbol name="VECTOR_SPI"                  address="FFE0" entry="true" type="code_ptr"/>
+    <symbol name="VECTOR_TPM2_Overflow"        address="FFE2" entry="true" type="code_ptr"/>
+    <symbol name="VECTOR_TPM2_Channel_4"       address="FFE4" entry="true" type="code_ptr"/>
+    <symbol name="VECTOR_TPM2_Channel_3"       address="FFE6" entry="true" type="code_ptr"/>
+    <symbol name="VECTOR_TPM2_Channel_2"       address="FFE8" entry="true" type="code_ptr"/>
+    <symbol name="VECTOR_TPM2_Channel_1"       address="FFEA" entry="true" type="code_ptr"/>
+    <symbol name="VECTOR_TPM2_Channel_0"       address="FFEC" entry="true" type="code_ptr"/>
+    <symbol name="VECTOR_TPM1_Overflow"        address="FFEE" entry="true" type="code_ptr"/>
+    <symbol name="VECTOR_TPM1_Channel_2"       address="FFF0" entry="true" type="code_ptr"/>
+    <symbol name="VECTOR_TPM1_Channel_1"       address="FFF2" entry="true" type="code_ptr"/>
+    <symbol name="VECTOR_TPM1_Channel_0"       address="FFF4" entry="true" type="code_ptr"/>
+    <symbol name="VECTOR_ICG"                  address="FFF6" entry="true" type="code_ptr"/>
+    <symbol name="VECTOR_Low_Voltage_Detect"   address="FFF8" entry="true" type="code_ptr"/>
+    <symbol name="VECTOR_IRQ"                  address="FFFA" entry="true" type="code_ptr"/>
+    <symbol name="VECTOR_SWI"                  address="FFFC" entry="true" type="code_ptr"/>
+    <symbol name="VECTOR_Reset"                address="FFFE" entry="true" type="code_ptr"/>
+  </default_symbols>
+  <default_memory_blocks>
+    <memory_block name="DIRECT_PAGE_REGISTERS"  start_address="0x0000" length="0x0080" initialized="false"/>
+    <memory_block name="LOW_RAM"                start_address="0x0080" length="0x0080" initialized="false"/>
+    <memory_block name="MAIN_RAM"               start_address="0x0100" length="0x0F80" initialized="false"/>
+    <memory_block name="HIGH_PAGE_REGISTERS"    start_address="0x1800" length="0x002C" initialized="false"/>
+<!--
+    <memory_block name="FLASH1"                 start_address="0x1080" length="0x0780" initialized="false"/>
+    <memory_block name="FLASH2"                 start_address="0x182C" length="0xE7D4" initialized="false"/>
+    <memory_block name="NON-VOLATILE_REGISTERS" start_address="0xFFB0" length="0x0010" initialized="false"/>
+-->
+  </default_memory_blocks>
+</processor_spec>

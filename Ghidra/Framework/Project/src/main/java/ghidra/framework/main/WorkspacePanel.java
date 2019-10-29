@@ -25,6 +25,7 @@ import javax.swing.border.Border;
 
 import docking.help.Help;
 import docking.help.HelpService;
+import docking.widgets.combobox.GComboBox;
 import docking.widgets.dialogs.InputDialog;
 import ghidra.framework.model.*;
 import ghidra.util.HelpLocation;
@@ -65,7 +66,7 @@ class WorkspacePanel extends JPanel implements WorkspaceChangeListener {
 		// create the combo box that allows the user to choose which
 		// workspace becomes active
 		workspaceModel = new DefaultComboBoxModel<>();
-		workspaceChooser = new JComboBox<>(workspaceModel);
+		workspaceChooser = new GComboBox<>(workspaceModel);
 		workspaceChooser.addItemListener(e -> {
 			if (e.getStateChange() == ItemEvent.SELECTED) {
 				chooseWorkspace((String) workspaceModel.getSelectedItem());

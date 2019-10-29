@@ -263,6 +263,9 @@ public class VariableUtilities {
 	 */
 	public static DataType checkDataType(DataType dataType, boolean voidOK, int defaultSize,
 			Program program) throws InvalidInputException {
+		if (dataType instanceof BitFieldDataType) {
+			throw new InvalidInputException("Bitfields not supported for variable");
+		}
 		if (dataType == null) {
 			if (voidOK) {
 				return VoidDataType.dataType;
@@ -412,6 +415,8 @@ public class VariableUtilities {
 						" bytes: " + curStorage.toString());
 				}
 			}
+			
+			vnAddr = newReg.getAddress();
 			if (bigEndian) {
 				vnAddr = vnAddr.add(newReg.getMinimumByteSize() - size);
 				return new Varnode(vnAddr, size);
@@ -441,14 +446,17 @@ public class VariableUtilities {
 			// complex data-type: always left align
 			// simple data-type: right align within minimum number of aligned cells
 
-			int endStackOffset = stackOffset + varnode.getSize() - 1;
 			int stackAlign = stackAttributes.stackAlign;
 
-			if (endStackOffset % stackAlign != 0) {
+			if ((stackOffset + varnode.getSize() - stackAttributes.bias) % stackAlign != 0) {
 				stackAlign = 1; // was not aligned to start with
 			}
 
-			newStackOffset -= newStackOffset % stackAlign; // left-alignment of start offset
+			int newAlign = (newStackOffset - stackAttributes.bias) % stackAlign;
+			if (newAlign < 0) {
+				newAlign += stackAlign;
+			}
+			newStackOffset -= newAlign;	// left-alignment of start offset
 			if (!complexDt) {
 				// right-align non-complex data
 				int cellExcess = newVarnodeSize % stackAlign;
@@ -470,10 +478,12 @@ public class VariableUtilities {
 	private static class StackAttributes {
 
 		final int stackAlign;
+		final int bias;
 		final boolean rightJustify; // only applies to primitives
 
-		public StackAttributes(int stackAlign, boolean rightJustify) {
+		public StackAttributes(int stackAlign, int bias, boolean rightJustify) {
 			this.stackAlign = stackAlign;
+			this.bias = bias;
 			this.rightJustify = rightJustify;
 		}
 	}
@@ -490,7 +500,15 @@ public class VariableUtilities {
 		if (stackAlign < 0) {
 			stackAlign = 1;
 		}
-		return new StackAttributes(stackAlign, rightJustify);
+		int bias = 0;
+		Long stackBase = callingConvention.getStackParameterOffset();
+		if (stackBase != null) {
+			bias = (int) (stackBase.longValue() % stackAlign);
+			if (bias < 0) {
+				bias += stackAlign;
+			}
+		}
+		return new StackAttributes(stackAlign, bias, rightJustify);
 	}
 
 	/**

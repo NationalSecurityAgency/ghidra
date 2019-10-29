@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<language_definitions>
+  <language processor="HCS12"
+            endian="big"
+            size="24"
+            variant="default"
+            version="1.0"
+            slafile="HCS12.sla"
+            processorspec="HCS12.pspec"
+            manualindexfile="../manuals/HCS12.idx"
+            id="HCS12:BE:24:default">
+    <description>HCS12X Microcontroller Family</description>
+    <compiler name="default" spec="HCS12.cspec" id="default"/>
+    <external_name tool="gnu" name="m9s12x"/>
+  </language>
+</language_definitions>

@@ -33,8 +33,8 @@ is b_2431=0b01011110 & b_2223=0b11 & b_1021=0b100000101110 & Rd_FPR64 & Rn_FPR64
 	Rd_FPR64 = MP_INT_ABS(Rn_FPR64);
 	zext_zd(Zd); # zero upper 24 bytes of Zd
 @elif defined(SEMANTIC_pcode)
-	local tmpd:8 = MP_INT_ABS(Rn_FPR64);
-	Zd = zext(tmpd); # assigning to Rd_FPR64
+	Rd_FPR64 = MP_INT_ABS(Rn_FPR64);
+	zext_zd(Zd); # zero upper 24 bytes of Zd
 @elif defined(SEMANTIC_pseudo)
 	Rd_FPR64 = NEON_abs(Rn_FPR64);
 @endif
@@ -432,10 +432,10 @@ is b_3131=0 & q=1 & u=0 & b_2428=0xe & advSIMD3.size=0 & b_2121=1 & Rm_VPR128.16
 	simd_address_at(tmp3, Rd_VPR128.16B, 15, 1, 16);
 	* [register]:1 tmp3 = (* [register]:1 tmp1) + (* [register]:1 tmp2);
 	zext_zq(Zd); # zero upper 16 bytes of Zd
-@elif defined(SEMANTIC_pcode) && !defined(SEMANTIC_force)
+@elif defined(SEMANTIC_pcode)
 	local tmpd:16 = SIMD_INT_ADD(Rn_VPR128.16B, Rm_VPR128.16B, 1:1);
 	Zd = zext(tmpd); # assigning to Rd_VPR128.16B
-@elif defined(SEMANTIC_pseudo) && !defined(SEMANTIC_force)
+@elif defined(SEMANTIC_pseudo)
 	Rd_VPR128.16B = NEON_add(Rn_VPR128.16B, Rm_VPR128.16B, 1:1);
 @endif
 }
@@ -526,10 +526,10 @@ is b_3131=0 & q=1 & u=0 & b_2428=0xe & advSIMD3.size=2 & b_2121=1 & Rm_VPR128.4S
 	simd_address_at(tmp3, Rd_VPR128.4S, 3, 4, 16);
 	* [register]:4 tmp3 = (* [register]:4 tmp1) + (* [register]:4 tmp2);
 	zext_zq(Zd); # zero upper 16 bytes of Zd
-@elif defined(SEMANTIC_pcode) && !defined(SEMANTIC_force)
+@elif defined(SEMANTIC_pcode)
 	local tmpd:16 = SIMD_INT_ADD(Rn_VPR128.4S, Rm_VPR128.4S, 4:1);
 	Zd = zext(tmpd); # assigning to Rd_VPR128.4S
-@elif defined(SEMANTIC_pseudo) && !defined(SEMANTIC_force)
+@elif defined(SEMANTIC_pseudo)
 	Rd_VPR128.4S = NEON_add(Rn_VPR128.4S, Rm_VPR128.4S, 4:1);
 @endif
 }
@@ -682,10 +682,10 @@ is b_3131=0 & q=0 & u=0 & b_2428=0xe & advSIMD3.size=2 & b_2121=1 & Rm_VPR64.2S 
 	simd_address_at(tmp3, Rd_VPR64.2S, 1, 4, 8);
 	* [register]:4 tmp3 = (* [register]:4 tmp1) + (* [register]:4 tmp2);
 	zext_zd(Zd); # zero upper 24 bytes of Zd
-@elif defined(SEMANTIC_pcode) && !defined(SEMANTIC_force)
+@elif defined(SEMANTIC_pcode)
 	local tmpd:8 = SIMD_INT_ADD(Rn_VPR64.2S, Rm_VPR64.2S, 4:1);
 	Zd = zext(tmpd); # assigning to Rd_VPR64.2S
-@elif defined(SEMANTIC_pseudo) && !defined(SEMANTIC_force)
+@elif defined(SEMANTIC_pseudo)
 	Rd_VPR64.2S = NEON_add(Rn_VPR64.2S, Rm_VPR64.2S, 4:1);
 @endif
 }
@@ -1658,7 +1658,7 @@ is b_3131=0 & q=1 & u=0 & b_2428=0xe & advSIMD3.size=2 & b_1721=0x18 & b_1216=0x
 	local tmp10:4 = tmp7 + tmp9;
 	Rd_FPR32 = tmp5 + tmp10;
 	zext_zs(Zd); # zero upper 28 bytes of Zd
-@elif defined(SEMANTIC_pcode) && !defined(SEMANTIC_force)
+@elif defined(SEMANTIC_pcode)
 	local tmp1:4 = SIMD_PIECE(Rn_VPR128.4S, 0:1);
 	local tmp2:4 = SIMD_PIECE(Rn_VPR128.4S, 1:1);
 	local tmp3:4 = tmp1 + tmp2;
@@ -1667,7 +1667,7 @@ is b_3131=0 & q=1 & u=0 & b_2428=0xe & advSIMD3.size=2 & b_1721=0x18 & b_1216=0x
 	local tmp6:4 = tmp4 + tmp5;
 	local tmpd:4 = tmp3 + tmp6;
 	Zd = zext(tmpd); # assigning to Rd_FPR32
-@elif defined(SEMANTIC_pseudo) && !defined(SEMANTIC_force)
+@elif defined(SEMANTIC_pseudo)
 	Rd_FPR32 = NEON_addv(Rn_VPR128.4S, 4:1);
 @endif
 }
@@ -4291,11 +4291,11 @@ is b_3131=0 & Q=1 & b_29=0 & b_2428=0xe & b_2123=0 & b_16=1 & b_1515=0 & imm4=0x
 	simd_address_at(tmp3, Rd_VPR128.16B, 15, 1, 16);
 	* [register]:1 tmp3 = tmp2;
 	zext_zq(Zd); # zero upper 16 bytes of Zd
-@elif defined(SEMANTIC_pcode) && !defined(SEMANTIC_force)
+@elif defined(SEMANTIC_pcode)
 	local tmp1:1 = SIMD_PIECE(Rn_GPR32, 0:1);
 	local tmpd:16 = SIMD_COPY(Rd_VPR128.16B, tmp1);
 	Zd = zext(tmpd); # assigning to Rd_VPR128.16B
-@elif defined(SEMANTIC_pseudo) && !defined(SEMANTIC_force)
+@elif defined(SEMANTIC_pseudo)
 	Rd_VPR128.16B = NEON_dup(Rd_VPR128.16B, Rn_GPR32, 1:1);
 @endif
 }
@@ -5352,8 +5352,8 @@ is m=0 & b_3030=0 & s=0 & b_2428=0x1e & ftype=3 & b_2121=1 & fpDpOpcode=0x1 & b_
 	Rd_FPR16 = abs(Rn_FPR16);
 	zext_zh(Zd); # zero upper 30 bytes of Zd
 @elif defined(SEMANTIC_pcode)
-	local tmpd:2 = abs(Rn_FPR16);
-	Zd = zext(tmpd); # assigning to Rd_FPR16
+	Rd_FPR16 = abs(Rn_FPR16);
+	zext_zh(Zd); # zero upper 30 bytes of Zd
 @elif defined(SEMANTIC_pseudo)
 	Rd_FPR16 = NEON_fabs(Rn_FPR16);
 @endif
@@ -5372,8 +5372,8 @@ is m=0 & b_3030=0 & s=0 & b_2428=0x1e & ftype=1 & b_2121=1 & fpDpOpcode=0x1 & b_
 	Rd_FPR64 = abs(Rn_FPR64);
 	zext_zd(Zd); # zero upper 24 bytes of Zd
 @elif defined(SEMANTIC_pcode)
-	local tmpd:8 = abs(Rn_FPR64);
-	Zd = zext(tmpd); # assigning to Rd_FPR64
+	Rd_FPR64 = abs(Rn_FPR64);
+	zext_zd(Zd); # zero upper 24 bytes of Zd
 @elif defined(SEMANTIC_pseudo)
 	Rd_FPR64 = NEON_fabs(Rn_FPR64);
 @endif
@@ -5392,8 +5392,8 @@ is m=0 & b_3030=0 & s=0 & b_2428=0x1e & ftype=0 & b_2121=1 & fpDpOpcode=0x1 & b_
 	Rd_FPR32 = abs(Rn_FPR32);
 	zext_zs(Zd); # zero upper 28 bytes of Zd
 @elif defined(SEMANTIC_pcode)
-	local tmpd:4 = abs(Rn_FPR32);
-	Zd = zext(tmpd); # assigning to Rd_FPR32
+	Rd_FPR32 = abs(Rn_FPR32);
+	zext_zs(Zd); # zero upper 28 bytes of Zd
 @elif defined(SEMANTIC_pseudo)
 	Rd_FPR32 = NEON_fabs(Rn_FPR32);
 @endif
@@ -5827,8 +5827,8 @@ is m=0 & b_3030=0 & s=0 & b_2428=0x1e & ftype=1 & b_2121=1 & Rm_FPR64 & b_1215=0
 	Rd_FPR64 = Rn_FPR64 f+ Rm_FPR64;
 	zext_zd(Zd); # zero upper 24 bytes of Zd
 @elif defined(SEMANTIC_pcode)
-	local tmpd:8 = Rn_FPR64 f+ Rm_FPR64;
-	Zd = zext(tmpd); # assigning to Rd_FPR64
+	Rd_FPR64 = Rn_FPR64 f+ Rm_FPR64;
+	zext_zd(Zd); # zero upper 24 bytes of Zd
 @elif defined(SEMANTIC_pseudo)
 	Rd_FPR64 = NEON_fadd(Rn_FPR64, Rm_FPR64);
 @endif
@@ -5847,8 +5847,8 @@ is m=0 & b_3030=0 & s=0 & b_2428=0x1e & ftype=3 & b_2121=1 & Rm_FPR16 & b_1215=0
 	Rd_FPR16 = Rn_FPR16 f+ Rm_FPR16;
 	zext_zh(Zd); # zero upper 30 bytes of Zd
 @elif defined(SEMANTIC_pcode)
-	local tmpd:2 = Rn_FPR16 f+ Rm_FPR16;
-	Zd = zext(tmpd); # assigning to Rd_FPR16
+	Rd_FPR16 = Rn_FPR16 f+ Rm_FPR16;
+	zext_zh(Zd); # zero upper 30 bytes of Zd
 @elif defined(SEMANTIC_pseudo)
 	Rd_FPR16 = NEON_fadd(Rn_FPR16, Rm_FPR16);
 @endif
@@ -5867,8 +5867,8 @@ is m=0 & b_3030=0 & s=0 & b_2428=0x1e & ftype=0 & b_2121=1 & Rm_FPR32 & b_1215=0
 	Rd_FPR32 = Rn_FPR32 f+ Rm_FPR32;
 	zext_zs(Zd); # zero upper 28 bytes of Zd
 @elif defined(SEMANTIC_pcode)
-	local tmpd:4 = Rn_FPR32 f+ Rm_FPR32;
-	Zd = zext(tmpd); # assigning to Rd_FPR32
+	Rd_FPR32 = Rn_FPR32 f+ Rm_FPR32;
+	zext_zs(Zd); # zero upper 28 bytes of Zd
 @elif defined(SEMANTIC_pseudo)
 	Rd_FPR32 = NEON_fadd(Rn_FPR32, Rm_FPR32);
 @endif
@@ -7709,11 +7709,11 @@ is m=0 & b_3030=0 & s=0 & b_2428=0x1e & ftype=1 & b_2121=1 & Rm_FPR64 & CondOp &
 	zext_zd(Zd); # zero upper 24 bytes of Zd
 @elif defined(SEMANTIC_pcode)
 	local tmp1:8 = Rm_FPR64;
-	local tmpd:8 = Rn_FPR64;
-	Zd = zext(tmpd); # assigning to Rd_FPR64
+	Rd_FPR64 = Rn_FPR64;
+	zext_zd(Zd); # zero upper 24 bytes of Zd
 	if (CondOp:1) goto inst_next;
-	tmpd = tmp1;
-	Zd = zext(tmpd); # assigning to Rd_FPR64
+	Rd_FPR64 = tmp1;
+	zext_zd(Zd); # zero upper 24 bytes of Zd
 @elif defined(SEMANTIC_pseudo)
 	Rd_FPR64 = NEON_fcsel(Rn_FPR64, Rm_FPR64, CondOp:1);
 @endif
@@ -7737,11 +7737,11 @@ is m=0 & b_3030=0 & s=0 & b_2428=0x1e & ftype=0 & b_2121=1 & Rm_FPR32 & CondOp &
 	zext_zs(Zd); # zero upper 28 bytes of Zd
 @elif defined(SEMANTIC_pcode)
 	local tmp1:4 = Rm_FPR32;
-	local tmpd:4 = Rn_FPR32;
-	Zd = zext(tmpd); # assigning to Rd_FPR32
+	Rd_FPR32 = Rn_FPR32;
+	zext_zs(Zd); # zero upper 28 bytes of Zd
 	if (CondOp:1) goto inst_next;
-	tmpd = tmp1;
-	Zd = zext(tmpd); # assigning to Rd_FPR32
+	Rd_FPR32 = tmp1;
+	zext_zs(Zd); # zero upper 28 bytes of Zd
 @elif defined(SEMANTIC_pseudo)
 	Rd_FPR32 = NEON_fcsel(Rn_FPR32, Rm_FPR32, CondOp:1);
 @endif
@@ -7765,11 +7765,11 @@ is m=0 & b_3030=0 & s=0 & b_2428=0x1e & ftype=3 & b_2121=1 & Rm_FPR16 & CondOp &
 	zext_zh(Zd); # zero upper 30 bytes of Zd
 @elif defined(SEMANTIC_pcode)
 	local tmp1:2 = Rm_FPR16;
-	local tmpd:2 = Rn_FPR16;
-	Zd = zext(tmpd); # assigning to Rd_FPR16
+	Rd_FPR16 = Rn_FPR16;
+	zext_zh(Zd); # zero upper 30 bytes of Zd
 	if (CondOp:1) goto inst_next;
-	tmpd = tmp1;
-	Zd = zext(tmpd); # assigning to Rd_FPR16
+	Rd_FPR16 = tmp1;
+	zext_zh(Zd); # zero upper 30 bytes of Zd
 @elif defined(SEMANTIC_pseudo)
 	Rd_FPR16 = NEON_fcsel(Rn_FPR16, Rm_FPR16, CondOp:1);
 @endif
@@ -7788,8 +7788,8 @@ is m=0 & b_3030=0 & s=0 & b_2428=0x1e & ftype=3 & b_2121=1 & fpDpOpcode=0x5 & b_
 	Rd_FPR64 = float2float(Rn_FPR16);
 	zext_zd(Zd); # zero upper 24 bytes of Zd
 @elif defined(SEMANTIC_pcode)
-	local tmpd:8 = float2float(Rn_FPR16);
-	Zd = zext(tmpd); # assigning to Rd_FPR64
+	Rd_FPR64 = float2float(Rn_FPR16);
+	zext_zd(Zd); # zero upper 24 bytes of Zd
 @elif defined(SEMANTIC_pseudo)
 	Rd_FPR64 = NEON_fcvt(Rn_FPR16);
 @endif
@@ -7808,8 +7808,8 @@ is m=0 & b_3030=0 & s=0 & b_2428=0x1e & ftype=0 & b_2121=1 & fpDpOpcode=0x5 & b_
 	Rd_FPR64 = float2float(Rn_FPR32);
 	zext_zd(Zd); # zero upper 24 bytes of Zd
 @elif defined(SEMANTIC_pcode)
-	local tmpd:8 = float2float(Rn_FPR32);
-	Zd = zext(tmpd); # assigning to Rd_FPR64
+	Rd_FPR64 = float2float(Rn_FPR32);
+	zext_zd(Zd); # zero upper 24 bytes of Zd
 @elif defined(SEMANTIC_pseudo)
 	Rd_FPR64 = NEON_fcvt(Rn_FPR32);
 @endif
@@ -7828,8 +7828,8 @@ is m=0 & b_3030=0 & s=0 & b_2428=0x1e & ftype=1 & b_2121=1 & fpDpOpcode=0x7 & b_
 	Rd_FPR16 = float2float(Rn_FPR64);
 	zext_zh(Zd); # zero upper 30 bytes of Zd
 @elif defined(SEMANTIC_pcode)
-	local tmpd:2 = float2float(Rn_FPR64);
-	Zd = zext(tmpd); # assigning to Rd_FPR16
+	Rd_FPR16 = float2float(Rn_FPR64);
+	zext_zh(Zd); # zero upper 30 bytes of Zd
 @elif defined(SEMANTIC_pseudo)
 	Rd_FPR16 = NEON_fcvt(Rn_FPR64);
 @endif
@@ -7848,8 +7848,8 @@ is m=0 & b_3030=0 & s=0 & b_2428=0x1e & ftype=0 & b_2121=1 & fpDpOpcode=0x7 & b_
 	Rd_FPR16 = float2float(Rn_FPR32);
 	zext_zh(Zd); # zero upper 30 bytes of Zd
 @elif defined(SEMANTIC_pcode)
-	local tmpd:2 = float2float(Rn_FPR32);
-	Zd = zext(tmpd); # assigning to Rd_FPR16
+	Rd_FPR16 = float2float(Rn_FPR32);
+	zext_zh(Zd); # zero upper 30 bytes of Zd
 @elif defined(SEMANTIC_pseudo)
 	Rd_FPR16 = NEON_fcvt(Rn_FPR32);
 @endif
@@ -7868,8 +7868,8 @@ is m=0 & b_3030=0 & s=0 & b_2428=0x1e & ftype=1 & b_2121=1 & fpDpOpcode=0x4 & b_
 	Rd_FPR32 = float2float(Rn_FPR64);
 	zext_zs(Zd); # zero upper 28 bytes of Zd
 @elif defined(SEMANTIC_pcode)
-	local tmpd:4 = float2float(Rn_FPR64);
-	Zd = zext(tmpd); # assigning to Rd_FPR32
+	Rd_FPR32 = float2float(Rn_FPR64);
+	zext_zs(Zd); # zero upper 28 bytes of Zd
 @elif defined(SEMANTIC_pseudo)
 	Rd_FPR32 = NEON_fcvt(Rn_FPR64);
 @endif
@@ -7888,8 +7888,8 @@ is m=0 & b_3030=0 & s=0 & b_2428=0x1e & ftype=3 & b_2121=1 & fpDpOpcode=0x4 & b_
 	Rd_FPR32 = float2float(Rn_FPR16);
 	zext_zs(Zd); # zero upper 28 bytes of Zd
 @elif defined(SEMANTIC_pcode)
-	local tmpd:4 = float2float(Rn_FPR16);
-	Zd = zext(tmpd); # assigning to Rd_FPR32
+	Rd_FPR32 = float2float(Rn_FPR16);
+	zext_zs(Zd); # zero upper 28 bytes of Zd
 @elif defined(SEMANTIC_pseudo)
 	Rd_FPR32 = NEON_fcvt(Rn_FPR16);
 @endif
@@ -9844,8 +9844,8 @@ is m=0 & b_3030=0 & s=0 & b_2428=0x1e & ftype=1 & b_2121=1 & Rm_FPR64 & b_1215=0
 	Rd_FPR64 = Rn_FPR64 f/ Rm_FPR64;
 	zext_zd(Zd); # zero upper 24 bytes of Zd
 @elif defined(SEMANTIC_pcode)
-	local tmpd:8 = Rn_FPR64 f/ Rm_FPR64;
-	Zd = zext(tmpd); # assigning to Rd_FPR64
+	Rd_FPR64 = Rn_FPR64 f/ Rm_FPR64;
+	zext_zd(Zd); # zero upper 24 bytes of Zd
 @elif defined(SEMANTIC_pseudo)
 	Rd_FPR64 = NEON_fdiv(Rn_FPR64, Rm_FPR64);
 @endif
@@ -9864,8 +9864,8 @@ is m=0 & b_3030=0 & s=0 & b_2428=0x1e & ftype=0 & b_2121=1 & Rm_FPR32 & b_1215=0
 	Rd_FPR32 = Rn_FPR32 f/ Rm_FPR32;
 	zext_zs(Zd); # zero upper 28 bytes of Zd
 @elif defined(SEMANTIC_pcode)
-	local tmpd:4 = Rn_FPR32 f/ Rm_FPR32;
-	Zd = zext(tmpd); # assigning to Rd_FPR32
+	Rd_FPR32 = Rn_FPR32 f/ Rm_FPR32;
+	zext_zs(Zd); # zero upper 28 bytes of Zd
 @elif defined(SEMANTIC_pseudo)
 	Rd_FPR32 = NEON_fdiv(Rn_FPR32, Rm_FPR32);
 @endif
@@ -9884,8 +9884,8 @@ is m=0 & b_3030=0 & s=0 & b_2428=0x1e & ftype=3 & b_2121=1 & Rm_FPR16 & b_1215=0
 	Rd_FPR16 = Rn_FPR16 f/ Rm_FPR16;
 	zext_zh(Zd); # zero upper 30 bytes of Zd
 @elif defined(SEMANTIC_pcode)
-	local tmpd:2 = Rn_FPR16 f/ Rm_FPR16;
-	Zd = zext(tmpd); # assigning to Rd_FPR16
+	Rd_FPR16 = Rn_FPR16 f/ Rm_FPR16;
+	zext_zh(Zd); # zero upper 30 bytes of Zd
 @elif defined(SEMANTIC_pseudo)
 	Rd_FPR16 = NEON_fdiv(Rn_FPR16, Rm_FPR16);
 @endif
@@ -13628,8 +13628,8 @@ is b_2431=0b00011110 & b_2223=0b11 & b_1021=0b100000010000 & Rd_FPR16 & Rn_FPR16
 	Rd_FPR16 = Rn_FPR16;
 	zext_zh(Zd); # zero upper 30 bytes of Zd
 @elif defined(SEMANTIC_pcode)
-	local tmpd:2 = Rn_FPR16;
-	Zd = zext(tmpd); # assigning to Rd_FPR16
+	Rd_FPR16 = Rn_FPR16;
+	zext_zh(Zd); # zero upper 30 bytes of Zd
 @elif defined(SEMANTIC_pseudo)
 	Rd_FPR16 = NEON_fmov(Rn_FPR16);
 @endif
@@ -13649,8 +13649,8 @@ is b_2431=0b00011110 & b_2223=0b00 & b_1021=0b100000010000 & Rd_FPR32 & Rn_FPR32
 	Rd_FPR32 = Rn_FPR32;
 	zext_zs(Zd); # zero upper 28 bytes of Zd
 @elif defined(SEMANTIC_pcode)
-	local tmpd:4 = Rn_FPR32;
-	Zd = zext(tmpd); # assigning to Rd_FPR32
+	Rd_FPR32 = Rn_FPR32;
+	zext_zs(Zd); # zero upper 28 bytes of Zd
 @elif defined(SEMANTIC_pseudo)
 	Rd_FPR32 = NEON_fmov(Rn_FPR32);
 @endif
@@ -13670,8 +13670,8 @@ is b_2431=0b00011110 & b_2223=0b01 & b_1021=0b100000010000 & Rd_FPR64 & Rn_FPR64
 	Rd_FPR64 = Rn_FPR64;
 	zext_zd(Zd); # zero upper 24 bytes of Zd
 @elif defined(SEMANTIC_pcode)
-	local tmpd:8 = Rn_FPR64;
-	Zd = zext(tmpd); # assigning to Rd_FPR64
+	Rd_FPR64 = Rn_FPR64;
+	zext_zd(Zd); # zero upper 24 bytes of Zd
 @elif defined(SEMANTIC_pseudo)
 	Rd_FPR64 = NEON_fmov(Rn_FPR64);
 @endif
@@ -13691,8 +13691,8 @@ is b_31=0 & b_2430=0b0011110 & b_2223=0b01 & b_21=1 & b_1920=0b00 & b_1618=0b110
 	Rd_GPR32 = float2float(Rn_FPR64);
 	zext_rs(Rd_GPR64); # zero upper 28 bytes of Rd_GPR64
 @elif defined(SEMANTIC_pcode)
-	local tmpd:4 = float2float(Rn_FPR64);
-	Rd_GPR64 = zext(tmpd); # assigning to Rd_GPR32
+	Rd_GPR32 = float2float(Rn_FPR64);
+	zext_rs(Rd_GPR64); # zero upper 28 bytes of Rd_GPR64
 @elif defined(SEMANTIC_pseudo)
 	Rd_GPR32 = NEON_fmov(Rn_FPR64);
 @endif
@@ -13731,8 +13731,8 @@ is b_31=0 & b_2430=0b0011110 & b_2223=0b01 & b_21=1 & b_1920=0b00 & b_1618=0b111
 	Rd_FPR64 = float2float(Rn_GPR32);
 	zext_zd(Zd); # zero upper 24 bytes of Zd
 @elif defined(SEMANTIC_pcode)
-	local tmpd:8 = float2float(Rn_GPR32);
-	Zd = zext(tmpd); # assigning to Rd_FPR64
+	Rd_FPR64 = float2float(Rn_GPR32);
+	zext_zd(Zd); # zero upper 24 bytes of Zd
 @elif defined(SEMANTIC_pseudo)
 	Rd_FPR64 = NEON_fmov(Rn_GPR32);
 @endif
@@ -13752,8 +13752,8 @@ is b_31=1 & b_2430=0b0011110 & b_2223=0b00 & b_21=1 & b_1920=0b00 & b_1618=0b111
 	Rd_FPR32 = float2float(Rn_GPR64);
 	zext_zs(Zd); # zero upper 28 bytes of Zd
 @elif defined(SEMANTIC_pcode)
-	local tmpd:4 = float2float(Rn_GPR64);
-	Zd = zext(tmpd); # assigning to Rd_FPR32
+	Rd_FPR32 = float2float(Rn_GPR64);
+	zext_zs(Zd); # zero upper 28 bytes of Zd
 @elif defined(SEMANTIC_pseudo)
 	Rd_FPR32 = NEON_fmov(Rn_GPR64);
 @endif
@@ -13773,8 +13773,8 @@ is b_31=0 & b_2430=0b0011110 & b_2223=0b11 & b_21=1 & b_1920=0b00 & b_1618=0b110
 	Rd_GPR32 = float2float(Rn_FPR16);
 	zext_rs(Rd_GPR64); # zero upper 28 bytes of Rd_GPR64
 @elif defined(SEMANTIC_pcode)
-	local tmpd:4 = float2float(Rn_FPR16);
-	Rd_GPR64 = zext(tmpd); # assigning to Rd_GPR32
+	Rd_GPR32 = float2float(Rn_FPR16);
+	zext_rs(Rd_GPR64); # zero upper 28 bytes of Rd_GPR64
 @elif defined(SEMANTIC_pseudo)
 	Rd_GPR32 = NEON_fmov(Rn_FPR16);
 @endif
@@ -13813,8 +13813,8 @@ is b_31=0 & b_2430=0b0011110 & b_2223=0b11 & b_21=1 & b_1920=0b00 & b_1618=0b111
 	Rd_FPR16 = float2float(Rn_GPR32);
 	zext_zh(Zd); # zero upper 30 bytes of Zd
 @elif defined(SEMANTIC_pcode)
-	local tmpd:2 = float2float(Rn_GPR32);
-	Zd = zext(tmpd); # assigning to Rd_FPR16
+	Rd_FPR16 = float2float(Rn_GPR32);
+	zext_zh(Zd); # zero upper 30 bytes of Zd
 @elif defined(SEMANTIC_pseudo)
 	Rd_FPR16 = NEON_fmov(Rn_GPR32);
 @endif
@@ -13834,8 +13834,8 @@ is b_31=0 & b_2430=0b0011110 & b_2223=0b00 & b_21=1 & b_1920=0b00 & b_1618=0b111
 	Rd_FPR32 = Rn_GPR32;
 	zext_zs(Zd); # zero upper 28 bytes of Zd
 @elif defined(SEMANTIC_pcode)
-	local tmpd:4 = Rn_GPR32;
-	Zd = zext(tmpd); # assigning to Rd_FPR32
+	Rd_FPR32 = Rn_GPR32;
+	zext_zs(Zd); # zero upper 28 bytes of Zd
 @elif defined(SEMANTIC_pseudo)
 	Rd_FPR32 = NEON_fmov(Rn_GPR32);
 @endif
@@ -13855,8 +13855,8 @@ is b_31=0 & b_2430=0b0011110 & b_2223=0b00 & b_21=1 & b_1920=0b00 & b_1618=0b110
 	Rd_GPR32 = Rn_FPR32;
 	zext_rs(Rd_GPR64); # zero upper 28 bytes of Rd_GPR64
 @elif defined(SEMANTIC_pcode)
-	local tmpd:4 = Rn_FPR32;
-	Rd_GPR64 = zext(tmpd); # assigning to Rd_GPR32
+	Rd_GPR32 = Rn_FPR32;
+	zext_rs(Rd_GPR64); # zero upper 28 bytes of Rd_GPR64
 @elif defined(SEMANTIC_pseudo)
 	Rd_GPR32 = NEON_fmov(Rn_FPR32);
 @endif
@@ -13876,8 +13876,8 @@ is b_31=1 & b_2430=0b0011110 & b_2223=0b11 & b_21=1 & b_1920=0b00 & b_1618=0b111
 	Rd_FPR16 = float2float(Rn_GPR64);
 	zext_zh(Zd); # zero upper 30 bytes of Zd
 @elif defined(SEMANTIC_pcode)
-	local tmpd:2 = float2float(Rn_GPR64);
-	Zd = zext(tmpd); # assigning to Rd_FPR16
+	Rd_FPR16 = float2float(Rn_GPR64);
+	zext_zh(Zd); # zero upper 30 bytes of Zd
 @elif defined(SEMANTIC_pseudo)
 	Rd_FPR16 = NEON_fmov(Rn_GPR64);
 @endif
@@ -13897,8 +13897,8 @@ is b_31=1 & b_2430=0b0011110 & b_2223=0b01 & b_21=1 & b_1920=0b00 & b_1618=0b111
 	Rd_FPR64 = Rn_GPR64;
 	zext_zd(Zd); # zero upper 24 bytes of Zd
 @elif defined(SEMANTIC_pcode)
-	local tmpd:8 = Rn_GPR64;
-	Zd = zext(tmpd); # assigning to Rd_FPR64
+	Rd_FPR64 = Rn_GPR64;
+	zext_zd(Zd); # zero upper 24 bytes of Zd
 @elif defined(SEMANTIC_pseudo)
 	Rd_FPR64 = NEON_fmov(Rn_GPR64);
 @endif
@@ -13981,8 +13981,8 @@ is ImmS_ImmR_TestSet=1 & m=0 & b_3030=0 & s=0 & b_2428=0x1e & ftype=1 & b_2121=1
 	Rd_FPR64 = Imm8_fmov64_operand:8;
 	zext_zd(Zd); # zero upper 24 bytes of Zd
 @elif defined(SEMANTIC_pcode)
-	local tmpd:8 = Imm8_fmov64_operand:8;
-	Zd = zext(tmpd); # assigning to Rd_FPR64
+	Rd_FPR64 = Imm8_fmov64_operand:8;
+	zext_zd(Zd); # zero upper 24 bytes of Zd
 @elif defined(SEMANTIC_pseudo)
 	Rd_FPR64 = NEON_fmov(Imm8_fmov64_operand);
 @endif
@@ -14001,8 +14001,8 @@ is m=0 & b_3030=0 & s=0 & b_2428=0x1e & ftype=0 & b_2121=1 & Imm8_fmov32_operand
 	Rd_FPR32 = Imm8_fmov32_operand:4;
 	zext_zs(Zd); # zero upper 28 bytes of Zd
 @elif defined(SEMANTIC_pcode)
-	local tmpd:4 = Imm8_fmov32_operand:4;
-	Zd = zext(tmpd); # assigning to Rd_FPR32
+	Rd_FPR32 = Imm8_fmov32_operand:4;
+	zext_zs(Zd); # zero upper 28 bytes of Zd
 @elif defined(SEMANTIC_pseudo)
 	Rd_FPR32 = NEON_fmov(Imm8_fmov32_operand);
 @endif
@@ -14021,8 +14021,8 @@ is m=0 & b_3030=0 & s=0 & b_2428=0x1e & ftype=3 & b_2121=1 & Imm8_fmov16_operand
 	Rd_FPR16 = Imm8_fmov16_operand:2;
 	zext_zh(Zd); # zero upper 30 bytes of Zd
 @elif defined(SEMANTIC_pcode)
-	local tmpd:2 = Imm8_fmov16_operand:2;
-	Zd = zext(tmpd); # assigning to Rd_FPR16
+	Rd_FPR16 = Imm8_fmov16_operand:2;
+	zext_zh(Zd); # zero upper 30 bytes of Zd
 @elif defined(SEMANTIC_pseudo)
 	Rd_FPR16 = NEON_fmov(Imm8_fmov16_operand);
 @endif
@@ -14563,8 +14563,8 @@ is m=0 & b_3030=0 & s=0 & b_2428=0x1e & ftype=1 & b_2121=1 & Rm_FPR64 & b_1215=0
 	Rd_FPR64 = Rn_FPR64 f* Rm_FPR64;
 	zext_zd(Zd); # zero upper 24 bytes of Zd
 @elif defined(SEMANTIC_pcode)
-	local tmpd:8 = Rn_FPR64 f* Rm_FPR64;
-	Zd = zext(tmpd); # assigning to Rd_FPR64
+	Rd_FPR64 = Rn_FPR64 f* Rm_FPR64;
+	zext_zd(Zd); # zero upper 24 bytes of Zd
 @elif defined(SEMANTIC_pseudo)
 	Rd_FPR64 = NEON_fmul(Rn_FPR64, Rm_FPR64);
 @endif
@@ -14583,8 +14583,8 @@ is m=0 & b_3030=0 & s=0 & b_2428=0x1e & ftype=0 & b_2121=1 & Rm_FPR32 & b_1215=0
 	Rd_FPR32 = Rn_FPR32 f* Rm_FPR32;
 	zext_zs(Zd); # zero upper 28 bytes of Zd
 @elif defined(SEMANTIC_pcode)
-	local tmpd:4 = Rn_FPR32 f* Rm_FPR32;
-	Zd = zext(tmpd); # assigning to Rd_FPR32
+	Rd_FPR32 = Rn_FPR32 f* Rm_FPR32;
+	zext_zs(Zd); # zero upper 28 bytes of Zd
 @elif defined(SEMANTIC_pseudo)
 	Rd_FPR32 = NEON_fmul(Rn_FPR32, Rm_FPR32);
 @endif
@@ -14603,8 +14603,8 @@ is m=0 & b_3030=0 & s=0 & b_2428=0x1e & ftype=3 & b_2121=1 & Rm_FPR16 & b_1215=0
 	Rd_FPR16 = Rn_FPR16 f* Rm_FPR16;
 	zext_zh(Zd); # zero upper 30 bytes of Zd
 @elif defined(SEMANTIC_pcode)
-	local tmpd:2 = Rn_FPR16 f* Rm_FPR16;
-	Zd = zext(tmpd); # assigning to Rd_FPR16
+	Rd_FPR16 = Rn_FPR16 f* Rm_FPR16;
+	zext_zh(Zd); # zero upper 30 bytes of Zd
 @elif defined(SEMANTIC_pseudo)
 	Rd_FPR16 = NEON_fmul(Rn_FPR16, Rm_FPR16);
 @endif
@@ -15214,8 +15214,8 @@ is m=0 & b_3030=0 & s=0 & b_2428=0x1e & ftype=1 & b_2121=1 & fpDpOpcode=0x2 & b_
 	Rd_FPR64 = f- Rn_FPR64;
 	zext_zd(Zd); # zero upper 24 bytes of Zd
 @elif defined(SEMANTIC_pcode)
-	local tmpd:8 = f- Rn_FPR64;
-	Zd = zext(tmpd); # assigning to Rd_FPR64
+	Rd_FPR64 = f- Rn_FPR64;
+	zext_zd(Zd); # zero upper 24 bytes of Zd
 @elif defined(SEMANTIC_pseudo)
 	Rd_FPR64 = NEON_fneg(Rn_FPR64);
 @endif
@@ -15234,8 +15234,8 @@ is m=0 & b_3030=0 & s=0 & b_2428=0x1e & ftype=0 & b_2121=1 & fpDpOpcode=0x2 & b_
 	Rd_FPR32 = f- Rn_FPR32;
 	zext_zs(Zd); # zero upper 28 bytes of Zd
 @elif defined(SEMANTIC_pcode)
-	local tmpd:4 = f- Rn_FPR32;
-	Zd = zext(tmpd); # assigning to Rd_FPR32
+	Rd_FPR32 = f- Rn_FPR32;
+	zext_zs(Zd); # zero upper 28 bytes of Zd
 @elif defined(SEMANTIC_pseudo)
 	Rd_FPR32 = NEON_fneg(Rn_FPR32);
 @endif
@@ -15254,8 +15254,8 @@ is m=0 & b_3030=0 & s=0 & b_2428=0x1e & ftype=3 & b_2121=1 & fpDpOpcode=0x2 & b_
 	Rd_FPR16 = f- Rn_FPR16;
 	zext_zh(Zd); # zero upper 30 bytes of Zd
 @elif defined(SEMANTIC_pcode)
-	local tmpd:2 = f- Rn_FPR16;
-	Zd = zext(tmpd); # assigning to Rd_FPR16
+	Rd_FPR16 = f- Rn_FPR16;
+	zext_zh(Zd); # zero upper 30 bytes of Zd
 @elif defined(SEMANTIC_pseudo)
 	Rd_FPR16 = NEON_fneg(Rn_FPR16);
 @endif
@@ -16538,8 +16538,8 @@ is m=0 & b_3030=0 & s=0 & b_2428=0x1e & ftype=1 & b_2121=1 & Rm_FPR64 & b_1215=0
 	Rd_FPR64 = Rn_FPR64 f- Rm_FPR64;
 	zext_zd(Zd); # zero upper 24 bytes of Zd
 @elif defined(SEMANTIC_pcode)
-	local tmpd:8 = Rn_FPR64 f- Rm_FPR64;
-	Zd = zext(tmpd); # assigning to Rd_FPR64
+	Rd_FPR64 = Rn_FPR64 f- Rm_FPR64;
+	zext_zd(Zd); # zero upper 24 bytes of Zd
 @elif defined(SEMANTIC_pseudo)
 	Rd_FPR64 = NEON_fsub(Rn_FPR64, Rm_FPR64);
 @endif
@@ -16558,8 +16558,8 @@ is m=0 & b_3030=0 & s=0 & b_2428=0x1e & ftype=0 & b_2121=1 & Rm_FPR32 & b_1215=0
 	Rd_FPR32 = Rn_FPR32 f- Rm_FPR32;
 	zext_zs(Zd); # zero upper 28 bytes of Zd
 @elif defined(SEMANTIC_pcode)
-	local tmpd:4 = Rn_FPR32 f- Rm_FPR32;
-	Zd = zext(tmpd); # assigning to Rd_FPR32
+	Rd_FPR32 = Rn_FPR32 f- Rm_FPR32;
+	zext_zs(Zd); # zero upper 28 bytes of Zd
 @elif defined(SEMANTIC_pseudo)
 	Rd_FPR32 = NEON_fsub(Rn_FPR32, Rm_FPR32);
 @endif
@@ -16578,8 +16578,8 @@ is m=0 & b_3030=0 & s=0 & b_2428=0x1e & ftype=3 & b_2121=1 & Rm_FPR16 & b_1215=0
 	Rd_FPR16 = Rn_FPR16 f- Rm_FPR16;
 	zext_zh(Zd); # zero upper 30 bytes of Zd
 @elif defined(SEMANTIC_pcode)
-	local tmpd:2 = Rn_FPR16 f- Rm_FPR16;
-	Zd = zext(tmpd); # assigning to Rd_FPR16
+	Rd_FPR16 = Rn_FPR16 f- Rm_FPR16;
+	zext_zh(Zd); # zero upper 30 bytes of Zd
 @elif defined(SEMANTIC_pseudo)
 	Rd_FPR16 = NEON_fsub(Rn_FPR16, Rm_FPR16);
 @endif
@@ -16685,11 +16685,11 @@ is b_3031=0b10 & b_2529=0b10110 & b_22=0b1 & Rt2_FPR128 & addrPairIndexed & Rt_F
 	Rt2_FPR128 = * tmp1;
 	zext_zq(Zt2); # zero upper 16 bytes of Zt2
 @elif defined(SEMANTIC_pcode)
-	local tmpt:16 = * addrPairIndexed;
-	Zt = zext(tmpt); # assigning to Rt_FPR128
+	Rt_FPR128 = * addrPairIndexed;
+	zext_zq(Zt); # zero upper 16 bytes of Zt
 	local tmp1:8 = addrPairIndexed + 16;
-	local tmpt2:16 = * tmp1;
-	Zt2 = zext(tmpt2); # assigning to Rt2_FPR128
+	Rt2_FPR128 = * tmp1;
+	zext_zq(Zt2); # zero upper 16 bytes of Zt2
 @elif defined(SEMANTIC_pseudo)
 	Rt_FPR128 = NEON_ldp1(addrPairIndexed);
 	Rt2_FPR128 = NEON_ldp2(addrPairIndexed);
@@ -16715,11 +16715,11 @@ is b_3031=0b00 & b_2529=0b10110 & b_22=0b1 & Rt2_FPR32 & addrPairIndexed & Rt_FP
 	Rt2_FPR32 = * tmp1;
 	zext_zs(Zt2); # zero upper 28 bytes of Zt2
 @elif defined(SEMANTIC_pcode)
-	local tmpt:4 = * addrPairIndexed;
-	Zt = zext(tmpt); # assigning to Rt_FPR32
+	Rt_FPR32 = * addrPairIndexed;
+	zext_zs(Zt); # zero upper 28 bytes of Zt
 	local tmp1:8 = addrPairIndexed + 4;
-	local tmpt2:4 = * tmp1;
-	Zt2 = zext(tmpt2); # assigning to Rt2_FPR32
+	Rt2_FPR32 = * tmp1;
+	zext_zs(Zt2); # zero upper 28 bytes of Zt2
 @elif defined(SEMANTIC_pseudo)
 	Rt_FPR32 = NEON_ldp1(addrPairIndexed);
 	Rt2_FPR32 = NEON_ldp2(addrPairIndexed);
@@ -16745,11 +16745,11 @@ is b_3031=0b01 & b_2529=0b10110 & b_22=0b1 & Rt2_FPR64 & addrPairIndexed & Rt_FP
 	Rt2_FPR64 = * tmp1;
 	zext_zd(Zt2); # zero upper 24 bytes of Zt2
 @elif defined(SEMANTIC_pcode)
-	local tmpt:8 = * addrPairIndexed;
-	Zt = zext(tmpt); # assigning to Rt_FPR64
+	Rt_FPR64 = * addrPairIndexed;
+	zext_zd(Zt); # zero upper 24 bytes of Zt
 	local tmp1:8 = addrPairIndexed + 8;
-	local tmpt2:8 = * tmp1;
-	Zt2 = zext(tmpt2); # assigning to Rt2_FPR64
+	Rt2_FPR64 = * tmp1;
+	zext_zd(Zt2); # zero upper 24 bytes of Zt2
 @elif defined(SEMANTIC_pseudo)
 	Rt_FPR64 = NEON_ldp1(addrPairIndexed);
 	Rt2_FPR64 = NEON_ldp2(addrPairIndexed);
@@ -16771,8 +16771,8 @@ is b_3031=0b00 & b_2429=0b111100 & b_2223=0b01 & b_21=0 & b_10=1 & Rt_FPR8 & add
 	Rt_FPR8 = * addrIndexed;
 	zext_zb(Zt); # zero upper 31 bytes of Zt
 @elif defined(SEMANTIC_pcode)
-	local tmpt:1 = * addrIndexed;
-	Zt = zext(tmpt); # assigning to Rt_FPR8
+	Rt_FPR8 = * addrIndexed;
+	zext_zb(Zt); # zero upper 31 bytes of Zt
 @elif defined(SEMANTIC_pseudo)
 	Rt_FPR8 = NEON_ldr(addrIndexed);
 @endif
@@ -16793,8 +16793,8 @@ is b_3031=0b01 & b_2429=0b111100 & b_2223=0b01 & b_21=0 & b_10=1 & Rt_FPR16 & ad
 	Rt_FPR16 = * addrIndexed;
 	zext_zh(Zt); # zero upper 30 bytes of Zt
 @elif defined(SEMANTIC_pcode)
-	local tmpt:2 = * addrIndexed;
-	Zt = zext(tmpt); # assigning to Rt_FPR16
+	Rt_FPR16 = * addrIndexed;
+	zext_zh(Zt); # zero upper 30 bytes of Zt
 @elif defined(SEMANTIC_pseudo)
 	Rt_FPR16 = NEON_ldr(addrIndexed);
 @endif
@@ -16815,8 +16815,8 @@ is b_3031=0b10 & b_2429=0b111100 & b_2223=0b01 & b_21=0 & b_10=1 & Rt_FPR32 & ad
 	Rt_FPR32 = * addrIndexed;
 	zext_zs(Zt); # zero upper 28 bytes of Zt
 @elif defined(SEMANTIC_pcode)
-	local tmpt:4 = * addrIndexed;
-	Zt = zext(tmpt); # assigning to Rt_FPR32
+	Rt_FPR32 = * addrIndexed;
+	zext_zs(Zt); # zero upper 28 bytes of Zt
 @elif defined(SEMANTIC_pseudo)
 	Rt_FPR32 = NEON_ldr(addrIndexed);
 @endif
@@ -16837,8 +16837,8 @@ is b_3031=0b11 & b_2429=0b111100 & b_2223=0b01 & b_21=0 & b_10=1 & Rt_FPR64 & ad
 	Rt_FPR64 = * addrIndexed;
 	zext_zd(Zt); # zero upper 24 bytes of Zt
 @elif defined(SEMANTIC_pcode)
-	local tmpt:8 = * addrIndexed;
-	Zt = zext(tmpt); # assigning to Rt_FPR64
+	Rt_FPR64 = * addrIndexed;
+	zext_zd(Zt); # zero upper 24 bytes of Zt
 @elif defined(SEMANTIC_pseudo)
 	Rt_FPR64 = NEON_ldr(addrIndexed);
 @endif
@@ -16859,8 +16859,8 @@ is b_3031=0b00 & b_2429=0b111100 & b_2223=0b11 & b_21=0 & b_10=1 & Rt_FPR128 & a
 	Rt_FPR128 = * addrIndexed;
 	zext_zq(Zt); # zero upper 16 bytes of Zt
 @elif defined(SEMANTIC_pcode)
-	local tmpt:16 = * addrIndexed;
-	Zt = zext(tmpt); # assigning to Rt_FPR128
+	Rt_FPR128 = * addrIndexed;
+	zext_zq(Zt); # zero upper 16 bytes of Zt
 @elif defined(SEMANTIC_pseudo)
 	Rt_FPR128 = NEON_ldr(addrIndexed);
 @endif
@@ -16880,8 +16880,8 @@ is b_3031=0b00 & b_2429=0b111101 & b_2223=0b01 & Rt_FPR8 & addrUIMM & Zt
 	Rt_FPR8 = * addrUIMM;
 	zext_zb(Zt); # zero upper 31 bytes of Zt
 @elif defined(SEMANTIC_pcode)
-	local tmpt:1 = * addrUIMM;
-	Zt = zext(tmpt); # assigning to Rt_FPR8
+	Rt_FPR8 = * addrUIMM;
+	zext_zb(Zt); # zero upper 31 bytes of Zt
 @elif defined(SEMANTIC_pseudo)
 	Rt_FPR8 = NEON_ldr(addrUIMM);
 @endif
@@ -16901,8 +16901,8 @@ is b_3031=0b01 & b_2429=0b111101 & b_2223=0b01 & Rt_FPR16 & addrUIMM & Zt
 	Rt_FPR16 = * addrUIMM;
 	zext_zh(Zt); # zero upper 30 bytes of Zt
 @elif defined(SEMANTIC_pcode)
-	local tmpt:2 = * addrUIMM;
-	Zt = zext(tmpt); # assigning to Rt_FPR16
+	Rt_FPR16 = * addrUIMM;
+	zext_zh(Zt); # zero upper 30 bytes of Zt
 @elif defined(SEMANTIC_pseudo)
 	Rt_FPR16 = NEON_ldr(addrUIMM);
 @endif
@@ -16922,8 +16922,8 @@ is b_3031=0b10 & b_2429=0b111101 & b_2223=0b01 & Rt_FPR32 & addrUIMM & Zt
 	Rt_FPR32 = * addrUIMM;
 	zext_zs(Zt); # zero upper 28 bytes of Zt
 @elif defined(SEMANTIC_pcode)
-	local tmpt:4 = * addrUIMM;
-	Zt = zext(tmpt); # assigning to Rt_FPR32
+	Rt_FPR32 = * addrUIMM;
+	zext_zs(Zt); # zero upper 28 bytes of Zt
 @elif defined(SEMANTIC_pseudo)
 	Rt_FPR32 = NEON_ldr(addrUIMM);
 @endif
@@ -16943,8 +16943,8 @@ is b_3031=0b11 & b_2429=0b111101 & b_2223=0b01 & Rt_FPR64 & addrUIMM & Zt
 	Rt_FPR64 = * addrUIMM;
 	zext_zd(Zt); # zero upper 24 bytes of Zt
 @elif defined(SEMANTIC_pcode)
-	local tmpt:8 = * addrUIMM;
-	Zt = zext(tmpt); # assigning to Rt_FPR64
+	Rt_FPR64 = * addrUIMM;
+	zext_zd(Zt); # zero upper 24 bytes of Zt
 @elif defined(SEMANTIC_pseudo)
 	Rt_FPR64 = NEON_ldr(addrUIMM);
 @endif
@@ -16964,8 +16964,8 @@ is b_3031=0b00 & b_2429=0b111101 & b_2223=0b11 & Rt_FPR128 & addrUIMM & Zt
 	Rt_FPR128 = * addrUIMM;
 	zext_zq(Zt); # zero upper 16 bytes of Zt
 @elif defined(SEMANTIC_pcode)
-	local tmpt:16 = * addrUIMM;
-	Zt = zext(tmpt); # assigning to Rt_FPR128
+	Rt_FPR128 = * addrUIMM;
+	zext_zq(Zt); # zero upper 16 bytes of Zt
 @elif defined(SEMANTIC_pseudo)
 	Rt_FPR128 = NEON_ldr(addrUIMM);
 @endif
@@ -16984,8 +16984,8 @@ is size.ldstr=1 & b_2729=3 & v=1 & b_2425=0 & AddrLoc19 & Rt_FPR64 & Zt
 	Rt_FPR64 = *:8 AddrLoc19;
 	zext_zd(Zt); # zero upper 24 bytes of Zt
 @elif defined(SEMANTIC_pcode)
-	local tmpt:8 = *:8 AddrLoc19;
-	Zt = zext(tmpt); # assigning to Rt_FPR64
+	Rt_FPR64 = *:8 AddrLoc19;
+	zext_zd(Zt); # zero upper 24 bytes of Zt
 @elif defined(SEMANTIC_pseudo)
 	Rt_FPR64 = NEON_ldr(AddrLoc19);
 @endif
@@ -17004,8 +17004,8 @@ is size.ldstr=2 & b_2729=3 & v=1 & b_2425=0 & AddrLoc19 & Rt_FPR128 & Zt
 	Rt_FPR128 = *:16 AddrLoc19;
 	zext_zq(Zt); # zero upper 16 bytes of Zt
 @elif defined(SEMANTIC_pcode)
-	local tmpt:16 = *:16 AddrLoc19;
-	Zt = zext(tmpt); # assigning to Rt_FPR128
+	Rt_FPR128 = *:16 AddrLoc19;
+	zext_zq(Zt); # zero upper 16 bytes of Zt
 @elif defined(SEMANTIC_pseudo)
 	Rt_FPR128 = NEON_ldr(AddrLoc19);
 @endif
@@ -17024,8 +17024,8 @@ is size.ldstr=0 & b_2729=3 & v=1 & b_2425=0 & AddrLoc19 & Rt_FPR32 & Zt
 	Rt_FPR32 = *:4 AddrLoc19;
 	zext_zs(Zt); # zero upper 28 bytes of Zt
 @elif defined(SEMANTIC_pcode)
-	local tmpt:4 = *:4 AddrLoc19;
-	Zt = zext(tmpt); # assigning to Rt_FPR32
+	Rt_FPR32 = *:4 AddrLoc19;
+	zext_zs(Zt); # zero upper 28 bytes of Zt
 @elif defined(SEMANTIC_pseudo)
 	Rt_FPR32 = NEON_ldr(AddrLoc19);
 @endif
@@ -17068,8 +17068,8 @@ is b_3031=0b00 & b_2429=0b111100 & b_2223=0b01 & b_21=1 & b_13=0 & b_1011=0b10 &
 @elif defined(SEMANTIC_pcode)
 	local tmp1:8 = extend_spec << extend_amount;
 	local tmp2:8 = Rn_GPR64xsp + tmp1;
-	local tmpt:1 = * tmp2;
-	Zt = zext(tmpt); # assigning to Rt_FPR8
+	Rt_FPR8 = * tmp2;
+	zext_zb(Zt); # zero upper 31 bytes of Zt
 @elif defined(SEMANTIC_pseudo)
 	Rt_FPR8 = NEON_ldr(Rn_GPR64xsp, extend_spec, extend_amount);
 @endif
@@ -17093,8 +17093,8 @@ is b_3031=0b00 & b_2429=0b111100 & b_2223=0b01 & b_21=1 & b_13=1 & b_1011=0b10 &
 @elif defined(SEMANTIC_pcode)
 	local tmp1:8 = extend_spec << extend_amount;
 	local tmp2:8 = Rn_GPR64xsp + tmp1;
-	local tmpt:1 = * tmp2;
-	Zt = zext(tmpt); # assigning to Rt_FPR8
+	Rt_FPR8 = * tmp2;
+	zext_zb(Zt); # zero upper 31 bytes of Zt
 @elif defined(SEMANTIC_pseudo)
 	Rt_FPR8 = NEON_ldr(Rn_GPR64xsp, extend_spec, extend_amount);
 @endif
@@ -17118,8 +17118,8 @@ is b_3031=0b00 & b_2429=0b111100 & b_2223=0b01 & b_21=1 & b_1315=0b011 & b_1011=
 @elif defined(SEMANTIC_pcode)
 	local tmp1:8 = extend_spec << extend_amount;
 	local tmp2:8 = Rn_GPR64xsp + tmp1;
-	local tmpt:1 = * tmp2;
-	Zt = zext(tmpt); # assigning to Rt_FPR8
+	Rt_FPR8 = * tmp2;
+	zext_zb(Zt); # zero upper 31 bytes of Zt
 @elif defined(SEMANTIC_pseudo)
 	Rt_FPR8 = NEON_ldr(Rn_GPR64xsp, extend_spec, extend_amount);
 @endif
@@ -17143,8 +17143,8 @@ is b_3031=0b01 & b_2429=0b111100 & b_2223=0b01 & b_21=1 & b_13=0 & b_1011=0b10 &
 @elif defined(SEMANTIC_pcode)
 	local tmp1:8 = extend_spec << extend_amount;
 	local tmp2:8 = Rn_GPR64xsp + tmp1;
-	local tmpt:2 = * tmp2;
-	Zt = zext(tmpt); # assigning to Rt_FPR16
+	Rt_FPR16 = * tmp2;
+	zext_zh(Zt); # zero upper 30 bytes of Zt
 @elif defined(SEMANTIC_pseudo)
 	Rt_FPR16 = NEON_ldr(Rn_GPR64xsp, extend_spec, extend_amount);
 @endif
@@ -17168,8 +17168,8 @@ is b_3031=0b01 & b_2429=0b111100 & b_2223=0b01 & b_21=1 & b_13=1 & b_1011=0b10 &
 @elif defined(SEMANTIC_pcode)
 	local tmp1:8 = extend_spec << extend_amount;
 	local tmp2:8 = Rn_GPR64xsp + tmp1;
-	local tmpt:2 = * tmp2;
-	Zt = zext(tmpt); # assigning to Rt_FPR16
+	Rt_FPR16 = * tmp2;
+	zext_zh(Zt); # zero upper 30 bytes of Zt
 @elif defined(SEMANTIC_pseudo)
 	Rt_FPR16 = NEON_ldr(Rn_GPR64xsp, extend_spec, extend_amount);
 @endif
@@ -17193,8 +17193,8 @@ is b_3031=0b10 & b_2429=0b111100 & b_2223=0b01 & b_21=1 & b_13=0 & b_1011=0b10 &
 @elif defined(SEMANTIC_pcode)
 	local tmp1:8 = extend_spec << extend_amount;
 	local tmp2:8 = Rn_GPR64xsp + tmp1;
-	local tmpt:4 = * tmp2;
-	Zt = zext(tmpt); # assigning to Rt_FPR32
+	Rt_FPR32 = * tmp2;
+	zext_zs(Zt); # zero upper 28 bytes of Zt
 @elif defined(SEMANTIC_pseudo)
 	Rt_FPR32 = NEON_ldr(Rn_GPR64xsp, extend_spec, extend_amount);
 @endif
@@ -17218,8 +17218,8 @@ is b_3031=0b10 & b_2429=0b111100 & b_2223=0b01 & b_21=1 & b_13=1 & b_1011=0b10 &
 @elif defined(SEMANTIC_pcode)
 	local tmp1:8 = extend_spec << extend_amount;
 	local tmp2:8 = Rn_GPR64xsp + tmp1;
-	local tmpt:4 = * tmp2;
-	Zt = zext(tmpt); # assigning to Rt_FPR32
+	Rt_FPR32 = * tmp2;
+	zext_zs(Zt); # zero upper 28 bytes of Zt
 @elif defined(SEMANTIC_pseudo)
 	Rt_FPR32 = NEON_ldr(Rn_GPR64xsp, extend_spec, extend_amount);
 @endif
@@ -17243,8 +17243,8 @@ is b_3031=0b11 & b_2429=0b111100 & b_2223=0b01 & b_21=1 & b_13=0 & b_1011=0b10 &
 @elif defined(SEMANTIC_pcode)
 	local tmp1:8 = extend_spec << extend_amount;
 	local tmp2:8 = Rn_GPR64xsp + tmp1;
-	local tmpt:8 = * tmp2;
-	Zt = zext(tmpt); # assigning to Rt_FPR64
+	Rt_FPR64 = * tmp2;
+	zext_zd(Zt); # zero upper 24 bytes of Zt
 @elif defined(SEMANTIC_pseudo)
 	Rt_FPR64 = NEON_ldr(Rn_GPR64xsp, extend_spec, extend_amount);
 @endif
@@ -17268,8 +17268,8 @@ is b_3031=0b11 & b_2429=0b111100 & b_2223=0b01 & b_21=1 & b_13=1 & b_1011=0b10 &
 @elif defined(SEMANTIC_pcode)
 	local tmp1:8 = extend_spec << extend_amount;
 	local tmp2:8 = Rn_GPR64xsp + tmp1;
-	local tmpt:8 = * tmp2;
-	Zt = zext(tmpt); # assigning to Rt_FPR64
+	Rt_FPR64 = * tmp2;
+	zext_zd(Zt); # zero upper 24 bytes of Zt
 @elif defined(SEMANTIC_pseudo)
 	Rt_FPR64 = NEON_ldr(Rn_GPR64xsp, extend_spec, extend_amount);
 @endif
@@ -17293,8 +17293,8 @@ is b_3031=0b00 & b_2429=0b111100 & b_2223=0b11 & b_21=1 & b_13=0 & b_1011=0b10 &
 @elif defined(SEMANTIC_pcode)
 	local tmp1:8 = extend_spec << extend_amount;
 	local tmp2:8 = Rn_GPR64xsp + tmp1;
-	local tmpt:16 = * tmp2;
-	Zt = zext(tmpt); # assigning to Rt_FPR128
+	Rt_FPR128 = * tmp2;
+	zext_zq(Zt); # zero upper 16 bytes of Zt
 @elif defined(SEMANTIC_pseudo)
 	Rt_FPR128 = NEON_ldr(Rn_GPR64xsp, extend_spec, extend_amount);
 @endif
@@ -17318,8 +17318,8 @@ is b_3031=0b00 & b_2429=0b111100 & b_2223=0b11 & b_21=1 & b_13=1 & b_1011=0b10 &
 @elif defined(SEMANTIC_pcode)
 	local tmp1:8 = extend_spec << extend_amount;
 	local tmp2:8 = Rn_GPR64xsp + tmp1;
-	local tmpt:16 = * tmp2;
-	Zt = zext(tmpt); # assigning to Rt_FPR128
+	Rt_FPR128 = * tmp2;
+	zext_zq(Zt); # zero upper 16 bytes of Zt
 @elif defined(SEMANTIC_pseudo)
 	Rt_FPR128 = NEON_ldr(Rn_GPR64xsp, extend_spec, extend_amount);
 @endif
@@ -17338,8 +17338,8 @@ is size.ldstr=0 & b_2729=7 & v=1 & b_2425=0 & b_23=1 & b_2222=1 & b_2121=0 & b_1
 	Rt_FPR128 = * addrIndexed;
 	zext_zq(Zt); # zero upper 16 bytes of Zt
 @elif defined(SEMANTIC_pcode)
-	local tmpt:16 = * addrIndexed;
-	Zt = zext(tmpt); # assigning to Rt_FPR128
+	Rt_FPR128 = * addrIndexed;
+	zext_zq(Zt); # zero upper 16 bytes of Zt
 @elif defined(SEMANTIC_pseudo)
 	Rt_FPR128 = NEON_ldur(addrIndexed);
 @endif
@@ -17358,8 +17358,8 @@ is size.ldstr=1 & b_2729=7 & v=1 & b_2425=0 & b_23=0 & b_2222=1 & b_2121=0 & b_1
 	Rt_FPR16 = * addrIndexed;
 	zext_zh(Zt); # zero upper 30 bytes of Zt
 @elif defined(SEMANTIC_pcode)
-	local tmpt:2 = * addrIndexed;
-	Zt = zext(tmpt); # assigning to Rt_FPR16
+	Rt_FPR16 = * addrIndexed;
+	zext_zh(Zt); # zero upper 30 bytes of Zt
 @elif defined(SEMANTIC_pseudo)
 	Rt_FPR16 = NEON_ldur(addrIndexed);
 @endif
@@ -17378,8 +17378,8 @@ is size.ldstr=2 & b_2729=7 & v=1 & b_2425=0 & b_23=0 & b_2222=1 & b_2121=0 & b_1
 	Rt_FPR32 = * addrIndexed;
 	zext_zs(Zt); # zero upper 28 bytes of Zt
 @elif defined(SEMANTIC_pcode)
-	local tmpt:4 = * addrIndexed;
-	Zt = zext(tmpt); # assigning to Rt_FPR32
+	Rt_FPR32 = * addrIndexed;
+	zext_zs(Zt); # zero upper 28 bytes of Zt
 @elif defined(SEMANTIC_pseudo)
 	Rt_FPR32 = NEON_ldur(addrIndexed);
 @endif
@@ -17398,8 +17398,8 @@ is size.ldstr=3 & b_2729=7 & v=1 & b_2425=0 & b_23=0 & b_2222=1 & b_2121=0 & b_1
 	Rt_FPR64 = * addrIndexed;
 	zext_zd(Zt); # zero upper 24 bytes of Zt
 @elif defined(SEMANTIC_pcode)
-	local tmpt:8 = * addrIndexed;
-	Zt = zext(tmpt); # assigning to Rt_FPR64
+	Rt_FPR64 = * addrIndexed;
+	zext_zd(Zt); # zero upper 24 bytes of Zt
 @elif defined(SEMANTIC_pseudo)
 	Rt_FPR64 = NEON_ldur(addrIndexed);
 @endif
@@ -17418,8 +17418,8 @@ is size.ldstr=0 & b_2729=7 & v=1 & b_2425=0 & b_23=0 & b_2222=1 & b_2121=0 & b_1
 	Rt_FPR8 = * addrIndexed;
 	zext_zb(Zt); # zero upper 31 bytes of Zt
 @elif defined(SEMANTIC_pcode)
-	local tmpt:1 = * addrIndexed;
-	Zt = zext(tmpt); # assigning to Rt_FPR8
+	Rt_FPR8 = * addrIndexed;
+	zext_zb(Zt); # zero upper 31 bytes of Zt
 @elif defined(SEMANTIC_pseudo)
 	Rt_FPR8 = NEON_ldur(addrIndexed);
 @endif
@@ -19165,10 +19165,10 @@ is b_3131=0 & q=1 & b_29=0 & b_2428=0xe & b_2123=0 & Rd_VPR128.S.imm_neon_uimm2 
 	simd_address_at(tmp1, Rd_VPR128, imm_neon_uimm2:4, 4, 16);
 	* [register]:4 tmp1 = Rn_GPR32;
 	zext_zq(Zd); # zero upper 16 bytes of Zd
-@elif defined(SEMANTIC_pcode) && !defined(SEMANTIC_force)
+@elif defined(SEMANTIC_pcode)
 	local tmpd:16 = SIMD_COPY(Rd_VPR128, Rn_GPR32, imm_neon_uimm2:1);
 	Zd = zext(tmpd); # assigning to Rd_VPR128
-@elif defined(SEMANTIC_pseudo) && !defined(SEMANTIC_force)
+@elif defined(SEMANTIC_pseudo)
 	Rd_VPR128 = NEON_mov(Rd_VPR128, Rn_GPR32, imm_neon_uimm2:1, 2:1);
 @endif
 }
@@ -19232,11 +19232,11 @@ is b_3131=0 & Q=0 & b_29=0 & b_2428=0xe & b_2123=0 & Rn_VPR128.S.imm_neon_uimm2 
 	local tmp2:4 = * [register]:4 tmp1;
 	Rd_GPR32 = tmp2;
 	zext_rs(Rd_GPR64); # zero upper 28 bytes of Rd_GPR64
-@elif defined(SEMANTIC_pcode) && !defined(SEMANTIC_force)
+@elif defined(SEMANTIC_pcode)
 	local tmp1:4 = SIMD_PIECE(Rn_VPR128, imm_neon_uimm2:1);
 	local tmpd:4 = tmp1;
 	Rd_GPR64 = zext(tmpd); # assigning to Rd_GPR32
-@elif defined(SEMANTIC_pseudo) && !defined(SEMANTIC_force)
+@elif defined(SEMANTIC_pseudo)
 	local tmp1:4 = SIMD_PIECE(Rn_VPR128, imm_neon_uimm2:1);
 	Rd_GPR32 = NEON_mov(tmp1, 4:1);
 @endif
@@ -19366,11 +19366,11 @@ is b_31=0 & b_30=1 & b_29=1 & b_1928=0b0111100000 & b_1215=0b1110 & b_1011=0b01 
 	simd_address_at(tmp2, Rd_VPR128.2D, 1, 8, 16);
 	* [register]:8 tmp2 = tmp1;
 	zext_zq(Zd); # zero upper 16 bytes of Zd
-@elif defined(SEMANTIC_pcode) && !defined(SEMANTIC_force)
+@elif defined(SEMANTIC_pcode)
 	local tmp1:8 = Imm_neon_uimm8Shift;
 	local tmpd:16 = SIMD_COPY(Rd_VPR128.2D, tmp1);
 	Zd = zext(tmpd); # assigning to Rd_VPR128.2D
-@elif defined(SEMANTIC_pseudo) && !defined(SEMANTIC_force)
+@elif defined(SEMANTIC_pseudo)
 	Rd_VPR128.2D = NEON_movi(Imm_neon_uimm8Shift, 8:1);
 @endif
 }
@@ -19468,10 +19468,10 @@ is b_31=0 & b_30=1 & b_29=0 & b_1928=0b0111100000 & b_15=0 & b_12=0 & b_1011=0b0
 	simd_address_at(tmp1, Rd_VPR128.4S, 3, 4, 16);
 	* [register]:4 tmp1 = Imm_neon_uimm8Shift:4;
 	zext_zq(Zd); # zero upper 16 bytes of Zd
-@elif defined(SEMANTIC_pcode) && !defined(SEMANTIC_force)
+@elif defined(SEMANTIC_pcode)
 	local tmpd:16 = SIMD_COPY(Rd_VPR128.4S, Imm_neon_uimm8Shift:4);
 	Zd = zext(tmpd); # assigning to Rd_VPR128.4S
-@elif defined(SEMANTIC_pseudo) && !defined(SEMANTIC_force)
+@elif defined(SEMANTIC_pseudo)
 	Rd_VPR128.4S = NEON_movi(Imm_neon_uimm8Shift, 4:1);
 @endif
 }
@@ -19674,11 +19674,11 @@ is b_3131=0 & q=1 & u=0 & b_2428=0xf & advSIMD3.size=2 & Re_VPR128.S.vIndex & Re
 	simd_address_at(tmp4, Rd_VPR128.4S, 3, 4, 16);
 	* [register]:4 tmp4 = (* [register]:4 tmp3) * tmp2;
 	zext_zq(Zd); # zero upper 16 bytes of Zd
-@elif defined(SEMANTIC_pcode) && !defined(SEMANTIC_force)
+@elif defined(SEMANTIC_pcode)
 	local tmp1:4 = SIMD_PIECE(Re_VPR128.S, vIndex:1);
 	local tmpd:16 = SIMD_INT_MULT(Rn_VPR128.4S, tmp1);
 	Zd = zext(tmpd); # assigning to Rd_VPR128.4S
-@elif defined(SEMANTIC_pseudo) && !defined(SEMANTIC_force)
+@elif defined(SEMANTIC_pseudo)
 	local tmp1:4 = SIMD_PIECE(Re_VPR128.S, vIndex:1);
 	Rd_VPR128.4S = NEON_mul(Rn_VPR128.4S, tmp1, 4:1);
 @endif
@@ -25169,8 +25169,8 @@ is b_3031=1 & u=0 & b_2428=0x1e & size_high=0 & b_1722=0x10 & b_1216=0x1d & b_10
 	Rd_FPR32 = int2float(Rn_FPR32);
 	zext_zs(Zd); # zero upper 28 bytes of Zd
 @elif defined(SEMANTIC_pcode)
-	local tmpd:4 = int2float(Rn_FPR32);
-	Zd = zext(tmpd); # assigning to Rd_FPR32
+	Rd_FPR32 = int2float(Rn_FPR32);
+	zext_zs(Zd); # zero upper 28 bytes of Zd
 @elif defined(SEMANTIC_pseudo)
 	Rd_FPR32 = NEON_scvtf(Rn_FPR32);
 @endif
@@ -25189,8 +25189,8 @@ is b_3031=1 & u=0 & b_2428=0x1e & size_high=0 & b_1722=0x30 & b_1216=0x1d & b_10
 	Rd_FPR64 = int2float(Rn_FPR64);
 	zext_zd(Zd); # zero upper 24 bytes of Zd
 @elif defined(SEMANTIC_pcode)
-	local tmpd:8 = int2float(Rn_FPR64);
-	Zd = zext(tmpd); # assigning to Rd_FPR64
+	Rd_FPR64 = int2float(Rn_FPR64);
+	zext_zd(Zd); # zero upper 24 bytes of Zd
 @elif defined(SEMANTIC_pseudo)
 	Rd_FPR64 = NEON_scvtf(Rn_FPR64);
 @endif
@@ -25249,8 +25249,8 @@ is b_1031=0b0101111001111001110110 & Rd_FPR16 & Rn_FPR16 & Zd
 	Rd_FPR16 = int2float(Rn_FPR16);
 	zext_zh(Zd); # zero upper 30 bytes of Zd
 @elif defined(SEMANTIC_pcode)
-	local tmpd:2 = int2float(Rn_FPR16);
-	Zd = zext(tmpd); # assigning to Rd_FPR16
+	Rd_FPR16 = int2float(Rn_FPR16);
+	zext_zh(Zd); # zero upper 30 bytes of Zd
 @elif defined(SEMANTIC_pseudo)
 	Rd_FPR16 = NEON_scvtf(Rn_FPR16);
 @endif
@@ -25300,8 +25300,8 @@ is sf=0 & b_3030=0 & s=0 & b_2428=0x1e & ftype=3 & b_2121=0 & mode=0 & fpOpcode=
 	zext_zh(Zd); # zero upper 30 bytes of Zd
 @elif defined(SEMANTIC_pcode)
 	local tmp1:2 = int2float(Rn_GPR32);
-	local tmpd:2 = tmp1 f/ FBits16;
-	Zd = zext(tmpd); # assigning to Rd_FPR16
+	Rd_FPR16 = tmp1 f/ FBits16;
+	zext_zh(Zd); # zero upper 30 bytes of Zd
 @elif defined(SEMANTIC_pseudo)
 	Rd_FPR16 = NEON_scvtf(Rn_GPR32, FBits16);
 @endif
@@ -25323,8 +25323,8 @@ is sf=1 & b_3030=0 & s=0 & b_2428=0x1e & ftype=3 & b_2121=0 & mode=0 & fpOpcode=
 	zext_zh(Zd); # zero upper 30 bytes of Zd
 @elif defined(SEMANTIC_pcode)
 	local tmp1:2 = int2float(Rn_GPR64);
-	local tmpd:2 = tmp1 f/ FBits16;
-	Zd = zext(tmpd); # assigning to Rd_FPR16
+	Rd_FPR16 = tmp1 f/ FBits16;
+	zext_zh(Zd); # zero upper 30 bytes of Zd
 @elif defined(SEMANTIC_pseudo)
 	Rd_FPR16 = NEON_scvtf(Rn_GPR64, FBits16);
 @endif
@@ -25345,8 +25345,8 @@ is sf=0 & b_3030=0 & s=0 & b_2428=0x1e & ftype=1 & b_2121=0 & mode=0 & fpOpcode=
 	zext_zd(Zd); # zero upper 24 bytes of Zd
 @elif defined(SEMANTIC_pcode)
 	local tmp1:8 = int2float(Rn_GPR32);
-	local tmpd:8 = tmp1 f/ FBits64;
-	Zd = zext(tmpd); # assigning to Rd_FPR64
+	Rd_FPR64 = tmp1 f/ FBits64;
+	zext_zd(Zd); # zero upper 24 bytes of Zd
 @elif defined(SEMANTIC_pseudo)
 	Rd_FPR64 = NEON_scvtf(Rn_GPR32, FBits64);
 @endif
@@ -25367,8 +25367,8 @@ is sf=0 & b_3030=0 & s=0 & b_2428=0x1e & ftype=0 & b_2121=0 & mode=0 & fpOpcode=
 	zext_zs(Zd); # zero upper 28 bytes of Zd
 @elif defined(SEMANTIC_pcode)
 	local tmp1:4 = int2float(Rn_GPR32);
-	local tmpd:4 = tmp1 f/ FBits32;
-	Zd = zext(tmpd); # assigning to Rd_FPR32
+	Rd_FPR32 = tmp1 f/ FBits32;
+	zext_zs(Zd); # zero upper 28 bytes of Zd
 @elif defined(SEMANTIC_pseudo)
 	Rd_FPR32 = NEON_scvtf(Rn_GPR32, FBits32);
 @endif
@@ -25389,8 +25389,8 @@ is sf=1 & b_3030=0 & s=0 & b_2428=0x1e & ftype=1 & b_2121=0 & mode=0 & fpOpcode=
 	zext_zd(Zd); # zero upper 24 bytes of Zd
 @elif defined(SEMANTIC_pcode)
 	local tmp1:8 = int2float(Rn_GPR64);
-	local tmpd:8 = tmp1 f/ FBits64;
-	Zd = zext(tmpd); # assigning to Rd_FPR64
+	Rd_FPR64 = tmp1 f/ FBits64;
+	zext_zd(Zd); # zero upper 24 bytes of Zd
 @elif defined(SEMANTIC_pseudo)
 	Rd_FPR64 = NEON_scvtf(Rn_GPR64, FBits64);
 @endif
@@ -25411,8 +25411,8 @@ is sf=1 & b_3030=0 & s=0 & b_2428=0x1e & ftype=0 & b_2121=0 & mode=0 & fpOpcode=
 	zext_zs(Zd); # zero upper 28 bytes of Zd
 @elif defined(SEMANTIC_pcode)
 	local tmp1:4 = int2float(Rn_GPR64);
-	local tmpd:4 = tmp1 f/ FBits32;
-	Zd = zext(tmpd); # assigning to Rd_FPR32
+	Rd_FPR32 = tmp1 f/ FBits32;
+	zext_zs(Zd); # zero upper 28 bytes of Zd
 @elif defined(SEMANTIC_pseudo)
 	Rd_FPR32 = NEON_scvtf(Rn_GPR64, FBits32);
 @endif
@@ -25431,8 +25431,8 @@ is sf=0 & b_3030=0 & s=0 & b_2428=0x1e & ftype=3 & b_2121=1 & rmode=0 & fpOpcode
 	Rd_FPR16 = int2float(Rn_GPR32);
 	zext_zh(Zd); # zero upper 30 bytes of Zd
 @elif defined(SEMANTIC_pcode)
-	local tmpd:2 = int2float(Rn_GPR32);
-	Zd = zext(tmpd); # assigning to Rd_FPR16
+	Rd_FPR16 = int2float(Rn_GPR32);
+	zext_zh(Zd); # zero upper 30 bytes of Zd
 @elif defined(SEMANTIC_pseudo)
 	Rd_FPR16 = NEON_scvtf(Rn_GPR32);
 @endif
@@ -25451,8 +25451,8 @@ is sf=1 & b_3030=0 & s=0 & b_2428=0x1e & ftype=3 & b_2121=1 & rmode=0 & fpOpcode
 	Rd_FPR16 = int2float(Rn_GPR64);
 	zext_zh(Zd); # zero upper 30 bytes of Zd
 @elif defined(SEMANTIC_pcode)
-	local tmpd:2 = int2float(Rn_GPR64);
-	Zd = zext(tmpd); # assigning to Rd_FPR16
+	Rd_FPR16 = int2float(Rn_GPR64);
+	zext_zh(Zd); # zero upper 30 bytes of Zd
 @elif defined(SEMANTIC_pseudo)
 	Rd_FPR16 = NEON_scvtf(Rn_GPR64);
 @endif
@@ -25471,8 +25471,8 @@ is sf=0 & b_3030=0 & s=0 & b_2428=0x1e & ftype=1 & b_2121=1 & rmode=0 & fpOpcode
 	Rd_FPR64 = int2float(Rn_GPR32);
 	zext_zd(Zd); # zero upper 24 bytes of Zd
 @elif defined(SEMANTIC_pcode)
-	local tmpd:8 = int2float(Rn_GPR32);
-	Zd = zext(tmpd); # assigning to Rd_FPR64
+	Rd_FPR64 = int2float(Rn_GPR32);
+	zext_zd(Zd); # zero upper 24 bytes of Zd
 @elif defined(SEMANTIC_pseudo)
 	Rd_FPR64 = NEON_scvtf(Rn_GPR32);
 @endif
@@ -25491,8 +25491,8 @@ is sf=1 & b_3030=0 & s=0 & b_2428=0x1e & ftype=1 & b_2121=1 & rmode=0 & fpOpcode
 	Rd_FPR64 = int2float(Rn_GPR64);
 	zext_zd(Zd); # zero upper 24 bytes of Zd
 @elif defined(SEMANTIC_pcode)
-	local tmpd:8 = int2float(Rn_GPR64);
-	Zd = zext(tmpd); # assigning to Rd_FPR64
+	Rd_FPR64 = int2float(Rn_GPR64);
+	zext_zd(Zd); # zero upper 24 bytes of Zd
 @elif defined(SEMANTIC_pseudo)
 	Rd_FPR64 = NEON_scvtf(Rn_GPR64);
 @endif
@@ -25511,8 +25511,8 @@ is sf=0 & b_3030=0 & s=0 & b_2428=0x1e & ftype=0 & b_2121=1 & rmode=0 & fpOpcode
 	Rd_FPR32 = int2float(Rn_GPR32);
 	zext_zs(Zd); # zero upper 28 bytes of Zd
 @elif defined(SEMANTIC_pcode)
-	local tmpd:4 = int2float(Rn_GPR32);
-	Zd = zext(tmpd); # assigning to Rd_FPR32
+	Rd_FPR32 = int2float(Rn_GPR32);
+	zext_zs(Zd); # zero upper 28 bytes of Zd
 @elif defined(SEMANTIC_pseudo)
 	Rd_FPR32 = NEON_scvtf(Rn_GPR32);
 @endif
@@ -25531,8 +25531,8 @@ is sf=1 & b_3030=0 & s=0 & b_2428=0x1e & ftype=0 & b_2121=1 & rmode=0 & fpOpcode
 	Rd_FPR32 = int2float(Rn_GPR64);
 	zext_zs(Zd); # zero upper 28 bytes of Zd
 @elif defined(SEMANTIC_pcode)
-	local tmpd:4 = int2float(Rn_GPR64);
-	Zd = zext(tmpd); # assigning to Rd_FPR32
+	Rd_FPR32 = int2float(Rn_GPR64);
+	zext_zs(Zd); # zero upper 28 bytes of Zd
 @elif defined(SEMANTIC_pseudo)
 	Rd_FPR32 = NEON_scvtf(Rn_GPR64);
 @endif
@@ -45805,8 +45805,8 @@ is sf=0 & b_3030=0 & s=0 & b_2428=0x1e & ftype=3 & b_2121=0 & mode=0 & fpOpcode=
 @elif defined(SEMANTIC_pcode)
 	local tmp1:8 = zext(Rn_GPR32);
 	local tmp2:2 = int2float(tmp1);
-	local tmpd:2 = tmp2 f/ FBits16;
-	Zd = zext(tmpd); # assigning to Rd_FPR16
+	Rd_FPR16 = tmp2 f/ FBits16;
+	zext_zh(Zd); # zero upper 30 bytes of Zd
 @elif defined(SEMANTIC_pseudo)
 	Rd_FPR16 = NEON_ucvtf(Rn_GPR32, FBits16);
 @endif
@@ -45829,8 +45829,8 @@ is sf=1 & b_3030=0 & s=0 & b_2428=0x1e & ftype=3 & b_2121=0 & mode=0 & fpOpcode=
 @elif defined(SEMANTIC_pcode)
 	local tmp1:9 = zext(Rn_GPR64);
 	local tmp2:2 = int2float(tmp1);
-	local tmpd:2 = tmp2 f/ FBits16;
-	Zd = zext(tmpd); # assigning to Rd_FPR16
+	Rd_FPR16 = tmp2 f/ FBits16;
+	zext_zh(Zd); # zero upper 30 bytes of Zd
 @elif defined(SEMANTIC_pseudo)
 	Rd_FPR16 = NEON_ucvtf(Rn_GPR64, FBits16);
 @endif
@@ -45854,8 +45854,8 @@ is sf=0 & b_3030=0 & s=0 & b_2428=0x1e & ftype=1 & b_2121=0 & mode=0 & fpOpcode=
 @elif defined(SEMANTIC_pcode)
 	local tmp1:8 = zext(Rn_GPR32);
 	local tmp2:8 = int2float(tmp1);
-	local tmpd:8 = tmp2 f/ FBits64;
-	Zd = zext(tmpd); # assigning to Rd_FPR64
+	Rd_FPR64 = tmp2 f/ FBits64;
+	zext_zd(Zd); # zero upper 24 bytes of Zd
 @elif defined(SEMANTIC_pseudo)
 	Rd_FPR64 = NEON_ucvtf(Rn_GPR32, FBits64);
 @endif
@@ -45879,8 +45879,8 @@ is sf=1 & b_3030=0 & s=0 & b_2428=0x1e & ftype=1 & b_2121=0 & mode=0 & fpOpcode=
 @elif defined(SEMANTIC_pcode)
 	local tmp1:9 = zext(Rn_GPR64);
 	local tmp2:8 = int2float(tmp1);
-	local tmpd:8 = tmp2 f/ FBits64;
-	Zd = zext(tmpd); # assigning to Rd_FPR64
+	Rd_FPR64 = tmp2 f/ FBits64;
+	zext_zd(Zd); # zero upper 24 bytes of Zd
 @elif defined(SEMANTIC_pseudo)
 	Rd_FPR64 = NEON_ucvtf(Rn_GPR64, FBits64);
 @endif
@@ -45904,8 +45904,8 @@ is sf=0 & b_3030=0 & s=0 & b_2428=0x1e & ftype=0 & b_2121=0 & mode=0 & fpOpcode=
 @elif defined(SEMANTIC_pcode)
 	local tmp1:8 = zext(Rn_GPR32);
 	local tmp2:4 = int2float(tmp1);
-	local tmpd:4 = tmp2 f/ FBits32;
-	Zd = zext(tmpd); # assigning to Rd_FPR32
+	Rd_FPR32 = tmp2 f/ FBits32;
+	zext_zs(Zd); # zero upper 28 bytes of Zd
 @elif defined(SEMANTIC_pseudo)
 	Rd_FPR32 = NEON_ucvtf(Rn_GPR32, FBits32);
 @endif
@@ -45928,8 +45928,8 @@ is sf=1 & b_3030=0 & s=0 & b_2428=0x1e & ftype=0 & b_2121=0 & mode=0 & fpOpcode=
 @elif defined(SEMANTIC_pcode)
 	local tmp1:9 = zext(Rn_GPR64);
 	local tmp2:4 = int2float(tmp1);
-	local tmpd:4 = tmp2 f/ FBits32;
-	Zd = zext(tmpd); # assigning to Rd_FPR32
+	Rd_FPR32 = tmp2 f/ FBits32;
+	zext_zs(Zd); # zero upper 28 bytes of Zd
 @elif defined(SEMANTIC_pseudo)
 	Rd_FPR32 = NEON_ucvtf(Rn_GPR64, FBits32);
 @endif
@@ -45950,8 +45950,8 @@ is sf=0 & b_3030=0 & s=0 & b_2428=0x1e & ftype=3 & b_2121=1 & rmode=0 & fpOpcode
 	zext_zh(Zd); # zero upper 30 bytes of Zd
 @elif defined(SEMANTIC_pcode)
 	local tmp1:8 = zext(Rn_GPR32);
-	local tmpd:2 = int2float(tmp1);
-	Zd = zext(tmpd); # assigning to Rd_FPR16
+	Rd_FPR16 = int2float(tmp1);
+	zext_zh(Zd); # zero upper 30 bytes of Zd
 @elif defined(SEMANTIC_pseudo)
 	Rd_FPR16 = NEON_ucvtf(Rn_GPR32);
 @endif
@@ -45972,8 +45972,8 @@ is sf=1 & b_3030=0 & s=0 & b_2428=0x1e & ftype=3 & b_2121=1 & rmode=0 & fpOpcode
 	zext_zh(Zd); # zero upper 30 bytes of Zd
 @elif defined(SEMANTIC_pcode)
 	local tmp1:9 = zext(Rn_GPR64);
-	local tmpd:2 = int2float(tmp1);
-	Zd = zext(tmpd); # assigning to Rd_FPR16
+	Rd_FPR16 = int2float(tmp1);
+	zext_zh(Zd); # zero upper 30 bytes of Zd
 @elif defined(SEMANTIC_pseudo)
 	Rd_FPR16 = NEON_ucvtf(Rn_GPR64);
 @endif
@@ -45994,8 +45994,8 @@ is sf=0 & b_3030=0 & s=0 & b_2428=0x1e & ftype=1 & b_2121=1 & rmode=0 & fpOpcode
 	zext_zd(Zd); # zero upper 24 bytes of Zd
 @elif defined(SEMANTIC_pcode)
 	local tmp1:8 = zext(Rn_GPR32);
-	local tmpd:8 = int2float(tmp1);
-	Zd = zext(tmpd); # assigning to Rd_FPR64
+	Rd_FPR64 = int2float(tmp1);
+	zext_zd(Zd); # zero upper 24 bytes of Zd
 @elif defined(SEMANTIC_pseudo)
 	Rd_FPR64 = NEON_ucvtf(Rn_GPR32);
 @endif
@@ -46016,8 +46016,8 @@ is sf=1 & b_3030=0 & s=0 & b_2428=0x1e & ftype=1 & b_2121=1 & rmode=0 & fpOpcode
 	zext_zd(Zd); # zero upper 24 bytes of Zd
 @elif defined(SEMANTIC_pcode)
 	local tmp1:9 = zext(Rn_GPR64);
-	local tmpd:8 = int2float(tmp1);
-	Zd = zext(tmpd); # assigning to Rd_FPR64
+	Rd_FPR64 = int2float(tmp1);
+	zext_zd(Zd); # zero upper 24 bytes of Zd
 @elif defined(SEMANTIC_pseudo)
 	Rd_FPR64 = NEON_ucvtf(Rn_GPR64);
 @endif
@@ -46038,8 +46038,8 @@ is sf=0 & b_3030=0 & s=0 & b_2428=0x1e & ftype=0 & b_2121=1 & rmode=0 & fpOpcode
 	zext_zs(Zd); # zero upper 28 bytes of Zd
 @elif defined(SEMANTIC_pcode)
 	local tmp1:8 = zext(Rn_GPR32);
-	local tmpd:4 = int2float(tmp1);
-	Zd = zext(tmpd); # assigning to Rd_FPR32
+	Rd_FPR32 = int2float(tmp1);
+	zext_zs(Zd); # zero upper 28 bytes of Zd
 @elif defined(SEMANTIC_pseudo)
 	Rd_FPR32 = NEON_ucvtf(Rn_GPR32);
 @endif
@@ -46060,8 +46060,8 @@ is sf=1 & b_3030=0 & s=0 & b_2428=0x1e & ftype=0 & b_2121=1 & rmode=0 & fpOpcode
 	zext_zs(Zd); # zero upper 28 bytes of Zd
 @elif defined(SEMANTIC_pcode)
 	local tmp1:9 = zext(Rn_GPR64);
-	local tmpd:4 = int2float(tmp1);
-	Zd = zext(tmpd); # assigning to Rd_FPR32
+	Rd_FPR32 = int2float(tmp1);
+	zext_zs(Zd); # zero upper 28 bytes of Zd
 @elif defined(SEMANTIC_pseudo)
 	Rd_FPR32 = NEON_ucvtf(Rn_GPR64);
 @endif

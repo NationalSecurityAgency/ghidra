@@ -256,35 +256,6 @@ public class MultiTabPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals(0, panel.getHiddenCount());
 	}
 
-	private void printResizeDebug() {
-		//
-		// To show the '>>' label, the number of tabs must exceed the room visible to show them
-		//
-
-		// frame size
-
-		// available width
-		int panelWidth = panel.getWidth();
-		System.out.println("available width: " + panelWidth);
-
-		// size label
-		int totalWidth = 0;
-		JComponent listLabel = (JComponent) getInstanceField("showHiddenListLabel", panel);
-		System.out.println("label width: " + listLabel.getWidth());
-		totalWidth = listLabel.getWidth();
-
-		// size of each tab's panel
-		Map<?, ?> map = (Map<?, ?>) getInstanceField("linkedProgramMap", panel);
-		Collection<?> values = map.values();
-		for (Object object : values) {
-			JComponent c = (JComponent) object;
-			totalWidth += c.getWidth();
-			System.out.println("\t" + c.getWidth());
-		}
-
-		System.out.println("Total width: " + totalWidth + " out of " + panelWidth);
-	}
-
 	@Test
 	public void testTabUpdatesOnProgramChange() throws Exception {
 		ProgramBuilder builder = new ProgramBuilder("notepad", ProgramBuilder._TOY);
@@ -315,11 +286,11 @@ public class MultiTabPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		setFrameSize(400, 500);
 		programNames = new String[] { "notepad", "login", "tms", "taskman", "TestGhidraSearches" };
 		openPrograms(programNames);
-		assertTrue(panel.isHidden(programs[1]));
+		assertHidden(programs[1]);
 
 		runSwing(() -> panel.setSelectedProgram(programs[1]));
 		assertEquals(programs[1], panel.getSelectedProgram());
-		assertTrue(!panel.isHidden(programs[1]));
+		assertShowing(programs[1]);
 	}
 
 	@Test
@@ -384,10 +355,6 @@ public class MultiTabPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals(BigInteger.valueOf(4), fp.getCursorLocation().getIndex());
 	}
 
-	private Color getFieldPanelBackgroundColor(FieldPanel fp, BigInteger index) {
-		return runSwing(() -> fp.getBackgroundColor(index));
-	}
-
 	@Test
 	public void testTabUpdate() throws Exception {
 		Program p = openDummyProgram("login", true);
@@ -449,8 +416,8 @@ public class MultiTabPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		// by trial-and-error, we know that 'tms' is the last visible program tab 
 		// after resizing
 		setFrameSize(500, 500);
-		assertTrue(!panel.isHidden(programs[2]));
-		assertTrue(panel.isHidden(programs[3]));
+		assertShowing(programs[2]);
+		assertHidden(programs[3]);
 
 		// select the last visible tab
 		selectTab(programs[2]);
@@ -485,8 +452,8 @@ public class MultiTabPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		// by trial-and-error, we know that 'tms' is the last visible program tab 
 		// after resizing
 		setFrameSize(500, 500);
-		assertTrue(!panel.isHidden(programs[2]));
-		assertTrue(panel.isHidden(programs[3]));
+		assertShowing(programs[2]);
+		assertHidden(programs[3]);
 
 		// select 'tms', which is the last tab before the list is shown
 		selectTab(programs[2]);
@@ -521,6 +488,53 @@ public class MultiTabPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals(selectedProgram, p);
 	}
 
+	private void printResizeDebug() {
+		//
+		// To show the '>>' label, the number of tabs must exceed the room visible to show them
+		//
+
+		// frame size
+
+		// available width
+		int panelWidth = panel.getWidth();
+		System.out.println("available width: " + panelWidth);
+
+		// size label
+		int totalWidth = 0;
+		JComponent listLabel = (JComponent) getInstanceField("showHiddenListLabel", panel);
+		System.out.println("label width: " + listLabel.getWidth());
+		totalWidth = listLabel.getWidth();
+
+		// size of each tab's panel
+		Map<?, ?> map = (Map<?, ?>) getInstanceField("linkedProgramMap", panel);
+		Collection<?> values = map.values();
+		for (Object object : values) {
+			JComponent c = (JComponent) object;
+			totalWidth += c.getWidth();
+			System.out.println("\t" + c.getWidth());
+		}
+
+		System.out.println("Total width: " + totalWidth + " out of " + panelWidth);
+	}
+
+	private void assertShowing(Program p) throws Exception {
+		waitForConditionWithoutFailing(() -> {
+			boolean isHidden = runSwing(() -> panel.isHidden(p));
+			return !isHidden;
+		});
+
+		boolean isHidden = runSwing(() -> panel.isHidden(p));
+		if (isHidden) {
+			capture(tool.getToolFrame(), "multi.tabs.program2.should.be.showing");
+		}
+
+		assertFalse(runSwing(() -> panel.isHidden(p)));
+	}
+
+	private void assertHidden(Program p) {
+		assertTrue(runSwing(() -> panel.isHidden(p)));
+	}
+
 	private void assertListWindowHidden() {
 		Window listWindow = getListWindow();
 		assertFalse(listWindow.isShowing());
@@ -542,6 +556,10 @@ public class MultiTabPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		Window window = windowForComponent(panel);
 		ProgramListPanel listPanel = findComponent(window, ProgramListPanel.class, true);
 		return windowForComponent(listPanel);
+	}
+
+	private Color getFieldPanelBackgroundColor(FieldPanel fp, BigInteger index) {
+		return runSwing(() -> fp.getBackgroundColor(index));
 	}
 
 	private void performPreviousAction() throws Exception {

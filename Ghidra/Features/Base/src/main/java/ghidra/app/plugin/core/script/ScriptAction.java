@@ -36,7 +36,7 @@ class ScriptAction extends DockingAction {
 	private boolean isUserDefinedKeyBinding = false;
 
 	ScriptAction(GhidraScriptMgrPlugin plugin, ResourceFile script) {
-		super(script.getName(), plugin.getName(), false);
+		super(script.getName(), plugin.getName());
 		this.plugin = plugin;
 		this.script = script;
 		setEnabled(true);
@@ -50,13 +50,7 @@ class ScriptAction extends DockingAction {
 	}
 
 	@Override
-	public void setKeyBindingData(KeyBindingData keyBindingData) {
-		isUserDefinedKeyBinding = false; // reset
-		if (keyBindingData == null) {
-			// simply clearing out any keybinding data settings
-			super.setKeyBindingData(keyBindingData);
-			return;
-		}
+	public void setUnvalidatedKeyBindingData(KeyBindingData keyBindingData) {
 
 		// 
 		// Unobvious Dependencies!: 
@@ -73,6 +67,19 @@ class ScriptAction extends DockingAction {
 		KeyBindingData newKeyBindingData = checkForFallbackKeybindingCondition(keyBindingData);
 		updateUserDefinedKeybindingStatus(newKeyBindingData);
 		super.setUnvalidatedKeyBindingData(newKeyBindingData);
+		plugin.getProvider().keyBindingUpdated();
+	}
+
+	@Override
+	public void setKeyBindingData(KeyBindingData keyBindingData) {
+		isUserDefinedKeyBinding = false; // reset
+		if (keyBindingData == null) {
+			// simply clearing out any keybinding data settings
+			super.setKeyBindingData(keyBindingData);
+			return;
+		}
+
+		setUnvalidatedKeyBindingData(keyBindingData);
 	}
 
 	private KeyBindingData checkForFallbackKeybindingCondition(KeyBindingData keyBindingData) {

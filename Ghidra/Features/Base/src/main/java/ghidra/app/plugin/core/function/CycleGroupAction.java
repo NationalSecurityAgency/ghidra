@@ -21,9 +21,6 @@ import docking.action.*;
 import ghidra.app.context.ListingActionContext;
 import ghidra.app.context.ListingContextAction;
 import ghidra.app.util.HelpTopics;
-import ghidra.framework.options.*;
-import ghidra.framework.plugintool.PluginTool;
-import ghidra.framework.plugintool.util.ToolConstants;
 import ghidra.program.model.data.CycleGroup;
 import ghidra.program.model.data.DataType;
 import ghidra.program.util.ProgramLocation;
@@ -34,42 +31,28 @@ import ghidra.util.HelpLocation;
  * <code>CycleGroupAction</code> cycles data through a series
  * of data types defined by a <code>CycleGroup</code>.
  */
-public class CycleGroupAction extends ListingContextAction implements OptionsChangeListener {
+public class CycleGroupAction extends ListingContextAction {
 
 	private FunctionPlugin plugin;
 	private CycleGroup cycleGroup;
 
-	/**
-	 * Creates a new instance of the action.
-	 *
-	 * @param plugin Data Plugin instance
-	 */
 	CycleGroupAction(CycleGroup group, FunctionPlugin plugin) {
-		super(group.getName(), plugin.getName(), false);
+		super(group.getName(), plugin.getName(), KeyBindingType.SHARED);
 		this.plugin = plugin;
 		this.cycleGroup = group;
+
 		setPopupMenu(plugin.getDataActionMenuName(null), true);
-
-		// register an action that allows users to edit keystrokes
-		PluginTool tool = plugin.getTool();
-		DockingAction action = new DummyKeyBindingsOptionsAction(cycleGroup.getName(),
-			cycleGroup.getDefaultKeyStroke());
-		tool.addAction(action);
-		ToolOptions options = tool.getOptions(ToolConstants.KEY_BINDINGS);
-		KeyStroke defaultKeyStroke = cycleGroup.getDefaultKeyStroke();
-		KeyStroke keyStroke = options.getKeyStroke(action.getFullName(), defaultKeyStroke);
-
-		if (!defaultKeyStroke.equals(keyStroke)) {
-			// user-defined keystroke
-			setUnvalidatedKeyBindingData(new KeyBindingData(keyStroke));
-		}
-		else {
-			setKeyBindingData(new KeyBindingData(keyStroke));
-		}
-
-		options.addOptionsChangeListener(this);
-
 		setHelpLocation(new HelpLocation(HelpTopics.DATA, group.getName()));
+
+		initKeyStroke(cycleGroup.getDefaultKeyStroke());
+	}
+
+	private void initKeyStroke(KeyStroke keyStroke) {
+		if (keyStroke == null) {
+			return;
+		}
+
+		setKeyBindingData(new KeyBindingData(keyStroke));
 	}
 
 	private void setPopupMenu(String name, boolean isSignatureAction) {
@@ -95,9 +78,6 @@ public class CycleGroupAction extends ListingContextAction implements OptionsCha
 		return false;
 	}
 
-	/**
-	 * @see ghidra.framework.plugintool.DockingAction#dispose()
-	 */
 	@Override
 	public void dispose() {
 		cycleGroup = null;
@@ -113,14 +93,6 @@ public class CycleGroupAction extends ListingContextAction implements OptionsCha
 			if (!plugin.createData(dt, context, false, false)) {
 				plugin.createData(DataType.DEFAULT, context, true, false);
 			}
-		}
-	}
-
-	@Override
-	public void optionsChanged(ToolOptions options, String name, Object oldValue, Object newValue) {
-		KeyStroke keyStroke = (KeyStroke) newValue;
-		if (name.startsWith(cycleGroup.getName())) {
-			setUnvalidatedKeyBindingData(new KeyBindingData(keyStroke));
 		}
 	}
 }

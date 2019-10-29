@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,15 +15,14 @@
  */
 package ghidra.program.database.code;
 
+import java.io.IOException;
+
+import db.*;
 import ghidra.program.database.map.AddressMap;
 import ghidra.program.model.address.Address;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.VersionException;
 import ghidra.util.task.TaskMonitor;
-
-import java.io.IOException;
-
-import db.*;
 
 /**
  * Adapter for accessing records in the CommentHistory table.
@@ -33,10 +31,10 @@ abstract class CommentHistoryAdapter {
 
 	static final String COMMENT_HISTORY_TABLE_NAME = "Comment History";
 
-	static final Schema COMMENT_HISTORY_SCHEMA = new Schema(0, "Key", new Class[] {
-		LongField.class, ByteField.class, IntField.class, IntField.class, StringField.class,
-		StringField.class, LongField.class }, new String[] { "Address", "Comment Type", "Pos1",
-		"Pos2", "String Data", "User", "Date" });
+	static final Schema COMMENT_HISTORY_SCHEMA = new Schema(0, "Key",
+		new Class[] { LongField.class, ByteField.class, IntField.class, IntField.class,
+			StringField.class, StringField.class, LongField.class },
+		new String[] { "Address", "Comment Type", "Pos1", "Pos2", "String Data", "User", "Date" });
 
 	static final int HISTORY_ADDRESS_COL = 0;
 	static final int HISTORY_TYPE_COL = 1;
@@ -79,14 +77,15 @@ abstract class CommentHistoryAdapter {
 			return new CommentHistoryAdapterV0(handle, addrMap.getOldAddressMap(), false);
 		}
 		catch (VersionException e) {
+			// use the 'no table' below
 		}
 
 		return new CommentHistoryAdapterNoTable();
 	}
 
 	private static CommentHistoryAdapter upgrade(DBHandle dbHandle, AddressMap addrMap,
-			CommentHistoryAdapter oldAdapter, TaskMonitor monitor) throws VersionException,
-			IOException, CancelledException {
+			CommentHistoryAdapter oldAdapter, TaskMonitor monitor)
+			throws VersionException, IOException, CancelledException {
 
 		AddressMap oldAddrMap = addrMap.getOldAddressMap();
 
@@ -128,7 +127,8 @@ abstract class CommentHistoryAdapter {
 	}
 
 	/**
-	 * Returns record count
+	 * Returns the record count
+	 * @return the record count
 	 */
 	abstract int getRecordCount();
 
@@ -139,15 +139,16 @@ abstract class CommentHistoryAdapter {
 	 * @param pos1 position 1 of change
 	 * @param pos2 position 2 of change
 	 * @param data string from the comment change
-	 * @throws IOException
+	 * @param date the date of the history entry
+	 * @throws IOException if there was a problem accessing the database
 	 */
-	abstract void createRecord(long addr, byte commentType, int pos1, int pos2, String data)
-			throws IOException;
+	abstract void createRecord(long addr, byte commentType, int pos1, int pos2, String data,
+			long date) throws IOException;
 
 	/**
 	 * Update record
-	 * @param rec
-	 * @throws IOException
+	 * @param rec the record to update
+	 * @throws IOException if there was a problem accessing the database
 	 */
 	abstract void updateRecord(Record rec) throws IOException;
 
@@ -162,12 +163,15 @@ abstract class CommentHistoryAdapter {
 
 	/**
 	 * Get an iterator over records with the given address.
+	 * @param addr the address for which to get records
+	 * @return the iterator
 	 * @throws IOException if there was a problem accessing the database
 	 */
 	abstract RecordIterator getRecordsByAddress(Address addr) throws IOException;
 
 	/**
-	 * Get an iterator over all records.
+	 * Get an iterator over all records
+	 * @return the iterator
 	 * @throws IOException if there was a problem accessing the database
 	 */
 	abstract RecordIterator getAllRecords() throws IOException;

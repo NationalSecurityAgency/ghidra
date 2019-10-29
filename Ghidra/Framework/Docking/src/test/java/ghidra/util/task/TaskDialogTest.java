@@ -17,27 +17,10 @@ package ghidra.util.task;
 
 import static org.junit.Assert.*;
 
-import java.awt.Component;
-import java.util.Deque;
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
-
-import org.apache.commons.lang3.StringUtils;
 import org.junit.After;
 import org.junit.Test;
 
-import docking.test.AbstractDockingTest;
-
-public class TaskDialogTest extends AbstractDockingTest {
-
-	private static final int DELAY_FAST = 10;
-	private static final int DELAY_SLOW = 100;
-	private static final int DELAY_LAUNCHER = DELAY_FAST * 2;
-
-	private CountDownLatch threadsFinished = new CountDownLatch(2);
-
-	private Deque<TDEvent> eventQueue = new LinkedBlockingDeque<>();
+public class TaskDialogTest extends AbstractTaskTest {
 
 	@After
 	public void tearDown() {
@@ -45,11 +28,26 @@ public class TaskDialogTest extends AbstractDockingTest {
 	}
 
 	@Test
+	public void testModalDialogWithoutDependencyInjection() throws Exception {
+
+		//
+		// A version of the test to use all of the real dialog internals of the
+		// TaskRunner, which are usually replaced with test versions.
+		//
+
+		FastModalTask task = new FastModalTask();
+
+		new TaskLauncher(task);
+
+		waitForTasks(); // make sure we don't timeout
+	}
+
+	@Test
 	public void testModalDialog_FastTask_NoDialog() throws Exception {
 
 		FastModalTask task = new FastModalTask();
 
-		TaskDialogSpy dialogSpy = launchTask(task);
+		launchTask(task);
 
 		waitForTask();
 
@@ -61,11 +59,11 @@ public class TaskDialogTest extends AbstractDockingTest {
 	public void testModalDialog_SlowTask_Dialog() throws Exception {
 		SlowModalTask task = new SlowModalTask();
 
-		TaskDialogSpy dialogSpy = launchTask(task);
+		launchTask(task);
 
 		waitForTask();
 
-		assertTrue(dialogSpy.wasShown());
+		assertDialogShown();
 		assertSwingThreadBlockedForTask();
 	}
 
@@ -74,12 +72,12 @@ public class TaskDialogTest extends AbstractDockingTest {
 
 		FastNonModalTask task = new FastNonModalTask();
 
-		TaskDialogSpy dialogSpy = launchTask(task);
+		launchTask(task);
 
 		waitForTask();
 
 		assertFalse(dialogSpy.wasShown());
-		assertSwingThreadFinishedBeforeTask();
+		assertNoDialogShown();
 	}
 
 	@Test
@@ -87,170 +85,45 @@ public class TaskDialogTest extends AbstractDockingTest {
 
 		SlowNonModalTask task = new SlowNonModalTask();
 
-		TaskDialogSpy dialogSpy = launchTask(task);
+		launchTask(task);
 
 		waitForTask();
 
-		assertTrue(dialogSpy.wasShown());
+		assertDialogShown();
 		assertSwingThreadFinishedBeforeTask();
 	}
 
-	private void assertSwingThreadBlockedForTask() {
-		TDEvent lastEvent = eventQueue.peekLast();
-		boolean swingIsLast = lastEvent.getThreadName().contains("AWT");
-		if (!swingIsLast) {
-			System.out.println("Events " + eventQueue);
-			fail("The Swing thread did not block until the task finished");
-		}
+	/*
+	 * Verifies that if the dialog cancel button is activated, the task is cancelled
+	 */
+	@Test
+	public void testTaskCancel() throws Exception {
+		SlowModalTask task = new SlowModalTask();
+		launchTask(task);
+
+		dialogSpy.doShow();
+
+		waitForTask();
+
+		assertFalse(dialogSpy.isCancelled());
+		dialogSpy.cancel();
+		assertTrue(dialogSpy.isCancelled());
 	}
 
-	private void assertSwingThreadFinishedBeforeTask() {
-		int size = eventQueue.size();
-		TDEvent lastEvent = eventQueue.peekLast();
-		boolean swingIsLast = lastEvent.getThreadName().contains("AWT");
-		if (swingIsLast) {
-			System.out.println("Events (" + size + ")\n\t" + StringUtils.join(eventQueue, "\n\t"));
-			fail("The Swing thread blocked until the task finished");
-		}
+	/*
+	 * Verifies that if the task does not allow cancellation, the cancel button on the GUI
+	 * is disabled
+	 */
+	@Test
+	public void testTaskNoCancel() throws Exception {
+		SlowModalTask task = new SlowModalTask();
+		launchTask(task);
+
+		dialogSpy.doShow();
+		dialogSpy.setCancelEnabled(false);
+
+		waitForTask();
+
+		assertFalse(dialogSpy.isCancelEnabled());
 	}
-
-	private void waitForTask() throws Exception {
-		threadsFinished.await(2, TimeUnit.SECONDS);
-	}
-
-	private TaskDialogSpy launchTask(Task task) {
-		AtomicReference<TaskDialogSpy> ref = new AtomicReference<>();
-		runSwing(() -> {
-			TaskLauncherSpy launcherSpy = new TaskLauncherSpy(task);
-			postEvent("After task launcher");
-			TaskDialogSpy dialogSpy = launcherSpy.getDialogSpy();
-			ref.set(dialogSpy);
-			threadsFinished.countDown();
-		});
-		return ref.get();
-	}
-
-	private void postEvent(String message) {
-		eventQueue.add(new TDEvent(message));
-	}
-
-	private class TaskLauncherSpy extends TaskLauncher {
-
-		private TaskDialogSpy dialogSpy;
-
-		public TaskLauncherSpy(Task task) {
-			super(task, null, DELAY_LAUNCHER);
-		}
-
-		@Override
-		protected TaskDialog createTaskDialog(Component comp) {
-			dialogSpy = new TaskDialogSpy(task);
-			return dialogSpy;
-		}
-
-		TaskDialogSpy getDialogSpy() {
-			return dialogSpy;
-		}
-	}
-
-	private class TaskDialogSpy extends TaskDialog {
-
-		private AtomicBoolean shown = new AtomicBoolean();
-
-		public TaskDialogSpy(Task task) {
-			super(task);
-		}
-
-		@Override
-		protected void doShow() {
-			shown.set(true);
-			super.doShow();
-		}
-
-		boolean wasShown() {
-			return shown.get();
-		}
-	}
-
-	private class FastModalTask extends Task {
-
-		public FastModalTask() {
-			super("Fast Modal Task", true, true, true);
-		}
-
-		@Override
-		public void run(TaskMonitor monitor) {
-			postEvent(" started...");
-			sleep(DELAY_FAST);
-			threadsFinished.countDown();
-			postEvent(" finished.");
-		}
-	}
-
-	private class FastNonModalTask extends Task {
-
-		public FastNonModalTask() {
-			super("Fast Non-modal Task", true, true, false);
-		}
-
-		@Override
-		public void run(TaskMonitor monitor) {
-			postEvent(" started...");
-			sleep(DELAY_FAST);
-			postEvent(" finished.");
-			threadsFinished.countDown();
-		}
-	}
-
-	private class SlowModalTask extends Task {
-
-		public SlowModalTask() {
-			super("Slow Modal Task", true, true, true);
-		}
-
-		@Override
-		public void run(TaskMonitor monitor) {
-			postEvent(" started...");
-			sleep(DELAY_SLOW);
-			threadsFinished.countDown();
-			postEvent(" finished.");
-		}
-	}
-
-	private class SlowNonModalTask extends Task {
-
-		public SlowNonModalTask() {
-			super("Slow Non-modal Task", true, true, false);
-		}
-
-		@Override
-		public void run(TaskMonitor monitor) {
-			postEvent(" started...");
-			sleep(DELAY_SLOW);
-			threadsFinished.countDown();
-			postEvent(" finished.");
-		}
-	}
-
-	private class TDEvent {
-
-		private String threadName = Thread.currentThread().getName();
-		private String message;
-
-		TDEvent(String message) {
-			this.message = message;
-
-			// Msg.out(message + " from " + threadName);
-		}
-
-		String getThreadName() {
-			return threadName;
-		}
-
-		@Override
-		public String toString() {
-			return message + " - thread [" + threadName + ']';
-		}
-	}
-
 }

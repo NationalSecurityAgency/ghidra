@@ -532,7 +532,7 @@ PcodeOp *Funcdata::cloneOp(const PcodeOp *op,const SeqNum &seq)
   PcodeOp *newop = newOp(op->numInput(),seq);
   opSetOpcode(newop,op->code());
   uint4 flags = op->flags & (PcodeOp::startmark | PcodeOp::startbasic);
-  opSetFlag(newop,flags);
+  newop->setFlag(flags);
   if (op->getOut() != (Varnode *)0)
     opSetOutput(newop,cloneVarnode(op->getOut()));
   for(int4 i=0;i<op->numInput();++i)
@@ -608,8 +608,9 @@ PcodeOp *Funcdata::newOpBefore(PcodeOp *follow,OpCode opc,Varnode *in1,Varnode *
 /// \param indeffect is the PcodeOp with the indirect effect
 /// \param addr is the starting address of the storage range to protect
 /// \param size is the number of bytes in the storage range
+/// \param extraFlags are extra boolean properties to put on the INDIRECT
 /// \return the new CPUI_INDIRECT op
-PcodeOp *Funcdata::newIndirectOp(PcodeOp *indeffect,const Address &addr,int4 size)
+PcodeOp *Funcdata::newIndirectOp(PcodeOp *indeffect,const Address &addr,int4 size,uint4 extraFlags)
 
 {
   Varnode *newin;
@@ -617,6 +618,7 @@ PcodeOp *Funcdata::newIndirectOp(PcodeOp *indeffect,const Address &addr,int4 siz
 
   newin = newVarnode(size,addr);
   newop = newOp(2,indeffect->getAddr());
+  newop->flags |= extraFlags;
   newVarnodeOut(size,addr,newop);
   opSetOpcode(newop,CPUI_INDIRECT);
   opSetInput(newop,newin,0);
@@ -970,8 +972,8 @@ void Funcdata::overrideFlow(const Address &addr,uint4 type)
 }
 
 /// Do in-place replacement of
-///   - `#c <= x`   with  `#c-1 < x`   OR
-///   - `x <= #c`   with  `x < #c+1`
+///   - `c <= x`   with  `c-1 < x`   OR
+///   - `x <= c`   with  `x < c+1`
 ///
 /// \param data is the function being analyzed
 /// \param op is comparison PcodeOp

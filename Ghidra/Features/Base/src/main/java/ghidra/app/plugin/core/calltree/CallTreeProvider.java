@@ -29,6 +29,7 @@ import docking.WindowPosition;
 import docking.action.*;
 import docking.util.GraphicsUtils;
 import docking.widgets.dialogs.NumberInputDialog;
+import docking.widgets.label.GLabel;
 import docking.widgets.tree.*;
 import docking.widgets.tree.support.GTreeSelectionEvent.EventOrigin;
 import docking.widgets.tree.support.GTreeSelectionListener;
@@ -56,7 +57,7 @@ import resources.ResourceManager;
 public class CallTreeProvider extends ComponentProviderAdapter implements DomainObjectListener {
 
 	static final String EXPAND_ACTION_NAME = "Fully Expand Selected Nodes";
-	private static final String TITLE = "Function Call Trees";
+	static final String TITLE = "Function Call Trees";
 	private static final Icon EMPTY_ICON = ResourceManager.loadImage("images/EmptyIcon16.gif");
 	private static final Icon EXPAND_ICON = Icons.EXPAND_ALL_ICON;
 	private static final Icon COLLAPSE_ICON = Icons.COLLAPSE_ALL_ICON;
@@ -73,6 +74,7 @@ public class CallTreeProvider extends ComponentProviderAdapter implements Domain
 	private JSplitPane splitPane;
 	private GTree incomingTree;
 	private GTree outgoingTree;
+	private boolean isPrimary;
 
 	private SwingUpdateManager reloadUpdateManager = new SwingUpdateManager(500, () -> doUpdate());
 
@@ -92,19 +94,25 @@ public class CallTreeProvider extends ComponentProviderAdapter implements Domain
 	private AtomicInteger recurseDepth = new AtomicInteger();
 	private NumberIcon recurseIcon;
 
-	public CallTreeProvider(CallTreePlugin plugin) {
+	public CallTreeProvider(CallTreePlugin plugin, boolean isPrimary) {
 		super(plugin.getTool(), TITLE, plugin.getName());
 		this.plugin = plugin;
+		this.isPrimary = isPrimary;
 
 		component = buildComponent();
 
 		// try to give the trees a suitable amount of space by default
 		component.setPreferredSize(new Dimension(800, 400));
 
-		setTransient();
 		setWindowMenuGroup(TITLE);
 		setDefaultWindowPosition(WindowPosition.BOTTOM);
 
+		if (isPrimary) {
+			addToToolbar();
+		}
+		else {
+			setTransient();
+		}
 		setIcon(CallTreePlugin.PROVIDER_ICON);
 		setHelpLocation(new HelpLocation(plugin.getName(), "Call_Tree_Plugin"));
 
@@ -429,7 +437,11 @@ public class CallTreeProvider extends ComponentProviderAdapter implements Domain
 					}
 				}
 			};
-		navigateIncomingToggleAction.setSelected(false);
+
+		// note: the default state is to follow navigation events for the primary provider; 
+		//       non-primary providers will function like snapshots of the function with 
+		//       which they were activated.
+		navigateIncomingToggleAction.setSelected(isPrimary);
 		navigateIncomingToggleAction.setToolBarData(new ToolBarData(
 			Icons.NAVIGATE_ON_INCOMING_EVENT_ICON, navigationOptionsToolbarGroup, "2"));
 		navigateIncomingToggleAction.setDescription(HTMLUtilities.toHTML("Incoming Navigation" +
@@ -792,10 +804,7 @@ public class CallTreeProvider extends ComponentProviderAdapter implements Domain
 	private JPanel createTreePanel(boolean isIncoming, GTree tree) {
 		JPanel panel = new JPanel(new BorderLayout());
 
-		String name = isIncoming ? "Incoming Calls" : "Outgoing Calls";
-		JLabel label = new JLabel(name);
-
-		panel.add(label, BorderLayout.NORTH);
+		panel.add(new GLabel(isIncoming ? "Incoming Calls" : "Outgoing Calls"), BorderLayout.NORTH);
 		panel.add(tree, BorderLayout.CENTER);
 
 		return panel;
@@ -820,7 +829,9 @@ public class CallTreeProvider extends ComponentProviderAdapter implements Domain
 
 	@Override
 	public void componentHidden() {
-		plugin.removeProvider(this);
+		if (!isPrimary) {
+			plugin.removeProvider(this);
+		}
 	}
 
 	private void reload() {
@@ -835,12 +846,6 @@ public class CallTreeProvider extends ComponentProviderAdapter implements Domain
 			currentProgram.removeListener(this);
 			currentProgram = null;
 		}
-
-		tool.removeLocalAction(this, recurseDepthAction);
-		tool.removeLocalAction(this, refreshAction);
-		tool.removeLocalAction(this, filterDuplicates);
-		tool.removeLocalAction(this, navigationOutgoingAction);
-		tool.removeLocalAction(this, navigateIncomingToggleAction);
 
 		recurseDepthAction.dispose();
 		refreshAction.dispose();
@@ -877,6 +882,7 @@ public class CallTreeProvider extends ComponentProviderAdapter implements Domain
 			// changes, which means we will get here while setting the location, but our program
 			// will have been null'ed out.
 			currentProgram = plugin.getCurrentProgram();
+			currentProgram.addListener(this);
 		}
 
 		Function function = plugin.getFunction(location);

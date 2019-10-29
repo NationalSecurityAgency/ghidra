@@ -43,7 +43,7 @@ public class ContextRegisterExtent {
 			return;
 		}
 		for (ContextRegisterInfo cRegInfo : contextRegisterInfo) {
-			addRegisterAndValue(cRegInfo.getContextRegister(), cRegInfo.getValueAsBigInteger());
+			addRegisterAndValue(cRegInfo.getContextRegister(), cRegInfo.getValue());
 		}
 	}
 

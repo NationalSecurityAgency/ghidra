@@ -73,7 +73,7 @@ class VarnodeInfo {
 			type = VarnodeType.Memory;
 		}
 		else {
-			throw new IllegalArgumentException("Illegal varode address type");
+			throw new IllegalArgumentException("Illegal varnode address type");
 		}
 	}
 

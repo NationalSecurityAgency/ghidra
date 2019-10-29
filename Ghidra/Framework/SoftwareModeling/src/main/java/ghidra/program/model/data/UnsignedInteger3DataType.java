@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,20 +37,23 @@ public class UnsignedInteger3DataType extends AbstractIntegerDataType {
 		super("uint3", false, dtm);
 	}
 
+	@Override
 	public String getDescription() {
 		return "Unsigned 3-Byte Integer)";
 	}
 
+	@Override
 	public int getLength() {
 		return 3;
 	}
 
 	@Override
-	public DataType getOppositeSignednessDataType() {
-		return Integer3DataType.dataType;
+	public Integer3DataType getOppositeSignednessDataType() {
+		return Integer3DataType.dataType.clone(getDataTypeManager());
 	}
 
-	public DataType clone(DataTypeManager dtm) {
+	@Override
+	public UnsignedInteger3DataType clone(DataTypeManager dtm) {
 		if (dtm == getDataTypeManager()) {
 			return this;
 		}

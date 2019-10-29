@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +16,6 @@
 package ghidra.util.layout;
 
 import java.awt.*;
-
-import javax.swing.*;
 
 /**
  * <CODE>MaximizeSpecificColumnGridLayout</CODE> is a row oriented grid type of layout.
@@ -181,9 +178,9 @@ public class MaximizeSpecificColumnGridLayout implements LayoutManager {
 							}
 						}
 					}
-					averageMaximizedWidth =
-						(remainingMaximizedCount > 0) ? (remainingMaximizedWidth / remainingMaximizedCount)
-								: 0;
+					averageMaximizedWidth = (remainingMaximizedCount > 0)
+							? (remainingMaximizedWidth / remainingMaximizedCount)
+							: 0;
 				}
 
 				// Now just divide up whatever width remains among whatever maximized columns remain.
@@ -282,176 +279,5 @@ public class MaximizeSpecificColumnGridLayout implements LayoutManager {
 	@Override
 	public void removeLayoutComponent(Component comp) {
 		// ignore
-	}
-
-	/**
-	 * Test main
-	 * @param args
-	 */
-	public static void main(String[] args) {
-		try {
-			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-		}
-		catch (Exception exc) {
-			System.out.println("Error loading L&F: " + exc);
-		}
-
-		JFrame frame = new JFrame("Test");
-		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		MaximizeSpecificColumnGridLayout layout = new MaximizeSpecificColumnGridLayout(5, 5, 3);
-		layout.maximizeColumn(0);
-		layout.maximizeColumn(2);
-		JPanel panel = new JPanel(layout);
-		panel.add(new MyLabel("<HTML><B><U>Version</U></B></HTML>", SwingConstants.LEFT));
-		panel.add(new MyLabel("<HTML><B><U>Description</U></B></HTML>", SwingConstants.LEFT));
-		panel.add(new MyLabel("<HTML><B><U>Other</U></B></HTML>", SwingConstants.LEFT));
-		panel.add(new MyRadioButton("Latest"));
-		panel.add(new MyLabel("What else?", SwingConstants.LEFT));
-		panel.add(new MyLabel("Some sample text.\nOnce upon a time in a land far far away",
-			SwingConstants.LEFT));
-		panel.add(new MyRadioButton("CheckedOut"));
-		panel.add(new MyLabel("Six", SwingConstants.LEFT));
-		panel.add(new MyLabel("Seven", SwingConstants.LEFT));
-		panel.add(new MyCheckBox("Test Check Box"));
-		panel.add(new MyLabel("AAA", SwingConstants.LEFT));
-		panel.add(new MyLabel("BBB", SwingConstants.LEFT));
-		panel.setBorder(BorderFactory.createEmptyBorder(8, 25, 10, 10));
-		frame.getContentPane().add(panel);
-		frame.pack();
-		frame.setVisible(true);
-	}
-}
-
-class MyCheckBox extends JCheckBox {
-
-	public MyCheckBox() {
-		super();
-		initialize();
-	}
-
-	public MyCheckBox(Action a) {
-		super(a);
-		initialize();
-	}
-
-	public MyCheckBox(Icon icon, boolean selected) {
-		super(icon, selected);
-		initialize();
-	}
-
-	public MyCheckBox(Icon icon) {
-		super(icon);
-		initialize();
-	}
-
-	public MyCheckBox(String text, boolean selected) {
-		super(text, selected);
-		initialize();
-	}
-
-	public MyCheckBox(String text, Icon icon, boolean selected) {
-		super(text, icon, selected);
-		initialize();
-	}
-
-	public MyCheckBox(String text, Icon icon) {
-		super(text, icon);
-		initialize();
-	}
-
-	public MyCheckBox(String text) {
-		super(text);
-		initialize();
-	}
-
-	private void initialize() {
-		setVerticalAlignment(SwingConstants.TOP);
-		setToolTipText(getText());
-	}
-}
-
-class MyRadioButton extends JRadioButton {
-
-	public MyRadioButton() {
-		super();
-		initialize();
-	}
-
-	public MyRadioButton(Action a) {
-		super(a);
-		initialize();
-	}
-
-	public MyRadioButton(Icon icon, boolean selected) {
-		super(icon, selected);
-		initialize();
-	}
-
-	public MyRadioButton(Icon icon) {
-		super(icon);
-		initialize();
-	}
-
-	public MyRadioButton(String text, boolean selected) {
-		super(text, selected);
-		initialize();
-	}
-
-	public MyRadioButton(String text, Icon icon, boolean selected) {
-		super(text, icon, selected);
-		initialize();
-	}
-
-	public MyRadioButton(String text, Icon icon) {
-		super(text, icon);
-		initialize();
-	}
-
-	public MyRadioButton(String text) {
-		super(text);
-		initialize();
-	}
-
-	private void initialize() {
-		setVerticalAlignment(SwingConstants.TOP);
-		setToolTipText(getText());
-	}
-}
-
-class MyLabel extends JLabel {
-
-	public MyLabel() {
-		super();
-		initialize();
-	}
-
-	public MyLabel(Icon image, int horizontalAlignment) {
-		super(image, horizontalAlignment);
-		initialize();
-	}
-
-	public MyLabel(Icon image) {
-		super(image);
-		initialize();
-	}
-
-	public MyLabel(String text, Icon icon, int horizontalAlignment) {
-		super(text, icon, horizontalAlignment);
-		initialize();
-	}
-
-	public MyLabel(String text, int horizontalAlignment) {
-		super(text, horizontalAlignment);
-		initialize();
-	}
-
-	public MyLabel(String text) {
-		super(text);
-		initialize();
-	}
-
-	private void initialize() {
-		setVerticalAlignment(SwingConstants.TOP);
-		setToolTipText(getText());
 	}
 }

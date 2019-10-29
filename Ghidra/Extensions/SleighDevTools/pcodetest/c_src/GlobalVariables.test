@@ -1,0 +1,26 @@
+#include "pcode_test.h"
+
+extern i4 GLOBAL;
+
+TEST pcode_ModifyGlobal_Main()
+{
+	extern void pcode_ModifyGlobal(i4 arg1);
+	pcode_ModifyGlobal(5);
+	ASSERTI4(GLOBAL, 5);
+}
+
+TEST pcode_AccessAndModifyGlobal_Main()
+{
+	extern i4 pcode_AccessAndModifyGlobal(i4 arg1);
+	i4 ret = pcode_AccessAndModifyGlobal(6);
+	ASSERTI4(GLOBAL, 6);
+}
+
+TEST pcode_AccessGlobal_Main()
+{
+	extern i4 pcode_AccessGlobal();
+	i4 ret = pcode_AccessGlobal();
+	ASSERTI4(GLOBAL, GLOBAL);
+}
+
+MAIN GlobalVariables_main() { }

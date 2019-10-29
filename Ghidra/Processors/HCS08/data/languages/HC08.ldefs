@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<language_definitions>
+  <language processor="HC08"
+            endian="big"
+            size="16"
+            variant="default"
+            version="1.0"
+            slafile="HC08.sla"
+            processorspec="HC08.pspec"
+            manualindexfile="../manuals/HC08.idx"
+            id="HC08:BE:16:default">
+    <description>HC08 Microcontroller Family</description>
+    <compiler name="default" spec="HCS08.cspec" id="default"/>
+  </language>
+    <language processor="HC08"
+            endian="big"
+            size="16"
+            variant="MC68HC908QY4"
+            version="1.0"
+            slafile="HC08.sla"
+            processorspec="HC08-MC68HC908QY4.pspec"
+            manualindexfile="../manuals/HC08.idx"
+            id="HC08:BE:16:MC68HC908QY4">
+    <description>HC08 Microcontroller Family - MC68HC908QY4</description>
+    <compiler name="default" spec="HCS08.cspec" id="default"/>
+  </language>
+</language_definitions>

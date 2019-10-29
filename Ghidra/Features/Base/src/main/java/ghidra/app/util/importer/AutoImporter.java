@@ -272,8 +272,7 @@ public final class AutoImporter {
 
 	public static boolean importAddToProgram(File file, Program program, MessageLog messageLog,
 			TaskMonitor monitor, Predicate<Loader> loaderFilter, LoadSpecChooser loadSpecChooser,
-			OptionChooser optionChooser, MemoryConflictHandler memoryConflictHandler)
-			throws IOException, CancelledException {
+			OptionChooser optionChooser) throws IOException, CancelledException {
 		if (file == null) {
 			return false;
 		}
@@ -347,7 +346,7 @@ public final class AutoImporter {
 
 		try (RandomAccessByteProvider provider = new RandomAccessByteProvider(file)) {
 			return loadSpec.getLoader().loadInto(provider, loadSpec, options, messageLog, program,
-				monitor, memoryConflictHandler);
+				monitor);
 		}
 	}
 }

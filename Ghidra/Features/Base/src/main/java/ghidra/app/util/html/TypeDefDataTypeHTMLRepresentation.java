@@ -138,7 +138,7 @@ public class TypeDefDataTypeHTMLRepresentation extends HTMLDataTypeRepresentatio
 
 		// body
 		buffy.append(BR);
-		buffy.append("TypeDef Base Data Type: ").append(BR).append(BR);
+		buffy.append("TypeDef Base Data Type: ").append(BR);
 
 		iterator = bodyLines.iterator();
 		for (; iterator.hasNext();) {

@@ -38,6 +38,14 @@ abstract class Node {
 	}
 
 	/**
+	 * Returns this node's window manager
+	 * @return the window manager
+	 */
+	DockingWindowManager getDockingWindowManager() {
+		return winMgr;
+	}
+
+	/**
 	 * Gets all children of this node; an empty list if no children exist.
 	 * 
 	 * @return all children of this node.
@@ -50,20 +58,23 @@ abstract class Node {
 	abstract void close();
 
 	/**
-	 * Returns a component that manages all the components from the nodes below it.
+	 * Returns a component that manages all the components from the nodes below it
+	 * @return the component
 	 */
 	abstract JComponent getComponent();
 
 	/**
-	 * Determine if this node contains the specified component.
+	 * Determine if this node contains the specified component
+	 * 
 	 * @param info component information
-	 * @return true if this node contains the specified component.
+	 * @return true if this node contains the specified component
 	 */
 	abstract boolean contains(ComponentPlaceholder info);
 
 	/**
 	 * Returns an JDOM element object that contains the configuration state of this node 
-	 * and its children.
+	 * and its children
+	 * @return the element
 	 */
 	abstract Element saveToXML();
 
@@ -83,7 +94,8 @@ abstract class Node {
 	abstract WindowNode getTopLevelNode();
 
 	/**
-	 * Returns list of active components.
+	 * Puts into the given list all active components in this node
+	 * @param list the results list
 	 */
 	abstract void populateActiveComponents(List<ComponentPlaceholder> list);
 
@@ -98,11 +110,14 @@ abstract class Node {
 	}
 
 	/**
-	 * Generates a node corresponding to the given XML element.
-	 * @param elem the XML element for which to generate a node.
-	 * @param mgr the DockingWindowsManager for the new node.
-	 * @param parentNode the parent node for the new node.
-	 * @return the new node generated from the XML element.
+	 * Generates a node corresponding to the given XML element
+	 * 
+	 * @param elem the XML element for which to generate a node
+	 * @param mgr the DockingWindowsManager for the new node
+	 * @param parentNode the parent node for the new node
+	 * @param restoredPlaceholders a 'results' list into which will be placed any restored
+	 *        placeholders
+	 * @return the new node generated from the XML element
 	 */
 	Node processChildElement(Element elem, DockingWindowManager mgr, Node parentNode,
 			List<ComponentPlaceholder> restoredPlaceholders) {

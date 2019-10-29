@@ -1098,7 +1098,7 @@ public class AutoAnalysisManager implements DomainObjectListener, DomainObjectCl
 		}
 		if (GhidraProgramUtilities.shouldAskToAnalyze(program)) {
 			int answer = OptionDialog.showYesNoDialog(tool.getToolFrame(), "Analyze",
-				program.getDomainFile().getName() +
+				"<html>" + HTMLUtilities.escapeHTML(program.getDomainFile().getName()) +
 					" has not been analyzed. Would you like to analyze it now?");
 			boolean analyzed = answer == OptionDialog.OPTION_ONE;
 			GhidraProgramUtilities.setAnalyzedFlag(program, analyzed);
@@ -1468,9 +1468,19 @@ public class AutoAnalysisManager implements DomainObjectListener, DomainObjectCl
 		}
 
 		@Override
+		public boolean isIndeterminate() {
+			return false;
+		}
+
+		@Override
 		public void setMessage(String message) {
 			dominantMonitor.setMessage(message);
 			slaveMonitor.setMessage(message);
+		}
+
+		@Override
+		public String getMessage() {
+			return dominantMonitor.getMessage();
 		}
 
 		@Override
@@ -1514,12 +1524,6 @@ public class AutoAnalysisManager implements DomainObjectListener, DomainObjectCl
 		}
 
 		@Override
-		public void reportIssue(Issue issue) {
-			dominantMonitor.reportIssue(issue);
-			slaveMonitor.reportIssue(issue);
-		}
-
-		@Override
 		public void cancel() {
 			dominantMonitor.cancel();
 			slaveMonitor.cancel();
@@ -1533,16 +1537,6 @@ public class AutoAnalysisManager implements DomainObjectListener, DomainObjectCl
 		@Override
 		public void removeCancelledListener(CancelledListener listener) {
 			dominantMonitor.addCancelledListener(listener);
-		}
-
-		@Override
-		public void addIssueListener(IssueListener listener) {
-			dominantMonitor.addIssueListener(listener);
-		}
-
-		@Override
-		public void removeIssueListener(IssueListener listener) {
-			dominantMonitor.removeIssueListener(listener);
 		}
 
 		@Override

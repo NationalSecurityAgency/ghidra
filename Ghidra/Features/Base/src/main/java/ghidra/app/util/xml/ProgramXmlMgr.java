@@ -23,7 +23,6 @@ import java.util.Date;
 import org.xml.sax.*;
 
 import ghidra.app.util.bin.ByteProvider;
-import ghidra.app.util.importer.MemoryConflictHandler;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.app.util.opinion.*;
 import ghidra.formats.gfilesystem.FSRL;
@@ -188,15 +187,12 @@ public class ProgramXmlMgr {
 	 * @param program the program to load the XML into
 	 * @param monitor the task monitor
 	 * @param options the XML options, which features to load and to ignore
-	 * @param handler the memory conflict handler
 	 * @return the message log containing any warning/error messages
 	 * @throws SAXException if an XML error occurs
 	 * @throws IOException if an I/O occurs
 	 * @throws AddressFormatException if an invalid address is specified in the XML
-	 * @throws CancelledException if the user cancels the read
 	 */
-	public MessageLog read(Program program, TaskMonitor monitor, XmlProgramOptions options,
-			MemoryConflictHandler handler)
+	public MessageLog read(Program program, TaskMonitor monitor, XmlProgramOptions options)
 			throws SAXException, IOException, AddressFormatException {
 
 		if (getProgramInfo() == null) {
@@ -269,7 +265,7 @@ public class ProgramXmlMgr {
 					monitor.setMessage("Processing MEMORY MAP ...");
 					MemoryMapXmlMgr mgr = new MemoryMapXmlMgr(program, log);
 					mgr.read(parser, options.isOverwriteMemoryConflicts(), monitor,
-						file.getParent(), handler);
+						file.getParent());
 				}
 				else if (options.isRegisters() && name.equals("REGISTER_VALUES")) {
 					monitor.setMessage("Processing REGISTER VALUES ...");

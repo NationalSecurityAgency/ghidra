@@ -29,6 +29,6 @@ public class FcgActionContext extends ActionContext {
 	}
 
 	public FcgActionContext(FcgProvider provider, Object contextObject) {
-		super(provider, contextObject);
+		super(provider, contextObject, provider.getComponent());
 	}
 }

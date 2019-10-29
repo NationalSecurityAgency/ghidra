@@ -122,7 +122,7 @@ public class FunctionGraphGroupVertices3Test extends AbstractFunctionGraphTest {
 		uncollapse(groupA);
 		assertUncollapsed(v1, v2);
 
-		triggerPersistence(functionAddress);
+		triggerPersistenceAndReload(functionAddress);
 		waitForBusyGraph();// the re-grouping may be using animation, which runs after the graph is loaded
 
 		v1 = vertex(a1);
@@ -161,7 +161,7 @@ public class FunctionGraphGroupVertices3Test extends AbstractFunctionGraphTest {
 
 		assertUncollapsed(v1, v2);// sanity check--still uncollapsed
 
-		triggerPersistence(functionAddress);
+		triggerPersistenceAndReload(functionAddress);
 		waitForBusyGraph();// the re-grouping may be using animation, which runs after the graph is loaded
 
 		v1 = vertex(a1);
@@ -195,7 +195,7 @@ public class FunctionGraphGroupVertices3Test extends AbstractFunctionGraphTest {
 		uncollapse(outerGroup);
 		assertUncollapsed(innerGroup, v3, v4);
 
-		triggerPersistence(functionAddress);
+		triggerPersistenceAndReload(functionAddress);
 		waitForBusyGraph();// the re-grouping may be using animation, which runs after the graph is loaded
 
 		v1 = vertex(a1);

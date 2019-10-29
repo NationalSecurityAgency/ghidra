@@ -2799,7 +2799,7 @@ public class ExternalMergerTest extends AbstractExternalMergerTest {
 					externalManager.getUniqueExternalLocation("advapi32.dll", "apples");
 				Symbol symbol = externalLocation.getSymbol();
 				SymbolType symbolType = symbol.getSymbolType();
-				assertEquals(SymbolType.CODE, symbolType);
+				assertEquals(SymbolType.LABEL, symbolType);
 
 				assertNull(functionManager.getFunctionAt(externalSpaceAddress));
 			}
@@ -2835,7 +2835,7 @@ public class ExternalMergerTest extends AbstractExternalMergerTest {
 					externalManager.getUniqueExternalLocation("advapi32.dll", "apples");
 				Symbol symbol = externalLocation.getSymbol();
 				SymbolType symbolType = symbol.getSymbolType();
-				assertEquals(SymbolType.CODE, symbolType);
+				assertEquals(SymbolType.LABEL, symbolType);
 
 				assertNull(functionManager.getFunctionAt(externalSpaceAddress));
 			}
@@ -2849,7 +2849,7 @@ public class ExternalMergerTest extends AbstractExternalMergerTest {
 		Symbol symbol = externalLocation.getSymbol();
 		assertNull(externalLocation.getFunction());
 		SymbolType symbolType = symbol.getSymbolType();
-		assertEquals(SymbolType.CODE, symbolType);
+		assertEquals(SymbolType.LABEL, symbolType);
 		Address externalSpaceAddress = externalLocation.getExternalSpaceAddress();
 		assertNotNull(externalSpaceAddress);
 
@@ -2860,7 +2860,7 @@ public class ExternalMergerTest extends AbstractExternalMergerTest {
 		symbol = externalLocation.getSymbol();
 		assertNull(externalLocation.getFunction());
 		symbolType = symbol.getSymbolType();
-		assertEquals(SymbolType.CODE, symbolType);
+		assertEquals(SymbolType.LABEL, symbolType);
 
 		FunctionManager functionManager = resultProgram.getFunctionManager();
 		assertNull(functionManager.getFunctionAt(externalSpaceAddress));

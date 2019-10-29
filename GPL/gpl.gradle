@@ -1,0 +1,88 @@
+
+// BIN_REPO only useable in full Ghidra source configuration
+project.ext.BIN_REPO = file("../../../ghidra.bin").absolutePath
+
+/****************************************************************************
+ * Create a set containing all the platforms we need when building native
+ * artifacts.
+ ****************************************************************************/
+project.ext.set("OS_NAMES", ["osx64", "win32", "win64", "linux64"])
+
+/****************************************************************************
+ * Establish Visual Studio configuration environment for Windows native builds
+ * NOTE: vsconfig.gradle path is relative to each GPL project module
+ ****************************************************************************/
+apply from: "../vsconfig.gradle"
+
+/*********************************************************************************
+ * Returns the local platform name.
+ *********************************************************************************/
+ext.getCurrentPlatformName = {
+
+	String osName = System.getProperty("os.name")
+	String archName = System.getProperty("os.arch")
+		
+	boolean isX86_32 = archName.equals("x86") || archName.equals("i386");
+	boolean isX86_64 = archName.equals("x86_64") || archName.equals("amd64");
+
+	if (osName.startsWith("Windows")) {
+		if (isX86_32) {
+			return 'win32'
+		}
+		else if (isX86_64) {
+			return 'win64'
+		}
+	}
+	else if (osName.startsWith("Linux")) {
+		if (isX86_64) {
+			return 'linux64'
+		}
+	}
+	else if (osName.startsWith("Mac OS X")) {
+		if (isX86_64) {
+			return 'osx64'
+		}
+	}
+	throw new GradleException("Unrecognized current platform -> osName = $osName, archName = $archName")
+}
+/******************************************************************************************
+ *	Helper method that returns a file that is the same relative location in the bin repo
+ *  as the given project is in its repo.
+ ******************************************************************************************/
+ext.getProjectLocationInBinRepo = {
+	String relativePath = getGhidraRelativePath(this.project)
+	println("RELATIVE: $relativePath")
+	File binRepoRootProject = new File("${BIN_REPO}")
+	if (!binRepoRootProject.isDirectory()) {
+		throw new GradleException("Task requires Ghidra source and ghidra.bin")
+	}
+	return new File(binRepoRootProject, relativePath)
+}
+/****************************************************************************************
+ * Returns the "effective" relative path (Path starting with Ghidra)
+ * Normally, for files in the ghidra repo this is just the relative path from 
+ * the root project (ghidra) to the given project.  
+ *
+ *  For example <...>/ghidra/Ghidra/Features/Base will return Ghidra/Features/Base
+ *
+ *  If the project is in a sibling repo (ghidra.<other> that lives in the same directory
+ *  as ghidra), then this method returns a relative path as though the project lived
+ *  in ghidra.  
+ *
+ *	for example <...>/ghidra.foo/Ghidra/Features/OtherProject will return Ghidra/Features/OtherProject
+ ****************************************************************************************/
+String getGhidraRelativePath(Project p) {
+	String path = rootProject.relativePath(p.projectDir)
+
+	// If the project lives outside the ghidra repo, then its relative path will
+	// start with "../".  In this case, we want to remove the "../" and the next path element
+	// so that the path will appear as though the project lived under the ghidra repo.
+	// example:   "../ghidra/Ghidra/Features/Foo"  will get changed to "Ghidra/Features/Foo"
+	String prefix = ".."+File.separator
+	if (path.startsWith(prefix)) {
+		int index = path.indexOf(File.separator,3)
+		path = path.substring(index+1)
+	}
+
+	return path
+}

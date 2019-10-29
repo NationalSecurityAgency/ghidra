@@ -1,0 +1,861 @@
+
+
+# R0 - Accumulator
+# R1 -
+# R2 - Return Address
+# R3 -
+# R4 - SRC
+# R5 - DST
+# R6 - CPPN/SRPN/TOS/CNT1
+# R7 - DPTR/Flags
+define register offset=0xf0043F00 size=4 [ R0 R1 R2 R3 R4 R5 R6 R7 ];
+@define CPPN "R6[24,8]"
+@define SRPN "R6[16,8]"
+@define TOS "R6[14,2]"
+@define CNT1 "R6[0,12]"
+
+@define DPTR "R7[8,8]"
+@define CEN "R7[6,1]"
+@define IEN "R7[5,1]"
+@define CNZ "R7[4,1]"
+@define V "R7[3,1]"
+@define C "R7[2,1]"
+@define N "R7[1,1]"
+@define Z "R7[0,1]"
+
+define token pcpinstr (16)
+       pcp_op0000=(0,0)
+       pcp_op0001=(0,1)
+       pcp_op0002=(0,2)
+       ccAB=(0,3)
+       ccA=(0,2)
+       pcp_op0004=(0,4)
+       pcp_op0005=(0,5)
+       pcp_op0009=(0,9)
+       pcp_op0010=(0,10)
+       pcp_op0101=(1,1)
+       pcp_op0202=(2,2)
+       pcp_op0203=(2,3)
+       pcp_op0204=(2,4)
+       pcp_op0303=(3,3)
+       R0305=(3,5)
+       pcp_op0404=(4,4)
+       pcp_op0405=(4,5)
+       pcp_op0406=(4,6)
+       pcp_op0505=(5,5)
+       pcp_op0506=(5,6)
+       R0608=(6,8)
+       ccB=(6,9)
+       pcp_op0707=(7,7)
+       pcp_op0708=(7,8)
+       pcp_op0808=(8,8)
+       pcp_op0909=(9,9)
+       pcp_op0910=(9,10)
+       pcp_op0912=(9,12)
+       pcp_op1010=(10,10)
+       pcp_op1012=(10,12)
+       pcp_op1111=(11,11)
+       pcp_op1212=(12,12)
+       addrmode=(13,15)
+;
+
+define token pcpinstr2 (16)
+       pcp_op1631=(0,15)
+;
+
+attach variables [ R0305 R0608 ] [ R0 R1 R2 R3 R4 R5 R6 R7 ];
+
+
+CONDCA: "cc_UC"  is PCPMode=1 & ccA=0x0 { local tmp:1 = 1; export tmp; }
+CONDCA: "cc_Z"   is PCPMode=1 & ccA=0x1 { local tmp:1 = ($(Z)==1); export tmp; }
+CONDCA: "cc_NZ"  is PCPMode=1 & ccA=0x2 { local tmp:1 = ($(Z)==0); export tmp; }
+CONDCA: "cc_V"   is PCPMode=1 & ccA=0x3 { local tmp:1 = ($(V)==1); export tmp; }
+CONDCA: "cc_ULT" is PCPMode=1 & ccA=0x4 { local tmp:1 = ($(C)==1); export tmp; }
+CONDCA: "cc_UGT" is PCPMode=1 & ccA=0x5 { local tmp:1 = (($(C)|$(Z))==0); export tmp; }
+CONDCA: "cc_SLT" is PCPMode=1 & ccA=0x6 { local tmp:1 = (($(N)^$(V))==1); export tmp; }
+CONDCA: "cc_SGT" is PCPMode=1 & ccA=0x7 { local tmp:1 = ((($(N)^$(V))|$(Z))==0); export tmp; }
+
+CONDCB: "cc_UC"  is PCPMode=1 & ccB=0x0 { local tmp:1 = 1; export tmp; }
+CONDCB: "cc_Z"   is PCPMode=1 & ccB=0x1 { local tmp:1 = ($(Z)==1); export tmp; }
+CONDCB: "cc_NZ"  is PCPMode=1 & ccB=0x2 { local tmp:1 = ($(Z)==0); export tmp; }
+CONDCB: "cc_V"   is PCPMode=1 & ccB=0x3 { local tmp:1 = ($(V)==1); export tmp; }
+CONDCB: "cc_ULT" is PCPMode=1 & ccB=0x4 { local tmp:1 = ($(C)==1); export tmp; }
+CONDCB: "cc_UGT" is PCPMode=1 & ccB=0x5 { local tmp:1 = (($(C)|$(Z))==0); export tmp; }
+CONDCB: "cc_SLT" is PCPMode=1 & ccB=0x6 { local tmp:1 = (($(N)^$(V))==1); export tmp; }
+CONDCB: "cc_SGT" is PCPMode=1 & ccB=0x7 { local tmp:1 = ((($(N)^$(V))|$(Z))==0); export tmp; }
+CONDCB: "cc_N"   is PCPMode=1 & ccB=0x8 { local tmp:1 = ($(N)==1); export tmp; }
+CONDCB: "cc_NN"  is PCPMode=1 & ccB=0x9 { local tmp:1 = ($(N)==0); export tmp; }
+CONDCB: "cc_NV"  is PCPMode=1 & ccB=0xA { local tmp:1 = ($(V)==0); export tmp; }
+CONDCB: "cc_UGE" is PCPMode=1 & ccB=0xB { local tmp:1 = ($(C)==0); export tmp; }
+CONDCB: "cc_SGE" is PCPMode=1 & ccB=0xC { local tmp:1 = (($(N)^$(V))==0); export tmp; }
+CONDCB: "cc_SLE" is PCPMode=1 & ccB=0xD { local tmp:1 = ((($(N)^$(V))|$(Z))==1); export tmp; }
+CONDCB: "cc_CNZ" is PCPMode=1 & ccB=0xE { local tmp:1 = ($(CNZ)==1); export tmp; }
+CONDCB: "cc_CNN" is PCPMode=1 & ccB=0xF { local tmp:1 = ($(CNZ)==0); export tmp; }
+
+#TODO
+CONDCAB: "cc_UC"  is PCPMode=1 & ccAB=0x0 { local tmp:1 = 1; export tmp; }
+CONDCAB: "cc_Z"   is PCPMode=1 & ccAB=0x1 { local tmp:1 = ($(Z)==1); export tmp; }
+CONDCAB: "cc_NZ"  is PCPMode=1 & ccAB=0x2 { local tmp:1 = ($(Z)==0); export tmp; }
+CONDCAB: "cc_V"   is PCPMode=1 & ccAB=0x3 { local tmp:1 = ($(V)==1); export tmp; }
+CONDCAB: "cc_ULT" is PCPMode=1 & ccAB=0x4 { local tmp:1 = ($(C)==1); export tmp; }
+CONDCAB: "cc_UGT" is PCPMode=1 & ccAB=0x5 { local tmp:1 = (($(C)|$(Z))==0); export tmp; }
+CONDCAB: "cc_SLT" is PCPMode=1 & ccAB=0x6 { local tmp:1 = (($(N)^$(V))==1); export tmp; }
+CONDCAB: "cc_SGT" is PCPMode=1 & ccAB=0x7 { local tmp:1 = ((($(N)^$(V))|$(Z))==0); export tmp; }
+CONDCAB: "cc_N"   is PCPMode=1 & ccAB=0x8 { local tmp:1 = ($(N)==1); export tmp; }
+CONDCAB: "cc_NN"  is PCPMode=1 & ccAB=0x9 { local tmp:1 = ($(N)==0); export tmp; }
+CONDCAB: "cc_NV"  is PCPMode=1 & ccAB=0xA { local tmp:1 = ($(V)==0); export tmp; }
+CONDCAB: "cc_UGE" is PCPMode=1 & ccAB=0xB { local tmp:1 = ($(C)==0); export tmp; }
+CONDCAB: "cc_SGE" is PCPMode=1 & ccAB=0xC { local tmp:1 = (($(N)^$(V))==0); export tmp; }
+CONDCAB: "cc_SLE" is PCPMode=1 & ccAB=0xD { local tmp:1 = ((($(N)^$(V))|$(Z))==1); export tmp; }
+CONDCAB: "cc_CNZ" is PCPMode=1 & ccAB=0xE { local tmp:1 = ($(CNZ)==1); export tmp; }
+CONDCAB: "cc_CNN" is PCPMode=1 & ccAB=0xF { local tmp:1 = ($(CNZ)==0); export tmp; }
+
+imm5: "#"^pcp_op0004 is pcp_op0004 { local tmp:4 = pcp_op0004; export tmp; }
+imm6: "#"^pcp_op0005 is pcp_op0005 { local tmp:4 = pcp_op0005; export tmp; }
+#imm10: "#"^pcp_op0009 is pcp_op0009 { local tmp:4 = pcp_op0009; export tmp; }
+imm16: "#"^pcp_op1631 is pcp_op1631 { local tmp:4 = pcp_op1631; export tmp; }
+offset6: "[#"^pcp_op0005^"]" is pcp_op0005 { local tmp:4 = (zext($(DPTR)) << 6) + pcp_op0005; export *[ram]:4 tmp; }
+
+offset6W: R0608, "[#"^pcp_op0005^"]" is pcp_op0005 & R0608 { local tmp:4 = (zext($(DPTR)) << 6) + pcp_op0005; *[ram]:4 tmp = R0608; }
+offset6RW: R0608, "[#"^pcp_op0005^"]" is pcp_op0005 & R0608 { local tmp:4 = R0608; local ea:4 = (zext($(DPTR)) << 6) + pcp_op0005; R0608 = *[ram]:4 ea; *[ram]:4 ea = tmp; }
+
+SRC: R4  is PCPMode=1 & pcp_op0708=0 & R4 { local tmp:4 = 0; export tmp; }
+SRC: R4+ is PCPMode=1 & pcp_op0708=1 & R4 { local tmp:4 = 1; export tmp; }
+SRC: R4- is PCPMode=1 & pcp_op0708=2 & R4 { local tmp:4 = -1; export tmp; }
+
+DST: R5  is PCPMode=1 & pcp_op0910=0 & R5 { local tmp:4 = 0; export tmp; }
+DST: R5+ is PCPMode=1 & pcp_op0910=1 & R5 { local tmp:4 = 1; export tmp; }
+DST: R5- is PCPMode=1 & pcp_op0910=2 & R5 { local tmp:4 = -1; export tmp; }
+
+SIZE0: "8" is PCPMode=1 & pcp_op0001=0 { local tmp:4 = zext(*[ram]:1 R4); export tmp;}
+SIZE0: "16" is PCPMode=1 & pcp_op0001=1 { local tmp:4 = zext(*[ram]:2 R4); export tmp;}
+SIZE0: "32" is PCPMode=1 & pcp_op0001=2 { local tmp:4 = *[ram]:4 R4; export tmp;}
+
+SIZE1: [R0305], "8" is PCPMode=1 & pcp_op0001=0 & R0305 { local tmp:4 = zext(*[ram]:1 R0305); export tmp;}
+SIZE1: [R0305], "16" is PCPMode=1 & pcp_op0001=1 & R0305 { local tmp:4 = zext(*[ram]:2 R0305); export tmp;}
+SIZE1: [R0305], "32" is PCPMode=1 & pcp_op0001=2 & R0305 { local tmp:4 = *[ram]:4 R0305; export tmp;}
+
+SIZE1W: R0608, [R0305], "8" is PCPMode=1 & pcp_op0001=0 & R0305 & R0608 { *[ram]:1 R0305 = R0608[0,8]; }
+SIZE1W: R0608, [R0305], "16" is PCPMode=1 & pcp_op0001=1 & R0305 & R0608 { *[ram]:2 R0305 = R0608[0,16]; }
+SIZE1W: R0608, [R0305], "32" is PCPMode=1 & pcp_op0001=2 & R0305 & R0608 { *[ram]:4 R0305 = R0608; }
+
+SIZE1RW: R0608, [R0305], "8" is PCPMode=1 & pcp_op0001=0 & R0305 & R0608 { local tmp:1 = R0608[0,8]; R0608 = zext(*[ram]:1 R0305); *[ram]:1 R0305 = tmp; }
+SIZE1RW: R0608, [R0305], "16" is PCPMode=1 & pcp_op0001=1 & R0305 & R0608 { local tmp:2 = R0608[0,16]; R0608 = zext(*[ram]:2 R0305); *[ram]:2 R0305 = tmp; }
+SIZE1RW: R0608, [R0305], "32" is PCPMode=1 & pcp_op0001=2 & R0305 & R0608 { local tmp:4 = R0608; R0608 = *[ram]:4 R0305; *[ram]:4 R0305 = tmp; }
+
+SIZE5: "8" is PCPMode=1 & pcp_op0505=0 & pcp_op0909=0 & R0608 { local tmp:4 = zext(*[ram]:1 R0608); export tmp;}
+SIZE5: "16" is PCPMode=1 & pcp_op0505=1 & pcp_op0909=0 & R0608 { local tmp:4 = zext(*[ram]:2 R0608); export tmp;}
+SIZE5: "32" is PCPMode=1 & pcp_op0505=0 & pcp_op0909=1 & R0608 { local tmp:4 = *[ram]:4 R0608; export tmp;}
+
+SIZE5W: [R0608], imm5, "8" is PCPMode=1 & pcp_op0505=0 & pcp_op0909=0 & imm5 & R0608 { *[ram]:1 (R0608 + imm5) = R0[0,8]; }
+SIZE5W: [R0608], imm5, "16" is PCPMode=1 & pcp_op0505=1 & pcp_op0909=0 & imm5 & R0608 { *[ram]:2 (R0608 + imm5) = R0[0,16]; }
+SIZE5W: [R0608], imm5, "32" is PCPMode=1 & pcp_op0505=0 & pcp_op0909=1 & imm5 & R0608 { *[ram]:4 (R0608 + imm5) = R0; }
+
+# Counter Control
+# 00 = perform xfer by CNT0 ; goto next
+# 01 = perform xfer by CNT0 ; dec CNT1 ; goto next
+# 10 = perform xfer by CNT0 ; dec CNT1 ; repeat dec ; goto next
+CNC: pcp_op0506 is PCPMode=1 & pcp_op0506 { local tmp:4 = pcp_op0506; export tmp; }
+
+# Counter Reload Value (COPY)
+# 001..111 = perform 1..7 xfer
+CNT03: pcp_op0204 is PCPMode=1 & pcp_op0204 { local tmp:4 = pcp_op0204; export tmp; }
+
+# Counter Reload Value Block Size (BCOPY)
+# 00 = block size 8 words
+# 10 = block size 2 words
+# 11 = block size 4 words
+CNT02: pcp_op0203 is PCPMode=1 & pcp_op0203 { local tmp:4 = pcp_op0203; export tmp; }
+
+EC: pcp_op0707 is PCPMode=1 & pcp_op0707 { local tmp:1 = pcp_op0707; export tmp; }
+EP: pcp_op0808 is PCPMode=1 & pcp_op0808 { local tmp:1 = pcp_op0808; export tmp; }
+INT: pcp_op0909 is PCPMode=1 & pcp_op0909 { local tmp:1 = pcp_op0909; export tmp; }
+ST: pcp_op1010 is PCPMode=1 & pcp_op1010 { local tmp:1 = pcp_op1010; export tmp; }
+
+SETCLR: "SET" is PCPMode=1 & pcp_op0505=1 { local tmp:1 = 1; export tmp; }
+SETCLR: "CLR" is PCPMode=1 & pcp_op0505=0 { local tmp:1 = 0; export tmp; }
+
+SDB: pcp_op0000 is PCPMode=1 & pcp_op0000 { local tmp:1 = pcp_op0000; export tmp; }
+EDA: pcp_op0101 is PCPMode=1 & pcp_op0101 { local tmp:1 = pcp_op0101; export tmp; }
+RTA: pcp_op0202 is PCPMode=1 & pcp_op0202 { local tmp:1 = pcp_op0202; export tmp; }
+DAC: pcp_op0303 is PCPMode=1 & pcp_op0303 { local tmp:1 = pcp_op0303; export tmp; }
+
+# Addressing Modes:
+# 0 - control
+# 1 - FPI
+# 2 - PRAM
+# 3 - Arithmetic
+# 4 - Immediate
+# 5 - FPI Immediate
+# 6 - Complex Maths
+# 7 - Jump
+
+
+# 3: 16-bit 6000|0b110000000000000 9e00|0b1001111000000000
+# ADD Rb, Ra, cc_A
+:add R0608, R0305, CONDCA is PCPMode=1 & addrmode=0x3 & pcp_op0912=0x0 & R0608 & R0305 & CONDCA
+{
+	#TODO  flags  N,Z,V,C
+	if (CONDCA == 0) goto inst_next;
+	R0608 = R0608 + R0305;
+}
+
+
+# 1: 16-bit 2000|0b10000000000000 de04|0b1101111000000100
+# ADD.F Rb, [Ra], Size
+:add.f R0608, SIZE1 is PCPMode=1 & addrmode=0x1 & pcp_op0912=0x0 & pcp_op0202=0x0 & R0608 & R0305 & SIZE1
+{
+	#TODO  flags  N,Z,V,C
+	build SIZE1;
+	R0608 = R0608 + SIZE1;
+}
+
+
+# 4: 16-bit 8000|0b1000000000000000 7e00|0b111111000000000
+# ADD.I Ra, #imm6
+:add.i R0608, imm6 is PCPMode=1 & addrmode=4 & R0608 & pcp_op0912=0x0 & imm6
+{
+	#TODO  flags  N,Z,V,C
+	R0608 = R0608 + imm6;
+}
+
+
+# 2: 16-bit 4000|0b100000000000000 be00|0b1011111000000000
+# ADD.PI Ra, [#offset6]
+:add.pi R0608, offset6 is PCPMode=1 & addrmode=2 & pcp_op0912=0x0 & R0608 & offset6
+{
+	#TODO  flags  N,Z,V,C
+	build offset6;
+	R0608 = R0608 + offset6; 
+}
+
+
+# 3: 16-bit 6a00|0b110101000000000 9400|0b1001010000000000
+# AND Rb, Ra, cc_A
+:and R0608, R0305, CONDCA is PCPMode=1 & addrmode=0x3 & pcp_op0912=0x5 & R0608 & R0305 & CONDCA
+{
+	#TODO  flags  N,Z
+	if (CONDCA == 0) goto inst_next;
+	R0608 = R0608 & R0305;
+}
+
+
+# 1: 16-bit 2a00|0b10101000000000 d404|0b1101010000000100
+# AND.F Rb, [Ra], Size
+:and.f R0608, SIZE1 is PCPMode=1 & addrmode=0x1 & pcp_op0912=0x5 & pcp_op0202=0x0 & R0608 & R0305 & SIZE1
+{
+	#TODO  flags  N,Z
+	build SIZE1;
+	R0608 = R0608 & SIZE1;
+}
+
+
+# 2: 16-bit 4a00|0b100101000000000 b400|0b1011010000000000
+# AND.PI Ra, [#offset6]
+:and.pi R0608, offset6 is PCPMode=1 & addrmode=2 & pcp_op0912=0x5 & R0608 & offset6
+{
+	#TODO  flags  N,Z
+	build offset6;
+	R0608 = R0608 & offset6;
+}
+
+
+# 0: 16-bit 1800|0b1100000000000 e013|0b1110000000010011
+#
+:bcopy DST, SRC, CNC, CNT02 is PCPMode=1 & addrmode=0 & pcp_op1212=0x1 & pcp_op1111=0x1 & DST & SRC & CNC & CNT02 & pcp_op0404=0x0 & pcp_op0001=0x0
+{
+}
+
+
+# 4: 16-bit 9c00|0b1001110000000000 6200|0b110001000000000
+# CHKB Ra, #imm5, S/C
+:chkb R0608, imm5, SETCLR is PCPMode=1 & addrmode=4 & R0608 & pcp_op0912=0xe & SETCLR & imm5
+{
+	$(C) = (R0608 & (1 << imm5)) != 0;
+}
+
+
+# 4: 16-bit 9600|0b1001011000000000 6820|0b110100000100000
+# CLR Ra, #imm5
+:clr R0608, imm5 is PCPMode=1 & addrmode=4 & R0608 & pcp_op0912=0xb & pcp_op0505=0x0 & imm5
+{
+	R0608 = R0608 & ~(1 << imm5);
+}
+
+
+# 5: 16-bit b000|0b1011000000000000 4c00|0b100110000000000
+# CLR.F [Ra], #imm5, Size
+:clr.f [R0608], imm5, SIZE5 is PCPMode=1 & addrmode=0x5 & pcp_op1012=0x4 & R0608 & imm5 & SIZE5
+{
+	build SIZE5;
+	*[ram]:4 R0608 = SIZE5 & ~(1 << imm5);
+}
+
+
+#TODO  the manual does not specify
+# N negative
+# Z zero
+# V overflow
+# C carry
+macro Flags(r0, r1) {
+        local val:4 = r0 - r1;
+        $(N) = val s< 0;
+        $(Z) = r0 == r1;
+        $(V) = r0[31,1] | r1[31,1];
+	$(C) = r0 < r1;
+}
+
+# 3: 16-bit 6400|0b110010000000000 9a00|0b1001101000000000
+# COMP Rb, Ra, cc_A
+:comp R0608, R0305, CONDCA is PCPMode=1 & addrmode=0x3 & pcp_op0912=0x2 & R0608 & R0305 & CONDCA
+{
+	if (CONDCA == 0) goto inst_next;
+	Flags(R0608, R0305);
+}
+
+
+# 1: 16-bit 2400|0b10010000000000 da04|0b1101101000000100
+# COMP.F Rb, [Ra], Size
+:comp.f R0608, SIZE1 is PCPMode=1 & addrmode=0x1 & pcp_op0912=0x2 & pcp_op0202=0x0 & R0608 & R0305 & SIZE1
+{
+	build SIZE1;
+	Flags(R0608, SIZE1);
+}
+
+
+# 4: 16-bit 8400|0b1000010000000000 7a00|0b111101000000000
+# COMP.I Ra, #imm6
+:comp.i R0608, imm6 is PCPMode=1 & addrmode=4 & R0608 & pcp_op0912=0x2 & imm6
+{
+	Flags(R0608, imm6);	
+}
+
+
+# 2: 16-bit 4400|0b100010000000000 ba00|0b1011101000000000
+# COMP.PI Ra, [#offset6]
+:comp.pi R0608, offset6 is PCPMode=1 & addrmode=2 & pcp_op0912=0x2 & R0608 & offset6
+{
+	build offset6;
+	Flags(R0608, offset6);
+}
+
+
+# 0: 16-bit 0800|0b100000000000 f000|0b1111000000000000
+#
+:copy DST, SRC, CNC, CNT03, SIZE0 is PCPMode=1 & addrmode=0 & pcp_op1212=0x0 & pcp_op1111=0x1 & DST & SRC & CNC & CNT03 & SIZE0
+{
+}
+
+#TODO  DEBUG SLEIGH instead
+define pcodeop pcpdebug;
+
+# 7: 16-bit fc00|0b1111110000000000 0030|0b110000
+# DEBUG EDA, DAC, RTA, SDB, cc_B
+:debug DAC, RTA, EDA, SDB, CONDCB is PCPMode=1 & addrmode=7 & pcp_op1012=0x7 & DAC & RTA & EDA & SDB & CONDCB & pcp_op0405=0x0
+{
+	if (CONDCB == 0) goto inst_next;
+	pcpdebug();	
+}
+
+
+# 6: 16-bit c000|0b1100000000000000 3e07|0b11111000000111
+# DINIT <R0>, Rb, Ra
+:dinit "<"^R0^">", R0608, R0305 is PCPMode=1 & addrmode=0x6 & pcp_op0912=0x0 & R0 & R0608 & R0305 & pcp_op0002=0x0
+{
+	R0 = 0;
+	$(V) = R0305 == 0;
+	$(Z) = (R0608 == 0) && (R0305 != 0);
+}
+
+
+# 6: 16-bit c200|0b1100001000000000 3c07|0b11110000000111
+# DSTEP <R0>, Rb, Ra
+:dstep "<"^R0^">", R0608, R0305 is PCPMode=1 & addrmode=0x6 & pcp_op0912=0x1 & R0 & R0608 & R0305 & pcp_op0002=0x0
+{
+	#TODO  flags  Z  not sure
+	R0 = (R0 << 8) + (R0608 >> 24);
+	R0608 = (R0608 << 8) + (R0 / R0305);
+	R0 = R0 % R0305;
+	$(Z) = R0 == 0;
+}
+
+
+# 0: 16-bit 1000|0b1000000000000 e870|0b1110100001110000
+#
+:exit ST, EC, INT, EP, CONDCAB is PCPMode=1 & addrmode=0 & pcp_op1212=0x1 & pcp_op1111=0x0 & ST & EC & INT & EP & CONDCAB & pcp_op0406=0x0
+{
+}
+
+
+# 3: 16-bit 7a00|0b111101000000000 8400|0b1000010000000000
+# INB Rb, Ra, cc_A
+:inb R0608, R0305, CONDCA is PCPMode=1 & addrmode=0x3 & pcp_op0912=0xd & R0608 & R0305 & CONDCA
+{
+	if (CONDCA == 0) goto inst_next;
+	R0608 = (R0608 & ~(1 << R0305[0,5])) | zext($(C) << R0305[0,5]);
+}
+
+
+# 4: 16-bit 9a00|0b1001101000000000 6420|0b110010000100000
+# INB.I Ra, #imm5
+:inb.i R0608, imm5 is PCPMode=1 & addrmode=4 & R0608 & pcp_op0912=0xd & pcp_op0505=0x0 & imm5
+{
+	R0608 = (R0608 & ~(1 << imm5)) | zext($(C) << imm5);
+}
+
+imm6pc: reloc is PCPMode=1 & pcp_op0005 [ reloc = inst_start + pcp_op0005; ] { export *[ram]:4 reloc; }
+imm10pc: reloc is PCPMode=1 & pcp_op0009 [ reloc = inst_start + pcp_op0009; ] { export *[ram]:4 reloc; }
+imm16abs: pcp_op1631 is PCPMode=1 & pcp_op1631 { export *[ram]:4 pcp_op1631; }
+
+# 7: 16-bit e400|0b1110010000000000 1800|0b1100000000000
+# JC offset6, cc_B
+:jc imm6pc, CONDCB is PCPMode=1 & addrmode=7 & pcp_op1012=0x1 & imm6pc & CONDCB
+{
+	if (CONDCB == 0) goto inst_next;
+	goto imm6pc;
+}
+
+
+# 7: 32-bit e800|0b1110100000000000 143f|0b1010000111111
+# JC.A #address16, cc_B
+:jc.a imm16abs, CONDCB is PCPMode=1 & addrmode=7 & pcp_op1012=0x2 & CONDCB & pcp_op0005=0 ; imm16abs
+{
+	if (CONDCB == 0) goto inst_next;
+	goto imm16abs;
+}
+
+
+# 7: 16-bit f000|0b1111000000000000 0c07|0b110000000111
+# JC.I Ra, cc_B
+:jc.i [R0305], CONDCB is PCPMode=1 & addrmode=7 & pcp_op1012=0x4 & R0305 & CONDCB & pcp_op0002=0x0
+{
+	if (CONDCB == 0) goto inst_next;
+	local tmp:4 = inst_start + zext(R0305[0,16]);
+	goto [tmp];
+}
+
+
+# 7: 16-bit f400|0b1111010000000000 0807|0b100000000111
+# JC.IA Ra, cc_B
+:jc.ia [R0305], CONDCB is PCPMode=1 & addrmode=7 & pcp_op1012=0x5 & R0305 & CONDCB & pcp_op0002=0x0
+{
+	if (CONDCB == 0) goto inst_next;
+	local tmp:4 = zext(R0305[0,16]);
+	goto [tmp];
+}
+
+
+# 7: 16-bit e000|0b1110000000000000 1c00|0b1110000000000
+# JL offset10
+:jl imm10pc is PCPMode=1 & addrmode=7 & pcp_op1012=0x0 & imm10pc
+{
+	goto imm10pc;
+}
+
+
+# 1: 16-bit 3200|0b11001000000000 cc04|0b1100110000000100
+# LD.F Rb, [Ra], Size
+:ld.f R0608, SIZE1 is PCPMode=1 & addrmode=0x1 & pcp_op0912=0x9 & pcp_op0202=0x0 & R0608 & R0305 & SIZE1
+{
+	R0608 = SIZE1;
+	$(N) = R0608 s< 0;
+	$(Z) = R0608 == 0;
+}
+
+
+# 4: 16-bit 9800|0b1001100000000000 6600|0b110011000000000
+# LD.I Ra, #imm6
+:ld.i R0608, imm6 is PCPMode=1 & addrmode=4 & R0608 & pcp_op0912=0xc & imm6
+{
+	R0608 = imm6;
+	$(N) = R0608 s< 0;
+	$(Z) = R0608 == 0;
+}
+
+
+# 5: 16-bit b400|0b1011010000000000 4800|0b100100000000000
+# LD.IF [Ra], #offset5, Size
+:ld.if [R0608], imm5, SIZE5 is PCPMode=1 & addrmode=0x5 & pcp_op1012=0x5 & R0608 & imm5 & SIZE5
+{
+	R0608 = SIZE5 + imm5;
+	$(N) = R0608 s< 0;
+	$(Z) = R0608 == 0;
+}
+
+
+# 3: 16-bit 7200|0b111001000000000 8c00|0b1000110000000000
+# LD.P Rb, [Ra], cc_A
+:ld.p R0608, [R0305], CONDCA is PCPMode=1 & addrmode=0x3 & pcp_op0912=0x9 & R0608 & R0305 & CONDCA
+{
+	if (CONDCA == 0) goto inst_next;
+	local tmp:4 = zext($(DPTR) << 6) + zext(R0305[0,6]);
+	R0608 = *[ram]:4 tmp;
+	$(N) = R0608 s< 0;
+	$(Z) = R0608 == 0;
+}
+
+
+# 2: 16-bit 5200|0b101001000000000 ac00|0b1010110000000000
+# LD.PI Ra, [#offset6]
+:ld.pi R0608, offset6 is PCPMode=1 & addrmode=2 & pcp_op0912=0x9 & R0608 & offset6
+{
+	R0608 = offset6;
+	$(N) = R0608 s< 0;
+	$(Z) = R0608 == 0;
+}
+
+
+# 4: 32-bit 9200|0b1001001000000000 6c3f|0b110110000111111
+# LDL.IL Ra, #imm16
+:ldl.il R0608, imm16 is PCPMode=1 & addrmode=4 & R0608 & pcp_op0912=0x9 & pcp_op0005=0x0 ; imm16
+{
+	#TODO  are flags correct
+	R0608[0,16] = imm16[0,16];
+	$(N) = R0608[0,16] s< 0;
+	$(Z) = R0608[0,16] == 0;	
+}
+
+
+# 4: 32-bit 9000|0b1001000000000000 6e3f|0b110111000111111
+#
+:ldl.iu R0608, imm16 is PCPMode=1 & addrmode=4 & R0608 & pcp_op0912=0x8 & pcp_op0005=0x0 ; imm16
+{
+	#TODO  are flags correct
+	R0608[16,16] = imm16[0,16];
+	$(N) = R0608[16,16] s< 0;
+	$(Z) = R0608[16,16] == 0;	
+}
+
+
+# 2: 16-bit 4800|0b100100000000000 b600|0b1011011000000000
+# MCLR.PI Ra, [#offset6]
+:mclr.pi R0608, offset6 is PCPMode=1 & addrmode=2 & pcp_op0005 & pcp_op0912=0x4 & R0608 & offset6
+{
+	R0608 = R0608 & offset6;
+	local tmp:4 = zext($(DPTR) << 6) + pcp_op0005;
+	*[ram]:4 tmp = R0608;
+	$(N) = R0608 s< 0;
+	$(Z) = R0608 == 0;	
+}
+
+
+# 6: 16-bit c400|0b1100010000000000 3a07|0b11101000000111
+# MINIT <R0>, Rb, Ra
+:minit "<"^R0^">", R0608, R0305 is PCPMode=1 & addrmode=0x6 & pcp_op0912=0x2 & R0 & R0608 & R0305 & pcp_op0002=0x0
+{
+	R0 = 0;
+	$(Z) = (R0608 == 0) || (R0305 == 0);
+}
+
+
+# 3: 16-bit 7800|0b111100000000000 8600|0b1000011000000000
+# MOV Rb, Ra, cc_A
+:mov R0608, R0305, CONDCA is PCPMode=1 & addrmode=0x3 & pcp_op0912=0xc & R0608 & R0305 & CONDCA
+{
+	if (CONDCA == 0) goto inst_next;
+	R0608 = R0305;
+	$(N) = R0608 s< 0;
+	$(Z) = R0608 == 0;	
+}
+
+
+# 2: 16-bit 4c00|0b100110000000000 b200|0b1011001000000000
+# MSET.PI Ra, [#offset6]
+:mset.pi R0608, offset6 is PCPMode=1 & addrmode=2 & pcp_op0005 & pcp_op0912=0x6 & R0608 & offset6
+{
+	R0608 = R0608 | offset6;
+	local tmp:4 = zext($(DPTR) << 6) + pcp_op0005;
+	*[ram]:4 tmp = R0608;
+	$(N) = R0608 s< 0;
+	$(Z) = R0608 == 0;	
+}
+
+
+# 6: 16-bit c600|0b1100011000000000 3807|0b11100000000111
+#
+:mstep.l R0608, R0305 is PCPMode=1 & addrmode=0x6 & pcp_op0912=0x3 & R0608 & R0305 & pcp_op0002=0x0
+{
+}
+
+
+# 6: 16-bit c800|0b1100100000000000 3607|0b11011000000111
+#
+:mstep.u R0608, R0305 is PCPMode=1 & addrmode=0x6 & pcp_op0912=0x4 & R0608 & R0305 & pcp_op0002=0x0
+{
+}
+
+
+# 3: 16-bit 6600|0b110011000000000 9800|0b1001100000000000
+# NEG Rb, Ra, cc_A
+:neg R0608, R0305, CONDCA is PCPMode=1 & addrmode=0x3 & pcp_op0912=0x3 & R0608 & R0305 & CONDCA
+{
+	#TODO  flags
+	if (CONDCA == 0) goto inst_next;
+	R0608 = -R0305;
+	$(N) = R0608 s< 0;
+	$(Z) = R0608 == 0;
+	$(V) = R0608[31,1];
+	$(C) = R0305[31,1];
+}
+
+
+# 0: 16-bit 0000|0b0 ffff|0b1111111111111111
+# NOP
+:nop  is PCPMode=1 & addrmode=0 & pcp_op1212=0x0 & pcp_op1111=0x0 & pcp_op0010=0x0
+{
+	local NOP:1 = 0;
+	NOP = NOP;
+}
+
+
+# 3: 16-bit 6800|0b110100000000000 9600|0b1001011000000000
+# NOT Rb, Ra, cc_A
+:not R0608, R0305, CONDCA is PCPMode=1 & addrmode=0x3 & pcp_op0912=0x4 & R0608 & R0305 & CONDCA
+{
+	if (CONDCA == 0) goto inst_next;
+	R0608 = ~R0305;
+	$(N) = R0608 s< 0;
+	$(Z) = R0608 == 0;
+}
+
+
+# 3: 16-bit 6e00|0b110111000000000 9000|0b1001000000000000
+# OR Rb, Ra, cc_A
+:or R0608, R0305, CONDCA is PCPMode=1 & addrmode=0x3 & pcp_op0912=0x7 & R0608 & R0305 & CONDCA
+{
+	if (CONDCA == 0) goto inst_next;
+	R0608 = R0608 | R0305;
+	$(N) = R0608 s< 0;
+	$(Z) = R0608 == 0;
+}
+
+
+# 1: 16-bit 2e00|0b10111000000000 d004|0b1101000000000100
+# OR.F Rb, [Ra], Size
+:or.f R0608, SIZE1 is PCPMode=1 & addrmode=0x1 & pcp_op0912=0x7 & pcp_op0202=0x0 & R0608 & R0305 & SIZE1
+{
+	R0608 = R0608 | SIZE1;
+	$(N) = R0608 s< 0;
+	$(Z) = R0608 == 0;
+}
+
+
+# 2: 16-bit 4e00|0b100111000000000 b000|0b1011000000000000
+# OR.PI Ra, [#offset6]
+:or.pi R0608, offset6 is PCPMode=1 & addrmode=2 & pcp_op0912=0x7 & R0608 & offset6
+{
+	R0608 = R0608 | offset6;
+	$(N) = R0608 s< 0;
+	$(Z) = R0608 == 0;
+}
+
+
+# 3: 16-bit 7c00|0b111110000000000 8200|0b1000001000000000
+# PRI Rb, Ra, cc_A
+:pri R0608, R0305, CONDCA is PCPMode=1 & addrmode=0x3 & pcp_op0912=0xe & R0608 & R0305 & CONDCA
+{
+	#TODO  pcodeop or this? also double check
+	if (CONDCA == 0) goto inst_next;
+	local index:4 = 0;
+	local tmp:4 = R0305;
+	if (tmp == 0) goto <LOOP_END>;
+    <LOOP_START>
+        tmp = tmp >> 2;
+	index = index + 1;
+	if (tmp != 0) goto <LOOP_START>;
+    <LOOP_END>
+        R0608 = zext(0x20 * (index == 0)) + (index * zext(index != 0));
+	$(N) = R0608 s< 0;
+	$(Z) = R0608 == 0;
+}
+
+
+# 4: 16-bit 8e00|0b1000111000000000 7020|0b111000000100000
+# RL Ra, #imm5
+:rl R0608, imm5 is PCPMode=1 & addrmode=4 & R0608 & pcp_op0912=0x7 & pcp_op0505=0x0 & imm5
+{
+	#TODO  double check
+	local tmp:4 = R0608;
+	R0608 = R0608 << imm5;
+	$(C) = (tmp & (1 << (32 - imm5))) != 0;
+	tmp = tmp >> (32 - imm5);
+	R0608 = tmp | R0608;
+	$(N) = R0608 s< 0;
+	$(Z) = R0608 == 0;
+}
+
+
+# 4: 16-bit 8c00|0b1000110000000000 7220|0b111001000100000
+# RR Ra, #imm5
+:rr R0608, imm5 is PCPMode=1 & addrmode=4 & R0608 & pcp_op0912=0x6 & pcp_op0505=0x0 & imm5
+{
+	#TODO  double check
+	local tmp:4 = R0608;
+	R0608 = R0608 >> imm5;
+	tmp = tmp << (32 - imm5);
+	R0608 = tmp | R0608;
+	$(N) = R0608 s< 0;
+	$(Z) = R0608 == 0;
+}
+
+
+# 4: 16-bit 9400|0b1001010000000000 6a20|0b110101000100000
+# SET Ra, #imm5
+:set R0608, imm5 is PCPMode=1 & addrmode=4 & R0608 & pcp_op0912=0xa & pcp_op0505=0x0 & imm5
+{
+	R0608 = R0608 | (1 << imm5);
+}
+
+
+# 5: 16-bit ac00|0b1010110000000000 5000|0b101000000000000
+# SET.F [Ra], #imm5, Size
+:set.f [R0608], imm5, SIZE5 is PCPMode=1 & addrmode=0x5 & pcp_op1012=0x3 & R0608 & imm5 & SIZE5
+{
+	build SIZE5;
+	*[ram]:4 R0608 = SIZE5 | (1 << imm5);
+}
+
+
+# 4: 16-bit 8a00|0b1000101000000000 7420|0b111010000100000
+# SHL Ra, #imm5
+:shl R0608, imm5 is PCPMode=1 & addrmode=4 & R0608 & pcp_op0912=0x5 & pcp_op0505=0x0 & imm5
+{
+	$(C) = (R0608 & (1 << (32 - imm5))) != 0;
+	R0608 = R0608 << imm5;
+	$(N) = R0608 s< 0;
+	$(Z) = R0608 == 0;
+}
+
+
+# 4: 16-bit 8800|0b1000100000000000 7620|0b111011000100000
+# SHR Ra, #imm5
+:shr R0608, imm5 is PCPMode=1 & addrmode=4 & R0608 & pcp_op0912=0x4 & pcp_op0505=0x0 & imm5
+{
+	R0608 = R0608 >> imm5;
+	$(N) = R0608 s< 0;
+	$(Z) = R0608 == 0;
+}
+
+
+# 1: 16-bit 3400|0b11010000000000 ca04|0b1100101000000100
+# ST.F Rb, [Ra], Size
+:st.f SIZE1W is PCPMode=1 & addrmode=0x1 & pcp_op0912=0xa & pcp_op0202=0x0 & SIZE1W
+{
+	build SIZE1W;
+}
+
+
+# 5: 16-bit b800|0b1011100000000000 4400|0b100010000000000
+# ST.IF [Ra], #offset5, Size
+:st.if SIZE5W is PCPMode=1 & addrmode=0x5 & pcp_op1012=0x6 & SIZE5W
+{
+	build SIZE5W;
+}
+
+
+# 3: 16-bit 7400|0b111010000000000 8a00|0b1000101000000000
+# ST.P Rb, [Ra], cc_A
+:st.p R0608, [R0305], CONDCA is PCPMode=1 & addrmode=0x3 & pcp_op0912=0xa & R0608 & R0305 & CONDCA
+{
+	if (CONDCA == 0) goto inst_next;
+	local tmp:4 = zext($(DPTR) << 6) + zext(R0305[0,6]);
+	*[ram]:4 tmp = R0608;	
+}
+
+
+# 2: 16-bit 5400|0b101010000000000 aa00|0b1010101000000000
+# ST.PI Rb, [#offset6]
+:st.pi offset6W is PCPMode=1 & addrmode=2 & pcp_op0912=0xa & offset6W
+{
+	build offset6W;
+}
+
+
+# 3: 16-bit 6200|0b110001000000000 9c00|0b1001110000000000
+# SUB Rb, Ra, cc_A
+:sub R0608, R0305, CONDCA is PCPMode=1 & addrmode=0x3 & pcp_op0912=0x1 & R0608 & R0305 & CONDCA
+{
+	if (CONDCA == 0) goto inst_next;
+	R0608 = R0608 - R0305;
+	Flags(R0608, R0305);
+}
+
+
+# 1: 16-bit 2200|0b10001000000000 dc04|0b1101110000000100
+# SUB.F Rb, [Ra], Size
+:sub.f R0608, SIZE1 is PCPMode=1 & addrmode=0x1 & pcp_op0912=0x1 & pcp_op0202=0x0 & R0608 & R0305 & SIZE1
+{
+	build SIZE1;
+	local tmp:4 = SIZE1;
+	Flags(R0608, tmp);
+	R0608 = R0608 - tmp;
+}
+
+
+# 4: 16-bit 8200|0b1000001000000000 7c00|0b111110000000000
+# SUB.I Ra, #imm6
+:sub.i R0608, imm6 is PCPMode=1 & addrmode=4 & R0608 & pcp_op0912=0x1 & imm6
+{
+	Flags(R0608, imm6);
+	R0608 = R0608 - imm6;
+}
+
+
+# 2: 16-bit 4200|0b100001000000000 bc00|0b1011110000000000
+# SUB.PI Ra, [#offset6]
+:sub.pi R0608, offset6 is PCPMode=1 & addrmode=2 & pcp_op0912=0x1 & R0608 & offset6
+{
+	Flags(R0608, offset6);
+	R0608 = R0608 - offset6;
+}
+
+
+# 1: 16-bit 3600|0b11011000000000 c804|0b1100100000000100
+# XCH.F Rb, [Ra], Size
+:xch.f SIZE1RW is PCPMode=1 & addrmode=0x1 & pcp_op0912=0xb & pcp_op0202=0x0 & R0608 & SIZE1RW
+{
+	build SIZE1RW;	
+	$(N) = R0608 s< 0;
+	$(Z) = R0608 == 0;
+}
+
+
+# 2: 16-bit 5600|0b101011000000000 a800|0b1010100000000000
+# XCH.PI Ra, [#offset6]
+:xch.pi offset6RW is PCPMode=1 & addrmode=2 & pcp_op0912=0xb & R0608 & offset6RW
+{
+	build offset6RW;
+	$(N) = R0608 s< 0;
+	$(Z) = R0608 == 0;
+}
+
+
+# 3: 16-bit 7000|0b111000000000000 8e00|0b1000111000000000
+# XOR Rb, Ra, cc_A
+:xor R0608, R0305, CONDCA is PCPMode=1 & addrmode=0x3 & pcp_op0912=0x8 & R0608 & R0305 & CONDCA
+{
+	if (CONDCA == 0) goto inst_next;
+	R0608 = R0608 ^ R0305;
+	$(N) = R0608 s< 0;
+	$(Z) = R0608 == 0;
+}
+
+
+# 1: 16-bit 3000|0b11000000000000 ce04|0b1100111000000100
+# XOR.F Rb, [Ra], Size
+:xor.f R0608, SIZE1 is PCPMode=1 & addrmode=0x1 & pcp_op0912=0x8 & pcp_op0202=0x0 & R0608 & R0305 & SIZE1
+{
+	R0608 = R0608 ^ SIZE1;
+	$(N) = R0608 s< 0;
+	$(Z) = R0608 == 0;
+}
+
+
+# 2: 16-bit 5000|0b101000000000000 ae00|0b1010111000000000
+# XOR.PI Ra, [#offset6]
+:xor.pi R0608, offset6 is PCPMode=1 & addrmode=2 & pcp_op0912=0x8 & R0608 & offset6
+{
+	R0608 = R0608 ^ offset6;
+	$(N) = R0608 s< 0;
+	$(Z) = R0608 == 0;
+}

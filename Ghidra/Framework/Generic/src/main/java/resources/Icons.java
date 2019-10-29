@@ -33,6 +33,8 @@ import resources.icons.TranslateIcon;
  */
 public class Icons {
 
+	public static final ImageIcon EMPTY_ICON = ResourceManager.loadImage("images/EmptyIcon16.gif");
+
 	public static final ImageIcon ADD_ICON = ResourceManager.loadImage("images/Plus2.png");
 
 	public static final ImageIcon COLLAPSE_ALL_ICON =
@@ -79,6 +81,9 @@ public class Icons {
 	public static final ImageIcon SAVE_AS = ResourceManager.getImageIcon(
 		new DotDotDotIcon(ResourceManager.loadImage("images/Disk.png")));
 
+	public static final ImageIcon MAKE_SELECTION_ICON =
+		ResourceManager.getImageIcon(ResourceManager.loadImage("images/text_align_justify.png"));
+
 	// Not necessarily re-usable, but this is needed for the help system; these should 
 	// probably be moved to the client that uses them, while updating the
 	// help system to use them there.
@@ -91,7 +96,7 @@ public class Icons {
 			ResourceManager.loadImage("images/dialog-cancel.png", 10, 10), 6, 6)));
 	public static final ImageIcon APPLY_BLOCKED_MATCH_ICON = ResourceManager.getImageIcon(
 		new MultiIcon(ResourceManager.loadImage("images/kgpg.png"), new TranslateIcon(
-			ResourceManager.loadImage("images/checkmark_green.png", 12, 12), 4, 0)));
+			ResourceManager.loadImage("images/checkmark_green.gif", 12, 12), 4, 0)));
 
 	/**
 	 * Returns true if the given string is a Java code snippet that references this class
@@ -124,24 +129,6 @@ public class Icons {
 
 		URL url = getUrlFromIcon(icon);
 		return new IconProvider(icon, url);
-	}
-
-	/**
-	 * Returns a URL for the given code snippet if it is a field reference on this class 
-	 * 
-	 * @param snippet the snippet of Java code that references a field of this class
-	 * @return the URL; null if the snippet does not refer to a field of this class
-	 */
-	public static URL getUrlForIconsReference(String snippet) {
-
-		String fieldName = getIconName(snippet);
-		if (fieldName == null) {
-			return null;
-		}
-
-		ImageIcon icon = getIconByFieldName(fieldName);
-		URL url = getUrlFromIcon(icon);
-		return url;
 	}
 
 	private static String getIconName(String snippet) {
@@ -185,7 +172,7 @@ public class Icons {
 			return url;
 		}
 		catch (MalformedURLException e) {
-			Msg.debug(Icons.class, "Unable to get URL for icon: " + description, e);
+			Msg.trace(Icons.class, "Unable to get URL for icon: " + description);
 			return null;
 		}
 

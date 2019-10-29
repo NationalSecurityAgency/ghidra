@@ -29,17 +29,6 @@ SymbolEntry::SymbolEntry(Symbol *sym)
   size = -1;
 }
 
-/// This constructor is for use with rangemap container.  It must be followed
-/// by an initialize() call.
-/// \param a is the first offset covered by the new SymbolEntry
-/// \param b is the last offset covered
-SymbolEntry::SymbolEntry(uintb a,uintb b)
-
-{
-  addr = Address(addr.getSpace(),a);
-  size = (b-a)+1;
-}
-
 /// This is used specifically for \e dynamic Symbol objects, where the storage location
 /// is attached to a temporary register or a constant. The main address field (\b addr)
 /// is set to \e invalid, and the \b hash becomes the primary location information.
@@ -64,12 +53,15 @@ SymbolEntry::SymbolEntry(Symbol *sym,uint4 exfl,uint8 h,int4 off,int4 sz,const R
 /// Assuming the boundary offsets have been specified with
 /// the constructor, fill in the rest of the data.
 /// \param data contains the raw initialization data
-void SymbolEntry::initialize(const EntryInitData &data)
+/// \param a is the starting offset of the entry
+/// \param b is the ending offset of the entry
+void SymbolEntry::initialize(const EntryInitData &data,uintb a,uintb b)
 
 {
+  addr = Address(data.space,a);
+  size = (b-a)+1;
   symbol = data.symbol;
   extraflags = data.extraflags;
-  addr = Address(data.space,addr.getOffset());
   offset = data.offset;
   uselimit = data.uselimit;
 }
@@ -2005,32 +1997,6 @@ SymbolEntry *ScopeInternal::findOverlap(const Address &addr,int4 size) const
   return (SymbolEntry *)0;
 }
 
-SymbolEntry *ScopeInternal::findBefore(const Address &addr) const
-
-{
-  EntryMap *rangemap = maptable[ addr.getSpace()->getIndex() ];
-  if (rangemap != (EntryMap *)0) {
-    EntryMap::const_iterator iter;
-    iter = rangemap->find_lastbefore(addr.getOffset());
-    if (iter != rangemap->end())
-      return &(*iter);
-  }
-  return (SymbolEntry *)0;
-}
-
-SymbolEntry *ScopeInternal::findAfter(const Address &addr) const
-
-{
-  EntryMap *rangemap = maptable[ addr.getSpace()->getIndex() ];
-  if (rangemap != (EntryMap *)0) {
-    EntryMap::const_iterator iter;
-    iter = rangemap->find_firstafter(addr.getOffset());
-    if (iter != rangemap->end())
-      return &(*iter);
-  }
-  return (SymbolEntry *)0;
-}
-
 void ScopeInternal::findByName(const string &name,vector<Symbol *> &res) const
 
 {
@@ -2090,9 +2056,7 @@ string ScopeInternal::buildVariableName(const Address &addr,
       s << "in_" << regname;
   }
   else if ((flags & Varnode::input)!=0) { // Regular parameter
-    if (ct != (Datatype *)0)
-      ct->printNameBase(s);
-    s << "Parm" << dec << index;
+    s << "param_" << dec << index;
   }
   else if ((flags & Varnode::addrtied)!=0) {
     if (ct != (Datatype *)0)

@@ -29,10 +29,6 @@ public class FileDataTypeManagerTest extends AbstractGenericTest {
 
 	private File testArchiveFile;
 
-	public FileDataTypeManagerTest() {
-		super();
-	}
-
 	@Before
 	public void setUp() throws Exception {
 		testArchiveFile =
@@ -74,7 +70,7 @@ public class FileDataTypeManagerTest extends AbstractGenericTest {
 			dtMgr = FileDataTypeManager.openFileArchive(testArchiveFile, false);
 			assertFalse(dtMgr.isUpdatable());
 
-			ArrayList<DataType> list = new ArrayList<DataType>();
+			ArrayList<DataType> list = new ArrayList<>();
 			dtMgr.getAllDataTypes(list);
 
 			int size = list.size();
@@ -86,8 +82,9 @@ public class FileDataTypeManagerTest extends AbstractGenericTest {
 						"\n");
 				}
 
-				Assert.fail("Did not get exptected data types of byte, Typdef and Typedef.  Instead found:\n" +
-					buffy.toString());
+				Assert.fail(
+					"Did not get exptected data types of byte, Typdef and Typedef.  Instead found:\n" +
+						buffy.toString());
 			}
 
 			assertTrue(dt1.isEquivalent(dtMgr.getDataType(CategoryPath.ROOT, "T1")));
@@ -148,7 +145,7 @@ public class FileDataTypeManagerTest extends AbstractGenericTest {
 			dtMgr = FileDataTypeManager.openFileArchive(testArchiveFile, false);
 			assertFalse(dtMgr.isUpdatable());
 
-			ArrayList<DataType> list = new ArrayList<DataType>();
+			ArrayList<DataType> list = new ArrayList<>();
 			dtMgr.getAllDataTypes(list);
 			assertEquals(13, list.size());
 

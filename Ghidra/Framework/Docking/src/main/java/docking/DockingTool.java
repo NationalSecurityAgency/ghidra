@@ -16,23 +16,31 @@
 package docking;
 
 import java.awt.Window;
-import java.util.List;
+import java.util.Set;
 
 import javax.swing.ImageIcon;
 
 import docking.action.DockingActionIf;
+import docking.actions.DockingToolActions;
+import docking.actions.PopupActionProvider;
 import ghidra.framework.options.ToolOptions;
 
+/**
+ * Generic tool interface for managing {@link ComponentProvider}s and 
+ * {@link DockingActionIf actions}
+ */
 public interface DockingTool {
 
 	/**
 	 * Returns a combination of the tool name and the instance name of the form
 	 * tool name(instance name), e.g., SomeTool(2)
+	 * @return the tool name
 	 */
 	public String getName();
 
 	/**
-	 * Returns true if tool is visible.
+	 * Returns true if tool is visible
+	 * @return true if tool is visible
 	 */
 	public boolean isVisible();
 
@@ -52,7 +60,8 @@ public interface DockingTool {
 	public void toFront();
 
 	/**
-	 * Get the icon that the tool is using.
+	 * Get the icon that the tool is using
+	 * @return the icon that the tool is using
 	 */
 	public ImageIcon getIcon();
 
@@ -64,8 +73,10 @@ public interface DockingTool {
 	public void addComponentProvider(ComponentProvider componentProvider, boolean show);
 
 	/**
-	 * Removes the given ComponentProvider from the tool.
-	 * @param componentProviderAdapter the provider to remove from the tool.
+	 * Removes the given ComponentProvider from the tool.  When a provider has been removed 
+	 * from the tool it is considered disposed and should not be reused.
+	 * 
+	 * @param componentProvider the provider to remove from the tool
 	 */
 	public void removeComponentProvider(ComponentProvider componentProvider);
 
@@ -79,9 +90,35 @@ public interface DockingTool {
 
 	/**
 	 * Set the status information
-	 * @param text string to be displayed in the Status display area
+	 * @param text non-html string to be displayed in the Status display area
 	 */
 	public void setStatusInfo(String text);
+
+	/**
+	  * Set the status information
+	  * @param text string to be displayed in the Status display area
+	  * @param beep whether to be or not
+	  */
+	public void setStatusInfo(String text, boolean beep);
+
+	/**
+	 * Clear the status information
+	 */
+	public void clearStatusInfo();
+
+	/**
+	 * Set the menu group associated with a cascaded submenu.  This allows
+	 * a cascading menu item to be grouped with a specific set of actions.
+	 * <p>
+	 * The default group for a cascaded submenu is the name of the submenu.
+	 * <p>
+	 *
+	 * @param menuPath menu name path where the last element corresponds to the specified group name.
+	 * @param group group name
+	 * @param menuSubGroup the name used to sort the cascaded menu within other menu items at
+	 *                     its level
+	 */
+	public void setMenuGroup(String[] menuPath, String group, String menuSubGroup);
 
 	/**
 	 * Adds the action to the tool.
@@ -90,7 +127,8 @@ public interface DockingTool {
 	public void addAction(DockingActionIf action);
 
 	/**
-	 * Removes the given action from the tool
+	 * Removes the given action from the tool.  When an action is removed from the tool it will
+	 * be disposed and should not be reused.
 	 * @param action the action to be removed.
 	 */
 	public void removeAction(DockingActionIf action);
@@ -110,25 +148,46 @@ public interface DockingTool {
 	public void removeLocalAction(ComponentProvider componentProvider, DockingActionIf action);
 
 	/**
-	 * Return a list of all actions in the tool.
-	 * @return list of all actions
+	 * Adds the given popup action provider to this tool.   This provider will be called each
+	 * time the popup menu is about to be shown.
+	 * @param provider the provider
 	 */
-	public List<DockingActionIf> getAllActions();
+	public void addPopupActionProvider(PopupActionProvider provider);
+
+	/**
+	 * Removes the given popup action provider
+	 * @param provider the provider
+	 */
+	public void removePopupActionProvider(PopupActionProvider provider);
+
+	/**
+	 * Return a set of all actions in the tool.
+	 * 
+	 * <p>Note: the result may contain conceptually duplicate actions, which is when multiple
+	 * actions exist that share the same full name (the full name is the action name with the 
+	 * owner name, such as "My Action (MyPlugin)".
+	 * 
+	 * @return set of all actions
+	 */
+	public Set<DockingActionIf> getAllActions();
 
 	/**
 	 * Returns all actions for the given owner
+	 * 
+	 * <p>Note: the result may contain conceptually duplicate actions, which is when multiple
+	 * actions exist that share the same full name (the full name is the action name with the 
+	 * owner name, such as "My Action (MyPlugin)".
+	 * 
 	 * @param owner the action owner's name
 	 * @return the actions
 	 */
-	public List<DockingActionIf> getDockingActionsByOwnerName(String owner);
+	public Set<DockingActionIf> getDockingActionsByOwnerName(String owner);
 
 	/**
-	 * Return an list of actions with the given full name
-	 * @param fullActionName action name that includes the owner's name in
-	 * 		  parentheses, e.g. "MyAction (MyPlugin)"
-	 * @return the actions
+	 * Returns the active component provider, that which has focus
+	 * @return the active provider
 	 */
-	public List<DockingActionIf> getDockingActionsByFullActionName(String fullActionName);
+	public ComponentProvider getActiveComponentProvider();
 
 	/**
 	 * Shows or hides the component provider in the tool
@@ -179,12 +238,35 @@ public interface DockingTool {
 	public void updateTitle(ComponentProvider componentProvider);
 
 	/**
-	 * Signals to the tool that the provider's context has changed.  This lets toolbar actions update
-	 * enablement based on current context.
+	 * Signals to the tool that the provider's context has changed.  This lets toolbar and 
+	 * menu actions update enablement based on current context.  
+	 * 
+	 * <p>Pass <code>null</code> to signal that the entire tool's context has changed
 	 *
-	 * @param provider the provider whose context changed.
+	 * @param provider the provider whose context changed; null to signal the tool's context
 	 */
 	public void contextChanged(ComponentProvider provider);
+
+	/**
+	 * Returns this tool's notion of the current action context, which is based upon the active
+	 * {@link ComponentProvider}.  If there is not active provider, then a generic context will
+	 * be returned.
+	 * 
+	 * @return the context
+	 */
+	public ActionContext getGlobalContext();
+
+	/**
+	 * Adds the given context listener to this tool
+	 * @param listener the listener to add
+	 */
+	public void addContextListener(DockingContextListener listener);
+
+	/**
+	 * Removes the given context listener to this tool
+	 * @param listener the listener to add
+	 */
+	public void removeContextListener(DockingContextListener listener);
 
 	/**
 	 * Returns the DockingWindowManger for this tool.
@@ -195,6 +277,8 @@ public interface DockingTool {
 	/**
 	 * Get the options for the given category name; if no options exist with
 	 * the given name, then one is created.
+	 * @param categoryName the category name
+	 * @return the options
 	 */
 	public ToolOptions getOptions(String categoryName);
 
@@ -205,8 +289,27 @@ public interface DockingTool {
 	public void setConfigChanged(boolean changed);
 
 	/**
-	 * Return true if the tool's configuration has changed.
+	 * Return true if the tool's configuration has changed
+	 * @return  true if the tool's configuration has changed
 	 */
 	public boolean hasConfigChanged();
+
+	/**
+	 * Returns the class that manages actions for the tool.
+	 * 
+	 * <p>Most clients will not need to use this methods.  Instead, actions should be added to
+	 * the tool via {@link #addAction(DockingActionIf)} and 
+	 * {@link #addLocalAction(ComponentProvider, DockingActionIf)}.
+	 * 
+	 * @return the action manager
+	 */
+	public DockingToolActions getToolActions();
+
+	/**
+	 * Suggests the tool to attempt to close().  This will be as though the user
+	 * selected the close menu option on the tool or hit the closeWindow x button in
+	 * the upper corner (Windows systems).
+	 */
+	public void close();
 
 }

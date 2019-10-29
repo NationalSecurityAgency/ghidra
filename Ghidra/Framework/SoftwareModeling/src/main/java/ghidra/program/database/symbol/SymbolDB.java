@@ -544,7 +544,7 @@ public abstract class SymbolDB extends DatabaseObject implements Symbol {
 				if (nameChange) {
 					SymbolType symbolType = getSymbolType();
 					if (isExternal() &&
-						(symbolType == SymbolType.FUNCTION || symbolType == SymbolType.CODE)) {
+						(symbolType == SymbolType.FUNCTION || symbolType == SymbolType.LABEL)) {
 						ExternalManagerDB externalManager = symbolMgr.getExternalManager();
 						ExternalLocationDB externalLocation =
 							(ExternalLocationDB) externalManager.getExternalLocation(this);
@@ -576,7 +576,7 @@ public abstract class SymbolDB extends DatabaseObject implements Symbol {
 	}
 
 	private void checkEditOK() throws InvalidInputException {
-		if (getSymbolType() == SymbolType.CODE) {
+		if (getSymbolType() == SymbolType.LABEL) {
 			for (Register reg : symbolMgr.getProgram().getRegisters(getAddress())) {
 				if (reg.getName().equals(getName())) {
 					throw new InvalidInputException("Register symbol may not be renamed");

@@ -1,15 +1,13 @@
 ##VERSION: 2.0
 ##MODULE IP: BSD
-##MODULE IP: GPL 2 With Classpath Exception
-##MODULE IP: Nuvola Icons - LGPL 2.1
-##MODULE IP: Modified Nuvola Icons - LGPL 2.1
-##MODULE IP: Tango Icons - Public Domain
-##MODULE IP: FAMFAMFAM Icons - CC 2.5
-##MODULE IP: Oxygen Icons - LGPL 3.0
 ##MODULE IP: Crystal Clear Icons - LGPL 2.1
+##MODULE IP: FAMFAMFAM Icons - CC 2.5
+##MODULE IP: GPL 2 With Classpath Exception
 ##MODULE IP: LGPL 2.1
-.classpath||GHIDRA||||END|
-.project||GHIDRA||||END|
+##MODULE IP: Modified Nuvola Icons - LGPL 2.1
+##MODULE IP: Nuvola Icons - LGPL 2.1
+##MODULE IP: Oxygen Icons - LGPL 3.0
+##MODULE IP: Tango Icons - Public Domain
 Module.manifest||GHIDRA||||END|
 build.gradle||GHIDRA||||END|
 data/ExtensionPoint.manifest||GHIDRA||||END|
@@ -46,7 +44,6 @@ src/main/resources/images/eatbits4.png||GHIDRA||reviewed||END|
 src/main/resources/images/eatbits5.png||GHIDRA||reviewed||END|
 src/main/resources/images/eatbits6.png||GHIDRA||reviewed||END|
 src/main/resources/images/eatbits7.png||GHIDRA||reviewed||END|
-src/main/resources/images/edit-clear-reverse.png||Oxygen Icons - LGPL 3.0|||mirror image of edit-clear.png|END|
 src/main/resources/images/edit-clear.png||Tango Icons - Public Domain|||tango icon set|END|
 src/main/resources/images/edit-cut22.png||Tango Icons - Public Domain|||original name edit-cut.png in tango 22x22|END|
 src/main/resources/images/edit-delete.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0)|END|

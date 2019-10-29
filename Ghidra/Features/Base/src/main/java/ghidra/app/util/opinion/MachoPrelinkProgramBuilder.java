@@ -25,7 +25,9 @@ import ghidra.app.util.bin.format.macho.MachHeader;
 import ghidra.app.util.bin.format.macho.Section;
 import ghidra.app.util.bin.format.macho.commands.SegmentNames;
 import ghidra.app.util.bin.format.macho.prelink.PrelinkMap;
-import ghidra.app.util.importer.*;
+import ghidra.app.util.importer.MessageLog;
+import ghidra.app.util.importer.MessageLogContinuesFactory;
+import ghidra.program.database.mem.FileBytes;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.DataUtilities;
 import ghidra.program.model.data.Pointer64DataType;
@@ -48,15 +50,15 @@ public class MachoPrelinkProgramBuilder extends MachoProgramBuilder {
 	 * 
 	 * @param program The {@link Program} to build up.
 	 * @param provider The {@link ByteProvider} that contains the Mach-O's bytes.
+	 * @param fileBytes Where the Mach-O's bytes came from.
 	 * @param prelinkList Parsed {@link PrelinkMap PRELINK} information.
 	 * @param log The log.
-	 * @param memoryConflictHandler How to handle memory conflicts that may occur.
 	 * @param monitor A cancelable task monitor.
 	 */
 	protected MachoPrelinkProgramBuilder(Program program, ByteProvider provider,
-			List<PrelinkMap> prelinkList, MessageLog log,
-			MemoryConflictHandler memoryConflictHandler, TaskMonitor monitor) {
-		super(program, provider, log, memoryConflictHandler, monitor);
+			FileBytes fileBytes, List<PrelinkMap> prelinkList, MessageLog log,
+			TaskMonitor monitor) {
+		super(program, provider, fileBytes, log, monitor);
 		this.prelinkList = prelinkList;
 	}
 
@@ -65,17 +67,16 @@ public class MachoPrelinkProgramBuilder extends MachoProgramBuilder {
 	 * 
 	 * @param program The {@link Program} to build up.
 	 * @param provider The {@link ByteProvider} that contains the Mach-O's bytes.
+	 * @param fileBytes Where the Mach-O's bytes came from.
 	 * @param prelinkList Parsed {@link PrelinkMap PRELINK} information.
 	 * @param log The log.
-	 * @param memoryConflictHandler How to handle memory conflicts that may occur.
 	 * @param monitor A cancelable task monitor.
 	 * @throws Exception if a problem occurs.
 	 */
-	public static void buildProgram(Program program, ByteProvider provider,
-			List<PrelinkMap> prelinkList, MessageLog log,
-			MemoryConflictHandler memoryConflictHandler, TaskMonitor monitor) throws Exception {
+	public static void buildProgram(Program program, ByteProvider provider, FileBytes fileBytes,
+			List<PrelinkMap> prelinkList, MessageLog log, TaskMonitor monitor) throws Exception {
 		MachoPrelinkProgramBuilder machoPrelinkProgramBuilder = new MachoPrelinkProgramBuilder(
-			program, provider, prelinkList, log, memoryConflictHandler, monitor);
+			program, provider, fileBytes, prelinkList, log, monitor);
 		machoPrelinkProgramBuilder.build();
 	}
 
@@ -305,10 +306,10 @@ public class MachoPrelinkProgramBuilder extends MachoProgramBuilder {
 		 * 
 		 * @throws Exception If there was a problem processing memory blocks for this PRELINK 
 		 *   Mach-O.
-		 * @see MachoPrelinkProgramBuilder#processMemoryBlocks(MachHeader, String, boolean)
+		 * @see MachoPrelinkProgramBuilder#processMemoryBlocks(MachHeader, String, boolean, boolean)
 		 */
 		public void processMemoryBlocks() throws Exception {
-			MachoPrelinkProgramBuilder.this.processMemoryBlocks(header, name, false);
+			MachoPrelinkProgramBuilder.this.processMemoryBlocks(header, name, true, false);
 		}
 
 		/**

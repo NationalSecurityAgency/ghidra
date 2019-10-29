@@ -66,7 +66,6 @@ define pcodeop invokeinterfaceCallOther;
 define pcodeop invokespecialCallOther;
 define pcodeop invokestaticCallOther;
 define pcodeop invokevirtualCallOther;
-define pcodeop lookupswitchCallOther;
 define pcodeop multianewarrayCallOther;
 define pcodeop putStaticCallOther;
 define pcodeop putFieldCallOther;
@@ -418,8 +417,8 @@ Default:"default" addr is defaultbyte1; defaultbyte2; defaultbyte3; defaultbyte4
 
 :checkcast index	is (in_table_switch=0 & in_lookup_switch=0 & op=0xc0); indexbyte1; indexbyte2 [ index = indexbyte1<<8 | indexbyte2; ]
 {
-    _object: $(SIZE) = *:$(SIZE) SP;
-    throwExceptionOp(_object);
+    #_object: $(SIZE) = *:$(SIZE) SP;
+    #throwExceptionOp(_object);
     
     #_res:1 = cpool(_object,index,$(CPOOL_CHECKCAST));
     #throwExceptionOp(_res);
@@ -428,9 +427,12 @@ Default:"default" addr is defaultbyte1; defaultbyte2; defaultbyte3; defaultbyte4
     #_ref: $(SIZE) = cpool(0:4,index,$(CPOOL_CHECKCAST));
     #checkcastOp(_object,_ref);
     
-    #_object:$(SIZE) = 0;
-	#pop(_object);
-    #_res:1 = cpool(_object,index,$(CPOOL_INSTANCEOF));
+    _object:$(SIZE) = 0;
+	pop(_object);
+    _object = cpool(_object,index,$(CPOOL_CHECKCAST));
+    push(_object);
+    
+    #_res:1 = cpool(_object,index,$(CPOOL_CHECKCAST));
     #_result:$(SIZE) = zext(_res);
     #push(_result);
 }
@@ -1036,7 +1038,7 @@ Default:"default" addr is defaultbyte1; defaultbyte2; defaultbyte3; defaultbyte4
 	pop(_value);
 	_resultAsLong = sext(_value);
 	_resultAsDouble = int2float(_resultAsLong);
-	push(_resultAsDouble); 
+	push2(_resultAsDouble); 
 }
 
 :i2f	is (in_table_switch=0 & in_lookup_switch=0 & op=0x86) 

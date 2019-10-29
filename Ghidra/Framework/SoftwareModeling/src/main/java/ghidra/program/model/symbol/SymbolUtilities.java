@@ -874,7 +874,7 @@ public class SymbolUtilities {
 		}
 
 		SymbolType symType = symbol.getSymbolType();
-		if (symType == SymbolType.CODE) {
+		if (symType == SymbolType.LABEL) {
 			if (symbol.isExternal()) {
 				return "External Data";
 			}

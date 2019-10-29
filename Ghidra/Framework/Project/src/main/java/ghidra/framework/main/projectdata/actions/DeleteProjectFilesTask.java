@@ -194,10 +194,13 @@ public class DeleteProjectFilesTask extends Task {
 				.addOption("Yes")
 				.addOption("No")
 				.addCancel()
-				.addApplyToAllOption()
 				.setMessageType(OptionDialog.WARNING_MESSAGE)
 				;
 			//@formatter:on
+
+			if (getFileCount() > 1) {
+				versionedDialogBuilder.addApplyToAllOption();
+			}
 		}
 
 		String msg =
@@ -217,10 +220,13 @@ public class DeleteProjectFilesTask extends Task {
 				new OptionDialogBuilder("Delete Not Allowed")
 				.addOption("OK")
 				.addCancel()
-				.addDontShowAgainOption()
 				.setMessageType(OptionDialog.ERROR_MESSAGE)
 				;
 			//@formatter:on
+
+			if (getFileCount() > 1) {
+				checkedOutDialogBuilder.addDontShowAgainOption();
+			}
 		}
 
 		String msg = "The file \"" + file.getName() +
@@ -240,9 +246,12 @@ public class DeleteProjectFilesTask extends Task {
 				.addOption("OK")
 				.setMessageType(OptionDialog.ERROR_MESSAGE)
 				.addCancel()
-				.addDontShowAgainOption()
 				;
 			//@formatter:on
+
+			if (getFileCount() > 1) {
+				fileInUseDialogBuilder.addDontShowAgainOption();
+			}
 		}
 
 		String msg =
@@ -263,10 +272,13 @@ public class DeleteProjectFilesTask extends Task {
 					.addOption("No")
 					.addCancel()
 					.setMessageType(OptionDialog.WARNING_MESSAGE)
-					.addApplyToAllOption()
 					.setDefaultButton("No")
 					;
 			//@formatter:on
+
+			if (getFileCount() > 1) {
+				readOnlyDialogBuilder.addApplyToAllOption();
+			}
 		}
 
 		String msg = "The file \"" + file.getName() +

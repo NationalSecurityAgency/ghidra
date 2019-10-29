@@ -61,6 +61,9 @@ public class CodeBrowserScreenMovementTest extends AbstractProgramBasedTest {
 	@Before
 	public void setUp() throws Exception {
 
+		// warning: this test is sensitive to size and layout of the visible component providers;
+		//          any layout changes may affect the values being tested below
+
 		initialize();
 
 		fp = codeBrowser.getFieldPanel();
@@ -114,6 +117,9 @@ public class CodeBrowserScreenMovementTest extends AbstractProgramBasedTest {
 
 	@Test
 	public void testBasicControls() throws Exception {
+
+		// warning: this test is sensitive to size and layout of the visible component providers;
+		//          any layout changes may affect the values being tested below
 
 		fp = codeBrowser.getFieldPanel();
 		ListingPanel panel = codeBrowser.getListingPanel();

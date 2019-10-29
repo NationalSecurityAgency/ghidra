@@ -29,6 +29,7 @@ import docking.DockingUtils;
 import docking.dnd.GClipboard;
 import docking.dnd.StringTransferable;
 import docking.widgets.OptionDialog;
+import docking.widgets.label.GIconLabel;
 import ghidra.framework.model.DomainFile;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.util.HelpLocation;
@@ -125,10 +126,9 @@ public class AboutDomainObjectUtils {
 			contentPanel.add(sp, BorderLayout.SOUTH);
 		}
 
-		JLabel infoLabel =
-			new JLabel(OptionDialog.getIconForMessageType(OptionDialog.INFORMATION_MESSAGE));
 		JPanel infoPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 10));
-		infoPanel.add(infoLabel);
+		infoPanel.add(
+			new GIconLabel(OptionDialog.getIconForMessageType(OptionDialog.INFORMATION_MESSAGE)));
 
 		JPanel panel = new JPanel(new BorderLayout(5, 5));
 		panel.add(infoPanel, BorderLayout.WEST);

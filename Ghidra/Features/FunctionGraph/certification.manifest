@@ -4,8 +4,6 @@
 ##MODULE IP: FAMFAMFAM Icons - CC 2.5
 ##MODULE IP: Oxygen Icons - LGPL 3.0
 ##MODULE IP: Tango Icons - Public Domain
-.classpath||GHIDRA||||END|
-.project||GHIDRA||||END|
 Module.manifest||GHIDRA||||END|
 build.gradle||GHIDRA||||END|
 data/ExtensionPoint.manifest||GHIDRA||||END|
@@ -21,6 +19,7 @@ src/main/help/help/shared/tip.png||Oxygen Icons - LGPL 3.0|||renamed oxygen file
 src/main/help/help/shared/undo.png||GHIDRA||reviewed||END|
 src/main/help/help/shared/warning.png||Oxygen Icons - LGPL 3.0||||END|
 src/main/help/help/topics/FunctionGraphPlugin/Function_Graph.html||GHIDRA|||contains screenshots of various icons with IP and listing windows|END|
+src/main/help/help/topics/FunctionGraphPlugin/Function_Graph_Layouts.html||GHIDRA||||END|
 src/main/help/help/topics/FunctionGraphPlugin/images/FunctionGraphWindow.png||GHIDRA||||END|
 src/main/help/help/topics/FunctionGraphPlugin/images/FunctionGraph_Action_Layout.png||GHIDRA||reviewed||END|
 src/main/help/help/topics/FunctionGraphPlugin/images/FunctionGraph_Action_Show_All_Loops_In_Function.png||GHIDRA||reviewed|created in-house|END|

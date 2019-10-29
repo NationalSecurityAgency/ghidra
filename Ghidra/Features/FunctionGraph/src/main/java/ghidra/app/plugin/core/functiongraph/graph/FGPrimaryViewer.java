@@ -16,10 +16,14 @@
 package ghidra.app.plugin.core.functiongraph.graph;
 
 import java.awt.Dimension;
+import java.util.Set;
 
 import ghidra.app.plugin.core.functiongraph.graph.vertex.FGVertex;
 import ghidra.app.plugin.core.functiongraph.graph.vertex.FGVertexTooltipProvider;
+import ghidra.graph.*;
 import ghidra.graph.viewer.*;
+import ghidra.graph.viewer.edge.PathHighlightListener;
+import ghidra.graph.viewer.edge.VisualGraphPathHighlighter;
 import ghidra.graph.viewer.layout.VisualGraphLayout;
 
 public class FGPrimaryViewer extends GraphViewer<FGVertex, FGEdge> {
@@ -35,5 +39,37 @@ public class FGPrimaryViewer extends GraphViewer<FGVertex, FGEdge> {
 	@Override
 	protected VisualGraphViewUpdater<FGVertex, FGEdge> createViewUpdater() {
 		return new FGViewUpdater(this, getVisualGraph());
+	}
+
+	// Overridden so that we can install our own path highlighter that knows how to work around
+	// source/sink vertices that have been grouped.  This allows us to use dominance algorithms
+	// that require sources/sinks
+	@Override
+	protected VisualGraphPathHighlighter<FGVertex, FGEdge> createPathHighlighter(
+			PathHighlightListener listener) {
+
+		return new VisualGraphPathHighlighter<>(getVisualGraph(), listener) {
+
+			@Override
+			protected GDirectedGraph<FGVertex, FGEdge> getDominanceGraph(
+					VisualGraph<FGVertex, FGEdge> graph, boolean forward) {
+
+				Set<FGVertex> sources =
+					forward ? GraphAlgorithms.getSources(graph) : GraphAlgorithms.getSinks(graph);
+				if (!sources.isEmpty()) {
+					return graph;
+				}
+
+				FunctionGraph functionGraph = (FunctionGraph) graph;
+				Set<FGEdge> dummyEdges =
+					forward ? functionGraph.createDummySources() : functionGraph.createDummySinks();
+				MutableGDirectedGraphWrapper<FGVertex, FGEdge> modifiedGraph =
+					new MutableGDirectedGraphWrapper<>(graph);
+				for (FGEdge e : dummyEdges) {
+					modifiedGraph.addEdge(e);
+				}
+				return modifiedGraph;
+			}
+		};
 	}
 }

@@ -46,10 +46,6 @@ public class OperandFieldMouseHandler implements FieldMouseHandlerExtension {
 
 	private final static Class<?>[] SUPPORTED_CLASSES = new Class[] { OperandFieldLocation.class };
 
-	/**
-	 * @see FieldMouseHandlerExtension#fieldElementClicked(Object, Navigatable,
-	 *      MouseEvent, ServiceProvider)
-	 */
 	@Override
 	public boolean fieldElementClicked(Object clickedObject, Navigatable navigatable,
 			ProgramLocation location, MouseEvent mouseEvent, ServiceProvider serviceProvider) {
@@ -101,9 +97,6 @@ public class OperandFieldMouseHandler implements FieldMouseHandlerExtension {
 		return false;
 	}
 
-	/**
-	 * @see FieldMouseHandlerExtension#getSupportedProgramLocations()
-	 */
 	@Override
 	public Class<?>[] getSupportedProgramLocations() {
 		return SUPPORTED_CLASSES;
@@ -130,17 +123,57 @@ public class OperandFieldMouseHandler implements FieldMouseHandlerExtension {
 
 	private boolean checkExternalReference(Navigatable navigatable, CodeUnit codeUnit,
 			OperandFieldLocation loc, GoToService goToService) {
+
 		Address refAddr = loc.getRefAddress();
 		if (refAddr == null || !refAddr.isExternalAddress()) {
-			return false;
+			return checkExternalThunkFunctionReference(navigatable, codeUnit, loc, goToService);
 		}
+
 		Program program = codeUnit.getProgram();
 		Symbol s = program.getSymbolTable().getPrimarySymbol(refAddr);
 		if (s == null) {
 			return false;
 		}
+
 		ExternalLocation extLoc = program.getExternalManager().getExternalLocation(s);
 		return goToService.goToExternalLocation(extLoc, true);
+	}
+
+	private boolean checkExternalThunkFunctionReference(Navigatable navigatable, CodeUnit codeUnit,
+			OperandFieldLocation loc, GoToService goToService) {
+
+		Address refAddr = loc.getRefAddress();
+		if (refAddr == null) {
+			return false;
+		}
+
+		Program program = codeUnit.getProgram();
+		Symbol s = program.getSymbolTable().getPrimarySymbol(refAddr);
+		if (s == null) {
+			return false;
+		}
+
+		SymbolType type = s.getSymbolType();
+		if (type != SymbolType.FUNCTION) {
+			return false;
+		}
+
+		Function refFunction = (Function) s.getObject();
+		Function thunked = refFunction.getThunkedFunction(true);
+		if (thunked == null) {
+			return false;
+		}
+
+		if (thunked.getBody().contains(codeUnit.getAddress())) {
+			// this handles the unlikely case where the user double-clicks a reference to a 
+			// local thunk label--don't navigate externally
+			return false;
+		}
+
+		Symbol thunkedSymbol = thunked.getSymbol();
+		ExternalLocation extLoc = program.getExternalManager().getExternalLocation(thunkedSymbol);
+		boolean success = goToService.goToExternalLocation(extLoc, true);
+		return success;
 	}
 
 	private boolean checkVariableReference(Navigatable navigatable, CodeUnit codeUnit,
@@ -150,40 +183,18 @@ public class OperandFieldMouseHandler implements FieldMouseHandlerExtension {
 			return false;
 		}
 
-		VariableOffset variableOffset = loc.getVariableOffset();
-		if (variableOffset != null) {
-			Variable variable = variableOffset.getVariable();
-			if (variable != null) {
-				goToService.goTo(navigatable,
-					new VariableNameFieldLocation(navigatable.getProgram(), variable, 0),
-					navigatable.getProgram());
-				return true;
-			}
+		if (goToExplicitOperandVariable(navigatable, loc, goToService)) {
+			return true;
 		}
 
 		Program p = codeUnit.getProgram();
 		Address cuAddr = codeUnit.getMinAddress();
-		Address refAddr = loc.getRefAddress();
-		Function func = p.getFunctionManager().getFunctionContaining(cuAddr);
-		if (func == null) {
+		Function function = p.getFunctionManager().getFunctionContaining(cuAddr);
+		if (function == null) {
 			return false;
 		}
 
-		ProgramLocation varLoc = null;
-		if (refAddr != null && !refAddr.isStackAddress()) {
-			Register reg = p.getRegister(refAddr, 1);
-			if (reg != null) {
-				Variable variable = p.getFunctionManager().getReferencedVariable(cuAddr, refAddr,
-					reg.getMinimumByteSize(),
-					!isWrite((Instruction) codeUnit, loc.getOperandIndex(), reg));
-				if (variable != null) {
-					varLoc = new VariableNameFieldLocation(navigatable.getProgram(), variable, 0);
-				}
-			}
-		}
-
-		if (varLoc != null) {
-			goToService.goTo(navigatable, varLoc, navigatable.getProgram());
+		if (goToRegisterVariable(navigatable, codeUnit, loc, goToService)) {
 			return true;
 		}
 
@@ -195,16 +206,67 @@ public class OperandFieldMouseHandler implements FieldMouseHandlerExtension {
 		Variable variable = p.getFunctionManager().getReferencedVariable(cuAddr,
 			reference.getToAddress(), 0, reference.getReferenceType().isRead());
 		if (variable != null) {
-			varLoc = new VariableNameFieldLocation(navigatable.getProgram(), variable, 0);
-			goToService.goTo(navigatable, varLoc, navigatable.getProgram());
+			ProgramLocation pl =
+				new VariableNameFieldLocation(navigatable.getProgram(), variable, 0);
+			goToService.goTo(navigatable, pl, navigatable.getProgram());
 			return true;
 		}
 
 		if (reference.isStackReference()) {
-			ProgramLocation fnLoc = new FunctionSignatureFieldLocation(p, func.getEntryPoint(),
-				null, 0, func.getPrototypeString(false, false));
-			goToService.goTo(navigatable, fnLoc, navigatable.getProgram());
+			ProgramLocation pl = new FunctionSignatureFieldLocation(p, function.getEntryPoint(),
+				null, 0, function.getPrototypeString(false, false));
+			goToService.goTo(navigatable, pl, navigatable.getProgram());
 			return true;
+		}
+		return false;
+	}
+
+	private boolean goToRegisterVariable(Navigatable navigatable, CodeUnit codeUnit,
+			OperandFieldLocation loc, GoToService goToService) {
+
+		Address refAddr = loc.getRefAddress();
+		Address cuAddr = codeUnit.getMinAddress();
+		if (refAddr == null || refAddr.isStackAddress()) {
+			return false;
+		}
+
+		Program p = codeUnit.getProgram();
+		Register reg = p.getRegister(refAddr, 1);
+		if (reg == null) {
+			return false;
+		}
+
+		Variable variable = p.getFunctionManager().getReferencedVariable(cuAddr, refAddr,
+			reg.getMinimumByteSize(), !isWrite((Instruction) codeUnit, loc.getOperandIndex(), reg));
+		if (variable == null) {
+			return false;
+		}
+
+		ProgramLocation pl = new VariableNameFieldLocation(navigatable.getProgram(), variable, 0);
+		goToService.goTo(navigatable, pl, navigatable.getProgram());
+		return true;
+	}
+
+	/**
+	 * Navigate to the variable, when directly supplied by the field location
+	 * 
+	 * @param navigatable the navigatable to which we should navigate
+	 * @param loc the source location
+	 * @param goToService the GoTo service
+	 * @return true if we decide to attempt navigation
+	 */
+	private boolean goToExplicitOperandVariable(Navigatable navigatable, OperandFieldLocation loc,
+			GoToService goToService) {
+
+		VariableOffset variableOffset = loc.getVariableOffset();
+		if (variableOffset != null) {
+			Variable variable = variableOffset.getVariable();
+			if (variable != null) {
+				goToService.goTo(navigatable,
+					new VariableNameFieldLocation(navigatable.getProgram(), variable, 0),
+					navigatable.getProgram());
+				return true;
+			}
 		}
 		return false;
 	}
@@ -220,12 +282,12 @@ public class OperandFieldMouseHandler implements FieldMouseHandlerExtension {
 
 	private boolean checkMemRefs(Navigatable navigatable, CodeUnit codeUnit,
 			OperandFieldLocation loc, ServiceProvider serviceProvider) {
+
 		Address refAddr = loc.getRefAddress();
 		if (refAddr == null || !refAddr.isMemoryAddress()) {
 			return false;
 		}
 
-		int opIndex = loc.getOperandIndex();
 		Reference[] refs = codeUnit.getOperandReferences(loc.getOperandIndex());
 		Address[] addrs = getAddressesForReferences(refs, codeUnit, serviceProvider);
 		if (addrs.length == 0) {
@@ -251,26 +313,8 @@ public class OperandFieldMouseHandler implements FieldMouseHandlerExtension {
 			return true;
 		}
 
-		Address gotoAddr = null;
-		if (addrs.length == 1) {
-			gotoAddr = addrs[0];
-		}
-		else {
-			gotoAddr = codeUnit.getAddress(opIndex);
-			if (gotoAddr == null) {
-				Scalar scalar = codeUnit.getScalar(opIndex);
-				if (scalar != null) {
-					Address minAddress = codeUnit.getMinAddress();
-					try {
-						gotoAddr = minAddress.getNewAddress(scalar.getUnsignedValue(), true);
-					}
-					catch (Exception e) {
-						// handled below by checking for null
-					}
-				}
-			}
-		}
-
+		// 1 address found
+		Address gotoAddr = addrs[0];
 		if (gotoAddr == null) {
 			return false;
 		}
@@ -294,27 +338,28 @@ public class OperandFieldMouseHandler implements FieldMouseHandlerExtension {
 			ServiceProvider serviceProvider, boolean skipExternal) {
 		Address address = reference.getToAddress();
 		RefType refType = reference.getReferenceType();
-		if (refType.isIndirect()) {
-			Program program = codeUnit.getProgram();
-			Data data = program.getListing().getDefinedDataAt(address);
-			Address indirectAddrress = null;
-			if (data != null) {
-				if (data.isPointer()) {
-					Reference ref = data.getPrimaryReference(0);
-					indirectAddrress = ref != null ? ref.getToAddress() : (Address) data.getValue();
-				}
-			}
-			else {
-				PseudoDisassembler pdis = new PseudoDisassembler(program);
-				indirectAddrress = pdis.getIndirectAddr(address);
-			}
-			if (indirectAddrress != null &&
-				(!indirectAddrress.isExternalAddress() || !skipExternal) &&
-				followIndirectReference(serviceProvider, indirectAddrress, program)) {
-				return indirectAddrress;
-			}
+		if (!refType.isIndirect()) {
+			return address;
 		}
 
+		Program program = codeUnit.getProgram();
+		Data data = program.getListing().getDefinedDataAt(address);
+		Address indirectAddrress = null;
+		if (data != null) {
+			if (data.isPointer()) {
+				Reference ref = data.getPrimaryReference(0);
+				indirectAddrress = ref != null ? ref.getToAddress() : (Address) data.getValue();
+			}
+		}
+		else {
+			PseudoDisassembler pdis = new PseudoDisassembler(program);
+			indirectAddrress = pdis.getIndirectAddr(address);
+		}
+
+		if (indirectAddrress != null && (!indirectAddrress.isExternalAddress() || !skipExternal) &&
+			followIndirectReference(serviceProvider, indirectAddrress, program)) {
+			return indirectAddrress;
+		}
 		return address;
 	}
 
@@ -324,6 +369,7 @@ public class OperandFieldMouseHandler implements FieldMouseHandlerExtension {
 		if (optionsService == null) {
 			return false;
 		}
+
 		NavigationOptions navOptions = new NavigationOptions(optionsService);
 		try {
 			if (!navOptions.isFollowIndirectionEnabled()) {

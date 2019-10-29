@@ -104,7 +104,7 @@ public class CoffArchiveFileSystem implements GFileSystem {
 	}
 
 	@Override
-	public String getInfo(GFile file, TaskMonitor monitor) throws IOException {
+	public String getInfo(GFile file, TaskMonitor monitor) {
 		CoffArchiveMemberHeader entry = fsih.getMetadata(file);
 		return (entry == null) ? null : FSUtilities.infoMapToString(getInfoMap(entry));
 	}

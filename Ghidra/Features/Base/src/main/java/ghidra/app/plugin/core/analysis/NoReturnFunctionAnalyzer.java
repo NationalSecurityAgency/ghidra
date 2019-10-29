@@ -110,7 +110,7 @@ public class NoReturnFunctionAnalyzer extends AbstractAnalyzer {
 			}
 
 			Address address = symbol.getAddress();
-			if (symbol.getSymbolType() == SymbolType.CODE) {
+			if (symbol.getSymbolType() == SymbolType.LABEL) {
 				if (!SymbolType.FUNCTION.isValidParent(program, symbol.getParentNamespace(),
 					address, false)) {
 					continue; // skip if parent does not permit function creation

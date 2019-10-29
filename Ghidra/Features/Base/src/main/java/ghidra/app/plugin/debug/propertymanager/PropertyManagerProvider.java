@@ -93,7 +93,6 @@ public class PropertyManagerProvider extends ComponentProviderAdapter {
 	}
 
 	void dispose() {
-		tool.removeLocalAction(this, deleteAction);
 		tool.removeComponentProvider(this);
 	}
 
@@ -220,7 +219,7 @@ public class PropertyManagerProvider extends ComponentProviderAdapter {
 				Rectangle rowBounds =
 					table.getCellRect(row, PropertyManagerTableModel.PROPERTY_NAME_COLUMN, true);
 				if (rowBounds.contains(event.getPoint())) {
-					return new ActionContext(this, rowBounds);
+					return createContext(rowBounds);
 				}
 			}
 		}

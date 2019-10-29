@@ -28,6 +28,7 @@ import docking.ActionContext;
 import docking.WindowPosition;
 import docking.action.DockingAction;
 import docking.action.ToolBarData;
+import docking.widgets.checkbox.GCheckBox;
 import ghidra.app.util.HelpTopics;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.framework.plugintool.Plugin;
@@ -131,7 +132,7 @@ public class DiffDetailsProvider extends ComponentProviderAdapter {
 	 */
 	private void createAutoUpdateCheckBox() {
 
-		autoUpdateCB = new JCheckBox("Automatically Update Details", false);
+		autoUpdateCB = new GCheckBox("Automatically Update Details", false);
 		autoUpdateCB.setName(AUTO_UPDATE_CHECK_BOX);
 		autoUpdateCB.addActionListener(e -> {
 			autoUpdate = autoUpdateCB.isSelected();
@@ -147,7 +148,7 @@ public class DiffDetailsProvider extends ComponentProviderAdapter {
 	 */
 	private void createFilterDiffsCheckBox() {
 
-		filterDiffsCB = new JCheckBox("Only Show Expected Difference Types", false);
+		filterDiffsCB = new GCheckBox("Only Show Expected Difference Types", false);
 		filterDiffsCB.setName(FILTER_DIFFS_CHECK_BOX);
 		filterDiffsCB.addActionListener(e -> {
 			filterDiffs = filterDiffsCB.isSelected();

@@ -235,10 +235,13 @@ public class FileHeader implements StructConverter {
 	/**
 	 * Returns the section header at the specified position in the array.
 	 * @param index index of section header to return
-	 * @return the section header at the specified position in the array
+	 * @return the section header at the specified position in the array, or null if invalid
 	 */
     public SectionHeader getSectionHeader(int index) {
-        return sectionHeaders[index];
+		if (index >= 0 && index < sectionHeaders.length) {
+    		return sectionHeaders[index];
+    	}
+    	return null;
     }
 
 	/**
@@ -307,16 +310,32 @@ public class FileHeader implements StructConverter {
         	Msg.error(this, "File alignment == 0: section processing skipped");
         } else {
 			sectionHeaders = new SectionHeader[numberOfSections];
-	        for (int i = 0; i < numberOfSections; ++i) {
-	            sectionHeaders[i] = SectionHeader.createSectionHeader(reader, tmpIndex);
-	            
-	            int sizeOfRawData = sectionHeaders[i].getSizeOfRawData();
-	    		sizeOfRawData  = PortableExecutable.computeAlignment(sizeOfRawData, optHeader.getFileAlignment());
-	    		sectionHeaders[i].setSizeOfRawData(sizeOfRawData);
-	    		
-	            tmpIndex += SectionHeader.IMAGE_SIZEOF_SECTION_HEADER;
-	        }
-        }
+			for (int i = 0; i < numberOfSections; ++i) {
+				sectionHeaders[i] = SectionHeader.createSectionHeader(reader, tmpIndex);
+
+				// Ensure VirtualSize is large enough to accommodate SizeOfRawData, but do not
+				// exceed the next alignment boundary.  We can only do this if the VirtualAddress is
+				// already properly aligned, since we currently don't support moving sections to
+				// different addresses to enforce alignment.
+				int virtualAddress = sectionHeaders[i].getVirtualAddress();
+				int virtualSize = sectionHeaders[i].getVirtualSize();
+				int sizeOfRawData = sectionHeaders[i].getSizeOfRawData();
+				int alignedVirtualAddress = PortableExecutable.computeAlignment(virtualAddress,
+					optHeader.getSectionAlignment());
+				int alignedVirtualSize = PortableExecutable.computeAlignment(virtualSize,
+					optHeader.getSectionAlignment());
+				if (virtualAddress == alignedVirtualAddress) {
+					if (sizeOfRawData > virtualSize) {
+						sectionHeaders[i].setVirtualSize(
+							Math.min(sizeOfRawData, alignedVirtualSize));
+					}
+				}
+				else {
+					Msg.warn(this, "Section " + sectionHeaders[i].getName() + " is not aligned!");
+				}
+				tmpIndex += SectionHeader.IMAGE_SIZEOF_SECTION_HEADER;
+			}
+		}
 
         reader.setPointerIndex(oldIndex);
     }

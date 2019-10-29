@@ -24,11 +24,12 @@ import javax.swing.*;
 
 import com.google.common.base.Function;
 
+import docking.DockingUtils;
 import docking.DockingWindowManager;
-import docking.ToolTipManager;
 import docking.help.HelpService;
 import docking.widgets.EmptyBorderButton;
 import docking.widgets.PopupWindow;
+import docking.widgets.label.GIconLabel;
 import edu.uci.ics.jung.algorithms.layout.GraphElementAccessor;
 import edu.uci.ics.jung.algorithms.layout.Layout;
 import edu.uci.ics.jung.visualization.*;
@@ -174,8 +175,8 @@ public class GraphComponent<V extends VisualVertex, E extends VisualEdge<V>, G e
 
 		createGUIComponents(primaryViewer, satelliteViewer);
 
-		docking.ToolTipManager.sharedInstance().registerComponent(primaryViewer);
-		docking.ToolTipManager.sharedInstance().registerComponent(satelliteViewer);
+		ToolTipManager.sharedInstance().registerComponent(primaryViewer);
+		ToolTipManager.sharedInstance().registerComponent(satelliteViewer);
 	}
 
 	// template method
@@ -405,7 +406,7 @@ public class GraphComponent<V extends VisualVertex, E extends VisualEdge<V>, G e
 			public void keyPressed(KeyEvent e) {
 				if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
 					PopupWindow.hideAllWindows();
-					ToolTipManager.sharedInstance().hideTipWindow();
+					DockingUtils.hideTipWindow();
 				}
 			}
 		};
@@ -417,7 +418,7 @@ public class GraphComponent<V extends VisualVertex, E extends VisualEdge<V>, G e
 		String tooltip = "Bring satellite view to the front";
 
 		Icon icon = ResourceManager.loadImage("images/network-wireless.png");
-		JLabel iconLabel = new JLabel(icon);
+		JLabel iconLabel = new GIconLabel(icon);
 		iconLabel.setOpaque(false);
 		iconLabel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 		iconLabel.setToolTipText(tooltip);
@@ -457,7 +458,7 @@ public class GraphComponent<V extends VisualVertex, E extends VisualEdge<V>, G e
 			"options to have the graph update automatically.";
 
 		Icon icon = Icons.REFRESH_ICON;
-		JLabel iconLabel = new JLabel(icon);
+		JLabel iconLabel = new GIconLabel(icon);
 		iconLabel.setOpaque(false);
 		iconLabel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 		iconLabel.setToolTipText(tooltip);

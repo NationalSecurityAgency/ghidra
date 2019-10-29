@@ -15,6 +15,14 @@
  */
 package ghidra.app.plugin.core.searchtext;
 
+import java.math.BigInteger;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import docking.widgets.fieldpanel.Layout;
+import docking.widgets.fieldpanel.support.FieldLocation;
+import docking.widgets.fieldpanel.support.RowColLocation;
 import ghidra.app.plugin.core.searchtext.iterators.*;
 import ghidra.app.services.CodeViewerService;
 import ghidra.app.util.viewer.field.*;
@@ -28,15 +36,6 @@ import ghidra.program.util.*;
 import ghidra.util.Msg;
 import ghidra.util.UserSearchUtils;
 import ghidra.util.task.TaskMonitor;
-
-import java.math.BigInteger;
-import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
-import docking.widgets.fieldpanel.Layout;
-import docking.widgets.fieldpanel.support.FieldLocation;
-import docking.widgets.fieldpanel.support.RowColLocation;
 
 /**
  * This class attempts to search for text as it is rendered on the screen.  This in in 
@@ -104,7 +103,7 @@ class ListingDisplaySearcher implements Searcher {
 		searchPattern =
 			UserSearchUtils.createSearchPattern(options.getText(), options.isCaseSensitive());
 
-		locationList = new ArrayList<ProgramLocation>();
+		locationList = new ArrayList<>();
 		locationIterator = locationList.listIterator();
 
 		CodeViewerService service = tool.getService(CodeViewerService.class);
@@ -152,7 +151,7 @@ class ListingDisplaySearcher implements Searcher {
 		// with a defined code unit.   See the history for the original code.  See the
 		// header for more info.
 		//
-		List<AddressIterator> iterators = new ArrayList<AddressIterator>();
+		List<AddressIterator> iterators = new ArrayList<>();
 
 		Listing listing = program.getListing();
 
@@ -169,9 +168,8 @@ class ListingDisplaySearcher implements Searcher {
 			iterators.add(listing.getCommentAddressIterator(searchAddresses, options.isForward()));
 		}
 		if (options.searchLabels() || all) {
-			SymbolIterator labels =
-				program.getSymbolTable().getPrimarySymbolIterator(searchAddresses,
-					options.isForward());
+			SymbolIterator labels = program.getSymbolTable().getPrimarySymbolIterator(
+				searchAddresses, options.isForward());
 			iterators.add(new LabelSearchAddressIterator(labels));
 		}
 		return iterators.toArray(new AddressIterator[iterators.size()]);
@@ -229,8 +227,8 @@ class ListingDisplaySearcher implements Searcher {
 			// if the tool is busy disassembling or if the program got closed,
 			// ignore the exception.
 			if (tool.isExecutingCommand()) {
-				tool.setStatusInfo("Search failed: try search when tool is not "
-					+ "executing commands that may change the program");
+				tool.setStatusInfo("Search failed: try search when tool is not " +
+					"executing commands that may change the program");
 			}
 			else if (!program.isClosed() && program.getCurrentTransaction() != null) {
 				tool.setStatusInfo("Search failed: try search when program is not being changed");
@@ -264,6 +262,7 @@ class ListingDisplaySearcher implements Searcher {
 			locationList.size() == 0) {
 
 			currentAddress = addressIterator.next();
+			monitor.setMessage("Checking address " + currentAddress);
 			if (!options.searchAllFields()) {
 				currentCodeUnit = listing.getCodeUnitContaining(currentAddress);
 			}
@@ -276,8 +275,10 @@ class ListingDisplaySearcher implements Searcher {
 				(!options.isForward() && currentAddress.compareTo(startAddress) > 0)) {
 				continue;
 			}
-			if ((options.isForward() && currentAddress.compareTo(searchAddresses.getMaxAddress()) > 0) ||
-				(!options.isForward() && currentAddress.compareTo(searchAddresses.getMinAddress()) < 0)) {
+			if ((options.isForward() &&
+				currentAddress.compareTo(searchAddresses.getMaxAddress()) > 0) ||
+				(!options.isForward() &&
+					currentAddress.compareTo(searchAddresses.getMinAddress()) < 0)) {
 				return;
 			}
 			if (!searchAddresses.contains(currentAddress)) {
@@ -317,7 +318,8 @@ class ListingDisplaySearcher implements Searcher {
 	}
 
 	private void searchForward() {
-		for (int i = currentFieldIndex; i < currentLayout.getNumFields(); i++, currentFieldIndex++) {
+		for (int i =
+			currentFieldIndex; i < currentLayout.getNumFields(); i++, currentFieldIndex++) {
 			int matchingFieldCount = findLocations(i);
 			if (matchingFieldCount != 0) {
 				currentFieldIndex += matchingFieldCount;
@@ -543,7 +545,8 @@ class ListingDisplaySearcher implements Searcher {
 		adjustIterator();
 	}
 
-	private MnemonicText generateMnemonicSearchText(ListingField mnemonicField, ListingField opField) {
+	private MnemonicText generateMnemonicSearchText(ListingField mnemonicField,
+			ListingField opField) {
 		String mnemonic = mnemonicField.getText();
 		String operands = opField != null ? opField.getText() : "";
 
@@ -600,7 +603,8 @@ class ListingDisplaySearcher implements Searcher {
 		// note: the program database search generates a location with sub op index as -1,
 		// so treat this as the same location if the sub op index is -1;
 		// this happens when transitioning from a database search to listing display search.
-		return (opStartLoc.getSubOperandIndex() < 0 && opStartLoc.getOperandIndex() == opLoc.getOperandIndex());
+		return (opStartLoc.getSubOperandIndex() < 0 &&
+			opStartLoc.getOperandIndex() == opLoc.getOperandIndex());
 	}
 
 //==================================================================================================

@@ -17,6 +17,7 @@ package ghidra.app.plugin.core.functiongraph;
 
 import java.awt.event.MouseEvent;
 import java.util.*;
+import java.util.function.Supplier;
 
 import javax.swing.*;
 
@@ -47,8 +48,7 @@ import ghidra.program.model.address.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.*;
 import ghidra.program.util.*;
-import ghidra.util.HelpLocation;
-import ghidra.util.SystemUtilities;
+import ghidra.util.*;
 import ghidra.util.datastruct.WeakDataStructureFactory;
 import ghidra.util.datastruct.WeakSet;
 import ghidra.util.exception.AssertException;
@@ -70,6 +70,11 @@ public class FGProvider extends VisualGraphComponentProvider<FGVertex, FGEdge, F
 	private ProgramSelection currentProgramSelection;
 	private ProgramSelection currentProgramHighlight;
 
+	/**
+	 * A construct that allows tests to control the notion of whether this provider has focus
+	 */
+	private Supplier<Boolean> focusStatusDelegate = () -> super.isFocusedProvider();
+
 	private DecoratorPanel decorationPanel;
 	private String disconnectedName;
 
@@ -85,8 +90,9 @@ public class FGProvider extends VisualGraphComponentProvider<FGVertex, FGEdge, F
 		WeakDataStructureFactory.createCopyOnWriteWeakSet();
 	private boolean isConnected;
 	private ImageIcon navigatableIcon;
-	private boolean disposed = false;
 	// End Navigatable Fields
+
+	private boolean disposed = false;
 
 	public FGProvider(FunctionGraphPlugin plugin, boolean isConnected) {
 		super(plugin.getTool(), FunctionGraphPlugin.FUNCTION_GRAPH_NAME, plugin.getName(),
@@ -97,13 +103,20 @@ public class FGProvider extends VisualGraphComponentProvider<FGVertex, FGEdge, F
 		controller = new FGController(this, plugin);
 
 		setConnected(isConnected);
+		setIcon(FunctionGraphPlugin.ICON);
+		if (!isConnected) {
+			setTransient();
+		}
+		else {
+			addToToolbar();
+		}
 
 		decorationPanel = new DecoratorPanel(controller.getViewComponent(), isConnected);
 		setWindowMenuGroup(FunctionGraphPlugin.FUNCTION_GRAPH_NAME);
 		setWindowGroup(FunctionGraphPlugin.FUNCTION_GRAPH_NAME);
 		setDefaultWindowPosition(WindowPosition.WINDOW);
+
 		setHelpLocation(new HelpLocation("FunctionGraphPlugin", "FunctionGraphPlugin"));
-		setIcon(FunctionGraphPlugin.ICON);
 
 		addToTool();
 		addSatelliteFeature(); // must be after addToTool();
@@ -119,6 +132,12 @@ public class FGProvider extends VisualGraphComponentProvider<FGVertex, FGEdge, F
 		clipboardProvider = new FGClipboardProvider(tool, controller);
 		ClipboardService service = tool.getService(ClipboardService.class);
 		setClipboardService(service);
+	}
+
+	@Override
+	public boolean isSnapshot() {
+		// we are a snapshot when we are 'disconnected' 
+		return !isConnected();
 	}
 
 	public void setClipboardService(ClipboardService service) {
@@ -196,7 +215,7 @@ public class FGProvider extends VisualGraphComponentProvider<FGVertex, FGEdge, F
 
 	void cloneWindow() {
 		FGProvider newProvider = plugin.createNewDisconnectedProvider();
-		SystemUtilities.runSwingLater(() -> {
+		Swing.runLater(() -> {
 			newProvider.doSetProgram(currentProgram);
 
 			FGData currentData = controller.getFunctionGraphData();
@@ -553,6 +572,17 @@ public class FGProvider extends VisualGraphComponentProvider<FGVertex, FGEdge, F
 	 */
 	public void refreshAndResetPerspective() {
 		refresh(false);
+	}
+
+	/**
+	 * Tells the graph that some display data may have changed, but the changes are not worth 
+	 * performing a full rebuild
+	 */
+	public void refreshDisplayWithoutRebuilding() {
+		FGData functionGraphData = controller.getFunctionGraphData();
+		if (functionGraphData.hasResults()) {
+			controller.refreshDisplayWithoutRebuilding();
+		}
 	}
 
 	@Override
@@ -1246,6 +1276,15 @@ public class FGProvider extends VisualGraphComponentProvider<FGVertex, FGEdge, F
 
 		controller.requestFocus();
 		tool.toFront(this);
+	}
+
+	@Override
+	public boolean isFocusedProvider() {
+		return focusStatusDelegate.get();
+	}
+
+	void setFocusStatusDelegate(Supplier<Boolean> focusStatusDelegate) {
+		this.focusStatusDelegate = focusStatusDelegate;
 	}
 
 	@Override

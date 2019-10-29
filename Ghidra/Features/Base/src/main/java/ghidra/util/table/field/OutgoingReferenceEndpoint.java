@@ -38,4 +38,9 @@ public class OutgoingReferenceEndpoint extends ReferenceEndpoint {
 	public OutgoingReferenceEndpoint(Reference r, Address toAddress, boolean isOffcut) {
 		super(r, toAddress, r.getReferenceType(), isOffcut, r.getSource());
 	}
+
+	@Override
+	public String toString() {
+		return "Outgoing " + getReferenceType().getName();
+	}
 }

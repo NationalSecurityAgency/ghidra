@@ -1,0 +1,317 @@
+
+/*********************************************************************************
+ * ip.gradle
+ *
+ * This file defines the gradle tasks for generating the LICENSE.txt in each module
+ * which lists all the 3rd party files in this module and their licenses.  
+ * 
+ * The task also verifies that the license for each of the 3rd party files is allowed
+ * based on what license files exist in the root/licenses directory.
+ *
+ * It also reads the Module.manifest file where license information is recorded for 
+ * jar dependencies and build artifacts.  These are added to the LICENSE.txt file. Also,
+ * the jar dependencies (as defined in the build.gradle file) are examined to make
+ * sure they are defined in the Module.manifest file.
+ *********************************************************************************/
+
+/*********************************************************************************
+ * Defines the main ip task for each subproject
+ *********************************************************************************/
+task ip { 
+	doLast {
+		
+		// scans all the files in the module, reads ip from header, verifies ip, and creates mapping
+		def ipToFileMap = getIpForModule(project)
+		
+		// reads the ip info from the Module.manifest file and verifies each ip
+		def moduleManifestIpMap = getModuleManifestIp(project)
+		
+		// gets the external libs from gradle and verifies they are accounted for in the Module.manifest file
+		checkExternalLibsInMap(moduleManifestIpMap, project)
+		
+		// adds the ip info from the Module.manifest file to the map generated from scanning the module files.
+		addModuleManifestIp(ipToFileMap, moduleManifestIpMap)
+		
+		// writes the LICENSE.txt file for the module
+		writeLicenseInfo(project, ipToFileMap)
+	}
+}
+rootProject.assembleDistribution.dependsOn ip
+
+
+/*********************************************************************************
+ * Addes the ip information from the Module.manifest file into the ipToFileMap
+ *********************************************************************************/
+def addModuleManifestIp(Map<String, List<String>> ipToFileMap, Map<String, String> moduleManifestIpMap) {
+	for (path in moduleManifestIpMap.keySet()) {
+		String ip = moduleManifestIpMap.get(path)
+		addToMap(ipToFileMap, ip, path)
+	}
+}
+
+/*********************************************************************************
+ * Reads the ip info in the Module.manifest file and creates a mapping of path to ip
+ *********************************************************************************/
+def Map<String, String> getModuleManifestIp(Project project) {
+	Map<String, String> map = new HashMap<String, String>();
+	File moduleManifest = new File(project.projectDir, "Module.manifest")
+	if (!moduleManifest.exists()) {
+		return map
+	} 
+	def allowedIP = getAllowedIP(project)
+
+	def lines = moduleManifest.readLines();
+	String key = "MODULE FILE LICENSE:"
+	for(line in lines) {
+		if (line.startsWith(key)) {
+			String s = line.substring(key.length()).trim()
+			int index = s.indexOf(' ')
+			String path = s.substring(0, index).trim()
+			String ip = s.substring(index+1).trim()
+			def ipString = ip.replace(' ','_')
+			assert allowedIP.contains(ipString) : "Encountered Non-allowed IP: "+ip+ " for Module.manifest entry: "+path
+			map.put(path, ip)
+		}
+	}
+	return map
+}
+
+/**********************************************************************************
+ * Gets the gradle dependences and makes sure each external lib is accounted for in
+ * the map from the Module.manifest file
+ *********************************************************************************/
+def checkExternalLibsInMap(Map<String, String> map, Project project) {
+	if (project.plugins.withType(JavaPlugin)) {
+		List<String> libs = getExternalDependencies(project)
+		libs.each { lib ->
+			String libName = new File(lib).getName()  // get just the filename without the path
+			String relativePath = "lib/"+libName;
+			assert map.containsKey(relativePath) : "No License specified for external library: "+relativePath+ " in module "+project.projectDir
+		}
+	}
+}
+
+/*********************************************************************************
+ * Examines all the files in the module, reads their ip from the header, verifies
+ * that the ip is allowed, and adds an entry to a mapping of the ip to a list of 
+ * files with that ip
+ *********************************************************************************/
+def Map<String, List<String>> getIpForModule(Project p) {
+	Map<String, List<String>> map = new HashMap<String, List<String>>()
+	File certificationFile = new File(p.projectDir, "certification.manifest")
+	if (!certificationFile.exists()) {
+		return map;
+	}	
+	def allowedIP = getAllowedIP(p)
+	FileTree tree = p.fileTree(".") {
+		exclude "bin/**";
+		exclude "**/build/**";
+		exclude "certification.manifest"
+		exclude "certification.local.manifest"
+		exclude ".project"
+		exclude ".classpath"
+		exclude "Module.manifest"
+		exclude "build.gradle"
+		exclude "**/Misc/Tips.htm"
+		exclude "**/*.sla"
+		exclude "**/.gradle/**"
+		exclude "**/.settings/**"
+		exclude "**/data/build.xml" // language build file (generated for dev only)
+		exclude "**/.vs/**"
+		exclude "**/*.vcxproj.user"
+	}
+	tree.each { file ->
+			String ip = getIp(p.projectDir, file)
+			assert ip != null : "No IP found for "+file.path+ " in module: "+p.projectDir
+			String ipString = ip.replace(' ','_')
+			assert allowedIP.contains(ipString) : "Found non-allowed IP: "+ip+" for file "+file.path+" in module: "+p.projectDir
+			addToMap(map, ip, getRelativePath(p.projectDir, file))
+	} 
+	return map;
+}
+
+/*********************************************************************************
+ * Returns the relative path of a file in the module
+ *********************************************************************************/
+def String getRelativePath(File projectDir, File file) {
+	return file.getPath().substring(projectDir.getPath().length()+1)
+}
+
+/*********************************************************************************
+ * adds a path and its ip to the mapping of ip to list of files
+ *********************************************************************************/
+def addToMap(Map<String, List<String>> map, String ip, String path) {
+	List<String> list = map.get(ip);
+	if (list == null) {
+		list = new ArrayList<String>();
+		map.put(ip, list);
+	}
+	list.add(path)
+}
+
+/*********************************************************************************
+ * checks if a file supports a C style header based on its extension.
+ *********************************************************************************/
+def isSourceFile(File file) {
+
+	String filename = file.getName().toLowerCase();
+
+	return filename.endsWith(".java") ||
+		   filename.endsWith(".c") ||
+		   filename.endsWith(".groovy") ||
+		   filename.endsWith(".cpp") ||
+		   filename.endsWith(".cc") ||
+		   filename.endsWith(".h") ||
+		   filename.endsWith(".y") ||
+		   filename.endsWith(".l") ||
+		   filename.endsWith(".hh") ||
+		   filename.endsWith(".css") ||
+		   filename.endsWith(".jj");
+}
+
+
+/*********************************************************************************
+ * Gets the ip for a file in the module from its header (or certification.manifest
+ *********************************************************************************/
+def getIp(File projectDir, File file) {
+	if (isSourceFile(file)) {
+		return getIpForSourceFile(file);
+	}
+	return getIpForNonSourceFile(projectDir, file);
+}
+
+/*********************************************************************************
+ * Gets the ip from a file that has a certification header 
+ *********************************************************************************/
+def getIpForSourceFile(File file) {
+	String ip =null
+	String line;
+	file.withReader { reader ->
+		while((line = reader.readLine()) != null) {
+			if (line.startsWith(" * IP:")) {
+				ip = line.substring(7).trim();
+				break;
+			}		
+		}
+	}
+	return ip;
+}
+
+/*********************************************************************************
+ * Gets the ip for a file that does not have a header, but has an entry in the
+ * certication.manifest
+ *********************************************************************************/
+def getIpForNonSourceFile(File projectDir, File file) {
+	String ip = null
+	File manifest = new File(projectDir, "certification.manifest");
+	def lines = manifest.readLines()
+	lines.each {line ->
+		line = line.trim();
+		def parts = line.split("\\|");
+		if (parts.length > 2 && file.toString().replace(File.separator, "/").endsWith(parts[0])) {
+			ip = parts[2];
+		}
+	}
+	return ip;
+}
+
+/*********************************************************************************
+ * Writes the license information to the LICENSE.txt file for the module
+ *********************************************************************************/
+def writeLicenseInfo(Project project, Map<String, List<String>> map) {
+	if (map.isEmpty()) {
+		return;
+	}
+	File buildDir = new File(project.projectDir, "build")
+	buildDir.mkdir();
+	
+	File licenseFile = new File(buildDir,"LICENSE.txt");
+		
+	def buf = new StringBuffer();
+	addLicenseProlog(project, buf)
+	
+	map.keySet().each { ip ->
+		reportLicenseFiles(buf, ip, map.get(ip))
+	}
+	licenseFile.text = buf.toString()
+}
+
+/*********************************************************************************
+ * Writes the files for a single ip
+ *********************************************************************************/
+def reportLicenseFiles(StringBuffer buf, String ip, List<String> filepaths) {
+	if (ip.equals("GHIDRA") || ip.equals("LICENSE")) {
+		return;
+	}
+	buf.append(ip+":\n\n") 
+	filepaths.each { path ->
+		buf.append("\t")
+		buf.append(path)
+		buf.append("\n")
+	}
+	buf.append("\n")
+}
+
+/*********************************************************************************
+ * Generates the text for the prolog (non-changing) part of the LICENSE.txt file 
+ *********************************************************************************/
+def addLicenseProlog(Project project, StringBuffer buf) {
+	if (project.projectDir.toString().contains(File.separator + "GPL" + File.separator)) {
+		buf.append("The program in this module is released under the GPL 3 license. \n")
+		buf.append("The files used to create this program include both public domain\n")
+		buf.append("files created by the Ghidra team and 3rd party files with \n")
+		buf.append("the GPL 3 or GPL 3 compatible license. ")
+		buf.append("The license files for each of license used can be found in the\n")
+		buf.append("<installation root>/GPL/licenses.\n\n")
+		buf.append("\nThe 3rd party files in this module are as follows:\n\n\n")
+	}
+	else {
+		buf.append("Ghidra software is released under the Apache 2.0 license. In addition, \n")
+		buf.append("there are numerous 3rd party components that each have their \n")
+		buf.append("own license. The license file for each of these licenses can be found\n")
+		buf.append("in the licenses directory in the installation root directory.\n")
+		buf.append("\nThe 3rd party files in this module are as follows:\n\n\n")
+	}
+}
+
+
+/*********************************************************************************
+ * Examines the <root>/licenses directory to discover what licenses are allowed
+ *********************************************************************************/
+def Set<String> getAllowedIP(Project p) {
+	Set<String> set = new HashSet<String>()
+	def projectPath = p.projectDir.path.replace(File.separator, "/");
+	if (projectPath.contains("/GPL/")) {
+		set.add("GPL_3")
+		set.add("GPL_3_Linking_Permitted")
+		set.add("GPL_2_With_Classpath_Exception")
+		set.add("Public_Domain")
+		set.add("LGPL_3.0")
+		set.add("LGPL_2.1")
+	}
+	else {
+		File root  = p.rootProject.file("..")
+		root.listFiles().each { f ->
+			File licenseDir = new File(f, "licenses")
+			File[] files = licenseDir.listFiles()
+			files.each { file ->
+				set.add(getIpName(file.getName()))
+			}
+		}
+	}
+	
+	set.add("GHIDRA")
+	set.add("LICENSE")
+	set.add("Copyright_Distribution_Permitted")
+	return set;
+}
+
+/*********************************************************************************
+ * converts a file name to an ip name that can be compared to info from headers.
+ *********************************************************************************/
+def String getIpName(String filename) {
+	if (filename.endsWith(".txt")) filename = filename.substring(0, filename.length()-4)
+	if (filename.endsWith(".htm")) filename = filename.substring(0, filename.length()-4)
+	if (filename.endsWith(".html")) filename = filename.substring(0, filename.length()-5)
+	return filename
+}	 

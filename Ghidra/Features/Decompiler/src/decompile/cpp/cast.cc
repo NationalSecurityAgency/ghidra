@@ -269,8 +269,14 @@ bool CastStrategyC::isSubpieceCast(Datatype *outtype,Datatype *intype,uint4 offs
       (outmeta!=TYPE_PTR)&&
       (outmeta!=TYPE_FLOAT))
     return false;
-  if ((inmeta==TYPE_PTR)&&((outmeta!=TYPE_INT) && (outmeta!=TYPE_UINT)))
-    return false; //other casts don't make sense for pointers
+  if (inmeta==TYPE_PTR) {
+    if (outmeta == TYPE_PTR) {
+      if (outtype->getSize() < intype->getSize())
+	return true;		// Cast from far pointer to near pointer
+    }
+    if ((outmeta!=TYPE_INT) && (outmeta!=TYPE_UINT))
+      return false; //other casts don't make sense for pointers
+  }
   return true;
 }
 

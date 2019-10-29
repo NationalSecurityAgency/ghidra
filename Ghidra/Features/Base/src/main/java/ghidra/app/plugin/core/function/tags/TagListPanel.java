@@ -20,11 +20,13 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.*;
 
-import javax.swing.*;
+import javax.swing.DefaultListModel;
+import javax.swing.JPanel;
 
 import docking.DockingWindowManager;
 import docking.widgets.OptionDialog;
 import docking.widgets.dialogs.InputDialog;
+import docking.widgets.label.GLabel;
 import ghidra.app.cmd.function.ChangeFunctionTagCmd;
 import ghidra.app.cmd.function.DeleteFunctionTagCmd;
 import ghidra.framework.cmd.Command;
@@ -64,8 +66,7 @@ public abstract class TagListPanel extends JPanel {
 	 * @param tool the plugin tool
 	 * @param title the title of the panel
 	 */
-	public TagListPanel(FunctionTagsComponentProvider provider, PluginTool tool,
-			String title) {
+	public TagListPanel(FunctionTagsComponentProvider provider, PluginTool tool, String title) {
 		this.tool = tool;
 
 		setLayout(new BorderLayout());
@@ -97,18 +98,18 @@ public abstract class TagListPanel extends JPanel {
 
 					// If the tag is a temporary one, it's not editable. Show a message to the user.
 					if (tag instanceof FunctionTagTemp) {
-						Msg.showWarn(list, list, "Tag Not Editable",
-							"Tag " + "\"" + tag.getName() + "\"" +
-								" was loaded from an external source and cannot be edited or deleted");
+						Msg.showWarn(list, list, "Tag Not Editable", "Tag " + "\"" + tag.getName() +
+							"\"" +
+							" was loaded from an external source and cannot be edited or deleted");
 						return;
 					}
 
 					String[] labels = new String[] { "Name:", "Comment:" };
 					String[] init = new String[] { tag.getName(), tag.getComment() };
-					
+
 					InputDialog dialog = new InputDialog("Edit Tag", labels, init, true, d -> {
 						String[] results = d.getValues();
-						
+
 						if (results == null || results.length != 2) {
 							Msg.error(this, "Error retrieving data from edit dialog"); // shouldn't happen
 							return false;
@@ -139,10 +140,10 @@ public abstract class TagListPanel extends JPanel {
 						}
 						return true;
 					});
-				
+
 					dialog.setPreferredSize(400, 150);
 					DockingWindowManager.showDialog(list, dialog);
-					
+
 					if (dialog.isCanceled()) {
 						return;
 					}
@@ -150,9 +151,7 @@ public abstract class TagListPanel extends JPanel {
 			}
 		});
 
-		JLabel label = new JLabel(title);
-
-		add(label, BorderLayout.NORTH);
+		add(new GLabel(title), BorderLayout.NORTH);
 		add(list, BorderLayout.CENTER);
 	}
 
@@ -245,8 +244,8 @@ public abstract class TagListPanel extends JPanel {
 		// Show a confirmation message - users may not be aware that deleting a tag is more
 		// than just removing it from a function.
 		int option = OptionDialog.showOptionDialog(this, "Function Tag Delete",
-			"Are you sure? \nThis will delete the tag from all functions in the program.",
-			"OK", OptionDialog.WARNING_MESSAGE);
+			"Are you sure? \nThis will delete the tag from all functions in the program.", "OK",
+			OptionDialog.WARNING_MESSAGE);
 
 		switch (option) {
 			case OptionDialog.OPTION_ONE:

@@ -17,8 +17,9 @@ package ghidra.app.util.viewer.field;
 
 import java.awt.Color;
 import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
+
+import org.apache.commons.lang3.StringUtils;
 
 import docking.widgets.fieldpanel.field.*;
 import docking.widgets.fieldpanel.support.FieldLocation;
@@ -32,6 +33,8 @@ import ghidra.framework.options.ToolOptions;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressOverflowException;
 import ghidra.program.model.listing.*;
+import ghidra.program.model.pcode.PcodeOp;
+import ghidra.program.model.pcode.PcodeOverride;
 import ghidra.program.model.symbol.FlowType;
 import ghidra.program.model.symbol.RefType;
 import ghidra.program.util.*;
@@ -46,7 +49,7 @@ public class PostCommentFieldFactory extends FieldFactory {
 	public static final String FIELD_NAME = "Post-Comment";
 
 	private final static String GROUP_TITLE = "Format Code";
-	private final static String FIELD_GROUP_TITLE = "Post Comment";
+	private final static String FIELD_GROUP_TITLE = "Post-comments Field";
 	public final static String ENABLE_WORD_WRAP_MSG =
 		FIELD_GROUP_TITLE + Options.DELIMITER + "Enable Word Wrapping";
 	public final static String ENABLE_ALWAYS_SHOW_AUTOMATIC_MSG =
@@ -82,7 +85,7 @@ public class PostCommentFieldFactory extends FieldFactory {
 	/**
 	 * Constructor
 	 * @param model the model that the field belongs to.
-	 * @param hsProvider the HightLightStringProvider.
+	 * @param hlProvider the HightLightStringProvider.
 	 * @param displayOptions the Options for display properties.
 	 * @param fieldOptions the Options for field specific properties.
 	 */
@@ -90,9 +93,12 @@ public class PostCommentFieldFactory extends FieldFactory {
 			Options displayOptions, Options fieldOptions) {
 		super(FIELD_NAME, model, hlProvider, displayOptions, fieldOptions);
 
-		fieldOptions.registerOption(FLAG_FUNCTION_EXIT_OPTION, false, null, null);
-		fieldOptions.registerOption(FLAG_TERMINATOR_OPTION, false, null, null);
-		fieldOptions.registerOption(LINES_AFTER_BLOCKS_OPTION, 0, null, null);
+		fieldOptions.registerOption(FLAG_FUNCTION_EXIT_OPTION, false, null,
+			"Toggles the display of a post-comment for a function exit");
+		fieldOptions.registerOption(FLAG_TERMINATOR_OPTION, false, null,
+			"Toggles the display of a jump/return post-comments");
+		fieldOptions.registerOption(LINES_AFTER_BLOCKS_OPTION, 0, null,
+			"The number of lines to display after basic blocks");
 
 		flagFunctionExits = fieldOptions.getBoolean(FLAG_FUNCTION_EXIT_OPTION, false);
 		flagJMPsRETs = fieldOptions.getBoolean(FLAG_TERMINATOR_OPTION, false);
@@ -154,47 +160,118 @@ public class PostCommentFieldFactory extends FieldFactory {
 	}
 
 	private String[] getAutoPostComment(CodeUnit cu) {
-		if (cu instanceof Instruction) {
-			String fallthroughComment = null;
-			String flowOverrideComment = null;
-			int count = 0;
-			Instruction instr = (Instruction) cu;
 
-			if (instr.isInDelaySlot()) {
-				// ensure that auto-comment come from parent and are only placed after last
-				// delay slot.  Switch out inst with the parent instruction
-				int delaySlotPosition = 0;
-				while (instr.isInDelaySlot()) {
-					++delaySlotPosition;
-					instr = instr.getPrevious();
-				}
-				if (instr.getDelaySlotDepth() != delaySlotPosition) {
-					return null; // not the last delay slot
-				}
-			}
+		if (!(cu instanceof Instruction)) {
+			return null;
+		}
+		Instruction instr = (Instruction) cu;
+		LinkedList<String> comments = new LinkedList<>();
 
-			if (instr.isFallThroughOverridden()) {
-				Address fallThrough = instr.getFallThrough();
-				fallthroughComment = "-- Fallthrough Override: " +
-					(fallThrough != null ? fallThrough.toString() : "NO-FALLTHROUGH");
-				++count;
+		if (instr.isInDelaySlot()) {
+			// ensure that auto-comment come from parent and are only placed after last
+			// delay slot.  Switch out inst with the parent instruction
+			int delaySlotPosition = 0;
+			while (instr.isInDelaySlot()) {
+				++delaySlotPosition;
+				instr = instr.getPrevious();
 			}
-			FlowOverride flowOverride = instr.getFlowOverride();
-			if (flowOverride != FlowOverride.NONE) {
-				flowOverrideComment = "-- Flow Override: " + flowOverride + " (" +
-					instr.getFlowType().getName() + ")";
-				++count;
+			if (instr.getDelaySlotDepth() != delaySlotPosition) {
+				return null; // not the last delay slot
 			}
-			String[] autoComment = new String[count];
-			if (fallthroughComment != null) {
-				autoComment[--count] = fallthroughComment;
+		}
+
+		if (instr.isFallThroughOverridden()) {
+			Address fallThrough = instr.getFallThrough();
+			String fallthroughComment = "-- Fallthrough Override: " +
+				(fallThrough != null ? fallThrough.toString() : "NO-FALLTHROUGH");
+			comments.addFirst(fallthroughComment);
+		}
+		FlowOverride flowOverride = instr.getFlowOverride();
+		if (flowOverride != FlowOverride.NONE) {
+			String flowOverrideComment =
+				"-- Flow Override: " + flowOverride + " (" + instr.getFlowType().getName() + ")";
+			comments.addFirst(flowOverrideComment);
+		}
+
+		InstructionPcodeOverride pCodeOverride = new InstructionPcodeOverride(instr);
+
+		if (pCodeOverride.hasPotentialOverride()) {
+			PcodeOp[] pcodeOps = instr.getPcode();
+			OverrideCommentData overrideData = null;
+			if (pCodeOverride.getPrimaryCallReference() == null) {
+				overrideData = getOverrideCommentData(instr, RefType.CALL_OVERRIDE_UNCONDITIONAL,
+					pcodeOps, pCodeOverride);
+				if (overrideData != null) {
+					String callOverrideComment =
+						"-- Call Destination Override: " + getOverridingCommentDestString(
+							overrideData.getOverridingRef(), instr.getProgram());
+					comments.addFirst(callOverrideComment);
+				}
 			}
-			if (flowOverrideComment != null) {
-				autoComment[--count] = flowOverrideComment;
+			overrideData = getOverrideCommentData(instr, RefType.JUMP_OVERRIDE_UNCONDITIONAL,
+				pcodeOps, pCodeOverride);
+			if (overrideData != null) {
+				String jumpOverrideComment =
+					"-- Jump Destination Override: " + getOverridingCommentDestString(
+						overrideData.getOverridingRef(), instr.getProgram());
+				comments.addFirst(jumpOverrideComment);
 			}
-			return autoComment;
+			overrideData = getOverrideCommentData(instr, RefType.CALLOTHER_OVERRIDE_CALL, pcodeOps,
+				pCodeOverride);
+			if (overrideData != null) {
+				String callOtherCallOverrideComment =
+					"-- CALLOTHER(" + overrideData.getOverriddenCallOther() + ") Call Override: " +
+						getOverridingCommentDestString(overrideData.getOverridingRef(),
+							instr.getProgram());
+				if (overrideData.hasMultipleCallOthers()) {
+					comments.addFirst("-- WARNING: additional CALLOTHER ops present");
+				}
+				String outputWarningString = overrideData.getOutputWarningString();
+				if (outputWarningString != null) {
+					comments.addFirst(outputWarningString);
+				}
+				else {
+					comments.addFirst(callOtherCallOverrideComment);
+				}
+			}
+			else {
+				overrideData = getOverrideCommentData(instr, RefType.CALLOTHER_OVERRIDE_JUMP,
+					pcodeOps, pCodeOverride);
+				if (overrideData != null) {
+					String callOtherJumpOverrideComment =
+						"-- CALLOTHER(" + overrideData.getOverriddenCallOther() +
+							") Jump Override: " + getOverridingCommentDestString(
+								overrideData.getOverridingRef(), instr.getProgram());
+					if (overrideData.hasMultipleCallOthers()) {
+						comments.addFirst("-- WARNING: additional CALLOTHER ops present");
+					}
+					String outputWarningString = overrideData.getOutputWarningString();
+					if (outputWarningString != null) {
+						comments.addFirst(outputWarningString);
+					}
+					else {
+						comments.addFirst(callOtherJumpOverrideComment);
+					}
+				}
+			}
+		}
+		if (comments.size() > 0) {
+			return comments.toArray(new String[0]);
 		}
 		return null;
+	}
+
+	private String getOverridingCommentDestString(Address address, Program program) {
+		StringBuilder sb = new StringBuilder();
+		String symbol = program.getSymbolTable().getPrimarySymbol(address).getName(true);
+		if (!StringUtils.isEmpty(symbol)) {
+			sb.append(symbol);
+			sb.append(" ");
+		}
+		sb.append("(");
+		sb.append(address.toString());
+		sb.append(")");
+		return sb.toString();
 	}
 
 	/**
@@ -250,8 +327,8 @@ public class PostCommentFieldFactory extends FieldFactory {
 
 	@Override
 	public FieldFactory newInstance(FieldFormatModel formatModel, HighlightProvider provider,
-			ToolOptions displayOptions, ToolOptions fieldOptions) {
-		return new PostCommentFieldFactory(formatModel, provider, displayOptions, fieldOptions);
+			ToolOptions toolOptions, ToolOptions fieldOptions) {
+		return new PostCommentFieldFactory(formatModel, provider, toolOptions, fieldOptions);
 	}
 
 	@Override
@@ -412,7 +489,8 @@ public class PostCommentFieldFactory extends FieldFactory {
 		// TODO: convoluted logic since str will not be user comment if useLinesAfterBlock is true
 		int nLinesAutoComment =
 			((comments.length == 0 && !useLinesAfterBlock) || alwaysShowAutomatic)
-					? autoComment.length : 0;
+					? autoComment.length
+					: 0;
 		if (!useLinesAfterBlock && comments.length == 0 && nLinesAutoComment == 0) {
 			return null;
 		}
@@ -461,7 +539,8 @@ public class PostCommentFieldFactory extends FieldFactory {
 				"at a jump or a return instruction.");
 		options.registerOption(LINES_AFTER_BLOCKS_OPTION, 0, null,
 			"Number of lines to display in the post comment after a code block.");
-		options.registerOption(ENABLE_ALWAYS_SHOW_AUTOMATIC_MSG, true, null, null);
+		options.registerOption(ENABLE_ALWAYS_SHOW_AUTOMATIC_MSG, true, null,
+			"Toggles the display of the automatic post-comment");
 
 		isWordWrap = options.getBoolean(ENABLE_WORD_WRAP_MSG, false);
 		alwaysShowAutomatic = options.getBoolean(ENABLE_ALWAYS_SHOW_AUTOMATIC_MSG, true);
@@ -493,8 +572,136 @@ public class PostCommentFieldFactory extends FieldFactory {
 			return next;
 		}
 		catch (AddressOverflowException e) {
+			// don't care
 		}
 		return null;
+	}
+
+	/**
+	 * See {@link InstructionPcodeOverride#getOverridingReference(RefType)}
+	 * See {@link ghidra.app.plugin.processors.sleigh.PcodeEmit#checkOverrides}
+	 * @param inst instruction
+	 * @param type reference type
+	 * @return {@link OverrideCommentData} object corresponding to override comment 
+	 * ({@code null} if no override comment)
+	 */
+	private OverrideCommentData getOverrideCommentData(Instruction inst, RefType type,
+			PcodeOp[] pcodeOps, PcodeOverride pcodeOverride) {
+		//first, check whether the pcode corresponding to inst has an appropriate op
+		Set<Integer> ops = new HashSet<>();
+		if (type.equals(RefType.CALL_OVERRIDE_UNCONDITIONAL)) {
+			ops.add(PcodeOp.CALL);
+			ops.add(PcodeOp.CALLIND);
+		}
+		else if (type.equals(RefType.JUMP_OVERRIDE_UNCONDITIONAL)) {
+			ops.add(PcodeOp.BRANCH);
+			ops.add(PcodeOp.CBRANCH);
+		}
+		else if (type.equals(RefType.CALLOTHER_OVERRIDE_CALL) ||
+			type.equals(RefType.CALLOTHER_OVERRIDE_JUMP)) {
+			ops.add(PcodeOp.CALLOTHER);
+		}
+		else {
+			return null;
+		}
+
+		boolean hasAppropriatePcodeOp = false;
+
+		//used to warn user that there are CALLOTHER ops at this instruction that are
+		//not overridden
+		boolean hasMultipleCallOthers = false;
+		//used to report the name of the CALLOTHER op that is overridden
+		String callOtherName = null;
+		String outputWarningString = null;
+		for (PcodeOp op : pcodeOps) {
+			if (ops.contains(op.getOpcode())) {
+				hasAppropriatePcodeOp = true;
+				if (op.getOpcode() == PcodeOp.CALLOTHER) {
+					if (callOtherName == null) {
+						callOtherName = inst.getProgram().getLanguage().getUserDefinedOpName(
+							(int) op.getInput(0).getOffset());
+						if (op.getOutput() != null) {
+							outputWarningString =
+								"WARNING: Output of " + callOtherName +
+									" destroyed by override!";
+						}
+					}
+					else {
+						hasMultipleCallOthers = true;
+					}
+				}
+			}
+		}
+		if (!hasAppropriatePcodeOp) {
+			return null;
+		}
+
+		//now check whether there is an active overriding reference of the appropriate type
+		if (type.equals(RefType.CALL_OVERRIDE_UNCONDITIONAL)) {
+			Address ref = pcodeOverride.getOverridingReference(type);
+			if (ref != null) {
+				return new OverrideCommentData(ref, null, false, outputWarningString);
+			}
+			return null;
+		}
+		if (type.equals(RefType.JUMP_OVERRIDE_UNCONDITIONAL)) {
+			Address ref = pcodeOverride.getOverridingReference(type);
+			if (ref != null) {
+				return new OverrideCommentData(ref, null, false, outputWarningString);
+			}
+			return null;
+		}
+		if (type.equals(RefType.CALLOTHER_OVERRIDE_CALL)) {
+			Address ref = pcodeOverride.getOverridingReference(type);
+			if (ref != null) {
+				return new OverrideCommentData(ref, callOtherName, hasMultipleCallOthers,
+					outputWarningString);
+			}
+			return null;
+		}
+		//must be in the RefType.CALLOTHER_OVERRIDE_JUMP case
+		Address ref = pcodeOverride.getOverridingReference(RefType.CALLOTHER_OVERRIDE_CALL);
+		if (ref != null) {
+			return null; //CALLOTHER_OVERRIDE_CALL overrides have precedence
+		}
+		ref = pcodeOverride.getOverridingReference(RefType.CALLOTHER_OVERRIDE_JUMP);
+		if (ref == null) {
+			return null;
+		}
+		return new OverrideCommentData(ref, callOtherName, hasMultipleCallOthers,
+			outputWarningString);
+
+	}
+
+	private class OverrideCommentData {
+		private Address overridingRef;
+		private String overriddenCallOther;
+		private boolean hasMultipleCallOthers;
+		private String outputWarningString = null;
+
+		OverrideCommentData(Address overridingRef, String overriddenCallOther,
+				boolean multipleCallOthers, String outputWarningString) {
+			this.overridingRef = overridingRef;
+			this.overriddenCallOther = overriddenCallOther;
+			this.hasMultipleCallOthers = multipleCallOthers;
+			this.outputWarningString = outputWarningString;
+		}
+
+		Address getOverridingRef() {
+			return overridingRef;
+		}
+
+		String getOverriddenCallOther() {
+			return overriddenCallOther;
+		}
+
+		boolean hasMultipleCallOthers() {
+			return hasMultipleCallOthers;
+		}
+
+		String getOutputWarningString() {
+			return outputWarningString;
+		}
 	}
 
 }

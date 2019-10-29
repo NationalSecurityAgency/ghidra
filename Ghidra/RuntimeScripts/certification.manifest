@@ -1,7 +1,7 @@
 ##VERSION: 2.0
 ##MODULE IP: Copyright Distribution Permitted
-.classpath||GHIDRA||||END|
-.project||GHIDRA||||END|
+Common/server/jaas.conf||GHIDRA||||END|
+Common/server/jaas_external_program.example.sh||GHIDRA||||END|
 Common/server/server.conf||GHIDRA||||END|
 Common/server/svrREADME.html||GHIDRA||||END|
 Common/support/analyzeHeadlessREADME.html||GHIDRA||||END|
@@ -17,7 +17,6 @@ Linux/server/svrUninstall||GHIDRA||||END|
 Linux/support/analyzeHeadless||GHIDRA||||END|
 Linux/support/buildGhidraJar||GHIDRA||||END|
 Linux/support/convertStorage||GHIDRA||||END|
-Linux/support/dumpGhidraThreads||GHIDRA||||END|
 Linux/support/ghidraDebug||GHIDRA||||END|
 Linux/support/launch.sh||GHIDRA||||END|
 Linux/support/pythonRun||GHIDRA||||END|
@@ -32,7 +31,6 @@ Windows/support/analyzeHeadless.bat||GHIDRA||||END|
 Windows/support/buildGhidraJar.bat||GHIDRA||||END|
 Windows/support/convertStorage.bat||GHIDRA||||END|
 Windows/support/createPdbXmlFiles.bat||GHIDRA||||END|
-Windows/support/dumpGhidraThreads.bat||GHIDRA||||END|
 Windows/support/ghidra.ico||GHIDRA||||END|
 Windows/support/ghidraDebug.bat||GHIDRA||||END|
 Windows/support/launch.bat||GHIDRA||||END|

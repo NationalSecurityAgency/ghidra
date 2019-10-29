@@ -33,7 +33,9 @@ public class StructureEditorUnlockedActions6Test
 	public void testArrayOnArray() throws Exception {
 		init(complexStructure, pgmTestCat);
 		NumberInputDialog dialog;
-		model.clearComponent(16);
+		runSwing(() -> {
+			model.clearComponent(16);
+		});
 		int num = model.getNumComponents();
 
 		setSelection(new int[] { 15 });
@@ -58,7 +60,9 @@ public class StructureEditorUnlockedActions6Test
 	public void testArrayOnFixedDt() throws Exception {
 		init(simpleStructure, pgmBbCat);
 		NumberInputDialog dialog;
-		model.clearComponents(new int[] { 4, 5, 6 });
+		runSwing(() -> {
+			getModel().clearComponents(new int[] { 4, 5, 6 });
+		});
 		int num = model.getNumComponents();
 
 		setSelection(new int[] { 3 });

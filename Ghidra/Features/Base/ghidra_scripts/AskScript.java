@@ -89,7 +89,8 @@ public class AskScript extends GhidraScript {
 			println("You typed: " + myStr + " and " + myOtherStr);
 
 			String choice = askChoice("Choice", "Please choose one",
-				new String[] { "grumpy", "dopey", "sleepy", "doc", "bashful" }, "bashful");
+				Arrays.asList(new String[] { "grumpy", "dopey", "sleepy", "doc", "bashful" }),
+				"bashful");
 			println("Choice? " + choice);
 
 			List<Integer> choices1 = askChoices("Choices 1", "Please choose one or more numbers.",

@@ -177,10 +177,8 @@ public class FunctionGraphPlugin2Test extends AbstractFunctionGraphTest {
 		GraphPerspectiveInfo<FGVertex, FGEdge> primaryPerspective =
 			primaryController.getGraphPerspective(location);
 
-		List<DockingActionIf> actions = tool.getDockingActionsByFullActionName(
-			"Function Graph Clone (" + graphPlugin.getName() + ")");
-		assertEquals(1, actions.size());
-		DockingActionIf snapshotAction = actions.get(0);
+		DockingActionIf snapshotAction =
+			getAction(tool, graphPlugin.getName(), "Function Graph Clone");
 		performAction(snapshotAction, true);
 
 		assertEquals(1, disconnectedProviders.size());

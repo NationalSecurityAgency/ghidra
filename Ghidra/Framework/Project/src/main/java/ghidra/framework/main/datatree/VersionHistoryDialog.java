@@ -16,6 +16,7 @@
 package ghidra.framework.main.datatree;
 
 import java.awt.event.MouseEvent;
+import java.util.Collections;
 import java.util.List;
 
 import javax.swing.SwingUtilities;
@@ -23,7 +24,6 @@ import javax.swing.SwingUtilities;
 import docking.ActionContext;
 import docking.DialogComponentProvider;
 import docking.action.DockingActionIf;
-import docking.action.DockingActionProviderIf;
 import ghidra.app.util.GenericHelpTopics;
 import ghidra.framework.main.AppInfo;
 import ghidra.framework.main.FrontEndTool;
@@ -31,24 +31,26 @@ import ghidra.framework.model.*;
 import ghidra.framework.store.FileSystem;
 import ghidra.util.HelpLocation;
 
-public class VersionHistoryDialog extends DialogComponentProvider
-		implements ProjectListener, DockingActionProviderIf {
+public class VersionHistoryDialog extends DialogComponentProvider implements ProjectListener {
 
 	private VersionHistoryPanel versionPanel;
 	private MyFolderListener listener = new MyFolderListener();
+	private List<DockingActionIf> popupActions = Collections.emptyList();
 
-	public VersionHistoryDialog() {
+	public VersionHistoryDialog(DomainFile domainFile) {
 
 		super("Version History", false);
 		FrontEndTool frontEndTool = AppInfo.getFrontEndTool();
-		setHelpLocation(new HelpLocation(GenericHelpTopics.REPOSITORY, "Show_History"));
-		versionPanel = new VersionHistoryPanel(frontEndTool, null, true);
+		setHelpLocation(new HelpLocation(GenericHelpTopics.VERSION_CONTROL, "Show_History"));
+		versionPanel = new VersionHistoryPanel(frontEndTool, domainFile, true);
 		addWorkPanel(versionPanel);
 		addDismissButton();
-		versionPanel.addPopupActions(this);
+
+		setDomainFile(domainFile);
+		popupActions = versionPanel.createPopupActions();
 	}
 
-	public void setDomainFile(DomainFile df) {
+	private void setDomainFile(DomainFile df) {
 
 		versionPanel.setDomainFile(df);
 
@@ -59,18 +61,24 @@ public class VersionHistoryDialog extends DialogComponentProvider
 			setTitle("Version History for " + df.getName());
 			project.getProjectData().addDomainFolderChangeListener(listener);
 		}
-		else {
-			setTitle("Version History");
-			project.getProjectData().removeDomainFolderChangeListener(listener);
+	}
+
+	@Override
+	protected void dialogShown() {
+		super.dialogShown();
+
+		for (DockingActionIf action : popupActions) {
+			addAction(action);
 		}
 	}
 
 	@Override
-	protected void dismissCallback() {
+	protected void dialogClosed() {
+		super.dialogClosed();
 
-		close();
-
-		setDomainFile(null);
+		for (DockingActionIf action : popupActions) {
+			removeAction(action);
+		}
 	}
 
 	@Override
@@ -127,13 +135,8 @@ public class VersionHistoryDialog extends DialogComponentProvider
 
 	@Override
 	public ActionContext getActionContext(MouseEvent event) {
-		ActionContext actionContext = new ActionContext(null, this, this);
+		ActionContext actionContext = new ActionContext(null, this, versionPanel.getTable());
 		actionContext.setMouseEvent(event);
 		return actionContext;
-	}
-
-	@Override
-	public List<DockingActionIf> getDockingActions(ActionContext context) {
-		return versionPanel.getDockingActions(context);
 	}
 }

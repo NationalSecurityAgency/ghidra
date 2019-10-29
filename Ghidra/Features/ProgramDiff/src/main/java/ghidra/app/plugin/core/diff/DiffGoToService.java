@@ -140,6 +140,13 @@ public class DiffGoToService implements GoToService {
 	}
 
 	@Override
+	public boolean goToExternalLocation(Navigatable navigatable, ExternalLocation extLoc,
+			boolean checkNavigationOption) {
+		showProgramFailureStatus();
+		return false; // Can only go to locations in the Diff's second program.
+	}
+
+	@Override
 	public boolean goToQuery(Address fromAddr, QueryData queryData, GoToServiceListener listener,
 			TaskMonitor monitor) {
 		// Does this need to do something different here? Maybe if Diff becomes searchable?

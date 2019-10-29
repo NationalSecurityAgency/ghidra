@@ -15,42 +15,6 @@
 apply plugin: 'cpp'
 apply plugin: 'c'
 
-// Unclear if we can rely on the VisualCpp plugin to identify the correct Visual Studio paths
-
-project.ext.VISUAL_STUDIO_BASE_DIR = "C:\\Program Files (x86)\\Microsoft Visual Studio\\2017"
-project.ext.WINDOWS_KITS_DIR = "C:\\Program Files (x86)\\Windows Kits\\10"
-
-project.ext.VISUAL_STUDIO_INSTALL_DIR = "/"
-project.ext.VISUAL_STUDIO_VCVARS_CMD = "UNKNOWN"
-project.ext.MSVC_SDK_VERSION = "UNKNOWN"
-project.ext.MSVC_TOOLS_VERSION = "UNKNOWN"
-
-if (org.gradle.internal.os.OperatingSystem.current().isWindows()) {
-
-	project.ext.VISUAL_STUDIO_INSTALL_DIR = project.ext.VISUAL_STUDIO_BASE_DIR + "\\Professional"
-	if (!file(project.ext.VISUAL_STUDIO_INSTALL_DIR).exists()) {
-		project.ext.VISUAL_STUDIO_INSTALL_DIR = project.ext.VISUAL_STUDIO_BASE_DIR + "\\Community"
-	}
-	if (file(project.ext.VISUAL_STUDIO_INSTALL_DIR).exists()) {
-
-		println "Visual Studio Path: ${VISUAL_STUDIO_INSTALL_DIR}"
-
-		project.ext.VISUAL_STUDIO_VCVARS_CMD = "\"${VISUAL_STUDIO_INSTALL_DIR}\\VC\\Auxiliary\\Build\\vcvarsall.bat\" x86_amd64"
-	
-		// NOTE: Windows 7 targeting requires the use of the Windows 8.1 SDK and setting the
-		// WINVER property a value of "0x0601" which may be specified to the compiler/linker.
-		// If using a VS Solution this must be specified within the project file(s).
-		project.ext.WINVER = "0x0601"
-	
-		// Rely on vcvars script to supply SDK versions
-		def COMMAND = "cmd /c ${VISUAL_STUDIO_VCVARS_CMD} > nul && cmd /c echo"
-		project.ext.MSVC_SDK_VERSION = "${COMMAND} %WINDOWSSDKVERSION%".execute().text.trim().replace('\\', '')
-		println "Visual Studio SDK Version: ${MSVC_SDK_VERSION}"
-		project.ext.MSVC_TOOLS_VERSION = "${COMMAND} %VCTOOLSVERSION%".execute().text.trim().replace('\\', '')
-		println "Visual Studio VCTools Version: ${MSVC_TOOLS_VERSION}"
-	}
-}
-
 /****************************************************************************
  * Defines the platforms we have to support in Ghidra.  This model is used 
  * for all native builds and should be extended by each module as-needed.
@@ -88,8 +52,7 @@ task CheckToolChain {
 			// ensure that required MS Visual Studio is installed where expected
 			String msg = "Microsoft Visual Studio install not found: ${VISUAL_STUDIO_BASE_DIR}\n" + 
 				"Adjust path in Ghidra/GPL/nativeBuildProperties.gradle if needed."
-			if (!file(VISUAL_STUDIO_BASE_DIR).exists() || 
-					!file(VISUAL_STUDIO_INSTALL_DIR).exists()) {
+			if (!file(VISUAL_STUDIO_BASE_DIR).exists() || !file(VISUAL_STUDIO_INSTALL_DIR).exists()) {
 				throw new GradleException(msg);
 			}	
 		}
@@ -133,7 +96,7 @@ def isNativeBinaryMakeTask(Task task, String platform) {
  ******************************************************************************************/
 tasks.addRule("Pattern: buildNatives_<platform name>]: build all natives for given platform") { String taskName ->
 
-	if (taskName.startsWith("buildNatives_") && !project.hasProperty('EXCLUDE_FROM_NATIVE_BUILD')) {
+	if (taskName.startsWith("buildNatives_")) {
 		String platform = taskName - "buildNatives_"
 		
 		task(taskName)  { myTask ->
@@ -198,5 +161,31 @@ tasks.addRule("Pattern: prebuildNatives_<platform name>]: build all natives for 
 	}
 }
 
+/*****************************************************************************************
+ * The following block of code changes the output directory for native builds
+ * to <projectDir>/build/os/<platform>/<executable>  ?? is there a better way to do this?
+ ****************************************************************************************/
+gradle.taskGraph.whenReady {
+		def p = this.project
+		p.tasks.withType(LinkExecutable).each { t ->
+			File f = t.linkedFile.getAsFile().get()
+			String filename = f.getName()
+			NativePlatform platform = t.targetPlatform.get()
+			String osName = platform.getName()
+			t.linkedFile = p.file("build/os/${osName}/$filename")
+		}
+		p.tasks.withType(LinkSharedLibrary).each { t ->
+			File f = t.linkedFile.getAsFile().get()
+			String filename = f.getName()
+			NativePlatform platform = t.targetPlatform.get()
+			String osName = platform.getName()
+			t.linkedFile = p.file("build/os/${osName}/$filename")
+		}
+}
+
+/*****************************************************************************************
+ * The following block of code ensures that the buildNatives_<platform> task is used
+ * during assembly to ensure that missing toolchain generates an appropriate error
+ ****************************************************************************************/
 def currentPlatform = getCurrentPlatformName()
 assemble.dependsOn "buildNatives_$currentPlatform" 

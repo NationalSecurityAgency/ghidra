@@ -439,7 +439,7 @@ public class FollowFlowProgramBuilder extends ProgramBuilder {
 		startTransaction();
 		ProgramDB program = getProgram();
 		Listing listing = program.getListing();
-		Structure struct = new StructureDataType(name, thisStructureSize, program.getDataManager());
+		Structure struct = new StructureDataType(name, thisStructureSize, program.getDataTypeManager());
 		struct.replaceAtOffset(0, new FloatDataType(), 4, null, null);
 		struct.replaceAtOffset(pointerOffset, new Pointer32DataType(), 4, null, null);
 		listing.createData(addr(startOfStruct), struct);
@@ -473,7 +473,7 @@ public class FollowFlowProgramBuilder extends ProgramBuilder {
 		startTransaction();
 		ProgramDB program = getProgram();
 		Listing listing = program.getListing();
-		Structure struct = new StructureDataType(name, thisStructureSize, program.getDataManager());
+		Structure struct = new StructureDataType(name, thisStructureSize, program.getDataTypeManager());
 		struct.replaceAtOffset(0, new FloatDataType(), 4, null, null);
 		struct.replaceAtOffset(pointerOffset, new Pointer32DataType(), 4, null, null);
 		struct.replaceAtOffset(pointerOffset + pointerSize, new Pointer32DataType(), 4, null, null);

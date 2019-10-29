@@ -337,7 +337,6 @@ public class DataTypeArchiveGTree extends GTree {
 			// Background icon uses the label's color so set it to match the 
 			// tree's background. Otherwise the icon's in the tree might have a 
 			// different background and look odd.
-			label.setBackground(tree.getBackground());
 			MultiIcon multiIcon = new MultiIcon(new BackgroundIcon(ICON_WIDTH, ICON_HEIGHT, false));
 
 			Icon icon = getIcon();

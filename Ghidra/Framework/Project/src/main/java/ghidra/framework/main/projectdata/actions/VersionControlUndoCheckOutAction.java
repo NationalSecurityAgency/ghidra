@@ -28,7 +28,9 @@ import ghidra.framework.main.datatable.DomainFileProvider;
 import ghidra.framework.main.datatree.UndoActionDialog;
 import ghidra.framework.model.DomainFile;
 import ghidra.framework.plugintool.Plugin;
+import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
+import ghidra.util.exception.FileInUseException;
 import ghidra.util.task.Task;
 import ghidra.util.task.TaskMonitor;
 import resources.ResourceManager;
@@ -176,6 +178,10 @@ public class VersionControlUndoCheckOutAction extends VersionControlAction {
 			}
 			catch (CancelledException e) {
 				tool.setStatusInfo("Undo check out was canceled");
+			}
+			catch (FileInUseException e) {
+				Msg.showError(this, null, "Action Failed",
+					"Unable to Undo Checkout while file(s) are open or in use");
 			}
 			catch (IOException e) {
 				ClientUtil.handleException(repository, e, "Undo Check Out", tool.getToolFrame());

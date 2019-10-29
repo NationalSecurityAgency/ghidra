@@ -35,7 +35,7 @@ public class ProjectDataActionContext extends ActionContext implements DomainFil
 	public ProjectDataActionContext(ComponentProvider provider, ProjectData projectData,
 			Object contextObject, List<DomainFolder> selectedFolders,
 			List<DomainFile> selectedFiles, Component comp, boolean isActiveProject) {
-		super(provider, contextObject);
+		super(provider, contextObject, comp);
 		this.projectData = projectData;
 		this.selectedFolders = selectedFolders;
 		this.selectedFiles = selectedFiles;

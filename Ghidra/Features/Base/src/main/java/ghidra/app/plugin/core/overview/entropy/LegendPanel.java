@@ -17,7 +17,8 @@ package ghidra.app.plugin.core.overview.entropy;
 
 import java.awt.*;
 
-import javax.swing.*;
+import javax.swing.BorderFactory;
+import javax.swing.JPanel;
 
 /**
  * Panel for display the Entropy color legend.
@@ -33,22 +34,12 @@ public class LegendPanel extends JPanel {
 		add(buildHeader(), BorderLayout.NORTH);
 		add(palettePanel, BorderLayout.WEST);
 		add(knotPanel, BorderLayout.CENTER);
-//		add(buildFooter(), BorderLayout.SOUTH);
 		setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 0));
 	}
 
 	private Component buildHeader() {
 		JPanel panel = new JPanel(new BorderLayout());
 		panel.setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0));
-//		panel.add(new JLabel("Entropy range: 0.0 - 8.0"), BorderLayout.CENTER);
-//		panel.add(new JLabel("Min Entropy (0.0)"), BorderLayout.CENTER);
-		return panel;
-	}
-
-	private Component buildFooter() {
-		JPanel panel = new JPanel(new BorderLayout());
-		panel.setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0));
-		panel.add(new JLabel("Max Entropy (8.0)"), BorderLayout.CENTER);
 		return panel;
 	}
 

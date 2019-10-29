@@ -35,11 +35,11 @@ import docking.menu.*;
 import docking.widgets.EmptyBorderButton;
 import docking.widgets.EventTrigger;
 import docking.widgets.filter.*;
+import docking.widgets.label.GDLabel;
 import docking.widgets.table.columnfilter.ColumnBasedTableFilter;
 import docking.widgets.table.columnfilter.ColumnFilterSaveManager;
 import docking.widgets.table.constraint.dialog.ColumnFilterDialog;
 import ghidra.framework.options.PreferenceState;
-import ghidra.generic.function.Callback;
 import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
 import ghidra.util.datastruct.WeakDataStructureFactory;
@@ -49,6 +49,7 @@ import ghidra.util.task.SwingUpdateManager;
 import resources.Icons;
 import resources.ResourceManager;
 import utilities.util.reflection.ReflectionUtilities;
+import utility.function.Callback;
 
 /**
  * This class is a panel that provides a label and text field that allows users to input text that
@@ -202,9 +203,9 @@ public class GTableFilterPanel<ROW_OBJECT> extends JPanel {
 
 		transformer = new DefaultRowFilterTransformer<>(tableModel, table.getColumnModel());
 
-		buildPanel(filterLabel);
-
 		textFilterModel = installTableModel(tableModel);
+
+		buildPanel(filterLabel);
 
 		TableColumnModel columnModel = table.getColumnModel();
 		columnModel.addColumnModelListener(columnModelListener);
@@ -213,7 +214,7 @@ public class GTableFilterPanel<ROW_OBJECT> extends JPanel {
 		table.addPropertyChangeListener(badProgrammingPropertyChangeListener);
 
 		DockingWindowManager.registerComponentLoadedListener(this,
-			windowManager -> initialize(windowManager));
+			(windowManager, provider) -> initialize(windowManager));
 	}
 
 	private void initialize(DockingWindowManager windowManager) {
@@ -348,7 +349,7 @@ public class GTableFilterPanel<ROW_OBJECT> extends JPanel {
 		setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
 		setBorder(BorderFactory.createBevelBorder(BevelBorder.LOWERED));
 
-		searchLabel = new JLabel(filterLabel);
+		searchLabel = new GDLabel(filterLabel);
 		searchLabel.setToolTipText("Include only table elements that match the given search text");
 
 		filterField = new FilterTextField(table);
@@ -389,38 +390,34 @@ public class GTableFilterPanel<ROW_OBJECT> extends JPanel {
 	}
 
 	private boolean isTableColumnFilterableModel() {
-
 		return table.getModel() instanceof RowObjectFilterModel;
 	}
 
 	@SuppressWarnings("unchecked")
 	private JComponent buildColumnFilterStateButton() {
-		if (!isTableColumnFilterableModel()) {
-			return null;
-		}
 
 		RowObjectFilterModel<ROW_OBJECT> tableModel =
 			(RowObjectFilterModel<ROW_OBJECT>) table.getModel();
-		columnFilterAction = new NonToolbarMultiStateAction<ColumnBasedTableFilter<ROW_OBJECT>>(
-			"Column Filter", "GTableFilterPanel") {
+		columnFilterAction =
+			new NonToolbarMultiStateAction<>("Column Filter", "GTableFilterPanel") {
 
-			@Override
-			public void actionStateChanged(
-					ActionState<ColumnBasedTableFilter<ROW_OBJECT>> newActionState,
-					EventTrigger trigger) {
-				if (trigger != EventTrigger.GUI_ACTION) {
-					return;
+				@Override
+				public void actionStateChanged(
+						ActionState<ColumnBasedTableFilter<ROW_OBJECT>> newActionState,
+						EventTrigger trigger) {
+					if (trigger != EventTrigger.GUI_ACTION) {
+						return;
+					}
+					ColumnFilterActionState state = (ColumnFilterActionState) newActionState;
+					state.performAction();
 				}
-				ColumnFilterActionState state = (ColumnFilterActionState) newActionState;
-				state.performAction();
-			}
 
-			@Override
-			protected void doActionPerformed(ActionContext context) {
-				showFilterDialog(tableModel);
-			}
+				@Override
+				protected void doActionPerformed(ActionContext context) {
+					showFilterDialog(tableModel);
+				}
 
-		};
+			};
 		columnFilterAction.setPerformActionOnPrimaryButtonClick(true);
 		HelpLocation helpLocation = new HelpLocation("Trees", "Column_Filters");
 		columnFilterAction.setHelpLocation(helpLocation);

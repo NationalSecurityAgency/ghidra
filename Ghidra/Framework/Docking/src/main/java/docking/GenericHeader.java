@@ -27,6 +27,7 @@ import org.jdesktop.animation.timing.interpolation.PropertySetter;
 
 import docking.action.DockingActionIf;
 import docking.widgets.VariableHeightPanel;
+import docking.widgets.label.GDLabel;
 
 // TODO: should this be put into generic?
 public class GenericHeader extends JPanel {
@@ -342,7 +343,7 @@ public class GenericHeader extends JPanel {
 		TitlePanel() {
 			super(new BorderLayout());
 			setFocusable(false);
-			titleLabel = new JLabel();
+			titleLabel = new GDLabel();
 			titleLabel.setBorder(BorderFactory.createEmptyBorder(0, 6, 0, 0));
 			titleLabel.setForeground(Color.BLACK);
 			titleLabel.setFocusable(false);
@@ -385,7 +386,7 @@ public class GenericHeader extends JPanel {
 		 */
 		void setTitle(String s) {
 			titleLabel.setText(s);
-			ToolTipManager.setToolTipText(titleLabel, s);
+			titleLabel.setToolTipText(s);
 		}
 
 		/**

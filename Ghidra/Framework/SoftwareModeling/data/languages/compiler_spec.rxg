@@ -71,7 +71,6 @@
               <optional>
                 <element name="long_double_size"><ref name="value_type"/></element>
               </optional>
-
               <optional>
                 <element name="size_alignment_map">
                   <zeroOrMore>
@@ -80,6 +79,24 @@
                       <attribute name="alignment"/>
                     </element>
                   </zeroOrMore>
+                </element>
+              </optional>
+              <optional>
+                <element name="bitfield_packing">
+                  <interleave>
+                      <optional>
+		                <!-- boolean value, default: false (MSVC should be true) -->
+		                <element name="use_MS_convention"><ref name="value_type"/></element>
+		              </optional>
+		              <optional>
+		                <!-- boolean value, default: true -->
+		                <element name="type_alignment_enabled"><ref name="value_type"/></element>
+		              </optional>
+		              <optional>
+		                <!-- int value: number of bytes -->
+		                <element name="zero_length_boundary"><ref name="value_type"/></element>
+		              </optional>
+	              </interleave>
                 </element>
               </optional>
             </interleave>
@@ -212,35 +229,7 @@
         </zeroOrMore>
 
         <zeroOrMore>
-          <element name="segmentop">
-            <attribute name="space"/>
-            <optional> <attribute name="userop"/> </optional>
-            <optional> <attribute name="baseinsize"/> </optional>
-            <optional> <attribute name="innerinsize"/> </optional>
-            <optional> <attribute name="farpointer"/> </optional>
-            <optional>
-              <attribute name="force">
-                <ref name="boolean_type"/>
-              </attribute>
-            </optional>
-            <interleave>
-              <zeroOrMore>
-                <element name="baseop">
-                  <ref name="segment_op_type"/>
-                </element>
-              </zeroOrMore>
-              <zeroOrMore>
-                <element name="innerop">
-                  <ref name="segment_op_type"/>
-                </element>
-              </zeroOrMore>
-              <optional>
-                <element name="constresolve">
-                  <ref name="varnode_tags_type"/>
-                </element>
-              </optional>
-            </interleave>
-          </element>
+          <ref name="segmentop_type"/>
         </zeroOrMore>
 
         <element name="default_proto">
@@ -281,22 +270,6 @@
       </interleave>
     </element>
   </start>
-
-  <define name="segment_op_type">
-    <attribute name="code">
-      <choice>
-        <value type="string">INT_ZEXT</value>
-        <value type="string">INT_LEFT</value>
-        <value type="string">INT_AND</value>
-      </choice>
-    </attribute>
-    <optional>
-      <attribute name="value"/>
-    </optional>
-    <optional>
-      <attribute name="slot"/>
-    </optional>
-  </define>
 
   <define name="pentry_type">
     <optional> <attribute name="maxsize"/> </optional>

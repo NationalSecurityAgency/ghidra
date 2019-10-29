@@ -51,6 +51,7 @@ class DataTypePreview implements Preview {
 			return dt.getRepresentation(mb, new SettingsImpl(), length);
 		}
 		catch (Exception e) {
+
 			return "ERROR: unable to create preview";
 		}
 	}

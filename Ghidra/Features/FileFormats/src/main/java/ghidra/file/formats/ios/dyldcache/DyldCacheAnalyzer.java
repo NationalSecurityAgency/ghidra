@@ -17,8 +17,12 @@ package ghidra.file.formats.ios.dyldcache;
 
 import ghidra.app.cmd.formats.MachoBinaryAnalysisCommand;
 import ghidra.app.util.bin.*;
+import ghidra.app.util.bin.format.macho.dyld.*;
 import ghidra.app.util.importer.MessageLog;
+import ghidra.app.util.opinion.BinaryLoader;
+import ghidra.app.util.opinion.DyldCacheUtils;
 import ghidra.file.analyzers.FileFormatAnalyzer;
+import ghidra.framework.options.Options;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.data.DataType;
@@ -53,22 +57,22 @@ public class DyldCacheAnalyzer extends FileFormatAnalyzer {
 		createFragment(program, headerDataType.getName(), headerData.getMinAddress(),
 			headerData.getMaxAddress().add(1));
 
-		reader.setPointerIndex(header.getStartAddress());
-		Address address = toAddr(program, header.getStartAddress());
+		reader.setPointerIndex(header.getImagesOffset());
+		Address address = toAddr(program, header.getImagesOffset());
 
-		for (int i = 0; i < header.getLibraryCount(); ++i) {
+		for (int i = 0; i < header.getImagesCount(); ++i) {
 
 			if (monitor.isCancelled()) {
 				break;
 			}
 
-			DyldCacheData data = new DyldCacheData(reader);
+			DyldCacheImageInfo data = new DyldCacheImageInfo(reader);
 			DataType dataDataType = data.toDataType();
 			Data dataData = createData(program, address, dataDataType);
 			createFragment(program, dataDataType.getName(), dataData.getMinAddress(),
 				dataData.getMaxAddress().add(1));
 
-			Address fileOffset = toAddr(program, data.getFileOffset());
+			Address fileOffset = toAddr(program, data.getAddress());
 			Data fileData = createData(program, fileOffset, new StringDataType());
 			createFragment(program, "LibraryNames", fileData.getMinAddress(),
 				fileData.getMaxAddress().add(1));
@@ -76,7 +80,7 @@ public class DyldCacheAnalyzer extends FileFormatAnalyzer {
 			String filePath = (String) fileData.getValue();
 
 			Address libraryOffsetAddress =
-				toAddr(program, data.getLibraryOffset() - header.getBaseAddress());
+				toAddr(program, data.getAddress() - header.getBaseAddress());
 
 			MachoBinaryAnalysisCommand command = new MachoBinaryAnalysisCommand(
 				libraryOffsetAddress, false, program.getListing().getDefaultRootModule());
@@ -102,12 +106,17 @@ public class DyldCacheAnalyzer extends FileFormatAnalyzer {
 
 	@Override
 	public boolean canAnalyze(Program program) {
-		return DyldCacheUtil.isDyldCache(program);
+		Options options = program.getOptions("Program Information");
+		String format = options.getString("Executable Format", null);
+		if (!BinaryLoader.BINARY_NAME.equals(format)) {
+			return false;
+		}
+		return DyldCacheUtils.isDyldCache(program);
 	}
 
 	@Override
 	public boolean getDefaultEnablement(Program program) {
-		return DyldCacheUtil.isDyldCache(program);
+		return DyldCacheUtils.isDyldCache(program);
 	}
 
 	@Override

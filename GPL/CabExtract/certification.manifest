@@ -1,8 +1,7 @@
 ##VERSION: 2.0
 ##MODULE IP: GPL 3
 ##MODULE IP: Public Domain
-.classpath||Public Domain||||END|
-.project||Public Domain||||END|
 Module.manifest||Public Domain||||END|
 build.gradle||Public Domain||||END|
 data/cabextract-1.6.tar.gz||GPL 3||||END|
+settings.gradle||Public Domain||||END|

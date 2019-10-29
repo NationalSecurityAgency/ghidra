@@ -27,7 +27,8 @@ import javax.swing.event.TableModelListener;
 
 import docking.ActionContext;
 import docking.ComponentProviderActivationListener;
-import docking.action.*;
+import docking.action.DockingAction;
+import docking.action.MenuData;
 import docking.widgets.table.AbstractSortedTableModel;
 import docking.widgets.table.GTable;
 import docking.widgets.table.threaded.GThreadedTablePanel;
@@ -35,21 +36,19 @@ import ghidra.app.nav.Navigatable;
 import ghidra.app.nav.NavigatableRemovalListener;
 import ghidra.app.services.*;
 import ghidra.app.util.HelpTopics;
-import ghidra.framework.options.OptionsChangeListener;
-import ghidra.framework.options.ToolOptions;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.framework.plugintool.Plugin;
-import ghidra.framework.plugintool.util.ToolConstants;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.*;
 import ghidra.util.HelpLocation;
-import ghidra.util.SystemUtilities;
 import ghidra.util.table.*;
+import ghidra.util.table.actions.DeleteTableRowAction;
+import ghidra.util.table.actions.MakeProgramSelectionAction;
 import resources.ResourceManager;
 
 public class TableComponentProvider<T> extends ComponentProviderAdapter
-		implements TableModelListener, NavigatableRemovalListener, OptionsChangeListener {
+		implements TableModelListener, NavigatableRemovalListener {
 
 	private JPanel componentPanel;
 	private GhidraThreadedTablePanel<T> threadedPanel;
@@ -158,72 +157,61 @@ public class TableComponentProvider<T> extends ComponentProviderAdapter
 	}
 
 	private void createActions(final Plugin plugin) {
-		selectAction = new DockingAction(TableServicePlugin.MAKE_SELECTION_ACTION_NAME,
-			tableServicePlugin.getName(), false) {
+
+		GhidraTable table = threadedPanel.getTable();
+		selectAction = new MakeProgramSelectionAction(tableServicePlugin, table) {
+			@Override
+			protected ProgramSelection makeSelection(ActionContext context) {
+
+				ProgramSelection selection = table.getProgramSelection();
+				navigatable.goTo(program, new ProgramLocation(program, selection.getMinAddress()));
+				navigatable.setSelection(selection);
+				navigatable.requestFocus();
+				return selection;
+			}
+		};
+		selectAction.setHelpLocation(new HelpLocation(HelpTopics.SEARCH, "Make_Selection"));
+
+		selectionNavigationAction = new SelectionNavigationAction(plugin, table);
+		selectionNavigationAction.setHelpLocation(
+			new HelpLocation(HelpTopics.SEARCH, "Selection_Navigation"));
+
+		DockingAction externalGotoAction = new DockingAction("Go to External Location", getName()) {
 			@Override
 			public void actionPerformed(ActionContext context) {
-				makeSelection(plugin);
+				gotoExternalAddress(getSelectedExternalAddress());
 			}
 
 			@Override
 			public boolean isEnabledForContext(ActionContext context) {
-				GhidraTable table = threadedPanel.getTable();
-				return table.getSelectedRowCount() > 0;
+				return getSelectedExternalAddress() != null &&
+					tool.getService(GoToService.class) != null;
+			}
+
+			private Address getSelectedExternalAddress() {
+				if (table.getSelectedRowCount() != 1) {
+					return null;
+				}
+				ProgramSelection selection = table.getProgramSelection();
+				Program modelProgram = model.getProgram();
+				if (modelProgram == null || selection.getNumAddresses() != 1) {
+					return null;
+				}
+				Address addr = selection.getMinAddress();
+				return addr.isExternalAddress() ? addr : null;
 			}
 		};
-		selectAction.setDescription("Make a selection using selected rows");
-		selectAction.setEnabled(false);
-
-		ImageIcon icon = ResourceManager.loadImage("images/text_align_justify.png");
-		selectAction.setToolBarData(new ToolBarData(icon, null));
-		selectAction.setPopupMenuData(new MenuData(new String[] { "Make Selection" }, icon, null));
-		selectAction.setHelpLocation(new HelpLocation(HelpTopics.SEARCH, "Make_Selection"));
-
-		selectionNavigationAction = new SelectionNavigationAction(plugin, threadedPanel.getTable());
-		selectionNavigationAction.setHelpLocation(
-			new HelpLocation(HelpTopics.SEARCH, "Selection_Navigation"));
-
-		DockingAction externalGotoAction =
-			new DockingAction("Go to External Location", getName(), false) {
-				@Override
-				public void actionPerformed(ActionContext context) {
-					gotoExternalAddress(getSlectedExternalAddress());
-				}
-
-				@Override
-				public boolean isEnabledForContext(ActionContext context) {
-					return getSlectedExternalAddress() != null &&
-						tool.getService(GoToService.class) != null;
-				}
-
-				private Address getSlectedExternalAddress() {
-					GhidraTable table = threadedPanel.getTable();
-					if (table.getSelectedRowCount() != 1) {
-						return null;
-					}
-					ProgramSelection selection = threadedPanel.getTable().getProgramSelection();
-					Program modelProgram = model.getProgram();
-					if (modelProgram == null || selection.getNumAddresses() != 1) {
-						return null;
-					}
-					Address addr = selection.getMinAddress();
-					return addr.isExternalAddress() ? addr : null;
-				}
-			};
 		externalGotoAction.setDescription("Go to an external location");
 		externalGotoAction.setEnabled(false);
 
-		icon = ResourceManager.loadImage("images/searchm_obj.gif");
+		Icon icon = ResourceManager.loadImage("images/searchm_obj.gif");
 		externalGotoAction.setPopupMenuData(
 			new MenuData(new String[] { "GoTo External Location" }, icon, null));
 		externalGotoAction.setHelpLocation(new HelpLocation(HelpTopics.SEARCH, "Navigation"));
 
-		configureKeybinding(selectAction, null);
-
 		plugin.getTool().addLocalAction(this, selectAction);
 		plugin.getTool().addLocalAction(this, selectionNavigationAction);
 		plugin.getTool().addLocalAction(this, externalGotoAction);
-
 	}
 
 	public void installRemoveItemsAction() {
@@ -232,36 +220,9 @@ public class TableComponentProvider<T> extends ComponentProviderAdapter
 		}
 
 		GhidraTable table = threadedPanel.getTable();
-		removeItemsAction = new DeleteTableRowAction(tool, table, tableServicePlugin.getName());
+		removeItemsAction = new DeleteTableRowAction(table, tableServicePlugin.getName());
 
 		tool.addLocalAction(this, removeItemsAction);
-	}
-
-	private void configureKeybinding(DockingAction action, KeyStroke keyBinding) {
-		// setup options to know when the dummy key binding is changed
-		ToolOptions options = tool.getOptions(ToolConstants.KEY_BINDINGS);
-		KeyStroke keyStroke = options.getKeyStroke(
-			action.getName() + TableServicePlugin.SHARED_ACTION_OWNER_SUFFIX, keyBinding);
-
-		if (!SystemUtilities.isEqual(keyBinding, keyStroke)) {
-			// user-defined keystroke
-			action.setUnvalidatedKeyBindingData(new KeyBindingData(keyStroke));
-		}
-		else {
-			action.setKeyBindingData(new KeyBindingData(keyStroke));
-		}
-
-		options.removeOptionsChangeListener(this); // don't double add
-		options.addOptionsChangeListener(this);
-	}
-
-	@Override
-	public void optionsChanged(ToolOptions options, String optionName, Object oldValue,
-			Object newValue) {
-		if (optionName.startsWith(TableServicePlugin.MAKE_SELECTION_ACTION_NAME)) {
-			KeyStroke keyStroke = (KeyStroke) newValue;
-			selectAction.setUnvalidatedKeyBindingData(new KeyBindingData(keyStroke));
-		}
 	}
 
 	private JPanel createFilterFieldPanel(JTable table, AbstractSortedTableModel<T> sortedModel) {
@@ -307,19 +268,6 @@ public class TableComponentProvider<T> extends ComponentProviderAdapter
 		if (gotoSvc != null) {
 			gotoSvc.goTo(extAddr, model.getProgram());
 		}
-	}
-
-	private void makeSelection(Plugin plugin) {
-		ProgramSelection selection = threadedPanel.getTable().getProgramSelection();
-		Program modelProgram = model.getProgram();
-		if (modelProgram == null || selection.getNumAddresses() == 0) {
-			return;
-		}
-
-		navigatable.goTo(model.getProgram(),
-			new ProgramLocation(modelProgram, selection.getMinAddress()));
-		navigatable.setSelection(selection);
-		navigatable.requestFocus();
 	}
 
 	@Override

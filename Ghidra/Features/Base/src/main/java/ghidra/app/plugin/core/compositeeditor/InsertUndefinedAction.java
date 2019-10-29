@@ -23,13 +23,12 @@ import javax.swing.KeyStroke;
 
 import docking.ActionContext;
 import docking.action.KeyBindingData;
-import ghidra.program.model.data.DataType;
-import ghidra.program.model.data.DataTypeInstance;
+import ghidra.program.model.data.*;
 import ghidra.util.exception.UsrException;
 import resources.ResourceManager;
 
 /**
- * Action for use in the composite data type editor.
+ * Action for use in the structure data type editor.
  * This action has help associated with it.
  */
 public class InsertUndefinedAction extends CompositeEditorTableAction {
@@ -57,8 +56,10 @@ public class InsertUndefinedAction extends CompositeEditorTableAction {
 			if (isContiguousSelection) {
 				int index = model.getMinIndexSelected();
 				if (index >= 0) {
-					DataTypeInstance dti =
-						DataTypeInstance.getDataTypeInstance(DataType.DEFAULT, 1);
+					DataType undefinedDt =
+						model.viewComposite.isInternallyAligned() ? Undefined1DataType.dataType
+								: DataType.DEFAULT;
+					DataTypeInstance dti = DataTypeInstance.getDataTypeInstance(undefinedDt, -1);
 					model.insert(index, dti.getDataType(), dti.getLength());
 				}
 			}
@@ -71,13 +72,16 @@ public class InsertUndefinedAction extends CompositeEditorTableAction {
 
 	@Override
 	public void adjustEnablement() {
-		if (model.viewComposite == null) {
-			return;
+		boolean enabled = false;
+		if (model.viewComposite instanceof Structure) {
+			boolean isContiguousSelection = model.getSelection().getNumRanges() == 1;
+			DataType undefinedDt =
+				model.viewComposite.isInternallyAligned() ? Undefined1DataType.dataType
+						: DataType.DEFAULT;
+			enabled = isContiguousSelection &&
+				model.isInsertAllowed(model.getMinIndexSelected(), undefinedDt);
 		}
-		boolean isContiguousSelection = model.getSelection().getNumRanges() == 1;
-
-		setEnabled(isContiguousSelection && model.isShowingUndefinedBytes() &&
-			model.isInsertAllowed(model.getMinIndexSelected(), DataType.DEFAULT));
+		setEnabled(enabled);
 	}
 
 }

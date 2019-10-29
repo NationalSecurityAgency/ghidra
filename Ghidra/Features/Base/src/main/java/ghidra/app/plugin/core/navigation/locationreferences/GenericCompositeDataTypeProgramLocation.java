@@ -23,7 +23,7 @@ import ghidra.program.model.listing.Program;
 /**
  * A class to signal that the ProgramLocation is used for data types and is not really 
  * connected to the listing.  This is a subclass specifically for {@link Composite} types and a
- * particular field name.
+ * particular field name of the given composite.
  * 
  * @see GenericCompositeDataTypeLocationDescriptor
  */

@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +15,15 @@
  */
 package ghidra.app.util;
 
-import ghidra.app.util.viewer.util.AddressPixelMap;
-import ghidra.program.model.mem.MemoryBlock;
-
 import java.awt.*;
 import java.awt.event.ComponentEvent;
 import java.awt.event.ComponentListener;
 
 import javax.swing.*;
+
+import docking.widgets.label.GDLabel;
+import ghidra.app.util.viewer.util.AddressPixelMap;
+import ghidra.program.model.mem.MemoryBlock;
 
 public class BlockPanel extends JPanel implements ComponentListener {
 	private static final long serialVersionUID = 1L;
@@ -37,8 +37,8 @@ public class BlockPanel extends JPanel implements ComponentListener {
 		setBackground(Color.WHITE);
 		addComponentListener(this);
 		metrics = getFontMetrics(FONT);
-		setPreferredSize(new Dimension(100, SPACING + metrics.getMaxAscent() +
-			metrics.getMaxDescent()));
+		setPreferredSize(
+			new Dimension(100, SPACING + metrics.getMaxAscent() + metrics.getMaxDescent()));
 	}
 
 	@Override
@@ -49,8 +49,9 @@ public class BlockPanel extends JPanel implements ComponentListener {
 		int height = getHeight();
 
 		MemoryBlock[] blocks = map.getBlocks();
-		if (blocks == null)
+		if (blocks == null) {
 			return;
+		}
 
 		for (int i = 0; i < blocks.length; i++) {
 			Rectangle rect = map.getBlockPosition(blocks[i]);
@@ -93,7 +94,7 @@ public class BlockPanel extends JPanel implements ComponentListener {
 		}
 
 		for (MemoryBlock block : blocks) {
-			final JLabel label = new JLabel(block.getName());
+			JLabel label = new GDLabel(block.getName());
 			label.setFont(FONT);
 			label.setHorizontalAlignment(SwingConstants.CENTER);
 			label.setToolTipText(block.getName());

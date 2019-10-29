@@ -26,6 +26,7 @@ import ghidra.feature.vt.gui.plugin.VTController;
 import ghidra.feature.vt.gui.plugin.VTPlugin;
 import ghidra.feature.vt.gui.provider.matchtable.VTMatchContext;
 import ghidra.feature.vt.gui.task.ApplyBlockedMatchTask;
+import ghidra.util.HTMLUtilities;
 import ghidra.util.HelpLocation;
 import resources.Icons;
 
@@ -77,7 +78,7 @@ public class ApplyBlockedMatchAction extends DockingAction {
 	}
 
 	private List<VTAssociation> getConflictingMatches(VTMatch match) {
-		ArrayList<VTAssociation> list = new ArrayList<VTAssociation>();
+		ArrayList<VTAssociation> list = new ArrayList<>();
 		VTAssociation association = match.getAssociation();
 		Collection<VTAssociation> relatedAssociations = association.getRelatedAssociations();
 		for (VTAssociation relatedAssociation : relatedAssociations) {
@@ -90,7 +91,7 @@ public class ApplyBlockedMatchAction extends DockingAction {
 
 	private String getConflictingMatchesDisplayString(VTMatch match,
 			List<VTAssociation> conflicts) {
-		StringBuffer buffer = new StringBuffer();
+		StringBuilder buffer = new StringBuilder();
 		buffer.append("<html>");
 		int count = 0;
 		for (VTAssociation conflictingAssociation : conflicts) {
@@ -118,8 +119,9 @@ public class ApplyBlockedMatchAction extends DockingAction {
 
 	private String getAssociationDisplayString(VTAssociation association) {
 		return association.getType().toString() + " match with source of <b>" +
-			association.getSourceAddress().toString() + "</b> and destination of <b>" +
-			association.getDestinationAddress().toString() + "</b>";
+			HTMLUtilities.escapeHTML(association.getSourceAddress().toString()) +
+			"</b> and destination of <b>" +
+			HTMLUtilities.escapeHTML(association.getDestinationAddress().toString()) + "</b>";
 	}
 
 	@Override

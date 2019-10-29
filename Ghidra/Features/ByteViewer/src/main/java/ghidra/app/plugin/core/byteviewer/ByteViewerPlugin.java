@@ -15,6 +15,10 @@
  */
 package ghidra.app.plugin.core.byteviewer;
 
+import java.util.*;
+
+import org.jdom.Element;
+
 import ghidra.app.CorePluginPackage;
 import ghidra.app.events.*;
 import ghidra.app.plugin.PluginCategoryNames;
@@ -28,16 +32,7 @@ import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramLocation;
 import ghidra.program.util.ProgramSelection;
 import ghidra.util.SystemUtilities;
-
-import java.util.*;
-
-import org.jdom.Element;
-
-import resources.ResourceManager;
-import docking.ActionContext;
-import docking.ComponentProvider;
-import docking.action.DockingAction;
-import docking.action.ToolBarData;
+import utility.function.Callback;
 
 /**
  * Visible Plugin to show ByteBlock data in various formats.
@@ -63,35 +58,17 @@ import docking.action.ToolBarData;
 public class ByteViewerPlugin extends Plugin {
 
 	private Program currentProgram;
-	private boolean restoringTransientState;
+	private boolean areEventsDisabled;
 	private ProgramLocation currentLocation;
 
 	private ProgramByteViewerComponentProvider connectedProvider;
 
-	private List<ProgramByteViewerComponentProvider> disconnectedProviders =
-		new ArrayList<ProgramByteViewerComponentProvider>();
+	private List<ProgramByteViewerComponentProvider> disconnectedProviders = new ArrayList<>();
 
 	public ByteViewerPlugin(PluginTool tool) {
 		super(tool);
 
 		connectedProvider = new ProgramByteViewerComponentProvider(tool, this, true);
-
-		createActions();
-	}
-
-	private void createActions() {
-		DockingAction action = new DockingAction("Byte Viewer", getName()) {
-			@Override
-			public void actionPerformed(ActionContext context) {
-				showConnectedProvider();
-			}
-		};
-		action.setToolBarData(new ToolBarData(ResourceManager.loadImage("images/binaryData.gif"),
-			"View"));
-
-		action.setDescription("Display Bytes");
-		action.setEnabled(true);
-		tool.addAction(action);
 	}
 
 	protected void showConnectedProvider() {
@@ -157,11 +134,12 @@ public class ByteViewerPlugin extends Plugin {
 
 	public void fireProgramLocationPluginEvent(ProgramByteViewerComponentProvider provider,
 			ProgramLocationPluginEvent event) {
+
 		if (SystemUtilities.isEqual(event.getLocation(), currentLocation)) {
 			return;
 		}
-		currentLocation = event.getLocation();
 
+		currentLocation = event.getLocation();
 		if (provider == connectedProvider) {
 			firePluginEvent(event);
 		}
@@ -192,30 +170,35 @@ public class ByteViewerPlugin extends Plugin {
 	 */
 	@Override
 	public void readDataState(SaveState saveState) {
-		ProgramManager programManagerService = tool.getService(ProgramManager.class);
 
-		connectedProvider.readDataState(saveState);
+		doWithEventsDisabled(() -> {
 
-		int numDisconnected = saveState.getInt("Num Disconnected", 0);
-		for (int i = 0; i < numDisconnected; i++) {
-			Element xmlElement = saveState.getXmlElement("Provider" + i);
-			SaveState providerSaveState = new SaveState(xmlElement);
-			String programPath = providerSaveState.getString("Program Path", "");
-			DomainFile file = tool.getProject().getProjectData().getFile(programPath);
-			if (file == null) {
-				continue;
+			ProgramManager programManagerService = tool.getService(ProgramManager.class);
+
+			connectedProvider.readDataState(saveState);
+
+			int numDisconnected = saveState.getInt("Num Disconnected", 0);
+			for (int i = 0; i < numDisconnected; i++) {
+				Element xmlElement = saveState.getXmlElement("Provider" + i);
+				SaveState providerSaveState = new SaveState(xmlElement);
+				String programPath = providerSaveState.getString("Program Path", "");
+				DomainFile file = tool.getProject().getProjectData().getFile(programPath);
+				if (file == null) {
+					continue;
+				}
+				Program program = programManagerService.openProgram(file);
+				if (program != null) {
+					ProgramByteViewerComponentProvider provider =
+						new ProgramByteViewerComponentProvider(tool, this, false);
+					provider.doSetProgram(program);
+					provider.readConfigState(providerSaveState);
+					provider.readDataState(providerSaveState);
+					tool.showComponentProvider(provider, true);
+					addProvider(provider);
+				}
 			}
-			Program program = programManagerService.openProgram(file);
-			if (program != null) {
-				ProgramByteViewerComponentProvider provider =
-					new ProgramByteViewerComponentProvider(tool, this, false);
-				provider.doSetProgram(program);
-				provider.readConfigState(providerSaveState);
-				provider.readDataState(providerSaveState);
-				tool.showComponentProvider(provider, true);
-				addProvider(provider);
-			}
-		}
+
+		});
 	}
 
 	/**
@@ -245,7 +228,7 @@ public class ByteViewerPlugin extends Plugin {
 
 	@Override
 	public Object getUndoRedoState(DomainObject domainObject) {
-		Map<Long, Object> stateMap = new HashMap<Long, Object>();
+		Map<Long, Object> stateMap = new HashMap<>();
 
 		addUndoRedoState(stateMap, domainObject, connectedProvider);
 
@@ -292,8 +275,6 @@ public class ByteViewerPlugin extends Plugin {
 		}
 	}
 
-	////////////////////////////////////////////////////////////////
-
 	@Override
 	public Object getTransientState() {
 		Object[] state = new Object[2];
@@ -307,37 +288,31 @@ public class ByteViewerPlugin extends Plugin {
 		return state;
 	}
 
-	/*
-	 *  (non-Javadoc)
-	 * @see ghidra.framework.plugintool.Plugin#restoreTransientState(java.lang.Object)
-	 */
 	@Override
 	public void restoreTransientState(Object objectState) {
-		restoringTransientState = true;
-		try {
+
+		doWithEventsDisabled(() -> {
 			Object[] state = (Object[]) objectState;
-
 			connectedProvider.restoreLocation((SaveState) state[0]);
-
 			connectedProvider.setSelection((ProgramSelection) state[1]);
+		});
+	}
+
+	private void doWithEventsDisabled(Callback callback) {
+		areEventsDisabled = true;
+		try {
+			callback.call();
 		}
 		finally {
-			restoringTransientState = false;
+			areEventsDisabled = false;
 		}
 	}
 
-	/////////////////////////////////////////////////////////////////
-	// *** package-level methods ***
-	/////////////////////////////////////////////////////////////////
-
-	boolean isRestoringTransientState() {
-		return restoringTransientState;
+	private boolean eventsDisabled() {
+		return areEventsDisabled;
 	}
 
-	/**
-	 * Set the status info on the tool.
-	 */
-	void setStatusMessage(String msg, ComponentProvider provider) {
+	void setStatusMessage(String msg) {
 		tool.setStatusInfo(msg);
 	}
 
@@ -383,7 +358,7 @@ public class ByteViewerPlugin extends Plugin {
 	public void updateLocation(ProgramByteViewerComponentProvider provider,
 			ProgramLocationPluginEvent event, boolean export) {
 
-		if (isRestoringTransientState()) {
+		if (eventsDisabled()) {
 			return;
 		}
 

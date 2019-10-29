@@ -86,8 +86,7 @@ public class ByteViewerClipboardProvider extends ByteCopier
 	@Override
 	public boolean paste(Transferable pasteData) {
 		if (!supportsPasteTransferable(pasteData)) {
-			tool.setStatusInfo("Paste failed: No valid data on clipboard");
-			tool.getToolFrame().getToolkit().beep();
+			tool.setStatusInfo("Paste failed: No valid data on clipboard", true);
 			return false;
 		}
 
@@ -96,8 +95,7 @@ public class ByteViewerClipboardProvider extends ByteCopier
 			return pasteBytes(pasteData);
 		}
 		catch (Exception e) {
-			tool.setStatusInfo("Paste failed: " + e.getMessage());
-			tool.getToolFrame().getToolkit().beep();
+			tool.setStatusInfo("Paste failed: " + e.getMessage(), true);
 		}
 		return false;
 	}

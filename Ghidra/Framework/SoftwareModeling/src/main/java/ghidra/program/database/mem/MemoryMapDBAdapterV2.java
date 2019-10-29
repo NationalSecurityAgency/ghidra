@@ -17,272 +17,220 @@ package ghidra.program.database.mem;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Arrays;
+import java.util.*;
 
 import db.*;
-import ghidra.program.database.map.AddressMap;
-import ghidra.program.model.address.*;
+import ghidra.program.model.address.Address;
+import ghidra.program.model.address.AddressOverflowException;
 import ghidra.program.model.mem.MemoryBlockType;
-import ghidra.util.exception.IOCancelledException;
 import ghidra.util.exception.VersionException;
 
+/**
+ * Adapter for version 2
+ */
 class MemoryMapDBAdapterV2 extends MemoryMapDBAdapter {
+	private static final int V2_VERSION = 2;
+	static final String V2_TABLE_NAME = "Memory Blocks";
 
-	private static final int VERSION = CURRENT_VERSION;
+	static final int V2_NAME_COL = 0;
+	static final int V2_COMMENTS_COL = 1;
+	static final int V2_SOURCE_COL = 2;
+	static final int V2_PERMISSIONS_COL = 3;
+	static final int V2_START_ADDR_COL = 4;
+	static final int V2_BLOCK_TYPE_COL = 5;
+	static final int V2_OVERLAY_ADDR_COL = 6;
+	static final int V2_LENGTH_COL = 7;
+	static final int V2_CHAIN_BUF_COL = 8;
+	static final int V2_SEGMENT_COL = 9;
+
+	static final int INITIALIZED = 0;
+	static final int UNINITIALIZED = 1;
+	static final int BIT_MAPPED = 2;
+	static final int BYTE_MAPPED = 4;
 
 	private DBHandle handle;
-	private Table blockTable;
 	private MemoryMapDB memMap;
-	private AddressMap addrMap;
-	private MemoryBlockDB[] blocks = new MemoryBlockDB[0];
 
-	MemoryMapDBAdapterV2(DBHandle handle, MemoryMapDB memMap, boolean create)
+	private List<MemoryBlockDB> blocks = new ArrayList<>();
+
+//  The following schema definition documents the schema used in version 2No  	
+//	
+//	static Schema BLOCK_SCHEMA = new Schema(CURRENT_VERSION, "Key",
+//		new Class[] { StringField.class, StringField.class, StringField.class, ByteField.class,
+//			LongField.class, ShortField.class, LongField.class, LongField.class, IntField.class,
+//			IntField.class },
+//		new String[] { "Name", "Comments", "Source Name", "Permissions", "Start Address",
+//			"Block Type", "Overlay Address", "Length", "Chain Buffer ID", "Segment" });
+
+
+	protected MemoryMapDBAdapterV2(DBHandle handle, MemoryMapDB memMap)
 			throws VersionException, IOException {
 		this.handle = handle;
 		this.memMap = memMap;
-		this.addrMap = memMap.getAddressMap();
-		if (create) {
-			blockTable = handle.createTable(TABLE_NAME, BLOCK_SCHEMA);
+		Table table = handle.getTable(V2_TABLE_NAME);
+		if (table == null) {
+			throw new VersionException("Memory Block table not found");
 		}
-		else {
-			blockTable = handle.getTable(TABLE_NAME);
-			if (blockTable == null) {
-				throw new VersionException(
-					handle.getTable(MemoryMapDBAdapterV0.V0_TABLE_NAME) != null);
-			}
-			if (blockTable.getSchema().getVersion() != VERSION) {
-				int version = blockTable.getSchema().getVersion();
-				throw new VersionException(version < VERSION);
-			}
-//			refreshMemory();
+		int versionNumber = table.getSchema().getVersion();
+		if (versionNumber != V2_VERSION) {
+			throw new VersionException(
+				"Memory Block table: Expected Version " + V2_VERSION + ", got " + versionNumber);
 		}
-	}
 
-	/**
-	 * @see ghidra.program.database.mem.MemoryMapDBAdapter#refreshMemory()
-	 */
-	@Override
-	void refreshMemory() throws IOException {
-		MemoryBlockDB[] updatedBlocks = new MemoryBlockDB[blockTable.getRecordCount()];
-		RecordIterator it = blockTable.iterator();
-		int index = 0;
+		int recCount = table.getRecordCount();
+		blocks = new ArrayList<>(recCount);
+
+		int key = 0;
+
+		RecordIterator it = table.iterator();
 		while (it.hasNext()) {
-			Record blockRec = it.next();
-			long key = blockRec.getKey();
-			for (int n = 0; n < blocks.length; n++) {
-				if (blocks[n] != null && blocks[n].getID() == key) {
-					updatedBlocks[index] = blocks[n];
-					updatedBlocks[index].refresh(blockRec);
-					blocks[n] = null;
-					break;
-				}
-			}
-			if (updatedBlocks[index] == null) {
-				updatedBlocks[index] =
-					MemoryMapDBAdapter.getMemoryBlock(this, blockRec, null, memMap);
-			}
-			++index;
+			Record rec = it.next();
+			int permissions = rec.getByteValue(V2_PERMISSIONS_COL);
+
+			long startAddr = rec.getLongValue(V2_START_ADDR_COL);
+			long length = rec.getLongValue(V2_LENGTH_COL);
+			int bufID = rec.getIntValue(V2_CHAIN_BUF_COL);
+			int segment = rec.getIntValue(V2_SEGMENT_COL);
+
+			Record blockRecord = BLOCK_SCHEMA.createRecord(key);
+			Record subBlockRecord = SUB_BLOCK_SCHEMA.createRecord(key);
+
+			blockRecord.setString(NAME_COL, rec.getString(V2_NAME_COL));
+			blockRecord.setString(COMMENTS_COL, rec.getString(V2_COMMENTS_COL));
+			blockRecord.setString(SOURCE_COL, rec.getString(V2_SOURCE_COL));
+			blockRecord.setByteValue(PERMISSIONS_COL, (byte) permissions);
+			blockRecord.setLongValue(START_ADDR_COL, startAddr);
+			blockRecord.setLongValue(LENGTH_COL, length);
+			blockRecord.setIntValue(SEGMENT_COL, segment);
+
+			subBlockRecord.setLongValue(SUB_PARENT_ID_COL, key);
+			subBlockRecord.setLongValue(SUB_LENGTH_COL, length);
+			subBlockRecord.setLongValue(SUB_START_OFFSET_COL, 0);
+
+			int type = rec.getShortValue(V2_BLOCK_TYPE_COL);
+			long overlayAddr = rec.getLongValue(V2_OVERLAY_ADDR_COL);
+
+			SubMemoryBlock subBlock = getSubBlock(bufID, subBlockRecord, type, overlayAddr);
+
+			blocks.add(new MemoryBlockDB(this, blockRecord, Arrays.asList(subBlock)));
+
 		}
-		for (int i = 0; i < blocks.length; i++) {
-			if (blocks[i] != null) {
-				blocks[i].invalidate();
-			}
-		}
-		Arrays.sort(updatedBlocks);
-		blocks = updatedBlocks;
+		Collections.sort(blocks);
+
 	}
 
-	/**
-	 * @see ghidra.program.database.mem.MemoryMapDBAdapter#getMemoryBlocks()
-	 */
+	private SubMemoryBlock getSubBlock(int bufID, Record record, int type, long overlayAddr)
+			throws IOException {
+		switch (type) {
+			case MemoryMapDBAdapterV2.BIT_MAPPED:
+				record.setByteValue(SUB_TYPE_COL, SUB_TYPE_BIT_MAPPED);
+				record.setLongValue(MemoryMapDBAdapter.SUB_SOURCE_OFFSET_COL, overlayAddr);
+				return new BitMappedSubMemoryBlock(this, record);
+			case MemoryMapDBAdapterV2.BYTE_MAPPED:
+				record.setByteValue(SUB_TYPE_COL, SUB_TYPE_BYTE_MAPPED);
+				record.setLongValue(MemoryMapDBAdapter.SUB_SOURCE_OFFSET_COL, overlayAddr);
+				return new ByteMappedSubMemoryBlock(this, record);
+			case MemoryMapDBAdapterV2.INITIALIZED:
+				record.setByteValue(SUB_TYPE_COL, SUB_TYPE_BUFFER);
+				record.setIntValue(SUB_SOURCE_ID_COL, bufID);
+				return new BufferSubMemoryBlock(this, record);
+			case MemoryMapDBAdapterV2.UNINITIALIZED:
+				record.setByteValue(SUB_TYPE_COL, SUB_TYPE_UNITIALIZED);
+				return new UninitializedSubMemoryBlock(this, record);
+			default:
+				throw new IOException("Unknown memory block type: " + type);
+		}
+	}
+
 	@Override
-	MemoryBlockDB[] getMemoryBlocks() {
+	List<MemoryBlockDB> getMemoryBlocks() {
 		return blocks;
 	}
 
-	private int getSegment(Address addr) {
-		if (addr instanceof SegmentedAddress) {
-//			SegmentedAddress imageBase = (SegmentedAddress)addrMap.getImageBase();
-//			int baseSegment = imageBase.getSegment();
-			return ((SegmentedAddress) addr).getSegment();
-		}
-		return 0;
-	}
-
-	/**
-	 * @see ghidra.program.database.mem.MemoryMapDBAdapter#createBlock(java.lang.String, ghidra.program.model.address.Address, db.DBBuffer)
-	 */
 	@Override
 	MemoryBlockDB createInitializedBlock(String name, Address startAddr, DBBuffer buf,
 			int permissions) throws AddressOverflowException, IOException {
-
-		// Ensure that address key has been generated for end address
-		Address endAddr = startAddr.addNoWrap(buf.length() - 1);
-		addrMap.getKey(endAddr, true);
-
-		int blockID = (int) blockTable.getKey();
-		Record blockRec = BLOCK_SCHEMA.createRecord(blockID);
-		blockRec.setString(MemoryMapDBAdapter.NAME_COL, name);
-		blockRec.setByteValue(MemoryMapDBAdapter.PERMISSIONS_COL, (byte) permissions);
-		blockRec.setLongValue(MemoryMapDBAdapter.START_ADDR_COL, addrMap.getKey(startAddr, true));
-		blockRec.setShortValue(MemoryMapDBAdapter.BLOCK_TYPE_COL, (short) INITIALIZED);
-		blockRec.setIntValue(MemoryMapDBAdapter.CHAIN_BUF_COL, buf.getId());
-		blockRec.setLongValue(MemoryMapDBAdapter.LENGTH_COL, buf.length());
-		blockRec.setIntValue(MemoryMapDBAdapter.SEGMENT_COL, getSegment(startAddr));
-
-		blockTable.putRecord(blockRec);
-
-		return new MemoryBlockDB(this, blockRec, buf, memMap);
+		throw new UnsupportedOperationException();
 	}
 
-	/** 
-	 * @see ghidra.program.database.mem.MemoryMapDBAdapter#createInitializedBlock(java.lang.String, ghidra.program.model.address.Address, java.io.InputStream, long)
-	 */
 	@Override
 	MemoryBlockDB createInitializedBlock(String name, Address startAddr, InputStream is,
 			long length, int permissions) throws AddressOverflowException, IOException {
-
-		// Ensure that address key has been generated for end address
-		Address endAddr = startAddr.addNoWrap(length - 1);
-		addrMap.getKey(endAddr, true);
-
-		int blockID = (int) blockTable.getKey();
-		Record blockRec = BLOCK_SCHEMA.createRecord(blockID);
-		blockRec.setString(MemoryMapDBAdapter.NAME_COL, name);
-		blockRec.setByteValue(MemoryMapDBAdapter.PERMISSIONS_COL, (byte) permissions);
-		blockRec.setLongValue(MemoryMapDBAdapter.START_ADDR_COL, addrMap.getKey(startAddr, true));
-		blockRec.setShortValue(MemoryMapDBAdapter.BLOCK_TYPE_COL, (short) INITIALIZED);
-		blockRec.setLongValue(MemoryMapDBAdapter.LENGTH_COL, length);
-		blockRec.setIntValue(MemoryMapDBAdapter.SEGMENT_COL, getSegment(startAddr));
-		DBBuffer buf = createBuffer(length, is);
-
-		blockRec.setIntValue(MemoryMapDBAdapter.CHAIN_BUF_COL, buf.getId());
-
-		blockTable.putRecord(blockRec);
-		return MemoryMapDBAdapter.getMemoryBlock(this, blockRec, buf, memMap);
+		throw new UnsupportedOperationException();
 	}
 
-	/**
-	 * @see ghidra.program.database.mem.MemoryMapDBAdapter#createBlock(int, java.lang.String, ghidra.program.database.mem2.MemoryChunkDB[], ghidra.program.model.address.Address)
-	 */
 	@Override
 	MemoryBlockDB createBlock(MemoryBlockType blockType, String name, Address startAddr,
 			long length, Address mappedAddress, boolean initializeBytes, int permissions)
 			throws AddressOverflowException, IOException {
-		if (initializeBytes) {
-			return createInitializedBlock(name, startAddr, null, length, permissions);
-		}
-
-		// Ensure that address key has been generated for end address
-		Address endAddr = startAddr.addNoWrap(length - 1);
-		addrMap.getKey(endAddr, true);
-
-		int blockID = (int) blockTable.getKey();
-		Record blockRec = BLOCK_SCHEMA.createRecord(blockID);
-		blockRec.setString(MemoryMapDBAdapter.NAME_COL, name);
-		blockRec.setByteValue(MemoryMapDBAdapter.PERMISSIONS_COL, (byte) permissions);
-		blockRec.setLongValue(MemoryMapDBAdapter.START_ADDR_COL, addrMap.getKey(startAddr, true));
-		blockRec.setShortValue(MemoryMapDBAdapter.BLOCK_TYPE_COL,
-			(short) encodeBlockType(blockType));
-		blockRec.setLongValue(MemoryMapDBAdapter.LENGTH_COL, length);
-		blockRec.setIntValue(MemoryMapDBAdapter.SEGMENT_COL, getSegment(startAddr));
-		blockRec.setIntValue(MemoryMapDBAdapter.CHAIN_BUF_COL, -1);
-		if (mappedAddress != null) {
-			blockRec.setLongValue(MemoryMapDBAdapter.OVERLAY_ADDR_COL,
-				addrMap.getKey(mappedAddress, true));
-		}
-
-		blockTable.putRecord(blockRec);
-		return MemoryMapDBAdapter.getMemoryBlock(this, blockRec, null, memMap);
-	}
-
-	private int encodeBlockType(MemoryBlockType blockType) {
-		if (blockType == MemoryBlockType.BIT_MAPPED) {
-			return BIT_MAPPED;
-		}
-		if (blockType == MemoryBlockType.BYTE_MAPPED) {
-			return BYTE_MAPPED;
-		}
-		return UNINITIALIZED;
-	}
-
-	private DBBuffer createBuffer(long length, InputStream is) throws IOException {
-
-		DBBuffer buf = handle.createBuffer((int) length);
-		if (is != null) {
-			try {
-				buf.fill(is);
-			}
-			catch (IOCancelledException e) {
-				buf.delete();
-				throw e;
-			}
-		}
-		return buf;
-	}
-
-	/**
-	 * @see ghidra.program.database.mem.MemoryMapDBAdapter#splitBlock(ghidra.program.database.mem2.MemoryBlockDB, long)
-	 */
-	@Override
-	MemoryBlockDB splitBlock(MemoryBlockDB block, long offset) throws IOException {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	/**
-	 * @see ghidra.program.database.mem.MemoryMapDBAdapter#joinBlocks(ghidra.program.database.mem2.MemoryBlockDB, ghidra.program.database.mem2.MemoryBlockDB)
-	 */
-	@Override
-	MemoryBlockDB joinBlocks(MemoryBlockDB block1, MemoryBlockDB block2) throws IOException {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	/**
-	 * @see ghidra.program.database.mem.MemoryMapDBAdapter#deleteMemoryBlock(ghidra.program.model.mem.MemoryBlock)
-	 */
-	@Override
-	void deleteMemoryBlock(MemoryBlockDB block) throws IOException {
-		blockTable.deleteRecord(block.getID());
-		block.invalidate();
-	}
-
-	/**
-	 * @see ghidra.program.database.mem.MemoryMapDBAdapter#deleteTable(db.DBHandle)
-	 */
-	@Override
-	void deleteTable(DBHandle dbHandle) throws IOException {
 		throw new UnsupportedOperationException();
 	}
 
-	/**
-	 * @see ghidra.program.database.mem.MemoryMapDBAdapter#updateBlockRecord(db.Record)
-	 */
+	@Override
+	void deleteMemoryBlock(long key) throws IOException {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	void deleteTable(DBHandle dbHandle) throws IOException {
+		dbHandle.deleteTable(V2_TABLE_NAME);
+	}
+
 	@Override
 	void updateBlockRecord(Record record) throws IOException {
-		blockTable.putRecord(record);
+		throw new UnsupportedOperationException();
 	}
 
-	/**
-	 * @see ghidra.program.database.mem.MemoryMapDBAdapter#createBuffer(int, byte)
-	 */
 	@Override
 	DBBuffer createBuffer(int length, byte initialValue) throws IOException {
-		DBBuffer buffer = handle.createBuffer(length);
-		buffer.fill(0, length - 1, initialValue);
-		return buffer;
+		throw new UnsupportedOperationException();
 	}
 
-	/**
-	 * @see ghidra.program.database.mem.MemoryMapDBAdapter#getBuffer(int)
-	 */
+	@Override
+	void refreshMemory() throws IOException {
+		// do nothing
+	}
+
 	@Override
 	DBBuffer getBuffer(int bufferID) throws IOException {
 		if (bufferID >= 0) {
 			return handle.getBuffer(bufferID);
 		}
 		return null;
+	}
+
+	@Override
+	MemoryMapDB getMemoryMap() {
+		return memMap;
+	}
+
+	@Override
+	void deleteSubBlock(long key) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	protected void updateSubBlockRecord(Record record) throws IOException {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	Record createSubBlockRecord(long memBlockId, long startingOffset, long length, byte subType,
+			int sourceID, long sourceOffset) throws IOException {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	protected MemoryBlockDB createBlock(String name, Address addr, long length, int permissions,
+			List<SubMemoryBlock> splitBlocks) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	protected MemoryBlockDB createFileBytesBlock(String name, Address startAddress, long length,
+			FileBytes fileBytes, long offset, int permissions)
+			throws IOException, AddressOverflowException {
+		throw new UnsupportedOperationException();
 	}
 
 }

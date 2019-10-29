@@ -36,6 +36,7 @@ import resources.ResourceManager;
 
 public class ToolUtils {
 
+	public static final String TOOL_EXTENSION = ".tool";
 	private static final Logger LOGGER = LogManager.getLogger(ToolUtils.class);
 	private static final File USER_TOOLS_DIR = new File(getApplicationToolDirPath());
 
@@ -70,6 +71,10 @@ public class ToolUtils {
 
 		Set<String> toolNames = ResourceManager.getResourceNames("defaultTools", ".tool");
 		for (String toolName : toolNames) {
+			if (skipTool(toolName)) {
+				continue;
+			}
+
 			ToolTemplate tool = readToolTemplate(toolName);
 			if (tool != null) {
 				set.add(tool);
@@ -290,10 +295,6 @@ public class ToolUtils {
 
 	public static ToolTemplate readToolTemplate(String resourceFileName) {
 
-		if (skipTool(resourceFileName)) {
-			return null;
-		}
-
 		try (InputStream is = ResourceManager.getResourceAsStream(resourceFileName)) {
 			if (is == null) {
 				return null;
@@ -346,7 +347,8 @@ public class ToolUtils {
 	}
 
 	/**
-	 * Returns the user's personal tool chest directory path.
+	 * Returns the user's personal tool chest directory path
+	 * @return the path
 	 */
 	public static String getApplicationToolDirPath() {
 		String userSettingsPath = Application.getUserSettingsDirectory().getAbsolutePath();

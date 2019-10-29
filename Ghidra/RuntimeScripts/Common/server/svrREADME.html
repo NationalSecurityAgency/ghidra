@@ -58,6 +58,7 @@ typewriter {
   <LI><a href="#troubleshooting">Troubleshooting</a></LI>
   <UL>
    	<LI><a href="#checkinFailures">Failures Creating Repository Folders / Checking in Files</a></LI>
+   	<LI><a href="#connectErrors">Client/Server connection errors</a></LI>
 	<LI><a href="#windowsMissingTempDirectory">MS Windows - ERROR Missing Temp Directory</a></LI>
 	<LI><a href="#windows7and8_scriptErrors">MS Windows 7 and 8 - ghidraSvr.bat, svrInstall.bat, 
 	or svrUninstall.bat Error</a></LI>
@@ -203,11 +204,12 @@ name/address queries.
 </P>
 
 <P>
-It is also highly recommended that the server&apos;s local hostname (with and with domain name) be 
-mapped to its IP address with the hosts file (<typewriter>/etc/hosts</typewriter> on Linux).  If 
-this is not desirable for your setup, then the server should be explicitly bound to a specific IP 
-address (see the <typewriter>-ip</typewriter> parameter in the <a href="#serverOptions">Server 
-Options</a> section).
+By default the server will attempt to identify an appropriate remote access IPv4 address which will
+be written to the log at startup.  In addition, the server will listen for incoming 
+connections on all IPv4 interfaces by default.  It is important to understand the difference between 
+the published remote access address and the listening address (i.e. interface) which are both
+configurable.  See the <typewriter>-ip</typewriter> and <typewriter>-i</typewriter> options in 
+the <a href="#serverOptions">Server Options</a> section for more details.
 </P>
 
 (<a href="#top">Back to Top</a>)
@@ -217,7 +219,7 @@ Options</a> section).
 <P>
 The Ghidra Server has been designed to support many  possible user authentication modes:
 
-<OL>
+<UL>
 	<LI><u>No authentication</u> - any user which has been added to the server may connect without 
 	password or credentials.</LI>
 	<br>
@@ -228,29 +230,78 @@ The Ghidra Server has been designed to support many  possible user authenticatio
 	first added or when the user is reset (see <a href="#serverAdministration">Server 
 	Administration</a>).  This default password must be changed by the user to avoid its expiration.</LI>
 	<br>
+	<LI><u>Active Directory via Kerberos (<typewriter>-a1</typewriter>)</u> - user authentication is
+	performed against your local Active Directory system using Kerberos to do so.  The -d&lt;ad_domain&gt;
+	argument is required to specify the domain name of your Active Directory system.
+	<p>
+	It is also possible to authenticate against your Active Directory system using LDAP.  See the
+	LDAP example when using JAAS -a4 mode.
+	</LI>
+	<br> 
 	<LI><u>PKI authentication (<typewriter>-a2</typewriter>)</u> - user authentication is performed 
 	using PKI user certificates.  When using this mode, the distinguished name (DN) for each user 
 	must be	associated with each server User ID (see <a href="#serverAdministration">Server 
 	Administration</a>).  In addition, each user must configure Ghidra with the location of their 
 	signing key/certificate keystore file (see <a href="#pkiCertificates">PKI Certificates</a> 
 	for more information). 
-	</LI>
-	<br>
+	<p>
 	Please note that each user&apos;s certificate must be issued by a trusted certificate authority 
 	which has been properly added to the Ghidra Server&apos;s <typewriter>cacerts</typewriter> file.  See 
 	<a href="#pkiCertificateAuthorities">Managing PKI Certificate Authorities</a> for more information.
-	<br><br>
+	<p>
     In an attempt to simplify the determination of user DN&apos;s, a log file 
     (<typewriter>UnknownDN.log</typewriter>) records user DNs which are unknown.  After adding a 
     user to the server, ask the user to attempt a login using their PKCS certificate.  This should 
     result in their DN being recorded to this log file.  The server administrator may now copy the 
     appropriate DN from this log file when assigning the DN for a user.
+	</LI>
     <br>
+	<LI><u>JAAS - Java Authentication and Authorization Service (<typewriter>-a4</typewriter>)</u> - 
+	user authentication is delegated to the JAAS subsystem.  The -jaas &lt;config_file&gt; argument
+	is required to specify the JAAS config file.  The JAAS config file supplied (<i>server/jaas.conf</i>)
+	contains various example configurations which may be used to establish an 'auth' configuration 
+	section.  None of the example configurations use the 'auth' name so they will be ignored by default.
+	<p>
+	JAAS is architected similar to Linux/Unix PAM, where a named authentication configuration is possibly
+	composed of several different modules.  Ghidra's support of JAAS only handles single simple
+	JAAS modules that requests the name and password from the user.
+	<p>
+	Some known JAAS login modules:
+	<ul>
+		<li><u>com.sun.security.auth.module.LdapLoginModule</u> - allows authentication to an LDAP server.  There
+		is an example of using this module to authenticate against an Active Directory system in the
+		jaas.conf file.
+		</li>
+		<li><u>net.sf.jpam.jaas.JpamLoginModule</u> - (Linux/Unix server only) allows authentication against
+		the local PAM configuration.  You will need to download JPAM from SourceForce and install the
+		libraries in the necessary locations.  See the example in the <i>jaas.conf</i> file. 
+		</li>
+		<li><u>ghidra.server.security.loginmodule.ExternalProgramLoginModule</u> - spawns an external
+		program for each authentication request, and uses the external program's exit code as the indicator
+		of successful authentication.
+		<p>
+		There is an example (and non-useful) implementation of an external authenticator provided with
+		the Ghidra instalation called <i>server/jaas_external_program.example.sh</i>.
+		<p>
+		This login module strives to be compatible with Apache's mod_authnz_external API, and you should
+		be able to use any mod_authnz_external authenticator with Ghidra.
+		<p>
+		The external program is fed the username\n and password\n on its STDIN (ie. two text lines).
+		The external authenticator needs to exit with 0 (zero) error level
+ 		if the authentication was successful, or a non-zero error level if not successful.
+		</li>
+		<li><u>com.sun.security.auth.module.Krb5LoginModule</u> - not recommended - this login module
+		is used in the -a1 Active Directory via Kerberos authentication mode, and as such you should use it that way.  
+		</li>
+	</ul> 
+	
+	</LI>
+	<br>
 	<LI><u>Use of an SSH pre-shared key (<typewriter>-ssh</typewriter>)</u> is supported as an 
 	alternate form of authentication when using Local Ghidra password (<typewriter>-a0</typewriter>).
 	This SSH authentication is currently supported by the Headless Analyzer only.  See 
 	<a href="#sshAuthentication">SSH User Authentication</a> for configuration details.</LI>
-</OL>       
+</UL>       
 </P>
 
 (<a href="#top">Back to Top</a>)
@@ -275,34 +326,69 @@ public key files may be made without restarting the Ghidra Server.
 <h2><a name="serverOptions">Server Options</a></h2>
 
 <UL>
-	<LI><typewriter>-a#</typewriter><br>Allows a user authentication mode to be specified (see 
-	<a href=#userAuthentication>User Authentication</a>)</LI>
+	<LI>Networking options
+		<UL>
+			<LI><typewriter>-ip &lt;hostname&gt;</typewriter><br>Identifies the remote access hostname (FQDN) 
+			or IPv4 address which should be used by remote clients to access the server.  By default the 
+			host name reported by the operating system is resolved to an IPv4 address, if this fails the 
+			local loopback address is used.  The server log will indicate the remote access hostname 
+			at startup.  This option may be required when a server has multiple IP interfaces, relies on 
+			a dynamic DNS or other network address translation for incoming connections.
+			This option establishes the property value for <i>java.rmi.server.hostname</i>.
+			</LI>
+			<br>
+			<LI><typewriter>-i &lt;#.#.#.#&gt;</typewriter><br>Forces the server to be bound to a specific 
+			IPv4 interface on the server.  If specified and the <typewriter>-ip</typewriter> option is not, 
+			the address specified by <typewriter>-i</typewriter> will establish the remote access IP 
+			address as well as restrict the listening interface. If this option is not specified connections 
+			will be accepted on any interface.</LI>
+			<br>
+			<LI><typewriter>-p#</typewriter><br>Allows the base TCP port to be specified (default: 13100).  The 
+			server utilizes three (3) TCP ports starting with the specified base port (e.g., 13100,13101 and 13102).
+			The ports utilized are logged by the server during startup.</LI>
+			<br>
+			<LI><typewriter>-n</typewriter><br>Enables reverse name lookup for IP addresses when logging 
+			(requires proper configuration of reverse lookup by your DNS server).  Please note that logging 
+			of host names is now disabled by default due to the slow-down which occurs when reverse DNS is 
+			not properly configured on the network.</LI>
+		</UL>
+	</LI>
 	<br>
-	<LI><typewriter>-anonymous</typewriter><br>Enable anonymous access support for Ghidra Server 
-	and its repositories.  Only those repositories which specifically enable anonymous access will be 
-	accessible as read-only to an anonymous user.</LI>
-	<br>
-	<LI><typewriter>-ssh</typewriter><br>Enable SSH as an alternate form of authentication when 
-	using <typewriter>-a0</typewriter> authentication mode.</LI>
-	<br>
-	<LI><typewriter>-u</typewriter><br>Allows the server login user ID to be specified at time of 
-	login for <typewriter>-a0</typewriter> authentication mode.  Without this option, the users 
-	client-side login ID will be assumed.</LI>
-	<br>
-	<LI><typewriter>-ip&lt;#.#.#.#&gt;</typewriter><br>Forces the server to be bound to a specific 
-	IP address on the server. This option is required when a server has multiple IP interfaces.</LI>
-	<br>
-	<LI><typewriter>-p#</typewriter><br>Allows the base TCP port to be specified (default: 13100).  The 
-	server utilizes three (3) TCP ports starting with the specified base port (e.g., 13100,13101 and 13102).
-	The ports utilized are logged by the server during startup.</LI>
-	<br>
-	<LI><typewriter>-e#</typewriter><br>Allows the reset password expiration to be set to a 
-	specified number of days (default is 1-day).</LI>
-	<br>
-	<LI><typewriter>-n</typewriter><br>Enables reverse name lookup for IP addresses when logging 
-	(requires proper configuration of reverse lookup by your DNS server).  Please note that logging 
-	of host names is now disabled by default due to the slow-down which occurs when reverse DNS is 
-	not properly configured on the network.</LI>
+	<LI>Authentication options
+		<UL>
+			<LI><typewriter>-a#</typewriter><br>Allows a user authentication mode to be specified (see 
+			<a href=#userAuthentication>User Authentication</a>)</LI>
+			<br>
+			<LI><typewriter>-d&lt;ad_domain&gt;</typewriter><br>Sets the Active Directory domain name.
+			Example: "-dmydomain.com"</LI>
+			<br>
+			<LI><typewriter>-e#</typewriter><br>Allows the reset password expiration to be set to a 
+			specified number of days (default is 1-day).</LI>
+			<br>
+			<LI><typewriter>-jaas &lt;config_file&gt;</typewriter><br>Specifies the path to the JAAS
+			config file (when using -a4), relative to the ghidra/server directory (if not absolute).
+			<p>
+			See jaas.conf for examples and suggestions. It is the system administrator's 
+			responsibility to craft their own JAAS configuration directive when using the -a4 mode.</LI>
+			<br>
+			<LI><typewriter>-u</typewriter><br>Allows the server login user ID to be specified at time of 
+			login for <typewriter>-a0</typewriter> authentication mode.  Without this option, the users 
+			client-side login ID will be assumed.</LI>
+			<br>
+			<LI><typewriter>-autoProvision</typewriter><br>Enable the auto-creation of new Ghidra Server
+			users when they successfully authenticate to the server (-a1 and -a4 modes only).
+			Users removed from the authentication provider (e.g., Active Directory) will need to be
+			deleted manually from the Ghidra Server using svrAdmin command.</LI>
+			<br>
+			<LI><typewriter>-anonymous</typewriter><br>Enable anonymous access support for Ghidra Server 
+			and its repositories.  Only those repositories which specifically enable anonymous access will be 
+			accessible as read-only to an anonymous user.</LI>
+			<br>
+			<LI><typewriter>-ssh</typewriter><br>Enable SSH as an alternate form of authentication when 
+			using <typewriter>-a0</typewriter> authentication mode.</LI>
+			<br>
+		</UL>
+	</LI>
 </UL>
 
 (<a href="#top">Back to Top</a>)
@@ -707,7 +793,7 @@ cacerts keystore file location is <typewriter>Ghidra/cacerts</typewriter>
 and is also specified by the <typewriter>ghidra.cacerts</typewriter> property setting within the 
 <typewriter>server.conf</typewriter> file.  Uncomment this specification within the 
 <typewriter>server.conf</typewriter> file to activate use of the <typewriter>cacerts</typewriter>
-for all incoming SSL connections (i.e., all Ghidra client users must install and employ the
+for all incoming SSL/TLS connections (i.e., all Ghidra client users must install and employ the
 use of their personal PKI signing certificate for both headed and headless use - see 
 <a href="#pkiCertificates">PKI Certificates</a>).  Clients can also impose server authentication
 for all HTTPS and Ghidra Server connections by creating the <typewriter>cacerts</typewriter> file 
@@ -858,6 +944,17 @@ If you see continuous failures to create repository folders or failures to check
 the disk space on the server or folder permissions. When the server runs out of disk space, it 
 cannot create folders or check in files.
 </P>
+<br>
+
+<a name="connectErrors"><h3><u>Client/Server connection errors</u></h3></a>
+<P>
+The Ghidra Server has transitioned to using SSL/TLS connections when accessing the server's RMI
+registry.  This change in communication protocol can cause unexpected symptoms when attempting to
+connect incompatible versions of Ghidra.  When an older incompatible Ghidra client attempts to access a 
+newer SSL/TLS enabled Ghidra Server registry, the following connection error will occur:
+<PRE>
+	non-JRMP server at remote endpoint
+</PRE> 
 
 <br>
 <a name="windowsMissingTempDirectory"><h3><u>MS Windows - ERROR Missing Temp Directory</u></h3></a>

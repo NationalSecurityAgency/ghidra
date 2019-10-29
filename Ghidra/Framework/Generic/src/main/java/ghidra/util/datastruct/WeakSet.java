@@ -53,6 +53,9 @@ public abstract class WeakSet<T> implements Iterable<T> {
 			return;
 		}
 
+		// Note: sadly, this code does not work with labmda's, as we cannot get the enclosing
+		//       method/constructor
+
 		Class<? extends Object> clazz = t.getClass();
 		if (!clazz.isAnonymousClass()) {
 			return; // O.K.
@@ -76,17 +79,21 @@ public abstract class WeakSet<T> implements Iterable<T> {
 //==================================================================================================	
 
 	/**
-	 * Add the given object to the set.
+	 * Add the given object to the set
+	 * @param t the object to add
 	 */
 	public abstract void add(T t);
 
 	/**
 	 * Remove the given object from the data structure
+	 * @param t the object to remove
+	 * 
 	 */
 	public abstract void remove(T t);
 
 	/**
 	 * Returns true if the given object is in this data structure
+	 * @return true if the given object is in this data structure
 	 */
 	public abstract boolean contains(T t);
 
@@ -97,11 +104,13 @@ public abstract class WeakSet<T> implements Iterable<T> {
 
 	/**
 	 * Return the number of objects contained within this data structure
+	 * @return the size
 	 */
 	public abstract int size();
 
 	/**
-	 * Return whether this data structure is empty. 
+	 * Return whether this data structure is empty
+	 * @return whether this data structure is empty
 	 */
 	public abstract boolean isEmpty();
 
@@ -118,5 +127,10 @@ public abstract class WeakSet<T> implements Iterable<T> {
 	 */
 	public Stream<T> stream() {
 		return values().stream();
+	}
+
+	@Override
+	public String toString() {
+		return values().toString();
 	}
 }

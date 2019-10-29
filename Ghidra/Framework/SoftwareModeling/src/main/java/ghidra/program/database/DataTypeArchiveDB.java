@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +15,10 @@
  */
 package ghidra.program.database;
 
+import java.io.IOException;
+import java.util.*;
+
+import db.*;
 import ghidra.framework.Application;
 import ghidra.framework.data.DomainObjectAdapterDB;
 import ghidra.framework.model.*;
@@ -31,16 +34,11 @@ import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
 import ghidra.util.task.TaskMonitorAdapter;
 
-import java.io.IOException;
-import java.util.*;
-
-import db.*;
-
 /**
  * Database implementation for Data Type Archive. 
  */
-public class DataTypeArchiveDB extends DomainObjectAdapterDB implements DataTypeArchive,
-		DataTypeArchiveChangeManager {
+public class DataTypeArchiveDB extends DomainObjectAdapterDB
+		implements DataTypeArchive, DataTypeArchiveChangeManager {
 
 	/**
 	 * DB_VERSION should be incremented any time a change is made to the overall
@@ -80,8 +78,8 @@ public class DataTypeArchiveDB extends DomainObjectAdapterDB implements DataType
 
 	private final static Class<?>[] COL_CLASS = new Class[] { StringField.class };
 	private final static String[] COL_TYPES = new String[] { "Value" };
-	private final static Schema SCHEMA = new Schema(0, StringField.class, "Key", COL_CLASS,
-		COL_TYPES);
+	private final static Schema SCHEMA =
+		new Schema(0, StringField.class, "Key", COL_CLASS, COL_TYPES);
 
 	private ProjectDataTypeManager dataTypeManager;
 
@@ -98,8 +96,8 @@ public class DataTypeArchiveDB extends DomainObjectAdapterDB implements DataType
 	 * @throws InvalidNameException 
 	 * @throws DuplicateNameException 
 	 */
-	public DataTypeArchiveDB(DomainFolder folder, String name, Object consumer) throws IOException,
-			DuplicateNameException, InvalidNameException {
+	public DataTypeArchiveDB(DomainFolder folder, String name, Object consumer)
+			throws IOException, DuplicateNameException, InvalidNameException {
 		super(new DBHandle(), name, 500, 1000, consumer);
 		this.name = name;
 
@@ -118,7 +116,9 @@ public class DataTypeArchiveDB extends DomainObjectAdapterDB implements DataType
 			endTransaction(id, true);
 			clearUndo(false);
 
-			folder.createFile(name, this, TaskMonitorAdapter.DUMMY_MONITOR);
+			if (folder != null) {
+				folder.createFile(name, this, TaskMonitorAdapter.DUMMY_MONITOR);
+			}
 
 			success = true;
 		}
@@ -136,7 +136,7 @@ public class DataTypeArchiveDB extends DomainObjectAdapterDB implements DataType
 	}
 
 	/**
-	 * Constructs a new DataTypeArchivemDB
+	 * Constructs a new DataTypeArchiveDB
 	 * @param dbh a handle to an open data type archive database.
 	 * @param openMode one of:
 	 * 		READ_ONLY: the original database will not be modified
@@ -207,8 +207,8 @@ public class DataTypeArchiveDB extends DomainObjectAdapterDB implements DataType
 	private void propertiesRestore() {
 		Options pl = getOptions(ARCHIVE_INFO);
 		boolean origChangeState = changed;
-		pl.registerOption(CREATED_WITH_GHIDRA_VERSION, "4.3",
-			null, "Version of Ghidra used to create this program.");
+		pl.registerOption(CREATED_WITH_GHIDRA_VERSION, "4.3", null,
+			"Version of Ghidra used to create this program.");
 		pl.registerOption(DATE_CREATED, JANUARY_1_1970, null, "Date this program was created");
 //	    registerDefaultPointerSize();
 		changed = origChangeState;

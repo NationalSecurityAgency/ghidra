@@ -45,8 +45,7 @@ public class ElfStringTable implements ElfFileSection {
 		ElfStringTable elfStringTable =
 			(ElfStringTable) reader.getFactory().create(ElfStringTable.class);
 		elfStringTable.initElfStringTable(reader, header, stringTableSection, fileOffset,
-			addrOffset,
-			length);
+			addrOffset, length);
 		return elfStringTable;
 	}
 
@@ -81,6 +80,9 @@ public class ElfStringTable implements ElfFileSection {
 	 * @return string or null on error
 	 */
 	public String readString(BinaryReader reader, long stringOffset) {
+		if (fileOffset < 0) {
+			return null;
+		}
 		try {
 			if (stringOffset >= length) {
 				throw new IOException("String read beyond table bounds");

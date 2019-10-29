@@ -21,8 +21,7 @@ import java.util.Arrays;
 
 import org.xml.sax.SAXParseException;
 
-import ghidra.app.util.MemoryBlockUtil;
-import ghidra.app.util.importer.MemoryConflictHandler;
+import ghidra.app.util.MemoryBlockUtils;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Program;
@@ -53,32 +52,26 @@ class MemoryMapXmlMgr {
 ///////////////////////////////////////////////////////////////////////////////////////
 
 	void read(XmlPullParser parser, boolean overwriteConflicts, TaskMonitor monitor,
-			String directory, MemoryConflictHandler handler)
+			String directory)
 			throws SAXParseException, FileNotFoundException, CancelledException {
 
-		MemoryBlockUtil mbu = new MemoryBlockUtil(program, handler);
-		try {
-			XmlElement element = parser.next();
+		XmlElement element = parser.next();
+		element = parser.next();
+		while (element.getName().equals("MEMORY_SECTION")) {
+			if (monitor.isCancelled()) {
+				throw new CancelledException();
+			}
+			processMemoryBlock(element, parser, directory, program, monitor);
 			element = parser.next();
-			while (element.getName().equals("MEMORY_SECTION")) {
-				if (monitor.isCancelled()) {
-					throw new CancelledException();
-				}
-				processMemoryBlock(element, parser, directory, mbu, monitor);
-				element = parser.next();
-			}
-			if (element.isStart() || !element.getName().equals("MEMORY_MAP")) {
-				throw new SAXParseException("Expected MEMORY_MAP end tag, got " + element.getName(),
-					null, null, parser.getLineNumber(), parser.getColumnNumber());
-			}
 		}
-		finally {
-			mbu.dispose();
+		if (element.isStart() || !element.getName().equals("MEMORY_MAP")) {
+			throw new SAXParseException("Expected MEMORY_MAP end tag, got " + element.getName(),
+				null, null, parser.getLineNumber(), parser.getColumnNumber());
 		}
 	}
 
 	private void processMemoryBlock(XmlElement memorySectionElement, XmlPullParser parser,
-			String directory, MemoryBlockUtil mbu, TaskMonitor monitor)
+			String directory, Program program, TaskMonitor monitor)
 			throws FileNotFoundException {
 
 		String name = memorySectionElement.getAttribute("NAME");
@@ -132,8 +125,9 @@ class MemoryMapXmlMgr {
 				}
 				if (overlayName != null) {
 					MemoryBlock block =
-						mbu.createOverlayBlock(overlayName, addr, new ByteArrayInputStream(bytes),
-							bytes.length, comment, null, r, w, x, monitor);
+						MemoryBlockUtils.createInitializedBlock(program, true, overlayName, addr,
+							new ByteArrayInputStream(bytes),
+							bytes.length, comment, null, r, w, x, log, monitor);
 					if (block != null) {
 						block.setVolatile(isVolatile);
 						if (!name.equals(overlayName)) {
@@ -142,26 +136,38 @@ class MemoryMapXmlMgr {
 					}
 				}
 				else {
-					MemoryBlock block = mbu.createInitializedBlock(name, addr, bytes, comment, null,
-						r, w, x, monitor);
+
+					MemoryBlock block = MemoryBlockUtils.createInitializedBlock(program, false,
+						name, addr, new ByteArrayInputStream(bytes), bytes.length, comment, null,
+						r, w, x, log, monitor);
 					if (block != null) {
 						block.setVolatile(isVolatile);
 					}
 				}
 			}
-			else if (element.getName().equals("BIT_MAPPED") ||
-				element.getName().equals("BYTE_MAPPED")) {
+			else if (element.getName().equals("BIT_MAPPED")) {
 				Address sourceAddr = factory.getAddress(element.getAttribute("SOURCE_ADDRESS"));
-				MemoryBlock block = mbu.createMappedBlock(element.getName().equals("BIT_MAPPED"),
-					name, addr, sourceAddr, length, comment, null, r, w, x);
+
+				MemoryBlock block = MemoryBlockUtils.createBitMappedBlock(program, overlayName,
+					addr, sourceAddr, length, comment, comment, r, w, x, log);
+				if (block != null) {
+					block.setVolatile(isVolatile);
+				}
+				parser.next(); // consume end of Bit_mapped
+			}
+			else if (element.getName().equals("BYTE_MAPPED")) {
+				Address sourceAddr = factory.getAddress(element.getAttribute("SOURCE_ADDRESS"));
+
+				MemoryBlock block = MemoryBlockUtils.createByteMappedBlock(program, overlayName,
+					addr, sourceAddr, length, comment, comment, r, w, x, log);
 				if (block != null) {
 					block.setVolatile(isVolatile);
 				}
 				parser.next(); // consume end of Bit_mapped
 			}
 			else {
-				MemoryBlock block = mbu.createUninitializedBlock(overlayName != null, name, addr,
-					length, comment, null, r, w, x);
+				MemoryBlock block = MemoryBlockUtils.createUninitializedBlock(program,
+					overlayName != null, name, addr, length, comment, null, r, w, x, log);
 				if (block != null) {
 					block.setVolatile(isVolatile);
 					if (overlayName != null && !name.equals(overlayName)) {
@@ -294,14 +300,18 @@ class MemoryMapXmlMgr {
 		writer.startElement("MEMORY_SECTION", attrs);
 
 		if (block.getType() == MemoryBlockType.BIT_MAPPED) {
+			// bit mapped blocks can only have one sub-block
+			MemoryBlockSourceInfo info = block.getSourceInfos().get(0);
 			attrs.addAttribute("SOURCE_ADDRESS",
-				((MappedMemoryBlock) block).getOverlayedMinAddress().toString());
+				info.getMappedRange().get().getMinAddress().toString());
 			writer.startElement("BIT_MAPPED", attrs);
 			writer.endElement("BIT_MAPPED");
 		}
 		else if (block.getType() == MemoryBlockType.BYTE_MAPPED) {
+			// byte mapped blocks can only have one sub-block
+			MemoryBlockSourceInfo info = block.getSourceInfos().get(0);
 			attrs.addAttribute("SOURCE_ADDRESS",
-				((MappedMemoryBlock) block).getOverlayedMinAddress().toString());
+				info.getMappedRange().get().getMinAddress().toString());
 			writer.startElement("BYTE_MAPPED", attrs);
 			writer.endElement("BYTE_MAPPED");
 		}

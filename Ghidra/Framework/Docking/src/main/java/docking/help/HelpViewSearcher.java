@@ -15,12 +15,12 @@
  */
 package docking.help;
 
-import java.awt.Component;
-import java.awt.Rectangle;
+import java.awt.*;
 import java.awt.event.*;
 import java.io.File;
 import java.net.URL;
 import java.util.*;
+import java.util.List;
 import java.util.regex.*;
 
 import javax.help.*;
@@ -32,8 +32,9 @@ import javax.swing.text.Document;
 
 import docking.DockingUtils;
 import docking.DockingWindowManager;
-import docking.util.KeyBindingUtils;
+import docking.actions.KeyBindingUtils;
 import docking.widgets.*;
+import generic.util.WindowUtilities;
 import ghidra.util.Msg;
 import ghidra.util.exception.AssertException;
 import ghidra.util.task.*;
@@ -232,7 +233,8 @@ class HelpViewSearcher {
 
 		@Override
 		public void actionPerformed(ActionEvent e) {
-			DockingWindowManager.showDialog(htmlEditorPane, findDialog);
+			Window helpWindow = WindowUtilities.windowForComponent(htmlEditorPane);
+			DockingWindowManager.showDialog(helpWindow, findDialog);
 		}
 	}
 

@@ -26,9 +26,9 @@
 import java.util.Iterator;
 
 import ghidra.app.script.GhidraScript;
-import ghidra.app.util.MemoryBlockUtil;
+import ghidra.app.util.MemoryBlockUtils;
 import ghidra.app.util.NamespaceUtils;
-import ghidra.app.util.importer.MemoryConflictHandler;
+import ghidra.app.util.importer.MessageLog;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.*;
 import ghidra.program.model.symbol.*;
@@ -242,46 +242,29 @@ public class MergeTwoProgramsScript extends GhidraScript {
 
 	private void mergeMemory( Program currProgram, Program otherProgram ) throws Exception {
 		monitor.setMessage( "Merging memory..." );
-		MemoryConflictHandler memoryConflictHandler = MemoryConflictHandler.ALWAYS_OVERWRITE;
-		MemoryBlockUtil mbu = new MemoryBlockUtil( currProgram, memoryConflictHandler );
-		try {
-			Memory otherMemory = otherProgram.getMemory();
-			MemoryBlock [] otherBlocks = otherMemory.getBlocks();
-			for ( MemoryBlock otherBlock : otherBlocks ) {
-				if ( monitor.isCancelled() ) {
-					break;
-				}
-				if ( otherBlock.getType() != MemoryBlockType.DEFAULT ) {
-					printerr( "Unhandled memory block type: " + otherBlock.getName() );
-					continue;
-				}
-				if ( otherBlock.isInitialized() ) {
-					mbu.createInitializedBlock( otherBlock.getName(),
-						otherBlock.getStart(),
-						otherBlock.getData(),
-						otherBlock.getSize(),
-						otherBlock.getComment(),
-						otherBlock.getSourceName(),
-						otherBlock.isRead(),
-						otherBlock.isWrite(),
-						otherBlock.isExecute(),
-						monitor );
-				}
-				else {
-					mbu.createUninitializedBlock( false,
-						otherBlock.getName(),
-						otherBlock.getStart(),
-						otherBlock.getSize(),
-						otherBlock.getComment(),
-						otherBlock.getSourceName(),
-						otherBlock.isRead(),
-						otherBlock.isWrite(),
-						otherBlock.isExecute() );
-				}
+		Memory otherMemory = otherProgram.getMemory();
+		MemoryBlock[] otherBlocks = otherMemory.getBlocks();
+		MessageLog log = new MessageLog();
+		for (MemoryBlock otherBlock : otherBlocks) {
+			if (monitor.isCancelled()) {
+				break;
 			}
-		}
-		finally {
-			mbu.dispose();
+			if (otherBlock.getType() != MemoryBlockType.DEFAULT) {
+				printerr("Unhandled memory block type: " + otherBlock.getName());
+				continue;
+			}
+			if (otherBlock.isInitialized()) {
+				MemoryBlockUtils.createInitializedBlock(currProgram, false, otherBlock.getName(),
+					otherBlock.getStart(), otherBlock.getData(), otherBlock.getSize(),
+					otherBlock.getComment(), otherBlock.getSourceName(), otherBlock.isRead(),
+					otherBlock.isWrite(), otherBlock.isExecute(), log, monitor);
+			}
+			else {
+				MemoryBlockUtils.createUninitializedBlock(currProgram, false, otherBlock.getName(),
+					otherBlock.getStart(), otherBlock.getSize(), otherBlock.getComment(),
+					otherBlock.getSourceName(), otherBlock.isRead(), otherBlock.isWrite(),
+					otherBlock.isExecute(), log);
+			}
 		}
 	}
 

@@ -54,6 +54,14 @@
 #  1111 0110 ssss 1ccc  # call rs            if ccc call rs
 #  1111 1nnn nnnn nnnn  # call n             call n
 #
+#### user-defined
+#  1010 0010 ssss 0000  # user_one rs       user_one rs
+#  1010 0010 ssss 0000  # user_two rs       user_two rs
+#  1010 0011 0000 0000  # user_three        user_three 
+#  1010 0100 ssss tttt  # user_four rs rt   user_four rs rt       
+#  1010 0101 nnnn nnnn  # user_five n       user_five n  
+#  1010 0110 ssss 0000  # user_six rs       user_six rs
+#
 #### RESERVED
 #  1101 1001 xxxx xxxx  # RESERVED BANK
 #  1101 1010 xxxx xxxx  # RESERVED BANK
@@ -133,6 +141,10 @@ macro logicflags() {
 	V = 0;
 }
 
+define pcodeop pcodeop_one;
+define pcodeop pcodeop_two;
+define pcodeop pcodeop_three;
+
 # operations
 
 :imm  rd, Imm11  is $(INSTR_PHASE) op1515=0x0 & rd & Imm11   { logicflags(); rd = Imm11; resultflags(rd); }
@@ -202,3 +214,11 @@ macro logicflags() {
 
 #  1111 0110 ssss 1ccc  # call rs            if ccc call rs
 :call^COND rs      is $(INSTR_PHASE) op1215=0xf & op0811=0x6 & rs & op0303=0x1 & COND        { build COND; lr = inst_next; call [rs]; }
+
+:user_one rs is $(INSTR_PHASE) op1215=0xa & op0811=0x01 & rs & op0003=0x0          { pcodeop_one(rs);}
+:user_two rs is $(INSTR_PHASE) op1215=0xa & op0811=0x02 & rs & op0003=0x0          { pcodeop_two(rs); pcodeop_three();}
+:user_three is $(INSTR_PHASE) op1215=0xa & op0811=0x03 & op0007=0x0                { pcodeop_three();}
+:user_four rs rt is $(INSTR_PHASE) op1215=0xa & op0811=0x04 & rs & rt              { pcodeop_one(rs); call [rt]; pcodeop_three();}  
+:user_five Rel8 is $(INSTR_PHASE) op1215=0xa & op0811=0x05 & Rel8                  { lr = inst_next; call Rel8; pcodeop_three();} 
+:user_six rs is $(INSTR_PHASE) op1215=0xa & op0811=0x06 & rs & op0003=0x0          { r1 = pcodeop_one(rs); call [r1];}
+

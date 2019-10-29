@@ -15,8 +15,6 @@
  */
 package ghidra.util.task;
 
-import ghidra.util.Issue;
-
 /**
  * A monitor that is designed for sub-tasks, where the outer task handles reporting messages and
  * progress.  This class is really just for checking cancelled.
@@ -86,11 +84,6 @@ public class CancelOnlyWrappingTaskMonitor extends WrappingTaskMonitor {
 	@Override
 	public long getProgress() {
 		return 0;
-	}
-
-	@Override
-	public void reportIssue(Issue issue) {
-		// ignore
 	}
 
 	@Override

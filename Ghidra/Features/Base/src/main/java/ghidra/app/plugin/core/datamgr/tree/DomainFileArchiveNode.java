@@ -22,6 +22,7 @@ import ghidra.app.plugin.core.datamgr.archive.DomainFileArchive;
 import ghidra.framework.model.DomainFile;
 import ghidra.framework.model.DomainObject;
 import ghidra.program.model.listing.Program;
+import ghidra.util.HTMLUtilities;
 import resources.MultiIcon;
 import resources.ResourceManager;
 import resources.icons.TranslateIcon;
@@ -102,7 +103,7 @@ public class DomainFileArchiveNode extends ArchiveNode {
 	public String getToolTip() {
 		DomainFile file = ((DomainFileArchive) archive).getDomainFile();
 		if (file != null) {
-			return file.getPathname();
+			return "<html>" + HTMLUtilities.escapeHTML(file.getPathname());
 		}
 		return "[Unsaved New Domain File Archive]";
 	}
@@ -114,10 +115,9 @@ public class DomainFileArchiveNode extends ArchiveNode {
 
 	@Override
 	public Icon getIcon(boolean expanded) {
-		DomainFile df = ((DomainFileArchive) archive).getDomainFile();
+		
 		ImageIcon baseIcon = archive.getIcon(expanded);
-
-		BackgroundIcon bgIcon = new BackgroundIcon(24, 16, df.isVersioned());
+		BackgroundIcon bgIcon = new BackgroundIcon(24, 16, isVersioned);
 		MultiIcon multiIcon = new MultiIcon(bgIcon);
 		multiIcon.addIcon(baseIcon);
 

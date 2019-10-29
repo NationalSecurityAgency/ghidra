@@ -169,8 +169,9 @@ public class FunctionResultStateStackAnalysisCmd extends BackgroundCommand {
 
 		// Process all the functions identified as needing stack analysis.
 		// The list will have the lowest level functions analyzed first.
-		int default_extraPop = program.getCompilerSpec().getCallStackMod();
-		int default_stackshift = program.getCompilerSpec().getCallStackShift();
+		PrototypeModel defaultModel = program.getCompilerSpec().getDefaultCallingConvention();
+		int default_extraPop = defaultModel.getExtrapop();
+		int default_stackshift = defaultModel.getStackshift();
 
 		while (!funcList.isEmpty()) {
 			monitor.checkCanceled();
@@ -256,19 +257,22 @@ public class FunctionResultStateStackAnalysisCmd extends BackgroundCommand {
 					int storageSpaceID, RefType refType, TaskMonitor monitor1)
 					throws CancelledException {
 
-				if (instrOpIndex < 0)
+				if (instrOpIndex < 0) {
 					return;
+				}
 				Address fromAddr = op.getSeqnum().getTarget();
 				Instruction instr = listing.getInstructionAt(fromAddr);
-				if (instr == null)
+				if (instr == null) {
 					return;
+				}
 				Address stackAddr = addrFactory.getStackSpace().getAddress(stackOffset);
 				RefType rt = refType;
 				Reference ref = refMgr.getReference(fromAddr, stackAddr, instrOpIndex);
 				if (ref != null) {
 					RefType existingRefType = ref.getReferenceType();
-					if (existingRefType == rt)
+					if (existingRefType == rt) {
 						return;
+					}
 					if (existingRefType == RefType.READ || existingRefType == RefType.WRITE) {
 						rt = RefType.READ_WRITE;
 					}

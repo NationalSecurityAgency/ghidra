@@ -22,7 +22,6 @@ import org.apache.commons.io.FilenameUtils;
 
 import ghidra.app.util.Option;
 import ghidra.app.util.bin.ByteProvider;
-import ghidra.app.util.importer.MemoryConflictHandler;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.framework.model.*;
 import ghidra.framework.store.local.ItemSerializer;
@@ -84,13 +83,13 @@ public class GdtLoader implements Loader {
 
 	@Override
 	public boolean loadInto(ByteProvider provider, LoadSpec loadSpec, List<Option> options,
-			MessageLog messageLog, Program program, TaskMonitor monitor,
-			MemoryConflictHandler memoryConflictHandler) throws IOException, CancelledException {
+			MessageLog messageLog, Program program, TaskMonitor monitor)
+			throws IOException, CancelledException {
 		throw new UnsupportedOperationException("cannot add GDT to program");
 	}
 
 	@Override
-	public String validateOptions(ByteProvider provider, LoadSpec loadSpec, List<Option> options) {
+	public String validateOptions(ByteProvider provider, LoadSpec loadSpec, List<Option> options, Program program) {
 		if (options != null && options.size() > 0) {
 			return "GDTLoader takes no options";
 		}

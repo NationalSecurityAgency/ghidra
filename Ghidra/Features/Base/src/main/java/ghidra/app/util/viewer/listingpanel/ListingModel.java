@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +15,13 @@
  */
 package ghidra.app.util.viewer.listingpanel;
 
+import docking.widgets.fieldpanel.Layout;
 import ghidra.app.util.viewer.format.FormatManager;
 import ghidra.framework.options.Options;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Data;
 import ghidra.program.model.listing.Program;
 import ghidra.util.task.TaskMonitor;
-import docking.widgets.fieldpanel.Layout;
 
 public interface ListingModel {
 
@@ -30,10 +29,10 @@ public interface ListingModel {
 
 	public static final String DISPLAY_EXTERNAL_FUNCTION_POINTER_OPTION_NAME =
 		FUNCTION_POINTER_OPTION_GROUP_NAME + Options.DELIMITER +
-			"Display Function Header for External Function Pointers";
+			"Display External Function Pointer Header";
 	public static final String DISPLAY_NONEXTERNAL_FUNCTION_POINTER_OPTION_NAME =
 		FUNCTION_POINTER_OPTION_GROUP_NAME + Options.DELIMITER +
-			"Display Function Header for Non-External Function Pointers";
+			"Display Non-External Function Pointer Header";
 
 	public AddressSetView getAddressSet();
 

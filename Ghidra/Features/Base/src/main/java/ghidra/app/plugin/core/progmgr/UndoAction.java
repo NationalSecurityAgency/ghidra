@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,23 +15,22 @@
  */
 package ghidra.app.plugin.core.progmgr;
 
-import ghidra.app.context.ProgramActionContext;
-import ghidra.app.context.ProgramContextAction;
-import ghidra.app.services.GoToService;
-import ghidra.app.services.NavigationHistoryService;
-import ghidra.framework.plugintool.PluginTool;
-import ghidra.framework.plugintool.util.ToolConstants;
-import ghidra.program.model.listing.Program;
-import ghidra.util.*;
-
 import java.awt.event.InputEvent;
 import java.io.IOException;
 
 import javax.swing.Icon;
 
-import resources.ResourceManager;
 import docking.ActionContext;
 import docking.action.*;
+import docking.tool.ToolConstants;
+import ghidra.app.context.ProgramActionContext;
+import ghidra.app.context.ProgramContextAction;
+import ghidra.app.services.GoToService;
+import ghidra.app.services.NavigationHistoryService;
+import ghidra.framework.plugintool.PluginTool;
+import ghidra.program.model.listing.Program;
+import ghidra.util.*;
+import resources.ResourceManager;
 
 public class UndoAction extends ProgramContextAction {
 	private final PluginTool tool;
@@ -40,7 +38,7 @@ public class UndoAction extends ProgramContextAction {
 	public UndoAction(PluginTool tool, String owner) {
 		super("Undo", owner);
 		this.tool = tool;
-		setHelpLocation(new HelpLocation("Tool", "Undo"));
+		setHelpLocation(new HelpLocation(ToolConstants.TOOL_HELP_TOPIC, "Undo"));
 		String[] menuPath = { ToolConstants.MENU_EDIT, "&Undo" };
 		Icon icon = ResourceManager.loadImage("images/undo.png");
 		MenuData menuData = new MenuData(menuPath, icon, "Undo");
@@ -77,7 +75,8 @@ public class UndoAction extends ProgramContextAction {
 		if (program.canUndo()) {
 			String programName = program.getDomainFile().getName();
 			getMenuBarData().setMenuItemName("Undo " + programName);
-			String tip = HTMLUtilities.toWrappedHTML("Undo " + program.getUndoName());
+			String tip = HTMLUtilities.toWrappedHTML(
+				"Undo " + HTMLUtilities.escapeHTML(program.getUndoName()));
 			setDescription(tip);
 			return true;
 		}

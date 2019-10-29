@@ -15,13 +15,13 @@
  */
 package ghidra.javaclass.format.attributes;
 
+import java.io.IOException;
+
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.StructConverter;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.data.StructureDataType;
 import ghidra.util.exception.DuplicateNameException;
-
-import java.io.IOException;
 
 /**
  * NOTE: THE FOLLOWING TEXT EXTRACTED FROM JVMS7.PDF
@@ -45,14 +45,14 @@ public class AnnotationJava implements StructConverter {
 
 	private short typeIndex;
 	private short numberOfElementValuePairs;
-	private AnnotationElementValuePair [] elementValuePairs;
+	private AnnotationElementValuePair[] elementValuePairs;
 
-	public AnnotationJava( BinaryReader reader ) throws IOException {
+	public AnnotationJava(BinaryReader reader) throws IOException {
 		typeIndex = reader.readNextShort();
 		numberOfElementValuePairs = reader.readNextShort();
-		elementValuePairs = new AnnotationElementValuePair[ numberOfElementValuePairs ];
-		for ( int i = 0 ; i < numberOfElementValuePairs ; ++i ) {
-			elementValuePairs[ i ] = new AnnotationElementValuePair( reader );
+		elementValuePairs = new AnnotationElementValuePair[getNumberOfElementValuePairs()];
+		for (int i = 0; i < getNumberOfElementValuePairs(); ++i) {
+			elementValuePairs[i] = new AnnotationElementValuePair(reader);
 		}
 	}
 
@@ -64,8 +64,8 @@ public class AnnotationJava implements StructConverter {
 	 * represented by this annotation structure.
 	 * @return  valid index into the constant_pool table
 	 */
-	public short getTypeIndex() {
-		return typeIndex;
+	public int getTypeIndex() {
+		return typeIndex & 0xffff;
 	}
 
 	/**
@@ -77,26 +77,26 @@ public class AnnotationJava implements StructConverter {
 	 * annotation.
 	 * @return the number of element-value pairs of the annotation
 	 */
-	public short getNumberOfElementValuePairs() {
-		return numberOfElementValuePairs;
+	public int getNumberOfElementValuePairs() {
+		return numberOfElementValuePairs & 0xffff;
 	}
 
 	/**
 	 * Returns the element value pair table for this annotation.
 	 * @return the element value pair table
 	 */
-	public AnnotationElementValuePair [] getElementValuePairs() {
+	public AnnotationElementValuePair[] getElementValuePairs() {
 		return elementValuePairs;
 	}
 
 	@Override
 	public DataType toDataType() throws DuplicateNameException, IOException {
-		String name = "annotation" +"|" + numberOfElementValuePairs + "|";
-		StructureDataType structure = new StructureDataType( name, 0 );
-		structure.add( WORD, "type_index", null );
-		structure.add( WORD, "num_element_value_pairs", null );
-		for ( int i = 0 ; i < elementValuePairs.length ; ++i ) {
-			structure.add( elementValuePairs[ i ].toDataType(), "element_value_pair_" + i, null );
+		String name = "annotation" + "|" + numberOfElementValuePairs + "|";
+		StructureDataType structure = new StructureDataType(name, 0);
+		structure.add(WORD, "type_index", null);
+		structure.add(WORD, "num_element_value_pairs", null);
+		for (int i = 0; i < elementValuePairs.length; ++i) {
+			structure.add(elementValuePairs[i].toDataType(), "element_value_pair_" + i, null);
 		}
 		return structure;
 	}

@@ -23,9 +23,7 @@ import docking.ActionContext;
 import docking.action.*;
 import ghidra.app.context.ListingActionContext;
 import ghidra.app.util.datatype.DataTypeSelectionDialog;
-import ghidra.framework.options.*;
 import ghidra.framework.plugintool.PluginTool;
-import ghidra.framework.plugintool.util.ToolConstants;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.data.DataTypeManager;
 import ghidra.program.model.listing.*;
@@ -36,45 +34,30 @@ import ghidra.util.data.DataTypeParser.AllowedDataTypes;
 /**
  * An action that allows the user to change or select a data type.
  */
-public class ChooseDataTypeAction extends DockingAction implements OptionsChangeListener {
+public class ChooseDataTypeAction extends DockingAction {
 	private static final KeyStroke KEY_BINDING = KeyStroke.getKeyStroke(KeyEvent.VK_T, 0);
 	private final static String ACTION_NAME = "Choose Data Type";
 
 	private FunctionPlugin plugin;
 
 	public ChooseDataTypeAction(FunctionPlugin plugin) {
-		super(ACTION_NAME, plugin.getName(), false);
-
+		super(ACTION_NAME, plugin.getName(), KeyBindingType.SHARED);
 		this.plugin = plugin;
 
-		// setup key binding management
-		PluginTool tool = plugin.getTool();
-		DockingAction action = new DummyKeyBindingsOptionsAction(ACTION_NAME, KEY_BINDING);
-		tool.addAction(action);
-
-		// setup options to know when the dummy key binding is changed
-		ToolOptions options = tool.getOptions(ToolConstants.KEY_BINDINGS);
-		KeyStroke keyStroke = options.getKeyStroke(action.getFullName(), KEY_BINDING);
-		setPopupMenu(plugin.getDataActionMenuName(null), true);
-
-		if (!KEY_BINDING.equals(keyStroke)) {
-			// user-defined keystroke
-			setUnvalidatedKeyBindingData(new KeyBindingData(keyStroke));
-		}
-		else {
-			setKeyBindingData(new KeyBindingData(keyStroke));
-		}
-
-		options.addOptionsChangeListener(this);
+		setPopupMenuData(new MenuData(
+			new String[] { FunctionPlugin.SET_DATA_TYPE_PULLRIGHT, "Choose Data Type..." }, null,
+			"Array"));
 		setHelpLocation(new HelpLocation("DataTypeEditors", "DataTypeSelectionDialog"));
+
+		initKeyStroke(KEY_BINDING);
 	}
 
-	@Override
-	public void optionsChanged(ToolOptions options, String name, Object oldValue, Object newValue) {
-		KeyStroke keyStroke = (KeyStroke) newValue;
-		if (name.startsWith(ACTION_NAME)) {
-			setUnvalidatedKeyBindingData(new KeyBindingData(keyStroke));
+	private void initKeyStroke(KeyStroke keyStroke) {
+		if (keyStroke == null) {
+			return;
 		}
+
+		setKeyBindingData(new KeyBindingData(keyStroke));
 	}
 
 	@Override
@@ -88,18 +71,17 @@ public class ChooseDataTypeAction extends DockingAction implements OptionsChange
 		if (!(actionContext.getContextObject() instanceof ListingActionContext)) {
 			return false;
 		}
-		ListingActionContext context = (ListingActionContext) actionContext.getContextObject();
 
+		ListingActionContext context = (ListingActionContext) actionContext.getContextObject();
 		if (context.hasSelection()) {
 			return false;
 		}
+
 		ProgramLocation location = context.getLocation();
 		if (plugin.isValidDataLocation(location)) {
-			setPopupMenu(plugin.getDataActionMenuName(location), true);
 			return true;
 		}
 		if (location instanceof VariableLocation) {
-			setPopupMenu(plugin.getDataActionMenuName(location), false);
 			return true;
 		}
 		return false;
@@ -131,7 +113,7 @@ public class ChooseDataTypeAction extends DockingAction implements OptionsChange
 			}
 
 			VariableStorage storage = var.getVariableStorage();
-			if (storage.isValid()) {
+			if (storage.isValid() && !storage.isStackStorage()) {
 				return storage.size();
 			}
 		}
@@ -155,11 +137,5 @@ public class ChooseDataTypeAction extends DockingAction implements OptionsChange
 		selectionDialog.setInitialDataType(currentDataType);
 		tool.showDialog(selectionDialog);
 		return selectionDialog;
-	}
-
-	private void setPopupMenu(String name, boolean isSignatureAction) {
-		setPopupMenuData(new MenuData(
-			new String[] { FunctionPlugin.SET_DATA_TYPE_PULLRIGHT, "Choose Data Type..." }, null,
-			"Array"));
 	}
 }

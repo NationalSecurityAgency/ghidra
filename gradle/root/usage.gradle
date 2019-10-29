@@ -1,0 +1,43 @@
+
+defaultTasks ':usage'
+
+task usage {
+	doLast {
+		println """
+
+*******************************************************************************************
+			
+GHIDRA GRADLE
+
+    Note: Most tasks can can be used to affect all modules or can
+          be run against a specific module. For example:
+
+	from root project, "gradle buildHelp"  builds help for all modules.
+	from root project, "gradle :Base:buildHelp" builds help for the "Base" module
+	from the Base project dir, "gradle buildHelp" builds help for the "Base" module
+
+Primary gradle tasks for Ghidra
+
+    usage                           Displays this text                                      [root/usage.gradle]
+    prepDev                         Prepares development environment                        [root/prepDev.gradle]
+    buildHelp                       Builds help                                             [root/buildHelp.gradle] 
+    buildGhidra 					Builds Ghidra for the current platform                  [root/distribution.gradle]
+    buildGhidra -PallPlatforms		Builds Ghidra for all platforms (assumes natives	 	[root/distribution.gradle]
+    									for other platforms are already built into
+    									appropriate os dirs)
+
+Task rules:
+    buildNatives_[platform]          builds the native executables and libraries for the
+                                     specified platform (win64, linux64, osx64, etc.)       [nativeProject.gradle] 
+    prebuildNatives_[platform]       builds the native executables and libraries for the
+                                     specified platform and copies results to bin repo.     [nativeProject.gradle]
+    	 
+"""
+	}
+}
+
+
+tasks['tasks'].doLast {
+//	usage.execute()
+
+}

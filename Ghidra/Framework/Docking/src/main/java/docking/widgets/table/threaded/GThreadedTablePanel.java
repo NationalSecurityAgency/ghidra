@@ -21,6 +21,7 @@ import java.awt.FlowLayout;
 import javax.swing.*;
 
 import docking.widgets.EmptyBorderButton;
+import docking.widgets.label.GLabel;
 import docking.widgets.table.GTable;
 import ghidra.util.task.TaskMonitor;
 import ghidra.util.task.TaskMonitorComponent;
@@ -150,13 +151,13 @@ public class GThreadedTablePanel<T> extends JPanel {
 	}
 
 	private void buildPending() {
-		JLabel label = new JLabel("Update pending...", SwingConstants.CENTER);
 		refreshButton = new EmptyBorderButton(Icons.REFRESH_ICON);
 		refreshButton.addActionListener(e -> threadedModel.reload());
 		refreshButton.setToolTipText("Force Refresh Now");
 		pendingPanel = new JPanel(new FlowLayout());
 		pendingPanel.setName("Pending Panel");
-		pendingPanel.add(label, BorderLayout.CENTER);
+		pendingPanel.add(new GLabel("Update pending...", SwingConstants.CENTER),
+			BorderLayout.CENTER);
 		pendingPanel.add(refreshButton, BorderLayout.EAST);
 	}
 

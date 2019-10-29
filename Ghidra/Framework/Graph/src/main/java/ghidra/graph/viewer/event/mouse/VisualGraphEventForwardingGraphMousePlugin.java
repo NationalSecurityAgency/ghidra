@@ -21,7 +21,6 @@ import java.awt.event.*;
 import javax.swing.JComponent;
 
 import docking.DockingUtils;
-import docking.ToolTipManager;
 import edu.uci.ics.jung.visualization.control.AbstractGraphMousePlugin;
 import ghidra.graph.viewer.*;
 
@@ -179,7 +178,7 @@ public class VisualGraphEventForwardingGraphMousePlugin<V extends VisualVertex,
 			return;
 		}
 
-		ToolTipManager.sharedInstance().hideTipWindow();
+		DockingUtils.hideTipWindow();
 	}
 
 	/*

@@ -18,50 +18,39 @@ package ghidra.app.plugin.core.data;
 import javax.swing.KeyStroke;
 
 import docking.action.*;
-import docking.tool.util.DockingToolConstants;
 import ghidra.app.context.ListingActionContext;
 import ghidra.app.context.ListingContextAction;
-import ghidra.framework.options.*;
-import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.data.*;
 import ghidra.util.HelpLocation;
 
 /**
  * Base class for actions to create data types
  */
-class DataAction extends ListingContextAction implements OptionsChangeListener {
+class DataAction extends ListingContextAction {
 
 	protected DataType dataType;
 	protected DataPlugin plugin;
-	private String actionName;
-	private DummyKeyBindingsOptionsAction dummyKeybindingsAction;
 
 	public DataAction(DataType dataType, DataPlugin plugin) {
 		this("Define " + dataType.getDisplayName(), "Data", dataType, plugin);
 	}
 
+	/**
+	 * Constructor
+	 * 
+	 * @param name action name
+	 * @param group the action's group
+	 * @param dataType the data type used by this action
+	 * @param plugin the plugin that owns this action
+	 */
 	public DataAction(String name, String group, DataType dataType, DataPlugin plugin) {
-		super(name, plugin.getName(), false);
-		this.actionName = name;
+		super(name, plugin.getName(), KeyBindingType.SHARED);
 		this.plugin = plugin;
 		this.dataType = dataType;
 
 		setPopupMenuData(new MenuData(new String[] { "Data", dataType.getDisplayName() }, group));
 		assignHelpID(dataType);
-
-		initializeKeybinding();
-	}
-
-	private void initializeKeybinding() {
-		PluginTool tool = plugin.getTool();
-		dummyKeybindingsAction =
-			new DummyKeyBindingsOptionsAction(actionName, getDefaultKeyStroke());
-		tool.addAction(dummyKeybindingsAction);
-		ToolOptions options = tool.getOptions(DockingToolConstants.KEY_BINDINGS);
-		options.addOptionsChangeListener(this);
-		KeyStroke keyStroke =
-			options.getKeyStroke(dummyKeybindingsAction.getFullName(), getDefaultKeyStroke());
-		initKeyStroke(keyStroke);
+		initKeyStroke(getDefaultKeyStroke());
 	}
 
 	protected KeyStroke getDefaultKeyStroke() {
@@ -73,12 +62,11 @@ class DataAction extends ListingContextAction implements OptionsChangeListener {
 			return;
 		}
 
-		// we don't have a default keybinding, so any value implies user-defined
-		setUnvalidatedKeyBindingData(new KeyBindingData(keyStroke));
+		setKeyBindingData(new KeyBindingData(keyStroke));
 	}
 
-	protected DockingAction getDummyKeyBindingAction() {
-		return dummyKeybindingsAction;
+	DataType getDataType() {
+		return dataType;
 	}
 
 	@Override
@@ -97,19 +85,6 @@ class DataAction extends ListingContextAction implements OptionsChangeListener {
 	@Override
 	public boolean isEnabledForContext(ListingActionContext context) {
 		return plugin.isCreateDataAllowed(context);
-	}
-
-	@Override
-	public void optionsChanged(ToolOptions options, String optionName, Object oldValue,
-			Object newValue) {
-		KeyStroke keyStroke = (KeyStroke) newValue;
-		if (optionName.startsWith(actionName)) {
-			setUnvalidatedKeyBindingData(new KeyBindingData(keyStroke));
-		}
-	}
-
-	DataType getDataType() {
-		return dataType;
 	}
 
 	// Set the help ID according to the data type

@@ -147,7 +147,7 @@ class FunctionCategoryNode extends SymbolCategoryNode {
 	private boolean isVariableParameterOrCodeSymbol(Symbol symbol) {
 		SymbolType symbolType = symbol.getSymbolType();
 		return symbolType.equals(SymbolType.LOCAL_VAR) || symbolType.equals(SymbolType.PARAMETER) ||
-			symbolType.equals(SymbolType.CODE);
+			symbolType.equals(SymbolType.LABEL);
 	}
 
 	@Override

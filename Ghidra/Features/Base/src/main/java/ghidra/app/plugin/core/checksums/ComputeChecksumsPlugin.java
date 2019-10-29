@@ -18,13 +18,13 @@ package ghidra.app.plugin.core.checksums;
 import docking.ActionContext;
 import docking.action.DockingAction;
 import docking.action.MenuData;
+import docking.tool.ToolConstants;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.ProgramPlugin;
 import ghidra.framework.plugintool.PluginInfo;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.util.PluginStatus;
-import ghidra.framework.plugintool.util.ToolConstants;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramSelection;
 import ghidra.util.HelpLocation;
@@ -107,33 +107,22 @@ public class ComputeChecksumsPlugin extends ProgramPlugin {
 	 */
 	@Override
 	protected void selectionChanged(ProgramSelection selection) {
-		super.selectionChanged(selection);
-		if (provider != null) {
-			provider.setSelection(hasSelection());
-		}
+		provider.setSelection(hasSelection());
 	}
 
 	/**
-	 * Get's the provider associated with this plugin.
-	 * @return the provider associated with this plugin.
+	 * Returns the current program selection
+	 * @return the current program selection
 	 */
-	public ComputeChecksumsProvider getProvider() {
-		return provider;
-	}
-
-	/**
-	 * Returns the current program selection.
-	 * @return the current program selection.
-	 */
-	public ProgramSelection getSelection() {
+	ProgramSelection getSelection() {
 		return currentSelection;
 	}
 
 	/**
-	 * Returns true if the current program has a selection.
-	 * @return true if the current program has a selection.
+	 * Returns true if the current program has a selection
+	 * @return true if the current program has a selection
 	 */
-	public boolean hasSelection() {
+	boolean hasSelection() {
 		ProgramSelection selection = getSelection();
 		return selection != null && !selection.isEmpty();
 	}

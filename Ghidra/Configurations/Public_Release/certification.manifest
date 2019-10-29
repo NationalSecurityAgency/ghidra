@@ -1,6 +1,4 @@
 ##VERSION: 2.0
-.classpath||GHIDRA||||END|
-.project||GHIDRA||||END|
 Module.manifest||GHIDRA||||END|
 build.gradle||GHIDRA||||END|
 data/PDB_SYMBOL_SERVER_URLS.pdburl||GHIDRA||||END|

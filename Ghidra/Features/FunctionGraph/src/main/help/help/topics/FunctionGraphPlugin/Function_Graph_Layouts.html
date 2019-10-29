@@ -1,0 +1,59 @@
+<!DOCTYPE doctype PUBLIC "-//W3C//DTD HTML 4.0 Frameset//EN">
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+
+    <TITLE>Function Graph Plugin</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=windows-1252">
+    <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+  </HEAD>
+
+  <BODY lang="EN-US">
+    <H1><A name="Function_Graph_Layouts"></A>Function Graph Layouts</H1>
+    
+    
+    <BLOCKQUOTE>
+	    <H2><A name="Nested_Code_Layout"></A>Nested Code Layout</H2>
+	    
+	    <BLOCKQUOTE>
+	    <P>The nested code layout use the 
+	    <A name="help/topics/DecompilePlugin/Decompiler.htm">Decompiler</A> to arrange the 
+	    code blocks of a function in a way that mimics the nesting of the source code as seen
+	    in the decompiled function.   As an example, any code block that must pass through an 
+	    <code>if</code> statement will be nested below and to the right of the code block that
+	    contains the conditional check.   The nested code block is <B>dominated</B> by the block
+	    containing the conditional check--code flow can only reach the nested block by passing
+	    through the block above it.   Also, code blocks that represent a default code flow 
+	    will be aligned to the left and below other code blocks in the function.   This layout 
+	    allows the user to quickly see the dominating relationships between code blocks.
+	    </P>
+	    <P>The edges leaving a code block are labeled with the type of high-level conditional 
+	    statement (e.g., <code>if</code>, <code>if/else</code>, etc) used to determine code flow.
+	    </P>
+	    <P>By default, edges are routed such that they are grouped together such that any edges
+	    returning to a shared code block will overlap.  This reduces visual clutter at the 
+	    expense of being able to visually follow individual edges to their vertices.  Another 
+	    consequence of this routing is that sometimes edges will travel behind unrelated 
+	    vertices, again, making it difficult to visually follow these edges.  The edge 
+	    routing can be changed via the options below.
+	    </P>
+
+	    
+	    <H3><A name="Nested_Code_Layout_Options"></A>Nested Code Layout Options</H3>
+	    
+	        <BLOCKQUOTE>
+		      <P>The <B>Route Edges Around Vertices</B> option triggers this layout to route 
+		      edges around any vertex that would otherwise touch that edge.  (See above for 
+		      notes on how edges are routed for this layout.)
+		      </P>
+	      </BLOCKQUOTE>
+    
+    </BLOCKQUOTE>
+    
+    
+    <P class="providedbyplugin">Provided by: <I>Function Graph Plugin</I></P>
+     <BR>
+  </BODY>
+</HTML>

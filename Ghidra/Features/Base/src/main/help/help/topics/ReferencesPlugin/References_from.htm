@@ -694,6 +694,79 @@
             <TD valign="top">Conditional jump flow from an instruction<BR>
             </TD>
           </TR>
+          
+           <TR>
+            <TD valign="top"><FONT color="#FF6600">CALL_OVERRIDE_UNCONDITIONAL<BR>
+            </FONT></TD>
+
+            <TD align="center" valign="top"><FONT color="#FF6600">M<BR>
+            </FONT></TD>
+
+            <TD align="center" valign="top"><FONT color="#FF6600">Flow<BR>
+            </FONT></TD>
+
+            <TD valign="top">Used to override the destination of a CALL or CALLIND pcode operation.  CALLIND operations are
+            changed to CALL operations.  The new call target is the "to" address of the reference.  The override only takes effect
+            when the reference is primary, and only when there is exactly one primary CALL_OVERRIDE_UNCONDITIONAL reference at the "from"
+            address of the reference. <BR>
+            </TD>
+          </TR>
+          
+          <TR>
+            <TD valign="top"><FONT color="#FF6600">JUMP_OVERRIDE_UNCONDITIONAL<BR>
+            </FONT></TD>
+
+            <TD align="center" valign="top"><FONT color="#FF6600">M<BR>
+            </FONT></TD>
+
+            <TD align="center" valign="top"><FONT color="#FF6600">Flow<BR>
+            </FONT></TD>
+
+            <TD valign="top">Used to override the destination of a BRANCH or CBRANCH pcode operation.  CBRANCH operations are
+            changed to BRANCH operations.  The new jump target is the "to" address of the reference.  The override only takes effect
+            when the reference is primary, and only when there is exactly one primary JUMP_OVERRIDE_UNCONDITIONAL reference at the "from"
+            address of the reference. <BR>
+            </TD>
+          </TR>
+          
+          <TR>
+            <TD valign="top"><FONT color="#FF6600">CALLOTHER_OVERRIDE_CALL<BR>
+            </FONT></TD>
+
+            <TD align="center" valign="top"><FONT color="#FF6600">M<BR>
+            </FONT></TD>
+
+            <TD align="center" valign="top"><FONT color="#FF6600">Flow<BR>
+            </FONT></TD>
+
+            <TD valign="top">Used to change CALLOTHER pcode operations to CALL operations. The new call target is the "to" address of the 
+            reference.  The override only takes effect when the reference is primary, and only when there is exactly one primary 
+            CALLOTHER_OVERRIDE_CALL reference at the "from" address of the reference. Only the first CALLOTHER operation at the "from"
+            address of the reference is changed. <EM> Applying this override to instances of a CALLOTHER op that have output is not recommended 
+            and can adversely affect decompilation. </EM>  You can see whether a particular instance has an output by enabling the "PCode" field 
+            of the Listing. Note that this reference override takes precedence over those of CALLOTHER_OVERRIDE_JUMP
+            references. <BR> 
+            </TD>
+          </TR>
+          
+          <TR>
+            <TD valign="top"><FONT color="#FF6600">CALLOTHER_OVERRIDE_JUMP<BR>
+            </FONT></TD>
+
+            <TD align="center" valign="top"><FONT color="#FF6600">M<BR>
+            </FONT></TD>
+
+            <TD align="center" valign="top"><FONT color="#FF6600">Flow<BR>
+            </FONT></TD>
+
+            <TD valign="top">Used to change CALLOTHER pcode operations to BRANCH operations. The new jump target is the "to" address of the 
+            reference.  The override only takes effect when the reference is primary, and only when there is exactly one primary 
+            CALLOTHER_OVERRIDE_JUMP reference at the "from" address of the reference. Only the first CALLOTHER operation at the "from"
+            address of the reference is changed. <EM> Applying this override to an instance of a CALLOTHER op with output is not recommended </EM> (see
+            the discussion above about CALLOTHER_OVERRIDE_CALL references).<BR>
+            </TD>
+          </TR>
+          
         </TBODY>
       </TABLE>
     </BLOCKQUOTE>
@@ -924,7 +997,7 @@
         single reference row is selected.<BR>
         </P>
 
-        <P><A name="Select_Destinations"></A><IMG src="images/text_align_justify.png" alt=""> <I><B>Select
+        <P><A name="Select_Destinations"></A><IMG src="Icons.MAKE_SELECTION_ICON" alt=""> <I><B>Select
         Memory Reference Destination</B></I> - With one or more memory references selected in the
         table, invoking this action will cause the corresponding locations within the&nbsp;<A href=
         "help/topics/CodeBrowserPlugin/CodeBrowser.htm">Listing</A> to become selected.<BR>

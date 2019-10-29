@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,16 +62,12 @@ abstract class LongKeyNode implements BTreeNode {
 		nodeMgr.addNode(this);
 	}
 
-	/*
-	 * @see ghidra.framework.store.db.BTreeNode#getBufferId()
-	 */
+	@Override
 	public int getBufferId() {
 		return buffer.getId();
 	}
 
-	/*
-	 * @see ghidra.framework.store.db.BTreeNode#getBuffer()
-	 */
+	@Override
 	public DataBuffer getBuffer() {
 		return buffer;
 	}
@@ -88,16 +83,12 @@ abstract class LongKeyNode implements BTreeNode {
 		return this;
 	}
 
-	/*
-	 * @see ghidra.framework.store.db.BTreeNode#getKeyCount()
-	 */
+	@Override
 	public int getKeyCount() {
 		return keyCount;
 	}
 
-	/*
-	 * @see ghidra.framework.store.db.BTreeNode#setKeyCount(int)
-	 */
+	@Override
 	public void setKeyCount(int cnt) {
 		keyCount = cnt;
 		buffer.putInt(KEY_COUNT_OFFSET, keyCount);
@@ -117,10 +108,5 @@ abstract class LongKeyNode implements BTreeNode {
 	 * @throws IOException thrown if an IO error occurs
 	 */
 	abstract LongKeyRecordNode getLeafNode(long key) throws IOException;
-
-	/*
-	 * @see ghidra.framework.store.db.BTreeNode#delete()
-	 */
-	public abstract void delete() throws IOException;
 
 }

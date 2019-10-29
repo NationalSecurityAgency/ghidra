@@ -25,6 +25,7 @@ import javax.swing.table.TableModel;
 import org.junit.*;
 
 import docking.action.DockingActionIf;
+import docking.tool.ToolConstants;
 import docking.widgets.table.GTableFilterPanel;
 import docking.widgets.table.threaded.ThreadedTableModel;
 import ghidra.app.DeveloperPluginPackage;
@@ -254,11 +255,9 @@ public class ManagePluginsTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	private void showProvider() {
-		List<DockingActionIf> actions =
-			tool.getDockingActionsByFullActionName("Configure Tool (Tool)");
-		assertEquals(1, actions.size());
 
-		performAction(actions.get(0), true);
+		DockingActionIf action = getAction(tool, ToolConstants.TOOL_OWNER, "Configure Tool");
+		performAction(action, true);
 		waitForSwing();
 		provider = tool.getManagePluginsDialog();
 		pluginManagerComponent = (PluginManagerComponent) getInstanceField("comp", provider);

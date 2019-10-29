@@ -18,7 +18,6 @@ package ghidra.app.plugin.core.editor;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.event.KeyEvent;
-import java.awt.event.MouseEvent;
 import java.io.*;
 import java.util.Iterator;
 import java.util.List;
@@ -32,8 +31,8 @@ import javax.swing.undo.UndoableEdit;
 import docking.ActionContext;
 import docking.ComponentProvider;
 import docking.action.*;
+import docking.actions.KeyBindingUtils;
 import docking.options.editor.FontPropertyEditor;
-import docking.util.KeyBindingUtils;
 import docking.widgets.OptionDialog;
 import docking.widgets.filechooser.GhidraFileChooser;
 import ghidra.framework.options.SaveState;
@@ -91,10 +90,10 @@ public class TextEditorComponentProvider extends ComponentProviderAdapter {
 		return textarea.getText();
 	}
 
-	private void initialize(TextEditorManagerPlugin plugin, String textContents) {
-		this.plugin = plugin;
+	private void initialize(TextEditorManagerPlugin p, String textContents) {
+		this.plugin = p;
 
-		setHelpLocation(new HelpLocation(plugin.getName(), plugin.getName()));
+		setHelpLocation(new HelpLocation(p.getName(), p.getName()));
 
 		title = textFileName + (isReadOnly() ? " (Read-Only) " : "");
 		setTitle(title);
@@ -106,7 +105,7 @@ public class TextEditorComponentProvider extends ComponentProviderAdapter {
 
 		addToTool();
 		setVisible(true);
-		plugin.getTool().setStatusInfo("Press F1 for help.");
+		p.getTool().setStatusInfo("Press F1 for help.");
 
 		createActions();
 	}
@@ -278,8 +277,7 @@ public class TextEditorComponentProvider extends ComponentProviderAdapter {
 
 		ActionContextProvider acp = e -> {
 			ComponentProvider p = TextEditorComponentProvider.this;
-			Object context = TextEditorComponentProvider.this;
-			return new ActionContext(p, context);
+			return new ActionContext(p);
 		};
 
 		KeyBindingUtils.registerAction(textarea, saveAction, acp);
@@ -375,11 +373,6 @@ public class TextEditorComponentProvider extends ComponentProviderAdapter {
 	}
 
 	@Override
-	public ActionContext getActionContext(MouseEvent event) {
-		return new ActionContext(this, this);
-	}
-
-	@Override
 	public JComponent getComponent() {
 		return scrollpane;
 	}
@@ -387,9 +380,10 @@ public class TextEditorComponentProvider extends ComponentProviderAdapter {
 //==================================================================================================
 // Inner Classes
 //==================================================================================================
+
 	/**
 	 * Special JTextArea that knows how to properly handle it's key events.
-	 * @see {@link #processKeyBinding(KeyStroke, KeyEvent, int, boolean)}
+	 * @see #processKeyBinding(KeyStroke, KeyEvent, int, boolean)
 	 */
 	private class KeyMasterTextArea extends JTextArea {
 		private static final long serialVersionUID = 1L;
@@ -455,7 +449,7 @@ public class TextEditorComponentProvider extends ComponentProviderAdapter {
 						return true;
 					}
 
-					return SwingUtilities.notifyAction(action, ks, e, this, e.getModifiers());
+					return SwingUtilities.notifyAction(action, ks, e, this, e.getModifiersEx());
 				}
 			}
 			return false;

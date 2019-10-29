@@ -95,6 +95,9 @@ public class FindReferencesToFieldAction extends DockingAction {
 		DataTypeComponent[] components = composite.getComponents();
 		List<String> names = new ArrayList<>();
 		for (DataTypeComponent dataTypeComponent : components) {
+			if (dataTypeComponent.isBitFieldComponent()) {
+				continue;
+			}
 			String fieldName = dataTypeComponent.getFieldName();
 			if (StringUtils.isBlank(fieldName)) {
 				continue;

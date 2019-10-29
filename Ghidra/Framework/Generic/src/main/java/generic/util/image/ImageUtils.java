@@ -42,6 +42,26 @@ public class ImageUtils {
 	}
 
 	/**
+	 * Creates an image of the given component
+	 * 
+	 * @param c the component
+	 * @return the image
+	 */
+	public static Image createImage(Component c) {
+
+		// prevent this from being called when the user has made the window too small to work
+		Rectangle bounds = c.getBounds();
+		int w = Math.max(bounds.width, 1);
+		int h = Math.max(bounds.height, 1);
+
+		BufferedImage bufferedImage = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
+		Graphics g = bufferedImage.getGraphics();
+		c.paint(g);
+		g.dispose();
+		return bufferedImage;
+	}
+
+	/**
 	 * Pads the given image with space in the amount given.
 	 * 
 	 * @param i the image to pad
@@ -67,8 +87,10 @@ public class ImageUtils {
 	}
 
 	/**
-	 * Crops the given image, keeping the given bounds.
+	 * Crops the given image, keeping the given bounds
 	 * 
+	 * @param i the image to crop
+	 * @param bounds the new bounds
 	 * @return a new image based on the given image, cropped to the given bounds.
 	 */
 	public static Image crop(Image i, Rectangle bounds) {
@@ -216,15 +238,6 @@ public class ImageUtils {
 		return false;
 	}
 
-	private static synchronized JComponent getMediaTrackerComponent() {
-		if (mediaTrackerComponent == null) {
-			mediaTrackerComponent = new JComponent() {
-				// dummy component
-			};
-		}
-		return mediaTrackerComponent;
-	}
-
 	/**
 	 * Write the specified image to file in PNG format
 	 * @param i the image to save
@@ -300,6 +313,26 @@ public class ImageUtils {
 	}
 
 	/**
+	 * Creates a scaled image based upon the given image.
+	 * NOTE: Avoid invocation by a static initializer.
+	 * @param image the image to scale
+	 * @param width the new width
+	 * @param height the new height
+	 * @param hints {@link RenderingHints} used by {@link Graphics2D}
+	 * @return a scaled version of the given image
+	 */
+	public static Image createScaledImage(Image image, int width, int height, int hints) {
+		BufferedImage scaledImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+		Graphics graphics = scaledImage.getGraphics();
+		Graphics2D g2 = (Graphics2D) graphics;
+		g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
+			RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+		graphics.drawImage(image, 0, 0, width, height, null);
+		graphics.dispose();
+		return scaledImage;
+	}
+
+	/**
 	 * Creates a disabled version of the given image.  The disabled version will be grayed
 	 * and have the varying gray levels blended together.
 	 * 
@@ -330,38 +363,6 @@ public class ImageUtils {
 		LookupOp lookupOp = new LookupOp(table, null);
 		lookupOp.filter(srcImage, destImage);
 		return destImage;
-	}
-
-	/**
-	 * Takes in RGB pixel data and then converts the pixel into a gray color with a brightness
-	 * based upon <tt>brightnessPercent</tt>.
-	 *  
-	 * @param rgbPixels The RGB pixel data for a given pixel.
-	 * @param destination The converted pixel data.
-	 * @param brightnessPercent The amount of brightness to include in the gray value, where 100
-	 *        percent is the brightest possible value.
-	 * @return The <tt>destination</tt> array filled with the new pixel data.
-	 */
-	private static int[] filterRgbDisabledImage(int[] rgbPixels, int[] destination,
-			int brightnessPercent) {
-
-		// preserve the luminance
-		// Humans have the most sensitivity to green, least sensitivity to blue
-		int r = (int) (0.30 * (rgbPixels[0] & 0xff));
-		int g = (int) (0.59 * (rgbPixels[1] & 0xff));
-		int b = (int) (0.11 * (rgbPixels[2] & 0xff));
-
-		// average the values together to blend the pixels so that the image is not as crisp
-		int gray = (r + g + b) / 3;
-
-		gray = (255 - ((255 - gray) * (100 - brightnessPercent) / 100));
-		gray = MathUtilities.clamp(gray, 0, 255);
-
-		destination[0] = gray;
-		destination[1] = gray;
-		destination[2] = gray;
-		destination[3] = rgbPixels[3];
-		return destination;
 	}
 
 	/**
@@ -398,6 +399,47 @@ public class ImageUtils {
 		LookupOp lookupOp = new LookupOp(table, null);
 		lookupOp.filter(srcImage, destImage);
 		return destImage;
+	}
+
+	private static synchronized JComponent getMediaTrackerComponent() {
+		if (mediaTrackerComponent == null) {
+			mediaTrackerComponent = new JComponent() {
+				// dummy component
+			};
+		}
+		return mediaTrackerComponent;
+	}
+
+	/**
+	 * Takes in RGB pixel data and then converts the pixel into a gray color with a brightness
+	 * based upon <tt>brightnessPercent</tt>.
+	 *  
+	 * @param rgbPixels The RGB pixel data for a given pixel.
+	 * @param destination The converted pixel data.
+	 * @param brightnessPercent The amount of brightness to include in the gray value, where 100
+	 *        percent is the brightest possible value.
+	 * @return The <tt>destination</tt> array filled with the new pixel data.
+	 */
+	private static int[] filterRgbDisabledImage(int[] rgbPixels, int[] destination,
+			int brightnessPercent) {
+
+		// preserve the luminance
+		// Humans have the most sensitivity to green, least sensitivity to blue
+		int r = (int) (0.30 * (rgbPixels[0] & 0xff));
+		int g = (int) (0.59 * (rgbPixels[1] & 0xff));
+		int b = (int) (0.11 * (rgbPixels[2] & 0xff));
+
+		// average the values together to blend the pixels so that the image is not as crisp
+		int gray = (r + g + b) / 3;
+
+		gray = (255 - ((255 - gray) * (100 - brightnessPercent) / 100));
+		gray = MathUtilities.clamp(gray, 0, 255);
+
+		destination[0] = gray;
+		destination[1] = gray;
+		destination[2] = gray;
+		destination[3] = rgbPixels[3];
+		return destination;
 	}
 
 	private static int[] filterRgbChangeColor(int[] rgbPixels, int[] destination, int[] oldRgb,

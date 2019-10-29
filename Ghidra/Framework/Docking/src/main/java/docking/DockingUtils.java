@@ -20,15 +20,79 @@ import java.awt.event.*;
 
 import javax.swing.*;
 import javax.swing.plaf.basic.BasicSeparatorUI;
+import javax.swing.table.TableCellRenderer;
 import javax.swing.text.Document;
 import javax.swing.text.JTextComponent;
+import javax.swing.tree.DefaultTreeCellRenderer;
+import javax.swing.tree.TreeCellRenderer;
 import javax.swing.undo.UndoableEdit;
 
+import docking.widgets.button.GRadioButton;
+import docking.widgets.checkbox.GCheckBox;
+import docking.widgets.checkbox.GHtmlCheckBox;
+import docking.widgets.combobox.GComboBox;
+import docking.widgets.combobox.GhidraComboBox;
+import docking.widgets.label.*;
+import docking.widgets.list.GList;
+import docking.widgets.list.GListCellRenderer;
+import docking.widgets.table.GTableCellRenderer;
+import docking.widgets.tree.support.GTreeRenderer;
 import ghidra.docking.util.DockingWindowsLookAndFeelUtils;
+import ghidra.util.HTMLUtilities;
 import resources.ResourceManager;
 
+/**
+ * <h1>Notes about how to use HTML safely:</h1>
+ * Java's built-in HTML rendering in UI components is very useful, but can also introduce security
+ * issues when a hostile actor is providing the text strings that are being rendered.
+ * <p>
+ * Before using a native Java UI component, search for a corresponding 'G'hidra component, and
+ * if possible choose the non-HTML version of that component (if available).
+ * <p>
+ * For instance, instead of using {@link JLabel}, use either {@link GLabel} or {@link GHtmlLabel}
+ * (and their variants).
+ * <p>
+ * (native JLabel, JCheckbox, etc, usage is actually disallowed in the Ghidra project)
+ * <p>
+ * When using a UI component that is HTML enabled, care must be used when constructing the text
+ * that is being rendered.
+ * <p>
+ * During string-building or concatenation, appending a non-literal string value (ie. 
+ * {@code "Hello " + getFoo();} ), the non-literal string value should be escaped using 
+ * {@link HTMLUtilities#escapeHTML(String)} (ie. {@code "Hello " + HTMLUtilities.escapeHTML(getFoo());}.
+ * <p>
+ * Of course, there are exceptions to every rule, and if the string value can be definitely be 
+ * traced to its source and there are no user-supplied origins, the HTML escaping can be skipped.
+ * <p>
+ * Note: just using a UI component that is HTML enabled does not mean that it will treat its
+ * text as HTML text.  If you need to HTML escape any values that are being fed to the component, you
+ * need to force the HTML mode 'on' by pre-pending a "&lt;HTML&gt;" at the beginning of the string.
+ * If you fail to do this, the escaped substrings will look wrong because any '&lt;' and '&gt;' chars
+ * (and others) in the substring will be mangled when rendered in plain-text mode.
+ * <p>
+ * When working with plain text, try to avoid allowing a user supplied string being the first 
+ * value of text that could be fed to a UI component.  This will prevent the possibly hostile 
+ * string from having a leading HTML start tag.  
+ * (ie. when displaying an error to the user about a bad file, don't put the filename
+ * value at the start of the string, but instead put a quote or some other delimiter to prevent
+ * html mode).
+ * <p>
+ * <h1>Recommended Ghidra UI Components:</h1>
+ * <p>
+ * <table border=1>
+ * 	<tr><th>Native Component</th><th>Recommended Component</th></tr>
+ * 	<tr><td>{@link JLabel}</td><td>{@link GLabel}<br>{@link GDLabel}<br>{@link GHtmlLabel}<br>{@link GDHtmlLabel}<br>{@link GIconLabel}</td></tr>
+ * 	<tr><td>{@link JCheckBox}</td><td>{@link GCheckBox}<br>{@link GHtmlCheckBox}</td></tr>
+ * 	<tr><td>{@link JComboBox}</td><td>{@link GComboBox}<br>{@link GhidraComboBox}</td></tr>
+ * 	<tr><td>{@link JList}</td><td>{@link GList}</td></tr>
+ * 	<tr><td>{@link ListCellRenderer}<br>{@link DefaultListCellRenderer}</td><td>{@link GListCellRenderer}</td></tr>
+ * 	<tr><td>{@link TableCellRenderer}</td><td>{@link GTableCellRenderer}</td></tr>
+ * 	<tr><td>{@link TreeCellRenderer}<br>{@link DefaultTreeCellRenderer}</td><td>{@link GTreeRenderer}<br><code>DnDTreeCellRenderer</code></td></tr>
+ * 	<tr><td>{@link JRadioButton}</td><td>{@link GRadioButton}</td></tr>
+ * 	<tr><td>{@link JButton}</td><td>???tbd???</td></tr>
+ * </table>
+ */
 public class DockingUtils {
-
 	private static final int ICON_SIZE = 16;
 
 	/** System dependent mask for the Ctrl key */
@@ -115,15 +179,6 @@ public class DockingUtils {
 		final UndoRedoKeeper undoRedoKeeper = new UndoRedoKeeper();
 		document.addUndoableEditListener(e -> {
 			UndoableEdit edit = e.getEdit();
-
-// TODO We are now handed a wrapper class and not the event for the 'edit'.  It is not clear
-//		which use case caused this code to be added.  If/when we find out, we can revisit how 
-//		to filter these types of updates.
-//			DefaultDocumentEvent defaultDocumentEvent = (DefaultDocumentEvent) edit;
-//			if (defaultDocumentEvent.getType() == EventType.CHANGE) {
-//				return; // this happens for style updates
-//			}
-
 			undoRedoKeeper.addUndo(edit);
 		});
 
@@ -285,6 +340,16 @@ public class DockingUtils {
 		}
 
 		c.setBackground(new Color(0, 0, 0, 0));
+	}
+
+	/** Hides any open tooltip window */
+	public static void hideTipWindow() {
+		// This is a hack, since Java's manager doesn't have this method
+		javax.swing.ToolTipManager.sharedInstance().setEnabled(false);
+		javax.swing.ToolTipManager.sharedInstance().setEnabled(true);
+
+// TODO: Ultimately, the ESCAPE key binding in the Java TTM should hide any visible tooltips.  We
+//       need to look into why this isn't working.
 	}
 
 }

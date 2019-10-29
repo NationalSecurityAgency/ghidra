@@ -481,18 +481,6 @@ public class HTMLUtilities {
 	}
 
 	/**
-	 * This is just a convenience call to {@link #friendlyEncodeHTML(String, boolean)} with a
-	 * value of <tt>true</tt>.
-	 *
-	 * @param text string to be encoded
-	 * @return the encoded HTML string
-	 * @see #friendlyEncodeHTML(String, boolean)
-	 */
-	public static String friendlyEncodeHTML(String text) {
-		return friendlyEncodeHTML(text, true);
-	}
-
-	/**
 	 * Converts any special or reserved characters in the specified string into HTML-escaped
 	 * entities.  Use this method when you have content containing HTML that you do not want
 	 * interpreted as HTML, such as when displaying text that uses angle brackets around words.
@@ -524,6 +512,16 @@ public class HTMLUtilities {
 	 *
 	 *  <br><br><br>
 	 *
+	 * @param text string to be encoded
+	 * @return the encoded HTML string
+	 */
+	public static String friendlyEncodeHTML(String text) {
+		return friendlyEncodeHTML(text, true);
+	}
+
+	/**
+	 * See {@link #friendlyEncodeHTML(String)}
+	 * 
 	 * @param text string to be encoded
 	 * @param skipLeadingWhitespace  true signals to ignore any leading whitespace characters.
 	 * 	      This is useful when line wrapping to force wrapped lines to the left
@@ -596,6 +594,64 @@ public class HTMLUtilities {
 		}
 
 		return buffer.toString();
+	}
+
+	/**
+	 * Escapes any HTML special characters in the specified text.
+	 * <p>
+	 * Does not otherwise modify the input text or wrap lines.
+	 * <p>
+	 * Calling this twice will result in text being double-escaped, which will not display correctly.
+	 * <p>
+	 * See also <code>StringEscapeUtils#escapeHtml3(String)</code> if you need quote-safe html encoding.
+	 * <p>
+	 *  
+	 * @param text plain-text that might have some characters that should NOT be interpreted as HTML
+	 * @return string with any html characters replaced with equivalents
+	 */
+	public static String escapeHTML(String text) {
+
+		StringBuilder buffer = new StringBuilder(text.length());
+		text.codePoints().forEach(cp -> {
+			switch (cp) {
+				case '&':
+					buffer.append("&amp;");
+					break;
+				case '<':
+					buffer.append("&lt;");
+					break;
+				case '>':
+					buffer.append("&gt;");
+					break;
+				default:
+					if (charNeedsHTMLEscaping(cp)) {
+						buffer.append("&#x");
+						buffer.append(Integer.toString(cp, 16).toUpperCase());
+						buffer.append(";");
+					}
+					else {
+						buffer.appendCodePoint(cp);
+					}
+					break;
+			}
+		});
+
+		return buffer.toString();
+	}
+
+	/**
+	 * Tests a unicode code point (i.e., 32 bit character) to see if it needs to be escaped before 
+	 * being added to a HTML document because it is non-printable or a non-standard control 
+	 * character
+	 * 
+	 * @param codePoint character to test
+	 * @return boolean true if character should be escaped
+	 */
+	public static boolean charNeedsHTMLEscaping(int codePoint) {
+		if (codePoint == '\n' || codePoint == '\t' || (' ' <= codePoint && codePoint < 0x7F)) {
+			return false;
+		}
+		return true;
 	}
 
 	/**

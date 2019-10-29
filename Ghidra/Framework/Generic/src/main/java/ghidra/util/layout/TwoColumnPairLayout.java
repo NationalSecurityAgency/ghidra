@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +15,7 @@
  */
 package ghidra.util.layout;
 
-import java.awt.Component;
-import java.awt.Container;
-import java.awt.Dimension;
-import java.awt.Insets;
-import java.awt.LayoutManager;
+import java.awt.*;
 
 /**
  * LayoutManger for arranging components into exactly two columns.  
@@ -30,14 +25,16 @@ public class TwoColumnPairLayout implements LayoutManager {
 	private int columnGap;
 	private int pairGap;
 	private int preferredColumnWidth;
+
 	/**
 	 * Constructor for PairLayout.
 	 */
 	public TwoColumnPairLayout() {
-		this(0,0,0,0);
+		this(0, 0, 0, 0);
 	}
-	
-	public TwoColumnPairLayout(int verticalGap, int columnGap, int pairGap, int preferredValueColumnWidth) {
+
+	public TwoColumnPairLayout(int verticalGap, int columnGap, int pairGap,
+			int preferredValueColumnWidth) {
 		super();
 		this.verticalGap = verticalGap;
 		this.columnGap = columnGap;
@@ -45,39 +42,46 @@ public class TwoColumnPairLayout implements LayoutManager {
 		this.preferredColumnWidth = preferredValueColumnWidth;
 	}
 
-
-
 	/**
 	 * @see LayoutManager#addLayoutComponent(String, Component)
 	 */
-	public void addLayoutComponent(String name, Component comp) {}
+	@Override
+	public void addLayoutComponent(String name, Component comp) {
+	}
 
 	/**
 	 * @see LayoutManager#removeLayoutComponent(Component)
 	 */
-	public void removeLayoutComponent(Component comp) {}
+	@Override
+	public void removeLayoutComponent(Component comp) {
+	}
 
 	/**
 	 * @see LayoutManager#preferredLayoutSize(Container)
 	 */
+	@Override
 	public Dimension preferredLayoutSize(Container parent) {
 		int rowHeight = getPreferredRowHeight(parent);
 		int[] widths = getPreferredWidths(parent);
-		
+
 		int nRows = (parent.getComponentCount() + 3) / 4;
 		Insets insets = parent.getInsets();
-		Dimension d = new Dimension(0,0);
-		int labelWidth = widths[0];
-		int valueWidth = preferredColumnWidth == 0 ? widths[1] : preferredColumnWidth;
-		
-		d.width = 2*labelWidth + 2*valueWidth + columnGap + 2*pairGap + insets.left + insets.right;
-		d.height = rowHeight *nRows + verticalGap * (nRows-1)  + insets.top + insets.bottom;
+		Dimension d = new Dimension(0, 0);
+
+		if (preferredColumnWidth > 0) {
+			widths[1] = widths[3] = preferredColumnWidth;
+		}
+
+		d.width = widths[0] + widths[1] + widths[2] + widths[3] + columnGap + 2 * pairGap +
+			insets.left + insets.right;
+		d.height = rowHeight * nRows + verticalGap * (nRows - 1) + insets.top + insets.bottom;
 		return d;
-	} 
+	}
 
 	/**
 	 * @see LayoutManager#minimumLayoutSize(Container)
 	 */
+	@Override
 	public Dimension minimumLayoutSize(Container parent) {
 		return preferredLayoutSize(parent);
 	}
@@ -85,6 +89,7 @@ public class TwoColumnPairLayout implements LayoutManager {
 	/**
 	 * @see LayoutManager#layoutContainer(Container)
 	 */
+	@Override
 	public void layoutContainer(Container parent) {
 		int rowHeight = getPreferredRowHeight(parent);
 		int[] widths = getPreferredWidths(parent);
@@ -94,16 +99,21 @@ public class TwoColumnPairLayout implements LayoutManager {
 		int width = d.width - (insets.left + insets.right);
 		int x = insets.left;
 		int y = insets.top;
-		
-		widths[1] = (width - 2*widths[0] - 2*pairGap - columnGap)/2;
+
+		int totalLabelWidth = widths[0] + widths[2];
+		int padding = 2 * pairGap + columnGap;
+		int totalValueWidth = (width - totalLabelWidth - padding);
+
+		widths[1] = (totalValueWidth * widths[1]) / (widths[1] + widths[3]);
+		widths[3] = totalValueWidth - widths[1];
 
 		int n = parent.getComponentCount();
-		for(int i=0;i<n;i++) {
-			int index = i % 2;
+		for (int i = 0; i < n; i++) {
+			int index = i % 4;
 			Component c = parent.getComponent(i);
-			c.setBounds(x,y,widths[index],rowHeight);
+			c.setBounds(x, y, widths[index], rowHeight);
 			x += widths[index];
-			x += (index == 0) ? pairGap : columnGap;
+			x += (index == 1) ? columnGap : pairGap;
 			if (i % 4 == 3) {
 				y += rowHeight + verticalGap;
 				x = insets.left;
@@ -113,26 +123,25 @@ public class TwoColumnPairLayout implements LayoutManager {
 
 	int getPreferredRowHeight(Container parent) {
 		int height = 0;
-		
+
 		int n = parent.getComponentCount();
-		for(int i=0;i<n;i++) {
+		for (int i = 0; i < n; i++) {
 			Component c = parent.getComponent(i);
 			height = Math.max(height, c.getPreferredSize().height);
 		}
 		return height;
 	}
+
 	int[] getPreferredWidths(Container parent) {
-		int[] widths = new int[2];
-		
+		int[] widths = new int[4];
 		int n = parent.getComponentCount();
-		for(int i=0;i<n;i++) {
+		for (int i = 0; i < n; i++) {
 			Component c = parent.getComponent(i);
 			Dimension d = c.getPreferredSize();
-			int index = i % 2;
+			int index = i % 4;
 			widths[index] = Math.max(widths[index], d.width);
 		}
-		return widths;	
+		return widths;
 	}
-	
-	
+
 }

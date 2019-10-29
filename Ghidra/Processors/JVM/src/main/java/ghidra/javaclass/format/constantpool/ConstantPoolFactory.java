@@ -15,62 +15,74 @@
  */
 package ghidra.javaclass.format.constantpool;
 
-import ghidra.app.util.bin.BinaryReader;
-
 import java.io.IOException;
+
+import ghidra.app.util.bin.BinaryReader;
 
 public class ConstantPoolFactory {
 
-	public static AbstractConstantPoolInfoJava get( BinaryReader reader ) throws IOException {
+	public static AbstractConstantPoolInfoJava get(BinaryReader reader) throws IOException {
 
-		switch ( reader.peekNextByte() ) {
+		switch (reader.peekNextByte()) {
 
 			case ConstantPoolTagsJava.CONSTANT_Class:
-				return new ConstantPoolClassInfo( reader );
+				return new ConstantPoolClassInfo(reader);
 
 			case ConstantPoolTagsJava.CONSTANT_Double:
-				return new ConstantPoolDoubleInfo( reader );
+				return new ConstantPoolDoubleInfo(reader);
 
 			case ConstantPoolTagsJava.CONSTANT_Fieldref:
-				return new ConstantPoolFieldReferenceInfo( reader );
+				return new ConstantPoolFieldReferenceInfo(reader);
 
 			case ConstantPoolTagsJava.CONSTANT_Float:
-				return new ConstantPoolFloatInfo( reader );
+				return new ConstantPoolFloatInfo(reader);
 
 			case ConstantPoolTagsJava.CONSTANT_Integer:
-				return new ConstantPoolIntegerInfo( reader );
+				return new ConstantPoolIntegerInfo(reader);
 
 			case ConstantPoolTagsJava.CONSTANT_InterfaceMethodref:
-				return new ConstantPoolInterfaceMethodReferenceInfo( reader );
+				return new ConstantPoolInterfaceMethodReferenceInfo(reader);
 
 			case ConstantPoolTagsJava.CONSTANT_InvokeDynamic:
-				return new ConstantPoolInvokeDynamicInfo( reader );
+				return new ConstantPoolInvokeDynamicInfo(reader);
 
 			case ConstantPoolTagsJava.CONSTANT_Long:
-				return new ConstantPoolLongInfo( reader );
+				return new ConstantPoolLongInfo(reader);
 
 			case ConstantPoolTagsJava.CONSTANT_MethodHandle:
-				return new ConstantPoolMethodHandleInfo( reader );
+				return new ConstantPoolMethodHandleInfo(reader);
 
 			case ConstantPoolTagsJava.CONSTANT_Methodref:
-				return new ConstantPoolMethodReferenceInfo( reader );
+				return new ConstantPoolMethodReferenceInfo(reader);
 
 			case ConstantPoolTagsJava.CONSTANT_MethodType:
-				return new ConstantPoolMethodTypeInfo( reader );
+				return new ConstantPoolMethodTypeInfo(reader);
 
 			case ConstantPoolTagsJava.CONSTANT_NameAndType:
-				return new ConstantPoolNameAndTypeInfo( reader );
+				return new ConstantPoolNameAndTypeInfo(reader);
 
 			case ConstantPoolTagsJava.CONSTANT_String:
-				return new ConstantPoolStringInfo( reader );
+				return new ConstantPoolStringInfo(reader);
 
 			case ConstantPoolTagsJava.CONSTANT_Utf8:
-				return new ConstantPoolUtf8Info( reader );
+				return new ConstantPoolUtf8Info(reader);
+
+			case ConstantPoolTagsJava.CONSTANT_Dynamic:
+				return new ConstantPoolDynamicInfo(reader);
+
+			case ConstantPoolTagsJava.CONSTANT_Module:
+				return new ConstantPoolModuleInfo(reader);
+
+			case ConstantPoolTagsJava.CONSTANT_Package:
+				return new ConstantPoolPackageInfo(reader);
 
 			case 0:
 				return null;
+
+			default:
+				throw new IllegalArgumentException(
+					"Unsupport Constant Pool Entry Type: " + reader.peekNextByte());
 		}
-		throw new RuntimeException();
 	}
 
 }

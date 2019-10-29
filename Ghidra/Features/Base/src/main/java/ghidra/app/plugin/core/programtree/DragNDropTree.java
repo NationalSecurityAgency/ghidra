@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,8 +26,8 @@ import javax.swing.*;
 import javax.swing.tree.*;
 
 import docking.DockingUtils;
+import docking.actions.KeyBindingUtils;
 import docking.dnd.*;
-import docking.util.KeyBindingUtils;
 import docking.widgets.table.AutoscrollAdapter;
 
 /**
@@ -85,7 +84,7 @@ public abstract class DragNDropTree extends JTree implements Draggable, Droppabl
 		plafSelectionColor = dndCellRenderer.getBackgroundSelectionColor();
 		nonSelectionDragColor = new Color(204, 204, 255);
 		initDragNDrop();
-		docking.ToolTipManager.sharedInstance().registerComponent(this);
+		ToolTipManager.sharedInstance().registerComponent(this);
 		autoscroller = new AutoscrollAdapter(this, getRowHeight());
 		disableJTreeTransferActions();
 	}

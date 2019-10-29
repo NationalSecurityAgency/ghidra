@@ -1,0 +1,197 @@
+#include "pcode_test.h"
+
+#ifdef HAS_DOUBLE
+TEST biopEqf8f8_Main()
+{
+	extern f8 biopEqf8f8(f8 lhs, f8 rhs);
+	f8 lhs = 2;
+	f8 rhs = 1;
+	f8 retVal;
+	retVal = biopEqf8f8(lhs, rhs);
+	ASSERTF8(retVal, 0);
+	ASSERTF8(biopEqf8f8(PI_SHORT, PI_SHORT), 1.0);
+	ASSERTF8(biopEqf8f8(PI_SHORT, 2*PI_SHORT), 0.0);
+	ASSERTF8(biopEqf8f8(2*PI_SHORT, PI_SHORT), 0.0);
+}
+#endif
+
+#ifdef HAS_DOUBLE
+TEST biopNef8f8_Main()
+{
+	extern f8 biopNef8f8(f8 lhs, f8 rhs);
+	f8 lhs = 2;
+	f8 rhs = 1;
+	f8 retVal;
+	retVal = biopNef8f8(lhs, rhs);
+	ASSERTF8(retVal, 1);
+	ASSERTF8(biopNef8f8(PI_SHORT, PI_SHORT), 0.0);
+	ASSERTF8(biopNef8f8(PI_SHORT, 2*PI_SHORT), 1.0);
+	ASSERTF8(biopNef8f8(2*PI_SHORT, PI_SHORT), 1.0);
+}
+#endif
+
+#ifdef HAS_DOUBLE
+TEST biopLogicOrf8f8_Main()
+{
+	extern f8 biopLogicOrf8f8(f8 lhs, f8 rhs);
+	f8 lhs = 2;
+	f8 rhs = 1;
+	f8 retVal;
+	retVal = biopLogicOrf8f8(lhs, rhs);
+	ASSERTF8(retVal, 1);
+	ASSERTF8(biopLogicOrf8f8(PI_SHORT, PI_SHORT), 1);
+	ASSERTF8(biopLogicOrf8f8(PI_SHORT, 0), 1);
+}
+#endif
+
+#ifdef HAS_DOUBLE
+TEST biopLogicAndf8f8_Main()
+{
+	extern f8 biopLogicAndf8f8(f8 lhs, f8 rhs);
+	f8 lhs = 2;
+	f8 rhs = 1;
+	f8 retVal;
+	retVal = biopLogicAndf8f8(lhs, rhs);
+	ASSERTF8(retVal, 1);
+	ASSERTF8(biopLogicAndf8f8(PI_SHORT, PI_SHORT), 1);
+	ASSERTF8(biopLogicAndf8f8(PI_SHORT, 0), 0.0);
+}
+#endif
+
+#ifdef HAS_DOUBLE
+TEST unopNotf8_Main()
+{
+	extern f8 unopNotf8(f8 lhs);
+	f8 lhs = 2;
+	f8 retVal;
+	retVal = unopNotf8(lhs);
+	ASSERTF8(retVal, 0);
+	ASSERTF8(unopNotf8(PI_SHORT), 0);
+}
+#endif
+
+#ifdef HAS_DOUBLE
+TEST unopNegativef8_Main()
+{
+	extern f8 unopNegativef8(f8 lhs);
+	f8 lhs = 2;
+	f8 retVal;
+	retVal = unopNegativef8(lhs);
+	ASSERTF8(retVal, -2);
+	ASSERTF8(unopNegativef8(PI_SHORT), -3.14);
+}
+#endif
+
+#ifdef HAS_DOUBLE
+TEST unopPlusf8_Main()
+{
+	extern f8 unopPlusf8(f8 lhs);
+	f8 lhs = 2;
+	f8 retVal;
+	retVal = unopPlusf8(lhs);
+	ASSERTF8(retVal, 2);
+	ASSERTF8(unopPlusf8(PI_SHORT), PI_SHORT);
+}
+#endif
+
+#ifdef HAS_DOUBLE
+TEST biopMultf8f8_Main()
+{
+	extern f8 biopMultf8f8(f8 lhs, f8 rhs);
+	f8 lhs = 2;
+	f8 rhs = 1;
+	f8 retVal;
+	retVal = biopMultf8f8(lhs, rhs);
+	ASSERTF8(retVal, 2);
+	ASSERTF8(biopMultf8f8(PI_SHORT, PI_SHORT), 9.8596);
+}
+#endif
+
+#ifdef HAS_DOUBLE
+TEST biopSubf8f8_Main()
+{
+	extern f8 biopSubf8f8(f8 lhs, f8 rhs);
+	f8 lhs = 2;
+	f8 rhs = 1;
+	f8 retVal;
+	retVal = biopSubf8f8(lhs, rhs);
+	ASSERTF8(retVal, 1);
+	ASSERTF8(biopSubf8f8(PI_SHORT, PI_SHORT), 0.0);
+}
+#endif
+
+#ifdef HAS_DOUBLE
+TEST biopAddf8f8_Main()
+{
+	extern f8 biopAddf8f8(f8 lhs, f8 rhs);
+	f8 lhs = 2;
+	f8 rhs = 1;
+	f8 retVal;
+	retVal = biopAddf8f8(lhs, rhs);
+	ASSERTF8(retVal, 3);
+	ASSERTF8(biopAddf8f8(PI_SHORT, PI_SHORT), 6.28);
+}
+#endif
+
+#ifdef HAS_DOUBLE
+TEST biopGtf8f8_Main()
+{
+	extern f8 biopGtf8f8(f8 lhs, f8 rhs);
+	f8 lhs = 2;
+	f8 rhs = 1;
+	f8 retVal;
+	retVal = biopGtf8f8(lhs, rhs);
+	ASSERTF8(retVal, 1);
+	ASSERTF8(biopGtf8f8(PI_SHORT, PI_SHORT), 0.0);
+	ASSERTF8(biopGtf8f8(PI_SHORT, 2*PI_SHORT), 0.0);
+	ASSERTF8(biopGtf8f8(2*PI_SHORT, PI_SHORT), 1.0);
+}
+#endif
+
+#ifdef HAS_DOUBLE
+TEST biopGef8f8_Main()
+{
+	extern f8 biopGef8f8(f8 lhs, f8 rhs);
+	f8 lhs = 2;
+	f8 rhs = 1;
+	f8 retVal;
+	retVal = biopGef8f8(lhs, rhs);
+	ASSERTF8(retVal, 1);
+	ASSERTF8(biopGef8f8(PI_SHORT, PI_SHORT), 1.0);
+	ASSERTF8(biopGef8f8(PI_SHORT, 2*PI_SHORT), 0.0);
+	ASSERTF8(biopGef8f8(2*PI_SHORT, PI_SHORT), 1.0);
+}
+#endif
+
+#ifdef HAS_DOUBLE
+TEST biopLtf8f8_Main()
+{
+	extern f8 biopLtf8f8(f8 lhs, f8 rhs);
+	f8 lhs = 2;
+	f8 rhs = 1;
+	f8 retVal;
+	retVal = biopLtf8f8(lhs, rhs);
+	ASSERTF8(retVal, 0);
+	ASSERTF8(biopLtf8f8(PI_SHORT, PI_SHORT), 0.0);
+	ASSERTF8(biopLtf8f8(PI_SHORT, 2*PI_SHORT), 1.0);
+	ASSERTF8(biopLtf8f8(2*PI_SHORT, PI_SHORT), 0.0);
+}
+#endif
+
+#ifdef HAS_DOUBLE
+TEST biopLef8f8_Main()
+{
+	extern f8 biopLef8f8(f8 lhs, f8 rhs);
+	f8 lhs = 2;
+	f8 rhs = 1;
+	f8 retVal;
+	retVal = biopLef8f8(lhs, rhs);
+	ASSERTF8(retVal, 0);
+	ASSERTF8(biopLef8f8(PI_SHORT, PI_SHORT), 1.0);
+	ASSERTF8(biopLef8f8(PI_SHORT, 2*PI_SHORT), 1.0);
+	ASSERTF8(biopLef8f8(2*PI_SHORT, PI_SHORT), 0.0);
+}
+#endif
+
+MAIN BIOPS_DOUBLE_main() { }
+

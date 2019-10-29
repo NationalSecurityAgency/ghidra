@@ -15,11 +15,10 @@
  */
 package ghidra.plugin.importer;
 
-import java.awt.Component;
+import java.awt.Window;
+import java.io.Closeable;
 import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
 
 import docking.widgets.OptionDialog;
 import ghidra.app.plugin.core.help.AboutDomainObjectUtils;
@@ -28,7 +27,6 @@ import ghidra.app.services.ProgramManager;
 import ghidra.app.util.GenericHelpTopics;
 import ghidra.app.util.Option;
 import ghidra.app.util.bin.ByteProvider;
-import ghidra.app.util.importer.MemoryConflictHandler;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.app.util.opinion.*;
 import ghidra.formats.gfilesystem.*;
@@ -49,6 +47,12 @@ import ghidra.util.task.TaskLauncher;
 import ghidra.util.task.TaskMonitor;
 import util.CollectionUtils;
 
+/**
+ * Utilities for importing files.
+ * 
+ * <p>Note: if a method takes a {@link TaskMonitor}, then that method should only be called 
+ * from a background task.
+ */
 public class ImporterUtilities {
 
 	/**
@@ -90,14 +94,17 @@ public class ImporterUtilities {
 	 */
 	public static void setProgramProperties(Program program, FSRL fsrl, TaskMonitor monitor)
 			throws CancelledException, IOException {
+
+		Objects.requireNonNull(monitor);
+
 		int id = program.startTransaction("setImportProperties");
 		try {
 			fsrl = FileSystemService.getInstance().getFullyQualifiedFSRL(fsrl, monitor);
 
 			Options propertyList = program.getOptions(Program.PROGRAM_INFO);
 			propertyList.setString(ProgramMappingService.PROGRAM_SOURCE_FSRL, fsrl.toString());
-			if ((program.getExecutableMD5() == null || program.getExecutableMD5().isEmpty()) &&
-				fsrl.getMD5() != null) {
+			String md5 = program.getExecutableMD5();
+			if ((md5 == null || md5.isEmpty()) && fsrl.getMD5() != null) {
 				program.setExecutableMD5(fsrl.getMD5());
 			}
 		}
@@ -114,123 +121,158 @@ public class ImporterUtilities {
 	 * <p>
 	 * If the file is a container of other files, a batch import dialog will be used,
 	 * otherwise the normal single file import dialog will be shown.
-	 * <p>
 	 *
-	 * @param fsrl {@link FSRL} of the file to import.
-	 * @param destFolder {@link DomainFolder} destination folder where the imported file
-	 * will default to.  (the user will be able to choose a different location).
-	 * @param suggestedDestinationPath optional string path that will automatically be pre-pended
-	 * to the destination filename.
-	 * @param tool {@link PluginTool} will be used as the parent tool for dialogs.
-	 * @param programManager optional {@link ProgramManager} instance to use to open imported binaries with, or null.
+	 * @param tool {@link PluginTool} will be used as the parent tool for dialogs
+	 * @param programManager optional {@link ProgramManager} instance to use to open imported 
+	 * 			binaries with, or null
+	 * @param fsrl {@link FSRL} of the file to import
+	 * @param destinationFolder {@link DomainFolder} destination folder where the imported file
+	 * 			will default to.  (the user will be able to choose a different location)
+	 * @param suggestedPath optional string path that will automatically be pre-pended
+	 * 			to the destination filename
 	 */
-	public static void showImportDialog(FSRL fsrl, DomainFolder destFolder,
-			String suggestedDestinationPath, PluginTool tool, ProgramManager programManager) {
+	public static void showImportDialog(PluginTool tool, ProgramManager programManager, FSRL fsrl,
+			DomainFolder destinationFolder, String suggestedPath) {
 
-		Component parent = tool.getActiveWindow();
-		AtomicReference<RefdFile> refdFile = new AtomicReference<>();
-		AtomicReference<FSRL> fqFSRL = new AtomicReference<>();
-		AtomicBoolean isFSContainer = new AtomicBoolean();
-		AtomicBoolean success = new AtomicBoolean();
+		TaskLauncher.launchModal("Import", monitor -> {
+			showImportDialog(tool, programManager, fsrl, destinationFolder, suggestedPath, monitor);
+		});
+	}
+
+	/**
+	 * Displays the appropriate import dialog for the specified {@link FSRL file}.
+	 * <p>
+	 * If the file is a container of other files, a batch import dialog will be used,
+	 * otherwise the normal single file import dialog will be shown.]
+	 * <p>
+	 * If you are not in a monitored task, then call 
+	 * {@link #showImportDialog(PluginTool, ProgramManager, FSRL, DomainFolder, String)}.
+	 *
+	 * @param tool {@link PluginTool} will be used as the parent tool for dialogs
+	 * @param programManager optional {@link ProgramManager} instance to use to open imported 
+	 * 			binaries with, or null
+	 * @param fsrl {@link FSRL} of the file to import
+	 * @param destinationFolder {@link DomainFolder} destination folder where the imported file
+	 * 			will default to.  (the user will be able to choose a different location)
+	 * @param suggestedPath optional string path that will automatically be pre-pended
+	 * 			to the destination filename
+	 * @param monitor the task monitor to use for monitoring; cannot be null
+	 */
+	public static void showImportDialog(PluginTool tool, ProgramManager programManager, FSRL fsrl,
+			DomainFolder destinationFolder, String suggestedPath, TaskMonitor monitor) {
+
+		Objects.requireNonNull(monitor);
+
+		RefdFile referencedFile = null;
 		try {
-			// do IO stuff in separate thread, with no UI prompts
-			TaskLauncher.launchModal("Import", (monitor) -> {
-				try {
-					RefdFile tmpRefdFile =
-						FileSystemService.getInstance().getRefdFile(fsrl, monitor);
-					refdFile.set(tmpRefdFile);
+			FileSystemService service = FileSystemService.getInstance();
+			referencedFile = service.getRefdFile(fsrl, monitor);
 
-					FSRL tmpFQFSRL =
-						FileSystemService.getInstance().getFullyQualifiedFSRL(fsrl, monitor);
-					fqFSRL.set(tmpFQFSRL);
-
-					isFSContainer.set(FileSystemService.getInstance().isFileFilesystemContainer(
-						tmpFQFSRL, monitor));
-
-					success.set(true);
-				}
-				catch (IOException ioe) {
-					Msg.showError(ImporterUtilities.class, parent, "Import Error",
-						"Unable to import file " + fsrl.getName() +
-							(ioe.getMessage() != null ? ("\n\nCause: " + ioe.getMessage()) : ""),
-						ioe);
-				}
-				catch (CancelledException e) {
-					Msg.info(ImporterUtilities.class, "ShowImportDialog canceled");
-				}
-			});
-
-			if (!success.get()) {
-				return;
-			}
-
-			if (refdFile.get().file.getLength() == 0) {
-				Msg.showError(ImporterUtilities.class, parent, "File is empty",
+			FSRL fullFsrl = service.getFullyQualifiedFSRL(fsrl, monitor);
+			boolean isFSContainer = service.isFileFilesystemContainer(fullFsrl, monitor);
+			if (referencedFile.file.getLength() == 0) {
+				Msg.showError(ImporterUtilities.class, null, "File is empty",
 					"File " + fsrl.getPath() + " is empty, nothing to import");
 				return;
 			}
 
-			GFileSystem fs = refdFile.get().fsRef.getFilesystem();
+			GFileSystem fs = referencedFile.fsRef.getFilesystem();
 			if (fs instanceof GFileSystemProgramProvider) {
-				doFSImport(refdFile.get(), fqFSRL.get(), destFolder, programManager, tool);
+				doFsImport(referencedFile, fullFsrl, destinationFolder, programManager, tool);
 				return;
 			}
 
-			if (isFSContainer.get()) {
-				// If file was a container,
-				// allow the user to pick between single import, batch import and fs browser
-				FileSystemBrowserService fsbService =
-					tool.getService(FileSystemBrowserService.class);
-				String fsbChoice = (fsbService != null) ? "File system" : null;
-				int choice = OptionDialog.showOptionDialog(parent, "Container file detected",
-					"The file " + refdFile.get().file.getName() +
-						" seems to have nested files in it.  Select an import mode:",
-					"Single file", "Batch", fsbChoice, OptionDialog.QUESTION_MESSAGE);
-				if (choice == 1) {
-					importSingleFile(fqFSRL.get(), destFolder, suggestedDestinationPath, tool,
-						programManager);
-				}
-				else if (choice == 2) {
-					BatchImportDialog.showAndImport(tool, null, Arrays.asList(fqFSRL.get()),
-						destFolder, programManager);
-				}
-				else if (choice == 3) {
-					fsbService.openFileSystem(fqFSRL.get());
-				}
+			if (!isFSContainer) {
+				// normal file; do a single-file import
+				importSingleFile(fullFsrl, destinationFolder, suggestedPath, tool, programManager,
+					monitor);
+				return;
 			}
-			else {
-				// If file was normal,
-				// do a normal single-file import
-				importSingleFile(fqFSRL.get(), destFolder, suggestedDestinationPath, tool,
-					programManager);
-			}
+
+			// file is a container, ask user to pick single import, batch import or fs browser
+			importFromContainer(tool, programManager, destinationFolder, suggestedPath, monitor,
+				referencedFile, fullFsrl);
+		}
+		catch (IOException ioe) {
+			String message = ioe.getMessage();
+			Msg.showError(ImporterUtilities.class, null, "Import Error", "Unable to import file " +
+				fsrl.getName() + (message != null ? ("\n\nCause: " + message) : ""), ioe);
+		}
+		catch (CancelledException e) {
+			Msg.info(ImporterUtilities.class, "Show Import Dialog canceled");
 		}
 		finally {
-			if (refdFile.get() != null) {
-				try {
-					refdFile.get().close();
-				}
-				catch (IOException e) {
-					// ignore
-				}
+			close(referencedFile);
+		}
+	}
+
+	private static void close(Closeable c) {
+		if (c != null) {
+			try {
+				c.close();
+			}
+			catch (IOException e) {
+				// ignore
 			}
 		}
+	}
 
+	private static void importFromContainer(PluginTool tool, ProgramManager programManager,
+			DomainFolder destinationFolder, String suggestedPath, TaskMonitor monitor,
+			RefdFile referencedFile, FSRL fullFsrl) {
+
+		Window parent = tool.getActiveWindow();
+		FileSystemBrowserService fsbService = tool.getService(FileSystemBrowserService.class);
+		int choice = 0; // cancelled
+		if (fsbService == null) {
+
+			//@formatter:off
+			choice = OptionDialog.showOptionDialog(parent, "Container File Detected",
+				"The file " + referencedFile.file.getName() +
+					" seems to have nested files in it.  Select an import mode:",							
+				"Single file",  // 1 
+				"Batch", 		// 2
+				OptionDialog.QUESTION_MESSAGE);
+		}
+		else {
+			choice = OptionDialog.showOptionDialog(parent, "Container File Detected",
+				"The file " + referencedFile.file.getName() +
+					" seems to have nested files in it.  Select an import mode:",							
+				"Single file",  // 1 
+				"Batch", 		// 2						
+				"File System", 	// 3
+				OptionDialog.QUESTION_MESSAGE);
+			//@formatter:on
+		}
+
+		if (choice == 1) {
+			importSingleFile(fullFsrl, destinationFolder, suggestedPath, tool, programManager,
+				monitor);
+		}
+		else if (choice == 2) {
+			BatchImportDialog.showAndImport(tool, null, Arrays.asList(fullFsrl), destinationFolder,
+				programManager);
+		}
+		else if (choice == 3) {
+			fsbService.openFileSystem(fullFsrl);
+		}
 	}
 
 	public static void showAddToProgramDialog(FSRL fsrl, Program program, PluginTool tool,
 			TaskMonitor monitor) {
 
+		Objects.requireNonNull(monitor);
+
 		try {
 			ByteProvider provider = FileSystemService.getInstance().getByteProvider(fsrl, monitor);
-
 			if (provider.length() == 0) {
 				Msg.showWarn(null, null, "Error opening " + fsrl.getName(),
 					"The item does not correspond to a valid file.");
 				return;
 			}
-			Map<Loader, Collection<LoadSpec>> loadMap =
-				LoaderService.getAllSupportedLoadSpecs(provider);
+
+			Map<Loader, Collection<LoadSpec>> loadMap = LoaderService.getSupportedLoadSpecs(
+				provider, loader -> loader.supportsLoadIntoProgram());
 
 			SystemUtilities.runSwingLater(() -> {
 				AddToProgramDialog dialog =
@@ -239,7 +281,7 @@ public class ImporterUtilities {
 			});
 		}
 		catch (IOException e) {
-			Msg.showError(ImporterUtilities.class, null, "Error reading data",
+			Msg.showError(ImporterUtilities.class, null, "Error Reading Resource",
 				"I/O error reading " + fsrl.getName(), e);
 		}
 		catch (CancelledException e) {
@@ -250,48 +292,46 @@ public class ImporterUtilities {
 
 	/**
 	 * Constructs a {@link ImporterDialog} and shows it in the swing thread.
-	 * <p>
+	 * 
 	 *
 	 * @param fsrl the file system resource locater (can be a simple file or an element of
-	 * a more complex file such as a zip file)
-	 * @param defaultFolder the default destination folder for the imported file. Can be null.
-	 * @param suggestedDestinationPath optional string path that will automatically be pre-pended
-	 * to the destination filename.
+	 * 			a more complex file such as a zip file)
+	 * @param destinationFolder the default destination folder for the imported file. Can be null
+	 * @param suggestedPath optional string path that will automatically be pre-pended
+	 * 			to the destination filename
 	 * @param tool the parent UI component
-	 * @param programManager optional {@link ProgramManager} instance to open the imported file in.
-	 * @throws IOException if there was an IO-related issue importing the file.
-	 * @throws CancelledException if the import was canceled.
+	 * @param programManager optional {@link ProgramManager} instance to open the imported file in
 	 */
-	private static void importSingleFile(FSRL fsrl, DomainFolder defaultFolder,
-			String suggestedDestinationPath, PluginTool tool, ProgramManager programManager) {
+	private static void importSingleFile(FSRL fsrl, DomainFolder destinationFolder,
+			String suggestedPath, PluginTool tool, ProgramManager programManager,
+			TaskMonitor monitor) {
 
-		TaskLauncher.launchNonModal("Import File", monitor -> {
-			try {
-				ByteProvider provider =
-					FileSystemService.getInstance().getByteProvider(fsrl, monitor);
-				Map<Loader, Collection<LoadSpec>> loadMap =
-					LoaderService.getAllSupportedLoadSpecs(provider);
+		try {
 
-				SystemUtilities.runSwingLater(() -> {
-					ImporterDialog importerDialog = new ImporterDialog(tool, programManager,
-						loadMap, provider, suggestedDestinationPath);
-					if (defaultFolder != null) {
-						importerDialog.setDestinationFolder(defaultFolder);
-					}
-					tool.showDialog(importerDialog);
-				});
-			}
-			catch (IOException ioe) {
-				Msg.showError(ImporterUtilities.class, tool.getActiveWindow(),
-					"Error Importing File", "Error when importing file " + fsrl, ioe);
-			}
-			catch (CancelledException e) {
-				Msg.info(ImporterUtilities.class, "Import single file " + fsrl + " cancelled");
-			}
-		});
+			ByteProvider provider = FileSystemService.getInstance().getByteProvider(fsrl, monitor);
+			Map<Loader, Collection<LoadSpec>> loadMap =
+				LoaderService.getAllSupportedLoadSpecs(provider);
+
+			SystemUtilities.runSwingLater(() -> {
+				ImporterDialog importerDialog =
+					new ImporterDialog(tool, programManager, loadMap, provider, suggestedPath);
+				if (destinationFolder != null) {
+					importerDialog.setDestinationFolder(destinationFolder);
+				}
+
+				tool.showDialog(importerDialog);
+			});
+		}
+		catch (IOException ioe) {
+			Msg.showError(ImporterUtilities.class, tool.getActiveWindow(), "Error Importing File",
+				"Error when importing file " + fsrl, ioe);
+		}
+		catch (CancelledException e) {
+			Msg.info(ImporterUtilities.class, "Import single file " + fsrl + " cancelled");
+		}
 	}
 
-	private static void doFSImport(RefdFile refdFile, FSRL fsrl, DomainFolder destFolderParam,
+	private static void doFsImport(RefdFile refdFile, FSRL fsrl, DomainFolder destFolderParam,
 			ProgramManager programManager, PluginTool tool) {
 		TaskLauncher.launchNonModal("Import File (FileSystem specific)", monitor -> {
 			GFile gfile = refdFile.file;
@@ -339,20 +379,21 @@ public class ImporterUtilities {
 
 	/**
 	 * Perform file import and open using optional programManager
+	 * @param tool tool to which popup dialogs should be associated
+	 * @param programManager program manager to open imported file with or null
 	 * @param fsrl import file location
 	 * @param destFolder project destination folder
 	 * @param loadSpec import {@link LoadSpec}
 	 * @param programName program name
 	 * @param options import options
-	 * @param tool tool to which popup dialogs should be associated
-	 * @param programManager program manager to open imported file with or null
 	 * @param monitor task monitor
 	 */
-	public static void doSingleImport(FSRL fsrl, DomainFolder destFolder, LoadSpec loadSpec,
-			String programName, List<Option> options, PluginTool tool,
-			ProgramManager programManager, TaskMonitor monitor) {
+	public static void importSingleFile(PluginTool tool, ProgramManager programManager, FSRL fsrl,
+			DomainFolder destFolder, LoadSpec loadSpec, String programName, List<Option> options,
+			TaskMonitor monitor) {
 
-		// Do a normal single-file import
+		Objects.requireNonNull(monitor);
+
 		try (ByteProvider bp = FileSystemService.getInstance().getByteProvider(fsrl, monitor)) {
 
 			Object consumer = new Object();
@@ -387,13 +428,15 @@ public class ImporterUtilities {
 
 			if (importedObject instanceof Program) {
 				Program program = (Program) importedObject;
+
+				setProgramProperties(program, fsrl, monitor);
+				ProgramMappingService.createAssociation(fsrl, program);
+
 				if (programManager != null) {
 					int openState =
 						firstProgram ? ProgramManager.OPEN_CURRENT : ProgramManager.OPEN_VISIBLE;
 					programManager.openProgram(program, openState);
 				}
-				ImporterUtilities.setProgramProperties(program, fsrl, monitor);
-				ProgramMappingService.createAssociation(fsrl, program);
 				importedFilesSet.add(program.getDomainFile());
 			}
 			if (firstProgram) {
@@ -416,12 +459,14 @@ public class ImporterUtilities {
 		}
 	}
 
-	public static void doAddToProgram(FSRL fsrl, LoadSpec loadSpec, List<Option> options,
-			Program program, TaskMonitor monitor, PluginTool tool) {
+	public static void addContentToProgram(PluginTool tool, Program program, FSRL fsrl,
+			LoadSpec loadSpec, List<Option> options, TaskMonitor monitor) {
+
+		Objects.requireNonNull(monitor);
+
 		MessageLog messageLog = new MessageLog();
 		try (ByteProvider bp = FileSystemService.getInstance().getByteProvider(fsrl, monitor)) {
-			loadSpec.getLoader().loadInto(bp, loadSpec, options, messageLog, program, monitor,
-				MemoryConflictHandler.ALWAYS_OVERWRITE);
+			loadSpec.getLoader().loadInto(bp, loadSpec, options, messageLog, program, monitor);
 			displayResults(tool, program, program.getDomainFile(), messageLog.toString());
 		}
 		catch (CancelledException e) {

@@ -1,0 +1,3123 @@
+# This module defines SuperH version 4, but should work against versions 1,2, and 3. 
+# There is a SuperH version 4A (which has 4 byte instruction length) which has instructions incompatable
+# with this.
+
+# Based on "Renesas SH-4 Software Manual: Rev 6.00 2006.09 (i.e. rej09b0318_sh_4sm.pdf)
+
+# Here's a nice webpage with all the insns clearly shown
+# http://shared-ptr.com/sh_insns.html
+
+# Address Space:
+#       SuperH 4A has a 29-bit and a 32-bit address space mode,
+#       and can do 32-bit addressing in 29-bit mode with virtual addressing.
+#       The SH4 has a 29-bit physical address space, but can do 32-bit with virtual addressing.
+#
+# WARNING:
+# WARNING:
+# WARNING: Currently set up for 29-bit only for computed jumps/calls.  This needs to be configurable.
+# WARNING:
+
+# NOTE: SuperH 4 and floating point disassembly and decompiling precision.
+# Many of the floating point instructions can do either single or double precision calculations depending 
+# on a flag FPSCR_PR at runtime.  This means at disassembly stage we don't have all the information required
+# determine the arguments to some floating point instructions.
+
+# NOTE: SuperH 4 and floating point disassembly and decompiling  (fmov lengths).
+# Some of the instructions can read and write floating point values in 4 or 8 byte values depending on the
+# flag FPSCR_SZ.  This means at disassembly stage we don't have all the information required to determine the
+# arguments to some floating point instructions.
+# Note that the FPSCR_PR flag is never examined during any of the fmov insns.
+
+# NOTE: SuperH and banking
+# When the RB flag is not set R1->R7 come from bank0 and when RB is set R1->R7 come from bank1.  The RB mode is
+# set in privileged mode.  We don't currently simulate this behavior.
+
+# NOTE: SuperH and floating point banking
+# When the flag FPSCR_FR is not set fr0->fr15 come from bank0 and when FPSCR.FR is set fr0->fr15 come from bank1.
+# We don't currently simulate this behavior.
+
+# NOTE: SuperH and memory map registers
+# There are 7 32bit control registers (SR, GBR, SSR, SPC, SGR, DBR, VBR) these are mapped to 2 different memory
+# areas 0x1C000000 and 0xFC000000. We don't currently simulate this behavior.
+
+# NOTE: SuperH/Renesas return value convention.
+# Renesas and gcc return most values from a function in r0 but floats are return in fr0 and doubles in dr0. 
+# Ghidra calling spec has no way of specifying this behavior so such return values are not handled correctly.
+
+# NOTE: SuperH/Renesas calling convention
+# Renesas and gcc pass most values to a function via r4-r7 but floats are passed by fr4-fr7 and doubles in
+# dr4, dr6, dr8, and dr10.   
+
+# NOTE: floating point errors
+# In implementing the floating point pcode we ignored many of the possible error conditions floating point
+# could cause.  This allows us to produce much better looking decompiled code.
+
+# NOTE: SuperH 4 Memory model
+# SuperH 4 has a Memory Management Unit (i.e. MMU).  Which means that depending on mode the memory can
+# look very different.  We don't model this behavior.  We also don't simulate the MMU address translation, 
+# so all addresses are raw.
+
+
+# Basic ================================================================================
+
+define endian=$(ENDIAN); # Defined in file that includes this file
+
+define alignment=2;
+
+define space ram 	  type=ram_space 	  size=4 default;
+define space register type=register_space size=4;
+
+# Registers ============================================================================
+# TODO deal with the 2 banks of registers
+# TODO move os corret memory address
+define register offset=0 size=4 [
+	r0      r1      r2      r3      r4      r5      r6      r7
+	r8      r9      r10     r11     r12     r13     r14     r15
+	R0_BANK R1_BANK R2_BANK R3_BANK R4_BANK R5_BANK R6_BANK R7_BANK
+];
+
+# This is where "BANK0" is with RB=0 (normal), causes duplicate pair error in SLEIGH
+#define register offset=0 size=4 [
+#  R0_BANK0  R1_BANK0  R2_BANK0  R3_BANK0  R4_BANK0  R5_BANK0  R6_BANK0  R7_BANK0
+#];
+# This is where "BANK1" is with RB=1 (privileged), causes duplicate pair error in SLEIGH
+#define register offset=0 size=4 [
+#  R0_BANK1  R1_BANK1  R2_BANK1  R3_BANK1  R4_BANK1  R5_BANK1  R6_BANK1  R7_BANK1
+#];
+@if ENDIAN == "big"
+define register offset=512 size=4 [
+	fr0  fr1  fr2  fr3  fr4  fr5  fr6  fr7  fr8  fr9  fr10 fr11 fr12 fr13 fr14 fr15
+	xf0  xf1  xf2  xf3  xf4  xf5  xf6  xf7  xf8  xf9  xf10 xf11 xf12 xf13 xf14 xf15
+];
+
+@endif
+
+@if ENDIAN == "little"
+define register offset=512 size=4 [
+	fr1  fr0  fr3  fr2  fr5  fr4  fr7  fr6  fr9  fr8  fr11 fr10 fr13 fr12 fr15 fr14
+	xf0  xf1  xf2  xf3  xf4  xf5  xf6  xf7  xf8  xf9  xf10 xf11 xf12 xf13 xf14 xf15
+];
+
+@endif
+
+define register offset=512 size=8 [
+	dr0  dr2  dr4  dr6  dr8  dr10 dr12 dr14
+	xd0  xd2  xd4  xd6  xd8  xd10 xd12 xd14
+];
+
+define register offset=512 size=16 [
+	fv0  fv4  fv8  fv12
+];
+
+# Control registers
+define register offset=1024 size=4 [
+	GBR SR  SSR SPC VBR SGR DBR
+];
+
+# SR component register fields (pseudo)
+define register offset=1536 size=1 [
+	MD    RB    BL    FD    M     Q     IMASK S     T
+];
+
+# System registers
+define register offset=2048 size=4 [
+	MACH  MACL  PR    PC    FPSCR FPUL
+];
+
+# FPSCR component register fields (pseudo)
+define register offset=2560 size=1 [
+	FPSCR_RM
+	FPSCR_FLAG
+	FPSCR_ENABLE
+	FPSCR_CAUSE
+	FPSCR_DN
+	FPSCR_PR
+	FPSCR_SZ
+	FPSCR_FR
+];
+
+@define T_FLAG  "T"
+@define S_FLAG  "S"
+@define IMASK   "IMASK"
+@define Q_FLAG  "Q"
+@define M_FLAG  "M"
+@define FD_FLAG "FD"
+@define BL_FLAG "BL"
+@define RB_FLAG "RB"
+@define MD_FLAG "MD"
+
+@define FPSCR_RM "FPSCR_RM"
+@define FPSCR_FLAG "FPSCR_FLAG"
+@define FPSCR_ENABLE "FPSCR_ENABLE"
+@define FPSCR_CAUSE "FPSCR_CAUSE"
+@define FPSCR_DN "FPSCR_DN"
+@define FPSCR_PR "FPSCR_PR"
+@define FPSCR_SZ "FPSCR_SZ"
+@define FPSCR_FR "FPSCR_FR"
+
+#
+# SR pack and unpack support
+#
+
+# 0000 0000 0000 0000 0000 0000 0000 0001
+@define T_MASK           "0x00000001"
+
+# 0000 0000 0000 0000 0000 0000 0000 0010
+@define S_MASK           "0x00000002"
+
+# 0000 0000 0000 0000 0000 0000 1111 0000
+@define IMASK_MASK       "0x000000F0"
+
+# 0000 0000 0000 0000 0000 0001 0000 0000
+@define Q_MASK           "0x00000100"
+
+# 0000 0000 0000 0000 0000 0010 0000 0000
+@define M_MASK           "0x00000200"
+
+# 0000 0000 0000 0000 1000 0000 0000 0000
+@define FD_MASK          "0x00008000"
+
+# 0001 0000 0000 0000 0000 0000 0000 0000
+@define BL_MASK          "0x10000000"
+
+# 0010 0000 0000 0000 0000 0000 0000 0000
+@define RB_MASK          "0x20000000"
+
+# 0100 0000 0000 0000 0000 0000 0000 0000
+@define MD_MASK          "0x40000000"
+
+@define T_SHIFT          " 0"
+@define S_SHIFT          " 1"
+@define IMASK_SHIFT      " 4"
+@define Q_SHIFT          " 8"
+@define M_SHIFT          " 9"
+@define FD_SHIFT         "15"
+@define BL_SHIFT         "28"
+@define RB_SHIFT         "29"
+@define MD_SHIFT         "30"
+
+macro genSRregister() {
+
+	SR = 	
+    (zext(T)     << $(T_SHIFT))     |
+    (zext(S)     << $(S_SHIFT))     |
+    (zext(IMASK) << $(IMASK_SHIFT)) |
+    (zext(Q)     << $(Q_SHIFT))     |
+    (zext(M)     << $(M_SHIFT))     |
+    (zext(FD)    << $(FD_SHIFT))    |
+    (zext(BL)    << $(BL_SHIFT))    |
+    (zext(RB)    << $(RB_SHIFT))    |
+    (zext(MD)    << $(MD_SHIFT));
+}
+
+macro splitSRregister() {
+
+	splitTemp:4  = (SR & $(T_MASK))     >> $(T_SHIFT);
+	T            = splitTemp:1;
+
+	splitTemp    = (SR & $(S_MASK))     >> $(S_SHIFT);
+	S            = splitTemp:1;
+
+	splitTemp    = (SR & $(IMASK_MASK)) >> $(IMASK_SHIFT);
+	IMASK        = splitTemp:1;
+
+	splitTemp    = (SR & $(Q_MASK))     >> $(Q_SHIFT);
+	Q            = splitTemp:1;
+
+	splitTemp    = (SR & $(M_MASK))     >> $(M_SHIFT);
+	M            = splitTemp:1;
+
+	splitTemp    = (SR & $(FD_MASK))    >> $(FD_SHIFT);
+	FD           = splitTemp:1;
+
+	splitTemp    = (SR & $(BL_MASK))    >> $(BL_SHIFT);
+	BL           = splitTemp:1;
+
+	splitTemp    = (SR & $(RB_MASK))    >> $(RB_SHIFT);
+	RB           = splitTemp:1;
+
+	splitTemp    = (SR & $(MD_MASK))    >> $(MD_SHIFT);
+	MD           = splitTemp:1;
+}
+
+#
+# FPSCR pack and unpack support
+#
+@define  FPSCR_RM_SHIFT      " 0"
+@define  FPSCR_FLAG_SHIFT    " 2"
+@define  FPSCR_ENABLE_SHIFT  " 7"
+@define  FPSCR_CAUSE_SHIFT   "12"
+@define  FPSCR_DN_SHIFT      "18"
+@define  FPSCR_PR_SHIFT      "19"
+@define  FPSCR_SZ_SHIFT      "20"
+@define  FPSCR_FR_SHIFT      "21"
+
+
+# 0000 0000 0000 0000 0000 0000 0000 0011
+@define  FPSCR_RM_MASK       "0x00000003"
+
+# 0000 0000 0000 0000 0000 0000 0111 1100
+@define  FPSCR_FLAG_MASK     "0x0000007C"
+
+# 0000 0000 0000 0000 0000 1111 1000 0000
+@define  FPSCR_ENABLE_MASK   "0x00000F80"
+
+# 0000 0000 0000 0011 1111 0000 0000 0000
+@define  FPSCR_CAUSE_MASK    "0x0003F000"
+
+# 0000 0000 0000 0100 0000 0000 0000 0000
+@define  FPSCR_DN_MASK       "0x00040000"
+
+# 0000 0000 0000 1000 0000 0000 0000 0000
+@define  FPSCR_PR_MASK       "0x00080000"
+
+# 0000 0000 0001 0000 0000 0000 0000 0000
+@define  FPSCR_SZ_MASK       "0x00100000"
+
+# 0000 0000 0010 0000 0000 0000 0000 0000
+@define  FPSCR_FR_MASK       "0x00200000"
+
+# Bits 22-31 are not used
+
+macro genFPSCRregister() {
+
+	FPSCR = 	
+    (zext(FPSCR_RM)     << $(FPSCR_RM_SHIFT))     |
+    (zext(FPSCR_FLAG)   << $(FPSCR_FLAG_SHIFT))   |
+    (zext(FPSCR_ENABLE) << $(FPSCR_ENABLE_SHIFT)) |
+    (zext(FPSCR_CAUSE)  << $(FPSCR_CAUSE_SHIFT))  |
+    (zext(FPSCR_DN)     << $(FPSCR_DN_SHIFT))     |
+    (zext(FPSCR_PR)     << $(FPSCR_PR_SHIFT))     |
+    (zext(FPSCR_SZ)     << $(FPSCR_SZ_SHIFT))     |
+    (zext(FPSCR_FR)     << $(FPSCR_FR_SHIFT));
+}
+
+macro splitFPSCRregister() {
+
+	splitTemp:4  = (FPSCR & $(FPSCR_RM_MASK))     >> $(FPSCR_RM_SHIFT);
+	FPSCR_RM     = splitTemp:1;
+
+	splitTemp    = (FPSCR & $(FPSCR_FLAG_MASK))   >> $(FPSCR_FLAG_SHIFT);
+	FPSCR_FLAG   = splitTemp:1;
+
+	splitTemp    = (FPSCR & $(FPSCR_ENABLE_MASK)) >> $(FPSCR_ENABLE_SHIFT);
+	FPSCR_ENABLE = splitTemp:1;
+
+	splitTemp    = (FPSCR & $(FPSCR_CAUSE_MASK))  >> $(FPSCR_CAUSE_SHIFT);
+	FPSCR_CAUSE  = splitTemp:1;
+
+	splitTemp    = (FPSCR & $(FPSCR_DN_MASK))     >> $(FPSCR_DN_SHIFT);
+	FPSCR_DN     = splitTemp:1;
+
+	splitTemp    = (FPSCR & $(FPSCR_PR_MASK))     >> $(FPSCR_PR_SHIFT);
+	FPSCR_PR     = splitTemp:1;
+
+	splitTemp    = (FPSCR & $(FPSCR_SZ_MASK))     >> $(FPSCR_SZ_SHIFT);
+	FPSCR_SZ     = splitTemp:1;
+
+	splitTemp    = (FPSCR & $(FPSCR_FR_MASK))     >> $(FPSCR_FR_SHIFT);
+	FPSCR_FR     = splitTemp:1;
+}
+
+# Fields =================================================================================
+define token instr(16)
+	OP_0  = (12,15)
+	OP_1  = ( 0, 3)
+	OP_2  = ( 8,15)
+	OP_3  = ( 0,15)
+	OP_4  = ( 0, 7)
+	OP_5  = ( 0, 8)
+	OP_6  = ( 8, 8)
+	OP_7  = ( 0, 4)
+	OP_8  = ( 0, 9)
+	OP_9  = ( 7, 7)
+	OP_10 = ( 4, 4)
+
+	BANK  = ( 4, 6) # bank register id
+	M_0   = ( 4, 7) # register id
+	M_1   = ( 5, 7) # register id
+	M_2   = ( 8, 9) # register id
+	FRM_0 = ( 4, 7) # float register id
+	DRM_1 = ( 5, 7) # double register id
+	XDM_1 = ( 5, 7) # double register id
+	XDRM  = ( 4, 7) # double register id
+	FVM_2 = ( 8, 9) # fv register id
+	N_0   = ( 8,11) # register id
+	N_1   = ( 9,11) # register id
+	N_2   = (10,11) # register id
+	FRN_0 = ( 8,11) # float register id
+	DRN_1 = ( 9,11) # double register id
+	XDN_1 = ( 9,11) # double register id
+	XDRN  = ( 8,11) # float register id
+	FVN_2 = (10,11) # fv register id
+	I_0   = ( 0, 7) signed # immediate
+	I_1   = ( 0,11) signed # immediate
+	I_2   = ( 0, 3) signed # immediate
+	U_0   = ( 0, 7) # immediate
+	U_1   = ( 0,11) # immediate
+	U_2   = ( 0, 3) # immediate
+;
+
+# Context variables ====================================================
+# Attach variables =====================================================
+# attach normal registers 
+attach variables [ N_0 M_0 ] [
+  r0  r1  r2  r3  r4  r5  r6  r7  r8  r9  r10  r11  r12  r13  r14  r15
+];
+
+# attach float registers 
+attach variables [ FRN_0 FRM_0] [
+  fr0  fr1  fr2  fr3  fr4  fr5  fr6  fr7  fr8  fr9  fr10  fr11  fr12  fr13  fr14  fr15
+];
+
+# attach double registers
+attach variables [ DRN_1 DRM_1 ] [
+  dr0 dr2 dr4 dr6 dr8 dr10 dr12 dr14
+];
+
+# attach extended double registers
+attach variables [ XDN_1 XDM_1 ] [
+  xd0 xd2 xd4 xd6 xd8 xd10 xd12 xd14
+];
+
+attach variables [ XDRN XDRM ] [
+  dr0 xd0 dr2 xd2 dr4 xd4 dr6 xd6 dr8 xd8 dr10 xd10 dr12 xd12 dr14 xd14
+];
+
+# attach vf registers
+attach variables [ FVN_2 FVM_2 ] [
+  fv0 fv4 fv8 fv12
+];
+
+attach variables [ BANK ] [
+   R0_BANK  R1_BANK  R2_BANK  R3_BANK  R4_BANK  R5_BANK  R6_BANK  R7_BANK
+];
+
+# Tables ================================================================
+# Addressing Modes
+#
+# Register direct
+# Rn			EA is Rn.
+# 
+# Register indirect
+# @Rn			Rn contains EA
+# 
+# Register indirect with postincrement
+# @Rn+			Rn contains EA
+#               After EA calculation:
+#				increment Rn by 1 for byte, 2 for word, 4 for long word, 8 quadword operand
+# 
+# Register indirect with predecrement
+# @-Rn			Rn contains EA,
+#               Before EA calculation:
+#				increment Rn by 1 for byte, 2 for word, 4 for long word, 8 quadword operand
+# 
+# Register indirect with displacement
+# @(disp:4, Rn)	EA is Rn + 4-bit displacement disp added. disp is zero extended,
+#               then multiplied by 1 for byte, 2 for word, 4 for long word operand size
+# 
+# Indexed register indirect
+# @(R0, Rn)		EA is Rn + R0
+# 
+# GBR indirect with displacement
+# @(disp:8,GBR)	EA is GBR contents with 8-bit displacement added.
+#				8-bit displacement disp added. disp is zero extended,
+#               then multiplied by 1 for byte, 2 for word, 4 for long word operand size
+# 
+# Indexed GBR indirect
+# @(R0, GBR)	EA is GBR + R0
+# 
+# PC-relative with displacement
+# @(disp:8, PC)	EA is PC+4 + 8bit displacement. disp is zero extended,
+#               then multiplied by 1 for byte, 2 for word, 4 for long word operand size
+# 
+# PC-relative
+# disp:8		EA is PC+4 + 8-bit displacement.
+#				disp is sign-extended and multiplied by 2.
+# 
+# PC-relative
+# disp:12		EA is PC+4 + 12-bit displacement.
+#				disp is sign-extended and multiplied by 2.
+# 
+# Rn			EA is PC+4 + Rn.
+# 
+M_0t:   M_0  is M_0 { export M_0; }
+
+N_0t:   N_0  is N_0 { export N_0; }
+
+N_0tjmp: @^N_0  is N_0 { export N_0; }
+
+I_0t:    "#"^I_0  is I_0 { tmp:4 = I_0; export tmp; }
+
+U_0t:    "#"^U_0                        is U_0            { tmp:4 = U_0; export tmp; }
+U_0t1:   "#"^U_0^",@("^r0^","^GBR^")"  is U_0 & r0 & GBR { tmp:1 = U_0; export tmp; }
+
+I_0t_r0: "#"I_0^","^r0  is I_0 & r0 { tmp:4 = I_0; export tmp; }
+
+U_0t_r0: "#"U_0^","^r0  is U_0 & r0 { tmp:4 = U_0; export tmp; }
+
+I_0tbranch: dest  is I_0 [ dest = inst_start + I_0*2 + 4; ] { export *:4 dest; }
+
+I_1tbranch: dest  is I_1 [ dest = inst_start + I_1*2 + 4; ] { export *:4 dest; }
+
+sr_N_0t:   SR^","^N_0  is N_0 & SR { export N_0; }
+
+gbr_N_0t:  GBR^","^N_0  is N_0 & GBR { export N_0; }
+
+vbr_N_0t:  VBR^","^N_0  is N_0 & VBR { export N_0; }
+
+ssr_N_0t:  SSR^","^N_0  is N_0 & SSR { export N_0; }
+
+spc_N_0t:  SPC^","^N_0  is N_0 & SPC { export N_0; }
+
+sgr_N_0t:  SGR^","^N_0  is N_0 & SGR { export N_0; }
+
+dbr_N_0t:  DBR^","^N_0  is N_0 & DBR { export N_0; }
+
+sr_t:   SR  is OP_0 & SR { x:4 = 0; export x; } # dummy export, just looking for the display
+
+gbr_t:  GBR  is OP_0 & GBR { x:4 = 0; export x; } # dummy export, just looking for the display
+
+vbr_t:  VBR  is OP_0 & VBR { x:4 = 0; export x; } # dummy export, just looking for the display
+
+ssr_t:  SSR  is OP_0 & SSR { x:4 = 0; export x; } # dummy export, just looking for the display
+
+spc_t:  SPC  is OP_0 & SPC { x:4 = 0; export x; } # dummy export, just looking for the display
+
+sgr_t:  SGR  is OP_0 & SGR { x:4 = 0; export x; } # dummy export, just looking for the display
+
+dbr_t:  DBR  is OP_0 & DBR { x:4 = 0; export x; } # dummy export, just looking for the display
+
+N_0t_sr:   N_0^","^SR      is N_0 & SR { export N_0; }
+
+N_0t_gbr:  N_0^","^GBR      is N_0 & GBR { export N_0; }
+
+N_0t_vbr:  N_0^","^VBR      is N_0 & VBR { export N_0; }
+
+N_0t_ssr:  N_0^","^SSR      is N_0 & SSR { export N_0; }
+
+N_0t_spc:  N_0^","^SPC      is N_0 & SPC { export N_0; }
+
+# N_0t_sgr:  N_0^","^SGR   is N_0 & SGR { export N_0; }
+N_0t_dbr:  N_0^","^DBR      is N_0 & DBR { export N_0; }
+
+N_0t_bank: N_0         is N_0 { export N_0; }
+
+N_0t_sr1:   @^N_0^"+,"^SR  is N_0 & SR { export N_0; }
+
+N_0t_gbr1:  @^N_0^"+,"^GBR  is N_0 & GBR { export N_0; }
+
+N_0t_vbr1:  @^N_0^"+,"^VBR  is N_0 & VBR { export N_0; }
+
+N_0t_ssr1:  @^N_0^"+,"^SSR  is N_0 & SSR { export N_0; }
+
+N_0t_spc1:  @^N_0^"+,"^SPC  is N_0 & SPC { export N_0; }
+
+# N_0t_sgr1:  @^N_0^"+,"^SGR     is N_0 & SGR { export N_0;}
+N_0t_dbr1:  @^N_0^"+,"^DBR  is N_0 & DBR { export N_0; }
+
+N_0t_bank1: @^N_0^"+"  is N_0 { export N_0; }
+
+FR0_t:   fr0  is OP_0 & fr0 { x:4 = 0; export x; } # dummy export, just looking for the display
+
+XMTRX_t: "xmtrx"  is OP_0 { x:4 = 0; export x; } # dummy export, just looking for the display
+
+mach_t:  MACH  is OP_0 & MACH { x:4 = 0; export x; } # dummy export, just looking for the display
+
+macl_t:  MACL  is OP_0 & MACL { x:4 = 0; export x; } # dummy export, just looking for the display
+
+fpul_t:  FPUL  is OP_0 & FPUL { x:4 = 0; export x; } # dummy export, just looking for the display
+
+fpscr_t: "FPSCR"  is OP_0 { x:4 = 0; export x; } # dummy export, just looking for the display
+
+mach_N_0t:  MACH^","^N_0  is N_0 & MACH { export N_0; }
+
+macl_N_0t:  MACL^","^N_0  is N_0 & MACL { export N_0; }
+
+pr_N_0t:    PR^","^N_0  is N_0 & PR { export N_0; }
+
+fpul_N_0t:  FPUL^","N_0  is N_0 & FPUL { export N_0; }
+
+fpscr_N_0t: "FPSCR"^","N_0  is N_0 { export N_0; }
+
+N_0t_mach:  N_0^","^MACH      is N_0 & MACH { export N_0; }
+
+N_0t_macl:  N_0^","^MACL      is N_0 & MACL { export N_0; }
+
+N_0t_pr:    N_0^","^PR      is N_0 & PR { export N_0; }
+
+N_0t_fpul:  N_0^","^FPUL      is N_0 & FPUL { export N_0; }
+
+N_0t_fpscr: N_0^",fpscr"      is N_0 { export N_0; }
+
+N_0t_mach1:  @^N_0^"+,"^MACH  is N_0 & MACH { export N_0; }
+
+N_0t_macl1:  @^N_0^"+,"^MACL  is N_0 & MACL { export N_0; }
+
+N_0t_pr1:    @^N_0^"+,"^PR  is N_0 & PR { export N_0; }
+
+N_0t_fpul1:  @^N_0^"+,"^FPUL  is N_0 & FPUL { export N_0; }
+
+N_0t_fpscr1: @^N_0^"+,fpscr"  is N_0 { export N_0; }
+
+M_0t_at1: @^M_0   is M_0 { export M_0; }
+
+N_0t_at1: @^N_0   is N_0 { export N_0; }
+
+M_0t_at: @^M_0^+  is M_0 { export M_0; }
+
+N_0t_at: @^N_0^+  is N_0 { export N_0; }
+
+FRM_0t: FRM_0  is FRM_0 { export FRM_0; }
+
+FRN_0t: FRN_0  is FRN_0 { export FRN_0; }
+
+DRM_1t: DRM_1  is DRM_1 { export DRM_1; }
+
+DRN_1t: DRN_1  is DRN_1 { export DRN_1; }
+
+FVM_2t: FVM_2  is FVM_2 { export FVM_2; }
+
+FVN_2t: FVN_2  is FVN_2 { export FVN_2; }
+
+N_0t_at_with_r0: "@("^r0^","^N_0^")"  is N_0 & r0 { export N_0; }
+
+M_0t_at_with_r0: "@("^r0^","^M_0^")"  is M_0 & r0 { export M_0; }
+
+N_0t_at_neg: "@-"^N_0  is N_0 { export N_0; }
+
+U_2t_M0_dispr01: "@("^disp^","^M_0^")"  is U_2 & M_0  [ disp = U_2 * 1; ] { tmp4:4 = disp; export tmp4; }
+U_2t_M0_dispr02: "@("^disp^","^M_0^")"  is U_2 & M_0  [ disp = U_2 * 2; ] { tmp4:4 = disp; export tmp4; }
+U_2t_M0_dispr04: "@("^disp^","^M_0^")"  is U_2 & M_0  [ disp = U_2 * 4; ] { tmp4:4 = disp; export tmp4; }
+
+U_2t_N0_dispr04: "@("^disp^","^N_0^")"  is U_2 & N_0  [ disp = U_2 * 4; ] { tmp4:4 = disp; export tmp4; }
+
+# Bug in SLEIGH, needed "* 1"
+U_0t_gbr_at_1: "@("^disp,GBR^")"  is U_0 & GBR [ disp = U_0 * 1; ] { tmp4:4 = disp + GBR; export tmp4; }
+U_0t_gbr_at_2: "@("^disp,GBR^")"  is U_0 & GBR [ disp = U_0 * 2; ] { tmp4:4 = disp + GBR; export tmp4; }
+U_0t_gbr_at_4: "@("^disp,GBR^")"  is U_0 & GBR [ disp = U_0 * 4; ] { tmp4:4 = disp + GBR; export tmp4; }
+
+# Note: The 4 byte (MOVA) case needs the masking of the PC bottom 2 bits, page 345, paragraph 1:
+#      "a value with the lower 2 bits adjusted to B00 is used in address calculation."
+# Note: Only the 4 byte case needs the masking of the PC bottom 2 bits, page 336, paragraph 3:
+#      "A value with the lower 2 bits adjusted to B00 is used in address calculation."
+# (The 2 byte case always has the PC LSBit at 0 because all instructions are 2 byte aligned.)
+U_0t_2pc: dest  is U_0  [ dest =   inst_start                + U_0*2 + 4; ] { export *:2 dest; }
+
+U_0t_4pc: dest  is U_0  [ dest = ( inst_start & 0xfffffffc ) + U_0*4 + 4; ] { export *:4 dest; }
+
+BANKt: BANK  is BANK { export BANK; }
+
+N_0txx: r0",@"^N_0  is r0 & N_0 { tmp:4 = N_0; export tmp; }
+
+# Constructors =======================================================================
+# Binary Addition
+# pattern 0011nnnnmmmm1100
+# text    add <REG_M>,<REG_N>
+# arch    arch_sh_up
+:add M_0t,N_0t              is OP_0=0x3 & N_0t & M_0t & OP_1=0xc {
+
+	N_0t = N_0t + M_0t;
+}
+
+
+# Binary Addition
+# pattern 0111nnnniiiiiiii
+# text    add #<imm>,<REG_N>
+# arch    arch_sh_up
+:add I_0t,N_0t              is OP_0=0x7 & N_0t & I_0t {
+
+	N_0t = I_0t + N_0t; # NOTE I_0t already signed extended
+}
+
+
+# Binary Addition with Carry
+# pattern 0011nnnnmmmm1110
+# text    addc <REG_M>,<REG_N>
+# arch    arch_sh_up
+:addc M_0t,N_0t             is OP_0=0x3 & N_0t & M_0t & OP_1=0xe {
+
+	tmp1:4 = N_0t + M_0t;
+	tmp0:4 = N_0t;
+	N_0t   = tmp1 + zext($(T_FLAG));
+	$(T_FLAG) = (tmp0 > tmp1);
+	if (tmp1 <= N_0t) goto <skip>;
+	$(T_FLAG) = 1;
+	<skip>
+}
+
+
+# Binary Addition with Overflow Check
+# pattern 0011nnnnmmmm1111
+# text    addv <REG_M>,<REG_N>
+# arch    arch_sh_up
+:addv M_0t,N_0t             is OP_0=0x3 & N_0t & M_0t & OP_1=0xf {
+
+	dest:4 = 0;
+	dest = zext((!(N_0t s>= 0)));
+	src:4  = 0;
+	src  = zext((!(M_0t s>= 0)));
+	src  = src + dest;
+	N_0t = N_0t + M_0t;
+	ans:4 = 0;
+	ans  = zext((!(N_0t s>= 0)));
+	ans = ans + dest;
+
+	bool:1 = ((src == 0) || (src == 2));
+	$(T_FLAG) = bool * (ans == 1) + !bool * ( 0 );
+}
+
+
+# Logical AND
+# pattern 0010nnnnmmmm1001
+# text    and <REG_M>,<REG_N>
+# arch    arch_sh_up
+:and M_0t,N_0t              is OP_0=0x2 & N_0t & M_0t & OP_1=0x9 {
+
+	N_0t = N_0t & M_0t;
+}
+
+# Logical AND
+# pattern 11001001iiiiiiii
+# text    and #<imm>,R0
+# arch    arch_sh_up
+:and U_0t_r0                is OP_2=0xc9 & U_0t_r0 {
+
+	r0 = r0 & U_0t_r0;
+}
+
+# Logical AND
+# pattern 11001101iiiiiiii
+# text    and.b #<imm>,@(R0,GBR)
+# arch    arch_sh_up
+:and.b U_0t1                is OP_2=0xcd & U_0t1 {
+
+	*:1 (GBR + r0) = (*:1 (GBR + r0)) & U_0t1;
+}
+
+
+# Conditional Branch
+# pattern 10001011iiiiiiii
+# text    bf <bdisp8>
+# arch    arch_sh_up
+:bf I_0tbranch              is OP_2=0x8b & I_0tbranch {
+
+	if ( $(T_FLAG) == 0 ) goto I_0tbranch;
+}
+
+
+# Conditional Branch with Delay
+# pattern 10001111iiiiiiii
+# text    bf/s <bdisp8>
+# arch    arch_sh2_up
+:bf^"/s" I_0tbranch         is OP_2=0x8f & I_0tbranch {
+
+	local cond = $(T_FLAG);
+	delayslot(1);
+	if ( cond == 0 ) goto I_0tbranch;
+} 
+
+
+# Unconditional Branch
+# pattern 1010iiiiiiiiiiii
+# text    bra <bdisp12>
+# arch    arch_sh_up
+:bra I_1tbranch             is OP_0=0xa & I_1tbranch {
+
+	delayslot(1);
+	goto I_1tbranch;
+}
+
+
+# Unconditional Branch
+# pattern 0000nnnn00100011
+# text    braf <REG_N>
+# arch    arch_sh2_up
+:braf N_0                   is OP_0=0x0 & N_0 & OP_4=0x23 {
+
+	local dest = N_0 + inst_next;
+	delayslot(1);
+	goto [dest];
+}
+
+
+# Branch to Subroutine Procedure
+# pattern 1011iiiiiiiiiiii
+# text    bsr <bdisp12>
+# arch    arch_sh_up
+:bsr I_1tbranch             is OP_0=0xb & I_1tbranch {
+
+	delayslot(1);
+	call I_1tbranch;
+}
+
+
+# Branch to Subroutine Procedure
+# pattern 0000nnnn00000011
+# text    bsrf <REG_N>
+# arch    arch_sh2_up
+:bsrf N_0                   is OP_0=0x0 & N_0 & OP_4=0x3 {
+
+	PR = inst_next;
+	local dest = N_0 + inst_next;
+	delayslot(1);
+	call [dest];
+}
+
+
+# Conditional Branch
+# pattern 10001001iiiiiiii
+# text    bt <bdisp8>
+# arch    arch_sh_up
+:bt I_0tbranch              is OP_2=0x89 & I_0tbranch {
+
+	if ( $(T_FLAG) == 1 ) goto I_0tbranch;
+}
+
+
+# Conditional Branch with Delay
+# pattern 10001101iiiiiiii
+# text    bt/s <bdisp8>
+# arch    arch_sh2_up
+:bt^"/s" I_0tbranch         is OP_2=0x8d & I_0tbranch {
+	local cond = $(T_FLAG);
+	delayslot(1);
+	if ( cond == 1 ) goto I_0tbranch;
+}
+
+
+# MAC Register Clear
+# pattern 0000000000101000
+# text    clrmac
+# arch    arch_sh_up
+:clrmac                     is OP_3=0x28 {
+
+	MACH = 0;
+	MACL = 0;
+}
+
+
+# S Bit Clear
+# pattern 0000000001001000
+# text    clrs
+# arch    arch_sh_up
+:clrs                       is OP_3=0x48 {
+
+	$(S_FLAG) = 0;
+}
+
+
+# T Bit Clear
+# pattern 0000000000001000
+# text    clrt
+# arch    arch_sh_up
+:clrt                       is OP_3=0x8 {
+
+	$(T_FLAG) = 0;
+}
+
+
+# Compare
+# pattern 0011nnnnmmmm0000
+# text    cmp/eq <REG_M>,<REG_N>
+# arch    arch_sh_up
+:cmp^"/eq" M_0t,N_0t        is OP_0=0x3 & N_0t & M_0t & OP_1=0x0 {
+
+	$(T_FLAG) = ( N_0t == M_0t );
+} 
+
+
+# Compare
+# pattern 0011nnnnmmmm0011
+# text    cmp/ge <REG_M>,<REG_N>
+# arch    arch_sh_up
+:cmp^"/ge" M_0t,N_0t        is OP_0=0x3 & N_0t & M_0t & OP_1=0x3 {
+
+	$(T_FLAG) = ( N_0t s>= M_0t );
+}
+
+# Compare
+# pattern 0011nnnnmmmm0111
+# text    cmp/gt <REG_M>,<REG_N>
+# arch    arch_sh_up
+:cmp^"/gt" M_0t,N_0t        is OP_0=0x3 & N_0t & M_0t & OP_1=0x7 {
+
+	$(T_FLAG) = ( N_0t s> M_0t);
+} 
+
+
+# Compare
+# pattern 0011nnnnmmmm0110
+# text    cmp/hi <REG_M>,<REG_N>
+# arch    arch_sh_up
+:cmp^"/hi" M_0t,N_0t        is OP_0=0x3 & N_0t & M_0t & OP_1=0x6 {
+
+	$(T_FLAG) = ( N_0t > M_0t );
+}
+
+
+# Compare
+# pattern 0011nnnnmmmm0010
+# text    cmp/hs <REG_M>,<REG_N>
+# arch    arch_sh_up
+:cmp^"/hs" M_0t,N_0t        is OP_0=0x3 & N_0t & M_0t & OP_1=0x2 {
+
+	$(T_FLAG) = ( N_0t >= M_0t );
+}
+
+
+# Compare
+# pattern 0100nnnn00010101
+# text    cmp/pl <REG_N>
+# arch    arch_sh_up
+:cmp^"/pl" N_0t             is OP_0=0x4 & N_0t & OP_4=0x15 {
+
+	$(T_FLAG) = ( N_0t s> 0 );
+}
+
+# Compare
+# pattern 0100nnnn00010001
+# text    cmp/pz <REG_N>
+# arch    arch_sh_up
+:cmp^"/pz" N_0t             is OP_0=0x4 & N_0t & OP_4=0x11 {
+
+	$(T_FLAG) = ( N_0t s>= 0 );
+}
+
+
+# Compare
+# pattern 0010nnnnmmmm1100
+# text    cmp/str <REG_M>,<REG_N>
+# arch    arch_sh_up
+:cmp^"/str" M_0t,N_0t       is OP_0=0x2 & N_0t & M_0t & OP_1=0xc {
+
+	temp:4 = M_0t ^ N_0t;
+	HH:4 = (temp & 0xFF000000) >> 24;
+	HL:4 = (temp & 0x00FF0000) >> 16;
+	LH:4 = (temp & 0x0000FF00) >> 8;
+	LL:4 =  temp & 0x000000FF;
+	$(T_FLAG) = !((HH:1) && (HL:1) && (LH:1) && (LL:1));
+}
+
+
+# Compare
+# pattern 10001111iiiiiiii
+# pattern 10001000iiiiiiii
+# text    cmp/eq #<imm>,R0
+# arch    arch_sh_up
+:cmp^"/eq" I_0t_r0          is OP_2=0x88 & I_0t_r0 {
+
+	$(T_FLAG) = ( r0 == I_0t_r0 );
+}
+
+
+# Initialization for Signed Division
+# pattern 0010nnnnmmmm0111
+# text    div0s <REG_M>,<REG_N>
+# arch    arch_sh_up
+:div0s M_0t,N_0t            is OP_0=0x2 & N_0t & M_0t & OP_1=0x7 {
+
+	$(Q_FLAG) = ( (N_0t & 0x80000000) != 0 );
+	$(M_FLAG) = ( (M_0t & 0x80000000) != 0 );
+	$(T_FLAG) = ( $(M_FLAG) != $(Q_FLAG) );
+}
+
+
+# Initialization for Unsigned Division
+# pattern 0000000000011001
+# text    div0u
+# arch    arch_sh_up
+:div0u                      is OP_3=0x19 {
+
+	$(M_FLAG) = 0;
+	$(Q_FLAG) = 0;
+	$(T_FLAG) = 0;
+}
+
+
+# Division
+# pattern 0011nnnnmmmm0100
+# text    div1 <REG_M>,<REG_N>
+# arch    arch_sh_up
+:div1 M_0t,N_0t             is OP_0=0x3 &  OP_1=0x4 &  M_0t &  N_0t {
+
+@ifdef DIV1_ORIGINAL_IS_BROKEN
+	tmp2:4  =   M_0t;
+	N_0t    =   N_0t << 1;
+	N_0t    =   N_0t | zext($(T_FLAG)); # ???
+	tmp0:4  =   N_0t;
+	N_0t    =   N_0t - zext((($(Q_FLAG)+$(M_FLAG))!=1))*tmp2 + zext(($(Q_FLAG)+$(M_FLAG))==1)*tmp2;
+	tmp1:1  =   ( (($(Q_FLAG)+$(M_FLAG))!=1)*(N_0t > tmp0) + (($(Q_FLAG)+$(M_FLAG))==1)*(N_0t < tmp0));
+	$(Q_FLAG)       =   ((0x80000000 & N_0t)!=0);
+	Q1:1    =   tmp1*($(Q_FLAG)!=0) + (tmp1==0)*($(Q_FLAG)==0);
+	Q2:1    =   tmp1*($(Q_FLAG)==0) + (tmp1==0)*($(Q_FLAG)!=0);
+	$(Q_FLAG)       =   (($(M_FLAG)==1)*Q1 + ($(M_FLAG)!=1)*Q2);
+	$(T_FLAG) = ($(Q_FLAG)==$(M_FLAG));
+@endif # DIV1_ORIGINAL_IS_BROKEN
+# DIV1_WITH_FORWARD_BRANCHES_WORKS_OK
+	Rm:4 = M_0t;
+	Rn:4 = N_0t;
+	old_Q:1 = $(Q_FLAG);
+	$(Q_FLAG) = ((0x80000000 & Rn)!=0);
+	tmp2:4 = Rm;
+	Rn = Rn << 1;
+	Rn = Rn | zext($(T_FLAG));
+	tmp0:4 = Rn;
+	tmp1:1 = 0;
+
+	if (old_Q == 0) && ($(M_FLAG) == 0) goto <section_1>;
+	if (old_Q == 0) && ($(M_FLAG) == 1) goto <section_2>;
+	if (old_Q == 1) && ($(M_FLAG) == 0) goto <section_3>;
+# if (old_Q == 1) && ($(M_FLAG) == 1) ...
+	Rn = Rn - tmp2;
+	tmp1 = Rn > tmp0;
+	if ($(Q_FLAG) == 0) goto <section_4a>;
+# ($(Q_FLAG) == 1)
+	$(Q_FLAG) = tmp1;
+	goto <done>;
+	<section_4a>
+	$(Q_FLAG) = tmp1 == 0;
+	goto <done>;
+
+	<section_3> # (old_Q == 1) && ($(M_FLAG) == 0)
+	Rn = Rn + tmp2;
+	tmp1 = Rn < tmp0;
+	if ($(Q_FLAG) == 0) goto <section_3a>;
+# ($(Q_FLAG) == 1)
+	$(Q_FLAG) = tmp1 == 0;
+	goto <done>;
+	<section_3a>
+	$(Q_FLAG) = tmp1;
+	goto <done>;
+
+	<section_2> # (old_Q == 0) && ($(M_FLAG) == 1)
+	Rn = Rn + tmp2;
+	tmp1 = Rn < tmp0;
+	if ($(Q_FLAG) == 0) goto <section_2a>;
+# ($(Q_FLAG) == 1)
+	$(Q_FLAG) = tmp1;
+	goto <done>;
+	<section_2a>
+	$(Q_FLAG) = tmp1 == 0;
+	goto <done>;
+
+	<section_1> # (old_Q == 0) && ($(M_FLAG) == 0)
+	Rn = Rn - tmp2;
+	tmp1 = Rn > tmp0;
+	if ($(Q_FLAG) == 0) goto <section_1a>;
+# ($(Q_FLAG) == 1)
+	$(Q_FLAG) = tmp1 == 0;
+	goto <done>;
+	<section_1a>
+	$(Q_FLAG) = tmp1;
+
+	<done>
+	$(T_FLAG) = $(Q_FLAG) == $(M_FLAG);
+	N_0t = Rn;
+
+# DIV1_WITH_GOTOs_WORKS_OK
+
+# TODO: the following is currently broken, it should be fixed to eliminate gotos in the code above
+
+@ifdef DIV1_STRAIGHT_CODE # BROKEN
+	Rm:4 = M_0t;
+	Rn:4 = N_0t;
+	old_Q:1 = $(Q_FLAG);
+	$(Q_FLAG) = ((0x80000000 & Rn)!=0);
+	tmp2:4 = Rm;
+	Rn = Rn << 1;
+	Rn = Rn | zext($(T_FLAG));
+	tmp0:4 = Rn;
+
+	oldQM_10_01_bool:1 = ( ( (old_Q == 1) && ($(M_FLAG) == 0) ) || ( (old_Q == 1) && ($(M_FLAG) == 0) ) );
+	oldQM_10_01:4 = zext(oldQM_10_01_bool) * 0xffffffff;
+
+	oldQM_11_00_bool:1 = ( (old_Q == 1) && ($(M_FLAG) == 1) ) || ( (old_Q == 0) && ($(M_FLAG) == 0) );
+	oldQM_11_00:4 = zext(oldQM_11_00_bool) * 0xffffffff;
+
+	Rn = (oldQM_10_01 & (Rn + tmp2)) | (oldQM_11_00 & (Rn - tmp2));
+
+	tmp1:1 = ( (oldQM_11_00 != 0) && (Rn > tmp0) ) | ( (oldQM_10_01 != 0) && (Rn < tmp0) );
+
+	QM_10_01:1 = ( ( ($(Q_FLAG) == 1) && ($(M_FLAG) == 0) ) || ( ($(Q_FLAG) == 1) && ($(M_FLAG) == 0) ) ) * 0xff;
+	QM_11_00:1 = ( ( ($(Q_FLAG) == 1) && ($(M_FLAG) == 1) ) || ( ($(Q_FLAG) == 0) && ($(M_FLAG) == 0) ) ) * 0xff;
+
+	$(Q_FLAG) = (QM_10_01 & tmp1) || (QM_11_00 & (tmp1 == 0));
+
+	$(T_FLAG) = $(Q_FLAG) == $(M_FLAG);
+	N_0t = Rn;
+@endif # DIV1_STRAIGHT_CODE
+}
+
+# Signed Double-Length Multiplication
+# pattern 0011nnnnmmmm1101
+# text    dmuls.l <REG_M>,<REG_N>
+# arch    arch_sh2_up
+:dmuls.l M_0t,N_0t          is OP_0=0x3 &  OP_1=0xd &  M_0t &  N_0t {
+	tempn:4 = N_0t;
+	tempm:4 = M_0t;
+	tempn   = zext(tempn s> 0)*tempn - zext(tempn s< 0)*tempn;
+	tempm   = zext(tempm s> 0)*tempm - zext(tempm s< 0)*tempm;
+	fnLmL:4 = zext((N_0t^M_0t) s< 0)*-1;
+	temp1:4 = tempn;
+	temp2:4 = tempm;
+	RnL:4   = temp1 & 0x0000FFFF;
+	RnH:4   = (temp1 >> 16) & 0x0000FFFF;
+	RmL:4   = temp2 & 0x0000FFFF;
+	RmH:4   = (temp2 >> 16) & 0x0000FFFF;
+	temp0:4 = RmL*RnL;
+	temp1   = RmH*RnL;
+	temp2   = RmL*RnH;
+	temp3:4 = RmH*RnH;
+	Res2:4  = 0;
+	Res1:4  = temp1 + temp2;
+	Res2    = Res2 + 0x00010000*zext(Res1 s< temp1);
+	temp1   = (Res1 << 16) & 0xFFFF0000;
+	Res0:4  = temp0 + temp1;
+	Res2    = Res2 + 1*zext(Res0 s< temp0);
+	Res2    = Res2 + ((Res1 >> 16) & 0x0000FFFF) + temp3;
+
+	if (!(fnLmL s< 0 )) goto <jmp1>;
+	Res2    =   ~Res2;
+	Res2    =   Res2*zext(Res0 != 0) + (Res2 + 1)*zext(Res0 == 0);
+	Res0    =   (Res0*zext((Res0 == 0)) + (1+(~Res0))*zext((Res0 != 0)));
+	<jmp1>
+
+	MACH    = Res2;
+	MACL    = Res0;
+}
+
+# Unsigned Double-Length Multiplication
+# pattern 0011nnnnmmmm0101
+# text    dmulu.l <REG_M>,<REG_N>
+# arch    arch_sh2_up
+:dmulu.l M_0t,N_0t          is OP_0=0x3 &  OP_1=0x5 &  M_0t &  N_0t {
+	RnL:4   =   N_0t & 0x0000FFFF;
+	RnH:4   =   (N_0t >> 16) & 0x0000FFFF;
+	RmL:4   =   M_0t & 0x0000FFFF;
+	RmH:4   =   (M_0t >> 16) & 0x0000FFFF;
+	temp0:4 =   RmL*RnL;
+	temp1:4 =   RmH*RnL;
+	temp2:4 =   RmL*RnH;
+	temp3:4 =   RmH*RnH;
+	Res2:4  =   0;
+	Res1:4  =   temp1 + temp2;
+	Res2    =   Res2 + zext(Res1<temp1)*0x00010000;
+	temp1   =   (Res1 << 16) & 0xFFFF0000;
+	Res0:4  =   temp0 + temp1;
+	Res2    =   Res2 + zext(Res0<temp1)*1;
+	Res2    =   Res2 + ((Res1 >> 16) & 0x0000FFFF) + temp3;
+	MACH    =   Res2;
+	MACL    =   Res0;
+}
+
+# Decrement and Test
+# pattern 0100nnnn00010000
+# text    dt <REG_N>
+# arch    arch_sh2_up
+:dt N_0t                    is OP_0=0x4 & N_0t & OP_4=0x10 {
+
+	N_0t = N_0t - 1;
+	$(T_FLAG) = ( N_0t == 0 );
+}
+
+
+# Sign Extension
+# pattern 0110nnnnmmmm1110
+# text    exts.b <REG_M>,<REG_N>
+# arch    arch_sh_up
+:exts.b M_0t,N_0t           is OP_0=0x6 & N_0t & M_0t & OP_1=0xe {
+
+	N_0t = sext(M_0t:1);
+}
+
+# Sign Extension
+# pattern 0110nnnnmmmm1111
+# text    exts.w <REG_M>,<REG_N>
+# arch    arch_sh_up
+:exts.w M_0t,N_0t           is OP_0=0x6 & N_0t & M_0t & OP_1=0xf {
+
+	N_0t = sext(M_0t:2);
+}
+
+
+# Zero Extension
+# pattern 0110nnnnmmmm1100
+# text    extu.b <REG_M>,<REG_N>
+# arch    arch_sh_up
+:extu.b M_0t,N_0t           is OP_0=0x6 & N_0t & M_0t & OP_1=0xc {
+
+	N_0t = zext(M_0t:1);
+}
+
+
+# Zero Extension
+# pattern 0110nnnnmmmm1101
+# text    extu.w <REG_M>,<REG_N>
+# arch    arch_sh_up
+:extu.w M_0t,N_0t           is OP_0=0x6 & N_0t & M_0t & OP_1=0xd {
+
+	N_0t = zext(M_0t:2);
+}
+
+
+# Floating-Point Absolute Value
+# pattern 1111nnnn01011101
+# text    fabs <F_REG_N>
+# arch    arch_sh2e_up
+:fabs FRN_0                 is
+      OP_0=0xf &  FRN_0 & DRN_1 & OP_4=0x5d {
+
+	if (!( $(FPSCR_PR) == 0 )) goto <doublePrecision>;
+	FRN_0 = abs(FRN_0);
+	goto <skip>;
+	<doublePrecision>
+	DRN_1 = abs(DRN_1);
+	<skip>
+}
+
+# Floating-Point Addition
+# pattern 1111nnnnmmmm0000
+# text    fadd <F_REG_M>,<F_REG_N>
+# arch    arch_sh2a_or_sh4_up
+:fadd FRM_0,FRN_0           is
+      OP_0=0xf & FRN_0 & DRN_1 & FRM_0 & DRM_1 & OP_1=0x0 {
+
+	if (!( $(FPSCR_PR) == 0 )) goto <doublePrecision>;
+	FRN_0 = FRN_0 f+ FRM_0;
+	goto <skip>;
+	<doublePrecision>
+	DRN_1 = DRN_1 f+ DRM_1;
+	<skip>
+}
+
+# Floating-Point Comparison
+# pattern 1111nnnnmmmm0100
+# text    fcmp/eq <F_REG_M>,<F_REG_N>
+# arch    arch_sh2e_up
+:fcmp^"/eq" FRM_0t,FRN_0t   is
+            OP_0=0xf & FRN_0t & DRN_1t & FRM_0t & DRM_1t & OP_6 & OP_10 & OP_1=0x4 {
+	if (!( $(FPSCR_PR) == 0 ) ) && (OP_6:1 == 0) && (OP_10:1 == 0) goto <doublePrecision>;
+	$(T_FLAG) = ( FRN_0t f== FRM_0t );
+	goto <skip>;
+	<doublePrecision>
+	$(T_FLAG) = ( DRN_1t f== DRM_1t );
+	<skip>
+}
+
+# Floating-Point Comparison
+# pattern 1111nnnnmmmm0101
+# text    fcmp/gt <F_REG_M>,<F_REG_N>
+# arch    arch_sh2e_up
+:fcmp^"/gt" FRM_0t,FRN_0t   is
+            OP_0=0xf & FRM_0t & DRM_1t & FRN_0t & DRN_1t & OP_1=0x5 {
+
+	if (!( $(FPSCR_PR) == 0 )) goto <doublePrecision>;
+	$(T_FLAG) = ( FRN_0t f> FRM_0t );
+	goto <skip>;
+	<doublePrecision>
+	$(T_FLAG) = ( DRN_1t f> DRM_1t );
+	<skip>
+}
+
+
+# Double-Precision to Single-Precision Conversion
+# pattern 1111nnn010111101
+# text    fcnvds <D_REG_N>,FPUL
+#   even though reserved to DblPrec, should decode, may not know at the time.
+#   if this instruction shows up, it is most likely in DblPrec mode but not set
+# arch    arch_sh2a_or_sh4_up
+:fcnvds DRN_1t,FPUL         is OP_0=0xf & DRN_1t & OP_5=0x0bd & FPUL {
+
+	# note: this instruction is undefined if not running in DblPrec mode.
+	FPUL = float2float( DRN_1t );
+}
+
+
+# Single-Precision to Double-Precision Conversion
+# pattern 1111nnn010101101
+# text    fcnvsd FPUL,<D_REG_N>
+#   even though reserved to DblPrec, should decode, may not know at the time.
+#   if this instruction shows up, it is most likely in DblPrec mode but not set
+# arch    arch_sh2a_or_sh4_up
+:fcnvsd FPUL,DRN_1t         is OP_0=0xf & DRN_1t & OP_5=0xad & FPUL {
+
+	# note: this instruction is undefined if not running in DblPrec mode.
+	DRN_1t = float2float( FPUL );
+}
+
+
+# Floating-Point Division
+# pattern 1111nnnnmmmm0011
+# text    fdiv <F_REG_M>,<F_REG_N>
+# arch    arch_sh2e_up
+:fdiv FRM_0t,FRN_0t         is
+      OP_0=0xf & FRN_0t & DRN_1t & FRM_0t & DRM_1t & OP_1=0x3 {
+
+	if (!( $(FPSCR_PR) == 0 )) goto <doublePrecision>;
+	FRN_0t = ( FRN_0t f/ FRM_0t );
+	goto <skip>;
+	<doublePrecision>
+	DRN_1t = ( DRN_1t f/ DRM_1t );
+	<skip>
+}
+
+# Floating-Point Inner Product
+# pattern 1111nnmm11101101
+# text    fipr <V_REG_M>,<V_REG_N>
+#   even though reserved to DblPrec, should decode, may not know at the time.
+#   if this instruction shows up, it is most likely in DblPrec mode but not set
+# arch    arch_sh4_up
+:fipr FVM_2t,FVN_2t         is OP_0=0xf & FVN_2t & FVM_2t & OP_4=0xed {
+
+	# note: this instruction is undefined if not running in SinglePrec mode.
+	if (!( $(FPSCR_PR) == 0 )) goto <skip>;
+	# FVn dot FVm
+	temp1:4 =          ( *[register]:4 (&:4 FVN_2t +  0) f* *[register]:4 (&:4 FVM_2t +  0) );
+	temp1   = temp1 f+ ( *[register]:4 (&:4 FVN_2t +  4) f* *[register]:4 (&:4 FVM_2t +  4) );
+	temp1   = temp1 f+ ( *[register]:4 (&:4 FVN_2t +  8) f* *[register]:4 (&:4 FVM_2t +  8) );
+	temp1   = temp1 f+ ( *[register]:4 (&:4 FVN_2t + 12) f* *[register]:4 (&:4 FVM_2t + 12) );
+
+	# summation goes to FR[n + 3]
+	*[register]:4 (&:4 FVN_2t + 12) = temp1;
+	<skip>
+}
+
+# 0.0 Load
+# pattern 1111nnnn10001101
+# text    fldi0 <F_REG_N>
+# arch    arch_sh2e_up
+#
+# Note- The manual says this applies only to single float destination regs
+#
+:fldi0 FRN_0t               is OP_0=0xf & DRN_1t & FRN_0t & OP_4=0x8d {
+	tmp1:4 = 0;
+	FRN_0t = int2float(tmp1);
+}
+
+# 1.0 Load
+# pattern 1111nnnn10011101
+# text    fldi1 <F_REG_N>
+# arch    arch_sh2e_up
+#
+# Note- the manual says FPSCR_PR applies only to single float regs, not to doubles.
+# Manual also says FPSCR_PR should be 0, but gcc generates code where it's set to 1.
+#
+:fldi1 FRN_0t               is OP_0=0xf & FRN_0t & DRN_1t & OP_4=0x9d {
+	tmp1:4 = 1;
+	FRN_0t = int2float(tmp1);
+}
+
+# Transfer to System Register
+# pattern 1111nnnn00011101
+# text    flds <F_REG_N>,FPUL
+# arch    # arch_sh2e_up
+# Note: Field usage indicates FR[n], not FR[m].
+:flds FRN_0t,FPUL           is OP_0=0xf &  FRN_0t &  OP_4=0x1d & FPUL {
+
+	FPUL = FRN_0t;
+}
+
+# Integer to Floating-Point Conversion
+# pattern 1111nnnn00101101
+# text    float FPUL,<F_REG_N>
+# arch    # arch_sh2e_up
+:float FPUL,FRN_0t          is
+       OP_0=0xf & OP_6 & FRN_0t & DRN_1t & OP_4=0x2d & FPUL {
+	# If bit 6 is set this this is an odd FP register number, so need to do single float operation.
+	# This is not in the manual but this seems to be the correct behavior.
+	if (!( $(FPSCR_PR) == 0 ) ) && (OP_6:1 == 0x0) goto <doublePrecision>;
+	FRN_0t = int2float( FPUL );
+	goto <skip>;
+	<doublePrecision>
+	DRN_1t = int2float( FPUL );
+	<skip>
+}
+
+# Floating-Point Multiply and Accumulate
+# pattern 1111nnnnmmmm1110
+# text    fmac FR0,<F_REG_M>,<F_REG_N>
+# arch    arch_sh2e_up
+:fmac FR0_t,FRM_0t,FRN_0t   is OP_0=0xf & FRN_0t & FRM_0t & OP_1=0xe & FR0_t {
+
+	if (!( $(FPSCR_PR) == 0 )) goto <skip>;
+	FRN_0t = ( FR0_t f* FRM_0t ) f+ FRN_0t;
+	<skip>
+}
+
+# Floating-Point Transfer #1-4
+# pattern 1111nnnnmmmm1100
+# text    fmov <F_REG_M>,<F_REG_N>
+# arch    arch_sh2e_up
+#
+# Note- The manual says all the fmov insns should only look at the FPSCR_SZ flag
+# to determine if this is a single or double float move. Ie, don't reference FPSCR_PR.
+#
+:fmov FRM_0,FRN_0           is
+      OP_0=0xf & FRN_0 & XDRN & FRM_0 & XDRM & OP_1=0xc {
+	if (!( $(FPSCR_SZ) == 0 )) goto <doubleWidth>;
+	FRN_0 = FRM_0;
+	goto <skip>;
+	<doubleWidth>
+	XDRN = XDRM;
+	<skip>
+}
+
+# Floating-Point Transfer #5-6
+# pattern 1111nnn0mmmm1000
+# text    fmov @<REG_M>,<F_REG_N>
+# arch    arch_sh2e_up
+:fmov.s M_0t_at1,FRN_0      is
+      OP_0=0xf &  XDRN & FRN_0 & M_0t_at1 &  OP_1=0x8 {
+
+	if (!( $(FPSCR_SZ) == 0 )) goto <doubleWidth>;
+	FRN_0 = *:4 M_0t_at1;
+	goto <skip>;
+	<doubleWidth>
+	XDRN = *:8 M_0t_at1;
+	<skip>
+}
+
+# Floating-Point Transfer #7-8
+# pattern 1111nnnnmmmm1010
+# text    fmov <F_REG_M>,@<REG_N>
+# arch    arch_sh2e_up
+#
+# Note- Manual says to ignore FPSCR_PR but FPSCR_SZ must = 0
+#
+:fmov.s FRM_0,N_0t_at1      is
+
+      OP_0=0xf &  N_0t_at1 &  FRM_0 & XDRM &  OP_1=0xa {
+	if (!( $(FPSCR_SZ) == 0 )) goto <doubleWidth>;
+	*:4 N_0t_at1 = FRM_0;
+	goto <skip>;
+	<doubleWidth>
+	*:8 N_0t_at1 = XDRM;
+	<skip>
+}
+
+# Floating-Point Transfer #9-10
+# pattern 1111nnnnmmmm1001
+# text    fmov @<REG_M>+,<F_REG_N>
+# arch    arch_sh2e_up
+:fmov.s M_0t_at,FRN_0       is
+      OP_0=0xf &  XDRN & FRN_0 &  M_0t_at &  OP_1=0x9 {
+
+	if (!( $(FPSCR_SZ) == 0 )) goto <doubleWidth>;
+	FRN_0 = *:4 M_0t_at;
+	M_0t_at = M_0t_at + 4;
+	goto <skip>;
+	<doubleWidth>
+	XDRN = *:8 M_0t_at;
+	M_0t_at = M_0t_at + 8;
+	<skip>
+}
+
+# Floating-Point Transfer #11-12
+# pattern 1111nnnnmmm01011
+# text    fmov <F_REG_M>,@-<REG_N>
+# arch    arch_sh2e_up
+:fmov.s FRM_0,N_0t_at_neg   is
+      OP_0=0xf &  N_0t_at_neg &  XDRM & FRM_0 &  OP_1=0xb {
+
+	if (!( $(FPSCR_SZ) == 0 )) goto <doubleWidth>;
+	*:4 N_0t_at_neg = FRM_0;
+	N_0t_at_neg = N_0t_at_neg - 4;
+	goto <skip>;
+	<doubleWidth>
+	*:8 N_0t_at_neg = XDRM;
+	N_0t_at_neg = N_0t_at_neg - 8;
+	<skip>
+}
+
+# Floating-Point Transfer #13-14
+# pattern 1111nnnnmmmm0110
+# text    fmov @(R0,<REG_M>),<F_REG_N>
+# arch    arch_sh2e_up
+:fmov.s M_0t_at_with_r0,FRN_0  is
+      OP_0=0xf &  XDRN &  FRN_0 & M_0t_at_with_r0 &  OP_1=0x6 {
+
+	if (!( $(FPSCR_SZ) == 0 )) goto <doubleWidth>;
+	FRN_0 = *:4 (r0 + M_0t_at_with_r0);
+	goto <skip>;
+	<doubleWidth>
+	XDRN = *:8 (r0 + M_0t_at_with_r0);
+	<skip>
+}
+
+# Floating-Point Transfer #15-16
+# pattern 1111nnnnmmmm0111
+# text    fmov @(R0,<REG_M>),<F_REG_N>
+# arch    arch_sh2e_up
+:fmov FRM_0,N_0t_at_with_r0 is
+      OP_0=0xf  &  N_0t_at_with_r0 &  XDRM & FRM_0 &  OP_1=0x7 {
+
+	if (!( $(FPSCR_SZ) == 0 )) goto <doubleWidth>;
+	*:4 (r0 + N_0t_at_with_r0) = FRM_0;
+	goto <skip>;
+	<doubleWidth>
+	*:8 (r0 + N_0t_at_with_r0) = XDRM;
+	<skip>
+}
+
+# Floating-Point Multiplication
+# pattern 1111nnnnmmmm0010
+# text    fmul <F_REG_M>,<F_REG_N>
+# arch    arch_sh2e_up
+:fmul FRM_0t,FRN_0t         is
+      OP_0=0xf & FRN_0t & DRN_1t & FRM_0t & DRM_1t & OP_1=0x2 {
+
+	if (!( $(FPSCR_PR) == 0 )) goto <doublePrecision>;
+	FRN_0t = FRN_0t f* FRM_0t;
+	goto <skip>;
+	<doublePrecision>
+	DRN_1t = DRN_1t f* DRM_1t;
+	<skip>
+}
+
+# Floating-Point Sign Inversion
+# pattern 1111nnnn01001101
+# text    fneg <F_REG_N>
+# arch    arch_sh2e_up
+:fneg FRN_0t                is
+      OP_0=0xf & FRN_0t & DRN_1t & OP_6 & OP_4=0x4d {
+
+	if (!( $(FPSCR_PR) == 0 )) && (OP_6:1 == 0) goto <doublePrecision>;
+	FRN_0t = f- FRN_0t;
+	goto <skip>;
+	<doublePrecision>
+	DRN_1t = f- DRN_1t;
+	<skip>
+}
+
+# FR Bit Inversion
+# pattern 1111101111111101
+# text    frchg
+# arch    # arch_sh4_up
+:frchg                      is
+    OP_3=0xfbfd {
+
+	if (!( $(FPSCR_PR) == 0 )) goto <skip>;
+	$(FPSCR_FR) = !$(FPSCR_FR);
+	FPSCR = FPSCR ^ 0x00200000;
+	<skip>
+}
+
+
+# SZ Bit Inversion
+# pattern 1111001111111101
+# text    fschg
+# arch    arch_sh2a_or_sh4a_up (not in sh4)
+:fschg                      is 
+    OP_3=0xf3fd {
+
+	if (!( $(FPSCR_PR) == 0 )) goto <skip>;
+	FPSCR = FPSCR ^ 0x00100000;
+	<skip>
+}
+
+# PR Bit Inversion
+# pattern 1111011111111101
+# text    fpchg
+# arch    arch_sh2a_or_sh4_up
+:fpchg                      is
+    OP_3=0xf7fd {
+	FPSCR = FPSCR ^ 0x00080000;
+}
+
+# Floating-Point Square Root
+# pattern 1111nnnn01101101
+# text    fsqrt <F_REG_N>
+# arch    # arch_sh2a_or_sh3e_up
+:fsqrt FRN_0t               is
+       OP_0=0xf & FRN_0t & DRN_1t & OP_4=0x6d {
+
+	if (!( $(FPSCR_PR) == 0 )) goto <doublePrecision>;
+	FRN_0t = sqrt( FRN_0t );
+	goto <skip>;
+	<doublePrecision>
+	DRN_1t = sqrt( DRN_1t );
+	<skip>
+}
+
+# Transfer from System Register
+# pattern 1111nnnn00001101
+# text    fsts FPUL,<F_REG_N>
+# arch    arch_sh2e_up
+:fsts FPUL,FRN_0t           is OP_0=0xf & FRN_0t & OP_4=0xd & FPUL {
+
+	FRN_0t = FPUL;
+}
+
+# Floating-Point Subtraction
+# pattern 1111nnnnmmmm0001
+# text    fsub <F_REG_M>,<F_REG_N>
+# arch    arch_sh2e_up
+:fsub FRM_0t,FRN_0t         is
+      OP_0=0xf & FRN_0t & DRN_1t & FRM_0t & DRM_1t & OP_1=0x1 {
+
+	if (!( $(FPSCR_PR) == 0 )) goto <doublePrecision>;
+	FRN_0t = FRN_0t f- FRM_0t;
+	goto <skip>;
+	<doublePrecision>
+	DRN_1t = DRN_1t f- DRM_1t;
+	<skip>
+}
+
+# Conversion to Integer
+# pattern 1111nnnn00111101
+# text    ftrc <F_REG_N>,FPUL
+# # arch    arch_sh2e_up
+# Note: Field usage indicates FR[n], not FR[m].
+:ftrc FRN_0t,FPUL           is
+      OP_0=0xf & FRN_0t & DRN_1t & OP_4=0x3d & FPUL {
+
+	if (!( $(FPSCR_PR) == 0 )) goto <doublePrecision>;
+	FPUL = trunc( FRN_0t );
+	goto <skip>;
+	<doublePrecision>
+	FPUL = trunc( DRN_1t );
+	<skip>
+}
+
+# Vector Transformation
+# pattern 1111nn0111111101
+# text    ftrv XMTRX_M4,<V_REG_n>
+# arch    # arch_sh4_up
+:ftrv XMTRX_t,FVN_2t        is OP_0=0xf &  FVN_2t &  OP_8=0x1fd & XMTRX_t {
+
+	if (!( $(FPSCR_PR) == 0 )) goto <skip>;
+	temp1:4 =          ( xf0  f* *[register]:4 (&:4 FVN_2t +  0) );
+	temp1   = temp1 f+ ( xf4  f* *[register]:4 (&:4 FVN_2t +  4) );
+	temp1   = temp1 f+ ( xf8  f* *[register]:4 (&:4 FVN_2t +  8) );
+	temp1   = temp1 f+ ( xf12 f* *[register]:4 (&:4 FVN_2t + 12) );
+
+	temp2:4 =          ( xf1  f* *[register]:4 (&:4 FVN_2t +  0) );
+	temp2   = temp2 f+ ( xf5  f* *[register]:4 (&:4 FVN_2t +  4) );
+	temp2   = temp2 f+ ( xf9  f* *[register]:4 (&:4 FVN_2t +  8) );
+	temp2   = temp2 f+ ( xf13 f* *[register]:4 (&:4 FVN_2t + 12) );
+
+	temp3:4 =          ( xf2  f* *[register]:4 (&:4 FVN_2t +  0) );
+	temp3   = temp3 f+ ( xf6  f* *[register]:4 (&:4 FVN_2t +  4) );
+	temp3   = temp3 f+ ( xf10 f* *[register]:4 (&:4 FVN_2t +  8) );
+	temp3   = temp3 f+ ( xf14 f* *[register]:4 (&:4 FVN_2t + 12) );
+
+	temp4:4 =          ( xf3  f* *[register]:4 (&:4 FVN_2t +  0) );
+	temp4   = temp4 f+ ( xf7  f* *[register]:4 (&:4 FVN_2t +  4) );
+	temp4   = temp4 f+ ( xf11 f* *[register]:4 (&:4 FVN_2t +  8) );
+	temp4   = temp4 f+ ( xf15 f* *[register]:4 (&:4 FVN_2t + 12) );
+
+	# summation goes to FR[n + 0] through FR[n + 3]
+	*[register]:4 (&:4 FVN_2t +  0) = temp1;
+	*[register]:4 (&:4 FVN_2t +  4) = temp2;
+	*[register]:4 (&:4 FVN_2t +  8) = temp3;
+	*[register]:4 (&:4 FVN_2t + 12) = temp4;
+	<skip>
+}
+
+# Invalidate Instruction Cache block
+# pattern 0000nnnn11100011
+# text    icib @<REG_N>
+# arch    arch_sh_up
+define pcodeop InvalidateCacheBlock;
+
+:icbi N_0t_at1              is OP_0=0x0 & N_0t_at1 & OP_4=0xe3 {
+	tmp:4 = N_0t_at1;
+	InvalidateCacheBlock(N_0t_at1);
+}
+
+# Unconditional Branch
+# pattern 0100nnnn00101011
+# text    jmp @<REG_N>
+# arch    arch_sh_up
+:jmp N_0tjmp                is OP_0=0x4 & N_0tjmp & OP_4=0x2b {
+
+	PC = N_0tjmp;
+	tmp:4 = PC;
+	delayslot(1);
+	goto [tmp];
+}
+
+
+# Branch to Subroutine Procedure
+# pattern 0100nnnn00001011
+# text    jsr @<REG_N>
+# arch    arch_sh_up
+:jsr N_0tjmp                is OP_0=0x4 & N_0tjmp & OP_4=0xb {
+
+	PR = inst_next;
+	PC = N_0tjmp;
+	tmp:4 = PC;
+	delayslot(1);
+	call [tmp];
+}
+
+
+# Load to Control Register
+# pattern 0100nnnn00001110
+# text    ldc <REG_N>,SR
+# arch    arch_sh_up
+:ldc N_0t_sr                is OP_0=0x4 & N_0t_sr & OP_4=0xe {
+
+	splitSRregister();
+	SR = (N_0t_sr & 0x700083f3);
+}
+
+
+# Load to Control Register
+# pattern 0100nnnn00011110
+# text    ldc <REG_N>,GBR
+# arch    arch_sh_up
+:ldc N_0t_gbr               is OP_0=0x4 & N_0t_gbr & OP_4=0x1e {
+
+	GBR = N_0t_gbr;
+}
+
+
+# Load to Control Register
+# pattern 0100nnnn00101110
+# text    ldc <REG_N>,VBR
+# arch    arch_sh_up
+:ldc N_0t_vbr               is OP_0=0x4 & N_0t_vbr & OP_4=0x2e {
+
+	VBR = N_0t_vbr;
+}
+
+
+# pattern 0100nnnn00111110
+# text    ldc <REG_N>,SSR
+# arch    arch_sh3_nommu_up
+:ldc N_0t_ssr               is OP_0=0x4 & N_0t_ssr & OP_4=0x3e {
+
+	SSR = N_0t_ssr;
+}
+
+
+# pattern 0100nnnn01001110
+# text    ldc <REG_N>,SPC
+# arch    arch_sh3_nommu_up
+:ldc N_0t_spc               is OP_0=0x4 & N_0t_spc & OP_4=0x4e {
+
+	SPC = N_0t_spc;
+}
+
+
+# pattern 0100nnnn11111010
+# text    ldc <REG_N>,DBR
+# arch    arch_sh4_nommu_nofpu_up
+:ldc N_0t_dbr               is OP_0=0x4 & N_0t_dbr & OP_4=0xfa {
+
+	DBR = N_0t_dbr;
+}
+
+# pattern 0100nnnn1xxx1110
+# text    ldc <REG_N>,Rn_BANK
+# arch    arch_sh3_nommu_up
+:ldc N_0t_bank,BANKt        is OP_0=0x4 & N_0t_bank & OP_9=0x1 & BANKt & OP_1=0xe {
+
+	BANKt = N_0t_bank;
+}
+
+
+# Load to Control Register
+# pattern 0100nnnn00000111
+# text    ldc.l @<REG_N>+,SR
+# arch    arch_sh_up
+:ldc.l N_0t_sr1             is OP_0=0x4 & N_0t_sr1 & OP_4=0x7 {
+
+	SR = (*:4 ( N_0t_sr1 )) & 0x700083F3;
+	splitSRregister();
+	N_0t_sr1 = N_0t_sr1 + 4;
+}
+
+
+# Load to Control Register
+# pattern 0100nnnn00010111
+# text    ldc.l @<REG_N>+,GBR
+# arch    arch_sh_up
+:ldc.l N_0t_gbr1            is OP_0=0x4 & N_0t_gbr1 & OP_4=0x17 {
+
+	GBR = *:4 ( N_0t_gbr1 );
+	N_0t_gbr1 = N_0t_gbr1 + 4;
+}
+
+
+# Load to Control Register
+# pattern 0100nnnn00100111
+# text    ldc.l @<REG_N>+,VBR
+# arch    arch_sh_up
+:ldc.l N_0t_vbr1            is OP_0=0x4 & N_0t_vbr1 & OP_4=0x27 {
+
+	VBR = *:4 ( N_0t_vbr1 );
+	N_0t_vbr1 = N_0t_vbr1 + 4;
+}
+
+
+# pattern 0100nnnn00110111
+# text    ldc.l @<REG_N>+,SSR
+# arch    arch_sh3_nommu_up
+:ldc.l N_0t_ssr1            is OP_0=0x4 & N_0t_ssr1 & OP_4=0x37 {
+
+	SSR = *:4 ( N_0t_ssr1 );
+	N_0t_ssr1 = N_0t_ssr1 + 4;
+}
+
+
+# pattern 0100nnnn01000111
+# text    ldc.l @<REG_N>+,SPC
+# arch    arch_sh3_nommu_up
+:ldc.l N_0t_spc1            is OP_0=0x4 & N_0t_spc1 & OP_4=0x47 {
+
+	SPC = *:4 ( N_0t_spc1 );
+	N_0t_spc1 = N_0t_spc1 + 4;
+}
+
+
+# pattern 0100nnnn11110110
+# text    ldc.l @<REG_N>+,DBR
+# arch    arch_sh4_nommu_nofpu_up
+:ldc.l N_0t_dbr1            is OP_0=0x4 & N_0t_dbr1 & OP_4=0xf6 {
+
+	DBR = *:4 ( N_0t_dbr1 );
+	N_0t_dbr1 = N_0t_dbr1 + 4;
+}
+
+
+# pattern 0100nnnn1xxx0111
+# text    ldc.l @<REG_N>+,Rn_BANK
+# arch    arch_sh3_nommu_up
+:ldc.l N_0t_bank1,BANKt     is OP_0=0x4 & N_0t_bank1 & OP_9=0x1 & BANKt & OP_1=0x7 {
+
+	BANKt = *:4 ( N_0t_bank1 );
+	N_0t_bank1 = N_0t_bank1 + 4;
+}
+
+
+# Load to FPU System Register
+# pattern 0100nnnn01011010
+# text    lds <REG_N>,FPUL
+# arch    arch_sh2e_up
+:lds N_0t_fpul              is OP_0=0x4 & N_0t_fpul & OP_4=0x5a {
+
+	FPUL = N_0t_fpul;
+}
+
+
+# Load to FPU System Register
+# pattern 0100nnnn01010110
+# text    lds.l @<REG_M>+,FPUL
+# arch    arch_sh2e_up
+:lds.l N_0t_fpul1           is OP_0=0x4 & N_0t_fpul1 & OP_4=0x56 {
+
+	FPUL = *:4 ( N_0t_fpul1 );
+	N_0t_fpul1 = N_0t_fpul1 + 4;
+}
+
+
+# Load to FPU System Register
+# pattern 0100nnnn01101010
+# text    lds <REG_M>,FPSCR
+# arch    arch_sh2e_up
+# Note: FPSCR context cannot be supported from this instruction; contents of N_0 not known at disassembly time.
+:lds N_0t_fpscr             is OP_0=0x4 & N_0t_fpscr & OP_4=0x6a {
+
+	FPSCR = N_0t_fpscr & 0x003FFFFF;
+	splitFPSCRregister();
+}
+
+
+# Load to FPU System Register
+# pattern 0100nnnn01100110
+# text    lds.l @<REG_M>+,FPSCR
+# arch    arch_sh2e_up
+# Note: FPSCR context cannot be supported from this instruction; contents of N_0 not known at disassembly time.
+:lds.l N_0t_fpscr1          is OP_0=0x4 & N_0t_fpscr1 & OP_4=0x66 {
+
+	FPSCR = (*:4 ( N_0t_fpscr1 )) & 0x003FFFFF;
+	splitFPSCRregister();
+	N_0t_fpscr1 = N_0t_fpscr1 + 4;
+}
+
+
+# Load to FPU System Register
+# pattern 0100nnnn00001010
+# text    lds <REG_N>,MACH
+# arch    arch_sh_up
+:lds N_0t_mach              is OP_0=0x4 & N_0t_mach & OP_4=0xa {
+
+	MACH = N_0t_mach;
+}
+
+
+# Load to FPU System Register
+# pattern 0100nnnn00011010
+# text    lds <REG_N>,MACL
+# arch    arch_sh_up
+:lds N_0t_macl              is OP_0=0x4 & N_0t_macl & OP_4=0x1a {
+
+	MACL = N_0t_macl;
+}
+
+
+# Load to FPU System Register
+# pattern 0100nnnn00101010
+# text    lds <REG_N>,PR
+# arch    arch_sh_up
+:lds N_0t_pr                is OP_0=0x4 & N_0t_pr & OP_4=0x2a {
+
+	PR = N_0t_pr;
+}
+
+
+# Load to FPU System Register
+# pattern 0100nnnn00000110
+# text    lds.l @<REG_N>+,MACH
+# arch    arch_sh_up
+:lds.l N_0t_mach1           is OP_0=0x4 & N_0t_mach1 & OP_4=0x6 {
+
+	MACH = *:4 ( N_0t_mach1 );
+	N_0t_mach1 = N_0t_mach1 + 4;
+}
+
+
+# Load to FPU System Register
+# pattern 0100nnnn00010110
+# text    lds.l @<REG_N>+,MACL
+# arch    arch_sh_up
+:lds.l N_0t_macl1           is OP_0=0x4 & N_0t_macl1 & OP_4=0x16 {
+
+	MACL = *:4 ( N_0t_macl1 );
+	N_0t_macl1 = N_0t_macl1 + 4;
+}
+
+
+# Load to FPU System Register
+# pattern 0100nnnn00100110
+# text    lds.l @<REG_N>+,PR
+# arch    arch_sh_up
+:lds.l N_0t_pr1             is OP_0=0x4 & N_0t_pr1 & OP_4=0x26 {
+
+	PR = *:4 ( N_0t_pr1 );
+	N_0t_pr1 = N_0t_pr1 + 4;
+}
+
+define pcodeop LoadTranslationLookasideBuffer;
+
+# Load to TLB
+# pattern 0000000000111000
+# text    ldtlb
+# arch    arch_sh3_up
+:ldtlb                      is OP_3=0x38 { LoadTranslationLookasideBuffer(); }
+
+# Double-Precision Multiply-and-Accumulate Operation
+# pattern 0000nnnnmmmm1111
+# text    mac.l @<REG_M>+,@<REG_N>+
+# arch    arch_sh2_up
+define pcodeop mac_lOp;
+
+:mac.l M_0t_at,N_0t_at      is OP_0=0x0 &  OP_1=0xf &  M_0t_at &  N_0t_at {
+	tmpM:4 = *:4 M_0t_at;
+	tmpN:4 = *:4 N_0t_at;
+	mac:8 = mac_lOp(tmpN,tmpM,MACH,MACL);
+# POSSIBLE THIS WILL WORK WELL ENOUGH
+#	 mac:8 = zext(MACH) << 4 + zext(MACL);
+#    mac = zext(tmpN) * zext(tmpM) + mac;
+#    mac = saturate(mac);
+	MACL = mac:4;
+	mac = mac >> 32;
+	MACH = mac:4;
+	M_0t_at = M_0t_at + 4;
+	N_0t_at = N_0t_at + 4;
+}
+
+# Single-Precision Multiply-and-Accumulate Operation
+# pattern 0100nnnnmmmm1111
+# text    mac.w @<REG_M>+,@<REG_N>+
+# arch    arch_sh_up
+define pcodeop mac_wOp;
+
+:mac.w M_0t_at,N_0t_at      is OP_0=0x4 &  OP_1=0xf &  M_0t_at &  N_0t_at {
+	tmpM:4 = *:2 M_0t_at;
+	tmpN:4 = *:2 N_0t_at;
+	mac:8 = mac_wOp(tmpN,tmpM,MACH,MACL);
+# POSSIBLE THIS WILL WORK WELL ENOUGH
+#	 mac:8 = zext(MACH) << 4 + zext(MACL);
+#    mac = zext(tmpN) * zext(tmpM) + mac;
+#    mac = saturate(mac);
+	MACL = mac:4;
+	mac = mac >> 32;
+	MACH = mac:4;
+	M_0t_at = M_0t_at + 2;
+	N_0t_at = N_0t_at + 2;
+}
+
+# Data Transfer
+# pattern 0110nnnnmmmm0011
+# text    mov <REG_M>,<REG_N>
+# arch    arch_sh_up
+:mov M_0t,N_0t              is OP_0=0x6 & N_0t & M_0t & OP_1=0x3 {
+
+	N_0t = M_0t;
+}
+
+
+# Data Transfer
+# pattern 0010nnnnmmmm0000
+# text    mov.b <REG_M>,@<REG_N>
+# arch    arch_sh_up
+:mov.b M_0t,N_0t_at1        is OP_0=0x2 & N_0t_at1 & M_0t & OP_1=0x0 {
+
+	*:1 ( N_0t_at1 ) = M_0t:1;
+}
+
+
+# Data Transfer
+# pattern 0010nnnnmmmm0001
+# text    mov.w <REG_M>,@<REG_N>
+# arch    arch_sh_up
+:mov.w M_0t,N_0t_at1        is OP_0=0x2 & N_0t_at1 & M_0t & OP_1=0x1 {
+
+	*:2 ( N_0t_at1 ) = M_0t:2;
+}
+
+
+# Data Transfer
+# pattern 0010nnnnmmmm0010
+# text    mov.l <REG_M>,@<REG_N>
+# arch    arch_sh_up
+:mov.l M_0t,N_0t_at1        is OP_0=0x2 & N_0t_at1 & M_0t & OP_1=0x2 {
+
+	*:4 ( N_0t_at1 ) = M_0t;
+}
+
+
+# Data Transfer
+# pattern 0110nnnnmmmm0000
+# text    mov.b @<REG_M>,<REG_N>
+# arch    arch_sh_up
+:mov.b M_0t_at1,N_0t        is OP_0=0x6 & N_0t & M_0t_at1 & OP_1=0x0 {
+
+	N_0t = sext( *:1 ( M_0t_at1 ) );
+}
+
+
+# Data Transfer
+# pattern 0110nnnnmmmm0001
+# text    mov.w @<REG_M>,<REG_N>
+# arch    arch_sh_up
+:mov.w M_0t_at1,N_0t        is OP_0=0x6 & N_0t & M_0t_at1 & OP_1=0x1 {
+
+	N_0t = sext( *:2 ( M_0t_at1 ) );
+}
+
+
+# Data Transfer
+# pattern 0110nnnnmmmm0010
+# text    mov.l @<REG_M>,<REG_N>
+# arch    arch_sh_up
+:mov.l M_0t_at1,N_0t        is OP_0=0x6 & N_0t & M_0t_at1 & OP_1=0x2 {
+
+	N_0t = *:4 ( M_0t_at1 );
+}
+
+
+# Data Transfer
+# pattern 0010nnnnmmmm0100
+# text    mov.b <REG_M>,@-<REG_N>
+# arch    arch_sh_up
+:mov.b M_0t,N_0t_at_neg     is OP_0=0x2 & N_0t_at_neg & M_0t & OP_1=0x4 {
+
+	N_0t_at_neg = N_0t_at_neg - 1;
+	*:1 ( N_0t_at_neg ) = M_0t:1;
+}
+
+
+# Data Transfer
+# pattern 0010nnnnmmmm0101
+# text    mov.w <REG_M>,@-<REG_N>
+# arch    arch_sh_up
+:mov.w M_0t,N_0t_at_neg     is OP_0=0x2 & N_0t_at_neg & M_0t & OP_1=0x5 {
+
+	N_0t_at_neg = N_0t_at_neg - 2;
+	*:2 ( N_0t_at_neg ) = M_0t:2;
+}
+
+
+# Data Transfer
+# pattern 0010nnnnmmmm0110
+# text    mov.l <REG_M>,@-<REG_N>
+# arch    arch_sh_up
+:mov.l M_0t,N_0t_at_neg     is OP_0=0x2 & N_0t_at_neg & M_0t & OP_1=0x6 {
+
+	N_0t_at_neg = N_0t_at_neg - 4;
+	*:4 ( N_0t_at_neg ) = M_0t;
+}
+
+
+# Data Transfer
+# pattern 0110nnnnmmmm0100
+# text    mov.b @<REG_M>+,<REG_N>
+# arch    arch_sh_up
+:mov.b M_0t_at,N_0t         is OP_0=0x6 & N_0t & M_0t_at & OP_1=0x4 {
+
+	N_0t = sext( *:1 ( M_0t_at ) );
+	M_0t_at = M_0t_at + 1;
+}
+
+
+# Data Transfer
+# pattern 0110nnnnmmmm0101
+# text    mov.w @<REG_M>+,<REG_N>
+# arch    arch_sh_up
+:mov.w M_0t_at,N_0t         is OP_0=0x6 & N_0t & M_0t_at & OP_1=0x5 {
+
+	N_0t = sext( *:2 ( M_0t_at ) );
+	M_0t_at = M_0t_at + 2;
+}
+
+
+# Data Transfer
+# pattern 0110nnnnmmmm0110
+# text    mov.l @<REG_M>+,<REG_N>
+# arch    arch_sh_up
+:mov.l M_0t_at,N_0t         is OP_0=0x6 & N_0t & M_0t_at & OP_1=0x6 {
+
+	N_0t = *:4 ( M_0t_at );
+	M_0t_at = M_0t_at + 4;
+}
+
+
+# Data Transfer
+# pattern 0000nnnnmmmm0100
+# text    mov.b <REG_M>,@(R0,<REG_N>)
+# arch    arch_sh_up
+:mov.b M_0t,N_0t_at_with_r0 is OP_0=0x0 & N_0t_at_with_r0 & M_0t & OP_1=0x4 {
+
+	*:1 ( r0 + N_0t_at_with_r0 ) = M_0t:1;
+}
+
+
+# Data Transfer
+# pattern 0000nnnnmmmm0101
+# text    mov.w <REG_M>,@(R0,<REG_N>)
+# arch    arch_sh_up
+:mov.w M_0t,N_0t_at_with_r0 is OP_0=0x0 & N_0t_at_with_r0 & M_0t & OP_1=0x5 {
+
+	*:2 ( r0 + N_0t_at_with_r0 ) = M_0t:2;
+}
+
+
+# Data Transfer
+# pattern 0000nnnnmmmm0110
+# text    mov.l <REG_M>,@(R0,<REG_N>)
+# arch    arch_sh_up
+:mov.l M_0t,N_0t_at_with_r0 is OP_0=0x0 & N_0t_at_with_r0 & M_0t & OP_1=0x6 {
+
+	*:4 ( r0 + N_0t_at_with_r0 ) = M_0t;
+}
+
+
+# Data Transfer
+# pattern 0000nnnnmmmm1100
+# text    mov.b @(R0,<REG_M>),<REG_N>
+# arch    arch_sh_up
+:mov.b M_0t_at_with_r0,N_0t is OP_0=0x0 & N_0t & M_0t_at_with_r0 & OP_1=0xc {
+
+	N_0t = sext( *:1 ( r0 + M_0t_at_with_r0 ) );
+}
+
+
+# Data Transfer
+# pattern 0000nnnnmmmm1101
+# text    mov.w @(R0,<REG_M>),<REG_N>
+# arch    arch_sh_up
+:mov.w M_0t_at_with_r0,N_0t is OP_0=0x0 & N_0t & M_0t_at_with_r0 & OP_1=0xd {
+
+	N_0t = sext( *:2 ( r0 + M_0t_at_with_r0 ) );
+}
+
+
+# Data Transfer
+# pattern 0000nnnnmmmm1110
+# text    mov.l @(R0,<REG_M>),<REG_N>
+# arch    arch_sh_up
+:mov.l M_0t_at_with_r0,N_0t is OP_0=0x0 & N_0t & M_0t_at_with_r0 & OP_1=0xe {
+
+	N_0t = *:4 ( r0 + M_0t_at_with_r0 );
+}
+
+
+# Data Transfer
+# pattern 1110nnnniiiiiiii
+# text    mov #<imm>,<REG_N>
+# arch    arch_sh_up
+:mov I_0t,N_0t              is OP_0=0xe & N_0t & I_0t {
+
+	N_0t = I_0t; # NOTE I_0t already signed extended
+}
+
+
+# Data Transfer
+# pattern 1001nnnndddddddd
+# text    mov.w @(<disp>,PC),<REG_N>
+# arch    arch_sh_up
+:mov.w U_0t_2pc,N_0t        is OP_0=0x9 & N_0t & U_0t_2pc {
+
+	N_0t = sext( U_0t_2pc ); # NOTE U_0t_2pc units is bytes
+}
+
+
+# Data Transfer
+# pattern 1101nnnndddddddd
+# text    mov.l @(<disp>,PC),<REG_N>
+# arch    arch_sh_up
+:mov.l U_0t_4pc,N_0t        is OP_0=0xd & N_0t & U_0t_4pc {
+
+	N_0t = U_0t_4pc; # NOTE U_0t_4pc units is bytes
+}
+
+
+# Data Transfer
+# pattern 11000100dddddddd
+# text    mov.b @(<disp>,GBR),R0
+# arch    arch_sh_up
+:mov.b U_0t_gbr_at_1,r0     is OP_2=0xc4 & U_0t_gbr_at_1 & r0 {
+
+	r0 = sext( *:1 ( U_0t_gbr_at_1 ) );
+}
+
+
+# Data Transfer
+# pattern 11000101dddddddd
+# text    mov.w @(<disp>,GBR),R0
+# arch    arch_sh_up
+:mov.w U_0t_gbr_at_2,r0     is OP_2=0xc5 & U_0t_gbr_at_2 & r0 {
+
+	r0 = sext( *:2 ( U_0t_gbr_at_2 ) ); # NOTE U_0t_gbr_at_2 units is bytes
+}
+
+
+# Data Transfer
+# pattern 11000110dddddddd
+# text    mov.l @(<disp>,GBR),R0
+# arch    arch_sh_up
+:mov.l U_0t_gbr_at_4,r0     is OP_2=0xc6 & U_0t_gbr_at_4 & r0 {
+
+	r0 = *:4 ( U_0t_gbr_at_4 ); # NOTE U_0t_gbr_at_4 units is bytes
+}
+
+
+# Data Transfer
+# pattern 11000000dddddddd
+# text    mov.b R0,@(<disp>,GBR)
+# arch    arch_sh_up
+:mov.b r0,U_0t_gbr_at_1     is OP_2=0xc0 & U_0t_gbr_at_1 & r0 {
+
+	*:1 ( U_0t_gbr_at_1 ) = r0:1;
+}
+
+
+# Data Transfer
+# pattern 11000001dddddddd
+# text    mov.w R0,@(<disp>,GBR)
+# arch    arch_sh_up
+:mov.w r0,U_0t_gbr_at_2     is OP_2=0xc1 & U_0t_gbr_at_2 & r0 {
+
+	*:2 ( U_0t_gbr_at_2 ) = r0:2; # NOTE U_0t_gbr_at_2 units is bytes
+}
+
+
+# Data Transfer
+# pattern 11000010dddddddd
+# text    mov.l R0,@(<disp>,GBR)
+# arch    arch_sh_up
+:mov.l r0, U_0t_gbr_at_4    is OP_2=0xc2 & U_0t_gbr_at_4 & r0 {
+
+	*:4 ( U_0t_gbr_at_4 ) = r0; # NOTE U_0t_4_at_gbr_r0_1 units is bytes
+}
+
+
+# Data Transfer
+# pattern 10000000mmmmdddd
+# text    mov.b R0,@(<disp>,<REG_M>)
+# arch    arch_sh_up
+:mov.b r0,U_2t_M0_dispr01   is OP_2=0x80 & M_0t & U_2t_M0_dispr01 & r0 {
+
+	*:1 ( U_2t_M0_dispr01 + M_0t ) = r0:1;
+}
+
+
+# Data Transfer
+# pattern 10000001mmmmdddd
+# text    mov.w R0,@(<disp>,<REG_M>)
+# arch    arch_sh_up
+:mov.w r0,U_2t_M0_dispr02   is OP_2=0x81 & M_0t & U_2t_M0_dispr02 & r0 {
+
+	*:2 ( U_2t_M0_dispr02 + M_0t ) = r0:2; # NOTE U_2t_M0_dispr02 units is bytes
+}
+
+
+# Data Transfer
+# pattern 0001nnnnmmmmdddd
+# text    mov.l <REG_M>,@(<disp>,<REG_N>)
+# arch    arch_sh_up
+:mov.l M_0t,U_2t_N0_dispr04 is OP_0=0x1 & M_0t & N_0t & U_2t_N0_dispr04 {
+
+	*:4 ( U_2t_N0_dispr04 + N_0t ) = M_0t; # NOTE U_2t_N0_dispr04 units is bytes 
+}
+
+
+# Data Transfer
+# pattern 10000100mmmmdddd
+# text    mov.b @(<disp>,<REG_M>),R0
+# arch    arch_sh_up
+:mov.b U_2t_M0_dispr01,r0   is OP_2=0x84 & M_0t & U_2t_M0_dispr01 & r0 {
+
+	r0 = sext( *:1 ( U_2t_M0_dispr01 + M_0t ) );
+}
+
+
+# Data Transfer
+# pattern 10000101mmmmdddd
+# text    mov.w @(<disp>,<REG_M>),R0
+# arch    arch_sh_up
+:mov.w U_2t_M0_dispr02,r0   is OP_2=0x85 & U_2t_M0_dispr02 & M_0t & r0 {
+
+	r0 = sext( *:2 ( U_2t_M0_dispr02 + M_0t ) ); # NOTE U_2t_M0_dispr02 units is bytes
+}
+
+
+# Data Transfer
+# pattern 0101nnnnmmmmdddd
+# text    mov.l @(<disp>,<REG_M>),<REG_N>
+# arch    arch_sh_up
+:mov.l U_2t_M0_dispr04,N_0t is OP_0=0x5 & N_0t & M_0t & U_2t_M0_dispr04 {
+
+	N_0t = *:4 ( U_2t_M0_dispr04 + M_0t ); # NOTE U_2t_M0_dispr04 units is bytes
+}
+
+
+# Effective Address Transfer
+# pattern 11000111iiiiiiii
+# text    mova @(<disp>,PC),R0
+# arch    arch_sh_up
+:mova U_0t_4pc,r0           is OP_2=0xc7 & U_0t_4pc & r0 {
+
+	r0 = &U_0t_4pc; # NOTE U_0t_4pc units is bytes
+}
+
+
+# MOVe with Cache block Allocation
+# pattern 0000nnnn11000011
+# text    movca.l R0,@<REG_N>
+# arch    arch_sh4_nommu_nofpu_up
+:movca.l N_0txx             is OP_0=0x0 & N_0txx & OP_4=0xc3 {
+
+	*:4 ( N_0txx ) = r0; # NOTE ignore cache issues
+}
+
+# T Bit Transfer
+# pattern 0000nnnn00101001
+# text    movt <REG_N>
+# arch 
+:movt N_0t                  is OP_0=0x0 & N_0t & OP_4=0x29 {
+
+	N_0t = zext($(T_FLAG));
+}
+
+
+# Double-Precision Multiplication
+# pattern 0000nnnnmmmm0111
+# text    mul.l <REG_M>,<REG_N>
+# arch 
+:mul.l M_0t,N_0t            is OP_0=0x0 & N_0t & M_0t & OP_1=0x7 {
+
+	MACL = N_0t * M_0t;
+}
+
+
+# Signed Multiplication
+# pattern 0010nnnnmmmm1111
+# text    muls.w <REG_M>,<REG_N>
+# arch 
+:muls.w M_0t,N_0t           is OP_0=0x2 & N_0t & M_0t & OP_1=0xf {
+
+	MACL = sext(N_0t:2) * sext(M_0t:2);
+}
+
+
+# Unsigned Multiplication
+# pattern 0010nnnnmmmm1110
+# text    mulu.w <REG_M>,<REG_N>
+# arch 
+:mulu.w M_0t,N_0t           is OP_0=0x2 & N_0t & M_0t & OP_1=0xe {
+
+	MACL = zext(N_0t:2) * zext(M_0t:2);
+}
+
+
+# Sign Inversion
+# pattern 0110nnnnmmmm1011
+# text    neg <REG_M>,<REG_N>
+# arch 
+:neg M_0t,N_0t              is OP_0=0x6 & N_0t & M_0t & OP_1=0xb {
+
+	N_0t = -M_0t;
+}
+
+
+# Sign Inversion with Borrow
+# pattern 0110nnnnmmmm1010
+# text    negc <REG_M>,<REG_N>
+# arch 
+:negc M_0t,N_0t             is OP_0=0x6 & N_0t & M_0t & OP_1=0xa {
+
+	temp:4 = -M_0t;
+	N_0t = temp - zext($(T_FLAG));
+	$(T_FLAG) = ( 0 < temp );
+	if ( temp >= N_0t ) goto <skip>;
+	$(T_FLAG) = 1;
+	<skip>
+}
+
+
+# No Operation
+# pattern 0000000000001001
+# text    nop
+# arch 
+:nop                        is OP_3=0x9 {  } # Empty on purpose
+
+
+# Bit Inversion
+# pattern 0110nnnnmmmm0111
+# text    not <REG_M>,<REG_N>
+# arch 
+:not M_0t,N_0t              is OP_0=0x6 & N_0t & M_0t & OP_1=0x7 {
+
+	N_0t = ~M_0t;
+}
+
+define pcodeop CacheBlockInvalidate;
+
+# Operand Cache Block Invalidate 
+# pattern 0000nnnn10010011
+# text    ocbi @<REG_N>
+# arch 
+:ocbi N_0t_at1              is OP_0=0x0 & N_0t_at1 & OP_4=0x93 { CacheBlockInvalidate(N_0t_at1); }
+
+define pcodeop CacheBlockPurge;
+
+# Cache Block Purge
+# pattern 0000nnnn10100011
+# text    ocbp @<REG_N>
+# arch 
+:ocbp N_0t_at1              is OP_0=0x0 & N_0t_at1 & OP_4=0xa3 { CacheBlockPurge(N_0t_at1); }
+
+define pcodeop CacheBlockWriteBack;
+
+# TODO ocbwb 
+# Cache Block Write-Back
+# pattern 0000nnnn10110011
+# text    ocbwb @<REG_N>
+# arch 
+:ocbwb N_0t_at1             is OP_0=0x0 & N_0t_at1 & OP_4=0xb3 { CacheBlockWriteBack(N_0t_at1); }
+
+
+# Logical OR
+# pattern 0010nnnnmmmm1011
+# text    or <REG_M>,<REG_N>
+# arch 
+:or M_0t,N_0t               is OP_0=0x2 & N_0t & M_0t & OP_1=0xb {
+
+	N_0t = N_0t | M_0t;
+}
+
+
+# Logical OR
+# pattern 11001011iiiiiiii
+# text    or #<imm>,R0
+# arch 
+:or U_0t_r0                 is OP_2=0xcb & U_0t_r0 {
+
+	r0 = r0 | U_0t_r0;
+}
+
+
+# Logical OR
+# pattern 11001111iiiiiiii
+# text    or.b #<imm>,@(R0,GBR)
+# arch 
+:or.b U_0t1                 is OP_2=0xcf & U_0t1 {
+
+	*:1 (GBR + r0) = ( *:1 (GBR + r0) ) | U_0t1;
+}
+
+
+# Prefetch to Data Cache
+# pattern 0000nnnn10000011
+# text    pref @<REG_N>
+# arch 
+:pref N_0tjmp               is OP_0=0x0 & N_0tjmp & OP_4=0x83 { } # Empty on purpose
+
+
+# One-Bit Left Rotation through T Bit
+# pattern 0100nnnn00100100
+# text    rotcl <REG_N>
+# arch 
+:rotcl N_0t                 is OP_0=0x4 & N_0t & OP_4=0x24 {
+
+	temp:1 = ( (N_0t & 0x80000000) != 0 );
+	N_0t   = (N_0t << 1) | zext($(T_FLAG));
+	$(T_FLAG)      = temp;
+}
+
+# One-Bit Right Rotation through T Bit
+# pattern 0100nnnn00100101
+# text    rotcr <REG_N>
+# arch 
+:rotcr N_0t                 is OP_0=0x4 & N_0t & OP_4=0x25 {
+
+	temp:1 = ( (N_0t & 0x00000001) != 0 );
+	N_0t   = ( N_0t >> 1 ) | ( zext($(T_FLAG)) << 31 );
+	$(T_FLAG)      = temp;
+}
+
+
+# One-Bit Left Rotation
+# pattern 0100nnnn00000100
+# text    rotl <REG_N>
+# arch 
+:rotl N_0t                  is OP_0=0x4 & N_0t & OP_4=0x4 {
+
+	$(T_FLAG)      = ( (N_0t & 0x80000000) != 0 );
+	N_0t   = (N_0t << 1) | zext($(T_FLAG));
+}
+
+
+# One-Bit Right Rotation
+# pattern 0100nnnn00000101
+# text    rotr <REG_N>
+# arch 
+:rotr N_0t                  is OP_0=0x4 & N_0t & OP_4=0x5 {
+
+	$(T_FLAG)      = ( (N_0t & 0x00000001) != 0 );
+	N_0t   = ( N_0t >> 1 ) | ( zext($(T_FLAG)) << 31 );
+}
+
+
+# Return from Exception Handling
+# pattern 0000000000101011
+# text    rte
+# arch 
+:rte                        is OP_3=0x2b {
+
+	SR = SSR;
+	splitSRregister();
+	PC = SPC;
+	delayslot(1);
+	return [PC];
+}
+
+
+# Return from Subroutine Procedure
+# pattern 0000000000001011
+# text    rts
+# arch 
+:rts                        is OP_3=0xb {
+
+	PC = PR;
+	delayslot(1);
+	return [PC];
+}
+
+
+# S Bit Setting
+# pattern 0000000001011000
+# text    sets
+# arch 
+:sets                       is OP_3=0x58 {
+
+	$(S_FLAG) = 1;
+}
+
+
+# T Bit Setting
+# pattern 0000000000011000
+# text    sett
+# arch 
+:sett                       is OP_3=0x18 {
+
+	$(T_FLAG) = 1;
+}
+
+
+# Note: this constructor follows the description on page 393 precisely, though simpler,
+# it should produce identical results to the pseudo-code above
+:shad M_0t,N_0t             is OP_0=0x4 & N_0t & M_0t & OP_1=0xc {
+
+	if ( M_0t s< 0 ) goto <shiftRight>;
+	N_0t = N_0t << ( M_0t & 0x1f );
+	goto <skip>;
+
+	<shiftRight>
+	N_0t = N_0t s>> ( ( ~M_0t & 0x1f ) + 1 );
+	<skip>
+}
+
+
+# One-Bit Left Arithmetic Shift
+# pattern 0100nnnn00100000
+# text    shal <REG_N>
+# arch 
+:shal N_0t                  is OP_0=0x4 & N_0t & OP_4=0x20 {
+
+	$(T_FLAG) = ( ( N_0t & 0x80000000 ) != 0 );
+	N_0t = N_0t << 1;
+}
+
+
+# One-Bit Right Arithmetic Shift
+# pattern 0100nnnn00100001
+# text    shar <REG_N>
+# arch 
+:shar N_0t                  is OP_0=0x4 & N_0t & OP_4=0x21 {
+
+	$(T_FLAG)    = ( ( N_0t & 0x00000001 ) != 0 );
+	N_0t = N_0t s>> 1;
+}
+
+
+# Note: this constructor follows the description on page 397 precisely, though simpler,
+# it should produce identical results to the pseudo-code above
+:shld M_0t,N_0t             is OP_0=0x4 & N_0t & M_0t & OP_1=0xd {
+
+	if ( M_0t s< 0 ) goto <shiftRight>;
+	N_0t = N_0t << ( M_0t & 0x1f );
+	goto <skip>;
+
+	<shiftRight>
+	N_0t = N_0t >> ( ( ~M_0t & 0x1f ) + 1 );
+	<skip>
+}
+
+
+# n-Bit Left Logical Shift
+# One-Bit Left Logical Shift
+# pattern 0100nnnn00000000
+# text    shll <REG_N>
+# arch 
+:shll N_0t                  is OP_0=0x4 & N_0t & OP_4=0x0 {
+
+	$(T_FLAG) = ( ( N_0t & 0x80000000 ) != 0 );
+	N_0t = N_0t << 1;
+}
+
+
+# n-Bit Left Logical Shift
+# pattern 0100nnnn00001000
+# text    shll2 <REG_N>
+# arch 
+:shll2 N_0t                 is OP_0=0x4 & N_0t & OP_4=0x8 {
+
+	N_0t = ( N_0t << 2 );
+}
+
+
+# n-Bit Left Logical Shift
+# pattern 0100nnnn00011000
+# text    shll8 <REG_N>
+# arch 
+:shll8 N_0t                 is OP_0=0x4 & N_0t & OP_4=0x18 {
+
+	N_0t = ( N_0t << 8 );
+}
+
+
+# pattern 0100nnnn00101000
+# text    shll16 <REG_N>
+# arch 
+:shll16 N_0t                is OP_0=0x4 & N_0t & OP_4=0x28 {
+
+	N_0t = ( N_0t << 16 );
+}
+
+
+# One-Bit Right Logical Shift
+# pattern 0100nnnn00000001
+# text    shlr <REG_N>
+# arch 
+:shlr N_0t                  is OP_0=0x4 & N_0t & OP_4=0x1 {
+
+	$(T_FLAG) = ( ( N_0t & 0x00000001 ) != 0 );
+	N_0t = N_0t >> 1;
+}
+
+
+# n-Bit Left Logical Shift
+# pattern 0100nnnn00001001
+# text    shlr2 <REG_N>
+# arch 
+:shlr2 N_0t                 is OP_0=0x4 & N_0t & OP_4=0x9 {
+
+	N_0t = N_0t >> 2;
+}
+
+
+# n-Bit Left Logical Shift
+# pattern 0100nnnn00011001
+# text    shlr8 <REG_N>
+# arch 
+:shlr8 N_0t                 is OP_0=0x4 & N_0t & OP_4=0x19 {
+
+	N_0t = N_0t >> 8;
+}
+
+
+# n-Bit Left Logical Shift
+# pattern 0100nnnn00101001
+# text    shlr16 <REG_N>
+# arch 
+:shlr16 N_0t                is OP_0=0x4 & N_0t & OP_4=0x29 {
+
+	N_0t = N_0t >> 16;
+}
+
+
+# Transition to Power-Down Mode
+# pattern 0000000000011011
+# text    sleep
+# arch 
+:sleep                      is OP_3=0x1b {  } # empty on purpose
+
+
+# Store from Control Register
+# pattern 0000nnnn00000010
+# text    stc SR,<REG_N>
+# arch    arch_sh_up
+:stc sr_N_0t                is OP_0=0x0 & sr_N_0t & OP_4=0x2 {
+
+	genSRregister();
+	sr_N_0t = SR;
+}
+
+
+# Store from Control Register
+# pattern 0000nnnn00010010
+# text    stc GBR,<REG_N>
+# arch 
+:stc gbr_N_0t               is OP_0=0x0 & gbr_N_0t & OP_4=0x12 {
+
+	gbr_N_0t = GBR;
+}
+
+
+# Store from Control Register
+# pattern 0000nnnn00100010
+# text    stc VBR,<REG_N>
+# arch    arch_sh_up
+:stc vbr_N_0t               is OP_0=0x0 & vbr_N_0t & OP_4=0x22 {
+
+	vbr_N_0t = VBR;
+}
+
+
+# pattern 0000nnnn00110010
+# text    stc SSR,<REG_N>
+# arch    arch_sh3_nommu_up
+:stc ssr_N_0t               is OP_0=0x0 & ssr_N_0t & OP_4=0x32 {
+
+	ssr_N_0t = SSR;
+}
+
+
+# pattern 0000nnnn01000010
+# text    stc SPC,<REG_N>
+# arch    arch_sh3_nommu_up
+#
+:stc spc_N_0t               is OP_0=0x0 & spc_N_0t & OP_4=0x42 {
+
+	spc_N_0t = SPC;
+}
+
+
+# pattern 0000nnnn00111010
+# text    stc SGR,<REG_N>
+# arch    arch_sh4_nommu_nofpu_up
+:stc sgr_N_0t               is OP_0=0x0 & sgr_N_0t & OP_4=0x3a {
+
+	sgr_N_0t = SGR;
+}
+
+
+# pattern 0000nnnn11111010
+# text    stc DBR,<REG_N>
+# arch    arch_sh4_nommu_nofpu_up
+:stc dbr_N_0t               is OP_0=0x0 & dbr_N_0t & OP_4=0xfa {
+
+	dbr_N_0t = DBR;
+}
+
+
+# pattern 0000nnnn1xxx0010
+# text    stc Rn_BANK,<REG_N>
+# arch    arch_sh3_nommu_up
+:stc BANKt,N_0t_bank        is OP_0=0x0 & N_0t_bank & OP_9=0x1 & BANKt & OP_1=0x2 {
+
+	N_0t_bank = BANKt;
+}
+
+
+# Store from Control Register
+# pattern 0100nnnn00000011
+# text    stc.l SR,@-<REG_N>
+# arch    arch_sh_up
+:stc.l sr_t,N_0t_at_neg     is OP_0=0x4 & N_0t_at_neg & OP_4=0x3 & sr_t {
+
+	N_0t_at_neg = N_0t_at_neg - 4;
+	genSRregister();
+	*:4 ( N_0t_at_neg ) = SR;
+}
+
+
+# Store from Control Register
+# pattern 0100nnnn00010011
+# text    stc.l GBR,@-<REG_N>
+# arch    arch_sh_up
+:stc.l gbr_t,N_0t_at_neg    is OP_0=0x4 & N_0t_at_neg & OP_4=0x13 & gbr_t {
+
+	N_0t_at_neg = N_0t_at_neg - 4;
+	*:4 ( N_0t_at_neg ) = GBR;
+}
+
+
+# Store from Control Register
+# pattern 0100nnnn00100011
+# text    stc.l VBR,@-<REG_N>
+# arch    arch_sh_up
+:stc.l vbr_t,N_0t_at_neg    is OP_0=0x4 & N_0t_at_neg & OP_4=0x23 & vbr_t {
+
+	N_0t_at_neg = N_0t_at_neg - 4;
+	*:4 ( N_0t_at_neg ) = VBR;
+}
+
+
+# pattern 0100nnnn00110011
+# text    stc.l SSR,@-<REG_N>
+# arch    arch_sh3_nommu_up
+:stc.l ssr_t,N_0t_at_neg    is OP_0=0x4 & N_0t_at_neg & OP_4=0x33 & ssr_t {
+
+	N_0t_at_neg = N_0t_at_neg - 4;
+	*:4 ( N_0t_at_neg ) = SSR;
+}
+
+
+# pattern 0100nnnn01000011
+# text    stc.l SPC,@-<REG_N>
+# arch    arch_sh3_nommu_up
+:stc.l spc_t,N_0t_at_neg    is OP_0=0x4 & N_0t_at_neg & OP_4=0x43 & spc_t {
+
+	N_0t_at_neg = N_0t_at_neg - 4;
+	*:4 ( N_0t_at_neg ) = SPC;
+}
+
+
+# pattern 0100nnnn00110010
+# text    stc.l SGR,@-<REG_N>
+# arch    arch_sh4_nommu_nofpu_up
+:stc.l sgr_t,N_0t_at_neg    is OP_0=0x4 & N_0t_at_neg & OP_4=0x32 & sgr_t {
+
+	N_0t_at_neg = N_0t_at_neg - 4;
+	*:4 ( N_0t_at_neg ) = SGR;
+}
+
+
+# pattern 0100nnnn11110010
+# text    stc.l DBR,@-<REG_N>
+# arch    arch_sh4_nommu_nofpu_up
+:stc.l dbr_t,N_0t_at_neg    is OP_0=0x4 & N_0t_at_neg & OP_4=0xf2 & dbr_t {
+
+	N_0t_at_neg = N_0t_at_neg - 4;
+	*:4 ( N_0t_at_neg ) = DBR;
+}
+
+
+# pattern 0100nnnn1xxx0011
+# text    stc.l Rn_BANK,@-<REG_N>
+# arch    arch_sh3_nommu_up
+:stc.l BANKt,N_0t_at_neg    is OP_0=0x4 & N_0t_at_neg & OP_9=0x1 & BANKt & OP_1=0x3 {
+
+	N_0t_at_neg = N_0t_at_neg - 4;
+	*:4 ( N_0t_at_neg ) = BANKt;
+}
+
+
+# Store from System Register
+# pattern 0000nnnn00001010
+# text    sts MACH,<REG_N>
+# arch    arch_sh_up
+:sts mach_N_0t              is OP_0=0x0 & mach_N_0t & OP_4=0xa {
+
+	mach_N_0t = MACH;
+}
+
+
+# Store from System Register
+# pattern 0000nnnn00011010
+# text    sts MACL,<REG_N>
+# arch    arch_sh_up
+:sts macl_N_0t              is OP_0=0x0 & macl_N_0t & OP_4=0x1a {
+
+	macl_N_0t = MACL;
+}
+
+
+# Store from System Register
+# pattern 0000nnnn00101010
+# text    sts PR,<REG_N>
+# arch    arch_sh_up
+:sts pr_N_0t                is OP_0=0x0 & pr_N_0t & OP_4=0x2a {
+
+	pr_N_0t = PR;
+}
+
+
+# Store from Control Register
+# pattern 0100nnnn00000010
+# text    sts.l MACH,@-<REG_N>
+# arch    arch_sh_up
+:sts.l mach_t,N_0t_at_neg   is OP_0=0x4 & N_0t_at_neg & OP_4=0x2 & mach_t {
+
+	N_0t_at_neg = N_0t_at_neg - 4;
+	*:4 ( N_0t_at_neg ) = MACH;
+}
+
+
+# Store from Control Register
+# pattern 0100nnnn00010010
+# text    sts.l MACL,@-<REG_N>
+# arch    arch_sh_up
+:sts.l macl_t,N_0t_at_neg   is OP_0=0x4 & N_0t_at_neg & OP_4=0x12 & macl_t {
+
+	N_0t_at_neg = N_0t_at_neg - 4;
+	*:4 ( N_0t_at_neg ) = MACL;
+}
+
+
+# Store from Control Register
+# pattern 0100nnnn00100010
+# text    sts.l PR,@-<REG_N>
+# arch    arch_sh_up
+:sts.l PR,N_0t_at_neg       is OP_0=0x4 & N_0t_at_neg & OP_4=0x22 & PR {
+
+	N_0t_at_neg = N_0t_at_neg - 4;
+	*:4 ( N_0t_at_neg ) = PR;
+}
+
+
+# Store from System Register
+# pattern 0000nnnn01011010
+# text    sts FPUL,<REG_N>
+# arch    arch_sh2e_up
+:sts fpul_N_0t              is OP_0=0x0 & fpul_N_0t & OP_4=0x5a {
+
+	fpul_N_0t = FPUL;
+}
+
+
+# Store from System Register
+# pattern 0000nnnn01101010
+# text    sts FPSCR,<REG_N>
+# arch    arch_sh2e_up
+:sts fpscr_N_0t             is OP_0=0x0 & fpscr_N_0t & OP_4=0x6a {
+
+	genFPSCRregister();
+	fpscr_N_0t = FPSCR;
+}
+
+
+# Store from Control Register
+# pattern 0100nnnn01010010
+# text    sts.l FPUL,@-<REG_N>
+# arch    arch_sh2e_up
+:sts.l fpul_t,N_0t_at_neg   is OP_0=0x4 & N_0t_at_neg & OP_4=0x52 & fpul_t {
+
+	N_0t_at_neg = N_0t_at_neg - 4;
+	*:4 ( N_0t_at_neg ) = FPUL;
+}
+
+
+# Store from Control Register
+# pattern 0100nnnn01100010
+# text    sts.l FPSCR,@-<REG_N>
+# arch    arch_sh2e_up
+:sts.l fpscr_t,N_0t_at_neg  is OP_0=0x4 & N_0t_at_neg & OP_4=0x62 & fpscr_t {
+
+	N_0t_at_neg = N_0t_at_neg - 4;
+	genFPSCRregister();
+	*:4 ( N_0t_at_neg ) = FPSCR;
+}
+
+
+# Binary Subtraction
+# pattern 0011nnnnmmmm1000
+# text    sub <REG_M>,<REG_N>
+# arch    arch_sh_up
+:sub M_0t,N_0t              is OP_0=0x3 & N_0t & M_0t & OP_1=0x8 {
+
+	N_0t = N_0t - M_0t;
+}
+
+
+# Binary Subtraction with Borrow
+# pattern 0011nnnnmmmm1010
+# text    subc <REG_M>,<REG_N>
+# arch    arch_sh_up
+:subc M_0t,N_0t             is OP_0=0x3 & N_0t & M_0t & OP_1=0xa {
+
+	tmp1:4 = N_0t - M_0t;
+	tmp0:4 = N_0t;
+	N_0t   = tmp1 - zext($(T_FLAG));
+	$(T_FLAG) = ( tmp0 < tmp1 );
+	if ( tmp1 >= N_0t ) goto <skip>;
+	$(T_FLAG) = 1;
+	<skip>
+}
+
+
+# Binary Subtraction with Underflow Check
+# pattern 0011nnnnmmmm1011
+# text    subv <REG_M>,<REG_N>
+# arch    arch_sh_up
+:subv M_0t,N_0t             is OP_0=0x3 & N_0t & M_0t & OP_1=0xb {
+
+	local dest = ( N_0t s< 0 );
+	local src  = ( M_0t s< 0 );
+	src  = src + dest;
+	N_0t = N_0t - M_0t;
+	local ans  = ( N_0t s< 0 );
+	ans  = ans + dest;
+	$(T_FLAG)    = ( (src == 1) && (ans == 1) );
+}
+
+
+# Upper-/Lower-Half Swap
+# pattern 0110nnnnmmmm1000
+# text    swap.b <REG_M>,<REG_N>
+# arch    arch_sh_up
+:swap.b M_0t,N_0t           is OP_0=0x6 & N_0t & M_0t & OP_1=0x8 {
+
+	N_0t    =   ( M_0t & 0xFFFF0000 )        |
+            ( ( M_0t & 0x000000FF ) << 8 ) |
+            ( ( M_0t & 0x0000FF00 ) >> 8 );
+}
+
+
+# Upper-/Lower-Half Swap
+# pattern 0110nnnnmmmm1001
+# text    swap.w <REG_M>,<REG_N>
+# arch    arch_sh_up
+:swap.w M_0t,N_0t           is OP_0=0x6 & N_0t & M_0t & OP_1=0x9 {
+
+	N_0t   = ( M_0t << 16 ) | ( M_0t >> 16 );
+}
+
+# Synchronize Data Operation
+# pattern 0000000010101011
+# text synco
+# arch arch_sh4a_up
+define pcodeop SynchronizeDataOperation;
+
+:synco                      is OP_3=0x00ab {
+	SynchronizeDataOperation();
+}
+
+
+# Memory Test and Bit Setting
+# pattern 0100nnnn00011011
+# text    tas.b @<REG_N>
+# arch    arch_sh_up
+:tas.b N_0t_at1             is OP_0=0x4 & N_0t_at1 & OP_4=0x1b {
+
+	temp:1 = *:1 ( N_0t_at1 );
+	$(T_FLAG) = ( temp == 0 );
+	temp = temp | 0x80;
+	*:1 ( N_0t_at1 ) = temp;
+}
+
+define pcodeop TrapAlways;
+
+# Trap Exception Handling
+# pattern 11000011iiiiiiii
+# text    trapa #<imm>
+# arch    arch_sh_up
+:trapa U_0t                 is OP_2=0xc3 & U_0t { TrapAlways(U_0t); }
+
+
+# AND Operation T Bit Setting
+# pattern 0010nnnnmmmm1000
+# text    tst <REG_M>,<REG_N>
+# arch    arch_sh_up
+:tst M_0t,N_0t              is OP_0=0x2 & N_0t & M_0t & OP_1=0x8 {
+
+	$(T_FLAG) = ( (N_0t & M_0t) == 0 );
+}
+
+
+# AND Operation T Bit Setting
+# pattern 11001000iiiiiiii
+# text    tst #<imm>,R0
+# arch    arch_sh_up
+:tst U_0t_r0                is OP_2=0xc8 & U_0t_r0 {
+
+	$(T_FLAG) = ( ( r0 & U_0t_r0 ) == 0 );
+}
+
+
+# AND Operation T Bit Setting
+# pattern 11001100iiiiiiii
+# text    tst.b #<imm>,@(R0,GBR)
+# arch    arch_sh_up
+:tst.b U_0t1                is OP_2=0xcc & U_0t1 {
+
+	$(T_FLAG) = ( ( (*:1 ( GBR + r0 )) & U_0t1 ) == 0 );
+}
+
+
+# pattern 0010nnnnmmmm1010
+# text    xor <REG_M>,<REG_N>
+# arch    arch_sh_up
+:xor M_0t,N_0t              is OP_0=0x2 & N_0t & M_0t & OP_1=0xa {
+
+	N_0t = N_0t ^ M_0t;
+}
+
+
+# Exclusive Logical OR
+# pattern 11001010iiiiiiii
+# text    xor #<imm>,R0
+# arch    arch_sh_up
+:xor U_0t_r0                is OP_2=0xca & U_0t_r0 {
+
+	r0 = r0 ^ U_0t_r0;
+}
+
+
+# Exclusive Logical OR
+# pattern 11001110iiiiiiii
+# text    xor.b #<imm>,@(R0,GBR)
+# arch    arch_sh_up
+:xor.b U_0t1                is OP_2=0xce & U_0t1 {
+
+	*:1 (GBR + r0) = ( *:1 (GBR + r0) ) ^ U_0t1;
+}
+
+
+# Middle Extraction from Linked Registers
+# pattern 0010nnnnmmmm1101
+# text    xtrct <REG_M>,<REG_N>
+# arch    arch_sh_up
+:xtrct M_0t,N_0t            is OP_0=0x2 & N_0t & M_0t & OP_1=0xd {
+
+	N_0t = (M_0t << 16) | (N_0t >> 16);
+}
+

@@ -213,6 +213,7 @@ public class ClearFlowAndRepairCmd extends BackgroundCommand {
 			}
 			if (repairFunctions) {
 				repairFunctions(program, clearSet, monitor);
+				monitor.setIndeterminate(false);
 			}
 
 			return true;

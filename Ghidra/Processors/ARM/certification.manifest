@@ -1,14 +1,10 @@
 ##VERSION: 2.0
-.classpath||GHIDRA||||END|
-.project||GHIDRA||||END|
 Module.manifest||GHIDRA||||END|
 build.gradle||GHIDRA||||END|
-data/build.xml||GHIDRA||||END|
 data/languages/ARM.cspec||GHIDRA||||END|
 data/languages/ARM.dwarf||GHIDRA||||END|
 data/languages/ARM.ldefs||GHIDRA||||END|
 data/languages/ARM.opinion||GHIDRA||||END|
-data/languages/ARM.pspec||GHIDRA||||END|
 data/languages/ARM.sinc||GHIDRA||||END|
 data/languages/ARM4_be.slaspec||GHIDRA||||END|
 data/languages/ARM4_le.slaspec||GHIDRA||||END|
@@ -28,10 +24,12 @@ data/languages/ARMCortex.pspec||GHIDRA||||END|
 data/languages/ARMTHUMBinstructions.sinc||GHIDRA||||END|
 data/languages/ARM_v45.cspec||GHIDRA||||END|
 data/languages/ARM_v45.pspec||GHIDRA||||END|
+data/languages/ARM_win.cspec||GHIDRA||||END|
 data/languages/ARMinstructions.sinc||GHIDRA||||END|
 data/languages/ARMneon.dwarf||GHIDRA||||END|
 data/languages/ARMneon.sinc||GHIDRA||||END|
 data/languages/ARMt.pspec||GHIDRA||||END|
+data/languages/ARMtTHUMB.pspec||GHIDRA||||END|
 data/languages/ARMt_v45.pspec||GHIDRA||||END|
 data/languages/ARMv8.sinc||GHIDRA||||END|
 data/languages/old/ARMv5.lang||GHIDRA||||END|

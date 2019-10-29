@@ -17,7 +17,8 @@ package ghidra.program.model.pcode;
 
 import java.util.*;
 
-import ghidra.program.model.address.*;
+import ghidra.program.model.address.Address;
+import ghidra.program.model.address.AddressIterator;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.data.Undefined;
 import ghidra.program.model.listing.*;
@@ -102,12 +103,7 @@ public class LocalSymbolMap {
 		boolean lock = (dbFunction.getSignatureSource() != SourceType.DEFAULT);
 
 		Address pcaddr = dbFunction.getEntryPoint();
-		try {
-			pcaddr = pcaddr.subtract(1);
-		}
-		catch (AddressOutOfBoundsException e) {
-			// Should rarely happen
-		}
+		pcaddr = pcaddr.subtractWrap(1);
 
 		List<MappedSymbol> paramList = new ArrayList<MappedSymbol>();
 		for (int i = 0; i < p.length; ++i) {

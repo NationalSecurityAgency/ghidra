@@ -19,13 +19,12 @@ import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import ghidra.generic.function.Callback;
-import ghidra.util.Issue;
 import ghidra.util.SystemUtilities;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.TimeoutException;
 import ghidra.util.timer.GTimer;
 import ghidra.util.timer.GTimerMonitor;
+import utility.function.Callback;
 
 /**
  * A task monitor that allows clients the ability to specify a timeout after which this monitor
@@ -141,6 +140,11 @@ public class TimeoutTaskMonitor implements TaskMonitor {
 	}
 
 	@Override
+	public String getMessage() {
+		return delegate.getMessage();
+	}
+
+	@Override
 	public void setProgress(long value) {
 		delegate.setProgress(value);
 	}
@@ -166,6 +170,11 @@ public class TimeoutTaskMonitor implements TaskMonitor {
 	}
 
 	@Override
+	public boolean isIndeterminate() {
+		return delegate.isIndeterminate();
+	}
+
+	@Override
 	public void checkCanceled() throws CancelledException {
 		if (didTimeout()) {
 			throw new TimeoutException(
@@ -182,11 +191,6 @@ public class TimeoutTaskMonitor implements TaskMonitor {
 	@Override
 	public long getProgress() {
 		return delegate.getProgress();
-	}
-
-	@Override
-	public void reportIssue(Issue issue) {
-		delegate.reportIssue(issue);
 	}
 
 	private void timeout() {
@@ -224,15 +228,5 @@ public class TimeoutTaskMonitor implements TaskMonitor {
 	@Override
 	public void clearCanceled() {
 		delegate.clearCanceled();
-	}
-
-	@Override
-	public void addIssueListener(IssueListener listener) {
-		delegate.addIssueListener(listener);
-	}
-
-	@Override
-	public void removeIssueListener(IssueListener listener) {
-		delegate.removeIssueListener(listener);
 	}
 }

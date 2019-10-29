@@ -57,13 +57,13 @@ class CategoryDB extends DatabaseObject implements Category {
 		this.name = name;
 		this.parent = parent;
 
-		subcategoryMap = new LazyLoadingCachingMap<String, CategoryDB>(mgr.lock, CategoryDB.class) {
+		subcategoryMap = new LazyLoadingCachingMap<>(mgr.lock, CategoryDB.class) {
 			@Override
 			public Map<String, CategoryDB> loadMap() {
 				return buildSubcategoryMap();
 			}
 		};
-		dataTypeMap = new LazyLoadingCachingMap<String, DataType>(mgr.lock, DataType.class) {
+		dataTypeMap = new LazyLoadingCachingMap<>(mgr.lock, DataType.class) {
 			@Override
 			public Map<String, DataType> loadMap() {
 				return createDataTypeMap();
@@ -272,9 +272,6 @@ class CategoryDB extends DatabaseObject implements Category {
 	private void testName(String categoryName) throws InvalidNameException {
 		if (categoryName == null || categoryName.length() == 0) {
 			throw new InvalidNameException("Name cannot be null or zero length");
-		}
-		if (categoryName.indexOf(DELIMITER_CHAR) >= 0) {
-			throw new InvalidNameException("Bad name: " + categoryName);
 		}
 	}
 

@@ -28,7 +28,9 @@ import javax.swing.event.HyperlinkListener;
 
 import docking.DialogComponentProvider;
 import docking.DockingWindowManager;
+import docking.tool.ToolConstants;
 import docking.widgets.HyperlinkComponent;
+import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.combobox.GhidraComboBox;
 import ghidra.GhidraOptions;
 import ghidra.app.nav.Navigatable;
@@ -38,7 +40,6 @@ import ghidra.framework.options.Options;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.Plugin;
 import ghidra.framework.plugintool.PluginTool;
-import ghidra.framework.plugintool.util.ToolConstants;
 import ghidra.program.model.address.Address;
 import ghidra.util.HelpLocation;
 import ghidra.util.task.TaskMonitorComponent;
@@ -211,12 +212,12 @@ public class GoToAddressLabelDialog extends DialogComponentProvider implements G
 		gbc.gridwidth = 2;
 		inner.add(comboBox, gbc);
 
-		caseSensitiveBox = new JCheckBox("Case sensitive", false);
+		caseSensitiveBox = new GCheckBox("Case sensitive", false);
 		gbc.gridy = 2;
 		gbc.gridwidth = 1;
 		inner.add(caseSensitiveBox, gbc);
 
-		includeDynamicBox = new JCheckBox("Dynamic labels", true);
+		includeDynamicBox = new GCheckBox("Dynamic labels", true);
 		includeDynamicBox.setToolTipText("Include dynamic lables in the search (slower)");
 		gbc.gridx = 1;
 		inner.add(includeDynamicBox, gbc);

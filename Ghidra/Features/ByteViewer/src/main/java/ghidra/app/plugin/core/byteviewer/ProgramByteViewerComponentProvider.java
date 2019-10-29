@@ -70,9 +70,17 @@ public class ProgramByteViewerComponentProvider extends ByteViewerComponentProvi
 	public ProgramByteViewerComponentProvider(PluginTool tool, ByteViewerPlugin plugin,
 			boolean isConnected) {
 		super(tool, plugin, "Bytes", ByteViewerActionContext.class);
-		this.isConnected = isConnected;
-		decorationComponent = new DecoratorPanel(panel, isConnected);
 
+		this.isConnected = isConnected;
+		setIcon(ResourceManager.loadImage("images/binaryData.gif"));
+		if (!isConnected) {
+			setTransient();
+		}
+		else {
+			addToToolbar();
+		}
+
+		decorationComponent = new DecoratorPanel(panel, isConnected);
 		clipboardProvider = new ByteViewerClipboardProvider(this, tool);
 		addToTool();
 
@@ -84,6 +92,12 @@ public class ProgramByteViewerComponentProvider extends ByteViewerComponentProvi
 	public void createProgramActions() {
 		cloneByteViewerAction = new CloneByteViewerAction();
 		tool.addLocalAction(this, cloneByteViewerAction);
+	}
+
+	@Override
+	public boolean isSnapshot() {
+		// we are a snapshot when we are 'disconnected' 
+		return !isConnected();
 	}
 
 	@Override
@@ -128,11 +142,6 @@ public class ProgramByteViewerComponentProvider extends ByteViewerComponentProvi
 	public void closeComponent() {
 		// overridden to handle snapshots
 		plugin.closeProvider(this);
-	}
-
-	@Override
-	public boolean isTransient() {
-		return false;
 	}
 
 	@Override
@@ -503,7 +512,8 @@ public class ProgramByteViewerComponentProvider extends ByteViewerComponentProvi
 	}
 
 	/**
-	 * Gets the text of the current {@link ProgramSelection}.
+	 * Gets the text of the current {@link ProgramSelection}
+	 * @return the text
 	 */
 	String getCurrentTextSelection() {
 		return panel.getCurrentComponent().getTextForSelection();

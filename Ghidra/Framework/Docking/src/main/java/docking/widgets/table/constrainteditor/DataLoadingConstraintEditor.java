@@ -26,6 +26,7 @@ import javax.swing.*;
 
 import docking.DisabledComponentLayerFactory;
 import docking.widgets.EmptyBorderButton;
+import docking.widgets.label.GDHtmlLabel;
 import docking.widgets.table.constraint.ColumnConstraint;
 import docking.widgets.table.constraint.ColumnData;
 import ghidra.util.HTMLUtilities;
@@ -90,7 +91,7 @@ public abstract class DataLoadingConstraintEditor<T> extends AbstractColumnConst
 	@Override
 	protected Component buildInlineEditorComponent() {
 		JPanel editorPanel = new JPanel(new BorderLayout());
-		statusLabel = new JLabel();
+		statusLabel = new GDHtmlLabel();
 		statusLabel.setHorizontalAlignment(SwingConstants.CENTER);
 
 		taskMonitorComponent = new TaskMonitorComponent();
@@ -220,7 +221,8 @@ public abstract class DataLoadingConstraintEditor<T> extends AbstractColumnConst
 		reloadDataButton.setVisible(false);
 		Task task = new LoadDataTask();
 		task.addTaskListener(this);
-		new TaskLauncher(task, (TaskMonitor) taskMonitorComponent);
+
+		TaskBuilder.withTask(task).launchInBackground(taskMonitorComponent);
 	}
 
 	@Override

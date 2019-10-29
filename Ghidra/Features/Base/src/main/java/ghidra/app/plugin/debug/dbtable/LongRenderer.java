@@ -17,18 +17,19 @@ package ghidra.app.plugin.debug.dbtable;
 
 import java.awt.Component;
 
-import javax.swing.*;
+import javax.swing.JLabel;
+import javax.swing.SwingConstants;
 
 import docking.widgets.table.GTableCellRenderer;
 import docking.widgets.table.GTableCellRenderingData;
+import ghidra.docking.settings.Settings;
 
 public class LongRenderer extends GTableCellRenderer {
 
 	@Override
 	public Component getTableCellRendererComponent(GTableCellRenderingData data) {
 
-		JLabel renderer =
-			(JLabel) super.getTableCellRendererComponent(data);
+		JLabel renderer = (JLabel) super.getTableCellRendererComponent(data);
 
 		renderer.setHorizontalAlignment(SwingConstants.LEADING);
 
@@ -38,5 +39,10 @@ public class LongRenderer extends GTableCellRenderer {
 	@Override
 	protected String getText(Object value) {
 		return value == null ? "" : "0x" + Long.toHexString((Long) value);
+	}
+
+	@Override
+	protected String formatNumber(Number value, Settings settings) {
+		return getText(value);
 	}
 }

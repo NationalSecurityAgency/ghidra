@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<language_definitions>
+  <language processor="MCS96"
+            endian="little"
+            size="16"
+            variant="default"
+            version="1.0"
+            slafile="MCS96.sla"
+            processorspec="MCS96.pspec"
+            manualindexfile="../manuals/MCS96.idx"
+            id="MCS96:LE:16:default">
+    <description>Intel MCS-96 Microcontroller Family</description>
+    <compiler name="default" spec="MCS96.cspec" id="default"/>
+  </language>
+</language_definitions>

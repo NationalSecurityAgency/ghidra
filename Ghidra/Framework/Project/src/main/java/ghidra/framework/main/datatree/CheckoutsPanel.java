@@ -128,7 +128,7 @@ public class CheckoutsPanel extends JPanel {
 
 		Set<ItemCheckoutStatus> toTerminate = new HashSet<>();
 		for (int i = 0; i < rows.length; i++) {
-			ItemCheckoutStatus item = tableModel.getRowObject(i);
+			ItemCheckoutStatus item = tableModel.getRowObject(rows[i]);
 			toTerminate.add(item);
 		}
 

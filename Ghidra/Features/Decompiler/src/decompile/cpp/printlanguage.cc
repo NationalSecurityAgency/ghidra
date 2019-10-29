@@ -52,55 +52,6 @@ PrintLanguageCapability *PrintLanguageCapability::findCapability(const string &n
   return (PrintLanguageCapability *)0;
 }
 
-/// \brief Determine if the given token should be emitted in its own parenthetic expression
-///
-/// This token is being emitted. Check if its input expression, ending with the given
-/// operator token, needs to be surrounded by parentheses to convey the proper meaning.
-/// \param op2 is the input token to \b this operator
-/// \param stage is the stage of \b this operator currently being printed
-/// \return \b true if \b op2 (as input to \b this) should be parenthesized
-bool OpToken::parentheses(const OpToken &op2,int4 stage) const
-
-{
-  switch(type) {
-  case space:
-  case binary:
-    if (precedence > op2.precedence) return true;
-    if (precedence < op2.precedence) return false;
-    if (associative && (this == &op2)) return false;
-    // If operators are adjacent to each other, the
-    // operator printed first must be evaluated first
-    // In this case op2 must be evaluated first, so we
-    // check if it is printed first (in first stage of binary)
-    if ((op2.type==postsurround)&&(stage==0)) return false;
-    return true;
-  case unary_prefix:
-    if (precedence > op2.precedence) return true;
-    if (precedence < op2.precedence) return false;
-    //    if (associative && (this == &op2)) return false;
-    if ((op2.type==unary_prefix)||(op2.type==presurround)) return false;
-    return true;
-  case postsurround:
-    if (stage==1) return false;	// Inside the surround
-    if (precedence > op2.precedence) return true;
-    if (precedence < op2.precedence) return false;
-    // If the precedences are equal, we know this postsurround
-    // comes after, so op2 being first doesn't need parens
-    if ((op2.type==postsurround)||(op2.type==binary)) return false;
-    //    if (associative && (this == &op2)) return false;
-    return true;
-  case presurround:
-    if (stage==0) return false;	// Inside the surround
-    if (precedence > op2.precedence) return true;
-    if (precedence < op2.precedence) return false;
-    //    if (associative && (this == &op2)) return false;
-    if ((op2.type==unary_prefix)||(op2.type==presurround)) return false;
-    return true;
-  }
-
-  return true;
-}
-
 /// \param g is the Architecture that owns and will use this PrintLanguage
 /// \param nm is the formal name of the language
 PrintLanguage::PrintLanguage(Architecture *g,const string &nm)
@@ -178,7 +129,7 @@ void PrintLanguage::pushOp(const OpToken *tok,const PcodeOp *op)
   }
   else {
     emitOp(revpol.back());
-    paren = revpol.back().tok->parentheses(*tok,revpol.back().visited);
+    paren = parentheses(tok);
     if (paren)
       id = emit->openParen('(');
     else
@@ -308,6 +259,68 @@ void PrintLanguage::pushVnLHS(const Varnode *vn,const PcodeOp *op)
   }
 }
 
+/// The token at the top of the stack is being emitted. Check if its input expression,
+/// ending with the given operator token, needs to be surrounded by parentheses to convey
+/// the proper meaning.
+/// \param op2 is the input token to \b this operator
+/// \param stage is the stage of \b this operator currently being printed
+/// \return \b true if \b op2 (as input to \b this) should be parenthesized
+bool PrintLanguage::parentheses(const OpToken *op2)
+
+{
+  ReversePolish &top( revpol.back() );
+  const OpToken *topToken = top.tok;
+  int4 stage = top.visited;
+  switch(topToken->type) {
+  case OpToken::space:
+  case OpToken::binary:
+    if (topToken->precedence > op2->precedence) return true;
+    if (topToken->precedence < op2->precedence) return false;
+    if (topToken->associative && (topToken == op2)) return false;
+    // If operators are adjacent to each other, the
+    // operator printed first must be evaluated first
+    // In this case op2 must be evaluated first, so we
+    // check if it is printed first (in first stage of binary)
+    if ((op2->type==OpToken::postsurround)&&(stage==0)) return false;
+    return true;
+  case OpToken::unary_prefix:
+    if (topToken->precedence > op2->precedence) return true;
+    if (topToken->precedence < op2->precedence) return false;
+    //    if (associative && (this == &op2)) return false;
+    if ((op2->type==OpToken::unary_prefix)||(op2->type==OpToken::presurround)) return false;
+    return true;
+  case OpToken::postsurround:
+    if (stage==1) return false;	// Inside the surround
+    if (topToken->precedence > op2->precedence) return true;
+    if (topToken->precedence < op2->precedence) return false;
+    // If the precedences are equal, we know this postsurround
+    // comes after, so op2 being first doesn't need parens
+    if ((op2->type==OpToken::postsurround)||(op2->type==OpToken::binary)) return false;
+    //    if (associative && (this == &op2)) return false;
+    return true;
+  case OpToken::presurround:
+    if (stage==0) return false;	// Inside the surround
+    if (topToken->precedence > op2->precedence) return true;
+    if (topToken->precedence < op2->precedence) return false;
+    //    if (associative && (this == &op2)) return false;
+    if ((op2->type==OpToken::unary_prefix)||(op2->type==OpToken::presurround)) return false;
+    return true;
+  case OpToken::hiddenfunction:
+    if ((stage==0)&&(revpol.size() > 1)) {	// If there is an unresolved previous token
+      // New token is printed next to the previous token.
+      const OpToken *prevToken = revpol[revpol.size()-2].tok;
+      if (prevToken->type != OpToken::binary && prevToken->type != OpToken::unary_prefix)
+	return false;
+      if (prevToken->precedence < op2->precedence) return false;
+      // If precedence is equal, make sure we don't treat two tokens as associative,
+      // i.e. we should have parentheses
+    }
+    return true;
+  }
+
+  return true;
+}
+
 /// An OpToken directly from the RPN is sent to the low-level emitter,
 /// resolving any final spacing or parentheses.
 /// \param entry is the RPN entry to be emitted
@@ -351,6 +364,8 @@ void PrintLanguage::emitOp(const ReversePolish &entry)
     if (entry.visited != 1) return;
     emit->spaces(entry.tok->spacing,entry.tok->bump);
     break;
+  case OpToken::hiddenfunction:
+    return;			// Never directly prints anything
   }
 }
 

@@ -56,10 +56,6 @@ public class OperandFieldFactoryTest extends AbstractGhidraHeadedIntegrationTest
 	private Options fieldOptions;
 	private Program program;
 
-	public OperandFieldFactoryTest() {
-		super();
-	}
-
 	@Before
 	public void setUp() throws Exception {
 

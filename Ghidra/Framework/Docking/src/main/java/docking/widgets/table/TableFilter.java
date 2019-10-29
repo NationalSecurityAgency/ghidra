@@ -48,4 +48,13 @@ public interface TableFilter<ROW_OBJECT> {
 		return false;
 	}
 
+	/**
+	 * A method that allows filters to report that they have nothing to actually filter.  This
+	 * is useful for empty/null filters.
+	 * 
+	 * @return true if this filter will not perform any filtering
+	 */
+	public default boolean isEmpty() {
+		return false;
+	}
 }

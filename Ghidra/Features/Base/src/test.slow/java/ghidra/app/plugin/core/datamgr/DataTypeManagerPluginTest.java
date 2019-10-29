@@ -37,7 +37,7 @@ import org.junit.*;
 import docking.DockingUtils;
 import docking.action.DockingActionIf;
 import docking.action.ToggleDockingActionIf;
-import docking.util.KeyBindingUtils;
+import docking.actions.KeyBindingUtils;
 import docking.widgets.OptionDialog;
 import docking.widgets.combobox.GhidraComboBox;
 import docking.widgets.dialogs.InputWithChoicesDialog;
@@ -71,7 +71,7 @@ import ghidra.test.*;
 import ghidra.util.Msg;
 import ghidra.util.classfinder.ClassFilter;
 import ghidra.util.classfinder.ClassSearcher;
-import ghidra.util.task.TaskMonitorAdapter;
+import ghidra.util.task.TaskMonitor;
 import utilities.util.FileUtilities;
 
 /**
@@ -647,9 +647,9 @@ public class DataTypeManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 	public void testRefreshBuiltins() throws Exception {
 		GTreeNode treeRoot = tree.getRootNode();
 		GTreeNode builtInNode = treeRoot.getChild("BuiltInTypes");
-		if (builtInNode.getChild("TestDataType") != null) {
-			Assert.fail("Test setup Error: ghidra.app.test.TestDataType was not removed!");
-		}
+
+		assertNull("Test setup Error: ghidra.app.test.TestDataType was not removed!",
+			builtInNode.getChild("TestDataType"));
 
 		compileJavaFile();
 
@@ -1074,7 +1074,13 @@ public class DataTypeManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 		}
 	}
 
-	private File getBinTestDir() throws FileNotFoundException {
+	/**
+	 * This directory is bin in eclipse; it will be a resources directory in the classpath when run 
+	 * in batch mode.  
+	 * @return class output directory
+	 * @throws FileNotFoundException Could not find class output directory
+	 */
+	private File getClassesDirectory() throws FileNotFoundException {
 		File file = getTestDataTypeFile();
 		if (file == null) {
 			throw new FileNotFoundException("Could not find resource TestDataType.txt");
@@ -1090,8 +1096,7 @@ public class DataTypeManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 
 	private void removeBinTestDir() {
 		try {
-			File binDir = getBinTestDir();
-			Msg.debug(this, "DT bin test dir: " + binDir);
+			File binDir = getClassesDirectory();
 			if (binDir.isDirectory()) {
 				Msg.debug(this, "\tdeleting the bin dir...");
 				boolean success = FileUtilities.deleteDir(binDir);
@@ -1111,16 +1116,15 @@ public class DataTypeManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 		boolean success = false;
 		try {
 			File file = getTestDataTypeFile();
-			File binDir = getBinTestDir();
+			File binDir = getClassesDirectory();
 			if (!binDir.exists()) {
 				if (!binDir.mkdir()) {
 					Assert.fail("Could not create directory " + binDir.getAbsolutePath());
 				}
 			}
-
 			File javaFile = new File(binDir, "TestDataType.java");
 
-			FileUtilities.copyFile(file, javaFile, false, TaskMonitorAdapter.DUMMY_MONITOR);
+			FileUtilities.copyFile(file, javaFile, false, TaskMonitor.DUMMY);
 			assertTrue(javaFile.exists());
 
 			JavaCompiler j = new JavaCompiler();

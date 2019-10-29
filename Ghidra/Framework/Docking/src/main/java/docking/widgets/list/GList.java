@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,24 +15,25 @@
  */
 package docking.widgets.list;
 
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
 import java.util.Vector;
 
-import javax.swing.JList;
-import javax.swing.ListModel;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
+import javax.swing.*;
 
+import docking.widgets.GComponent;
 import docking.widgets.table.GTable;
 
 /**
  * A sub-class of JList that provides an auto-lookup feature.
+ * <p>
  * The user can begin typing the first few letters of a desired
  * list element and the selection will automatically navigate to it.
+ * <p>
+ * HTML rendering is disabled by default.
+ * <p>
+ * 
+ * @param <T> the row type of the list
  */
-public class GList<T> extends JList<T> {
-	private static final long serialVersionUID = 1L;
+public class GList<T> extends JList<T> implements GComponent {
 
 	/**The timeout for the auto-lookup feature*/
 	public static final long KEY_TIMEOUT = GTable.KEY_TIMEOUT;//made public for JUnits...
@@ -81,41 +81,10 @@ public class GList<T> extends JList<T> {
 	}
 
 	private void init() {
-		addKeyListener(new KeyListener() {
-			public void keyPressed(KeyEvent e) {
-//				if (e.isActionKey() ||
-//				    e.getKeyChar() == KeyEvent.CHAR_UNDEFINED ||
-//				    Character.isISOControl(e.getKeyChar())) {
-//				    return;
-//				}
-//				long when = e.getWhen();
-//				if (when - lastLookupTime > KEY_TIMEOUT) {
-//				    lookupString = ""+e.getKeyChar();
-//				}
-//				else {
-//				    lookupString += ""+e.getKeyChar();
-//				}
-//				int index = getIndex(getModel(), lookupString);
-//				if (index >= 0) {
-//				    setSelectedIndex(index);
-//				    Rectangle rect = getCellBounds(index, index);
-//				    scrollRectToVisible(rect);
-//				}
-//				lastLookupTime = when;
-//				e.consume();
-			}
-
-			public void keyReleased(KeyEvent e) {
-			}
-
-			public void keyTyped(KeyEvent e) {
-			}
-		});
-		addListSelectionListener(new ListSelectionListener() {
-			public void valueChanged(ListSelectionEvent e) {
-				ensureIndexIsVisible(getSelectedIndex());
-			}
-		});
+		setHTMLRenderingEnabled(false);
+		if (getCellRenderer() instanceof JComponent) {
+			GComponent.setHTMLRenderingFlag((JComponent) getCellRenderer(), false);
+		}
+		addListSelectionListener(e -> ensureIndexIsVisible(getSelectedIndex()));
 	}
-
 }

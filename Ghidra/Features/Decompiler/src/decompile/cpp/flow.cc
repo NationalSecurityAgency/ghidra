@@ -212,7 +212,7 @@ void FlowInfo::newAddress(PcodeOp *from,const Address &to)
 
   if (seenInstruction(to)) {	// If we have seen this address before
     PcodeOp *op = target(to);
-    data.opSetFlag(op,PcodeOp::startbasic);
+    data.opMarkStartBasic(op);
     return;
   }
   addrlist.push_back(to);
@@ -255,7 +255,7 @@ PcodeOp *FlowInfo::xrefControlFlow(list<PcodeOp *>::const_iterator oiter,bool &s
   while(oiter != obank.endDead()) {
     op = *oiter++;
     if (startbasic) {
-      data.opSetFlag(op,PcodeOp::startbasic);
+      data.opMarkStartBasic(op);
       startbasic = false;
     }
     switch(op->code()) {
@@ -266,7 +266,7 @@ PcodeOp *FlowInfo::xrefControlFlow(list<PcodeOp *>::const_iterator oiter,bool &s
 	  Address fallThruAddr;
 	  PcodeOp *destop = findRelTarget(op,fallThruAddr);
 	  if (destop != (PcodeOp *)0) {
-	    data.opSetFlag(destop,PcodeOp::startbasic);	// Make sure the target op is a basic block start
+	    data.opMarkStartBasic(destop);	// Make sure the target op is a basic block start
 	    uintm newtime = destop->getTime();
 	    if (newtime > maxtime)
 	      maxtime = newtime;
@@ -286,7 +286,7 @@ PcodeOp *FlowInfo::xrefControlFlow(list<PcodeOp *>::const_iterator oiter,bool &s
 	  Address fallThruAddr;
 	  PcodeOp *destop = findRelTarget(op,fallThruAddr);
 	  if (destop != (PcodeOp *)0) {
-	    data.opSetFlag(destop,PcodeOp::startbasic);	// Make sure the target op is a basic block start
+	    data.opMarkStartBasic(destop);	// Make sure the target op is a basic block start
 	    uintm newtime = destop->getTime();
 	    if (newtime > maxtime)
 	      maxtime = newtime;
@@ -456,7 +456,7 @@ bool FlowInfo::processInstruction(const Address &curaddr,bool &startbasic)
   
   if (oiter != obank.endDead()) {
     stat.seqnum = (*oiter)->getSeqNum();
-    data.opSetFlag(*oiter,PcodeOp::startmark); // Mark the first op in the instruction
+    data.opMarkStartInstruction(*oiter); // Mark the first op in the instruction
     if (flowoverride != Override::NONE)
       data.overrideFlow(curaddr,flowoverride);
     xrefControlFlow(oiter,startbasic,isfallthru,(FuncCallSpecs *)0);
@@ -484,7 +484,7 @@ bool FlowInfo::setFallthruBound(Address &bound)
     if (addr == (*iter).first) { // If we have already visited this address
       addrlist.pop_back();	// Throw it away
       PcodeOp *op = target(addr); // But make sure the address
-      data.opSetFlag(op,PcodeOp::startbasic); // starts a basic block
+      data.opMarkStartBasic(op); // starts a basic block
       return false;
     }
     if (addr < (*iter).first + (*iter).second.size)
@@ -555,7 +555,7 @@ void FlowInfo::fallthru(void)
       if (bound == addrlist.back()) { // Hit the bound exactly
 	if (startbasic) {
 	  PcodeOp *op = target(addrlist.back());
-	  data.opSetFlag(op,PcodeOp::startbasic);
+	  data.opMarkStartBasic(op);
 	}
 	addrlist.pop_back();
 	break;
@@ -828,7 +828,7 @@ void FlowInfo::findUnprocessed(void)
   for(iter=addrlist.begin();iter!=addrlist.end();++iter) {
     if (seenInstruction(*iter)) {
       PcodeOp *op = target(*iter);
-      data.opSetFlag(op,PcodeOp::startbasic);
+      data.opMarkStartBasic(op);
     }
     else
       unprocessed.push_back(*iter);
@@ -868,7 +868,8 @@ void FlowInfo::fillinBranchStubs(void)
   dedupUnprocessed();
   for(iter=unprocessed.begin();iter!=unprocessed.end();++iter) {
     PcodeOp *op = artificialHalt(*iter,PcodeOp::missing);
-    data.opSetFlag(op,PcodeOp::startmark|PcodeOp::startbasic);
+    data.opMarkStartBasic(op);
+    data.opMarkStartInstruction(op);
   }
 }
 
@@ -1125,7 +1126,7 @@ bool FlowInfo::testHardInlineRestrictions(Funcdata *inlinefd,PcodeOp *op,Address
       return false;
     }
     // If the inlining "jumps back" this starts a new basic block
-    data.opSetFlag(nextop,PcodeOp::startbasic);
+    data.opMarkStartBasic(nextop);
   }
 
   inline_recursion->insert(inlinefd->getAddress());
@@ -1173,7 +1174,7 @@ void FlowInfo::doInjection(InjectPayload *payload,InjectContext &icontext,PcodeO
     iter = op->getInsertIter();
     ++iter;			// Mark next op after the call
     if (iter != obank.endDead())
-      data.opSetFlag(*iter,PcodeOp::startbasic); // as start of basic block
+      data.opMarkStartBasic(*iter); // as start of basic block
   }
 
   obank.moveSequenceDead(firstop,lastop,op); // Move the injection to right after the call
@@ -1356,12 +1357,12 @@ void FlowInfo::checkContainedCall(void)
       data.opSetOpcode(op,CPUI_BRANCH);
       // Make sure target of new goto starts a basic block
       PcodeOp *targ = target(addr);
-      data.opSetFlag(targ,PcodeOp::startbasic);
+      data.opMarkStartBasic(targ);
       // Make sure the following op starts a basic block
       list<PcodeOp *>::const_iterator oiter = op->getInsertIter();
       ++oiter;
       if (oiter != obank.endDead())
-	data.opSetFlag(*oiter,PcodeOp::startbasic);
+	data.opMarkStartBasic(*oiter);
       // Restore original address
       data.opSetInput(op,data.newCodeRef(addr),0);
       iter = qlst.erase(iter);	// Delete the call

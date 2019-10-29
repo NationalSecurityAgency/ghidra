@@ -19,6 +19,8 @@ import java.awt.Color;
 import java.awt.geom.Point2D;
 import java.util.*;
 
+import com.google.common.base.Function;
+
 import edu.uci.ics.jung.algorithms.layout.Layout;
 import edu.uci.ics.jung.graph.Graph;
 import edu.uci.ics.jung.visualization.*;
@@ -32,6 +34,9 @@ import ghidra.graph.viewer.layout.*;
  * This was created to add the ability to paint selected vertices above other vertices.  We need
  * this since the Jung Graph has no notion of Z-order and thus does not let us specify that any
  * particular vertex should be above another one.
+ * 
+ * @param <V> the vertex type
+ * @param <E> the edge type 
  */
 public class VisualGraphRenderer<V extends VisualVertex, E extends VisualEdge<V>>
 		extends edu.uci.ics.jung.visualization.renderers.BasicRenderer<V, E> {
@@ -83,7 +88,6 @@ public class VisualGraphRenderer<V extends VisualVertex, E extends VisualEdge<V>
 		// paint all the edges
 		// DEBUG code to show the edges *over* the vertices
 //		for (E e : layout.getGraph().getEdges()) {
-//
 //			renderEdge(renderContext, layout, e);
 //			renderEdgeLabel(renderContext, layout, e);
 //		}
@@ -109,15 +113,18 @@ public class VisualGraphRenderer<V extends VisualVertex, E extends VisualEdge<V>
 			return;
 		}
 
-		String label = rc.getEdgeLabelTransformer().apply(e);
+		Function<? super E, String> xform = rc.getEdgeLabelTransformer();
+		String label = xform.apply(e);
 		if (label == null) {
 			return;
 		}
-		super.renderEdgeLabel(rc, layout, e);
+
+		edgeLabelRenderer.labelEdge(rc, layout, e, xform.apply(e));
 	}
 
 	private void paintLayoutGridCells(RenderContext<V, E> renderContext, Layout<V, E> layout) {
 
+		// to enable this debug, search java files for commented-out uses of 'DEBUG_ROW_COL_MAP'
 		Graph<V, E> graph = layout.getGraph();
 		LayoutLocationMap<?, ?> locationMap = DEBUG_ROW_COL_MAP.get(graph);
 		if (locationMap == null) {

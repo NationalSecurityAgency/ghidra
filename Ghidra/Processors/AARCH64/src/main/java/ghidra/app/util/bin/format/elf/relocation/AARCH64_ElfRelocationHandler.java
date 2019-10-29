@@ -142,7 +142,9 @@ public class AARCH64_ElfRelocationHandler extends ElfRelocationHandler {
 				break;
 			}
 
+			// B:  ((S+A-P) >> 2) & 0x3ffffff.
 			// BL: ((S+A-P) >> 2) & 0x3ffffff
+			case AARCH64_ElfRelocationConstants.R_AARCH64_JUMP26:
 			case AARCH64_ElfRelocationConstants.R_AARCH64_CALL26: {
 				int oldValue = memory.getInt(relocationAddress, isBigEndianInstructions);
 				newValue = (symbolValue + addend);

@@ -15,6 +15,7 @@
  */
 package ghidra.app.plugin.core.datamgr;
 
+import java.awt.Component;
 import java.awt.Point;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -57,6 +58,8 @@ import resources.ResourceManager;
 import util.HistoryList;
 
 public class DataTypesProvider extends ComponentProviderAdapter {
+
+	private static final String DATA_TYPES_ICON = "images/dataTypes.png";
 	private static final String TITLE = "Data Type Manager";
 	private static final String POINTER_FILTER_STATE = "PointerFilterState";
 	private static final String ARRAY_FILTER_STATE = "ArrayFilterState";
@@ -95,8 +98,11 @@ public class DataTypesProvider extends ComponentProviderAdapter {
 
 	public DataTypesProvider(DataTypeManagerPlugin plugin, String providerName) {
 		super(plugin.getTool(), providerName, plugin.getName(), DataTypesActionContext.class);
-		setTitle(TITLE);
 		this.plugin = plugin;
+
+		setTitle(TITLE);
+		setIcon(ResourceManager.loadImage(DATA_TYPES_ICON));
+		addToToolbar();
 
 		navigationHistory.setAllowDuplicates(true);
 
@@ -104,11 +110,6 @@ public class DataTypesProvider extends ComponentProviderAdapter {
 		helpLocation = new HelpLocation(plugin.getName(), "Data_Type_Manager");
 		addToTool();
 		createLocalActions();
-	}
-
-	@Override
-	public ImageIcon getIcon() {
-		return ResourceManager.loadImage(DataTypeManagerPlugin.DATA_TYPES_ICON);
 	}
 
 	/**
@@ -333,7 +334,8 @@ public class DataTypesProvider extends ComponentProviderAdapter {
 
 			Object source = event.getSource();
 			if (source instanceof JTextField || source instanceof JTextPane) {
-				return new ActionContext(this, source, source);
+				Component component = (Component) source;
+				return new ActionContext(this, source, component);
 			}
 
 			Point point = event.getPoint();

@@ -24,9 +24,8 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
-import resources.ResourceManager;
-import docking.ToolTipManager;
 import ghidra.docking.util.DockingWindowsLookAndFeelUtils;
+import resources.ResourceManager;
 
 /**
  * Class that is a JButton that has an empty border and adds a mouse listener

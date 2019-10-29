@@ -17,22 +17,19 @@ package ghidra.util.task;
 
 import java.awt.Component;
 
-import javax.swing.SwingUtilities;
-
-import generic.util.WindowUtilities;
-import ghidra.util.*;
+import ghidra.util.Swing;
 
 /**
  * Class to initiate a Task in a new Thread, and to show a progress dialog that indicates
- * activity.  The progress dialog will show an animation in the event that the task of this class
- * cannot show progress.
+ * activity <b>if the task takes too long</b>.  The progress dialog will show an 
+ * animation in the event that the task of this class cannot show progress.
  *
  * <p>For complete control of how this class functions, use
  * {@link #TaskLauncher(Task, Component, int, int)}.  Alternatively, for simpler uses,
  * see one of the many static convenience methods.
- *
- * <a name="modal_usage"></a>
- * <p><a name="modal_usage"></a>Most clients of this class should not be concerned with where 
+ * 
+ * <p><b><a name="modal_usage">Modal Usage</a></b><br>
+ * Most clients of this class should not be concerned with where 
  * the dialog used by this class will appear.  By default, it will be shown over 
  * the active window, which is the desired
  * behavior for most uses.  If you should need a dialog to appear over a non-active window,
@@ -92,7 +89,7 @@ public class TaskLauncher {
 			public void run(TaskMonitor monitor) {
 				runnable.monitoredRun(monitor);
 			}
-		}, null, INITIAL_DELAY);
+		}, null, INITIAL_DELAY_MS);
 	}
 
 	/**
@@ -121,7 +118,7 @@ public class TaskLauncher {
 			public void run(TaskMonitor monitor) {
 				runnable.monitoredRun(monitor);
 			}
-		}, null, INITIAL_MODAL_DELAY);
+		}, null, INITIAL_MODAL_DELAY_MS);
 	}
 
 	/**
@@ -162,33 +159,13 @@ public class TaskLauncher {
 // End Static Launcher Methods
 //==================================================================================================
 
-	static final int INITIAL_DELAY = 1000;// 1 second
+	static final int INITIAL_DELAY_MS = 1000;
 
 	/** The time, for modal tasks, to try and run before blocking and showing a dialog */
-	public static final int INITIAL_MODAL_DELAY = 500;
-
-	protected Task task;
-	private TaskDialog taskDialog;
-	private Thread taskThread;
-	private CancelledListener monitorChangeListener = () -> {
-		if (task.isInterruptible()) {
-			taskThread.interrupt();
-		}
-		if (task.isForgettable()) {
-			taskDialog.close(); // close the dialog and forget about the task
-		}
-	};
-
-	private static Component getParent(Component parent) {
-		if (parent == null) {
-			return null;
-		}
-
-		return (parent.isVisible() ? parent : null);
-	}
+	static final int INITIAL_MODAL_DELAY_MS = 500;
 
 	/**
-	 * Constructor for TaskLauncher.
+	 * Constructor for TaskLauncher
 	 *
 	 * <p>This constructor assumes that if a progress dialog is needed, then it should appear
 	 * over the active window.  If you should need a dialog to appear over a non-active window,
@@ -199,11 +176,11 @@ public class TaskLauncher {
 	 *
 	 */
 	public TaskLauncher(Task task) {
-		this(task, null, task.isModal() ? INITIAL_MODAL_DELAY : INITIAL_DELAY);
+		this(task, null, task.isModal() ? INITIAL_MODAL_DELAY_MS : INITIAL_DELAY_MS);
 	}
 
 	/**
-	 * Constructor for TaskLauncher.
+	 * Constructor for TaskLauncher
 	 *
 	 * <p>See <a href="#modal_usage">notes on modal usage</a>
 	 *
@@ -211,129 +188,67 @@ public class TaskLauncher {
 	 * @param parent component whose window to use to parent the dialog.
 	 */
 	public TaskLauncher(Task task, Component parent) {
-		this(task, getParent(parent), task.isModal() ? INITIAL_MODAL_DELAY : INITIAL_DELAY);
+		this(task, getParent(parent), task.isModal() ? INITIAL_MODAL_DELAY_MS : INITIAL_DELAY_MS);
 	}
 
 	/**
-	 * Construct a new TaskLauncher.
+	 * Construct a new TaskLauncher
 	 *
 	 * <p>See <a href="#modal_usage">notes on modal usage</a>
 	 *
 	 * @param task task to run in another thread (other than the Swing Thread)
 	 * @param parent component whose window to use to parent the dialog; null centers the task
 	 *        dialog over the current window
-	 * @param delay number of milliseconds to delay until the task monitor is displayed
+	 * @param delayMs number of milliseconds to delay until the task monitor is displayed
 	 */
-	public TaskLauncher(Task task, Component parent, int delay) {
-		this(task, parent, delay, TaskDialog.DEFAULT_WIDTH);
+	public TaskLauncher(Task task, Component parent, int delayMs) {
+		this(task, parent, delayMs, TaskDialog.DEFAULT_WIDTH);
 	}
 
 	/**
-	 * Construct a new TaskLauncher.
+	 * Construct a new TaskLauncher
 	 *
 	 * <p>See <a href="#modal_usage">notes on modal usage</a>
 	 *
 	 * @param task task to run in another thread (other than the Swing Thread)
 	 * @param parent component whose window to use to parent the dialog; null centers the task
 	 *        dialog over the current window
-	 * @param delay number of milliseconds to delay until the task monitor is displayed
+	 * @param delayMs number of milliseconds to delay until the task monitor is displayed
 	 * @param dialogWidth The preferred width of the dialog (this allows clients to make a wider
 	 *        dialog, which better shows long messages).
 	 */
-	public TaskLauncher(Task task, Component parent, int delay, int dialogWidth) {
+	public TaskLauncher(Task task, Component parent, int delayMs, int dialogWidth) {
 
-		this.task = task;
-		this.taskDialog = buildTaskDialog(parent, dialogWidth);
-
-		startBackgroundThread(taskDialog);
-
-		taskDialog.show(Math.max(delay, 0));
-
-		waitForModalIfNotSwing();
+		TaskRunner runner = createTaskRunner(task, parent, delayMs, dialogWidth);
+		runner.run();
 	}
 
-	private void waitForModalIfNotSwing() {
-		if (SwingUtilities.isEventDispatchThread() || !task.isModal()) {
-			return;
-		}
-
-		try {
-			taskThread.join();
-		}
-		catch (InterruptedException e) {
-			Msg.debug(this, "Task Launcher unexpectedly interrupted waiting for task thread", e);
-		}
+	// template method to allow task runner change; used by tests
+	protected TaskRunner createTaskRunner(Task task, Component parent, int delayMs,
+			int dialogWidth) {
+		return new TaskRunner(task, parent, delayMs, dialogWidth);
 	}
 
 	/**
-	 * Constructor where an external taskMonitor is used.  Normally, this class will provide
-	 * the {@link TaskDialog} as the monitor.  This constructor is useful when you want to run
-	 * the task and use a monitor that is embedded in some other component.
-	 *
-	 * <p>See <a href="#modal_usage">notes on modal usage</a>
-	 *
-	 * @param task task to run in another thread (other than the Swing Thread)
-	 * @param taskMonitor the monitor to use while running the task.
+	 * Runs the given task in the current thread, which <b>cannot be the Swing thread</b>
+	 * 
+	 * @param task the task to run
+	 * @throws IllegalStateException if the given thread is the Swing thread
 	 */
-	public TaskLauncher(Task task, TaskMonitor taskMonitor) {
-
-		this.task = task;
-
-		startBackgroundThread(taskMonitor);
-
-	}
-
-	private TaskDialog buildTaskDialog(Component comp, int dialogWidth) {
-
-		//
-		// This class may be used by background threads.  Make sure that our GUI creation is
-		// on the Swing thread to prevent exceptions while painting (as seen when using the
-		// Nimbus Look and Feel).
-		//
-
-		SystemUtilities.runSwingNow(() -> {
-			taskDialog = createTaskDialog(comp);
-			taskDialog.setMinimumSize(dialogWidth, 0);
-		});
-
-		if (task.isInterruptible() || task.isForgettable()) {
-			taskDialog.addCancelledListener(monitorChangeListener);
+	protected void runInThisBackgroundThread(Task task) {
+		if (Swing.isSwingThread()) {
+			throw new IllegalStateException("Must not call this method from the Swing thread");
 		}
 
-		taskDialog.setStatusJustification(task.getStatusTextAlignment());
-
-		return taskDialog;
+		task.monitoredRun(TaskMonitor.DUMMY);
 	}
 
-	private void startBackgroundThread(TaskMonitor monitor) {
-
-		// add the task here, so we can track it before it is actually started by the thread
-		TaskUtilities.addTrackedTask(task, monitor);
-
-		String name = "Task - " + task.getTaskTitle();
-		taskThread = new Thread(() -> {
-			task.monitoredRun(monitor);
-			taskProcessed();
-		}, name);
-		taskThread.setPriority(Thread.MIN_PRIORITY);
-		taskThread.start();
-	}
-
-	private void taskProcessed() {
-		if (taskDialog != null) {
-			taskDialog.taskProcessed();
-		}
-	}
-
-	protected TaskDialog createTaskDialog(Component comp) {
-		Component parent = comp;
-		if (parent != null) {
-			parent = WindowUtilities.windowForComponent(comp);
-		}
-
+	private static Component getParent(Component parent) {
 		if (parent == null) {
-			return new TaskDialog(task);
+			return null;
 		}
-		return new TaskDialog(comp, task);
+
+		return (parent.isVisible() ? parent : null);
 	}
+
 }

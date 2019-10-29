@@ -15,8 +15,10 @@
  */
 package ghidra.graph;
 
-import static org.hamcrest.CoreMatchers.*;
-import static org.hamcrest.Matchers.isOneOf;
+import static org.hamcrest.CoreMatchers.hasItem;
+import static org.hamcrest.CoreMatchers.hasItems;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.*;
 
 import java.util.*;
@@ -26,7 +28,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import ghidra.graph.algo.*;
-import ghidra.util.datastruct.Accumulator;
+import ghidra.util.Msg;
 import ghidra.util.datastruct.ListAccumulator;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.TimeoutException;
@@ -1105,23 +1107,6 @@ public class GraphAlgorithmsTest extends AbstractGraphAlgorithmsTest {
 			Arrays.asList(v1, v2, v4, v5, v6, v3));
 	}
 
-	@SafeVarargs
-	private final <V> void assertListEqualsOneOf(List<V> actual, List<V>... expected) {
-
-		StringBuilder buffy = new StringBuilder();
-		for (List<V> list : expected) {
-			if (areListsEquals(actual, list)) {
-				return;
-			}
-			buffy.append(list.toString());
-		}
-		fail("Expected : " + buffy + "\nActual: " + actual);
-	}
-
-	private <V> boolean areListsEquals(List<V> l1, List<V> l2) {
-		return l1.equals(l2);
-	}
-
 	@Test
 	public void testDepthFirstPostOrder_MiddleAlternatingPaths() {
 		/*
@@ -1362,19 +1347,355 @@ public class GraphAlgorithmsTest extends AbstractGraphAlgorithmsTest {
 	}
 
 	@Test
-	public void testFindPaths_LimitRecursion() throws CancelledException {
+	public void testFindPaths_FullyConnected() throws CancelledException {
 
-		g = GraphFactory.createDirectedGraph();
-		TestV[] vertices =
-			generateSimplyConnectedGraph(FindPathsAlgorithm.JAVA_STACK_DEPTH_LIMIT + 100);
+		TestV v1 = vertex(1);
+		TestV v2 = vertex(2);
+		TestV v3 = vertex(3);
 
-		TestV v1 = vertices[0];
-		TestV v2 = vertices[vertices.length - 1];
+		edge(v1, v2);
+		edge(v1, v3);
 
-		Accumulator<List<TestV>> accumulator = new ListAccumulator<>();
+		edge(v2, v3);
+		edge(v2, v1);
+
+		edge(v3, v2);
+		edge(v3, v1);
+
+		ListAccumulator<List<TestV>> accumulator = new ListAccumulator<>();
 		GraphAlgorithms.findPaths(g, v1, v2, accumulator, TaskMonitor.DUMMY);
-		assertTrue("The Find Paths algorithm should have failed, due to hitting the recursion " +
-			"limite, before finding a path", accumulator.isEmpty());
+
+		List<List<TestV>> paths = accumulator.asList();
+		assertPathExists(paths, v1, v2);
+		assertPathExists(paths, v1, v3, v2);
+	}
+
+	@Test
+	public void testFindPaths_FullyConnected2() throws CancelledException {
+
+		TestV v1 = vertex(1);
+		TestV v2 = vertex(2);
+		TestV v3 = vertex(3);
+		TestV v4 = vertex(4);
+		TestV v5 = vertex(5);
+
+		edge(v1, v2);
+		edge(v1, v3);
+		edge(v1, v4);
+		edge(v1, v5);
+
+		edge(v2, v1);
+		edge(v2, v3);
+		edge(v2, v4);
+		edge(v2, v5);
+
+		edge(v3, v1);
+		edge(v3, v2);
+		edge(v3, v4);
+		edge(v3, v5);
+
+		edge(v4, v1);
+		edge(v4, v2);
+		edge(v4, v3);
+		edge(v4, v5);
+
+		edge(v5, v1);
+		edge(v5, v2);
+		edge(v5, v3);
+		edge(v5, v4);
+
+		ListAccumulator<List<TestV>> accumulator = new ListAccumulator<>();
+		GraphAlgorithms.findPaths(g, v1, v5, accumulator, TaskMonitor.DUMMY);
+
+		List<List<TestV>> paths = accumulator.asList();
+		assertEquals(16, paths.size());
+		assertPathExists(paths, v1, v5);
+
+		assertPathExists(paths, v1, v2, v5);
+		assertPathExists(paths, v1, v3, v5);
+		assertPathExists(paths, v1, v4, v5);
+
+		assertPathExists(paths, v1, v2, v3, v5);
+		assertPathExists(paths, v1, v2, v4, v5);
+		assertPathExists(paths, v1, v3, v2, v5);
+		assertPathExists(paths, v1, v3, v4, v5);
+		assertPathExists(paths, v1, v4, v2, v5);
+		assertPathExists(paths, v1, v4, v3, v5);
+
+		assertPathExists(paths, v1, v2, v3, v4, v5);
+		assertPathExists(paths, v1, v2, v4, v3, v5);
+		assertPathExists(paths, v1, v3, v2, v4, v5);
+		assertPathExists(paths, v1, v3, v4, v2, v5);
+		assertPathExists(paths, v1, v4, v2, v3, v5);
+		assertPathExists(paths, v1, v4, v3, v2, v5);
+	}
+
+	@Test
+	public void testFindPaths_MultiPaths() throws CancelledException {
+
+		/*
+		 		v1		 		
+		 	   /  \
+		 	 v2    v3
+			  |   / | \
+			  |  v4 v5 v6
+			  |   * |  |
+			  |     |  v7
+			  |     |  | \
+			  |     |  v8 v9
+			  |     |   * |
+			   \    |    /    
+			     \  |  /
+			       \|/
+			        v10	
+			        
+			        
+			 Paths:
+			 	v1, v2, v10
+			 	v1, v3, v5, v10
+			 	v1, v3, v6, v7, v9, v10
+		 */
+
+		TestV v1 = vertex(1);
+		TestV v2 = vertex(2);
+		TestV v3 = vertex(3);
+		TestV v4 = vertex(4);
+		TestV v5 = vertex(5);
+		TestV v6 = vertex(6);
+		TestV v7 = vertex(7);
+		TestV v8 = vertex(8);
+		TestV v9 = vertex(9);
+		TestV v10 = vertex(10);
+
+		edge(v1, v2);
+		edge(v1, v3);
+
+		edge(v2, v10);
+
+		edge(v3, v4);
+		edge(v3, v5);
+		edge(v3, v6);
+
+		edge(v5, v10);
+
+		edge(v6, v7);
+		edge(v7, v8);
+		edge(v7, v9);
+
+		edge(v9, v10);
+
+		ListAccumulator<List<TestV>> accumulator = new ListAccumulator<>();
+		GraphAlgorithms.findPaths(g, v1, v10, accumulator, TaskMonitor.DUMMY);
+
+		List<List<TestV>> paths = accumulator.asList();
+		assertEquals(3, paths.size());
+		assertPathExists(paths, v1, v2, v10);
+		assertPathExists(paths, v1, v3, v5, v10);
+		assertPathExists(paths, v1, v3, v6, v7, v9, v10);
+
+		accumulator = new ListAccumulator<>();
+		GraphAlgorithms.findPaths(g, v1, v10, accumulator, TaskMonitor.DUMMY);
+
+	}
+
+	@Test
+	public void testFindPathsNew_MultiPaths_BackFlows() throws CancelledException {
+
+		/*
+		   --> v1		 		
+		   |  /  \
+		   -v2    v3
+			    /  | \
+			   v4  v5 v6 <--
+			    *  |  |     |
+			       |  v7    |
+			       |  | \   |
+			       |  v8 v9 -
+			       |   * 
+			       |
+			      v10	
+			    
+			    
+			Paths: v1, v3, v5, v10
+		*/
+
+		TestV v1 = vertex(1);
+		TestV v2 = vertex(2);
+		TestV v3 = vertex(3);
+		TestV v4 = vertex(4);
+		TestV v5 = vertex(5);
+		TestV v6 = vertex(6);
+		TestV v7 = vertex(7);
+		TestV v8 = vertex(8);
+		TestV v9 = vertex(9);
+		TestV v10 = vertex(10);
+
+		edge(v1, v2);
+		edge(v1, v3);
+
+		edge(v2, v1); // back edge
+
+		edge(v3, v4);
+		edge(v3, v5);
+		edge(v3, v6);
+
+		edge(v5, v10);
+
+		edge(v6, v7);
+
+		edge(v7, v8);
+		edge(v7, v9);
+
+		edge(v9, v6); // back edge
+
+		ListAccumulator<List<TestV>> accumulator = new ListAccumulator<>();
+
+		GraphAlgorithms.findPaths(g, v1, v10, accumulator, TaskMonitor.DUMMY);
+
+		List<List<TestV>> paths = accumulator.asList();
+		assertEquals(1, paths.size());
+		assertPathExists(paths, v1, v3, v5, v10);
+	}
+
+	@Test
+	public void testFindPathsNew_MultiPaths_LongDeadEnd() throws CancelledException {
+
+		/*
+			   v1		 		
+			  /  \
+			v2    v3
+			|   /  | \
+			|  v4  v5 v6
+			|   |  |  |
+			|  v11 |  v7
+			|   |  |  | \
+			|  v12 |  v8 v9
+			|   *  |   * |
+			 \     |    /    
+			   \   |  /
+			     \ |/
+			      v10	
+			    
+			    
+			Paths:
+			v1, v2, v10
+			v1, v3, v5, v10
+			v1, v3, v6, v7, v9, v10
+		*/
+
+		TestV v1 = vertex(1);
+		TestV v2 = vertex(2);
+		TestV v3 = vertex(3);
+		TestV v4 = vertex(4);
+		TestV v5 = vertex(5);
+		TestV v6 = vertex(6);
+		TestV v7 = vertex(7);
+		TestV v8 = vertex(8);
+		TestV v9 = vertex(9);
+		TestV v10 = vertex(10);
+		TestV v11 = vertex(11);
+		TestV v12 = vertex(12);
+
+		edge(v1, v2);
+		edge(v1, v3);
+
+		edge(v2, v10);
+
+		edge(v3, v4);
+		edge(v3, v5);
+		edge(v3, v6);
+
+		edge(v4, v11);
+
+		edge(v11, v12);
+
+		edge(v5, v10);
+
+		edge(v6, v7);
+		edge(v7, v8);
+		edge(v7, v9);
+
+		edge(v9, v10);
+
+		ListAccumulator<List<TestV>> accumulator = new ListAccumulator<>();
+
+		GraphAlgorithms.findPaths(g, v1, v10, accumulator, TaskMonitor.DUMMY);
+
+		List<List<TestV>> paths = accumulator.asList();
+		assertEquals(3, paths.size());
+		assertPathExists(paths, v1, v2, v10);
+		assertPathExists(paths, v1, v3, v5, v10);
+		assertPathExists(paths, v1, v3, v6, v7, v9, v10);
+	}
+
+	@Test
+	public void testFindPathsNew_MultiPaths() throws CancelledException {
+
+		/*
+		 		v1		 		
+		 	   /  \
+		 	 v2    v3
+			  |   / | \
+			  |  v4 v5 v6
+			  |   * |  |
+			  |     |  v7
+			  |     |  | \
+			  |     |  v8 v9
+			  |     |   * |
+			   \    |    /    
+			     \  |  /
+			       \|/
+			        v10	
+			        
+			        
+			 Paths:
+			 	v1, v2, v10
+			 	v1, v3, v5, v10
+			 	v1, v3, v6, v7, v9, v10
+		 */
+
+		TestV v1 = vertex(1);
+		TestV v2 = vertex(2);
+		TestV v3 = vertex(3);
+		TestV v4 = vertex(4);
+		TestV v5 = vertex(5);
+		TestV v6 = vertex(6);
+		TestV v7 = vertex(7);
+		TestV v8 = vertex(8);
+		TestV v9 = vertex(9);
+		TestV v10 = vertex(10);
+
+		edge(v1, v2);
+		edge(v1, v3);
+
+		edge(v2, v10);
+
+		edge(v3, v4);
+		edge(v3, v5);
+		edge(v3, v6);
+
+		edge(v5, v10);
+
+		edge(v6, v7);
+		edge(v7, v8);
+		edge(v7, v9);
+
+		edge(v9, v10);
+
+		ListAccumulator<List<TestV>> accumulator = new ListAccumulator<>();
+
+		GraphAlgorithms.findPaths(g, v1, v10, accumulator, TaskMonitor.DUMMY);
+
+		List<List<TestV>> paths = accumulator.asList();
+		assertEquals(3, paths.size());
+		assertPathExists(paths, v1, v2, v10);
+		assertPathExists(paths, v1, v3, v5, v10);
+		assertPathExists(paths, v1, v3, v6, v7, v9, v10);
+
+		accumulator = new ListAccumulator<>();
+		GraphAlgorithms.findPaths(g, v4, v10, accumulator, TaskMonitor.DUMMY);
+		paths = accumulator.asList();
+		assertTrue(paths.isEmpty());
 	}
 
 	@Test
@@ -1383,7 +1704,7 @@ public class GraphAlgorithmsTest extends AbstractGraphAlgorithmsTest {
 		startMemoryMonitorThread(false);
 
 		g = GraphFactory.createDirectedGraph();
-		TestV[] vertices = generateCompletelyConnectedGraph(30); // this takes a while
+		TestV[] vertices = generateCompletelyConnectedGraph(15);
 
 		int timeout = 250;
 		TimeoutTaskMonitor monitor = TimeoutTaskMonitor.timeoutIn(timeout, TimeUnit.MILLISECONDS);
@@ -1391,7 +1712,10 @@ public class GraphAlgorithmsTest extends AbstractGraphAlgorithmsTest {
 		TestV start = vertices[0];
 		TestV end = vertices[vertices.length - 1];
 		try {
-			GraphAlgorithms.findPaths(g, start, end, new ListAccumulator<>(), monitor);
+			ListAccumulator<List<TestV>> accumulator = new ListAccumulator<>();
+			GraphAlgorithms.findPaths(g, start, end, accumulator, monitor);
+
+			Msg.debug(this, "Found paths " + accumulator.size());
 			fail("Did not timeout in " + timeout + " ms");
 		}
 		catch (TimeoutException e) {

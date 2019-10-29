@@ -21,7 +21,6 @@ import java.util.List;
 
 import ghidra.app.util.Option;
 import ghidra.app.util.bin.ByteProvider;
-import ghidra.app.util.importer.MemoryConflictHandler;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.framework.model.DomainFolder;
 import ghidra.framework.model.DomainObject;
@@ -97,14 +96,13 @@ public interface Loader extends ExtensionPoint, Comparable<Loader> {
 	 * @param messageLog The message log.
 	 * @param program The {@link Program} to load into.
 	 * @param monitor A cancelable task monitor.
-	 * @param memoryConflictHandler How to handle memory conflicts that occur during the load.
 	 * @return True if the file was successfully loaded; otherwise, false.
 	 * @throws IOException if there was an IO-related problem loading.
 	 * @throws CancelledException if the user cancelled the load.
 	 */
 	public boolean loadInto(ByteProvider provider, LoadSpec loadSpec, List<Option> options,
-			MessageLog messageLog, Program program, TaskMonitor monitor,
-			MemoryConflictHandler memoryConflictHandler) throws IOException, CancelledException;
+			MessageLog messageLog, Program program, TaskMonitor monitor)
+			throws IOException, CancelledException;
 
 	/**
 	 * Gets the default {@link Loader} options.
@@ -126,10 +124,13 @@ public interface Loader extends ExtensionPoint, Comparable<Loader> {
 	 * @param provider The bytes of the thing being loaded.
 	 * @param loadSpec The proposed {@link LoadSpec}.
 	 * @param options The list of {@link Option}s to validate.
+	 * @param program existing program if the loader is adding to an existing program. If it is
+	 * a fresh import, then this will be null. 
 	 * @return null if all {@link Option}s are valid; otherwise, an error message describing the 
 	 *   problem is returned.
 	 */
-	public String validateOptions(ByteProvider provider, LoadSpec loadSpec, List<Option> options);
+	public String validateOptions(ByteProvider provider, LoadSpec loadSpec, List<Option> options,
+			Program program);
 
 	/**
 	 * Gets the {@link Loader}'s name, which is used both for display purposes, and to identify the 

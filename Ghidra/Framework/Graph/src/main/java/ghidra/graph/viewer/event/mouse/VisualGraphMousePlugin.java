@@ -108,4 +108,11 @@ public interface VisualGraphMousePlugin<V extends VisualVertex, E extends Visual
 		VisualGraphViewUpdater<V, E> updater = viewer.getViewUpdater();
 		return updater;
 	}
+
+	/**
+	 * Signals to perform any cleanup when this plugin is going away
+	 */
+	public default void dispose() {
+		// stub
+	}
 }

@@ -1,9 +1,11 @@
+apply from: "$rootProject.projectDir/gradle/distributableGhidraModule.gradle"
+apply from: "$rootProject.projectDir/gradle/javaProject.gradle"
+apply from: "$rootProject.projectDir/gradle/helpProject.gradle"
+apply from: "$rootProject.projectDir/gradle/jacocoProject.gradle"
+apply from: "$rootProject.projectDir/gradle/javaTestProject.gradle"
 apply plugin: 'eclipse'
 eclipse.project.name = 'Features Base'
 
-apply from: "$rootProject.projectDir/gradleScripts/buildHelp.gradle"
-apply from: "$rootProject.projectDir/gradleScripts/ghidraScripts.gradle"
-apply from: "$rootProject.projectDir/gradleScripts/developerScripts.gradle"
 
 /*
 	This build file is a bit different than most project build files, as it initializes
@@ -28,10 +30,10 @@ dependencies {
    	compileOnly "junit:junit:4.12"
 	
 	// These have abstract test classes and stubs needed by this module	
-	testCompile project(':Docking').sourceSets.test.output
-	testCompile project(':Generic').sourceSets.test.output
-	testCompile project(':Project').sourceSets.test.output
-	testCompile project(':SoftwareModeling').sourceSets.test.output
+	testCompile project(path: ':Docking', configuration: 'testArtifacts')
+	testCompile project(path: ':Generic', configuration: 'testArtifacts')
+	testCompile project(path: ':Project', configuration: 'testArtifacts')
+	testCompile project(path: ':SoftwareModeling', configuration: 'testArtifacts')
 	
 	javacc 'net.java.dev.javacc:javacc:5.0'
 }
@@ -147,7 +149,7 @@ def createTipsHelpFile(input, output) {
 	Dependency Setup
 */
 compileJava.dependsOn buildJavacc
-prepDev.dependsOn buildJavacc
+rootProject.prepDev.dependsOn buildJavacc
 
 // 'indexHelp' is defined in the buildHelp.gradle 'script plugin'
 indexHelp.dependsOn generateExtraHelpFiles

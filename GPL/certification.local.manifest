@@ -1,5 +1,5 @@
 ##VERSION: 2.0
 ##MODULE IP: Public Domain
-build.gradle||Public Domain||||END|
+gpl.gradle||Public Domain||||END|
 nativeBuildProperties.gradle||Public Domain||||END|
-settings.gradle||Public Domain||||END|
+vsconfig.gradle||GHIDRA||||END|

@@ -386,7 +386,7 @@ public class EntryPointAnalyzer extends AbstractAnalyzer {
 	private void addCodeSymbolsToSet(Program program, AddressSetView addressSet,
 			TaskMonitor monitor, Set<Address> set) throws CancelledException {
 		SymbolTable symbolTable = program.getSymbolTable();
-		SymbolIterator symbolIter = symbolTable.getSymbols(addressSet, SymbolType.CODE, true);
+		SymbolIterator symbolIter = symbolTable.getSymbols(addressSet, SymbolType.LABEL, true);
 
 		while (symbolIter.hasNext()) {
 			monitor.checkCanceled();

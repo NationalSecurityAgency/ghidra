@@ -23,12 +23,13 @@ import java.io.IOException;
 import java.util.*;
 import java.util.Map.Entry;
 
-import javax.swing.ImageIcon;
 import javax.swing.SwingUtilities;
 import javax.swing.tree.TreePath;
 
 import docking.ActionContext;
+import docking.DockingTool;
 import docking.action.*;
+import docking.actions.PopupActionProvider;
 import docking.widgets.tree.GTreeNode;
 import generic.jar.ResourceFile;
 import generic.util.Path;
@@ -48,7 +49,8 @@ import ghidra.framework.Application;
 import ghidra.framework.main.OpenVersionedFileDialog;
 import ghidra.framework.model.*;
 import ghidra.framework.options.SaveState;
-import ghidra.framework.plugintool.*;
+import ghidra.framework.plugintool.PluginInfo;
+import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.program.database.DataTypeArchiveContentHandler;
 import ghidra.program.database.data.ProgramDataTypeManager;
@@ -60,7 +62,6 @@ import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
 import ghidra.util.datastruct.LRUMap;
 import ghidra.util.task.TaskLauncher;
-import resources.ResourceManager;
 
 /**
  * Plugin to pop up the dialog to manage data types in the program
@@ -80,16 +81,14 @@ import resources.ResourceManager;
 )
 //@formatter:on
 public class DataTypeManagerPlugin extends ProgramPlugin
-		implements DomainObjectListener, DataTypeManagerService, PopupListener {
+		implements DomainObjectListener, DataTypeManagerService, PopupActionProvider {
 
-	final static String DATA_TYPES_ICON = "images/dataTypes.png";
 	private static final String SEACH_PROVIDER_NAME = "Search DataTypes Provider";
 	private static final int RECENTLY_USED_CACHE_SIZE = 10;
 
 	private static final String STANDARD_ARCHIVE_MENU = "Standard Archive";
 	private static final String RECENTLY_OPENED_MENU = "Recently Opened Archive";
 
-	private DockingAction manageDataAction;
 	private DataTypeManagerHandler dataTypeManagerHandler;
 	private DataTypesProvider provider;
 	private OpenVersionedFileDialog openDialog;
@@ -106,7 +105,7 @@ public class DataTypeManagerPlugin extends ProgramPlugin
 
 	@Override
 	protected void init() {
-		recentlyOpenedArchiveMap = new LRUMap<String, DockingAction>(RECENTLY_USED_CACHE_SIZE) {
+		recentlyOpenedArchiveMap = new LRUMap<>(RECENTLY_USED_CACHE_SIZE) {
 			@Override
 			protected void eldestEntryRemoved(Entry<String, DockingAction> eldest) {
 				DockingAction action = eldest.getValue();
@@ -126,12 +125,10 @@ public class DataTypeManagerPlugin extends ProgramPlugin
 			@Override
 			public void archiveClosed(Archive archive) {
 				if (archive instanceof ProjectArchive) {
+					// Program is handled by deactivation event
 					((ProjectArchive) archive).getDomainObject().removeListener(
 						DataTypeManagerPlugin.this);
 				}
-				// Program is handled by deactivation.
-
-				// Otherwise, don't care.
 			}
 
 			@Override
@@ -164,7 +161,7 @@ public class DataTypeManagerPlugin extends ProgramPlugin
 		if (codeViewerService != null) {
 			codeViewerService.addProgramDropProvider(new DataDropOnBrowserHandler(this));
 		}
-		tool.addPopupListener(this);
+		tool.addPopupActionProvider(this);
 		tool.setMenuGroup(new String[] { SyncRefreshAction.MENU_NAME }, "SYNC");
 		tool.setMenuGroup(new String[] { UpdateAction.MENU_NAME }, "SYNC");
 		tool.setMenuGroup(new String[] { CommitAction.MENU_NAME }, "SYNC");
@@ -269,7 +266,7 @@ public class DataTypeManagerPlugin extends ProgramPlugin
 
 	@Override
 	public void dispose() {
-		tool.removePopupListener(this);
+		tool.removePopupActionProvider(this);
 		provider.dispose();
 		close();
 		dataTypeManagerHandler.dispose();
@@ -467,21 +464,6 @@ public class DataTypeManagerPlugin extends ProgramPlugin
 	 * Create the actions for the menu on the tool.
 	 */
 	private void createActions() {
-		// create action
-		manageDataAction = new DockingAction("Data Type Manager", getName()) {
-			@Override
-			public void actionPerformed(ActionContext context) {
-				tool.showComponentProvider(provider, true);
-			}
-		};
-		ImageIcon dtIcon = ResourceManager.loadImage(DATA_TYPES_ICON);
-		manageDataAction.setToolBarData(new ToolBarData(dtIcon, "View"));
-
-		manageDataAction.setDescription("Display Data Types");
-		manageDataAction.setHelpLocation(provider.getHelpLocation());
-
-		tool.addAction(manageDataAction);
-
 		createStandardArchivesMenu();
 	}
 
@@ -719,32 +701,8 @@ public class DataTypeManagerPlugin extends ProgramPlugin
 		return currentSelection;
 	}
 
-//	public DataOrganization promptToChangeDataOrganization(DataTypeManager dataTypeManagerToCheck)
-//			throws CancelledException {
-//		DataOrganization dataOrganization = promptUserForDataOrganization(dataTypeManagerToCheck);
-//		dataTypeManagerToCheck.setDataOrganization(dataOrganization);
-//		return dataOrganization;
-//	}
-
-//	public DataOrganization promptUserForDataOrganization(DataTypeManager dataTypeManagerToAlign)
-//			throws CancelledException {
-//		DataOrganization currentDataOrganization = dataTypeManagerToAlign.getDataOrganization();
-//		if (currentDataOrganization == null) {
-//			currentDataOrganization = DataOrganizationImpl.getDefaultOrganization();
-//		}
-//		DataOrganizationDialog dataOrgDialog =
-//			new DataOrganizationDialog(dataTypeManagerToAlign, currentDataOrganization);
-//		dataOrgDialog.setHelpLocation(new HelpLocation(this.getName(),
-//			"Align_Data_Types_In_Archive"));
-//		tool.showDialog(dataOrgDialog);
-//		if (dataOrgDialog.userCanceled()) {
-//			throw new CancelledException();
-//		}
-//		return dataOrgDialog.getDataOrganization();
-//	}
-
 	@Override
-	public List<DockingActionIf> getPopupActions(ActionContext context) {
+	public List<DockingActionIf> getPopupActions(DockingTool dockingTool, ActionContext context) {
 		if (!(context instanceof DataTypesActionContext)) {
 			return null;
 		}

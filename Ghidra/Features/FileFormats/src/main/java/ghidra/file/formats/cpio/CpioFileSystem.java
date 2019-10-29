@@ -48,32 +48,19 @@ public class CpioFileSystem extends GFileSystemBase {
 	public void open(TaskMonitor monitor) throws IOException, CryptoException, CancelledException {
 		monitor.setMessage("Opening CPIO...");
 
-		byte[] bytes = provider.readBytes(0, provider.length());
-		InputStream inputStream = new ByteArrayInputStream(bytes);
-
-		try (CpioArchiveInputStream cpioInputStream = new CpioArchiveInputStream(inputStream)) {
-			while (!monitor.isCancelled()) {
-				/* TODO is this check needed?
-				if ( cpioInputStream.available() == 0 ) {
-					break;
-				}
-				 */
-				try {
-					CpioArchiveEntry entry = cpioInputStream.getNextCPIOEntry();
-					if (entry == null) {
-						break;
-					}
-					readEntryContents(cpioInputStream, monitor);//ignore contents now, but it must be read from stream
-					storeEntry(entry, monitor);
-				}
-				catch (EOFException e) {
-					break;
-				}
-				catch (Exception e) {
-					FSUtilities.displayException(this, null, "Error While Opening CPIO",
-						e.getMessage(), e);
-				}
+		try (CpioArchiveInputStream cpioInputStream =
+			new CpioArchiveInputStream(provider.getInputStream(0))) {
+			CpioArchiveEntry entry;
+			while ((entry = cpioInputStream.getNextCPIOEntry()) != null) {
+				skipEntryContents(cpioInputStream, monitor);
+				storeEntry(entry, monitor);
 			}
+		}
+		catch (EOFException e) {
+			// silently ignore EOFExceptions
+		}
+		catch (Exception e) {
+			FSUtilities.displayException(this, null, "Error While Opening CPIO", e.getMessage(), e);
 		}
 	}
 
@@ -107,25 +94,36 @@ public class CpioFileSystem extends GFileSystemBase {
 	}
 
 	@Override
-	public String getInfo(GFile file, TaskMonitor monitor) throws IOException {
+	public String getInfo(GFile file, TaskMonitor monitor) {
 		CpioArchiveEntry entry = map.get(file);
-		StringBuffer buffer = new StringBuffer();
+		StringBuilder buffer = new StringBuilder();
 		try {
 			buffer.append("Name: " + entry.getName() + "\n");
-			buffer.append("Checksum: " + Long.toHexString(entry.getChksum()) + "\n");
 			buffer.append("Format: " + Long.toHexString(entry.getFormat()) + "\n");
 			buffer.append("GID: " + Long.toHexString(entry.getGID()) + "\n");
 			buffer.append("Inode: " + Long.toHexString(entry.getInode()) + "\n");
 			buffer.append("Last Modified: " + entry.getLastModifiedDate() + "\n");
 			buffer.append("Links: " + Long.toHexString(entry.getNumberOfLinks()) + "\n");
 			buffer.append("Mode: " + Long.toHexString(entry.getMode()) + "\n");
-			buffer.append("Remote Device: " + Long.toHexString(entry.getRemoteDevice()) + "\n");
 			buffer.append("Size: " + Long.toHexString(entry.getSize()) + "\n");
 			buffer.append("Time: " + new Date(entry.getTime()) + "\n");
 			buffer.append("UID: " + Long.toHexString(entry.getUID()) + "\n");
-			buffer.append("Device ID: " + Long.toHexString(entry.getDevice()) + "\n");
 		}
 		catch (Exception e) {
+			// ignore 
+		}
+		try {
+			buffer.append("Device ID: " + Long.toHexString(entry.getDevice()) + "\n");
+			buffer.append("Remote Device: " + Long.toHexString(entry.getRemoteDevice()) + "\n");
+		}
+		catch (Exception e) {
+			// ignore old format missing exception
+		}
+		try {
+			buffer.append("Checksum: " + Long.toHexString(entry.getChksum()) + "\n");
+		}
+		catch (Exception e) {
+			// ignore new format missing exception
 		}
 		return buffer.toString();
 	}
@@ -135,30 +133,24 @@ public class CpioFileSystem extends GFileSystemBase {
 			throws IOException, CancelledException, CryptoException {
 		CpioArchiveEntry fileEntry = map.get(file);
 		if (!fileEntry.isRegularFile()) {
-			throw new IOException(file.getName() + " is not a regular file.");
+			throw new IOException("CPIO entry " + file.getName() + " is not a regular file.");
 		}
-		byte[] bytes = provider.readBytes(0, provider.length());
-		InputStream inputStream = new ByteArrayInputStream(bytes);
-		CpioArchiveInputStream cpioInputStream = new CpioArchiveInputStream(inputStream);
-		try {
-			while (true) {
-				if (monitor.isCancelled()) {
-					break;
+		try (CpioArchiveInputStream cpioInputStream =
+			new CpioArchiveInputStream(provider.getInputStream(0));) {
+
+			CpioArchiveEntry entry;
+			while ((entry = cpioInputStream.getNextCPIOEntry()) != null) {
+				if (!entry.equals(fileEntry)) {
+					skipEntryContents(cpioInputStream, monitor);
 				}
-				CpioArchiveEntry entry = cpioInputStream.getNextCPIOEntry();
-				if (entry == null) {
-					break;
-				}
-				byte[] entryBytes = readEntryContents(cpioInputStream, monitor);
-				if (entry.equals(fileEntry)) {
+				else {
+					byte[] entryBytes = readEntryContents(cpioInputStream, monitor);
 					return new ByteArrayInputStream(entryBytes);
 				}
 			}
 		}
-		catch (IllegalArgumentException e) {//unknown MODES..
-		}
-		finally {
-			cpioInputStream.close();
+		catch (IllegalArgumentException e) {
+			//unknown MODES..
 		}
 		return null;
 	}
@@ -188,18 +180,33 @@ public class CpioFileSystem extends GFileSystemBase {
 	}
 
 	private byte[] readEntryContents(CpioArchiveInputStream cpioInputStream, TaskMonitor monitor)
-			throws IOException {
+			throws IOException, CancelledException {
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
+		byte[] buffer = new byte[64 * 1024];
 		while (true) {
 			if (monitor.isCancelled()) {
-				return null;
+				throw new CancelledException();
 			}
-			int b = cpioInputStream.read();
-			if (b == -1) {
+			int bytesRead = cpioInputStream.read(buffer);
+			if (bytesRead <= 0) {
 				break;
 			}
-			out.write(b);
+			out.write(buffer, 0, bytesRead);
 		}
 		return out.toByteArray();
+	}
+
+	private void skipEntryContents(CpioArchiveInputStream cpioInputStream, TaskMonitor monitor)
+			throws IOException, CancelledException {
+		byte[] buffer = new byte[64 * 1024];
+		while (true) {
+			if (monitor.isCancelled()) {
+				throw new CancelledException();
+			}
+			int bytesRead = cpioInputStream.read(buffer);
+			if (bytesRead <= 0) {
+				break;
+			}
+		}
 	}
 }

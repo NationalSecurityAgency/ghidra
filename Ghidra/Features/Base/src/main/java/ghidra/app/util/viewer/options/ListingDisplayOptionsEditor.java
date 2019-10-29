@@ -23,7 +23,6 @@ import javax.swing.JComponent;
 
 import ghidra.GhidraOptions;
 import ghidra.framework.options.*;
-import ghidra.framework.plugintool.Plugin;
 
 /**
  * Class for editing Listing display properties.
@@ -35,14 +34,11 @@ public class ListingDisplayOptionsEditor implements OptionsEditor {
 	private Options options;
 	private PropertyChangeListener propertyChangeListener;
 
-	private final Plugin ownerPlugin;
-
 	/**
 	 * Constructs a new ListingDisplayOptionsEditor.
 	 * @param options the options object to edit
 	 */
-	public ListingDisplayOptionsEditor(Plugin ownerPlugin, Options options) {
-		this.ownerPlugin = ownerPlugin;
+	public ListingDisplayOptionsEditor(Options options) {
 		this.options = options;
 		registerOptions();
 	}
@@ -56,17 +52,18 @@ public class ListingDisplayOptionsEditor implements OptionsEditor {
 	}
 
 	private void registerOptions() {
-		options.registerOption(GhidraOptions.OPTION_BASE_FONT, DEFAULT_FONT, null, null);
+		String prefix = "Sets the ";
+		options.registerOption(GhidraOptions.OPTION_BASE_FONT, DEFAULT_FONT, null,
+			prefix + GhidraOptions.OPTION_BASE_FONT);
 		for (ScreenElement element : OptionsGui.elements) {
-			options.registerOption(element.getColorOptionName(), element.getDefaultColor(), null,
-				null);
-			options.registerOption(element.getStyleOptionName(), -1, null, null);
+			String colorOptionName = element.getColorOptionName();
+			options.registerOption(colorOptionName, element.getDefaultColor(), null,
+				prefix + colorOptionName);
+			String styleOptionName = element.getStyleOptionName();
+			options.registerOption(styleOptionName, -1, null, prefix + styleOptionName);
 		}
 	}
 
-	/**
-	 * Apply the changes.
-	 */
 	@Override
 	public void apply() {
 		if (optionsGui != null) {
@@ -105,9 +102,6 @@ public class ListingDisplayOptionsEditor implements OptionsEditor {
 		// nothing to do, as this component is reloaded when options are changed
 	}
 
-	/**
-	 * @see ghidra.framework.options.OptionsEditor#setOptionsPropertyChangeListener(java.beans.PropertyChangeListener)
-	 */
 	@Override
 	public void setOptionsPropertyChangeListener(PropertyChangeListener listener) {
 		this.propertyChangeListener = listener;
@@ -120,14 +114,12 @@ public class ListingDisplayOptionsEditor implements OptionsEditor {
 	/**
 	 * Returns true if this component has "good" resizing behavior.  Components
 	 * that do not have this property will be placed in a scrolled pane.
+	 * @return true if resizable
 	 */
 	public boolean isResizable() {
 		return true;
 	}
 
-	/**
-	 * Get the editor component.
-	 */
 	@Override
 	public JComponent getEditorComponent(Options editableOptions,
 			EditorStateFactory editorStateFactory) {

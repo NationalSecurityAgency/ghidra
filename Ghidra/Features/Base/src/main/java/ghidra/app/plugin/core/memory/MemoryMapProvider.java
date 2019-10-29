@@ -26,6 +26,7 @@ import javax.swing.table.TableModel;
 import docking.ActionContext;
 import docking.action.DockingAction;
 import docking.action.ToolBarData;
+import docking.widgets.label.GLabel;
 import docking.widgets.table.*;
 import docking.widgets.textfield.GValidatedTextField.MaxLengthField;
 import ghidra.app.context.ProgramActionContext;
@@ -80,9 +81,11 @@ class MemoryMapProvider extends ComponentProviderAdapter {
 	MemoryMapProvider(MemoryMapPlugin plugin) {
 		super(plugin.getTool(), "Memory Map", plugin.getName(), ProgramActionContext.class);
 		this.plugin = plugin;
+
 		setHelpLocation(new HelpLocation(plugin.getName(), getName()));
 		memManager = plugin.getMemoryMapManager();
 		setIcon(ResourceManager.loadImage(MEMORY_IMAGE));
+		addToToolbar();
 		mainPanel = buildMainPanel();
 		addToTool();
 		addLocalActions();
@@ -106,9 +109,6 @@ class MemoryMapProvider extends ComponentProviderAdapter {
 		return new ProgramActionContext(this, program);
 	}
 
-	/**
-	 * Set the status text on this dialog.
-	 */
 	void setStatusText(String msg) {
 		tool.setStatusInfo(msg);
 	}
@@ -176,7 +176,7 @@ class MemoryMapProvider extends ComponentProviderAdapter {
 			enableOptions(model);
 		});
 
-		memPanel.add(new JLabel("Memory Blocks", SwingConstants.CENTER), BorderLayout.NORTH);
+		memPanel.add(new GLabel("Memory Blocks", SwingConstants.CENTER), BorderLayout.NORTH);
 		memPanel.add(memPane, BorderLayout.CENTER);
 
 		return memPanel;
@@ -366,9 +366,6 @@ class MemoryMapProvider extends ComponentProviderAdapter {
 		}
 	}
 
-	/**
-	 * @return
-	 */
 	JTable getTable() {
 		return memTable;
 	}
@@ -461,7 +458,8 @@ class MemoryMapProvider extends ComponentProviderAdapter {
 		public void mousePressed(MouseEvent e) {
 			setStatusText("");
 			if (!e.isPopupTrigger()) {
-				if ((e.getModifiers() & (InputEvent.CTRL_MASK | InputEvent.SHIFT_MASK)) == 0) {
+				if ((e.getModifiersEx() &
+					(InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK)) == 0) {
 					selectAddress();
 				}
 			}
@@ -654,7 +652,8 @@ class MemoryMapProvider extends ComponentProviderAdapter {
 
 	private class MemoryMapTable extends GhidraTable {
 		MemoryMapTable(TableModel model) {
-			super(model, true);
+			super(model);
+			setAutoEditEnabled(true);
 			setActionsEnabled(true);
 			setVisibleRowCount(10);
 		}

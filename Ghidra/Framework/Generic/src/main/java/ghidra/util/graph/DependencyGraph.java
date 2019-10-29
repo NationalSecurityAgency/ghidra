@@ -15,33 +15,23 @@
  */
 package ghidra.util.graph;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
- * Class for managing the visiting (processing)  of a set of values where some values depend
- * on other values being process before them.  In other words, an acyclic directed graph will
- * be formed where the vertexes are the values and the edges represent dependencies.  Values can
- * only be removed if they have no dependencies.  Since the graph is acyclic, as values are removed
- * that have no dependencies, other nodes that depend on those nodes will become eligible for 
- * processing and removal.  If cycles are introduced, they will eventually cause an IllegalState
- * exception to occur when removing and processing values.  There is also a hasCycles() method
- * that can be called before processing to find cycle problems up front without wasting time 
- * processing values. 
+ * Original Dependency Graph implementation that uses {@link HashMap}s and {@link HashSet}s.
+ * Side affect of these is that data pulled from the graph ({@link #pop()}) is not performed
+ * in a deterministic order.  However, load time for the graph is O(1).
  *
  * @param <T> the type of value.  This class uses the values as keys in HashSets, so the value
  * type must be meet the equals() and hashCode() requirements for hashing.
+ * 
+ * @see AbstractDependencyGraph
+ * @see DeterministicDependencyGraph
  */
-public class DependencyGraph<T> {
-	private Map<T, DependencyNode> nodeMap = new HashMap<T, DependencyNode>();
-	private Set<T> unvisitedIndependentSet = new HashSet<T>();
-	private int visitedButNotDeletedCount = 0;
+public class DependencyGraph<T> extends AbstractDependencyGraph<T> {
 
 	public DependencyGraph() {
-
+		super();
 	}
 
 	/**
@@ -51,278 +41,39 @@ public class DependencyGraph<T> {
 	public DependencyGraph(DependencyGraph<T> other) {
 		synchronized (other) {
 			for (DependencyNode node : other.nodeMap.values()) {
-				addValue(node.value);
-				if (node.setOfNodesThatDependOnMe != null) {
-					for (DependencyNode child : node.setOfNodesThatDependOnMe) {
-						addDependency(child.value, node.value);
+				addValue(node.getValue());
+				if (node.getSetOfNodesThatDependOnMe() != null) {
+					for (DependencyNode child : node.getSetOfNodesThatDependOnMe()) {
+						addDependency(child.getValue(), node.getValue());
 					}
 				}
 			}
 		}
 	}
 
-	/**
-	 * Adds the value to this graph.
-	 * @param value the value to add
-	 */
-	public synchronized void addValue(T value) {
-		getOrCreateDependencyNode(value);
+	@Override
+	public DependencyGraph<T> copy() {
+		return new DependencyGraph<>(this);
 	}
 
-	/**
-	 * Returns the number of values in this graph.
-	 * @return the number of values in this graph.
-	 */
-	public synchronized int size() {
-		return nodeMap.size();
+	@Override
+	protected Map<T, DependencyNode> createNodeMap() {
+		return new HashMap<>();
 	}
 
-	/**
-	 * Returns true if the graph has no values;
-	 * @return true if the graph has no values;
-	 */
-	public synchronized boolean isEmpty() {
-		return nodeMap.isEmpty();
+	@Override
+	protected Set<T> createNodeSet() {
+		return new HashSet<>();
 	}
 
-	/**
-	 * Returns true if this graph has the given key.
-	 * @param value the value to check if its in this graph
-	 * @return true if this graph has the given key.
-	 */
-	public synchronized boolean contains(T value) {
-		return nodeMap.containsKey(value);
+	@Override
+	protected Set<DependencyNode> createDependencyNodeSet() {
+		return new HashSet<>();
 	}
 
-	/**
-	 * Returns the set of values in this graph.
-	 * @return the set of values in this graph.
-	 */
-	public synchronized Set<T> getValues() {
-		return new HashSet<T>(nodeMap.keySet());
-	}
-
-	/**
-	 * Returns a copy of this graph.
-	 * @return a copy of this graph.
-	 */
-	public synchronized DependencyGraph<T> copy() {
-		return new DependencyGraph<T>(this);
-	}
-
-	private DependencyNode getOrCreateDependencyNode(T value) {
-		DependencyNode dependencyNode = nodeMap.get(value);
-		if (dependencyNode == null) {
-			dependencyNode = new DependencyNode(value);
-			nodeMap.put(value, dependencyNode);
-			unvisitedIndependentSet.add(value);
-		}
-		return dependencyNode;
-	}
-
-	/**
-	 * Add a dependency such that value1 depends on value2.  Both value1 and value2 will be
-	 * added to the graph if they are not already in the graph.
-	 * @param value1 the value that depends on value2
-	 * @param value2 the value that value1 is depending on
-	 */
-	public synchronized void addDependency(T value1, T value2) {
-		DependencyNode valueNode1 = getOrCreateDependencyNode(value1);
-		DependencyNode valueNode2 = getOrCreateDependencyNode(value2);
-		valueNode2.addNodeThatDependsOnMe(valueNode1);
-
-	}
-
-	/**
-	 * Returns true if there are unvisited values ready (no dependencies) for processing.
-	 * 
-	 * @return true if there are unvisited values ready for processing.
-	 * 
-	 * @exception IllegalStateException is thrown if the graph is not empty and there are no nodes
-	 * without dependency which indicates there is a cycle in the graph.
-	 */
-	public synchronized boolean hasUnVisitedIndependentValues() {
-		if (!unvisitedIndependentSet.isEmpty()) {
-			return true;
-		}
-		checkCycleState();
-		return false;
-	}
-
-	/**
-	 * Removes and returns a value that has no dependencies from the graph.  If the graph is empty
-	 * or all the nodes without dependencies are currently visited, then null will be returned.
-	 * NOTE: If the getUnvisitedIndependentValues() method has been called(), this method may
-	 * return null until all those "visited" nodes are removed from the graph.  
-	 * @return return an arbitrary value that has no dependencies and hasn't been visited or null.
-	 */
-	public synchronized T pop() {
-		checkCycleState();
-		if (unvisitedIndependentSet.isEmpty()) {
-			return null;
-		}
-		T value = unvisitedIndependentSet.iterator().next();
-		unvisitedIndependentSet.remove(value);
-		remove(value);
-		return value;
-	}
-
-	private void checkCycleState() {
-		if (!isEmpty() && unvisitedIndependentSet.isEmpty() && visitedButNotDeletedCount == 0) {
-			throw new IllegalStateException("Cycle detected!");
-		}
-	}
-
-	/**
-	 * Checks if this graph has cycles.  Normal processing of this graph will eventually reveal
-	 * a cycle and throw an exception at the time it is detected.  This method allows for a 
-	 * "fail fast" way to detect cycles.
-	 * @return true if cycles exist in the graph.
-	 */
-	public synchronized boolean hasCycles() {
-		try {
-			Set<T> visited = new HashSet<T>();
-
-			while (!unvisitedIndependentSet.isEmpty()) {
-				Collection<T> values = getUnvisitedIndependentValues();
-				visited.addAll(values);
-
-				for (T k : values) {
-					DependencyNode node = nodeMap.get(k);
-					node.releaseDependencies();
-				}
-			}
-			if (visited.size() != nodeMap.size()) {
-				return true;
-			}
-		}
-		finally {
-			reset();
-		}
-		return false;
-	}
-
-	private void reset() {
-		visitedButNotDeletedCount = 0;
-		for (DependencyNode node : nodeMap.values()) {
-			node.numberOfNodesThatIDependOn = 0;
-		}
-		for (DependencyNode node : nodeMap.values()) {
-			if (node.setOfNodesThatDependOnMe != null) {
-				for (DependencyNode child : node.setOfNodesThatDependOnMe) {
-					unvisitedIndependentSet.remove(child.value);
-					child.numberOfNodesThatIDependOn++;
-				}
-			}
-		}
-		unvisitedIndependentSet = getAllIndependentValues();
-	}
-
-	/**
-	 * Returns a set of all values that have no dependencies.  As values are removed from the
-	 * graph, dependencies will be removed and additional values will be eligible to be returned
-	 * by this method.  Once a value has been retrieved using this method, it will be considered
-	 * "visited" and future calls to this method will not include those values.  To continue
-	 * processing the values in the graph, all values return from this method should eventually
-	 * be deleted from the graph to "free up" other values.  NOTE: values retrieved by this method
-	 * will no longer be eligible for return by the pop() method. 
-	 *
-	 * @return the set of values without dependencies that have never been returned by this method 
-	 * before.
-	 */
-	public synchronized Set<T> getUnvisitedIndependentValues() {
-		checkCycleState();
-		visitedButNotDeletedCount += unvisitedIndependentSet.size();
-		Set<T> returnCollection = unvisitedIndependentSet;
-		unvisitedIndependentSet = new HashSet<T>();
-		return returnCollection;
-	}
-
-	/**
-	 * Returns the set of all values that have no dependencies regardless of whether or not
-	 * they have been "visited" (by the getUnvisitedIndependentValues() method.
-	 * @return return the set of all values that have no dependencies.
-	 */
-	public synchronized Set<T> getAllIndependentValues() {
-		Set<T> set = new HashSet<T>();
-		for (DependencyNode node : nodeMap.values()) {
-			if (node.numberOfNodesThatIDependOn == 0) {
-				set.add(node.value);
-			}
-		}
-		return set;
-	}
-
-	/**
-	 * Removes the value from the graph.  Any dependency from this node to another will be removed,
-	 * possible allowing nodes that depend on this node to be eligible for processing.
-	 * @param value the value to remove from the graph.
-	 */
-	public synchronized void remove(T value) {
-		DependencyNode node = nodeMap.remove(value);
-		if (node != null) {
-			node.releaseDependencies();
-			if (unvisitedIndependentSet.remove(value)) {
-				visitedButNotDeletedCount--;
-			}
-		}
-	}
-
-	/**
-	 * Returns a set of values that depend on the given value.
-	 * @param value the value that other values may depend on.
-	 * @return a set of values that depend on the given value.
-	 */
-	public synchronized Set<T> getDependentValues(T value) {
-		Set<T> set = new HashSet<T>();
-
-		DependencyNode node = nodeMap.get(value);
-		if (node != null && node.setOfNodesThatDependOnMe != null) {
-			for (DependencyNode child : node.setOfNodesThatDependOnMe) {
-				set.add(child.value);
-			}
-		}
-		return set;
-	}
-
-	private class DependencyNode {
-		private final T value;
-		private Set<DependencyNode> setOfNodesThatDependOnMe;
-		private int numberOfNodesThatIDependOn = 0;
-
-		DependencyNode(T value) {
-			this.value = value;
-		}
-
-		public void releaseDependencies() {
-			if (setOfNodesThatDependOnMe == null) {
-				return;
-			}
-			for (DependencyNode node : setOfNodesThatDependOnMe) {
-				if (--node.numberOfNodesThatIDependOn == 0) {
-					unvisitedIndependentSet.add(node.value);
-				}
-			}
-		}
-
-		public void addNodeThatDependsOnMe(DependencyNode node) {
-			if (setOfNodesThatDependOnMe == null) {
-				setOfNodesThatDependOnMe = new HashSet<DependencyGraph<T>.DependencyNode>();
-			}
-
-			if (setOfNodesThatDependOnMe.add(node)) {
-				// if not already added, increment the dependent node's count so that it knows
-				// how many nodes it depends on.
-				node.numberOfNodesThatIDependOn++;
-
-				unvisitedIndependentSet.remove(node.value);  // it has at least one dependency now
-			}
-		}
-
-		@Override
-		public String toString() {
-			return value == null ? "" : value.toString();
-		}
+	@Override
+	public synchronized Set<T> getNodeMapValues() {
+		return new HashSet<>(nodeMap.keySet());
 	}
 
 }

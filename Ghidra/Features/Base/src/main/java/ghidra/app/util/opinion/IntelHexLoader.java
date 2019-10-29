@@ -20,7 +20,6 @@ import java.util.*;
 
 import ghidra.app.util.Option;
 import ghidra.app.util.bin.ByteProvider;
-import ghidra.app.util.importer.MemoryConflictHandler;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.framework.model.DomainFolder;
 import ghidra.framework.model.DomainObject;
@@ -76,7 +75,7 @@ public class IntelHexLoader extends AbstractProgramLoader {
 	}
 
 	@Override
-	public String validateOptions(ByteProvider provider, LoadSpec loadSpec, List<Option> options) {
+	public String validateOptions(ByteProvider provider, LoadSpec loadSpec, List<Option> options, Program program) {
 		Address baseAddr = null;
 
 		for (Option option : options) {
@@ -155,8 +154,7 @@ public class IntelHexLoader extends AbstractProgramLoader {
 			importerCompilerSpec, consumer);
 		boolean success = false;
 		try {
-			success = loadInto(provider, loadSpec, options, log, prog, monitor,
-				MemoryConflictHandler.ALWAYS_OVERWRITE);
+			success = loadInto(provider, loadSpec, options, log, prog, monitor);
 			if (success) {
 				createDefaultMemoryBlocks(prog, importerLanguage, log);
 			}
@@ -176,8 +174,8 @@ public class IntelHexLoader extends AbstractProgramLoader {
 
 	@Override
 	protected boolean loadProgramInto(ByteProvider provider, LoadSpec loadSpec,
-			List<Option> options, MessageLog log, Program prog, TaskMonitor monitor,
-			MemoryConflictHandler handler) throws IOException, CancelledException {
+			List<Option> options, MessageLog log, Program prog, TaskMonitor monitor)
+			throws IOException, CancelledException {
 		Address baseAddr = getBaseAddr(options);
 
 		if (baseAddr == null) {
@@ -185,7 +183,7 @@ public class IntelHexLoader extends AbstractProgramLoader {
 		}
 		boolean success = false;
 		try {
-			processIntelHex(provider, options, log, prog, monitor, handler);
+			processIntelHex(provider, options, log, prog, monitor);
 			success = true;
 		}
 		catch (AddressOverflowException e) {
@@ -196,7 +194,7 @@ public class IntelHexLoader extends AbstractProgramLoader {
 	}
 
 	private void processIntelHex(ByteProvider provider, List<Option> options, MessageLog log,
-			Program program, TaskMonitor monitor, MemoryConflictHandler handler)
+			Program program, TaskMonitor monitor)
 			throws IOException, AddressOverflowException, CancelledException {
 		String blockName = getBlockName(options);
 		boolean isOverlay = isOverlay(options);
@@ -232,7 +230,7 @@ public class IntelHexLoader extends AbstractProgramLoader {
 		}
 
 		String msg = memImage.createMemory(getName(), provider.getName(),
-			isOverlay ? blockName : null, isOverlay, program, handler, monitor);
+			isOverlay ? blockName : null, isOverlay, program, monitor);
 
 		if (msg.length() > 0) {
 			log.appendMsg(msg);

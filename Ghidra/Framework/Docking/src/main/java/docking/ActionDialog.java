@@ -22,7 +22,8 @@ import java.util.List;
 import javax.swing.*;
 
 import docking.action.DockingActionIf;
-import resources.ResourceManager;
+import docking.widgets.label.GIconLabel;
+import docking.widgets.label.GLabel;
 
 /**
  * Dialog to show multiple actions that are mapped to the same keystroke;
@@ -37,10 +38,8 @@ public class ActionDialog extends DialogComponentProvider {
 
 	/**
 	 * Constructor
-	 * @param parent parent to this dialog
 	 * @param keystrokeName keystroke name
-	 * @param list list of PluginActions
-	 * @param event event to pass the selected action
+	 * @param list list of actions
 	 */
 	public ActionDialog(String keystrokeName, List<ExecutableKeyActionAdapter> list) {
 		super("Select Action", true);
@@ -66,10 +65,8 @@ public class ActionDialog extends DialogComponentProvider {
 	}
 
 	/**
-	 * Set the list of actions that are enabled.
-	 * @param list list of actions
-	 * @param event event to pass to the action that is
-	 * selected.
+	 * Set the list of actions that are enabled
+	 * @param list list of actions selected
 	 */
 	public void setActionList(List<ExecutableKeyActionAdapter> list) {
 		okButton.setEnabled(false);
@@ -78,12 +75,10 @@ public class ActionDialog extends DialogComponentProvider {
 		for (int i = 0; i < list.size(); i++) {
 			ExecutableKeyActionAdapter actionProxy = list.get(i);
 			DockingActionIf action = actionProxy.getAction();
-			listModel.addElement(action.getName());
+			listModel.addElement(action.getName() + " (" + action.getOwnerDescription() + ")");
 		}
 		actionList.setSelectedIndex(0);
 	}
-
-	/////////////////////////////////////////////////////////////////////////
 
 	private void init() {
 		this.addWorkPanel(buildMainPanel());
@@ -98,17 +93,16 @@ public class ActionDialog extends DialogComponentProvider {
 		JPanel innerPanel = new JPanel(new BorderLayout());
 
 		JPanel labelPanel = new JPanel(new GridLayout(0, 1));
-		labelPanel.add(new JLabel("Multiple actions have been mapped to " + keystrokeName));
-		labelPanel.add(new JLabel("Actions that can be enabled at the same"));
-		labelPanel.add(new JLabel("time should be mapped to different keys"));
+		labelPanel.add(new GLabel("Multiple actions have been mapped to " + keystrokeName));
+		labelPanel.add(new GLabel("Actions that can be enabled at the same"));
+		labelPanel.add(new GLabel("time should be mapped to different keys"));
 
 		innerPanel.setBorder(BorderFactory.createTitledBorder("Actions"));
 
-		ImageIcon image = ResourceManager.loadImage("images/warning.png");
-		JLabel cautionLabel = new JLabel(image);
-
 		JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-		panel.add(cautionLabel);
+
+		Icon icon = UIManager.getIcon("OptionPane.warningIcon");
+		panel.add(new GIconLabel(icon));
 		panel.add(labelPanel);
 
 		listModel = new DefaultListModel<>();
@@ -140,12 +134,12 @@ public class ActionDialog extends DialogComponentProvider {
 		return mainPanel;
 	}
 
-	void addListeners() {
+	private void addListeners() {
 		actionList.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseClicked(MouseEvent e) {
 
-				if (e.getModifiers() != InputEvent.BUTTON1_MASK) {
+				if (e.getModifiersEx() != InputEvent.BUTTON1_DOWN_MASK) {
 					return;
 				}
 				int clickCount = e.getClickCount();

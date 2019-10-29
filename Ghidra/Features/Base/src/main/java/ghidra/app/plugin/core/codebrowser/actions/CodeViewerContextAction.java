@@ -15,8 +15,6 @@
  */
 package ghidra.app.plugin.core.codebrowser.actions;
 
-
-
 import java.util.Set;
 
 import docking.ActionContext;
@@ -24,21 +22,17 @@ import docking.action.DockingAction;
 import ghidra.app.plugin.core.codebrowser.CodeViewerActionContext;
 
 public abstract class CodeViewerContextAction extends DockingAction {
-	
-    public CodeViewerContextAction(String name, String owner) {
-        this(name, owner, true);
-    }
-    
-	public CodeViewerContextAction(String name, String owner, boolean isKeyBindingManaged) {
-		super(name, owner, isKeyBindingManaged);
+
+	public CodeViewerContextAction(String name, String owner) {
+		super(name, owner);
 	}
-	
+
 	@Override
 	public boolean isEnabledForContext(ActionContext context) {
 		if (!(context instanceof CodeViewerActionContext)) {
 			return false;
 		}
-		return isEnabledForContext((CodeViewerActionContext)context);
+		return isEnabledForContext((CodeViewerActionContext) context);
 	}
 
 	@Override
@@ -46,26 +40,25 @@ public abstract class CodeViewerContextAction extends DockingAction {
 		if (!(context instanceof CodeViewerActionContext)) {
 			return false;
 		}
-		return isValidContext((CodeViewerActionContext)context);
+		return isValidContext((CodeViewerActionContext) context);
 	}
-	
+
 	@Override
 	public boolean isAddToPopup(ActionContext context) {
 		if (!(context instanceof CodeViewerActionContext)) {
 			return false;
 		}
-		return isAddToPopup((CodeViewerActionContext)context);
+		return isAddToPopup((CodeViewerActionContext) context);
 	}
 
 	@Override
 	public void actionPerformed(ActionContext context) {
-		actionPerformed((CodeViewerActionContext)context);
+		actionPerformed((CodeViewerActionContext) context);
 	}
 
 	protected boolean isAddToPopup(CodeViewerActionContext context) {
-		return isEnabledForContext( context );
+		return isEnabledForContext(context);
 	}
-	
 
 	protected boolean isValidContext(CodeViewerActionContext context) {
 		return true;
@@ -76,9 +69,9 @@ public abstract class CodeViewerContextAction extends DockingAction {
 	}
 
 	protected void actionPerformed(CodeViewerActionContext context) {
-		
+
 	}
-	
+
 	@Override
 	public boolean shouldAddToWindow(boolean isMainWindow, Set<Class<?>> contextTypes) {
 		for (Class<?> class1 : contextTypes) {

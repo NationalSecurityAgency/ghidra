@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +15,12 @@
  */
 package ghidra.pcodeCPort.slghsymbol;
 
+import java.io.PrintStream;
+import java.util.ArrayList;
+
+import org.jdom.Element;
+
+import generic.util.UnsignedDataUtils;
 // A global varnode
 import ghidra.pcodeCPort.context.*;
 import ghidra.pcodeCPort.pcoderaw.VarnodeData;
@@ -23,12 +28,9 @@ import ghidra.pcodeCPort.semantics.ConstTpl;
 import ghidra.pcodeCPort.semantics.VarnodeTpl;
 import ghidra.pcodeCPort.sleighbase.SleighBase;
 import ghidra.pcodeCPort.space.AddrSpace;
+import ghidra.pcodeCPort.space.spacetype;
 import ghidra.pcodeCPort.utils.XmlUtils;
 import ghidra.sleigh.grammar.Location;
-
-import java.io.PrintStream;
-
-import org.jdom.Element;
 
 public class VarnodeSymbol extends PatternlessSymbol {
 
@@ -58,6 +60,13 @@ public class VarnodeSymbol extends PatternlessSymbol {
 	}
 
 	@Override
+	public void collectLocalValues(ArrayList<Long> results) {
+		if (fix.space.getType() == spacetype.IPTR_INTERNAL) {
+			results.add(fix.offset);
+		}
+	}
+
+	@Override
 	public symbol_type getType() {
 		return symbol_type.varnode_symbol;
 	}
@@ -65,12 +74,18 @@ public class VarnodeSymbol extends PatternlessSymbol {
 	public VarnodeSymbol(Location location, String nm, AddrSpace base, long offset, int size) {
 		super(location, nm);
 		int addrSize = base.getAddrSize();
-		long offsetTooBig = 1;
-		offsetTooBig <<= (8 * addrSize);
-		if (offset >= offsetTooBig) {
-			throw new SleighError("offset " + String.format("0x%x", offset) +
-				" is too large for space " + base.getName(), location);
+		long maxByteOffset = ((long) base.getWordSize() << (8 * addrSize)) - 1;
+		long endOffset = offset + size - 1;
+		boolean sizeError = size != 0 && UnsignedDataUtils.unsignedGreaterThan(offset, endOffset);
+		if (!sizeError && addrSize < 8) {
+			sizeError = UnsignedDataUtils.unsignedGreaterThan(endOffset, maxByteOffset);
 		}
+		if (sizeError) {
+			throw new SleighError(nm + ":" + size + " @ " + base.getName() + ":" +
+				String.format("0x%x", offset) + " extends beyond end of space (max offset is " +
+				String.format("0x%x", maxByteOffset) + ")", location);
+		}
+
 		fix.space = base;
 		fix.offset = offset;
 		fix.size = size;
@@ -78,8 +93,9 @@ public class VarnodeSymbol extends PatternlessSymbol {
 
 	@Override
 	public VarnodeTpl getVarnode() {
-		return new VarnodeTpl(location, new ConstTpl(fix.space), new ConstTpl(
-			ConstTpl.const_type.real, fix.offset), new ConstTpl(ConstTpl.const_type.real, fix.size));
+		return new VarnodeTpl(location, new ConstTpl(fix.space),
+			new ConstTpl(ConstTpl.const_type.real, fix.offset),
+			new ConstTpl(ConstTpl.const_type.real, fix.size));
 	}
 
 	@Override

@@ -18,81 +18,84 @@ package ghidra.util.task;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.text.NumberFormat;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.swing.*;
 
-import docking.ToolTipManager;
-import docking.util.AnimatedIcon;
 import docking.widgets.EmptyBorderButton;
 import docking.widgets.OptionDialog;
-import ghidra.util.Issue;
+import docking.widgets.label.GDHtmlLabel;
 import ghidra.util.SystemUtilities;
 import ghidra.util.datastruct.WeakDataStructureFactory;
 import ghidra.util.datastruct.WeakSet;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.layout.VerticalLayout;
 import resources.Icons;
-import resources.ResourceManager;
 
 /**
  * Component that contains a progress bar, a progress icon, and a cancel
  * button to cancel the task that is associated with this task monitor.
+ * <p>
  * By default the progress bar and progress icon (spinning globe) are visible.
  */
 public class TaskMonitorComponent extends JPanel implements TaskMonitor {
 
 	private WeakSet<CancelledListener> listeners =
 		WeakDataStructureFactory.createCopyOnReadWeakSet();
-	private WeakSet<IssueListener> issueListeners;
-	private JButton cancelButton;
-	private JPanel eastButtonPanel;
-	private JProgressBar progressBar;
-	private JPanel progressPanel;
-	private JPanel activeProgressPanel;
-	private JLabel imageLabel;
 
+	private JProgressBar progressBar;
+	private JButton cancelButton;
+
+	private JPanel cancelPanel;
+	private JPanel progressBarPanel;
+	private JPanel mainContentPanel;
+	private JPanel progressPanel;
+
+	private String progressMessage;
 	private String taskName;
+
+	private JLabel messageLabel;
+
 	private volatile boolean isCancelled;
-	private String message;
 
 	private long lastProgress = -1;
 	private long progress;
-	private long lastMax = -1;
-	private long max;
+	private long lastMaxProgress = -1;
+	private long maxProgress;
+	private long scaleFactor = 1;
 
 	private Runnable updateProgressPanelRunnable;
 	private Runnable updateCancelButtonRunnable;
 	private Runnable updateToolTipRunnable;
-	private JLabel messageLabel;
+	private Runnable shouldCancelRunnable;
 
 	private boolean showingProgress = true;
 	private boolean showingIcon = true;
 	private boolean showingCancelButton = true;
 	private boolean cancelEnabled = true;
+	private boolean paintProgressValue = true;
+
 	private AtomicBoolean isIndeterminate = new AtomicBoolean(false);
 	private AtomicInteger taskID = new AtomicInteger();
 
 	private Timer updateTimer;
-	private Runnable shouldCancelRunnable;
 
-	private boolean paintProgressValue = true;
 	private NumberFormat percentFormat = NumberFormat.getPercentInstance();
-	private long scaleFactor = 1;
 
 	/**
-	 * Construct a new TaskMonitorComponent.
-	 * @param l listener that is notified when the task completes or the
-	 * user cancels the task
+	 * Constructor
 	 */
-
 	public TaskMonitorComponent() {
 		this(true, true);
 	}
 
+	/**
+	 * Constructor
+	 * 
+	 * @param includeTextField if true, the dialog can display a status progressMessage with progress details
+	 * @param includeCancelButton if true, a cancel button will be displayed 
+	 */
 	public TaskMonitorComponent(boolean includeTextField, boolean includeCancelButton) {
 		updateProgressPanelRunnable = () -> updateProgressPanel();
 		updateCancelButtonRunnable = () -> updateCancelButton();
@@ -114,12 +117,24 @@ public class TaskMonitorComponent extends JPanel implements TaskMonitor {
 		buildProgressPanel(includeTextField, includeCancelButton);
 	}
 
-	/**
-	 * Reset this monitor so that it can be reused.
-	 */
-	public synchronized void reset() {
-		isCancelled = false;
-		taskID.incrementAndGet();
+	@Override
+	public void addCancelledListener(CancelledListener mcl) {
+		listeners.add(mcl);
+	}
+
+	@Override
+	public void removeCancelledListener(CancelledListener mcl) {
+		listeners.remove(mcl);
+	}
+
+	@Override
+	public void incrementProgress(long incrementAmount) {
+		setProgress(progress + incrementAmount);
+	}
+
+	@Override
+	public long getProgress() {
+		return progress;
 	}
 
 	@Override
@@ -136,8 +151,13 @@ public class TaskMonitorComponent extends JPanel implements TaskMonitor {
 
 	@Override
 	public synchronized void setMessage(String message) {
-		this.message = message;
+		this.progressMessage = message;
 		startUpdateTimer();
+	}
+
+	@Override
+	public synchronized String getMessage() {
+		return progressMessage;
 	}
 
 	@Override
@@ -149,12 +169,6 @@ public class TaskMonitorComponent extends JPanel implements TaskMonitor {
 		startUpdateTimer();
 	}
 
-	private synchronized void startUpdateTimer() {
-		if (!updateTimer.isRunning()) {
-			updateTimer.start();
-		}
-	}
-
 	@Override
 	public void initialize(long maxValue) {
 		setMaximum(maxValue);
@@ -163,8 +177,8 @@ public class TaskMonitorComponent extends JPanel implements TaskMonitor {
 
 	@Override
 	public void setMaximum(long max) {
-		this.max = max;
-		if (progress > this.max) {
+		this.maxProgress = max;
+		if (progress > this.maxProgress) {
 			progress = max;
 		}
 		startUpdateTimer();
@@ -201,17 +215,6 @@ public class TaskMonitorComponent extends JPanel implements TaskMonitor {
 		});
 	}
 
-	/**
-	 * Returns true if {@link #setIndeterminate(boolean)} with a value of <tt>true</tt> has
-	 * been called.
-	 * 
-	 * @return true if {@link #setIndeterminate(boolean)} with a value of <tt>true</tt> has
-	 * been called.
-	 */
-	public boolean isIndeterminate() {
-		return isIndeterminate.get();
-	}
-
 	@Override
 	public synchronized void setCancelEnabled(boolean enable) {
 		if (cancelEnabled != enable) {
@@ -244,66 +247,6 @@ public class TaskMonitorComponent extends JPanel implements TaskMonitor {
 		}
 	}
 
-	/**
-	 * Set whether the progress bar should be visible.
-	 * @param b true if the progress bar should be visible
-	 */
-	public synchronized void showProgress(boolean b) {
-		if (b != showingProgress) {
-			showingProgress = b;
-			SystemUtilities.runSwingLater(updateProgressPanelRunnable);
-		}
-	}
-
-	/**
-	 * Set the name of the task; the name shows up in the tool tip for
-	 * the cancel button.
-	 * @param name the name of the task
-	 */
-	public void setTaskName(String name) {
-		taskName = name;
-		SystemUtilities.runSwingLater(updateToolTipRunnable);
-	}
-
-	/**
-	 * Show or not show the cancel button according to the showCancel param.
-	 */
-	public void showCancelButton(boolean showCancel) {
-
-		if (showCancel == showingCancelButton) {
-			return;
-		}
-
-		if (showCancel) {
-			add(eastButtonPanel, BorderLayout.EAST);
-		}
-		else {
-			remove(eastButtonPanel);
-		}
-		showingCancelButton = showCancel;
-	}
-
-	/**
-	 * Show or not show the progress icon (spinning globe) according to
-	 * the showIcon param.
-	 */
-	public void showProgressIcon(final boolean showIcon) {
-		if (showIcon == showingIcon) {
-			return;
-		}
-		Runnable r = () -> {
-			if (showIcon) {
-				activeProgressPanel.add(imageLabel, BorderLayout.EAST);
-			}
-			else {
-				activeProgressPanel.remove(imageLabel);
-			}
-			showingIcon = showIcon;
-		};
-
-		SystemUtilities.runSwingNow(r);
-	}
-
 	@Override
 	public void setShowProgressValue(boolean showProgressValue) {
 		this.paintProgressValue = showProgressValue;
@@ -312,19 +255,120 @@ public class TaskMonitorComponent extends JPanel implements TaskMonitor {
 
 	@Override
 	public long getMaximum() {
-		return max;
+		return maxProgress;
+	}
+
+	/**
+	 * Reset this monitor so that it can be reused
+	 */
+	public synchronized void reset() {
+		isCancelled = false;
+		taskID.incrementAndGet();
+	}
+
+	/**
+	 * Returns true if {@link #setIndeterminate(boolean)} with a value of <tt>true</tt> has
+	 * been called.
+	 * 
+	 * @return true if {@link #setIndeterminate(boolean)} with a value of <tt>true</tt> has
+	 * been called.
+	 */
+	public boolean isIndeterminate() {
+		return isIndeterminate.get();
+	}
+
+	/**
+	 * Set whether the progress bar should be visible
+	 * 
+	 * @param show true if the progress bar should be visible
+	 */
+	public synchronized void showProgress(boolean show) {
+		if (show != showingProgress) {
+			showingProgress = show;
+			SystemUtilities.runSwingLater(updateProgressPanelRunnable);
+		}
+	}
+
+	/**
+	 * Set the name of the task; the name shows up in the tool tip for
+	 * the cancel button.
+	 * 
+	 * @param name the name of the task
+	 */
+	public void setTaskName(String name) {
+		taskName = name;
+		SystemUtilities.runSwingLater(updateToolTipRunnable);
+	}
+
+	/**
+	 * Set the visibility of the cancel button
+	 * 
+	 * @param visible if true, show the cancel button; false otherwise
+	 */
+	public void setCancelButtonVisibility(boolean visible) {
+
+		if (visible == showingCancelButton) {
+			return;
+		}
+
+		if (visible) {
+			add(cancelPanel, BorderLayout.EAST);
+		}
+		else {
+			remove(cancelPanel);
+		}
+
+		repaint();
+		showingCancelButton = visible;
+	}
+
+	/**
+	 * Sets the visibility of the progress icon
+	 * 
+	 * @param visible if true, display the progress icon
+	 */
+	public void showProgressIcon(boolean visible) {
+		if (visible == showingIcon) {
+			return;
+		}
+		Runnable r = () -> {
+			if (visible) {
+				mainContentPanel.add(progressPanel, BorderLayout.EAST);
+			}
+			else {
+				mainContentPanel.remove(progressPanel);
+			}
+			showingIcon = visible;
+		};
+
+		SystemUtilities.runSwingNow(r);
+	}
+
+	protected void notifyChangeListeners() {
+		Runnable r = () -> {
+			for (CancelledListener mcl : listeners) {
+				mcl.cancelled();
+			}
+		};
+		SwingUtilities.invokeLater(r);
+	}
+
+	private synchronized void startUpdateTimer() {
+		if (!updateTimer.isRunning()) {
+			updateTimer.start();
+		}
 	}
 
 	private synchronized void update() {
 
-		if (message != null) {
-			messageLabel.setText(message);
-			message = null;
+		if (progressMessage != null) {
+			messageLabel.setText(progressMessage);
+			progressMessage = null;
 		}
 
-		if (max != lastMax) {
-			setMaxValueInProgressBar(max);
-			lastMax = max;
+		if (maxProgress != lastMaxProgress) {
+			setMaxValueInProgressBar(maxProgress);
+			lastMaxProgress = maxProgress;
 		}
 
 		if (progress != lastProgress) {
@@ -379,15 +423,15 @@ public class TaskMonitorComponent extends JPanel implements TaskMonitor {
 
 	private synchronized void updateProgressPanel() {
 		if (showingProgress) {
-			progressPanel.add(progressBar, BorderLayout.NORTH);
+			progressBarPanel.add(progressBar, BorderLayout.NORTH);
 		}
 		else {
-			progressPanel.remove(progressBar);
+			progressBarPanel.remove(progressBar);
 		}
 	}
 
 	private void updateToolTip() {
-		ToolTipManager.setToolTipText(cancelButton, "Cancel " + getTaskName());
+		cancelButton.setToolTipText("Cancel " + getTaskName());
 	}
 
 	private String getTaskName() {
@@ -400,7 +444,7 @@ public class TaskMonitorComponent extends JPanel implements TaskMonitor {
 
 	private void buildProgressPanel(boolean includeTextField, boolean includeCancelButton) {
 		setLayout(new BorderLayout(5, 1));
-		messageLabel = new JLabel("               ") {
+		messageLabel = new GDHtmlLabel("               ") {
 			@Override
 			public void invalidate() {
 				// don't care
@@ -424,24 +468,24 @@ public class TaskMonitorComponent extends JPanel implements TaskMonitor {
 		progressBar.setStringPainted(true);
 		ToolTipManager.sharedInstance().registerComponent(progressBar);
 
-		createAnimatedIcon();
+		progressPanel = new HourglassAnimationPanel();
 
-		progressPanel = new JPanel(new VerticalLayout(0));
-		progressPanel.add(progressBar);
+		progressBarPanel = new JPanel(new VerticalLayout(0));
+		progressBarPanel.add(progressBar);
 		if (includeTextField) {
-			progressPanel.add(messageLabel);
+			progressBarPanel.add(messageLabel);
 			progressBar.setPreferredSize(new Dimension(180, 12));
 		}
 		else {
 			progressBar.setBorderPainted(true);
 			Dimension size = progressBar.getPreferredSize();
-			progressPanel.setBorder(BorderFactory.createEmptyBorder(
-				(imageLabel.getPreferredSize().height - size.height) / 2, 0, 0, 8));
+			progressBarPanel.setBorder(BorderFactory.createEmptyBorder(
+				(progressPanel.getPreferredSize().height - size.height) / 2, 0, 0, 8));
 		}
 
-		activeProgressPanel = new JPanel(new BorderLayout());
-		activeProgressPanel.add(progressPanel, BorderLayout.CENTER);
-		activeProgressPanel.add(imageLabel, BorderLayout.EAST);
+		mainContentPanel = new JPanel(new BorderLayout());
+		mainContentPanel.add(progressBarPanel, BorderLayout.CENTER);
+		mainContentPanel.add(progressPanel, BorderLayout.EAST);
 
 		ImageIcon icon = Icons.STOP_ICON;
 		cancelButton = new EmptyBorderButton(icon);
@@ -452,134 +496,15 @@ public class TaskMonitorComponent extends JPanel implements TaskMonitor {
 		cancelButton.setFocusable(false);
 		cancelButton.setRolloverEnabled(true);
 
-		add(activeProgressPanel, BorderLayout.CENTER);
+		add(mainContentPanel, BorderLayout.CENTER);
 
 		if (includeCancelButton) {
-			eastButtonPanel = new JPanel();
-			eastButtonPanel.setLayout(new BoxLayout(eastButtonPanel, BoxLayout.Y_AXIS));
-			eastButtonPanel.add(Box.createVerticalGlue());
-			eastButtonPanel.add(cancelButton);
-			eastButtonPanel.add(Box.createVerticalGlue());
-			add(eastButtonPanel, BorderLayout.EAST);
-		}
-	}
-
-	private void createAnimatedIcon() {
-		List<Icon> iconList = new ArrayList<>();
-		iconList.add(ResourceManager.loadImage("images/hourglass24_01.png"));
-		iconList.add(ResourceManager.loadImage("images/hourglass24_02.png"));
-		iconList.add(ResourceManager.loadImage("images/hourglass24_02.png"));
-		iconList.add(ResourceManager.loadImage("images/hourglass24_03.png"));
-		iconList.add(ResourceManager.loadImage("images/hourglass24_03.png"));
-		iconList.add(ResourceManager.loadImage("images/hourglass24_04.png"));
-		iconList.add(ResourceManager.loadImage("images/hourglass24_04.png"));
-		iconList.add(ResourceManager.loadImage("images/hourglass24_05.png"));
-		iconList.add(ResourceManager.loadImage("images/hourglass24_05.png"));
-		iconList.add(ResourceManager.loadImage("images/hourglass24_06.png"));
-		iconList.add(ResourceManager.loadImage("images/hourglass24_06.png"));
-		iconList.add(ResourceManager.loadImage("images/hourglass24_07.png"));
-		iconList.add(ResourceManager.loadImage("images/hourglass24_07.png"));
-		iconList.add(ResourceManager.loadImage("images/hourglass24_08.png"));
-		iconList.add(ResourceManager.loadImage("images/hourglass24_08.png"));
-		iconList.add(ResourceManager.loadImage("images/hourglass24_09.png"));
-		iconList.add(ResourceManager.loadImage("images/hourglass24_10.png"));
-		iconList.add(ResourceManager.loadImage("images/hourglass24_11.png"));
-		AnimatedIcon progressIcon = new AnimatedIcon(iconList, 150, 0);
-		imageLabel = new JLabel(progressIcon);
-	}
-
-	/**
-	 * Simple test for the TaskMonitorComponent class.
-	 * @param args not used
-	 */
-	public static void main(String[] args) {
-		try {
-			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-		}
-		catch (Exception e) {
-			// don't care
-		}
-
-		JFrame f = new JFrame();
-		f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		f.getContentPane().setLayout(new BorderLayout());
-		final TaskMonitorComponent tm = new TaskMonitorComponent();
-		f.getContentPane().add(tm);
-		tm.showCancelButton(true);
-		f.pack();
-		f.setVisible(true);
-
-//		tm.initialize(78);
-//		TaskMonitor monitor = new UnknownProgressWrappingTaskMonitor(tm, 10);
-//
-//		for (int i = 0; i < 78; i++) {
-//			try {
-//				Thread.sleep(250);
-//				monitor.setProgress(i);
-//				System.out.println("set progress to " + i);
-//			}
-//			catch (InterruptedException e) {
-//				e.printStackTrace();
-//			}
-//		}
-	}
-
-	@Override
-	public void incrementProgress(long incrementAmount) {
-		setProgress(progress + incrementAmount);
-	}
-
-	@Override
-	public long getProgress() {
-		return progress;
-	}
-
-	protected void notifyChangeListeners() {
-		Runnable r = () -> {
-			synchronized (listeners) {
-				for (CancelledListener mcl : listeners) {
-					mcl.cancelled();
-				}
-			}
-		};
-		SwingUtilities.invokeLater(r);
-	}
-
-	@Override
-	public void addCancelledListener(CancelledListener mcl) {
-		synchronized (listeners) {
-			listeners.add(mcl);
-		}
-	}
-
-	@Override
-	public void removeCancelledListener(CancelledListener mcl) {
-		synchronized (listeners) {
-			listeners.remove(mcl);
-		}
-	}
-
-	@Override
-	public void addIssueListener(IssueListener listener) {
-		if (issueListeners == null) {
-			issueListeners = WeakDataStructureFactory.createCopyOnWriteWeakSet();
-		}
-	}
-
-	@Override
-	public void removeIssueListener(IssueListener listener) {
-		if (issueListeners != null) {
-			issueListeners.remove(listener);
-		}
-
-	}
-
-	@Override
-	public void reportIssue(Issue issue) {
-		if (issueListeners != null) {
-			for (IssueListener listener : issueListeners) {
-				listener.issueReported(issue);
-			}
+			cancelPanel = new JPanel();
+			cancelPanel.setLayout(new BoxLayout(cancelPanel, BoxLayout.Y_AXIS));
+			cancelPanel.add(Box.createVerticalGlue());
+			cancelPanel.add(cancelButton);
+			cancelPanel.add(Box.createVerticalGlue());
+			add(cancelPanel, BorderLayout.EAST);
 		}
 	}
 }

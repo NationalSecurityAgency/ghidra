@@ -21,6 +21,7 @@ import java.util.Set;
 
 import docking.action.DockingAction;
 import docking.action.MenuData;
+import docking.tool.ToolConstants;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.context.*;
 import ghidra.app.plugin.PluginCategoryNames;
@@ -31,7 +32,6 @@ import ghidra.app.util.query.TableService;
 import ghidra.framework.plugintool.PluginInfo;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.util.PluginStatus;
-import ghidra.framework.plugintool.util.ToolConstants;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.MemoryBlock;
@@ -251,7 +251,7 @@ public class InstructionSearchPlugin extends ProgramPlugin {
 		};
 		searchAction.setHelpLocation(new HelpLocation("Search", "Instruction_Pattern_Search"));
 		searchAction.setMenuBarData(
-			new MenuData(new String[] { ToolConstants.MENU_SEARCH, "For Instruction Patterns..." },
+			new MenuData(new String[] { ToolConstants.MENU_SEARCH, "For Instruction Patterns" },
 				null, "search for"));
 		searchAction.setDescription("Construct searches using selected instructions");
 		tool.addAction(searchAction);

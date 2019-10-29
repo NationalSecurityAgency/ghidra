@@ -86,7 +86,7 @@ class RelocationProvider extends ComponentProviderAdapter {
 		table.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 		table.setAutoResizeMode(JTable.AUTO_RESIZE_NEXT_COLUMN);
 
-		docking.ToolTipManager.sharedInstance().registerComponent(table);
+		ToolTipManager.sharedInstance().registerComponent(table);
 
 		panel.add(threadedPanel, BorderLayout.CENTER);
 

@@ -86,12 +86,22 @@ public abstract class AbstractVisualGraphLayout<V extends VisualVertex,
 		new ArticulatedEdgeTransformer<>();
 	private ArticulatedEdgeRenderer<V, E> edgeRenderer = new ArticulatedEdgeRenderer<>();
 
-	protected TaskMonitor monitor = TaskMonitor.DUMMY;
-
+	protected String layoutName;
 	protected boolean layoutInitialized;
 
-	protected AbstractVisualGraphLayout(Graph<V, E> graph) {
+	protected TaskMonitor monitor = TaskMonitor.DUMMY;
+
+	protected AbstractVisualGraphLayout(Graph<V, E> graph, String layoutName) {
 		super(graph);
+		this.layoutName = layoutName;
+	}
+
+	/**
+	 * Returns the name of this layout
+	 * @return the name of this layout
+	 */
+	public String getLayoutName() {
+		return layoutName;
 	}
 
 	/**
@@ -308,8 +318,8 @@ public abstract class AbstractVisualGraphLayout<V extends VisualVertex,
 				layoutLocations);
 
 		// DEGUG triggers grid lines to be printed; useful for debugging
-		// VisualGraphRenderer.DEBUG_ROW_COL_MAP.put((Graph<?, ?>) visualGraph,
-		// 	layoutLocations.copy());
+//		VisualGraphRenderer.DEBUG_ROW_COL_MAP.put((Graph<?, ?>) visualGraph,
+//			layoutLocations.copy());
 
 		Rectangle graphBounds =
 			getTotalGraphSize(vertexLayoutLocations, edgeLayoutArticulationLocations, transformer);

@@ -1,0 +1,7 @@
+      <!-- end of vsTableLeft (p-code test/group names, date/time, and summary) -->
+    </TABLE>
+  </DIV>
+  
+  <DIV ID="sTableRight" STYLE="position: absolute; overflow: scroll;" onscroll="onScrollDiv()">
+    <TABLE BORDER=1 CELLSPACING=0 CELLPADDING=0>
+      <!-- top of sTableRight (test results) -->

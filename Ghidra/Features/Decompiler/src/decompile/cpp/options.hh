@@ -144,6 +144,12 @@ public:
   virtual string apply(Architecture *glb,const string &p1,const string &p2,const string &p3) const;
 };
 
+class OptionHideExtensions : public ArchOption {
+public:
+  OptionHideExtensions(void) { name="hideextensions"; }		///< Constructor
+  virtual string apply(Architecture *glb,const string &p1,const string &p2,const string &p3) const;
+};
+
 class OptionMaxLineWidth : public ArchOption {
 public:
   OptionMaxLineWidth(void) { name = "maxlinewidth"; }	///< Constructor

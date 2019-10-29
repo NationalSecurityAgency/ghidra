@@ -21,7 +21,6 @@ import docking.DockingWindowManager;
 import docking.framework.AboutDialog;
 import ghidra.framework.OperatingSystem;
 import ghidra.framework.Platform;
-import ghidra.util.SystemUtilities;
 
 /**
  * A plugin-level about handler that serves as the callback from the Dock's 'About' popup action.
@@ -35,22 +34,18 @@ public class PluginToolMacAboutHandler {
 	 * 
 	 * @param winMgr The docking window manager to use to install the about dialog.
 	 */
-	public static void install(DockingWindowManager winMgr) {
+	public static synchronized void install(DockingWindowManager winMgr) {
 
 		if (installed) {
 			return;
 		}
+		installed = true;
 
 		if (Platform.CURRENT_PLATFORM.getOperatingSystem() != OperatingSystem.MAC_OS_X) {
 			return;
 		}
 
-		// These calls should all be in the Swing thread; thus, no need for locking.
-		SystemUtilities.assertThisIsTheSwingThread(
-			"Must install about handler in the Swing thread");
-
-		Desktop.getDesktop().setAboutHandler(e -> winMgr.showDialog(new AboutDialog()));
-
-		installed = true;
+		Desktop.getDesktop().setAboutHandler(
+			e -> DockingWindowManager.showDialog(new AboutDialog()));
 	}
 }

@@ -20,10 +20,9 @@ import java.awt.Component;
 import java.util.*;
 
 import javax.swing.*;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 
 import docking.DialogComponentProvider;
+import docking.tool.ToolConstants;
 import docking.widgets.table.*;
 import ghidra.framework.model.*;
 import ghidra.framework.project.tool.GhidraToolTemplate;
@@ -42,7 +41,7 @@ public class PickToolDialog extends DialogComponentProvider {
 		this.tool = tool;
 		this.domainClass = domainClass;
 
-		setHelpLocation(new HelpLocation("Tool", "Set Tool Associations"));
+		setHelpLocation(new HelpLocation(ToolConstants.TOOL_HELP_TOPIC, "Set Tool Associations"));
 
 		addWorkPanel(createWorkPanel());
 
@@ -64,17 +63,14 @@ public class PickToolDialog extends DialogComponentProvider {
 		table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		table.setDefaultRenderer(GhidraToolTemplate.class, new ToolTemplateRenderer());
 
-		table.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
-			@Override
-			public void valueChanged(ListSelectionEvent e) {
-				if (e.getValueIsAdjusting()) {
-					return;
-				}
-
-				int selectedRow = table.getSelectedRow();
-				ToolTemplate template = model.getRowObject(selectedRow);
-				okButton.setEnabled(template != null);
+		table.getSelectionModel().addListSelectionListener(e -> {
+			if (e.getValueIsAdjusting()) {
+				return;
 			}
+
+			int selectedRow = table.getSelectedRow();
+			ToolTemplate template = model.getRowObject(selectedRow);
+			okButton.setEnabled(template != null);
 		});
 
 		loadList();

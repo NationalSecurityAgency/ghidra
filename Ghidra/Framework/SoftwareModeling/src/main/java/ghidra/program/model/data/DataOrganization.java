@@ -38,7 +38,7 @@ public interface DataOrganization {
 	 * @return the left shift amount for shifted-pointers.
 	 */
 	int getPointerShift();
-	
+
 	/**
 	 * @return true if the "char" type is signed
 	 */
@@ -127,6 +127,12 @@ public interface DataOrganization {
 	int getSizeAlignment(int size) throws NoValueException;
 
 	/**
+	 * Get the composite bitfield packing information associated with this data organization.
+	 * @return composite bitfield packing information
+	 */
+	BitFieldPacking getBitFieldPacking();
+
+	/**
 	 * Remove all entries from the size alignment map
 	 */
 	void clearSizeAlignmentMap();
@@ -154,10 +160,11 @@ public interface DataOrganization {
 	String getIntegerCTypeApproximation(int size, boolean signed);
 
 	/**
-	 * Determines the alignment value for the indicated data type. (i.e. how the dat type gets
-	 * aligned within other data types.)
+	 * Determines the alignment value for the indicated data type. (i.e. how the data type gets
+	 * aligned within other data types.)  NOTE: the alignment of bitfields is dependent upon packing
+	 * rules which must be considered at the composite level.
 	 * @param dataType the data type
-	 * @param dtSize the data type's size
+	 * @param dtSize the data type's size or component size
 	 * @return the alignment
 	 */
 	int getAlignment(DataType dataType, int dtSize);
@@ -174,5 +181,4 @@ public interface DataOrganization {
 	 * @return the aligned offset for the data type
 	 */
 	int getAlignmentOffset(int minimumOffset, DataType dataType, int dtSize);
-
 }

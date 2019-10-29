@@ -1,0 +1,2083 @@
+# common include file for HCS08, HC08 and HC05(6805) constructors
+
+define endian=big;
+define alignment=1;
+
+define space RAM      type=ram_space      size=2  default;
+define space register type=register_space size=1;
+
+@define VECTOR_SWI "0xFFFC"
+
+################################################################
+# Registers
+################################################################
+
+define register offset=0x00 size=1 [ A ];
+
+@if defined(HC05)
+define register offset=0x10 size=1 [ X ];
+@elif  defined(HCS08) || defined(HC08)
+define register offset=0x10 size=2 [ HIX ]; # H:X in the manual
+define register offset=0x10 size=1 [ HI X ];
+@endif
+
+define register offset=0x20 size=2 [ PC SP ];
+define register offset=0x20 size=1 [ PCH PCL SPH SPL ];
+
+define register offset=0x30 size=1 [ CCR ];
+
+@if  defined(HCS08) || defined(HC08)
+@define V		"CCR[7,1]"		# Two's complement overflow Flag
+@endif
+
+#				"CCR[6,1]"		# unused
+#				"CCR[5,1]"		# unused
+@define H		"CCR[4,1]"		# Half Carry Flag
+@define I		"CCR[3,1]"		# Maskable interrupt control bit
+@define N		"CCR[2,1]"		# Negative Flag
+@define Z		"CCR[1,1]"		# Zero Flag
+@define C		"CCR[0,1]"		# Carry/Borrow Flag
+
+
+
+################################################################
+# Tokens
+################################################################
+
+define token opbyte8 (8)
+	op     = (0,7)
+	op4_7  = (4,7)
+	op4_6  = (4,6)
+	nIndex = (1,3)
+	op0_0  = (0,0)
+;
+
+define token opbyte16 (16)
+	op16 = (0,15)
+;
+
+define token data8 (8)
+	imm8  = (0,7)
+	simm8 = (0,7) signed
+	rel   = (0,7) signed
+;
+
+define token data16 (16)
+	imm16 = (0,15)
+;
+
+
+################################################################
+# Pseudo Instructions
+################################################################
+
+@if  defined(HCS08) || defined(HC08) || defined(HC05)
+define pcodeop readIRQ;
+define pcodeop stop;
+define pcodeop wait;
+@endif
+
+@if  defined(HCS08) || defined(HC08)
+define pcodeop decimalAdjustAccumulator;
+define pcodeop decimalAdjustCarry;
+@endif
+
+@if  defined(HCS08)
+define pcodeop backgroundDebugMode;
+@endif
+
+
+################################################################
+# Addressing tables
+################################################################
+
+@if  defined(HCS08) || defined(HC08) || defined(HC05)
+opr8a_8:		imm8     is imm8       { export *:1 imm8; }
+opr16a_8:	    imm16    is imm16      { export *:1 imm16; }
+iopr8i:		    "#"imm8  is imm8       { export *[const]:1 imm8; }
+@endif
+
+@if  defined(HCS08) || defined(HC08)
+opr8a_16:	    imm8     is imm8       { export *:2 imm8; }
+iopr8is:	    "#"simm8 is simm8      { export *[const]:1 simm8; }
+iopr16i:		"#"imm16 is imm16      { export *[const]:2 imm16; }
+oprx8:			imm8     is imm8	   { export *[const]:1 imm8; }
+oprx8_8_SP:		imm8,SP  is imm8 & SP  { address:2 = SP  + zext(imm8:1); export *:1 address; }
+oprx16_8_SP:	imm16,SP is imm16 & SP { address:2 = SP  + imm16:2;      export *:1 address; }
+@endif
+
+@if  defined(HCS08)
+opr16a_16:	    imm16    is imm16      { export *:2 imm16; }
+oprx8_16_SP:	imm8,SP  is imm8 & SP  { address:2 = SP  + zext(imm8:1); export *:2 address; }
+@endif
+
+# X or HIX addressing
+
+@if defined(HC05)
+oprx8_8_X:		imm8,X   is imm8 & X   { address:1 = X   + imm8:1;       export *:1 address; }
+comma_X:		","X     is X		   { address:1 = X;                  export *:1 address; }
+@endif
+
+@if defined(HCS08) || defined(HC08)
+oprx8_8_X:		imm8,X   is imm8 & X   { address:2 = HIX + zext(imm8:1); export *:1 address; }
+oprx16_8_X:		imm16,X  is imm16 & X  { address:2 = HIX + imm16:2;      export *:1 address; }
+comma_X:		","X     is X		   { address:2 = HIX;                export *:1 address; }
+@endif
+
+@if  defined(HCS08)
+oprx8_16_X:		imm8,X   is imm8 & X   { address:2 = HIX + zext(imm8:1); export *:2 address; }
+oprx16_16_X:	imm16,X  is imm16 & X  { address:2 = HIX + imm16:2;      export *:2 address; }
+@endif
+
+
+# address decoding
+
+OP1: iopr8i		is op4_6=2; iopr8i       { export iopr8i; }
+OP1: opr8a_8	is op4_6=3; opr8a_8      { export opr8a_8; }
+OP1: opr16a_8	is op4_6=4; opr16a_8     { export opr16a_8; }
+
+@if defined(HCS08) || defined(HC08)
+OP1: oprx16_8_X	is op4_6=5; oprx16_8_X   { export oprx16_8_X; }
+@endif
+
+OP1: oprx8_8_X	is op4_6=6; oprx8_8_X    { export oprx8_8_X; }
+OP1: comma_X	is op4_6=7 & comma_X     { export comma_X; }
+
+@if  defined(HCS08) || defined(HC08)
+op2_opr8a: imm8     is imm8       { export *:1 imm8; }
+@endif
+
+
+ADDR: opr8a_8		is op4_6=3; opr8a_8		{ export opr8a_8; }
+ADDR: opr16a_8		is op4_6=4; opr16a_8	{ export opr16a_8; }
+
+@if defined(HCS08) || defined(HC08)
+ADDRI: oprx16_8_X	is op4_6=5; oprx16_8_X	{ export oprx16_8_X; }
+@endif
+
+ADDRI: oprx8_8_X	is op4_6=6; oprx8_8_X	{ export oprx8_8_X; }
+ADDRI: comma_X		is op4_6=7 & comma_X	{ export comma_X; }
+
+REL: reloc is rel    [ reloc = inst_next + rel; ]  { export *:1 reloc; }
+
+NthBit: nthbit is nIndex  [ nthbit = (1 << nIndex); ] { export *[const]:1 nthbit; }
+
+
+################################################################
+# Macros
+################################################################
+
+
+@if defined(HCS08) || defined(HC08)
+
+macro additionFlags(operand1, operand2, result) {
+	local AFmask = -1 >> 4;
+	$(H) = (((operand1 & AFmask) + (operand2 & AFmask)) & (AFmask + 1)) != 0;
+	$(V) = scarry(operand1, operand2);
+	$(N) = result s< 0;
+	$(C) = carry(operand1, operand2);
+	$(Z) = (result == 0);
+}
+
+macro additionWithCarry(operand1, operand2, result) {
+	local Ccopy = zext($(C));
+	local AFmask = -1 >> 4;
+	$(H) = (((operand1 & AFmask) + (operand2 & AFmask) + Ccopy) & (AFmask + 1)) != 0;
+	$(V) = scarry(operand1, operand2);
+	$(C) = carry(operand1, operand2);
+	local tempResult = operand1 + operand2;
+	$(C) = $(C) || carry(tempResult, Ccopy);
+	$(V) = $(V) ^^ scarry(tempResult, Ccopy);
+	result = tempResult + Ccopy;
+	$(N) =result s< 0;
+	$(Z) = (result == 0);
+}
+
+@elif defined(HC05)
+
+# V is not implemented in HC05	
+
+macro additionFlags(operand1, operand2, result) {
+	local AFmask = -1 >> 4;
+	$(H) = (((operand1 & AFmask) + (operand2 & AFmask)) & (AFmask + 1)) != 0;
+    $(N) =result s< 0;
+    $(Z) = (result == 0);
+	$(C) = carry(operand1, operand2);
+}
+
+macro additionWithCarry(operand1, operand2, result) {
+	local Ccopy = zext($(C));
+	local AFmask = -1 >> 4;
+	$(H) = (((operand1 & AFmask) + (operand2 & AFmask) + Ccopy) & (AFmask + 1)) != 0;
+	$(C) = carry(operand1, operand2);
+	local tempResult = operand1 + operand2;
+	$(C) = $(C) || carry(tempResult, Ccopy);
+	result = tempResult + Ccopy;
+    $(N) =result s< 0;
+    $(Z) = (result == 0);
+}
+
+@endif
+
+
+@if defined(HCS08) || defined(HC08)
+
+macro subtractionFlags(operand1, operand2, result) {
+	$(V) = sborrow(operand1, operand2);
+	$(N) = (result s< 0);
+	$(Z) = (result == 0);
+	$(C) = operand1 < operand2;
+}
+
+macro subtractWithCarry(operand1, operand2, result) {
+	local Ccopy = zext($(C));
+	$(V) = sborrow(operand1, operand2);
+
+	$(C) = operand1 < operand2;
+	local tempResult = operand1 - operand2;
+	$(C) = $(C) || (tempResult < Ccopy);
+	$(V) = $(V) ^^ sborrow(tempResult, Ccopy);
+	result = tempResult - Ccopy;
+	$(N) = result s< 0;
+}
+
+@elif defined(HC05)
+macro subtractionFlags(operand1, operand2, result) {
+    # V is not implemented in HC05	
+
+	$(N) = (result s< 0);
+	$(Z) = (result == 0);
+	$(C) = operand1 < operand2;
+}
+
+macro subtractWithCarry(operand1, operand2, result) {
+	local Ccopy = zext($(C));
+	# V is not implemented in HC05	
+
+	$(C) = operand1 < operand2;
+	local tempResult = operand1 - operand2;
+	$(C) = $(C) || (tempResult < Ccopy);
+	result = tempResult - Ccopy;
+	$(N) = result s< 0;
+}
+
+@endif
+
+@if defined(HCS08) || defined(HC08)
+macro V_equals_0() {
+	$(V) = 0;
+}
+@elif defined(HC05)
+macro V_equals_0() {} # empty macro because V is not implemented in HC05
+@endif
+
+@if defined(HCS08) || defined(HC08)
+macro V_equals_C() {
+	$(V) = $(C);
+}
+@elif defined(HC05)
+macro V_equals_C() {} # empty macro because V is not implemented in HC05
+@endif
+
+@if defined(HCS08) || defined(HC08)
+macro V_equals_N_xor_C() {
+	$(V) = $(N) ^ $(C);	
+}
+@elif defined(HC05)
+macro V_equals_N_xor_C() {} # empty macro because V is not implemented in HC05
+@endif
+
+@if defined(HCS08) || defined(HC08)
+macro V_CMP_flag(operand, result) {
+	$(V) = ( ((A & ~operand & ~result) | (~A & operand & result)) & 0b10000000 ) != 0;
+}
+@elif defined(HC05)
+macro V_CMP_flag(operand, result) {} # empty macro because V is not implemented in HC05
+@endif
+
+@if defined(HCS08) || defined(HC08)
+macro V_CPHX_flag(operand, result) {
+	$(V) = ( ((HIX & ~operand & ~result) | (~HIX & operand & result)) & 0x8000 ) != 0;
+}
+@elif defined(HC05)
+macro V_CPHX_flag(operand, result) {} # empty macro because V is not implemented in HC05
+@endif
+
+@if defined(HCS08) || defined(HC08)
+macro V_CPX_flag(operand, result) {
+	$(V) = ( ((X & ~operand & ~result) | (~X & operand & result)) & 0b10000000 ) != 0;
+}
+@elif defined(HC05)
+macro V_CPX_flag(operand, result) {} # empty macro because V is not implemented in HC05
+@endif
+
+@if defined(HCS08) || defined(HC08)
+macro V_DEC_flag(operand, result) {
+	$(V) = ( (~result & operand) & 0b10000000 ) != 0;
+}
+@elif defined(HC05)
+macro V_DEC_flag(operand, result) {} # empty macro because V is not implemented in HC05
+@endif
+
+@if defined(HCS08) || defined(HC08)
+macro V_INC_flag(operand, result) {
+	$(V) = ( (~operand & result) & 0b10000000 ) != 0;
+}
+@elif defined(HC05)
+macro V_INC_flag(operand, result) {} # empty macro because V is not implemented in HC05
+@endif
+
+@if defined(HCS08) || defined(HC08)
+macro V_NEG_flag(operand, result) {
+	$(V) = ( (operand & result) & 0b10000000 ) != 0;
+}
+@elif defined(HC05)
+macro V_NEG_flag(operand, result) {} # empty macro because V is not implemented in HC05
+@endif
+
+@if defined(HCS08) || defined(HC08) || defined(HC05)
+macro Pull1(operand) {
+	SP = SP + 1;
+	operand = *:1 SP;
+}
+@endif
+
+@if defined(HCS08) || defined(HC08) || defined(HC05)
+macro Pull2(operand) {
+	SP = SP + 1;
+	operand = *:2 SP;
+	SP = SP + 1;
+}
+@endif
+
+@if defined(HCS08) || defined(HC08) || defined(HC05)
+macro Push1(operand) {
+	*:1 SP = operand;
+	SP = SP - 1;
+}
+@endif
+
+@if defined(HCS08) || defined(HC08) || defined(HC05)
+macro Push2(operand) {
+	SP = SP - 1;
+	*:2 SP = operand;
+	SP = SP - 1;
+}
+@endif
+
+################################################################
+# Constructors
+################################################################
+
+@if  defined(HCS08) || defined(HC08) || defined(HC05)
+:ADC OP1                 is (op=0xA9 | op=0xB9 | op=0xC9 | op=0xD9 | op=0xE9 | op=0xF9) ... & OP1
+{
+	op1:1 = OP1;
+
+	additionWithCarry(A, op1, A);
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08)
+:ADC oprx16_8_SP                 is (op16=0x9ED9); oprx16_8_SP
+{
+	op1:1 = oprx16_8_SP;
+
+	additionWithCarry(A, op1, A);
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08)
+:ADC oprx8_8_SP                 is (op16=0x9EE9); oprx8_8_SP
+{
+	op1:1 = oprx8_8_SP;
+
+	additionWithCarry(A, op1, A);
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08) || defined(HC05)
+:ADD OP1                 is (op=0xAB | op=0xBB | op=0xCB | op=0xDB | op=0xEB | op=0xFB) ... & OP1
+{ 
+	op1:1 = OP1;
+
+	result:1 = A + op1;
+	additionFlags(A, op1,result);
+	A = result;
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08)
+:ADD oprx16_8_SP                 is (op16=0x9EDB); oprx16_8_SP
+{ 
+	op1:1 = oprx16_8_SP;
+
+	result:1 = A + op1;
+	additionFlags(A, op1,result);
+	A = result;
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08)
+:ADD oprx8_8_SP                 is (op16=0x9EEB); oprx8_8_SP
+{ 
+	op1:1 = oprx8_8_SP;
+
+	result:1 = A + op1;
+	additionFlags(A, op1,result);
+	A = result;
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08)
+:AIS iopr8is                 is op=0xA7; iopr8is
+{
+	SP = SP + sext(iopr8is);	
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08)
+:AIX iopr8is                 is op=0xAF; iopr8is
+{
+	HIX = HIX + sext(iopr8is);
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08) || defined(HC05)
+:AND OP1                 is (op=0xA4 | op=0xB4 | op=0xC4 | op=0xD4 | op=0xE4 | op=0xF4) ... & OP1
+{ 
+	A = A & OP1;
+	V_equals_0(); 
+	$(Z) = (A == 0);
+	$(N) = (A s< 0);
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08)
+:AND oprx16_8_SP                 is (op16=0x9ED4); oprx16_8_SP
+{ 
+	A = A & oprx16_8_SP;
+	V_equals_0(); 
+	$(Z) = (A == 0);
+	$(N) = (A s< 0);
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08)
+:AND oprx8_8_SP                 is (op16=0x9EE4); oprx8_8_SP
+{ 
+	A = A & oprx8_8_SP;
+	V_equals_0(); 
+	$(Z) = (A == 0);
+	$(N) = (A s< 0);
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08) || defined(HC05)
+:ASLA                    is op=0x48 
+{
+	$(C) = A >> 7;
+	A = A << 1;
+	$(Z) = (A == 0);
+	$(N) = (A s< 0);	
+	V_equals_N_xor_C();	
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08) || defined(HC05)
+:ASLX                    is op=0x58 
+{
+	$(C) = X >> 7;
+	X = X << 1;
+	$(Z) = (X == 0);
+	$(N) = (X s< 0);	
+	V_equals_N_xor_C();	
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08) || defined(HC05)
+:ASL OP1                 is (op=0x38 | op=0x68 | op=0x78) ... & OP1 
+{
+	tmp:1 = OP1;
+	$(C) = tmp >> 7;
+	tmp = tmp << 1;
+	OP1 = tmp;
+	$(Z) = (tmp == 0);
+	$(N) = (tmp s< 0);
+	V_equals_N_xor_C();	
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08)
+:ASL oprx8_8_SP                 is (op16=0x9E68); oprx8_8_SP
+{
+	tmp:1 = oprx8_8_SP;
+	$(C) = tmp >> 7;
+	tmp = tmp << 1;
+	oprx8_8_SP = tmp;
+	$(Z) = (tmp == 0);
+	$(N) = (tmp s< 0);
+	V_equals_N_xor_C();	
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08) || defined(HC05)
+:ASRA                    is op=0x47 
+{
+	$(C) = A & 1;
+	A = A s>> 1;
+	$(Z) = (A == 0);
+	$(N) = (A s< 0);	
+	V_equals_N_xor_C();	
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08) || defined(HC05)
+:ASRX                    is op=0x57 
+{
+	$(C) = X & 1;
+	X = X s>> 1;
+	$(Z) = (X == 0);
+	$(N) = (X s< 0);	
+	V_equals_N_xor_C();	
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08) || defined(HC05)
+:ASR OP1                 is (op=0x37 | op=0x67 | op=0x77) ... & OP1 
+{
+	tmp:1 = OP1;
+	$(C) = tmp & 1;
+	tmp = tmp s>> 1;
+	OP1 = tmp;
+	$(Z) = (tmp == 0);
+	$(N) = (tmp s< 0);	
+	V_equals_N_xor_C();	
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08)
+:ASR oprx8_8_SP                 is (op16=0x9E67); oprx8_8_SP
+{
+	tmp:1 = oprx8_8_SP;
+	$(C) = tmp & 1;
+	tmp = tmp s>> 1;
+	oprx8_8_SP = tmp;
+	$(Z) = (tmp == 0);
+	$(N) = (tmp s< 0);	
+	V_equals_N_xor_C();	
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08) || defined(HC05)
+:BCC REL                 is op=0x24; REL
+{
+	if ($(C) == 0) goto REL;
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08) || defined(HC05)
+:BCLR nIndex, opr8a_8          is op4_7=1 & nIndex & NthBit & op0_0=1; opr8a_8
+{
+	opr8a_8 = opr8a_8 & ~NthBit;
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08) || defined(HC05)
+:BCS REL                 is op=0x25; REL
+{
+	if ($(C) == 1) goto REL;
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08) || defined(HC05)
+:BEQ REL                 is op=0x27; REL
+{
+	if ($(Z) == 1) goto REL;
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08)
+:BGE REL                 is op=0x90; REL
+{
+	if (($(N) ^ $(V)) == 1) goto REL;
+}
+@endif
+
+@if  defined(HCS08)
+:BGND                    is op=0x82
+{
+	backgroundDebugMode();
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08)
+:BGT REL                 is op=0x92; REL
+{
+	if (($(Z) | ($(N) ^ $(V))) == 0) goto REL;
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08) || defined(HC05)
+:BHCC REL                is op=0x28; REL
+{
+	if ($(H) == 0) goto REL;
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08) || defined(HC05)
+:BHCS REL                is op=0x29; REL
+{
+	if ($(H) == 1) goto REL;
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08) || defined(HC05)
+:BHI REL                 is op=0x22; REL
+{
+	if (($(C) | $(Z)) == 0) goto REL;
+}
+@endif
+
+#:BHS REL	is op=0x24; REL		See BCC
+
+@if  defined(HCS08) || defined(HC08) || defined(HC05)
+:BIH REL                 is op=0x2F; REL
+{
+	tmp:1 = readIRQ();
+	if (tmp == 1) goto REL;
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08) || defined(HC05)
+:BIL REL                 is op=0x2E; REL
+{
+	tmp:1 = readIRQ();
+	if (tmp == 0) goto REL;
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08) || defined(HC05)
+:BIT OP1                 is (op=0xA5 | op=0xB5 | op=0xC5 | op=0xD5 | op=0xE5 | op=0xF5) ... & OP1
+{
+	result:1 = A & OP1;
+	$(Z) = (result == 0);
+	$(N) = (result s< 0);
+	V_equals_0();
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08)
+:BIT oprx16_8_SP                 is (op16=0x9ED5); oprx16_8_SP
+{
+	result:1 = A & oprx16_8_SP;
+	$(Z) = (result == 0);
+	$(N) = (result s< 0);
+	V_equals_0();
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08)
+:BIT oprx8_8_SP                 is (op16=0x9EE5); oprx8_8_SP
+{
+	result:1 = A & oprx8_8_SP;
+	$(Z) = (result == 0);
+	$(N) = (result s< 0);
+	V_equals_0();
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08)
+:BLE REL                 is op=0x93; REL
+{
+	if ($(Z) | ($(N) ^ $(V))) goto REL;
+}
+@endif
+
+#:BLO REL	is op=0x25; REL		see BCS
+
+@if  defined(HCS08) || defined(HC08) || defined(HC05)
+:BLS REL                 is op=0x23; REL
+{
+	if (($(C) | $(Z)) == 1) goto REL;
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08)
+:BLT REL                 is op=0x91; REL
+{
+	if (($(N) ^ $(V)) == 1) goto REL;
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08) || defined(HC05)
+:BMC REL                 is op=0x2C; REL
+{
+	if ($(I) == 0) goto REL;
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08) || defined(HC05)
+:BMI REL                 is op=0x2B; REL
+{
+	if ($(N) == 1) goto REL;
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08) || defined(HC05)
+:BMS REL                 is op=0x2D; REL
+{
+	if ($(I) == 1) goto REL;
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08) || defined(HC05)
+:BNE REL                 is op=0x26; REL
+{
+	if ($(Z) == 0) goto REL;
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08) || defined(HC05)
+:BPL REL                 is op=0x2A; REL
+{
+	if ($(N) == 0) goto REL;
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08) || defined(HC05)
+:BRA REL                 is op=0x20; REL
+{
+	goto REL;
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08) || defined(HC05)
+:BRCLR nIndex, opr8a_8, REL    is op4_7=0 & nIndex & NthBit & op0_0=1; opr8a_8; REL
+{
+	result:1 = opr8a_8 & NthBit;
+	$(C) = (result != 0);
+	if (result == 0) goto REL;
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08) || defined(HC05)
+# branch never is a two-byte nop
+:BRN REL                 is op=0x21; REL
+{
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08) || defined(HC05)
+:BRSET nIndex, opr8a_8, REL    is op4_7=0 & nIndex & NthBit & op0_0=0; opr8a_8; REL
+{
+	result:1 = opr8a_8 & NthBit;
+	$(C) = (result != 0);
+	if (result != 0) goto REL;
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08) || defined(HC05)
+:BSET nIndex, opr8a_8          is op4_7=1 & nIndex & NthBit & op0_0=0; opr8a_8
+{
+	opr8a_8 = opr8a_8 | NthBit;
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08) || defined(HC05)
+:BSR REL                 is op=0xAD; REL 
+{
+	tmp:2 = inst_next;
+	Push2( tmp );
+	
+	call REL;
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08)
+:CBEQ opr8a_8, REL           is (op=0x31); opr8a_8; REL 
+{
+	if (A == opr8a_8) goto REL;
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08)
+:CBEQA iopr8i, REL          is op=0x41; iopr8i; REL
+{
+	if (A == iopr8i) goto REL;
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08)
+:CBEQX iopr8i, REL          is op=0x51; iopr8i; REL
+{
+	if (X == iopr8i) goto REL;
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08)
+:CBEQ oprx8, X"+,", REL      is (op=0x61) & X; oprx8; REL 
+{
+	tmp:1 = *:1 (HIX + zext(oprx8));
+	HIX = HIX + 1;
+	
+	if (A == tmp) goto REL;
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08)
+:CBEQ ","X"+,", REL      is (op=0x71) & X; REL 
+{
+	tmp:1 = *:1 (HIX);
+	HIX = HIX + 1;
+	
+	if (A == tmp) goto REL;
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08)
+:CBEQ oprx8_8_SP, REL      is (op16=0x9E61); oprx8_8_SP; REL 
+{
+	if (A == oprx8_8_SP) goto REL;
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08) || defined(HC05)
+:CLC                     is op=0x98
+{
+	$(C) = 0;
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08) || defined(HC05)
+:CLI                     is op=0x9A
+{
+	$(I) = 0;
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08) || defined(HC05)
+:CLRA                    is op=0x4F 
+{
+	A = 0;
+	$(Z) = 1;
+	$(N) = 0;
+	V_equals_0();
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08) || defined(HC05)
+:CLRX                    is op=0x5F 
+{
+	X = 0;
+	$(Z) = 1;
+	$(N) = 0;
+	V_equals_0();
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08)
+:CLRH                    is op=0x8C 
+{
+	HI = 0;
+	$(Z) = 1;
+	$(N) = 0;
+	V_equals_0();
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08) || defined(HC05)
+:CLR OP1                 is (op=0x3F | op=0x6F | op=0x7F) ... & OP1 
+{
+	OP1 = 0;
+	$(Z) = 1;
+	$(N) = 0;
+	V_equals_0();
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08)
+:CLR oprx8_8_SP                 is (op16=0x9E6F); oprx8_8_SP
+{
+	oprx8_8_SP = 0;
+	$(Z) = 1;
+	$(N) = 0;
+	V_equals_0();
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08) || defined(HC05)
+:CMP OP1                 is (op=0xA1 | op=0xB1 | op=0xC1 | op=0xD1 | op=0xE1 | op=0xF1) ... & OP1
+{ 
+	op1:1 = OP1;
+	tmp:1 = A - op1;
+	$(Z) = (tmp == 0);
+	$(N) = (tmp s< 0);
+	$(C) = (op1 > A);
+	V_CMP_flag(op1, tmp);
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08)
+:CMP oprx16_8_SP                 is (op16=0x9ED1); oprx16_8_SP
+{ 
+	op1:1 = oprx16_8_SP;
+	tmp:1 = A - op1;
+	$(Z) = (tmp == 0);
+	$(N) = (tmp s< 0);
+	$(C) = (op1 > A);
+	V_CMP_flag(op1, tmp);
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08)
+:CMP oprx8_8_SP                 is (op16=0x9EE1); oprx8_8_SP
+{ 
+	op1:1 = oprx8_8_SP;
+	tmp:1 = A - op1;
+	$(Z) = (tmp == 0);
+	$(N) = (tmp s< 0);
+	$(C) = (op1 > A);
+	V_CMP_flag(op1, tmp);
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08) || defined(HC05)
+:COMA                    is op=0x43 
+{
+	A = ~A;
+	$(Z) = (A == 0);
+	$(N) = (A s< 0);
+	$(C) = 1;
+	V_equals_0();
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08) || defined(HC05)
+:COMX                    is op=0x53 
+{
+	X = ~X;
+	$(Z) = (X == 0);
+	$(N) = (X s< 0);
+	$(C) = 1;
+	V_equals_0();
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08) || defined(HC05)
+:COM OP1                 is (op=0x33 | op=0x63 | op=0x73) ... & OP1 
+{
+	tmp:1 = ~OP1;
+	OP1 = tmp;
+	$(Z) = (tmp == 0);
+	$(N) = (tmp s< 0);
+	$(C) = 1;
+	V_equals_0();
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08)
+:COM oprx8_8_SP                 is (op16=0x9E63); oprx8_8_SP
+{
+	tmp:1 = ~oprx8_8_SP;
+	oprx8_8_SP = tmp;
+	$(Z) = (tmp == 0);
+	$(N) = (tmp s< 0);
+	$(C) = 1;
+	V_equals_0();
+}
+@endif
+
+@if  defined(HCS08)
+:CPHX opr16a_16       is (op=0x3E); opr16a_16
+{ 
+	op1:2 = opr16a_16;
+	tmp:2 = HIX - op1;
+	$(Z) = (tmp == 0);
+	$(N) = (tmp s< 0);
+	$(C) = (op1 > HIX);
+	V_CPHX_flag(op1, tmp);
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08)
+:CPHX iopr16i       is (op=0x65); iopr16i
+{ 
+	op1:2 = iopr16i;
+	tmp:2 = HIX - op1;
+	$(Z) = (tmp == 0);
+	$(N) = (tmp s< 0);
+	$(C) = (op1 > HIX);
+	V_CPHX_flag(op1, tmp);
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08)
+:CPHX opr8a_16       is (op=0x75); opr8a_16
+{ 
+	op1:2 = *:2 opr8a_16;
+	tmp:2 = HIX - op1;
+	$(Z) = (tmp == 0);
+	$(N) = (tmp s< 0);
+	$(C) = (op1 > HIX);
+	V_CPHX_flag(op1, tmp);
+}
+@endif
+
+@if  defined(HCS08)
+:CPHX oprx8_16_SP       is (op16=0x9EF3); oprx8_16_SP
+{ 
+	op1:2 = oprx8_16_SP;
+	tmp:2 = HIX - op1;
+	$(Z) = (tmp == 0);
+	$(N) = (tmp s< 0);
+	$(C) = (op1 > HIX);
+	V_CPHX_flag(op1, tmp);
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08) || defined(HC05)
+:CPX OP1                 is (op=0xA3 | op=0xB3 | op=0xC3 | op=0xD3 | op=0xE3 | op=0xF3) ... & OP1
+{ 
+	op1:1 = OP1;
+	tmp:1 = X - op1;
+	$(Z) = (tmp == 0);
+	$(N) = (tmp s< 0);
+	$(C) = (op1 > X);
+	V_CPX_flag(op1, tmp);
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08)
+:CPX oprx16_8_SP                 is (op16=0x9ED3); oprx16_8_SP
+{ 
+	op1:1 = oprx16_8_SP;
+	tmp:1 = X - op1;
+	$(Z) = (tmp == 0);
+	$(N) = (tmp s< 0);
+	$(C) = (op1 > X);
+	V_CPX_flag(op1, tmp);
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08)
+:CPX oprx8_8_SP                 is (op16=0x9EE3); oprx8_8_SP
+{ 
+	op1:1 = oprx8_8_SP;
+	tmp:1 = X - op1;
+	$(Z) = (tmp == 0);
+	$(N) = (tmp s< 0);
+	$(C) = (op1 > X);
+	V_CPX_flag(op1, tmp);
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08)
+:DAA                     is op=0x72 
+{
+	A = decimalAdjustAccumulator(A, $(C), $(H));
+	$(C) = decimalAdjustCarry(A, $(C), $(H));
+	$(Z) = (A == 0);
+	$(N) = (A s< 0);
+	# V is undefined
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08)
+:DBNZA REL               is op=0x4B; REL
+{
+	A = A - 1;
+	if (A != 0) goto REL;
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08)
+:DBNZX REL               is op=0x5B; REL
+{
+	X = X - 1;
+	if (X != 0) goto REL;
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08)
+:DBNZ OP1, REL           is (op=0x3B | op=0x6B | op=0x7B) ... & OP1; REL 
+{
+	OP1 = OP1 - 1;
+	if (OP1 != 0) goto REL;
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08)
+:DBNZ oprx8_8_SP, REL                 is (op16=0x9E6B); oprx8_8_SP; REL
+{
+	tmp:1 = oprx8_8_SP - 1;
+	oprx8_8_SP = tmp;
+	if (tmp != 0) goto REL;
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08) || defined(HC05)
+:DECA                    is op=0x4A 
+{
+	tmp:1 = A;
+	A = tmp - 1;
+	$(Z) = (A == 0);
+	$(N) = (A s< 0);
+	V_DEC_flag(tmp, A);
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08) || defined(HC05)
+:DECX                    is op=0x5A 
+{
+	tmp:1 = X;
+	X = tmp - 1;
+	$(Z) = (X == 0);
+	$(N) = (X s< 0);
+	V_DEC_flag(tmp, X);
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08) || defined(HC05)
+:DEC OP1                 is (op=0x3A | op=0x6A | op=0x7A) ... & OP1 
+{
+	tmp:1 = OP1;
+	result:1 = tmp - 1;
+	OP1 = result;
+	$(Z) = (result == 0);
+	$(N) = (result s< 0);
+	V_DEC_flag(tmp, result);
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08)
+:DEC oprx8_8_SP                 is (op16=0x9E6A); oprx8_8_SP
+{
+	tmp:1 = oprx8_8_SP;
+	result:1 = tmp - 1;
+	oprx8_8_SP = result;
+	$(Z) = (result == 0);
+	$(N) = (result s< 0);
+	V_DEC_flag(tmp, result);
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08)
+:DIV                     is op=0x52 
+{
+	tmp:2 = (zext(HI) << 8) | (zext(A));
+	resultQ:2 = tmp / zext(X);
+	A = resultQ:1;
+	resultR:2 = tmp % zext(X);
+	HI = resultR:1;
+	$(Z) = (A == 0);
+	$(C) = (X == 0) | (resultQ > 0x00FF);
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08) || defined(HC05)
+:EOR OP1                 is (op=0xA8 | op=0xB8 | op=0xC8 | op=0xD8 | op=0xE8 | op=0xF8) ... & OP1
+{ 
+	op1:1 = OP1;
+	A = A ^ op1;
+	$(Z) = (A == 0);
+	$(N) = (A s< 0);
+	V_equals_0();
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08)
+:EOR oprx16_8_SP                 is (op16=0x9ED8); oprx16_8_SP
+{ 
+	op1:1 = oprx16_8_SP;
+	A = A ^ op1;
+	$(Z) = (A == 0);
+	$(N) = (A s< 0);
+	V_equals_0();
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08)
+:EOR oprx8_8_SP                 is (op16=0x9EE8); oprx8_8_SP
+{ 
+	op1:1 = oprx8_8_SP;
+	A = A ^ op1;
+	$(Z) = (A == 0);
+	$(N) = (A s< 0);
+	V_equals_0();
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08) || defined(HC05)
+:INCA                    is op=0x4C 
+{
+	tmp:1 = A;
+	A = tmp + 1;
+	$(Z) = (A == 0);
+	$(N) = (A s< 0);
+	V_INC_flag(tmp, A);
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08) || defined(HC05)
+:INCX                    is op=0x5C 
+{
+	tmp:1 = X;
+	X = tmp + 1;
+	$(Z) = (X == 0);
+	$(N) = (X s< 0);
+	V_INC_flag(tmp, X);
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08) || defined(HC05)
+:INC OP1                 is (op=0x3C | op=0x6C | op=0x7C) ... & OP1 
+{
+	tmp:1 = OP1;
+	result:1 = tmp + 1;
+	OP1 = result;
+	$(Z) = (result == 0);
+	$(N) = (result s< 0);
+	V_INC_flag(tmp, result);
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08)
+:INC oprx8_8_SP                 is (op16=0x9E6C); oprx8_8_SP
+{
+	tmp:1 = oprx8_8_SP;
+	result:1 = tmp + 1;
+	oprx8_8_SP = result;
+	$(Z) = (result == 0);
+	$(N) = (result s< 0);
+	V_INC_flag(tmp, result);
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08) || defined(HC05)
+:JMP ADDR                is (op=0xBC | op=0xCC) ... & ADDR
+{
+	goto ADDR;
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08) || defined(HC05)
+:JMP ADDRI               is (op=0xDC | op=0xEC | op=0xFC) ... & ADDRI
+{
+	goto [ADDRI];
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08) || defined(HC05)
+:JSR ADDR                is (op=0xBD | op=0xCD) ... & ADDR
+{
+	tmp:2 = inst_next;
+	Push2( tmp );
+	 
+	call ADDR;
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08) || defined(HC05)
+:JSR ADDRI               is (op=0xDD | op=0xED | op=0xFD) ... & ADDRI
+{
+	tmp:2 = inst_next;
+	Push2( tmp );
+	 
+	call [ADDRI];
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08) || defined(HC05)
+:LDA OP1                 is (op=0xA6 | op=0xB6 | op=0xC6 | op=0xD6 | op=0xE6 | op=0xF6) ... & OP1
+{ 
+	A = OP1;
+	$(Z) = (A == 0);
+	$(N) = (A s< 0);
+	V_equals_0();
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08)
+:LDA oprx16_8_SP                 is (op16=0x9ED6); oprx16_8_SP
+{ 
+	A = oprx16_8_SP;
+	$(Z) = (A == 0);
+	$(N) = (A s< 0);
+	V_equals_0();
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08)
+:LDA oprx8_8_SP                 is (op16=0x9EE6); oprx8_8_SP
+{ 
+	A = oprx8_8_SP;
+	$(Z) = (A == 0);
+	$(N) = (A s< 0);
+	V_equals_0();
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08)
+:LDHX iopr16i           is (op=0x45); iopr16i
+{
+	HIX = iopr16i; 
+	$(Z) = (HIX == 0);
+	$(N) = (HI s< 0);
+	V_equals_0();
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08)
+:LDHX opr8a_16               is (op=0x55); opr8a_16
+{
+	HIX = opr8a_16; 
+	$(Z) = (HIX == 0);
+	$(N) = (HI s< 0);
+	V_equals_0();
+}
+@endif
+
+@if  defined(HCS08)
+:LDHX opr16a_16              is (op=0x32); opr16a_16
+{
+	HIX = opr16a_16; 
+	$(Z) = (HIX == 0);
+	$(N) = (HI s< 0);
+	V_equals_0();
+}
+@endif
+
+@if  defined(HCS08)
+:LDHX ","X              is (op16=0x9EAE) & X
+{
+	HIX = *:2 (HIX); 
+	$(Z) = (HIX == 0);
+	$(N) = (HI s< 0);
+	V_equals_0();
+}
+@endif
+
+@if  defined(HCS08)
+:LDHX oprx16_16_X              is (op16=0x9EBE); oprx16_16_X
+{
+	HIX = oprx16_16_X; 
+	$(Z) = (HIX == 0);
+	$(N) = (HI s< 0);
+	V_equals_0();
+}
+@endif
+
+@if  defined(HCS08)
+:LDHX oprx8_16_X              is (op16=0x9ECE); oprx8_16_X
+{
+	HIX = oprx8_16_X; 
+	$(Z) = (HIX == 0);
+	$(N) = (HI s< 0);
+	V_equals_0();
+}
+@endif
+
+@if  defined(HCS08)
+:LDHX oprx8_16_SP              is (op16=0x9EFE); oprx8_16_SP
+{
+	HIX = oprx8_16_SP; 
+	$(Z) = (HIX == 0);
+	$(N) = (HI s< 0);
+	V_equals_0();
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08) || defined(HC05)
+:LDX OP1                 is (op=0xAE | op=0xBE | op=0xCE | op=0xDE | op=0xEE | op=0xFE) ... & OP1
+{ 
+	X = OP1;
+	$(Z) = (X == 0);
+	$(N) = (X s< 0);
+	V_equals_0();
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08)
+:LDX oprx16_8_SP                 is (op16=0x9EDE); oprx16_8_SP
+{ 
+	X = oprx16_8_SP;
+	$(Z) = (X == 0);
+	$(N) = (X s< 0);
+	V_equals_0();
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08)
+:LDX oprx8_8_SP                 is (op16=0x9EEE); oprx8_8_SP
+{ 
+	X = oprx8_8_SP;
+	$(Z) = (X == 0);
+	$(N) = (X s< 0);
+	V_equals_0();
+}
+@endif
+
+## Logical Shift left is same as arithmetic shift left
+#:LSLA		is op=0x48 
+#:LSLX		is op=0x58 
+#:LSL OP1	is (op=0x38 | op=0x68 | op=0x78) ... & OP1 
+
+@if  defined(HCS08) || defined(HC08) || defined(HC05)
+:LSRA                    is op=0x44 
+{
+	$(C) = (A & 1);
+	A = (A >> 1);
+	$(Z) = (A == 0);
+	$(N) = 0;
+	V_equals_C();	
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08) || defined(HC05)
+:LSRX                    is op=0x54 
+{
+	$(C) = (X & 1);
+	X = (X >> 1);
+	$(Z) = (X == 0);
+	$(N) = 0;	
+	V_equals_C();	
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08) || defined(HC05)
+:LSR OP1                 is (op=0x34 | op=0x64 | op=0x74) ... & OP1 
+{
+	tmp:1 = OP1;
+	$(C) = tmp & 1;
+	tmp = tmp >> 1;
+	OP1 = tmp;
+	$(Z) = (tmp == 0);
+	$(N) = 0;
+	V_equals_C();	
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08)
+:LSR oprx8_8_SP                 is (op16=0x9E64); oprx8_8_SP
+{
+	tmp:1 = oprx8_8_SP;
+	$(C) = tmp & 1;
+	tmp = tmp >> 1;
+	oprx8_8_SP = tmp;
+	$(Z) = (tmp == 0);
+	$(N) = 0;
+	V_equals_C();	
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08)
+:MOV opr8a_8, op2_opr8a	is (op=0x4E); opr8a_8; op2_opr8a
+{
+	result:1 = opr8a_8;
+	op2_opr8a = result;
+	V_equals_0();
+	$(N) = (result s< 0);
+	$(Z) = (result == 0);
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08)
+:MOV opr8a_8, X"+"     is (op=0x5E); opr8a_8 & X
+{
+	result:1 = opr8a_8;
+	*:1 HIX = result;
+	HIX = HIX + 1;
+	V_equals_0();
+	$(N) = (result s< 0);
+	$(Z) = (result == 0);
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08)
+:MOV iopr8i, op2_opr8a  is (op=0x6E); iopr8i; op2_opr8a
+{
+	result:1 = iopr8i;
+	op2_opr8a = result;
+	V_equals_0();
+	$(N) = (result s< 0);
+	$(Z) = (result == 0);
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08)
+:MOV ","X"+," op2_opr8a  is (op=0x7E) & X; op2_opr8a
+{
+	result:1 = *:1 HIX;
+	op2_opr8a = result;
+	HIX = HIX + 1;
+	V_equals_0();
+	$(N) = (result s< 0);
+	$(Z) = (result == 0);
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08) || defined(HC05)
+:MUL                     is op=0x42
+{
+	op1:2 = zext(A);
+	op2:2 = zext(X);
+	result:2 = op1 * op2;
+	A = result:1;
+	X = result(1);
+	$(H) = 0;
+	$(C) = 0;
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08) || defined(HC05)
+:NEGA                    is op=0x40 
+{
+	tmp:1 = A;
+	A = -tmp;
+	$(C) = (A != 0);
+	$(Z) = (A == 0);
+	$(N) = (A s< 0);
+	V_NEG_flag(tmp, A); 
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08) || defined(HC05)
+:NEGX                    is op=0x50 
+{
+	tmp:1 = X;
+	X = -tmp;
+	$(C) = (X != 0);
+	$(Z) = (X == 0);
+	$(N) = (X s< 0);
+	V_NEG_flag(tmp, X); 
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08) || defined(HC05)
+:NEG OP1                 is (op=0x30 | op=0x60 | op=0x70) ... & OP1 
+{
+	tmp:1 = OP1;
+	result:1 = -tmp;
+	OP1 = result;
+	$(C) = (result != 0);
+	$(Z) = (result == 0);
+	$(N) = (result s< 0);
+	V_NEG_flag(tmp, result); 
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08)
+:NEG oprx8_8_SP                 is (op16=0x9E60); oprx8_8_SP
+{
+	tmp:1 = oprx8_8_SP;
+	result:1 = -tmp;
+	oprx8_8_SP = result;
+	$(C) = (result != 0);
+	$(Z) = (result == 0);
+	$(N) = (result s< 0);
+	V_NEG_flag(tmp, result); 
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08) || defined(HC05)
+:NOP                     is op = 0x9D
+{
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08)
+:NSA                     is op = 0x62
+{
+	A = (A >> 4) | (A << 4);
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08) || defined(HC05)
+:ORA OP1                 is (op=0xAA | op=0xBA | op=0xCA | op=0xDA | op=0xEA | op=0xFA) ... & OP1
+{ 
+	A = A | OP1; 
+	$(Z) = (A == 0);
+	$(N) = (A s< 0);
+	V_equals_0();
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08)
+:ORA oprx16_8_SP                 is (op16=0x9EDA); oprx16_8_SP
+{ 
+	A = A | oprx16_8_SP; 
+	$(Z) = (A == 0);
+	$(N) = (A s< 0);
+	V_equals_0();
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08)
+:ORA oprx8_8_SP                 is (op16=0x9EEA); oprx8_8_SP
+{ 
+	A = A | oprx8_8_SP; 
+	$(Z) = (A == 0);
+	$(N) = (A s< 0);
+	V_equals_0();
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08)
+:PSHA                    is op = 0x87
+{
+	Push1( A );
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08)
+:PSHH                    is op = 0x8B
+{
+	Push1( HI );
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08)
+:PSHX                    is op = 0x89
+{
+	Push1( X );
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08)
+:PULA                    is op = 0x86
+{
+	Pull1( A );
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08)
+:PULH                    is op = 0x8A
+{
+	Pull1( HI );
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08)
+:PULX                    is op = 0x88
+{
+	Pull1( X );
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08) || defined(HC05)
+:ROLA                    is op=0x49 
+{
+	tmpC:1 = $(C) ;
+	$(C) = A >> 7;
+	A = (A << 1) | tmpC;
+	$(Z) = (A == 0);
+	$(N) = (A s< 0);
+	V_equals_N_xor_C();	
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08) || defined(HC05)
+:ROLX                    is op=0x59 
+{
+	tmpC:1 = $(C);
+	$(C) = X >> 7;
+	X = (X << 1) | tmpC;
+	$(Z) = (X == 0);
+	$(N) = (X s< 0);	
+	V_equals_N_xor_C();	
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08) || defined(HC05)
+:ROL OP1                 is (op=0x39 | op=0x69 | op=0x79) ... & OP1 
+{
+	tmpC:1 = $(C);
+	op1:1 = OP1;
+	$(C) = op1 >> 7;
+	result:1 = (op1 << 1) | tmpC;
+	OP1 = result;
+	$(Z) = (result == 0);
+	$(N) = (result s< 0);	
+	V_equals_N_xor_C();	
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08)
+:ROL oprx8_8_SP                 is (op16=0x9E69); oprx8_8_SP
+{
+	tmpC:1 = $(C);
+	op1:1 = oprx8_8_SP;
+	$(C) = op1 >> 7;
+	result:1 = (op1 << 1) | tmpC;
+	oprx8_8_SP = result;
+	$(Z) = (result == 0);
+	$(N) = (result s< 0);	
+	V_equals_N_xor_C();	
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08) || defined(HC05)
+:RORA                    is op=0x46 
+{
+	tmpC:1 = $(C) << 7;
+	$(C) = A & 1;
+	A = (A >> 1) | tmpC;
+	$(Z) = (A == 0);
+	$(N) = (A s< 0);	
+	V_equals_N_xor_C();	
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08) || defined(HC05)
+:RORX                    is op=0x56 
+{
+	tmpC:1 = $(C) << 7;
+	$(C) = X & 1;
+	X = (X >> 1) | tmpC;
+	$(Z) = (X == 0);
+	$(N) = (X s< 0);	
+	V_equals_N_xor_C();	
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08) || defined(HC05)
+:ROR OP1                 is (op=0x36 | op=0x66 | op=0x76) ... & OP1 
+{
+	tmpC:1 = $(C) << 7;
+	tmp:1 = OP1;
+	$(C) = tmp & 1;
+	tmp = (tmp >> 1) | tmpC;
+	OP1 = tmp;
+	$(Z) = (tmp == 0);
+	$(N) = (tmp s< 0);	
+	V_equals_N_xor_C();	
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08)
+:ROR oprx8_8_SP                 is (op16=0x9E66); oprx8_8_SP
+{
+	tmpC:1 = $(C) << 7;
+	tmp:1 = oprx8_8_SP;
+	$(C) = tmp & 1;
+	tmp = (tmp >> 1) | tmpC;
+	oprx8_8_SP = tmp;
+	$(Z) = (tmp == 0);
+	$(N) = (tmp s< 0);	
+	V_equals_N_xor_C();	
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08) || defined(HC05)
+:RSP                     is op = 0x9C
+{
+	SPL = 0xff;
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08) || defined(HC05)
+:RTI                     is op = 0x80
+{
+	Pull1( CCR );
+	
+	Pull1( A );
+	
+	Pull1( X );
+	
+	tmp:2 = 0;
+	Pull2( tmp );
+	
+	return [tmp];
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08) || defined(HC05)
+:RTS                     is op = 0x81
+{
+	tmp:2 = 0;
+	Pull2( tmp );
+	
+	return [tmp];
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08) || defined(HC05)
+:SBC OP1                 is (op=0xA2 | op=0xB2 | op=0xC2 | op=0xD2 | op=0xE2 | op=0xF2) ... & OP1
+{ 
+	op1:1 = OP1;
+	
+	subtractWithCarry(A, op1, A);
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08)
+:SBC oprx16_8_SP                 is (op16=0x9ED2); oprx16_8_SP
+{ 
+	op1:1 = oprx16_8_SP;
+	
+	subtractWithCarry(A, op1, A);
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08)
+:SBC oprx8_8_SP                 is (op16=0x9EE2); oprx8_8_SP
+{ 
+	op1:1 = oprx8_8_SP;
+	
+	subtractWithCarry(A, op1, A);
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08) || defined(HC05)
+:SEC                     is op = 0x99 
+{
+	$(C) = 1;
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08) || defined(HC05)
+:SEI                     is op = 0x9B 
+{
+	$(I) = 1;
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08) || defined(HC05)
+:STA OP1                 is (op=0xB7 | op=0xC7 | op=0xD7 | op=0xE7 | op=0xF7) ... & OP1
+{
+	OP1 = A;
+	$(Z) = (A == 0);
+	$(N) = (A s< 0);
+	V_equals_0();
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08)
+:STA oprx16_8_SP                 is (op16=0x9ED7); oprx16_8_SP
+{
+	oprx16_8_SP = A;
+	$(Z) = (A == 0);
+	$(N) = (A s< 0);
+	V_equals_0();
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08)
+:STA oprx8_8_SP                 is (op16=0x9EE7); oprx8_8_SP
+{
+	oprx8_8_SP = A;
+	$(Z) = (A == 0);
+	$(N) = (A s< 0);
+	V_equals_0();
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08)
+:STHX opr8a_16               is (op=0x35); opr8a_16
+{
+	opr8a_16 = HIX; 
+	$(Z) = (HIX == 0);
+	$(N) = (HI s< 0);
+	V_equals_0();
+}
+@endif
+
+@if  defined(HCS08)
+:STHX opr16a_16              is (op=0x96); opr16a_16
+{
+	opr16a_16 = HIX; 
+	$(Z) = (HIX == 0);
+	$(N) = (HI s< 0);
+	V_equals_0();
+}
+@endif
+
+@if  defined(HCS08)
+:STHX oprx8_16_SP           is (op16=0x9EFF); oprx8_16_SP
+{
+	oprx8_16_SP = HIX; 
+	$(Z) = (HIX == 0);
+	$(N) = (HI s< 0);
+	V_equals_0();
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08) || defined(HC05)
+:STOP                    is op=0x8E
+{
+	$(I) = 0;
+	stop();
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08) || defined(HC05)
+:STX OP1                 is (op=0xBF | op=0xCF | op=0xDF | op=0xEF | op=0xFF) ... & OP1
+{
+	OP1 = X;
+	$(Z) = (X == 0);
+	$(N) = (X s< 0);
+	V_equals_0();
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08)
+:STX oprx16_8_SP                 is (op16=0x9EDF); oprx16_8_SP
+{
+	oprx16_8_SP = X;
+	$(Z) = (X == 0);
+	$(N) = (X s< 0);
+	V_equals_0();
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08)
+:STX oprx8_8_SP                 is (op16=0x9EEF); oprx8_8_SP
+{
+	oprx8_8_SP = X;
+	$(Z) = (X == 0);
+	$(N) = (X s< 0);
+	V_equals_0();
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08) || defined(HC05)
+:SUB OP1                 is (op=0xA0 | op=0xB0 | op=0xC0 | op=0xD0 | op=0xE0 | op=0xF0) ... & OP1
+{ 
+	op1:1 = OP1;
+	
+	result:1 = A - op1;
+	subtractionFlags(A, op1,result);
+	A = result;
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08)
+:SUB oprx16_8_SP                 is (op16=0x9ED0); oprx16_8_SP
+{ 
+	op1:1 = oprx16_8_SP;
+	
+	result:1 = A - op1;
+	subtractionFlags(A, op1,result);
+	A = result;
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08)
+:SUB oprx8_8_SP                 is (op16=0x9EE0); oprx8_8_SP
+{ 
+	op1:1 = oprx8_8_SP;
+	
+	result:1 = A - op1;
+	subtractionFlags(A, op1,result);
+	A = result;
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08) || defined(HC05)
+:SWI                     is op=0x83
+{
+	tmp:2 = inst_next;
+	Push2( tmp );
+	
+	Push1( X );
+	
+	Push1( A );
+	
+	Push1( CCR );
+	
+	$(I) = 1;
+	
+	addr:2 = $(VECTOR_SWI);
+	call [addr];
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08)
+:TAP                     is op=0x84 
+{
+	CCR = A;
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08) || defined(HC05)
+:TAX                     is op=0x97 
+{
+	X = A;
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08)
+:TPA                     is op=0x85 
+{
+	A = CCR;
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08) || defined(HC05)
+:TSTA                    is op=0x4D 
+{
+	$(Z) = (A == 0);
+	$(N) = (A s< 0);
+	V_equals_0();	
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08) || defined(HC05)
+:TSTX                    is op=0x5D 
+{
+	$(Z) = (X == 0);
+	$(N) = (X s< 0);	
+	V_equals_0();	
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08) || defined(HC05)
+:TST OP1                 is (op=0x3D | op=0x6D | op=0x7D) ... & OP1 
+{
+	op1:1 = OP1;
+	$(Z) = (op1 == 0);
+	$(N) = (op1 s< 0);	
+	V_equals_0();	
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08)
+:TST oprx8_8_SP                 is (op16=0x9E6D); oprx8_8_SP
+{
+	op1:1 = oprx8_8_SP;
+	$(Z) = (op1 == 0);
+	$(N) = (op1 s< 0);	
+	V_equals_0();	
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08)
+:TSX                     is op=0x95 
+{
+	HIX = SP + 1;
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08) || defined(HC05)
+:TXA                     is op=0x9F 
+{
+	A = X;
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08)
+:TXS                     is op=0x94 
+{
+	SP = HIX - 1;
+}
+@endif
+
+@if  defined(HCS08) || defined(HC08) || defined(HC05)
+:WAIT                    is op=0x8f 
+{
+	$(I) = 0;
+	wait();
+}
+@endif
+ 

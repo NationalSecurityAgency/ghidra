@@ -27,9 +27,11 @@ import javax.swing.border.CompoundBorder;
 import javax.swing.event.*;
 import javax.swing.table.TableCellEditor;
 
-import docking.DialogComponentProvider;
-import docking.DockingUtils;
+import docking.*;
 import docking.widgets.OptionDialog;
+import docking.widgets.checkbox.GCheckBox;
+import docking.widgets.combobox.GComboBox;
+import docking.widgets.label.GLabel;
 import docking.widgets.table.*;
 import generic.util.WindowUtilities;
 import ghidra.app.services.DataTypeManagerService;
@@ -70,7 +72,10 @@ public class FunctionEditorDialog extends DialogComponentProvider implements Mod
 	private JCheckBox storageCheckBox;
 	private JScrollPane scroll;
 	private JPanel previewPanel;
+
 	private FunctionSignatureTextField signatureTextField;
+	private UndoRedoKeeper signatureFieldUndoRedoKeeper;
+
 	private MyGlassPane glassPane;
 	private JPanel centerPanel;
 
@@ -91,7 +96,6 @@ public class FunctionEditorDialog extends DialogComponentProvider implements Mod
 		addCancelButton();
 		glassPane = new MyGlassPane();
 		dataChanged();
-		setFocusComponent(nameField);
 	}
 
 	private static String createTitle(Function function) {
@@ -117,6 +121,23 @@ public class FunctionEditorDialog extends DialogComponentProvider implements Mod
 			}
 		}
 		return strBuilder.toString();
+	}
+
+	@Override
+	protected void dialogShown() {
+
+		// put user focus in the signature field, ready to take keyboard input
+		signatureTextField.requestFocus();
+		Swing.runLater(() -> {
+			int start = model.getFunctionNameStartPosition();
+			int end = model.getNameString().length();
+			signatureTextField.setCaretPosition(end);
+			signatureTextField.setSelectionStart(start);
+			signatureTextField.setSelectionEnd(start + end);
+
+			// reset any edits that happened before the user interacted with the field
+			signatureFieldUndoRedoKeeper.clear();
+		});
 	}
 
 	@Override
@@ -220,6 +241,9 @@ public class FunctionEditorDialog extends DialogComponentProvider implements Mod
 	private JComponent createSignatureTextPanel() {
 		JPanel panel = new JPanel(new BorderLayout());
 		signatureTextField = new FunctionSignatureTextField();
+
+		signatureFieldUndoRedoKeeper = DockingUtils.installUndoRedo(signatureTextField);
+
 		Font font = signatureTextField.getFont();
 		signatureTextField.setFont(font.deriveFont(18.0f));
 		panel.add(signatureTextField);
@@ -290,9 +314,9 @@ public class FunctionEditorDialog extends DialogComponentProvider implements Mod
 		panel.setBorder(BorderFactory.createEmptyBorder(0, 5, 15, 15));
 
 		JPanel leftPanel = new JPanel(new PairLayout(4, 8));
-		leftPanel.add(new JLabel("Function Name:"));
+		leftPanel.add(new GLabel("Function Name:"));
 		leftPanel.add(createNameField());
-		leftPanel.add(new JLabel("Calling Convention"));
+		leftPanel.add(new GLabel("Calling Convention"));
 		leftPanel.add(createCallingConventionCombo());
 		leftPanel.setBorder(BorderFactory.createEmptyBorder(14, 0, 0, 10));
 
@@ -303,18 +327,18 @@ public class FunctionEditorDialog extends DialogComponentProvider implements Mod
 
 	private Component buildTogglePanel() {
 		JPanel panel = new JPanel(new PairLayout());
-		varArgsCheckBox = new JCheckBox("Varargs");
+		varArgsCheckBox = new GCheckBox("Varargs");
 		varArgsCheckBox.addItemListener(e -> model.setHasVarArgs(varArgsCheckBox.isSelected()));
 		panel.add(varArgsCheckBox);
 
-		inLineCheckBox = new JCheckBox("In Line");
+		inLineCheckBox = new GCheckBox("In Line");
 		panel.add(inLineCheckBox);
 		inLineCheckBox.addItemListener(e -> model.setIsInLine(inLineCheckBox.isSelected()));
 		inLineCheckBox.setEnabled(model.isInlineAllowed());
 
-		noReturnCheckBox = new JCheckBox("No Return");
+		noReturnCheckBox = new GCheckBox("No Return");
 		noReturnCheckBox.addItemListener(e -> model.setNoReturn(noReturnCheckBox.isSelected()));
-		storageCheckBox = new JCheckBox("Use Custom Storage");
+		storageCheckBox = new GCheckBox("Use Custom Storage");
 		storageCheckBox.addItemListener(
 			e -> model.setUseCustomizeStorage(storageCheckBox.isSelected()));
 		panel.add(noReturnCheckBox);
@@ -327,7 +351,7 @@ public class FunctionEditorDialog extends DialogComponentProvider implements Mod
 	private JComponent createCallingConventionCombo() {
 		List<String> callingConventionNames = model.getCallingConventionNames();
 		String[] names = new String[callingConventionNames.size()];
-		callingConventionComboBox = new JComboBox<>(callingConventionNames.toArray(names));
+		callingConventionComboBox = new GComboBox<>(callingConventionNames.toArray(names));
 		callingConventionComboBox.setSelectedItem(model.getCallingConventionName());
 		callingConventionComboBox.addItemListener(e -> model.setCallingConventionName(
 			(String) callingConventionComboBox.getSelectedItem()));
@@ -335,7 +359,7 @@ public class FunctionEditorDialog extends DialogComponentProvider implements Mod
 	}
 
 	private JComponent createCallFixupComboPanel() {
-		callFixupComboBox = new JComboBox<>();
+		callFixupComboBox = new GComboBox<>();
 		String[] callFixupNames = model.getCallFixupNames();
 
 		callFixupComboBox.addItem(FunctionEditorModel.NONE_CHOICE);
@@ -556,7 +580,13 @@ public class FunctionEditorDialog extends DialogComponentProvider implements Mod
 	private void updatePreviewField() {
 		String preview = model.getFunctionSignatureTextFromModel();
 		int caretPosition = signatureTextField.getCaretPosition();
-		signatureTextField.setText(preview);
+
+		// don't cause undo/redo updates if the text has not changed
+		String oldText = signatureTextField.getText();
+		if (!preview.equals(oldText)) {
+			signatureTextField.setText(preview);
+		}
+
 		if (!model.hasValidName()) {
 			signatureTextField.setError(model.getFunctionNameStartPosition(),
 				model.getNameString().length());
@@ -601,7 +631,8 @@ public class FunctionEditorDialog extends DialogComponentProvider implements Mod
 					color = Color.red;
 				}
 				String toolTipText = ToolTipUtils.getToolTipText(dataType);
-				String headerText = "<HTML><b>" + dataType.getPathName() + "</b><BR>";
+				String headerText = "<HTML><b>" +
+					HTMLUtilities.friendlyEncodeHTML(dataType.getPathName()) + "</b><BR>";
 				toolTipText = toolTipText.replace("<HTML>", headerText);
 				setToolTipText(toolTipText);
 			}

@@ -89,7 +89,7 @@ public class SymbolTreeRootNode extends SymbolCategoryNode implements GTreeRootN
 		else if (type == LIBRARY || type == NAMESPACE) {
 			return findNamespaceSymbol(key, loadChildren, monitor);
 		}
-		else if (type == CODE) {
+		else if (type == LABEL) {
 			return findCodeSymbol(key, loadChildren, monitor);
 		}
 		//else { GLOBAL, GLOBAL_VAR } // not sure where these end up

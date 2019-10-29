@@ -166,7 +166,8 @@ public class TableUpdateJob<T> {
 	 *   
 	 * @param item the add/remove item to add to the list of items to be processed in the add/remove
 	 *            phase of this job.
-	 * @param the maximum number of add/remove jobs to queue before performing a full reload
+	 * @param maxAddRemoveCount the maximum number of add/remove jobs to queue before performing 
+	 *        a full reload
 	 */
 	public synchronized void addRemove(AddRemoveListItem<T> item, int maxAddRemoveCount) {
 		if (currentState != NOT_RUNNING) {
@@ -203,7 +204,8 @@ public class TableUpdateJob<T> {
 	 * @return true if the sort can be processed by this job, false if this job is essentially already
 	 * completed and therefor cannot perform the sort job.
 	 */
-	public synchronized boolean sort(TableSortingContext<T> newSortingContext, boolean forceSort) {
+	public synchronized boolean requestSort(TableSortingContext<T> newSortingContext,
+			boolean forceSort) {
 		if (currentState == DONE) {
 			return false;
 		}
@@ -219,27 +221,27 @@ public class TableUpdateJob<T> {
 
 	/**
 	 * Tells the job that the filter criteria has changed.  This method can be called on
-	 * the currently running job as well as the pending job.  If called on the running job, the effect
-	 * depends on the running job's state:
+	 * the currently running job as well as the pending job.  If called on the running job, the 
+	 * effect depends on the running job's state:
 	 * <ul>
 	 * 	  <li>If the filter state hasn't happened yet, then nothing needs to be done as this job 
-	 * 	will filter later anyway. 
+	 * 			will filter later anyway. 
 	 *    <li>If the filter state has already been started or completed, then this method 
-	 *    attempts to stop the current process phase and cause the state machine to return to the 
-	 *    filter phase. 
+	 *    		attempts to stop the current process phase and cause the state machine to 
+	 *    		return to the filter phase. 
 	 *    <li>If the current job has already entered the DONE state, then the filter cannot take
-	 *     effect in this job and a false value is returned to indicate the
-	 * filter was not handled by this job.
+	 *     		effect in this job and a false value is returned to indicate the filter was 
+	 *     		not handled by this job.
 	 * </ul> 
 	 * @return true if the filter can be processed by this job, false if this job is essentially already
 	 * completed and therefor cannot perform the filter job.
 	 */
-	public synchronized boolean filter() {
+	public synchronized boolean requestFilter() {
 		if (currentState == DONE) {
 			return false;
 		}
 		if (hasFiltered()) {
-			// the user has requested a new filter, and we've already filtered, so we need to filter again
+			// the user has requested a new filter; we've already filtered, so filter again
 			monitor.cancel();
 			pendingRequestedState = FILTERING;
 		}
@@ -320,7 +322,7 @@ public class TableUpdateJob<T> {
 	/**
 	 * Calls the appropriate method to process the given state.
 	 * @param state the state to process.
-	 * @throws CancelledException 
+	 * @throws CancelledException if the job was cancelled
 	 */
 	private void processState(JobState state) throws CancelledException {
 		switch (state) {
@@ -457,6 +459,11 @@ public class TableUpdateJob<T> {
 
 	/** True if the sort applied to the table is not the same as that in the source dataset */
 	private boolean tableSortDiffersFromSourceData() {
+		// Note: at this point in time we do not check to see if the table is user-unsorted.  It
+		//       doesn't seem to hurt to leave the original source data sorted, even if the 
+		//       current context is 'unsorted'.  In that case, this method will return true, 
+		//       that the sorts are different.  But, later in this job, we check the new sort and
+		//       do not perform sorting when 'unsorted'
 		return !SystemUtilities.isEqual(sourceData.getSortContext(), model.getSortingContext());
 	}
 
@@ -498,6 +505,11 @@ public class TableUpdateJob<T> {
 	}
 
 	private void doSortData(List<T> data) {
+
+		if (newSortContext.isUnsorted()) {
+			return;
+		}
+
 		int size = data.size();
 		monitor.setMessage("Sorting " + model.getName() + " (" + size + " rows)" + "...");
 		monitor.initialize(size);
@@ -512,7 +524,7 @@ public class TableUpdateJob<T> {
 		//
 		// Usually the source data is sorted before any filter is applied.  However, this is not
 		// the case when a load of new data is followed directly by a filter action.  We rely on 
-		// the source data being filtered in order to perform fast translations from the table's 
+		// the source data being sorted in order to perform fast translations from the table's 
 		// view to the table's model when it is filtered.  Thus, make sure that any time we are 
 		// sorting the filtered data, that the source data too is sorted.
 		//
@@ -595,23 +607,24 @@ public class TableUpdateJob<T> {
 
 		List<T> list = filterSourceData.getData();
 		List<T> result = model.doFilter(list, lastSortContext, monitor);
-		if (result != list) { // yes, '=='
+		if (result == list) { // yes, '=='
+			// no filtering took place
+			updatedData = filterSourceData;
+		}
+		else {
 			// the derived data is sorted the same as the source data
 			TableSortingContext<T> sortContext = filterSourceData.getSortContext();
 			updatedData = TableData.createSubDataset(filterSourceData, result, sortContext);
 			updatedData.setTableFilter(model.getTableFilter());
 		}
-		else {
-			// no filtering took place
-			updatedData = filterSourceData;
-		}
+
 		monitor.setMessage(
 			"Done filtering " + model.getName() + " (" + updatedData.size() + " rows)");
 	}
 
 	private void copyCurrentFilterData() {
 		TableData<T> currentFilteredData = getCurrentFilteredData();
-		updatedData = currentFilteredData.copy(); // copy so we don't modify the UIs version
+		updatedData = currentFilteredData.copy(sourceData); // copy; don't modify the UI's version
 
 		// We are re-using the filtered data, so use too its sort
 		lastSortContext = updatedData.getSortContext();
@@ -676,7 +689,7 @@ public class TableUpdateJob<T> {
 
 	@Override
 	public String toString() {
-		return "Job - [state history=\n" + getStateHistoryString() + "]";
+		return getClass().getSimpleName() + " - [state history=\n" + getStateHistoryString() + "]";
 	}
 
 	private String getStateHistoryString() {

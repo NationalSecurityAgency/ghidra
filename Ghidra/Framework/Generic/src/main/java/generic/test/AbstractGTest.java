@@ -20,12 +20,15 @@ import static org.junit.Assert.fail;
 
 import java.io.File;
 import java.util.*;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
 
 import org.junit.Assert;
 import org.junit.rules.TestName;
 
+import ghidra.framework.Application;
 import ghidra.framework.TestApplicationUtils;
 import ghidra.util.SystemUtilities;
 import ghidra.util.UniversalIdGenerator;
@@ -341,7 +344,24 @@ public abstract class AbstractGTest {
 	}
 
 	/**
-	 * Waits for the given condition to return true.
+	 * Waits for the given latch to be counted-down
+	 * 
+	 * @param latch the latch to await
+	 * @throws AssertionFailedError if the condition is not met within the timeout period
+	 */
+	public static void waitFor(CountDownLatch latch) {
+		try {
+			if (!latch.await(DEFAULT_WAIT_TIMEOUT, TimeUnit.MILLISECONDS)) {
+				throw new AssertionFailedError("Timed-out waiting for CountDownLatch");
+			}
+		}
+		catch (InterruptedException e) {
+			fail("Interrupted waiting for CountDownLatch");
+		}
+	}
+
+	/**
+	 * Waits for the given condition to return true
 	 *
 	 * @param condition the condition that returns true when satisfied
 	 * @throws AssertionFailedError if the condition is not met within the timeout period
@@ -351,7 +371,7 @@ public abstract class AbstractGTest {
 	}
 
 	/**
-	 * Waits for the given condition to return true.
+	 * Waits for the given condition to return true
 	 *
 	 * @param condition the condition that returns true when satisfied
 	 * @throws AssertionFailedError if the condition is not met within the timeout period
@@ -374,20 +394,40 @@ public abstract class AbstractGTest {
 	}
 
 	/**
+	 * Waits for the given condition to return true
+	 *
+	 * @param condition the condition that returns true when satisfied
+	 * @param failureMessageSupplier the function that will supply the failure message in the
+	 *        event of a timeout.
+	 * @throws AssertionFailedError if the condition is not met within the timeout period
+	 */
+	public static void waitForCondition(BooleanSupplier condition,
+			Supplier<String> failureMessageSupplier) throws AssertionFailedError {
+
+		waitForCondition(condition, true /*failOnTimeout*/, failureMessageSupplier);
+	}
+
+	/**
 	 * Waits for the given condition to return true.  Most of the <code>waitForCondition()</code>
 	 * methods throw an {@link AssertionFailedError} if the timeout period expires.
 	 *  This method allows you to setup a longer wait period by repeatedly calling this method.
 	 *
 	 * <P>Most clients should use {@link #waitForCondition(BooleanSupplier)}.
 	 *
-	 * @param condition the condition that returns true when satisfied
+	 * @param supplier the supplier that returns true when satisfied
 	 */
 	public static void waitForConditionWithoutFailing(BooleanSupplier supplier) {
-		waitForCondition(supplier, false /*failOnTimeout*/, null /*failure message*/);
+		waitForCondition(supplier, false /*failOnTimeout*/, () -> null /*failure message*/);
 	}
 
 	private static void waitForCondition(BooleanSupplier condition, boolean failOnTimeout,
 			String failureMessage) throws AssertionFailedError {
+
+		waitForCondition(condition, failOnTimeout, () -> failureMessage);
+	}
+
+	private static void waitForCondition(BooleanSupplier condition, boolean failOnTimeout,
+			Supplier<String> failureMessageSupplier) throws AssertionFailedError {
 
 		int totalTime = 0;
 		while (totalTime <= DEFAULT_WAIT_TIMEOUT) {
@@ -403,8 +443,12 @@ public abstract class AbstractGTest {
 			return;
 		}
 
-		String error = failureMessage != null ? failureMessage : "Timed-out waiting for condition";
-		throw new AssertionFailedError(error);
+		String failureMessage = "Timed-out waiting for condition";
+		if (failureMessageSupplier != null) {
+			failureMessage = failureMessageSupplier.get();
+		}
+
+		throw new AssertionFailedError(failureMessage);
 	}
 
 	/**
@@ -465,7 +509,6 @@ public abstract class AbstractGTest {
 	 * throwing an exception if that does not happen by the given timeout.
 	 *
 	 * @param supplier the supplier of the value
-	 * @param timeoutMillis the timeout
 	 * @param failureMessage the message to print upon the timeout being reached
 	 * @param failOnTimeout if true, an exception will be thrown if the timeout is reached
 	 * @return the value

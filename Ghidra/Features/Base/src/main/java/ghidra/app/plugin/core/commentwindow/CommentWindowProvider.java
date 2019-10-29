@@ -112,7 +112,7 @@ class CommentWindowProvider extends ComponentProviderAdapter {
 
 		commentModel.addTableModelListener(e -> {
 			int rowCount = commentModel.getRowCount();
-			int unfilteredCount = commentModel.getUnfilteredCount();
+			int unfilteredCount = commentModel.getUnfilteredRowCount();
 
 			StringBuilder buffy = new StringBuilder();
 

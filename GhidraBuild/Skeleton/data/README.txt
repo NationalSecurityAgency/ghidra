@@ -5,11 +5,11 @@ files are placed here rather than in the resources directory if the user may nee
 An optional data/languages directory can exist for the purpose of containing various Sleigh language
 specification files and importer opinion files.  
 
-The data/build.xml is used for building the contents of the data/languages directory.
+The data/buildLanguage.xml is used for building the contents of the data/languages directory.
 
 The skel language definition has been commented-out within the skel.ldefs file so that the 
 skeleton language does not show-up within Ghidra.
 
-See the Sleigh language documentation (docs/languages/sleigh.htm or sleigh.pdf) for details
-on Sleigh language specification syntax.
+See the Sleigh language documentation (docs/languages/index.html) for details Sleigh language 
+specification syntax.
  

@@ -359,12 +359,11 @@ public abstract class GhidraScreenShotGenerator extends AbstractScreenShotGenera
 	}
 
 	public void performFrontEndAction(String actionName, String owner, boolean wait) {
-		String fullActionName = actionName + " (" + owner + ")";
 		FrontEndTool frontEnd = getFrontEndTool();
-		List<DockingActionIf> action = frontEnd.getDockingActionsByFullActionName(fullActionName);
+
+		DockingActionIf action = getAction(frontEnd, owner, actionName);
 		ComponentProvider compProvider =
 			(ComponentProvider) getInstanceField("compProvider", frontEnd);
-		performAction(action.get(0), compProvider, wait);
+		performAction(action, compProvider, wait);
 	}
-
 }

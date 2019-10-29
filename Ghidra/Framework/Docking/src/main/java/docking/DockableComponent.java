@@ -42,17 +42,13 @@ public class DockableComponent extends JPanel implements ContainerListener {
 	public static ComponentPlaceholder SOURCE_INFO;
 	public static boolean DROP_CODE_SET;
 
-	enum DropCode {
-		INVALID, STACK, LEFT, RIGHT, TOP, BOTTOM, ROOT, WINDOW
-	}
-
 	private DockableHeader header;
 	private MouseListener popupListener;
-	private ComponentPlaceholder componentInfo;
+	private ComponentPlaceholder placeholder;
 	private JComponent providerComp;
 	private Component focusedComponent;
 	private DockingWindowManager winMgr;
-	private DockingActionManager actionMgr;
+	private ActionToGuiMapper actionMgr;
 	private DropTarget dockableDropTarget;
 
 	/**
@@ -62,10 +58,10 @@ public class DockableComponent extends JPanel implements ContainerListener {
 	 */
 	DockableComponent(ComponentPlaceholder placeholder, boolean isDocking) {
 		if (placeholder != null) {
-			this.componentInfo = placeholder;
+			this.placeholder = placeholder;
 
 			winMgr = placeholder.getNode().winMgr;
-			actionMgr = winMgr.getActionManager();
+			actionMgr = winMgr.getActionToGuiMapper();
 
 			popupListener = new MouseAdapter() {
 				@Override
@@ -108,11 +104,11 @@ public class DockableComponent extends JPanel implements ContainerListener {
 		}
 	}
 
-	private JComponent initializeComponentPlaceholder(ComponentPlaceholder placeholder) {
-		JComponent providerComponent = placeholder.getProviderComponent();
+	private JComponent initializeComponentPlaceholder(ComponentPlaceholder newPlaceholder) {
+		JComponent providerComponent = newPlaceholder.getProviderComponent();
 
 		// Ensure that every provider component has a registered help location
-		ComponentProvider provider = placeholder.getProvider();
+		ComponentProvider provider = newPlaceholder.getProvider();
 		HelpLocation helpLocation = provider.getHelpLocation();
 		HelpLocation location = registerHelpLocation(provider, helpLocation);
 
@@ -167,45 +163,62 @@ public class DockableComponent extends JPanel implements ContainerListener {
 		boolean withinBounds = bounds.contains(point);
 
 		if (e.isPopupTrigger() && withinBounds) {
-			actionMgr.showPopupMenu(componentInfo, e);
+			actionMgr.showPopupMenu(placeholder, e);
 		}
 	}
 
-	/**
-	 * @see java.awt.Component#getMinimumSize()
-	 */
 	@Override
 	public Dimension getMinimumSize() {
 		return MIN_DIM;
 	}
 
-	/**
-	 * Returns the user component that this wraps.
-	 */
 	JComponent getProviderComponent() {
 		return providerComp;
 	}
 
 	/**
-	 * Returns the info object associated with this DockableComponent.
+	 * Returns the placeholder object associated with this DockableComponent
+	 * @return the placeholder object associated with this DockableComponent
 	 */
 	public ComponentPlaceholder getComponentWindowingPlaceholder() {
-		return componentInfo;
+		return placeholder;
+	}
+
+	/**
+	 * Returns the component provider attached to this dockable component; null if this object
+	 * has been disposed
+	 * 
+	 * @return the provider
+	 */
+	public ComponentProvider getComponentProvider() {
+		if (placeholder == null) {
+			return null;
+		}
+		return placeholder.getProvider();
+	}
+
+	/**
+	 * Returns the docking window manager that owns this component
+	 * @return the manager
+	 */
+	public DockingWindowManager getDockingWindowManager() {
+		if (placeholder == null) {
+			return null;
+		}
+		return placeholder.getNode().getDockingWindowManager();
 	}
 
 	@Override
 	public String toString() {
-		if (componentInfo == null) {
+		if (placeholder == null) {
 			return "";
 		}
-		return componentInfo.getFullTitle();
+		return placeholder.getFullTitle();
 	}
 
 	/**
-	 * Set up for drag and drop.
-	 *
+	 * Translates the given point so that it is relative to the given component
 	 */
-
 	private void translate(Point p, Component c) {
 		Point cLoc = c.getLocationOnScreen();
 		Point myLoc = getLocationOnScreen();
@@ -219,10 +232,6 @@ public class DockableComponent extends JPanel implements ContainerListener {
 			super(comp, null);
 		}
 
-		/**
-		 * 
-		 * @see java.awt.dnd.DropTargetListener#drop(java.awt.dnd.DropTargetDropEvent)
-		 */
 		@Override
 		public synchronized void drop(DropTargetDropEvent dtde) {
 			clearAutoscroll();
@@ -230,7 +239,7 @@ public class DockableComponent extends JPanel implements ContainerListener {
 				Point p = dtde.getLocation();
 				translate(p, ((DropTarget) dtde.getSource()).getComponent());
 				setDropCode(p);
-				TARGET_INFO = componentInfo;
+				TARGET_INFO = placeholder;
 				dtde.acceptDrop(dtde.getDropAction());
 				dtde.dropComplete(true);
 			}
@@ -239,10 +248,6 @@ public class DockableComponent extends JPanel implements ContainerListener {
 			}
 		}
 
-		/**
-		 * 
-		 * @see java.awt.dnd.DropTargetListener#dragEnter(java.awt.dnd.DropTargetDragEvent)
-		 */
 		@Override
 		public synchronized void dragEnter(DropTargetDragEvent dtde) {
 			super.dragEnter(dtde);
@@ -258,7 +263,7 @@ public class DockableComponent extends JPanel implements ContainerListener {
 				Point p = dtde.getLocation();
 				translate(p, ((DropTarget) dtde.getSource()).getComponent());
 				setDropCode(p);
-				DRAGGED_OVER_INFO = componentInfo;
+				DRAGGED_OVER_INFO = placeholder;
 				dtde.acceptDrag(dtde.getDropAction());
 			}
 			else {
@@ -266,10 +271,6 @@ public class DockableComponent extends JPanel implements ContainerListener {
 			}
 		}
 
-		/**
-		 * 
-		 * @see java.awt.dnd.DropTargetListener#dragOver(java.awt.dnd.DropTargetDragEvent)
-		 */
 		@Override
 		public synchronized void dragOver(DropTargetDragEvent dtde) {
 			super.dragOver(dtde);
@@ -285,7 +286,7 @@ public class DockableComponent extends JPanel implements ContainerListener {
 				Point p = dtde.getLocation();
 				translate(p, ((DropTarget) dtde.getSource()).getComponent());
 				setDropCode(p);
-				DRAGGED_OVER_INFO = componentInfo;
+				DRAGGED_OVER_INFO = placeholder;
 				dtde.acceptDrag(dtde.getDropAction());
 			}
 			else {
@@ -293,10 +294,6 @@ public class DockableComponent extends JPanel implements ContainerListener {
 			}
 		}
 
-		/**
-		 * 
-		 * @see java.awt.dnd.DropTargetListener#dragExit(java.awt.dnd.DropTargetEvent)
-		 */
 		@Override
 		public synchronized void dragExit(DropTargetEvent dte) {
 			super.dragExit(dte);
@@ -362,7 +359,7 @@ public class DockableComponent extends JPanel implements ContainerListener {
 	private void setDropCode(Point p) {
 		DROP_CODE_SET = true;
 
-		if (componentInfo == null) {
+		if (placeholder == null) {
 			DROP_CODE = DropCode.ROOT;
 			return;
 		}
@@ -370,11 +367,11 @@ public class DockableComponent extends JPanel implements ContainerListener {
 			DROP_CODE = DropCode.WINDOW;
 			return;
 		}
-		if (SOURCE_INFO.getNode().winMgr != componentInfo.getNode().winMgr) {
+		if (SOURCE_INFO.getNode().winMgr != placeholder.getNode().winMgr) {
 			DROP_CODE = DropCode.WINDOW;
 			return;
 		}
-		if (SOURCE_INFO == componentInfo && !componentInfo.isStacked()) {
+		if (SOURCE_INFO == placeholder && !placeholder.isStacked()) {
 			DROP_CODE = DropCode.INVALID;
 			return;
 		}
@@ -390,7 +387,7 @@ public class DockableComponent extends JPanel implements ContainerListener {
 		else if (p.y > getHeight() - DROP_EDGE_OFFSET) {
 			DROP_CODE = DropCode.BOTTOM;
 		}
-		else if (SOURCE_INFO == componentInfo) {
+		else if (SOURCE_INFO == placeholder) {
 			DROP_CODE = DropCode.INVALID;
 		}
 		else {
@@ -409,10 +406,6 @@ public class DockableComponent extends JPanel implements ContainerListener {
 		header.emphasize();
 	}
 
-	/**
-	 * Set the title displayed in this component's header.
-	 * @param title
-	 */
 	void setTitle(String title) {
 		header.setTitle(title);
 	}
@@ -421,13 +414,10 @@ public class DockableComponent extends JPanel implements ContainerListener {
 		header.setIcon(icon);
 	}
 
-	/**
-	 * Releases all resources for this object.
-	 */
 	void dispose() {
 		header.dispose();
 		header = null;
-		componentInfo = null;
+		placeholder = null;
 		providerComp = null;
 		actionMgr = null;
 	}

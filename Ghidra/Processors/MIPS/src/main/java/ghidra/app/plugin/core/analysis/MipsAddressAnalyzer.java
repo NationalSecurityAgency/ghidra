@@ -707,9 +707,6 @@ public class MipsAddressAnalyzer extends ConstantPropagationAnalyzer {
 		options.registerOption(OPTION_NAME_ASSUME_T9_ENTRY, OPTION_DEFAULT_ASSUME_T9_ENTRY, null,
 			OPTION_DESCRIPTION_ASSUME_T9_ENTRY);
 
-		options.registerOption(OPTION_NAME_ASSUME_T9_ENTRY, OPTION_DEFAULT_ASSUME_T9_ENTRY, null,
-			OPTION_DESCRIPTION_ASSUME_T9_ENTRY);
-
 		options.registerOption(OPTION_NAME_RECOVER_GP, OPTION_DEFAULT_RECOVER_GP, null,
 			OPTION_DESCRIPTION_RECOVER_GP);
 
@@ -717,9 +714,6 @@ public class MipsAddressAnalyzer extends ConstantPropagationAnalyzer {
 
 		markupDualInstructionOption = options.getBoolean(OPTION_NAME_MARK_DUAL_INSTRUCTION,
 			OPTION_DEFAULT_MARK_DUAL_INSTRUCTION);
-
-		assumeT9EntryAddress =
-			options.getBoolean(OPTION_NAME_ASSUME_T9_ENTRY, OPTION_DEFAULT_ASSUME_T9_ENTRY);
 
 		assumeT9EntryAddress =
 			options.getBoolean(OPTION_NAME_ASSUME_T9_ENTRY, OPTION_DEFAULT_ASSUME_T9_ENTRY);

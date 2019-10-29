@@ -15,8 +15,7 @@
  */
 package ghidra.app.merge;
 
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -41,7 +40,7 @@ import ghidra.util.Msg;
 public abstract class AbstractMergeTest extends AbstractGhidraHeadedIntegrationTest {
 
 	// TODO this may need to be modified for parallel mode
-	protected static final int MAX_MERGE_TIMEOUT = 10000;
+	protected static final int MAX_MERGE_TIMEOUT = 20000;
 
 	protected MergeTestFacilitator mtf;
 	protected Program originalProgram;
@@ -128,7 +127,7 @@ public abstract class AbstractMergeTest extends AbstractGhidraHeadedIntegrationT
 
 	protected void waitForMergeCompletion() {
 		int totalTime = 0;
-		while (!mergeMgr.processingCompleted()) {
+		while (mergeMgr != null && !mergeMgr.processingCompleted()) {
 
 			Window win = getWindowByTitleContaining(null, "Merge Information");
 			if (win != null) {

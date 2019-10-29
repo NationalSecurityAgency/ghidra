@@ -90,6 +90,8 @@ public abstract class AbstractGraphComponentPanel extends JPanel {
 
 	abstract Color getBackgroundColor();
 
+	abstract Color getSelectionColor();
+
 	abstract Color getUserDefinedColor();
 
 	abstract Color getDefaultBackgroundColor();

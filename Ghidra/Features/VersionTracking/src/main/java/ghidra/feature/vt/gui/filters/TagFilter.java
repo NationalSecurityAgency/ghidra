@@ -23,6 +23,8 @@ import java.util.*;
 
 import javax.swing.*;
 
+import docking.widgets.label.GDLabel;
+import docking.widgets.label.GLabel;
 import ghidra.feature.vt.api.impl.VTChangeManager;
 import ghidra.feature.vt.api.impl.VersionTrackingChangeRecord;
 import ghidra.feature.vt.api.main.*;
@@ -40,8 +42,8 @@ public class TagFilter extends AncillaryFilter<VTMatch> {
 	private static final String ALL_TAGS_EXCLUDED = "<All Tags Excluded>";
 	static final String EXCLUDED_TAGS_KEY = "TagFilter.tags";
 	private static final String DELIMITER = ":";
-	private Map<String, VTMatchTag> excludedTags = new TreeMap<String, VTMatchTag>(); // ordered by String
-	private JLabel excludedTagsLabel = new JLabel();
+	private Map<String, VTMatchTag> excludedTags = new TreeMap<>(); // ordered by String
+	private JLabel excludedTagsLabel = new GDLabel();
 	private JComponent component;
 
 	private final VTController controller;
@@ -71,7 +73,7 @@ public class TagFilter extends AncillaryFilter<VTMatch> {
 
 		JPanel innerPanel = new JPanel();
 		innerPanel.setLayout(new BoxLayout(innerPanel, BoxLayout.X_AXIS));
-		innerPanel.add(new JLabel("Excluded Tags: "));
+		innerPanel.add(new GLabel("Excluded Tags: "));
 		innerPanel.add(excludedTagsLabel);
 		innerPanel.add(Box.createHorizontalGlue());
 		innerPanel.add(editButton);
@@ -82,14 +84,13 @@ public class TagFilter extends AncillaryFilter<VTMatch> {
 
 	private void chooseExcludedTags() {
 		Map<String, VTMatchTag> allTags = getAllTags();
-		excludedTags =
-			tagChooser.getExcludedTags(allTags, new TreeMap<String, VTMatchTag>(excludedTags));
+		excludedTags = tagChooser.getExcludedTags(allTags, new TreeMap<>(excludedTags));
 		updateTags(allTags);
 	}
 
 	private void initializeTags() {
 		// allow all tags by default
-		excludedTags = new TreeMap<String, VTMatchTag>();
+		excludedTags = new TreeMap<>();
 		updateTags();
 	}
 
@@ -127,7 +128,7 @@ public class TagFilter extends AncillaryFilter<VTMatch> {
 		if (session == null) {
 			return Collections.emptyMap();
 		}
-		TreeMap<String, VTMatchTag> map = new TreeMap<String, VTMatchTag>();
+		TreeMap<String, VTMatchTag> map = new TreeMap<>();
 
 		Set<VTMatchTag> matchTags = session.getMatchTags();
 		for (VTMatchTag tag : matchTags) {
@@ -151,7 +152,7 @@ public class TagFilter extends AncillaryFilter<VTMatch> {
 	@Override
 	public FilterState getFilterState() {
 		FilterState state = new FilterState(this);
-		state.put(EXCLUDED_TAGS_KEY, new TreeMap<String, VTMatchTag>(excludedTags));
+		state.put(EXCLUDED_TAGS_KEY, new TreeMap<>(excludedTags));
 		return state;
 	}
 
@@ -193,7 +194,7 @@ public class TagFilter extends AncillaryFilter<VTMatch> {
 
 	private Map<String, VTMatchTag> getTagsFromText(String tagText) {
 		Map<String, VTMatchTag> allTags = getAllTags();
-		Map<String, VTMatchTag> tagFromStringMap = new TreeMap<String, VTMatchTag>();
+		Map<String, VTMatchTag> tagFromStringMap = new TreeMap<>();
 		String[] tags = tagText.split(DELIMITER);
 		for (String tagString : tags) {
 			VTMatchTag tag = allTags.get(tagString);

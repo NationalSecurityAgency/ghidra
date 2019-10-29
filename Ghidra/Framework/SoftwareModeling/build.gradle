@@ -1,7 +1,16 @@
+apply from: "$rootProject.projectDir/gradle/distributableGhidraModule.gradle"
+apply from: "$rootProject.projectDir/gradle/javaProject.gradle"
+apply from: "$rootProject.projectDir/gradle/jacocoProject.gradle"
+apply from: "$rootProject.projectDir/gradle/javaTestProject.gradle"
 apply plugin: 'eclipse'
+
 eclipse.project.name = 'Framework SoftwareModeling'
 
 apply plugin: 'antlr'
+
+// make sure antlr code gets built during prepdev so that the directories are created and 
+// eclipse doesn't complain about missing src directories.
+rootProject.prepDev.dependsOn compileJava
 
 dependencies {
 	compile project(':Generic')
@@ -21,11 +30,7 @@ dependencies {
 	// Must specify the specific antlr implementation to use or it will default to trying to find
 	// version 2.7.7 (which we don't have)
 	antlr "org.antlr:antlr:3.5.2"
-}
-
-// Define classpath needed to execute sleigh compiler during development
-// (see gradleScripts/processorUtils.gradle)
-ext.sleighDevClasspath = project.sourceSets.main.runtimeClasspath.collect { it.absolutePath }.join(':')		
+}	
 
 def genSrcDir = 'generated-src/antlr/main'
 generateGrammarSource {

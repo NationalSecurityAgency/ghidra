@@ -1,0 +1,48 @@
+/****************************************************************************
+ * Establish Visual Studio configuration environment for Windows native builds
+ * 
+ * NOTE: We do not rely on the VisualCpp plugin to identify paths since it has
+ * proven in the past to be unreliable when multiple versions of Visual Studio
+ * and SDKs are installed.
+ ****************************************************************************/
+ 
+if (!hasProperty("VISUAL_STUDIO_BASE_DIR")) {
+	configureVisualStudio()
+}
+
+def configureVisualStudio() { 
+
+	rootProject.ext.VISUAL_STUDIO_BASE_DIR = "C:\\Program Files (x86)\\Microsoft Visual Studio\\2017"
+	rootProject.ext.WINDOWS_KITS_DIR = "C:\\Program Files (x86)\\Windows Kits\\10"
+	
+	rootProject.ext.VISUAL_STUDIO_INSTALL_DIR = "/"
+	rootProject.ext.VISUAL_STUDIO_VCVARS_CMD = "UNKNOWN"
+	rootProject.ext.MSVC_SDK_VERSION = "UNKNOWN"
+	rootProject.ext.MSVC_TOOLS_VERSION = "UNKNOWN"
+	
+	if (org.gradle.internal.os.OperatingSystem.current().isWindows()) {
+			
+		rootProject.ext.VISUAL_STUDIO_INSTALL_DIR = "${VISUAL_STUDIO_BASE_DIR}\\Professional"
+		if (!file(rootProject.ext.VISUAL_STUDIO_INSTALL_DIR).exists()) {
+			rootProject.ext.VISUAL_STUDIO_INSTALL_DIR = "${VISUAL_STUDIO_BASE_DIR}\\Community"
+		}
+		if (file(rootProject.ext.VISUAL_STUDIO_INSTALL_DIR).exists()) {
+	
+			println "Visual Studio Path: ${VISUAL_STUDIO_INSTALL_DIR}"
+	
+			rootProject.ext.VISUAL_STUDIO_VCVARS_CMD = "\"${VISUAL_STUDIO_INSTALL_DIR}\\VC\\Auxiliary\\Build\\vcvarsall.bat\" x86_amd64"
+		
+			// NOTE: Windows 7 targeting requires the use of the Windows 8.1 SDK and setting the
+			// WINVER property a value of "0x0601" which may be specified to the compiler/linker.
+			// If using a VS Solution this must be specified within the project file(s).
+			rootProject.ext.WINVER = "0x0601"
+		
+			// Rely on vcvars script to supply SDK versions
+			def COMMAND = "cmd /v:ON /c ${VISUAL_STUDIO_VCVARS_CMD} > nul && cmd /c echo"
+			rootProject.ext.MSVC_SDK_VERSION = "${COMMAND} !WINDOWSSDKVERSION!".execute().text.trim().replace('\\', '')
+			println "Visual Studio SDK Version: ${MSVC_SDK_VERSION}"
+			rootProject.ext.MSVC_TOOLS_VERSION = "${COMMAND} !VCTOOLSVERSION!".execute().text.trim().replace('\\', '')
+			println "Visual Studio VCTools Version: ${MSVC_TOOLS_VERSION}"
+		}
+	}
+}

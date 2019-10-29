@@ -27,7 +27,7 @@
           <register name="o5"/>
         </pentry>
         <pentry minsize="1" maxsize="500" align="4">
-          <addr offset="4" space="stack"/>
+          <addr offset="0x5c" space="stack"/>
         </pentry>
       </input>
       <output>
@@ -63,6 +63,10 @@
         <register name="sp"/>
         <register name="didrestore"/>
       </unaffected>
+      <localrange>
+        <range space="stack" first="0xfff0bdc1" last="0xffffffff"/>
+        <range space="stack" first="0x0" last="0x5b"/>   <!-- Stack storage for register window -->
+      </localrange>
     </prototype>
   </default_proto>
 </compiler_spec>

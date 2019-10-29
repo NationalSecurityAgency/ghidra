@@ -34,7 +34,7 @@ import ghidra.program.model.mem.Memory;
 public class SearchBaseExtended extends GhidraScript {
 
 	//holds the mask and value for all the mnemonics, or commands like cmp, jmp, jnz etc
-	ArrayList<Case> mnemonics = new ArrayList<Case>();
+	ArrayList<Case> mnemonics = new ArrayList<>();
 
 	/*
 	 * Holds the masks and values for all the operands. The arraylist portion will correspond to the operand number. An example is 
@@ -44,13 +44,13 @@ public class SearchBaseExtended extends GhidraScript {
 	 * operand. I set it up this was to conserve memory and allow for a dynamically growing collection.
 	 */
 	ArrayList<LinkedHashMap<Case, OperandCase>> ops =
-		new ArrayList<LinkedHashMap<Case, OperandCase>>();//holds masks and values for all operands. 
+		new ArrayList<>();//holds masks and values for all operands. 
 
-	ArrayList<Case> db = new ArrayList<Case>();//holds the search results.
+	ArrayList<Case> db = new ArrayList<>();//holds the search results.
 
 	//These control the detail at which a scan is performed. 
 	//They determine how specific the instructions must match the currently selected ones
-	ArrayList<SLMaskControl> controlList = new ArrayList<SLMaskControl>();
+	ArrayList<SLMaskControl> controlList = new ArrayList<>();
 
 	@Override
 	public void run() throws Exception {
@@ -59,7 +59,7 @@ public class SearchBaseExtended extends GhidraScript {
 	}
 
 	public void run(boolean mneonics, boolean op1, boolean op2, boolean constants) {
-		controlList = new ArrayList<SLMaskControl>();
+		controlList = new ArrayList<>();
 		controlList.add(new SLMaskControl(mneonics, op1, op2, constants));
 		loadSelectedInstructions();
 		executeSearch();
@@ -72,11 +72,11 @@ public class SearchBaseExtended extends GhidraScript {
 	}
 
 	public void clearResults() {
-		db = new ArrayList<Case>();
+		db = new ArrayList<>();
 	}
 
 	public void setState(SLMaskControl newState) {
-		controlList = new ArrayList<SLMaskControl>();
+		controlList = new ArrayList<>();
 		controlList.add(newState);
 	}
 
@@ -137,7 +137,7 @@ public class SearchBaseExtended extends GhidraScript {
 					mnemonics.add(tCase); //adds the mnemonic mask and value to the arraylist
 
 					//Gets a code unit which can be used to determine if the operands are constants.
-					CodeUnit cUnit = list.getCodeUnitAt(tempAddr);
+					CodeUnit cu = list.getCodeUnitAt(tempAddr);
 
 					//Iterates through all the operands for the currently selected instruction and stores them accordingly
 					for (int x = 1; x <= logger.getNumOperands(); x++) {
@@ -156,7 +156,7 @@ public class SearchBaseExtended extends GhidraScript {
 						otCase.textRep = tempIns.getDefaultOperandRepresentation(x - 1);
 
 						//Determines if the given operand is a constant value. If it is a constant then proper flag is set.
-						if (cUnit.getScalar(x - 1) != null) {
+						if (cu.getScalar(x - 1) != null) {
 							otCase.constant = true;
 						}
 
@@ -321,8 +321,8 @@ public class SearchBaseExtended extends GhidraScript {
 			ArrayList<LinkedHashMap<Case, OperandCase>> localOperands,
 			ArrayList<SLMaskControl> control) {
 
-		ArrayList<byte[]> masks = new ArrayList<byte[]>();
-		ArrayList<byte[]> values = new ArrayList<byte[]>();
+		ArrayList<byte[]> masks = new ArrayList<>();
+		ArrayList<byte[]> values = new ArrayList<>();
 
 		//used for storing the byte stream currently being work on prior to being added to final data structure
 		int totalLength = 0;

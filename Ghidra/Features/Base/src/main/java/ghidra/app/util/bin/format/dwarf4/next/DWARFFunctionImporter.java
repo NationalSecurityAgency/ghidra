@@ -437,15 +437,14 @@ public class DWARFFunctionImporter {
 			dvar.dni = dvar.dni.replaceType(null /*nothing matches static global var*/);
 			if (res != 0) {
 				// If the expression evaluated to a static address other than '0'
-				Address staticVariableAddresss = toAddr(res);
-				if (variablesProcesesed.contains(staticVariableAddresss)) {
+				Address staticVariableAddress = toAddr(res + prog.getProgramBaseAddressFixup());
+				if (variablesProcesesed.contains(staticVariableAddress)) {
 					return null;
 				}
 
 				boolean external = diea.getBool(DWARFAttribute.DW_AT_external, false);
-				DataType storageType = dwarfDTM.getStorageDataType(diea.getTypeRef(), dvar.type);
 
-				outputGlobal(staticVariableAddresss, storageType, external,
+				outputGlobal(staticVariableAddress, dvar.type, external,
 					DWARFSourceInfo.create(diea), dvar.dni);
 			}
 			else {
@@ -711,6 +710,9 @@ public class DWARFFunctionImporter {
 		if (!(dataDT instanceof Enum || dataDT instanceof AbstractIntegerDataType)) {
 			return false;
 		}
+		if (dataDT instanceof BooleanDataType) {
+			return false;
+		}
 		if (dataDT.getLength() != enumDT.getLength()) {
 			return false;
 		}
@@ -751,25 +753,26 @@ public class DWARFFunctionImporter {
 
 	private Data createVariable(Address address, DataType dataType, DWARFNameInfo dni) {
 		try {
-			if (dataType.getLength() < 0) {
-				Data result = DataUtilities.createData(currentProgram, address, dataType, -1, false,
-					ClearDataMode.CLEAR_ALL_UNDEFINED_CONFLICT_DATA);
-				variablesProcesesed.add(address);
-				return result;
+			String eolComment = null;
+			if (dataType instanceof Dynamic || dataType instanceof FactoryDataType) {
+				eolComment = "Unsupported dynamic data type: " + dataType;
+				dataType = Undefined.getUndefinedDataType(1);
 			}
-			if (isDataTypeCompatibleWithExistingData(dataType, address)) {
-				Data result = DataUtilities.createData(currentProgram, address, dataType, -1, false,
-					ClearDataMode.CLEAR_ALL_CONFLICT_DATA);
-				variablesProcesesed.add(address);
-				return result;
-			}
-			else {
-				Msg.warn(this,
-					"Could not place static variable " +
-						dni.getNamespacePath().asFormattedString() + " : " + dataType + " at " +
-						address + " because existing data type conflicts.");
+			if (!isDataTypeCompatibleWithExistingData(dataType, address)) {
+				appendComment(address, CodeUnit.EOL_COMMENT,
+					"Could not place DWARF static variable " +
+						dni.getNamespacePath().asFormattedString() + " : " + dataType +
+						" because existing data type conflicts.",
+					"\n");
 				return null;
 			}
+			Data result = DataUtilities.createData(currentProgram, address, dataType, -1, false,
+				ClearDataMode.CLEAR_ALL_CONFLICT_DATA);
+			variablesProcesesed.add(address);
+			if (eolComment != null) {
+				appendComment(address, CodeUnit.EOL_COMMENT, eolComment, "\n");
+			}
+			return result;
 		}
 		catch (CodeUnitInsertionException | DataTypeConflictException e) {
 			Msg.error(this, "Error creating data object at " + address, e);
@@ -800,8 +803,7 @@ public class DWARFFunctionImporter {
 		importSummary.globalVarsAdded++;
 
 		if (sourceInfo != null) {
-			currentProgram.getListing().setComment(address, CodeUnit.EOL_COMMENT,
-				sourceInfo.getDescriptionStr());
+			appendComment(address, CodeUnit.EOL_COMMENT, sourceInfo.getDescriptionStr(), "\n");
 
 			if (varData != null) {
 				moveIntoFragment(dni.getName(), varData.getMinAddress(), varData.getMaxAddress(),
@@ -1096,7 +1098,7 @@ public class DWARFFunctionImporter {
 		}
 	}
 
-	private Function createFunction(DWARFFunction dfunc) throws DuplicateNameException {
+	private Function createFunction(DWARFFunction dfunc) {
 		try {
 			// create a new symbol if one does not exist (symbol table will figure this out)
 			SymbolTable symbolTable = currentProgram.getSymbolTable();

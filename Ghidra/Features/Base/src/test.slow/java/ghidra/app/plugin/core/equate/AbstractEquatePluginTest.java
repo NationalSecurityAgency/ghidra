@@ -17,7 +17,7 @@ package ghidra.app.plugin.core.equate;
 
 import static org.junit.Assert.*;
 
-import java.util.List;
+import java.util.Set;
 
 import javax.swing.JTextField;
 
@@ -115,11 +115,10 @@ public abstract class AbstractEquatePluginTest extends AbstractProgramBasedTest 
 
 		// for selection containing a function stack address
 		builder.setBytes("0x01004bbd", "c2 08 00"); // return of previous function
-		builder.setBytes("0x01004bc0",
-			"53 8b 5c 24 08 56 8b 35 b8 10 00 01 57 ff 35 78 80 00 01 " +
-				"53 ff d6 8b 3d e0 10 00 01 53 ff d7 8d 5c 43 02 68 9c 13 00 01 53 ff d6 53 ff d7 " +
-				"ff 35 7c 80 00 01 8d 5c 43 02 53 ff d6 53 ff d7 8d 5c 43 02 68 e0 17 00 01 53 ff " +
-				"d6 53 ff d7 66 83 64 43 02 00 8d 44 43 02 5f 5e 5b c2 04 00");
+		builder.setBytes("0x01004bc0", "53 8b 5c 24 08 56 8b 35 b8 10 00 01 57 ff 35 78 80 00 01 " +
+			"53 ff d6 8b 3d e0 10 00 01 53 ff d7 8d 5c 43 02 68 9c 13 00 01 53 ff d6 53 ff d7 " +
+			"ff 35 7c 80 00 01 8d 5c 43 02 53 ff d6 53 ff d7 8d 5c 43 02 68 e0 17 00 01 53 ff " +
+			"d6 53 ff d7 66 83 64 43 02 00 8d 44 43 02 5f 5e 5b c2 04 00");
 		builder.disassemble(new AddressSet(builder.getProgram(), builder.addr("0x01004bc0"),
 			builder.addr("0x01004c1a")), true);
 		builder.createFunction("0x01004bc0");
@@ -203,8 +202,6 @@ public abstract class AbstractEquatePluginTest extends AbstractProgramBasedTest 
 		env.dispose();
 	}
 
-	
-
 //=================================================================================================
 // Private Methods
 //=================================================================================================
@@ -218,8 +215,7 @@ public abstract class AbstractEquatePluginTest extends AbstractProgramBasedTest 
 		ComponentProvider provider = tool.getComponentProvider(PluginConstants.CODE_BROWSER);
 		DockingActionIf action = getAction(equatePlugin, "Apply Enum");
 		performAction(action, provider, false);
-		ApplyEnumDialog d =
-			waitForDialogComponent(tool.getToolFrame(), ApplyEnumDialog.class, DEFAULT_WAIT_DELAY);
+		ApplyEnumDialog d = waitForDialogComponent(ApplyEnumDialog.class);
 		return d;
 	}
 
@@ -231,7 +227,7 @@ public abstract class AbstractEquatePluginTest extends AbstractProgramBasedTest 
 	}
 
 	protected void assertConvertActionsInPopup(boolean inPopup) {
-		List<DockingActionIf> actions = tool.getDockingActionsByOwnerName("EquatePlugin");
+		Set<DockingActionIf> actions = getActionsByOwner(tool, "EquatePlugin");
 		for (DockingActionIf action : actions) {
 			String actionName = action.getName();
 			if (actionName.startsWith("Convert")) {
@@ -242,7 +238,7 @@ public abstract class AbstractEquatePluginTest extends AbstractProgramBasedTest 
 	}
 
 	protected void assertNonFloatConvertActionsInPopup() {
-		List<DockingActionIf> actions = tool.getDockingActionsByOwnerName("EquatePlugin");
+		Set<DockingActionIf> actions = getActionsByOwner(tool, "EquatePlugin");
 		for (DockingActionIf action : actions) {
 			String actionName = action.getName();
 			if (actionName.startsWith("Convert")) {
@@ -255,7 +251,7 @@ public abstract class AbstractEquatePluginTest extends AbstractProgramBasedTest 
 	}
 
 	protected void assertConvertNonCharNonSignedActionsInPopup() {
-		List<DockingActionIf> actions = tool.getDockingActionsByOwnerName("EquatePlugin");
+		Set<DockingActionIf> actions = getActionsByOwner(tool, "EquatePlugin");
 		for (DockingActionIf element : actions) {
 			String name = element.getName();
 			if (name.startsWith("Convert") &&
@@ -266,7 +262,7 @@ public abstract class AbstractEquatePluginTest extends AbstractProgramBasedTest 
 	}
 
 	protected void assertConvertNonSignedActionsInPopup() {
-		List<DockingActionIf> actions = tool.getDockingActionsByOwnerName("EquatePlugin");
+		Set<DockingActionIf> actions = getActionsByOwner(tool, "EquatePlugin");
 		for (DockingActionIf action : actions) {
 			String name = action.getName();
 			if (name.startsWith("Convert") && name.indexOf("Signed") < 0) {
@@ -437,22 +433,20 @@ public abstract class AbstractEquatePluginTest extends AbstractProgramBasedTest 
 	}
 
 	protected void createSignedData(Address addr) throws Exception {
-		int id = program.startTransaction("Test - Create Signed Data");
-
-		SignedWordDataType dt = new SignedWordDataType(program.getDataTypeManager());
-		int length = dt.getLength();
-		listing.clearCodeUnits(addr, addr.add(length), true);
-		listing.createData(addr, dt);
-
-		program.endTransaction(id, true);
+		createData(addr, SignedWordDataType.dataType);
 	}
 
 	protected void createUnsignedData(Address addr) throws Exception {
-		int id = program.startTransaction("Test - Create Unsigned Data");
+		createData(addr, WordDataType.dataType);
+	}
 
-		WordDataType dt = new WordDataType(program.getDataTypeManager());
+	protected void createData(Address addr, DataType dt) throws Exception {
+		int id = program.startTransaction("Test - Create Data");
+
+		dt = dt.clone(program.getDataTypeManager());
 		int length = dt.getLength();
-		listing.clearCodeUnits(addr, addr.add(length), true);
+		assertTrue("", length > 0);
+		listing.clearCodeUnits(addr, addr.add(length - 1), true);
 		program.getListing().createData(addr, dt);
 
 		program.endTransaction(id, true);

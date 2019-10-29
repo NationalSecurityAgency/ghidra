@@ -1,0 +1,17 @@
+<patternlist>
+  <patternpairs totalbits="32" postbits="16">
+    <prepatterns>
+      <data>0x0b 0x00 0x09 0x00 </data>						<!-- rts _nop -->
+      <data>0x0b 0x00 0xf6 0x6. </data>						<!-- rts _mov.l @r15+,<rx> -->
+      <data>0x0b 0x00 0x09 0x00 0x00 0x00 </data>			<!-- rts _nop filler -->
+      <data>0x0b 0x00 0x.. 0x7f </data>						<!-- rts    add <#x>,r15 -->
+    </prepatterns>
+    <postpatterns>
+      <data>10011101 11100011 10111... ........</data>		<!-- save sp, xx, sp -->
+      <data>0x22 0x4f </data>								<!-- sts.l pr,@-r15 -->
+      <data>0x22 0x4f 1....... 0x7f  </data>				<!-- sts.l  pr,@-r15   add#-<x>,r15 -->
+      <data> 1....... 0x7f </data>							<!-- add #-<x>, r15 -->
+      <funcstart/>
+    </postpatterns>
+  </patternpairs>
+ </patternlist>

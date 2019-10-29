@@ -15,6 +15,11 @@
  */
 package ghidra.app.plugin.core.function;
 
+import java.awt.event.KeyEvent;
+
+import docking.ActionContext;
+import docking.action.KeyBindingData;
+import docking.action.KeyBindingType;
 import ghidra.app.cmd.function.SetVariableCommentCmd;
 import ghidra.app.context.ListingActionContext;
 import ghidra.app.context.ListingContextAction;
@@ -22,26 +27,19 @@ import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Variable;
 import ghidra.program.util.*;
 
-import java.awt.event.KeyEvent;
-
-import docking.ActionContext;
-import docking.action.KeyBindingData;
-
 /**
  * <CODE>VariableCommentDeleteAction</CODE> allows the user to delete a function variable comment.
  */
 class VariableCommentDeleteAction extends ListingContextAction {
 
-	/** the plugin associated with this action. */
 	FunctionPlugin funcPlugin;
 
 	/**
-	     * Creates a new action with the given name and associated to the given plugin.
-	     * @param plugin
-	     *                the plugin this action is associated with.
-	     */
+	 * Creates a new action with the given name and associated to the given plugin.
+	 * @param plugin the plugin this action is associated with.
+	 */
 	VariableCommentDeleteAction(FunctionPlugin plugin) {
-		super("Delete Function Variable Comment", plugin.getName(), false);
+		super("Delete Function Variable Comment", plugin.getName(), KeyBindingType.SHARED);
 		this.funcPlugin = plugin;
 		setKeyBindingData(new KeyBindingData(KeyEvent.VK_DELETE, 0));
 	}
@@ -65,7 +63,6 @@ class VariableCommentDeleteAction extends ListingContextAction {
 		}
 	}
 
-	// ///////////////////////////////////////////////////////////
 	/**
 	 * Get a variable using the current location.
 	 * 

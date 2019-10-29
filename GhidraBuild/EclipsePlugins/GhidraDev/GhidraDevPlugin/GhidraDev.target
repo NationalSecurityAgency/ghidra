@@ -1,14 +1,12 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<?pde version="3.8"?><target name="Running Platform" sequenceNumber="60">
+<?pde version="3.8"?>
+<target name="Running Platform" sequenceNumber="60">
     <locations>
         <location path="${eclipse_home}" type="Profile"/>
         <location path="${workspace_loc:Eclipse GhidraDevPlugin}/build/data/buildDependencies/cdt" type="Directory"/>
         <location path="${workspace_loc:Eclipse GhidraDevPlugin}/build/data/buildDependencies/pydev" type="Directory"/>
     </locations>
     <environment>
-        <os>macosx</os>
-        <ws>cocoa</ws>
-        <arch>x86_64</arch>
         <nl>en_US</nl>
     </environment>
 </target>

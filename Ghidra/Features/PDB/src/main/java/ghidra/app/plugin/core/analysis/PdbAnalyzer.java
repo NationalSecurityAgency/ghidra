@@ -46,6 +46,16 @@ public class PdbAnalyzer extends AbstractAnalyzer {
 
 	private String symbolsRepositoryPath = SYMBOLPATH_OPTION_DEFAULT_VALUE;
 
+	//==============================================================================================
+	// Include the PE-Header-Specified PDB path for searching for appropriate PDB file.
+	private static final String OPTION_NAME_INCLUDE_PE_PDB_PATH =
+		"Unsafe: Include PE PDB Path in PDB Search";
+	private static final String OPTION_DESCRIPTION_INCLUDE_PE_PDB_PATH =
+		"If checked, specifically searching for PDB in PE-Header-Specified Location.";
+
+	private boolean includePeSpecifiedPdbPath = false;
+
+	//==============================================================================================
 	public PdbAnalyzer() {
 		super(NAME, DESCRIPTION, AnalyzerType.BYTE_ANALYZER);
 		setDefaultEnablement(true);
@@ -56,11 +66,11 @@ public class PdbAnalyzer extends AbstractAnalyzer {
 	@Override
 	public boolean added(Program program, AddressSetView set, TaskMonitor monitor, MessageLog log) {
 
-		if (PdbParserNEW.isAlreadyLoaded(program)) {
+		if (PdbParser.isAlreadyLoaded(program)) {
 			return true;
 		}
 
-		File pdb = lookForPdb(program, log);
+		File pdb = lookForPdb(program, includePeSpecifiedPdbPath, log);
 
 		if (pdb == null) {
 			return false;
@@ -74,13 +84,13 @@ public class PdbAnalyzer extends AbstractAnalyzer {
 		// object existence indicates missing PDB has already been reported
 	}
 
-	File lookForPdb(Program program, MessageLog log) {
+	File lookForPdb(Program program, boolean includePeSpecifiedPdbPath, MessageLog log) {
 		String message = "";
 		File pdb;
 
 		try {
 
-			pdb = PdbParserNEW.findPDB(program, symbolsRepositoryPath);
+			pdb = PdbParser.findPDB(program, includePeSpecifiedPdbPath, symbolsRepositoryPath);
 
 			if (pdb == null) {
 
@@ -130,14 +140,14 @@ public class PdbAnalyzer extends AbstractAnalyzer {
 	boolean parsePdb(File pdb, Program program, AutoAnalysisManager mgr, TaskMonitor monitor,
 			MessageLog log) {
 		DataTypeManagerService dataTypeManagerService = mgr.getDataTypeManagerService();
-		PdbParserNEW parser = new PdbParserNEW(pdb, program, dataTypeManagerService, true);
+		PdbParser parser = new PdbParser(pdb, program, dataTypeManagerService, true, monitor);
 
 		String message;
 
 		try {
 			parser.parse();
 			parser.openDataTypeArchives();
-			parser.applyTo(monitor, log);
+			parser.applyTo(log);
 			return true;
 		}
 		catch (PdbException e) {
@@ -150,7 +160,11 @@ public class PdbAnalyzer extends AbstractAnalyzer {
 			return false;
 		}
 		catch (Exception e) {
-			Msg.showError(this, null, ERROR_TITLE, e.getMessage(), e);
+			String msg = e.getMessage();
+			if (msg == null) {
+				msg = e.toString();
+			}
+			Msg.showError(this, null, ERROR_TITLE, msg, e);
 			return false;
 		}
 
@@ -165,7 +179,7 @@ public class PdbAnalyzer extends AbstractAnalyzer {
 	public void registerOptions(Options options, Program program) {
 
 		String pdbStorageLocation =
-			Preferences.getProperty(PdbParserNEW.PDB_STORAGE_PROPERTY, null, true);
+			Preferences.getProperty(PdbParser.PDB_STORAGE_PROPERTY, null, true);
 		if (pdbStorageLocation != null) {
 			File pdbDirectory = new File(pdbStorageLocation);
 
@@ -178,6 +192,9 @@ public class PdbAnalyzer extends AbstractAnalyzer {
 			options.registerOption(SYMBOLPATH_OPTION_NAME, SYMBOLPATH_OPTION_DEFAULT_VALUE, null,
 				SYMBOLPATH_OPTION_DESCRIPTION);
 		}
+
+		options.registerOption(OPTION_NAME_INCLUDE_PE_PDB_PATH, includePeSpecifiedPdbPath, null,
+			OPTION_DESCRIPTION_INCLUDE_PE_PDB_PATH);
 	}
 
 	@Override
@@ -186,8 +203,11 @@ public class PdbAnalyzer extends AbstractAnalyzer {
 			options.getString(SYMBOLPATH_OPTION_NAME, SYMBOLPATH_OPTION_DEFAULT_VALUE);
 		setSymbolsRepositoryPath(symbolPath);
 
-		Preferences.setProperty(PdbParserNEW.PDB_STORAGE_PROPERTY, symbolPath);
+		Preferences.setProperty(PdbParser.PDB_STORAGE_PROPERTY, symbolPath);
 		Preferences.store();
+
+		includePeSpecifiedPdbPath =
+			options.getBoolean(OPTION_NAME_INCLUDE_PE_PDB_PATH, includePeSpecifiedPdbPath);
 	}
 
 	public void setSymbolsRepositoryPath(String symbolPath) {

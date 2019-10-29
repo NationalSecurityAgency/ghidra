@@ -23,7 +23,6 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableModel;
 
-import docking.widgets.table.DefaultSortedTableModel;
 import docking.widgets.table.GTable;
 import ghidra.app.nav.Navigatable;
 import ghidra.app.services.GoToService;
@@ -41,8 +40,6 @@ import ghidra.program.util.ProgramSelection;
  * {@link #setNavigateOnSelectionEnabled(boolean)} with a value of false.
  * <p>
  */
-@SuppressWarnings("deprecation")
-// Suppress - we are using the deprecated reference to DefaultSortedTableModel to handle old code
 public class GhidraTable extends GTable {
 
 	private Navigatable navigatable;
@@ -54,66 +51,10 @@ public class GhidraTable extends GTable {
 
 	public GhidraTable() {
 		super();
-
 	}
 
 	public GhidraTable(TableModel model) {
 		super(model);
-
-	}
-
-	/**
-	 * Constructs a new GhidraTable using the specified table model.
-	 * If <code>allowAutoEdit</code> is true, then automatic editing is enabled.
-	 * Auto-editing implies that typing in an editable cell will automatically
-	 * force the cell into edit mode.
-	 * If <code>allowAutoEdit</code> is false, then <code>F2</code> must be hit before editing may commence.
-	 * @param dm the table model
-	 * @param allowAutoEdit true if auto-editing is allowed
-	 */
-	public GhidraTable(TableModel dm, boolean allowAutoEdit) {
-		super(dm, allowAutoEdit);
-
-	}
-
-	/**
-	 * Constructs a <code>GhidraTable</code> to display the values in the two dimensional array,
-	 * <code>rowData</code>, with column names, <code>columnNames</code>.
-	 * <code>rowData</code> is an array of rows, so the value of the cell at row 1,
-	 * column 5 can be obtained with the following code:
-	 * <p>
-	 * <pre> rowData[1][5]; </pre>
-	 * <p>
-	 * All rows must be of the same length as <code>columnNames</code>.
-	 * <p>
-	 * @param rowData           the data for the new table
-	 * @param columnNames       names of each column
-	 */
-	public GhidraTable(Object[][] rowData, Object[] columnNames) {
-		super(rowData, columnNames);
-	}
-
-	/**
-	 * Constructs a <code>GhidraTable</code> to display the values in the two dimensional array,
-	 * <code>rowData</code>, with column names, <code>columnNames</code>.
-	 * <code>rowData</code> is an array of rows, so the value of the cell at row 1,
-	 * column 5 can be obtained with the following code:
-	 * <p>
-	 * <pre> rowData[1][5]; </pre>
-	 * <p>
-	 * All rows must be of the same length as <code>columnNames</code>.
-	 * <p>
-	 * If <code>allowAutoEdit</code> is true, then automatic editing is enabled.
-	 * Auto-editing implies that typing in an editable cell will automatically
-	 * force the cell into edit mode.
-	 * If <code>allowAutoEdit</code> is false, then <code>F2</code> must be hit before editing may commence.
-	 * 
-	 * @param rowData           the data for the new table
-	 * @param columnNames       names of each column
-	 * @param allowAutoEdit     true if auto-editing is allowed
-	 */
-	public GhidraTable(Object[][] rowData, Object[] columnNames, boolean allowAutoEdit) {
-		super(rowData, columnNames, allowAutoEdit);
 	}
 
 	/** 
@@ -194,10 +135,10 @@ public class GhidraTable extends GTable {
 	}
 
 	/**
-	 * Returns the program selection equivalent
-	 * to the rows currently selected in the table. This method
-	 * is only valid when the underlying table model implements
-	 * <code>ProgramTableModel</code>.
+	 * Returns the program selection equivalent to the rows currently selected in the table. 
+	 * This method is only valid when the underlying table model implements
+	 * {@link ProgramTableModel}.
+	 * <P>
 	 * Returns null if no rows are selected or
 	 * the underlying model does not implement <code>ProgramTableModel</code>.
 	 * @return the program selection or null.
@@ -210,13 +151,23 @@ public class GhidraTable extends GTable {
 		return programTableModel.getProgramSelection(getSelectedRows());
 	}
 
+	/**
+	 * Returns the program being used by this table; null if the underlying model does not
+	 * implement {@link ProgramTableModel}
+	 * 
+	 * @return the table's program
+	 */
+	public Program getProgram() {
+		ProgramTableModel programTableModel = getProgramTableModel(dataModel);
+		if (programTableModel == null) {
+			return null;
+		}
+		return programTableModel.getProgram();
+	}
+
 	private ProgramTableModel getProgramTableModel(TableModel model) {
 		if (model instanceof ProgramTableModel) {
 			return (ProgramTableModel) model;
-		}
-		else if (model instanceof DefaultSortedTableModel) {
-			DefaultSortedTableModel defaultSortedTableModel = (DefaultSortedTableModel) model;
-			return getProgramTableModel(defaultSortedTableModel.getModel());
 		}
 		return null;
 	}

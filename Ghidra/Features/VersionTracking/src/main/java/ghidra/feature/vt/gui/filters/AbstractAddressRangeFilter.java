@@ -25,7 +25,10 @@ import javax.swing.event.EventListenerList;
 
 import org.apache.commons.lang3.StringUtils;
 
+import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.combobox.GhidraComboBox;
+import docking.widgets.label.GDLabel;
+import docking.widgets.label.GHtmlLabel;
 import docking.widgets.textfield.HexIntegerFormatter;
 import ghidra.feature.vt.api.main.VTAssociation;
 import ghidra.feature.vt.gui.provider.matchtable.NumberRangeProducer;
@@ -75,8 +78,7 @@ public abstract class AbstractAddressRangeFilter<T> extends AncillaryFilter<T>
 		// Enable panel
 		// check box for enabled/disabled, so the user can keep previous values
 		//
-		enableCheckBox = new JCheckBox("enable");
-		enableCheckBox.setSelected(true);
+		enableCheckBox = new GCheckBox("enable", true);
 		enableCheckBox.addItemListener(e -> enableFilter(enableCheckBox.isSelected()));
 		enableCheckBox.setSelected(true);
 		JPanel enablePanel = new JPanel(new BorderLayout());
@@ -110,14 +112,14 @@ public abstract class AbstractAddressRangeFilter<T> extends AncillaryFilter<T>
 		upperRangeComboBox =
 			createComboBox(upperAddressRangeTextField, MAX_ADDRESS_VALUE, prototypeDisplay);
 
-		JLabel rangeLabel = new JLabel("<=");
+		JLabel rangeLabel = new GDLabel("<=");
 		rangeLabel.setHorizontalAlignment(SwingConstants.CENTER);
 
 		//
 		// Lower Score Panel
 		//
 		lowerRangePanel = new JPanel(new GridLayout(2, 1));
-		JLabel lowLabel = new JLabel("<html><font size=\"2\" color=\"808080\">low</font>");
+		JLabel lowLabel = new GHtmlLabel("<html><font size=\"2\" color=\"808080\">low</font>");
 		lowLabel.setHorizontalAlignment(SwingConstants.CENTER);
 		lowLabel.setVerticalAlignment(SwingConstants.BOTTOM);
 		lowerRangePanel.add(lowLabel);
@@ -128,7 +130,7 @@ public abstract class AbstractAddressRangeFilter<T> extends AncillaryFilter<T>
 		//
 		JPanel labelPanel = new JPanel(new GridLayout(2, 1));
 		labelPanel.add(Box.createVerticalStrut(5)); // space filler
-		JLabel statusLabel = new JLabel("<=");
+		JLabel statusLabel = new GDLabel("<=");
 		statusLabel.setHorizontalAlignment(SwingConstants.CENTER);
 		labelPanel.add(statusLabel);
 
@@ -136,7 +138,7 @@ public abstract class AbstractAddressRangeFilter<T> extends AncillaryFilter<T>
 		// Upper Score Panel
 		//
 		upperRangePanel = new JPanel(new GridLayout(2, 1));
-		JLabel upperLabel = new JLabel("<html><font size=\"2\" color=\"808080\">high</font>");
+		JLabel upperLabel = new GHtmlLabel("<html><font size=\"2\" color=\"808080\">high</font>");
 		upperLabel.setHorizontalAlignment(SwingConstants.CENTER);
 		upperLabel.setVerticalAlignment(SwingConstants.BOTTOM);
 		upperRangePanel.add(upperLabel);
@@ -238,19 +240,18 @@ public abstract class AbstractAddressRangeFilter<T> extends AncillaryFilter<T>
 
 	private JComboBox<String> createComboBox(FilterFormattedTextField field, Long defaultValue,
 			String prototypeString) {
-		GhidraComboBox<String> comboBox =
-			new GhidraComboBox<String>(new LimitedHistoryComboBoxModel()) {
-				// overridden to paint seamlessly with out color changing text field
-				@Override
-				protected void paintComponent(Graphics g) {
-					super.paintComponent(g);
-					Rectangle bounds = getBounds();
-					Color oldColor = g.getColor();
-					g.setColor(getBackground());
-					g.fillRect(0, 0, bounds.width, bounds.height);
-					g.setColor(oldColor);
-				}
-			};
+		GhidraComboBox<String> comboBox = new GhidraComboBox<>(new LimitedHistoryComboBoxModel()) {
+			// overridden to paint seamlessly with out color changing text field
+			@Override
+			protected void paintComponent(Graphics g) {
+				super.paintComponent(g);
+				Rectangle bounds = getBounds();
+				Color oldColor = g.getColor();
+				g.setColor(getBackground());
+				g.fillRect(0, 0, bounds.width, bounds.height);
+				g.setColor(oldColor);
+			}
+		};
 		comboBox.setEditor(new FormattedFieldComboBoxEditor(field));
 		comboBox.setEditable(true);
 		comboBox.setPrototypeDisplayValue(prototypeString);

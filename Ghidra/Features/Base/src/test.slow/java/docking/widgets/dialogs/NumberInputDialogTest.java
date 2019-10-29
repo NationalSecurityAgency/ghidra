@@ -30,10 +30,12 @@ import org.junit.Test;
 import docking.DockingWindowManager;
 import docking.test.AbstractDockingTest;
 import docking.widgets.textfield.IntegerTextField;
+import ghidra.test.DummyTool;
 
 public class NumberInputDialogTest extends AbstractDockingTest {
 
-	private DockingWindowManager dwm = new DockingWindowManager("test", (List<Image>) null, null);
+	private DockingWindowManager dwm =
+		new DockingWindowManager(new DummyTool(), (List<Image>) null);
 	private NumberInputDialog dialog;
 	private JButton okButton;
 	private JTextField textField;

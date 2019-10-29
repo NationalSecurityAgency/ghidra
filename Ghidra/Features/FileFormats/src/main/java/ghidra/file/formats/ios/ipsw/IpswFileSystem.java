@@ -58,11 +58,6 @@ public class IpswFileSystem extends GFileSystemBase {
 	}
 
 	@Override
-	public String getInfo(GFile file, TaskMonitor monitor) throws IOException {
-		return null;
-	}
-
-	@Override
 	protected InputStream getData(GFile file, TaskMonitor monitor)
 			throws IOException, CancelledException, CryptoException {
 		return null;
