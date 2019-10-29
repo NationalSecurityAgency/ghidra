@@ -30,7 +30,10 @@ import javax.swing.table.AbstractTableModel;
 
 import org.jdom.Element;
 
+import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.combobox.GhidraComboBox;
+import docking.widgets.label.GDLabel;
+import docking.widgets.label.GLabel;
 import ghidra.app.util.AddressInput;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.*;
@@ -49,10 +52,8 @@ class EditMemoryReferencePanel extends EditReferencePanel {
 
 	private static final int MAX_HISTORY_LENGTH = 10;
 
-	private WeakHashMap<Program, List<Address>> addrHistoryMap =
-		new WeakHashMap<Program, List<Address>>();
+	private WeakHashMap<Program, List<Address>> addrHistoryMap = new WeakHashMap<>();
 
-	
 	private ReferencesPlugin plugin;
 
 	// Fields required for ADD
@@ -94,7 +95,7 @@ class EditMemoryReferencePanel extends EditReferencePanel {
 	private void buildPanel() {
 		setLayout(new PairLayout(10, 10, 160));
 
-		offsetCheckbox = new JCheckBox("Offset:");
+		offsetCheckbox = new GCheckBox("Offset:");
 		offsetCheckbox.setHorizontalAlignment(SwingConstants.RIGHT);
 		offsetCheckbox.addChangeListener(new ChangeListener() {
 			@Override
@@ -104,7 +105,7 @@ class EditMemoryReferencePanel extends EditReferencePanel {
 		});
 		offsetField = new JTextField();
 
-		addrLabel = new JLabel("Base Address:");
+		addrLabel = new GDLabel("Base Address:");
 		addrLabel.setHorizontalAlignment(SwingConstants.RIGHT);
 		Dimension d = addrLabel.getPreferredSize();
 		addrLabel.setPreferredSize(d);
@@ -143,9 +144,7 @@ class EditMemoryReferencePanel extends EditReferencePanel {
 		add(addrLabel);
 		add(addrPanel);
 
-		JLabel label = new JLabel("Ref-Type:");
-		label.setHorizontalAlignment(SwingConstants.RIGHT);
-		add(label);
+		add(new GLabel("Ref-Type:", SwingConstants.RIGHT));
 		add(refTypes);
 
 		enableOffsetField(false);
@@ -207,7 +206,7 @@ class EditMemoryReferencePanel extends EditReferencePanel {
 			toAddr = toAddr.subtractWrap(defaultOffset);
 		}
 
-		toAddressField.setAddressFactory(fromCu.getProgram().getAddressFactory(), false);
+		toAddressField.setAddressFactory(fromCu.getProgram().getAddressFactory(), false, false);
 		toAddressField.setAddress(toAddr);
 		enableOffsetField(editReference.isOffsetReference());
 
@@ -232,7 +231,7 @@ class EditMemoryReferencePanel extends EditReferencePanel {
 
 		addrHistoryButton.setEnabled(getAddressHistorySize(p) != 0);
 
-		toAddressField.setAddressFactory(p.getAddressFactory(), false);
+		toAddressField.setAddressFactory(p.getAddressFactory(), false, false);
 
 		Address cuAddr = fromCu.getMinAddress();
 
@@ -305,9 +304,8 @@ class EditMemoryReferencePanel extends EditReferencePanel {
 				toAddr = fromCu.getAddress(fromOpIndex);
 			}
 			if (toAddr != null) {
-				Reference r =
-					p.getReferenceManager().getReference(fromCu.getMinAddress(), toAddr,
-						fromOpIndex);
+				Reference r = p.getReferenceManager().getReference(fromCu.getMinAddress(), toAddr,
+					fromOpIndex);
 				if (r != null) {
 					toAddr = null;
 					if (r.isOffsetReference()) {
@@ -425,13 +423,13 @@ class EditMemoryReferencePanel extends EditReferencePanel {
 				space.getMaxAddress().toString(false));
 			return false;
 		}
-		
+
 		// Don't try to process an address that is not valid. 
 		if (!toAddr.isMemoryAddress()) {
 			showInputErr("Invalid memory address specified");
 			return false;
 		}
-		
+
 		addHistoryAddress(fromCodeUnit.getProgram(), toAddr);
 
 		toAddr = plugin.checkMemoryAddress(this, fromCodeUnit.getProgram(), toAddr, offset);
@@ -466,7 +464,7 @@ class EditMemoryReferencePanel extends EditReferencePanel {
 	private void addHistoryAddress(Program program, Address addr) {
 		List<Address> list = addrHistoryMap.get(program);
 		if (list == null) {
-			list = new ArrayList<Address>();
+			list = new ArrayList<>();
 			addrHistoryMap.put(program, list);
 		}
 		list.remove(addr);

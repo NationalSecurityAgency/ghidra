@@ -1,4 +1,9 @@
+apply from: "$rootProject.projectDir/gradle/distributableGhidraModule.gradle"
+apply from: "$rootProject.projectDir/gradle/javaProject.gradle"
+apply from: "$rootProject.projectDir/gradle/jacocoProject.gradle"
+apply from: "$rootProject.projectDir/gradle/javaTestProject.gradle"
 apply plugin: 'eclipse'
+
 eclipse.project.name = 'Features GhidraServer'
 
 def yajswRelease = "yajsw-stable-12.12"
@@ -20,7 +25,14 @@ addExports([
 ])
 
 CopySpec yajswCopySpec = copySpec {
-	from(zipTree("${BIN_REPO}/Ghidra/Features/GhidraServer/${yajswRelease}.zip")) {
+	File localFile = file("build/${yajswRelease}.zip")
+	File binFile = file("${BIN_REPO}/Ghidra/Features/GhidraServer/${yajswRelease}.zip")
+
+	// First check if the file was downloaded and dropped in locally.  If not, check in the bin
+	// repo.
+	def yajswZipTree = localFile.exists() ? zipTree(localFile) : zipTree(binFile)
+	
+	from(yajswZipTree) {
 		include "${yajswRelease}/lib/core/**"
 		include "${yajswRelease}/lib/extended/**"
 		include "${yajswRelease}/templates/**"
@@ -85,17 +97,20 @@ task generateGhidraServerClasspath {
 }
 
 /**
- * The classpath.frag file created below needs to be placed in the common folder under the root
+ * The classpath.frag file created below needs to be placed in the staging folder under the root
  * path of this project.
  *
  * Note that we use 'this.project' to reference the GhidraServer project - this is because
  * inside the closure, 'project' refers to the root project, while 'this' refers to 
  * GhidraServer.
  */
-rootProject.assembleCommon { 
+rootProject.assembleDistribution { 
 	into (getZipPath(this.project)  + "/data") {
 		with yajswCopySpec
 		from generateGhidraServerClasspath
+	}
+	into (getZipPath(this.project) + "/os") {
+		from (projectDir.toString() + "/os")
 	}
 }
 
@@ -145,8 +160,8 @@ task generateDevGhidraServerClasspath {
  * We want the two main tasks in this build file to be run at the appropriate time; the  
  * dev task should be run during prepDev; the other should be run during the build       
  *****************************************************************************************/
-prepDev.dependsOn(generateDevGhidraServerClasspath)
-prepDev.dependsOn(yajswDevUnpack)
+rootProject.prepDev.dependsOn(generateDevGhidraServerClasspath)
+rootProject.prepDev.dependsOn(yajswDevUnpack)
 //compileJava.dependsOn(generateGhidraServerClasspath)
 
 

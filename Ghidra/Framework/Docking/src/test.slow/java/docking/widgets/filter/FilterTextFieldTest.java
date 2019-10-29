@@ -33,7 +33,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import generic.test.AbstractGenericTest;
-import ghidra.generic.function.Callback;
+import utility.function.Callback;
 
 public class FilterTextFieldTest {
 

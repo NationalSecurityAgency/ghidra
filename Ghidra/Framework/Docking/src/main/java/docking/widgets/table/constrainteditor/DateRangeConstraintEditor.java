@@ -23,6 +23,7 @@ import java.util.Calendar;
 
 import javax.swing.*;
 
+import docking.widgets.label.GDHtmlLabel;
 import docking.widgets.table.constraint.ColumnConstraint;
 import docking.widgets.table.constraint.RangeColumnConstraint;
 import docking.widgets.table.constraint.provider.DateColumnConstraintProvider;
@@ -107,38 +108,12 @@ public class DateRangeConstraintEditor extends AbstractColumnConstraintEditor<Lo
 
 		panel.add(controlPanel);
 
-		infoLabel = new JLabel();
+		infoLabel = new GDHtmlLabel();
 		infoLabel.setForeground(Color.GRAY);
 		infoLabel.setHorizontalAlignment(SwingConstants.CENTER);
 		panel.add(infoLabel);
 
 		return panel;
-	}
-
-	private void rangeChanged() {
-		if (!hasEditorComponents()) {
-			return;
-		}
-		String statusMsg = "";
-
-		if (checkEditorValueValidity()) {
-
-			LocalDate start = lowerSpinnerModel.getDate();
-			LocalDate end = upperSpinnerModel.getDate();
-
-			// add one because the date range is inclusive.
-			long days = ChronoUnit.DAYS.between(start, end) + 1;
-			// add one because the date range is inclusive.
-
-			statusMsg += formatStatus(String.format("Range Size: %,d days", days), false);
-		}
-		else {
-			statusMsg += formatStatus(getErrorMessage(), true);
-		}
-
-		infoLabel.setText(statusMsg);
-
-		valueChanged();
 	}
 
 	@Override

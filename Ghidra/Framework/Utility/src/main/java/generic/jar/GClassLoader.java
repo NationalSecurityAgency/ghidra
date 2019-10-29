@@ -29,10 +29,10 @@ public class GClassLoader extends URLClassLoader {
 	}
 
 	private static URL[] findUrls(List<File> moduleDirs) {
-		List<URL> urls = new ArrayList<URL>();
+		List<URL> urls = new ArrayList<>();
 
 		for (File moduleDir : moduleDirs) {
-			File binDir = new File(moduleDir, "bin/");
+			File binDir = new File(moduleDir, "bin/main");
 			if (binDir.exists()) {
 				addFileURL(urls, binDir);
 			}

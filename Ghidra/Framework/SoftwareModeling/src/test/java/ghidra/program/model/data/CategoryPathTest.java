@@ -21,129 +21,290 @@
  */
 package ghidra.program.model.data;
 
-import static org.junit.Assert.assertNull;
+import static org.junit.Assert.*;
 
-import org.junit.Assert;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.junit.Test;
 
-import generic.test.AbstractGenericTest;
+import generic.test.AbstractGTest;
 
 /**
- * 
- *
- * To change the template for this generated type comment go to
- * Window&gt;Preferences&gt;Java&gt;Code Generation&gt;Code and Comments
+ * {@link CategoryPath} tests.
  */
-public class CategoryPathTest extends AbstractGenericTest {
+public class CategoryPathTest extends AbstractGTest {
 
-	public CategoryPathTest() {
-		super();
+	@Test
+	public void testEscapeStringEmpty() {
+		String orig = "";
+		String escaped = CategoryPath.escapeString(orig);
+		String unescaped = CategoryPath.unescapeString(escaped);
+		assertEquals(orig, unescaped);
+		assertEquals("", escaped);
 	}
 
 	@Test
-	public void testConstructor() {
+	public void testEscapeString1() {
+		String orig = "/";
+		String escaped = CategoryPath.escapeString(orig);
+		String unescaped = CategoryPath.unescapeString(escaped);
+		assertEquals(orig, unescaped);
+		assertEquals("\\/", escaped);
+	}
+
+	@Test
+	public void testEscapeString2() {
+		String orig = "//";
+		String escaped = CategoryPath.escapeString(orig);
+		String unescaped = CategoryPath.unescapeString(escaped);
+		assertEquals(orig, unescaped);
+		assertEquals("\\/\\/", escaped);
+	}
+
+	@Test
+	public void testConstructorRoot1() {
+		CategoryPath c = CategoryPath.ROOT;
+		assertEquals("/", c.getPath());
+		assertEquals("", c.getName());
+		assertTrue(c.isRoot());
+	}
+
+	@Test
+	public void testConstructorRoot2() {
 		CategoryPath c = new CategoryPath(null);
-		Assert.assertEquals("/", c.getPath());
-		Assert.assertEquals("", c.getName());
+		assertEquals("/", c.getPath());
+		assertEquals("", c.getName());
+		assertTrue(c.isRoot());
+	}
 
-		c = new CategoryPath("");
-		Assert.assertEquals("/", c.getPath());
-		Assert.assertEquals("", c.getName());
+	@Test
+	public void testConstructorRoot3() {
+		CategoryPath c = new CategoryPath("");
+		assertEquals("/", c.getPath());
+		assertEquals("", c.getName());
+		assertTrue(c.isRoot());
+	}
 
-		c = new CategoryPath("/");
-		Assert.assertEquals("/", c.getPath());
-		Assert.assertEquals("", c.getName());
+	@Test
+	public void testConstructorRoot4() {
+		CategoryPath c = new CategoryPath("/");
+		assertEquals("/", c.getPath());
+		assertEquals("", c.getName());
+		assertTrue(c.isRoot());
+	}
 
-		c = new CategoryPath("/apple");
-		Assert.assertEquals("/apple", c.getPath());
-		Assert.assertEquals("apple", c.getName());
+	@Test
+	public void testConstructorBasicString1() {
+		CategoryPath c = new CategoryPath("/apple");
+		assertEquals("/apple", c.getPath());
+		assertEquals("apple", c.getName());
+	}
 
-		c = new CategoryPath("/apple/pear");
-		Assert.assertEquals("/apple/pear", c.getPath());
-		Assert.assertEquals("pear", c.getName());
+	@Test
+	public void testConstructorBasicString2() {
+		CategoryPath c = new CategoryPath("/apple/pear");
+		assertEquals("/apple/pear", c.getPath());
+		assertEquals("pear", c.getName());
+	}
 
-		try {
-			c = new CategoryPath("//");
-			Assert.fail();
-		}
-		catch (IllegalArgumentException e) {
-		}
-		try {
-			c = new CategoryPath("apple");
-			Assert.fail();
-		}
-		catch (IllegalArgumentException e) {
-		}
-		try {
-			c = new CategoryPath("/apple/");
-			Assert.fail();
-		}
-		catch (IllegalArgumentException e) {
-		}
-		try {
-			c = new CategoryPath("/apple//bob");
-			Assert.fail();
-		}
-		catch (IllegalArgumentException e) {
-		}
+	@Test
+	public void testConstructorParentVarargsSingle() {
+		CategoryPath c = new CategoryPath("/apple/pear");
+		c = new CategoryPath(c, "mango");
+		assertEquals("/apple/pear/mango", c.getPath());
+		assertEquals("mango", c.getName());
+	}
+
+	@Test
+	public void testConstructorParentAndList() {
+		CategoryPath parent = new CategoryPath("/universe/earth");
+		List<String> list = new ArrayList<>();
+		list.add("boy");
+		list.add("bad");
+		CategoryPath c = new CategoryPath(parent, list);
+		assertEquals("/universe/earth/boy/bad", c.getPath());
+		assertEquals("bad", c.getName());
+	}
+
+	@Test
+	public void testConstructorParentAndVarargsArray() {
+		CategoryPath parent = new CategoryPath("/apple/peaches");
+		CategoryPath c = new CategoryPath(parent, new String[] { "pumpkin", "pie" });
+		assertEquals("pie", c.getName());
+		c = c.getParent();
+		assertEquals("pumpkin", c.getName());
+		c = c.getParent();
+		assertEquals("peaches", c.getName());
+		c = c.getParent();
+		assertEquals("apple", c.getName());
+		c = c.getParent();
+		assertEquals("", c.getName());
+		assertTrue(c.isRoot());
+	}
+
+	@Test
+	public void testConstructorParentAndVarargs() {
+		CategoryPath parent = new CategoryPath("/apple/peaches");
+		CategoryPath c = new CategoryPath(parent, "pumpkin", "pie");
+		assertEquals("pie", c.getName());
+		c = c.getParent();
+		assertEquals("pumpkin", c.getName());
+		c = c.getParent();
+		assertEquals("peaches", c.getName());
+		c = c.getParent();
+		assertEquals("apple", c.getName());
+		c = c.getParent();
+		assertEquals("", c.getName());
+		assertTrue(c.isRoot());
 	}
 
 	@Test(expected = IllegalArgumentException.class)
-	public void testBadCtorParam_empty_path_element() {
+	public void testConstructorBadCtorParam_empty_path_element() {
 		new CategoryPath("//");
 	}
 
 	@Test(expected = IllegalArgumentException.class)
-	public void testBadCtorParam_empty_path_element_2() {
+	public void testConstructorBadCtorParam_empty_path_element_2() {
 		new CategoryPath("/apple//bob");
 	}
 
 	@Test(expected = IllegalArgumentException.class)
-	public void testBadCtorParam_missing_leading_slash() {
+	public void testConstructorBadCtorParam_missing_leading_slash() {
 		new CategoryPath("apple");
 	}
 
 	@Test(expected = IllegalArgumentException.class)
-	public void testBadCtorParam_bad_trailing_slash() {
+	public void testConstructorBadCtorParam_bad_trailing_slash() {
 		new CategoryPath("/apple/");
 	}
 
 	@Test
-	public void testOtherConstructor() {
-		CategoryPath a = new CategoryPath("/aaa");
-		CategoryPath b = new CategoryPath(a, "bbb");
-		Assert.assertEquals("/aaa/bbb", b.getPath());
-		Assert.assertEquals("bbb", b.getName());
-	}
-
-	@Test
 	public void testGetParent() {
-		CategoryPath c = new CategoryPath(null);
+		CategoryPath c = CategoryPath.ROOT;
 		assertNull(c.getParent());
-
 		c = new CategoryPath("/aaa/bbb/ccc");
 		c = c.getParent();
-		Assert.assertEquals("/aaa/bbb", c.getPath());
+		assertEquals("/aaa/bbb", c.getPath());
 	}
 
 	@Test
-	public void testIsAncestor() {
+	public void testIsAncestorRootRoot() {
+		assertTrue(CategoryPath.ROOT.isAncestorOrSelf(CategoryPath.ROOT));
+	}
 
-		Assert.assertTrue(CategoryPath.ROOT.isAncestorOrSelf(CategoryPath.ROOT));
-
+	@Test
+	public void testIsAncestorRootApple() {
 		CategoryPath apple = new CategoryPath("/apple");
-		Assert.assertTrue(apple.isAncestorOrSelf(CategoryPath.ROOT));
-		Assert.assertFalse(CategoryPath.ROOT.isAncestorOrSelf(apple));
+		assertTrue(apple.isAncestorOrSelf(CategoryPath.ROOT));
+		assertFalse(CategoryPath.ROOT.isAncestorOrSelf(apple));
+	}
 
+	@Test
+	public void testIsAncestorAppleSubApple() {
+		CategoryPath apple = new CategoryPath("/apple");
 		CategoryPath applesub = new CategoryPath("/apple/sub");
-		Assert.assertTrue(applesub.isAncestorOrSelf(apple));
-		Assert.assertTrue(applesub.isAncestorOrSelf(applesub));
+		assertTrue(applesub.isAncestorOrSelf(apple));
+		assertTrue(applesub.isAncestorOrSelf(applesub));
+	}
 
+	@Test
+	public void testIsAncestorAppleSubNotApple() {
+		CategoryPath applesub = new CategoryPath("/apple/sub");
 		CategoryPath notapple = new CategoryPath("/notapple");
-		Assert.assertFalse(applesub.isAncestorOrSelf(notapple));
+		assertFalse(applesub.isAncestorOrSelf(notapple));
+	}
 
+	@Test
+	public void testIsAncestorAppleSubApp() {
+		CategoryPath applesub = new CategoryPath("/apple/sub");
 		CategoryPath app = new CategoryPath("/app");
-		Assert.assertFalse(applesub.isAncestorOrSelf(app));
+		assertFalse(applesub.isAncestorOrSelf(app));
+	}
+
+	@Test
+	public void testToArray() {
+		CategoryPath path = new CategoryPath("/aaa/bbb/bob");
+		String[] names = path.asArray();
+		assertEquals("aaa", names[0]);
+		assertEquals("bbb", names[1]);
+		assertEquals("bob", names[2]);
+	}
+
+	@Test
+	public void testToList() {
+		CategoryPath path = new CategoryPath("/aaa/bbb/bob");
+		List<String> names = path.asList();
+		assertEquals("aaa", names.get(0));
+		assertEquals("bbb", names.get(1));
+		assertEquals("bob", names.get(2));
+	}
+
+	@Test
+	public void testConstructorDelimeterEscape1() {
+		CategoryPath path = new CategoryPath("/aaa/bbb/\\/bob");
+		List<String> names = path.asList();
+		assertEquals("aaa", names.get(0));
+		assertEquals("bbb", names.get(1));
+		assertEquals("/bob", names.get(2));
+		assertEquals("/aaa/bbb/\\/bob", path.getPath());
+	}
+
+	@Test
+	public void testConstructorDelimeterEscape2() {
+		// Should not complain about terminating slash
+		CategoryPath path = new CategoryPath("/aaa/bbb/bob\\/");
+		List<String> names = path.asList();
+		assertEquals("aaa", names.get(0));
+		assertEquals("bbb", names.get(1));
+		assertEquals("bob/", names.get(2));
+		assertEquals("/aaa/bbb/bob\\/", path.getPath());
+	}
+
+	@Test
+	public void testConstructorDelimeterEscape3() {
+		CategoryPath path = new CategoryPath("/\\/aaa/bbb/bob");
+		List<String> names = path.asList();
+		assertEquals("/aaa", names.get(0));
+		assertEquals("bbb", names.get(1));
+		assertEquals("bob", names.get(2));
+		assertEquals("/\\/aaa/bbb/bob", path.getPath());
+	}
+
+	@Test
+	public void testConstructorDelimeterEscape4() {
+		CategoryPath path = new CategoryPath("/\\/\\/aaa/bbb/bob");
+		List<String> names = path.asList();
+		assertEquals("//aaa", names.get(0));
+		assertEquals("bbb", names.get(1));
+		assertEquals("bob", names.get(2));
+		assertEquals("/\\/\\/aaa/bbb/bob", path.getPath());
+	}
+
+	@Test(expected = IllegalArgumentException.class)
+	@SuppressWarnings("unused")
+	public void testDelimeterEscapeAtRoot() {
+		CategoryPath path = new CategoryPath("\\//aaa/bbb/bob");
+	}
+
+	@Test
+	public void testConstructorParentVarargsNestedDelimiter1() {
+		CategoryPath c = new CategoryPath("/apple/pear");
+		// nested delimiter sequence should be ignored on constructor and getName(), but output on
+		// getPath().
+		c = new CategoryPath(c, "man/go");
+		assertEquals("/apple/pear/man\\/go", c.getPath());
+		assertEquals("man/go", c.getName());
+	}
+
+	@Test
+	public void testConstructorParentVarargsNestedEscape1() {
+		CategoryPath c = new CategoryPath("/apple/pear");
+		// nested escape sequence should be ignored on constructor and getName(), but output on
+		// getPath().
+		c = new CategoryPath(c, "man\\/go");
+		assertEquals("/apple/pear/man\\\\/go", c.getPath());
+		assertEquals("man\\/go", c.getName());
 	}
 
 }

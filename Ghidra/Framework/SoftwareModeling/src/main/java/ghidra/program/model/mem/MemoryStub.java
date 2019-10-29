@@ -15,10 +15,14 @@
  */
 package ghidra.program.model.mem;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.Iterator;
+import java.util.List;
 
 import ghidra.framework.store.LockException;
+import ghidra.program.database.mem.AddressSourceInfo;
+import ghidra.program.database.mem.FileBytes;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Program;
 import ghidra.util.exception.*;
@@ -464,4 +468,31 @@ public class MemoryStub implements Memory {
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
+	public FileBytes createFileBytes(String filename, long offset, long size, InputStream is,
+			TaskMonitor monitor) throws IOException {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public List<FileBytes> getAllFileBytes() {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public boolean deleteFileBytes(FileBytes descriptor) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public MemoryBlock createInitializedBlock(String name, Address start, FileBytes fileBytes,
+			long offset, long size, boolean overlay) throws LockException, DuplicateNameException,
+			MemoryConflictException, AddressOverflowException {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public AddressSourceInfo getAddressSourceInfo(Address address) {
+		throw new UnsupportedOperationException();
+	}
 }

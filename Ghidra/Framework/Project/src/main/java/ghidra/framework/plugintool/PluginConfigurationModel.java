@@ -21,6 +21,7 @@ import javax.swing.Icon;
 import javax.swing.event.ChangeListener;
 
 import docking.action.DockingActionIf;
+import docking.actions.KeyBindingUtils;
 import ghidra.framework.plugintool.util.*;
 import ghidra.util.Msg;
 import resources.ResourceManager;
@@ -212,12 +213,12 @@ public class PluginConfigurationModel {
 	 * @param pluginDescription The description for which to find loaded actions.
 	 * @return all of the actions loaded by the Plugin represented by the given PluginDescription.
 	 */
-	public List<DockingActionIf> getActionsForPlugin(PluginDescription pluginDescription) {
+	public Set<DockingActionIf> getActionsForPlugin(PluginDescription pluginDescription) {
 		if (!isLoaded(pluginDescription)) {
-			return Collections.emptyList();
+			return Collections.emptySet();
 		}
 
-		return tool.getDockingActionsByOwnerName(pluginDescription.getName());
+		return KeyBindingUtils.getKeyBindingActionsForOwner(tool, pluginDescription.getName());
 	}
 
 	/**

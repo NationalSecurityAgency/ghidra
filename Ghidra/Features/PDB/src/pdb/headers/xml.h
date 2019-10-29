@@ -17,9 +17,10 @@
 #define __PDB__XML__H__
 
 #include <stdio.h>
+#include <string>
 #include <comutil.h>
 
-char * indent(size_t nSpaces);
-BSTR escapeXmlEntities(BSTR bstr);
+std::wstring indent(size_t nSpaces);
+std::wstring escapeXmlEntities(const std::wstring& bstr);
 
 #endif

@@ -435,21 +435,25 @@ public class BinaryReader {
 	 * @exception IOException if an I/O error occurs
 	 */
 	public String readAsciiString(long index) throws IOException {
-		StringBuffer buffer = new StringBuffer();
-		while (true) {
-			if (index == provider.length()) {
-				// reached the end of the bytes and found no non-ascii data
-				break;
+		final int BUF_LEN = 1024;
+		StringBuilder builder = new StringBuilder();
+		boolean done = false;
+		while (!done && index < provider.length()) {
+			long numToRead = Math.min(BUF_LEN, provider.length() - index);
+			for (byte b : provider.readBytes(index, numToRead)) {
+				if ((b >= 32) && (b <= 126)) {
+					builder.append((char) b);
+				}
+				else {
+					done = true;
+					break;
+				}
 			}
-			byte b = provider.readByte(index++);
-			if ((b >= 32) && (b <= 126)) {
-				buffer.append((char) b);
-			}
-			else {
-				break;
-			}
+			index += numToRead;
 		}
-		return buffer.toString().trim();
+		
+		
+		return builder.toString().trim();
 	}
 
 	/**

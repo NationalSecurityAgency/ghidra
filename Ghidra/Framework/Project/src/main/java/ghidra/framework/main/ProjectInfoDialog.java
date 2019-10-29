@@ -27,6 +27,8 @@ import docking.DialogComponentProvider;
 import docking.help.Help;
 import docking.help.HelpService;
 import docking.widgets.OptionDialog;
+import docking.widgets.label.GDLabel;
+import docking.widgets.label.GLabel;
 import docking.wizard.WizardManager;
 import ghidra.app.util.GenericHelpTopics;
 import ghidra.framework.client.*;
@@ -124,13 +126,13 @@ public class ProjectInfoDialog extends DialogComponentProvider {
 		JPanel infoPanel = new JPanel(new PairLayout(5, 10));
 		infoPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-		JLabel dirLabel = new JLabel("Directory Location:", SwingConstants.RIGHT);
+		JLabel dirLabel = new GLabel("Directory Location:", SwingConstants.RIGHT);
 		dirLabel.setToolTipText("Directory where your project files reside.");
 		infoPanel.add(dirLabel);
-		projectDirLabel = new JLabel(dir.getAbsolutePath());
+		projectDirLabel = new GDLabel(dir.getAbsolutePath());
 		infoPanel.add(projectDirLabel);
 
-		infoPanel.add(new JLabel("Project Storage Type:", SwingConstants.RIGHT));
+		infoPanel.add(new GLabel("Project Storage Type:", SwingConstants.RIGHT));
 		Class<? extends LocalFileSystem> fsClass = project.getProjectData().getLocalStorageClass();
 		String fsClassName = "<UNKNOWN>";
 		if (IndexedV1LocalFileSystem.class.equals(fsClass)) {
@@ -143,11 +145,11 @@ public class ProjectInfoDialog extends DialogComponentProvider {
 			fsClassName = "Mangled Filesystem";
 		}
 
-		JLabel label = new JLabel(fsClassName);
+		JLabel label = new GLabel(fsClassName);
 		label.setName("Project Storage Type");
 		infoPanel.add(label);
-		infoPanel.add(new JLabel("Project Name:", SwingConstants.RIGHT));
-		label = new JLabel(project.getName());
+		infoPanel.add(new GLabel("Project Name:", SwingConstants.RIGHT));
+		label = new GLabel(project.getName());
 		label.setName("Project Name");
 		infoPanel.add(label);
 
@@ -226,25 +228,25 @@ public class ProjectInfoDialog extends DialogComponentProvider {
 		JPanel panel = new JPanel(new PairLayout(5, 10));
 		panel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
 
-		JLabel sLabel = new JLabel("Server Name:", SwingConstants.RIGHT);
+		JLabel sLabel = new GDLabel("Server Name:", SwingConstants.RIGHT);
 		panel.add(sLabel);
-		serverLabel = new JLabel(serverName);
+		serverLabel = new GDLabel(serverName);
 		serverLabel.setName("Server Name");
 		panel.add(serverLabel);
 
-		JLabel pLabel = new JLabel("Port Number:", SwingConstants.RIGHT);
+		JLabel pLabel = new GDLabel("Port Number:", SwingConstants.RIGHT);
 		panel.add(pLabel);
-		portLabel = new JLabel(portNumberStr);
+		portLabel = new GDLabel(portNumberStr);
 		portLabel.setName("Port Number");
 		panel.add(portLabel);
 
-		JLabel repLabel = new JLabel("Repository Name:", SwingConstants.RIGHT);
+		JLabel repLabel = new GDLabel("Repository Name:", SwingConstants.RIGHT);
 		panel.add(repLabel);
-		repNameLabel = new JLabel(repositoryName);
+		repNameLabel = new GDLabel(repositoryName);
 		repNameLabel.setName("Repository Name");
 		panel.add(repNameLabel);
 
-		JLabel connectLabel = new JLabel("Connection Status:", SwingConstants.RIGHT);
+		JLabel connectLabel = new GDLabel("Connection Status:", SwingConstants.RIGHT);
 		panel.add(connectLabel);
 
 		connectionButton = new JButton(
@@ -266,7 +268,7 @@ public class ProjectInfoDialog extends DialogComponentProvider {
 		buttonPanel.add(connectionButton);
 		panel.add(buttonPanel);
 
-		JLabel userLabel = new JLabel("User Access Level:", SwingConstants.RIGHT);
+		JLabel userLabel = new GDLabel("User Access Level:", SwingConstants.RIGHT);
 		userLabel.setToolTipText("Indicates your privileges in the shared repository");
 		panel.add(userLabel);
 		User user = null;
@@ -278,7 +280,7 @@ public class ProjectInfoDialog extends DialogComponentProvider {
 				Msg.error(this, "Unable to get the current user", e);
 			}
 		}
-		userAccessLabel = new JLabel(getAccessString(user));
+		userAccessLabel = new GDLabel(getAccessString(user));
 		userAccessLabel.setName("User Access Level");
 		panel.add(userLabel);
 		panel.add(userAccessLabel);
@@ -555,6 +557,7 @@ public class ProjectInfoDialog extends DialogComponentProvider {
 		@Override
 		public void run(TaskMonitor monitor) {
 			try {
+				// NOTE: conversion of non-shared project will lose version history
 				project.getProjectData().updateRepositoryInfo(taskRepository, monitor);
 				status = true;
 			}

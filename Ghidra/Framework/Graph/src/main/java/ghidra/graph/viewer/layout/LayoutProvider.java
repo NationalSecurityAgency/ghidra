@@ -48,7 +48,6 @@ public interface LayoutProvider<V extends VisualVertex,
 	/**
 	 * Returns a new instance of the layout that this class provides
 	 * 
-	 * @param m the model object
 	 * @param graph the graph
 	 * @param monitor a task monitor 
 	 * @return the new layout

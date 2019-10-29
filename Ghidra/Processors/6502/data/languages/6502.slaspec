@@ -36,7 +36,7 @@ macro popSR() {
 	V = ccr[6,1];
 	B = ccr[4,1];
 	D = ccr[3,1];
-	I = ccr[3,1];
+	I = ccr[2,1];
 	Z = ccr[1,1];
 	C = ccr[0,1];
 }
@@ -47,7 +47,7 @@ macro pushSR() {
 	ccr[6,1] = V;
 	ccr[4,1] = B;
 	ccr[3,1] = D;
-	ccr[3,1] = I;
+	ccr[2,1] = I;
 	ccr[1,1] = Z;
 	ccr[0,1] = C;
 	*:1 (SP) = ccr;

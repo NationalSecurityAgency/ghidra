@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +20,8 @@ import java.awt.event.ItemListener;
 
 import javax.swing.*;
 import javax.swing.event.ChangeListener;
+
+import docking.widgets.button.GRadioButton;
 
 /**
  * Panel to show radio buttons to choose a name or a set of permissions
@@ -89,6 +90,7 @@ class BlockConflictPanel extends JPanel {
 		group = new ButtonGroup();
 
 		ItemListener itemListener = new ItemListener() {
+			@Override
 			public void itemStateChanged(ItemEvent e) {
 				if (e.getStateChange() == ItemEvent.SELECTED) {
 					listener.stateChanged(null);
@@ -96,13 +98,13 @@ class BlockConflictPanel extends JPanel {
 			}
 		};
 
-		latestRB = new JRadioButton("Latest");
+		latestRB = new GRadioButton("Latest");
 		latestRB.setName(MemoryMergePanel.LATEST_BUTTON_NAME);
 		latestRB.addItemListener(itemListener);
-		myRB = new JRadioButton("My");
+		myRB = new GRadioButton("My");
 		myRB.addItemListener(itemListener);
 		myRB.setName(MemoryMergePanel.MY_BUTTON_NAME);
-		originalRB = new JRadioButton("Original");
+		originalRB = new GRadioButton("Original");
 		originalRB.addItemListener(itemListener);
 		originalRB.setName(MemoryMergePanel.ORIGINAL_BUTTON_NAME);
 

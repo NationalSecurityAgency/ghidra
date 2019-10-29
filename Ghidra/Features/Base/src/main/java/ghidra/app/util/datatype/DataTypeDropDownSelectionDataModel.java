@@ -15,20 +15,20 @@
  */
 package ghidra.app.util.datatype;
 
+import java.awt.Component;
+import java.util.*;
+
+import javax.swing.*;
+
+import docking.widgets.DropDownSelectionTextField;
+import docking.widgets.DropDownTextFieldDataModel;
+import docking.widgets.list.GListCellRenderer;
 import ghidra.app.plugin.core.datamgr.util.DataTypeUtils;
 import ghidra.app.services.DataTypeManagerService;
 import ghidra.app.util.ToolTipUtils;
 import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.program.model.data.*;
 import ghidra.util.exception.AssertException;
-
-import java.awt.Component;
-import java.util.*;
-
-import javax.swing.*;
-
-import docking.widgets.DropDownTextFieldDataModel;
-import docking.widgets.DropDownSelectionTextField;
 
 /**
  * The data model for {@link DropDownSelectionTextField} that allows the text field to work with
@@ -84,7 +84,7 @@ public class DataTypeDropDownSelectionDataModel implements DropDownTextFieldData
 	 * Remove any unwanted data type items, like arrays.
 	 */
 	private List<DataType> filterDataTypeList(List<DataType> dataTypeList) {
-		List<DataType> matchingList = new ArrayList<DataType>(dataTypeList.size());
+		List<DataType> matchingList = new ArrayList<>(dataTypeList.size());
 		for (DataType dataType : dataTypeList) {
 			if (!(dataType instanceof Array)) {
 				matchingList.add(dataType);
@@ -127,33 +127,24 @@ public class DataTypeDropDownSelectionDataModel implements DropDownTextFieldData
 		return -1; // we only get here when the list is empty
 	}
 
-	/**
-	 * Renderer for data types.  It uses delegation instead of inheritance, due typing issues
-	 * (DefaultListCellRenderer is already typed on Object).
-	 */
-	private class DataTypeDropDownRenderer implements ListCellRenderer<DataType> {
+	private class DataTypeDropDownRenderer extends GListCellRenderer<DataType> {
 
-		private DefaultListCellRenderer delegate = new DefaultListCellRenderer();
+		@Override
+		protected String getItemText(DataType dt) {
+			DataTypeManager dtm = dt.getDataTypeManager();
+			String dtmName = (dtm != null) ? dtm.getName() : "";
+			return dt.getName() + " - " + dtmName + dt.getPathName();
+		}
 
 		@Override
 		public Component getListCellRendererComponent(JList<? extends DataType> list,
 				DataType value, int index, boolean isSelected, boolean cellHasFocus) {
 
-			JLabel renderLabel =
-				(JLabel) delegate.getListCellRendererComponent(list, value, index, isSelected,
-					cellHasFocus);
+			super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+			setIcon(DataTypeUtils.getIconForDataType(value, false));
+			setVerticalAlignment(SwingConstants.TOP);
 
-			// set the data
-			DataType dt = value;
-			renderLabel.setIcon(DataTypeUtils.getIconForDataType(dt, false));
-			DataTypeManager dtm = dt.getDataTypeManager();
-			String dtmName = dtm != null ? dtm.getName() : "";
-			renderLabel.setText(dt.getName() + " - " + dtmName + dt.getPathName());
-
-			renderLabel.setVerticalAlignment(SwingConstants.TOP);
-
-			return renderLabel;
-
+			return this;
 		}
 	}
 

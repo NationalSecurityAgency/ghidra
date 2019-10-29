@@ -15,9 +15,14 @@
  */
 #include "subflow.hh"
 
+/// \brief Return \e slot of constant if INT_OR op sets all bits in mask, otherwise -1
+///
+/// \param orop is the given CPUI_INT_OR op
+/// \param mask is the given mask
+/// \return constant slot or -1
 int4 SubvariableFlow::doesOrSet(PcodeOp *orop,uintb mask)
 
-{  // Return index of constant if OR op sets bits in mask, otherwise -1
+{
   int4 index = (orop->getIn(1)->isConstant() ? 1 : 0);
   if (!orop->getIn(index)->isConstant())
     return -1;
@@ -27,9 +32,14 @@ int4 SubvariableFlow::doesOrSet(PcodeOp *orop,uintb mask)
   return -1;
 }
 
+/// \brief Return \e slot of constant if INT_AND op clears all bits in mask, otherwise -1
+///
+/// \param andop is the given CPUI_INT_AND op
+/// \param mask is the given mask
+/// \return constant slot or -1
 int4 SubvariableFlow::doesAndClear(PcodeOp *andop,uintb mask)
 
-{ // Return index of constant if AND op clears bits in mask, otherwise -1
+{
   int4 index = (andop->getIn(1)->isConstant() ? 1 : 0);
   if (!andop->getIn(index)->isConstant())
     return -1;
@@ -39,9 +49,20 @@ int4 SubvariableFlow::doesAndClear(PcodeOp *andop,uintb mask)
   return -1;
 }
 
+/// \brief Add the given Varnode as a new node in the logical subgraph
+///
+/// A new ReplaceVarnode object is created, representing the given Varnode within
+/// the logical subgraph, and returned.  If an object representing the Varnode already
+/// exists it is returned.  A mask describing the subset of bits within the Varnode
+/// representing the logical value is also passed in. This method also determines if
+/// the new node needs to be added to the worklist for continued tracing.
+/// \param vn is the given Varnode holding the logical value
+/// \param mask is the given mask describing the bits of the logical value
+/// \param inworklist will hold \b true if the new node should be traced further
+/// \return the new subgraph variable node
 SubvariableFlow::ReplaceVarnode *SubvariableFlow::setReplacement(Varnode *vn,uintb mask,bool &inworklist)
 
-{ // Mark 
+{
   ReplaceVarnode *res;
   if (vn->isMark()) {		// Already seen before
     map<Varnode *,ReplaceVarnode>::iterator iter;
@@ -126,9 +147,15 @@ SubvariableFlow::ReplaceVarnode *SubvariableFlow::setReplacement(Varnode *vn,uin
   return res;
 }
 
+/// \brief Create a logical subgraph operator node given its output variable node
+///
+/// \param opc is the opcode of the new logical operator
+/// \param numparam is the number of parameters in the new operator
+/// \param outrvn is the given output variable node
+/// \return the new logical subgraph operator object
 SubvariableFlow::ReplaceOp *SubvariableFlow::createOp(OpCode opc,int4 numparam,ReplaceVarnode *outrvn)
 
-{ // Create record for replacement op, given its replacement varnode output
+{
   if (outrvn->def != (ReplaceOp *)0)
     return outrvn->def;
   oplist.push_back(ReplaceOp());
@@ -142,9 +169,17 @@ SubvariableFlow::ReplaceOp *SubvariableFlow::createOp(OpCode opc,int4 numparam,R
   return rop;
 }
 
+
+/// \brief Create a logical subraph operator node given one of its input variable nodes
+///
+/// \param opc is the opcode of the new logical operator
+/// \param numparam is the number of parameters in the new operator
+/// \param inrvn is the given input variable node
+/// \param slot is the input slot of the variable node
+/// \return the new logical subgraph operator objects
 SubvariableFlow::ReplaceOp *SubvariableFlow::createOpDown(OpCode opc,int4 numparam,PcodeOp *op,ReplaceVarnode *inrvn,int4 slot)
 
-{ // Create record for replacement op, given one of its input replacement varnodes
+{
   oplist.push_back(ReplaceOp());
   ReplaceOp *rop = &oplist.back();
   rop->op = op;
@@ -157,9 +192,17 @@ SubvariableFlow::ReplaceOp *SubvariableFlow::createOpDown(OpCode opc,int4 numpar
   return rop;
 }
 
+/// \brief Convert a new INDIRECT op into the logically trimmed variant of the given original PcodeOp
+///
+/// This method assumes the original op was an \e indirect \e creation. The input and output
+/// Varnode for the new INDIRECT are not provided by this method. It only provides the
+/// \e indirect \e effect input and patches up any active parameter recovery process.
+/// \param newop is the new INDIRECT op to convert
+/// \param oldop is the original INDIRECT op
+/// \param out is the subgraph output variable node of the new INDIRECT
 void SubvariableFlow::patchIndirect(PcodeOp *newop,PcodeOp *oldop, ReplaceVarnode *out)
 
-{ // Finish converting -newop- into the logically trimmed variant of -oldop-
+{
   PcodeOp *indop = PcodeOp::getOpFromConst(oldop->getIn(1)->getAddr());
   bool possibleout = !oldop->getIn(0)->isIndirectZero();
   Varnode *outvn = getReplaceVarnode(out);
@@ -176,9 +219,18 @@ void SubvariableFlow::patchIndirect(PcodeOp *newop,PcodeOp *oldop, ReplaceVarnod
   }
 }
 
+/// \brief Determine if the given subgraph variable can act as a parameter to the given CALL op
+///
+/// We assume the variable flows as a parameter to the CALL. If the CALL doesn't lock the parameter
+/// size, create a PatchRecord within the subgraph that allows the CALL to take the parameter
+/// with its smaller logical size.
+/// \param op is the given CALL op
+/// \param rvn is the given subgraph variable acting as a parameter
+/// \param slot is the input slot of the variable within the CALL
+/// \return \b true if the parameter can be successfully trimmed to its logical size
 bool SubvariableFlow::tryCallPull(PcodeOp *op,ReplaceVarnode *rvn,int4 slot)
 
-{ // -rvn- is flowing as parameter to the call -op-, determine if we can still trim the varnode to its logical size
+{
   if (slot == 0) return false;
   FuncCallSpecs *fc = fd->getCallSpecs(op);
   if (fc == (FuncCallSpecs *)0) return false;
@@ -194,9 +246,17 @@ bool SubvariableFlow::tryCallPull(PcodeOp *op,ReplaceVarnode *rvn,int4 slot)
   return true;
 }
 
+/// \brief Determine if the given subgraph variable can act as return value for the given RETURN op
+///
+/// We assume the variable flows the RETURN. If the return value size is not locked. Create a
+/// PatchRecord within the subgraph that allows the RETURN to take a smaller logical value.
+/// \param op is the given RETURN op
+/// \param rvn is the given subgraph variable flowing to the RETURN
+/// \param slot is the input slot of the subgraph variable
+/// \return \b true if the return value can be successfully trimmed to its logical size
 bool SubvariableFlow::tryReturnPull(PcodeOp *op,ReplaceVarnode *rvn,int4 slot)
 
-{ // -rvn- flows to CPUI_RETURN (is probably being returned by function), determine if we can trim varnode to logical size
+{
   if (slot == 0) return false;	// Don't deal with actual return address container
   if (fd->getFuncProto().isOutputLocked()) return false;
 
@@ -229,9 +289,16 @@ bool SubvariableFlow::tryReturnPull(PcodeOp *op,ReplaceVarnode *rvn,int4 slot)
   return true;
 }
 
+/// \brief Determine if the given subgraph variable can act as a \e created value for the given INDIRECT op
+///
+/// Check if the INDIRECT is an \e indirect \e creation and is not representing a locked return value.
+/// If we can, create the INDIRECT node in the subgraph representing the logical \e indirect \e creation.
+/// \param op is the given INDIRECT
+/// \param rvn is the given subgraph variable acting as the output of the INDIRECT
+/// \return \b true if we can successfully trim the value to its logical size
 bool SubvariableFlow::tryCallReturnPull(PcodeOp *op,ReplaceVarnode *rvn)
 
-{ // -rvn- is defined by a CALL op, check if the call is actively recovering the return value and if we can trim
+{
   if (!op->isIndirectCreation()) return false;
   PcodeOp *indop = PcodeOp::getOpFromConst(op->getIn(1)->getAddr());
   FuncCallSpecs *fc = fd->getCallSpecs(indop);
@@ -250,11 +317,13 @@ bool SubvariableFlow::tryCallReturnPull(PcodeOp *op,ReplaceVarnode *rvn)
   return true;
 }
 
+/// Try to trace the logical variable through descendant Varnodes
+/// creating new nodes in the logical subgraph and updating the worklist.
+/// \param rvn is the given subgraph variable to trace
+/// \return \b true if the logical value can be traced forward one level
 bool SubvariableFlow::traceForward(ReplaceVarnode *rvn)
 
-{ // Try to trace logical variable through descendant varnodes
-  // updating list/map of replace_ops and replace_varnodes
-  // and the worklist
+{
   ReplaceOp *rop;
   PcodeOp *op;
   Varnode *outvn;
@@ -508,11 +577,13 @@ bool SubvariableFlow::traceForward(ReplaceVarnode *rvn)
   return true;
 }
 
+/// Trace the logical value backward through one PcodeOp adding new nodes to the
+/// logical subgraph and updating the worklist.
+/// \param rvn is the given logical value to trace
+/// \return \b true if the logical value can be traced backward one level
 bool SubvariableFlow::traceBackward(ReplaceVarnode *rvn)
 
-{ // Trace backward through defining op one level
-  // Update worklist, varmap, and oplist
-  // return false if the trace is aborted
+{
   PcodeOp *op = rvn->vn->getDef();
   if (op == (PcodeOp *)0) return true; // If vn is input
   int4 sa;
@@ -647,6 +718,7 @@ bool SubvariableFlow::traceBackward(ReplaceVarnode *rvn)
     }
     break;
   case CPUI_INDIRECT:
+    // TODO: This assumes that the INDIRECT is CALL-based.  Add STORE-based logic.
     if (aggressive) {
       if (tryCallReturnPull(op,rvn))
 	return true;
@@ -682,10 +754,13 @@ bool SubvariableFlow::traceBackward(ReplaceVarnode *rvn)
   return false;
 }
 
+/// Try to trace the logical variable through descendant Varnodes, updating the logical subgraph.
+/// We assume (and check) that the logical variable has always been sign extended (sextstate) into its container.
+/// \param rvn is the given subgraph variable to trace
+/// \return \b true if the logical value can successfully traced forward one level
 bool SubvariableFlow::traceForwardSext(ReplaceVarnode *rvn)
 
-{ // Try to trace the logical variable through descendant varnodes, updating map of replacement ops and varnodes
-  // We assume (and check) that the logical variable has always been sign extended (sextstate) into its container
+{
   ReplaceOp *rop;
   PcodeOp *op;
   Varnode *outvn;
@@ -767,10 +842,13 @@ bool SubvariableFlow::traceForwardSext(ReplaceVarnode *rvn)
   return true;
 }
 
+/// Try to trace the logical variable up through its defining op, updating the logical subgraph.
+/// We assume (and check) that the logical variable has always been sign extended (sextstate) into its container.
+/// \param rvn is the given subgraph variable to trace
+/// \return \b true if the logical value can successfully traced backward one level
 bool SubvariableFlow::traceBackwardSext(ReplaceVarnode *rvn)
 
-{ // Trace backward through defining op, one level, update worklist and map
-  // We assume (and check) that the logical variable has always been sign extended (sextstate) into its container
+{
   PcodeOp *op = rvn->vn->getDef();
   if (op == (PcodeOp *)0) return true; // If vn is input
   ReplaceOp *rop;
@@ -813,9 +891,20 @@ bool SubvariableFlow::traceBackwardSext(ReplaceVarnode *rvn)
   return false;
 }
 
-bool SubvariableFlow::createLink(ReplaceOp *rop,uintb mask,int4 slot,
-				    Varnode *vn)
-{ // Add a new varnode (and the edge which traced to it) to the worklist
+/// \brief Add a new variable to the logical subgraph as an input to the given operation
+///
+/// The subgraph is extended by the specified input edge, and a new variable node is created
+/// if necessary or a preexisting node corresponding to the Varnode is used.
+/// If the logical value described by the given mask cannot be made to line up with the
+/// subgraph variable node, \b false is returned.
+/// \param rop is the given operation
+/// \param mask is the mask describing the logical value within the input Varnode
+/// \param slot is the input slot of the Varnode to the operation
+/// \param vn is the original input Varnode holding the logical value
+/// \return \b true is the subgraph is successfully extended to the input
+bool SubvariableFlow::createLink(ReplaceOp *rop,uintb mask,int4 slot,Varnode *vn)
+
+{
   bool inworklist;
   ReplaceVarnode *rep = setReplacement(vn,mask,inworklist);
   if (rep == (ReplaceVarnode *)0) return false;
@@ -837,10 +926,19 @@ bool SubvariableFlow::createLink(ReplaceOp *rop,uintb mask,int4 slot,
   return true;
 }
 
+/// \brief Extend the logical subgraph through a given comparison operator if possible
+///
+/// Given the variable already in the subgraph that is compared and the other side of the
+/// comparison, add the other side as a logical value to the subgraph and create a PatchRecord
+/// for the comparison operation.
+/// \param op is the given comparison operation
+/// \param inrvn is the variable already in the logical subgraph
+/// \param slot is the input slot to the comparison of the variable already in the subgraph
+/// \param othervn is the Varnode holding the other side of the comparison
+/// \return \b true if the logical subgraph can successfully be extended through the comparison
 bool SubvariableFlow::createCompareBridge(PcodeOp *op,ReplaceVarnode *inrvn,int4 slot,Varnode *othervn)
 
-{ // Add a new varnode to the worklist based on subvariable flow crossing a comparison operator -op-
-  // -slot- is the slot of -inrvn- into the comparison.  -othervn- is the other side of the comparison to be added
+{
   bool inworklist;
   ReplaceVarnode *rep = setReplacement(othervn,inrvn->mask,inworklist);
   if (rep == (ReplaceVarnode *)0) return false;
@@ -855,6 +953,13 @@ bool SubvariableFlow::createCompareBridge(PcodeOp *op,ReplaceVarnode *inrvn,int4
   return true;
 }
 
+/// \brief Add a constant variable node to the logical subgraph
+///
+/// Unlike other subgraph variable nodes, this one does not maintain a mirror with the original containing Varnode.
+/// \param rop is the logical operation taking the constant as input
+/// \param mask is the set of bits holding the logical value (within a bigger value)
+/// \param slot is the input slot to the operation
+/// \param val is the bigger constant value holding the logical value
 SubvariableFlow::ReplaceVarnode *SubvariableFlow::addConstant(ReplaceOp *rop,uintb mask,
 					      uint4 slot,uintb val)
 { // Add a constant to the replacement tree
@@ -876,12 +981,15 @@ SubvariableFlow::ReplaceVarnode *SubvariableFlow::addConstant(ReplaceOp *rop,uin
   return res;
 }
 
+/// \brief Create a new, non-shadowing, subgraph variable node as an operation output
+///
+/// The new node does not shadow a preexisting Varnode. Because the ReplaceVarnode record
+/// is defined by rop (the -def- field is filled in) this can still be distinguished from a constant.
+/// \param rop is the logical operation taking the new output
+/// \param mask describes the logical value
 void SubvariableFlow::createNewOut(ReplaceOp *rop,uintb mask)
 
-{ // Create a varnode output in the replacement graph that
-  // does not shadow a preexisting varnode
-  // Because the ReplaceVarnode record is defined by rop
-  // (the -def- field is filled in) this can still be distinguished from a constant
+{
   newvarlist.push_back(ReplaceVarnode());
   ReplaceVarnode *res = &newvarlist.back();
   res->vn = (Varnode *)0;
@@ -892,10 +1000,16 @@ void SubvariableFlow::createNewOut(ReplaceOp *rop,uintb mask)
   res->def = rop;
 }
 
+/// \brief Mark an operation where a subgraph variable is naturally copied into the original data-flow
+///
+/// If the operations naturally takes the given logical value as input but the output
+/// doesn't need to be traced as a logical value, a subgraph terminator (PatchRecord) is created
+/// noting this. The original PcodeOp will be converted to a COPY.
+/// \param pullop is the PcodeOp pulling the logical value out of the subgraph
+/// \param rvn is the given subgraph variable holding the logical value
 void SubvariableFlow::addTerminalPatch(PcodeOp *pullop,ReplaceVarnode *rvn)
 
-{ // Add a reference to the logical variable getting pulled
-  // out of container flow
+{
   patchlist.push_back(PatchRecord());
   patchlist.back().type = 0;	// Ultimately gets converted to a COPY
   patchlist.back().pullop = pullop;	// Operation pulling the variable out
@@ -903,6 +1017,14 @@ void SubvariableFlow::addTerminalPatch(PcodeOp *pullop,ReplaceVarnode *rvn)
   pullcount += 1;		// a true terminal modification
 }
 
+/// \brief Mark an operation where a subgraph variable is naturally pulled into the original data-flow
+///
+/// If the operations naturally takes the given logical value as input but the output
+/// doesn't need to be traced as a logical value, a subgraph terminator (PatchRecord) is created
+/// noting this. The opcode of the operation will not change.
+/// \param pullop is the PcodeOp pulling the logical value out of the subgraph
+/// \param rvn is the given subgraph variable holding the logical value
+/// \param slot is the input slot to the operation
 void SubvariableFlow::addTerminalPatchSameOp(PcodeOp *pullop,ReplaceVarnode *rvn,int4 slot)
 
 {
@@ -914,9 +1036,16 @@ void SubvariableFlow::addTerminalPatchSameOp(PcodeOp *pullop,ReplaceVarnode *rvn
   pullcount += 1;		// a true terminal modification
 }
 
+/// \brief Mark a subgraph bit variable flowing into an operation taking a boolean input
+///
+/// This doesn't count as a Varnode holding a logical value that needs to be patched (by itself).
+/// A PatchRecord terminating the logical subgraph along the given edge is created.
+/// \param pullup is the operation taking the boolean input
+/// \param rvn is the given bit variable
+/// \param slot is the input slot of the variable to the operation
 void SubvariableFlow::addBooleanPatch(PcodeOp *pullop,ReplaceVarnode *rvn,int4 slot)
 
-{ // Add a reference to the logical bit variable, flowing into a boolean operation
+{
   patchlist.push_back(PatchRecord());
   patchlist.back().type = 2;	// Make no change to the operator, just put in the new input
   patchlist.back().pullop = pullop;	// Operation pulling the variable out
@@ -925,9 +1054,16 @@ void SubvariableFlow::addBooleanPatch(PcodeOp *pullop,ReplaceVarnode *rvn,int4 s
   // this is not a true modification
 }
 
+/// \brief Mark a subgraph variable flowing to an operation that expands it by padding with zero bits.
+///
+/// Data-flow along the specified edge within the logical subgraph is terminated by added a PatchRecord.
+/// This doesn't count as a logical value that needs to be patched (by itself).
+/// \param rvn is the given subgraph variable
+/// \param pushop is the operation that pads the variable
+/// \param sa is the amount the logical value is shifted to the left
 void SubvariableFlow::addSuggestedPatch(ReplaceVarnode *rvn,PcodeOp *pushop,int4 sa)
 
-{ // Operations that expand the logical value to a larger value padded with zero bits
+{
   patchlist.push_back(PatchRecord());
   patchlist.back().type = 3;
   patchlist.back().in1 = rvn;
@@ -938,9 +1074,16 @@ void SubvariableFlow::addSuggestedPatch(ReplaceVarnode *rvn,PcodeOp *pushop,int4
   // This is not a true modification because the output is still the expanded size
 }
 
+/// \brief Mark subgraph variables flowing into a comparison operation
+///
+/// The operation accomplishes the logical comparison by comparing the larger containers.
+/// A PatchRecord is created indicating that data-flow from the subgraph terminates at the comparison.
+/// \param in1 is the first logical value to the comparison
+/// \param in2 is the second logical value
+/// \param op is the comparison operation
 void SubvariableFlow::addComparePatch(ReplaceVarnode *in1,ReplaceVarnode *in2,PcodeOp *op)
 
-{ // Operations that accomplish the logical comparison by comparing the larger container
+{
   patchlist.push_back(PatchRecord());
   patchlist.back().type = 1;
   patchlist.back().pullop = op;
@@ -949,10 +1092,15 @@ void SubvariableFlow::addComparePatch(ReplaceVarnode *in1,ReplaceVarnode *in2,Pc
   pullcount += 1;
 }
 
+/// \brief Replace an input Varnode in the subgraph with a temporary register
+///
+/// This is used to avoid overlapping input Varnode errors. The temporary register
+/// is typically short lived and gets quickly eliminated in favor of the new
+/// logically sized Varnode.
+/// \param rvn is the logical variable to replace
 void SubvariableFlow::replaceInput(ReplaceVarnode *rvn)
 
-{ // Replace input in the subgraph with temporaries, so
-  // we don't get overlapping varnode errors
+{
   Varnode *newvn = fd->newUnique(rvn->vn->getSize());
   newvn = fd->setInputVarnode(newvn);
   fd->totalReplace(rvn->vn,newvn);
@@ -960,10 +1108,15 @@ void SubvariableFlow::replaceInput(ReplaceVarnode *rvn)
   rvn->vn = newvn;
 }
 
+/// \brief Decide if we use the same memory range of the original Varnode for the logical replacement
+///
+/// Usually the logical Varnode can use the \e true storage bytes that hold the value,
+/// but there are a few corner cases where we want to use a new temporary register to hold the value.
+/// \param rvn is the subgraph variable
+/// \return \b true if the same memory range can be used to hold the value
 bool SubvariableFlow::useSameAddress(ReplaceVarnode *rvn)
 
-{ // Decide whether we use (a portion of) the same memory location
-  // of the original varnode when creating its replacement
+{
   if (rvn->vn->isInput()) return true;
   // If we trim an addrtied varnode, because of required merges, we increase chance of conflicting forms for one variable
   if (rvn->vn->isAddrTied()) return false;
@@ -980,9 +1133,13 @@ bool SubvariableFlow::useSameAddress(ReplaceVarnode *rvn)
   return false;			// If more of the varnode is consumed than is in just this flow
 }
 
+/// \brief Calculcate address of replacement Varnode for given subgraph variable node
+///
+/// \param rvn is the given subgraph variable node
+/// \return the address of the new logical Varnode
 Address SubvariableFlow::getReplacementAddress(ReplaceVarnode *rvn) const
 
-{ // Calculcate the starting address for the replacement varnode of -rvn-
+{
   Address addr = rvn->vn->getAddr();
   int4 sa = leastsigbit_set(rvn->mask) / 8; // Number of bytes value is shifted into container
   if (addr.isBigEndian())
@@ -992,11 +1149,15 @@ Address SubvariableFlow::getReplacementAddress(ReplaceVarnode *rvn) const
   return addr;
 }
 
+/// \brief Build the logical Varnode which will replace its original containing Varnode
+///
+/// This is the main routine for converting a logical variable in the subgraph into
+/// an actual Varnode object.
+/// \param rvn is the logical variable
+/// \return the (new or existing) Varnode object
 Varnode *SubvariableFlow::getReplaceVarnode(ReplaceVarnode *rvn)
 
-{ // Get the actual varnode associated with a replacement varnode
-  // either by recycling a previously built one or creating
-  // one on the spot
+{
   if (rvn->replacement != (Varnode *)0)
     return rvn->replacement;
   // Only a constant if BOTH replacement and vn fields are null
@@ -1021,6 +1182,10 @@ Varnode *SubvariableFlow::getReplaceVarnode(ReplaceVarnode *rvn)
   return rvn->replacement;
 }
 
+/// The subgraph is extended from the variable node at the top of the worklist.
+/// Data-flow is traced forward and backward one level, possibly extending the subgraph
+/// and adding new nodes to the worklist.
+/// \return \b true if the node was successfully processed
 bool SubvariableFlow::processNextWork(void)
 
 {
@@ -1986,8 +2151,7 @@ Varnode *SubfloatFlow::getReplaceVarnode(ReplaceVarnode *rvn)
     // Here we artificially truncate the location, which isn't realistic
     if (addr.isBigEndian())
       addr = addr + (rvn->vn->getSize() - precision);
-    if (isinput)
-      replaceInput(rvn);	// Replace input to avoid overlap errors
+    replaceInput(rvn);	// Replace input to avoid overlap errors
     rvn->replacement = fd->newVarnode(precision,addr);
   }
   else

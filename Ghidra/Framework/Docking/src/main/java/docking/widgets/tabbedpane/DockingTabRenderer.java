@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,8 +20,9 @@ import java.awt.event.*;
 
 import javax.swing.*;
 
-import resources.ResourceManager;
 import docking.widgets.EmptyBorderButton;
+import docking.widgets.label.GDLabel;
+import resources.ResourceManager;
 
 /**
  * A widget that can be used to render an icon, title and close button for JTabbedPane.  You would 
@@ -31,10 +31,10 @@ import docking.widgets.EmptyBorderButton;
 public class DockingTabRenderer extends JPanel {
 
 	private static final int MAX_TITLE_LENGTH = 25;
-	private Icon EMPTY_ICON = ResourceManager.getScaledIcon(
-		ResourceManager.loadImage("images/close16.gif"), 8, 8);
-	private Icon CLOSE_ICON = ResourceManager.getScaledIcon(
-		ResourceManager.loadImage("images/close16.gif"), 8, 8);
+	private Icon EMPTY_ICON =
+		ResourceManager.getScaledIcon(ResourceManager.loadImage("images/close16.gif"), 8, 8);
+	private Icon CLOSE_ICON =
+		ResourceManager.getScaledIcon(ResourceManager.loadImage("images/close16.gif"), 8, 8);
 
 	private JLabel titleLabel;
 	private JLabel iconLabel;
@@ -50,8 +50,8 @@ public class DockingTabRenderer extends JPanel {
 		final ForwardingMouseListener eventForwardingListener =
 			new ForwardingMouseListener(tabbedPane);
 
-		titleLabel = new JLabel();
-		iconLabel = new JLabel();
+		titleLabel = new GDLabel();
+		iconLabel = new GDLabel();
 		closeButton = new EmptyBorderButton();
 
 		setTitle(tabTitle, fullTitle);
@@ -105,7 +105,8 @@ public class DockingTabRenderer extends JPanel {
 			@Override
 			public void hierarchyChanged(HierarchyEvent e) {
 				long changeFlags = e.getChangeFlags();
-				if (HierarchyEvent.DISPLAYABILITY_CHANGED == (changeFlags & HierarchyEvent.DISPLAYABILITY_CHANGED)) {
+				if (HierarchyEvent.DISPLAYABILITY_CHANGED == (changeFlags &
+					HierarchyEvent.DISPLAYABILITY_CHANGED)) {
 
 					Container myParent = getParent(); // should be a TabContainer
 

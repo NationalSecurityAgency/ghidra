@@ -20,22 +20,14 @@ import java.math.BigDecimal;
 import org.junit.Assert;
 import org.junit.Test;
 
-import generic.test.AbstractGenericTest;
+import generic.test.AbstractGTest;
 import ghidra.pcode.floatformat.FloatFormat;
 import ghidra.program.model.mem.ByteMemBufferImpl;
 
-public class Float10DataTypeTest extends AbstractGenericTest {
+public class Float10DataTypeTest extends AbstractGTest {
 
-	/**
-	 * Constructor for LongDoubleDataTypeTest.
-	 * @param arg0
-	 */
-	public Float10DataTypeTest() {
-		super();
-	}
-
-@Test
-    public void testGetValue() {
+	@Test
+	public void testGetValue() {
 
 		byte[] bytes = new byte[] { 0x7f, (byte) 0xff, 0, 0, 0, 0, 0, 0, 0, 0 }; // 0x7fff0000000000000000 = +infinity
 		Object value =

@@ -55,7 +55,7 @@ public class PackSizeDataTypeAction extends DockingAction {
 		if (!(node instanceof DataTypeNode)) {
 			return false;
 		}
-		setEnabled(node.getArchiveNode().isModifiable());
+		setEnabled(node.isModifiable());
 		return true;
 	}
 
@@ -68,8 +68,8 @@ public class PackSizeDataTypeAction extends DockingAction {
 		DataType dataType = dataTypeNode.getDataType();
 		DataTypeManager dataTypeManager = dataType.getDataTypeManager();
 		if (dataTypeManager == null) {
-			Msg.error(this, "Can't pack data type " + dataType.getName() +
-				" without a data type manager.");
+			Msg.error(this,
+				"Can't pack data type " + dataType.getName() + " without a data type manager.");
 			return;
 		}
 
@@ -100,8 +100,8 @@ public class PackSizeDataTypeAction extends DockingAction {
 
 	private void packDataType(DataType dataType, int packSize) throws InvalidInputException {
 		if (!(dataType instanceof Structure)) {
-			Msg.error(this, "Can't pack data type " + dataType.getName() +
-				". It's not a structure.");
+			Msg.error(this,
+				"Can't pack data type " + dataType.getName() + ". It's not a structure.");
 			return;
 		}
 		((Structure) dataType).pack(packSize);

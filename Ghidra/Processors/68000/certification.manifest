@@ -1,16 +1,13 @@
 ##VERSION: 2.0
-.classpath||GHIDRA||||END|
-.project||GHIDRA||||END|
 Module.manifest||GHIDRA||||END|
 build.gradle||GHIDRA||||END|
-data/build.xml||GHIDRA||||END|
 data/languages/68000.cspec||GHIDRA||||END|
 data/languages/68000.ldefs||GHIDRA||||END|
 data/languages/68000.opinion||GHIDRA||||END|
 data/languages/68000.pspec||GHIDRA||||END|
 data/languages/68000.sinc||GHIDRA||||END|
 data/languages/68020.slaspec||GHIDRA||reviewed||END|
-data/languages/68030.slaspec||GHIDRA||reviewed||END|
-data/languages/68040.slaspec||GHIDRA||reviewed||END|
-data/languages/coldfire.slaspec||GHIDRA||reviewed||END|
+data/languages/68030.slaspec||GHIDRA||||END|
+data/languages/68040.slaspec||GHIDRA||||END|
+data/languages/coldfire.slaspec||GHIDRA||||END|
 data/manuals/68000.idx||GHIDRA||||END|

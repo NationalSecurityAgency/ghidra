@@ -39,6 +39,7 @@ import ghidra.util.*;
 import ghidra.util.exception.AssertException;
 import ghidra.util.layout.VerticalLayout;
 import resources.ResourceManager;
+import util.CollectionUtils;
 
 /**
  * This panel looks similar in appearance to the LisGraphComponentPanel, with a header, actions 
@@ -412,6 +413,13 @@ public class GroupedFunctionGraphComponentPanel extends AbstractGraphComponentPa
 			return userDefinedColor;
 		}
 		return defaultBackgroundColor;
+	}
+
+	@Override
+	Color getSelectionColor() {
+		Set<FGVertex> vertices = groupVertex.getVertices();
+		FGVertex v = CollectionUtils.any(vertices);
+		return v.getSelectionColor();
 	}
 
 	@Override

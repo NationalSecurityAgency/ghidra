@@ -25,6 +25,7 @@ import javax.swing.KeyStroke;
 
 import docking.ActionContext;
 import docking.action.*;
+import docking.tool.ToolConstants;
 import docking.widgets.OptionDialog;
 import docking.widgets.filechooser.GhidraFileChooser;
 import docking.wizard.WizardManager;
@@ -32,7 +33,6 @@ import ghidra.framework.client.ClientUtil;
 import ghidra.framework.client.RepositoryAdapter;
 import ghidra.framework.model.*;
 import ghidra.framework.options.SaveState;
-import ghidra.framework.plugintool.util.ToolConstants;
 import ghidra.framework.store.LockException;
 import ghidra.util.*;
 import ghidra.util.exception.NotFoundException;

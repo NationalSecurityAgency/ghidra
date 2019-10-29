@@ -24,6 +24,7 @@ import javax.swing.event.ChangeListener;
 
 import docking.DockingUtils;
 import docking.options.editor.ScrollableOptionsEditor;
+import docking.widgets.label.GDLabel;
 import generic.jar.ResourceFile;
 import ghidra.app.services.Analyzer;
 import ghidra.framework.analysis.gui.AnalyzerListPanel;
@@ -56,7 +57,7 @@ public class AnalysisRecipeEditor {
 	private void buildNoOptionsPanel() {
 		noOptionsPanel = new JPanel(new MiddleLayout());
 		noOptionsPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 5));
-		JLabel label = new JLabel("No options available.");
+		JLabel label = new GDLabel("No options available.");
 		label.setFont(label.getFont().deriveFont(20f));
 		noOptionsPanel.add(label);
 	}

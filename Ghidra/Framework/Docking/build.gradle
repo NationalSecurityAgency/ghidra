@@ -1,11 +1,14 @@
+apply from: "$rootProject.projectDir/gradle/distributableGhidraModule.gradle"
+apply from: "$rootProject.projectDir/gradle/javaProject.gradle"
+apply from: "$rootProject.projectDir/gradle/jacocoProject.gradle"
+apply from: "$rootProject.projectDir/gradle/javaTestProject.gradle"
 apply plugin: 'eclipse'
+
 eclipse.project.name = 'Framework Docking'
 
 dependencies {
 	compile project(':Generic')
 	compile 'net.java.dev.timingframework:timingframework:1.0'
-	compile 'com.toedter:jcalendar:1.4'
-	
 	
 	// Only include this debug version of the jh library if necessary.
 	//compile name:'jh2.with.debug'
@@ -13,8 +16,7 @@ dependencies {
 	
 	
 	// include code from src/test in Generic
-	testCompile project(':Generic').sourceSets.test.output
-	
+	testCompile project(path: ':Generic', configuration: 'testArtifacts')
 	compileOnly "junit:junit:4.12"
 }
 

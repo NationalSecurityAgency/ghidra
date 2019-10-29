@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,11 +22,11 @@ import ghidra.framework.main.DataTreeDialog;
 import ghidra.framework.model.DomainFile;
 import ghidra.framework.model.DomainFileFilter;
 import ghidra.framework.plugintool.PluginTool;
-import ghidra.framework.plugintool.util.ToolConstants;
 import ghidra.util.HelpLocation;
 import docking.ActionContext;
 import docking.action.DockingAction;
 import docking.action.MenuData;
+import docking.tool.ToolConstants;
 
 public class OpenVersionTrackingSessionAction extends DockingAction {
 

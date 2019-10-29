@@ -19,6 +19,7 @@ import static org.junit.Assert.*;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.List;
+import java.util.Set;
 
 import javax.swing.*;
 import javax.swing.table.TableModel;
@@ -39,6 +40,7 @@ import ghidra.app.util.viewer.field.ListingTextField;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSet;
 import ghidra.program.model.data.*;
+import ghidra.program.model.data.Enum;
 import ghidra.program.model.listing.Data;
 import ghidra.program.model.listing.Instruction;
 import ghidra.program.model.scalar.Scalar;
@@ -821,6 +823,35 @@ public class EquatePlugin1Test extends AbstractEquatePluginTest {
 	}
 
 	@Test
+	public void testNoConvertOnData() throws Exception {
+		Address addr = addr(0x01003384);
+
+		// action should not apply to BooleanDataType which produces Scalar value
+		createData(addr, BooleanDataType.dataType);
+		Data data = program.getListing().getDataAt(addr);
+		assertTrue(data.getDataType() instanceof BooleanDataType);
+
+		goTo(addr);
+		DockingActionIf action = getAction(equatePlugin, "Convert To Signed Decimal");
+
+		assertFalse(action.isAddToPopup(getListingContext()));
+		assertFalse(action.isEnabledForContext(getListingContext()));
+
+		// action should not apply to Enum which produces Scalar value
+		EnumDataType myEnum = new EnumDataType("Joe", 2);
+		myEnum.add("ValFFFF", -1);
+
+		createData(addr, myEnum);
+		data = program.getListing().getDataAt(addr);
+		assertTrue(data.getDataType() instanceof Enum);
+
+		goTo(addr);
+
+		assertFalse(action.isAddToPopup(getListingContext()));
+		assertFalse(action.isEnabledForContext(getListingContext()));
+	}
+
+	@Test
 	public void testConvertPickSameDatatype() throws Exception {
 		Address addr = addr(0x01003384);
 		createSignedData(addr);
@@ -841,7 +872,7 @@ public class EquatePlugin1Test extends AbstractEquatePluginTest {
 
 		putCursorOnOperand(0x010064ae, 1);
 
-		List<DockingActionIf> actions = tool.getDockingActionsByOwnerName("EquatePlugin");
+		Set<DockingActionIf> actions = getActionsByOwner(tool, "EquatePlugin");
 		int found = 0;
 		for (DockingActionIf action : actions) {
 			String name = action.getName();
@@ -892,7 +923,7 @@ public class EquatePlugin1Test extends AbstractEquatePluginTest {
 		putCursorOnOperand(0x010064a3, 0);
 
 		int found = 0;
-		List<DockingActionIf> actions = tool.getDockingActionsByOwnerName("EquatePlugin");
+		Set<DockingActionIf> actions = getActionsByOwner(tool, "EquatePlugin");
 		for (DockingActionIf action : actions) {
 			String name = action.getName();
 			if (!name.startsWith("Convert") || !action.isAddToPopup(getListingContext())) {
@@ -944,7 +975,7 @@ public class EquatePlugin1Test extends AbstractEquatePluginTest {
 		putCursorOnOperand(0x01003a94, 0);
 
 		int found = 0;
-		List<DockingActionIf> actions = tool.getDockingActionsByOwnerName("EquatePlugin");
+		Set<DockingActionIf> actions = getActionsByOwner(tool, "EquatePlugin");
 		for (DockingActionIf action : actions) {
 			String name = action.getName();
 			if (!name.startsWith("Convert") || !action.isAddToPopup(getListingContext())) {

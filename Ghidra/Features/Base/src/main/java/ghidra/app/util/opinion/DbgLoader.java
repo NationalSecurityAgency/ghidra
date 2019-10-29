@@ -26,7 +26,8 @@ import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.bin.RandomAccessByteProvider;
 import ghidra.app.util.bin.format.pe.*;
 import ghidra.app.util.bin.format.pe.PortableExecutable.SectionLayout;
-import ghidra.app.util.importer.*;
+import ghidra.app.util.importer.MessageLog;
+import ghidra.app.util.importer.MessageLogContinuesFactory;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
 import ghidra.util.Conv;
@@ -72,9 +73,8 @@ public class DbgLoader extends AbstractPeDebugLoader {
 	}
 
 	@Override
-	public void load(ByteProvider provider, LoadSpec loadSpec, List<Option> options,
-			Program prog, MemoryConflictHandler handler, TaskMonitor monitor, MessageLog log)
-			throws IOException {
+	public void load(ByteProvider provider, LoadSpec loadSpec, List<Option> options, Program prog,
+			TaskMonitor monitor, MessageLog log) throws IOException {
 
 		GenericFactory factory = MessageLogContinuesFactory.create(log);
 
@@ -94,14 +94,14 @@ public class DbgLoader extends AbstractPeDebugLoader {
 			PortableExecutable parentPE =
 				PortableExecutable.createPortableExecutable(factory, provider2, SectionLayout.FILE);
 			Address imageBase = prog.getImageBase();
-			Map<Integer, Address> sectionNumberToAddress = new HashMap<>();
-			SectionHeader[] sectionHeaders =
-				parentPE.getNTHeader().getFileHeader().getSectionHeaders();
-			for (int i = 0; i < sectionHeaders.length; i++) {
-				sectionNumberToAddress.put(i + 1,
-					imageBase.add(sectionHeaders[i].getVirtualAddress()));
+			Map<SectionHeader, Address> sectionToAddress = new HashMap<>();
+			FileHeader fileHeader = parentPE.getNTHeader().getFileHeader();
+			SectionHeader[] sectionHeaders = fileHeader.getSectionHeaders();
+			for (SectionHeader sectionHeader : sectionHeaders) {
+				sectionToAddress.put(sectionHeader,
+					imageBase.add(sectionHeader.getVirtualAddress()));
 			}
-			processDebug(debug.getParser(), sectionNumberToAddress, prog, monitor);
+			processDebug(debug.getParser(), fileHeader, sectionToAddress, prog, monitor);
 		}
 		finally {
 			if (provider2 != null) {

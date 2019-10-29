@@ -1,0 +1,5 @@
+# sleigh specification file for Freescale HC08 (68HC08)
+
+@define HC08 "1"
+
+@include "HCS_HC.sinc"

@@ -33,7 +33,7 @@ import ghidra.util.exception.RollbackException;
 public class AddMemoryBlockCmdTest extends AbstractGenericTest {
 	private Program notepad;
 	private Program x08;
-	private AddMemoryBlockCmd command;
+	private Command command;
 
 	public AddMemoryBlockCmdTest() {
 		super();
@@ -54,8 +54,8 @@ public class AddMemoryBlockCmdTest extends AbstractGenericTest {
 
 	@Test
 	public void testAddBlock() throws Exception {
-		command = new AddMemoryBlockCmd(".test", "A Test", "new block", getNotepadAddr(0x100), 100,
-			true, true, true, false, (byte) 0xa, MemoryBlockType.DEFAULT, null, true);
+		command = new AddInitializedMemoryBlockCmd(".test", "A Test", "new block",
+			getNotepadAddr(0x100), 100, true, true, true, false, (byte) 0xa, false);
 		assertTrue(applyCmd(notepad, command));
 		MemoryBlock block = notepad.getMemory().getBlock(getNotepadAddr(0x100));
 		assertNotNull(block);
@@ -87,8 +87,8 @@ public class AddMemoryBlockCmdTest extends AbstractGenericTest {
 
 	@Test
 	public void testOverlap() {
-		command = new AddMemoryBlockCmd(".test", "A Test", "new block", getNotepadAddr(0x1001010),
-			100, true, true, true, false, (byte) 0xa, MemoryBlockType.DEFAULT, null, true);
+		command = new AddInitializedMemoryBlockCmd(".test", "A Test", "new block",
+			getNotepadAddr(0x1001010), 100, true, true, true, false, (byte) 0xa, false);
 		try {
 			applyCmd(notepad, command);
 			Assert.fail("Should have gotten exception");
@@ -102,26 +102,28 @@ public class AddMemoryBlockCmdTest extends AbstractGenericTest {
 	@Test
 	public void testAddBitBlock() {
 		Address addr = getX08Addr(0x3000);
-		command = new AddMemoryBlockCmd(".testBit", "A Test", "new block", addr, 100, true, true,
-			true, false, (byte) 0, MemoryBlockType.BIT_MAPPED, getX08Addr(0), false);
+		command = new AddBitMappedMemoryBlockCmd(".testBit", "A Test", "new block", addr, 100, true,
+			true, true, false, getX08Addr(0));
 		assertTrue(applyCmd(x08, command));
 
 		MemoryBlock block = x08.getMemory().getBlock(addr);
 		assertNotNull(block);
-		assertEquals(getX08Addr(0), ((MappedMemoryBlock) block).getOverlayedMinAddress());
+		MemoryBlockSourceInfo info = block.getSourceInfos().get(0);
+		assertEquals(getX08Addr(0), info.getMappedRange().get().getMinAddress());
 		assertEquals(MemoryBlockType.BIT_MAPPED, block.getType());
 	}
 
 	@Test
 	public void testAddByteBlock() {
 		Address addr = getX08Addr(0x3000);
-		command = new AddMemoryBlockCmd(".testByte", "A Test", "new block", addr, 100, true, true,
-			true, false, (byte) 0, MemoryBlockType.BYTE_MAPPED, getX08Addr(0), false);
+		command = new AddByteMappedMemoryBlockCmd(".testByte", "A Test", "new block", addr, 100,
+			true, true, true, false, getX08Addr(0));
 		assertTrue(applyCmd(x08, command));
 
 		MemoryBlock block = x08.getMemory().getBlock(addr);
 		assertNotNull(block);
-		assertEquals(getX08Addr(0), ((MappedMemoryBlock) block).getOverlayedMinAddress());
+		MemoryBlockSourceInfo info = block.getSourceInfos().get(0);
+		assertEquals(getX08Addr(0), info.getMappedRange().get().getMinAddress());
 		assertEquals(MemoryBlockType.BYTE_MAPPED, block.getType());
 
 	}
@@ -129,8 +131,8 @@ public class AddMemoryBlockCmdTest extends AbstractGenericTest {
 	@Test
 	public void testAddOverlayBlock() throws Exception {
 		Address addr = getX08Addr(0x3000);
-		command = new AddMemoryBlockCmd(".overlay", "A Test", "new block", addr, 100, true, true,
-			true, false, (byte) 0xa, MemoryBlockType.OVERLAY, getX08Addr(0), true);
+		command = new AddInitializedMemoryBlockCmd(".overlay", "A Test", "new block", addr, 100,
+			true, true, true, false, (byte) 0xa, true);
 		assertTrue(applyCmd(x08, command));
 
 		MemoryBlock block = null;

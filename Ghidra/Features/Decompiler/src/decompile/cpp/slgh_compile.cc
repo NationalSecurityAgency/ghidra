@@ -1463,6 +1463,7 @@ SleighCompile::SleighCompile(void)
   warnunnecessarypcode = false;
   warndeadtemps = false;
   lenientconflicterrors = true;
+  warnalllocalcollisions = false;
   warnallnops = false;
   root = (SubtableSymbol *)0;
 }
@@ -1476,8 +1477,12 @@ void SleighCompile::predefinedSymbols(void)
 				// Some predefined symbols
   root = new SubtableSymbol("instruction"); // Base constructors
   symtab.addSymbol(root);
-  insertSpace(new ConstantSpace(this,this,"const",0));
+  insertSpace(new ConstantSpace(this,this,"const",AddrSpace::constant_space_index));
   SpaceSymbol *spacesym = new SpaceSymbol(getConstantSpace()); // Constant space
+  symtab.addSymbol(spacesym);
+  OtherSpace *otherSpace = new OtherSpace(this,this,"OTHER",AddrSpace::other_space_index);
+  insertSpace(otherSpace);
+  spacesym = new SpaceSymbol(otherSpace);
   symtab.addSymbol(spacesym);
   insertSpace(new UniqueSpace(this,this,"unique",numSpaces(),0));
   spacesym = new SpaceSymbol(getUniqueSpace()); // Temporary register space
@@ -1620,6 +1625,74 @@ void SleighCompile::checkConsistency(void)
   }
 }
 
+int4 SleighCompile::findCollision(map<uintb,int4> &local2Operand,const vector<uintb> &locals,int operand)
+
+{
+  for(int4 i=0;i<locals.size();++i) {
+    pair<map<uintb,int4>::iterator,bool> res;
+    res = local2Operand.insert(pair<uintb,int4>(locals[i],operand));
+    if (!res.second) {
+      int4 oldIndex = (*res.first).second;
+      if (oldIndex != operand)
+	return oldIndex;
+    }
+  }
+  return -1;
+}
+
+bool SleighCompile::checkLocalExports(Constructor *ct)
+
+{
+  if (ct->getTempl() == (ConstructTpl *)0)
+    return true;		// No template, collisions impossible
+  if (ct->getTempl()->buildOnly())
+    return true;		// Operand exports aren't manipulated, so no collision is possible
+  if (ct->getNumOperands() < 2)
+    return true;		// Collision can only happen with multiple operands
+  bool noCollisions = true;
+  map<uintb,int4> collect;
+  for(int4 i=0;i<ct->getNumOperands();++i) {
+    vector<uintb> newCollect;
+    ct->getOperand(i)->collectLocalValues(newCollect);
+    if (newCollect.empty()) continue;
+    int4 collideOperand = findCollision(collect, newCollect, i);
+    if (collideOperand >= 0) {
+      noCollisions = false;
+      if (warnalllocalcollisions) {
+	cerr << "Possible collision with symbols ";
+	cerr << ct->getOperand(collideOperand)->getName();
+	cerr << " and " << ct->getOperand(i)->getName();
+	cerr << " in constructor starting at line " << dec << ct->getLineno() << endl;
+      }
+      break;	// Don't continue
+    }
+  }
+  return noCollisions;
+}
+
+void SleighCompile::checkLocalCollisions(void)
+
+{
+  int4 collisionCount = 0;
+  SubtableSymbol *sym = root; // Start with the instruction table
+  int4 i = -1;
+  for(;;) {
+    int4 numconst = sym->getNumConstructors();
+    for(int4 j=0;j<numconst;++j) {
+      if (!checkLocalExports(sym->getConstructor(j)))
+	collisionCount += 1;
+    }
+    i+=1;
+    if (i>=tables.size()) break;
+    sym = tables[i];
+  }
+  if (collisionCount > 0) {
+    cerr << "WARNING: " << dec << collisionCount << " constructors with local collisions between operands" << endl;
+    if (!warnalllocalcollisions)
+      cerr << "Use -c switch to list each individually" << endl;
+  }
+}
+
 void SleighCompile::checkNops(void)
 
 {
@@ -1700,6 +1773,8 @@ void SleighCompile::process(void)
     reportError("No default space specified",false);
   if (errors>0) return;
   checkConsistency();
+  if (errors>0) return;
+  checkLocalCollisions();
   if (errors>0) return;
   buildPatterns();
   if (errors>0) return;
@@ -2690,7 +2765,8 @@ static void findSlaSpecs(vector<string> &res, const string &dir, const string &s
   }
 }
 
-static void initCompiler(SleighCompile &compiler, map<string,string> &defines, bool enableUnnecessaryPcodeWarning, bool disableLenientConflict,
+static void initCompiler(SleighCompile &compiler, map<string,string> &defines, bool enableUnnecessaryPcodeWarning,
+			 bool disableLenientConflict, bool enableAllCollisionWarning,
 			 bool enableAllNopWarning,bool enableDeadTempWarning,bool enforceLocalKeyWord)
 
 {
@@ -2698,21 +2774,18 @@ static void initCompiler(SleighCompile &compiler, map<string,string> &defines, b
   for (iter = defines.begin(); iter != defines.end(); iter++) {
     compiler.setPreprocValue((*iter).first, (*iter).second);
   }
-  if (enableUnnecessaryPcodeWarning) {
+  if (enableUnnecessaryPcodeWarning)
     compiler.setUnnecessaryPcodeWarning(true);
-  }
-  if (disableLenientConflict) {
+  if (disableLenientConflict)
     compiler.setLenientConflict(false);
-  }
-  if (enableAllNopWarning) {
+  if (enableAllCollisionWarning)
+    compiler.setLocalCollisionWarning( true );
+  if (enableAllNopWarning)
     compiler.setAllNopWarning( true );
-  }
-  if (enableDeadTempWarning) {
+  if (enableDeadTempWarning)
     compiler.setDeadTempWarning(true);
-  }
-  if (enforceLocalKeyWord) {
-	  compiler.setEnforceLocalKeyWord(true);
-  }
+  if (enforceLocalKeyWord)
+    compiler.setEnforceLocalKeyWord(true);
 }
 
 static void segvHandler(int sig) {
@@ -2739,6 +2812,7 @@ int main(int argc,char **argv)
     cerr << "   -n              print warnings for all NOP constructors" << endl;
     cerr << "   -t              print warnings for dead temporaries" << endl;
     cerr << "   -e              enforce use of 'local' keyword for temporaries" << endl;
+    cerr << "   -c              print warnings for all constructors with colliding operands" << endl;
     cerr << "   -DNAME=VALUE    defines a preprocessor macro NAME with value VALUE" << endl;
     exit(2);
   }
@@ -2748,6 +2822,7 @@ int main(int argc,char **argv)
   map<string,string> defines;
   bool enableUnnecessaryPcodeWarning = false;
   bool disableLenientConflict = false;
+  bool enableAllCollisionWarning = false;
   bool enableAllNopWarning = false;
   bool enableDeadTempWarning = false;
   bool enforceLocalKeyWord = false;
@@ -2774,6 +2849,8 @@ int main(int argc,char **argv)
       enableUnnecessaryPcodeWarning = true;
     else if (argv[i][1] == 'l')
       disableLenientConflict = true;
+    else if (argv[i][1] == 'c')
+      enableAllCollisionWarning = true;
     else if (argv[i][1] == 'n')
       enableAllNopWarning = true;
     else if (argv[1][1] == 't')
@@ -2811,7 +2888,8 @@ int main(int argc,char **argv)
       sla.replace(slaspec.length() - slaspecExtLen, slaspecExtLen, SLAEXT);
       SleighCompile compiler;
       initCompiler(compiler, defines, enableUnnecessaryPcodeWarning, 
-		   disableLenientConflict, enableAllNopWarning, enableDeadTempWarning, enforceLocalKeyWord);
+		   disableLenientConflict, enableAllCollisionWarning, enableAllNopWarning,
+		   enableDeadTempWarning, enforceLocalKeyWord);
       retval = run_compilation(slaspec.c_str(),sla.c_str(),compiler);
       if (retval != 0) {
 	return retval; // stop on first error
@@ -2844,7 +2922,8 @@ int main(int argc,char **argv)
     
     SleighCompile compiler;
     initCompiler(compiler, defines, enableUnnecessaryPcodeWarning, 
-		 disableLenientConflict, enableAllNopWarning, enableDeadTempWarning, enforceLocalKeyWord);
+		 disableLenientConflict, enableAllCollisionWarning, enableAllNopWarning,
+		 enableDeadTempWarning, enforceLocalKeyWord);
     
     if (i < argc - 1) {
       string fileoutExamine(argv[i+1]);

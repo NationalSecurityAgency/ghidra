@@ -1,0 +1,400 @@
+#include "pcode_test.h"
+#include "big_struct.h"
+
+#ifdef HAS_DOUBLE
+TEST pcode_P30_GetDecrementedDouble_Main()
+{
+	extern f8 pcode_P30_GetDecrementedDouble(f8 * ptr);
+	f8 arg[2] = { 3.14, 1.18 };
+	f8 *argPtr = &arg[1];
+	ASSERTF8(pcode_P30_GetDecrementedDouble(argPtr), 3.14);
+}
+#endif
+
+TEST pcode_P58_UnionGetAddressOfUnsignedChar_Main()
+{
+	extern u1 *pcode_P58_UnionGetAddressOfUnsignedChar(big_union_type *ptr, i4 index);
+	big_union_type testUnion[1] = {0};
+	ASSERTU1(* (u1 *) pcode_P58_UnionGetAddressOfUnsignedChar(testUnion, 0), 0);
+}
+
+#ifdef HAS_FLOAT
+TEST pcode_P9_GetAddressOfFloat_Main()
+{
+	extern f4 *pcode_P9_GetAddressOfFloat(f4 *ptr, i4 index);
+	f4 array[] = { 1, 2, 3, 4, 5 };
+	ASSERTF4(*pcode_P9_GetAddressOfFloat(array, 3), 4.0);
+}
+#endif
+
+#ifdef HAS_FLOAT
+TEST pcode_P59_UnionGetAddressOfFloat_Main()
+{
+	extern f4 *pcode_P59_UnionGetAddressOfFloat(big_union_type *ptr, i4 index);
+	big_union_type testUnion[1] = {0};
+	f4 *ret = pcode_P59_UnionGetAddressOfFloat(testUnion, 0);
+	ASSERTF4(*ret, 0.0);
+}
+#endif
+
+#ifdef HAS_DOUBLE
+TEST pcode_P10_GetAddressOfDouble_Main()
+{
+	extern f8 *pcode_P10_GetAddressOfDouble(f8 * ptr, i4 index);
+	f8 array[] = { 1, 2, 3, 4, 5 };
+	f8 *ret;
+	ret = pcode_P10_GetAddressOfDouble(array, 3);
+	ASSERTF8(*ret, 4.0);
+}
+#endif
+
+TEST pcode_P32_ModifyContentsOfInt_Main()
+{
+	extern i4 pcode_P32_ModifyContentsOfInt(i4 * ptr, i4 index, i4 value);
+	i4 array[] = { 1, 2, 3, 4, 5 };
+	i4 ret;
+	ret = pcode_P32_ModifyContentsOfInt (array, 3, 5);
+	ASSERTI4(ret, 5);
+}
+
+TEST pcode_P33_ModifyContentsOfShort_Main()
+{
+	extern i2 pcode_P33_ModifyContentsOfShort(i2 * ptr, i4 index, i2 value);
+	i2 array[] = { 1, 2, 3, 4, 5 };
+	i2 ret;
+	ret = pcode_P33_ModifyContentsOfShort(array, 3, 5);
+	ASSERTI2(ret, 5);
+}
+
+#ifdef HAS_DOUBLE
+TEST pcode_P60_UnionGetAddressOfDouble_Main()
+{
+	extern f8 *pcode_P60_UnionGetAddressOfDouble(big_union_type *ptr, i4 index);
+	big_union_type testUnion[5] = {0};
+	f8 *ret = pcode_P60_UnionGetAddressOfDouble(testUnion, 3);
+	ASSERTF8(*ret, 0.0);
+}
+#endif
+
+#ifdef HAS_LONGLONG
+TEST pcode_P11_GetIncrementedLongLong_Main()
+{
+	extern i8 pcode_P11_GetIncrementedLongLong(i8 * ptr);
+	i8 array[] = { 1, 2, 3, 4, 5 };
+	i8 ret;
+	ret = pcode_P11_GetIncrementedLongLong(array + 2);
+	ASSERTI8 (ret, 4);
+}
+#endif
+
+TEST pcode_P34_ModifyContentsOfChar_Main()
+{
+	extern i1 pcode_P34_ModifyContentsOfChar(i1 * ptr, i4 index, i1 value);
+	i1 array[] = { 1, 2, 3, 4, 5 };
+	i1 ret;
+	ret = pcode_P34_ModifyContentsOfChar(array, 3, 5);
+	ASSERTI1(ret, 5);
+}
+
+TEST pcode_P12_GetIncrementedInt_Main()
+{
+	extern i4 pcode_P12_GetIncrementedInt(i4 * ptr);
+	i4 array[] = { 1, 2, 3, 4, 5 };
+	i4 ret;
+	ret = pcode_P12_GetIncrementedInt(array);
+	ASSERTI4(ret, 2);
+}
+
+TEST pcode_P13_GetIncrementedShort_Main()
+{
+	extern i2 pcode_P13_GetIncrementedShort(i2 * ptr);
+	i2 array[] = { 1, 2, 3, 4, 5 };
+	i2 ret;
+	ret = pcode_P13_GetIncrementedShort(array);
+	ASSERTI4(ret, 2);
+}
+
+TEST pcode_P36_ModifyContentsOfUnsignedInt_Main()
+{
+	extern u4 pcode_P36_ModifyContentsOfUnsignedInt(u4 * ptr, i4 index, u4 value);
+	u4 array[] = { 1, 2, 3, 4, 5 };
+	u4 ret;
+	ret = pcode_P36_ModifyContentsOfUnsignedInt(array, 3, 5);
+	ASSERTU4(ret, 5);
+}
+
+#ifdef HAS_LONGLONG
+TEST pcode_P35_ModifyContentsOfUnsignedLongLong_Main()
+{
+	extern u8 pcode_P35_ModifyContentsOfUnsignedLongLong(u8 * ptr, i4 index, u8 value);
+	u8 array[] = { 1, 2, 3, 4, 5 };
+	u8 ret;
+	ret = pcode_P35_ModifyContentsOfUnsignedLongLong(array, 3, 5);
+	ASSERTU8(ret, 5);
+}
+#endif
+
+TEST pcode_P14_GetIncrementedChar_Main()
+{
+	extern i1 pcode_P14_GetIncrementedChar (i1 * ptr);
+	i1 array[] = { 1, 2, 3, 4, 5 };
+	i1 ret;
+	ret = pcode_P14_GetIncrementedChar(array);
+	ASSERTI4(ret, 2);
+}
+
+TEST pcode_P37_ModifyContentsOfUnsignedShort_Main()
+{
+	extern u2 pcode_P37_ModifyContentsOfUnsignedShort(u2 * ptr, i4 index, u2 value);
+	u2 array[] = { 1, 2, 3, 4, 5 };
+	u2 ret;
+	ret = pcode_P37_ModifyContentsOfUnsignedShort(array, 3, 5);
+	ASSERTU2(ret, 5);
+}
+
+TEST pcode_P38_ModifyContentsOfUnsignedChar_Main()
+{
+	extern u1 pcode_P38_ModifyContentsOfUnsignedChar(u1 * ptr, i4 index, u1 value);
+	u1 array[] = { 1, 2, 3, 4, 5 };
+	u1 ret;
+	ret = pcode_P38_ModifyContentsOfUnsignedChar(array, 3, 5);
+	ASSERTU1(ret, 5);
+}
+
+#ifdef HAS_LONGLONG
+TEST pcode_P15_GetIncrementedUnsignedLongLong_Main()
+{
+	extern u8 pcode_P15_GetIncrementedUnsignedLongLong(u8 * ptr);
+	u8 array[] = { 1, 2, 3, 4, 5 };
+	u8 ret;
+	ret = pcode_P15_GetIncrementedUnsignedLongLong(array);
+	ASSERTI4(ret, 2);
+}
+#endif
+
+#ifdef HAS_FLOAT
+TEST pcode_P39_ModifyContentsOfFloat_Main()
+{
+	extern f4 pcode_P39_ModifyContentsOfFloat(f4 * ptr, i4 index, f4 value);
+	f4 array[] = { 1, 2, 3, 4, 5 };
+	f4 ret;
+	ret = pcode_P39_ModifyContentsOfFloat(array, 3, 5.0);
+	ASSERTF4(ret, 5.0);
+}
+#endif
+
+TEST pcode_P17_GetIncrementedUnsignedShort_Main()
+{
+	extern u2 pcode_P17_GetIncrementedUnsignedShort(u2 * ptr);
+	u2 array[] = { 1, 2, 3, 4, 5 };
+	u2 ret;
+	ret = pcode_P17_GetIncrementedUnsignedShort(array);
+	ASSERTI4(ret, 2);
+}
+
+TEST pcode_P16_GetIncrementedUnsignedInt_Main()
+{
+	extern u4 pcode_P16_GetIncrementedUnsignedInt(u4 * ptr);
+	u4 array[] = { 1, 2, 3, 4, 5 };
+	u4 ret;
+	ret = pcode_P16_GetIncrementedUnsignedInt(array);
+	ASSERTI4(ret, 2);
+}
+
+TEST pcode_P18_GetIncrementedUnsignedChar_Main()
+{
+	extern u1 pcode_P18_GetIncrementedUnsignedChar(u1 * ptr);
+	u1 array[] = { 1, 2, 3, 4, 5 };
+	u1 ret;
+	ret = pcode_P18_GetIncrementedUnsignedChar(array);
+	ASSERTI4(ret, 2);
+}
+
+#ifdef HAS_DOUBLE
+TEST pcode_P40_ModifyContentsOfDouble_Main()
+{
+	extern f8 pcode_P40_ModifyContentsOfDouble(f8 * ptr, i4 index, f8 value);
+	f8 array[] = { 1, 2, 3, 4, 5 };
+	f8 ret;
+	ret = pcode_P40_ModifyContentsOfDouble(array, 3, 5.0);
+	ASSERTF8(ret, 5.0);
+}
+#endif
+
+#ifdef HAS_LONGLONG
+TEST pcode_P41_StructGetAddressOfLongLong_Main()
+{
+	extern i8 *pcode_P41_StructGetAddressOfLongLong(big_struct_type *ptr, i4 index);
+	big_struct_type bst[5] = {0};
+	i8 *ret;
+	ret = pcode_P41_StructGetAddressOfLongLong(bst, 3);
+	ASSERTI8(*ret, 0);
+}
+#endif
+
+#ifdef HAS_FLOAT
+TEST pcode_P19_GetIncrementedFloat_Main()
+{
+	extern f4 pcode_P19_GetIncrementedFloat(f4 * ptr);
+	f4 array[] = { 1.0, 2.0, 3.0, 4.0, 5.0 };
+	f4 ret;
+	ret = pcode_P19_GetIncrementedFloat((f4 *) array);
+	ASSERTF4(ret, 2);
+}
+#endif
+
+TEST pcode_P42_StructGetAddressOfInt_Main()
+{
+	extern i4 *pcode_P42_StructGetAddressOfInt(big_struct_type *ptr, i4 index);
+	big_struct_type bst[5] = {0};
+	i4 *ret;
+	ret= pcode_P42_StructGetAddressOfInt(bst, 3);
+	ASSERTI4(*ret, 0);
+}
+
+TEST pcode_P43_StructGetAddressOfShort_Main()
+{
+	extern i2 *pcode_P43_StructGetAddressOfShort(big_struct_type *ptr, i4 index);
+	big_struct_type bst[5] = {0};
+	i2 *ret;
+	ret = pcode_P43_StructGetAddressOfShort(bst, 3);
+	ASSERTI4(*ret, 0);
+}
+
+TEST pcode_P44_StructGetAddressOfChar_Main()
+{
+	extern i1 *pcode_P44_StructGetAddressOfChar(big_struct_type *ptr, i4 index);
+	big_struct_type bst[5] = {0};
+	i1 *ret;
+	ret = pcode_P44_StructGetAddressOfChar(bst, 3);
+	ASSERTI1(*ret, 0);
+}
+
+#ifdef HAS_DOUBLE
+TEST pcode_P20_GetIncrementedDouble_Main()
+{
+	extern f8 pcode_P20_GetIncrementedDouble(f8 * ptr);
+	f8 array[] = { 1.0, 2.0, 3.0, 4.0, 5.0 };
+	f8 ret;
+	ret = pcode_P20_GetIncrementedDouble((f8 *) array);
+	ASSERTF8(ret, 2.0);
+}
+#endif
+
+#ifdef HAS_LONGLONG
+TEST pcode_P45_StructGetAddressOfUnsignedLongLong_Main()
+{
+	extern u8 *pcode_P45_StructGetAddressOfUnsignedLongLong(big_struct_type *ptr, i4 index);
+	big_struct_type bst[5] = {0};
+	u8 *ret;
+	ret = pcode_P45_StructGetAddressOfUnsignedLongLong(bst, 3);
+	ASSERTU8(*ret, 0);
+}
+#endif
+
+#ifdef HAS_LONGLONG
+TEST pcode_P21_GetDecrementedLongLong_Main()
+{
+	extern i8 pcode_P21_GetDecrementedLongLong(i8 * ptr);
+	i8 val[] = {100, 200, 300};
+	i8 ret;
+	ret = pcode_P21_GetDecrementedLongLong(&val[1]);
+	ASSERTI8(ret, 100);
+}
+#endif
+
+TEST pcode_P47_StructGetAddressOfUnsignedShort_Main()
+{
+	extern u2 *pcode_P47_StructGetAddressOfUnsignedShort(big_struct_type *ptr, i4 index);
+	big_struct_type bst[5] = {0};
+	u2 *ret;
+	ret = pcode_P47_StructGetAddressOfUnsignedShort(bst, 3);
+	ASSERTU2(*ret, 0);
+}
+
+TEST pcode_P46_StructGetAddressOfUnsignedInt_Main()
+{
+	extern u4 *pcode_P46_StructGetAddressOfUnsignedInt(big_struct_type *ptr, i4 index);
+	big_struct_type bst[5] = {0};
+	u4 *ret;
+	ret = pcode_P46_StructGetAddressOfUnsignedInt(bst, 3);
+	ASSERTU2(*ret, 0);
+}
+
+#ifdef HAS_LONGLONG
+TEST pcode_P1_GetAddressOfLongLong_Main()
+{
+	extern i8 *pcode_P1_GetAddressOfLongLong(i8 * ptr, i4 index);
+	i8 array[] = { 1, 2, 3, 4, 5 };
+	i8 *ret;
+	ret = pcode_P1_GetAddressOfLongLong(array, 3);
+	ASSERTI8(*ret, 4);
+}
+#endif
+
+TEST pcode_P2_GetAddressOfInt_Main()
+{
+	extern i4 *pcode_P2_GetAddressOfInt(i4 * ptr, i4 index);
+	i4 array[] = { 1, 2, 3, 4, 5 };
+	i4 *ret;
+	ret = pcode_P2_GetAddressOfInt(array, 3);
+	ASSERTI4(*ret, 4);
+}
+
+TEST pcode_P3_GetAddressOfShort_Main()
+{
+	extern i2 *pcode_P3_GetAddressOfShort(i2 * ptr, i4 index);
+	i2 array[] = { 1, 2, 3, 4, 5 };
+	i2 *ret;
+	ret = pcode_P3_GetAddressOfShort(array, 3);
+	ASSERTI2(*ret, 4);
+}
+
+TEST pcode_P4_GetAddressOfChar_Main()
+{
+	extern i1 *pcode_P4_GetAddressOfChar(i1 * ptr, i4 index);
+	i1 array[] = { 1, 2, 3, 4, 5 };
+	i1 *ret;
+	ret = pcode_P4_GetAddressOfChar(array, 3);
+	ASSERTI1(*ret, 4);
+}
+
+TEST pcode_P6_GetAddressOfUnsignedInt_Main()
+{
+	extern u4 *pcode_P6_GetAddressOfUnsignedInt(u4 * ptr, i4 index);
+	u4 array[] = { 1, 2, 3, 4, 5 };
+	u4 *ret;
+	ret = pcode_P6_GetAddressOfUnsignedInt(array, 3);
+	ASSERTU4(*ret, 4);
+}
+
+#ifdef HAS_LONGLONG
+TEST pcode_P5_GetAddressOfUnsignedLongLong_Main()
+{
+	extern u8 *pcode_P5_GetAddressOfUnsignedLongLong(u8 * ptr, i4 index);
+	u8 array[] = { 1, 2, 3, 4, 5 };
+	u8 *ret;
+	ret = pcode_P5_GetAddressOfUnsignedLongLong(array, 3);
+	ASSERTU8(*ret, 4);
+}
+#endif
+
+TEST pcode_P7_GetAddressOfUnsignedShort_Main()
+{
+	extern u2 *pcode_P7_GetAddressOfUnsignedShort(u2 * ptr, i4 index);
+	u2 array[] = { 1, 2, 3, 4, 5 };
+	u2 *ret;
+	ret = pcode_P7_GetAddressOfUnsignedShort(array, 3);
+	ASSERTU2(*ret, 4);
+}
+
+TEST pcode_P8_GetAddressOfUnsignedChar_Main()
+{
+	extern u1 *pcode_P8_GetAddressOfUnsignedChar(u1 * ptr, i4 index);
+	u1 array[] = { 1, 2, 3, 4, 5 };
+	u1 *ret;
+	ret = pcode_P8_GetAddressOfUnsignedChar(array, 3);
+	ASSERTU1(*ret, 4);
+}
+
+MAIN PointerManipulation_main() { }

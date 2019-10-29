@@ -45,46 +45,40 @@ public class DecompilerHoverProvider extends AbstractHoverProvider {
 	protected ProgramLocation getHoverLocation(FieldLocation fieldLocation, Field field,
 			Rectangle fieldBounds, MouseEvent event) {
 
-		ProgramLocation loc = null;
-		if (field instanceof ClangTextField) {
-			ClangTextField decompilerField = (ClangTextField) field;
-			ClangToken token = decompilerField.getToken(fieldLocation);
+		if (!(field instanceof ClangTextField)) {
+			return null;
+		}
 
-			if (token instanceof ClangOpToken) {
+		ClangTextField decompilerField = (ClangTextField) field;
+		ClangToken token = decompilerField.getToken(fieldLocation);
+		if (token instanceof ClangOpToken) {
+			return null;
+		}
+
+		if (token instanceof ClangTypeToken) {
+			ClangTypeToken typeToken = (ClangTypeToken) token;
+			HighVariable hv = typeToken.getHighVariable();
+			if (hv == null) {
 				return null;
 			}
 
-			if (token instanceof ClangTypeToken) {
-				ClangTypeToken typeToken = (ClangTypeToken) token;
+			Address localAddr = hv.getRepresentative().getAddress();
+			return new ProgramLocation(program, localAddr);
+		}
 
-				HighVariable hv = typeToken.getHighVariable();
-				if (hv == null) {
-					return null;
-				}
-				Address localAddr = hv.getRepresentative().getAddress();
+		if (token.getMinAddress() == null) {
+			return null;
+		}
 
-				loc = new ProgramLocation(program, localAddr);
-
-			}
-			else {
-
-				if (token.getMinAddress() == null) {
-					return null;
-				}
-
-				Address reference = null;
-
-				Varnode vn = token.getVarnode();
-				if (vn != null) {
-					HighVariable highVar = vn.getHigh();
-					if (highVar instanceof HighGlobal) {
-						reference = highVar.getRepresentative().getAddress();
-					}
-				}
-
-				loc = new ProgramLocation(program, token.getMinAddress(), reference);
+		Address reference = null;
+		Varnode vn = token.getVarnode();
+		if (vn != null) {
+			HighVariable highVar = vn.getHigh();
+			if (highVar instanceof HighGlobal) {
+				reference = highVar.getRepresentative().getAddress();
 			}
 		}
-		return loc;
+
+		return new ProgramLocation(program, token.getMinAddress(), reference);
 	}
 }

@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,19 +17,13 @@
 
 package ghidra.framework.main;
 
-import ghidra.framework.plugintool.PluginTool;
-import ghidra.framework.preferences.Preferences;
-import ghidra.util.HelpLocation;
-import ghidra.util.Msg;
-import ghidra.util.filechooser.ExtensionFileFilter;
-import ghidra.util.filechooser.GhidraFileFilter;
-
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import javax.swing.*;
@@ -39,9 +32,16 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
 import docking.DialogComponentProvider;
-import docking.ToolTipManager;
 import docking.options.editor.ButtonPanelFactory;
 import docking.widgets.filechooser.GhidraFileChooser;
+import docking.widgets.label.GDLabel;
+import docking.widgets.list.GListCellRenderer;
+import ghidra.framework.plugintool.PluginTool;
+import ghidra.framework.preferences.Preferences;
+import ghidra.util.HelpLocation;
+import ghidra.util.Msg;
+import ghidra.util.filechooser.ExtensionFileFilter;
+import ghidra.util.filechooser.GhidraFileFilter;
 
 /**
  * Dialog for editing the Plugin path and Jar directory path preferences.
@@ -65,8 +65,8 @@ class EditPluginPathDialog extends DialogComponentProvider {
 	private final static Color STATUS_MESSAGE_COLOR = Color.blue.brighter();
 	final static String EMPTY_STATUS = " ";
 
-	private ExtensionFileFilter JAR_FILTER = new ExtensionFileFilter(new String[] { "jar", "zip" },
-		"Plugin Jar Files");
+	private ExtensionFileFilter JAR_FILTER =
+		new ExtensionFileFilter(new String[] { "jar", "zip" }, "Plugin Jar Files");
 
 	// codes used when handling actions
 	private final static byte UP = (byte) 0;
@@ -117,12 +117,12 @@ class EditPluginPathDialog extends DialogComponentProvider {
 		mainPanel = new JPanel();
 		mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
 
-		listModel = new DefaultListModel<String>();
+		listModel = new DefaultListModel<>();
 		setPluginPathsListData(Preferences.getPluginPaths());
 
 		// construct the bottom error message panel
 		JPanel statusMessagePanel = new JPanel();
-		statusMessage = new JLabel("Ready to set User Plugin Paths");
+		statusMessage = new GDLabel("Ready to set User Plugin Paths");
 		statusMessage.setName("statusLabel");
 
 		statusMessage.setForeground(STATUS_MESSAGE_COLOR);
@@ -370,9 +370,8 @@ class EditPluginPathDialog extends DialogComponentProvider {
 		Dimension d = addJarButton.getPreferredSize();
 		addDirButton.setPreferredSize(d);
 		removeButton.setPreferredSize(d);
-		JPanel otherButtonsPanel =
-			ButtonPanelFactory.createButtonPanel(new JButton[] { addJarButton, addDirButton,
-				removeButton }, SIDE_MARGIN);
+		JPanel otherButtonsPanel = ButtonPanelFactory.createButtonPanel(
+			new JButton[] { addJarButton, addDirButton, removeButton }, SIDE_MARGIN);
 
 		// put the right-side buttons panel together
 		JPanel listButtonPanel = new JPanel(new BorderLayout(0, 0));
@@ -383,7 +382,7 @@ class EditPluginPathDialog extends DialogComponentProvider {
 		// construct the plugin paths list
 		//
 		JPanel scrollListPanel = new JPanel(new BorderLayout(10, 15));
-		pluginPathsList = new JList<String>();
+		pluginPathsList = new JList<>();
 		pluginPathsList.addListSelectionListener(new PathListSelectionListener());
 		pluginPathsList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 
@@ -409,8 +408,8 @@ class EditPluginPathDialog extends DialogComponentProvider {
 		// tooltip text problem where the text is obscured by a component
 		// added after tooltip has been added
 		//
-		ToolTipManager.setToolTipText(upButton, "Changes the order of search for plugins");
-		ToolTipManager.setToolTipText(downButton, "Changes the order of search for plugins");
+		upButton.setToolTipText("Changes the order of search for plugins");
+		downButton.setToolTipText("Changes the order of search for plugins");
 
 		pluginPathListPanel.validate();
 		return pluginPathListPanel;
@@ -555,46 +554,20 @@ class EditPluginPathDialog extends DialogComponentProvider {
 	}
 
 	/**
-	 * special class that renders the path values in the list,
+	 * ListCellRenderer that renders the path values in the list,
 	 * coloring paths that are no longer readable in red.
 	 */
-	private class PluginPathRenderer extends JLabel implements ListCellRenderer<String> {
-		public PluginPathRenderer() {
-			super();
-			setOpaque(true);
-		}
+	private class PluginPathRenderer extends GListCellRenderer<String> {
 
 		@Override
 		public Component getListCellRendererComponent(JList<? extends String> list, String value,
 				int index, boolean isSelected, boolean cellHasFocus) {
+			super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+			boolean pathOK = new File(value).canRead();
+			if (!pathOK) {
+				setForeground(isSelected ? INVALID_SELECTED_PATH_COLOR : INVALID_PATH_COLOR);
+			}
 
-			// validate the paths, setting invalid paths to red in the list
-			// Invalid paths are defined as:
-			//   Jar files or directories that are no longer accessible;
-			//
-			String pathName = listModel.get(index);
-			setText(pathName);
-			setFont(list.getFont());
-			boolean pathOK = new File(pathName).canRead();
-			if (isSelected) {
-				if (!pathOK) {
-					setForeground(INVALID_SELECTED_PATH_COLOR);
-				}
-				else {
-					setForeground(list.getSelectionForeground());
-				}
-				setBackground(list.getSelectionBackground());
-			}
-			else {
-				// set color to red if no longer accessible
-				if (!pathOK) {
-					setForeground(INVALID_PATH_COLOR);
-				}
-				else {
-					setForeground(list.getForeground());
-				}
-				setBackground(list.getBackground());
-			}
 			return this;
 		}
 	}

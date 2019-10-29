@@ -1,0 +1,4 @@
+@define C196KB "1"
+@define C196KC "1"
+
+@include "MCS96.sinc"

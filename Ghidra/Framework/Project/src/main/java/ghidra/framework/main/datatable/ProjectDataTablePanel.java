@@ -27,9 +27,9 @@ import javax.swing.*;
 
 import docking.ActionContext;
 import docking.ComponentProvider;
-import docking.action.DockingActionIf;
 import docking.help.Help;
 import docking.help.HelpService;
+import docking.widgets.label.GHtmlLabel;
 import docking.widgets.table.*;
 import docking.widgets.table.threaded.*;
 import ghidra.framework.main.FrontEndPlugin;
@@ -222,8 +222,8 @@ public class ProjectDataTablePanel extends JPanel {
 		}
 	}
 
-	private JLabel capacityExceededText =
-		new JLabel("<HTML><CENTER><I>Table view disabled for very large projects, or<BR>" +
+	private GHtmlLabel capacityExceededText =
+		new GHtmlLabel("<HTML><CENTER><I>Table view disabled for very large projects, or<BR>" +
 			"if an older project/repository filesystem is in use.<BR>" +
 			"View will remain disabled until project is closed.</I></CENTER></HTML>");
 
@@ -288,7 +288,7 @@ public class ProjectDataTablePanel extends JPanel {
 			list.add(info.getDomainFile());
 		}
 		return new ProjectDataActionContext(provider, projectData,
-			model.getRowObject(selectedRows[0]), null, list, table, true);
+			model.getRowObject(selectedRows[0]), null, list, gTable, true);
 	}
 
 	private void checkOpen(MouseEvent e) {
@@ -489,9 +489,8 @@ public class ProjectDataTablePanel extends JPanel {
 		}
 
 		@Override
-		public List<DockingActionIf> getDockingActions(ActionContext context) {
-			// the table's default actions aren't that useful in the Front End
-			return Collections.emptyList();
+		protected boolean supportsPopupActions() {
+			return false;
 		}
 	}
 }

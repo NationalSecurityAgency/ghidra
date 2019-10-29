@@ -19,6 +19,7 @@ import javax.swing.*;
 
 import docking.DialogComponentProvider;
 import docking.widgets.combobox.GhidraComboBox;
+import docking.widgets.label.GDLabel;
 import ghidra.app.cmd.label.AddLabelCmd;
 import ghidra.app.cmd.refs.AssociateSymbolCmd;
 import ghidra.app.context.ListingActionContext;
@@ -59,7 +60,7 @@ public class OperandLabelDialog extends DialogComponentProvider {
 		JPanel mainPanel = new JPanel(new PairLayout(5, 5));
 		mainPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 
-		label = new JLabel("Label: ");
+		label = new GDLabel("Label: ");
 
 		myChoice = new GhidraComboBox<>();
 		myChoice.setName("MYCHOICE");

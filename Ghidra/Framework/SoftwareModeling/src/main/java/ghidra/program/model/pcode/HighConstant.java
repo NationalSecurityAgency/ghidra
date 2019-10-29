@@ -40,8 +40,8 @@ public class HighConstant extends HighVariable {
 	 * @param func the associated high function
 	 * @throws InvalidInputException 
 	 */
-	public HighConstant(String name, DataType type, Varnode vn, Address pc,
-			HighFunction func) throws InvalidInputException {
+	public HighConstant(String name, DataType type, Varnode vn, Address pc, HighFunction func)
+			throws InvalidInputException {
 		super(name, type, vn, null, func);
 		pcaddr = pc;
 	}
@@ -55,8 +55,8 @@ public class HighConstant extends HighVariable {
 	 * @param sym associated dynamic symbol
 	 * @throws InvalidInputException 
 	 */
-	public HighConstant(String name, DataType type, Varnode vn, Address pc,
-			DynamicSymbol sym) throws InvalidInputException {
+	public HighConstant(String name, DataType type, Varnode vn, Address pc, DynamicSymbol sym)
+			throws InvalidInputException {
 		this(name, type, vn, pc, sym.getHighFunction());
 		symbol = sym;
 	}
@@ -76,7 +76,7 @@ public class HighConstant extends HighVariable {
 	}
 
 	/**
-	 * Returns constant as a scalar object
+	 * @return constant as a scalar object
 	 */
 	public Scalar getScalar() {
 		boolean signed = false;

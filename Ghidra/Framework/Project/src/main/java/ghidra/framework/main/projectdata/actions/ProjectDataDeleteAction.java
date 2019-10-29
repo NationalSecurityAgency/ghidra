@@ -29,6 +29,7 @@ import ghidra.framework.main.datatable.ProjectDataActionContext;
 import ghidra.framework.main.datatable.ProjectDataContextAction;
 import ghidra.framework.model.DomainFile;
 import ghidra.framework.model.DomainFolder;
+import ghidra.util.HTMLUtilities;
 import ghidra.util.task.TaskLauncher;
 import resources.ResourceManager;
 import util.CollectionUtils;
@@ -89,7 +90,7 @@ public class ProjectDataDeleteAction extends ProjectDataContextAction {
 			if (!selectedFiles.isEmpty()) {
 				DomainFile file = CollectionUtils.any(selectedFiles);
 				return "<HTML>Are you sure you want to <B><U>permanently</U></B> delete \"" +
-					file.getName() + "\"?";
+					HTMLUtilities.escapeHTML(file.getName()) + "\"?";
 			}
 
 			// only folders are selected, but they contain files

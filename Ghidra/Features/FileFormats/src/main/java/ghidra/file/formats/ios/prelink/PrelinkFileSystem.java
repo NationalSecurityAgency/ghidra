@@ -23,12 +23,12 @@ import org.apache.commons.collections4.BidiMap;
 import org.jdom.JDOMException;
 
 import generic.continues.RethrowContinuesFactory;
+import ghidra.app.util.MemoryBlockUtils;
 import ghidra.app.util.bin.*;
 import ghidra.app.util.bin.format.macho.*;
 import ghidra.app.util.bin.format.macho.commands.*;
 import ghidra.app.util.bin.format.macho.prelink.PrelinkConstants;
 import ghidra.app.util.bin.format.macho.prelink.PrelinkMap;
-import ghidra.app.util.importer.MemoryConflictHandler;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.app.util.opinion.*;
 import ghidra.formats.gfilesystem.*;
@@ -37,6 +37,7 @@ import ghidra.formats.gfilesystem.factory.GFileSystemBaseFactory;
 import ghidra.framework.store.local.LocalFileSystem;
 import ghidra.macosx.MacosxLanguageHelper;
 import ghidra.program.database.ProgramDB;
+import ghidra.program.database.mem.FileBytes;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.lang.LanguageCompilerSpecPair;
 import ghidra.program.model.lang.LanguageService;
@@ -118,12 +119,9 @@ public class PrelinkFileSystem extends GFileSystemBase implements GFileSystemPro
 	}
 
 	@Override
-	public String getInfo(GFile file, TaskMonitor monitor) throws IOException {
+	public String getInfo(GFile file, TaskMonitor monitor) {
 		PrelinkMap info = fileToPrelinkInfoMap.get(file);
-		if (info != null) {
-			return info.toString();
-		}
-		return null;
+		return (info != null) ? info.toString() : null;
 	}
 
 	@Override
@@ -188,9 +186,12 @@ public class PrelinkFileSystem extends GFileSystemBase implements GFileSystemPro
 		int id = program.startTransaction(getName());
 		boolean success = false;
 		try {
-			MachoProgramBuilder.buildProgram(program,
-				new ByteProviderWrapper(provider, offset, provider.length() - offset),
-				new MessageLog(), MemoryConflictHandler.NEVER_OVERWRITE, monitor);
+			FileBytes fileBytes = MemoryBlockUtils.createFileBytes(program, provider, offset,
+				provider.length() - offset, monitor);
+			ByteProvider providerWrapper =
+				new ByteProviderWrapper(provider, offset, provider.length() - offset);
+			MachoProgramBuilder.buildProgram(program, providerWrapper, fileBytes, new MessageLog(),
+				monitor);
 			program.setExecutableFormat(MachoLoader.MACH_O_NAME);
 			program.setExecutablePath(file.getPath());
 

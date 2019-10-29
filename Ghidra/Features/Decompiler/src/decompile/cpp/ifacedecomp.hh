@@ -541,6 +541,11 @@ public:
   virtual void execute(istream &s);
 };
 
+class IfcAnalyzeRange : public IfaceDecompCommand {
+public:
+  virtual void execute(istream &s);
+};
+
 #ifdef CPUI_RULECOMPILE
 class IfcParseRule : public IfaceDecompCommand {
 public:

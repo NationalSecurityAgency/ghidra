@@ -222,7 +222,8 @@ public class DataTypeNode extends AbstractGTreeNode implements DataTypeTreeNode 
 
 	@Override
 	public boolean isModifiable() {
-		return getArchiveNode().isModifiable();
+		ArchiveNode archiveNode = getArchiveNode();
+		return archiveNode != null && archiveNode.isModifiable();
 	}
 
 	@Override

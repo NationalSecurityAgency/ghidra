@@ -15,11 +15,10 @@
  */
 package ghidra.app.plugin.core.compositeeditor;
 
-import ghidra.framework.plugintool.Plugin;
-import ghidra.program.model.data.Union;
-
 import javax.swing.ImageIcon;
 
+import ghidra.framework.plugintool.Plugin;
+import ghidra.program.model.data.Union;
 import resources.ResourceManager;
 
 /**
@@ -49,32 +48,35 @@ public class UnionEditorProvider extends CompositeEditorProvider {
 		return "Union Editor";
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.compositeeditor.CompositeEditorProvider#createActions()
-	 */
 	@Override
-	protected CompositeEditorAction[] createActions() {
-		return new CompositeEditorAction[] { new ApplyAction(this), new MoveUpAction(this),
-			new MoveDownAction(this), new DuplicateAction(this), new DuplicateMultipleAction(this),
-			new DeleteAction(this), new PointerAction(this), new ArrayAction(this),
-			new ShowComponentPathAction(this), new EditComponentAction(this),
-			new EditFieldAction(this), new HexNumbersAction(this) };
+	protected CompositeEditorTableAction[] createActions() {
+		//@formatter:off
+		return new CompositeEditorTableAction[] { 
+			new ApplyAction(this), 
+			new MoveUpAction(this),
+			new MoveDownAction(this), 
+			new DuplicateAction(this), 
+			new DuplicateMultipleAction(this),
+			new DeleteAction(this), 
+			new PointerAction(this), 
+			new ArrayAction(this),
+			new ShowComponentPathAction(this), 
+			new EditComponentAction(this),
+			new EditFieldAction(this), 
+			new HexNumbersAction(this),
+			new AddBitFieldAction(this),
+			new EditBitFieldAction(this)
+		};
+		//@formatter:on
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.compositeeditor.CompositeEditorProvider#getHelpName()
-	 */
 	@Override
 	public String getHelpName() {
 		return "Structure_Editor";
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.compositeeditor.CompositeEditorProvider#getHelpTopic()
-	 */
 	@Override
 	public String getHelpTopic() {
 		return "DataTypeEditors";
 	}
-
 }

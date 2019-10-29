@@ -372,7 +372,7 @@ public class ApplyFunctionSignatureCmd extends BackgroundCommand {
 			Namespace namespace) {
 		Symbol otherSym = symbolTable.getSymbol(name, address, namespace);
 		if (otherSym != null) {
-			if (otherSym.getSymbolType() == SymbolType.CODE) {
+			if (otherSym.getSymbolType() == SymbolType.LABEL) {
 				otherSym.delete(); // replace label if function name matches
 			}
 		}

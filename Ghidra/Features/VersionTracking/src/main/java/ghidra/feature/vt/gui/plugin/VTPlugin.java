@@ -17,11 +17,14 @@ package ghidra.feature.vt.gui.plugin;
 
 import java.net.URL;
 import java.util.List;
+import java.util.Set;
 
 import javax.swing.*;
 
+import docking.action.DockingActionIf;
 import docking.help.Help;
 import docking.help.HelpService;
+import docking.tool.ToolConstants;
 import docking.wizard.WizardManager;
 import ghidra.GhidraOptions;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
@@ -121,17 +124,32 @@ public class VTPlugin extends Plugin {
 		createActions();
 		registerServiceProvided(VTController.class, controller);
 		tool.setUnconfigurable();
-		tool.removeAction(tool.getDockingActionsByFullActionName("Save Tool As (Tool)").get(0));
-		tool.removeAction(tool.getDockingActionsByFullActionName("Export Tool (Tool)").get(0));
+
+		DockingActionIf saveAs = getToolAction("Save Tool As");
+		tool.removeAction(saveAs);
+
+		DockingActionIf export = getToolAction("Export Tool");
+		tool.removeAction(export);
+
 		new MatchStatusUpdaterAssociationHook(controller);
 		new ImpliedMatchAssociationHook(controller);
 
 		initializeOptions();
 	}
 
+	private DockingActionIf getToolAction(String actionName) {
+		Set<DockingActionIf> actions = tool.getDockingActionsByOwnerName(ToolConstants.TOOL_OWNER);
+		for (DockingActionIf action : actions) {
+			if (action.getName().equals(actionName)) {
+				return action;
+			}
+		}
+		throw new IllegalArgumentException("Unable to find Tool action '" + actionName + "'");
+	}
+
 	private void initializeOptions() {
 		Options options = tool.getOptions(GhidraOptions.CATEGORY_BROWSER_DISPLAY);
-		options.registerOptionsEditor(new ListingDisplayOptionsEditor(this, options));
+		options.registerOptionsEditor(new ListingDisplayOptionsEditor(options));
 		options.setOptionsHelpLocation(new HelpLocation(CodeBrowserPlugin.class.getSimpleName(),
 			GhidraOptions.CATEGORY_BROWSER_DISPLAY));
 
@@ -159,8 +177,7 @@ public class VTPlugin extends Plugin {
 		Preferences.setProperty(SHOW_HELP_PREFERENCE, "No");
 		Preferences.store();
 
-		URL url =
-			ResourceManager.getResource("help/topics/VersionTrackingPlugin/VT_Workflow.html");
+		URL url = ResourceManager.getResource("help/topics/VersionTrackingPlugin/VT_Workflow.html");
 		if (url == null) {
 			Msg.showError(this, null, "Help Not Found",
 				"Unable to find the Version Tracking workflow help");
@@ -396,7 +413,7 @@ public class VTPlugin extends Plugin {
 	 */
 	static void showBusyToolMessage(PluginTool tool) {
 		JFrame toolFrame = tool.getToolFrame();
-		toolFrame.getToolkit().beep();
+		tool.beep();
 		Msg.showInfo(VTPlugin.class, toolFrame, "Tool \"" + tool.getName() + "\" Busy",
 			"You must stop all background tasks before exiting.");
 	}

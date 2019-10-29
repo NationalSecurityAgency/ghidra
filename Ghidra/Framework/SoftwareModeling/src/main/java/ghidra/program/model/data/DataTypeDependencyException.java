@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,16 +16,16 @@
 package ghidra.program.model.data;
 
 /**
- * Exception thrown when trying to replace a dataType with a dataType that depends
- * on the dataType being replaced.  For example try to replace byte with byte[] fail
- * because byte[] depends on byte.
+ * <code>DataTypeDependencyException</code> corresponds to a datatype dependency failure.
+ * This can occur under various situations, including when trying to replace a dataType 
+ * with a dataType that depends on the dataType being replaced.  This error may also occur
+ * when a datatype dependency can not be satisfied.
  */
 
 public class DataTypeDependencyException extends Exception {
 
 	public DataTypeDependencyException() {
 		super();
-		// TODO Auto-generated constructor stub
 	}
 
 	public DataTypeDependencyException(String message) {

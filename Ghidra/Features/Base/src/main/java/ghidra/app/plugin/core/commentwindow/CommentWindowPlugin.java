@@ -15,28 +15,23 @@
  */
 package ghidra.app.plugin.core.commentwindow;
 
-import javax.swing.ImageIcon;
-import javax.swing.KeyStroke;
-
-import docking.ActionContext;
-import docking.action.*;
+import docking.action.DockingAction;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.events.ProgramSelectionPluginEvent;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.ProgramPlugin;
 import ghidra.app.services.GoToService;
 import ghidra.framework.model.*;
-import ghidra.framework.options.*;
-import ghidra.framework.plugintool.*;
-import ghidra.framework.plugintool.util.*;
+import ghidra.framework.plugintool.PluginInfo;
+import ghidra.framework.plugintool.PluginTool;
+import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.CodeUnit;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.*;
-import ghidra.util.table.GhidraTable;
 import ghidra.util.table.SelectionNavigationAction;
+import ghidra.util.table.actions.MakeProgramSelectionAction;
 import ghidra.util.task.SwingUpdateManager;
-import resources.ResourceManager;
 
 /*
  * This plugin shows a filterable Ghidra table containing all the comments in the active program
@@ -53,8 +48,7 @@ import resources.ResourceManager;
 	servicesRequired = { GoToService.class }
 )
 //@formatter:on
-public class CommentWindowPlugin extends ProgramPlugin
-		implements DomainObjectListener, OptionsChangeListener {
+public class CommentWindowPlugin extends ProgramPlugin implements DomainObjectListener {
 
 	private DockingAction selectAction;
 	private CommentWindowProvider provider;
@@ -63,12 +57,7 @@ public class CommentWindowPlugin extends ProgramPlugin
 	public CommentWindowPlugin(PluginTool tool) {
 		super(tool, true, true);
 
-		reloadUpdateMgr = new SwingUpdateManager(1000, 60000, new Runnable() {
-			@Override
-			public void run() {
-				doReload();
-			}
-		});
+		reloadUpdateMgr = new SwingUpdateManager(1000, 60000, () -> doReload());
 	}
 
 	@Override
@@ -88,12 +77,6 @@ public class CommentWindowPlugin extends ProgramPlugin
 		provider.dispose();
 		super.dispose();
 	}
-
-	////////////////////////////////////////////////////////////////////////////
-	//
-	//  Implementation of DomainObjectListener
-	//
-	////////////////////////////////////////////////////////////////////////////
 
 	private int getCommentType(int type) {
 		if (type == ChangeManager.DOCR_PRE_COMMENT_CHANGED) {
@@ -169,9 +152,7 @@ public class CommentWindowPlugin extends ProgramPlugin
 					provider.getComponent().repaint();
 				}
 			}
-
 		}
-
 	}
 
 	private void reload() {
@@ -198,74 +179,23 @@ public class CommentWindowPlugin extends ProgramPlugin
 		return currentProgram;
 	}
 
-	// Junit access
 	CommentWindowProvider getProvider() {
 		return provider;
 	}
 
-	/**
-	 * Create the action objects for this plugin.
-	 */
 	private void createActions() {
 
-		selectAction = new DockingAction("Make Selection", getName(), false) {
-			@Override
-			public void actionPerformed(ActionContext context) {
-				selectComment(provider.selectComment());
-			}
-
-			@Override
-			public boolean isEnabledForContext(ActionContext context) {
-				if (!(context instanceof CommentWindowContext)) {
-					return false;
-				}
-				CommentWindowContext commentWindowContext = (CommentWindowContext) context;
-				GhidraTable table = commentWindowContext.getCommentTable();
-				return table.getSelectedRows().length > 0;
-			}
-		};
-		selectAction.setEnabled(false);
-		ImageIcon icon = ResourceManager.loadImage("images/text_align_justify.png");
-		selectAction.setPopupMenuData(new MenuData(new String[] { "Make Selection" }, icon));
-		selectAction.setDescription("Selects currently selected comment in table");
-		selectAction.setToolBarData(new ToolBarData(icon));
-
-		installDummyAction(selectAction);
-
+		selectAction = new MakeProgramSelectionAction(this, provider.getTable());
 		tool.addLocalAction(provider, selectAction);
 
 		DockingAction selectionAction = new SelectionNavigationAction(this, provider.getTable());
 		tool.addLocalAction(provider, selectionAction);
 	}
 
-	private void installDummyAction(DockingAction action) {
-		DummyKeyBindingsOptionsAction dummyAction =
-			new DummyKeyBindingsOptionsAction(action.getName(), null);
-		tool.addAction(dummyAction);
-
-		ToolOptions options = tool.getOptions(ToolConstants.KEY_BINDINGS);
-		options.addOptionsChangeListener(this);
-
-		KeyStroke keyStroke = options.getKeyStroke(dummyAction.getFullName(), null);
-		if (keyStroke != null) {
-			action.setUnvalidatedKeyBindingData(new KeyBindingData(keyStroke));
-		}
-	}
-
-	@Override
-	public void optionsChanged(ToolOptions options, String optionName, Object oldValue,
-			Object newValue) {
-		if (optionName.startsWith(selectAction.getName())) {
-			KeyStroke keyStroke = (KeyStroke) newValue;
-			selectAction.setUnvalidatedKeyBindingData(new KeyBindingData(keyStroke));
-		}
-	}
-
-	void selectComment(ProgramSelection selection) {
+	private void selectComment(ProgramSelection selection) {
 		ProgramSelectionPluginEvent pspe =
 			new ProgramSelectionPluginEvent("Selection", selection, currentProgram);
 		firePluginEvent(pspe);
 		processEvent(pspe);
 	}
-
 }

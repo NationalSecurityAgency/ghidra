@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +15,6 @@
  */
 package ghidra.app.util.viewer.field;
 
-import ghidra.framework.options.CustomOptionsEditor;
-import ghidra.util.HTMLUtilities;
-import ghidra.util.layout.VerticalLayout;
-
 import java.awt.Component;
 import java.awt.Container;
 import java.awt.event.ItemEvent;
@@ -31,11 +26,15 @@ import javax.swing.border.TitledBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
-import docking.ToolTipManager;
+import docking.widgets.checkbox.GCheckBox;
+import docking.widgets.label.GDLabel;
 import docking.widgets.textfield.IntegerTextField;
+import ghidra.framework.options.CustomOptionsEditor;
+import ghidra.util.HTMLUtilities;
+import ghidra.util.layout.VerticalLayout;
 
-public class ArrayElementPropertyEditor extends PropertyEditorSupport implements
-		CustomOptionsEditor {
+public class ArrayElementPropertyEditor extends PropertyEditorSupport
+		implements CustomOptionsEditor {
 
 	private static final String SHOW_MULTI_ELEMENTS_LABEL = "Group Array Elements";
 	private static final String GROUP_SIZE_LABEL = "Elements Per Line";
@@ -43,13 +42,13 @@ public class ArrayElementPropertyEditor extends PropertyEditorSupport implements
 	private static final String[] NAMES = { SHOW_MULTI_ELEMENTS_LABEL, GROUP_SIZE_LABEL };
 
 	// help tooltips
-	private static final String SHOW_MULTI_ELEMENTS_TOOLTIP = HTMLUtilities.toWrappedHTML(
-		"Groups multiple array elements on the same listing line", 75);
-	private static final String GROUP_SIZE_LABEL_TOOLTIP = HTMLUtilities.toWrappedHTML(
-		"Number of array elements to show on a line", 75);
+	private static final String SHOW_MULTI_ELEMENTS_TOOLTIP =
+		HTMLUtilities.toWrappedHTML("Groups multiple array elements on the same listing line", 75);
+	private static final String GROUP_SIZE_LABEL_TOOLTIP =
+		HTMLUtilities.toWrappedHTML("Number of array elements to show on a line", 75);
 
-	private static final String[] DESCRIPTIONS = { SHOW_MULTI_ELEMENTS_TOOLTIP,
-		GROUP_SIZE_LABEL_TOOLTIP };
+	private static final String[] DESCRIPTIONS =
+		{ SHOW_MULTI_ELEMENTS_TOOLTIP, GROUP_SIZE_LABEL_TOOLTIP };
 
 	private ArrayElementWrappedOption elementWrappedOption;
 
@@ -67,15 +66,15 @@ public class ArrayElementPropertyEditor extends PropertyEditorSupport implements
 		JPanel panel = new JPanel(new VerticalLayout(3));
 
 		// the namespace checkbox will disable the text field options when it is not used
-		groupElementsCheckBox = new JCheckBox(SHOW_MULTI_ELEMENTS_LABEL);
+		groupElementsCheckBox = new GCheckBox(SHOW_MULTI_ELEMENTS_LABEL);
 		groupElementsCheckBox.setSelected(true);
-		ToolTipManager.setToolTipText(groupElementsCheckBox, SHOW_MULTI_ELEMENTS_TOOLTIP);
+		groupElementsCheckBox.setToolTipText(SHOW_MULTI_ELEMENTS_TOOLTIP);
 
 		panel.add(groupElementsCheckBox);
 
 		elementsPerLineField =
 			createLocalPrefixTextField(GROUP_SIZE_LABEL, GROUP_SIZE_LABEL_TOOLTIP, panel);
-		ToolTipManager.setToolTipText(elementsLabel, GROUP_SIZE_LABEL_TOOLTIP);
+		elementsLabel.setToolTipText(GROUP_SIZE_LABEL_TOOLTIP);
 
 		groupElementsCheckBox.addItemListener(new ItemListener() {
 			@Override
@@ -104,7 +103,7 @@ public class ArrayElementPropertyEditor extends PropertyEditorSupport implements
 		JPanel textFieldPanel = new JPanel();
 		textFieldPanel.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 0));
 
-		elementsLabel = new JLabel(labelText);
+		elementsLabel = new GDLabel(labelText);
 		textFieldPanel.add(elementsLabel);
 		textFieldPanel.add(textField.getComponent());
 		textField.addChangeListener(new ChangeListener() {

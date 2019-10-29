@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +15,12 @@
  */
 package ghidra.javaclass.format.attributes;
 
+import java.io.IOException;
+
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.data.StructureDataType;
 import ghidra.util.exception.DuplicateNameException;
-
-import java.io.IOException;
 
 /**
  * NOTE: THE FOLLOWING TEXT EXTRACTED FROM JVMS7.PDF
@@ -50,15 +49,15 @@ import java.io.IOException;
 public class InnerClassesAttribute extends AbstractAttributeInfo {
 
 	private short numberOfInnerClasses;
-	private InnerClass [] innerClasses;
+	private InnerClass[] innerClasses;
 
-	public InnerClassesAttribute( BinaryReader reader ) throws IOException {
-		super( reader );
+	public InnerClassesAttribute(BinaryReader reader) throws IOException {
+		super(reader);
 
 		numberOfInnerClasses = reader.readNextShort();
-		innerClasses = new InnerClass[ numberOfInnerClasses ];
-		for ( int i = 0 ; i < numberOfInnerClasses ; i++ ) {
-			innerClasses[ i ] = new InnerClass( reader );
+		innerClasses = new InnerClass[getNumberOfInnerClasses()];
+		for (int i = 0; i < getNumberOfInnerClasses(); i++) {
+			innerClasses[i] = new InnerClass(reader);
 		}
 	}
 
@@ -66,25 +65,26 @@ public class InnerClassesAttribute extends AbstractAttributeInfo {
 	 * The value of the number_of_classes item indicates the number of entries in
 	 * the classes array.
 	 * @return the number of entries in the classes array
-	 */ 
-	public short getNumberOfInnerClasses() {
-		return numberOfInnerClasses;
+	 */
+	public int getNumberOfInnerClasses() {
+		return numberOfInnerClasses & 0xffff;
 	}
 
 	/**
 	 * Returns array of inner classes.
 	 * @return array of inner classes.
 	 */
-	public InnerClass [] getInnerClasses() {
+	public InnerClass[] getInnerClasses() {
 		return innerClasses;
 	}
 
 	@Override
 	public DataType toDataType() throws DuplicateNameException, IOException {
-		StructureDataType structure = getBaseStructure( "InnerClasses_attribute" + "|" + numberOfInnerClasses + "|" );
-		structure.add( WORD, "number_of_classes", null );
-		for ( int i = 0 ; i < innerClasses.length ; ++i ) {
-			structure.add( innerClasses[ i ].toDataType(), "inner_class_" + i, null );
+		StructureDataType structure =
+			getBaseStructure("InnerClasses_attribute" + "|" + numberOfInnerClasses + "|");
+		structure.add(WORD, "number_of_classes", null);
+		for (int i = 0; i < innerClasses.length; ++i) {
+			structure.add(innerClasses[i].toDataType(), "inner_class_" + i, null);
 		}
 
 		return structure;

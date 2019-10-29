@@ -26,7 +26,7 @@ import ghidra.util.exception.InvalidInputException;
 
 /**
  * Command to make a label the primary label at an address.  Only really
- * makes sense if there is more that one label at the address - otherwise
+ * makes sense if there is more than one label at the address - otherwise
  * the label will already be primary.
  */
 public class SetLabelPrimaryCmd implements Command {
@@ -52,6 +52,7 @@ public class SetLabelPrimaryCmd implements Command {
 	 * 
 	 * @see ghidra.framework.cmd.Command#applyTo(ghidra.framework.model.DomainObject)
 	 */
+	@Override
 	public boolean applyTo(DomainObject obj) {
 		Program program = (Program) obj;
 		st = program.getSymbolTable();
@@ -106,7 +107,7 @@ public class SetLabelPrimaryCmd implements Command {
 				errorMsg = "InvalidInputException: " + e.getMessage();
 			}
 			catch (CircularDependencyException e) {
-				errorMsg = "CuicularDependencyException: " + e.getMessage();
+				errorMsg = "CircularDependencyException: " + e.getMessage();
 			}
 			return false;
 		}
@@ -117,6 +118,7 @@ public class SetLabelPrimaryCmd implements Command {
 	/**
 	 * @see ghidra.framework.cmd.Command#getStatusMsg()
 	 */
+	@Override
 	public String getStatusMsg() {
 		return errorMsg;
 	}
@@ -124,6 +126,7 @@ public class SetLabelPrimaryCmd implements Command {
 	/**
 	 * @see ghidra.framework.cmd.Command#getName()
 	 */
+	@Override
 	public String getName() {
 		return "Set Primary Label";
 	}

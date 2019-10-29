@@ -81,7 +81,7 @@ public class LabelFieldFactory extends FieldFactory {
 	/**
 	 * Constructor
 	 * @param model the model that the field belongs to.
-	 * @param hsProvider the HightLightStringProvider.
+	 * @param hlProvider the HightLightStringProvider.
 	 * @param displayOptions the Options for display properties.
 	 * @param fieldOptions the Options for field specific properties.
 	 */
@@ -116,7 +116,8 @@ public class LabelFieldFactory extends FieldFactory {
 	private void setupNamespaceOptions(Options fieldOptions) {
 		// we need to install a custom editor that allows us to edit a group of related options
 		fieldOptions.registerOption(NAMESPACE_OPTIONS, OptionType.CUSTOM_TYPE,
-			new NamespaceWrappedOption(), null, null, namespaceOptionsEditor);
+			new NamespaceWrappedOption(), null, "Adjusts the Label Field namespace display",
+			namespaceOptionsEditor);
 		CustomOption wrappedOption =
 			fieldOptions.getCustomOption(NAMESPACE_OPTIONS, new NamespaceWrappedOption());
 		if (!(wrappedOption instanceof NamespaceWrappedOption)) {
@@ -392,7 +393,7 @@ public class LabelFieldFactory extends FieldFactory {
 		}
 		Symbol symbol = symbols[symbolIndex];
 		SymbolType symbolType = symbol.getSymbolType();
-		if (symbolType != SymbolType.CODE && symbolType != SymbolType.FUNCTION) {
+		if (symbolType != SymbolType.LABEL && symbolType != SymbolType.FUNCTION) {
 			return null;
 		}
 		return symbol;
@@ -406,8 +407,7 @@ public class LabelFieldFactory extends FieldFactory {
 			text = SymbolUtilities.getDynamicOffcutName(addr);
 		}
 		// since these labels are fictitious, they don't have a namespace.
-		return new LabelFieldLocation(cu.getProgram(), addr, cpath, text, null, row,
-			col);
+		return new LabelFieldLocation(cu.getProgram(), addr, cpath, text, null, row, col);
 	}
 
 	@Override

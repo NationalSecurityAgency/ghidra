@@ -26,6 +26,9 @@ import javax.swing.*;
 import javax.swing.table.TableModel;
 
 import db.*;
+import docking.widgets.combobox.GComboBox;
+import docking.widgets.label.GDLabel;
+import docking.widgets.label.GLabel;
 import docking.widgets.table.GTable;
 import ghidra.app.plugin.debug.dbtable.*;
 import ghidra.util.Msg;
@@ -36,7 +39,7 @@ class DbViewerComponent extends JPanel {
 
 	private static Table[] NO_TABLES = new Table[0];
 
-	private static Comparator<Table> TABLE_NAME_COMPARATOR = new Comparator<Table>() {
+	private static Comparator<Table> TABLE_NAME_COMPARATOR = new Comparator<>() {
 		@Override
 		public int compare(Table o1, Table o2) {
 			return (o1).getName().compareTo((o2).getName());
@@ -49,8 +52,7 @@ class DbViewerComponent extends JPanel {
 	private JLabel dbLabel;
 	private JComboBox<TableItem> combo;
 	private Table[] tables = NO_TABLES;
-	private Hashtable<String, TableStatistics[]> tableStats =
-		new Hashtable<String, TableStatistics[]>();
+	private Hashtable<String, TableStatistics[]> tableStats = new Hashtable<>();
 
 	private SwingUpdateManager updateMgr;
 
@@ -59,15 +61,15 @@ class DbViewerComponent extends JPanel {
 
 		JPanel northPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
 		JPanel subNorthPanel = new JPanel(new PairLayout(4, 10));
-		subNorthPanel.add(new JLabel("Database:"));
-		dbLabel = new JLabel("");
+		subNorthPanel.add(new GLabel("Database:"));
+		dbLabel = new GDLabel();
 		subNorthPanel.add(dbLabel);
-		subNorthPanel.add(new JLabel("Tables:"));
-		combo = new JComboBox<>();
+		subNorthPanel.add(new GLabel("Tables:"));
+		combo = new GComboBox<>();
 		combo.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				updateTable();
+				refreshTable();
 			}
 		});
 		subNorthPanel.add(combo);
@@ -94,8 +96,8 @@ class DbViewerComponent extends JPanel {
 			tableStats.clear();
 			dbh = null;
 			dbListener = null;
-			invalidate();
-			getParent().repaint();
+
+			revalidate();
 		}
 	}
 
@@ -113,9 +115,27 @@ class DbViewerComponent extends JPanel {
 	}
 
 	synchronized void refresh() {
+		if (dbh == null) {
+			return;
+		}
 		Msg.info(this, "Updating dbViewer...");
-		updateTableChoices((TableItem) combo.getSelectedItem());
-		updateTable();
+		synchronized (dbh) {
+			updateTableChoices((TableItem) combo.getSelectedItem());
+			updateTable();
+		}
+	}
+
+	synchronized void refreshTable() {
+		if (dbh == null) {
+			if (southPanel != null) {
+				remove(southPanel);
+				southPanel = null;
+			}
+			return;
+		}
+		synchronized (dbh) {
+			updateTable();
+		}
 	}
 
 	synchronized void dispose() {
@@ -125,10 +145,10 @@ class DbViewerComponent extends JPanel {
 
 	/**
 	 * Get the statistics for the specified table.
-	 * @param table
+	 * @param table the table
 	 * @return arrays containing statistics. Element 0 provides
-	 * statsitics for primary table, element 1 provides combined
-	 * statsitics for all index tables.  Remaining array elements 
+	 * statistics for primary table, element 1 provides combined
+	 * statistics for all index tables.  Remaining array elements 
 	 * should be ignored since they have been combined into element 1.
 	 */
 	private TableStatistics[] getStats(Table table) {
@@ -180,6 +200,7 @@ class DbViewerComponent extends JPanel {
 
 		if (southPanel != null) {
 			remove(southPanel);
+			southPanel = null;
 		}
 
 		TableItem t = (TableItem) combo.getSelectedItem();
@@ -187,9 +208,7 @@ class DbViewerComponent extends JPanel {
 			southPanel = createSouthPanel(t.table);
 			add(southPanel, BorderLayout.CENTER);
 		}
-		//invalidate();
-		validate();
-		//repaint();
+		revalidate();
 	}
 
 	private JPanel createSouthPanel(Table table) {
@@ -198,12 +217,12 @@ class DbViewerComponent extends JPanel {
 		GTable gTable = new GTable();
 		if (table.getRecordCount() <= 10000) {
 			model = new DbSmallTableModel(table);
-			gTable.setDefaultRenderer(Long.class, new LongRenderer());
 		}
 		else {
 			model = new DbLargeTableModel(table);
 		}
 		gTable.setModel(model);
+		gTable.setDefaultRenderer(Long.class, new LongRenderer());
 
 		JScrollPane scroll = new JScrollPane(gTable);
 		panel.add(scroll, BorderLayout.CENTER);
@@ -226,10 +245,9 @@ class DbViewerComponent extends JPanel {
 				size += " / " + Integer.toString(stats[1].size / 1024);
 			}
 		}
-		JLabel statsLabel =
-			new JLabel(recCnt + "   " + intNodeCnt + "   " + recNodeCnt + "   " + chainBufCnt +
-				"   " + size);
-		panel.add(statsLabel, BorderLayout.SOUTH);
+		panel.add(new GLabel(
+			recCnt + "   " + intNodeCnt + "   " + recNodeCnt + "   " + chainBufCnt + "   " + size),
+			BorderLayout.SOUTH);
 
 		return panel;
 	}
@@ -259,28 +277,28 @@ class DbViewerComponent extends JPanel {
 
 	private class InternalDBListener implements DBListener {
 		@Override
-		public synchronized void dbClosed(DBHandle handle) {
+		public void dbClosed(DBHandle handle) {
 			if (handle == DbViewerComponent.this.dbh) {
 				closeDatabase();
 			}
 		}
 
 		@Override
-		public synchronized void dbRestored(DBHandle handle) {
+		public void dbRestored(DBHandle handle) {
 			if (handle == DbViewerComponent.this.dbh) {
 				updateMgr.updateLater();
 			}
 		}
 
 		@Override
-		public synchronized void tableAdded(DBHandle handle, Table table) {
+		public void tableAdded(DBHandle handle, Table table) {
 			if (handle == DbViewerComponent.this.dbh) {
 				updateMgr.updateLater();
 			}
 		}
 
 		@Override
-		public synchronized void tableDeleted(DBHandle handle, Table table) {
+		public void tableDeleted(DBHandle handle, Table table) {
 			if (handle == DbViewerComponent.this.dbh) {
 				updateMgr.updateLater();
 			}

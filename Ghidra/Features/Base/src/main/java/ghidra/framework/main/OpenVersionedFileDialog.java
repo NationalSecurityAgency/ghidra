@@ -17,10 +17,15 @@ package ghidra.framework.main;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
+import java.awt.event.MouseEvent;
 import java.io.IOException;
+import java.util.Collections;
+import java.util.List;
 
 import javax.swing.*;
 
+import docking.ActionContext;
+import docking.action.DockingActionIf;
 import ghidra.framework.main.datatree.VersionHistoryPanel;
 import ghidra.framework.model.*;
 import ghidra.framework.plugintool.PluginTool;
@@ -47,10 +52,12 @@ public class OpenVersionedFileDialog extends DataTreeDialog {
 
 	private JSplitPane splitPane;
 	private JButton historyButton;
-	private VersionHistoryPanel historyPanel;
 	private JPanel mainPanel;
 	private boolean historyIsShowing;
 	private PluginTool tool;
+
+	private VersionHistoryPanel historyPanel;
+	private List<DockingActionIf> popupActions = Collections.emptyList();
 
 	/**
 	 * Constructor
@@ -178,13 +185,32 @@ public class OpenVersionedFileDialog extends DataTreeDialog {
 		super.close();
 	}
 
+	@Override
+	protected void dialogShown() {
+		super.dialogShown();
+
+		for (DockingActionIf action : popupActions) {
+			addAction(action);
+		}
+	}
+
+	@Override
+	protected void dialogClosed() {
+		super.dialogClosed();
+
+		for (DockingActionIf action : popupActions) {
+			removeAction(action);
+		}
+	}
+
 	private boolean createHistoryPanel() {
 		try {
 			historyPanel = new VersionHistoryPanel(tool, null);
+			popupActions = historyPanel.createPopupActions();
 		}
 		catch (IOException ioe) {
 			Msg.debug(getClass(),
-				"Error creating history panel for versioned file: " + ioe.getMessage());
+				"Error creating history panel for versioned file: " + ioe.getMessage(), ioe);
 			return false;
 		}
 
@@ -224,5 +250,18 @@ public class OpenVersionedFileDialog extends DataTreeDialog {
 				historyPanel.setDomainFile(df);
 			}
 		});
+	}
+
+	@Override
+	public ActionContext getActionContext(MouseEvent event) {
+		ActionContext context = super.getActionContext(event);
+		if (context != null) {
+			return context;
+		}
+
+		ActionContext actionContext = new ActionContext(null, this, event.getComponent());
+		actionContext.setMouseEvent(event);
+
+		return actionContext;
 	}
 }

@@ -15,19 +15,22 @@
  */
 package ghidra.app.util.opinion;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.util.*;
 
 import generic.continues.ContinuesFactory;
 import generic.continues.RethrowContinuesFactory;
-import ghidra.app.util.MemoryBlockUtil;
+import ghidra.app.util.MemoryBlockUtils;
 import ghidra.app.util.Option;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.bin.format.ne.*;
 import ghidra.app.util.bin.format.ne.Resource;
-import ghidra.app.util.importer.*;
+import ghidra.app.util.importer.MessageLog;
+import ghidra.app.util.importer.MessageLogContinuesFactory;
 import ghidra.framework.options.Options;
+import ghidra.program.database.function.OverlappingFunctionException;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
 import ghidra.program.model.lang.Register;
@@ -38,8 +41,7 @@ import ghidra.program.model.symbol.*;
 import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.util.Conv;
 import ghidra.util.Msg;
-import ghidra.util.exception.DuplicateNameException;
-import ghidra.util.exception.InvalidInputException;
+import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
 
 /**
@@ -50,6 +52,7 @@ public class NeLoader extends AbstractLibrarySupportLoader {
 
 	private static final String TAB = "    ";
 	private static final long MIN_BYTE_LENGTH = 4;
+	private static final int SEGMENT_START = 0x1000;
 
 	private ArrayList<Address> entryPointList = new ArrayList<>();
 	private Comparator<String> comparator = new CallNameComparator();
@@ -64,7 +67,7 @@ public class NeLoader extends AbstractLibrarySupportLoader {
 		if (provider.length() < MIN_BYTE_LENGTH) {
 			return loadSpecs;
 		}
-		NewExecutable ne = new NewExecutable(RethrowContinuesFactory.INSTANCE, provider);
+		NewExecutable ne = new NewExecutable(RethrowContinuesFactory.INSTANCE, provider, null);
 		WindowsHeader wh = ne.getWindowsHeader();
 		if (wh != null) {
 			List<QueryResult> results = QueryOpinionService.query(getName(),
@@ -82,7 +85,7 @@ public class NeLoader extends AbstractLibrarySupportLoader {
 
 	@Override
 	public void load(ByteProvider provider, LoadSpec loadSpec, List<Option> options, Program prog,
-			MemoryConflictHandler handler, TaskMonitor monitor, MessageLog log) throws IOException {
+			TaskMonitor monitor, MessageLog log) throws IOException, CancelledException {
 
 		if (monitor.isCancelled()) {
 			return;
@@ -92,91 +95,85 @@ public class NeLoader extends AbstractLibrarySupportLoader {
 		initVars();
 
 		ContinuesFactory factory = MessageLogContinuesFactory.create(log);
-		MemoryBlockUtil mbu = new MemoryBlockUtil(prog, handler);
-		try {
-			NewExecutable ne = new NewExecutable(factory, provider);
-			WindowsHeader wh = ne.getWindowsHeader();
-			InformationBlock ib = wh.getInformationBlock();
-			SegmentTable st = wh.getSegmentTable();
-			ResourceTable rt = wh.getResourceTable();
-			EntryTable et = wh.getEntryTable();
-			ResidentNameTable rnt = wh.getResidentNameTable();
-			NonResidentNameTable nrnt = wh.getNonResidentNameTable();
-			ImportedNameTable imp = wh.getImportedNameTable();
-			ModuleReferenceTable mrt = wh.getModuleReferenceTable();
 
-			Listing listing = prog.getListing();
-			SymbolTable symbolTable = prog.getSymbolTable();
-			Memory memory = prog.getMemory();
-			SegmentedAddressSpace space =
-					(SegmentedAddressSpace) prog.getAddressFactory().getDefaultAddressSpace();
-			ProgramContext context = prog.getProgramContext();
-			RelocationTable relocTable = prog.getRelocationTable();
+		// We don't use the file bytes to create block because the bytes are manipulated before
+		// forming the block.  Creating the FileBytes anyway in case later we want access to all
+		// the original bytes.
+		MemoryBlockUtils.createFileBytes(prog, provider, monitor);
 
-			if (monitor.isCancelled()) {
-				return;
-			}
-			monitor.setMessage("Processing segment table...");
-			processSegmentTable(mbu, ib, st, space, listing, memory, context, monitor);
-			if (prog.getMemory().isEmpty()) {
-				Msg.error(this, "Empty memory for " + prog);
-				return;
-			}
+		SegmentedAddressSpace space =
+			(SegmentedAddressSpace) prog.getAddressFactory().getDefaultAddressSpace();
+		NewExecutable ne = new NewExecutable(factory, provider, space.getAddress(SEGMENT_START, 0));
+		WindowsHeader wh = ne.getWindowsHeader();
+		InformationBlock ib = wh.getInformationBlock();
+		SegmentTable st = wh.getSegmentTable();
+		ResourceTable rt = wh.getResourceTable();
+		EntryTable et = wh.getEntryTable();
+		ResidentNameTable rnt = wh.getResidentNameTable();
+		NonResidentNameTable nrnt = wh.getNonResidentNameTable();
+		ImportedNameTable imp = wh.getImportedNameTable();
+		ModuleReferenceTable mrt = wh.getModuleReferenceTable();
 
-			if (monitor.isCancelled()) {
-				return;
-			}
-			monitor.setMessage("Processing resource table...");
-			processResourceTable(prog, mbu, rt, space, monitor);
+		Listing listing = prog.getListing();
+		SymbolTable symbolTable = prog.getSymbolTable();
+		Memory memory = prog.getMemory();
+		ProgramContext context = prog.getProgramContext();
+		RelocationTable relocTable = prog.getRelocationTable();
 
-			if (monitor.isCancelled()) {
-				return;
-			}
-			monitor.setMessage("Processing module reference table...");
-			processModuleReferenceTable(mbu, mrt, st, imp, prog, space, log, monitor);
-
-			if (monitor.isCancelled()) {
-				return;
-			}
-			monitor.setMessage("Processing entry table...");
-			processEntryTable(st, ib, et, symbolTable, space);
-
-			if (monitor.isCancelled()) {
-				return;
-			}
-			monitor.setMessage("Processing non-resident name table...");
-			processNonResidentNameTable(nrnt, symbolTable);
-
-			if (monitor.isCancelled()) {
-				return;
-			}
-			monitor.setMessage("Processing resident name table...");
-			processResidentNameTable(rnt, symbolTable);
-
-			if (monitor.isCancelled()) {
-				return;
-			}
-			monitor.setMessage("Processing segment relocations...");
-			processRelocations(st, imp, mrt, relocTable, prog, memory, space, log, monitor);
-
-			if (monitor.isCancelled()) {
-				return;
-			}
-			monitor.setMessage("Processing information block...");
-			processInformationBlock(ib, nrnt, memory, listing);
-
-			processProperties(ib, prog, monitor);
+		if (monitor.isCancelled()) {
+			return;
 		}
-		finally {
-
-			String messages = mbu.getMessages();
-			if (messages.length() != 0) {
-				log.appendMsg(messages);
-			}
-
-			mbu.dispose();
-			mbu = null;
+		monitor.setMessage("Processing segment table...");
+		processSegmentTable(log, ib, st, space, prog, context, monitor);
+		if (prog.getMemory().isEmpty()) {
+			Msg.error(this, "Empty memory for " + prog);
+			return;
 		}
+
+		if (monitor.isCancelled()) {
+			return;
+		}
+		monitor.setMessage("Processing resource table...");
+		processResourceTable(log, prog, rt, space, monitor);
+
+		if (monitor.isCancelled()) {
+			return;
+		}
+		monitor.setMessage("Processing module reference table...");
+		processModuleReferenceTable(mrt, st, imp, prog, space, log, monitor);
+
+		if (monitor.isCancelled()) {
+			return;
+		}
+		monitor.setMessage("Processing entry table...");
+		processEntryTable(st, ib, et, symbolTable, space);
+
+		if (monitor.isCancelled()) {
+			return;
+		}
+		monitor.setMessage("Processing non-resident name table...");
+		processNonResidentNameTable(nrnt, symbolTable);
+
+		if (monitor.isCancelled()) {
+			return;
+		}
+		monitor.setMessage("Processing resident name table...");
+		processResidentNameTable(rnt, symbolTable);
+
+		if (monitor.isCancelled()) {
+			return;
+		}
+		monitor.setMessage("Processing segment relocations...");
+		processRelocations(st, imp, mrt, relocTable, prog, memory, space, log, monitor);
+
+		if (monitor.isCancelled()) {
+			return;
+		}
+		monitor.setMessage("Processing information block...");
+		processInformationBlock(ib, nrnt, memory, listing);
+
+		processProperties(ib, prog, monitor);
+
 	}
 
 	//////////////////////////////////////////////////////////////////
@@ -189,7 +186,7 @@ public class NeLoader extends AbstractLibrarySupportLoader {
 		Options props = prog.getOptions(Program.PROGRAM_INFO);
 
 		boolean relocatable =
-				(ib.getApplicationFlags() & InformationBlock.FLAGS_APP_LIBRARY_MODULE) != 0;
+			(ib.getApplicationFlags() & InformationBlock.FLAGS_APP_LIBRARY_MODULE) != 0;
 
 		props.setBoolean(RelocationTable.RELOCATABLE_PROP_NAME, relocatable);
 	}
@@ -207,12 +204,12 @@ public class NeLoader extends AbstractLibrarySupportLoader {
 		buffer.append("\n");
 		buffer.append(
 			"Program Entry Point (CS:IP):   " + Conv.toHexString(ib.getEntryPointSegment()) + ":" +
-					Conv.toHexString(ib.getEntryPointOffset()) + "\n");
+				Conv.toHexString(ib.getEntryPointOffset()) + "\n");
 		buffer.append(
 			"Initial Stack Pointer (SS:SP): " + Conv.toHexString(ib.getStackPointerSegment()) +
-			":" + Conv.toHexString(ib.getStackPointerOffset()) + "\n");
+				":" + Conv.toHexString(ib.getStackPointerOffset()) + "\n");
 		buffer.append("Auto Data Segment Index:       " +
-				Conv.toHexString(ib.getAutomaticDataSegment()) + "\n");
+			Conv.toHexString(ib.getAutomaticDataSegment()) + "\n");
 		buffer.append(
 			"Initial Heap Size:             " + Conv.toHexString(ib.getInitialHeapSize()) + "\n");
 		buffer.append(
@@ -223,7 +220,7 @@ public class NeLoader extends AbstractLibrarySupportLoader {
 		buffer.append("Linker Version:  " + ib.getVersion() + "." + ib.getRevision() + "\n");
 		buffer.append("Target OS:       " + ib.getTargetOpSysAsString() + "\n");
 		buffer.append("Windows Version: " + (ib.getExpectedWindowsVersion() >> 8) + "." +
-				(ib.getExpectedWindowsVersion() & 0xff) + "\n");
+			(ib.getExpectedWindowsVersion() & 0xff) + "\n");
 		buffer.append("\n");
 		buffer.append("Program Flags:     " + Conv.toHexString(ib.getProgramFlags()) + "\n");
 		buffer.append(ib.getProgramFlagsAsString());
@@ -235,8 +232,8 @@ public class NeLoader extends AbstractLibrarySupportLoader {
 		firstCU.setComment(CodeUnit.PLATE_COMMENT, buffer.toString());
 	}
 
-	private void processSegmentTable(MemoryBlockUtil mbu, InformationBlock ib, SegmentTable st,
-			SegmentedAddressSpace space, Listing listing, Memory memory, ProgramContext context,
+	private void processSegmentTable(MessageLog log, InformationBlock ib, SegmentTable st,
+			SegmentedAddressSpace space, Program program, ProgramContext context,
 			TaskMonitor monitor) throws IOException {
 		try {
 			Segment[] segments = st.getSegments();
@@ -249,10 +246,13 @@ public class NeLoader extends AbstractLibrarySupportLoader {
 				boolean x = segments[i].isCode();
 
 				if (bytes.length > 0) {
-					mbu.createInitializedBlock(name, addr, bytes, "", "", r, w, x, monitor);
+					MemoryBlockUtils.createInitializedBlock(program, false, name, addr,
+						new ByteArrayInputStream(bytes), bytes.length, "", "", r, w, x, log,
+						monitor);
 				}
 				else {
-					mbu.createUninitializedBlock(false, name, addr, bytes.length, "", "", r, w, x);
+					MemoryBlockUtils.createUninitializedBlock(program, false, name, addr,
+						bytes.length, "", "", r, w, x, log);
 				}
 
 				if (segments[i].is32bit()) {
@@ -290,7 +290,7 @@ public class NeLoader extends AbstractLibrarySupportLoader {
 					(segments[i].isPure() ? "Pure (Shareable)" : "Impure (Non-shareable)") + "\n");
 				buff.append((segments[i].isReadOnly() ? TAB + "Read Only" + "\n" : ""));
 				buff.append((segments[i].is32bit() ? TAB + "Use 32 Bit" + "\n" : ""));
-				CodeUnit cu = listing.getCodeUnitAt(addr);
+				CodeUnit cu = program.getListing().getCodeUnitAt(addr);
 				cu.setComment(CodeUnit.PRE_COMMENT, buff.toString());
 			}
 
@@ -299,7 +299,7 @@ public class NeLoader extends AbstractLibrarySupportLoader {
 					continue;
 				}
 				Address addr = space.getAddress(segment.getSegmentID(), 0);
-				MemoryBlock mb = memory.getBlock(addr);
+				MemoryBlock mb = program.getMemory().getBlock(addr);
 				setRegisterDS(ib, st, context, mb.getStart(), mb.getEnd());
 			}
 		}
@@ -308,14 +308,8 @@ public class NeLoader extends AbstractLibrarySupportLoader {
 		}
 	}
 
-	private int getNextAvailableSegment(Program program) {
-		Address addr = program.getMemory().getMaxAddress();
-		return ((int) addr.getOffset() >> 4) + 1;
-	}
-
-	private void processResourceTable(Program program, MemoryBlockUtil mbu, ResourceTable rt,
+	private void processResourceTable(MessageLog log, Program program, ResourceTable rt,
 			SegmentedAddressSpace space, TaskMonitor monitor) throws IOException {
-
 		Listing listing = program.getListing();
 
 		if (rt == null) {
@@ -329,15 +323,16 @@ public class NeLoader extends AbstractLibrarySupportLoader {
 			Resource[] resources = type.getResources();
 			for (Resource resource : resources) {
 
-				int segidx = getNextAvailableSegment(program);
+				int segidx = space.getNextOpenSegment(program.getMemory().getMaxAddress());
 				Address addr = space.getAddress(segidx, 0);
 
 				try {
 					byte[] bytes = resource.getBytes();
 
 					if (bytes != null && bytes.length > 0) {
-						mbu.createInitializedBlock("Rsrc" + (id++), addr, bytes, "", "", true,
-							false, false, monitor);
+						MemoryBlockUtils.createInitializedBlock(program, false, "Rsrc" + (id++),
+							addr, new ByteArrayInputStream(bytes), bytes.length, "", "", true,
+							false, false, log, monitor);
 					}
 				}
 				catch (AddressOverflowException e) {
@@ -403,58 +398,64 @@ public class NeLoader extends AbstractLibrarySupportLoader {
 	 * that will serve as a jump table for imported
 	 * libraries.
 	 */
-	private void processModuleReferenceTable(MemoryBlockUtil mbu, ModuleReferenceTable mrt,
-			SegmentTable st, ImportedNameTable imp, Program program, SegmentedAddressSpace space,
-			MessageLog log, TaskMonitor monitor) throws IOException {
+	private void processModuleReferenceTable(ModuleReferenceTable mrt, SegmentTable st,
+			ImportedNameTable imp, Program program, SegmentedAddressSpace space, MessageLog log,
+			TaskMonitor monitor) throws IOException {
 
-		int pointerSize = space.getAddress(0, 0).getPointerSize();
+		int thunkBodySize = 4;
 
-		PointerDataType ptr = new PointerDataType();
-		String comment = "";
-		String source = "";
-		Listing listing = program.getListing();
-		SymbolTable symbolTable = program.getSymbolTable();
+		ExternalManager externalManager = program.getExternalManager();
+		FunctionManager functionManager = program.getFunctionManager();
+		Namespace globalNamespace = program.getGlobalNamespace();
 
 		LengthStringSet[] names = mrt.getNames();
-		for (LengthStringSet name : names) {
-			String[] callnames = getCallNamesForModule(name.getString(), mrt, st, imp);
-			int length = callnames.length * pointerSize;
-			int segment = getNextAvailableSegment(program);
-			Address start = space.getAddress(segment, 0);
-			if (length > 0) {
-				// This isn't a real block, just place holder addresses, so don't create an initialized block
-				mbu.createUninitializedBlock(false, name.getString(), start, length, comment,
-					source, true, false, false);
-			}
-			Address addr = start;
-			for (String callname : callnames) {
-				try {
-					listing.createData(addr, ptr, pointerSize);
-				}
-				catch (CodeUnitInsertionException e) {
-					log.appendMsg(e.getMessage() + "\n");
-					continue;
-				}
-				catch (DataTypeConflictException e) {
-					log.appendMsg(e.getMessage() + "\n");
-					continue;
-				}
-				try {
+		String[][] mod2proclist = new String[names.length][];
+		int length = 0;
+		for (int i = 0; i < names.length; ++i) {
+			String moduleName = names[i].getString();
+			String[] callnames = getCallNamesForModule(moduleName, mrt, st, imp);
+			mod2proclist[i] = callnames;
+			length += callnames.length * thunkBodySize;
+		}
+		if (length == 0) {
+			return;
+		}
+		int segment = space.getNextOpenSegment(program.getMemory().getMaxAddress());
+		Address addr = space.getAddress(segment, 0);
+		String comment = "";
+		String source = "";
+		// This isn't a real block, just place holder addresses, so don't create an initialized block
+		MemoryBlockUtils.createUninitializedBlock(program, false, MemoryBlock.EXTERNAL_BLOCK_NAME,
+			addr, length, comment, source, true, false, false, log);
 
-					program.getReferenceManager().addExternalReference(addr, name.getString(),
-						callname, null, SourceType.IMPORTED, 0, RefType.EXTERNAL_REF);
-					symbolTable.createLabel(addr, name.getString() + "_" + callname,
-						SourceType.IMPORTED);
+		for (int i = 0; i < names.length; ++i) {
+			String moduleName = names[i].getString();
+			String[] callnames = mod2proclist[i];
+			for (String callname : callnames) {
+				Function refFunction = null;
+				try {
+					ExternalLocation loc;
+					loc = externalManager.addExtFunction(moduleName, callname, null, SourceType.IMPORTED);
+					refFunction = loc.getFunction();
 				}
 				catch (DuplicateNameException e) {
-					log.appendMsg(e.getMessage() + "\n");
+					log.appendMsg(e.getMessage() + '\n');
 					continue;
 				}
 				catch (InvalidInputException e) {
-					log.appendMsg(e.getMessage() + "\n");
+					log.appendMsg(e.getMessage() + '\n');
 					continue;
 				}
-				addr = addr.addWrap(pointerSize);
+				AddressSet body = new AddressSet();
+				body.add(addr, addr.add(thunkBodySize - 1));
+				try {
+					functionManager.createThunkFunction(null, globalNamespace, addr, body,
+						refFunction, SourceType.IMPORTED);
+				}
+				catch (OverlappingFunctionException e) {
+					log.appendMsg(e.getMessage() + '\n');
+				}
+				addr = addr.addWrap(thunkBodySize);
 			}
 		}
 	}
@@ -487,7 +488,7 @@ public class NeLoader extends AbstractLibrarySupportLoader {
 		@Override
 		public int compare(String s1, String s2) {
 			if (s1.startsWith(SymbolUtilities.ORDINAL_PREFIX) &&
-					s2.startsWith(SymbolUtilities.ORDINAL_PREFIX)) {
+				s2.startsWith(SymbolUtilities.ORDINAL_PREFIX)) {
 				int i1 = Integer.parseInt(s1.substring(prefixLength));
 				int i2 = Integer.parseInt(s2.substring(prefixLength));
 				if (i1 < i2) {
@@ -561,9 +562,28 @@ public class NeLoader extends AbstractLibrarySupportLoader {
 		createSymbols(rnt.getNames(), symbolTable);
 	}
 
+	private SegmentedAddress getImportSymbolByName(SymbolTable symbolTable, String modname,
+			String procname) {
+		Namespace libnamespace = symbolTable.getNamespace(modname, null);
+		List<Symbol> symbols = symbolTable.getSymbols(procname, libnamespace);
+		if (symbols.isEmpty()) {
+			return null;
+		}
+		Symbol symbol = symbols.get(0);
+		if (symbol.getSymbolType() == SymbolType.FUNCTION && symbol.isExternal()) {
+			Function func = (Function) symbol.getObject();
+			Address[] thunkAddresses = func.getFunctionThunkAddresses();
+			if (thunkAddresses != null && thunkAddresses.length != 0) {
+				return (SegmentedAddress) thunkAddresses[0];
+			}
+		}
+		return null;
+	}
+
 	private void processRelocations(SegmentTable st, ImportedNameTable imp,
 			ModuleReferenceTable mrt, RelocationTable relocTable, Program program, Memory memory,
 			SegmentedAddressSpace space, MessageLog log, TaskMonitor monitor) throws IOException {
+		SymbolTable symbolTable = program.getSymbolTable();
 		Segment[] segments = st.getSegments();
 		for (int s = 0; s < segments.length; ++s) {
 			if (monitor.isCancelled()) {
@@ -592,17 +612,13 @@ public class NeLoader extends AbstractLibrarySupportLoader {
 				else if (reloc.isImportName()) {
 					String modname = getRelocationModuleName(mrt, reloc);
 					String procname = imp.getNameAt(reloc.getTargetOffset()).getString();
-					Symbol symbol = SymbolUtilities.getLabelOrFunctionSymbol(program,
-						modname + "_" + procname, err -> log.error("NE", err));
-					relocAddr = symbol == null ? null : (SegmentedAddress) symbol.getAddress();
+					relocAddr = getImportSymbolByName(symbolTable, modname, procname);
 				}
 				else if (reloc.isImportOrdinal()) {
 					String modname = getRelocationModuleName(mrt, reloc);
 					int ordinal = Conv.shortToInt(reloc.getTargetOffset());
-					Symbol symbol = SymbolUtilities.getLabelOrFunctionSymbol(program,
-						modname + "_" + SymbolUtilities.ORDINAL_PREFIX + ordinal,
-						err -> log.error("NE", err));
-					relocAddr = symbol == null ? null : (SegmentedAddress) symbol.getAddress();
+					String procname = SymbolUtilities.ORDINAL_PREFIX + ordinal;
+					relocAddr = getImportSymbolByName(symbolTable, modname, procname);
 				}
 				else if (reloc.isOpSysFixup()) {
 					// short fixupType = relocs[r].getTargetSegment();

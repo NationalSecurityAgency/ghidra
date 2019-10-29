@@ -20,6 +20,8 @@ import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.util.*;
 
+import javax.swing.JComponent;
+
 import org.jdom.Element;
 
 import docking.ComponentProvider;
@@ -177,7 +179,8 @@ public class ReferencesPlugin extends Plugin {
 		createAction.setPopupMenuData(new MenuData(
 			new String[] { SUBMENU_NAME, CreateDefaultReferenceAction.DEFAULT_MENU_ITEM_NAME },
 			null, SHOW_REFS_GROUP));
-		createAction.setKeyBindingData(new KeyBindingData(KeyEvent.VK_R, InputEvent.ALT_DOWN_MASK));
+		createAction.setKeyBindingData(new KeyBindingData(KeyEvent.VK_R,
+			InputEvent.CTRL_DOWN_MASK | InputEvent.ALT_DOWN_MASK));
 
 		createAction.setDescription("Create default forward reference");
 		tool.addAction(createAction);
@@ -820,14 +823,11 @@ public class ReferencesPlugin extends Plugin {
 			curType = "Memory reference(s)";
 		}
 
-		OptionDialog confirmDlg = new OptionDialog("Reference Removal Confirmation",
+		JComponent parent = editRefDialog.getComponent();
+		int choice = OptionDialog.showOptionDialog(parent, "Reference Removal Confirmation",
 			"Warning! existing " + curType + " will be removed.", "Continue",
-			OptionDialog.WARNING_MESSAGE,
-			OptionDialog.getIconForMessageType(OptionDialog.WARNING_MESSAGE));
-		confirmDlg.setRememberLocation(false);
-		confirmDlg.setRememberSize(false);
-		tool.showDialog(confirmDlg, editRefDialog.getComponent());
-		return (confirmDlg.getResult() != OptionDialog.CANCEL_OPTION);
+			OptionDialog.WARNING_MESSAGE);
+		return (choice != OptionDialog.CANCEL_OPTION);
 	}
 
 	@Override

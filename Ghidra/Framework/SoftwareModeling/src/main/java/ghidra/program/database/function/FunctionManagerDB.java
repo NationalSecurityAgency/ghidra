@@ -326,7 +326,7 @@ public class FunctionManagerDB implements ManagerDB, FunctionManager {
 	@Override
 	public Function createThunkFunction(String name, Namespace nameSpace, Address entryPoint,
 			AddressSetView body, Function thunkedFunction, SourceType source)
-			throws DuplicateNameException, OverlappingFunctionException {
+			throws OverlappingFunctionException {
 		try {
 			return createFunction(name, nameSpace, entryPoint, body, thunkedFunction, source);
 		}
@@ -1139,7 +1139,7 @@ public class FunctionManagerDB implements ManagerDB, FunctionManager {
 
 		Symbol functionSymbol = function.getSymbol();
 		ArrayList<Symbol> list = new ArrayList<>();
-		SymbolIterator iter = symbolMgr.getSymbols(set, SymbolType.CODE, true);
+		SymbolIterator iter = symbolMgr.getSymbols(set, SymbolType.LABEL, true);
 		while (iter.hasNext()) {
 			Symbol symbol = iter.next();
 			if (symbol.getParentSymbol() == functionSymbol) {

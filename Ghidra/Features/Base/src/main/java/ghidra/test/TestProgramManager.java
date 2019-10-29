@@ -23,7 +23,6 @@ import db.DBHandle;
 import db.buffers.BufferFile;
 import generic.test.AbstractGTest;
 import generic.test.AbstractGenericTest;
-import ghidra.app.util.importer.MemoryConflictHandler;
 import ghidra.app.util.xml.*;
 import ghidra.framework.data.DomainObjectAdapterDB;
 import ghidra.framework.model.*;
@@ -57,7 +56,7 @@ public class TestProgramManager {
 	 * Open a read-only test program from the test data directory.
 	 * This program must be released prior to disposing this test environment.
 	 * NOTE: Some tests rely on this method returning null when file does
-	 * not yet exist within the resource area (e.g., CUnit binaries for Processor Tests)
+	 * not yet exist within the resource area (e.g., test binaries for P-Code Tests)
 	 *
 	 * @param progName name of program database within the test data directory.
 	 * @return program or null if program file not found
@@ -387,7 +386,7 @@ public class TestProgramManager {
 		ProgramDB p = new ProgramDB(programName, language, compilerSpec, this);
 		int txId = p.startTransaction("Import");
 		try {
-			mgr.read(p, monitor, new XmlProgramOptions(), MemoryConflictHandler.ALWAYS_OVERWRITE);
+			mgr.read(p, monitor, new XmlProgramOptions());
 		}
 		finally {
 			p.endTransaction(txId, true);

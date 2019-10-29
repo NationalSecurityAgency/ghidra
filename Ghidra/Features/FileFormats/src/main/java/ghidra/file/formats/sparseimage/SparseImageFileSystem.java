@@ -15,14 +15,14 @@
  */
 package ghidra.file.formats.sparseimage;
 
+import java.io.*;
+import java.util.*;
+
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.formats.gfilesystem.*;
 import ghidra.formats.gfilesystem.annotations.FileSystemInfo;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
-
-import java.io.*;
-import java.util.*;
 
 /**
  * A pseudo filesystem that contains a single file that is the decompressed contents
@@ -101,7 +101,7 @@ public class SparseImageFileSystem implements GFileSystem {
 				SparseImageDecompressor sid = new SparseImageDecompressor(provider, os);
 				sid.decompress(monitor);
 			}
-		} , monitor);
+		}, monitor);
 	}
 
 	@Override
@@ -123,7 +123,7 @@ public class SparseImageFileSystem implements GFileSystem {
 	}
 
 	@Override
-	public String getInfo(GFile file, TaskMonitor monitor) throws IOException {
+	public String getInfo(GFile file, TaskMonitor monitor) {
 		if (payload.equals(file)) {
 			return FSUtilities.infoMapToString(getInfoMap());
 		}

@@ -1,6 +1,7 @@
 # SLA specification for Motorola 68000 series
 
 define endian=big;
+define alignment=2;
 
 define space ram type=ram_space size=4 default;
 define space register type=register_space size=4;
@@ -11,7 +12,7 @@ define register offset=0 size=1      [ _ _ _ D0b _ _ _ D1b _ _ _ D2b _ _ _ D3b _
 define register offset=0x20 size=4   [ A0 A1 A2 A3 A4 A5 A6 SP ];   # Address registers
 define register offset=0x20 size=2   [ _ A0w _ A1w _ A2w _ A3w _ A4w _ A5w _ A6w _ A7w];
 define register offset=0x20 size=1   [ _ _ _ A0b _ _ _ A1b _ _ _ A2b _ _ _ A3b _ _ _ A4b _ _ _ A5b _ _ _ A6b _ _ _ A7b ];
-define register offset=0x40 size=1   [ XF NF ZF VF CF ];	    # Condition flags
+define register offset=0x40 size=1   [ TF SVF IPL XF NF ZF VF CF ];	    # Condition flags
 define register offset=0x50 size=4   PC;			    # Program counter register
 
 # Floating point registers are 80 bits internally, but are 96 bits to/from memory.
@@ -293,6 +294,7 @@ attach variables [ fsrc fdst fdcos fdsin ]                     [ FP0 FP1 FP2 FP3
 
 @ifdef COLDFIRE
 attach variables [ reg03y ]    [ D0 D1 D2 D3 D4 D5 D6 D7 A0 A1 A2 A3 A4 A5 A6 SP ];
+attach values d911 [ -1 1 2 3 4 5 6 7 ];
 @endif
 
 attach values scale [ 1 2 4 8 ];
@@ -300,7 +302,8 @@ attach values quick [ 8 1 2 3 4 5 6 7 ];
 
 define pcodeop kfactor;
 define pcodeop ftrap;
-define pcodeop trap;
+define pcodeop __m68k_trap;
+define pcodeop __m68k_trapv;
 define pcodeop reset;
 define pcodeop saveFPUStateFrame;
 define pcodeop restoreFPUStateFrame;
@@ -667,10 +670,13 @@ macro resbitflags(result, bitnum) {
 }
 
 macro packflags(res) {
-  res = zext((XF<<4)|(NF<<3)|(ZF<<2)|(VF<<1)|CF);
+  res = zext((TF<<15)|(SVF<<13)|(IPL<<8)|(XF<<4)|(NF<<3)|(ZF<<2)|(VF<<1)|CF);
 }
 
 macro unpackflags(in) {
+  TF = (in & 0x8000)!=0;
+  SVF = (in & 0x2000)!=0;
+  IPL = in[8,3];
   XF = (in & 0x10)!=0;
   NF = (in & 8)!=0;
   ZF = (in & 4)!=0;
@@ -735,8 +741,8 @@ with : extGUARD=1 {
 :andi const8,"CCR"			is d16=0x23c; const8						{ packflags(SR); SR = SR & zext(const8); unpackflags(SR); }
 :andi const16,SR			is opbig=0x2 & d8base=0x7c; const16 & SR				{ packflags(SR); SR = SR & const16; unpackflags(SR); }
 
-:asl.b cntreg,regdnb		is op=14 & cntreg & op8=1 & op67=0 & op34=0 & regdnb		{ getbit(CF,regdnb,32-cntreg); regdnb=regdnb<<cntreg; resflags(regdnb);}
-:asl.w cntreg,regdnw		is op=14 & cntreg & op8=1 & op67=1 & op34=0 & regdnw		{ getbit(CF,regdnw,32-cntreg); regdnw=regdnw<<cntreg; resflags(regdnw);}
+:asl.b cntreg,regdnb		is op=14 & cntreg & op8=1 & op67=0 & op34=0 & regdnb		{ getbit(CF,regdnb,8-cntreg); regdnb=regdnb<<cntreg; resflags(regdnb);}
+:asl.w cntreg,regdnw		is op=14 & cntreg & op8=1 & op67=1 & op34=0 & regdnw		{ getbit(CF,regdnw,16-cntreg); regdnw=regdnw<<cntreg; resflags(regdnw);}
 :asl.l cntreg,regdn		is op=14 & cntreg & op8=1 & op67=2 & op34=0 & regdn		{ getbit(CF,regdn,32-cntreg); regdn=regdn<<cntreg; resflags(regdn); }
 :asl eaw			is (opbig=0xe1 & op67=3 & $(MEM_ALTER_ADDR_MODES))... & eaw				{ getbit(CF,eaw,31); eaw=eaw<<1; resflags(eaw); }
 
@@ -1055,16 +1061,20 @@ addrd32: d32			is d32								{ export *[ram]:4 d32; }
 :link.w regan,d16		is opbig=0x4e & op37=10 & regan; d16				{ SP=SP-4; *:4 SP = regan; regan=SP; SP = SP + d16; }
 :link.l regan,d32		is opbig=0x48 & op37=1 & regan; d32				{ SP=SP-4; *:4 SP = regan; regan=SP; SP = SP + d32; }
 
-:lsl.b cntreg,regdnb		is op=14 & cntreg & op8=1 & op67=0 & op34=1 & regdnb		{ getbit(CF,regdnb,32-cntreg); regdnb=regdnb<<cntreg; resflags(regdnb);}
-:lsl.w cntreg,regdnw		is op=14 & cntreg & op8=1 & op67=1 & op34=1 & regdnw		{ getbit(CF,regdnw,32-cntreg); regdnw=regdnw<<cntreg; resflags(regdnw);}
-:lsl.l cntreg,regdn		is op=14 & cntreg & op8=1 & op67=2 & op34=1 & regdn		{ getbit(CF,regdn,32-cntreg); regdn=regdn<<cntreg; resflags(regdn); }
-:lsl eaw			is (opbig=0xe3 & op67=3 & $(MEM_ALTER_ADDR_MODES))... & eaw				{ getbit(CF,eaw,31); eaw=eaw<<1; resflags(eaw); }
+macro shiftCXFlags(cntreg) {
+		CF = CF * (cntreg != 0);
+		XF = CF * (cntreg != 0) + XF * (cntreg == 0);
+}
 
-:lsr.b cntreg,regdnb		is op=14 & cntreg & op8=0 & op67=0 & op34=1 & regdnb		{ getbit(CF,regdnb,cntreg-1);regdnb=regdnb >>cntreg; resflags(regdnb);}
-:lsr.w cntreg,regdnw		is op=14 & cntreg & op8=0 & op67=1 & op34=1 & regdnw		{ getbit(CF,regdnw,cntreg-1);regdnw=regdnw >>cntreg; resflags(regdnw);}
-:lsr.l cntreg,regdn		is op=14 & cntreg & op8=0 & op67=2 & op34=1 & regdn		{ getbit(CF,regdn,cntreg-1); regdn=regdn >>cntreg; resflags(regdn); }
-:lsr eaw			is (opbig=0xe2 & op67=3 & $(MEM_ALTER_ADDR_MODES))... & eaw				{ getbit(CF,eaw,0); eaw=eaw >>1; resflags(eaw); }
+:lsl.b cntreg,regdnb               is op=14 & cntreg & op8=1 & op67=0 & op34=1 & regdnb		{ getbit(CF,regdnb,8-cntreg); shiftCXFlags(cntreg); regdnb=regdnb<<cntreg; resflags(regdnb);}
+:lsl.w cntreg,regdnw               is op=14 & cntreg & op8=1 & op67=1 & op34=1 & regdnw		{ getbit(CF,regdnw,16-cntreg); shiftCXFlags(cntreg); regdnw=regdnw<<cntreg; resflags(regdnw);}
+:lsl.l cntreg,regdn                is op=14 & cntreg & op8=1 & op67=2 & op34=1 & regdn		{ getbit(CF,regdn,32-cntreg); shiftCXFlags(cntreg); regdn=regdn<<cntreg; resflags(regdn); }
+:lsl eaw                           is (opbig=0xe3 & op67=3 & $(MEM_ALTER_ADDR_MODES))... & eaw				{ getbit(CF,eaw,31); shiftCXFlags(eaw); eaw=eaw<<1; resflags(eaw); }
 
+:lsr.b cntreg,regdnb               is op=14 & cntreg & op8=0 & op67=0 & op34=1 & regdnb		{ getbit(CF,regdnb,cntreg-1); shiftCXFlags(cntreg); regdnb=regdnb >>cntreg; resflags(regdnb);}
+:lsr.w cntreg,regdnw               is op=14 & cntreg & op8=0 & op67=1 & op34=1 & regdnw		{ getbit(CF,regdnw,cntreg-1); shiftCXFlags(cntreg); regdnw=regdnw >>cntreg; resflags(regdnw);}
+:lsr.l cntreg,regdn                is op=14 & cntreg & op8=0 & op67=2 & op34=1 & regdn		{ getbit(CF,regdn,cntreg-1); shiftCXFlags(cntreg); regdn=regdn >>cntreg; resflags(regdn); }
+:lsr eaw                           is (opbig=0xe2 & op67=3 & $(MEM_ALTER_ADDR_MODES))... & eaw	{ getbit(CF,eaw,0); shiftCXFlags(eaw); eaw=eaw >>1; resflags(eaw); }
 
 :move.b eab,e2b			is (op=1 & $(DAT_ALTER_ADDR_MODES2))... & eab ; e2b	{ build eab; build e2b; e2b = eab; resflags(eab); logflags(); }
 :move.w eaw,e2w			is (op=3 & $(DAT_ALTER_ADDR_MODES2))... & eaw ; e2w	{ build eaw; build e2w; e2w = eaw; resflags(eaw); logflags(); }
@@ -1104,12 +1114,11 @@ addrd32: d32			is d32								{ export *[ram]:4 d32; }
 
 @ifdef COLDFIRE
 
-d3bits: d911			is d911						{ export *[const]:1 d911; }
 :mvs.b: eab, reg9dn		is (op=0x7 & op68=4 & reg9dn )... &eab		{ reg9dn = sext(eab); }
 :mvs.w: eaw, reg9dn		is (op=0x7 & op68=5 & reg9dn )... &eaw		{ reg9dn = sext(eaw); }
 :mvz.b: eab, reg9dn		is (op=0x7 & op68=6 & reg9dn )... &eab		{ reg9dn = zext(eab); }
 :mvz.w: eaw, reg9dn		is (op=0x7 & op68=7 & reg9dn )... &eaw		{ reg9dn = zext(eaw); }
-:mov3q "#"^d3bits, eal		is (op=0xa & op68=5 & d3bits )... &eal		{ eal = zext(d3bits); }
+:mov3q "#"^d911, eal	is (op=0xa & op68=5 & d911 )  ... &eal		{ eal = d911; }
 
 :sats.l regdn			is opbig=0x4c & op37=0x10 & regdn	{ if (VF == 0) goto inst_next; regdn = (zext(regdn == 0 ) * 0x80000000) + (zext(regdn != 0) * 0x7fffffff); VF=0; CF=0; }
 
@@ -1673,11 +1682,11 @@ ptestLevel: "#"^mregn	is mregn  { export *[const]:1 mregn; }
 :tas eab			is (opbig=0x4a & op67=3 & $(DAT_ALTER_ADDR_MODES))... & eab				{ logflags(); resflags(eab); eab = eab | 0x80; }
 @endif # COLDFIRE
 
-:trap "#"^op03			is opbig=0x4e & op67=1 & op45=0 & op03			{ vector:1 = 32 + op03; trap(vector); }
-:trap^cc			is op=5 & cc & op37=31 & op02=4					{ if (!cc) goto inst_next; SP = SP - 4; *:4 SP = PC; vector:1 = 7; trap(vector); }
-:trap^cc^".w" "#"^d16		is op=5 & cc & op37=31 & op02=2; d16		{ if (!cc) goto inst_next; SP = SP - 4; *:4 SP = PC; vector:1 = 7; trap(vector); }
-:trap^cc^".l" "#"^d32		is op=5 & cc & op37=31 & op02=3; d32		{ if (!cc) goto inst_next; SP = SP - 4; *:4 SP = PC; vector:1 = 7; trap(vector); }
-:trapv				is opbig=0x4e & op37=14 & op02=6				{ if (!VF) goto inst_next; vector:1 = 7; trap(vector); }
+:trap "#"^op03			is opbig=0x4e & op67=1 & op45=0 & op03			{ vector:1 = op03; __m68k_trap(vector); }
+:trap^cc			is op=5 & cc & op37=31 & op02=4					{ if (!cc) goto inst_next; SP = SP - 4; *:4 SP = PC; vector:1 = 7; __m68k_trap(vector); }
+:trap^cc^".w" "#"^d16		is op=5 & cc & op37=31 & op02=2; d16		{ if (!cc) goto inst_next; SP = SP - 4; *:4 SP = PC; __m68k_trapv(); }
+:trap^cc^".l" "#"^d32		is op=5 & cc & op37=31 & op02=3; d32		{ if (!cc) goto inst_next; SP = SP - 4; *:4 SP = PC; __m68k_trapv(); }
+:trapv				is opbig=0x4e & op37=14 & op02=6				{ if (!VF) goto inst_next; __m68k_trapv(); }
 
 :tst.b eab			is (opbig=0x4a & op67=0)... & eab				{ logflags(); resflags(eab); }
 :tst.w eaw			is (opbig=0x4a & op67=1)... & eaw				{ logflags(); resflags(eaw); }

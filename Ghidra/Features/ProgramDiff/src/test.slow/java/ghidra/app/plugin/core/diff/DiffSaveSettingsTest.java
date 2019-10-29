@@ -15,7 +15,7 @@
  */
 package ghidra.app.plugin.core.diff;
 
-import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.*;
 
 import java.awt.Window;
 
@@ -23,21 +23,17 @@ import org.junit.*;
 
 import docking.action.DockingActionIf;
 import docking.action.ToggleDockingAction;
+import docking.util.image.ToolIconURL;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
 import ghidra.app.plugin.core.progmgr.ProgramManagerPlugin;
 import ghidra.framework.main.FrontEndPlugin;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.project.tool.GhidraTool;
-import ghidra.framework.project.tool.ToolIconURL;
 import ghidra.program.database.ProgramDB;
 import ghidra.test.ClassicSampleX86ProgramBuilder;
 import ghidra.test.TestEnv;
 
 public class DiffSaveSettingsTest extends DiffApplyTestAdapter {
-
-	public DiffSaveSettingsTest() {
-		super();
-	}
 
 	@Override
 	@Before

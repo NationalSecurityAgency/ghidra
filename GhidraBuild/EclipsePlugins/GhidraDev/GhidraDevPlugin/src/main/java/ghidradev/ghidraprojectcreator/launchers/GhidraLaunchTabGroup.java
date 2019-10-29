@@ -48,6 +48,7 @@ public class GhidraLaunchTabGroup extends AbstractLaunchConfigurationTabGroup {
 		tabs.add(getJavaMainTab());
 		tabs.add(getUserDefinedArgumentsTab());
 		tabs.add(new JavaClasspathTab());
+		tabs.add(new EnvironmentTab());
 		tabs.add(getCommonTab());
 
 		// Set the tabs

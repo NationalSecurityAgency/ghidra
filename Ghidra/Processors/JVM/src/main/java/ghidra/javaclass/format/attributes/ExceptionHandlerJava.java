@@ -15,12 +15,12 @@
  */
 package ghidra.javaclass.format.attributes;
 
+import java.io.IOException;
+
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.StructConverter;
 import ghidra.program.model.data.*;
 import ghidra.util.exception.DuplicateNameException;
-
-import java.io.IOException;
 
 /**
  * NOTE: THE FOLLOWING TEXT EXTRACTED FROM JVMS7.PDF
@@ -32,10 +32,10 @@ public class ExceptionHandlerJava implements StructConverter {
 	private short endPC;
 	private short handlerPC;
 	private short catchType;
-	
-	public ExceptionHandlerJava( BinaryReader reader ) throws IOException {
-		startPC   = reader.readNextShort();
-		endPC     = reader.readNextShort();
+
+	public ExceptionHandlerJava(BinaryReader reader) throws IOException {
+		startPC = reader.readNextShort();
+		endPC = reader.readNextShort();
 		handlerPC = reader.readNextShort();
 		catchType = reader.readNextShort();
 	}
@@ -54,9 +54,10 @@ public class ExceptionHandlerJava implements StructConverter {
 	 * [start_pc, end_pc].
 	 * @return a valid index into the code array
 	 */
-	public short getStartPC() {
-		return startPC;
+	public int getStartPC() {
+		return startPC & 0xffff;
 	}
+
 	/**
 	 * The values of the two items start_pc and end_pc indicate the ranges in the
 	 * code array at which the exception handler is active.
@@ -72,18 +73,20 @@ public class ExceptionHandlerJava implements StructConverter {
 	 * [start_pc, end_pc].  
 	 * @return a valid index into the code array
 	 */
-	public short getEndPC() {
-		return endPC;
+	public int getEndPC() {
+		return endPC & 0xffff;
 	}
+
 	/**
 	 * The value of the handler_pc item indicates the start of the exception
 	 * handler. The value of the item must be a valid index into the code array
 	 * and must be the index of the opcode of an instruction.
 	 * @return the start of the exception handler
 	 */
-	public short getHandlerPC() {
-		return handlerPC;
+	public int getHandlerPC() {
+		return handlerPC & 0xffff;
 	}
+
 	/**
 	 * If the value of the catch_type item is nonzero, it must be a valid index
 	 * into the constant_pool table. The constant_pool entry at that index
@@ -96,17 +99,17 @@ public class ExceptionHandlerJava implements StructConverter {
 	 * for all exceptions. This is used to implement finally (?3.13).
 	 * @return the value of the catch_type item
 	 */
-	public short getCatchType() {
-		return catchType;
+	public int getCatchType() {
+		return catchType & 0xffff;
 	}
 
 	@Override
 	public DataType toDataType() throws DuplicateNameException, IOException {
-		Structure structure = new StructureDataType( "exception_handler", 0 );
-		structure.add( WORD, "start_pc", null );
-		structure.add( WORD, "end_pc", null );
-		structure.add( WORD, "handler_pc", null );
-		structure.add( WORD, "catch_type", null );
+		Structure structure = new StructureDataType("exception_handler", 0);
+		structure.add(WORD, "start_pc", null);
+		structure.add(WORD, "end_pc", null);
+		structure.add(WORD, "handler_pc", null);
+		structure.add(WORD, "catch_type", null);
 		return structure;
 	}
 }

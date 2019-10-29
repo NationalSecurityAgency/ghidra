@@ -32,7 +32,7 @@ import ghidra.program.model.symbol.SourceType;
 public class StructureEditorAlignmentTest extends AbstractStructureEditorTest {
 
 	@Test
-    public void testUnalignedStructure() {
+	public void testUnalignedStructure() {
 		init(emptyStructure, pgmRootCat, false);
 
 		assertTrue(structureModel.hasChanges());// initial unsaved empty structure
@@ -84,13 +84,15 @@ public class StructureEditorAlignmentTest extends AbstractStructureEditorTest {
 	}
 
 	@Test
-    public void testDefaultAlignedStructure() throws Exception {
+	public void testDefaultAlignedStructure() throws Exception {
 		init(emptyStructure, pgmRootCat, false);
 
 		DataType arrayDt = new ArrayDataType(new CharDataType(), 5, 1);
 		addDataType(new ByteDataType());
 		addDataType(new FloatDataType());
 		addDataType(arrayDt);
+
+		waitForSwing();
 
 		assertEquals(3, structureModel.getNumComponents());
 		assertEquals(4, structureModel.getRowCount());
@@ -112,7 +114,7 @@ public class StructureEditorAlignmentTest extends AbstractStructureEditorTest {
 	}
 
 	@Test
-    public void testEnablementDefaultAlignedStructure() throws Exception {
+	public void testEnablementDefaultAlignedStructure() throws Exception {
 		emptyStructure.setInternallyAligned(true);
 		init(emptyStructure, pgmRootCat, false);
 
@@ -122,11 +124,12 @@ public class StructureEditorAlignmentTest extends AbstractStructureEditorTest {
 		addDataType(arrayDt);
 
 		// Check enablement.
-		CompositeEditorAction[] pActions = provider.getActions();
+		CompositeEditorTableAction[] pActions = provider.getActions();
 		for (int i = 0; i < pActions.length; i++) {
 			if ((pActions[i] instanceof FavoritesAction) ||
 				(pActions[i] instanceof CycleGroupAction) ||
 				(pActions[i] instanceof EditFieldAction) ||
+				(pActions[i] instanceof InsertUndefinedAction) ||
 				(pActions[i] instanceof PointerAction) ||
 				(pActions[i] instanceof HexNumbersAction) || (actions[i] instanceof ApplyAction)) {
 				checkEnablement(pActions[i], true);
@@ -146,13 +149,15 @@ public class StructureEditorAlignmentTest extends AbstractStructureEditorTest {
 	}
 
 	@Test
-    public void testMachineAlignedStructure() throws Exception {
+	public void testMachineAlignedStructure() throws Exception {
 		init(emptyStructure, pgmRootCat, false);
 
 		DataType arrayDt = new ArrayDataType(new CharDataType(), 5, 1);
 		addDataType(new ByteDataType());
 		addDataType(new FloatDataType());
 		addDataType(arrayDt);
+
+		waitForSwing();
 
 		pressButtonByName(getPanel(), "Internally Aligned");
 		pressButtonByName(getPanel(), "Machine Minimum Alignment");
@@ -167,7 +172,7 @@ public class StructureEditorAlignmentTest extends AbstractStructureEditorTest {
 	}
 
 	@Test
-    public void testByValueAlignedStructure() throws Exception {
+	public void testByValueAlignedStructure() throws Exception {
 		init(emptyStructure, pgmRootCat, false);
 
 		CompEditorPanel editorPanel = (CompEditorPanel) getPanel();
@@ -176,6 +181,8 @@ public class StructureEditorAlignmentTest extends AbstractStructureEditorTest {
 		addDataType(new ByteDataType());
 		addDataType(new FloatDataType());
 		addDataType(arrayDt);
+
+		waitForSwing();
 
 		pressButtonByName(editorPanel, "Internally Aligned");
 		JTextField minAlignField =
@@ -201,27 +208,27 @@ public class StructureEditorAlignmentTest extends AbstractStructureEditorTest {
 	}
 
 	@Test
-    public void testByValue1AlignedStructure() throws Exception {
+	public void testByValue1AlignedStructure() throws Exception {
 		checkByValueAlignedStructure(1, 4, 16);
 	}
 
 	@Test
-    public void testByValue2AlignedStructure() throws Exception {
+	public void testByValue2AlignedStructure() throws Exception {
 		checkByValueAlignedStructure(2, 4, 16);
 	}
 
 	@Test
-    public void testByValue4AlignedStructure() throws Exception {
+	public void testByValue4AlignedStructure() throws Exception {
 		checkByValueAlignedStructure(4, 4, 16);
 	}
 
 	@Test
-    public void testByValue8AlignedStructure() throws Exception {
+	public void testByValue8AlignedStructure() throws Exception {
 		checkByValueAlignedStructure(8, 8, 16);
 	}
 
 	@Test
-    public void testByValue16AlignedStructure() throws Exception {
+	public void testByValue16AlignedStructure() throws Exception {
 		checkByValueAlignedStructure(16, 16, 16);
 	}
 
@@ -262,7 +269,7 @@ public class StructureEditorAlignmentTest extends AbstractStructureEditorTest {
 	}
 
 	@Test
-    public void testDefaultAlignedPacked1Structure() throws Exception {
+	public void testDefaultAlignedPacked1Structure() throws Exception {
 		int value = 1;
 		emptyStructure.setInternallyAligned(true);
 		emptyStructure.setPackingValue(value);
@@ -298,7 +305,7 @@ public class StructureEditorAlignmentTest extends AbstractStructureEditorTest {
 	}
 
 	@Test
-    public void testAlignedEditToFunctionDefinitionDataType() throws Exception {
+	public void testAlignedEditToFunctionDefinitionDataType() throws Exception {
 		int value = 1;
 
 		startTransaction("addExternal");
@@ -351,7 +358,7 @@ public class StructureEditorAlignmentTest extends AbstractStructureEditorTest {
 	}
 
 	@Test
-    public void testSelectionOnGoFromUnalignedToAlignedStructure() throws Exception {
+	public void testSelectionOnGoFromUnalignedToAlignedStructure() throws Exception {
 		init(emptyStructure, pgmRootCat, false);
 
 		CompEditorPanel editorPanel = (CompEditorPanel) getPanel();

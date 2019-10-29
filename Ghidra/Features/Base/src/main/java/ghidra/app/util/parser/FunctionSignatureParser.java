@@ -16,77 +16,94 @@
 package ghidra.app.util.parser;
 
 import java.util.*;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import javax.help.UnsupportedOperationException;
 
 import org.apache.commons.lang3.StringUtils;
 
-import ghidra.app.services.DataTypeManagerService;
+import ghidra.app.services.DataTypeQueryService;
 import ghidra.app.util.cparser.C.ParseException;
-import ghidra.framework.plugintool.ServiceProvider;
+import ghidra.program.database.data.DataTypeUtilities;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.FunctionSignature;
-import ghidra.program.model.listing.Program;
 import ghidra.util.data.DataTypeParser;
 import ghidra.util.data.DataTypeParser.AllowedDataTypes;
+import ghidra.util.exception.CancelledException;
 
 /**
- * Class for parsing function signatures. This class attempts to be much more flexible than
- * a full parser that requires correct C or C++ syntax.  To achieve this, it scans the original
- * function signature (if present) for names that would cause parse problems (parens, commas, and
- * spaces).  If it finds any problem names, it looks for those strings in the text to be parsed and
- * if it finds them, it replaces them with substitutes that parse easily.  Then, after parsing, those
- * replacement strings are then restored to their original values.
+ * Class for parsing function signatures. This class attempts to be much more
+ * flexible than a full parser that requires correct C or C++ syntax. To achieve
+ * this, it scans the original function signature (if present) for names that
+ * would cause parse problems (parens, brackets, asterisk, commas, and spaces). 
+ * If it finds any problem names, it looks for those strings in the text to be 
+ * parsed and if it finds them, it replaces them with substitutes that parse 
+ * easily. Then, after parsing, those replacement strings are then restored to 
+ * their original values.
  * <P>
  * Some examples of valid c++ that would fail due to the current limitations:
  * <P>
  * void foo(myclass<int, float> x) - fails due to comma in x's data type name
- * int operator()(int x) - fails due to parens in function name
- * unsigned int bar(float y) - fails due to space in return type name
+ * int operator()(int x) - fails due to parens in function name unsigned int
+ * bar(float y) - fails due to space in return type name
  * <P>
- * Note: you can edit signatures that already have these features as long as your modifications
- * don't affect the pieces containing parens, commas or spaces in their name.
+ * Note: you can edit signatures that already have these features as long as
+ * your modifications don't affect the pieces containing parens, commas or
+ * spaces in their name.
  */
 public class FunctionSignatureParser {
 	private static final String REPLACEMENT_DT_NAME = "__REPLACE_DT_NAME__";
 	private static final String REPLACE_NAME = "__REPLACE_NAME__";
 	private DataTypeParser dataTypeParser;
 	private Map<String, DataType> dtMap = new HashMap<>();
+
 	private Map<String, String> nameMap = new HashMap<>();
+	private DataTypeManager destDataTypeManager;
+	private ParserDataTypeManagerService dtmService;
 
 	/**
-	 * Constructs a SignatureParser for a program.
-	 *
-	 * @param program the program whose datatype manager is used to resolve datatype names.
-	 * @param service the DataTypeManagerService to use for resolving datatypes that can't be
-	 * found in the given program. Can be null to utilize program based types only.
+	 * Constructs a SignatureParser for a program.  The destDataTypeManager and/or
+	 * service must be specified.
+	 * 
+	 * @param destDataTypeManager the destination datatype maanger.
+	 * @param service the DataTypeManagerService to use for resolving datatypes that
+	 *                can't be found in the given program. Can be null to utilize
+	 *                program based types only.
 	 */
-	public FunctionSignatureParser(Program program, DataTypeManagerService service) {
-		if (service == null) {
-			if (program == null) {
-				throw new IllegalArgumentException("program or service provider required");
-			}
-			DataTypeManager dataTypeManager = program.getDataTypeManager();
-			dataTypeParser = new DataTypeParser(dataTypeManager, dataTypeManager, null,
-				AllowedDataTypes.FIXED_LENGTH);
+	public FunctionSignatureParser(DataTypeManager destDataTypeManager,
+			DataTypeQueryService service) {
+		this.destDataTypeManager = destDataTypeManager;
+		if (destDataTypeManager == null && service == null) {
+			throw new IllegalArgumentException(
+				"Destination DataTypeManager or DataTypeManagerService provider required");
 		}
-		else {
-			dataTypeParser = new DataTypeParser(service, AllowedDataTypes.FIXED_LENGTH);
+		if (service != null) {
+			dtmService = new ParserDataTypeManagerService(service);
 		}
+		dataTypeParser = new DataTypeParser(destDataTypeManager, destDataTypeManager, dtmService,
+			AllowedDataTypes.FIXED_LENGTH);
 	}
 
 	/**
 	 * Parse the given function signature text into a FunctionDefinitionDataType.
 	 *
-	 * @param originalSignature the function signature before editing.  This may be null
-	 * if the user is entering a new signature instead of editing an existing one.
-	 * @param signatureText the text to be parsed into a function signature.
+	 * @param originalSignature the function signature before editing. This may be
+	 *                          null if the user is entering a new signature instead
+	 *                          of editing an existing one.
+	 * @param signatureText     the text to be parsed into a function signature.
 	 * @return the FunctionDefinitionDataType resulting from parsing.
 	 * @throws ParseException if the text could not be parsed.
+	 * @throws CancelledException if parse cancelled by user
 	 */
 	public FunctionDefinitionDataType parse(FunctionSignature originalSignature,
-			String signatureText) throws ParseException {
+			String signatureText) throws ParseException, CancelledException {
+
 		dtMap.clear();
 		nameMap.clear();
+		if (dtmService != null) {
+			dtmService.clearCache(); // clear datatype selection cache
+		}
 
 		if (originalSignature != null) {
 			initDataTypeMap(originalSignature);
@@ -94,7 +111,8 @@ public class FunctionSignatureParser {
 		}
 
 		String functionName = extractFunctionName(signatureText);
-		FunctionDefinitionDataType function = new FunctionDefinitionDataType(functionName);
+		FunctionDefinitionDataType function =
+			new FunctionDefinitionDataType(functionName, destDataTypeManager);
 
 		function.setReturnType(extractReturnType(signatureText));
 		function.setArguments(extractArguments(signatureText));
@@ -129,13 +147,6 @@ public class FunctionSignatureParser {
 		cacheDataType(baseType);
 	}
 
-	private static DataTypeManagerService getDataTypeManagerService(ServiceProvider provider) {
-		if (provider != null) {
-			return provider.getService(DataTypeManagerService.class);
-		}
-		return null;
-	}
-
 	private boolean hasVarArgs(String newSignatureText) {
 		int startIndex = newSignatureText.lastIndexOf(',');
 		int endIndex = newSignatureText.indexOf(')');
@@ -146,7 +157,8 @@ public class FunctionSignatureParser {
 		return "...".equals(lastArg);
 	}
 
-	private ParameterDefinition[] extractArguments(String newSignatureText) throws ParseException {
+	private ParameterDefinition[] extractArguments(String newSignatureText)
+			throws ParseException, CancelledException {
 		int startIndex = newSignatureText.indexOf('(');
 		int endIndex = newSignatureText.indexOf(')');
 		if (startIndex < 0 || endIndex < 0 || startIndex >= endIndex) {
@@ -176,7 +188,7 @@ public class FunctionSignatureParser {
 	}
 
 	private void addParameter(List<ParameterDefinition> parameterList, String arg)
-			throws ParseException {
+			throws ParseException, CancelledException {
 		if ("...".equals(arg)) {
 			return;
 		}
@@ -242,7 +254,7 @@ public class FunctionSignatureParser {
 		return substitute(text, name, replacementName);
 	}
 
-	DataType extractReturnType(String signatureText) throws ParseException {
+	DataType extractReturnType(String signatureText) throws ParseException, CancelledException {
 		int parenIndex = signatureText.indexOf('(');
 		if (parenIndex < 0) {
 			throw new ParseException("Can't find return type");
@@ -260,9 +272,34 @@ public class FunctionSignatureParser {
 		return dt;
 	}
 
-	private DataType resolveDataType(String dataTypeName) {
+	// The following regex pattern attempts to isolate the parameter name from
+	// the begining of a parameter specification. Since the name is optional,
+	// additional steps must be taken in code to ensure that the trailing word of
+	// a multi-word type-specified is not treated as a name (e.g., unsigned long).
+	//
+	// The regex pattern attempts to isolate the following fields:
+	//
+	// <type-specifier> [<array-specifier>|<pointer-specifier>]* [param-name]
+	//     group-1                     group-3                     group-4
+	//
+	// Note: group-2 is an inner group to group-3 is not useful
+	//
+	private static final Pattern parameterNameCapturePattern =
+		Pattern.compile("(.+?)((\\[\\d*\\]|\\*\\d*)\\s*)*([^\\s\\[\\*]+)");
+
+	private DataType resolveDataType(String dataTypeName) throws CancelledException {
 		if (dtMap.containsKey(dataTypeName)) {
 			return dtMap.get(dataTypeName);
+		}
+
+		Matcher m = parameterNameCapturePattern.matcher(dataTypeName);
+		if (m.matches()) {
+			boolean hasPointerOrArraySpec = m.group(3) != null;
+			boolean hasName = (m.group(4) != null) && (m.group(4).length() != 0);
+			if (hasPointerOrArraySpec && hasName) {
+				// name after array/pointer spec - dataTypeName is not a valid datatype
+				return null;
+			}
 		}
 
 		DataType dataType = null;
@@ -270,7 +307,7 @@ public class FunctionSignatureParser {
 			dataType = dataTypeParser.parse(dataTypeName);
 		}
 		catch (InvalidDataTypeException e) {
-			// ignore
+			// ignore - return null
 		}
 		return dataType;
 	}
@@ -304,7 +341,57 @@ public class FunctionSignatureParser {
 	}
 
 	private boolean canParse(String text) {
-		return !StringUtils.containsAny(text, "(), ");
+		return !StringUtils.containsAny(text, "()*[], ");
 	}
 
+	/**
+	 * <code></code> provides a simple caching datatype manager service
+	 * wrapper.  Implementation intended for use with {@link FunctionSignatureParser}
+	 * and underlying {@link DataTypeParser} and {@link DataTypeUtilities} classes.  
+	 */
+	private static class ParserDataTypeManagerService implements DataTypeQueryService {
+
+		private Map<String, DataType> dtCache = new HashMap<>();
+
+		private final DataTypeQueryService service;
+
+		/**
+		 * Construct caching datatype manager service.
+		 * @param service actual datatype manager service which may prompt
+		 * user to make a datatype selection.  It is this impementation's 
+		 * purpose to cache such a choice for {@link #getDataType(String)} to
+		 * avoid repeated selections of the same choice if type is reused
+		 * within a function signature.
+		 */
+		ParserDataTypeManagerService(DataTypeQueryService service) {
+			this.service = service;
+		}
+
+		void clearCache() {
+			dtCache.clear();
+		}
+
+		@Override
+		public DataTypeManager[] getDataTypeManagers() {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public List<DataType> getSortedDataTypeList() {
+			return service.getSortedDataTypeList();
+		}
+
+		@Override
+		public DataType getDataType(String filterText) {
+			DataType dt = dtCache.get(filterText);
+			if (dt == null) {
+				dt = service.getDataType(filterText);
+				if (dt != null) {
+					dtCache.put(filterText, dt);
+				}
+			}
+			return dt;
+		}
+
+	}
 }

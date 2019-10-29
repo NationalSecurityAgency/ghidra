@@ -231,11 +231,19 @@ void EmulateFunction::collectLoadPoints(vector<LoadTable> &res) const
   }
 }
 
+/// The starting value for the range and the step is preserved.  The
+/// ending value is set so there are exactly the given number of elements
+/// in the range.
+/// \param nm is the given number
 void JumpValuesRange::truncate(int4 nm)
 
 {
-  // FIXME: This doesn't work if there is a stride
-  range = CircleRange(range.getMin(),range.getMin() + (nm-1),range.getMask());
+  int4 rangeSize = 8*sizeof(uintb) - count_leading_zeros(range.getMask());
+  rangeSize >>= 3;
+  uintb left = range.getMin();
+  int4 step = range.getStep();
+  uintb right = (left + step * nm) & range.getMask();
+  range.setRange(left, right, rangeSize, step);
 }
 
 uintb JumpValuesRange::getSize(void) const
@@ -403,18 +411,22 @@ bool JumpBasic::ispoint(Varnode *vn)
   return true;
 }
 
-void JumpBasic::setStride(Varnode *vn,CircleRange &rng)
+/// If the some of the least significant bits of the given Varnode are known to
+/// be zero, translate this into a stride for the jumptable range.
+/// \param vn is the given Varnode
+/// \return the calculated stride = 1,2,4,...
+int4 JumpBasic::getStride(Varnode *vn)
 
 {
   uintb mask = vn->getNZMask();
-  int4 stride = 0;
+  if ((mask & 0x3f)==0)		// Limit the maximum stride we can return
+    return 32;
+  int4 stride = 1;
   while((mask&1)==0) {
     mask >>= 1;
-    stride += 1;
+    stride <<= 1;
   }
-  if (stride==0) return;
-  if (stride > 6) return;
-  rng.setStride(stride);
+  return stride;
 }
 
 uintb JumpBasic::backup2Switch(Funcdata *fd,uintb output,Varnode *outvn,Varnode *invn)
@@ -915,23 +927,25 @@ void JumpBasic::calcRange(Varnode *vn,CircleRange &rng) const
   // by using the precalculated guard ranges.
 
   // Get an initial range, based on the size/type of -vn-
+  int4 stride = 1;
   if (vn->isConstant())
     rng = CircleRange(vn->getOffset(),vn->getSize());
   else if (vn->isWritten() && vn->getDef()->isBoolOutput())
-    rng = CircleRange(0,1,1);	// Only 0 or 1 possible
+    rng = CircleRange(0,2,1,1);	// Only 0 or 1 possible
   else {			// Should we go ahead and use nzmask in all cases?
-    uintb mask = calc_mask(vn->getSize());
+    uintb maxValue = 0;		// Every possible value
     if (vn->isWritten()) {
       PcodeOp *andop = vn->getDef();
       if (andop->code() == CPUI_INT_AND) {
 	Varnode *constvn = andop->getIn(1);
 	if (constvn->isConstant()) {
-	  mask = coveringmask( constvn->getOffset() );
+	  maxValue = coveringmask( constvn->getOffset() );
+	  maxValue = (maxValue + 1) & calc_mask(vn->getSize());
 	}
       }
     }
-    rng = CircleRange(0,mask,mask);
-    setStride(vn,rng);
+    stride = getStride(vn);
+    rng = CircleRange(0,maxValue,vn->getSize(),stride);
   }
 
   // Intersect any guard ranges which apply to -vn-
@@ -950,7 +964,7 @@ void JumpBasic::calcRange(Varnode *vn,CircleRange &rng) const
   // in which case the guard might not check for it. If the
   // size is too big, we try only positive values
   if (rng.getSize() > 0x10000) {
-    CircleRange positive(0,rng.getMask()>>1,rng.getMask());
+    CircleRange positive(0,(rng.getMask()>>1)+1,vn->getSize(),stride);
     positive.intersect(rng);
     if (!positive.isEmpty())
       rng = positive;
@@ -1147,6 +1161,7 @@ void JumpBasic::findUnnormalized(uint4 maxaddsub,uint4 maxleftright,uint4 maxext
     case CPUI_INT_SUB:
       countaddsub += 1;
       if (countaddsub > maxaddsub) break;
+      if (!normop->getIn(1-j)->isConstant()) break;
       switchvn = testvn;
       break;
     case CPUI_INT_ZEXT:

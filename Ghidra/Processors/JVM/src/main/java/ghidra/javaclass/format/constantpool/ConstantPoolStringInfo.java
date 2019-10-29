@@ -18,9 +18,7 @@ package ghidra.javaclass.format.constantpool;
 import java.io.IOException;
 
 import ghidra.app.util.bin.BinaryReader;
-import ghidra.program.model.data.DataType;
-import ghidra.program.model.data.Structure;
-import ghidra.program.model.data.StructureDataType;
+import ghidra.program.model.data.*;
 import ghidra.util.exception.DuplicateNameException;
 
 /**
@@ -39,7 +37,7 @@ public class ConstantPoolStringInfo extends AbstractConstantPoolInfoJava {
 
 	private short stringIndex;
 
-	public ConstantPoolStringInfo( BinaryReader reader ) throws IOException {
+	public ConstantPoolStringInfo(BinaryReader reader) throws IOException {
 		super(reader);
 		stringIndex = reader.readNextShort();
 	}
@@ -51,16 +49,16 @@ public class ConstantPoolStringInfo extends AbstractConstantPoolInfoJava {
 	 * code points to which the String object is to be initialized.
 	 * @return a valid index into the constant_pool table
 	 */
-	public short getStringIndex() {
-		return stringIndex;
+	public int getStringIndex() {
+		return stringIndex & 0xffff;
 	}
 
 	@Override
 	public DataType toDataType() throws DuplicateNameException, IOException {
 		String name = "CONSTANT_String_info";
-		Structure structure = new StructureDataType( name, 0 );
-		structure.add( BYTE, "tag", null );
-		structure.add( WORD, "string_index", null );
+		Structure structure = new StructureDataType(name, 0);
+		structure.add(BYTE, "tag", null);
+		structure.add(WORD, "string_index", null);
 		return structure;
 	}
 

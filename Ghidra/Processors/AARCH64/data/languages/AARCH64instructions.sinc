@@ -3755,74 +3755,54 @@ macro simd_address_at(dest, reg, elem, esize, vsize)
 
 macro zext_zb(reg)
 {
-	local tmpr:4 = &reg;
-@if DATA_ENDIAN == "little"
-	tmpr = tmpr + 1;
-@endif
-	* [register]:31 tmpr = 0;
+	reg[8,56] = 0;
+	reg[64,64] = 0;
+	reg[128,64] = 0;
+	reg[192,64] = 0;
 }
 
 macro zext_zh(reg)
 {
-	local tmpr:4 = &reg;
-@if DATA_ENDIAN == "little"
-	tmpr = tmpr + 2;
-@endif
-	* [register]:30 tmpr = 0;
+	reg[16,48] = 0;
+	reg[64,64] = 0;
+	reg[128,64] = 0;
+	reg[192,64] = 0;
 }
 
 macro zext_zs(reg)
 {
-	local tmpr:4 = &reg;
-@if DATA_ENDIAN == "little"
-	tmpr = tmpr + 4;
-@endif
-	* [register]:28 tmpr = 0;
+	reg[32,32] = 0;
+	reg[64,64] = 0;
+	reg[128,64] = 0;
+	reg[192,64] = 0;
 }
 
 macro zext_zd(reg)
 {
-	local tmpr:4 = &reg;
-@if DATA_ENDIAN == "little"
-	tmpr = tmpr + 8;
-@endif
-	* [register]:24 tmpr = 0;
+	reg[64,64] = 0;
+	reg[128,64] = 0;
+	reg[192,64] = 0;
 }
 
 macro zext_zq(reg)
 {
-	local tmpr:4 = &reg;
-@if DATA_ENDIAN == "little"
-	tmpr = tmpr + 16;
-@endif
-	* [register]:16 tmpr = 0;
+	reg[128,64] = 0;
+	reg[192,64] = 0;
 }
 
 macro zext_rb(reg)
 {
-	local tmpr:4 = &reg;
-@if DATA_ENDIAN == "little"
-	tmpr = tmpr + 1;
-@endif
-	* [register]:7 tmpr = 0;
+	reg[8,56] = 0;
 }
 
 macro zext_rh(reg)
 {
-	local tmpr:4 = &reg;
-@if DATA_ENDIAN == "little"
-	tmpr = tmpr + 2;
-@endif
-	* [register]:6 tmpr = 0;
+	reg[16,48] = 0;
 }
 
 macro zext_rs(reg)
 {
-	local tmpr:4 = &reg;
-@if DATA_ENDIAN == "little"
-	tmpr = tmpr + 4;
-@endif
-	* [register]:4 tmpr = 0;
+	reg[32,32] = 0;
 }
 
 # SECTION instructions

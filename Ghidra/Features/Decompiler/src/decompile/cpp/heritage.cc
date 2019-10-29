@@ -144,11 +144,8 @@ void Heritage::clearInfoList(void)
 
 {
   vector<HeritageInfo>::iterator iter;
-  for(iter=infolist.begin();iter!=infolist.end();++iter) {
-    (*iter).deadremoved = 0;
-    (*iter).deadcodedelay = (*iter).delay;
-    (*iter).warningissued = false;
-  }
+  for(iter=infolist.begin();iter!=infolist.end();++iter)
+    (*iter).reset();
 }
 
 /// \brief Collect free reads, writes, and inputs in the given address range
@@ -454,6 +451,524 @@ void Heritage::splitPieces(const vector<Varnode *> &vnlist,PcodeOp *insertop,
   }
 }
 
+/// \brief Find the last PcodeOps that write to specific addresses that flow to specific sites
+///
+/// Given a set of sites for which data-flow needs to be preserved at a specific address, find
+/// the \e last ops that write to the address such that data flows to the site
+/// only through \e artificial COPYs and MULTIEQUALs.  A COPY/MULTIEQUAL is artificial if all
+/// of its input and output Varnodes have the same storage address.  The specific sites are
+/// presented as artificial COPY ops.  The final set of ops that are not artificial will all
+/// have an output Varnode that matches the specific address of a COPY sink and will need to
+/// be marked address forcing. The original set of COPY sinks will be extended to all artificial
+/// COPY/MULTIEQUALs encountered.  Every PcodeOp encountered will have its mark set.
+/// \param copySinks is the list of sinks that we are trying to find flow to
+/// \param forces is the final list of address forcing PcodeOps
+void Heritage::findAddressForces(vector<PcodeOp *> &copySinks,vector<PcodeOp *> &forces)
+
+{
+  // Mark the sinks
+  for(int4 i=0;i<copySinks.size();++i) {
+    PcodeOp *op = copySinks[i];
+    op->setMark();
+  }
+
+  // Mark everything back-reachable from a sink, trimming at non-artificial ops
+  int4 pos = 0;
+  while(pos < copySinks.size()) {
+    PcodeOp *op = copySinks[pos];
+    Address addr = op->getOut()->getAddr();	// Address being flowed to
+    pos += 1;
+    int4 maxIn = op->numInput();
+    for(int4 i=0;i<maxIn;++i) {
+      Varnode *vn = op->getIn(i);
+      if (!vn->isWritten()) continue;
+      if (vn->isAddrForce()) continue;		// Already marked address forced
+      PcodeOp *newOp = vn->getDef();
+      if (newOp->isMark()) continue;		// Already visited this op
+      newOp->setMark();
+      OpCode opc = newOp->code();
+      bool isArtificial = false;
+      if (opc == CPUI_COPY || opc == CPUI_MULTIEQUAL) {
+	isArtificial = true;
+	int4 maxInNew = newOp->numInput();
+	for(int4 j=0;j<maxInNew;++j) {
+	  Varnode *inVn = newOp->getIn(j);
+	  if (addr != inVn->getAddr()) {
+	    isArtificial = false;
+	    break;
+	  }
+	}
+      }
+      else if (opc == CPUI_INDIRECT && newOp->isIndirectStore()) {
+	// An INDIRECT can be considered artificial if it is caused by a STORE
+	Varnode *inVn = newOp->getIn(0);
+	if (addr == inVn->getAddr())
+	  isArtificial = true;
+      }
+      if (isArtificial)
+	copySinks.push_back(newOp);
+      else
+	forces.push_back(newOp);
+    }
+  }
+}
+
+/// \brief Eliminate a COPY sink preserving its data-flow
+///
+/// Given a COPY from a storage location to itself, propagate the input Varnode
+/// version of the storage location to all the ops reading the output Varnode, so
+/// the output no longer has any descendants. Then eliminate the COPY.
+/// \param op is the given COPY sink
+void Heritage::propagateCopyAway(PcodeOp *op)
+
+{
+  Varnode *inVn = op->getIn(0);
+  while(inVn->isWritten()) {		// Follow any COPY chain to earliest input
+    PcodeOp *nextOp = inVn->getDef();
+    if (nextOp->code() != CPUI_COPY) break;
+    Varnode *nextIn = nextOp->getIn(0);
+    if (nextIn->getAddr() != inVn->getAddr()) break;
+    inVn = nextIn;
+  }
+  fd->totalReplace(op->getOut(),inVn);
+  fd->opDestroy(op);
+}
+
+/// \brief Mark the boundary of artificial ops introduced by load guards
+///
+/// Having just completed renaming, run through all new COPY sinks from load guards
+/// and mark boundary Varnodes (Varnodes whose data-flow along all paths traverses only
+/// COPY/INDIRECT/MULTIEQUAL ops and hits a load guard). This lets dead code removal
+/// run forward from the boundary while still preserving the address force on the load guard.
+void Heritage::handleNewLoadCopies(void)
+
+{
+  if (loadCopyOps.empty()) return;
+  vector<PcodeOp *> forces;
+  int4 copySinkSize = loadCopyOps.size();
+  findAddressForces(loadCopyOps, forces);
+
+  if (!forces.empty()) {
+    RangeList loadRanges;
+    for(list<LoadGuard>::const_iterator iter=loadGuard.begin();iter!=loadGuard.end();++iter) {
+      const LoadGuard &guard( *iter );
+      loadRanges.insertRange(guard.spc, guard.minimumOffset, guard.maximumOffset);
+    }
+    // Mark everything on the boundary as address forced to prevent dead-code removal
+    for(int4 i=0;i<forces.size();++i) {
+      PcodeOp *op = forces[i];
+      Varnode *vn = op->getOut();
+      if (loadRanges.inRange(vn->getAddr(), 1))	// If we are within one of the guarded ranges
+	vn->setAddrForce();			// then consider the output address forced
+      op->clearMark();
+    }
+  }
+
+  // Eliminate or propagate away original COPY sinks
+  for(int4 i=0;i<copySinkSize;++i) {
+    PcodeOp *op = loadCopyOps[i];
+    propagateCopyAway(op);	// Make sure load guard COPYs no longer exist
+  }
+  // Clear marks on remaining artificial COPYs
+  for(int4 i=copySinkSize;i<loadCopyOps.size();++i) {
+    PcodeOp *op = loadCopyOps[i];
+    op->clearMark();
+  }
+  loadCopyOps.clear();		// We have handled all the load guard COPY ops
+}
+
+/// Make some determination of the range of possible values for a LOAD based
+/// an partial value set analysis. This can sometimes get
+///   - minimumOffset - otherwise the original constant pulled with the LOAD is used
+///   - step          - the partial analysis shows step and direction
+///   - maximumOffset - in rare cases
+///
+/// isAnalyzed is set to \b true, if full range analysis is not needed
+/// \param valueSet is the calculated value set as seen by the LOAD operation
+void LoadGuard::establishRange(const ValueSetRead &valueSet)
+
+{
+  const CircleRange &range( valueSet.getRange() );
+  uintb rangeSize = range.getSize();
+  uintb size;
+  if (range.isEmpty()) {
+    minimumOffset = pointerBase;
+    size = 0x1000;
+  }
+  else if (range.isFull() || rangeSize > 0xffffff) {
+    minimumOffset = pointerBase;
+    size = 0x1000;
+    analysisState = 1;	// Don't bother doing more analysis
+  }
+  else {
+    step = (rangeSize == 3) ? range.getStep() : 0;	// Check for consistent step
+    size = 0x1000;
+    if (valueSet.isLeftStable()) {
+      minimumOffset = range.getMin();
+    }
+    else if (valueSet.isRightStable()) {
+      if (pointerBase < range.getEnd()) {
+	minimumOffset = pointerBase;
+	size = (range.getEnd() - pointerBase);
+      }
+      else {
+	minimumOffset = range.getMin();
+	size = rangeSize * range.getStep();
+      }
+    }
+    else
+      minimumOffset = pointerBase;
+  }
+  uintb max = spc->getHighest();
+  if (minimumOffset > max) {
+    minimumOffset = max;
+    maximumOffset = minimumOffset;	// Something is seriously wrong
+  }
+  else {
+    uintb maxSize = (max - minimumOffset) + 1;
+    if (size > maxSize)
+      size = maxSize;
+    maximumOffset = minimumOffset + size -1;
+  }
+}
+
+void LoadGuard::finalizeRange(const ValueSetRead &valueSet)
+
+{
+  analysisState = 1;		// In all cases the settings determined here are final
+  const CircleRange &range( valueSet.getRange() );
+  uintb rangeSize = range.getSize();
+  if (rangeSize == 0x100 || rangeSize == 0x10000) {
+    // These sizes likely result from the storage size of the index
+    if (step == 0)	// If we didn't see signs of iteration
+      rangeSize = 0;	// don't use this range
+  }
+  if (rangeSize > 1 && rangeSize < 0xffffff) {	// Did we converge to something reasonable
+    analysisState = 2;			// Mark that we got a definitive result
+    if (rangeSize > 2)
+      step = range.getStep();
+    minimumOffset = range.getMin();
+    maximumOffset = (range.getEnd() - 1) & range.getMask();	// NOTE: Don't subtract a whole step
+    if (maximumOffset < minimumOffset) {	// Values extend into what is usually stack parameters
+      maximumOffset = spc->getHighest();
+      analysisState = 1;	// Remove the lock as we have likely overflowed
+    }
+  }
+  if (minimumOffset > spc->getHighest())
+    minimumOffset = spc->getHighest();
+  if (maximumOffset > spc->getHighest())
+    maximumOffset = spc->getHighest();
+}
+
+/// Check if the address falls within the range defined by \b this
+/// \param addr is the given address
+/// \return \b true if the address is contained
+bool LoadGuard::isGuarded(const Address &addr) const
+
+{
+  if (addr.getSpace() != spc) return false;
+  if (addr.getOffset() < minimumOffset) return false;
+  if (addr.getOffset() > maximumOffset) return false;
+  return true;
+}
+
+/// \brief Make final determination of what range new LoadGuards are protecting
+///
+/// Actual LOAD operations are guarded with an initial version of the LoadGuard record.
+/// Now that heritage has completed, a full analysis of each LOAD is conducted, using
+/// value set analysis, to reach a conclusion about what range of stack values the
+/// LOAD might actually alias.  All new LoadGuard records are updated with the analysis,
+/// which then informs handling of LOAD COPYs and possible later heritage passes.
+void Heritage::analyzeNewLoadGuards(void)
+
+{
+  bool nothingToDo = true;
+  if (!loadGuard.empty()) {
+    if (loadGuard.back().analysisState == 0)	// Check if unanalyzed
+      nothingToDo = false;
+  }
+  if (!storeGuard.empty()) {
+    if (storeGuard.back().analysisState == 0)
+      nothingToDo = false;
+  }
+  if (nothingToDo) return;
+
+  vector<Varnode *> sinks;
+  vector<PcodeOp *> reads;
+  list<LoadGuard>::iterator loadIter = loadGuard.end();
+  while(loadIter != loadGuard.begin()) {
+    --loadIter;
+    LoadGuard &guard( *loadIter );
+    if (guard.analysisState != 0) break;
+    reads.push_back(guard.op);
+    sinks.push_back(guard.op->getIn(1));	// The CPUI_LOAD pointer
+  }
+  list<LoadGuard>::iterator storeIter = storeGuard.end();
+  while(storeIter != storeGuard.begin()) {
+    --storeIter;
+    LoadGuard &guard( *storeIter );
+    if (guard.analysisState != 0) break;
+    reads.push_back(guard.op);
+    sinks.push_back(guard.op->getIn(1));	// The CPUI_STORE pointer
+  }
+  AddrSpace *stackSpc = fd->getArch()->getStackSpace();
+  Varnode *stackReg = (Varnode *)0;
+  if (stackSpc != (AddrSpace *)0 && stackSpc->numSpacebase() > 0)
+    stackReg = fd->findSpacebaseInput(stackSpc);
+  ValueSetSolver vsSolver;
+  vsSolver.establishValueSets(sinks, reads, stackReg, false);
+  WidenerNone widener;
+  vsSolver.solve(10000,widener);
+  list<LoadGuard>::iterator iter;
+  bool runFullAnalysis = false;
+  for(iter=loadIter;iter!=loadGuard.end(); ++iter) {
+    LoadGuard &guard( *iter );
+    guard.establishRange(vsSolver.getValueSetRead(guard.op->getSeqNum()));
+    if (guard.analysisState == 0)
+      runFullAnalysis = true;
+  }
+  for(iter=storeIter;iter!=storeGuard.end(); ++iter) {
+    LoadGuard &guard( *iter );
+    guard.establishRange(vsSolver.getValueSetRead(guard.op->getSeqNum()));
+    if (guard.analysisState == 0)
+      runFullAnalysis = true;
+  }
+  if (runFullAnalysis) {
+    WidenerFull fullWidener;
+    vsSolver.solve(10000, fullWidener);
+    for (iter = loadIter; iter != loadGuard.end(); ++iter) {
+      LoadGuard &guard(*iter);
+      guard.finalizeRange(vsSolver.getValueSetRead(guard.op->getSeqNum()));
+    }
+    for (iter = storeIter; iter != storeGuard.end(); ++iter) {
+      LoadGuard &guard(*iter);
+      guard.finalizeRange(vsSolver.getValueSetRead(guard.op->getSeqNum()));
+    }
+  }
+}
+
+/// \brief Generate a guard record given an indexed LOAD into a stack space
+///
+/// Record the LOAD op and the (likely) range of addresses in the stack space that
+/// might be loaded from.
+/// \param node is the path element containing the constructed Address
+/// \param op is the LOAD PcodeOp
+/// \param spc is the stack space
+void Heritage::generateLoadGuard(StackNode &node,PcodeOp *op,AddrSpace *spc)
+
+{
+  if (!op->usesSpacebasePtr()) {
+    loadGuard.push_back(LoadGuard());
+    loadGuard.back().set(op,spc,node.offset);
+    fd->opMarkSpacebasePtr(op);
+  }
+}
+
+/// \brief Generate a guard record given an indexed STORE to a stack space
+///
+/// Record the STORE op and the (likely) range of addresses in the stack space that
+/// might be stored to.
+/// \param node is the path element containing the constructed Address
+/// \param op is the STORE PcodeOp
+/// \param spc is the stack space
+void Heritage::generateStoreGuard(StackNode &node,PcodeOp *op,AddrSpace *spc)
+
+{
+  if (!op->usesSpacebasePtr()) {
+    storeGuard.push_back(LoadGuard());
+    storeGuard.back().set(op,spc,node.offset);
+    fd->opMarkSpacebasePtr(op);
+  }
+}
+
+/// \brief Identify any CPUI_STORE ops that use a free pointer from a given address space
+///
+/// When performing heritage for stack Varnodes, data-flow around a STORE with a
+/// free pointer must be guarded (with an INDIRECT) to be safe. This routine collects
+/// and marks the STORE ops that trigger this guard.
+/// \param spc is the given address space
+/// \param freeStores will hold the list of STOREs if any
+/// \return \b true if there are any new STOREs needing a guard
+bool Heritage::protectFreeStores(AddrSpace *spc,vector<PcodeOp *> &freeStores)
+
+{
+  list<PcodeOp *>::const_iterator iter = fd->beginOp(CPUI_STORE);
+  list<PcodeOp *>::const_iterator enditer = fd->endOp(CPUI_STORE);
+  bool hasNew = false;
+  while(iter != enditer) {
+    PcodeOp *op = *iter;
+    ++iter;
+    if (op->isDead()) continue;
+    Varnode *vn = op->getIn(1);
+    if (vn->isWritten()) {
+      PcodeOp *copyOp = vn->getDef();
+      if (copyOp->code() == CPUI_COPY)
+	vn = copyOp->getIn(0);
+    }
+    if (vn->isFree() && vn->getSpace() == spc) {
+      fd->opMarkSpacebasePtr(op);	// Mark op as spacebase STORE, even though we're not sure
+      freeStores.push_back(op);
+      hasNew = true;
+    }
+  }
+  return hasNew;
+}
+
+/// \brief Trace input stack-pointer to any indexed loads
+///
+/// Look for expressions of the form  val = *(SP(i) + vn + \#c), where the base stack
+/// pointer has an (optional) constant added to it and a non-constant index, then a
+/// value is loaded from the resulting address.  The LOAD operations are added to the list
+/// of ops that potentially need to be guarded during a heritage pass.  The routine can
+/// checks for STOREs where the data-flow path hasn't been completed yet and returns
+/// \b true if they exist, passing back a list of those that might use a pointer to the stack.
+/// \param spc is the particular address space with a stackpointer (into it)
+/// \param freeStores will hold the list of any STOREs that need follow-up analysis
+/// \param checkFreeStores is \b true if the routine should check for free STOREs
+/// \return \b true if there are incomplete STOREs
+bool Heritage::discoverIndexedStackPointers(AddrSpace *spc,vector<PcodeOp *> &freeStores,bool checkFreeStores)
+
+{
+  // We need to be careful of exponential ladders, so we mark Varnodes independently of
+  // the depth first path we are traversing.
+  vector<Varnode *> markedVn;
+  vector<StackNode> path;
+  bool unknownStackStorage = false;
+  for(int4 i=0;i<spc->numSpacebase();++i) {
+    const VarnodeData &stackPointer(spc->getSpacebase(i));
+    Varnode *spInput = fd->findVarnodeInput(stackPointer.size, stackPointer.getAddr());
+    if (spInput == (Varnode *)0) continue;
+    path.push_back(StackNode(spInput,0,0));
+    while(!path.empty()) {
+      StackNode &curNode(path.back());
+      if (curNode.iter == curNode.vn->endDescend()) {
+	path.pop_back();
+	continue;
+      }
+      PcodeOp *op = *curNode.iter;
+      ++curNode.iter;
+      Varnode *outVn = op->getOut();
+      if (outVn != (Varnode *)0 && outVn->isMark()) continue;		// Don't revisit Varnodes
+      switch(op->code()) {
+	case CPUI_INT_ADD:
+	{
+	  Varnode *otherVn = op->getIn(1-op->getSlot(curNode.vn));
+	  if (otherVn->isConstant()) {
+	    uintb newOffset = spc->wrapOffset(curNode.offset + otherVn->getOffset());
+	    StackNode nextNode(outVn,newOffset,curNode.traversals);
+	    if (nextNode.iter != nextNode.vn->endDescend()) {
+	      outVn->setMark();
+	      path.push_back(nextNode);
+	      markedVn.push_back(outVn);
+	    }
+	    else if (outVn->getSpace()->getType() == IPTR_SPACEBASE)
+	      unknownStackStorage = true;
+	  }
+	  else {
+	    StackNode nextNode(outVn,curNode.offset,curNode.traversals | StackNode::nonconstant_index);
+	    if (nextNode.iter != nextNode.vn->endDescend()) {
+	      outVn->setMark();
+	      path.push_back(nextNode);
+	      markedVn.push_back(outVn);
+	    }
+	    else if (outVn->getSpace()->getType() == IPTR_SPACEBASE)
+	      unknownStackStorage = true;
+	  }
+	  break;
+	}
+	case CPUI_INDIRECT:
+	case CPUI_COPY:
+	{
+	  StackNode nextNode(outVn,curNode.offset,curNode.traversals);
+	  if (nextNode.iter != nextNode.vn->endDescend()) {
+	    outVn->setMark();
+	    path.push_back(nextNode);
+	    markedVn.push_back(outVn);
+	  }
+	  else if (outVn->getSpace()->getType() == IPTR_SPACEBASE)
+	    unknownStackStorage = true;
+	  break;
+	}
+	case CPUI_MULTIEQUAL:
+	{
+	  StackNode nextNode(outVn,curNode.offset,curNode.traversals | StackNode::multiequal);
+	  if (nextNode.iter != nextNode.vn->endDescend()) {
+	    outVn->setMark();
+	    path.push_back(nextNode);
+	    markedVn.push_back(outVn);
+	  }
+	  else if (outVn->getSpace()->getType() == IPTR_SPACEBASE)
+	    unknownStackStorage = true;
+	  break;
+	}
+	case CPUI_LOAD:
+	{
+	  // Note that if ANY path has one of the traversals (non-constant ADD or MULTIEQUAL), then
+	  // THIS path must have one of the traversals, because the only other acceptable path elements
+	  // (INDIRECT/COPY/constant ADD) have only one path through.
+	  if (curNode.traversals != 0) {
+	    generateLoadGuard(curNode,op,spc);
+	  }
+	  break;
+	}
+	case CPUI_STORE:
+	{
+	  if (curNode.traversals != 0) {
+	    generateStoreGuard(curNode, op, spc);
+	  }
+	  break;
+	}
+	default:
+	  break;
+      }
+    }
+  }
+  for(int4 i=0;i<markedVn.size();++i)
+    markedVn[i]->clearMark();
+  if (unknownStackStorage && checkFreeStores)
+    return protectFreeStores(spc, freeStores);
+  return false;
+}
+
+/// \brief Revisit STOREs with free pointers now that a heritage pass has completed
+///
+/// We regenerate STORE LoadGuard records then cross-reference with STOREs that were
+/// originally free to see if they actually needed a LoadGaurd.  If not, the STORE
+/// is unmarked and INDIRECTs it has caused are removed.
+/// \param spc is the address space being guarded
+/// \param freeStores is the list of STOREs that were marked as free
+void Heritage::reprocessFreeStores(AddrSpace *spc,vector<PcodeOp *> &freeStores)
+
+{
+  for(int4 i=0;i<freeStores.size();++i)
+    fd->opClearSpacebasePtr(freeStores[i]);
+
+  discoverIndexedStackPointers(spc, freeStores, false);
+
+  for(int4 i=0;i<freeStores.size();++i) {
+    PcodeOp *op = freeStores[i];
+
+    // If the STORE now is marked as using a spacebase ptr, then it was appropriately
+    // marked to begin with, and we don't need to clean anything up
+    if (op->usesSpacebasePtr()) continue;
+
+    // If not the STORE may have triggered INDIRECTs that are unnecessary
+    PcodeOp *indOp = op->previousOp();
+    while(indOp != (PcodeOp *)0) {
+      if (indOp->code() != CPUI_INDIRECT) break;
+      Varnode *iopVn = indOp->getIn(1);
+      if (iopVn->getSpace()->getType()!=IPTR_IOP) break;
+      if (op != PcodeOp::getOpFromConst(iopVn->getAddr())) break;
+      PcodeOp *nextOp = indOp->previousOp();
+      if (indOp->getOut()->getSpace() == spc) {
+	fd->totalReplace(indOp->getOut(),indOp->getIn(0));
+	fd->opDestroy(indOp);		// Get rid of the INDIRECT
+      }
+      indOp = nextOp;
+    }
+  }
+}
+
 /// \brief Normalize p-code ops so that phi-node placement and renaming works
 ///
 /// The traditional phi-node placement and renaming algorithms don't expect
@@ -516,7 +1031,40 @@ void Heritage::guard(const Address &addr,int4 size,vector<Varnode *> &read,vecto
     guardReturns(flags,addr,size,write);
     if (fd->getArch()->highPtrPossible(addr,size)) {
       guardStores(addr,size,write);
-      //      guardLoads(flags,addr,size,write);
+      guardLoads(flags,addr,size,write);
+    }
+  }
+}
+
+/// \brief Guard an address range that is larger than any single parameter
+///
+/// In this situation, an address range is being heritaged, but only a piece of
+/// it can be a parameter for a given call. We have to construct a SUBPIECE that
+/// pulls out the potential parameter.
+/// \param fc is the call site potentially taking a parameter
+/// \param addr is the starting address of the range
+/// \param size is the size of the range in bytes
+void Heritage::guardCallOverlappingInput(FuncCallSpecs *fc,const Address &addr,int4 size)
+
+{
+  VarnodeData vData;
+
+  if (fc->getBiggestContainedInputParam(addr, size, vData)) {
+    ParamActive *active = fc->getActiveInput();
+    Address taddr(vData.space,vData.offset);
+    if (active->whichTrial(taddr, size) < 0) { // If not already a trial
+      int4 truncateAmount = addr.justifiedContain(size, taddr, vData.size, false);
+      PcodeOp *op = fc->getOp();
+      PcodeOp *subpieceOp = fd->newOp(2,op->getAddr());
+      fd->opSetOpcode(subpieceOp, CPUI_SUBPIECE);
+      Varnode *wholeVn = fd->newVarnode(size,addr);
+      wholeVn->setActiveHeritage();
+      fd->opSetInput(subpieceOp,wholeVn,0);
+      fd->opSetInput(subpieceOp,fd->newConstant(4,truncateAmount),1);
+      Varnode *vn = fd->newVarnodeOut(vData.size, taddr, subpieceOp);
+      fd->opInsertBefore(subpieceOp,op);
+      active->registerTrial(taddr, vData.size);
+      fd->opInsertInput(op, vn, op->numInput());
     }
   }
 }
@@ -574,20 +1122,25 @@ void Heritage::guardCalls(uint4 flags,const Address &addr,int4 size,vector<Varno
 	}
       }
       Address taddr(spc,off);
-      if (tryregister && fc->possibleInputParam(taddr,size)) {
-	ParamActive *active = fc->getActiveInput();
-	if (active->whichTrial(taddr,size)<0) { // If not already a trial
-	  PcodeOp *op = fc->getOp();
-	  active->registerTrial(taddr,size);
-	  Varnode *vn = fd->newVarnode(size,addr);
-	  vn->setActiveHeritage();
-	  fd->opInsertInput(op,vn,op->numInput());
+      if (tryregister) {
+	int4 inputCharacter = fc->characterizeAsInputParam(taddr,size);
+	if (inputCharacter == 1) {		// Call could be using this range as an input parameter
+	  ParamActive *active = fc->getActiveInput();
+	  if (active->whichTrial(taddr,size)<0) { // If not already a trial
+	    PcodeOp *op = fc->getOp();
+	    active->registerTrial(taddr,size);
+	    Varnode *vn = fd->newVarnode(size,addr);
+	    vn->setActiveHeritage();
+	    fd->opInsertInput(op,vn,op->numInput());
+	  }
 	}
+	else if (inputCharacter == 2)		// Call may be using part of this range as an input parameter
+	  guardCallOverlappingInput(fc, addr, size);
       }
     }
     // We do not guard the call if the effect is "unaffected" or "reload"
     if ((effecttype == EffectRecord::unknown_effect)||(effecttype == EffectRecord::return_address)) {
-      indop = fd->newIndirectOp(fc->getOp(),addr,size);
+      indop = fd->newIndirectOp(fc->getOp(),addr,size,0);
       indop->getIn(0)->setActiveHeritage();
       indop->getOut()->setActiveHeritage();
       write.push_back(indop->getOut());
@@ -618,17 +1171,63 @@ void Heritage::guardStores(const Address &addr,int4 size,vector<Varnode *> &writ
 {
   list<PcodeOp *>::const_iterator iter,iterend;
   PcodeOp *op,*indop;
+  AddrSpace *spc = addr.getSpace();
+  AddrSpace *container = spc->getContain();
 
   iterend = fd->endOp(CPUI_STORE);
   for(iter=fd->beginOp(CPUI_STORE);iter!=iterend;++iter) {
     op = *iter;
     if (op->isDead()) continue;
-    if (addr.getSpace()->contain(Address::getSpaceFromConst(op->getIn(0)->getAddr()))) { // Does store affect same space
-      indop = fd->newIndirectOp(op,addr,size);
+    AddrSpace *storeSpace = Address::getSpaceFromConst(op->getIn(0)->getAddr());
+    if ((container == storeSpace && op->usesSpacebasePtr()) ||
+	(spc == storeSpace)) {
+      indop = fd->newIndirectOp(op,addr,size,PcodeOp::indirect_store);
       indop->getIn(0)->setActiveHeritage();
       indop->getOut()->setActiveHeritage();
       write.push_back(indop->getOut());
     }
+  }
+}
+
+/// \brief Guard LOAD ops in preparation for the renaming algorithm
+///
+/// The op must be in the loadGuard list, which means it may pull values from an indexed
+/// range on the stack.  A COPY guard is placed for the given range on any LOAD op whose
+/// indexed range it intersects.
+/// \param flags is boolean properties associated with the address
+/// \param addr is the first address of the given range
+/// \param size is the number of bytes in the given range
+/// \param write is the list of written Varnodes in the range (may be updated)
+void Heritage::guardLoads(uint4 flags,const Address &addr,int4 size,vector<Varnode *> &write)
+
+{
+  PcodeOp *copyop;
+  list<LoadGuard>::iterator iter;
+
+  if ((flags & Varnode::addrtied)==0) return;	// If not address tied, don't consider for index alias
+  iter = loadGuard.begin();
+  while(iter!=loadGuard.end()) {
+    LoadGuard &guardRec(*iter);
+    if (!guardRec.isValid(CPUI_LOAD)) {
+      list<LoadGuard>::iterator copyIter = iter;
+      ++iter;
+      loadGuard.erase(copyIter);
+      continue;
+    }
+    ++iter;
+    if (guardRec.spc != addr.getSpace()) continue;
+    if (addr.getOffset() < guardRec.minimumOffset) continue;
+    if (addr.getOffset() > guardRec.maximumOffset) continue;
+    copyop = fd->newOp(1,guardRec.op->getAddr());
+    Varnode *vn = fd->newVarnodeOut(size,addr,copyop);
+    vn->setActiveHeritage();
+    vn->setAddrForce();
+    fd->opSetOpcode(copyop,CPUI_COPY);
+    Varnode *invn = fd->newVarnode(size,addr);
+    invn->setActiveHeritage();
+    fd->opSetInput(copyop,invn,0);
+    fd->opInsertBefore(copyop,guardRec.op);
+    loadCopyOps.push_back(copyop);
   }
 }
 
@@ -681,31 +1280,6 @@ void Heritage::guardReturns(uint4 flags,const Address &addr,int4 size,vector<Var
     fd->opInsertBefore(copyop,op);
   }
 }
-
-// void Heritage::guardLoads(uint4 flags,const Address &addr,int4 size,vector<Varnode *> &write)
-
-// {
-//   list<PcodeOp *>::const_iterator iter,iterend;
-//   PcodeOp *op,*copyop;
-
-//   iterend = fd->endOp(CPUI_LOAD);
-//   for(iter=fd->beginOp(CPUI_LOAD);iter!=iterend;++iter) {
-//     op = *iter;
-//     if (op->isDead()) continue;
-// 				// Check if load could possible read from this addr
-//     if (!Address::getSpaceFromConst(op->getIn(0)->getAddr())->contain(addr.getSpace()))
-//       continue;
-//     copyop = fd->newOp(1,op->getAddr());
-//     Varnode *vn = fd->newVarnodeOut(size,addr,copyop);
-//     vn->setActiveHeritage();
-//     vn->setAddrForce();
-//     fd->opSetOpcode(copyop,CPUI_COPY);
-//     Varnode *invn = fd->newVarnode(size,addr);
-//     vn->setActiveHeritage();
-//     fd->opSetInput(copyop,invn,0);
-//     fd->opInsertBefore(copyop,op);
-//   }
-// }
 
 /// \brief Build a refinement array given an address range and a list of Varnodes
 ///
@@ -1638,11 +2212,16 @@ void Heritage::buildInfoList(void)
 
 {
   if (!infolist.empty()) return;
-  AddrSpace *spc;
   const AddrSpaceManager *manage = fd->getArch();
+  infolist.resize(manage->numSpaces());
   for(int4 i=0;i<manage->numSpaces();++i) {
-    spc = manage->getSpace(i);
-    infolist.push_back(HeritageInfo(spc,spc->getDelay(),spc->getDeadcodeDelay()));
+    AddrSpace *spc = manage->getSpace(i);
+    if (spc == (AddrSpace *)0)
+      infolist[i].set((AddrSpace *)0,0,0);
+    else if (!spc->isHeritaged())
+      infolist[i].set((AddrSpace *)0,spc->getDelay(),spc->getDeadcodeDelay());
+    else
+      infolist[i].set(spc,spc->getDelay(),spc->getDeadcodeDelay());
   }
 }
 
@@ -1653,12 +2232,13 @@ void Heritage::heritage(void)
 
 {
   VarnodeLocSet::const_iterator iter,enditer;
-  AddrSpace *space;
   HeritageInfo *info;
   Varnode *vn;
   bool needwarning;
   Varnode *warnvn = (Varnode *)0;
-  const AddrSpaceManager *manage = fd->getArch();
+  int4 reprocessStackCount = 0;
+  AddrSpace *stackSpace = (AddrSpace *)0;
+  vector<PcodeOp *> freeStores;
   PreferSplitManager splitmanage;
 
   if (maxdepth == -1)		// Has a restructure been forced
@@ -1669,14 +2249,20 @@ void Heritage::heritage(void)
     splitmanage.init(fd,&fd->getArch()->splitrecords);
     splitmanage.split();
   }
-  for(int4 i=0;i<manage->numSpaces();++i) {
-    space = manage->getSpace(i);
-    if (!space->isHeritaged()) continue;
-    info = getInfo(space);
+  for(int4 i=0;i<infolist.size();++i) {
+    info = &infolist[i];
+    if (!info->isHeritaged()) continue;
     if (pass < info->delay) continue; // It is too soon to heritage this space
+    if (!info->loadGuardSearch) {
+      info->loadGuardSearch = true;
+      if (discoverIndexedStackPointers(info->space,freeStores,true)) {
+	    reprocessStackCount += 1;
+	    stackSpace = info->space;
+      }
+    }
     needwarning = false;
-    iter = fd->beginLoc(space);
-    enditer = fd->endLoc(space);
+    iter = fd->beginLoc(info->space);
+    enditer = fd->endLoc(info->space);
 
     while(iter != enditer) {
       vn = *iter++;
@@ -1727,9 +2313,26 @@ void Heritage::heritage(void)
   }
   placeMultiequals();
   rename();
+  if (reprocessStackCount > 0)
+    reprocessFreeStores(stackSpace, freeStores);
+  analyzeNewLoadGuards();
+  handleNewLoadCopies();
   if (pass == 0)
     splitmanage.splitAdditional();
   pass += 1;
+}
+
+/// \param op is the given PcodeOp
+/// \return the associated LoadGuard or NULL
+const LoadGuard *Heritage::getStoreGuard(PcodeOp *op) const
+
+{
+  list<LoadGuard>::const_iterator iter;
+  for(iter=storeGuard.begin();iter!=storeGuard.end();++iter) {
+    if ((*iter).op == op)
+      return &(*iter);
+  }
+  return (const LoadGuard *)0;
 }
 
 /// \brief Get the number times heritage was performed for the given address space
@@ -1742,7 +2345,7 @@ int4 Heritage::numHeritagePasses(AddrSpace *spc) const
 
 {
   const HeritageInfo *info = getInfo(spc);
-  if (info == (const HeritageInfo *)0)
+  if (!info->isHeritaged())
     throw LowlevelError("Trying to calculate passes for non-heritaged space");
   return (info->delay - pass);
 }
@@ -1754,8 +2357,6 @@ void Heritage::seenDeadCode(AddrSpace *spc)
 
 {
   HeritageInfo *info = getInfo(spc);
-  if (info == (HeritageInfo *)0)
-    throw LowlevelError("Informed of deadcode removal for non-heritaged space");
   info->deadremoved = 1;
 }
 
@@ -1768,8 +2369,6 @@ int4 Heritage::getDeadCodeDelay(AddrSpace *spc) const
 
 {
   const HeritageInfo *info = getInfo(spc);
-  if (info == (const HeritageInfo *)0)
-    throw LowlevelError("Could not get heritage delay for space: "+spc->getName());
   return info->deadcodedelay;
 }
 
@@ -1782,8 +2381,6 @@ void Heritage::setDeadCodeDelay(AddrSpace *spc,int4 delay)
 
 {
   HeritageInfo *info = getInfo(spc);
-  if (info == (HeritageInfo *)0)
-    throw LowlevelError("Setting heritage delay for non-heritaged space");
   if (delay < info->delay)
     throw LowlevelError("Illegal deadcode delay setting");
   info->deadcodedelay = delay;
@@ -1798,8 +2395,6 @@ bool Heritage::deadRemovalAllowed(AddrSpace *spc) const
 
 {
   const HeritageInfo *info = getInfo(spc);
-  if (info == (HeritageInfo *)0)
-    throw LowlevelError("Heritage query for non-heritaged space");
   return (pass > info->deadcodedelay);
 }
 
@@ -1814,8 +2409,6 @@ bool Heritage::deadRemovalAllowedSeen(AddrSpace *spc)
 
 {
   HeritageInfo *info = getInfo(spc);
-  if (info == (HeritageInfo *)0)
-    throw LowlevelError("Heritage query for non-heritaged space");
   bool res = (pass > info->deadcodedelay);
   if (res)
     info->deadremoved = 1;
@@ -1835,6 +2428,8 @@ void Heritage::clear(void)
   depth.clear();
   merge.clear();
   clearInfoList();
+  loadGuard.clear();
+  storeGuard.clear();
   maxdepth = -1;
   pass = 0;
 }

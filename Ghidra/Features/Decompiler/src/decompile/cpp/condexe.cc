@@ -367,10 +367,11 @@ void ConditionalExecution::buildHeritageArray(void)
 {
   heritageyes.clear();
   Architecture *glb = fd->getArch();
+  heritageyes.resize(glb->numSpaces(),false);
   for(int4 i=0;i<glb->numSpaces();++i) {
     AddrSpace *spc = glb->getSpace(i);
+    if (spc == (AddrSpace *)0) continue;
     int4 index = spc->getIndex();
-    heritageyes.push_back(false);
     if (!spc->isHeritaged()) continue;
     if (fd->numHeritagePasses(spc) > 0)
       heritageyes[index] = true;	// At least one pass has been performed on the space

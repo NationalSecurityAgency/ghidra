@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +15,6 @@
  */
 package docking.widgets.dialogs;
 
-import ghidra.framework.OperatingSystem;
-import ghidra.framework.Platform;
-
 import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
@@ -27,11 +23,15 @@ import javax.swing.*;
 
 import docking.DialogComponentProvider;
 import docking.DockingUtils;
+import docking.widgets.label.GDLabel;
+import docking.widgets.label.GLabel;
+import ghidra.framework.OperatingSystem;
+import ghidra.framework.Platform;
 
 public class MultiLineInputDialog extends DialogComponentProvider {
 
-	private static final KeyStroke SUBMIT_KEYSTROKE = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER,
-		DockingUtils.CONTROL_KEY_MODIFIER_MASK);
+	private static final KeyStroke SUBMIT_KEYSTROKE =
+		KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, DockingUtils.CONTROL_KEY_MODIFIER_MASK);
 
 	private boolean isCanceled;
 	private JTextArea inputTextArea;
@@ -71,7 +71,7 @@ public class MultiLineInputDialog extends DialogComponentProvider {
 		}
 		inputTextArea.selectAll();
 
-		JLabel messageLabel = new JLabel();
+		JLabel messageLabel = new GDLabel();
 		messageLabel.setText(messageText);
 		messageLabel.setBorder(BorderFactory.createEmptyBorder(0, 0, 5, 0));
 
@@ -80,7 +80,7 @@ public class MultiLineInputDialog extends DialogComponentProvider {
 		if (OS == OperatingSystem.MAC_OS_X) {
 			metaKeyText = "Command";
 		}
-		JLabel hintLabel = new JLabel("(" + metaKeyText + "-Enter to accept)");
+		JLabel hintLabel = new GLabel("(" + metaKeyText + "-Enter to accept)");
 		hintLabel.setHorizontalAlignment(SwingConstants.CENTER);
 		Font font = hintLabel.getFont();
 		Font smallerFont = font.deriveFont(12F);
@@ -92,7 +92,7 @@ public class MultiLineInputDialog extends DialogComponentProvider {
 		dataPanel.add(new JScrollPane(inputTextArea), BorderLayout.CENTER);
 		dataPanel.add(hintLabel, BorderLayout.SOUTH);
 
-		JLabel iconLabel = new JLabel();
+		JLabel iconLabel = new GDLabel();
 		iconLabel.setIcon(icon);
 		iconLabel.setVerticalAlignment(SwingConstants.TOP);
 

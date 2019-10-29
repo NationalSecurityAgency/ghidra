@@ -25,6 +25,8 @@ import org.junit.Test;
 
 import docking.widgets.dialogs.NumberInputDialog;
 import ghidra.program.model.data.*;
+import ghidra.util.InvalidNameException;
+import ghidra.util.exception.*;
 
 public class StructureEditorUnlockedActions4Test
 		extends AbstractStructureEditorUnlockedActionsTest {
@@ -61,7 +63,9 @@ public class StructureEditorUnlockedActions4Test
 	public void testArrayOnVarDt() throws Exception {
 		init(complexStructure, pgmTestCat);
 		NumberInputDialog dialog;
-		model.clearComponent(6);
+		runSwing(() -> {
+			model.clearComponent(6);
+		});
 		int num = model.getNumComponents();
 
 		setSelection(new int[] { 5 });
@@ -100,10 +104,24 @@ public class StructureEditorUnlockedActions4Test
 	@Test
 	public void testDuplicateAction() throws Exception {
 		init(complexStructure, pgmTestCat);
-
-		model.setComponentName(1, "comp1");
-		model.setComponentComment(1, "comment 1");
-		model.clearComponent(2);
+		runSwing(() -> {
+			try {
+				model.setComponentName(1, "comp1");
+				model.setComponentComment(1, "comment 1");
+				model.clearComponent(2);
+			}
+			catch (InvalidInputException e) {
+				failWithException("Unexpected error", e);
+			}
+			catch (InvalidNameException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			catch (DuplicateNameException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		});
 		int len = model.getLength();
 		int num = model.getNumComponents();
 
@@ -234,8 +252,15 @@ public class StructureEditorUnlockedActions4Test
 		init(complexStructure, pgmTestCat);
 
 		setSelection(new int[] { 3, 4 });
-		model.clearSelectedComponents();
-		model.deleteSelectedComponents();
+		runSwing(() -> {
+			try {
+				model.clearSelectedComponents();
+				model.deleteSelectedComponents();
+			}
+			catch (UsrException e) {
+				failWithException("Unexpected error", e);
+			}
+		});
 		DataType viewCopy = model.viewComposite.clone(null);
 
 		assertTrue(!complexStructure.isEquivalent(model.viewComposite));

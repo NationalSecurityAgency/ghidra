@@ -15,7 +15,6 @@
  */
 package ghidra.util.task;
 
-import ghidra.util.Issue;
 import ghidra.util.datastruct.WeakDataStructureFactory;
 import ghidra.util.datastruct.WeakSet;
 import ghidra.util.exception.CancelledException;
@@ -69,6 +68,11 @@ public class TaskMonitorAdapter implements TaskMonitor {
 	}
 
 	@Override
+	public String getMessage() {
+		return null;
+	}
+
+	@Override
 	public void setProgress(long value) {
 		// do nothing
 	}
@@ -107,6 +111,11 @@ public class TaskMonitorAdapter implements TaskMonitor {
 	}
 
 	@Override
+	public boolean isIndeterminate() {
+		return false;
+	}
+
+	@Override
 	public synchronized void setCancelEnabled(boolean enable) {
 		cancelEnabled = enable;
 	}
@@ -135,6 +144,8 @@ public class TaskMonitorAdapter implements TaskMonitor {
 			}
 			cancelled = false;
 		}
+
+		// TODO this seems like a mistake, to notify of 'cancelled' when clearning 
 		notifyChangeListeners();
 	}
 
@@ -162,20 +173,5 @@ public class TaskMonitorAdapter implements TaskMonitor {
 	@Override
 	public synchronized void removeCancelledListener(CancelledListener listener) {
 		listeners.remove(listener);
-	}
-
-	@Override
-	public void addIssueListener(IssueListener listener) {
-		// do nothing
-	}
-
-	@Override
-	public void removeIssueListener(IssueListener listener) {
-		// do nothing
-	}
-
-	@Override
-	public void reportIssue(Issue issue) {
-		// do nothing
 	}
 }

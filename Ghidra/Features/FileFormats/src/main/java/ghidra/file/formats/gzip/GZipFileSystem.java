@@ -147,12 +147,11 @@ public class GZipFileSystem implements GFileSystem {
 	}
 
 	@Override
-	public String getInfo(GFile file, TaskMonitor monitor) throws IOException {
+	public String getInfo(GFile file, TaskMonitor monitor) {
 		if (payload.equals(file)) {
 			return FSUtilities.infoMapToString(getInfoMap());
 		}
 		return null;
-
 	}
 
 	public Map<String, String> getInfoMap() {

@@ -32,7 +32,7 @@ import ghidra.program.model.symbol.SourceType;
 import ghidra.program.model.symbol.Symbol;
 import ghidra.util.InvalidNameException;
 import ghidra.util.exception.DuplicateNameException;
-import ghidra.util.task.TaskMonitorAdapter;
+import ghidra.util.task.TaskMonitor;
 
 /**
  * Tests for merging data types.
@@ -1198,7 +1198,7 @@ public class DataTypeMerge2Test extends AbstractDataTypeMergeTest {
 				Structure bar = (Structure) dtm.getDataType(new CategoryPath("/MISC"), "Bar");
 				try {
 					// remove Bar from the data type manager
-					dtm.remove(bar, TaskMonitorAdapter.DUMMY_MONITOR);
+					dtm.remove(bar, TaskMonitor.DUMMY);
 					commit = true;
 				}
 				finally {
@@ -1290,7 +1290,7 @@ public class DataTypeMerge2Test extends AbstractDataTypeMergeTest {
 				Structure bar = (Structure) dtm.getDataType(new CategoryPath("/MISC"), "Bar");
 				try {
 					// remove Bar from the data type manager
-					dtm.remove(bar, TaskMonitorAdapter.DUMMY_MONITOR);
+					dtm.remove(bar, TaskMonitor.DUMMY);
 					commit = true;
 				}
 				finally {
@@ -1430,7 +1430,7 @@ public class DataTypeMerge2Test extends AbstractDataTypeMergeTest {
 				try {
 					fd.setReturnType(bar);
 					Structure foo = (Structure) dtm.getDataType(new CategoryPath("/MISC"), "Foo");
-					dtm.remove(foo, TaskMonitorAdapter.DUMMY_MONITOR);
+					dtm.remove(foo, TaskMonitor.DUMMY);
 					commit = true;
 				}
 				finally {
@@ -1498,7 +1498,7 @@ public class DataTypeMerge2Test extends AbstractDataTypeMergeTest {
 				try {
 					fd.setVarArgs(true);
 					Structure foo = (Structure) dtm.getDataType(new CategoryPath("/MISC"), "Foo");
-					dtm.remove(foo, TaskMonitorAdapter.DUMMY_MONITOR);
+					dtm.remove(foo, TaskMonitor.DUMMY);
 					commit = true;
 				}
 				finally {
@@ -1567,7 +1567,7 @@ public class DataTypeMerge2Test extends AbstractDataTypeMergeTest {
 				try {
 					fd.setVarArgs(true);
 					Structure foo = (Structure) dtm.getDataType(new CategoryPath("/MISC"), "Foo");
-					dtm.remove(foo, TaskMonitorAdapter.DUMMY_MONITOR);
+					dtm.remove(foo, TaskMonitor.DUMMY);
 					commit = true;
 				}
 				finally {
@@ -1618,6 +1618,79 @@ public class DataTypeMerge2Test extends AbstractDataTypeMergeTest {
 		checkDataType(new Undefined4DataType(), vars[2].getDataType());
 		checkDataType(new Undefined4DataType(), vars[3].getDataType());
 		assertEquals(true, fd.hasVarArgs());
+	}
+
+	@Test
+	public void testEditFuncSig5() throws Exception {
+
+		mtf.initialize("notepad3", new ProgramModifierListener() {
+			/* (non-Javadoc)
+			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
+			 */
+			@Override
+			public void modifyLatest(ProgramDB program) throws Exception {
+				boolean commit = false;
+				DataTypeManager dtm = program.getDataTypeManager();
+				int transactionID = program.startTransaction("test");
+
+				FunctionDefinition fd =
+					(FunctionDefinition) dtm.getDataType(new CategoryPath("/MISC"),
+						"MyFunctionDef");
+
+				try {
+					fd.setReturnType(VoidDataType.dataType);
+
+					commit = true;
+				}
+				finally {
+					program.endTransaction(transactionID, commit);
+				}
+			}
+
+			/* (non-Javadoc)
+			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
+			 */
+			@Override
+			public void modifyPrivate(ProgramDB program) throws Exception {
+				boolean commit = false;
+				DataTypeManager dtm = program.getDataTypeManager();
+
+				FunctionDefinition fd =
+					(FunctionDefinition) dtm.getDataType(new CategoryPath("/MISC"),
+						"MyFunctionDef");
+				ParameterDefinition[] vars = fd.getArguments();
+
+				int transactionID = program.startTransaction("test");
+				try {
+					ParameterDefinition[] newVars = new ParameterDefinition[vars.length + 1];
+					System.arraycopy(vars, 0, newVars, 0, vars.length);
+					newVars[vars.length] = new ParameterDefinitionImpl("Bar", WordDataType.dataType,
+						"this is another comment");
+					fd.setArguments(newVars);
+					fd.setVarArgs(true);
+					commit = true;
+				}
+				finally {
+					program.endTransaction(transactionID, commit);
+				}
+			}
+		});
+		executeMerge(DataTypeMergeManager.OPTION_MY);
+		DataTypeManager dtm = resultProgram.getDataTypeManager();
+		FunctionDefinition fd =
+			(FunctionDefinition) dtm.getDataType(new CategoryPath("/MISC"), "MyFunctionDef");
+		assertNotNull(fd);
+		Structure dll = (Structure) dtm.getDataType(CategoryPath.ROOT, "DLL_Table");
+		assertEquals(dll, fd.getReturnType());
+		ParameterDefinition[] vars = fd.getArguments();
+		assertTrue(vars[0].getDataType() instanceof WordDataType);
+		assertTrue(vars[1].getDataType() instanceof CharDataType);
+		assertTrue(vars[2].getDataType() instanceof Undefined4DataType);
+		assertTrue(vars[3].getDataType() instanceof Undefined4DataType);
+		assertTrue(vars[4].getDataType() instanceof WordDataType);
+		assertEquals("Bar", vars[4].getName());
+		assertEquals("this is another comment", vars[4].getComment());
+		assertTrue(fd.hasVarArgs());
 	}
 
 	private void checkDataType(DataType expectedDataType, DataType actualDataType) {

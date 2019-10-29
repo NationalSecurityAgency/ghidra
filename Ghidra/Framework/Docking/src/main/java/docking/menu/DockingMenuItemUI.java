@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,18 +50,10 @@ import docking.util.GraphicsUtils;
  */
 public class DockingMenuItemUI extends MenuItemUI {
 
-	static final String MAX_TEXT_WIDTH = "maxTextWidth1";
-	static final String MAX_ACC_WIDTH = "maxAccWidth1";
-	static final String TABULATOR_PROPERTIES = "menuItemTabulator";
-	public static int ARROW_GAP = 4;
-	static final int ICON_WIDTH = 16;
-	static final int ICON_HEIGHT = 16;
-	static final int LEFT_MARGIN = 2;
-	static final int TOP_MARGIN = 2;
-	static final int RIGHT_MARGIN = 4;
-	static final int BOTTOM_MARGIN = 2;
-	static final int ACC_GAP = 5;
-	static final int COLUMN_PADDING = 5;
+	private static final String TABULATOR_PROPERTIES = "menuItemTabulator";
+
+	// make this big enough to differentiate columns
+	private static final int COLUMN_PADDING = 20;
 
 	protected MenuItemUI ui;
 
@@ -127,19 +118,24 @@ public class DockingMenuItemUI extends MenuItemUI {
 		sg2.setDoImage(false);
 
 		Icon origIcon = c.getIcon();
+		int iconWidth = 0;
+		if (origIcon != null) {
+			iconWidth = origIcon.getIconWidth();
+		}
 		String origText = c.getText();
 		KeyStroke origAcc = c.getAccelerator();
 		String[] parts = origText.split("\t");
 		for (int i = 0; i < parts.length; i++) {
-			if (i == 1) {
-				c.setIcon(null);
-				c.setAccelerator(null);
-			}
-			c.setText(parts[i]);
 
+			c.setText(parts[i]);
 			ui.paint(sg2, c);
 
-			sg2.translate(t.columns.get(i) + COLUMN_PADDING, 0);
+			sg2.translate(iconWidth + t.columns.get(i) + COLUMN_PADDING, 0);
+
+			// this is only needed for the first pass
+			iconWidth = 0;
+			c.setIcon(null);
+			c.setAccelerator(null);
 		}
 
 		c.setIcon(origIcon);
@@ -154,10 +150,9 @@ public class DockingMenuItemUI extends MenuItemUI {
 		if (text.indexOf('\t') == -1) {
 			return uiPref;
 		}
+
 		int extra = uiPref.width - textWidth(c, text);
-
 		MenuTabulator tabulator = MenuTabulator.tabulate((JMenuItem) c);
-
 		return new Dimension(tabulator.getWidth() + extra, uiPref.height);
 	}
 
@@ -303,14 +298,16 @@ public class DockingMenuItemUI extends MenuItemUI {
 		}
 
 		@Override
-		public void drawRoundRect(int x, int y, int width, int height, int arcWidth, int arcHeight) {
+		public void drawRoundRect(int x, int y, int width, int height, int arcWidth,
+				int arcHeight) {
 			if (doDraw) {
 				g.drawRoundRect(x, y, width, height, arcWidth, arcHeight);
 			}
 		}
 
 		@Override
-		public void fillRoundRect(int x, int y, int width, int height, int arcWidth, int arcHeight) {
+		public void fillRoundRect(int x, int y, int width, int height, int arcWidth,
+				int arcHeight) {
 			if (doFill) {
 				g.fillRoundRect(x, y, width, height, arcWidth, arcHeight);
 			}

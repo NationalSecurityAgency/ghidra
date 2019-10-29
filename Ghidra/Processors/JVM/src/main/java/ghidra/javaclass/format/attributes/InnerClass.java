@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +15,13 @@
  */
 package ghidra.javaclass.format.attributes;
 
+import java.io.IOException;
+
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.StructConverter;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.data.StructureDataType;
 import ghidra.util.exception.DuplicateNameException;
-
-import java.io.IOException;
 
 /**
  * NOTE: THE FOLLOWING TEXT EXTRACTED FROM JVMS7.PDF
@@ -44,7 +43,7 @@ public class InnerClass implements StructConverter {
 	private short innerNameIndex;
 	private short innerClassAccessFlags;
 
-	public InnerClass( BinaryReader reader ) throws IOException {
+	public InnerClass(BinaryReader reader) throws IOException {
 		innerClassInfoIndex = reader.readNextShort();
 		outerClassInfoIndex = reader.readNextShort();
 		innerNameIndex = reader.readNextShort();
@@ -58,8 +57,8 @@ public class InnerClass implements StructConverter {
 	 * items in the classes array entry give information about C.
 	 * @return a valid index into the constant_pool table
 	 */
-	public short getInnerClassInfoIndex() {
-		return innerClassInfoIndex;
+	public int getInnerClassInfoIndex() {
+		return innerClassInfoIndex & 0xffff;
 	}
 
 	/**
@@ -74,8 +73,8 @@ public class InnerClass implements StructConverter {
 	 * interface of which C is a member.
 	 * @return a valid index into the constant_pool table, or zero
 	 */
-	public short getOuterClassInfoIndex() {
-		return outerClassInfoIndex;
+	public int getOuterClassInfoIndex() {
+		return outerClassInfoIndex & 0xffff;
 	}
 
 	/**
@@ -88,8 +87,8 @@ public class InnerClass implements StructConverter {
 	 * compiled.
 	 * @return a valid index into the constant_pool table, or zero
 	 */
-	public short getInnerNameIndex() {
-		return innerNameIndex;
+	public int getInnerNameIndex() {
+		return innerNameIndex & 0xffff;
 	}
 
 	/**
@@ -107,11 +106,11 @@ public class InnerClass implements StructConverter {
 
 	@Override
 	public DataType toDataType() throws DuplicateNameException, IOException {
-		StructureDataType structure = new StructureDataType( "inner_class", 0 );
-		structure.add( WORD, "inner_class_info_index", null );
-		structure.add( WORD, "outer_class_info_index", null );
-		structure.add( WORD, "inner_name_index", null );
-		structure.add( WORD, "inner_class_access_flags", null );
+		StructureDataType structure = new StructureDataType("inner_class", 0);
+		structure.add(WORD, "inner_class_info_index", null);
+		structure.add(WORD, "outer_class_info_index", null);
+		structure.add(WORD, "inner_name_index", null);
+		structure.add(WORD, "inner_class_access_flags", null);
 		return structure;
 	}
 

@@ -827,14 +827,14 @@ int4 ActionShadowVar::apply(Funcdata &data)
 /// \param rampoint will hold the Address of the resolved symbol
 /// \param data is the function being analyzed
 /// \return the recovered symbol or NULL
-SymbolEntry *ActionConstantPtr::isPointer(AddrSpace *spc,Varnode *vn,PcodeOp *op,Address &rampoint,Funcdata &data)
+SymbolEntry *ActionConstantPtr::isPointer(AddrSpace *spc,Varnode *vn,PcodeOp *op,Address &rampoint,uintb &fullEncoding,Funcdata &data)
 
 {
   bool needexacthit;
   Architecture *glb = data.getArch();
   Varnode *outvn;
   if (vn->getType()->getMetatype() == TYPE_PTR) { // Are we explicitly marked as a pointer
-    rampoint = glb->resolveConstant(spc,vn->getOffset(),vn->getSize(),op->getAddr());
+    rampoint = glb->resolveConstant(spc,vn->getOffset(),vn->getSize(),op->getAddr(),fullEncoding);
     needexacthit = false;
   }
   else {
@@ -881,7 +881,7 @@ SymbolEntry *ActionConstantPtr::isPointer(AddrSpace *spc,Varnode *vn,PcodeOp *op
     // Check if the constant looks like a single bit or mask
     if (bit_transitions(vn->getOffset(),vn->getSize()) < 3)
       return (SymbolEntry *)0;
-    rampoint = glb->resolveConstant(spc,vn->getOffset(),vn->getSize(),op->getAddr());
+    rampoint = glb->resolveConstant(spc,vn->getOffset(),vn->getSize(),op->getAddr(),fullEncoding);
   }
 
   if (rampoint.isInvalid()) return (SymbolEntry *)0;
@@ -943,10 +943,11 @@ int4 ActionConstantPtr::apply(Funcdata &data)
     else if ((opc == CPUI_PTRSUB)||(opc==CPUI_PTRADD))
       continue;
     Address rampoint;
-    entry = isPointer(rspc,vn,op,rampoint,data);
+    uintb fullEncoding;
+    entry = isPointer(rspc,vn,op,rampoint,fullEncoding,data);
     vn->setPtrCheck();		// Set check flag AFTER searching for symbol
     if (entry != (SymbolEntry *)0) {
-      data.spacebaseConstant(op,slot,entry,rampoint,vn->getOffset(),vn->getSize());
+      data.spacebaseConstant(op,slot,entry,rampoint,fullEncoding,vn->getSize());
       if ((opc == CPUI_INT_ADD)&&(slot==1))
 	data.opSwapInput(op,0,1);
       count += 1;
@@ -1144,7 +1145,8 @@ int4 ActionDirectWrite::apply(Funcdata &data)
       dvn = op->getOut();
       if (!dvn->isDirectWrite()) {
 	dvn->setDirectWrite();
-	if (propagateIndirect || op->code() != CPUI_INDIRECT)	// If INDIRECT, output is marked, but does not propagate
+	// For call based INDIRECTs, output is marked, but does not propagate depending on setting
+	if (propagateIndirect || op->code() != CPUI_INDIRECT || op->isIndirectStore())
 	  worklist.push_back(dvn);
       }
     }
@@ -1715,7 +1717,13 @@ uint4 ActionLikelyTrash::countMarks(PcodeOp *op)
 	res += 1;
 	break;
       }
-      if (!vn->isWritten()||(vn->getDef()->code()!=CPUI_INDIRECT)) // Chain up through INDIRECTs
+      if (!vn->isWritten()) break;
+      PcodeOp *defOp = vn->getDef();
+      if (defOp == op) {	// We have looped all the way around
+	res += 1;
+	break;
+      }
+      else if (defOp->code() != CPUI_INDIRECT)	// Chain up through INDIRECTs
 	break;
       vn = vn->getDef()->getIn(0);
     }
@@ -1762,6 +1770,12 @@ bool ActionLikelyTrash::traceTrash(Varnode *vn,vector<PcodeOp *> &indlist)
       case CPUI_INDIRECT:
 	if (outvn->isPersist())
 	  istrash = false;
+	else if (op->isIndirectStore()) {
+	  if (!outvn->isMark()) {
+	    outvn->setMark();
+	    markedlist.push_back(outvn);
+	  }
+	}
 	else
 	  indlist.push_back(op);
 	break;
@@ -2137,11 +2151,11 @@ void ActionNameVars::makeRec(ProtoParameter *param,Varnode *vn,map<HighVariable 
     PcodeOp *castop = vn->getDef();
     if (castop->code() == CPUI_CAST) {
       vn = castop->getIn(0);
-      ct = (Datatype *)0;	// Indicate that this is a less prefered name
+      ct = (Datatype *)0;	// Indicate that this is a less preferred name
     }
   }
   HighVariable *high = vn->getHigh();
-  if (!high->isMark()) return;	// Not one of the 
+  if (!high->isMark()) return;	// Not one of the variables needing a name
 
   map<HighVariable *,OpRecommend>::iterator iter = recmap.find(high);
   if (iter != recmap.end()) {	// We have seen this varnode before
@@ -2178,6 +2192,7 @@ void ActionNameVars::lookForFuncParamNames(Funcdata &data,const vector<Varnode *
   for(uint4 i=0;i<varlist.size();++i) {	// Mark all the varnodes that can accept a name from a parameter
     Varnode *vn = varlist[i];
     if (vn->isFree()) continue;
+    if (vn->isInput()) continue;	// Don't override unaffected or input naming strategy
     Symbol *sym = vn->getHigh()->getSymbol();
     if (sym == (Symbol *)0) continue;
     if (!sym->isNameUndefined()) continue;
@@ -2226,6 +2241,7 @@ int4 ActionNameVars::apply(Funcdata &data)
 
   for(int4 i=0;i<manage->numSpaces();++i) { // Build a list of nameable highs
     spc = manage->getSpace(i);
+    if (spc == (AddrSpace *)0) continue;
     enditer = data.endLoc(spc);
     for(iter=data.beginLoc(spc);iter!=enditer;++iter) {
       Varnode *curvn = *iter;
@@ -2494,8 +2510,8 @@ void ActionMarkExplicit::checkNewToConstructor(Funcdata &data,Varnode *vn)
   if (firstuse->numInput() < 2) return;		// Must have at least 1 parameter (plus destination varnode)
   if (firstuse->getIn(1) != vn) return;		// First parameter must result of new
 //  if (!fc->isConstructor()) return;		// Function must be a constructor
-  data.opSetFlag(firstuse,PcodeOp::special_print);	// Mark call to print the new operator as well
-  data.opSetFlag(op,PcodeOp::nonprinting);	// Don't print the new operator as stand-alone operation
+  data.opMarkSpecialPrint(firstuse);		// Mark call to print the new operator as well
+  data.opMarkNonPrinting(op);			// Don't print the new operator as stand-alone operation
 }
 
 int4 ActionMarkExplicit::apply(Funcdata &data)
@@ -3081,7 +3097,7 @@ int4 ActionDeadCode::apply(Funcdata &data)
 				// Set pre-live registers
   for(i=0;i<manage->numSpaces();++i) {
     spc = manage->getSpace(i);
-    if (!spc->doesDeadcode()) continue;
+    if (spc == (AddrSpace *)0 || !spc->doesDeadcode()) continue;
     if (data.deadRemovalAllowed(spc)) continue; // Mark consumed if we have NOT heritaged
     viter = data.beginLoc(spc);
     endviter = data.endLoc(spc);
@@ -3125,7 +3141,7 @@ int4 ActionDeadCode::apply(Funcdata &data)
 
   for(i=0;i<manage->numSpaces();++i) {
     spc = manage->getSpace(i);
-    if (!spc->doesDeadcode()) continue;
+    if (spc == (AddrSpace *)0 || !spc->doesDeadcode()) continue;
     if (!data.deadRemovalAllowed(spc)) continue; // Don't eliminate if we haven't heritaged
     viter = data.beginLoc(spc);
     endviter = data.endLoc(spc);
@@ -3246,7 +3262,7 @@ int4 ActionConditionalConst::apply(Funcdata &data)
     if (flipEdge)
       constEdge = 1 - constEdge;
     FlowBlock *constBlock = bl->getOut(constEdge);
-    if (constBlock->sizeIn() != 1) continue;	// Must only be one path to constant block directly through CBRANCH
+    if (!constBlock->restrictedByConditional(bl)) continue;	// Make sure condition holds
     propagateConstant(varVn,constVn,constBlock,data);
   }
   return 0;
@@ -3539,97 +3555,20 @@ int4 ActionUnjustifiedParams::apply(Funcdata &data)
 int4 ActionHideShadow::apply(Funcdata &data)
 
 {
-  VarnodeDefSet::const_iterator iter;
+  VarnodeDefSet::const_iterator iter,enditer;
   HighVariable *high;
 
-  for(iter=data.beginDef();iter!=data.endDef(Varnode::written);++iter) {
+  enditer = data.endDef(Varnode::written);
+  for(iter=data.beginDef();iter!=enditer;++iter) {
     high = (*iter)->getHigh();
     if (high->isMark()) continue;
     if (data.getMerge().hideShadows(high))
       count += 1;
     high->setMark();
   }
-  for(iter=data.beginDef();iter!=data.endDef(Varnode::written);++iter) {
+  for(iter=data.beginDef();iter!=enditer;++iter) {
     high = (*iter)->getHigh();
     high->clearMark();
-  }
-  return 0;
-}
-
-/// \brief Determine if given Varnode is shadowed by another Varnode in the same HighVariable
-///
-/// \param vn is the Varnode to check for shadowing
-/// \return \b true if \b vn is shadowed by another Varnode in its high-level variable
-bool ActionCopyMarker::shadowedVarnode(const Varnode *vn)
-
-{
-  const Varnode *othervn;
-  const HighVariable *high = vn->getHigh();
-  int4 num,i;
-
-  num = high->numInstances();
-  for(i=0;i<num;++i) {
-    othervn = high->getInstance(i);
-    if (othervn == vn) continue;
-    if (vn->getCover()->intersect(*othervn->getCover()) == 2) return true;
-  }
-  return false;
-}
-
-int4 ActionCopyMarker::apply(Funcdata &data)
-
-{
-  list<PcodeOp *>::const_iterator iter;
-  PcodeOp *op;
-  HighVariable *h1,*h2,*h3;
-  Varnode *v1,*v2,*v3;
-  int4 val;
-
-  for(iter=data.beginOpAlive();iter!=data.endOpAlive();++iter) {
-    op = *iter;
-    switch(op->code()) {
-    case CPUI_COPY:
-      if (op->getOut()->getHigh() == op->getIn(0)->getHigh()) {
-	data.opSetFlag(op,PcodeOp::nonprinting);
-	count += 1;
-      }
-      else if (op->getOut()->hasNoDescend()) {	// Don't print shadow assignments
-	if (shadowedVarnode(op->getOut())) {
-	  data.opSetFlag(op,PcodeOp::nonprinting);
-	  count += 1;
-	}
-      }
-      break;
-    case CPUI_PIECE:		// Check if output is built out of pieces of itself
-      h1 = op->getOut()->getHigh();
-      h2 = op->getIn(0)->getHigh();
-      h3 = op->getIn(1)->getHigh();
-      if (!h1->isAddrTied()) break;
-      if (!h2->isAddrTied()) break;
-      if (!h3->isAddrTied()) break;
-      v1 = h1->getTiedVarnode();
-      v2 = h2->getTiedVarnode();
-      v3 = h3->getTiedVarnode();
-      if (v3->overlap(*v1) != 0) break;
-      if (v2->overlap(*v1) != v3->getSize()) break;
-      data.opSetFlag(op,PcodeOp::nonprinting);
-      count += 1;
-      break;
-    case CPUI_SUBPIECE:
-      h1 = op->getOut()->getHigh();
-      h2 = op->getIn(0)->getHigh();
-      if (!h1->isAddrTied()) break;
-      if (!h2->isAddrTied()) break;
-      v1 = h1->getTiedVarnode();
-      v2 = h2->getTiedVarnode();
-      val = op->getIn(1)->getOffset();
-      if (v1->overlap(*v2) != val) break;
-      data.opSetFlag(op,PcodeOp::nonprinting);
-      count += 1;
-      break;
-    default:
-      break;
-    }
   }
   return 0;
 }
@@ -4528,12 +4467,15 @@ void universal_action(Architecture *conf)
 	actprop->addRule( new RuleTrivialArith("analysis") );
 	actprop->addRule( new RuleTrivialBool("analysis") );
 	actprop->addRule( new RuleTrivialShift("analysis") );
+	actprop->addRule( new RuleSignShift("analysis") );
+	actprop->addRule( new RuleTestSign("analysis") );
 	actprop->addRule( new RuleIdentityEl("analysis") );
 	actprop->addRule( new RuleOrMask("analysis") );
 	actprop->addRule( new RuleAndMask("analysis") );
 	actprop->addRule( new RuleOrCollapse("analysis") );
 	actprop->addRule( new RuleAndOrLump("analysis") );
 	actprop->addRule( new RuleShiftBitops("analysis") );
+	actprop->addRule( new RuleRightShiftAnd("analysis") );
 	actprop->addRule( new RuleNotDistribute("analysis") );
 	actprop->addRule( new RuleHighOrderAnd("analysis") );
 	actprop->addRule( new RuleAndDistribute("analysis") );
@@ -4542,6 +4484,7 @@ void universal_action(Architecture *conf)
 	actprop->addRule( new RuleAndCompare("analysis") );
 	actprop->addRule( new RuleDoubleSub("analysis") );
 	actprop->addRule( new RuleDoubleShift("analysis") );
+	actprop->addRule( new RuleDoubleArithShift("analysis") );
 	actprop->addRule( new RuleConcatShift("analysis") );
 	actprop->addRule( new RuleLeftRight("analysis") );
 	actprop->addRule( new RuleShiftCompare("analysis") );
@@ -4689,6 +4632,7 @@ void universal_action(Architecture *conf)
   act->addAction( new ActionMarkExplicit("merge") );
   act->addAction( new ActionMarkImplied("merge") ); // This must come BEFORE general merging
   act->addAction( new ActionMergeCopy("merge") );
+  act->addAction( new ActionDominantCopy("merge") );
   act->addAction( new ActionMarkIndirectOnly("merge") ); // Must come after required merges but before speculative
   act->addAction( new ActionMergeAdjacent("merge") );
   act->addAction( new ActionMergeType("merge") );

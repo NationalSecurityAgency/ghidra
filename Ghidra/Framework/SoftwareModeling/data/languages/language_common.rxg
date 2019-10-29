@@ -226,6 +226,22 @@
       </element>
     </optional>
   </define>
+
+  <define name="segmentop_type">
+    <element name="segmentop">
+      <attribute name="space"/>
+      <optional> <attribute name="userop"/> </optional>
+      <optional> <attribute name="farpointer"/> </optional>
+      <element name="pcode">
+        <ref name="pcode_type"/>
+      </element>
+      <optional>
+        <element name="constresolve">
+          <ref name="varnode_tags_type"/>
+        </element>
+      </optional>
+    </element>
+  </define>
   
   <define name="jumpassist_type">
     <attribute name="name"/>

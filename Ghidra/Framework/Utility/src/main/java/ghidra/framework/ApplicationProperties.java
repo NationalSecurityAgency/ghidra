@@ -53,9 +53,9 @@ public class ApplicationProperties extends Properties {
 	public static final String APPLICATION_LAYOUT_VERSION_PROPERTY = "application.layout.version";
 
 	/**
-	 * The recommended version of gradle used to build the application.
+	 * The minimum version of gradle required to build the application.
 	 */
-	public static final String APPLICATION_GRADLE_VERSION_PROPERTY = "application.gradle.version";
+	public static final String APPLICATION_GRADLE_MIN_PROPERTY = "application.gradle.min";
 
 	/**
 	 * The minimum major version of Java required to run the application. For example, "8".
@@ -104,16 +104,6 @@ public class ApplicationProperties extends Properties {
 
 	public static final String TEST_RELEASE_PROPERTY = "application.test.release";
 	public static final String RELEASE_SOURCE_PROPERTY = "application.release.source";
-
-	/**
-	 * The default application name to use if {@link #APPLICATION_NAME_PROPERTY} is undefined.
-	 */
-	private static final String DEFAULT_APPLICATION_NAME = "NO_APP_NAME_DEFINED";
-
-	/**
-	 * The default version to use if {@link #APPLICATION_VERSION_PROPERTY} is undefined.
-	 */
-	private static final String DEFAULT_APPLICATION_VERSION = "0.1";
 
 	/**
 	 * Attempts to create an instance of this class by looking for the a properties file 
@@ -233,12 +223,12 @@ public class ApplicationProperties extends Properties {
 	/**
 	 * Gets the application's name.
 	 * 
-	 * @return The application's name.
+	 * @return The application's name (empty string if undefined).
 	 */
 	public String getApplicationName() {
 		String appName = getProperty(ApplicationProperties.APPLICATION_NAME_PROPERTY);
-		if (appName == null) {
-			return DEFAULT_APPLICATION_NAME;
+		if (appName == null || appName.trim().isEmpty()) {
+			return "";
 		}
 		return appName;
 	}
@@ -246,14 +236,27 @@ public class ApplicationProperties extends Properties {
 	/**
 	 * Gets the application's version.
 	 * 
-	 * @return The application's version.
+	 * @return The application's version (empty string if undefined).
 	 */
 	public String getApplicationVersion() {
 		String appVersion = getProperty(ApplicationProperties.APPLICATION_VERSION_PROPERTY);
-		if (appVersion == null) {
-			return DEFAULT_APPLICATION_VERSION;
+		if (appVersion == null || appVersion.trim().isEmpty()) {
+			return "";
 		}
 		return appVersion;
+	}
+	
+	/**
+	 * Gets the application's release name.
+	 * 
+	 * @return The application's release name (empty string if undefined).
+	 */
+	public String getApplicationReleaseName() {
+		String appReleaseName = getProperty(ApplicationProperties.RELEASE_NAME_PROPERTY);
+		if (appReleaseName == null || appReleaseName.trim().isEmpty()) {
+			return "";
+		}
+		return appReleaseName;
 	}
 
 	/**
@@ -263,8 +266,8 @@ public class ApplicationProperties extends Properties {
 	 */
 	public String getApplicationBuildDate() {
 		String appBuildDate = getProperty(ApplicationProperties.BUILD_DATE_PROPERTY);
-		if (appBuildDate == null) {
-			// Use today if property is not found
+		if (appBuildDate == null || appBuildDate.trim().isEmpty()) {
+			// Use today if property is not defined
 			appBuildDate = new SimpleDateFormat("yyyy-MMM-dd").format(new Date());
 		}
 		return appBuildDate;

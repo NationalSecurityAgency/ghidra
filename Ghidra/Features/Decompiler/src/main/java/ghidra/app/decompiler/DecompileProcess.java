@@ -223,7 +223,7 @@ public class DecompileProcess {
 		if (type != 14) {
 			throw new IOException("GHIDRA/decompiler alignment error");
 		}
-		LimitedByteBuffer buf = new LimitedByteBuffer(16,1<<16);
+		LimitedByteBuffer buf = new LimitedByteBuffer(16, 1 << 16);
 		type = readToBuffer(buf);
 		if (type != 15) {
 			throw new IOException("GHIDRA/decompiler alignment error");
@@ -426,8 +426,8 @@ public class DecompileProcess {
 	 * @throws DecompileException
 	 */
 	public synchronized void registerProgram(DecompileCallback cback, String pspecxml,
-			String cspecxml, String tspecxml, String coretypesxml) throws IOException,
-			DecompileException {
+			String cspecxml, String tspecxml, String coretypesxml)
+			throws IOException, DecompileException {
 		callback = cback;
 		callback.setShowNamespace(showNamespace);
 
@@ -481,7 +481,8 @@ public class DecompileProcess {
 	 * @throws IOException
 	 * @throws DecompileException
 	 */
-	public synchronized LimitedByteBuffer sendCommand(String command) throws IOException, DecompileException {
+	public synchronized LimitedByteBuffer sendCommand(String command)
+			throws IOException, DecompileException {
 		if (!statusGood) {
 			throw new IOException(command + " called on bad process");
 		}
@@ -552,8 +553,8 @@ public class DecompileProcess {
 	 * @throws IOException
 	 * @throws DecompileException
 	 */
-	public synchronized LimitedByteBuffer sendCommand2Params(String command, String param1, String param2)
-			throws IOException, DecompileException {
+	public synchronized LimitedByteBuffer sendCommand2Params(String command, String param1,
+			String param2) throws IOException, DecompileException {
 		if (!statusGood) {
 			throw new IOException(command + " called on bad process");
 		}
@@ -591,8 +592,8 @@ public class DecompileProcess {
 	 * @throws IOException
 	 * @throws DecompileException
 	 */
-	public synchronized LimitedByteBuffer sendCommand1Param(String command, String param1) throws IOException,
-			DecompileException {
+	public synchronized LimitedByteBuffer sendCommand1Param(String command, String param1)
+			throws IOException, DecompileException {
 		if (!statusGood) {
 			throw new IOException(command + " called on bad process");
 		}
@@ -671,7 +672,7 @@ public class DecompileProcess {
 	private void getPcodeInject(int type) throws IOException {
 		String name = readQueryString();
 		String context = readQueryString();
-		String res = callback.getPcodeInject(name, context,type);
+		String res = callback.getPcodeInject(name, context, type);
 		write(query_response_start);
 		if ((res != null) && (res.length() != 0)) {
 			writeString(res);
@@ -683,7 +684,7 @@ public class DecompileProcess {
 		String liststring = readQueryString();
 		String[] split = liststring.split(",");
 		long[] refs = new long[split.length];
-		for(int i=0;i<split.length;++i) {
+		for (int i = 0; i < split.length; ++i) {
 			refs[i] = Long.parseUnsignedLong(split[i], 16);
 		}
 		String res = callback.getCPoolRef(refs);
@@ -691,7 +692,7 @@ public class DecompileProcess {
 		if ((res != null) && (res.length() != 0)) {
 			writeString(res);
 		}
-		write(query_response_end);		
+		write(query_response_end);
 	}
 
 	private void getMappedSymbolsXML() throws IOException {

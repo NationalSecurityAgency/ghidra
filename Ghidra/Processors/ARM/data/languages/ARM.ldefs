@@ -12,6 +12,24 @@
             id="ARM:LE:32:v8">
     <description>Generic ARM/Thumb v8 little endian</description>
     <compiler name="default" spec="ARM.cspec" id="default"/>
+    <compiler name="Visual Studio" spec="ARM_win.cspec" id="windows"/>
+    <external_name tool="gnu" name="iwmmxt"/>
+    <external_name tool="IDA-PRO" name="arm"/>
+    <external_name tool="DWARF.register.mapping.file" name="ARMneon.dwarf"/>
+  </language>
+  
+  <language processor="ARM"
+            endian="little"
+            size="32"
+            variant="v8T"
+            version="1.102"
+            slafile="ARM8_le.sla"
+            processorspec="ARMtTHUMB.pspec"
+            manualindexfile="../manuals/ARM.idx"
+            id="ARM:LE:32:v8T">
+    <description>Generic ARM/Thumb v8 little endian (Thumb is default)</description>
+    <compiler name="default" spec="ARM.cspec" id="default"/>
+    <compiler name="Visual Studio" spec="ARM_win.cspec" id="windows"/>
     <external_name tool="gnu" name="iwmmxt"/>
     <external_name tool="IDA-PRO" name="arm"/>
     <external_name tool="DWARF.register.mapping.file" name="ARMneon.dwarf"/>
@@ -50,6 +68,22 @@
   </language>
   
   <language processor="ARM"
+            endian="big"
+            size="32"
+            variant="v8T"
+            version="1.102"
+            slafile="ARM8_be.sla"
+            processorspec="ARMtTHUMB.pspec"
+            manualindexfile="../manuals/ARM.idx"
+            id="ARM:BE:32:v8T">
+    <description>Generic ARM/Thumb v8 big endian (Thumb is default)</description>
+    <compiler name="default" spec="ARM.cspec" id="default"/>
+    <external_name tool="gnu" name="iwmmxt"/>
+    <external_name tool="IDA-PRO" name="armb"/>
+    <external_name tool="DWARF.register.mapping.file" name="ARMneon.dwarf"/>
+  </language>
+  
+  <language processor="ARM"
             endian="little"
             size="32"
             variant="v7"
@@ -60,7 +94,7 @@
             id="ARM:LE:32:v7">
     <description>Generic ARM/Thumb v7 little endian</description>
     <compiler name="default" spec="ARM.cspec" id="default"/>
-    <compiler name="Visual Studio" spec="ARM.cspec" id="windows"/>
+    <compiler name="Visual Studio" spec="ARM_win.cspec" id="windows"/>
     <external_name tool="gnu" name="iwmmxt"/>
     <external_name tool="IDA-PRO" name="arm"/>
     <external_name tool="DWARF.register.mapping.file" name="ARMneon.dwarf"/>

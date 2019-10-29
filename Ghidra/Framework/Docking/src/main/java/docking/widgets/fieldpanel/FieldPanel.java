@@ -15,7 +15,7 @@
  */
 package docking.widgets.fieldpanel;
 
-import static docking.widgets.EventTrigger.INTERNAL_ONLY;
+import static docking.widgets.EventTrigger.*;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -58,6 +58,7 @@ public class FieldPanel extends JPanel
 	private KeyHandler keyHandler = new KeyHandler();
 	private HoverHandler hoverHandler;
 	private SelectionHandler selectionHandler = new SelectionHandler();
+	private boolean horizontalScrollingEnabled = true;
 
 	private FieldLocation cursorPosition = new FieldLocation();
 	private FieldSelection selection = new FieldSelection();
@@ -197,7 +198,7 @@ public class FieldPanel extends JPanel
 
 	@Override
 	public void scrollLineDown() {
-		layouts = layoutHandler.ShiftViewDownOneRow();
+		layouts = layoutHandler.shiftViewDownOneRow();
 		notifyScrollListenerViewChangedAndRepaint();
 	}
 
@@ -295,6 +296,51 @@ public class FieldPanel extends JPanel
 		return new ArrayList<>(layouts);
 	}
 
+	/**
+	 * Returns true if the given field location is rendered on the screen; false if scrolled 
+	 * offscreen
+	 * 
+	 * @param location the location to check
+	 * @return true if the location is on the screen
+	 */
+	public boolean isLocationVisible(FieldLocation location) {
+		if (location == null) {
+			return false;
+		}
+
+		BigInteger locationIndex = location.getIndex();
+		for (AnchoredLayout layout : layouts) {
+			if (layout.getIndex().equals(locationIndex)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * Returns the first visible layout or null if there are no visible layouts
+	 * 
+	 * @return the first visible layout
+	 */
+	public AnchoredLayout getVisibleStartLayout() {
+		if (layouts.isEmpty()) {
+			return null;
+		}
+		return layouts.get(0);
+	}
+
+	/**
+	 * Returns the last visible layout or null if there are no visible layouts
+	 * 
+	 * @return the last visible layout
+	 */
+	public AnchoredLayout getVisibleEndLayout() {
+		if (layouts.isEmpty()) {
+			return null;
+		}
+		return layouts.get(layouts.size() - 1);
+	}
+
 	@Override
 	public void repaint() {
 		repaintPosted = true;
@@ -333,6 +379,14 @@ public class FieldPanel extends JPanel
 
 	public void setBlinkCursor(Boolean blinkCursor) {
 		cursorHandler.setBlinkCursor(blinkCursor);
+	}
+
+	public void enableSelection(boolean b) {
+		selectionHandler.enableSelection(b);
+	}
+
+	public void setHorizontalScrollingEnabled(boolean enabled) {
+		horizontalScrollingEnabled = enabled;
 	}
 
 	/**
@@ -714,13 +768,19 @@ public class FieldPanel extends JPanel
 	 *            the row in the field to go to.
 	 * @param col
 	 *            the column in the field to go to.
-	 * @param centerCursor
+	 * @param alwaysCenterCursor
 	 *            if true, centers cursor on screen. Otherwise, only centers
 	 *            cursor if cursor is offscreen.
 	 */
 	public void goTo(BigInteger index, int fieldNum, int row, int col, boolean alwaysCenterCursor) {
+		goTo(index, fieldNum, row, col, alwaysCenterCursor, EventTrigger.API_CALL);
+	}
 
-		if (!cursorHandler.doSetCursorPosition(index, fieldNum, row, col, EventTrigger.API_CALL)) {
+	// for subclasses to control the event trigger
+	protected void goTo(BigInteger index, int fieldNum, int row, int col,
+			boolean alwaysCenterCursor, EventTrigger trigger) {
+
+		if (!cursorHandler.doSetCursorPosition(index, fieldNum, row, col, trigger)) {
 			return;
 		}
 
@@ -901,21 +961,43 @@ public class FieldPanel extends JPanel
 
 	@Override
 	// BigLayoutModelListener
-	public void modelSizeChanged() {
-		BigInteger anchorIndex = layouts.isEmpty() ? BigInteger.ZERO : layouts.get(0).getIndex();
+	public void modelSizeChanged(IndexMapper indexMapper) {
+		BigInteger anchorIndex =
+			layouts.isEmpty() ? BigInteger.ZERO : indexMapper.map(layouts.get(0).getIndex());
 		int anchorOffset = layouts.isEmpty() ? 0 : layouts.get(0).getYPos();
 		Point cursorPoint = getCursorPoint();
-		AnchoredLayout layout = findLayoutOnScreen(cursorPosition.getIndex());
+		BigInteger cursorIndex = indexMapper.map(cursorPosition.getIndex());
+		AnchoredLayout layout = findLayoutOnScreen(cursorIndex);
 		if (layout != null) {
-			anchorIndex = cursorPosition.getIndex();
+			anchorIndex = cursorIndex;
 			anchorOffset = layout.getYPos();
 		}
 		notifyScrollListenerModelChanged();
 		layouts = layoutHandler.positionLayoutsAroundAnchor(anchorIndex, anchorOffset);
 
+		updateHighlight(indexMapper);
 		cursorHandler.updateCursor(cursorPoint);
 		notifyScrollListenerViewChangedAndRepaint();
 		invalidate();
+	}
+
+	private void updateHighlight(IndexMapper mapper) {
+		if (highlight.isEmpty()) {
+			return;
+		}
+		FieldSelection oldHighlight = highlight;
+		highlight = new FieldSelection();
+		for (FieldRange range : oldHighlight) {
+			FieldLocation start = range.getStart();
+			FieldLocation end = range.getEnd();
+			BigInteger startIndex = mapper.map(start.getIndex());
+			BigInteger endIndex = mapper.map(end.getIndex());
+			if (startIndex != null && endIndex != null) {
+				start.setIndex(startIndex);
+				end.setIndex(endIndex);
+				highlight.addRange(start, end);
+			}
+		}
 	}
 
 	@Override
@@ -1171,15 +1253,11 @@ public class FieldPanel extends JPanel
 
 	private JViewport getViewport() {
 		Container c = getParent();
-		if (c == null) {
-			return null;
-		}
-		if (c instanceof JViewport) {
-			return (JViewport) c;
-		}
-		c = c.getParent();
-		if (c instanceof JViewport) {
-			return (JViewport) c;
+		while (c != null) {
+			if (c instanceof JViewport) {
+				return (JViewport) c;
+			}
+			c = c.getParent();
 		}
 		return null;
 	}
@@ -1428,9 +1506,28 @@ public class FieldPanel extends JPanel
 			}
 			else {
 				hoverHandler.stopHover();
-				scrollView(scrollAmount);
+
+				if (e.isShiftDown() && horizontalScrollingEnabled) {
+					scrollViewHorizontally(scrollAmount);
+				}
+				else {
+					scrollView(scrollAmount);
+				}
 			}
 			e.consume();
+		}
+
+		private void scrollViewHorizontally(int scrollAmount) {
+
+			JViewport vp = getViewport();
+			if (vp == null) {
+				// this will happen for Field Panels not placed inside of scroll panes
+				return;
+			}
+
+			// horizontal scroll (only move viewport)
+			Point pos = vp.getViewPosition();
+			vp.setViewPosition(new Point(Math.max(0, pos.x + scrollAmount), pos.y));
 		}
 	}
 
@@ -1837,7 +1934,7 @@ public class FieldPanel extends JPanel
 			cursorPosition.fieldNum = fieldNum;
 			cursorPosition.row = row;
 			cursorPosition.col = col;
-			lastX = currentField.getStartX();
+			lastX = currentField.getX(row, col);
 			notifyCursorChanged(trigger);
 			return true;
 		}
@@ -2049,9 +2146,5 @@ public class FieldPanel extends JPanel
 				}
 			}
 		}
-	}
-
-	public void enableSelection(boolean b) {
-		selectionHandler.enableSelection(b);
 	}
 }

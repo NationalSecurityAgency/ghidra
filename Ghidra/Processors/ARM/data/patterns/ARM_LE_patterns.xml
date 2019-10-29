@@ -64,6 +64,7 @@
       <data>0x08 0xe0 0x2d 0xe5                                                         </data> <!--  str lr,[sp,#-0x8] -->
       <data>0x0dc0a0e1                             0x....2de9                           </data> <!--  cpy ip,sp; stmdb  sp!,{} -->
       <data> ........ .1...... 00101101 11101001                                        </data> <!--  stmdb sp!,{xxx lr};  -->
+      <align mark="0" bits="3"/>
       <setcontext name="TMode" value="0"/>
       <possiblefuncstart/>
     </postpatterns>
@@ -71,20 +72,30 @@
   
   <pattern> <!-- 32 bit ARM -->
       <data> 0x..d.4de2                             ....0000 .1...... 00101101 11101001 </data> <!-- sub sp,sp ; stmdb sp!,{r4+,lr} -->
+      <align mark="0" bits="3"/>
       <setcontext name="TMode" value="0"/>
       <codeboundary />              <!-- it is at least code -->
       <possiblefuncstart after="defined" /> <!-- must be something defined right before this -->
   </pattern>
   
   <pattern> <!-- 32 bit ARM -->
+  	  <!-- NOTE: pattern also match Thumb 'b' instruction followed by a 'push' instruction (where push is start uf Thumb function) -->
       <data> ....0000 .1...... 00101101 11101001     </data> <!--  stmdb sp!,{r4+,lr}; -->
+      <align mark="0" bits="3"/>
       <setcontext name="TMode" value="0"/>
-      <codeboundary />
       <possiblefuncstart after="data" isvalid="true"/> <!-- must be something defined right before this, and good code -->
+  </pattern>
+  
+  <pattern> <!-- 32 bit ARM -->
+      <data> ........ .1...... 00101101 11101001     </data> <!--  stmdb sp!,{r4+,lr};  <valid code> -->
+      <align mark="0" bits="3"/>
+      <setcontext name="TMode" value="0"/>
+      <funcstart after="defined" isvalid="40"/>     <!-- must be something defined right before this, && must be at least 40 valid instructions after it -->
   </pattern>
  
   <pattern> <!-- 32 bit ARM -->
       <data> 0x..d.4de2                             ........ 1110.... 00101101 11100101 </data> <!--  sub sp,sp;  str lr,[sp,#...]; -->
+      <align mark="0" bits="3"/>
       <setcontext name="TMode" value="0"/>
       <codeboundary />
       <possiblefuncstart after="defined" /> <!-- must be something defined right before this -->
@@ -92,6 +103,7 @@
   
   <pattern> <!-- 32 bit ARM -->
       <data>........ 1110.... 00101101 11100101      0x..d.4de2                         </data> <!--  str lr,[sp,#...];   -->
+      <align mark="0" bits="3"/>
       <setcontext name="TMode" value="0"/>
       <codeboundary />
       <possiblefuncstart after="data" /> <!-- must be data defined right before this -->
@@ -99,6 +111,7 @@
 
   <pattern> <!-- 32 bit ARM -->
       <data> ....0000 .1...... 00101101 11101001   0x........ 0x..d.4de2                          </data> <!--  stmdb sp!,{r4+,lr}; <instr>; sub sp,sp -->
+      <align mark="0" bits="3"/>
       <setcontext name="TMode" value="0"/>
       <codeboundary />
       <possiblefuncstart after="data" /> <!-- must be data defined right before this -->
@@ -106,12 +119,14 @@
     
   <pattern> <!-- 32 bit ARM -->
       <data>........ 1110.... 00101101 11100101      0x........    0x..d.4de2                         </data> <!--  str lr,[sp,#...]; <instr>; sub sp,sp;   -->
+      <align mark="0" bits="3"/>
       <setcontext name="TMode" value="0"/>
       <possiblefuncstart after="data" /> <!-- must be data defined right before this -->
   </pattern>
  
    <pattern> <!-- 32 bit ARM --> 
        <data>0x0dc0a0e1                             0x....2de9                           </data> <!--  cpy ip,sp; stmdb  sp!,{} -->
+       <align mark="0" bits="3"/>
        <setcontext name="TMode" value="0"/>
        <codeboundary />                                 <!-- can't say it is a function yet, have seen instructions before -->
   </pattern>
@@ -188,13 +203,6 @@
       <funcstart after="function"/>
     </postpatterns>
   </patternpairs>
-  
-  <pattern> <!-- 32 bit ARM -->
-      <data> ........ .1...... 00101101 11101001                            </data> <!--  stmdb sp!,{r4+,lr};  <valid code> -->
-      <setcontext name="TMode" value="0"/>
-      <funcstart after="defined" isvalid="40"/>     <!-- must be something defined right before this, && must be at least 40 valid instructions after it -->
-  </pattern>
-  
   
   <!-- Special functions with side-effects -->
   <!--                                     -->
@@ -290,6 +298,7 @@
            add        ip,lr,r3, lsl #0x1   |   add lr,lr,r3, lsl #0x1
            bx         ip                   |   bx lr
        -->
+      <align mark="0" bits="3"/>
       <setcontext name="TMode" value="0"/>
       <funcstart label="switch8_r3"/>
   </pattern>
@@ -304,6 +313,7 @@
            add        ip,lr,r3, lsl #0x1   |   add lr,lr,r3, lsl #0x1
            bx         ip                   |   bx lr
        -->
+      <align mark="0" bits="3"/>
       <setcontext name="TMode" value="0"/>
       <funcstart label="switch8_r3"/>
   </pattern>

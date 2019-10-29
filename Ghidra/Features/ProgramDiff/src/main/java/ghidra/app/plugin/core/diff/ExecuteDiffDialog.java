@@ -15,12 +15,6 @@
  */
 package ghidra.app.plugin.core.diff;
 
-import ghidra.program.model.address.*;
-import ghidra.program.model.listing.Program;
-import ghidra.program.util.ProgramDiffFilter;
-import ghidra.program.util.ProgramMemoryComparator;
-import ghidra.util.HelpLocation;
-
 import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
@@ -31,7 +25,12 @@ import javax.swing.border.TitledBorder;
 
 import docking.DialogComponentProvider;
 import docking.DockingUtils;
-import docking.ToolTipManager;
+import docking.widgets.checkbox.GCheckBox;
+import ghidra.program.model.address.*;
+import ghidra.program.model.listing.Program;
+import ghidra.program.util.ProgramDiffFilter;
+import ghidra.program.util.ProgramMemoryComparator;
+import ghidra.util.HelpLocation;
 
 /**
  * The ExecuteDiffDialog is used whenever initiating a Program Diff. 
@@ -70,7 +69,7 @@ public class ExecuteDiffDialog extends DialogComponentProvider {
 
 	private ProgramDiffFilter diffFilter;
 	private JPanel diffPanel;
-	private ArrayList<ActionListener> listenerList = new ArrayList<ActionListener>();
+	private ArrayList<ActionListener> listenerList = new ArrayList<>();
 	private boolean limitToSelection;
 	private AddressSetView pgm1MemorySet;
 	private AddressSetView pgm1SelectionSet;
@@ -178,16 +177,13 @@ public class ExecuteDiffDialog extends DialogComponentProvider {
 	private JPanel createLimitPanel() {
 		JPanel panel = new JPanel();
 
-		limitToSelectionCB = new JCheckBox("Limit To Selection");
+		limitToSelectionCB = new GCheckBox("Limit To Selection");
 		limitToSelectionCB.setName("LimitToSelectionDiffCB");
-		ToolTipManager.setToolTipText(limitToSelectionCB, "Limits the Diff to the selection.");
-		limitToSelectionCB.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent ev) {
-				limitToSelection = limitToSelectionCB.isSelected();
-				updateDiffSetText();
-				clearStatusText();
-			}
+		limitToSelectionCB.setToolTipText("Limits the Diff to the selection.");
+		limitToSelectionCB.addActionListener(ev -> {
+			limitToSelection = limitToSelectionCB.isSelected();
+			updateDiffSetText();
+			clearStatusText();
 		});
 
 		panel.add(limitToSelectionCB);
@@ -200,9 +196,9 @@ public class ExecuteDiffDialog extends DialogComponentProvider {
 	 */
 	private JPanel createDiffFilterPanel() {
 		JPanel checkBoxPanel = new JPanel();
-		ToolTipManager.setToolTipText(checkBoxPanel,
-			"Check the types of differences between the two "
-				+ "programs that you want detected and highlighted.");
+		checkBoxPanel.setToolTipText(
+			"Check the types of differences between the two " +
+				"programs that you want detected and highlighted.");
 
 		createBytesCheckBox();
 		createLabelsCheckBox();
@@ -239,136 +235,107 @@ public class ExecuteDiffDialog extends DialogComponentProvider {
 	}
 
 	private void createBytesCheckBox() {
-		diffBytesCB = new JCheckBox("Bytes", diffBytes);
+		diffBytesCB = new GCheckBox("Bytes", diffBytes);
 		diffBytesCB.setName("BytesDiffCB");
-		ToolTipManager.setToolTipText(diffBytesCB, "Highlight byte differences.");
-		diffBytesCB.addItemListener(new ItemListener() {
-			@Override
-			public void itemStateChanged(ItemEvent event) {
-				diffBytes = (event.getStateChange() == ItemEvent.SELECTED);
-				diffFilter.setFilter(ProgramDiffFilter.BYTE_DIFFS, diffBytes);
-				clearStatusText();
-			}
+		diffBytesCB.setToolTipText("Highlight byte differences.");
+		diffBytesCB.addItemListener(event -> {
+			diffBytes = (event.getStateChange() == ItemEvent.SELECTED);
+			diffFilter.setFilter(ProgramDiffFilter.BYTE_DIFFS, diffBytes);
+			clearStatusText();
 		});
 	}
 
 	private void createLabelsCheckBox() {
-		diffLabelsCB = new JCheckBox("Labels", diffLabels);
+		diffLabelsCB = new GCheckBox("Labels", diffLabels);
 		diffLabelsCB.setName("LabelsDiffCB");
-		ToolTipManager.setToolTipText(diffLabelsCB, "Highlight label differences.");
-		diffLabelsCB.addItemListener(new ItemListener() {
-			@Override
-			public void itemStateChanged(ItemEvent event) {
-				diffLabels = (event.getStateChange() == ItemEvent.SELECTED);
-				diffFilter.setFilter(ProgramDiffFilter.SYMBOL_DIFFS, diffLabels);
-				clearStatusText();
-			}
+		diffLabelsCB.setToolTipText("Highlight label differences.");
+		diffLabelsCB.addItemListener(event -> {
+			diffLabels = (event.getStateChange() == ItemEvent.SELECTED);
+			diffFilter.setFilter(ProgramDiffFilter.SYMBOL_DIFFS, diffLabels);
+			clearStatusText();
 		});
 	}
 
 	private void createCodeUnitsCheckBox() {
-		diffCodeUnitsCB = new JCheckBox("Code Units", diffCodeUnits);
+		diffCodeUnitsCB = new GCheckBox("Code Units", diffCodeUnits);
 		diffCodeUnitsCB.setName("CodeUnitsDiffCB");
-		ToolTipManager.setToolTipText(diffCodeUnitsCB, "Highlight the instruction, data, "
-			+ "and equate differences.");
-		diffCodeUnitsCB.addItemListener(new ItemListener() {
-			@Override
-			public void itemStateChanged(ItemEvent event) {
-				diffCodeUnits = (event.getStateChange() == ItemEvent.SELECTED);
-				diffFilter.setFilter(ProgramDiffFilter.CODE_UNIT_DIFFS, diffCodeUnits);
-				diffFilter.setFilter(ProgramDiffFilter.EQUATE_DIFFS, diffCodeUnits);
-				clearStatusText();
-			}
+		diffCodeUnitsCB.setToolTipText(
+			"Highlight the instruction, data, " + "and equate differences.");
+		diffCodeUnitsCB.addItemListener(event -> {
+			diffCodeUnits = (event.getStateChange() == ItemEvent.SELECTED);
+			diffFilter.setFilter(ProgramDiffFilter.CODE_UNIT_DIFFS, diffCodeUnits);
+			diffFilter.setFilter(ProgramDiffFilter.EQUATE_DIFFS, diffCodeUnits);
+			clearStatusText();
 		});
 	}
 
 	private void createReferencesCheckBox() {
-		diffReferencesCB = new JCheckBox("References", diffReferences);
+		diffReferencesCB = new GCheckBox("References", diffReferences);
 		diffReferencesCB.setName("ReferencesDiffCB");
-		ToolTipManager.setToolTipText(diffReferencesCB, "Highlight the reference differences.");
-		diffReferencesCB.addItemListener(new ItemListener() {
-			@Override
-			public void itemStateChanged(ItemEvent event) {
-				diffReferences = (event.getStateChange() == ItemEvent.SELECTED);
-				diffFilter.setFilter(ProgramDiffFilter.REFERENCE_DIFFS, diffReferences);
-				clearStatusText();
-			}
+		diffReferencesCB.setToolTipText("Highlight the reference differences.");
+		diffReferencesCB.addItemListener(event -> {
+			diffReferences = (event.getStateChange() == ItemEvent.SELECTED);
+			diffFilter.setFilter(ProgramDiffFilter.REFERENCE_DIFFS, diffReferences);
+			clearStatusText();
 		});
 	}
 
 	private void createProgramContextCheckBox() {
-		diffProgramContextCB = new JCheckBox("Program Context", diffProgramContext);
+		diffProgramContextCB = new GCheckBox("Program Context", diffProgramContext);
 		diffProgramContextCB.setName("ProgramContextDiffCB");
-		ToolTipManager.setToolTipText(diffProgramContextCB,
-			"Highlight the program context register differences.");
-		diffProgramContextCB.addItemListener(new ItemListener() {
-			@Override
-			public void itemStateChanged(ItemEvent event) {
-				diffProgramContext = (event.getStateChange() == ItemEvent.SELECTED);
-				diffFilter.setFilter(ProgramDiffFilter.PROGRAM_CONTEXT_DIFFS, diffProgramContext);
-				clearStatusText();
-			}
+		diffProgramContextCB.setToolTipText("Highlight the program context register differences.");
+		diffProgramContextCB.addItemListener(event -> {
+			diffProgramContext = (event.getStateChange() == ItemEvent.SELECTED);
+			diffFilter.setFilter(ProgramDiffFilter.PROGRAM_CONTEXT_DIFFS, diffProgramContext);
+			clearStatusText();
 		});
 	}
 
 	private void createCommentsCheckBox() {
-		diffCommentsCB = new JCheckBox("Comments", diffComments);
+		diffCommentsCB = new GCheckBox("Comments", diffComments);
 		diffCommentsCB.setName("CommentsDiffCB");
-		ToolTipManager.setToolTipText(diffCommentsCB, "Highlight comment differences.");
-		diffCommentsCB.addItemListener(new ItemListener() {
-			@Override
-			public void itemStateChanged(ItemEvent event) {
-				diffComments = (event.getStateChange() == ItemEvent.SELECTED);
-				diffFilter.setFilter(ProgramDiffFilter.COMMENT_DIFFS, diffComments);
-				clearStatusText();
-			}
+		diffCommentsCB.setToolTipText("Highlight comment differences.");
+		diffCommentsCB.addItemListener(event -> {
+			diffComments = (event.getStateChange() == ItemEvent.SELECTED);
+			diffFilter.setFilter(ProgramDiffFilter.COMMENT_DIFFS, diffComments);
+			clearStatusText();
 		});
 	}
 
 	private void createBookmarksCheckBox() {
-		diffBookmarksCB = new JCheckBox("Bookmarks", diffBookmarks);
+		diffBookmarksCB = new GCheckBox("Bookmarks", diffBookmarks);
 		diffBookmarksCB.setName("BookmarksDiffCB");
-		ToolTipManager.setToolTipText(diffBookmarksCB, "Highlight bookmark differences. "
-			+ "(for example, bookmark differences)");
-		diffBookmarksCB.addItemListener(new ItemListener() {
-			@Override
-			public void itemStateChanged(ItemEvent event) {
-				diffBookmarks = (event.getStateChange() == ItemEvent.SELECTED);
-				diffFilter.setFilter(ProgramDiffFilter.BOOKMARK_DIFFS, diffBookmarks);
-				clearStatusText();
-			}
+		diffBookmarksCB.setToolTipText(
+			"Highlight bookmark differences. " + "(for example, bookmark differences)");
+		diffBookmarksCB.addItemListener(event -> {
+			diffBookmarks = (event.getStateChange() == ItemEvent.SELECTED);
+			diffFilter.setFilter(ProgramDiffFilter.BOOKMARK_DIFFS, diffBookmarks);
+			clearStatusText();
 		});
 	}
 
 	private void createPropertiesCheckBox() {
-		diffPropertiesCB = new JCheckBox("Properties", diffProperties);
+		diffPropertiesCB = new GCheckBox("Properties", diffProperties);
 		diffPropertiesCB.setName("PropertiesDiffCB");
-		ToolTipManager.setToolTipText(diffPropertiesCB,
-			"Highlight user defined property differences. "
-				+ "(for example, Format (space) differences)");
-		diffPropertiesCB.addItemListener(new ItemListener() {
-			@Override
-			public void itemStateChanged(ItemEvent event) {
-				diffProperties = (event.getStateChange() == ItemEvent.SELECTED);
-				diffFilter.setFilter(ProgramDiffFilter.USER_DEFINED_DIFFS, diffProperties);
-				clearStatusText();
-			}
+		diffPropertiesCB.setToolTipText("Highlight user defined property differences. " +
+				"(for example, Format (space) differences)");
+		diffPropertiesCB.addItemListener(event -> {
+			diffProperties = (event.getStateChange() == ItemEvent.SELECTED);
+			diffFilter.setFilter(ProgramDiffFilter.USER_DEFINED_DIFFS, diffProperties);
+			clearStatusText();
 		});
 	}
 
 	private void createFunctionsCheckBox() {
-		diffFunctionsCB = new JCheckBox("Functions", diffFunctions);
+		diffFunctionsCB = new GCheckBox("Functions", diffFunctions);
 		diffFunctionsCB.setName("FunctionsDiffCB");
-		ToolTipManager.setToolTipText(diffFunctionsCB, "Highlight function differences.");
-		diffFunctionsCB.addItemListener(new ItemListener() {
-			@Override
-			public void itemStateChanged(ItemEvent event) {
-				diffFunctions = (event.getStateChange() == ItemEvent.SELECTED);
-				// Functions check box controls both functions and function tags.
-				diffFilter.setFilter(ProgramDiffFilter.FUNCTION_DIFFS, diffFunctions);
-				diffFilter.setFilter(ProgramDiffFilter.FUNCTION_TAG_DIFFS, diffFunctions);
-				clearStatusText();
-			}
+		diffFunctionsCB.setToolTipText("Highlight function differences.");
+		diffFunctionsCB.addItemListener(event -> {
+			diffFunctions = (event.getStateChange() == ItemEvent.SELECTED);
+			// Functions check box controls both functions and function tags.
+			diffFilter.setFilter(ProgramDiffFilter.FUNCTION_DIFFS, diffFunctions);
+			diffFilter.setFilter(ProgramDiffFilter.FUNCTION_TAG_DIFFS, diffFunctions);
+			clearStatusText();
 		});
 	}
 

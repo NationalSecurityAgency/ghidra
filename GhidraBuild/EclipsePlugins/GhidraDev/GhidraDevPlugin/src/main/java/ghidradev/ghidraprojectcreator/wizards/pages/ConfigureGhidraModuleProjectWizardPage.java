@@ -49,12 +49,12 @@ public class ConfigureGhidraModuleProjectWizardPage extends WizardPage {
 	public void createControl(Composite parent) {
 
 		Composite container = new Composite(parent, SWT.NULL);
-		container.setLayout(new GridLayout(2, false));
+		container.setLayout(new GridLayout(1, false));
 
 		Label moduleTemplateLabel = new Label(container, SWT.NULL);
 		moduleTemplateLabel.setText("Module template:");
 		Group moduleTemplateGroup = new Group(container, SWT.SHADOW_ETCHED_OUT);
-		moduleTemplateGroup.setLayout(new RowLayout(SWT.HORIZONTAL));
+		moduleTemplateGroup.setLayout(new RowLayout(SWT.VERTICAL));
 
 		SelectionListener selectionListener = new SelectionListener() {
 			@Override
@@ -71,7 +71,8 @@ public class ConfigureGhidraModuleProjectWizardPage extends WizardPage {
 		for (ModuleTemplateType moduleTemplateType : ModuleTemplateType.values()) {
 			Button checkboxButton = new Button(moduleTemplateGroup, SWT.CHECK);
 			checkboxButton.setSelection(true);
-			checkboxButton.setText(moduleTemplateType.getName());
+			checkboxButton.setText(
+				moduleTemplateType.getName() + " - " + moduleTemplateType.getDescription());
 			checkboxButton.setToolTipText(moduleTemplateType.getDescription());
 			checkboxButton.addSelectionListener(selectionListener);
 			moduleTemplateCheckboxMap.put(checkboxButton, moduleTemplateType);

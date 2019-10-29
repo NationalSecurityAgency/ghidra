@@ -23,8 +23,6 @@ import java.util.*;
 
 import javax.swing.BorderFactory;
 import javax.swing.JTable;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
 
@@ -34,7 +32,6 @@ import docking.widgets.table.GTableCellRenderer;
 import docking.widgets.table.GTableCellRenderingData;
 import docking.widgets.table.threaded.GThreadedTablePanel;
 import docking.widgets.table.threaded.ThreadedTableModelListener;
-import ghidra.app.util.GenericHelpTopics;
 import ghidra.framework.main.datatable.ProjectDataActionContext;
 import ghidra.framework.main.projectdata.actions.VersionControlCheckInAction;
 import ghidra.framework.main.projectdata.actions.VersionControlUndoCheckOutAction;
@@ -66,7 +63,7 @@ public class FindCheckoutsDialog extends DialogComponentProvider {
 		this.folder = folder;
 		formatter = new SimpleDateFormat("yyyy MMM dd hh:mm aaa");
 		create();
-		setHelpLocation(new HelpLocation(GenericHelpTopics.REPOSITORY, "Find_Checkouts"));
+		setHelpLocation(new HelpLocation("VersionControl", "Find_Checkouts"));
 	}
 
 	private void create() {
@@ -93,14 +90,14 @@ public class FindCheckoutsDialog extends DialogComponentProvider {
 
 				boolean hasData = model.getRowCount() > 0;
 				if (!hasData && showMessage) {
-					Msg.showInfo(getClass(), threadedTablePanel,
-						"Find Checkouts", "No checkouts were found.");
+					Msg.showInfo(getClass(), threadedTablePanel, "Find Checkouts",
+						"No checkouts were found.");
 					FindCheckoutsDialog.this.close();
 				}
 			}
 		});
 
-		threadedTablePanel = new GThreadedTablePanel<CheckoutInfo>(model);
+		threadedTablePanel = new GThreadedTablePanel<>(model);
 		table = threadedTablePanel.getTable();
 
 		TableColumnModel columnModel = table.getColumnModel();
@@ -114,14 +111,9 @@ public class FindCheckoutsDialog extends DialogComponentProvider {
 				column.setPreferredWidth(180);
 			}
 		}
-		table.setPreferredScrollableViewportSize(new Dimension(
-			threadedTablePanel.getPreferredSize().width, 150));
-		table.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
-			@Override
-			public void valueChanged(ListSelectionEvent e) {
-				setActionsEnabled();
-			}
-		});
+		table.setPreferredScrollableViewportSize(
+			new Dimension(threadedTablePanel.getPreferredSize().width, 150));
+		table.getSelectionModel().addListSelectionListener(e -> setActionsEnabled());
 		addWorkPanel(threadedTablePanel);
 		addDismissButton();
 
@@ -144,7 +136,7 @@ public class FindCheckoutsDialog extends DialogComponentProvider {
 	}
 
 	private List<DomainFile> getFileList() {
-		List<DomainFile> list = new ArrayList<DomainFile>();
+		List<DomainFile> list = new ArrayList<>();
 		int[] selectedRows = table.getSelectedRows();
 		for (int selectedRow : selectedRows) {
 			list.add(model.getDomainFile(selectedRow));

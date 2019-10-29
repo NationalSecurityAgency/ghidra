@@ -15,18 +15,49 @@
  */
 package ghidra.program.model.listing;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import ghidra.app.plugin.processors.sleigh.PcodeEmit;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.lang.InjectPayload;
 import ghidra.program.model.pcode.PcodeOverride;
+import ghidra.program.model.symbol.RefType;
 import ghidra.program.model.symbol.Reference;
 import ghidra.util.Msg;
 
 public class InstructionPcodeOverride implements PcodeOverride {
 
 	protected Instruction instr;
+	private boolean callOverrideApplied = false;
+	private boolean jumpOverrideApplied = false;
+	private boolean callOtherCallOverrideApplied = false;
+	private boolean callOtherJumpOverrideApplied = false;
+	private Address primaryCallAddress = null;
+	private List<Reference> primaryOverridingReferences;
 
+	/**
+	 * This constructor caches the primary and overriding "from" references of {@code instr}.  
+	 * This cache is never updated; the assumption is that this object is short-lived 
+	 * (duration of {@link PcodeEmit})  
+	 * @param instr the instruction
+	 */
 	public InstructionPcodeOverride(Instruction instr) {
 		this.instr = instr;
+
+		primaryOverridingReferences = new ArrayList<>();
+		for (Reference ref : instr.getReferencesFrom()) {
+			if (!ref.isPrimary() || !ref.getToAddress().isMemoryAddress()) {
+				continue;
+			}
+			RefType type = ref.getReferenceType();
+			if (type.isOverride()) {
+				primaryOverridingReferences.add(ref);
+			}
+			else if (type.isCall() && primaryCallAddress == null) {
+				primaryCallAddress = ref.getToAddress();
+			}
+		}
 	}
 
 	@Override
@@ -50,13 +81,27 @@ public class InstructionPcodeOverride implements PcodeOverride {
 	}
 
 	@Override
-	public Address getPrimaryCallReference() {
-		for (Reference ref : instr.getReferencesFrom()) {
-			if (ref.isPrimary() && ref.getReferenceType().isCall()) {
-				return ref.getToAddress();
+	public Address getOverridingReference(RefType type) {
+		if (!type.isOverride()) {
+			return null;
+		}
+		Address overrideAddress = null;
+		for (Reference ref : primaryOverridingReferences) {
+			if (ref.getReferenceType().equals(type)) {
+				if (overrideAddress == null) {
+					overrideAddress = ref.getToAddress();
+				}
+				else {
+					return null; //only allow one primary reference of each type
+				}
 			}
 		}
-		return null;
+		return overrideAddress;
+	}
+
+	@Override
+	public Address getPrimaryCallReference() {
+		return primaryCallAddress;
 	}
 
 	@Override
@@ -86,5 +131,53 @@ public class InstructionPcodeOverride implements PcodeOverride {
 			Msg.warn(this, "Undefined call-fixup at " + callDestAddr + ": " + fixupName);
 		}
 		return fixup;
+	}
+
+	@Override
+	public void setCallOverrideRefApplied() {
+		callOverrideApplied = true;
+
+	}
+
+	@Override
+	public boolean isCallOverrideRefApplied() {
+		return callOverrideApplied;
+	}
+
+	@Override
+	public void setJumpOverrideRefApplied() {
+		jumpOverrideApplied = true;
+
+	}
+
+	@Override
+	public boolean isJumpOverrideRefApplied() {
+		return jumpOverrideApplied;
+	}
+
+	@Override
+	public void setCallOtherCallOverrideRefApplied() {
+		callOtherCallOverrideApplied = true;
+	}
+
+	@Override
+	public boolean isCallOtherCallOverrideRefApplied() {
+		return callOtherCallOverrideApplied;
+	}
+
+	@Override
+	public void setCallOtherJumpOverrideRefApplied() {
+		callOtherJumpOverrideApplied = true;
+
+	}
+
+	@Override
+	public boolean isCallOtherJumpOverrideApplied() {
+		return callOtherJumpOverrideApplied;
+	}
+
+	@Override
+	public boolean hasPotentialOverride() {
+		return !primaryOverridingReferences.isEmpty();
 	}
 }

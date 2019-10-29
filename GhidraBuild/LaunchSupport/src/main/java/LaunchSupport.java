@@ -224,10 +224,11 @@ public class LaunchSupport {
 			javaRange = min + "-" + max;
 		}
 
-		System.out.println("*******************************************************");
+		System.out.println("******************************************************************");
 		System.out.println(
-			javaName + " " + javaRange + " could not be found and must be manually chosen!");
-		System.out.println("*******************************************************");
+			javaName + " " + javaRange + " (" + javaConfig.getSupportedArchitecture() +
+				"-bit) could not be found and must be manually chosen!");
+		System.out.println("******************************************************************");
 
 		File javaHomeDir = null;
 		BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
@@ -259,7 +260,7 @@ public class LaunchSupport {
 				}
 				System.out.println(
 					"Java version " + javaVersion + " is outside of supported range: [" +
-						javaRange + "]");
+						javaRange + " " + javaConfig.getSupportedArchitecture() + "-bit]");
 			}
 			catch (FileNotFoundException e) {
 				System.out.println(

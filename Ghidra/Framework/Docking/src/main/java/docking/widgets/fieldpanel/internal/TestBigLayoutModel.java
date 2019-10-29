@@ -24,6 +24,7 @@ import javax.swing.JFrame;
 
 import docking.widgets.fieldpanel.*;
 import docking.widgets.fieldpanel.field.*;
+import docking.widgets.fieldpanel.listener.IndexMapper;
 import docking.widgets.fieldpanel.listener.LayoutModelListener;
 import docking.widgets.fieldpanel.support.*;
 import docking.widgets.indexedscrollpane.IndexedScrollPane;
@@ -53,7 +54,7 @@ public class TestBigLayoutModel implements LayoutModel {
 	public void setNumIndexes(BigInteger n) {
 		this.numIndexes = n;
 		for (LayoutModelListener listener : listeners) {
-			listener.modelSizeChanged();
+			listener.modelSizeChanged(IndexMapper.IDENTITY_MAPPER);
 		}
 	}
 

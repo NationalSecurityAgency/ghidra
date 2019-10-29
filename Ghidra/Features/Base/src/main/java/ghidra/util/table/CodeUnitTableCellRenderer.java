@@ -21,6 +21,7 @@ import java.util.List;
 
 import javax.swing.*;
 
+import docking.widgets.label.GDLabel;
 import docking.widgets.table.GTableCellRenderingData;
 import ghidra.docking.settings.Settings;
 import ghidra.util.Msg;
@@ -80,7 +81,7 @@ public class CodeUnitTableCellRenderer extends AbstractGColumnRenderer<CodeUnitT
 		panel.setBorder(getBorder());
 
 		for (String string : displayStrings) {
-			JLabel label = new JLabel();
+			JLabel label = new GDLabel();
 
 			// configure the renderer for display--these settings were taken from the 
 			// GhidraTableCellRenderer, so if that changes, then this will need to change :(

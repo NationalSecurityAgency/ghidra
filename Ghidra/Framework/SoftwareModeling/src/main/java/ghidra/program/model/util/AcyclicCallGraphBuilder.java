@@ -22,6 +22,7 @@ import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.Reference;
 import ghidra.program.model.symbol.ReferenceManager;
 import ghidra.util.exception.CancelledException;
+import ghidra.util.graph.AbstractDependencyGraph;
 import ghidra.util.graph.DependencyGraph;
 import ghidra.util.task.TaskMonitor;
 
@@ -66,7 +67,7 @@ public class AcyclicCallGraphBuilder {
 	public AcyclicCallGraphBuilder(Program program, Collection<Function> functions,
 			boolean killThunks) {
 		this.program = program;
-		functionSet = new HashSet<Address>();
+		functionSet = new HashSet<>();
 		for (Function function : functions) {
 			if (killThunks) {
 				if (function.isThunk()) {
@@ -84,12 +85,12 @@ public class AcyclicCallGraphBuilder {
 	 * @return the DependencyGraph for the acyclic call graph represented by this object.
 	 * @throws CancelledException if the monitor was cancelled.
 	 */
-	public DependencyGraph<Address> getDependencyGraph(TaskMonitor monitor)
+	public AbstractDependencyGraph<Address> getDependencyGraph(TaskMonitor monitor)
 			throws CancelledException {
 
-		DependencyGraph<Address> graph = new DependencyGraph<Address>();
+		AbstractDependencyGraph<Address> graph = new DependencyGraph<>();
 		Deque<Address> startPoints = findStartPoints();
-		Set<Address> unprocessed = new TreeSet<Address>(functionSet); // reliable processing order
+		Set<Address> unprocessed = new TreeSet<>(functionSet); // reliable processing order
 
 		while (!unprocessed.isEmpty()) {
 			monitor.checkCanceled();
@@ -111,7 +112,7 @@ public class AcyclicCallGraphBuilder {
 	}
 
 	private Deque<Address> findStartPoints() {
-		Deque<Address> startPoints = new LinkedList<Address>();
+		Deque<Address> startPoints = new LinkedList<>();
 
 		// populate startPoints with functions that have no callers or are an entry point
 		for (Address address : functionSet) {
@@ -131,7 +132,7 @@ public class AcyclicCallGraphBuilder {
 			node.children[0] = thunkedfunc.getEntryPoint();
 			return;
 		}
-		ArrayList<Address> children = new ArrayList<Address>();
+		ArrayList<Address> children = new ArrayList<>();
 		ReferenceManager referenceManager = program.getReferenceManager();
 		AddressIterator referenceSourceIterator =
 			referenceManager.getReferenceSourceIterator(function.getBody(), true);
@@ -142,7 +143,7 @@ public class AcyclicCallGraphBuilder {
 				Address toAddr = ref.getToAddress();
 				if (ref.getReferenceType().isCall()) {
 					Function childfunc = fmanage.getFunctionAt(toAddr);
-					if (killThunks) {
+					if (childfunc != null && killThunks) {
 						if (childfunc.isThunk()) {
 							childfunc = childfunc.getThunkedFunction(true);
 							toAddr = childfunc.getEntryPoint();
@@ -158,7 +159,7 @@ public class AcyclicCallGraphBuilder {
 		children.toArray(node.children);
 	}
 
-	private void processForward(DependencyGraph<Address> graph, Set<Address> unprocessed,
+	private void processForward(AbstractDependencyGraph<Address> graph, Set<Address> unprocessed,
 			Address startFunction, TaskMonitor monitor) throws CancelledException {
 		VisitStack stack = new VisitStack(startFunction);
 		StackNode curnode = stack.peek();
@@ -205,7 +206,7 @@ public class AcyclicCallGraphBuilder {
 
 	private static Set<Address> findFunctions(Program program, AddressSetView set,
 			boolean killThunks) {
-		Set<Address> functionStarts = new HashSet<Address>();
+		Set<Address> functionStarts = new HashSet<>();
 
 		FunctionIterator functions = program.getFunctionManager().getFunctions(set, true);
 		for (Function function : functions) {
@@ -227,14 +228,15 @@ public class AcyclicCallGraphBuilder {
 
 		@Override
 		public String toString() {
-			return address == null ? "" : address.toString() +
-				(children == null ? " <no children>" : " " + Arrays.toString(children));
+			return address == null ? ""
+					: address.toString() +
+						(children == null ? " <no children>" : " " + Arrays.toString(children));
 		}
 	}
 
 	private static class VisitStack {
-		private Set<Address> inStack = new HashSet<Address>();
-		private Deque<StackNode> stack = new LinkedList<StackNode>();
+		private Set<Address> inStack = new HashSet<>();
+		private Deque<StackNode> stack = new LinkedList<>();
 
 		public VisitStack(Address functionEntry) {
 			push(functionEntry);

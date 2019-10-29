@@ -136,7 +136,7 @@ public class FunctionSymbolNode extends SymbolNode {
 		//@formatter:off
 		return type == SymbolType.PARAMETER || 
 			   type == SymbolType.LOCAL_VAR ||
-			   type == SymbolType.CODE ||    // label function namespace 
+			   type == SymbolType.LABEL ||    // label function namespace 
 			   type == SymbolType.NAMESPACE; // namespace in function namespace
 		//@formatter:on
 	}

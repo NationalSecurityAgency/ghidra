@@ -1,0 +1,369 @@
+/*******************************************************************************
+ * fetchDependencies.gradle                                                    *
+ *                                                                             *
+ * Fetches/downloads required dependencies that aren't available in the        *
+ * standard online repositories (eg: maven) and configures a flat              *
+ * directory-style respository that points to them. This should be run         *
+ * immediately after cloning the Ghidra repository before any other gradle     *
+ * tasks are run.                                                              *
+ *                                                                             *
+ * Specifically, this task:                                                    *
+ *                                                                             *
+ *   1. Downloads various dependencies required by the ghidra build and        *
+ *      puts them in <ghidra repo>/build/downloads/. From here they are        *
+ *      unzipped and/or copied to their final locations. The files to be       *
+ *      downloaded:                                                            *
+ *          - dex-tools-2.0.zip                                                *
+ *          - AXMLPrinter2.jar                                                 *
+ *          - hfsexplorer-0_21-bin.zip                                         *
+ *          - yajsw-stable-12.12.zip                                           *
+ *          - cdt-8.6.0.zip                                                    *
+ *          - PyDev 6.3.1.zip                                                  *
+ *                                                                             *
+ *   2. Creates a directory at <ghidra repo>/flatRepo which is used as a       *
+ *      flat directory-style respository for the files extracted above.        *
+ *                                                                             *
+ * usage: from the command line in the main ghidra repository                  *
+ *        directory, run the following:                                        *
+ *                                                                             *
+ *        gradle --init-script gradle/support/fetchDependencies.gradle init    *
+ *                                                                             *
+ * Note: When running the script, files will only be downloaded if             *
+ *       necessary (eg: they are not already in the build/downloads/           *
+ *       directory).                                                           *
+ *                                                                             *
+ *******************************************************************************/
+
+import java.util.zip.*;
+import java.nio.file.*;
+import java.security.MessageDigest;
+import org.apache.commons.io.*;
+import org.apache.commons.io.filefilter.*;
+
+ext.HOME_DIR = System.getProperty('user.home')
+ext.REPO_DIR = ((Script)this).buildscript.getSourceFile().getParentFile().getParentFile().getParentFile()
+ext.FLAT_REPO_DIR = new File(REPO_DIR, "flatRepo")
+ext.DOWNLOADS_DIR = new File(REPO_DIR, "build/downloads")
+
+// Stores the size of the file being downloaded (for formatting print statements)
+ext.FILE_SIZE = 0;
+
+// The URLs for each of the dependencies
+ext.DEX_ZIP = 'https://github.com/pxb1988/dex2jar/releases/download/2.0/dex-tools-2.0.zip'
+ext.AXML_ZIP = 'https://storage.googleapis.com/google-code-archive-downloads/v2/code.google.com/android4me/AXMLPrinter2.jar'
+ext.HFS_ZIP = 'https://sourceforge.net/projects/catacombae/files/HFSExplorer/0.21/hfsexplorer-0_21-bin.zip'
+ext.YAJSW_ZIP = 'https://sourceforge.net/projects/yajsw/files/yajsw/yajsw-stable-12.12/yajsw-stable-12.12.zip'
+ext.PYDEV_ZIP = 'https://sourceforge.net/projects/pydev/files/pydev/PyDev%206.3.1/PyDev%206.3.1.zip'
+ext.CDT_ZIP = 'http://www.eclipse.org/downloads/download.php?r=1&protocol=https&file=/tools/cdt/releases/8.6/cdt-8.6.0.zip'
+
+// The MD5s for each of the dependencies
+ext.DEX_MD5 = '032456b9db9e6059376611553aecf31f'
+ext.AXML_MD5 = '55d70be9862c2b456cc91a933c197934'
+ext.HFS_MD5 = 'cc1713d634d2cd1fd7f21e18ae4d5d5c'
+ext.YAJSW_MD5 = 'e490ea92554f0238d74d4ef6161cb2c7'
+ext.PYDEV_MD5 = '06263bdef4917c49d8d977d12c2d5073'
+ext.CDT_MD5 = '8e9438a6e3947d614af98e1b58e945a2'
+
+// Number of times to try and establish a connection when downloading files before
+// failing
+ext.NUM_RETRIES = 2
+
+// Set up a maven repository configuration so we can get access to Apache FileUtils for
+// copying/deleting files.
+initscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'commons-io:commons-io:2.5'
+    }
+}
+
+// This is where the real flow of the script starts...
+try {
+	createDirs()
+	populateFlatRepo()
+}
+finally {
+	cleanup()  
+}
+
+/**
+ * Creates the directories where the dependencies will be downloaded and stored
+ */
+def createDirs() {   
+   if (!DOWNLOADS_DIR.exists()) {
+      DOWNLOADS_DIR.mkdirs()
+   }
+   if (!FLAT_REPO_DIR.exists()) {
+      FLAT_REPO_DIR.mkdirs()
+   }
+}
+
+/**
+ * Downloads a file from a URL. If there is a problem connecting to the given
+ * URL the attempt will be retried NUM_RETRIES times before failing.
+ *
+ * Progress is shown on the command line in the form of the number of bytes
+ * downloaded and a percentage of the total. 
+ *
+ * Note: We do not validate that the number of bytes downloaded matches the
+ *       expected total here; any discrepencies will be caught when checking
+ *       the MD5s later on.
+ *
+ * @param url the file to download
+ * @param filename the local file to create for the download
+ */
+def download(url, filename) {
+
+   println("File: " + url)
+   BufferedInputStream istream = establishConnection(url, NUM_RETRIES);
+   assert istream != null : "   ***CONNECTION FAILURE***\n   max attempts exceeded; exiting\n"
+   
+   FileOutputStream ostream = new FileOutputStream(filename);
+   def dataBuffer = new byte[1024];
+   int bytesRead;
+   int totalRead;
+   while ((bytesRead = istream.read(dataBuffer, 0, 1024)) != -1) { 
+	   
+     ostream.write(dataBuffer, 0, bytesRead);
+     totalRead += bytesRead
+	      
+     print("\r")
+     if (FILE_SIZE.equals("unknown")) {
+        print("   Downloading: " + totalRead + " of " + FILE_SIZE)
+     }
+     else {
+        int pctComplete = (totalRead / FILE_SIZE) * 100
+        print("   Downloading: " + totalRead + " of " + FILE_SIZE + " (" + pctComplete + "%)")
+     }
+     System.out.flush()
+   }
+   println("")
+	
+   istream.close();
+   ostream.close();
+}
+
+/**
+ * Attemps to establish a connection to the given URL. 
+ *
+ * @param url the site to connect to
+ * @param retries the number of times to attempt to reconnect if there is a failure
+ * @return the InputStream for the URL
+ */
+def establishConnection(url, retries) {
+   for (int i=0; i<retries; i++) {
+      try {
+         println("   Connect attempt " + (i+1) + " of " + retries)
+         URLConnection conn = new URL(url).openConnection();
+         FILE_SIZE = conn.getContentLength();
+         if (FILE_SIZE == -1) {
+            // This can happen if there is a problem retrieving the size; we've seen it happen
+            // in testing. 
+            FILE_SIZE = "unknown" 
+         }
+         return new BufferedInputStream(new URL(url).openStream()); 
+      }
+      catch (Exception e) {
+         println("   Connection error! " + e)
+      }
+   }
+}
+
+/**
+ * Unzips a file to a directory
+ *
+ * @param sourceDir the directory where the zip file resides
+ * @param targetDir the directory where the unzipped files should be placed
+ * @param zipFileName the name of the file to unpack
+ */
+def unzip(sourceDir, targetDir, zipFileName) {
+   def zip = new ZipFile(new File(sourceDir, zipFileName))
+   
+   zip.entries().findAll { !it.directory }.each { e ->
+      (e.name as File).with { f -> 
+         if (f.parentFile != null) {
+	         File destPath = new File(targetDir.path, f.parentFile.path)
+	         destPath.mkdirs()
+	         File targetFile = new File(destPath.path, f.name)
+	         targetFile.withOutputStream { w -> 
+	            w << zip.getInputStream(e)
+	         }
+	      }
+      }
+   }
+}
+
+/**
+ * Downloads and stores the necessary dependencies in the local flat repository.
+ *
+ * If the dependency already exists in the downloads folder (DOWNLOADS_DIR) and has the
+ * proper checksum, it will NOT be re-downloaded.
+ */
+def populateFlatRepo() {
+
+   // 1. Download all the dependencies and verify their checksums. If the dependency has already
+   //    been download, do NOT download again.
+   File file = new File(DOWNLOADS_DIR, 'dex-tools-2.0.zip')
+   if (!DEX_MD5.equals(generateChecksum(file))) {
+      download (DEX_ZIP, file.path)
+      validateChecksum(generateChecksum(file), DEX_MD5);
+   }
+  
+   file = new File(DOWNLOADS_DIR, 'AXMLPrinter2.jar')
+   if (!AXML_MD5.equals(generateChecksum(file))) {
+      download (AXML_ZIP, file.path)
+      validateChecksum(generateChecksum(file), AXML_MD5);
+   }
+   
+   file = new File(DOWNLOADS_DIR, 'hfsexplorer-0_21-bin.zip')
+   if (!HFS_MD5.equals(generateChecksum(file))) {
+      download (HFS_ZIP, file.path)
+      validateChecksum(generateChecksum(file), HFS_MD5);
+   }
+   
+   file = new File(DOWNLOADS_DIR, 'yajsw-stable-12.12.zip')
+   if (!YAJSW_MD5.equals(generateChecksum(file))) {
+      download (YAJSW_ZIP, file.path)
+      validateChecksum(generateChecksum(file), YAJSW_MD5);
+   }
+   
+   file = new File(DOWNLOADS_DIR, 'PyDev 6.3.1.zip')
+   if (!PYDEV_MD5.equals(generateChecksum(file))) {
+      download (PYDEV_ZIP, file.path)
+      validateChecksum(generateChecksum(file), PYDEV_MD5);
+   }
+   
+   file = new File(DOWNLOADS_DIR, 'cdt-8.6.0.zip')
+   if (!CDT_MD5.equals(generateChecksum(file))) {
+      download (CDT_ZIP, file.path)
+      validateChecksum(generateChecksum(file), CDT_MD5);
+   }
+   
+   // 2. Unzip the dependencies
+   unzip(DOWNLOADS_DIR, DOWNLOADS_DIR, "dex-tools-2.0.zip")
+   unzipHfsx()
+
+   // 3. Copy the necessary jars to the flatRepo directory. Yajsw, CDT, and PyDev go directly into
+   //    the source repository.
+   copyDexTools()
+   copyAXML()
+   copyHfsx()
+   copyYajsw()
+   copyPyDev()
+   copyCdt()
+}
+
+/**
+ * Generates the md5 for the given file
+ *
+ * @param file the file to generate the checksum for
+ * @return the generated checksum
+ */
+def generateChecksum(file) {
+   if (!file.exists()) {
+      return null
+   }
+   MessageDigest md = MessageDigest.getInstance("MD5");
+   md.update(Files.readAllBytes(Paths.get(file.path)));
+   byte[] digest = md.digest();
+   StringBuilder sb = new StringBuilder();
+   for (byte b : digest) {
+      sb.append(String.format("%02x", b));
+   }
+   
+   return sb.toString();
+}
+
+/**
+ * Compares two checksums and generates an assert failure if they do not match
+ *
+ * @param sourceMd5 the checksum to validate
+ * @param expectedMd5 the expected checksum
+ */
+def validateChecksum(sourceMd5, expectedMd5) {
+   	assert(sourceMd5.equals(expectedMd5));    
+}
+
+/**
+ * Unzips the hfsx zip file
+ */
+def unzipHfsx() {
+   def hfsxdir = getOrCreateTempHfsxDir()
+   unzip (DOWNLOADS_DIR, hfsxdir, "hfsexplorer-0_21-bin.zip")
+}
+
+/**
+ * Copies the dex-tools jars to the flat repository
+ *
+ * Note: This will only copy files beginning with "dex-"
+ */
+def copyDexTools() {
+   FileUtils.copyDirectory(new File(DOWNLOADS_DIR, 'dex2jar-2.0/lib/'), FLAT_REPO_DIR, new WildcardFileFilter("dex-*"));
+}
+
+/**
+ * Copies the AXMLPrinter2 jar to the flat repository
+ */
+def copyAXML() {
+   FileUtils.copyFile(new File(DOWNLOADS_DIR, 'AXMLPrinter2.jar'), new File(FLAT_REPO_DIR, "AXMLPrinter2.jar"));
+}
+
+/**
+ * Copies the necessary hfsx jars to the flat repository
+ */
+def copyHfsx() {
+   FileUtils.copyFile(new File(DOWNLOADS_DIR, "hfsx/lib/csframework.jar"), new File(FLAT_REPO_DIR, "csframework.jar"));
+   FileUtils.copyFile(new File(DOWNLOADS_DIR, "hfsx/lib/hfsx_dmglib.jar"), new File(FLAT_REPO_DIR, "hfsx_dmglib.jar"));
+   FileUtils.copyFile(new File(DOWNLOADS_DIR, "hfsx/lib/hfsx.jar"), new File(FLAT_REPO_DIR, "hfsx.jar"));
+   FileUtils.copyFile(new File(DOWNLOADS_DIR, "hfsx/lib/iharder-base64.jar"), new File(FLAT_REPO_DIR, "iharder-base64.jar"));
+}
+
+/**
+ * Copies the yajswdir zip to its location in the GhidraServer project.
+ */
+def copyYajsw() {
+   FileUtils.copyFile(new File(DOWNLOADS_DIR, "yajsw-stable-12.12.zip"), new File(REPO_DIR, "Ghidra/Features/GhidraServer/build/yajsw-stable-12.12.zip"));
+}
+
+/**
+ * Copies the pydev zip to its bin repository location
+ */
+def copyPyDev() {
+   FileUtils.copyFile(new File(DOWNLOADS_DIR, 'PyDev 6.3.1.zip'), new File(REPO_DIR, "GhidraBuild/EclipsePlugins/GhidraDev/GhidraDevPlugin/build/PyDev 6.3.1.zip"));
+}
+
+/**
+ * Copies the cdt zip to its bin repository location
+ */
+def copyCdt() {
+   FileUtils.copyFile(new File(DOWNLOADS_DIR, 'cdt-8.6.0.zip'), new File(REPO_DIR, "GhidraBuild/EclipsePlugins/GhidraDev/GhidraDevPlugin/build/cdt-8.6.0.zip"));
+}
+
+/**
+ * Creates a temporary folder to house the hfsx zip contents
+ *
+ * @return the newly-created hfsx directory object
+ */
+def getOrCreateTempHfsxDir() {
+   def hfsxdir = new File (DOWNLOADS_DIR, "hfsx")
+   if (!hfsxdir.exists()) {
+       hfsxdir.mkdir()
+   }
+
+   return hfsxdir;
+}
+
+/**
+ * Performs any cleanup operations that need to be performed after the flat repo has
+ * been populated.
+ */
+def cleanup() {
+   // Uncomment this if we want to delete the downloads folder. For now, leave this and 
+   // depend on a gradle clean to wipe it out.
+   //
+   //if (DOWNLOADS_DIR.exists()) {
+   //   FileUtils.deleteDirectory(DOWNLOADS_DIR)
+   //}
+}

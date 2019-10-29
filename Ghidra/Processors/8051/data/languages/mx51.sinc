@@ -190,7 +190,7 @@ EBitByteAddr: byteaddr 	is bitbank=0 & lowbyte & sfrbit [ byteaddr = lowbyte + 0
 :movx "@"eptrReg,Areg is opfull=0xa5; opfull=0xf0 & Areg & eptrReg { 
   *:1 EPTR = ACC;
 }
-:movc Areg,"@"APlusEptr is opfull=0xa5; opfull=0x93 & Areg & APlusEptr { 
+:movc Areg,APlusEptr is opfull=0xa5; opfull=0x93 & Areg & APlusEptr { 
   ACC = *:1 APlusEptr;
 }
 :inc EPTR is opfull=0xa5; opfull=0xa3 & EPTR { 

@@ -18,6 +18,7 @@ package ghidra.app.plugin.core.disassembler;
 import docking.ActionContext;
 import docking.action.DockingAction;
 import docking.action.MenuData;
+import docking.tool.ToolConstants;
 import docking.widgets.table.GTable;
 import docking.widgets.table.threaded.ThreadedTableModelListener;
 import ghidra.app.CorePluginPackage;
@@ -32,7 +33,6 @@ import ghidra.framework.model.*;
 import ghidra.framework.plugintool.PluginInfo;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.util.PluginStatus;
-import ghidra.framework.plugintool.util.ToolConstants;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.lang.RegisterValue;
@@ -140,15 +140,18 @@ public class AutoTableDisassemblerPlugin extends ProgramPlugin implements Domain
 			public void actionPerformed(ActionContext context) {
 				startDialog();
 			}
+
+			@Override
+			public boolean isEnabledForContext(ActionContext context) {
+				return currentProgram != null;
+			}
 		};
 		findTableAction.setHelpLocation(
 			new HelpLocation(HelpTopics.SEARCH, findTableAction.getName()));
-		findTableAction.setMenuBarData(
-			new MenuData(new String[] { ToolConstants.MENU_SEARCH, "For Address Tables..." }, null,
-				"search for"));
-
+		findTableAction.setMenuBarData(new MenuData(
+			new String[] { ToolConstants.MENU_SEARCH, "For Address Tables" }, null, "search for"));
 		findTableAction.setDescription(getPluginDescription().getDescription());
-		enableOnLocation(findTableAction);
+
 		tool.addAction(findTableAction);
 
 	} // end of createActions()

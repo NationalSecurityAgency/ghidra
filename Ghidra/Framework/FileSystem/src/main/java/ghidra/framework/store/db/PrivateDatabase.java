@@ -229,9 +229,8 @@ public class PrivateDatabase extends Database {
 	/**
 	 * If a cumulative change files exists, it will be deleted.
 	 * @throws IOException
-	 * @throws CancelledException
 	 */
-	public void updateCheckoutCopy() throws CancelledException, IOException {
+	public void updateCheckoutCopy() throws IOException {
 		if (!isCheckOutCopy) {
 			throw new IOException("Database is not a checkout copy");
 		}

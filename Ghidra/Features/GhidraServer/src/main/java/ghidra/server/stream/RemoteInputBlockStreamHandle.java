@@ -67,7 +67,7 @@ public class RemoteInputBlockStreamHandle extends RemoteBlockStreamHandle<InputB
 
 		@Override
 		public void close() throws IOException {
-			socket.getInputStream().close();
+			in.close();
 			socket.close();
 		}
 

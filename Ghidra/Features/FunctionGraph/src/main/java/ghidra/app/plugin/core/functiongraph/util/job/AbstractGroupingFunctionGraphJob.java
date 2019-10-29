@@ -68,7 +68,7 @@ public abstract class AbstractGroupingFunctionGraphJob extends AbstractFunctionG
 	 */
 	AbstractGroupingFunctionGraphJob(FGController controller,
 			GroupedFunctionGraphVertex groupVertex, Set<FGVertex> newVertices,
-			Set<FGVertex> verticesToRemove, boolean relayloutOverride, boolean useAnimation) {
+			Set<FGVertex> verticesToRemove, boolean relayoutOverride, boolean useAnimation) {
 
 		super(controller, useAnimation);
 
@@ -87,7 +87,7 @@ public abstract class AbstractGroupingFunctionGraphJob extends AbstractFunctionG
 		FunctionGraphOptions options = controller.getFunctionGraphOptions();
 		RelayoutOption relayoutOption = options.getRelayoutOption();
 		this.relayout = relayoutOption == VERTEX_GROUPING_CHANGES || relayoutOption == ALWAYS ||
-			relayloutOverride;
+			relayoutOverride;
 	}
 
 	@Override
@@ -158,7 +158,7 @@ public abstract class AbstractGroupingFunctionGraphJob extends AbstractFunctionG
 		return positions;
 	}
 
-	/**
+	/*
 	 * Subclasses must return locations for vertices.  This method will be called when no 
 	 * relayout will be performed.
 	 * 
@@ -191,15 +191,21 @@ public abstract class AbstractGroupingFunctionGraphJob extends AbstractFunctionG
 
 	@Override
 	protected void updateOpacity(double percentComplete) {
+
 		double oldComponentsAlpha = 1.0 - percentComplete;
 
 		Collection<FGVertex> vertices = getVerticesToBeRemoved();
 		for (FGVertex vertex : vertices) {
+
 			vertex.setAlpha(oldComponentsAlpha);
 
 			Collection<FGEdge> edges = getEdges(vertex);
 			for (FGEdge edge : edges) {
-				edge.setAlpha(oldComponentsAlpha);
+
+				// don't go past the alpha when removing
+				double defaultAlpha = edge.getDefaultAlpha();
+				double alpha = Math.min(oldComponentsAlpha, defaultAlpha);
+				edge.setAlpha(alpha);
 			}
 		}
 
@@ -210,7 +216,11 @@ public abstract class AbstractGroupingFunctionGraphJob extends AbstractFunctionG
 
 			Collection<FGEdge> edges = getEdges(vertex);
 			for (FGEdge edge : edges) {
-				edge.setAlpha(newComponentsAlpha);
+
+				// don't go past the alpha when adding
+				double defaultAlpha = edge.getDefaultAlpha();
+				double alpha = Math.min(newComponentsAlpha, defaultAlpha);
+				edge.setAlpha(alpha);
 			}
 		}
 	}

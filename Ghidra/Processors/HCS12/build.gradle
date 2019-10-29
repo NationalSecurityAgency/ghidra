@@ -1,0 +1,15 @@
+apply from: "$rootProject.projectDir/gradle/distributableGhidraModule.gradle"
+apply from: "$rootProject.projectDir/gradle/javaProject.gradle"
+apply from: "$rootProject.projectDir/gradle/jacocoProject.gradle"
+apply from: "$rootProject.projectDir/gradle/processorProject.gradle"
+apply plugin: 'eclipse'
+
+eclipse.project.name = 'Processors HCS12'
+
+sleighCompile {
+	args '-l'
+}
+
+dependencies {
+	compile project(':Base')
+}

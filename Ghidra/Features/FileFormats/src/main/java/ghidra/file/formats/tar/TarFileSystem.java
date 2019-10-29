@@ -15,16 +15,16 @@
  */
 package ghidra.file.formats.tar;
 
-import ghidra.formats.gfilesystem.*;
-import ghidra.formats.gfilesystem.annotations.FileSystemInfo;
-import ghidra.util.exception.CancelledException;
-import ghidra.util.task.TaskMonitor;
-
 import java.io.*;
 import java.util.*;
 
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
+
+import ghidra.formats.gfilesystem.*;
+import ghidra.formats.gfilesystem.annotations.FileSystemInfo;
+import ghidra.util.exception.CancelledException;
+import ghidra.util.task.TaskMonitor;
 
 /**
  * TAR file system implementation.
@@ -169,12 +169,9 @@ public class TarFileSystem implements GFileSystem {
 	}
 
 	@Override
-	public String getInfo(GFile file, TaskMonitor monitor) throws IOException {
+	public String getInfo(GFile file, TaskMonitor monitor) {
 		TarMetadata tmd = fsih.getMetadata(file);
-		if (tmd == null) {
-			throw new IOException("Unknown file " + file);
-		}
-		return FSUtilities.infoMapToString(getInfoMap(tmd.tarArchiveEntry));
+		return (tmd != null) ? FSUtilities.infoMapToString(getInfoMap(tmd.tarArchiveEntry)) : null;
 	}
 
 	@Override

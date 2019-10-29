@@ -17,13 +17,13 @@ package ghidra.app.plugin.core.checksums;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 import javax.swing.*;
 
 import docking.ActionContext;
 import docking.action.*;
+import docking.widgets.label.GDLabel;
 import ghidra.app.context.ProgramContextAction;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.util.HelpLocation;
@@ -63,15 +63,16 @@ public class ComputeChecksumsProvider extends ComponentProviderAdapter {
 		super(plugin.getTool(), "Checksum Generator", plugin.getName(), ProgramContextAction.class);
 
 		setHelpLocation(new HelpLocation("ComputeChecksumsPlugin", "Generate_Checksum_Help"));
-		ClassSearcher.getInstances(ChecksumAlgorithm.class).forEach(
-			alg -> addChecksumAlgorithm(alg));
+		Set<ChecksumAlgorithm> algorithms = ClassSearcher.getInstances(ChecksumAlgorithm.class);
+		checksums.addAll(algorithms);
 
 		this.plugin = plugin;
 		this.mainPanel = createWorkPanel();
-		setSelection(false);
 
 		addToTool();
 		createActions();
+
+		setSelection(false);
 	}
 
 	@Override
@@ -92,7 +93,7 @@ public class ComputeChecksumsProvider extends ComponentProviderAdapter {
 		resultsMainPanel.add(tablePanel);
 		main.add(resultsMainPanel, BorderLayout.CENTER);
 
-		errorStatus = new JLabel(" ");
+		errorStatus = new GDLabel(" ");
 		errorStatus.setName("message");
 		errorStatus.setHorizontalAlignment(SwingConstants.CENTER);
 		errorStatus.setForeground(Color.RED);
@@ -134,9 +135,7 @@ public class ComputeChecksumsProvider extends ComponentProviderAdapter {
 	 */
 	void setSelection(boolean state) {
 		setErrorMessage("");
-		if (selectionAction == null) {
-			return;
-		}
+
 		selectionAction.setSelected(state);
 		selectionAction.setEnabled(state);
 		if (state) {
@@ -183,39 +182,17 @@ public class ComputeChecksumsProvider extends ComponentProviderAdapter {
 		return carryAction.isSelected();
 	}
 
-	/**
-	 * Returns the model that's being used by the table.
-	 * @return the model that's being used by the table.
-	 */
-	public ChecksumTableModel getModel() {
+	ChecksumTableModel getModel() {
 		return model;
 	}
 
 	/**
-	 * Returns the checksum algorithm table that's being used in the provider.
-	 * @return the checksums algorithm table that's being used in the provider.
+	 * Returns a list of the checksums currently being used by the table model
+	 * @return a list of the checksums currently being used by the table model
 	 */
-	public GhidraTable getTable() {
-		return table;
-	}
-
-	/**
-	 * Returns a list of the checksums currently being used by the table model.
-	 * @return a list of the checksums currently being used by the table model.
-	 */
-	public List<ChecksumAlgorithm> getChecksums() {
-		return checksums;
-	}
-
-	/**
-	 * Adds a checksum algorithm to the table model.
-	 * @param checksumAlgorithm the algorithm to add to the table model.
-	 */
-	public void addChecksumAlgorithm(ChecksumAlgorithm checksumAlgorithm) {
-		checksums.add(checksumAlgorithm);
-		if (model != null) {
-			model.fireTableDataChanged();
-		}
+	List<ChecksumAlgorithm> getChecksums() {
+		// send out a copy so that nobody can modify the list while it is being used
+		return new ArrayList<>(checksums);
 	}
 
 	/**
@@ -227,19 +204,17 @@ public class ComputeChecksumsProvider extends ComponentProviderAdapter {
 		table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 	}
 
-	void updateFields() {
+	private void updateFields() {
 		if (!hasResults) {
 			return;
 		}
 
-		model.formatOptions(showHexAction.isSelected());
+		model.setFormatOptions(showHexAction.isSelected());
 		model.fireTableDataChanged();
 	}
 
 	private void clearFields() {
-		if (checksums != null) {
-			checksums.stream().forEach(checkResult -> checkResult.reset());
-		}
+		checksums.forEach(checkResult -> checkResult.reset());
 		model.fireTableDataChanged();
 	}
 

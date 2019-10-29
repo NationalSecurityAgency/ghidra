@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<language_definitions>
+  
+  <language processor="8048"
+            endian="little"
+            size="16"
+            variant="default"
+            version="1.0"
+            slafile="8048.sla"
+            processorspec="8048.pspec"
+            manualindexfile="../manuals/8048.idx"
+            id="8048:LE:16:default">
+    <description>8048 Microcontroller Family</description>
+    <compiler name="default" spec="8048.cspec" id="default"/>
+  </language>
+  
+</language_definitions>

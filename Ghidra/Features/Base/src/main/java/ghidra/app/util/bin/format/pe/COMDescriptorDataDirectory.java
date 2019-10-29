@@ -86,7 +86,7 @@ public class COMDescriptorDataDirectory extends DataDirectory {
 			NTHeader ntHeader) throws DuplicateNameException, CodeUnitInsertionException,
 			IOException, MemoryAccessException {
 
-		monitor.setMessage(program.getName() + ": com descriptor(s)...");
+		monitor.setMessage("[" + program.getName() + "]: com descriptor(s)...");
 		Address addr = PeUtils.getMarkupAddress(program, isBinary, ntHeader, virtualAddress);
 		if (!program.getMemory().contains(addr)) {
 			return;

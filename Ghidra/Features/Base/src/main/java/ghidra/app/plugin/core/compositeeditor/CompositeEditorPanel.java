@@ -21,35 +21,31 @@ import java.awt.datatransfer.Transferable;
 import java.awt.dnd.*;
 import java.awt.event.*;
 import java.math.BigInteger;
-import java.util.Arrays;
-import java.util.EventObject;
-import java.util.List;
+import java.util.*;
 
 import javax.swing.*;
-import javax.swing.border.BevelBorder;
 import javax.swing.border.Border;
 import javax.swing.event.CellEditorListener;
 import javax.swing.event.ChangeEvent;
 import javax.swing.table.*;
 import javax.swing.text.JTextComponent;
 
-import docking.ToolTipManager;
+import docking.DockingWindowManager;
 import docking.action.DockingActionIf;
+import docking.actions.KeyBindingUtils;
 import docking.dnd.*;
 import docking.help.Help;
 import docking.help.HelpService;
-import docking.util.KeyBindingUtils;
 import docking.widgets.DropDownSelectionTextField;
 import docking.widgets.OptionDialog;
 import docking.widgets.fieldpanel.support.FieldRange;
 import docking.widgets.fieldpanel.support.FieldSelection;
+import docking.widgets.label.GDLabel;
+import docking.widgets.label.GLabel;
 import docking.widgets.table.GTable;
 import docking.widgets.table.GTableCellRenderer;
 import docking.widgets.textfield.GValidatedTextField;
-import ghidra.app.plugin.core.data.DataTypeCellRenderer;
-import ghidra.app.plugin.core.datamgr.archive.SourceArchive;
 import ghidra.app.services.DataTypeManagerService;
-import ghidra.app.util.ToolTipUtils;
 import ghidra.app.util.datatype.DataTypeSelectionEditor;
 import ghidra.app.util.datatype.NavigationDirection;
 import ghidra.framework.plugintool.Plugin;
@@ -76,7 +72,7 @@ public abstract class CompositeEditorPanel extends JPanel
 	// Normal color for selecting components in the table.
 	// TODO: Why do we choose a different selection color?
 	//private static final Color SELECTION_COLOR = Color.YELLOW.brighter().brighter();
-	protected static final Insets TEXTFIELD_INSETS = new JTextField().getInsets();
+	//protected static final Insets TEXTFIELD_INSETS = new JTextField().getInsets();
 
 	protected static final Border BEVELED_BORDER = BorderFactory.createLoweredBevelBorder();
 
@@ -110,6 +106,10 @@ public abstract class CompositeEditorPanel extends JPanel
 		this.provider = provider;
 		this.model = model;
 		createTable();
+		JPanel bitViewerPanel = createBitViewerPanel();
+		if (bitViewerPanel != null) {
+			lowerPanel.add(bitViewerPanel);
+		}
 		JPanel infoPanel = createInfoPanel();
 		if (infoPanel != null) {
 			adjustCompositeInfo();
@@ -145,9 +145,33 @@ public abstract class CompositeEditorPanel extends JPanel
 
 	private void setupTableCellRenderer() {
 		GTableCellRenderer cellRenderer = new GTableCellRenderer();
-		DataTypeCellRenderer dtiCellRenderer = new DataTypeCellRenderer();
+		DataTypeCellRenderer dtiCellRenderer =
+			new DataTypeCellRenderer(model.getOriginalDataTypeManager());
 		table.setDefaultRenderer(String.class, cellRenderer);
 		table.setDefaultRenderer(DataTypeInstance.class, dtiCellRenderer);
+	}
+
+	private boolean launchBitFieldEditor(int modelColumn, int editingRow) {
+		if (model.viewComposite instanceof Structure &&
+			!model.viewComposite.isInternallyAligned() &&
+			model.getDataTypeColumn() == modelColumn && editingRow < model.getNumComponents()) {
+			// check if we are attempting to edit a bitfield
+			DataTypeComponent dtComponent = model.getComponent(editingRow);
+			if (dtComponent.isBitFieldComponent()) {
+				table.getCellEditor().cancelCellEditing();
+
+				BitFieldEditorDialog dlg = new BitFieldEditorDialog(model.viewComposite,
+					provider.dtmService, editingRow, ordinal -> {
+						model.fireTableDataChanged();
+						model.compositeInfoChanged();
+					});
+				Component c = provider.getComponent();
+				Window w = SwingUtilities.windowForComponent(c);
+				DockingWindowManager.showDialog(w, dlg, c);
+				return true;
+			}
+		}
+		return false;
 	}
 
 	private void setupTableCellEditor() {
@@ -162,8 +186,13 @@ public abstract class CompositeEditorPanel extends JPanel
 				// Starting cell edit.
 				SwingUtilities.invokeLater(() -> {
 					int editingRow = table.getEditingRow();
+					if (editingRow < 0) {
+						return;
+					}
 					int modelColumn = table.convertColumnIndexToModel(table.getEditingColumn());
-					model.beginEditingField(editingRow, modelColumn);
+					if (!launchBitFieldEditor(modelColumn, editingRow)) {
+						model.beginEditingField(editingRow, modelColumn);
+					}
 				});
 			}
 		});
@@ -528,6 +557,7 @@ public abstract class CompositeEditorPanel extends JPanel
 			setVisible(false);
 		}
 		model.removeCompositeEditorModelListener(this);
+		table.dispose();
 	}
 
 	private void createTable() {
@@ -535,8 +565,8 @@ public abstract class CompositeEditorPanel extends JPanel
 		table.putClientProperty("JTable.autoStartsEdit", Boolean.FALSE);
 		table.addMouseListener(new CompositeTableMouseListener());
 
-		CompositeEditorAction action = provider.actionMgr.getNamedAction(
-			CompositeEditorAction.EDIT_ACTION_PREFIX + EditFieldAction.ACTION_NAME);
+		CompositeEditorTableAction action = provider.actionMgr.getNamedAction(
+			CompositeEditorTableAction.EDIT_ACTION_PREFIX + EditFieldAction.ACTION_NAME);
 		Action swingAction = KeyBindingUtils.adaptDockingActionToNonContextAction(action);
 		InputMap map = table.getInputMap();
 		map.put(action.getKeyBinding(), "StartEditing");
@@ -548,6 +578,14 @@ public abstract class CompositeEditorPanel extends JPanel
 				return;
 			}
 			model.setSelection(table.getSelectedRows());
+
+		});
+
+		table.getColumnModel().getSelectionModel().addListSelectionListener(e -> {
+			if (e.getValueIsAdjusting()) {
+				return;
+			}
+			model.setColumn(e.getFirstIndex());
 		});
 
 		JPanel tablePanel = new JPanel(new BorderLayout());
@@ -590,6 +628,18 @@ public abstract class CompositeEditorPanel extends JPanel
 	}
 
 	/**
+	 * Override this method to add your own bit-viewer panel below the
+	 * component table.
+	 * <P>Creates a panel that appears below the component table. This panel
+	 * contains a bit-level view of a selected component.
+	 * By default, there is no panel below the component table.
+	 * @return the panel or null if there isn't one.
+	 */
+	protected JPanel createBitViewerPanel() {
+		return null;
+	}
+
+	/**
 	 * Override this method to add your own view/edit panel below the
 	 * component table.
 	 * <P>Creates a panel that appears below the component table. This panel
@@ -603,7 +653,7 @@ public abstract class CompositeEditorPanel extends JPanel
 
 	private JPanel createStatusPanel() {
 		JPanel panel = new JPanel(new BorderLayout());
-		statusLabel = new JLabel(" ");
+		statusLabel = new GDLabel(" ");
 		statusLabel.setHorizontalAlignment(SwingConstants.CENTER);
 		statusLabel.setForeground(Color.blue);
 		statusLabel.addComponentListener(new ComponentAdapter() {
@@ -620,7 +670,7 @@ public abstract class CompositeEditorPanel extends JPanel
 	/**
 	 * Sets the currently displayed status message.
 	 *
-	 * @param id the new size
+	 * @param status non-html message string to be displayed.
 	 */
 	public void setStatus(String status) {
 		if (statusLabel != null) {
@@ -646,10 +696,10 @@ public abstract class CompositeEditorPanel extends JPanel
 			messageWidth = fm.stringWidth(text);
 		}
 		if (messageWidth > statusLabel.getWidth()) {
-			ToolTipManager.setToolTipText(statusLabel, text);
+			statusLabel.setToolTipText(text);
 		}
 		else {
-			ToolTipManager.setToolTipText(statusLabel, "Editor messages appear here.");
+			statusLabel.setToolTipText("Editor messages appear here.");
 		}
 	}
 
@@ -657,7 +707,7 @@ public abstract class CompositeEditorPanel extends JPanel
 		JPanel panel = new JPanel();
 		panel.setLayout(new BoxLayout(panel, BoxLayout.X_AXIS));
 
-		JLabel label = new JLabel(name + ":", SwingConstants.RIGHT);
+		JLabel label = new GLabel(name + ":", SwingConstants.RIGHT);
 		label.setPreferredSize(new Dimension(label.getPreferredSize()));
 		panel.add(label);
 		panel.add(Box.createHorizontalStrut(2));
@@ -1190,22 +1240,18 @@ public abstract class CompositeEditorPanel extends JPanel
 			implements TableCellEditor {
 		private static final long serialVersionUID = 1L;
 		private DataTypeSelectionEditor editor;
-		private JLabel label = new JLabel();
 		private DataType dt;
 		private int maxLength;
+		private boolean bitfieldAllowed;
 
 		private JPanel editorPanel;
 
 		@Override
 		public Component getTableCellEditorComponent(JTable table1, Object value,
 				boolean isSelected, int row, int column) {
-			if (label == null) {
-				label = new JLabel();
-				label.setBorder(BorderFactory.createBevelBorder(BevelBorder.LOWERED));
-			}
-
 			model.clearStatus();
 			maxLength = model.getMaxAddLength(row);
+			bitfieldAllowed = model.isBitFieldAllowed();
 			init();
 
 			DataTypeInstance dti = (DataTypeInstance) value;
@@ -1225,7 +1271,9 @@ public abstract class CompositeEditorPanel extends JPanel
 
 			Plugin plugin = provider.getPlugin();
 			final PluginTool tool = plugin.getTool();
-			editor = new DataTypeSelectionEditor(tool, maxLength, AllowedDataTypes.SIZABLE_DYNAMIC);
+			editor = new DataTypeSelectionEditor(tool, maxLength,
+				bitfieldAllowed ? AllowedDataTypes.SIZABLE_DYNAMIC_AND_BITFIELD
+						: AllowedDataTypes.SIZABLE_DYNAMIC);
 			editor.setTabCommitsEdit(true);
 			DataTypeManager originalDataTypeManager = model.getOriginalDataTypeManager();
 			editor.setPreferredDataTypeManager(originalDataTypeManager);
@@ -1451,69 +1499,6 @@ public abstract class CompositeEditorPanel extends JPanel
 			super(dm);
 		}
 
-		// Use the contains method to set the tooltip text depending
-		// on the table cell the mouse is over.
-		@Override
-		public boolean contains(int x, int y) {
-			if (!super.contains(x, y)) {
-				return false;
-			}
-			Point p = new Point(x, y);
-			int columnIndex = columnAtPoint(p);
-			int rowIndex = rowAtPoint(p);
-			String toolTipText = null;
-			Object value = model.getValueAt(rowIndex, columnIndex);
-			if (columnIndex == model.getDataTypeColumn()) {
-				if (value instanceof DataTypeInstance) {
-					DataTypeInstance dataTypeInstance = (DataTypeInstance) value;
-					toolTipText = getDataTypeToolTip(dataTypeInstance.getDataType());
-				}
-			}
-			else if (value instanceof String) {
-				String string = (String) value;
-				if (string.length() == 0) {
-					string = null;
-				}
-				toolTipText = string;
-			}
-			String currentToolTipText = getToolTipText();
-			if (!SystemUtilities.isEqual(toolTipText, currentToolTipText)) {
-				setToolTipText(toolTipText);
-			}
-
-			return true;
-		}
-
-		private String getDataTypeToolTip(DataType dataType) {
-
-			DataTypeManager dataTypeManager = dataType.getDataTypeManager();
-			// This checks for null dataTypeManager below since BadDataType won't have one.
-			SourceArchive sourceArchive = dataType.getSourceArchive();
-			DataTypeManager originalDTM = model.getOriginalDataTypeManager();
-			boolean localSource =
-				(sourceArchive == null) || ((dataTypeManager != null) && SystemUtilities.isEqual(
-					dataTypeManager.getUniversalID(), sourceArchive.getSourceArchiveID()));
-			if (localSource) {
-				sourceArchive = originalDTM.getSourceArchive(originalDTM.getUniversalID());
-			}
-			DataType foundDataType = originalDTM.getDataType(dataType.getDataTypePath());
-
-			String displayName = "";
-			if (foundDataType != null && (dataTypeManager != null)) {
-				displayName = dataTypeManager.getName();
-			}
-			displayName += dataType.getPathName();
-			if (!localSource) {
-				displayName += "  (" + sourceArchive.getName() + ")";
-			}
-			displayName = HTMLUtilities.friendlyEncodeHTML(displayName);
-
-			String toolTipText = ToolTipUtils.getToolTipText(dataType);
-			String headerText = "<HTML><b>" + displayName + "</b><BR>";
-			toolTipText = toolTipText.replace("<HTML>", headerText);
-			return toolTipText;
-		}
-
 		@Override
 		// overridden because the editor component was not being given focus
 		public Component prepareEditor(TableCellEditor editor, int row, int column) {
@@ -1525,17 +1510,18 @@ public abstract class CompositeEditorPanel extends JPanel
 		@Override
 		public boolean isKeyConsumed(KeyStroke keyStroke) {
 			if (isEditing()) {
+				// don't let actions through when editing our table
 				return true;
 			}
 
-			// don't let actions through when editing our table
+			// TODO this should no longer be needed
 			return !hasLocalActionForKeyStroke(keyStroke);
 		}
 
 		private boolean hasLocalActionForKeyStroke(KeyStroke keyStroke) {
 			Plugin plugin = provider.getPlugin();
 			PluginTool tool = plugin.getTool();
-			List<DockingActionIf> actions = tool.getDockingActionsByOwnerName(plugin.getName());
+			Set<DockingActionIf> actions = tool.getDockingActionsByOwnerName(plugin.getName());
 			for (DockingActionIf action : actions) {
 				if (!(action instanceof CompositeEditorTableAction)) {
 					continue;

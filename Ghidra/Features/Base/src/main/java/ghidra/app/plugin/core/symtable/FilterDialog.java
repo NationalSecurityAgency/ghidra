@@ -26,6 +26,9 @@ import org.jdom.Element;
 
 import docking.ComponentProvider;
 import docking.DialogComponentProvider;
+import docking.widgets.checkbox.GCheckBox;
+import docking.widgets.label.GHtmlLabel;
+import docking.widgets.label.GIconLabel;
 import ghidra.app.util.HelpTopics;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.util.*;
@@ -95,7 +98,7 @@ public class FilterDialog extends DialogComponentProvider {
 	}
 
 	private JComponent buildWorkPanel() {
-		advancedFilterCheckbox = new JCheckBox("Use Advanced Filters");
+		advancedFilterCheckbox = new GCheckBox("Use Advanced Filters");
 		advancedFilterCheckbox.setToolTipText(HTMLUtilities.toHTML(
 			"Show advance filters.  Advanced filters eliminate all appropriate\n" +
 				"symbols that don't match the filter.  Selecting mutually exclusive filters\n" +
@@ -145,7 +148,7 @@ public class FilterDialog extends DialogComponentProvider {
 		String[] sourceNames = filter.getSourceFilterNames();
 		JPanel panel = new JPanel(new GridLayout(0, 2));
 		for (String sourceName : sourceNames) {
-			JCheckBox cb = new JCheckBox(sourceName);
+			JCheckBox cb = new GCheckBox(sourceName);
 			checkBoxMap.put(sourceName, cb);
 			cb.addItemListener(sourceItemListener);
 			cb.setToolTipText(HTMLUtilities.toHTML(filter.getFilterDescription(sourceName)));
@@ -161,16 +164,15 @@ public class FilterDialog extends DialogComponentProvider {
 		JPanel infoPanel = new JPanel(new HorizontalLayout(20));
 		Icon icon = ResourceManager.loadImage("images/information.png");
 
-		JLabel infoLabel =
-			new JLabel(HTMLUtilities.toHTML("Advanced filters do not apply to all symbol types.\n" +
+		infoPanel.add(new GIconLabel(icon));
+		infoPanel.add(new GHtmlLabel(
+			HTMLUtilities.toHTML("Advanced filters do not apply to all symbol types.\n" +
 				"All symbols without applicable advanced filters will\n" +
 				"be included. If more than one advanced filter is\n" +
 				"applicable to a symbol type, then those symbols will\n" +
 				"be included if any of the applicable filters match. \n" +
 				"Filters that are not applicable to any of the selected\n" +
-				"symbol types are disabled."));
-		infoPanel.add(new JLabel(icon));
-		infoPanel.add(infoLabel);
+				"symbol types are disabled.")));
 
 		JPanel filtersPanel = new JPanel(new GridLayout(0, 2));
 //		Border outer = BorderFactory.createEmptyBorder(0,40,0,0);
@@ -178,7 +180,7 @@ public class FilterDialog extends DialogComponentProvider {
 		filtersPanel.setBorder(BorderFactory.createEmptyBorder(0, 40, 0, 0));
 		String[] filterNames = filter.getAdvancedFilterNames();
 		for (String filterName : filterNames) {
-			JCheckBox cb = new JCheckBox(filterName);
+			JCheckBox cb = new GCheckBox(filterName);
 			checkBoxMap.put(filterName, cb);
 			cb.addItemListener(checkboxListener);
 			cb.setToolTipText(HTMLUtilities.toHTML(filter.getFilterDescription(filterName)));
@@ -206,7 +208,7 @@ public class FilterDialog extends DialogComponentProvider {
 		JPanel panel = new JPanel(new VerticalLayout(0));
 		panel.setBorder(BorderFactory.createTitledBorder(title));
 		for (String filterName : filterNames) {
-			JCheckBox cb = new JCheckBox(filterName);
+			JCheckBox cb = new GCheckBox(filterName);
 			cb.setName(filterName);
 			checkBoxMap.put(filterName, cb);
 			cb.addItemListener(checkboxListener);

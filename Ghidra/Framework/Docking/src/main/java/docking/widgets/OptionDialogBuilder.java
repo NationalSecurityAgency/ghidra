@@ -21,6 +21,8 @@ import java.util.List;
 
 import javax.swing.Icon;
 
+import ghidra.util.Swing;
+
 /**
  * Class for creating OptionDialogs using the builder pattern.
  *
@@ -45,8 +47,8 @@ import javax.swing.Icon;
  * "no" as the defaultOption.
  *
  * <P>You can also add a Cancel button, which will return a result of 0 if pressed. Note that this
- * is different than adding an option named "Cancel" which would return a result > 0, depending
- * on where in the order it was added.
+ * is different than adding an option named "Cancel" which would return a result greater than
+ * <code>0</code>, depending on where in the order it was added.
  *
  * <P><a name="RememberOption"></a>A "Remember Option" can be added to OptionDialog to
  * present the user with a choice for remembering a dialog result and automatically
@@ -82,9 +84,6 @@ public class OptionDialogBuilder {
 	 * this constructor is used, then both {@link #setTitle(String)} and the
 	 * {@link #setMessage(String)} methods must be called
 	 * or else the dialog will have no title or message.
-	 *
-	 * @param title the title of the dialog.
-	 * @param message the main message to be displayed in the dialog.
 	 */
 	public OptionDialogBuilder() {
 		this(null, null);
@@ -95,8 +94,7 @@ public class OptionDialogBuilder {
 	 * this constructor is used, then the {@link #setMessage(String)} method must be called
 	 * or else the dialog will be blank.
 	 *
-	 * @param title the title of the dialog.
-	 * @param message the main message to be displayed in the dialog.
+	 * @param title the title of the dialog
 	 */
 	public OptionDialogBuilder(String title) {
 		this(title, null);
@@ -243,8 +241,10 @@ public class OptionDialogBuilder {
 	 * @return an OptionDialog built based on the values set in this builder.
 	 */
 	public OptionDialog build() {
-		return new OptionDialog(title, message, messageType, icon, addCancelButton,
-			rememberOption, options, defaultOption);
+		return Swing.runNow(() -> {
+			return new OptionDialog(title, message, messageType, icon, addCancelButton,
+				rememberOption, options, defaultOption);
+		});
 	}
 
 	/**
@@ -266,6 +266,7 @@ public class OptionDialogBuilder {
 		if (rememberOption != null && rememberOption.hasRememberedResult()) {
 			return rememberOption.getRememberedResult();
 		}
+
 		OptionDialog dialog = build();
 		dialog.show(parent);
 		return dialog.getResult();

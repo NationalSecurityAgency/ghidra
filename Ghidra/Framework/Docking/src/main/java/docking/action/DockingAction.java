@@ -17,6 +17,7 @@ package docking.action;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.Objects;
 import java.util.Set;
 
 import javax.swing.*;
@@ -51,11 +52,6 @@ import utilities.util.reflection.ReflectionUtilities;
  * method allows actions to manage their own enablement.  Otherwise, the default behavior for this
  * method is to return the current enabled property of the action.  This allows for the possibility
  * for plugins to manage the enablement of its actions.
- * <p>
- * By default, actions that are not enabledForContext do not appear in the popup menu.  To change
- * that behavior, implementors can also override {@link #deleteThisContextMethod(ActionContext)}.  
- * This method is used to determine if the action should appear on the popup menu based on the given
- * context.
  */
 public abstract class DockingAction implements DockingActionIf {
 
@@ -68,8 +64,8 @@ public abstract class DockingAction implements DockingActionIf {
 	private String inceptionInformation;
 
 	private boolean isEnabled = true;
-	private boolean isKeyBindingManaged = true;
 
+	private KeyBindingType keyBindingType = KeyBindingType.INDIVIDUAL;
 	private KeyBindingData defaultKeyBindingData;
 	private KeyBindingData keyBindingData;
 	private MenuBarData menuBarData;
@@ -77,17 +73,27 @@ public abstract class DockingAction implements DockingActionIf {
 	private ToolBarData toolBarData;
 
 	public DockingAction(String name, String owner) {
-		this(name, owner, true);
-	}
-
-	public DockingAction(String name, String owner, boolean isKeyBindingManaged) {
 		this.name = name;
 		this.owner = owner;
-		this.isKeyBindingManaged = isKeyBindingManaged;
 
 		recordInception();
 		HelpLocation location = new HelpLocation(owner, name, inceptionInformation);
 		setHelpLocation(location);
+	}
+
+	public DockingAction(String name, String owner, KeyBindingType kbType) {
+		this(name, owner);
+		this.keyBindingType = Objects.requireNonNull(kbType);
+	}
+
+	public DockingAction(String name, String owner, boolean supportsKeyBindings) {
+		this(name, owner);
+		this.keyBindingType =
+			supportsKeyBindings ? KeyBindingType.INDIVIDUAL : KeyBindingType.UNSUPPORTED;
+	}
+
+	protected KeyBindingType getPreferredKeyBindingType() {
+		return KeyBindingType.INDIVIDUAL;
 	}
 
 	@Override
@@ -104,11 +110,6 @@ public abstract class DockingAction implements DockingActionIf {
 	}
 
 	@Override
-	public boolean isKeyBindingManaged() {
-		return isKeyBindingManaged;
-	}
-
-	@Override
 	public String getDescription() {
 		return description;
 	}
@@ -116,21 +117,6 @@ public abstract class DockingAction implements DockingActionIf {
 	@Override
 	public String getFullName() {
 		return getName() + " (" + getOwner() + ")";
-	}
-
-	@Override
-	public KeyBindingData getKeyBindingData() {
-		return keyBindingData;
-	}
-
-	@Override
-	public KeyBindingData getDefaultKeyBindingData() {
-		return defaultKeyBindingData;
-	}
-
-	@Override
-	public KeyStroke getKeyBinding() {
-		return keyBindingData == null ? null : keyBindingData.getKeyBinding();
 	}
 
 	@Override
@@ -278,52 +264,26 @@ public abstract class DockingAction implements DockingActionIf {
 		return menuItem;
 	}
 
-//==================================================================================================
-// Non interface methods
-//==================================================================================================
-
-	/**
-	 * Sets the {@link #MenuData} to be used to put this action on the tool's menu bar.
-	 * @param newMenuData the MenuData to be used to put this action on the tool's menu bar.
-	 */
-	public void setMenuBarData(MenuData newMenuData) {
-		MenuBarData oldData = menuBarData;
-		MenuBarData newDataCopy = newMenuData == null ? null : new MenuBarData(this, newMenuData);
-
-		menuBarData = newDataCopy;
-		firePropertyChanged(MENUBAR_DATA_PROPERTY, oldData, newDataCopy);
+	@Override
+	public KeyBindingType getKeyBindingType() {
+		return keyBindingType;
 	}
 
-	/**
-	 * Sets the {@link #MenuData} to be used to put this action in the tool's popup menu.
-	 * @param newMenuData the MenuData to be used to put this action on the tool's popup menu.
-	 */
-	public void setPopupMenuData(MenuData newMenuData) {
-		PopupMenuData oldData = popupMenuData;
-		PopupMenuData newDataCopy =
-			newMenuData == null ? null : new PopupMenuData(this, newMenuData);
-		popupMenuData = newDataCopy;
-		firePropertyChanged(POPUP_MENU_DATA_PROPERTY, oldData, newDataCopy);
+	@Override
+	public KeyStroke getKeyBinding() {
+		return keyBindingData == null ? null : keyBindingData.getKeyBinding();
 	}
 
-	/**
-	 * Sets the {@link #ToolBarData} to be used to put this action on the tool's toolbar.
-	 * @param newToolBarData the ToolBarData to be used to put this action on the tool's toolbar.
-	 */
-	public void setToolBarData(ToolBarData newToolBarData) {
-
-		ToolBarData oldData = toolBarData;
-		ToolBarData newToolBarDataCopy = newToolBarData == null ? null
-				: new ToolBarData(this, newToolBarData.getIcon(), newToolBarData.getToolBarGroup(),
-					newToolBarData.getToolBarSubGroup());
-		toolBarData = newToolBarDataCopy;
-		firePropertyChanged(TOOLBAR_DATA_PROPERTY, oldData, newToolBarDataCopy);
+	@Override
+	public KeyBindingData getKeyBindingData() {
+		return keyBindingData;
 	}
 
-	/**
-	 * Sets the {@link #KeyBindingData} to be used to assign this action to a keybinding.
-	 * @param newKeyBindingData the KeyBindingData to be used to assign this action to a keybinding.
-	 */
+	@Override
+	public KeyBindingData getDefaultKeyBindingData() {
+		return defaultKeyBindingData;
+	}
+
 	@Override
 	public void setKeyBindingData(KeyBindingData newKeyBindingData) {
 		KeyBindingData oldData = keyBindingData;
@@ -336,19 +296,53 @@ public abstract class DockingAction implements DockingActionIf {
 		firePropertyChanged(KEYBINDING_DATA_PROPERTY, oldData, keyBindingData);
 	}
 
-	/**
-	 * <b>Users creating actions should not call this method, but should instead call
-	 * {@link #setKeyBindingData(KeyBindingData)}.</b>
-	 * @param newKeyBindingData the KeyBindingData to be used to assign this action to a keybinding.
-	 * @param validate true signals that this method should convert keybindings to their 
-	 *                 OS-dependent form (for example, on Mac a <tt>Ctrl</tt> 
-	 *                 key is changed to the <tt>Command</tt> key).
-	 */
 	@Override
 	public void setUnvalidatedKeyBindingData(KeyBindingData newKeyBindingData) {
 		KeyBindingData oldData = keyBindingData;
 		keyBindingData = newKeyBindingData;
 		firePropertyChanged(KEYBINDING_DATA_PROPERTY, oldData, keyBindingData);
+	}
+
+//==================================================================================================
+// Non interface methods
+//==================================================================================================
+
+	/**
+	 * Sets the {@link MenuData} to be used to put this action on the tool's menu bar
+	 * @param newMenuData the MenuData to be used to put this action on the tool's menu bar
+	 */
+	public void setMenuBarData(MenuData newMenuData) {
+		MenuBarData oldData = menuBarData;
+		MenuBarData newDataCopy = newMenuData == null ? null : new MenuBarData(this, newMenuData);
+
+		menuBarData = newDataCopy;
+		firePropertyChanged(MENUBAR_DATA_PROPERTY, oldData, newDataCopy);
+	}
+
+	/**
+	 * Sets the {@link MenuData} to be used to put this action in the tool's popup menu
+	 * @param newMenuData the MenuData to be used to put this action on the tool's popup menu
+	 */
+	public void setPopupMenuData(MenuData newMenuData) {
+		PopupMenuData oldData = popupMenuData;
+		PopupMenuData newDataCopy =
+			newMenuData == null ? null : new PopupMenuData(this, newMenuData);
+		popupMenuData = newDataCopy;
+		firePropertyChanged(POPUP_MENU_DATA_PROPERTY, oldData, newDataCopy);
+	}
+
+	/**
+	 * Sets the {@link ToolBarData} to be used to put this action on the tool's toolbar
+	 * @param newToolBarData the ToolBarData to be used to put this action on the tool's toolbar
+	 */
+	public void setToolBarData(ToolBarData newToolBarData) {
+
+		ToolBarData oldData = toolBarData;
+		ToolBarData newToolBarDataCopy = newToolBarData == null ? null
+				: new ToolBarData(this, newToolBarData.getIcon(), newToolBarData.getToolBarGroup(),
+					newToolBarData.getToolBarSubGroup());
+		toolBarData = newToolBarDataCopy;
+		firePropertyChanged(TOOLBAR_DATA_PROPERTY, oldData, newToolBarDataCopy);
 	}
 
 	/**
@@ -364,7 +358,7 @@ public abstract class DockingAction implements DockingActionIf {
 
 	/**
 	 * Sets the description to be used in the tooltip.
-	 * @param description the description to be set.
+	 * @param newDescription the description to be set.
 	 */
 	public void setDescription(String newDescription) {
 		if (SystemUtilities.isEqual(newDescription, description)) {
@@ -378,9 +372,8 @@ public abstract class DockingAction implements DockingActionIf {
 	/**
 	 * Cleans up any resources used by the action.
 	 */
+	@Override
 	public void dispose() {
-		// TODO this doesn't seem to be called by the framework.  Should't we call this when
-		//      an action is removed from the tool??
 		propertyListeners.clear();
 	}
 
@@ -402,6 +395,13 @@ public abstract class DockingAction implements DockingActionIf {
 			buffer.append('\n');
 			buffer.append("        MENU GROUP:        ").append(menuBarData.getMenuGroup());
 			buffer.append('\n');
+
+			String parentGroup = menuBarData.getParentMenuGroup();
+			if (parentGroup != null) {
+				buffer.append("        PARENT GROUP:         ").append(parentGroup);
+				buffer.append('\n');
+			}
+
 			Icon icon = menuBarData.getMenuIcon();
 			if (icon != null && icon instanceof ImageIconWrapper) {
 				ImageIconWrapper wrapper = (ImageIconWrapper) icon;
@@ -418,6 +418,12 @@ public abstract class DockingAction implements DockingActionIf {
 			buffer.append('\n');
 			buffer.append("        POPUP GROUP:      ").append(popupMenuData.getMenuGroup());
 			buffer.append('\n');
+
+			String parentGroup = popupMenuData.getParentMenuGroup();
+			if (parentGroup != null) {
+				buffer.append("        PARENT GROUP:         ").append(parentGroup);
+				buffer.append('\n');
+			}
 
 			String menuSubGroup = popupMenuData.getMenuSubGroup();
 			if (menuSubGroup != MenuData.NO_SUBGROUP) {
@@ -506,7 +512,7 @@ public abstract class DockingAction implements DockingActionIf {
 		inceptionInformation = getInceptionFromTheFirstClassThatIsNotUs();
 	}
 
-	private String getInceptionFromTheFirstClassThatIsNotUs() {
+	protected String getInceptionFromTheFirstClassThatIsNotUs() {
 		Throwable t = ReflectionUtilities.createThrowableWithStackOlderThan(getClass());
 		StackTraceElement[] trace = t.getStackTrace();
 		String classInfo = trace[0].toString();

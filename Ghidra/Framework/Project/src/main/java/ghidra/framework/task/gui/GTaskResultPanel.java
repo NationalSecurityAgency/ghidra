@@ -19,26 +19,27 @@ import java.awt.*;
 
 import javax.swing.*;
 
+import docking.widgets.list.GListCellRenderer;
 import ghidra.framework.task.GTaskManager;
 import ghidra.framework.task.GTaskResult;
 import resources.Icons;
 import resources.ResourceManager;
 
 public class GTaskResultPanel extends JPanel {
-	private JList jList;
+	private JList<GTaskResultInfo> jList;
 	private CompletedTaskListModel model;
 
 	public GTaskResultPanel(GTaskManager taskMgr) {
 		super(new BorderLayout());
 		model = new CompletedTaskListModel(taskMgr);
-		jList = new JList(model);
+		jList = new JList<>(model);
 		jList.setCellRenderer(new GTaskResultCellRenderer());
 		JScrollPane scroll = new JScrollPane(jList);
 		add(scroll);
 		setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 	}
 
-	static class GTaskResultCellRenderer extends DefaultListCellRenderer {
+	static class GTaskResultCellRenderer extends GListCellRenderer<GTaskResultInfo> {
 		private static final Icon CANCELLED_ICON =
 			ResourceManager.loadImage("images/dialog-cancel.png");
 		private static final Icon EXCEPTION_ICON = Icons.ERROR_ICON;
@@ -46,12 +47,14 @@ public class GTaskResultPanel extends JPanel {
 			ResourceManager.loadImage("images/checkmark_green.gif");
 
 		@Override
-		public Component getListCellRendererComponent(JList list, Object value, int index,
-				boolean isSelected, boolean cellHasFocus) {
-			GTaskResultInfo element = (GTaskResultInfo) value;
-			GTaskResult result = element.getResult();
-			setText(value.toString());
-			setIcon(getIcon(result));
+		protected String getItemText(GTaskResultInfo value) {
+			return value.toString();
+		}
+
+		@Override
+		public Component getListCellRendererComponent(JList<? extends GTaskResultInfo> list,
+				GTaskResultInfo value, int index, boolean isSelected, boolean cellHasFocus) {
+			setIcon(getIcon(value.getResult()));
 			setBackground(Color.white);
 			return this;
 		}

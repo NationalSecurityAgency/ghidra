@@ -21,6 +21,8 @@ import java.util.List;
 
 import javax.swing.*;
 
+import docking.widgets.label.GIconLabel;
+import docking.widgets.label.GLabel;
 import ghidra.framework.Application;
 import ghidra.framework.PluggableServiceRegistry;
 import ghidra.util.HelpLocation;
@@ -35,20 +37,20 @@ public class ApplicationInformationDisplayFactory {
 	}
 
 	public static String createSplashScreenTitle() {
-		ApplicationInformationDisplayFactory factory =
-			PluggableServiceRegistry.getPluggableService(ApplicationInformationDisplayFactory.class);
+		ApplicationInformationDisplayFactory factory = PluggableServiceRegistry.getPluggableService(
+			ApplicationInformationDisplayFactory.class);
 		return factory.doCreateSplashScreenTitle();
 	}
 
 	public static String createAboutTitle() {
-		ApplicationInformationDisplayFactory factory =
-			PluggableServiceRegistry.getPluggableService(ApplicationInformationDisplayFactory.class);
+		ApplicationInformationDisplayFactory factory = PluggableServiceRegistry.getPluggableService(
+			ApplicationInformationDisplayFactory.class);
 		return factory.doCreateAboutTitle();
 	}
 
 	public static List<Image> getWindowIcons() {
-		ApplicationInformationDisplayFactory factory =
-			PluggableServiceRegistry.getPluggableService(ApplicationInformationDisplayFactory.class);
+		ApplicationInformationDisplayFactory factory = PluggableServiceRegistry.getPluggableService(
+			ApplicationInformationDisplayFactory.class);
 		return factory.doGetWindowIcons();
 	}
 
@@ -69,8 +71,8 @@ public class ApplicationInformationDisplayFactory {
 	}
 
 	public static ImageIcon getHomeIcon() {
-		ApplicationInformationDisplayFactory factory = PluggableServiceRegistry
-				.getPluggableService(ApplicationInformationDisplayFactory.class);
+		ApplicationInformationDisplayFactory factory = PluggableServiceRegistry.getPluggableService(
+			ApplicationInformationDisplayFactory.class);
 		return factory.doGetHomeIcon();
 	}
 
@@ -81,25 +83,25 @@ public class ApplicationInformationDisplayFactory {
 	}
 
 	public static JComponent createSplashScreenComponent() {
-		ApplicationInformationDisplayFactory factory =
-			PluggableServiceRegistry.getPluggableService(ApplicationInformationDisplayFactory.class);
+		ApplicationInformationDisplayFactory factory = PluggableServiceRegistry.getPluggableService(
+			ApplicationInformationDisplayFactory.class);
 		return factory.doCreateSplashScreenComponent();
 	}
 
 	public static JComponent createAboutComponent() {
-		ApplicationInformationDisplayFactory factory =
-			PluggableServiceRegistry.getPluggableService(ApplicationInformationDisplayFactory.class);
+		ApplicationInformationDisplayFactory factory = PluggableServiceRegistry.getPluggableService(
+			ApplicationInformationDisplayFactory.class);
 		return factory.doCreateAboutComponent();
 	}
 
 	public static HelpLocation createHelpLocation() {
-		ApplicationInformationDisplayFactory factory =
-			PluggableServiceRegistry.getPluggableService(ApplicationInformationDisplayFactory.class);
+		ApplicationInformationDisplayFactory factory = PluggableServiceRegistry.getPluggableService(
+			ApplicationInformationDisplayFactory.class);
 		return factory.doCreateHelpLocation();
 	}
 
 	protected String doCreateSplashScreenTitle() {
-		return Application.getName();
+		return Application.getName() + " " + Application.getApplicationVersion();
 	}
 
 	protected String doCreateAboutTitle() {
@@ -117,8 +119,7 @@ public class ApplicationInformationDisplayFactory {
 
 		panel.setBackground(background);
 
-		JLabel nameLabel = new JLabel();
-		nameLabel.setText(Application.getName());
+		JLabel nameLabel = new GLabel(Application.getName());
 		nameLabel.setForeground(new Color(155, 155, 155));
 		Font newFont = new Font("Garamond", Font.BOLD, 35);
 		nameLabel.setFont(newFont);
@@ -128,7 +129,7 @@ public class ApplicationInformationDisplayFactory {
 
 		final JPanel imagePanel = new JPanel(new BorderLayout());
 		imagePanel.setBackground(background);
-		JLabel imageLabel = new JLabel(icon);
+		JLabel imageLabel = new GIconLabel(icon);
 		imageLabel.setVerticalAlignment(SwingConstants.CENTER);
 		imageLabel.setHorizontalAlignment(SwingConstants.CENTER);
 		imagePanel.add(imageLabel);
@@ -143,7 +144,7 @@ public class ApplicationInformationDisplayFactory {
 	}
 
 	protected List<Image> doGetWindowIcons() {
-		List<Image> list = new ArrayList<Image>();
+		List<Image> list = new ArrayList<>();
 		list.add(ResourceManager.loadImage("images/www_128.png").getImage());
 		list.add(ResourceManager.loadImage("images/www_16.png").getImage());
 		return list;

@@ -28,8 +28,10 @@ import javax.swing.event.TableColumnModelEvent;
 
 import org.junit.*;
 
-import docking.ActionContext;
+import docking.*;
 import docking.action.DockingActionIf;
+import docking.menu.ToolBarItemManager;
+import docking.menu.ToolBarManager;
 import docking.widgets.EventTrigger;
 import docking.widgets.fieldpanel.FieldPanel;
 import docking.widgets.fieldpanel.field.Field;
@@ -168,7 +170,7 @@ public class ByteViewerPlugin1Test extends AbstractGhidraHeadedIntegrationTest {
 		DataModelInfo info = panel.getDataModelInfo();
 		String[] names = info.getNames();
 		assertEquals(3, names.length);
-		Set<String> viewNames = new HashSet<String>(Arrays.asList(names));
+		Set<String> viewNames = new HashSet<>(Arrays.asList(names));
 		assertTrue(viewNames.contains("Hex"));
 		assertTrue(viewNames.contains("Octal"));
 		assertTrue(viewNames.contains("Ascii"));
@@ -668,6 +670,64 @@ public class ByteViewerPlugin1Test extends AbstractGhidraHeadedIntegrationTest {
 		}
 	}
 
+	@Test
+	public void testShowingSnapshotDoesNotAddMultipleToolbarActions() {
+
+		DockingActionIf cloneAction = getAction(plugin, "ByteViewer Clone");
+		performAction(cloneAction);
+		waitForSwing();
+		assertOnlyOneProviderToolbarAction();
+
+		performAction(cloneAction);
+		waitForSwing();
+		assertOnlyOneProviderToolbarAction();
+	}
+
+//==================================================================================================
+// Private Methods
+//==================================================================================================	
+
+	@SuppressWarnings("unchecked")
+	private void assertOnlyOneProviderToolbarAction() {
+
+		DockingWindowManager dwm = tool.getWindowManager();
+		ActionToGuiMapper guiActions =
+			(ActionToGuiMapper) getInstanceField("actionToGuiMapper", dwm);
+		GlobalMenuAndToolBarManager menuManager =
+			(GlobalMenuAndToolBarManager) getInstanceField("menuAndToolBarManager", guiActions);
+
+		Map<WindowNode, WindowActionManager> windowToActionManagerMap =
+			(Map<WindowNode, WindowActionManager>) getInstanceField("windowToActionManagerMap",
+				menuManager);
+
+		ProgramByteViewerComponentProvider provider = plugin.getProvider();
+		DockingActionIf showAction =
+			(DockingActionIf) getInstanceField("showProviderAction", provider);
+		String actionName = showAction.getName();
+		List<DockingActionIf> matches = new ArrayList<>();
+		for (WindowActionManager actionManager : windowToActionManagerMap.values()) {
+
+			ToolBarManager toolbarManager =
+				(ToolBarManager) getInstanceField("toolBarMgr", actionManager);
+			Map<String, List<ToolBarItemManager>> groupToItems =
+				(Map<String, List<ToolBarItemManager>>) getInstanceField("groupToItemsMap",
+					toolbarManager);
+
+			Collection<List<ToolBarItemManager>> values = groupToItems.values();
+			for (List<ToolBarItemManager> list : values) {
+				for (ToolBarItemManager manager : list) {
+					DockingActionIf action = manager.getAction();
+					if (actionName.equals(action.getName())) {
+						matches.add(action);
+					}
+				}
+			}
+		}
+
+		assertEquals("Should only have 1 action on toolbar to show the provider", 1,
+			matches.size());
+	}
+
 	private void goToOperand(String addr) {
 		goTo(addr(addr), OperandFieldFactory.FIELD_NAME);
 	}
@@ -729,11 +789,6 @@ public class ByteViewerPlugin1Test extends AbstractGhidraHeadedIntegrationTest {
 
 		FieldLocation location = runSwing(() -> view.getCursorLocation());
 		assertEquals(expectedColumn, location.getCol());
-	}
-
-	private void goTo(String addr) {
-		GoToService goToService = tool.getService(GoToService.class);
-		goToService.goTo(addr(addr));
 	}
 
 	private void goToByte(String addr) {

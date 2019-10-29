@@ -1,9 +1,6 @@
 ##VERSION: 2.0
-.classpath||GHIDRA||||END|
-.project||GHIDRA||||END|
 Module.manifest||GHIDRA||||END|
 build.gradle||GHIDRA||||END|
-data/build.xml||GHIDRA||||END|
 data/languages/atmega256.pspec||GHIDRA||||END|
 data/languages/avr32.opinion||GHIDRA||||END|
 data/languages/avr32a.cspec||GHIDRA||||END|
@@ -35,3 +32,4 @@ data/languages/avr8gcc.cspec||GHIDRA||||END|
 data/languages/avr8iarV1.cspec||GHIDRA||||END|
 data/languages/avr8imgCraftV8.cspec||GHIDRA||||END|
 data/manuals/AVR32.idx||GHIDRA||||END|
+data/manuals/AVR8.idx||GHIDRA||||END|

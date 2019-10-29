@@ -16,15 +16,16 @@
 package ghidra.pcodeCPort.slghsymbol;
 
 import java.io.PrintStream;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 import org.jdom.Element;
 
 import generic.stl.IteratorSTL;
 import generic.stl.VectorSTL;
 import ghidra.pcodeCPort.context.*;
+import ghidra.pcodeCPort.semantics.ConstTpl.const_type;
 import ghidra.pcodeCPort.semantics.ConstructTpl;
+import ghidra.pcodeCPort.semantics.HandleTpl;
 import ghidra.pcodeCPort.sleighbase.SleighBase;
 import ghidra.pcodeCPort.slghpatexpress.*;
 import ghidra.pcodeCPort.utils.XmlUtils;
@@ -129,6 +130,34 @@ public class Constructor {
 			else {
 				check.set(i, 2);
 			}
+		}
+	}
+
+	public void collectLocalExports(ArrayList<Long> results) {
+		if (templ == null) {
+			return;
+		}
+		HandleTpl handle = templ.getResult();
+		if (handle == null) {
+			return;
+		}
+		if (handle.getSpace().isConstSpace()) {
+			return;	// Even if the value is dynamic, the pointed to value won't get used
+		}
+		if (handle.getPtrSpace().getType() != const_type.real) {
+			if (handle.getTempSpace().isUniqueSpace()) {
+				results.add(handle.getTempOffset().getReal());
+			}
+			return;
+		}
+		if (handle.getSpace().isUniqueSpace()) {
+			results.add(handle.getPtrOffset().getReal());
+			return;
+		}
+		if (handle.getSpace().getType() == const_type.handle) {
+			int handleIndex = handle.getSpace().getHandleIndex();
+			OperandSymbol opSym = getOperand(handleIndex);
+			opSym.collectLocalValues(results);
 		}
 	}
 
@@ -570,8 +599,9 @@ public class Constructor {
 		// in bytes
 
 		OperandResolve resolve = new OperandResolve(operands);
-		if (!pateq.resolveOperandLeft(resolve))
+		if (!pateq.resolveOperandLeft(resolve)) {
 			throw new SleighError("Unable to resolve operand offsets", location);
+		}
 
 		// Unravel relative offsets to absolute (if possible)
 		for (int i = 0; i < operands.size(); ++i) {

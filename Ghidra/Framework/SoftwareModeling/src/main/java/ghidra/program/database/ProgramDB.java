@@ -30,7 +30,6 @@ import ghidra.framework.store.LockException;
 import ghidra.program.database.bookmark.BookmarkDBManager;
 import ghidra.program.database.code.CodeManager;
 import ghidra.program.database.code.InstructionDB;
-import ghidra.program.database.data.DataTypeManagerDB;
 import ghidra.program.database.data.ProgramDataTypeManager;
 import ghidra.program.database.external.ExternalManagerDB;
 import ghidra.program.database.function.FunctionManagerDB;
@@ -128,6 +127,7 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 	private static final String EXECUTABLE_PATH = "Executable Location";
 	private static final String EXECUTABLE_FORMAT = "Executable Format";
 	private static final String EXECUTABLE_MD5 = "Executable MD5";
+	private static final String EXECUTABLE_SHA256 = "Executable SHA256";
 	private static final String TABLE_NAME = "Program";
 	private static final String EXECUTE_PATH = "Execute Path";
 	private static final String EXECUTE_FORMAT = "Execute Format";
@@ -280,9 +280,11 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 			throws IOException, VersionException, LanguageNotFoundException, CancelledException {
 
 		super(dbh, "Untitled", 500, 1000, consumer);
+
 		if (monitor == null) {
-			monitor = TaskMonitorAdapter.DUMMY_MONITOR;
+			monitor = TaskMonitorAdapter.DUMMY;
 		}
+		
 		boolean success = false;
 		try {
 			int id = startTransaction("create program");
@@ -293,6 +295,7 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 			VersionException dbVersionExc = initializeDatabase(openMode);
 
 			VersionException languageVersionExc = null;
+
 			try {
 				language = DefaultLanguageService.getLanguageService().getLanguage(languageID);
 				languageVersionExc = checkLanguageVersion(openMode);
@@ -620,13 +623,6 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 	}
 
 	/**
-	 * Returns the DataManager
-	 */
-	public DataTypeManagerDB getDataManager() {
-		return (DataTypeManagerDB) managers[DATA_MGR];
-	}
-
-	/**
 	 * @see ghidra.program.model.listing.Program#getDataTypeManager()
 	 */
 	@Override
@@ -716,7 +712,6 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 	}
 
 	/**
-	 * 
 	 * @see ghidra.program.model.listing.Program#setExecutableFormat(java.lang.String)
 	 */
 	@Override
@@ -742,13 +737,37 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 	}
 
 	/**
-	 * 
 	 * @see ghidra.program.model.listing.Program#setExecutableMD5(java.lang.String)
 	 */
 	@Override
 	public void setExecutableMD5(String md5) {
 		Options pl = getOptions(PROGRAM_INFO);
 		pl.setString(EXECUTABLE_MD5, md5);
+		changed = true;
+	}
+
+	/**
+	 * @see ghidra.program.model.listing.Program#getExecutableSHA256()
+	 */
+	@Override
+	public String getExecutableSHA256() {
+		String format = null;
+		try {
+			Options pl = getOptions(PROGRAM_INFO);
+			format = pl.getString(EXECUTABLE_SHA256, (String) null);
+		}
+		catch (Exception e) {
+		}
+		return format == null ? UNKNOWN : format;
+	}
+
+	/**
+	 * @see ghidra.program.model.listing.Program#setExecutableSHA256(java.lang.String)
+	 */
+	@Override
+	public void setExecutableSHA256(String sha256) {
+		Options pl = getOptions(PROGRAM_INFO);
+		pl.setString(EXECUTABLE_SHA256, sha256);
 		changed = true;
 	}
 
@@ -2630,7 +2649,7 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 		metadata.put("# of Defined Data", "" + listing.getNumDefinedData());
 		metadata.put("# of Functions", "" + getFunctionManager().getFunctionCount());
 		metadata.put("# of Symbols", "" + getSymbolTable().getNumSymbols());
-		metadata.put("# of Data Types", "" + getDataManager().getDataTypeCount(true));
+		metadata.put("# of Data Types", "" + getDataTypeManager().getDataTypeCount(true));
 		metadata.put("# of Data Type Categories", "" + getDataTypeManager().getCategoryCount());
 
 		Options propList = getOptions(Program.PROGRAM_INFO);

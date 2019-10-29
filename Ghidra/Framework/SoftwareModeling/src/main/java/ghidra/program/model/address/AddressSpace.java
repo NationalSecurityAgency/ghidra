@@ -17,6 +17,7 @@ package ghidra.program.model.address;
 
 import java.math.BigInteger;
 
+import ghidra.program.model.lang.BasicCompilerSpec;
 import ghidra.program.model.listing.Program;
 
 /**
@@ -66,39 +67,39 @@ public interface AddressSpace extends Comparable<AddressSpace> {
 
 	/**
 	 * The <code>OTHER_SPACE</code> is used to store data from the original program file that doesn't
-	 * get loaded into the final memory image.
+	 * get loaded into the final memory image and for user-defined spaces.
 	 */
-	public static final AddressSpace OTHER_SPACE = new GenericAddressSpace("OTHER", 64, TYPE_OTHER,
-		0);
+	public static final AddressSpace OTHER_SPACE = new GenericAddressSpace(
+		BasicCompilerSpec.OTHER_SPACE_NAME, 64, TYPE_OTHER, BasicCompilerSpec.OTHER_SPACE_INDEX);
 
 	/**
 	 * The <code>EXTERNAL_SPACE</code> is used to contain all external locations (i.e., data and functions) 
 	 * defined within a given library namespace.  All external locations within a program
 	 * are given a unique offset within the EXTERNAL space.
 	 */
-	public static final AddressSpace EXTERNAL_SPACE = new GenericAddressSpace("EXTERNAL", 32,
-		TYPE_EXTERNAL, 0);
+	public static final AddressSpace EXTERNAL_SPACE =
+		new GenericAddressSpace("EXTERNAL", 32, TYPE_EXTERNAL, 0);
 
 	/**
 	 * The <code>VARIABLE_SPACE</code> is used to contain all variables and parameters 
 	 * defined within a given namespace (i.e., function).  All variables within a program
 	 * are given a unique offset within the VARIABLE space.
 	 */
-	public static final AddressSpace VARIABLE_SPACE = new GenericAddressSpace("VARIABLE", 32,
-		TYPE_VARIABLE, 0);
+	public static final AddressSpace VARIABLE_SPACE =
+		new GenericAddressSpace("VARIABLE", 32, TYPE_VARIABLE, 0);
 
 	/**
 	 * The <code>HASH_SPACE</code> provides a 60-bit space for encoding of unique hashcodes. 
 	 */
-	public static final AddressSpace HASH_SPACE = new GenericAddressSpace("HASH", 60, TYPE_UNKNOWN,
-		0);
+	public static final AddressSpace HASH_SPACE =
+		new GenericAddressSpace("HASH", 60, TYPE_UNKNOWN, 0);
 
 	/**
 	 * A language may only define a single REGISTER space.  If one is not defined, this 
 	 * DEFAULT_REGISTER_SPACE definition will be used.
 	 */
-	public static final AddressSpace DEFAULT_REGISTER_SPACE = new GenericAddressSpace("REGISTER",
-		32, TYPE_REGISTER, 0);
+	public static final AddressSpace DEFAULT_REGISTER_SPACE =
+		new GenericAddressSpace("REGISTER", 32, TYPE_REGISTER, 0);
 
 	/**
 	 * Returns the name of this address space.

@@ -112,6 +112,11 @@ public class PointerDataType extends BuiltIn implements Pointer {
 	public PointerDataType(DataType referencedDataType, int length, DataTypeManager dtm) {
 		super(referencedDataType != null ? referencedDataType.getCategoryPath() : null,
 			constructUniqueName(referencedDataType, length), dtm);
+		if (referencedDataType instanceof BitFieldDataType) {
+			throw new IllegalArgumentException(
+				"Pointer reference data-type may not be a bitfield: " +
+					referencedDataType.getName());
+		}
 		this.length = length <= 0 ? -1 : length;
 		this.referencedDataType = referencedDataType;
 		if (referencedDataType != null) {

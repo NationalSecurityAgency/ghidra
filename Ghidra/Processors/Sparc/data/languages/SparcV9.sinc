@@ -38,7 +38,7 @@ define register offset=0x5000 size=$(SIZE) [ TPC1 TPC2 TPC3 TPC4
 									         TT1 TT2 TT3 TT4
 									         TCK TBA PSTATE TL
                                              PIL CWP CANSAVE CANRESTORE CLEANWIN
-                                             OTHER WINWSTATE FQ VER GL ];
+                                             OTHERWIN WSTATE FQ VER GL ];
 
 define register offset=0x6000 size=$(SIZE) [ HPSTATE1 HPSTATE2 HPSTATE3 HPSTATE4
                                              HTSTATE1 HTSTATE2 HTSTATE3 HTSTATE4
@@ -939,7 +939,7 @@ membar_mask: is cmask & mmask { tmp:1 = (cmask << 4) | mmask; export tmp; }
 :sir simm13 is op=0x2 & rd=0xF & op3=0x30 & rs1=0x0 & i=1 & simm13 { reset(); }
                                              
 attach variables [ prs1 prd ]   [ TPC1 TNPC1 TSTATE1 TT1 TCK TBA PSTATE TL 
-                             	  PIL CWP CANSAVE CANRESTORE CLEANWIN OTHER WINWSTATE FQ
+                             	  PIL CWP CANSAVE CANRESTORE CLEANWIN OTHERWIN WSTATE FQ
                                   GL _ _ _ _ _ _ _ _ _ _ _ _ _ _ VER ];
 
 tnpc: "%tnpc"		is fcn {local reloc = zext(TL == 1)*&TNPC1 + zext(TL == 2)*&TNPC2 + zext(TL == 3)*&TNPC3 + zext(TL ==4)*&TNPC4;  export reloc;}

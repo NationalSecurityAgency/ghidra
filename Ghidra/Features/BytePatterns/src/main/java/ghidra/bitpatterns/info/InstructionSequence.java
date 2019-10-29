@@ -17,6 +17,10 @@ package ghidra.bitpatterns.info;
 
 import java.util.*;
 
+import org.jdom.Element;
+
+import ghidra.util.xml.XmlUtilities;
+
 /**
  * An object in this class stores a sequence of instructions along with the sizes and operands of each. 
  * These sequences come from function starts, function returns, or immediately before function starts. 
@@ -24,12 +28,14 @@ import java.util.*;
 
 public class InstructionSequence {
 
+	final static String XML_ELEMENT_NAME = "InstructionSequence";
+
 	private String[] instructions;
 	private Integer[] sizes;
 	private String[] commaSeparatedOperands;
 
 	/**
-	 * Default no-arg constructor for use by JAXB
+	 * Default no-arg constructor
 	 */
 	public InstructionSequence() {
 	}
@@ -78,7 +84,9 @@ public class InstructionSequence {
 			current.append(":");
 			current.append(sizes[currentInst]);
 			current.append("(");
-			current.append(commaSeparatedOperands[currentInst]);
+			if (commaSeparatedOperands[currentInst] != null) {
+				current.append(commaSeparatedOperands[currentInst]);
+			}
 			current.append(")");
 			current.append(" ");
 			if (inOrder) {
@@ -241,8 +249,9 @@ public class InstructionSequence {
 						continue;
 					}
 					for (int i = 0, numSeqs = currentSeqs.size(); i < numSeqs; ++i) {
-						if (currentSeqs.get(i).getInstructions()[0] != null &&
-							currentBytes.get(i).getBytes() != null) {
+						if (currentSeqs.get(i)
+							.getInstructions()[0] != null && currentBytes.get(i)
+								.getBytes() != null) {
 							instSeqs.add(currentSeqs.get(i));
 						}
 					}
@@ -253,5 +262,108 @@ public class InstructionSequence {
 			}
 		}
 		return instSeqs;
+	}
+
+	/**
+	 * Convert this object into a XML node, using {@link #XML_ELEMENT_NAME} as the name for the node.
+	 * 
+	 * @return new XML element
+	 */
+	public Element toXml() {
+		return toXml(XML_ELEMENT_NAME);
+	}
+
+	/**
+	 * Convert this object into a XML node, using the specified name for the node.
+	 * 
+	 * @param elementName name for the new XML node
+	 * @return new XML element
+	 */
+	public Element toXml(String elementName) {
+		Element result = new Element(elementName);
+
+		Element instructionsListEle = new Element("instructions");
+		result.addContent(instructionsListEle);
+		if (instructions != null) {
+			for (String s : instructions) {
+				Element x = new Element("instruction");
+				instructionsListEle.addContent(x);
+				if (s != null) {
+					x.setAttribute("value", s);
+				}
+			}
+		}
+
+		Element sizesListEle = new Element("sizes");
+		result.addContent(sizesListEle);
+		if (sizes != null) {
+			for (Integer s : sizes) {
+				Element x = new Element("size");
+				sizesListEle.addContent(x);
+				if (s != null) {
+					XmlUtilities.setIntAttr(x, "value", s);
+				}
+			}
+		}
+
+		Element csoListEle = new Element("commaSeparatedOperands");
+		result.addContent(csoListEle);
+		if (commaSeparatedOperands != null) {
+			for (String s : commaSeparatedOperands) {
+				Element x = new Element("operands");
+				csoListEle.addContent(x);
+				if (s != null) {
+					x.setAttribute("value", s);
+				}
+			}
+		}
+
+		return result;
+	}
+
+	/**
+	 * Creates an {@link InstructionSequence} instance from a XML node.
+	 * 
+	 * @param element jdom Element to read, null ok
+	 * @return new {@link InstructionSequence} or null if element was null
+	 */
+	public static InstructionSequence fromXml(Element element) {
+		if (element == null) {
+			return null;
+		}
+
+		List<String> instructionsList = new ArrayList<>();
+		Element instructionsListEle = element.getChild("instructions");
+		if (instructionsListEle != null) {
+			for (Element instEle : XmlUtilities.getChildren(instructionsListEle, "instruction")) {
+				String val = instEle.getAttributeValue("value");
+				instructionsList.add(val);
+			}
+		}
+
+		List<Integer> sizesList = new ArrayList<>();
+		Element sizesListEle = element.getChild("sizes");
+		if (sizesListEle != null) {
+			for (Element sizeEle : XmlUtilities.getChildren(sizesListEle, "size")) {
+				String val = sizeEle.getAttributeValue("value");
+				sizesList.add(val != null ? XmlUtilities.parseInt(val) : null);
+			}
+		}
+
+		List<String> csoList = new ArrayList<>();
+		Element csoListEle = element.getChild("commaSeparatedOperands");
+		if (csoListEle != null) {
+			for (Element csoEle : XmlUtilities.getChildren(csoListEle, "operands")) {
+				String val = csoEle.getAttributeValue("value");
+				csoList.add(val);
+			}
+		}
+
+		InstructionSequence result = new InstructionSequence();
+		result.setInstructions(instructionsList.toArray(new String[instructionsList.size()]));
+		result.setCommaSeparatedOperands(csoList.toArray(new String[csoList.size()]));
+		result.setSizes(sizesList.toArray(new Integer[sizesList.size()]));
+
+		return result;
 	}
 }

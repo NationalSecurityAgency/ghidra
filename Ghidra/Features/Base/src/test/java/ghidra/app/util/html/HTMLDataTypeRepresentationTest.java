@@ -28,6 +28,7 @@ import javax.swing.*;
 import org.junit.Assert;
 import org.junit.Test;
 
+import docking.widgets.label.GDHtmlLabel;
 import generic.test.AbstractGenericTest;
 import ghidra.app.util.ToolTipUtils;
 import ghidra.program.model.data.*;
@@ -1406,11 +1407,11 @@ public class HTMLDataTypeRepresentationTest extends AbstractGenericTest {
 		String name = componentAtIndex.getFieldName();
 
 		if (optionalName != null) {
-			destinationComposite.insert(insertIndex, componentCopy, componentCopy.getLength(),
+			destinationComposite.insert(insertIndex, componentCopy, componentAtIndex.getLength(),
 				optionalName, null);
 		}
 		else {
-			destinationComposite.insert(insertIndex, componentCopy, componentCopy.getLength(),
+			destinationComposite.insert(insertIndex, componentCopy, componentAtIndex.getLength(),
 				name + " Copy", null);
 		}
 	}
@@ -1449,7 +1450,7 @@ public class HTMLDataTypeRepresentationTest extends AbstractGenericTest {
 		String rightHtml = right.getHTMLString();
 		System.err.println("Right HTML: " + rightHtml);
 		StringBuffer buffy1 = new StringBuffer(rightHtml);
-		JLabel rightLabel = new JLabel();
+		JLabel rightLabel = new GDHtmlLabel();
 		rightLabel.setOpaque(true);
 		rightLabel.setBackground(Color.WHITE);
 		rightLabel.setVerticalAlignment(SwingConstants.TOP);
@@ -1459,7 +1460,7 @@ public class HTMLDataTypeRepresentationTest extends AbstractGenericTest {
 		String leftHtml = left.getHTMLString();
 		System.err.println("Left HTML: " + leftHtml);
 		StringBuffer buffy2 = new StringBuffer(leftHtml);
-		JLabel leftLabel = new JLabel();
+		JLabel leftLabel = new GDHtmlLabel();
 		leftLabel.setOpaque(true);
 		leftLabel.setBackground(Color.WHITE);
 		leftLabel.setVerticalAlignment(SwingConstants.TOP);

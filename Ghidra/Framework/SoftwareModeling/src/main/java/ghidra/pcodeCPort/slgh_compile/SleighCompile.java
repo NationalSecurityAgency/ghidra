@@ -36,6 +36,7 @@ import ghidra.pcodeCPort.slghsymbol.*;
 import ghidra.pcodeCPort.space.*;
 import ghidra.pcodeCPort.utils.Utils;
 import ghidra.pcodeCPort.xml.DocumentStorage;
+import ghidra.program.model.lang.BasicCompilerSpec;
 import ghidra.sleigh.grammar.Location;
 import ghidra.util.Msg;
 
@@ -255,6 +256,7 @@ public class SleighCompile extends SleighBase {
 	boolean warnunusedfields;   // True if fields are defined but not used
 	boolean enforcelocalkeyword;  // Force slaspec to use 'local' keyword when defining temporary varnodes
 	boolean lenientconflicterrors; // True if we ignore most pattern conflict errors
+	public boolean warnalllocalcollisions;
 	public boolean warnallnops;
 	public VectorSTL<String> noplist = new VectorSTL<>();
 
@@ -273,9 +275,14 @@ public class SleighCompile extends SleighBase {
 		// Some predefined symbols
 		root = new SubtableSymbol(location, "instruction"); // Base constructors
 		symtab.addSymbol(root);
-		insertSpace(new ConstantSpace(this, "const", 0));
+		insertSpace(new ConstantSpace(this, "const", BasicCompilerSpec.CONSTANT_SPACE_INDEX));
 		SpaceSymbol spacesym = new SpaceSymbol(location, getConstantSpace()); // Constant
 		// space
+		symtab.addSymbol(spacesym);
+		OtherSpace otherSpace = new OtherSpace(this, BasicCompilerSpec.OTHER_SPACE_NAME,
+			BasicCompilerSpec.OTHER_SPACE_INDEX);
+		insertSpace(otherSpace);
+		spacesym = new SpaceSymbol(location, otherSpace);
 		symtab.addSymbol(spacesym);
 		insertSpace(new UniqueSpace(this, "unique", numSpaces(), 0));
 		spacesym = new SpaceSymbol(location, getUniqueSpace()); // Temporary register
@@ -517,6 +524,79 @@ public class SleighCompile extends SleighBase {
 		}
 	}
 
+	static int findCollision(Map<Long, Integer> local2Operand, ArrayList<Long> locals,
+			int operand) {
+		Integer boxOperand = Integer.valueOf(operand);
+		for (int i = 0; i < locals.size(); ++i) {
+			Integer previous = local2Operand.putIfAbsent(locals.get(i), boxOperand);
+			if (previous != null) {
+				if (previous.intValue() != operand) {
+					return previous.intValue();
+				}
+			}
+		}
+		return -1;
+	}
+
+	boolean checkLocalExports(Constructor ct) {
+		if (ct.getTempl() == null) {
+			return true;		// No template, collisions impossible
+		}
+		if (ct.getTempl().buildOnly()) {
+			return true;		// Operand exports aren't manipulated, so no collision is possible
+		}
+		if (ct.getNumOperands() < 2) {
+			return true;		// Collisions can only happen with multiple operands
+		}
+		boolean noCollisions = true;
+		Map<Long, Integer> collect = new TreeMap<Long, Integer>();
+		for (int i = 0; i < ct.getNumOperands(); ++i) {
+			ArrayList<Long> newCollect = new ArrayList<Long>();
+			ct.getOperand(i).collectLocalValues(newCollect);
+			if (newCollect.isEmpty()) {
+				continue;
+			}
+			int collideOperand = findCollision(collect, newCollect, i);
+			if (collideOperand >= 0) {
+				noCollisions = false;
+				if (warnalllocalcollisions) {
+					Msg.warn(this, "Possible collision with symbol " +
+						ct.getOperand(collideOperand).getName() + " and " +
+						ct.getOperand(i).getName() + " in constructor from " + ct.getFilename() +
+						" starting at line " + Integer.toString(ct.getLineno()));
+				}
+				break;	// Don't continue
+			}
+		}
+		return noCollisions;
+	}
+
+	void checkLocalCollisions() {
+		int collisionCount = 0;
+		SubtableSymbol sym = root;	// Start with the instruction table
+		int i = -1;
+		for (;;) {
+			int numconst = sym.getNumConstructors();
+			for (int j = 0; j < numconst; ++j) {
+				if (!checkLocalExports(sym.getConstructor(j))) {
+					collisionCount += 1;
+				}
+			}
+			i += 1;
+			if (i >= tables.size()) {
+				break;
+			}
+			sym = tables.get(i);
+		}
+		if (collisionCount > 0) {
+			Msg.warn(this, "WARNING: " + Integer.toString(collisionCount) +
+				" constructors with local collisions between operands");
+			if (!warnalllocalcollisions) {
+				Msg.warn(this, "Use -c switch to list each individually");
+			}
+		}
+	}
+
 	// Make sure label symbols are used properly
 	String checkSymbols(SymbolScope scope) {
 		entry("checkSymbols", scope);
@@ -638,6 +718,11 @@ public class SleighCompile extends SleighBase {
 		lenientconflicterrors = val;
 	}
 
+	void setLocalCollisionWarning(boolean val) {
+		entry("setLocalCollisionWarning", val);
+		warnalllocalcollisions = val;
+	}
+
 	void setAllNopWarning(boolean val) {
 		entry("setAllNopWarning", val);
 		warnallnops = val;
@@ -653,6 +738,10 @@ public class SleighCompile extends SleighBase {
 			return;
 		}
 		checkConsistency();
+		if (errors > 0) {
+			return;
+		}
+		checkLocalCollisions();
 		if (errors > 0) {
 			return;
 		}
@@ -779,11 +868,32 @@ public class SleighCompile extends SleighBase {
 		return true;
 	}
 
+	private int bitsConsumedByUnitSize(int ws) {
+		int cnt = 0;
+		for (int test = ws - 1; test != 0; test >>= 1) {
+			++cnt;
+		}
+		return cnt;
+	}
+
 	public void newSpace(Location location, SpaceQuality qual) {
 		entry("newSpace", location, qual);
 		if (qual.size == 0) {
 			reportError(location, "Space definition missing size attribute");
 			return;
+		}
+
+		if (qual.size <= 0 || qual.size > 8) {
+			throw new SleighError("Space " + qual.name + " has unsupported size: " + 16, location);
+		}
+		if (qual.wordsize < 1 || qual.wordsize > 8) {
+			throw new SleighError(
+				"Space " + qual.name + " has unsupported wordsize: " + qual.wordsize, location);
+		}
+		int addressBits = bitsConsumedByUnitSize(qual.wordsize) + (8 * qual.size);
+		if (addressBits > 64) {
+			throw new SleighError("Space " + qual.name + " has unsupported dimensions, requires " +
+				addressBits + "-bits (limit is 64-bits)", location);
 		}
 
 		int delay = (qual.type == space_class.register_space) ? 0 : 1;
@@ -815,7 +925,7 @@ public class SleighCompile extends SleighBase {
 		alignment = val;
 	}
 
-	public void defineVarnodes(SpaceSymbol spacesym, long off, long size, VectorSTL<String> names,
+	public void defineVarnodes(SpaceSymbol spacesym, long off, int size, VectorSTL<String> names,
 			VectorSTL<Location> locations) {
 		entry("defineVarnodes", spacesym, off, size, names, locations);
 		AddrSpace spc = spacesym.getSpace();
@@ -823,7 +933,7 @@ public class SleighCompile extends SleighBase {
 		for (int i = 0; i < names.size(); ++i) {
 			Location location = locations.get(i);
 			if (!"_".equals(names.get(i))) {
-				addSymbol(new VarnodeSymbol(location, names.get(i), spc, myoff, (int) size));
+				addSymbol(new VarnodeSymbol(location, names.get(i), spc, myoff, size));
 			}
 			myoff += size;
 		}
@@ -1537,7 +1647,8 @@ public class SleighCompile extends SleighBase {
 		entry("buildMacro", sym, rtl);
 		String errstring = checkSymbols(symtab.getCurrentScope());
 		if (errstring.length() != 0) {
-			reportError(sym.getLocation(), " in definition of macro " + sym.getName() + ":");
+			reportError(sym.getLocation(),
+				" in definition of macro " + sym.getName() + ":" + errstring);
 			return;
 		}
 		if (!expandMacros(rtl)) {

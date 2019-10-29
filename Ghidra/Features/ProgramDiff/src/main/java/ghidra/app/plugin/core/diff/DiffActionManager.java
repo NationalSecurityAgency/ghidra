@@ -22,12 +22,13 @@ import javax.swing.ImageIcon;
 
 import docking.ActionContext;
 import docking.action.*;
+import docking.tool.ToolConstants;
 import docking.widgets.OptionDialog;
 import ghidra.app.plugin.core.codebrowser.OtherPanelContext;
 import ghidra.app.services.CodeViewerService;
 import ghidra.app.util.HelpTopics;
-import ghidra.framework.plugintool.util.ToolConstants;
 import ghidra.program.model.listing.Program;
+import ghidra.util.HTMLUtilities;
 import ghidra.util.HelpLocation;
 import resources.ResourceManager;
 
@@ -50,7 +51,7 @@ class DiffActionManager {
 	static final String IGNORE_DIFFS_NEXT_ACTION = "Ignore Selection and Goto Next Difference";
 	static final String NEXT_DIFF_ACTION = "Next Difference";
 	static final String PREVIOUS_DIFF_ACTION = "Previous Difference";
-	static final String DIFF_DETAILS_ACTION = "Diff Location Details";
+	static final String DIFF_DETAILS_ACTION = "Show Diff Location Details";
 	static final String SHOW_DIFF_SETTINGS_ACTION = "Show Diff Apply Settings";
 	static final String GET_DIFFS_ACTION = "Get Differences";
 	static final String SELECT_ALL_DIFFS_ACTION = "Select All Differences";
@@ -172,9 +173,10 @@ class DiffActionManager {
 		String secondName = secondProgram.getName();
 
 		//@formatter:off
-		openCloseProgram2Action.setDescription("<html><center>Close Diff View</center><br>" +
-											   "Current diff: " +
-											   "<b>"+firstName+"</b> to <b>" +secondName+"</b>");
+		openCloseProgram2Action.setDescription(
+			"<html><center>Close Diff View</center><br>" +
+			"Current diff: " +
+			"<b>"+HTMLUtilities.escapeHTML(firstName)+"</b> to <b>" +HTMLUtilities.escapeHTML(secondName)+"</b>");
 		//@formatter:on
 	}
 
@@ -280,9 +282,8 @@ class DiffActionManager {
 			}
 		};
 		icon = ResourceManager.loadImage("images/eraser_arrow16.png");
-		ignoreDiffsAction.setPopupMenuData(
-			new MenuData(new String[] { "Ignore Selection and Goto Next Difference" }, icon,
-				GROUP));
+		ignoreDiffsAction.setPopupMenuData(new MenuData(
+			new String[] { "Ignore Selection and Goto Next Difference" }, icon, GROUP));
 		ignoreDiffsAction.setDescription(
 			"Ignores the selected program differences and moves the cursor to the next difference.");
 		ignoreDiffsAction.setToolBarData(new ToolBarData(icon, GROUP));

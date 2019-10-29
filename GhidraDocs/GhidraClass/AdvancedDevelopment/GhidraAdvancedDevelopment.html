@@ -910,8 +910,7 @@
 
     <annot>@Override</annot>
     <kw>public</kw> <kw>void</kw> run() <kw>throws</kw> Exception {
-        <if>Instruction</if> <loc>instruction</loc> = getFirstInstruction();
-        <kw>while</kw> (<loc>instruction</loc> != <kw>null</kw>) {
+        <kw>for</kw> (<if>Instruction</if> <loc>instruction</loc> = getFirstInstruction(); <loc>instruction</loc> != <kw>null</kw>; <loc>instruction</loc> = getNextInstruction()) {
             <kw>if</kw> ( <fld>monitor</fld>.isCancelled() ) {
                 <kw>break</kw>;
             }
@@ -933,7 +932,6 @@
             Scalar <loc>scalar</loc> = (Scalar) <loc>opObjects1</loc>[<lit>0</lit>];
             String <loc>comment</loc> = <strlit>"["</strlit> + <loc>register</loc>.getName() + <strlit>"]=["</strlit> + <loc>scalar</loc>.toString(<lit>16</lit>, <kw>false</kw>, <kw>false</kw>, <stlrit>""</strlit>, <strlit>""</strlit>) + <strlit>"]"</strlit>;
             setEOLComment(<loc>instruction</loc>.getMinAddress(), <loc>comment</loc>);
-            <loc>instruction</loc> = getNextInstruction();
         }
     }
 }</codeblock>

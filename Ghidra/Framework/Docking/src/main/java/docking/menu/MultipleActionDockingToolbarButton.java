@@ -24,9 +24,12 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.event.*;
 
+import org.apache.commons.lang3.StringUtils;
+
 import docking.*;
 import docking.action.*;
 import docking.widgets.EmptyBorderButton;
+import docking.widgets.label.GDHtmlLabel;
 import ghidra.util.SystemUtilities;
 import resources.ResourceManager;
 
@@ -181,7 +184,7 @@ public class MultipleActionDockingToolbarButton extends EmptyBorderButton {
 			final DockingActionIf delegateAction = dockingAction;
 			item.addActionListener(e -> {
 				ActionContext context = getActionContext();
-				context.setSource(e.getSource());
+				context.setSourceObject(e.getSource());
 				if (delegateAction instanceof ToggleDockingAction) {
 					ToggleDockingAction toggleAction = (ToggleDockingAction) delegateAction;
 					toggleAction.setSelected(!toggleAction.isSelected());
@@ -415,7 +418,7 @@ public class MultipleActionDockingToolbarButton extends EmptyBorderButton {
 
 		private final int EMTPY_SEPARATOR_HEIGHT = 10;
 		private final int TEXT_SEPARATOR_HEIGHT = 32;
-		private JLabel renderer = new JLabel();
+		private JLabel renderer = new GDHtmlLabel();
 
 		private int separatorHeight = EMTPY_SEPARATOR_HEIGHT;
 
@@ -426,7 +429,7 @@ public class MultipleActionDockingToolbarButton extends EmptyBorderButton {
 			renderer.setHorizontalAlignment(SwingConstants.CENTER);
 			renderer.setVisible(true);
 
-			if (name != null && !"".equals(name)) {
+			if (!StringUtils.isBlank(name)) {
 				separatorHeight = TEXT_SEPARATOR_HEIGHT;
 			}
 
@@ -436,14 +439,20 @@ public class MultipleActionDockingToolbarButton extends EmptyBorderButton {
 
 		@Override
 		protected void paintComponent(Graphics g) {
-			// assume horizontal
-			Dimension s = getSize();
-			int center = separatorHeight >> 1;
-			g.setColor(getForeground());
-			g.drawLine(0, center, s.width, center);
+			Dimension d = getSize();
 
+			// some edge padding, for classiness
+			int pad = 10;
+			int center = separatorHeight >> 1;
+			int x = 0 + pad;
+			int y = center;
+			int w = d.width - pad;
+			g.setColor(getForeground());
+			g.drawLine(x, y, w, y);
+
+			// drop-shadow
 			g.setColor(getBackground());
-			g.drawLine(0, (center + 1), s.width, (center + 1));
+			g.drawLine(x, (y + 1), w, (y + 1));
 
 			// now add our custom text
 			renderer.setSize(getSize());

@@ -24,8 +24,6 @@ import java.util.concurrent.TimeUnit;
 
 import javax.swing.*;
 
-import org.junit.Assert;
-
 import ghidra.app.merge.*;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.data.DataTypeManager;
@@ -106,7 +104,7 @@ public abstract class AbstractDataTypeMergeTest extends AbstractMergeTest {
 		if (option >= 0) {
 			dataTypeMergeManager.setConflictResolution(option);
 		}
-		dataTypeMergeManager.merge(TaskMonitorAdapter.DUMMY_MONITOR);
+		dataTypeMergeManager.merge(TaskMonitor.DUMMY);
 	}
 
 	private Window getMergeWindow(CountDownLatch doneLatch) {
@@ -222,26 +220,7 @@ public abstract class AbstractDataTypeMergeTest extends AbstractMergeTest {
 	}
 
 	protected void waitForCompletion() throws Exception {
-
-		long total = 0;
-		while (mergeMgr != null && !mergeMgr.processingCompleted()) {
-
-			total += sleep(DEFAULT_WAIT_DELAY);
-			if (total >= MAX_MERGE_TIMEOUT) {
-				Assert.fail("Timed-out waiting for merge mangager to finish!");
-			}
-		}
-
-		if (window != null) {
-			while (window.isShowing()) {
-
-				total += sleep(DEFAULT_WAIT_DELAY);
-				if (total >= MAX_MERGE_TIMEOUT) {
-					Assert.fail("Timed-out waiting for merge window to close");
-				}
-			}
-		}
-		waitForSwing();
+		waitForMergeCompletion();
 	}
 
 	protected void checkConflictCount(int expectedCount) {

@@ -81,9 +81,4 @@ public class Apple8900FileSystem extends GFileSystemBase {
 		dataFile = GFileImpl.fromFilename(this, root, "DATA", false, header.getSizeOfData(), null);
 
 	}
-
-	@Override
-	public String getInfo(GFile file, TaskMonitor monitor) throws IOException {
-		return null;
-	}
 }

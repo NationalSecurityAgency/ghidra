@@ -25,8 +25,10 @@ import javax.swing.event.DocumentListener;
 
 import docking.ActionContext;
 import docking.DialogComponentProvider;
-import docking.ToolTipManager;
-import docking.action.*;
+import docking.action.DockingAction;
+import docking.widgets.checkbox.GCheckBox;
+import docking.widgets.label.GDLabel;
+import docking.widgets.label.GLabel;
 import ghidra.app.events.ProgramSelectionPluginEvent;
 import ghidra.app.services.GoToService;
 import ghidra.app.util.HelpTopics;
@@ -38,11 +40,13 @@ import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.util.ProgramSelection;
 import ghidra.util.HelpLocation;
 import ghidra.util.table.*;
+import ghidra.util.table.actions.MakeProgramSelectionAction;
 import ghidra.util.task.Task;
-import resources.ResourceManager;
 
 public class AddressTableDialog extends DialogComponentProvider {
-	static final int DEFAULT_MINIMUM_TABLE_SIZE = 3;
+	private static final int DEFAULT_MINIMUM_TABLE_SIZE = 3;
+	private static final String DIALOG_NAME = "Search For Address Tables";
+
 	private JPanel mainPanel;
 	private String[] blockData;
 	private AutoTableDisassemblerPlugin plugin;
@@ -65,7 +69,7 @@ public class AddressTableDialog extends DialogComponentProvider {
 	private GhidraThreadedTablePanel<AddressTable> resultsTablePanel;
 
 	public AddressTableDialog(AutoTableDisassemblerPlugin plugin) {
-		super("Search For Address Tables", false, true, true, true);
+		super(DIALOG_NAME, false, true, true, true);
 		setHelpLocation(
 			new HelpLocation(HelpTopics.SEARCH, AutoTableDisassemblerPlugin.SEARCH_ACTION_NAME));
 		this.plugin = plugin;
@@ -123,15 +127,14 @@ public class AddressTableDialog extends DialogComponentProvider {
 		JPanel makeTablePanel = new JPanel(new FlowLayout());
 
 		makeTableButton = new JButton("Make Table");
-		ToolTipManager.setToolTipText(makeTableButton,
-			"Make a table of addresses at the selected location(s).");
+		makeTableButton.setToolTipText("Make a table of addresses at the selected location(s).");
 		makeTablePanel.add(makeTableButton);
 		makeTableButton.setEnabled(false);
 		makeTableButton.addActionListener(e -> plugin.makeTable(resultsTable.getSelectedRows()));
 
 		JPanel disassemblePanel = new JPanel(new FlowLayout());
 		disassembleTableButton = new JButton("Disassemble");
-		ToolTipManager.setToolTipText(disassembleTableButton,
+		disassembleTableButton.setToolTipText(
 			"Disassemble at all locations pointed to by the selected address table(s) members.");
 		disassembleTableButton.setEnabled(false);
 		disassemblePanel.add(disassembleTableButton);
@@ -148,8 +151,8 @@ public class AddressTableDialog extends DialogComponentProvider {
 		JPanel searchOptionsPanel = new JPanel(new BorderLayout());
 		searchOptionsPanel.setBorder(BorderFactory.createTitledBorder("Search Options"));
 
-		JLabel minLengthLabel = new JLabel("Minimum Length: ");
-		ToolTipManager.setToolTipText(minLengthLabel,
+		JLabel minLengthLabel = new GLabel("Minimum Length: ");
+		minLengthLabel.setToolTipText(
 			"The minimum number of consecutive addresses that will make an address table.");
 		minLengthField = new JTextField(5);
 		minLengthField.setName("Minimum Length");
@@ -159,10 +162,10 @@ public class AddressTableDialog extends DialogComponentProvider {
 		minLengthPanel.add(minLengthLabel);
 		minLengthPanel.add(minLengthField);
 
-		alignLabel = new JLabel("Alignment: ");
+		alignLabel = new GDLabel("Alignment: ");
 		alignField = new JTextField(5);
 		alignField.setName("Alignment");
-		ToolTipManager.setToolTipText(alignLabel,
+		alignLabel.setToolTipText(
 			"Alignment that address tables and what they are pointing to must satisfy.");
 		int align = plugin.getProgram().getLanguage().getInstructionAlignment();
 		if (PseudoDisassembler.hasLowBitCodeModeInAddrValues(plugin.getProgram())) {
@@ -170,11 +173,10 @@ public class AddressTableDialog extends DialogComponentProvider {
 		}
 		alignField.setText("" + align);
 
-		skipLabel = new JLabel("Skip Length: ");
+		skipLabel = new GDLabel("Skip Length: ");
 		skipField = new JTextField(5);
 		skipField.setName("Skip");
-		ToolTipManager.setToolTipText(skipLabel,
-			"Number of bytes to skip between found addresses in a table.");
+		skipLabel.setToolTipText("Number of bytes to skip between found addresses in a table.");
 		skipField.setText("0");
 
 		JPanel alignPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
@@ -190,14 +192,13 @@ public class AddressTableDialog extends DialogComponentProvider {
 		optPanel.add(alignPanel);
 		optPanel.add(skipPanel);
 
-		selectionButton = new JCheckBox("Search Selection");
+		selectionButton = new GCheckBox("Search Selection");
 		selectionButton.setSelected(false);
-		ToolTipManager.setToolTipText(selectionButton,
-			"If checked, search only the current selection.");
+		selectionButton.setToolTipText("If checked, search only the current selection.");
 		JPanel searchOptionsWestPanel = new JPanel(new GridLayout(2, 1));
 		searchOptionsWestPanel.add(selectionButton);
 
-		shiftedAddressButton = new JCheckBox("Shifted Addresses");
+		shiftedAddressButton = new GCheckBox("Shifted Addresses");
 
 		boolean allowShiftedAddresses =
 			plugin.getProgram().getDataTypeManager().getDataOrganization().getPointerShift() != 0;
@@ -210,7 +211,7 @@ public class AddressTableDialog extends DialogComponentProvider {
 			shiftedAddressButton.setVisible(false);
 		}
 
-		ToolTipManager.setToolTipText(shiftedAddressButton,
+		shiftedAddressButton.setToolTipText(
 			"Search for tables of four byte values that when shifted left by two, are valid " +
 				"addresses in the current program.");
 		searchOptionsWestPanel.add(shiftedAddressButton);
@@ -224,24 +225,22 @@ public class AddressTableDialog extends DialogComponentProvider {
 		JPanel makeOptionsPanel = new JPanel(new BorderLayout());
 		makeOptionsPanel.setBorder(BorderFactory.createTitledBorder("Make Table Options"));
 
-		autoLabelCB = new JCheckBox("Auto Label");
+		autoLabelCB = new GCheckBox("Auto Label");
 		autoLabelCB.setSelected(true);
 		autoLabelCB.setEnabled(false);
-		ToolTipManager.setToolTipText(autoLabelCB,
+		autoLabelCB.setToolTipText(
 			"Label the top of the address table and all members of the table.");
 
-		offsetLabel = new JLabel("Offset: ");
-		ToolTipManager.setToolTipText(offsetLabel,
-			"Offset from the beginning of the selected table(s)");
+		offsetLabel = new GDLabel("Offset: ");
+		offsetLabel.setToolTipText("Offset from the beginning of the selected table(s)");
 		offsetLabel.setEnabled(false);
 
-		JLabel viewOffsetLabel = new JLabel("  ");
+		JLabel viewOffsetLabel = new GDLabel("  ");
 		viewOffsetLabel.setEnabled(false);
 
 		viewOffset = new HintTextField(20);
 		viewOffset.setName("viewOffset");
-		ToolTipManager.setToolTipText(viewOffset,
-			"Address of the selected table starting at the given offset");
+		viewOffset.setToolTipText("Address of the selected table starting at the given offset");
 		viewOffset.setHintText("table start address");
 		viewOffset.showHint();
 
@@ -254,8 +253,7 @@ public class AddressTableDialog extends DialogComponentProvider {
 
 		offsetField = new JTextField(2);
 		offsetField.setName("offset");
-		ToolTipManager.setToolTipText(offsetField,
-			"Offset from the beginning of the selected table(s)");
+		offsetField.setToolTipText("Offset from the beginning of the selected table(s)");
 		offsetField.setText("0");
 		offsetField.setEnabled(false);
 		offsetField.addActionListener(
@@ -525,20 +523,31 @@ public class AddressTableDialog extends DialogComponentProvider {
 	}
 
 	private void createAction() {
-		DockingAction selectAction =
-			new DockingAction("Make Selection", "AsciiFinderDialog", false) {
-				@Override
-				public void actionPerformed(ActionContext context) {
-					makeSelection();
+
+		DockingAction selectAction = new MakeProgramSelectionAction(plugin, resultsTable) {
+			@Override
+			protected ProgramSelection makeSelection(ActionContext context) {
+				Program program = plugin.getProgram();
+				AddressSet set = new AddressSet();
+				AutoTableDisassemblerModel model = plugin.getModel();
+				int[] selectedRows = resultsTable.getSelectedRows();
+				for (int selectedRow : selectedRows) {
+					Address selectedAddress = model.getAddress(selectedRow);
+					AddressTable addrTab = model.get(selectedAddress);
+					if (addrTab != null) {
+						set.addRange(selectedAddress,
+							selectedAddress.add(addrTab.getByteLength() - 1));
+					}
 				}
-			};
-		selectAction.setDescription("Make a selection using selected rows");
-		selectAction.setEnabled(true);
-		Icon icon = ResourceManager.loadImage("images/text_align_justify.png");
-		selectAction.setPopupMenuData(new MenuData(new String[] { "Make Selection" }, icon));
-		selectAction.setToolBarData(new ToolBarData(icon));
-		selectAction.setHelpLocation(
-			new HelpLocation(HelpTopics.SEARCH, "Search_Make_Selection_Address_Tables"));
+				ProgramSelection selection = new ProgramSelection(set);
+				if (!set.isEmpty()) {
+					plugin.firePluginEvent(
+						new ProgramSelectionPluginEvent(plugin.getName(), selection, program));
+				}
+
+				return selection;
+			}
+		};
 
 		selectionNavigationAction = new SelectionNavigationAction(plugin, resultsTable);
 		selectionNavigationAction.setHelpLocation(
@@ -547,7 +556,7 @@ public class AddressTableDialog extends DialogComponentProvider {
 		addAction(selectAction);
 	}
 
-	private void makeSelection() {
+	private void doMakeSelection() {
 		Program program = plugin.getProgram();
 		AddressSet set = new AddressSet();
 		AutoTableDisassemblerModel model = plugin.getModel();

@@ -828,7 +828,7 @@ public class ProgramMerge2Test extends AbstractGhidraHeadedIntegrationTest {
 			Symbol[] syms = st.getSymbols(addr(p1, "0x0100299e"));
 			assertEquals(1, syms.length);
 			assertEquals("SampleLabel", syms[0].getName());
-			assertEquals(SymbolType.CODE, syms[0].getSymbolType());
+			assertEquals(SymbolType.LABEL, syms[0].getSymbolType());
 			assertEquals("MY.DLL", syms[0].getParentNamespace().getName());
 			assertEquals(SymbolType.NAMESPACE,
 				syms[0].getParentNamespace().getSymbol().getSymbolType());
@@ -1031,7 +1031,7 @@ public class ProgramMerge2Test extends AbstractGhidraHeadedIntegrationTest {
 			assertEquals(SymbolType.NAMESPACE,
 				syms[0].getParentNamespace().getSymbol().getSymbolType());
 			assertEquals("MY.DLL_SampleLabel", syms[1].getName());
-			assertEquals(SymbolType.CODE, syms[1].getSymbolType());
+			assertEquals(SymbolType.LABEL, syms[1].getSymbolType());
 			assertEquals("Global", syms[1].getParentNamespace().getName());
 			assertEquals(SymbolType.GLOBAL,
 				syms[1].getParentNamespace().getSymbol().getSymbolType());
@@ -1137,7 +1137,7 @@ public class ProgramMerge2Test extends AbstractGhidraHeadedIntegrationTest {
 			assertEquals(SymbolType.NAMESPACE,
 				syms[0].getParentNamespace().getSymbol().getSymbolType());
 			assertEquals("MY.DLL_SampleLabel", syms[1].getName());
-			assertEquals(SymbolType.CODE, syms[1].getSymbolType());
+			assertEquals(SymbolType.LABEL, syms[1].getSymbolType());
 			assertEquals("Global", syms[1].getParentNamespace().getName());
 			assertEquals(SymbolType.GLOBAL,
 				syms[1].getParentNamespace().getSymbol().getSymbolType());
@@ -1339,7 +1339,7 @@ public class ProgramMerge2Test extends AbstractGhidraHeadedIntegrationTest {
 			assertEquals(SymbolType.GLOBAL,
 				syms[0].getParentNamespace().getSymbol().getSymbolType());
 			assertEquals("SampleLabel", syms[1].getName());
-			assertEquals(SymbolType.CODE, syms[1].getSymbolType());
+			assertEquals(SymbolType.LABEL, syms[1].getSymbolType());
 			assertEquals("MY.DLL", syms[1].getParentNamespace().getName());
 			assertEquals(SymbolType.NAMESPACE,
 				syms[1].getParentNamespace().getSymbol().getSymbolType());
@@ -1443,7 +1443,7 @@ public class ProgramMerge2Test extends AbstractGhidraHeadedIntegrationTest {
 			assertEquals(SymbolType.NAMESPACE,
 				syms[0].getParentNamespace().getSymbol().getSymbolType());
 			assertEquals("MY.DLL_SampleLabel", syms[1].getName());
-			assertEquals(SymbolType.CODE, syms[1].getSymbolType());
+			assertEquals(SymbolType.LABEL, syms[1].getSymbolType());
 			assertEquals("Global", syms[1].getParentNamespace().getName());
 			assertEquals(SymbolType.GLOBAL,
 				syms[1].getParentNamespace().getSymbol().getSymbolType());

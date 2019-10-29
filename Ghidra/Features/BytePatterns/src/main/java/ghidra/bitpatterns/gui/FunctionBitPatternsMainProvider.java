@@ -26,12 +26,13 @@ import javax.swing.tree.TreePath;
 import docking.ActionContext;
 import docking.action.DockingAction;
 import docking.action.MenuData;
+import docking.tool.ToolConstants;
 import docking.widgets.filechooser.GhidraFileChooser;
+import docking.widgets.label.GLabel;
 import ghidra.bitpatterns.info.*;
 import ghidra.framework.options.OptionsChangeListener;
 import ghidra.framework.options.ToolOptions;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
-import ghidra.framework.plugintool.util.ToolConstants;
 import ghidra.framework.preferences.Preferences;
 import ghidra.program.model.listing.Program;
 import ghidra.util.HelpLocation;
@@ -281,17 +282,17 @@ public class FunctionBitPatternsMainProvider extends ComponentProviderAdapter
 		PairLayout pairLayout = new PairLayout();
 		dataInfoPanel.setLayout(pairLayout);
 
-		dataInfoPanel.add(new JLabel(DATA_SOURCE_FIELD_LABEL));
+		dataInfoPanel.add(new GLabel(DATA_SOURCE_FIELD_LABEL));
 		dataSourceField = new JTextField(70);
 		dataSourceField.setEditable(false);
 		dataInfoPanel.add(dataSourceField);
 
-		dataInfoPanel.add(new JLabel(NUM_FUNCS_FIELD_LABEL));
+		dataInfoPanel.add(new GLabel(NUM_FUNCS_FIELD_LABEL));
 		numFunctionsField = new JTextField(10);
 		numFunctionsField.setEditable(false);
 		dataInfoPanel.add(numFunctionsField);
 
-		dataInfoPanel.add(new JLabel(NUM_FILES_FIELD_LABEL));
+		dataInfoPanel.add(new GLabel(NUM_FILES_FIELD_LABEL));
 		numFilesField = new JTextField(10);
 		numFilesField.setEditable(false);
 		dataInfoPanel.add(numFilesField);
@@ -300,17 +301,17 @@ public class FunctionBitPatternsMainProvider extends ComponentProviderAdapter
 		PairLayout instructionLayout = new PairLayout();
 		instructionInfoPanel.setLayout(instructionLayout);
 
-		instructionInfoPanel.add(new JLabel(FIRST_INSTRUCTIONS_LABEL));
+		instructionInfoPanel.add(new GLabel(FIRST_INSTRUCTIONS_LABEL));
 		firstInstructionsField = new JTextField(10);
 		firstInstructionsField.setEditable(false);
 		instructionInfoPanel.add(firstInstructionsField);
 
-		instructionInfoPanel.add(new JLabel(PRE_INSTRUCTIONS_LABEL));
+		instructionInfoPanel.add(new GLabel(PRE_INSTRUCTIONS_LABEL));
 		preInstructionsField = new JTextField(10);
 		preInstructionsField.setEditable(false);
 		instructionInfoPanel.add(preInstructionsField);
 
-		instructionInfoPanel.add(new JLabel(RETURN_INSTRUCTIONS_LABEL));
+		instructionInfoPanel.add(new GLabel(RETURN_INSTRUCTIONS_LABEL));
 		returnInstructionsField = new JTextField(10);
 		returnInstructionsField.setEditable(false);
 		instructionInfoPanel.add(returnInstructionsField);
@@ -319,17 +320,17 @@ public class FunctionBitPatternsMainProvider extends ComponentProviderAdapter
 		PairLayout bytesLayout = new PairLayout();
 		bytesInfoPanel.setLayout(bytesLayout);
 
-		bytesInfoPanel.add(new JLabel(FIRST_BYTES_LABEL));
+		bytesInfoPanel.add(new GLabel(FIRST_BYTES_LABEL));
 		firstBytesField = new JTextField(10);
 		firstBytesField.setEditable(false);
 		bytesInfoPanel.add(firstBytesField);
 
-		bytesInfoPanel.add(new JLabel(PRE_BYTES_LABEL));
+		bytesInfoPanel.add(new GLabel(PRE_BYTES_LABEL));
 		preBytesField = new JTextField(10);
 		preBytesField.setEditable(false);
 		bytesInfoPanel.add(preBytesField);
 
-		bytesInfoPanel.add(new JLabel(RETURN_BYTES_LABEL));
+		bytesInfoPanel.add(new GLabel(RETURN_BYTES_LABEL));
 		returnBytesField = new JTextField(10);
 		returnBytesField.setEditable(false);
 		bytesInfoPanel.add(returnBytesField);

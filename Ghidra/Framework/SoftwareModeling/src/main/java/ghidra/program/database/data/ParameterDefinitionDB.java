@@ -64,7 +64,13 @@ final class ParameterDefinitionDB implements ParameterDefinition {
 
 	@Override
 	public void setDataType(DataType type) {
-		type = ParameterDefinitionImpl.checkDataType(type, dataMgr);
+		type = ParameterDefinitionImpl.validateDataType(type, dataMgr, false);
+
+		getDataType().removeParent(parent);
+
+		type = dataMgr.resolve(type, null);
+		type.addParent(parent);
+
 		record.setLongValue(FunctionParameterAdapter.PARAMETER_DT_ID_COL,
 			dataMgr.getResolvedID(type));
 		record.setIntValue(FunctionParameterAdapter.PARAMETER_DT_LENGTH_COL, type.getLength());
@@ -134,27 +140,6 @@ final class ParameterDefinitionDB implements ParameterDefinition {
 	@Override
 	public int getOrdinal() {
 		return record.getIntValue(FunctionParameterAdapter.PARAMETER_ORDINAL_COL);
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		if (obj == null) {
-			return false;
-		}
-		if (obj == this) {
-			return true;
-		}
-		if (!(obj instanceof ParameterDefinition)) {
-			return false;
-		}
-		ParameterDefinition p = (ParameterDefinition) obj;
-		if ((getOrdinal() == p.getOrdinal()) && (getName().equals(p.getName())) &&
-			(getDataType().isEquivalent(p.getDataType()))) {
-			String myCmt = getComment();
-			String otherCmt = p.getComment();
-			return (myCmt == null) ? (otherCmt == null) : (myCmt.equals(otherCmt));
-		}
-		return false;
 	}
 
 	@Override

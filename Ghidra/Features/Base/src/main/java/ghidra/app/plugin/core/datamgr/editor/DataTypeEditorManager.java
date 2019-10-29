@@ -18,10 +18,13 @@ package ghidra.app.plugin.core.datamgr.editor;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.swing.*;
+import javax.swing.ComboBoxModel;
+import javax.swing.JPanel;
 
 import docking.ComponentProvider;
+import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.combobox.GhidraComboBox;
+import docking.widgets.label.GLabel;
 import ghidra.app.plugin.core.compositeeditor.*;
 import ghidra.app.plugin.core.datamgr.DataTypeManagerPlugin;
 import ghidra.app.plugin.core.datamgr.archive.SourceArchive;
@@ -32,8 +35,7 @@ import ghidra.program.model.data.*;
 import ghidra.program.model.data.Enum;
 import ghidra.program.model.listing.*;
 import ghidra.util.*;
-import ghidra.util.exception.DuplicateNameException;
-import ghidra.util.exception.InvalidInputException;
+import ghidra.util.exception.*;
 
 /**
  * Manages program and archive data type editors.
@@ -574,18 +576,18 @@ public class DataTypeEditorManager
 			}
 
 			setCallingConventionChoices(choices);
-			parentPanel.add(new JLabel("Calling Convention:"));
+			parentPanel.add(new GLabel("Calling Convention:"));
 			parentPanel.add(callingConventionComboBox);
 		}
 
 		@Override
 		protected void installInlineWidget(JPanel parentPanel) {
-			inlineCheckBox = new JCheckBox("Inline");
+			inlineCheckBox = new GCheckBox("Inline");
 		}
 
 		@Override
 		protected void installNoReturnWidget(JPanel parentPanel) {
-			noReturnCheckBox = new JCheckBox("No Return");
+			noReturnCheckBox = new GCheckBox("No Return");
 		}
 
 		@Override
@@ -612,7 +614,13 @@ public class DataTypeEditorManager
 		protected boolean applyChanges() {
 			// can't use a command here as we have to create a transaction on the datatypeManager
 			// (it might be an archive and the transaction on the program wouldn't work)
-			FunctionDefinitionDataType newDefinition = parseSignature();
+			FunctionDefinitionDataType newDefinition = null;
+			try {
+				newDefinition = parseSignature();
+			}
+			catch (CancelledException e1) {
+				// ignore
+			}
 
 			if (newDefinition == null) {
 				return false;

@@ -16,6 +16,7 @@
 package docking.widgets.table;
 
 import java.util.List;
+import java.util.Objects;
 
 import docking.widgets.filter.MultitermEvaluationMode;
 import docking.widgets.filter.TextFilter;
@@ -23,13 +24,11 @@ import docking.widgets.filter.TextFilter;
 public class MultiTextFilterTableFilter<ROW_OBJECT> implements TableFilter<ROW_OBJECT> {
 
 	private final List<TextFilter> filters;
-	private final String text;
 	private final RowFilterTransformer<ROW_OBJECT> transformer;
 	private final MultitermEvaluationMode evalMode;
 
-	public MultiTextFilterTableFilter(String text, List<TextFilter> filters,
+	public MultiTextFilterTableFilter(List<TextFilter> filters,
 			RowFilterTransformer<ROW_OBJECT> transformer, MultitermEvaluationMode evalMode) {
-		this.text = text;
 		this.filters = filters;
 		this.transformer = transformer;
 		this.evalMode = evalMode;
@@ -88,6 +87,39 @@ public class MultiTextFilterTableFilter<ROW_OBJECT> implements TableFilter<ROW_O
 			.map(data -> filter.matches(data))
 			.anyMatch(r -> r == true);
 		// @formatter:on
+	}
+
+	@Override
+	public int hashCode() {
+		// not meant to put in hashing structures; the data for equals may change over time
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null) {
+			return false;
+		}
+		if (getClass() != obj.getClass()) {
+			return false;
+		}
+
+		MultiTextFilterTableFilter<?> other = (MultiTextFilterTableFilter<?>) obj;
+		if (evalMode != other.evalMode) {
+			return false;
+		}
+
+		if (!Objects.equals(filters, other.filters)) {
+			return false;
+		}
+
+		if (!Objects.equals(transformer, other.transformer)) {
+			return false;
+		}
+		return true;
 	}
 
 }

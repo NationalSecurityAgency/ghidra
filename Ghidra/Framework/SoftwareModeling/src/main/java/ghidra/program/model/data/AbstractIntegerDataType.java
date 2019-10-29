@@ -18,6 +18,7 @@ package ghidra.program.model.data;
 import java.math.BigInteger;
 
 import ghidra.docking.settings.*;
+import ghidra.program.model.mem.ByteMemBufferImpl;
 import ghidra.program.model.mem.MemBuffer;
 import ghidra.program.model.scalar.Scalar;
 import ghidra.util.StringFormat;
@@ -31,8 +32,6 @@ import ghidra.util.StringFormat;
  * treat an array of this data type as a string.
  */
 public abstract class AbstractIntegerDataType extends BuiltIn implements ArrayStringable {
-
-	private static final long serialVersionUID = 1L;
 
 	static final String C_SIGNED_CHAR = "signed char";
 	static final String C_UNSIGNED_CHAR = "unsigned char";
@@ -58,7 +57,7 @@ public abstract class AbstractIntegerDataType extends BuiltIn implements ArraySt
 	/**
 	 * Constructor
 	 * @param name a unique signed/unsigned data-type name (also used as the mnemonic)
-	 * @param signed
+	 * @param signed true if signed, false if unsigned
 	 * @param dtm data-type manager whose data organization should be used
 	 */
 	public AbstractIntegerDataType(String name, boolean signed, DataTypeManager dtm) {
@@ -91,7 +90,7 @@ public abstract class AbstractIntegerDataType extends BuiltIn implements ArraySt
 	}
 
 	/**
-	 * Returns true if this is a signed integer data-type
+	 * @return true if this is a signed integer data-type
 	 */
 	public boolean isSigned() {
 		return signed;
@@ -115,7 +114,7 @@ public abstract class AbstractIntegerDataType extends BuiltIn implements ArraySt
 	}
 
 	/**
-	 * Returns the Assembly style data-type declaration
+	 * @return the Assembly style data-type declaration
 	 * for this data-type.
 	 */
 	public String getAssemblyMnemonic() {
@@ -123,7 +122,7 @@ public abstract class AbstractIntegerDataType extends BuiltIn implements ArraySt
 	}
 
 	/**
-	 * Returns the C style data-type mnemonic
+	 * @return the C style data-type mnemonic
 	 * for this data-type.
 	 * NOTE: currently the same as getCDeclaration().
 	 */
@@ -133,7 +132,7 @@ public abstract class AbstractIntegerDataType extends BuiltIn implements ArraySt
 	}
 
 	/**
-	 * Returns the C style data-type declaration
+	 * @return the C style data-type declaration
 	 * for this data-type.  Null is returned if
 	 * no appropriate declaration exists.
 	 */
@@ -161,10 +160,6 @@ public abstract class AbstractIntegerDataType extends BuiltIn implements ArraySt
 		return null;
 	}
 
-	/**
-	 *
-	 * @see ghidra.program.model.data.DataType#getValue(ghidra.program.model.mem.MemBuffer, ghidra.docking.settings.Settings, int)
-	 */
 	@Override
 	public Object getValue(MemBuffer buf, Settings settings, int length) {
 
@@ -214,9 +209,6 @@ public abstract class AbstractIntegerDataType extends BuiltIn implements ArraySt
 		return Scalar.class;
 	}
 
-	/**
-	 * @see ghidra.program.model.data.DataType#getRepresentation(ghidra.program.model.mem.MemBuffer, ghidra.docking.settings.Settings, int)
-	 */
 	@Override
 	public String getRepresentation(MemBuffer buf, Settings settings, int length) {
 
@@ -233,8 +225,6 @@ public abstract class AbstractIntegerDataType extends BuiltIn implements ArraySt
 			return "??";
 		}
 
-		int format = getFormatSettingsDefinition().getFormat(settings);
-		boolean padded = PADDING.isPadded(settings);
 		boolean isBigEndian = ENDIAN.isBigEndian(settings, buf);
 
 		if (!isBigEndian) {
@@ -245,78 +235,73 @@ public abstract class AbstractIntegerDataType extends BuiltIn implements ArraySt
 			bytes = flipped;
 		}
 
+		return getRepresentation(new BigInteger(bytes), settings, 8 * length);
+	}
+
+	/**
+	 * Get integer representation of the big-endian value.
+	 * @param bigInt BigInteger value with the appropriate sign
+	 * @param settings integer format settings (PADDING, FORMAT, etc.)
+	 * @param bitLength number of value bits to be used from bigInt
+	 * @return formatted integer string
+	 */
+	public String getRepresentation(BigInteger bigInt, Settings settings, int bitLength) {
+
+		int format = getFormatSettingsDefinition().getFormat(settings);
+		boolean padded = PADDING.isPadded(settings);
+
+		boolean negative = bigInt.signum() < 0;
+
+		if (negative && (!signed || (format != FormatSettingsDefinition.DECIMAL))) {
+			// force use of unsigned value
+			bigInt = bigInt.add(BigInteger.valueOf(2).pow(bitLength));
+		}
+
+		int nominalLen;
+
 		if (format == FormatSettingsDefinition.CHAR) {
 			int charSize = Math.min(getDataOrganization().getCharSize(), getLength());
-			return new StringDataInstance(this, settings, buf, charSize).getCharRepresentation();
+			nominalLen = (bitLength + 7) / 8;
+			byte[] bytes = bigInt.toByteArray();
+			if (bytes.length > nominalLen) {
+				// BigInteger supplied too many bytes
+				byte[] chars = new byte[nominalLen];
+				System.arraycopy(bytes, bytes.length - nominalLen, chars, 0, nominalLen);
+				bytes = chars;
+			}
+			else if (bytes.length < nominalLen) {
+				// BigInteger supplied too few bytes
+				byte[] chars = new byte[nominalLen];
+				System.arraycopy(bytes, 0, chars, nominalLen - bytes.length, bytes.length);
+				bytes = chars;
+			}
+			MemBuffer memBuf = new ByteMemBufferImpl(null, bytes, true);
+			return new StringDataInstance(this, settings, memBuf, charSize).getCharRepresentation();
 		}
 
-		boolean negative = (bytes[0] < 0); // check most-significant-byte sign
-		int nominalLen;
 		String valStr;
 
-		if (size >= 8) {
-			// Use BigInteger - too big for long
-			if ((negative && !signed) || (format != FormatSettingsDefinition.DECIMAL)) {
-				byte[] unsignedBytes = new byte[size + 1];
-				unsignedBytes[size] = 0;
-				System.arraycopy(bytes, 0, unsignedBytes, 1, size);
-				bytes = unsignedBytes;
-			}
-			BigInteger bigInt = new BigInteger(bytes);
-			switch (format) {
-				default:
-				case FormatSettingsDefinition.HEX:
-					valStr = bigInt.toString(16).toUpperCase() + "h";
-					nominalLen = (2 * size) + 1;
-					break;
-				case FormatSettingsDefinition.DECIMAL:
-					String sign = "";
-					if (negative && signed) {
-						sign = "-";
-						bigInt = bigInt.negate();
-					}
-					return sign + bigInt.toString(10);
-				case FormatSettingsDefinition.BINARY:
-					valStr = bigInt.toString(2) + "b";
-					nominalLen = (8 * size) + 1;
-					break;
-				case FormatSettingsDefinition.OCTAL:
-					valStr = bigInt.toString(8) + "o";
-					nominalLen = (3 * size) + 1;
-					break;
-			}
+		switch (format) {
+			default:
+			case FormatSettingsDefinition.HEX:
+				valStr = bigInt.toString(16).toUpperCase() + "h";
+				nominalLen = (bitLength + 3) / 4;
+				break;
+			case FormatSettingsDefinition.DECIMAL:
+				return bigInt.toString(10);
+			case FormatSettingsDefinition.BINARY:
+				valStr = bigInt.toString(2) + "b";
+				nominalLen = bitLength;
+				break;
+			case FormatSettingsDefinition.OCTAL:
+				valStr = bigInt.toString(8) + "o";
+				nominalLen = (bitLength + 2) / 3;
+				break;
 		}
-		else {
-			// Use long when possible
-			long val = 0;
-			for (byte b : bytes) {
-				val = (val << 8) + (b & 0x0ffL);
-			}
-			switch (format) {
-				default:
-				case FormatSettingsDefinition.HEX:
-					valStr = Long.toString(val, 16).toUpperCase() + 'h';
-					nominalLen = (2 * size) + 1;
-					break;
-				case FormatSettingsDefinition.DECIMAL:
-					String sign = "";
-					if (negative && signed) {
-						sign = "-";
-						val = (~val + 1) & ~-(1L << (8 * size));
-					}
-					return sign + Long.toString(val);
-				case FormatSettingsDefinition.BINARY:
-					valStr = Long.toString(val, 2) + 'b';
-					nominalLen = (8 * size) + 1;
-					break;
-				case FormatSettingsDefinition.OCTAL:
-					valStr = Long.toString(val, 8) + 'o';
-					nominalLen = (3 * size) + 1;
-					break;
-			}
-		}
+
 		if (padded) {
-			valStr = StringFormat.padIt(valStr, nominalLen, (char) 0, true);
+			// +1 to account for format suffix char
+			valStr = StringFormat.padIt(valStr, nominalLen + 1, (char) 0, true);
 		}
 		return valStr;
 	}
@@ -330,25 +315,25 @@ public abstract class AbstractIntegerDataType extends BuiltIn implements ArraySt
 	@Override
 	public String getArrayDefaultLabelPrefix(MemBuffer buf, Settings settings, int len,
 			DataTypeDisplayOptions options) {
-		if (!hasStringValue(settings)) {
-			return null;
+		if (hasStringValue(settings) && buf.isInitializedMemory()) {
+			return new StringDataInstance(this, settings, buf, len).getLabel(
+				AbstractStringDataType.DEFAULT_ABBREV_PREFIX + "_",
+				AbstractStringDataType.DEFAULT_LABEL_PREFIX, AbstractStringDataType.DEFAULT_LABEL,
+				options);
 		}
-		return new StringDataInstance(this, settings, buf, len).getLabel(
-			AbstractStringDataType.DEFAULT_ABBREV_PREFIX + "_",
-			AbstractStringDataType.DEFAULT_LABEL_PREFIX, AbstractStringDataType.DEFAULT_LABEL,
-			options);
+		return null;
 	}
 
 	@Override
 	public String getArrayDefaultOffcutLabelPrefix(MemBuffer buf, Settings settings, int len,
 			DataTypeDisplayOptions options, int offcutOffset) {
-		if (!hasStringValue(settings)) {
-			return null;
+		if (hasStringValue(settings) && buf.isInitializedMemory()) {
+			return new StringDataInstance(this, settings, buf, len).getOffcutLabelString(
+				AbstractStringDataType.DEFAULT_ABBREV_PREFIX + "_",
+				AbstractStringDataType.DEFAULT_LABEL_PREFIX, AbstractStringDataType.DEFAULT_LABEL,
+				options, offcutOffset);
 		}
-		return new StringDataInstance(this, settings, buf, len).getOffcutLabelString(
-			AbstractStringDataType.DEFAULT_ABBREV_PREFIX + "_",
-			AbstractStringDataType.DEFAULT_LABEL_PREFIX, AbstractStringDataType.DEFAULT_LABEL,
-			options, offcutOffset);
+		return null;
 	}
 
 	/**
@@ -356,7 +341,7 @@ public abstract class AbstractIntegerDataType extends BuiltIn implements ArraySt
 	 * this data-type.  For example, this method on IntegerDataType will
 	 * return an instance of UnsignedIntegerDataType.
 	 */
-	public abstract DataType getOppositeSignednessDataType();
+	public abstract AbstractIntegerDataType getOppositeSignednessDataType();
 
 	@Override
 	public boolean isEquivalent(DataType dt) {
@@ -371,7 +356,7 @@ public abstract class AbstractIntegerDataType extends BuiltIn implements ArraySt
 	 * the element at index <code>i</code> points to the datatype of size <code>i+1</code>,
 	 * with additional types with no size restriction appended after the first 8.
 	 *
-	 * @return
+	 * @return array of all signed integer types (char and bool types excluded)
 	 */
 	private static AbstractIntegerDataType[] getSignedTypes() {
 		if (signedTypes == null) {
@@ -389,7 +374,7 @@ public abstract class AbstractIntegerDataType extends BuiltIn implements ArraySt
 	 * the element at index <code>i</code> points to the datatype of size <code>i+1</code>,
 	 * with additional types with no size restriction appended after the first 8.
 	 *
-	 * @return
+	 * @return array of all unsigned integer types (char and bool types excluded)
 	 */
 	private static AbstractIntegerDataType[] getUnsignedTypes() {
 		if (unsignedTypes == null) {
@@ -444,6 +429,7 @@ public abstract class AbstractIntegerDataType extends BuiltIn implements ArraySt
 	 * Returns all built-in signed integer data-types.
 	 * @param dtm optional program data-type manager, if specified
 	 * generic data-types will be returned in place of fixed-sized data-types.
+	 * @return array of all signed integer types (char and bool types excluded)
 	 */
 	public static AbstractIntegerDataType[] getSignedDataTypes(DataTypeManager dtm) {
 		AbstractIntegerDataType[] dataTypes = getSignedTypes().clone();
@@ -452,21 +438,19 @@ public abstract class AbstractIntegerDataType extends BuiltIn implements ArraySt
 			if (dataOrganization != null) {
 				int index = dataOrganization.getLongLongSize() - 1;
 				if (index >= 0 && index < 8) {
-					dataTypes[index] =
-						(AbstractIntegerDataType) LongLongDataType.dataType.clone(dtm);
+					dataTypes[index] = LongLongDataType.dataType.clone(dtm);
 				}
 				index = dataOrganization.getLongSize() - 1;
 				if (index >= 0 && index < 8) {
-					dataTypes[index] = (AbstractIntegerDataType) LongDataType.dataType.clone(dtm);
+					dataTypes[index] = LongDataType.dataType.clone(dtm);
 				}
 				index = dataOrganization.getShortSize() - 1;
 				if (index >= 0 && index < 8) {
-					dataTypes[index] = (AbstractIntegerDataType) ShortDataType.dataType.clone(dtm);
+					dataTypes[index] = ShortDataType.dataType.clone(dtm);
 				}
 				index = dataOrganization.getIntegerSize() - 1;
 				if (index >= 0 && index < 8) {
-					dataTypes[index] =
-						(AbstractIntegerDataType) IntegerDataType.dataType.clone(dtm);
+					dataTypes[index] = IntegerDataType.dataType.clone(dtm);
 				}
 			}
 		}
@@ -515,6 +499,7 @@ public abstract class AbstractIntegerDataType extends BuiltIn implements ArraySt
 	 * Returns all built-in unsigned integer data-types
 	 * @param dtm optional program data-type manager, if specified
 	 * generic data-types will be returned in place of fixed-sized data-types.
+	 * @return array of all unsigned integer types (char and bool types excluded)
 	 */
 	public static AbstractIntegerDataType[] getUnsignedDataTypes(DataTypeManager dtm) {
 		AbstractIntegerDataType[] dataTypes = getUnsignedTypes().clone();
@@ -523,26 +508,23 @@ public abstract class AbstractIntegerDataType extends BuiltIn implements ArraySt
 			if (dataOrganization != null) {
 				int index = dataOrganization.getLongLongSize() - 1;
 				if (index >= 0 && index < 8) {
-					dataTypes[index] =
-						(AbstractIntegerDataType) UnsignedLongLongDataType.dataType.clone(dtm);
+					dataTypes[index] = UnsignedLongLongDataType.dataType.clone(dtm);
 				}
 				index = dataOrganization.getLongSize() - 1;
 				if (index >= 0 && index < 8) {
-					dataTypes[index] =
-						(AbstractIntegerDataType) UnsignedLongDataType.dataType.clone(dtm);
+					dataTypes[index] = UnsignedLongDataType.dataType.clone(dtm);
 				}
 				index = dataOrganization.getShortSize() - 1;
 				if (index >= 0 && index < 8) {
-					dataTypes[index] =
-						(AbstractIntegerDataType) UnsignedShortDataType.dataType.clone(dtm);
+					dataTypes[index] = UnsignedShortDataType.dataType.clone(dtm);
 				}
 				index = dataOrganization.getIntegerSize() - 1;
 				if (index >= 0 && index < 8) {
-					dataTypes[index] =
-						(AbstractIntegerDataType) UnsignedIntegerDataType.dataType.clone(dtm);
+					dataTypes[index] = UnsignedIntegerDataType.dataType.clone(dtm);
 				}
 			}
 		}
 		return dataTypes;
 	}
+
 }

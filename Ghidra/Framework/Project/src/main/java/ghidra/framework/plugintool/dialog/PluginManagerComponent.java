@@ -20,13 +20,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.*;
-import javax.swing.border.BevelBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.HyperlinkEvent.EventType;
 
 import docking.EmptyBorderToggleButton;
 import docking.widgets.HyperlinkComponent;
+import docking.widgets.checkbox.GCheckBox;
+import docking.widgets.label.*;
 import ghidra.framework.plugintool.PluginConfigurationModel;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.util.PluginPackage;
@@ -75,74 +76,106 @@ public class PluginManagerComponent extends JPanel implements ChangeListener, Sc
 		tool.showDialog(pluginTableDialog);
 	}
 
-	class PluginPackageComponent extends JPanel {
-		private Color BG = Color.white;
+	private class PluginPackageComponent extends JPanel {
+		private final Color BG = Color.white;
 		private final PluginPackage pluginPackage;
-		private JCheckBox jCheckBox;
-
+		private final GCheckBox checkBox;
+		
 		PluginPackageComponent(PluginPackage pluginPackage) {
 			super(new BorderLayout());
 			setBackground(BG);
+
 			this.pluginPackage = pluginPackage;
-			JPanel panel = new JPanel(new HorizontalLayout(0));
-			panel.setBackground(BG);
-			jCheckBox = new JCheckBox();
-			jCheckBox.addActionListener(e -> checkBoxClicked());
-			if (!pluginPackage.isfullyAddable()) {
-				jCheckBox.setEnabled(false);
-			}
-			panel.add(Box.createHorizontalStrut(10));
-			jCheckBox.setBackground(BG);
-			panel.add(jCheckBox);
-			panel.add(Box.createHorizontalStrut(10));
-			JLabel label =
-				new JLabel(ResourceManager.getScaledIcon(pluginPackage.getIcon(), 32, 32, 32));
-			label.setBackground(BG);
-			panel.add(label);
-			panel.add(Box.createHorizontalStrut(10));
-			add(panel, BorderLayout.WEST);
+			this.checkBox = new GCheckBox();
 
-			JPanel labelPanel = new JPanel(new VerticalLayout(3));
-			labelPanel.setBorder(BorderFactory.createEmptyBorder(4, 0, 0, 0));
-			labelPanel.setBackground(BG);
-			label = new JLabel(pluginPackage.getName());
-			//label.setVerticalAlignment(SwingConstants.TOP);
-			label.setFont(label.getFont().deriveFont(18f));
-			label.setForeground(Color.BLACK);
-			labelPanel.add(label);
-			HyperlinkComponent hyper =
-				new HyperlinkComponent("<html> <a href=\"Configure\">Configure</a>");
-			hyper.addHyperlinkListener("Configure", e -> {
-				if (e.getEventType() == EventType.ACTIVATED) {
-					managePlugins(PluginPackageComponent.this.pluginPackage);
-				}
-			});
-			hyper.setBackground(BG);
-			labelPanel.add(hyper);
-			labelPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 40));
+			initizalizeCheckBoxSection();
+			initializeLabelSection();
+			initializeDescriptionSection();
 
-			add(labelPanel);
-			String htmlDescription = getHTMLDescription();
-			JLabel descriptionlabel = new JLabel(htmlDescription);
-			descriptionlabel.setForeground(Color.GRAY);
-			descriptionlabel.setBorder(BorderFactory.createEmptyBorder(5, 0, 0, 0));
-			descriptionlabel.setVerticalAlignment(SwingConstants.TOP);
-			descriptionlabel.setPreferredSize(new Dimension(300, 60));
-			descriptionlabel.setToolTipText(
-				HTMLUtilities.toWrappedHTML(pluginPackage.getDescription(), 80));
-			add(descriptionlabel, BorderLayout.EAST);
-			setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED, Color.LIGHT_GRAY,
-				Color.DARK_GRAY));
+			setBorder(BorderFactory.createLineBorder(Color.DARK_GRAY));
 			updateCheckBoxState();
 		}
 
-		private String getHTMLDescription() {
-			String description = pluginPackage.getDescription();
-			return HTMLUtilities.toHTML(description);
+		private void initizalizeCheckBoxSection() {
+			final JPanel checkboxPanel = new JPanel(new HorizontalLayout(0));
+			checkboxPanel.setBackground(BG);
+			
+			checkBox.addActionListener(e -> checkBoxClicked());
+			if (!pluginPackage.isfullyAddable()) {
+				checkBox.setEnabled(false);
+			}
+			checkBox.setBackground(BG);
+			
+			checkboxPanel.add(Box.createHorizontalStrut(10));
+			checkboxPanel.add(checkBox);
+			checkboxPanel.add(Box.createHorizontalStrut(10));
+			
+			final JLabel iconLabel =
+				new GIconLabel(ResourceManager.getScaledIcon(pluginPackage.getIcon(), 32, 32, 32));
+			iconLabel.setBackground(BG);
+			
+			checkboxPanel.add(iconLabel);
+			checkboxPanel.add(Box.createHorizontalStrut(10));
+			checkboxPanel.setPreferredSize(new Dimension(84, 70));
+			
+			add(checkboxPanel, BorderLayout.WEST);
+		}
+		
+		private void initializeLabelSection() {
+			final JPanel centerPanel = new JPanel(new GridBagLayout());
+			GridBagConstraints gbc = new GridBagConstraints();
+			gbc.fill = GridBagConstraints.HORIZONTAL;
+			gbc.weightx = 1.0;
+
+			centerPanel.setBackground(BG);
+			
+			final JPanel labelPanel = new JPanel(new VerticalLayout(3));
+			labelPanel.setBackground(BG);
+			
+			final GLabel nameLabel = new GLabel(pluginPackage.getName());
+			nameLabel.setFont(nameLabel.getFont().deriveFont(18f));
+			nameLabel.setForeground(Color.BLACK);
+			labelPanel.add(nameLabel);
+			
+			final HyperlinkComponent configureHyperlink = createConfigureHyperlink();
+			labelPanel.add(configureHyperlink);
+			
+			labelPanel.setBorder(BorderFactory.createEmptyBorder(0, 25, 0, 40));
+			centerPanel.add(labelPanel, gbc);
+			add(centerPanel);
+		}
+		
+		private HyperlinkComponent createConfigureHyperlink() {
+			final HyperlinkComponent configureHyperlink =
+					new HyperlinkComponent("<html> <a href=\"Configure\">Configure</a>");
+				configureHyperlink.addHyperlinkListener("Configure", e -> {
+					if (e.getEventType() == EventType.ACTIVATED) {
+						managePlugins(PluginPackageComponent.this.pluginPackage);
+					}
+				});
+				configureHyperlink.setBackground(BG);
+				return configureHyperlink;
+		}
+		
+		private String enchanceDescription(final String text) {
+			return String.format("<html><body style='width: 300px'>%s</body></html>", text);
+		}
+		
+		private void initializeDescriptionSection() {
+			final String htmlDescription = enchanceDescription(pluginPackage.getDescription());
+			
+			final JLabel descriptionlabel = new GHtmlLabel(htmlDescription);
+			descriptionlabel.setForeground(Color.GRAY);
+			descriptionlabel.setBorder(BorderFactory.createEmptyBorder(5, 0, 0, 0));
+			descriptionlabel.setVerticalAlignment(SwingConstants.TOP);
+			descriptionlabel.setToolTipText(
+				HTMLUtilities.toWrappedHTML(pluginPackage.getDescription(), 80));
+			
+			add(descriptionlabel, BorderLayout.EAST);
 		}
 
 		protected void checkBoxClicked() {
-			boolean isSelected = jCheckBox.isSelected();
+			boolean isSelected = checkBox.isSelected();
 			if (isSelected) {
 				model.addAllPlugins(pluginPackage);
 			}
@@ -153,7 +186,7 @@ public class PluginManagerComponent extends JPanel implements ChangeListener, Sc
 		}
 
 		void updateCheckBoxState() {
-			jCheckBox.setSelected(
+			checkBox.setSelected(
 				model.getPackageState(pluginPackage) != PluginPackageState.NO_PLUGINS_LOADED);
 		}
 	}

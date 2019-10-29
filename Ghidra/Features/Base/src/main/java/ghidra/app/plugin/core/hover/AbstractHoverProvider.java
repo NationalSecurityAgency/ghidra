@@ -22,7 +22,7 @@ import java.util.List;
 
 import javax.swing.*;
 
-import docking.ToolTipManager;
+import docking.DockingUtils;
 import docking.widgets.PopupWindow;
 import docking.widgets.fieldpanel.field.Field;
 import docking.widgets.fieldpanel.support.FieldLocation;
@@ -31,7 +31,7 @@ import ghidra.app.services.HoverService;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramLocation;
 import ghidra.util.Msg;
-import ghidra.util.SystemUtilities;
+import ghidra.util.Swing;
 
 public abstract class AbstractHoverProvider implements HoverProvider {
 
@@ -40,12 +40,7 @@ public abstract class AbstractHoverProvider implements HoverProvider {
 	protected Program program;
 	protected Field lastField;
 	private static final Comparator<HoverService> HOVER_PRIORITY_COMPARATOR =
-		new Comparator<HoverService>() {
-			@Override
-			public int compare(HoverService service1, HoverService service2) {
-				return service2.getPriority() - service1.getPriority();// Highest priority is first
-			}
-		};
+		(service1, service2) -> service2.getPriority() - service1.getPriority();
 	protected HoverService activeHoverService;
 	protected PopupWindow popupWindow;
 
@@ -104,7 +99,7 @@ public abstract class AbstractHoverProvider implements HoverProvider {
 		activeHoverService = null;
 		lastField = null;
 
-		ToolTipManager.sharedInstance().hideTipWindow();
+		DockingUtils.hideTipWindow();
 
 		if (popupWindow != null) {
 			popupWindow.dispose();
@@ -121,12 +116,9 @@ public abstract class AbstractHoverProvider implements HoverProvider {
 
 	public void dispose() {
 		// we can be disposed from outside the swing thread
-		SystemUtilities.runSwingLater(new Runnable() {
-			@Override
-			public void run() {
-				closeHover();
-				hoverServices.clear();
-			}
+		Swing.runLater(() -> {
+			closeHover();
+			hoverServices.clear();
 		});
 
 		program = null;
@@ -148,25 +140,15 @@ public abstract class AbstractHoverProvider implements HoverProvider {
 		}
 
 		ProgramLocation loc = getHoverLocation(fieldLocation, field, fieldBounds, event);
-
-		if (loc == null) {
-			return;
-		}
-
-		JComponent comp = null;
 		for (HoverService hoverService : hoverServices) {
-			comp = hoverService.getHoverComponent(program, loc, fieldLocation, field);
+			JComponent comp = hoverService.getHoverComponent(program, loc, fieldLocation, field);
 			if (comp != null) {
 				closeHover();
 				activeHoverService = hoverService;
-				break;
+				showPopup(comp, field, event, fieldBounds);
+				return;
 			}
 		}
-
-		if (comp != null) {
-			showPopup(comp, field, event, fieldBounds);
-		}
-
 	}
 
 	protected void showPopup(JComponent comp, Field field, MouseEvent event,

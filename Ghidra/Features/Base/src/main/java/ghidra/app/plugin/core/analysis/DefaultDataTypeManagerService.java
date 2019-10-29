@@ -23,16 +23,17 @@ import java.util.Map.Entry;
 import javax.swing.tree.TreePath;
 
 import generic.jar.ResourceFile;
-import ghidra.app.plugin.core.datamgr.archive.Archive;
-import ghidra.app.plugin.core.datamgr.archive.DuplicateIdException;
+import ghidra.app.plugin.core.datamgr.archive.*;
 import ghidra.app.plugin.core.datamgr.util.DataTypeArchiveUtility;
+import ghidra.app.plugin.core.datamgr.util.DataTypeComparator;
 import ghidra.app.services.DataTypeManagerService;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.DataTypeArchive;
 import ghidra.util.HelpLocation;
 import ghidra.util.UniversalID;
 
-class DefaultDataTypeManagerService implements DataTypeManagerService {
+// FIXME!! TESTING
+public class DefaultDataTypeManagerService implements DataTypeManagerService {
 
 	private Map<String, FileDataTypeManager> archiveMap = new HashMap<>();
 	private DataTypeManager builtInDataTypesManager = BuiltInDataTypeManager.getDataTypeManager();
@@ -156,6 +157,9 @@ class DefaultDataTypeManagerService implements DataTypeManagerService {
 
 	@Override
 	public DataType getDataType(TreePath selectedTreeNode) {
+		if (selectedTreeNode == null) {
+			return null;
+		}
 		throw new UnsupportedOperationException();
 	}
 
@@ -171,7 +175,11 @@ class DefaultDataTypeManagerService implements DataTypeManagerService {
 
 	@Override
 	public List<DataType> getSortedDataTypeList() {
-		throw new UnsupportedOperationException();
+		List<DataType> dataTypes =
+			builtInDataTypesManager.getDataTypes(BuiltInSourceArchive.INSTANCE);
+		dataTypes.sort(new DataTypeComparator());
+		return dataTypes;
+//		throw new UnsupportedOperationException();
 	}
 
 	@Override

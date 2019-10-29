@@ -26,16 +26,17 @@ import java.util.zip.ZipFile;
 
 import javax.swing.KeyStroke;
 
-import docking.*;
+import docking.ActionContext;
+import docking.DockingUtils;
 import docking.action.*;
+import docking.actions.KeyBindingUtils;
+import docking.tool.ToolConstants;
 import docking.widgets.table.GTable;
 import generic.jar.ResourceFile;
 import ghidra.app.script.GhidraScriptUtil;
 import ghidra.app.script.ScriptInfo;
 import ghidra.framework.Application;
-import ghidra.framework.options.*;
-import ghidra.framework.plugintool.PluginTool;
-import ghidra.framework.plugintool.util.ToolConstants;
+import ghidra.framework.options.SaveState;
 import ghidra.util.*;
 import ghidra.util.task.*;
 import resources.Icons;
@@ -44,7 +45,6 @@ import utilities.util.FileUtilities;
 
 class GhidraScriptActionManager {
 	public static final String RERUN_LAST_SHARED_ACTION_NAME = "Rerun Last Script";
-	public static final String GLOBAL_RERUN_LAST_SHARED_ACTION_NAME = "Global Rerun Last Script";
 	private static final KeyStroke RERUN_LAST_SCRIPT_KEYSTROKE = KeyStroke.getKeyStroke(
 		KeyEvent.VK_R, DockingUtils.CONTROL_KEY_MODIFIER_MASK | InputEvent.SHIFT_DOWN_MASK);
 	private static final String SCRIPT_ACTIONS_KEY = "Scripts_Actions_Key";
@@ -94,7 +94,7 @@ class GhidraScriptActionManager {
 					action.setKeyBindingData(null);
 				}
 				else {
-					KeyStroke stroke = DockingKeyBindingAction.parseKeyStroke(strokeStr);
+					KeyStroke stroke = KeyBindingUtils.parseKeyStroke(strokeStr);
 					if (stroke == null) {
 						break;
 					}
@@ -120,6 +120,7 @@ class GhidraScriptActionManager {
 	/**
 	 * This saves bindings that users have changed.  These will overwrite those that may
 	 * be defined in the script.
+	 * @param saveState the state into which bindings are saved
 	 */
 	void saveUserDefinedKeybindings(SaveState saveState) {
 		Collection<ScriptAction> actions = actionMap.values();
@@ -138,7 +139,7 @@ class GhidraScriptActionManager {
 				saveState.putString(scriptFile.getName(), "");
 			}
 			else {
-				String strokeStr = DockingKeyBindingAction.parseKeyStroke(stroke);
+				String strokeStr = KeyBindingUtils.parseKeyStroke(stroke);
 				saveState.putString(scriptFile.getName(), strokeStr);
 			}
 		}
@@ -147,6 +148,7 @@ class GhidraScriptActionManager {
 	/**
 	 * This saves scripts that not only have keybindings, but that are also marked as "In Tool"
 	 * from the GUI.
+	 * @param saveState the state into which the script info is saved
 	 */
 	void saveScriptsThatAreInTool(SaveState saveState) {
 		Set<ResourceFile> actionScriptFiles = actionMap.keySet();
@@ -194,10 +196,9 @@ class GhidraScriptActionManager {
 		runAction.setEnabled(false);
 		plugin.getTool().addLocalAction(provider, runAction);
 
-		runLastAction = new RerunLastScriptAction(RERUN_LAST_SHARED_ACTION_NAME, runGroup);
+		runLastAction = new RerunLastScriptAction(runGroup);
 		plugin.getTool().addLocalAction(provider, runLastAction);
-		globalRunLastAction =
-			new RerunLastScriptAction(GLOBAL_RERUN_LAST_SHARED_ACTION_NAME, "Xtra");
+		globalRunLastAction = new RerunLastScriptAction("Xtra");
 		plugin.getTool().addAction(globalRunLastAction);
 
 		//
@@ -465,7 +466,6 @@ class GhidraScriptActionManager {
 		if (action == null) {
 			action = new ScriptAction(plugin, script);
 			actionMap.put(script, action);
-			plugin.getTool().addAction(action);
 		}
 		return action;
 	}
@@ -626,41 +626,25 @@ class GhidraScriptActionManager {
 
 	}
 
-	private class RerunLastScriptAction extends DockingAction implements OptionsChangeListener {
+	private class RerunLastScriptAction extends DockingAction {
 
-		RerunLastScriptAction(String actionName, String toolbarGroup) {
-			super(actionName, plugin.getName(), false);
+		RerunLastScriptAction(String toolbarGroup) {
+			super(RERUN_LAST_SHARED_ACTION_NAME, plugin.getName(), KeyBindingType.SHARED);
 
 			setToolBarData(
 				new ToolBarData(ResourceManager.loadImage("images/play_again.png"), toolbarGroup));
 			setDescription("Rerun the last run script");
-			setEnabled(false);
-
-			DockingAction action = new DummyKeyBindingsOptionsAction(RERUN_LAST_SHARED_ACTION_NAME,
-				RERUN_LAST_SCRIPT_KEYSTROKE);
-			PluginTool tool = plugin.getTool();
-			tool.addAction(action);
-
-			// setup options to know when the dummy key binding is changed
-			ToolOptions options = tool.getOptions(ToolConstants.KEY_BINDINGS);
-			KeyStroke keyStroke =
-				options.getKeyStroke(getFullSharedActionName(), RERUN_LAST_SCRIPT_KEYSTROKE);
-
-			if (!RERUN_LAST_SCRIPT_KEYSTROKE.equals(keyStroke)) {
-				// user-defined keystroke
-				setUnvalidatedKeyBindingData(new KeyBindingData(keyStroke));
-			}
-			else {
-				setKeyBindingData(new KeyBindingData(keyStroke));
-			}
-
-			options.addOptionsChangeListener(this);
-
 			setHelpLocation(new HelpLocation(plugin.getName(), "Run_Last"));
+
+			initKeyStroke(RERUN_LAST_SCRIPT_KEYSTROKE);
 		}
 
-		private String getFullSharedActionName() {
-			return RERUN_LAST_SHARED_ACTION_NAME + " (Tool)";
+		private void initKeyStroke(KeyStroke keyStroke) {
+			if (keyStroke == null) {
+				return;
+			}
+
+			setKeyBindingData(new KeyBindingData(keyStroke));
 		}
 
 		@Override
@@ -672,15 +656,5 @@ class GhidraScriptActionManager {
 		public boolean isEnabledForContext(ActionContext context) {
 			return provider.getLastRunScript() != null;
 		}
-
-		@Override
-		public void optionsChanged(ToolOptions options, String name, Object oldValue,
-				Object newValue) {
-			KeyStroke keyStroke = (KeyStroke) newValue;
-			if (name.startsWith(RERUN_LAST_SHARED_ACTION_NAME)) {
-				setUnvalidatedKeyBindingData(new KeyBindingData(keyStroke));
-			}
-		}
 	}
-
 }

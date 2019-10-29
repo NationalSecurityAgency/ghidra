@@ -15,6 +15,7 @@
  */
 package ghidra.program.model.data;
 
+import java.math.BigInteger;
 import java.util.*;
 
 import ghidra.app.plugin.core.datamgr.archive.SourceArchive;
@@ -267,15 +268,24 @@ public class EnumDataType extends GenericDataType implements Enum {
 					value = buf.getLong(0);
 					break;
 			}
-			String valueName = getName(value);
-			if (valueName == null) {
-				valueName = getCompoundValue(value);
-			}
-			return valueName;
+			return getRepresentation(value);
 		}
 		catch (MemoryAccessException e) {
 			return "??";
 		}
+	}
+
+	@Override
+	public String getRepresentation(BigInteger bigInt, Settings settings, int bitLength) {
+		return getRepresentation(bigInt.longValue());
+	}
+
+	private String getRepresentation(long value) {
+		String valueName = getName(value);
+		if (valueName == null) {
+			valueName = getCompoundValue(value);
+		}
+		return valueName;
 	}
 
 	private String getCompoundValue(long value) {

@@ -76,6 +76,8 @@ public class BrowserCodeUnitFormatOptions extends CodeUnitFormatOptions
 	 */
 	private final static String NAMESPACE_OPTIONS =
 		GhidraOptions.OPERAND_GROUP_TITLE + Options.DELIMITER + "Display Namespace";
+	private static final String NAMESPACE_OPTIONS_DESCRIPTIONS =
+		"Adjusts the Operands Field namespace display";
 
 	/**
 	 * Option which controls the display of data mutability in the mnemonic representation
@@ -106,7 +108,8 @@ public class BrowserCodeUnitFormatOptions extends CodeUnitFormatOptions
 
 		if (!exists) {
 			fieldOptions.registerOption(NAMESPACE_OPTIONS, OptionType.CUSTOM_TYPE,
-				new NamespaceWrappedOption(), null, null, new NamespacePropertyEditor());
+				new NamespaceWrappedOption(), null, NAMESPACE_OPTIONS_DESCRIPTIONS,
+				new NamespacePropertyEditor());
 
 			HelpLocation hl = new HelpLocation("CodeBrowserPlugin", "Operands_Field");
 			fieldOptions.getOptions(GhidraOptions.OPERAND_GROUP_TITLE).setOptionsHelpLocation(hl);
@@ -157,7 +160,8 @@ public class BrowserCodeUnitFormatOptions extends CodeUnitFormatOptions
 
 	private void updateFormat() {
 		fieldOptions.registerOption(NAMESPACE_OPTIONS, OptionType.CUSTOM_TYPE,
-			new NamespaceWrappedOption(), null, null, new NamespacePropertyEditor());
+			new NamespaceWrappedOption(), null, NAMESPACE_OPTIONS_DESCRIPTIONS,
+			new NamespacePropertyEditor());
 		CustomOption customOption =
 			fieldOptions.getCustomOption(NAMESPACE_OPTIONS, new NamespaceWrappedOption());
 		if (!(customOption instanceof NamespaceWrappedOption)) {
@@ -208,7 +212,7 @@ public class BrowserCodeUnitFormatOptions extends CodeUnitFormatOptions
 	/**
 	 * Add format change listener.
 	 * Listeners will only be notified if autoUpdate was true when instantiated.
-	 * @param listener
+	 * @param listener the listener
 	 */
 	public void addChangeListener(ChangeListener listener) {
 		listeners.add(listener);
@@ -216,7 +220,7 @@ public class BrowserCodeUnitFormatOptions extends CodeUnitFormatOptions
 
 	/**
 	 * Remove format change listener
-	 * @param listener
+	 * @param listener the listener
 	 */
 	public void removeChangeListener(ChangeListener listener) {
 		listeners.remove(listener);

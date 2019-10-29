@@ -35,10 +35,12 @@ public class SignedByteDataType extends AbstractIntegerDataType {
 		super("sbyte", true, dtm);
 	}
 
+	@Override
 	public String getDescription() {
 		return "Signed Byte (sdb)";
 	}
 
+	@Override
 	public int getLength() {
 		return 1;
 	}
@@ -56,11 +58,12 @@ public class SignedByteDataType extends AbstractIntegerDataType {
 	}
 
 	@Override
-	public DataType getOppositeSignednessDataType() {
-		return ByteDataType.dataType;
+	public ByteDataType getOppositeSignednessDataType() {
+		return ByteDataType.dataType.clone(getDataTypeManager());
 	}
 
-	public DataType clone(DataTypeManager dtm) {
+	@Override
+	public SignedByteDataType clone(DataTypeManager dtm) {
 		if (dtm == getDataTypeManager()) {
 			return this;
 		}

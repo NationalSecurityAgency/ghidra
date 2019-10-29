@@ -15,7 +15,7 @@
  */
 package ghidra.app.plugin.processors.sleigh;
 
-import static utilities.util.FileUtilities.existsAndIsCaseDependent;
+import static utilities.util.FileUtilities.*;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -99,6 +99,11 @@ public class SleighLanguageProvider implements LanguageProvider {
 		return getNewSleigh(languageId);
 	}
 
+	@Override
+	public boolean isLanguageLoaded(LanguageID languageId) {
+		return languages.get(languageId) != null;
+	}
+
 	private Language getNewSleigh(LanguageID languageId) {
 		SleighLanguageDescription description = descriptions.get(languageId);
 		SleighLanguage lang = languages.get(languageId);
@@ -108,31 +113,31 @@ public class SleighLanguageProvider implements LanguageProvider {
 				languages.put(languageId, lang);
 			}
 			catch (SleighException e) {
-				Msg.showError(this, null, "Error", "Can't read language spec " +
-					description.getSlaFile().getAbsolutePath(), e);
+				Msg.showError(this, null, "Error",
+					"Can't read language spec " + description.getSlaFile().getAbsolutePath(), e);
 				throw e;
 			}
 			catch (FileNotFoundException e) {
-				Msg.showError(this, null, "Error", "Can't read language spec " +
-					description.getSlaFile().getAbsolutePath(), e);
+				Msg.showError(this, null, "Error",
+					"Can't read language spec " + description.getSlaFile().getAbsolutePath(), e);
 				throw new SleighException(
 					"File not found - language probably did not compile properly", e);
 			}
 			catch (UnknownInstructionException e) {
-				Msg.showError(this, null, "Error", "Can't read language spec " +
-					description.getSlaFile().getAbsolutePath(), e);
+				Msg.showError(this, null, "Error",
+					"Can't read language spec " + description.getSlaFile().getAbsolutePath(), e);
 				throw new SleighException(
 					"Unknown instruction - language probably did not compile properly", e);
 			}
 			catch (SAXException e) {
-				Msg.showError(this, null, "Error", "Can't read language spec " +
-					description.getSlaFile().getAbsolutePath(), e);
+				Msg.showError(this, null, "Error",
+					"Can't read language spec " + description.getSlaFile().getAbsolutePath(), e);
 				throw new SleighException(
 					"SAXException - language probably did not compile properly", e);
 			}
 			catch (IOException e) {
-				Msg.showError(this, null, "Error", "Can't read language spec " +
-					description.getSlaFile().getAbsolutePath(), e);
+				Msg.showError(this, null, "Error",
+					"Can't read language spec " + description.getSlaFile().getAbsolutePath(), e);
 				throw new SleighException(
 					"IOException - language probably did not compile properly", e);
 			}
@@ -162,7 +167,8 @@ public class SleighLanguageProvider implements LanguageProvider {
 
 			@Override
 			public void fatalError(SAXParseException exception) throws SAXException {
-				Msg.error(SleighLanguageProvider.this, "Fatal error parsing " + specFile, exception);
+				Msg.error(SleighLanguageProvider.this, "Fatal error parsing " + specFile,
+					exception);
 			}
 
 			@Override
@@ -256,8 +262,8 @@ public class SleighLanguageProvider implements LanguageProvider {
 					truncatedSpaceMap = new HashMap<String, Integer>();
 				}
 				if (truncatedSpaceMap.put(spaceName, truncatedSize) != null) {
-					throw new SleighException("truncated space '" + spaceName +
-							"' alread specified");
+					throw new SleighException(
+						"truncated space '" + spaceName + "' alread specified");
 				}
 				parser.end(element);
 			}
@@ -267,15 +273,15 @@ public class SleighLanguageProvider implements LanguageProvider {
 				final String compilerSpecName = compiler.getAttribute("name");
 				final String compilerSpecFilename = compiler.getAttribute("spec");
 				final ResourceFile compilerSpecFile =
-						findFile(parentDirectory, compilerSpecFilename, ".cspec");
+					findFile(parentDirectory, compilerSpecFilename, ".cspec");
 				FileResolutionResult result = existsAndIsCaseDependent(compilerSpecFile);
 				if (!result.isOk()) {
 					throw new SleighException("cspec file " + compilerSpecFile +
 						" is not properly case dependent: " + result.getMessage());
 				}
 				final SleighCompilerSpecDescription sleighCompilerSpecDescription =
-						new SleighCompilerSpecDescription(compilerSpecID, compilerSpecName,
-							compilerSpecFile);
+					new SleighCompilerSpecDescription(compilerSpecID, compilerSpecName,
+						compilerSpecFile);
 				compilerSpecs.add(sleighCompilerSpecDescription);
 				parser.end(compiler);
 			}
@@ -301,11 +307,10 @@ public class SleighLanguageProvider implements LanguageProvider {
 
 			// skip the language end tag
 			parser.end(languageEnter);
-			description =
-					new SleighLanguageDescription(id, descriptionText,
-						Processor.findOrPossiblyCreateProcessor(processorName), endian,
-						instructionEndian, size, variant, version, minorVersion, deprecated,
-						truncatedSpaceMap, compilerSpecs, externalNameMap);
+			description = new SleighLanguageDescription(id, descriptionText,
+				Processor.findOrPossiblyCreateProcessor(processorName), endian, instructionEndian,
+				size, variant, version, minorVersion, deprecated, truncatedSpaceMap, compilerSpecs,
+				externalNameMap);
 			final ResourceFile defsFile = new ResourceFile(parentDirectory, ldefs);
 			FileResolutionResult result = existsAndIsCaseDependent(defsFile);
 			if (!result.isOk()) {
@@ -337,8 +342,7 @@ public class SleighLanguageProvider implements LanguageProvider {
 
 				String slaspecfilename = slabase + ".slaspec";
 
-				ResourceFile slaspecFile =
-					findFile(parentDirectory, slaspecfilename, ".slaspec");
+				ResourceFile slaspecFile = findFile(parentDirectory, slaspecfilename, ".slaspec");
 				result = existsAndIsCaseDependent(slaspecFile);
 				if (!result.isOk()) {
 					throw new SleighException("sla file source " + slaspecFile +
@@ -365,7 +369,10 @@ public class SleighLanguageProvider implements LanguageProvider {
 			catch (SleighException ex) { // Error with the manual shouldn't prevent language from loading
 				Msg.error(this, ex.getMessage());
 			}
-			descriptions.put(id, description);
+			if (descriptions.put(id, description) != null) {
+				Msg.showError(this, null, "Duplicate Sleigh Language ID",
+					"Language " + id + " previously defined: " + defsFile);
+			}
 		}
 		parser.end(start);
 	}

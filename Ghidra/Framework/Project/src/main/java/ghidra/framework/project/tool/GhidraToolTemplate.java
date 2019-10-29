@@ -21,6 +21,7 @@ import javax.swing.ImageIcon;
 
 import org.jdom.Element;
 
+import docking.util.image.ToolIconURL;
 import ghidra.framework.model.*;
 import ghidra.util.Msg;
 import ghidra.util.NumericUtilities;

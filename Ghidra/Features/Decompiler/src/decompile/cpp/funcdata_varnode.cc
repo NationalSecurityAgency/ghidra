@@ -519,9 +519,9 @@ bool Funcdata::fillinReadOnly(Varnode *vn)
   if (vn->isWritten()) {	// Can't replace output with constant
     PcodeOp *defop = vn->getDef();
     if (defop->isMarker())
-      defop->setFlag(PcodeOp::warning);	// Not a true write, ignore it
+      defop->setAdditionalFlag(PcodeOp::warning);	// Not a true write, ignore it
     else if (!defop->isWarning()) { // No warning generated before
-      defop->setFlag(PcodeOp::warning);
+      defop->setAdditionalFlag(PcodeOp::warning);
       ostringstream s;
       if ((!vn->isAddrForce())||(!vn->hasNoDescend())) {
 	s << "Read-only address (";
@@ -635,7 +635,7 @@ bool Funcdata::replaceVolatile(Varnode *vn)
   return true;
 }
 
-/// \brief Check if the given Varnode only flows into INDIRECT ops
+/// \brief Check if the given Varnode only flows into call-based INDIRECT ops
 ///
 /// Flow is only followed through MULTIEQUAL ops.
 /// \param vn is the given Varnode
@@ -654,8 +654,17 @@ bool Funcdata::checkIndirectUse(Varnode *vn)
     for(iter=vn->beginDescend();iter!=vn->endDescend();++iter) {
       PcodeOp *op = *iter;
       OpCode opc = op->code();
-      if (opc == CPUI_INDIRECT) continue;
-      if (opc == CPUI_MULTIEQUAL) {
+      if (opc == CPUI_INDIRECT) {
+	if (op->isIndirectStore()) {
+	  // INDIRECT from a STORE is not a negative result but continue to follow data-flow
+	  Varnode *outvn = op->getOut();
+	  if (!outvn->isMark()) {
+	    vlist.push_back(outvn);
+	    outvn->setMark();
+	  }
+	}
+      }
+      else if (opc == CPUI_MULTIEQUAL) {
 	Varnode *outvn = op->getOut();
 	if (!outvn->isMark()) {
 	  vlist.push_back(outvn);
@@ -915,7 +924,7 @@ bool Funcdata::updateFlags(VarnodeLocSet::const_iterator &iter,uint4 flags,Datat
 /// The Symbol is really attached to the Varnode's HighVariable (which must exist).
 /// The only reason a Symbol doesn't get set is if, the HighVariable
 /// is global and there is no pre-existing Symbol.  (see mapGlobals())
-/// \param is the given Varnode
+/// \param vn is the given Varnode
 /// \return the associated Symbol or NULL
 Symbol *Funcdata::linkSymbol(Varnode *vn)
 
@@ -1294,11 +1303,12 @@ bool Funcdata::onlyOpUse(const Varnode *invn,const PcodeOp *opmatch,const ParamT
 /// \brief Test if the given trial Varnode is likely only used for parameter passing
 ///
 /// Flow is followed from the Varnode itself and from ancestors the Varnode was copied from
-/// to see if it hits anything other than the CALL operation.
+/// to see if it hits anything other than the given CALL or RETURN operation.
 /// \param maxlevel is the maximum number of times to recurse through ancestor copies
 /// \param invn is the given trial Varnode to test
+/// \param op is the given CALL or RETURN
 /// \param trial is the associated parameter trial object
-/// \return \b true if the Varnode is only used for the CALL
+/// \return \b true if the Varnode is only used for the CALL/RETURN
 bool Funcdata::ancestorOpUse(int4 maxlevel,const Varnode *invn,
 			     const PcodeOp *op,ParamTrial &trial) const
 
@@ -1402,7 +1412,6 @@ bool AncestorRealistic::checkConditionalExe(State &state)
 int4 AncestorRealistic::enterNode(State &state)
 
 {
-  PcodeOp *indop;
   // If the node has already been visited, we truncate the traversal to prevent cycles.
   // We always return success assuming the proper result will get returned along the first path
   if (state.vn->isMark()) return pop_success;
@@ -1424,19 +1433,36 @@ int4 AncestorRealistic::enterNode(State &state)
 	return pop_failkill;		// Truncate this path, indicating killedbycall
       return pop_success;		// otherwise it could be valid
     }
-    indop = PcodeOp::getOpFromConst(op->getIn(1)->getAddr());
-    if (indop->isCall()) {	// If flow goes THROUGH a call
+    if (!op->isIndirectStore()) {	// If flow goes THROUGH a call
       if (op->getOut()->isReturnAddress()) return pop_fail;	// Storage address location is completely invalid
       if (trial->isKilledByCall()) return pop_fail;		// "Likely" killedbycall is invalid
     }
     stateStack.push_back(State(op,0));
     return enter_node;			// Enter the new node
   case CPUI_SUBPIECE:
+    // Extracting to a temporary, or to the same storage location, or otherwise incidental
+    // are viewed as just another node on the path to traverse
+    if (op->getOut()->getSpace()->getType()==IPTR_INTERNAL||op->getIn(0)->isIncidentalCopy()
+	|| (op->getOut()->overlap(*op->getIn(0)) == (int4)op->getIn(1)->getOffset())) {
+      stateStack.push_back(State(op,0));
+      return enter_node;		// Push into the new node
+    }
+    // For other SUBPIECES, do a minimal traversal to rule out unaffected or other invalid inputs,
+    // but otherwise treat it as valid, active, movement into the parameter
+    do {
+      Varnode *vn = op->getIn(0);
+      if ((!vn->isMark())&&(vn->isInput())) {
+	if (vn->isUnaffected()||(!vn->isDirectWrite()))
+	  return pop_fail;
+      }
+      op = vn->getDef();
+    } while((op!=(PcodeOp *)0)&&((op->code() == CPUI_COPY)||(op->code()==CPUI_SUBPIECE)));
+    return pop_solid;	// treat the COPY as a solid movement
   case CPUI_COPY:
     // Copies to a temporary, or between varnodes with same storage location, or otherwise incidental
     // are viewed as just another node on the path to traverse
-    if ((op->getOut()->getSpace()->getType()==IPTR_INTERNAL)
-	||(op->getOut()->getAddr() == op->getIn(0)->getAddr())||(op->getIn(0)->isIncidentalCopy())) {
+    if (op->getOut()->getSpace()->getType()==IPTR_INTERNAL||op->getIn(0)->isIncidentalCopy()
+	|| (op->getOut()->getAddr() == op->getIn(0)->getAddr())) {
       stateStack.push_back(State(op,0));
       return enter_node;		// Push into the new node
     }
@@ -1515,7 +1541,7 @@ int4 AncestorRealistic::uponPop(State &state,int4 pop_command)
 /// \param op is the CALL or RETURN to test parameter passing for
 /// \param slot is the index of the particular input varnode to test
 /// \param t is the ParamTrial object corresponding to the varnode
-/// \param allowFailingPath is true if we allow and test for failing paths due to conditional execution
+/// \param allowFail is \b true if we allow and test for failing paths due to conditional execution
 /// \return \b true if the varnode has realistic ancestors for a parameter passing location
 bool AncestorRealistic::execute(PcodeOp *op,int4 slot,ParamTrial *t,bool allowFail)
 

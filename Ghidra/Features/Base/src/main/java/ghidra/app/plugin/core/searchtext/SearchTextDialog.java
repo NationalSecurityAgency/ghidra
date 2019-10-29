@@ -26,7 +26,10 @@ import javax.swing.border.Border;
 import javax.swing.text.*;
 
 import docking.*;
+import docking.widgets.button.GRadioButton;
+import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.combobox.GhidraComboBox;
+import docking.widgets.label.GLabel;
 import ghidra.app.util.HelpTopics;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.util.*;
@@ -143,27 +146,19 @@ class SearchTextDialog extends DialogComponentProvider {
 		}
 	}
 
-	/* (non Javadoc)
-	 * @see ghidra.util.bean.GhidraDialog#executeProgressTask(ghidra.util.task.Task, int)
-	 */
+	// overridden to increase visibility
 	@Override
 	protected void executeProgressTask(Task task, int delay) {
 		super.executeProgressTask(task, delay);
 	}
 
-	/*
-	 *  (non Javadoc)
-	 * @see ghidra.util.bean.GhidraDialog#getTaskMonitorComponent()
-	 */
+	// overridden to increase visibility
 	@Override
 	protected TaskMonitorComponent getTaskMonitorComponent() {
 		return super.getTaskMonitorComponent();
 	}
 
-	/*
-	 *  (non Javadoc)
-	 * @see ghidra.util.bean.GhidraDialog#getTaskScheduler()
-	 */
+	// overridden to increase visibility
 	@Override
 	protected TaskScheduler getTaskScheduler() {
 		return super.getTaskScheduler();
@@ -175,9 +170,6 @@ class SearchTextDialog extends DialogComponentProvider {
 		previousButton.setEnabled(!isBusy && searchEnabled);
 	}
 
-	/**
-	 * Enable/disable the search button.
-	 */
 	void setSearchEnabled(boolean enabled) {
 		searchEnabled = enabled;
 		updateSearchButtonsEnablement();
@@ -192,14 +184,10 @@ class SearchTextDialog extends DialogComponentProvider {
 		return searchSelectionCB.isSelected();
 	}
 
-	///////////////////////////////////////////////////////////////////
 	private void setMessage(String msg) {
 		super.setStatusText(msg);
 	}
 
-	/**
-	 * Create the main panel.
-	 */
 	private JPanel createMainPanel() {
 		JPanel mainPanel = new JPanel();
 		mainPanel.setLayout(new BorderLayout(10, 0));
@@ -208,15 +196,11 @@ class SearchTextDialog extends DialogComponentProvider {
 		return mainPanel;
 	}
 
-	/**
-	 * Create the top panel that has the text field.
-	 */
 	private JPanel createSearchPanel() {
 		JPanel panel = new JPanel();
 		panel.setBorder(BorderFactory.createEmptyBorder(4, 4, 10, 4));
 		panel.setLayout(new BorderLayout());
 
-		JLabel searchLabel = new JLabel("Search for:");
 		valueComboBox = new GhidraComboBox<>();
 		valueComboBox.setEditable(true);
 		valueField = (JTextField) valueComboBox.getEditor().getEditorComponent();
@@ -240,7 +224,7 @@ class SearchTextDialog extends DialogComponentProvider {
 		JPanel searchPanel = new JPanel();
 		BoxLayout bl = new BoxLayout(searchPanel, BoxLayout.X_AXIS);
 		searchPanel.setLayout(bl);
-		searchPanel.add(searchLabel);
+		searchPanel.add(new GLabel("Search for:"));
 		searchPanel.add(Box.createHorizontalStrut(5));
 		searchPanel.add(valueComboBox);
 		JPanel outerPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
@@ -250,9 +234,8 @@ class SearchTextDialog extends DialogComponentProvider {
 		return panel;
 	}
 
-	/**
-	 * Create the inner panel that has the direction and the
-	 * case sensitive panel.
+	/*
+	 * Create the inner panel that has the direction and the case sensitive panel
 	 */
 	private JPanel createDetailsPanel() {
 		JPanel detailsPanel = new JPanel(new BorderLayout());
@@ -273,7 +256,6 @@ class SearchTextDialog extends DialogComponentProvider {
 
 	private JPanel createRightPanel() {
 		JPanel panel = new JPanel(new GridLayout(0, 1, 10, 10));
-//    	JPanel panel = new JPanel(new VerticalLayout(5));
 		panel.add(createDirectionPanel());
 		panel.add(createOptionsPanel());
 		return panel;
@@ -282,49 +264,44 @@ class SearchTextDialog extends DialogComponentProvider {
 	private JPanel createOptionsPanel() {
 		JPanel panel = new JPanel(new VerticalLayout(3));
 
-		caseSensitiveCB = new JCheckBox("Case Sensitive");
+		caseSensitiveCB = new GCheckBox("Case Sensitive");
 		caseSensitiveCB.setToolTipText(
 			HTMLUtilities.toHTML("Select this if the search\n should be case sensitive."));
 		panel.add(caseSensitiveCB);
 
-		searchSelectionCB = new JCheckBox("Search Selection");
+		searchSelectionCB = new GCheckBox("Search Selection");
 		panel.add(searchSelectionCB);
 
 		panel.setBorder(BorderFactory.createTitledBorder("Options"));
 		return panel;
 	}
 
-	/**
-	 * Create the options panel.
-	 * 
-	 * @return JPanel
-	 */
 	private JPanel createFieldOptionsPanel() {
 		JPanel optionsPanel = new JPanel();
 		BoxLayout bl = new BoxLayout(optionsPanel, BoxLayout.Y_AXIS);
 		optionsPanel.setLayout(bl);
 
-		functionsCB = new JCheckBox("Functions");
+		functionsCB = new GCheckBox("Functions");
 		functionsCB.setToolTipText(HTMLUtilities.toHTML("Search in the Function Header fields"));
 
-		commentsCB = new JCheckBox("Comments", true);
+		commentsCB = new GCheckBox("Comments", true);
 		commentsCB.setToolTipText(HTMLUtilities.toHTML("Search in any of the comment fields"));
 
-		labelsCB = new JCheckBox("Labels");
+		labelsCB = new GCheckBox("Labels");
 		labelsCB.setToolTipText(HTMLUtilities.toHTML("Search in the Lable field"));
 
-		mnemonicsCB = new JCheckBox("Instruction Mnemonics");
+		mnemonicsCB = new GCheckBox("Instruction Mnemonics");
 		mnemonicsCB.setToolTipText(
 			HTMLUtilities.toHTML("Search in the Instruction Mnemonic field"));
 
-		operandsCB = new JCheckBox("Instruction Operands");
+		operandsCB = new GCheckBox("Instruction Operands");
 		operandsCB.setToolTipText(HTMLUtilities.toHTML("Search in the Instruction Operand fields"));
 
-		dataMnemonicsCB = new JCheckBox("Defined Data Mnemonics");
+		dataMnemonicsCB = new GCheckBox("Defined Data Mnemonics");
 		dataMnemonicsCB.setToolTipText(
 			HTMLUtilities.toHTML("Search in the Data Mnemonic and Value fields"));
 
-		dataOperandsCB = new JCheckBox("Defined Data Values");
+		dataOperandsCB = new GCheckBox("Defined Data Values");
 		dataOperandsCB.setToolTipText(
 			HTMLUtilities.toHTML("Search in the Data Mnemonic and Value fields"));
 
@@ -344,14 +321,14 @@ class SearchTextDialog extends DialogComponentProvider {
 		JPanel radioPanel = new JPanel(new VerticalLayout(10));
 
 		ButtonGroup bg = new ButtonGroup();
-		searchFieldRB = new JRadioButton("Selected Fields", true);
+		searchFieldRB = new GRadioButton("Selected Fields", true);
 		searchFieldRB.setToolTipText(HTMLUtilities.toHTML("Search for specific fields. Use the\n" +
 			"checkboxes to mark which fields to search.\n" +
 			"This option applies to either the Program Database Search\n" +
 			"or the Listing Display Match Search.\n\n" +
 			"NOTE: Selecting all of these fields is NOT the same as selecting \"All Fields\".\n"));
 
-		searchAllRB = new JRadioButton("All Fields", false);
+		searchAllRB = new GRadioButton("All Fields", false);
 		searchAllRB.setToolTipText(
 			HTMLUtilities.toHTML("Search all the fields displayed in the Code Browser.\n" +
 				"The option applies only to the Listing Display Search."));
@@ -388,7 +365,7 @@ class SearchTextDialog extends DialogComponentProvider {
 
 		ButtonGroup bg = new ButtonGroup();
 
-		programDatabaseSearchRB = new JRadioButton("Program Database", true);
+		programDatabaseSearchRB = new GRadioButton("Program Database", true);
 		programDatabaseSearchRB.setToolTipText(HTMLUtilities.toHTML(
 			"Searches comments, labels, instructions, function signatures, and data stored in the" +
 				" program database.\n This search is much faster, but does not search all text displayed in the Code Browser\n" +
@@ -405,7 +382,7 @@ class SearchTextDialog extends DialogComponentProvider {
 			changingState = false;
 		});
 
-		listingDisplaySearchRB = new JRadioButton("Listing Display", false);
+		listingDisplaySearchRB = new GRadioButton("Listing Display", false);
 		listingDisplaySearchRB.setToolTipText(
 			HTMLUtilities.toHTML("Searches the text displayed in the Code Browser\n" +
 				"Listing Display. (Depending on which fields are selected)\n" +
@@ -432,9 +409,9 @@ class SearchTextDialog extends DialogComponentProvider {
 		directionPanel.setBorder(BorderFactory.createTitledBorder("Memory Block Types"));
 
 		ButtonGroup directionGroup = new ButtonGroup();
-		loadedBlocksButton = new JRadioButton("Loaded Blocks", true);
+		loadedBlocksButton = new GRadioButton("Loaded Blocks", true);
 
-		allBlocksButton = new JRadioButton("All Blocks", false);
+		allBlocksButton = new GRadioButton("All Blocks", false);
 		loadedBlocksButton.setToolTipText(HTMLUtilities.toHTML(
 			"Only searches memory blocks that are loaded in a running executable.\n  " +
 				"Ghidra now includes memory blocks for other data such as section headers.\n" +

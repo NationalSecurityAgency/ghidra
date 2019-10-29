@@ -17,6 +17,7 @@ package ghidra.app.plugin.core.select.qualified;
 
 import docking.action.DockingAction;
 import docking.action.MenuData;
+import docking.tool.ToolConstants;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.context.*;
 import ghidra.app.events.ProgramSelectionPluginEvent;

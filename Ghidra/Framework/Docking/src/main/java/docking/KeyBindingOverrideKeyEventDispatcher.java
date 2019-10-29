@@ -25,7 +25,7 @@ import java.awt.event.KeyListener;
 import javax.swing.*;
 import javax.swing.text.JTextComponent;
 
-import docking.util.KeyBindingUtils;
+import docking.actions.KeyBindingUtils;
 import ghidra.util.bean.GGlassPane;
 import ghidra.util.exception.AssertException;
 
@@ -202,7 +202,7 @@ class KeyBindingOverrideKeyEventDispatcher implements KeyEventDispatcher {
 
 			// note: this call has no effect if 'action' is null
 			SwingUtilities.notifyAction(action, keyStroke, event, event.getSource(),
-				event.getModifiers());
+				event.getModifiersEx());
 
 		}
 		return wasInProgress;
@@ -254,8 +254,30 @@ class KeyBindingOverrideKeyEventDispatcher implements KeyEventDispatcher {
 		// }
 
 		// We've made the executive decision to allow all keys to go through to the text component
-		// unless they are modified with the 'Alt' key
-		return !event.isAltDown();
+		// unless they are modified with the 'Alt'/'Ctrl'/etc keys, unless they directly used 
+		// by the text component
+		if (!isModified(event)) {
+			return true; // unmodified keys will be given to the text component
+		}
+
+		// the key is modified; let it through if the component has a mapping for the key
+		return hasRegisteredKeyBinding((JTextComponent) destination, event);
+	}
+
+	/**
+	 * A test to see if the given event is modified in such a way as a text component would not
+	 * handle the event
+	 * @param e the event
+	 * @return true if modified
+	 */
+	private boolean isModified(KeyEvent e) {
+		return e.isAltDown() || e.isAltGraphDown() || e.isMetaDown() || e.isControlDown();
+	}
+
+	private boolean hasRegisteredKeyBinding(JComponent c, KeyEvent event) {
+		KeyStroke keyStroke = KeyStroke.getKeyStrokeForEvent(event);
+		Action action = getJavaActionForComponent(c, keyStroke);
+		return action != null;
 	}
 
 	/**
@@ -371,7 +393,7 @@ class KeyBindingOverrideKeyEventDispatcher implements KeyEventDispatcher {
 		Action action = getJavaActionForComponent(jComponent, keyStroke);
 		if (action != null) {
 			return SwingUtilities.notifyAction(action, keyStroke, keyEvent, keyEvent.getSource(),
-				keyEvent.getModifiers());
+				keyEvent.getModifiersEx());
 		}
 		return false;
 	}
@@ -386,8 +408,9 @@ class KeyBindingOverrideKeyEventDispatcher implements KeyEventDispatcher {
 
 		// ...next see if there is a key binding for when the component is the child of the focus
 		// owner
-		return KeyBindingUtils.getAction(jComponent, keyStroke,
+		action = KeyBindingUtils.getAction(jComponent, keyStroke,
 			JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+		return action;
 	}
 
 	/**
@@ -403,7 +426,9 @@ class KeyBindingOverrideKeyEventDispatcher implements KeyEventDispatcher {
 		}
 
 		KeyStroke keyStroke = KeyStroke.getKeyStrokeForEvent(event);
-		return (DockingKeyBindingAction) activeManager.getActionForKeyStroke(keyStroke);
+		DockingKeyBindingAction bindingAction =
+			(DockingKeyBindingAction) activeManager.getActionForKeyStroke(keyStroke);
+		return bindingAction;
 	}
 
 	private DockingWindowManager getActiveDockingWindowManager() {

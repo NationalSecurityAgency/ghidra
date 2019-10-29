@@ -15,22 +15,42 @@
  */
 package ghidra.app.plugin.core.select;
 
-import java.awt.*;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.math.BigInteger;
 
-import javax.swing.*;
+import javax.swing.BorderFactory;
+import javax.swing.ButtonGroup;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JRadioButton;
+import javax.swing.JTextField;
+import javax.swing.SwingUtilities;
 
 import docking.ComponentProvider;
 import docking.DialogComponentProvider;
+import docking.widgets.button.GRadioButton;
+import docking.widgets.label.GLabel;
 import docking.widgets.textfield.IntegerTextField;
 import ghidra.app.nav.Navigatable;
 import ghidra.app.nav.NavigationUtils;
 import ghidra.framework.plugintool.PluginTool;
-import ghidra.program.model.address.*;
+import ghidra.program.model.address.Address;
+import ghidra.program.model.address.AddressFactory;
+import ghidra.program.model.address.AddressFormatException;
+import ghidra.program.model.address.AddressOutOfBoundsException;
+import ghidra.program.model.address.AddressRange;
+import ghidra.program.model.address.AddressRangeIterator;
+import ghidra.program.model.address.AddressSet;
+import ghidra.program.model.address.AddressSetView;
+import ghidra.program.model.address.AddressSpace;
+import ghidra.program.model.address.OverlayAddressSpace;
 import ghidra.program.util.ProgramSelection;
 import ghidra.util.HelpLocation;
+import ghidra.util.layout.PairLayout;
 
 /**
  * Class to set up dialog box that will enable the user
@@ -84,25 +104,18 @@ class SelectBlockDialog extends DialogComponentProvider {
 	private JPanel buildBlockPanel() {
 		JPanel main = new JPanel();
 		main.setBorder(BorderFactory.createTitledBorder("Byte Selection"));
-		main.setLayout(new GridBagLayout());
-		GridBagConstraints gbc = new GridBagConstraints();
-		gbc.insets = new Insets(2, 2, 2, 2);
-		gbc.anchor = GridBagConstraints.WEST;
-		gbc.gridx = 0;
-		gbc.gridy = 0;
+		
+		main.setLayout(new PairLayout());
 
-		main.add(new JLabel("Ending Address:"), gbc);
-		gbc.gridx++;
+		main.add(new GLabel("Ending Address:"));
 		toAddressField = new JTextField(10);
-		main.add(toAddressField, gbc);
-		gbc.gridx = 0;
-		gbc.gridy++;
-		main.add(new JLabel("Length: "), gbc);
-		gbc.gridx++;
+		main.add(toAddressField);
+
+		main.add(new GLabel("Length: "));
 		numberInputField = new IntegerTextField(10);
 		numberInputField.setMaxValue(BigInteger.valueOf(Integer.MAX_VALUE));
 		numberInputField.setAllowNegativeValues(false);
-		main.add(numberInputField.getComponent(), gbc);
+		main.add(numberInputField.getComponent());
 		return main;
 	}
 
@@ -115,7 +128,7 @@ class SelectBlockDialog extends DialogComponentProvider {
 		gbc.insets = new Insets(2, 2, 2, 2);
 		gbc.anchor = GridBagConstraints.WEST;
 
-		forwardButton = new JRadioButton("Select Forward", true);
+		forwardButton = new GRadioButton("Select Forward", true);
 		forwardButton.setName("forwardButton");
 		forwardButton.addActionListener(new ActionListener() {
 			@Override
@@ -126,7 +139,7 @@ class SelectBlockDialog extends DialogComponentProvider {
 			}
 		});
 		buttonGroup.add(forwardButton);
-		backwardButton = new JRadioButton("Select Backward");
+		backwardButton = new GRadioButton("Select Backward");
 		backwardButton.setName("backwardButton");
 		backwardButton.addActionListener(new ActionListener() {
 			@Override
@@ -137,7 +150,7 @@ class SelectBlockDialog extends DialogComponentProvider {
 			}
 		});
 		buttonGroup.add(backwardButton);
-		allButton = new JRadioButton("Select All");
+		allButton = new GRadioButton("Select All");
 		allButton.setName("allButton");
 		allButton.addActionListener(new ActionListener() {
 			@Override
@@ -148,7 +161,7 @@ class SelectBlockDialog extends DialogComponentProvider {
 		});
 
 		buttonGroup.add(allButton);
-		toButton = new JRadioButton("To Address");
+		toButton = new GRadioButton("To Address");
 		toButton.setName("toButton");
 		toButton.addActionListener(new ActionListener() {
 			@Override

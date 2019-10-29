@@ -99,6 +99,13 @@
 
       <P><I><B>Initialized -</B></I> Indicates whether the block has been initialized with values;
       this property applies to Default and Overlay blocks.</P>
+      
+      <P><I><B>Byte Source -</B></I> Provides information about the source of the bytes in this
+      	block.  If the bytes were originally imported from a file, then this will indicate which file
+      	and the offset into that file.  If the bytes are mapped to another region of memory, it will
+      	provide the address for the mapping.  Blocks may consist of regions that have different
+      	sources.  In that case, source information about the first several regions will be d
+      	displayed.</P>
 
       <P><I><B>Source -</B></I> The name of the file that produced the bytes that make up this
       block as set by the file importer; for <A href="#BitMappedType">Bit Mapped</A> or <A href=
@@ -228,10 +235,16 @@
           <UL>
             <LI><I><B>Default&nbsp;</B></I> - A normal memory block within the processor's address
             space.&nbsp; These blocks cannot overlap any other default block.&nbsp; Default blocks
-            can be either initialized or uninitialized. If you select <I>Initialized</I> you can
-            enter a byte value that will be used to fill all the bytes in the new memory
-            block.</LI>
-
+            can be one of the following types:</LI>
+            <UL>
+				<LI><B>Initialized</B> - Specify a value and a new block will be created
+					using that value for every byte in the block. </LI>
+				<LI><B>Uninitialized</B> - An unitialized block will be created.</LI>
+				<LI><B>File Bytes</B> - Select from a list of imported files and enter
+				a starting offset for that file.  Those bytes will be the initial value for the block.</LI>
+				<P><I><IMG src="../../shared/note.png" border="0"> You can use the "Add To Program"
+				using "Binary Import" to create new FileBytes that you can use here.</I></P>
+			</UL>
             <LI><B><I>Overlay -</I></B> An overlay block is used to give an alternative set of
             bytes (and related information) for a range in memory.&nbsp; This is achieved by
             creating a new address space related to the actual processor address space and placing

@@ -15,6 +15,14 @@
  */
 package ghidra.framework.project.tool;
 
+import java.io.*;
+import java.util.*;
+
+import org.jdom.Document;
+import org.jdom.output.XMLOutputter;
+
+import docking.widgets.OptionDialog;
+import docking.widgets.filechooser.GhidraFileChooser;
 import ghidra.framework.ToolUtils;
 import ghidra.framework.data.ContentHandler;
 import ghidra.framework.data.DomainObjectAdapter;
@@ -24,13 +32,9 @@ import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.preferences.Preferences;
 import ghidra.util.Msg;
 import ghidra.util.classfinder.ClassSearcher;
+import ghidra.util.filechooser.GhidraFileChooserModel;
+import ghidra.util.filechooser.GhidraFileFilter;
 import ghidra.util.xml.GenericXMLOutputter;
-
-import java.io.*;
-import java.util.*;
-
-import org.jdom.Document;
-import org.jdom.output.XMLOutputter;
 
 /**
  * Implementation of service used to manipulate tools.
@@ -42,7 +46,7 @@ class ToolServicesImpl implements ToolServices {
 
 	private ToolChest toolChest;
 	private ToolManagerImpl toolManager;
-	private List<DefaultToolChangeListener> listeners = new ArrayList<DefaultToolChangeListener>();
+	private List<DefaultToolChangeListener> listeners = new ArrayList<>();
 	private ToolChestChangeListener toolChestChangeListener;
 	private Set<ContentHandler> contentHandlers;
 
@@ -61,30 +65,88 @@ class ToolServicesImpl implements ToolServices {
 	}
 
 	@Override
-	public void exportTool(File location, Tool tool) throws FileNotFoundException, IOException {
+	public File exportTool(ToolTemplate tool) throws FileNotFoundException, IOException {
+
+		File location = chooseToolFile(tool);
+		if (location == null) {
+			return location; // user cancelled
+		}
 
 		String filename = location.getName();
-		if (filename.endsWith(".tool")) {
-			filename = filename.substring(0, filename.length() - 5);
+		if (!filename.endsWith(ToolUtils.TOOL_EXTENSION)) {
+			filename = filename + ToolUtils.TOOL_EXTENSION;
 		}
 
-		FileOutputStream f =
-			new FileOutputStream(location.getParent() + File.separator + filename + ".tool");
-		BufferedOutputStream bf = new BufferedOutputStream(f);
-
-		ToolTemplate template = tool.getToolTemplate(false);
-
-		Document doc = new Document(template.saveToXml());
-
-		XMLOutputter xmlout = new GenericXMLOutputter();
-		try {
+		try (FileOutputStream f =
+			new FileOutputStream(location.getParent() + File.separator + filename)) {
+			BufferedOutputStream bf = new BufferedOutputStream(f);
+			Document doc = new Document(tool.saveToXml());
+			XMLOutputter xmlout = new GenericXMLOutputter();
 			xmlout.output(doc, bf);
 		}
-		catch (IOException ioe) {
-			Msg.error(this, "Unexpected exception exporting tool", ioe);
+
+		return location;
+	}
+
+	private File chooseToolFile(ToolTemplate tool) {
+		GhidraFileChooser fileChooser = getFileChooser();
+
+		File exportFile = null;
+		while (exportFile == null) {
+			exportFile = fileChooser.getSelectedFile(); // show the chooser
+			if (exportFile == null) {
+				return null; // user cancelled
+			}
+
+			Preferences.setProperty(Preferences.LAST_TOOL_EXPORT_DIRECTORY, exportFile.getParent());
+			if (!exportFile.getName().endsWith(ToolUtils.TOOL_EXTENSION)) {
+				exportFile = new File(exportFile.getAbsolutePath() + ToolUtils.TOOL_EXTENSION);
+			}
+
+			if (exportFile.exists()) {
+				int result = OptionDialog.showOptionDialog(null, "Overwrite?",
+					"Overwrite existing file: '" + exportFile.getName() + "'?", "Overwrite",
+					OptionDialog.QUESTION_MESSAGE);
+				if (result != OptionDialog.OPTION_ONE) {
+					exportFile = null; // user chose not to overwrite
+				}
+			}
 		}
 
-		f.close();
+		return exportFile;
+	}
+
+	private GhidraFileChooser getFileChooser() {
+		GhidraFileChooser newFileChooser = new GhidraFileChooser(null);
+		newFileChooser.setFileFilter(new GhidraFileFilter() {
+			@Override
+			public boolean accept(File file, GhidraFileChooserModel model) {
+				if (file == null) {
+					return false;
+				}
+
+				if (file.isDirectory()) {
+					return true;
+				}
+
+				return file.getAbsolutePath().toLowerCase().endsWith("tool");
+			}
+
+			@Override
+			public String getDescription() {
+				return "Tools";
+			}
+		});
+
+		String exportDir = Preferences.getProperty(Preferences.LAST_TOOL_EXPORT_DIRECTORY);
+		if (exportDir != null) {
+			newFileChooser.setCurrentDirectory(new File(exportDir));
+		}
+
+		newFileChooser.setTitle("Export Tool");
+		newFileChooser.setApproveButtonText("Export");
+
+		return newFileChooser;
 	}
 
 	@Override
@@ -189,7 +251,7 @@ class ToolServicesImpl implements ToolServices {
 
 	@Override
 	public Set<ToolAssociationInfo> getContentTypeToolAssociations() {
-		Set<ToolAssociationInfo> set = new HashSet<ToolAssociationInfo>();
+		Set<ToolAssociationInfo> set = new HashSet<>();
 
 		// get all known content types
 		Set<ContentHandler> handlers = getContentHandlers();
@@ -232,7 +294,7 @@ class ToolServicesImpl implements ToolServices {
 
 	@Override
 	public Set<ToolTemplate> getCompatibleTools(Class<? extends DomainObject> domainClass) {
-		Map<String, ToolTemplate> nameToTemplateMap = new HashMap<String, ToolTemplate>();
+		Map<String, ToolTemplate> nameToTemplateMap = new HashMap<>();
 
 		//
 		// First, get all compatible tools in the tool chest
@@ -290,12 +352,12 @@ class ToolServicesImpl implements ToolServices {
 			}
 		}
 
-		return new HashSet<ToolTemplate>(nameToTemplateMap.values());
+		return new HashSet<>(nameToTemplateMap.values());
 	}
 
 	private Set<ContentHandler> getCompatibleContentHandlers(
 			Class<? extends DomainObject> domainClass) {
-		Set<ContentHandler> set = new HashSet<ContentHandler>();
+		Set<ContentHandler> set = new HashSet<>();
 		Set<ContentHandler> handlers = getContentHandlers();
 		for (ContentHandler contentHandler : handlers) {
 			Class<? extends DomainObject> handlerDomainClass =
@@ -327,7 +389,7 @@ class ToolServicesImpl implements ToolServices {
 			return contentHandlers;
 		}
 
-		contentHandlers = new HashSet<ContentHandler>();
+		contentHandlers = new HashSet<>();
 		Set<ContentHandler> instances = ClassSearcher.getInstances(ContentHandler.class);
 		for (ContentHandler contentHandler : instances) {
 			// a bit of validation
@@ -392,7 +454,7 @@ class ToolServicesImpl implements ToolServices {
 	private Tool[] getSameNamedRunningTools(Tool tool) {
 		String toolName = tool.getToolName();
 		Tool[] tools = toolManager.getRunningTools();
-		List<Tool> toolList = new ArrayList<Tool>(tools.length);
+		List<Tool> toolList = new ArrayList<>(tools.length);
 		for (Tool element : tools) {
 			if (toolName.equals(element.getToolName())) {
 				toolList.add(element);

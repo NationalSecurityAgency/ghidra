@@ -15,8 +15,8 @@
  */
 package ghidra.feature.vt.api.correlator.program;
 
-import ghidra.app.plugin.prototype.match.MatchData;
-import ghidra.app.plugin.prototype.match.MatchedData;
+import ghidra.app.plugin.match.MatchData;
+import ghidra.app.plugin.match.MatchedData;
 import ghidra.feature.vt.api.main.*;
 import ghidra.feature.vt.api.util.VTAbstractProgramCorrelator;
 import ghidra.framework.options.ToolOptions;

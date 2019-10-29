@@ -20,8 +20,7 @@ import javax.swing.JComponent;
 import docking.widgets.fieldpanel.field.Field;
 import docking.widgets.fieldpanel.support.FieldLocation;
 import ghidra.GhidraOptions;
-import ghidra.app.decompiler.ClangToken;
-import ghidra.app.decompiler.ClangTypeToken;
+import ghidra.app.decompiler.*;
 import ghidra.app.decompiler.component.ClangTextField;
 import ghidra.app.plugin.core.hover.AbstractDataTypeHover;
 import ghidra.app.util.ToolTipUtils;
@@ -29,6 +28,8 @@ import ghidra.framework.options.Options;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.listing.Program;
+import ghidra.program.model.pcode.HighVariable;
+import ghidra.program.model.pcode.Varnode;
 import ghidra.program.util.ProgramLocation;
 
 public class DataTypeDecompilerHover extends AbstractDataTypeHover
@@ -62,37 +63,53 @@ public class DataTypeDecompilerHover extends AbstractDataTypeHover
 	public JComponent getHoverComponent(Program program, ProgramLocation programLocation,
 			FieldLocation fieldLocation, Field field) {
 
-		if (!enabled || programLocation == null) {
+		if (!enabled) {
 			return null;
 		}
 
-		DataType dt = null;
+		if (!(field instanceof ClangTextField)) {
+			return null;
+		}
 
-		boolean hasInvalidStorage = false;
+		ClangToken token = ((ClangTextField) field).getToken(fieldLocation);
 
-		if (field instanceof ClangTextField) {
-			ClangToken token = ((ClangTextField) field).getToken(fieldLocation);
+		DataType dt = getDataType(token);
+		if (dt == null) {
+			dt = getDataType(token.Parent());
+		}
 
-			if (token instanceof ClangTypeToken) {
-				dt = ((ClangTypeToken) token).getDataType();
-			}
-
-			if (dt != null) {
-				String toolTipText = ToolTipUtils.getToolTipText(dt);
-
-				String warningMsg = "";
-				if (hasInvalidStorage) {
-					warningMsg += "WARNING! Invalid Storage";
-				}
-				if (warningMsg.length() != 0) {
-					String errorText =
-						"<HTML><center><font color=\"red\">" + warningMsg + "!</font></center><BR>";
-					toolTipText = toolTipText.replace("<HTML>", errorText);
-				}
-				return createTooltipComponent(toolTipText);
-			}
+		if (dt != null) {
+			String toolTipText = ToolTipUtils.getToolTipText(dt);
+			return createTooltipComponent(toolTipText);
 		}
 		return null;
 
+	}
+
+	private DataType getDataType(ClangNode node) {
+
+		if (node instanceof ClangVariableDecl) {
+			return ((ClangVariableDecl) node).getDataType();
+		}
+
+		if (node instanceof ClangReturnType) {
+			return ((ClangReturnType) node).getDataType();
+		}
+
+		if (node instanceof ClangTypeToken) {
+			return ((ClangTypeToken) node).getDataType();
+		}
+
+		if (node instanceof ClangVariableToken) {
+			Varnode vn = ((ClangVariableToken) node).getVarnode();
+			if (vn != null) {
+				HighVariable high = vn.getHigh();
+				if (high != null) {
+					return high.getDataType();
+				}
+			}
+		}
+
+		return null;
 	}
 }

@@ -29,8 +29,8 @@ import javax.swing.undo.UndoableEdit;
 
 import docking.*;
 import docking.action.*;
+import docking.actions.KeyBindingUtils;
 import docking.options.editor.FontPropertyEditor;
-import docking.util.KeyBindingUtils;
 import docking.widgets.OptionDialog;
 import generic.jar.ResourceFile;
 import ghidra.app.script.GhidraScriptUtil;
@@ -324,7 +324,7 @@ public class GhidraScriptEditorComponentProvider extends ComponentProvider {
 						return;
 					}
 					int result = OptionDialog.showYesNoDialog(getComponent(), getName(),
-						scriptSourceFile.getName() +
+						"File " + scriptSourceFile.getName() +
 							" has changed. Do you want to save it first?\n");
 					if (result == OptionDialog.OPTION_ONE) {
 						save();
@@ -651,7 +651,7 @@ public class GhidraScriptEditorComponentProvider extends ComponentProvider {
 
 	@Override
 	public ActionContext getActionContext(MouseEvent event) {
-		return new ActionContext(this, this);
+		return createContext(this);
 	}
 
 	@Override

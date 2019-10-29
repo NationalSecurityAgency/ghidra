@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +15,12 @@
  */
 package ghidra.javaclass.format.attributes;
 
+import java.io.IOException;
+
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.data.StructureDataType;
 import ghidra.util.exception.DuplicateNameException;
-
-import java.io.IOException;
 
 /**
  * NOTE: THE FOLLOWING TEXT EXTRACTED FROM JVMS7.PDF
@@ -45,8 +44,8 @@ public class SignatureAttribute extends AbstractAttributeInfo {
 
 	private short signatureIndex;
 
-	public SignatureAttribute( BinaryReader reader ) throws IOException {
-		super( reader );
+	public SignatureAttribute(BinaryReader reader) throws IOException {
+		super(reader);
 
 		signatureIndex = reader.readNextShort();
 	}
@@ -60,14 +59,14 @@ public class SignatureAttribute extends AbstractAttributeInfo {
 	 * type signature otherwise.
 	 * @return a valid index into the constant_pool table
 	 */
-	public short getSignatureIndex() {
-		return signatureIndex;
+	public int getSignatureIndex() {
+		return signatureIndex & 0xffff;
 	}
 
 	@Override
 	public DataType toDataType() throws DuplicateNameException, IOException {
-		StructureDataType structure = getBaseStructure( "Signature_attribute" );
-		structure.add( WORD, "signature_index", null );
+		StructureDataType structure = getBaseStructure("Signature_attribute");
+		structure.add(WORD, "signature_index", null);
 		return structure;
 	}
 

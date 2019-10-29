@@ -16,6 +16,7 @@
 package ghidra.app.plugin.core.memory;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 import javax.swing.JTable;
 import javax.swing.SwingUtilities;
@@ -51,8 +52,9 @@ class MemoryMapModel extends AbstractSortedTableModel<MemoryBlock> {
 	final static byte VOLATILE = 7;
 	final static byte BLOCK_TYPE = 8;
 	final static byte INIT = 9;
-	final static byte SOURCE = 10;
-	final static byte COMMENT = 11;
+	final static byte BYTE_SOURCE = 10;
+	final static byte SOURCE = 11;
+	final static byte COMMENT = 12;
 
 	final static String NAME_COL = "Name";
 	final static String START_COL = "Start";
@@ -64,6 +66,7 @@ class MemoryMapModel extends AbstractSortedTableModel<MemoryBlock> {
 	final static String VOLATILE_COL = "Volatile";
 	final static String BLOCK_TYPE_COL = "Type";
 	final static String INIT_COL = "Initialized";
+	final static String BYTE_SOURCE_COL = "Byte Source";
 	final static String SOURCE_COL = "Source";
 	final static String COMMENT_COL = "Comment";
 
@@ -74,7 +77,7 @@ class MemoryMapModel extends AbstractSortedTableModel<MemoryBlock> {
 
 	private final static String COLUMN_NAMES[] =
 		{ NAME_COL, START_COL, END_COL, LENGTH_COL, READ_COL, WRITE_COL, EXECUTE_COL, VOLATILE_COL,
-			BLOCK_TYPE_COL, INIT_COL, SOURCE_COL, COMMENT_COL };
+			BLOCK_TYPE_COL, INIT_COL, BYTE_SOURCE_COL, SOURCE_COL, COMMENT_COL };
 
 	MemoryMapModel(MemoryMapProvider provider, Program program) {
 		super(START);
@@ -146,38 +149,10 @@ class MemoryMapModel extends AbstractSortedTableModel<MemoryBlock> {
 	 */
 	@Override
 	public int findColumn(String columnName) {
-		if (columnName.equals(NAME_COL)) {
-			return NAME;
-		}
-		if (columnName.equals(START_COL)) {
-			return START;
-		}
-		if (columnName.equals(END_COL)) {
-			return END;
-		}
-		if (columnName.equals(LENGTH_COL)) {
-			return LENGTH;
-		}
-		if (columnName.equals(READ_COL)) {
-			return READ;
-		}
-		if (columnName.equals(WRITE_COL)) {
-			return WRITE;
-		}
-		if (columnName.equals(EXECUTE_COL)) {
-			return EXECUTE;
-		}
-		if (columnName.equals(VOLATILE_COL)) {
-			return VOLATILE;
-		}
-		if (columnName.equals(SOURCE_COL)) {
-			return SOURCE;
-		}
-		if (columnName.equals(COMMENT_COL)) {
-			return COMMENT;
-		}
-		if (columnName.equals(BLOCK_TYPE_COL)) {
-			return BLOCK_TYPE;
+		for (int i = 0; i < COLUMN_NAMES.length; i++) {
+			if (COLUMN_NAMES[i].equals(columnName)) {
+				return i;
+			}
 		}
 		return 0;
 	}
@@ -523,10 +498,13 @@ class MemoryMapModel extends AbstractSortedTableModel<MemoryBlock> {
 						return null;
 					}
 					return (block.isInitialized() ? Boolean.TRUE : Boolean.FALSE);
+				case BYTE_SOURCE:
+					return getByteSourceDescription(block.getSourceInfos());
 				case SOURCE:
 					if ((block.getType() == MemoryBlockType.BIT_MAPPED) ||
 						(block.getType() == MemoryBlockType.BYTE_MAPPED)) {
-						return ((MappedMemoryBlock) block).getOverlayedMinAddress().toString();
+						MemoryBlockSourceInfo info = block.getSourceInfos().get(0);
+						return info.getMappedRange().get().getMinAddress().toString();
 					}
 					return block.getSourceName();
 				case COMMENT:
@@ -541,6 +519,21 @@ class MemoryMapModel extends AbstractSortedTableModel<MemoryBlock> {
 			update();
 		}
 		return null;
+	}
+
+	private String getByteSourceDescription(List<MemoryBlockSourceInfo> sourceInfos) {
+		List<MemoryBlockSourceInfo> limited = sourceInfos.size() < 5 ? sourceInfos : sourceInfos.subList(0, 4);
+		
+		//@formatter:off
+		String description = limited
+							.stream()
+							.map(info -> info.getDescription())
+							.collect(Collectors.joining(", "));
+		//@formatter:on
+		if (limited != sourceInfos) {
+			description += "...";
+		}
+		return description;
 	}
 
 	@Override

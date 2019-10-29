@@ -1,8 +1,16 @@
+apply from: file("../gpl.gradle").getCanonicalPath()
+
+if (findProject(':Generic') != null) {
+	apply from: "$rootProject.projectDir/gradle/nativeProject.gradle"
+	apply from: "$rootProject.projectDir/gradle/distributableGPLModule.gradle"
+}
+else {
+	apply from: "../nativeBuildProperties.gradle"
+}
+
 apply plugin: 'eclipse'
+
 eclipse.project.name = 'GPL DemanglerGnu'
-
-apply from: "../nativeBuildProperties.gradle"
-
 
 /****************************************************************************
  * Defines the platforms we have to support in Ghidra.  This model is used 

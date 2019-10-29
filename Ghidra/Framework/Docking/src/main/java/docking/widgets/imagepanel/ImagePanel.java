@@ -22,6 +22,7 @@ import java.util.Arrays;
 
 import javax.swing.*;
 
+import docking.widgets.label.GIconLabel;
 import resources.icons.EmptyIcon;
 
 /**
@@ -501,7 +502,7 @@ public class ImagePanel extends JPanel {
 		translateEnabled = enabled;
 	}
 
-	private class PanAndZoomComponent extends JLabel {
+	private class PanAndZoomComponent extends GIconLabel {
 
 		public static final String TRANSLATION_RESET_PROPERTY = "translation-reset";
 

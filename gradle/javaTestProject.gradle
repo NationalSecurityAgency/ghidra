@@ -1,0 +1,193 @@
+/*****************************************************************************************
+	This file is a "mix-in" gradle script that individual gradle projects that should be included
+	if this module has tests that should be included when running all the Ghidra tests.
+	
+	A gradle project can add itself to the test run by including the following in its build.gradle
+	file:
+
+		apply from: "$rootProject.projectDir/gradle/support/javaTestProject.gradle"
+ *****************************************************************************************/
+
+configurations {
+	jmockitAgent
+}
+
+dependencies {
+	jmockitAgent('org.jmockit:jmockit:1.44') {
+		exclude group: 'com.google.code.findbugs', module: 'jsr305'
+	}
+}
+
+test { t ->
+
+	forkEvery 1
+	initTestJVM(t, rootProject.ext.testRootDirName)
+
+	// WARNING! WATCH OUT !!
+	// WARNING! Since a single shared JVM instance is used, the first
+	// test and its ApplicationConfiguration will be used to initialize
+	// the class searching environment.  This can have a negative impact
+	// on test results due to the inconsistent Application environment
+	// which may exist when all tests are run versus a single test.
+	// 
+	// Based on this limitation, do not place tests that depend on integration
+	// base classes (eg: AbstractGhidraHeadlessIntegrationTest) in 'test'; they
+	// must go in 'test.slow'.
+	
+
+	doFirst {
+		startTestTimer(t)
+	}
+	doLast {
+		endTestTimer(t)
+	}
+}
+
+task integrationTest (type: Test) { t ->
+	group "test"
+	dependsOn { project(":FunctionID").unpackFidDatabases }	
+	testClassesDirs = files sourceSets.integrationTest.output.classesDirs
+
+	classpath = sourceSets.integrationTest.runtimeClasspath
+
+	// Do not include suite classes; they trigger the tests in the suite to get run twice
+	// (once by normal jUnit and again when the suite runs).
+	excludes = ['**/*Suite*']
+
+	// Enable if you want to force Gradle to launch a new JVM for each test.
+	forkEvery 1
+
+	initTestJVM(t, rootProject.ext.testRootDirName)
+
+	doFirst {
+		startTestTimer(t)
+	}
+	doLast {
+		endTestTimer(t)
+	}
+}
+
+task pcodeTest (type: Test) { t ->	
+    group "pcodeTest"	
+    dependsOn { project(":FunctionID").unpackFidDatabases }	
+    testClassesDirs = files sourceSets.pcodeTest.output.classesDirs
+	classpath = sourceSets.pcodeTest.runtimeClasspath
+	
+	// Enable if you want to force Gradle to launch a new JVM for each test.
+    forkEvery 1	
+    	
+	initTestJVM(t, rootProject.ext.pcodeTestRootDirName)
+	
+	doFirst {
+		startTestTimer(t)
+	}
+	doLast {
+		endTestTimer(t)
+	}		
+}
+
+rootProject.unitTestReport {
+	reportOn this.project.test
+}
+rootProject.integrationTestReport {
+	reportOn this.project.integrationTest
+}
+rootProject.pcodeTestReport {
+	reportOn this.project.pcodeTest
+}
+rootProject.combinedTestReport { 
+	reportOn this.project.test
+	reportOn this.project.integrationTest
+}
+
+
+
+/*********************************************************************************
+ * Initialize test task
+ *********************************************************************************/
+def initTestJVM(Task task, String rootDirName) {
+
+	def testTempDir = file(rootTestDir).getAbsolutePath()
+	def testReportDir = file(reportDir).getAbsolutePath()
+
+	task.doFirst {
+		println "Test Machine Name: " + machineName
+		println "Root Test Dir: " + rootTestDir
+		println "Test Output Dir: " + testOutputDir
+		println "Test Temp Dir: " + testTempDir
+		println "Test Report Dir: " + testReportDir
+		println "Java Debug Port: " + debugPort
+
+		mkdir testTempDir
+		mkdir testOutputDir
+	}
+	// If false, testing will halt when an error is found.
+	task.ignoreFailures true
+	
+	// If false, then tests are re-run every time, even if no code has changed.
+	task.outputs.upToDateWhen {false}
+	
+	// Must set this to see System.out print statements.
+	task.testLogging.showStandardStreams = true
+
+    // Min/Max heap size.  These are passed in.
+    task.minHeapSize xms
+    task.maxHeapSize xmx
+    	
+    // for jmockit; needs the javaagent option
+    // -javaagent:/path/to/jmockit.jar
+    task.doFirst {
+	    def jmockitPath = configurations.jmockitAgent.singleFile
+	    
+		task.jvmArgs '-DupgradeProgramErrorMessage=' + upgradeProgramErrorMessage,
+			'-DupgradeTimeErrorMessage=' + upgradeTimeErrorMessage,
+			'-Dlog4j.configuration=' + logPropertiesUrl,
+			'-Dghidra.test.property.batch.mode=true',
+			'-Dghidra.test.property.parallel.mode=' + parallelMode,
+			'-Dghidra.test.property.output.dir=' + testOutputDir,
+			'-Dghidra.test.property.report.dir=' + testReportDir,
+			'-DSystemUtilities.isTesting=true',
+			'-Dmachine.name=' + machineName,
+			'-Djava.io.tmpdir=' + testTempDir,
+			'-Duser.data.dir=' + userHome + '/.ghidra/.ghidra-' + srcTreeName + '-Test',
+			'-Dcpu.core.override=8',
+			'-XX:ParallelGCThreads=8',
+			'-XX:+UseParallelGC',
+			'-Djava.awt.headless=false',
+			'-DDecompilerFunctionAnalyzer.enabled=false', // prevent long-winded analysis when testing (see DecompilerFunctionAnalyzer)
+			'-Dfile.encoding=UTF8',
+			'-Duser.country=US',
+			'-Duser.language=en',
+			'-Djdk.attach.allowAttachSelf',
+			'-javaagent:' + jmockitPath,			
+			'-DLock.DEBUG=true',
+			'-Xdebug',
+			'-Xnoagent',
+			'-Djava.compiler=NONE',
+			'-Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=' + debugPort
+	}
+}
+/*********************************************************************************
+ * Record and Print test task start time
+ *********************************************************************************/
+def startTestTimer(Task task) {
+	project.ext.testStartTime = new Date()
+	println ":" + task.project.name + ":" + task.name + " started: " + testStartTime;
+}
+
+/*********************************************************************************
+ * Print test task end time and elapsed time
+ *********************************************************************************/
+def endTestTimer(Task task) {
+	Date endTime = new Date();
+	println ":" + task.project.name + ":" + task.name + " ended: " + endTime;
+	
+	long elapsedMS = endTime.getTime() - testStartTime.getTime();
+	long msPerMin = 60 * 1000;
+	long msPerHour = 60 * msPerMin;
+	long hrs = elapsedMS / msPerHour;
+	long mins = (elapsedMS - (hrs * msPerHour)) / msPerMin;
+	long secs = (elapsedMS - (hrs * msPerHour) - (mins * msPerMin)) / 1000;
+	println ":" + task.project.name + ":" + task.name + " elapsed time: " +
+		String.format("%d:%02d:%02d", hrs, mins, secs);
+}

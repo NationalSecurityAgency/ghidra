@@ -303,7 +303,7 @@ public class JavaSourceFile {
 		if (nameAndMaybeDeclaraction.length == 2) {
 			return nameAndMaybeDeclaraction[0].endsWith("Action");
 		}
-		return StringUtilities.containsIgnoreCase(nameAndMaybeDeclaraction[0], "action");
+		return StringUtils.containsIgnoreCase(nameAndMaybeDeclaraction[0], "action");
 	}
 
 	private JavaSourceLine findEndOfUnknownLine(int lineNumber) {

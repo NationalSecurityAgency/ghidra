@@ -2339,9 +2339,9 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
   coprocessor_function(t_cpn,t_op1,t_op2,CRd,CRn,CRm);
 }
 
-@if defined(VERSION_6K)
+@if defined(VERSION_6K) || defined(VERSION_7)
 
-:clrex	is c0031=0xf57ff01f	{
+:clrex	is $(AMODE) & c0031=0xf57ff01f	{
 	ClearExclusiveLocal();
 }
 
@@ -5581,6 +5581,40 @@ armEndianNess: "BE" is c0031=0xf1010200 { export 1:1; }
   resultflags(tmp);
   affectflags();
 }
+
+:teq^COND^"p" rn,shift1 		is $(AMODE) &  COND & c2024=19 & rn & c1215=15 & c2627=0 & shift1
+{
+  build COND;
+  build rn;
+  build shift1;
+  local tmp = rn^shift1;
+  logicflags();
+  resultflags(tmp);
+  affectflags();
+}
+
+:teq^COND^"p" rn,shift2 		is $(AMODE) &  COND & c2024=19 & rn & c1215=15 & c2627=0 & shift2
+{
+  build COND;
+  build rn;
+  build shift2;
+  local tmp = rn^shift2;
+  logicflags();
+  resultflags(tmp);
+  affectflags();
+}
+
+:teq^COND^"p" rn,shift3 		is $(AMODE) &  COND & c2024=19 & rn & c1215=15 & c2627=0 & shift3
+{
+  build COND;
+  build rn;
+  build shift3;
+  local tmp = rn^shift3;
+  logicflags();
+  resultflags(tmp);
+  affectflags();
+}
+
 
 :tst^COND rn,shift1 		is $(AMODE) &  COND & c2024=17 & rn & c1215=0 & c2627=0 & shift1
 {

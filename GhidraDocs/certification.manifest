@@ -6,7 +6,6 @@
 ##MODULE IP: Nuvola Icons - LGPL 2.1
 ##MODULE IP: Public Domain
 ##MODULE IP: Tango Icons - Public Domain
-.classpath||GHIDRA||||END|
 .project||GHIDRA||||END|
 CheatSheet.html||GHIDRA||||END|
 GhidraClass/Advanced/Examples/Makefile||GHIDRA||||END|
@@ -17,7 +16,7 @@ GhidraClass/Advanced/GHIDRA_1.png||GHIDRA||||END|
 GhidraClass/Advanced/ghidraRight.png||GHIDRA||||END|
 GhidraClass/Advanced/improvingDisassemblyAndDecompilation.pdf||GHIDRA||||END|
 GhidraClass/Advanced/improvingDisassemblyAndDecompilation.tex||GHIDRA||||END|
-GhidraClass/AdvancedDevelopment/GhidraAdvancedDevelopment.html||GHIDRA||reviewed|This file contains mostly Ghidra content, but also includes code that is available for distribution, without restrictions, from https://github.com/paulrouget/dzslides.|END|
+GhidraClass/AdvancedDevelopment/GhidraAdvancedDevelopment.html||GHIDRA|||This file contains mostly Ghidra content, but also includes code that is available for distribution, without restrictions, from https://github.com/paulrouget/dzslides.|END|
 GhidraClass/AdvancedDevelopment/GhidraAdvancedDevelopment_withNotes.html||Public Domain|||Slight modification of code that is available for distribution, without restrictions, (original extremely permissive wtf license allows us to change IP to Public Domain),from https://github.com/paulrouget/dzslides.|END|
 GhidraClass/AdvancedDevelopment/Images/GhidraLogo64.png||GHIDRA||||END|
 GhidraClass/AdvancedDevelopment/Images/highLevelClasses.png||GHIDRA||||END|
@@ -40,6 +39,8 @@ GhidraClass/ExerciseFiles/Advanced/override.so||GHIDRA||||END|
 GhidraClass/ExerciseFiles/Advanced/setRegister||GHIDRA||||END|
 GhidraClass/ExerciseFiles/Advanced/sharedReturn||GHIDRA||||END|
 GhidraClass/ExerciseFiles/Advanced/switch||GHIDRA||||END|
+GhidraClass/ExerciseFiles/Advanced/write||GHIDRA||||END|
+GhidraClass/ExerciseFiles/Emulation/Source/README.txt||GHIDRA||||END|
 GhidraClass/ExerciseFiles/VersionTracking/WallaceSrc.exe||GHIDRA||||END|
 GhidraClass/ExerciseFiles/VersionTracking/WallaceVersion2.exe||GHIDRA||||END|
 GhidraClass/ExerciseFiles/WinhelloCPP/WinHelloCPP.exe||GHIDRA||||END|

@@ -19,26 +19,27 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.JComponent;
 
 import docking.ActionContext;
 import docking.action.DockingAction;
 import docking.action.ToolBarData;
 import docking.widgets.OptionDialog;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
-import ghidra.generic.function.Callback;
 import ghidra.util.HelpLocation;
 import resources.Icons;
 import resources.ResourceManager;
+import utility.function.Callback;
 
 public class InterpreterComponentProvider extends ComponentProviderAdapter
 		implements InterpreterConsole {
+
 	private static final String CONSOLE_GIF = "images/monitor.png";
 	private static final String CLEAR_GIF = "images/erase16.png";
 
 	private InterpreterPanel panel;
 	private InterpreterConnection interpreter;
-	private ImageIcon icon;
 	private List<Callback> firstActivationCallbacks;
 
 	public InterpreterComponentProvider(InterpreterPanelPlugin plugin,
@@ -54,9 +55,9 @@ public class InterpreterComponentProvider extends ComponentProviderAdapter
 		addToTool();
 		createActions();
 
-		icon = interpreter.getIcon();
+		Icon icon = interpreter.getIcon();
 		if (icon == null) {
-			ResourceManager.loadImage(CONSOLE_GIF);
+			icon = ResourceManager.loadImage(CONSOLE_GIF);
 		}
 		setIcon(icon);
 
@@ -105,11 +106,6 @@ public class InterpreterComponentProvider extends ComponentProviderAdapter
 		disposeAction.setEnabled(true);
 
 		addLocalAction(disposeAction);
-	}
-
-	@Override
-	public Icon getIcon() {
-		return icon;
 	}
 
 	@Override

@@ -25,15 +25,12 @@ import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.MemBuffer;
 import ghidra.program.model.symbol.SourceType;
 import ghidra.util.UniversalID;
-import ghidra.util.exception.AssertException;
-import ghidra.util.exception.InvalidInputException;
 
 /**
  * Definition of a function for things like function pointers.
  */
 public class FunctionDefinitionDataType extends GenericDataType implements FunctionDefinition {
 
-	private static final long serialVersionUID = 1L;
 	private DataType returnType = DataType.DEFAULT;
 	private ParameterDefinition[] params;
 	private String comment;
@@ -77,8 +74,8 @@ public class FunctionDefinitionDataType extends GenericDataType implements Funct
 	public FunctionDefinitionDataType(CategoryPath path, String name, FunctionSignature sig,
 			UniversalID universalID, SourceArchive sourceArchive, long lastChangeTime,
 			long lastChangeTimeInSourceArchive, DataTypeManager dtm) {
-		super(path, name, universalID, sourceArchive, lastChangeTime,
-			lastChangeTimeInSourceArchive, dtm);
+		super(path, name, universalID, sourceArchive, lastChangeTime, lastChangeTimeInSourceArchive,
+			dtm);
 		init(sig);
 	}
 
@@ -135,82 +132,40 @@ public class FunctionDefinitionDataType extends GenericDataType implements Funct
 		}
 	}
 
-	/**
-	 * @param sig
-	 */
 	private void copySignature(FunctionSignature sig) {
 		comment = sig.getComment();
 		DataType rtnType = sig.getReturnType();
-		if (rtnType == null) {
-			rtnType = DataType.DEFAULT;
-		}
 		setReturnType(rtnType.clone(getDataTypeManager()));
 		setArguments(sig.getArguments());
 		hasVarArgs = sig.hasVarArgs();
 		genericCallingConvention = sig.getGenericCallingConvention();
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.program.model.data.FunctionDefinition#setArguments(ghidra.program.model.listing.ParameterDefinition[])
-	 */
 	@Override
 	public void setArguments(ParameterDefinition[] args) {
-		for (int i = 0; i < params.length; i++) {
-			params[i].getDataType().removeParent(this);
-		}
-
-		if (args.length == 1) {
-			if (args[0].getDataType() instanceof VoidDataType) {
-				args = new ParameterDefinition[0];
-			}
-		}
-
 		params = new ParameterDefinition[args.length];
 		for (int i = 0; i < args.length; i++) {
 			DataType dt = args[i].getDataType();
-			dt.addParent(this);
-			params[i] =
-				new ParameterDefinitionImpl(args[i].getName(), dt.clone(getDataTypeManager()),
-					args[i].getComment(), i);
+			params[i] = new ParameterDefinitionImpl(args[i].getName(),
+				dt.clone(getDataTypeManager()), args[i].getComment(), i);
 		}
 	}
 
-	/**
-	 * @see ghidra.program.model.data.DataType#isDynamicallySized()
-	 */
 	@Override
 	public boolean isDynamicallySized() {
 		return false;
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.program.model.data.FunctionDefinition#setReturnType(ghidra.program.model.data.DataType)
-	 */
 	@Override
 	public void setReturnType(DataType type) {
-		if (type == null || type.getLength() < 0) {
-			returnType = DataType.DEFAULT;
-		}
-		else {
-			returnType.removeParent(this);
-		}
-		returnType = type;
-		if (returnType != null) {
-			returnType.addParent(this);
-		}
+		returnType = ParameterDefinitionImpl.validateDataType(type, dataMgr, true);
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.program.model.data.FunctionDefinition#setComment(java.lang.String)
-	 */
 	@Override
 	public void setComment(String comment) {
 		this.comment = comment;
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.program.model.data.FunctionDefinition#setVarArgs(boolean)
-	 */
 	@Override
 	public void setVarArgs(boolean hasVarArgs) {
 		this.hasVarArgs = hasVarArgs;
@@ -241,41 +196,26 @@ public class FunctionDefinitionDataType extends GenericDataType implements Funct
 			getSourceArchive(), getLastChangeTime(), getLastChangeTimeInSourceArchive(), dtm);
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.program.model.data.DataType#getMnemonic(ghidra.program.model.data.Settings)
-	 */
 	@Override
 	public String getMnemonic(Settings settings) {
 		return getPrototypeString();
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.program.model.data.DataType#getLength()
-	 */
 	@Override
 	public int getLength() {
 		return -1;
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.program.model.data.DataType#getDescription()
-	 */
 	@Override
 	public String getDescription() {
 		return "Function:     " + getMnemonic(null);
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.program.model.data.DataType#getValue(ghidra.program.model.mem.MemBuffer, ghidra.program.model.lang.ProcessorContext, ghidra.program.model.data.Settings, int)
-	 */
 	@Override
 	public Object getValue(MemBuffer buf, Settings settings, int length) {
 		return null;
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.program.model.data.DataType#getRepresentation(ghidra.program.model.mem.MemBuffer, ghidra.program.model.lang.ProcessorContext, ghidra.program.model.data.Settings, int)
-	 */
 	@Override
 	public String getRepresentation(MemBuffer buf, Settings settings, int length) {
 
@@ -320,9 +260,6 @@ public class FunctionDefinitionDataType extends GenericDataType implements Funct
 		return buf.toString();
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.program.model.listing.FunctionSignature#getArguments()
-	 */
 	@Override
 	public ParameterDefinition[] getArguments() {
 		ParameterDefinition[] args = new ParameterDefinition[params.length];
@@ -330,25 +267,16 @@ public class FunctionDefinitionDataType extends GenericDataType implements Funct
 		return args;
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.program.model.listing.FunctionSignature#getReturnType()
-	 */
 	@Override
 	public DataType getReturnType() {
 		return returnType;
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.program.model.listing.FunctionSignature#getComment()
-	 */
 	@Override
 	public String getComment() {
 		return comment;
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.program.model.listing.FunctionSignature#hasVarArgs()
-	 */
 	@Override
 	public boolean hasVarArgs() {
 		return hasVarArgs;
@@ -405,30 +333,37 @@ public class FunctionDefinitionDataType extends GenericDataType implements Funct
 		return false;
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.program.model.data.DataType#dataTypeReplaced(ghidra.program.model.data.DataType, ghidra.program.model.data.DataType)
-	 */
 	@Override
 	public void dataTypeReplaced(DataType oldDt, DataType newDt) {
-		if (returnType == oldDt) {
-			oldDt.removeParent(this);
-			returnType = newDt;
-			newDt.addParent(this);
+
+		if (newDt == this) {
+			// avoid creating circular dependency
+			newDt = DataType.DEFAULT;
+		}
+		DataType retType = getReturnType();
+		if (oldDt == retType) {
+			try {
+				setReturnType(newDt);
+			}
+			catch (IllegalArgumentException e) {
+				// oldDt replaced with incompatible type - treat as removal
+				dataTypeDeleted(oldDt);
+				return;
+			}
 		}
 		for (int i = 0; i < params.length; i++) {
 			ParameterDefinition param = params[i];
 			if (param.getDataType() == oldDt) {
-				oldDt.removeParent(this);
 				try {
 					param.setDataType(newDt);
 				}
-				catch (InvalidInputException e) {
-					throw new IllegalArgumentException(e.getMessage());
+				catch (IllegalArgumentException e) {
+					// oldDt replaced with incompatible type - treat as removal
+					dataTypeDeleted(oldDt);
+					return;
 				}
-				newDt.addParent(this);
 			}
 		}
-
 	}
 
 	@Override
@@ -439,57 +374,36 @@ public class FunctionDefinitionDataType extends GenericDataType implements Funct
 			ParameterDefinition[] newParams = new ParameterDefinition[ordinal + 1];
 			System.arraycopy(params, 0, newParams, 0, params.length);
 			for (int i = params.length; i < ordinal + 1; i++) {
-				newParams[i] =
-					new ParameterDefinitionImpl(Function.DEFAULT_PARAM_PREFIX + (i + 1),
-						DataType.DEFAULT, newComment, i);
+				newParams[i] = new ParameterDefinitionImpl(Function.DEFAULT_PARAM_PREFIX + (i + 1),
+					DataType.DEFAULT, newComment, i);
 			}
 			params = newParams;
 		}
-		params[ordinal].getDataType().removeParent(this);
 		params[ordinal] = new ParameterDefinitionImpl(newName, dt, newComment, ordinal);
-		dt.addParent(this);
-
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.program.model.data.DataType#dataTypeSizeChanged(ghidra.program.model.data.DataType)
-	 */
 	@Override
 	public void dataTypeSizeChanged(DataType dt) {
+		// ignore - no affect
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.program.model.data.DataType#dataTypeDeleted(ghidra.program.model.data.DataType)
-	 */
 	@Override
 	public void dataTypeDeleted(DataType dt) {
 		if (returnType == dt) {
-			dt.removeParent(this);
-			returnType = new VoidDataType();
+			returnType = DataType.DEFAULT;
 		}
 		for (int i = 0; i < params.length; i++) {
 			if (params[i].getDataType() == dt) {
-				try {
-					params[i].setDataType(DataType.DEFAULT);
-				}
-				catch (InvalidInputException e) {
-					throw new AssertException(
-						"Setting DataType to Default should not throw this exception");
-				}
+				params[i].setDataType(DataType.DEFAULT);
 			}
 		}
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.program.model.data.DataType#dataTypeNameChanged(ghidra.program.model.data.DataType, java.lang.String)
-	 */
 	@Override
 	public void dataTypeNameChanged(DataType dt, String oldName) {
+		// ignore - no affect
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.program.model.data.DataType#dependsOn(ghidra.program.model.data.DataType)
-	 */
 	@Override
 	public boolean dependsOn(DataType dt) {
 		return false;

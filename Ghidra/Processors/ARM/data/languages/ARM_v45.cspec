@@ -1,10 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<!-- This arm cspec split from the main arm.cspec.
-     The difference is no floating point registers for
-     older arm variants (pre-v7) -->
+<!-- 
+  This arm cspec split from the main arm.cspec.
+  The difference is no floating point registers for
+  older arm variants (pre-v7) 
+-->
 
 <compiler_spec>
+  <!--
+  	Assumes Procedure Call Standard for the ARM Architecture (AAPCS) Applies.
+  -->
   <data_organization>  <!-- These tags were generated with gcc 4.2.4 -->
      <absolute_max_alignment value="0" />
      <machine_alignment value="2" />

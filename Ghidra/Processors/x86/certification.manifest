@@ -1,6 +1,4 @@
 ##VERSION: 2.0
-.classpath||GHIDRA||||END|
-.project||GHIDRA||||END|
 Module.manifest||GHIDRA||||END|
 build.gradle||GHIDRA||||END|
 data/languages/adx.sinc||GHIDRA||||END|
@@ -12,6 +10,7 @@ data/languages/bmi1.sinc||GHIDRA||||END|
 data/languages/bmi2.sinc||GHIDRA||||END|
 data/languages/cet.sinc||GHIDRA||||END|
 data/languages/clwb.sinc||GHIDRA||||END|
+data/languages/fma.sinc||GHIDRA||||END|
 data/languages/ia.sinc||GHIDRA||||END|
 data/languages/lzcnt.sinc||GHIDRA||||END|
 data/languages/mpx.sinc||GHIDRA||||END|
@@ -29,6 +28,7 @@ data/languages/rdseed.sinc||GHIDRA||||END|
 data/languages/sgx.sinc||GHIDRA||||END|
 data/languages/sha.sinc||GHIDRA||||END|
 data/languages/smx.sinc||GHIDRA||||END|
+data/languages/x86-16-real.pspec||GHIDRA||||END|
 data/languages/x86-16.cspec||GHIDRA||||END|
 data/languages/x86-16.pspec||GHIDRA||||END|
 data/languages/x86-64-gcc.cspec||GHIDRA||||END|
@@ -36,8 +36,6 @@ data/languages/x86-64-win.cspec||GHIDRA||||END|
 data/languages/x86-64.dwarf||GHIDRA||||END|
 data/languages/x86-64.pspec||GHIDRA||||END|
 data/languages/x86-64.slaspec||GHIDRA||||END|
-data/languages/x86-smm.cspec||GHIDRA||||END|
-data/languages/x86-smm.pspec||GHIDRA||||END|
 data/languages/x86.dwarf||GHIDRA||||END|
 data/languages/x86.ldefs||GHIDRA||||END|
 data/languages/x86.opinion||GHIDRA||||END|

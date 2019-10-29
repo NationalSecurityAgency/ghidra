@@ -8,3 +8,6 @@ dependencies {
 		exclude group: 'junit', module: 'junit'
 	}
 }
+
+rootProject.createJsondocs.dependsOn jar
+

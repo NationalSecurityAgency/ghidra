@@ -25,6 +25,7 @@ import org.apache.logging.log4j.Logger;
 
 import ghidra.framework.store.local.LocalFileSystem;
 import ghidra.util.exception.DuplicateNameException;
+import utilities.util.FileUtilities;
 
 /**
  * <code>UserAdmin</code> is an Application for generating administrative 
@@ -205,33 +206,15 @@ public class UserAdmin {
 		log.info("Processing " + files.length + " queued commands");
 
 		for (File file : files) {
-			ArrayList<String> cmdList = readCommands(file);
-			Iterator<String> it = cmdList.iterator();
-			while (it.hasNext()) {
-				processCommand(repositoryMgr, it.next());
+			List<String> cmdList = FileUtilities.getLines(file);
+			for (String cmdStr : cmdList) {
+				if (cmdStr.isBlank()) {
+					continue;
+				}
+				processCommand(repositoryMgr, cmdStr.trim());
 			}
 			file.delete();
 		}
-	}
-
-	/**
-	 * Read all command strings contained within a file.
-	 * @param cmdFile command file
-	 * @return list of command strings
-	 * @throws IOException
-	 */
-	private static ArrayList<String> readCommands(File cmdFile) throws IOException {
-		ArrayList<String> cmdList = new ArrayList<>();
-		BufferedReader rdr = new BufferedReader(new FileReader(cmdFile));
-		String cmd;
-		while ((cmd = rdr.readLine()) != null) {
-			if (cmd.length() == 0) {
-				continue;
-			}
-			cmdList.add(cmd.trim());
-		}
-		rdr.close();
-		return cmdList;
 	}
 
 	/**

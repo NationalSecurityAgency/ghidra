@@ -22,8 +22,10 @@ import java.awt.event.ItemListener;
 import javax.swing.*;
 
 import docking.widgets.EmptyBorderButton;
+import docking.widgets.button.GRadioButton;
 import docking.widgets.fieldpanel.FieldPanel;
 import docking.widgets.fieldpanel.internal.FieldPanelCoordinator;
+import docking.widgets.label.GIconLabel;
 import ghidra.app.merge.MergeConstants;
 import ghidra.app.merge.MergeManager;
 import ghidra.app.merge.util.ConflictCountPanel;
@@ -223,19 +225,19 @@ class ExternalAddConflictPanel extends JPanel implements CodeFormatService {
 			}
 		};
 
-		keepLatestRB = new JRadioButton(MergeConstants.LATEST_TITLE);
+		keepLatestRB = new GRadioButton(MergeConstants.LATEST_TITLE);
 		keepLatestRB.setName(KEEP_LATEST_BUTTON_NAME);
 		keepLatestRB.addItemListener(listener);
 
-		keepMyRB = new JRadioButton(MergeConstants.MY_TITLE);
+		keepMyRB = new GRadioButton(MergeConstants.MY_TITLE);
 		keepMyRB.setName(KEEP_MY_BUTTON_NAME);
 		keepMyRB.addItemListener(listener);
 
-		keepBothRB = new JRadioButton("Both");
+		keepBothRB = new GRadioButton("Both");
 		keepBothRB.setName(KEEP_BOTH_BUTTON_NAME);
 		keepBothRB.addItemListener(listener);
 
-		mergeBothRB = new JRadioButton("Merge");
+		mergeBothRB = new GRadioButton("Merge");
 		mergeBothRB.setName(MERGE_BOTH_BUTTON_NAME);
 		mergeBothRB.addItemListener(listener);
 
@@ -253,7 +255,7 @@ class ExternalAddConflictPanel extends JPanel implements CodeFormatService {
 		myTitlePanel = new TitledPanel(MergeConstants.MY_TITLE, myPanel, 5);
 
 		latestTitlePanel.addTitleComponent(new ShowHeaderButton());
-		myTitlePanel.addTitleComponent(new JLabel(new EmptyIcon(22, 22)));
+		myTitlePanel.addTitleComponent(new GIconLabel(new EmptyIcon(22, 22)));
 
 		JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
 		splitPane.setResizeWeight(0.5);

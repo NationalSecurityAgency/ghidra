@@ -41,12 +41,12 @@ import ghidra.util.exception.DuplicateNameException;
 public class ConstantPoolUtf8Info extends AbstractConstantPoolInfoJava {
 
 	private short length;
-	private byte [] bytes;
+	private byte[] bytes;
 
-	public ConstantPoolUtf8Info( BinaryReader reader ) throws IOException {
-		super( reader );
+	public ConstantPoolUtf8Info(BinaryReader reader) throws IOException {
+		super(reader);
 		length = reader.readNextShort();
-		bytes = reader.readNextByteArray( length );
+		bytes = reader.readNextByteArray(getLength());
 	}
 
 	/**
@@ -55,8 +55,8 @@ public class ConstantPoolUtf8Info extends AbstractConstantPoolInfoJava {
 	 * structure are not null-terminated.
 	 * @return the number of bytes in the bytes array
 	 */
-	public short getLength() {
-		return length;
+	public int getLength() {
+		return length & 0xffff;
 	}
 
 	/**
@@ -65,7 +65,7 @@ public class ConstantPoolUtf8Info extends AbstractConstantPoolInfoJava {
 	 * range (byte)0xf0 - (byte)0xff.
 	 * @return the bytes of the string
 	 */
-	public byte [] getBytes() {
+	public byte[] getBytes() {
 		return bytes;
 	}
 
@@ -75,7 +75,7 @@ public class ConstantPoolUtf8Info extends AbstractConstantPoolInfoJava {
 	 * @return the byte array translated into a string
 	 */
 	public String getString() {
-		return new String( bytes );
+		return new String(bytes);
 	}
 
 	@Override
@@ -86,10 +86,10 @@ public class ConstantPoolUtf8Info extends AbstractConstantPoolInfoJava {
 	@Override
 	public DataType toDataType() throws DuplicateNameException, IOException {
 		String name = "CONSTANT_Utf8_info" + "|" + length + "|";
-		Structure structure = new StructureDataType( name, 0 );
-		structure.add( BYTE, "tag", null );
-		structure.add( WORD, "length", null );
-		if ( length > 0 ) {
+		Structure structure = new StructureDataType(name, 0);
+		structure.add(BYTE, "tag", null);
+		structure.add(WORD, "length", null);
+		if (length > 0) {
 			structure.add(UTF8, length, "data", null);
 		}
 		return structure;

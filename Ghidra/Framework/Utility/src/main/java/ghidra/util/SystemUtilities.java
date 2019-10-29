@@ -17,12 +17,10 @@ package ghidra.util;
 
 import java.awt.Font;
 import java.io.*;
-import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
 import java.net.URLDecoder;
 import java.text.SimpleDateFormat;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
 import javax.swing.SwingUtilities;
@@ -36,9 +34,6 @@ import utilities.util.reflection.ReflectionUtilities;
  * static.
  */
 public class SystemUtilities {
-
-	private static final String SWING_RUN_ERROR_MSG =
-		"Unexpected exception running a task in the Swing Thread:  ";
 
 	private final static String DATE_TIME_FORMAT = "MMM d yyyy HH:mm:ss";
 
@@ -245,9 +240,7 @@ public class SystemUtilities {
 	 * @see #runSwingNow(Runnable)
 	 */
 	public static <T> T runSwingNow(Supplier<T> s) {
-		AtomicReference<T> ref = new AtomicReference<>();
-		runSwingNow(() -> ref.set(s.get()));
-		return ref.get();
+		return Swing.runNow(s);
 	}
 
 	/**
@@ -257,7 +250,7 @@ public class SystemUtilities {
 	 * @see #runSwingNow(Supplier) if you need to return a value from the Swing thread.
 	 */
 	public static void runSwingNow(Runnable r) {
-		runSwing(r, true, SWING_RUN_ERROR_MSG);
+		Swing.runNow(r);
 	}
 
 	/**
@@ -267,48 +260,11 @@ public class SystemUtilities {
 	 * @param r the runnable
 	 */
 	public static void runSwingLater(Runnable r) {
-		runSwing(r, false, SWING_RUN_ERROR_MSG);
+		Swing.runLater(r);
 	}
 
 	public static void runIfSwingOrPostSwingLater(Runnable r) {
-		if (isInHeadlessMode()) {
-			r.run();
-			return;
-		}
-
-		if (SwingUtilities.isEventDispatchThread()) {
-			r.run();
-		}
-		else {
-			SwingUtilities.invokeLater(r);
-		}
-	}
-
-	private static void runSwing(Runnable r, boolean wait, String errorMessage) {
-		if (isInHeadlessMode()) {
-			r.run();
-			return;
-		}
-
-		if (wait) {
-			if (SwingUtilities.isEventDispatchThread()) {
-				r.run();
-				return;
-			}
-			try {
-				SwingUtilities.invokeAndWait(r);
-			}
-			catch (InterruptedException e) {
-				// we sometimes interrupt our tasks intentionally, so don't report it
-			}
-			catch (InvocationTargetException e) {
-				Msg.error(SystemUtilities.class,
-					errorMessage + "\nException Message: " + e.getMessage(), e);
-			}
-		}
-		else {
-			SwingUtilities.invokeLater(r);
-		}
+		Swing.runIfSwingOrRunLater(r);
 	}
 
 	/**
@@ -339,23 +295,6 @@ public class SystemUtilities {
 	 */
 	public static boolean isEqual(Object o1, Object o2) {
 		return Objects.equals(o1, o2);
-	}
-
-	/**
-	 * Returns true if the given element is equals to one of the provided elements.
-	 *
-	 * @param o the element to test
-	 * @param others the potential matches
-	 * @return true if the given element is equals to one of the provided elements.
-	 */
-	@SafeVarargs // we are not using the provided type, so there is no pollution
-	public static <T> boolean isOneOf(T o, T... others) {
-		for (T t : others) {
-			if (o.equals(t)) {
-				return true;
-			}
-		}
-		return false;
 	}
 
 	public static <T extends Comparable<T>> int compareTo(T c1, T c2) {
@@ -483,25 +422,7 @@ public class SystemUtilities {
 	 * @return  true if this is the event dispatch thread -OR- is in headless mode.
 	 */
 	public static boolean isEventDispatchThread() {
-		if (isInHeadlessMode()) {
-			return true;
-		}
-
-		// Note: just calling this method may trigger the AWT thread to get created
-		return SwingUtilities.isEventDispatchThread();
-	}
-
-	/**
-	 * Wait until AWT event queue (Swing) has been flushed and no more (to a point) events
-	 * are pending.
-	 */
-	public static void allowSwingToProcessEvents() {
-		Runnable r = () -> {
-			// do nothing...this is just a placeholder runnable that gets put onto the stack
-		};
-		runSwingNow(r);
-		runSwingNow(r);
-		runSwingNow(r);
+		return Swing.isSwingThread();
 	}
 
 	/**

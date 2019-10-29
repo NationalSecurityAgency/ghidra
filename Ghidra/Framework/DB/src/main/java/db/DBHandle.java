@@ -390,7 +390,7 @@ public class DBHandle {
 	/**
 	 * Returns true if transaction is currently active
 	 */
-	protected boolean isTransactionActive() {
+	public boolean isTransactionActive() {
 		return txStarted;
 	}
 
@@ -605,8 +605,9 @@ public class DBHandle {
 
 //TODO: Does not throw ReadOnlyException - should it?
 
-		if (txStarted)
+		if (txStarted) {
 			throw new AssertException("Can't save during transaction");
+		}
 
 		long txId = startTransaction();
 		try {
@@ -634,8 +635,9 @@ public class DBHandle {
 	public synchronized void saveAs(BufferFile outFile, boolean associateWithNewFile,
 			TaskMonitor monitor) throws IOException, CancelledException {
 
-		if (txStarted)
+		if (txStarted) {
 			throw new AssertException("Can't save during transaction");
+		}
 
 		long txId = startTransaction();
 		boolean addedTx = false;
@@ -675,8 +677,9 @@ public class DBHandle {
 	protected synchronized void saveAs(BufferFile outFile, Long newDatabaseId, TaskMonitor monitor)
 			throws IOException, CancelledException {
 
-		if (txStarted)
+		if (txStarted) {
 			throw new IllegalStateException("Can't save during transaction");
+		}
 
 		long txId = startTransaction();
 		try {
@@ -735,13 +738,29 @@ public class DBHandle {
 	 * This method may only be invoked while a database transaction 
 	 * is in progress. A database transaction must also be in progress
 	 * when invoking the various put, delete and setSize methods on the returned buffer.
-	 * @param length
-	 * @return Buffer
+	 * @param length the size of the buffer to create
+	 * @return Buffer the newly created buffer
 	 * @throws IOException if an I/O error occurs while creating the buffer.
 	 */
 	public DBBuffer createBuffer(int length) throws IOException {
 		checkTransaction();
-		return new DBBuffer(this, new ChainedBuffer(length, bufferMgr));
+		return new DBBuffer(this, new ChainedBuffer(length, true, bufferMgr));
+	}
+
+	/**
+	 * Create a new buffer that layers on top of another buffer.  This buffer
+	 * will return values from the shadowBuffer unless they have been changed in this buffer.
+	 * This method may only be invoked while a database transaction 
+	 * is in progress. A database transaction must also be in progress
+	 * when invoking the various put, delete and setSize methods on the returned buffer.
+	 * @param shadowBuffer the source of the byte values to use unless they have been changed.
+	 * @return Buffer the newly created buffer
+	 * @throws IOException if an I/O error occurs while creating the buffer.
+	 */
+	public DBBuffer createBuffer(DBBuffer shadowBuffer) throws IOException {
+		checkTransaction();
+		return new DBBuffer(this,
+			new ChainedBuffer(shadowBuffer.length(), true, shadowBuffer.buf, 0, bufferMgr));
 	}
 
 	/**
@@ -749,11 +768,26 @@ public class DBHandle {
 	 * providing an improper id.  A database transaction must be in progress
 	 * when invoking the various put, delete and setSize methods on the returned buffer.
 	 * @param id the buffer id.
-	 * @return Buffer
+	 * @return Buffer the buffer associated with the given id.
 	 * @throws IOException if an I/O error occurs while getting the buffer.
 	 */
 	public DBBuffer getBuffer(int id) throws IOException {
 		return new DBBuffer(this, new ChainedBuffer(bufferMgr, id));
+	}
+
+	/**
+	 * Get an existing buffer that uses a shadowBuffer for byte values if they haven't been
+	 * explicitly changed in this buffer.  This method should be used with care to avoid 
+	 * providing an improper id.  A database transaction must be in progress
+	 * when invoking the various put, delete and setSize methods on the returned buffer.
+	 * @param id the buffer id.
+	 * @param shadowBuffer the buffer to use for byte values if they haven't been changed in 
+	 * this buffer.
+	 * @return Buffer the buffer associated with the given id.
+	 * @throws IOException if an I/O error occurs while getting the buffer.
+	 */
+	public DBBuffer getBuffer(int id, DBBuffer shadowBuffer) throws IOException {
+		return new DBBuffer(this, new ChainedBuffer(bufferMgr, id, shadowBuffer.buf, 0));
 	}
 
 	/**
@@ -777,15 +811,15 @@ public class DBHandle {
 
 		tables = new Hashtable<>();
 		TableRecord[] tableRecords = masterTable.getTableRecords();
-		for (int i = 0; i < tableRecords.length; i++) {
+		for (TableRecord tableRecord : tableRecords) {
 
 			// Process each primary tables
-			if (tableRecords[i].getIndexedColumn() < 0) {
-				Table table = new Table(this, tableRecords[i]);
+			if (tableRecord.getIndexedColumn() < 0) {
+				Table table = new Table(this, tableRecord);
 				tables.put(table.getName(), table);
 			}
 			else {	//secondary table indexes
-				IndexTable.getIndexTable(this, tableRecords[i]);
+				IndexTable.getIndexTable(this, tableRecord);
 			}
 		}
 	}
@@ -801,16 +835,16 @@ public class DBHandle {
 		Hashtable<String, Table> oldTables = tables;
 		tables = new Hashtable<>();
 		TableRecord[] tableRecords = masterTable.refreshTableRecords();
-		for (int i = 0; i < tableRecords.length; i++) {
+		for (TableRecord tableRecord : tableRecords) {
 
-			String tableName = tableRecords[i].getName();
+			String tableName = tableRecord.getName();
 
 			// Process each primary tables
-			if (tableRecords[i].getIndexedColumn() < 0) {
+			if (tableRecord.getIndexedColumn() < 0) {
 				Table t = oldTables.get(tableName);
 				if (t == null || t.isInvalid()) {
 					oldTables.remove(tableName);
-					t = new Table(this, tableRecords[i]);
+					t = new Table(this, tableRecord);
 					tableAdded(t);
 				}
 				tables.put(tableName, t);
@@ -818,7 +852,7 @@ public class DBHandle {
 
 			// secondary table indexes
 			else if (!oldTables.containsKey(tableName)) {
-				IndexTable.getIndexTable(this, tableRecords[i]);
+				IndexTable.getIndexTable(this, tableRecord);
 			}
 		}
 		dbRestored();
@@ -852,8 +886,9 @@ public class DBHandle {
 	 */
 	public synchronized Table createTable(String name, Schema schema) throws IOException {
 
-		if (tables.containsKey(name))
+		if (tables.containsKey(name)) {
 			throw new IOException("Table already exists");
+		}
 		Table table = new Table(this, masterTable.createTableRecord(name, schema, -1));
 		tables.put(name, table);
 		tableAdded(table);
@@ -867,12 +902,13 @@ public class DBHandle {
 	public synchronized Table createTable(String name, Schema schema, int[] indexedColumns)
 			throws IOException {
 
-		if (tables.containsKey(name))
+		if (tables.containsKey(name)) {
 			throw new IOException("Table already exists");
+		}
 		Table table = new Table(this, masterTable.createTableRecord(name, schema, -1));
 		tables.put(name, table);
-		for (int i = 0; i < indexedColumns.length; i++) {
-			IndexTable.createIndexTable(table, indexedColumns[i]);
+		for (int indexedColumn : indexedColumns) {
+			IndexTable.createIndexTable(table, indexedColumn);
 		}
 		tableAdded(table);
 		return table;
@@ -890,8 +926,9 @@ public class DBHandle {
 			return false;
 		}
 		checkTransaction();
-		if (tables.containsKey(newName))
+		if (tables.containsKey(newName)) {
 			throw new DuplicateNameException("Table already exists");
+		}
 		Table table = tables.remove(oldName);
 		if (table == null) {
 			return false;
@@ -908,11 +945,12 @@ public class DBHandle {
 	 */
 	public synchronized void deleteTable(String name) throws IOException {
 		Table table = tables.get(name);
-		if (table == null)
+		if (table == null) {
 			return;
+		}
 		int[] indexedColumns = table.getIndexedColumns();
-		for (int i = 0; i < indexedColumns.length; i++) {
-			table.removeIndex(indexedColumns[i]);
+		for (int indexedColumn : indexedColumns) {
+			table.removeIndex(indexedColumn);
 		}
 		table.deleteAll();
 		masterTable.deleteTableRecord(table.getTableNum());

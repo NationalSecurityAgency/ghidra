@@ -50,9 +50,9 @@ import ghidra.program.model.mem.*;
 import ghidra.program.model.symbol.*;
 import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.program.util.*;
+import ghidra.util.Msg;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
-import ghidra.util.task.TaskMonitorAdapter;
 
 /**
  * Test the merge of the versioned program's listing.
@@ -79,7 +79,7 @@ public abstract class AbstractListingMergeManagerTest extends AbstractMergeTest
 
 	protected AddressFactory resultAddressFactory;
 	protected ListingMergeManager listingMergeMgr;
-	protected TaskMonitor monitor = TaskMonitorAdapter.DUMMY_MONITOR;
+	protected TaskMonitor monitor = TaskMonitor.DUMMY;
 
 	protected Instruction createInstruction(Program program, Address atAddress) {
 
@@ -274,7 +274,7 @@ public abstract class AbstractListingMergeManagerTest extends AbstractMergeTest
 		AddressSetView diffs;
 		try {
 			diffs = diff.getDifferences(new ProgramDiffFilter(ProgramDiffFilter.CODE_UNIT_DIFFS),
-				TaskMonitorAdapter.DUMMY_MONITOR);
+				TaskMonitor.DUMMY);
 			assertTrue("Not same code units at " + diffs.toString(), diffs.isEmpty());
 		}
 		catch (CancelledException e) {
@@ -286,9 +286,8 @@ public abstract class AbstractListingMergeManagerTest extends AbstractMergeTest
 			throws ProgramConflictException {
 		ProgramDiff diff = new ProgramDiff(p1, p2, addrs);
 		try {
-			AddressSetView diffs =
-				diff.getDifferences(new ProgramDiffFilter(ProgramDiffFilter.BYTE_DIFFS),
-					TaskMonitorAdapter.DUMMY_MONITOR);
+			AddressSetView diffs = diff.getDifferences(
+				new ProgramDiffFilter(ProgramDiffFilter.BYTE_DIFFS), TaskMonitor.DUMMY);
 			assertTrue("Not same bytes at " + diffs.toString(), diffs.isEmpty());
 		}
 		catch (CancelledException e) {
@@ -416,7 +415,8 @@ public abstract class AbstractListingMergeManagerTest extends AbstractMergeTest
 
 	/**
 	 * Starts the merge and sets "window" to the merge dialog.
-	 * @decision the conflict decision
+	 * @param decision the conflict decision
+	 * @param waitForVisibleWindow true to wait
 	 * @throws Exception if the sleep for the automatic merge was interrupted.
 	 */
 	protected void executeMerge(int decision, boolean waitForVisibleWindow) throws Exception {
@@ -439,7 +439,7 @@ public abstract class AbstractListingMergeManagerTest extends AbstractMergeTest
 		Thread t = new Thread((Runnable) () -> {
 			try {
 				startLatch.countDown();
-				mergeMgr.merge(TaskMonitorAdapter.DUMMY_MONITOR);
+				mergeMgr.merge(TaskMonitor.DUMMY);
 				endLatch.countDown();
 			}
 			catch (CancelledException e1) {
@@ -730,6 +730,11 @@ public abstract class AbstractListingMergeManagerTest extends AbstractMergeTest
 		Component mergePanel = getMergePanel(conflictPanelClass);
 		assertNotNull("Timed-out waiting for merge panel", mergePanel);
 		Window window = SwingUtilities.getWindowAncestor(mergePanel);
+		if (window == null) {
+			Msg.debug(this, "Unable to find conflict panel window for '" + conflictTitle + "'");
+			printOpenWindows();
+		}
+		assertNotNull("Timed-out waiting for merge panel", window);
 		JComponent comp = findComponent(window, conflictPanelClass);
 		assertNotNull(comp);
 		Border border = comp.getBorder();
@@ -1161,7 +1166,7 @@ public abstract class AbstractListingMergeManagerTest extends AbstractMergeTest
 
 	/**
 	 * Checks for the indicated bookmark in the Result program.
-	 * @param addr indicates the address of the bookmark.
+	 * @param address indicates the address of the bookmark.
 	 * @param type the bookmark type.
 	 * @param category the bookmark category.
 	 * @param comment the expected comment.
@@ -1609,8 +1614,8 @@ public abstract class AbstractListingMergeManagerTest extends AbstractMergeTest
 	}
 
 	protected void disassemble(Program pgm, AddressSetView addrSet) {
-		Disassembler disassembler = Disassembler.getDisassembler(pgm,
-			TaskMonitorAdapter.DUMMY_MONITOR, DisassemblerMessageListener.IGNORE);
+		Disassembler disassembler = Disassembler.getDisassembler(pgm, TaskMonitor.DUMMY,
+			DisassemblerMessageListener.IGNORE);
 		disassembler.disassemble(addrSet.getMinAddress(), addrSet, false);
 	}
 
@@ -1618,13 +1623,13 @@ public abstract class AbstractListingMergeManagerTest extends AbstractMergeTest
 		// 0100194b		FUN_0100194b	body:100194b-1001977
 		// 01001978		FUN_01001978	body:1001978-1001ae2
 		// 01001ae3		FUN_01001ae3	body:1001ae3-100219b
-	
+
 		// 01002950		FUN_01002950	body:1002950-100299d
 		// 0100299e		FUN_0100299e	body:100299e-1002a90
 		// 01002a91		FUN_01002a91	body:1002a91-1002b43
-	
+
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
-	
+
 			/* (non-Javadoc)
 			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
 			 */
@@ -1636,18 +1641,18 @@ public abstract class AbstractListingMergeManagerTest extends AbstractMergeTest
 					AddressSet body1001979 =
 						new AddressSet(addr(program, "0x1001979"), addr(program, "0x100199a"));
 					createFunction(program, "0x1001979", "FUN_01001979", body1001979);
-	
+
 					AddressSet body10029a1 =
 						new AddressSet(addr(program, "0x10029a1"), addr(program, "0x10029ca"));
 					createFunction(program, "0x10029a1", "FUN_010029a1", body10029a1);
-	
+
 					commit = true;
 				}
 				finally {
 					program.endTransaction(txId, commit);
 				}
 			}
-	
+
 			/* (non-Javadoc)
 			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
 			 */
@@ -1659,11 +1664,11 @@ public abstract class AbstractListingMergeManagerTest extends AbstractMergeTest
 					AddressSet body1001984 =
 						new AddressSet(addr(program, "0x1001984"), addr(program, "0x100198a"));
 					createFunction(program, "0x1001984", "FUN_01001984", body1001984);
-	
+
 					AddressSet body10029bc =
 						new AddressSet(addr(program, "0x10029bc"), addr(program, "0x10029d3"));
 					createFunction(program, "0x10029bc", "FUN_010029bc", body10029bc);
-	
+
 					commit = true;
 				}
 				finally {
@@ -1675,7 +1680,7 @@ public abstract class AbstractListingMergeManagerTest extends AbstractMergeTest
 
 	protected void setupRemoveConflictUseForAll() throws Exception {
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
-	
+
 			/* (non-Javadoc)
 			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
 			 */
@@ -1692,7 +1697,7 @@ public abstract class AbstractListingMergeManagerTest extends AbstractMergeTest
 					program.endTransaction(txId, commit);
 				}
 			}
-	
+
 			/* (non-Javadoc)
 			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
 			 */

@@ -72,6 +72,14 @@ public class DecompilerManager {
 	}
 
 	/**
+	 * Resets the native decompiler process.  Call this method when the decompiler's view
+	 * of a program has been invalidated, such as when a new overlay space has been added.
+	 */
+	public void resetDecompiler() {
+		decompiler.resetDecompiler();
+	}
+
+	/**
 	 * Requests a new decompile be scheduled.  If a current decompile is already in progress,
 	 * the new request is checked to see if represents the same function. If so, only the
 	 * location of the current decompile is updated and the current decompile is allowed to continue.

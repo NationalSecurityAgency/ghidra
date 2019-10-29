@@ -55,8 +55,8 @@ public class SubLibraryCommand extends LoadCommand {
 		sub_library = LoadCommandString.createLoadCommandString(reader, this);
 	}
 
-	public String getSubLibraryName() {
-		return sub_library.getString();
+	public LoadCommandString getSubLibraryName() {
+		return sub_library;
 	}
 
 	@Override

@@ -100,7 +100,7 @@ public class CreateExternalFunctionCmd implements Command {
 			return createExternalFunction(program);
 		}
 
-		if (!extSymbol.isExternal() || extSymbol.getSymbolType() != SymbolType.CODE) {
+		if (!extSymbol.isExternal() || extSymbol.getSymbolType() != SymbolType.LABEL) {
 			// status = "Invalid symbol specified";
 			return false;
 		}

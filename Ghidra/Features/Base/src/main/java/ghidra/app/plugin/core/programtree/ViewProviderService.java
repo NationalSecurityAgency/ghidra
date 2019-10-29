@@ -15,14 +15,14 @@
  */
 package ghidra.app.plugin.core.programtree;
 
-import ghidra.app.services.ViewService;
-import ghidra.framework.plugintool.ServiceInfo;
-
 import java.awt.event.MouseEvent;
 
 import javax.swing.JComponent;
 
+import docking.ActionContext;
 import docking.action.DockingAction;
+import ghidra.app.services.ViewService;
+import ghidra.framework.plugintool.ServiceInfo;
 
 /**
  * Define methods for notification of which service becomes active;
@@ -30,55 +30,62 @@ import docking.action.DockingAction;
  */
 @ServiceInfo(description = "Provide a view that is managed by the ViewManagerService")
 public interface ViewProviderService extends ViewService {
-	
-    /**
-     * Get the viewer component.
-     */
-    public JComponent getViewComponent();
 
-    /**
-     * Get the name of this view.
-     */
-    public String getViewName();
+	/**
+	 * Get the viewer component.
+	 */
+	public JComponent getViewComponent();
 
-    /**
-     * Set whether or not the component that is showing has focus.
+	/**
+	 * Get the name of this view.
+	 */
+	public String getViewName();
+
+	/**
+	 * Set whether or not the component that is showing has focus.
 	 * @param hasFocus true if the component has focus
-     */
-    public void setHasFocus(boolean hasFocus);
+	 */
+	public void setHasFocus(boolean hasFocus);
 
-    /**
-     * Return the object under the mouse location for the popup
-     * @param event mouse event generated when the right mouse button is pressed
-     */ 
-    public Object getActivePopupObject(MouseEvent event);
-    
-    /**
-     * Get the actions that would go on a tool bar.
-     */
-    public DockingAction[] getToolBarActions();
-    
-    /**
-     * Notification that this view is closed.
-     * @return true if the view can be closed
-     */
-    public boolean viewClosed();
+	/**
+	 * Return the object under the mouse location for the popup
+	 * @param event mouse event generated when the right mouse button is pressed
+	 */
+	public Object getActivePopupObject(MouseEvent event);
+
+	/**
+	 * Returns the current action context for this view service
+	 * @param event the mouse event
+	 * @return the context
+	 */
+	public ActionContext getActionContext(MouseEvent event);
+
+	/**
+	 * Get the actions that would go on a tool bar.
+	 */
+	public DockingAction[] getToolBarActions();
+
+	/**
+	 * Notification that this view is closed.
+	 * @return true if the view can be closed
+	 */
+	public boolean viewClosed();
 
 	/**
 	 * Notification that this view should be deleted
 	 * @return true if the view can be deleted
 	 */
 	public boolean viewDeleted();
-	
+
 	/**
 	 * Notification that this view should be renamed to newName.
 	 * @return true if the rename is allowed
 	 */
 	public boolean viewRenamed(String newName);
-	
+
 	/**
 	 * Returns the context for the current selection.
 	 */
 	public Object getActiveObject();
-	
+
 }

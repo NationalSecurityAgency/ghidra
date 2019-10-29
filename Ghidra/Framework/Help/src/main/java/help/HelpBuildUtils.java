@@ -25,6 +25,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import help.validator.location.*;
+import resources.IconProvider;
 import resources.Icons;
 
 public class HelpBuildUtils {
@@ -536,6 +537,7 @@ public class HelpBuildUtils {
 	 * locate files based upon relative references, specialized help system references (i.e., 
 	 * help/topics/...),  and absolute URLs.
 	 * 
+	 * @param sourceFile the source file path of the image reference
 	 * @param ref the reference text
 	 * @return an absolute path; null if the URI is remote
 	 * @throws URISyntaxException 
@@ -544,15 +546,21 @@ public class HelpBuildUtils {
 			throws URISyntaxException {
 
 		if (Icons.isIconsReference(ref)) {
+
 			// help system syntax: <img src="Icons.ERROR_ICON" />
-			URL url = Icons.getUrlForIconsReference(ref);
-			if (url == null) {
+			IconProvider iconProvider = Icons.getIconForIconsReference(ref);
+			if (iconProvider == null || iconProvider.isInvalid()) {
 				// bad icon name
 				return ImageLocation.createInvalidRuntimeLocation(sourceFile, ref);
 			}
 
-			URI resolved = url.toURI();
-			Path path = toPath(resolved);
+			URL url = iconProvider.getUrl();
+			URI resolved = null;
+			Path path = null;
+			if (url != null) { // we may have an icon with an invalid URL (e.g., a MultiIcon)
+				resolved = url.toURI();
+				path = toPath(resolved);
+			}
 			return ImageLocation.createRuntimeLocation(sourceFile, ref, resolved, path);
 		}
 

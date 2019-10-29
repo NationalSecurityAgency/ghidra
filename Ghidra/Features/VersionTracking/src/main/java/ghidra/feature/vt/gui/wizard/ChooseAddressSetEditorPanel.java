@@ -15,22 +15,23 @@
  */
 package ghidra.feature.vt.gui.wizard;
 
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.util.*;
+
+import javax.swing.*;
+import javax.swing.event.*;
+
+import docking.widgets.button.GRadioButton;
+import docking.widgets.label.GLabel;
+import docking.widgets.list.GList;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Program;
 import ghidra.util.layout.MiddleLayout;
 import ghidra.util.layout.VerticalLayout;
-
-import java.awt.BorderLayout;
-import java.awt.Component;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.util.HashSet;
-import java.util.List;
-
-import javax.swing.*;
-import javax.swing.event.*;
-
 import resources.ResourceManager;
 
 public class ChooseAddressSetEditorPanel extends JPanel {
@@ -60,12 +61,13 @@ public class ChooseAddressSetEditorPanel extends JPanel {
 	private JButton removeRangeButton;
 	private JPanel bottomButtons;
 	private AddressSetListModel listModel;
-	private JList list;
-	private HashSet<ChangeListener> listeners = new HashSet<ChangeListener>();
+	private GList<AddressRange> list;
+	private Set<ChangeListener> listeners = new HashSet<>();
 
 	public ChooseAddressSetEditorPanel(final PluginTool tool, final String name,
 			final Program program, final AddressSetView selectionAddressSet,
-			final AddressSetView myInitialAddressSet, final AddressSetChoice initialAddressSetChoice) {
+			final AddressSetView myInitialAddressSet,
+			final AddressSetChoice initialAddressSetChoice) {
 
 		super(new BorderLayout());
 		// Establish the initial state from the parameters.
@@ -78,9 +80,8 @@ public class ChooseAddressSetEditorPanel extends JPanel {
 			hasSelection = true;
 		}
 		this.myInitialAddressSet = new AddressSet(myInitialAddressSet);
-		this.initialAddressSetChoice =
-			(initialAddressSetChoice != null) ? initialAddressSetChoice
-					: (hasSelection ? AddressSetChoice.SELECTION : AddressSetChoice.ENTIRE_PROGRAM);
+		this.initialAddressSetChoice = (initialAddressSetChoice != null) ? initialAddressSetChoice
+				: (hasSelection ? AddressSetChoice.SELECTION : AddressSetChoice.ENTIRE_PROGRAM);
 
 		if (myInitialAddressSet != null && !myInitialAddressSet.isEmpty()) {
 			myCurrentAddressSet = new AddressSet(myInitialAddressSet);
@@ -119,15 +120,15 @@ public class ChooseAddressSetEditorPanel extends JPanel {
 		JPanel chooseSourcePanel = new JPanel(new VerticalLayout(5));
 
 		ButtonGroup originGroup = new ButtonGroup();
-		entireProgramButton = new JRadioButton("Use Entire " + name + " Program", false);
-		toolSelectionButton = new JRadioButton("Use " + name + " Tool's Selection", false);
-		myRangesButton = new JRadioButton("Specify My Own Address Ranges", false);
+		entireProgramButton = new GRadioButton("Use Entire " + name + " Program", false);
+		toolSelectionButton = new GRadioButton("Use " + name + " Tool's Selection", false);
+		myRangesButton = new GRadioButton("Specify My Own Address Ranges", false);
 		originGroup.add(entireProgramButton);
 		originGroup.add(toolSelectionButton);
 		originGroup.add(myRangesButton);
 
-		entireProgramButton.setToolTipText("Don't limit the address ranges. Use all addresses in the " +
-			name + " program.");
+		entireProgramButton.setToolTipText(
+			"Don't limit the address ranges. Use all addresses in the " + name + " program.");
 		toolSelectionButton.setToolTipText("Limit the address ranges from the " + name +
 			" program to those that are selected in the " + name + " Tool.");
 		myRangesButton.setToolTipText("Limit the address ranges from the " + name +
@@ -230,11 +231,11 @@ public class ChooseAddressSetEditorPanel extends JPanel {
 		buttonPanel.add(addRangeButton);
 		buttonPanel.add(subtractRangeButton);
 		JPanel headerPanel = new JPanel(new BorderLayout());
-		headerPanel.add(new JLabel("Address Ranges:"), BorderLayout.WEST);
+		headerPanel.add(new GLabel("Address Ranges:"), BorderLayout.WEST);
 		headerPanel.add(buttonPanel, BorderLayout.EAST);
 
 		listModel = new AddressSetListModel(myCurrentAddressSet.toList());
-		list = new JList(listModel);
+		list = new GList<>(listModel);
 		list.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 		list.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
 			@Override

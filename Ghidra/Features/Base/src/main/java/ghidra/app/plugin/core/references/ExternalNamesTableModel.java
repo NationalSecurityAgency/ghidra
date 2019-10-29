@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +15,12 @@
  */
 package ghidra.app.plugin.core.references;
 
+import java.awt.Window;
+import java.util.*;
+
+import org.apache.commons.lang3.StringUtils;
+
+import docking.widgets.table.AbstractSortedTableModel;
 import ghidra.app.cmd.refs.UpdateExternalNameCmd;
 import ghidra.framework.cmd.Command;
 import ghidra.framework.plugintool.PluginTool;
@@ -25,57 +30,40 @@ import ghidra.program.model.symbol.ExternalManager;
 import ghidra.program.model.symbol.SourceType;
 import ghidra.util.Msg;
 
-import java.awt.Window;
-import java.util.*;
-
-import javax.swing.table.AbstractTableModel;
-
-/**
- * TableModel for the external program names and corresponding ghidra path names.
- */
-class ExternalNamesTableModel extends AbstractTableModel {
+public class ExternalNamesTableModel extends AbstractSortedTableModel<ExternalPath> {
 
 	final static int NAME_COL = 0;
 	final static int PATH_COL = 1;
 	final static String EXTERNAL_NAME = "Name";
 	final static String PATH_NAME = "Ghidra Program";
+	private final List<String> columns = List.of(EXTERNAL_NAME, PATH_NAME);
 
-	private final String[] columnNames = { EXTERNAL_NAME, PATH_NAME };
-
-	private List<String> nameList = new ArrayList<String>();
-	private List<String> pathNameList = new ArrayList<String>();
-	private Program program;
 	private PluginTool tool;
+	private Program program;
+	private List<ExternalPath> paths = new ArrayList<>();
 
 	public ExternalNamesTableModel(PluginTool tool) {
 		this.tool = tool;
 	}
 
+	@Override
 	public int getColumnCount() {
-		return columnNames.length;
-	}
-
-	public int getRowCount() {
-		return nameList.size();
+		return columns.size();
 	}
 
 	@Override
 	public String getColumnName(int column) {
-		return columnNames[column];
+		return columns.get(column);
 	}
 
-	public Object getValueAt(int rowIndex, int columnIndex) {
-		if (rowIndex >= nameList.size()) {
-			return "";
-		}
-		switch (columnIndex) {
-			case NAME_COL:
-				return nameList.get(rowIndex);
+	@Override
+	public String getName() {
+		return "External Programs Model";
+	}
 
-			case PATH_COL:
-				return pathNameList.get(rowIndex);
-		}
-		return "Unknown Column!";
+	@Override
+	public boolean isSortable(int columnIndex) {
+		return true;
 	}
 
 	@Override
@@ -87,28 +75,53 @@ class ExternalNamesTableModel extends AbstractTableModel {
 	}
 
 	@Override
-	public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
-		String extName = ((String) aValue).trim();
+	public List<ExternalPath> getModelData() {
+		return paths;
+	}
 
-		if ("".equals(extName)) {
+	@Override
+	public Object getColumnValueForRow(ExternalPath t, int columnIndex) {
+
+		switch (columnIndex) {
+			case NAME_COL:
+				return t.getName();
+			case PATH_COL:
+				return t.getPath();
+		}
+		return "Unknown Column!";
+	}
+
+	@Override
+	public void setValueAt(Object aValue, int row, int column) {
+
+		String newName = ((String) aValue).trim();
+		if (StringUtils.isBlank(newName)) {
 			return;
 		}
 
-		if (nameList.contains(extName)) {
-			if (nameList.indexOf(extName) != rowIndex) {
-				Window window = tool.getActiveWindow();
-				Msg.showInfo(getClass(), window, "Duplicate Name", "Name already exists: " +
-					extName);
-			}
+		int index = indexOf(newName);
+		if (index >= 0) {
+			Window window = tool.getActiveWindow();
+			Msg.showInfo(getClass(), window, "Duplicate Name", "Name already exists: " + newName);
 			return;
 		}
 
-		Command cmd =
-			new UpdateExternalNameCmd(nameList.get(rowIndex), extName, SourceType.USER_DEFINED);
-
+		ExternalPath path = paths.get(row);
+		String oldName = path.getName();
+		Command cmd = new UpdateExternalNameCmd(oldName, newName, SourceType.USER_DEFINED);
 		if (!tool.execute(cmd, program)) {
 			tool.setStatusInfo(cmd.getStatusMsg());
 		}
+	}
+
+	private int indexOf(String name) {
+		for (int i = 0; i < paths.size(); i++) {
+			ExternalPath path = paths.get(i);
+			if (path.getName().equals(name)) {
+				return i;
+			}
+		}
+		return 0;
 	}
 
 	void setProgram(Program program) {
@@ -116,26 +129,27 @@ class ExternalNamesTableModel extends AbstractTableModel {
 		updateTableData();
 	}
 
-	///////////////////////////////////////////////////////////////////////////
-
 	void updateTableData() {
-		nameList.clear();
-		pathNameList.clear();
+
+		paths.clear();
 
 		if (program == null) {
 			fireTableDataChanged();
 			return;
 		}
+
 		ExternalManager extMgr = program.getExternalManager();
 		String[] programNames = extMgr.getExternalLibraryNames();
 		Arrays.sort(programNames);
 
-		for (int i = 0; i < programNames.length; i++) {
-			if (Library.UNKNOWN.equals(programNames[i])) {
+		for (String programName : programNames) {
+			if (Library.UNKNOWN.equals(programName)) {
 				continue;
 			}
-			nameList.add(programNames[i]);
-			pathNameList.add(extMgr.getExternalLibraryPath(programNames[i]));
+
+			ExternalPath path =
+				new ExternalPath(programName, extMgr.getExternalLibraryPath(programName));
+			paths.add(path);
 		}
 		fireTableDataChanged();
 	}

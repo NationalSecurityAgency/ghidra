@@ -64,10 +64,14 @@ public class ReferenceDecompilerHover extends AbstractReferenceHover
 	}
 
 	@Override
-	public JComponent getHoverComponent(Program program, ProgramLocation programLocation,
+	public JComponent getHoverComponent(Program program, ProgramLocation location,
 			FieldLocation fieldLocation, Field field) {
 
-		Address refAddr = programLocation.getRefAddress();
+		if (!enabled || location == null) {
+			return null;
+		}
+
+		Address refAddr = location.getRefAddress();
 		if (refAddr == null) {
 			return null;
 		}
@@ -75,9 +79,8 @@ public class ReferenceDecompilerHover extends AbstractReferenceHover
 		if (other != null) {
 			return null;
 		}
-		return super.getHoverComponent(program, programLocation, fieldLocation, field);
+		return super.getHoverComponent(program, location, fieldLocation, field);
 
 	}
-	
 
 }

@@ -433,7 +433,7 @@ public class BookmarkPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		Address address = bookmark.getAddress();
 		DeleteBookmarkAction action = new DeleteBookmarkAction(plugin, bookmark, true);
 		MarkerLocation markerLocation = new MarkerLocation(null, address, 0, 0);
-		performAction(action, new ActionContext(null, markerLocation), true);
+		performAction(action, createContext(markerLocation), true);
 		list = getBookmarks(program.getBookmarkManager());
 		assertFalse(list.contains(bookmark));
 
@@ -441,7 +441,7 @@ public class BookmarkPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		address = bookmark.getAddress();
 		action = new DeleteBookmarkAction(plugin, bookmark, false);
 		markerLocation = new MarkerLocation(null, address, 0, 0);
-		performAction(action, new ActionContext(null, markerLocation), true);
+		performAction(action, createContext(markerLocation), true);
 		list = getBookmarks(program.getBookmarkManager());
 		assertFalse(list.contains(bookmark));
 	}
@@ -543,8 +543,8 @@ public class BookmarkPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		CreateStructureCmd cmd = new CreateStructureCmd(addr("0100b6db"), 20);
 		applyCmd(program, cmd);
 
-		List<DockingActionIf> actions = runSwing(() -> plugin.getPopupActions(
-			new ActionContext(null, new MarkerLocation(null, addr("0100b6db"), 0, 0))));
+		List<DockingActionIf> actions = runSwing(() -> plugin.getPopupActions(null,
+			createContext(new MarkerLocation(null, addr("0100b6db"), 0, 0))));
 		assertEquals(10, actions.size());
 	}
 
@@ -718,7 +718,7 @@ public class BookmarkPluginTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	private void showBookmarkProvider() throws Exception {
-		DockingActionIf action = getAction(plugin, "Show Bookmarks");
+		DockingActionIf action = getAction(plugin, "Bookmarks");
 		performAction(action, true);
 		table = plugin.getBookmarkTable();
 		waitForTable();

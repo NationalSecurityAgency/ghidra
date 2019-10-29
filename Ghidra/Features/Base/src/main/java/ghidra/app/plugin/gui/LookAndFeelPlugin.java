@@ -20,6 +20,7 @@ import static ghidra.docking.util.DockingWindowsLookAndFeelUtils.*;
 import java.util.List;
 
 import docking.options.editor.StringWithChoicesEditor;
+import docking.tool.ToolConstants;
 import docking.widgets.OptionDialog;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.plugin.PluginCategoryNames;
@@ -49,7 +50,7 @@ public class LookAndFeelPlugin extends Plugin implements FrontEndOnly, OptionsCh
 	private boolean useInvertedColors;
 	public final static String LOOK_AND_FEEL_NAME = "Swing Look And Feel";
 	private final static String USE_INVERTED_COLORS_NAME = "Use Inverted Colors";
-	private final static String OPTIONS_TITLE = "Tool";
+	private final static String OPTIONS_TITLE = ToolConstants.TOOL_OPTIONS;
 
 	private static boolean issuedLafNotification;
 	private static boolean issuedPreferredDarkThemeLafNotification;
@@ -69,7 +70,7 @@ public class LookAndFeelPlugin extends Plugin implements FrontEndOnly, OptionsCh
 		selectedLookAndFeel = getInstalledLookAndFeelName();
 		List<String> lookAndFeelNames = getLookAndFeelNames();
 		opt.registerOption(LOOK_AND_FEEL_NAME, OptionType.STRING_TYPE, selectedLookAndFeel,
-			new HelpLocation("Tool", "Look_And_Feel"),
+			new HelpLocation(ToolConstants.TOOL_HELP_TOPIC, "Look_And_Feel"),
 			"Set the look and feel for Ghidra.  After you change the " +
 				"look and feel, you will have to restart Ghidra to see the effect.",
 			new StringWithChoicesEditor(lookAndFeelNames));
@@ -77,7 +78,7 @@ public class LookAndFeelPlugin extends Plugin implements FrontEndOnly, OptionsCh
 
 		useInvertedColors = getUseInvertedColorsPreference();
 		opt.registerOption(USE_INVERTED_COLORS_NAME, OptionType.BOOLEAN_TYPE, useInvertedColors,
-			new HelpLocation("Tool", "Use_Inverted_Colors"),
+			new HelpLocation(ToolConstants.TOOL_HELP_TOPIC, "Use_Inverted_Colors"),
 			"Indicates to invert all drawn colors.   This provides the ability to create an " +
 				"effective 'Dark Theme' appearance.  (Note: you may have to change your " +
 				"Look and Feel to achieve the best rendering.)\n\n" +

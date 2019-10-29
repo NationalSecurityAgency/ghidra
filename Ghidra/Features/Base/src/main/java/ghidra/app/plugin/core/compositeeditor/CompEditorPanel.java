@@ -25,15 +25,20 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.text.Document;
 
-import docking.ToolTipManager;
 import docking.widgets.OptionDialog;
-import ghidra.program.model.data.Category;
+import docking.widgets.button.GRadioButton;
+import docking.widgets.checkbox.GCheckBox;
+import docking.widgets.fieldpanel.support.FieldSelection;
+import docking.widgets.label.GDLabel;
+import ghidra.app.plugin.core.compositeeditor.BitFieldPlacementComponent.BitAttributes;
+import ghidra.program.model.data.*;
 import ghidra.program.model.data.Composite;
 import ghidra.program.model.data.Composite.AlignmentType;
-import ghidra.program.model.data.DataUtilities;
 import ghidra.util.HelpLocation;
 import ghidra.util.InvalidNameException;
 import ghidra.util.exception.*;
+import ghidra.util.layout.PairLayout;
+import ghidra.util.layout.VerticalLayout;
 
 /**
  * Panel for editing a composite with a blank line at the bottom of the table
@@ -72,6 +77,8 @@ public class CompEditorPanel extends CompositeEditorPanel {
 
 	protected JLabel actualAlignmentLabel;
 	protected JTextField actualAlignmentValueTextField;
+
+	private BitFieldPlacementComponent bitViewComponent;
 
 	private DocumentListener fieldDocListener;
 
@@ -151,6 +158,90 @@ public class CompEditorPanel extends CompositeEditorPanel {
 		}
 	}
 
+	@Override
+	protected JPanel createBitViewerPanel() {
+
+		bitViewComponent = new BitFieldPlacementComponent(model.viewComposite);
+		model.addCompositeViewerModelListener(new CompositeEditorModelAdapter() {
+			@Override
+			public void selectionChanged() {
+				update();
+			}
+
+			@Override
+			public void componentDataChanged() {
+				update();
+			}
+
+			private void update() {
+				if (!model.isLoaded()) {
+					bitViewComponent.setComposite(null);
+					return;
+				}
+				if (bitViewComponent.getComposite() != model.viewComposite) {
+					// must track instance changes caused by model unload/load invocations
+					bitViewComponent.setComposite(model.viewComposite);
+				}
+
+				bitViewComponent.updateAllocation(model.viewComposite.getLength(), 0);
+
+				DataTypeComponent dtc = null;
+				if (model.isSingleComponentRowSelection()) {
+					dtc = model.getComponent(model.getSelectedRows()[0]);
+				}
+				bitViewComponent.init(dtc);
+				Rectangle selectedRectangle = bitViewComponent.getComponentRectangle(dtc, true);
+				if (selectedRectangle != null) {
+					SwingUtilities.invokeLater(
+						() -> bitViewComponent.scrollRectToVisible(selectedRectangle));
+				}
+			}
+		});
+
+		bitViewComponent.addMouseListener(new MouseAdapter() {
+
+			@Override
+			public void mousePressed(MouseEvent e) {
+				Point p = e.getPoint();
+				BitAttributes attrs = bitViewComponent.getBitAttributes(p);
+				if (attrs == null) {
+					return;
+				}
+				DataTypeComponent dtc = attrs.getDataTypeComponent(false);
+				if (dtc != null) {
+					model.setSelection(new int[] { dtc.getOrdinal() });
+					table.scrollToSelectedRow();
+				}
+				else {
+					model.setSelection(new FieldSelection());
+				}
+			}
+		});
+
+		JPanel bitViewPanel = new JPanel(new PairLayout(0, 5));
+
+		JPanel labelPanel = new JPanel(new VerticalLayout(7));
+		labelPanel.setBorder(BorderFactory.createEmptyBorder(7, 5, 0, 0));
+		JLabel byteOffsetLabel = new JLabel("Byte Offset:", SwingConstants.RIGHT);
+		labelPanel.add(byteOffsetLabel);
+		labelPanel.add(new JLabel("Component Bits:", SwingConstants.RIGHT));
+		bitViewPanel.add(labelPanel);
+
+		JScrollPane bitViewScrollPane =
+			new JScrollPane(bitViewComponent, ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER,
+				ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+
+		bitViewScrollPane.getViewport().setBackground(getBackground());
+		bitViewScrollPane.setBorder(null);
+
+		// establish default preferred size of panel based upon fixed preferred height of bitViewComponent
+		Dimension bitViewerDefaultSize = new Dimension(800, bitViewComponent.getPreferredHeight());
+		bitViewScrollPane.setPreferredSize(bitViewerDefaultSize);
+
+		bitViewPanel.add(bitViewScrollPane);
+		return bitViewPanel;
+	}
+
 	/**
 	 * Create the Info Panel that is horizontally resizable. The panel contains
 	 * the name, category, data type, size, and edit mode for the current
@@ -177,7 +268,7 @@ public class CompEditorPanel extends CompositeEditorPanel {
 
 		addFieldListeners();
 
-		infoPanel.setBorder(BorderFactory.createEmptyBorder(30, 10, 0, 10));
+		infoPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 0, 5));
 
 		return infoPanel;
 	}
@@ -185,7 +276,7 @@ public class CompEditorPanel extends CompositeEditorPanel {
 	private void setupName() {
 		GridBagConstraints gridBagConstraints = new GridBagConstraints();
 
-		nameLabel = new JLabel("Name:");
+		nameLabel = new GDLabel("Name:");
 		gridBagConstraints.insets = LEFT_INSETS;
 		gridBagConstraints.anchor = GridBagConstraints.LINE_END;
 		gridBagConstraints.fill = GridBagConstraints.NONE;
@@ -195,9 +286,8 @@ public class CompEditorPanel extends CompositeEditorPanel {
 		infoPanel.add(nameLabel, gridBagConstraints);
 
 		nameTextField = new JTextField("");
-		ToolTipManager.setToolTipText(nameTextField, "Structure Name");
+		nameTextField.setToolTipText("Structure Name");
 		nameTextField.setEditable(true);
-		nameTextField.setMargin(TEXTFIELD_INSETS);
 		gridBagConstraints.insets = VERTICAL_INSETS;
 		gridBagConstraints.anchor = GridBagConstraints.LINE_START;
 		gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
@@ -216,7 +306,7 @@ public class CompEditorPanel extends CompositeEditorPanel {
 	private void setupDescription() {
 		GridBagConstraints gridBagConstraints = new GridBagConstraints();
 
-		descriptionLabel = new JLabel("Description:");
+		descriptionLabel = new GDLabel("Description:");
 		gridBagConstraints.insets = LEFT_INSETS;
 		gridBagConstraints.anchor = GridBagConstraints.LINE_END;
 		gridBagConstraints.fill = GridBagConstraints.NONE;
@@ -226,8 +316,7 @@ public class CompEditorPanel extends CompositeEditorPanel {
 		infoPanel.add(descriptionLabel, gridBagConstraints);
 
 		descriptionTextField = new JTextField("");
-		descriptionTextField.setMargin(TEXTFIELD_INSETS);
-		ToolTipManager.setToolTipText(descriptionTextField, "Structure Description");
+		descriptionTextField.setToolTipText("Structure Description");
 		descriptionTextField.setEditable(true);
 		gridBagConstraints.insets = VERTICAL_INSETS;
 		gridBagConstraints.anchor = GridBagConstraints.LINE_START;
@@ -247,7 +336,7 @@ public class CompEditorPanel extends CompositeEditorPanel {
 	private void setupCategory() {
 		GridBagConstraints gridBagConstraints = new GridBagConstraints();
 
-		categoryLabel = new JLabel("Category:");
+		categoryLabel = new GDLabel("Category:");
 		gridBagConstraints.insets = LEFT_INSETS;
 		gridBagConstraints.anchor = GridBagConstraints.LINE_END;
 		gridBagConstraints.fill = GridBagConstraints.NONE;
@@ -258,9 +347,7 @@ public class CompEditorPanel extends CompositeEditorPanel {
 
 		categoryStatusTextField = new JTextField(" ");
 		categoryStatusTextField.setEditable(false);
-		ToolTipManager.setToolTipText(categoryStatusTextField,
-			"Category of this composite data type.");
-		categoryStatusTextField.setMargin(TEXTFIELD_INSETS);
+		categoryStatusTextField.setToolTipText("Category of this composite data type.");
 		gridBagConstraints.insets = VERTICAL_INSETS;
 		gridBagConstraints.anchor = GridBagConstraints.LINE_START;
 		gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
@@ -274,13 +361,13 @@ public class CompEditorPanel extends CompositeEditorPanel {
 	private void setupInternallyAligned() {
 		GridBagConstraints gridBagConstraints = new GridBagConstraints();
 
-		internalAlignmentCheckBox = new JCheckBox("Align");
+		internalAlignmentCheckBox = new GCheckBox("Align");
 		gridBagConstraints.anchor = GridBagConstraints.LINE_END;
 		gridBagConstraints.fill = GridBagConstraints.NONE;
 		gridBagConstraints.gridx = 4;
 		gridBagConstraints.gridy = 3;
 		internalAlignmentCheckBox.setSelected(model.viewComposite.isInternallyAligned());
-		ToolTipManager.setToolTipText(internalAlignmentCheckBox,
+		internalAlignmentCheckBox.setToolTipText(
 			"Whether or not the internal components of this structure are aligned.");
 		internalAlignmentCheckBox.setEnabled(true);
 		if (helpManager != null) {
@@ -330,9 +417,9 @@ public class CompEditorPanel extends CompositeEditorPanel {
 	}
 
 	private void setupMinimumAlignment() {
-		defaultMinAlignButton = new JRadioButton("none           ");
-		machineMinAlignButton = new JRadioButton("machine      ");
-		byValueMinAlignButton = new JRadioButton();
+		defaultMinAlignButton = new GRadioButton("none           ");
+		machineMinAlignButton = new GRadioButton("machine      ");
+		byValueMinAlignButton = new GRadioButton();
 		minAlignValueTextField = new JTextField();
 		setupDefaultMinAlignButton();
 		setupMachineMinAlignButton();
@@ -398,7 +485,7 @@ public class CompEditorPanel extends CompositeEditorPanel {
 			"<HTML>" + "Sets this data type to have <B>no</B> minimum alignment<BR>" +
 				"when aligning this data type inside another data type.<BR>" +
 				"Align this data type based only on its components." + "</HTML>";
-		ToolTipManager.setToolTipText(defaultMinAlignButton, alignmentToolTip);
+		defaultMinAlignButton.setToolTipText(alignmentToolTip);
 		if (helpManager != null) {
 			helpManager.registerHelp(defaultMinAlignButton, new HelpLocation(
 				provider.getHelpTopic(), provider.getHelpName() + "_" + "AlignMinimum"));
@@ -410,7 +497,7 @@ public class CompEditorPanel extends CompositeEditorPanel {
 		String alignmentToolTip = "<HTML>" + "Sets this data type to have a minimum alignment<BR>" +
 			"that is a multiple of the <B>machine</B> alignment<BR>" +
 			"when aligning this data type inside another data type." + "</HTML>";
-		ToolTipManager.setToolTipText(machineMinAlignButton, alignmentToolTip);
+		machineMinAlignButton.setToolTipText(alignmentToolTip);
 		if (helpManager != null) {
 			helpManager.registerHelp(machineMinAlignButton, new HelpLocation(
 				provider.getHelpTopic(), provider.getHelpName() + "_" + "AlignMinimum"));
@@ -422,7 +509,7 @@ public class CompEditorPanel extends CompositeEditorPanel {
 		String alignmentToolTip = "<HTML>" + "Sets this data type to have a minimum alignment<BR>" +
 			"that is a multiple of the <B>specified value</B><BR>" +
 			"when aligning this data type inside another data type." + "</HTML>";
-		ToolTipManager.setToolTipText(byValueMinAlignButton, alignmentToolTip);
+		byValueMinAlignButton.setToolTipText(alignmentToolTip);
 		if (helpManager != null) {
 			helpManager.registerHelp(byValueMinAlignButton, new HelpLocation(
 				provider.getHelpTopic(), provider.getHelpName() + "_" + "AlignMinimum"));
@@ -430,8 +517,7 @@ public class CompEditorPanel extends CompositeEditorPanel {
 
 		minAlignValueTextField.setName("Minimum Alignment Value");
 		minAlignValueTextField.setEditable(true);
-		minAlignValueTextField.setMargin(TEXTFIELD_INSETS);
-		ToolTipManager.setToolTipText(minAlignValueTextField, alignmentToolTip);
+		minAlignValueTextField.setToolTipText(alignmentToolTip);
 		if (helpManager != null) {
 			helpManager.registerHelp(minAlignValueTextField, new HelpLocation(
 				provider.getHelpTopic(), provider.getHelpName() + "_" + "AlignMinimum"));
@@ -486,19 +572,19 @@ public class CompEditorPanel extends CompositeEditorPanel {
 			"aligning this data type inside another data type." + "</HTML>";
 
 		JPanel actualAlignmentPanel = new JPanel(new BorderLayout());
-		actualAlignmentLabel = new JLabel("Alignment:");
+		actualAlignmentLabel = new GDLabel("Alignment:");
 		gridBagConstraints.insets = new Insets(2, 7, 2, 2);
 		gridBagConstraints.anchor = GridBagConstraints.EAST;
 		gridBagConstraints.fill = GridBagConstraints.NONE;
 		gridBagConstraints.gridx = 2;
 		gridBagConstraints.gridy = 3;
-		ToolTipManager.setToolTipText(actualAlignmentLabel, actualAlignmentToolTip);
+		actualAlignmentLabel.setToolTipText(actualAlignmentToolTip);
 		actualAlignmentPanel.add(actualAlignmentLabel, BorderLayout.EAST);
 		infoPanel.add(actualAlignmentPanel, gridBagConstraints);
 
 		actualAlignmentValueTextField = new JTextField(8);
 		actualAlignmentValueTextField.setText("" + ((CompEditorModel) model).getMinimumAlignment());
-		ToolTipManager.setToolTipText(actualAlignmentValueTextField, actualAlignmentToolTip);
+		actualAlignmentValueTextField.setToolTipText(actualAlignmentToolTip);
 		actualAlignmentValueTextField.setEditable(false);
 		if (helpManager != null) {
 			helpManager.registerHelp(actualAlignmentValueTextField, new HelpLocation(
@@ -506,7 +592,6 @@ public class CompEditorPanel extends CompositeEditorPanel {
 		}
 		actualAlignmentValueTextField.setName("Actual Alignment Value");
 
-		actualAlignmentValueTextField.setMargin(TEXTFIELD_INSETS);
 		gridBagConstraints.insets = VERTICAL_INSETS;
 		gridBagConstraints.anchor = GridBagConstraints.LINE_START;
 		gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
@@ -517,8 +602,8 @@ public class CompEditorPanel extends CompositeEditorPanel {
 	}
 
 	private void setupPacking() {
-		noPackingButton = new JRadioButton("none           ");
-		byValuePackingButton = new JRadioButton();
+		noPackingButton = new GRadioButton("none           ");
+		byValuePackingButton = new GRadioButton();
 		packingValueTextField = new JTextField();
 		setupNoPackingButton();
 		setupByValuePackingButton();
@@ -584,7 +669,7 @@ public class CompEditorPanel extends CompositeEditorPanel {
 			}
 		});
 
-		ToolTipManager.setToolTipText(noPackingButton, packingToolTipText);
+		noPackingButton.setToolTipText(packingToolTipText);
 		if (helpManager != null) {
 			helpManager.registerHelp(noPackingButton, new HelpLocation(provider.getHelpTopic(),
 				provider.getHelpName() + "_" + "PackMaximum"));
@@ -599,7 +684,7 @@ public class CompEditorPanel extends CompositeEditorPanel {
 				"Note: An individual data type's alignment may override this value.</HTML>";
 
 		byValuePackingButton.addActionListener(e -> chooseByValuePacking());
-		ToolTipManager.setToolTipText(byValuePackingButton, packingToolTipText);
+		byValuePackingButton.setToolTipText(packingToolTipText);
 		if (helpManager != null) {
 			helpManager.registerHelp(byValuePackingButton, new HelpLocation(provider.getHelpTopic(),
 				provider.getHelpName() + "_" + "PackMaximum"));
@@ -607,7 +692,6 @@ public class CompEditorPanel extends CompositeEditorPanel {
 
 		packingValueTextField.setName("Packing Value");
 		packingValueTextField.setEditable(true);
-		packingValueTextField.setMargin(TEXTFIELD_INSETS);
 
 		packingValueTextField.addActionListener(e -> adjustPackingValue());
 
@@ -627,7 +711,7 @@ public class CompEditorPanel extends CompositeEditorPanel {
 			}
 		});
 
-		ToolTipManager.setToolTipText(packingValueTextField, packingToolTipText);
+		packingValueTextField.setToolTipText(packingToolTipText);
 		if (helpManager != null) {
 			helpManager.registerHelp(packingValueTextField, new HelpLocation(
 				provider.getHelpTopic(), provider.getHelpName() + "_" + "PackMaximum"));
@@ -718,8 +802,8 @@ public class CompEditorPanel extends CompositeEditorPanel {
 	protected void setupSize() {
 		GridBagConstraints gridBagConstraints = new GridBagConstraints();
 
-		sizeLabel = new JLabel("Size:");
-		ToolTipManager.setToolTipText(sizeLabel, "The current size in bytes.");
+		sizeLabel = new GDLabel("Size:");
+		sizeLabel.setToolTipText("The current size in bytes.");
 		gridBagConstraints.anchor = GridBagConstraints.LINE_END;
 		gridBagConstraints.fill = GridBagConstraints.NONE;
 		gridBagConstraints.gridx = 0;
@@ -729,8 +813,7 @@ public class CompEditorPanel extends CompositeEditorPanel {
 		sizeStatusTextField = new JTextField(10);
 		sizeStatusTextField.setName("Total Length");
 		sizeStatusTextField.setEditable(false);
-		ToolTipManager.setToolTipText(sizeStatusTextField, "The current size in bytes.");
-		sizeStatusTextField.setMargin(TEXTFIELD_INSETS);
+		sizeStatusTextField.setToolTipText("The current size in bytes.");
 		gridBagConstraints.ipadx = 60;
 		gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
 		gridBagConstraints.gridx = 1;

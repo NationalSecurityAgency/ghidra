@@ -15,13 +15,13 @@
  */
 package ghidra.javaclass.format.attributes;
 
+import java.io.IOException;
+
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.javaclass.format.constantpool.AbstractConstantPoolInfoJava;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.data.StructureDataType;
 import ghidra.util.exception.DuplicateNameException;
-
-import java.io.IOException;
 
 /**
  * NOTE: THE FOLLOWING TEXT EXTRACTED FROM JVMS7.PDF
@@ -53,28 +53,29 @@ import java.io.IOException;
 public class LocalVariableTableAttribute extends AbstractAttributeInfo {
 
 	private short localVariableTableLength;
-	private LocalVariableJava [] localVariableTable;
+	private LocalVariableJava[] localVariableTable;
 
-	public LocalVariableTableAttribute( BinaryReader reader, AbstractConstantPoolInfoJava [] constantPool ) throws IOException {
-		super( reader );
+	public LocalVariableTableAttribute(BinaryReader reader,
+			AbstractConstantPoolInfoJava[] constantPool) throws IOException {
+		super(reader);
 
 		localVariableTableLength = reader.readNextShort();
-		localVariableTable = new LocalVariableJava[ localVariableTableLength ];
-		for ( int i = 0 ; i < localVariableTableLength ; i++ ) {
-			localVariableTable[ i ] = new LocalVariableJava( reader );
+		localVariableTable = new LocalVariableJava[localVariableTableLength & 0xffff];
+		for (int i = 0; i < (localVariableTableLength & 0xffff); i++) {
+			localVariableTable[i] = new LocalVariableJava(reader);
 		}
 	}
 
-	public LocalVariableJava [] getLocalVariables() {
+	public LocalVariableJava[] getLocalVariables() {
 		return localVariableTable;
 	}
 
 	@Override
 	public DataType toDataType() throws DuplicateNameException, IOException {
-		StructureDataType structure = getBaseStructure( "LocalVariableTable_attribute" );
-		structure.add( WORD, "local_variable_table_length", null );
-		for ( int i = 0 ; i < localVariableTable.length ; ++i ) {
-			structure.add( localVariableTable[ i ].toDataType(), "local_variable_" + i, null );
+		StructureDataType structure = getBaseStructure("LocalVariableTable_attribute");
+		structure.add(WORD, "local_variable_table_length", null);
+		for (int i = 0; i < localVariableTable.length; ++i) {
+			structure.add(localVariableTable[i].toDataType(), "local_variable_" + i, null);
 		}
 		return structure;
 	}

@@ -45,7 +45,7 @@ class ApplyFunctions {
 	 * @param log message log
 	 * @throws CancelledException if task cancelled
 	 */
-	static void applyTo(PdbParserNEW pdbParser, XmlPullParser xmlParser, TaskMonitor monitor,
+	static void applyTo(PdbParser pdbParser, XmlPullParser xmlParser, TaskMonitor monitor,
 			MessageLog log) throws CancelledException {
 		Program program = pdbParser.getProgram();
 		Listing listing = program.getListing();
@@ -73,7 +73,7 @@ class ApplyFunctions {
 				cmd.applyTo(program, monitor);
 			}
 
-			pdbParser.createSymbol(address, name, true, log, monitor);
+			pdbParser.createSymbol(address, name, true, log);
 
 			Function function = listing.getFunctionAt(address);
 			if (function == null) {

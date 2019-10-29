@@ -1705,8 +1705,9 @@ public class SymbolicPropogator {
 	 * @return
 	 */
 	private int getDefaultStackDepthChange(Program prog, int depth) {
-		int callStackMod = prog.getCompilerSpec().getCallStackMod();
-		int callStackShift = prog.getCompilerSpec().getCallStackShift();
+		PrototypeModel defaultModel = prog.getCompilerSpec().getDefaultCallingConvention();
+		int callStackMod = defaultModel.getExtrapop();
+		int callStackShift = defaultModel.getStackshift();
 		if (callStackMod != PrototypeModel.UNKNOWN_EXTRAPOP) {
 			return callStackShift;
 		}
@@ -2037,7 +2038,7 @@ public class SymbolicPropogator {
 		}
 
 		// only want returns that can fit in a pointer!
-		returnLoc = conv.getReturnLocation(Undefined.getUndefinedDataType(pointerSize), program);
+		returnLoc = conv.getReturnLocation(new PointerDataType(Undefined.DEFAULT,pointerSize), program);
 
 		return returnLoc;
 	}

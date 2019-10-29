@@ -18,11 +18,7 @@ package ghidra.app.plugin.core.datawindow;
 import java.util.ArrayList;
 import java.util.Iterator;
 
-import javax.swing.ImageIcon;
-import javax.swing.KeyStroke;
-
-import docking.ActionContext;
-import docking.action.*;
+import docking.action.DockingAction;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.events.ProgramSelectionPluginEvent;
 import ghidra.app.events.ViewChangedPluginEvent;
@@ -31,10 +27,9 @@ import ghidra.app.plugin.ProgramPlugin;
 import ghidra.app.services.GoToService;
 import ghidra.app.services.ProgramTreeService;
 import ghidra.framework.model.*;
-import ghidra.framework.options.*;
+import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
-import ghidra.framework.plugintool.util.ToolConstants;
 import ghidra.program.model.address.AddressRangeIterator;
 import ghidra.program.model.address.AddressSet;
 import ghidra.program.model.data.DataType;
@@ -42,10 +37,9 @@ import ghidra.program.model.data.DataTypeManager;
 import ghidra.program.model.listing.Data;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.*;
-import ghidra.util.table.GhidraTable;
 import ghidra.util.table.SelectionNavigationAction;
+import ghidra.util.table.actions.MakeProgramSelectionAction;
 import ghidra.util.task.SwingUpdateManager;
-import resources.ResourceManager;
 
 //@formatter:off
 @PluginInfo(
@@ -60,10 +54,7 @@ import resources.ResourceManager;
 	eventsConsumed = { ViewChangedPluginEvent.class }
 )
 //@formatter:on
-public class DataWindowPlugin extends ProgramPlugin
-		implements DomainObjectListener, OptionsChangeListener {
-
-//	private final static String[] DISPLAY_MENU_PATH = { ToolConstants.MENU_VIEW, "Defined Data..." };
+public class DataWindowPlugin extends ProgramPlugin implements DomainObjectListener {
 
 	private DockingAction selectAction;
 	private FilterAction filterAction;
@@ -73,24 +64,12 @@ public class DataWindowPlugin extends ProgramPlugin
 	private SwingUpdateManager reloadUpdateMgr;
 	private boolean resetTypesNeeded;
 
-	///////////////////////////////////////////////////////////
-
 	public DataWindowPlugin(PluginTool tool) {
 		super(tool, true, true);
 
-		resetUpdateMgr = new SwingUpdateManager(100, 60000, new Runnable() {
-			@Override
-			public void run() {
-				doReset();
-			}
-		});
+		resetUpdateMgr = new SwingUpdateManager(100, 60000, () -> doReset());
 
-		reloadUpdateMgr = new SwingUpdateManager(100, 60000, new Runnable() {
-			@Override
-			public void run() {
-				doReload();
-			}
-		});
+		reloadUpdateMgr = new SwingUpdateManager(100, 60000, () -> doReload());
 	}
 
 	@Override
@@ -111,12 +90,6 @@ public class DataWindowPlugin extends ProgramPlugin
 		provider.dispose();
 		super.dispose();
 	}
-
-	////////////////////////////////////////////////////////////////////////////
-	//
-	//  Implementation of DomainObjectListener
-	//
-	////////////////////////////////////////////////////////////////////////////
 
 	@Override
 	public void domainObjectChanged(DomainObjectChangedEvent ev) {
@@ -153,8 +126,6 @@ public class DataWindowPlugin extends ProgramPlugin
 		}
 	}
 
-	////////////////////////////////////////////////////////////////////////////
-
 	void reload() {
 		reloadUpdateMgr.update();
 	}
@@ -163,9 +134,6 @@ public class DataWindowPlugin extends ProgramPlugin
 		provider.reload();
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.framework.plugintool.Plugin#processEvent(ghidra.framework.plugintool.PluginEvent)
-	 */
 	@Override
 	public void processEvent(PluginEvent event) {
 		if (event instanceof ViewChangedPluginEvent) {
@@ -193,8 +161,6 @@ public class DataWindowPlugin extends ProgramPlugin
 		filterAction.programClosed();
 	}
 
-	////////////////////////////////////////////////////////////////////////////
-
 	Program getProgram() {
 		return currentProgram;
 	}
@@ -208,37 +174,12 @@ public class DataWindowPlugin extends ProgramPlugin
 		return provider;
 	}
 
-	////////////////////////////////////////////////////////////////////////////
-
 	/**
 	 * Create the action objects for this plugin.
 	 */
 	private void createActions() {
 
-		selectAction = new DockingAction("Make Selection", getName(), false) {
-			@Override
-			public void actionPerformed(ActionContext context) {
-				selectData(provider.selectData());
-			}
-
-			@Override
-			public boolean isEnabledForContext(ActionContext context) {
-				if (!(context instanceof DataWindowContext)) {
-					return false;
-				}
-				DataWindowContext dataWindowContext = (DataWindowContext) context;
-				GhidraTable table = dataWindowContext.getDataTable();
-				return table.getSelectedRows().length > 0;
-			}
-		};
-		selectAction.setEnabled(false);
-		ImageIcon icon = ResourceManager.loadImage("images/text_align_justify.png");
-		selectAction.setPopupMenuData(new MenuData(new String[] { "Make Selection" }, icon));
-		selectAction.setDescription("Selects currently selected data in table");
-		selectAction.setToolBarData(new ToolBarData(icon));
-
-		installDummyAction(selectAction);
-
+		selectAction = new MakeProgramSelectionAction(this, provider.getTable());
 		tool.addLocalAction(provider, selectAction);
 
 		filterAction = new FilterAction(this);
@@ -247,28 +188,6 @@ public class DataWindowPlugin extends ProgramPlugin
 
 		DockingAction selectionAction = new SelectionNavigationAction(this, provider.getTable());
 		tool.addLocalAction(provider, selectionAction);
-	}
-
-	private void installDummyAction(DockingAction action) {
-		DummyKeyBindingsOptionsAction dummyAction =
-			new DummyKeyBindingsOptionsAction(action.getName(), null);
-		tool.addAction(dummyAction);
-
-		ToolOptions options = tool.getOptions(ToolConstants.KEY_BINDINGS);
-		options.addOptionsChangeListener(this);
-
-		KeyStroke keyStroke = options.getKeyStroke(dummyAction.getFullName(), null);
-		if (keyStroke != null) {
-			action.setUnvalidatedKeyBindingData(new KeyBindingData(keyStroke));
-		}
-	}
-
-	@Override
-	public void optionsChanged(ToolOptions options, String optionName, Object oldValue, Object newValue) {
-		if (optionName.startsWith(selectAction.getName())) {
-			KeyStroke keyStroke = (KeyStroke) newValue;
-			selectAction.setUnvalidatedKeyBindingData(new KeyBindingData(keyStroke));
-		}
 	}
 
 	void selectData(ProgramSelection selection) {

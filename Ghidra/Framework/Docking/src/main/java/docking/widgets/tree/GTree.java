@@ -112,7 +112,7 @@ public class GTree extends JPanel implements BusyListener {
 		init();
 
 		DockingWindowManager.registerComponentLoadedListener(this,
-			windowManager -> filterProvider.loadFilterPreference(windowManager,
+			(windowManager, provider) -> filterProvider.loadFilterPreference(windowManager,
 				uniquePreferenceKey));
 
 		filterUpdateManager = new SwingUpdateManager(1000, 30000, () -> performNodeFiltering());
@@ -208,7 +208,7 @@ public class GTree extends JPanel implements BusyListener {
 		tree.setRowHeight(-1);// variable size rows
 		tree.setSelectionModel(new GTreeSelectionModel());
 		tree.setInvokesStopCellEditing(true);// clicking outside the cell editor will trigger a save, not a cancel
-		docking.ToolTipManager.sharedInstance().registerComponent(tree);
+		ToolTipManager.sharedInstance().registerComponent(tree);
 
 		setLayout(new BorderLayout());
 

@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +15,12 @@
  */
 package ghidra.pcodeCPort.slghsymbol;
 
+import java.io.PrintStream;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.jdom.Element;
+
 import ghidra.pcodeCPort.context.*;
 import ghidra.pcodeCPort.semantics.VarnodeTpl;
 import ghidra.pcodeCPort.sleighbase.SleighBase;
@@ -23,11 +28,6 @@ import ghidra.pcodeCPort.slghpatexpress.OperandValue;
 import ghidra.pcodeCPort.slghpatexpress.PatternExpression;
 import ghidra.pcodeCPort.utils.XmlUtils;
 import ghidra.sleigh.grammar.Location;
-
-import java.io.PrintStream;
-import java.util.List;
-
-import org.jdom.Element;
 
 public class OperandSymbol extends SpecificSymbol {
 
@@ -204,6 +204,13 @@ public class OperandSymbol extends SpecificSymbol {
 			}
 		}
 		pos.popOperand();
+	}
+
+	@Override
+	public void collectLocalValues(ArrayList<Long> results) {
+		if (triple != null) {
+			triple.collectLocalValues(results);
+		}
 	}
 
 	@Override

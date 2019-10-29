@@ -1,0 +1,145 @@
+#include "pcode_test.h"
+
+TEST pcode_StandardPostIncWhileLoop_Main()
+{
+	extern i4 pcode_StandardPostIncWhileLoop();
+	ASSERTI4(pcode_StandardPostIncWhileLoop(), 25);
+}
+
+TEST pcode_StandardPreIncWhileLoop_Main()
+{
+	extern i4 pcode_StandardPreIncWhileLoop();
+	ASSERTI4(pcode_StandardPreIncWhileLoop(), 25);
+}
+
+TEST pcode_StandardPostDecWhileLoop_Main()
+{
+	extern i4 pcode_StandardPostDecWhileLoop();
+	ASSERTI4(pcode_StandardPostDecWhileLoop(), 25);
+}
+
+TEST pcode_StandardPreDecWhileLoop_Main()
+{
+	extern i4 pcode_StandardPreDecWhileLoop();
+	ASSERTI4(pcode_StandardPreDecWhileLoop(), 25);
+}
+
+TEST pcode_VarIncrementPostIncWhileLoop_Main()
+{
+	extern i4 pcode_VarIncrementPostIncWhileLoop(i4 kk);
+	ASSERTI4(pcode_VarIncrementPostIncWhileLoop(5), 25);
+}
+
+TEST pcode_VarIncrementPreIncWhileLoop_Main()
+{
+	extern i4 pcode_VarIncrementPreIncWhileLoop(i4 kk);
+	ASSERTI4(pcode_VarIncrementPreIncWhileLoop(5), 25);
+}
+
+TEST pcode_VarIncrementPostDecWhileLoop_Main()
+{
+	extern i4 pcode_VarIncrementPostDecWhileLoop(i4 kk);
+	ASSERTI4(pcode_VarIncrementPostDecWhileLoop(5), 25);
+}
+
+TEST pcode_VarIterationPostIncWhileLoop_Main()
+{
+	extern i4 pcode_VarIterationPostIncWhileLoop(i4 nn);
+	ASSERTI4(pcode_VarIterationPostIncWhileLoop(5), 25);
+}
+
+TEST pcode_VarIncrementPreDecWhileLoop_Main()
+{
+	extern i4 pcode_VarIncrementPreDecWhileLoop(i4 kk);
+	ASSERTI4(pcode_VarIncrementPreDecWhileLoop(5), 25);
+}
+
+TEST pcode_VarIterationPreIncWhileLoop_Main()
+{
+	extern i4 pcode_VarIterationPreIncWhileLoop(i4 nn);
+	ASSERTI4(pcode_VarIterationPreIncWhileLoop(5), 25);
+}
+
+TEST pcode_VarIterationPostDecWhileLoop_Main()
+{
+	extern i4 pcode_VarIterationPostDecWhileLoop(i4 nn);
+	ASSERTI4(pcode_VarIterationPostDecWhileLoop(5), 25);
+}
+
+TEST pcode_VarIterationPreDecWhileLoop_Main()
+{
+	extern i4 pcode_VarIterationPreDecWhileLoop(i4 nn);
+	ASSERTI4(pcode_VarIterationPreDecWhileLoop(5), 25);
+}
+
+TEST pcode_VariablePostIncWhileLoop_Main()
+{
+	extern i4 pcode_VariablePostIncWhileLoop(i4 kk, i4 nn);
+	ASSERTI4(pcode_VariablePostIncWhileLoop(5, 10), 50);
+}
+
+TEST pcode_VariablePreIncWhileLoop_Main()
+{
+	extern i4 pcode_VariablePreIncWhileLoop(i4 kk, i4 nn);
+	ASSERTI4(pcode_VariablePreIncWhileLoop(5, 10), 50);
+}
+
+TEST pcode_VariablePostDecWhileLoop_Main()
+{
+	extern i4 pcode_VariablePostDecWhileLoop(i4 kk, i4 nn);
+	ASSERTI4(pcode_VariablePostDecWhileLoop(5, 10), 50);
+}
+
+TEST pcode_VariablePreDecWhileLoop_Main()
+{
+	extern i4 pcode_VariablePreDecWhileLoop(i4 kk, i4 nn);
+	ASSERTI4(pcode_VariablePreDecWhileLoop(5, 10), 50);
+}
+
+TEST pcode_UnSwitchedWhileLoop_Main()
+{
+	extern i4 pcode_UnSwitchedWhileLoop(i4 type, i4 kk, i4 jj, i4 nn);
+	ASSERTI4(pcode_UnSwitchedWhileLoop(5, 10, 15, 20), 300);
+}
+
+TEST pcode_SwitchedWhileLoop_Main()
+{
+	extern i4 pcode_SwitchedWhileLoop(i4 type, i4 kk, i4 jj, i4 nn);
+	ASSERTI4(pcode_SwitchedWhileLoop(5, 10, 15, 20), 300);
+}
+
+TEST pcode_JammedWhileLoop_Main()
+{
+	extern i4 pcode_JammedWhileLoop(i4 kk, i4 jj, i4 nn);
+	ASSERTI4(pcode_JammedWhileLoop(5, 10, 15), 4915350);
+}
+
+TEST pcode_UnJammedWhileLoop_Main()
+{
+	extern i4 pcode_UnJammedWhileLoop(i4 kk, i4 jj, i4 nn);
+	ASSERTI4(pcode_UnJammedWhileLoop(5, 10, 15), 4915350);
+}
+
+TEST pcode_RolledWhileLoop_Main()
+{
+	extern i4 pcode_RolledWhileLoop(i4 array[], i4 nn);
+	i4 array[] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
+	ASSERTI4(pcode_RolledWhileLoop(array, 5), 10);
+}
+
+TEST pcode_Unrolled2WhileLoop_Main()
+{
+	extern i4 pcode_Unrolled2WhileLoop(i4 array[], i4 nn);
+	i4 array[] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
+	ASSERTI4(pcode_Unrolled2WhileLoop(array, 5), 10);
+}
+
+TEST pcode_Unrolled4WhileLoop_Main()
+{
+	extern i4 pcode_Unrolled4WhileLoop(i4 array[], i4 nn);
+	i4 array[] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
+	ASSERTI4(pcode_Unrolled4WhileLoop(array, 5), 10);
+}
+
+MAIN IterativeProcessingWhile_main() { }
+

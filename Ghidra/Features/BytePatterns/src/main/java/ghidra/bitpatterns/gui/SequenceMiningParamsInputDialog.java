@@ -20,6 +20,8 @@ import java.awt.Component;
 import javax.swing.*;
 
 import docking.DockingWindowManager;
+import docking.widgets.button.GRadioButton;
+import docking.widgets.label.GLabel;
 import docking.widgets.textfield.IntegerTextField;
 import ghidra.closedpatternmining.SequenceMiningParams;
 import ghidra.framework.preferences.Preferences;
@@ -79,7 +81,7 @@ public class SequenceMiningParamsInputDialog extends InputDialogComponentProvide
 		PairLayout mainLayout = new PairLayout();
 		mainPanel.setLayout(mainLayout);
 
-		mainPanel.add(new JLabel(PERCENTAGE_BOX_TEXT));
+		mainPanel.add(new GLabel(PERCENTAGE_BOX_TEXT));
 		percentageBox = new JTextField(16);
 		double percentage =
 			Double.parseDouble(Preferences.getProperty(PERCENTAGE_PROPERTY, DEFAULT_PERCENTAGE));
@@ -87,7 +89,7 @@ public class SequenceMiningParamsInputDialog extends InputDialogComponentProvide
 		percentageBox.setEditable(true);
 		mainPanel.add(percentageBox);
 
-		mainPanel.add(new JLabel(MIN_FIXED_BITS_BOX_TEXT));
+		mainPanel.add(new GLabel(MIN_FIXED_BITS_BOX_TEXT));
 		minFixedBitsBox = new IntegerTextField();
 		int minFixBits = Integer.parseInt(
 			Preferences.getProperty(MIN_FIXED_BITS_PROPERTY, DEFAULT_MIN_FIXED_BITS));
@@ -96,9 +98,9 @@ public class SequenceMiningParamsInputDialog extends InputDialogComponentProvide
 
 		boolean useBinary = Boolean.parseBoolean(
 			Preferences.getProperty(BINARY_SEQUENCES_PROPERTY, BINARY_SEQUENCES_DEFAULT));
-		binaryButton = new JRadioButton(BINARY_BUTTON_TEXT, useBinary);
+		binaryButton = new GRadioButton(BINARY_BUTTON_TEXT, useBinary);
 		binaryButton.setMnemonic(BINARY_MNEMONIC);
-		nibbleButton = new JRadioButton(NIBBLE_BUTTON_TEXT, !useBinary);
+		nibbleButton = new GRadioButton(NIBBLE_BUTTON_TEXT, !useBinary);
 		nibbleButton.setMnemonic(NIBBLE_MNEMONIC);
 		mainPanel.add(binaryButton);
 		mainPanel.add(nibbleButton);

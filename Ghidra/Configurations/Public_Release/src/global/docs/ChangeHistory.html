@@ -6,6 +6,211 @@
   </HEAD>
 
 <BODY>
+<H1 align="center">Ghidra 9.1 Change History (October 2019)</H1>
+<blockquote><p><u>New Features</u></p>
+<ul>
+    <li><I>Data Types</I>. Added bit-field support to Structure and Union editor.  An additional Bit-field Editor was also added for explicit bit-field placement within unaligned structures. (GT-559)</li>
+    <li><I>Eclipse Integration</I>. Added new GhidraSleighEditor Eclipse plugin in the installation directory under Extensions/Eclipse. (GT-113)</li>
+    <li><I>GUI</I>. Added method for turning off table sorting by control-clicking the only sorted table column. (GT-2763, Issue #87)</li>
+    <li><I>GUI</I>. Hovering on an address will now show where the byte at that address came from in the imported file. (GT-3016, Issue #154)</li>
+    <li><I>Importer:MachO</I>. Added new importer/loader for DYLD-shared cache files. (GT-2343)</li>
+    <li><I>Languages</I>. Implemented Intel MCS-96 processor module. (GT-2350)</li>
+    <li><I>Languages</I>. Added SH1/2/2a sleigh processor specification. (GT-3029, Issue #715)</li>
+    <li><I>Languages</I>. Added Tricore processor specification. (GT-3041, Issue #567)</li>
+    <li><I>Languages</I>. Added HCS12X processor specification. (GT-3049)</li>
+    <li><I>Languages</I>. Added HCS05 and HCS08 sleigh processor specifications. (GT-3050)</li>
+    <li><I>Languages</I>. Added SH4 sleigh processor specification. (GT-3051, Issue #37)</li>
+    <li><I>Languages</I>. Added MCS-48 processor specification. (GT-3058, Issue #638)</li>
+    <li><I>Memory</I>. Added new API to preserve imported program's original bytes and how they map to memory blocks. (GT-2845)</li>
+    <li><I>Program API</I>. Added Bit-field support for structures and unions.
+<B>Warning:</B> Version upgrade will be forced on all modified programs and data type archives that are open for update. (GT-557)</li>
+    <li><I>Sleigh</I>. Added two new extension modules (SleighDevTools and GnuDisassembler) in support of processor module development.  Added support for pcode junit tests which utilize emulation of cross-compiled C  test code to verify sleigh pcode (i.e., instruction semantics).  The SleighDevTools extension provides the pcode test C source and associated build scripts, as well as external disassembler support for aiding in the validation of disassembled instruction syntax. (GT-3067)</li>
+</ul>
+</blockquote>
+
+
+<blockquote><p><u>Improvements</u></p>
+<ul>
+    <li><I>Analysis</I>. Added example script, ResolveX86orX64LinuxSyscallsScript.java, for decompiling Linux system calls in x86 and x64.  Added syscall-related exercises to <B>Advanced</B> class. (GT-3113)</li>
+    <li><I>Basic Infrastructure</I>. Made bash scripts more portable, allowing Ghidra to be launched on additional platforms. (GT-2742, Issue #347)</li>
+    <li><I>Build</I>. Created a new Gradle task that automates some installation procedures defined in <B>DevGuide.md</B>. (GT-2897)</li>
+    <li><I>Build</I>. The build now allows newer versions of Gradle to be used. (GT-3017, Issue #737)</li>
+    <li><I>Data Types</I>. All DataType archives have been regenerated to support the new bit-field functionality. (GT-2878)</li>
+    <li><I>Data Types</I>. CategoryPath now accepts forward slashes in its components. (GT-2961)</li>
+    <li><I>Data Types</I>. Fixed Structure Editor bug that caused the <B>Data Type</B> field of a row to be edited after a successful name field edit. (GT-3109, Issue #703)</li>
+    <li><I>Decompiler</I>. Most forms of unnecessary or redundant copy statements are now removed from the decompiler output. (GT-2839)</li>
+    <li><I>Decompiler</I>. Added ability to double-click a Decompiler brace syntax token to navigate to the matching brace. (GT-2846)</li>
+    <li><I>Decompiler</I>. Updated the Decompiler to navigate to the label of a <code>goto</code> statement when that label is double-clicked. (GT-2847)</li>
+    <li><I>Decompiler</I>. Updated the Decompiler's <B>Copy</B> action to copy the symbol under the cursor when there is no selection. (GT-2914, Issue #411)</li>
+    <li><I>Decompiler</I>. Fixed broken <B>External Navigation: Navigate to External Program</B> option found in <B>Edit -> Tool Options...</B>. (GT-2932)</li>
+    <li><I>Decompiler</I>. The decompiler's logic for handling optimized division has been updated to recognize forms typically found in executables generated with more recent 64-bit compilers. (GT-2968, Issue #668)</li>
+    <li><I>Decompiler</I>. Implemented call-fixup for x64 <code>__chkstk</code> function. (GT-3006, Issue #670, #671)</li>
+    <li><I>Decompiler</I>. The decompiler simplifies many new sign-bit extraction forms used in optimized division and comparison expressions. (GT-3036)</li>
+    <li><I>Decompiler</I>. Ghidra now supports protected mode addressing when analyzing 16-bit x86 programs. This is the default variant when analyzing NE format executables, but it can also be used for MZ (and other) formats. (GT-3090, Issue #98)</li>
+    <li><I>Decompiler</I>. Added the <B>Show References to Address</B> and <B>Find References to <I>Symbol</I></B> actions to the Decompiler.  Added <B>Find Uses of <I>Field</I></B> action to the Structure Editor. (GT-3115, Issue #474, #542, #543)</li>
+    <li><I>Decompiler</I>. Updated the Decompiler's <B>Edit Data Type</B> action to work on more fields. (GT-3116, Issue #275, #511)</li>
+    <li><I>Decompiler</I>. Renaming a single parameter within the decompiler window no longer prevents the data types of parameters from floating. Retyping a single parameter locks the data type for that parameter but no longer prevents the data types of other parameters from floating. (GT-3162)</li>
+    <li><I>Documentation</I>. Fixed typos and other errors in GitHub-related documentation. (GT-2748, Issue #345, #361, #370, #375, #398)</li>
+    <li><I>Documentation</I>. Added documentation to the <B>DevGuide.md</B> on how to run unit/integration tests. (GT-3046, Issue #815, #832)</li>
+    <li><I>DWARF</I>. Corrected DWARF analysis to handle binaries that are imported at non-default locations. (GT-2963, Issue #637)</li>
+    <li><I>Emulator</I>. Added improved emulation support at the API level including a simplified API exposed via the EmulatorHelper class.  Sample GhidraScripts, which utilize this API, have been provided. (GT-3066)</li>
+    <li><I>Function Graph</I>. Updated the Function Graph to show the current program selection when zoomed out. (GT-2735)</li>
+    <li><I>Function Graph</I>. Added an option to the Function Graph to allow more complex edge routing that will go around non-incident vertices.   See the Tool Options for more information and to enable this feature. (GT-3019, Issue #811)</li>
+    <li><I>Function Graph</I>. Fixed Function Graph edge layout bugs that caused some edges to get clipped by vertices. (GT-3161)</li>
+    <li><I>GUI</I>. Added listener to Script Table Chooser Dialog that will get notified when the dialog closes. (GT-2216)</li>
+    <li><I>GUI</I>. Fixed global Tool <B>auto-save</B> option so that it persists between Ghidra sessions. (GT-2818, Issue #231)</li>
+    <li><I>GUI</I>. Added the <B>apple.laf.useScreenmenuBar</B> option to hoist the menu bar out of the window on macOS.  The option is off by default but can be activated in <B>support/launch.properties</B>. (GT-2859, Issue #562)</li>
+    <li><I>GUI</I>. Updated the <B>Repeat Text Search</B>/<B>Repeat Memory Search</B> menu items to show the search dialog for long searches. (GT-2872, Issue #585)</li>
+    <li><I>GUI</I>. Updated Structure Editor to allow user key bindings to work. (GT-2894, Issue #504)</li>
+    <li><I>GUI</I>. Python interpreter key bindings for sending reset and interrupt commands are now configurable. (GT-2901, Issue #588)</li>
+    <li><I>GUI</I>. Tweaked default graphic settings in <B>support/launch.properties</B> to support a wider range of displays out-of-the-box. (GT-2913, Issue #341)</li>
+    <li><I>GUI</I>. Added the ability to assign key bindings to activate individual component providers. (GT-2925, Issue #539)</li>
+    <li><I>GUI</I>. Fixed rendering issue in the Search Results table's <B>Preview</B> column. (GT-2942, Issue #550)</li>
+    <li><I>GUI</I>. Updated the Function Signature Editor's <B>Data Type Chooser</B> dialog to allow for keyboard navigation. (GT-3110, Issue #636)</li>
+    <li><I>GUI</I>. Fixed NullPointerException in the DB Viewer component. (GT-3163, Issue #1023)</li>
+    <li><I>Importer</I>. Updated x86 16-bit processor binding for IDA. (GT-3004, Issue #771)</li>
+    <li><I>Importer:ELF</I>. Improved ELF loader ability to cope with malformed headers including negative file offsets and missing section names. (GT-2933, Issue #35)</li>
+    <li><I>Importer:PE</I>. PeLoader better accounts for section alignment when laying out memory blocks, allowing additional bytes from the file to be loaded into memory. (GT-2827, Issue #327, #418)</li>
+    <li><I>Importer:PE</I>. Removed out-of-place call to demangler and laying down of types from PeLoader. This fix enables demangling and other analyzers to be applied correctly and in the proper order. (GT-2849)</li>
+    <li><I>Importer:PE</I>. PeLoader now adds TLS callback functions as entry points. (GT-2898, Issue #102)</li>
+    <li><I>Languages</I>. Added new Task Monitor service to better handle user experience when there are delays in building languages. (GT-2376)</li>
+    <li><I>Languages</I>. Corrected ARM/Thumb instruction parsing for Thumb <code>bl</code> and <code>add</code> instructions. (GT-2744, Issue #362)</li>
+    <li><I>Languages</I>. Added AVR8 manual index file. (GT-2828, Issue #346)</li>
+    <li><I>Languages</I>. Improved support for ARM on Windows. (GT-2880)</li>
+    <li><I>Languages</I>. M68000 <code>LSL.W</code>, <code>ASL.B</code>, <code>LSL.B</code>, and <code>ASL.W</code> instructions now correctly set the <code>CF</code> flag. (GT-2907, Issue #619)</li>
+    <li><I>Languages</I>. Updated x86 manual index files. (GT-2943, Issue #366)</li>
+    <li><I>Languages</I>. Improved macro label-related error reporting in slaspec files. (GT-2995, Issue #522)</li>
+    <li><I>Languages</I>. Added MIPS special <code>0x1f</code> patterns. (GT-3005, Issue #709)</li>
+    <li><I>Languages</I>. Added proper updating of the <code>X</code> condition flag register for the M68000 processor <code>lsl</code> and <code>lsr</code> instructions. (GT-3137, Issue #983)</li>
+    <li><I>Languages</I>. Implemented PowerPc VLE Interrupt Handler Efficiency Instructions. (GT-3143, Issue #935)</li>
+    <li><I>Languages</I>. Ghidra now correctly models SPARC 64-bit <B>stack bias</B>. (GT-3201)</li>
+    <li><I>Languages</I>. Updated AVR32 instruction manual index to latest version. (GT-712)</li>
+    <li><I>Listing</I>. Updated Listing to support horizontal scrolling by holding the <B>Shift</B> key when using the mouse wheel. (GT-3105, Issue #451)</li>
+    <li><I>Listing:References</I>. Created new <B>overriding</B> reference types, which improve and extend the ability to override calls, jumps, and callothers. (GT-2885)</li>
+    <li><I>Multi-User</I>. Added a script to allow repository admins the ability to terminate multiple file checkouts belonging to an individual user on a shared project. (GT-2893)</li>
+    <li><I>Multi-User:Ghidra Server</I>. Added additional Ghidra Server authentication modes including: Active Directory via Kerberos and JAAS.  The JAAS framework can facilitate use of LDAP, PAM, and other JAAS-supported extensions which utilize a login name and password. (GT-2658)</li>
+    <li><I>Multi-User:Ghidra Server</I>. Changed Ghidra Server repositories storage to ignore file/folder names which start with a period.  This will impose a restriction on naming of Ghidra projects where they can no longer start with a period. (GT-3218)</li>
+    <li><I>PDB</I>. Now using HTTPS for Microsoft symbol server URL. (GT-2819, Issue #369)</li>
+    <li><I>PDB</I>. PDB processing can now store data types that contain forward slashes under a CategoryPath. (GT-2974, Issue #94, #182)</li>
+    <li><I>PDB</I>. PDB Analyzer no longer automatically includes the PDB path specified in the program's PE header when searching for the PDB.  However, the filename in this path is considered during the search.  The analyzer's <B>Unsafe: Include PE PDB Path in PDB Search</B> option allows the user to revert to the original PDB search algorithm. (GT-3076, Issue #277)</li>
+    <li><I>Program API</I>. Added SHA256 hash to Program metadata and API. (GT-2753, Issue #331)</li>
+    <li><I>Scripting</I>. Updated Script Table Chooser Dialog: to fix bug with tracking work items, to add new API methods for item removal and dialog closed notification, and to prevent the same item from being worked on more than once. (GT-2724, Issue #307)</li>
+    <li><I>Scripting</I>. Fixed MultiInstructionMemReference Ghidra script to place the reference correctly on instructions with a delay slot. (GT-2906)</li>
+    <li><I>Sleigh</I>. The sleigh compiler now reports line numbers for the <code><B>-n</B></code> NOP command line option. (GT-2905, Issue #561)</li>
+    <li><I>Sleigh</I>. SLEIGH compiler now warns when building an operand in a constructor may unintentionally overwrite another operand. (GT-3085)</li>
+    <li><I>Testing:Junits</I>. <code>test.gradle getLogFileUrl()</code> no longer searches user <B>.dir</B> for <B>log4j</B> properties file. (GT-2834, Issue #499)</li>
+    <li><I>Testing:Junits</I>. Added new Gradle task to run integration tests and generate an HTML report. (GT-3060, Issue #870)</li>
+    <li><I>Tool</I>. Fixed bug that caused an exported tool to exclude plugin configuration settings. (GT-3193, Issue #1065)</li>
+</ul>
+</blockquote>
+
+<blockquote><p><u>Bugs</u></p>
+<ul>
+    <li><I>Analysis</I>. Fixed an exception in the EmbeddedMediaAnalyzer that occurred when media was discovered at the very end of the address space. (GT-2890)</li>
+    <li><I>Analysis</I>. Recognition and disassembly of the FMA, F16C, and several missing AVX instructions have been added to the base x86 processor specification.  The pcode for these instructions is pseudo-op and not a full pcode implementation. (GT-3168)</li>
+    <li><I>Basic Infrastructure</I>. Updated the apache-commons-lang3 library to version 3.9 which supports Java 11. (GT-2879)</li>
+    <li><I>Basic Infrastructure</I>. Prevented Ghidra from launching with 32-bit Java installations. (GT-3146, Issue #882)</li>
+    <li><I>Data Types</I>. Corrected string data default label generation when defined within uninitialized memory, which will now render as <code>STRING_<I>address</I></code>. (GT-2715, Issue #272)</li>
+    <li><I>Data Types</I>. Improved ASCII string data handling for processors with a char size greater than one (1). (GT-2842)</li>
+    <li><I>Data Types</I>. Changed BooleanDataType to extend AbstractIntegerDataType including support as a bit-field. (GT-3170)</li>
+    <li><I>DbViewer</I>. Corrected concurrent modification issue within DbViewer resulting in NullPointerException. (GT-3192, Issue #1076)</li>
+    <li><I>Decompiler</I>. Fixed aliasing issue where the decompiler would sometimes drop initialization or other code writing to the stack. (GT-2369)</li>
+    <li><I>Decompiler</I>. Fixed bug causing the decompiler to incorrectly omit the display of infinite loops when they contained switch statements. (GT-2852, Issue #443)</li>
+    <li><I>Decompiler</I>. Integer extension casts are no longer printed in the decompiler if the extension is implied. (GT-2857)</li>
+    <li><I>Decompiler</I>. Improved handling of overlay spaces. In particular, the decompiler is now able to handle references into overlays defined on the OTHER space. Added SLEIGH version numbers. (GT-2873)</li>
+    <li><I>Decompiler</I>. Updated the Decompiler to place the cursor on the function signature when a function is decompiled. (GT-2882)</li>
+    <li><I>Decompiler</I>. Fixed a common source of <code>Data type does not fit</code> errors when using the <B>Retype</B> actions in the decompiler. (GT-2956)</li>
+    <li><I>Decompiler</I>. Fixed <code>equals()</code> method in Varnode AST. (GT-2959, Issue #677)</li>
+    <li><I>Decompiler</I>. Users can no longer rename undefined functions from the decompiler. (GT-3043, Issue #753)</li>
+    <li><I>Decompiler</I>. Fixed a bug that did not allow the prototype for a specific CALL to an external function to be overridden in the decompiler. (GT-3145)</li>
+    <li><I>Decompiler</I>. Restricted <B>Auto Fill in Structure</B> command to operate only on pointer variables. (GT-3182)</li>
+    <li><I>Decompiler</I>. Fixed bug in the analysis of stack variables for SPARC, which caused extraneous local variables and missed stack parameters in the decompiler. (GT-3200)</li>
+    <li><I>Decompiler</I>. Fixed one source of <code>Type propagation algorithm not settling</code> warnings in the decompiler. (GT-3213, Issue #839)</li>
+    <li><I>Decompiler:Java</I>. Updated Decompiler's hovers to show preview for data types on variables and return types. (GT-2629)</li>
+    <li><I>Decompiler:Java</I>. Fixed error involving decompilation of certain <code>invokedynamic</code> instructions in JVM class files.  Made numerous minor improvements to decompilation of JVM bytecode. (GT-2757, Issue #287)</li>
+    <li><I>Demangler</I>. Fixed a NullPointerException in DemangledFunctionPointer. (GT-2948, Issue #609)</li>
+    <li><I>DWARF</I>. Empty DWARF compilation unit sections will now be ignored. (GT-2939, Issue #690)</li>
+    <li><I>Exporter</I>. Negative memory references in <B>idaxml.py</B> no longer cause errors. (GT-2696, Issue #213, #885)</li>
+    <li><I>Exporter</I>. Fixed Intel Hex Exporter to not ignore the <B>Address Space</B> option value. (GT-2749)</li>
+    <li><I>Exporter</I>. Fixed cancellation behavior of the C/C++ exporter. (GT-2881, Issue #591)</li>
+    <li><I>File Formats</I>. Fixed an out-of-memory error in the CPIO file system. (GT-2912)</li>
+    <li><I>File Formats</I>. DmgClientFileSystem no longer falsely matches zlib compressed files. (GT-2926, Issue #583)</li>
+    <li><I>File System Browser</I>. Fixed NullPointerException when clicking <B>Get Info</B> on a directory in a zip file in the file system browser when the element was a directory that did not have a corresponding entry in the zip file. Changed the <B>Get Info</B> action to show information about both the highlighted file and any file system mounted from that file. (GT-2758)</li>
+    <li><I>File System Browser</I>. Fixed dialog stacking problem in File System Browser when double-clicking a container file to open the filesystem inside it. (GT-2764)</li>
+    <li><I>File System Browser</I>. Reduced the disk usage of the DYLD-shared cache file system. (GT-2887)</li>
+    <li><I>Function Graph</I>. Fixed exception encountered when a Function Graph's entry node was put into a group node. (GT-3074)</li>
+    <li><I>Function Graph</I>. Fixed Function Graph edge routing bug that sometimes caused edge flowing upward to route unexpectedly. (GT-3153, Issue #994)</li>
+    <li><I>GUI</I>. Fixed stack trace when deleting large memory block that is in its own address space. (GT-2699)</li>
+    <li><I>GUI</I>. Changed Data Type Preview to allow adding string data types. (GT-2832)</li>
+    <li><I>GUI</I>. Fixed display of operand scalar values in tooltip popup of Decompiler and Listing windows. (GT-2836, Issue #120)</li>
+    <li><I>GUI</I>. Fixed bug in Data Type Preview that caused a rendering error in Structures as primitive types were deleted. (GT-2844)</li>
+    <li><I>GUI</I>. Fixed Symbol Tree ClassCastException that happened when clicking a node while the tree was still loading. (GT-2870, Issue #96)</li>
+    <li><I>GUI</I>. Fixed bug that prevented the XRef's <B>Ref Type</B> column from sorting correctly. (GT-2892)</li>
+    <li><I>GUI</I>. Fixed Listing bug so that the cursor gets restored to the previous location on Ghidra startup. (GT-2927, Issue #505)</li>
+    <li><I>GUI</I>. Updated Edit Function Signature dialog to have focus in the signature field when first opened.  Also added undo/redo support. (GT-2947, Issue #635)</li>
+    <li><I>GUI</I>. Fixed exception in the References Editor encountered when closing the editor with an active edit in the table. (GT-2951)</li>
+    <li><I>GUI</I>. Fixed bug where the Ghidra menu mnemonic was not being set by the ampersand ('&') character in the last field of the menu path. (GT-2954)</li>
+    <li><I>GUI</I>. Updated the Component Provider's <B>Close</B> button to allow for key bindings. (GT-2971, Issue #533)</li>
+    <li><I>GUI</I>. Fixed tool navigation button enablement when using snapshot windows. (GT-2973)</li>
+    <li><I>GUI</I>. Corrected Function Editor issue where parsed signature text resulted in incorrect type sizes which impacted custom storage selection.  Also added support for parsing signatures which reference types from an open datatype archive. (GT-3059)</li>
+    <li><I>GUI</I>. Updated resizing in <B>Select Bytes</B> dialog. (GT-3072)</li>
+    <li><I>GUI</I>. Fixed bug where listing would jump to random location when opening or closing a large structure or array. (GT-3088)</li>
+    <li><I>GUI</I>. Fixed bug that caused some tables (e.g., the Symbol Table) to sort twice during their initial loading of data. (GT-3142)</li>
+    <li><I>GUI</I>. Drag-and-Drop bug causing incorrect drop highlighting has been fixed. (GT-3219, Issue #1093)</li>
+    <li><I>Help</I>. Fixed NullPointerException when navigating the Help UI. (GT-2830, Issue #493)</li>
+    <li><I>Importer</I>. Fixed issues in the MapLoader that prevented <B>.map</B> files from being added to an existing program. (GT-2972, Issue #762)</li>
+    <li><I>Importer</I>. For batch import, fixed issue where last character of directory name was truncated on Windows workstations. (GT-3012, Issue #797)</li>
+    <li><I>Importer</I>. Fixed a bug in how the NE importer creates External Function symbols for the procedures it imports, allowing the decompiler to properly access any available information. (GT-3140, Issue #770)</li>
+    <li><I>Importer</I>. Fixed a bug that prevented some old-style Windows executables from getting loaded by the MzLoader. (GT-3180, Issue #1054)</li>
+    <li><I>Importer:ELF</I>. Added ELF relocation handler for <code>R_AARCH64_JUMP26</code>. (GT-2999, Issue #775)</li>
+    <li><I>Importer:ELF</I>. Improved ELF MIPS support for GP-relative relocations encountered in PIC compiled binaries.  Also added support for <code>R_MIPS_RPREL32</code> relocation. (GT-3026, Issue #764)</li>
+    <li><I>Importer:ELF</I>. ELF x86-64 relocations <code>R_X86_64_GOT32</code>, <code>R_X86_64_PLT32</code>, <code>R_X86_64_SIZE32</code>, <code>R_X86_64_SIZE64</code>, and <code>R_X86_64_GOTPC32</code> have been fixed to relocate correctly. Additional ELF x86-64 relocations, found mostly in unlinked <B>.o</B> files, have been added. (GT-3089, Issue #910)</li>
+    <li><I>Importer:PE</I>. Fixed a problem in the PeLoader that would result in section names being incorrectly used as primary symbols.  This could result in function names being wrong. (GT-3195, Issue #761, #1051)</li>
+    <li><I>Languages</I>. Utilized <code>FLOAT_NEG</code> pcodeop to simplify PowerPC <code>fneg</code> instructions. (GT-2781, Issue #387)</li>
+    <li><I>Languages</I>. Added 6502 <code>I</code> status bit save and restore. (GT-2826, Issue #469)</li>
+    <li><I>Languages</I>. Corrected alternate register definitions in z80 processor. (GT-2876, Issue #520)</li>
+    <li><I>Languages</I>. Reviewed all processor modules for GhidraSleighEditor syntax errors. (GT-2902)</li>
+    <li><I>Languages</I>. Added support for <code>RD</code>, <code>WR</code>, <code>FS</code>, and <code>GSBASE</code> instructions in x86. (GT-2940, Issue #554, #555)</li>
+    <li><I>Languages</I>. Added fixes for sign extension of <code>ADD</code>, <code>AND</code>, <code>CMP</code>, and <code>SUB</code> instructions on x86-64bit. (GT-2955, Issue #881)</li>
+    <li><I>Languages</I>. Updated PIC-30 division pcode to correct decompilation issue. (GT-3008)</li>
+    <li><I>Languages</I>. Fixed x86 <code>AAM</code> instruction. (GT-3015)</li>
+    <li><I>Languages</I>. Corrected x86 decode of <code>MOVBE</code> instruction. (GT-3039, Issue #822)</li>
+    <li><I>Languages</I>. Corrected M68000 <code>mov3q</code> instruction decode and semantics. (GT-3080, Issue #905)</li>
+    <li><I>Languages</I>. The JVM instruction <code>I2D</code> now correctly pushes an 8-byte double on the stack. (GT-3081)</li>
+    <li><I>Languages</I>. Fixed problem displaying processor manuals in Windows Firefox. (GT-3084)</li>
+    <li><I>Languages</I>. Encoding of <code>MOV</code> into debug registers has been relaxed. (GT-3117)</li>
+    <li><I>Languages</I>. Corrected behavior of PowerPC <code>vectorPermute</code> pcodeop for emulation. (GT-3148)</li>
+    <li><I>Languages</I>. Corrected MIPS relocation computation for <code>R_MIPS_26</code>, <code>R_MIPS16_26</code>, and <code>R_MICROMIPS_26_S1</code>. (GT-3154, Issue #1001)</li>
+    <li><I>Languages</I>. Corrected the bit patterns for PowerPC VLE <code>rlwimi</code> and <code>rlwinm</code> instructions. (GT-3159, Issue #752)</li>
+    <li><I>Languages</I>. Corrected instruction semantics for AARCH64 <code>BLR</code> instruction. (GT-3191)</li>
+    <li><I>Languages</I>. Corrected fall-through override semantics for cases where pcode simply drops into the next address. (GT-3196, Issue #1083)</li>
+    <li><I>Languages</I>. Corrected the semantics of the PowerPC <code>se_bmaski</code> instruction. (GT-3230, Issue #1123)</li>
+    <li><I>Listing</I>. Fixed potential infinite loop when editing long comments. (GT-2824, Issue #437)</li>
+    <li><I>Listing</I>. Fixed potential ClassCastException in Listing comments. (GT-3023)</li>
+    <li><I>Listing</I>. Cursor in the listing now stays in the proper column after editing a field. (GT-3045, Issue #702)</li>
+    <li><I>Listing</I>. Fixed a problem with register highlighting that could occur on certain register/sub-register combinations. (GT-3071, Issue #810)</li>
+    <li><I>Multi-User</I>. Corrected terminate checkout from viewed checkout list which was always terminating first row range based upon number of selected rows and not the actual selected rows. (GT-2903)</li>
+    <li><I>Multi-user</I>. Corrected ability for user to cancel checkin/checkout to Ghidra Server. (GT-3208)</li>
+    <li><I>Multi-User:Ghidra Server</I>. Added proper Ghidra Server interface binding with new <code><B>-i</B></code> option.  Corrected <code><B>-ip</B></code> option to strictly convey remote access hostname to clients.  The updated server will only accept connections from Ghidra 9.1 and later clients due to the registry port now employing TLS. (GT-2685, Issue #101, #645)</li>
+    <li><I>Multi-User:Ghidra Server</I>. Fixed argument-passing bug in svrAdmin script. (GT-3082, Issue #907)</li>
+    <li><I>Multi-User:Merge</I>. Corrected merge problem affecting modified Function Definition datatypes which could result in a NullPointerException. (GT-2922)</li>
+    <li><I>PDB</I>. Added <code>char16_t</code> and <code>char32_t</code> to PDB <code>BASIC_TYPE_STRINGS</code>. (GT-2952, Issue #685)</li>
+    <li><I>PDB</I>. Addressed memory leaks and string handling issues in <B>pdb.exe</B>. (GT-2975, Issue #674, #597, #598, #599, #600)</li>
+    <li><I>PDB</I>. Can now recover stack variables from more recent Visual Studio version PDBs. (GT-3014)</li>
+    <li><I>PDB</I>. Fixed PDB validation logic, which caused a more severe error message to be created, masking the real issue. (GT-3209, Issue #198, #1024)</li>
+    <li><I>Program API</I>. Corrected parameter storage which failed to properly refresh after undo/redo. (GT-3130, Issue #960)</li>
+    <li><I>Program API</I>. Corrected function parameter ordinal numbering when more than one auto-parameter is present. (GT-3214)</li>
+    <li><I>Project Manager</I>. Fixed a problem with creating Ghidra projects in Windows root directories (e.g., Z:\). (GT-2585)</li>
+    <li><I>Project Manager</I>. Fixed a path traversal vulnerability that could occur when restoring a malicious project archive. (GT-3001, Issue #789)</li>
+    <li><I>Scripting</I>. <code>GhidraScript.askDomainFile()</code> now correctly throws a CancelledException when the cancel button is clicked. (GT-2841)</li>
+    <li><I>Scripting</I>. Removed deprecated scripting methods older than 5 releases. (GT-2949)</li>
+    <li><I>Security</I>. Removed use of insecure XMLEncoder/XMLDecoder from Ghidra code base. (GT-3198, Issue #1090)</li>
+    <li><I>Sleigh</I>. Corrected Sleigh compiler bug which performed improper bounds checking for named register offset specification when space wordsize is not one (1). (GT-3034, Issue #831)</li>
+    <li><I>Testing:CUnits</I>. Fixed error logging in pcodetest for reporting an error when running a compile command. (GT-3199, Issue #1089)</li>
+    <li><I>Version Tracking</I>. Fixed NullPointerException in Version Tracking hashing algorithm. (GT-2976)</li>
+</ul>
+</blockquote>
+
 <H1 align="center">Ghidra 9.0.4 Change History (May 2019)</H1>
 
 <blockquote><p><u>Bugs</u></p></blockquote>
@@ -118,7 +323,7 @@
 	<li><I>Importer:ELF</I>. Corrected bug in ELF loader which can improperly process the GOT, PLT and relocations 
 	  when multiple symbol tables exist within the ELF binary. (Issue #52)</li>
 	<li><I>Languages</I>. Added ARM/Thumb SRS instruction decodes for undefined modes. (Issue #216)</li>
-	<li><I>Multi-User:Ghdira Server</I>. Corrected the Ghidra Server service wrapper (YAJSW) configuration for 
+	<li><I>Multi-User:Ghidra Server</I>. Corrected the Ghidra Server service wrapper (YAJSW) configuration for 
 	  Mac OS X to prevent a startup timeout condition which could occur.</li>
 </ul>
 </blockquote>

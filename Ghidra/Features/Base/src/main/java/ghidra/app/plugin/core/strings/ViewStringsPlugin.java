@@ -16,11 +16,9 @@
 package ghidra.app.plugin.core.strings;
 
 import javax.swing.ImageIcon;
-import javax.swing.KeyStroke;
 
 import docking.ActionContext;
 import docking.action.*;
-import docking.tool.util.DockingToolConstants;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.events.ProgramSelectionPluginEvent;
 import ghidra.app.plugin.PluginCategoryNames;
@@ -28,7 +26,6 @@ import ghidra.app.plugin.ProgramPlugin;
 import ghidra.app.plugin.core.data.DataSettingsDialog;
 import ghidra.app.services.GoToService;
 import ghidra.framework.model.*;
-import ghidra.framework.options.*;
 import ghidra.framework.plugintool.PluginInfo;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.util.PluginStatus;
@@ -38,9 +35,9 @@ import ghidra.program.util.*;
 import ghidra.util.HelpLocation;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.table.SelectionNavigationAction;
+import ghidra.util.table.actions.MakeProgramSelectionAction;
 import ghidra.util.task.SwingUpdateManager;
 import resources.Icons;
-import resources.ResourceManager;
 
 /**
  * Plugin that provides the "Defined Strings" table, where all the currently defined
@@ -58,8 +55,7 @@ import resources.ResourceManager;
 	servicesRequired = { GoToService.class }
 )
 //@formatter:on
-public class ViewStringsPlugin extends ProgramPlugin
-		implements DomainObjectListener, OptionsChangeListener {
+public class ViewStringsPlugin extends ProgramPlugin implements DomainObjectListener {
 
 	private DockingAction selectAction;
 	private DockingAction showSettingsAction;
@@ -86,7 +82,7 @@ public class ViewStringsPlugin extends ProgramPlugin
 	}
 
 	private void createActions() {
-		DockingAction refreshAction = new DockingAction("Refresh Strings", getName(), false) {
+		DockingAction refreshAction = new DockingAction("Refresh Strings", getName()) {
 
 			@Override
 			public boolean isEnabledForContext(ActionContext context) {
@@ -104,31 +100,12 @@ public class ViewStringsPlugin extends ProgramPlugin
 		refreshAction.setHelpLocation(new HelpLocation("ViewStringsPlugin", "Refresh"));
 		tool.addLocalAction(provider, refreshAction);
 
-		selectAction = new DockingAction("Make Selection", getName(), false) {
-			@Override
-			public void actionPerformed(ActionContext context) {
-				selectData(provider.selectData());
-			}
-
-			@Override
-			public boolean isEnabledForContext(ActionContext context) {
-				return provider.getSelectedRowCount() > 0;
-			}
-		};
-		ImageIcon selectActionIcon = ResourceManager.loadImage("images/text_align_justify.png");
-		selectAction.setPopupMenuData(
-			new MenuData(new String[] { "Make Selection" }, selectActionIcon));
-		selectAction.setDescription("Selects currently selected data in table");
-		selectAction.setToolBarData(new ToolBarData(selectActionIcon));
-
-		installDummyAction(selectAction);
-
-		tool.addLocalAction(provider, selectAction);
+		tool.addLocalAction(provider, new MakeProgramSelectionAction(this, provider.getTable()));
 
 		linkNavigationAction = new SelectionNavigationAction(this, provider.getTable());
 		tool.addLocalAction(provider, linkNavigationAction);
 
-		showSettingsAction = new DockingAction("Settings...", getName(), false) {
+		showSettingsAction = new DockingAction("Settings", getName()) {
 			@Override
 			public void actionPerformed(ActionContext context) {
 				try {
@@ -148,7 +125,7 @@ public class ViewStringsPlugin extends ProgramPlugin
 		showSettingsAction.setPopupMenuData(new MenuData(new String[] { "Settings..." }, "R"));
 		showSettingsAction.setDescription("Shows settings for the selected strings");
 		showSettingsAction.setHelpLocation(new HelpLocation("DataPlugin", "Data_Settings"));
-		showDefaultSettingsAction = new DockingAction("Default Settings...", getName(), false) {
+		showDefaultSettingsAction = new DockingAction("Default Settings", getName()) {
 			@Override
 			public void actionPerformed(ActionContext context) {
 				Data data = provider.getSelectedData();
@@ -173,29 +150,6 @@ public class ViewStringsPlugin extends ProgramPlugin
 		tool.addLocalAction(provider, showSettingsAction);
 		tool.addLocalAction(provider, showDefaultSettingsAction);
 
-	}
-
-	private void installDummyAction(DockingAction action) {
-		DummyKeyBindingsOptionsAction dummyAction =
-			new DummyKeyBindingsOptionsAction(action.getName(), null);
-		tool.addAction(dummyAction);
-
-		ToolOptions options = tool.getOptions(DockingToolConstants.KEY_BINDINGS);
-		options.addOptionsChangeListener(this);
-
-		KeyStroke keyStroke = options.getKeyStroke(dummyAction.getFullName(), null);
-		if (keyStroke != null) {
-			action.setUnvalidatedKeyBindingData(new KeyBindingData(keyStroke));
-		}
-	}
-
-	@Override
-	public void optionsChanged(ToolOptions options, String optionName, Object oldValue,
-			Object newValue) {
-		if (optionName.startsWith(selectAction.getName())) {
-			KeyStroke keyStroke = (KeyStroke) newValue;
-			selectAction.setUnvalidatedKeyBindingData(new KeyBindingData(keyStroke));
-		}
 	}
 
 	private void selectData(ProgramSelection selection) {
@@ -245,7 +199,6 @@ public class ViewStringsPlugin extends ProgramPlugin
 		else if (ev.containsEvent(ChangeManager.DOCR_CODE_ADDED)) {
 			for (int i = 0; i < ev.numRecords(); ++i) {
 				DomainObjectChangeRecord doRecord = ev.getChangeRecord(i);
-				Object oldValue = doRecord.getOldValue();
 				Object newValue = doRecord.getNewValue();
 				switch (doRecord.getEventType()) {
 					case ChangeManager.DOCR_CODE_REMOVED:

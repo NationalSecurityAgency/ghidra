@@ -1,0 +1,350 @@
+import java.util.regex.*;
+import groovy.io.FileType;
+import java.lang.reflect.Constructor;
+import java.lang.*;
+import java.io.*;
+
+ext.integrationConfigs = new ArrayList<>();
+ext.dockingConfigs = new ArrayList<>();
+ext.appConfigs = new ArrayList<>();
+ext.ghidraConfigs = new ArrayList<>();
+
+/*
+ * Checks if html test report for an individual test class has a valid name.
+ */
+boolean hasValidTestReportClassName(String name) {
+	return name.endsWith("Test.html") && !name.contains("Suite")
+}
+
+/**
+ * Parses the file containing the mapping of test classes to application configs and assigns those
+ * classes to the appropriate lists.
+ */
+def parseApplicationConfigs(List dockingConfigs, List integrationConfigs, List appConfigs, List ghidraConfigs) {
+				
+	File breakoutFile = new File(rootProject.projectDir, "gradle/support/app_config_breakout.txt");
+	String configLines = breakoutFile.text;
+		
+	// Ignore everything up to the first "###" (everything before that
+	// is documentation)
+	configLines = configLines.substring(configLines.indexOf("###"));
+		
+	String[] splitLines = configLines.split("###");
+	for (int i=0; i<splitLines.size(); i++) {
+		String block = splitLines[i];
+		if (block.isEmpty()) {
+		   continue;
+		}
+		
+		// Grab the header (and remove it from the main string)
+		String header = block.substring(0,block.indexOf("^"));
+		block = block.substring(header.length() + 1);
+		String[] classes = block.split("\n");
+		if (header.equals("HeadlessGhidraApplicationConfig")) {
+			for (int j=0;j<classes.size(); j++) {
+				String cl = classes[j].trim();
+				if (cl.isEmpty()) {
+				  continue;
+				}
+				logger.info("adding " + cl + " to integrationConfigs");
+				integrationConfigs.add(cl);
+			}
+		}
+		else if (header.equals("DockingApplicationConfiguration")) {
+			for (int j=0;j<classes.size(); j++) {
+				String cl = classes[j].trim();
+				if (cl.isEmpty()) {
+				  continue;
+				}
+				logger.info("adding " + cl + " to dockingConfigs");
+				dockingConfigs.add(cl);
+			}
+		}
+		else if (header.equals("ApplicationConfiguration")) {
+			for (int j=0;j<classes.size(); j++) {
+				String cl = classes[j].trim();
+				if (cl.isEmpty()) {
+				  continue;
+				}
+				logger.info("adding " + cl + " to appConfigs");
+				appConfigs.add(cl);
+			}
+		}
+		else if (header.equals("GhidraAppConfiguration")) {
+			for (int j=0;j<classes.size(); j++) {
+				String cl = classes[j].trim();
+				if (cl.isEmpty()) {
+				  continue;
+				}
+				logger.info("adding " + cl + " to ghidraConfigs");
+				ghidraConfigs.add(cl);
+			}
+		}			
+	}		
+}
+
+/*
+ * Checks if Java test class has a valid name.
+ */
+boolean hasValidTestClassName(String name) {
+	return name != null && name.endsWith("Test.java") && 
+		!(name.contains("Abstract") || name.contains("Suite"))
+}
+
+/*
+ * Checks if Java test class is excluded via 'org.junit.experimental.categories.Category'
+ */
+boolean hasCategoryExcludes(String fileContents) {
+
+	String annotation1 = "@Category\\(PortSensitiveCategory.class\\)" // evaluated as regex
+	String annotation2 = "@Category\\(NightlyCategory.class\\)"
+
+	return fileContents.find(annotation1) || fileContents.find(annotation2)
+}
+
+/*
+ * Returns a fully qualified class name from a java class.
+ */
+String constructFullyQualifiedClassName(String fileContents, String fileName) {
+	String packageName = fileContents.find("(?<=package\\s).*?(?=;)")
+	logger.debug("constructFullyQualifiedClassName: Found '" + packageName + "' in " + fileName)
+
+	assert packageName != null : "constructFullyQualifiedClassName: Null packageName found in $fileName"
+	assert !packageName.startsWith("package")
+	assert !packageName.endsWith(";")
+
+	return packageName + "." + fileName.replace(".java","")
+}
+
+/* 
+ * Creates a map of config types to the test classes for that type. This should be
+ * used to creates sets of tests that can be run in parallel.
+ */
+def Map<String, List> getTestsForSubProject(SourceDirectorySet sourceDirectorySet) {
+
+	def testsForSubProject = new HashMap<String,LinkedHashMap>();
+	
+	int includedClassFilesNotInTestReport = 0 // class in sourceSet but not in test report, 'bumped' to first task
+	int includedClassFilesInTestReport = 0    // class in sourceSet and in test report
+	int excludedClassFilesBadName = 0         // excluded class in sourceSet with invalid name
+	int excludedClassFilesCategory = 0        // excluded class in sourceSet with @Category annotation
+	int excludedClassAllTestsIgnored = 0      // excluded class in sourceSet with test report duration of 0
+
+	logger.debug("getTestsForSubProject: Found " + sourceDirectorySet.files.size()
+		+ " file(s) in source set to process.")
+		
+	// Read in the config file that indicates which base test classes are associated with
+	// which application configs. This is not a comprehensive list of all test classes
+	// in Ghidra - it's the list of all classes that are extended in Ghidra. 
+	parseApplicationConfigs(dockingConfigs, integrationConfigs, appConfigs, ghidraConfigs);
+	
+	// "Buckets" that delineate which test classes should be run together.
+	List dockingBucket = new ArrayList<String>();
+	List integrationBucket = new ArrayList<String>();
+	List appBucket = new ArrayList<String>();
+	List ghidraBucket = new ArrayList<String>();
+	List unknownBucket = new ArrayList<String>();
+		
+	for (File file : sourceDirectorySet.getFiles()) {
+		logger.debug("getTestsForSubProject: Found file in sourceSet = " + file.name)
+
+		// Must have a valid class name
+		if(!hasValidTestClassName(file.name)) {
+			logger.debug("getTestsForSubProject: Excluding file '" + file.name + "' based on name.")
+			excludedClassFilesBadName++
+			continue
+		}
+
+		String fileContents = file.text
+		
+		// Must not have a Category annotation
+		if (hasCategoryExcludes(fileContents)) {
+			logger.debug("getTestsForSubProject: Found category exclude for '"
+				+ file.name + "'. Excluding this class from running.")
+			excludedClassFilesCategory++
+			continue
+		}
+		
+		// Get any extending class so we can see what bucket it belongs to. Do this
+		// by grabbing the next word after "extends".
+		Pattern p = Pattern.compile("extends\\W+(\\w+)");
+		Matcher m = p.matcher(fileContents);
+		String extendsClass = "";
+		while (m.find()) {
+			extendsClass = m.group(1);
+			break;
+		}
+				
+		// Get full package name of the class.
+		Pattern p2 = Pattern.compile("package\\s+([a-zA_Z_][\\.\\w]*);");
+		Matcher m2 = p2.matcher(fileContents);
+		String packageName = "";
+		while (m2.find()) {
+			packageName = m2.group(1);
+			break;
+		}
+		
+		// Construct a var of the form "<package name>.<class name>". This will 
+		// be stored in the appropriate bucket and be used when creating test
+		// tasks later on.
+		String className = packageName + "." + file.name
+		className = className.replace(".java", "")
+			
+		if (extendsClass.isEmpty()) {
+			unknownBucket.add(className);
+		}
+		else {		
+			if (integrationConfigs.contains(extendsClass)) {
+				integrationBucket.add(className);
+			}
+			else if (dockingConfigs.contains(extendsClass)) {
+				dockingBucket.add(className);
+			}
+			else if (appConfigs.contains(extendsClass)) {
+				appBucket.add(className);
+			}
+			else if (ghidraConfigs.contains(extendsClass)) {
+				ghidraBucket.add(className);
+			}
+			else {
+				unknownBucket.add(className);
+			}
+		}
+	}
+		
+	Map<String,List> testBuckets = new HashMap<String,List>();
+	testBuckets.put("docking", dockingBucket)
+	testBuckets.put("integration", integrationBucket)
+	testBuckets.put("app", appBucket)
+	testBuckets.put("ghidra", ghidraBucket)
+	testBuckets.put("unknown", unknownBucket)
+		
+	logger.debug("integration bucket: " + integrationBucket)
+	logger.debug("docking bucket: " + dockingBucket)
+	logger.debug("app bucket: " + appBucket)
+	logger.debug("ghidra bucket: " + ghidraBucket)
+	logger.debug("unknown bucket: " + unknownBucket)
+	
+	return testBuckets;
+}
+
+/*********************************************************************************
+ * Determines if test task creation should be skipped for parallelCombinedTestReport task.
+*********************************************************************************/
+def boolean shouldSkipTestTaskCreation(Project subproject) {
+	if (!parallelMode) {
+		logger.debug("shouldSkipTestTaskCreation: Skip task creation for $subproject.name. Not in parallel mode.")
+		return true
+	}
+	if (!subproject.hasProperty("sourceSets")) {
+		logger.debug("shouldSkipTestTaskCreation: subproject $subproject.name has no sourceSet property.")
+		return true
+	}
+	if (subproject.sourceSets.findByName("test") == null || 
+			subproject.sourceSets.test.java.files.isEmpty()) {
+		logger.debug("shouldSkipTestTaskCreation: Skip task creation for $subproject.name. No test sources.")
+		return true
+	}
+	if (subproject.findProperty("excludeFromParallelTests") ?: false) {
+		logger.debug("shouldSkipTestTaskCreation: Skip task creation for $subproject.name." 
+			+ " 'excludeFromParallelTests' found.")
+		return true
+	}
+	
+	if (subproject.findProperty("repoToTest")) {
+	    subproject.ext.repoToTest = subproject.getProperty('repoToTest')
+	}
+	else {
+	    subproject.ext.repoToTest = "ALL_REPOS"
+	}
+	if (!subproject.ext.repoToTest.equals("ALL_REPOS") && !subproject.getProjectDir().toString().contains("/" + repoToTest + "/")) {
+	    return true
+	}
+
+	return false
+}
+
+/*********************************************************************************
+ * Determines if integrationTest task creation should be skipped for parallelCombinedTestReport task.
+*********************************************************************************/
+def boolean shouldSkipIntegrationTestTaskCreation(Project subproject) {
+	if (!parallelMode) {
+		logger.debug("shouldSkipIntegrationTestTaskCreation: Skip task creation for $subproject.name." 
+			+ " Not in parallel mode.")
+		return true
+	}
+	if (!subproject.hasProperty("sourceSets")) {
+		logger.debug("shouldSkipIntegrationTestTaskCreation: subproject $subproject.name has no sourceSet property.")
+		return true
+	}
+	if (subproject.sourceSets.findByName("integrationTest") == null || 
+			subproject.sourceSets.integrationTest.java.files.isEmpty()) {
+		logger.debug("shouldSkipIntegrationTestTaskCreation: Skip task creation for $subproject.name." 
+			+ " No integrationTest sources.")
+		return true
+	}
+	if (subproject.findProperty("excludeFromParallelIntegrationTests") ?: false) {
+		logger.debug("shouldSkipIntegrationTestTaskCreation: Skip task creation for $subproject.name." 
+			+ "'excludeFromParallelIntegrationTests' found.")
+		return true
+	}
+	
+	if (subproject.findProperty("repoToTest")) {
+	    subproject.ext.repoToTest = subproject.getProperty('repoToTest')
+	}
+	else {
+	    subproject.ext.repoToTest = "ALL_REPOS"
+	}
+	if (!subproject.ext.repoToTest.equals("ALL_REPOS") && !subproject.getProjectDir().toString().contains("/" + repoToTest + "/")) {
+	    return true
+	}
+
+	return false
+}
+
+/*********************************************************************************
+ * Gets the path to the last archived test report. This is used by the
+ * 'parallelCombinedTestReport' task when no -PtestTimeParserInputDir is supplied 
+ * via cmd line.
+*********************************************************************************/
+def String getLastArchivedReport(String reportArchivesPath) {
+
+	// skip configuration for this property if not in parallelMode
+	if (!parallelMode) {
+		logger.debug("getLastArchivedReport: not in 'parallelMode'. Skipping.")
+		return ""
+	}
+
+	File reportArchiveDir = new File(reportArchivesPath);
+	logger.info("getLastArchivedReport: searching for test report to parse in " + reportArchivesPath)
+
+	if(!reportArchiveDir.exists()) {
+		logger.info("getLastArchivedReport: '$reportArchiveDir' does not exist.")
+		return ""
+	}
+
+	// filter for report archive directories.
+	File[] files = reportArchiveDir.listFiles(new FilenameFilter() {
+		public boolean accept(File dir, String name) {
+			return name.startsWith("reports_");
+		}
+	});
+
+	assert (files != null && files.size() > 0) :
+		"""Could not find test report archives in '$reportArchiveDir'.
+		because no -PtestTimeParserInputDir=<path/to/report> supplied via cmd line"""
+
+	logger.debug("getLastArchivedReport: found " + files.size() + " archived report directories in '" 
+		+ reportArchiveDir.getPath() + "'.") 
+	// Sort by lastModified date.  The last modified directory will be first.
+	files = files.sort{-it.lastModified()}
+	logger.debug("getLastArchivedReport: selecting report archive to parse: " + files[0].getAbsolutePath()) 
+	return files[0].getAbsolutePath()
+}
+
+ext {
+	getTestsForSubProject = this.&getTestsForSubProject // export this utility method to project
+	shouldSkipTestTaskCreation = this.&shouldSkipTestTaskCreation
+	shouldSkipIntegrationTestTaskCreation = this.&shouldSkipIntegrationTestTaskCreation
+	getLastArchivedReport = this.&getLastArchivedReport
+}

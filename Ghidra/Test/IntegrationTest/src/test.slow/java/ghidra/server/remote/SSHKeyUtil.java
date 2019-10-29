@@ -22,7 +22,7 @@ import java.util.Base64;
 
 import ch.ethz.ssh2.packets.TypesWriter;
 
-class SSHKeyUtil {
+public class SSHKeyUtil {
 
 	/**
 	 * Generate private/public SSH keys for test purposes using RSA algorithm.
@@ -30,7 +30,7 @@ class SSHKeyUtil {
 	 * key files ([0] corresponds to private key, [1] corresponds to public key)
 	 * @throws NoSuchAlgorithmException
 	 */
-	static String[] generateSSHKeys() throws NoSuchAlgorithmException {
+	public static String[] generateSSHKeys() throws NoSuchAlgorithmException {
 
 		KeyPairGenerator generator = KeyPairGenerator.getInstance("RSA");
 		generator.initialize(2048);

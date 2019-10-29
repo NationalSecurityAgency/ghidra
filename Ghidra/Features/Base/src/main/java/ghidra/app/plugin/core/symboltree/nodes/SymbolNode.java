@@ -28,6 +28,7 @@ import ghidra.program.model.address.GlobalNamespace;
 import ghidra.program.model.listing.CircularDependencyException;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.*;
+import ghidra.util.HTMLUtilities;
 import ghidra.util.Msg;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.exception.InvalidInputException;
@@ -137,7 +138,7 @@ public class SymbolNode extends GTreeSlowLoadingNode implements SymbolTreeNode {
 
 	@Override
 	public String getToolTip() {
-		return symbol.getName(true);
+		return "<html>" + HTMLUtilities.escapeHTML(symbol.getName(true));
 	}
 
 	@Override
@@ -184,7 +185,7 @@ public class SymbolNode extends GTreeSlowLoadingNode implements SymbolTreeNode {
 		if (symbolType.equals(SymbolType.CLASS)) {
 			return new ClassSymbolNode(program, symbol);
 		}
-		else if (symbolType.equals(SymbolType.CODE)) {
+		else if (symbolType.equals(SymbolType.LABEL)) {
 			return new CodeSymbolNode(program, symbol);
 		}
 		else if (symbolType.equals(SymbolType.FUNCTION)) {

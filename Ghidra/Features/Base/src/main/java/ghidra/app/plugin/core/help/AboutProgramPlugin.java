@@ -20,6 +20,7 @@ import java.util.Map;
 import docking.ActionContext;
 import docking.action.DockingAction;
 import docking.action.MenuData;
+import docking.tool.ToolConstants;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.context.ProgramActionContext;
 import ghidra.app.context.ProgramContextAction;
@@ -33,7 +34,6 @@ import ghidra.framework.main.datatable.ProjectDataContextAction;
 import ghidra.framework.model.DomainFile;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
-import ghidra.framework.plugintool.util.ToolConstants;
 import ghidra.program.model.listing.Program;
 import ghidra.util.HelpLocation;
 

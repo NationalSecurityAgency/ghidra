@@ -25,6 +25,8 @@ import javax.swing.JComponent;
 import javax.swing.JPanel;
 
 import docking.DockingUtils;
+import docking.util.AnimationUtils;
+import docking.util.SwingAnimationCallback;
 import docking.widgets.EventTrigger;
 import docking.widgets.SearchLocation;
 import docking.widgets.fieldpanel.FieldPanel;
@@ -36,7 +38,7 @@ import docking.widgets.fieldpanel.support.*;
 import docking.widgets.indexedscrollpane.IndexedScrollPane;
 import ghidra.app.decompiler.*;
 import ghidra.app.decompiler.component.hover.DecompilerHoverService;
-import ghidra.app.plugin.core.decompile.DecompileClipboardProvider;
+import ghidra.app.plugin.core.decompile.DecompilerClipboardProvider;
 import ghidra.app.plugin.core.decompile.actions.FieldBasedSearchLocation;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Function;
@@ -48,9 +50,8 @@ import ghidra.util.*;
 import ghidra.util.bean.field.AnnotatedTextFieldElement;
 
 /**
- * Class to handle the display of a decompiled function.
+ * Class to handle the display of a decompiled function
  */
-
 public class DecompilerPanel extends JPanel implements FieldMouseListener, FieldLocationListener,
 		FieldSelectionListener, ClangHighlightListener {
 
@@ -62,7 +63,7 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 	private final DecompilerController controller;
 	private final DecompileOptions options;
 
-	private FieldPanel codeViewer;
+	private DecompilerFieldPanel fieldPanel;
 	private ClangLayoutController layoutMgr;
 	private HighlightFactory hlFactory;
 	private ClangHighlightController highlightController;
@@ -73,7 +74,7 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 	private SearchLocation currentSearchLocation;
 
 	private DecompileData decompileData = new EmptyDecompileData("No Function");
-	private final DecompileClipboardProvider clipboard;
+	private final DecompilerClipboardProvider clipboard;
 
 	private Color originalBackgroundColor;
 	private boolean useNonFunctionColor = false;
@@ -82,7 +83,7 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 	private DecompilerHoverProvider decompilerHoverProvider;
 
 	DecompilerPanel(DecompilerController controller, DecompileOptions options,
-			DecompileClipboardProvider clipboard, JComponent taskMonitorComponent) {
+			DecompilerClipboardProvider clipboard, JComponent taskMonitorComponent) {
 		this.controller = controller;
 		this.options = options;
 		this.clipboard = clipboard;
@@ -93,13 +94,13 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 		hlFactory = new SearchHighlightFactory();
 
 		layoutMgr = new ClangLayoutController(options, this, metrics, hlFactory);
-		codeViewer = new FieldPanel(layoutMgr);
+		fieldPanel = new DecompilerFieldPanel(layoutMgr);
 		setBackground(options.getCodeViewerBackgroundColor());
 
-		IndexedScrollPane scroller = new IndexedScrollPane(codeViewer);
-		codeViewer.addFieldSelectionListener(this);
-		codeViewer.addFieldMouseListener(this);
-		codeViewer.addFieldLocationListener(this);
+		IndexedScrollPane scroller = new IndexedScrollPane(fieldPanel);
+		fieldPanel.addFieldSelectionListener(this);
+		fieldPanel.addFieldMouseListener(this);
+		fieldPanel.addFieldLocationListener(this);
 
 		decompilerHoverProvider = new DecompilerHoverProvider();
 
@@ -124,7 +125,7 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 	}
 
 	public FieldPanel getFieldPanel() {
-		return codeViewer;
+		return fieldPanel;
 	}
 
 	@Override
@@ -133,15 +134,15 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 		if (useNonFunctionColor) {
 			bg = NON_FUNCTION_BACKGROUND_COLOR_DEF;
 		}
-		if (codeViewer != null) {
-			codeViewer.setBackgroundColor(bg);
+		if (fieldPanel != null) {
+			fieldPanel.setBackgroundColor(bg);
 		}
 		super.setBackground(bg);
 	}
 
 	/**
-	 * This function sets the current window display based
-	 * on our display state.
+	 * This function sets the current window display based on our display state
+	 * @param decompileData the new data
 	 */
 	void setDecompileData(DecompileData decompileData) {
 		if (layoutMgr == null) {
@@ -202,40 +203,154 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 
 	public void setLocation(ProgramLocation location, ViewerPosition viewerPosition) {
 		repaint();
-		Address address = location.getAddress();
-		if (address == null) {
+		if (location.getAddress() == null) {
 			return;
 		}
+
 		if (viewerPosition != null) {
-			codeViewer.setViewerPosition(viewerPosition.getIndex(), viewerPosition.getXOffset(),
+			fieldPanel.setViewerPosition(viewerPosition.getIndex(), viewerPosition.getXOffset(),
 				viewerPosition.getYOffset());
 		}
-		List<ClangToken> tokens =
-			DecompilerUtils.getTokens(layoutMgr.getRoot(), translateAddress(address));
 
 		if (location instanceof DecompilerLocation) {
 			DecompilerLocation decompilerLocation = (DecompilerLocation) location;
-			codeViewer.goTo(BigInteger.valueOf(decompilerLocation.getLineNumber()), 0, 0,
+			fieldPanel.goTo(BigInteger.valueOf(decompilerLocation.getLineNumber()), 0, 0,
 				decompilerLocation.getCharPos(), false);
+			return;
 		}
-		else if (!tokens.isEmpty()) {
-			int firstfield = DecompilerUtils.findIndexOfFirstField(tokens, layoutMgr.getFields());
-			// Put cursor on first token in the list
-			if (firstfield != -1) {
-				codeViewer.goTo(BigInteger.valueOf(firstfield), 0, 0, 0, false);
+
+		//
+		// Try to figure out where the given location's address maps to.  If we can find the
+		// line that contains the address, the go to the beginning of that line.  (We do not try
+		// to go to an actual token, since multiple tokens can share an address, we woudln't know
+		// which token is best.)
+		//
+		// Note:  at the time of this writing, not all fields have an address value.  For 
+		//        example, the ClangFuncNameToken, does not have an address.  (It seems that most
+		//        of the tokens in the function signature do not have an address, which can 
+		//        probably be fixed.)   So, to deal with this oddity, we will have some special
+		//        case code below.
+		//
+		Address address = location.getAddress();
+		if (goToFunctionSignature(address)) {
+			// special case: the address is at the function entry, which means we just navigate
+			// to the signature
+			return;
+		}
+
+		Address translated = translate(address);
+		List<ClangToken> tokens =
+			DecompilerUtils.getTokensFromView(layoutMgr.getFields(), translated);
+		goToBeginningOfLine(tokens);
+	}
+
+	private boolean goToFunctionSignature(Address address) {
+
+		if (!decompileData.hasDecompileResults()) {
+			return false;
+		}
+
+		Address entry = decompileData.getFunction().getEntryPoint();
+		if (!entry.equals(address)) {
+			return false;
+		}
+
+		List<ClangLine> lines = layoutMgr.getLines();
+		ClangLine signatureLine = getFunctionSignatureLine(lines);
+		if (signatureLine == null) {
+			return false; // can happen when there is no function decompiled
+		}
+
+		// -1 since the FieldPanel is 0-based; we are 1-based
+		int lineNumber = signatureLine.getLineNumber() - 1;
+		fieldPanel.goTo(BigInteger.valueOf(lineNumber), 0, 0, 0, false);
+
+		return true;
+	}
+
+	private ClangLine getFunctionSignatureLine(List<ClangLine> functionLines) {
+		for (ClangLine line : functionLines) {
+			List<ClangToken> tokens = line.getAllTokens();
+			for (ClangToken token : tokens) {
+				if (token.Parent() instanceof ClangFuncProto) {
+					return line;
+				}
 			}
 		}
+		return null;
 	}
 
 	/**
-	 * Translate Ghidra address to decompiler address.
-	 * Functions within an overlay space are decompiled
-	 * in their physical space, therefore decompiler results
-	 * refer to the functions underlying .physical space
-	 * @param addr
-	 * @return
+	 * Put cursor on first token in the list
+	 * @param tokens the tokens to search for 
 	 */
-	private Address translateAddress(Address addr) {
+	private void goToBeginningOfLine(List<ClangToken> tokens) {
+		if (tokens.isEmpty()) {
+			return;
+		}
+
+		int firstLineNumber = DecompilerUtils.findIndexOfFirstField(tokens, layoutMgr.getFields());
+		if (firstLineNumber != -1) {
+			fieldPanel.goTo(BigInteger.valueOf(firstLineNumber), 0, 0, 0, false);
+		}
+	}
+
+	private void goToToken(ClangToken token) {
+
+		ClangLine line = token.getLineParent();
+
+		int offset = 0;
+		List<ClangToken> tokens = line.getAllTokens();
+		for (ClangToken lineToken : tokens) {
+			if (lineToken.equals(token)) {
+				break;
+			}
+			offset += lineToken.getText().length();
+		}
+
+		// -1 since the FieldPanel is 0-based; we are 1-based
+		int lineNumber = line.getLineNumber() - 1;
+		int column = offset;
+		FieldLocation start = getCursorPosition();
+
+		int distance = getOffscreenDistance(lineNumber);
+		if (distance == 0) {
+			fieldPanel.navigateTo(lineNumber, column);
+			return;
+		}
+
+		ScrollingCallback callback = new ScrollingCallback(start, lineNumber, column, distance);
+		AnimationUtils.executeSwingAnimationCallback(callback);
+	}
+
+	private int getOffscreenDistance(int line) {
+
+		AnchoredLayout start = fieldPanel.getVisibleStartLayout();
+		int visibleStartLine = start.getIndex().intValue();
+		if (visibleStartLine > line) {
+			// the end is off the top of the screen
+			return visibleStartLine - line;
+		}
+
+		AnchoredLayout end = fieldPanel.getVisibleEndLayout();
+		int visibleEndLine = end.getIndex().intValue();
+		if (visibleEndLine < line) {
+			// the end is off the bottom of the screen
+			return line - visibleEndLine;
+		}
+
+		return 0;
+	}
+
+	/**
+	 * Translate Ghidra address to decompiler address. Functions within an overlay space are 
+	 * decompiled in their physical space, therefore decompiler results refer to the 
+	 * functions underlying .physical space
+	 * 
+	 * @param addr the Ghidra address
+	 * @return the decompiler address
+	 */
+	private Address translate(Address addr) {
 		Function func = decompileData.getFunction();
 		if (func == null) {
 			return addr;
@@ -248,12 +363,12 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 	}
 
 	/**
-	 * Translate Ghidra address set to decompiler address set.
-	 * Functions within an overlay space are decompiled
-	 * in their physical space, therefore decompiler results
+	 * Translate Ghidra address set to decompiler address set. Functions within an overlay 
+	 * space are decompiled in their physical space, therefore decompiler results
 	 * refer to the functions underlying .physical space
-	 * @param set
-	 * @return
+	 * 
+	 * @param set the Ghidra addresses
+	 * @return the decompiler addresses
 	 */
 	private AddressSetView translateSet(AddressSetView set) {
 		Function func = decompileData.getFunction();
@@ -288,7 +403,7 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 				DecompilerUtils.getTokens(layoutMgr.getRoot(), translateSet(selection));
 			fieldSelection = DecompilerUtils.getFieldSelection(tokens);
 		}
-		codeViewer.setSelection(fieldSelection);
+		fieldPanel.setSelection(fieldSelection);
 	}
 
 	public void setDecompilerHoverProvider(DecompilerHoverProvider provider) {
@@ -363,45 +478,83 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 		ClangTextField textField = (ClangTextField) field;
 		ClangToken token = textField.getToken(location);
 		if (token instanceof ClangFuncNameToken) {
-			Function function =
-				DecompilerUtils.getFunction(controller.getProgram(), (ClangFuncNameToken) token);
-			if (function != null) {
-				controller.goToFunction(function, newWindow);
-			}
-			else {
-				String labelName = token.getText();
-				if (labelName.startsWith("func_0x")) {
-					try {
-						Address addr = decompileData.getFunction().getEntryPoint().getAddress(
-							labelName.substring(7));
-						controller.goToAddress(addr, newWindow);
-					}
-					catch (AddressFormatException e) {
-						controller.goToLabel(labelName, newWindow);
-					}
-				}
-			}
+			tryGoToFunction((ClangFuncNameToken) token, newWindow);
 		}
 		else if (token instanceof ClangLabelToken) {
-			Address addr = token.getMinAddress();
-			controller.goToAddress(addr, newWindow);
+			tryGoToLabel((ClangLabelToken) token, newWindow);
 		}
 		else if (token instanceof ClangVariableToken) {
 			tryGoToVarnode((ClangVariableToken) token, newWindow);
 		}
 		else if (token instanceof ClangCommentToken) {
-			// special cases
-			// -comments: these no longer use tokens for each item, but are one composite field
-			FieldElement clickedElement = textField.getClickedObject(location);
-			if (clickedElement instanceof AnnotatedTextFieldElement) {
-				AnnotatedTextFieldElement annotation = (AnnotatedTextFieldElement) clickedElement;
-				controller.annotationClicked(annotation, event, newWindow);
+			tryGoToComment(location, event, textField, token, newWindow);
+		}
+		else if (token instanceof ClangSyntaxToken) {
+			tryGoToSyntaxToken((ClangSyntaxToken) token);
+		}
+	}
+
+	private void tryGoToComment(FieldLocation location, MouseEvent event, ClangTextField textField,
+			ClangToken token, boolean newWindow) {
+
+		// special cases
+		// -comments: these no longer use tokens for each item, but are one composite field
+		FieldElement clickedElement = textField.getClickedObject(location);
+		if (clickedElement instanceof AnnotatedTextFieldElement) {
+			AnnotatedTextFieldElement annotation = (AnnotatedTextFieldElement) clickedElement;
+			controller.annotationClicked(annotation, event, newWindow);
+			return;
+		}
+
+		String text = clickedElement.getText();
+		String word = StringUtilities.findWord(text, location.col);
+		tryGoToScalar(word, newWindow);
+	}
+
+	private void tryGoToFunction(ClangFuncNameToken functionToken, boolean newWindow) {
+		Function function = DecompilerUtils.getFunction(controller.getProgram(), functionToken);
+		if (function != null) {
+			controller.goToFunction(function, newWindow);
+			return;
+		}
+
+		// TODO no idea what this is supposed to be handling...someone doc this please
+		String labelName = functionToken.getText();
+		if (labelName.startsWith("func_0x")) {
+			try {
+				Address addr =
+					decompileData.getFunction().getEntryPoint().getAddress(labelName.substring(7));
+				controller.goToAddress(addr, newWindow);
+			}
+			catch (AddressFormatException e) {
+				controller.goToLabel(labelName, newWindow);
+			}
+		}
+	}
+
+	private void tryGoToLabel(ClangLabelToken token, boolean newWindow) {
+		ClangNode node = token.Parent();
+		if (node instanceof ClangStatement) {
+			// check for a goto label
+			ClangTokenGroup root = layoutMgr.getRoot();
+			ClangLabelToken destination = DecompilerUtils.getGoToTargetToken(root, token);
+			if (destination != null) {
+				goToToken(destination);
 				return;
 			}
+		}
 
-			String text = clickedElement.getText();
-			String word = StringUtilities.findWord(text, location.col);
-			tryGoToScalar(word, newWindow);
+		Address addr = token.getMinAddress();
+		controller.goToAddress(addr, newWindow);
+	}
+
+	private void tryGoToSyntaxToken(ClangSyntaxToken token) {
+
+		if (DecompilerUtils.isBrace(token)) {
+			ClangSyntaxToken otherBrace = DecompilerUtils.getMatchingBrace(token);
+			if (otherBrace != null) {
+				goToToken(otherBrace);
+			}
 		}
 	}
 
@@ -490,8 +643,8 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 		if (!decompileData.hasDecompileResults()) {
 			return null;
 		}
-		Field currentField = codeViewer.getCurrentField();
-		FieldLocation cursorPosition = codeViewer.getCursorLocation();
+		Field currentField = fieldPanel.getCurrentField();
+		FieldLocation cursorPosition = fieldPanel.getCursorLocation();
 		return getProgramLocation(currentField, cursorPosition);
 	}
 
@@ -514,6 +667,7 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 			return;
 		}
 
+		// only broadcast when the user is clicking around
 		if (trigger == EventTrigger.GUI_ACTION) {
 			ProgramLocation programLocation = getProgramLocation(field, location);
 			if (programLocation != null) {
@@ -550,7 +704,7 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 		if (token == null) {
 			return null;
 		}
-		Address address = DecompilerUtils.getClosestAddress(token);
+		Address address = DecompilerUtils.getClosestAddress(getProgram(), token);
 		if (address == null) {
 			address = DecompilerUtils.findAddressBefore(layoutMgr.getFields(), token);
 		}
@@ -605,13 +759,13 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 	}
 
 	public FieldLocation getCursorPosition() {
-		return codeViewer.getCursorLocation();
+		return fieldPanel.getCursorLocation();
 	}
 
 	public void setCursorPosition(FieldLocation fieldLocation) {
-		codeViewer.setCursorPosition(fieldLocation.getIndex(), fieldLocation.getFieldNum(),
+		fieldPanel.setCursorPosition(fieldLocation.getIndex(), fieldLocation.getFieldNum(),
 			fieldLocation.getRow(), fieldLocation.getCol());
-		codeViewer.scrollToCursor();
+		fieldPanel.scrollToCursor();
 	}
 
 	/**
@@ -619,7 +773,7 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 	 * @return a single selected token; null if there is no selection or multiple tokens selected.
 	 */
 	public ClangToken getSelectedToken() {
-		FieldSelection selection = codeViewer.getSelection();
+		FieldSelection selection = fieldPanel.getSelection();
 		if (selection.isEmpty()) {
 			return null;
 		}
@@ -635,8 +789,8 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 	}
 
 	public ClangToken getTokenAtCursor() {
-		FieldLocation cursorPosition = codeViewer.getCursorLocation();
-		Field field = codeViewer.getCurrentField();
+		FieldLocation cursorPosition = fieldPanel.getCursorLocation();
+		Field field = fieldPanel.getCurrentField();
 		if (field == null) {
 			return null;
 		}
@@ -654,10 +808,10 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 	public void setHoverMode(boolean enabled) {
 		decompilerHoverProvider.setHoverEnabled(enabled);
 		if (enabled) {
-			codeViewer.setHoverProvider(decompilerHoverProvider);
+			fieldPanel.setHoverProvider(decompilerHoverProvider);
 		}
 		else {
-			codeViewer.setHoverProvider(null);
+			fieldPanel.setHoverProvider(null);
 		}
 	}
 
@@ -702,49 +856,25 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 		}
 	}
 
-	class SearchHighlightFactory implements HighlightFactory {
-
-		@Override
-		public Highlight[] getHighlights(Field field, String text, int cursorTextOffset) {
-			if (currentSearchLocation == null) {
-				return new Highlight[0];
-			}
-
-			ClangTextField cField = (ClangTextField) field;
-			int highlightLine = cField.getLineNumber();
-
-			FieldLocation searchCursorLocation =
-				((FieldBasedSearchLocation) currentSearchLocation).getFieldLocation();
-			int searchLineNumber = searchCursorLocation.getIndex().intValue() + 1;
-			if (highlightLine != searchLineNumber) {
-				// only highlight the match on the actual line
-				return new Highlight[0];
-			}
-
-			return new Highlight[] { new Highlight(currentSearchLocation.getStartIndexInclusive(),
-				currentSearchLocation.getEndIndexInclusive(), currentSearchHighlightColor) };
-		}
-	}
-
 	public ViewerPosition getViewerPosition() {
-		return codeViewer.getViewerPosition();
+		return fieldPanel.getViewerPosition();
 	}
 
 	public void setViewerPosition(ViewerPosition viewerPosition) {
-		codeViewer.setViewerPosition(viewerPosition.getIndex(), viewerPosition.getXOffset(),
+		fieldPanel.setViewerPosition(viewerPosition.getIndex(), viewerPosition.getXOffset(),
 			viewerPosition.getYOffset());
 	}
 
 	@Override
 	public void requestFocus() {
-		codeViewer.requestFocus();
+		fieldPanel.requestFocus();
 	}
 
 	public void selectAll() {
 		BigInteger numIndexes = layoutMgr.getNumIndexes();
 		FieldSelection selection = new FieldSelection();
 		selection.addRange(BigInteger.ZERO, numIndexes);
-		codeViewer.setSelection(selection);
+		fieldPanel.setSelection(selection);
 		// fake it out that the selection was caused by the field panel GUI.
 		selectionChanged(selection, EventTrigger.GUI_ACTION);
 	}
@@ -770,4 +900,102 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 		repaint();
 	}
 
+//==================================================================================================
+// Inner Classes
+//==================================================================================================	
+
+	private class SearchHighlightFactory implements HighlightFactory {
+
+		@Override
+		public Highlight[] getHighlights(Field field, String text, int cursorTextOffset) {
+			if (currentSearchLocation == null) {
+				return new Highlight[0];
+			}
+
+			ClangTextField cField = (ClangTextField) field;
+			int highlightLine = cField.getLineNumber();
+
+			FieldLocation searchCursorLocation =
+				((FieldBasedSearchLocation) currentSearchLocation).getFieldLocation();
+			int searchLineNumber = searchCursorLocation.getIndex().intValue() + 1;
+			if (highlightLine != searchLineNumber) {
+				// only highlight the match on the actual line
+				return new Highlight[0];
+			}
+
+			return new Highlight[] { new Highlight(currentSearchLocation.getStartIndexInclusive(),
+				currentSearchLocation.getEndIndexInclusive(), currentSearchHighlightColor) };
+		}
+	}
+
+	/**
+	 * A simple class that handles the animators callback to scroll the display
+	 */
+	private class ScrollingCallback implements SwingAnimationCallback {
+
+		private int startLine;
+		private int endLine;
+		private int endColumn;
+		private int duration;
+
+		ScrollingCallback(FieldLocation start, int endLineNumber, int endColumn, int distance) {
+			this.startLine = start.getIndex().intValue();
+			this.endLine = endLineNumber;
+			this.endColumn = endColumn;
+
+			// have things nearby execute more quickly so users don't wait needlessly
+			double rate = Math.pow(distance, .8);
+			int ms = (int) rate * 100;
+			this.duration = Math.min(1000, ms);
+		}
+
+		@Override
+		public int getDuration() {
+			return duration;
+		}
+
+		@Override
+		public void progress(double percentComplete) {
+
+			int length = Math.abs(endLine - startLine);
+			long offset = Math.round(length * percentComplete);
+			int current = 0;
+			if (startLine > endLine) {
+				// backwards
+				current = (int) (startLine - offset);
+			}
+			else {
+				current = (int) (startLine + offset);
+			}
+
+			FieldLocation location = new FieldLocation(BigInteger.valueOf(current));
+			fieldPanel.scrollTo(location);
+		}
+
+		@Override
+		public void done() {
+			fieldPanel.goTo(BigInteger.valueOf(endLine), 0, 0, endColumn, false);
+		}
+	}
+
+	private class DecompilerFieldPanel extends FieldPanel {
+
+		public DecompilerFieldPanel(LayoutModel model) {
+			super(model);
+		}
+
+		/**
+		 * Moves this field panel to the given line and column.  Further, this navigation will
+		 * fire an event to the rest of the tool.   (This is in contrast to a field panel
+		 * <code>goTo</code>, which we use to simply move the cursor, but not trigger an 
+		 * tool-level navigation event.) 
+		 * 
+		 * @param lineNumber the line number 
+		 * @param column the column within the line
+		 */
+		void navigateTo(int lineNumber, int column) {
+			fieldPanel.goTo(BigInteger.valueOf(lineNumber), 0, 0, column, false,
+				EventTrigger.GUI_ACTION);
+		}
+	}
 }

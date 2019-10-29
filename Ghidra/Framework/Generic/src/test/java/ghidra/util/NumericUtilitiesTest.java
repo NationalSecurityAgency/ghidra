@@ -96,6 +96,13 @@ public class NumericUtilitiesTest {
 	}
 
 	@Test
+	public void testConvertBytesToStringWithOffsetAndLength() {
+		byte[] bytes = new byte[] { (byte) 0x1, (byte) 0x23, (byte) 0x80, (byte) 0xff, (byte) 0 };
+		String str = NumericUtilities.convertBytesToString(bytes, 2, 2, " ");
+		assertEquals("80 ff", str);
+	}
+
+	@Test
 	public void testConvertBytesToStringWithDelimiter() {
 		byte[] bytes = new byte[] { (byte) 0x1, (byte) 0x23, (byte) 0x80, (byte) 0xff, (byte) 0 };
 		String str = NumericUtilities.convertBytesToString(bytes, " ");
@@ -276,7 +283,7 @@ public class NumericUtilitiesTest {
 	}
 
 	@Test
-	public void testGetUnsigndeAlignedValue() {
+	public void testGetUnsignedAlignedValue() {
 
 		assertEquals(0, NumericUtilities.getUnsignedAlignedValue(0xffffffffffffffffL, 8));
 		assertEquals(0xfffffffffffffff8L,

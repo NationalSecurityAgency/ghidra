@@ -32,7 +32,7 @@ public class TestTool extends GhidraTool {
 	@Override
 	protected DockingWindowManager createDockingWindowManager(boolean isDockable, boolean hasStatus,
 			boolean isModal) {
-		return new DockingWindowManager("EMPTY", null, this, isModal, isDockable, hasStatus, null);
+		return new DockingWindowManager(this, null, isModal, isDockable, hasStatus, null);
 	}
 
 	@Override

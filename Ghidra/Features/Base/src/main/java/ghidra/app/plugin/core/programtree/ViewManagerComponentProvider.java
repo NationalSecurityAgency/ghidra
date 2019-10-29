@@ -34,6 +34,10 @@ import ghidra.util.HelpLocation;
 
 public class ViewManagerComponentProvider extends ComponentProviderAdapter
 		implements ViewManagerService, ViewChangeListener {
+
+	private static final String OLD_NAME = "ProgramTreePlugin";
+	private static final String NAME = "Program Tree";
+
 	public static final String CURRENT_VIEW = "Current Viewname";
 
 	private ViewPanel viewPanel;
@@ -41,18 +45,34 @@ public class ViewManagerComponentProvider extends ComponentProviderAdapter
 	private Program currentProgram;
 	private String restoredViewName;
 
-	public ViewManagerComponentProvider(PluginTool tool, String name) {
-		super(tool, name, name, ProgramActionContext.class);
+	public ViewManagerComponentProvider(PluginTool tool, String owner) {
+		super(tool, NAME, owner, ProgramActionContext.class);
 		viewPanel = new ViewPanel(tool, this);
 		listeners = new ArrayList<>(3);
 
 		setTitle("Program Trees");
-		setHelpLocation(new HelpLocation(getName(), getName()));
+		setHelpLocation(new HelpLocation(owner, getName()));
 		setDefaultWindowPosition(WindowPosition.LEFT);
 
-		// This provider used to be name ViewManagerPlugin and owned by ViewManagerPlugin so register owner/name change
-		ComponentProvider.registerProviderNameOwnerChange("ViewManagerPlugin", "ViewManagerPlugin",
-			"ProgramTreePlugin", "ProgramTreePlugin");
+		//
+		// Remove the 'name change' calls below some time after version 10.  These calls map
+		// this provider to the correct name and owner over the course of 2 renames.
+		//
+
+		// This provider used to be name ViewManagerPlugin and owned by ViewManagerPlugin so 
+		// register owner/name change
+		String oldOwner = "ViewManagerPlugin";
+		String oldName = oldOwner;
+		String currentOwner = "ProgramTreePlugin";
+		String intermediateName = currentOwner;
+		ComponentProvider.registerProviderNameOwnerChange(oldName, oldOwner, intermediateName,
+			currentOwner);
+
+		// note: it was a mistake above to name the provider the same as the owner; this update
+		// fixes that
+		String currentName = NAME;
+		ComponentProvider.registerProviderNameOwnerChange(intermediateName, currentOwner,
+			currentName, currentOwner);
 	}
 
 	void serviceAdded(ViewProviderService service) {
@@ -147,8 +167,7 @@ public class ViewManagerComponentProvider extends ComponentProviderAdapter
 	/**
 	 * Get the object under the mouse location for the popup
 	 * 
-	 * @param popupPoint point of where the popup will be placed relative to the
-	 *            popup component.
+	 * @param event the mouse event that triggered the popup
 	 */
 	private Object getActivePopupObject(MouseEvent event) {
 
@@ -177,11 +196,13 @@ public class ViewManagerComponentProvider extends ComponentProviderAdapter
 		if (currentProgram == null) {
 			return null;
 		}
+
 		if (event != null) {
-			return new ProgramActionContext(this, currentProgram, getActivePopupObject(event));
+			return new ProgramActionContext(this, currentProgram, viewPanel,
+				getActivePopupObject(event));
 		}
 
-		return new ProgramActionContext(this, currentProgram, getFocusedContext());
+		return new ProgramActionContext(this, currentProgram, viewPanel, getFocusedContext());
 	}
 
 	private Object getFocusedContext() {

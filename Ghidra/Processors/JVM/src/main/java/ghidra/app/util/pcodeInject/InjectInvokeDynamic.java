@@ -31,7 +31,7 @@ public class InjectInvokeDynamic extends InjectPayloadJava {
 		InjectContext injectContext = getInjectContext(program, context);
 		AbstractConstantPoolInfoJava[] constantPool = getConstantPool(program);
 		int constantPoolIndex = (int) injectContext.inputlist.get(0).getOffset();
-		String pcodeText = InvokeMethods.getPcodeForInvoke(constantPoolIndex, constantPool, JavaInvocationType.INVOKE_DYNAMIC);
+		String pcodeText = InvokeMethods.getPcodeForInvokeDynamic(constantPoolIndex, constantPool);
 		return pcodeText;
 	}
 

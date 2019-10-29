@@ -27,6 +27,7 @@ import generic.jar.ResourceFile;
 import ghidra.app.plugin.processors.sleigh.SleighLanguageProvider;
 import ghidra.program.model.lang.*;
 import ghidra.util.classfinder.ClassSearcher;
+import ghidra.util.task.TaskBuilder;
 
 /**
  * Default Language service used gather up all the languages that were found
@@ -43,6 +44,7 @@ public class DefaultLanguageService implements LanguageService, ChangeListener {
 
 	/**
 	 * Returns the single instance of the DefaultLanguageService.
+	 * @return the language service
 	 */
 	public static synchronized LanguageService getLanguageService() {
 		if (languageService == null) {
@@ -85,62 +87,57 @@ public class DefaultLanguageService implements LanguageService, ChangeListener {
 	private void searchForProviders() {
 		Set<LanguageProvider> languageProviders =
 			ClassSearcher.getInstances(LanguageProvider.class);
+
 		searchCompleted = true;
-		processProviders(languageProviders);
+
+		//@formatter:off
+		TaskBuilder.withRunnable(monitor -> {			
+				processProviders(languageProviders); // load and cache
+			})
+			.setTitle("Language Search")
+			.setCanCancel(false)
+			.setHasProgress(false)
+			.launchModal()
+			;
+		//@formatter:on
 	}
 
-	/**
-	 * @see ghidra.program.model.lang.LanguageService#getLanguage(ghidra.program.model.lang.LanguageID)
-	 */
-	@Override
+		@Override
 	public Language getLanguage(LanguageID languageID) throws LanguageNotFoundException {
 		LanguageInfo info = languageMap.get(languageID);
-
 		if (info == null) {
 			throw new LanguageNotFoundException(languageID);
 		}
-
 		return info.getLanguage();
 	}
 
-	/**
-	 * @see ghidra.program.model.lang.LanguageService#getLanguageDescription(ghidra.program.model.lang.LanguageID)
-	 */
-	@Override
+		@Override
 	public LanguageDescription getLanguageDescription(LanguageID languageID)
 			throws LanguageNotFoundException {
 		LanguageInfo info = languageMap.get(languageID);
 		if (info == null) {
 			throw new LanguageNotFoundException(languageID);
 		}
-		return info.ld;
+		return info.description;
 	}
 
-	/**
-	 * @see ghidra.program.model.lang.LanguageService#getLanguageDescriptions(boolean)
-	 */
-	@Override
+		@Override
 	public List<LanguageDescription> getLanguageDescriptions(boolean includeDeprecatedLanguages) {
 		List<LanguageDescription> languageDescriptions = new ArrayList<>();
 		for (LanguageInfo info : languageInfos) {
-			if (includeDeprecatedLanguages || !info.ld.isDeprecated()) {
-				languageDescriptions.add(info.ld);
+			if (includeDeprecatedLanguages || !info.description.isDeprecated()) {
+				languageDescriptions.add(info.description);
 			}
 		}
 		return languageDescriptions;
 	}
 
-	/**
-	 * @see ghidra.program.model.lang.LanguageService#getLanguageDescriptions(ghidra.program.model.lang.Processor,
-	 *      ghidra.program.model.lang.Endian, java.lang.Integer,
-	 *      java.lang.String)
-	 */
-	@Override
+		@Override
 	public List<LanguageDescription> getLanguageDescriptions(Processor processor, Endian endianess,
 			Integer size, String variant) {
 		List<LanguageDescription> languageDescriptions = new ArrayList<>();
 		for (LanguageInfo info : languageInfos) {
-			LanguageDescription description = info.ld;
+			LanguageDescription description = info.description;
 			if (processor != null && processor != description.getProcessor()) {
 				continue;
 			}
@@ -161,8 +158,9 @@ public class DefaultLanguageService implements LanguageService, ChangeListener {
 	private static boolean languageMatchesExternalProcessor(LanguageDescription description,
 			String externalProcessorName, String externalTool) {
 		boolean result = false;
-		if (externalProcessorName == null)
+		if (externalProcessorName == null) {
 			result = true;
+		}
 		else if (externalTool != null) {
 			List<String> extNames = description.getExternalNames(externalTool);
 			if (extNames != null) {
@@ -182,7 +180,7 @@ public class DefaultLanguageService implements LanguageService, ChangeListener {
 
 		List<LanguageDescription> languageDescriptions = new ArrayList<>();
 		for (LanguageInfo info : languageInfos) {
-			LanguageDescription description = info.ld;
+			LanguageDescription description = info.description;
 
 			if (!languageMatchesExternalProcessor(description, externalProcessorName,
 				externalTool)) {
@@ -276,16 +274,13 @@ public class DefaultLanguageService implements LanguageService, ChangeListener {
 
 	}
 
-	/**
-	 * @see ghidra.program.model.lang.LanguageService#getLanguageDescriptions(ghidra.program.model.lang.Processor)
-	 */
-	@Override
+		@Override
 	public List<LanguageDescription> getLanguageDescriptions(Processor processor) {
 		ArrayList<LanguageDescription> list = new ArrayList<>();
 
 		for (LanguageInfo info : languageInfos) {
-			if (info.ld.getProcessor().equals(processor)) {
-				list.add(info.ld);
+			if (info.description.getProcessor().equals(processor)) {
+				list.add(info.description);
 			}
 		}
 		return list;
@@ -326,16 +321,13 @@ public class DefaultLanguageService implements LanguageService, ChangeListener {
 		return returnValue;
 	}
 
-	/**
-	 * @see ghidra.program.model.lang.LanguageService#getDefaultLanguage(ghidra.program.model.lang.Processor)
-	 */
-	@Override
+		@Override
 	public Language getDefaultLanguage(Processor processor) throws LanguageNotFoundException {
 		if (processor == null) {
 			throw new IllegalArgumentException("processor == null not allowed");
 		}
 		for (LanguageInfo info : languageInfos) {
-			if (info.ld.getProcessor().equals(processor)) {
+			if (info.description.getProcessor().equals(processor)) {
 				long start = System.currentTimeMillis();
 				Language language = info.getLanguage();
 				log.debug("getDefaultLanguage(" + language.getLanguageID() + ") took " +
@@ -361,7 +353,7 @@ public class DefaultLanguageService implements LanguageService, ChangeListener {
 				continue;
 			}
 			languageInfos.add(info);
-			LanguageID id = info.ld.getLanguageID();
+			LanguageID id = info.description.getLanguageID();
 			if (languageMap.containsKey(id)) {
 				throw new IllegalStateException("Duplicate language ID encountered: " + id);
 			}
@@ -369,22 +361,42 @@ public class DefaultLanguageService implements LanguageService, ChangeListener {
 		}
 	}
 
-	class LanguageInfo {
-		LanguageDescription ld;
-		LanguageProvider lp;
+	private class LanguageInfo {
+
+		private LanguageProvider provider;
+		LanguageDescription description;
 
 		LanguageInfo(LanguageDescription ld, LanguageProvider lp) {
-			this.ld = ld;
-			this.lp = lp;
+			this.description = ld;
+			this.provider = lp;
 		}
 
-		Language getLanguage() {
-			return lp.getLanguage(ld.getLanguageID());
+		// synchronized to prevent multiple clients from trying to load the language at once
+		synchronized Language getLanguage() {
+
+			LanguageID id = description.getLanguageID();
+			if (provider.isLanguageLoaded(id)) {
+				// already loaded; no need to create a task
+				return provider.getLanguage(id);
+			}
+
+			//@formatter:off
+			TaskBuilder.withRunnable(monitor -> {			
+					provider.getLanguage(id); // load and cache				
+				})
+				.setTitle("Loading language '" + id + "'")
+				.setCanCancel(false)
+				.setHasProgress(false)
+				.launchModal()
+				;
+			//@formatter:on	
+
+			return provider.getLanguage(id);
 		}
 
 		@Override
 		public String toString() {
-			return ld.getLanguageID().getIdAsString();
+			return description.getLanguageID().getIdAsString();
 		}
 
 		@Override
@@ -393,19 +405,16 @@ public class DefaultLanguageService implements LanguageService, ChangeListener {
 				return false;
 			}
 			LanguageInfo otherInfo = (LanguageInfo) obj;
-			return ld.getLanguageID().equals(otherInfo.ld.getLanguageID());
+			return description.getLanguageID().equals(otherInfo.description.getLanguageID());
 		}
 
 		@Override
 		public int hashCode() {
-			return ld.getLanguageID().hashCode();
+			return description.getLanguageID().hashCode();
 		}
 	}
 
-	/**
-	 * @see javax.swing.event.ChangeListener#stateChanged(javax.swing.event.ChangeEvent)
-	 */
-	@Override
+		@Override
 	public void stateChanged(ChangeEvent e) {
 		// NOTE: this is only intended to pickup new language providers 
 		// which is not really supported with the introduction of Sleigh.

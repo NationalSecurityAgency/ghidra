@@ -20,6 +20,7 @@ import java.awt.event.ActionListener;
 
 import javax.swing.*;
 
+import docking.widgets.label.GDLabel;
 import ghidra.feature.fid.db.*;
 import ghidra.feature.fid.service.FidService;
 import ghidra.program.model.lang.LanguageID;
@@ -63,7 +64,7 @@ public class FidFunctionDebugPanel extends JPanel {
 	 * @param text the text of the label
 	 */
 	private void addLabel(String text) {
-		JLabel label = new JLabel(text);
+		JLabel label = new GDLabel(text);
 		label.setHorizontalAlignment(SwingConstants.LEFT);
 		label.setFont(FidDebugUtils.MONOSPACED_FONT);
 		add(label);

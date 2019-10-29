@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,26 +15,37 @@
  */
 package ghidra.app.context;
 
-import ghidra.program.model.listing.Program;
+import java.awt.Component;
+import java.awt.KeyboardFocusManager;
+
 import docking.ActionContext;
 import docking.ComponentProvider;
+import ghidra.program.model.listing.Program;
 
 public class ProgramActionContext extends ActionContext {
 	protected final Program program;
 
-	
 	public ProgramActionContext(ComponentProvider provider, Program program) {
 		this(provider, program, null);
 	}
-	
-	public ProgramActionContext(ComponentProvider provider, Program program, Object contextObject) {
-		super(provider, contextObject);
-		this.program = program;
+
+	public ProgramActionContext(ComponentProvider provider, Program program,
+			Component sourceComponent) {
+		this(provider, program, sourceComponent, sourceComponent);
 	}
 
-	/**
-	 * @return Returns the program.
-	 */
+	public ProgramActionContext(ComponentProvider provider, Program program,
+			Component sourceComponent, Object contextObject) {
+		super(provider, contextObject, sourceComponent);
+		this.program = program;
+
+		// the case where the first constructor is called, which does not specify the component
+		if (sourceComponent == null) {
+			KeyboardFocusManager kfm = KeyboardFocusManager.getCurrentKeyboardFocusManager();
+			setSourceObject(kfm.getFocusOwner());
+		}
+	}
+
 	public Program getProgram() {
 		return program;
 	}

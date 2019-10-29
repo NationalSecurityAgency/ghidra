@@ -20,10 +20,10 @@ import java.awt.event.KeyEvent;
 
 import docking.ActionContext;
 import docking.action.*;
+import docking.tool.ToolConstants;
 import ghidra.framework.OperatingSystem;
 import ghidra.framework.Platform;
 import ghidra.framework.plugintool.util.PluginClassManager;
-import ghidra.framework.plugintool.util.ToolConstants;
 import ghidra.util.HelpLocation;
 
 public class StandAlonePluginTool extends PluginTool {
@@ -49,7 +49,7 @@ public class StandAlonePluginTool extends PluginTool {
 
 	@Override
 	public void addExitAction() {
-		DockingAction exitAction = new DockingAction("Exit", "Tool") {
+		DockingAction exitAction = new DockingAction("Exit", ToolConstants.TOOL_OWNER) {
 			@Override
 			public void actionPerformed(ActionContext context) {
 				app.exit();
@@ -82,7 +82,7 @@ public class StandAlonePluginTool extends PluginTool {
 
 	public void addManagePluginsAction() {
 
-		configureToolAction = new DockingAction("Configure Tool", "Tool") {
+		configureToolAction = new DockingAction("Configure Tool", ToolConstants.TOOL_OWNER) {
 			@Override
 			public void actionPerformed(ActionContext context) {
 				showConfig(false, false);

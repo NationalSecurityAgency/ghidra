@@ -449,6 +449,11 @@ public abstract class ByteViewerComponentProvider extends ComponentProviderAdapt
 		return panel;
 	}
 
+	/**
+	 * Set the status info on the tool.
+	 * 
+	 * @param message non-html text to display
+	 */
 	void setStatusMessage(String message) {
 		plugin.setStatusMessage(message);
 	}

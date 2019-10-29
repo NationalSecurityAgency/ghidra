@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +15,6 @@
  */
 package ghidra.framework.main.datatree;
 
-import ghidra.framework.model.DomainFile;
-
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -26,18 +23,20 @@ import java.util.List;
 
 import javax.swing.*;
 
+import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.list.ListPanel;
+import ghidra.framework.model.DomainFile;
 
 /**
  * Reusable Panel that shows a list of checkboxes for each domain 
  * file in a list.
  */
 class DomainFilesPanel extends JPanel {
-	
+
 	private List<DomainFile> fileList;
-    private JCheckBox []checkboxes;
-    private ListPanel listPanel;
-	
+	private GCheckBox[] checkboxes;
+	private ListPanel listPanel;
+
 	/**
 	 * Constructor
 	 * @param fileList list of DomainFile objects
@@ -45,96 +44,95 @@ class DomainFilesPanel extends JPanel {
 	DomainFilesPanel(List<DomainFile> fileList, String listTitle) {
 		super();
 		this.fileList = fileList;
-	    setLayout(new BorderLayout());
-	    setBorder(BorderFactory.createEmptyBorder(5, 5, 0, 5));
-	    
-	    JPanel innerPanel = new JPanel(new BorderLayout());
-	    checkboxes = new JCheckBox[fileList.size()];
-	    for (int i=0; i<fileList.size(); i++) {
-	        DomainFile df = fileList.get(i);
-	        checkboxes[i] = new JCheckBox(df.getPathname());
-	        checkboxes[i].setBackground(Color.white);
-		    checkboxes[i].setSelected(true);
-	    }
-	
-	    //
-	    // List Panel
-	    //
-	    listPanel = new ListPanel();
-	    listPanel.setCellRenderer(new DataCellRenderer());
-	    listPanel.setMouseListener(new ListMouseListener()); 
-	    if (listTitle != null) {
-			listPanel.setListTitle(listTitle);
-	    }
-	    // Layout Main Panel
-	    innerPanel.add(listPanel, BorderLayout.CENTER);
-	 
-	    add(innerPanel, BorderLayout.CENTER);
-	    listPanel.setListData(checkboxes);
-	    Dimension d = listPanel.getPreferredSize();
-	    if (d.width < 250) {
-			listPanel.setPreferredSize(new Dimension(250, 
-	        						listPanel.getPreferredSize().height));
+		setLayout(new BorderLayout());
+		setBorder(BorderFactory.createEmptyBorder(5, 5, 0, 5));
+
+		JPanel innerPanel = new JPanel(new BorderLayout());
+		checkboxes = new GCheckBox[fileList.size()];
+		for (int i = 0; i < fileList.size(); i++) {
+			DomainFile df = fileList.get(i);
+			checkboxes[i] = new GCheckBox(df.getPathname(), true);
+			checkboxes[i].setBackground(Color.white);
 		}
-	} 
+
+		//
+		// List Panel
+		//
+		listPanel = new ListPanel();
+		listPanel.setCellRenderer(new DataCellRenderer());
+		listPanel.setMouseListener(new ListMouseListener());
+		if (listTitle != null) {
+			listPanel.setListTitle(listTitle);
+		}
+		// Layout Main Panel
+		innerPanel.add(listPanel, BorderLayout.CENTER);
+
+		add(innerPanel, BorderLayout.CENTER);
+		listPanel.setListData(checkboxes);
+		Dimension d = listPanel.getPreferredSize();
+		if (d.width < 250) {
+			listPanel.setPreferredSize(new Dimension(250, listPanel.getPreferredSize().height));
+		}
+	}
+
 	/**
 	 * Get the selected domain files.
 	 */
 	DomainFile[] getSelectedDomainFiles() {
-		List<DomainFile> list = new ArrayList<DomainFile>();
-		for (int i=0; i<checkboxes.length; i++) {
+		List<DomainFile> list = new ArrayList<>();
+		for (int i = 0; i < checkboxes.length; i++) {
 			if (checkboxes[i].isSelected()) {
 				list.add(fileList.get(i));
 			}
 		}
 		DomainFile[] files = new DomainFile[list.size()];
-		return list.toArray(files);	
+		return list.toArray(files);
 	}
-	   
-    /**
-     * Cell renderer to show the checkboxes for the changed data files.
-     */
-    private class DataCellRenderer implements ListCellRenderer {
 
-        public Component getListCellRendererComponent(JList list,
-                          Object value, int index, boolean isSelected,
-                          boolean cellHasFocus) {
+	/**
+	 * Cell renderer to show the checkboxes for the changed data files.
+	 */
+	private class DataCellRenderer implements ListCellRenderer<JCheckBox> {
 
-            if (index == -1) {
-                int selected = list.getSelectedIndex();
-                if (selected == -1) {
-                    return null;
-                }
-                index = selected;
-            }
-            return(checkboxes[index]);
-        }
-    }
-    /**
-     * Mouse listener to get the selected cell in the list.
-     */
-    private class ListMouseListener extends MouseAdapter {
+		@Override
+		public Component getListCellRendererComponent(JList<? extends JCheckBox> list,
+				JCheckBox value, int index, boolean isSelected, boolean cellHasFocus) {
 
-        @Override
-        public void mouseClicked(MouseEvent e) {
-        	if ( e.getClickCount() != 1 ) {
-        		return;
-        	}
-        	
-        	JList list = (JList)e.getSource();
-        	int index = list.locationToIndex(e.getPoint());
-        	if (index < 0) {
-        		return;
-        	}
-        	boolean selected = checkboxes[index].isSelected();
-        	checkboxes[index].setSelected(!selected);
-        	// The following repaint() is to get the check box state to get refreshed on the screen.
-        	// Prior to adding this the check box did not refresh the display of its state in the
-        	// list when selected multiple times in a row. It only seemed to repaint when focus 
-        	// was lost.
-        	list.repaint();
-        }
-    }
+			if (index == -1) {
+				int selected = list.getSelectedIndex();
+				if (selected == -1) {
+					return null;
+				}
+				index = selected;
+			}
+			return checkboxes[index];
+		}
+	}
 
+	/**
+	 * Mouse listener to get the selected cell in the list.
+	 */
+	private class ListMouseListener extends MouseAdapter {
+
+		@Override
+		public void mouseClicked(MouseEvent e) {
+			if (e.getClickCount() != 1) {
+				return;
+			}
+
+			JList list = (JList) e.getSource();
+			int index = list.locationToIndex(e.getPoint());
+			if (index < 0) {
+				return;
+			}
+			boolean selected = checkboxes[index].isSelected();
+			checkboxes[index].setSelected(!selected);
+			// The following repaint() is to get the check box state to get refreshed on the screen.
+			// Prior to adding this the check box did not refresh the display of its state in the
+			// list when selected multiple times in a row. It only seemed to repaint when focus 
+			// was lost.
+			list.repaint();
+		}
+	}
 
 }

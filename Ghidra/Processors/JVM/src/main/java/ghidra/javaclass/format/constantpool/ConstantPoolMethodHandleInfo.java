@@ -15,14 +15,11 @@
  */
 package ghidra.javaclass.format.constantpool;
 
-import ghidra.app.util.bin.BinaryReader;
-import ghidra.program.model.data.DataType;
-import ghidra.program.model.data.Structure;
-import ghidra.program.model.data.StructureDataType;
-import ghidra.util.exception.DuplicateNameException;
-
 import java.io.IOException;
 
+import ghidra.app.util.bin.BinaryReader;
+import ghidra.program.model.data.*;
+import ghidra.util.exception.DuplicateNameException;
 
 /**
  * NOTE: THE FOLLOWING TEXT EXTRACTED FROM JVMS7.PDF
@@ -37,12 +34,12 @@ import java.io.IOException;
  * </pre>
  */
 public class ConstantPoolMethodHandleInfo extends AbstractConstantPoolInfoJava {
-	
-	private byte referenceKind;
-	private int  referenceIndex;
 
-	public ConstantPoolMethodHandleInfo( BinaryReader reader ) throws IOException {
-		super( reader );
+	private byte referenceKind;
+	private short referenceIndex;
+
+	public ConstantPoolMethodHandleInfo(BinaryReader reader) throws IOException {
+		super(reader);
 		referenceKind = reader.readNextByte();
 		referenceIndex = reader.readNextShort();
 	}
@@ -101,16 +98,16 @@ public class ConstantPoolMethodHandleInfo extends AbstractConstantPoolInfoJava {
 	 * @return a valid index into the constant_pool table
 	 */
 	public int getReferenceIndex() {
-		return referenceIndex;
+		return referenceIndex & 0xffff;
 	}
 
 	@Override
 	public DataType toDataType() throws DuplicateNameException, IOException {
 		String name = "CONSTANT_MethodHandle_info";
-		Structure structure = new StructureDataType( name, 0 );
-		structure.add( BYTE,  "tag", null );
-		structure.add( BYTE, "reference_kind", null );
-		structure.add( WORD, "reference_index", null );
+		Structure structure = new StructureDataType(name, 0);
+		structure.add(BYTE, "tag", null);
+		structure.add(BYTE, "reference_kind", null);
+		structure.add(WORD, "reference_index", null);
 		return structure;
 	}
 

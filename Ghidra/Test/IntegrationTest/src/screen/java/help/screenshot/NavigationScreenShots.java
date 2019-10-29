@@ -15,7 +15,7 @@
  */
 package help.screenshot;
 
-import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.*;
 
 import java.awt.Window;
 
@@ -26,14 +26,14 @@ import docking.widgets.combobox.GhidraComboBox;
 import docking.widgets.table.GTable;
 import docking.widgets.table.threaded.GThreadedTablePanel;
 import generic.test.TestUtils;
-import ghidra.app.cmd.memory.AddMemoryBlockCmd;
+import ghidra.app.cmd.memory.AddInitializedMemoryBlockCmd;
+import ghidra.app.cmd.memory.AddUninitializedMemoryBlockCmd;
 import ghidra.app.plugin.core.gotoquery.GoToServicePlugin;
 import ghidra.app.plugin.core.table.TableComponentProvider;
 import ghidra.app.plugin.core.table.TableServicePlugin;
 import ghidra.app.services.GoToService;
 import ghidra.app.util.navigation.GoToAddressLabelDialog;
 import ghidra.program.model.address.Address;
-import ghidra.program.model.mem.MemoryBlockType;
 import ghidra.util.table.GhidraProgramTableModel;
 
 public class NavigationScreenShots extends GhidraScreenShotGenerator {
@@ -54,12 +54,12 @@ public class NavigationScreenShots extends GhidraScreenShotGenerator {
 	public void testGoto_Ambiguous() {
 
 		//add fake memory blocks to mimic a multiple address space program
-		tool.execute(new AddMemoryBlockCmd("CODE", "comments", "test1", addr(0), 0x100, true, true,
-			true, false, (byte) 0x69, MemoryBlockType.OVERLAY, null, true), program);
-		tool.execute(new AddMemoryBlockCmd("INTMEM", "comments", "test2", addr(0), 0x100, true,
-			true, true, false, (byte) 1, MemoryBlockType.OVERLAY, null, false), program);
-		tool.execute(new AddMemoryBlockCmd("DUMMY", "comments", "test3", addr(20), 0x100, true,
-			true, true, false, (byte) 1, MemoryBlockType.OVERLAY, null, true), program);
+		tool.execute(new AddInitializedMemoryBlockCmd("CODE", "comments", "test1", addr(0), 0x100,
+			true, true, true, false, (byte) 0x69, true), program);
+		tool.execute(new AddUninitializedMemoryBlockCmd("INTMEM", "comments", "test2", addr(0),
+			0x100, true, true, true, false, false), program);
+		tool.execute(new AddInitializedMemoryBlockCmd("DUMMY", "comments", "test3", addr(20), 0x100,
+			true, true, true, false, (byte) 1, true), program);
 
 		// go to an address outside the blocks that will be displayed
 		goToAddress(program.getMemory().getBlock("DUMMY").getStart());
@@ -98,7 +98,7 @@ public class NavigationScreenShots extends GhidraScreenShotGenerator {
 		pressOkOnDialog();
 		waitForSwing();
 		waitForModel();
-		
+
 		waitForSwing();
 
 		performAction("Go To Address/Label", "GoToAddressLabelPlugin", false);
@@ -107,7 +107,7 @@ public class NavigationScreenShots extends GhidraScreenShotGenerator {
 		pressOkOnDialog();
 		waitForSwing();
 		waitForModel();
-		
+
 		waitForSwing();
 
 		performAction("Go To Address/Label", "GoToAddressLabelPlugin", false);
@@ -116,7 +116,7 @@ public class NavigationScreenShots extends GhidraScreenShotGenerator {
 		pressOkOnDialog();
 		waitForSwing();
 		waitForModel();
-		
+
 		waitForSwing();
 
 		performAction("Go To Address/Label", "GoToAddressLabelPlugin", false);
@@ -125,7 +125,7 @@ public class NavigationScreenShots extends GhidraScreenShotGenerator {
 		pressOkOnDialog();
 		waitForSwing();
 		waitForModel();
-		
+
 		waitForSwing();
 
 		performAction("Go To Address/Label", "GoToAddressLabelPlugin", false);
@@ -134,7 +134,7 @@ public class NavigationScreenShots extends GhidraScreenShotGenerator {
 		pressOkOnDialog();
 		waitForSwing();
 		waitForModel();
-		
+
 		waitForSwing();
 
 		performAction("Go To Address/Label", "GoToAddressLabelPlugin", false);
@@ -147,7 +147,7 @@ public class NavigationScreenShots extends GhidraScreenShotGenerator {
 		pressButtonByText(window, "OK");
 		waitForSwing();
 		waitForModel();
-		
+
 		waitForSwing();
 
 		performAction("Go To Address/Label", "GoToAddressLabelPlugin", false);

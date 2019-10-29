@@ -28,15 +28,16 @@ import docking.*;
 import docking.action.*;
 import docking.widgets.OptionDialog;
 import docking.widgets.dialogs.InputDialog;
+import docking.widgets.label.GLabel;
 import docking.widgets.table.GTableFilterPanel;
 import docking.widgets.table.RowObjectFilterModel;
 import docking.widgets.table.columnfilter.*;
 import docking.widgets.table.constrainteditor.ColumnConstraintEditor;
-import ghidra.generic.function.Callback;
 import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
 import ghidra.util.layout.VerticalLayout;
 import resources.ResourceManager;
+import utility.function.Callback;
 
 /**
  * Dialog for creating and editing column table filters.
@@ -359,18 +360,18 @@ public class ColumnFilterDialog<R> extends DialogComponentProvider
 		filterPanelContainer.getParent().validate();
 	}
 
-	private Component createLogicalOperationLabel(LogicOperation op) {
-		JLabel jLabel = new JLabel("<" + op + ">", SwingConstants.CENTER);
-		jLabel.setForeground(Color.GRAY);
-		return jLabel;
+	private GLabel createLogicalOperationLabel(LogicOperation op) {
+		GLabel label = new GLabel("<" + op + ">", SwingConstants.CENTER);
+		label.setForeground(Color.GRAY);
+		return label;
 	}
 
 	private JComponent buildHeaderPanel() {
 		JPanel headerPanel = new JPanel(new FilterPanelLayout(200, 0));
 
-		headerPanel.add(new JLabel("Table Column", SwingConstants.CENTER));
-		headerPanel.add(new JLabel("Filter", SwingConstants.CENTER));
-		headerPanel.add(new JLabel("Filter Value", SwingConstants.CENTER));
+		headerPanel.add(new GLabel("Table Column", SwingConstants.CENTER));
+		headerPanel.add(new GLabel("Filter", SwingConstants.CENTER));
+		headerPanel.add(new GLabel("Filter Value", SwingConstants.CENTER));
 
 		headerPanel.setBorder(new CompoundBorder(
 			BorderFactory.createMatteBorder(0, 0, 1, 0, Color.DARK_GRAY.brighter().brighter()),

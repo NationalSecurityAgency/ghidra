@@ -325,6 +325,26 @@ void Merge::mergeByDatatype(VarnodeLocSet::const_iterator startiter,VarnodeLocSe
   }
 }
 
+/// \brief Allocate COPY PcodeOp designed to trim an overextended Cover
+///
+/// A COPY is allocated with the given input and data-type.  A \e unique space
+/// output is created.
+/// \param inVn is the given input Varnode for the new COPY
+/// \param ct is the data-type to assign to the new unique output
+/// \param addr is the address associated with the new COPY
+/// \return the newly allocated COPY
+PcodeOp *Merge::allocateCopyTrim(Varnode *inVn,Datatype *ct,const Address &addr)
+
+{
+  PcodeOp *copyOp = data.newOp(1,addr);
+  data.opSetOpcode(copyOp,CPUI_COPY);
+  Varnode *outVn = data.newUnique(inVn->getSize(),ct);
+  data.opSetOutput(copyOp,outVn);
+  data.opSetInput(copyOp,inVn,0);
+  copyTrims.push_back(copyOp);
+  return copyOp;
+}
+
 /// \brief Snip off set of \e read p-code ops for a given Varnode
 ///
 /// The data-flow for the given Varnode is truncated by creating a COPY p-code from the Varnode
@@ -337,7 +357,6 @@ void Merge::snipReads(Varnode *vn,list<PcodeOp *> &markedop)
 {
   if (markedop.empty()) return;
 
-  Varnode *uniq;
   PcodeOp *copyop,*op;
   BlockBasic *bl;
   Address pc;
@@ -359,11 +378,7 @@ void Merge::snipReads(Varnode *vn,list<PcodeOp *> &markedop)
     else
       afterop = vn->getDef();
   }
-  copyop = data.newOp(1,pc);
-  data.opSetOpcode(copyop,CPUI_COPY);
-  uniq = data.newUnique(vn->getSize(),vn->getType());
-  data.opSetOutput(copyop,uniq);
-  data.opSetInput(copyop,vn,0);
+  copyop = allocateCopyTrim(vn, vn->getType(), pc);
   if (afterop == (PcodeOp *)0)
     data.opInsertBegin(copyop,bl);
   else
@@ -374,7 +389,7 @@ void Merge::snipReads(Varnode *vn,list<PcodeOp *> &markedop)
     op = *iter;
     for(slot=0;slot<op->numInput();++slot)
       if (op->getIn(slot)==vn) break; // Find the correct slot
-    data.opSetInput(op,uniq,slot);
+    data.opSetInput(op,copyop->getOut(),slot);
   }
 }
 
@@ -553,7 +568,7 @@ void Merge::trimOpInput(PcodeOp *op,int4 slot)
 
 {
   PcodeOp *copyop;
-  Varnode *uniq,*vn;
+  Varnode *vn;
   Address pc;
   
   if (op->code() == CPUI_MULTIEQUAL) {
@@ -563,12 +578,8 @@ void Merge::trimOpInput(PcodeOp *op,int4 slot)
   else
     pc = op->getAddr();
   vn = op->getIn(slot);
-  copyop = data.newOp(1,pc);
-  data.opSetOpcode(copyop,CPUI_COPY);
-  uniq = data.newUnique(vn->getSize(),vn->getType());
-  data.opSetOutput(copyop,uniq);
-  data.opSetInput(copyop,vn,0);
-  data.opSetInput(op,uniq,slot);
+  copyop = allocateCopyTrim(vn, vn->getType(), pc);
+  data.opSetInput(op,copyop->getOut(),slot);
   if (op->code() == CPUI_MULTIEQUAL)
     data.opInsertEnd(copyop,(BlockBasic *)op->getParent()->getIn(slot));
   else
@@ -717,25 +728,20 @@ void Merge::snipIndirect(PcodeOp *indop)
 
   if (correctable.empty()) return;
   Varnode *refvn = correctable.front()->getIn(correctslot[0]);
-  Varnode *snipvn;
   PcodeOp *snipop,*insertop;
 
 				// NOTE: the covers for any input to op which is
 				// an instance of the output high must
 				// all intersect so the varnodes must all be
 				// traceable via COPY to the same root
-  snipop = data.newOp(1,op->getAddr());
-  data.opSetOpcode(snipop,CPUI_COPY);
-  snipvn = data.newUnique(refvn->getSize(),refvn->getType());
-  data.opSetOutput(snipop,snipvn);
-  data.opSetInput(snipop,refvn,0);
+  snipop = allocateCopyTrim(refvn, refvn->getType(), op->getAddr());
   data.opInsertBefore(snipop,op);
   list<PcodeOp *>::iterator oiter;
   int4 i,slot;
   for(oiter=correctable.begin(),i=0;i<correctslot.size();++oiter,++i) {
     insertop = *oiter;
     slot = correctslot[i];
-    data.opSetInput(insertop,snipvn,slot);
+    data.opSetInput(insertop,snipop->getOut(),slot);
   }
 }
 
@@ -762,14 +768,9 @@ void Merge::mergeIndirect(PcodeOp *indop)
 				// the indirect effect. So fix this
 
   PcodeOp *newop;
-  Varnode *trimvn;
 
-  newop = data.newOp(1,indop->getAddr());
-  trimvn = data.newUnique(outvn->getSize(),outvn->getType());
-  data.opSetOutput(newop,trimvn);
-  data.opSetOpcode(newop,CPUI_COPY);
-  data.opSetInput(newop,indop->getIn(0),0);
-  data.opSetInput(indop,trimvn,0);
+  newop = allocateCopyTrim(invn0, outvn->getType(), indop->getAddr());
+  data.opSetInput(indop,newop->getOut(),0);
   data.opInsertBefore(newop,indop);
   if (!mergeTestRequired(outvn->getHigh(),indop->getIn(0)->getHigh()) ||
       (!merge(indop->getIn(0)->getHigh(),outvn->getHigh(),false))) // Try merge again
@@ -857,6 +858,27 @@ void Merge::findSingleCopy(HighVariable *high,vector<Varnode *> &singlelist)
   }
 }
 
+/// \brief Compare COPY ops first by Varnode input, then by block containing the op
+///
+/// A sort designed to group COPY ops from the same Varnode together. Then within a group,
+/// COPYs are sorted by their containing basic block (so that dominating ops come first).
+/// \param op1 is the first PcodeOp being compared
+/// \param op2 is the second PcodeOp being compared
+/// \return \b true if the first PcodeOp should be ordered before the second
+bool Merge::compareCopyByInVarnode(PcodeOp *op1,PcodeOp *op2)
+
+{
+  Varnode *inVn1 = op1->getIn(0);
+  Varnode *inVn2 = op2->getIn(0);
+  if (inVn1 != inVn2)		// First compare by Varnode inputs
+    return (inVn1->getCreateIndex() < inVn2->getCreateIndex());
+  int4 index1 = op1->getParent()->getIndex();
+  int4 index2 = op2->getParent()->getIndex();
+  if (index1 != index2)
+    return (index1 < index2);
+  return (op1->getSeqNum().getOrder() < op2->getSeqNum().getOrder());
+}
+
 /// \brief Hide \e shadow Varnodes related to the given HighVariable by consolidating COPY chains
 ///
 /// If two Varnodes are copied from the same common ancestor then they will always contain the
@@ -898,6 +920,373 @@ bool Merge::hideShadows(HighVariable *high)
     }
   }
   return res;
+}
+
+/// \brief Check if the given PcodeOp COPYs are redundant
+///
+/// Both the given COPYs assign to the same HighVariable. One is redundant if there is no other
+/// assignment to the HighVariable between the first COPY and the second COPY.
+/// The first COPY must come from a block with a smaller or equal index to the second COPY.
+/// If the indices are equal, the first COPY must come before the second within the block.
+/// \param high is the HighVariable being assigned to
+/// \param domOp is the first COPY
+/// \param subOp is the second COPY
+/// \return \b true if the second COPY is redundant
+bool Merge::checkCopyPair(HighVariable *high,PcodeOp *domOp,PcodeOp *subOp)
+
+{
+  FlowBlock *domBlock = domOp->getParent();
+  FlowBlock *subBlock = subOp->getParent();
+  if (!domBlock->dominates(subBlock))
+    return false;
+  Cover range;
+  range.addDefPoint(domOp->getOut());
+  range.addRefPoint(subOp,subOp->getIn(0));
+  Varnode *inVn = domOp->getIn(0);
+  // Look for high Varnodes in the range
+  for(int4 i=0;i<high->numInstances();++i) {
+    Varnode *vn = high->getInstance(i);
+    if (!vn->isWritten()) continue;
+    PcodeOp *op = vn->getDef();
+    if (op->code() == CPUI_COPY) {		// If the write is not a COPY
+      if (op->getIn(0) == inVn) continue;	// from the same Varnode as domOp and subOp
+    }
+    if (range.contain(op, 1)) {			// and if write is contained in range between domOp and subOp
+      return false;				// it is intervening and subOp is not redundant
+    }
+  }
+  return true;
+}
+
+/// \brief Try to replace a set of COPYs from the same Varnode with a single dominant COPY
+///
+/// All the COPY outputs must be instances of the same HighVariable (not the same Varnode).
+/// Either an existing COPY dominates all the others, or a new dominating COPY is constructed.
+/// The read locations of all other COPY outputs are replaced with the output of the dominating
+/// COPY, if it does not cause intersections in the HighVariable's Cover. Because of
+/// intersections, replacement may fail or partially succeed. Replacement only happens with
+/// COPY outputs that are temporary registers. The cover of the HighVariable may be extended
+/// because of a new COPY output instance.
+/// \param high is the HighVariable being copied to
+/// \param copy is the list of COPY ops into the HighVariable
+/// \param pos is the index of the first COPY from the specific input Varnode
+/// \param size is the number of COPYs (in sequence) from the same specific Varnode
+void Merge::buildDominantCopy(HighVariable *high,vector<PcodeOp *> &copy,int4 pos,int4 size)
+
+{
+  vector<FlowBlock *> blockSet;
+  for(int4 i=0;i<size;++i)
+    blockSet.push_back(copy[pos+i]->getParent());
+  BlockBasic *domBl = (BlockBasic *)FlowBlock::findCommonBlock(blockSet);
+  Varnode *rootVn = copy[pos]->getIn(0);
+  bool domCopyIsNew;
+  PcodeOp *domCopy;
+  Varnode *domVn;
+  if (domBl == copy[pos]->getParent()) {
+    domCopyIsNew = false;
+    domCopy = copy[pos];
+    domVn = domCopy->getOut();
+  }
+  else {
+    domCopyIsNew = true;
+    domCopy = data.newOp(1,domBl->getStop());
+    data.opSetOpcode(domCopy, CPUI_COPY);
+    domVn = data.newUnique(rootVn->getSize(), rootVn->getType());
+    data.opSetOutput(domCopy,domVn);
+    data.opSetInput(domCopy,rootVn,0);
+    data.opInsertEnd(domCopy, domBl);
+  }
+  // Cover created by removing all the COPYs from rootVn
+  Cover bCover;
+  for(int4 i=0;i<high->numInstances();++i) {
+    Varnode *vn = high->getInstance(i);
+    if (vn->isWritten()) {
+      PcodeOp *op = vn->getDef();
+      if (op->code() == CPUI_COPY) {
+	if (op->getIn(0)->copyShadow(rootVn)) continue;
+      }
+    }
+    bCover.merge(*vn->getCover());
+  }
+
+  int4 count = size;
+  for(int4 i=0;i<size;++i) {
+    PcodeOp *op = copy[pos+i];
+    if (op == domCopy) continue;	// No intersections from domVn already proven
+    Varnode *outVn = op->getOut();
+    list<PcodeOp *>::const_iterator iter;
+    Cover aCover;
+    aCover.addDefPoint(domVn);
+    for(iter=outVn->beginDescend();iter!=outVn->endDescend();++iter)
+      aCover.addRefPoint(*iter, outVn);
+    if (bCover.intersect(aCover)>1) {
+      count -= 1;
+      op->setMark();
+    }
+  }
+
+  if (count <= 1) {	// Don't bother if we only replace one COPY with another
+    for (int4 i = 0; i < size; ++i)
+      copy[pos + i]->setMark();
+    count = 0;
+    if (domCopyIsNew) {
+      data.opDestroy(domCopy);
+    }
+  }
+  // Replace all non-intersecting COPYs with read of dominating Varnode
+  for(int4 i=0;i<size;++i) {
+    PcodeOp *op = copy[pos+i];
+    if (op->isMark())
+      op->clearMark();
+    else {
+      Varnode *outVn = op->getOut();
+      if (outVn != domVn) {
+	outVn->getHigh()->remove(outVn);
+	data.totalReplace(outVn, domVn);
+	data.opDestroy(op);
+      }
+    }
+  }
+  if (count > 0 && domCopyIsNew) {
+    high->merge(domVn->getHigh(),false);
+  }
+}
+
+/// \brief Search for and mark redundant COPY ops into the given high as \e non-printing
+///
+/// Trimming during the merge process can insert multiple COPYs from the same source. In some
+/// cases, one or more COPYs may be redundant and shouldn't be printed. This method searches
+/// for redundancy among COPY ops that assign to the given HighVariable.
+/// \param high is the given HighVariable
+/// \param copy is the list of COPYs coming from the same source HighVariable
+/// \param pos is the starting index of a set of COPYs coming from the same Varnode
+/// \param size is the number of Varnodes in the set coming from the same Varnode
+void Merge::markRedundantCopies(HighVariable *high,vector<PcodeOp *> &copy,int4 pos,int4 size)
+
+{
+  for (int4 i = size - 1; i > 0; --i) {
+    PcodeOp *subOp = copy[pos + i];
+    if (subOp->isDead()) continue;
+    for (int4 j = i - 1; j >= 0; --j) {
+      // Make sure earlier index provides dominant op
+      PcodeOp *domOp = copy[pos + j];
+      if (domOp->isDead()) continue;
+      if (checkCopyPair(high, domOp, subOp)) {
+	data.opMarkNonPrinting(subOp);
+	break;
+      }
+    }
+  }
+}
+
+/// \brief Determine if given Varnode is shadowed by another Varnode in the same HighVariable
+///
+/// \param vn is the Varnode to check for shadowing
+/// \return \b true if \b vn is shadowed by another Varnode in its high-level variable
+bool Merge::shadowedVarnode(const Varnode *vn)
+
+{
+  const Varnode *othervn;
+  const HighVariable *high = vn->getHigh();
+  int4 num,i;
+
+  num = high->numInstances();
+  for(i=0;i<num;++i) {
+    othervn = high->getInstance(i);
+    if (othervn == vn) continue;
+    if (vn->getCover()->intersect(*othervn->getCover()) == 2) return true;
+  }
+  return false;
+}
+
+/// \brief  Find all the COPY ops into the given HighVariable
+///
+/// Collect all the COPYs whose output is the given HighVariable but
+/// the input is from a different HighVariable. Returned COPYs are sorted
+/// first by the input Varnode then by block order.
+/// \param high is the given HighVariable
+/// \param copyIns will hold the list of COPYs
+/// \param filterTemps is \b true if COPYs must have a temporary output
+void Merge::findAllIntoCopies(HighVariable *high,vector<PcodeOp *> &copyIns,bool filterTemps)
+
+{
+  for(int4 i=0;i<high->numInstances();++i) {
+    Varnode *vn = high->getInstance(i);
+    if (!vn->isWritten()) continue;
+    PcodeOp *op = vn->getDef();
+    if (op->code() != CPUI_COPY) continue;
+    if (op->getIn(0)->getHigh() == high) continue;
+    if (filterTemps && op->getOut()->getSpace()->getType() != IPTR_INTERNAL) continue;
+    copyIns.push_back(op);
+  }
+  // Group COPYs based on the incoming Varnode then block order
+  sort(copyIns.begin(),copyIns.end(),compareCopyByInVarnode);
+}
+
+/// \brief Try to replace COPYs into the given HighVariable with a single dominant COPY
+///
+/// Find groups of COPYs into the given HighVariable that come from a single source Varnode,
+/// then try to replace them with a COPY.
+/// \param high is the given HighVariable
+void Merge::processHighDominantCopy(HighVariable *high)
+
+{
+  vector<PcodeOp *> copyIns;
+
+  findAllIntoCopies(high,copyIns,true);	// Get all COPYs into this with temporary output
+  if (copyIns.size() < 2) return;
+  int4 pos = 0;
+  while(pos < copyIns.size()) {
+    // Find a group of COPYs coming from the same Varnode
+    Varnode *inVn = copyIns[pos]->getIn(0);
+    int4 sz = 1;
+    while(pos + sz < copyIns.size()) {
+      Varnode *nextVn = copyIns[pos+sz]->getIn(0);
+      if (nextVn != inVn) break;
+      sz += 1;
+    }
+    if (sz > 1)		// If there is more than one COPY in a group
+      buildDominantCopy(high, copyIns, pos, sz);	// Try to construct a dominant COPY
+    pos += sz;
+  }
+}
+
+/// \brief Mark COPY ops into the given HighVariable that are redundant
+///
+/// A COPY is redundant if another COPY performs the same action and has
+/// dominant control flow. The redundant COPY is not removed but is marked so that
+/// it doesn't print in the final source output.
+/// \param high is the given HighVariable
+void Merge::processHighRedundantCopy(HighVariable *high)
+
+{
+  vector<PcodeOp *> copyIns;
+
+  findAllIntoCopies(high,copyIns,false);
+  if (copyIns.size() < 2) return;
+  int4 pos = 0;
+  while(pos < copyIns.size()) {
+    // Find a group of COPYs coming from the same Varnode
+    Varnode *inVn = copyIns[pos]->getIn(0);
+    int4 sz = 1;
+    while(pos + sz < copyIns.size()) {
+      Varnode *nextVn = copyIns[pos+sz]->getIn(0);
+      if (nextVn != inVn) break;
+      sz += 1;
+    }
+    if (sz > 1) {	// If there is more than one COPY in a group
+      markRedundantCopies(high, copyIns, pos, sz);
+    }
+    pos += sz;
+  }
+}
+
+/// \brief Try to reduce/eliminate COPYs produced by the merge trimming process
+///
+/// In order to force merging of certain Varnodes, extra COPY operations may be inserted
+/// to reduce their Cover ranges, and multiple COPYs from the same Varnode can be created this way.
+/// This method collects sets of COPYs generated in this way that have the same input Varnode
+/// and then tries to replace the COPYs with fewer or a single COPY.
+void Merge::processCopyTrims(void)
+
+{
+  vector<HighVariable *> multiCopy;
+
+  for(int4 i=0;i<copyTrims.size();++i) {
+    HighVariable *high = copyTrims[i]->getOut()->getHigh();
+    if (!high->hasCopyIn1()) {
+      multiCopy.push_back(high);
+      high->setCopyIn1();
+    }
+    else
+      high->setCopyIn2();
+  }
+  copyTrims.clear();
+  for(int4 i=0;i<multiCopy.size();++i) {
+    HighVariable *high = multiCopy[i];
+    if (high->hasCopyIn2())		// If the high has at least 2 COPYs into it
+      processHighDominantCopy(high);	// Try to replace with a dominant copy
+    high->clearCopyIns();
+  }
+}
+
+/// \brief Mark redundant/internal COPY PcodeOps
+///
+/// Run through all COPY, SUBPIECE, and PIECE operations (PcodeOps that copy data) and
+/// characterize those that are \e internal (copy data between storage locations representing
+/// the same variable) or \e redundant (perform the same copy as an earlier operation).
+/// These, as a result, are not printed in the final source code representation.
+void Merge::markInternalCopies(void)
+
+{
+  vector<HighVariable *> multiCopy;
+  list<PcodeOp *>::const_iterator iter;
+  PcodeOp *op;
+  HighVariable *h1,*h2,*h3;
+  Varnode *v1,*v2,*v3;
+  int4 val;
+
+  for(iter=data.beginOpAlive();iter!=data.endOpAlive();++iter) {
+    op = *iter;
+    switch(op->code()) {
+    case CPUI_COPY:
+      v1 = op->getOut();
+      h1 = v1->getHigh();
+      if (h1 == op->getIn(0)->getHigh()) {
+	data.opMarkNonPrinting(op);
+      }
+      else {	// COPY between different HighVariables
+	if (!h1->hasCopyIn1()) {	// If this is the first COPY we've seen for this high
+	  h1->setCopyIn1();		// Mark it
+	  multiCopy.push_back(h1);
+	}
+	else
+	  h1->setCopyIn2();		// This is at least the second COPY we've seen
+	if (v1->hasNoDescend()) {	// Don't print shadow assignments
+	  if (shadowedVarnode(v1)) {
+	    data.opMarkNonPrinting(op);
+	  }
+	}
+      }
+      break;
+    case CPUI_PIECE:		// Check if output is built out of pieces of itself
+      h1 = op->getOut()->getHigh();
+      h2 = op->getIn(0)->getHigh();
+      h3 = op->getIn(1)->getHigh();
+      if (!h1->isAddrTied()) break;
+      if (!h2->isAddrTied()) break;
+      if (!h3->isAddrTied()) break;
+      v1 = h1->getTiedVarnode();
+      v2 = h2->getTiedVarnode();
+      v3 = h3->getTiedVarnode();
+      if (v3->overlap(*v1) != 0) break;
+      if (v2->overlap(*v1) != v3->getSize()) break;
+      data.opMarkNonPrinting(op);
+      break;
+    case CPUI_SUBPIECE:
+      h1 = op->getOut()->getHigh();
+      h2 = op->getIn(0)->getHigh();
+      if (!h1->isAddrTied()) break;
+      if (!h2->isAddrTied()) break;
+      v1 = h1->getTiedVarnode();
+      v2 = h2->getTiedVarnode();
+      val = op->getIn(1)->getOffset();
+      if (v1->overlap(*v2) != val) break;
+      data.opMarkNonPrinting(op);
+      break;
+    default:
+      break;
+    }
+  }
+  for(int4 i=0;i<multiCopy.size();++i) {
+    HighVariable *high = multiCopy[i];
+    if (high->hasCopyIn2())
+      data.getMerge().processHighRedundantCopy(high);
+    high->clearCopyIns();
+  }
+#ifdef MERGEMULTI_DEBUG
+  verifyHighCovers();
+#endif
 }
 
 /// \brief Perform low-level details of merging two HighVariables if possible
@@ -1140,3 +1529,27 @@ bool Merge::mergeTest(HighVariable *high,vector<HighVariable *> &tmplist)
   tmplist.push_back(high);
   return true;
 }
+
+#ifdef MERGEMULTI_DEBUG
+/// \brief Check that all HighVariable covers are consistent
+///
+/// For each HighVariable make sure there are no internal intersections between
+/// its instance Varnodes (unless one is a COPY shadow of the other).
+void Merge::verifyHighCovers(void)
+
+{
+  VarnodeLocSet::const_iterator iter,enditer;
+
+  enditer = data.endLoc();
+  for(iter=data.beginLoc();iter!=enditer;++iter) {
+    Varnode *vn = *iter;
+    if (vn->hasCover()) {
+      HighVariable *high = vn->getHigh();
+      if (!high->hasCopyIn1()) {
+	high->setCopyIn1();
+	high->verifyCover();
+      }
+    }
+  }
+}
+#endif

@@ -21,8 +21,8 @@ import java.beans.PropertyVetoException;
 import org.jdom.Element;
 
 import docking.DockingTool;
+import docking.util.image.ToolIconURL;
 import ghidra.framework.plugintool.PluginEvent;
-import ghidra.framework.project.tool.ToolIconURL;
 
 /**
  * 
@@ -55,13 +55,6 @@ public interface Tool extends DockingTool, ToolListener {
 	 * The tool should dispose of all its windows and other resources.
 	 */
 	public void exit();
-
-	/**
-	 * Suggests the tool to attempt to close().  This will be as though the user
-	 * selected the close menu option on the tool or hit the closeWindow x button in
-	 * the upper corner (Windows systems).
-	 */
-	public void close();
 
 	/**
 	 * Can this tool be closed?

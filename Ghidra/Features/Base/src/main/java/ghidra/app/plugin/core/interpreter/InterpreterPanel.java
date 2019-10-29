@@ -277,20 +277,6 @@ public class InterpreterPanel extends JPanel implements OptionsChangeListener {
 						completionWindow.setVisible(false);
 						e.consume();
 						break;
-					case KeyEvent.VK_D:
-						if (e.isControlDown()) {
-							// Ctrl+D - reset interpreter
-							e.consume();
-							interpreter.reset();
-						}
-						break;
-					case KeyEvent.VK_I:
-						if (e.isControlDown()) {
-							// Ctrl+I - interrupt interpreter
-							e.consume();
-							interpreter.interrupt();
-						}
-						break;
 					default:
 
 						// Check for the completion window trigger on input that contains text
@@ -693,14 +679,14 @@ public class InterpreterPanel extends JPanel implements OptionsChangeListener {
 			}
 
 			if (bytes != null) {
-				int length = Math.min(bytes.length, len);
-				System.arraycopy(bytes, 0, b, off, length);
-				if (length == bytes.length) {
+				int length = Math.min(bytes.length - position, len);
+				System.arraycopy(bytes, position, b, off, length);
+				if (position + length == bytes.length) {
 					position = 0;
 					bytes = null;
 				}
 				else {
-					position = b.length;
+					position += length;
 				}
 				return length;
 			}

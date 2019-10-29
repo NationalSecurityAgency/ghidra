@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+     This is the processor specification for the HCS08 (68HCS08) processor family.
+-->
+<processor_spec>
+  <programcounter register="PC"/>
+  <default_symbols>
+    <symbol name="NVBACKKEY0"   address="FFB0"/>
+    <symbol name="NVBACKKEY1"   address="FFB1"/>
+    <symbol name="NVBACKKEY2"   address="FFB2"/>
+    <symbol name="NVBACKKEY3"   address="FFB3"/>
+    <symbol name="NVBACKKEY4"   address="FFB4"/>
+    <symbol name="NVBACKKEY5"   address="FFB5"/>
+    <symbol name="NVBACKKEY6"   address="FFB6"/>
+    <symbol name="NVBACKKEY7"   address="FFB7"/>
+    <symbol name="Reserved_FFB8"   address="FFB8"/>
+    <symbol name="Reserved_FFB9"   address="FFB9"/>
+    <symbol name="Reserved_FFBA"   address="FFBA"/>
+    <symbol name="Reserved_FFBB"   address="FFBB"/>
+    <symbol name="Reserved_FFBC"   address="FFBC"/>
+    <symbol name="NVPROT"   address="FFBD"/>
+    <symbol name="NVOPT"   address="FFBF"/>
+    <symbol name="VECTOR_Low_Voltage_Detect"   address="FFF8" entry="true" type="code_ptr"/>
+    <symbol name="VECTOR_IRQ"                  address="FFFA" entry="true" type="code_ptr"/>
+    <symbol name="VECTOR_SWI"                  address="FFFC" entry="true" type="code_ptr"/>
+    <symbol name="VECTOR_Reset"                address="FFFE" entry="true" type="code_ptr"/>
+  </default_symbols>
+</processor_spec>

@@ -16,7 +16,6 @@
 //This script dumps information about byte and instructions in neighborhoods around function starts
 //and returns to an XML file
 //@category FunctionStartPatterns
-import java.beans.XMLEncoder;
 import java.io.*;
 import java.util.List;
 
@@ -118,10 +117,7 @@ public class DumpFunctionPatternInfoScript extends GhidraScript {
 		File savedFile = new File(saveDir.getAbsolutePath() + File.separator +
 			currentProgram.getDomainFile().getPathname().replaceAll("/", "_") + "_" +
 			currentProgram.getExecutableMD5() + "_funcInfo.xml");
-		try (XMLEncoder xmlEncoder =
-			new XMLEncoder(new BufferedOutputStream(new FileOutputStream(savedFile)))) {
-			xmlEncoder.writeObject(funcPatternList);
-		}
+		funcPatternList.toXmlFile(savedFile);
 		Msg.info(this,
 			"Programs analyzed: " + programsAnalyzed + "; total functions: " + totalFuncs);
 	}

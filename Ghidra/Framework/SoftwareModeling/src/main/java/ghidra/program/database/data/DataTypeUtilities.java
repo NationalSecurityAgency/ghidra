@@ -24,8 +24,6 @@ import ghidra.program.model.address.GlobalNamespace;
 import ghidra.program.model.data.*;
 import ghidra.program.model.data.Enum;
 import ghidra.program.model.listing.Library;
-import ghidra.program.model.mem.MemBuffer;
-import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.program.model.symbol.Namespace;
 import ghidra.util.UniversalID;
 import ghidra.util.exception.AssertException;
@@ -125,6 +123,10 @@ public class DataTypeUtilities {
 		}
 		else if (dt instanceof BuiltInDataType) {
 			// no-op; prevents assert exception below
+		}
+		else if (dt instanceof BitFieldDataType) {
+			BitFieldDataType bitFieldDt = (BitFieldDataType) dt;
+			list.add(bitFieldDt.getBaseDataType());
 		}
 		else if (dt instanceof MissingBuiltInDataType) {
 			// no-op; prevents assert exception below
@@ -317,87 +319,6 @@ public class DataTypeUtilities {
 		}
 		buf.append(getArrayDimensions(arrayDt));
 		return buf.toString();
-	}
-
-	/**
-	 * Get the value object which corresponds to an array in memory.  This will either be a
-	 * String for the ArrayStringable case or null.
-	 * @param arrayDt array data type
-	 * @param buf data buffer
-	 * @param settings data settings
-	 * @param length length of array
-	 * @return a String if it is an array of chars; otherwise null.
-	 */
-	public static Object getArrayValue(Array arrayDt, MemBuffer buf, Settings settings,
-			int length) {
-		if (!buf.getMemory().getAllInitializedAddressSet().contains(buf.getAddress())) {
-			return null;
-		}
-		ArrayStringable as = ArrayStringable.getArrayStringable(arrayDt.getDataType());
-		Object value = (as != null) ? as.getArrayString(buf, settings, length) : null;
-
-		return value;
-		// TODO
-		// For large array it is not scalable to create a java array object.  Perhaps
-		// we could create a GhidraArray that can dish out objects.
-//			DataType dt = arrayDt.getDataType();
-//			Class<?> valueClass = dt.getValueClass(settings);
-//			if (valueClass != null) {
-//				int count = arrayDt.getNumElements();
-//				int elementLength = arrayDt.getElementLength();
-//				WrappedMemBuffer wrappedBuffer = new WrappedMemBuffer(buf, 0);
-//				Object[] array = (Object[]) java.lang.reflect.Array.newInstance(valueClass, count);
-//				for (int i = 0; i < count; i++) {
-//					wrappedBuffer.setBaseOffset(i * elementLength);
-//					array[i] = dt.getValue(wrappedBuffer, settings, elementLength);
-//				}
-//				return array;
-//			}
-	}
-
-	/**
-	 * Get the representation which corresponds to an array in memory.  This will either be a
-	 * String for the ArrayStringable case or the empty string if it is not.
-	 * 
-	 * @param arrayDt array data type
-	 * @param buf data buffer
-	 * @param settings data settings
-	 * @param length length of array
-	 * @return a String if it is an array of chars; otherwise empty string, never null.
-	 */
-	public static String getArrayRepresentation(Array arrayDt, MemBuffer buf, Settings settings,
-			int length) {
-		try {
-			buf.getByte(0); // test for uninitialized memory
-			ArrayStringable as = ArrayStringable.getArrayStringable(arrayDt.getDataType());
-			String value = (as != null) ? as.getArrayRepresentation(buf, settings, length) : null;
-			return (value != null) ? value : "";
-		}
-		catch (MemoryAccessException e) {
-			// ignore
-		}
-		return "";
-	}
-
-	/**
-	 * Get the value Class of a specific arrayDt with settings
-	 * ( see {@link #getArrayValueClass(Array, Settings)} ).
-	 * @param settings the relevant settings to use or null for default.
-	 * @return Class of the value to be returned by the array or null if it can vary
-	 * or is unspecified (String or Array class will be returned).
-	 */
-	public static Class<?> getArrayValueClass(Array arrayDt, Settings settings) {
-		DataType dt = arrayDt.getDataType();
-		if (dt instanceof TypeDef) {
-			dt = ((TypeDef) dt).getBaseDataType();
-		}
-		if (dt instanceof ArrayStringable) {
-			if (((ArrayStringable) dt).hasStringValue(settings)) {
-				return String.class;
-			}
-		}
-		Class<?> valueClass = dt.getValueClass(settings);
-		return valueClass != null ? Array.class : null;
 	}
 
 	/**

@@ -110,7 +110,7 @@ public class OmfArchiveFileSystem implements GFileSystem {
 	}
 
 	@Override
-	public String getInfo(GFile file, TaskMonitor monitor) throws IOException {
+	public String getInfo(GFile file, TaskMonitor monitor) {
 		OmfLibraryRecord.MemberHeader entry = fsih.getMetadata(file);
 		return (entry == null) ? null : FSUtilities.infoMapToString(getInfoMap(entry));
 	}

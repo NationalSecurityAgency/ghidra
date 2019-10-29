@@ -43,16 +43,16 @@ public class ArrayValuesFieldFactory extends FieldFactory {
 
 	@Override
 	public FieldFactory newInstance(FieldFormatModel formatModel,
-			HighlightProvider highlightProvider, ToolOptions displayOptions,
+			HighlightProvider highlightProvider, ToolOptions toolOptions,
 			ToolOptions fieldOptions) {
-		return new ArrayValuesFieldFactory(formatModel, highlightProvider, displayOptions,
+		return new ArrayValuesFieldFactory(formatModel, highlightProvider, toolOptions,
 			fieldOptions);
 	}
 
 	/**
 	 * Constructor
 	 * @param model the model that the field belongs to.
-	 * @param hsProvider the HightLightStringProvider.
+	 * @param hlProvider the HightLightStringProvider.
 	 * @param displayOptions the Options for display properties.
 	 * @param fieldOptions the Options for field specific properties.
 	 */
@@ -65,12 +65,13 @@ public class ArrayValuesFieldFactory extends FieldFactory {
 	private void setupOptions(Options fieldOptions) {
 		// we need to install a custom editor that allows us to edit a group of related options
 		fieldOptions.registerOption(FormatManager.ARRAY_DISPLAY_OPTIONS, OptionType.CUSTOM_TYPE,
-			new ArrayElementWrappedOption(), null, null, arrayOptionsEditor);
+			new ArrayElementWrappedOption(), null, FormatManager.ARRAY_DISPLAY_DESCRIPTION,
+			arrayOptionsEditor);
 		CustomOption wrappedOption = fieldOptions.getCustomOption(
 			FormatManager.ARRAY_DISPLAY_OPTIONS, new ArrayElementWrappedOption());
 
 		HelpLocation hl = new HelpLocation("CodeBrowserPlugin", "Array_Options");
-		fieldOptions.getOptions(FormatManager.OPTIONS_GROUP).setOptionsHelpLocation(hl);
+		fieldOptions.getOptions(FormatManager.ARRAY_OPTIONS_GROUP).setOptionsHelpLocation(hl);
 		fieldOptions.getOptions(FormatManager.ARRAY_DISPLAY_OPTIONS).setOptionsHelpLocation(hl);
 
 		if (!(wrappedOption instanceof ArrayElementWrappedOption)) {
@@ -162,9 +163,6 @@ public class ArrayValuesFieldFactory extends FieldFactory {
 		return (category == FieldFormatModel.ARRAY);
 	}
 
-	/**
-	 * @see ghidra.app.util.viewer.field.FieldFactory#fieldOptionsChanged(ghidra.framework.options.ToolOptions, java.lang.String, java.lang.Object, java.lang.Object)
-	 */
 	@Override
 	public void fieldOptionsChanged(Options options, String optionName, Object oldValue,
 			Object newValue) {

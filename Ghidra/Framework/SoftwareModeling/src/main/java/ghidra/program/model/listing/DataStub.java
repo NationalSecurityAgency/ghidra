@@ -17,6 +17,7 @@ package ghidra.program.model.listing;
 
 import java.math.BigInteger;
 import java.util.Iterator;
+import java.util.List;
 
 import ghidra.docking.settings.Settings;
 import ghidra.program.model.address.Address;
@@ -33,7 +34,7 @@ import ghidra.util.prop.PropertyVisitor;
 
 /**
  * DataStub can be extended for use by tests. It throws an UnsupportedOperationException
- * for all methods in the Data interface. Any method that is needed for your test can then 
+ * for all methods in the Data interface. Any method that is needed for your test can then
  * be overridden so it can provide its own test implementation and return value.
  */
 public class DataStub implements Data {
@@ -523,6 +524,11 @@ public class DataStub implements Data {
 
 	@Override
 	public Data getComponentAt(int offset) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public List<Data> getComponentsContaining(int offset) {
 		throw new UnsupportedOperationException();
 	}
 

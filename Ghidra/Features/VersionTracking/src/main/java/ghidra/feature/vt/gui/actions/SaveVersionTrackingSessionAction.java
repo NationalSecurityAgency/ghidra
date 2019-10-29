@@ -21,13 +21,13 @@ import javax.swing.Icon;
 
 import docking.ActionContext;
 import docking.action.*;
+import docking.tool.ToolConstants;
 import ghidra.feature.vt.api.db.VTSessionDB;
 import ghidra.feature.vt.api.main.VTSession;
 import ghidra.feature.vt.gui.plugin.VTController;
 import ghidra.feature.vt.gui.plugin.VTPlugin;
 import ghidra.feature.vt.gui.task.SaveTask;
 import ghidra.framework.model.DomainFile;
-import ghidra.framework.plugintool.util.ToolConstants;
 import ghidra.program.model.listing.Program;
 import ghidra.util.HelpLocation;
 import ghidra.util.task.TaskLauncher;

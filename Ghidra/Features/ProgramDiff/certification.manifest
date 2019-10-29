@@ -1,12 +1,10 @@
 ##VERSION: 2.0
-##MODULE IP: Nuvola Icons - LGPL 2.1
-##MODULE IP: Modified Nuvola Icons - LGPL 2.1
-##MODULE IP: Tango Icons - Public Domain
-##MODULE IP: FAMFAMFAM Icons - CC 2.5
-##MODULE IP: Oxygen Icons - LGPL 3.0
 ##MODULE IP: Crystal Clear Icons - LGPL 2.1
-.classpath||GHIDRA||||END|
-.project||GHIDRA||||END|
+##MODULE IP: FAMFAMFAM Icons - CC 2.5
+##MODULE IP: Modified Nuvola Icons - LGPL 2.1
+##MODULE IP: Nuvola Icons - LGPL 2.1
+##MODULE IP: Oxygen Icons - LGPL 3.0
+##MODULE IP: Tango Icons - Public Domain
 Module.manifest||GHIDRA||||END|
 build.gradle||GHIDRA||||END|
 src/main/help/help/TOC_Source.xml||GHIDRA||||END|
@@ -32,7 +30,6 @@ src/main/help/help/topics/Diff/images/SelectOtherProgram.png||GHIDRA||||END|
 src/main/help/help/topics/Diff/images/SelectOtherVersionedProgram.png||GHIDRA||||END|
 src/main/help/help/topics/Diff/images/disk.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
 src/main/help/help/topics/Diff/images/down.png||GHIDRA||reviewed||END|
-src/main/help/help/topics/Diff/images/erase16.png||GHIDRA||reviewed||END|
 src/main/help/help/topics/Diff/images/eraser_arrow16.png||GHIDRA||||END|
 src/main/help/help/topics/Diff/images/pencil16.png||GHIDRA||reviewed||END|
 src/main/help/help/topics/Diff/images/pencil_arrow16.png||GHIDRA||reviewed||END|

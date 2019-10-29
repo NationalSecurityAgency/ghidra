@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +15,6 @@
  */
 package ghidra.app.plugin.core.datamgr.actions;
 
-import ghidra.app.plugin.core.datamgr.DataTypeManagerPlugin;
-import ghidra.app.plugin.core.datamgr.DataTypesActionContext;
-import ghidra.app.plugin.core.datamgr.archive.*;
-import ghidra.app.plugin.core.datamgr.tree.InvalidArchiveNode;
-
 import javax.swing.tree.TreePath;
 
 import docking.ActionContext;
@@ -29,6 +23,11 @@ import docking.action.MenuData;
 import docking.widgets.OptionDialog;
 import docking.widgets.tree.GTree;
 import docking.widgets.tree.GTreeNode;
+import ghidra.app.plugin.core.datamgr.DataTypeManagerPlugin;
+import ghidra.app.plugin.core.datamgr.DataTypesActionContext;
+import ghidra.app.plugin.core.datamgr.archive.*;
+import ghidra.app.plugin.core.datamgr.tree.InvalidArchiveNode;
+import ghidra.util.HTMLUtilities;
 
 public class RemoveInvalidArchiveFromProgramAction extends DockingAction {
 
@@ -38,7 +37,8 @@ public class RemoveInvalidArchiveFromProgramAction extends DockingAction {
 		super("Remove Invalid Archive", plugin.getName());
 		this.plugin = plugin;
 
-		setPopupMenuData(new MenuData(new String[] { "Remove Archive From Program" }, null, "File"));
+		setPopupMenuData(
+			new MenuData(new String[] { "Remove Archive From Program" }, null, "File"));
 
 		setDescription("Removes the archive from program and tool");
 		setEnabled(true);
@@ -76,11 +76,12 @@ public class RemoveInvalidArchiveFromProgramAction extends DockingAction {
 		InvalidArchiveNode invalidArchiveNode = (InvalidArchiveNode) pathComponent;
 
 		if (OptionDialog.showOptionDialog(gtree, "Confirm Remove Invalid Archive(s)",
-			"<html><b>Are you sure you want to delete archive: " + invalidArchiveNode.getName() +
+			"<html><b>Are you sure you want to delete archive: " +
+				HTMLUtilities.escapeHTML(invalidArchiveNode.getName()) +
 				" from the program?<br><br>" +
 				"<font color=\"red\">(WARNING: This action will disassociate " +
-				"all datatypes in the program from this archive.)</font></b>", "Yes",
-			OptionDialog.QUESTION_MESSAGE) != OptionDialog.OPTION_ONE) {
+				"all datatypes in the program from this archive.)</font></b>",
+			"Yes", OptionDialog.QUESTION_MESSAGE) != OptionDialog.OPTION_ONE) {
 			return;
 		}
 

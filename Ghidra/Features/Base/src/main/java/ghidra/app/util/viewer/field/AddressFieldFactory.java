@@ -61,7 +61,7 @@ public class AddressFieldFactory extends FieldFactory {
 	/**
 	 * Constructor
 	 * @param model the model that the field belongs to.
-	 * @param hsProvider the HightLightStringProvider.
+	 * @param hlProvider the HightLightStringProvider.
 	 * @param displayOptions the Options for display properties.
 	 * @param fieldOptions the Options for field specific properties.
 	 */
@@ -75,7 +75,8 @@ public class AddressFieldFactory extends FieldFactory {
 		HelpLocation helpLoc = new HelpLocation("CodeBrowserPlugin", "Address_Field");
 
 		fieldOptions.registerOption(ADDRESS_DISPLAY_OPTIONS_NAME, OptionType.CUSTOM_TYPE,
-			new AddressFieldOptionsWrappedOption(), helpLoc, null, addressFieldOptionsEditor);
+			new AddressFieldOptionsWrappedOption(), helpLoc, "Adjusts the Address Field display",
+			addressFieldOptionsEditor);
 
 		CustomOption customOption =
 			fieldOptions.getCustomOption(ADDRESS_DISPLAY_OPTIONS_NAME, null);
@@ -204,9 +205,9 @@ public class AddressFieldFactory extends FieldFactory {
 
 	@Override
 	public FieldFactory newInstance(FieldFormatModel newModel,
-			HighlightProvider highlightStringProvider, ToolOptions displayOptions,
+			HighlightProvider highlightStringProvider, ToolOptions toolOptions,
 			ToolOptions fieldOptions) {
-		return new AddressFieldFactory(newModel, highlightStringProvider, displayOptions,
+		return new AddressFieldFactory(newModel, highlightStringProvider, toolOptions,
 			fieldOptions);
 	}
 }

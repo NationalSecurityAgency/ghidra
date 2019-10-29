@@ -17,7 +17,7 @@ package ghidra.app.util.bin.format.pdb;
 
 import java.util.*;
 
-import ghidra.app.util.bin.format.pdb.PdbParserNEW.PdbFileType;
+import ghidra.app.util.bin.format.pdb.PdbParser.PdbFileType;
 import ghidra.framework.options.Options;
 import ghidra.program.model.listing.Program;
 

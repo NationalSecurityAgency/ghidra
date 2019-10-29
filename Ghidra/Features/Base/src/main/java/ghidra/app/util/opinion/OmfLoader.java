@@ -18,13 +18,12 @@ package ghidra.app.util.opinion;
 import java.io.IOException;
 import java.util.*;
 
-import ghidra.app.util.MemoryBlockUtil;
+import ghidra.app.util.MemoryBlockUtils;
 import ghidra.app.util.Option;
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.bin.format.omf.*;
 import ghidra.app.util.bin.format.omf.OmfFixupRecord.Subrecord;
-import ghidra.app.util.importer.MemoryConflictHandler;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressOverflowException;
@@ -35,6 +34,7 @@ import ghidra.program.model.mem.*;
 import ghidra.program.model.symbol.*;
 import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.util.*;
+import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.InvalidInputException;
 import ghidra.util.task.TaskMonitor;
 import ghidra.util.task.TaskMonitorAdapter;
@@ -89,8 +89,8 @@ public class OmfLoader extends AbstractLibrarySupportLoader {
 			catch (OmfException e) {
 				throw new IOException("Bad header format: " + e.getMessage());
 			}
-			List<QueryResult> results = QueryOpinionService.query(getName(),
-				scan.getMachineName(), mapTranslator(scan.getTranslator()));
+			List<QueryResult> results = QueryOpinionService.query(getName(), scan.getMachineName(),
+				mapTranslator(scan.getTranslator()));
 			for (QueryResult result : results) {
 				loadSpecs.add(new LoadSpec(this, IMAGE_BASE, result));
 			}
@@ -108,8 +108,8 @@ public class OmfLoader extends AbstractLibrarySupportLoader {
 
 	@Override
 	protected void load(ByteProvider provider, LoadSpec loadSpec, List<Option> options,
-			Program program, MemoryConflictHandler handler, TaskMonitor monitor, MessageLog log)
-			throws IOException {
+			Program program, TaskMonitor monitor, MessageLog log)
+			throws IOException, CancelledException {
 
 		OmfFileHeader header = null;
 		BinaryReader reader = OmfFileHeader.createReader(provider);
@@ -125,11 +125,16 @@ public class OmfLoader extends AbstractLibrarySupportLoader {
 			}
 			log.appendMsg("File was corrupted - leaving partial program " + provider.getName());
 		}
-		MemoryBlockUtil mbu = new MemoryBlockUtil(program, handler);
+
+		// We don't use the file bytes to create block because the bytes are manipulated before
+		// forming the block.  Creating the FileBytes anyway in case later we want access to all
+		// the original bytes.
+		MemoryBlockUtils.createFileBytes(program, provider, monitor);
+
 		int id = program.startTransaction("loading program from OMF");
 		boolean success = false;
 		try {
-			processSegmentHeaders(reader, header, program, mbu, monitor, log);
+			processSegmentHeaders(reader, header, program, monitor, log);
 			processExternalSymbols(header, program, monitor, log);
 			processPublicSymbols(header, program, monitor, log);
 			processRelocations(header, program, monitor, log);
@@ -139,7 +144,6 @@ public class OmfLoader extends AbstractLibrarySupportLoader {
 			throw new IOException(e);
 		}
 		finally {
-			mbu.dispose();
 			program.endTransaction(id, success);
 		}
 	}
@@ -292,8 +296,7 @@ public class OmfLoader extends AbstractLibrarySupportLoader {
 	 * @throws IOException for problems accessing the OMF file through the reader
 	 */
 	private void processSegmentHeaders(BinaryReader reader, OmfFileHeader header, Program program,
-			MemoryBlockUtil mbu, TaskMonitor monitor, MessageLog log)
-			throws AddressOverflowException, IOException {
+			TaskMonitor monitor, MessageLog log) throws AddressOverflowException, IOException {
 		monitor.setMessage("Process segments...");
 
 		final Language language = program.getLanguage();
@@ -320,34 +323,30 @@ public class OmfLoader extends AbstractLibrarySupportLoader {
 				log.appendMsg("Empty Segment: " + segment.getName());
 			}
 			else if (segment.hasNonZeroData()) {
-				block = mbu.createInitializedBlock(segment.getName(), segmentAddr,
-					segment.getRawDataStream(reader), segmentSize,
+				block = MemoryBlockUtils.createInitializedBlock(program, false, segment.getName(),
+					segmentAddr, segment.getRawDataStream(reader, log), segmentSize,
 					"Address:0x" + Long.toHexString(segmentAddr.getOffset()) + " " + "Size:0x" +
 						Long.toHexString(segmentSize),
 					null/*source*/, segment.isReadable(), segment.isWritable(),
-					segment.isExecutable(), monitor);
+					segment.isExecutable(), log, monitor);
 				if (block != null) {
 					log.appendMsg(
 						"Created Initialized Block: " + segment.getName() + " @ " + segmentAddr);
 				}
 			}
 			else {
-				block =
-					mbu.createUninitializedBlock(false, segment.getName(), segmentAddr, segmentSize,
-						"Address:0x" + Long.toHexString(segmentAddr.getOffset()) + " " + "Size:0x" +
-							Long.toHexString(segmentSize),
-						null/*source*/, segment.isReadable(), segment.isWritable(),
-						segment.isExecutable());
+				block = MemoryBlockUtils.createUninitializedBlock(program, false, segment.getName(),
+					segmentAddr, segmentSize,
+					"Address:0x" + Long.toHexString(segmentAddr.getOffset()) + " " + "Size:0x" +
+						Long.toHexString(segmentSize),
+					null/*source*/, segment.isReadable(), segment.isWritable(),
+					segment.isExecutable(), log);
 				if (block != null) {
 					log.appendMsg(
 						"Created Uninitialized Block: " + segment.getName() + " @ " + segmentAddr);
 				}
 			}
-			if (block == null) {
-				log.appendMsg(mbu.getMessages());
-			}
 		}
-
 	}
 
 	/**

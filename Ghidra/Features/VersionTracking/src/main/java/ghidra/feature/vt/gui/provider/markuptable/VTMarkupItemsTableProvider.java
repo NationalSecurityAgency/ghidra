@@ -30,6 +30,7 @@ import javax.swing.table.*;
 
 import docking.*;
 import docking.action.*;
+import docking.actions.PopupActionProvider;
 import docking.help.HelpService;
 import docking.widgets.EventTrigger;
 import docking.widgets.fieldpanel.FieldPanel;
@@ -56,7 +57,6 @@ import ghidra.framework.model.DomainObjectChangedEvent;
 import ghidra.framework.options.Options;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
-import ghidra.framework.plugintool.PopupListener;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.util.ProgramLocation;
@@ -69,7 +69,7 @@ import resources.ResourceManager;
  * This provides the GUI for displaying and working with version tracking markup items.
  */
 public class VTMarkupItemsTableProvider extends ComponentProviderAdapter
-		implements FilterDialogModel<VTMarkupItem>, VTControllerListener, PopupListener {
+		implements FilterDialogModel<VTMarkupItem>, VTControllerListener, PopupActionProvider {
 
 	private static final String SHOW_COMPARISON_PANEL = "SHOW_COMPARISON_PANEL";
 
@@ -133,7 +133,7 @@ public class VTMarkupItemsTableProvider extends ComponentProviderAdapter
 		iconTimer = new FilterIconFlashTimer<>(UNFILTERED_ICON, FILTERED_ICON,
 			ancillaryFilterDialog, ancillaryFilterButton);
 
-		tool.addPopupListener(this);
+		tool.addPopupActionProvider(this);
 
 		HelpLocation helpLocation = new HelpLocation("VersionTrackingPlugin", "Markup Items Table");
 		setHelpLocation(helpLocation);
@@ -321,14 +321,14 @@ public class VTMarkupItemsTableProvider extends ComponentProviderAdapter
 		markupItemsTableModel = new VTMarkupItemsTableModel(controller);
 		markupItemsTableModel.addTableModelListener(e -> {
 			int filteredCount = markupItemsTableModel.getRowCount();
-			int unfilteredCount = markupItemsTableModel.getUnfilteredCount();
+			int unfilteredCount = markupItemsTableModel.getUnfilteredRowCount();
 
 			String sessionName = controller.getVersionTrackingSessionName();
 			StringBuffer buffy = new StringBuffer();
 			buffy.append("[Session: ").append(sessionName).append("] ");
 			buffy.append('-').append(markupItemsTableModel.getRowCount()).append(" markup items");
 			if (filteredCount != unfilteredCount) {
-				buffy.append(" (of ").append(markupItemsTableModel.getUnfilteredCount()).append(
+				buffy.append(" (of ").append(markupItemsTableModel.getUnfilteredRowCount()).append(
 					')');
 			}
 
@@ -400,10 +400,9 @@ public class VTMarkupItemsTableProvider extends ComponentProviderAdapter
 		JComponent nameFilterPanel = createTextFilterPanel();
 		parentPanel.add(nameFilterPanel, BorderLayout.CENTER);
 
-		ancillaryFilterButton = new JButton();
+		ancillaryFilterButton = new JButton(FILTER_ICON);
 		ancillaryFilterButton.addActionListener(
 			e -> tool.showDialog(ancillaryFilterDialog, component));
-		ancillaryFilterButton.setIcon(FILTER_ICON);
 		ancillaryFilterButton.setToolTipText("Filters Dialog");
 
 		parentPanel.add(ancillaryFilterButton, BorderLayout.EAST);
@@ -453,7 +452,7 @@ public class VTMarkupItemsTableProvider extends ComponentProviderAdapter
 	}
 
 	@Override
-	public List<DockingActionIf> getPopupActions(ActionContext context) {
+	public List<DockingActionIf> getPopupActions(DockingTool tool, ActionContext context) {
 		ListingCodeComparisonPanel dualListingPanel = functionComparisonPanel.getDualListingPanel();
 		if (context.getComponentProvider() == this && dualListingPanel != null) {
 			ListingPanel sourcePanel = dualListingPanel.getLeftPanel();
@@ -494,7 +493,7 @@ public class VTMarkupItemsTableProvider extends ComponentProviderAdapter
 						new VTListingContext(this, vtListingNavigator);
 					vtListingContext.setCodeComparisonPanel(dualListingPanel);
 					vtListingContext.setContextObject(dualListingPanel);
-					vtListingContext.setSource(source);
+					vtListingContext.setSourceObject(source);
 					return vtListingContext;
 				}
 			}
@@ -535,7 +534,7 @@ public class VTMarkupItemsTableProvider extends ComponentProviderAdapter
 			filter.dispose();
 		}
 
-		tool.removePopupListener(this);
+		tool.removePopupActionProvider(this);
 	}
 
 	VTController getController() {
@@ -849,7 +848,7 @@ public class VTMarkupItemsTableProvider extends ComponentProviderAdapter
 
 		if (filtered) {
 			int filteredCount = markupItemsTableModel.getRowCount();
-			int unfilteredCount = markupItemsTableModel.getUnfilteredCount();
+			int unfilteredCount = markupItemsTableModel.getUnfilteredRowCount();
 			int filteredOutCount = unfilteredCount - filteredCount;
 			ancillaryFilterButton.setToolTipText(
 				"More Filters - " + filteredOutCount + " item(s) hidden");

@@ -19,6 +19,7 @@ import java.awt.Rectangle;
 import java.awt.geom.Point2D;
 import java.util.*;
 
+import org.apache.commons.collections4.IterableUtils;
 import org.jdesktop.animation.timing.Animator;
 import org.jdesktop.animation.timing.interpolation.PropertySetter;
 
@@ -197,22 +198,25 @@ public class MergeVertexFunctionGraphJob extends AbstractAnimatorJob {
 		parentVertex.setAlpha(oldComponentsAlpha);
 		childVertex.setAlpha(oldComponentsAlpha);
 
-		Collection<FGEdge> edges = getEdges(parentVertex);
+		Iterable<FGEdge> edges =
+			IterableUtils.chainedIterable(getEdges(parentVertex), getEdges(childVertex));
 		for (FGEdge edge : edges) {
-			edge.setAlpha(oldComponentsAlpha);
-		}
 
-		edges = getEdges(childVertex);
-		for (FGEdge edge : edges) {
-			edge.setAlpha(oldComponentsAlpha);
+			// don't go past the alpha when removing
+			double defaultAlpha = edge.getDefaultAlpha();
+			double alpha = Math.min(oldComponentsAlpha, defaultAlpha);
+			edge.setAlpha(alpha);
 		}
 
 		double newComponentsAlpha = percentComplete;
 		mergedVertex.setAlpha(newComponentsAlpha);
-
 		edges = getEdges(mergedVertex);
 		for (FGEdge edge : edges) {
-			edge.setAlpha(newComponentsAlpha);
+
+			// don't go past the alpha when adding
+			double defaultAlpha = edge.getDefaultAlpha();
+			double alpha = Math.min(newComponentsAlpha, defaultAlpha);
+			edge.setAlpha(alpha);
 		}
 	}
 

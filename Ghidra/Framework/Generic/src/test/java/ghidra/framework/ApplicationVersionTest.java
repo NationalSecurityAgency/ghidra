@@ -35,11 +35,11 @@ public class ApplicationVersionTest extends AbstractGenericTest {
 	public void testApplicationVersionParsing() {
 		assertEquals(new ApplicationVersion("9.0").toString(), "9.0");
 		assertEquals(new ApplicationVersion("9.0.0").toString(), "9.0");
-		assertEquals(new ApplicationVersion("9.0.0-DEV").toString(), "9.0");
+		assertEquals(new ApplicationVersion("9.0.0-BETA").toString(), "9.0-BETA");
 
 		assertEquals(new ApplicationVersion("9.1").toString(), "9.1");
 		assertEquals(new ApplicationVersion("9.1.1").toString(), "9.1.1");
-		assertEquals(new ApplicationVersion("9.1.1-DEV").toString(), "9.1.1");
+		assertEquals(new ApplicationVersion("9.1.1-BETA").toString(), "9.1.1-BETA");
 
 		try {
 			new ApplicationVersion("9");
@@ -52,16 +52,35 @@ public class ApplicationVersionTest extends AbstractGenericTest {
 
 	@Test
 	public void testApplicationVersionGetters() {
-		ApplicationVersion applicationVersion = new ApplicationVersion("9.0.1-DEV");
+		ApplicationVersion applicationVersion = new ApplicationVersion("9.0.1-BETA");
 		assertEquals(applicationVersion.getMajor(), 9);
 		assertEquals(applicationVersion.getMinor(), 0);
 		assertEquals(applicationVersion.getPatch(), 1);
 	}
 
 	@Test
+	public void testApplicationVersionEquals() {
+		ApplicationVersion applicationVersion1 = new ApplicationVersion("9.0");
+		ApplicationVersion applicationVersion2 = new ApplicationVersion("9.0.0");
+		assertTrue(applicationVersion1.equals(applicationVersion2));
+
+		applicationVersion1 = new ApplicationVersion("9.0");
+		applicationVersion2 = new ApplicationVersion("9.0.0-BETA");
+		assertFalse(applicationVersion1.equals(applicationVersion2));
+
+		applicationVersion1 = new ApplicationVersion("9.0.0");
+		applicationVersion2 = new ApplicationVersion("9.0.1");
+		assertFalse(applicationVersion1.equals(applicationVersion2));
+
+		applicationVersion1 = new ApplicationVersion("9.0");
+		applicationVersion2 = new ApplicationVersion("10.0");
+		assertNotEquals(applicationVersion1, applicationVersion2);
+	}
+
+	@Test
 	public void testApplicationVersionCompare() {
 		ApplicationVersion applicationVersion1 = new ApplicationVersion("9.0");
-		ApplicationVersion applicationVersion2 = new ApplicationVersion("9.0.0-DEV");
+		ApplicationVersion applicationVersion2 = new ApplicationVersion("9.0.0-BETA");
 		assertTrue(applicationVersion1.compareTo(applicationVersion2) == 0);
 
 		applicationVersion1 = new ApplicationVersion("9.0");

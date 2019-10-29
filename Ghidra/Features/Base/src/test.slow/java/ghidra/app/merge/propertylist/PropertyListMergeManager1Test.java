@@ -21,51 +21,21 @@ import java.awt.*;
 
 import javax.swing.*;
 
-import org.junit.*;
+import org.junit.Test;
 
-import ghidra.app.merge.DummyMergeManager;
-import ghidra.app.merge.ProgramMultiUserMergeManager;
+import ghidra.app.merge.*;
 import ghidra.framework.options.Options;
 import ghidra.framework.plugintool.PluginTool;
-import ghidra.program.database.*;
-import ghidra.program.model.listing.Program;
+import ghidra.program.database.ProgramDB;
+import ghidra.program.database.ProgramModifierListener;
 import ghidra.program.model.listing.ProgramChangeSet;
-import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.util.exception.AssertException;
 import ghidra.util.exception.CancelledException;
-import ghidra.util.task.TaskMonitorAdapter;
+import ghidra.util.task.TaskMonitor;
 
-/**
- * Tests for the property list merge manager.
- * 
- * 
- */
-public class PropertyListMergeManager1Test extends AbstractGhidraHeadedIntegrationTest {
+public class PropertyListMergeManager1Test extends AbstractMergeTest {
 
-	private MergeTestFacilitator mtf;
-	private Program origProgram;
-	private Program privateProgram;
-	private Program resultProgram;
-	private Program latestProgram;
-
-	private PluginTool mergeTool;
 	private ProgramMultiUserMergeManager multiUserMergeManager;
-
-	/*
-	 * @see TestCase#setUp()
-	 */
-	@Before
-	public void setUp() throws Exception {
-		mtf = new MergeTestFacilitator();
-	}
-
-	/*
-	 * @see TestCase#tearDown()
-	 */
-	@After
-	public void tearDown() throws Exception {
-		mtf.dispose();
-	}
 
 	@Test
 	public void testAddNewProperty() throws Exception {
@@ -582,34 +552,34 @@ public class PropertyListMergeManager1Test extends AbstractGhidraHeadedIntegrati
 	}
 
 	private void executeMerge(int option) {
-		origProgram = mtf.getOriginalProgram();
-		privateProgram = mtf.getPrivateProgram();// my program
+		originalProgram = mtf.getOriginalProgram();
+		myProgram = mtf.getPrivateProgram();// my program
 		resultProgram = mtf.getResultProgram();// destination program
 		latestProgram = mtf.getLatestProgram();// latest version (results and latest start out the same);
 
 		ProgramChangeSet resultChangeSet = mtf.getResultChangeSet();
 		ProgramChangeSet myChangeSet = mtf.getPrivateChangeSet();
 		ProgramMultiUserMergeManager dummyMergeManager = new DummyMergeManager(resultProgram,
-			privateProgram, origProgram, latestProgram, resultChangeSet, myChangeSet);
-		PropertyListMergeManager mergeMgr = new PropertyListMergeManager(dummyMergeManager,
-			resultProgram, privateProgram, origProgram, latestProgram);
+			myProgram, originalProgram, latestProgram, resultChangeSet, myChangeSet);
+		PropertyListMergeManager merger = new PropertyListMergeManager(dummyMergeManager,
+			resultProgram, myProgram, originalProgram, latestProgram);
 		if (option >= 0) {
-			mergeMgr.setConflictResolution(option);
+			merger.setConflictResolution(option);
 		}
-		mergeMgr.merge(TaskMonitorAdapter.DUMMY_MONITOR);
+		merger.merge(TaskMonitor.DUMMY);
 	}
 
 	private void merge() throws Exception {
-		origProgram = mtf.getOriginalProgram();
-		privateProgram = mtf.getPrivateProgram();// my program
+		originalProgram = mtf.getOriginalProgram();
+		myProgram = mtf.getPrivateProgram();// my program
 		resultProgram = mtf.getResultProgram();// destination program
 		latestProgram = mtf.getLatestProgram();// latest version (results and latest start out the same);
 
 		ProgramChangeSet resultChangeSet = mtf.getResultChangeSet();
 		ProgramChangeSet myChangeSet = mtf.getPrivateChangeSet();
 
-		multiUserMergeManager = new ProgramMultiUserMergeManager(resultProgram, privateProgram,
-			origProgram, latestProgram, resultChangeSet, myChangeSet);
+		multiUserMergeManager = new ProgramMultiUserMergeManager(resultProgram, myProgram,
+			originalProgram, latestProgram, resultChangeSet, myChangeSet);
 		Thread t = new Thread(() -> {
 			try {
 				multiUserMergeManager.merge();
@@ -640,9 +610,7 @@ public class PropertyListMergeManager1Test extends AbstractGhidraHeadedIntegrati
 	}
 
 	private void waitForCompletion() throws Exception {
-		while (!multiUserMergeManager.processingCompleted()) {
-			Thread.sleep(300);
-		}
+		waitForMergeCompletion();
 	}
 
 	private void selectButtonAndUseForAllThenApply(String partialButtonText,

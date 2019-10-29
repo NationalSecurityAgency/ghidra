@@ -21,6 +21,8 @@ import java.awt.FlowLayout;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
+import docking.widgets.label.GDLabel;
+
 /**
  * Simple panel containing a JLabel for displaying error messages.
  * 
@@ -35,14 +37,14 @@ public class MessagePanel extends JPanel {
 	 */
 	public MessagePanel() {
 		setLayout(new FlowLayout(FlowLayout.CENTER));
-		msgLabel = new JLabel(NO_STATUS);
+		msgLabel = new GDLabel(NO_STATUS);
 		add(msgLabel);
 	}
 
 	/**
 	 * Sets the text to be displayed.
 	 * 
-	 * @param text the new text
+	 * @param text the new non-html text
 	 * @param foregroundColor the text color
 	 */
 	public void setMessageText(String text, Color foregroundColor) {

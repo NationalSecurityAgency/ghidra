@@ -15,13 +15,15 @@
  */
 package pdb;
 
+import java.io.File;
 import java.lang.reflect.InvocationTargetException;
 
 import docking.DockingWindowManager;
 import docking.widgets.dialogs.MultiLineMessageDialog;
 import ghidra.app.plugin.core.analysis.*;
+import ghidra.app.services.DataTypeManagerService;
 import ghidra.app.util.bin.format.pdb.PdbException;
-import ghidra.app.util.bin.format.pdb.PdbParserNEW;
+import ghidra.app.util.bin.format.pdb.PdbParser;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.framework.options.Options;
 import ghidra.program.model.address.AddressSetView;
@@ -32,13 +34,15 @@ import ghidra.util.task.Task;
 import ghidra.util.task.TaskMonitor;
 
 class LoadPdbTask extends Task {
-	private PdbParserNEW parser;
+	private File pdbFile;
+	private DataTypeManagerService service;
 	private final Program program;
 
-	LoadPdbTask(Program program, PdbParserNEW parser) {
+	LoadPdbTask(Program program, File pdbFile, DataTypeManagerService service) {
 		super("Loading PDB...", true, false, false);
 		this.program = program;
-		this.parser = parser;
+		this.pdbFile = pdbFile;
+		this.service = service;
 	}
 
 	@Override
@@ -56,9 +60,12 @@ class LoadPdbTask extends Task {
 			public boolean analysisWorkerCallback(Program currentProgram, Object workerContext,
 					TaskMonitor currentMonitor) throws Exception, CancelledException, PdbException {
 
+				PdbParser parser =
+					new PdbParser(pdbFile, program, service, true, currentMonitor);
+
 				parser.parse();
 				parser.openDataTypeArchives();
-				parser.applyTo(currentMonitor, log);
+				parser.applyTo(log);
 
 				analyzeSymbols(currentMonitor, log);
 				return !monitor.isCancelled();

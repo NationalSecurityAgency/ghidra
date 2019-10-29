@@ -1674,17 +1674,19 @@ Composite StructOrUnion() : {Composite comp;}
 {
 	(
 		<STRUCT> ( DeclSpec() )* { comp =  new StructureDataType(ANONYMOUS_STRUCT_PREFIX + cnt++, 0);
-		                          try {
-		                          // always set the packing, because by default structures should be aligned
+
+		                          // Always set the packing, because by default structures should be aligned
 		                          //     setting 0 turns off packing, but sets structures to be aligned
-		                          // TODO: is this correct, should this be changed and controlled by the
-		                          //  compiler spec.
 		                          comp.setPackingValue(this.packSize);
-		                           } catch (InvalidInputException e1) {
-												e1.printStackTrace(); }
+		                           
 								}
 		|
-		<UNION>  ( DeclSpec() )* { comp = new UnionDataType(ANONYMOUS_UNION_PREFIX  + cnt++); }
+		<UNION>  ( DeclSpec() )* { comp = new UnionDataType(ANONYMOUS_UNION_PREFIX  + cnt++); 
+		
+								  // Always set the packing, because by default structures should be aligned
+		                          //     setting 0 turns off packing, but sets structures to be aligned.
+		                          comp.setPackingValue(this.packSize);
+		}
 	)
 	{
                 try {
@@ -1807,13 +1809,15 @@ void StructDeclarator(Declaration dt, Composite comp, CompositeHandler composite
 	(
 		LOOKAHEAD(3)
 		dec= Declarator(dt, comp) [ ":" bitSizeObj = ConstantExpression() {
-			   Integer bitSize = getConstantValue(bitSizeObj,0);
-			   if (bitSize != null) {
-		          dec.setBitFieldSize(bitSize);
-		       }
+			   Integer bitSize = getConstantValue(bitSizeObj,-1);
+		       dec.setBitFieldSize(bitSize);
 		   }] 
 		|
-		":" ConstantExpression() 
+		":" bitSizeObj = ConstantExpression() {
+		       Integer bitSize = getConstantValue(bitSizeObj,-1);
+			   dec = new Declaration(dt);
+			   dec.setBitFieldSize(bitSize);
+		}
 	)
 	{
         try {

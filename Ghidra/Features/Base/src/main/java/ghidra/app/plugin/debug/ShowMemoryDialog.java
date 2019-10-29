@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +15,6 @@
  */
 package ghidra.app.plugin.debug;
 
-import ghidra.util.layout.PairLayout;
-
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.text.DecimalFormat;
@@ -25,6 +22,9 @@ import java.text.DecimalFormat;
 import javax.swing.*;
 
 import docking.DialogComponentProvider;
+import docking.widgets.label.GDLabel;
+import docking.widgets.label.GLabel;
+import ghidra.util.layout.PairLayout;
 
 class ShowMemoryDialog extends DialogComponentProvider {
 	private MemoryUsagePlugin plugin;
@@ -49,8 +49,8 @@ class ShowMemoryDialog extends DialogComponentProvider {
 				maxMem.setText(df.format(runtime.maxMemory() / 1000) + "K");
 				totalMem.setText(df.format(runtime.totalMemory() / 1000) + "K");
 				freeMem.setText(df.format(runtime.freeMemory() / 1000) + "K");
-				usedMem.setText(df.format((runtime.totalMemory() - runtime.freeMemory()) / 1000) +
-					"K");
+				usedMem.setText(
+					df.format((runtime.totalMemory() - runtime.freeMemory()) / 1000) + "K");
 			}
 		});
 		timer.start();
@@ -82,18 +82,18 @@ class ShowMemoryDialog extends DialogComponentProvider {
 	private JComponent createWorkPanel() {
 		JPanel panel = new JPanel(new PairLayout());
 		panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-		maxMem = new JLabel("00000000000", SwingConstants.RIGHT);
-		totalMem = new JLabel("00000000000", SwingConstants.RIGHT);
-		freeMem = new JLabel("00000000000", SwingConstants.RIGHT);
-		usedMem = new JLabel("00000000000", SwingConstants.RIGHT);
+		maxMem = new GDLabel("00000000000", SwingConstants.RIGHT);
+		totalMem = new GDLabel("00000000000", SwingConstants.RIGHT);
+		freeMem = new GDLabel("00000000000", SwingConstants.RIGHT);
+		usedMem = new GDLabel("00000000000", SwingConstants.RIGHT);
 
-		panel.add(new JLabel("Max Memory:"));
+		panel.add(new GLabel("Max Memory:"));
 		panel.add(maxMem);
-		panel.add(new JLabel("Total Memory:"));
+		panel.add(new GLabel("Total Memory:"));
 		panel.add(totalMem);
-		panel.add(new JLabel("Free Memory:"));
+		panel.add(new GLabel("Free Memory:"));
 		panel.add(freeMem);
-		panel.add(new JLabel("Used Memory:"));
+		panel.add(new GLabel("Used Memory:"));
 		panel.add(usedMem);
 
 		return panel;

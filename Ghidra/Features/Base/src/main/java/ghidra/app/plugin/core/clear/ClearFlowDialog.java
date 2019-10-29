@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +15,6 @@
  */
 package ghidra.app.plugin.core.clear;
 
-import ghidra.app.context.ListingActionContext;
-import ghidra.util.HelpLocation;
-
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
 import java.awt.event.*;
@@ -26,6 +22,10 @@ import java.awt.event.*;
 import javax.swing.*;
 
 import docking.DialogComponentProvider;
+import docking.widgets.checkbox.GCheckBox;
+import docking.widgets.label.GLabel;
+import ghidra.app.context.ListingActionContext;
+import ghidra.util.HelpLocation;
 
 /**
  * Dialog that shows options for "Clear Flow and Repair." User can choose to clear
@@ -92,16 +92,15 @@ public class ClearFlowDialog extends DialogComponentProvider {
 		panel = new JPanel();
 		panel.setLayout(new BorderLayout(10, 10));
 
-		JLabel label = new JLabel("Clear Flow Options:");
-		panel.add(label, BorderLayout.NORTH);
+		panel.add(new GLabel("Clear Flow Options:"), BorderLayout.NORTH);
 
 		JPanel cbPanel = new JPanel();
 		BoxLayout bl = new BoxLayout(cbPanel, BoxLayout.Y_AXIS);
 		cbPanel.setLayout(bl);
 
-		symbolsCb = new JCheckBox("Clear Symbols");
-		dataCb = new JCheckBox("Clear Data");
-		repairCb = new JCheckBox("Repair Flow");
+		symbolsCb = new GCheckBox("Clear Symbols");
+		dataCb = new GCheckBox("Clear Data");
+		repairCb = new GCheckBox("Repair Flow");
 
 		symbolsCb.setSelected(false);
 		symbolsCb.addKeyListener(listener);

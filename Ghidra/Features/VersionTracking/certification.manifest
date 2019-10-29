@@ -3,8 +3,6 @@
 ##MODULE IP: Nuvola Icons - LGPL 2.1
 ##MODULE IP: Oxygen Icons - LGPL 3.0
 ##MODULE IP: Tango Icons - Public Domain
-.classpath||GHIDRA||||END|
-.project||GHIDRA||||END|
 Module.manifest||GHIDRA||||END|
 build.gradle||GHIDRA||||END|
 data/ExtensionPoint.manifest||GHIDRA||reviewed||END|
@@ -35,7 +33,6 @@ src/main/help/help/topics/VersionTrackingPlugin/images/DataRefCorr_ExactSelectAl
 src/main/help/help/topics/VersionTrackingPlugin/images/DataRefCorr_options.png||GHIDRA||||END|
 src/main/help/help/topics/VersionTrackingPlugin/images/DataRefCorr_refined.png||GHIDRA||||END|
 src/main/help/help/topics/VersionTrackingPlugin/images/DataRefCorrelator_Setup.png||GHIDRA||||END|
-src/main/help/help/topics/VersionTrackingPlugin/images/FuncRefCorr_MatchTableFilters.png||GHIDRA||||END|
 src/main/help/help/topics/VersionTrackingPlugin/images/FuncRefCorr_MatchTableFilters_AssocStatus.png||GHIDRA||||END|
 src/main/help/help/topics/VersionTrackingPlugin/images/FuncRefCorr_defaultOptions_results.png||GHIDRA||||END|
 src/main/help/help/topics/VersionTrackingPlugin/images/FuncRefCorr_lowerScoreThresh.png||GHIDRA||||END|
@@ -69,7 +66,6 @@ src/main/help/help/topics/VersionTrackingPlugin/images/VersionTrackingTool.png||
 src/main/help/help/topics/VersionTrackingPlugin/images/accepted_fully_applied.png||GHIDRA||reviewed||END|
 src/main/help/help/topics/VersionTrackingPlugin/images/accepted_fully_considered.png||GHIDRA||reviewed||END|
 src/main/help/help/topics/VersionTrackingPlugin/images/accepted_warning.png||GHIDRA||reviewed||END|
-src/main/help/help/topics/VersionTrackingPlugin/images/add.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
 src/main/help/help/topics/VersionTrackingPlugin/images/application_tile_horizontal.png||FAMFAMFAM Icons - CC 2.5|||fam fam|END|
 src/main/help/help/topics/VersionTrackingPlugin/images/asterisk_orange.png||FAMFAMFAM Icons - CC 2.5||||END|
 src/main/help/help/topics/VersionTrackingPlugin/images/cache.png||Nuvola Icons - LGPL 2.1|||Nuvola icon set. LGPL 2.1. Copied from nuvola/16x16/cache.png.|END|
@@ -96,7 +92,6 @@ src/main/help/help/topics/VersionTrackingPlugin/images/table_go.png||FAMFAMFAM I
 src/main/help/help/topics/VersionTrackingPlugin/images/tag_blue.png||FAMFAMFAM Icons - CC 2.5|||fam fam|END|
 src/main/help/help/topics/VersionTrackingPlugin/images/tag_blue_delete.png||FAMFAMFAM Icons - CC 2.5|||famfam|END|
 src/main/help/help/topics/VersionTrackingPlugin/images/tag_blue_edit.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set - Copied from famfamfam_silk/icons/tag_blue_edit.png|END|
-src/main/help/help/topics/VersionTrackingPlugin/images/text_align_justify.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
 src/main/help/help/topics/VersionTrackingPlugin/images/undo-apply.png||Nuvola Icons - LGPL 2.1|||originally named undo.png|END|
 src/main/help/help/topics/VersionTrackingPlugin/images/unknown.gif||GHIDRA||reviewed|Copied from GhidraIcons/unknown.gif|END|
 src/main/help/help/topics/VersionTrackingPlugin/images/view-filter.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0)|END|

@@ -1,0 +1,108 @@
+This file groups ghidra test classes by the application configuration
+they require. This is necessary for our parallel test execution so that we
+don't group tests that will try to load different application configs. 
+
+There are currently 4 config classes that are created by our various test
+classes. A single gradle task that executes multiple tests in a single jvm cannot have
+tests that try to load more than one of these:
+  - HeadlessGhidraApplicationConfig
+  - DockingApplicationConfiguration
+  - ApplicationConfiguration
+  - GhidraAppConfiguration
+
+Note that this does not list EVERY ghidra test class; just the classes
+that are extended by other test classes. 
+
+See testUtils.gradle for how this file is parsed/used.
+
+###HeadlessGhidraApplicationConfig^
+AbstractGhidraHeadlessIntegrationTest
+ProcessorEmulatorTestAdapter
+SaveAsOutboundTest
+AbstractDbgTest
+AbstractGProtocolTest
+GProtocolClientServerTestBase
+AbstractHeadlessAnalyzerTest
+SuperListingTest
+EmulatorTest
+												
+###DockingApplicationConfiguration^
+AbstractDockingTest;
+AbstractCRIntegrationTest
+AbstractDropDownTextFieldTest<T>
+AbstractFcgTest
+AbstractTaskTest
+AbstractThreadedTableTest
+DefaultThreadedTableFilterTest
+ThreadedTableTest
+AbstractVisualGraphTest
+AbstractSimpleVisualGraphTest
+												
+###ApplicationConfiguration^
+AbstractGenericTest
+SolverTest
+TestClassFileCreator
+AbstractAssemblyTest
+AbstractChainedBufferTest
+AbstractCreateDataTypeModelTest
+AbstractGraphAlgorithmsTest
+AbstractHelpModuleLocationTest
+AbstractHelpTest
+AbstractLocalFileSystemTest
+AbstractOpBehaviorTest
+MDMangBaseTest
+StorageEditorModelTest
+VTBaseTestCase
+AbstractEHTest
+AbstractRttiTest
+								
+###GhidraAppConfiguration^
+DataTypeSelectionTextFieldTest    
+AbstractGhidraHeadedIntegrationTest  
+AbstractAddressMapDBTestClass  
+AbstractCodeBrowserNavigationTest  
+AbstractCorrelatorTest  
+AbstractCreateArchiveTest  
+AbstractDataActionTest  
+AbstractEditorTest  
+AbstractFileFormatsTest  
+AbstractFollowFlowTest  
+AbstractFunctionGraphTest  
+AbstractFunctionSignatureMarkupTest  
+AbstractGFileSystemBaseTest  
+AbstractGhidraScriptMgrPluginTest  
+AbstractMergeTest  
+AbstractProgramBasedTest  
+AbstractProgramDiffTest  
+AbstractProgramTreePluginTest  
+AbstractScreenShotGenerator  
+AbstractSelectByFlowPluginTest  
+AbstractSymbolTreePluginExternalsTest  
+AbstractToolSavingTest  
+AbstractVersionControlActionTest  
+AbstractVTCorrelatorTest  
+AbstractVTMarkupItemTest  
+CallTreePluginTest
+DiffTestAdapter  
+DWARFTestBase  
+AbstractSelfSimilarCorrelatorTest  
+AbstractStackEditorTest  
+AbstractStructureEditorTest  
+AbstractUnionEditorTest  
+AbstractStackEditorProviderTest  
+AbstractStructureEditorLockedActionsTest  
+AbstractStructureEditorUnlockedActionsTest  
+AbstractStructureEditorUnlockedCellEditTest  
+AbstractDataTypeMergeTest  
+AbstractProgramTreeMergeManagerTest  
+AbstractListingMergeManagerTest  
+AbstractExternalMergerTest  
+AbstractDecompilerTest  
+AbstractEquatePluginTest  
+AbstractLocationReferencesTest  
+AbstractMemSearchTest  
+AbstractDecompilerFindReferencesActionTest  
+GhidraScreenShotGenerator  
+TutorialScreenShotGenerator  
+AbstractSearchScreenShots  
+DiffApplyTestAdapter  

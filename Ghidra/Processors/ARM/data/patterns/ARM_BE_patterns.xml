@@ -63,13 +63,15 @@
       <data> 11100101 00101101 1110.... ........     0x........    0xe24dd...             </data> <!--  str lr,[sp,#...]; <instr>; sub sp,sp;   -->
       <data> 0xe5 0x2d 0xe0 0x08                                                          </data> <!--  str lr,[sp,#-0x8] -->
       <data> 0xe1a0c00d                              0xe92d....                          </data> <!--  cpy ip,sp; stmdb  sp!,{} -->
+      <align mark="0" bits="3"/>
       <setcontext name="TMode" value="0"/>
       <funcstart/>
     </postpatterns>
   </patternpairs>
   
   <pattern> <!-- 32 bit ARM -->
-      <data> 0xe24dd...                             11101001 00101101 .1...... ....0000 </data> <!-- sub sp,sp ; stmdb sp!,{r4+,lr} -->
+      <data> 0xe24dd... 11101001 00101101 .1...... ....0000 </data> <!-- sub sp,sp ; stmdb sp!,{r4+,lr} -->
+      <align mark="0" bits="3"/>
       <setcontext name="TMode" value="0"/>
       <codeboundary />              <!-- it is at least code -->
       <funcstart after="defined" /> <!-- must be something defined right before this -->
@@ -77,36 +79,49 @@
   
   <pattern> <!-- 32 bit ARM -->
       <data> 11101001 00101101 .1...... ....0000     </data> <!--  stmdb sp!,{r4+,lr}; -->
+      <align mark="0" bits="3"/>
       <setcontext name="TMode" value="0"/>
       <funcstart after="data" isvalid="true"/> <!-- must be something defined right before this, and good code -->
   </pattern>
+  
+  <pattern> <!-- 32 bit ARM -->
+      <data> 11101001 00101101 .1...... ....0000      </data> <!--  stmdb sp!,{r4+,lr};  <valid code> -->
+      <align mark="0" bits="3"/>
+      <setcontext name="TMode" value="0"/>
+      <funcstart after="defined" isvalid="40"/>     <!-- must be something defined right before this, && must be at least 40 valid instructions after it -->
+  </pattern>
  
   <pattern> <!-- 32 bit ARM -->
-      <data> 0xe24dd...                             11100101 00101101 1110.... ........ </data> <!--  sub sp,sp;  str lr,[sp,#...]; -->
+      <data> 0xe24dd... 11100101 00101101 1110.... ........ </data> <!--  sub sp,sp;  str lr,[sp,#...]; -->
+      <align mark="0" bits="3"/>
       <setcontext name="TMode" value="0"/>
       <funcstart after="defined" /> <!-- must be something defined right before this -->
   </pattern>
   
   <pattern> <!-- 32 bit ARM -->
       <data>11100101 00101101 1110.... ........      0xe24dd...                         </data> <!--  str lr,[sp,#...];   -->
+      <align mark="0" bits="3"/>
       <setcontext name="TMode" value="0"/>
       <funcstart after="data" /> <!-- must be something defined right before this -->
   </pattern>
 
   <pattern> <!-- 32 bit ARM -->
       <data> 11101001 00101101 .1...... ....0000   0x........ 0xe24dd...                          </data> <!--  stmdb sp!,{r4+,lr}; <instr>; sub sp,sp -->
+      <align mark="0" bits="3"/>
       <setcontext name="TMode" value="0"/>
       <funcstart after="data" /> <!-- must be something defined right before this -->
   </pattern>
     
   <pattern> <!-- 32 bit ARM -->
       <data>11100101 00101101 1110.... ........      0x........    0xe24dd...                         </data> <!--  str lr,[sp,#...]; <instr>; sub sp,sp;   -->
+      <align mark="0" bits="3"/>
       <setcontext name="TMode" value="0"/>
       <funcstart after="data" /> <!-- must be something defined right before this -->
   </pattern>
  
    <pattern> <!-- 32 bit ARM --> 
        <data>0xe1a0c00d                             0xe92d....                           </data> <!--  cpy ip,sp; stmdb  sp!,{} -->
+       <align mark="0" bits="3"/>
        <setcontext name="TMode" value="0"/>
        <codeboundary />                                 <!-- can't say it is a function yet, have seen instructions before -->
   </pattern>
@@ -182,11 +197,5 @@
       <funcstart after="function"/>
     </postpatterns>
   </patternpairs>
-  
-  <pattern> <!-- 32 bit ARM -->
-      <data> 11101001 00101101 .1...... ....0000      </data> <!--  stmdb sp!,{r4+,lr};  <valid code> -->
-      <setcontext name="TMode" value="0"/>
-      <funcstart after="defined" isvalid="40"/>     <!-- must be something defined right before this, && must be at least 40 valid instructions after it -->
-  </pattern>
   
 </patternlist>

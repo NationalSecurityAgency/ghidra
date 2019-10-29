@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +15,13 @@
  */
 package db;
 
+import java.io.IOException;
+
+import db.buffers.DataBuffer;
 import ghidra.util.Msg;
 import ghidra.util.exception.AssertException;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
-
-import java.io.IOException;
-
-import db.buffers.DataBuffer;
 
 /**
  * <code>LongKeyInteriorNode</code> stores a BTree node for use as an interior
@@ -91,8 +89,8 @@ class VarKeyInteriorNode extends VarKeyNode {
 	}
 
 	@Override
-	public boolean isConsistent(String tableName, TaskMonitor monitor) throws IOException,
-			CancelledException {
+	public boolean isConsistent(String tableName, TaskMonitor monitor)
+			throws IOException, CancelledException {
 		boolean consistent = true;
 		Field lastMinKey = null;
 		Field lastMaxKey = null;
@@ -103,19 +101,19 @@ class VarKeyInteriorNode extends VarKeyNode {
 			if (i != 0) {
 				if (key.compareTo(lastMinKey) <= 0) {
 					consistent = false;
-					logConsistencyError(tableName, "child[" + i + "].minKey <= child[" + (i - 1) +
-						"].minKey", null);
-					Msg.debug(this, "  child[" + i + "].minKey = " + key + " bufferID=" +
-						getBufferId(i));
+					logConsistencyError(tableName,
+						"child[" + i + "].minKey <= child[" + (i - 1) + "].minKey", null);
+					Msg.debug(this,
+						"  child[" + i + "].minKey = " + key + " bufferID=" + getBufferId(i));
 					Msg.debug(this, "  child[" + (i - 1) + "].minKey = " + lastMinKey +
 						" bufferID=" + getBufferId(i - 1));
 				}
 				else if (key.compareTo(lastMaxKey) <= 0) {
 					consistent = false;
-					logConsistencyError(tableName, "child[" + i + "].minKey <= child[" + (i - 1) +
-						"].maxKey", null);
-					Msg.debug(this, "  child[" + i + "].minKey = " + key + " bufferID=" +
-						getBufferId(i));
+					logConsistencyError(tableName,
+						"child[" + i + "].minKey <= child[" + (i - 1) + "].maxKey", null);
+					Msg.debug(this,
+						"  child[" + i + "].minKey = " + key + " bufferID=" + getBufferId(i));
 					Msg.debug(this, "  child[" + (i - 1) + "].maxKey = " + lastMaxKey +
 						" bufferID=" + getBufferId(i - 1));
 				}
@@ -150,10 +148,10 @@ class VarKeyInteriorNode extends VarKeyNode {
 				Field childKey0 = node.getKey(0);
 				if (!key.equals(childKey0)) {
 					consistent = false;
-					logConsistencyError(tableName, "parent key entry mismatch with child[" + i +
-						"].minKey", null);
-					Msg.debug(this, "  child[" + i + "].minKey = " + childKey0 + " bufferID=" +
-						getBufferId(i));
+					logConsistencyError(tableName,
+						"parent key entry mismatch with child[" + i + "].minKey", null);
+					Msg.debug(this,
+						"  child[" + i + "].minKey = " + childKey0 + " bufferID=" + getBufferId(i));
 					Msg.debug(this, "  parent key entry = " + key);
 				}
 
@@ -506,9 +504,8 @@ class VarKeyInteriorNode extends VarKeyNode {
 		}
 
 		// New parent node becomes root
-		parent =
-			new VarKeyInteriorNode(nodeMgr, getKey(0), buffer.getId(), newNode.getKey(0),
-				newNode.getBufferId());
+		parent = new VarKeyInteriorNode(nodeMgr, getKey(0), buffer.getId(), newNode.getKey(0),
+			newNode.getBufferId());
 		newNode.parent = parent;
 	}
 
@@ -598,9 +595,8 @@ class VarKeyInteriorNode extends VarKeyNode {
 		}
 
 		// New parent node becomes root
-		parent =
-			new VarKeyInteriorNode(nodeMgr, getKey(0), buffer.getId(), rightKey,
-				newNode.getBufferId());
+		parent = new VarKeyInteriorNode(nodeMgr, getKey(0), buffer.getId(), rightKey,
+			newNode.getBufferId());
 		newNode.parent = parent;
 		return parent;
 	}
@@ -622,6 +618,12 @@ class VarKeyInteriorNode extends VarKeyNode {
 	VarKeyRecordNode getLeftmostLeafNode() throws IOException {
 		VarKeyNode node = nodeMgr.getVarKeyNode(getBufferId(0));
 		return node.getLeftmostLeafNode();
+	}
+
+	@Override
+	VarKeyRecordNode getRightmostLeafNode() throws IOException {
+		VarKeyNode node = nodeMgr.getVarKeyNode(getBufferId(keyCount - 1));
+		return node.getRightmostLeafNode();
 	}
 
 	/**
@@ -707,7 +709,8 @@ class VarKeyInteriorNode extends VarKeyNode {
 		Field rightKey = rightNode.getKey(0);
 
 		// Can right keys fit within left node
-		if ((rightKeySpace + (rightKeyCount * ENTRY_SIZE)) <= (len - BASE - leftKeySpace - (leftKeyCount * ENTRY_SIZE))) {
+		if ((rightKeySpace + (rightKeyCount * ENTRY_SIZE)) <= (len - BASE - leftKeySpace -
+			(leftKeyCount * ENTRY_SIZE))) {
 			// Right node is elliminated and all entries stored in left node
 			moveKeysLeft(leftNode, rightNode, rightKeyCount);
 			nodeMgr.deleteNode(rightNode);
@@ -845,6 +848,7 @@ class VarKeyInteriorNode extends VarKeyNode {
 	/*
 	 * @see ghidra.framework.store.db.BTreeNode#getBufferReferences()
 	 */
+	@Override
 	public int[] getBufferReferences() {
 		int[] ids = new int[keyCount];
 		for (int i = 0; i < keyCount; i++) {

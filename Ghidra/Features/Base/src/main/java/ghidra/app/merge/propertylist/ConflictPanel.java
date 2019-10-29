@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +15,17 @@
  */
 package ghidra.app.merge.propertylist;
 
-import ghidra.app.merge.MergeConstants;
-
 import java.awt.BorderLayout;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 
 import javax.swing.*;
 import javax.swing.event.ChangeListener;
+
+import docking.widgets.button.GRadioButton;
+import docking.widgets.checkbox.GCheckBox;
+import docking.widgets.label.GDLabel;
+import ghidra.app.merge.MergeConstants;
 
 /**
  * Panel that shows differences for properties in Property Lists.
@@ -63,27 +65,27 @@ class ConflictPanel extends JPanel {
 		}
 
 		if (info.isTypeMatch()) {
-			setBorder(BorderFactory.createTitledBorder("Resolve Type Mismatch for Property " +
-				info.getDisplayedPropertyName()));
+			setBorder(BorderFactory.createTitledBorder(
+				"Resolve Type Mismatch for Property " + info.getDisplayedPropertyName()));
 
 			latestRB.setText("Use type '" + info.getLatestTypeString() + "', value = '" +
 				info.getLatestValue() + "' (" + MergeConstants.LATEST_TITLE + ")");
 			myRB.setText("Use type '" + info.getMyTypeString() + "', value = '" +
 				info.getMyValue() + "' (" + MergeConstants.MY_TITLE + ")");
 			if (origValue != null) {
-				origText =
-					"Use type '" + info.getOrigTypeString() + "', value = '" + info.getOrigValue() +
-						"' (" + MergeConstants.ORIGINAL_TITLE + ")";
+				origText = "Use type '" + info.getOrigTypeString() + "', value = '" +
+					info.getOrigValue() + "' (" + MergeConstants.ORIGINAL_TITLE + ")";
 			}
 		}
 		else {
 
-			setBorder(BorderFactory.createTitledBorder("Resolve Property Conflict for " +
-				info.getDisplayedPropertyName()));
+			setBorder(BorderFactory.createTitledBorder(
+				"Resolve Property Conflict for " + info.getDisplayedPropertyName()));
 
-			latestRB.setText("Use value '" + info.getLatestValue() + "' (" +
-				MergeConstants.LATEST_TITLE + ")");
-			myRB.setText("Use value '" + info.getMyValue() + "' (" + MergeConstants.MY_TITLE + " )");
+			latestRB.setText(
+				"Use value '" + info.getLatestValue() + "' (" + MergeConstants.LATEST_TITLE + ")");
+			myRB.setText(
+				"Use value '" + info.getMyValue() + "' (" + MergeConstants.MY_TITLE + " )");
 			if (origValue != null) {
 				origText = "Use value '" + origValue + "' (" + MergeConstants.ORIGINAL_TITLE + " )";
 			}
@@ -133,15 +135,15 @@ class ConflictPanel extends JPanel {
 		panel.setLayout(new BorderLayout());
 		panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-		propertyGroupLabel = new JLabel("Property Group:  ");
+		propertyGroupLabel = new GDLabel("Property Group:  ");
 
 		JPanel namePanel = new JPanel(new BorderLayout());
 		namePanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 10, 5));
 		namePanel.add(propertyGroupLabel);
 
-		latestRB = new JRadioButton("Use " + MergeConstants.LATEST_TITLE);
-		myRB = new JRadioButton("Use " + MergeConstants.MY_TITLE);
-		originalRB = new JRadioButton("Use " + MergeConstants.ORIGINAL_TITLE);
+		latestRB = new GRadioButton("Use " + MergeConstants.LATEST_TITLE);
+		myRB = new GRadioButton("Use " + MergeConstants.MY_TITLE);
+		originalRB = new GRadioButton("Use " + MergeConstants.ORIGINAL_TITLE);
 
 		latestRB.setName(LATEST_BUTTON_NAME);
 		myRB.setName(CHECKED_OUT_BUTTON_NAME);
@@ -163,6 +165,7 @@ class ConflictPanel extends JPanel {
 		panel.add(createUseForAllCheckBox(), BorderLayout.SOUTH);
 
 		ItemListener itemListener = new ItemListener() {
+			@Override
 			public void itemStateChanged(ItemEvent e) {
 				if (listener != null) {
 					listener.stateChanged(null);
@@ -177,7 +180,7 @@ class ConflictPanel extends JPanel {
 	}
 
 	protected JCheckBox createUseForAllCheckBox() {
-		useForAllCB = new JCheckBox(getUseAllString("Property"));
+		useForAllCB = new GCheckBox(getUseAllString("Property"));
 		useForAllCB.setName(USE_FOR_ALL_CHECKBOX);
 		return useForAllCB;
 	}

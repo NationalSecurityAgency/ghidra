@@ -32,8 +32,8 @@ import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.CryptoException;
 import ghidra.util.task.TaskMonitor;
 
-@FileSystemInfo(type = "ibootim", description = "iOS "
-		+ iBootImConstants.SIGNATURE, factory = GFileSystemBaseFactory.class)
+@FileSystemInfo(type = "ibootim", description = "iOS " +
+	iBootImConstants.SIGNATURE, factory = GFileSystemBaseFactory.class)
 public class iBootImFileSystem extends GFileSystemBase implements GIconProvider {
 
 	private iBootImHeader header;
@@ -59,17 +59,13 @@ public class iBootImFileSystem extends GFileSystemBase implements GIconProvider 
 	public Icon getIcon(GFile file, TaskMonitor monitor) throws IOException, CancelledException {
 		File cacheFile = fsService.getFile(file.getFSRL(), monitor);
 		try (InputStream cacheInputStream = new FileInputStream(cacheFile)) {
-			GImageFormat format = (header.getFormat() == iBootImConstants.FORMAT_ARGB) ? GImageFormat.RGB_ALPHA_4BYTE
-					: GImageFormat.GRAY_ALPHA_2BYTE;
-			GImage image = new GImage(header.getWidth(), header.getHeight(), format, cacheInputStream,
-					cacheFile.length());
+			GImageFormat format =
+				(header.getFormat() == iBootImConstants.FORMAT_ARGB) ? GImageFormat.RGB_ALPHA_4BYTE
+						: GImageFormat.GRAY_ALPHA_2BYTE;
+			GImage image = new GImage(header.getWidth(), header.getHeight(), format,
+				cacheInputStream, cacheFile.length());
 			return image.toPNG();
 		}
-	}
-
-	@Override
-	public String getInfo(GFile file, TaskMonitor monitor) throws IOException {
-		return null;
 	}
 
 	@Override

@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +17,6 @@ package ghidra.app.plugin.core.compositeeditor;
 
 import java.awt.event.KeyEvent;
 
-import javax.swing.JTable;
 import javax.swing.KeyStroke;
 
 import docking.ActionContext;
@@ -49,9 +47,7 @@ public class EditFieldAction extends CompositeEditorTableAction {
 	public void actionPerformed(ActionContext context) {
 		if (model != null) {
 			int row = model.getRow();
-			JTable table = provider.getTable();
-			int column = table.getSelectedColumn();
-
+			int column = model.getColumn();
 			if (model.isCellEditable(row, column)) {
 				model.beginEditingField(row, column);
 				return;

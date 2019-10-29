@@ -17,12 +17,11 @@ package ghidra.util;
 
 import java.util.Set;
 
-import ghidra.framework.store.FileSystem;
+import ghidra.framework.store.local.LocalFileSystem;
 import util.CollectionUtils;
 
 /**
- * Utility class with static methods for validating names and converting
- * strings to numbers, etc.
+ * Utility class with static methods for validating project file names.
  */
 public final class NamingUtilities {
 
@@ -39,15 +38,56 @@ public final class NamingUtilities {
 	}
 
 	/**
-	 * tests whether the given string is a valid name.
+	 * Tests whether the given string is a valid.
+	 * Rules:
+	 * <ul>
+	 * <li>All characters must be a letter, digit (0..9), period, hyphen, underscore or space</li>
+	 * <li>May not exceed a length of 60 characters</li>
+	 * </ul>
 	 * @param name name to validate
+	 * @return true if specified name is valid, else false
+	 * @deprecated method has been deprecated due to improper and widespread use.  
+	 * New methods include {@link NamingUtilities#isValidProjectName(String)} and 
+	 * {@link LocalFileSystem#testValidName(String,boolean)}.
 	 */
+	@Deprecated
 	public static boolean isValidName(String name) {
+
 		if (name == null) {
 			return false;
 		}
 
-		if (name.indexOf(FileSystem.SEPARATOR_CHAR) >= 0) {
+		if ((name.length() < 1) || (name.length() > MAX_NAME_LENGTH)) {
+			return false;
+		}
+
+		for (int i = 0; i < name.length(); i++) {
+			char c = name.charAt(i);
+			if (!Character.isLetterOrDigit(c) && !VALID_NAME_SET.contains(c)) {
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	/**
+	 * Tests whether the given string is a valid project name.
+	 * Rules:
+	 * <ul>
+	 * <li>Name may not start with period</li>
+	 * <li>All characters must be a letter, digit (0..9), period, hyphen, underscore or space</li>
+	 * <li>May not exceed a length of 60 characters</li>
+	 * </ul>
+	 * @param name name to validate
+	 * @return true if specified name is valid, else false
+	 */
+	public static boolean isValidProjectName(String name) {
+		if (name == null) {
+			return false;
+		}
+
+		if (name.startsWith(".")) {
 			return false;
 		}
 
@@ -69,12 +109,16 @@ public final class NamingUtilities {
 	 * Find the invalid character in the given name.
 	 * <p>
 	 * This method should only be used with {@link #isValidName(String)}} and <b>not</b>
-	 * {@link #isValidFileName(String);
+	 * {@link #isValidProjectName(String)}
 	 * 
 	 * @param name the name with an invalid character
 	 * @return the invalid character or 0 if no invalid character can be found
 	 * @see #isValidName(String)
+	 * @deprecated this method may be removed in a subsequent release due to 
+	 * limited use and applicability (project names and project file names have
+	 * different naming resrictions).
 	 */
+	@Deprecated
 	public static char findInvalidChar(String name) {
 		for (int i = 0; i < name.length(); i++) {
 			char c = name.charAt(i);
@@ -94,6 +138,9 @@ public final class NamingUtilities {
 	 * not case sensitive.  Under Windows, Foo.exe and foo.exe represent
 	 * the same filename.  To fix this we mangle names first such that Foo.exe becomes
 	 * _foo.exe.
+	 * 
+	 * @param name name string to be mangled
+	 * @return mangled name
 	 */
 	public static String mangle(String name) {
 		int len = name.length();
@@ -120,14 +167,17 @@ public final class NamingUtilities {
 	 * Performs the inverse of the mangle method.  A string is returned such that
 	 * all characters following a MANGLE_CHAR are converted to uppercase.  Two MANGLE
 	 * chars in a row are replace by a single MANGLE_CHAR.
+	 * 
+	 * @param mangledName mangled name string
+	 * @return demagle name
 	 */
-	public static String demangle(String name) {
-		int len = name.length();
+	public static String demangle(String mangledName) {
+		int len = mangledName.length();
 		StringBuffer buf = new StringBuffer(len);
 		boolean foundMangle = false;
 
 		for (int i = 0; i < len; i++) {
-			char c = name.charAt(i);
+			char c = mangledName.charAt(i);
 			if (foundMangle) {
 				foundMangle = false;
 				if (c == MANGLE_CHAR) {

@@ -29,7 +29,7 @@ class ApplySourceFiles {
 		// static use only
 	}
 
-	static void applyTo(PdbParserNEW pdbParser, XmlPullParser xmlParser, TaskMonitor monitor,
+	static void applyTo(PdbParser pdbParser, XmlPullParser xmlParser, TaskMonitor monitor,
 			MessageLog log) {
 		Program program = pdbParser.getProgram();
 		Options proplist = program.getOptions(Program.PROGRAM_INFO);

@@ -21,13 +21,13 @@ import javax.swing.SwingUtilities;
 import javax.swing.event.TableModelEvent;
 
 import docking.widgets.table.*;
+import docking.widgets.table.sort.DefaultColumnComparator;
 import generic.concurrent.ConcurrentListenerSet;
 import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.util.SystemUtilities;
 import ghidra.util.datastruct.*;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
-import ghidra.util.task.TaskMonitorAdapter;
 import ghidra.util.worker.Worker;
 
 /**
@@ -36,14 +36,14 @@ import ghidra.util.worker.Worker;
  * You can optionally set this model to load data incrementally by passing the correct
  * constructor argument.  Note, if you make this model incremental, then you need to set an
  * incremental task monitor in order to get feedback about loading
- * (see {@link #setIncrementalTaskMonitor(TaskMonitor)).  Alternatively, you can use
+ * (see {@link #setIncrementalTaskMonitor(TaskMonitor)}.  Alternatively, you can use
  * a {@link GThreadedTablePanel}, which will install the proper monitor for you.
  *
- * @param ROW_OBJECT the row object class for this table model.
- * @param DATA_SOURCE the type of data that will be returned from {@link #getDataSource()}.  This
+ * @param <ROW_OBJECT> the row object class for this table model.
+ * @param <DATA_SOURCE> the type of data that will be returned from {@link #getDataSource()}.  This
  *                    object will be given to the {@link DynamicTableColumn} objects used by this
  *                    table model when
- *                    {@link DynamicTableColumn#getValue(Object, generic.settings.Settings, Object, ServiceProvider)}
+ *                    {@link DynamicTableColumn#getValue(Object, ghidra.docking.settings.Settings, Object, ServiceProvider)}
  *                    is called.
  */
 public abstract class ThreadedTableModel<ROW_OBJECT, DATA_SOURCE>
@@ -52,7 +52,7 @@ public abstract class ThreadedTableModel<ROW_OBJECT, DATA_SOURCE>
 
 	private ThreadedTableModelUpdateMgr<ROW_OBJECT> updateManager;
 	private boolean loadIncrementally;
-	private TaskMonitor incrementalMonitor = TaskMonitorAdapter.DUMMY_MONITOR;
+	private TaskMonitor incrementalMonitor = TaskMonitor.DUMMY;
 	private ConcurrentListenerSet<ThreadedTableModelListener> listeners =
 		new ConcurrentListenerSet<>();
 
@@ -157,8 +157,12 @@ public abstract class ThreadedTableModel<ROW_OBJECT, DATA_SOURCE>
 
 	/**
 	 * A package-level method.  Subclasses should not call this.
-	 * <p>
-	 * This exists to handle whether this model should load incrementally.
+	 * 
+	 * <p>This exists to handle whether this model should load incrementally.
+	 * 
+	 * @param monitor the monitor
+	 * @return the loaded data
+	 * @throws CancelledException if the load was cancelled
 	 */
 	final List<ROW_OBJECT> load(TaskMonitor monitor) throws CancelledException {
 		if (loadIncrementally) {
@@ -261,7 +265,7 @@ public abstract class ThreadedTableModel<ROW_OBJECT, DATA_SOURCE>
 	 *
 	 * @param rowObject The object for which to search
 	 * @return The index for the given object; a negative value if the object is not in the list
-	 * @see #getIndexForRowObject(Object);
+	 * @see #getIndexForRowObject(Object)
 	 */
 	protected int getUnfilteredIndexForRowObject(ROW_OBJECT rowObject) {
 		return getIndexForRowObject(rowObject, getUnfilteredData());
@@ -287,8 +291,15 @@ public abstract class ThreadedTableModel<ROW_OBJECT, DATA_SOURCE>
 
 	@Override
 	protected Comparator<ROW_OBJECT> createSortComparator(int columnIndex) {
+
 		Comparator<Object> columnComparator = createSortComparatorForColumn(columnIndex);
-		return new TableColumnComparator<>(this, columnComparator, columnIndex);
+		if (columnComparator != null) {
+			// the given column has its own comparator; wrap and us that
+			return new ThreadedTableColumnComparator<>(this, columnIndex, columnComparator);
+		}
+
+		return new ThreadedTableColumnComparator<>(this, columnIndex, new DefaultColumnComparator(),
+			new ThreadedBackupRowComparator<>(this, columnIndex));
 	}
 
 	@Override
@@ -327,6 +338,7 @@ public abstract class ThreadedTableModel<ROW_OBJECT, DATA_SOURCE>
 	/**
 	 * Returns the current sorting context, which is the next one to be applied, if a sort is
 	 * pending; otherwise the current sorting context.
+	 * @return the sort context
 	 */
 	TableSortingContext<ROW_OBJECT> getSortingContext() {
 		if (pendingSortContext != null) {
@@ -359,14 +371,13 @@ public abstract class ThreadedTableModel<ROW_OBJECT, DATA_SOURCE>
 	 */
 	public boolean hasFitler() {
 		TableFilter<ROW_OBJECT> currentFilter = getTableFilter();
-		return !(currentFilter instanceof NullTableFilter);
+		return !currentFilter.isEmpty();
 	}
 
 	/**
 	 * Override this to change how filtering is performed.  This implementation will do nothing
 	 * if a <tt>TableFilter</tt> has not been set via a call to {@link #setTableFilter(TableFilter)}.
-	 * Also, no filtering will happen if there is no filter text set via a call to
-	 * {@link #setFilterText(String)}.
+	 * 
 	 *
 	 * @param data The list of data to be filtered.
 	 *
@@ -483,7 +494,11 @@ public abstract class ThreadedTableModel<ROW_OBJECT, DATA_SOURCE>
 
 		SystemUtilities.assertThisIsTheSwingThread("Must be called on the Swing thread");
 
-		boolean dataChanged = (this.filteredData.size() != filteredData.size());
+		//@formatter:off
+		// The data is changed when it is filtered OR when an item has been added or removed
+		boolean dataChanged = this.filteredData.getId() != filteredData.getId() || 
+							  this.filteredData.size() != filteredData.size();
+		//@formatter:on
 		this.allData = allData;
 		this.filteredData = filteredData;
 
@@ -629,10 +644,6 @@ public abstract class ThreadedTableModel<ROW_OBJECT, DATA_SOURCE>
 		return filteredData.size();
 	}
 
-	public int getUnfilteredCount() {
-		return allData.size();
-	}
-
 	/**
 	 * Given a row index for the raw (unfiltered) model, return the corresponding index in the
 	 * view (filtered) model.
@@ -643,11 +654,12 @@ public abstract class ThreadedTableModel<ROW_OBJECT, DATA_SOURCE>
 	 */
 	@Override
 	public int getViewRow(int modelRow) {
-		if (getRowCount() == getUnfilteredCount()) {
+		int unfilteredCount = getUnfilteredRowCount();
+		if (getRowCount() == unfilteredCount) {
 			return modelRow; // same list; no need to translate values
 		}
 
-		if (modelRow >= allData.size()) {
+		if (modelRow >= unfilteredCount) {
 			return -1; // out-of-bounds request
 		}
 
@@ -665,7 +677,7 @@ public abstract class ThreadedTableModel<ROW_OBJECT, DATA_SOURCE>
 	 */
 	@Override
 	public int getModelRow(int viewRow) {
-		if (getRowCount() == getUnfilteredCount()) {
+		if (getRowCount() == getUnfilteredRowCount()) {
 			return viewRow; // same list; no need to translate values
 		}
 
@@ -715,8 +727,10 @@ public abstract class ThreadedTableModel<ROW_OBJECT, DATA_SOURCE>
 
 	/**
 	 * Sets the update delay, which is how long the model should wait before updating, after
-	 * a change has been made the data.
+	 * a change has been made the data
+	 * 
 	 * @param updateDelayMillis the new update delay
+	 * @param maxUpdateDelayMillis the new max update delay; updates will not wait past this time
 	 */
 	void setUpdateDelay(int updateDelayMillis, int maxUpdateDelayMillis) {
 		this.minUpdateDelayMillis = updateDelayMillis;
@@ -724,16 +738,11 @@ public abstract class ThreadedTableModel<ROW_OBJECT, DATA_SOURCE>
 		updateManager.setUpdateDelay(updateDelayMillis, maxUpdateDelayMillis);
 	}
 
-	/**
-	 * @see #setMinDelay(int)
-	 */
+	// see setUpdateDelay
 	long getMinDelay() {
 		return minUpdateDelayMillis;
 	}
 
-	/**
-	 * @see #setMaxDelay(int)
-	 */
 	long getMaxDelay() {
 		return maxUpdateDelayMillis;
 	}
@@ -763,7 +772,7 @@ public abstract class ThreadedTableModel<ROW_OBJECT, DATA_SOURCE>
 	 * Adds a listener that will be notified of the first table load of this model.  After the
 	 * initial load, the listener is removed.
 	 *
-	 * @param listener
+	 * @param listener the listener
 	 */
 	public void addInitialLoadListener(ThreadedTableModelListener listener) {
 		listeners.add(new OneTimeListenerWrapper(listener));

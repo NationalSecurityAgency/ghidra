@@ -516,14 +516,21 @@
         <LI><B>Control-shift-click</B> - Triggers the Listing in a <A href=
         "help/topics/Snapshots/Snapshots.html">Snapshots</A> view to navigate to the address
         denoted by the symbol that was clicked.</LI>
+        
+        <LI><B>Middle-mouse</B> - If you press the middle mouse
+      	button  the decompiler will highlight every occurrence of a variable or constant
+      	under the current cursor location (the button changed in the tool options under 
+      	<B>Browser Field-&gt;Cursor Text Highlight</B>).</LI>        
       </UL>
 
-      <P><IMG alt="" src="../../shared/note.png" border="0">&nbsp; If you press the middle mouse
-      button (the button changed in the tool options under <B>Browser Field-&gt;Cursor Text
-      Highlight</B>), the decompiler will highlight every occurrence of a variable or constant
-      under the current cursor location.<BR>
-      </P>
-    </BLOCKQUOTE><BR>
+	   <BLOCKQUOTE>
+	      <P><IMG alt="" src="../../shared/tip.png" border="0">You can navigate to the target 
+	      of a <code>goto</code> statement by double-clicking its label (you can also double-click 
+	      a brace to navigate to the matching brace).<BR>
+	      </P>	
+      	</BLOCKQUOTE>
+    </BLOCKQUOTE>
+    <BR>
      <BR>
      
 
@@ -845,6 +852,22 @@
         file. Instead of submitting the entire program to be analyzed to discover the problem, only
         a small XML file is needed.<BR>
         </P>
+      </BLOCKQUOTE>
+
+      <H3><A name="Graph_AST_Control_Flow"></A>Graph AST Control Flow</H3>
+
+      <BLOCKQUOTE>
+        <P>Selecting <B><IMG alt="" src="../../shared/menu16.gif">Graph AST Control Flow</B>,
+        from the decompiler provider window toolbar, will generate an abstract syntax tree (AST)
+        control flow graph based upon the decompiler results and render the graph within the
+        current Graph Service.</P>
+        
+		      <BLOCKQUOTE>
+		      <P><IMG alt="" src="../../shared/note.yellow.png" border="0">If no Graph Service is
+		      available then this action will not be present.
+		      </P>
+		      </BLOCKQUOTE>        
+        
       </BLOCKQUOTE>
 
       <H3><A name="Export_to_C"></A>Export to C <IMG alt="" src="images/page_edit.png" border=

@@ -70,9 +70,6 @@ public class ToolManagerImpl implements ToolManager, PropertyChangeListener {
 
 	private Map<String, ToolSaveStatus> toolStatusMap = new HashMap<>();
 
-	/**
-	 *  creates a tool manager for the project
-	 */
 	public ToolManagerImpl(Project project) {
 		this.project = project;
 		this.toolChest = project.getLocalToolChest();
@@ -91,8 +88,7 @@ public class ToolManagerImpl implements ToolManager, PropertyChangeListener {
 	 * Registers the new instance of the tool in the namesMap and returns the total number of 
 	 * running instances of that tool
 	 * @param toolName the name of the tool being registers
-	 * @param tool the tool being registered.
-	 * @return the total number of running instances of the tool
+	 * @param tool the tool being registered
 	 */
 	private void registerTool(String toolName, Tool tool) {
 		List<Tool> list = namesMap.get(toolName);
@@ -124,17 +120,11 @@ public class ToolManagerImpl implements ToolManager, PropertyChangeListener {
 		tool.removePropertyChangeListener(this);
 	}
 
-	/*
-	 * @see ghidra.framework.model.ToolManager#getActiveWorkspace()
-	 */
 	@Override
 	public Workspace getActiveWorkspace() {
 		return activeWorkspace;
 	}
 
-	/*
-	 * @see ghidra.framework.model.ToolManager#getConsumerTools()
-	 */
 	@Override
 	public Tool[] getConsumerTools() {
 		ArrayList<Tool> consumers = new ArrayList<>(TYPICAL_NUM_TOOLS);
@@ -149,9 +139,6 @@ public class ToolManagerImpl implements ToolManager, PropertyChangeListener {
 		return tools;
 	}
 
-	/*
-	 * @see ghidra.framework.model.ToolManager#getProducerTools()
-	 */
 	@Override
 	public Tool[] getProducerTools() {
 		ArrayList<Tool> producers = new ArrayList<>(TYPICAL_NUM_TOOLS);
@@ -165,9 +152,6 @@ public class ToolManagerImpl implements ToolManager, PropertyChangeListener {
 		return producers.toArray(tools);
 	}
 
-	/*
-	 * @see ghidra.framework.model.ToolManager#getRunningTools()
-	 */
 	@Override
 	public Tool[] getRunningTools() {
 		Workspace[] wsList = new Workspace[workspaces.size()];
@@ -200,9 +184,6 @@ public class ToolManagerImpl implements ToolManager, PropertyChangeListener {
 		return tc;
 	}
 
-	/*
-	 * @see ghidra.framework.model.ToolManager#createWorkspace(java.lang.String)
-	 */
 	@Override
 	public Workspace createWorkspace(String name) throws DuplicateNameException {
 		// if passed in the default "untitled" name, or no name at all,
@@ -291,9 +272,6 @@ public class ToolManagerImpl implements ToolManager, PropertyChangeListener {
 		}
 	}
 
-	/*
-	 * @see ghidra.framework.model.ToolManager#getWorkspaces()
-	 */
 	@Override
 	public Workspace[] getWorkspaces() {
 		Workspace[] wsList = new Workspace[workspaces.size()];
@@ -301,7 +279,8 @@ public class ToolManagerImpl implements ToolManager, PropertyChangeListener {
 	}
 
 	/**
-	 * saves this object to an XML element.
+	 * Saves this object to an XML element
+	 * @return the element containing the tool XML
 	 */
 	public Element saveToXml() {
 
@@ -378,6 +357,7 @@ public class ToolManagerImpl implements ToolManager, PropertyChangeListener {
 	/**
 	 * Return whether any tools have changed, or if any tools were
 	 * added or removed from any of the workspaces.
+	 * @return true if any tools in this workspace have changed
 	 */
 	public boolean hasChanged() {
 		// check the connections for changes
@@ -407,7 +387,8 @@ public class ToolManagerImpl implements ToolManager, PropertyChangeListener {
 
 	/** 
 	 * Save the tools that are opened and changed, that will be brought back up when the project
-	 * is reopened.
+	 * is reopened
+	 * @return true if the session was saved
 	 */
 	public boolean saveSessionTools() {
 		Set<String> keySet = namesMap.keySet();
@@ -483,9 +464,6 @@ public class ToolManagerImpl implements ToolManager, PropertyChangeListener {
 		}
 	}
 
-	/*
-	 * @see java.beans.PropertyChangeListener#propertyChange(java.beans.PropertyChangeEvent)
-	 */
 	@Override
 	public void propertyChange(PropertyChangeEvent evt) {
 
@@ -514,17 +492,11 @@ public class ToolManagerImpl implements ToolManager, PropertyChangeListener {
 		firePropertyChangeEvent(evt);
 	}
 
-	/*
-	 * @see ghidra.framework.model.ToolManager#addWorkspaceChangeListener(ghidra.framework.model.WorkspaceChangeListener)
-	 */
 	@Override
 	public void addWorkspaceChangeListener(WorkspaceChangeListener l) {
 		changeListeners.add(l);
 	}
 
-	/*
-	 * @see ghidra.framework.model.ToolManager#removeWorkspaceChangeListener(ghidra.framework.model.WorkspaceChangeListener)
-	 */
 	@Override
 	public void removeWorkspaceChangeListener(WorkspaceChangeListener l) {
 		changeListeners.remove(l);
@@ -543,7 +515,7 @@ public class ToolManagerImpl implements ToolManager, PropertyChangeListener {
 	}
 
 	/**
-	 * Get any toolservices available from this tool.
+	 * Get any tool services available from this tool
 	 * 
 	 * @return ToolServices list of tool services this tool can provide.
 	 */
@@ -551,10 +523,6 @@ public class ToolManagerImpl implements ToolManager, PropertyChangeListener {
 		return toolServices;
 	}
 
-	/*
-	 *  (non-Javadoc)
-	 * @see ghidra.framework.model.ToolManager#toolChanged(ghidra.framework.model.Tool)
-	 */
 	@Override
 	public void toolChanged(Tool tool) {
 		updateConnectMap(tool);
@@ -565,6 +533,8 @@ public class ToolManagerImpl implements ToolManager, PropertyChangeListener {
 	// restoring the front end tool.
 	/**
 	 * Called by WorkspaceImpl when it is restoring its state.
+	 * @param toolName the name of the tool
+	 * @return the tool
 	 */
 	public Tool getTool(String toolName) {
 		ToolTemplate template = toolServices.getToolChest().getToolTemplate(toolName);
@@ -663,7 +633,7 @@ public class ToolManagerImpl implements ToolManager, PropertyChangeListener {
 	 * @param ws workspace to rename
 	 * @param name new name of workspace
 	 * 
-	 * @throws DuplicateNameException
+	 * @throws DuplicateNameException if there already exists a workspace by the given name
 	 */
 	void setWorkspaceName(Workspace ws, String name) throws DuplicateNameException {
 
@@ -682,7 +652,7 @@ public class ToolManagerImpl implements ToolManager, PropertyChangeListener {
 		}
 	}
 
-	/**
+	/*
 	 * Get a tool from the template; set the instance name.
 	 */
 	Tool getTool(Workspace ws, ToolTemplate template) {
@@ -693,7 +663,7 @@ public class ToolManagerImpl implements ToolManager, PropertyChangeListener {
 		return tool;
 	}
 
-	/**
+	/*
 	 * Called by the workspace when a tool is removed.
 	 */
 	void toolRemoved(Workspace ws, Tool tool) {
@@ -743,14 +713,10 @@ public class ToolManagerImpl implements ToolManager, PropertyChangeListener {
 		}
 		catch (PropertyVetoException e) {
 			// shouldn't happen
-			Msg.showError(this, null, "Error", "set type name was vetoed", e);
+			Msg.showError(this, null, "Error Setting Tool Name", "Set tool name was vetoed", e);
 		}
-		Msg.debug(this, "Loaded " + tool.getName());
 	}
 
-	/**
-	 * Called when a tool is added.
-	 */
 	void fireToolAddedEvent(Workspace ws, Tool tool) {
 		for (int i = 0; i < changeListeners.size(); i++) {
 			WorkspaceChangeListener l = changeListeners.get(i);
@@ -758,10 +724,6 @@ public class ToolManagerImpl implements ToolManager, PropertyChangeListener {
 		}
 	}
 
-	/**
-	 * Remove all connection objects for the given tool.
-	 * @param tool
-	 */
 	@Override
 	public void disconnectTool(Tool tool) {
 		Iterator<String> keys = connectMap.keySet().iterator();
@@ -777,10 +739,6 @@ public class ToolManagerImpl implements ToolManager, PropertyChangeListener {
 		}
 	}
 
-	/**
-	 * Update the connection map for the given tool.
-	 * @param tool
-	 */
 	private void updateConnectMap(Tool tool) {
 		Iterator<String> keys = connectMap.keySet().iterator();
 		Map<String, ToolConnectionImpl> map = new HashMap<>();

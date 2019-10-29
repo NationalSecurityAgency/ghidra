@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,11 +19,11 @@ import ghidra.feature.vt.api.db.VTSessionDB;
 import ghidra.feature.vt.api.main.VTSession;
 import ghidra.feature.vt.gui.plugin.*;
 import ghidra.framework.model.DomainFile;
-import ghidra.framework.plugintool.util.ToolConstants;
 import ghidra.util.HelpLocation;
 import docking.ActionContext;
 import docking.action.DockingAction;
 import docking.action.MenuData;
+import docking.tool.ToolConstants;
 import docking.widgets.OptionDialog;
 
 public class ResetToolAction extends DockingAction {

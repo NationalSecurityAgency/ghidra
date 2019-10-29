@@ -15,7 +15,10 @@
  */
 package ghidra.program.model.data;
 
+import java.math.BigInteger;
 import java.util.NoSuchElementException;
+
+import ghidra.docking.settings.Settings;
 
 public interface Enum extends DataType {
 
@@ -69,4 +72,12 @@ public interface Enum extends DataType {
 	 */
 	@Override
 	public void setDescription(String description);
+
+	/**
+	 * Get enum representation of the big-endian value.
+	 * @param bigInt BigInteger value with the appropriate sign
+	 * @param settings integer format settings (PADDING, FORMAT, etc.)
+	 * @return formatted integer string
+	 */
+	public String getRepresentation(BigInteger bigInt, Settings settings, int bitLength);
 }

@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,21 +15,20 @@
  */
 package ghidra.feature.vt.gui.actions;
 
-import ghidra.feature.vt.api.db.VTSessionDB;
-import ghidra.feature.vt.api.main.VTSession;
-import ghidra.feature.vt.gui.plugin.VTController;
-import ghidra.feature.vt.gui.plugin.VTPlugin;
-import ghidra.framework.plugintool.util.ToolConstants;
-import ghidra.util.*;
-
 import java.awt.event.InputEvent;
 import java.io.IOException;
 
 import javax.swing.Icon;
 
-import resources.ResourceManager;
 import docking.ActionContext;
 import docking.action.*;
+import docking.tool.ToolConstants;
+import ghidra.feature.vt.api.db.VTSessionDB;
+import ghidra.feature.vt.api.main.VTSession;
+import ghidra.feature.vt.gui.plugin.VTController;
+import ghidra.feature.vt.gui.plugin.VTPlugin;
+import ghidra.util.*;
+import resources.ResourceManager;
 
 public class RedoAction extends DockingAction {
 	private final VTController controller;
@@ -38,7 +36,7 @@ public class RedoAction extends DockingAction {
 	public RedoAction(VTController controller) {
 		super("Redo", VTPlugin.OWNER);
 		this.controller = controller;
-		setHelpLocation(new HelpLocation("Tool", "Redo"));
+		setHelpLocation(new HelpLocation(ToolConstants.TOOL_HELP_TOPIC, "Redo"));
 		String[] menuPath = { ToolConstants.MENU_EDIT, "&Redo" };
 		String group = "ZZUndo";
 		Icon icon = ResourceManager.loadImage("images/redo.png");

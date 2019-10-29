@@ -106,7 +106,7 @@ public class TableColumnModelState implements SortListener {
 		// We want to load our state after the column model is loaded.  We are using this
 		// listener to know when the table has been added to the component hierarchy, as its
 		// model has been loaded by then.
-		DockingWindowManager.registerComponentLoadedListener(table, windowManager -> {
+		DockingWindowManager.registerComponentLoadedListener(table, (windowManager, provider) -> {
 			if (!enabled) {
 				setEnabled(true);
 				restoreState();
