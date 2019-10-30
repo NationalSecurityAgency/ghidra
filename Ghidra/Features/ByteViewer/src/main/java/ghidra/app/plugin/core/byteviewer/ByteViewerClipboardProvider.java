@@ -46,14 +46,6 @@ public class ByteViewerClipboardProvider extends ByteCopier
 		return copyTypesList;
 	}
 
-	private static final List<ClipboardType> PASTE_TYPES = createPasteTypesList();
-
-	private static List<ClipboardType> createPasteTypesList() {
-		List<ClipboardType> pasteTypesList = new LinkedList<>();
-		pasteTypesList.add(BYTE_STRING_TYPE);
-		return pasteTypesList;
-	}
-
 	private boolean copyEnabled;
 	private boolean pasteEnabled;
 	private Set<ChangeListener> listeners = new CopyOnWriteArraySet<>();
