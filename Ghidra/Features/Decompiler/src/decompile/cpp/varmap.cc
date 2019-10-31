@@ -273,23 +273,26 @@ bool RangeHint::merge(RangeHint *b,AddrSpace *space,TypeFactory *typeFactory)
   return overlapProblems;
 }
 
-/// Order the two ranges by the signed version of their offset, then by size,
-/// then by data-type
-/// \param a is the first range to compare
-/// \param b is the second range
-/// \return \b true if the first range is ordered before the second
-bool RangeHint::compareRanges(const RangeHint *a,const RangeHint *b)
+/// Compare (signed) offset, size, RangeType, type lock, and high index, in that order.
+/// Datatype is \e not compared.
+/// \param op2 is the other RangeHint to compare with \b this
+/// \return -1, 0, or 1 depending on if \b this comes before, is equal to, or comes after
+int4 RangeHint::compare(const RangeHint &op2) const
 
 {
-  if (a->sstart != b->sstart)
-    return (a->sstart < b->sstart);
-  if (a->size != b->size)
-    return (a->size < b->size);		// Small sizes come first
-  type_metatype ameta = a->type->getMetatype();
-  type_metatype bmeta = b->type->getMetatype();
-  if (ameta != bmeta)
-    return (ameta < bmeta);		// Order more specific types first
-  return false; //comp(x, x) must be false for strict weak ordering
+  if (sstart != op2.sstart)
+    return (sstart < op2.sstart) ? -1 : 1;
+  if (size != op2.size)
+    return (size < op2.size) ? -1 : 1;		// Small sizes come first
+  if (rangeType != op2.rangeType)
+    return (rangeType < op2.rangeType) ? -1 : 1;
+  uint4 thisLock = flags & Varnode::typelock;
+  uint4 op2Lock = op2.flags & Varnode::typelock;
+  if (thisLock != op2Lock)
+    return (thisLock < op2Lock) ? -1 : 1;
+  if (highind != op2.highind)
+    return (highind < op2.highind) ? -1 : 1;
+  return 0;
 }
 
 /// \param spc is the (stack) address space associated with this function's local variables
@@ -799,6 +802,44 @@ void MapState::addRange(uintb st,Datatype *ct,uint4 fl,RangeHint::RangeType rt,i
 #endif
 }
 
+/// Assuming a sorted list, from among a sequence of RangeHints with the same start and size, select
+/// the most specific data-type.  Set all elements to use this data-type, and eliminate duplicates.
+void MapState::reconcileDatatypes(void)
+
+{
+  vector<RangeHint *> newList;
+  newList.reserve(maplist.size());
+  int4 startPos = 0;
+  RangeHint *startHint = maplist[0];
+  Datatype *startDatatype = startHint->type;
+  newList.push_back(startHint);
+  int4 curPos = 1;
+  while(curPos < maplist.size()) {
+    RangeHint *curHint = maplist[curPos++];
+    if (curHint->start == startHint->start && curHint->size == startHint->size) {
+      Datatype *curDatatype = curHint->type;
+      if (curDatatype->typeOrder(*startDatatype) < 0)	// Take the most specific variant of data-type
+	startDatatype = curDatatype;
+      if (curHint->compare(*startHint) != 0)
+	newList.push_back(curHint);		// Keep the current hint if it is otherwise different
+    }
+    else {
+      while(startPos < newList.size()) {
+	newList[startPos]->type = startDatatype;
+	startPos += 1;
+      }
+      startHint = curHint;
+      startDatatype = startHint->type;
+      newList.push_back(startHint);
+    }
+  }
+  while(startPos < newList.size()) {
+    newList[startPos]->type = startDatatype;
+    startPos += 1;
+  }
+  maplist.swap(newList);
+}
+
 /// The given LoadGuard, which may be a LOAD or STORE is converted into an appropriate
 /// RangeHint, attempting to make use of any data-type or index information.
 /// \param guard is the given LoadGuard
@@ -879,6 +920,7 @@ bool MapState::initialize(void)
   maplist.push_back(range);
 
   stable_sort(maplist.begin(),maplist.end(),RangeHint::compareRanges);
+  reconcileDatatypes();
   iter = maplist.begin();
   return true;
 }
