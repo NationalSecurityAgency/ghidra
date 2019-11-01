@@ -25,6 +25,7 @@ import java.awt.event.MouseListener;
 import java.io.PrintWriter;
 import java.util.*;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
 import javax.swing.*;
@@ -40,8 +41,8 @@ import docking.widgets.tree.internal.*;
 import docking.widgets.tree.support.*;
 import docking.widgets.tree.support.GTreeSelectionEvent.EventOrigin;
 import docking.widgets.tree.tasks.*;
-import ghidra.util.FilterTransformer;
-import ghidra.util.SystemUtilities;
+import ghidra.util.*;
+import ghidra.util.exception.AssertException;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.*;
 import ghidra.util.worker.PriorityWorker;
@@ -56,13 +57,20 @@ public class GTree extends JPanel implements BusyListener {
 	private GTreeModel model;
 
 	/**
-	 * This is the root node that either is the actual current root node, or the node that will
-	 * be the real root node, once the Worker has loaded it.  Thus, it is possible that a call to
-	 * {@link GTreeModel#getRoot()} will return an {@link InProgressGTreeRootNode}.  By keeping
-	 * this variable around, we can give this node to clients, regardless of the root node
-	 * visible in the tree.
+	 * This is the root node of the tree's data model.  It may or may not be the root node
+	 * that is currently being displayed by the tree. If there is currently a 
+	 * filter applied, then then the displayed root node will be a clone whose children have been
+	 * trimmed to only those that match the filter.  By keeping this variable around, we can give
+	 * this node to clients, regardless of the root node visible in the tree.
 	 */
-	private GTreeNode realRootNode;
+	private volatile GTreeNode realModelRootNode;
+
+	/**
+	 * This is the root that is currently being displayed. This node will be either exactly the 
+	 * same instance as the realModelRootNode (if no filter has been applied) or it will be the
+	 * filtered clone of the realModelRootNode. 
+	 */
+	private volatile GTreeNode realViewRootNode;
 
 	/**
 	 * The rootParent is a node that is assigned as the parent to the realRootNode. It's primary purpose is
@@ -108,7 +116,8 @@ public class GTree extends JPanel implements BusyListener {
 	 */
 	public GTree(GTreeNode root) {
 		uniquePreferenceKey = generateFilterPreferenceKey();
-		this.realRootNode = root;
+		this.realModelRootNode = root;
+		this.realViewRootNode = root;
 		monitor = new TaskMonitorComponent();
 		monitor.setShowProgressValue(false);// the tree's progress is fabricated--don't paint it
 		worker = new PriorityWorker("GTree Worker", monitor);
@@ -265,7 +274,8 @@ public class GTree extends JPanel implements BusyListener {
 		if (root != null) {
 			root.dispose();
 		}
-		realRootNode.dispose();// just in case we were loading
+		realModelRootNode.dispose();
+		realViewRootNode.dispose();
 		model.dispose();
 	}
 
@@ -728,57 +738,66 @@ public class GTree extends JPanel implements BusyListener {
 	 * @param rootNode The node to set.
 	 */
 	public void setRootNode(GTreeNode rootNode) {
-		GTreeNode oldRoot = doSetRootNode(rootNode, true);
-		oldRoot.dispose();
-		if (filter != null) {
-			filterUpdateManager.update();
-		}
-	}
-
-	private GTreeNode doSetRootNode(GTreeNode rootNode, boolean waitForJobs) {
 		worker.clearAllJobs();
-		GTreeNode root = model.getModelRoot();
-
-		this.realRootNode = rootNode;
 		rootNode.setParent(rootParent);
-
-		//
-		// We need to use our standard 'worker pipeline' for mutations to the tree.  This means
-		// that requests from the Swing thread must go through the worker.  However,
-		// non-Swing-thread requests can just block while we wait for cancelled work to finish
-		// and setup the new root.  The assumption is that other threads (like test threads and
-		// client background threads) will want to block in order to get real-time data.  Further,
-		// since they are not in the Swing thread, blocking will not lock-up the GUI.
-		//
-		if (SwingUtilities.isEventDispatchThread()) {
-			model.setRootNode(new InProgressGTreeRootNode());
-			runTask(new SetRootNodeTask(this, rootNode, model));
-		}
-		else {
-			if (waitForJobs) {
-				worker.waitUntilNoJobsScheduled(Integer.MAX_VALUE);
+		realModelRootNode = rootNode;
+		realViewRootNode = rootNode;
+		GTreeNode oldRoot;
+		try {
+			oldRoot = doSetModelRootNode(rootNode);
+			oldRoot.dispose();
+			if (filter != null) {
+				filterUpdateManager.update();
 			}
-			monitor.clearCanceled();
-			model.setRootNode(rootNode);
 		}
-		return root;
+		catch (CancelledException e) {
+			throw new AssertException("Setting the root node should never be cancelled");
+		}
 	}
 
 	void setFilteredRootNode(GTreeNode filteredRootNode) {
 		filteredRootNode.setParent(rootParent);
-		GTreeNode currentRoot = (GTreeNode) model.getRoot();
-		model.setRootNode(filteredRootNode);
-		if (currentRoot != realRootNode) {
-			currentRoot.disposeClones();
+		realViewRootNode = filteredRootNode;
+		try {
+			GTreeNode currentRoot = doSetModelRootNode(filteredRootNode);
+			if (currentRoot != realModelRootNode) {
+				currentRoot.disposeClones();
+			}
+		}
+		catch (CancelledException e) {
+			// the filter task was cancelled
 		}
 	}
 
 	void restoreNonFilteredRootNode() {
-		GTreeNode currentRoot = (GTreeNode) model.getRoot();
-		model.setRootNode(realRootNode);
-		if (currentRoot != realRootNode) {
-			currentRoot.disposeClones();
+		realViewRootNode = realModelRootNode;
+		try {
+			GTreeNode currentRoot = doSetModelRootNode(realModelRootNode);
+			if (currentRoot != realModelRootNode) {
+				currentRoot.disposeClones();
+			}
 		}
+		catch (CancelledException e) {
+			// the filter task was cancelled
+		}
+	}
+
+	private GTreeNode doSetModelRootNode(GTreeNode rootNode) throws CancelledException {
+		// If this method is called from a background filter task, then it may be cancelled
+		// by other tree operations.  Not all tasks can be cancelled.
+		AtomicBoolean wasCancelled = new AtomicBoolean(true);
+		GTreeNode node = Swing.runNow(() -> {
+			GTreeNode old = model.getModelRoot();
+			model.setRootNode(rootNode);
+
+			wasCancelled.set(false);
+			return old;
+		});
+
+		if (wasCancelled.get()) {
+			throw new CancelledException();
+		}
+		return node;
 	}
 
 	/**
@@ -790,7 +809,7 @@ public class GTree extends JPanel implements BusyListener {
 	 * @return the root node as provided by the client.
 	 */
 	public GTreeNode getModelRoot() {
-		return realRootNode;
+		return realModelRootNode;
 	}
 
 	/**
@@ -801,7 +820,7 @@ public class GTree extends JPanel implements BusyListener {
 	 * @return the root node currently being display by the {@link JTree}
 	 */
 	public GTreeNode getViewRoot() {
-		return (GTreeNode) model.getRoot();
+		return realViewRootNode;
 	}
 
 	/**

@@ -33,6 +33,9 @@ import util.CollectionUtils;
  * all their children in hand when initially constructed (either in their constructor or externally
  * using {@link #addNode(GTreeNode)} or {@link #setChildren(List)}.  For large trees, subclasses
  * should instead extend {@link GTreeLazyNode} or {@link GTreeSlowLoadingNode}
+ * <P>
+ * All methods in this class that mutate the children node must perform that operation in
+ * the swing thread.
  */
 public abstract class GTreeNode extends CoreGTreeNode implements Comparable<GTreeNode> {
 	private static AtomicLong NEXT_ID = new AtomicLong();
@@ -85,9 +88,7 @@ public abstract class GTreeNode extends CoreGTreeNode implements Comparable<GTre
 	 * @param node the node to add as a child
 	 */
 	public void addNode(GTreeNode node) {
-		children().add(node);
-		node.setParent(this);
-		fireNodeAdded(this, node);
+		Swing.runNow(() -> doAddNode(node));
 	}
 
 	/**
@@ -95,11 +96,7 @@ public abstract class GTreeNode extends CoreGTreeNode implements Comparable<GTre
 	 * @param nodes the nodes to add
 	 */
 	public void addNodes(List<GTreeNode> nodes) {
-		for (GTreeNode node : nodes) {
-			node.setParent(this);
-		}
-		children().addAll(nodes);
-		fireNodeStructureChanged(this);
+		Swing.runNow(() -> doAddNodes(nodes));
 	}
 
 	/**
@@ -108,9 +105,7 @@ public abstract class GTreeNode extends CoreGTreeNode implements Comparable<GTre
 	 * @param node the node to add as a child of this node
 	 */
 	public void addNode(int index, GTreeNode node) {
-		children().add(index, node);
-		node.setParent(this);
-		fireNodeAdded(this, node);
+		Swing.runNow(() -> doAddNode(index, node));
 	}
 
 	/**
@@ -216,17 +211,7 @@ public abstract class GTreeNode extends CoreGTreeNode implements Comparable<GTre
 	 * Removes all children from this node.  The children nodes will be disposed.
 	 */
 	public void removeAll() {
-		if (!isLoaded()) {
-			return;
-		}
-		List<GTreeNode> children = children();
-		if (children != null) {
-			for (GTreeNode child : children) {
-				child.dispose();
-			}
-			children().clear();
-			fireNodeStructureChanged(this);
-		}
+		Swing.runNow(() -> doSetChildrenAndFireEvent(null));
 	}
 
 	/**
@@ -234,14 +219,7 @@ public abstract class GTreeNode extends CoreGTreeNode implements Comparable<GTre
 	 * @param node the to be removed
 	 */
 	public void removeNode(GTreeNode node) {
-		if (!isLoaded()) {
-			return;
-		}
-		List<GTreeNode> children = children();
-		if (children.remove(node)) {
-			node.setParent(null);
-			fireNodeRemoved(this, node);
-		}
+		Swing.runNow(() -> doRemoveNode(node));
 	}
 
 	/**
@@ -249,8 +227,7 @@ public abstract class GTreeNode extends CoreGTreeNode implements Comparable<GTre
 	 * @param childList this list of nodes to be set as children of this node
 	 */
 	public void setChildren(List<GTreeNode> childList) {
-		doSetChildren(childList);
-		fireNodeStructureChanged(this);
+		Swing.runNow(() -> doSetChildrenAndFireEvent(childList));
 	}
 
 	/**
@@ -430,11 +407,7 @@ public abstract class GTreeNode extends CoreGTreeNode implements Comparable<GTre
 	 * @param node the node that has changed.
 	 */
 	public void fireNodeStructureChanged(GTreeNode node) {
-		GTree tree = getTree();
-		if (tree != null) {
-			Swing.runNow(() -> tree.getModel().fireNodeStructureChanged(node));
-			tree.refilterLater();
-		}
+		Swing.runNow(() -> doFireNodeStructureChanged());
 	}
 
 	/**
@@ -443,28 +416,7 @@ public abstract class GTreeNode extends CoreGTreeNode implements Comparable<GTre
 	 * @param node the that changed
 	 */
 	public void fireNodeChanged(GTreeNode parentNode, GTreeNode node) {
-		GTree tree = getTree();
-		if (tree != null) {
-			Swing.runNow(() -> tree.getModel().fireNodeDataChanged(parentNode, node));
-			tree.refilterLater();
-		}
-	}
-
-	protected void fireNodeAdded(GTreeNode parentNode, GTreeNode newNode) {
-		GTree tree = getTree();
-		if (tree != null) {
-			Swing.runNow(() -> tree.getModel().fireNodeAdded(parentNode, newNode));
-			tree.refilterLater(newNode);
-		}
-	}
-
-	protected void fireNodeRemoved(GTreeNode parentNode, GTreeNode removedNode) {
-
-		GTree tree = getTree();
-		if (tree != null) {
-			Swing.runNow(
-				() -> tree.getModel().fireNodeRemoved(parentNode, removedNode));
-		}
+		Swing.runNow(() -> doFireNodeChanged());
 	}
 
 	private GTreeNode[] getPathToRoot(GTreeNode node, int depth) {

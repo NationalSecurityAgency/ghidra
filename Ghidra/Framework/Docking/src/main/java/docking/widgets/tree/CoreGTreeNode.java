@@ -18,8 +18,11 @@ package docking.widgets.tree;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+import javax.swing.JTree;
+
 import docking.widgets.tree.internal.InProgressGTreeNode;
 import ghidra.util.Swing;
+import ghidra.util.SystemUtilities;
 
 /**
  * This class exists to help prevent threading errors in {@link GTreeNode} and subclasses,
@@ -27,24 +30,34 @@ import ghidra.util.Swing;
  * <P>
  * This implementation uses a {@link CopyOnWriteArrayList} to store its children. The theory is
  * that this will allow direct thread-safe access to the children without having to worry about
- * {@link ConcurrentModificationException}s.  Also, the assumption is that accessing the children 
- * will occur much more frequently than modifying the children.  This should only be a problem if
- * a direct descendent of AbstractGTreeNode creates it children by calling
+ * {@link ConcurrentModificationException}s while iterating the children.  Also, the assumption
+ * is that accessing the children will occur much more frequently than modifying the children.  
+ * This should only be a problem if a direct descendent of GTreeNode creates its children by calling
  * addNode many times. But in that case, the tree should be using Lazy or 
  * SlowLoading nodes which always load into another list first and all the children will be set 
  * on a node in a single operation.
  * <P>
- * Subclasses that need access to the children
- * can call the {@link #children()} method which will ensure that the children are
- * loaded (not null). Since this class uses a {@link CopyOnWriteArrayList}, subclasses that call
- * the {@link #children()} method can safely operate and iterate on the list they get back without
- * having to worry about getting a {@link ConcurrentModificationException}.  
+ * Subclasses that need access to the children can call the {@link #children()} method which will
+ * ensure that the children are loaded (not null). Since this class uses a
+ * {@link CopyOnWriteArrayList}, subclasses that call the {@link #children()} method can safely
+ * iterate the list without having to worry about getting a {@link ConcurrentModificationException}.  
  * <P>
  * This class uses synchronization to assure that the parent/children relationship is stable across
  * threads.  To avoid deadlocks, the sychronization strategy is that if you have the lock on
- * a parent node, you can safely acquire the lock on any of its descendants, put never its 
+ * a parent node, you can safely acquire the lock on any of its descendants, but never its 
  * ancestors.  To facilitate this strategy, the {@link #getParent()} is not synchronized, but it
  * is made volatile to assure the current value is always used.
+ * <P>
+ * Except for the {@link #doSetChildren(List)} method, all other calls that mutate the
+ * children must be called on the swing thread.  The idea is that bulk operations can work efficiently
+ * by avoiding constantly switching to the swing thread to mutate the tree. This works because
+ * the bulk setting of the children generates a coarse "node structure changed" event, which causes the
+ * underlying {@link JTree} to rebuild its internal cache of the tree.  Individual add/remove operations
+ * have to be done very carefully such that the {@link JTree} is always updated on one change before any
+ * additional changes are done.  This is why those operations are required to be done on the swing
+ * thread, which combined with the fact that all mutate operations are synchronized, keeps the JTree
+ * happy.
+ * 
  */
 abstract class CoreGTreeNode implements Cloneable {
 	// the parent is volatile to facilitate the synchronization strategy (see comments above)
@@ -118,6 +131,25 @@ abstract class CoreGTreeNode implements Cloneable {
 	 */
 	protected abstract List<GTreeNode> generateChildren();
 
+	/**
+	 * Sets the children of this node to the given list of child nodes and fires the appropriate
+	 * tree event to kick the tree to update the display.  Note: This method must be called
+	 * from the swing thread because it will notify the underlying JTree.
+	 * @param childList the list of child nodes to assign as children to this node
+	 * @see #doSetChildren(List) if calling from a background thread.
+	 */
+	protected synchronized void doSetChildrenAndFireEvent(List<GTreeNode> childList) {
+		doSetChildren(childList);
+		doFireNodeStructureChanged();
+	}
+
+	/**
+	 * Sets the children of this node to the given list of child nodes, but does not notify the
+	 * tree. This method does not have to be called from the swing thread.  It is intended to be
+	 * used by background threads that want to populate all or part of the tree, but wait until
+	 * the bulk operations are completed before notifying the tree.
+	 * @param childList the list of child nodes to assign as children to this node
+	 */
 	protected synchronized void doSetChildren(List<GTreeNode> childList) {
 		List<GTreeNode> oldChildren = children;
 		children = null;
@@ -143,6 +175,57 @@ abstract class CoreGTreeNode implements Cloneable {
 	}
 
 	/**
+	 * Adds a node to this node's children. Must be called from the swing thread.
+	 * @param node the node to add as a child to this node
+	 */
+	protected synchronized void doAddNode(GTreeNode node) {
+		children().add(node);
+		node.setParent((GTreeNode) this);
+		doFireNodeAdded(node);
+	}
+
+	/**
+	 * Adds a node to this node's children at the given index and notifies the tree.
+	 * Must be called from the swing thread.
+	 * @param index the index at which to add the new node
+	 * @param node the node to add as a child to this node
+	 */
+	protected synchronized void doAddNode(int index, GTreeNode node) {
+		List<GTreeNode> kids = children();
+		int insertIndex = Math.min(kids.size(), index);
+		kids.add(insertIndex, node);
+		node.setParent((GTreeNode) this);
+		doFireNodeAdded(node);
+	}
+
+	/**
+	 * Removes the node from this node's children and notifies the tree.  Must be called
+	 * from the swing thread.
+	 * @param node the node to remove
+	 */
+	protected synchronized void doRemoveNode(GTreeNode node) {
+		List<GTreeNode> kids = children();
+		int index = kids.indexOf(node);
+		if (index >= 0) {
+			kids.remove(index);
+			node.setParent(null);
+			doFireNodeRemoved(node, index);
+		}
+	}
+
+	/**
+	 * Adds the given nodes to this node's children. Must be called from the swing thread.
+	 * @param nodes the nodes to add to the children this node
+	 */
+	protected synchronized void doAddNodes(List<GTreeNode> nodes) {
+		for (GTreeNode node : nodes) {
+			node.setParent((GTreeNode) this);
+		}
+		children().addAll(nodes);
+		doFireNodeStructureChanged();
+	}
+
+	/**
 	 * Creates a clone of this node.  The clone should contain a shallow copy of all the node's
 	 * attributes except that the parent and children are null.
 	 * @return the clone of this object.
@@ -157,7 +240,6 @@ abstract class CoreGTreeNode implements Cloneable {
 	}
 
 	public void dispose() {
-
 		List<GTreeNode> oldChildren;
 		synchronized (this) {
 			oldChildren = children;
@@ -240,6 +322,46 @@ abstract class CoreGTreeNode implements Cloneable {
 			return true;
 		}
 		return false;
+	}
+
+	protected void doFireNodeAdded(GTreeNode newNode) {
+		assertSwing();
+		GTree tree = getTree();
+		if (tree != null) {
+			tree.getModel().fireNodeAdded((GTreeNode) this, newNode);
+			tree.refilterLater(newNode);
+		}
+	}
+
+	protected void doFireNodeRemoved(GTreeNode removedNode, int index) {
+		assertSwing();
+		GTree tree = getTree();
+		if (tree != null) {
+			tree.getModel().fireNodeRemoved((GTreeNode) this, removedNode, index);
+		}
+	}
+
+	protected void doFireNodeStructureChanged() {
+		assertSwing();
+		GTree tree = getTree();
+		if (tree != null) {
+			tree.getModel().fireNodeStructureChanged((GTreeNode) this);
+			tree.refilterLater();
+		}
+	}
+
+	protected void doFireNodeChanged() {
+		assertSwing();
+		GTree tree = getTree();
+		if (tree != null) {
+			tree.getModel().fireNodeDataChanged((GTreeNode) this);
+			tree.refilterLater();
+		}
+	}
+
+	private void assertSwing() {
+		SystemUtilities
+				.assertThisIsTheSwingThread("tree events must be called from the AWT thread");
 	}
 
 }

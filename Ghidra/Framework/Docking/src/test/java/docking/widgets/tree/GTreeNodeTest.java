@@ -285,7 +285,7 @@ public class GTreeNodeTest {
 		assertEquals(1, events.size());
 		TestEvent event = events.get(0);
 		assertEquals(EventType.NODE_REMOVED, event.type);
-		assertEquals(root, event.node);
+		assertEquals(root, event.parent);
 	}
 
 	@Test
@@ -432,23 +432,23 @@ public class GTreeNodeTest {
 		}
 
 		@Override
-		public void fireNodeStructureChanged(GTreeNode node) {
-			events.add(new TestEvent(EventType.STRUCTURE_CHANGED, null, node, -1));
+		public void doFireNodeStructureChanged() {
+			events.add(new TestEvent(EventType.STRUCTURE_CHANGED, null, this, -1));
 		}
 
 		@Override
-		public void fireNodeChanged(GTreeNode parent, GTreeNode node) {
-			events.add(new TestEvent(EventType.NODE_CHANGED, parent, node, -1));
+		public void doFireNodeChanged() {
+			events.add(new TestEvent(EventType.NODE_CHANGED, getParent(), this, -1));
 		}
 
 		@Override
-		protected void fireNodeAdded(GTreeNode parentNode, GTreeNode newNode) {
-			events.add(new TestEvent(EventType.NODE_ADDED, parentNode, newNode, -1));
+		protected void doFireNodeAdded(GTreeNode newNode) {
+			events.add(new TestEvent(EventType.NODE_ADDED, this, newNode, -1));
 		}
 
 		@Override
-		protected void fireNodeRemoved(GTreeNode parentNode, GTreeNode removedNode) {
-			events.add(new TestEvent(EventType.NODE_REMOVED, null, parentNode, -1));
+		protected void doFireNodeRemoved(GTreeNode removedNode, int index) {
+			events.add(new TestEvent(EventType.NODE_REMOVED, this, removedNode, -1));
 		}
 	}
 

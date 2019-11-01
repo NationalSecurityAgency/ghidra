@@ -79,8 +79,8 @@ public abstract class SymbolCategoryNode extends SymbolTreeNode {
 		while (it.hasNext()) {
 			Symbol s = it.next();
 			monitor.incrementProgress(1);
+			monitor.checkCanceled();
 			if (s != null && (s.getSymbolType() == symbolType)) {
-				monitor.checkCanceled();
 				list.add(SymbolNode.createNode(s, program));
 			}
 		}
