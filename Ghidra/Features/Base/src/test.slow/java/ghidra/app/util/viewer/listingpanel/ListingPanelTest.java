@@ -18,6 +18,7 @@ package ghidra.app.util.viewer.listingpanel;
 import static org.junit.Assert.*;
 
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.*;
 
@@ -50,11 +51,6 @@ public class ListingPanelTest extends AbstractGhidraHeadedIntegrationTest {
 	private Program program;
 	private AddressFactory addrFactory;
 	private AddressSpace space;
-	private AddressSetView addresses = null;
-
-	public ListingPanelTest() {
-		super();
-	}
 
 	@Before
 	public void setUp() throws Exception {
@@ -309,24 +305,26 @@ public class ListingPanelTest extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testListingDisplayListener() {
 		showTool(tool);
+
+		AtomicReference<AddressSetView> addresses = new AtomicReference<>();
 		CodeViewerService cvs = tool.getService(CodeViewerService.class);
 		cvs.addListingDisplayListener(new ListingDisplayListener() {
 			@Override
 			public void visibleAddressesChanged(AddressSetView visibleAddresses) {
-				addresses = visibleAddresses;
+				addresses.set(visibleAddresses);
 			}
 		});
 
-		assertNull(addresses);
+		assertNull(addresses.get());
 		cvs.goTo(new ProgramLocation(program, addr(0x1008000)), false);
-		assertNotNull(addresses);
-		assertTrue(addresses.contains(addr(0x1008000)));
-		assertFalse(addresses.contains(addr(0x1001000)));
+		assertNotNull(addresses.get());
+		assertTrue(addresses.get().contains(addr(0x1008000)));
+		assertFalse(addresses.get().contains(addr(0x1001000)));
 
 		cvs.goTo(new ProgramLocation(program, addr(0x1001000)), false);
-		assertNotNull(addresses);
-		assertFalse(addresses.contains(addr(0x1008000)));
-		assertTrue(addresses.contains(addr(0x1001000)));
+		assertNotNull(addresses.get());
+		assertFalse(addresses.get().contains(addr(0x1008000)));
+		assertTrue(addresses.get().contains(addr(0x1001000)));
 
 	}
 

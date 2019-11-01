@@ -463,17 +463,20 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 		for (MarginProvider element : marginProviders) {
 			element.setPixelMap(pixmap);
 		}
-		if (!displayListeners.isEmpty()) {
-			AddressSetView displayAddresses = pixmap.getAddressSet();
-			for (ListingDisplayListener listener : displayListeners) {
-				try {
-					listener.visibleAddressesChanged(displayAddresses);
-				}
-				catch (Throwable t) {
-					Msg.showError(this, fieldPanel, "ListingDisplayListener Error",
-						"Error occurred in calling client's ListingDisplayListener", t);
-				}
-			}
+
+		for (ListingDisplayListener listener : displayListeners) {
+			notifyDisplayListener(listener);
+		}
+	}
+
+	private void notifyDisplayListener(ListingDisplayListener listener) {
+		AddressSetView displayAddresses = pixmap.getAddressSet();
+		try {
+			listener.visibleAddressesChanged(displayAddresses);
+		}
+		catch (Throwable t) {
+			Msg.showError(this, fieldPanel, "Error in Display Listener",
+				"Execption encountered in client callback", t);
 		}
 	}
 
