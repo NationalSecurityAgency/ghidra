@@ -45,6 +45,7 @@ import ghidra.program.model.address.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.*;
 import ghidra.program.util.*;
+import ghidra.util.Msg;
 import ghidra.util.layout.HorizontalLayout;
 
 public class ListingPanel extends JPanel implements FieldMouseListener, FieldLocationListener,
@@ -465,7 +466,13 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 		if (!displayListeners.isEmpty()) {
 			AddressSetView displayAddresses = pixmap.getAddressSet();
 			for (ListingDisplayListener listener : displayListeners) {
-				listener.visibleAddressesChanged(displayAddresses);
+				try {
+					listener.visibleAddressesChanged(displayAddresses);
+				}
+				catch (Throwable t) {
+					Msg.showError(this, fieldPanel, "ListingDisplayListener Error",
+						"Error occurred in calling client's ListingDisplayListener", t);
+				}
 			}
 		}
 	}
