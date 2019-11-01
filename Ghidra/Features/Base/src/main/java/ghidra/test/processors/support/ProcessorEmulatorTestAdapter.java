@@ -2170,6 +2170,10 @@ public abstract class ProcessorEmulatorTestAdapter extends TestCase implements E
 		// stub
 	}
 
+	public final void test_BIOPS4() {
+		// stub
+	}
+
 	public final void test_BitManipulation() {
 		// stub
 	}

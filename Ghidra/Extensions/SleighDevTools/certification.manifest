@@ -11,6 +11,7 @@ pcodetest/build||GHIDRA||||END|
 pcodetest/build.py||GHIDRA||||END|
 pcodetest/c_src/BIOPS.test||GHIDRA||||END|
 pcodetest/c_src/BIOPS2.test||GHIDRA||||END|
+pcodetest/c_src/BIOPS4.test||GHIDRA||||END|
 pcodetest/c_src/BIOPS_DOUBLE.test||GHIDRA||||END|
 pcodetest/c_src/BIOPS_FLOAT.test||GHIDRA||||END|
 pcodetest/c_src/BIOPS_LONGLONG.test||GHIDRA||||END|
