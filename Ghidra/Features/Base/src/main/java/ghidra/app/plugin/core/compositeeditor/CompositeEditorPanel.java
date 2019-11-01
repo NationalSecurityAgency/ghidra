@@ -21,7 +21,8 @@ import java.awt.datatransfer.Transferable;
 import java.awt.dnd.*;
 import java.awt.event.*;
 import java.math.BigInteger;
-import java.util.*;
+import java.util.Arrays;
+import java.util.EventObject;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -31,7 +32,6 @@ import javax.swing.table.*;
 import javax.swing.text.JTextComponent;
 
 import docking.DockingWindowManager;
-import docking.action.DockingActionIf;
 import docking.actions.KeyBindingUtils;
 import docking.dnd.*;
 import docking.help.Help;
@@ -1505,33 +1505,6 @@ public abstract class CompositeEditorPanel extends JPanel
 			final Component component = super.prepareEditor(editor, row, column);
 			SwingUtilities.invokeLater(() -> component.requestFocus());
 			return component;
-		}
-
-		@Override
-		public boolean isKeyConsumed(KeyStroke keyStroke) {
-			if (isEditing()) {
-				// don't let actions through when editing our table
-				return true;
-			}
-
-			// TODO this should no longer be needed
-			return !hasLocalActionForKeyStroke(keyStroke);
-		}
-
-		private boolean hasLocalActionForKeyStroke(KeyStroke keyStroke) {
-			Plugin plugin = provider.getPlugin();
-			PluginTool tool = plugin.getTool();
-			Set<DockingActionIf> actions = tool.getDockingActionsByOwnerName(plugin.getName());
-			for (DockingActionIf action : actions) {
-				if (!(action instanceof CompositeEditorTableAction)) {
-					continue;
-				}
-				KeyStroke keyBinding = action.getKeyBinding();
-				if (keyStroke.equals(keyBinding)) {
-					return true;
-				}
-			}
-			return false;
 		}
 	}
 

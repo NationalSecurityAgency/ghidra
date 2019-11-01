@@ -15,7 +15,7 @@
  */
 package docking.actions;
 
-import static org.apache.commons.lang3.StringUtils.indexOfIgnoreCase;
+import static org.apache.commons.lang3.StringUtils.*;
 
 import java.awt.Component;
 import java.awt.KeyboardFocusManager;
@@ -171,6 +171,28 @@ public class KeyBindingUtils {
 		catch (IOException ioe) {
 			// we tried
 		}
+	}
+
+	/**
+	 * Changes the given key event to the new source component and then dispatches that event.
+	 * This method is intended for clients that wish to effectively take a key event given to 
+	 * one component and give it to another component.  This is seldom-used code; if you don't
+	 * know when to use this code, then don't.
+	 * 
+	 * @param newSource the new target of the event
+	 * @param e the existing event
+	 */
+	public static void retargetEvent(Component newSource, KeyEvent e) {
+
+		if (e.getSource() == newSource) {
+			return; // yes '=='; prevent recursion 
+		}
+
+		KeyEvent newEvent = new KeyEvent(newSource, e.getID(), e.getWhen(), e.getModifiersEx(),
+			e.getKeyCode(), e.getKeyChar(), e.getKeyLocation());
+		e.consume();
+		KeyboardFocusManager kfm = KeyboardFocusManager.getCurrentKeyboardFocusManager();
+		kfm.dispatchEvent(newEvent);
 	}
 
 	/**
@@ -678,7 +700,7 @@ public class KeyBindingUtils {
 	 *    ctrl Z
 	 * </pre>  
 	 * 
-	 * @param keyStroke
+	 * @param keyStroke the key stroke
 	 * @return the new key stroke (as returned by  {@link KeyStroke#getKeyStroke(String)}
 	 */
 	public static KeyStroke parseKeyStroke(String keyStroke) {
