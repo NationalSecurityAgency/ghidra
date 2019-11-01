@@ -541,7 +541,7 @@ IMM16B: val						is IMM_0_10_VLE & IMM_16_20_VLE [ val = (IMM_16_20_VLE << 11) |
 }
 
 :se_btsti RX_VLE,OIM5_VLE		is $(ISVLE) & OP6_VLE=25 & BIT9_VLE=1 & RX_VLE & OIM5_VLE {
-	tmp:$(REGISTER_SIZE) = (RX_VLE >> OIM5_VLE) & 0x1;
+	tmp:$(REGISTER_SIZE) = (RX_VLE >> (0x1F - OIM5_VLE)) & 0x1;
 	cr0flags(tmp);
 }
 
@@ -709,13 +709,13 @@ IMM16B: val						is IMM_0_10_VLE & IMM_16_20_VLE [ val = (IMM_16_20_VLE << 11) |
 }
 
 :se_bclri RX_VLE,OIM5_VLE		is $(ISVLE) & OP6_VLE=24 & BIT9_VLE=0 & RX_VLE & OIM5_VLE {
-	tmp:$(REGISTER_SIZE) = 1 << OIM5_VLE;
+	tmp:$(REGISTER_SIZE) =  0x80000000 >> OIM5_VLE;
 	tmp = ~tmp;
 	RX_VLE = RX_VLE & tmp;
 }
 
 :se_bgeni RX_VLE,OIM5_VLE		is $(ISVLE) & OP6_VLE=24 & BIT9_VLE=1 & RX_VLE & OIM5_VLE {
-	RX_VLE = 1 << OIM5_VLE;
+	RX_VLE = 0x80000000 >> OIM5_VLE;
 }
 
 :se_bmaski RX_VLE,OIM5_VLE		is $(ISVLE) & OP6_VLE=11 & BIT9_VLE=0 & RX_VLE & OIM5_VLE {
@@ -725,7 +725,7 @@ IMM16B: val						is IMM_0_10_VLE & IMM_16_20_VLE [ val = (IMM_16_20_VLE << 11) |
 }
 
 :se_bseti RX_VLE,OIM5_VLE		is $(ISVLE) & OP6_VLE=25 & BIT9_VLE=0 & RX_VLE & OIM5_VLE {
-	tmp:$(REGISTER_SIZE) = 1 << OIM5_VLE;
+	tmp:$(REGISTER_SIZE) = 0x80000000 >> OIM5_VLE;
 	RX_VLE = RX_VLE | tmp;	
 }
 
