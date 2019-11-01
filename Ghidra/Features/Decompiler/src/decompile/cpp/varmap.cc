@@ -666,8 +666,21 @@ void AliasChecker::gatherAdditiveBase(Varnode *startvn,vector<AddBase> &addbase)
 	  vnqueue.push_back(AddBase(subvn,indexvn));
 	}
 	break;
-      case CPUI_INT_ADD:
       case CPUI_INT_SUB:
+	if (vn == op->getIn(1)) {	// Subtracting the pointer
+	  nonadduse = true;
+	  break;
+	}
+	othervn = op->getIn(1);
+	if (!othervn->isConstant())
+	  indexvn = othervn;
+	subvn = op->getOut();
+	if (!subvn->isMark()) {
+	  subvn->setMark();
+	  vnqueue.push_back(AddBase(subvn,indexvn));
+	}
+	break;
+      case CPUI_INT_ADD:
       case CPUI_PTRADD:
 	othervn = op->getIn(1);	// Check if something else is being added in besides a constant
 	if (othervn == vn)
@@ -820,7 +833,7 @@ void MapState::reconcileDatatypes(void)
       Datatype *curDatatype = curHint->type;
       if (curDatatype->typeOrder(*startDatatype) < 0)	// Take the most specific variant of data-type
 	startDatatype = curDatatype;
-      if (curHint->compare(*startHint) != 0)
+      if (curHint->compare(*newList.back()) != 0)
 	newList.push_back(curHint);		// Keep the current hint if it is otherwise different
     }
     else {
