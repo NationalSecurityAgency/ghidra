@@ -84,7 +84,7 @@ class Funcdata {
 				// Low level Varnode functions
   void setVarnodeProperties(Varnode *vn) const;	///< Look-up boolean properties and data-type information
   HighVariable *assignHigh(Varnode *vn);	///< Assign a new HighVariable to a Varnode
-  bool updateFlags(VarnodeLocSet::const_iterator &iter,uint4 flags,Datatype *ct);
+  bool syncVarnodesWithSymbol(VarnodeLocSet::const_iterator &iter,uint4 flags,Datatype *ct);
   bool descend2Undef(Varnode *vn);		///< Transform all reads of the given Varnode to a special \b undefined constant
 
   void splitUses(Varnode *vn);			///< Make all reads of the given Varnode unique
@@ -351,7 +351,7 @@ public:
   bool checkCallDoubleUse(const PcodeOp *opmatch,const PcodeOp *op,const Varnode *vn,const ParamTrial &trial) const;
   bool onlyOpUse(const Varnode *invn,const PcodeOp *opmatch,const ParamTrial &trial) const;
   bool ancestorOpUse(int4 maxlevel,const Varnode *invn,const PcodeOp *op,ParamTrial &trial) const;
-  bool updateFlags(const ScopeLocal *lm,bool typesyes);
+  bool syncVarnodesWithSymbols(const ScopeLocal *lm,bool typesyes);
   void splitVarnode(Varnode *vn,int4 lowsize,Varnode *&vnlo,Varnode *& vnhi);
   bool fillinReadOnly(Varnode *vn);		///< Replace the given Varnode with its (constant) value in the load image
   bool replaceVolatile(Varnode *vn);		///< Replace accesses of the given Varnode with \e volatile operations

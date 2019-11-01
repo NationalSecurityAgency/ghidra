@@ -803,15 +803,16 @@ void Funcdata::calcNZMask(void)
   }
 }
 
-/// \brief Update Varnode boolean properties based on (new) Symbol information
+/// \brief Update Varnode properties based on (new) Symbol information
 ///
 /// Boolean properties \b addrtied, \b addrforce, \b auto_live, and \b nolocalalias
 /// for Varnodes are updated based on new Symbol information they map to.
-/// The caller can elect to update data-type information as well.
+/// The caller can elect to update data-type information as well, where Varnodes
+/// and their associated HighVariables have their data-type finalized based symbols.
 /// \param lm is the Symbol scope within which to search for mapped Varnodes
 /// \param typesyes is \b true if the caller wants to update data-types
 /// \return \b true if any Varnode was updated
-bool Funcdata::updateFlags(const ScopeLocal *lm,bool typesyes)
+bool Funcdata::syncVarnodesWithSymbols(const ScopeLocal *lm,bool typesyes)
 
 {
   bool updateoccurred = false;
@@ -859,13 +860,13 @@ bool Funcdata::updateFlags(const ScopeLocal *lm,bool typesyes)
       else
 	flags = 0;
     }
-    if (updateFlags(iter,flags,ct))
+    if (syncVarnodesWithSymbol(iter,flags,ct))
 	updateoccurred = true;
   }
   return updateoccurred;
 }
 
-/// \brief Update boolean properties (and the data-type) for a set of Varnodes
+/// \brief Update properties (and the data-type) for a set of Varnodes associated with one Symbol
 ///
 /// The set of Varnodes with the same size and address all have their boolean properties
 /// updated to the given values. The set is specified by providing an iterator reference
@@ -882,7 +883,7 @@ bool Funcdata::updateFlags(const ScopeLocal *lm,bool typesyes)
 /// \param flags holds the new set of boolean properties
 /// \param ct is the given data-type to set (or NULL)
 /// \return \b true if at least one Varnode was modified
-bool Funcdata::updateFlags(VarnodeLocSet::const_iterator &iter,uint4 flags,Datatype *ct)
+bool Funcdata::syncVarnodesWithSymbol(VarnodeLocSet::const_iterator &iter,uint4 flags,Datatype *ct)
 
 {
   VarnodeLocSet::const_iterator enditer;
@@ -914,9 +915,11 @@ bool Funcdata::updateFlags(VarnodeLocSet::const_iterator &iter,uint4 flags,Datat
       vn->setFlags(flags);
       vn->clearFlags((~flags)&mask);
     }
-    if (ct != (Datatype *)0)
+    if (ct != (Datatype *)0) {
       if (vn->updateType(ct,false,false))
 	updateoccurred = true;
+      vn->getHigh()->finalizeDatatype(ct);	// Permanently set the data-type on the HighVariable
+    }
   } while(iter != enditer);
   return updateoccurred;
 }

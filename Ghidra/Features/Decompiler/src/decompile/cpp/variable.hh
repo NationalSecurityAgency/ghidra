@@ -47,7 +47,8 @@ public:
     typedirty = 2,		///< The data-type for the HighVariable is dirty
     coverdirty = 4,		///< The cover for the HighVariable is dirty
     copy_in1 = 8,		///< There exists at least 1 COPY into \b this HighVariable from other HighVariables
-    copy_in2 = 16		///< There exists at least 2 COPYs into \b this HighVariable from other HighVariables
+    copy_in2 = 16,		///< There exists at least 2 COPYs into \b this HighVariable from other HighVariables
+    type_finalized = 32		///< Set if a final data-type is locked in and dirtying is disabled
   };
 private:
   friend class Merge;
@@ -68,6 +69,7 @@ private:
   void clearCopyIns(void) const { highflags &= ~(copy_in1 | copy_in2); }	///< Clear marks indicating COPYs into \b this
   bool hasCopyIn1(void) const { return ((highflags&copy_in1)!=0); }	///< Is there at least one COPY into \b this
   bool hasCopyIn2(void) const { return ((highflags&copy_in2)!=0); }	///< Is there at least two COPYs into \b this
+  void merge(HighVariable *tv2,bool isspeculative);	///< Merge another HighVariable into \b this
 public:
   HighVariable(Varnode *vn);		///< Construct a HighVariable with a single member Varnode
   Datatype *getType(void) const { updateType(); return type; }	///< Get the data-type
@@ -90,6 +92,7 @@ public:
   void coverDirty(void) const { highflags |= HighVariable::coverdirty; }	///< Mark the cover as \e dirty
   void typeDirty(void) const { highflags |= HighVariable::typedirty; }		///< Mark the data-type as \e dirty
   void remove(Varnode *vn);					///< Remove a member Varnode from \b this
+  void finalizeDatatype(Datatype *tp);		///< Set a final datatype for \b this variable
 
   /// \brief Print details of the cover for \b this (for debug purposes)
   ///
@@ -102,7 +105,6 @@ public:
   Varnode *getInputVarnode(void) const;		///< Find (the) input member Varnode
   Varnode *getTypeRepresentative(void) const;	///< Get a member Varnode with the strongest data-type
   Varnode *getNameRepresentative(void) const;	///< Get a member Varnode that dictates the naming of \b this HighVariable
-  void merge(HighVariable *tv2,bool isspeculative);	///< Merge another HighVariable into \b this
   bool isMapped(void) const { updateFlags(); return ((flags&Varnode::mapped)!=0); }	///< Return \b true if \b this is mapped
   bool isPersist(void) const { updateFlags(); return ((flags&Varnode::persist)!=0); }	///< Return \b true if \b this is a global variable
   bool isAddrTied(void) const { updateFlags(); return ((flags&Varnode::addrtied)!=0); }	///< Return \b true if \b this is \e address \e ties
