@@ -2059,17 +2059,24 @@ int4 ActionSetCasts::apply(Funcdata &data)
     for(iter=bb->beginOp();iter!=bb->endOp();++iter) {
       op = *iter;
       if (op->notPrinted()) continue;
-      if (op->code() == CPUI_CAST) continue;
+      OpCode opc = op->code();
+      if (opc == CPUI_CAST) continue;
+      if (opc == CPUI_PTRADD) {	// Check for PTRADD that no longer fits its pointer
+	int4 sz = (int4)op->getIn(2)->getOffset();
+	TypePointer *ct = (TypePointer *)op->getIn(0)->getHigh()->getType();
+	if ((ct->getMetatype() != TYPE_PTR)||(ct->getPtrTo()->getSize() != AddrSpace::addressToByteInt(sz, ct->getWordSize())))
+	  data.opUndoPtradd(op,true);
+      }
       for(int4 i=0;i<op->numInput();++i) // Do input casts first, as output may depend on input
 	count += castInput(op,i,data,castStrategy);
-      if (op->code() == CPUI_LOAD) {
+      if (opc == CPUI_LOAD) {
 	TypePointer *ptrtype = (TypePointer *)op->getIn(1)->getHigh()->getType();
 	int4 valsize = op->getOut()->getSize();
 	if ((ptrtype->getMetatype()!=TYPE_PTR)||
 	    (ptrtype->getPtrTo()->getSize() != valsize))
 	  data.warning("Load size is inaccurate",op->getAddr());
       }
-      else if (op->code() == CPUI_STORE) {
+      else if (opc == CPUI_STORE) {
 	TypePointer *ptrtype = (TypePointer *)op->getIn(1)->getHigh()->getType();
 	int4 valsize = op->getIn(2)->getSize();
 	if ((ptrtype->getMetatype()!=TYPE_PTR)||

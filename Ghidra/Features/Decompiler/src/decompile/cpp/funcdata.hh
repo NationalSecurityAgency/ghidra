@@ -428,6 +428,7 @@ public:
   Varnode *createStackRef(AddrSpace *spc,uintb off,PcodeOp *op,Varnode *stackptr,bool insertafter);
   Varnode *opStackLoad(AddrSpace *spc,uintb off,uint4 sz,PcodeOp *op,Varnode *stackptr,bool insertafter);
   PcodeOp *opStackStore(AddrSpace *spc,uintb off,PcodeOp *op,bool insertafter);
+  void opUndoPtradd(PcodeOp *op,bool finalize);	///< Convert a CPUI_PTRADD back into a CPUI_INT_ADD
 
   /// \brief Start of PcodeOp objects with the given op-code
   list<PcodeOp *>::const_iterator beginOp(OpCode opc) const { return obank.begin(opc); }

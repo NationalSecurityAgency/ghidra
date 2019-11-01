@@ -6105,14 +6105,11 @@ void RulePtraddUndo::getOpList(vector<uint4> &oplist) const
 int4 RulePtraddUndo::applyOp(PcodeOp *op,Funcdata &data)
 
 {
-  int4 size;
-  Varnode *basevn,*offvn,*multvn,*addvn;
-  PcodeOp *multop;
+  Varnode *basevn;
   TypePointer *tp;
 
   if (!data.isTypeRecoveryOn()) return 0;
-  multvn = op->getIn(2);
-  size = multvn->getOffset(); // Size the PTRADD thinks we are pointing
+  int4 size = (int4)op->getIn(2)->getOffset(); // Size the PTRADD thinks we are pointing
   basevn = op->getIn(0);
   tp = (TypePointer *)basevn->getType();
   if (tp->getMetatype() == TYPE_PTR)								// Make sure we are still a pointer
@@ -6122,19 +6119,7 @@ int4 RulePtraddUndo::applyOp(PcodeOp *op,Funcdata &data)
 	return 0;
     }
 
-				// At this point we have a type mismatch to fix
-  data.opRemoveInput(op,2);
-  data.opSetOpcode(op,CPUI_INT_ADD);
-  if (size == 1) return 1;	// If no multiplier, we are done
-  multop = data.newOp(2,op->getAddr());
-  data.opSetOpcode(multop,CPUI_INT_MULT);
-  offvn = op->getIn(1);
-  addvn = data.newUniqueOut(offvn->getSize(),multop);
-  data.opSetInput(multop,offvn,0);
-  data.opSetInput(multop,multvn,1);
-  data.opSetInput(op,addvn,1);
-  data.opInsertBefore(multop,op);
-  
+  data.opUndoPtradd(op,false);
   return 1;
 }
 
