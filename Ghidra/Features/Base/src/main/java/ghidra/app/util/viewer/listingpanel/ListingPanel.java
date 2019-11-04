@@ -476,7 +476,7 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 		}
 		catch (Throwable t) {
 			Msg.showError(this, fieldPanel, "Error in Display Listener",
-				"Execption encountered in client callback", t);
+				"Execption encountered when notifying listeners of change in display", t);
 		}
 	}
 

@@ -128,7 +128,7 @@ public class VerticalPixelAddressMapImpl implements VerticalPixelAddressMap {
 
 	@Override
 	public AddressSetView getAddressSet() {
-		// If there are no visible layouts (no open data to dispaly or visible height = 0
+		// If there are no visible layouts (no open data to display or listing component height = 0)
 		if (layouts.isEmpty()) {
 			return new AddressSet();
 		}

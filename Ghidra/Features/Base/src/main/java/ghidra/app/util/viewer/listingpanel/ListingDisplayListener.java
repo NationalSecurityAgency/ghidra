@@ -24,7 +24,7 @@ public interface ListingDisplayListener {
 	/**
 	 * Callback whenever the set of visible addresses change in the listing.
 	 * @param visibleAddresses the current set of visible addresses in the listing.  If no
-	 * visible addresses are in the listing view, then an empty addressSetView will be return
+	 * visible addresses are in the listing view, then an empty AddressSetView will be passed.
 	 */
 	void visibleAddressesChanged(AddressSetView visibleAddresses);
 }
