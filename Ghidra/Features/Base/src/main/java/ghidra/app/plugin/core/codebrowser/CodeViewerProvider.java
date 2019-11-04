@@ -889,8 +889,8 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 		int index = saveState.getInt("INDEX", 0);
 		int yOffset = saveState.getInt("Y_OFFSET", 0);
 		ViewerPosition vp = new ViewerPosition(index, 0, yOffset);
-		listingPanel.getFieldPanel().setViewerPosition(vp.getIndex(), vp.getXOffset(),
-			vp.getYOffset());
+		listingPanel.getFieldPanel()
+				.setViewerPosition(vp.getIndex(), vp.getXOffset(), vp.getYOffset());
 		if (program != null) {
 			currentLocation = ProgramLocation.getLocation(program, saveState);
 			if (currentLocation != null) {
@@ -906,8 +906,8 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 		// (its done in an invoke later)
 		Swing.runLater(() -> {
 			newProvider.doSetProgram(program);
-			newProvider.listingPanel.getFieldPanel().setViewerPosition(vp.getIndex(),
-				vp.getXOffset(), vp.getYOffset());
+			newProvider.listingPanel.getFieldPanel()
+					.setViewerPosition(vp.getIndex(), vp.getXOffset(), vp.getYOffset());
 			newProvider.setLocation(currentLocation);
 		});
 	}
@@ -975,8 +975,8 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 		public void actionPerformed(ActionContext context) {
 			boolean show = !listingPanel.isHeaderShowing();
 			listingPanel.showHeader(show);
-			getToolBarData().setIcon(
-				show ? LISTING_FORMAT_COLLAPSE_ICON : LISTING_FORMAT_EXPAND_ICON);
+			getToolBarData()
+					.setIcon(show ? LISTING_FORMAT_COLLAPSE_ICON : LISTING_FORMAT_EXPAND_ICON);
 		}
 	}
 
@@ -1038,5 +1038,21 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 
 			return list.toArray(new Highlight[list.size()]);
 		}
+	}
+
+	/**
+	 * Add the ListingDisplayListener to the listing panel
+	 * @param listener the listener to add
+	 */
+	public void addListingDisplayListener(ListingDisplayListener listener) {
+		listingPanel.addListingDisplayListener(listener);
+	}
+
+	/**
+	 * Remove the ListingDisplayListener from the listing panel
+	 * @param listener the listener to remove
+	 */
+	public void removeListingDisplayListener(ListingDisplayListener listener) {
+		listingPanel.removeListingDisplayListener(listener);
 	}
 }
