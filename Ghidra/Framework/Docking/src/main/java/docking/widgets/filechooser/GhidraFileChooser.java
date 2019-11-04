@@ -19,7 +19,6 @@ import java.awt.*;
 import java.awt.event.*;
 import java.io.File;
 import java.io.FileFilter;
-import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -125,8 +124,6 @@ public class GhidraFileChooser extends DialogComponentProvider
 		}
 		return null;
 	}
-
-	static final SimpleDateFormat format = new SimpleDateFormat("MM/dd/yyyy hh:mm aaa");
 
 	/** Instruction to display only files. */
 	public static final int FILES_ONLY = 0;

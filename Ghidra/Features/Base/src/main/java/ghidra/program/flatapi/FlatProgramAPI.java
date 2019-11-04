@@ -16,8 +16,8 @@
 package ghidra.program.flatapi;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.List;
+import java.text.SimpleDateFormat;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import ghidra.app.cmd.comments.SetCommentCmd;
@@ -42,7 +42,6 @@ import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.program.util.AddressEvaluator;
 import ghidra.program.util.string.*;
 import ghidra.util.Conv;
-import ghidra.util.SystemUtilities;
 import ghidra.util.ascii.AsciiCharSetRecognizer;
 import ghidra.util.datastruct.Accumulator;
 import ghidra.util.datastruct.ListAccumulator;
@@ -2456,8 +2455,9 @@ public class FlatProgramAPI {
 			folder.createFile(program.getName(), program, monitor);
 		}
 		catch (DuplicateFileException e) {
-			folder.createFile(program.getName() + "_" + SystemUtilities.currentTimeStamp(), program,
-				monitor);
+			SimpleDateFormat formatter = new SimpleDateFormat("dd.MMM.yyyy_HH.mm.ss");
+			String time = formatter.format(new Date());
+			folder.createFile(program.getName() + "_" + time, program, monitor);
 		}
 		finally {
 			if (program == currentProgram) {

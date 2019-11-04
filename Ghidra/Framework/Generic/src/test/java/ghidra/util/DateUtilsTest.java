@@ -15,49 +15,41 @@
  */
 package ghidra.util;
 
-import java.util.Date;
-import java.util.List;
+import static org.junit.Assert.*;
 
-import org.junit.Assert;
+import java.util.Date;
+
 import org.junit.Test;
 
-import generic.test.AbstractGenericTest;
+public class DateUtilsTest {
 
-public class DateUtilsTest extends AbstractGenericTest {
-
-	public DateUtilsTest() {
-		// nada
+	@Test
+	public void testFormatDate() {
+		Date date = new Date(1572896586687L);
+		assertEquals("11/04/2019", DateUtils.formatDate(date));
 	}
 
-	/**
-	 * This test was moved here from DateUtils.main()
-	 */
-	//@Test
-	public void testHolidays() {
-		for (int year = 2012; year < 2020; year++) {
-			List<Date> holidays = DateUtils.getHolidays(year);
-			for (Date date : holidays) {
-				System.out.println(DateUtils.formatDate(date));
-			}
-		}
+	@Test
+	public void testFormatDateTime() {
+		Date date = new Date(1572896586687L);
+		assertEquals("Nov 04, 2019 02:43 PM", DateUtils.formatDateTimestamp(date));
 	}
 
 	@Test
 	public void testFormatDuration() {
-		Assert.assertEquals("0 secs", DateUtils.formatDuration(100));
-		Assert.assertEquals("0 secs", DateUtils.formatDuration(DateUtils.MS_PER_SEC - 1));
-		Assert.assertEquals("1 secs", DateUtils.formatDuration(DateUtils.MS_PER_SEC));
-		Assert.assertEquals("1 secs", DateUtils.formatDuration(DateUtils.MS_PER_SEC + 1));
-		Assert.assertEquals("59 secs", DateUtils.formatDuration(DateUtils.MS_PER_MIN - 1));
-		Assert.assertEquals("1 mins, 0 secs", DateUtils.formatDuration(DateUtils.MS_PER_MIN));
-		Assert.assertEquals("1 mins, 1 secs",
+		assertEquals("0 secs", DateUtils.formatDuration(100));
+		assertEquals("0 secs", DateUtils.formatDuration(DateUtils.MS_PER_SEC - 1));
+		assertEquals("1 secs", DateUtils.formatDuration(DateUtils.MS_PER_SEC));
+		assertEquals("1 secs", DateUtils.formatDuration(DateUtils.MS_PER_SEC + 1));
+		assertEquals("59 secs", DateUtils.formatDuration(DateUtils.MS_PER_MIN - 1));
+		assertEquals("1 mins, 0 secs", DateUtils.formatDuration(DateUtils.MS_PER_MIN));
+		assertEquals("1 mins, 1 secs",
 			DateUtils.formatDuration(DateUtils.MS_PER_MIN + DateUtils.MS_PER_SEC));
-		Assert.assertEquals("23 hours, 59 mins, 59 secs",
+		assertEquals("23 hours, 59 mins, 59 secs",
 			DateUtils.formatDuration(DateUtils.MS_PER_DAY - 1));
-		Assert.assertEquals("1 days, 0 hours, 0 mins, 0 secs",
+		assertEquals("1 days, 0 hours, 0 mins, 0 secs",
 			DateUtils.formatDuration(DateUtils.MS_PER_DAY));
-		Assert.assertEquals("1 days, 0 hours, 0 mins, 0 secs",
+		assertEquals("1 days, 0 hours, 0 mins, 0 secs",
 			DateUtils.formatDuration(DateUtils.MS_PER_DAY + 1));
 	}
-
 }

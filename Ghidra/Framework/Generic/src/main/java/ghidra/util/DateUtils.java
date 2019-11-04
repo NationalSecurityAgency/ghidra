@@ -24,8 +24,20 @@ import java.util.*;
 import ghidra.util.exception.AssertException;
 
 public class DateUtils {
-	private static final String DATEFORMAT_STR = "MM/dd/yyyy";
-	private static final String TIMEFORMAT_STR = "h:mm";
+
+	/** Example: Oct 31, 2019 03:24 PM */
+	private static final String DATE_TIME_FORMAT_STRING = "MMM dd, yyyy hh:mm aaa";
+	private static final String DATE_FORMAT_STRING = "MM/dd/yyyy";
+	private static final String TIME_FORMAT_STRING = "h:mm";
+
+	private static final ThreadLocal<SimpleDateFormat> DATE_TIME_FORMAT =
+		ThreadLocal.withInitial(() -> new SimpleDateFormat(DATE_TIME_FORMAT_STRING));
+
+	private static final ThreadLocal<SimpleDateFormat> DATE_FORMAT =
+		ThreadLocal.withInitial(() -> new SimpleDateFormat(DATE_FORMAT_STRING));
+
+	private static final ThreadLocal<SimpleDateFormat> TIME_FORMAT =
+		ThreadLocal.withInitial(() -> new SimpleDateFormat(TIME_FORMAT_STRING));
 
 	public static final long MS_PER_SEC = 1000;
 	public static final long MS_PER_MIN = MS_PER_SEC * 60;
@@ -172,7 +184,7 @@ public class DateUtils {
 
 	public static Date normalizeDate(Date date) {
 		try {
-			SimpleDateFormat sdf = new SimpleDateFormat(DATEFORMAT_STR);
+			SimpleDateFormat sdf = DATE_FORMAT.get();
 			return sdf.parse(sdf.format(date));
 		}
 		catch (ParseException e) {
@@ -201,19 +213,35 @@ public class DateUtils {
 		return dayOfWeek == SATURDAY || dayOfWeek == SUNDAY;
 	}
 
+	/**
+	 * Formats the given date into a string.  This is in contrast to 
+	 * {@link #formatDateTimestamp(Date)}, which will also return the time portion of the date.
+	 * 
+	 * @param date the date to format
+	 * @return the date string
+	 */
 	public static String formatDate(Date date) {
-		SimpleDateFormat sdf = new SimpleDateFormat(DATEFORMAT_STR);
-		return sdf.format(date);
+		return DATE_FORMAT.get().format(date);
 	}
 
 	/**
-	 * Returns the current local timezone time-of-day as an HOUR:MIN string.
+	 * Formats the given date into a string that contains the date and time.  This is in 
+	 * contrast to {@link #formatDate(Date)}, which only returns a date string.
+	 * 
+	 * @param date the date to format
+	 * @return the date and time string
+	 */
+	public static String formatDateTimestamp(Date date) {
+		return DATE_TIME_FORMAT.get().format(date);
+	}
+
+	/**
+	 * Returns the current local time zone time-of-day as an HOUR:MIN string.
 	 *
 	 * @return current time-of-day as "HOUR:MIN"
 	 */
 	public static String getTimeNow() {
-		SimpleDateFormat sdf = new SimpleDateFormat(TIMEFORMAT_STR);
-		return sdf.format(new Date());
+		return TIME_FORMAT.get().format(new Date());
 	}
 
 	public static Date getDate(int year, int month, int day) {
@@ -230,7 +258,7 @@ public class DateUtils {
 		int days = 0;
 		while (cal.getTime().compareTo(date2) < 0) {
 			cal.add(Calendar.DAY_OF_MONTH, 1);
-			if (!DateUtils.isWeekend(cal) && !DateUtils.isHoliday(cal)) {
+			if (!isWeekend(cal) && !isHoliday(cal)) {
 				days++;
 			}
 		}
@@ -239,8 +267,8 @@ public class DateUtils {
 
 	/**
 	 * Formats a millisecond duration as a English string expressing the number of
-	 * hours, minutes and seconds in the duration.
-	 * <p>
+	 * hours, minutes and seconds in the duration
+	 *
 	 * @param millis Count of milliseconds of an elapsed duration.
 	 * @return String such as "5 hours, 3 mins, 22 secs".
 	 */

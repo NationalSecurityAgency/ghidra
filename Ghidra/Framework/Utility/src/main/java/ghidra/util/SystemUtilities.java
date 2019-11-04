@@ -19,8 +19,8 @@ import java.awt.Font;
 import java.io.*;
 import java.net.URL;
 import java.net.URLDecoder;
-import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.Objects;
+import java.util.StringTokenizer;
 import java.util.function.Supplier;
 
 import javax.swing.SwingUtilities;
@@ -34,8 +34,6 @@ import utilities.util.reflection.ReflectionUtilities;
  * static.
  */
 public class SystemUtilities {
-
-	private final static String DATE_TIME_FORMAT = "MMM d yyyy HH:mm:ss";
 
 	private static String userName;
 
@@ -166,32 +164,6 @@ public class SystemUtilities {
 		}
 
 		return font.deriveFont((float) FONT_SIZE_OVERRIDE_VALUE.intValue());
-	}
-
-	/**
-	 * returns the current date/time using default DATE/TIME format
-	 * @return the current date/time using default DATE/TIME format
-	 */
-	public static String getDateTime() {
-		return getDateTime(DATE_TIME_FORMAT);
-	}
-
-	public static String currentTimeStamp() {
-		SimpleDateFormat formatter = new SimpleDateFormat("dd.MMM.yyyy_HH.mm.ss");
-		return formatter.format(new Date());
-	}
-
-	/**
-	 * returns the current date/time using specified DATE/TIME format
-	 * 
-	 * @param dateTimeFormat the format for the time
-	 * @return the formatted date 
-	 */
-	public static String getDateTime(String dateTimeFormat) {
-		SimpleDateFormat formatter = new SimpleDateFormat(dateTimeFormat, Locale.getDefault());
-		formatter.setTimeZone(TimeZone.getDefault());
-
-		return formatter.format(new Date());
 	}
 
 	/**
