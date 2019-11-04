@@ -300,12 +300,9 @@ public class HighFunctionDBUtil {
 	 * database which conflict with this variable and return
 	 * one of them for re-use.  The returned variable still
 	 * exists within the function at the same first-use-offset.
-	 * @throws InvalidInputException
-	 * @returns variable with conflicting storage or null, all
-	 * aspects of variable returned should be reset (i.e., name, datatype and storage)
+	 * @returns existing variable with identical storage and first-use offset or null
 	 */
-	private static Variable clearConflictingLocalVariables(HighLocal local)
-			throws InvalidInputException {
+	private static Variable clearConflictingLocalVariables(HighLocal local) {
 
 		if (local instanceof HighParam) {
 			throw new IllegalArgumentException();
@@ -344,10 +341,7 @@ public class HighFunctionDBUtil {
 			VariableStorage otherStorage = otherVar.getVariableStorage();
 
 			if (otherStorage.intersects(storage)) {
-				if (matchingVariable == null || otherStorage.equals(storage)) {
-					if (matchingVariable != null) {
-						func.removeVariable(matchingVariable);
-					}
+				if (matchingVariable == null && otherStorage.equals(storage)) {
 					matchingVariable = otherVar;
 					continue;
 				}
@@ -460,7 +454,7 @@ public class HighFunctionDBUtil {
 			Variable var = clearConflictingLocalVariables(local);
 			if (dataType == null) {
 				if (var != null) {
-					dataType = var.getDataType();	// Use preexisting datatype
+					dataType = var.getDataType();	// Use preexisting datatype if it fits in desired storage
 				}
 				else {
 					dataType = Undefined.getUndefinedDataType(variable.getSize());
