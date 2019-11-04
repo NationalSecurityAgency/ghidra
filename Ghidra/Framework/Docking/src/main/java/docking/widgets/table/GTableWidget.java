@@ -219,4 +219,8 @@ public class GTableWidget<T> extends JPanel {
 	public void focusFilter() {
 		gFilterTable.focusFilter();
 	}
+
+	public void setFilterText(String text) {
+		gFilterTable.setFiterText(text);
+	}
 }
