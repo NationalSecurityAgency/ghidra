@@ -99,6 +99,8 @@ void HighVariable::updateType(void) const
   Varnode *vn;
 
   if ((highflags&HighVariable::typedirty)==0) return; // Type is up to date
+  highflags &= ~HighVariable::typedirty; // Mark type as clean
+  if ((highflags & type_finalized)!=0) return;	// Type has been finalized
   vn = getTypeRepresentative();
 
   type = vn->getType();
@@ -106,7 +108,6 @@ void HighVariable::updateType(void) const
   flags &= ~Varnode::typelock;
   if (vn->isTypeLock())
     flags |= Varnode::typelock;
-  highflags &= ~HighVariable::typedirty; // Mark type as clean
 }
 
 /// Compare two Varnode objects based just on their storage address
@@ -196,6 +197,16 @@ void HighVariable::remove(Varnode *vn)
       return;
     }
   }
+}
+
+/// The data-type its dirtying mechanism is disabled.  The data-type will not change, unless
+/// this method is called again.
+/// \param tp is the data-type to set
+void HighVariable::finalizeDatatype(Datatype *tp)
+
+{
+  type = tp;
+  highflags |= type_finalized;
 }
 
 /// The lists of members are merged and the other HighVariable is deleted.

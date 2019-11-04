@@ -390,6 +390,35 @@ int4 RuleAndMask::applyOp(PcodeOp *op,Funcdata &data)
   return 1;
 }
 
+/// \class RuleOrConsume
+/// \brief Simply OR with unconsumed input:  `V = A | B  =>  V = B  if  nzm(A) & consume(V) == 0
+void RuleOrConsume::getOpList(vector<uint4> &oplist) const
+
+{
+  oplist.push_back(CPUI_INT_OR);
+  oplist.push_back(CPUI_INT_XOR);
+}
+
+int4 RuleOrConsume::applyOp(PcodeOp *op,Funcdata &data)
+
+{
+  Varnode *outvn = op->getOut();
+  int4 size = outvn->getSize();
+  if (size > sizeof(uintb)) return 0; // FIXME: uintb should be arbitrary precision
+  uintb consume = outvn->getConsume();
+  if ((consume & op->getIn(0)->getNZMask()) == 0) {
+    data.opRemoveInput(op,0);
+    data.opSetOpcode(op, CPUI_COPY);
+    return 1;
+  }
+  else if ((consume & op->getIn(1)->getNZMask()) == 0) {
+    data.opRemoveInput(op,1);
+    data.opSetOpcode(op, CPUI_COPY);
+    return 1;
+  }
+  return 0;
+}
+
 /// \class RuleOrCollapse
 /// \brief Collapse unnecessary INT_OR
 ///
@@ -6076,14 +6105,11 @@ void RulePtraddUndo::getOpList(vector<uint4> &oplist) const
 int4 RulePtraddUndo::applyOp(PcodeOp *op,Funcdata &data)
 
 {
-  int4 size;
-  Varnode *basevn,*offvn,*multvn,*addvn;
-  PcodeOp *multop;
+  Varnode *basevn;
   TypePointer *tp;
 
   if (!data.isTypeRecoveryOn()) return 0;
-  multvn = op->getIn(2);
-  size = multvn->getOffset(); // Size the PTRADD thinks we are pointing
+  int4 size = (int4)op->getIn(2)->getOffset(); // Size the PTRADD thinks we are pointing
   basevn = op->getIn(0);
   tp = (TypePointer *)basevn->getType();
   if (tp->getMetatype() == TYPE_PTR)								// Make sure we are still a pointer
@@ -6093,19 +6119,7 @@ int4 RulePtraddUndo::applyOp(PcodeOp *op,Funcdata &data)
 	return 0;
     }
 
-				// At this point we have a type mismatch to fix
-  data.opRemoveInput(op,2);
-  data.opSetOpcode(op,CPUI_INT_ADD);
-  if (size == 1) return 1;	// If no multiplier, we are done
-  multop = data.newOp(2,op->getAddr());
-  data.opSetOpcode(multop,CPUI_INT_MULT);
-  offvn = op->getIn(1);
-  addvn = data.newUniqueOut(offvn->getSize(),multop);
-  data.opSetInput(multop,offvn,0);
-  data.opSetInput(multop,multvn,1);
-  data.opSetInput(op,addvn,1);
-  data.opInsertBefore(multop,op);
-  
+  data.opUndoPtradd(op,false);
   return 1;
 }
 
@@ -6445,6 +6459,33 @@ int4 RuleSubNormal::applyOp(PcodeOp *op,Funcdata &data)
   data.opSetInput(op,newop->getOut(),0);
   data.opSetInput(op,data.newConstant(4,n),1);
   data.opSetOpcode(op,opc);
+  return 1;
+}
+
+/// \class RulePositiveDiv
+/// \brief Signed division of positive values is unsigned division
+///
+/// If the sign bit of both the numerator and denominator of a signed division (or remainder)
+/// are zero, then convert to the unsigned form of the operation.
+void RulePositiveDiv::getOpList(vector<uint4> &oplist) const
+
+{
+  oplist.push_back(CPUI_INT_SDIV);
+  oplist.push_back(CPUI_INT_SREM);
+}
+
+int4 RulePositiveDiv::applyOp(PcodeOp *op,Funcdata &data)
+
+{
+  int4 sa = op->getOut()->getSize();
+  if (sa > sizeof(uintb)) return 0;
+  sa = sa * 8 - 1;
+  if (((op->getIn(0)->getNZMask() >> sa) & 1) != 0)
+    return 0;		// Input 0 may be negative
+  if (((op->getIn(1)->getNZMask() >> sa) & 1) != 0)
+    return 0;		// Input 1 may be negative
+  OpCode opc = (op->code() == CPUI_INT_SDIV) ? CPUI_INT_DIV : CPUI_INT_REM;
+  data.opSetOpcode(op, opc);
   return 1;
 }
 
@@ -7230,7 +7271,7 @@ int4 RuleSubvarSubpiece::applyOp(PcodeOp *op,Funcdata &data)
   mask <<= 8*((int4)op->getIn(1)->getOffset());
   bool aggressive = outvn->isPtrFlow();
   if (!aggressive) {
-    if (mask != vn->getConsume()) return 0;
+    if ((vn->getConsume() & mask) != vn->getConsume()) return 0;
     if (op->getOut()->hasNoDescend()) return 0;
   }
   SubvariableFlow subflow(&data,vn,mask,aggressive,false);

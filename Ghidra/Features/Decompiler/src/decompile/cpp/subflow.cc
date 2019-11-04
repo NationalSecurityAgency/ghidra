@@ -367,7 +367,7 @@ bool SubvariableFlow::traceForward(ReplaceVarnode *rvn)
 	  break;
 	}
 	// Is the small variable getting zero padded into something that is fully consumed
-	if ((!aggressive)&&(calc_mask(outvn->getSize()) == outvn->getConsume())) {
+	if ((!aggressive)&&((outvn->getConsume() & rvn->mask) != outvn->getConsume())) {
 	  addSuggestedPatch(rvn,op,-1);
 	  hcount += 1;		// Dealt with this descendant
 	  break;
@@ -1310,18 +1310,25 @@ void SubvariableFlow::doReplacement(void)
       // where all the remaining bits are zero
       int4 sa = (*piter).slot;
       vector<Varnode *> invec;
+      Varnode *inVn = getReplaceVarnode((*piter).in1);
+      int4 outSize = pullop->getOut()->getSize();
       if (sa == 0) {
-	invec.push_back( getReplaceVarnode((*piter).in1) );
-	fd->opSetOpcode( pullop, CPUI_INT_ZEXT );
+	invec.push_back( inVn );
+	OpCode opc = (inVn->getSize() == outSize) ? CPUI_COPY : CPUI_INT_ZEXT;
+	fd->opSetOpcode( pullop, opc );
 	fd->opSetAllInput(pullop,invec);
       }
       else {
-	PcodeOp *zextop = fd->newOp(1,pullop->getAddr());
-	fd->opSetOpcode( zextop, CPUI_INT_ZEXT );
-	Varnode *zextout = fd->newUniqueOut(pullop->getOut()->getSize(),zextop);
-	fd->opSetInput(zextop,getReplaceVarnode((*piter).in1),0);
-	fd->opInsertBefore(zextop,pullop);
-	invec.push_back(zextout);
+	if (inVn->getSize() != outSize) {
+	  PcodeOp *zextop = fd->newOp(1,pullop->getAddr());
+	  fd->opSetOpcode( zextop, CPUI_INT_ZEXT );
+	  Varnode *zextout = fd->newUniqueOut(outSize,zextop);
+	  fd->opSetInput(zextop,inVn,0);
+	  fd->opInsertBefore(zextop,pullop);
+	  invec.push_back(zextout);
+	}
+	else
+	  invec.push_back(inVn);
 	invec.push_back(fd->newConstant(4,sa));
 	fd->opSetAllInput(pullop,invec);
 	fd->opSetOpcode( pullop, CPUI_INT_LEFT);

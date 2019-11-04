@@ -1879,7 +1879,7 @@ int4 ActionRestructureVarnode::apply(Funcdata &data)
   bool aliasyes = data.isJumptableRecoveryOn() ? false : (numpass != 0);
   l1->restructureVarnode(aliasyes);
   // Note the alias calculation, may not be very good on the first pass
-  if (data.updateFlags(l1,false))
+  if (data.syncVarnodesWithSymbols(l1,false))
     count += 1;
 
   numpass += 1;
@@ -1904,7 +1904,7 @@ int4 ActionRestructureHigh::apply(Funcdata &data)
 #endif
 
   l1->restructureHigh();
-  if (data.updateFlags(l1,true))
+  if (data.syncVarnodesWithSymbols(l1,true))
     count += 1;
   
 #ifdef OPACTION_DEBUG
@@ -2064,17 +2064,24 @@ int4 ActionSetCasts::apply(Funcdata &data)
     for(iter=bb->beginOp();iter!=bb->endOp();++iter) {
       op = *iter;
       if (op->notPrinted()) continue;
-      if (op->code() == CPUI_CAST) continue;
+      OpCode opc = op->code();
+      if (opc == CPUI_CAST) continue;
+      if (opc == CPUI_PTRADD) {	// Check for PTRADD that no longer fits its pointer
+	int4 sz = (int4)op->getIn(2)->getOffset();
+	TypePointer *ct = (TypePointer *)op->getIn(0)->getHigh()->getType();
+	if ((ct->getMetatype() != TYPE_PTR)||(ct->getPtrTo()->getSize() != AddrSpace::addressToByteInt(sz, ct->getWordSize())))
+	  data.opUndoPtradd(op,true);
+      }
       for(int4 i=0;i<op->numInput();++i) // Do input casts first, as output may depend on input
 	count += castInput(op,i,data,castStrategy);
-      if (op->code() == CPUI_LOAD) {
+      if (opc == CPUI_LOAD) {
 	TypePointer *ptrtype = (TypePointer *)op->getIn(1)->getHigh()->getType();
 	int4 valsize = op->getOut()->getSize();
 	if ((ptrtype->getMetatype()!=TYPE_PTR)||
 	    (ptrtype->getPtrTo()->getSize() != valsize))
 	  data.warning("Load size is inaccurate",op->getAddr());
       }
-      else if (op->code() == CPUI_STORE) {
+      else if (opc == CPUI_STORE) {
 	TypePointer *ptrtype = (TypePointer *)op->getIn(1)->getHigh()->getType();
 	int4 valsize = op->getIn(2)->getSize();
 	if ((ptrtype->getMetatype()!=TYPE_PTR)||
@@ -2882,14 +2889,24 @@ void ActionDeadCode::propagateConsumed(vector<Varnode *> &worklist)
 
   switch(op->code()) {
   case CPUI_INT_MULT:
+    b = coveringmask(outc);
+    if (op->getIn(1)->isConstant()) {
+      int4 leastSet = leastsigbit_set(op->getIn(1)->getOffset());
+      if (leastSet >= 0) {
+	a = calc_mask(vn->getSize()) >> leastSet;
+	a &= b;
+      }
+      else
+	a = 0;
+    }
+    else
+      a = b;
+    pushConsumed(a,op->getIn(0),worklist);
+    pushConsumed(b,op->getIn(1),worklist);
+    break;
   case CPUI_INT_ADD:
   case CPUI_INT_SUB:
-    a = outc | (outc>>1);	// Make sure all 1 bits below
-    a = a | (a>>2);		// highest 1 bit are set
-    a = a | (a>>4);
-    a = a | (a>>8);		
-    a = a | (a>>16);
-    a = a | (a>>32);
+    a = coveringmask(outc);	// Make sure value is filled out as a contiguous mask
     pushConsumed(a,op->getIn(0),worklist);
     pushConsumed(a,op->getIn(1),worklist);
     break;
@@ -4477,6 +4494,7 @@ void universal_action(Architecture *conf)
 	actprop->addRule( new RuleIdentityEl("analysis") );
 	actprop->addRule( new RuleOrMask("analysis") );
 	actprop->addRule( new RuleAndMask("analysis") );
+	actprop->addRule( new RuleOrConsume("analysis") );
 	actprop->addRule( new RuleOrCollapse("analysis") );
 	actprop->addRule( new RuleAndOrLump("analysis") );
 	actprop->addRule( new RuleShiftBitops("analysis") );
@@ -4537,6 +4555,7 @@ void universal_action(Architecture *conf)
 	actprop->addRule( new RuleHumptyOr("analysis") );
 	actprop->addRule( new RuleNegateIdentity("analysis") );
 	actprop->addRule( new RuleSubNormal("analysis") );
+	actprop->addRule( new RulePositiveDiv("analysis") );
 	actprop->addRule( new RuleDivTermAdd("analysis") );
 	actprop->addRule( new RuleDivTermAdd2("analysis") );
 	actprop->addRule( new RuleDivOpt("analysis") );
@@ -4644,12 +4663,12 @@ void universal_action(Architecture *conf)
   act->addAction( new ActionHideShadow("merge") );
   act->addAction( new ActionCopyMarker("merge") );
   act->addAction( new ActionOutputPrototype("localrecovery") );
-  act->addAction( new ActionSetCasts("casts") );
   act->addAction( new ActionInputPrototype("fixateproto") );
   act->addAction( new ActionRestructureHigh("localrecovery") );
   act->addAction( new ActionMapGlobals("fixateglobals") );
   act->addAction( new ActionDynamicSymbols("dynamic") );
   act->addAction( new ActionNameVars("merge") );
+  act->addAction( new ActionSetCasts("casts") );
   act->addAction( new ActionFinalStructure("blockrecovery") );
   act->addAction( new ActionPrototypeWarnings("protorecovery") );
   act->addAction( new ActionStop("base") );

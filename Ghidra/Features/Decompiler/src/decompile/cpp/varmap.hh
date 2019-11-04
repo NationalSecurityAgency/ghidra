@@ -66,6 +66,7 @@ public:
 /// where the data-type starts, what data-type it might be, and how far it extends
 /// from the start point (possibly as an array).
 class RangeHint {
+  friend class MapState;
   friend class ScopeLocal;
 public:
   /// \brief The basic categorization of the range
@@ -91,7 +92,8 @@ public:
   bool preferred(const RangeHint *b,bool reconcile) const;
   bool absorb(RangeHint *b);	///< Try to absorb the other RangeHint into \b this
   bool merge(RangeHint *b,AddrSpace *space,TypeFactory *typeFactory);	///< Try to form the union of \b this with another RangeHint
-  static bool compareRanges(const RangeHint *a,const RangeHint *b);	///< Compare to RangeHint pointers
+  int4 compare(const RangeHint &op2) const;		///< Order \b this with another RangeHint
+  static bool compareRanges(const RangeHint *a,const RangeHint *b) { return (a->compare(*b) < 0); }	///< Compare two RangeHint pointers
 };
 
 class ProtoModel;
@@ -148,6 +150,7 @@ class MapState {
   AliasChecker checker;			///< A collection of pointer Varnodes into our address space
   void addGuard(const LoadGuard &guard,OpCode opc,TypeFactory *typeFactory);	///< Add LoadGuard record as a hint to the collection
   void addRange(uintb st,Datatype *ct,uint4 fl,RangeHint::RangeType rt,int4 hi);	///< Add a hint to the collection
+  void reconcileDatatypes(void);	///< Decide on data-type for RangeHints at the same address
 public:
 #ifdef OPACTION_DEBUG
   mutable bool debugon;
