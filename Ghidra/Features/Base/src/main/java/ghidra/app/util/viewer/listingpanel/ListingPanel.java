@@ -254,8 +254,8 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 		for (OverviewProvider element : overviewProviders) {
 			element.setAddressIndexMap(addressIndexMap);
 		}
-		for (int i = 0; i < indexMapChangeListeners.size(); i++) {
-			indexMapChangeListeners.get(i).stateChanged(null);
+		for (ChangeListener indexMapChangeListener : indexMapChangeListeners) {
+			indexMapChangeListener.stateChanged(null);
 		}
 		if (layeredColorModel != null) {
 			layeredColorModel.modelDataChanged(this);
@@ -476,7 +476,7 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 		}
 		catch (Throwable t) {
 			Msg.showError(this, fieldPanel, "Error in Display Listener",
-				"Execption encountered when notifying listeners of change in display", t);
+				"Exception encountered when notifying listeners of change in display", t);
 		}
 	}
 
