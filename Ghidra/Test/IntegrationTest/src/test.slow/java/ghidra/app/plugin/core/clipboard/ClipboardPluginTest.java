@@ -42,7 +42,8 @@ import ghidra.app.plugin.core.byteviewer.*;
 import ghidra.app.plugin.core.clear.ClearCmd;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
 import ghidra.app.plugin.core.codebrowser.CodeViewerProvider;
-import ghidra.app.plugin.core.decompile.*;
+import ghidra.app.plugin.core.decompile.DecompilerClipboardProvider;
+import ghidra.app.plugin.core.decompile.DecompilerProvider;
 import ghidra.app.plugin.core.format.ByteBlockSelection;
 import ghidra.app.plugin.core.format.DataFormatModel;
 import ghidra.app.plugin.core.functiongraph.FGClipboardProvider;
@@ -85,7 +86,6 @@ public class ClipboardPluginTest extends AbstractGhidraHeadedIntegrationTest {
 	private CodeBrowserClipboardProvider codeBrowserClipboardProvider;
 	private CodeBrowserPlugin codeBrowserPlugin;
 	private ByteViewerPlugin byteViewerPlugin;
-	private DecompilePlugin decompilePlugin;
 	private CodeViewerProvider codeViewerProvider;
 	private ClipboardPlugin clipboardPlugin;
 	private ComponentProvider decompileProvider;
@@ -198,7 +198,6 @@ public class ClipboardPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		codeViewerWrapper = new CodeViewerWrapper(codeViewerProvider);
 		tool.showComponentProvider(codeViewerProvider, true);
 
-		decompilePlugin = getPlugin(tool, DecompilePlugin.class);
 		ComponentProvider decompiler = tool.getComponentProvider("Decompiler");
 		tool.showComponentProvider(decompiler, true);
 
@@ -653,6 +652,43 @@ public class ClipboardPluginTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	@Test
+	public void testCodeBrowser_CopySpecial_WithSelection() throws Exception {
+
+		DockingAction copySpecialAction =
+			getAction(codeBrowserClipboardProvider, COPY_SPECIAL_ACTION_NAME);
+		waitForSwing();
+		assertFalse(copySpecialAction.isEnabled());
+
+		codeBrowserPlugin.goTo(new MnemonicFieldLocation(program, addr("1001050")));
+		assertTrue(copySpecialAction.isEnabled());
+
+		makeSelection(codeViewerWrapper);
+		assertTrue(copySpecialAction.isEnabled());
+
+		copySpecial(codeViewerWrapper, copySpecialAction);
+		String clipboardContents = getClipboardContents();
+		String expectedBytes = "f4 77 33 58 f4 77 91 45";
+		assertEquals(expectedBytes, clipboardContents);
+	}
+
+	@Test
+	public void testCodeBrowser_CopySpecial_WithoutSelection() throws Exception {
+
+		DockingAction copySpecialAction =
+			getAction(codeBrowserClipboardProvider, COPY_SPECIAL_ACTION_NAME);
+		waitForSwing();
+		assertFalse(copySpecialAction.isEnabled());
+
+		codeBrowserPlugin.goTo(new MnemonicFieldLocation(program, addr("1001050")));
+		assertTrue(copySpecialAction.isEnabled());
+
+		copySpecial(codeViewerWrapper, copySpecialAction);
+		String clipboardContents = getClipboardContents();
+		String expectedBytes = "e0";
+		assertEquals(expectedBytes, clipboardContents);
+	}
+
+	@Test
 	public void testCopyActionEnablement() {
 
 		// no copy on by default
@@ -664,14 +700,14 @@ public class ClipboardPluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 		waitForSwing();
 
-		assertTrue(!byteViewerCopyAction.isEnabled());
-		assertTrue(!codeBrowserCopyAction.isEnabled());
+		assertFalse(byteViewerCopyAction.isEnabled());
+		assertFalse(codeBrowserCopyAction.isEnabled());
 
 		// this action is enabled on any text
-		// assertTrue(!decompileCopyAction.isEnabled());
+		// assertFalse(decompileCopyAction.isEnabled());
 
 		// give the providers focus and check their actions state
-		assertTrue(!byteViewerCopyAction.isEnabled());
+		assertFalse(byteViewerCopyAction.isEnabled());
 
 		// the code browser is special--make sure that it not only has focus, but that the location
 		// of the cursor is not one of the 'special' copy locations
@@ -720,15 +756,15 @@ public class ClipboardPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		DockingAction codeBrowserPasteAction =
 			getAction(codeBrowserClipboardProvider, PASTE_ACTION_NAME);
 
-		assertTrue(!byteViewerPasteAction.isEnabled());
-		assertTrue(!codeBrowserPasteAction.isEnabled());
+		assertFalse(byteViewerPasteAction.isEnabled());
+		assertFalse(codeBrowserPasteAction.isEnabled());
 
 		// For each provider make sure no paste on a selection without a copy:
 		// check copy on selection state
 		makeSelection(byteViewerWrapper);
 
 		// check the state
-		assertTrue(!byteViewerPasteAction.isEnabled());
+		assertFalse(byteViewerPasteAction.isEnabled());
 
 		// clear the selection
 		byteViewerWrapper.clearSelection();
@@ -737,7 +773,7 @@ public class ClipboardPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		codeViewerWrapper.clearSelection();
 
 		// check the state
-		assertTrue(!codeBrowserPasteAction.isEnabled());
+		assertFalse(codeBrowserPasteAction.isEnabled());
 
 		// clear the selection
 		codeViewerWrapper.clearSelection();
@@ -754,7 +790,7 @@ public class ClipboardPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		copy(byteViewerWrapper, byteViewerCopyAction);
 
 		// check the state
-		assertTrue(!byteViewerPasteAction.isEnabled());
+		assertFalse(byteViewerPasteAction.isEnabled());
 		setByteViewerEditable(true);
 		assertTrue(byteViewerPasteAction.isEnabled());
 
@@ -809,7 +845,7 @@ public class ClipboardPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		makeSelection(byteViewerWrapper);
 		copy(byteViewerWrapper, byteViewerCopyAction);
 
-		assertTrue(!byteViewerPasteAction.isEnabled());
+		assertFalse(byteViewerPasteAction.isEnabled());
 		setByteViewerEditable(true);
 		assertTrue(byteViewerPasteAction.isEnabled());
 		assertTrue(codeBrowserPasteAction.isEnabled());
@@ -818,8 +854,8 @@ public class ClipboardPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		clearClipboardContents();
 
 		// sanity check
-		assertTrue(!byteViewerPasteAction.isEnabled());
-		assertTrue(!codeBrowserPasteAction.isEnabled());
+		assertFalse(byteViewerPasteAction.isEnabled());
+		assertFalse(codeBrowserPasteAction.isEnabled());
 
 		// code browser to byte viewer and decompiler
 		makeSelection(codeViewerWrapper);
@@ -848,8 +884,8 @@ public class ClipboardPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		clearClipboardContents();
 
 		// sanity check
-		assertTrue(!byteViewerPasteAction.isEnabled());
-		assertTrue(!codeBrowserPasteAction.isEnabled());
+		assertFalse(byteViewerPasteAction.isEnabled());
+		assertFalse(codeBrowserPasteAction.isEnabled());
 
 		// copy from decompiler can not paste into the other two
 		makeSelection(decompilerWrapper);
@@ -1427,7 +1463,7 @@ public class ClipboardPluginTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	private void copySpecial(ComponentProviderWrapper wrapper, final DockingAction copyAction) {
-		wrapper.verifySelection();
+
 		executeOnSwingWithoutBlocking(() -> copyAction.actionPerformed(getActionContext(wrapper)));
 
 		// get the dialog and make a selection
@@ -1445,12 +1481,7 @@ public class ClipboardPluginTest extends AbstractGhidraHeadedIntegrationTest {
 			okButton.doClick();
 		});
 
-		try {
-			waitForTasks();
-		}
-		catch (Exception e) {
-			Assert.fail();
-		}
+		waitForTasks();
 	}
 
 	private void copySpecial_ByteStringNoSpaces(ComponentProviderWrapper wrapper,
@@ -1473,12 +1504,7 @@ public class ClipboardPluginTest extends AbstractGhidraHeadedIntegrationTest {
 			okButton.doClick();
 		});
 
-		try {
-			waitForTasks();
-		}
-		catch (Exception e) {
-			Assert.fail("Unexpected exception waiting for tasks");
-		}
+		waitForTasks();
 	}
 
 	private void assertByteViewerBytes(String clipboardContents, Address address)
