@@ -551,11 +551,11 @@ IMM16B: val						is IMM_0_10_VLE & IMM_16_20_VLE [ val = (IMM_16_20_VLE << 11) |
 	cr0 = ((tmpA s< tmpB) << 3) | ((tmpA s> tmpB) << 2) | ((tmpA == tmpB) << 1) | (xer_so & 1);
 }
 
+
 :e_cmpi BF_VLE,A,SCALE			is $(ISVLE) & OP=6 & XOP_11_VLE=21 & BITS_23_25=0 & A & BF_VLE & SCALE {
 	tmpA:4 = A:4;
 	tmpB:4 = SCALE:4;
-	tmpC:8 = zext(((tmpA s< tmpB) << 3) | ((tmpA s> tmpB) << 2) | ((tmpA == tmpB) << 1) | (xer_so & 1));
-	crall = crall | (tmpC << (BF_VLE*8));
+	BF_VLE = ((tmpA s< tmpB) << 3) | ((tmpA s> tmpB) << 2) | ((tmpA == tmpB) << 1) | (xer_so & 1);
 }
 
 :se_cmp RX_VLE,RY_VLE			is $(ISVLE) & OP6_VLE=3 & BITS_8_9=0 & RX_VLE & RY_VLE {
@@ -579,8 +579,7 @@ IMM16B: val						is IMM_0_10_VLE & IMM_16_20_VLE [ val = (IMM_16_20_VLE << 11) |
 :e_cmpli BF_VLE,A,SCALE			is $(ISVLE) & OP=6 & XOP_11_VLE=21 & BITS_23_25=1 & A & BF_VLE & SCALE {
 	tmpA:4 = A:4;
 	tmpB:4 = SCALE:4;
-	tmpC:8 = zext(((tmpA < tmpB) << 3) | ((tmpA > tmpB) << 2) | ((tmpA == tmpB) << 1) | (xer_so & 1));
-	crall = crall | (tmpC << (BF_VLE*8));	
+	BF_VLE = ((tmpA < tmpB) << 3) | ((tmpA > tmpB) << 2) | ((tmpA == tmpB) << 1) | (xer_so & 1);
 }
 
 :se_cmpl RX_VLE,RY_VLE			is $(ISVLE) & OP6_VLE=3 & BITS_8_9=1 & RX_VLE & RY_VLE {
@@ -595,11 +594,10 @@ IMM16B: val						is IMM_0_10_VLE & IMM_16_20_VLE [ val = (IMM_16_20_VLE << 11) |
 	cr0 = ((tmpA < tmpB) << 3) | ((tmpA > tmpB) << 2) | ((tmpA == tmpB) << 1) | (xer_so & 1);			
 }
 
-:e_cmph BF2,A,B					is $(ISVLE) & OP=31 & BITS_21_22=0 & BIT_0=0 & XOP_1_10=14 & A & B & BF2 {
+:e_cmph CRFD,A,B					is $(ISVLE) & OP=31 & BITS_21_22=0 & BIT_0=0 & XOP_1_10=14 & A & B & CRFD {
 	tmpA:2 = A:2;
 	tmpB:2 = B:2;
-	tmpC:8 = zext(((tmpA s< tmpB) << 3) | ((tmpA s> tmpB) << 2) | ((tmpA == tmpB) << 1) | (xer_so & 1));		
-	crall = crall | (tmpC << (BF2*8));	
+	CRFD = ((tmpA s< tmpB) << 3) | ((tmpA s> tmpB) << 2) | ((tmpA == tmpB) << 1) | (xer_so & 1);			
 }
 
 :se_cmph RX_VLE,RY_VLE			is $(ISVLE) & OP6_VLE=3 & BITS_8_9=2 & RX_VLE & RY_VLE {
@@ -614,11 +612,11 @@ IMM16B: val						is IMM_0_10_VLE & IMM_16_20_VLE [ val = (IMM_16_20_VLE << 11) |
 	cr0 = ((tmpA s< tmpB) << 3) | ((tmpA s> tmpB) << 2) | ((tmpA == tmpB) << 1) | (xer_so & 1);		
 }
 
-:e_cmphl BF2,A,B				is $(ISVLE) & OP=31 & BITS_21_22=0 & BIT_0=0 & XOP_1_10=46 & A & B & BF2 {
+:e_cmphl CRFD,A,B				is $(ISVLE) & OP=31 & BITS_21_22=0 & BIT_0=0 & XOP_1_10=46 & A & B & CRFD {
 	tmpA:2 = A:2;
 	tmpB:2 = B:2;
-	tmpC:8 = zext(((tmpA < tmpB) << 3) | ((tmpA > tmpB) << 2) | ((tmpA == tmpB) << 1) | (xer_so & 1));		
-	crall = crall | (tmpC << (BF2*8));		
+	tmpC:1 = ((tmpA < tmpB) << 3) | ((tmpA > tmpB) << 2) | ((tmpA == tmpB) << 1) | (xer_so & 1);		
+	CRFD = tmpC;		
 }
 
 :se_cmphl RX_VLE,RY_VLE			is $(ISVLE) & OP6_VLE=3 & BITS_8_9=3 & RX_VLE & RY_VLE {

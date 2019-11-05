@@ -1069,7 +1069,7 @@ attach variables [ D A B C S TH RA RB RS RT regp]
 attach variables [ BFA BI_CR CRFD CRFS CR_A CR_B CR_D CR_X ]
 	[cr0 cr1 cr2 cr3 cr4 cr5 cr6 cr7] ;
 
-attach variables [ BI_CR_VLE ]
+attach variables [ BI_CR_VLE BF_VLE ]
 	[cr0 cr1 cr2 cr3 ] ;
 
 attach variables [ fD fB fA fC fS fT ]
