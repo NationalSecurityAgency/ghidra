@@ -52,4 +52,32 @@ public class DateUtilsTest {
 		assertEquals("1 days, 0 hours, 0 mins, 0 secs",
 			DateUtils.formatDuration(DateUtils.MS_PER_DAY + 1));
 	}
+
+	@Test
+	public void testNormalize() {
+		long now = System.currentTimeMillis();
+		long threeHourOffset = 3 * (60 * 60 * 1000);
+		long future = now + threeHourOffset;
+		Date nowDate = new Date(now);
+		Date futureDate = new Date(future);
+
+		assertNotEquals(nowDate, futureDate);
+		Date nowNormalized = DateUtils.normalizeDate(nowDate);
+		Date futureNormalized = DateUtils.normalizeDate(futureDate);
+		assertEquals(nowNormalized, futureNormalized);
+	}
+
+	@Test
+	public void testGetDaysBetween() {
+
+		long now = System.currentTimeMillis();
+		int days = 3;
+		long threeDaysOffset = days * (24 * 60 * 60 * 1000);
+		long future = now + threeDaysOffset;
+
+		Date nowDate = new Date(now);
+		Date futureDate = new Date(future);
+		int daysBetween = DateUtils.getDaysBetween(nowDate, futureDate);
+		assertEquals(days, daysBetween);
+	}
 }

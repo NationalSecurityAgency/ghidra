@@ -17,8 +17,10 @@ package ghidra.util;
 
 import static java.util.Calendar.*;
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
+import java.time.*;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
+import java.time.temporal.TemporalAccessor;
 import java.util.*;
 
 import ghidra.util.exception.AssertException;
@@ -30,14 +32,12 @@ public class DateUtils {
 	private static final String DATE_FORMAT_STRING = "MM/dd/yyyy";
 	private static final String TIME_FORMAT_STRING = "h:mm";
 
-	private static final ThreadLocal<SimpleDateFormat> DATE_TIME_FORMAT =
-		ThreadLocal.withInitial(() -> new SimpleDateFormat(DATE_TIME_FORMAT_STRING));
-
-	private static final ThreadLocal<SimpleDateFormat> DATE_FORMAT =
-		ThreadLocal.withInitial(() -> new SimpleDateFormat(DATE_FORMAT_STRING));
-
-	private static final ThreadLocal<SimpleDateFormat> TIME_FORMAT =
-		ThreadLocal.withInitial(() -> new SimpleDateFormat(TIME_FORMAT_STRING));
+	private static final DateTimeFormatter DATE_TIME_FORMATTER =
+		DateTimeFormatter.ofPattern(DATE_TIME_FORMAT_STRING);
+	private static final DateTimeFormatter DATE_FORMATTER =
+		DateTimeFormatter.ofPattern(DATE_FORMAT_STRING);
+	private static final DateTimeFormatter TIME_FORMATTER =
+		DateTimeFormatter.ofPattern(TIME_FORMAT_STRING);
 
 	public static final long MS_PER_SEC = 1000;
 	public static final long MS_PER_MIN = MS_PER_SEC * 60;
@@ -182,16 +182,6 @@ public class DateUtils {
 		}
 	}
 
-	public static Date normalizeDate(Date date) {
-		try {
-			SimpleDateFormat sdf = DATE_FORMAT.get();
-			return sdf.parse(sdf.format(date));
-		}
-		catch (ParseException e) {
-			throw new AssertException("Can't happend parsing date from formated date");
-		}
-	}
-
 	private static Calendar getLastDayOfWeekInMonth(int year, int month, int dayOfWeek) {
 		Calendar cal = new GregorianCalendar(year, month, 1);
 		cal.add(MONTH, 1);
@@ -213,15 +203,27 @@ public class DateUtils {
 		return dayOfWeek == SATURDAY || dayOfWeek == SUNDAY;
 	}
 
+	public static Date normalizeDate(Date date) {
+		try {
+			DateTimeFormatter dtf = DATE_FORMATTER;
+			TemporalAccessor ta = dtf.parse(dtf.format(toLocalDate(date)));
+			LocalDate localDateTime = LocalDate.from(ta);
+			return toDate(localDateTime);
+		}
+		catch (DateTimeParseException e) {
+			throw new AssertException("Can't happend parsing date from formated date", e);
+		}
+	}
+
 	/**
-	 * Formats the given date into a string.  This is in contrast to 
+	 * Formats the given date into a string.   This is in contrast to 
 	 * {@link #formatDateTimestamp(Date)}, which will also return the time portion of the date.
 	 * 
 	 * @param date the date to format
 	 * @return the date string
 	 */
 	public static String formatDate(Date date) {
-		return DATE_FORMAT.get().format(date);
+		return DATE_FORMATTER.format(toLocalDate(date));
 	}
 
 	/**
@@ -232,7 +234,14 @@ public class DateUtils {
 	 * @return the date and time string
 	 */
 	public static String formatDateTimestamp(Date date) {
-		return DATE_TIME_FORMAT.get().format(date);
+		//@formatter:off
+		LocalDateTime localDate = 
+			Instant.ofEpochMilli(date.getTime())
+			       .atZone(ZoneId.systemDefault())
+	               .toLocalDateTime()
+	               ;
+		//@formatter:on
+		return DATE_TIME_FORMATTER.format(toLocalDate(date));
 	}
 
 	/**
@@ -242,7 +251,25 @@ public class DateUtils {
 	 * @return current time-of-day a a string
 	 */
 	public static String formatCurrentTime() {
-		return TIME_FORMAT.get().format(new Date());
+		return TIME_FORMATTER.format(toLocalDate(new Date()));
+	}
+
+	private static LocalDateTime toLocalDate(Date d) {
+		//@formatter:off
+		return Instant.ofEpochMilli(d.getTime())
+			       .atZone(ZoneId.systemDefault())
+	               .toLocalDateTime()
+	               ;
+		//@formatter:on
+	}
+
+	private static Date toDate(LocalDate ld) {
+		//@formatter:off
+		  return Date.from(ld.atStartOfDay()
+			  		 .atZone(ZoneId.systemDefault())
+			  		 .toInstant())
+				  	 ;
+		//@formatter:on
 	}
 
 	public static Date getDate(int year, int month, int day) {
