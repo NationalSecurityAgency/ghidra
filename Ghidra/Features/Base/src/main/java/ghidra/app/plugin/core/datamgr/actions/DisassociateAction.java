@@ -35,7 +35,7 @@ import ghidra.util.exception.CancelledException;
 import ghidra.util.task.*;
 
 public class DisassociateAction extends DockingAction {
-	public static final String MENU_NAME = "Disassociate Datatypes from";
+	public static final String MENU_NAME = "Disassociate Datatypes From";
 
 	private final SourceArchive sourceArchive;
 	private final DataTypeManager dtm;

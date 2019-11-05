@@ -23,6 +23,8 @@ import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.Transferable;
 import java.awt.geom.Point2D;
 import java.util.*;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import org.junit.*;
 
@@ -36,6 +38,8 @@ import edu.uci.ics.jung.visualization.util.Caching;
 import generic.test.TestUtils;
 import ghidra.app.cmd.label.AddLabelCmd;
 import ghidra.app.events.ProgramSelectionPluginEvent;
+import ghidra.app.nav.LocationMemento;
+import ghidra.app.nav.Navigatable;
 import ghidra.app.plugin.core.colorizer.ColorizingPlugin;
 import ghidra.app.plugin.core.colorizer.ColorizingService;
 import ghidra.app.plugin.core.functiongraph.graph.*;
@@ -43,8 +47,7 @@ import ghidra.app.plugin.core.functiongraph.graph.vertex.FGVertex;
 import ghidra.app.plugin.core.functiongraph.mvc.*;
 import ghidra.app.plugin.core.navigation.GoToAddressLabelPlugin;
 import ghidra.app.plugin.core.navigation.NextPrevAddressPlugin;
-import ghidra.app.services.BlockModelService;
-import ghidra.app.services.ProgramManager;
+import ghidra.app.services.*;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.block.*;
@@ -701,7 +704,136 @@ public class FunctionGraphPlugin1Test extends AbstractFunctionGraphTest {
 		assertZoomedIn();
 	}
 
-	protected void doTestLabelChangeAtVertexEntryUpdatesTitle() {
+	@Test
+	public void testNavigationHistory_VertexChangesOption() throws Exception {
+
+		setNavigationHistoryOption(NavigationHistoryChoices.VERTEX_CHANGES);
+
+		FGData graphData = getFunctionGraphData();
+		FunctionGraph graph = graphData.getFunctionGraph();
+		Collection<FGVertex> vertices = graph.getVertices();
+
+		FGVertex start = getFocusedVertex();
+
+		Iterator<FGVertex> it = vertices.iterator();
+		FGVertex v1 = it.next();
+		pickVertex(v1);
+
+		FGVertex v2 = it.next();
+		pickVertex(v2);
+
+		FGVertex v3 = it.next();
+		pickVertex(v3);
+
+		assertInHistory(start, v1, v2);
+	}
+
+	@Test
+	public void testNavigationHistory_NavigationEventsOption() throws Exception {
+
+		setNavigationHistoryOption(NavigationHistoryChoices.NAVIGATION_EVENTS);
+
+		FGVertex start = getFocusedVertex();
+
+		FGVertex v1 = vertex("01004178");
+		pickVertex(v1);
+
+		FGVertex v2 = vertex("01004192");
+		pickVertex(v2);
+
+		FGVertex v3 = vertex("010041a4");
+		pickVertex(v3);
+
+		assertInHistory(start);
+		assertNotInHistory(v1, v2);
+
+		//
+		// Now leave the function and verify the old function is in the history
+		//
+		Address ghidra = getAddress("0x01002cf5");
+		goTo(ghidra);
+
+		Address foo = getAddress("0x01002339");
+		goTo(foo);
+
+		assertInHistory(start.getVertexAddress(), ghidra);
+	}
+
+//==================================================================================================
+// Private Methods
+//==================================================================================================	
+
+	private void assertNotInHistory(FGVertex... vertices) {
+
+		List<Address> vertexAddresses =
+			Arrays.stream(vertices)
+					.map(v -> v.getVertexAddress())
+					.collect(Collectors.toList());
+		assertNotInHistory(vertexAddresses);
+	}
+
+	private void assertNotInHistory(List<Address> addresses) {
+
+		GoToService goTo = tool.getService(GoToService.class);
+		Navigatable navigatable = goTo.getDefaultNavigatable();
+
+		NavigationHistoryService service = tool.getService(NavigationHistoryService.class);
+		List<LocationMemento> locations = service.getPreviousLocations(navigatable);
+
+		List<Address> actualAddresses =
+			locations.stream()
+					.map(memento -> memento.getProgramLocation().getAddress())
+					.collect(Collectors.toList());
+
+		for (Address a : addresses) {
+			assertFalse("Vertex address should not be in the history list: " + a + ".\nHistory: " +
+				actualAddresses + "\nNavigated vertices: " + Arrays.asList(addresses),
+				actualAddresses.contains(a));
+		}
+	}
+
+	private void assertInHistory(FGVertex... vertices) {
+
+		List<Address> vertexAddresses =
+			Arrays.stream(vertices)
+					.map(v -> v.getVertexAddress())
+					.collect(Collectors.toList());
+		assertInHistory(vertexAddresses);
+	}
+
+	private void assertInHistory(Address... addresses) {
+		assertInHistory(Arrays.asList(addresses));
+	}
+
+	private void assertInHistory(List<Address> addresses) {
+
+		GoToService goTo = tool.getService(GoToService.class);
+		Navigatable navigatable = goTo.getDefaultNavigatable();
+
+		NavigationHistoryService service = tool.getService(NavigationHistoryService.class);
+		List<LocationMemento> locations = service.getPreviousLocations(navigatable);
+		assertTrue("Vertex locations not added to history", addresses.size() <= locations.size());
+
+		List<Address> actualAddresses =
+			locations.stream()
+					.map(memento -> memento.getProgramLocation().getAddress())
+					.collect(Collectors.toList());
+
+		for (Address a : addresses) {
+
+			assertTrue("Vertex address should be in the history list: " + a + ".\nHistory: " +
+				actualAddresses + "\nNavigated vertices: " + addresses,
+				actualAddresses.contains(a));
+		}
+	}
+
+	private void setNavigationHistoryOption(NavigationHistoryChoices choice) throws Exception {
+		FGController controller = getFunctionGraphController();
+		FunctionGraphOptions options = controller.getFunctionGraphOptions();
+		setInstanceField("navigationHistoryChoice", options, choice);
+	}
+
+	private void doTestLabelChangeAtVertexEntryUpdatesTitle() {
 		// get the graph contents
 		FGData graphData = getFunctionGraphData();
 		assertNotNull(graphData);
@@ -727,7 +859,7 @@ public class FunctionGraphPlugin1Test extends AbstractFunctionGraphTest {
 		assertTrue(updatedTitle.indexOf(testName.getMethodName()) != -1);
 	}
 
-	protected void doTestRelayout(boolean fullReload) throws Exception {
+	private void doTestRelayout(boolean fullReload) throws Exception {
 
 		//
 		// This test covers navigation, which relies on the provider being focused to work
