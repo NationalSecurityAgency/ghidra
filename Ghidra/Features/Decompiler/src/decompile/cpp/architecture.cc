@@ -830,8 +830,8 @@ void Architecture::parseLaneSizes(const Element *el)
   lanerecords.sort();
 
   // Dedup records that are contained by (the following) records
-  list<LanedRegister>::const_iterator viter = lanerecords.begin();
-  list<LanedRegister>::const_iterator nextiter = viter;
+  list<LanedRegister>::iterator viter = lanerecords.begin();
+  list<LanedRegister>::iterator nextiter = viter;
   ++nextiter;
   while(nextiter != lanerecords.end()) {
     if ((*viter).contains(*nextiter)) {

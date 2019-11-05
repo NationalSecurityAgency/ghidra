@@ -497,10 +497,11 @@ int4 ActionStackPtrFlow::apply(Funcdata &data)
 
 /// \brief Try to divide a single Varnode into lanes
 ///
-/// Look for a CPUI_SUBPIECE op that takes the given Varnode as the input.  If
-/// the output size is an acceptable lane size, try to split data-flow through
-/// this Varnode using this lane scheme. Try a split for every output size of such a
-/// SUBPIECE op until one succeeds.
+/// Look for a CPUI_SUBPIECE op that takes the given Varnode as the input or a
+/// CPUI_PIECE op that defines it. The smallest piece involved in this op is considered the
+/// putative lane size. If this lane size is acceptable, try to split data-flow through
+/// this Varnode using this lane scheme. Try a split for every CPUI_SUBPIECE/CPUI_PIECE the
+/// given Varnode is involved in until one succeeds.
 /// \param data is the function being transformed
 /// \param vn is the given single Varnode
 /// \param lanedRegister is acceptable set of lane sizes for the Varnode
@@ -510,11 +511,27 @@ bool ActionLaneDivide::processVarnode(Funcdata &data,Varnode *vn,const LanedRegi
 {
   list<PcodeOp *>::const_iterator iter = vn->beginDescend();
   LanedRegister checkedLanes;
-  while(iter != vn->endDescend()) {
-    PcodeOp *op = *iter;
-    ++iter;
-    if (op->code() != CPUI_SUBPIECE) continue;
-    int4 curSize = op->getOut()->getSize();
+  int4 step = 0;		// 0 = descendants, 1 = def, 2 = done
+  while(step < 2) {
+    int4 curSize;		// Putative lane size
+    if (step == 0) {
+      PcodeOp *op = *iter;
+      ++iter;
+      if (iter == vn->endDescend())
+	step = 1;
+      if (op->code() != CPUI_SUBPIECE) continue;	// Is the big register split into pieces
+      curSize = op->getOut()->getSize();
+    }
+    else {
+      step = 2;
+      if (!vn->isWritten()) continue;
+      PcodeOp *op = vn->getDef();
+      if (op->code() != CPUI_PIECE) continue;		// Is the big register formed from smaller pieces
+      curSize = op->getIn(0)->getSize();
+      int4 tmpSize = op->getIn(1)->getSize();
+      if (tmpSize < curSize)
+	curSize = tmpSize;
+    }
     if (lanedRegister.allowedLane(curSize)) {
       if (checkedLanes.allowedLane(curSize)) continue;
       checkedLanes.addSize(curSize);		// Only check this scheme once
@@ -525,7 +542,7 @@ bool ActionLaneDivide::processVarnode(Funcdata &data,Varnode *vn,const LanedRegi
       }
       if (!description.subset(bytePos,vn->getSize()))		// Try to restrict lane scheme to actual Varnode
 	continue;
-      LaneDivide laneDivide(&data,op->getIn(0),description,allowDowncast);
+      LaneDivide laneDivide(&data,vn,description,allowDowncast);
       if (laneDivide.doTrace()) {
 	laneDivide.apply();
 	count += 1;		// Indicate a change was made
