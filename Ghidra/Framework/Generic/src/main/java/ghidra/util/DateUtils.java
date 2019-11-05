@@ -26,7 +26,7 @@ import ghidra.util.exception.AssertException;
 public class DateUtils {
 
 	/** Example: Oct 31, 2019 03:24 PM */
-	private static final String DATE_TIME_FORMAT_STRING = "MMM dd, yyyy hh:mm aaa";
+	private static final String DATE_TIME_FORMAT_STRING = "MMM dd, yyyy hh:mm a";
 	private static final String DATE_FORMAT_STRING = "MM/dd/yyyy";
 	private static final String TIME_FORMAT_STRING = "h:mm";
 
@@ -236,11 +236,12 @@ public class DateUtils {
 	}
 
 	/**
-	 * Returns the current local time zone time-of-day as an HOUR:MIN string.
+	 * Returns the current local time zone time-of-day as simple time string. 
+	 * See {@value #TIME_FORMAT_STRING}.
 	 *
-	 * @return current time-of-day as "HOUR:MIN"
+	 * @return current time-of-day a a string
 	 */
-	public static String getTimeNow() {
+	public static String formatCurrentTime() {
 		return TIME_FORMAT.get().format(new Date());
 	}
 
