@@ -18,6 +18,8 @@ package ghidra.app.util.bin.format.macho.dyld;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import generic.continues.RethrowContinuesFactory;
 import ghidra.app.util.bin.BinaryReader;
@@ -28,7 +30,10 @@ import ghidra.app.util.bin.format.macho.MachConstants;
 import ghidra.app.util.bin.format.macho.commands.NList;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.program.model.address.Address;
-import ghidra.program.model.data.*;
+import ghidra.program.model.data.CategoryPath;
+import ghidra.program.model.data.DataType;
+import ghidra.program.model.data.DataUtilities;
+import ghidra.program.model.data.StructureDataType;
 import ghidra.program.model.listing.Data;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.util.CodeUnitInsertionException;
@@ -149,14 +154,28 @@ public class DyldCacheLocalSymbolsInfo implements StructConverter {
 		FactoryBundledWithBinaryReader nListReader = new FactoryBundledWithBinaryReader(
 			RethrowContinuesFactory.INSTANCE, reader.getByteProvider(), reader.isLittleEndian());
 		monitor.setMessage("Parsing DYLD nlist symbol table...");
-		monitor.initialize(nlistCount);
+		monitor.initialize(nlistCount*2);
 		nListReader.setPointerIndex(startIndex + nlistOffset);
 		try {
+
 			for (int i = 0; i < nlistCount; ++i) {
-				nlistList.add(NList.createNList(nListReader, is32bit, startIndex + stringsOffset));
+				nlistList.add(NList.createNList(nListReader, is32bit));
 				monitor.checkCanceled();
 				monitor.incrementProgress(1);
 			}
+			// sort the entries by the index in the string table, so don't jump around reading
+			List<NList> sortedList = nlistList.stream()
+					.sorted((o1,o2)-> o1.getStringTableIndex() - o2.getStringTableIndex())
+					.collect(Collectors.toList());
+
+			// initialize the NList strings from string table
+			long stringTableOffset = startIndex + stringsOffset;
+			sortedList.forEach(entry ->  {
+				if (!monitor.isCancelled()) {
+					entry.initString(nListReader, stringTableOffset);
+					monitor.incrementProgress(1);
+				}
+			} );
 		}
 		catch (IOException e) {
 			log.appendMsg(DyldCacheAccelerateInfo.class.getSimpleName(), "Failed to parse nlist.");

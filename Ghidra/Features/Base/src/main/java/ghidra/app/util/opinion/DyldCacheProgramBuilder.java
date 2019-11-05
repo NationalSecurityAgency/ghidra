@@ -39,10 +39,8 @@ import ghidra.app.util.importer.MessageLogContinuesFactory;
 import ghidra.program.database.mem.FileBytes;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
-import ghidra.program.model.data.DataUtilities;
 import ghidra.program.model.data.Pointer64DataType;
 import ghidra.program.model.listing.CodeUnit;
-import ghidra.program.model.listing.Data;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.listing.ProgramFragment;
 import ghidra.program.model.mem.MemoryAccessException;
@@ -286,6 +284,9 @@ public class DyldCacheProgramBuilder extends MachoProgramBuilder {
 			if (pageEntry == DYLD_CACHE_SLIDE_PAGE_ATTR_NO_REBASE) {
 				continue;
 			}
+			
+			List<Address> unchainedLocList = new ArrayList<Address>(1024);
+			
 			if ((pageEntry & DYLD_CACHE_SLIDE_PAGE_ATTR_EXTRA) != 0) {
 				// go into extras and process list of chain entries for the same page
 			    int extraIndex = (pageEntry & CHAIN_OFFSET_MASK);
@@ -293,15 +294,27 @@ public class DyldCacheProgramBuilder extends MachoProgramBuilder {
 					pageEntry = ((int) extraEntries[extraIndex]) & 0xffff;
 					long pageOffset = (pageEntry & CHAIN_OFFSET_MASK) * BYTES_PER_CHAIN_OFFSET;
 	                
-	    			fixedAddressCount += processPointerChain(page, pageOffset, deltaMask, deltaShift, valueAdd);
+	    			processPointerChain(unchainedLocList, page, pageOffset, deltaMask, deltaShift, valueAdd);
 	    			extraIndex++;
 				} while ((pageEntry & DYLD_CACHE_SLIDE_PAGE_ATTR_EXTRA) == 0);
 			}
             else {
                 long pageOffset = pageEntry * BYTES_PER_CHAIN_OFFSET;
                 
-                fixedAddressCount += processPointerChain(page, pageOffset, deltaMask, deltaShift, valueAdd);
+                processPointerChain(unchainedLocList, page, pageOffset, deltaMask, deltaShift, valueAdd);
             }
+			
+			fixedAddressCount += unchainedLocList.size();
+			unchainedLocList.forEach(entry -> {
+			    // create a pointer at the fixed up chain pointer location
+				try {
+					// don't use data utilities. does too much extra checking work
+					listing.createData(entry, Pointer64DataType.dataType);
+				}
+				catch (CodeUnitInsertionException e) {
+					// No worries, something presumably more important was there already
+				}
+			});
 		}
 
 		log.appendMsg("Fixed " + fixedAddressCount + " chained pointers.  Creating Pointers");
@@ -312,6 +325,7 @@ public class DyldCacheProgramBuilder extends MachoProgramBuilder {
 	/**
 	 * Fixes up any chained pointers, starting at the given address.
 	 * 
+	 * @param unchainedLocList list of locations that were unchained
 	 * @param page within data pages that has pointers to be unchained
 	 * @param nextOff offset within the page that is the chain start
 	 * @param deltaMask delta offset mask for each value
@@ -322,17 +336,16 @@ public class DyldCacheProgramBuilder extends MachoProgramBuilder {
 	 * @throws MemoryAccessException
 	 * @throws CancelledException 
 	 */
-	private long processPointerChain(long page,  long nextOff, long deltaMask, long deltaShift, long valueAdd)
+	private void processPointerChain(List<Address> unchainedLocList, long page,  long nextOff, long deltaMask, long deltaShift, long valueAdd)
 			throws MemoryAccessException, CancelledException {
+		
 		// TODO: should the image base be used to perform the ASLR slide on the pointers.
 		//        currently image is kept at it's initial location with no ASLR.
         Address chainStart = memory.getProgram().getLanguage().getDefaultSpace().getAddress(page);
-		
-        long fixedAddressCount = 0;
 
 		byte origBytes[] = new byte[8];
 		
-		long valueMask = ~deltaMask;
+		long valueMask = 0xffffffffffffffffL  >>>  (64 - deltaShift);
 		
 		long delta = -1;
 		while (delta != 0) {
@@ -356,21 +369,11 @@ public class DyldCacheProgramBuilder extends MachoProgramBuilder {
 		    
 		    memory.setLong(chainLoc, chainValue);
 		    
-		    // create a pointer at the fixed up chain pointer location
-			try {
-				// don't use data utilities. does too much extra checking work
-				listing.createData(chainLoc, Pointer64DataType.dataType);
-			}
-			catch (CodeUnitInsertionException e) {
-				// No worries, something presumably more important was there already
-			}
-		    
-			fixedAddressCount++;
+		    // delay creating data until after memory has been changed
+		    unchainedLocList.add(chainLoc);
 
 			nextOff += (delta * 4);
 		}
-
-		return fixedAddressCount;
 	}
 	
 

@@ -18,10 +18,12 @@ package ghidra.app.util.bin.format.macho.commands;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import ghidra.app.util.bin.format.FactoryBundledWithBinaryReader;
 import ghidra.app.util.bin.format.macho.MachConstants;
 import ghidra.app.util.bin.format.macho.MachHeader;
+import ghidra.app.util.bin.format.macho.dyld.DyldCacheAccelerateInfo;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.program.flatapi.FlatProgramAPI;
 import ghidra.program.model.address.Address;
@@ -73,11 +75,26 @@ public class SymbolTableCommand extends LoadCommand {
 		long index = reader.getPointerIndex();
 
 		reader.setPointerIndex(header.getStartIndexInProvider() + symoff);
+		
+		List<NList> nlistList = new ArrayList<>(nsyms);
+		long startIndex = header.getStartIndexInProvider();
+		boolean is32bit = header.is32bit();
+		reader.setPointerIndex(startIndex + symoff);
 
 		for (int i = 0; i < nsyms; ++i) {
-			NList symbol = NList.createNList(reader, header.is32bit(), stroff);
-			symbols.add(symbol);
+			nlistList.add(NList.createNList(reader, is32bit));
 		}
+		// sort the entries by the index in the string table, so don't jump around reading
+		List<NList> sortedList = nlistList.stream()
+				.sorted((o1,o2)-> o1.getStringTableIndex() - o2.getStringTableIndex())
+				.collect(Collectors.toList());
+
+		// initialize the NList strings from string table
+		long stringTableOffset = stroff;
+		sortedList.forEach(entry ->  {
+			entry.initString(reader, stringTableOffset);
+			symbols.add(entry);
+		} );
 
 		reader.setPointerIndex(index);
 	}
