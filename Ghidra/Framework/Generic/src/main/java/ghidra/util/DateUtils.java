@@ -211,7 +211,7 @@ public class DateUtils {
 			return toDate(localDateTime);
 		}
 		catch (DateTimeParseException e) {
-			throw new AssertException("Can't happend parsing date from formated date", e);
+			throw new AssertException("Unexpected exception parsing date from a known format", e);
 		}
 	}
 
@@ -234,13 +234,6 @@ public class DateUtils {
 	 * @return the date and time string
 	 */
 	public static String formatDateTimestamp(Date date) {
-		//@formatter:off
-		LocalDateTime localDate = 
-			Instant.ofEpochMilli(date.getTime())
-			       .atZone(ZoneId.systemDefault())
-	               .toLocalDateTime()
-	               ;
-		//@formatter:on
 		return DATE_TIME_FORMATTER.format(toLocalDate(date));
 	}
 
