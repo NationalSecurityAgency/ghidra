@@ -57,6 +57,8 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 	private AddressSet addrSet = new AddressSet();
 	private AddressSet initializedLoadedAddrSet = new AddressSet();
 	private AddressSet allInitializedAddrSet = new AddressSet();
+	private AddressSetView executeSet = new AddressSet();
+
 	private MemoryBlock lastBlock;// the last accessed block
 	private LiveMemoryHandler liveMemory;
 	
@@ -187,6 +189,7 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 		blocks = newBlocks;
 		addrMap.memoryMapChanged(this);
 		nameBlockMap = new HashMap<>();
+		executeSet = null;
 	}
 
 	public void setLanguage(Language newLanguage) {
@@ -396,6 +399,12 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 		
 		// name could have changed
 		nameBlockMap = new HashMap<>();
+		
+		// execute state could have changed.  check if in set and shouldn't be or vice/versa
+		if (executeSet != null && executeSet.contains(block.getStart(), block.getEnd()) != block.isExecute()) {
+			// don't regenerate now, do lazily later if needed
+			executeSet = null;
+		}
 	}
 
 	void fireBytesChanged(Address addr, int count) {
@@ -1972,13 +1981,17 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 	 */
 	@Override
 	public AddressSetView getExecuteSet() {
+		if (executeSet != null) {
+			return executeSet;
+		}
 		AddressSet set = new AddressSet();
 		for (MemoryBlock block : blocks) {
 			if (block.isExecute()) {
 				set.addRange(block.getStart(), block.getEnd());
 			}
 		}
-		return set;
+		executeSet = new AddressSetViewAdapter(set);
+		return executeSet;
 	}
 
 	@Override

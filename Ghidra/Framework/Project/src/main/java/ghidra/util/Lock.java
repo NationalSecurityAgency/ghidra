@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,18 +16,20 @@
 package ghidra.util;
 
 /**
- * Ghidra synchronization lock. This class allows creation of named locks for 
+ * Ghidra synchronization lock. This class allows creation of named locks for
  * modifying tables in the Ghidra data base. This class also creates an instance
- * of a global lock that must first be obtained when synchronizing using multiple
- * of the named locks.
+ * of a global lock that must first be obtained when synchronizing using
+ * multiple of the named locks.
  */
 public class Lock {
 	private Thread owner;
 	private int cnt = 0;
+	private int waiting = 0;
 	private String name;
 
 	/**
 	 * Creates an instance of a lock for synchronization within Ghidra.
+	 * 
 	 * @param name the name of this lock
 	 */
 	public Lock(String name) {
@@ -36,8 +37,8 @@ public class Lock {
 	}
 
 	/**
-	 * Acquire this synchronization lock. 
-	 * (i.e. begin synchronizing on this named lock.) 
+	 * Acquire this synchronization lock. (i.e. begin synchronizing on this named
+	 * lock.)
 	 */
 	public synchronized void acquire() {
 		Thread currThread = Thread.currentThread();
@@ -47,15 +48,16 @@ public class Lock {
 				cnt = 1;
 				owner = currThread;
 				return;
-			}
-			else if (owner == currThread) {
+			} else if (owner == currThread) {
 				cnt++;
 				return;
 			}
 			try {
+				waiting++;
 				wait();
-			}
-			catch (InterruptedException e) {
+			} catch (InterruptedException e) {
+			} finally {
+				waiting--;
 			}
 		}
 	}
@@ -70,20 +72,24 @@ public class Lock {
 		if (cnt > 0 && (owner == currThread)) {
 			if (--cnt == 0) {
 				owner = null;
-				notify();
+				// This is purely to help sample profiling.  If notify() is called the
+				// sampler can attribute time to the methods calling this erroneously.  For some reason
+				// the visualvm sampler gets a sample more often when notify() is called.
+				if (waiting != 0) {
+					notify();
+				}
 			}
-		}
-		else {
+		} else {
 			throw new IllegalStateException("Attempted to release an unowned lock: " + name);
 		}
 	}
 
 	/**
 	 * Gets the thread that currently owns the lock.
+	 * 
 	 * @return the thread that owns the lock or null.
 	 */
 	public Thread getOwner() {
 		return owner;
 	}
-
 }
