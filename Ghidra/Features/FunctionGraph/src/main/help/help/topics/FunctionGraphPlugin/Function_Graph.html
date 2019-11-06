@@ -786,9 +786,31 @@
         graph groups changes (during a group or ungroup operation)</LI>
 
         <LI><B>Never</B> - never perform a relayout of the graph automatically</LI>
-      </UL><BR>
+      </UL>
       <BR>
-       
+      <BR>      
+      
+      
+      <P>The <B>Navigation History</B> option determines how the navigation history 
+      will be updated when using the Function Graph.  The values are:</P>
+      
+      <UL>
+        <LI><B>Navigation Events</B> - save a history entry when a navigation takes place
+	    	(e.g., double-click or Go To event).  This setting will record less history.  Further, 
+	    	this setting works the same as the Tool's general history saving mechanism.  This 
+	    	setting should be preferred if you wish to use the navigation actions to go back
+	    	to previously visited <b>functions</b> more than individual addresses.
+	    </LI>
+
+        <LI><B>Vertex Changes</B> - save a history entry each time a new vertex is selected.  This
+        setting allows users to move throughout the graph view while using the navigation actions
+        to go back to previously visited vertices.  This setting will create a much larger
+        and more detailed history list.
+        </LI>
+      </UL>
+      <BR>
+      <BR>
+      
 
       <P>The <B>Scroll Wheel Pans</B> option signals to move the graph vertical when scrolling the
       mouse scroll wheel. Disabling this option restores the original function graph scroll wheel

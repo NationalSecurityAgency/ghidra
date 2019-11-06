@@ -311,20 +311,29 @@ public class FGController implements ProgramLocationListener, ProgramSelectionLi
 		FunctionGraph graph = functionGraphData.getFunctionGraph();
 		FGVertex newFocusedVertex = graph.getFocusedVertex();
 		boolean vertexChanged = lastUserNavigatedVertex != newFocusedVertex;
+		boolean updateHistory = false;
 		if (vertexChanged) {
-			// put the navigation on the history stack if we've changed nodes (this is the
-			// location we are leaving)
-			provider.saveLocationToHistory();
+			if (shouldSaveVertexChanges()) {
+				// put the navigation on the history stack if we've changed nodes (this is the
+				// location we are leaving)
+				provider.saveLocationToHistory();
+				updateHistory = true;
+			}
 			lastUserNavigatedVertex = newFocusedVertex;
 		}
 
 		viewSettings.setLocation(loc);
 		provider.graphLocationChanged(loc);
 
-		if (vertexChanged) {
+		if (updateHistory) {
 			// put the new location on the history stack now that we've updated the provider
 			provider.saveLocationToHistory();
 		}
+	}
+
+	private boolean shouldSaveVertexChanges() {
+		return functionGraphOptions
+				.getNavigationHistoryChoice() == NavigationHistoryChoices.VERTEX_CHANGES;
 	}
 
 	@Override

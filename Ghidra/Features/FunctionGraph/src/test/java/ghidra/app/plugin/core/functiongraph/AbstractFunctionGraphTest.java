@@ -1865,13 +1865,21 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 		return groupVertex;
 	}
 
-	private boolean isUncollapsed(final FGVertex vertex) {
+	protected boolean isUncollapsed(final FGVertex vertex) {
 		final AtomicReference<Boolean> reference = new AtomicReference<>();
 		runSwing(() -> reference.set(vertex.isUncollapsedGroupMember()));
 		return reference.get();
 	}
 
-	private void pickVertices(final Set<FGVertex> vertices) {
+	protected void pickVertex(FGVertex v) {
+		runSwing(() -> {
+			PickedState<FGVertex> pickedState = getPickedState();
+			pickedState.clear();
+			pickedState.pick(v, true);
+		});
+	}
+
+	protected void pickVertices(final Set<FGVertex> vertices) {
 		runSwing(() -> {
 			PickedState<FGVertex> pickedState = getPickedState();
 			pickedState.clear();
@@ -2264,9 +2272,12 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 
 	protected void goTo(String address) {
 		Address addr = getAddress(address);
-		GoToService goToService = tool.getService(GoToService.class);
-		goToService.goTo(addr);
+		goTo(addr);
+	}
 
+	protected void goTo(Address address) {
+		GoToService goToService = tool.getService(GoToService.class);
+		goToService.goTo(address);
 		waitForBusyGraph();
 	}
 
