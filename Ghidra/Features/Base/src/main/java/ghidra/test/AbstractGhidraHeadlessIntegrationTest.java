@@ -27,6 +27,7 @@ import ghidra.app.events.ProgramLocationPluginEvent;
 import ghidra.app.events.ProgramSelectionPluginEvent;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
 import ghidra.app.script.GhidraScriptConstants;
+import ghidra.app.services.GoToService;
 import ghidra.framework.*;
 import ghidra.framework.cmd.Command;
 import ghidra.framework.model.UndoableDomainObject;
@@ -383,6 +384,14 @@ public abstract class AbstractGhidraHeadlessIntegrationTest extends AbstractDock
 	}
 
 	public void goTo(PluginTool tool, Program p, Address addr) {
+
+		GoToService goTo = tool.getService(GoToService.class);
+		if (goTo != null) {
+			goTo.goTo(addr);
+			waitForSwing();
+			return;
+		}
+
 		tool.firePluginEvent(
 			new ProgramLocationPluginEvent("Test", new ProgramLocation(p, addr), p));
 		waitForSwing();

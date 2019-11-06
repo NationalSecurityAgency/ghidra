@@ -399,12 +399,14 @@
       previous Instruction, Data, Undefined, Function or Non Function. The search starts at the
       current cursor location and proceeds either forward (next) or backwards (previous).</P>
 
+	  <BLOCKQUOTE>
       <P><IMG src="../../shared/note.png" border="0">When searching for Instructions, Data or
       Undefined items, Ghidra will skip all contiguous items of the same type. For example, if the
       cursor is on an address with an Instruction, and you go to the next Instruction, then all
       Instructions immediately following the current one will be skipped until a non-Instruction is
       found. Once that non-instruction is found, then Ghidra will take you to the next Instruction
       after the address of that non-Instruction.</P>
+      </BLOCKQUOTE>
 
       <H3><A name="Toggle_Code_Unit_Search_Direction"></A>Search Direction</H3>
 
@@ -548,8 +550,8 @@
       navigation history stack.&nbsp; The navigation history feature allows the user to revisit
       previous locations.</P>
 
-      <H3><A name="History_Buffer"></A> <A name="Next_in_History_Buffer"></A> <A name=
-      "Previous_in_History_Buffer"></A> Go To Next/Previous Location</H3>
+      <H3><A name="Next_Location_in_History"></A> <A name=
+      "Previous_Location_in_History"></A> Go To Next/Previous Location</H3>
 
       <BLOCKQUOTE>
         <P>To traverse the history stack:</P>
@@ -584,6 +586,29 @@
 
         <P><IMG src="../../shared/note.png" border="0">The <IMG src="images/left.png" border="0">
         button is only enabled after performing a <IMG src="images/right.png" border="0"></P>
+      </BLOCKQUOTE>
+
+	  <H3><A name="Next_Function_in_History"></A> <A name=
+      "Previous_Function_in_History"></A> Go To Next/Previous <b>Function</b> in History</H3>
+
+      <BLOCKQUOTE>
+        <P>
+        	These actions allow you to navigate to the next/previous functions in the history
+        	list, skipping over any locations that are not in functions or are in the current
+        	function.
+        </P>
+        
+      		<BLOCKQUOTE>
+        	<P>
+        	<IMG src="../../shared/note.png" border="0">The behavior of the previous action will
+        	vary slightly depending upon what component is focused.  It is possible for a 
+        	non-Listing view to be showing a function that is not the current function in the 
+        	Listing.  In this case, if the Listing has focus, then the previously visited function
+        	will be the navigation destination.  <B>Alternatively, if a non-Listing widget
+        	(e.g., the Decompiler) has focus and is showing a function, then that function
+        	being displayed will be ignored when navigating to the previous function.</B> 
+        	</P>
+        	</BLOCKQUOTE>
       </BLOCKQUOTE>
 
       <H3><A name="Clear_History_Buffer"></A>Clear History</H3>

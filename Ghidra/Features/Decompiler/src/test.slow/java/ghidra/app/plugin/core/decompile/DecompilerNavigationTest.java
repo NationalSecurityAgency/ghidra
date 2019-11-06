@@ -20,11 +20,14 @@ import static org.junit.Assert.*;
 import org.junit.Before;
 import org.junit.Test;
 
+import docking.ActionContext;
+import docking.action.DockingAction;
 import ghidra.app.cmd.function.CreateFunctionCmd;
 import ghidra.app.nav.Navigatable;
 import ghidra.app.plugin.core.codebrowser.CodeViewerProvider;
 import ghidra.app.plugin.core.gotoquery.GoToHelper;
 import ghidra.app.plugin.core.navigation.NavigationOptions;
+import ghidra.app.plugin.core.navigation.NextPrevAddressPlugin;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.*;
@@ -94,8 +97,9 @@ public class DecompilerNavigationTest extends AbstractDecompilerTest {
 		// this call triggers jMockit to load our spy
 		new SpyGoToHelper();
 
-		tool.getOptions("Navigation").setEnum("External Navigation",
-			NavigationOptions.ExternalNavigationEnum.NavigateToExternalProgram);
+		tool.getOptions("Navigation")
+				.setEnum("External Navigation",
+					NavigationOptions.ExternalNavigationEnum.NavigateToExternalProgram);
 
 		//
 		// Take an existing function with a call reference and change it to call a thunk with
@@ -129,8 +133,9 @@ public class DecompilerNavigationTest extends AbstractDecompilerTest {
 		// this call triggers jMockit to load our spy
 		new SpyGoToHelper();
 
-		tool.getOptions("Navigation").setEnum("External Navigation",
-			NavigationOptions.ExternalNavigationEnum.NavigateToLinkage);
+		tool.getOptions("Navigation")
+				.setEnum("External Navigation",
+					NavigationOptions.ExternalNavigationEnum.NavigateToLinkage);
 
 		//
 		// Take an existing function with a call reference and change it to call a thunk with
@@ -169,6 +174,52 @@ public class DecompilerNavigationTest extends AbstractDecompilerTest {
 		setDecompilerLocation(line, character);
 
 		assertListingAddress(addr("01002d32"));
+	}
+
+	@Test
+	public void testFunctionNavigation_WithAViewThatCachesTheLastValidFunction()
+			throws Exception {
+
+		//
+		// This is testing the case where the user starts on a function foo().  Ancillary windows
+		// will display tool, such as a decompiled view.   Now, if the user clicks to a 
+		// non-function location, such as data, the ancillary window may still show foo(), even 
+		// though the user is no longer in foo.  At this point, if the user wishes to go to the
+		// previous function, then from the ancillary window's perspective, it is the function 
+		// that came before foo().
+		//
+
+		Address f1 = addr("01002cf5"); // ghidra
+		Address f2 = addr("0100415a"); // sscanf
+		Address nonFunctionAddress = addr("01001000");
+
+		goTo(f1);
+		goTo(f2);
+		goTo(nonFunctionAddress);
+
+		String title = provider.getTitle();
+		assertTrue("Decompiler did not retain last function visited", title.contains("sscanf"));
+
+		provider.requestFocus();
+		waitForSwing();
+
+		// 
+		// The Decompiler is focused, showing 'entry'.  Going back while it is focused should go
+		// to the function before 'entry', which is 'ghidra'.
+		//
+		previousFunction();
+		assertCurrentAddress(f1);
+	}
+
+	private void previousFunction() {
+		NextPrevAddressPlugin plugin = env.getPlugin(NextPrevAddressPlugin.class);
+		DockingAction previousFunctionAction =
+			(DockingAction) getInstanceField("previousFunctionAction", plugin);
+
+		ActionContext context = provider.getActionContext(null);
+		assertTrue(previousFunctionAction.isEnabledForContext(context));
+		performAction(previousFunctionAction, context, true);
+		waitForSwing();
 	}
 
 	private void assertListingAddress(Address expected) {
