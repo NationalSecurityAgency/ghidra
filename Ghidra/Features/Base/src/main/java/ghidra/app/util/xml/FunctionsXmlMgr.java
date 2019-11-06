@@ -22,6 +22,8 @@ import javax.swing.ImageIcon;
 
 import ghidra.app.cmd.function.*;
 import ghidra.app.services.DataTypeManagerService;
+import ghidra.app.util.NamespaceUtils;
+import ghidra.app.util.SymbolPath;
 import ghidra.app.util.cparser.C.CParserUtils;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.program.model.address.*;
@@ -109,7 +111,14 @@ class FunctionsXmlMgr {
 				}
 
 				try {
+
+					SymbolPath namespacePath = null;
 					String name = functionElement.getAttribute("NAME");
+					if (name != null) {
+						SymbolPath symbolPath = new SymbolPath(name);
+						name = symbolPath.getName();
+						namespacePath = symbolPath.getParent();
+					}
 
 					AddressSet body = new AddressSet(entryPoint, entryPoint);
 
@@ -139,11 +148,18 @@ class FunctionsXmlMgr {
 						parser.discardSubTree(functionElement);
 						continue;
 					}
+
 					Function func = cmd.getFunction();
 					if (name != null && !SymbolUtilities.isReservedDynamicLabelName(name,
 						program.getAddressFactory())) {
 						try {
-							func.setName(name, SourceType.USER_DEFINED);
+							Symbol symbol = func.getSymbol();
+							Namespace namespace =
+								NamespaceUtils.getNamespace(program, namespacePath, entryPoint);
+							if (namespace == null) {
+								namespace = program.getGlobalNamespace();
+							}
+							symbol.setNameAndNamespace(name, namespace, SourceType.USER_DEFINED);
 						}
 						catch (DuplicateNameException e) {//name may already be set if symbols were loaded...
 						}
@@ -651,8 +667,7 @@ class FunctionsXmlMgr {
 			attrs.addAttribute("NAME", reg.getName());
 			attrs.addAttribute("REGISTER", reg.getRegister().getName());
 			attrs.addAttribute("DATATYPE", reg.getDataType().getDisplayName());
-			attrs.addAttribute("DATATYPE_NAMESPACE",
-				reg.getDataType().getCategoryPath().getPath());
+			attrs.addAttribute("DATATYPE_NAMESPACE", reg.getDataType().getCategoryPath().getPath());
 
 			String comment = reg.getComment();
 			if (comment == null || comment.length() == 0) {

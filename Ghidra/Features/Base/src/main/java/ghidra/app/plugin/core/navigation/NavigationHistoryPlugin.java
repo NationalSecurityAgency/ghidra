@@ -558,8 +558,7 @@ public class NavigationHistoryPlugin extends Plugin
 			ProgramLocation location = navigatable.getLocation();
 			Program program = location.getProgram();
 			FunctionManager functionManager = program.getFunctionManager();
-			Function currentFunction =
-				functionManager.getFunctionContaining(location.getAddress());
+			Function currentFunction = functionManager.getFunctionContaining(location.getAddress());
 
 			for (int i = currentLocation + 1; i < list.size(); i++) {
 				LocationMemento memento = list.get(i);
@@ -630,7 +629,10 @@ public class NavigationHistoryPlugin extends Plugin
 			ComponentProvider provider = manager.getActiveComponentProvider();
 			if (provider instanceof Navigatable) {
 				LocationMemento memento = ((Navigatable) provider).getMemento();
-				currentAddress = memento.getProgramLocation().getAddress();
+				ProgramLocation otherLocation = memento.getProgramLocation();
+				if (otherLocation != null) {
+					currentAddress = otherLocation.getAddress();
+				}
 			}
 
 			Program program = location.getProgram();
