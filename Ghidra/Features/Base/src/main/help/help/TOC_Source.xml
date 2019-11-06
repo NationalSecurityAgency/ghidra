@@ -312,7 +312,7 @@
             <tocdef id="Set Fallthrough Address" sortgroup="m" text="Set Fallthrough Address"  target="help/topics/FallThroughPlugin/Override_Fallthrough.htm" />
             <tocdef id="Navigation" sortgroup="n" text="Navigation"  target="help/topics/Navigation/Navigation.htm" >
                 <tocdef id="Go to Address Label" sortgroup="a" text="Go to Address Label"  target="help/topics/Navigation/Navigation.htm" />
-                <tocdef id="Go to Next/Previous" sortgroup="b" text="Go to Next/Previous"  target="help/topics/Navigation/Navigation.htm#History_Buffer" />
+                <tocdef id="Go to Next/Previous" sortgroup="b" text="Go to Next/Previous"  target="help/topics/Navigation/Navigation.htm#Navigation_History" />
                 <tocdef id="Margin and Navigation Markers" sortgroup="c" text="Margin and Navigation Markers"  target="help/topics/CodeBrowserPlugin/CodeBrowser.htm#CBNavigationMarkers" />
             </tocdef>
             

@@ -19,6 +19,8 @@ import java.util.*;
 
 import org.jdom.Element;
 
+import docking.ComponentProvider;
+import docking.DockingWindowManager;
 import docking.tool.ToolConstants;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.events.ProgramClosedPluginEvent;
@@ -28,7 +30,9 @@ import ghidra.app.services.*;
 import ghidra.framework.options.*;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
-import ghidra.program.model.listing.Program;
+import ghidra.program.model.address.Address;
+import ghidra.program.model.listing.*;
+import ghidra.program.util.ProgramLocation;
 import ghidra.util.Msg;
 import ghidra.util.bean.opteditor.OptionsVetoException;
 
@@ -81,15 +85,9 @@ public class NavigationHistoryPlugin extends Plugin
 
 	private SaveState dataSaveState;
 
-	/**
-	 * Creates a new instance of the <CODE>ToolStateHistoryPlugin</CODE>,
-	 * passing it the session and plugin tool that it is in.
-	 * <P>
-	 */
-	public NavigationHistoryPlugin(PluginTool plugintool) {
-		super(plugintool);
-
-		plugintool.getOptions(ToolConstants.TOOL_OPTIONS);
+	public NavigationHistoryPlugin(PluginTool tool) {
+		super(tool);
+		tool.getOptions(ToolConstants.TOOL_OPTIONS);
 	}
 
 	@Override
@@ -208,11 +206,37 @@ public class NavigationHistoryPlugin extends Plugin
 		}
 	}
 
-	/**
-	 * Positions the "current" view to the next view in the history list and
-	 * generates a "HistoryChangedEvent". If there is no "next" view, the
-	 * history list remains unchanged.
-	 */
+	@Override
+	public void nextFunction(Navigatable navigatable) {
+		if (hasNextFunction(navigatable)) {
+			HistoryList historyList = historyListMap.get(navigatable);
+			LocationMemento memento = historyList.nextFunction(navigatable, true);
+			navigate(navigatable, memento);
+		}
+	}
+
+	@Override
+	public void previousFunction(Navigatable navigatable) {
+		if (hasPreviousFunction(navigatable)) {
+			HistoryList historyList = historyListMap.get(navigatable);
+			addCurrentLocationToHistoryIfAppropriate(navigatable, historyList.getCurrentLocation());
+			LocationMemento memento = historyList.previousFunction(navigatable, true);
+			navigate(navigatable, memento);
+		}
+	}
+
+	@Override
+	public boolean hasNextFunction(Navigatable navigatable) {
+		HistoryList historyList = historyListMap.get(navigatable);
+		return historyList != null && historyList.hasNextFunction(navigatable);
+	}
+
+	@Override
+	public boolean hasPreviousFunction(Navigatable navigatable) {
+		HistoryList historyList = historyListMap.get(navigatable);
+		return historyList != null && historyList.hasPreviousFunction(navigatable);
+	}
+
 	@Override
 	public void next(Navigatable navigatable) {
 		if (hasNext(navigatable)) {
@@ -222,11 +246,6 @@ public class NavigationHistoryPlugin extends Plugin
 		}
 	}
 
-	/**
-	 * Positions the "current" view to the previous view in the history list and
-	 * generates a "HistoryChangeEvent". If there is no "previous" view,
-	 * the history list remains unchanged.
-	 */
 	@Override
 	public void previous(Navigatable navigatable) {
 		if (hasPrevious(navigatable)) {
@@ -262,6 +281,10 @@ public class NavigationHistoryPlugin extends Plugin
 	}
 
 	private void navigate(Navigatable navigatable, LocationMemento memento) {
+		if (memento == null) {
+			return;
+		}
+
 		navigatable.goTo(memento.getProgram(), memento.getProgramLocation());
 		navigatable.setMemento(memento);
 		if (navigatable.isVisible()) {
@@ -309,28 +332,18 @@ public class NavigationHistoryPlugin extends Plugin
 		return previousLocations;
 	}
 
-	/**
-	 * Returns true if there is a valid "next" view in the history list.
-	 */
 	@Override
 	public boolean hasNext(Navigatable navigatable) {
 		HistoryList historyList = historyListMap.get(navigatable);
 		return historyList != null && historyList.hasNext();
 	}
 
-	/**
-	 * Returns true if there is a valid "previous" view in the history list.
-	 */
 	@Override
 	public boolean hasPrevious(Navigatable navigatable) {
 		HistoryList historyList = historyListMap.get(navigatable);
 		return historyList != null && historyList.hasPrevious();
 	}
 
-	/**
-	 * Removes all views from the history list and fires a change event. If the
-	 * history list is already empty, then nothing happens.
-	 */
 	@Override
 	public void clear(Navigatable navigatable) {
 		historyListMap.remove(navigatable);
@@ -353,10 +366,6 @@ public class NavigationHistoryPlugin extends Plugin
 		}
 	}
 
-	/**
-	 * Fires off a <CODE>HistoryChangePluginEvent</CODE>.
-	 * <P>
-	 */
 	private void notifyHistoryChange() {
 		tool.contextChanged(null);
 	}
@@ -416,13 +425,14 @@ public class NavigationHistoryPlugin extends Plugin
 		if (mementoElement == null) {
 			return null;
 		}
+
 		SaveState mementoState = new SaveState(mementoElement);
 		LocationMemento locationMemento = null;
 		try {
 			locationMemento = LocationMemento.getLocationMemento(mementoState, programs);
 		}
 		catch (IllegalArgumentException iae) {
-			Msg.debug(this, "Unable to restore LocationMemento: " + iae.getMessage());
+			Msg.debug(this, "Unable to restore LocationMemento: " + iae.getMessage(), iae);
 		}
 		return locationMemento;
 	}
@@ -436,11 +446,11 @@ public class NavigationHistoryPlugin extends Plugin
 		private int currentLocation = 0;
 		private int maxLocations;
 
-		public HistoryList(int maxLocations) {
+		HistoryList(int maxLocations) {
 			this.maxLocations = maxLocations;
 		}
 
-		public int getCurrentLocationIndex() {
+		int getCurrentLocationIndex() {
 			return currentLocation;
 		}
 
@@ -450,20 +460,15 @@ public class NavigationHistoryPlugin extends Plugin
 			}
 		}
 
-		void clear() {
-			list.clear();
-			currentLocation = 0;
-		}
-
-		public int size() {
+		int size() {
 			return list.size();
 		}
 
-		public LocationMemento getLocation(int index) {
+		LocationMemento getLocation(int index) {
 			return list.get(index);
 		}
 
-		public LocationMemento getCurrentLocation() {
+		LocationMemento getCurrentLocation() {
 			return list.get(currentLocation);
 		}
 
@@ -473,6 +478,7 @@ public class NavigationHistoryPlugin extends Plugin
 				currentLocation = 0;
 				return;
 			}
+
 			while (list.size() - 1 > currentLocation) {
 				list.remove(list.size() - 1);
 			}
@@ -485,11 +491,11 @@ public class NavigationHistoryPlugin extends Plugin
 				// same location, but maybe different "extra" info replace equivalent location
 				list.set(list.size() - 1, newValue);
 			}
+
 			if (list.size() > maxLocations) {
 				list.remove(0);
 			}
 			currentLocation = list.size() - 1;
-
 		}
 
 		void setMaxLocations(int maxLocations) {
@@ -524,6 +530,112 @@ public class NavigationHistoryPlugin extends Plugin
 				return list.get(currentLocation);
 			}
 			return null;
+		}
+
+		boolean hasNextFunction(Navigatable navigatable) {
+			return nextFunction(navigatable, false) != null;
+		}
+
+		boolean hasPreviousFunction(Navigatable navigatable) {
+			return previousFunction(navigatable, false) != null;
+		}
+
+		/**
+		 * Find the next history LocationMemento that contains a different function.  If no such
+		 * LocationMemento is found, null is returned.
+		 * 
+		 * @param navigatable the navigatable being navigated
+		 * @param moveTo true means after finding, get current location to it. false to just find 
+		 * 			and do nothing
+		 * @return next LocationMemento, or null if no next function
+		 */
+		private LocationMemento nextFunction(Navigatable navigatable, boolean moveTo) {
+
+			if (list.isEmpty()) {
+				return null;
+			}
+
+			ProgramLocation location = navigatable.getLocation();
+			Program program = location.getProgram();
+			FunctionManager functionManager = program.getFunctionManager();
+			Function currentFunction =
+				functionManager.getFunctionContaining(location.getAddress());
+
+			for (int i = currentLocation + 1; i < list.size(); i++) {
+				LocationMemento memento = list.get(i);
+				ProgramLocation otherLocation = memento.getProgramLocation();
+				Address address = otherLocation.getAddress();
+				Function historyFunction = functionManager.getFunctionContaining(address);
+				if (historyFunction != null && !historyFunction.equals(currentFunction)) {
+					if (moveTo) {
+						currentLocation = i;
+					}
+					return memento;
+				}
+			}
+
+			return null;
+		}
+
+		/**
+		 * Find the previous history LocationMemento that contains a different function. If no such
+		 * LocationMemento is found, null is returned.
+		 * 
+		 * @param navigatable the navigatable being navigated
+		 * @param moveTo true means after finding, get current location to it. false to just find 
+		 * 		   and do nothing
+		 * @return previous LocationMemento, or null if no previous function found
+		 */
+		private LocationMemento previousFunction(Navigatable navigatable, boolean moveTo) {
+			if (list.isEmpty()) {
+				return null;
+			}
+
+			Function startFunction = getPreviousStartFunction(navigatable);
+			ProgramLocation location = navigatable.getLocation();
+			Program program = location.getProgram();
+			FunctionManager functionManager = program.getFunctionManager();
+			for (int i = currentLocation - 1; i >= 0; i--) {
+
+				LocationMemento memento = list.get(i);
+				ProgramLocation otherLocation = memento.getProgramLocation();
+				Address address = otherLocation.getAddress();
+				Function historyFunction = functionManager.getFunctionContaining(address);
+
+				if (historyFunction != null && !historyFunction.equals(startFunction)) {
+					if (moveTo) {
+						currentLocation = i;
+					}
+					return memento;
+				}
+			}
+
+			return null;
+		}
+
+		private Function getPreviousStartFunction(Navigatable navigatable) {
+			ProgramLocation location = navigatable.getLocation();
+			Address currentAddress = location.getAddress();
+
+			//
+			// The active component may still be showing the previously loaded function, instead
+			// of the current location when that location is not in a function.  In that case, 
+			// when that provider is focused, prefer its notion of the current function so that
+			// users navigating from that view will go to the function before the one that is
+			// on the history stack.  This should feel more intuitive to the user, with the risk
+			// that the navigation actions will sometimes feel inconsistent, depending upon
+			// what view is focused.
+			//
+			DockingWindowManager manager = DockingWindowManager.getActiveInstance();
+			ComponentProvider provider = manager.getActiveComponentProvider();
+			if (provider instanceof Navigatable) {
+				LocationMemento memento = ((Navigatable) provider).getMemento();
+				currentAddress = memento.getProgramLocation().getAddress();
+			}
+
+			Program program = location.getProgram();
+			FunctionManager functionManager = program.getFunctionManager();
+			return functionManager.getFunctionContaining(currentAddress);
 		}
 
 		void remove(LocationMemento location) {
