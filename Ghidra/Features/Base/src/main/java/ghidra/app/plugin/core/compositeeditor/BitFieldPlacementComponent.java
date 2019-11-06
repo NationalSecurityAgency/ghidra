@@ -54,6 +54,8 @@ public class BitFieldPlacementComponent extends JPanel implements Scrollable {
 	private int bitWidth = 10;
 	private int byteWidth = getByteWidth(bitWidth);
 
+	private final boolean editUseEnabled;
+
 	private Composite composite;
 	private boolean bigEndian;
 
@@ -111,8 +113,18 @@ public class BitFieldPlacementComponent extends JPanel implements Scrollable {
 
 	}
 
-	BitFieldPlacementComponent(Composite composite) {
+	/**
+	 * Construct a bit field viewer/editor component.  Non-edit use limits bit
+	 * attribute computation to visible range only which facilitate use within
+	 * scroll pane for very large structures.  Edit use will determine bit attributes
+	 * for full allocation size. 
+	 * @param composite composite data type to be viewed/modified.
+	 * @param editUseEnabled if true use of editing bitfield editing/placement is
+	 * supported, else viewing only.
+	 */
+	BitFieldPlacementComponent(Composite composite, boolean editUseEnabled) {
 		this.composite = composite;
+		this.editUseEnabled = editUseEnabled;
 		if (composite != null) {
 			bigEndian = composite.getDataOrganization().isBigEndian();
 		}
@@ -133,6 +145,7 @@ public class BitFieldPlacementComponent extends JPanel implements Scrollable {
 
 	/**
 	 * Set the current composite.  State will reset to a non-edit mode.
+	 * The edit use enablement will remain unchanged.
 	 * @param composite composite or null
 	 */
 	public void setComposite(Composite composite) {
@@ -142,6 +155,9 @@ public class BitFieldPlacementComponent extends JPanel implements Scrollable {
 		}
 		allocationByteOffset = 0;
 		allocationByteSize = 1;
+		if (!editUseEnabled) {
+			allocationByteSize = composite.getLength();
+		}
 		init(null);
 	}
 
@@ -214,11 +230,7 @@ public class BitFieldPlacementComponent extends JPanel implements Scrollable {
 		return 8 * (bitWidth + BIT_SEPARATOR_THICKNESS);
 	}
 
-	public int getBitWidth() {
-		return bitWidth;
-	}
-
-	public void setBitWidth(int width) {
+	void setBitWidth(int width) {
 
 		bitWidth = width;
 		byteWidth = getByteWidth(bitWidth);
@@ -237,18 +249,15 @@ public class BitFieldPlacementComponent extends JPanel implements Scrollable {
 	}
 
 	private int getPreferredWidth() {
-		if (bitFieldAllocation == null) {
-			return byteWidth;
-		}
 		int extraLineSpace = BYTE_SEPARATOR_THICKNESS - BIT_SEPARATOR_THICKNESS;
 		return (allocationByteSize * byteWidth) + BYTE_SEPARATOR_THICKNESS + extraLineSpace;
 	}
 
-	public boolean isBigEndian() {
+	boolean isBigEndian() {
 		return bigEndian;
 	}
 
-	public BitFieldAllocation getBitFieldAllocation() {
+	BitFieldAllocation getBitFieldAllocation() {
 		return bitFieldAllocation;
 	}
 
@@ -263,12 +272,30 @@ public class BitFieldPlacementComponent extends JPanel implements Scrollable {
 		revalidate();
 	}
 
+	/**
+	 * Refresh the bitfield allocation following an {@link #editMode} change.
+	 * When {@link #editMode} is not {@link EditMode#NONE} the specified
+	 * bitSize and bitOffset specify the active edit bitfield.
+	 * @param bitSize component bitsize
+	 * @param bitOffset component lsb bit offset from lsb of allocation unit 
+	 * (allocation unit size is determine by current {@link #allocationByteSize}).
+	 */
 	void refresh(int bitSize, int bitOffset) {
 		bitFieldAllocation = new BitFieldAllocation(bitSize, bitOffset);
 		updatePreferredSize();
 		repaint();
 	}
 
+	/**
+	 * Refresh the bitfield allocation following an {@link #editMode} change or
+	 * change in allocation unit size/offset.
+	 * When {@link #editMode} is not {@link EditMode#NONE} the specified
+	 * bitSize and bitOffset specify the active edit bitfield.
+	 * @param byteSize allocation unit byte size
+	 * @param byteOffset allocation unit byte offset within composite
+	 * @param bitSize component bitsize
+	 * @param bitOffset component lsb bit offset from lsb of allocation unit.
+	 */
 	void refresh(int byteSize, int byteOffset, int bitSize, int bitOffset) {
 		this.allocationByteOffset = byteOffset;
 		this.allocationByteSize = byteSize;
@@ -277,11 +304,25 @@ public class BitFieldPlacementComponent extends JPanel implements Scrollable {
 		repaint();
 	}
 
+	/**
+	 * Update the size and offset of the allocation unit.  Since this can 
+	 * affect the size of this component, its bounds will be updated the component
+	 * repainted.
+	 * @param byteSize allocation byte size
+	 * @param byteOffset offset of allocation from start of composite
+	 */
 	void updateAllocation(int byteSize, int byteOffset) {
 		this.allocationByteOffset = byteOffset;
 		this.allocationByteSize = byteSize;
+		setBounds(0, 0, getPreferredWidth(), getPreferredHeight());
+		invalidate();
 		if (bitFieldAllocation != null) {
-			bitFieldAllocation.refresh();
+			if (editMode == EditMode.EDIT && editComponent.getOffset() > composite.getLength()) {
+				editMode = EditMode.NONE;
+				editOrdinal = -1;
+				editComponent = null;
+			}
+			bitFieldAllocation.refresh(true);
 			repaint();
 		}
 	}
@@ -295,6 +336,9 @@ public class BitFieldPlacementComponent extends JPanel implements Scrollable {
 	}
 
 	void initAdd(int bitSize, int bitOffset) {
+		if (!editUseEnabled) {
+			throw new IllegalStateException("component not constructed for edit use");
+		}
 		editMode = EditMode.ADD;
 		editOrdinal = -1;
 		editComponent = null;
@@ -324,6 +368,9 @@ public class BitFieldPlacementComponent extends JPanel implements Scrollable {
 	}
 
 	boolean hasApplyConflict() {
+		if (!editUseEnabled) {
+			throw new IllegalStateException("component not constructed for edit use");
+		}
 		if (composite == null || bitFieldAllocation == null) {
 			throw new IllegalStateException();
 		}
@@ -337,7 +384,7 @@ public class BitFieldPlacementComponent extends JPanel implements Scrollable {
 	 * @return true if editing or adding a bitfield
 	 */
 	boolean isEditing() {
-		return editMode != EditMode.NONE;
+		return editUseEnabled && editMode != EditMode.NONE;
 	}
 
 	/**
@@ -367,12 +414,15 @@ public class BitFieldPlacementComponent extends JPanel implements Scrollable {
 				--editOrdinal;
 			}
 		}
-		bitFieldAllocation.refresh();
+		bitFieldAllocation.refresh(true);
 		repaint();
 	}
 
 	void applyBitField(DataType baseDataType, String fieldName, boolean deleteConflicts,
 			CompositeChangeListener listener) {
+		if (!editUseEnabled) {
+			throw new IllegalStateException("component not constructed for edit use");
+		}
 		if (composite == null) {
 			throw new IllegalStateException("Composite not loaded");
 		}
@@ -432,7 +482,7 @@ public class BitFieldPlacementComponent extends JPanel implements Scrollable {
 			editMode = EditMode.NONE;
 			editOrdinal = -1;
 			editComponent = null;
-			bitFieldAllocation.refresh();
+			bitFieldAllocation.refresh(true);
 			repaint();
 		}
 	}
@@ -451,7 +501,8 @@ public class BitFieldPlacementComponent extends JPanel implements Scrollable {
 
 	/**
 	 * Get the bit attributes object which corresponds to the specified point p within the
-	 * bounds of this component.
+	 * bounds of this component. NOTE: use of non-visible bitAttributes within the 
+	 * allocation range requires edit use enablement (see {@link #editUseEnabled}).
 	 * @param p point within the bounds of this component
 	 * @return bit attributes object or null
 	 */
@@ -486,41 +537,24 @@ public class BitFieldPlacementComponent extends JPanel implements Scrollable {
 	}
 
 	/**
-	 * Get rectangle which fully encompasses specified component.
+	 * Get rectangle which fully encompasses specified component bytes.
 	 * @param dtc data type component
-	 * @param extendToByteBoundary if true rectangle extended to byte boundary
 	 * @return component rectangle or null
 	 */
-	Rectangle getComponentRectangle(DataTypeComponent dtc, boolean extendToByteBoundary) {
+	Rectangle getComponentRectangle(DataTypeComponent dtc) {
 		if (bitFieldAllocation == null || dtc == null) {
 			return null;
 		}
 
-		if (extendToByteBoundary) {
-			// compute rectangle which extends to byte boundary
-			int offset = (dtc.getOffset() - allocationByteOffset);
-			if (!bigEndian) {
-				offset = allocationByteSize - offset - dtc.getLength();
-			}
-			int x = offset * byteWidth;
-			int y = (2 * BYTE_SEPARATOR_THICKNESS) + CELL_HEIGHT;
-			int width = (dtc.getLength() * byteWidth) + (2 * BYTE_SEPARATOR_THICKNESS);
-			return new Rectangle(x, y, width, CELL_HEIGHT);
+		// compute rectangle which extends to byte boundary
+		int offset = (dtc.getOffset() - allocationByteOffset);
+		if (!bigEndian) {
+			offset = allocationByteSize - offset - dtc.getLength();
 		}
-
-		// compute rectangle based on bits only
-		Rectangle rect = null;
-		for (BitAttributes attrs : bitFieldAllocation.bitAttributes) {
-			if (attrs.dtc == dtc) {
-				if (rect == null) {
-					rect = new Rectangle(attrs.rectangle);
-				}
-				else {
-					rect.add(attrs.rectangle);
-				}
-			}
-		}
-		return rect;
+		int x = offset * byteWidth;
+		int y = (2 * BYTE_SEPARATOR_THICKNESS) + CELL_HEIGHT;
+		int width = (dtc.getLength() * byteWidth) + (2 * BYTE_SEPARATOR_THICKNESS);
+		return new Rectangle(x, y, width, CELL_HEIGHT);
 	}
 
 	@Override
@@ -633,6 +667,8 @@ public class BitFieldPlacementComponent extends JPanel implements Scrollable {
 
 	private void paintBits(Graphics2D g, int y) {
 
+		bitFieldAllocation.refresh(false);
+
 		Color curColor = g.getColor();
 
 		BitAttributes[] bitAttributes = bitFieldAllocation.bitAttributes;
@@ -654,7 +690,8 @@ public class BitFieldPlacementComponent extends JPanel implements Scrollable {
 		Rectangle clipBounds = g.getClipBounds();
 		int maxX = clipBounds.x + clipBounds.width - 1;
 		int width = bitAttributes[0].rectangle.width;
-		int startIndex = clipBounds.x / (bitAttributes[0].rectangle.width);
+		int startIndex = (clipBounds.x / (bitAttributes[0].rectangle.width)) -
+			(8 * bitFieldAllocation.leftChopBytes);
 		x += startIndex * width;
 
 		int bitIndex;
@@ -753,6 +790,12 @@ public class BitFieldPlacementComponent extends JPanel implements Scrollable {
 
 	}
 
+	/**
+	 * <code>BitFieldPlacement</code> provides the ability to translate a 
+	 * composite component to a bit-level placement within the allocation
+	 * range including the notion of clipped edges when one or both sides 
+	 * extend beyond the allocation range.
+	 */
 	private class BitFieldPlacement {
 		int leftBit;
 		int rightBit;
@@ -789,10 +832,7 @@ public class BitFieldPlacementComponent extends JPanel implements Scrollable {
 				leftBit = leftAdj;
 			}
 
-//			System.out.println(component.toString() + " >>> " + leftBit + " - " + rightBit +
-//				"  oa: " + offsetAdjBytes);
-
-			// clip to allocation region
+			// clip to allocation range
 			int allocBitSize = 8 * allocationByteSize;
 			truncateRight = false;
 			if (rightBit >= allocBitSize) {
@@ -807,30 +847,137 @@ public class BitFieldPlacementComponent extends JPanel implements Scrollable {
 		}
 	}
 
+	/**
+	 * <code>BitFieldAllocation</code> provides the bit-level details within the
+	 * allocation range including the optional overlay of an edit component
+	 * with confict detection.  The bit-level details are defined via 
+	 * {@link BitAttributes}.
+	 */
 	class BitFieldAllocation {
 
 		private final int bitSize;
 		private final int bitOffset;
-		private boolean hasConflict;
 
-		// bit layout normalized to big-endian layout
-		// left-most allocation msb has array index of 0 
+		private boolean hasConflict; // only useable during edit use (see editUseEnabled)
+
+		/**
+		 * Reflects actual byte allocation range covered by bitAttributes.
+		 * The full allocation is defined by allocationByteSize, where:
+		 * <pre>
+		 *        {@link #allocationByteSize} = {@link #leftChopBytes} + {@link #allocationBytes} + {@link #rightChopBytes}
+		 *        length of {@link #bitAttributes} = 8 * {@link #allocationBytes}
+		 * </pre>
+		 */
+		private Rectangle visibleArea;
+		private int allocationBytes;
+		private int rightChopBytes;
+		private int leftChopBytes;
+
+		/**
+		 * Bit attributes array reflects bit layout normalized to big-endian 
+		 * layout where left-most allocation bit has array index of 0.  In edit 
+		 * mode this array covers the full span of {@link #allocationByteSize}, while in 
+		 * non-edit mode the array size is reduced based upon visibility as 
+		 * indicated by {@link #leftChopBytes} and {@link #rightChopBytes}.
+		 */
 		private BitAttributes[] bitAttributes;
 
+		/**
+		 * Construct a bitfield allocation with an optional EDIT/ADD component
+		 * specified as a bit range.  If editMode is NONE the specified
+		 * bit range will be ignored during use.
+		 * @param bitSize component bitsize
+		 * @param bitOffset component lsb bit offset from lsb of allocation unit.
+		 */
 		BitFieldAllocation(int bitSize, int bitOffset) {
-			if (allocationByteSize <= 0 || (bitSize + bitOffset) > (8 * allocationByteSize)) {
-				throw new AssertException("allocation size too small");
+			int maxBitOffset = (8 * allocationByteSize) - 1;
+			if (allocationByteSize <= 0 || bitOffset < 0 || bitSize < 0 ||
+				(bitSize + bitOffset - 1) > maxBitOffset) {
+				throw new IllegalArgumentException(
+					"bitfield not contained within allocation window");
 			}
 			this.bitSize = bitSize;
 			this.bitOffset = bitOffset;
-			refresh();
+			refresh(true);
 		}
 
-		private void refresh() {
+		/**
+		 * Get the number of bytes contained within the allocationByteSize which
+		 * are not visible on the left side.  When edit use is enabled the left
+		 * will always be zero regardless of visibility.
+		 * @return number of allocation bytes chopped from left
+		 */
+		private int getLeftByteChop() {
+			if (editUseEnabled) {
+				return 0;
+			}
+			if (visibleArea.width == 0) {
+				// component not yet contained witin scroll pane
+				return allocationByteSize - 1;
+			}
+			int visibleStart = visibleArea.x;
+			return (visibleStart / byteWidth);
+		}
+
+		/**
+		 * Get the number of bytes contained within the allocationByteSize which
+		 * are not visible on the right side.  When edit use is enabled the right
+		 * will always be zero regardless of visibility.
+		 * @return number of allocation bytes chopped from right
+		 */
+		private int getRightByteChop() {
+			if (editUseEnabled) {
+				return 0;
+			}
+			if (visibleArea.width == 0) {
+				// component not yet contained witin scroll pane
+				return 0;
+			}
+
+			int visibleEnd = visibleArea.x + visibleArea.width - 1;
+			int chop = allocationByteSize - ((visibleEnd + byteWidth) / byteWidth);
+			return Math.max(0, chop);
+		}
+
+		/**
+		 * Refresh the computed bitAttributes.  When editUseEnabled is false 
+		 * the computed bitAttributes will correspond to the visible portion
+		 * of the component.  This method does not handle changes to
+		 * {@link #allocationByteSize} which require a new {@link BitFieldAllocation}
+		 * instance.
+		 * @param force if true a refresh will be forced, otherwise a refresh
+		 * will only occur for non-edit use when the visible portion of the component
+		 * has changed (e.g., scrolled).
+		 */
+		private void refresh(boolean force) {
+			Rectangle visibleRect = getVisibleRect();
+			if (!force && (editUseEnabled || visibleRect.equals(visibleArea))) {
+				return; // no change to bitAttributes required
+			}
+			visibleArea = visibleRect;
+
+			int leftChop = getLeftByteChop();
+			int rightChop = getRightByteChop();
+
+			if (!force && (leftChop == leftChopBytes && rightChop == rightChopBytes)) {
+				return; // no change to bitAttributes required
+			}
+
+			leftChopBytes = leftChop;
+			rightChopBytes = rightChop;
+			allocationBytes = allocationByteSize - leftChopBytes - rightChopBytes;
+
 			allocateBits();
 			layoutBits();
 		}
 
+		/**
+		 * Generate bit attribute array.  When new or existing component
+		 * is active ({@link #editMode} != {@link EditMode#NONE}) the {@link #bitAttributes}
+		 * will reflect this as well as any conflict with extsing components.
+		 * The {@link #bitAttributes} will also convey placement within the displayed
+		 * {@link BitFieldPlacementComponent}.
+		 */
 		private void allocateBits() {
 
 			if (composite == null) {
@@ -838,14 +985,14 @@ public class BitFieldPlacementComponent extends JPanel implements Scrollable {
 				return;
 			}
 
-			bitAttributes = new BitAttributes[8 * allocationByteSize];
+			bitAttributes = new BitAttributes[8 * allocationBytes];
 
 			if (composite instanceof Structure) {
 				allocateStructureMembers((Structure) composite);
 			}
 
 			if (editMode != EditMode.NONE) {
-				int rightMostBit = bitAttributes.length - bitOffset - 1;
+				int rightMostBit = (8 * allocationByteSize) - bitOffset - 1;
 				if (bitSize == 0) {
 					allocateZeroBitField(editComponent, rightMostBit);
 				}
@@ -863,50 +1010,86 @@ public class BitFieldPlacementComponent extends JPanel implements Scrollable {
 			}
 		}
 
+		/**
+		 * Layout the {@link #bitAttributes} within the {@link BitFieldPlacementComponent}.
+		 */
 		private void layoutBits() {
 			int x = BYTE_SEPARATOR_THICKNESS;
 			int y = (2 * BYTE_SEPARATOR_THICKNESS) + CELL_HEIGHT;
 			int width = bitWidth + BIT_SEPARATOR_THICKNESS;
+			x += 8 * leftChopBytes * width;
 			for (BitAttributes attrs : bitAttributes) {
 				attrs.layout(x, y, width, CELL_HEIGHT);
 				x += width;
 			}
 		}
 
+		/**
+		 * Allocate {@link #bitAttributes} for all structure members which reside
+		 * within the byte range covered by {@link #allocationBytes}.
+		 * @param struct structure whose component bit attributes should be 
+		 *               computed.
+		 */
 		private void allocateStructureMembers(Structure struct) {
 
-			int allocationEndOffset = allocationByteOffset + allocationByteSize - 1;
+			int offset = allocationByteOffset;
+			offset += isBigEndian() ? leftChopBytes : rightChopBytes;
 
-			for (DataTypeComponent component : struct.getComponents()) {
-				if (component.getOrdinal() == editOrdinal) {
-					continue;
+			int allocationEndOffset = offset + allocationBytes - 1;
+
+			int numComponents = struct.getNumComponents();
+			DataTypeComponent component = struct.getComponentAt(offset);
+			while (component != null) {
+				if (component.getOffset() > allocationEndOffset) {
+					break;
 				}
-				int startOffset = component.getOffset();
-				int endOffset = component.getEndOffset();
-				if (endOffset < allocationByteOffset) {
-					continue;
+				if (component.getOrdinal() != editOrdinal) {
+					BitFieldPlacement placement = new BitFieldPlacement(component);
+					if (placement.zeroBitField) {
+						allocateZeroBitField(component, placement.rightBit);
+					}
+					else {
+						allocateBits(component, placement.leftBit, placement.rightBit,
+							placement.truncateLeft, placement.truncateRight);
+					}
 				}
-				if (startOffset > allocationEndOffset) {
-					continue;
+				int nextOrdinal = component.getOrdinal() + 1;
+				if (nextOrdinal >= numComponents) {
+					break;
 				}
-				BitFieldPlacement placement = new BitFieldPlacement(component);
-				if (placement.zeroBitField) {
-					allocateZeroBitField(component, placement.rightBit);
-				}
-				else {
-					allocateBits(component, placement.leftBit, placement.rightBit,
-						placement.truncateLeft, placement.truncateRight);
-				}
+				component = struct.getComponent(nextOrdinal);
 			}
 		}
 
+		/**
+		 * Allocate {@link #bitAttributes} for the specified component within
+		 * the byte range covered by {@link #allocationBytes}. 
+		 * @param dtc composite component
+		 * @param leftBit left bit index within the full {@link #allocationByteSize}
+		 *                where 0 is the left-most bit index.
+		 * @param rightBit right bit index within the full {@link #allocationByteSize}
+		 *                 where 0 is the left-most bit index.
+		 * @param truncatedLeft true if leftBit has been truncated by the full
+		 *                      allocation range
+		 * @param truncatedRight true if rightBit has been truncated by the full
+		 *                      allocation range
+		 */
 		private void allocateBits(DataTypeComponent dtc, int leftBit, int rightBit,
 				boolean truncatedLeft, boolean truncatedRight) {
 			if (truncatedLeft && truncatedRight && leftBit == rightBit) {
 				throw new AssertException();
 			}
+
+			// adjust bit indexes for missing bitAttributes
+			int adjust = 8 * leftChopBytes;
+			leftBit -= adjust;
+			rightBit -= adjust;
+
+			// compute start and end bit index within allocationBytes which
+			// may have been reduced from allocationByteSize based upon visibility.
 			int startIndex = Math.max(0, leftBit);
-			int endIndex = Math.min(bitAttributes.length - 1, rightBit);
+			int endIndex = Math.min((8 * allocationBytes) - 1, rightBit);
+
 			for (int i = startIndex; i <= endIndex; i++) {
 				EndBitType leftEndType = EndBitType.NOT_END;
 				EndBitType rightEndType = EndBitType.NOT_END;
@@ -925,7 +1108,14 @@ public class BitFieldPlacementComponent extends JPanel implements Scrollable {
 		}
 
 		private void allocateZeroBitField(DataTypeComponent dtc, int bitIndex) {
-			bitAttributes[bitIndex] = new BitAttributes(dtc, bitAttributes[bitIndex]);
+
+			// determine placement attribute index within allocationBytes which
+			// may have been reduced from allocationByteSize based upon visibility.
+
+			int index = bitIndex - (8 * rightChopBytes);
+			if (index >= 0 && index < bitAttributes.length) {
+				bitAttributes[index] = new BitAttributes(dtc, bitAttributes[index]);
+			}
 		}
 
 		public int getBitOffset() {
@@ -938,11 +1128,11 @@ public class BitFieldPlacementComponent extends JPanel implements Scrollable {
 
 	}
 
-	static enum EditMode {
+	private static enum EditMode {
 		NONE, ADD, EDIT;
 	}
 
-	static enum EndBitType {
+	private static enum EndBitType {
 		NOT_END, END, TRUNCATED_END;
 	}
 
@@ -961,7 +1151,7 @@ public class BitFieldPlacementComponent extends JPanel implements Scrollable {
 		private boolean zeroBitfield;
 		private boolean unallocated;
 
-		Rectangle rectangle;
+		private Rectangle rectangle;
 
 		/**
 		 * Unallocated bitfield (e.g., bitfield padding)
@@ -1030,10 +1220,10 @@ public class BitFieldPlacementComponent extends JPanel implements Scrollable {
 
 		/**
 		 * Layout the position of this displayed bit (i.e., Rectangle information)
-		 * @param x
-		 * @param y
-		 * @param width
-		 * @param height
+		 * @param x the  specified X coordinate
+		 * @param y the  specified Y coordinate
+		 * @param width  the width of the {@code Rectangle}
+		 * @param height the height of the {@code Rectangle}
 		 */
 		void layout(int x, int y, int width, int height) {
 			rectangle = new Rectangle(x, y, width, height);
@@ -1144,6 +1334,10 @@ public class BitFieldPlacementComponent extends JPanel implements Scrollable {
 				return conflict.dtc;
 			}
 			return null;
+		}
+
+		Rectangle getRectangle() {
+			return rectangle;
 		}
 
 	}

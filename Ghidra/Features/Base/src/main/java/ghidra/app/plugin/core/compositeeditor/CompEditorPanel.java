@@ -161,19 +161,19 @@ public class CompEditorPanel extends CompositeEditorPanel {
 	@Override
 	protected JPanel createBitViewerPanel() {
 
-		bitViewComponent = new BitFieldPlacementComponent(model.viewComposite);
+		bitViewComponent = new BitFieldPlacementComponent(model.viewComposite, false);
 		model.addCompositeViewerModelListener(new CompositeEditorModelAdapter() {
 			@Override
 			public void selectionChanged() {
-				update();
+				update(false);
 			}
 
 			@Override
 			public void componentDataChanged() {
-				update();
+				update(true);
 			}
 
-			private void update() {
+			private void update(boolean dataChanged) {
 				if (!model.isLoaded()) {
 					bitViewComponent.setComposite(null);
 					return;
@@ -183,18 +183,24 @@ public class CompEditorPanel extends CompositeEditorPanel {
 					bitViewComponent.setComposite(model.viewComposite);
 				}
 
-				bitViewComponent.updateAllocation(model.viewComposite.getLength(), 0);
+				int length = model.viewComposite.getLength();
+				if (length != bitViewComponent.getAllocationByteSize()) {
+					bitViewComponent.updateAllocation(length, 0);
+				}
 
 				DataTypeComponent dtc = null;
 				if (model.isSingleComponentRowSelection()) {
 					dtc = model.getComponent(model.getSelectedRows()[0]);
 				}
-				bitViewComponent.init(dtc);
-				Rectangle selectedRectangle = bitViewComponent.getComponentRectangle(dtc, true);
+
+				Rectangle selectedRectangle = bitViewComponent.getComponentRectangle(dtc);
 				if (selectedRectangle != null) {
-					SwingUtilities.invokeLater(
-						() -> bitViewComponent.scrollRectToVisible(selectedRectangle));
+					bitViewComponent.scrollRectToVisible(selectedRectangle);
+					validate();
 				}
+
+				bitViewComponent.init(dtc);
+
 			}
 		});
 
