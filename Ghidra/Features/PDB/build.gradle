@@ -55,7 +55,7 @@ if ("win64".equals(getCurrentPlatformName())) {
 		doFirst {
 			file("build/os/win64").mkdirs()
 			def msbuildCmd = "msbuild ${solutionPathWindows} /p:Configuration=Release /p:PlatformToolset=${platformToolset} /p:WindowsTargetPlatformVersion=${windowsTargetPlatformVersion}"
-			println msbuildCmd
+			println "Executing: " + msbuildCmd
 			new File(solutionBatchFilePath).withWriter { out ->
 				out.println "call " + VISUAL_STUDIO_VCVARS_CMD
 				out.println msbuildCmd
