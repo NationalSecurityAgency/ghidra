@@ -98,6 +98,20 @@ public:
   bool operator<(const LanedRegister &op2) const { return (storage < op2.storage); }	///< Compare based on VarnodeData
 };
 
+/// \brief Record describing the access of a large Varnode that can be traced to a LanedRegister
+class LanedAccess {
+  const LanedRegister *base;	///< Base register dictating the lane scheme
+  PcodeOp *op;			///< Operation using the big register
+  int4 size;			///< Size of the register in bytes
+  int4 bytePos;			///< Significance position relative to the laned register
+public:
+  LanedAccess(const LanedRegister *b,PcodeOp *o,int4 sz,int4 pos) { base=b; op=o; size=sz; bytePos=pos; }	///< Constructor
+  const LanedRegister *getBase(void) const { return base; }	///< Get the base LanedRegister being traced
+  PcodeOp *getOp(void) const { return op; }	///< Get the PcodeOp using the large Varnode
+  int4 getSize(void) const { return size; }	///< Get the size of the Varnode being accessed
+  int4 getBytePos(void) const { return bytePos; }	///< Get the significance position relative to the laned register
+};
+
 /// \brief Description of logical lanes within a \b big Varnode
 ///
 /// A \b lane is a byte offset and size within a Varnode. Lanes within a

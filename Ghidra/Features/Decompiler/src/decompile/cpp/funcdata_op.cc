@@ -557,6 +557,19 @@ void Funcdata::opUndoPtradd(PcodeOp *op,bool finalize)
   opInsertBefore(multOp,op);
 }
 
+/// Store a record indicating a potential use of a large laned register. Generally, the output
+/// of the op is the use, except in the case of SUBPIECE or STORE, where getIn(0) and getIn(2)
+/// respectively are the Varnodes being used.
+/// \param base is the description of the laned register that is triggering this record
+/// \param op is the PcodeOp using the large Varnode
+/// \param sz is the size of the large Varnode in bytes
+/// \param pos is the significance position of the Varnode, relative to the LanedRegister description
+void Funcdata::opMarkLanedAccess(const LanedRegister *base,PcodeOp *op,int4 sz,int4 pos)
+
+{
+  lanedList.push_back(LanedAccess(base,op,sz,pos));
+}
+
 /// Make a clone of the given PcodeOp, copying control-flow properties as well.  The data-type
 /// is \e not cloned.
 /// \param op is the PcodeOp to clone

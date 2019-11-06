@@ -80,6 +80,7 @@ class Funcdata {
   Merge covermerge;		///< Variable range intersection algorithms
   ParamActive *activeoutput;	///< Data for assessing which parameters are passed to \b this function
   Override localoverride;	///< Overrides of data-flow, prototypes, etc. that are local to \b this function
+  list<LanedAccess> lanedList;	///< List of ops that are accessing potentially laned registers
 
 				// Low level Varnode functions
   void setVarnodeProperties(Varnode *vn) const;	///< Look-up boolean properties and data-type information
@@ -428,6 +429,10 @@ public:
   Varnode *opStackLoad(AddrSpace *spc,uintb off,uint4 sz,PcodeOp *op,Varnode *stackptr,bool insertafter);
   PcodeOp *opStackStore(AddrSpace *spc,uintb off,PcodeOp *op,bool insertafter);
   void opUndoPtradd(PcodeOp *op,bool finalize);	///< Convert a CPUI_PTRADD back into a CPUI_INT_ADD
+  void opMarkLanedAccess(const LanedRegister *base,PcodeOp *op,int4 sz,int4 pos);	///< Mark op as using laned register
+  list<LanedAccess>::const_iterator beginLaneAccess(void) const { return lanedList.begin(); }	///< Beginning iterator over laned accesses
+  list<LanedAccess>::const_iterator endLaneAccess(void) const { return lanedList.end(); }	///< Ending iterator over laned accesses
+  void clearLanedAccessList(void) { lanedList.clear(); }	///< Clear records from the laned access list
 
   /// \brief Start of PcodeOp objects with the given op-code
   list<PcodeOp *>::const_iterator beginOp(OpCode opc) const { return obank.begin(opc); }
