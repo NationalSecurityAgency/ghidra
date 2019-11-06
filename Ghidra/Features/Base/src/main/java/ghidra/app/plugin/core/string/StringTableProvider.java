@@ -114,7 +114,7 @@ public class StringTableProvider extends ComponentProviderAdapter implements Dom
 			setTitle(options.isPascalRequired() ? "Pascal String Search" : "String Search");
 			setWindowMenuGroup("String Search");
 			setWindowGroup("String Search");
-			setTabText("String Search - " + DateUtils.getTimeNow());
+			setTabText("String Search - " + DateUtils.formatCurrentTime());
 		}
 		setIcon(ICON);
 		setHelpLocation(new HelpLocation(HelpTopics.SEARCH, "String_Search_Results"));
