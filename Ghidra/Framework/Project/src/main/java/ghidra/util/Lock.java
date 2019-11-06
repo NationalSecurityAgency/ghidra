@@ -17,14 +17,14 @@ package ghidra.util;
 
 /**
  * Ghidra synchronization lock. This class allows creation of named locks for
- * modifying tables in the Ghidra data base. This class also creates an instance
- * of a global lock that must first be obtained when synchronizing using
+ * modifying tables in the Ghidra database. An instance of this class is used as
+ * a global lock that must first be obtained when synchronizing use of
  * multiple of the named locks.
  */
 public class Lock {
 	private Thread owner;
-	private int cnt = 0;
-	private int waiting = 0;
+	private int lockAquireCount = 0;
+	private int waiterCount = 0;
 	private String name;
 
 	/**
@@ -45,19 +45,21 @@ public class Lock {
 
 		while (true) {
 			if (owner == null) {
-				cnt = 1;
+				lockAquireCount = 1;
 				owner = currThread;
 				return;
 			} else if (owner == currThread) {
-				cnt++;
+				lockAquireCount++;
 				return;
 			}
 			try {
-				waiting++;
+				waiterCount++;
 				wait();
 			} catch (InterruptedException e) {
+				// exception from another threads notify(), ignore
+				// and try to get lock again
 			} finally {
-				waiting--;
+				waiterCount--;
 			}
 		}
 	}
@@ -69,13 +71,13 @@ public class Lock {
 	public synchronized void release() {
 		Thread currThread = Thread.currentThread();
 
-		if (cnt > 0 && (owner == currThread)) {
-			if (--cnt == 0) {
+		if (lockAquireCount > 0 && (owner == currThread)) {
+			if (--lockAquireCount == 0) {
 				owner = null;
 				// This is purely to help sample profiling.  If notify() is called the
 				// sampler can attribute time to the methods calling this erroneously.  For some reason
 				// the visualvm sampler gets a sample more often when notify() is called.
-				if (waiting != 0) {
+				if (waiterCount != 0) {
 					notify();
 				}
 			}
