@@ -88,6 +88,11 @@ public interface GhidraOptions {
 	final String OPTION_SEARCH_LIMIT = "Search Limit";
 
 	/**
+	 * Options title the search category
+	 */
+	final String OPTION_SEARCH_TITLE = "Search";
+
+	/**
 	 * Category name for the "Auto Analysis" options.
 	 */
 	final String CATEGORY_AUTO_ANALYSIS = "Auto Analysis";
