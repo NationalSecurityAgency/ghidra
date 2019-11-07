@@ -18,6 +18,7 @@ package ghidra.app.util.bin.format.macho.dyld;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import generic.continues.RethrowContinuesFactory;
 import ghidra.app.util.bin.BinaryReader;
@@ -119,7 +120,7 @@ public class DyldCacheLocalSymbolsInfo implements StructConverter {
 	public List<NList> getNList() {
 		return nlistList;
 	}
-	
+
 	/**
 	 * Gets the {@link List} of {@link DyldCacheLocalSymbolsEntry}s.
 	 * 
@@ -144,18 +145,30 @@ public class DyldCacheLocalSymbolsInfo implements StructConverter {
 		return struct;
 	}
 
-	private void parseNList(MessageLog log, TaskMonitor monitor)
-			throws CancelledException {
+	private void parseNList(MessageLog log, TaskMonitor monitor) throws CancelledException {
 		FactoryBundledWithBinaryReader nListReader = new FactoryBundledWithBinaryReader(
 			RethrowContinuesFactory.INSTANCE, reader.getByteProvider(), reader.isLittleEndian());
 		monitor.setMessage("Parsing DYLD nlist symbol table...");
-		monitor.initialize(nlistCount);
+		monitor.initialize(nlistCount * 2);
 		nListReader.setPointerIndex(startIndex + nlistOffset);
 		try {
+
 			for (int i = 0; i < nlistCount; ++i) {
-				nlistList.add(NList.createNList(nListReader, is32bit, startIndex + stringsOffset));
+				nlistList.add(NList.createNList(nListReader, is32bit));
 				monitor.checkCanceled();
 				monitor.incrementProgress(1);
+			}
+			// sort the entries by the index in the string table, so don't jump around reading
+			List<NList> sortedList = nlistList.stream().sorted(
+				(o1, o2) -> o1.getStringTableIndex() - o2.getStringTableIndex()).collect(
+					Collectors.toList());
+
+			// initialize the NList strings from string table
+			long stringTableOffset = startIndex + stringsOffset;
+			for (NList nList : sortedList) {
+				monitor.checkCanceled();
+				monitor.incrementProgress(1);
+				nList.initString(nListReader, stringTableOffset);
 			}
 		}
 		catch (IOException e) {
@@ -187,8 +200,8 @@ public class DyldCacheLocalSymbolsInfo implements StructConverter {
 		try {
 			Address addr = localSymbolsInfoAddr.add(nlistOffset);
 			for (NList nlist : nlistList) {
-				Data d = DataUtilities.createData(program, addr, nlist.toDataType(), -1,
-					false, DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
+				Data d = DataUtilities.createData(program, addr, nlist.toDataType(), -1, false,
+					DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
 				addr = addr.add(d.getLength());
 				monitor.checkCanceled();
 				monitor.incrementProgress(1);
