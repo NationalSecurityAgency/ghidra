@@ -449,12 +449,10 @@ public class ListingModelAdapter implements LayoutModel, ListingModelListener {
 
 	protected void resetIndexMap() {
 		AddressIndexMap previous = addressToIndexMap.reset();
-		if (removeUnviewableAddressRanges()) {
-			AddressBasedIndexMapper mapper =
-				new AddressBasedIndexMapper(previous, addressToIndexMap);
-			for (LayoutModelListener listener : listeners) {
-				listener.modelSizeChanged(mapper);
-			}
+		removeUnviewableAddressRanges();
+		AddressBasedIndexMapper mapper = new AddressBasedIndexMapper(previous, addressToIndexMap);
+		for (LayoutModelListener listener : listeners) {
+			listener.modelSizeChanged(mapper);
 		}
 	}
 
@@ -495,8 +493,8 @@ public class ListingModelAdapter implements LayoutModel, ListingModelListener {
 		if (indexBefore == null) {
 			indexBefore = BigInteger.ZERO;
 		}
-		if (indexAfter.subtract(indexBefore).compareTo(
-			addressToIndexMap.getMiniumUnviewableGapSize()) > 0) {
+		if (indexAfter.subtract(indexBefore)
+				.compareTo(addressToIndexMap.getMiniumUnviewableGapSize()) > 0) {
 			Address start = addressToIndexMap.getAddress(indexBefore.add(BigInteger.ONE));
 			Address end = addressToIndexMap.getAddress(indexAfter.subtract(BigInteger.ONE));
 			if (start != null && end != null &&
