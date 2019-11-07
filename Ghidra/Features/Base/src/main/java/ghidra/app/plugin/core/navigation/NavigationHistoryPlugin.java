@@ -555,15 +555,13 @@ public class NavigationHistoryPlugin extends Plugin
 				return null;
 			}
 
-			ProgramLocation location = navigatable.getLocation();
-			Program program = location.getProgram();
-			FunctionManager functionManager = program.getFunctionManager();
-			Function currentFunction = functionManager.getFunctionContaining(location.getAddress());
+			Function currentFunction = getCurrentFunction(navigatable);
 
 			for (int i = currentLocation + 1; i < list.size(); i++) {
 				LocationMemento memento = list.get(i);
 				ProgramLocation otherLocation = memento.getProgramLocation();
 				Address address = otherLocation.getAddress();
+				FunctionManager functionManager = otherLocation.getProgram().getFunctionManager();
 				Function historyFunction = functionManager.getFunctionContaining(address);
 				if (historyFunction != null && !historyFunction.equals(currentFunction)) {
 					if (moveTo) {
@@ -574,6 +572,16 @@ public class NavigationHistoryPlugin extends Plugin
 			}
 
 			return null;
+		}
+
+		private Function getCurrentFunction(Navigatable navigatable) {
+			ProgramLocation location = navigatable.getLocation();
+			if (location == null) {
+				return null;
+			}
+			Program program = location.getProgram();
+			FunctionManager functionManager = program.getFunctionManager();
+			return functionManager.getFunctionContaining(location.getAddress());
 		}
 
 		/**
@@ -591,14 +599,12 @@ public class NavigationHistoryPlugin extends Plugin
 			}
 
 			Function startFunction = getPreviousStartFunction(navigatable);
-			ProgramLocation location = navigatable.getLocation();
-			Program program = location.getProgram();
-			FunctionManager functionManager = program.getFunctionManager();
 			for (int i = currentLocation - 1; i >= 0; i--) {
 
 				LocationMemento memento = list.get(i);
 				ProgramLocation otherLocation = memento.getProgramLocation();
 				Address address = otherLocation.getAddress();
+				FunctionManager functionManager = otherLocation.getProgram().getFunctionManager();
 				Function historyFunction = functionManager.getFunctionContaining(address);
 
 				if (historyFunction != null && !historyFunction.equals(startFunction)) {
@@ -614,6 +620,10 @@ public class NavigationHistoryPlugin extends Plugin
 
 		private Function getPreviousStartFunction(Navigatable navigatable) {
 			ProgramLocation location = navigatable.getLocation();
+			if (location == null) {
+				return null;
+			}
+
 			Address currentAddress = location.getAddress();
 
 			//
