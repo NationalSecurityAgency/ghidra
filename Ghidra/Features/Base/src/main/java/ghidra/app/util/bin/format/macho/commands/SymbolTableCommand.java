@@ -23,7 +23,6 @@ import java.util.stream.Collectors;
 import ghidra.app.util.bin.format.FactoryBundledWithBinaryReader;
 import ghidra.app.util.bin.format.macho.MachConstants;
 import ghidra.app.util.bin.format.macho.MachHeader;
-import ghidra.app.util.bin.format.macho.dyld.DyldCacheAccelerateInfo;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.program.flatapi.FlatProgramAPI;
 import ghidra.program.model.address.Address;
@@ -75,7 +74,7 @@ public class SymbolTableCommand extends LoadCommand {
 		long index = reader.getPointerIndex();
 
 		reader.setPointerIndex(header.getStartIndexInProvider() + symoff);
-		
+
 		List<NList> nlistList = new ArrayList<>(nsyms);
 		long startIndex = header.getStartIndexInProvider();
 		boolean is32bit = header.is32bit();
@@ -85,16 +84,16 @@ public class SymbolTableCommand extends LoadCommand {
 			nlistList.add(NList.createNList(reader, is32bit));
 		}
 		// sort the entries by the index in the string table, so don't jump around reading
-		List<NList> sortedList = nlistList.stream()
-				.sorted((o1,o2)-> o1.getStringTableIndex() - o2.getStringTableIndex())
-				.collect(Collectors.toList());
+		List<NList> sortedList = nlistList.stream().sorted(
+			(o1, o2) -> o1.getStringTableIndex() - o2.getStringTableIndex()).collect(
+				Collectors.toList());
 
 		// initialize the NList strings from string table
 		long stringTableOffset = stroff;
-		sortedList.forEach(entry ->  {
-			entry.initString(reader, stringTableOffset);
-			symbols.add(entry);
-		} );
+		for (NList nList : sortedList) {
+			nList.initString(reader, stringTableOffset);
+			symbols.add(nList);
+		}
 
 		reader.setPointerIndex(index);
 	}
