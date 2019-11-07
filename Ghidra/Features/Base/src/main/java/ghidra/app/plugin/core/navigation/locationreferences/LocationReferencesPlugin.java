@@ -74,6 +74,7 @@ public class LocationReferencesPlugin extends Plugin
 	@Override
 	protected void init() {
 		initOptions();
+		LocationReferencesHighlighter.registerHighlighterOptions(this);
 	}
 
 	private void initOptions() {

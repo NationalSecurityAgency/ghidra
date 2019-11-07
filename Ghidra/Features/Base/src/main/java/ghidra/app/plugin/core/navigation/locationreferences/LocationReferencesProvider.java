@@ -25,7 +25,6 @@ import javax.swing.event.ChangeListener;
 import docking.ActionContext;
 import docking.action.*;
 import docking.widgets.table.GTable;
-import ghidra.app.events.ProgramSelectionPluginEvent;
 import ghidra.app.nav.Navigatable;
 import ghidra.app.nav.NavigatableRemovalListener;
 import ghidra.app.services.GoToService;
@@ -151,11 +150,6 @@ public class LocationReferencesProvider extends ComponentProviderAdapter
 
 	private void doUpdateAndReloadReferencesTable() {
 		referencesPanel.reloadModel();
-	}
-
-	private void doMakeSelection() {
-		locationReferencesPlugin.firePluginEvent(new ProgramSelectionPluginEvent(
-			locationReferencesPlugin.getName(), referencesPanel.getSelection(), program));
 	}
 
 	private void setLocationDescriptor(LocationDescriptor locationDescriptor,
