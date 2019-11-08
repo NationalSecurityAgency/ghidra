@@ -17,9 +17,7 @@ package ghidra.util;
 
 /**
  * Ghidra synchronization lock. This class allows creation of named locks for
- * modifying tables in the Ghidra database. An instance of this class is used as
- * a global lock that must first be obtained when synchronizing use of
- * multiple of the named locks.
+ * synchroniing modification of multiple tables in the Ghidra database.
  */
 public class Lock {
 	private Thread owner;
@@ -48,17 +46,20 @@ public class Lock {
 				lockAquireCount = 1;
 				owner = currThread;
 				return;
-			} else if (owner == currThread) {
+			}
+			else if (owner == currThread) {
 				lockAquireCount++;
 				return;
 			}
 			try {
 				waiterCount++;
 				wait();
-			} catch (InterruptedException e) {
+			}
+			catch (InterruptedException e) {
 				// exception from another threads notify(), ignore
 				// and try to get lock again
-			} finally {
+			}
+			finally {
 				waiterCount--;
 			}
 		}
@@ -81,7 +82,8 @@ public class Lock {
 					notify();
 				}
 			}
-		} else {
+		}
+		else {
 			throw new IllegalStateException("Attempted to release an unowned lock: " + name);
 		}
 	}
