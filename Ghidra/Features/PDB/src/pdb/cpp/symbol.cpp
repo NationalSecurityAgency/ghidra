@@ -239,7 +239,7 @@ DWORD getTag(IDiaSymbol& symbol) {
 
 std::wstring getTagAsString(IDiaSymbol& symbol) {
 	const DWORD tag = getTag(symbol);
-	if (tag > _countof(SYMBOL_TAG_STRINGS))	{
+	if (tag > _countof(SYMBOL_TAG_STRINGS) - 1)	{
 		return L"";
 	}
 	return SYMBOL_TAG_STRINGS[tag];
