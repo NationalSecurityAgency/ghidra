@@ -30,6 +30,7 @@ import docking.help.HelpService;
 import docking.widgets.label.GHtmlLabel;
 import docking.widgets.table.*;
 import docking.widgets.table.threaded.*;
+import ghidra.framework.main.DomainFileOperationTracker;
 import ghidra.framework.main.FrontEndPlugin;
 import ghidra.framework.model.*;
 import ghidra.framework.plugintool.PluginTool;
@@ -280,7 +281,9 @@ public class ProjectDataTablePanel extends JPanel {
 			DomainFileInfo info = model.getRowObject(i);
 			list.add(info.getDomainFile());
 		}
-		return new ProjectDataActionContext(provider, projectData,
+
+		DomainFileOperationTracker fileTracker = plugin.getFileOperationTracker();
+		return new ProjectDataActionContext(provider, projectData, fileTracker,
 			model.getRowObject(selectedRows[0]), null, list, gTable, true);
 	}
 

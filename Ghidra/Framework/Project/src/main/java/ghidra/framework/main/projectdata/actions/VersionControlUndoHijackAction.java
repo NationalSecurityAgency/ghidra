@@ -23,7 +23,7 @@ import javax.swing.ImageIcon;
 
 import docking.action.MenuData;
 import ghidra.framework.client.ClientUtil;
-import ghidra.framework.main.datatable.DomainFileProvider;
+import ghidra.framework.main.datatable.DomainFileContext;
 import ghidra.framework.main.datatree.UndoActionDialog;
 import ghidra.framework.model.DomainFile;
 import ghidra.framework.model.DomainFolder;
@@ -51,7 +51,7 @@ public class VersionControlUndoHijackAction extends VersionControlAction {
 	}
 
 	@Override
-	public void actionPerformed(DomainFileProvider context) {
+	public void actionPerformed(DomainFileContext context) {
 		undoHijackedFiles(context.getSelectedFiles());
 	}
 
@@ -59,7 +59,7 @@ public class VersionControlUndoHijackAction extends VersionControlAction {
 	 * Returns true if at least one of the provided domain files is hijacked.
 	 */
 	@Override
-	public boolean isEnabledForContext(DomainFileProvider context) {
+	public boolean isEnabledForContext(DomainFileContext context) {
 		List<DomainFile> domainFiles = context.getSelectedFiles();
 		for (DomainFile domainFile : domainFiles) {
 			if (domainFile.isHijacked()) {

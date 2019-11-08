@@ -379,7 +379,7 @@ public class FrontEndTestEnv {
 		if (exclusive) {
 			JCheckBox cb = AbstractDockingTest.findComponent(dialog, JCheckBox.class);
 			assertNotNull(cb);
-			assertEquals("Request exclusive check out", cb.getText());
+			assertEquals("Request exclusive checkout", cb.getText());
 			runSwing(() -> cb.setSelected(true));
 		}
 

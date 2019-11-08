@@ -673,7 +673,7 @@ public class ProjectFileManager implements ProjectData {
 
 	/**
 	 * Returns the standard user data filename associated with the specified file ID.
-	 * @param associatedFileID
+	 * @param associatedFileID the file id
 	 * @return user data filename
 	 */
 	public static String getUserDataFilename(String associatedFileID) {

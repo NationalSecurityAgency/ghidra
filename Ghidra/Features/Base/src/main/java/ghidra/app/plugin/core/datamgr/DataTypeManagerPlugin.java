@@ -46,6 +46,7 @@ import ghidra.app.services.CodeViewerService;
 import ghidra.app.services.DataTypeManagerService;
 import ghidra.app.util.HelpTopics;
 import ghidra.framework.Application;
+import ghidra.framework.main.DomainFileOperationTracker;
 import ghidra.framework.main.OpenVersionedFileDialog;
 import ghidra.framework.model.*;
 import ghidra.framework.options.SaveState;
@@ -92,6 +93,7 @@ public class DataTypeManagerPlugin extends ProgramPlugin
 	private DataTypeManagerHandler dataTypeManagerHandler;
 	private DataTypesProvider provider;
 	private OpenVersionedFileDialog openDialog;
+	private DomainFileOperationTracker fileTracker = new DomainFileOperationTracker();
 
 	private Map<String, DockingAction> recentlyOpenedArchiveMap;
 	private Map<String, DockingAction> installArchiveMap;
@@ -125,7 +127,6 @@ public class DataTypeManagerPlugin extends ProgramPlugin
 			@Override
 			public void archiveClosed(Archive archive) {
 				if (archive instanceof ProjectArchive) {
-					// Program is handled by deactivation event
 					((ProjectArchive) archive).getDomainObject().removeListener(
 						DataTypeManagerPlugin.this);
 				}
@@ -141,7 +142,6 @@ public class DataTypeManagerPlugin extends ProgramPlugin
 						DataTypeManagerPlugin.this);
 					addRecentlyOpenedProjectArchive((ProjectArchive) archive);
 				}
-				// Program is handled by activation.
 			}
 
 			@Override
@@ -172,9 +172,6 @@ public class DataTypeManagerPlugin extends ProgramPlugin
 
 	}
 
-	/**
-	 * @see ghidra.framework.plugintool.Plugin#serviceAdded(java.lang.Class, java.lang.Object)
-	 */
 	@Override
 	public void serviceAdded(Class<?> interfaceClass, Object service) {
 		if (interfaceClass == CodeViewerService.class) {
@@ -619,10 +616,6 @@ public class DataTypeManagerPlugin extends ProgramPlugin
 		return new Class[] { DataTypeArchive.class };
 	}
 
-	/**
-	 * Method called if the plugin supports this domain file.
-	 * @param data the data to be used by the running tool
-	 */
 	@Override
 	public boolean acceptData(DomainFile[] data) {
 		if (data == null || data.length == 0) {
@@ -783,6 +776,18 @@ public class DataTypeManagerPlugin extends ProgramPlugin
 		return true;
 	}
 
+	public DataTypeConflictHandler getConflictHandler() {
+		return provider.getConflictHandler();
+	}
+
+	void setStatus(String message) {
+		tool.setStatusInfo(message);
+	}
+
+	DomainFileOperationTracker getFileOperationTracker() {
+		return fileTracker;
+	}
+
 	public static boolean isValidTypeDefBaseType(Component parent, DataType dataType) {
 		if (dataType instanceof FactoryDataType) {
 			Msg.showError(DataTypeManagerPlugin.class, parent, "TypeDef not allowed",
@@ -800,13 +805,5 @@ public class DataTypeManagerPlugin extends ProgramPlugin
 			return false;
 		}
 		return true;
-	}
-
-	public DataTypeConflictHandler getConflictHandler() {
-		return provider.getConflictHandler();
-	}
-
-	void setStatus(String message) {
-		tool.setStatusInfo(message);
 	}
 }

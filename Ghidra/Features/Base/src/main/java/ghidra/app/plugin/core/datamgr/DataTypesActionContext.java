@@ -25,27 +25,48 @@ import ghidra.app.context.ProgramActionContext;
 import ghidra.app.plugin.core.datamgr.archive.ProjectArchive;
 import ghidra.app.plugin.core.datamgr.tree.DataTypeArchiveGTree;
 import ghidra.app.plugin.core.datamgr.tree.ProjectArchiveNode;
-import ghidra.framework.main.datatable.DomainFileProvider;
+import ghidra.framework.main.DomainFileOperationTracker;
+import ghidra.framework.main.datatable.DomainFileContext;
 import ghidra.framework.model.DomainFile;
 import ghidra.program.model.listing.Program;
 
-public class DataTypesActionContext extends ProgramActionContext implements DomainFileProvider {
+public class DataTypesActionContext extends ProgramActionContext implements DomainFileContext {
 	private final GTreeNode clickedNode;
 	private final boolean isToolbarAction;
 	private DataTypeArchiveGTree archiveGTree;
 	private List<DomainFile> domainFiles;
+	private DomainFileOperationTracker fileTracker;
 
 	public DataTypesActionContext(DataTypesProvider provider, Program program,
 			DataTypeArchiveGTree archiveGTree, GTreeNode clickedNode) {
-		this(provider, program, archiveGTree, clickedNode, false);
+		this(provider, program, null, archiveGTree, clickedNode, false);
 	}
 
 	public DataTypesActionContext(DataTypesProvider provider, Program program,
 			DataTypeArchiveGTree archiveGTree, GTreeNode clickedNode, boolean isToolbarAction) {
+		this(provider, program, null, archiveGTree, clickedNode, isToolbarAction);
+	}
+
+	public DataTypesActionContext(DataTypesProvider provider, Program program,
+			DomainFileOperationTracker fileTracker, DataTypeArchiveGTree archiveGTree,
+			GTreeNode clickedNode, boolean isToolbarAction) {
 		super(provider, program, archiveGTree);
+		this.fileTracker = fileTracker;
 		this.archiveGTree = archiveGTree;
 		this.clickedNode = clickedNode;
 		this.isToolbarAction = isToolbarAction;
+	}
+
+	@Override
+	public boolean isBusy() {
+		return fileTracker != null && fileTracker.isBusy();
+	}
+
+	@Override
+	public void setBusy(boolean isBusy) {
+		if (fileTracker != null) {
+			fileTracker.setBusy(isBusy);
+		}
 	}
 
 	public boolean isToolbarAction() {

@@ -86,6 +86,7 @@ public class FrontEndPlugin extends Plugin
 	private WorkspacePanel workspacePanel;
 	private Project activeProject;
 	private ProjectManager projectManager;
+	private DomainFileOperationTracker fileTracker = new DomainFileOperationTracker();
 
 	/**
 	 * the sash panel that contains the active project data and
@@ -1065,6 +1066,10 @@ public class FrontEndPlugin extends Plugin
 		if (tool != null) { // tool is null when we've been disposed
 			((FrontEndTool) tool).removeProjectListener(l);
 		}
+	}
+
+	public DomainFileOperationTracker getFileOperationTracker() {
+		return fileTracker;
 	}
 
 	class FrontEndProvider extends ComponentProvider {

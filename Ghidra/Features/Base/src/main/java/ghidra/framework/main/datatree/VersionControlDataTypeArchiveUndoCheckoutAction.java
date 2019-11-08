@@ -27,7 +27,7 @@ import ghidra.app.plugin.core.datamgr.archive.*;
 import ghidra.app.plugin.core.datamgr.editor.DataTypeEditorManager;
 import ghidra.framework.client.ClientUtil;
 import ghidra.framework.main.SaveDataDialog;
-import ghidra.framework.main.datatable.DomainFileProvider;
+import ghidra.framework.main.datatable.DomainFileContext;
 import ghidra.framework.main.projectdata.actions.VersionControlAction;
 import ghidra.framework.model.DomainFile;
 import ghidra.util.exception.AssertException;
@@ -61,7 +61,7 @@ public class VersionControlDataTypeArchiveUndoCheckoutAction extends VersionCont
 	}
 
 	@Override
-	public void actionPerformed(DomainFileProvider context) {
+	public void actionPerformed(DomainFileContext context) {
 		undoCheckOut();
 	}
 
@@ -69,7 +69,7 @@ public class VersionControlDataTypeArchiveUndoCheckoutAction extends VersionCont
 	 * Returns true if at least one of the provided domain files is checked out from the repository.
 	 */
 	@Override
-	public boolean isEnabledForContext(DomainFileProvider context) {
+	public boolean isEnabledForContext(DomainFileContext context) {
 		List<DomainFile> domainFiles = context.getSelectedFiles();
 		for (DomainFile domainFile : domainFiles) {
 			if (domainFile.isCheckedOut()) {
