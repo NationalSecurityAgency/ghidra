@@ -37,8 +37,7 @@ public abstract class GTreeSlowLoadingNode extends GTreeLazyNode {
 	 * @return the list of children for this node.
 	 * @throws CancelledException if the monitor is cancelled
 	 */
-	public abstract List<GTreeNode> generateChildren(TaskMonitor monitor)
-			throws CancelledException;
+	public abstract List<GTreeNode> generateChildren(TaskMonitor monitor) throws CancelledException;
 
 	@Override
 	protected final List<GTreeNode> generateChildren() {

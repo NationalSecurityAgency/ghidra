@@ -49,7 +49,7 @@ public class OrganizationNode extends SymbolTreeNode {
 	private OrganizationNode(List<GTreeNode> list, int max, int parentLevel, TaskMonitor monitor)
 			throws CancelledException {
 
-		setChildren(computeChildren(list, max, this, parentLevel, monitor));
+		doSetChildren(computeChildren(list, max, this, parentLevel, monitor));
 
 		GTreeNode child = getChild(0);
 		baseName = child.getName().substring(0, getPrefixSizeForGrouping(getChildren(), 1) + 1);
@@ -128,8 +128,7 @@ public class OrganizationNode extends SymbolTreeNode {
 				monitor.checkCanceled();
 				String str = list.get(i).getName();
 				if (stringsDiffer(prevStr, str, characterOffset)) {
-					addNode(children, list, start, i - 1, maxNodes, characterOffset,
-						monitor);
+					addNode(children, list, start, i - 1, maxNodes, characterOffset, monitor);
 					start = i;
 				}
 				prevStr = str;
@@ -144,16 +143,14 @@ public class OrganizationNode extends SymbolTreeNode {
 			return true;
 		}
 		return s1.substring(0, diffLevel + 1)
-				.compareToIgnoreCase(
-					s2.substring(0, diffLevel + 1)) != 0;
+				.compareToIgnoreCase(s2.substring(0, diffLevel + 1)) != 0;
 	}
 
 	private static void addNode(List<GTreeNode> children, List<GTreeNode> list, int start, int end,
-			int max, int diffLevel, TaskMonitor monitor)
-			throws CancelledException {
+			int max, int diffLevel, TaskMonitor monitor) throws CancelledException {
 		if (end - start > 0) {
-			children.add(new OrganizationNode(list.subList(start, end + 1), max, diffLevel,
-				monitor));
+			children.add(
+				new OrganizationNode(list.subList(start, end + 1), max, diffLevel, monitor));
 		}
 		else {
 			GTreeNode node = list.get(start);
