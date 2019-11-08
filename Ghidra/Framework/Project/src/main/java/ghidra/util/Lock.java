@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,18 +16,18 @@
 package ghidra.util;
 
 /**
- * Ghidra synchronization lock. This class allows creation of named locks for 
- * modifying tables in the Ghidra data base. This class also creates an instance
- * of a global lock that must first be obtained when synchronizing using multiple
- * of the named locks.
+ * Ghidra synchronization lock. This class allows creation of named locks for
+ * synchroniing modification of multiple tables in the Ghidra database.
  */
 public class Lock {
 	private Thread owner;
-	private int cnt = 0;
+	private int lockAquireCount = 0;
+	private int waiterCount = 0;
 	private String name;
 
 	/**
 	 * Creates an instance of a lock for synchronization within Ghidra.
+	 * 
 	 * @param name the name of this lock
 	 */
 	public Lock(String name) {
@@ -36,26 +35,32 @@ public class Lock {
 	}
 
 	/**
-	 * Acquire this synchronization lock. 
-	 * (i.e. begin synchronizing on this named lock.) 
+	 * Acquire this synchronization lock. (i.e. begin synchronizing on this named
+	 * lock.)
 	 */
 	public synchronized void acquire() {
 		Thread currThread = Thread.currentThread();
 
 		while (true) {
 			if (owner == null) {
-				cnt = 1;
+				lockAquireCount = 1;
 				owner = currThread;
 				return;
 			}
 			else if (owner == currThread) {
-				cnt++;
+				lockAquireCount++;
 				return;
 			}
 			try {
+				waiterCount++;
 				wait();
 			}
 			catch (InterruptedException e) {
+				// exception from another threads notify(), ignore
+				// and try to get lock again
+			}
+			finally {
+				waiterCount--;
 			}
 		}
 	}
@@ -67,10 +72,15 @@ public class Lock {
 	public synchronized void release() {
 		Thread currThread = Thread.currentThread();
 
-		if (cnt > 0 && (owner == currThread)) {
-			if (--cnt == 0) {
+		if (lockAquireCount > 0 && (owner == currThread)) {
+			if (--lockAquireCount == 0) {
 				owner = null;
-				notify();
+				// This is purely to help sample profiling.  If notify() is called the
+				// sampler can attribute time to the methods calling this erroneously.  For some reason
+				// the visualvm sampler gets a sample more often when notify() is called.
+				if (waiterCount != 0) {
+					notify();
+				}
 			}
 		}
 		else {
@@ -80,10 +90,10 @@ public class Lock {
 
 	/**
 	 * Gets the thread that currently owns the lock.
+	 * 
 	 * @return the thread that owns the lock or null.
 	 */
 	public Thread getOwner() {
 		return owner;
 	}
-
 }
