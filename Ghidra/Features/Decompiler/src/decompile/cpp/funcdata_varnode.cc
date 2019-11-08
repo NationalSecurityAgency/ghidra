@@ -711,12 +711,9 @@ void Funcdata::clearDeadVarnodes(void)
   while(iter!=vbank.endLoc()) {
     vn = *iter++;
     if (vn->hasNoDescend()) {
-      if (vn->isInput()&&(!vn->isMark())) {
-	if ((vn->isSpacebase())|| // Space base is always typelocked
-	    (!vn->isTypeLock())) {
-	  vbank.makeFree(vn);
-	  vn->clearCover();
-	}
+      if (vn->isInput() && !vn->isLockedInput()) {
+	vbank.makeFree(vn);
+	vn->clearCover();
       }
       if (vn->isFree())
 	vbank.destroy(vn);
