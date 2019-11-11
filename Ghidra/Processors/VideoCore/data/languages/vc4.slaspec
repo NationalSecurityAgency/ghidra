@@ -1442,10 +1442,10 @@ with finst: {
     Rd = tmp;
   }
   :"fceil"^ccsfx Rd, fargb is ccsfx & (Alu5=12 & Rd ; fargb) {
-    Rd = int2float(ceil(fargb));
+    Rd = ceil(fargb);
   }
   :"ffloor"^ccsfx Rd, fargb is ccsfx & (Alu5=13 & Rd ; fargb) {
-    Rd = int2float(floor(fargb));
+    Rd = floor(fargb);
   }
   :"flog2"^ccsfx Rd, fargb is ccsfx & (Alu5=14 & Rd ; fargb) {
     Rd = flog2(fargb);
@@ -1463,10 +1463,10 @@ with finst: {
   }
   with : Alu5=17 ... {
     :"floor"^ccsfx Rd, Ra, "sasl" fargb is ccsfx & (Rd ; Ra & fargb) {
-      Rd = floor(Ra f* fexp2(fargb));
+      Rd = trunc(floor(Ra f* fexp2(fargb)));
     }
     :"floor"^ccsfx Rd, Ra is ccsfx & (Rd ; Ra & argHasImm=1 & argImm6=0) {
-      Rd = floor(Ra);
+      Rd = trunc(floor(Ra));
     }
   }
   with : Alu5=18 ... {
