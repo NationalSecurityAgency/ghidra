@@ -17,8 +17,6 @@ package ghidra.app.plugin.core.stackeditor;
 
 import static org.junit.Assert.*;
 
-import java.awt.event.KeyEvent;
-
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 
@@ -308,15 +306,6 @@ public abstract class AbstractStackEditorTest extends AbstractEditorTest {
 				hexNumbersAction = (HexNumbersAction) element;
 			}
 		}
-	}
-
-	@Override
-	protected void backspace(final int repeat) {
-		runSwing(() -> {
-			for (int i = 0; i < repeat; i++) {
-				triggerActionInCellEditor(KeyEvent.VK_BACK_SPACE);
-			}
-		});
 	}
 
 	int getOrdinalAtOffset(int offset) {
