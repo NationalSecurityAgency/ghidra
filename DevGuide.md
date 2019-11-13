@@ -77,7 +77,7 @@ Install OpenJDK 11 and make sure it's the default java.
 
 Install Eclipse.
 You can launch Eclipse with any JRE/JDK, but you'll need to ensure Eclipse knows about your JDK 11 installation.
-In Eclipse, select Window -> Prefereces (Eclipse -> Preferences on macOS), then navigate to Java -> Installed JREs, and ensure a JDK 11 is configured.
+In Eclipse, select Window -> Preferences (Eclipse -> Preferences on macOS), then navigate to Java -> Installed JREs, and ensure a JDK 11 is configured.
 
 Install Gradle, add it to your `PATH`, and ensure it is launched using JDK 11.
 
