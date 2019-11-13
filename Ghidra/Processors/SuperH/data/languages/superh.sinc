@@ -91,7 +91,7 @@ define token instr32(32)
     l_rm_20_23 =        (20, 23)
     l_rn_24_27 =        (24, 27)
     l_opcode_28_31 =    (28, 31)
-    l_simm20_00_16 =    (0, 16) signed
+    l_imm20_00_16 =    (0, 16)
     l_simm20_20_23 =    (20, 23) signed
     l_imm3_20_22 =      (20, 22)
 ;
@@ -499,26 +499,27 @@ disppc2: @(disp,pc) is disp_00_07 & pc
     l_rm_20_23 = zext(*:2 (disp + l_rm_20_23));
 }
 
-imm20: "#"value is l_simm20_20_23 & l_simm20_00_16
-    [ value = ((l_simm20_20_23 << 16) | l_simm20_00_16); ]
+simm20: "#"value is l_simm20_20_23 & l_imm20_00_16
+    [ value = ((l_simm20_20_23 << 16) | l_imm20_00_16); ]
     { export *[const]:4 value; }
 
-imm20s: "#"value is l_simm20_20_23 & l_simm20_00_16
-    [ value = ((l_simm20_20_23 << 16) | l_simm20_00_16) << 8; ]
+simm20s: "#"value is l_simm20_20_23 & l_imm20_00_16
+    [ value = ((l_simm20_20_23 << 16) | l_imm20_00_16) << 8; ]
     { export *[const]:4 value; }
+
 
 # MOVI20 #imm20, Rn           0000nnnniiii0000 iiiiiiiiiiiiiiii     imm → sign extension → Rn
-:movi20 imm20, l_rn_24_27
-    is l_opcode_28_31=0b0000 & l_rn_24_27 & l_opcode_16_19=0b0000 & imm20
+:movi20 simm20, l_rn_24_27
+    is l_opcode_28_31=0b0000 & l_rn_24_27 & l_opcode_16_19=0b0000 & simm20
 {
-    l_rn_24_27 = imm20;
+    l_rn_24_27 = simm20;
 }
 
 # MOVI20S #imm20, Rn          0000nnnniiii0001 iiiiiiiiiiiiiiii     imm<<8 → sign extension → Rn
-:movi20s imm20s, l_rn_24_27
-    is l_opcode_28_31=0b0000 & l_rn_24_27 & l_opcode_16_19=0b0001 & imm20s
+:movi20s simm20s, l_rn_24_27
+    is l_opcode_28_31=0b0000 & l_rn_24_27 & l_opcode_16_19=0b0001 & simm20s
 {
-    l_rn_24_27 = imm20s;
+    l_rn_24_27 = simm20s;
 }
 
 #
