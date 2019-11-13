@@ -1,5 +1,27 @@
 # Developer's Guide
 
+## References
+
+- [Catalog of Dependencies](#catalog-of-dependencies)
+- [Install Development and Build Tools](#install-development-and-build-tools)
+- [Setup Source Repository](#setup-source-repository)
+- [Setup Build Dependency Repository](#setup-build-dependency-repository)
+  * [Automatic script instructions](#automatic-script-instructions)
+  * [Manual download instructions](#manual-download-instructions)
+- [Building Ghidra](#building-ghidra)
+- [Developing Ghidra](#developing-ghidra)
+  * [Prepare the Environment](#prepare-the-environment)
+  * [Import Eclipse Projects](#import-eclipse-projects)
+  * [Building the natives](#building-the-natives)
+  * [Pre-compile Language Modules](#pre-compile-language-modules-optional)
+  * [Import and Build GhidraDev project](#import-and-build-ghidradev-project-optional)
+  * [Run and Debug Ghidra from Eclipse](#run-and-debug-ghidra-from-eclipse)
+  * [Running tests](#running-tests)
+- [Setup build in CI](#setup-build-in-ci)
+- [Building Supporting Data](#building-supporting-data)
+  * [Building Data Type Archives](#building-data-type-archives)
+  * [Building FID Databases](#building-fid-databases)
+
 ## Catalog of Dependencies
 
 The following is a list of dependencies, in no particular order.
@@ -55,7 +77,7 @@ Install OpenJDK 11 and make sure it's the default java.
 
 Install Eclipse.
 You can launch Eclipse with any JRE/JDK, but you'll need to ensure Eclipse knows about your JDK 11 installation.
-In Eclipse, select Window -> Prefereces (Eclipse -> Preferences on macOS), then navigate to Java -> Installed JREs, and ensure a JDK 11 is configured.
+In Eclipse, select Window -> Preferences (Eclipse -> Preferences on macOS), then navigate to Java -> Installed JREs, and ensure a JDK 11 is configured.
 
 Install Gradle, add it to your `PATH`, and ensure it is launched using JDK 11.
 
@@ -299,7 +321,7 @@ and under _Target Platform_, activate _/Eclipse GhidraDevPlugin/GhidraDev.target
 See `~/git/ghidra/GhidraBuild/EclipsePlugins/GhidraDev/GhidraDevPlugin/build_README.txt`
 for instructions on how to build the GhidraDev plugin.
 
-### Run/Debug Ghidra from Eclipse
+### Run and Debug Ghidra from Eclipse
 
 To run or debug Ghidra from Eclipse, use the provided launch configuration (usually under the "Run" or "Debug" buttons).
 If the launcher does not appear, it probably has not been marked as a favorite.
