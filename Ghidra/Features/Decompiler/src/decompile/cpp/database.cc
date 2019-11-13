@@ -398,34 +398,44 @@ void Symbol::restoreXml(const Element *el)
   restoreXmlBody(list.begin());
 }
 
-void FunctionSymbol::buildType(int4 size)
+/// Get the number of bytes consumed by a SymbolEntry representing \b this Symbol.
+/// By default, this is the number of bytes consumed by the Symbol's data-type.
+/// This gives the amount of leeway a search has when the address queried does not match
+/// the exact address of the Symbol. With functions, the bytes consumed by a SymbolEntry
+/// may not match the data-type size.
+/// \return the number of bytes in a default SymbolEntry
+int4 Symbol::getBytesConsumed(void) const
+
+{
+  return type->getSize();
+}
+
+void FunctionSymbol::buildType(void)
 
 {
   TypeFactory *types = scope->getArch()->types;
   type = types->getTypeCode();
-  // Entries for functions have small size starting at the entry address
-  // of the function in order to deal with non-contiguous functions
-  // The size used to always be 1, but now we need sizes (slightly) larger than 1
-  // to accomodate pointer constants that encode extra information in the lower bit(s)
-  // of an otherwise aligned pointer.   If the encoding is not aprior detected, it is interpreted
-  // initially as a straight address that comes up 1 (or more) bytes off of the start of the function
-  // In order to detect this, we need to lay down a slightly larger size than 1
-  if (size > 1)
-    type = types->getTypeArray(size,type);
-
   flags |= Varnode::namelock | Varnode::typelock;
 }
 
 /// Build a function \e shell, made up of just the name of the function and
 /// a placeholder data-type, without the underlying Funcdata object.
+/// A SymbolEntry for a function has a small size starting at the entry address,
+/// in order to deal with non-contiguous functions.
+/// We need a size (slightly) larger than 1 to accommodate pointer constants that encode
+/// extra information in the lower bit(s) of an otherwise aligned pointer.
+/// If the encoding is not initially detected, it is interpreted
+/// as a straight address that comes up 1 (or more) bytes off of the start of the function
+/// In order to detect this, we need to lay down a slightly larger size than 1
 /// \param sc is the Scope that will contain the new Symbol
 /// \param nm is the name of the new Symbol
-/// \param size is the number of bytes the Symbol should consume
+/// \param size is the number of bytes a SymbolEntry should consume
 FunctionSymbol::FunctionSymbol(Scope *sc,const string &nm,int4 size)
   : Symbol(sc)
 {
   fd = (Funcdata *)0;
-  buildType(size);
+  consumeSize = size;
+  buildType();
   name = nm;
 }
 
@@ -433,7 +443,8 @@ FunctionSymbol::FunctionSymbol(Scope *sc,int4 size)
   : Symbol(sc)
 {
   fd = (Funcdata *)0;
-  buildType(size);
+  consumeSize = size;
+  buildType();
 }
 
 FunctionSymbol::~FunctionSymbol(void) {
@@ -469,9 +480,9 @@ void FunctionSymbol::restoreXml(const Element *el)
     fd = new Funcdata("",scope,Address());
     fd->restoreXml(el);
     name = fd->getName();
-    if (type->getSize() < fd->getSize()) {
+    if (consumeSize < fd->getSize()) {
       if ((fd->getSize()>1)&&(fd->getSize() <= 8))
-	buildType(fd->getSize());
+	consumeSize = fd->getSize();
     }
   }
   else {			// functionshell
@@ -934,8 +945,9 @@ SymbolEntry *Scope::addMap(const SymbolEntry &entry)
     entry.symbol->flags |= Varnode::persist;
 
   SymbolEntry *res;
+  int4 consumeSize = entry.symbol->getBytesConsumed();
   if (entry.addr.isInvalid())
-    res = addDynamicMapInternal(entry.symbol,Varnode::mapped,entry.hash,0,entry.symbol->getType()->getSize(),entry.uselimit);
+    res = addDynamicMapInternal(entry.symbol,Varnode::mapped,entry.hash,0,consumeSize,entry.uselimit);
   else {
     if (entry.uselimit.empty()) {
       entry.symbol->flags |= Varnode::addrtied;
@@ -943,7 +955,7 @@ SymbolEntry *Scope::addMap(const SymbolEntry &entry)
       // can only happen if use is not limited
       entry.symbol->flags |= glb->symboltab->getProperty(entry.addr);
     }
-    res = addMapInternal(entry.symbol,Varnode::mapped,entry.addr,0,entry.symbol->getType()->getSize(),entry.uselimit);
+    res = addMapInternal(entry.symbol,Varnode::mapped,entry.addr,0,consumeSize,entry.uselimit);
     if (entry.addr.isJoin()) {
       // The address is a join,  we add extra SymbolEntry maps for each of the pieces
       JoinRecord *rec = glb->findJoin(entry.addr.getOffset());
