@@ -16,7 +16,7 @@
  *********************************************************************************/
 task rasterizeSvg(type: JavaExec) {
 	group rootProject.GHIDRA_GROUP
-	description "   Converts .svg files to .png files.  [gradle/root/distribution.gradle]\n"
+	description "   Converts .svg files to .png files.  [gradle/root/svg.gradle]\n"
 				
 	subprojects { p ->
 	

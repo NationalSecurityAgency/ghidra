@@ -95,7 +95,7 @@ rootProject.assembleDistribution {
  *****************************************************************************************/
 task sleighCompile (type: JavaExec) {
 	group = rootProject.GHIDRA_GROUP
-	description "  Compiles all the sleigh languages.    [processorUtils.gradle]\n"
+	description "  Compiles all the sleigh languages.    [gradle/processorProject.gradle]\n"
 	 
 	// define standard parameters for JavaExec
 	classpath configurations.sleighConfig
@@ -128,7 +128,7 @@ rootProject.allSleighCompile.dependsOn saveSleighArgs
  *****************************************************************************************/
 task cleanSleigh  {
 	group rootProject.GHIDRA_GROUP
-	description "Removes all the compile sleigh language files (*.sla).   [gradle/processProject.gradle]\n"
+	description "Removes all the compile sleigh language files (*.sla).   [gradle/processorProject.gradle]\n"
  	doLast {
 		def deleteTree = fileTree(dir: "data/languages", include: "*.sla")
 		deleteTree.each { File file ->
