@@ -394,15 +394,6 @@ public abstract class GTreeNode extends CoreGTreeNode implements Comparable<GTre
 	}
 
 	/**
-	 * Returns an id for this node that is unique among all GTreeNodes in this running JVM.
-	 * If this node is cloned, the clone will have the same id.
-	 * @return the unique id for this node.
-	 */
-	public long getId() {
-		return id;
-	}
-
-	/**
 	 * Notifies the tree that the node has different children.  This method 
 	 * @param node the node that has changed.
 	 */

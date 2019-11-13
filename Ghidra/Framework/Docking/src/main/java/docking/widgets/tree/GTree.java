@@ -325,6 +325,7 @@ public class GTree extends JPanel implements BusyListener {
 	 * <p>
 	 * <b>Note: </b>See the usage note at the header of this class concerning how tree state
 	 * is used relative to the <tt>equals()</tt> method.
+	 * @return the saved state
 	 */
 	public GTreeState getTreeState() {
 		return new GTreeState(this);
@@ -340,10 +341,11 @@ public class GTree extends JPanel implements BusyListener {
 	 * <p>
 	 * <b>Note: </b>See the usage note at the header of this class concerning how tree state
 	 * is used relative to the <tt>equals()</tt> method.
+	 * 
+	 * @param state the state to restore
 	 *
 	 * @see #getTreeState()
 	 * @see #getTreeState(GTreeNode)
-	 * @see #cloneTreeState()
 	 */
 	public void restoreTreeState(GTreeState state) {
 		runTask(new GTreeRestoreTreeStateTask(this, state));
@@ -355,10 +357,14 @@ public class GTree extends JPanel implements BusyListener {
 	 * that should be opened have been opened.  Thus any other nodes are closed and can be
 	 * disposed, if desired.
 	 *
-	 * @param taskMonitor
+	 * @param taskMonitor the TaskMonitor
 	 */
-	public void expandedStateRestored(TaskMonitor onitor) {
+	public void expandedStateRestored(TaskMonitor taskMonitor) {
 		// optional
+	}
+
+	public List<TreePath> getExpandedPaths() {
+		return getExpandedPaths(getViewRoot());
 	}
 
 	public List<TreePath> getExpandedPaths(GTreeNode node) {
@@ -592,7 +598,7 @@ public class GTree extends JPanel implements BusyListener {
 
 		GTreeNode node = (GTreeNode) path.getLastPathComponent();
 		if (path.getPathCount() == 1) {
-			if (root.getId() == node.getId()) {
+			if (root.equals(node)) {
 				return root;
 			}
 			return null; // invalid path--the root of the path is not equal to our root!
@@ -609,7 +615,7 @@ public class GTree extends JPanel implements BusyListener {
 		GTreeNode lastPathComponent = (GTreeNode) path.getLastPathComponent();
 		List<GTreeNode> children = parentNode.getChildren();
 		for (GTreeNode child : children) {
-			if (child.getId() == lastPathComponent.getId()) {
+			if (child.equals(lastPathComponent)) {
 				return child;
 			}
 		}
@@ -825,7 +831,8 @@ public class GTree extends JPanel implements BusyListener {
 
 	/**
 	 * This method is useful for debugging tree problems.  Don't know where else to put it.
-	 * @param name - Use this to indicate what tree event occurred ("node inserted" "node removed", etc.)
+	 * @param out the output writer
+	 * @param name use this to indicate what tree event occurred ("node inserted" "node removed", etc.)
 	 * @param e the TreeModelEvent;
 	 */
 	public static void printEvent(PrintWriter out, String name, TreeModelEvent e) {

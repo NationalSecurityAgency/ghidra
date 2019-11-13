@@ -528,6 +528,39 @@ public class GTreeTest extends AbstractDockingTest {
 	}
 
 	@Test
+	public void testGetAndRestoreTreeState_ExpandedStateOnly() {
+		//
+		// Test that we can setup the tree, record its expanded state, change the tree 
+		// and then restore the saved state
+		//
+
+		GTreeNode originalNode = findNodeInTree("Leaf Child - Many B1").getParent();
+		assertNotNull("Did not find existing child node in non filtered tree", originalNode);
+
+		gTree.expandPath(originalNode);
+		waitForTree();
+
+		List<TreePath> expandedPaths = gTree.getExpandedPaths();
+		assertEquals(3, expandedPaths.size());
+		assertEquals(originalNode, expandedPaths.get(0).getLastPathComponent());
+
+		GTreeState treeState = gTree.getTreeState();
+
+		gTree.collapseAll(gTree.getViewRoot());
+		waitForTree();
+
+		expandedPaths = gTree.getExpandedPaths();
+		assertTrue(expandedPaths.isEmpty());
+
+		gTree.restoreTreeState(treeState);
+		waitForTree();
+
+		expandedPaths = gTree.getExpandedPaths();
+		assertEquals(3, expandedPaths.size());
+		assertEquals(originalNode, expandedPaths.get(0).getLastPathComponent());
+	}
+
+	@Test
 	public void testFilterPathsRestoredWithFurtherFiltering_NoSelection() throws Exception {
 
 		installLargeTreeModel();
@@ -872,8 +905,8 @@ public class GTreeTest extends AbstractDockingTest {
 	private void setFilterOptions(final TextFilterStrategy filterStrategy, final boolean inverted) {
 		runSwing(() -> {
 			FilterOptions filterOptions = new FilterOptions(filterStrategy, false, false, inverted);
-			((DefaultGTreeFilterProvider) gTree.getFilterProvider()).setFilterOptions(
-				filterOptions);
+			((DefaultGTreeFilterProvider) gTree.getFilterProvider())
+					.setFilterOptions(filterOptions);
 		});
 		waitForTree();
 
