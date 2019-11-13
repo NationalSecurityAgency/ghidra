@@ -18,7 +18,7 @@
 
 <h1>Ghidra Installation Guide</h1>
 <p>
-The installation information provided is effective as of Ghidra 9.0.3 and is subject to change with
+The installation information provided is effective as of Ghidra 9.1 and is subject to change with
 future releases.
 </p>
 
@@ -551,9 +551,9 @@ be installed in a pre-existing Eclipse installation.</p>
 <h3><a name="LinuxIssues"></a>Linux</h3>
 <ul>
   <li>
-    Ghidra may not display correctly on Linux systems with HiDPI monitors.  Setting 
-    <i>VMARGS=-Dsun.java2d.xrender=false</i> to <i><b>true</b></i> in 
-    <i>&lt;GhidraInstallDir&gt;</i>/support/launch.properties has been known to improve this issue. 
+    Ghidra may not display correctly when run from a Linux remote desktop session that uses 32-bit 
+    color depth.  Setting the remote desktop application's color depth to 24-bit has been known to 
+    improve this issue. 
   <li>
     Some users have reported Ghidra GUI rendering issues on multi-monitor thin client setups.  
     These problems are attributed to reported bugs in Java, which will hopefully be fixed in the 
