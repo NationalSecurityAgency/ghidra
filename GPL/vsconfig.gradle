@@ -13,17 +13,27 @@ if (!hasProperty("VISUAL_STUDIO_INSTALL_DIR")) {
 def configureVisualStudio() { 
 	
 	if (org.gradle.internal.os.OperatingSystem.current().isWindows()) {
+		
+		// Initialize variables
+		rootProject.ext.VISUAL_STUDIO_INSTALL_DIR = ""
+		rootProject.ext.VISUAL_STUDIO_TOOLS_VERSION_DEFAULT = ""
+		rootProject.ext.VISUAL_STUDIO_SDK_DIR_DEFAULT = ""
+		rootProject.ext.VISUAL_STUDIO_SDK_VERSION_DEFAULT = ""
+		rootProject.ext.VISUAL_STUDIO_SDK_VERSION_OVERRIDE = ""
+		rootProject.ext.VISUAL_STUDIO_VCVARS_CMD = ""
 	
 		// Use vswhere.exe to search for latest Visual Studio installation 
 		println "Searching for latest Visual Studio and required components..."
 		def vswherePath = "C:\\Program Files (x86)\\Microsoft Visual Studio\\Installer\\vswhere.exe"
 		if (!file(vswherePath).exists()) {
-			throw new GradleException("Required file does not exist: " + vswherePath);
+			println "Visual Studio not found!"
+			return
 		}
 		def vswhereOutput = "${vswherePath} -latest -format json".execute().text.trim()
 		def vswhereJson = new groovy.json.JsonSlurper().parseText(vswhereOutput);
 		if (vswhereJson.isEmpty()) {
-			throw new GradleException("Failed to find Visual Studio!")
+			println "Visual Studio not found!"
+			return
 		}
 		def vsInstallDir = vswhereJson[0].installationPath
 		println "  -> Installation Directory: ${vsInstallDir}"

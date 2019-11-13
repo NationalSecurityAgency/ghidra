@@ -49,11 +49,9 @@ task CheckToolChain {
 	// Native C/Cpp plugins will trigger failure if no tool chain found
 	doFirst {
 		if (org.gradle.internal.os.OperatingSystem.current().isWindows()) {
-			// ensure that required MS Visual Studio is installed where expected
-			String msg = "Microsoft Visual Studio install not found: ${VISUAL_STUDIO_INSTALL_DIR}\n" + 
-				"Adjust path in Ghidra/GPL/vsconfig.gradle if needed."
-			if (!file(VISUAL_STUDIO_INSTALL_DIR).exists()) {
-				throw new GradleException(msg);
+			// ensure that required MS Visual Studio is installed
+			if (!VISUAL_STUDIO_INSTALL_DIR) {
+				throw new GradleException("Visual Studio not found!");
 			}	
 		}
 	}
