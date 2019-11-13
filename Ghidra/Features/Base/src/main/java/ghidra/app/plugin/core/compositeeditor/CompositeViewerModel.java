@@ -17,6 +17,7 @@ package ghidra.app.plugin.core.compositeeditor;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.table.AbstractTableModel;
 
@@ -47,9 +48,9 @@ class CompositeViewerModel extends AbstractTableModel implements DataTypeManager
 	protected Composite viewComposite;
 	protected DataTypeManager viewDTM;
 
-	protected ArrayList<CompositeViewerModelListener> modelListeners = new ArrayList<>(1);
+	protected List<CompositeViewerModelListener> modelListeners = new ArrayList<>();
 	/** OriginalCompositeListeners */
-	protected ArrayList<OriginalCompositeListener> originalListeners = new ArrayList<>(1);
+	protected List<OriginalCompositeListener> originalListeners = new ArrayList<>();
 	/** the current status */
 	protected String status = "";
 	/** The selection associated with the components. */
@@ -459,8 +460,8 @@ class CompositeViewerModel extends AbstractTableModel implements DataTypeManager
 	}
 
 	/**
-	 * Gets the component display field widths
-	 * @return  the offsets
+	 * Gets the component display field offsets
+	 * @return the offsets
 	 */
 	int[] getFieldOffsets() {
 		return columnOffsets;
@@ -480,7 +481,7 @@ class CompositeViewerModel extends AbstractTableModel implements DataTypeManager
 	}
 
 	/**
-	 *  Adjusts the total width of the component field area.
+	 * Adjusts the total width of the component field area
 	 */
 	private void adjustWidth() {
 		int newWidth = leftMargin;
@@ -492,16 +493,16 @@ class CompositeViewerModel extends AbstractTableModel implements DataTypeManager
 	}
 
 	/**
-	 *  Gets the component display field area's total width.
+	 * Gets the component display field area's total width
 	 *
-	 * @return the total width of the component field area.
+	 * @return the total width of the component field area
 	 */
 	public int getWidth() {
 		return width;
 	}
 
 	/**
-	 *  Gets the display width of the component field at the specified column index.
+	 * Gets the display width of the component field at the specified column index
 	 *
 	 * @param columnIndex the field index within the component.
 	 * @return the width of the component field.
@@ -509,49 +510,6 @@ class CompositeViewerModel extends AbstractTableModel implements DataTypeManager
 	public int getFieldWidth(int columnIndex) {
 		return ((columnIndex < 0 || columnIndex >= getColumnCount()) ? 0
 				: columnWidths[columnIndex]);
-	}
-
-	/**
-	 * Sets the component display width for the field
-	 *
-	 * @param width the width of the component field
-	 * @param columnIndex the field index within the component
-	 * @return true if the width changed
-	 */
-	boolean setFieldWidth(int width, int columnIndex) {
-		if (columnIndex >= 0 && columnIndex < getColumnCount()) {
-			columnWidths[columnIndex] = width;
-			adjustWidth();
-			adjustOffsets();
-			fireTableDataChanged();
-			componentDataChanged();
-			return true;
-		}
-		return false;
-	}
-
-	/**
-	 *  Gets the component display field widths.
-	 *
-	 * @return an array indicating each component field's width.
-	 */
-	public int[] getFieldWidths() {
-		return columnWidths;
-	}
-
-	/**
-	 * Sets the component display field widths
-	 *
-	 * @param widths an array indicating each component field's width
-	 * @return true 
-	 */
-	boolean setFieldWidths(int[] widths) {
-		int numCols = getColumnCount();
-		for (int i = 0; i < numCols && i < widths.length; i++) {
-			columnWidths[i] = widths[i];
-		}
-		adjustWidth();
-		return true;
 	}
 
 	/**
@@ -838,13 +796,6 @@ class CompositeViewerModel extends AbstractTableModel implements DataTypeManager
 		return originalDataTypePath;
 	}
 
-	/*******************************************************************
-	 * CategoryChangeListener methods.
-	 ********************************************************************/
-
-	/**
-	 * @see ghidra.program.model.data.DataTypeManagerChangeListener#categoryAdded(ghidra.program.model.data.DataTypeManager, ghidra.program.model.data.CategoryPath)
-	 */
 	@Override
 	public void categoryAdded(DataTypeManager dtm, CategoryPath path) {
 		// new categories don't matter
@@ -1153,7 +1104,7 @@ class CompositeViewerModel extends AbstractTableModel implements DataTypeManager
 			DataType subDt = component.getDataType();
 
 			String subDtPath = subDt.getPathName();
-			if (subDtPath.equals(dtPath)) {
+			if (subDtPath.equals(dtPath.getPath())) {
 				return true;
 			}
 			else if (subDt instanceof Composite) {
@@ -1466,9 +1417,6 @@ class CompositeViewerModel extends AbstractTableModel implements DataTypeManager
 				: ("-" + prefix + Integer.toHexString(-offset)));
 	}
 
-	// **********************************************************************
-	// * METHODS FOR THE ROW
-	// **********************************************************************
 	/**
 	 * If there is a selection, this changes the row to the minimum row selected.
 	 */

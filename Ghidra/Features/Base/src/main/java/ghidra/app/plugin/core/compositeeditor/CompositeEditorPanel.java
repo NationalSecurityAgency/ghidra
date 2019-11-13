@@ -68,7 +68,7 @@ import ghidra.util.layout.VerticalLayout;
  */
 public abstract class CompositeEditorPanel extends JPanel
 		implements CompositeEditorModelListener, ComponentCellEditorListener, Draggable, Droppable {
-	private static final long serialVersionUID = 1L;
+
 	// Normal color for selecting components in the table.
 	// TODO: Why do we choose a different selection color?
 	//private static final Color SELECTION_COLOR = Color.YELLOW.brighter().brighter();
@@ -255,7 +255,7 @@ public abstract class CompositeEditorPanel extends JPanel
 	public void moveCellEditor(final int direction, final String value) {
 		stopCellEditing();
 
-		// Note: We run this later due to focus dependencies (SCR 6915).  When we call
+		// Note: We run this later due to focus dependencies.  When we call
 		// stopCellEditing() this will trigger a focusLost() event, which itself happens in
 		// a Swing.runLater().  If we do not trigger the moving of the cell editor after that focus
 		// event, then the focusLost() will trigger our new edit to be cancelled.
@@ -479,10 +479,6 @@ public abstract class CompositeEditorPanel extends JPanel
 			return beginEditField(model.getRow(), model.getColumn());
 		}
 		return false;
-	}
-
-	public void lockStateChanged(int type) {
-		// no-op
 	}
 
 	/**
@@ -884,7 +880,7 @@ public abstract class CompositeEditorPanel extends JPanel
 
 	/**
 	 * Add the object to the droppable component. The DragSrcAdapter calls this method from its 
-	 * drop() method
+	 * drop() method.
 	 *
 	 * @param obj Transferable object that is to be dropped.
 	 * @param e  has current state of drop operation
@@ -931,7 +927,7 @@ public abstract class CompositeEditorPanel extends JPanel
 
 	/**
 	 * Add the object to the droppable component. The DragSrcAdapter calls this method from its 
-	 * drop() method
+	 * drop() method.
 	 * 
 	 * @param p the point of insert
 	 * @param dt the data type to insert
@@ -1211,10 +1207,6 @@ public abstract class CompositeEditorPanel extends JPanel
 			super(new JTextField());
 		}
 
-		/**
-		 * Calls <code>fireEditingStopped</code> and returns true.
-		 * @return true
-		 */
 		@Override
 		public boolean stopCellEditing() {
 			try {
@@ -1232,7 +1224,7 @@ public abstract class CompositeEditorPanel extends JPanel
 
 	private class ComponentDataTypeCellEditor extends AbstractCellEditor
 			implements TableCellEditor {
-		private static final long serialVersionUID = 1L;
+
 		private DataTypeSelectionEditor editor;
 		private DataType dt;
 		private int maxLength;
@@ -1289,8 +1281,6 @@ public abstract class CompositeEditorPanel extends JPanel
 
 			// force a small button for the table's cell editor
 			JButton dataTypeChooserButton = new JButton("...") {
-				private static final long serialVersionUID = 1L;
-
 				@Override
 				public Dimension getPreferredSize() {
 					Dimension preferredSize = super.getPreferredSize();
@@ -1299,28 +1289,22 @@ public abstract class CompositeEditorPanel extends JPanel
 				}
 			};
 
-			dataTypeChooserButton.addActionListener(e -> Swing.runLater(() -> {
-				DataTypeManagerService service = tool.getService(DataTypeManagerService.class);
-				DataType dataType = service.getDataType((String) null);
-				if (dataType != null) {
-					editor.setCellEditorValue(dataType);
-					editor.stopCellEditing();
+			dataTypeChooserButton.addActionListener(new ActionListener() {
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					Swing.runLater(() -> stopEdit(tool));
 				}
-				else {
-					editor.cancelCellEditing();
-				}
-			}));
-			FocusAdapter focusListener = new FocusAdapter() {
+			});
+
+			textField.addFocusListener(new FocusAdapter() {
 				@Override
 				public void focusGained(FocusEvent e) {
 					textField.selectAll();
 					textField.removeFocusListener(this);
 				}
-			};
-			textField.addFocusListener(focusListener);
+			});
 
 			editorPanel = new JPanel() {
-
 				@Override
 				public void requestFocus() {
 					textField.requestFocus();
@@ -1329,6 +1313,18 @@ public abstract class CompositeEditorPanel extends JPanel
 			editorPanel.setLayout(new BorderLayout());
 			editorPanel.add(textField, BorderLayout.CENTER);
 			editorPanel.add(dataTypeChooserButton, BorderLayout.EAST);
+		}
+
+		private void stopEdit(PluginTool tool) {
+			DataTypeManagerService service = tool.getService(DataTypeManagerService.class);
+			DataType dataType = service.getDataType((String) null);
+			if (dataType != null) {
+				editor.setCellEditorValue(dataType);
+				editor.stopCellEditing();
+			}
+			else {
+				editor.cancelCellEditing();
+			}
 		}
 
 		@Override
