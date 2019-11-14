@@ -3469,6 +3469,7 @@ int4 ActionPrototypeTypes::apply(Funcdata &data)
       ProtoParameter *param = data.getFuncProto().getParam(i);
       Varnode *vn = data.newVarnode( param->getSize(), param->getAddress());
       vn = data.setInputVarnode(vn);
+      vn->setLockedInput();
       if (topbl != (BlockBasic *)0)
 	extendInput(data,vn,param,topbl);
       if (ptr_size > 0) {
