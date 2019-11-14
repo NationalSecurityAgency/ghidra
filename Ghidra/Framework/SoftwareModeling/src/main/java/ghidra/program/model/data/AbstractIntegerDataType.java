@@ -21,7 +21,10 @@ import ghidra.docking.settings.*;
 import ghidra.program.model.mem.ByteMemBufferImpl;
 import ghidra.program.model.mem.MemBuffer;
 import ghidra.program.model.scalar.Scalar;
+import ghidra.util.BigEndianDataConverter;
+import ghidra.util.LittleEndianDataConverter;
 import ghidra.util.StringFormat;
+import ghidra.util.StringUtilities;
 
 /**
  * Base type for integer data types such as {@link CharDataType chars}, {@link IntegerDataType ints},
@@ -260,9 +263,10 @@ public abstract class AbstractIntegerDataType extends BuiltIn implements ArraySt
 		int nominalLen;
 
 		if (format == FormatSettingsDefinition.CHAR) {
-			int charSize = Math.min(getDataOrganization().getCharSize(), getLength());
 			nominalLen = (bitLength + 7) / 8;
-			byte[] bytes = bigInt.toByteArray();
+			byte[] bytes = getDataOrganization().isBigEndian() ?
+				BigEndianDataConverter.INSTANCE.getBytes(bigInt, nominalLen) :
+					LittleEndianDataConverter.INSTANCE.getBytes(bigInt, nominalLen);
 			if (bytes.length > nominalLen) {
 				// BigInteger supplied too many bytes
 				byte[] chars = new byte[nominalLen];
@@ -275,8 +279,19 @@ public abstract class AbstractIntegerDataType extends BuiltIn implements ArraySt
 				System.arraycopy(bytes, 0, chars, nominalLen - bytes.length, bytes.length);
 				bytes = chars;
 			}
+
 			MemBuffer memBuf = new ByteMemBufferImpl(null, bytes, true);
-			return new StringDataInstance(this, settings, memBuf, charSize).getCharRepresentation();
+			StringDataInstance instance = new StringDataInstance(this, settings, memBuf, nominalLen);
+			if (bytes.length == 1) {
+				return instance.getCharRepresentation();
+			}
+
+			String stringRepresentation = instance.getStringRepresentation();
+			if (stringRepresentation.length() != nominalLen) {
+				stringRepresentation = StringUtilities.toQuotedString(bytes);
+			}
+
+			return stringRepresentation;
 		}
 
 		String valStr;
