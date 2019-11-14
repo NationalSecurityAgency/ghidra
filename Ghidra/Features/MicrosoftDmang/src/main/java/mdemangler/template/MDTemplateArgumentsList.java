@@ -86,9 +86,22 @@ public class MDTemplateArgumentsList extends MDParsableItem {
 				}
 					break;
 				case '$':
+					// "$$$V" and "$$V" (latter is MSVC15 version):  case of ignore as argument.
 					if ((dmang.peek(1) == '$') && (dmang.peek(2) == '$') &&
-						(dmang.peek(3) == 'V')) { // Case of ignore as argument.
+						(dmang.peek(3) == 'V')) {
 						dmang.increment();
+						dmang.increment();
+						dmang.increment();
+						dmang.increment();
+						if (args.isEmpty()) {
+							// MDMANG SPECIALIZATION USED.
+							// For "delimiters" MSFT bug: setting true even though we are
+							//  skipping parameter.
+							needsComma = dmang.emptyFirstArgComma(this);
+						}
+						continue;
+					}
+					if ((dmang.peek(1) == '$') && (dmang.peek(2) == 'V')) {
 						dmang.increment();
 						dmang.increment();
 						dmang.increment();
