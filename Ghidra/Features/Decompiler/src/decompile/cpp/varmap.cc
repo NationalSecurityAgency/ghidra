@@ -513,7 +513,7 @@ void ScopeLocal::createEntry(const RangeHint &a)
 {
   Address addr(space,a.start);
   Address usepoint;
-  Datatype *ct = a.type;
+  Datatype *ct = glb->types->concretize(a.type);
   int4 num = a.size/ct->getSize();
   if (num>1)
     ct = glb->types->getTypeArray(num,ct);

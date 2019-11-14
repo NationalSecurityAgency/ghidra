@@ -1893,6 +1893,24 @@ Datatype *TypeFactory::downChain(Datatype *ptrtype,uintb &off)
   return getTypePointer(ptype->size,pt,ptype->getWordSize());
 }
 
+/// The data-type propagation system can push around data-types that are \e partial or are
+/// otherwise unrepresentable in the source language.  This method substitutes those data-types
+/// with a concrete data-type that is representable, or returns the same data-type if is already concrete.
+/// Its important that the returned data-type have the same size as the original data-type regardless.
+/// \param ct is the given data-type
+/// \return the concrete data-type
+Datatype *TypeFactory::concretize(Datatype *ct)
+
+{
+  type_metatype metatype = ct->getMetatype();
+  if (metatype == TYPE_CODE) {
+    if (ct->getSize() != 1)
+      throw LowlevelError("Primitive code data-type that is not size 1");
+    ct = getBase(1, TYPE_UNKNOWN);
+  }
+  return ct;
+}
+
 /// Restore a Datatype object from an XML tag description: either \<type>, \<typeref>, or \<void>
 /// \param el is the XML element describing the data-type
 /// \return the restored Datatype object
