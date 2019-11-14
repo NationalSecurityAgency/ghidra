@@ -634,6 +634,33 @@ public class StructureEditorProviderTest extends AbstractStructureEditorTest {
 	}
 
 	@Test
+	public void testEditAfterUsingArrowKeys() throws Exception {
+
+		//
+		// This is a regression test.  Using F2 to start an edit would edit the wrong cell after
+		// the user had navigated the table using the left/right arrow keys.
+		//
+
+		init(simpleStructure, pgmBbCat, false);
+
+		int row = 3;
+		int column = model.getNameColumn();
+		assertNull(getComment(3));
+		clickTableCell(getTable(), row, column, 1);
+		assertColumn(column);
+
+		leftArrow();
+		assertColumn(column - 1);
+
+		rightArrow();
+		assertColumn(column);
+
+		performAction(editFieldAction, provider, true);
+		assertIsEditingField(row, column);
+		escape();
+	}
+
+	@Test
 	public void testChangeHexNumbersOption() throws Exception {
 		final Options options = tool.getOptions("Editors");
 		final String hexNumbersName =

@@ -17,6 +17,7 @@ package ghidra.app.plugin.core.compositeeditor;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.table.AbstractTableModel;
 
@@ -29,7 +30,7 @@ import ghidra.util.InvalidNameException;
 import ghidra.util.Msg;
 import ghidra.util.exception.AssertException;
 import ghidra.util.exception.DuplicateNameException;
-import ghidra.util.task.TaskMonitorAdapter;
+import ghidra.util.task.TaskMonitor;
 
 class CompositeViewerModel extends AbstractTableModel implements DataTypeManagerChangeListener {
 
@@ -47,9 +48,9 @@ class CompositeViewerModel extends AbstractTableModel implements DataTypeManager
 	protected Composite viewComposite;
 	protected DataTypeManager viewDTM;
 
-	protected ArrayList<CompositeViewerModelListener> modelListeners = new ArrayList<>(1);
+	protected List<CompositeViewerModelListener> modelListeners = new ArrayList<>();
 	/** OriginalCompositeListeners */
-	protected ArrayList<OriginalCompositeListener> originalListeners = new ArrayList<>(1);
+	protected List<OriginalCompositeListener> originalListeners = new ArrayList<>();
 	/** the current status */
 	protected String status = "";
 	/** The selection associated with the components. */
@@ -81,12 +82,6 @@ class CompositeViewerModel extends AbstractTableModel implements DataTypeManager
 	protected CompositeEditorProvider provider;
 	protected boolean showHexNumbers = false;
 
-	/**
-	 * Constructor for a model for handling a data structure.
-	 *
-	 * @param dataType the composite data type to be viewed.
-	 * @param category the category for the composite data type.
-	 */
 	CompositeViewerModel(CompositeEditorProvider provider) {
 		this.provider = provider;
 		selection = new FieldSelection();
@@ -211,8 +206,6 @@ class CompositeViewerModel extends AbstractTableModel implements DataTypeManager
 	 * and category/dataType changes no longer need to be listened for.
 	 * It can also be called to unload the current composite before loading 
 	 * a new composite data type.
-	 *
-	 * @param dataType the new structure to be edited.
 	 */
 	void unload() {
 		DataTypeManager originalDTM =
@@ -239,7 +232,7 @@ class CompositeViewerModel extends AbstractTableModel implements DataTypeManager
 	/**
 	 * Resolves the indicated data type against the working copy in the 
 	 * viewer's data type manager.
-	 * @param dataType
+	 * @param dataType the data type
 	 * @return the working copy of the data type.
 	 */
 	DataType resolve(DataType dataType) {
@@ -312,21 +305,24 @@ class CompositeViewerModel extends AbstractTableModel implements DataTypeManager
 	}
 
 	/**
-	 * Returns the original name of the CompositeDataType being viewed.
+	 * Returns the original name of the CompositeDataType being viewed
+	 * @return the name
 	 */
 	public final String getOriginalDataTypeName() {
 		return originalDataTypePath.getDataTypeName();
 	}
 
 	/**
-	 *  Return the data type manager for the composite data type being viewed.
+	 * Return the data type manager for the composite data type being viewed
+	 * @return the manager
 	 */
 	protected DataTypeManager getOriginalDataTypeManager() {
 		return (originalComposite != null) ? originalComposite.getDataTypeManager() : null;
 	}
 
 	/**
-	 * Return the original category for the composite data type being viewed.
+	 * Return the original category for the composite data type being viewed
+	 * @return the category
 	 */
 	public final Category getOriginalCategory() {
 		DataTypeManager originalDTM = getOriginalDataTypeManager();
@@ -340,7 +336,8 @@ class CompositeViewerModel extends AbstractTableModel implements DataTypeManager
 	}
 
 	/**
-	 *  Return the path of the data category for the structure being viewed.
+	 * Return the path of the data category for the structure being viewed
+	 * @return the path 
 	 */
 	public final CategoryPath getOriginalCategoryPath() {
 		if (originalDataTypePath != null) {
@@ -350,7 +347,8 @@ class CompositeViewerModel extends AbstractTableModel implements DataTypeManager
 	}
 
 	/**
-	 *  Return the description for the structure being viewed.
+	 * Return the description for the structure being viewed
+	 * @return the description
 	 */
 	public String getDescription() {
 		String desc = null;
@@ -361,7 +359,8 @@ class CompositeViewerModel extends AbstractTableModel implements DataTypeManager
 	}
 
 	/**
-	 *  Return the size of the structure being viewed in bytes.
+	 * Return the size of the structure being viewed in bytes
+	 * @return this size 
 	 */
 	public int getLength() {
 		if (viewComposite != null && !viewComposite.isNotYetDefined()) {
@@ -371,8 +370,9 @@ class CompositeViewerModel extends AbstractTableModel implements DataTypeManager
 	}
 
 	/**
-	 *  Return the size of the structure being viewed in bytes as a hex or decimal string
-	 *  depending on the model's current display setting for numbers.
+	 * Return the size of the structure being viewed in bytes as a hex or decimal string
+	 * depending on the model's current display setting for numbers
+	 * @return the length
 	 */
 	public String getLengthAsString() {
 		int length = getLength();
@@ -380,14 +380,16 @@ class CompositeViewerModel extends AbstractTableModel implements DataTypeManager
 	}
 
 	/**
-	 *  Return the data type name of the structure being viewed.
+	 * Return the data type name of the structure being viewed
+	 * @return the name
 	 */
 	public String getCompositeName() {
 		return (viewComposite != null) ? viewComposite.getDisplayName() : "";
 	}
 
 	/**
-	 *  Return the size of the left margin for the component viewing area.
+	 * Return the size of the left margin for the component viewing area
+	 * @return the margin
 	 */
 	public int getLeftMargin() {
 		return leftMargin;
@@ -405,10 +407,11 @@ class CompositeViewerModel extends AbstractTableModel implements DataTypeManager
 	}
 
 	/**
-	 *  Return a header name for the indicated field (column).
+	 *  Return a header name for the indicated field (column)
 	 *
 	 * @param columnIndex the index number indicating the component field (column)
-	 * to get the header for.
+	 * to get the header for
+	 * @return the name
 	 */
 	public String getFieldName(int columnIndex) {
 		if (columnIndex < 0 || columnIndex > getColumnCount()) {
@@ -419,21 +422,22 @@ class CompositeViewerModel extends AbstractTableModel implements DataTypeManager
 	}
 
 	/**
-	 *  returns whether or not a particular component row and field in this
-	 *  structure is an editable type of cell. However the cell still
-	 *  may not be editable currently. To check if the cell can actually be
-	 *  edited call isCellEditable().
+	 * Returns whether or not a particular component row and field in this
+	 * structure is an editable type of cell. However the cell still
+	 * may not be editable currently. To check if the cell can actually be
+	 * edited call isCellEditable().
 	 *
-	 * @param rowIndex the row index of the component.
-	 * @param columnIndex the index for the field of the component.
+	 * @param rowIndex the row index of the component
+	 * @param columnIndex the index for the field of the component
+	 * @return true if editable
 	 */
 	boolean isEditTypeOfCell(int rowIndex, int columnIndex) {
 		return false; // User can't edit the cell.
 	}
 
 	/**
-	 *  Returns whether or not a particular component row and field in this
-	 *  structure is editable
+	 * Returns whether or not a particular component row and field in this
+	 * structure is editable
 	 *
 	 * @param rowIndex index for the row (component within this structure).
 	 * @param columnIndex index for the column (field of the component within
@@ -445,7 +449,7 @@ class CompositeViewerModel extends AbstractTableModel implements DataTypeManager
 	}
 
 	/**
-	 *  Gets the display offset of the component field at the specified column index.
+	 * Gets the display offset of the component field at the specified column index
 	 *
 	 * @param columnIndex the field index within the component.
 	 * @return the offset in pixels of the component field.
@@ -456,14 +460,15 @@ class CompositeViewerModel extends AbstractTableModel implements DataTypeManager
 	}
 
 	/**
-	 *  Gets the component display field widths.
+	 * Gets the component display field offsets
+	 * @return the offsets
 	 */
 	int[] getFieldOffsets() {
 		return columnOffsets;
 	}
 
 	/**
-	 *  Adjusts the offsets of all component fields.
+	 * Adjusts the offsets of all component fields
 	 */
 	protected void adjustOffsets() {
 		int offset = leftMargin;
@@ -476,7 +481,7 @@ class CompositeViewerModel extends AbstractTableModel implements DataTypeManager
 	}
 
 	/**
-	 *  Adjusts the total width of the component field area.
+	 * Adjusts the total width of the component field area
 	 */
 	private void adjustWidth() {
 		int newWidth = leftMargin;
@@ -488,16 +493,16 @@ class CompositeViewerModel extends AbstractTableModel implements DataTypeManager
 	}
 
 	/**
-	 *  Gets the component display field area's total width.
+	 * Gets the component display field area's total width
 	 *
-	 * @return the total width of the component field area.
+	 * @return the total width of the component field area
 	 */
 	public int getWidth() {
 		return width;
 	}
 
 	/**
-	 *  Gets the display width of the component field at the specified column index.
+	 * Gets the display width of the component field at the specified column index
 	 *
 	 * @param columnIndex the field index within the component.
 	 * @return the width of the component field.
@@ -505,47 +510,6 @@ class CompositeViewerModel extends AbstractTableModel implements DataTypeManager
 	public int getFieldWidth(int columnIndex) {
 		return ((columnIndex < 0 || columnIndex >= getColumnCount()) ? 0
 				: columnWidths[columnIndex]);
-	}
-
-	/**
-	 *  Sets the component display width for the field.
-	 *
-	 * @param width the width of the component field.
-	 * @param columnIndex the field index within the component.
-	 */
-	boolean setFieldWidth(int width, int columnIndex) {
-		if (columnIndex >= 0 && columnIndex < getColumnCount()) {
-			columnWidths[columnIndex] = width;
-			adjustWidth();
-			adjustOffsets();
-			fireTableDataChanged();
-			componentDataChanged();
-			return true;
-		}
-		return false;
-	}
-
-	/**
-	 *  Gets the component display field widths.
-	 *
-	 * @return an array indicating each component field's width.
-	 */
-	public int[] getFieldWidths() {
-		return columnWidths;
-	}
-
-	/**
-	 *  Sets the component display field widths.
-	 *
-	 * @param widths an array indicating each component field's width.
-	 */
-	boolean setFieldWidths(int[] widths) {
-		int numCols = getColumnCount();
-		for (int i = 0; i < numCols && i < widths.length; i++) {
-			columnWidths[i] = widths[i];
-		}
-		adjustWidth();
-		return true;
 	}
 
 	/**
@@ -578,13 +542,13 @@ class CompositeViewerModel extends AbstractTableModel implements DataTypeManager
 	}
 
 	/**
-	 *  Return the nth component for the structure being viewed. Since the number of rows
-	 *  can exceed the number of components defined within the composite 
-	 *  ({@link Composite#getNumComponents()}) this method will return null for a blank 
-	 *  row or a flexible array component which may appear as an additional rows for
-	 *  structures.
-	 * @param rowIndex the index of the component to return.
-	 * First component is index of 0.
+	 * Return the nth component for the structure being viewed. Since the number of rows
+	 * can exceed the number of components defined within the composite 
+	 * ({@link Composite#getNumComponents()}) this method will return null for a blank 
+	 * row or a flexible array component which may appear as an additional rows for
+	 * structures.
+	 * @param rowIndex the index of the component to return. First component is index of 0.
+	 * @return the component
 	 */
 	public DataTypeComponent getComponent(int rowIndex) {
 		if (rowIndex >= 0 && rowIndex < getNumComponents()) {
@@ -613,14 +577,6 @@ class CompositeViewerModel extends AbstractTableModel implements DataTypeManager
 		return getColumnCount();
 	}
 
-	/**
-	 * Returns an attribute value for the cell at <I>columnIndex</I>
-	 * and <I>rowIndex</I>.
-	 *
-	 * @param	rowIndex	the row whose value is to be looked up
-	 * @param	columnIndex 	the column whose value is to be looked up
-	 * @return	the value Object at the specified cell
-	 */
 	@Override
 	public Object getValueAt(int rowIndex, int columnIndex) {
 
@@ -671,14 +627,16 @@ class CompositeViewerModel extends AbstractTableModel implements DataTypeManager
 	}
 
 	/**
-	 *  Returns the current dataType name (Structure or Union) as a string.
+	 * Returns the current dataType name (Structure or Union) as a string
+	 * @return the name
 	 */
 	protected String getTypeName() {
 		return "Composite Data Type";
 	}
 
 	/**
-	 *  Returns the current status string.
+	 * Returns the current status string
+	 * @return the status
 	 */
 	public String getStatus() {
 		return status;
@@ -741,28 +699,32 @@ class CompositeViewerModel extends AbstractTableModel implements DataTypeManager
 	}
 
 	/**
-	 * Adds a CompositeViewerModelListener to be notified when model changes occur.
+	 * Adds a CompositeViewerModelListener to be notified when model changes occur
+	 * @param listener the listener
 	 */
 	public void addCompositeViewerModelListener(CompositeViewerModelListener listener) {
 		modelListeners.add(listener);
 	}
 
 	/**
-	 * Removes a CompositeViewerModelListener that was being notified when model changes occur.
+	 * Removes a CompositeViewerModelListener that was being notified when model changes occur
+	 * @param listener the listener
 	 */
 	public void removeCompositeViewerModelListener(CompositeViewerModelListener listener) {
 		modelListeners.remove(listener);
 	}
 
 	/**
-	 * Adds an OriginalCompositeListener to be notified when changes occur.
+	 * Adds an OriginalCompositeListener to be notified when changes occur
+	 * @param listener the listener
 	 */
 	public void addOriginalCompositeListener(OriginalCompositeListener listener) {
 		originalListeners.add(listener);
 	}
 
 	/**
-	 * Removes an OriginalCompositeListener that was being notified when changes occur.
+	 * Removes an OriginalCompositeListener that was being notified when changes occur
+	 * @param listener the listener
 	 */
 	public void removeOriginalCompositeListener(OriginalCompositeListener listener) {
 		originalListeners.remove(listener);
@@ -834,13 +796,6 @@ class CompositeViewerModel extends AbstractTableModel implements DataTypeManager
 		return originalDataTypePath;
 	}
 
-	/*******************************************************************
-	 * CategoryChangeListener methods.
-	 ********************************************************************/
-
-	/**
-	 * @see ghidra.program.model.data.DataTypeManagerChangeListener#categoryAdded(ghidra.program.model.data.DataTypeManager, ghidra.program.model.data.CategoryPath)
-	 */
 	@Override
 	public void categoryAdded(DataTypeManager dtm, CategoryPath path) {
 		// new categories don't matter
@@ -904,7 +859,7 @@ class CompositeViewerModel extends AbstractTableModel implements DataTypeManager
 		viewDTM.createCategory(parent);
 		Category newCat = viewDTM.getCategory(parent);
 		try {
-			newCat.moveCategory(oldCat, TaskMonitorAdapter.DUMMY_MONITOR);
+			newCat.moveCategory(oldCat, TaskMonitor.DUMMY);
 		}
 		catch (DuplicateNameException e) {
 			Msg.error(this, "Unexpected Exception: " + e.getMessage(), e);
@@ -938,7 +893,7 @@ class CompositeViewerModel extends AbstractTableModel implements DataTypeManager
 							originalDataTypePath.getDataTypeName() + "\".";
 					setStatus(msg, true);
 				}
-				viewDTM.remove(dt, TaskMonitorAdapter.DUMMY_MONITOR);
+				viewDTM.remove(dt, TaskMonitor.DUMMY);
 				// If a datatype we are using is removed, change it to undefined data types.
 				fireTableDataChanged();
 				componentDataChanged();
@@ -1149,7 +1104,7 @@ class CompositeViewerModel extends AbstractTableModel implements DataTypeManager
 			DataType subDt = component.getDataType();
 
 			String subDtPath = subDt.getPathName();
-			if (subDtPath.equals(dtPath)) {
+			if (subDtPath.equals(dtPath.getPath())) {
 				return true;
 			}
 			else if (subDt instanceof Composite) {
@@ -1161,25 +1116,25 @@ class CompositeViewerModel extends AbstractTableModel implements DataTypeManager
 		return false;
 	}
 
-	// **********************************************************************
-	// * METHODS FOR THE SELECTION
-	// **********************************************************************
 	/**
-	 *  Returns a copy of the model's current field selection.
+	 * Returns a copy of the model's current field selection
+	 * @return the selection
 	 */
 	public FieldSelection getSelection() {
 		return new FieldSelection(this.selection);
 	}
 
 	/**
-	 *  Returns true if the GUI has a table row selected.
+	 * Returns true if the GUI has a table row selected
+	 * @return true if there is a selection
 	 */
 	public boolean hasSelection() {
 		return (selection.getNumRanges() > 0);
 	}
 
 	/**
-	 *  Returns true if the GUI has a component row selected.
+	 * Returns true if the GUI has a component row selected
+	 * @return true if there is a selection
 	 */
 	public boolean hasComponentSelection() {
 		return ((selection.getNumRanges() > 0) &&
@@ -1187,8 +1142,10 @@ class CompositeViewerModel extends AbstractTableModel implements DataTypeManager
 	}
 
 	/**
-	 *  Returns the number of rows currently selected.
-	 * <br> Note: In unlocked mode this can include the additional blank line.
+	 * Returns the number of rows currently selected.
+	 *  
+	 * <p>Note: In unlocked mode this can include the additional blank line.
+	 * @return the selected row count
 	 */
 	public int getNumSelectedRows() {
 		int numRanges = this.selection.getNumRanges();
@@ -1202,8 +1159,10 @@ class CompositeViewerModel extends AbstractTableModel implements DataTypeManager
 	}
 
 	/**
-	 *  Returns the number of component rows currently selected.
-	 * <br> Note: This only includes rows that are actually components.
+	 * Returns the number of component rows currently selected.
+	 * 
+	 * <p>Note: This only includes rows that are actually components.
+	 * @return the selected row count
 	 */
 	public int getNumSelectedComponentRows() {
 		FieldSelection tmpSelection = new FieldSelection();
@@ -1220,15 +1179,16 @@ class CompositeViewerModel extends AbstractTableModel implements DataTypeManager
 	}
 
 	/**
-	 *  Returns true if the component list selection is contiguous.
+	 * Returns true if the component list selection is contiguous
+	 * @return true if contiguous
 	 */
 	public boolean isContiguousSelection() {
 		return (selection.getNumRanges() == 1);
 	}
 
 	/**
-	 * Returns true if the current single row selection corresponds to 
-	 * a flexible array component.
+	 * Returns true if the current single row selection corresponds to a flexible array component
+	 * @return true if the current single row selection corresponds to a flexible array component
 	 */
 	public boolean isFlexibleArraySelection() {
 		if (!isSingleRowSelection()) {
@@ -1241,7 +1201,8 @@ class CompositeViewerModel extends AbstractTableModel implements DataTypeManager
 	}
 
 	/**
-	 *  Returns true if the component list selection is a single component.
+	 * Returns true if the component list selection is a single component
+	 * @return true if the component list selection is a single component
 	 */
 	public boolean isSingleComponentRowSelection() {
 		if (!isSingleRowSelection()) {
@@ -1253,7 +1214,8 @@ class CompositeViewerModel extends AbstractTableModel implements DataTypeManager
 	}
 
 	/**
-	 *  Returns true if the selection is a single row.
+	 * Returns true if the selection is a single row
+	 * @return true if the selection is a single row
 	 */
 	public boolean isSingleRowSelection() {
 		if (selection.getNumRanges() != 1) {
@@ -1264,8 +1226,8 @@ class CompositeViewerModel extends AbstractTableModel implements DataTypeManager
 	}
 
 	/**
-	 *  Returns true if the list selection is contiguous and only contains
-	 * component rows.
+	 * Returns true if the list selection is contiguous and only contains component rows
+	 * @return true if the list selection is contiguous and only contains component rows
 	 */
 	public boolean isContiguousComponentSelection() {
 		return ((selection.getNumRanges() == 1) &&
@@ -1273,7 +1235,8 @@ class CompositeViewerModel extends AbstractTableModel implements DataTypeManager
 	}
 
 	/**
-	 *  Get an array of the indices for all the selected rows.
+	 * Get an array of the indices for all the selected rows
+	 * @return the selected rows
 	 */
 	public int[] getSelectedRows() {
 		int[] selectedRows = new int[getNumSelectedRows()];
@@ -1290,7 +1253,8 @@ class CompositeViewerModel extends AbstractTableModel implements DataTypeManager
 	}
 
 	/**
-	 *  Get an array of the row indices for all the selected components.
+	 * Get an array of the row indices for all the selected components
+	 * @return the selected rows
 	 */
 	public int[] getSelectedComponentRows() {
 		int[] selectedRows = new int[getNumSelectedComponentRows()];
@@ -1312,7 +1276,7 @@ class CompositeViewerModel extends AbstractTableModel implements DataTypeManager
 	 * Returns the selection range containing the specified row index 
 	 * if there is one that contains it. Otherwise, returns null.
 	 *
-	 * @index the row index
+	 * @param rowIndex the row index
 	 * @return the range or null
 	 */
 	public FieldRange getSelectedRangeContaining(int rowIndex) {
@@ -1333,8 +1297,8 @@ class CompositeViewerModel extends AbstractTableModel implements DataTypeManager
 	}
 
 	/**
-	 * 
-	 * Gets the minimum row index that is selected or -1 if no index is selected.
+	 * Gets the minimum row index that is selected or -1 if no index is selected
+	 * @return the index
 	 */
 	public int getMinIndexSelected() {
 		if (!selection.isEmpty()) {
@@ -1345,7 +1309,7 @@ class CompositeViewerModel extends AbstractTableModel implements DataTypeManager
 	}
 
 	/**
-	 *  Saves the current selection in the structure components viewing area.
+	 * Saves the current selection in the structure components viewing area
 	 *
 	 * @param rows the indices for the selected rows.
 	 */
@@ -1440,7 +1404,8 @@ class CompositeViewerModel extends AbstractTableModel implements DataTypeManager
 	}
 
 	/**
-	 *  Returns whether or not the editor is displaying numbers in hex.
+	 * Returns whether or not the editor is displaying numbers in hex
+	 * @return true if hex
 	 */
 	public boolean isShowingNumbersInHex() {
 		return showHexNumbers;
@@ -1452,9 +1417,6 @@ class CompositeViewerModel extends AbstractTableModel implements DataTypeManager
 				: ("-" + prefix + Integer.toHexString(-offset)));
 	}
 
-	// **********************************************************************
-	// * METHODS FOR THE ROW
-	// **********************************************************************
 	/**
 	 * If there is a selection, this changes the row to the minimum row selected.
 	 */

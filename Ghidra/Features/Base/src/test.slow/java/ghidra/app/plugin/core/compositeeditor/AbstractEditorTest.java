@@ -467,24 +467,13 @@ public abstract class AbstractEditorTest extends AbstractGhidraHeadedIntegration
 		// no-op?
 	}
 
-	protected void backspace(int repeat) {
-		for (int i = 0; i < repeat; i++) {
-			triggerActionKey(getTable(), 0, KeyEvent.VK_BACK_SPACE);
-		}
+	protected void leftArrow() {
+		triggerActionKey(getTable(), 0, KeyEvent.VK_LEFT);
 		waitForSwing();
 	}
 
-	protected void leftArrowKey(int repeat) {
-		for (int i = 0; i < repeat; i++) {
-			triggerActionKey(getTable(), 0, KeyEvent.VK_LEFT);
-		}
-		waitForSwing();
-	}
-
-	protected void rightArrowKey(int repeat) {
-		for (int i = 0; i < repeat; i++) {
-			triggerActionKey(getTable(), 0, KeyEvent.VK_RIGHT);
-		}
+	protected void rightArrow() {
+		triggerActionKey(getTable(), 0, KeyEvent.VK_RIGHT);
 		waitForSwing();
 	}
 
@@ -771,12 +760,20 @@ public abstract class AbstractEditorTest extends AbstractGhidraHeadedIntegration
 		assertEquals(status, getStatus());
 	}
 
-	private int getRow() {
+	protected int getRow() {
 		return runSwing(() -> model.getRow());
 	}
 
-	private int getColumn() {
+	protected void assertRow(int row) {
+		assertEquals(row, getRow());
+	}
+
+	protected int getColumn() {
 		return runSwing(() -> model.getColumn());
+	}
+
+	protected void assertColumn(int column) {
+		assertEquals(column, getColumn());
 	}
 
 	private String getStatus() {
