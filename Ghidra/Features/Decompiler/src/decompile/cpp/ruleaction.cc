@@ -6384,15 +6384,18 @@ int4 RulePtrsubCharConstant::applyOp(PcodeOp *op,Funcdata &data)
   if (!isstring) return 0;
 
   // If we reach here, the PTRSUB should be converted to a (COPY of a) pointer constant.
-  list<PcodeOp *>::const_iterator iter,enditer;
-  iter = outvn->beginDescend();
-  enditer = outvn->endDescend();
-  bool removeCopy = true;
-  while(iter != enditer) {
-    PcodeOp *subop = *iter;	// Give each descendant of op a chance to further propagate the constant
-    ++iter;
-    if (!pushConstFurther(data,outtype,subop,subop->getSlot(outvn),vn1->getOffset()))
-      removeCopy = false;	// If the descendant does NOT propagate const, do NOT remove op
+  bool removeCopy = false;
+  if (!outvn->isAddrForce()) {
+    removeCopy = true;		// Assume we can remove, unless we can't propagate to all descendants
+    list<PcodeOp *>::const_iterator iter,enditer;
+    iter = outvn->beginDescend();
+    enditer = outvn->endDescend();
+    while(iter != enditer) {
+      PcodeOp *subop = *iter;	// Give each descendant of op a chance to further propagate the constant
+      ++iter;
+      if (!pushConstFurther(data,outtype,subop,subop->getSlot(outvn),vn1->getOffset()))
+	removeCopy = false;	// If the descendant does NOT propagate const, do NOT remove op
+    }
   }
   if (removeCopy) {
     data.opDestroy(op);

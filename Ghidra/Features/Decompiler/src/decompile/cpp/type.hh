@@ -435,6 +435,7 @@ public:
 			bool dotdotdot);			///< Create a "function" datatype
   void destroyType(Datatype *ct);				///< Remove a data-type from \b this
   Datatype *downChain(Datatype *ptrtype,uintb &off);		///< Find a sub-type matching a pointer and offset
+  Datatype *concretize(Datatype *ct);				///< Convert given data-type to concrete form
   void dependentOrder(vector<Datatype *> &deporder) const;	///< Place all data-types in dependency order
   void saveXml(ostream &s) const;			///< Save \b this container to stream
   void saveXmlCoreTypes(ostream &s) const;		///< Save core types to stream
