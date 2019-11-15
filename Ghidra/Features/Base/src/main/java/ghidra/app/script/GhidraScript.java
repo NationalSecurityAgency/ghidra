@@ -3697,6 +3697,24 @@ public abstract class GhidraScript extends FlatProgramAPI {
 		return comment;
 	}
 
+	/**
+	 * Returns the repeatable comment at the specified address.  If you want the raw text,
+	 * then you must call {@link #getRepeatableComment(Address)}.  This method returns the text as
+	 * seen in the display.
+	 *
+	 * @param address the address to get the comment
+	 * @return the repeatable comment at the specified address or null if one does not exist
+	 * @see #getRepeatableComment(Address)
+	 */
+	public String getRepeatableCommentAsRendered(Address address) {
+		String comment = currentProgram.getListing().getComment(CodeUnit.REPEATABLE_COMMENT, address);
+		PluginTool tool = state.getTool();
+		if (tool != null) {
+			comment = CommentUtils.getDisplayString(comment, currentProgram);
+		}
+		return comment;
+	}
+
 	private void show(String title, TableService table, Address[] addresses) {
 		PluginTool tool = state.getTool();
 		if (tool == null) {

@@ -499,13 +499,24 @@ public class FlatProgramAPI {
 	}
 
 	/**
-	 * Sets a EOL comment at the specified address
+	 * Sets an EOL comment at the specified address
 	 * @param address the address to set the EOL comment
 	 * @param comment the EOL comment
 	 * @return true if the EOL comment was successfully set
 	 */
 	public final boolean setEOLComment(Address address, String comment) {
 		SetCommentCmd cmd = new SetCommentCmd(address, CodeUnit.EOL_COMMENT, comment);
+		return cmd.applyTo(currentProgram);
+	}
+
+	/**
+	 * Sets a repeatable comment at the specified address
+	 * @param address the address to set the repeatable comment
+	 * @param comment the repeatable comment
+	 * @return true if the repeatable comment was successfully set
+	 */
+	public final boolean setRepeatableComment(Address address, String comment) {
+		SetCommentCmd cmd = new SetCommentCmd(address, CodeUnit.REPEATABLE_COMMENT, comment);
 		return cmd.applyTo(currentProgram);
 	}
 
@@ -562,6 +573,19 @@ public class FlatProgramAPI {
 	 */
 	public final String getEOLComment(Address address) {
 		return currentProgram.getListing().getComment(CodeUnit.EOL_COMMENT, address);
+	}
+
+	/**
+	 * Returns the repeatable comment at the specified address.  The comment returned is the raw text
+	 * of the comment.  Contrastingly, calling {@link #getRepeatableCommentAsRendered(Address)} will
+	 * return the text of the comment as it is rendered in the display.
+	 * @param address the address to get the comment
+	 * @return the repeatable comment at the specified address or null
+	 * if one does not exist
+	 * @see #getRepeatableCommentAsRendered(Address)
+	 */
+	public final String getRepeatableComment(Address address) {
+		return currentProgram.getListing().getComment(CodeUnit.REPEATABLE_COMMENT, address);
 	}
 
 	/**
