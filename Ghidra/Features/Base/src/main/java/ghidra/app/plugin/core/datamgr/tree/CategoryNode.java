@@ -91,6 +91,10 @@ public class CategoryNode extends DataTypeTreeNode {
 		return -1; // CategoryNodes are always come before ****everything else****
 	}
 
+	@Override
+	public int hashCode() {
+		return name.hashCode();
+	}
 	/**
 	 * @see java.lang.Object#equals(java.lang.Object)
 	 */
@@ -166,6 +170,11 @@ public class CategoryNode extends DataTypeTreeNode {
 		CategoryNode node = new CategoryNode(newCategory, filterState);
 		List<GTreeNode> allChildrenList = getChildren();
 		int index = Collections.binarySearch(allChildrenList, node);
+		if (index >= 0) {
+			if (node.getName().equals(allChildrenList.get(index).getName())) {
+				return;
+			}
+		}
 		if (index < 0) {
 			index = -index - 1;
 		}

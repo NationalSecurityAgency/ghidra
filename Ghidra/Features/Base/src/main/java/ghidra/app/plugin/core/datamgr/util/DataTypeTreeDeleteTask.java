@@ -31,13 +31,15 @@ import ghidra.util.task.TaskMonitor;
 
 public class DataTypeTreeDeleteTask extends Task {
 
+	private static final int MAX_NODES = 10;
 	private Map<ArchiveNode, List<GTreeNode>> nodesByArchive;
 	private DataTypeManagerPlugin plugin;
+	private int nodeCount;
 
 	public DataTypeTreeDeleteTask(DataTypeManagerPlugin plugin, List<GTreeNode> nodes) {
 		super("Delete Nodes", true, true, true);
 		this.plugin = plugin;
-
+		nodeCount = nodes.size();
 		nodes = filterList(nodes);
 
 		nodesByArchive = groupNodeByArchive(nodes);
@@ -105,7 +107,9 @@ public class DataTypeTreeDeleteTask extends Task {
 		DataTypeArchiveGTree tree = provider.getGTree();
 		GTreeState treeState = tree.getTreeState();
 		try {
-			collapseArchives(tree);
+			if (nodeCount > MAX_NODES) {
+				collapseArchives(tree);
+			}
 
 			Set<Entry<ArchiveNode, List<GTreeNode>>> entries = nodesByArchive.entrySet();
 			for (Entry<ArchiveNode, List<GTreeNode>> entry : entries) {
