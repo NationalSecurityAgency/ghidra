@@ -310,13 +310,29 @@ public class GTree extends JPanel implements BusyListener {
 		}
 	}
 
-// TODO: doc on how to override to extend listener stuff
 	protected JTreeMouseListenerDelegate createMouseListenerDelegate() {
 		return new GTreeMouseListenerDelegate(tree, this);
 	}
 
+	/**
+	 * Returns the tree state that should be used when clearing a tree filter.  This state
+	 * is tracked by the tree.  It allows the tree to remember the users tree selection
+	 * before, during and after filter operations.
+	 * 
+	 * @return the state
+	 */
 	public GTreeState getRestoreTreeState() {
 		return restoreTreeState;
+	}
+
+	/**
+	 * This allows the filter task to tell the this tree when to save its initial state
+	 * @see #getRestoreTreeState()
+	 */
+	void initializeRestoreTreeState() {
+		if (restoreTreeState == null) {
+			restoreTreeState = new GTreeState(this);
+		}
 	}
 
 	/**

@@ -25,6 +25,7 @@ import java.util.List;
 import javax.swing.*;
 import javax.swing.tree.TreePath;
 
+import org.apache.commons.lang3.StringUtils;
 import org.junit.*;
 
 import docking.test.AbstractDockingTest;
@@ -482,7 +483,7 @@ public class GTreeTest extends AbstractDockingTest {
 	}
 
 	@Test
-	public void testGetAndRestoreTreeState() {
+	public void testRestoreTreeState() {
 		//
 		// Test that we can setup the tree, record its state, change the tree and then restore
 		// the saved state
@@ -528,7 +529,7 @@ public class GTreeTest extends AbstractDockingTest {
 	}
 
 	@Test
-	public void testGetAndRestoreTreeState_ExpandedStateOnly() {
+	public void testRestoreTreeState_ExpandedStateOnly() {
 		//
 		// Test that we can setup the tree, record its expanded state, change the tree 
 		// and then restore the saved state
@@ -558,6 +559,40 @@ public class GTreeTest extends AbstractDockingTest {
 		expandedPaths = gTree.getExpandedPaths();
 		assertEquals(3, expandedPaths.size());
 		assertEquals(originalNode, expandedPaths.get(0).getLastPathComponent());
+	}
+
+	@Test
+	public void testRestoreTreeState_NoSelectedNodes_BeforeOrAfterFilter() {
+
+		//
+		// Tests the base use case for the tree's 'restore state', which is to put the tree
+		// back to the expanded state before a filter *if the user does NOT click the tree*.
+		//
+
+		installLargeTreeModel_WithManyExpandablePaths();
+
+		GTreeNode originalNode = findNodeInTree("Leaf Child - Single B0").getParent();
+		assertNotNull("Did not find existing child node in non filtered tree", originalNode);
+
+		gTree.expandPath(originalNode);
+		waitForTree();
+
+		TreePath expected = getLastVisiblePath();
+
+		// Set a filter that opens more paths than we had initially expanded.  This ensures
+		// that the tree's state changes after the filter is applied.
+		setFilterText("Leaf");
+
+		clearFilterText();
+
+		TreePath selectionPath = gTree.getSelectionPath();
+		assertNull("No node should be selected", selectionPath);
+
+		List<TreePath> expandedPaths = gTree.getExpandedPaths();
+		assertExpaned(expandedPaths, originalNode);
+
+		TreePath newFirstVisiblePath = getLastVisiblePath();
+		assertCloseEnough(expected, newFirstVisiblePath);
 	}
 
 	@Test
@@ -735,7 +770,8 @@ public class GTreeTest extends AbstractDockingTest {
 			}
 		}
 
-		fail("Node not expaded: " + expected + "; expanded paths: " + expandedPaths);
+		String pretty = StringUtils.join(expandedPaths, "\n\t");
+		fail("\n\tNode not expanded: " + expected + ";\n\texpanded paths:\n\t" + pretty);
 	}
 
 	/** Verifies the actual is within one of the expected */
@@ -905,8 +941,8 @@ public class GTreeTest extends AbstractDockingTest {
 	private void setFilterOptions(final TextFilterStrategy filterStrategy, final boolean inverted) {
 		runSwing(() -> {
 			FilterOptions filterOptions = new FilterOptions(filterStrategy, false, false, inverted);
-			((DefaultGTreeFilterProvider) gTree.getFilterProvider())
-					.setFilterOptions(filterOptions);
+			((DefaultGTreeFilterProvider) gTree.getFilterProvider()).setFilterOptions(
+				filterOptions);
 		});
 		waitForTree();
 

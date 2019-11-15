@@ -31,8 +31,22 @@ public class GTreeFilterTask extends GTreeTask {
 		super(tree);
 		this.filter = filter;
 
-		// save this now, before we modify the tree
-		defaultRestoreState = tree.getTreeState();
+		defaultRestoreState = getDefaultRestoreState();
+	}
+
+	private GTreeState getDefaultRestoreState() {
+
+		GTreeState state = tree.getRestoreTreeState();
+		if (filter == null) {
+			// clearing the filter; no need to initialize the restore state
+			return state;
+		}
+
+		if (state == null) {
+			tree.initializeRestoreTreeState();
+			state = tree.getRestoreTreeState();
+		}
+		return state;
 	}
 
 	@Override
@@ -81,8 +95,9 @@ public class GTreeFilterTask extends GTreeTask {
 
 	private void restoreInSameTask(TaskMonitor monitor) {
 
-		GTreeState existingState = tree.getRestoreTreeState();
-		GTreeState state = (existingState == null) ? defaultRestoreState : existingState;
+		GTreeState treesPreferredState = tree.getRestoreTreeState();
+		GTreeState state =
+			(treesPreferredState == null) ? defaultRestoreState : treesPreferredState;
 		GTreeRestoreTreeStateTask restoreTask = new GTreeRestoreTreeStateTask(tree, state);
 		restoreTask.run(monitor);
 	}
