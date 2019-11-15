@@ -33,6 +33,8 @@ import javax.swing.Timer;
 import javax.swing.event.*;
 import javax.swing.tree.*;
 
+import org.apache.commons.lang3.StringUtils;
+
 import docking.DockingWindowManager;
 import docking.widgets.JTreeMouseListenerDelegate;
 import docking.widgets.filter.FilterTextField;
@@ -88,7 +90,6 @@ public class GTree extends JPanel implements BusyListener {
 	private JTreeMouseListenerDelegate mouseListenerDelegate;
 	private GTreeDragNDropHandler dragNDropHandler;
 	private boolean isFilteringEnabled = true;
-	private boolean hasFilterText = false;
 
 	private AtomicLong modificationID = new AtomicLong();
 	private ThreadLocal<TaskMonitor> threadLocalMonitor = new ThreadLocal<>();
@@ -100,7 +101,7 @@ public class GTree extends JPanel implements BusyListener {
 
 	private JPanel mainPanel;
 
-	private GTreeState restoreTreeState;
+	private GTreeState filterRestoreTreeState;
 	private GTreeFilterTask lastFilterTask;
 	private String uniquePreferenceKey;
 
@@ -225,7 +226,6 @@ public class GTree extends JPanel implements BusyListener {
 				// don't care
 			}
 		});
-		model.addTreeModelListener(new FilteredExpansionListener());
 
 		tree = new AutoScrollTree(model);
 		tree.setRowHeight(-1);// variable size rows
@@ -249,7 +249,7 @@ public class GTree extends JPanel implements BusyListener {
 		addGTreeSelectionListener(e -> {
 			if (e.getEventOrigin() == GTreeSelectionEvent.EventOrigin.USER_GENERATED ||
 				e.getEventOrigin() == GTreeSelectionEvent.EventOrigin.API_GENERATED) {
-				restoreTreeState = getTreeState();
+				filterRestoreTreeState = getTreeState();
 			}
 		});
 
@@ -347,25 +347,22 @@ public class GTree extends JPanel implements BusyListener {
 	}
 
 	/**
-	 * Returns the tree state that should be used when clearing a tree filter.  This state
-	 * is tracked by the tree.  It allows the tree to remember the users tree selection
-	 * before, during and after filter operations.
-	 * 
-	 * @return the state
+	 * Signal to the tree that it should record its expanded and selected state when a 
+	 * new filter is applied
 	 */
-	public GTreeState getRestoreTreeState() {
-		if (restoreTreeState == null) {
-			restoreTreeState = new GTreeState(this);
+	void saveFilterRestoreState() {
+		// this may be called by sub-filter tasks and we wish to save only the first one
+		if (filterRestoreTreeState == null) {
+			filterRestoreTreeState = new GTreeState(this);
 		}
-		return restoreTreeState;
 	}
 
-	void treeStateRestored(TaskMonitor taskMonitor) {
-		if (filter == null) {
-			// clear the state so that we will track future user changes upon the next filter
-			restoreTreeState = null;
-		}
-		expandedStateRestored(taskMonitor);
+	GTreeState getFilterRestoreState() {
+		return filterRestoreTreeState;
+	}
+
+	void clearFilterRestoreState() {
+		filterRestoreTreeState = null;
 	}
 
 	/**
@@ -661,10 +658,6 @@ public class GTree extends JPanel implements BusyListener {
 		}
 		filterProvider.setDataTransformer(transformer);
 		updateModelFilter();
-	}
-
-	public String getFilterText() {
-		return filterProvider.getFilterText();
 	}
 
 	/**
@@ -1138,8 +1131,16 @@ public class GTree extends JPanel implements BusyListener {
 		return filter;
 	}
 
+	public boolean isFiltered() {
+		return filter != null;
+	}
+
 	public boolean hasFilterText() {
-		return hasFilterText;
+		return !StringUtils.isBlank(filterProvider.getFilterText());
+	}
+
+	public String getFilterText() {
+		return filterProvider.getFilterText();
 	}
 
 	public void clearFilter() {
@@ -1185,10 +1186,6 @@ public class GTree extends JPanel implements BusyListener {
 
 	public void setNodeEditable(GTreeNode child) {
 		// for now only subclasses of GTree will set a node editable.
-	}
-
-	public boolean isFiltered() {
-		return filter != null;
 	}
 
 	@Override
@@ -1354,74 +1351,6 @@ public class GTree extends JPanel implements BusyListener {
 			//       events as user vs internally generated.
 			GTreeSelectionModel gTreeSelectionModel = (GTreeSelectionModel) getSelectionModel();
 			gTreeSelectionModel.userRemovedSelectionPath(path);
-		}
-	}
-
-	/**
-	 * Listens for changes to nodes in the tree to refilter and expand nodes as they are changed.
-	 * We do this work here in the GTree, as opposed to doing it inside the GTreeNode, since the
-	 * GTree can buffer requests and trigger the work to happen in tasks.  If the work was done
-	 * in the nodes, then long running operations could block the Swing thread.
-	 */
-	private class FilteredExpansionListener implements TreeModelListener {
-
-		/**
-		 * We need this method to handle opening newly added tree nodes.  The GTreeNode will
-		 * properly handle filtering for us in this case, but it does not expand nodes, as this
-		 * is usually done in a separate task after the normal filtering process.
-		 */
-		@Override
-		public void treeNodesInserted(TreeModelEvent e) {
-			if (!hasFilterText) {
-				return;
-			}
-
-			Object[] children = e.getChildren();
-			for (Object child : children) {
-				GTreeNode node = (GTreeNode) child;
-				expandTree(node);
-			}
-		}
-
-		/**
-		 * We need this method to handle major tree changes that bypass the add and remove system
-		 * of the GTreeNode.
-		 */
-		@Override
-		public void treeStructureChanged(TreeModelEvent e) {
-			if (!hasFilterText) {
-				return;
-			}
-
-			Object lastPathComponent = e.getTreePath().getLastPathComponent();
-			GTreeNode node = (GTreeNode) lastPathComponent;
-			maybeTriggerUpdateForNode(node);
-		}
-
-		private void maybeTriggerUpdateForNode(GTreeNode node) {
-			if ((node instanceof InProgressGTreeNode) ||
-				(node instanceof InProgressGTreeRootNode)) {
-				return;
-			}
-
-			// root structure changes imply that we are being rebuilt/refiltered and those tasks
-			// are the result of an update, so there is nothing to do in that case
-			if (node == model.getModelRoot()) {
-				return;
-			}
-
-			updateModelFilter();
-		}
-
-		@Override
-		public void treeNodesChanged(TreeModelEvent e) {
-			// this is handled by the GTreeNode internally via adds and removes
-		}
-
-		@Override
-		public void treeNodesRemoved(TreeModelEvent e) {
-			// currently, the GTreeNode handles adds and removes on its own and updates the
-			// model accordingly
 		}
 	}
 
