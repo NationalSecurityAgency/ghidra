@@ -95,8 +95,6 @@ public class PseudoDisassembler {
 
 	private boolean respectExecuteFlag = false;
 
-	private AddressSetView executeSet;
-
 	/**
 	 * Create a pseudo disassembler for the given program.
 	 */
@@ -110,18 +108,6 @@ public class PseudoDisassembler {
 		pointerSize = program.getDefaultPointerSize();
 
 		this.programContext = program.getProgramContext();
-	}
-	
-	/**
-	 * @return cached addressSet of executable memory blocks
-	 */
-	private AddressSetView getExecuteSet() {
-		if (executeSet != null) {
-			return executeSet;
-		}
-		
-		executeSet = memory.getExecuteSet();
-		return executeSet;
 	}
 
 	/**
@@ -617,6 +603,7 @@ public class PseudoDisassembler {
 			boolean allowExistingInstructions, boolean mustTerminate) {
 		AddressSet body = new AddressSet();
 		AddressSet instrStarts = new AddressSet();
+		AddressSetView execSet = memory.getExecuteSet();
 
 		if (hasLowBitCodeModeInAddrValues(program)) {
 			entryPoint = setTargeContextForDisassembly(procContext, entryPoint);
@@ -801,7 +788,6 @@ public class PseudoDisassembler {
 								}
 							}
 							// if respecting execute flag on memory, test to make sure we did flow into non-execute memory
-							AddressSetView execSet = getExecuteSet();
 							if (respectExecuteFlag && !execSet.isEmpty() && !execSet.contains(flows[j])) {
 								if (!flows[j].isExternalAddress()) {
 									MemoryBlock block = memory.getBlock(flows[j]);
@@ -902,8 +888,8 @@ public class PseudoDisassembler {
 		}
 
 		// check that body does not wander into non-executable memory
-		AddressSetView execSet = getExecuteSet();
-		if (respectExecuteFlag && !execSet.isEmpty() && !body.subtract(execSet).isEmpty()) {
+		AddressSetView execSet = memory.getExecuteSet();
+		if (respectExecuteFlag && !execSet.isEmpty() && !execSet.contains(body)) {
 			return false;
 		}
 
@@ -914,8 +900,9 @@ public class PseudoDisassembler {
 			return false;
 		}
 
+		boolean canHaveOffcutEntry = hasLowBitCodeModeInAddrValues(program);
 		AddressSet strictlyBody = body.subtract(starts);
-		if (hasLowBitCodeModeInAddrValues(program)) {
+		if (canHaveOffcutEntry) {
 			strictlyBody.deleteRange(entry, entry.add(1));
 		}
 		AddressIterator addrIter =

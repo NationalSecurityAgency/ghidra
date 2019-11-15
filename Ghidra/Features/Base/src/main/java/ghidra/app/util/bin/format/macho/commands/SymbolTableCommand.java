@@ -84,9 +84,11 @@ public class SymbolTableCommand extends LoadCommand {
 			nlistList.add(NList.createNList(reader, is32bit));
 		}
 		// sort the entries by the index in the string table, so don't jump around reading
-		List<NList> sortedList = nlistList.stream().sorted(
-			(o1, o2) -> o1.getStringTableIndex() - o2.getStringTableIndex()).collect(
-				Collectors.toList());
+		List<NList> sortedList = nlistList
+				.stream()
+				.sorted((o1, o2) -> Integer.valueOf(o1.getStringTableIndex())
+						.compareTo(Integer.valueOf(o2.getStringTableIndex())))
+				.collect(Collectors.toList());
 
 		// initialize the NList strings from string table
 		long stringTableOffset = stroff;
