@@ -168,10 +168,11 @@ public class CategoryNode extends DataTypeTreeNode {
 		}
 
 		CategoryNode node = new CategoryNode(newCategory, filterState);
-		List<GTreeNode> allChildrenList = getChildren();
-		int index = Collections.binarySearch(allChildrenList, node);
+		List<GTreeNode> children = getChildren();
+		int index = Collections.binarySearch(children, node);
 		if (index >= 0) {
-			if (node.getName().equals(allChildrenList.get(index).getName())) {
+			// if a node with that name exists, then we don't need to add one for the new category
+			if (node.getName().equals(children.get(index).getName())) {
 				return;
 			}
 		}
