@@ -315,27 +315,6 @@ public class GTree extends JPanel implements BusyListener {
 	}
 
 	/**
-	 * Returns the tree state that should be used when clearing a tree filter.  This state
-	 * is tracked by the tree.  It allows the tree to remember the users tree selection
-	 * before, during and after filter operations.
-	 * 
-	 * @return the state
-	 */
-	public GTreeState getRestoreTreeState() {
-		return restoreTreeState;
-	}
-
-	/**
-	 * This allows the filter task to tell the this tree when to save its initial state
-	 * @see #getRestoreTreeState()
-	 */
-	void initializeRestoreTreeState() {
-		if (restoreTreeState == null) {
-			restoreTreeState = new GTreeState(this);
-		}
-	}
-
-	/**
 	 * Returns a state object that allows this tree to later restore its expanded and selected
 	 * state.
 	 * <p>
@@ -365,6 +344,28 @@ public class GTree extends JPanel implements BusyListener {
 	 */
 	public void restoreTreeState(GTreeState state) {
 		runTask(new GTreeRestoreTreeStateTask(this, state));
+	}
+
+	/**
+	 * Returns the tree state that should be used when clearing a tree filter.  This state
+	 * is tracked by the tree.  It allows the tree to remember the users tree selection
+	 * before, during and after filter operations.
+	 * 
+	 * @return the state
+	 */
+	public GTreeState getRestoreTreeState() {
+		if (restoreTreeState == null) {
+			restoreTreeState = new GTreeState(this);
+		}
+		return restoreTreeState;
+	}
+
+	void treeStateRestored(TaskMonitor taskMonitor) {
+		if (filter == null) {
+			// clear the state so that we will track future user changes upon the next filter
+			restoreTreeState = null;
+		}
+		expandedStateRestored(taskMonitor);
 	}
 
 	/**

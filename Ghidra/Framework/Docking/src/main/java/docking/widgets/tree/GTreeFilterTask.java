@@ -31,22 +31,7 @@ public class GTreeFilterTask extends GTreeTask {
 		super(tree);
 		this.filter = filter;
 
-		defaultRestoreState = getDefaultRestoreState();
-	}
-
-	private GTreeState getDefaultRestoreState() {
-
-		GTreeState state = tree.getRestoreTreeState();
-		if (filter == null) {
-			// clearing the filter; no need to initialize the restore state
-			return state;
-		}
-
-		if (state == null) {
-			tree.initializeRestoreTreeState();
-			state = tree.getRestoreTreeState();
-		}
-		return state;
+		defaultRestoreState = tree.getRestoreTreeState();
 	}
 
 	@Override

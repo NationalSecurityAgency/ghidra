@@ -48,7 +48,7 @@ public class GTreeSelectPathsTask extends GTreeTask {
 	 * 
 	 * @param disabled true to disable
 	 */
-	void setExpandingDisabled(boolean disabled) {
+	public void setExpandingDisabled(boolean disabled) {
 		this.expandingDisabled = disabled;
 	}
 
