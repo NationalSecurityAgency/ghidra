@@ -386,254 +386,16 @@ define token modrm (8)
   rexb          = (0,0)
   mmxmod        = (6,7)
   mmxreg        = (3,5)
-  mmxreg_Da     = (3,5)
-  mmxreg_Db     = (3,5)
-  mmxreg_Wa     = (3,5)
-  mmxreg_Wb     = (3,5)
-  mmxreg_Wc     = (3,5)
-  mmxreg_Wd     = (3,5)
-  mmxreg_Ba     = (3,5)
-  mmxreg_Bb     = (3,5)
-  mmxreg_Bc     = (3,5)
-  mmxreg_Bd     = (3,5)
-  mmxreg_Be     = (3,5)
-  mmxreg_Bf     = (3,5)
-  mmxreg_Bg     = (3,5)
-  mmxreg_Bh     = (3,5)
   mmxreg1       = (3,5)
-  mmxreg1_Da    = (3,5)
-  mmxreg1_Db    = (3,5)
-  mmxreg1_Wa    = (3,5)
-  mmxreg1_Wb    = (3,5)
-  mmxreg1_Wc    = (3,5)
-  mmxreg1_Wd    = (3,5)
-  mmxreg1_Ba    = (3,5)
-  mmxreg1_Bb    = (3,5)
-  mmxreg1_Bc    = (3,5)
-  mmxreg1_Bd    = (3,5)
-  mmxreg1_Be    = (3,5)
-  mmxreg1_Bf    = (3,5)
-  mmxreg1_Bg    = (3,5)
-  mmxreg1_Bh    = (3,5)
   mmxreg2       = (0,2)
-  mmxreg2_Da    = (0,2)
-  mmxreg2_Db    = (0,2)
-  mmxreg2_Wa    = (0,2)
-  mmxreg2_Wb    = (0,2)
-  mmxreg2_Wc    = (0,2)
-  mmxreg2_Wd    = (0,2)
-  mmxreg2_Ba    = (0,2)
-  mmxreg2_Bb    = (0,2)
-  mmxreg2_Bc    = (0,2)
-  mmxreg2_Bd    = (0,2)
-  mmxreg2_Be    = (0,2)
-  mmxreg2_Bf    = (0,2)
-  mmxreg2_Bg    = (0,2)
-  mmxreg2_Bh    = (0,2)
   xmmmod        = (6,7)
   xmmreg        = (3,5)
-  xmmreg_Qa     = (3,5)
-  xmmreg_Qb     = (3,5)
-  xmmreg_x_Qa   = (3,5)
-  xmmreg_x_Qb   = (3,5)
-  xmmreg_Da     = (3,5)
-  xmmreg_Db     = (3,5)
-  xmmreg_Dc     = (3,5)
-  xmmreg_Dd     = (3,5)
-  xmmreg_x_Da   = (3,5)
-  xmmreg_x_Db   = (3,5)
-  xmmreg_x_Dc   = (3,5)
-  xmmreg_x_Dd   = (3,5)
-  xmmreg_Wa     = (3,5)
-  xmmreg_Wb     = (3,5)
-  xmmreg_Wc     = (3,5)
-  xmmreg_Wd     = (3,5)
-  xmmreg_We     = (3,5)
-  xmmreg_Wf     = (3,5)
-  xmmreg_Wg     = (3,5)
-  xmmreg_Wh     = (3,5)
-  xmmreg_x_Wa   = (3,5)
-  xmmreg_x_Wb   = (3,5)
-  xmmreg_x_Wc   = (3,5)
-  xmmreg_x_Wd   = (3,5)
-  xmmreg_x_We   = (3,5)
-  xmmreg_x_Wf   = (3,5)
-  xmmreg_x_Wg   = (3,5)
-  xmmreg_x_Wh   = (3,5)
-  xmmreg_Ba     = (3,5)
-  xmmreg_Bb     = (3,5)
-  xmmreg_Bc     = (3,5)
-  xmmreg_Bd     = (3,5)
-  xmmreg_Be     = (3,5)
-  xmmreg_Bf     = (3,5)
-  xmmreg_Bg     = (3,5)
-  xmmreg_Bh     = (3,5)
-  xmmreg_Bi     = (3,5)
-  xmmreg_Bj     = (3,5)
-  xmmreg_Bk     = (3,5)
-  xmmreg_Bl     = (3,5)
-  xmmreg_Bm     = (3,5)
-  xmmreg_Bn     = (3,5)
-  xmmreg_Bo     = (3,5)
-  xmmreg_Bp     = (3,5)
-  xmmreg_x_Ba   = (3,5)
-  xmmreg_x_Bb   = (3,5)
-  xmmreg_x_Bc   = (3,5)
-  xmmreg_x_Bd   = (3,5)
-  xmmreg_x_Be   = (3,5)
-  xmmreg_x_Bf   = (3,5)
-  xmmreg_x_Bg   = (3,5)
-  xmmreg_x_Bh   = (3,5)
-  xmmreg_x_Bi   = (3,5)
-  xmmreg_x_Bj   = (3,5)
-  xmmreg_x_Bk   = (3,5)
-  xmmreg_x_Bl   = (3,5)
-  xmmreg_x_Bm   = (3,5)
-  xmmreg_x_Bn   = (3,5)
-  xmmreg_x_Bo   = (3,5)
-  xmmreg_x_Bp   = (3,5)
-
   ymmreg        = (3,5)
-  ymmreg_DQa     = (3,5)
-  ymmreg_DQb     = (3,5)
-  ymmreg_x_DQa   = (3,5)
-  ymmreg_x_DQb   = (3,5)
 
   xmmreg1       = (3,5)
-  xmmreg1_Qa     = (3,5)
-  xmmreg1_Qb     = (3,5)
-  xmmreg1_x_Qa   = (3,5)
-  xmmreg1_x_Qb   = (3,5)
-  xmmreg1_Da     = (3,5)
-  xmmreg1_Db     = (3,5)
-  xmmreg1_Dc     = (3,5)
-  xmmreg1_Dd     = (3,5)
-  xmmreg1_x_Da   = (3,5)
-  xmmreg1_x_Db   = (3,5)
-  xmmreg1_x_Dc   = (3,5)
-  xmmreg1_x_Dd   = (3,5)
-  xmmreg1_Wa     = (3,5)
-  xmmreg1_Wb     = (3,5)
-  xmmreg1_Wc     = (3,5)
-  xmmreg1_Wd     = (3,5)
-  xmmreg1_We     = (3,5)
-  xmmreg1_Wf     = (3,5)
-  xmmreg1_Wg     = (3,5)
-  xmmreg1_Wh     = (3,5)
-  xmmreg1_x_Wa   = (3,5)
-  xmmreg1_x_Wb   = (3,5)
-  xmmreg1_x_Wc   = (3,5)
-  xmmreg1_x_Wd   = (3,5)
-  xmmreg1_x_We   = (3,5)
-  xmmreg1_x_Wf   = (3,5)
-  xmmreg1_x_Wg   = (3,5)
-  xmmreg1_x_Wh   = (3,5)
-  xmmreg1_Ba     = (3,5)
-  xmmreg1_Bb     = (3,5)
-  xmmreg1_Bc     = (3,5)
-  xmmreg1_Bd     = (3,5)
-  xmmreg1_Be     = (3,5)
-  xmmreg1_Bf     = (3,5)
-  xmmreg1_Bg     = (3,5)
-  xmmreg1_Bh     = (3,5)
-  xmmreg1_Bi     = (3,5)
-  xmmreg1_Bj     = (3,5)
-  xmmreg1_Bk     = (3,5)
-  xmmreg1_Bl     = (3,5)
-  xmmreg1_Bm     = (3,5)
-  xmmreg1_Bn     = (3,5)
-  xmmreg1_Bo     = (3,5)
-  xmmreg1_Bp     = (3,5)
-  xmmreg1_x_Ba   = (3,5)
-  xmmreg1_x_Bb   = (3,5)
-  xmmreg1_x_Bc   = (3,5)
-  xmmreg1_x_Bd   = (3,5)
-  xmmreg1_x_Be   = (3,5)
-  xmmreg1_x_Bf   = (3,5)
-  xmmreg1_x_Bg   = (3,5)
-  xmmreg1_x_Bh   = (3,5)
-  xmmreg1_x_Bi   = (3,5)
-  xmmreg1_x_Bj   = (3,5)
-  xmmreg1_x_Bk   = (3,5)
-  xmmreg1_x_Bl   = (3,5)
-  xmmreg1_x_Bm   = (3,5)
-  xmmreg1_x_Bn   = (3,5)
-  xmmreg1_x_Bo   = (3,5)
-  xmmreg1_x_Bp   = (3,5)
-
   ymmreg1       = (3,5)
-  ymmreg1_DQa     = (3,5)
-  ymmreg1_DQb     = (3,5)
-  ymmreg1_x_DQa   = (3,5)
-  ymmreg1_x_DQb   = (3,5)
-
   xmmreg2       = (0,2)
-  xmmreg2_Qa     = (0,2)
-  xmmreg2_Qb     = (0,2)
-  xmmreg2_x_Qa   = (0,2)
-  xmmreg2_x_Qb   = (0,2)
-  xmmreg2_Da     = (0,2)
-  xmmreg2_Db     = (0,2)
-  xmmreg2_Dc     = (0,2)
-  xmmreg2_Dd     = (0,2)
-  xmmreg2_x_Da   = (0,2)
-  xmmreg2_x_Db   = (0,2)
-  xmmreg2_x_Dc   = (0,2)
-  xmmreg2_x_Dd   = (0,2)
-  xmmreg2_Wa     = (0,2)
-  xmmreg2_Wb     = (0,2)
-  xmmreg2_Wc     = (0,2)
-  xmmreg2_Wd     = (0,2)
-  xmmreg2_We     = (0,2)
-  xmmreg2_Wf     = (0,2)
-  xmmreg2_Wg     = (0,2)
-  xmmreg2_Wh     = (0,2)
-  xmmreg2_x_Wa   = (0,2)
-  xmmreg2_x_Wb   = (0,2)
-  xmmreg2_x_Wc   = (0,2)
-  xmmreg2_x_Wd   = (0,2)
-  xmmreg2_x_We   = (0,2)
-  xmmreg2_x_Wf   = (0,2)
-  xmmreg2_x_Wg   = (0,2)
-  xmmreg2_x_Wh   = (0,2)
-  xmmreg2_Ba     = (0,2)
-  xmmreg2_Bb     = (0,2)
-  xmmreg2_Bc     = (0,2)
-  xmmreg2_Bd     = (0,2)
-  xmmreg2_Be     = (0,2)
-  xmmreg2_Bf     = (0,2)
-  xmmreg2_Bg     = (0,2)
-  xmmreg2_Bh     = (0,2)
-  xmmreg2_Bi     = (0,2)
-  xmmreg2_Bj     = (0,2)
-  xmmreg2_Bk     = (0,2)
-  xmmreg2_Bl     = (0,2)
-  xmmreg2_Bm     = (0,2)
-  xmmreg2_Bn     = (0,2)
-  xmmreg2_Bo     = (0,2)
-  xmmreg2_Bp     = (0,2)
-  xmmreg2_x_Ba   = (0,2)
-  xmmreg2_x_Bb   = (0,2)
-  xmmreg2_x_Bc   = (0,2)
-  xmmreg2_x_Bd   = (0,2)
-  xmmreg2_x_Be   = (0,2)
-  xmmreg2_x_Bf   = (0,2)
-  xmmreg2_x_Bg   = (0,2)
-  xmmreg2_x_Bh   = (0,2)
-  xmmreg2_x_Bi   = (0,2)
-  xmmreg2_x_Bj   = (0,2)
-  xmmreg2_x_Bk   = (0,2)
-  xmmreg2_x_Bl   = (0,2)
-  xmmreg2_x_Bm   = (0,2)
-  xmmreg2_x_Bn   = (0,2)
-  xmmreg2_x_Bo   = (0,2)
-  xmmreg2_x_Bp   = (0,2)
-
   ymmreg2       = (0,2)
-  ymmreg2_DQa     = (0,2)
-  ymmreg2_DQb     = (0,2)
-  ymmreg2_x_DQa   = (0,2)
-  ymmreg2_x_DQb   = (0,2)
 
   xmmreg_x      = (3,5)
   ymmreg_x      = (3,5)
@@ -714,97 +476,9 @@ attach values ss  [ 1 2 4 8];
 
 attach variables [ mmxreg mmxreg1 mmxreg2 ] [ MM0 MM1 MM2 MM3 MM4 MM5 MM6 MM7 ];
 
-attach variables [ mmxreg_Da mmxreg1_Da mmxreg2_Da ] [ MM0_Da MM1_Da MM2_Da MM3_Da MM4_Da MM5_Da MM6_Da MM7_Da ];
-attach variables [ mmxreg_Db mmxreg1_Db mmxreg2_Db ] [ MM0_Db MM1_Db MM2_Db MM3_Db MM4_Db MM5_Db MM6_Db MM7_Db ];
-
-attach variables [ mmxreg_Wa mmxreg1_Wa mmxreg2_Wa ] [ MM0_Wa MM1_Wa MM2_Wa MM3_Wa MM4_Wa MM5_Wa MM6_Wa MM7_Wa ];
-attach variables [ mmxreg_Wb mmxreg1_Wb mmxreg2_Wb ] [ MM0_Wb MM1_Wb MM2_Wb MM3_Wb MM4_Wb MM5_Wb MM6_Wb MM7_Wb ];
-attach variables [ mmxreg_Wc mmxreg1_Wc mmxreg2_Wc ] [ MM0_Wc MM1_Wc MM2_Wc MM3_Wc MM4_Wc MM5_Wc MM6_Wc MM7_Wc ];
-attach variables [ mmxreg_Wd mmxreg1_Wd mmxreg2_Wd ] [ MM0_Wd MM1_Wd MM2_Wd MM3_Wd MM4_Wd MM5_Wd MM6_Wd MM7_Wd ];
-
-attach variables [ mmxreg_Ba mmxreg1_Ba mmxreg2_Ba ] [ MM0_Ba MM1_Ba MM2_Ba MM3_Ba MM4_Ba MM5_Ba MM6_Ba MM7_Ba ];
-attach variables [ mmxreg_Bb mmxreg1_Bb mmxreg2_Bb ] [ MM0_Bb MM1_Bb MM2_Bb MM3_Bb MM4_Bb MM5_Bb MM6_Bb MM7_Bb ];
-attach variables [ mmxreg_Bc mmxreg1_Bc mmxreg2_Bc ] [ MM0_Bc MM1_Bc MM2_Bc MM3_Bc MM4_Bc MM5_Bc MM6_Bc MM7_Bc ];
-attach variables [ mmxreg_Bd mmxreg1_Bd mmxreg2_Bd ] [ MM0_Bd MM1_Bd MM2_Bd MM3_Bd MM4_Bd MM5_Bd MM6_Bd MM7_Bd ];
-attach variables [ mmxreg_Be mmxreg1_Be mmxreg2_Be ] [ MM0_Be MM1_Be MM2_Be MM3_Be MM4_Be MM5_Be MM6_Be MM7_Be ];
-attach variables [ mmxreg_Bf mmxreg1_Bf mmxreg2_Bf ] [ MM0_Bf MM1_Bf MM2_Bf MM3_Bf MM4_Bf MM5_Bf MM6_Bf MM7_Bf ];
-attach variables [ mmxreg_Bg mmxreg1_Bg mmxreg2_Bg ] [ MM0_Bg MM1_Bg MM2_Bg MM3_Bg MM4_Bg MM5_Bg MM6_Bg MM7_Bg ];
-attach variables [ mmxreg_Bh mmxreg1_Bh mmxreg2_Bh ] [ MM0_Bh MM1_Bh MM2_Bh MM3_Bh MM4_Bh MM5_Bh MM6_Bh MM7_Bh ];
-
-
 attach variables [ xmmreg xmmreg1 xmmreg2 xmm_vsib ] [ XMM0 XMM1 XMM2 XMM3 XMM4 XMM5 XMM6 XMM7 ];
 
-attach variables [ xmmreg_Qa xmmreg1_Qa xmmreg2_Qa ] [ XMM0_Qa XMM1_Qa XMM2_Qa XMM3_Qa XMM4_Qa XMM5_Qa XMM6_Qa XMM7_Qa ];
-attach variables [ xmmreg_Qb xmmreg1_Qb xmmreg2_Qb ] [ XMM0_Qb XMM1_Qb XMM2_Qb XMM3_Qb XMM4_Qb XMM5_Qb XMM6_Qb XMM7_Qb ];
-
-attach variables [ xmmreg_Da xmmreg1_Da xmmreg2_Da ] [ XMM0_Da XMM1_Da XMM2_Da XMM3_Da XMM4_Da XMM5_Da XMM6_Da XMM7_Da ];
-attach variables [ xmmreg_Db xmmreg1_Db xmmreg2_Db ] [ XMM0_Db XMM1_Db XMM2_Db XMM3_Db XMM4_Db XMM5_Db XMM6_Db XMM7_Db ];
-attach variables [ xmmreg_Dc xmmreg1_Dc xmmreg2_Dc ] [ XMM0_Dc XMM1_Dc XMM2_Dc XMM3_Dc XMM4_Dc XMM5_Dc XMM6_Dc XMM7_Dc ];
-attach variables [ xmmreg_Dd xmmreg1_Dd xmmreg2_Dd ] [ XMM0_Dd XMM1_Dd XMM2_Dd XMM3_Dd XMM4_Dd XMM5_Dd XMM6_Dd XMM7_Dd ];
-
-attach variables [ xmmreg_Wa xmmreg1_Wa xmmreg2_Wa ] [ XMM0_Wa XMM1_Wa XMM2_Wa XMM3_Wa XMM4_Wa XMM5_Wa XMM6_Wa XMM7_Wa ];
-attach variables [ xmmreg_Wb xmmreg1_Wb xmmreg2_Wb ] [ XMM0_Wb XMM1_Wb XMM2_Wb XMM3_Wb XMM4_Wb XMM5_Wb XMM6_Wb XMM7_Wb ];
-attach variables [ xmmreg_Wc xmmreg1_Wc xmmreg2_Wc ] [ XMM0_Wc XMM1_Wc XMM2_Wc XMM3_Wc XMM4_Wc XMM5_Wc XMM6_Wc XMM7_Wc ];
-attach variables [ xmmreg_Wd xmmreg1_Wd xmmreg2_Wd ] [ XMM0_Wd XMM1_Wd XMM2_Wd XMM3_Wd XMM4_Wd XMM5_Wd XMM6_Wd XMM7_Wd ];
-attach variables [ xmmreg_We xmmreg1_We xmmreg2_We ] [ XMM0_We XMM1_We XMM2_We XMM3_We XMM4_We XMM5_We XMM6_We XMM7_We ];
-attach variables [ xmmreg_Wf xmmreg1_Wf xmmreg2_Wf ] [ XMM0_Wf XMM1_Wf XMM2_Wf XMM3_Wf XMM4_Wf XMM5_Wf XMM6_Wf XMM7_Wf ];
-attach variables [ xmmreg_Wg xmmreg1_Wg xmmreg2_Wg ] [ XMM0_Wg XMM1_Wg XMM2_Wg XMM3_Wg XMM4_Wg XMM5_Wg XMM6_Wg XMM7_Wg ];
-attach variables [ xmmreg_Wh xmmreg1_Wh xmmreg2_Wh ] [ XMM0_Wh XMM1_Wh XMM2_Wh XMM3_Wh XMM4_Wh XMM5_Wh XMM6_Wh XMM7_Wh ];
-
-attach variables [ xmmreg_Ba xmmreg1_Ba xmmreg2_Ba ] [ XMM0_Ba XMM1_Ba XMM2_Ba XMM3_Ba XMM4_Ba XMM5_Ba XMM6_Ba XMM7_Ba ];
-attach variables [ xmmreg_Bb xmmreg1_Bb xmmreg2_Bb ] [ XMM0_Bb XMM1_Bb XMM2_Bb XMM3_Bb XMM4_Bb XMM5_Bb XMM6_Bb XMM7_Bb ];
-attach variables [ xmmreg_Bc xmmreg1_Bc xmmreg2_Bc ] [ XMM0_Bc XMM1_Bc XMM2_Bc XMM3_Bc XMM4_Bc XMM5_Bc XMM6_Bc XMM7_Bc ];
-attach variables [ xmmreg_Bd xmmreg1_Bd xmmreg2_Bd ] [ XMM0_Bd XMM1_Bd XMM2_Bd XMM3_Bd XMM4_Bd XMM5_Bd XMM6_Bd XMM7_Bd ];
-attach variables [ xmmreg_Be xmmreg1_Be xmmreg2_Be ] [ XMM0_Be XMM1_Be XMM2_Be XMM3_Be XMM4_Be XMM5_Be XMM6_Be XMM7_Be ];
-attach variables [ xmmreg_Bf xmmreg1_Bf xmmreg2_Bf ] [ XMM0_Bf XMM1_Bf XMM2_Bf XMM3_Bf XMM4_Bf XMM5_Bf XMM6_Bf XMM7_Bf ];
-attach variables [ xmmreg_Bg xmmreg1_Bg xmmreg2_Bg ] [ XMM0_Bg XMM1_Bg XMM2_Bg XMM3_Bg XMM4_Bg XMM5_Bg XMM6_Bg XMM7_Bg ];
-attach variables [ xmmreg_Bh xmmreg1_Bh xmmreg2_Bh ] [ XMM0_Bh XMM1_Bh XMM2_Bh XMM3_Bh XMM4_Bh XMM5_Bh XMM6_Bh XMM7_Bh ];
-attach variables [ xmmreg_Bi xmmreg1_Bi xmmreg2_Bi ] [ XMM0_Bi XMM1_Bi XMM2_Bi XMM3_Bi XMM4_Bi XMM5_Bi XMM6_Bi XMM7_Bi ];
-attach variables [ xmmreg_Bj xmmreg1_Bj xmmreg2_Bj ] [ XMM0_Bj XMM1_Bj XMM2_Bj XMM3_Bj XMM4_Bj XMM5_Bj XMM6_Bj XMM7_Bj ];
-attach variables [ xmmreg_Bk xmmreg1_Bk xmmreg2_Bk ] [ XMM0_Bk XMM1_Bk XMM2_Bk XMM3_Bk XMM4_Bk XMM5_Bk XMM6_Bk XMM7_Bk ];
-attach variables [ xmmreg_Bl xmmreg1_Bl xmmreg2_Bl ] [ XMM0_Bl XMM1_Bl XMM2_Bl XMM3_Bl XMM4_Bl XMM5_Bl XMM6_Bl XMM7_Bl ];
-attach variables [ xmmreg_Bm xmmreg1_Bm xmmreg2_Bm ] [ XMM0_Bm XMM1_Bm XMM2_Bm XMM3_Bm XMM4_Bm XMM5_Bm XMM6_Bm XMM7_Bm ];
-attach variables [ xmmreg_Bn xmmreg1_Bn xmmreg2_Bn ] [ XMM0_Bn XMM1_Bn XMM2_Bn XMM3_Bn XMM4_Bn XMM5_Bn XMM6_Bn XMM7_Bn ];
-attach variables [ xmmreg_Bo xmmreg1_Bo xmmreg2_Bo ] [ XMM0_Bo XMM1_Bo XMM2_Bo XMM3_Bo XMM4_Bo XMM5_Bo XMM6_Bo XMM7_Bo ];
-attach variables [ xmmreg_Bp xmmreg1_Bp xmmreg2_Bp ] [ XMM0_Bp XMM1_Bp XMM2_Bp XMM3_Bp XMM4_Bp XMM5_Bp XMM6_Bp XMM7_Bp ];
-
-
 attach variables [ xmmreg_x xmmreg1_x xmmreg2_x xmm_vsib_x ] [ XMM8 XMM9 XMM10 XMM11 XMM12 XMM13 XMM14 XMM15 ];
-
-attach variables [ xmmreg_x_Qa xmmreg1_x_Qa xmmreg2_x_Qa ] [ XMM8_Qa XMM9_Qa XMM10_Qa XMM11_Qa XMM12_Qa XMM13_Qa XMM14_Qa XMM15_Qa ];
-attach variables [ xmmreg_x_Qb xmmreg1_x_Qb xmmreg2_x_Qb ] [ XMM8_Qb XMM9_Qb XMM10_Qb XMM11_Qb XMM12_Qb XMM13_Qb XMM14_Qb XMM15_Qb ];
-
-attach variables [ xmmreg_x_Da xmmreg1_x_Da xmmreg2_x_Da ] [ XMM8_Da XMM9_Da XMM10_Da XMM11_Da XMM12_Da XMM13_Da XMM14_Da XMM15_Da ];
-attach variables [ xmmreg_x_Db xmmreg1_x_Db xmmreg2_x_Db ] [ XMM8_Db XMM9_Db XMM10_Db XMM11_Db XMM12_Db XMM13_Db XMM14_Db XMM15_Db ];
-attach variables [ xmmreg_x_Dc xmmreg1_x_Dc xmmreg2_x_Dc ] [ XMM8_Dc XMM9_Dc XMM10_Dc XMM11_Dc XMM12_Dc XMM13_Dc XMM14_Dc XMM15_Dc ];
-attach variables [ xmmreg_x_Dd xmmreg1_x_Dd xmmreg2_x_Dd ] [ XMM8_Dd XMM9_Dd XMM10_Dd XMM11_Dd XMM12_Dd XMM13_Dd XMM14_Dd XMM15_Dd ];
-
-attach variables [ xmmreg_x_Wa xmmreg1_x_Wa xmmreg2_x_Wa ] [ XMM8_Wa XMM9_Wa XMM10_Wa XMM11_Wa XMM12_Wa XMM13_Wa XMM14_Wa XMM15_Wa ];
-attach variables [ xmmreg_x_Wb xmmreg1_x_Wb xmmreg2_x_Wb ] [ XMM8_Wb XMM9_Wb XMM10_Wb XMM11_Wb XMM12_Wb XMM13_Wb XMM14_Wb XMM15_Wb ];
-attach variables [ xmmreg_x_Wc xmmreg1_x_Wc xmmreg2_x_Wc ] [ XMM8_Wc XMM9_Wc XMM10_Wc XMM11_Wc XMM12_Wc XMM13_Wc XMM14_Wc XMM15_Wc ];
-attach variables [ xmmreg_x_Wd xmmreg1_x_Wd xmmreg2_x_Wd ] [ XMM8_Wd XMM9_Wd XMM10_Wd XMM11_Wd XMM12_Wd XMM13_Wd XMM14_Wd XMM15_Wd ];
-attach variables [ xmmreg_x_We xmmreg1_x_We xmmreg2_x_We ] [ XMM8_We XMM9_We XMM10_We XMM11_We XMM12_We XMM13_We XMM14_We XMM15_We ];
-attach variables [ xmmreg_x_Wf xmmreg1_x_Wf xmmreg2_x_Wf ] [ XMM8_Wf XMM9_Wf XMM10_Wf XMM11_Wf XMM12_Wf XMM13_Wf XMM14_Wf XMM15_Wf ];
-attach variables [ xmmreg_x_Wg xmmreg1_x_Wg xmmreg2_x_Wg ] [ XMM8_Wg XMM9_Wg XMM10_Wg XMM11_Wg XMM12_Wg XMM13_Wg XMM14_Wg XMM15_Wg ];
-attach variables [ xmmreg_x_Wh xmmreg1_x_Wh xmmreg2_x_Wh ] [ XMM8_Wh XMM9_Wh XMM10_Wh XMM11_Wh XMM12_Wh XMM13_Wh XMM14_Wh XMM15_Wh ];
-
-attach variables [ xmmreg_x_Ba xmmreg1_x_Ba xmmreg2_x_Ba ] [ XMM8_Ba XMM9_Ba XMM10_Ba XMM11_Ba XMM12_Ba XMM13_Ba XMM14_Ba XMM15_Ba ];
-attach variables [ xmmreg_x_Bb xmmreg1_x_Bb xmmreg2_x_Bb ] [ XMM8_Bb XMM9_Bb XMM10_Bb XMM11_Bb XMM12_Bb XMM13_Bb XMM14_Bb XMM15_Bb ];
-attach variables [ xmmreg_x_Bc xmmreg1_x_Bc xmmreg2_x_Bc ] [ XMM8_Bc XMM9_Bc XMM10_Bc XMM11_Bc XMM12_Bc XMM13_Bc XMM14_Bc XMM15_Bc ];
-attach variables [ xmmreg_x_Bd xmmreg1_x_Bd xmmreg2_x_Bd ] [ XMM8_Bd XMM9_Bd XMM10_Bd XMM11_Bd XMM12_Bd XMM13_Bd XMM14_Bd XMM15_Bd ];
-attach variables [ xmmreg_x_Be xmmreg1_x_Be xmmreg2_x_Be ] [ XMM8_Be XMM9_Be XMM10_Be XMM11_Be XMM12_Be XMM13_Be XMM14_Be XMM15_Be ];
-attach variables [ xmmreg_x_Bf xmmreg1_x_Bf xmmreg2_x_Bf ] [ XMM8_Bf XMM9_Bf XMM10_Bf XMM11_Bf XMM12_Bf XMM13_Bf XMM14_Bf XMM15_Bf ];
-attach variables [ xmmreg_x_Bg xmmreg1_x_Bg xmmreg2_x_Bg ] [ XMM8_Bg XMM9_Bg XMM10_Bg XMM11_Bg XMM12_Bg XMM13_Bg XMM14_Bg XMM15_Bg ];
-attach variables [ xmmreg_x_Bh xmmreg1_x_Bh xmmreg2_x_Bh ] [ XMM8_Bh XMM9_Bh XMM10_Bh XMM11_Bh XMM12_Bh XMM13_Bh XMM14_Bh XMM15_Bh ];
-attach variables [ xmmreg_x_Bi xmmreg1_x_Bi xmmreg2_x_Bi ] [ XMM8_Bi XMM9_Bi XMM10_Bi XMM11_Bi XMM12_Bi XMM13_Bi XMM14_Bi XMM15_Bi ];
-attach variables [ xmmreg_x_Bj xmmreg1_x_Bj xmmreg2_x_Bj ] [ XMM8_Bj XMM9_Bj XMM10_Bj XMM11_Bj XMM12_Bj XMM13_Bj XMM14_Bj XMM15_Bj ];
-attach variables [ xmmreg_x_Bk xmmreg1_x_Bk xmmreg2_x_Bk ] [ XMM8_Bk XMM9_Bk XMM10_Bk XMM11_Bk XMM12_Bk XMM13_Bk XMM14_Bk XMM15_Bk ];
-attach variables [ xmmreg_x_Bl xmmreg1_x_Bl xmmreg2_x_Bl ] [ XMM8_Bl XMM9_Bl XMM10_Bl XMM11_Bl XMM12_Bl XMM13_Bl XMM14_Bl XMM15_Bl ];
-attach variables [ xmmreg_x_Bm xmmreg1_x_Bm xmmreg2_x_Bm ] [ XMM8_Bm XMM9_Bm XMM10_Bm XMM11_Bm XMM12_Bm XMM13_Bm XMM14_Bm XMM15_Bm ];
-attach variables [ xmmreg_x_Bn xmmreg1_x_Bn xmmreg2_x_Bn ] [ XMM8_Bn XMM9_Bn XMM10_Bn XMM11_Bn XMM12_Bn XMM13_Bn XMM14_Bn XMM15_Bn ];
-attach variables [ xmmreg_x_Bo xmmreg1_x_Bo xmmreg2_x_Bo ] [ XMM8_Bo XMM9_Bo XMM10_Bo XMM11_Bo XMM12_Bo XMM13_Bo XMM14_Bo XMM15_Bo ];
-attach variables [ xmmreg_x_Bp xmmreg1_x_Bp xmmreg2_x_Bp ] [ XMM8_Bp XMM9_Bp XMM10_Bp XMM11_Bp XMM12_Bp XMM13_Bp XMM14_Bp XMM15_Bp ];
-
 
 attach variables [ vexVVVV_XmmReg Xmm_imm8_7_4 ] [ XMM0 XMM1 XMM2 XMM3 XMM4 XMM5 XMM6 XMM7 XMM8 XMM9 XMM10 XMM11 XMM12 XMM13 XMM14 XMM15 ];
 
@@ -827,12 +501,6 @@ attach variables [ ymmreg_x ymmreg1_x ymmreg2_x ymm_vsib_x ]	[ YMM8 YMM9 YMM10 Y
 attach variables [ bnd1 bnd2 ]       [ BND0 BND1 BND2 BND3 _ _ _ _ ];
 attach variables [ bnd1_lb bnd2_lb ] [ BND0_LB BND1_LB BND2_LB BND3_LB _ _ _ _ ];
 attach variables [ bnd1_ub bnd2_ub ] [ BND0_UB BND1_UB BND2_UB BND3_UB _ _ _ _ ];
-
-attach variables [ ymmreg_DQa ymmreg1_DQa ymmreg2_DQa ] [ XMM0 XMM1 XMM2 XMM3 XMM4 XMM5 XMM6 XMM7 ];
-attach variables [ ymmreg_DQb ymmreg1_DQb ymmreg2_DQb ] [ YMM0_H YMM1_H YMM2_H YMM3_H YMM4_H YMM5_H YMM6_H YMM7_H ];
-
-attach variables [ ymmreg_x_DQa ymmreg1_x_DQa ymmreg2_x_DQa ] [ XMM8 XMM9 XMM10 XMM11 XMM12 XMM13 XMM14 XMM15 ];
-attach variables [ ymmreg_x_DQb ymmreg1_x_DQb ymmreg2_x_DQb ] [ YMM8_H YMM9_H YMM10_H YMM11_H YMM12_H YMM13_H YMM14_H YMM15_H ];
 
 attach variables [ vexVVVV_YmmReg_DQa ] [ XMM0 XMM1 XMM2 XMM3 XMM4 XMM5 XMM6 XMM7 XMM8 XMM9 XMM10 XMM11 XMM12 XMM13 XMM14 XMM15 ];
 attach variables [ vexVVVV_YmmReg_DQb ] [ YMM0_H YMM1_H YMM2_H YMM3_H YMM4_H YMM5_H YMM6_H YMM7_H YMM8_H YMM9_H YMM10_H YMM11_H YMM12_H YMM13_H YMM14_H YMM15_H ];
@@ -1199,73 +867,6 @@ q_vm64x: "qword ptr "^vMem64x is vMem64x { }
 q_vm64y: "qword ptr "^vMem64y is vMem64y { }
 @endif
 
-
-
-##
-## Memory sub-pieces
-##
- 
-m32_Wa: is Mem {                 export *:2 Mem; }
-m32_Wb: is Mem { local tmp = Mem +  2; export *:2 tmp; }
-
-m32_Ba: is Mem {                 export *:1 Mem; }
-m32_Bb: is Mem { local tmp = Mem +  1; export *:1 tmp; }
-m32_Bc: is Mem { local tmp = Mem +  2; export *:1 tmp; }
-m32_Bd: is Mem { local tmp = Mem +  3; export *:1 tmp; }
-
-
-m64_Da: is Mem {                 export *:4 Mem; }
-m64_Db: is Mem { local tmp = Mem +  4; export *:4 tmp; }
-
-m64_Wa: is Mem {                 export *:2 Mem; }
-m64_Wb: is Mem { local tmp = Mem +  2; export *:2 tmp; }
-m64_Wc: is Mem { local tmp = Mem +  4; export *:2 tmp; }
-m64_Wd: is Mem { local tmp = Mem +  6; export *:2 tmp; }
-
-m64_Ba: is Mem {                 export *:1 Mem; }
-m64_Bb: is Mem { local tmp = Mem +  1; export *:1 tmp; }
-m64_Bc: is Mem { local tmp = Mem +  2; export *:1 tmp; }
-m64_Bd: is Mem { local tmp = Mem +  3; export *:1 tmp; }
-m64_Be: is Mem { local tmp = Mem +  4; export *:1 tmp; }
-m64_Bf: is Mem { local tmp = Mem +  5; export *:1 tmp; }
-m64_Bg: is Mem { local tmp = Mem +  6; export *:1 tmp; }
-m64_Bh: is Mem { local tmp = Mem +  7; export *:1 tmp; }
-
-
-m128_Qa: is Mem {                 export *:8 Mem; }
-m128_Qb: is Mem { local tmp = Mem +  8; export *:8 tmp; }
-
-m128_Da: is Mem {                 export *:4 Mem; }
-m128_Db: is Mem { local tmp = Mem +  4; export *:4 tmp; }
-m128_Dc: is Mem { local tmp = Mem +  8; export *:4 tmp; }
-m128_Dd: is Mem { local tmp = Mem + 12; export *:4 tmp; }
-
-m128_Wa: is Mem {                 export *:2 Mem; }
-m128_Wb: is Mem { local tmp = Mem +  2; export *:2 tmp; }
-m128_Wc: is Mem { local tmp = Mem +  4; export *:2 tmp; }
-m128_Wd: is Mem { local tmp = Mem +  6; export *:2 tmp; }
-m128_We: is Mem { local tmp = Mem +  8; export *:2 tmp; }
-m128_Wf: is Mem { local tmp = Mem + 10; export *:2 tmp; }
-m128_Wg: is Mem { local tmp = Mem + 12; export *:2 tmp; }
-m128_Wh: is Mem { local tmp = Mem + 14; export *:2 tmp; }
-
-m128_Ba: is Mem {                 export *:1 Mem; }
-m128_Bb: is Mem { local tmp = Mem +  1; export *:1 tmp; }
-m128_Bc: is Mem { local tmp = Mem +  2; export *:1 tmp; }
-m128_Bd: is Mem { local tmp = Mem +  3; export *:1 tmp; }
-m128_Be: is Mem { local tmp = Mem +  4; export *:1 tmp; }
-m128_Bf: is Mem { local tmp = Mem +  5; export *:1 tmp; }
-m128_Bg: is Mem { local tmp = Mem +  6; export *:1 tmp; }
-m128_Bh: is Mem { local tmp = Mem +  7; export *:1 tmp; }
-m128_Bi: is Mem { local tmp = Mem +  8; export *:1 tmp; }
-m128_Bj: is Mem { local tmp = Mem +  9; export *:1 tmp; }
-m128_Bk: is Mem { local tmp = Mem + 10; export *:1 tmp; }
-m128_Bl: is Mem { local tmp = Mem + 11; export *:1 tmp; }
-m128_Bm: is Mem { local tmp = Mem + 12; export *:1 tmp; }
-m128_Bn: is Mem { local tmp = Mem + 13; export *:1 tmp; }
-m128_Bo: is Mem { local tmp = Mem + 14; export *:1 tmp; }
-m128_Bp: is Mem { local tmp = Mem + 15; export *:1 tmp; }
-
 Reg32_m8:     Rmr32     is mod=3 & Rmr32                     { export Rmr32; }
 Reg32_m8:     m8        is m8                                { local tmp:4 = zext(m8); export tmp; }
 Reg32_m16:    Rmr32     is mod=3 & Rmr32                     { export Rmr32; }
@@ -1392,268 +993,6 @@ check_EAX_dest:		is epsilon  { }
 ptr1616: reloc is protectedMode=0 & imm16; j16		[ reloc = j16*0x10 + imm16; ] { CS = j16; export *[ram]:4 reloc; }
 ptr1616: reloc is protectedMode=1 & imm16; j16		[ reloc = j16*0x10000 + imm16; ] { CS = j16; export *[ram]:4 reloc; }
 ptr1632: j16":"imm32 is imm32; j16	{ CS = j16; export *:4 imm32; }
-
-
-#
-# Breakout of XMM sub-registers
-#
-
-
-#
-# XmmReg
-#
-
-XmmReg_Qa:  is rexRprefix=0 & xmmreg_Qa { export xmmreg_Qa; }
-XmmReg_Qb:  is rexRprefix=0 & xmmreg_Qb { export xmmreg_Qb; }
-
-XmmReg_Da:  is rexRprefix=0 & xmmreg_Da { export xmmreg_Da; }
-XmmReg_Db:  is rexRprefix=0 & xmmreg_Db { export xmmreg_Db; }
-XmmReg_Dc:  is rexRprefix=0 & xmmreg_Dc { export xmmreg_Dc; }
-XmmReg_Dd:  is rexRprefix=0 & xmmreg_Dd { export xmmreg_Dd; }
-
-XmmReg_Wa:  is rexRprefix=0 & xmmreg_Wa { export xmmreg_Wa; }
-XmmReg_Wb:  is rexRprefix=0 & xmmreg_Wb { export xmmreg_Wb; }
-XmmReg_Wc:  is rexRprefix=0 & xmmreg_Wc { export xmmreg_Wc; }
-XmmReg_Wd:  is rexRprefix=0 & xmmreg_Wd { export xmmreg_Wd; }
-XmmReg_We:  is rexRprefix=0 & xmmreg_We { export xmmreg_We; }
-XmmReg_Wf:  is rexRprefix=0 & xmmreg_Wf { export xmmreg_Wf; }
-XmmReg_Wg:  is rexRprefix=0 & xmmreg_Wg { export xmmreg_Wg; }
-XmmReg_Wh:  is rexRprefix=0 & xmmreg_Wh { export xmmreg_Wh; }
-
-XmmReg_Ba:  is rexRprefix=0 & xmmreg_Ba { export xmmreg_Ba; }
-XmmReg_Bb:  is rexRprefix=0 & xmmreg_Bb { export xmmreg_Bb; }
-XmmReg_Bc:  is rexRprefix=0 & xmmreg_Bc { export xmmreg_Bc; }
-XmmReg_Bd:  is rexRprefix=0 & xmmreg_Bd { export xmmreg_Bd; }
-XmmReg_Be:  is rexRprefix=0 & xmmreg_Be { export xmmreg_Be; }
-XmmReg_Bf:  is rexRprefix=0 & xmmreg_Bf { export xmmreg_Bf; }
-XmmReg_Bg:  is rexRprefix=0 & xmmreg_Bg { export xmmreg_Bg; }
-XmmReg_Bh:  is rexRprefix=0 & xmmreg_Bh { export xmmreg_Bh; }
-XmmReg_Bi:  is rexRprefix=0 & xmmreg_Bi { export xmmreg_Bi; }
-XmmReg_Bj:  is rexRprefix=0 & xmmreg_Bj { export xmmreg_Bj; }
-XmmReg_Bk:  is rexRprefix=0 & xmmreg_Bk { export xmmreg_Bk; }
-XmmReg_Bl:  is rexRprefix=0 & xmmreg_Bl { export xmmreg_Bl; }
-XmmReg_Bm:  is rexRprefix=0 & xmmreg_Bm { export xmmreg_Bm; }
-XmmReg_Bn:  is rexRprefix=0 & xmmreg_Bn { export xmmreg_Bn; }
-XmmReg_Bo:  is rexRprefix=0 & xmmreg_Bo { export xmmreg_Bo; }
-XmmReg_Bp:  is rexRprefix=0 & xmmreg_Bp { export xmmreg_Bp; }
-
-XmmReg_Qa:  is rexRprefix=1 & xmmreg_x_Qa { export xmmreg_x_Qa; }
-XmmReg_Qb:  is rexRprefix=1 & xmmreg_x_Qb { export xmmreg_x_Qb; }
-
-XmmReg_Da:  is rexRprefix=1 & xmmreg_x_Da { export xmmreg_x_Da; }
-XmmReg_Db:  is rexRprefix=1 & xmmreg_x_Db { export xmmreg_x_Db; }
-XmmReg_Dc:  is rexRprefix=1 & xmmreg_x_Dc { export xmmreg_x_Dc; }
-XmmReg_Dd:  is rexRprefix=1 & xmmreg_x_Dd { export xmmreg_x_Dd; }
-
-XmmReg_Wa:  is rexRprefix=1 & xmmreg_x_Wa { export xmmreg_x_Wa; }
-XmmReg_Wb:  is rexRprefix=1 & xmmreg_x_Wb { export xmmreg_x_Wb; }
-XmmReg_Wc:  is rexRprefix=1 & xmmreg_x_Wc { export xmmreg_x_Wc; }
-XmmReg_Wd:  is rexRprefix=1 & xmmreg_x_Wd { export xmmreg_x_Wd; }
-XmmReg_We:  is rexRprefix=1 & xmmreg_x_We { export xmmreg_x_We; }
-XmmReg_Wf:  is rexRprefix=1 & xmmreg_x_Wf { export xmmreg_x_Wf; }
-XmmReg_Wg:  is rexRprefix=1 & xmmreg_x_Wg { export xmmreg_x_Wg; }
-XmmReg_Wh:  is rexRprefix=1 & xmmreg_x_Wh { export xmmreg_x_Wh; }
-
-XmmReg_Ba:  is rexRprefix=1 & xmmreg_x_Ba { export xmmreg_x_Ba; }
-XmmReg_Bb:  is rexRprefix=1 & xmmreg_x_Bb { export xmmreg_x_Bb; }
-XmmReg_Bc:  is rexRprefix=1 & xmmreg_x_Bc { export xmmreg_x_Bc; }
-XmmReg_Bd:  is rexRprefix=1 & xmmreg_x_Bd { export xmmreg_x_Bd; }
-XmmReg_Be:  is rexRprefix=1 & xmmreg_x_Be { export xmmreg_x_Be; }
-XmmReg_Bf:  is rexRprefix=1 & xmmreg_x_Bf { export xmmreg_x_Bf; }
-XmmReg_Bg:  is rexRprefix=1 & xmmreg_x_Bg { export xmmreg_x_Bg; }
-XmmReg_Bh:  is rexRprefix=1 & xmmreg_x_Bh { export xmmreg_x_Bh; }
-XmmReg_Bi:  is rexRprefix=1 & xmmreg_x_Bi { export xmmreg_x_Bi; }
-XmmReg_Bj:  is rexRprefix=1 & xmmreg_x_Bj { export xmmreg_x_Bj; }
-XmmReg_Bk:  is rexRprefix=1 & xmmreg_x_Bk { export xmmreg_x_Bk; }
-XmmReg_Bl:  is rexRprefix=1 & xmmreg_x_Bl { export xmmreg_x_Bl; }
-XmmReg_Bm:  is rexRprefix=1 & xmmreg_x_Bm { export xmmreg_x_Bm; }
-XmmReg_Bn:  is rexRprefix=1 & xmmreg_x_Bn { export xmmreg_x_Bn; }
-XmmReg_Bo:  is rexRprefix=1 & xmmreg_x_Bo { export xmmreg_x_Bo; }
-XmmReg_Bp:  is rexRprefix=1 & xmmreg_x_Bp { export xmmreg_x_Bp; }
-
-#
-# XmmReg1
-#
-
-XmmReg1_Qa:  is rexRprefix=0 & xmmreg1_Qa { export xmmreg1_Qa; }
-XmmReg1_Qb:  is rexRprefix=0 & xmmreg1_Qb { export xmmreg1_Qb; }
-
-XmmReg1_Da:  is rexRprefix=0 & xmmreg1_Da { export xmmreg1_Da; }
-XmmReg1_Db:  is rexRprefix=0 & xmmreg1_Db { export xmmreg1_Db; }
-XmmReg1_Dc:  is rexRprefix=0 & xmmreg1_Dc { export xmmreg1_Dc; }
-XmmReg1_Dd:  is rexRprefix=0 & xmmreg1_Dd { export xmmreg1_Dd; }
-
-XmmReg1_Wa:  is rexRprefix=0 & xmmreg1_Wa { export xmmreg1_Wa; }
-XmmReg1_Wb:  is rexRprefix=0 & xmmreg1_Wb { export xmmreg1_Wb; }
-XmmReg1_Wc:  is rexRprefix=0 & xmmreg1_Wc { export xmmreg1_Wc; }
-XmmReg1_Wd:  is rexRprefix=0 & xmmreg1_Wd { export xmmreg1_Wd; }
-XmmReg1_We:  is rexRprefix=0 & xmmreg1_We { export xmmreg1_We; }
-XmmReg1_Wf:  is rexRprefix=0 & xmmreg1_Wf { export xmmreg1_Wf; }
-XmmReg1_Wg:  is rexRprefix=0 & xmmreg1_Wg { export xmmreg1_Wg; }
-XmmReg1_Wh:  is rexRprefix=0 & xmmreg1_Wh { export xmmreg1_Wh; }
-
-XmmReg1_Ba:  is rexRprefix=0 & xmmreg1_Ba { export xmmreg1_Ba; }
-XmmReg1_Bb:  is rexRprefix=0 & xmmreg1_Bb { export xmmreg1_Bb; }
-XmmReg1_Bc:  is rexRprefix=0 & xmmreg1_Bc { export xmmreg1_Bc; }
-XmmReg1_Bd:  is rexRprefix=0 & xmmreg1_Bd { export xmmreg1_Bd; }
-XmmReg1_Be:  is rexRprefix=0 & xmmreg1_Be { export xmmreg1_Be; }
-XmmReg1_Bf:  is rexRprefix=0 & xmmreg1_Bf { export xmmreg1_Bf; }
-XmmReg1_Bg:  is rexRprefix=0 & xmmreg1_Bg { export xmmreg1_Bg; }
-XmmReg1_Bh:  is rexRprefix=0 & xmmreg1_Bh { export xmmreg1_Bh; }
-XmmReg1_Bi:  is rexRprefix=0 & xmmreg1_Bi { export xmmreg1_Bi; }
-XmmReg1_Bj:  is rexRprefix=0 & xmmreg1_Bj { export xmmreg1_Bj; }
-XmmReg1_Bk:  is rexRprefix=0 & xmmreg1_Bk { export xmmreg1_Bk; }
-XmmReg1_Bl:  is rexRprefix=0 & xmmreg1_Bl { export xmmreg1_Bl; }
-XmmReg1_Bm:  is rexRprefix=0 & xmmreg1_Bm { export xmmreg1_Bm; }
-XmmReg1_Bn:  is rexRprefix=0 & xmmreg1_Bn { export xmmreg1_Bn; }
-XmmReg1_Bo:  is rexRprefix=0 & xmmreg1_Bo { export xmmreg1_Bo; }
-XmmReg1_Bp:  is rexRprefix=0 & xmmreg1_Bp { export xmmreg1_Bp; }
-
-XmmReg1_Qa:  is rexRprefix=1 & xmmreg1_x_Qa { export xmmreg1_x_Qa; }
-XmmReg1_Qb:  is rexRprefix=1 & xmmreg1_x_Qb { export xmmreg1_x_Qb; }
-
-XmmReg1_Da:  is rexRprefix=1 & xmmreg1_x_Da { export xmmreg1_x_Da; }
-XmmReg1_Db:  is rexRprefix=1 & xmmreg1_x_Db { export xmmreg1_x_Db; }
-XmmReg1_Dc:  is rexRprefix=1 & xmmreg1_x_Dc { export xmmreg1_x_Dc; }
-XmmReg1_Dd:  is rexRprefix=1 & xmmreg1_x_Dd { export xmmreg1_x_Dd; }
-
-XmmReg1_Wa:  is rexRprefix=1 & xmmreg1_x_Wa { export xmmreg1_x_Wa; }
-XmmReg1_Wb:  is rexRprefix=1 & xmmreg1_x_Wb { export xmmreg1_x_Wb; }
-XmmReg1_Wc:  is rexRprefix=1 & xmmreg1_x_Wc { export xmmreg1_x_Wc; }
-XmmReg1_Wd:  is rexRprefix=1 & xmmreg1_x_Wd { export xmmreg1_x_Wd; }
-XmmReg1_We:  is rexRprefix=1 & xmmreg1_x_We { export xmmreg1_x_We; }
-XmmReg1_Wf:  is rexRprefix=1 & xmmreg1_x_Wf { export xmmreg1_x_Wf; }
-XmmReg1_Wg:  is rexRprefix=1 & xmmreg1_x_Wg { export xmmreg1_x_Wg; }
-XmmReg1_Wh:  is rexRprefix=1 & xmmreg1_x_Wh { export xmmreg1_x_Wh; }
-
-XmmReg1_Ba:  is rexRprefix=1 & xmmreg1_x_Ba { export xmmreg1_x_Ba; }
-XmmReg1_Bb:  is rexRprefix=1 & xmmreg1_x_Bb { export xmmreg1_x_Bb; }
-XmmReg1_Bc:  is rexRprefix=1 & xmmreg1_x_Bc { export xmmreg1_x_Bc; }
-XmmReg1_Bd:  is rexRprefix=1 & xmmreg1_x_Bd { export xmmreg1_x_Bd; }
-XmmReg1_Be:  is rexRprefix=1 & xmmreg1_x_Be { export xmmreg1_x_Be; }
-XmmReg1_Bf:  is rexRprefix=1 & xmmreg1_x_Bf { export xmmreg1_x_Bf; }
-XmmReg1_Bg:  is rexRprefix=1 & xmmreg1_x_Bg { export xmmreg1_x_Bg; }
-XmmReg1_Bh:  is rexRprefix=1 & xmmreg1_x_Bh { export xmmreg1_x_Bh; }
-XmmReg1_Bi:  is rexRprefix=1 & xmmreg1_x_Bi { export xmmreg1_x_Bi; }
-XmmReg1_Bj:  is rexRprefix=1 & xmmreg1_x_Bj { export xmmreg1_x_Bj; }
-XmmReg1_Bk:  is rexRprefix=1 & xmmreg1_x_Bk { export xmmreg1_x_Bk; }
-XmmReg1_Bl:  is rexRprefix=1 & xmmreg1_x_Bl { export xmmreg1_x_Bl; }
-XmmReg1_Bm:  is rexRprefix=1 & xmmreg1_x_Bm { export xmmreg1_x_Bm; }
-XmmReg1_Bn:  is rexRprefix=1 & xmmreg1_x_Bn { export xmmreg1_x_Bn; }
-XmmReg1_Bo:  is rexRprefix=1 & xmmreg1_x_Bo { export xmmreg1_x_Bo; }
-XmmReg1_Bp:  is rexRprefix=1 & xmmreg1_x_Bp { export xmmreg1_x_Bp; }
-
-#
-# XmmReg2
-#
-
-XmmReg2_Qa:  is rexBprefix=0 & xmmreg2_Qa { export xmmreg2_Qa; }
-XmmReg2_Qb:  is rexBprefix=0 & xmmreg2_Qb { export xmmreg2_Qb; }
-
-XmmReg2_Da:  is rexBprefix=0 & xmmreg2_Da { export xmmreg2_Da; }
-XmmReg2_Db:  is rexBprefix=0 & xmmreg2_Db { export xmmreg2_Db; }
-XmmReg2_Dc:  is rexBprefix=0 & xmmreg2_Dc { export xmmreg2_Dc; }
-XmmReg2_Dd:  is rexBprefix=0 & xmmreg2_Dd { export xmmreg2_Dd; }
-
-XmmReg2_Wa:  is rexBprefix=0 & xmmreg2_Wa { export xmmreg2_Wa; }
-XmmReg2_Wb:  is rexBprefix=0 & xmmreg2_Wb { export xmmreg2_Wb; }
-XmmReg2_Wc:  is rexBprefix=0 & xmmreg2_Wc { export xmmreg2_Wc; }
-XmmReg2_Wd:  is rexBprefix=0 & xmmreg2_Wd { export xmmreg2_Wd; }
-XmmReg2_We:  is rexBprefix=0 & xmmreg2_We { export xmmreg2_We; }
-XmmReg2_Wf:  is rexBprefix=0 & xmmreg2_Wf { export xmmreg2_Wf; }
-XmmReg2_Wg:  is rexBprefix=0 & xmmreg2_Wg { export xmmreg2_Wg; }
-XmmReg2_Wh:  is rexBprefix=0 & xmmreg2_Wh { export xmmreg2_Wh; }
-
-XmmReg2_Ba:  is rexBprefix=0 & xmmreg2_Ba { export xmmreg2_Ba; }
-XmmReg2_Bb:  is rexBprefix=0 & xmmreg2_Bb { export xmmreg2_Bb; }
-XmmReg2_Bc:  is rexBprefix=0 & xmmreg2_Bc { export xmmreg2_Bc; }
-XmmReg2_Bd:  is rexBprefix=0 & xmmreg2_Bd { export xmmreg2_Bd; }
-XmmReg2_Be:  is rexBprefix=0 & xmmreg2_Be { export xmmreg2_Be; }
-XmmReg2_Bf:  is rexBprefix=0 & xmmreg2_Bf { export xmmreg2_Bf; }
-XmmReg2_Bg:  is rexBprefix=0 & xmmreg2_Bg { export xmmreg2_Bg; }
-XmmReg2_Bh:  is rexBprefix=0 & xmmreg2_Bh { export xmmreg2_Bh; }
-XmmReg2_Bi:  is rexBprefix=0 & xmmreg2_Bi { export xmmreg2_Bi; }
-XmmReg2_Bj:  is rexBprefix=0 & xmmreg2_Bj { export xmmreg2_Bj; }
-XmmReg2_Bk:  is rexBprefix=0 & xmmreg2_Bk { export xmmreg2_Bk; }
-XmmReg2_Bl:  is rexBprefix=0 & xmmreg2_Bl { export xmmreg2_Bl; }
-XmmReg2_Bm:  is rexBprefix=0 & xmmreg2_Bm { export xmmreg2_Bm; }
-XmmReg2_Bn:  is rexBprefix=0 & xmmreg2_Bn { export xmmreg2_Bn; }
-XmmReg2_Bo:  is rexBprefix=0 & xmmreg2_Bo { export xmmreg2_Bo; }
-XmmReg2_Bp:  is rexBprefix=0 & xmmreg2_Bp { export xmmreg2_Bp; }
-
-XmmReg2_Qa:  is rexBprefix=1 & xmmreg2_x_Qa { export xmmreg2_x_Qa; }
-XmmReg2_Qb:  is rexBprefix=1 & xmmreg2_x_Qb { export xmmreg2_x_Qb; }
-
-XmmReg2_Da:  is rexBprefix=1 & xmmreg2_x_Da { export xmmreg2_x_Da; }
-XmmReg2_Db:  is rexBprefix=1 & xmmreg2_x_Db { export xmmreg2_x_Db; }
-XmmReg2_Dc:  is rexBprefix=1 & xmmreg2_x_Dc { export xmmreg2_x_Dc; }
-XmmReg2_Dd:  is rexBprefix=1 & xmmreg2_x_Dd { export xmmreg2_x_Dd; }
-
-XmmReg2_Wa:  is rexBprefix=1 & xmmreg2_x_Wa { export xmmreg2_x_Wa; }
-XmmReg2_Wb:  is rexBprefix=1 & xmmreg2_x_Wb { export xmmreg2_x_Wb; }
-XmmReg2_Wc:  is rexBprefix=1 & xmmreg2_x_Wc { export xmmreg2_x_Wc; }
-XmmReg2_Wd:  is rexBprefix=1 & xmmreg2_x_Wd { export xmmreg2_x_Wd; }
-XmmReg2_We:  is rexBprefix=1 & xmmreg2_x_We { export xmmreg2_x_We; }
-XmmReg2_Wf:  is rexBprefix=1 & xmmreg2_x_Wf { export xmmreg2_x_Wf; }
-XmmReg2_Wg:  is rexBprefix=1 & xmmreg2_x_Wg { export xmmreg2_x_Wg; }
-XmmReg2_Wh:  is rexBprefix=1 & xmmreg2_x_Wh { export xmmreg2_x_Wh; }
-
-XmmReg2_Ba:  is rexBprefix=1 & xmmreg2_x_Ba { export xmmreg2_x_Ba; }
-XmmReg2_Bb:  is rexBprefix=1 & xmmreg2_x_Bb { export xmmreg2_x_Bb; }
-XmmReg2_Bc:  is rexBprefix=1 & xmmreg2_x_Bc { export xmmreg2_x_Bc; }
-XmmReg2_Bd:  is rexBprefix=1 & xmmreg2_x_Bd { export xmmreg2_x_Bd; }
-XmmReg2_Be:  is rexBprefix=1 & xmmreg2_x_Be { export xmmreg2_x_Be; }
-XmmReg2_Bf:  is rexBprefix=1 & xmmreg2_x_Bf { export xmmreg2_x_Bf; }
-XmmReg2_Bg:  is rexBprefix=1 & xmmreg2_x_Bg { export xmmreg2_x_Bg; }
-XmmReg2_Bh:  is rexBprefix=1 & xmmreg2_x_Bh { export xmmreg2_x_Bh; }
-XmmReg2_Bi:  is rexBprefix=1 & xmmreg2_x_Bi { export xmmreg2_x_Bi; }
-XmmReg2_Bj:  is rexBprefix=1 & xmmreg2_x_Bj { export xmmreg2_x_Bj; }
-XmmReg2_Bk:  is rexBprefix=1 & xmmreg2_x_Bk { export xmmreg2_x_Bk; }
-XmmReg2_Bl:  is rexBprefix=1 & xmmreg2_x_Bl { export xmmreg2_x_Bl; }
-XmmReg2_Bm:  is rexBprefix=1 & xmmreg2_x_Bm { export xmmreg2_x_Bm; }
-XmmReg2_Bn:  is rexBprefix=1 & xmmreg2_x_Bn { export xmmreg2_x_Bn; }
-XmmReg2_Bo:  is rexBprefix=1 & xmmreg2_x_Bo { export xmmreg2_x_Bo; }
-XmmReg2_Bp:  is rexBprefix=1 & xmmreg2_x_Bp { export xmmreg2_x_Bp; }
-
-
-
-#
-# Breakout of YMM sub-registers
-#
-
-
-#
-# YmmReg
-#
-
-YmmReg_DQa:  is rexRprefix=0 & ymmreg_DQa { export ymmreg_DQa; }
-YmmReg_DQb:  is rexRprefix=0 & ymmreg_DQb { export ymmreg_DQb; }
-
-YmmReg_DQa:  is rexRprefix=1 & ymmreg_x_DQa { export ymmreg_x_DQa; }
-YmmReg_DQb:  is rexRprefix=1 & ymmreg_x_DQb { export ymmreg_x_DQb; }
-
-
-#
-# YmmReg1
-#
-
-YmmReg1_DQa:  is rexRprefix=0 & ymmreg1_DQa { export ymmreg1_DQa; }
-YmmReg1_DQb:  is rexRprefix=0 & ymmreg1_DQb { export ymmreg1_DQb; }
-
-YmmReg1_DQa:  is rexRprefix=1 & ymmreg1_x_DQa { export ymmreg1_x_DQa; }
-YmmReg1_DQb:  is rexRprefix=1 & ymmreg1_x_DQb { export ymmreg1_x_DQb; }
-
-
-#
-# YmmReg2
-#
-
-YmmReg2_DQa:  is rexRprefix=0 & ymmreg2_DQa { export ymmreg2_DQa; }
-YmmReg2_DQb:  is rexRprefix=0 & ymmreg2_DQb { export ymmreg2_DQb; }
-
-YmmReg2_DQa:  is rexRprefix=1 & ymmreg2_x_DQa { export ymmreg2_x_DQa; }
-YmmReg2_DQb:  is rexRprefix=1 & ymmreg2_x_DQb { export ymmreg2_x_DQb; }
-
 
 # conditions
 
@@ -5036,130 +4375,137 @@ define pcodeop addpd;
 :ADDPD        XmmReg, m128     is vexMode=0 & $(PRE_66) & byte=0x0F; byte=0x58; XmmReg ... & m128 { XmmReg = addpd(XmmReg, m128); }
 :ADDPD        XmmReg1, XmmReg2 is vexMode=0 & $(PRE_66) & byte=0x0F; byte=0x58; xmmmod=3 & XmmReg1 & XmmReg2 { XmmReg1 = addpd(XmmReg1, XmmReg2); }
 
-:ADDPS        XmmReg, m128     is vexMode=0 & mandover=0 & byte=0x0F; byte=0x58; ( XmmReg & XmmReg_Da & XmmReg_Db & XmmReg_Dc & XmmReg_Dd ) ... & ( m128 & m128_Da & m128_Db & m128_Dc & m128_Dd )
+:ADDPS        XmmReg, m128     is vexMode=0 & mandover=0 & byte=0x0F; byte=0x58; m128 & XmmReg ...
 {
-    XmmReg_Da = XmmReg_Da f+ m128_Da;
-    XmmReg_Db = XmmReg_Db f+ m128_Db;
-    XmmReg_Dc = XmmReg_Dc f+ m128_Dc;
-    XmmReg_Dd = XmmReg_Dd f+ m128_Da;
+    local m:16 = m128;	# Guarantee value is in a fixed location
+    XmmReg[0,32] = XmmReg[0,32] f+ m[0,32];
+    XmmReg[32,32] = XmmReg[32,32] f+ m[32,32];
+    XmmReg[64,32] = XmmReg[64,32] f+ m[64,32];
+    XmmReg[96,32] = XmmReg[96,32] f+ m[0,32];
 }
 
-:ADDPS        XmmReg1, XmmReg2 is vexMode=0 & mandover=0 & byte=0x0F; byte=0x58; xmmmod=3 & XmmReg1 & XmmReg1_Da & XmmReg1_Db & XmmReg1_Dc & XmmReg1_Dd & XmmReg2 & XmmReg2_Da & XmmReg2_Db & XmmReg2_Dc & XmmReg2_Dd 
+:ADDPS        XmmReg1, XmmReg2 is vexMode=0 & mandover=0 & byte=0x0F; byte=0x58; xmmmod=3 & XmmReg1 & XmmReg2
 {
-    XmmReg1_Da = XmmReg1_Da f+ XmmReg2_Da;
-    XmmReg1_Db = XmmReg1_Db f+ XmmReg2_Db;
-    XmmReg1_Dc = XmmReg1_Dc f+ XmmReg2_Dc;
-    XmmReg1_Dd = XmmReg1_Dd f+ XmmReg2_Dd;
+    XmmReg1[0,32] = XmmReg1[0,32] f+ XmmReg2[0,32];
+    XmmReg1[32,32] = XmmReg1[32,32] f+ XmmReg2[32,32];
+    XmmReg1[64,32] = XmmReg1[64,32] f+ XmmReg2[64,32];
+    XmmReg1[96,32] = XmmReg1[96,32] f+ XmmReg2[96,32];
 }
 
-:ADDSD        XmmReg, m64      is vexMode=0 & $(PRE_F2) & byte=0x0F; byte=0x58; ( XmmReg & XmmReg_Qa ) ... & m64
+:ADDSD        XmmReg, m64      is vexMode=0 & $(PRE_F2) & byte=0x0F; byte=0x58; m64 & XmmReg ...
 {
-    XmmReg_Qa = XmmReg_Qa f+ m64;
+    XmmReg[0,64] = XmmReg[0,64] f+ m64;
 }
 
-:ADDSD        XmmReg1, XmmReg2 is vexMode=0 & $(PRE_F2) & byte=0x0F; byte=0x58; xmmmod=3 & XmmReg1 & XmmReg1_Qa & XmmReg2 & XmmReg2_Qa
+:ADDSD        XmmReg1, XmmReg2 is vexMode=0 & $(PRE_F2) & byte=0x0F; byte=0x58; xmmmod=3 & XmmReg1 & XmmReg2
 {
-    XmmReg1_Qa = XmmReg1_Qa f+ XmmReg2_Qa;
+    XmmReg1[0,64] = XmmReg1[0,64] f+ XmmReg2[0,64];
 }
 
-:ADDSS        XmmReg, m32      is vexMode=0 & $(PRE_F3) & byte=0x0F; byte=0x58; ( XmmReg & XmmReg_Da ) ... & m32
+:ADDSS        XmmReg, m32      is vexMode=0 & $(PRE_F3) & byte=0x0F; byte=0x58; m32 & XmmReg ...
 {
-    XmmReg_Da = XmmReg_Da f+ m32;
+    XmmReg[0,32] = XmmReg[0,32] f+ m32;
 }
 
-:ADDSS        XmmReg1, XmmReg2 is vexMode=0 & $(PRE_F3) & byte=0x0F; byte=0x58; xmmmod=3 & XmmReg1 & XmmReg1_Da & XmmReg2 & XmmReg2_Da
+:ADDSS        XmmReg1, XmmReg2 is vexMode=0 & $(PRE_F3) & byte=0x0F; byte=0x58; xmmmod=3 & XmmReg1 & XmmReg2
 {
-    XmmReg1_Da = XmmReg1_Da f+ XmmReg2_Da;
+    XmmReg1[0,32] = XmmReg1[0,32] f+ XmmReg2[0,32];
 }
 
-:ADDSUBPD     XmmReg, m128     is vexMode=0 & $(PRE_66) & byte=0x0F; byte=0xD0; ( XmmReg & XmmReg_Qa & XmmReg_Qb ) ... & ( m128 & m128_Qa & m128_Qb )
+:ADDSUBPD     XmmReg, m128     is vexMode=0 & $(PRE_66) & byte=0x0F; byte=0xD0; m128 & XmmReg ...
 {
-    XmmReg_Qa = XmmReg_Qa f- m128_Qa;
-    XmmReg_Qb = XmmReg_Qb f+ m128_Qb;
+    local m:16 = m128;
+    XmmReg[0,64] = XmmReg[0,64] f- m[0,64];
+    XmmReg[64,64] = XmmReg[64,64] f+ m[64,64];
 }
 
-:ADDSUBPD     XmmReg1, XmmReg2 is vexMode=0 & $(PRE_66) & byte=0x0F; byte=0xD0; xmmmod=3 & XmmReg1 & XmmReg1_Qa & XmmReg1_Qb & XmmReg2 & XmmReg2_Qa & XmmReg2_Qb
+:ADDSUBPD     XmmReg1, XmmReg2 is vexMode=0 & $(PRE_66) & byte=0x0F; byte=0xD0; xmmmod=3 & XmmReg1 & XmmReg2
 {
-    XmmReg1_Qa = XmmReg1_Qa f- XmmReg2_Qa;
-    XmmReg1_Qb = XmmReg1_Qb f+ XmmReg2_Qb;
+    XmmReg1[0,64] = XmmReg1[0,64] f- XmmReg2[0,64];
+    XmmReg1[64,64] = XmmReg1[64,64] f+ XmmReg2[64,64];
 }
 
-:ADDSUBPS     XmmReg, m128     is vexMode=0 & $(PRE_F2) & byte=0x0F; byte=0xD0; ( XmmReg & XmmReg_Da & XmmReg_Db & XmmReg_Dc & XmmReg_Dd ) ... & ( m128 & m128_Da & m128_Db & m128_Dc & m128_Dd )
+:ADDSUBPS     XmmReg, m128     is vexMode=0 & $(PRE_F2) & byte=0x0F; byte=0xD0; m128 & XmmReg ...
 {
-    XmmReg_Da = XmmReg_Da f- m128_Da;
-    XmmReg_Db = XmmReg_Db f+ m128_Db;
-    XmmReg_Dc = XmmReg_Dc f- m128_Dc;
-    XmmReg_Dd = XmmReg_Dd f+ m128_Dd;
+    local m:16 = m128;
+    XmmReg[0,32] = XmmReg[0,32] f- m[0,32];
+    XmmReg[32,32] = XmmReg[32,32] f+ m[32,32];
+    XmmReg[64,32] = XmmReg[64,32] f- m[64,32];
+    XmmReg[96,32] = XmmReg[96,32] f+ m[96,32];
 }
 
-:ADDSUBPS     XmmReg1, XmmReg2 is vexMode=0 & $(PRE_F2) & byte=0x0F; byte=0xD0; xmmmod=3 & XmmReg1 & XmmReg1_Da & XmmReg1_Db & XmmReg1_Dc & XmmReg1_Dd & XmmReg2 & XmmReg2_Da & XmmReg2_Db & XmmReg2_Dc & XmmReg2_Dd
+:ADDSUBPS     XmmReg1, XmmReg2 is vexMode=0 & $(PRE_F2) & byte=0x0F; byte=0xD0; xmmmod=3 & XmmReg1 & XmmReg2
 {
-    XmmReg1_Da = XmmReg1_Da f- XmmReg2_Da;
-    XmmReg1_Db = XmmReg1_Db f+ XmmReg2_Db;
-    XmmReg1_Dc = XmmReg1_Dc f- XmmReg2_Dc;
-    XmmReg1_Dd = XmmReg1_Dd f+ XmmReg2_Dd;
-}
-
-# special FLOATING POINT bitwise AND
-:ANDPD  XmmReg, m128     is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x54; ( XmmReg & XmmReg_Qa & XmmReg_Qb ) ... & ( m128 & m128_Qa & m128_Qb )
-{
-    XmmReg_Qa = XmmReg_Qa & m128_Qa;
-    XmmReg_Qb = XmmReg_Qb & m128_Qb;
+    XmmReg1[0,32] = XmmReg1[0,32] f- XmmReg2[0,32];
+    XmmReg1[32,32] = XmmReg1[32,32] f+ XmmReg2[32,32];
+    XmmReg1[64,32] = XmmReg1[64,32] f- XmmReg2[64,32];
+    XmmReg1[96,32] = XmmReg1[96,32] f+ XmmReg2[96,32];
 }
 
 # special FLOATING POINT bitwise AND
-:ANDPD  XmmReg1, XmmReg2 is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x54; xmmmod=3 & XmmReg1 & XmmReg1_Qa & XmmReg1_Qb & XmmReg2 & XmmReg2_Qa & XmmReg2_Qb
+:ANDPD  XmmReg, m128     is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x54; m128 & XmmReg ...
 {
-    XmmReg1_Qa = XmmReg1_Qa & XmmReg2_Qa;
-    XmmReg1_Qb = XmmReg1_Qb & XmmReg2_Qb;
+    local m:16 = m128;
+    XmmReg[0,64] = XmmReg[0,64] & m[0,64];
+    XmmReg[64,64] = XmmReg[64,64] & m[64,64];
 }
 
 # special FLOATING POINT bitwise AND
-:ANDPS        XmmReg, m128     is vexMode=0 &  mandover=0 & byte=0x0F; byte=0x54; ( XmmReg & XmmReg_Da & XmmReg_Db & XmmReg_Dc & XmmReg_Dd ) ... & ( m128 & m128_Da & m128_Db & m128_Dc & m128_Dd )
+:ANDPD  XmmReg1, XmmReg2 is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x54; xmmmod=3 & XmmReg1 & XmmReg2
 {
-    XmmReg_Da = XmmReg_Da & m128_Da;
-    XmmReg_Db = XmmReg_Db & m128_Db;
-    XmmReg_Dc = XmmReg_Dc & m128_Dc;
-    XmmReg_Dd = XmmReg_Dd & m128_Dd;
+    XmmReg1[0,64] = XmmReg1[0,64] & XmmReg2[0,64];
+    XmmReg1[64,64] = XmmReg1[64,64] & XmmReg2[64,64];
 }
 
 # special FLOATING POINT bitwise AND
-:ANDPS        XmmReg1, XmmReg2 is vexMode=0 &  mandover=0 & byte=0x0F; byte=0x54; xmmmod=3 & XmmReg1 & XmmReg1_Da & XmmReg1_Db & XmmReg1_Dc & XmmReg1_Dd & XmmReg2 & XmmReg2_Da & XmmReg2_Db & XmmReg2_Dc & XmmReg2_Dd
+:ANDPS        XmmReg, m128     is vexMode=0 &  mandover=0 & byte=0x0F; byte=0x54; m128 & XmmReg ...
 {
-    XmmReg1_Da = XmmReg1_Da & XmmReg2_Da;
-    XmmReg1_Db = XmmReg1_Db & XmmReg2_Db;
-    XmmReg1_Dc = XmmReg1_Dc & XmmReg2_Dc;
-    XmmReg1_Dd = XmmReg1_Dd & XmmReg2_Dd;
+    local m:16 = m128;
+    XmmReg[0,32] = XmmReg[0,32] & m[0,32];
+    XmmReg[32,32] = XmmReg[32,32] & m[32,32];
+    XmmReg[64,32] = XmmReg[64,32] & m[64,32];
+    XmmReg[96,32] = XmmReg[96,32] & m[96,32];
+}
+
+# special FLOATING POINT bitwise AND
+:ANDPS        XmmReg1, XmmReg2 is vexMode=0 &  mandover=0 & byte=0x0F; byte=0x54; xmmmod=3 & XmmReg1 & XmmReg2
+{
+    XmmReg1[0,32] = XmmReg1[0,32] & XmmReg2[0,32];
+    XmmReg1[32,32] = XmmReg1[32,32] & XmmReg2[32,32];
+    XmmReg1[64,32] = XmmReg1[64,32] & XmmReg2[64,32];
+    XmmReg1[96,32] = XmmReg1[96,32] & XmmReg2[96,32];
 }
 
 # special FLOATING POINT bitwise AND NOT
-:ANDNPD       XmmReg, m128     is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x55; ( XmmReg & XmmReg_Qa & XmmReg_Qb ) ... & ( m128 & m128_Qa & m128_Qb )
+:ANDNPD       XmmReg, m128     is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x55; m128 & XmmReg ...
 {
-    XmmReg_Qa = ~XmmReg_Qa & m128_Qa;
-    XmmReg_Qb = ~XmmReg_Qb & m128_Qb;
+    local m:16 = m128;
+    XmmReg[0,64] = ~XmmReg[0,64] & m[0,64];
+    XmmReg[64,64] = ~XmmReg[64,64] & m[64,64];
 }
 
-:ANDNPD       XmmReg1, XmmReg2 is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x55; xmmmod=3 & XmmReg1 & XmmReg1_Qa & XmmReg1_Qb & XmmReg2 & XmmReg2_Qa & XmmReg2_Qb
+:ANDNPD       XmmReg1, XmmReg2 is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x55; xmmmod=3 & XmmReg1 & XmmReg2
 {
-    XmmReg1_Qa = ~XmmReg1_Qa & XmmReg2_Qa;
-    XmmReg1_Qb = ~XmmReg1_Qb & XmmReg2_Qb;
+    XmmReg1[0,64] = ~XmmReg1[0,64] & XmmReg2[0,64];
+    XmmReg1[64,64] = ~XmmReg1[64,64] & XmmReg2[64,64];
 }
 
 # special FLOATING POINT bitwise AND NOT
-:ANDNPS       XmmReg, m128     is vexMode=0 &  mandover=0 & byte=0x0F; byte=0x55; ( XmmReg & XmmReg_Da & XmmReg_Db & XmmReg_Dc & XmmReg_Dd ) ... & ( m128 & m128_Da & m128_Db & m128_Dc & m128_Dd )
+:ANDNPS       XmmReg, m128     is vexMode=0 &  mandover=0 & byte=0x0F; byte=0x55; m128 & XmmReg ...
 {
-    XmmReg_Da = ~XmmReg_Da & m128_Da;
-    XmmReg_Db = ~XmmReg_Db & m128_Db;
-    XmmReg_Dc = ~XmmReg_Dc & m128_Dc;
-    XmmReg_Dd = ~XmmReg_Dd & m128_Dd;
+    local m:16 = m128;
+    XmmReg[0,32] = ~XmmReg[0,32] & m[0,32];
+    XmmReg[32,32] = ~XmmReg[32,32] & m[32,32];
+    XmmReg[64,32] = ~XmmReg[64,32] & m[64,32];
+    XmmReg[96,32] = ~XmmReg[96,32] & m[96,32];
 }
 
-:ANDNPS       XmmReg1, XmmReg2 is vexMode=0 &  mandover=0 & byte=0x0F; byte=0x55; xmmmod=3 & XmmReg1 & XmmReg1_Da & XmmReg1_Db & XmmReg1_Dc & XmmReg1_Dd & XmmReg2 & XmmReg2_Da & XmmReg2_Db & XmmReg2_Dc & XmmReg2_Dd
+:ANDNPS       XmmReg1, XmmReg2 is vexMode=0 &  mandover=0 & byte=0x0F; byte=0x55; xmmmod=3 & XmmReg1 & XmmReg2
 {
-    XmmReg1_Da = ~XmmReg1_Da & XmmReg2_Da;
-    XmmReg1_Db = ~XmmReg1_Db & XmmReg2_Db;
-    XmmReg1_Dc = ~XmmReg1_Dc & XmmReg2_Dc;
-    XmmReg1_Dd = ~XmmReg1_Dd & XmmReg2_Dd;
+    XmmReg1[0,32] = ~XmmReg1[0,32] & XmmReg2[0,32];
+    XmmReg1[32,32] = ~XmmReg1[32,32] & XmmReg2[32,32];
+    XmmReg1[64,32] = ~XmmReg1[64,32] & XmmReg2[64,32];
+    XmmReg1[96,32] = ~XmmReg1[96,32] & XmmReg2[96,32];
 }
 
 # predicate mnemonics for "CMP...PD" opcode
@@ -5214,32 +4560,33 @@ XmmCondPD:	     is imm8     {
 CMPPD_OPERAND:           is imm8<8 { }
 CMPPD_OPERAND: ", "^imm8 is imm8   { }
 
-:CMP^XmmCondPD^"PD"        XmmReg,m128^CMPPD_OPERAND      is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0xC2; ( XmmReg & XmmReg_Qa & XmmReg_Qb ) ... & ( m128 & m128_Qa & m128_Qb ) ; XmmCondPD & CMPPD_OPERAND 
+:CMP^XmmCondPD^"PD"        XmmReg,m128^CMPPD_OPERAND      is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0xC2; (m128 & XmmReg ...); XmmCondPD & CMPPD_OPERAND
 {
-	xmmTmp1_Qa = XmmReg_Qa;
-	xmmTmp1_Qb = XmmReg_Qb;
+        local m:16 = m128;
+	xmmTmp1_Qa = XmmReg[0,64];
+	xmmTmp1_Qb = XmmReg[64,64];
 
-	xmmTmp2_Qa = m128_Qa;
-	xmmTmp2_Qb = m128_Qb;
+	xmmTmp2_Qa = m[0,64];
+	xmmTmp2_Qb = m[64,64];
 
 	build XmmCondPD;
 	
-	XmmReg_Qa = xmmTmp1_Qa;
-	XmmReg_Qb = xmmTmp1_Qb;
+	XmmReg[0,64] = xmmTmp1_Qa;
+	XmmReg[64,64] = xmmTmp1_Qb;
 }
 
-:CMP^XmmCondPD^"PD"        XmmReg1,XmmReg2^CMPPD_OPERAND  is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0xC2; xmmmod=3 & XmmReg1 & XmmReg1_Qa & XmmReg1_Qb & XmmReg2 & XmmReg2_Qa & XmmReg2_Qb; XmmCondPD & CMPPD_OPERAND 
+:CMP^XmmCondPD^"PD"        XmmReg1,XmmReg2^CMPPD_OPERAND  is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0xC2; xmmmod=3 & XmmReg1 & XmmReg2; XmmCondPD & CMPPD_OPERAND 
 {
-	xmmTmp1_Qa = XmmReg1_Qa;
-	xmmTmp1_Qb = XmmReg1_Qb;
+	xmmTmp1_Qa = XmmReg1[0,64];
+	xmmTmp1_Qb = XmmReg1[64,64];
 	
-	xmmTmp2_Qa = XmmReg2_Qa;
-	xmmTmp2_Qb = XmmReg2_Qb;
+	xmmTmp2_Qa = XmmReg2[0,64];
+	xmmTmp2_Qb = XmmReg2[64,64];
 	
 	build XmmCondPD;
 	
-	XmmReg1_Qa = xmmTmp1_Qa;
-	XmmReg1_Qb = xmmTmp1_Qb;
+	XmmReg1[0,64] = xmmTmp1_Qa;
+	XmmReg1[64,64] = xmmTmp1_Qb;
 }
 
 
@@ -5313,44 +4660,45 @@ XmmCondPS:	     is imm8     {
 CMPPS_OPERAND:           is imm8<8 { }
 CMPPS_OPERAND: ", "^imm8 is imm8   { }
 
-:CMP^XmmCondPS^"PS"        XmmReg,m128^CMPPS_OPERAND      is vexMode=0 &  mandover=0 & byte=0x0F; byte=0xC2; ( XmmReg & XmmReg_Da & XmmReg_Db & XmmReg_Dc & XmmReg_Dd ) ... & ( m128 & m128_Da & m128_Db & m128_Dc & m128_Dd ) ; XmmCondPS & CMPPS_OPERAND 
+:CMP^XmmCondPS^"PS"        XmmReg,m128^CMPPS_OPERAND      is vexMode=0 &  mandover=0 & byte=0x0F; byte=0xC2; (m128 & XmmReg ...); XmmCondPS & CMPPS_OPERAND
 {
-	xmmTmp1_Da = XmmReg_Da;
-	xmmTmp1_Db = XmmReg_Db;
-	xmmTmp1_Dc = XmmReg_Dc;
-	xmmTmp1_Dd = XmmReg_Dd;
+        local m:16 = m128;
+	xmmTmp1_Da = XmmReg[0,32];
+	xmmTmp1_Db = XmmReg[32,32];
+	xmmTmp1_Dc = XmmReg[64,32];
+	xmmTmp1_Dd = XmmReg[96,32];
 
-	xmmTmp2_Da = m128_Da;
-	xmmTmp2_Db = m128_Db;
-	xmmTmp2_Dc = m128_Dc;
-	xmmTmp2_Dd = m128_Dd;
+	xmmTmp2_Da = m[0,32];
+	xmmTmp2_Db = m[32,32];
+	xmmTmp2_Dc = m[64,32];
+	xmmTmp2_Dd = m[96,32];
 
 	build XmmCondPS;
 	
-	XmmReg_Da = xmmTmp1_Da;
-	XmmReg_Db = xmmTmp1_Db;
-	XmmReg_Dc = xmmTmp1_Dc;
-	XmmReg_Dd = xmmTmp1_Dd;
+	XmmReg[0,32] = xmmTmp1_Da;
+	XmmReg[32,32] = xmmTmp1_Db;
+	XmmReg[64,32] = xmmTmp1_Dc;
+	XmmReg[96,32] = xmmTmp1_Dd;
 }
 
-:CMP^XmmCondPS^"PS"        XmmReg1,XmmReg2^CMPPS_OPERAND  is vexMode=0 &  mandover=0 & byte=0x0F; byte=0xC2; xmmmod=3 & XmmReg1 & XmmReg1_Da & XmmReg1_Db & XmmReg1_Dc & XmmReg1_Dd & XmmReg2 & XmmReg2_Da & XmmReg2_Db & XmmReg2_Dc & XmmReg2_Dd; XmmCondPS & CMPPS_OPERAND 
+:CMP^XmmCondPS^"PS"        XmmReg1,XmmReg2^CMPPS_OPERAND  is vexMode=0 &  mandover=0 & byte=0x0F; byte=0xC2; xmmmod=3 & XmmReg1 & XmmReg2; XmmCondPS & CMPPS_OPERAND 
 {
-	xmmTmp1_Da = XmmReg1_Da;
-	xmmTmp1_Db = XmmReg1_Db;
-	xmmTmp1_Dc = XmmReg1_Dc;
-	xmmTmp1_Dd = XmmReg1_Dd;
+	xmmTmp1_Da = XmmReg1[0,32];
+	xmmTmp1_Db = XmmReg1[32,32];
+	xmmTmp1_Dc = XmmReg1[64,32];
+	xmmTmp1_Dd = XmmReg1[96,32];
 	
-	xmmTmp2_Da = XmmReg2_Da;
-	xmmTmp2_Db = XmmReg2_Db;
-	xmmTmp2_Dc = XmmReg2_Dc;
-	xmmTmp2_Dc = XmmReg2_Dd;
+	xmmTmp2_Da = XmmReg2[0,32];
+	xmmTmp2_Db = XmmReg2[32,32];
+	xmmTmp2_Dc = XmmReg2[64,32];
+	xmmTmp2_Dc = XmmReg2[96,32];
 	
 	build XmmCondPS;
 	
-	XmmReg1_Da = xmmTmp1_Da;
-	XmmReg1_Db = xmmTmp1_Db;
-	XmmReg1_Dc = xmmTmp1_Dc;
-	XmmReg1_Dd = xmmTmp1_Dd;
+	XmmReg1[0,32] = xmmTmp1_Da;
+	XmmReg1[32,32] = xmmTmp1_Db;
+	XmmReg1[64,32] = xmmTmp1_Dc;
+	XmmReg1[96,32] = xmmTmp1_Dd;
 }
 
 
@@ -5398,20 +4746,20 @@ XmmCondSD:	     is imm8     {
 CMPSD_OPERAND:           is imm8<8 { }
 CMPSD_OPERAND: ", "^imm8 is imm8   { }
 
-:CMP^XmmCondSD^"SD"  XmmReg, m64^CMPSD_OPERAND  is vexMode=0 & $(PRE_F2) & byte=0x0F; byte=0xC2; ( XmmReg & XmmReg_Qa ) ... & m64; XmmCondSD & CMPSD_OPERAND
+:CMP^XmmCondSD^"SD"  XmmReg, m64^CMPSD_OPERAND  is vexMode=0 & $(PRE_F2) & byte=0x0F; byte=0xC2; (m64 & XmmReg ...); XmmCondSD & CMPSD_OPERAND
 { 
-	xmmTmp1_Qa = XmmReg_Qa;
+	xmmTmp1_Qa = XmmReg[0,64];
 	xmmTmp2_Qa = m64;
 	build XmmCondSD;
-	XmmReg_Qa = xmmTmp1_Qa;
+	XmmReg[0,64] = xmmTmp1_Qa;
 }
 
-:CMP^XmmCondSD^"SD"  XmmReg1, XmmReg2^CMPSD_OPERAND  is vexMode=0 & $(PRE_F2) & byte=0x0F; byte=0xC2; xmmmod=3 & XmmReg1 & XmmReg1_Qa & XmmReg2 & XmmReg2_Qa; XmmCondSD & CMPSD_OPERAND
+:CMP^XmmCondSD^"SD"  XmmReg1, XmmReg2^CMPSD_OPERAND  is vexMode=0 & $(PRE_F2) & byte=0x0F; byte=0xC2; xmmmod=3 & XmmReg1 & XmmReg2; XmmCondSD & CMPSD_OPERAND
 { 
-	xmmTmp1_Qa = XmmReg1_Qa;
-	xmmTmp2_Qa = XmmReg2_Qa;
+	xmmTmp1_Qa = XmmReg1[0,64];
+	xmmTmp2_Qa = XmmReg2[0,64];
 	build XmmCondSD;
-	XmmReg1_Qa = xmmTmp1_Qa;
+	XmmReg1[0,64] = xmmTmp1_Qa;
 }
 
 
@@ -5459,178 +4807,188 @@ XmmCondSS:	     is imm8     {
 CMPSS_OPERAND:           is imm8<8 { }
 CMPSS_OPERAND: ", "^imm8 is imm8   { }
 
-:CMP^XmmCondSS^"SS"  XmmReg, m32^CMPSS_OPERAND  is vexMode=0 & $(PRE_F3) & byte=0x0F; byte=0xC2; ( XmmReg & XmmReg_Da ) ... & m32; XmmCondSS & CMPSS_OPERAND
+:CMP^XmmCondSS^"SS"  XmmReg, m32^CMPSS_OPERAND  is vexMode=0 & $(PRE_F3) & byte=0x0F; byte=0xC2; (m32 & XmmReg ...); XmmCondSS & CMPSS_OPERAND
 { 
-	xmmTmp1_Da = XmmReg_Da;
+	xmmTmp1_Da = XmmReg[0,32];
 	xmmTmp2_Da = m32;
 	build XmmCondSS;
-	XmmReg_Da = xmmTmp1_Da;
+	XmmReg[0,32] = xmmTmp1_Da;
 }
 
-:CMP^XmmCondSS^"SS"  XmmReg1, XmmReg2^CMPSS_OPERAND  is vexMode=0 & $(PRE_F3) & byte=0x0F; byte=0xC2; xmmmod=3 & XmmReg1 & XmmReg1_Da & XmmReg2 & XmmReg2_Da; XmmCondSS & CMPSS_OPERAND
+:CMP^XmmCondSS^"SS"  XmmReg1, XmmReg2^CMPSS_OPERAND  is vexMode=0 & $(PRE_F3) & byte=0x0F; byte=0xC2; xmmmod=3 & XmmReg1 & XmmReg2; XmmCondSS & CMPSS_OPERAND
 { 
-	xmmTmp1_Da = XmmReg1_Da;
-	xmmTmp2_Da = XmmReg2_Da;
+	xmmTmp1_Da = XmmReg1[0,32];
+	xmmTmp2_Da = XmmReg2[0,32];
 	build XmmCondSS;
-	XmmReg1_Da = xmmTmp1_Da;
+	XmmReg1[0,32] = xmmTmp1_Da;
 }
 
 
-:COMISD       XmmReg, m64   is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x2F; ( XmmReg & XmmReg_Qa ) ... & m64
+:COMISD       XmmReg, m64   is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x2F; m64 & XmmReg ...
 {
-  fucompe(XmmReg_Qa, m64);
+  fucompe(XmmReg[0,64], m64);
 }
   
-:COMISD       XmmReg1, XmmReg2  is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x2F; xmmmod=3 & XmmReg1 & XmmReg1_Qa & XmmReg2 & XmmReg2_Qa
+:COMISD       XmmReg1, XmmReg2  is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x2F; xmmmod=3 & XmmReg1 & XmmReg2
 {
-  fucompe(XmmReg1_Qa, XmmReg2_Qa);
+  fucompe(XmmReg1[0,64], XmmReg2[0,64]);
 }
 
-:COMISS       XmmReg, m32       is vexMode=0 &  mandover=0 & byte=0x0F; byte=0x2F; ( XmmReg & XmmReg_Da ) ... & m32
+:COMISS       XmmReg, m32       is vexMode=0 &  mandover=0 & byte=0x0F; byte=0x2F; m32 & XmmReg ...
 {
-  fucompe(XmmReg_Da, m32);
+  fucompe(XmmReg[0,32], m32);
 }
 
-:COMISS       XmmReg1, XmmReg2  is vexMode=0 &  mandover=0 & byte=0x0F; byte=0x2F; xmmmod=3 & XmmReg1 & XmmReg1_Da & XmmReg2 & XmmReg2_Da
+:COMISS       XmmReg1, XmmReg2  is vexMode=0 &  mandover=0 & byte=0x0F; byte=0x2F; xmmmod=3 & XmmReg1 & XmmReg2
 {
-  fucompe(XmmReg1_Da, XmmReg2_Da);
+  fucompe(XmmReg1[0,32], XmmReg2[0,32]);
 }
 
-:CVTDQ2PD     XmmReg, m64       is vexMode=0 &  $(PRE_F3) & byte=0x0F; byte=0xE6; ( XmmReg & XmmReg_Qa & XmmReg_Qb ) ... & ( m64 & m64_Da & m64_Db )
+:CVTDQ2PD     XmmReg, m64       is vexMode=0 &  $(PRE_F3) & byte=0x0F; byte=0xE6; m64 & XmmReg ...
 {
-    XmmReg_Qa = int2float( m64_Da );
-    XmmReg_Qb = int2float( m64_Db );
+    local m:8 = m64;
+    XmmReg[0,64] = int2float( m[0,32] );
+    XmmReg[64,64] = int2float( m[32,32] );
 }
 
-:CVTDQ2PD     XmmReg1, XmmReg2  is vexMode=0 &  $(PRE_F3) & byte=0x0F; byte=0xE6; xmmmod=3 & XmmReg1 & XmmReg1_Qa & XmmReg1_Qb & XmmReg2 & XmmReg2_Da & XmmReg2_Db
+:CVTDQ2PD     XmmReg1, XmmReg2  is vexMode=0 &  $(PRE_F3) & byte=0x0F; byte=0xE6; xmmmod=3 & XmmReg1 & XmmReg2
 {
-    XmmReg1_Qa = int2float( XmmReg2_Da );
-    XmmReg1_Qb = int2float( XmmReg2_Db );
+    XmmReg1[0,64] = int2float( XmmReg2[0,32] );
+    XmmReg1[64,64] = int2float( XmmReg2[32,32] );
 }
 
-:CVTDQ2PS     XmmReg, m128      is vexMode=0 &  mandover=0 & byte=0x0F; byte=0x5B;  ( XmmReg & XmmReg_Da & XmmReg_Db & XmmReg_Dc & XmmReg_Dd ) ... & ( m128 & m128_Da & m128_Db & m128_Dc & m128_Dd )
+:CVTDQ2PS     XmmReg, m128      is vexMode=0 &  mandover=0 & byte=0x0F; byte=0x5B; m128 & XmmReg ...
 {
-    XmmReg_Da = int2float( m128_Da );
-    XmmReg_Db = int2float( m128_Db );
-    XmmReg_Dc = int2float( m128_Dc );
-    XmmReg_Dd = int2float( m128_Dd );
+    local m:16 = m128;
+    XmmReg[0,32] = int2float( m[0,32] );
+    XmmReg[32,32] = int2float( m[32,32] );
+    XmmReg[64,32] = int2float( m[64,32] );
+    XmmReg[96,32] = int2float( m[96,32] );
 }
 
-:CVTDQ2PS     XmmReg1, XmmReg2  is vexMode=0 &  mandover=0 & byte=0x0F; byte=0x5B; xmmmod=3 & XmmReg1 & XmmReg1_Da & XmmReg1_Db & XmmReg1_Dc & XmmReg1_Dd & XmmReg2 & XmmReg2_Da & XmmReg2_Db & XmmReg2_Dc & XmmReg2_Dd
+:CVTDQ2PS     XmmReg1, XmmReg2  is vexMode=0 &  mandover=0 & byte=0x0F; byte=0x5B; xmmmod=3 & XmmReg1 & XmmReg2
 {
-    XmmReg1_Da = int2float( XmmReg2_Da );
-    XmmReg1_Db = int2float( XmmReg2_Db );
-    XmmReg1_Dc = int2float( XmmReg2_Dc );
-    XmmReg1_Dd = int2float( XmmReg2_Dd );
+    XmmReg1[0,32] = int2float( XmmReg2[0,32] );
+    XmmReg1[32,32] = int2float( XmmReg2[32,32] );
+    XmmReg1[64,32] = int2float( XmmReg2[64,32] );
+    XmmReg1[96,32] = int2float( XmmReg2[96,32] );
 }
 
-:CVTPD2DQ     XmmReg, m128      is vexMode=0 &  $(PRE_F2) & byte=0x0F; byte=0xE6; ( XmmReg & XmmReg_Da & XmmReg_Db & XmmReg_Dc & XmmReg_Dd ) ... & ( m128 & m128_Qa & m128_Qb )
+:CVTPD2DQ     XmmReg, m128      is vexMode=0 &  $(PRE_F2) & byte=0x0F; byte=0xE6; m128 & XmmReg ...
 {
-    XmmReg_Da = trunc( m128_Qa );
-    XmmReg_Db = trunc( m128_Qb );
-    XmmReg_Dc = 0;
-    XmmReg_Dd = 0;
+    local m:16 = m128;
+    XmmReg[0,32] = trunc( m[0,64] );
+    XmmReg[32,32] = trunc( m[64,64] );
+    XmmReg[64,32] = 0;
+    XmmReg[96,32] = 0;
 }
 
-:CVTPD2DQ     XmmReg1, XmmReg2  is vexMode=0 &  $(PRE_F2) & byte=0x0F; byte=0xE6; xmmmod=3 & XmmReg1 & XmmReg1_Da & XmmReg1_Db & XmmReg1_Dc & XmmReg1_Dd & XmmReg2 & XmmReg2_Qa & XmmReg2_Qb
+:CVTPD2DQ     XmmReg1, XmmReg2  is vexMode=0 &  $(PRE_F2) & byte=0x0F; byte=0xE6; xmmmod=3 & XmmReg1 & XmmReg2
 {
-    XmmReg1_Da = trunc( XmmReg2_Qa );
-    XmmReg1_Db = trunc( XmmReg2_Qb );
-    XmmReg1_Dc = 0;
-    XmmReg1_Dd = 0;
+    XmmReg1[0,32] = trunc( XmmReg2[0,64] );
+    XmmReg1[32,32] = trunc( XmmReg2[64,64] );
+    XmmReg1[64,32] = 0;
+    XmmReg1[96,32] = 0;
 }
 
-:CVTPD2PI     mmxreg, m128        is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x2D; ( mmxreg & mmxreg_Da & mmxreg_Db ) ... & ( m128 & m128_Qa & m128_Qb )
+:CVTPD2PI     mmxreg, m128        is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x2D; mmxreg ... & m128
 {
-    mmxreg_Da = trunc( m128_Qa );
-    mmxreg_Db = trunc( m128_Qb );
+    local m:16 = m128;
+    mmxreg[0,32] = trunc( m[0,64] );
+    mmxreg[32,32] = trunc( m[64,64] );
 }
 
-:CVTPD2PI     mmxreg1, XmmReg2    is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x2D; xmmmod=3 & mmxreg1 & mmxreg1_Da & mmxreg1_Db & XmmReg2 & XmmReg2_Qa & XmmReg2_Qb
+:CVTPD2PI     mmxreg1, XmmReg2    is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x2D; xmmmod=3 & mmxreg1 & XmmReg2
 {
-    mmxreg1_Da = trunc( XmmReg2_Qa );
-    mmxreg1_Db = trunc( XmmReg2_Qb );
+    mmxreg1[0,32] = trunc( XmmReg2[0,64] );
+    mmxreg1[32,32] = trunc( XmmReg2[64,64] );
 }
 
-:CVTPD2PS     XmmReg, m128      is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x5A; ( XmmReg & XmmReg_Da & XmmReg_Db & XmmReg_Dc & XmmReg_Dd ) ... & ( m128 & m128_Qa & m128_Qb )
+:CVTPD2PS     XmmReg, m128      is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x5A; m128 & XmmReg ...
 {
-    XmmReg_Da = float2float( m128_Qa );
-    XmmReg_Db = float2float( m128_Qb );
-    XmmReg_Dc = 0;
-    XmmReg_Dd = 0;
+    local m:16 = m128;
+    XmmReg[0,32] = float2float( m[0,64] );
+    XmmReg[32,32] = float2float( m[64,64] );
+    XmmReg[64,32] = 0;
+    XmmReg[96,32] = 0;
 }
 
-:CVTPD2PS     XmmReg1, XmmReg2  is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x5A; xmmmod=3 & XmmReg1 & XmmReg1_Da & XmmReg1_Db & XmmReg1_Dc & XmmReg1_Dd & XmmReg2 & XmmReg2_Qa & XmmReg2_Qb
+:CVTPD2PS     XmmReg1, XmmReg2  is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x5A; xmmmod=3 & XmmReg1 & XmmReg2
 {
-    XmmReg1_Da = float2float( XmmReg2_Qa );
-    XmmReg1_Db = float2float( XmmReg2_Qb );
-    XmmReg1_Dc = 0;
-    XmmReg1_Dd = 0;
+    XmmReg1[0,32] = float2float( XmmReg2[0,64] );
+    XmmReg1[32,32] = float2float( XmmReg2[64,64] );
+    XmmReg1[64,32] = 0;
+    XmmReg1[96,32] = 0;
 }
 
-:CVTPI2PD     XmmReg, m64       is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x2A; ( XmmReg & XmmReg_Qa & XmmReg_Qb ) ... & ( m64 & m64_Da & m64_Db )
+:CVTPI2PD     XmmReg, m64       is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x2A; m64 & XmmReg ...
 {
-  XmmReg_Qa =  int2float(m64_Da);
-  XmmReg_Qb =  int2float(m64_Db);
+  local m:8 = m64;
+  XmmReg[0,64] =  int2float(m[0,32]);
+  XmmReg[64,64] =  int2float(m[32,32]);
 }
 
-:CVTPI2PD     XmmReg1, mmxreg2  is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x2A; xmmmod=3 & XmmReg1 & XmmReg1_Qa & XmmReg1_Qb & mmxreg2 & mmxreg2_Da & mmxreg2_Db
+:CVTPI2PD     XmmReg1, mmxreg2  is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x2A; xmmmod=3 & XmmReg1 & mmxreg2
 {
-  XmmReg1_Qa = int2float(mmxreg2_Da);
-  XmmReg1_Qb = int2float(mmxreg2_Db);
+  XmmReg1[0,64] = int2float(mmxreg2[0,32]);
+  XmmReg1[64,64] = int2float(mmxreg2[32,32]);
 }
 
-:CVTPI2PS     XmmReg, m64       is vexMode=0 &  mandover=0 & byte=0x0F; byte=0x2A; ( XmmReg & XmmReg_Da & XmmReg_Db ) ... & ( m64 & m64_Da & m64_Db )
+:CVTPI2PS     XmmReg, m64       is vexMode=0 &  mandover=0 & byte=0x0F; byte=0x2A; m64 & XmmReg ...
 {
-  XmmReg_Da = int2float(m64_Da);
-  XmmReg_Db = int2float(m64_Db);
+  local m:8 = m64;
+  XmmReg[0,32] = int2float(m[0,32]);
+  XmmReg[32,32] = int2float(m[32,32]);
 }
 
-:CVTPI2PS     XmmReg1, mmxreg2  is vexMode=0 &  mandover=0 & byte=0x0F; byte=0x2A; xmmmod=3 & XmmReg1 & XmmReg1_Da & XmmReg1_Db & mmxreg2 & mmxreg2_Da & mmxreg2_Db
+:CVTPI2PS     XmmReg1, mmxreg2  is vexMode=0 &  mandover=0 & byte=0x0F; byte=0x2A; xmmmod=3 & XmmReg1 & mmxreg2
 {
-  XmmReg1_Da = int2float(mmxreg2_Da);
-  XmmReg1_Db = int2float(mmxreg2_Db);
+  XmmReg1[0,32] = int2float(mmxreg2[0,32]);
+  XmmReg1[32,32] = int2float(mmxreg2[32,32]);
 }
 
-:CVTPS2DQ      XmmReg, m128        is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x5B; ( XmmReg & XmmReg_Da & XmmReg_Db & XmmReg_Dc & XmmReg_Dd ) ... & ( m128 & m128_Da & m128_Db & m128_Dc & m128_Dd )
+:CVTPS2DQ      XmmReg, m128        is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x5B; m128 & XmmReg ...
 {
-    XmmReg_Da = trunc( m128_Da );
-    XmmReg_Db = trunc( m128_Db );
-    XmmReg_Dc = trunc( m128_Dc );
-    XmmReg_Dd = trunc( m128_Dd );
+    local m:16 = m128;
+    XmmReg[0,32] = trunc( m[0,32] );
+    XmmReg[32,32] = trunc( m[32,32] );
+    XmmReg[64,32] = trunc( m[64,32] );
+    XmmReg[96,32] = trunc( m[96,32] );
 }
 
-:CVTPS2DQ      XmmReg1, XmmReg2    is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x5B; xmmmod=3 & XmmReg1 & XmmReg1_Da & XmmReg1_Db & XmmReg1_Dc & XmmReg1_Dd & XmmReg2 & XmmReg2_Da & XmmReg2_Db & XmmReg2_Dc & XmmReg2_Dd
+:CVTPS2DQ      XmmReg1, XmmReg2    is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x5B; xmmmod=3 & XmmReg1 & XmmReg2
 {
-    XmmReg1_Da = trunc( XmmReg2_Da );
-    XmmReg1_Db = trunc( XmmReg2_Db );
-    XmmReg1_Dc = trunc( XmmReg2_Dc );
-    XmmReg1_Dd = trunc( XmmReg2_Dd );
+    XmmReg1[0,32] = trunc( XmmReg2[0,32] );
+    XmmReg1[32,32] = trunc( XmmReg2[32,32] );
+    XmmReg1[64,32] = trunc( XmmReg2[64,32] );
+    XmmReg1[96,32] = trunc( XmmReg2[96,32] );
 }
 
-:CVTPS2PD     XmmReg, m64       is vexMode=0 &  mandover=0 & byte=0x0F; byte=0x5A;  ( XmmReg & XmmReg_Qa & XmmReg_Qb ) ... & ( m64 & m64_Da & m64_Db )
+:CVTPS2PD     XmmReg, m64       is vexMode=0 &  mandover=0 & byte=0x0F; byte=0x5A; m64 & XmmReg ...
 {
-    XmmReg_Qa = float2float( m64_Da );
-    XmmReg_Qb = float2float( m64_Db );
+    local m:8 = m64;
+    XmmReg[0,64] = float2float( m[0,32] );
+    XmmReg[64,64] = float2float( m[32,32] );
 }
 
-:CVTPS2PD     XmmReg1, XmmReg2  is vexMode=0 &  mandover=0 & byte=0x0F; byte=0x5A; xmmmod=3 & XmmReg1 & XmmReg1_Qa & XmmReg1_Qb & XmmReg2 & XmmReg2_Da & XmmReg2_Db
+:CVTPS2PD     XmmReg1, XmmReg2  is vexMode=0 &  mandover=0 & byte=0x0F; byte=0x5A; xmmmod=3 & XmmReg1 & XmmReg2
 {
-    XmmReg1_Qa = float2float( XmmReg2_Da );
-    XmmReg1_Qb = float2float( XmmReg2_Db );
+    XmmReg1[0,64] = float2float( XmmReg2[0,32] );
+    XmmReg1[64,64] = float2float( XmmReg2[32,32] );
 }
 
-:CVTPS2PI     mmxreg, m64         is vexMode=0 &  mandover=0 & byte=0x0F; byte=0x2D; ( mmxreg & mmxreg_Da & mmxreg_Db) ... & ( m64 & m64_Da & m64_Db )
+:CVTPS2PI     mmxreg, m64         is vexMode=0 &  mandover=0 & byte=0x0F; byte=0x2D; mmxreg ... & m64
 {
-  mmxreg_Da = round(m64_Da);
-  mmxreg_Db = round(m64_Db);
+  local m:8 = m64;
+  mmxreg[0,32] = round(m[0,32]);
+  mmxreg[32,32] = round(m[32,32]);
   FPUTagWord = 0x0000;         
 }
 
-:CVTPS2PI     mmxreg1, XmmReg2    is vexMode=0 &  mandover=0 & byte=0x0F; byte=0x2D; xmmmod=3 & mmxreg1 & mmxreg1_Da & mmxreg1_Db & XmmReg2 & XmmReg2_Da & XmmReg2_Db 
+:CVTPS2PI     mmxreg1, XmmReg2    is vexMode=0 &  mandover=0 & byte=0x0F; byte=0x2D; xmmmod=3 & mmxreg1 & XmmReg2
 {
-  mmxreg1_Da = round(XmmReg2_Da);
-  mmxreg1_Db = round(XmmReg2_Db);
+  mmxreg1[0,32] = round(XmmReg2[0,32]);
+  mmxreg1[32,32] = round(XmmReg2[32,32]);
   FPUTagWord = 0x0000;         
 }
 
@@ -5639,9 +4997,9 @@ CMPSS_OPERAND: ", "^imm8 is imm8   { }
   Reg32 = trunc(round(m64));
 }
 
-:CVTSD2SI     Reg32, XmmReg2 is vexMode=0 & $(PRE_F2) & byte=0x0F; byte=0x2D; xmmmod=3 & Reg32 & XmmReg2 & XmmReg2_Qa  
+:CVTSD2SI     Reg32, XmmReg2 is vexMode=0 & $(PRE_F2) & byte=0x0F; byte=0x2D; xmmmod=3 & Reg32 & XmmReg2
 {
-  Reg32 = trunc(round(XmmReg2_Qa));
+  Reg32 = trunc(round(XmmReg2[0,64]));
 }
 
 @ifdef IA64
@@ -5650,54 +5008,54 @@ CMPSS_OPERAND: ", "^imm8 is imm8   { }
   Reg64 = round(m64);
 }
 
-:CVTSD2SI     Reg64, XmmReg2 is vexMode=0 & opsize=2 & $(PRE_F2) & byte=0x0F; byte=0x2D; xmmmod=3 & Reg64 & XmmReg2 & XmmReg2_Qa
+:CVTSD2SI     Reg64, XmmReg2 is vexMode=0 & opsize=2 & $(PRE_F2) & byte=0x0F; byte=0x2D; xmmmod=3 & Reg64 & XmmReg2
 {
-  Reg64 = round(XmmReg2_Qa);
+  Reg64 = round(XmmReg2[0,64]);
 }
 @endif
 
-:CVTSD2SS     XmmReg, m64       is vexMode=0 & $(PRE_F2) & byte=0x0F; byte=0x5A; ( XmmReg & XmmReg_Da ) ... & m64
+:CVTSD2SS     XmmReg, m64       is vexMode=0 & $(PRE_F2) & byte=0x0F; byte=0x5A; m64 & XmmReg ...
 {
-  XmmReg_Da = float2float(m64);
+  XmmReg[0,32] = float2float(m64);
 }
 
-:CVTSD2SS     XmmReg1, XmmReg2  is vexMode=0 & $(PRE_F2) & byte=0x0F; byte=0x5A; xmmmod=3 & XmmReg1 & XmmReg1_Da & XmmReg2 & XmmReg2_Qa 
+:CVTSD2SS     XmmReg1, XmmReg2  is vexMode=0 & $(PRE_F2) & byte=0x0F; byte=0x5A; xmmmod=3 & XmmReg1 & XmmReg2
 {
-  XmmReg1_Da = float2float(XmmReg2_Qa);
+  XmmReg1[0,32] = float2float(XmmReg2[0,64]);
 }
 
-:CVTSI2SD     XmmReg, rm32    is vexMode=0 &  $(PRE_F2) & byte=0x0F; byte=0x2A; ( XmmReg & XmmReg_Qa ) ... & rm32
+:CVTSI2SD     XmmReg, rm32    is vexMode=0 &  $(PRE_F2) & byte=0x0F; byte=0x2A; rm32 & XmmReg ...
 {
-  XmmReg_Qa = int2float(rm32);
+  XmmReg[0,64] = int2float(rm32);
 }
 
 @ifdef IA64
-:CVTSI2SD     XmmReg, rm64    is vexMode=0 & opsize=2 & $(PRE_F2) & byte=0x0F; byte=0x2A; ( XmmReg & XmmReg_Qa ) ... & rm64
+:CVTSI2SD     XmmReg, rm64    is vexMode=0 & opsize=2 & $(PRE_F2) & byte=0x0F; byte=0x2A; rm64 & XmmReg ...
 {
-  XmmReg_Qa = int2float(rm64);
+  XmmReg[0,64] = int2float(rm64);
 }
 @endif
 
-:CVTSI2SS     XmmReg, rm32    is vexMode=0 &  $(PRE_F3) & byte=0x0F; byte=0x2A; ( XmmReg & XmmReg_Da ) ... & rm32
+:CVTSI2SS     XmmReg, rm32    is vexMode=0 &  $(PRE_F3) & byte=0x0F; byte=0x2A; rm32 & XmmReg ...
 {
-  XmmReg_Da = int2float(rm32);
+  XmmReg[0,32] = int2float(rm32);
 }
 
 @ifdef IA64
-:CVTSI2SS     XmmReg, rm64    is vexMode=0 & opsize=2 & $(PRE_F3) & byte=0x0F; byte=0x2A; ( XmmReg & XmmReg_Da ) ... & rm64
+:CVTSI2SS     XmmReg, rm64    is vexMode=0 & opsize=2 & $(PRE_F3) & byte=0x0F; byte=0x2A; rm64 & XmmReg ...
 {
-  XmmReg_Da = int2float(rm64);
+  XmmReg[0,32] = int2float(rm64);
 }
 @endif
 
-:CVTSS2SD     XmmReg, m32    is vexMode=0 &  $(PRE_F3) & byte=0x0F; byte=0x5A; ( XmmReg & XmmReg_Qa ) ... & m32
+:CVTSS2SD     XmmReg, m32    is vexMode=0 &  $(PRE_F3) & byte=0x0F; byte=0x5A; m32 & XmmReg ...
 {
-  XmmReg_Qa = float2float(m32);
+  XmmReg[0,64] = float2float(m32);
 }
 
-:CVTSS2SD     XmmReg1, XmmReg2  is vexMode=0 &  $(PRE_F3) & byte=0x0F; byte=0x5A; xmmmod=3 & XmmReg1 & XmmReg1_Qa & XmmReg2 & XmmReg2_Da
+:CVTSS2SD     XmmReg1, XmmReg2  is vexMode=0 &  $(PRE_F3) & byte=0x0F; byte=0x5A; xmmmod=3 & XmmReg1 & XmmReg2
 {
-  XmmReg1_Qa = float2float(XmmReg2_Da);
+  XmmReg1[0,64] = float2float(XmmReg2[0,32]);
 }
 
 :CVTSS2SI     Reg32, m32    is vexMode=0 & $(PRE_F3) & byte=0x0F; byte=0x2D; Reg32 ... & m32
@@ -5705,9 +5063,9 @@ CMPSS_OPERAND: ", "^imm8 is imm8   { }
   Reg32 = round(m32);
 }
 
-:CVTSS2SI     Reg32, XmmReg2 is vexMode=0 & $(PRE_F3) & byte=0x0F; byte=0x2D; xmmmod=3 & Reg32 & XmmReg2 & XmmReg2_Da  
+:CVTSS2SI     Reg32, XmmReg2 is vexMode=0 & $(PRE_F3) & byte=0x0F; byte=0x2D; xmmmod=3 & Reg32 & XmmReg2
 {
-  Reg32 = round(XmmReg2_Da);
+  Reg32 = round(XmmReg2[0,32]);
 }
 
 @ifdef IA64
@@ -5716,69 +5074,73 @@ CMPSS_OPERAND: ", "^imm8 is imm8   { }
   Reg64 = trunc(round(m32));
 }
 
-:CVTSS2SI     Reg64, XmmReg2 is vexMode=0 & opsize=2 & $(PRE_F3) & byte=0x0F; byte=0x2D; xmmmod=3 & Reg64 & XmmReg2 & XmmReg2_Da
+:CVTSS2SI     Reg64, XmmReg2 is vexMode=0 & opsize=2 & $(PRE_F3) & byte=0x0F; byte=0x2D; xmmmod=3 & Reg64 & XmmReg2
 {
-  Reg64 = trunc(round(XmmReg2_Da));
+  Reg64 = trunc(round(XmmReg2[0,32]));
 }
 @endif
                 
-:CVTTPD2PI    mmxreg, m128        is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x2C; ( mmxreg & mmxreg_Da & mmxreg_Db ) ... & ( m128 & m128_Qa & m128_Qb )
+:CVTTPD2PI    mmxreg, m128        is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x2C; mmxreg ... & m128
 {
-  mmxreg_Da = trunc(m128_Qa);
-  mmxreg_Db = trunc(m128_Qb);
+  local m:16 = m128;
+  mmxreg[0,32] = trunc(m[0,64]);
+  mmxreg[32,32] = trunc(m[64,64]);
   FPUTagWord = 0x0000;         
 }
 
-:CVTTPD2PI    mmxreg1, XmmReg2    is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x2C; xmmmod=3 & mmxreg1 & mmxreg1_Da & mmxreg1_Db & XmmReg2 & XmmReg2_Qa & XmmReg2_Qb 
+:CVTTPD2PI    mmxreg1, XmmReg2    is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x2C; xmmmod=3 & mmxreg1 & XmmReg2
 {
-  mmxreg1_Da = trunc(XmmReg2_Qa);
-  mmxreg1_Db = trunc(XmmReg2_Qb);
+  mmxreg1[0,32] = trunc(XmmReg2[0,64]);
+  mmxreg1[32,32] = trunc(XmmReg2[64,64]);
   FPUTagWord = 0x0000;         
 }
 
-:CVTTPD2DQ    XmmReg, m128        is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0xE6; ( XmmReg & XmmReg_Da & XmmReg_Db & XmmReg_Dc & XmmReg_Dd ) ... & ( m128 & m128_Qa & m128_Qb )
+:CVTTPD2DQ    XmmReg, m128        is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0xE6; m128 & XmmReg ...
 {
-  XmmReg_Da = trunc(m128_Qa);
-  XmmReg_Db = trunc(m128_Qb);
-  XmmReg_Dc = 0;
-  XmmReg_Dd = 0;
+  local m:16 = m128;
+  XmmReg[0,32] = trunc(m[0,64]);
+  XmmReg[32,32] = trunc(m[64,64]);
+  XmmReg[64,32] = 0;
+  XmmReg[96,32] = 0;
 }
 
-:CVTTPD2DQ    XmmReg1, XmmReg2    is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0xE6; xmmmod=3 & XmmReg1 & XmmReg1_Da & XmmReg1_Db & XmmReg1_Dc & XmmReg1_Dd & XmmReg2 & XmmReg2_Qa & XmmReg2_Qb
+:CVTTPD2DQ    XmmReg1, XmmReg2    is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0xE6; xmmmod=3 & XmmReg1 & XmmReg2
 {
-  XmmReg1_Da = trunc(XmmReg2_Qa);
-  XmmReg1_Db = trunc(XmmReg2_Qb);
-  XmmReg1_Dc = 0;
-  XmmReg1_Dd = 0;
+  XmmReg1[0,32] = trunc(XmmReg2[0,64]);
+  XmmReg1[32,32] = trunc(XmmReg2[64,64]);
+  XmmReg1[64,32] = 0;
+  XmmReg1[96,32] = 0;
 }
 
-:CVTTPS2DQ    XmmReg, m128        is vexMode=0 &  $(PRE_F3) & byte=0x0F; byte=0x5B; ( XmmReg & XmmReg_Da & XmmReg_Db & XmmReg_Dc & XmmReg_Dd ) ... & ( m128 & m128_Da & m128_Db & m128_Dc & m128_Dd )
+:CVTTPS2DQ    XmmReg, m128        is vexMode=0 &  $(PRE_F3) & byte=0x0F; byte=0x5B; m128 & XmmReg ...
 {
-  XmmReg_Da = trunc(m128_Da);
-  XmmReg_Db = trunc(m128_Db);
-  XmmReg_Dc = trunc(m128_Dc);
-  XmmReg_Dd = trunc(m128_Dd);
+  local m:16 = m128;
+  XmmReg[0,32] = trunc(m[0,32]);
+  XmmReg[32,32] = trunc(m[32,32]);
+  XmmReg[64,32] = trunc(m[64,32]);
+  XmmReg[96,32] = trunc(m[96,32]);
 }
 
-:CVTTPS2DQ    XmmReg1, XmmReg2    is vexMode=0 &  $(PRE_F3) & byte=0x0F; byte=0x5B; xmmmod=3 & XmmReg1 & XmmReg1_Da & XmmReg1_Db & XmmReg1_Dc & XmmReg1_Dd & XmmReg2 & XmmReg2_Da & XmmReg2_Db & XmmReg2_Dc & XmmReg2_Dd
+:CVTTPS2DQ    XmmReg1, XmmReg2    is vexMode=0 &  $(PRE_F3) & byte=0x0F; byte=0x5B; xmmmod=3 & XmmReg1 & XmmReg2
 {
-  XmmReg1_Da = trunc(XmmReg2_Da);
-  XmmReg1_Db = trunc(XmmReg2_Db);
-  XmmReg1_Dc = trunc(XmmReg2_Dc);
-  XmmReg1_Dd = trunc(XmmReg2_Dd);
+  XmmReg1[0,32] = trunc(XmmReg2[0,32]);
+  XmmReg1[32,32] = trunc(XmmReg2[32,32]);
+  XmmReg1[64,32] = trunc(XmmReg2[64,32]);
+  XmmReg1[96,32] = trunc(XmmReg2[96,32]);
 }
 
-:CVTTPS2PI    mmxreg, m64         is vexMode=0 &  mandover=0 & byte=0x0F; byte=0x2C; ( mmxreg & mmxreg_Da & mmxreg_Db ) ... & ( m64 & m64_Da & m64_Db )
+:CVTTPS2PI    mmxreg, m64         is vexMode=0 &  mandover=0 & byte=0x0F; byte=0x2C; mmxreg ... & m64
 {
-  mmxreg_Da = trunc(m64_Da);
-  mmxreg_Db = trunc(m64_Db);
+  local m:8 = m64;
+  mmxreg[0,32] = trunc(m[0,32]);
+  mmxreg[32,32] = trunc(m[32,32]);
   FPUTagWord = 0x0000;         
 }
 
-:CVTTPS2PI    mmxreg1, XmmReg2    is vexMode=0 &  mandover=0 & byte=0x0F; byte=0x2C; xmmmod=3 & mmxreg1 & mmxreg1_Da & mmxreg1_Db & XmmReg2 & XmmReg2_Da & XmmReg2_Db 
+:CVTTPS2PI    mmxreg1, XmmReg2    is vexMode=0 &  mandover=0 & byte=0x0F; byte=0x2C; xmmmod=3 & mmxreg1 & XmmReg2
 {
-  mmxreg1_Da = trunc(XmmReg2_Da);
-  mmxreg1_Db = trunc(XmmReg2_Db);
+  mmxreg1[0,32] = trunc(XmmReg2[0,32]);
+  mmxreg1[32,32] = trunc(XmmReg2[32,32]);
   FPUTagWord = 0x0000;         
 }
 
@@ -5787,9 +5149,9 @@ CMPSS_OPERAND: ", "^imm8 is imm8   { }
   Reg32 = trunc(m64);
 }
 
-:CVTTSD2SI    Reg32, XmmReg2  is vexMode=0 & $(PRE_F2) & byte=0x0F; byte=0x2C; xmmmod=3 & Reg32 & XmmReg2 & XmmReg2_Qa
+:CVTTSD2SI    Reg32, XmmReg2  is vexMode=0 & $(PRE_F2) & byte=0x0F; byte=0x2C; xmmmod=3 & Reg32 & XmmReg2
 {
-  Reg32 = trunc(XmmReg2_Qa);
+  Reg32 = trunc(XmmReg2[0,64]);
 }
 
 @ifdef IA64
@@ -5798,9 +5160,9 @@ CMPSS_OPERAND: ", "^imm8 is imm8   { }
   Reg64 = trunc(m64);
 }
 
-:CVTTSD2SI    Reg64, XmmReg2  is vexMode=0 & opsize=2 & $(PRE_F2) & byte=0x0F; byte=0x2C; xmmmod=3 & Reg64 & XmmReg2 & XmmReg2_Qa
+:CVTTSD2SI    Reg64, XmmReg2  is vexMode=0 & opsize=2 & $(PRE_F2) & byte=0x0F; byte=0x2C; xmmmod=3 & Reg64 & XmmReg2
 {
-  Reg64 = trunc(XmmReg2_Qa);
+  Reg64 = trunc(XmmReg2[0,64]);
 }
 @endif
                 
@@ -5809,9 +5171,9 @@ CMPSS_OPERAND: ", "^imm8 is imm8   { }
   Reg32 = trunc(m32);
 }
 
-:CVTTSS2SI    Reg32, XmmReg2  is vexMode=0 & $(PRE_F3) & byte=0x0F; byte=0x2C; xmmmod=3 & Reg32 & XmmReg2 & XmmReg2_Da 
+:CVTTSS2SI    Reg32, XmmReg2  is vexMode=0 & $(PRE_F3) & byte=0x0F; byte=0x2C; xmmmod=3 & Reg32 & XmmReg2
 {
-  Reg32 = trunc(XmmReg2_Da);
+  Reg32 = trunc(XmmReg2[0,32]);
 }
 
 @ifdef IA64
@@ -5820,9 +5182,9 @@ CMPSS_OPERAND: ", "^imm8 is imm8   { }
   Reg64 = trunc(m32);
 }
 
-:CVTTSS2SI    Reg64, XmmReg2  is vexMode=0 & opsize=2 & $(PRE_F3) & byte=0x0F; byte=0x2C; xmmmod=3 & Reg64 & XmmReg2 & XmmReg2_Da 
+:CVTTSS2SI    Reg64, XmmReg2  is vexMode=0 & opsize=2 & $(PRE_F3) & byte=0x0F; byte=0x2C; xmmmod=3 & Reg64 & XmmReg2
 {
-  Reg64 = trunc(XmmReg2_Da);
+  Reg64 = trunc(XmmReg2[0,32]);
 }
 @endif
 
@@ -5834,82 +5196,86 @@ define pcodeop divps;
 :DIVPS        XmmReg, m128     is vexMode=0 & mandover=0 & byte=0x0F; byte=0x5E; XmmReg ... & m128 { XmmReg = divps(XmmReg, m128); }
 :DIVPS        XmmReg1, XmmReg2 is vexMode=0 & mandover=0 & byte=0x0F; byte=0x5E; xmmmod=3 & XmmReg1 & XmmReg2 { XmmReg1 = divps(XmmReg1, XmmReg2); }
                 
-:DIVSD        XmmReg, m64      is vexMode=0 & $(PRE_F2) & byte=0x0F; byte=0x5E; ( XmmReg & XmmReg_Qa ) ... & m64
+:DIVSD        XmmReg, m64      is vexMode=0 & $(PRE_F2) & byte=0x0F; byte=0x5E; m64 & XmmReg ...
 {
-    XmmReg_Qa = XmmReg_Qa f/ m64;
+    XmmReg[0,64] = XmmReg[0,64] f/ m64;
 }
 
-:DIVSD        XmmReg1, XmmReg2 is vexMode=0 & $(PRE_F2) & byte=0x0F; byte=0x5E; xmmmod=3 & XmmReg1 & XmmReg1_Qa & XmmReg2 & XmmReg2_Qa
+:DIVSD        XmmReg1, XmmReg2 is vexMode=0 & $(PRE_F2) & byte=0x0F; byte=0x5E; xmmmod=3 & XmmReg1 & XmmReg2
 {
-    XmmReg1_Qa = XmmReg1_Qa f/ XmmReg2_Qa;
+    XmmReg1[0,64] = XmmReg1[0,64] f/ XmmReg2[0,64];
 }
 
-:DIVSS        XmmReg, m32      is vexMode=0 & $(PRE_F3) & byte=0x0F; byte=0x5E; ( XmmReg & XmmReg_Da ) ... & m32 
+:DIVSS        XmmReg, m32      is vexMode=0 & $(PRE_F3) & byte=0x0F; byte=0x5E; m32 & XmmReg ...
 {
-    XmmReg_Da = XmmReg_Da f/ m32;
+    XmmReg[0,32] = XmmReg[0,32] f/ m32;
 }
 
-:DIVSS        XmmReg1, XmmReg2 is vexMode=0 &  $(PRE_F3) & byte=0x0F; byte=0x5E; xmmmod=3 & XmmReg1 & XmmReg1_Da & XmmReg2 & XmmReg2_Da 
+:DIVSS        XmmReg1, XmmReg2 is vexMode=0 &  $(PRE_F3) & byte=0x0F; byte=0x5E; xmmmod=3 & XmmReg1 & XmmReg2
 {
-    XmmReg1_Da = XmmReg1_Da f/ XmmReg2_Da;
+    XmmReg1[0,32] = XmmReg1[0,32] f/ XmmReg2[0,32];
 }
 
 :EMMS                     is vexMode=0 &  byte=0x0F; byte=0x77 { FPUTagWord = 0xFFFF; }
 
-:HADDPD        XmmReg, m128        is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x7C; ( XmmReg & XmmReg_Qa & XmmReg_Qb ) ... & ( m128 & m128_Qa & m128_Qb )
+:HADDPD        XmmReg, m128        is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x7C; m128 & XmmReg ...
 {
-    XmmReg_Qa = XmmReg_Qa f+ XmmReg_Qb;
-    XmmReg_Qb = m128_Qa   f+ m128_Qb;
+    local m:16 = m128;
+    XmmReg[0,64] = XmmReg[0,64] f+ XmmReg[64,64];
+    XmmReg[64,64] = m[0,64]   f+ m[64,64];
 }
 
-:HADDPD        XmmReg1, XmmReg2    is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x7C; xmmmod=3 & XmmReg1 & XmmReg1_Qa & XmmReg1_Qb & XmmReg2 & XmmReg2_Qa & XmmReg2_Qb 
+:HADDPD        XmmReg1, XmmReg2    is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x7C; xmmmod=3 & XmmReg1 & XmmReg2
 {
-    XmmReg1_Qa = XmmReg1_Qa f+ XmmReg1_Qb;
-    XmmReg1_Qb = XmmReg2_Qa f+ XmmReg2_Qb;
+    XmmReg1[0,64] = XmmReg1[0,64] f+ XmmReg1[64,64];
+    XmmReg1[64,64] = XmmReg2[0,64] f+ XmmReg2[64,64];
 }
 
-:HADDPS        XmmReg, m128        is vexMode=0 &  $(PRE_F2) & byte=0x0F; byte=0x7C; ( XmmReg & XmmReg_Da & XmmReg_Db & XmmReg_Dc & XmmReg_Dd ) ... & ( m128 & m128_Da & m128_Db & m128_Dc & m128_Dd )
+:HADDPS        XmmReg, m128        is vexMode=0 &  $(PRE_F2) & byte=0x0F; byte=0x7C; m128 & XmmReg ...
 {
-    XmmReg_Da = XmmReg_Da f+ XmmReg_Db;
-    XmmReg_Db = XmmReg_Dc f+ XmmReg_Dd;
-    XmmReg_Dc = m128_Da   f+ m128_Db;
-    XmmReg_Dd = m128_Dc   f+ m128_Dd;
+    local m:16 = m128;
+    XmmReg[0,32] = XmmReg[0,32] f+ XmmReg[32,32];
+    XmmReg[32,32] = XmmReg[64,32] f+ XmmReg[96,32];
+    XmmReg[64,32] = m[0,32]   f+ m[32,32];
+    XmmReg[96,32] = m[64,32]   f+ m[96,32];
 }
 
-:HADDPS        XmmReg1, XmmReg2    is vexMode=0 &  $(PRE_F2) & byte=0x0F; byte=0x7C; xmmmod=3 & XmmReg1 & XmmReg1_Da & XmmReg1_Db & XmmReg1_Dc & XmmReg1_Dd & XmmReg2 & XmmReg2_Da & XmmReg2_Db & XmmReg2_Dc & XmmReg2_Dd
+:HADDPS        XmmReg1, XmmReg2    is vexMode=0 &  $(PRE_F2) & byte=0x0F; byte=0x7C; xmmmod=3 & XmmReg1 & XmmReg2
 {
-    XmmReg1_Da = XmmReg1_Da f+ XmmReg1_Db;
-    XmmReg1_Db = XmmReg1_Dc f+ XmmReg1_Dd;
-    XmmReg1_Dc = XmmReg2_Da f+ XmmReg2_Db;
-    XmmReg1_Dd = XmmReg2_Dc f+ XmmReg2_Dd;
+    XmmReg1[0,32] = XmmReg1[0,32] f+ XmmReg1[32,32];
+    XmmReg1[32,32] = XmmReg1[64,32] f+ XmmReg1[96,32];
+    XmmReg1[64,32] = XmmReg2[0,32] f+ XmmReg2[32,32];
+    XmmReg1[96,32] = XmmReg2[64,32] f+ XmmReg2[96,32];
 }
 
-:HSUBPD        XmmReg, m128        is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x7D; ( XmmReg & XmmReg_Qa & XmmReg_Qb ) ... & ( m128 & m128_Qa & m128_Qb )
+:HSUBPD        XmmReg, m128        is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x7D; m128 & XmmReg ...
 {
-    XmmReg_Qa = XmmReg_Qa f- XmmReg_Qb;
-    XmmReg_Qb = m128_Qa   f- m128_Qb;
+    local m:16 = m128;
+    XmmReg[0,64] = XmmReg[0,64] f- XmmReg[64,64];
+    XmmReg[64,64] = m[0,64]   f- m[64,64];
 }
 
-:HSUBPD        XmmReg1, XmmReg2    is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x7D; xmmmod=3 & XmmReg1 & XmmReg1_Qa & XmmReg1_Qb & XmmReg2 & XmmReg2_Qa & XmmReg2_Qb 
+:HSUBPD        XmmReg1, XmmReg2    is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x7D; xmmmod=3 & XmmReg1 & XmmReg2
 {
-    XmmReg1_Qa = XmmReg1_Qa f- XmmReg1_Qb;
-    XmmReg1_Qb = XmmReg2_Qa f- XmmReg2_Qb;
+    XmmReg1[0,64] = XmmReg1[0,64] f- XmmReg1[64,64];
+    XmmReg1[64,64] = XmmReg2[0,64] f- XmmReg2[64,64];
 }
 
-:HSUBPS        XmmReg, m128        is vexMode=0 &  $(PRE_F2) & byte=0x0F; byte=0x7D; ( XmmReg & XmmReg_Da & XmmReg_Db & XmmReg_Dc & XmmReg_Dd ) ... & ( m128 & m128_Da & m128_Db & m128_Dc & m128_Dd )
+:HSUBPS        XmmReg, m128        is vexMode=0 &  $(PRE_F2) & byte=0x0F; byte=0x7D; m128 & XmmReg ...
 {
-    XmmReg_Da = XmmReg_Da f- XmmReg_Db;
-    XmmReg_Db = XmmReg_Dc f- XmmReg_Dd;
-    XmmReg_Dc = m128_Da   f- m128_Db;
-    XmmReg_Dd = m128_Dc   f- m128_Dd;
+    local m:16 = m128;
+    XmmReg[0,32] = XmmReg[0,32] f- XmmReg[32,32];
+    XmmReg[32,32] = XmmReg[64,32] f- XmmReg[96,32];
+    XmmReg[64,32] = m[0,32]   f- m[32,32];
+    XmmReg[96,32] = m[64,32]   f- m[96,32];
 }
 
-:HSUBPS        XmmReg1, XmmReg2    is vexMode=0 &  $(PRE_F2) & byte=0x0F; byte=0x7D; xmmmod=3 & XmmReg1 & XmmReg1_Da & XmmReg1_Db & XmmReg1_Dc & XmmReg1_Dd & XmmReg2 & XmmReg2_Da & XmmReg2_Db & XmmReg2_Dc & XmmReg2_Dd
+:HSUBPS        XmmReg1, XmmReg2    is vexMode=0 &  $(PRE_F2) & byte=0x0F; byte=0x7D; xmmmod=3 & XmmReg1 & XmmReg2
 {
-    XmmReg1_Da = XmmReg1_Da f- XmmReg1_Db;
-    XmmReg1_Db = XmmReg1_Dc f- XmmReg1_Dd;
-    XmmReg1_Dc = XmmReg2_Da f- XmmReg2_Db;
-    XmmReg1_Dd = XmmReg2_Dc f- XmmReg2_Dd;
+    XmmReg1[0,32] = XmmReg1[0,32] f- XmmReg1[32,32];
+    XmmReg1[32,32] = XmmReg1[64,32] f- XmmReg1[96,32];
+    XmmReg1[64,32] = XmmReg2[0,32] f- XmmReg2[32,32];
+    XmmReg1[96,32] = XmmReg2[64,32] f- XmmReg2[96,32];
 }
 
 #--------------------
@@ -5954,60 +5320,58 @@ define pcodeop minss;
 :MINSS        XmmReg, m32         is vexMode=0 &  $(PRE_F3) & byte=0x0F; byte=0x5D; XmmReg ... & m32 { XmmReg = minss(XmmReg, m32); }
 :MINSS        XmmReg1, XmmReg2    is vexMode=0 &  $(PRE_F3) & byte=0x0F; byte=0x5D; xmmmod=3 & XmmReg1 & XmmReg2 { XmmReg1 = minss(XmmReg1, XmmReg2); }
 
-:MOVAPD       XmmReg, m128        is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x28; ( XmmReg & XmmReg_Qa & XmmReg_Qb ) ... & ( m128 & m128_Qa & m128_Qb )
+:MOVAPD       XmmReg, m128        is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x28; m128 & XmmReg ...
 {
-    XmmReg_Qa = m128_Qa;
-    XmmReg_Qb = m128_Qb;
+    local m:16 = m128;
+    XmmReg[0,64] = m[0,64];
+    XmmReg[64,64] = m[64,64];
 }
 
-:MOVAPD       XmmReg1, XmmReg2    is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x28; xmmmod=3 & XmmReg1 & XmmReg1_Qa & XmmReg1_Qb & XmmReg2 & XmmReg2_Qa & XmmReg2_Qb 
+:MOVAPD       XmmReg1, XmmReg2    is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x28; xmmmod=3 & XmmReg1 & XmmReg2
 {
-    XmmReg1_Qa = XmmReg2_Qa;
-    XmmReg1_Qb = XmmReg2_Qb;
+    XmmReg1[0,64] = XmmReg2[0,64];
+    XmmReg1[64,64] = XmmReg2[64,64];
 }
 
-:MOVAPD       m128, XmmReg        is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x29; ( XmmReg & XmmReg_Qa & XmmReg_Qb ) ... & ( m128 & m128_Qa & m128_Qb )
+:MOVAPD       m128, XmmReg        is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x29; m128 & XmmReg ...
 {
-    m128_Qa = XmmReg_Qa;
-    m128_Qb = XmmReg_Qb;
+    m128 = XmmReg;
 }
 
-:MOVAPD       XmmReg2, XmmReg1    is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x29; xmmmod=3 & XmmReg1 & XmmReg1_Qa & XmmReg1_Qb & XmmReg2 & XmmReg2_Qa & XmmReg2_Qb 
+:MOVAPD       XmmReg2, XmmReg1    is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x29; xmmmod=3 & XmmReg1 & XmmReg2
 {
-    XmmReg2_Qa = XmmReg1_Qa;
-    XmmReg2_Qb = XmmReg1_Qb;
+    XmmReg2[0,64] = XmmReg1[0,64];
+    XmmReg2[64,64] = XmmReg1[64,64];
 }
 
-:MOVAPS       XmmReg, m128        is vexMode=0 &  mandover=0 & byte=0x0F; byte=0x28; ( XmmReg & XmmReg_Da & XmmReg_Db & XmmReg_Dc & XmmReg_Dd ) ... & ( m128 & m128_Da & m128_Db & m128_Dc & m128_Dd ) 
+:MOVAPS       XmmReg, m128        is vexMode=0 &  mandover=0 & byte=0x0F; byte=0x28; m128 & XmmReg ...
 {
-    XmmReg_Da = m128_Da;
-    XmmReg_Db = m128_Db;
-    XmmReg_Dc = m128_Dc;
-    XmmReg_Dd = m128_Dd;
+    local m:16 = m128;
+    XmmReg[0,32] = m[0,32];
+    XmmReg[32,32] = m[32,32];
+    XmmReg[64,32] = m[64,32];
+    XmmReg[96,32] = m[96,32];
 }
 
-:MOVAPS       XmmReg1, XmmReg2    is vexMode=0 &  mandover=0 & byte=0x0F; byte=0x28; xmmmod=3 & XmmReg1 & XmmReg1_Da & XmmReg1_Db & XmmReg1_Dc & XmmReg1_Dd & XmmReg2 & XmmReg2_Da & XmmReg2_Db & XmmReg2_Dc & XmmReg2_Dd
+:MOVAPS       XmmReg1, XmmReg2    is vexMode=0 &  mandover=0 & byte=0x0F; byte=0x28; xmmmod=3 & XmmReg1 & XmmReg2
 {
-    XmmReg1_Da = XmmReg2_Da;
-    XmmReg1_Db = XmmReg2_Db;
-    XmmReg1_Dc = XmmReg2_Dc;
-    XmmReg1_Dd = XmmReg2_Dd;
+    XmmReg1[0,32] = XmmReg2[0,32];
+    XmmReg1[32,32] = XmmReg2[32,32];
+    XmmReg1[64,32] = XmmReg2[64,32];
+    XmmReg1[96,32] = XmmReg2[96,32];
 }
 
-:MOVAPS       m128, XmmReg        is vexMode=0 &  mandover=0 & byte=0x0F; byte=0x29; ( XmmReg & XmmReg_Da & XmmReg_Db & XmmReg_Dc & XmmReg_Dd ) ... & ( m128 & m128_Da & m128_Db & m128_Dc & m128_Dd )
+:MOVAPS       m128, XmmReg        is vexMode=0 &  mandover=0 & byte=0x0F; byte=0x29; m128 & XmmReg ...
 {
-    m128_Da = XmmReg_Da;
-    m128_Db = XmmReg_Db;
-    m128_Dc = XmmReg_Dc;
-    m128_Dd = XmmReg_Dd;
+    m128 = XmmReg;
 }
 
-:MOVAPS       XmmReg2, XmmReg1    is vexMode=0 &  mandover=0 & byte=0x0F; byte=0x29; xmmmod=3 & XmmReg1 & XmmReg1_Da & XmmReg1_Db & XmmReg1_Dc & XmmReg1_Dd & XmmReg2 & XmmReg2_Da & XmmReg2_Db & XmmReg2_Dc & XmmReg2_Dd
+:MOVAPS       XmmReg2, XmmReg1    is vexMode=0 &  mandover=0 & byte=0x0F; byte=0x29; xmmmod=3 & XmmReg1 & XmmReg2
 {
-    XmmReg2_Da = XmmReg1_Da;
-    XmmReg2_Db = XmmReg1_Db;
-    XmmReg2_Dc = XmmReg1_Dc;
-    XmmReg2_Dd = XmmReg1_Dd;
+    XmmReg2[0,32] = XmmReg1[0,32];
+    XmmReg2[32,32] = XmmReg1[32,32];
+    XmmReg2[64,32] = XmmReg1[64,32];
+    XmmReg2[96,32] = XmmReg1[96,32];
 }
 
 :MOVD         mmxreg, rm32   is vexMode=0 &  mandover=0 & byte=0x0F; byte=0x6E; rm32 & mmxreg ...                    { mmxreg = zext(rm32); }
@@ -6021,48 +5385,50 @@ define pcodeop minss;
 :MOVQ         rm64, XmmReg   is vexMode=0 &  opsize=2 & $(PRE_66) & byte=0x0F; byte=0x7E; rm64 & XmmReg ...         { rm64 = XmmReg(0); }
 @endif
 
-:MOVDDUP      XmmReg, m64         is vexMode=0 &  $(PRE_F2) & byte=0x0F; byte=0x12; ( XmmReg & XmmReg_Qa & XmmReg_Qb ) ... & m64
+:MOVDDUP      XmmReg, m64         is vexMode=0 &  $(PRE_F2) & byte=0x0F; byte=0x12; m64 & XmmReg ...
 {
-    XmmReg_Qa = m64;
-    XmmReg_Qb = m64;
+    XmmReg[0,64] = m64;
+    XmmReg[64,64] = m64;
 }
 
-:MOVDDUP      XmmReg1, XmmReg2    is vexMode=0 &  $(PRE_F2) & byte=0x0F; byte=0x12; xmmmod=3 & XmmReg1 & XmmReg1_Qa & XmmReg1_Qb & XmmReg2 & XmmReg2_Qa
+:MOVDDUP      XmmReg1, XmmReg2    is vexMode=0 &  $(PRE_F2) & byte=0x0F; byte=0x12; xmmmod=3 & XmmReg1 & XmmReg2
 {
-    XmmReg1_Qa = XmmReg2_Qa;
-    XmmReg1_Qb = XmmReg2_Qa;
+    XmmReg1[0,64] = XmmReg2[0,64];
+    XmmReg1[64,64] = XmmReg2[0,64];
 }
 
-:MOVSHDUP     XmmReg, m128        is vexMode=0 &  $(PRE_F3) & byte=0x0F; byte=0x16; ( XmmReg & XmmReg_Da & XmmReg_Db & XmmReg_Dc & XmmReg_Dd ) ... & ( m128 & m128_Db & m128_Dd )
+:MOVSHDUP     XmmReg, m128        is vexMode=0 &  $(PRE_F3) & byte=0x0F; byte=0x16; m128 & XmmReg ...
 {
-    XmmReg_Da = m128_Db;
-    XmmReg_Db = m128_Db;
-    XmmReg_Dc = m128_Dd;
-    XmmReg_Dd = m128_Dd;
+    local m:16 = m128;
+    XmmReg[0,32] = m[32,32];
+    XmmReg[32,32] = m[32,32];
+    XmmReg[64,32] = m[96,32];
+    XmmReg[96,32] = m[96,32];
 }
 
-:MOVSHDUP     XmmReg1, XmmReg2    is vexMode=0 &  $(PRE_F3) & byte=0x0F; byte=0x16; xmmmod=3 & XmmReg1 & XmmReg1_Da & XmmReg1_Db & XmmReg1_Dc & XmmReg1_Dd & XmmReg2 & XmmReg2_Db & XmmReg2_Dd
+:MOVSHDUP     XmmReg1, XmmReg2    is vexMode=0 &  $(PRE_F3) & byte=0x0F; byte=0x16; xmmmod=3 & XmmReg1 & XmmReg2
 {
-    XmmReg1_Da = XmmReg2_Db;
-    XmmReg1_Db = XmmReg2_Db;
-    XmmReg1_Dc = XmmReg2_Dd;
-    XmmReg1_Dd = XmmReg2_Dd;
+    XmmReg1[0,32] = XmmReg2[32,32];
+    XmmReg1[32,32] = XmmReg2[32,32];
+    XmmReg1[64,32] = XmmReg2[96,32];
+    XmmReg1[96,32] = XmmReg2[96,32];
 }
 
-:MOVSLDUP     XmmReg, m128        is vexMode=0 &  $(PRE_F3) & byte=0x0F; byte=0x12; ( XmmReg & XmmReg_Da & XmmReg_Db & XmmReg_Dc & XmmReg_Dd ) ... & ( m128 & m128_Da & m128_Dc )
+:MOVSLDUP     XmmReg, m128        is vexMode=0 &  $(PRE_F3) & byte=0x0F; byte=0x12; m128 & XmmReg ...
 {
-    XmmReg_Da = m128_Da;
-    XmmReg_Db = m128_Da;
-    XmmReg_Dc = m128_Dc;
-    XmmReg_Dd = m128_Dc;
+    local m:16 = m128;
+    XmmReg[0,32] = m[0,32];
+    XmmReg[32,32] = m[0,32];
+    XmmReg[64,32] = m[64,32];
+    XmmReg[96,32] = m[64,32];
 }
 
-:MOVSLDUP     XmmReg1, XmmReg2    is vexMode=0 &  $(PRE_F3) & byte=0x0F; byte=0x12; xmmmod=3 & XmmReg1 & XmmReg1_Da & XmmReg1_Db & XmmReg1_Dc & XmmReg1_Dd & XmmReg2 & XmmReg2_Da & XmmReg2_Dc
+:MOVSLDUP     XmmReg1, XmmReg2    is vexMode=0 &  $(PRE_F3) & byte=0x0F; byte=0x12; xmmmod=3 & XmmReg1 & XmmReg2
 {
-    XmmReg1_Da = XmmReg2_Da;
-    XmmReg1_Db = XmmReg2_Da;
-    XmmReg1_Dc = XmmReg2_Dc;
-    XmmReg1_Dd = XmmReg2_Dc;
+    XmmReg1[0,32] = XmmReg2[0,32];
+    XmmReg1[32,32] = XmmReg2[0,32];
+    XmmReg1[64,32] = XmmReg2[64,32];
+    XmmReg1[96,32] = XmmReg2[64,32];
 }
 
 :MOVDQA       XmmReg, m128        is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x6F; XmmReg ... & m128            { XmmReg = m128; }  
@@ -6126,19 +5492,19 @@ define pcodeop movmskps;
     XmmReg = zext(m64);
 }
 
-:MOVQ         XmmReg1, XmmReg2 is vexMode=0 &  $(PRE_F3) & byte=0x0F; byte=0x7E; xmmmod = 3 & XmmReg1 & XmmReg2_Qa & XmmReg2
+:MOVQ         XmmReg1, XmmReg2 is vexMode=0 &  $(PRE_F3) & byte=0x0F; byte=0x7E; xmmmod = 3 & XmmReg1 & XmmReg2
 {
-    XmmReg1 = zext(XmmReg2_Qa);
+    XmmReg1 = zext(XmmReg2[0,64]);
 }
 
-:MOVQ         m64, XmmReg      is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0xD6; ( XmmReg & XmmReg_Qa ) ... & m64
+:MOVQ         m64, XmmReg      is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0xD6; m64 & XmmReg ...
 {
-    m64 = XmmReg_Qa;
+    m64 = XmmReg[0,64];
 }
 
-:MOVQ         XmmReg2, XmmReg1 is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0xD6; xmmmod = 3 & XmmReg1 & XmmReg1_Qa & XmmReg2
+:MOVQ         XmmReg2, XmmReg1 is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0xD6; xmmmod = 3 & XmmReg1 & XmmReg2
 {
-    XmmReg2 = zext(XmmReg1_Qa);
+    XmmReg2 = zext(XmmReg1[0,64]);
 }
 
 :MOVQ2DQ      XmmReg, mmxreg2  is vexMode=0 &  $(PRE_F3) & byte=0x0F; byte=0xD6; XmmReg & mmxreg2
@@ -6147,72 +5513,72 @@ define pcodeop movmskps;
 # may need to model x87 FPU state changes too ?????
 }
 
-:MOVSD        XmmReg, m64      is vexMode=0 &  $(PRE_F2) & byte=0x0F; byte=0x10; ( XmmReg & XmmReg_Qa & XmmReg_Qb ) ... & m64
+:MOVSD        XmmReg, m64      is vexMode=0 &  $(PRE_F2) & byte=0x0F; byte=0x10; m64 & XmmReg ...
 {
-    XmmReg_Qa = m64;
-    XmmReg_Qb = 0;
+    XmmReg[0,64] = m64;
+    XmmReg[64,64] = 0;
 }
 
-:MOVSD        XmmReg1, XmmReg2 is vexMode=0 &  $(PRE_F2) & byte=0x0F; byte=0x10; xmmmod = 3 & XmmReg1 & XmmReg1_Qa & XmmReg2 & XmmReg2_Qa
+:MOVSD        XmmReg1, XmmReg2 is vexMode=0 &  $(PRE_F2) & byte=0x0F; byte=0x10; xmmmod = 3 & XmmReg1 & XmmReg2
 {
-    XmmReg1_Qa = XmmReg2_Qa;
+    XmmReg1[0,64] = XmmReg2[0,64];
 }
 
-:MOVSD        m64, XmmReg      is vexMode=0 &  $(PRE_F2) & byte=0x0F; byte=0x11; ( XmmReg & XmmReg_Qa ) ... & m64
+:MOVSD        m64, XmmReg      is vexMode=0 &  $(PRE_F2) & byte=0x0F; byte=0x11; m64 & XmmReg ...
 {
-    m64 = XmmReg_Qa;
+    m64 = XmmReg[0,64];
 }
 
-:MOVSD        XmmReg2, XmmReg1 is vexMode=0 &  $(PRE_F2) & byte=0x0F; byte=0x11; xmmmod = 3 & XmmReg1 & XmmReg1_Qa & XmmReg2 & XmmReg2_Qa
+:MOVSD        XmmReg2, XmmReg1 is vexMode=0 &  $(PRE_F2) & byte=0x0F; byte=0x11; xmmmod = 3 & XmmReg1 & XmmReg2
 {
-    XmmReg2_Qa = XmmReg1_Qa;
+    XmmReg2[0,64] = XmmReg1[0,64];
 }
 
-:MOVSS        XmmReg, m32      is vexMode=0 &  $(PRE_F3) & byte=0x0F; byte=0x10; ( XmmReg & XmmReg_Da & XmmReg_Db & XmmReg_Dc & XmmReg_Dd ) ... & m32 
+:MOVSS        XmmReg, m32      is vexMode=0 &  $(PRE_F3) & byte=0x0F; byte=0x10; m32 & XmmReg ...
 {
-    XmmReg_Da = m32;
-    XmmReg_Db = 0;
-    XmmReg_Dc = 0;
-    XmmReg_Dd = 0;
+    XmmReg[0,32] = m32;
+    XmmReg[32,32] = 0;
+    XmmReg[64,32] = 0;
+    XmmReg[96,32] = 0;
 }
 
-:MOVSS        XmmReg1, XmmReg2 is vexMode=0 &  $(PRE_F3) & byte=0x0F; byte=0x10; xmmmod = 3 & XmmReg1 & XmmReg1_Da & XmmReg2 & XmmReg2_Da
+:MOVSS        XmmReg1, XmmReg2 is vexMode=0 &  $(PRE_F3) & byte=0x0F; byte=0x10; xmmmod = 3 & XmmReg1 & XmmReg2
 {
-    XmmReg1_Da = XmmReg2_Da;
+    XmmReg1[0,32] = XmmReg2[0,32];
 }
 
-:MOVSS        m32, XmmReg      is vexMode=0 &  $(PRE_F3) & byte=0x0F; byte=0x11; ( XmmReg & XmmReg_Da ) ... & m32
+:MOVSS        m32, XmmReg      is vexMode=0 &  $(PRE_F3) & byte=0x0F; byte=0x11; m32 & XmmReg ...
 {
-     m32 = XmmReg_Da;
+     m32 = XmmReg[0,32];
 }
 
-:MOVSS        XmmReg2, XmmReg1 is vexMode=0 &  $(PRE_F3) & byte=0x0F; byte=0x11; xmmmod = 3 & XmmReg1 & XmmReg1_Da & XmmReg2 & XmmReg2_Da
+:MOVSS        XmmReg2, XmmReg1 is vexMode=0 &  $(PRE_F3) & byte=0x0F; byte=0x11; xmmmod = 3 & XmmReg1 & XmmReg2
 {
-    XmmReg2_Da = XmmReg1_Da;
+    XmmReg2[0,32] = XmmReg1[0,32];
 }
 
-:MOVUPD       XmmReg, m128     is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x10; ( XmmReg & XmmReg_Qa & XmmReg_Qb ) ... & ( m128 & m128_Qa & m128_Qb )
+:MOVUPD       XmmReg, m128     is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x10; m128 & XmmReg ...
 {
-    XmmReg_Qa = m128_Qa;
-    XmmReg_Qb = m128_Qb;
+    local m:16 = m128;
+    XmmReg[0,64] = m[0,64];
+    XmmReg[64,64] = m[64,64];
 }
 
-:MOVUPD       XmmReg1, XmmReg2 is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x10; xmmmod = 3 & XmmReg1 & XmmReg1_Qa & XmmReg1_Qb & XmmReg2 & XmmReg2_Qa & XmmReg2_Qb
+:MOVUPD       XmmReg1, XmmReg2 is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x10; xmmmod = 3 & XmmReg1 & XmmReg2
 {
-    XmmReg1_Qa = XmmReg2_Qa;
-    XmmReg1_Qb = XmmReg2_Qb;
+    XmmReg1[0,64] = XmmReg2[0,64];
+    XmmReg1[64,64] = XmmReg2[64,64];
 }
 
-:MOVUPD       m128, XmmReg     is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x11; ( XmmReg & XmmReg_Qa & XmmReg_Qb ) ... & ( m128 & m128_Qa & m128_Qb )
+:MOVUPD       m128, XmmReg     is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x11; m128 & XmmReg ...
 {
-    m128_Qa = XmmReg_Qa;
-    m128_Qb = XmmReg_Qb;
+    m128 = XmmReg;
 }
 
-:MOVUPD       XmmReg2, XmmReg1 is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x11; xmmmod = 3 & XmmReg1 & XmmReg1_Qa & XmmReg1_Qb & XmmReg2 & XmmReg2_Qa & XmmReg2_Qb
+:MOVUPD       XmmReg2, XmmReg1 is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x11; xmmmod = 3 & XmmReg1 & XmmReg2
 {
-    XmmReg2_Qa = XmmReg1_Qa;
-    XmmReg2_Qb = XmmReg1_Qb;
+    XmmReg2[0,64] = XmmReg1[0,64];
+    XmmReg2[64,64] = XmmReg1[64,64];
 }
 
 # Not sure why someone had done it this way ?????
@@ -6225,84 +5591,84 @@ define pcodeop movmskps;
 #
 #:MOVUPS       XmmReg,Xmm2m128  is vexMode=0 & mandover=0 & byte=0x0F; byte=0x10; XmmReg ... & Xmm2m128    { XmmReg = movups(XmmReg, Xmm2m128); }
 
-:MOVUPS       XmmReg, m128     is vexMode=0 &  byte=0x0F; byte=0x10; ( XmmReg & XmmReg_Da & XmmReg_Db & XmmReg_Dc & XmmReg_Dd ) ... & ( m128 & m128_Da & m128_Db & m128_Dc & m128_Dd )
+:MOVUPS       XmmReg, m128     is vexMode=0 &  byte=0x0F; byte=0x10; m128 & XmmReg ...
 {
-    XmmReg_Da = m128_Da;
-    XmmReg_Db = m128_Db;
-    XmmReg_Dc = m128_Dc;
-    XmmReg_Dd = m128_Dd;
+    local m:16 = m128;
+    XmmReg[0,32] = m[0,32];
+    XmmReg[32,32] = m[32,32];
+    XmmReg[64,32] = m[64,32];
+    XmmReg[96,32] = m[96,32];
 }
 
-:MOVUPS       XmmReg1, XmmReg2 is vexMode=0 &  byte=0x0F; byte=0x10; xmmmod = 3 & XmmReg1 & XmmReg1_Da & XmmReg1_Db & XmmReg1_Dc & XmmReg1_Dd & XmmReg2 & XmmReg2_Da & XmmReg2_Db & XmmReg2_Dc & XmmReg2_Dd
+:MOVUPS       XmmReg1, XmmReg2 is vexMode=0 &  byte=0x0F; byte=0x10; xmmmod = 3 & XmmReg1 & XmmReg2
 {
-    XmmReg1_Da = XmmReg2_Da;
-    XmmReg1_Db = XmmReg2_Db;
-    XmmReg1_Dc = XmmReg2_Dc;
-    XmmReg1_Dd = XmmReg2_Dd;
+    XmmReg1[0,32] = XmmReg2[0,32];
+    XmmReg1[32,32] = XmmReg2[32,32];
+    XmmReg1[64,32] = XmmReg2[64,32];
+    XmmReg1[96,32] = XmmReg2[96,32];
 }
 
-:MOVUPS       m128, XmmReg     is vexMode=0 &  mandover=0 & byte=0x0F; byte=0x11; ( XmmReg & XmmReg_Da & XmmReg_Db & XmmReg_Dc & XmmReg_Dd ) ... & ( m128 & m128_Da & m128_Db & m128_Dc & m128_Dd )
+:MOVUPS       m128, XmmReg     is vexMode=0 &  mandover=0 & byte=0x0F; byte=0x11; m128 & XmmReg ...
 {
-    m128_Da = XmmReg_Da;
-    m128_Db = XmmReg_Db;
-    m128_Dc = XmmReg_Dc;
-    m128_Dd = XmmReg_Dd;
+    m128 = XmmReg;
 }
 
-:MOVUPS       XmmReg2, XmmReg1 is vexMode=0 &  mandover=0 & byte=0x0F; byte=0x11; xmmmod = 3 & XmmReg1 & XmmReg1_Da & XmmReg1_Db & XmmReg1_Dc & XmmReg1_Dd & XmmReg2 & XmmReg2_Da & XmmReg2_Db & XmmReg2_Dc & XmmReg2_Dd
+:MOVUPS       XmmReg2, XmmReg1 is vexMode=0 &  mandover=0 & byte=0x0F; byte=0x11; xmmmod = 3 & XmmReg1 & XmmReg2
 {
-    XmmReg1_Da = XmmReg2_Da;
-    XmmReg1_Db = XmmReg2_Db;
-    XmmReg1_Dc = XmmReg2_Dc;
-    XmmReg1_Dd = XmmReg2_Dd;
+    XmmReg1[0,32] = XmmReg2[0,32];
+    XmmReg1[32,32] = XmmReg2[32,32];
+    XmmReg1[64,32] = XmmReg2[64,32];
+    XmmReg1[96,32] = XmmReg2[96,32];
 }
 
-:MULPD        XmmReg, m128     is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x59; ( XmmReg & XmmReg_Qa & XmmReg_Qb ) ... & ( m128 & m128_Qa & m128_Qb )
+:MULPD        XmmReg, m128     is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x59; m128 & XmmReg ...
 {
-    XmmReg_Qa = XmmReg_Qa f* m128_Qa;
-    XmmReg_Qb = XmmReg_Qb f* m128_Qb;
+    local m:16 = m128;
+    XmmReg[0,64] = XmmReg[0,64] f* m[0,64];
+    XmmReg[64,64] = XmmReg[64,64] f* m[64,64];
 }
 
-:MULPD        XmmReg1, XmmReg2 is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x59; xmmmod = 3 & XmmReg1 & XmmReg1_Qa & XmmReg1_Qb & XmmReg2 & XmmReg2_Qa & XmmReg2_Qb
+:MULPD        XmmReg1, XmmReg2 is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x59; xmmmod = 3 & XmmReg1 & XmmReg2
 {
-    XmmReg1_Qa = XmmReg1_Qa f* XmmReg2_Qa;
-    XmmReg1_Qb = XmmReg1_Qb f* XmmReg2_Qb;
+    XmmReg1[0,64] = XmmReg1[0,64] f* XmmReg2[0,64];
+    XmmReg1[64,64] = XmmReg1[64,64] f* XmmReg2[64,64];
 }
 
-:MULPS        XmmReg, m128     is vexMode=0 &  mandover=0 & byte=0x0F; byte=0x59; ( XmmReg & XmmReg_Da & XmmReg_Db & XmmReg_Dc & XmmReg_Dd ) ... & ( m128 & m128_Da & m128_Db & m128_Dc & m128_Dd )
+:MULPS        XmmReg, m128     is vexMode=0 &  mandover=0 & byte=0x0F; byte=0x59; m128 & XmmReg ...
 {
-    XmmReg_Da = XmmReg_Da f* m128_Da;
-    XmmReg_Db = XmmReg_Db f* m128_Db;
-    XmmReg_Dc = XmmReg_Dc f* m128_Dc;
-    XmmReg_Dd = XmmReg_Dd f* m128_Dd;
+    local m:16 = m128;
+    XmmReg[0,32] = XmmReg[0,32] f* m[0,32];
+    XmmReg[32,32] = XmmReg[32,32] f* m[32,32];
+    XmmReg[64,32] = XmmReg[64,32] f* m[64,32];
+    XmmReg[96,32] = XmmReg[96,32] f* m[96,32];
 }
 
-:MULPS        XmmReg1, XmmReg2 is vexMode=0 &  mandover=0 & byte=0x0F; byte=0x59; xmmmod = 3 & XmmReg1 & XmmReg1_Da & XmmReg1_Db & XmmReg1_Dc & XmmReg1_Dd & XmmReg2 & XmmReg2_Da & XmmReg2_Db & XmmReg2_Dc & XmmReg2_Dd
+:MULPS        XmmReg1, XmmReg2 is vexMode=0 &  mandover=0 & byte=0x0F; byte=0x59; xmmmod = 3 & XmmReg1 & XmmReg2
 {
-    XmmReg1_Da = XmmReg1_Da f* XmmReg2_Da;
-    XmmReg1_Db = XmmReg1_Db f* XmmReg2_Db;
-    XmmReg1_Dc = XmmReg1_Dc f* XmmReg2_Dc;
-    XmmReg1_Dd = XmmReg1_Dd f* XmmReg2_Dd;
+    XmmReg1[0,32] = XmmReg1[0,32] f* XmmReg2[0,32];
+    XmmReg1[32,32] = XmmReg1[32,32] f* XmmReg2[32,32];
+    XmmReg1[64,32] = XmmReg1[64,32] f* XmmReg2[64,32];
+    XmmReg1[96,32] = XmmReg1[96,32] f* XmmReg2[96,32];
 }
 
-:MULSD        XmmReg, m64      is vexMode=0 &  $(PRE_F2) & byte=0x0F; byte=0x59;  ( XmmReg & XmmReg_Qa ) ... & m64
+:MULSD        XmmReg, m64      is vexMode=0 &  $(PRE_F2) & byte=0x0F; byte=0x59;  m64 & XmmReg ...
 {
-    XmmReg_Qa = XmmReg_Qa f* m64;
+    XmmReg[0,64] = XmmReg[0,64] f* m64;
 }
 
-:MULSD        XmmReg1, XmmReg2 is vexMode=0 &  $(PRE_F2) & byte=0x0F; byte=0x59; xmmmod = 3 & XmmReg1 & XmmReg1_Qa & XmmReg2 & XmmReg2_Qa
+:MULSD        XmmReg1, XmmReg2 is vexMode=0 &  $(PRE_F2) & byte=0x0F; byte=0x59; xmmmod = 3 & XmmReg1 & XmmReg2
 {
-    XmmReg1_Qa = XmmReg1_Qa f* XmmReg2_Qa;
+    XmmReg1[0,64] = XmmReg1[0,64] f* XmmReg2[0,64];
 }
 
-:MULSS        XmmReg, m32      is vexMode=0 &  $(PRE_F3) & byte=0x0F; byte=0x59;  ( XmmReg & XmmReg_Da ) ... & m32
+:MULSS        XmmReg, m32      is vexMode=0 &  $(PRE_F3) & byte=0x0F; byte=0x59; m32 & XmmReg ...
 {
-    XmmReg_Da = XmmReg_Da f* m32;
+    XmmReg[0,32] = XmmReg[0,32] f* m32;
 }
 
-:MULSS        XmmReg1, XmmReg2 is vexMode=0 &  $(PRE_F3) & byte=0x0F; byte=0x59; xmmmod = 3 & XmmReg1 & XmmReg1_Da & XmmReg2 & XmmReg2_Da
+:MULSS        XmmReg1, XmmReg2 is vexMode=0 &  $(PRE_F3) & byte=0x0F; byte=0x59; xmmmod = 3 & XmmReg1 & XmmReg2
 {
-    XmmReg1_Da = XmmReg1_Da f* XmmReg2_Da;
+    XmmReg1[0,32] = XmmReg1[0,32] f* XmmReg2[0,32];
 }
 
 # special FLOATING POINT bitwise OR
@@ -6353,76 +5719,80 @@ define pcodeop pabsd;
 :PABSD         XmmReg, m128     is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x38; byte=0x1e; XmmReg ... & m128              { XmmReg=pabsd(XmmReg,m128); }
 :PABSD         XmmReg1, XmmReg2 is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x38; byte=0x1e; xmmmod = 3 & XmmReg1 & XmmReg2 { XmmReg1=pabsd(XmmReg1,XmmReg2); }
 
-:PADDB          mmxreg, m64      is vexMode=0 &  mandover=0 & byte=0x0F; byte=0xFC; ( mmxreg & mmxreg_Ba & mmxreg_Bb & mmxreg_Bc & mmxreg_Bd & mmxreg_Be & mmxreg_Bf & mmxreg_Bg & mmxreg_Bh ) ... & ( m64 & m64_Ba & m64_Bb & m64_Bc & m64_Bd & m64_Be & m64_Bf & m64_Bg & m64_Bh )
+:PADDB          mmxreg, m64      is vexMode=0 &  mandover=0 & byte=0x0F; byte=0xFC; mmxreg ... & m64
 {
-    mmxreg_Ba = mmxreg_Ba + m64_Ba;
-    mmxreg_Bb = mmxreg_Bb + m64_Bb;
-    mmxreg_Bc = mmxreg_Bc + m64_Bc;
-    mmxreg_Bd = mmxreg_Bd + m64_Bd;
-    mmxreg_Be = mmxreg_Be + m64_Be;
-    mmxreg_Bf = mmxreg_Bf + m64_Bf;
-    mmxreg_Bg = mmxreg_Bg + m64_Bg;
-    mmxreg_Bh = mmxreg_Bh + m64_Bh;
+    local m:8 = m64;
+    mmxreg[0,8] = mmxreg[0,8] + m[0,8];
+    mmxreg[8,8] = mmxreg[8,8] + m[8,8];
+    mmxreg[16,8] = mmxreg[16,8] + m[16,8];
+    mmxreg[24,8] = mmxreg[24,8] + m[24,8];
+    mmxreg[32,8] = mmxreg[32,8] + m[32,8];
+    mmxreg[40,8] = mmxreg[40,8] + m[40,8];
+    mmxreg[48,8] = mmxreg[48,8] + m[48,8];
+    mmxreg[56,8] = mmxreg[56,8] + m[56,8];
 }
 
-:PADDB          mmxreg1, mmxreg2 is vexMode=0 &  mandover=0 & byte=0x0F; byte=0xFC; mmxmod = 3 & mmxreg1 & mmxreg1_Ba & mmxreg1_Bb & mmxreg1_Bc & mmxreg1_Bd & mmxreg1_Be & mmxreg1_Bf & mmxreg1_Bg & mmxreg1_Bh & mmxreg2 & mmxreg2_Ba & mmxreg2_Bb & mmxreg2_Bc & mmxreg2_Bd & mmxreg2_Be & mmxreg2_Bf & mmxreg2_Bg & mmxreg2_Bh 
+:PADDB          mmxreg1, mmxreg2 is vexMode=0 &  mandover=0 & byte=0x0F; byte=0xFC; mmxmod = 3 & mmxreg1 & mmxreg2
 {
-    mmxreg1_Ba = mmxreg1_Ba + mmxreg2_Ba;
-    mmxreg1_Bb = mmxreg1_Bb + mmxreg2_Bb;
-    mmxreg1_Bc = mmxreg1_Bc + mmxreg2_Bc;
-    mmxreg1_Bd = mmxreg1_Bd + mmxreg2_Bd;
-    mmxreg1_Be = mmxreg1_Be + mmxreg2_Be;
-    mmxreg1_Bf = mmxreg1_Bf + mmxreg2_Bf;
-    mmxreg1_Bg = mmxreg1_Bg + mmxreg2_Bg;
-    mmxreg1_Bh = mmxreg1_Bh + mmxreg2_Bh;
+    mmxreg1[0,8] = mmxreg1[0,8] + mmxreg2[0,8];
+    mmxreg1[8,8] = mmxreg1[8,8] + mmxreg2[8,8];
+    mmxreg1[16,8] = mmxreg1[16,8] + mmxreg2[16,8];
+    mmxreg1[24,8] = mmxreg1[24,8] + mmxreg2[24,8];
+    mmxreg1[32,8] = mmxreg1[32,8] + mmxreg2[32,8];
+    mmxreg1[40,8] = mmxreg1[40,8] + mmxreg2[40,8];
+    mmxreg1[48,8] = mmxreg1[48,8] + mmxreg2[48,8];
+    mmxreg1[56,8] = mmxreg1[56,8] + mmxreg2[56,8];
 }
 
-:PADDW          mmxreg, m64      is vexMode=0 &  mandover=0 & byte=0x0F; byte=0xFD;  ( mmxreg & mmxreg_Wa & mmxreg_Wb & mmxreg_Wc & mmxreg_Wd ) ... & ( m64 & m64_Wa & m64_Wb & m64_Wc & m64_Wd )
+:PADDW          mmxreg, m64      is vexMode=0 &  mandover=0 & byte=0x0F; byte=0xFD; mmxreg ... & m64
 {
-    mmxreg_Wa = mmxreg_Wa + m64_Wa;
-    mmxreg_Wb = mmxreg_Wb + m64_Wb;
-    mmxreg_Wc = mmxreg_Wc + m64_Wc;
-    mmxreg_Wd = mmxreg_Wd + m64_Wd;
+    local m:8 = m64;
+    mmxreg[0,16] = mmxreg[0,16] + m[0,16];
+    mmxreg[16,16] = mmxreg[16,16] + m[16,16];
+    mmxreg[32,16] = mmxreg[32,16] + m[32,16];
+    mmxreg[48,16] = mmxreg[48,16] + m[48,16];
 }
 
-:PADDW          mmxreg1, mmxreg2 is vexMode=0 &  mandover=0 & byte=0x0F; byte=0xFD; mmxmod = 3 & mmxreg1 & mmxreg1_Wa & mmxreg1_Wb & mmxreg1_Wc & mmxreg1_Wd & mmxreg2 & mmxreg2_Wa & mmxreg2_Wb & mmxreg2_Wc & mmxreg2_Wd
+:PADDW          mmxreg1, mmxreg2 is vexMode=0 &  mandover=0 & byte=0x0F; byte=0xFD; mmxmod = 3 & mmxreg1 & mmxreg2
 {
-    mmxreg1_Wa = mmxreg1_Wa + mmxreg2_Wa;
-    mmxreg1_Wb = mmxreg1_Wb + mmxreg2_Wb;
-    mmxreg1_Wc = mmxreg1_Wc + mmxreg2_Wc;
-    mmxreg1_Wd = mmxreg1_Wd + mmxreg2_Wd;
+    mmxreg1[0,16] = mmxreg1[0,16] + mmxreg2[0,16];
+    mmxreg1[16,16] = mmxreg1[16,16] + mmxreg2[16,16];
+    mmxreg1[32,16] = mmxreg1[32,16] + mmxreg2[32,16];
+    mmxreg1[48,16] = mmxreg1[48,16] + mmxreg2[48,16];
 }
 
-:PADDD          mmxreg, m64      is vexMode=0 &  mandover=0 & byte=0x0F; byte=0xFE; ( mmxreg & mmxreg_Da & mmxreg_Db ) ... & ( m64 & m64_Da & m64_Db )
+:PADDD          mmxreg, m64      is vexMode=0 &  mandover=0 & byte=0x0F; byte=0xFE; mmxreg ... & m64
 {
-    mmxreg_Da = mmxreg_Da + m64_Da;
-    mmxreg_Db = mmxreg_Db + m64_Db;
+    local m:8 = m64;
+    mmxreg[0,32] = mmxreg[0,32] + m[0,32];
+    mmxreg[32,32] = mmxreg[32,32] + m[32,32];
 }
 
-:PADDD          mmxreg1, mmxreg2 is vexMode=0 &  mandover=0 & byte=0x0F; byte=0xFE; mmxmod = 3 & mmxreg1 & mmxreg1_Da & mmxreg1_Db & mmxreg2 & mmxreg2_Da & mmxreg2_Db
+:PADDD          mmxreg1, mmxreg2 is vexMode=0 &  mandover=0 & byte=0x0F; byte=0xFE; mmxmod = 3 & mmxreg1 & mmxreg2
 {
-    mmxreg1_Da = mmxreg1_Da + mmxreg2_Da;
-    mmxreg1_Db = mmxreg1_Db + mmxreg2_Db;
+    mmxreg1[0,32] = mmxreg1[0,32] + mmxreg2[0,32];
+    mmxreg1[32,32] = mmxreg1[32,32] + mmxreg2[32,32];
 }
 
-:PADDB          XmmReg, m128      is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0xFC; ( XmmReg & XmmReg_Ba & XmmReg_Bb & XmmReg_Bc & XmmReg_Bd & XmmReg_Be & XmmReg_Bf & XmmReg_Bg & XmmReg_Bh & XmmReg_Bi & XmmReg_Bj & XmmReg_Bk & XmmReg_Bl & XmmReg_Bm & XmmReg_Bn & XmmReg_Bo & XmmReg_Bp ) ... & ( m128 & m128_Ba & m128_Bb & m128_Bc & m128_Bd & m128_Be & m128_Bf & m128_Bg & m128_Bh & m128_Bi & m128_Bj & m128_Bk & m128_Bl & m128_Bm & m128_Bn & m128_Bo & m128_Bp )
+:PADDB          XmmReg, m128      is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0xFC; m128 & XmmReg ...
 {
-    XmmReg_Ba = XmmReg_Ba + m128_Ba;
-    XmmReg_Bb = XmmReg_Bb + m128_Bb;
-    XmmReg_Bc = XmmReg_Bc + m128_Bc;
-    XmmReg_Bd = XmmReg_Bd + m128_Bd;
-    XmmReg_Be = XmmReg_Be + m128_Be;
-    XmmReg_Bf = XmmReg_Bf + m128_Bf;
-    XmmReg_Bg = XmmReg_Bg + m128_Bg;
-    XmmReg_Bh = XmmReg_Bh + m128_Bh;
-    XmmReg_Bi = XmmReg_Bi + m128_Bi;
-    XmmReg_Bj = XmmReg_Bj + m128_Bj;
-    XmmReg_Bk = XmmReg_Bk + m128_Bk;
-    XmmReg_Bl = XmmReg_Bl + m128_Bl;
-    XmmReg_Bm = XmmReg_Bm + m128_Bm;
-    XmmReg_Bn = XmmReg_Bn + m128_Bn;
-    XmmReg_Bo = XmmReg_Bo + m128_Bo;
-    XmmReg_Bp = XmmReg_Bp + m128_Bp;
+    local m:16 = m128;
+    XmmReg[0,8] = XmmReg[0,8] + m[0,8];
+    XmmReg[8,8] = XmmReg[8,8] + m[8,8];
+    XmmReg[16,8] = XmmReg[16,8] + m[16,8];
+    XmmReg[24,8] = XmmReg[24,8] + m[24,8];
+    XmmReg[32,8] = XmmReg[32,8] + m[32,8];
+    XmmReg[40,8] = XmmReg[40,8] + m[40,8];
+    XmmReg[48,8] = XmmReg[48,8] + m[48,8];
+    XmmReg[56,8] = XmmReg[56,8] + m[56,8];
+    XmmReg[64,8] = XmmReg[64,8] + m[64,8];
+    XmmReg[72,8] = XmmReg[72,8] + m[72,8];
+    XmmReg[80,8] = XmmReg[80,8] + m[80,8];
+    XmmReg[88,8] = XmmReg[88,8] + m[88,8];
+    XmmReg[96,8] = XmmReg[96,8] + m[96,8];
+    XmmReg[104,8] = XmmReg[104,8] + m[104,8];
+    XmmReg[112,8] = XmmReg[112,8] + m[112,8];
+    XmmReg[120,8] = XmmReg[120,8] + m[120,8];
 }
 
 ## example of bitfield solution
@@ -6447,68 +5817,66 @@ define pcodeop pabsd;
 #}
 
 # full set of XMM byte registers
-:PADDB  XmmReg1, XmmReg2  is vexMode=0 & $(PRE_66) & byte=0x0F; byte=0xFC; xmmmod = 3 & XmmReg1 & XmmReg2 &  
-XmmReg1_Ba & XmmReg1_Bb & XmmReg1_Bc & XmmReg1_Bd & XmmReg1_Be & XmmReg1_Bf & XmmReg1_Bg & XmmReg1_Bh & 
-XmmReg1_Bi & XmmReg1_Bj & XmmReg1_Bk & XmmReg1_Bl & XmmReg1_Bm & XmmReg1_Bn & XmmReg1_Bo & XmmReg1_Bp & 
-XmmReg2_Ba & XmmReg2_Bb & XmmReg2_Bc & XmmReg2_Bd & XmmReg2_Be & XmmReg2_Bf & XmmReg2_Bg & XmmReg2_Bh &
-XmmReg2_Bi & XmmReg2_Bj & XmmReg2_Bk & XmmReg2_Bl & XmmReg2_Bm & XmmReg2_Bn & XmmReg2_Bo & XmmReg2_Bp
+:PADDB  XmmReg1, XmmReg2  is vexMode=0 & $(PRE_66) & byte=0x0F; byte=0xFC; xmmmod = 3 & XmmReg1 & XmmReg2
 {
-    XmmReg1_Ba = XmmReg1_Ba + XmmReg2_Ba;
-    XmmReg1_Bb = XmmReg1_Bb + XmmReg2_Bb;
-    XmmReg1_Bc = XmmReg1_Bc + XmmReg2_Bc;
-    XmmReg1_Bd = XmmReg1_Bd + XmmReg2_Bd;
-    XmmReg1_Be = XmmReg1_Be + XmmReg2_Be;
-    XmmReg1_Bf = XmmReg1_Bf + XmmReg2_Bf;
-    XmmReg1_Bg = XmmReg1_Bg + XmmReg2_Bg;
-    XmmReg1_Bh = XmmReg1_Bh + XmmReg2_Bh;
-    XmmReg1_Bi = XmmReg1_Bi + XmmReg2_Bi;
-    XmmReg1_Bj = XmmReg1_Bj + XmmReg2_Bj;
-    XmmReg1_Bk = XmmReg1_Bk + XmmReg2_Bk;
-    XmmReg1_Bl = XmmReg1_Bl + XmmReg2_Bl;
-    XmmReg1_Bm = XmmReg1_Bm + XmmReg2_Bm;
-    XmmReg1_Bn = XmmReg1_Bn + XmmReg2_Bn;
-    XmmReg1_Bo = XmmReg1_Bo + XmmReg2_Bo;
-    XmmReg1_Bp = XmmReg1_Bp + XmmReg2_Bp;
+    XmmReg1[0,8] = XmmReg1[0,8] + XmmReg2[0,8];
+    XmmReg1[8,8] = XmmReg1[8,8] + XmmReg2[8,8];
+    XmmReg1[16,8] = XmmReg1[16,8] + XmmReg2[16,8];
+    XmmReg1[24,8] = XmmReg1[24,8] + XmmReg2[24,8];
+    XmmReg1[32,8] = XmmReg1[32,8] + XmmReg2[32,8];
+    XmmReg1[40,8] = XmmReg1[40,8] + XmmReg2[40,8];
+    XmmReg1[48,8] = XmmReg1[48,8] + XmmReg2[48,8];
+    XmmReg1[56,8] = XmmReg1[56,8] + XmmReg2[56,8];
+    XmmReg1[64,8] = XmmReg1[64,8] + XmmReg2[64,8];
+    XmmReg1[72,8] = XmmReg1[72,8] + XmmReg2[72,8];
+    XmmReg1[80,8] = XmmReg1[80,8] + XmmReg2[80,8];
+    XmmReg1[88,8] = XmmReg1[88,8] + XmmReg2[88,8];
+    XmmReg1[96,8] = XmmReg1[96,8] + XmmReg2[96,8];
+    XmmReg1[104,8] = XmmReg1[104,8] + XmmReg2[104,8];
+    XmmReg1[112,8] = XmmReg1[112,8] + XmmReg2[112,8];
+    XmmReg1[120,8] = XmmReg1[120,8] + XmmReg2[120,8];
 }
 
-:PADDW          XmmReg, m128      is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0xFD; ( XmmReg & XmmReg_Wa & XmmReg_Wb & XmmReg_Wc & XmmReg_Wd & XmmReg_We & XmmReg_Wf & XmmReg_Wg & XmmReg_Wh ) ... & ( m128 & m128_Wa & m128_Wb & m128_Wc & m128_Wd & m128_We & m128_Wf & m128_Wg & m128_Wh )
+:PADDW          XmmReg, m128      is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0xFD; m128 & XmmReg ...
 {
-    XmmReg_Wa = XmmReg_Wa + m128_Wa;
-    XmmReg_Wb = XmmReg_Wb + m128_Wb;
-    XmmReg_Wc = XmmReg_Wc + m128_Wc;
-    XmmReg_Wd = XmmReg_Wd + m128_Wd;
-    XmmReg_We = XmmReg_We + m128_We;
-    XmmReg_Wf = XmmReg_Wf + m128_Wf;
-    XmmReg_Wg = XmmReg_Wg + m128_Wg;
-    XmmReg_Wh = XmmReg_Wh + m128_Wh;
+    local m:16 = m128;
+    XmmReg[0,16] = XmmReg[0,16] + m[0,16];
+    XmmReg[16,16] = XmmReg[16,16] + m[16,16];
+    XmmReg[32,16] = XmmReg[32,16] + m[32,16];
+    XmmReg[48,16] = XmmReg[48,16] + m[48,16];
+    XmmReg[64,16] = XmmReg[64,16] + m[64,16];
+    XmmReg[80,16] = XmmReg[80,16] + m[80,16];
+    XmmReg[96,16] = XmmReg[96,16] + m[96,16];
+    XmmReg[112,16] = XmmReg[112,16] + m[112,16];
 }
 
-:PADDW          XmmReg1, XmmReg2  is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0xFD; xmmmod = 3 & XmmReg1 & XmmReg1_Wa & XmmReg1_Wb & XmmReg1_Wc & XmmReg1_Wd & XmmReg1_We & XmmReg1_Wf & XmmReg1_Wg & XmmReg1_Wh & XmmReg2 & XmmReg2_Wa & XmmReg2_Wb & XmmReg2_Wc & XmmReg2_Wd & XmmReg2_We & XmmReg2_Wf & XmmReg2_Wg & XmmReg2_Wh
+:PADDW          XmmReg1, XmmReg2  is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0xFD; xmmmod = 3 & XmmReg1 & XmmReg2
 {
-    XmmReg1_Wa = XmmReg1_Wa + XmmReg2_Wa;
-    XmmReg1_Wb = XmmReg1_Wb + XmmReg2_Wb;
-    XmmReg1_Wc = XmmReg1_Wc + XmmReg2_Wc;
-    XmmReg1_Wd = XmmReg1_Wd + XmmReg2_Wd;
-    XmmReg1_We = XmmReg1_We + XmmReg2_We;
-    XmmReg1_Wf = XmmReg1_Wf + XmmReg2_Wf;
-    XmmReg1_Wg = XmmReg1_Wg + XmmReg2_Wg;
-    XmmReg1_Wh = XmmReg1_Wh + XmmReg2_Wh;
+    XmmReg1[0,16] = XmmReg1[0,16] + XmmReg2[0,16];
+    XmmReg1[16,16] = XmmReg1[16,16] + XmmReg2[16,16];
+    XmmReg1[32,16] = XmmReg1[32,16] + XmmReg2[32,16];
+    XmmReg1[48,16] = XmmReg1[48,16] + XmmReg2[48,16];
+    XmmReg1[64,16] = XmmReg1[64,16] + XmmReg2[64,16];
+    XmmReg1[80,16] = XmmReg1[80,16] + XmmReg2[80,16];
+    XmmReg1[96,16] = XmmReg1[96,16] + XmmReg2[96,16];
+    XmmReg1[112,16] = XmmReg1[112,16] + XmmReg2[112,16];
 }
 
-:PADDD          XmmReg, m128      is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0xFE; (XmmReg & XmmReg_Da & XmmReg_Db & XmmReg_Dc & XmmReg_Dd) ... & ( m128 & m128_Da & m128_Db & m128_Dc & m128_Dd )
+:PADDD          XmmReg, m128      is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0xFE; m128 & XmmReg ...
 {
-    XmmReg_Da = XmmReg_Da + m128_Da;
-    XmmReg_Db = XmmReg_Db + m128_Db;
-    XmmReg_Dc = XmmReg_Dc + m128_Dc;
-    XmmReg_Dd = XmmReg_Dd + m128_Dd;
+    local m:16 = m128;
+    XmmReg[0,32] = XmmReg[0,32] + m[0,32];
+    XmmReg[32,32] = XmmReg[32,32] + m[32,32];
+    XmmReg[64,32] = XmmReg[64,32] + m[64,32];
+    XmmReg[96,32] = XmmReg[96,32] + m[96,32];
 }
 
-:PADDD          XmmReg1, XmmReg2  is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0xFE; xmmmod = 3 & XmmReg1 & XmmReg1_Da & XmmReg1_Db & XmmReg1_Dc & XmmReg1_Dd & XmmReg2 & XmmReg2_Da & XmmReg2_Db & XmmReg2_Dc & XmmReg2_Dd 
+:PADDD          XmmReg1, XmmReg2  is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0xFE; xmmmod = 3 & XmmReg1 & XmmReg2
 {
-    XmmReg1_Da = XmmReg1_Da + XmmReg2_Da;
-    XmmReg1_Db = XmmReg1_Db + XmmReg2_Db;
-    XmmReg1_Dc = XmmReg1_Dc + XmmReg2_Dc;
-    XmmReg1_Dd = XmmReg1_Dd + XmmReg2_Dd;
+    XmmReg1[0,32] = XmmReg1[0,32] + XmmReg2[0,32];
+    XmmReg1[32,32] = XmmReg1[32,32] + XmmReg2[32,32];
+    XmmReg1[64,32] = XmmReg1[64,32] + XmmReg2[64,32];
+    XmmReg1[96,32] = XmmReg1[96,32] + XmmReg2[96,32];
 }
 
 :PADDQ          mmxreg, m64       is vexMode=0 &  mandover=0 & byte=0x0F; byte=0xD4; mmxreg ... & m64
@@ -6521,16 +5889,17 @@ XmmReg2_Bi & XmmReg2_Bj & XmmReg2_Bk & XmmReg2_Bl & XmmReg2_Bm & XmmReg2_Bn & Xm
     mmxreg1 = mmxreg1 + mmxreg2;
 }
 
-:PADDQ          XmmReg, m128      is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0xD4; ( XmmReg & XmmReg_Qa & XmmReg_Qb ) ... & ( m128 & m128_Qa & m128_Qb )
+:PADDQ          XmmReg, m128      is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0xD4; m128 & XmmReg ...
 {
-    XmmReg_Qa = XmmReg_Qa + m128_Qa;
-    XmmReg_Qb = XmmReg_Qb + m128_Qb;
+    local m:16 = m128;
+    XmmReg[0,64] = XmmReg[0,64] + m[0,64];
+    XmmReg[64,64] = XmmReg[64,64] + m[64,64];
 }
 
-:PADDQ          XmmReg1, XmmReg2  is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0xD4; xmmmod = 3 & XmmReg1 & XmmReg1_Qa & XmmReg1_Qb & XmmReg2 & XmmReg2_Qa & XmmReg2_Qb
+:PADDQ          XmmReg1, XmmReg2  is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0xD4; xmmmod = 3 & XmmReg1 & XmmReg2
 {
-    XmmReg1_Qa = XmmReg1_Qa + XmmReg2_Qa;
-    XmmReg1_Qb = XmmReg1_Qb + XmmReg2_Qb;
+    XmmReg1[0,64] = XmmReg1[0,64] + XmmReg2[0,64];
+    XmmReg1[64,64] = XmmReg1[64,64] + XmmReg2[64,64];
 }
 
 define pcodeop paddsb;
@@ -6594,389 +5963,393 @@ define pcodeop paddusw;
 :PANDN          XmmReg1, XmmReg2 is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0xDF; xmmmod = 3 & XmmReg1 & XmmReg2	{ XmmReg1 = ~XmmReg1 & XmmReg2; }
 
 define pcodeop pavgb;
-:PAVGB          mmxreg, m64      is vexMode=0 &  mandover=0 & byte=0x0F; byte=0xE0; ( mmxreg & mmxreg_Ba & mmxreg_Bb & mmxreg_Bc & mmxreg_Bd & mmxreg_Be & mmxreg_Bf & mmxreg_Bg & mmxreg_Bh ) ... & ( m64 & m64_Ba & m64_Bb & m64_Bc & m64_Bd & m64_Be & m64_Bf & m64_Bg & m64_Bh )
+:PAVGB          mmxreg, m64      is vexMode=0 &  mandover=0 & byte=0x0F; byte=0xE0; mmxreg ... & m64
 {
-    mmxreg_Ba = pavgb(mmxreg_Ba, m64_Ba);
-    mmxreg_Bb = pavgb(mmxreg_Bb, m64_Bb);
-    mmxreg_Bc = pavgb(mmxreg_Bc, m64_Bc);
-    mmxreg_Bd = pavgb(mmxreg_Bd, m64_Bd);
-    mmxreg_Be = pavgb(mmxreg_Be, m64_Be);
-    mmxreg_Bf = pavgb(mmxreg_Bf, m64_Bf);
-    mmxreg_Bg = pavgb(mmxreg_Bg, m64_Bg);
-    mmxreg_Bh = pavgb(mmxreg_Bh, m64_Bh);
+    local m:8 = m64;
+    mmxreg[0,8] = pavgb(mmxreg[0,8], m[0,8]);
+    mmxreg[8,8] = pavgb(mmxreg[8,8], m[8,8]);
+    mmxreg[16,8] = pavgb(mmxreg[16,8], m[16,8]);
+    mmxreg[24,8] = pavgb(mmxreg[24,8], m[24,8]);
+    mmxreg[32,8] = pavgb(mmxreg[32,8], m[32,8]);
+    mmxreg[40,8] = pavgb(mmxreg[40,8], m[40,8]);
+    mmxreg[48,8] = pavgb(mmxreg[48,8], m[48,8]);
+    mmxreg[56,8] = pavgb(mmxreg[56,8], m[56,8]);
 }
 
-:PAVGB          mmxreg1, mmxreg2 is vexMode=0 &  mandover=0 & byte=0x0F; byte=0xE0; mmxmod = 3 & mmxreg1 & mmxreg1_Ba & mmxreg1_Bb & mmxreg1_Bc & mmxreg1_Bd & mmxreg1_Be & mmxreg1_Bf & mmxreg1_Bg & mmxreg1_Bh & mmxreg2 & mmxreg2_Ba & mmxreg2_Bb & mmxreg2_Bc & mmxreg2_Bd & mmxreg2_Be & mmxreg2_Bf & mmxreg2_Bg & mmxreg2_Bh
+:PAVGB          mmxreg1, mmxreg2 is vexMode=0 &  mandover=0 & byte=0x0F; byte=0xE0; mmxmod = 3 & mmxreg1 & mmxreg2
 {
-    mmxreg1_Ba = pavgb(mmxreg1_Ba, mmxreg2_Ba);
-    mmxreg1_Bb = pavgb(mmxreg1_Bb, mmxreg2_Bb);
-    mmxreg1_Bc = pavgb(mmxreg1_Bc, mmxreg2_Bc);
-    mmxreg1_Bd = pavgb(mmxreg1_Bd, mmxreg2_Bd);
-    mmxreg1_Be = pavgb(mmxreg1_Be, mmxreg2_Be);
-    mmxreg1_Bf = pavgb(mmxreg1_Bf, mmxreg2_Bf);
-    mmxreg1_Bg = pavgb(mmxreg1_Bg, mmxreg2_Bg);
-    mmxreg1_Bh = pavgb(mmxreg1_Bh, mmxreg2_Bh);
+    mmxreg1[0,8] = pavgb(mmxreg1[0,8], mmxreg2[0,8]);
+    mmxreg1[8,8] = pavgb(mmxreg1[8,8], mmxreg2[8,8]);
+    mmxreg1[16,8] = pavgb(mmxreg1[16,8], mmxreg2[16,8]);
+    mmxreg1[24,8] = pavgb(mmxreg1[24,8], mmxreg2[24,8]);
+    mmxreg1[32,8] = pavgb(mmxreg1[32,8], mmxreg2[32,8]);
+    mmxreg1[40,8] = pavgb(mmxreg1[40,8], mmxreg2[40,8]);
+    mmxreg1[48,8] = pavgb(mmxreg1[48,8], mmxreg2[48,8]);
+    mmxreg1[56,8] = pavgb(mmxreg1[56,8], mmxreg2[56,8]);
 }
 
 define pcodeop pavgw;
-:PAVGW          mmxreg, m64      is vexMode=0 &  mandover=0 & byte=0x0F; byte=0xE3; ( mmxreg & mmxreg_Wa & mmxreg_Wb & mmxreg_Wc & mmxreg_Wd ) ... & ( m64 & m64_Wa & m64_Wb & m64_Wc & m64_Wd )
+:PAVGW          mmxreg, m64      is vexMode=0 &  mandover=0 & byte=0x0F; byte=0xE3; mmxreg ... & m64
 {
-    mmxreg_Wa = pavgw(mmxreg_Wa, m64_Wa);
-    mmxreg_Wb = pavgw(mmxreg_Wb, m64_Wb);
-    mmxreg_Wc = pavgw(mmxreg_Wc, m64_Wc);
-    mmxreg_Wd = pavgw(mmxreg_Wd, m64_Wd);
+    local m:8 = m64;
+    mmxreg[0,16] = pavgw(mmxreg[0,16], m[0,16]);
+    mmxreg[16,16] = pavgw(mmxreg[16,16], m[16,16]);
+    mmxreg[32,16] = pavgw(mmxreg[32,16], m[32,16]);
+    mmxreg[48,16] = pavgw(mmxreg[48,16], m[48,16]);
 }
 
-:PAVGW          mmxreg1, mmxreg2 is vexMode=0 &  mandover=0 & byte=0x0F; byte=0xE3; mmxmod = 3 & mmxreg1 & mmxreg1_Wa & mmxreg1_Wb & mmxreg1_Wc & mmxreg1_Wd & mmxreg2 & mmxreg2_Wa & mmxreg2_Wb & mmxreg2_Wc & mmxreg2_Wd
+:PAVGW          mmxreg1, mmxreg2 is vexMode=0 &  mandover=0 & byte=0x0F; byte=0xE3; mmxmod = 3 & mmxreg1 & mmxreg2
 {
-    mmxreg1_Wa = pavgw(mmxreg1_Wa, mmxreg2_Wa);
-    mmxreg1_Wb = pavgw(mmxreg1_Wb, mmxreg2_Wb);
-    mmxreg1_Wc = pavgw(mmxreg1_Wc, mmxreg2_Wc);
-    mmxreg1_Wd = pavgw(mmxreg1_Wd, mmxreg2_Wd);
+    mmxreg1[0,16] = pavgw(mmxreg1[0,16], mmxreg2[0,16]);
+    mmxreg1[16,16] = pavgw(mmxreg1[16,16], mmxreg2[16,16]);
+    mmxreg1[32,16] = pavgw(mmxreg1[32,16], mmxreg2[32,16]);
+    mmxreg1[48,16] = pavgw(mmxreg1[48,16], mmxreg2[48,16]);
 }
 
-:PAVGB          XmmReg, m128      is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0xE0; ( XmmReg & XmmReg_Ba & XmmReg_Bb & XmmReg_Bc & XmmReg_Bd & XmmReg_Be & XmmReg_Bf & XmmReg_Bg & XmmReg_Bh & XmmReg_Bi & XmmReg_Bj & XmmReg_Bk & XmmReg_Bl & XmmReg_Bm & XmmReg_Bn & XmmReg_Bo & XmmReg_Bp ) ... & ( m128 & m128_Ba & m128_Bb & m128_Bc & m128_Bd & m128_Be & m128_Bf & m128_Bg & m128_Bh & m128_Bi & m128_Bj & m128_Bk & m128_Bl & m128_Bm & m128_Bn & m128_Bo & m128_Bp )
+:PAVGB          XmmReg, m128      is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0xE0; m128 & XmmReg ...
 {
-    XmmReg_Ba = pavgb(XmmReg_Ba, m128_Ba);
-    XmmReg_Bb = pavgb(XmmReg_Bb, m128_Bb);
-    XmmReg_Bc = pavgb(XmmReg_Bc, m128_Bc);
-    XmmReg_Bd = pavgb(XmmReg_Bd, m128_Bd);
-    XmmReg_Be = pavgb(XmmReg_Be, m128_Be);
-    XmmReg_Bf = pavgb(XmmReg_Bf, m128_Bf);
-    XmmReg_Bg = pavgb(XmmReg_Bg, m128_Bg);
-    XmmReg_Bh = pavgb(XmmReg_Bh, m128_Bh);
-    XmmReg_Bi = pavgb(XmmReg_Bi, m128_Bi);
-    XmmReg_Bj = pavgb(XmmReg_Bj, m128_Bj);
-    XmmReg_Bk = pavgb(XmmReg_Bk, m128_Bk);
-    XmmReg_Bl = pavgb(XmmReg_Bl, m128_Bl);
-    XmmReg_Bm = pavgb(XmmReg_Bm, m128_Bm);
-    XmmReg_Bn = pavgb(XmmReg_Bn, m128_Bn);
-    XmmReg_Bo = pavgb(XmmReg_Bo, m128_Bo);
-    XmmReg_Bp = pavgb(XmmReg_Bp, m128_Bp);
+    local m:16 = m128;
+    XmmReg[0,8] = pavgb(XmmReg[0,8], m[0,8]);
+    XmmReg[8,8] = pavgb(XmmReg[8,8], m[8,8]);
+    XmmReg[16,8] = pavgb(XmmReg[16,8], m[16,8]);
+    XmmReg[24,8] = pavgb(XmmReg[24,8], m[24,8]);
+    XmmReg[32,8] = pavgb(XmmReg[32,8], m[32,8]);
+    XmmReg[40,8] = pavgb(XmmReg[40,8], m[40,8]);
+    XmmReg[48,8] = pavgb(XmmReg[48,8], m[48,8]);
+    XmmReg[56,8] = pavgb(XmmReg[56,8], m[56,8]);
+    XmmReg[64,8] = pavgb(XmmReg[64,8], m[64,8]);
+    XmmReg[72,8] = pavgb(XmmReg[72,8], m[72,8]);
+    XmmReg[80,8] = pavgb(XmmReg[80,8], m[80,8]);
+    XmmReg[88,8] = pavgb(XmmReg[88,8], m[88,8]);
+    XmmReg[96,8] = pavgb(XmmReg[96,8], m[96,8]);
+    XmmReg[104,8] = pavgb(XmmReg[104,8], m[104,8]);
+    XmmReg[112,8] = pavgb(XmmReg[112,8], m[112,8]);
+    XmmReg[120,8] = pavgb(XmmReg[120,8], m[120,8]);
 }
 
 # full set of XMM byte registers
-:PAVGB  XmmReg1, XmmReg2  is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0xE0; xmmmod = 3 & XmmReg1 & XmmReg2 & 
-XmmReg1_Ba & XmmReg1_Bb & XmmReg1_Bc & XmmReg1_Bd & XmmReg1_Be & XmmReg1_Bf & XmmReg1_Bg & XmmReg1_Bh &
-XmmReg1_Bi & XmmReg1_Bj & XmmReg1_Bk & XmmReg1_Bl & XmmReg1_Bm & XmmReg1_Bn & XmmReg1_Bo & XmmReg1_Bp &
-XmmReg2_Ba & XmmReg2_Bb & XmmReg2_Bc & XmmReg2_Bd & XmmReg2_Be & XmmReg2_Bf & XmmReg2_Bg & XmmReg2_Bh &
-XmmReg2_Bi & XmmReg2_Bj & XmmReg2_Bk & XmmReg2_Bl & XmmReg2_Bm & XmmReg2_Bn & XmmReg2_Bo & XmmReg2_Bp
+:PAVGB  XmmReg1, XmmReg2  is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0xE0; xmmmod = 3 & XmmReg1 & XmmReg2
 {
-    XmmReg1_Ba = pavgb(XmmReg1_Ba, XmmReg2_Ba);
-    XmmReg1_Bb = pavgb(XmmReg1_Bb, XmmReg2_Bb);
-    XmmReg1_Bc = pavgb(XmmReg1_Bc, XmmReg2_Bc);
-    XmmReg1_Bd = pavgb(XmmReg1_Bd, XmmReg2_Bd);
-    XmmReg1_Be = pavgb(XmmReg1_Be, XmmReg2_Be);
-    XmmReg1_Bf = pavgb(XmmReg1_Bf, XmmReg2_Bf);
-    XmmReg1_Bg = pavgb(XmmReg1_Bg, XmmReg2_Bg);
-    XmmReg1_Bh = pavgb(XmmReg1_Bh, XmmReg2_Bh);
-    XmmReg1_Bi = pavgb(XmmReg1_Bi, XmmReg2_Bi);
-    XmmReg1_Bj = pavgb(XmmReg1_Bj, XmmReg2_Bj);
-    XmmReg1_Bk = pavgb(XmmReg1_Bk, XmmReg2_Bk);
-    XmmReg1_Bl = pavgb(XmmReg1_Bl, XmmReg2_Bl);
-    XmmReg1_Bm = pavgb(XmmReg1_Bm, XmmReg2_Bm);
-    XmmReg1_Bn = pavgb(XmmReg1_Bn, XmmReg2_Bn);
-    XmmReg1_Bo = pavgb(XmmReg1_Bo, XmmReg2_Bo);
-    XmmReg1_Bp = pavgb(XmmReg1_Bp, XmmReg2_Bp);
+    XmmReg1[0,8] = pavgb(XmmReg1[0,8], XmmReg2[0,8]);
+    XmmReg1[8,8] = pavgb(XmmReg1[8,8], XmmReg2[8,8]);
+    XmmReg1[16,8] = pavgb(XmmReg1[16,8], XmmReg2[16,8]);
+    XmmReg1[24,8] = pavgb(XmmReg1[24,8], XmmReg2[24,8]);
+    XmmReg1[32,8] = pavgb(XmmReg1[32,8], XmmReg2[32,8]);
+    XmmReg1[40,8] = pavgb(XmmReg1[40,8], XmmReg2[40,8]);
+    XmmReg1[48,8] = pavgb(XmmReg1[48,8], XmmReg2[48,8]);
+    XmmReg1[56,8] = pavgb(XmmReg1[56,8], XmmReg2[56,8]);
+    XmmReg1[64,8] = pavgb(XmmReg1[64,8], XmmReg2[64,8]);
+    XmmReg1[72,8] = pavgb(XmmReg1[72,8], XmmReg2[72,8]);
+    XmmReg1[80,8] = pavgb(XmmReg1[80,8], XmmReg2[80,8]);
+    XmmReg1[88,8] = pavgb(XmmReg1[88,8], XmmReg2[88,8]);
+    XmmReg1[96,8] = pavgb(XmmReg1[96,8], XmmReg2[96,8]);
+    XmmReg1[104,8] = pavgb(XmmReg1[104,8], XmmReg2[104,8]);
+    XmmReg1[112,8] = pavgb(XmmReg1[112,8], XmmReg2[112,8]);
+    XmmReg1[120,8] = pavgb(XmmReg1[120,8], XmmReg2[120,8]);
 }
 
-:PAVGW          XmmReg, m128      is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0xE3;  ( XmmReg & XmmReg_Wa & XmmReg_Wb & XmmReg_Wc & XmmReg_Wd & XmmReg_We & XmmReg_Wf & XmmReg_Wg & XmmReg_Wh ) ... & ( m128 & m128_Wa & m128_Wb & m128_Wc & m128_Wd & m128_We & m128_Wf & m128_Wg & m128_Wh )
+:PAVGW          XmmReg, m128      is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0xE3; m128 & XmmReg ...
 {
-    XmmReg_Wa = pavgw(XmmReg_Wa, m128_Wa);
-    XmmReg_Wb = pavgw(XmmReg_Wb, m128_Wb);
-    XmmReg_Wc = pavgw(XmmReg_Wc, m128_Wc);
-    XmmReg_Wd = pavgw(XmmReg_Wd, m128_Wd);
-    XmmReg_We = pavgw(XmmReg_We, m128_We);
-    XmmReg_Wf = pavgw(XmmReg_Wf, m128_Wf);
-    XmmReg_Wg = pavgw(XmmReg_Wg, m128_Wg);
-    XmmReg_Wh = pavgw(XmmReg_Wh, m128_Wh);
+    local m:16 = m128;
+    XmmReg[0,16] = pavgw(XmmReg[0,16], m[0,16]);
+    XmmReg[16,16] = pavgw(XmmReg[16,16], m[16,16]);
+    XmmReg[32,16] = pavgw(XmmReg[32,16], m[32,16]);
+    XmmReg[48,16] = pavgw(XmmReg[48,16], m[48,16]);
+    XmmReg[64,16] = pavgw(XmmReg[64,16], m[64,16]);
+    XmmReg[80,16] = pavgw(XmmReg[80,16], m[80,16]);
+    XmmReg[96,16] = pavgw(XmmReg[96,16], m[96,16]);
+    XmmReg[112,16] = pavgw(XmmReg[112,16], m[112,16]);
 }
 
-:PAVGW          XmmReg1, XmmReg2  is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0xE3; xmmmod = 3 & XmmReg1 & XmmReg1_Wa & XmmReg1_Wb & XmmReg1_Wc & XmmReg1_Wd & XmmReg1_We & XmmReg1_Wf & XmmReg1_Wg & XmmReg1_Wh & XmmReg2 & XmmReg2_Wa & XmmReg2_Wb & XmmReg2_Wc & XmmReg2_Wd & XmmReg2_We & XmmReg2_Wf & XmmReg2_Wg & XmmReg2_Wh
+:PAVGW          XmmReg1, XmmReg2  is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0xE3; xmmmod = 3 & XmmReg1 & XmmReg2
 {
-    XmmReg1_Wa = pavgw(XmmReg1_Wa, XmmReg2_Wa);
-    XmmReg1_Wb = pavgw(XmmReg1_Wb, XmmReg2_Wb);
-    XmmReg1_Wc = pavgw(XmmReg1_Wc, XmmReg2_Wc);
-    XmmReg1_Wd = pavgw(XmmReg1_Wd, XmmReg2_Wd);
-    XmmReg1_We = pavgw(XmmReg1_We, XmmReg2_We);
-    XmmReg1_Wf = pavgw(XmmReg1_Wf, XmmReg2_Wf);
-    XmmReg1_Wg = pavgw(XmmReg1_Wg, XmmReg2_Wg);
-    XmmReg1_Wh = pavgw(XmmReg1_Wh, XmmReg2_Wh);
+    XmmReg1[0,16] = pavgw(XmmReg1[0,16], XmmReg2[0,16]);
+    XmmReg1[16,16] = pavgw(XmmReg1[16,16], XmmReg2[16,16]);
+    XmmReg1[32,16] = pavgw(XmmReg1[32,16], XmmReg2[32,16]);
+    XmmReg1[48,16] = pavgw(XmmReg1[48,16], XmmReg2[48,16]);
+    XmmReg1[64,16] = pavgw(XmmReg1[64,16], XmmReg2[64,16]);
+    XmmReg1[80,16] = pavgw(XmmReg1[80,16], XmmReg2[80,16]);
+    XmmReg1[96,16] = pavgw(XmmReg1[96,16], XmmReg2[96,16]);
+    XmmReg1[112,16] = pavgw(XmmReg1[112,16], XmmReg2[112,16]);
 }
 
-:PCMPEQB       mmxreg, m64      is vexMode=0 &  mandover=0 & byte=0x0F; byte=0x74; ( mmxreg & mmxreg_Ba & mmxreg_Bb & mmxreg_Bc & mmxreg_Bd & mmxreg_Be & mmxreg_Bf & mmxreg_Bg & mmxreg_Bh ) ... & ( m64 & m64_Ba & m64_Bb & m64_Bc & m64_Bd & m64_Be & m64_Bf & m64_Bg & m64_Bh )
+:PCMPEQB       mmxreg, m64      is vexMode=0 &  mandover=0 & byte=0x0F; byte=0x74; mmxreg ... & m64
 {
-    mmxreg_Ba = (mmxreg_Ba == m64_Ba) * 0xFF;
-    mmxreg_Bb = (mmxreg_Bb == m64_Bb) * 0xFF;
-    mmxreg_Bc = (mmxreg_Bc == m64_Bc) * 0xFF;
-    mmxreg_Bd = (mmxreg_Bd == m64_Bd) * 0xFF;
-    mmxreg_Be = (mmxreg_Be == m64_Be) * 0xFF;
-    mmxreg_Bf = (mmxreg_Bf == m64_Bf) * 0xFF;
-    mmxreg_Bg = (mmxreg_Bg == m64_Bg) * 0xFF;
-    mmxreg_Bh = (mmxreg_Bh == m64_Bh) * 0xFF;
+    local m:8 = m64;
+    mmxreg[0,8] = (mmxreg[0,8] == m[0,8]) * 0xFF;
+    mmxreg[8,8] = (mmxreg[8,8] == m[8,8]) * 0xFF;
+    mmxreg[16,8] = (mmxreg[16,8] == m[16,8]) * 0xFF;
+    mmxreg[24,8] = (mmxreg[24,8] == m[24,8]) * 0xFF;
+    mmxreg[32,8] = (mmxreg[32,8] == m[32,8]) * 0xFF;
+    mmxreg[40,8] = (mmxreg[40,8] == m[40,8]) * 0xFF;
+    mmxreg[48,8] = (mmxreg[48,8] == m[48,8]) * 0xFF;
+    mmxreg[56,8] = (mmxreg[56,8] == m[56,8]) * 0xFF;
 }
 
-:PCMPEQB       mmxreg1, mmxreg2 is vexMode=0 &  mandover=0 & byte=0x0F; byte=0x74; mmxmod = 3 & mmxreg1 & mmxreg1_Ba & mmxreg1_Bb & mmxreg1_Bc & mmxreg1_Bd & mmxreg1_Be & mmxreg1_Bf & mmxreg1_Bg & mmxreg1_Bh & mmxreg2 & mmxreg2_Ba & mmxreg2_Bb & mmxreg2_Bc & mmxreg2_Bd & mmxreg2_Be & mmxreg2_Bf & mmxreg2_Bg & mmxreg2_Bh
+:PCMPEQB       mmxreg1, mmxreg2 is vexMode=0 &  mandover=0 & byte=0x0F; byte=0x74; mmxmod = 3 & mmxreg1 & mmxreg2
 {
-    mmxreg1_Ba = (mmxreg1_Ba == mmxreg2_Ba) * 0xFF;
-    mmxreg1_Bb = (mmxreg1_Bb == mmxreg2_Bb) * 0xFF;
-    mmxreg1_Bc = (mmxreg1_Bc == mmxreg2_Bc) * 0xFF;
-    mmxreg1_Bd = (mmxreg1_Bd == mmxreg2_Bd) * 0xFF;
-    mmxreg1_Be = (mmxreg1_Be == mmxreg2_Be) * 0xFF;
-    mmxreg1_Bf = (mmxreg1_Bf == mmxreg2_Bf) * 0xFF;
-    mmxreg1_Bg = (mmxreg1_Bg == mmxreg2_Bg) * 0xFF;
-    mmxreg1_Bh = (mmxreg1_Bh == mmxreg2_Bh) * 0xFF;
+    mmxreg1[0,8] = (mmxreg1[0,8] == mmxreg2[0,8]) * 0xFF;
+    mmxreg1[8,8] = (mmxreg1[8,8] == mmxreg2[8,8]) * 0xFF;
+    mmxreg1[16,8] = (mmxreg1[16,8] == mmxreg2[16,8]) * 0xFF;
+    mmxreg1[24,8] = (mmxreg1[24,8] == mmxreg2[24,8]) * 0xFF;
+    mmxreg1[32,8] = (mmxreg1[32,8] == mmxreg2[32,8]) * 0xFF;
+    mmxreg1[40,8] = (mmxreg1[40,8] == mmxreg2[40,8]) * 0xFF;
+    mmxreg1[48,8] = (mmxreg1[48,8] == mmxreg2[48,8]) * 0xFF;
+    mmxreg1[56,8] = (mmxreg1[56,8] == mmxreg2[56,8]) * 0xFF;
 }
 
-:PCMPEQW       mmxreg, m64      is vexMode=0 &  mandover=0 & byte=0x0F; byte=0x75; ( mmxreg & mmxreg_Wa & mmxreg_Wb & mmxreg_Wc & mmxreg_Wd ) ... & ( m64 & m64_Wa & m64_Wb & m64_Wc & m64_Wd )
+:PCMPEQW       mmxreg, m64      is vexMode=0 &  mandover=0 & byte=0x0F; byte=0x75; mmxreg ... & m64
 {
-    mmxreg_Wa = zext(mmxreg_Wa == m64_Wa) * 0xFFFF;
-    mmxreg_Wb = zext(mmxreg_Wb == m64_Wb) * 0xFFFF;
-    mmxreg_Wc = zext(mmxreg_Wc == m64_Wc) * 0xFFFF;
-    mmxreg_Wd = zext(mmxreg_Wd == m64_Wd) * 0xFFFF;
+    local m:8 = m64;
+    mmxreg[0,16] = zext(mmxreg[0,16] == m[0,16]) * 0xFFFF;
+    mmxreg[16,16] = zext(mmxreg[16,16] == m[16,16]) * 0xFFFF;
+    mmxreg[32,16] = zext(mmxreg[32,16] == m[32,16]) * 0xFFFF;
+    mmxreg[48,16] = zext(mmxreg[48,16] == m[48,16]) * 0xFFFF;
 }
 
-:PCMPEQW       mmxreg1, mmxreg2 is vexMode=0 &  mandover=0 & byte=0x0F; byte=0x75; mmxmod = 3 & mmxreg1 & mmxreg1_Wa & mmxreg1_Wb & mmxreg1_Wc & mmxreg1_Wd & mmxreg2 & mmxreg2_Wa & mmxreg2_Wb & mmxreg2_Wc & mmxreg2_Wd
+:PCMPEQW       mmxreg1, mmxreg2 is vexMode=0 &  mandover=0 & byte=0x0F; byte=0x75; mmxmod = 3 & mmxreg1 & mmxreg2
 {
-    mmxreg1_Wa = zext(mmxreg1_Wa == mmxreg2_Wa) * 0xFFFF;
-    mmxreg1_Wb = zext(mmxreg1_Wb == mmxreg2_Wb) * 0xFFFF;
-    mmxreg1_Wc = zext(mmxreg1_Wc == mmxreg2_Wc) * 0xFFFF;
-    mmxreg1_Wd = zext(mmxreg1_Wd == mmxreg2_Wd) * 0xFFFF;
+    mmxreg1[0,16] = zext(mmxreg1[0,16] == mmxreg2[0,16]) * 0xFFFF;
+    mmxreg1[16,16] = zext(mmxreg1[16,16] == mmxreg2[16,16]) * 0xFFFF;
+    mmxreg1[32,16] = zext(mmxreg1[32,16] == mmxreg2[32,16]) * 0xFFFF;
+    mmxreg1[48,16] = zext(mmxreg1[48,16] == mmxreg2[48,16]) * 0xFFFF;
 }
 
-:PCMPEQD       mmxreg, m64      is vexMode=0 &  mandover=0 & byte=0x0F; byte=0x76;  ( mmxreg & mmxreg_Da & mmxreg_Db ) ... & ( m64 & m64_Da & m64_Db )
+:PCMPEQD       mmxreg, m64      is vexMode=0 &  mandover=0 & byte=0x0F; byte=0x76; mmxreg ... & m64
 {
-    mmxreg_Da = zext(mmxreg_Da == m64_Da) * 0xFFFFFFFF;
-    mmxreg_Db = zext(mmxreg_Db == m64_Db) * 0xFFFFFFFF;
+    local m:8 = m64;
+    mmxreg[0,32] = zext(mmxreg[0,32] == m[0,32]) * 0xFFFFFFFF;
+    mmxreg[32,32] = zext(mmxreg[32,32] == m[32,32]) * 0xFFFFFFFF;
 }
 
-:PCMPEQD       mmxreg1, mmxreg2 is vexMode=0 &  mandover=0 & byte=0x0F; byte=0x76; mmxmod = 3 & mmxreg1 & mmxreg1_Da & mmxreg1_Db & mmxreg2 & mmxreg2_Da & mmxreg2_Db
+:PCMPEQD       mmxreg1, mmxreg2 is vexMode=0 &  mandover=0 & byte=0x0F; byte=0x76; mmxmod = 3 & mmxreg1 & mmxreg2
 {
-    mmxreg1_Da = zext(mmxreg1_Da == mmxreg2_Da) * 0xFFFFFFFF;
-    mmxreg1_Db = zext(mmxreg1_Db == mmxreg2_Db) * 0xFFFFFFFF;
+    mmxreg1[0,32] = zext(mmxreg1[0,32] == mmxreg2[0,32]) * 0xFFFFFFFF;
+    mmxreg1[32,32] = zext(mmxreg1[32,32] == mmxreg2[32,32]) * 0xFFFFFFFF;
 }
 
 define pcodeop pcmpeqb;
-:PCMPEQB       XmmReg, m128      is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x74; ( XmmReg & XmmReg_Ba & XmmReg_Bb & XmmReg_Bc & XmmReg_Bd & XmmReg_Be & XmmReg_Bf & XmmReg_Bg & XmmReg_Bh & XmmReg_Bi & XmmReg_Bj & XmmReg_Bk & XmmReg_Bl & XmmReg_Bm & XmmReg_Bn & XmmReg_Bo & XmmReg_Bp ) ... & ( m128 & m128_Ba & m128_Bb & m128_Bc & m128_Bd & m128_Be & m128_Bf & m128_Bg & m128_Bh & m128_Bi & m128_Bj & m128_Bk & m128_Bl & m128_Bm & m128_Bn & m128_Bo & m128_Bp )
+:PCMPEQB       XmmReg, m128      is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x74; m128 & XmmReg ...
 {
-    XmmReg_Ba = (XmmReg_Ba == m128_Ba) * 0xFF;
-    XmmReg_Bb = (XmmReg_Bb == m128_Bb) * 0xFF;
-    XmmReg_Bc = (XmmReg_Bc == m128_Bc) * 0xFF;
-    XmmReg_Bd = (XmmReg_Bd == m128_Bd) * 0xFF;
-    XmmReg_Be = (XmmReg_Be == m128_Be) * 0xFF;
-    XmmReg_Bf = (XmmReg_Bf == m128_Bf) * 0xFF;
-    XmmReg_Bg = (XmmReg_Bg == m128_Bg) * 0xFF;
-    XmmReg_Bh = (XmmReg_Bh == m128_Bh) * 0xFF;
-    XmmReg_Bi = (XmmReg_Bi == m128_Bi) * 0xFF;
-    XmmReg_Bj = (XmmReg_Bj == m128_Bj) * 0xFF;
-    XmmReg_Bk = (XmmReg_Bk == m128_Bk) * 0xFF;
-    XmmReg_Bl = (XmmReg_Bl == m128_Bl) * 0xFF;
-    XmmReg_Bm = (XmmReg_Bm == m128_Bm) * 0xFF;
-    XmmReg_Bn = (XmmReg_Bn == m128_Bn) * 0xFF;
-    XmmReg_Bo = (XmmReg_Bo == m128_Bo) * 0xFF;
-    XmmReg_Bp = (XmmReg_Bp == m128_Bp) * 0xFF;
+    local m:16 = m128;
+    XmmReg[0,8] = (XmmReg[0,8] == m[0,8]) * 0xFF;
+    XmmReg[8,8] = (XmmReg[8,8] == m[8,8]) * 0xFF;
+    XmmReg[16,8] = (XmmReg[16,8] == m[16,8]) * 0xFF;
+    XmmReg[24,8] = (XmmReg[24,8] == m[24,8]) * 0xFF;
+    XmmReg[32,8] = (XmmReg[32,8] == m[32,8]) * 0xFF;
+    XmmReg[40,8] = (XmmReg[40,8] == m[40,8]) * 0xFF;
+    XmmReg[48,8] = (XmmReg[48,8] == m[48,8]) * 0xFF;
+    XmmReg[56,8] = (XmmReg[56,8] == m[56,8]) * 0xFF;
+    XmmReg[64,8] = (XmmReg[64,8] == m[64,8]) * 0xFF;
+    XmmReg[72,8] = (XmmReg[72,8] == m[72,8]) * 0xFF;
+    XmmReg[80,8] = (XmmReg[80,8] == m[80,8]) * 0xFF;
+    XmmReg[88,8] = (XmmReg[88,8] == m[88,8]) * 0xFF;
+    XmmReg[96,8] = (XmmReg[96,8] == m[96,8]) * 0xFF;
+    XmmReg[104,8] = (XmmReg[104,8] == m[104,8]) * 0xFF;
+    XmmReg[112,8] = (XmmReg[112,8] == m[112,8]) * 0xFF;
+    XmmReg[120,8] = (XmmReg[120,8] == m[120,8]) * 0xFF;
 }
 
 # full set of XMM byte registers
-:PCMPEQB       XmmReg1, XmmReg2  is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x74; xmmmod = 3 & XmmReg1 & XmmReg2 &
-XmmReg1_Ba & XmmReg1_Bb & XmmReg1_Bc & XmmReg1_Bd & XmmReg1_Be & XmmReg1_Bf & XmmReg1_Bg & XmmReg1_Bh &
-XmmReg1_Bi & XmmReg1_Bj & XmmReg1_Bk & XmmReg1_Bl & XmmReg1_Bm & XmmReg1_Bn & XmmReg1_Bo & XmmReg1_Bp &
-XmmReg2_Ba & XmmReg2_Bb & XmmReg2_Bc & XmmReg2_Bd & XmmReg2_Be & XmmReg2_Bf & XmmReg2_Bg & XmmReg2_Bh &
-XmmReg2_Bi & XmmReg2_Bj & XmmReg2_Bk & XmmReg2_Bl & XmmReg2_Bm & XmmReg2_Bn & XmmReg2_Bo & XmmReg2_Bp
+:PCMPEQB       XmmReg1, XmmReg2  is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x74; xmmmod = 3 & XmmReg1 & XmmReg2
 {
-    XmmReg1_Ba = (XmmReg1_Ba == XmmReg2_Ba) * 0xFF;
-    XmmReg1_Bb = (XmmReg1_Bb == XmmReg2_Bb) * 0xFF;
-    XmmReg1_Bc = (XmmReg1_Bc == XmmReg2_Bc) * 0xFF;
-    XmmReg1_Bd = (XmmReg1_Bd == XmmReg2_Bd) * 0xFF;
-    XmmReg1_Be = (XmmReg1_Be == XmmReg2_Be) * 0xFF;
-    XmmReg1_Bf = (XmmReg1_Bf == XmmReg2_Bf) * 0xFF;
-    XmmReg1_Bg = (XmmReg1_Bg == XmmReg2_Bg) * 0xFF;
-    XmmReg1_Bh = (XmmReg1_Bh == XmmReg2_Bh) * 0xFF;
-    XmmReg1_Bi = (XmmReg1_Bi == XmmReg2_Bi) * 0xFF;
-    XmmReg1_Bj = (XmmReg1_Bj == XmmReg2_Bj) * 0xFF;
-    XmmReg1_Bk = (XmmReg1_Bk == XmmReg2_Bk) * 0xFF;
-    XmmReg1_Bl = (XmmReg1_Bl == XmmReg2_Bl) * 0xFF;
-    XmmReg1_Bm = (XmmReg1_Bm == XmmReg2_Bm) * 0xFF;
-    XmmReg1_Bn = (XmmReg1_Bn == XmmReg2_Bn) * 0xFF;
-    XmmReg1_Bo = (XmmReg1_Bo == XmmReg2_Bo) * 0xFF;
-    XmmReg1_Bp = (XmmReg1_Bp == XmmReg2_Bp) * 0xFF;
+    XmmReg1[0,8] = (XmmReg1[0,8] == XmmReg2[0,8]) * 0xFF;
+    XmmReg1[8,8] = (XmmReg1[8,8] == XmmReg2[8,8]) * 0xFF;
+    XmmReg1[16,8] = (XmmReg1[16,8] == XmmReg2[16,8]) * 0xFF;
+    XmmReg1[24,8] = (XmmReg1[24,8] == XmmReg2[24,8]) * 0xFF;
+    XmmReg1[32,8] = (XmmReg1[32,8] == XmmReg2[32,8]) * 0xFF;
+    XmmReg1[40,8] = (XmmReg1[40,8] == XmmReg2[40,8]) * 0xFF;
+    XmmReg1[48,8] = (XmmReg1[48,8] == XmmReg2[48,8]) * 0xFF;
+    XmmReg1[56,8] = (XmmReg1[56,8] == XmmReg2[56,8]) * 0xFF;
+    XmmReg1[64,8] = (XmmReg1[64,8] == XmmReg2[64,8]) * 0xFF;
+    XmmReg1[72,8] = (XmmReg1[72,8] == XmmReg2[72,8]) * 0xFF;
+    XmmReg1[80,8] = (XmmReg1[80,8] == XmmReg2[80,8]) * 0xFF;
+    XmmReg1[88,8] = (XmmReg1[88,8] == XmmReg2[88,8]) * 0xFF;
+    XmmReg1[96,8] = (XmmReg1[96,8] == XmmReg2[96,8]) * 0xFF;
+    XmmReg1[104,8] = (XmmReg1[104,8] == XmmReg2[104,8]) * 0xFF;
+    XmmReg1[112,8] = (XmmReg1[112,8] == XmmReg2[112,8]) * 0xFF;
+    XmmReg1[120,8] = (XmmReg1[120,8] == XmmReg2[120,8]) * 0xFF;
 }
 
-:PCMPEQW       XmmReg, m128      is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x75; ( XmmReg & XmmReg_Wa & XmmReg_Wb & XmmReg_Wc & XmmReg_Wd & XmmReg_We & XmmReg_Wf & XmmReg_Wg & XmmReg_Wh ) ... & ( m128 & m128_Wa & m128_Wb & m128_Wc & m128_Wd & m128_We & m128_Wf & m128_Wg & m128_Wh )
+:PCMPEQW       XmmReg, m128      is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x75; m128 & XmmReg ...
 {
-    XmmReg_Wa = zext(XmmReg_Wa == m128_Wa) * 0xFFFF;
-    XmmReg_Wb = zext(XmmReg_Wb == m128_Wb) * 0xFFFF;
-    XmmReg_Wc = zext(XmmReg_Wc == m128_Wc) * 0xFFFF;
-    XmmReg_Wd = zext(XmmReg_Wd == m128_Wd) * 0xFFFF;
-    XmmReg_We = zext(XmmReg_We == m128_We) * 0xFFFF;
-    XmmReg_Wf = zext(XmmReg_Wf == m128_Wf) * 0xFFFF;
-    XmmReg_Wg = zext(XmmReg_Wg == m128_Wg) * 0xFFFF;
-    XmmReg_Wh = zext(XmmReg_Wh == m128_Wh) * 0xFFFF;
+    local m:16 = m128;
+    XmmReg[0,16] = zext(XmmReg[0,16] == m[0,16]) * 0xFFFF;
+    XmmReg[16,16] = zext(XmmReg[16,16] == m[16,16]) * 0xFFFF;
+    XmmReg[32,16] = zext(XmmReg[32,16] == m[32,16]) * 0xFFFF;
+    XmmReg[48,16] = zext(XmmReg[48,16] == m[48,16]) * 0xFFFF;
+    XmmReg[64,16] = zext(XmmReg[64,16] == m[64,16]) * 0xFFFF;
+    XmmReg[80,16] = zext(XmmReg[80,16] == m[80,16]) * 0xFFFF;
+    XmmReg[96,16] = zext(XmmReg[96,16] == m[96,16]) * 0xFFFF;
+    XmmReg[112,16] = zext(XmmReg[112,16] == m[112,16]) * 0xFFFF;
 }
 
-:PCMPEQW       XmmReg1, XmmReg2  is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x75; xmmmod = 3 & XmmReg1 & XmmReg1_Wa & XmmReg1_Wb & XmmReg1_Wc & XmmReg1_Wd & XmmReg1_We & XmmReg1_Wf & XmmReg1_Wg & XmmReg1_Wh & XmmReg2 & XmmReg2_Wa & XmmReg2_Wb & XmmReg2_Wc & XmmReg2_Wd & XmmReg2_We & XmmReg2_Wf & XmmReg2_Wg & XmmReg2_Wh
+:PCMPEQW       XmmReg1, XmmReg2  is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x75; xmmmod = 3 & XmmReg1 & XmmReg2
 {
-    XmmReg1_Wa = zext(XmmReg1_Wa == XmmReg2_Wa) * 0xFFFF;
-    XmmReg1_Wb = zext(XmmReg1_Wb == XmmReg2_Wb) * 0xFFFF;
-    XmmReg1_Wc = zext(XmmReg1_Wc == XmmReg2_Wc) * 0xFFFF;
-    XmmReg1_Wd = zext(XmmReg1_Wd == XmmReg2_Wd) * 0xFFFF;
-    XmmReg1_We = zext(XmmReg1_We == XmmReg2_We) * 0xFFFF;
-    XmmReg1_Wf = zext(XmmReg1_Wf == XmmReg2_Wf) * 0xFFFF;
-    XmmReg1_Wg = zext(XmmReg1_Wg == XmmReg2_Wg) * 0xFFFF;
-    XmmReg1_Wh = zext(XmmReg1_Wh == XmmReg2_Wh) * 0xFFFF;
+    XmmReg1[0,16] = zext(XmmReg1[0,16] == XmmReg2[0,16]) * 0xFFFF;
+    XmmReg1[16,16] = zext(XmmReg1[16,16] == XmmReg2[16,16]) * 0xFFFF;
+    XmmReg1[32,16] = zext(XmmReg1[32,16] == XmmReg2[32,16]) * 0xFFFF;
+    XmmReg1[48,16] = zext(XmmReg1[48,16] == XmmReg2[48,16]) * 0xFFFF;
+    XmmReg1[64,16] = zext(XmmReg1[64,16] == XmmReg2[64,16]) * 0xFFFF;
+    XmmReg1[80,16] = zext(XmmReg1[80,16] == XmmReg2[80,16]) * 0xFFFF;
+    XmmReg1[96,16] = zext(XmmReg1[96,16] == XmmReg2[96,16]) * 0xFFFF;
+    XmmReg1[112,16] = zext(XmmReg1[112,16] == XmmReg2[112,16]) * 0xFFFF;
 }
 
-:PCMPEQD       XmmReg, m128      is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x76;  ( XmmReg & XmmReg_Da & XmmReg_Db & XmmReg_Dc & XmmReg_Dd ) ... & ( m128 & m128_Da & m128_Db & m128_Dc & m128_Dd )
+:PCMPEQD       XmmReg, m128      is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x76; m128 & XmmReg ...
 {
-    XmmReg_Da = zext(XmmReg_Da == m128_Da) * 0xFFFFFFFF;
-    XmmReg_Db = zext(XmmReg_Db == m128_Db) * 0xFFFFFFFF;
-    XmmReg_Dc = zext(XmmReg_Dc == m128_Dc) * 0xFFFFFFFF;
-    XmmReg_Dd = zext(XmmReg_Dd == m128_Dd) * 0xFFFFFFFF;
+    local m:16 = m128;
+    XmmReg[0,32] = zext(XmmReg[0,32] == m[0,32]) * 0xFFFFFFFF;
+    XmmReg[32,32] = zext(XmmReg[32,32] == m[32,32]) * 0xFFFFFFFF;
+    XmmReg[64,32] = zext(XmmReg[64,32] == m[64,32]) * 0xFFFFFFFF;
+    XmmReg[96,32] = zext(XmmReg[96,32] == m[96,32]) * 0xFFFFFFFF;
 }
 
-:PCMPEQD       XmmReg1, XmmReg2  is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x76; xmmmod = 3 & XmmReg1 & XmmReg1_Da & XmmReg1_Db & XmmReg1_Dc & XmmReg1_Dd & XmmReg2 & XmmReg2_Da & XmmReg2_Db & XmmReg2_Dc & XmmReg2_Dd
+:PCMPEQD       XmmReg1, XmmReg2  is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x76; xmmmod = 3 & XmmReg1 & XmmReg2
 {
-    XmmReg1_Da = zext(XmmReg1_Da == XmmReg2_Da) * 0xFFFFFFFF;
-    XmmReg1_Db = zext(XmmReg1_Db == XmmReg2_Db) * 0xFFFFFFFF;
-    XmmReg1_Dc = zext(XmmReg1_Dc == XmmReg2_Dc) * 0xFFFFFFFF;
-    XmmReg1_Dd = zext(XmmReg1_Dd == XmmReg2_Dd) * 0xFFFFFFFF;
+    XmmReg1[0,32] = zext(XmmReg1[0,32] == XmmReg2[0,32]) * 0xFFFFFFFF;
+    XmmReg1[32,32] = zext(XmmReg1[32,32] == XmmReg2[32,32]) * 0xFFFFFFFF;
+    XmmReg1[64,32] = zext(XmmReg1[64,32] == XmmReg2[64,32]) * 0xFFFFFFFF;
+    XmmReg1[96,32] = zext(XmmReg1[96,32] == XmmReg2[96,32]) * 0xFFFFFFFF;
 }
 
-:PCMPGTB       mmxreg, m64      is vexMode=0 &  mandover=0 & byte=0x0F; byte=0x64;  ( mmxreg & mmxreg_Ba & mmxreg_Bb & mmxreg_Bc & mmxreg_Bd & mmxreg_Be & mmxreg_Bf & mmxreg_Bg & mmxreg_Bh ) ... & ( m64 & m64_Ba & m64_Bb & m64_Bc & m64_Bd & m64_Be & m64_Bf & m64_Bg & m64_Bh )
+:PCMPGTB       mmxreg, m64      is vexMode=0 &  mandover=0 & byte=0x0F; byte=0x64; mmxreg ... & m64
 {
-    mmxreg_Ba = (mmxreg_Ba s> m64_Ba) * 0xFF;
-    mmxreg_Bb = (mmxreg_Bb s> m64_Bb) * 0xFF;
-    mmxreg_Bc = (mmxreg_Bc s> m64_Bc) * 0xFF;
-    mmxreg_Bd = (mmxreg_Bd s> m64_Bd) * 0xFF;
-    mmxreg_Be = (mmxreg_Be s> m64_Be) * 0xFF;
-    mmxreg_Bf = (mmxreg_Bf s> m64_Bf) * 0xFF;
-    mmxreg_Bg = (mmxreg_Bg s> m64_Bg) * 0xFF;
-    mmxreg_Bh = (mmxreg_Bh s> m64_Bh) * 0xFF;
+    local m:8 = m64;
+    mmxreg[0,8] = (mmxreg[0,8] s> m[0,8]) * 0xFF;
+    mmxreg[8,8] = (mmxreg[8,8] s> m[8,8]) * 0xFF;
+    mmxreg[16,8] = (mmxreg[16,8] s> m[16,8]) * 0xFF;
+    mmxreg[24,8] = (mmxreg[24,8] s> m[24,8]) * 0xFF;
+    mmxreg[32,8] = (mmxreg[32,8] s> m[32,8]) * 0xFF;
+    mmxreg[40,8] = (mmxreg[40,8] s> m[40,8]) * 0xFF;
+    mmxreg[48,8] = (mmxreg[48,8] s> m[48,8]) * 0xFF;
+    mmxreg[56,8] = (mmxreg[56,8] s> m[56,8]) * 0xFF;
 }
 
-:PCMPGTB       mmxreg1, mmxreg2 is vexMode=0 &  mandover=0 & byte=0x0F; byte=0x64; mmxmod = 3 & mmxreg1 & mmxreg1_Ba & mmxreg1_Bb & mmxreg1_Bc & mmxreg1_Bd & mmxreg1_Be & mmxreg1_Bf & mmxreg1_Bg & mmxreg1_Bh & mmxreg2 & mmxreg2_Ba & mmxreg2_Bb & mmxreg2_Bc & mmxreg2_Bd & mmxreg2_Be & mmxreg2_Bf & mmxreg2_Bg & mmxreg2_Bh
+:PCMPGTB       mmxreg1, mmxreg2 is vexMode=0 &  mandover=0 & byte=0x0F; byte=0x64; mmxmod = 3 & mmxreg1 & mmxreg2
 {
-    mmxreg1_Ba = (mmxreg1_Ba s> mmxreg2_Ba) * 0xFF;
-    mmxreg1_Bb = (mmxreg1_Bb s> mmxreg2_Bb) * 0xFF;
-    mmxreg1_Bc = (mmxreg1_Bc s> mmxreg2_Bc) * 0xFF;
-    mmxreg1_Bd = (mmxreg1_Bd s> mmxreg2_Bd) * 0xFF;
-    mmxreg1_Be = (mmxreg1_Be s> mmxreg2_Be) * 0xFF;
-    mmxreg1_Bf = (mmxreg1_Bf s> mmxreg2_Bf) * 0xFF;
-    mmxreg1_Bg = (mmxreg1_Bg s> mmxreg2_Bg) * 0xFF;
-    mmxreg1_Bh = (mmxreg1_Bh s> mmxreg2_Bh) * 0xFF;
+    mmxreg1[0,8] = (mmxreg1[0,8] s> mmxreg2[0,8]) * 0xFF;
+    mmxreg1[8,8] = (mmxreg1[8,8] s> mmxreg2[8,8]) * 0xFF;
+    mmxreg1[16,8] = (mmxreg1[16,8] s> mmxreg2[16,8]) * 0xFF;
+    mmxreg1[24,8] = (mmxreg1[24,8] s> mmxreg2[24,8]) * 0xFF;
+    mmxreg1[32,8] = (mmxreg1[32,8] s> mmxreg2[32,8]) * 0xFF;
+    mmxreg1[40,8] = (mmxreg1[40,8] s> mmxreg2[40,8]) * 0xFF;
+    mmxreg1[48,8] = (mmxreg1[48,8] s> mmxreg2[48,8]) * 0xFF;
+    mmxreg1[56,8] = (mmxreg1[56,8] s> mmxreg2[56,8]) * 0xFF;
 }
 
-:PCMPGTW       mmxreg, m64      is vexMode=0 &  mandover=0 & byte=0x0F; byte=0x65; ( mmxreg & mmxreg_Wa & mmxreg_Wb & mmxreg_Wc & mmxreg_Wd ) ... & ( m64 & m64_Wa & m64_Wb & m64_Wc & m64_Wd )
+:PCMPGTW       mmxreg, m64      is vexMode=0 &  mandover=0 & byte=0x0F; byte=0x65; mmxreg ... & m64
 {
-    mmxreg_Wa = zext(mmxreg_Wa s> m64_Wa) * 0xFFFF;
-    mmxreg_Wb = zext(mmxreg_Wb s> m64_Wb) * 0xFFFF;
-    mmxreg_Wc = zext(mmxreg_Wc s> m64_Wc) * 0xFFFF;
-    mmxreg_Wd = zext(mmxreg_Wd s> m64_Wd) * 0xFFFF;
+    local m:8 = m64;
+    mmxreg[0,16] = zext(mmxreg[0,16] s> m[0,16]) * 0xFFFF;
+    mmxreg[16,16] = zext(mmxreg[16,16] s> m[16,16]) * 0xFFFF;
+    mmxreg[32,16] = zext(mmxreg[32,16] s> m[32,16]) * 0xFFFF;
+    mmxreg[48,16] = zext(mmxreg[48,16] s> m[48,16]) * 0xFFFF;
 }
 
-:PCMPGTW       mmxreg1, mmxreg2 is vexMode=0 &  mandover=0 & byte=0x0F; byte=0x65; mmxmod = 3 & mmxreg1 & mmxreg1_Wa & mmxreg1_Wb & mmxreg1_Wc & mmxreg1_Wd & mmxreg2 & mmxreg2_Wa & mmxreg2_Wb & mmxreg2_Wc & mmxreg2_Wd
+:PCMPGTW       mmxreg1, mmxreg2 is vexMode=0 &  mandover=0 & byte=0x0F; byte=0x65; mmxmod = 3 & mmxreg1 & mmxreg2
 {
-    mmxreg1_Wa = zext(mmxreg1_Wa s> mmxreg2_Wa) * 0xFFFF;
-    mmxreg1_Wb = zext(mmxreg1_Wb s> mmxreg2_Wb) * 0xFFFF;
-    mmxreg1_Wc = zext(mmxreg1_Wc s> mmxreg2_Wc) * 0xFFFF;
-    mmxreg1_Wd = zext(mmxreg1_Wd s> mmxreg2_Wd) * 0xFFFF;
+    mmxreg1[0,16] = zext(mmxreg1[0,16] s> mmxreg2[0,16]) * 0xFFFF;
+    mmxreg1[16,16] = zext(mmxreg1[16,16] s> mmxreg2[16,16]) * 0xFFFF;
+    mmxreg1[32,16] = zext(mmxreg1[32,16] s> mmxreg2[32,16]) * 0xFFFF;
+    mmxreg1[48,16] = zext(mmxreg1[48,16] s> mmxreg2[48,16]) * 0xFFFF;
 }
 
-:PCMPGTD       mmxreg, m64      is vexMode=0 &  mandover=0 & byte=0x0F; byte=0x66;  ( mmxreg & mmxreg_Da & mmxreg_Db ) ... & ( m64 & m64_Da & m64_Db )
+:PCMPGTD       mmxreg, m64      is vexMode=0 &  mandover=0 & byte=0x0F; byte=0x66; mmxreg ... & m64
 {
-    mmxreg_Da = zext(mmxreg_Da s> m64_Da) * 0xFFFFFFFF;
-    mmxreg_Db = zext(mmxreg_Db s> m64_Db) * 0xFFFFFFFF;
+    local m:8 = m64;
+    mmxreg[0,32] = zext(mmxreg[0,32] s> m[0,32]) * 0xFFFFFFFF;
+    mmxreg[32,32] = zext(mmxreg[32,32] s> m[32,32]) * 0xFFFFFFFF;
 }
 
-:PCMPGTD       mmxreg1, mmxreg2 is vexMode=0 &  mandover=0 & byte=0x0F; byte=0x66; mmxmod = 3 & mmxreg1 & mmxreg1_Da & mmxreg1_Db & mmxreg2 & mmxreg2_Da & mmxreg2_Db
+:PCMPGTD       mmxreg1, mmxreg2 is vexMode=0 &  mandover=0 & byte=0x0F; byte=0x66; mmxmod = 3 & mmxreg1 & mmxreg2
 {
-    mmxreg1_Da = zext(mmxreg1_Da s> mmxreg2_Da) * 0xFFFFFFFF;
-    mmxreg1_Db = zext(mmxreg1_Db s> mmxreg2_Db) * 0xFFFFFFFF;
+    mmxreg1[0,32] = zext(mmxreg1[0,32] s> mmxreg2[0,32]) * 0xFFFFFFFF;
+    mmxreg1[32,32] = zext(mmxreg1[32,32] s> mmxreg2[32,32]) * 0xFFFFFFFF;
 }
 
-:PCMPGTB       XmmReg, m128      is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x64; ( XmmReg & XmmReg_Ba & XmmReg_Bb & XmmReg_Bc & XmmReg_Bd & XmmReg_Be & XmmReg_Bf & XmmReg_Bg & XmmReg_Bh & XmmReg_Bi & XmmReg_Bj & XmmReg_Bk & XmmReg_Bl & XmmReg_Bm & XmmReg_Bn & XmmReg_Bo & XmmReg_Bp ) ... & ( m128 & m128_Ba & m128_Bb & m128_Bc & m128_Bd & m128_Be & m128_Bf & m128_Bg & m128_Bh & m128_Bi & m128_Bj & m128_Bk & m128_Bl & m128_Bm & m128_Bn & m128_Bo & m128_Bp )
+:PCMPGTB       XmmReg, m128      is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x64; m128 & XmmReg ...
 {
-    XmmReg_Ba = (XmmReg_Ba s> m128_Ba) * 0xFF;
-    XmmReg_Bb = (XmmReg_Bb s> m128_Bb) * 0xFF;
-    XmmReg_Bc = (XmmReg_Bc s> m128_Bc) * 0xFF;
-    XmmReg_Bd = (XmmReg_Bd s> m128_Bd) * 0xFF;
-    XmmReg_Be = (XmmReg_Be s> m128_Be) * 0xFF;
-    XmmReg_Bf = (XmmReg_Bf s> m128_Bf) * 0xFF;
-    XmmReg_Bg = (XmmReg_Bg s> m128_Bg) * 0xFF;
-    XmmReg_Bh = (XmmReg_Bh s> m128_Bh) * 0xFF;
-    XmmReg_Bi = (XmmReg_Bi s> m128_Bi) * 0xFF;
-    XmmReg_Bj = (XmmReg_Bj s> m128_Bj) * 0xFF;
-    XmmReg_Bk = (XmmReg_Bk s> m128_Bk) * 0xFF;
-    XmmReg_Bl = (XmmReg_Bl s> m128_Bl) * 0xFF;
-    XmmReg_Bm = (XmmReg_Bm s> m128_Bm) * 0xFF;
-    XmmReg_Bn = (XmmReg_Bn s> m128_Bn) * 0xFF;
-    XmmReg_Bo = (XmmReg_Bo s> m128_Bo) * 0xFF;
-    XmmReg_Bp = (XmmReg_Bp s> m128_Bp) * 0xFF;
+    local m:16 = m128;
+    XmmReg[0,8] = (XmmReg[0,8] s> m[0,8]) * 0xFF;
+    XmmReg[8,8] = (XmmReg[8,8] s> m[8,8]) * 0xFF;
+    XmmReg[16,8] = (XmmReg[16,8] s> m[16,8]) * 0xFF;
+    XmmReg[24,8] = (XmmReg[24,8] s> m[24,8]) * 0xFF;
+    XmmReg[32,8] = (XmmReg[32,8] s> m[32,8]) * 0xFF;
+    XmmReg[40,8] = (XmmReg[40,8] s> m[40,8]) * 0xFF;
+    XmmReg[48,8] = (XmmReg[48,8] s> m[48,8]) * 0xFF;
+    XmmReg[56,8] = (XmmReg[56,8] s> m[56,8]) * 0xFF;
+    XmmReg[64,8] = (XmmReg[64,8] s> m[64,8]) * 0xFF;
+    XmmReg[72,8] = (XmmReg[72,8] s> m[72,8]) * 0xFF;
+    XmmReg[80,8] = (XmmReg[80,8] s> m[80,8]) * 0xFF;
+    XmmReg[88,8] = (XmmReg[88,8] s> m[88,8]) * 0xFF;
+    XmmReg[96,8] = (XmmReg[96,8] s> m[96,8]) * 0xFF;
+    XmmReg[104,8] = (XmmReg[104,8] s> m[104,8]) * 0xFF;
+    XmmReg[112,8] = (XmmReg[112,8] s> m[112,8]) * 0xFF;
+    XmmReg[120,8] = (XmmReg[120,8] s> m[120,8]) * 0xFF;
 }
 
 # full set of XMM byte registers
-:PCMPGTB       XmmReg1, XmmReg2  is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x64; xmmmod = 3 & XmmReg1 & XmmReg2 &
-XmmReg1_Ba & XmmReg1_Bb & XmmReg1_Bc & XmmReg1_Bd & XmmReg1_Be & XmmReg1_Bf & XmmReg1_Bg & XmmReg1_Bh &
-XmmReg1_Bi & XmmReg1_Bj & XmmReg1_Bk & XmmReg1_Bl & XmmReg1_Bm & XmmReg1_Bn & XmmReg1_Bo & XmmReg1_Bp &
-XmmReg2_Ba & XmmReg2_Bb & XmmReg2_Bc & XmmReg2_Bd & XmmReg2_Be & XmmReg2_Bf & XmmReg2_Bg & XmmReg2_Bh &
-XmmReg2_Bi & XmmReg2_Bj & XmmReg2_Bk & XmmReg2_Bl & XmmReg2_Bm & XmmReg2_Bn & XmmReg2_Bo & XmmReg2_Bp
+:PCMPGTB       XmmReg1, XmmReg2  is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x64; xmmmod = 3 & XmmReg1 & XmmReg2
 {
-    XmmReg1_Ba = (XmmReg1_Ba s> XmmReg2_Ba) * 0xFF;
-    XmmReg1_Bb = (XmmReg1_Bb s> XmmReg2_Bb) * 0xFF;
-    XmmReg1_Bc = (XmmReg1_Bc s> XmmReg2_Bc) * 0xFF;
-    XmmReg1_Bd = (XmmReg1_Bd s> XmmReg2_Bd) * 0xFF;
-    XmmReg1_Be = (XmmReg1_Be s> XmmReg2_Be) * 0xFF;
-    XmmReg1_Bf = (XmmReg1_Bf s> XmmReg2_Bf) * 0xFF;
-    XmmReg1_Bg = (XmmReg1_Bg s> XmmReg2_Bg) * 0xFF;
-    XmmReg1_Bh = (XmmReg1_Bh s> XmmReg2_Bh) * 0xFF;
-    XmmReg1_Bi = (XmmReg1_Bi s> XmmReg2_Bi) * 0xFF;
-    XmmReg1_Bj = (XmmReg1_Bj s> XmmReg2_Bj) * 0xFF;
-    XmmReg1_Bk = (XmmReg1_Bk s> XmmReg2_Bk) * 0xFF;
-    XmmReg1_Bl = (XmmReg1_Bl s> XmmReg2_Bl) * 0xFF;
-    XmmReg1_Bm = (XmmReg1_Bm s> XmmReg2_Bm) * 0xFF;
-    XmmReg1_Bn = (XmmReg1_Bn s> XmmReg2_Bn) * 0xFF;
-    XmmReg1_Bo = (XmmReg1_Bo s> XmmReg2_Bo) * 0xFF;
-    XmmReg1_Bp = (XmmReg1_Bp s> XmmReg2_Bp) * 0xFF;
+    XmmReg1[0,8] = (XmmReg1[0,8] s> XmmReg2[0,8]) * 0xFF;
+    XmmReg1[8,8] = (XmmReg1[8,8] s> XmmReg2[8,8]) * 0xFF;
+    XmmReg1[16,8] = (XmmReg1[16,8] s> XmmReg2[16,8]) * 0xFF;
+    XmmReg1[24,8] = (XmmReg1[24,8] s> XmmReg2[24,8]) * 0xFF;
+    XmmReg1[32,8] = (XmmReg1[32,8] s> XmmReg2[32,8]) * 0xFF;
+    XmmReg1[40,8] = (XmmReg1[40,8] s> XmmReg2[40,8]) * 0xFF;
+    XmmReg1[48,8] = (XmmReg1[48,8] s> XmmReg2[48,8]) * 0xFF;
+    XmmReg1[56,8] = (XmmReg1[56,8] s> XmmReg2[56,8]) * 0xFF;
+    XmmReg1[64,8] = (XmmReg1[64,8] s> XmmReg2[64,8]) * 0xFF;
+    XmmReg1[72,8] = (XmmReg1[72,8] s> XmmReg2[72,8]) * 0xFF;
+    XmmReg1[80,8] = (XmmReg1[80,8] s> XmmReg2[80,8]) * 0xFF;
+    XmmReg1[88,8] = (XmmReg1[88,8] s> XmmReg2[88,8]) * 0xFF;
+    XmmReg1[96,8] = (XmmReg1[96,8] s> XmmReg2[96,8]) * 0xFF;
+    XmmReg1[104,8] = (XmmReg1[104,8] s> XmmReg2[104,8]) * 0xFF;
+    XmmReg1[112,8] = (XmmReg1[112,8] s> XmmReg2[112,8]) * 0xFF;
+    XmmReg1[120,8] = (XmmReg1[120,8] s> XmmReg2[120,8]) * 0xFF;
 }
 
-:PCMPGTW       XmmReg, m128      is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x65;  ( XmmReg & XmmReg_Wa & XmmReg_Wb & XmmReg_Wc & XmmReg_Wd & XmmReg_We & XmmReg_Wf & XmmReg_Wg & XmmReg_Wh ) ... & ( m128 & m128_Wa & m128_Wb & m128_Wc & m128_Wd & m128_We & m128_Wf & m128_Wg & m128_Wh )
+:PCMPGTW       XmmReg, m128      is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x65; m128 & XmmReg ...
 {
-    XmmReg_Wa = zext(XmmReg_Wa s> m128_Wa) * 0xFFFF;
-    XmmReg_Wb = zext(XmmReg_Wb s> m128_Wb) * 0xFFFF;
-    XmmReg_Wc = zext(XmmReg_Wc s> m128_Wc) * 0xFFFF;
-    XmmReg_Wd = zext(XmmReg_Wd s> m128_Wd) * 0xFFFF;
-    XmmReg_We = zext(XmmReg_We s> m128_We) * 0xFFFF;
-    XmmReg_Wf = zext(XmmReg_Wf s> m128_Wf) * 0xFFFF;
-    XmmReg_Wg = zext(XmmReg_Wg s> m128_Wg) * 0xFFFF;
-    XmmReg_Wh = zext(XmmReg_Wh s> m128_Wh) * 0xFFFF;
+    local m:16 = m128;
+    XmmReg[0,16] = zext(XmmReg[0,16] s> m[0,16]) * 0xFFFF;
+    XmmReg[16,16] = zext(XmmReg[16,16] s> m[16,16]) * 0xFFFF;
+    XmmReg[32,16] = zext(XmmReg[32,16] s> m[32,16]) * 0xFFFF;
+    XmmReg[48,16] = zext(XmmReg[48,16] s> m[48,16]) * 0xFFFF;
+    XmmReg[64,16] = zext(XmmReg[64,16] s> m[64,16]) * 0xFFFF;
+    XmmReg[80,16] = zext(XmmReg[80,16] s> m[80,16]) * 0xFFFF;
+    XmmReg[96,16] = zext(XmmReg[96,16] s> m[96,16]) * 0xFFFF;
+    XmmReg[112,16] = zext(XmmReg[112,16] s> m[112,16]) * 0xFFFF;
 }
 
-:PCMPGTW       XmmReg1, XmmReg2  is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x65; xmmmod = 3 & XmmReg1 & XmmReg1_Wa & XmmReg1_Wb & XmmReg1_Wc & XmmReg1_Wd & XmmReg1_We & XmmReg1_Wf & XmmReg1_Wg & XmmReg1_Wh & XmmReg2 & XmmReg2_Wa & XmmReg2_Wb & XmmReg2_Wc & XmmReg2_Wd & XmmReg2_We & XmmReg2_Wf & XmmReg2_Wg & XmmReg2_Wh
+:PCMPGTW       XmmReg1, XmmReg2  is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x65; xmmmod = 3 & XmmReg1 & XmmReg2
 {
-    XmmReg1_Wa = zext(XmmReg1_Wa s> XmmReg2_Wa) * 0xFFFF;
-    XmmReg1_Wb = zext(XmmReg1_Wb s> XmmReg2_Wb) * 0xFFFF;
-    XmmReg1_Wc = zext(XmmReg1_Wc s> XmmReg2_Wc) * 0xFFFF;
-    XmmReg1_Wd = zext(XmmReg1_Wd s> XmmReg2_Wd) * 0xFFFF;
-    XmmReg1_We = zext(XmmReg1_We s> XmmReg2_We) * 0xFFFF;
-    XmmReg1_Wf = zext(XmmReg1_Wf s> XmmReg2_Wf) * 0xFFFF;
-    XmmReg1_Wg = zext(XmmReg1_Wg s> XmmReg2_Wg) * 0xFFFF;
-    XmmReg1_Wh = zext(XmmReg1_Wh s> XmmReg2_Wh) * 0xFFFF;
+    XmmReg1[0,16] = zext(XmmReg1[0,16] s> XmmReg2[0,16]) * 0xFFFF;
+    XmmReg1[16,16] = zext(XmmReg1[16,16] s> XmmReg2[16,16]) * 0xFFFF;
+    XmmReg1[32,16] = zext(XmmReg1[32,16] s> XmmReg2[32,16]) * 0xFFFF;
+    XmmReg1[48,16] = zext(XmmReg1[48,16] s> XmmReg2[48,16]) * 0xFFFF;
+    XmmReg1[64,16] = zext(XmmReg1[64,16] s> XmmReg2[64,16]) * 0xFFFF;
+    XmmReg1[80,16] = zext(XmmReg1[80,16] s> XmmReg2[80,16]) * 0xFFFF;
+    XmmReg1[96,16] = zext(XmmReg1[96,16] s> XmmReg2[96,16]) * 0xFFFF;
+    XmmReg1[112,16] = zext(XmmReg1[112,16] s> XmmReg2[112,16]) * 0xFFFF;
 }
 
-:PCMPGTD       XmmReg, m128      is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x66; ( XmmReg & XmmReg_Da & XmmReg_Db & XmmReg_Dc & XmmReg_Dd ) ... & ( m128 & m128_Da & m128_Db & m128_Dc & m128_Dd )
+:PCMPGTD       XmmReg, m128      is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x66; m128 & XmmReg ...
 {
-    XmmReg_Da = zext(XmmReg_Da s> m128_Da) * 0xFFFFFFFF;
-    XmmReg_Db = zext(XmmReg_Db s> m128_Db) * 0xFFFFFFFF;
-    XmmReg_Dc = zext(XmmReg_Dc s> m128_Dc) * 0xFFFFFFFF;
-    XmmReg_Dd = zext(XmmReg_Dd s> m128_Dd) * 0xFFFFFFFF;
+    local m:16 = m128;
+    XmmReg[0,32] = zext(XmmReg[0,32] s> m[0,32]) * 0xFFFFFFFF;
+    XmmReg[32,32] = zext(XmmReg[32,32] s> m[32,32]) * 0xFFFFFFFF;
+    XmmReg[64,32] = zext(XmmReg[64,32] s> m[64,32]) * 0xFFFFFFFF;
+    XmmReg[96,32] = zext(XmmReg[96,32] s> m[96,32]) * 0xFFFFFFFF;
 }
 
-:PCMPGTD       XmmReg1, XmmReg2  is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x66; xmmmod = 3 & XmmReg1 & XmmReg1_Da & XmmReg1_Db & XmmReg1_Dc & XmmReg1_Dd & XmmReg2 & XmmReg2_Da & XmmReg2_Db & XmmReg2_Dc & XmmReg2_Dd
+:PCMPGTD       XmmReg1, XmmReg2  is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x66; xmmmod = 3 & XmmReg1 & XmmReg2
 {
-    XmmReg1_Da = zext(XmmReg1_Da s> XmmReg2_Da) * 0xFFFFFFFF;
-    XmmReg1_Db = zext(XmmReg1_Db s> XmmReg2_Db) * 0xFFFFFFFF;
-    XmmReg1_Dc = zext(XmmReg1_Dc s> XmmReg2_Dc) * 0xFFFFFFFF;
-    XmmReg1_Dd = zext(XmmReg1_Dd s> XmmReg2_Dd) * 0xFFFFFFFF;
+    XmmReg1[0,32] = zext(XmmReg1[0,32] s> XmmReg2[0,32]) * 0xFFFFFFFF;
+    XmmReg1[32,32] = zext(XmmReg1[32,32] s> XmmReg2[32,32]) * 0xFFFFFFFF;
+    XmmReg1[64,32] = zext(XmmReg1[64,32] s> XmmReg2[64,32]) * 0xFFFFFFFF;
+    XmmReg1[96,32] = zext(XmmReg1[96,32] s> XmmReg2[96,32]) * 0xFFFFFFFF;
 }
 
 :PEXTRW        Reg32, mmxreg2, imm8 is vexMode=0 &  mandover=0 & byte=0x0F; byte=0xC5; Reg32 & mmxreg2; imm8
@@ -7136,34 +6509,34 @@ Order1: order1	is imm8 [ order1 = (((imm8 >> 2) & 0x3) << 5); ] { export *[const
 Order2: order2	is imm8 [ order2 = (((imm8 >> 4) & 0x3) << 5); ] { export *[const]:1 order2; } 
 Order3: order3	is imm8 [ order3 = (((imm8 >> 6) & 0x3) << 5); ] { export *[const]:1 order3; } 
 
-:PSHUFD         XmmReg1, m128, imm8     is vexMode=0 & $(PRE_66) & byte=0x0F; byte=0x70; ( XmmReg1 & XmmReg1_Da & XmmReg1_Db & XmmReg1_Dc & XmmReg1_Dd ) ... & m128 ; imm8 & Order0 & Order1 & Order2 & Order3
+:PSHUFD         XmmReg1, m128, imm8     is vexMode=0 & $(PRE_66) & byte=0x0F; byte=0x70; (m128 & XmmReg1 ...); imm8 & Order0 & Order1 & Order2 & Order3
 {
     shifted:16 = m128 >> Order0;   
-    XmmReg1_Da = shifted:4;
+    XmmReg1[0,32] = shifted:4;
     
     shifted = m128 >> Order1;   
-    XmmReg1_Db = shifted:4;
+    XmmReg1[32,32] = shifted:4;
 
     shifted = m128 >> Order2;   
-    XmmReg1_Dc = shifted:4;
+    XmmReg1[64,32] = shifted:4;
 
     shifted = m128 >> Order3;   
-    XmmReg1_Dd = shifted:4;
+    XmmReg1[96,32] = shifted:4;
 }
 
-:PSHUFD         XmmReg1, XmmReg2, imm8  is vexMode=0 & $(PRE_66) & byte=0x0F; byte=0x70; xmmmod=3 & XmmReg1 & XmmReg1_Da & XmmReg1_Db & XmmReg1_Dc & XmmReg1_Dd & XmmReg2 ; imm8 & Order0 & Order1 & Order2 & Order3
+:PSHUFD         XmmReg1, XmmReg2, imm8  is vexMode=0 & $(PRE_66) & byte=0x0F; byte=0x70; xmmmod=3 & XmmReg1 & XmmReg2 ; imm8 & Order0 & Order1 & Order2 & Order3
 {
     shifted:16 = XmmReg2 >> Order0;   
-    XmmReg1_Da = shifted:4;
+    XmmReg1[0,32] = shifted:4;
     
     shifted = XmmReg2 >> Order1;   
-    XmmReg1_Db = shifted:4;
+    XmmReg1[32,32] = shifted:4;
 
     shifted = XmmReg2 >> Order2;   
-    XmmReg1_Dc = shifted:4;
+    XmmReg1[64,32] = shifted:4;
 
     shifted = XmmReg2 >> Order3;   
-    XmmReg1_Dd = shifted:4;
+    XmmReg1[96,32] = shifted:4;
 }
 
 define pcodeop pshufhw;
@@ -7231,56 +6604,56 @@ define pcodeop psraw;
 :PSRAW          mmxreg1, mmxreg2 is vexMode=0 &  mandover=0 & byte=0x0F; byte=0xE1; mmxmod = 3 & mmxreg1 & mmxreg2 { mmxreg1 = psraw(mmxreg1, mmxreg2); }
 :PSRAW          mmxreg2, imm8    is vexMode=0 &  mandover=0 & byte=0x0F; byte=0x71; mod = 0b11 & reg_opcode=4 & mmxreg2; imm8 { mmxreg2 = psraw(mmxreg2, imm8:8); }
                     
-:PSRAD          mmxreg, m64      is vexMode=0 &  mandover=0 & byte=0x0F; byte=0xE2; ( mmxreg & mmxreg_Da & mmxreg_Db ) ... & m64
+:PSRAD          mmxreg, m64      is vexMode=0 &  mandover=0 & byte=0x0F; byte=0xE2; mmxreg ... & m64
 {
 # a count greater than 31 just clears all the bits
-    mmxreg_Da = mmxreg_Da s>> m64;
-    mmxreg_Db = mmxreg_Db s>> m64;
+    mmxreg[0,32] = mmxreg[0,32] s>> m64;
+    mmxreg[32,32] = mmxreg[32,32] s>> m64;
 }
 
-:PSRAD          mmxreg1, mmxreg2 is vexMode=0 &  mandover=0 & byte=0x0F; byte=0xE2; mmxmod = 3 & mmxreg1 & mmxreg1_Da & mmxreg1_Db & mmxreg2
+:PSRAD          mmxreg1, mmxreg2 is vexMode=0 &  mandover=0 & byte=0x0F; byte=0xE2; mmxmod = 3 & mmxreg1 & mmxreg2
 {
 # a count greater than 31 just clears all the bits
-    mmxreg1_Da = mmxreg1_Da s>> mmxreg2;
-    mmxreg1_Db = mmxreg1_Db s>> mmxreg2;
+    mmxreg1[0,32] = mmxreg1[0,32] s>> mmxreg2;
+    mmxreg1[32,32] = mmxreg1[32,32] s>> mmxreg2;
 }
 
-:PSRAD          mmxreg2, imm8    is vexMode=0 &  mandover=0 & byte=0x0F; byte=0x72; mod = 0b11 & reg_opcode=4 & mmxreg2 & mmxreg2_Da & mmxreg2_Db ; imm8
+:PSRAD          mmxreg2, imm8    is vexMode=0 &  mandover=0 & byte=0x0F; byte=0x72; mod = 0b11 & reg_opcode=4 & mmxreg2; imm8
 {
 # a count greater than 31 just clears all the bits
-    mmxreg2_Da = mmxreg2_Da s>> imm8;
-    mmxreg2_Db = mmxreg2_Db s>> imm8;
+    mmxreg2[0,32] = mmxreg2[0,32] s>> imm8;
+    mmxreg2[32,32] = mmxreg2[32,32] s>> imm8;
 }
 
 :PSRAW          XmmReg, m128      is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0xE1; XmmReg ... & m128 ... { XmmReg = psraw(XmmReg, m128); }
 :PSRAW          XmmReg1, XmmReg2  is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0xE1; xmmmod = 3 & XmmReg1 & XmmReg2 { XmmReg1 = psraw(XmmReg1, XmmReg2); }
 :PSRAW          XmmReg2, imm8     is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x71; mod = 0b11 & reg_opcode=4 & XmmReg2; imm8 { XmmReg2 = psraw(XmmReg2, imm8:8); }
                     
-:PSRAD          XmmReg, m128      is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0xE2; ( XmmReg & XmmReg_Da & XmmReg_Db & XmmReg_Dc & XmmReg_Dd ) ... & m128
+:PSRAD          XmmReg, m128      is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0xE2; m128 & XmmReg ...
 {
 # a count greater than 31 just clears all the bits
-    XmmReg_Da = XmmReg_Da s>> m128;
-    XmmReg_Db = XmmReg_Db s>> m128;
-    XmmReg_Dc = XmmReg_Dc s>> m128;
-    XmmReg_Dd = XmmReg_Dd s>> m128;
+    XmmReg[0,32] = XmmReg[0,32] s>> m128;
+    XmmReg[32,32] = XmmReg[32,32] s>> m128;
+    XmmReg[64,32] = XmmReg[64,32] s>> m128;
+    XmmReg[96,32] = XmmReg[96,32] s>> m128;
 }
 
-:PSRAD          XmmReg1, XmmReg2  is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0xE2; xmmmod = 3 & XmmReg1 & XmmReg1_Da & XmmReg1_Db & XmmReg1_Dc & XmmReg1_Dd & XmmReg2
+:PSRAD          XmmReg1, XmmReg2  is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0xE2; xmmmod = 3 & XmmReg1 & XmmReg2
 {
 # a count greater than 31 just clears all the bits
-    XmmReg1_Da = XmmReg1_Da s>> XmmReg2;
-    XmmReg1_Db = XmmReg1_Db s>> XmmReg2;
-    XmmReg1_Dc = XmmReg1_Dc s>> XmmReg2;
-    XmmReg1_Dd = XmmReg1_Dd s>> XmmReg2;
+    XmmReg1[0,32] = XmmReg1[0,32] s>> XmmReg2;
+    XmmReg1[32,32] = XmmReg1[32,32] s>> XmmReg2;
+    XmmReg1[64,32] = XmmReg1[64,32] s>> XmmReg2;
+    XmmReg1[96,32] = XmmReg1[96,32] s>> XmmReg2;
 }
 
-:PSRAD          XmmReg2, imm8     is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x72; mod = 0b11 & reg_opcode=4 & XmmReg2 & XmmReg2_Da & XmmReg2_Db & XmmReg2_Dc & XmmReg2_Dd ; imm8
+:PSRAD          XmmReg2, imm8     is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x72; mod = 0b11 & reg_opcode=4 & XmmReg2; imm8
 {
 # a count greater than 31 just clears all the bits
-    XmmReg2_Da = XmmReg2_Da s>> imm8;
-    XmmReg2_Db = XmmReg2_Db s>> imm8;
-    XmmReg2_Dc = XmmReg2_Dc s>> imm8;
-    XmmReg2_Dd = XmmReg2_Dd s>> imm8;
+    XmmReg2[0,32] = XmmReg2[0,32] s>> imm8;
+    XmmReg2[32,32] = XmmReg2[32,32] s>> imm8;
+    XmmReg2[64,32] = XmmReg2[64,32] s>> imm8;
+    XmmReg2[96,32] = XmmReg2[96,32] s>> imm8;
 }
 
 :PSRLDQ         XmmReg2, imm8     is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x73; xmmmod=3 & reg_opcode=3 & XmmReg2; imm8
@@ -7320,20 +6693,21 @@ define pcodeop psubb;
 :PSUBB           mmxreg, m64      is vexMode=0 &  mandover=0 & byte=0x0F; byte=0xF8; mmxreg ... & m64 ... { mmxreg = psubb(mmxreg, m64); }
 :PSUBB           mmxreg1, mmxreg2 is vexMode=0 &  mandover=0 & byte=0x0F; byte=0xF8; mmxmod = 3 & mmxreg1 & mmxreg2 { mmxreg1 = psubb(mmxreg1, mmxreg2); }
                     
-:PSUBW           mmxreg, m64      is vexMode=0 &  mandover=0 & byte=0x0F; byte=0xF9; ( mmxreg & mmxreg_Wa & mmxreg_Wb & mmxreg_Wc & mmxreg_Wd ) ... & ( m64 & m64_Wa & m64_Wb & m64_Wc & m64_Wd )
+:PSUBW           mmxreg, m64      is vexMode=0 &  mandover=0 & byte=0x0F; byte=0xF9; mmxreg ... & m64
 {
-    mmxreg_Wa = mmxreg_Wa - m64_Wa;
-    mmxreg_Wb = mmxreg_Wb - m64_Wb;
-    mmxreg_Wc = mmxreg_Wc - m64_Wc;
-    mmxreg_Wd = mmxreg_Wd - m64_Wd;
+    local m:8 = m64;
+    mmxreg[0,16] = mmxreg[0,16] - m[0,16];
+    mmxreg[16,16] = mmxreg[16,16] - m[16,16];
+    mmxreg[32,16] = mmxreg[32,16] - m[32,16];
+    mmxreg[48,16] = mmxreg[48,16] - m[48,16];
 }
 
-:PSUBW           mmxreg1, mmxreg2 is vexMode=0 &  mandover=0 & byte=0x0F; byte=0xF9; mmxmod = 3 & mmxreg1 & mmxreg1_Wa & mmxreg1_Wb & mmxreg1_Wc & mmxreg1_Wd & mmxreg2 & mmxreg2_Wa & mmxreg2_Wb & mmxreg2_Wc & mmxreg2_Wd
+:PSUBW           mmxreg1, mmxreg2 is vexMode=0 &  mandover=0 & byte=0x0F; byte=0xF9; mmxmod = 3 & mmxreg1 & mmxreg2
 {
-    mmxreg1_Wa = mmxreg1_Wa - mmxreg2_Wa;
-    mmxreg1_Wb = mmxreg1_Wb - mmxreg2_Wb;
-    mmxreg1_Wc = mmxreg1_Wc - mmxreg2_Wc;
-    mmxreg1_Wd = mmxreg1_Wd - mmxreg2_Wd;
+    mmxreg1[0,16] = mmxreg1[0,16] - mmxreg2[0,16];
+    mmxreg1[16,16] = mmxreg1[16,16] - mmxreg2[16,16];
+    mmxreg1[32,16] = mmxreg1[32,16] - mmxreg2[32,16];
+    mmxreg1[48,16] = mmxreg1[48,16] - mmxreg2[48,16];
 }
                     
 define pcodeop psubd;
@@ -7349,28 +6723,29 @@ define pcodeop psubq;
 :PSUBB           XmmReg, m128      is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0xF8; XmmReg ... & m128 ... { XmmReg = psubb(XmmReg, m128); }
 :PSUBB           XmmReg1, XmmReg2  is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0xF8; xmmmod = 3 & XmmReg1 & XmmReg2 { XmmReg1 = psubb(XmmReg1, XmmReg2); }
                     
-:PSUBW           XmmReg, m128      is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0xF9; ( XmmReg & XmmReg_Wa & XmmReg_Wb & XmmReg_Wc & XmmReg_Wd & XmmReg_We & XmmReg_Wf & XmmReg_Wg & XmmReg_Wh ) ... & ( m128 & m128_Wa & m128_Wb & m128_Wc & m128_Wd & m128_We & m128_Wf & m128_Wg & m128_Wh )
+:PSUBW           XmmReg, m128      is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0xF9; m128 & XmmReg ...
 {
-    XmmReg_Wa = XmmReg_Wa - m128_Wa;
-    XmmReg_Wb = XmmReg_Wb - m128_Wb;
-    XmmReg_Wc = XmmReg_Wc - m128_Wc;
-    XmmReg_Wd = XmmReg_Wd - m128_Wd;
-    XmmReg_We = XmmReg_We - m128_We;
-    XmmReg_Wf = XmmReg_Wf - m128_Wf;
-    XmmReg_Wg = XmmReg_Wg - m128_Wg;
-    XmmReg_Wh = XmmReg_Wh - m128_Wh;
+    local m:16 = m128;
+    XmmReg[0,16] = XmmReg[0,16] - m[0,16];
+    XmmReg[16,16] = XmmReg[16,16] - m[16,16];
+    XmmReg[32,16] = XmmReg[32,16] - m[32,16];
+    XmmReg[48,16] = XmmReg[48,16] - m[48,16];
+    XmmReg[64,16] = XmmReg[64,16] - m[64,16];
+    XmmReg[80,16] = XmmReg[80,16] - m[80,16];
+    XmmReg[96,16] = XmmReg[96,16] - m[96,16];
+    XmmReg[112,16] = XmmReg[112,16] - m[112,16];
 }
 
-:PSUBW           XmmReg1, XmmReg2  is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0xF9; xmmmod = 3 & XmmReg1 & XmmReg1_Wa & XmmReg1_Wb & XmmReg1_Wc & XmmReg1_Wd & XmmReg1_We & XmmReg1_Wf & XmmReg1_Wg & XmmReg1_Wh & XmmReg2 & XmmReg2_Wa & XmmReg2_Wb & XmmReg2_Wc & XmmReg2_Wd & XmmReg2_We & XmmReg2_Wf & XmmReg2_Wg & XmmReg2_Wh
+:PSUBW           XmmReg1, XmmReg2  is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0xF9; xmmmod = 3 & XmmReg1 & XmmReg2
 {
-    XmmReg1_Wa = XmmReg1_Wa - XmmReg2_Wa;
-    XmmReg1_Wb = XmmReg1_Wb - XmmReg2_Wb;
-    XmmReg1_Wc = XmmReg1_Wc - XmmReg2_Wc;
-    XmmReg1_Wd = XmmReg1_Wd - XmmReg2_Wd;
-    XmmReg1_We = XmmReg1_We - XmmReg2_We;
-    XmmReg1_Wf = XmmReg1_Wf - XmmReg2_Wf;
-    XmmReg1_Wg = XmmReg1_Wg - XmmReg2_Wg;
-    XmmReg1_Wh = XmmReg1_Wh - XmmReg2_Wh;
+    XmmReg1[0,16] = XmmReg1[0,16] - XmmReg2[0,16];
+    XmmReg1[16,16] = XmmReg1[16,16] - XmmReg2[16,16];
+    XmmReg1[32,16] = XmmReg1[32,16] - XmmReg2[32,16];
+    XmmReg1[48,16] = XmmReg1[48,16] - XmmReg2[48,16];
+    XmmReg1[64,16] = XmmReg1[64,16] - XmmReg2[64,16];
+    XmmReg1[80,16] = XmmReg1[80,16] - XmmReg2[80,16];
+    XmmReg1[96,16] = XmmReg1[96,16] - XmmReg2[96,16];
+    XmmReg1[112,16] = XmmReg1[112,16] - XmmReg2[112,16];
 }
                     
 :PSUBD           XmmReg, m128      is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0xFA; XmmReg ... & m128 ... { XmmReg = psubd(XmmReg, m128); }
@@ -7404,300 +6779,305 @@ define pcodeop psubusw;
 :PSUBUSW         XmmReg, m128      is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0xD9; XmmReg ... & m128 { XmmReg = psubusw(XmmReg, m128); }
 :PSUBUSW         XmmReg1, XmmReg2  is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0xD9; xmmmod = 3 & XmmReg1 & XmmReg2 { XmmReg1 = psubusw(XmmReg1, XmmReg2); }
 
-:PUNPCKHBW       mmxreg, m64      is vexMode=0 &  mandover=0 & byte=0x0F; byte=0x68; ( mmxreg & mmxreg_Ba & mmxreg_Bb & mmxreg_Bc & mmxreg_Bd & mmxreg_Be & mmxreg_Bf & mmxreg_Bg & mmxreg_Bh ) ... & ( m64 & m64_Be & m64_Bf & m64_Bg & m64_Bh )
+:PUNPCKHBW       mmxreg, m64      is vexMode=0 &  mandover=0 & byte=0x0F; byte=0x68; mmxreg ... & m64
 {
-    mmxreg_Ba = mmxreg_Be;
-    mmxreg_Bb =    m64_Be;
-    mmxreg_Bc = mmxreg_Bf;
-    mmxreg_Bd =    m64_Bf;
-    mmxreg_Be = mmxreg_Bg;
-    mmxreg_Bf =    m64_Bg;
-    mmxreg_Bg = mmxreg_Bh;
-    mmxreg_Bh =    m64_Bh;
+    local m:8 = m64;
+    mmxreg[0,8] = mmxreg[32,8];
+    mmxreg[8,8] =    m[32,8];
+    mmxreg[16,8] = mmxreg[40,8];
+    mmxreg[24,8] =    m[40,8];
+    mmxreg[32,8] = mmxreg[48,8];
+    mmxreg[40,8] =    m[48,8];
+    mmxreg[48,8] = mmxreg[56,8];
+    mmxreg[56,8] =    m[56,8];
 }
 
-:PUNPCKHBW       mmxreg1, mmxreg2 is vexMode=0 &  mandover=0 & byte=0x0F; byte=0x68; mmxmod = 3 & mmxreg1 & mmxreg1_Ba & mmxreg1_Bb & mmxreg1_Bc & mmxreg1_Bd & mmxreg1_Be & mmxreg1_Bf & mmxreg1_Bg & mmxreg1_Bh & mmxreg2 & mmxreg2_Be & mmxreg2_Bf & mmxreg2_Bg & mmxreg2_Bh
+:PUNPCKHBW       mmxreg1, mmxreg2 is vexMode=0 &  mandover=0 & byte=0x0F; byte=0x68; mmxmod = 3 & mmxreg1 & mmxreg2
 {
-    mmxreg1_Ba = mmxreg1_Be;
-    mmxreg1_Bb = mmxreg2_Be;
-    mmxreg1_Bc = mmxreg1_Bf;
-    mmxreg1_Bd = mmxreg2_Bf;
-    mmxreg1_Be = mmxreg1_Bg;
-    mmxreg1_Bf = mmxreg2_Bg;
-    mmxreg1_Bg = mmxreg1_Bh;
-    mmxreg1_Bh = mmxreg2_Bh;
+    mmxreg1[0,8] = mmxreg1[32,8];
+    mmxreg1[8,8] = mmxreg2[32,8];
+    mmxreg1[16,8] = mmxreg1[40,8];
+    mmxreg1[24,8] = mmxreg2[40,8];
+    mmxreg1[32,8] = mmxreg1[48,8];
+    mmxreg1[40,8] = mmxreg2[48,8];
+    mmxreg1[48,8] = mmxreg1[56,8];
+    mmxreg1[56,8] = mmxreg2[56,8];
 }
                     
-:PUNPCKHWD       mmxreg, m64      is vexMode=0 &  mandover=0 & byte=0x0F; byte=0x69; ( mmxreg & mmxreg_Wa & mmxreg_Wb & mmxreg_Wc & mmxreg_Wd ) ... & ( m64 & m64_Wc & m64_Wd )
+:PUNPCKHWD       mmxreg, m64      is vexMode=0 &  mandover=0 & byte=0x0F; byte=0x69; mmxreg ... & m64
 {
-    mmxreg_Wa = mmxreg_Wc;
-    mmxreg_Wb =    m64_Wc;
-    mmxreg_Wc = mmxreg_Wd;
-    mmxreg_Wd =    m64_Wd;
+    local m:8 = m64;
+    mmxreg[0,16] = mmxreg[32,16];
+    mmxreg[16,16] =    m[32,16];
+    mmxreg[32,16] = mmxreg[48,16];
+    mmxreg[48,16] =    m[48,16];
 }
 
-:PUNPCKHWD       mmxreg1, mmxreg2 is vexMode=0 &  mandover=0 & byte=0x0F; byte=0x69; mmxmod = 3 & mmxreg1 & mmxreg1_Wa & mmxreg1_Wb & mmxreg1_Wc & mmxreg1_Wd & mmxreg2 & mmxreg2_Wc & mmxreg2_Wd
+:PUNPCKHWD       mmxreg1, mmxreg2 is vexMode=0 &  mandover=0 & byte=0x0F; byte=0x69; mmxmod = 3 & mmxreg1 & mmxreg2
 {
-    mmxreg1_Wa = mmxreg1_Wc;
-    mmxreg1_Wb = mmxreg2_Wc;
-    mmxreg1_Wc = mmxreg1_Wd;
-    mmxreg1_Wd = mmxreg2_Wd;
+    mmxreg1[0,16] = mmxreg1[32,16];
+    mmxreg1[16,16] = mmxreg2[32,16];
+    mmxreg1[32,16] = mmxreg1[48,16];
+    mmxreg1[48,16] = mmxreg2[48,16];
 }
                     
-:PUNPCKHDQ       mmxreg, m64      is vexMode=0 &  mandover=0 & byte=0x0F; byte=0x6A; ( mmxreg & mmxreg_Da & mmxreg_Db ) ... & ( m64 & m64_Db )
+:PUNPCKHDQ       mmxreg, m64      is vexMode=0 &  mandover=0 & byte=0x0F; byte=0x6A; mmxreg ... & m64
 {
-    mmxreg_Da = mmxreg_Db;
-    mmxreg_Db =    m64_Db;
+    mmxreg[0,32] = mmxreg[32,32];
+    mmxreg[32,32] =    m64[32,32];
 }
 
-:PUNPCKHDQ       mmxreg1, mmxreg2 is vexMode=0 &  mandover=0 & byte=0x0F; byte=0x6A; mmxmod = 3 & mmxreg1 & mmxreg1_Da & mmxreg1_Db & mmxreg2 & mmxreg2_Db
+:PUNPCKHDQ       mmxreg1, mmxreg2 is vexMode=0 &  mandover=0 & byte=0x0F; byte=0x6A; mmxmod = 3 & mmxreg1 & mmxreg2
 {
-    mmxreg1_Da = mmxreg1_Db;
-    mmxreg1_Db = mmxreg2_Db;
+    mmxreg1[0,32] = mmxreg1[32,32];
+    mmxreg1[32,32] = mmxreg2[32,32];
 }
 
-:PUNPCKHBW       XmmReg, m128      is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x68; ( XmmReg & XmmReg_Ba & XmmReg_Bb & XmmReg_Bc & XmmReg_Bd & XmmReg_Be & XmmReg_Bf & XmmReg_Bg & XmmReg_Bh & XmmReg_Bi & XmmReg_Bj & XmmReg_Bk & XmmReg_Bl & XmmReg_Bm & XmmReg_Bn & XmmReg_Bo & XmmReg_Bp ) ... & ( m128 & m128_Bi & m128_Bj & m128_Bk & m128_Bl & m128_Bm & m128_Bn & m128_Bo & m128_Bp )
+:PUNPCKHBW       XmmReg, m128      is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x68; m128 & XmmReg ...
 {
-    XmmReg_Ba = XmmReg_Bi;
-    XmmReg_Bb =   m128_Bi;
-    XmmReg_Bc = XmmReg_Bj;
-    XmmReg_Bd =   m128_Bj;
-    XmmReg_Be = XmmReg_Bk;
-    XmmReg_Bf =   m128_Bk;
-    XmmReg_Bg = XmmReg_Bl;
-    XmmReg_Bh =   m128_Bl;
-    XmmReg_Bi = XmmReg_Bm;
-    XmmReg_Bj =   m128_Bm;
-    XmmReg_Bk = XmmReg_Bn;
-    XmmReg_Bl =   m128_Bn;
-    XmmReg_Bm = XmmReg_Bo;
-    XmmReg_Bn =   m128_Bo;
-    XmmReg_Bo = XmmReg_Bp;
-    XmmReg_Bp =   m128_Bp;
+    local m:16 = m128;
+    XmmReg[0,8] = XmmReg[64,8];
+    XmmReg[8,8] =   m[64,8];
+    XmmReg[16,8] = XmmReg[72,8];
+    XmmReg[24,8] =   m[72,8];
+    XmmReg[32,8] = XmmReg[80,8];
+    XmmReg[40,8] =   m[80,8];
+    XmmReg[48,8] = XmmReg[88,8];
+    XmmReg[56,8] =   m[88,8];
+    XmmReg[64,8] = XmmReg[96,8];
+    XmmReg[72,8] =   m[96,8];
+    XmmReg[80,8] = XmmReg[104,8];
+    XmmReg[88,8] =   m[104,8];
+    XmmReg[96,8] = XmmReg[112,8];
+    XmmReg[104,8] =   m[112,8];
+    XmmReg[112,8] = XmmReg[120,8];
+    XmmReg[120,8] =   m[120,8];
 }
 
 # full set of XMM byte registers
-:PUNPCKHBW  XmmReg1, XmmReg2  is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x68; xmmmod = 3 & XmmReg1 & XmmReg2 &
-XmmReg1_Ba & XmmReg1_Bb & XmmReg1_Bc & XmmReg1_Bd & XmmReg1_Be & XmmReg1_Bf & XmmReg1_Bg & XmmReg1_Bh &
-XmmReg1_Bi & XmmReg1_Bj & XmmReg1_Bk & XmmReg1_Bl & XmmReg1_Bm & XmmReg1_Bn & XmmReg1_Bo & XmmReg1_Bp &
-XmmReg2_Bi & XmmReg2_Bj & XmmReg2_Bk & XmmReg2_Bl & XmmReg2_Bm & XmmReg2_Bn & XmmReg2_Bo & XmmReg2_Bp
+:PUNPCKHBW  XmmReg1, XmmReg2  is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x68; xmmmod = 3 & XmmReg1 & XmmReg2
 {
-    XmmReg1_Ba = XmmReg1_Bi;
-    XmmReg1_Bb = XmmReg2_Bi;
-    XmmReg1_Bc = XmmReg1_Bj;
-    XmmReg1_Bd = XmmReg2_Bj;
-    XmmReg1_Be = XmmReg1_Bk;
-    XmmReg1_Bf = XmmReg2_Bk;
-    XmmReg1_Bg = XmmReg1_Bl;
-    XmmReg1_Bh = XmmReg2_Bl;
-    XmmReg1_Bi = XmmReg1_Bm;
-    XmmReg1_Bj = XmmReg2_Bm;
-    XmmReg1_Bk = XmmReg1_Bn;
-    XmmReg1_Bl = XmmReg2_Bn;
-    XmmReg1_Bm = XmmReg1_Bo;
-    XmmReg1_Bn = XmmReg2_Bo;
-    XmmReg1_Bo = XmmReg1_Bp;
-    XmmReg1_Bp = XmmReg2_Bp;
+    XmmReg1[0,8] = XmmReg1[64,8];
+    XmmReg1[8,8] = XmmReg2[64,8];
+    XmmReg1[16,8] = XmmReg1[72,8];
+    XmmReg1[24,8] = XmmReg2[72,8];
+    XmmReg1[32,8] = XmmReg1[80,8];
+    XmmReg1[40,8] = XmmReg2[80,8];
+    XmmReg1[48,8] = XmmReg1[88,8];
+    XmmReg1[56,8] = XmmReg2[88,8];
+    XmmReg1[64,8] = XmmReg1[96,8];
+    XmmReg1[72,8] = XmmReg2[96,8];
+    XmmReg1[80,8] = XmmReg1[104,8];
+    XmmReg1[88,8] = XmmReg2[104,8];
+    XmmReg1[96,8] = XmmReg1[112,8];
+    XmmReg1[104,8] = XmmReg2[112,8];
+    XmmReg1[112,8] = XmmReg1[120,8];
+    XmmReg1[120,8] = XmmReg2[120,8];
 }
                                       
-:PUNPCKHWD       XmmReg, m128      is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x69;  ( XmmReg & XmmReg_Wa & XmmReg_Wb & XmmReg_Wc & XmmReg_Wd & XmmReg_We & XmmReg_Wf & XmmReg_Wg & XmmReg_Wh ) ... & ( m128 & m128_We & m128_Wf & m128_Wg & m128_Wh )
+:PUNPCKHWD       XmmReg, m128      is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x69; m128 & XmmReg ...
 {
-    XmmReg_Wa = XmmReg_We;
-    XmmReg_Wb =   m128_We;
-    XmmReg_Wc = XmmReg_Wf;
-    XmmReg_Wd =   m128_Wf;
-    XmmReg_We = XmmReg_Wg;
-    XmmReg_Wf =   m128_Wg;
-    XmmReg_Wg = XmmReg_Wh;
-    XmmReg_Wh =   m128_Wh;
+    local m:16 = m128;
+    XmmReg[0,16] = XmmReg[64,16];
+    XmmReg[16,16] =   m[64,16];
+    XmmReg[32,16] = XmmReg[80,16];
+    XmmReg[48,16] =   m[80,16];
+    XmmReg[64,16] = XmmReg[96,16];
+    XmmReg[80,16] =   m[96,16];
+    XmmReg[96,16] = XmmReg[112,16];
+    XmmReg[112,16] =   m[112,16];
 }
 
-:PUNPCKHWD       XmmReg1, XmmReg2  is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x69; xmmmod = 3 & XmmReg1 & XmmReg1_Wa & XmmReg1_Wb & XmmReg1_Wc & XmmReg1_Wd & XmmReg1_We & XmmReg1_Wf & XmmReg1_Wg & XmmReg1_Wh & XmmReg2 & XmmReg2_We & XmmReg2_Wf & XmmReg2_Wg & XmmReg2_Wh
+:PUNPCKHWD       XmmReg1, XmmReg2  is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x69; xmmmod = 3 & XmmReg1 & XmmReg2
 {
-    XmmReg1_Wa = XmmReg1_We;
-    XmmReg1_Wb = XmmReg2_We;
-    XmmReg1_Wc = XmmReg1_Wf;
-    XmmReg1_Wd = XmmReg2_Wf;
-    XmmReg1_We = XmmReg1_Wg;
-    XmmReg1_Wf = XmmReg2_Wg;
-    XmmReg1_Wg = XmmReg1_Wh;
-    XmmReg1_Wh = XmmReg2_Wh;
+    XmmReg1[0,16] = XmmReg1[64,16];
+    XmmReg1[16,16] = XmmReg2[64,16];
+    XmmReg1[32,16] = XmmReg1[80,16];
+    XmmReg1[48,16] = XmmReg2[80,16];
+    XmmReg1[64,16] = XmmReg1[96,16];
+    XmmReg1[80,16] = XmmReg2[96,16];
+    XmmReg1[96,16] = XmmReg1[112,16];
+    XmmReg1[112,16] = XmmReg2[112,16];
 }
                      
-:PUNPCKHDQ       XmmReg, m128      is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x6A; ( XmmReg & XmmReg_Da & XmmReg_Db & XmmReg_Dc & XmmReg_Dd ) ... & ( m128 & m128_Dc & m128_Dd )
+:PUNPCKHDQ       XmmReg, m128      is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x6A; m128 & XmmReg ...
 {
-    XmmReg_Da = XmmReg_Dc;
-    XmmReg_Db =   m128_Dc;
-    XmmReg_Dc = XmmReg_Dd;
-    XmmReg_Dd =   m128_Dd;
+    local m:16 = m128;
+    XmmReg[0,32] = XmmReg[64,32];
+    XmmReg[32,32] =   m[64,32];
+    XmmReg[64,32] = XmmReg[96,32];
+    XmmReg[96,32] =   m[96,32];
 }
 
-:PUNPCKHDQ       XmmReg1, XmmReg2  is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x6A; xmmmod = 3 & XmmReg1 & XmmReg1_Da & XmmReg1_Db & XmmReg1_Dc & XmmReg1_Dd & XmmReg2 & XmmReg2_Da & XmmReg2_Db & XmmReg2_Dc & XmmReg2_Dd
+:PUNPCKHDQ       XmmReg1, XmmReg2  is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x6A; xmmmod = 3 & XmmReg1 & XmmReg2
 {
-    XmmReg1_Da = XmmReg1_Dc;
-    XmmReg1_Db = XmmReg2_Dc;
-    XmmReg1_Dc = XmmReg1_Dd;
-    XmmReg1_Dd = XmmReg2_Dd;
+    XmmReg1[0,32] = XmmReg1[64,32];
+    XmmReg1[32,32] = XmmReg2[64,32];
+    XmmReg1[64,32] = XmmReg1[96,32];
+    XmmReg1[96,32] = XmmReg2[96,32];
 }
 
-:PUNPCKHQDQ      XmmReg, m128      is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x6D; ( XmmReg & XmmReg_Qa & XmmReg_Qb ) ... & ( m128 & m128_Qb )
+:PUNPCKHQDQ      XmmReg, m128      is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x6D; m128 & XmmReg ...
 {
-    XmmReg_Qa = XmmReg_Qb;
-    XmmReg_Qb =   m128_Qb;
+    XmmReg[0,64] = XmmReg[64,64];
+    XmmReg[64,64] =   m128[64,64];
 }
 
-:PUNPCKHQDQ      XmmReg1, XmmReg2  is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x6D; xmmmod = 3 & XmmReg1 & XmmReg1_Qa & XmmReg1_Qb & XmmReg2 & XmmReg2_Qb
+:PUNPCKHQDQ      XmmReg1, XmmReg2  is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x6D; xmmmod = 3 & XmmReg1 & XmmReg2
 {
-    XmmReg1_Qa = XmmReg1_Qb;
-    XmmReg1_Qb = XmmReg2_Qb;
+    XmmReg1[0,64] = XmmReg1[64,64];
+    XmmReg1[64,64] = XmmReg2[64,64];
 }
 
-:PUNPCKLBW       mmxreg, m32      is vexMode=0 &  mandover=0 & byte=0x0F; byte=0x60;  ( mmxreg & mmxreg_Ba & mmxreg_Bb & mmxreg_Bc & mmxreg_Bd & mmxreg_Be & mmxreg_Bf & mmxreg_Bg & mmxreg_Bh ) ... & ( m32 & m32_Ba & m32_Bb & m32_Bc & m32_Bd )
+:PUNPCKLBW       mmxreg, m32      is vexMode=0 &  mandover=0 & byte=0x0F; byte=0x60; mmxreg ... & m32
 {
-    mmxreg_Bh =    m32_Bd;
-    mmxreg_Bg = mmxreg_Bd;
-    mmxreg_Bf =    m32_Bc;
-    mmxreg_Be = mmxreg_Bc;
-    mmxreg_Bd =    m32_Bb;
-    mmxreg_Bc = mmxreg_Bb;
-    mmxreg_Bb =    m32_Ba;
-#   mmxreg_Ba = mmxreg_Ba; superfluous
+    local m:4 = m32;
+    mmxreg[56,8] =    m[24,8];
+    mmxreg[48,8] = mmxreg[24,8];
+    mmxreg[40,8] =    m[16,8];
+    mmxreg[32,8] = mmxreg[16,8];
+    mmxreg[24,8] =    m[8,8];
+    mmxreg[16,8] = mmxreg[8,8];
+    mmxreg[8,8] =    m[0,8];
+#   mmxreg[0,8] = mmxreg[0,8]; superfluous
 }
     
-:PUNPCKLBW       mmxreg1, mmxreg2 is vexMode=0 &  mandover=0 & byte=0x0F; byte=0x60; mmxmod = 3 & mmxreg1 & mmxreg1_Ba & mmxreg1_Bb & mmxreg1_Bc & mmxreg1_Bd & mmxreg1_Be & mmxreg1_Bf & mmxreg1_Bg & mmxreg1_Bh & mmxreg2 & mmxreg2_Ba & mmxreg2_Bb & mmxreg2_Bc & mmxreg2_Bd
+:PUNPCKLBW       mmxreg1, mmxreg2 is vexMode=0 &  mandover=0 & byte=0x0F; byte=0x60; mmxmod = 3 & mmxreg1 & mmxreg2
 {
-    mmxreg1_Bh = mmxreg2_Bd;
-    mmxreg1_Bg = mmxreg1_Bd;
-    mmxreg1_Bf = mmxreg2_Bc;
-    mmxreg1_Be = mmxreg1_Bc;
-    mmxreg1_Bd = mmxreg2_Bb;
-    mmxreg1_Bc = mmxreg1_Bb;
-    mmxreg1_Bb = mmxreg2_Ba;
-#   mmxreg1_Ba = mmxreg1_Ba; superfluous
+    mmxreg1[56,8] = mmxreg2[24,8];
+    mmxreg1[48,8] = mmxreg1[24,8];
+    mmxreg1[40,8] = mmxreg2[16,8];
+    mmxreg1[32,8] = mmxreg1[16,8];
+    mmxreg1[24,8] = mmxreg2[8,8];
+    mmxreg1[16,8] = mmxreg1[8,8];
+    mmxreg1[8,8] = mmxreg2[0,8];
+#   mmxreg1[0,8] = mmxreg1[0,8]; superfluous
 }
     
-:PUNPCKLWD       mmxreg, m32      is vexMode=0 &  mandover=0 & byte=0x0F; byte=0x61; ( mmxreg & mmxreg_Wa & mmxreg_Wb & mmxreg_Wc & mmxreg_Wd ) ... & ( m32 & m32_Wa & m32_Wb )
+:PUNPCKLWD       mmxreg, m32      is vexMode=0 &  mandover=0 & byte=0x0F; byte=0x61; mmxreg ... & m32
 {
-    mmxreg_Wd =    m32_Wb;
-    mmxreg_Wc = mmxreg_Wb;
-    mmxreg_Wb =    m32_Wa;
-#   mmxreg_Wa = mmxreg_Wa; superfluous
+    local m:4 = m32;
+    mmxreg[48,16] =    m[16,16];
+    mmxreg[32,16] = mmxreg[16,16];
+    mmxreg[16,16] =    m[0,16];
+#   mmxreg[0,16] = mmxreg[0,16]; superfluous
 }
 
-:PUNPCKLWD       mmxreg1, mmxreg2 is vexMode=0 &  mandover=0 & byte=0x0F; byte=0x61; mmxmod = 3 & mmxreg1 & mmxreg1_Wa & mmxreg1_Wb & mmxreg1_Wc & mmxreg1_Wd & mmxreg2 & mmxreg2_Wa & mmxreg2_Wb
+:PUNPCKLWD       mmxreg1, mmxreg2 is vexMode=0 &  mandover=0 & byte=0x0F; byte=0x61; mmxmod = 3 & mmxreg1 & mmxreg2
 {
-    mmxreg1_Wd = mmxreg2_Wb;
-    mmxreg1_Wc = mmxreg1_Wb;
-    mmxreg1_Wb = mmxreg2_Wa;
-#   mmxreg1_Wa = mmxreg1_Wa; superfluous
+    mmxreg1[48,16] = mmxreg2[16,16];
+    mmxreg1[32,16] = mmxreg1[16,16];
+    mmxreg1[16,16] = mmxreg2[0,16];
+#   mmxreg1[0,16] = mmxreg1[0,16]; superfluous
 }
 
-:PUNPCKLDQ       mmxreg, m32      is vexMode=0 &  mandover=0 & byte=0x0F; byte=0x62; ( mmxreg & mmxreg_Da & mmxreg_Db ) ... & ( m32 )
+:PUNPCKLDQ       mmxreg, m32      is vexMode=0 &  mandover=0 & byte=0x0F; byte=0x62; mmxreg ... & m32
 {
-    mmxreg_Db =    m32;
-#   mmxreg_Da = mmxreg_Da; superfluous
+    mmxreg[32,32] =    m32;
+#   mmxreg[0,32] = mmxreg[0,32]; superfluous
 }
 
-:PUNPCKLDQ       mmxreg1, mmxreg2 is vexMode=0 &  mandover=0 & byte=0x0F; byte=0x62; mmxmod = 3 & mmxreg1 & mmxreg1_Da & mmxreg1_Db & mmxreg2 & mmxreg2_Da
+:PUNPCKLDQ       mmxreg1, mmxreg2 is vexMode=0 &  mandover=0 & byte=0x0F; byte=0x62; mmxmod = 3 & mmxreg1 & mmxreg2
 {
-    mmxreg1_Db = mmxreg2_Da;
-#   mmxreg1_Da = mmxreg1_Da; superfluous
+    mmxreg1[32,32] = mmxreg2[0,32];
+#   mmxreg1[0,32] = mmxreg1[0,32]; superfluous
 }
 
-:PUNPCKLBW       XmmReg, m128      is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x60;  ( XmmReg & XmmReg_Ba & XmmReg_Bb & XmmReg_Bc & XmmReg_Bd & XmmReg_Be & XmmReg_Bf & XmmReg_Bg & XmmReg_Bh & XmmReg_Bi & XmmReg_Bj & XmmReg_Bk & XmmReg_Bl & XmmReg_Bm & XmmReg_Bn & XmmReg_Bo & XmmReg_Bp ) ... & ( m128 & m128_Ba & m128_Bb & m128_Bc & m128_Bd & m128_Be & m128_Bf & m128_Bg & m128_Bh ) 
+:PUNPCKLBW       XmmReg, m128      is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x60; m128 & XmmReg ...
 {
-    XmmReg_Bp =   m128_Bh;
-    XmmReg_Bo = XmmReg_Bh;
-    XmmReg_Bn =   m128_Bg;
-    XmmReg_Bm = XmmReg_Bg;
-    XmmReg_Bl =   m128_Bf;
-    XmmReg_Bk = XmmReg_Bf;
-    XmmReg_Bj =   m128_Be;
-    XmmReg_Bi = XmmReg_Be;
-    XmmReg_Bh =   m128_Bd;
-    XmmReg_Bg = XmmReg_Bd;
-    XmmReg_Bf =   m128_Bc;
-    XmmReg_Be = XmmReg_Bc;
-    XmmReg_Bd =   m128_Bb;
-    XmmReg_Bc = XmmReg_Bb;
-    XmmReg_Bb =   m128_Ba;
-#   XmmReg_Ba = XmmReg_Ba; superfluous
+    local m:16 = m128;
+    XmmReg[120,8] =   m[56,8];
+    XmmReg[112,8] = XmmReg[56,8];
+    XmmReg[104,8] =   m[48,8];
+    XmmReg[96,8] = XmmReg[48,8];
+    XmmReg[88,8] =   m[40,8];
+    XmmReg[80,8] = XmmReg[40,8];
+    XmmReg[72,8] =   m[32,8];
+    XmmReg[64,8] = XmmReg[32,8];
+    XmmReg[56,8] =   m[24,8];
+    XmmReg[48,8] = XmmReg[24,8];
+    XmmReg[40,8] =   m[16,8];
+    XmmReg[32,8] = XmmReg[16,8];
+    XmmReg[24,8] =   m[8,8];
+    XmmReg[16,8] = XmmReg[8,8];
+    XmmReg[8,8] =   m[0,8];
+#   XmmReg[0,8] = XmmReg[0,8]; superfluous
 }
 
 :PUNPCKLBW       XmmReg1, XmmReg2  is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x60; xmmmod = 3 &
-XmmReg1 & XmmReg1_Ba & XmmReg1_Bb & XmmReg1_Bc & XmmReg1_Bd & XmmReg1_Be & XmmReg1_Bf & XmmReg1_Bg & XmmReg1_Bh &
-XmmReg1_Bi & XmmReg1_Bj & XmmReg1_Bk & XmmReg1_Bl & XmmReg1_Bm & XmmReg1_Bn & XmmReg1_Bo & XmmReg1_Bp &
-XmmReg2 & XmmReg2_Ba & XmmReg2_Bb & XmmReg2_Bc & XmmReg2_Bd & XmmReg2_Be & XmmReg2_Bf & XmmReg2_Bg & XmmReg2_Bh
+XmmReg1 & XmmReg2
 {
-    XmmReg1_Bp = XmmReg2_Bh;
-    XmmReg1_Bo = XmmReg1_Bh;
-    XmmReg1_Bn = XmmReg2_Bg;
-    XmmReg1_Bm = XmmReg1_Bg;
-    XmmReg1_Bl = XmmReg2_Bf;
-    XmmReg1_Bk = XmmReg1_Bf;
-    XmmReg1_Bj = XmmReg2_Be;
-    XmmReg1_Bi = XmmReg1_Be;
-    XmmReg1_Bh = XmmReg2_Bd;
-    XmmReg1_Bg = XmmReg1_Bd;
-    XmmReg1_Bf = XmmReg2_Bc;
-    XmmReg1_Be = XmmReg1_Bc;
-    XmmReg1_Bd = XmmReg2_Bb;
-    XmmReg1_Bc = XmmReg1_Bb;
-    XmmReg1_Bb = XmmReg2_Ba;
-#   XmmReg1_Ba = XmmReg1_Ba; superfluous
+    XmmReg1[120,8] = XmmReg2[56,8];
+    XmmReg1[112,8] = XmmReg1[56,8];
+    XmmReg1[104,8] = XmmReg2[48,8];
+    XmmReg1[96,8] = XmmReg1[48,8];
+    XmmReg1[88,8] = XmmReg2[40,8];
+    XmmReg1[80,8] = XmmReg1[40,8];
+    XmmReg1[72,8] = XmmReg2[32,8];
+    XmmReg1[64,8] = XmmReg1[32,8];
+    XmmReg1[56,8] = XmmReg2[24,8];
+    XmmReg1[48,8] = XmmReg1[24,8];
+    XmmReg1[40,8] = XmmReg2[16,8];
+    XmmReg1[32,8] = XmmReg1[16,8];
+    XmmReg1[24,8] = XmmReg2[8,8];
+    XmmReg1[16,8] = XmmReg1[8,8];
+    XmmReg1[8,8] = XmmReg2[0,8];
+#   XmmReg1[0,8] = XmmReg1[0,8]; superfluous
 }
 
-:PUNPCKLWD       XmmReg, m128      is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x61; ( XmmReg & XmmReg_Wa & XmmReg_Wb & XmmReg_Wc & XmmReg_Wd & XmmReg_We & XmmReg_Wf & XmmReg_Wg & XmmReg_Wh ) ... & ( m128 & m128_Wa & m128_Wb & m128_Wc & m128_Wd )
+:PUNPCKLWD       XmmReg, m128      is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x61; m128 & XmmReg ...
 {
-    XmmReg_Wh =   m128_Wd;
-    XmmReg_Wg = XmmReg_Wd;
-    XmmReg_Wf =   m128_Wc;
-    XmmReg_We = XmmReg_Wc;
-    XmmReg_Wd =   m128_Wb;
-    XmmReg_Wc = XmmReg_Wb;
-    XmmReg_Wb =   m128_Wa;
-#   XmmReg_Wa = XmmReg_Wa; superfluous
+    local m:16 = m128;
+    XmmReg[112,16] =   m[48,16];
+    XmmReg[96,16] = XmmReg[48,16];
+    XmmReg[80,16] =   m[32,16];
+    XmmReg[64,16] = XmmReg[32,16];
+    XmmReg[48,16] =   m[16,16];
+    XmmReg[32,16] = XmmReg[16,16];
+    XmmReg[16,16] =   m[0,16];
+#   XmmReg[0,16] = XmmReg[0,16]; superfluous
 }
 
-:PUNPCKLWD       XmmReg1, XmmReg2  is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x61; xmmmod = 3 & XmmReg1 & XmmReg1_Wa & XmmReg1_Wb & XmmReg1_Wc & XmmReg1_Wd & XmmReg1_We & XmmReg1_Wf & XmmReg1_Wg & XmmReg1_Wh & XmmReg2 & XmmReg2_Wa & XmmReg2_Wb & XmmReg2_Wc & XmmReg2_Wd
+:PUNPCKLWD       XmmReg1, XmmReg2  is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x61; xmmmod = 3 & XmmReg1 & XmmReg2
 {
-    XmmReg1_Wh = XmmReg2_Wd;
-    XmmReg1_Wg = XmmReg1_Wd;
-    XmmReg1_Wf = XmmReg2_Wc;
-    XmmReg1_We = XmmReg1_Wc;
-    XmmReg1_Wd = XmmReg2_Wb;
-    XmmReg1_Wc = XmmReg1_Wb;
-    XmmReg1_Wb = XmmReg2_Wa;
-#   XmmReg1_Wa = XmmReg1_Wa; superfluous
+    XmmReg1[112,16] = XmmReg2[48,16];
+    XmmReg1[96,16] = XmmReg1[48,16];
+    XmmReg1[80,16] = XmmReg2[32,16];
+    XmmReg1[64,16] = XmmReg1[32,16];
+    XmmReg1[48,16] = XmmReg2[16,16];
+    XmmReg1[32,16] = XmmReg1[16,16];
+    XmmReg1[16,16] = XmmReg2[0,16];
+#   XmmReg1[0,16] = XmmReg1[0,16]; superfluous
 }
 
-:PUNPCKLDQ       XmmReg, m128      is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x62; ( XmmReg & XmmReg_Da & XmmReg_Db & XmmReg_Dc & XmmReg_Dd ) ... & ( m128 & m128_Da & m128_Db )
+:PUNPCKLDQ       XmmReg, m128      is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x62; m128 & XmmReg ...
 {
-    XmmReg_Dd =   m128_Db;
-    XmmReg_Dc = XmmReg_Db;
-    XmmReg_Db =   m128_Da;
-#   XmmReg_Da = XmmReg_Da; superfluous
+    local m:16 = m128;
+    XmmReg[96,32] =   m[32,32];
+    XmmReg[64,32] = XmmReg[32,32];
+    XmmReg[32,32] =   m[0,32];
+#   XmmReg[0,32] = XmmReg[0,32]; superfluous
 }
 
-:PUNPCKLDQ       XmmReg1, XmmReg2  is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x62; xmmmod = 3 & XmmReg1 & XmmReg1_Da & XmmReg1_Db & XmmReg1_Dc & XmmReg1_Dd & XmmReg2 & XmmReg2_Da & XmmReg2_Db
+:PUNPCKLDQ       XmmReg1, XmmReg2  is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x62; xmmmod = 3 & XmmReg1 & XmmReg2
 {
-    XmmReg1_Dd = XmmReg2_Db;
-    XmmReg1_Dc = XmmReg1_Db;
-    XmmReg1_Db = XmmReg2_Da;
-#   XmmReg1_Da = XmmReg1_Da; superfluous
+    XmmReg1[96,32] = XmmReg2[32,32];
+    XmmReg1[64,32] = XmmReg1[32,32];
+    XmmReg1[32,32] = XmmReg2[0,32];
+#   XmmReg1[0,32] = XmmReg1[0,32]; superfluous
 }
 
 define pcodeop punpcklqdq;
-:PUNPCKLQDQ      XmmReg, m128      is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x6C; ( XmmReg & XmmReg_Qa & XmmReg_Qb ) ... & ( m128 & m128_Qa )
+:PUNPCKLQDQ      XmmReg, m128      is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x6C; m128 & XmmReg ...
 {
-    XmmReg_Qb =   m128_Qa;
-#   XmmReg_Qa = XmmReg_Qa; superfluous
+    XmmReg[64,64] =   m128[0,64];
+#   XmmReg[0,64] = XmmReg[0,64]; superfluous
 }
 
-:PUNPCKLQDQ      XmmReg1, XmmReg2  is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x6C; xmmmod = 3 & XmmReg1 & XmmReg1_Qa & XmmReg1_Qb & XmmReg2 & XmmReg2_Qa
+:PUNPCKLQDQ      XmmReg1, XmmReg2  is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x6C; xmmmod = 3 & XmmReg1 & XmmReg2
 {
-    XmmReg1_Qb = XmmReg2_Qa;
-#   XmmReg1_Qa = XmmReg1_Qa; superfluous
+    XmmReg1[64,64] = XmmReg2[0,64];
+#   XmmReg1[0,64] = XmmReg1[0,64]; superfluous
 }
 
 :PXOR            mmxreg, m64      is vexMode=0 &  mandover=0 & byte=0x0F; byte=0xEF; mmxreg ... & m64 { mmxreg = mmxreg ^ m64; }
@@ -7725,7 +7105,7 @@ define pcodeop shufpd;
 :SHUFPD          XmmReg, m128, imm8     is vexMode=0 & $(PRE_66) & byte=0x0F; byte=0xC6; XmmReg ... & m128; imm8 { XmmReg = shufpd(XmmReg, m128, imm8:8); }
 :SHUFPD          XmmReg1, XmmReg2, imm8  is vexMode=0 & $(PRE_66) & byte=0x0F; byte=0xC6; xmmmod=3 & XmmReg1 & XmmReg2; imm8 { XmmReg1 = shufpd(XmmReg1, XmmReg2, imm8:8); }
 
-:SHUFPS  XmmReg, m128, imm8  is vexMode=0 & mandover=0 & byte=0x0F; byte=0xC6; ( XmmReg & XmmReg_Da & XmmReg_Db & XmmReg_Dc & XmmReg_Dd ) ... & m128 ; imm8 & Order0 & Order1 & Order2 & Order3
+:SHUFPS  XmmReg, m128, imm8  is vexMode=0 & mandover=0 & byte=0x0F; byte=0xC6; (m128 & XmmReg ...); imm8 & Order0 & Order1 & Order2 & Order3
 {
     shifted:16 = XmmReg >> Order0;   
     tempA:4 = shifted:4;
@@ -7739,13 +7119,13 @@ define pcodeop shufpd;
     shifted = m128 >> Order3;   
     tempD:4 = shifted:4;
 
-    XmmReg_Da = tempA;
-    XmmReg_Db = tempB;
-    XmmReg_Dc = tempC;
-    XmmReg_Dd = tempD;
+    XmmReg[0,32] = tempA;
+    XmmReg[32,32] = tempB;
+    XmmReg[64,32] = tempC;
+    XmmReg[96,32] = tempD;
 }
 
-:SHUFPS  XmmReg1, XmmReg2, imm8  is vexMode=0 & mandover=0 & byte=0x0F; byte=0xC6; xmmmod=3 & XmmReg1 & XmmReg1_Da & XmmReg1_Db & XmmReg1_Dc & XmmReg1_Dd & XmmReg2; imm8 & Order0 & Order1 & Order2 & Order3
+:SHUFPS  XmmReg1, XmmReg2, imm8  is vexMode=0 & mandover=0 & byte=0x0F; byte=0xC6; xmmmod=3 & XmmReg1 & XmmReg2; imm8 & Order0 & Order1 & Order2 & Order3
 {
     shifted:16 = XmmReg1 >> Order0;   
     tempA:4 = shifted:4;
@@ -7759,10 +7139,10 @@ define pcodeop shufpd;
     shifted = XmmReg2 >> Order3;   
     tempD:4 = shifted:4;
     
-    XmmReg1_Da = tempA;
-    XmmReg1_Db = tempB;
-    XmmReg1_Dc = tempC;
-    XmmReg1_Dd = tempD;
+    XmmReg1[0,32] = tempA;
+    XmmReg1[32,32] = tempB;
+    XmmReg1[64,32] = tempC;
+    XmmReg1[96,32] = tempD;
 }
 
 define pcodeop sqrtpd;
@@ -7805,14 +7185,14 @@ define pcodeop subps;
 #   ESAC;
 #   OF,AF,SF <- 0;}
 
-:UCOMISD         XmmReg, m64      is vexMode=0 & $(PRE_66) & byte=0x0F; byte=0x2E; ( XmmReg & XmmReg_Qa ) ... & m64
+:UCOMISD         XmmReg, m64      is vexMode=0 & $(PRE_66) & byte=0x0F; byte=0x2E; m64 & XmmReg ...
 {
-   fucompe(XmmReg_Qa, m64);
+   fucompe(XmmReg[0,64], m64);
 }
 
-:UCOMISD         XmmReg1, XmmReg2  is vexMode=0 & $(PRE_66) & byte=0x0F; byte=0x2E; xmmmod=3 & XmmReg1 & XmmReg1_Qa & XmmReg2 & XmmReg2_Qa
+:UCOMISD         XmmReg1, XmmReg2  is vexMode=0 & $(PRE_66) & byte=0x0F; byte=0x2E; xmmmod=3 & XmmReg1 & XmmReg2
 {
-   fucompe(XmmReg1_Qa, XmmReg2_Qa);
+   fucompe(XmmReg1[0,64], XmmReg2[0,64]);
 }
 
 #Unordered Compare Scalar Single-Precision Floating-Point Values and Set EFLAGS
@@ -7825,102 +7205,106 @@ define pcodeop subps;
 #   ESAC;
 #   OF,AF,SF <- 0;}
 
-:UCOMISS         XmmReg, m32      is vexMode=0 & mandover=0 & byte=0x0F; byte=0x2E; ( XmmReg & XmmReg_Da ) ... & m32
+:UCOMISS         XmmReg, m32      is vexMode=0 & mandover=0 & byte=0x0F; byte=0x2E; m32 & XmmReg ...
 {
-   fucompe(XmmReg_Da, m32);
+   fucompe(XmmReg[0,32], m32);
 }
 
-:UCOMISS         XmmReg1, XmmReg2  is vexMode=0 & mandover=0 & byte=0x0F; byte=0x2E; xmmmod=3 & XmmReg1 & XmmReg1_Da & XmmReg2 & XmmReg2_Da
+:UCOMISS         XmmReg1, XmmReg2  is vexMode=0 & mandover=0 & byte=0x0F; byte=0x2E; xmmmod=3 & XmmReg1 & XmmReg2
 {
-   fucompe(XmmReg1_Da, XmmReg2_Da);
+   fucompe(XmmReg1[0,32], XmmReg2[0,32]);
 }
 
-:UNPCKHPD        XmmReg, m128     is vexMode=0 & $(PRE_66) & byte=0x0F; byte=0x15; ( XmmReg & XmmReg_Qa & XmmReg_Qb )... & ( m128 & m128_Qb )
+:UNPCKHPD        XmmReg, m128     is vexMode=0 & $(PRE_66) & byte=0x0F; byte=0x15; m128 & XmmReg ...
 {
-    XmmReg_Qa = XmmReg_Qb;
-    XmmReg_Qb = m128_Qb;
+    XmmReg[0,64] = XmmReg[64,64];
+    XmmReg[64,64] = m128[64,64];
 }
 
-:UNPCKHPD        XmmReg1, XmmReg2  is vexMode=0 & $(PRE_66) & byte=0x0F; byte=0x15; xmmmod=3 & XmmReg1 & XmmReg1_Qa & XmmReg1_Qb & XmmReg2 & XmmReg2_Qb
+:UNPCKHPD        XmmReg1, XmmReg2  is vexMode=0 & $(PRE_66) & byte=0x0F; byte=0x15; xmmmod=3 & XmmReg1 & XmmReg2
 {
-    XmmReg1_Qa = XmmReg1_Qb;
-    XmmReg1_Qb = XmmReg2_Qb;
+    XmmReg1[0,64] = XmmReg1[64,64];
+    XmmReg1[64,64] = XmmReg2[64,64];
 }
 
-:UNPCKHPS        XmmReg, m128     is vexMode=0 & mandover=0 & byte=0x0F; byte=0x15; ( XmmReg & XmmReg_Da & XmmReg_Db & XmmReg_Dc & XmmReg_Dd ) ... & ( m128 & m128_Dc & m128_Dd )
+:UNPCKHPS        XmmReg, m128     is vexMode=0 & mandover=0 & byte=0x0F; byte=0x15; m128 & XmmReg ...
 {
-    XmmReg_Da = XmmReg_Dc;
-    XmmReg_Dc = XmmReg_Dd;
-    XmmReg_Db = m128_Dc;
-    XmmReg_Dd = m128_Dd;
+    local m:16 = m128;
+    XmmReg[0,32] = XmmReg[64,32];
+    XmmReg[64,32] = XmmReg[96,32];
+    XmmReg[32,32] = m[64,32];
+    XmmReg[96,32] = m[96,32];
 }
 
-:UNPCKHPS        XmmReg1, XmmReg2  is vexMode=0 & mandover=0 & byte=0x0F; byte=0x15; xmmmod=3 & XmmReg1 & XmmReg1_Da & XmmReg1_Db & XmmReg1_Dc & XmmReg1_Dd & XmmReg2 & XmmReg2_Dc & XmmReg2_Dd
+:UNPCKHPS        XmmReg1, XmmReg2  is vexMode=0 & mandover=0 & byte=0x0F; byte=0x15; xmmmod=3 & XmmReg1 & XmmReg2
 {
-    XmmReg1_Da = XmmReg1_Dc;
-    XmmReg1_Db = XmmReg2_Dc;
-    XmmReg1_Dc = XmmReg1_Dd;  # XmmReg1 and XmmReg2 could be the same register, preserve XmmReg1_Dc till later
-    XmmReg1_Dd = XmmReg2_Dd;
+    XmmReg1[0,32] = XmmReg1[64,32];
+    XmmReg1[32,32] = XmmReg2[64,32];
+    XmmReg1[64,32] = XmmReg1[96,32];  # XmmReg1 and XmmReg2 could be the same register, preserve XmmReg1[64,32] till later
+    XmmReg1[96,32] = XmmReg2[96,32];
 }
 
-:UNPCKLPD        XmmReg, m128     is vexMode=0 & $(PRE_66) & byte=0x0F; byte=0x14; ( XmmReg & XmmReg_Qa & XmmReg_Qb )... & ( m128 & m128_Qa )
+:UNPCKLPD        XmmReg, m128     is vexMode=0 & $(PRE_66) & byte=0x0F; byte=0x14; m128 & XmmReg ...
 {
-#   XmmReg_Qa = XmmReg_Qa; superfluous
-    XmmReg_Qb = m128_Qa;
+#   XmmReg[0,64] = XmmReg[0,64]; superfluous
+    XmmReg[64,64] = m128[0,64];
 }
 
-:UNPCKLPD        XmmReg1, XmmReg2  is vexMode=0 & $(PRE_66) & byte=0x0F; byte=0x14; xmmmod=3 & XmmReg1 & XmmReg1_Qa & XmmReg1_Qb & XmmReg2 & XmmReg2_Qa
+:UNPCKLPD        XmmReg1, XmmReg2  is vexMode=0 & $(PRE_66) & byte=0x0F; byte=0x14; xmmmod=3 & XmmReg1 & XmmReg2
 {
-#   XmmReg1_Qa = XmmReg1_Qa; superfluous
-    XmmReg1_Qb = XmmReg2_Qa;
+#   XmmReg1[0,64] = XmmReg1[0,64]; superfluous
+    XmmReg1[64,64] = XmmReg2[0,64];
 }
 
-:UNPCKLPS        XmmReg, m128     is vexMode=0 & mandover=0 & byte=0x0F; byte=0x14; ( XmmReg & XmmReg_Da & XmmReg_Db & XmmReg_Dc & XmmReg_Dd ) ... & ( m128 & m128_Da & m128_Db )
+:UNPCKLPS        XmmReg, m128     is vexMode=0 & mandover=0 & byte=0x0F; byte=0x14; m128 & XmmReg ...
 {
-#   XmmReg_Da = XmmReg_Da; superfluous
-    XmmReg_Dc = XmmReg_Db;
-    XmmReg_Db = m128_Da;
-    XmmReg_Dd = m128_Db;
+    local m:16 = m128;
+#   XmmReg[0,32] = XmmReg[0,32]; superfluous
+    XmmReg[64,32] = XmmReg[32,32];
+    XmmReg[32,32] = m[0,32];
+    XmmReg[96,32] = m[32,32];
 }
 
-:UNPCKLPS        XmmReg1, XmmReg2  is vexMode=0 & mandover=0 & byte=0x0F; byte=0x14; xmmmod=3 & XmmReg1 & XmmReg1_Da & XmmReg1_Db & XmmReg1_Dc & XmmReg1_Dd & XmmReg2 & XmmReg2_Da & XmmReg2_Db
+:UNPCKLPS        XmmReg1, XmmReg2  is vexMode=0 & mandover=0 & byte=0x0F; byte=0x14; xmmmod=3 & XmmReg1 & XmmReg2
 {
-#   XmmReg1_Da = XmmReg1_Da; superfluous
-    XmmReg1_Dc = XmmReg1_Db;
-    XmmReg1_Dd = XmmReg2_Db;
-    XmmReg1_Db = XmmReg2_Da; # XmmReg1 and XmmReg2 could be the same register, preserve Db till last
-}
-
-# special FLOATING POINT bitwise XOR
-:XORPD           XmmReg, m128     is vexMode=0 & $(PRE_66) & byte=0x0F; byte=0x57; ( XmmReg & XmmReg_Qa & XmmReg_Qb ) ... & ( m128 & m128_Qa & m128_Qb )
-{
-    XmmReg_Qa = ( XmmReg_Qa ^ m128_Qa );
-    XmmReg_Qb = ( XmmReg_Qb ^ m128_Qb );
+#   XmmReg1[0,32] = XmmReg1[0,32]; superfluous
+    XmmReg1[64,32] = XmmReg1[32,32];
+    XmmReg1[96,32] = XmmReg2[32,32];
+    XmmReg1[32,32] = XmmReg2[0,32]; # XmmReg1 and XmmReg2 could be the same register, preserve Db till last
 }
 
 # special FLOATING POINT bitwise XOR
-:XORPD           XmmReg1, XmmReg2  is vexMode=0 & $(PRE_66) & byte=0x0F; byte=0x57; xmmmod=3 & XmmReg1 & XmmReg1_Qa & XmmReg1_Qb & XmmReg2 & XmmReg2_Qa & XmmReg2_Qb
+:XORPD           XmmReg, m128     is vexMode=0 & $(PRE_66) & byte=0x0F; byte=0x57; m128 & XmmReg ...
 {
-    XmmReg1_Qa = ( XmmReg1_Qa ^ XmmReg2_Qa );
-    XmmReg1_Qb = ( XmmReg1_Qb ^ XmmReg2_Qb );
+    local m:16 = m128;
+    XmmReg[0,64] = ( XmmReg[0,64] ^ m[0,64] );
+    XmmReg[64,64] = ( XmmReg[64,64] ^ m[64,64] );
 }
 
 # special FLOATING POINT bitwise XOR
-:XORPS           XmmReg, m128     is vexMode=0 & mandover=0 & byte=0x0F; byte=0x57; ( XmmReg & XmmReg_Da & XmmReg_Db & XmmReg_Dc & XmmReg_Dd ) ... & ( m128 & m128_Da & m128_Db & m128_Dc & m128_Dd )
+:XORPD           XmmReg1, XmmReg2  is vexMode=0 & $(PRE_66) & byte=0x0F; byte=0x57; xmmmod=3 & XmmReg1 & XmmReg2
 {
-    XmmReg_Da = ( XmmReg_Da ^ m128_Da );
-    XmmReg_Db = ( XmmReg_Db ^ m128_Db );
-    XmmReg_Dc = ( XmmReg_Dc ^ m128_Dc );
-    XmmReg_Dd = ( XmmReg_Dd ^ m128_Dd );
+    XmmReg1[0,64] = ( XmmReg1[0,64] ^ XmmReg2[0,64] );
+    XmmReg1[64,64] = ( XmmReg1[64,64] ^ XmmReg2[64,64] );
 }
 
 # special FLOATING POINT bitwise XOR
-:XORPS           XmmReg1, XmmReg2  is vexMode=0 & mandover=0 & byte=0x0F; byte=0x57; xmmmod=3 & XmmReg1 & XmmReg1_Da & XmmReg1_Db & XmmReg1_Dc & XmmReg1_Dd & XmmReg2 & XmmReg2_Da & XmmReg2_Db & XmmReg2_Dc & XmmReg2_Dd
+:XORPS           XmmReg, m128     is vexMode=0 & mandover=0 & byte=0x0F; byte=0x57; m128 & XmmReg ...
 {
-    XmmReg1_Da = ( XmmReg1_Da ^ XmmReg2_Da );
-    XmmReg1_Db = ( XmmReg1_Db ^ XmmReg2_Db );
-    XmmReg1_Dc = ( XmmReg1_Dc ^ XmmReg2_Dc );
-    XmmReg1_Dd = ( XmmReg1_Dd ^ XmmReg2_Dd );
+    local m:16 = m128;
+    XmmReg[0,32] = ( XmmReg[0,32] ^ m[0,32] );
+    XmmReg[32,32] = ( XmmReg[32,32] ^ m[32,32] );
+    XmmReg[64,32] = ( XmmReg[64,32] ^ m[64,32] );
+    XmmReg[96,32] = ( XmmReg[96,32] ^ m[96,32] );
+}
+
+# special FLOATING POINT bitwise XOR
+:XORPS           XmmReg1, XmmReg2  is vexMode=0 & mandover=0 & byte=0x0F; byte=0x57; xmmmod=3 & XmmReg1 & XmmReg2
+{
+    XmmReg1[0,32] = ( XmmReg1[0,32] ^ XmmReg2[0,32] );
+    XmmReg1[32,32] = ( XmmReg1[32,32] ^ XmmReg2[32,32] );
+    XmmReg1[64,32] = ( XmmReg1[64,32] ^ XmmReg2[64,32] );
+    XmmReg1[96,32] = ( XmmReg1[96,32] ^ XmmReg2[96,32] );
 }
 
 ####
