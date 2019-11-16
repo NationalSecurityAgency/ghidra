@@ -273,11 +273,7 @@ define context contextreg
   vexVVVV_r32=(18,21)   # value of vex byte for matching a normal 32 bit register
   vexVVVV_r64=(18,21)   # value of vex byte for matching a normal 64 bit register
   vexVVVV_XmmReg=(18,21)       # value of vex byte for matching XmmReg
-  vexVVVV_XmmReg_Qa=(18,21)    # value of vex byte for matching XmmReg
-  vexVVVV_XmmReg_Qb=(18,21)    # value of vex byte for matching XmmReg
   vexVVVV_YmmReg=(18,21)       # value of vex byte for matching YmmReg
-  vexVVVV_YmmReg_DQa=(18,21)   # value of vex byte for matching YmmReg
-  vexVVVV_YmmReg_DQb=(18,21)   # value of vex byte for matching YmmReg
   vexMMMMM=(22,26)      # need to match for preceding bytes 1=0x0F, 2=0x0F 0x38, 3=0x0F 0x3A
   
   suffix3D=(17,24)      # 3DNow suffix byte (overlaps un-modified vex context region)
@@ -482,9 +478,6 @@ attach variables [ xmmreg_x xmmreg1_x xmmreg2_x xmm_vsib_x ] [ XMM8 XMM9 XMM10 X
 
 attach variables [ vexVVVV_XmmReg Xmm_imm8_7_4 ] [ XMM0 XMM1 XMM2 XMM3 XMM4 XMM5 XMM6 XMM7 XMM8 XMM9 XMM10 XMM11 XMM12 XMM13 XMM14 XMM15 ];
 
-attach variables [ vexVVVV_XmmReg_Qa ] [ XMM0_Qa XMM1_Qa XMM2_Qa XMM3_Qa XMM4_Qa XMM5_Qa XMM6_Qa XMM7_Qa XMM8_Qa XMM9_Qa XMM10_Qa XMM11_Qa XMM12_Qa XMM13_Qa XMM14_Qa XMM15_Qa ];
-attach variables [ vexVVVV_XmmReg_Qb ] [ XMM0_Qb XMM1_Qb XMM2_Qb XMM3_Qb XMM4_Qb XMM5_Qb XMM6_Qb XMM7_Qb XMM8_Qb XMM9_Qb XMM10_Qb XMM11_Qb XMM12_Qb XMM13_Qb XMM14_Qb XMM15_Qb ];
-
 attach variables [ vexVVVV_YmmReg Ymm_imm8_7_4 ] [ YMM0 YMM1 YMM2 YMM3 YMM4 YMM5 YMM6 YMM7 YMM8 YMM9 YMM10 YMM11 YMM12 YMM13 YMM14 YMM15 ];
 
 @ifdef IA64
@@ -501,9 +494,6 @@ attach variables [ ymmreg_x ymmreg1_x ymmreg2_x ymm_vsib_x ]	[ YMM8 YMM9 YMM10 Y
 attach variables [ bnd1 bnd2 ]       [ BND0 BND1 BND2 BND3 _ _ _ _ ];
 attach variables [ bnd1_lb bnd2_lb ] [ BND0_LB BND1_LB BND2_LB BND3_LB _ _ _ _ ];
 attach variables [ bnd1_ub bnd2_ub ] [ BND0_UB BND1_UB BND2_UB BND3_UB _ _ _ _ ];
-
-attach variables [ vexVVVV_YmmReg_DQa ] [ XMM0 XMM1 XMM2 XMM3 XMM4 XMM5 XMM6 XMM7 XMM8 XMM9 XMM10 XMM11 XMM12 XMM13 XMM14 XMM15 ];
-attach variables [ vexVVVV_YmmReg_DQb ] [ YMM0_H YMM1_H YMM2_H YMM3_H YMM4_H YMM5_H YMM6_H YMM7_H YMM8_H YMM9_H YMM10_H YMM11_H YMM12_H YMM13_H YMM14_H YMM15_H ];
 
 define pcodeop segment;    # Define special pcodeop that calculates the RAM address
                            # given the segment selector and offset as input
