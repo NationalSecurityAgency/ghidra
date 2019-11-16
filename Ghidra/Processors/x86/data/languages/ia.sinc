@@ -6463,11 +6463,43 @@ define pcodeop pmulhw;
 :PMULHW         XmmReg, m128     is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0xE5; XmmReg ... & m128 { XmmReg = pmulhw(XmmReg, m128); }
 :PMULHW         XmmReg1, XmmReg2 is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0xE5; xmmmod = 3 & XmmReg1 & XmmReg2 { XmmReg1 = pmulhw(XmmReg1, XmmReg2); }
 
-define pcodeop pmullw;
-:PMULLW         mmxreg, m64      is vexMode=0 &  mandover=0 & byte=0x0F; byte=0xD5; mmxreg ... & m64 { mmxreg = pmullw(mmxreg, m64); }
-:PMULLW         mmxreg1, mmxreg2 is vexMode=0 &  mandover=0 & byte=0x0F; byte=0xD5; mmxmod = 3 & mmxreg1 & mmxreg2 { mmxreg1 = pmullw(mmxreg1, mmxreg2); }
-:PMULLW         XmmReg, m128     is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0xD5; XmmReg ... & m128 { XmmReg = pmullw(XmmReg, m128); }
-:PMULLW         XmmReg1, XmmReg2 is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0xD5; xmmmod = 3 & XmmReg1 & XmmReg2 { XmmReg1 = pmullw(XmmReg1, XmmReg2); }
+:PMULLW         mmxreg, m64      is vexMode=0 &  mandover=0 & byte=0x0F; byte=0xD5; mmxreg ... & m64 {
+  local m:8 = m64;
+  mmxreg[0,16] = mmxreg[0,16] * m[0,16];
+  mmxreg[16,16] = mmxreg[16,16] * m[16,16];
+  mmxreg[32,16] = mmxreg[32,16] * m[32,16];
+  mmxreg[48,16] = mmxreg[48,16] * m[48,16];
+}
+
+:PMULLW         mmxreg1, mmxreg2 is vexMode=0 &  mandover=0 & byte=0x0F; byte=0xD5; mmxmod = 3 & mmxreg1 & mmxreg2 {
+  mmxreg1[0,16] = mmxreg1[0,16] * mmxreg2[0,16];
+  mmxreg1[16,16] = mmxreg1[16,16] * mmxreg2[16,16];
+  mmxreg1[32,16] = mmxreg1[32,16] * mmxreg2[32,16];
+  mmxreg1[48,16] = mmxreg1[48,16] * mmxreg2[48,16];
+}
+
+:PMULLW         XmmReg, m128     is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0xD5; XmmReg ... & m128 {
+  local m:16 = m128;
+  XmmReg[0,16] = XmmReg[0,16] * m[0,16];
+  XmmReg[16,16] = XmmReg[16,16] * m[16,16];
+  XmmReg[32,16] = XmmReg[32,16] * m[32,16];
+  XmmReg[48,16] = XmmReg[48,16] * m[48,16];
+  XmmReg[64,16] = XmmReg[64,16] * m[64,16];
+  XmmReg[80,16] = XmmReg[80,16] * m[80,16];
+  XmmReg[96,16] = XmmReg[96,16] * m[96,16];
+  XmmReg[112,16] = XmmReg[112,16] * m[112,16];
+}
+
+:PMULLW         XmmReg1, XmmReg2 is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0xD5; xmmmod = 3 & XmmReg1 & XmmReg2 {
+  XmmReg1[0,16] = XmmReg1[0,16] * XmmReg2[0,16];
+  XmmReg1[16,16] = XmmReg1[16,16] * XmmReg2[16,16];
+  XmmReg1[32,16] = XmmReg1[32,16] * XmmReg2[32,16];
+  XmmReg1[48,16] = XmmReg1[48,16] * XmmReg2[48,16];
+  XmmReg1[64,16] = XmmReg1[64,16] * XmmReg2[64,16];
+  XmmReg1[80,16] = XmmReg1[80,16] * XmmReg2[80,16];
+  XmmReg1[96,16] = XmmReg1[96,16] * XmmReg2[96,16];
+  XmmReg1[112,16] = XmmReg1[112,16] * XmmReg2[112,16];
+ }
 
 define pcodeop pmuludq;
 :PMULUDQ        mmxreg, m64      is vexMode=0 &  mandover=0 & byte=0x0F; byte=0xF4; mmxreg ... & m64 { mmxreg = pmuludq(mmxreg, m64); }
@@ -6567,10 +6599,21 @@ define pcodeop psllw;
 :PSLLW          mmxreg1, mmxreg2 is vexMode=0 &  mandover=0 & byte=0x0F; byte=0xF1; mmxmod = 3 & mmxreg1 & mmxreg2 { mmxreg1 = psllw(mmxreg1, mmxreg2); }
 :PSLLW          mmxreg2, imm8    is vexMode=0 &  mandover=0 & byte=0x0F; byte=0x71; mod = 0b11 & reg_opcode=6 & mmxreg2; imm8 { mmxreg2 = psllw(mmxreg2, imm8:8); }
 
-define pcodeop pslld;
-:PSLLD          mmxreg, m64      is vexMode=0 &  mandover=0 & byte=0x0F; byte=0xF2; mmxreg ... & m64 ... { mmxreg = pslld(mmxreg, m64); }
-:PSLLD          mmxreg1, mmxreg2 is vexMode=0 &  mandover=0 & byte=0x0F; byte=0xF2; mmxmod = 3 & mmxreg1 & mmxreg2 { mmxreg1 = pslld(mmxreg1, mmxreg2); }
-:PSLLD          mmxreg2, imm8    is vexMode=0 &  mandover=0 & byte=0x0F; byte=0x72; mod = 0b11 & reg_opcode=6 & mmxreg2; imm8 { mmxreg2 = pslld(mmxreg2, imm8:8); }
+:PSLLD          mmxreg, m64      is vexMode=0 &  mandover=0 & byte=0x0F; byte=0xF2; mmxreg ... & m64 ... {
+  local m:8 = m64;
+  mmxreg[0,32] = mmxreg[0,32] << m[0,32];
+  mmxreg[32,32] = mmxreg[32,32] << m[32,32];
+}
+
+:PSLLD          mmxreg1, mmxreg2 is vexMode=0 &  mandover=0 & byte=0x0F; byte=0xF2; mmxmod = 3 & mmxreg1 & mmxreg2 {
+  mmxreg1[0,32] = mmxreg1[0,32] << mmxreg2[0,32];
+  mmxreg1[32,32] = mmxreg1[32,32] << mmxreg2[32,32];
+}
+
+:PSLLD          mmxreg2, imm8    is vexMode=0 &  mandover=0 & byte=0x0F; byte=0x72; mod = 0b11 & reg_opcode=6 & mmxreg2; imm8 {
+  mmxreg2[0,32] = mmxreg2[0,32] << imm8;
+  mmxreg2[32,32] = mmxreg2[32,32] << imm8;
+}
 
 define pcodeop psllq;
 :PSLLQ          mmxreg, m64      is vexMode=0 &  mandover=0 & byte=0x0F; byte=0xF3; mmxreg ... & m64 ... { mmxreg = psllq(mmxreg, m64); }
@@ -6581,9 +6624,27 @@ define pcodeop psllq;
 :PSLLW          XmmReg1, XmmReg2  is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0xF1; xmmmod = 3 & XmmReg1 & XmmReg2 { XmmReg1 = psllw(XmmReg1, XmmReg2); }
 :PSLLW          XmmReg2, imm8     is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x71; mod = 0b11 & reg_opcode=6 & XmmReg2; imm8 { XmmReg2 = psllw(XmmReg2, imm8:8); }
 
-:PSLLD          XmmReg, m128      is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0xF2; XmmReg ... & m128 ... { XmmReg = pslld(XmmReg, m128); }
-:PSLLD          XmmReg1, XmmReg2  is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0xF2; xmmmod = 3 & XmmReg1 & XmmReg2 { XmmReg1 = pslld(XmmReg1, XmmReg2); }
-:PSLLD          XmmReg2, imm8     is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x72; mod = 0b11 & reg_opcode=6 & XmmReg2; imm8 { XmmReg2 = pslld(XmmReg2, imm8:8); }
+:PSLLD          XmmReg, m128      is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0xF2; XmmReg ... & m128 ... {
+  local m:16 = m128;
+  XmmReg[0,32] = XmmReg[0,32] << m[0,32];
+  XmmReg[32,32] = XmmReg[32,32] << m[32,32];
+  XmmReg[64,32] = XmmReg[64,32] << m[64,32];
+  XmmReg[96,32] = XmmReg[96,32] << m[96,32];
+}
+
+:PSLLD          XmmReg1, XmmReg2  is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0xF2; xmmmod = 3 & XmmReg1 & XmmReg2 {
+  XmmReg1[0,32] = XmmReg1[0,32] << XmmReg2[0,32];
+  XmmReg1[32,32] = XmmReg1[32,32] << XmmReg2[32,32];
+  XmmReg1[64,32] = XmmReg1[64,32] << XmmReg2[64,32];
+  XmmReg1[96,32] = XmmReg1[96,32] << XmmReg2[96,32];
+}
+
+:PSLLD          XmmReg2, imm8     is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x72; mod = 0b11 & reg_opcode=6 & XmmReg2; imm8 {
+  XmmReg2[0,32] = XmmReg2[0,32] << imm8;
+  XmmReg2[32,32] = XmmReg2[32,32] << imm8;
+  XmmReg2[64,32] = XmmReg2[64,32] << imm8;
+  XmmReg2[96,32] = XmmReg2[96,32] << imm8;
+}
                     
 :PSLLQ          XmmReg, m128      is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0xF3; XmmReg ... & m128 ... { XmmReg = psllq(XmmReg, m128); }
 :PSLLQ          XmmReg1, XmmReg2  is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0xF3; xmmmod = 3 & XmmReg1 & XmmReg2 { XmmReg1 = psllq(XmmReg1, XmmReg2); }
@@ -6700,9 +6761,16 @@ define pcodeop psubb;
     mmxreg1[48,16] = mmxreg1[48,16] - mmxreg2[48,16];
 }
                     
-define pcodeop psubd;
-:PSUBD           mmxreg, m64      is vexMode=0 &  mandover=0 & byte=0x0F; byte=0xFA; mmxreg ... & m64 ... { mmxreg = psubd(mmxreg, m64); }
-:PSUBD           mmxreg1, mmxreg2 is vexMode=0 &  mandover=0 & byte=0x0F; byte=0xFA; mmxmod = 3 & mmxreg1 & mmxreg2 { mmxreg1 = psubd(mmxreg1, mmxreg2); }
+:PSUBD           mmxreg, m64      is vexMode=0 &  mandover=0 & byte=0x0F; byte=0xFA; mmxreg ... & m64 ... {
+  local m:8 = m64;
+  mmxreg[0,32] = mmxreg[0,32] - m[0,32];
+  mmxreg[32,32] = mmxreg[32,32] - m[32,32];
+}
+
+:PSUBD           mmxreg1, mmxreg2 is vexMode=0 &  mandover=0 & byte=0x0F; byte=0xFA; mmxmod = 3 & mmxreg1 & mmxreg2 {
+  mmxreg1[0,32] = mmxreg1[0,32] - mmxreg2[0,32];
+  mmxreg1[32,32] = mmxreg1[32,32] - mmxreg2[32,32];
+}
 
 define pcodeop psubq;
 :PSUBQ           mmxreg, m64      is vexMode=0 &  mandover=0 & byte=0x0F; byte=0xFB; mmxreg ... & m64 ...					{ mmxreg = psubq(mmxreg, m64); }
@@ -6738,8 +6806,20 @@ define pcodeop psubq;
     XmmReg1[112,16] = XmmReg1[112,16] - XmmReg2[112,16];
 }
                     
-:PSUBD           XmmReg, m128      is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0xFA; XmmReg ... & m128 ... { XmmReg = psubd(XmmReg, m128); }
-:PSUBD           XmmReg1, XmmReg2  is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0xFA; xmmmod = 3 & XmmReg1 & XmmReg2 { XmmReg1 = psubd(XmmReg1, XmmReg2); }
+:PSUBD           XmmReg, m128      is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0xFA; XmmReg ... & m128 ... {
+  local m:16 = m128;
+  XmmReg[0,32] = XmmReg[0,32] - m[0,32];
+  XmmReg[32,32] = XmmReg[32,32] - m[32,32];
+  XmmReg[64,32] = XmmReg[64,32] - m[64,32];
+  XmmReg[96,32] = XmmReg[96,32] - m[96,32];
+}
+
+:PSUBD           XmmReg1, XmmReg2  is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0xFA; xmmmod = 3 & XmmReg1 & XmmReg2 {
+  XmmReg1[0,32] = XmmReg1[0,32] - XmmReg2[0,32];
+  XmmReg1[32,32] = XmmReg1[32,32] - XmmReg2[32,32];
+  XmmReg1[64,32] = XmmReg1[64,32] - XmmReg2[64,32];
+  XmmReg1[96,32] = XmmReg1[96,32] - XmmReg2[96,32];
+}
 
 define pcodeop psubsb;
 :PSUBSB          mmxreg, m64      is vexMode=0 &  mandover=0 & byte=0x0F; byte=0xE8; mmxreg ... & m64 ... { mmxreg = psubsb(mmxreg, m64); }
