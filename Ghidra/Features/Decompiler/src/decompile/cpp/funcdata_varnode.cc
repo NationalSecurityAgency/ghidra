@@ -286,6 +286,21 @@ void Funcdata::destroyVarnode(Varnode *vn)
   vbank.destroy(vn);
 }
 
+/// Record the given Varnode as a potential laned register access.
+/// The address and size of the Varnode is recorded, anticipating that new
+/// Varnodes at the same storage location may be created
+/// \param vn is the given Varnode to mark
+/// \param lanedReg is the laned register record to associate with the Varnode
+void Funcdata::markLanedVarnode(Varnode *vn,const LanedRegister *lanedReg)
+
+{
+  VarnodeData storage;
+  storage.space = vn->getSpace();
+  storage.offset = vn->getOffset();
+  storage.size = vn->getSize();
+  lanedMap[storage] = lanedReg;
+}
+
 /// Look up the Symbol visible in \b this function's Scope and return the HighVariable
 /// associated with it.  If the Symbol doesn't exist or there is no Varnode holding at least
 /// part of the value of the Symbol, NULL is returned.

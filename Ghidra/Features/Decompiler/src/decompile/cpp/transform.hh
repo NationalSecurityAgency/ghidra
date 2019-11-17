@@ -86,30 +86,16 @@ public:
 
 /// \brief Describes a (register) storage location and the ways it might be split into lanes
 class LanedRegister {
-  VarnodeData storage;		///< Defining characteristics of the register
+  int4 wholeSize;		///< Size of the whole register
   uint4 sizeBitMask;		///< A 1-bit for every permissible lane size
 public:
-  LanedRegister(void) { sizeBitMask = 0; }	///< Constructor
+  LanedRegister(void) { wholeSize = 0; sizeBitMask = 0; }	///< Constructor for use with restoreXml
+  LanedRegister(int4 sz,uint4 mask) { wholeSize = sz; sizeBitMask = mask; }	///< Constructor
   bool restoreXml(const Element *el,const AddrSpaceManager *manage);	///< Restore object from XML stream
-  const VarnodeData &getStorage(void) const { return storage; }		///< Get VarnodeData for storage
-  void addSize(int4 size) { sizeBitMask |= ((uint4)1 << size); }	///< Add a new \e size to the allowed list
+  int4 getWholeSize(void) const { return wholeSize; }	///< Get the size in bytes of the whole laned register
+  uint4 getSizeBitMask(void) const { return sizeBitMask; }	///< Get the bit mask of possible lane sizes
+  void addLaneSize(int4 size) { sizeBitMask |= ((uint4)1 << size); }	///< Add a new \e size to the allowed list
   bool allowedLane(int4 size) const { return (((sizeBitMask >> size) & 1) != 0); }	///< Is \e size among the allowed lane sizes
-  bool contains(const LanedRegister &op2) const;		///< Does \b this contain the given register and its possible lanes
-  bool operator<(const LanedRegister &op2) const { return (storage < op2.storage); }	///< Compare based on VarnodeData
-};
-
-/// \brief Record describing the access of a large Varnode that can be traced to a LanedRegister
-class LanedAccess {
-  const LanedRegister *base;	///< Base register dictating the lane scheme
-  PcodeOp *op;			///< Operation using the big register
-  int4 size;			///< Size of the register in bytes
-  int4 bytePos;			///< Significance position relative to the laned register
-public:
-  LanedAccess(const LanedRegister *b,PcodeOp *o,int4 sz,int4 pos) { base=b; op=o; size=sz; bytePos=pos; }	///< Constructor
-  const LanedRegister *getBase(void) const { return base; }	///< Get the base LanedRegister being traced
-  PcodeOp *getOp(void) const { return op; }	///< Get the PcodeOp using the large Varnode
-  int4 getSize(void) const { return size; }	///< Get the size of the Varnode being accessed
-  int4 getBytePos(void) const { return bytePos; }	///< Get the significance position relative to the laned register
 };
 
 /// \brief Description of logical lanes within a \b big Varnode

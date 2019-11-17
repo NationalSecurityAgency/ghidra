@@ -152,7 +152,7 @@ public:
   vector<TypeOp *> inst;	///< Registered p-code instructions
   UserOpManage userops;		///< Specifically registered user-defined p-code ops
   vector<PreferSplitRecord> splitrecords; ///< registers that we would prefer to see split for this processor
-  list<LanedRegister> lanerecords;	///< Vector registers that have preferred lane sizes
+  vector<LanedRegister> lanerecords;	///< Vector registers that have preferred lane sizes
   ActionDatabase allacts;	///< Actions that can be applied in this architecture
   bool loadersymbols_parsed;	///< True if loader symbols have been read
 #ifdef CPUI_STATISTICS
@@ -167,6 +167,8 @@ public:
   bool hasModel(const string &nm) const;		///< Does this Architecture have a specific PrototypeModel
   bool highPtrPossible(const Address &loc,int4 size) const; ///< Are pointers possible to the given location?
   AddrSpace *getSpaceBySpacebase(const Address &loc,int4 size) const; ///< Get space associated with a \e spacebase register
+  const LanedRegister *getLanedRegister(const Address &loc,int4 size) const;	///< Get LanedRegister associated with storage
+  int4 getMinimumLanedRegisterSize(void) const;		///< Get the minimum size of a laned register in bytes
   void setDefaultModel(const string &nm);		///< Set the default PrototypeModel
   void clearAnalysis(Funcdata *fd);			///< Clear analysis specific to a function
   void readLoaderSymbols(void);		 		///< Read any symbols from loader into database

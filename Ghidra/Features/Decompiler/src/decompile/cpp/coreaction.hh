@@ -97,26 +97,6 @@ public:
   virtual int4 apply(Funcdata &data);
 };
 
-/// \brief Find PcodeOps that are accessing values from laned registers
-///
-/// This looks for Varnodes that match any of the LanedRegister records associated with
-/// the architecture. A record is created in the function's LanedAccess list for every
-/// PcodeOp that accesses one of these Varnodes.  These are later examined by ActionLaneDivide.
-/// The LanedRegister is the key for finding the Varnode, but the \e big property can propagate
-/// through data-flow to other Varnodes that are not necessarily using the same storage (i.e. uniques).
-class ActionCollectLanedAccess : public Action {
-  void traceVarnode(Funcdata &data,const LanedRegister *base,Varnode *vn,int4 pos);	///< Trace a big Varnode instance to other big Varnodes
-  void processLane(Funcdata &data,const LanedRegister &lanedRegister,VarnodeLocSet::const_iterator iter);
-  void propagate(Funcdata &data);	///< Discover other PcodeOps that use laned values
-public:
-  ActionCollectLanedAccess(const string &g) : Action(rule_onceperfunc,"collectlanedaccess",g) {}	///< Constructor
-  virtual Action *clone(const ActionGroupList &grouplist) const {
-    if (!grouplist.contains(getGroup())) return (Action *)0;
-    return new ActionCollectLanedAccess(getGroup());
-  }
-  virtual int4 apply(Funcdata &data);
-};
-
 /// \brief Find Varnodes with a vectorized lane scheme and attempt to split the lanes
 ///
 /// The Architecture lists (vector) registers that may be used to perform parallelized operations
@@ -124,7 +104,7 @@ public:
 /// if a particular lane scheme makes sense in terms of the function's data-flow, and then
 /// rewrites the data-flow so that the lanes become explicit Varnodes.
 class ActionLaneDivide : public Action {
-  bool processVarnode(Funcdata &data,Varnode *vn,const LanedRegister &lanedRegister,int4 bytePos,bool allowDowncast);
+  bool processVarnode(Funcdata &data,Varnode *vn,const LanedRegister &lanedRegister,bool allowDowncast);
 public:
   ActionLaneDivide(const string &g) : Action(rule_onceperfunc,"lanedivide",g) {}	///< Constructor
   virtual Action *clone(const ActionGroupList &grouplist) const {
@@ -222,8 +202,15 @@ public:
   virtual int4 apply(Funcdata &data);
 };
 
-/// \brief Transform read-only variables to constants
+/// \brief Transform based on Varnode properties, such as \e read-only and \e volatile
+///
+/// This performs various transforms that are based on Varnode properties.
+///   - Read-only Varnodes are converted to the underlying constant
+///   - Volatile Varnodes are converted read/write functions
+///   - Varnodes whose values are not consumed are replaced with constant 0 Varnodes
+///   - Large Varnodes are flagged for lane analysis
 class ActionVarnodeProps : public Action {
+  void markLanedVarnode(Funcdata &data,Varnode *vn);	///< Mark possible laned register storage
 public:
   ActionVarnodeProps(const string &g) : Action(0,"varnodeprops",g) {}	///< Constructor
   virtual Action *clone(const ActionGroupList &grouplist) const {

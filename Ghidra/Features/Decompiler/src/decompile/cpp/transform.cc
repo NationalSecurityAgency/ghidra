@@ -276,8 +276,10 @@ bool LanedRegister::restoreXml(const Element *el,const AddrSpaceManager *manage)
     }
   }
   if (laneSizes.empty()) return false;
+  VarnodeData storage;
   storage.space = (AddrSpace *)0;
   storage.restoreXml(el, manage);
+  wholeSize = storage.size;
   sizeBitMask = 0;
   string::size_type pos = 0;
   while(pos != string::npos) {
@@ -299,21 +301,9 @@ bool LanedRegister::restoreXml(const Element *el,const AddrSpaceManager *manage)
     s >> sz;
     if (sz < 0 || sz > 16)
       throw LowlevelError("Bad lane size: " + value);
-    addSize(sz);
+    addLaneSize(sz);
   }
   return true;
-}
-
-/// In order to return \b true, the storage for \b this must contain the storage for the other
-/// LanedRegister, and every lane scheme of the other LanedRegister must also be a lane scheme
-/// for \b this.
-/// \param op2 is the other LanedRegister to check for containment
-/// \return \b true if \b this contains the other register
-bool LanedRegister::contains(const LanedRegister &op2) const
-
-{
-  if (!storage.contains(op2.storage)) return false;
-  return ((sizeBitMask & op2.sizeBitMask) == op2.sizeBitMask);	// Check for containment of lane size sets
 }
 
 TransformManager::~TransformManager(void)

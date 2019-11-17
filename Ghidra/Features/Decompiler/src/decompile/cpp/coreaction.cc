@@ -495,127 +495,6 @@ int4 ActionStackPtrFlow::apply(Funcdata &data)
   return 0;
 }
 
-/// Mark every PcodeOp that is reachable from the given Varnode and create a LanedAccess record.
-/// \param data is the function to trace through
-/// \param base is the description of the laned register being traced from
-/// \param vn is the Varnode to trace
-/// \param pos is the significance position of the Varnode within the laned register
-void ActionCollectLanedAccess::traceVarnode(Funcdata &data,const LanedRegister *base,Varnode *vn,int4 pos)
-
-{
-  list<PcodeOp *>::const_iterator iter = vn->beginDescend();
-  int4 step = 0;
-  while(step < 2) {
-    PcodeOp *op;
-    if (step == 0) {
-      op = *iter;
-      ++iter;
-      if (iter == vn->endDescend())
-	step = 1;
-    }
-    else {
-      step = 2;
-      if (!vn->isWritten()) continue;
-      op = vn->getDef();
-    }
-    if (op->isMark()) continue;
-    // Make sure op is associated with a lane access records describing its biggest Varnode
-    switch(op->code()) {
-      case CPUI_LOAD:
-      case CPUI_PIECE:
-      case CPUI_INT_ZEXT:
-      case CPUI_INT_SEXT:
-	if (vn != op->getOut()) continue;	// Biggest Varnode is the output
-	break;
-      case CPUI_SUBPIECE:
-	if (vn != op->getIn(0)) continue;	// Biggest Varnode is first input
-	break;
-      case CPUI_STORE:
-	if (vn != op->getIn(2)) continue;
-	break;
-      default:
-	break;
-    }
-    op->setMark();
-    data.opMarkLanedAccess(base, op, vn->getSize(), pos);
-  }
-}
-
-/// \brief Search for Varnodes that match the given laned vector register
-///
-/// All varnodes (bigger than 8 bytes) that are contained in the vector register are processed,
-/// looking for a working lane scheme.  Data-flow from these Varnodes is traces and LanedAccess
-/// records are created for each PcodeOp flowed through.
-/// \param data is the function being traced
-/// \param lanedRegister is the given register and acceptable lane schemes
-/// \param iter is an iterator to the first Varnode that matches the vector register
-void ActionCollectLanedAccess::processLane(Funcdata &data,const LanedRegister &lanedRegister,
-					   VarnodeLocSet::const_iterator iter)
-{
-  int4 fullSize = lanedRegister.getStorage().size;
-  Address startAddress(lanedRegister.getStorage().getAddr());
-  Address lastAddress(startAddress + (fullSize-1));
-  VarnodeLocSet::const_iterator enditer = data.endLoc();
-  while(iter != enditer) {
-    Varnode *vn = *iter;
-    ++iter;
-    if (lastAddress < vn->getAddr())
-      break;
-    if (vn->getSize() <= 8)		// Varnode not big enough to be vector register
-      continue;
-    int4 diff = (int4)(vn->getOffset() - startAddress.getOffset());
-    if (diff + vn->getSize() > fullSize)	// Must be contained by full register
-      continue;
-    if (vn->getSpace()->isBigEndian())
-      diff = fullSize - (diff + vn->getSize());
-    traceVarnode(data, &lanedRegister, vn, diff);
-  }
-}
-
-/// Give each PcodeOp in the laned access list a chance to propagate to new PcodeOps,
-/// which will have new records added to the list.
-/// \param data is the function being traced
-void ActionCollectLanedAccess::propagate(Funcdata &data)
-
-{
-  list<LanedAccess>::const_iterator iter = data.beginLaneAccess();
-  while(iter != data.endLaneAccess()) {
-    const LanedAccess lanedAccess( *iter );
-    PcodeOp *op = lanedAccess.getOp();
-    int4 sz = lanedAccess.getSize();
-    for(int4 i=0;i<op->numInput();++i) {
-      Varnode *vn = op->getIn(i);
-      if (vn->getSize() != sz) continue;	// Size must match exactly
-      if (vn->isConstant() || vn->isAnnotation()) continue;
-      traceVarnode(data, lanedAccess.getBase(), vn, lanedAccess.getBytePos());
-    }
-    ++iter;
-  }
-}
-
-int4 ActionCollectLanedAccess::apply(Funcdata &data)
-
-{
-  if (data.getArch()->lanerecords.empty())
-    return 0;
-  const LanedRegister &lastRecord( data.getArch()->lanerecords.back() );
-  Address lastAddress( lastRecord.getStorage().getAddr() + lastRecord.getStorage().size - 1);
-  list<LanedRegister>::const_iterator iter;
-  for(iter=data.getArch()->lanerecords.begin();iter!=data.getArch()->lanerecords.end();++iter) {
-    const LanedRegister &lanedRegister( *iter );
-    VarnodeLocSet::const_iterator viter = data.beginLoc(lanedRegister.getStorage().getAddr());
-    if (viter == data.endLoc()) break;
-    Varnode *vn = *viter;
-    if (lastAddress < vn->getAddr()) break;
-    processLane(data,lanedRegister,viter);
-  }
-  propagate(data);
-  list<LanedAccess>::const_iterator aiter;
-  for(aiter=data.beginLaneAccess();aiter!=data.endLaneAccess();++aiter)
-    (*aiter).getOp()->clearMark();
-  return 0;
-}
-
 /// \brief Try to divide a single Varnode into lanes
 ///
 /// Look for a CPUI_SUBPIECE op that takes the given Varnode as the input or a
@@ -626,15 +505,17 @@ int4 ActionCollectLanedAccess::apply(Funcdata &data)
 /// \param data is the function being transformed
 /// \param vn is the given single Varnode
 /// \param lanedRegister is acceptable set of lane sizes for the Varnode
-/// \param bytePos is the significance position of the Varnode within the laned register
 /// \param allowDowncast is \b true if we allow lane systems with SUBPIECE terminators
-bool ActionLaneDivide::processVarnode(Funcdata &data,Varnode *vn,const LanedRegister &lanedRegister,int4 bytePos,
-				      bool allowDowncast)
+/// \return \b true if the Varnode (and its data-flow) was successfully split
+bool ActionLaneDivide::processVarnode(Funcdata &data,Varnode *vn,const LanedRegister &lanedRegister,bool allowDowncast)
 
 {
   list<PcodeOp *>::const_iterator iter = vn->beginDescend();
   LanedRegister checkedLanes;
   int4 step = 0;		// 0 = descendants, 1 = def, 2 = done
+  if (iter == vn->endDescend()) {
+    step = 1;
+  }
   while(step < 2) {
     int4 curSize;		// Putative lane size
     if (step == 0) {
@@ -657,10 +538,8 @@ bool ActionLaneDivide::processVarnode(Funcdata &data,Varnode *vn,const LanedRegi
     }
     if (lanedRegister.allowedLane(curSize)) {
       if (checkedLanes.allowedLane(curSize)) continue;
-      checkedLanes.addSize(curSize);		// Only check this scheme once
-      LaneDescription description(lanedRegister.getStorage().size,curSize);	// Lane scheme dictated by curSize
-      if (!description.subset(bytePos,vn->getSize()))		// Try to restrict lane scheme to actual Varnode
-	continue;
+      checkedLanes.addLaneSize(curSize);		// Only check this scheme once
+      LaneDescription description(lanedRegister.getWholeSize(),curSize);	// Lane scheme dictated by curSize
       LaneDivide laneDivide(&data,vn,description,allowDowncast);
       if (laneDivide.doTrace()) {
 	laneDivide.apply();
@@ -675,31 +554,28 @@ bool ActionLaneDivide::processVarnode(Funcdata &data,Varnode *vn,const LanedRegi
 int4 ActionLaneDivide::apply(Funcdata &data)
 
 {
-  list<LanedAccess>::const_iterator iter;
+  map<VarnodeData,const LanedRegister *>::const_iterator iter;
   bool allowDowncast = false;
   for(int4 i=0;i<2;++i) {
     for(iter=data.beginLaneAccess();iter!=data.endLaneAccess();++iter) {
-      const LanedAccess &lanedAccess(*iter);
-      PcodeOp *op = lanedAccess.getOp();
-      if (op->isDead()) continue;
-      Varnode *vn = op->getOut();
-      if (vn != (Varnode *)0 && vn->getSize() == lanedAccess.getSize())
-	processVarnode(data, vn, *lanedAccess.getBase(), lanedAccess.getBytePos(), allowDowncast);
-      else {
-	for(int4 j=0;j<op->numInput();++j) {
-	  vn = op->getIn(j);
-	  if (vn->getSize() == lanedAccess.getSize()) {
-	    if (!vn->isConstant() && !vn->isAnnotation() && !vn->isWritten()) {
-	      processVarnode(data, vn, *lanedAccess.getBase(), lanedAccess.getBytePos(), allowDowncast);
-	      break;
-	    }
-	  }
+      const LanedRegister *lanedReg = (*iter).second;
+      Address addr = (*iter).first.getAddr();
+      int4 sz = (*iter).first.size;
+      VarnodeLocSet::const_iterator viter = data.beginLoc(sz,addr);
+      VarnodeLocSet::const_iterator venditer = data.endLoc(sz,addr);
+      while(viter != venditer) {
+	Varnode *vn = *viter;
+	if (processVarnode(data, vn, *lanedReg, allowDowncast)) {
+	  viter = data.beginLoc(sz,addr);
+	  venditer = data.endLoc(sz, addr);	// Recalculate bounds
 	}
+	else
+	  ++viter;
       }
     }
     allowDowncast = true;
   }
-  data.clearLanedAccessList();
+  data.clearLanedAccessMap();
   return 0;
 }
 
@@ -1238,14 +1114,30 @@ int4 ActionDeindirect::apply(Funcdata &data)
   return 0;
 }
 
+/// Check if the given Varnode has a matching LanedRegister record. If so, add its
+/// storage location to the given function's laned access list.
+/// \param data is the given function
+/// \param vn is the given Varnode
+void ActionVarnodeProps::markLanedVarnode(Funcdata &data,Varnode *vn)
+
+{
+  if (vn->isConstant()) return;
+  Architecture *glb = data.getArch();
+  const LanedRegister *lanedRegister  = glb->getLanedRegister(vn->getAddr(),vn->getSize());
+  if (lanedRegister != (const LanedRegister *)0)
+    data.markLanedVarnode(vn,lanedRegister);
+}
+
 int4 ActionVarnodeProps::apply(Funcdata &data)
 
 {
   Architecture *glb = data.getArch();
   bool cachereadonly = glb->readonlypropagate;
-  if (glb->userops.getVolatileRead() == (VolatileReadOp *)0) {
-    if (!cachereadonly)
-      return 0;			// Nothing to do to special properties
+  int4 minLanedSize = 1000000;		// Default size meant to filter no Varnodes
+  if (!data.isLanedRegComplete()) {
+    int4 sz = glb->getMinimumLanedRegisterSize();
+    if (sz > 0)
+      minLanedSize = sz;
   }
   VarnodeLocSet::const_iterator iter;
   Varnode *vn;
@@ -1254,6 +1146,9 @@ int4 ActionVarnodeProps::apply(Funcdata &data)
   while(iter != data.endLoc()) {
     vn = *iter++;		// Advance iterator in case vn is deleted
     if (vn->isAnnotation()) continue;
+    int4 vnSize = vn->getSize();
+    if (vnSize >= minLanedSize)
+      markLanedVarnode(data, vn);
     if (vn->hasActionProperty()) {
       if (cachereadonly&&vn->isReadOnly()) {
 	if (data.fillinReadOnly(vn)) // Try to replace vn with its lookup in LoadImage
@@ -1263,7 +1158,7 @@ int4 ActionVarnodeProps::apply(Funcdata &data)
 	if (data.replaceVolatile(vn))
 	  count += 1;		// Try to replace vn with pcode op
     }
-    else if (((vn->getNZMask() & vn->getConsume())==0)&&(vn->getSize()<=sizeof(uintb))) {
+    else if (((vn->getNZMask() & vn->getConsume())==0)&&(vnSize<=sizeof(uintb))) {
       // FIXME: uintb should be arbitrary precision
       if (vn->isConstant()) continue; // Don't replace a constant
       if (vn->isWritten()) {
@@ -1283,6 +1178,7 @@ int4 ActionVarnodeProps::apply(Funcdata &data)
       }
     }
   }
+  data.setLanedRegGenerated();
   return 0;
 }
 
@@ -4714,7 +4610,6 @@ void universal_action(Architecture *conf)
       //      actmainloop->addAction( new ActionParamShiftStop("paramshift") );
       actmainloop->addAction( new ActionRestrictLocal("localrecovery") ); // Do before dead code removed
       actmainloop->addAction( new ActionDeadCode("deadcode") );
-      actmainloop->addAction( new ActionCollectLanedAccess("base") );
       actmainloop->addAction( new ActionDynamicMapping("dynamic") ); // Must come before restructurevarnode and infertypes
       actmainloop->addAction( new ActionRestructureVarnode("localrecovery") );
       actmainloop->addAction( new ActionSpacebase("base") );	// Must come before infertypes and nonzeromask

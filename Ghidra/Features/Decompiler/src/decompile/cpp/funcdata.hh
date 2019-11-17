@@ -56,7 +56,8 @@ class Funcdata {
     restart_pending = 0x200,	///< Analysis must be restarted (because of new override info)
     unimplemented_present = 0x400,	///< Set if function contains unimplemented instructions
     baddata_present = 0x800,	///< Set if function flowed into bad data
-    double_precis_on = 0x1000	///< Set if we are performing double precision recovery
+    double_precis_on = 0x1000,	///< Set if we are performing double precision recovery
+    big_varnodes_generated = 0x2000	///< Set when search for laned registers is complete
   };
   uint4 flags;			///< Boolean properties associated with \b this function
   uint4 clean_up_index;		///< Creation index of first Varnode created after start of cleanup
@@ -80,7 +81,7 @@ class Funcdata {
   Merge covermerge;		///< Variable range intersection algorithms
   ParamActive *activeoutput;	///< Data for assessing which parameters are passed to \b this function
   Override localoverride;	///< Overrides of data-flow, prototypes, etc. that are local to \b this function
-  list<LanedAccess> lanedList;	///< List of ops that are accessing potentially laned registers
+  map<VarnodeData,const LanedRegister *> lanedMap;	///< Current storage locations which may be laned registers
 
 				// Low level Varnode functions
   void setVarnodeProperties(Varnode *vn) const;	///< Look-up boolean properties and data-type information
@@ -131,6 +132,8 @@ public:
   bool isTypeRecoveryOn(void) const { return ((flags&typerecovery_on)!=0); }	///< Has data-type recovery processes started
   bool hasNoCode(void) const { return ((flags & no_code)!=0); }		///< Return \b true if \b this function has no code body
   void setNoCode(bool val) { if (val) flags |= no_code; else flags &= ~no_code; }	///< Toggle whether \b this has a body
+  bool isLanedRegComplete(void) const { return ((flags&big_varnodes_generated)!=0); }	///< Have potential laned registers been generated
+  void setLanedRegGenerated(void) { flags |= big_varnodes_generated; }	///< Mark that laned registers have been collected
 
   /// \brief Toggle whether \b this is being used for jump-table recovery
   ///
@@ -347,6 +350,11 @@ public:
   /// \brief End of (input or free) Varnodes at a given storage address
   VarnodeDefSet::const_iterator endDef(uint4 fl,const Address &addr) const { return vbank.endDef(fl,addr); }
 
+  void markLanedVarnode(Varnode *vn,const LanedRegister *lanedReg);	///< Mark Varnode as potential laned register
+  map<VarnodeData,const LanedRegister *>::const_iterator beginLaneAccess(void) const { return lanedMap.begin(); }	///< Beginning iterator over laned accesses
+  map<VarnodeData,const LanedRegister *>::const_iterator endLaneAccess(void) const { return lanedMap.end(); }	///< Ending iterator over laned accesses
+  void clearLanedAccessMap(void) { lanedMap.clear(); }	///< Clear records from the laned access list
+
   HighVariable *findHigh(const string &name) const;	///< Find a high-level variable by name
   void mapGlobals(void);			///< Make sure there is a Symbol entry for all global Varnodes
   bool checkCallDoubleUse(const PcodeOp *opmatch,const PcodeOp *op,const Varnode *vn,const ParamTrial &trial) const;
@@ -429,10 +437,6 @@ public:
   Varnode *opStackLoad(AddrSpace *spc,uintb off,uint4 sz,PcodeOp *op,Varnode *stackptr,bool insertafter);
   PcodeOp *opStackStore(AddrSpace *spc,uintb off,PcodeOp *op,bool insertafter);
   void opUndoPtradd(PcodeOp *op,bool finalize);	///< Convert a CPUI_PTRADD back into a CPUI_INT_ADD
-  void opMarkLanedAccess(const LanedRegister *base,PcodeOp *op,int4 sz,int4 pos);	///< Mark op as using laned register
-  list<LanedAccess>::const_iterator beginLaneAccess(void) const { return lanedList.begin(); }	///< Beginning iterator over laned accesses
-  list<LanedAccess>::const_iterator endLaneAccess(void) const { return lanedList.end(); }	///< Ending iterator over laned accesses
-  void clearLanedAccessList(void) { lanedList.clear(); }	///< Clear records from the laned access list
 
   /// \brief Start of PcodeOp objects with the given op-code
   list<PcodeOp *>::const_iterator beginOp(OpCode opc) const { return obank.begin(opc); }
