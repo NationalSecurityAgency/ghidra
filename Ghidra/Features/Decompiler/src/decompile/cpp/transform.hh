@@ -86,6 +86,24 @@ public:
 
 /// \brief Describes a (register) storage location and the ways it might be split into lanes
 class LanedRegister {
+  friend class LanedIterator;
+public:
+  /// \brief Class for iterating over possible lane sizes
+  class LanedIterator {
+    int4 size;		///< Current lane size
+    uint4 mask;		///< Collection being iterated over
+    void normalize(void);	///< Normalize the iterator, after increment or initialization
+  public:
+    LanedIterator(const LanedRegister *lanedR) { size = 0; mask = lanedR->sizeBitMask; normalize(); }	///< Constructor
+    LanedIterator(void) { size = -1; mask = 0; }	///< Constructor for ending iterator
+    LanedIterator &operator++(void) { size += 1; normalize(); return *this; }	///< Preincrement operator
+    int4 operator*(void) const { return size; }		/// Dereference operator
+    LanedIterator &operator=(const LanedIterator &op2) { size = op2.size; mask = op2.mask; return *this; }	///< Assignment
+    bool operator==(const LanedIterator &op2) const { return (size == op2.size); }	///< Equal operator
+    bool operator!=(const LanedIterator &op2) const { return (size != op2.size); }	///< Not-equal operator
+  };
+  typedef LanedIterator const_iterator;
+private:
   int4 wholeSize;		///< Size of the whole register
   uint4 sizeBitMask;		///< A 1-bit for every permissible lane size
 public:
@@ -96,6 +114,8 @@ public:
   uint4 getSizeBitMask(void) const { return sizeBitMask; }	///< Get the bit mask of possible lane sizes
   void addLaneSize(int4 size) { sizeBitMask |= ((uint4)1 << size); }	///< Add a new \e size to the allowed list
   bool allowedLane(int4 size) const { return (((sizeBitMask >> size) & 1) != 0); }	///< Is \e size among the allowed lane sizes
+  const_iterator begin(void) const { return LanedIterator(this); }	///< Starting iterator over possible lane sizes
+  const_iterator end(void) const { return LanedIterator(); }	///< Ending iterator over possible lane sizes
 };
 
 /// \brief Description of logical lanes within a \b big Varnode

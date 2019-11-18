@@ -495,23 +495,18 @@ int4 ActionStackPtrFlow::apply(Funcdata &data)
   return 0;
 }
 
-/// \brief Try to divide a single Varnode into lanes
+/// \brief Examine the PcodeOps using the given Varnode to determine possible lane sizes
 ///
-/// Look for a CPUI_SUBPIECE op that takes the given Varnode as the input or a
-/// CPUI_PIECE op that defines it. The smallest piece involved in this op is considered the
-/// putative lane size. If this lane size is acceptable, try to split data-flow through
-/// this Varnode using this lane scheme. Try a split for every CPUI_SUBPIECE/CPUI_PIECE the
-/// given Varnode is involved in until one succeeds.
-/// \param data is the function being transformed
-/// \param vn is the given single Varnode
-/// \param lanedRegister is acceptable set of lane sizes for the Varnode
-/// \param allowDowncast is \b true if we allow lane systems with SUBPIECE terminators
-/// \return \b true if the Varnode (and its data-flow) was successfully split
-bool ActionLaneDivide::processVarnode(Funcdata &data,Varnode *vn,const LanedRegister &lanedRegister,bool allowDowncast)
+/// Run through the defining op and any descendant ops of the given Varnode, looking for
+/// CPUI_PIECE and CPUI_SUBPIECE. Use these to determine possible lane sizes and
+/// register them with the given LanedRegister object.
+/// \param vn is the given Varnode
+/// \param allowedLanes is used to determine if a putative lane size is allowed
+/// \param checkLanes collects the possible lane sizes
+void ActionLaneDivide::collectLaneSizes(Varnode *vn,const LanedRegister &allowedLanes,LanedRegister &checkLanes)
 
 {
   list<PcodeOp *>::const_iterator iter = vn->beginDescend();
-  LanedRegister checkedLanes;
   int4 step = 0;		// 0 = descendants, 1 = def, 2 = done
   if (iter == vn->endDescend()) {
     step = 1;
@@ -536,16 +531,46 @@ bool ActionLaneDivide::processVarnode(Funcdata &data,Varnode *vn,const LanedRegi
       if (tmpSize < curSize)
 	curSize = tmpSize;
     }
-    if (lanedRegister.allowedLane(curSize)) {
-      if (checkedLanes.allowedLane(curSize)) continue;
-      checkedLanes.addLaneSize(curSize);		// Only check this scheme once
-      LaneDescription description(lanedRegister.getWholeSize(),curSize);	// Lane scheme dictated by curSize
-      LaneDivide laneDivide(&data,vn,description,allowDowncast);
-      if (laneDivide.doTrace()) {
-	laneDivide.apply();
-	count += 1;		// Indicate a change was made
-	return true;
-      }
+    if (allowedLanes.allowedLane(curSize))
+      checkLanes.addLaneSize(curSize);			// Register this possible size
+  }
+}
+
+/// \brief Search for a likely lane size and try to divide a single Varnode into these lanes
+///
+/// There are different ways to search for a lane size:
+///
+/// Mode 0: Collect putative lane sizes based on the local ops using the Varnode. Attempt
+/// to divide based on each of those lane sizes in turn.
+///
+/// Mode 1: Similar to mode 0, except we allow for SUBPIECE operations that truncate to
+/// variables that are smaller than the lane size.
+///
+/// Mode 2: Attempt to divide based on a default lane size.
+/// \param data is the function being transformed
+/// \param vn is the given single Varnode
+/// \param lanedRegister is acceptable set of lane sizes for the Varnode
+/// \param mode is the lane size search mode (0, 1, or 2)
+/// \return \b true if the Varnode (and its data-flow) was successfully split
+bool ActionLaneDivide::processVarnode(Funcdata &data,Varnode *vn,const LanedRegister &lanedRegister,int4 mode)
+
+{
+  LanedRegister checkLanes;		// Lanes we are going to try, initialized to no lanes
+  bool allowDowncast = (mode > 0);
+  if (mode < 2)
+    collectLaneSizes(vn,lanedRegister,checkLanes);
+  else {
+    checkLanes.addLaneSize(4);		// Default lane size
+  }
+  LanedRegister::const_iterator enditer = checkLanes.end();
+  for(LanedRegister::const_iterator iter=checkLanes.begin();iter!=enditer;++iter) {
+    int4 curSize = *iter;
+    LaneDescription description(lanedRegister.getWholeSize(),curSize);	// Lane scheme dictated by curSize
+    LaneDivide laneDivide(&data,vn,description,allowDowncast);
+    if (laneDivide.doTrace()) {
+      laneDivide.apply();
+      count += 1;		// Indicate a change was made
+      return true;
     }
   }
   return false;
@@ -555,25 +580,31 @@ int4 ActionLaneDivide::apply(Funcdata &data)
 
 {
   map<VarnodeData,const LanedRegister *>::const_iterator iter;
-  bool allowDowncast = false;
-  for(int4 i=0;i<2;++i) {
+  for(int4 mode=0;mode<3;++mode) {
+    bool allStorageProcessed = true;
     for(iter=data.beginLaneAccess();iter!=data.endLaneAccess();++iter) {
       const LanedRegister *lanedReg = (*iter).second;
       Address addr = (*iter).first.getAddr();
       int4 sz = (*iter).first.size;
       VarnodeLocSet::const_iterator viter = data.beginLoc(sz,addr);
       VarnodeLocSet::const_iterator venditer = data.endLoc(sz,addr);
+      bool allVarnodesProcessed = true;
       while(viter != venditer) {
 	Varnode *vn = *viter;
-	if (processVarnode(data, vn, *lanedReg, allowDowncast)) {
+	if (processVarnode(data, vn, *lanedReg, mode)) {
 	  viter = data.beginLoc(sz,addr);
 	  venditer = data.endLoc(sz, addr);	// Recalculate bounds
+	  allVarnodesProcessed = true;
 	}
-	else
+	else {
 	  ++viter;
+	  allVarnodesProcessed = false;
+	}
       }
+      if (!allVarnodesProcessed)
+	allStorageProcessed = false;
     }
-    allowDowncast = true;
+    if (allStorageProcessed) break;
   }
   data.clearLanedAccessMap();
   return 0;

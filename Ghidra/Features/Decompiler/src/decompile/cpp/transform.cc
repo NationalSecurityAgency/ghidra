@@ -261,6 +261,19 @@ bool TransformOp::attemptInsertion(Funcdata *fd)
   return true;		// Already inserted
 }
 
+void LanedRegister::LanedIterator::normalize(void)
+
+{
+  uint4 flag = 1;
+  flag <<= size;
+  while(flag <= mask) {
+    if ((flag & mask) != 0) return;	// Found a valid lane size
+    size += 1;
+    flag <<= 1;
+  }
+  size = -1;		// Indicate ending iterator
+}
+
 /// Read XML of the form \<register name=".." vector_lane_sizes=".."/>
 /// \param el is the particular \e register tag
 /// \param manage is used to map register names to storage info

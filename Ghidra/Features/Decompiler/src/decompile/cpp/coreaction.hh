@@ -104,7 +104,8 @@ public:
 /// if a particular lane scheme makes sense in terms of the function's data-flow, and then
 /// rewrites the data-flow so that the lanes become explicit Varnodes.
 class ActionLaneDivide : public Action {
-  bool processVarnode(Funcdata &data,Varnode *vn,const LanedRegister &lanedRegister,bool allowDowncast);
+  void collectLaneSizes(Varnode *vn,const LanedRegister &allowedLanes,LanedRegister &checkLanes);
+  bool processVarnode(Funcdata &data,Varnode *vn,const LanedRegister &lanedRegister,int4 mode);
 public:
   ActionLaneDivide(const string &g) : Action(rule_onceperfunc,"lanedivide",g) {}	///< Constructor
   virtual Action *clone(const ActionGroupList &grouplist) const {
