@@ -15,10 +15,10 @@
  */
 package ghidra.program.model.data;
 
-import static ghidra.program.model.data.EndianSettingsDefinition.ENDIAN;
-import static ghidra.program.model.data.RenderUnicodeSettingsDefinition.RENDER;
+import static ghidra.program.model.data.EndianSettingsDefinition.*;
+import static ghidra.program.model.data.RenderUnicodeSettingsDefinition.*;
 import static ghidra.program.model.data.StringLayoutEnum.*;
-import static ghidra.program.model.data.TranslationSettingsDefinition.TRANSLATION;
+import static ghidra.program.model.data.TranslationSettingsDefinition.*;
 
 import java.nio.charset.Charset;
 import java.util.HashMap;
@@ -176,8 +176,9 @@ public class StringDataInstance {
 	/**
 	 * Creates a string instance using the data in the {@link MemBuffer} and the settings
 	 * pulled from the {@link AbstractStringDataType string data type}.
-	 *
-	 * @param stringDataType {@link AbstractStringDataType} common string base data type.
+	 * 
+	 * @param dataType {@link DataType} of the string, either a {@link AbstractStringDataType} derived type
+	 * or an {@link ArrayStringable} element-of-char-array type. 
 	 * @param settings {@link Settings} attached to the data location.
 	 * @param buf {@link MemBuffer} containing the data.
 	 * @param length Length passed from the caller to the datatype.  -1 indicates a 'probe'
@@ -189,9 +190,10 @@ public class StringDataInstance {
 		this.buf = buf;
 		this.charsetName = getCharsetNameFromDataTypeOrSettings(dataType, settings);
 		this.charSize = CharsetInfo.getInstance().getCharsetCharSize(charsetName);
-		// NOTE: for now only handle padding for charSize == 1 
-		this.paddedCharSize =
-			charSize == 1 ? getDataOrganization(dataType).getCharSize() : charSize;
+		// NOTE: for now only handle padding for charSize == 1 and the data type is an array of elements, not a "string" 
+		this.paddedCharSize = (dataType instanceof ArrayStringable) && (charSize == 1) //
+				? getDataOrganization(dataType).getCharSize()
+				: charSize;
 		this.stringLayout = getLayoutFromDataType(dataType);
 		this.showTranslation = TRANSLATION.isShowTranslated(settings);
 		this.translatedValue = TRANSLATION.getTranslatedValue(settings);

@@ -45,6 +45,19 @@ public class StringDataTypeTest extends AbstractGTest {
 	private PascalStringDataType pascalString = new PascalStringDataType();
 	private PascalUnicodeDataType pascalUtf16String = new PascalUnicodeDataType();
 
+	private static class DataOrgDTM extends TestDummyDataTypeManager {
+		private DataOrganization dataOrg;
+
+		public DataOrgDTM(DataOrganization dataOrg) {
+			this.dataOrg = dataOrg;
+		}
+
+		@Override
+		public DataOrganization getDataOrganization() {
+			return dataOrg;
+		}
+	}
+
 	private ByteMemBufferImpl mb(boolean isBE, int... values) {
 		byte[] bytes = new byte[values.length];
 		for (int i = 0; i < values.length; i++) {
@@ -214,6 +227,21 @@ public class StringDataTypeTest extends AbstractGTest {
 		String actual = (String) fixedUtf8String.getValue(buf, newset(), buf.getLength());
 
 		assertEquals("ab\ucc01\u1202", actual);
+	}
+
+	@Test
+	public void testGetStringValue_utf8_2bytechar_dataorg() {
+		// test UTF-8 when the dataorg specifies a 2byte character (ie. JVM)
+		ByteMemBufferImpl buf = mb(false, 'a', 'b', 'c');
+
+		DataOrganizationImpl dataOrg = DataOrganizationImpl.getDefaultOrganization(null);
+		dataOrg.setCharSize(2);
+		DataOrgDTM dtm = new DataOrgDTM(dataOrg);
+		StringUTF8DataType wideCharUTF8DT = new StringUTF8DataType(dtm);
+
+		String actual = (String) wideCharUTF8DT.getValue(buf, newset(), buf.getLength());
+
+		assertEquals("abc", actual);
 	}
 
 	@Test
