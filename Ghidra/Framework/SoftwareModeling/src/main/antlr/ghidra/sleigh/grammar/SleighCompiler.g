@@ -1246,7 +1246,17 @@ funcall returns [VectorSTL<OpTpl> value]
 	@init {
 		$Return::noReturn = true;
 	}
-	:	e=expr_apply { $value = (VectorSTL<OpTpl>) e; }
+	:	e=expr_apply {
+			if (e instanceof VectorSTL<?>)
+				$value = (VectorSTL<OpTpl>) e;
+			else {
+				Location loc = null;
+				if (e instanceof ExprTree) {
+					loc = ((ExprTree)e).location;
+				}
+				reportError(loc,"Functional operator requires a return value");
+			}
+		}
 	;
 
 build_stmt returns [VectorSTL<OpTpl> ops]
