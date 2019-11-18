@@ -237,6 +237,16 @@ public class GTreeNodeTest {
 	}
 
 	@Test
+	public void testGetLeafCountOnLazyNodes() throws CancelledException {
+		LazyGTestNode node = new LazyGTestNode("Test", 3);
+		assertEquals(1, node.getLeafCount());
+		node.getChildren();// force load
+		assertEquals(3, node.getLeafCount());
+		node.loadAll(TaskMonitor.DUMMY);
+		assertEquals(27, node.getLeafCount());
+	}
+
+	@Test
 	public void testGetIndexInParent() {
 		assertEquals(0, node0.getIndexInParent());
 		assertEquals(1, node1.getIndexInParent());
@@ -404,6 +414,24 @@ public class GTreeNodeTest {
 		assertEquals(node0_0, collect.get(4));
 		assertEquals(node0_1, collect.get(5));
 		assertEquals(node1_0, collect.get(6));
+	}
+
+	@Test
+	public void testEqualsAndHashCode() {
+		GTreeNode nodeA = new TestNode("AAA");
+		GTreeNode nodeB = new TestNode("BBB");
+		GTreeNode nodeAA = new TestNode("AAA");
+		assertEquals(nodeA, nodeAA);
+		assertNotEquals(nodeA, nodeB);
+		assertEquals(nodeA.hashCode(), nodeAA.hashCode());
+		assertNotEquals(nodeA.hashCode(), nodeB.hashCode());
+	}
+
+	@Test
+	public void testCloneEquals() throws CloneNotSupportedException {
+		GTreeNode nodeA = new TestNode("AAA");
+		assertEquals(nodeA, nodeA.clone());
+		assertEquals(nodeA.hashCode(), nodeA.clone().hashCode());
 	}
 
 	private class TestFilter implements GTreeFilter {
