@@ -436,8 +436,9 @@ public class BinaryReader {
 	 */
 	public String readAsciiString(long index) throws IOException {
 		StringBuffer buffer = new StringBuffer();
+		long len = provider.length();
 		while (true) {
-			if (index == provider.length()) {
+			if (index == len) {
 				// reached the end of the bytes and found no non-ascii data
 				break;
 			}
