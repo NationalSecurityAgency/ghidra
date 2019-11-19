@@ -4371,7 +4371,7 @@ define pcodeop addpd;
     XmmReg[0,32] = XmmReg[0,32] f+ m[0,32];
     XmmReg[32,32] = XmmReg[32,32] f+ m[32,32];
     XmmReg[64,32] = XmmReg[64,32] f+ m[64,32];
-    XmmReg[96,32] = XmmReg[96,32] f+ m[0,32];
+    XmmReg[96,32] = XmmReg[96,32] f+ m[96,32];
 }
 
 :ADDPS        XmmReg1, XmmReg2 is vexMode=0 & mandover=0 & byte=0x0F; byte=0x58; xmmmod=3 & XmmReg1 & XmmReg2
