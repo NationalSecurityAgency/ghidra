@@ -15,13 +15,21 @@
  */
 package ghidra.app.util.bin;
 
-import ghidra.formats.gfilesystem.FSRL;
-
 import java.io.*;
 
+import ghidra.formats.gfilesystem.FSRL;
+
+/**
+ * Creates a thread-safe pass-through {@link ByteProvider}. 
+ */
 public class SynchronizedByteProvider implements ByteProvider {
 	private final ByteProvider provider;
 
+	/**
+	 * Constructs a {@link SynchronizedByteProvider} around the specified {@link ByteProvider}
+	 * 
+	 * @param provider the {@link ByteProvider} to make thread-safe
+	 */
 	public SynchronizedByteProvider(ByteProvider provider) {
 		this.provider = provider;
 	}

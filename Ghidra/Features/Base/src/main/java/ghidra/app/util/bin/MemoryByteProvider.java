@@ -22,24 +22,29 @@ import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryBlock;
 
 /**
- * A Byte Provider implementation based on Memory.
+ * A {@link ByteProvider} implementation based on {@link Memory}.
  */
 public class MemoryByteProvider implements ByteProvider {
+
 	protected Memory memory;
 	protected Address baseAddress;
 
 	/**
-	 * Constructs a new provider for a specific address space.
-	 * @param memory the memory
+	 * Constructs a new {@link MemoryByteProvider} for a specific {@link AddressSpace}.  Bytes will be
+	 * provided starting at address 0 in the space.
+	 * 
+	 * @param memory the {@link Memory}
+	 * @param space the {@link AddressSpace}
 	 */
 	public MemoryByteProvider(Memory memory, AddressSpace space) {
 		this(memory, space.getAddress(0));
 	}
 
 	/**
-	 * Constructs a new provider relative to the base address.
-	 * @param memory the memory
-	 * @param baseAddress the relative base address
+	 * Constructs a new {@link MemoryByteProvider} relative to the specified base address.
+	 * 
+	 * @param memory the {@link Memory}
+	 * @param baseAddress the base address
 	 */
 	public MemoryByteProvider(Memory memory, Address baseAddress) {
 		this.memory = memory;
