@@ -46,8 +46,9 @@
 			fork="true"
 			failonerror="true">
 			<jvmarg value="-Xmx2048M"/>
+			<arg value="-DBaseDir=../../../../../../" />  <!-- repos root directory -->
 			<arg value="-i"/>
-			<arg value="../build/data/sleighArgs.txt"/>
+			<arg value="../build/tmp/sleighArgs.txt"/>
 			<arg value="-a"/>
 			<arg value="./languages"/>
 		</java>

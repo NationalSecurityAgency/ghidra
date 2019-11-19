@@ -39,6 +39,7 @@
 			fork="true"
 			failonerror="true">
 			<jvmarg value="-Xmx2048M"/>
+			<arg value="-DBaseDir=../../../../../" />  <!-- Ghidra install directory -->
 			<arg value="-i"/>
 			<arg value="sleighArgs.txt"/>
 			<arg value="-a"/>
