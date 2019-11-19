@@ -205,6 +205,37 @@ public class StringDataInstance {
 		this.length = length;
 	}
 
+	/**
+	 * Creates a string instance using the data in the {@link MemBuffer} and the settings
+	 * pulled from the {@link AbstractStringDataType string data type} but using the given
+	 * {@link RenderUnicodeSettingsDefinition.RENDER_ENUM rendering setting}.
+	 *
+	 * @param stringDataType {@link AbstractStringDataType} common string base data type.
+	 * @param settings {@link Settings} attached to the data location.
+	 * @param buf {@link MemBuffer} containing the data.
+	 * @param length Length passed from the caller to the datatype.  -1 indicates a 'probe'
+	 * trying to detect the length of an unknown string, otherwise it will be the length
+	 * of the containing field of the data instance.
+	 * @param renderSettings How to render the instance contents.
+	 */
+	public StringDataInstance(DataType dataType, Settings settings, MemBuffer buf, int length,
+			RenderUnicodeSettingsDefinition.RENDER_ENUM renderSettings) {
+		settings = (settings == null) ? SettingsImpl.NO_SETTINGS : settings;
+		this.buf = buf;
+		this.charsetName = getCharsetNameFromDataTypeOrSettings(dataType, settings);
+		this.charSize = CharsetInfo.getInstance().getCharsetCharSize(charsetName);
+		// NOTE: for now only handle padding for charSize == 1
+		this.paddedCharSize =
+			charSize == 1 ? getDataOrganization(dataType).getCharSize() : charSize;
+		this.stringLayout = getLayoutFromDataType(dataType);
+		this.showTranslation = TRANSLATION.isShowTranslated(settings);
+		this.translatedValue = TRANSLATION.getTranslatedValue(settings);
+		this.renderSetting = renderSettings;
+		this.endianSetting = ENDIAN.getEndianess(settings, null);
+
+		this.length = length;
+	}
+
 	private StringDataInstance(StringDataInstance copyFrom, StringLayoutEnum newLayout,
 			MemBuffer newBuf, int newLen) {
 		this.charSize = copyFrom.charSize;
@@ -233,6 +264,9 @@ public class StringDataInstance {
 	private static StringLayoutEnum getLayoutFromDataType(DataType dataType) {
 		if (dataType instanceof AbstractStringDataType) {
 			return ((AbstractStringDataType) dataType).getStringLayout();
+		}
+		if (dataType instanceof AbstractIntegerDataType) {
+			return StringLayoutEnum.FIXED_LEN;
 		}
 		return StringLayoutEnum.NULL_TERMINATED_BOUNDED;
 	}

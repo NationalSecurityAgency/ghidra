@@ -18,13 +18,13 @@ package ghidra.program.model.data;
 import java.math.BigInteger;
 
 import ghidra.docking.settings.*;
+import ghidra.program.model.data.RenderUnicodeSettingsDefinition.RENDER_ENUM;
 import ghidra.program.model.mem.ByteMemBufferImpl;
 import ghidra.program.model.mem.MemBuffer;
 import ghidra.program.model.scalar.Scalar;
 import ghidra.util.BigEndianDataConverter;
 import ghidra.util.LittleEndianDataConverter;
 import ghidra.util.StringFormat;
-import ghidra.util.StringUtilities;
 
 /**
  * Base type for integer data types such as {@link CharDataType chars}, {@link IntegerDataType ints},
@@ -281,17 +281,10 @@ public abstract class AbstractIntegerDataType extends BuiltIn implements ArraySt
 			}
 
 			MemBuffer memBuf = new ByteMemBufferImpl(null, bytes, true);
-			StringDataInstance instance = new StringDataInstance(this, settings, memBuf, nominalLen);
-			if (bytes.length == 1) {
-				return instance.getCharRepresentation();
-			}
-
-			String stringRepresentation = instance.getStringRepresentation();
-			if (stringRepresentation.length() != nominalLen) {
-				stringRepresentation = StringUtilities.toQuotedString(bytes);
-			}
-
-			return stringRepresentation;
+			StringDataInstance instance = new StringDataInstance(this, settings, memBuf,
+					nominalLen, RENDER_ENUM.ESC_SEQ);
+			return bytes.length == 1 ? instance.getCharRepresentation() :
+				instance.getStringRepresentation();
 		}
 
 		String valStr;
