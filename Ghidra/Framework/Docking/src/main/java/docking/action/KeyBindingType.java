@@ -45,7 +45,6 @@ public enum KeyBindingType {
 	 * <p>Most actions will not be shared.  If you are unsure if your action
 	 * should use a shared keybinding, then do not do so.
 	 */
-	
 	SHARED;
 	//@formatter:on
 
