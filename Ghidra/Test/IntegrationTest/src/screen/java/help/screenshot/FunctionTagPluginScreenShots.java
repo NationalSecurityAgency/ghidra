@@ -19,15 +19,21 @@ import static org.junit.Assert.assertTrue;
 
 import java.awt.Rectangle;
 
-import javax.swing.*;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
 
 import org.junit.Test;
 
 import docking.widgets.OptionDialog;
 import docking.widgets.dialogs.InputDialog;
-import ghidra.app.plugin.core.function.tags.*;
+import ghidra.app.plugin.core.function.tags.FunctionTagButtonPanel;
+import ghidra.app.plugin.core.function.tags.FunctionTagTableModel;
+import ghidra.app.plugin.core.function.tags.FunctionTagTable;
+import ghidra.app.plugin.core.function.tags.FunctionTagsComponentProvider;
+import ghidra.app.plugin.core.function.tags.SourceTagsPanel;
 import ghidra.program.model.address.Address;
-import ghidra.program.model.listing.*;
+import ghidra.program.model.listing.Function;
+import ghidra.program.model.listing.FunctionIterator;
 import ghidra.program.util.ProgramLocation;
 import ghidra.util.exception.UsrException;
 
@@ -38,7 +44,7 @@ public class FunctionTagPluginScreenShots extends GhidraScreenShotGenerator {
 		showProvider(FunctionTagsComponentProvider.class);
 		waitForSwing();
 		addTableData();
-		captureIsolatedProvider(FunctionTagsComponentProvider.class, 400, 300);
+		captureIsolatedProvider(FunctionTagsComponentProvider.class, 950, 400);
 	}
 
 	@Test
@@ -71,9 +77,9 @@ public class FunctionTagPluginScreenShots extends GhidraScreenShotGenerator {
 
 		FunctionTagsComponentProvider provider = getProvider(FunctionTagsComponentProvider.class);
 		SourceTagsPanel sourcePanel = (SourceTagsPanel) getInstanceField("sourcePanel", provider);
-		FunctionTagList list = (FunctionTagList) getInstanceField("list", sourcePanel);
-		Rectangle bounds = list.getCellBounds(7, 7); // Cell 7 is an editable item
-		doubleClick(list, bounds.x, bounds.y);
+		FunctionTagTable table = (FunctionTagTable) getInstanceField("table", sourcePanel);
+		Rectangle bounds = table.getCellRect(7, 0, false); // Cell 7 is an editable item
+		doubleClick(table, bounds.x, bounds.y);
 		
 		InputDialog warningDialog = waitForDialogComponent(InputDialog.class);
 
@@ -95,8 +101,8 @@ public class FunctionTagPluginScreenShots extends GhidraScreenShotGenerator {
 
 		FunctionTagsComponentProvider provider = getProvider(FunctionTagsComponentProvider.class);
 		SourceTagsPanel sourcePanel = (SourceTagsPanel) getInstanceField("sourcePanel", provider);
-		FunctionTagList list = (FunctionTagList) getInstanceField("list", sourcePanel);
-		list.setSelectedIndex(7);
+		FunctionTagTable table = (FunctionTagTable) getInstanceField("table", sourcePanel);
+		table.setRowSelectionInterval(7, 7);
 		FunctionTagButtonPanel buttonPanel =
 			(FunctionTagButtonPanel) getInstanceField("buttonPanel", provider);
 		pressButtonByName(buttonPanel, "deleteBtn", false);
@@ -117,8 +123,8 @@ public class FunctionTagPluginScreenShots extends GhidraScreenShotGenerator {
 
 		FunctionTagsComponentProvider provider = getProvider(FunctionTagsComponentProvider.class);
 		SourceTagsPanel sourcePanel = (SourceTagsPanel) getInstanceField("sourcePanel", provider);
-		FunctionTagList list = (FunctionTagList) getInstanceField("list", sourcePanel);
-		doubleClickItem(list, "LIBRARY"); // pick a known read-only tag
+		FunctionTagTable table = (FunctionTagTable) getInstanceField("table", sourcePanel);
+		doubleClickItem(table, "LIBRARY"); // pick a known read-only tag
 
 		OptionDialog warningDialog = waitForDialogComponent(OptionDialog.class);
 		captureDialog(warningDialog);
@@ -128,15 +134,13 @@ public class FunctionTagPluginScreenShots extends GhidraScreenShotGenerator {
 // Private Methods
 //==================================================================================================
 
-	private void doubleClickItem(FunctionTagList list, String text) {
+	private void doubleClickItem(FunctionTagTable table, String text) {
 
-		ListModel<FunctionTag> model = list.getModel();
-		int n = model.getSize();
+		FunctionTagTableModel model = (FunctionTagTableModel) table.getModel();
 		int row = -1;
-		for (int i = 0; i < n; i++) {
-			FunctionTag tag = model.getElementAt(i);
-			String name = tag.getName();
-			if (text.equals(name)) {
+		for (int i=0; i<model.getRowCount(); i++) { 
+			String name = (String) table.getValueAt(i, 0);
+			if (name.equals(text)) {
 				row = i;
 				break;
 			}
@@ -144,8 +148,8 @@ public class FunctionTagPluginScreenShots extends GhidraScreenShotGenerator {
 
 		assertTrue("Could not find tag '" + text + "'", row > -1);
 
-		Rectangle bounds = list.getCellBounds(row, row);
-		doubleClick(list, bounds.x, bounds.y);
+		Rectangle bounds = table.getCellRect(row, 0, true);
+		doubleClick(table, bounds.x, bounds.y);
 	}
 
 	private void addTableData() {

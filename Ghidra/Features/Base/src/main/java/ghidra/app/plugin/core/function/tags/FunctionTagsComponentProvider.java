@@ -32,8 +32,7 @@ import ghidra.framework.model.DomainObjectChangedEvent;
 import ghidra.framework.model.DomainObjectListener;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.program.model.address.Address;
-import ghidra.program.model.listing.Function;
-import ghidra.program.model.listing.Program;
+import ghidra.program.model.listing.*;
 import ghidra.program.util.*;
 import ghidra.util.*;
 
@@ -60,6 +59,7 @@ public class FunctionTagsComponentProvider extends ComponentProviderAdapter
 	private SourceTagsPanel sourcePanel;
 	private TargetTagsPanel targetPanel;
 	private FunctionTagButtonPanel buttonPanel;
+	private AllFunctionsPanel allFunctionsPanel;
 
 	private Program program;
 	private JPanel mainPanel;
@@ -69,8 +69,8 @@ public class FunctionTagsComponentProvider extends ComponentProviderAdapter
 	private HintTextField tagInputTF;
 	private HintTextField filterInputTF;
 
-	private int MIN_WIDTH = 400;
-	private int MIN_HEIGHT = 150;
+	private int MIN_WIDTH = 850;
+	private int MIN_HEIGHT = 350;
 
 	// The current program location selected in the listing. 
 	private ProgramLocation currentLocation = null;
@@ -79,6 +79,12 @@ public class FunctionTagsComponentProvider extends ComponentProviderAdapter
 	// the create tag entry field.
 	private static String INPUT_DELIMITER = ",";
 
+	/**
+	 * Constructor
+	 * 
+	 * @param plugin the function tag plugin
+	 * @param program the current program
+	 */
 	public FunctionTagsComponentProvider(FunctionTagPlugin plugin, Program program) {
 		super(plugin.getTool(), "Function Tags", plugin.getName(), ProgramActionContext.class);
 
@@ -105,7 +111,6 @@ public class FunctionTagsComponentProvider extends ComponentProviderAdapter
 			}
 
 			updateTitle(currentLocation);
-
 			updateTagLists();
 		});
 	}
@@ -113,7 +118,6 @@ public class FunctionTagsComponentProvider extends ComponentProviderAdapter
 	@Override
 	public void componentShown() {
 		mainPanel = createWorkPanel();
-
 		updateTagLists();
 		updateTitle(currentLocation);
 	}
@@ -124,14 +128,13 @@ public class FunctionTagsComponentProvider extends ComponentProviderAdapter
 	}
 
 	/**
-	 * Invoked when the user has selected a new location in the listing. When 
+	 * Invoked when a new location has been detected in the listing. When 
 	 * this happens we need to update the tag list to show what tags are assigned
 	 * at the current location.
 	 * 
 	 * @param loc the address selected in the listing
 	 */
 	public void locationChanged(ProgramLocation loc) {
-
 		currentLocation = loc;
 		updateTitle(loc);
 		updateTagLists();
@@ -159,7 +162,6 @@ public class FunctionTagsComponentProvider extends ComponentProviderAdapter
 	 */
 	@Override
 	public void domainObjectChanged(DomainObjectChangedEvent ev) {
-
 		if (ev.containsEvent(ChangeManager.DOCR_FUNCTION_TAG_CHANGED) ||
 			ev.containsEvent(ChangeManager.DOCR_FUNCTION_TAG_CREATED) ||
 			ev.containsEvent(ChangeManager.DOCR_FUNCTION_TAG_DELETED) ||
@@ -183,8 +185,7 @@ public class FunctionTagsComponentProvider extends ComponentProviderAdapter
 			setSubTitle("NOT A FUNCTION");
 		}
 		else {
-			setSubTitle(
-				" " + function.getName() + " " + "(" + function.getEntryPoint().toString() + ")");
+			setSubTitle("");
 		}
 	}
 
@@ -194,53 +195,49 @@ public class FunctionTagsComponentProvider extends ComponentProviderAdapter
 
 		// BOTTOM PANEL
 		JPanel bottomPanel = new JPanel();
-		bottomPanel.setLayout(new GridBagLayout());
-		GridBagConstraints gbc = new GridBagConstraints();
-		gbc.fill = GridBagConstraints.HORIZONTAL;
-
-		gbc.gridx = 0;
-		gbc.gridy = 0;
-		gbc.weightx = 50;
-		bottomPanel.add(createInputPanel(), gbc);
-
-		gbc.gridx = 1;
-		bottomPanel.add(createFilterPanel(), gbc);
+		bottomPanel.setLayout(new BoxLayout(bottomPanel, BoxLayout.X_AXIS));
+		bottomPanel.add(createInputPanel());
+		bottomPanel.add(createFilterPanel());
 
 		mainPanel.add(bottomPanel, BorderLayout.SOUTH);
 		mainPanel.setPreferredSize(new Dimension(MIN_WIDTH, MIN_HEIGHT));
 
 		// CENTER PANEL
-		JPanel tagPanel = new JPanel();
-		tagPanel.setLayout(new GridBagLayout());
-		sourcePanel = new SourceTagsPanel(this, tool, "Available Tags");
+		sourcePanel = new SourceTagsPanel(this, tool, "All Tags");
 		targetPanel = new TargetTagsPanel(this, tool, "Assigned To Function");
+		allFunctionsPanel = new AllFunctionsPanel(program, this, "Functions with Selected Tag");
 		buttonPanel = new FunctionTagButtonPanel(sourcePanel, targetPanel);
 		sourcePanel.setBorder(BorderFactory.createLineBorder(BORDER_COLOR));
 		targetPanel.setBorder(BorderFactory.createLineBorder(BORDER_COLOR));
+		allFunctionsPanel.setBorder(BorderFactory.createLineBorder(BORDER_COLOR));
 
-		gbc.gridx = 0;
-		gbc.gridy = 0;
-		gbc.weightx = 0.5;
-		gbc.weighty = 1.0;
-		gbc.fill = GridBagConstraints.BOTH;
-		tagPanel.add(sourcePanel, gbc);
+		// If we don't set this, then the splitter won't be able to shrink the
+		// target panels below the size required by its header, which can be large 
+		// because of the amount of text displayed. Keep the minimum size setting on 
+		// the source panel, however. That is generally small.
+		targetPanel.setMinimumSize(new Dimension(0, 0));
 
-		gbc.gridx = 1;
-		gbc.weightx = 0.0;
-		tagPanel.add(buttonPanel, gbc);
+		JPanel wrapper = new JPanel();
+		wrapper.setLayout(new BoxLayout(wrapper, BoxLayout.X_AXIS));
+		wrapper.add(sourcePanel);
+		wrapper.add(buttonPanel);
+		wrapper.add(targetPanel);
 
-		gbc.gridx = 2;
-		gbc.weightx = 0.5;
-		tagPanel.add(targetPanel, gbc);
+		JSplitPane splitter =
+			new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, wrapper, allFunctionsPanel);
 
-		mainPanel.add(tagPanel, BorderLayout.CENTER);
+		mainPanel.add(splitter, BorderLayout.CENTER);
+		
+		splitter.setResizeWeight(0.5f);
+		splitter.setDividerLocation(0.5f);
 
 		return mainPanel;
 	}
 
 	/**
 	 * Updates the button panel depending on the selection state of the
-	 * tag lists.
+	 * tag lists. Also updates the {@link AllFunctionsPanel} so it can update
+	 * its list.
 	 * 
 	 * @param panel the panel that generated the selection event
 	 */
@@ -256,6 +253,11 @@ public class FunctionTagsComponentProvider extends ComponentProviderAdapter
 			buttonPanel.targetPanelSelectionChanged(function != null);
 			sourcePanel.clearSelection();
 		}
+
+		List<FunctionTag> sourceTags = sourcePanel.getSelectedTags();
+		List<FunctionTag> targetTags = targetPanel.getSelectedTags();
+		sourceTags.addAll(targetTags);
+		allFunctionsPanel.setSelectedTags(sourceTags);
 	}
 
 	/**
@@ -309,11 +311,23 @@ public class FunctionTagsComponentProvider extends ComponentProviderAdapter
 	 */
 	private void updateTagLists() {
 
-		if (sourcePanel == null || targetPanel == null) {
+		if (sourcePanel == null || targetPanel == null || allFunctionsPanel == null) {
 			return;
 		}
+
 		sourcePanel.setProgram(program);
 		targetPanel.setProgram(program);
+		allFunctionsPanel.setProgram(program);
+		
+		// Get the currently selected tags and use them to update the
+		// all functions panel. If there is no current selection, leave the
+		// table as-is.
+		List<FunctionTag> sTags = sourcePanel.getSelectedTags();
+		List<FunctionTag> tTags = targetPanel.getSelectedTags();
+		sTags.addAll(tTags);
+		if (!sTags.isEmpty()) {
+			allFunctionsPanel.refresh(sTags);
+		}
 
 		Function function = getFunctionAtLocation(currentLocation);
 		sourcePanel.refresh(function);
@@ -397,7 +411,7 @@ public class FunctionTagsComponentProvider extends ComponentProviderAdapter
 			}
 		});
 
-		filterPanel.add(new GLabel(" Filter:"), BorderLayout.WEST);
+		filterPanel.add(new GLabel(" Tag Filter:"), BorderLayout.WEST);
 		filterPanel.add(filterInputTF, BorderLayout.CENTER);
 
 		return filterPanel;

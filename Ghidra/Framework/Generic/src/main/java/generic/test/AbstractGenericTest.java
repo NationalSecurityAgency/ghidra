@@ -15,7 +15,7 @@
  */
 package generic.test;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertNotNull;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -1293,6 +1293,46 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 		waitForSwing();
 		Rectangle rect = table.getCellRect(row, col, true);
 		clickMouse(table, MouseEvent.BUTTON1, rect.x + 10, rect.y + 10, clickCount, 0);
+		waitForSwing();
+	}
+
+	/**
+	 * Clicks a range of items in a list (simulates holding SHIFT and selecting
+	 * each item in the range in-turn)
+	 * 
+	 * @param list the list to select from
+	 * @param row the initial index
+	 * @param count the number of rows to select
+	 * @throws Exception if there's a problem simulating the click
+	 */
+	public static void clickListRange(final JList list, final int row, int count)
+			throws Exception {
+		waitForSwing();
+		for (int i = row; i < row + count; i++) {
+			Rectangle rect = list.getCellBounds(i, i);
+			clickMouse(list, MouseEvent.BUTTON1, rect.x + 10, rect.y + 10, 1,
+				InputEvent.SHIFT_DOWN_MASK);
+		}
+		waitForSwing();
+	}
+	
+	/**
+	 * Clicks a range of items in a table (simulates holding SHIFT and selecting
+	 * each item in the range)
+	 * 
+	 * @param table the table to select
+	 * @param row the starting row index
+	 * @param count the number of rows to select
+	 * @throws Exception
+	 */
+	public static void clickTableRange(final JTable table, final int row, int count)
+			throws Exception {
+		waitForSwing();
+		for (int i = row; i < row + count; i++) {
+			Rectangle rect = table.getCellRect(i, 0, true);
+			clickMouse(table, MouseEvent.BUTTON1, rect.x + 10, rect.y + 10, 1,
+				InputEvent.SHIFT_DOWN_MASK);
+		}
 		waitForSwing();
 	}
 
