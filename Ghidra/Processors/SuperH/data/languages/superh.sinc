@@ -116,7 +116,7 @@ attach names [ rm_imm_08_11 rn_imm_08_11 ] [
 @if defined(FPU)
 
 define token finstr16(16)
-    fop_00_07 =         (0,  8)
+    fop_00_07 =         (0,  7)
     fop_00_03 =         (0,  3)
     fop_04_07 =         (4,  7)
     fop_12_15 =         (12, 15)
