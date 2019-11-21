@@ -543,7 +543,13 @@ public class GTreeTest extends AbstractDockingTest {
 
 		List<TreePath> expandedPaths = gTree.getExpandedPaths();
 		assertEquals(3, expandedPaths.size());
-		assertEquals(originalNode, expandedPaths.get(0).getLastPathComponent());
+
+		// make sure one of the expanded paths contains the originalNode
+		TreePath path = expandedPaths.parallelStream()
+				.filter(p -> p.getLastPathComponent().equals(originalNode))
+				.findAny()
+				.orElse(null);
+		assertTrue(path != null);
 
 		GTreeState treeState = gTree.getTreeState();
 
