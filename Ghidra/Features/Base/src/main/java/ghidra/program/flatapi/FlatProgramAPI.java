@@ -2473,7 +2473,7 @@ public class FlatProgramAPI {
 	 * the root domain folder.
 	 * @return the root domain folder of the current project
 	 */
-	protected DomainFolder getProjectRootFolder() {
+	public DomainFolder getProjectRootFolder() {
 		Project project = AppInfo.getActiveProject();
 		ProjectData projectData = project.getProjectData();
 		DomainFolder folder = projectData.getRootFolder();

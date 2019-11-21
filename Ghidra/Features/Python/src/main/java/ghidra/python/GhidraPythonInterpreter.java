@@ -69,11 +69,6 @@ public class GhidraPythonInterpreter extends InteractiveInterpreter {
 				// Setup python cache directory
 				PythonUtils.setupPythonCacheDir(TaskMonitor.DUMMY);
 
-				// Enable protected java methods to be accessed from python sub-classes.
-				// This is necessary to be able to call protected GhidraScript/FlatProgram API
-				// methods from a python script.
-				System.setProperty("python.security.respectJavaAccessibility", "false");
-
 				// Indicate that we've initialized the python environment, which should
 				// only happen once.
 				pythonInitialized = true;
@@ -348,12 +343,16 @@ public class GhidraPythonInterpreter extends InteractiveInterpreter {
 				}
 			}
 
-			// Add public and protected methods (only once). Ignore inner classes.
+			// Add public methods (only once). Ignore inner classes.
+			//
+			// NOTE: We currently do not have a way to safely add protected methods.  Disabling
+			// python.security.respectJavaAccessibility and adding in protected methods in the below
+			// loop caused an InaccessibleObjectException for some users (relating to core Java 
+			// modules, not the GhidraScript class hierarchy).
 			if (!scriptMethodsInjected) {
 				for (Method method : scriptClass.getDeclaredMethods()) {
 					if (!method.getName().contains("$") &&
-						(Modifier.isPublic(method.getModifiers()) ||
-							Modifier.isProtected(method.getModifiers()))) {
+						Modifier.isPublic(method.getModifiers())) {
 						method.setAccessible(true);
 						setMethod(script, method);
 					}
