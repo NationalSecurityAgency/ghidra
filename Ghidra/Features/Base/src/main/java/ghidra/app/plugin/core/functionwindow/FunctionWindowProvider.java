@@ -33,7 +33,7 @@ import ghidra.util.table.*;
 import resources.ResourceManager;
 
 /**
- * Provider for the equates table. 
+ * Provider that displays all functions in the selected program
  */
 public class FunctionWindowProvider extends ComponentProviderAdapter {
 
@@ -45,9 +45,13 @@ public class FunctionWindowProvider extends ComponentProviderAdapter {
 	private JComponent mainPanel;
 
 	private GhidraTableFilterPanel<FunctionRowObject> tableFilterPanel;
-
 	private GhidraThreadedTablePanel<FunctionRowObject> threadedTablePanel;
 
+	/**
+	 * Constructor
+	 * 
+	 * @param plugin the function window plugin
+	 */
 	FunctionWindowProvider(FunctionWindowPlugin plugin) {
 		super(plugin.getTool(), "Functions Window", plugin.getName());
 		setTitle("Functions");
@@ -124,8 +128,9 @@ public class FunctionWindowProvider extends ComponentProviderAdapter {
 		functionTable.setPreferredScrollableViewportSize(new Dimension(350, 150));
 		functionTable.setRowSelectionAllowed(true);
 		functionTable.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
-		functionTable.getSelectionModel().addListSelectionListener(
-			e -> plugin.setActionsEnabled(functionTable.getSelectedRowCount() > 0));
+		functionTable.getSelectionModel()
+				.addListSelectionListener(
+					e -> plugin.setActionsEnabled(functionTable.getSelectedRowCount() > 0));
 
 		functionModel.addTableModelListener(e -> {
 			int rowCount = functionModel.getRowCount();
@@ -158,8 +163,10 @@ public class FunctionWindowProvider extends ComponentProviderAdapter {
 	}
 
 	private void setFunctionTableRenderer() {
-		functionTable.getColumnModel().getColumn(FunctionTableModel.LOCATION_COL).setPreferredWidth(
-			FunctionTableModel.LOCATION_COL_WIDTH);
+		functionTable.getColumnModel()
+				.getColumn(FunctionTableModel.LOCATION_COL)
+				.setPreferredWidth(
+					FunctionTableModel.LOCATION_COL_WIDTH);
 	}
 
 	void update(Function function) {
@@ -203,5 +210,4 @@ public class FunctionWindowProvider extends ComponentProviderAdapter {
 	public boolean isTransient() {
 		return false;
 	}
-
 }

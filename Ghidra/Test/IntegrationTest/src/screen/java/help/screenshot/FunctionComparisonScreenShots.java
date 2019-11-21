@@ -15,12 +15,15 @@
  */
 package help.screenshot;
 
-import java.util.HashMap;
+import java.awt.Rectangle;
+import java.io.IOException;
 import java.util.HashSet;
+import java.util.Set;
 
 import org.junit.Test;
 
-import docking.ComponentProvider;
+import docking.DialogComponentProvider;
+import docking.action.DockingActionIf;
 import ghidra.app.cmd.disassemble.DisassembleCommand;
 import ghidra.app.plugin.core.functioncompare.*;
 import ghidra.app.util.viewer.listingpanel.ListingCodeComparisonPanel;
@@ -30,8 +33,8 @@ import ghidra.program.model.address.AddressSet;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryAccessException;
-import ghidra.program.model.symbol.Namespace;
 import ghidra.program.model.symbol.SourceType;
+import ghidra.util.InvalidNameException;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.exception.InvalidInputException;
 
@@ -52,19 +55,27 @@ public class FunctionComparisonScreenShots extends GhidraScreenShotGenerator {
 	public void setUp() throws Exception {
 		super.setUp();
 		plugin = getPlugin(tool, FunctionComparisonPlugin.class);
+
+		destinationProgram = loadProgram(TEST_DESTINATION_PROGRAM_NAME);
+		sourceProgram = loadProgram(TEST_SOURCE_PROGRAM_NAME);
+	}
+
+	public void tearDown() throws Exception {
+		super.tearDown();
 	}
 
 	@Test
 	public void testFunctionComparisonWindow() {
-		destinationProgram = loadProgram(TEST_DESTINATION_PROGRAM_NAME);
-		sourceProgram = loadProgram(TEST_SOURCE_PROGRAM_NAME);
 
 		positionListingTop(0x004118f0);
 		int txId1 = sourceProgram.startTransaction("Modify Program1");
 		int txId2 = destinationProgram.startTransaction("Modify Program2");
 		try {
-			sourceProgram.setName("TestProgram");
-			destinationProgram.setName("OtherProgram");
+			sourceProgram.getDomainFile().setName("FirstProgram");
+			destinationProgram.getDomainFile().setName("SecondProgram");
+			sourceProgram.setName("FirstProgram");
+			destinationProgram.setName("SecondProgram");
+
 			Listing sourceListing = sourceProgram.getListing();
 			Listing destListing = destinationProgram.getListing();
 			Memory sourceMemory = sourceProgram.getMemory();
@@ -81,100 +92,10 @@ public class FunctionComparisonScreenShots extends GhidraScreenShotGenerator {
 			f2.setName("FunctionB", SourceType.USER_DEFINED);
 			destListing.setComment(addr(0x004118c0), CodeUnit.PLATE_COMMENT, null);
 
-			Function[] functions = new Function[] { f1, f2 };
 			FunctionComparisonProviderManager providerMgr =
 				getInstanceFieldByClassType(FunctionComparisonProviderManager.class, plugin);
 			FunctionComparisonProvider functionComparisonProvider =
-				providerMgr.showFunctionComparisonProvider(functions);
-			FunctionComparisonPanel functionComparisonPanel =
-				functionComparisonProvider.getComponent();
-			runSwing(() -> {
-				functionComparisonPanel.setCurrentTabbedComponent("Listing View");
-				ListingCodeComparisonPanel dualListing =
-					(ListingCodeComparisonPanel) functionComparisonPanel.getDisplayedPanel();
-				ListingPanel leftPanel = dualListing.getLeftPanel();
-				dualListing.setLeftTitle("FunctionA() in /TestProgram");
-				dualListing.setRightTitle("FunctionB() in /OtherProgram");
-				leftPanel.goTo(addr(0x004119aa));
-
-			});
-			waitForSwing();
-			captureIsolatedProvider(FunctionComparisonProvider.class, 1200, 550);
-		}
-		catch (DuplicateNameException e) {
-			e.printStackTrace();
-		}
-		catch (InvalidInputException e) {
-			e.printStackTrace();
-		}
-		catch (MemoryAccessException e) {
-			e.printStackTrace();
-		}
-		finally {
-			destinationProgram.endTransaction(txId2, false);
-			sourceProgram.endTransaction(txId1, false);
-		}
-	}
-
-	@Test
-	public void testFunctionComparisonWindowFromMap() throws CircularDependencyException {
-		destinationProgram = loadProgram(TEST_DESTINATION_PROGRAM_NAME);
-		sourceProgram = loadProgram(TEST_SOURCE_PROGRAM_NAME);
-
-		positionListingTop(0x004118f0);
-		int txId1 = sourceProgram.startTransaction("Modify Program1");
-		int txId2 = destinationProgram.startTransaction("Modify Program2");
-		try {
-			sourceProgram.setName("TestProgram");
-			destinationProgram.setName("OtherProgram");
-			Listing sourceListing = sourceProgram.getListing();
-			Listing destListing = destinationProgram.getListing();
-			Memory sourceMemory = sourceProgram.getMemory();
-
-			Function f1 = getFunction(sourceProgram, addr(0x004118f0));
-			f1.setName("Function1", SourceType.USER_DEFINED);
-			Namespace parentNamespace = sourceProgram.getSymbolTable().createNameSpace(
-				program.getGlobalNamespace(), "Namespace1", SourceType.USER_DEFINED);
-			f1.setParentNamespace(parentNamespace);
-			sourceListing.setComment(addr(0x004118f0), CodeUnit.PLATE_COMMENT, null);
-			sourceListing.clearCodeUnits(addr(0x004119b1), addr(0x004119b4), false);
-			sourceMemory.setByte(addr(0x004119b2), (byte) 0x55);
-			sourceMemory.setByte(addr(0x004119b4), (byte) 0x52);
-			disassemble(sourceProgram, 0x004119b1, 4, false);
-
-			Function f2 = getFunction(destinationProgram, addr(0x004118c0));
-			f2.setName("Function2", SourceType.USER_DEFINED);
-			destListing.setComment(addr(0x004118c0), CodeUnit.PLATE_COMMENT, null);
-
-			Function fA = getFunction(sourceProgram, addr(0x00411a30));
-			fA.setName("FunctionA", SourceType.USER_DEFINED);
-			sourceListing.setComment(addr(0x00411a30), CodeUnit.PLATE_COMMENT, null);
-
-			Function fB = getFunction(destinationProgram, addr(0x00411a10));
-			fB.setName("FunctionB", SourceType.USER_DEFINED);
-			destListing.setComment(addr(0x00411a10), CodeUnit.PLATE_COMMENT, null);
-
-			Function fC = getFunction(sourceProgram, addr(0x00411ab0));
-			fC.setName("FunctionC", SourceType.USER_DEFINED);
-			sourceListing.setComment(addr(0x00411ab0), CodeUnit.PLATE_COMMENT, null);
-
-			Function fD = getFunction(destinationProgram, addr(0x00411a90));
-			fD.setName("FunctionD", SourceType.USER_DEFINED);
-			destListing.setComment(addr(0x00411a90), CodeUnit.PLATE_COMMENT, null);
-
-			HashMap<Function, HashSet<Function>> functionMap = new HashMap<>();
-			HashSet<Function> functionSet = new HashSet<>();
-			functionSet.add(fA);
-			functionSet.add(fB);
-			functionMap.put(f1, functionSet);
-			functionSet = new HashSet<>();
-			functionSet.add(fC);
-			functionSet.add(fD);
-			functionMap.put(f2, functionSet);
-			FunctionComparisonProviderManager providerMgr =
-				getInstanceFieldByClassType(FunctionComparisonProviderManager.class, plugin);
-			FunctionComparisonProvider functionComparisonProvider =
-				providerMgr.showFunctionComparisonProvider(functionMap);
+				providerMgr.compareFunctions(f1, f2);
 			FunctionComparisonPanel functionComparisonPanel =
 				functionComparisonProvider.getComponent();
 			runSwing(() -> {
@@ -183,12 +104,12 @@ public class FunctionComparisonScreenShots extends GhidraScreenShotGenerator {
 					(ListingCodeComparisonPanel) functionComparisonPanel.getDisplayedPanel();
 				ListingPanel leftPanel = dualListing.getLeftPanel();
 				leftPanel.goTo(addr(0x004119aa));
-
 			});
 			waitForSwing();
 			captureIsolatedProvider(FunctionComparisonProvider.class, 1200, 550);
 		}
-		catch (DuplicateNameException | InvalidInputException | MemoryAccessException e) {
+		catch (DuplicateNameException | InvalidInputException | MemoryAccessException
+				| InvalidNameException | IOException e) {
 			e.printStackTrace();
 		}
 		finally {
@@ -198,136 +119,102 @@ public class FunctionComparisonScreenShots extends GhidraScreenShotGenerator {
 	}
 
 	@Test
-	public void testListingCodeComparisonOptions() {
-		destinationProgram = loadProgram(TEST_DESTINATION_PROGRAM_NAME);
-		sourceProgram = loadProgram(TEST_SOURCE_PROGRAM_NAME);
+	public void testAddToComparisonIcon() {
+		Function f1 = getFunction(sourceProgram, addr(0x004118f0));
+		Function f2 = getFunction(destinationProgram, addr(0x004118c0));
 
-		positionListingTop(0x004118f0);
-		int txId1 = sourceProgram.startTransaction("Modify Program1");
-		int txId2 = destinationProgram.startTransaction("Modify Program2");
-		try {
-			sourceProgram.setName("TestProgram");
-			destinationProgram.setName("OtherProgram");
-			Listing sourceListing = sourceProgram.getListing();
-			Listing destListing = destinationProgram.getListing();
-			Memory sourceMemory = sourceProgram.getMemory();
+		FunctionComparisonProviderManager providerMgr =
+			getInstanceFieldByClassType(FunctionComparisonProviderManager.class, plugin);
+		FunctionComparisonProvider functionComparisonProvider =
+			providerMgr.compareFunctions(f1, f2);
 
-			Function f1 = getFunction(sourceProgram, addr(0x004118f0));
-			f1.setName("FunctionA", SourceType.USER_DEFINED);
-			sourceListing.setComment(addr(0x004118f0), CodeUnit.PLATE_COMMENT, null);
-			sourceListing.clearCodeUnits(addr(0x004119b1), addr(0x004119b4), false);
-			sourceMemory.setByte(addr(0x004119b2), (byte) 0x55);
-			sourceMemory.setByte(addr(0x004119b4), (byte) 0x52);
-			disassemble(sourceProgram, 0x004119b1, 4, false);
+		waitForSwing();
 
-			Function f2 = getFunction(destinationProgram, addr(0x004118c0));
-			f2.setName("FunctionB", SourceType.USER_DEFINED);
-			destListing.setComment(addr(0x004118c0), CodeUnit.PLATE_COMMENT, null);
-
-			Function[] functions = new Function[] { f1, f2 };
-			FunctionComparisonProviderManager providerMgr =
-				getInstanceFieldByClassType(FunctionComparisonProviderManager.class, plugin);
-			FunctionComparisonProvider functionComparisonProvider =
-				providerMgr.showFunctionComparisonProvider(functions);
-			FunctionComparisonPanel functionComparisonPanel =
-				functionComparisonProvider.getComponent();
-			runSwing(() -> {
-				functionComparisonPanel.setCurrentTabbedComponent("Listing View");
-			});
-			waitForSwing();
-
-			ComponentProvider provider = getProvider("Function Comparison");
-			performAction("Listing Code Comparison Options", "Function Comparison", provider,
-				false);
-
-			captureDialog(600, 300);
-			pressButtonByText(getDialog(), "Cancel");
-
-			waitForSwing();
-		}
-		catch (DuplicateNameException e) {
-			e.printStackTrace();
-		}
-		catch (InvalidInputException e) {
-			e.printStackTrace();
-		}
-		catch (MemoryAccessException e) {
-			e.printStackTrace();
-		}
-		finally {
-			destinationProgram.endTransaction(txId2, false);
-			sourceProgram.endTransaction(txId1, false);
-		}
+		captureProvider(functionComparisonProvider);
+		crop(new Rectangle(261, 2, 24, 24));
 	}
 
 	@Test
-	public void testMultiFunctionComparisonWindow() {
-		destinationProgram = loadProgram(TEST_DESTINATION_PROGRAM_NAME);
-		sourceProgram = loadProgram(TEST_SOURCE_PROGRAM_NAME);
+	public void testRemoveFromComparisonIcon() {
+		Function f1 = getFunction(sourceProgram, addr(0x004118f0));
+		Function f2 = getFunction(destinationProgram, addr(0x004118c0));
 
-		positionListingTop(0x004118f0);
-		int txId1 = sourceProgram.startTransaction("Modify Program1");
-		int txId2 = destinationProgram.startTransaction("Modify Program2");
-		try {
-			sourceProgram.setName("TestProgram");
-			destinationProgram.setName("OtherProgram");
-			Listing sourceListing = sourceProgram.getListing();
-			Listing destListing = destinationProgram.getListing();
-			Memory sourceMemory = sourceProgram.getMemory();
+		FunctionComparisonProviderManager providerMgr =
+			getInstanceFieldByClassType(FunctionComparisonProviderManager.class, plugin);
+		FunctionComparisonProvider functionComparisonProvider =
+			providerMgr.compareFunctions(f1, f2);
 
-			Function f1 = getFunction(sourceProgram, addr(0x004118f0));
-			f1.setName("FunctionA", SourceType.USER_DEFINED);
-			sourceListing.setComment(addr(0x004118f0), CodeUnit.PLATE_COMMENT, null);
-			sourceListing.clearCodeUnits(addr(0x004119b1), addr(0x004119b4), false);
-			sourceMemory.setByte(addr(0x004119b2), (byte) 0x55);
-			sourceMemory.setByte(addr(0x004119b4), (byte) 0x52);
-			disassemble(sourceProgram, 0x004119b1, 4, false);
+		waitForSwing();
 
-			Function f2 = getFunction(destinationProgram, addr(0x004118c0));
-			f2.setName("FunctionB", SourceType.USER_DEFINED);
-			destListing.setComment(addr(0x004118c0), CodeUnit.PLATE_COMMENT, null);
-
-			Function f3 = getFunction(sourceProgram, addr(0x004117c0));
-			f3.setName("FunctionC", SourceType.USER_DEFINED);
-			sourceListing.setComment(addr(0x004117c0), CodeUnit.PLATE_COMMENT, null);
-
-			Function f4 = getFunction(destinationProgram, addr(0x004117b0));
-			f4.setName("FunctionD", SourceType.USER_DEFINED);
-			destListing.setComment(addr(0x004117b0), CodeUnit.PLATE_COMMENT, null);
-
-			Function[] functions = new Function[] { f1, f2, f3, f4 };
-			FunctionComparisonProviderManager providerMgr =
-				getInstanceFieldByClassType(FunctionComparisonProviderManager.class, plugin);
-			FunctionComparisonProvider functionComparisonProvider =
-				providerMgr.showFunctionComparisonProvider(functions);
-			FunctionComparisonPanel functionComparisonPanel =
-				functionComparisonProvider.getComponent();
-			runSwing(() -> {
-				functionComparisonPanel.setCurrentTabbedComponent("Listing View");
-				ListingCodeComparisonPanel dualListing =
-					(ListingCodeComparisonPanel) functionComparisonPanel.getDisplayedPanel();
-				ListingPanel leftPanel = dualListing.getLeftPanel();
-				leftPanel.goTo(addr(0x004119a5));
-
-			});
-			waitForSwing();
-			captureIsolatedProvider(FunctionComparisonProvider.class, 1200, 598);
-		}
-		catch (DuplicateNameException | InvalidInputException | MemoryAccessException e) {
-			e.printStackTrace();
-		}
-		finally {
-			destinationProgram.endTransaction(txId2, false);
-			sourceProgram.endTransaction(txId1, false);
-		}
+		captureProvider(functionComparisonProvider);
+		crop(new Rectangle(351, 2, 24, 24));
 	}
 
-	Function getFunction(Program program1, Address entryPoint) {
+	@Test
+	public void testNavNextIcon() {
+		Function f1 = getFunction(sourceProgram, addr(0x004118f0));
+		Function f2 = getFunction(destinationProgram, addr(0x004118c0));
+
+		FunctionComparisonProviderManager providerMgr =
+			getInstanceFieldByClassType(FunctionComparisonProviderManager.class, plugin);
+		Set<Function> functions = new HashSet<>();
+		functions.add(f1);
+		functions.add(f2);
+		FunctionComparisonProvider functionComparisonProvider =
+			providerMgr.compareFunctions(functions);
+
+		waitForSwing();
+
+		captureProvider(functionComparisonProvider);
+		crop(new Rectangle(293, 2, 24, 24));
+	}
+
+	@Test
+	public void testNavPreviousIcon() {
+		Function f1 = getFunction(sourceProgram, addr(0x004118f0));
+		Function f2 = getFunction(destinationProgram, addr(0x004118c0));
+
+		FunctionComparisonProviderManager providerMgr =
+			getInstanceFieldByClassType(FunctionComparisonProviderManager.class, plugin);
+		Set<Function> functions = new HashSet<>();
+		functions.add(f1);
+		functions.add(f2);
+		FunctionComparisonProvider functionComparisonProvider =
+			providerMgr.compareFunctions(functions);
+		MultiFunctionComparisonPanel panel =
+			(MultiFunctionComparisonPanel) functionComparisonProvider.getComponent();
+		panel.getFocusedComponent().setSelectedIndex(1);
+
+		waitForSwing();
+
+		captureProvider(functionComparisonProvider);
+		crop(new Rectangle(315, 2, 24, 24));
+	}
+
+	@Test
+	public void testAddFunctionsPanel() {
+		Function f1 = getFunction(sourceProgram, addr(0x004118f0));
+		Function f2 = getFunction(destinationProgram, addr(0x004118c0));
+
+		FunctionComparisonProviderManager providerMgr =
+			getInstanceFieldByClassType(FunctionComparisonProviderManager.class, plugin);
+		Set<Function> functions = new HashSet<>();
+		functions.add(f1);
+		functions.add(f2);
+		providerMgr.compareFunctions(functions);
+
+		DockingActionIf openTableAction = getAction(plugin, "Add Functions To Comparison");
+		performAction(openTableAction);
+		DialogComponentProvider table = waitForDialogComponent("Select Functions");
+		captureDialog(table);
+	}
+
+	private Function getFunction(Program program1, Address entryPoint) {
 		FunctionManager functionManager = program1.getFunctionManager();
 		return functionManager.getFunctionAt(entryPoint);
 	}
 
-	public void disassemble(Program pgm1, long addressAsLong, int length, boolean followFlows) {
+	private void disassemble(Program pgm1, long addressAsLong, int length, boolean followFlows) {
 		Address address = addr(addressAsLong);
 		DisassembleCommand cmd = new DisassembleCommand(address,
 			new AddressSet(address, address.add(length - 1)), followFlows);

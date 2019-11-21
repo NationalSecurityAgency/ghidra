@@ -15,23 +15,20 @@
  */
 package ghidra.app.plugin.core.functioncompare;
 
+import java.util.List;
+
+import ghidra.app.services.FunctionComparisonModel;
+
 /**
- * Allows subscribers to register for function comparison provider changes 
- * (eg: when the provider is opened/closed)
+ * Allows subscribers to register for {@link FunctionComparisonModel function
+ * comparison model} changes
  */
-public interface FunctionComparisonProviderListener {
+public interface FunctionComparisonModelListener {
 
 	/**
-	 * Invoked when the provider is being closed
+	 * Invoked when the comparison model has changed
 	 * 
-	 * @param provider the closed provider
+	 * @param model the current state of the model
 	 */
-	public void providerClosed(FunctionComparisonProvider provider);
-
-	/**
-	 * Invoked when the provider is being opened
-	 * 
-	 * @param provider the opened provider
-	 */
-	public void providerOpened(FunctionComparisonProvider provider);
+	public void modelChanged(List<FunctionComparison> model);
 }

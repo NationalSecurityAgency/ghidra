@@ -369,10 +369,15 @@ src/main/help/help/topics/FrontEndPlugin/images/program_obj.png||GHIDRA|||Custom
 src/main/help/help/topics/FrontEndPlugin/images/up.png||GHIDRA||||END|
 src/main/help/help/topics/FrontEndPlugin/images/user.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
 src/main/help/help/topics/FunctionComparison/FunctionComparison.htm||GHIDRA||||END|
+src/main/help/help/topics/FunctionComparison/images/AddFunctionsPanel.png||GHIDRA||||END|
+src/main/help/help/topics/FunctionComparison/images/AddToComparisonIcon.png||GHIDRA||||END|
 src/main/help/help/topics/FunctionComparison/images/FunctionComparisonWindow.png||GHIDRA||||END|
 src/main/help/help/topics/FunctionComparison/images/FunctionScope.gif||GHIDRA||||END|
 src/main/help/help/topics/FunctionComparison/images/ListingCodeComparisonOptions.png||GHIDRA||||END|
 src/main/help/help/topics/FunctionComparison/images/MultiFunctionComparisonWindow.png||GHIDRA||||END|
+src/main/help/help/topics/FunctionComparison/images/NavNextIcon.png||GHIDRA||||END|
+src/main/help/help/topics/FunctionComparison/images/NavPreviousIcon.png||GHIDRA||||END|
+src/main/help/help/topics/FunctionComparison/images/RemoveFromComparisonIcon.png||GHIDRA||||END|
 src/main/help/help/topics/FunctionComparison/images/binaryData.gif||GHIDRA||||END|
 src/main/help/help/topics/FunctionComparison/images/class.png||GHIDRA||||END|
 src/main/help/help/topics/FunctionComparison/images/cursor_arrow_flipped.gif||GHIDRA||||END|
@@ -946,6 +951,7 @@ src/main/resources/images/arrow_up.png||FAMFAMFAM Icons - CC 2.5|||famfamfam sil
 src/main/resources/images/binaryData.gif||GHIDRA||||END|
 src/main/resources/images/browser.png||Nuvola Icons - LGPL 2.1|||Nuvola icon set|END|
 src/main/resources/images/bullet_green.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
+src/main/resources/images/bullet_star.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
 src/main/resources/images/cUnion.png||GHIDRA||||END|
 src/main/resources/images/camera-photo.png||Tango Icons - Public Domain|||tango|END|
 src/main/resources/images/carry.png||GHIDRA||||END|
