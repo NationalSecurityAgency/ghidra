@@ -509,7 +509,7 @@ public class StringDataInstance {
 
 	private byte[] getBytesFromMemBuff(MemBuffer memBuffer, int copyLen) {
 		// round copyLen down to multiple of paddedCharSize
-		copyLen &= ~(paddedCharSize - 1);
+		copyLen = (copyLen / paddedCharSize) * paddedCharSize;
 
 		byte[] bytes = new byte[copyLen];
 		if (memBuffer.getBytes(bytes, 0) != bytes.length) {
