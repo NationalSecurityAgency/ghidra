@@ -23,6 +23,7 @@ import generic.continues.GenericFactory;
 import ghidra.app.util.bin.*;
 import ghidra.app.util.bin.format.FactoryBundledWithBinaryReader;
 import ghidra.app.util.bin.format.Writeable;
+import ghidra.app.util.bin.format.elf.ElfRelocationTable.TableFormat;
 import ghidra.app.util.bin.format.elf.extend.ElfExtensionFactory;
 import ghidra.app.util.bin.format.elf.extend.ElfLoadAdapter;
 import ghidra.program.model.data.*;
@@ -339,13 +340,13 @@ public class ElfHeader implements StructConverter, Writeable {
 
 		parseDynamicRelocTable(relocationTableList, ElfDynamicType.DT_RELA,
 			ElfDynamicType.DT_RELAENT, ElfDynamicType.DT_RELASZ, true);
-		
+
 		// Android versions
-		parseDynamicRelocTable(relocationTableList, ElfDynamicType.DT_ANDROID_REL, ElfDynamicType.DT_RELENT,
+		parseDynamicRelocTable(relocationTableList, ElfDynamicType.DT_ANDROID_REL, null,
 			ElfDynamicType.DT_ANDROID_RELSZ, false);
 
-		parseDynamicRelocTable(relocationTableList, ElfDynamicType.DT_ANDROID_RELA,
-			ElfDynamicType.DT_RELAENT, ElfDynamicType.DT_ANDROID_RELASZ, true);
+		parseDynamicRelocTable(relocationTableList, ElfDynamicType.DT_ANDROID_RELA, null,
+			ElfDynamicType.DT_ANDROID_RELASZ, true);
 
 		parseJMPRelocTable(relocationTableList);
 
@@ -364,7 +365,9 @@ public class ElfHeader implements StructConverter, Writeable {
 		try {
 			int sectionHeaderType = section.getType();
 			if (sectionHeaderType == ElfSectionHeaderConstants.SHT_REL ||
-				sectionHeaderType == ElfSectionHeaderConstants.SHT_RELA) {
+				sectionHeaderType == ElfSectionHeaderConstants.SHT_RELA ||
+				sectionHeaderType == ElfSectionHeaderConstants.SHT_ANDROID_REL ||
+				sectionHeaderType == ElfSectionHeaderConstants.SHT_ANDROID_RELA) {
 
 				for (ElfRelocationTable relocTable : relocationTableList) {
 					if (relocTable.getFileOffset() == section.getOffset()) {
@@ -380,55 +383,24 @@ public class ElfHeader implements StructConverter, Writeable {
 					sectionToBeRelocated != null ? sectionToBeRelocated.getNameAsString()
 							: "PT_LOAD";
 
-				ElfSectionHeader symbolTableSection = getLinkedSection(link,
-					ElfSectionHeaderConstants.SHT_DYNSYM, ElfSectionHeaderConstants.SHT_SYMTAB);
-				ElfSymbolTable symbolTable = getSymbolTable(symbolTableSection);
-
-				boolean addendTypeReloc = (sectionHeaderType == ElfSectionHeaderConstants.SHT_RELA);
-
-				Msg.debug(this,
-					"Elf relocation table section " + section.getNameAsString() +
-						" linked to symbol table section " + symbolTableSection.getNameAsString() +
-						" affecting " + relocaBaseName);
-
-				if (section.getOffset() < 0) {
-					return;
+				ElfSectionHeader symbolTableSection;
+				if (link == 0) {
+					// dynamic symbol table assumed when link section value is 0
+					symbolTableSection = getSection(ElfSectionHeaderConstants.dot_dynsym);
+				}
+				else {
+					symbolTableSection = getLinkedSection(link,
+						ElfSectionHeaderConstants.SHT_DYNSYM, ElfSectionHeaderConstants.SHT_SYMTAB);
 				}
 
-				relocationTableList.add(ElfRelocationTable.createElfRelocationTable(reader, this,
-					section, section.getOffset(), section.getAddress(), section.getSize(),
-					section.getEntrySize(), addendTypeReloc, symbolTable, sectionToBeRelocated));
-			} 
-			else if (sectionHeaderType == ElfSectionHeaderConstants.SHT_ANDROID_REL ||
-					   sectionHeaderType == ElfSectionHeaderConstants.SHT_ANDROID_RELA) {
-
-				for (ElfRelocationTable relocTable : relocationTableList) {
-					if (relocTable.getFileOffset() == section.getOffset()) {
-						return; // skip reloc table previously parsed as dynamic entry
-					}
-				}
-
-				int link = section.getLink(); // section index of associated symbol table
-				int info = section.getInfo(); // section index of section to which relocations apply (relocation offset base)
-
-				ElfSectionHeader sectionToBeRelocated = info != 0 ? getLinkedSection(info) : null;
-				String relocaBaseName =
-					sectionToBeRelocated != null ? sectionToBeRelocated.getNameAsString()
-							: "PT_LOAD";
-
-				// For some Android binaries, the symbols table section is not referenced by the link value.  Instead
-				// we can just reference the main dynamic symbol table.
-				ElfSectionHeader symbolTableSection = (link != 0)
-					? getLinkedSection(link, ElfSectionHeaderConstants.SHT_DYNSYM, ElfSectionHeaderConstants.SHT_SYMTAB)
-					: getSection(ElfSectionHeaderConstants.dot_dynsym);
-
 				ElfSymbolTable symbolTable = getSymbolTable(symbolTableSection);
-
 				if (symbolTable == null) {
-					throw new NotFoundException("Referenced symbol section not found.");
+					throw new NotFoundException("Referenced relocation symbol section not found.");
 				}
 
-				boolean addendTypeReloc = (sectionHeaderType == ElfSectionHeaderConstants.SHT_ANDROID_RELA);
+				boolean addendTypeReloc =
+					(sectionHeaderType == ElfSectionHeaderConstants.SHT_RELA ||
+						sectionHeaderType == ElfSectionHeaderConstants.SHT_ANDROID_RELA);
 
 				Msg.debug(this,
 					"Elf relocation table section " + section.getNameAsString() +
@@ -439,9 +411,18 @@ public class ElfHeader implements StructConverter, Writeable {
 					return;
 				}
 
-				relocationTableList.add(ElfRelocationTable.createAndroidElfRelocationTable(reader, this,
-					section, section.getOffset(), section.getAddress(), section.getSize(),
-					section.getEntrySize(), addendTypeReloc, symbolTable, sectionToBeRelocated));
+				ElfRelocationTable.TableFormat format = TableFormat.DEFAULT;
+				if (sectionHeaderType == ElfSectionHeaderConstants.SHT_ANDROID_REL ||
+					sectionHeaderType == ElfSectionHeaderConstants.SHT_ANDROID_RELA) {
+					format = TableFormat.ANDROID;
+				}
+
+				ElfRelocationTable relocTable = ElfRelocationTable.createElfRelocationTable(reader,
+					this, section, section.getOffset(), section.getAddress(), section.getSize(),
+					section.getEntrySize(), addendTypeReloc, symbolTable, sectionToBeRelocated,
+					format);
+
+				relocationTableList.add(relocTable);
 			}
 		}
 		catch (NotFoundException e) {
@@ -513,13 +494,20 @@ public class ElfHeader implements StructConverter, Writeable {
 			}
 
 			long relocTableOffset = relocTableLoadHeader.getOffset(relocTableAddr);
-			long tableEntrySize = dynamicTable.getDynamicValue(relocEntrySizeType);
+			long tableEntrySize =
+				relocEntrySizeType != null ? dynamicTable.getDynamicValue(relocEntrySizeType) : -1;
 			long tableSize = dynamicTable.getDynamicValue(relocTableSizeType);
 
-			relocationTableList.add(ElfRelocationTable.createElfRelocationTable(reader, this, null,
-				relocTableOffset, relocTableAddr, tableSize, tableEntrySize, addendTypeReloc,
-				dynamicSymbolTable, null));
+			ElfRelocationTable.TableFormat format = TableFormat.DEFAULT;
+			if (relocTableAddrType == ElfDynamicType.DT_ANDROID_REL ||
+				relocTableAddrType == ElfDynamicType.DT_ANDROID_RELA) {
+				format = TableFormat.ANDROID;
+			}
 
+			ElfRelocationTable relocTable = ElfRelocationTable.createElfRelocationTable(reader,
+				this, null, relocTableOffset, relocTableAddr, tableSize, tableEntrySize,
+				addendTypeReloc, dynamicSymbolTable, null, format);
+			relocationTableList.add(relocTable);
 		}
 		catch (NotFoundException e) {
 			// ignore - skip (required dynamic table value is missing)
@@ -1581,6 +1569,9 @@ public class ElfHeader implements StructConverter, Writeable {
 	 * @return the symbol table associated to the specified section header
 	 */
 	public ElfSymbolTable getSymbolTable(ElfSectionHeader symbolTableSection) {
+		if (symbolTableSection == null) {
+			return null;
+		}
 		for (int i = 0; i < symbolTables.length; i++) {
 			if (symbolTables[i].getFileOffset() == symbolTableSection.getOffset()) {
 				return symbolTables[i];

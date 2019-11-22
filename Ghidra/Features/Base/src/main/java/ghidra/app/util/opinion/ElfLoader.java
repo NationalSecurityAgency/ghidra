@@ -90,7 +90,8 @@ public class ElfLoader extends AbstractLibrarySupportLoader {
 	}
 
 	@Override
-	public String validateOptions(ByteProvider provider, LoadSpec loadSpec, List<Option> options, Program program) {
+	public String validateOptions(ByteProvider provider, LoadSpec loadSpec, List<Option> options,
+			Program program) {
 		if (options != null) {
 			String validationErrorStr = ElfLoaderOptionsFactory.validateOptions(loadSpec, options);
 			if (validationErrorStr != null) {
@@ -143,7 +144,8 @@ public class ElfLoader extends AbstractLibrarySupportLoader {
 
 	@Override
 	public void load(ByteProvider provider, LoadSpec loadSpec, List<Option> options,
-			Program program, TaskMonitor monitor, MessageLog log) throws IOException {
+			Program program, TaskMonitor monitor, MessageLog log)
+			throws IOException, CancelledException {
 
 		try {
 			GenericFactory factory = MessageLogContinuesFactory.create(log);
@@ -151,10 +153,6 @@ public class ElfLoader extends AbstractLibrarySupportLoader {
 			ElfProgramBuilder.loadElf(elf, program, options, log, monitor);
 		}
 		catch (ElfException e) {
-			throw new IOException(e.getMessage());
-		}
-		catch (CancelledException e) {
-			// TODO: Caller should properly handle CancelledException instead
 			throw new IOException(e.getMessage());
 		}
 	}
