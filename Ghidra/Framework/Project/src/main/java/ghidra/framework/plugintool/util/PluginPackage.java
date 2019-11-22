@@ -49,7 +49,8 @@ public abstract class PluginPackage implements ExtensionPoint, Comparable<Plugin
 
 	private static Map<String, PluginPackage> createPackageMap() {
 		Map<String, PluginPackage> map = new HashMap<>();
-		Set<Class<? extends PluginPackage>> classes = ClassSearcher.getClasses(PluginPackage.class);
+		List<Class<? extends PluginPackage>> classes =
+			ClassSearcher.getClasses(PluginPackage.class);
 		for (Class<? extends PluginPackage> class1 : classes) {
 			PluginPackage pluginPackage;
 			try {

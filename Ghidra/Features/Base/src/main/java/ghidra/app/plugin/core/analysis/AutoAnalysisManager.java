@@ -158,7 +158,7 @@ public class AutoAnalysisManager implements DomainObjectListener, DomainObjectCl
 		taskArray = new AnalysisTaskList[] { byteTasks, instructionTasks, functionTasks,
 			functionModifierChangedTasks, functionSignatureChangedTasks, dataTasks };
 
-		Set<Analyzer> analyzers = ClassSearcher.getInstances(Analyzer.class);
+		List<Analyzer> analyzers = ClassSearcher.getInstances(Analyzer.class);
 		for (Analyzer analyzer : analyzers) {
 			if (!analyzer.canAnalyze(program)) {
 				continue;

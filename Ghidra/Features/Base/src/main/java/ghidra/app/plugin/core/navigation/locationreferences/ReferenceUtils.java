@@ -284,7 +284,7 @@ public final class ReferenceUtils {
 			Accumulator<LocationReference> accumulator, Program program, DataType dataType,
 			String fieldName, TaskMonitor monitor) throws CancelledException {
 
-		Set<DataTypeReferenceFinder> finders =
+		List<DataTypeReferenceFinder> finders =
 			ClassSearcher.getInstances(DataTypeReferenceFinder.class);
 
 		Consumer<DataTypeReference> callback = ref -> {

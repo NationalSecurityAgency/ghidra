@@ -110,7 +110,7 @@ public class SymbolUtilities {
 	private static List<String> getDynamicDataTypePrefixes() {
 		List<String> list = new ArrayList<>();
 		ClassFilter filter = new BuiltInDataTypeClassExclusionFilter();
-		Set<BuiltInDataType> instances = ClassSearcher.getInstances(BuiltInDataType.class, filter);
+		List<BuiltInDataType> instances = ClassSearcher.getInstances(BuiltInDataType.class, filter);
 		for (BuiltInDataType builtIn : instances) {
 			String prefix = builtIn.getDefaultAbbreviatedLabelPrefix();
 			if (prefix != null) {

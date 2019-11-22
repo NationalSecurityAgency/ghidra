@@ -96,7 +96,7 @@ public class ProjectDataTableModel extends ThreadedTableModel<DomainFileInfo, Pr
 
 	@SuppressWarnings("rawtypes")
 	private List<ProjectDataColumn<?>> findAppSpecificColumns() {
-		Set<ProjectDataColumn> instances = ClassSearcher.getInstances(ProjectDataColumn.class);
+		List<ProjectDataColumn> instances = ClassSearcher.getInstances(ProjectDataColumn.class);
 		List<ProjectDataColumn<?>> columns = new ArrayList<>();
 
 		for (ProjectDataColumn projectDataColumn : instances) {

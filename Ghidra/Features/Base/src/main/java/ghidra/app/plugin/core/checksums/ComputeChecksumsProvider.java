@@ -17,7 +17,8 @@ package ghidra.app.plugin.core.checksums;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.*;
 
@@ -63,7 +64,7 @@ public class ComputeChecksumsProvider extends ComponentProviderAdapter {
 		super(plugin.getTool(), "Checksum Generator", plugin.getName(), ProgramContextAction.class);
 
 		setHelpLocation(new HelpLocation("ComputeChecksumsPlugin", "Generate_Checksum_Help"));
-		Set<ChecksumAlgorithm> algorithms = ClassSearcher.getInstances(ChecksumAlgorithm.class);
+		List<ChecksumAlgorithm> algorithms = ClassSearcher.getInstances(ChecksumAlgorithm.class);
 		checksums.addAll(algorithms);
 
 		this.plugin = plugin;

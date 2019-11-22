@@ -15,7 +15,7 @@
  */
 package ghidra.app.cmd.label;
 
-import java.util.Set;
+import java.util.List;
 
 import ghidra.app.util.demangler.*;
 import ghidra.framework.cmd.BackgroundCommand;
@@ -33,7 +33,7 @@ public class DemanglerCmd extends BackgroundCommand {
 	private String mangled;
 	private String result;
 	private DemangledObject demangledObject;
-	private static Set<Demangler> demanglers;
+	private static List<Demangler> demanglers;
 	private DemanglerOptions options;
 
 	public DemanglerCmd(Address addr, String mangled) {
@@ -138,7 +138,7 @@ public class DemanglerCmd extends BackgroundCommand {
 		return demangledObject;
 	}
 
-	private static Set<Demangler> getDemanglers() {
+	private static List<Demangler> getDemanglers() {
 		if (demanglers == null) {
 			demanglers = ClassSearcher.getInstances(Demangler.class);
 		}

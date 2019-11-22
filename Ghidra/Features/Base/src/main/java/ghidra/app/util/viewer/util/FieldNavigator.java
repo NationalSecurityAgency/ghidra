@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,17 +15,16 @@
  */
 package ghidra.app.util.viewer.util;
 
+import java.awt.event.MouseEvent;
+import java.util.*;
+
+import docking.widgets.fieldpanel.support.FieldLocation;
 import ghidra.app.nav.Navigatable;
 import ghidra.app.services.*;
 import ghidra.app.util.viewer.field.*;
 import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.program.util.ProgramLocation;
 import ghidra.util.classfinder.ClassSearcher;
-
-import java.awt.event.MouseEvent;
-import java.util.*;
-
-import docking.widgets.fieldpanel.support.FieldLocation;
 
 /**
  * Helper class to navigate to an address when user double clicks in a 
@@ -84,7 +82,7 @@ public class FieldNavigator implements ButtonPressedListener, FieldMouseHandlerS
 			new HashMap<Class<?>, List<FieldMouseHandler>>();
 
 		// find all instances of AnnotatedString
-		Set<FieldMouseHandlerExtension> instances =
+		List<FieldMouseHandlerExtension> instances =
 			ClassSearcher.getInstances(FieldMouseHandlerExtension.class);
 		for (FieldMouseHandlerExtension fieldMouseHandler : instances) {
 			addHandler(map, fieldMouseHandler);

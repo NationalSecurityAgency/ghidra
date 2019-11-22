@@ -15,6 +15,9 @@
  */
 package ghidra.feature.vt;
 
+import java.io.IOException;
+import java.util.*;
+
 import ghidra.app.script.GhidraScript;
 import ghidra.feature.vt.api.db.VTSessionDB;
 import ghidra.feature.vt.api.main.*;
@@ -25,9 +28,6 @@ import ghidra.program.model.listing.*;
 import ghidra.util.classfinder.ClassSearcher;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.VersionException;
-
-import java.io.IOException;
-import java.util.*;
 
 public abstract class GhidraVersionTrackingScript extends GhidraScript {
 	protected VTSession vtSession;
@@ -162,7 +162,7 @@ public abstract class GhidraVersionTrackingScript extends GhidraScript {
 
 	public List<String> getProgramCorrelators() {
 		List<String> correlators = new ArrayList<String>();
-		Set<VTProgramCorrelatorFactory> generateList = getVTProgramCorrelatorFactory();
+		List<VTProgramCorrelatorFactory> generateList = getVTProgramCorrelatorFactory();
 		for (VTProgramCorrelatorFactory vtProgramCorrelatorFactory : generateList) {
 			correlators.add(vtProgramCorrelatorFactory.getName());
 		}
@@ -221,7 +221,7 @@ public abstract class GhidraVersionTrackingScript extends GhidraScript {
 //==================================================================================================	
 
 	private VTProgramCorrelatorFactory getCorrelatorFactory(String name) {
-		Set<VTProgramCorrelatorFactory> generateList = getVTProgramCorrelatorFactory();
+		List<VTProgramCorrelatorFactory> generateList = getVTProgramCorrelatorFactory();
 		for (VTProgramCorrelatorFactory vtProgramCorrelatorFactory : generateList) {
 			if (vtProgramCorrelatorFactory.getName().equals(name)) {
 				return vtProgramCorrelatorFactory;
@@ -230,7 +230,7 @@ public abstract class GhidraVersionTrackingScript extends GhidraScript {
 		return null;
 	}
 
-	private static Set<VTProgramCorrelatorFactory> getVTProgramCorrelatorFactory() {
+	private static List<VTProgramCorrelatorFactory> getVTProgramCorrelatorFactory() {
 		return ClassSearcher.getInstances(VTProgramCorrelatorFactory.class);
 	}
 }

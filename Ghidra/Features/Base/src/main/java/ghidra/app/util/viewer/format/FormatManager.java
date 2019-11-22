@@ -15,7 +15,8 @@
  */
 package ghidra.app.util.viewer.format;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import org.jdom.Element;
@@ -139,7 +140,7 @@ public class FormatManager implements OptionsChangeListener {
 	private void getFactorys() {
 		ClassFilter filter = new ClassExclusionFilter(DummyFieldFactory.class,
 			SpacerFieldFactory.class, SubDataFieldFactory.class);
-		Set<FieldFactory> instances = ClassSearcher.getInstances(FieldFactory.class, filter);
+		List<FieldFactory> instances = ClassSearcher.getInstances(FieldFactory.class, filter);
 		List<FieldFactory> list = new ArrayList<>();
 		for (FieldFactory fieldFactory : instances) {
 			if (fieldFactory instanceof SpacerFieldFactory) {

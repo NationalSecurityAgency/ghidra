@@ -154,7 +154,7 @@ public class FunctionComparisonPanel extends JPanel implements ChangeListener {
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	private Set<CodeComparisonPanel<? extends FieldPanelCoordinator>> createAllPossibleCodeComparisonPanels() {
 		Set<CodeComparisonPanel<? extends FieldPanelCoordinator>> instances = new HashSet<>();
-		Set<Class<? extends CodeComparisonPanel>> classes =
+		List<Class<? extends CodeComparisonPanel>> classes =
 			ClassSearcher.getClasses(CodeComparisonPanel.class);
 		for (Class<? extends CodeComparisonPanel> panelClass : classes) {
 			try {

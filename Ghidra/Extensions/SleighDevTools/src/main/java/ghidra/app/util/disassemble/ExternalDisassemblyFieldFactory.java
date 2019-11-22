@@ -17,7 +17,8 @@ package ghidra.app.util.disassemble;
 
 import java.awt.Color;
 import java.math.BigInteger;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 import docking.widgets.fieldpanel.field.*;
 import docking.widgets.fieldpanel.support.FieldLocation;
@@ -43,7 +44,7 @@ public class ExternalDisassemblyFieldFactory extends FieldFactory {
 		availableDisassemblers = new ArrayList<>();
 
 		// find the available external disassemblers
-		Set<ExternalDisassembler> extDisassemblers =
+		List<ExternalDisassembler> extDisassemblers =
 			ClassSearcher.getInstances(ExternalDisassembler.class);
 
 		for (ExternalDisassembler disassember : extDisassemblers) {
