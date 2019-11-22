@@ -18,12 +18,8 @@ package ghidra.program.model.data;
 import java.math.BigInteger;
 
 import ghidra.docking.settings.*;
-import ghidra.program.model.data.RenderUnicodeSettingsDefinition.RENDER_ENUM;
-import ghidra.program.model.mem.ByteMemBufferImpl;
 import ghidra.program.model.mem.MemBuffer;
 import ghidra.program.model.scalar.Scalar;
-import ghidra.util.BigEndianDataConverter;
-import ghidra.util.LittleEndianDataConverter;
 import ghidra.util.StringFormat;
 
 /**
@@ -228,6 +224,10 @@ public abstract class AbstractIntegerDataType extends BuiltIn implements ArraySt
 			return "??";
 		}
 
+		if (getFormatSettingsDefinition().getFormat(settings) == FormatSettingsDefinition.CHAR) {
+			return StringDataInstance.getCharRepresentation(this, bytes, settings);
+		}
+
 		boolean isBigEndian = ENDIAN.isBigEndian(settings, buf);
 
 		if (!isBigEndian) {
@@ -237,6 +237,7 @@ public abstract class AbstractIntegerDataType extends BuiltIn implements ArraySt
 			}
 			bytes = flipped;
 		}
+
 
 		return getRepresentation(new BigInteger(bytes), settings, 8 * length);
 	}
@@ -260,34 +261,8 @@ public abstract class AbstractIntegerDataType extends BuiltIn implements ArraySt
 			bigInt = bigInt.add(BigInteger.valueOf(2).pow(bitLength));
 		}
 
-		int nominalLen;
-
-		if (format == FormatSettingsDefinition.CHAR) {
-			nominalLen = (bitLength + 7) / 8;
-			byte[] bytes = getDataOrganization().isBigEndian() ?
-				BigEndianDataConverter.INSTANCE.getBytes(bigInt, nominalLen) :
-					LittleEndianDataConverter.INSTANCE.getBytes(bigInt, nominalLen);
-			if (bytes.length > nominalLen) {
-				// BigInteger supplied too many bytes
-				byte[] chars = new byte[nominalLen];
-				System.arraycopy(bytes, bytes.length - nominalLen, chars, 0, nominalLen);
-				bytes = chars;
-			}
-			else if (bytes.length < nominalLen) {
-				// BigInteger supplied too few bytes
-				byte[] chars = new byte[nominalLen];
-				System.arraycopy(bytes, 0, chars, nominalLen - bytes.length, bytes.length);
-				bytes = chars;
-			}
-
-			MemBuffer memBuf = new ByteMemBufferImpl(null, bytes, true);
-			StringDataInstance instance = new StringDataInstance(this, settings, memBuf,
-					nominalLen, RENDER_ENUM.ESC_SEQ);
-			return bytes.length == 1 ? instance.getCharRepresentation() :
-				instance.getStringRepresentation();
-		}
-
 		String valStr;
+		int nominalLen;
 
 		switch (format) {
 			default:

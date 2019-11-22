@@ -30,6 +30,7 @@ import ghidra.util.StringUtilities;
 public class StringRenderBuilder {
 	public static final char DOUBLE_QUOTE = '"';
 	public static final char SINGLE_QUOTE = '\'';
+	private static final int MAX_ASCII = 0x80;
 
 	private StringBuilder sb = new StringBuilder();
 	private boolean byteMode = true;
@@ -124,10 +125,9 @@ public class StringRenderBuilder {
 	 */
 	public void addEscapedCodePoint(int codePoint) {
 		ensureTextMode();
-		char escapeChar = StringUtilities.isAsciiChar(codePoint) ? 'x'
-				: Character.isBmpCodePoint(codePoint) ? 'u' : 'U';
-		int cpDigits = StringUtilities.isAsciiChar(codePoint) ? 2
-				: Character.isBmpCodePoint(codePoint) ? 4 : 8;
+		char escapeChar =
+			(codePoint < MAX_ASCII) ? 'x' : Character.isBmpCodePoint(codePoint) ? 'u' : 'U';
+		int cpDigits = (codePoint < MAX_ASCII) ? 2 : Character.isBmpCodePoint(codePoint) ? 4 : 8;
 		String s = Integer.toHexString(codePoint).toUpperCase();
 		sb.append("\\").append(escapeChar);
 		sb.append(StringUtilities.pad(s, '0', cpDigits));

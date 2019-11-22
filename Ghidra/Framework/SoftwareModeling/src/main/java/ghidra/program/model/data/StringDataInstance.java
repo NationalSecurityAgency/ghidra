@@ -75,6 +75,24 @@ public class StringDataInstance {
 	}
 
 	/**
+	 * Returns a string representation of the character(s) contained in the byte array, suitable
+	 * for display as a single character, or as a sequence of characters.
+	 * <p>
+	 * 
+	 * @param dataType the {@link DataType} of the element containing the bytes (most likely a ByteDataType)
+	 * @param bytes the bytes to convert
+	 * @param settings the {@link Settings} object for the location where the bytes came from, or null
+	 * @return formatted string (typically with quotes around the contents): single character: 'a', multiple characters: "a\x12bc"
+	 */
+	public static String getCharRepresentation(DataType dataType, byte[] bytes, Settings settings) {
+		MemBuffer memBuf = new ByteMemBufferImpl(null, bytes, true);
+		StringDataInstance instance =
+			new StringDataInstance(dataType, settings, memBuf, bytes.length, RENDER_ENUM.ESC_SEQ);
+		return bytes.length == 1 ? instance.getCharRepresentation()
+				: instance.getCharSequenceRepresentation();
+	}
+
+	/**
 	 * Returns a new {@link StringDataInstance} using the bytes in the data codeunit.
 	 * <p>
 	 * @param data {@link Data} item
@@ -210,7 +228,7 @@ public class StringDataInstance {
 	 * pulled from the {@link AbstractStringDataType string data type} but using the given
 	 * {@link RenderUnicodeSettingsDefinition.RENDER_ENUM rendering setting}.
 	 *
-	 * @param stringDataType {@link AbstractStringDataType} common string base data type.
+	 * @param dataType {@link AbstractStringDataType} common string base data type.
 	 * @param settings {@link Settings} attached to the data location.
 	 * @param buf {@link MemBuffer} containing the data.
 	 * @param length Length passed from the caller to the datatype.  -1 indicates a 'probe'
@@ -662,6 +680,10 @@ public class StringDataInstance {
 	 * @return formatted String
 	 */
 	public String getStringRepresentation() {
+		return getStringRep(true);
+	}
+
+	private String getStringRep(boolean trimNulls) {
 
 		if (isProbe() || isBadCharSize() || !buf.isInitializedMemory()) {
 			return UNKNOWN;
@@ -689,7 +711,7 @@ public class StringDataInstance {
 
 		StringRenderBuilder strBuf = new StringRenderBuilder(charSize);
 
-		stringValue = !isPascal() ? trimNulls(stringValue) : stringValue;
+		stringValue = !isPascal() && trimNulls ? trimNulls(stringValue) : stringValue;
 		if (stringValue.isEmpty() || (stringValue.length() == 1 && stringValue.charAt(0) == 0)) {
 			// force the string renderer into "string" mode so we get empty quotes when done.
 			strBuf.addString("");
@@ -813,6 +835,18 @@ public class StringDataInstance {
 	 */
 	public boolean isShowTranslation() {
 		return showTranslation;
+	}
+
+	/**
+	 * Convert a sequence of char values in memory into a formatted string, without
+	 * stripping any nulls. 
+	 * <p>
+	 * See {@link #getCharRepresentation()} and {@link #getStringRepresentation()} 
+	 *
+	 * @return String containing the representation of the char sequence
+	 */
+	public String getCharSequenceRepresentation() {
+		return getStringRep(false);
 	}
 
 	/**
