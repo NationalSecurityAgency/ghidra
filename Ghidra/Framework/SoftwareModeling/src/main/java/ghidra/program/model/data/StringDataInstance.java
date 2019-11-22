@@ -155,10 +155,10 @@ public class StringDataInstance {
 	private final String translatedValue;
 	private final Endian endianSetting;
 
-	private boolean showTranslation;
-	private RENDER_ENUM renderSetting;
+	private final boolean showTranslation;
+	private final RENDER_ENUM renderSetting;
 
-	private int length;
+	private final int length;
 	private final MemBuffer buf;
 
 	protected StringDataInstance() {
@@ -171,6 +171,8 @@ public class StringDataInstance {
 		stringLayout = StringLayoutEnum.FIXED_LEN;
 		endianSetting = null;
 		renderSetting = RENDER_ENUM.ALL;
+		length = 0;
+		showTranslation = false;
 	}
 
 	/**
@@ -789,7 +791,7 @@ public class StringDataInstance {
 	 * @return String containing the representation of the single char.
 	 */
 	public String getCharRepresentation() {
-		if (length < charSize) {
+		if (length < charSize /* also covers case of isProbe() */ ) {
 			return UNKNOWN_DOT_DOT_DOT;
 		}
 
