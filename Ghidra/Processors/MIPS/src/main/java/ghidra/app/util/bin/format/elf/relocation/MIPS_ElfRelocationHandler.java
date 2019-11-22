@@ -402,10 +402,9 @@ public class MIPS_ElfRelocationHandler extends ElfRelocationHandler {
 				break;
 
 			case MIPS_ElfRelocationConstants.R_MIPS_REL32:
-				// TODO: some guess-work was used here
+				// TODO: unsure if reloc valid for symbolIndex != 0
 				if (symbolIndex == 0) {
-					// TODO: may need to use relocation section load address if applicable
-					symbolValue = program.getImageBase().getOffset();
+					symbolValue = mipsRelocationContext.getImageBaseWordAdjustmentOffset();
 				}
 				value = (int) symbolValue;
 				value += mipsRelocationContext.extractAddend() ? oldValue : addend;
