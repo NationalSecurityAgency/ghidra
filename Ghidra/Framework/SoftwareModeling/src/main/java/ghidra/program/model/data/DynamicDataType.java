@@ -64,7 +64,6 @@ public abstract class DynamicDataType extends BuiltIn implements Dynamic {
 	 * their data context.  A null value is acceptable to indicate that a memory
 	 * context is not available.  DataTypes that need a context will return -1
 	 * if the context is null.
-
 	 * @return the number of components that make up this data prototype
 	 *   - if this is an Array, return the number of elements in the array.
 	 *   - if this datatype is a subcomponent of another datatype and it
@@ -78,7 +77,7 @@ public abstract class DynamicDataType extends BuiltIn implements Dynamic {
 		return -1;
 	}
 
-	private DataTypeComponent[] getComps(MemBuffer buf) {
+	protected DataTypeComponent[] getComps(MemBuffer buf) {
 		Address addr = buf.getAddress();
 		DataTypeComponent[] comps = map.get(addr);
 		if (comps == null) {
@@ -150,6 +149,12 @@ public abstract class DynamicDataType extends BuiltIn implements Dynamic {
 
 	}
 
+	/**
+	 * Get all dynamic components associated with the specified MemBuffer
+	 * @param buf memory buffer positioned at start of data type instance
+	 * @return all components or null if memory data is not valid for this
+	 * data type.
+	 */
 	protected abstract DataTypeComponent[] getAllComponents(MemBuffer buf);
 
 	@Override
