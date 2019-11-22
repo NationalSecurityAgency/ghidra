@@ -31,13 +31,17 @@ import ghidra.util.task.TaskMonitor;
 
 public class DataTypeTreeDeleteTask extends Task {
 
+	// if the total number of nodes is small, we won't need to collapse the tree before deleting
+	// the nodes to avoid excess tree events
+	private static final int NODE_COUNT_FOR_COLLAPSING_TREE = 100;
 	private Map<ArchiveNode, List<GTreeNode>> nodesByArchive;
 	private DataTypeManagerPlugin plugin;
+	private int nodeCount;
 
 	public DataTypeTreeDeleteTask(DataTypeManagerPlugin plugin, List<GTreeNode> nodes) {
 		super("Delete Nodes", true, true, true);
 		this.plugin = plugin;
-
+		nodeCount = nodes.size();
 		nodes = filterList(nodes);
 
 		nodesByArchive = groupNodeByArchive(nodes);
@@ -105,7 +109,9 @@ public class DataTypeTreeDeleteTask extends Task {
 		DataTypeArchiveGTree tree = provider.getGTree();
 		GTreeState treeState = tree.getTreeState();
 		try {
-			collapseArchives(tree);
+			if (nodeCount > NODE_COUNT_FOR_COLLAPSING_TREE) {
+				collapseArchives(tree);
+			}
 
 			Set<Entry<ArchiveNode, List<GTreeNode>>> entries = nodesByArchive.entrySet();
 			for (Entry<ArchiveNode, List<GTreeNode>> entry : entries) {

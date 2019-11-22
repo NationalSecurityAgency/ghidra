@@ -13,15 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package docking.widgets.tree.tasks;
+package docking.widgets.tree;
 
 import java.util.List;
 
 import javax.swing.tree.TreePath;
 
-import docking.widgets.tree.*;
 import docking.widgets.tree.support.GTreeSelectionEvent.EventOrigin;
-import ghidra.util.SystemUtilities;
+import docking.widgets.tree.tasks.GTreeExpandPathsTask;
+import docking.widgets.tree.tasks.GTreeSelectPathsTask;
+import ghidra.util.Swing;
 import ghidra.util.task.TaskMonitor;
 
 public class GTreeRestoreTreeStateTask extends GTreeTask {
@@ -57,6 +58,7 @@ public class GTreeRestoreTreeStateTask extends GTreeTask {
 
 			// this allows some tress to perform cleanup
 			tree.expandedStateRestored(monitor);
+			tree.clearFilterRestoreState();
 		}
 	}
 
@@ -90,7 +92,7 @@ public class GTreeRestoreTreeStateTask extends GTreeTask {
 		for (TreePath path : viewPaths) {
 			TreePath currentPath = translatePath(path, monitor);
 			if (currentPath != null) {
-				SystemUtilities.runSwingLater(() -> tree.scrollPathToVisible(currentPath));
+				Swing.runLater(() -> tree.scrollPathToVisible(currentPath));
 				break;
 			}
 		}

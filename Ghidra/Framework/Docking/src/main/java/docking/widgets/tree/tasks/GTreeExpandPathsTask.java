@@ -17,7 +17,6 @@ package docking.widgets.tree.tasks;
 
 import java.util.List;
 
-import javax.swing.JTree;
 import javax.swing.tree.TreePath;
 
 import docking.widgets.tree.*;

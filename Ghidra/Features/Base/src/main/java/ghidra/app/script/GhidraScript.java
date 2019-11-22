@@ -371,7 +371,7 @@ public abstract class GhidraScript extends FlatProgramAPI {
 	}
 
 	@Override
-	protected DomainFolder getProjectRootFolder() {
+	public DomainFolder getProjectRootFolder() {
 		if (isRunningHeadless()) {
 			Project project = state.getProject();
 			ProjectData projectData = project.getProjectData();

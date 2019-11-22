@@ -612,7 +612,7 @@ public class PeLoader extends AbstractPeDebugLoader {
 		}
 
 		// Header block
-		int virtualSize = getVirtualSize(pe, sections, space);
+		int virtualSize = (int) Math.min(getVirtualSize(pe, sections, space), fileBytes.getSize());
 		long addr = optionalHeader.getImageBase();
 		Address address = space.getAddress(addr);
 

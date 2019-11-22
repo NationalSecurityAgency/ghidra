@@ -57,11 +57,13 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 	private AddressSet addrSet = new AddressSet();
 	private AddressSet initializedLoadedAddrSet = new AddressSet();
 	private AddressSet allInitializedAddrSet = new AddressSet();
+	private AddressSetView executeSet = null;
+
 	private MemoryBlock lastBlock;// the last accessed block
 	private LiveMemoryHandler liveMemory;
-	
+
 	// lazy hashmap of block names to blocks, must be reloaded if blocks are removed or added
-	private HashMap<String,MemoryBlock> nameBlockMap = new HashMap<String, MemoryBlock>();
+	private HashMap<String, MemoryBlock> nameBlockMap = new HashMap<String, MemoryBlock>();
 	private final static MemoryBlock NoBlock = new MemoryBlockStub();  // placeholder for no block, not given out
 
 	Lock lock;
@@ -187,6 +189,7 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 		blocks = newBlocks;
 		addrMap.memoryMapChanged(this);
 		nameBlockMap = new HashMap<>();
+		executeSet = null;
 	}
 
 	public void setLanguage(Language newLanguage) {
@@ -248,7 +251,7 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 
 	@Override
 	public AddressSetView getAllInitializedAddressSet() {
-		return allInitializedAddrSet;
+		return new AddressSetViewAdapter(allInitializedAddrSet);
 	}
 
 	/**
@@ -259,7 +262,7 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 		if (liveMemory != null) {
 			return this;//all memory is initialized!
 		}
-		return initializedLoadedAddrSet;
+		return new AddressSetViewAdapter(initializedLoadedAddrSet);
 	}
 
 	void checkMemoryWrite(MemoryBlockDB block, Address start, long length)
@@ -393,9 +396,12 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 		if (program != null) {
 			program.setChanged(ChangeManager.DOCR_MEMORY_BLOCK_CHANGED, block, null);
 		}
-		
+
 		// name could have changed
 		nameBlockMap = new HashMap<>();
+
+		// don't regenerate now, do lazily later if needed
+		executeSet = null;
 	}
 
 	void fireBytesChanged(Address addr, int count) {
@@ -1972,13 +1978,32 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 	 */
 	@Override
 	public AddressSetView getExecuteSet() {
-		AddressSet set = new AddressSet();
-		for (MemoryBlock block : blocks) {
-			if (block.isExecute()) {
-				set.addRange(block.getStart(), block.getEnd());
-			}
+		AddressSetView set = executeSet;
+
+		if (set == null) {
+			set = computeExecuteSet();
 		}
 		return set;
+	}
+
+	/**
+	 * @return executable address set
+	 */
+	private AddressSetView computeExecuteSet() {
+		lock.acquire();
+		try {
+			AddressSet set = new AddressSet();
+			for (MemoryBlock block : blocks) {
+				if (block.isExecute()) {
+					set.addRange(block.getStart(), block.getEnd());
+				}
+			}
+			executeSet = new AddressSetViewAdapter(set);
+			return executeSet;
+		}
+		finally {
+			lock.release();
+		}
 	}
 
 	@Override

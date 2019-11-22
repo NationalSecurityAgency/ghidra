@@ -296,7 +296,6 @@ public class MemoryManagerTest extends AbstractGhidraHeadedIntegrationTest {
 
 		block2.setSourceName("Test");
 		assertEquals("Test", block2.getSourceName());
-
 	}
 
 	@Test
@@ -398,6 +397,90 @@ public class MemoryManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		transactionID = program.startTransaction("Test");
 	}
 
+	@Test
+	public void testMemoryMapExecuteSet() throws Exception {
+		
+		AddressSetView executeSet = mem.getExecuteSet();
+		assertTrue(executeSet.isEmpty());
+		MemoryBlock block1 = createBlock("Test1", addr(100), 100);
+		executeSet = mem.getExecuteSet();
+		assertTrue(executeSet.isEmpty());
+		MemoryBlock block2 = createBlock("Test2", addr(300), 100);
+		executeSet = mem.getExecuteSet();
+		assertTrue(executeSet.isEmpty());
+
+		MemoryBlock block = mem.getBlock("Test1");
+		executeSet = mem.getExecuteSet();
+		assertTrue(executeSet.isEmpty());
+		
+		block.setExecute(false);
+		executeSet = mem.getExecuteSet();
+		assertTrue(executeSet.isEmpty());
+
+		block.setExecute(true);
+		executeSet = mem.getExecuteSet();
+		assertTrue(executeSet.isEmpty() != true);
+		Address start = block.getStart();
+		Address end = block.getEnd();
+		assertTrue(executeSet.contains(start,end));
+
+		// non-existent block
+		block = mem.getBlock("NoExist");
+		assertNull(block);
+		
+		program.endTransaction(transactionID, true);
+		transactionID = program.startTransaction("Test");	
+		
+		// now exists
+		mem.getBlock("Test1").setName("NoExist");
+		// Test1 no longer exists
+		block = mem.getBlock("NoExist");
+		executeSet = mem.getExecuteSet();
+		start = block.getStart();
+		end = block.getEnd();
+		// should be same block
+		assertTrue(executeSet.contains(start,end));
+		block.setExecute(false);
+		executeSet = mem.getExecuteSet();
+		assertTrue(executeSet.contains(start,end) == false);
+		
+		block2.setExecute(true);
+		Address start2 = block2.getStart();
+		Address end2 = block2.getEnd();
+		mem.removeBlock(block2, new TaskMonitorAdapter());
+		
+		program.endTransaction(transactionID, true);
+		
+		program.undo();
+		
+		transactionID = program.startTransaction("Test");
+
+		// should be execute set on block2, deleted, then undone
+		executeSet = mem.getExecuteSet();
+		assertTrue(executeSet.contains(start2,end2) == false);
+	
+		// undid set execute block should now be contained
+		block = mem.getBlock("Test1");
+		start = block.getStart();
+		end = block.getEnd();
+		executeSet = mem.getExecuteSet();
+		assertTrue(executeSet.contains(start,end));
+		
+		mem.split(block, addr(150));
+		block = mem.getBlock("Test1");
+		executeSet = mem.getExecuteSet();
+		assertTrue(executeSet.isEmpty() != true);
+		assertTrue(executeSet.contains(block.getStart(), block.getEnd()));
+		
+		// remove block that was split, should still be executable memory
+		start = block.getStart();
+		end = block.getEnd();
+		mem.removeBlock(block, new TaskMonitorAdapter());
+		executeSet = mem.getExecuteSet();
+		assertTrue(executeSet.isEmpty() != true);
+		assertTrue(executeSet.contains(start, end) == false);
+	}
+	
 	@Test
 	public void testSave() throws Exception {
 		MemoryBlock block1 = createBlock("Test1", addr(0), 100);
