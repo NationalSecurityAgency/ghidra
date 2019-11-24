@@ -3129,26 +3129,26 @@ define pcodeop FloatVectorNeg;
 @if defined(VFPv2) || defined(VFPv3)
 
 
-:vnmls.f64 Dd,Dn,Dm		is COND & ( ($(AMODE) & cond=15 & c2327=0x1c & c2021=1 & c0811=11 & c0606=1 & c0404=0) |
-                                    ($(TMODE_E) & thv_c2327=0x1c & thv_c2021=1 & thv_c0811=11 & thv_c0606=1 & thv_c0404=0) ) & Dm & Dn & Dd 
+:vnmla^COND^".f64" Dd,Dn,Dm is ( ($(AMODE) & COND & c2327=0x1c & c2021=1 & c0811=11 & c0606=1 & c0404=0) |
+                                 ($(TMODE_E) & thv_c2327=0x1c & thv_c2021=1 & thv_c0811=11 & thv_c0606=1 & thv_c0404=0) ) & Dm & Dn & Dd
 {
-	product:8 = Dn f* Dm;
-	Dd = 0 f- product f- Dd;
+    product:8 = Dn f* Dm;
+    Dd = (0 f- Dd) f+ (0 f- product);
 }
 
-:vnmls.f32 Sd,Sn,Sm		is COND & ( ($(AMODE) & cond=15 & c2327=0x1c & c2021=1 & c0811=10 & c0606=1 & c0404=0) |
-                                    ($(TMODE_E) & thv_c2327=0x1c & thv_c2021=1 & thv_c0811=10 & thv_c0606=1 & thv_c0404=0) ) & Sm & Sn & Sd 
+:vnmla^COND^".f32" Sd,Sn,Sm is ( ($(AMODE) & COND & c2327=0x1c & c2021=1 & c0811=10 & c0606=1 & c0404=0) |
+                                 ($(TMODE_E) & thv_c2327=0x1c & thv_c2021=1 & thv_c0811=10 & thv_c0606=1 & thv_c0404=0) ) & Sm & Sn & Sd
 {
-	product:4 = Sn f* Sm;
-	Sd = 0 f- product f- Sd;
+    product:4 = Sn f* Sm;
+    Sd = (0 f- Sd) f+ (0 f- product);
 }
 
-:vnmls.f16 Sd,Sn,Sm		is COND & ( ($(AMODE) & cond=15 & c2327=0x1c & c2021=1 & c0811=9 & c0606=1 & c0404=0) |
-                                    ($(TMODE_E) & thv_c2327=0x1c & thv_c2021=1 & thv_c0811=9 & thv_c0606=1 & thv_c0404=0) ) & Sm & Sn & Sd 
+:vnmla.f16 Sd,Sn,Sm         is ( ($(AMODE) & cond=0xe & c2327=0x1c & c2021=1 & c0811=9 & c0606=1 & c0404=0) |
+                                 ($(TMODE_E) & thv_c2327=0x1c & thv_c2021=1 & thv_c0811=9 & thv_c0606=1 & thv_c0404=0) ) & Sm & Sn & Sd
 {
-	product:2 = Sn:2 f* Sm:2;
-	product = 0:2 f- product f- Sd:2;
-	Sd = zext(product);
+    product:2 = Sn:2 f* Sm:2;
+    product = (0:2 f- Sd:2) f+ (0:2 f- product);
+    Sd = zext(product);
 }
 
 :vnmls^COND^".f64" Dd,Dn,Dm  is ( ($(AMODE) & COND & c2327=0x1c & c2021=1 & c0811=11 & c0606=0 & c0404=0) |
