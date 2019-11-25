@@ -57,7 +57,8 @@ dependencies {
  *****************************************************************************************/
  def checkSleighCompileOptions() {
  	sleighCompileOptions.each { a ->
- 		assert !(a.startsWith("-a") || a.startsWith("-i")) : "Invalid sleighCompileOption: ${a}"
+ 		def arg = a.trim()
+ 		assert !(arg.startsWith("-a") || arg.startsWith("-i")) : "Invalid sleighCompileOption: ${arg}"
  	}
  }
  
@@ -215,10 +216,7 @@ saveSleighArgs.inputs.files (taskInputs)
  *
  *****************************************************************************************/
 def getProjectReposRootPath() {
-	def rootPath = rootProject.projectDir.absolutePath
-	int index = rootPath.lastIndexOf(File.separator)
-	rootPath = rootPath.substring(0, index+1)
-	return rootPath
+	return rootProject.projectDir.getParent() + File.separator
 }
 
 /*****************************************************************************************
@@ -235,6 +233,7 @@ def getProjectReposRootPath() {
  *
  *****************************************************************************************/
 def resolveSleighArg(String arg, boolean useDevPath) {
+	arg = arg.trim()
 	int index = arg.indexOf("%%")
 	if (index < 0) {
 		return arg
