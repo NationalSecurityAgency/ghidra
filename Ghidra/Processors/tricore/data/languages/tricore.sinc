@@ -612,6 +612,15 @@ macro suov(res,x,y) {
 	res = (max_pos * zext(sc1 != 0)) + (x * zext(sc1 == 0 && sc2 == 0));
 }
 
+macro int_abs(res, val) {
+      local acond = val s< 0;
+      res = (val * zext(acond == 0)) + (-val * zext(acond != 0));
+}
+macro int_abs1(res, val) {
+      local acond = val s< 0;
+      res = (val * (acond == 0)) + (-val * (acond != 0));
+}
+
 macro ternary(res, cond, avar, bvar) {
 	res = (avar * zext(cond != 0)) + (bvar * zext(cond == 0));
 }
@@ -910,77 +919,76 @@ SC: [a10]const0815Z10zz is PCPMode=0 & a10 & const0815Z10zz & op0003=8 & op0404=
 # ABS D[c], D[b] (RR)
 :abs Rd2831,Rd1215 is PCPMode=0 & Rd1215 & op0007=0xb & op0811=0 ; Rd2831 & op1627=0x1c0
 {
-	Rd2831 = abs(Rd1215);
+	int_abs(Rd2831, Rd1215);
 	overflowflags(Rd2831);
 }
 
 # ABS.B D[c], D[b] (RR)
 :abs.b Rd2831,Rd1215 is PCPMode=0 & Rd1215 & op0007=0xb & op0811=0 ; Rd2831 & op1627=0x5c0
 {
-	local result3:4 = zext(abs(Rd1215[24,8]));
-	local result2:4 = zext(abs(Rd1215[16,8]));
-	local result1:4 = zext(abs(Rd1215[8,8]));
-	local result0:4 = zext(abs(Rd1215[0,8]));
+	local result3:1; int_abs1(result3, Rd1215[24,8]);
+	local result2:1; int_abs1(result2, Rd1215[16,8]);
+	local result1:1; int_abs1(result1, Rd1215[8,8]);
+	local result0:1; int_abs1(result0, Rd1215[0,8]);
 	overflowflagsb(result3, result2, result1, result0);
-	Rd2831[24,8] = result3[0,8];
-	Rd2831[16,8] = result2[0,8];
-	Rd2831[8,8] = result1[0,8];
-	Rd2831[0,8] = result0[0,8];
-	
+	Rd2831[24,8] = result3;
+	Rd2831[16,8] = result2;
+	Rd2831[8,8] = result1;
+	Rd2831[0,8] = result0;
 }
 
 # ABS.H D[c], D[b] (RR)
 :abs.h Rd2831,Rd1215 is PCPMode=0 & Rd1215 & op0007=0xb & op0811=0 ; Rd2831 & op1627=0x7c0
 {
-	local result1:4 = zext(abs(Rd1215[16,16]));
-	local result0:4 = zext(abs(Rd1215[0,16]));
+	local result1:2; int_abs(result1, Rd1215[16,16]);
+	local result0:2; int_abs(result0, Rd1215[0,16]);
 	overflowflagsh(result1, result0);
-	Rd2831[16,16] = result1[0,16];
-	Rd2831[0,16] = result0[0,16];
+	Rd2831[16,16] = result1;
+	Rd2831[0,16] = result0;
 }
 
 # ABSDIF D[c], D[a], D[b] (RR)
 :absdif Rd2831,Rd0811,Rd1215 is PCPMode=0 & Rd0811 & Rd1215 & op0007=0xb ; Rd2831 & op1627=0xe0
 {
-	Rd2831 = abs(Rd0811 - Rd1215);
+	int_abs(Rd2831, Rd0811 - Rd1215);
 	overflowflags(Rd2831);
 }
 
 # ABSDIF D[c], D[a], const9 (RC)
 :absdif Rd2831,Rd0811,const1220S is PCPMode=0 & ( Rd0811 & op0007=0x8b ; Rd2831 & op2127=0xe ) & const1220S
 {
-	Rd2831 = abs(Rd0811 - const1220S);
+	int_abs(Rd2831, Rd0811 - const1220S);
 	overflowflags(Rd2831);
 }
 
 # ABSDIF.B D[c], D[a], D[b] (RR)
 :absdif.b Rd2831,Rd0811,Rd1215 is PCPMode=0 & Rd0811 & Rd1215 & op0007=0xb ; Rd2831 & op1627=0x4e0
 {
-	local result3:4 = zext(abs(Rd0811[24,8] - Rd1215[24,8]));
-	local result2:4 = zext(abs(Rd0811[16,8] - Rd1215[16,8]));
-	local result1:4 = zext(abs(Rd0811[8,8] - Rd1215[8,8]));
-	local result0:4 = zext(abs(Rd0811[0,8] - Rd1215[0,8]));
+	local result3:1; int_abs1(result3, (Rd0811[24,8] - Rd1215[24,8]));
+	local result2:1; int_abs1(result2, (Rd0811[16,8] - Rd1215[16,8]));
+	local result1:1; int_abs1(result1, (Rd0811[8,8] - Rd1215[8,8]));
+	local result0:1; int_abs1(result0, (Rd0811[0,8] - Rd1215[0,8]));
 	overflowflagsb(result3, result2, result1, result0);
-	Rd2831[24,8] = result3[0,8];
-	Rd2831[16,8] = result2[0,8];
-	Rd2831[8,8] = result1[0,8];
-	Rd2831[0,8] = result0[0,8];
+	Rd2831[24,8] = result3;
+	Rd2831[16,8] = result2;
+	Rd2831[8,8] = result1;
+	Rd2831[0,8] = result0;
 }
 
 # ABSDIF.H D[c], D[a], D[b] (RR)
 :absdif.h Rd2831,Rd0811,Rd1215 is PCPMode=0 & Rd0811 & Rd1215 & op0007=0xb ; Rd2831 & op1627=0x6e0
 {
-	local result1:4 = zext(abs(Rd0811[16,16] - Rd1215[16,16]));
-	local result0:4 = zext(abs(Rd0811[0,16] - Rd1215[16,16]));
+	local result1:2; int_abs(result1, (Rd0811[16,16] - Rd1215[16,16]));
+	local result0:2; int_abs(result0, (Rd0811[0,16] - Rd1215[16,16]));
 	overflowflagsh(result1, result0);
-	Rd2831[16,16] = result1[0,16];
-	Rd2831[0,16] = result0[0,16];
+	Rd2831[16,16] = result1;
+	Rd2831[0,16] = result0;
 }
 
 # ABSDIFS D[c], D[a], D[b] (RR)
 :absdifs Rd2831,Rd0811,Rd1215 is PCPMode=0 & Rd0811 & Rd1215 & op0007=0xb ; Rd2831 & op1627=0xf0
 {
-	local result:4 = abs(Rd0811 - Rd1215);
+	local result:4; int_abs(result, (Rd0811 - Rd1215));
 	overflowflags(result);
 	ssov(Rd2831, result, 32);
 }
@@ -988,7 +996,7 @@ SC: [a10]const0815Z10zz is PCPMode=0 & a10 & const0815Z10zz & op0003=8 & op0404=
 # ABSDIFS D[c], D[a], const9 (RC)
 :absdifs Rd2831,Rd0811,const1220S is PCPMode=0 & ( Rd0811 & op0007=0x8b ; Rd2831 & op2127=0xf ) & const1220S
 {
-	local result:4 = abs(Rd0811 - const1220S);
+	local result:4; int_abs(result, (Rd0811 - const1220S));
 	overflowflags(result);
 	ssov(Rd2831, result, 32);
 }
@@ -996,17 +1004,17 @@ SC: [a10]const0815Z10zz is PCPMode=0 & a10 & const0815Z10zz & op0003=8 & op0404=
 # ABSDIFS.H D[c], D[a], D[b] (RR)
 :absdifs.h Rd2831,Rd0811,Rd1215 is PCPMode=0 & Rd0811 & Rd1215 & op0007=0xb ; Rd2831 & op1627=0x6f0
 {
-	local result1:4 = sext(abs(Rd0811[16,16] - Rd1215[16,16]));
-	local result0:4 = sext(abs(Rd0811[0,16] - Rd1215[16,16]));
+	local result1:2; int_abs(result1, (Rd0811[16,16] - Rd1215[16,16]));
+	local result0:2; int_abs(result0, (Rd0811[0,16] - Rd1215[16,16]));
 	overflowflagsh(result1, result0);
-	ssov(Rd2831[16,16], result1[0,16], 16);
-	ssov(Rd2831[0,16], result0[0,16], 16);
+	ssov(Rd2831[16,16], result1, 16);
+	ssov(Rd2831[0,16], result0, 16);
 }
 
 # ABSS D[c], D[b] (RR)
 :abss Rd2831,Rd1215 is PCPMode=0 & Rd1215 & op0007=0xb & op0811=0 ; Rd2831 & op1627=0x1d0
 {
-	local result:4 = abs(Rd1215);
+	local result:4; int_abs(result, Rd1215);
 	overflowflags(result);
 	ssov(Rd2831, result, 32);
 }
@@ -1014,11 +1022,11 @@ SC: [a10]const0815Z10zz is PCPMode=0 & a10 & const0815Z10zz & op0003=8 & op0404=
 # ABSS.H D[c], D[b] (RR)
 :abss.h Rd2831,Rd1215 is PCPMode=0 & Rd1215 & op0007=0xb & op0811=0 ; Rd2831 & op1627=0x7d0
 {
-	local result1:4 = sext(abs(Rd1215[16,16]));
-	local result0:4 = sext(abs(Rd1215[0,16]));
+	local result1:2; int_abs(result1, Rd1215[16,16]);
+	local result0:2; int_abs(result0, Rd1215[0,16]);
 	overflowflagsh(result1, result0);
-	ssov(Rd2831[16,16], result1[0,16], 16);
-	ssov(Rd2831[0,16], result0[0,16], 16);
+	ssov(Rd2831[16,16], result1, 16);
+	ssov(Rd2831[0,16], result0, 16);
 }
 
 @if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
@@ -2083,8 +2091,10 @@ SC: [a10]const0815Z10zz is PCPMode=0 & a10 & const0815Z10zz & op0003=8 & op0404=
 	ternary(quotient, ((q_sign & ~eq_neg) | eq_pos), Ree2427 + 1, Ree2427);
 	local remainder:4;
 	ternary(remainder, (eq_pos | eq_neg), 0, Reo2427);
-	local _gt = abs(Reo2427) > abs(Rd1215);
-	local _eq = !x_sign && (abs(Reo2427) == abs(Rd1215));
+	local absReo2427:4; int_abs(absReo2427, Reo2427);
+	local absRd1215:4; int_abs(absRd1215, Rd1215);
+	local _gt = absReo2427 > absRd1215;
+	local _eq = !x_sign && (absReo2427 == absRd1215);
 	ternary(Reo2831, (_eq | _gt) != 0, 0, remainder);
 	ternary(Ree2831, (_eq | _gt) != 0, 0, quotient);
 }
