@@ -49,8 +49,8 @@ public abstract class SymbolDB extends DatabaseObject implements Symbol {
 	protected SymbolManager symbolMgr;
 	protected Lock lock;
 
-	private String cachedName;
-	private long cachedNameModCount;
+	private volatile String cachedName;
+	private volatile long cachedNameModCount;
 
 	/**
 	 * Creates a Symbol that is just a placeholder for use when trying to find symbols by using
@@ -84,11 +84,6 @@ public abstract class SymbolDB extends DatabaseObject implements Symbol {
 
 	@Override
 	public String toString() {
-		// prefer cached name for speed; it may be stale; call getName() for current value
-		String temp = cachedName;
-		if (temp != null) {
-			return temp;
-		}
 		return getName();
 	}
 
