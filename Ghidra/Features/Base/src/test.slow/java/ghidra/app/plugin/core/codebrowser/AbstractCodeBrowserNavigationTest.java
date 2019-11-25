@@ -59,7 +59,7 @@ public class AbstractCodeBrowserNavigationTest extends AbstractGhidraHeadedInteg
 		addrFactory = program.getAddressFactory();
 
 		NextPrevAddressPlugin np = env.getPlugin(NextPrevAddressPlugin.class);
-		prev = getAction(np, "Previous in History Buffer");
+		prev = getAction(np, "Previous Location in History");
 		clearHistory = getAction(np, "Clear History Buffer");
 		cb = env.getPlugin(CodeBrowserPlugin.class);
 
