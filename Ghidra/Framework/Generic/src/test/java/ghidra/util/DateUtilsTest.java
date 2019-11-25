@@ -80,4 +80,37 @@ public class DateUtilsTest {
 		int daysBetween = DateUtils.getDaysBetween(nowDate, futureDate);
 		assertEquals(days, daysBetween);
 	}
+
+	@Test
+	public void testGetDaysBetween_SameDay() {
+
+		long now = System.currentTimeMillis();
+		Date nowDate = new Date(now);
+		int daysBetween = DateUtils.getDaysBetween(nowDate, nowDate);
+		assertEquals(0, daysBetween);
+	}
+
+	@Test
+	public void testGetDaysBetween_MostRecentDateFirst() {
+
+		long now = System.currentTimeMillis();
+		int days = 3;
+		long threeDaysOffset = days * (24 * 60 * 60 * 1000);
+		long future = now + threeDaysOffset;
+
+		Date nowDate = new Date(now);
+		Date futureDate = new Date(future);
+		int daysBetween = DateUtils.getDaysBetween(futureDate, nowDate);
+		assertEquals(days, daysBetween);
+	}
+
+	@Test
+	public void testGetBusinessDaysBetween() {
+
+		int november = 10;
+		Date friday = DateUtils.getDate(2019, november, 22);
+		Date monday = DateUtils.getDate(2019, november, 25);
+		int daysBetween = DateUtils.getBusinessDaysBetween(friday, monday);
+		assertEquals(1, daysBetween);
+	}
 }
