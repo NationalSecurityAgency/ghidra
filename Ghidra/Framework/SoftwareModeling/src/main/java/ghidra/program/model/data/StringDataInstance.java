@@ -283,7 +283,7 @@ public class StringDataInstance {
 		if (dataType instanceof AbstractStringDataType) {
 			return ((AbstractStringDataType) dataType).getStringLayout();
 		}
-		if (dataType instanceof AbstractIntegerDataType) {
+		if (dataType instanceof AbstractIntegerDataType || dataType instanceof BitFieldDataType) {
 			return StringLayoutEnum.FIXED_LEN;
 		}
 		return StringLayoutEnum.NULL_TERMINATED_BOUNDED;

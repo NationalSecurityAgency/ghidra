@@ -21,6 +21,7 @@ import ghidra.docking.settings.*;
 import ghidra.program.model.mem.MemBuffer;
 import ghidra.program.model.scalar.Scalar;
 import ghidra.util.StringFormat;
+import utilities.util.ArrayUtilities;
 
 /**
  * Base type for integer data types such as {@link CharDataType chars}, {@link IntegerDataType ints},
@@ -224,32 +225,29 @@ public abstract class AbstractIntegerDataType extends BuiltIn implements ArraySt
 			return "??";
 		}
 
+		boolean isLE = !ENDIAN.isBigEndian(settings, buf);
+		if (isLE) {
+			bytes = ArrayUtilities.reverse(bytes);
+		}
+
 		if (getFormatSettingsDefinition().getFormat(settings) == FormatSettingsDefinition.CHAR) {
 			return StringDataInstance.getCharRepresentation(this, bytes, settings);
 		}
-
-		boolean isBigEndian = ENDIAN.isBigEndian(settings, buf);
-
-		if (!isBigEndian) {
-			byte[] flipped = new byte[size];
-			for (int i = 0; i < size; i++) {
-				flipped[i] = bytes[size - i - 1];
-			}
-			bytes = flipped;
-		}
-
 
 		return getRepresentation(new BigInteger(bytes), settings, 8 * length);
 	}
 
 	/**
 	 * Get integer representation of the big-endian value.
+	 * <p>
+	 * Does not handle CHAR format, use {@link StringDataInstance#getCharRepresentation(DataType, byte[], Settings)}
+	 * 
 	 * @param bigInt BigInteger value with the appropriate sign
 	 * @param settings integer format settings (PADDING, FORMAT, etc.)
 	 * @param bitLength number of value bits to be used from bigInt
 	 * @return formatted integer string
 	 */
-	public String getRepresentation(BigInteger bigInt, Settings settings, int bitLength) {
+	/*package*/ String getRepresentation(BigInteger bigInt, Settings settings, int bitLength) {
 
 		int format = getFormatSettingsDefinition().getFormat(settings);
 		boolean padded = PADDING.isPadded(settings);

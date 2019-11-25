@@ -20,7 +20,6 @@ import ghidra.program.model.data.ByteDataType;
 import ghidra.program.model.data.StringDataInstance;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.scalar.Scalar;
-import utilities.util.ArrayUtilities;
 
 public class ConvertToCharAction extends AbstractConvertAction {
 	public static final String ACTION_NAME = "Convert To Char";
@@ -49,10 +48,6 @@ public class ConvertToCharAction extends AbstractConvertAction {
 	@Override
 	protected String convertToString(Program program, Scalar scalar, boolean isData) {
 		byte[] bytes = scalar.byteArrayValue();
-		boolean isLE = !program.getMemory().isBigEndian();
-		if (isLE) {
-			bytes = ArrayUtilities.reverse(bytes);
-		}
 
 		return StringDataInstance.getCharRepresentation(ByteDataType.dataType, bytes, null);
 	}
