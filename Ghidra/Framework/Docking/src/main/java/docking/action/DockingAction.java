@@ -92,10 +92,6 @@ public abstract class DockingAction implements DockingActionIf {
 			supportsKeyBindings ? KeyBindingType.INDIVIDUAL : KeyBindingType.UNSUPPORTED;
 	}
 
-	protected KeyBindingType getPreferredKeyBindingType() {
-		return KeyBindingType.INDIVIDUAL;
-	}
-
 	@Override
 	public abstract void actionPerformed(ActionContext context);
 
@@ -286,6 +282,11 @@ public abstract class DockingAction implements DockingActionIf {
 
 	@Override
 	public void setKeyBindingData(KeyBindingData newKeyBindingData) {
+
+		if (!supportsKeyBinding(newKeyBindingData)) {
+			return;
+		}
+
 		KeyBindingData oldData = keyBindingData;
 		keyBindingData = KeyBindingData.validateKeyBindingData(newKeyBindingData);
 
@@ -294,6 +295,22 @@ public abstract class DockingAction implements DockingActionIf {
 		}
 
 		firePropertyChanged(KEYBINDING_DATA_PROPERTY, oldData, keyBindingData);
+	}
+
+	private boolean supportsKeyBinding(KeyBindingData kbData) {
+
+		KeyBindingType type = getKeyBindingType();
+		if (type.supportsKeyBindings()) {
+			return true;
+		}
+
+		if (kbData.getKeyBindingPrecedence() == KeyBindingPrecedence.ReservedActionsLevel) {
+			return true; // reserved actions are special
+		}
+
+		// log a trace message instead of throwing an exception, as to not break any legacy code
+		Msg.error(this, "Action does not support key bindings: " + getFullName(), new Throwable());
+		return false;
 	}
 
 	@Override
