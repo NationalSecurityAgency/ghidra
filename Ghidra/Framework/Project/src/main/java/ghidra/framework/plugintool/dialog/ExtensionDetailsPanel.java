@@ -31,12 +31,12 @@ import docking.widgets.table.threaded.ThreadedTableModelListener;
 class ExtensionDetailsPanel extends AbstractDetailsPanel {
 
 	/** Attribute sets define the visual characteristics for each field */
-	private static SimpleAttributeSet nameAttrSet;
-	private static SimpleAttributeSet descrAttrSet;
-	private static SimpleAttributeSet authorAttrSet;
-	private static SimpleAttributeSet createdOnAttrSet;
-	private static SimpleAttributeSet versionAttrSet;
-	private static SimpleAttributeSet pathAttrSet;
+	private SimpleAttributeSet nameAttrSet;
+	private SimpleAttributeSet descrAttrSet;
+	private SimpleAttributeSet authorAttrSet;
+	private SimpleAttributeSet createdOnAttrSet;
+	private SimpleAttributeSet versionAttrSet;
+	private SimpleAttributeSet pathAttrSet;
 
 	ExtensionDetailsPanel(ExtensionTablePanel tablePanel) {
 		super();
@@ -44,7 +44,7 @@ class ExtensionDetailsPanel extends AbstractDetailsPanel {
 		createMainPanel();
 
 		// Any time the table is reloaded or a new selection is made, we want to reload this 
-		// panel. This ensures we are alwasy viewing data for the currently-selected item.
+		// panel. This ensures we are always viewing data for the currently-selected item.
 		tablePanel.getTableModel().addThreadedTableModelListener(new ThreadedTableModelListener() {
 
 			@Override
@@ -87,7 +87,7 @@ class ExtensionDetailsPanel extends AbstractDetailsPanel {
 		insertRowValue(buffer, details.getName(), nameAttrSet);
 
 		insertRowTitle(buffer, "Description");
-		insertRowValue(buffer, formatDescription(details.getDescription()), descrAttrSet);
+		insertRowValue(buffer, details.getDescription(), descrAttrSet);
 
 		insertRowTitle(buffer, "Author");
 		insertRowValue(buffer, details.getAuthor(), authorAttrSet);

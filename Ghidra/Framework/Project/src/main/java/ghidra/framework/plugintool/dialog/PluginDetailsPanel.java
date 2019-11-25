@@ -35,15 +35,15 @@ import ghidra.framework.plugintool.util.PluginStatus;
  */
 class PluginDetailsPanel extends AbstractDetailsPanel {
 
-	private static SimpleAttributeSet nameAttrSet;
-	private static SimpleAttributeSet depNameAttrSet;
-	private static SimpleAttributeSet descrAttrSet;
-	private static SimpleAttributeSet categoriesAttrSet;
-	private static SimpleAttributeSet classAttrSet;
-	private static SimpleAttributeSet locAttrSet;
-	private static SimpleAttributeSet developerAttrSet;
-	private static SimpleAttributeSet dependencyAttrSet;
-	private static SimpleAttributeSet noValueAttrSet;
+	private SimpleAttributeSet nameAttrSet;
+	private SimpleAttributeSet depNameAttrSet;
+	private SimpleAttributeSet descrAttrSet;
+	private SimpleAttributeSet categoriesAttrSet;
+	private SimpleAttributeSet classAttrSet;
+	private SimpleAttributeSet locAttrSet;
+	private SimpleAttributeSet developerAttrSet;
+	private SimpleAttributeSet dependencyAttrSet;
+	private SimpleAttributeSet noValueAttrSet;
 
 	private final PluginConfigurationModel model;
 
@@ -54,14 +54,14 @@ class PluginDetailsPanel extends AbstractDetailsPanel {
 		createMainPanel();
 	}
 
-	void setPluginDescription(PluginDescription pluginDescription) {
+	void setPluginDescription(PluginDescription descriptor) {
 
 		textLabel.setText("");
-		if (pluginDescription == null) {
+		if (descriptor == null) {
 			return;
 		}
 
-		List<PluginDescription> dependencies = model.getDependencies(pluginDescription);
+		List<PluginDescription> dependencies = model.getDependencies(descriptor);
 		Collections.sort(dependencies, (pd1, pd2) -> pd1.getName().compareTo(pd2.getName()));
 
 		StringBuilder buffer = new StringBuilder("<HTML>");
@@ -69,45 +69,44 @@ class PluginDetailsPanel extends AbstractDetailsPanel {
 		buffer.append("<TABLE cellpadding=2>");
 
 		insertRowTitle(buffer, "Name");
-		insertRowValue(buffer, pluginDescription.getName(),
+		insertRowValue(buffer, descriptor.getName(),
 			!dependencies.isEmpty() ? depNameAttrSet : nameAttrSet);
 
 		insertRowTitle(buffer, "Description");
-		insertRowValue(buffer, formatDescription(pluginDescription.getDescription()), descrAttrSet);
+		insertRowValue(buffer, descriptor.getDescription(), descrAttrSet);
 
 		insertRowTitle(buffer, "Status");
-		insertRowValue(buffer, pluginDescription.getStatus().getDescription(),
-			(pluginDescription.getStatus() == PluginStatus.RELEASED) ? titleAttrSet
-					: developerAttrSet);
+		insertRowValue(buffer, descriptor.getStatus().getDescription(),
+			(descriptor.getStatus() == PluginStatus.RELEASED) ? titleAttrSet : developerAttrSet);
 
 		insertRowTitle(buffer, "Package");
-		insertRowValue(buffer, pluginDescription.getPluginPackage().getName(), categoriesAttrSet);
+		insertRowValue(buffer, descriptor.getPluginPackage().getName(), categoriesAttrSet);
 
 		insertRowTitle(buffer, "Category");
-		insertRowValue(buffer, pluginDescription.getCategory(), categoriesAttrSet);
+		insertRowValue(buffer, descriptor.getCategory(), categoriesAttrSet);
 
 		insertRowTitle(buffer, "Plugin Class");
-		insertRowValue(buffer, pluginDescription.getPluginClass().getName(), classAttrSet);
+		insertRowValue(buffer, descriptor.getPluginClass().getName(), classAttrSet);
 
 		insertRowTitle(buffer, "Class Location");
-		insertRowValue(buffer, pluginDescription.getSourceLocation(), locAttrSet);
+		insertRowValue(buffer, descriptor.getSourceLocation(), locAttrSet);
 
 		insertRowTitle(buffer, "Used By");
 
 		buffer.append("<TD VALIGN=\"TOP\">");
 
 		if (dependencies.isEmpty()) {
-			insertHTMLLine("None", titleAttrSet, buffer);
+			insertHTMLLine(buffer, "None", noValueAttrSet);
 		}
 		else {
 			for (int i = 0; i < dependencies.size(); i++) {
-				insertHTMLString(dependencies.get(i).getPluginClass().getName(), dependencyAttrSet,
-					buffer);
+				insertHTMLString(buffer, dependencies.get(i).getPluginClass().getName(),
+					dependencyAttrSet);
 				if (i < dependencies.size() - 1) {
-					insertHTMLString("<BR>", dependencyAttrSet, buffer);
+					insertHTMLString(buffer, "<BR>", dependencyAttrSet);
 				}
 			}
-			insertHTMLLine("", titleAttrSet, buffer);  // add a newline
+			insertHTMLLine(buffer, "", titleAttrSet);  // add a newline
 		}
 		buffer.append("</TD>");
 		buffer.append("</TR>");
@@ -116,18 +115,18 @@ class PluginDetailsPanel extends AbstractDetailsPanel {
 
 		buffer.append("<TD VALIGN=\"TOP\">");
 
-		List<Class<?>> servicesRequired = pluginDescription.getServicesRequired();
+		List<Class<?>> servicesRequired = descriptor.getServicesRequired();
 		if (servicesRequired.isEmpty()) {
-			insertHTMLLine("None", titleAttrSet, buffer);
+			insertHTMLLine(buffer, "None", noValueAttrSet);
 		}
 		else {
 			for (int i = 0; i < servicesRequired.size(); i++) {
-				insertHTMLString(servicesRequired.get(i).getName(), dependencyAttrSet, buffer);
+				insertHTMLString(buffer, servicesRequired.get(i).getName(), dependencyAttrSet);
 				if (i < dependencies.size() - 1) {
-					insertHTMLString("<BR>", dependencyAttrSet, buffer);
+					insertHTMLString(buffer, "<BR>", dependencyAttrSet);
 				}
 			}
-			insertHTMLLine("", titleAttrSet, buffer);  // add a newline
+			insertHTMLLine(buffer, "", titleAttrSet);  // add a newline
 		}
 		buffer.append("</TD>");
 		buffer.append("</TR>");
@@ -138,7 +137,7 @@ class PluginDetailsPanel extends AbstractDetailsPanel {
 		//
 		// Optional: Actions loaded by this plugin
 		// 
-		addLoadedActionsContent(buffer, pluginDescription);
+		addLoadedActionsContent(buffer, descriptor);
 
 		buffer.append("</TABLE>");
 
@@ -155,13 +154,13 @@ class PluginDetailsPanel extends AbstractDetailsPanel {
 
 		buffer.append("<TR>");
 		buffer.append("<TD VALIGN=\"TOP\">");
-		insertHTMLLine("Loaded Actions:", titleAttrSet, buffer);
+		insertHTMLLine(buffer, "Loaded Actions:", titleAttrSet);
 		buffer.append("</TD>");
 
 		Set<DockingActionIf> actions = model.getActionsForPlugin(pluginDescription);
 		if (actions.size() == 0) {
 			buffer.append("<TD VALIGN=\"TOP\">");
-			insertHTMLLine("No actions for plugin", noValueAttrSet, buffer);
+			insertHTMLLine(buffer, "No actions for plugin", noValueAttrSet);
 			buffer.append("</TD>");
 			buffer.append("</TR>");
 			return;
@@ -174,7 +173,7 @@ class PluginDetailsPanel extends AbstractDetailsPanel {
 
 		for (DockingActionIf dockableAction : actions) {
 			buffer.append("<TR><TD WIDTH=\"200\">");
-			insertHTMLString(dockableAction.getName(), locAttrSet, buffer);
+			insertHTMLString(buffer, dockableAction.getName(), locAttrSet);
 			buffer.append("</TD>");
 
 			buffer.append("<TD WIDTH=\"300\">");
@@ -182,17 +181,17 @@ class PluginDetailsPanel extends AbstractDetailsPanel {
 			String[] menuPath = menuBarData == null ? null : menuBarData.getMenuPath();
 			String menuPathString = createStringForMenuPath(menuPath);
 			if (menuPathString != null) {
-				insertHTMLString(menuPathString, locAttrSet, buffer);
+				insertHTMLString(buffer, menuPathString, locAttrSet);
 			}
 			else {
 				MenuData popupMenuData = dockableAction.getPopupMenuData();
 				String[] popupPath = popupMenuData == null ? null : popupMenuData.getMenuPath();
 
 				if (popupPath != null) {
-					insertHTMLString("(in a context popup menu)", noValueAttrSet, buffer);
+					insertHTMLString(buffer, "(in a context popup menu)", noValueAttrSet);
 				}
 				else {
-					insertHTMLString("Not in a menu", noValueAttrSet, buffer);
+					insertHTMLString(buffer, "Not in a menu", noValueAttrSet);
 				}
 			}
 
@@ -202,10 +201,10 @@ class PluginDetailsPanel extends AbstractDetailsPanel {
 			KeyStroke keyBinding = dockableAction.getKeyBinding();
 			if (keyBinding != null) {
 				String keyStrokeString = KeyBindingUtils.parseKeyStroke(keyBinding);
-				insertHTMLString(keyStrokeString, locAttrSet, buffer);
+				insertHTMLString(buffer, keyStrokeString, locAttrSet);
 			}
 			else {
-				insertHTMLString("No keybinding", noValueAttrSet, buffer);
+				insertHTMLString(buffer, "No keybinding", noValueAttrSet);
 			}
 
 			buffer.append("</TD></TR>");
