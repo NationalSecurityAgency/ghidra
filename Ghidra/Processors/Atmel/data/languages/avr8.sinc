@@ -737,20 +737,20 @@ define pcodeop break;
 :elpm                            is phase=1 & ophi16=0x95d8 {
 	ptr:3 = zext(Z) | (zext(RAMPZ) << 16);
 	tmp:2 = *[code]:2 (ptr >> 1);
-	val:2 = (tmp >> (Z & 0x1));
-	R0 = val:1;
+	val:2 = (tmp >> (8 * (Z & 0x1)));
+	R0 = val:1; 
 }
 :elpm RdFull, Z                  is phase=1 & ophi7=0x48 & oplow4=0x6 & RdFull & Z {
 	ptr:3 = zext(Z) | (zext(RAMPZ) << 16);
 	tmp:2 = *[code]:2 (ptr >> 1);
-	val:2 = (tmp >> (Z & 0x1));
+	val:2 = (tmp >> (8 * (Z & 0x1)));
 	RdFull = val:1;
 }
 
 :elpm RdFull, Z^"+"              is phase=1 & ophi7=0x48 & oplow4=0x7 & RdFull & Z {
 	ptr:3 = zext(Z) | (zext(RAMPZ) << 16);
 	tmp:2 = *[code]:2 (ptr >> 1);
-	val:2 = (tmp >> (Z & 0x1));
+	val:2 = (tmp >> (8 * (Z & 0x1)));
 	RdFull = val:1;
 	ptr = ptr + 1;
 	Z = ptr:2;
@@ -892,21 +892,21 @@ LdPredec:  "-"^RstPtr  is RstPtr { RstPtr = RstPtr - 0x01; export RstPtr; }
 :lpm R0                          is phase=1 & ophi16=0x95c8 & R0 {
 	ptr:$(PCBYTESIZE) = zext(Z);
 	tmp:$(PCBYTESIZE) = *[code]:$(PCBYTESIZE) (ptr >> 1);
-	val:$(PCBYTESIZE) = (tmp >> (Z & 0x1));
+	val:$(PCBYTESIZE) = (tmp >> (8 * (Z & 0x1)));
 	R0 = val:1;
 }
 # lpm Rd,Z
 :lpm RdFull,Z                    is phase=1 & ophi7=0x48 & op1to3=0x2 & RdFull & Z & opbit0=0 {
 	ptr:$(PCBYTESIZE) = zext(Z);
 	tmp:$(PCBYTESIZE) = *[code]:$(PCBYTESIZE) (ptr >> 1);
-	val:$(PCBYTESIZE) = (tmp >> (Z & 0x1));
+	val:$(PCBYTESIZE) = (tmp >> (8 * (Z & 0x1)));
 	RdFull = val:1;
 }
 # lpm Rd,Z+
 :lpm RdFull,Z"+"                 is phase=1 & ophi7=0x48 & op1to3=0x2 & RdFull & Z & opbit0=1 {
 	ptr:$(PCBYTESIZE) = zext(Z);
 	tmp:$(PCBYTESIZE) = *[code]:$(PCBYTESIZE) (ptr >> 1);
-	val:$(PCBYTESIZE) = (tmp >> (Z & 0x1));
+	val:$(PCBYTESIZE) = (tmp >> (8 * (Z & 0x1)));
 	RdFull = val:1;
 	Z = Z + 1;
 }
@@ -1161,3 +1161,4 @@ define pcodeop watchdog_reset;
 	*[mem]:1 ptr = RdFull;
 	RdFull = tmp;
 }
+
