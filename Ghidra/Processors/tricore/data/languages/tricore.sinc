@@ -910,17 +910,17 @@ SC: [a10]const0815Z10zz is PCPMode=0 & a10 & const0815Z10zz & op0003=8 & op0404=
 # ABS D[c], D[b] (RR)
 :abs Rd2831,Rd1215 is PCPMode=0 & Rd1215 & op0007=0xb & op0811=0 ; Rd2831 & op1627=0x1c0
 {
-	Rd2831 = abs(Rd1215);
+	Rd2831 = Rd1215 & 0x7fffffff;
 	overflowflags(Rd2831);
 }
 
 # ABS.B D[c], D[b] (RR)
 :abs.b Rd2831,Rd1215 is PCPMode=0 & Rd1215 & op0007=0xb & op0811=0 ; Rd2831 & op1627=0x5c0
 {
-	local result3:4 = zext(abs(Rd1215[24,8]));
-	local result2:4 = zext(abs(Rd1215[16,8]));
-	local result1:4 = zext(abs(Rd1215[8,8]));
-	local result0:4 = zext(abs(Rd1215[0,8]));
+	local result3:4 = zext(Rd1215[24,8] & 0x7f);
+	local result2:4 = zext(Rd1215[16,8] & 0x7f);
+	local result1:4 = zext(Rd1215[8,8] & 0x7f);
+	local result0:4 = zext(Rd1215[0,8] & 0x7f);
 	overflowflagsb(result3, result2, result1, result0);
 	Rd2831[24,8] = result3[0,8];
 	Rd2831[16,8] = result2[0,8];
@@ -932,8 +932,8 @@ SC: [a10]const0815Z10zz is PCPMode=0 & a10 & const0815Z10zz & op0003=8 & op0404=
 # ABS.H D[c], D[b] (RR)
 :abs.h Rd2831,Rd1215 is PCPMode=0 & Rd1215 & op0007=0xb & op0811=0 ; Rd2831 & op1627=0x7c0
 {
-	local result1:4 = zext(abs(Rd1215[16,16]));
-	local result0:4 = zext(abs(Rd1215[0,16]));
+	local result1:4 = zext(Rd1215[16,16] & 0x7fff);
+	local result0:4 = zext(Rd1215[0,16] & 0x7fff);
 	overflowflagsh(result1, result0);
 	Rd2831[16,16] = result1[0,16];
 	Rd2831[0,16] = result0[0,16];
@@ -942,24 +942,24 @@ SC: [a10]const0815Z10zz is PCPMode=0 & a10 & const0815Z10zz & op0003=8 & op0404=
 # ABSDIF D[c], D[a], D[b] (RR)
 :absdif Rd2831,Rd0811,Rd1215 is PCPMode=0 & Rd0811 & Rd1215 & op0007=0xb ; Rd2831 & op1627=0xe0
 {
-	Rd2831 = abs(Rd0811 - Rd1215);
+	Rd2831 = (Rd0811 - Rd1215) & 0x7fffffff;
 	overflowflags(Rd2831);
 }
 
 # ABSDIF D[c], D[a], const9 (RC)
 :absdif Rd2831,Rd0811,const1220S is PCPMode=0 & ( Rd0811 & op0007=0x8b ; Rd2831 & op2127=0xe ) & const1220S
 {
-	Rd2831 = abs(Rd0811 - const1220S);
+	Rd2831 = (Rd0811 - const1220S) & 0x7fffffff;
 	overflowflags(Rd2831);
 }
 
 # ABSDIF.B D[c], D[a], D[b] (RR)
 :absdif.b Rd2831,Rd0811,Rd1215 is PCPMode=0 & Rd0811 & Rd1215 & op0007=0xb ; Rd2831 & op1627=0x4e0
 {
-	local result3:4 = zext(abs(Rd0811[24,8] - Rd1215[24,8]));
-	local result2:4 = zext(abs(Rd0811[16,8] - Rd1215[16,8]));
-	local result1:4 = zext(abs(Rd0811[8,8] - Rd1215[8,8]));
-	local result0:4 = zext(abs(Rd0811[0,8] - Rd1215[0,8]));
+	local result3:4 = zext((Rd0811[24,8] - Rd1215[24,8]) & 0x7f);
+	local result2:4 = zext((Rd0811[16,8] - Rd1215[16,8]) & 0x7f);
+	local result1:4 = zext((Rd0811[8,8] - Rd1215[8,8]) & 0x7f);
+	local result0:4 = zext((Rd0811[0,8] - Rd1215[0,8]) & 0x7f);
 	overflowflagsb(result3, result2, result1, result0);
 	Rd2831[24,8] = result3[0,8];
 	Rd2831[16,8] = result2[0,8];
@@ -970,8 +970,8 @@ SC: [a10]const0815Z10zz is PCPMode=0 & a10 & const0815Z10zz & op0003=8 & op0404=
 # ABSDIF.H D[c], D[a], D[b] (RR)
 :absdif.h Rd2831,Rd0811,Rd1215 is PCPMode=0 & Rd0811 & Rd1215 & op0007=0xb ; Rd2831 & op1627=0x6e0
 {
-	local result1:4 = zext(abs(Rd0811[16,16] - Rd1215[16,16]));
-	local result0:4 = zext(abs(Rd0811[0,16] - Rd1215[16,16]));
+	local result1:4 = zext((Rd0811[16,16] - Rd1215[16,16]) & 0x7fff);
+	local result0:4 = zext((Rd0811[0,16] - Rd1215[16,16]) & 0x7fff);
 	overflowflagsh(result1, result0);
 	Rd2831[16,16] = result1[0,16];
 	Rd2831[0,16] = result0[0,16];
@@ -980,7 +980,7 @@ SC: [a10]const0815Z10zz is PCPMode=0 & a10 & const0815Z10zz & op0003=8 & op0404=
 # ABSDIFS D[c], D[a], D[b] (RR)
 :absdifs Rd2831,Rd0811,Rd1215 is PCPMode=0 & Rd0811 & Rd1215 & op0007=0xb ; Rd2831 & op1627=0xf0
 {
-	local result:4 = abs(Rd0811 - Rd1215);
+	local result:4 = (Rd0811 - Rd1215) & 0x7fffffff;
 	overflowflags(result);
 	ssov(Rd2831, result, 32);
 }
@@ -988,7 +988,7 @@ SC: [a10]const0815Z10zz is PCPMode=0 & a10 & const0815Z10zz & op0003=8 & op0404=
 # ABSDIFS D[c], D[a], const9 (RC)
 :absdifs Rd2831,Rd0811,const1220S is PCPMode=0 & ( Rd0811 & op0007=0x8b ; Rd2831 & op2127=0xf ) & const1220S
 {
-	local result:4 = abs(Rd0811 - const1220S);
+	local result:4 = (Rd0811 - const1220S) & 0x7fffffff;
 	overflowflags(result);
 	ssov(Rd2831, result, 32);
 }
@@ -996,8 +996,8 @@ SC: [a10]const0815Z10zz is PCPMode=0 & a10 & const0815Z10zz & op0003=8 & op0404=
 # ABSDIFS.H D[c], D[a], D[b] (RR)
 :absdifs.h Rd2831,Rd0811,Rd1215 is PCPMode=0 & Rd0811 & Rd1215 & op0007=0xb ; Rd2831 & op1627=0x6f0
 {
-	local result1:4 = sext(abs(Rd0811[16,16] - Rd1215[16,16]));
-	local result0:4 = sext(abs(Rd0811[0,16] - Rd1215[16,16]));
+	local result1:4 = sext((Rd0811[16,16] - Rd1215[16,16]) & 0x7fff);
+	local result0:4 = sext((Rd0811[0,16] - Rd1215[16,16]) & 0x7fff);
 	overflowflagsh(result1, result0);
 	ssov(Rd2831[16,16], result1[0,16], 16);
 	ssov(Rd2831[0,16], result0[0,16], 16);
@@ -1006,7 +1006,7 @@ SC: [a10]const0815Z10zz is PCPMode=0 & a10 & const0815Z10zz & op0003=8 & op0404=
 # ABSS D[c], D[b] (RR)
 :abss Rd2831,Rd1215 is PCPMode=0 & Rd1215 & op0007=0xb & op0811=0 ; Rd2831 & op1627=0x1d0
 {
-	local result:4 = abs(Rd1215);
+	local result:4 = Rd1215 & 0x7fffffff;
 	overflowflags(result);
 	ssov(Rd2831, result, 32);
 }
@@ -1014,8 +1014,8 @@ SC: [a10]const0815Z10zz is PCPMode=0 & a10 & const0815Z10zz & op0003=8 & op0404=
 # ABSS.H D[c], D[b] (RR)
 :abss.h Rd2831,Rd1215 is PCPMode=0 & Rd1215 & op0007=0xb & op0811=0 ; Rd2831 & op1627=0x7d0
 {
-	local result1:4 = sext(abs(Rd1215[16,16]));
-	local result0:4 = sext(abs(Rd1215[0,16]));
+	local result1:4 = sext(Rd1215[16,16] & 0x7fff);
+	local result0:4 = sext(Rd1215[0,16] & 0x7fff);
 	overflowflagsh(result1, result0);
 	ssov(Rd2831[16,16], result1[0,16], 16);
 	ssov(Rd2831[0,16], result0[0,16], 16);
@@ -2083,8 +2083,8 @@ SC: [a10]const0815Z10zz is PCPMode=0 & a10 & const0815Z10zz & op0003=8 & op0404=
 	ternary(quotient, ((q_sign & ~eq_neg) | eq_pos), Ree2427 + 1, Ree2427);
 	local remainder:4;
 	ternary(remainder, (eq_pos | eq_neg), 0, Reo2427);
-	local _gt = abs(Reo2427) > abs(Rd1215);
-	local _eq = !x_sign && (abs(Reo2427) == abs(Rd1215));
+	local _gt = (Reo2427 & 0x7fffffff) > (Rd1215 & 0x7fffffff);
+	local _eq = !x_sign && ((Reo2427 & 0x7fffffff) == (Rd1215 & 0x7fffffff));
 	ternary(Reo2831, (_eq | _gt) != 0, 0, remainder);
 	ternary(Ree2831, (_eq | _gt) != 0, 0, quotient);
 }
