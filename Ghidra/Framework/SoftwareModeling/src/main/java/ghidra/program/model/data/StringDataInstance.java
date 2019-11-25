@@ -15,10 +15,10 @@
  */
 package ghidra.program.model.data;
 
-import static ghidra.program.model.data.EndianSettingsDefinition.ENDIAN;
-import static ghidra.program.model.data.RenderUnicodeSettingsDefinition.RENDER;
+import static ghidra.program.model.data.EndianSettingsDefinition.*;
+import static ghidra.program.model.data.RenderUnicodeSettingsDefinition.*;
 import static ghidra.program.model.data.StringLayoutEnum.*;
-import static ghidra.program.model.data.TranslationSettingsDefinition.TRANSLATION;
+import static ghidra.program.model.data.TranslationSettingsDefinition.*;
 
 import java.nio.charset.Charset;
 import java.util.HashMap;
@@ -155,10 +155,10 @@ public class StringDataInstance {
 	private final String translatedValue;
 	private final Endian endianSetting;
 
-	private boolean showTranslation;
-	private RENDER_ENUM renderSetting;
+	private final boolean showTranslation;
+	private final RENDER_ENUM renderSetting;
 
-	private int length;
+	private final int length;
 	private final MemBuffer buf;
 
 	protected StringDataInstance() {
@@ -171,13 +171,16 @@ public class StringDataInstance {
 		stringLayout = StringLayoutEnum.FIXED_LEN;
 		endianSetting = null;
 		renderSetting = RENDER_ENUM.ALL;
+		length = 0;
+		showTranslation = false;
 	}
 
 	/**
 	 * Creates a string instance using the data in the {@link MemBuffer} and the settings
 	 * pulled from the {@link AbstractStringDataType string data type}.
-	 *
-	 * @param stringDataType {@link AbstractStringDataType} common string base data type.
+	 * 
+	 * @param dataType {@link DataType} of the string, either a {@link AbstractStringDataType} derived type
+	 * or an {@link ArrayStringable} element-of-char-array type. 
 	 * @param settings {@link Settings} attached to the data location.
 	 * @param buf {@link MemBuffer} containing the data.
 	 * @param length Length passed from the caller to the datatype.  -1 indicates a 'probe'
@@ -189,9 +192,10 @@ public class StringDataInstance {
 		this.buf = buf;
 		this.charsetName = getCharsetNameFromDataTypeOrSettings(dataType, settings);
 		this.charSize = CharsetInfo.getInstance().getCharsetCharSize(charsetName);
-		// NOTE: for now only handle padding for charSize == 1 
-		this.paddedCharSize =
-			charSize == 1 ? getDataOrganization(dataType).getCharSize() : charSize;
+		// NOTE: for now only handle padding for charSize == 1 and the data type is an array of elements, not a "string" 
+		this.paddedCharSize = (dataType instanceof ArrayStringable) && (charSize == 1) //
+				? getDataOrganization(dataType).getCharSize()
+				: charSize;
 		this.stringLayout = getLayoutFromDataType(dataType);
 		this.showTranslation = TRANSLATION.isShowTranslated(settings);
 		this.translatedValue = TRANSLATION.getTranslatedValue(settings);
@@ -507,7 +511,7 @@ public class StringDataInstance {
 
 	private byte[] getBytesFromMemBuff(MemBuffer memBuffer, int copyLen) {
 		// round copyLen down to multiple of paddedCharSize
-		copyLen &= ~(paddedCharSize - 1);
+		copyLen = (copyLen / paddedCharSize) * paddedCharSize;
 
 		byte[] bytes = new byte[copyLen];
 		if (memBuffer.getBytes(bytes, 0) != bytes.length) {
@@ -787,7 +791,7 @@ public class StringDataInstance {
 	 * @return String containing the representation of the single char.
 	 */
 	public String getCharRepresentation() {
-		if (length < charSize) {
+		if (length < charSize /* also covers case of isProbe() */ ) {
 			return UNKNOWN_DOT_DOT_DOT;
 		}
 
