@@ -2259,7 +2259,7 @@ bool LaneDivide::traceForward(TransformVar *rvn,int4 numLanes,int4 skipLanes)
 	else {
 	  TransformVar *outRvn = setReplacement(outvn,outLanes,outSkip);
 	  if (outRvn == (TransformVar *)0) return false;
-	  buildUnaryOp(CPUI_COPY,op,rvn + (outLanes-skipLanes),outRvn,outLanes);
+	  // Don't create the placeholder ops, let traceBackward make them
 	}
 	break;
       }
