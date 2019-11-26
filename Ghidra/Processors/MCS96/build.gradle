@@ -3,7 +3,6 @@ apply from: "$rootProject.projectDir/gradle/processorProject.gradle"
 apply plugin: 'eclipse'
 eclipse.project.name = 'Processors MCS96'
 
-
-sleighCompile {
-	args '-l'
-}
+sleighCompileOptions = [
+	'-l'
+]

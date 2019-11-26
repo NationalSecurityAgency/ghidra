@@ -422,7 +422,7 @@ public class SleighLanguage implements Language {
 		String languageName = specName + ".slaspec";
 		ResourceFile languageFile = new ResourceFile(slaFile.getParentFile(), languageName);
 
-		// see gradleScripts/processorUtils.gradle for sleighArgs.txt generation
+		// see gradle/processorUtils.gradle for sleighArgs.txt generation
 		ResourceFile sleighArgsFile = null;
 		ResourceFile languageModule = Application.getModuleContainingResourceFile(languageFile);
 		if (languageModule != null) {
@@ -430,21 +430,23 @@ public class SleighLanguage implements Language {
 				sleighArgsFile = new ResourceFile(languageModule, "data/sleighArgs.txt");
 			}
 			else {
-				sleighArgsFile = new ResourceFile(languageModule, "build/data/sleighArgs.txt");
+				sleighArgsFile = new ResourceFile(languageModule, "build/tmp/sleighArgs.txt");
 			}
 		}
 
-		Map<String, String> defineMap;
 		String[] args;
 		if (sleighArgsFile != null && sleighArgsFile.isFile()) {
-			args = new String[] { "-i", sleighArgsFile.getAbsolutePath(),
+			String baseDir = Application.getInstallationDirectory().getAbsolutePath().replace(
+				File.separatorChar, '/');
+			if (!baseDir.endsWith("/")) {
+				baseDir += "/";
+			}
+			args = new String[] { "-DBaseDir=" + baseDir, "-i", sleighArgsFile.getAbsolutePath(),
 				languageFile.getAbsolutePath(), description.getSlaFile().getAbsolutePath() };
-			defineMap = new HashMap<>();
 		}
 		else {
 			args = new String[] { languageFile.getAbsolutePath(),
 				description.getSlaFile().getAbsolutePath() };
-			defineMap = ModuleDefinitionsMap.getModuleMap();
 		}
 
 		try {
@@ -454,7 +456,7 @@ public class SleighLanguage implements Language {
 				buf.append(" ");
 			}
 			Msg.debug(this, "Sleigh compile: " + buf);
-			int returnCode = SleighCompileLauncher.runMain(args, defineMap);
+			int returnCode = SleighCompileLauncher.runMain(args);
 			if (returnCode != 0) {
 				throw new SleighException("Errors compiling " + languageFile.getAbsolutePath() +
 					" -- please check log messages for details");
