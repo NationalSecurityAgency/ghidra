@@ -22,6 +22,7 @@
 package ghidra.app.plugin.core.misc;
 
 import java.awt.Color;
+import java.io.IOException;
 
 import javax.swing.ImageIcon;
 
@@ -43,8 +44,7 @@ import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.listing.ProgramChangeSet;
-import ghidra.util.HelpLocation;
-import ghidra.util.SystemUtilities;
+import ghidra.util.*;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.*;
 import ghidra.util.worker.Job;
@@ -438,6 +438,10 @@ public class MyProgramChangesDisplayPlugin extends ProgramPlugin implements Doma
 			ProgramChangeSet changes = null;
 			try {
 				changes = (ProgramChangeSet) domainFile.getChangesByOthersSinceCheckout();
+			}
+			catch (IOException e) {
+				Msg.warn(this, "Unable to determine program change set: " + e.getMessage());
+				return;
 			}
 			catch (Exception e) {
 				ClientUtil.handleException(tool.getProject().getRepository(), e, "Get Change Set",

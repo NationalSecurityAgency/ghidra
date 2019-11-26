@@ -1,14 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <!--
-  + Compile sleigh languages within this source language module.
+  + Compile sleigh languages within this source language module via Eclipse or
+  + a command shell.
+  + 
+  +   * Eclipse: right-click on this file and choose menu item "Run As->Ant Build"
+  +
+  +   * From command line (requires ant install)
+  +        - cd to data directory containing this file
+  +        - run ant
+  +
   + Sleigh compiler options are read from build/data/sleighArgs.txt which is 
   + updated by "gradle prepdev" based upon specification within module's build.gradle.
-  + 
-  + Eclipse: right-click on this file and choose menu item "Run As->Ant Build"
-  + From command line (requires ant install)
-  +    - cd to data directory containing this file
-  +    - run ant
   -->
                                      
 <project name="privateBuildDeveloper" default="sleigh-compile">
@@ -46,8 +49,9 @@
 			fork="true"
 			failonerror="true">
 			<jvmarg value="-Xmx2048M"/>
+			<arg value="-DBaseDir=../../../../../../" />  <!-- repos root directory -->
 			<arg value="-i"/>
-			<arg value="../build/data/sleighArgs.txt"/>
+			<arg value="../build/tmp/sleighArgs.txt"/>
 			<arg value="-a"/>
 			<arg value="./languages"/>
 		</java>

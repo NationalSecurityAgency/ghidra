@@ -18,6 +18,7 @@ package db;
 import java.io.IOException;
 import java.util.*;
 
+import db.Field.UnsupportedFieldException;
 import ghidra.util.Msg;
 import ghidra.util.datastruct.IntObjectHashtable;
 import ghidra.util.exception.*;
@@ -56,8 +57,9 @@ public class Table {
 	 * Construct a new or existing Table.
 	 * @param db database handle
 	 * @param tableRecord master table record for this table.
+	 * @throws UnsupportedFieldException if unsupported schema field encountered
 	 */
-	Table(DBHandle db, TableRecord tableRecord) {
+	Table(DBHandle db, TableRecord tableRecord) throws UnsupportedFieldException {
 		this.db = db;
 		this.tableRecord = tableRecord;
 

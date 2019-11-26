@@ -46,8 +46,9 @@ abstract class VarKeyNode implements BTreeNode {
 	 * Construct an existing variable-length-key node.
 	 * @param nodeMgr table node manager instance
 	 * @param buf node buffer
+	 * @throws IOException if IO error occurs
 	 */
-	VarKeyNode(NodeMgr nodeMgr, DataBuffer buf) {
+	VarKeyNode(NodeMgr nodeMgr, DataBuffer buf) throws IOException {
 		this.nodeMgr = nodeMgr;
 		this.buffer = buf;
 		keyType = Field.getField(buf.getByte(KEY_TYPE_OFFSET));

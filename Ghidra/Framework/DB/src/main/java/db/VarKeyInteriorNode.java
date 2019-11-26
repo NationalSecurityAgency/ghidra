@@ -47,8 +47,9 @@ class VarKeyInteriorNode extends VarKeyNode {
 	 * Construct an existing variable-length-key interior node.
 	 * @param nodeMgr table node manager instance
 	 * @param buf node buffer
+	 * @throws IOException if IO error occurs
 	 */
-	VarKeyInteriorNode(NodeMgr nodeMgr, DataBuffer buf) {
+	VarKeyInteriorNode(NodeMgr nodeMgr, DataBuffer buf) throws IOException {
 		super(nodeMgr, buf);
 	}
 

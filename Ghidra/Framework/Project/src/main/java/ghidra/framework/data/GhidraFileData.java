@@ -23,6 +23,7 @@ import java.util.Map;
 import javax.swing.Icon;
 
 import db.DBHandle;
+import db.Field;
 import db.buffers.*;
 import ghidra.framework.client.ClientUtil;
 import ghidra.framework.client.NotConnectedException;
@@ -1747,6 +1748,9 @@ public class GhidraFileData {
 		}
 		catch (FileNotFoundException e) {
 			// file has been deleted, just return an empty map.
+		}
+		catch (Field.UnsupportedFieldException e) {
+			// file created with newer version of Ghidra
 		}
 		catch (IOException e) {
 			Msg.error(this, "Read meta-data error", e);

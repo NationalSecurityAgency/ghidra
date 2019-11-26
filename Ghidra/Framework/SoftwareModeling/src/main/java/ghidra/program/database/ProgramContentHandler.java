@@ -20,8 +20,7 @@ import java.io.IOException;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 
-import db.DBConstants;
-import db.DBHandle;
+import db.*;
 import db.buffers.BufferFile;
 import db.buffers.ManagedBufferFile;
 import ghidra.framework.data.*;
@@ -80,6 +79,9 @@ public class ProgramContentHandler extends DBContentHandler {
 			success = true;
 			return program;
 		}
+		catch (Field.UnsupportedFieldException e) {
+			throw new VersionException(false);
+		}
 		catch (VersionException e) {
 			throw e;
 		}
@@ -135,6 +137,9 @@ public class ProgramContentHandler extends DBContentHandler {
 			program.setProgramUserData(new ProgramUserDataDB(program));
 			success = true;
 			return program;
+		}
+		catch (Field.UnsupportedFieldException e) {
+			throw new VersionException(false);
 		}
 		catch (VersionException e) {
 			throw e;
@@ -198,6 +203,9 @@ public class ProgramContentHandler extends DBContentHandler {
 			program.setProgramUserData(getProgramUserData(program, dbItem, userfs, monitor));
 			success = true;
 			return program;
+		}
+		catch (Field.UnsupportedFieldException e) {
+			throw new VersionException(false);
 		}
 		catch (VersionException e) {
 			throw e;

@@ -1706,6 +1706,6 @@ public class SleighCompile extends SleighBase {
 	 * @throws RecognitionException for parsing errors
 	 */
 	public static void main(String[] args) throws JDOMException, IOException, RecognitionException {
-		System.exit(SleighCompileLauncher.runMain(args, new HashMap<String, String>()));
+		System.exit(SleighCompileLauncher.runMain(args));
 	}
 }

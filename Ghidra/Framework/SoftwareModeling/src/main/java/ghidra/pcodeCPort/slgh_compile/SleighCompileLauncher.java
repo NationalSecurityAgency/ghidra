@@ -71,24 +71,24 @@ public class SleighCompileLauncher implements GhidraLaunchable {
 		ApplicationConfiguration configuration = new ApplicationConfiguration();
 		Application.initializeApplication(layout, configuration);
 
-		System.exit(runMain(args, new HashMap<String, String>()));
+		System.exit(runMain(args));
 	}
 
 	/**
 	 * Execute the Sleigh compiler process
 	 * 
 	 * @param args sleigh compiler command line arguments
-	 * @param preprocs additional preprocessor macro
 	 * @return exit code (TODO: exit codes are not well defined)
 	 * @throws JDOMException
 	 * @throws IOException
 	 * @throws RecognitionException
 	 */
-	public static int runMain(String[] args, Map<String, String> preprocs)
+	public static int runMain(String[] args)
 			throws JDOMException, IOException, RecognitionException {
 		int retval;
 		String filein = null;
 		String fileout = null;
+		Map<String, String> preprocs = new HashMap<>();
 
 		SleighCompile.yydebug = false;
 		boolean allMode = false;
@@ -218,8 +218,8 @@ public class SleighCompileLauncher implements GhidraLaunchable {
 				System.out.println("Compiling " + input + ":");
 				SleighCompile compiler = new SleighCompile();
 				initCompiler(compiler, preprocs, unnecessaryPcodeWarning, lenientConflict,
-					allCollisionWarning,
-					allNopWarning, deadTempWarning, unusedFieldWarning, enforceLocalKeyWord);
+					allCollisionWarning, allNopWarning, deadTempWarning, unusedFieldWarning,
+					enforceLocalKeyWord);
 
 				String outname = input.getName().replace(".slaspec", ".sla");
 				File output = new File(input.getParent(), outname);
@@ -247,8 +247,8 @@ public class SleighCompileLauncher implements GhidraLaunchable {
 		// single file compile
 		SleighCompile compiler = new SleighCompile();
 		initCompiler(compiler, preprocs, unnecessaryPcodeWarning, lenientConflict,
-			allCollisionWarning, allNopWarning,
-			deadTempWarning, unusedFieldWarning, enforceLocalKeyWord);
+			allCollisionWarning, allNopWarning, deadTempWarning, unusedFieldWarning,
+			enforceLocalKeyWord);
 		if (i == args.length) {
 			Msg.error(SleighCompile.class, "Missing input file name");
 			return 1;
@@ -418,6 +418,7 @@ public class SleighCompileLauncher implements GhidraLaunchable {
 			return 4;
 		}
 		catch (PreprocessorException e) {
+			Msg.error(SleighCompile.class, e.getMessage());
 			Msg.error(SleighCompile.class, "Errors during preprocessing, halting compilation");
 			return 5;
 		}
