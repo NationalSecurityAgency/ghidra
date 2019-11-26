@@ -126,9 +126,6 @@ class ProgramDBChangeSet implements ProgramChangeSet, DomainObjectDBChangeSet {
 		addedTagIds = new HashSet<Long>();
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.ProgramChangeSet#getAddressSet()
-	 */
 	@Override
 	public synchronized AddressSetView getAddressSet() {
 		SynchronizedAddressSetCollection addressSetCollection =
@@ -149,9 +146,6 @@ class ProgramDBChangeSet implements ProgramChangeSet, DomainObjectDBChangeSet {
 
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.ProgramChangeSet#add(ghidra.program.model.address.AddressSetView)
-	 */
 	@Override
 	public synchronized void add(AddressSetView addrSet) {
 		if (!inTransaction) {
@@ -160,9 +154,6 @@ class ProgramDBChangeSet implements ProgramChangeSet, DomainObjectDBChangeSet {
 		tmpAddrs.add(addrSet);
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.ProgramChangeSet#addRange(ghidra.program.model.address.Address, ghidra.program.model.address.Address)
-	 */
 	@Override
 	public synchronized void addRange(Address addr1, Address addr2) {
 		if (!inTransaction) {
@@ -173,9 +164,6 @@ class ProgramDBChangeSet implements ProgramChangeSet, DomainObjectDBChangeSet {
 		}
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.ProgramChangeSet#addRegisterRange(ghidra.program.model.address.Address, ghidra.program.model.address.Address)
-	 */
 	@Override
 	public synchronized void addRegisterRange(Address addr1, Address addr2) {
 		if (!inTransaction) {
@@ -184,9 +172,6 @@ class ProgramDBChangeSet implements ProgramChangeSet, DomainObjectDBChangeSet {
 		tmpRegAddrs.addRange(addr1, addr2);
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.ProgramChangeSet#getRegisterAddressSet()
-	 */
 	@Override
 	public synchronized AddressSetView getRegisterAddressSet() {
 		SynchronizedAddressSetCollection addressSetCollection =
@@ -195,9 +180,6 @@ class ProgramDBChangeSet implements ProgramChangeSet, DomainObjectDBChangeSet {
 		return addressSetCollection.getCombinedAddressSet();
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.ProgramChangeSet#dataTypeChanged(long)
-	 */
 	@Override
 	public synchronized void dataTypeChanged(long id) {
 		if (!inTransaction) {
@@ -209,9 +191,6 @@ class ProgramDBChangeSet implements ProgramChangeSet, DomainObjectDBChangeSet {
 		}
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.ProgramChangeSet#dataTypeAdded(long)
-	 */
 	@Override
 	public synchronized void dataTypeAdded(long id) {
 		if (!inTransaction) {
@@ -220,25 +199,16 @@ class ProgramDBChangeSet implements ProgramChangeSet, DomainObjectDBChangeSet {
 		tmpAddedDataTypeIds.add(new Long(id));
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.ProgramChangeSet#getDataTypeChanges()
-	 */
 	@Override
 	public synchronized long[] getDataTypeChanges() {
 		return getLongs(changedDataTypeIds);
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.ProgramChangeSet#getDataTypeAdditions()
-	 */
 	@Override
 	public synchronized long[] getDataTypeAdditions() {
 		return getLongs(addedDataTypeIds);
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.ProgramChangeSet#categoryChanged(long)
-	 */
 	@Override
 	public synchronized void categoryChanged(long id) {
 		if (!inTransaction) {
@@ -250,9 +220,6 @@ class ProgramDBChangeSet implements ProgramChangeSet, DomainObjectDBChangeSet {
 		}
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.ProgramChangeSet#categoryAdded(long)
-	 */
 	@Override
 	public synchronized void categoryAdded(long id) {
 		if (!inTransaction) {
@@ -261,25 +228,16 @@ class ProgramDBChangeSet implements ProgramChangeSet, DomainObjectDBChangeSet {
 		tmpAddedCategoryIds.add(new Long(id));
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.ProgramChangeSet#getCategoryChanges()
-	 */
 	@Override
 	public synchronized long[] getCategoryChanges() {
 		return getLongs(changedCategoryIds);
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.ProgramChangeSet#getCategoryAdditions()
-	 */
 	@Override
 	public synchronized long[] getCategoryAdditions() {
 		return getLongs(addedCategoryIds);
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.ProgramChangeSet#programTreeChanged(long)
-	 */
 	@Override
 	public synchronized void programTreeChanged(long id) {
 		if (!inTransaction) {
@@ -291,9 +249,6 @@ class ProgramDBChangeSet implements ProgramChangeSet, DomainObjectDBChangeSet {
 		}
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.ProgramChangeSet#programTreeAdded(long)
-	 */
 	@Override
 	public synchronized void programTreeAdded(long id) {
 		if (!inTransaction) {
@@ -302,25 +257,16 @@ class ProgramDBChangeSet implements ProgramChangeSet, DomainObjectDBChangeSet {
 		tmpAddedProgramTreeIds.add(new Long(id));
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.ProgramChangeSet#getProgramTreeChanges()
-	 */
 	@Override
 	public synchronized long[] getProgramTreeChanges() {
 		return getLongs(changedProgramTreeIds);
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.ProgramChangeSet#getProgramTreeAdditions()
-	 */
 	@Override
 	public synchronized long[] getProgramTreeAdditions() {
 		return getLongs(addedProgramTreeIds);
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.ProgramChangeSet#symbolChanged(long)
-	 */
 	@Override
 	public synchronized void symbolChanged(long id) {
 		if (!inTransaction) {
@@ -332,9 +278,6 @@ class ProgramDBChangeSet implements ProgramChangeSet, DomainObjectDBChangeSet {
 		}
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.ProgramChangeSet#symbolAdded(long)
-	 */
 	@Override
 	public synchronized void symbolAdded(long id) {
 		if (!inTransaction) {
@@ -343,25 +286,16 @@ class ProgramDBChangeSet implements ProgramChangeSet, DomainObjectDBChangeSet {
 		tmpAddedSymbolIds.add(new Long(id));
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.ProgramChangeSet#getSymbolChanges()
-	 */
 	@Override
 	public synchronized long[] getSymbolChanges() {
 		return getLongs(changedSymbolIds);
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.ProgramChangeSet#getSymbolAdditions()
-	 */
 	@Override
 	public synchronized long[] getSymbolAdditions() {
 		return getLongs(addedSymbolIds);
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.ProgramChangeSet#tagChanged(long)
-	 */
 	@Override
 	public synchronized void tagChanged(long id) {
 		if (!inTransaction) {
@@ -373,9 +307,6 @@ class ProgramDBChangeSet implements ProgramChangeSet, DomainObjectDBChangeSet {
 		}
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.ProgramChangeSet#tagCreated(long)
-	 */
 	@Override
 	public synchronized void tagCreated(long id) {
 		if (!inTransaction) {
@@ -384,25 +315,16 @@ class ProgramDBChangeSet implements ProgramChangeSet, DomainObjectDBChangeSet {
 		tmpAddedTagIds.add(new Long(id));
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.ProgramChangeSet#getTagChanges()
-	 */
 	@Override
 	public synchronized long[] getTagChanges() {
 		return getLongs(changedTagIds);
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.ProgramChangeSet#getTagCreations()
-	 */
 	@Override
 	public synchronized long[] getTagCreations() {
 		return getLongs(addedTagIds);
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.program.model.listing.DataTypeChangeSet#archiveAdded(long)
-	 */
 	@Override
 	public void sourceArchiveAdded(long id) {
 		if (!inTransaction) {
@@ -411,9 +333,6 @@ class ProgramDBChangeSet implements ProgramChangeSet, DomainObjectDBChangeSet {
 		tmpAddedSourceArchiveIds.add(new Long(id));
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.program.model.listing.DataTypeChangeSet#archiveChanged(long)
-	 */
 	@Override
 	public void sourceArchiveChanged(long id) {
 		if (!inTransaction) {
@@ -425,25 +344,16 @@ class ProgramDBChangeSet implements ProgramChangeSet, DomainObjectDBChangeSet {
 		}
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.program.model.listing.DataTypeChangeSet#getArchiveAdditions()
-	 */
 	@Override
 	public long[] getSourceArchiveAdditions() {
 		return getLongs(addedSourceArchiveIds);
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.program.model.listing.DataTypeChangeSet#getArchiveChanges()
-	 */
 	@Override
 	public long[] getSourceArchiveChanges() {
 		return getLongs(changedSourceArchiveIds);
 	}
 
-	/**
-	 * @see ghidra.framework.data.DomainObjectDBChangeSet#clear()
-	 */
 	@Override
 	public synchronized void clearUndo(boolean isCheckedOut) {
 		if (inTransaction) {
@@ -470,9 +380,6 @@ class ProgramDBChangeSet implements ProgramChangeSet, DomainObjectDBChangeSet {
 		clearUndo();
 	}
 
-	/**
-	 * @see ghidra.framework.data.DomainObjectDBChangeSet#startTransaction()
-	 */
 	@Override
 	public synchronized void startTransaction() {
 		inTransaction = true;
@@ -493,9 +400,6 @@ class ProgramDBChangeSet implements ProgramChangeSet, DomainObjectDBChangeSet {
 		tmpAddedTagIds = new HashSet<Long>();
 	}
 
-	/**
-	 * @see ghidra.framework.data.DomainObjectDBChangeSet#endTransaction(boolean)
-	 */
 	@Override
 	public synchronized void endTransaction(boolean commit) {
 		if (!inTransaction) {
@@ -556,9 +460,6 @@ class ProgramDBChangeSet implements ProgramChangeSet, DomainObjectDBChangeSet {
 		tmpAddedTagIds = null;
 	}
 
-	/**
-	 * @see ghidra.framework.data.DomainObjectDBChangeSet#undo()
-	 */
 	@Override
 	public synchronized void undo() {
 		ChangeDiff diff = undoList.removeLast();
@@ -579,9 +480,6 @@ class ProgramDBChangeSet implements ProgramChangeSet, DomainObjectDBChangeSet {
 		redoList.addLast(diff);
 	}
 
-	/**
-	 * @see ghidra.framework.data.DomainObjectDBChangeSet#redo()
-	 */
 	@Override
 	public synchronized void redo() {
 		ChangeDiff diff = redoList.removeLast();
@@ -602,26 +500,17 @@ class ProgramDBChangeSet implements ProgramChangeSet, DomainObjectDBChangeSet {
 		undoList.addLast(diff);
 	}
 
-	/**
-	 * @see ghidra.framework.model.ChangeSet#clearUndo()
-	 */
 	@Override
 	public synchronized void clearUndo() {
 		undoList.clear();
 		redoList.clear();
 	}
 
-	/**
-	 * @see ghidra.framework.data.DomainObjectDBChangeSet#setMaxUndos(int)
-	 */
 	@Override
 	public synchronized void setMaxUndos(int numUndos) {
 		this.numUndos = numUndos;
 	}
 
-	/**
-	 * @see ghidra.framework.model.ChangeSet#read(ghidra.framework.store.db.DBHandle)
-	 */
 	@Override
 	public synchronized void read(DBHandle dbh) throws IOException {
 
@@ -648,6 +537,9 @@ class ProgramDBChangeSet implements ProgramChangeSet, DomainObjectDBChangeSet {
 	private void readIdRecords(DBHandle dbh, String tableName, Set<Long> ids) throws IOException {
 		Table table = dbh.getTable(tableName);
 		if (table != null) {
+			if (table.getSchema().getVersion() != 0) {
+				throw new IOException("Change data produced with newer version of Ghidra");
+			}
 			RecordIterator it = table.iterator();
 			while (it.hasNext()) {
 				Record rec = it.next();
@@ -660,6 +552,9 @@ class ProgramDBChangeSet implements ProgramChangeSet, DomainObjectDBChangeSet {
 			throws IOException {
 		Table table = dbh.getTable(tableName);
 		if (table != null) {
+			if (table.getSchema().getVersion() != 0) {
+				throw new IOException("Change data produced with newer version of Ghidra");
+			}
 			RecordIterator it = table.iterator();
 			while (it.hasNext()) {
 				Record rec = it.next();
@@ -673,9 +568,6 @@ class ProgramDBChangeSet implements ProgramChangeSet, DomainObjectDBChangeSet {
 		}
 	}
 
-	/**
-	 * @see ghidra.framework.model.ChangeSet#write(ghidra.framework.store.db.DBHandle)
-	 */
 	@Override
 	public synchronized void write(DBHandle dbh, boolean isRecoverySave) throws IOException {
 

@@ -31,10 +31,9 @@ public class FieldIndexTable extends IndexTable {
 	/**
 	 * Construct a new secondary index which is based upon a specific field within the
 	 * primary table specified by name.
-	 * @param db database handle
 	 * @param primaryTable primary table.
 	 * @param colIndex identifies the indexed column within the primary table.
-	 * @throws IOException
+	 * @throws IOException thrown if an IO error occurs 
 	 */
 	FieldIndexTable(Table primaryTable, int colIndex) throws IOException {
 		this(primaryTable, primaryTable.getDBHandle().getMasterTable().createTableRecord(
@@ -44,11 +43,11 @@ public class FieldIndexTable extends IndexTable {
 	/**
 	 * Construct a new or existing secondary index. An existing index must have
 	 * its' root ID specified within the tableRecord.
-	 * @param db database handle
-	 * @param bufferMgr database buffer manager
+	 * @param primaryTable primary table.
 	 * @param indexTableRecord specifies the index parameters.
+	 * @throws IOException thrown if an IO error occurs 
 	 */
-	FieldIndexTable(Table primaryTable, TableRecord indexTableRecord) {
+	FieldIndexTable(Table primaryTable, TableRecord indexTableRecord) throws IOException {
 		super(primaryTable, indexTableRecord);
 		this.indexSchema = indexTable.getSchema();
 		this.indexColumn = indexTableRecord.getIndexedColumn();
