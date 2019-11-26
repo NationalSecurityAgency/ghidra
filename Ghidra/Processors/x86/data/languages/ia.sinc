@@ -5695,7 +5695,6 @@ define pcodeop packssdw;
 #sword > 0xff: ubyte = 0xff
 #otherwise ubyte = sword
 macro sswub(sword, ubyte) {
-    ubyte = 0:1;
     ubyte = (sword s> 0xff:2) * 0xff:1;
     ubyte = ubyte + (sword s> 0:2) * (sword s< 0xff:2) * sword:1;
 }
@@ -5705,7 +5704,6 @@ macro sswub(sword, ubyte) {
     local dest_copy:8 = mmxreg;
     local src_copy:8 = m64;
     local ubyte:1 = 0;
-    local sword:2 = 0;
     sswub(dest_copy[0,16],ubyte);
     mmxreg[0,8] = ubyte;
     sswub(dest_copy[16,16],ubyte);
