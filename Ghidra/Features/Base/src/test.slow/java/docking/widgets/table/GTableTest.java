@@ -15,7 +15,7 @@
  */
 package docking.widgets.table;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 import java.awt.BorderLayout;
 
@@ -36,7 +36,6 @@ public class GTableTest extends AbstractGhidraHeadedIntegrationTest {
 	public void setUp() throws Exception {
 		model = new TestDataModel();
 		table = new GhidraTable(model);
-		table.setAutoLookupColumn(4);
 
 		frame = new JFrame("Ghidra Table Test");
 		frame.getContentPane().setLayout(new BorderLayout());
@@ -52,6 +51,9 @@ public class GTableTest extends AbstractGhidraHeadedIntegrationTest {
 
 	@Test
 	public void testAutoLookup() throws Exception {
+
+		table.setAutoLookupColumn(4);
+
 		setSelectedRow(table, 0);
 
 		triggerText(table, "a");
@@ -70,6 +72,44 @@ public class GTableTest extends AbstractGhidraHeadedIntegrationTest {
 		timeout();
 		triggerText(table, "a");
 		assertEquals(11, table.getSelectedRow());
+	}
+
+	@Test
+	public void testSetActionsEnabled() throws Exception {
+
+		table.setAutoLookupColumn(4);
+		assertFalse(table.areActionsEnabled());
+		setSelectedRow(table, 0);
+
+		triggerText(table, "a");
+		assertEquals("Auto-lookup failed to change the table row", 11, table.getSelectedRow());
+
+		// this will disable 'auto lookup'
+		table.setActionsEnabled(true);
+		setSelectedRow(table, 0);
+
+		triggerText(table, "a");
+		assertEquals("Auto-lookup should be disabled when actions are enabled", 0,
+			table.getSelectedRow());
+
+		table.setActionsEnabled(false);
+		setSelectedRow(table, 0);
+
+		triggerText(table, "a");
+		assertEquals("Auto-lookup failed to change the table row", 11, table.getSelectedRow());
+
+		table.setActionsEnabled(true);
+		setSelectedRow(table, 0);
+
+		triggerText(table, "a");
+		assertEquals("Auto-lookup should be disabled when actions are enabled", 0,
+			table.getSelectedRow());
+
+		table.setAutoLookupColumn(4);
+		setSelectedRow(table, 0);
+
+		triggerText(table, "a");
+		assertEquals("Auto-lookup failed to change the table row", 11, table.getSelectedRow());
 	}
 
 	private void timeout() throws InterruptedException {

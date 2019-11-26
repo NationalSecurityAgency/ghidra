@@ -184,7 +184,6 @@ public class CodeBrowserOptionsTest extends AbstractGhidraHeadedIntegrationTest 
 		assertEquals("Cursor", groups[idx++]);
 		assertEquals("Cursor Text Highlight", groups[idx++]);
 		assertEquals("EOL Comments Field", groups[idx++]);
-		assertEquals("Field Name", groups[idx++]);
 		assertEquals("Format Code", groups[idx++]);
 		assertEquals("Function Pointers", groups[idx++]);
 		assertEquals("Function Signature Field", groups[idx++]);
@@ -193,9 +192,9 @@ public class CodeBrowserOptionsTest extends AbstractGhidraHeadedIntegrationTest 
 		assertEquals("Mouse", groups[idx++]);
 		assertEquals("Operands Field", groups[idx++]);
 		assertEquals("Pcode Field", groups[idx++]);
-		assertEquals("Plate Comment", groups[idx++]);
-		assertEquals("Post Comment", groups[idx++]);
-		assertEquals("Pre-Comment", groups[idx++]);
+		assertEquals("Plate Comments Field", groups[idx++]);
+		assertEquals("Post-comments Field", groups[idx++]);
+		assertEquals("Pre-comments Field", groups[idx++]);
 		assertEquals("Register Field", groups[idx++]);
 		assertEquals("Selection Colors", groups[idx++]);
 		assertEquals("XREFs Field", groups[idx++]);

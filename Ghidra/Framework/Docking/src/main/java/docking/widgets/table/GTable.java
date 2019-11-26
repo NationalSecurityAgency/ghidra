@@ -84,7 +84,7 @@ public class GTable extends JTable {
 	private int userDefinedRowHeight;
 
 	private boolean isInitialized;
-	private boolean allowActions;
+	private boolean enableActionKeyBindings;
 	private KeyListener autoLookupListener;
 	private long lastLookupTime;
 	private String lookupString;
@@ -386,6 +386,11 @@ public class GTable extends JTable {
 
 	/**
 	 * Sets the column in which auto-lookup will be enabled.
+	 * 
+	 * <p>Note: calling this method with a valid column index will disable key binding support
+	 * of actions.  See {@link #setActionsEnabled(boolean)}.  Passing an invalid column index
+	 * will disable the auto-lookup feature.
+	 * 
 	 * @param lookupColumn the column in which auto-lookup will be enabled
 	 */
 	public void setAutoLookupColumn(int lookupColumn) {
@@ -395,7 +400,8 @@ public class GTable extends JTable {
 			autoLookupListener = new KeyAdapter() {
 				@Override
 				public void keyPressed(KeyEvent e) {
-					if (!allowActions) {
+					if (enableActionKeyBindings) {
+						// actions will consume key bindings, so don't process them
 						return;
 					}
 
@@ -428,6 +434,7 @@ public class GTable extends JTable {
 
 		if (lookupColumn >= 0 && lookupColumn < getModel().getColumnCount()) {
 			addKeyListener(autoLookupListener);
+			enableActionKeyBindings = false;
 		}
 		else {
 			removeKeyListener(autoLookupListener);
@@ -471,7 +478,22 @@ public class GTable extends JTable {
 	 * @param b true allows keyboard actions to pass up the component hierarchy.
 	 */
 	public void setActionsEnabled(boolean b) {
-		allowActions = b;
+		enableActionKeyBindings = b;
+	}
+
+	/**
+	 * Returns true if key strokes are used to trigger actions. 
+	 * 
+	 * <p>This method has a relationship with {@link #setAutoLookupColumn(int)}.  If this method 
+	 * returns <code>true</code>, then the auto-lookup feature is disabled.  If this method 
+	 * returns <code>false</code>, then the auto-lookup may or may not be enabled.
+	 *   
+	 * @return true if key strokes are used to trigger actions
+	 * @see #setActionsEnabled(boolean)
+	 * @see #setAutoLookupColumn(int)
+	 */
+	public boolean areActionsEnabled() {
+		return enableActionKeyBindings;
 	}
 
 	/**

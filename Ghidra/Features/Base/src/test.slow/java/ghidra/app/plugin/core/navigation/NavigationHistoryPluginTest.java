@@ -75,8 +75,8 @@ public class NavigationHistoryPluginTest extends AbstractGhidraHeadedIntegration
 		cb = env.getPlugin(CodeBrowserPlugin.class);
 		goToService = tool.getService(GoToService.class);
 		navigatable = goToService.getDefaultNavigatable();
-		prevAction = getAction(nextPrevPlugin, "Previous in History Buffer");
-		nextAction = getAction(nextPrevPlugin, "Next in History Buffer");
+		prevAction = getAction(nextPrevPlugin, "Previous Location in History");
+		nextAction = getAction(nextPrevPlugin, "Next Location in History");
 		ProgramManagerPlugin pmp = env.getPlugin(ProgramManagerPlugin.class);
 		undoAction = getAction(pmp, "Undo");
 		redoAction = getAction(pmp, "Redo");

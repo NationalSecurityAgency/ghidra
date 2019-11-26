@@ -684,7 +684,7 @@ public class ClipboardPluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 		copySpecial(codeViewerWrapper, copySpecialAction);
 		String clipboardContents = getClipboardContents();
-		String expectedBytes = "e0";
+		String expectedBytes = "0e";
 		assertEquals(expectedBytes, clipboardContents);
 	}
 

@@ -22,6 +22,7 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.time.temporal.TemporalAccessor;
 import java.util.*;
+import java.util.function.Predicate;
 
 import ghidra.util.exception.AssertException;
 
@@ -265,21 +266,69 @@ public class DateUtils {
 		//@formatter:on
 	}
 
+	/**
+	 * Returns a date for the given numeric values
+	 * 
+	 * @param year the year 
+	 * @param month the month; 0-based
+	 * @param day the day of month; 1-based
+	 * @return the date
+	 */
 	public static Date getDate(int year, int month, int day) {
 		Calendar cal = new GregorianCalendar(year, month, day);
 		return cal.getTime();
 	}
 
+	/**
+	 * Returns all days between the two dates.  Returns 0 if the same date is passed for both
+	 * parameters.  The order of the dates does not matter.
+	 * 
+	 * @param date1 the first date
+	 * @param date2 the second date
+	 * @return the number of days
+	 */
 	public static int getDaysBetween(Date date1, Date date2) {
-		date1 = normalizeDate(date1);
-		date2 = normalizeDate(date2);
+		return doGetDaysBetween(date1, date2, DateUtils::anyDay);
+	}
+
+	/**
+	 * Returns the <b>business days</b> between the two dates.  Returns 0 if the same date is 
+	 * passed for both parameters.  The order of the dates does not matter.
+	 * 
+	 * @param date1 the first date
+	 * @param date2 the second date
+	 * @return the number of days
+	 */
+	public static int getBusinessDaysBetween(Date date1, Date date2) {
+		return doGetDaysBetween(date1, date2, DateUtils::isBusinessDay);
+	}
+
+	private static boolean anyDay(Calendar c) {
+		return true;
+	}
+
+	private static boolean isBusinessDay(Calendar c) {
+		return !(isWeekend(c) || isHoliday(c));
+	}
+
+	private static int doGetDaysBetween(Date date1, Date date2, Predicate<Calendar> dayFilter) {
+
+		Date d1 = date1;
+		Date d2 = date2;
+		if (date1.compareTo(date2) > 0) {
+			d1 = date2;
+			d2 = date1;
+		}
+
+		d1 = normalizeDate(d1);
+		d2 = normalizeDate(d2);
 
 		Calendar cal = new GregorianCalendar();
-		cal.setTime(date1);
+		cal.setTime(d1);
 		int days = 0;
-		while (cal.getTime().compareTo(date2) < 0) {
+		while (cal.getTime().compareTo(d2) < 0) {
 			cal.add(Calendar.DAY_OF_MONTH, 1);
-			if (!isWeekend(cal) && !isHoliday(cal)) {
+			if (dayFilter.test(cal)) {
 				days++;
 			}
 		}
