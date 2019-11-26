@@ -74,6 +74,8 @@ void InjectPayload::restoreXml(const Element *el)
     }
     else if (elname == "dynamic")
       dynamic = xml_readbool(el->getAttributeValue(i));
+    else if (elname == "incidentalcopy")
+      incidentalCopy = xml_readbool(el->getAttributeValue(i));
   }
   const List &list(el->getChildren());
   List::const_iterator iter;
