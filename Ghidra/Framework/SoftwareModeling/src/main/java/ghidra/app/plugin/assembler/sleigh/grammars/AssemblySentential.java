@@ -30,7 +30,6 @@ import ghidra.app.plugin.assembler.sleigh.tree.AssemblyParseToken;
  * in the grammar starting with the start symbol. We ignore that if only for the sake of naming.
  * 
  * @param <NT> the type of non-terminals
- * @param <T> the type of terminals
  */
 public class AssemblySentential<NT extends AssemblyNonTerminal> extends
 		AbstractListDecorator<AssemblySymbol> implements Comparable<AssemblySentential<NT>> {

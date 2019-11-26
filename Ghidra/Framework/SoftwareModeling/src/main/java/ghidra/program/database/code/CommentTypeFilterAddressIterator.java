@@ -43,17 +43,11 @@ public class CommentTypeFilterAddressIterator implements AddressIterator {
 		this.commentType = commentType;
 	}
 
-	/**
-	 * @see java.util.Iterator#remove()
-	 */
 	@Override
 	public void remove() {
 		throw new UnsupportedOperationException();
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.AddressIterator#hasNext()
-	 */
 	@Override
 	public boolean hasNext() {
 		if (nextAddr == null) {
@@ -62,9 +56,6 @@ public class CommentTypeFilterAddressIterator implements AddressIterator {
 		return nextAddr != null;
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.AddressIterator#next()
-	 */
 	@Override
 	public Address next() {
 		if (hasNext()) {

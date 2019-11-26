@@ -40,7 +40,6 @@ public interface HoverProvider {
 	 * @param field the field over which the mouse is hovering
 	 * @param fieldBounds the rectangle containing the bounds of the given field.
 	 * @param event the last mouse motion event over the field viewer component (i.e., FieldPanel).
-	 * @return true if a popup window has been displayed adjacent to the mouse location.
 	 */
 	public void mouseHovered(FieldLocation fieldLocation, Field field, Rectangle fieldBounds,
 			MouseEvent event);

@@ -97,7 +97,7 @@ public class CliStreamBlob extends CliAbstractStream {
 	 * Updates the blob at the given address with the new blob.
 	 * 
 	 * @param updatedBlob The updated blob.
-	 * @param address The address of the blob to update.
+	 * @param addr The address of the blob to update.
 	 * @param program The program that will get the update.
 	 */
 	public boolean updateBlob(CliBlob updatedBlob, Address addr, Program program) {

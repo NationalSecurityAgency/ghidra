@@ -241,7 +241,7 @@ public abstract class GDynamicColumnTableModel<ROW_TYPE, DATA_SOURCE>
 	 * implementations to add custom column objects, rather than relying on generic, discovered
 	 * DynamicTableColumn implementations.
 	 * 
-	 * <p><b>Note: this method assumes that the columns have already been sorted
+	 * <p><b>Note: this method assumes that the columns have already been sorted</b>
 	 * @param column The field to add
 	 */
 	protected void addTableColumn(DynamicTableColumn<ROW_TYPE, ?, ?> column) {
@@ -269,7 +269,7 @@ public abstract class GDynamicColumnTableModel<ROW_TYPE, DATA_SOURCE>
 	 * This method is intended for implementations to add custom column objects, rather than
 	 * relying on generic, discovered DynamicTableColumn implementations.
 	 * <p>
-	 * <b>Note: this method assumes that the columns have already been sorted.
+	 * <b>Note: this method assumes that the columns have already been sorted.</b>
 	 * @param column The field to add.
 	 * @param index The index at which to add the field.  If the index value is invalid (negative
 	 *        or greater than the number of columns), then the column will be added to the

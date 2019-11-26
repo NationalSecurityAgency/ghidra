@@ -199,7 +199,7 @@ public interface Instruction extends CodeUnit, ProcessorContext {
 	 * performs.  NOTE: If includeOverrides is true, unique temporary varnodes
 	 * may be produced which vary in size to those produced for other instructions.
 	 * If your analysis is sensitive to this you should consider using 
-	 * {@link InstructionPrototype#getPcode(ghidra.program.model.mem.MemBuffer, ProcessorContext, FlowOverride, ghidra.program.model.address.UniqueAddressFactory)}
+	 * {@link InstructionPrototype#getPcode(InstructionContext, PcodeOverride, UniqueAddressFactory)}
 	 * instead with your own {@link UniqueAddressFactory} to prevent duplication within 
 	 * your scope of analysis.
 	 * by this method may not be suitable for use with certain analysis
@@ -266,7 +266,7 @@ public interface Instruction extends CodeUnit, ProcessorContext {
 	public boolean isFallThroughOverridden();
 
 	/**
-	 * @returns the instruction context for this instruction
+	 * @return the instruction context for this instruction
 	 */
 	public InstructionContext getInstructionContext();
 

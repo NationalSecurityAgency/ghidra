@@ -52,7 +52,7 @@ import ghidra.util.task.TaskLauncher;
 import resources.ResourceManager;
 
 /**
- * Component provider for the Search -> For Strings... result dialog.
+ * Component provider for the Search -&gt; For Strings... result dialog.
  */
 public class StringTableProvider extends ComponentProviderAdapter implements DomainObjectListener {
 	private static final ImageIcon ICON = ResourceManager.loadImage("images/kmessedwords.png");

@@ -37,14 +37,14 @@ public interface VisualGraphChangeListener<V, E> {
 	/**
 	 * Called when the given edges have been added from the graph
 	 * 
-	 * @param vertices the added edges
+	 * @param edges the added edges
 	 */
 	public void edgesAdded(Iterable<E> edges);
 
 	/**
 	 * Called when the given edges have been removed from the graph
 	 * 
-	 * @param vertices the removed edges
+	 * @param edges the removed edges
 	 */
 	public void edgesRemoved(Iterable<E> edges);
 }

@@ -100,7 +100,7 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 	 * UPGRADE_REQUIRED_BFORE_VERSION should be changed to DB_VERSION anytime the
 	 * latest version requires a forced upgrade (i.e., Read-only mode not supported
 	 * until upgrade is performed).  It is assumed that read-only mode is supported 
-	 * if the data's version is >= UPGRADE_REQUIRED_BEFORE_VERSION and <= DB_VERSION. 
+	 * if the data's version is &gt;= UPGRADE_REQUIRED_BEFORE_VERSION and &lt;= DB_VERSION. 
 	 */
 	private static final int UPGRADE_REQUIRED_BEFORE_VERSION = 19;
 
@@ -206,7 +206,8 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 	/**
 	 * Constructs a new ProgramDB
 	 * @param name the name of the program
-	 * @param languageSuperFacade the Language used by this program
+	 * @param language the Language used by this program
+	 * @param compilerSpec compiler specification
 	 * @param consumer the object that is using this program.
 	 * @throws IOException if there is an error accessing the database.
 	 */
@@ -262,9 +263,6 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 	/**
 	 * Constructs a new ProgramDB
 	 * @param dbh a handle to an open program database.
-	 * @param userDbh a handle to the associated user data
-	 * @param service the LanguageService that will provide that language object once
-	 * the name of the language is retrieved from the database.
 	 * @param openMode one of:
 	 * 		READ_ONLY: the original database will not be modified
 	 * 		UPDATE: the database can be written to.
@@ -402,7 +400,7 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 	 * 		UPDATE: the database can be written to.
 	 * 		UPGRADE: the database is upgraded to the lastest schema as it is opened.
 	 * @throws LanguageNotFoundException 
-	 * @returns VersionException if language upgrade required
+	 * @return VersionException if language upgrade required
 	 */
 	private VersionException checkLanguageVersion(int openMode) throws LanguageNotFoundException {
 
@@ -458,7 +456,7 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 	 * 		READ_ONLY: the original database will not be modified
 	 * 		UPDATE: the database can be written to.
 	 * 		UPGRADE: the database is upgraded to the lastest schema as it is opened.
-	 * @returns true if language upgrade required
+	 * @return true if language upgrade required
 	 * @throws LanguageNotFoundException if a suitable replacement language not found
 	 */
 	private VersionException checkForLanguageChange(LanguageNotFoundException e, int openMode)
@@ -488,9 +486,7 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 		return ve;
 	}
 
-	/**
-	 * @see ghidra.framework.data.DomainObjectAdapter#setDomainFile(ghidra.framework.model.DomainFile)
-	 */
+	
 	@Override
 	protected void setDomainFile(DomainFile df) {
 		super.setDomainFile(df);
@@ -526,9 +522,6 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 		this.programUserData = programUserData;
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.Program#getProgramUserData()
-	 */
 	@Override
 	public ProgramUserData getProgramUserData() {
 		if (programUserData == null) {
@@ -553,41 +546,26 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 		return programUserData;
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.Program#getListing()
-	 */
 	@Override
 	public Listing getListing() {
 		return listing;
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.Program#getSymbolTable()
-	 */
 	@Override
 	public SymbolTable getSymbolTable() {
 		return (SymbolTable) managers[SYMBOL_MGR];
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.Program#getExternalManager()
-	 */
 	@Override
 	public ExternalManager getExternalManager() {
 		return (ExternalManager) managers[EXTERNAL_MGR];
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.Program#getEquateTable()
-	 */
 	@Override
 	public EquateTable getEquateTable() {
 		return (EquateTable) managers[EQUATE_MGR];
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.Program#getMemory()
-	 */
 	@Override
 	public Memory getMemory() {
 		return memoryManager;
@@ -600,9 +578,6 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 		return (NamespaceManager) managers[NAMESPACE_MGR];
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.Program#getReferenceManager()
-	 */
 	@Override
 	public ReferenceManager getReferenceManager() {
 		return (ReferenceManager) managers[REF_MGR];
@@ -622,41 +597,26 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 		return (TreeManager) managers[TREE_MGR];
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.Program#getDataTypeManager()
-	 */
 	@Override
 	public ProgramDataTypeManager getDataTypeManager() {
 		return (ProgramDataTypeManager) managers[DATA_MGR];
 	}
 
-	/**
-	 * Returns the FunctionManager
-	 */
 	@Override
 	public FunctionManager getFunctionManager() {
 		return (FunctionManagerDB) managers[FUNCTION_MGR];
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.Program#getBookmarkManager()
-	 */
 	@Override
 	public BookmarkManager getBookmarkManager() {
 		return (BookmarkManager) managers[BOOKMARK_MGR];
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.Program#getRelocationTable()
-	 */
 	@Override
 	public RelocationTable getRelocationTable() {
 		return (RelocationManager) managers[RELOC_MGR];
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.Program#getCompiler()
-	 */
 	@Override
 	public String getCompiler() {
 		String compiler = null;
@@ -665,9 +625,6 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 		return compiler == null ? UNKNOWN : compiler;
 	}
 
-	/*
-	 * @see ghidra.program.model.listing.Program#setCompiler(java.lang.String)
-	 */
 	@Override
 	public void setCompiler(String compiler) {
 		Options pl = getOptions(PROGRAM_INFO);
@@ -675,9 +632,6 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 		changed = true;
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.Program#getExecutablePath()
-	 */
 	@Override
 	public String getExecutablePath() {
 		String path = null;
@@ -686,9 +640,6 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 		return path == null ? UNKNOWN : path;
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.Program#setExecutablePath(java.lang.String)
-	 */
 	@Override
 	public void setExecutablePath(String path) {
 		Options pl = getOptions(PROGRAM_INFO);
@@ -696,9 +647,6 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 		changed = true;
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.Program#getExecutableFormat()
-	 */
 	@Override
 	public String getExecutableFormat() {
 		String format = null;
@@ -711,9 +659,6 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 		return format == null ? UNKNOWN : format;
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.Program#setExecutableFormat(java.lang.String)
-	 */
 	@Override
 	public void setExecutableFormat(String format) {
 		Options pl = getOptions(PROGRAM_INFO);
@@ -721,9 +666,6 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 		changed = true;
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.Program#getExecutableMD5()
-	 */
 	@Override
 	public String getExecutableMD5() {
 		String format = null;
@@ -736,9 +678,6 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 		return format == null ? UNKNOWN : format;
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.Program#setExecutableMD5(java.lang.String)
-	 */
 	@Override
 	public void setExecutableMD5(String md5) {
 		Options pl = getOptions(PROGRAM_INFO);
@@ -746,9 +685,6 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 		changed = true;
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.Program#getExecutableSHA256()
-	 */
 	@Override
 	public String getExecutableSHA256() {
 		String format = null;
@@ -761,9 +697,6 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 		return format == null ? UNKNOWN : format;
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.Program#setExecutableSHA256(java.lang.String)
-	 */
 	@Override
 	public void setExecutableSHA256(String sha256) {
 		Options pl = getOptions(PROGRAM_INFO);
@@ -771,90 +704,57 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 		changed = true;
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.Program#getCreationDate()
-	 */
 	@Override
 	public Date getCreationDate() {
 		Options pl = getOptions(PROGRAM_INFO);
 		return pl.getDate(Program.DATE_CREATED, new Date(0));
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.Program#getDefaultStoredPointerSize()
-	 */
 	@Override
 	public int getDefaultPointerSize() {
 		return compilerSpec.getDataOrganization().getPointerSize();
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.Program#getLanguageID()
-	 */
 	@Override
 	public LanguageID getLanguageID() {
 		return languageID;
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.Program#getLanguage()
-	 */
 	@Override
 	public Language getLanguage() {
 		return language;
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.Program#getCompilerSpec()
-	 */
 	@Override
 	public CompilerSpec getCompilerSpec() {
 		return compilerSpec;
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.Program#getUsrPropertyManager()
-	 */
 	@Override
 	public PropertyMapManager getUsrPropertyManager() {
 		return (PropertyMapManager) managers[PROPERTY_MGR];
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.Program#getProgramContext()
-	 */
 	@Override
 	public ProgramContext getProgramContext() {
 		return (ProgramContext) managers[CONTEXT_MGR];
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.Program#getMinAddress()
-	 */
 	@Override
 	public Address getMinAddress() {
 		return memoryManager.getMinAddress();
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.Program#getMaxAddress()
-	 */
 	@Override
 	public Address getMaxAddress() {
 		return memoryManager.getMaxAddress();
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.Program#getChanges()
-	 */
 	@Override
 	public ProgramChangeSet getChanges() {
 		return (ProgramChangeSet) changeSet;
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.Program#getAddressFactory()
-	 */
 	@Override
 	public AddressFactory getAddressFactory() {
 		return addressFactory;
@@ -872,9 +772,6 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 		return addrMap;
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.Program#parseAddress(java.lang.String)
-	 */
 	@Override
 	public Address[] parseAddress(String addrStr) {
 		return parseAddress(addrStr, true);
@@ -1365,15 +1262,11 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 	 * @param propertyName
 	 * @param oldValue
 	 * @param newValue
-	 * @return true if change is OK, false value should be reverted
 	 */
 	protected void userDataChanged(String propertyName, Object oldValue, Object newValue) {
 		fireEvent(new UserDataChangeRecord(propertyName, name, name));
 	}
 
-	/**
-	 * @see ghidra.framework.model.DomainObject#setName(java.lang.String)
-	 */
 	@Override
 	public void setName(String newName) {
 		lock.acquire();
@@ -1486,17 +1379,11 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 		return 0;
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.Program#getImageBase()
-	 */
 	@Override
 	public Address getImageBase() {
 		return addrMap.getImageBase();
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.Program#setImageBase(ghidra.program.model.address.Address, boolean)
-	 */
 	@Override
 	public void setImageBase(Address base, boolean commit)
 			throws AddressOverflowException, LockException, IllegalStateException {
@@ -1578,9 +1465,6 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 		flushEvents();
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.Program#restoreImageBase()
-	 */
 	@Override
 	public void restoreImageBase() {
 		if (!imageBaseOverride) {
@@ -1600,9 +1484,6 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 		flushEvents();
 	}
 
-	/**
-	 * @see ghidra.framework.model.DomainObject#getDescription()
-	 */
 	@Override
 	public String getDescription() {
 		return "Program";
@@ -2056,9 +1937,6 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 
 	}
 
-	/**
-	 * @see ghidra.framework.data.DomainObjectAdapterDB#clearCache()
-	 */
 	@Override
 	protected void clearCache(boolean all) {
 		lock.acquire();
@@ -2082,42 +1960,27 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 		}
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.Program#invalidate()
-	 */
 	@Override
 	public void invalidate() {
 		clearCache(false);
 		fireEvent(new DomainObjectChangeRecord(DomainObject.DO_OBJECT_RESTORED));
 	}
 
-	/**
-	 * @see ghidra.framework.model.DomainObject#isChangeable()
-	 */
 	@Override
 	public boolean isChangeable() {
 		return changeable;
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.Program#getRegister(int, int)
-	 */
 	@Override
 	public Register getRegister(Address addr) {
 		return language.getRegister(getGlobalAddress(addr), 0);
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.Program#getRegisters(ghidra.program.model.address.Address)
-	 */
 	@Override
 	public Register[] getRegisters(Address addr) {
 		return language.getRegisters(getGlobalAddress(addr));
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.Program#getRegister(ghidra.program.model.address.Address, int)
-	 */
 	@Override
 	public Register getRegister(Address addr, int size) {
 		return language.getRegister(getGlobalAddress(addr), size);
@@ -2141,9 +2004,6 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 		return addr;
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.Program#getRegister(java.lang.String)
-	 */
 	@Override
 	public Register getRegister(String regName) {
 		return language.getRegister(regName);
@@ -2238,9 +2098,6 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 		}
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.Program#getGlobalNamespace()
-	 */
 	@Override
 	public Namespace getGlobalNamespace() {
 		return globalNamespace;

@@ -32,7 +32,7 @@ import ghidra.util.Msg;
 import util.CollectionUtils;
 
 /**
- * A drag-and-drop handler for trees that is specific to List&ltFile&gt. (see
+ * {@literal A drag-and-drop handler for trees that is specific to List<File>.} (see
  * {@link DataFlavor#javaFileListFlavor}).
  */
 public final class JavaFileListHandler implements DataTreeFlavorHandler, FileOpenDataFlavorHandler {

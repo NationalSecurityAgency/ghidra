@@ -40,7 +40,7 @@ public interface BufferFile {
 	 * If file is open read-write, the modified contents are flushed
 	 * and the file re-opened as read-only.  This is also used to commit
 	 * a new version if the file had been modified for update.
-	 * @returns true if successfully transitioned from read-write to read-only
+	 * @return true if successfully transitioned from read-write to read-only
 	 * @throws IOException if an I/O error occurs
 	 */
 	boolean setReadOnly() throws IOException;
@@ -120,7 +120,7 @@ public interface BufferFile {
 	/**
 	 * Delete this buffer file if writable.  Once deleted,
 	 * this object is immediately disposed and may no longer be used.
-	 * @returns true if deleted, false if the file is read-only
+	 * @return true if deleted, false if the file is read-only
 	 * @throws IOException if an I/O error occurs.
 	 */
 	boolean delete() throws IOException;

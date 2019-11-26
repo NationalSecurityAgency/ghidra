@@ -41,7 +41,7 @@ import ghidra.util.Msg;
  * *.cer, *.der) or may be in a Java JKS form (*.jks). The path to this file may be 
  * established in one of two ways using the absolute file path:
  * <ol>
- * <li>setting the system property <i>ghidra.cacerts</i> (takes precedence)</i> 
+ * <li>setting the system property <i>ghidra.cacerts</i> (takes precedence)</li> 
  * <li>setting the user preference <i>ghidra.cacerts</i></li>
  * </ol>
  * <p>

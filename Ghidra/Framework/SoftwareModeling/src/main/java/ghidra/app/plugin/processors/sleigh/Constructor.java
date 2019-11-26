@@ -283,8 +283,9 @@ public class Constructor implements Comparable<Constructor> {
 	/**
 	 * Apply any operations on context for this Constructor to a
 	 * particular InstructionContext
-	 * @param pos
-	 * @throws MemoryAccessException
+	 * @param walker the parser walker
+	 * @param debug the debug logger
+	 * @throws MemoryAccessException if the context failed to be applied.
 	 */
 	public void applyContext(ParserWalker walker, SleighDebugLogger debug)
 			throws MemoryAccessException {

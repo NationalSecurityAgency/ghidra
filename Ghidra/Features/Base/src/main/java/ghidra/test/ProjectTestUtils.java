@@ -181,7 +181,8 @@ public class ProjectTestUtils {
 	 * Create an empty program file within the specified project folder.
 	 * @param proj active project.
 	 * @param progName name of program and domain file to be created.
-	 * @param langType a specified language, or 0 if it does not matter.
+	 * @param language a specified language, or 0 if it does not matter.
+	 * @param compilerSpec the compiler spec
 	 * @param folder domain folder within the specified project which the
 	 * user has permission to write.  If null, the root data folder will be used.
 	 * @return new domain file.
@@ -242,7 +243,6 @@ public class ProjectTestUtils {
 	 * @param project The project which with the tool is associated.
 	 * @param tool The tool to be saved
 	 * @return The tool template for the given tool.
-	 * @throws DuplicateNameException
 	 */
 	public static ToolTemplate saveTool(Project project, Tool tool) {
 		// save the tool to the project tool chest

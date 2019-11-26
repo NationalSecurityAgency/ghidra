@@ -54,8 +54,6 @@ public class ProgramLocation implements Comparable<ProgramLocation> {
 	 * @param addr address of the location; cannot be null; This could be a
 	 * code unit minimum address where the byteAddr is within the code unit.
 	 * @param byteAddr address of the location; cannot be null
-	 * @param groupPath path associated with the address (an address could
-	 * appear at more than one group path); may be null
 	 * @param componentPath array of indexes for each nested data component;
 	 * the data index is the data component's index within its parent; may be null
 	 * @param refAddr the "referred to" address if the location is
@@ -202,8 +200,6 @@ public class ProgramLocation implements Comparable<ProgramLocation> {
 	/**
 	 * Save this program location to the given save state object.
 	 * @param obj the save state object for saving the location
-	 * @param prefix prefix appended to the names of the save state items to make the entry
-	 * unique
 	 */
 	public void saveState(SaveState obj) {
 		obj.putString("_CLASSNAME", getClass().getName());
@@ -224,8 +220,8 @@ public class ProgramLocation implements Comparable<ProgramLocation> {
 	/**
 	 * Restore this program location using the given program
 	 * and save state object.
-	 * @param prefix prefix appended to the names of the save state items to make the entry
-	 * unique
+	 * @param program1 program to restore from
+	 * @param obj the save state to restore from
 	 */
 	public void restoreState(Program program1, SaveState obj) {
 		this.program = program1;

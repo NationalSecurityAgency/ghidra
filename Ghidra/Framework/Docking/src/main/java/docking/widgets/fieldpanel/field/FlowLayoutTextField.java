@@ -30,7 +30,7 @@ public class FlowLayoutTextField extends VerticalLayoutTextField {
 
 	/**
 	 * This constructor will create a text field that will render one line of
-	 * text. If <code>metrics.stringWidth(text) > width</code>, then the text
+	 * text. If <code>metrics.stringWidth(text) &gt; width</code>, then the text
 	 * will be clipped. No wrapping will be performed. If <code>text</code>
 	 * contains the highlight string, then it will be highlighted using the
 	 * highlight color.

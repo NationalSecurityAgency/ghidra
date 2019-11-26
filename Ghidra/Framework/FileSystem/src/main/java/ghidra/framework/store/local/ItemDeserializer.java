@@ -54,8 +54,7 @@ public class ItemDeserializer {
 
 	/**
 	 * Constructor.
-	 * @param in input stream. The input stream must not be read again until
-	 * after the saveItem method has been invoked successfully.
+	 * @param packedFile item to deserialize.
 	 * @throws IOException
 	 */
 	public ItemDeserializer(File packedFile) throws IOException {

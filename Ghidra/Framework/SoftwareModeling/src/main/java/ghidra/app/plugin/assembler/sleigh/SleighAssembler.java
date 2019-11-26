@@ -60,7 +60,7 @@ public class SleighAssembler implements Assembler {
 	 * @param program the program to bind to (must have same language as parser)
 	 * @param parser the parser for the SLEIGH language
 	 * @param defaultContext the default context for the language
-	 * @param recGraphs the map of recursion graphs (shared by assemblers of this language)
+	 * @param ctxGraph the context graph
 	 */
 	protected SleighAssembler(AssemblySelector selector, Program program, AssemblyParser parser,
 			AssemblyDefaultContext defaultContext, AssemblyContextGraph ctxGraph) {
@@ -76,13 +76,13 @@ public class SleighAssembler implements Assembler {
 	/**
 	 * Construct a SleighAssembler.
 	 * 
-	 * @note This variant does not permit {@link #assemble(Address, String)}.
+	 * NOTE: This variant does not permit {@link #assemble(Address, String...)}.
 	 * 
 	 * @param selector a method of selecting one result from many
 	 * @param lang the SLEIGH language (must be same as to create the parser)
 	 * @param parser the parser for the SLEIGH language
-	 * @param ctxGraph 
-	 * @param recGraphs the map of recursion graphs (shared by assemblers of this language)
+	 * @param defaultContext the default context for the language
+	 * @param ctxGraph the context graph
 	 */
 	protected SleighAssembler(AssemblySelector selector, SleighLanguage lang, AssemblyParser parser,
 			AssemblyDefaultContext defaultContext, AssemblyContextGraph ctxGraph) {
@@ -224,7 +224,7 @@ public class SleighAssembler implements Assembler {
 	 * A convenience to obtain a map of program labels strings to long values
 	 * @return the map
 	 * 
-	 * @TODO Use a Map<String, Address> instead so that, if possible, symbol values can be checked
+	 * {@literal TODO Use a Map<String, Address> instead so that, if possible, symbol values can be checked}
 	 * lest they be an invalid substitution for a given operand.
 	 */
 	protected Map<String, Long> getProgramLabels() {

@@ -465,7 +465,7 @@ public class DataTreeDialog extends DialogComponentProvider
 
 	/**
 	 * Define the Main panel for the dialog here.
-	 * @return JPanel the completed <CODE>Main Panel<\CODE>
+	 * @return JPanel the completed <CODE>Main Panel</CODE>
 	 */
 	protected JPanel buildMainPanel() {
 

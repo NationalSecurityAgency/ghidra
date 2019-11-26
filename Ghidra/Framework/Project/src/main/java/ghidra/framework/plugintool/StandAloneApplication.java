@@ -58,7 +58,7 @@ public abstract class StandAloneApplication implements GenericStandAloneApplicat
 	 * <b>The given properties file is expected to have the
 	 * {@link ApplicationProperties#APPLICATION_NAME_PROPERTY} and
 	 * {@link ApplicationProperties#APPLICATION_VERSION_PROPERTY} properties
-	 * set.
+	 * set.</b>
 	 * 
 	 * @param propertiesFilename the name of the properties file.
 	 */

@@ -132,9 +132,8 @@ public class VersionControlDataTypeArchiveUndoCheckoutAction extends VersionCont
 	 * user chooses to do so.<br>
 	 * All unmodified checkouts will be undone. Only modified checkouts the user chooses
 	 * will be undone.
-	 * @param unmodifiedCheckOutsList the list of unmodified checked out files
-	 * @param modifiedArchivesList the list of checked out files that have been modified
-	 * @param changedList the list of checked out files that have been modified and not yet saved
+	 * @param unmodifiedArchivesList the list of unmodified archives
+	 * @param modifiedArchivesList the list of archives that have been modified
 	 * @throws CancelledException 
 	 */
 	protected void undoCheckOuts(List<DomainFileArchive> unmodifiedArchivesList,
@@ -204,8 +203,8 @@ public class VersionControlDataTypeArchiveUndoCheckoutAction extends VersionCont
 	}
 
 	/**
-	 * 
-	 * @param changedList
+	 * Saves all checked out changes.
+	 * @param changedList the list of changes
 	 */
 	protected void saveCheckOutChanges(List<DomainFile> changedList) throws CancelledException {
 		if (changedList.size() > 0) {

@@ -106,7 +106,7 @@ public class DBBuffer {
 	 * Append the contents of the specified dbBuf onto the end of this buffer.
 	 * The size of this buffer increases by the size of dbBuf.  When the operation 
 	 * is complete, dbBuf object is no longer valid and must not be used.
-	 * @param dbBuf the buffer to be appended to this buffer.
+	 * @param buffer the buffer to be appended to this buffer.
 	 * @throws IOException thrown if an IO error occurs
 	 */
 	public void append(DBBuffer buffer) throws IOException {
@@ -168,11 +168,9 @@ public class DBBuffer {
 	 * at the specified offset.  The number of bytes stored is specified by the
 	 * length specified.
 	 * @param offset byte offset from start of buffer.
-	 * @param data the byte data to be stored.
+	 * @param bytes the byte data to be stored.
 	 * @param dataOffset the starting offset into the data.
 	 * @param length the number of bytes to be stored.
-	 * @return the next available offset into the buffer, or -1 if the buffer is
-	 * full.
 	 * @throws ArrayIndexOutOfBoundsException if an invalid offset is provided
 	 * or the end of buffer was encountered while storing the data.
 	 * @throws IOException is thrown if an error occurs while accessing the
@@ -192,8 +190,6 @@ public class DBBuffer {
 	 * array.
 	 * @param offset byte offset from start of buffer.
 	 * @param bytes the byte data to be stored.
-	 * @return the next available offset into the buffer, or -1 if the buffer is
-	 * full.
 	 * @throws ArrayIndexOutOfBoundsException if an invalid offset is provided
 	 * or the end of buffer was encountered while storing the data.
 	 * @throws IOException is thrown if an error occurs while accessing the
@@ -210,8 +206,6 @@ public class DBBuffer {
 	 * Put the 8-bit byte value into the buffer at the specified offset. 
 	 * @param offset byte offset from start of buffer.
 	 * @param b the byte value to be stored.
-	 * @return the next available offset into the buffer, or -1 if the buffer is
-	 * full.
 	 * @throws ArrayIndexOutOfBoundsException if an invalid offset is provided.
 	 * @throws IOException is thrown if an error occurs while accessing the
 	 * underlying storage.
@@ -226,7 +220,6 @@ public class DBBuffer {
 	/**
 	 * Get the byte data located at the specified offset.
 	 * @param offset byte offset from start of buffer.
-	 * @return the byte array.
 	 * @throws ArrayIndexOutOfBoundsException is thrown if an invalid offset is
 	 * specified or the end of the buffer was encountered while reading the
 	 * data.

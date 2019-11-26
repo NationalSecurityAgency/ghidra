@@ -20,7 +20,7 @@ import java.util.ListIterator;
 /**
  * Wraps a {@link ListIterator} so that the operations are reversed.
  * 
- * @note you must obtain an iterator that is already at its end. E.g., if you wish to traverse a
+ * NOTE: you must obtain an iterator that is already at its end. E.g., if you wish to traverse a
  * list in reverse, you would use
  * {@code new ReversedListIterator<>(list.listIterator(list.size()))}.
  *

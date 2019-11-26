@@ -61,10 +61,6 @@ public class RowLayout implements Layout {
 		}
 	}
 
-	/**
-	 * 
-	 * @see docking.widgets.fieldpanel.Layout#getHeight()
-	 */
 	@Override
 	public int getHeight() {
 		return heightAbove + heightBelow;
@@ -116,43 +112,26 @@ public class RowLayout implements Layout {
 		return rowID;
 	}
 
-	/**
-	 * @see docking.widgets.fieldpanel.Layout#insertSpaceAbove(int)
-	 */
 	@Override
 	public void insertSpaceAbove(int size) {
 		heightAbove += size;
 	}
 
-	/**
-	 * @see docking.widgets.fieldpanel.Layout#insertSpaceBelow(int)
-	 */
 	@Override
 	public void insertSpaceBelow(int size) {
 		heightBelow += size;
 	}
 
-	/**
-	 * 
-	 * @see docking.widgets.fieldpanel.Layout#getNumFields()
-	 */
 	@Override
 	public int getNumFields() {
 		return fields.length;
 	}
 
-	/**
-	 * 
-	 * @see docking.widgets.fieldpanel.Layout#getField(int)
-	 */
 	@Override
 	public Field getField(int index) {
 		return fields[index];
 	}
 
-	/**
-	 * @see docking.widgets.fieldpanel.Layout#paint(java.awt.Graphics, docking.widgets.fieldpanel.internal.PaintContext, java.awt.Rectangle, docking.widgets.fieldpanel.support.field.LayoutSelection, docking.widgets.fieldpanel.support.field.LayoutSelection, int, int, int)
-	 */
 	@Override
 	public void paint(JComponent c, Graphics g, PaintContext context, Rectangle rect,
 			LayoutBackgroundColorManager colorManager, FieldLocation cursorLocation) {
@@ -209,10 +188,6 @@ public class RowLayout implements Layout {
 		}
 	}
 
-	/**
-	 * 
-	 * @see docking.widgets.fieldpanel.Layout#setCursor(docking.widgets.fieldpanel.support.FieldLocation, int, int)
-	 */
 	@Override
 	public int setCursor(FieldLocation cursorLoc, int x, int y) {
 
@@ -229,10 +204,6 @@ public class RowLayout implements Layout {
 		return field.getX(cursorLoc.row, cursorLoc.col);
 	}
 
-	/**
-	 * 
-	 * @see docking.widgets.fieldpanel.Layout#getCursorRect(int, int, int)
-	 */
 	@Override
 	public Rectangle getCursorRect(int fieldNum, int row, int col) {
 		if (fieldNum >= fields.length) { // somehow we got a call where this happened
@@ -247,10 +218,6 @@ public class RowLayout implements Layout {
 		return null;
 	}
 
-	/**
-	 * 
-	 * @see docking.widgets.fieldpanel.Layout#cursorUp(docking.widgets.fieldpanel.support.FieldLocation, int)
-	 */
 	@Override
 	public boolean cursorUp(FieldLocation cursorLoc, int lastX) {
 		if (cursorLoc.row > 0) {
@@ -261,10 +228,6 @@ public class RowLayout implements Layout {
 		return false;
 	}
 
-	/**
-	 * 
-	 * @see docking.widgets.fieldpanel.Layout#cursorDown(docking.widgets.fieldpanel.support.FieldLocation, int)
-	 */
 	@Override
 	public boolean cursorDown(FieldLocation cursorLoc, int lastX) {
 		if (cursorLoc.row < fields[cursorLoc.fieldNum].getNumRows() - 1) {
@@ -275,10 +238,6 @@ public class RowLayout implements Layout {
 		return false;
 	}
 
-	/**
-	 * 
-	 * @see docking.widgets.fieldpanel.Layout#cursorBeginning(docking.widgets.fieldpanel.support.FieldLocation)
-	 */
 	@Override
 	public int cursorBeginning(FieldLocation cursorLoc) {
 
@@ -290,10 +249,6 @@ public class RowLayout implements Layout {
 		return field.getX(cursorLoc.row, cursorLoc.col);
 	}
 
-	/**
-	 * 
-	 * @see docking.widgets.fieldpanel.Layout#cursorEnd(docking.widgets.fieldpanel.support.FieldLocation)
-	 */
 	@Override
 	public int cursorEnd(FieldLocation cursorLoc) {
 		Field field = fields[fields.length - 1];
@@ -304,10 +259,6 @@ public class RowLayout implements Layout {
 		return field.getX(cursorLoc.row, cursorLoc.col);
 	}
 
-	/**
-	 * 
-	 * @see docking.widgets.fieldpanel.Layout#cursorLeft(docking.widgets.fieldpanel.support.FieldLocation)
-	 */
 	@Override
 	public int cursorLeft(FieldLocation cursorLoc) {
 		if (cursorLoc.col > 0) {
@@ -334,10 +285,6 @@ public class RowLayout implements Layout {
 		return fields[cursorLoc.fieldNum].getX(cursorLoc.row, cursorLoc.col);
 	}
 
-	/**
-	 * 
-	 * @see docking.widgets.fieldpanel.Layout#cursorRight(docking.widgets.fieldpanel.support.FieldLocation)
-	 */
 	@Override
 	public int cursorRight(FieldLocation cursorLoc) {
 		if (cursorLoc.col < fields[cursorLoc.fieldNum].getNumCols(cursorLoc.row) - 1) {
@@ -362,10 +309,6 @@ public class RowLayout implements Layout {
 		return fields[cursorLoc.fieldNum].getX(cursorLoc.row, cursorLoc.col);
 	}
 
-	/**
-	 * 
-	 * @see docking.widgets.fieldpanel.Layout#enterLayout(docking.widgets.fieldpanel.support.FieldLocation, int, boolean)
-	 */
 	@Override
 	public boolean enterLayout(FieldLocation cursorLoc, int lastX, boolean fromTop) {
 		// locate the field that the cursor will enter
@@ -387,10 +330,6 @@ public class RowLayout implements Layout {
 
 	}
 
-	/**
-	 * 
-	 * @see docking.widgets.fieldpanel.Layout#getScrollableUnitIncrement(int, int)
-	 */
 	@Override
 	public int getScrollableUnitIncrement(int topOfScreen, int direction) {
 		int max = 0;
@@ -420,10 +359,6 @@ public class RowLayout implements Layout {
 		return max;
 	}
 
-	/**
-	 * 
-	 * @see docking.widgets.fieldpanel.Layout#contains(int)
-	 */
 	@Override
 	public boolean contains(int yPos) {
 		if ((yPos >= 0) && (yPos < heightAbove + heightBelow)) {
@@ -487,9 +422,7 @@ public class RowLayout implements Layout {
 //        int width = end-start;
 //		g.fillRect(start,0,width,heightAbove+heightBelow);
 //    }
-	/**
-	 * @see docking.widgets.fieldpanel.Layout#getPrimaryOffset()
-	 */
+
 	@Override
 	public int getPrimaryOffset() {
 		return 0;
@@ -499,9 +432,6 @@ public class RowLayout implements Layout {
 		return isPrimary;
 	}
 
-	/**
-	 * @see docking.widgets.fieldpanel.Layout#getFieldBounds(int)
-	 */
 	@Override
 	public Rectangle getFieldBounds(int index) {
 		Field f = fields[index];
@@ -511,9 +441,6 @@ public class RowLayout implements Layout {
 		return rect;
 	}
 
-	/**
-	 * @see docking.widgets.fieldpanel.Layout#getIndexSize()
-	 */
 	@Override
 	public int getIndexSize() {
 		return 1;

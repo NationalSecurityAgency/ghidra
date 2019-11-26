@@ -185,8 +185,8 @@ public class VS_VERSION_CHILD implements StructConverter {
 
 	/**
 	 * @return true if value is 4-byte integer value in memory 
-	 * while string value return by {@link #getValue()} is a
-	 * numeric hex string.
+	 * while string value return by {@link DataType#getValue(ghidra.program.model.mem.MemBuffer, ghidra.docking.settings.Settings, int)
+	 * DataType.getValue(MemBuffer, Settings, int)} is a numeric hex string.
 	 */
 	public boolean valueIsDWord() {
 		return childValue != null && "Var".equals(childDataType);

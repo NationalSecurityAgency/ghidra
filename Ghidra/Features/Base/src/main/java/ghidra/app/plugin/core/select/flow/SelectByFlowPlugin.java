@@ -49,14 +49,16 @@ import docking.action.MenuData;
  * tool. Selection is based on the initial selection or if there is no selection
  * then on where the cursor is located in the program.<BR>
  * This plugin provides the following types of selection:<BR>
- * <UL>Select by following the flow from the specified address(es) onward.
- * Properties indicate whether or not CALLS or JUMPS should be followed.</UL>
- * <UL>Select the subroutine(s) for the specified address(es).</UL>
- * <UL>Select the function(s) for the specified address(es).</UL>
- * <UL>Select dead subroutine(s) for the specified address(es).</UL>
- * <UL>Select the current program changes.</UL>
- * <UL>Select by following the flow to the specified address(es).
- * Properties indicate whether or not CALLS or JUMPS should be followed.</UL>
+ * <ul>
+ * <li>Select by following the flow from the specified address(es) onward.
+ * Properties indicate whether or not CALLS or JUMPS should be followed.</li>
+ * <li>Select the subroutine(s) for the specified address(es).</li>
+ * <li>Select the function(s) for the specified address(es).</li>
+ * <li>Select dead subroutine(s) for the specified address(es).</li>
+ * <li>Select the current program changes.</li>
+ * <li>Select by following the flow to the specified address(es).
+ * Properties indicate whether or not CALLS or JUMPS should be followed.</li>
+ * </UL>
  */
 //@formatter:off
 @PluginInfo(

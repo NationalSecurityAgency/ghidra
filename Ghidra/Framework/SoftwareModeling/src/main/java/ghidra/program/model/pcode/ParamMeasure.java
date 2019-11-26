@@ -32,6 +32,10 @@ public class ParamMeasure {
 	private DataType dt;
 	private Integer rank;
 
+	/**
+	 * Constructs a ParamMeasure Object.
+	 * <b>The ParamMeasure will be empty until {@link #readXml} is invoked.</b>
+	 */
 	public ParamMeasure() {
 		vn = null;
 		dt = null;
@@ -45,10 +49,10 @@ public class ParamMeasure {
 	}
 
 	/**
-	 * Create a JumpTable object by parsing the XML elements
-	 * @param parser
-	 * @param addrFactory
-	 * @throws PcodeXMLException
+	 * Create a ParamMeasure object by parsing the XML elements
+	 * @param parser xml parser
+	 * @param factory pcode factory
+	 * @throws PcodeXMLException if an error occurs when reading the xml.
 	 */
 	public void readXml(XmlPullParser parser, PcodeFactory factory) throws PcodeXMLException {
 		vn = Varnode.readXML(parser, factory);

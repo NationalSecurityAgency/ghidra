@@ -1325,8 +1325,8 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 	/**
 	 * Move symbol.  Only symbol address is changed.
 	 * References must be moved separately.
-	 * @param fromAddr
-	 * @param toAddr
+	 * @param oldAddr the old symbol address
+	 * @param newAddr the new symbol address
 	 */
 	public void moveSymbolsAt(Address oldAddr, Address newAddr) {
 		lock.acquire();

@@ -40,8 +40,7 @@ public interface Recognizer extends ExtensionPoint {
      * efficiency's sake the array of bytes is just passed to each recognizer in
      * turn. Abuse this and we will need to create copies, and everyone loses.
      * 
-     * @param byteProvider
-     *            the byte provider
+     * @param bytes the bytes to recognize
      * @return a String description of the recognition, or null if it is not
      *         recognized
      */

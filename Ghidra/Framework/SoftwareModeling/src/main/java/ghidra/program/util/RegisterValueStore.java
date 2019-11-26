@@ -89,7 +89,6 @@ public class RegisterValueStore {
 	 * @param length the number of addresses to move.
 	 * @param monitor the task monitor.
 	 * @throws CancelledException if the user canceled the operation via the task monitor.
-	 * @throws AddressOverflowException if the length is such that a address wrap occurs
 	 */
 	public void moveAddressRange(Address fromAddr, Address toAddr, long length, TaskMonitor monitor)
 			throws CancelledException {
@@ -103,7 +102,7 @@ public class RegisterValueStore {
 	 * not changed. 
 	 * @param start the start of the range to set the register value. 
 	 * @param end the end of the range(inclusive) to set the register value.
-	 * @param bytes byte array containing the mask and value bytes.
+	 * @param newValue the new register value to set.
 	 */
 	public void setValue(Address start, Address end, RegisterValue newValue) {
 
@@ -315,8 +314,7 @@ public class RegisterValueStore {
 	/**
 	 * Returns the bounding address-range containing addr and the the same value throughout.
 	 * This range will be limited by any value change associated with the base register.
-	 * @param register
-	 * @param addr
+	 * @param addr the contained address
 	 * @return single value address-range containing addr
 	 */
 	public AddressRange getValueRangeContaining(Address addr) {

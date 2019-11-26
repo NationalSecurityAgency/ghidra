@@ -26,7 +26,7 @@ public interface Library extends Namespace {
 	public static final String UNKNOWN = "<EXTERNAL>";
 
 	/**
-	 * @returns the associated program within the project which corresponds to this library
+	 * @return the associated program within the project which corresponds to this library
 	 */
 	public String getAssociatedProgramPath();
 

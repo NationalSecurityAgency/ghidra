@@ -565,9 +565,8 @@ public class VarnodeContext implements ProcessorContext {
 	}
 
 	/**
-	 * Check if a symbol is read_only.
+	 * Check if the symbol at the address is read_only.
 	 * 
-	 * @param sym - symbol to check
 	 * @param addr - address of the symbol
 	 * 
 	 * @return true if the block is read_only, and there are no write references.
@@ -824,11 +823,13 @@ public class VarnodeContext implements ProcessorContext {
 		return lastSetAddr;
 	}
 
+	// TODO unused parameter bval
 	/**
 	 * return the location that this varnode was last set
 	 * This is a transient thing, so it should only be used as a particular flow is being processed...
 	 * 
-	 * @param reg
+	 * @param rvar the register varnode
+	 * @param bval this parameter is unused.
 	 * @return address that the register was set.
 	 */
 	public Address getLastSetLocation(Varnode rvar, BigInteger bval) {
@@ -908,9 +909,10 @@ public class VarnodeContext implements ProcessorContext {
 	 * get the value of a register as a varnode (value, space, size)
 	 * 
 	 * @param reg  register to get value for
-	 * @param address  location for value
+	 * @param fromAddr  from address
+	 * @param toAddr to address
 	 * @param signed  true if signed
-	 * @return  null if the register has no value
+	 * @return the register value or null
 	 */
 	public Varnode getRegisterVarnodeValue(Register reg, Address fromAddr, Address toAddr,
 			boolean signed) {

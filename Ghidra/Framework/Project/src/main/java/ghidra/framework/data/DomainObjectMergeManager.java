@@ -40,7 +40,8 @@ public interface DomainObjectMergeManager extends MergeProgressModifier {
 	 * @param infoType the string indicating the type of resolve information
 	 * @param infoObject the object for the named string. This information is
 	 * determined by the merge manager that creates it.
-	 * @see getResolveInformation(String)
+	 * @see ghidra.app.merge.MergeManager#getResolveInformation(String)
+	 * MergeManager.getResolveInformation(String)
 	 */
 	public void setResolveInformation(String infoType, Object infoObject);
 	

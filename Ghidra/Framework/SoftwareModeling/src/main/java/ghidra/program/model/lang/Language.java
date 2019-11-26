@@ -369,7 +369,7 @@ public interface Language {
 	/**
 	 * Get the ManualEntry for the given instruction mnemonic.
 	 * 
-	 * @param instruction
+	 * @param instructionMnemonic
 	 *            the instruction mnemonic
 	 * @return the ManualEntry or null if instruction mnemonic not found
 	 */

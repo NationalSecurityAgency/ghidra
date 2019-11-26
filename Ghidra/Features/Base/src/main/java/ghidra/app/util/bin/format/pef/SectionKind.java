@@ -21,7 +21,7 @@ package ghidra.app.util.bin.format.pef;
  * Section kind values for instantiated sections.
  */
 public enum SectionKind {
-	/** Code, presumed pure & position independent.*/
+	/** Code, presumed pure &amp; position independent.*/
 	Code(0, true),
 	/** Unpacked writeable data.*/
 	UnpackedData(1, true),

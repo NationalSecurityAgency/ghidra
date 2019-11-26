@@ -27,8 +27,10 @@ public interface ViewListener {
 	/**
 	 * Notifies the listener that the top of the screen has changed position.
 	 * @param fp the field panel whose view changed.
-	 * @param index the index of the layout at the top of the screen
-	 * @param offset the y coordinate of the layout displayed at the top of the
+	 * @param index the index of the layout at the top of the screen.
+	 * @param xOffset the x coordinate of the layout displayed at the left of the
+	 * screen.
+	 * @param yOffset the y coordinate of the layout displayed at the top of the
 	 * screen.
 	 */
 	public void viewChanged(FieldPanel fp, BigInteger index, int xOffset, int yOffset);

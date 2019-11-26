@@ -20,7 +20,7 @@ package ghidra.util.graph;
  *
  * A simple graph is a graph with no parallel edges or loops. This class models
  * a simple digraph -- edges are directed and a single edge may go from any vertex
- * to any other vertex. It is possible to have edges A-->B and B-->A however.
+ * to any other vertex. {@literal It is possible to have edges A-->B and B-->A however.}
  * Attempting to add an edge from A to B when an edge from A to B already exists
  * causes the edge weight to be increased by the defaultEdgeWeight or the weight
  * specified. 

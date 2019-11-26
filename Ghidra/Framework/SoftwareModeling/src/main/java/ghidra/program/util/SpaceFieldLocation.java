@@ -27,7 +27,7 @@ public class SpaceFieldLocation extends CodeUnitLocation {
 	/**
 	 * Construct a new SpaceFieldLocation.
 	 * 
-	 * @param the program of the location
+	 * @param program the program of the location
 	 * @param addr the address of the codeunit.
 	 * @param componentPath the componentPath of the codeUnit
 	 * @param row the line of the location

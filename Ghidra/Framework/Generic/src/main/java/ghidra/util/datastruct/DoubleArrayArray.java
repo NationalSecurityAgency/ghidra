@@ -90,7 +90,6 @@ public class DoubleArrayArray implements Array, Serializable {
      * @return The double array at the given index. An empty array will
      * be returned for any index not initialized to
      * another value.
-     * @exception throws IndexOutOfBoundsException if the index is negative
      */    
     public double[] get(int index) {
         if (index <= starts.length) {
@@ -108,7 +107,6 @@ public class DoubleArrayArray implements Array, Serializable {
     }
     /** Removes the array at the given index
      * @param index index of the array to be removed
-     * @exception throws IndexOutOfBoundsException if the index is negative
      */    
     public void remove(int index) {
         try {

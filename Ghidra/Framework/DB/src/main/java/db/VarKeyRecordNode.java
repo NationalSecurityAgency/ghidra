@@ -629,7 +629,7 @@ class VarKeyRecordNode extends VarKeyNode {
 
 	/**
 	 * Find the index which represents the halfway point within the record data.
-	 * @returns key index.
+	 * @return key index.
 	 */
 	private int getSplitIndex() {
 

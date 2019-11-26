@@ -35,7 +35,7 @@ public class AnonymousCallback implements Callback, Serializable {
 	}
 
 	/**
-	 * @returns true if anonymous access requested
+	 * @return true if anonymous access requested
 	 */
 	public boolean anonymousAccessRequested() {
 		return anonymousAccessRequested;

@@ -35,7 +35,7 @@ import ghidra.util.exception.AssertException;
  * A utility class to easily show dialogs that require input from the user.
  *
  *
- * <h3>Option Dialogs</h3><br>
+ * <h2>Option Dialogs</h2><br>
  * <blockquote>
  * <p>
  * The primary type of

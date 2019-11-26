@@ -105,8 +105,8 @@ public class FileDataTypeManager extends StandAloneDataTypeManager
 	 * Saves the data type manager to the given file with a specific databaseId.
 	 * NOTE: This method is intended for use in transforming one archive database to
 	 * match another existing archive database.
-	 * @param outputFilename filename for output
-	 * @param databaseId new databaseId
+	 * @param saveFile the file to save
+	 * @param newUniversalId the new id to use
 	 */
 	public void saveAs(File saveFile, UniversalID newUniversalId)
 			throws DuplicateFileException, IOException {
@@ -127,7 +127,7 @@ public class FileDataTypeManager extends StandAloneDataTypeManager
 
 	/**
 	 * Saves the data type manager to the given file
-	 * @param outputFilename filename for output
+	 * @param saveFile the file to save
 	 */
 	public void saveAs(File saveFile) throws DuplicateFileException, IOException {
 		ResourceFile resourceSaveFile = new ResourceFile(saveFile);

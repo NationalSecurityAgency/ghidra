@@ -28,7 +28,7 @@ import ghidra.app.plugin.processors.sleigh.pattern.DisjointPattern;
  * Defines a context free grammar, used to parse mnemonic assembly instructions
  * 
  * This stores the CFG and the associated semantics for each production. It also has mechanisms for
- * tracking "purely recursive" productions. These are productions of the form I => I, and they
+ * tracking "purely recursive" productions. These are productions of the form I =&gt; I, and they
  * necessarily create ambiguity. Thus, when constructing a parser, it is useful to identify them
  * early.
  */

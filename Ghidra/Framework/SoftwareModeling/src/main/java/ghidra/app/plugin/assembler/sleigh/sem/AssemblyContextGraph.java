@@ -34,7 +34,7 @@ import ghidra.graph.algo.DijkstraShortestPathsAlgorithm;
  * A graph of possible context changes via the application of various constructors
  * 
  * This is used primarily to find optimal paths for the application of recursive rules, i.e., those
- * of the form I => I. These cannot be resolved without some form of semantic analysis. The most
+ * of the form I =&gt; I. These cannot be resolved without some form of semantic analysis. The most
  * notable disadvantage to all of this is that you no longer get all of the possible assemblies,
  * but only those with the fewest rule applications.
  * 
@@ -99,7 +99,7 @@ public class AssemblyContextGraph implements GImplicitDirectedGraph<Vertex, Edge
 	 * @return a collection of sequences of constructor applications from {@code src} to
 	 *         {@code dst}
 	 * 
-	 * @note For assembly, the sequences will need to be applied right-to-left.
+	 * NOTE: For assembly, the sequences will need to be applied right-to-left.
 	 */
 	public Collection<Deque<AssemblyConstructorSemantic>> computeOptimalApplications(
 			AssemblyPatternBlock src, String srcTable, AssemblyPatternBlock dst, String dstTable) {

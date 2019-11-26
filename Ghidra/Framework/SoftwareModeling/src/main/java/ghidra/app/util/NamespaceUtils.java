@@ -29,7 +29,7 @@ import ghidra.util.exception.*;
  * <a name="examples"></a>
  * Example string format:
  * <ul>
- *     <li>global{@link Namespace#NAMESPACE_DELIMITER &lt;delimiter&gt;}child1{@link Namespace#NAMESPACE_DELIMITER &lt;delimiter&gt;}child2
+ *     <li>global{@link Namespace#NAMESPACE_DELIMITER ::}child1{@link Namespace#NAMESPACE_DELIMITER ::}child2
  *     <li>child1
  * </ul>
  * <a name="assumptions"></a>

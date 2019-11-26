@@ -46,7 +46,7 @@ public abstract class Constraint<T> {
 
 	/**
 	 * Returns true if the given object satisfies this constraint.
-	 * @param the object to test this constraint on.
+	 * @param t the object to test this constraint on.
 	 * @return true if the given object satisfies this constraint.
 	 */
 	public abstract boolean isSatisfied(T t);

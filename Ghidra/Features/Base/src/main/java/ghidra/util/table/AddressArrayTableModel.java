@@ -29,7 +29,8 @@ import ghidra.util.task.TaskMonitor;
  * <p>
  * If you need to compute the address array, then you should
  * extend {@link AddressPreviewTableModel} and override the 
- * {@link AddressPreviewTableModel#doLoad(Accumulator<Address> accumulator, TaskMonitor monitor)}
+ * {@link AddressPreviewTableModel#doLoad(Accumulator, TaskMonitor)
+ * doLoad(Accumulator&lt;Address&gt; accumulator, TaskMonitor monitor)}
  *  method which will be called in a dedicated thread.
  *  <p>
  *  Alternatively, you can create an instance of the {@link CustomLoadingAddressTableModel},

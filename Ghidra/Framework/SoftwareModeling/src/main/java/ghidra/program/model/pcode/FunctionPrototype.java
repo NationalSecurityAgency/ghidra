@@ -412,7 +412,7 @@ public class FunctionPrototype {
 	}
 
 	/**
-	 * Parse the function prototype from <prototype> tag.
+	 * Parse the function prototype from {@code <prototype>} tag.
 	 * @param parser is the XML document to parse
 	 * @param dtmanage is the DataTypeManager used to parse data-type tags
 	 * @throws PcodeXMLException for any problems parsing

@@ -107,7 +107,6 @@ public interface ToolServices {
 	 * Launch the default tool; if domainFile is not null, this file will
 	 * be opened in the tool.
 	 * @param domainFile the file to open; may be null
-	 * @see #setDefaultTool(ToolTemplate)
 	 */
 	public Tool launchDefaultTool(DomainFile domainFile);
 

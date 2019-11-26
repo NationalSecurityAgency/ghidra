@@ -49,7 +49,6 @@ public class AssemblyConstructorSemantic implements Comparable<AssemblyConstruct
 
 	/**
 	 * Build a new SLEIGH constructor semantic
-	 * @param pattern the encoding pattern associated with the constructor
 	 * @param cons the SLEIGH constructor
 	 * @param indices the indices of RHS non-terminals in the associated production that represent an
 	 *                operand in the SLEIGH constructor
@@ -155,8 +154,8 @@ public class AssemblyConstructorSemantic implements Comparable<AssemblyConstruct
 	 * This takes a given pattern, and searches the rest of the language for any patterns that
 	 * would take precedence, and combines them as forbidden patterns with the given pattern.
 	 * 
-	 * @param pat2 the given pattern
-	 * @returns the same pattern with forbidden records added 
+	 * @param pat the given pattern
+	 * @return the same pattern with forbidden records added 
 	 */
 	protected AssemblyResolvedConstructor withComputedForbids(AssemblyResolvedConstructor pat) {
 		// Forbid anything more specific (or otherwise takes precedence) over me.
@@ -240,7 +239,7 @@ public class AssemblyConstructorSemantic implements Comparable<AssemblyConstruct
 	 * reverse, the context is solved immediately before applying the selected constructor
 	 * patterns.
 	 * 
-	 * @see AssemblyTreeResolver#resolveSelectedChildren(AssemblyProduction, List, List, Collection)
+	 * @see AssemblyTreeResolver#resolveSelectedChildren(AssemblyProduction, List, ImmutableList, Collection)
 	 */
 	public AssemblyResolution solveContextChanges(AssemblyResolvedConstructor res,
 			Map<String, Long> vals, Map<Integer, Object> opvals) {

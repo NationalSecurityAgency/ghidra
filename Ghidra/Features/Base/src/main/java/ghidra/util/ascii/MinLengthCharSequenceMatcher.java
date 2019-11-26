@@ -71,7 +71,7 @@ public class MinLengthCharSequenceMatcher {
 	/**
 	 * Indicates there are no more contiguous chars to add to this matcher.  If a minimum or more
 	 * number of included chars have been seen before this call, then a sequence is returned.
-	 * @return a Sequence if there was a sequence of chars >= the min length just before this call. 
+	 * @return a Sequence if there was a sequence of chars &gt;= the min length just before this call. 
 	 */
 	public boolean endSequence() {
 		lastSequence = null;

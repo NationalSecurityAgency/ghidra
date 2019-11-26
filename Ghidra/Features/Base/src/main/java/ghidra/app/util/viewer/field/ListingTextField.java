@@ -140,33 +140,21 @@ public class ListingTextField implements ListingField, TextField {
 		this.field = field;
 	}
 
-	/**
-	 * @see docking.widgets.fieldpanel.field.TextField#setPrimary(boolean)
-	 */
 	@Override
 	public void setPrimary(boolean b) {
 		field.setPrimary(b);
 	}
 
-	/**
-	 * @see docking.widgets.fieldpanel.field.TextField#dataToScreenLocation(int, int)
-	 */
 	@Override
 	public RowColLocation dataToScreenLocation(int dataRow, int dataColumn) {
 		return field.dataToScreenLocation(dataRow, dataColumn);
 	}
 
-	/**
-	 * @see docking.widgets.fieldpanel.field.TextField#screenToDataLocation(int, int)
-	 */
 	@Override
 	public RowColLocation screenToDataLocation(int screenRow, int screenColumn) {
 		return field.screenToDataLocation(screenRow, screenColumn);
 	}
 
-	/**
-	 * @see docking.widgets.fieldpanel.field.Field#getWidth()
-	 */
 	@Override
 	public int getWidth() {
 		return field.getWidth();
@@ -177,146 +165,92 @@ public class ListingTextField implements ListingField, TextField {
 		return field.getPreferredWidth();
 	}
 
-	/**
-	 * @see docking.widgets.fieldpanel.field.Field#getHeight()
-	 */
 	@Override
 	public int getHeight() {
 		return field.getHeight();
 	}
 
-	/**
-	 * @see docking.widgets.fieldpanel.field.Field#getHeightAbove()
-	 */
 	@Override
 	public int getHeightAbove() {
 		return field.getHeightAbove();
 	}
 
-	/**
-	 * @see docking.widgets.fieldpanel.field.Field#getHeightBelow()
-	 */
 	@Override
 	public int getHeightBelow() {
 		return field.getHeightBelow();
 	}
 
-	/**
-	 * @see docking.widgets.fieldpanel.field.Field#getStartX()
-	 */
 	@Override
 	public int getStartX() {
 		return field.getStartX();
 	}
 
-	/**
-	 * @see docking.widgets.fieldpanel.field.Field#paint(java.awt.Graphics, docking.widgets.fieldpanel.internal.PaintContext, boolean, docking.widgets.fieldpanel.support.RowColLocation)
-	 */
 	@Override
 	public void paint(JComponent c, Graphics g, PaintContext context,
 			FieldBackgroundColorManager map, RowColLocation cursorLoc, int rowHeight) {
 		field.paint(c, g, context, map, cursorLoc, rowHeight);
 	}
 
-	/**
-	 * @see docking.widgets.fieldpanel.field.Field#contains(int, int)
-	 */
 	@Override
 	public boolean contains(int x, int y) {
 		return field.contains(x, y);
 	}
 
-	/**
-	 * @see docking.widgets.fieldpanel.field.Field#getNumRows()
-	 */
 	@Override
 	public int getNumRows() {
 		return field.getNumRows();
 	}
 
-	/**
-	 * @see docking.widgets.fieldpanel.field.Field#getNumCols(int)
-	 */
 	@Override
 	public int getNumCols(int row) {
 		return field.getNumCols(row);
 	}
 
-	/**
-	 * @see docking.widgets.fieldpanel.field.Field#getX(int, int)
-	 */
 	@Override
 	public int getX(int row, int col) {
 		return field.getX(row, col);
 	}
 
-	/**
-	 * @see docking.widgets.fieldpanel.field.Field#getY(int)
-	 */
 	@Override
 	public int getY(int row) {
 		return field.getY(row);
 	}
 
-	/**
-	 * @see docking.widgets.fieldpanel.field.Field#getRow(int)
-	 */
 	@Override
 	public int getRow(int y) {
 		return field.getRow(y);
 	}
 
-	/**
-	 * @see docking.widgets.fieldpanel.field.Field#getCol(int, int)
-	 */
 	@Override
 	public int getCol(int row, int x) {
 		return field.getCol(row, x);
 	}
 
-	/**
-	 * @see docking.widgets.fieldpanel.field.Field#isValid(int, int)
-	 */
 	@Override
 	public boolean isValid(int row, int col) {
 		return field.isValid(row, col);
 	}
 
-	/**
-	 * @see docking.widgets.fieldpanel.field.Field#getCursorBounds(int, int)
-	 */
 	@Override
 	public Rectangle getCursorBounds(int row, int col) {
 		return field.getCursorBounds(row, col);
 	}
 
-	/**
-	 * @see docking.widgets.fieldpanel.field.Field#getScrollableUnitIncrement(int, int, int)
-	 */
 	@Override
 	public int getScrollableUnitIncrement(int topOfScreen, int direction, int max) {
 		return field.getScrollableUnitIncrement(topOfScreen, direction, max);
 	}
 
-	/**
-	 * @see docking.widgets.fieldpanel.field.Field#isPrimary()
-	 */
 	@Override
 	public boolean isPrimary() {
 		return field.isPrimary();
 	}
 
-	/**
-	 * @see docking.widgets.fieldpanel.field.Field#rowHeightChanged(int, int)
-	 */
 	@Override
 	public void rowHeightChanged(int heightAbove, int heightBelow) {
 		field.rowHeightChanged(heightAbove, heightBelow);
 	}
 
-	/**
-	 * @see docking.widgets.fieldpanel.field.Field#getText()
-	 */
 	@Override
 	public String getText() {
 		return field.getText();
@@ -327,41 +261,26 @@ public class ListingTextField implements ListingField, TextField {
 		return field.getTextWithLineSeparators();
 	}
 
-	/**
-	 * @see docking.widgets.fieldpanel.field.Field#textOffsetToScreenLocation(int)
-	 */
 	@Override
 	public RowColLocation textOffsetToScreenLocation(int textOffset) {
 		return field.textOffsetToScreenLocation(textOffset);
 	}
 
-	/**
-	 * @see docking.widgets.fieldpanel.field.Field#screenLocationToTextOffset(int, int)
-	 */
 	@Override
 	public int screenLocationToTextOffset(int row, int col) {
 		return field.screenLocationToTextOffset(row, col);
 	}
 
-	/**
-	 * @see ghidra.app.util.viewer.field.ListingField#getFieldFactory()
-	 */
 	@Override
 	public FieldFactory getFieldFactory() {
 		return factory;
 	}
 
-	/**
-	 * @see java.lang.Object#toString()
-	 */
 	@Override
 	public String toString() {
 		return getText();
 	}
 
-	/**
-	 * @see ghidra.app.util.viewer.field.ListingField#getProxy()
-	 */
 	@Override
 	public ProxyObj getProxy() {
 		if (proxy == null) {
@@ -370,25 +289,16 @@ public class ListingTextField implements ListingField, TextField {
 		return proxy;
 	}
 
-	/**
-	 * @see ghidra.app.util.viewer.field.ListingField#getFieldModel()
-	 */
 	@Override
 	public FieldFormatModel getFieldModel() {
 		return factory.getFieldModel();
 	}
 
-	/**
-	 * @see docking.widgets.fieldpanel.field.TextField#isClipped()
-	 */
 	@Override
 	public boolean isClipped() {
 		return field.isClipped();
 	}
 
-	/**
-	 * @see ghidra.app.util.viewer.field.ListingField#getClickedObject(docking.widgets.fieldpanel.support.FieldLocation)
-	 */
 	@Override
 	public Object getClickedObject(FieldLocation fieldLocation) {
 		return getFieldElement(fieldLocation.row, fieldLocation.col);

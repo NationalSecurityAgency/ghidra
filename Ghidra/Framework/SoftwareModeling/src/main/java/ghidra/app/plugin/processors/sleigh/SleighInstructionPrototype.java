@@ -190,7 +190,7 @@ public class SleighInstructionPrototype implements InstructionPrototype {
 	/**
 	 * Walk the pcode templates in the order they would be emitted.
 	 * Collect flowFlags FlowRecords
-	 * @param sectionnum is the named section to walk
+	 * @param walker the pcode template walker
 	 */
 	public static FlowSummary walkTemplates(OpTplWalker walker) {
 		FlowSummary res = new FlowSummary();

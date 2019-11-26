@@ -66,7 +66,8 @@ public class FieldHeader extends JTabbedPane implements ChangeListener {
 	/**
 	 * Constructs a new FieldHeaderPanel
 	 * @param formatMgr the format manager to display tabbed panels for.
-	 * @param rangeModel the scroll model to coordinate the view for.
+	 * @param scroller the scroll model to coordinate the view for.
+	 * @param panel the field panel to use.
 	 */
 	public FieldHeader(FormatManager formatMgr, IndexedScrollPane scroller, FieldPanel panel) {
 		this.formatManager = formatMgr;
@@ -81,9 +82,6 @@ public class FieldHeader extends JTabbedPane implements ChangeListener {
 		addChangeListener(this);
 	}
 
-	/**
-	 * @see javax.swing.event.ChangeListener#stateChanged(javax.swing.event.ChangeEvent)
-	 */
 	@Override
 	public void stateChanged(ChangeEvent ev) {
 		int index = this.getSelectedIndex();
@@ -220,10 +218,10 @@ public class FieldHeader extends JTabbedPane implements ChangeListener {
 		stateChanged(null);
 	}
 
-	/**
-	 * Main test.
-	 * @param args command line arguments.
-	 */
+//	/**
+//	 * Main test.
+//	 * @param args command line arguments.
+//	 */
 //	public static void main(String[] args) {
 //		DockingApplication.initialize(new HeadedDockingApplicationConfiguration());
 //		try {

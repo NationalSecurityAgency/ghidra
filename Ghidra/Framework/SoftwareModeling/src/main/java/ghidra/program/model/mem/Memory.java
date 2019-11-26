@@ -270,8 +270,6 @@ public interface Memory extends AddressSetView {
 	 *
 	 * @param addr a valid data Address.
 	 * @return the block containing addr; null if addr is not a valid location.
-	 * @throws AddressTypeException if the addr is not the proper type
-	 * of Address for this Memory.
 	 */
 	public MemoryBlock getBlock(Address addr);
 
@@ -372,8 +370,8 @@ public interface Memory extends AddressSetView {
 	  * Finds a sequence of contiguous bytes that match the
 	  * given byte array at all bit positions where the mask contains an "on" bit.
 	  * Starts at startAddr and ends at endAddr.
-	  * If forward is true, search starts at startAddr and will end if startAddr ">" endAddr.
-	  * If forward is false, search starts at start addr and will end if startAddr "<" endAddr.
+	  * If forward is true, search starts at startAddr and will end if startAddr "&gt;" endAddr.
+	  * If forward is false, search starts at start addr and will end if startAddr "&lt;" endAddr.
 	  *
 	  * @param startAddr The beginning address in memory to search.
 	  * @param endAddr   The ending address in memory to search (inclusive).
@@ -466,7 +464,7 @@ public interface Memory extends AddressSetView {
 	 * @param addr the starting Address.
 	 * @param dest the short array to populate.
 	 * @param dIndex the offset into dest to place the shorts.
-	 * @param size the number of shorts to get.
+	 * @param nElem the number of shorts to get.
 	 * @return the number of shorts put into dest.  May be less than
 	 * dest.length if the requested number extends beyond available memory.
 	 * If the number of retrievable bytes is odd, the final byte will be discarded.
@@ -481,7 +479,7 @@ public interface Memory extends AddressSetView {
 	 * @param addr the starting Address.
 	 * @param dest the short array to populate.
 	 * @param dIndex the offset into dest to place the shorts.
-	 * @param size the number of shorts to get.
+	 * @param nElem the number of shorts to get.
 	 * @param isBigEndian true means to get the shorts in
 	 * bigEndian order
 	 * @return the number of shorts put into dest.  May be less than
@@ -533,7 +531,7 @@ public interface Memory extends AddressSetView {
 	 * @param addr the starting Address.
 	 * @param dest the int array to populate.
 	 * @param dIndex the offset into dest to place the ints.
-	 * @param size the number of ints to get.
+	 * @param nElem the number of ints to get.
 	 * @return the number of ints put into dest.  May be less than
 	 * dest.length if the requested number extends beyond available memory.
 	 * If the number of retrievable bytes is not 0 mod 4, the final byte(s) will be discarded.
@@ -548,7 +546,7 @@ public interface Memory extends AddressSetView {
 	 * @param addr the starting Address.
 	 * @param dest the int array to populate.
 	 * @param dIndex the offset into dest to place the ints.
-	 * @param size the number of ints to get.
+	 * @param nElem the number of ints to get.
 	 * @param isBigEndian true means to get the ints in
 	 * bigEndian order
 	 * @return the number of ints put into dest.  May be less than
@@ -599,7 +597,7 @@ public interface Memory extends AddressSetView {
 	 * @param addr the starting Address.
 	 * @param dest the long array to populate.
 	 * @param dIndex the offset into dest to place the longs.
-	 * @param size the number of longs to get.
+	 * @param nElem the number of longs to get.
 	 * @return the number of longs put into dest.  May be less than
 	 * dest.length if the requested number extends beyond available memory.
 	 * If the number of retrievable bytes is not 0 mod 8, the final byte(s) will be discarded.
@@ -614,7 +612,7 @@ public interface Memory extends AddressSetView {
 	 * @param addr the starting Address.
 	 * @param dest the long array to populate.
 	 * @param dIndex the offset into dest to place the longs.
-	 * @param size the number of longs to get.
+	 * @param nElem the number of longs to get.
 	 * @param isBigEndian true means to get the longs in
 	 * bigEndian order
 	 * @return the number of longs put into dest.  May be less than

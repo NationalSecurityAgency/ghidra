@@ -40,7 +40,7 @@ import java.util.LinkedList;
  * by B (due to a cycle), then this iterator will include it twice rather than
  * skipping over the identical address set.  This is because the iterator works by
  * iterating through M-model subroutines, and wherever M-model subroutines have
- * n > 1 multiple entry points, the iterator produces an O-model subroutine
+ * n &gt; 1 multiple entry points, the iterator produces an O-model subroutine
  * for every one of the entry points.
  */
 public class SingleEntSubIterator implements CodeBlockIterator {

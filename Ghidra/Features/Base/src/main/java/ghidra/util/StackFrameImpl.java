@@ -37,8 +37,8 @@ import java.lang.UnsupportedOperationException;
  * saved registers).
  *</p>
  * <p> When a frame is created, the parameter stack start offset must be set up.
- * If the parameter start is >= 0, then the stack grows in the negative
- * direction. If the parameter start < 0, then the stack grows in the positive
+ * If the parameter start is &gt;= 0, then the stack grows in the negative
+ * direction. If the parameter start &lt; 0, then the stack grows in the positive
  * direction. When a frame is created the parameter start offset must be
  * specified. Later the parameter start offset can be changed, but it must
  * remain positive/negative if the frame was created with a positive/negative
@@ -86,7 +86,7 @@ class StackFrameImpl implements StackFrame {
 	 * 
 	 * Specified source is always ignored
 	 * and the variable instance returned will never be a parameter.
-	 * @see ghidra.program.model.listing.StackFrame#createVariable(java.lang.String, int, ghidra.program.model.data.DataType, ghidra.program.model.symbol.SourceType)
+	 * @see ghidra.program.model.listing.StackFrame#createVariable(String, int, DataType, SourceType)
 	 */
 	@Override
 	public Variable createVariable(String name, int offset, DataType dataType,
@@ -95,18 +95,11 @@ class StackFrameImpl implements StackFrame {
 		throw new UnsupportedOperationException();
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.StackFrame#getStackVariables()
-	 */
 	@Override
 	public Variable[] getStackVariables() {
 		return getAllVariables();
 	}
 
-	/**
-	 * 
-	 * @see ghidra.program.model.listing.StackFrame#getLocals()
-	 */
 	@Override
 	public Variable[] getLocals() {
 		if (getParameterOffset() >= 0) {
@@ -115,20 +108,12 @@ class StackFrameImpl implements StackFrame {
 		return getPositiveVariables();
 	}
 
-	/**
-	 * 
-	 * @see ghidra.program.model.listing.StackFrame#getParameters()
-	 */
 	@Override
 	public Variable[] getParameters() {
 
 		return (getParameterOffset() >= 0) ? getPositiveVariables() : getNegativeVariables();
 	}
 
-	/**
-	 * 
-	 * @see ghidra.program.model.listing.StackFrame#getFrameSize()
-	 */
 	@Override
 	public int getFrameSize() {
 		int size = getLocalSize();
@@ -137,10 +122,6 @@ class StackFrameImpl implements StackFrame {
 		return size;
 	}
 
-	/**
-	 * 
-	 * @see ghidra.program.model.listing.StackFrame#getLocalSize()
-	 */
 	@Override
 	public int getLocalSize() {
 		if (localSize > 0) {
@@ -153,28 +134,16 @@ class StackFrameImpl implements StackFrame {
 		return getPositiveSize();
 	}
 
-	/**
-	 * 
-	 * @see ghidra.program.model.listing.StackFrame#growsNegative()
-	 */
 	@Override
 	public boolean growsNegative() {
 		return growsNegative;
 	}
 
-	/**
-	 * 
-	 * @see ghidra.program.model.listing.StackFrame#setLocalSize(int)
-	 */
 	@Override
 	public void setLocalSize(int size) {
 		throw new UnsupportedOperationException();
 	}
 
-	/**
-	 * 
-	 * @see ghidra.program.model.listing.StackFrame#getParameterSize()
-	 */
 	@Override
 	public int getParameterSize() {
 		if (growsNegative()) {
@@ -184,8 +153,10 @@ class StackFrameImpl implements StackFrame {
 	}
 
 	/**
+	 * Gets the number of parameters in the stack frame regardless
+	 * of the direction the stack grows in.
 	 * 
-	 * @see ghidra.program.model.listing.StackFrame#getParameterCount()
+	 * @return the number of parameters in the stack frame.
 	 */
 	public int getParameterCount() {
 		if (growsNegative()) {
@@ -194,19 +165,11 @@ class StackFrameImpl implements StackFrame {
 		return getNegativeCount();
 	}
 
-	/**
-	 * 
-	 * @see ghidra.program.model.listing.StackFrame#clearVariable(int)
-	 */
 	@Override
 	public void clearVariable(int offset) {
 		throw new UnsupportedOperationException();
 	}
 
-	/*
-	 *  (non-Javadoc)
-	 * @see ghidra.program.model.listing.StackFrame#getParameterOffset()
-	 */
 	@Override
 	public int getParameterOffset() {
 		return paramStart;
@@ -227,31 +190,19 @@ class StackFrameImpl implements StackFrame {
 //		stackChanged();
 //	}
 
-	/**
-	 * 
-	 * @see ghidra.program.model.listing.StackFrame#getReturnAddressOffset()
-	 */
 	@Override
 	public int getReturnAddressOffset() {
 		return returnStart;
 	}
 
-	/**
-	 * 
-	 * @see ghidra.program.model.listing.StackFrame#setReturnAddressOffset(int)
-	 */
 	@Override
 	public void setReturnAddressOffset(int offset) {
 		throw new UnsupportedOperationException();
 	}
 
-	/**
-	 * 
-	 * @see ghidra.program.model.listing.StackFrame#getVariableContaining(int)
-	 */
 	@Override
 	public Variable getVariableContaining(int offset) {
-		Object key = new Integer(offset);
+		Object key = Integer.valueOf(offset);
 		int index = Collections.binarySearch(variables, key, StackVariableComparator.get());
 		if (index >= 0) {
 			return variables.get(index);
@@ -454,10 +405,6 @@ class StackFrameImpl implements StackFrame {
 		return length - index;
 	}
 
-	/**
-	 * 
-	 * @see ghidra.program.model.listing.StackFrame#getFunction()
-	 */
 	@Override
 	public Function getFunction() {
 		return function;

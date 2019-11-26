@@ -111,7 +111,7 @@ public class PrototypeModel {
 	 * @param dataType first parameter dataType or null for a default
 	 * undefined type.
 	 * @param program
-	 * @return return location or {@link VariableStorage.UNASSIGNED_STORAGE} if
+	 * @return return location or {@link VariableStorage#UNASSIGNED_STORAGE} if
 	 * unable to determine suitable location
 	 */
 	@Deprecated
@@ -136,7 +136,7 @@ public class PrototypeModel {
 	 * @param dataType dataType associated with next parameter location or null
 	 * for a default undefined type.
 	 * @param program 
-	 * @return next parameter location or {@link VariableStorage.UNASSIGNED_STORAGE} if
+	 * @return next parameter location or {@link VariableStorage#UNASSIGNED_STORAGE} if
 	 * unable to determine suitable location
 	 */
 	public VariableStorage getNextArgLocation(Parameter[] params, DataType dataType, Program program) {
@@ -152,7 +152,7 @@ public class PrototypeModel {
 	 * @param dataType dataType associated with next parameter location or null
 	 * for a default undefined type.
 	 * @param program 
-	 * @return parameter location or {@link VariableStorage.UNASSIGNED_STORAGE} if
+	 * @return parameter location or {@link VariableStorage#UNASSIGNED_STORAGE} if
 	 * unable to determine suitable location
 	 */
 	public VariableStorage getArgLocation(int argIndex, Parameter[] params, DataType dataType,

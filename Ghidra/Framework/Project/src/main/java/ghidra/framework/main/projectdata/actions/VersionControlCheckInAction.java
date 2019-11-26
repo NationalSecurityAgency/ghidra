@@ -105,7 +105,6 @@ public class VersionControlCheckInAction extends VersionControlAction {
 	 * Check in the list of domain files. 
 	 * Domain files that cannot be closed are skipped in the list.
 	 * @param fileList list of DomainFile objects
-	 * @param listener the task listener that is notified when task completes
 	 */
 	public void checkIn(List<DomainFile> fileList) {
 

@@ -29,7 +29,7 @@ import java.math.BigInteger;
  * attrs.add("BAR", "foo");
  * attrs.add("PI", 3.14159);
  * </pre><br>
- * The output would be: <code>FIVE="0x20" BAR="foo" PI="3.14159".
+ * The output would be: <code>FIVE="0x20" BAR="foo" PI="3.14159".</code>
  * 
  */
 public class XmlAttributes {

@@ -32,7 +32,7 @@ import db.*;
 /**
  * Adapter to access the comments table for code units. The primary key
  * for the table is the address. The record contains all of the comment
- * types: Pre, Post, EOL, Plate, & Repeatable.
+ * types: Pre, Post, EOL, Plate, &amp; Repeatable.
  */
 abstract class CommentsDBAdapter {
 

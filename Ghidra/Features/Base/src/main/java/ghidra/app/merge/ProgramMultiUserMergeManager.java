@@ -233,9 +233,7 @@ public class ProgramMultiUserMergeManager extends MergeManager {
 
 	/**
 	 * Show the listing merge panel.
-	 * @param show true indicates to show the Listing merge panel.
-	 * false indicates show the default component.
-	 * @param goToAddress
+	 * @param goToAddress the address to goto.
 	 */
 	public void showListingMergePanel(final Address goToAddress) {
 		SwingUtilities.invokeLater(() -> {

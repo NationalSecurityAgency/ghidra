@@ -418,7 +418,7 @@ public class Repository implements FileSystemListener, RepositoryLogger {
 	}
 
 	/**
-	 * @returns true if anonymous access is allowed for this repository
+	 * @return true if anonymous access is allowed for this repository
 	 */
 	public boolean anonymousAccessAllowed() {
 		return anonymousAccessAllowed;

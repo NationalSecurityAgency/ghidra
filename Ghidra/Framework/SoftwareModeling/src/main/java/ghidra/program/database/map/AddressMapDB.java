@@ -215,7 +215,7 @@ public class AddressMapDB implements AddressMap {
 	/**
 	 * Notification when the memory map changes.  If we are segemented, we need to update our
 	 * list of address ranges used for address normalization.
-	 * @param memory
+	 * @param mem the changed memory map.
 	 */
 	public synchronized void memoryMapChanged(MemoryMapDB mem) {
 		if (!(addrFactory.getDefaultAddressSpace() instanceof SegmentedAddressSpace)) {
@@ -269,17 +269,11 @@ public class AddressMapDB implements AddressMap {
 		return useOldAddrMap ? this : oldAddrMap;
 	}
 
-	/**
-	 * @see ghidra.program.database.map.AddressMap#isUpgraded()
-	 */
 	@Override
 	public boolean isUpgraded() {
 		return getOldAddressMap() != this;
 	}
 
-	/**
-	 * @see ghidra.program.database.map.AddressMap#getKey(ghidra.program.model.address.Address, boolean)
-	 */
 	@Override
 	public synchronized long getKey(Address addr, boolean create) {
 		if (useOldAddrMap) {
@@ -308,9 +302,6 @@ public class AddressMapDB implements AddressMap {
 		return offset;
 	}
 
-	/**
-	 * @see ghidra.program.database.map.AddressMap#getAbsoluteEncoding(ghidra.program.model.address.Address, boolean)
-	 */
 	@Override
 	public synchronized long getAbsoluteEncoding(Address addr, boolean create) {
 		if (useOldAddrMap) {
@@ -479,9 +470,6 @@ public class AddressMapDB implements AddressMap {
 		}
 	}
 
-	/**
-	 * @see ghidra.program.model.address.AddressMap#decodeAddress(long)
-	 */
 	@Override
 	public synchronized Address decodeAddress(long value) {
 		return decodeAddress(value, true);
@@ -708,17 +696,11 @@ public class AddressMapDB implements AddressMap {
 		throw new IllegalArgumentException("Address can not be encoded");
 	}
 
-	/**
-	 * @see ghidra.program.model.address.AddressMap#getAddressFactory()
-	 */
 	@Override
 	public AddressFactory getAddressFactory() {
 		return addrFactory;
 	}
 
-	/**
-	 * @see ghidra.program.database.map.AddressMap#setImageBase(ghidra.program.model.address.Address)
-	 */
 	@Override
 	public void setImageBase(Address base) {
 		if (useOldAddrMap) {
@@ -733,18 +715,11 @@ public class AddressMapDB implements AddressMap {
 		baseImageOffset = base.getOffset();
 	}
 
-	/**
-	 * @see ghidra.program.database.map.AddressMap#getModCount()
-	 */
 	@Override
 	public synchronized int getModCount() {
 		return baseAddrs.length;
 	}
 
-	/**
-	 * 
-	 * @see ghidra.program.model.address.AddressMap#findKeyRange(java.util.List, ghidra.program.model.address.Address)
-	 */
 	@Override
 	public int findKeyRange(List<KeyRange> keyRangeList, Address addr) {
 		// TODO: Will not handle mixed list of relative and absolute key ranges
@@ -754,25 +729,16 @@ public class AddressMapDB implements AddressMap {
 		return Collections.binarySearch(keyRangeList, addr, addressInsertionKeyRangeComparator);
 	}
 
-	/**
-	 * @see ghidra.program.database.map.AddressMap#getKeyRanges(ghidra.program.model.address.Address, ghidra.program.model.address.Address, boolean)
-	 */
 	@Override
 	public List<KeyRange> getKeyRanges(Address start, Address end, boolean create) {
 		return getKeyRanges(start, end, false, create);
 	}
 
-	/**
-	 * @see ghidra.program.database.map.AddressMap#getKeyRanges(ghidra.program.model.address.AddressSetView, boolean)
-	 */
 	@Override
 	public List<KeyRange> getKeyRanges(AddressSetView set, boolean create) {
 		return getKeyRanges(set, false, create);
 	}
 
-	/**
-	 * @see ghidra.program.database.map.AddressMap#getKeyRanges(ghidra.program.model.address.Address, ghidra.program.model.address.Address, boolean, boolean)
-	 */
 	@Override
 	public synchronized List<KeyRange> getKeyRanges(Address start, Address end, boolean absolute,
 			boolean create) {
@@ -797,9 +763,6 @@ public class AddressMapDB implements AddressMap {
 		return fullSet;
 	}
 
-	/**
-	 * @see ghidra.program.database.map.AddressMap#getKeyRanges(ghidra.program.model.address.AddressSetView, boolean, boolean)
-	 */
 	@Override
 	public synchronized List<KeyRange> getKeyRanges(AddressSetView set, boolean absolute,
 			boolean create) {
@@ -953,9 +916,6 @@ public class AddressMapDB implements AddressMap {
 		return addr;
 	}
 
-	/**
-	 * @see ghidra.program.database.map.AddressMap#getImageBase()
-	 */
 	@Override
 	public Address getImageBase() {
 		if (defaultAddrSpace instanceof SegmentedAddressSpace) {

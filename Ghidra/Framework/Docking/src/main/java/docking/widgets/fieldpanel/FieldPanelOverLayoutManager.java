@@ -36,7 +36,7 @@ import docking.widgets.fieldpanel.support.FieldLocation;
 
 /**
  * A {@link LayoutManager} that can be applied to a {@link FieldPanel}, allowing
- * {@link Components} to be placed over a given field location.
+ * {@link Component}s to be placed over a given field location.
  * 
  * To apply it, use {@link Container#setLayout(LayoutManager)} to install it. In this case, the
  * {@link Container} must be a {@link FieldPanel}. Then, use

@@ -28,7 +28,7 @@ public enum WindowPosition {
 	 * be placed into their own window.
 	 * <p>
 	 * <b>This position is ignored when used with components that share the same group (a.k.a., 
-	 * when used as an intragroup positioning item).
+	 * when used as an intragroup positioning item).</b>
 	 */
 	WINDOW,
 

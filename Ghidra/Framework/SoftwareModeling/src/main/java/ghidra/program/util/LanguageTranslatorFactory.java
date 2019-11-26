@@ -200,7 +200,7 @@ public class LanguageTranslatorFactory {
 	/**
 	 * Validate all translators contained within the translator maps.  
 	 * This is intended to be used by a unit test.
-	 * @returns number of validation errors
+	 * @return number of validation errors
 	 */
 	int validateAllTranslators() {
 		int errorCnt = 0;

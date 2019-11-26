@@ -59,7 +59,8 @@ public class PcodeEmitPacked extends PcodeEmit {
 
 	/**
 	 * Pcode emitter constructor for producing a packed binary representation.
-	 * @param delayContexts delay slotted instruction contexts
+	 * @param walk parser walker
+	 * @param ictx instruction contexts
 	 * @param fallOffset default instruction fall offset (i.e., instruction length including delay slotted instructions)
 	 * @param override required if pcode overrides are to be utilized
 	 * @param uniqueFactory required when override specified or if overlay normalization is required

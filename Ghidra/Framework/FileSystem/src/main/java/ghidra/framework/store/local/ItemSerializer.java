@@ -162,7 +162,7 @@ public class ItemSerializer {
 	 * @param inputStream a stream for accessing bytes of what may be a packed file
 	 * @return true if the bytes from the inputStream represent the bytes of a packed file
 	 * @throws IOException If there is a problem accessing the inputStream
-	 * @see {@link #isPackedFile(File)}
+	 * @see #isPackedFile(File)
 	 */
 	public static boolean isPackedFile(InputStream inputStream) throws IOException {
 		inputStream.skip(MAGIC_NUMBER_POS);

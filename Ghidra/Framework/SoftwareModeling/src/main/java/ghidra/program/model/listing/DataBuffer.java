@@ -41,10 +41,9 @@ public interface DataBuffer {
      *
      * @return the Data item at offset from the current position.
      *
-	 * @throws AddressOutOfBoundsException if offset exceeds
+	 * @throws ghidra.program.model.address.AddressOutOfBoundsException if offset exceeds
 	 * address space
 	 * @throws IndexOutOfBoundsException if offset is negative
-     * @throws MemoryAccessException if memory cannot be read
      */
     public Data getData(int offset);
 

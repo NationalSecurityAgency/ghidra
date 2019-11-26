@@ -130,11 +130,7 @@ public class Operand implements Serializable {
 	}
 
 	/**
-	 * Return l
-	 * @param list
-	 * @param buf
-	 * @param i
-	 * @return
+	 * @see OperandValue#toList(ArrayList, Position, int)
 	 */
 	public void toList(ArrayList<Handle> list, Position position, int off) throws Exception {
 		op.toList(list, position, offset.getOffset(position.buffer(),off));

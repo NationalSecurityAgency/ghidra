@@ -88,7 +88,6 @@ public class DataBuffer implements Buffer, Externalizable {
 
 	/**
 	 * Get the storage array associated with this buffer.
-	 * @return byte storage array.
 	 */
 	protected void setData(byte[] data) {
 		this.data = data;

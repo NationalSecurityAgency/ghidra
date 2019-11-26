@@ -87,7 +87,7 @@ public class KeyBindingOverrideKeyEventDispatcher implements KeyEventDispatcher 
 	 *     <li><b>Reserved keybinding actions</b>
 	 *     <li>KeyListeners on the focused Component</li>
 	 *     <li>InputMap and ActionMap actions for the Component</li>
-	 *     <b><li>Ghidra tool-level actions</li></b>
+	 *     <li><b>Ghidra tool-level actions</b></li>
 	 *     <li>InputMap and ActionMap actions for the Component's parent, and so on up the
 	 *         Swing hierarchy</li>
 	 * </ol>

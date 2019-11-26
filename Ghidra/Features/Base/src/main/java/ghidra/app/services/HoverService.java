@@ -53,7 +53,6 @@ public interface HoverService {
 	 * @param programLocation the program location where the mouse is hovering.
 	 * @param fieldLocation the precise mouse location within the field viewer
 	 * @param field the field over which the mouse is hovering
-	 * @param event the last mouse motion event over the field viewer component (i.e., FieldPanel).
 	 * @return The component to be shown for the given location information.
 	 */
 	public JComponent getHoverComponent(Program program, ProgramLocation programLocation,

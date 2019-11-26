@@ -45,8 +45,7 @@ public class ShutdownHookRegistry {
 	/**
 	 * Remove a shutdown hook previously registered.
 	 * Hooks with a higher priority value will run first
-	 * @param r shutdown hook runnable
-	 * @param priority relative priority
+	 * @param hook shutdown hook
 	 */
 	public static synchronized void removeShutdownHook(ShutdownHook hook) {
 		hooks.remove(hook);

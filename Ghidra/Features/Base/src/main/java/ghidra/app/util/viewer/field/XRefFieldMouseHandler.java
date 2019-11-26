@@ -40,9 +40,6 @@ public class XRefFieldMouseHandler implements FieldMouseHandlerExtension {
 	private final static Class<?>[] SUPPORTED_CLASSES =
 		new Class<?>[] { XRefFieldLocation.class, XRefHeaderFieldLocation.class };
 
-	/**
-	 * @see FieldMouseHandlerExtension#fieldElementClicked(Object, Navigatable, MouseEvent, ServiceProvider)
-	 */
 	@Override
 	public boolean fieldElementClicked(Object clickedObject, Navigatable sourceNavigatable,
 			ProgramLocation location, MouseEvent mouseEvent, ServiceProvider serviceProvider) {

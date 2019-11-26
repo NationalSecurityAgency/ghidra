@@ -3202,7 +3202,7 @@ public class ProgramDiff {
 	}
 
 	/** An IteratorWrapper provides a common class for accessing the methods
-	 * for several different iterator types (Iterator, CodeUnitIterator, &
+	 * for several different iterator types (Iterator, CodeUnitIterator, &amp;
 	 * AddressIterator).
 	 */
 	private static class IteratorWrapper {

@@ -956,7 +956,7 @@ public class HeadlessAnalyzer {
 	}
 
 	/**
-	 * Run prescripts -> analysis -> postscripts (any of these steps is optional).
+	 *{@literal Run prescripts -> analysis -> postscripts (any of these steps is optional).}
 	 * @param fileAbsolutePath Path of the file to analyze.
 	 * @param program The program to analyze.
 	 * @return true if the program file should be kept.  If analysis or scripts have marked

@@ -35,25 +35,19 @@ public class RandomAccessMutableByteProvider extends RandomAccessByteProvider im
 	/**
 	 * Constructs a byte provider using the specified file and permissions string
 	 * @param file the file to open for random access
-	 * @param string indicating permissions used for open
+	 * @param permissions indicating permissions used for open
 	 * @throws FileNotFoundException if the file does not exist
 	 */
 	public RandomAccessMutableByteProvider(File file, String permissions) throws IOException {
 		super(file, permissions);
 	}
 
-	/**
-	 * @see ghidra.app.util.bin.ByteProvider#writeByte(long, byte)
-	 */
 	@Override
 	public void writeByte(long index, byte value) throws IOException {
 		randomAccessFile.seek(index);
 		randomAccessFile.write(value);
 	}
 
-	/**
-	 * @see ghidra.app.util.bin.ByteProvider#writeBytes(long, byte[])
-	 */
 	@Override
 	public void writeBytes(long index, byte[] values) throws IOException {
 		randomAccessFile.seek(index);

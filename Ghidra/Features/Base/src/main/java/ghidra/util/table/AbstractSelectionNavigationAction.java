@@ -33,7 +33,7 @@ import resources.Icons;
 
 /**
  * <a name="description"></a>
- * An action used to trigger navigation callback on instances of {@link #JTable}.  Users can 
+ * An action used to trigger navigation callback on instances of {@link JTable}.  Users can 
  * toggle this action to control navigation that is based upon selection.
  * <p>
  * Subclasses need to implement {@link #navigate()}, which will be called when a navigation is

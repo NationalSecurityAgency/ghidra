@@ -124,7 +124,7 @@ public class DecompInterface {
 	/**
 	 * Turn on debugging dump for the next decompiled
 	 * function
-	 * @param filename in which to save dump
+	 * @param debugfile the file to enable debug dubp
 	 */
 	public synchronized void enableDebug(File debugfile) {
 		debug = new DecompileDebug(debugfile);
@@ -685,7 +685,6 @@ public class DecompInterface {
 	 * will be returned and a timeout error set.
 	 * @param monitor optional task monitor which may be used to cancel decompile
 	 * @return decompiled function text
-	 * @throws CancelledException operation was cancelled via monitor
 	 */
 	public synchronized DecompileResults decompileFunction(Function func, int timeoutSecs,
 			TaskMonitor monitor) {

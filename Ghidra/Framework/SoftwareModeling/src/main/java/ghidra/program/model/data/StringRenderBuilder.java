@@ -58,7 +58,7 @@ public class StringRenderBuilder {
 
 	/**
 	 * Append the specified char after an escaping backslash "\", ie
-	 * "x" -> "\x";
+	 * {@literal "x" -> "\x";}
 	 *
 	 * @param ch
 	 */
@@ -97,7 +97,7 @@ public class StringRenderBuilder {
 	/**
 	 * Add byte values, shown as numeric hex values.
 	 * <p>
-	 * { 0, 1, 2 } -> 00,01,02
+	 * {@literal { 0, 1, 2 } -> 00,01,02}
 	 *
 	 * @param bytes
 	 */
@@ -116,9 +116,9 @@ public class StringRenderBuilder {
 	 * Add an unicode codepoint as its escaped hex value, with a escape character
 	 * prefix of 'x', 'u' or 'U' depending on the magnitude of the codePoint value.
 	 * <p>
-	 * codePoint 15 -> '\' 'x' "0F"<br>
-	 * codePoint 65535 -> '\' 'u' "FFFF"<br>
-	 * codePoint 65536 -> '\' 'U' "10000"<br>
+	 * {@literal codePoint 15 -> '\' 'x' "0F"}<br>
+	 * {@literal codePoint 65535 -> '\' 'u' "FFFF"}<br>
+	 * {@literal codePoint 65536 -> '\' 'U' "10000"}<br>
 	 *
 	 * @param codePoint int value
 	 */

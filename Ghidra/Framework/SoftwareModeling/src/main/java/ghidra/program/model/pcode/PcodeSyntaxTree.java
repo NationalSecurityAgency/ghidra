@@ -106,7 +106,8 @@ public class PcodeSyntaxTree implements PcodeFactory {
 	 * @param addr join address associated with pieces
 	 * 
 	 * @return the VariableStorage associated with xml
-	 * @throws PcodeXMLException, InvalidInputException
+	 * @throws PcodeXMLException
+	 * @throws InvalidInputException
 	 */
 	@Override
 	public VariableStorage readXMLVarnodePieces(XmlElement el, Address addr) throws PcodeXMLException, InvalidInputException {

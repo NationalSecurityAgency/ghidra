@@ -67,9 +67,10 @@ public class SleighDebugLogger {
 
 	/**
 	 * Performs a parse debug at the specified memory location within program.
-	 * @param buf
-	 * @param programContext
-	 * @param verbose if true extended debug information may be provided
+	 * @param buf the memory buffer
+	 * @param context the processor context
+	 * @param language the sleigh language
+	 * @param mode the sleigh debug mode
 	 * @throws IllegalArgumentException if program language provider is not Sleigh
 	 */
 	public SleighDebugLogger(MemBuffer buf, ProcessorContextView context, Language language,
@@ -141,9 +142,9 @@ public class SleighDebugLogger {
 
 	/**
 	 * Performs a parse debug at the specified memory location within program.
-	 * @param program
-	 * @param start
-	 * @param verbose if true extended debug information may be provided
+	 * @param program the program the memory location is found in
+	 * @param start the start address of the memory location
+	 * @param mode the sleigh debug mode
 	 * @throws IllegalArgumentException if program language provider is not Sleigh
 	 */
 	public SleighDebugLogger(Program program, Address start, SleighDebugMode mode) {
@@ -199,7 +200,7 @@ public class SleighDebugLogger {
 
 	/**
 	 * @return true if a parse error was detected, otherwise false is returned.
-	 * The methods getMaskedInstructionBytes() and getInstructionBitMask() should
+	 * The methods getMaskedBytes() and getInstructionMask() should
 	 * only be invoked if this method returns false.
 	 */
 	public boolean parseFailed() {
@@ -297,7 +298,7 @@ public class SleighDebugLogger {
 	 * NOTE: Method has no affect unless constructed with VERBOSE logging mode.
 	 * @param value integer array
 	 * @param startbit identifies the first most-significant bit within the
-	 * bracketed range (left-most value[0] bit is bit-0, right-most value[n] bit is bit-<32(n+1)-1> ).
+	 * {@literal bracketed range (left-most value[0] bit is bit-0, right-most value[n] bit is bit-<32(n+1)-1> ).}
 	 * @param bitcount number of bits included within range
 	 */
 	public void append(int[] value, int startbit, int bitcount) {
@@ -323,7 +324,7 @@ public class SleighDebugLogger {
 	 * NOTE: Method has no affect unless constructed with VERBOSE logging mode.
 	 * @param value byte array
 	 * @param startbit identifies the first most-significant bit within the
-	 * bracketed range (left-most value[0] bit is bit-0, right-most value[n] bit is bit-<8(n+1)-1> ).
+	 * {@literal bracketed range (left-most value[0] bit is bit-0, right-most value[n] bit is bit-<8(n+1)-1> ).}
 	 * @param bitcount number of bits included within range
 	 */
 	public void append(byte[] value, int startbit, int bitcount) {
@@ -914,7 +915,7 @@ public class SleighDebugLogger {
 	 * the instruction (includes addressing modes, generally excludes register selector bits
 	 * associated with attaches or immediate values used in for semantic values only).
 	 * @throws IllegalStateException if prototype parse failed
-	 * @see SleighDebugLogger#getMaskedInstructionBytes()
+	 * @see #getFormattedInstructionMask(int) getFormattedInstructionMask(-1)
 	 */
 	public byte[] getInstructionMask() {
 		buildMasks();

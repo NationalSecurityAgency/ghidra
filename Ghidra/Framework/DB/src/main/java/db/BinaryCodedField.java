@@ -91,7 +91,7 @@ public class BinaryCodedField extends BinaryField {
 	
 	/**
 	 * Construct a coded field from an existing binary field.
-	 * @param binary field
+	 * @param binField the binary field
 	 */
 	public BinaryCodedField(BinaryField binField) {
 		data = binField.getBinaryData();
@@ -99,7 +99,7 @@ public class BinaryCodedField extends BinaryField {
 	
 	/**
 	 * Construct a coded field from a double value.
-	 * @param value
+	 * @param value the double value
 	 */
 	public BinaryCodedField(double value) {
 		BinaryDataBuffer buffer = new BinaryDataBuffer(9);
@@ -110,7 +110,7 @@ public class BinaryCodedField extends BinaryField {
 	
 	/**
 	 * Construct a coded field from a float value.
-	 * @param value
+	 * @param value the float value
 	 */
 	public BinaryCodedField(float value) {
 		BinaryDataBuffer buffer = new BinaryDataBuffer(5);

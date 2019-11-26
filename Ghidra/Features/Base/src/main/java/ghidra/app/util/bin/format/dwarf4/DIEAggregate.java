@@ -113,7 +113,7 @@ public class DIEAggregate {
 	 * which is skipped.
 	 * <p>
 	 * Used when a DIEA is composed of a head DIE with a different TAG type than the rest of
-	 * the DIEs.  (ie. a dw_tag_call_site -> dw_tag_sub DIEA)
+	 * the DIEs.  (ie. a dw_tag_call_site -&gt; dw_tag_sub DIEA)
 	 *
 	 * @param source
 	 * @return
@@ -794,11 +794,7 @@ public class DIEAggregate {
 	 * Parses a range list from the debug_ranges section.
 	 * See DWARF4 Section 2.17.3 (Non-Contiguous Address Ranges).
 	 * <p>
-	 * This method is similar to {@link DWARFLocation#parseLocationList(long, DebugInfoEntry)}
-	 * and may have the same gotchas that need to be ported over.
-	 * <p>
 	 * @param attribute attribute ie. {@link DWARFAttribute#DW_AT_ranges}
-	 * @param debug_ranges debug_ranges section byte provider
 	 * @return list of ranges
 	 * @throws IOException if an I/O error occurs
 	 */

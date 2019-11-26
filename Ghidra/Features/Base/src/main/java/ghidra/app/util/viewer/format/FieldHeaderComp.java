@@ -63,8 +63,8 @@ public class FieldHeaderComp extends JPanel {
 
 	/**
 	 * Constructs a new FieldHeader for the given model.
-	 * @param formatMgr the format manager
 	 * @param headerPanel the headerPanel containing this component.
+	 * @param modelNumber the model number for this component.
 	 */
 	public FieldHeaderComp(FieldHeader headerPanel, int modelNumber) {
 		FormatManager formatMgr = headerPanel.getFormatManager();

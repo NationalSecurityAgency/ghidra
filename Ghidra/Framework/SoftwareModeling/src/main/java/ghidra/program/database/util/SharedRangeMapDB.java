@@ -31,6 +31,7 @@ import db.util.ErrorHandler;
  * This map allows values to share a given range with other values.
  * @deprecated This map class should not be used except by the OldFunctionMapDB class
  */
+@Deprecated
 public class SharedRangeMapDB {
 
 	private DBHandle dbHandle;

@@ -43,7 +43,7 @@ public class MultiIterator<T> implements Iterator<T> {
 	 * Use this constructor when the items of the iterators are naturally comparable (i.e., 
 	 * they implement {@link Comparable}).
 	 * 
-	 * @param comparator the comparator used to find the next item
+	 * @param iterators the iterators that provide the data
 	 * @param forward true if the iterators provide data sorted ascending; false for descending
 	 */
 	public MultiIterator(List<PeekableIterator<T>> iterators, boolean forward) {

@@ -2316,8 +2316,7 @@ abstract class AbstractFunctionMerger implements ListingMergeConstants {
 
 	/**
 	 * Creates the panel for resolving a conflict due to a variable being removed.
-	 * @param entryPt the function entry point for the function variables.
-	 * @param vars variables from the different programs [0]=Original, [1]=Latest, [2]=My
+	 * @param lvc the local variable conflict
 	 * @param monitor status monitor
 	 * @return the panel
 	 */
@@ -2390,7 +2389,7 @@ abstract class AbstractFunctionMerger implements ListingMergeConstants {
 
 	/**
 	 * Updates the progress message details associated with this phase of the merge.
-	 * @param progressMessage a message indicating what is currently occurring in this phase.
+	 * @param message a message indicating what is currently occurring in this phase.
 	 * Null indicates to use the default message.
 	 */
 	protected void updateProgressMessage(String message) {

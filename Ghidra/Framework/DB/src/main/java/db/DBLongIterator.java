@@ -39,14 +39,14 @@ public interface DBLongIterator {
 	/**
 	 * Return the next long value.
 	 * @throws IOException thrown if an IO error occurs
-	 * @throws NoSuchElementException if the next value is not available.
+	 * @throws java.util.NoSuchElementException if the next value is not available.
 	 */
 	public long next() throws IOException;
 	
 	/**
 	 * Return the previous long value.
 	 * @throws IOException thrown if an IO error occurs
-	 * @throws NoSuchElementException if the previous value is not available.
+	 * @throws java.util.NoSuchElementException if the previous value is not available.
 	 */
 	public long previous() throws IOException;
 	

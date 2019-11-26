@@ -102,7 +102,7 @@ public abstract class CachingSwingWorker<T> implements CachingLoader<T> {
 	 * 
 	 * @param monitor the monitor (may be null)
 	 * @return the object that this class is managing/caching
-	 * @see #get()
+	 * @see #getCachedValue()
 	 */
 	@Override
 	public T get(TaskMonitor monitor) {

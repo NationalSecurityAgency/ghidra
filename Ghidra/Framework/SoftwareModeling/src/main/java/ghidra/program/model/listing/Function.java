@@ -400,13 +400,13 @@ public interface Function extends Namespace {
 	 * The {@link VariableUtilities#checkVariableConflict(Function, Variable, VariableStorage, boolean)} 
 	 * method may be used to check and remove conflicting variables which already exist in the function.
 	 * @param callingConvention updated calling convention name or null if no change is required
-	 * @param returnVar return variable or null if no change required
-	 * @param params the new set of parameters for the function.
+	 * @param returnValue return variable or null if no change required
 	 * @param updateType function update type
 	 * @param force if true any conflicting local parameters will be removed
 	 * @param source the source of these parameters which will be applied to the parameter symbols and 
 	 * overall function signature source.  If parameter names are null or a default name a SourceType of DEFAULT
 	 * will be applied to the corresponding parameter symbol.
+	 * @param newParams a variable number of parameters for the function.
 	 * @throws DuplicateNameException if another variable(parameter or local) already
 	 * exists in the function with that name.
 	 * @throws InvalidInputException if a parameter data type is not a fixed length or variable name is invalid.
@@ -429,7 +429,7 @@ public interface Function extends Namespace {
 	 * @param source the source of these parameters which will be applied to the parameter symbols and 
 	 * overall function signature source.  If parameter names are null or a default name a SourceType of DEFAULT
 	 * will be applied to the corresponding parameter symbol.
-	 * @param params the new parameters for the function (required).
+	 * @param newParams the list of new parameters for the function (required).
 	 * @throws DuplicateNameException if another variable(parameter or local) already
 	 * exists in the function with that name.
 	 * @throws InvalidInputException if a parameter data type is not a fixed length or variable name is invalid.
@@ -463,7 +463,7 @@ public interface Function extends Namespace {
 	 * moved but must be accounted for in the specified ordinals.
 	 * @param fromOrdinal from ordinal position using the current numbering
 	 * @param toOrdinal the final position of the specified parameter
-	 * @returns parameter which was moved
+	 * @return parameter which was moved
 	 * @deprecated The use of this method is discouraged.  The function signature should generally be 
 	 * adjusted with a single call to {@link #updateFunction(String, Variable, List, FunctionUpdateType, boolean, SourceType)}
 	 */

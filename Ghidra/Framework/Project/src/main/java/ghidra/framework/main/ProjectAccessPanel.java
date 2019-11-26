@@ -40,9 +40,11 @@ import util.CollectionUtils;
  * Panel that shows the users for a given repository and the users associated with the current
  * shared project. There are 3 main sub-panels:
  * <p>
+ * <ul>
  * <li>Known Users Panel: Displays all users in the repository</li>
  * <li>Button Panel: Provides buttons for adding/removing users from the project</li>
  * <li>User Access Panel: Displays all users on the project, and their access permissions</li>
+ * </ul>
  * <p>
  * If the current user is an admin, he may change user permissions and add/remove them 
  * from the project. If not, only the User Access Panel will be visible and it will
@@ -70,7 +72,7 @@ public class ProjectAccessPanel extends AbstractWizardJPanel {
 	/** 
 	 * Construct a new panel from a {@link RepositoryAdapter} instance.
 	 * 
-	 * @param knownUser names of the users that are known to the remote server
+	 * @param knownUsers names of the users that are known to the remote server
 	 * @param repository the repository adapter instance
 	 * @param tool the current tool
 	 * @throws IOException if there's an error processing the repository user list

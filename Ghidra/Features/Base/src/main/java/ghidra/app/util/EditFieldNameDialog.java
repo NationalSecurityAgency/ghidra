@@ -44,9 +44,8 @@ public class EditFieldNameDialog extends DialogComponentProvider {
    /**
 	 * Construct a new dialog.
 	 *
-	 * @param Frame parent for the dialog, null value is acceptable if no parent
-	 * @param model object that controls the enablement and settings for
-	 * labels and does the work of adding or editing labels
+	 * @param title title for the dialog, null value is acceptable if no title
+	 * @param tool the plugin tool
 	 */
 	public EditFieldNameDialog(String title, PluginTool tool) {
 		super(title, true, true, true, false); 

@@ -77,7 +77,7 @@ public class MnemonicSearchPlugin extends Plugin {
 
 	/**
 	 * Retrieves the selection region from the program, builds the search string, and pops
-	 * up the @{link MemSearchDialog}.
+	 * up the {@link MemSearchDialog}.
 	 * 
 	 * @param context
 	 * @param useOps

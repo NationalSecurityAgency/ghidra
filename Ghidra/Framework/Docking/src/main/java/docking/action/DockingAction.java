@@ -96,6 +96,9 @@ public abstract class DockingAction implements DockingActionIf {
 		return KeyBindingType.INDIVIDUAL;
 	}
 
+    /**
+     * Method called when the action is invoked.
+     */
 	@Override
 	public abstract void actionPerformed(ActionContext context);
 

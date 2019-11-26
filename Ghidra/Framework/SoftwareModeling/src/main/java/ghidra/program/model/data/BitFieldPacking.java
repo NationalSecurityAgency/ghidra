@@ -37,8 +37,7 @@ public interface BitFieldPacking {
 	 * A non-zero value indicates the fixed alignment size for bit-fields which follow
 	 * a zero-length bitfield if greater than a bitfields base type normal alignment. 
 	 * Corresponds to EMPTY_FIELD_BOUNDARY in GCC.
-	 * This value is only used when {@link #isTypeAlignmentEnabled()} returns false
-	 * and {@link #isZeroLengthAlignmentEnabled()} returns true.
+	 * This value is only used when {@link #isTypeAlignmentEnabled()} returns false.
 	 * @return fixed alignment size as number of bytes for a bit-field which follows
 	 * a zero-length bit-field
 	 */

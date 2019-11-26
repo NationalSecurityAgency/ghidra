@@ -307,7 +307,6 @@ public interface DomainFile extends Comparable<DomainFile> {
 
 	/**
 	 * Return the latest version
-	 * @throws IOException thrown if an IO or access error occurs.
 	 */
 	public int getLatestVersion();
 

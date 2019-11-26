@@ -83,7 +83,7 @@ public interface ManagedBufferFile extends BufferFile {
 	 * Returns true if a save file is provided for creating a new
 	 * version of this buffer file.
 	 * @throws IOException if an I/O error occurs
-	 * @see BufferFile.getSaveFile
+	 * @see #getSaveFile()
 	 */
 	boolean canSave() throws IOException;
 	

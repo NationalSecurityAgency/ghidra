@@ -1654,7 +1654,7 @@ class FunctionMerger extends AbstractFunctionMerger implements ListingMerger {
 	}
 
 	/** Return an address set that contains all addresses that make up the code
-	 * units containing the indicated address in the LATEST, MY, & ORIGINAL programs.
+	 * units containing the indicated address in the LATEST, MY, &amp; ORIGINAL programs.
 	 * @param addr the address
 	 * @return the code unit address set
 	 */
@@ -1663,7 +1663,7 @@ class FunctionMerger extends AbstractFunctionMerger implements ListingMerger {
 	}
 
 	/** Return an address set that contains all addresses that make up the code
-	 * units containing the indicated addresses in the LATEST, MY, & ORIGINAL programs.
+	 * units containing the indicated addresses in the LATEST, MY, &amp; ORIGINAL programs.
 	 * @param addr the addresses
 	 * @return the code unit address set
 	 */
@@ -1762,7 +1762,7 @@ class FunctionMerger extends AbstractFunctionMerger implements ListingMerger {
 
 	/**
 	 * Updates the progress bar associated with this phase of the merge.
-	 * Before beginning to auto-merge the <code>totalChanges</code> and <code>changeNum<\code> must be set.
+	 * Before beginning to auto-merge the <code>totalChanges</code> and <code>changeNum</code> must be set.
 	 * This method should then be called as changes are made to update the change bar.
 	 * This assumes that each change is equivalent in terms of shown progress.
 	 * @param increment the number of changes completed relative to the total

@@ -606,9 +606,7 @@ public abstract class MergeManager implements DomainObjectMergeManager {
 
 	/**
 	 * Updates the current phase progress area in the default merge panel.
-	 * @param currentProgressPercentage the progress percentage completed for the current phase.
-	 * This should be a value from 0 to 100.
-	 * @param progressMessage a message indicating what is currently occurring in this phase.
+	 * @param description a message describing what is currently occurring in this phase.
 	 * Null indicates to use the default message.
 	 */
 	@Override

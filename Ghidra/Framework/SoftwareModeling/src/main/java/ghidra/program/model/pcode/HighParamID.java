@@ -52,8 +52,10 @@ public class HighParamID extends PcodeSyntaxTree {
 
 	/**
 	 * @param function  function associated with the higher level function abstraction.
-	 * @param langParser language parser used to disassemble/get info on the language
-	 * @param dtManager data type manager
+	 * @param language language parser used to disassemble/get info on the language.
+	 * @param compilerSpec the compiler spec.
+	 * @param dtManager data type manager.
+	 * @param showNamespace true to show the parameters namespace.
 	 */
 	public HighParamID(Function function, Language language, CompilerSpec compilerSpec,
 			PcodeDataTypeManager dtManager, boolean showNamespace) {

@@ -27,7 +27,6 @@ import ghidra.app.plugin.assembler.sleigh.symbol.AssemblySymbol;
  *
  * @see AbstractAssemblyGrammar
  * @param <NT> the type of non-terminals
- * @param <T> the type of terminals
  */
 public abstract class AbstractAssemblyProduction<NT extends AssemblyNonTerminal>
 		extends AbstractListDecorator<AssemblySymbol>

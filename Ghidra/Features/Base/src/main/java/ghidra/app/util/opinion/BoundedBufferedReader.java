@@ -49,7 +49,7 @@ public class BoundedBufferedReader extends Reader {
 	 *            Input-buffer size
 	 * 
 	 * @exception IllegalArgumentException
-	 *                If sz is <= 0
+	 *                If sz is &lt;= 0
 	 */
 	public BoundedBufferedReader(Reader in, int sz) {
 		super(in);
@@ -458,7 +458,7 @@ public class BoundedBufferedReader extends Reader {
 	 *            than limit. Therefore large values should be used with care.
 	 * 
 	 * @exception IllegalArgumentException
-	 *                If readAheadLimit is < 0
+	 *                If readAheadLimit is &lt; 0
 	 * @exception IOException
 	 *                If an I/O error occurs
 	 */

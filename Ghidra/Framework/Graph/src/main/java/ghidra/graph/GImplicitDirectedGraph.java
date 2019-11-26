@@ -35,8 +35,8 @@ public interface GImplicitDirectedGraph<V, E extends GEdge<V>> {
 	 * 
 	 * (Optional operation)
 	 * 
-	 * @note This method ought to return cached results if available
-	 * @note As part of computing in-edges, this method will also provide predecessors
+	 * NOTE: This method ought to return cached results if available
+	 * NOTE: As part of computing in-edges, this method will also provide predecessors
 	 * 
 	 * @param v the destination vertex
 	 * @return the in-edges to the given vertex
@@ -46,8 +46,8 @@ public interface GImplicitDirectedGraph<V, E extends GEdge<V>> {
 	/**
 	 * Compute the incident edges that start at the given vertex
 	 * 
-	 * @note This method ought to return cached results if available
-	 * @note As part of computing out-edges, this method will also provide successors
+	 * NOTE: This method ought to return cached results if available
+	 * NOTE: As part of computing out-edges, this method will also provide successors
 	 * 
 	 * @param v the source vertex
 	 * @return the out-edges from the given vertex
@@ -59,7 +59,7 @@ public interface GImplicitDirectedGraph<V, E extends GEdge<V>> {
 	 * 
 	 * The default implementation computes this from the in-edges
 	 * 
-	 * @note If a non-default implementation is provided, it ought to return cached results if
+	 * NOTE: If a non-default implementation is provided, it ought to return cached results if
 	 * available
 	 * 
 	 * @param v the destination vertex
@@ -78,7 +78,7 @@ public interface GImplicitDirectedGraph<V, E extends GEdge<V>> {
 	 * 
 	 * The default implementation compute this from the out-edges
 	 * 
-	 * @note If a non-default implementation is provided, it ought to return cached results if
+	 * NOTE: If a non-default implementation is provided, it ought to return cached results if
 	 * available
 	 * 
 	 * @param v the source vertex

@@ -73,6 +73,7 @@ public class ProgramTreeMergeManager implements MergeResolver {
 
 	/**
 	 * Construct a new manager for merging trees
+	 * @param mergeManager the program merge manager
 	 * @param resultProgram latest version of the Program that is the 
 	 * destination for changes applied from the source program
 	 * @param myProgram source of changes to apply to the destination
@@ -82,7 +83,6 @@ public class ProgramTreeMergeManager implements MergeResolver {
 	 * resultProgram and latestProgram start out as being identical
 	 * @param latestChangeSet change set of the destination program
 	 * @param myChangeSet change set for the source program
-	 * @param monitor
 	 */
 	public ProgramTreeMergeManager(ProgramMultiUserMergeManager mergeManager,
 			Program resultProgram, Program myProgram, Program originalProgram,
@@ -592,9 +592,9 @@ public class ProgramTreeMergeManager implements MergeResolver {
 
 	/**
 	 * Covers case 6: dest content changed, source content changed;
-	 *        case 7: dest name change & content changed, source name changed & content changed
-	 *        case 8: dest name & content changed, source content changed
-	 *        case 9: dest content changed, source name & content changed
+	 *        case 7: dest name change &amp; content changed, source name changed &amp; content changed
+	 *        case 8: dest name &amp; content changed, source content changed
+	 *        case 9: dest content changed, source name &amp; content changed
 	 * @throws CancelledException 
 	 */
 	private void keepOtherOrCreateTree(ProgramModule origRoot, ProgramModule sourceRoot, ProgramModule destRoot,
@@ -738,7 +738,7 @@ public class ProgramTreeMergeManager implements MergeResolver {
 	}
 
 	/**
-	 * Case 4: destination Name & content changed, source name changed
+	 * Case 4: destination Name &amp; content changed, source name changed
 	 * @param sourceRoot source root module
 	 * @param sourceTreeName source tree name
 	 * @param destTreeName destination tree name
@@ -793,7 +793,7 @@ public class ProgramTreeMergeManager implements MergeResolver {
 	}
 
 	/**
-	 * Case 5: destination Name changed, source name & content changed
+	 * Case 5: destination Name changed, source name &amp; content changed
 	 * @param sourceRoot source root module
 	 * @param sourceTreeName source tree name
 	 * @param destTreeName destination tree name

@@ -30,10 +30,9 @@ public class FunctionCallFixupFieldLocation extends FunctionLocation {
 	/**
 	 * Construct a new FunctionCallFixupFieldLocation object.
 	 * 
-	 * @param the program of the location
+	 * @param program the program of the location
 	 * @param locationAddr the address of the listing location (i.e., referent code unit)
 	 * @param functionAddr the function address
-	 * @param path the group path from the program tree.
 	 * @param callFixupName the function call-fixup field text String at this location.
 	 * @param charOffset the character position within the field
 	 */

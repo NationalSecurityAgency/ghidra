@@ -42,7 +42,7 @@ import ghidra.util.HTMLUtilities;
 import resources.ResourceManager;
 
 /**
- * <h1>Notes about how to use HTML safely:</h1>
+ * <h2>Notes about how to use HTML safely:</h2>
  * Java's built-in HTML rendering in UI components is very useful, but can also introduce security
  * issues when a hostile actor is providing the text strings that are being rendered.
  * <p>
@@ -77,9 +77,9 @@ import resources.ResourceManager;
  * value at the start of the string, but instead put a quote or some other delimiter to prevent
  * html mode).
  * <p>
- * <h1>Recommended Ghidra UI Components:</h1>
+ * <h3>Recommended Ghidra UI Components:</h3>
  * <p>
- * <table border=1>
+ * <table border=1><caption></caption>
  * 	<tr><th>Native Component</th><th>Recommended Component</th></tr>
  * 	<tr><td>{@link JLabel}</td><td>{@link GLabel}<br>{@link GDLabel}<br>{@link GHtmlLabel}<br>{@link GDHtmlLabel}<br>{@link GIconLabel}</td></tr>
  * 	<tr><td>{@link JCheckBox}</td><td>{@link GCheckBox}<br>{@link GHtmlCheckBox}</td></tr>

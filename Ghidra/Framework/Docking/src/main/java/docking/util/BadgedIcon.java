@@ -230,7 +230,7 @@ public class BadgedIcon implements Icon {
 	/**
 	 * Get the visibility status of the badge at the specified location
 	 * @param position Which icon to enquire about
-	 * @Return True if the badge is visible, false otherwise
+	 * @return True if the badge is visible, false otherwise
 	 * @see #setBadgeVisisble(BadgePosition, boolean)
 	 */
 	public boolean isBadgeVisible(BadgePosition position) {

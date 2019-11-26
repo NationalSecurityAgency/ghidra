@@ -27,10 +27,11 @@ package ghidra.formats.gfilesystem;
  * <ul>
  * 	<li>FSRLRoot [ file:// ]<br>
  *	  "file://"
- * 	<li>FSRLRoot [ file:// ]  <---- FSRL [ /filename.txt ]<br>
+ * 	<li>{@literal FSRLRoot [ file:// ]  <---- FSRL [ /filename.txt ]}<br>
  * 	  "file:///filename.txt"
- *  <li>FSRLRoot [ file:// ]  <---- FSRL [ /filename.txt ] <--- FSRLRoot [ subfs:// ]<br>
+ *  <li>{@literal FSRLRoot [ file:// ]  <---- FSRL [ /filename.txt ] <--- FSRLRoot [ subfs:// ]}<br>
  *    "file:///filename.txt|subfs://"
+ * </ul>
  */
 public class FSRLRoot extends FSRL {
 	/**

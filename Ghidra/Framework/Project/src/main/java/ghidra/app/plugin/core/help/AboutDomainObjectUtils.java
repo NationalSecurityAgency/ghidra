@@ -44,13 +44,12 @@ public class AboutDomainObjectUtils {
 	 * Displays an informational dialog about the specified domain object
 	 *
 	 * @param tool			 plugin tool
-	 * @param domainObject   domain object to display information about
+	 * @param domainFile     domain file to display information about
+	 * @param metadata		 the metadata for the domainFile
 	 * @param title          title to use for the dialog
 	 * @param additionalInfo additional custom user information to append to
 	 *                       the bottom of the dialog
-	 * @param shouldParent   true means that about dialog will be parented
-	 *                       to <code>parent</code>, false means that only
-	 *                       the location will be set relative to <code>parent</code>
+	 * @param helpLocation	 the help location
 	 */
 	public static void displayInformation(PluginTool tool, DomainFile domainFile,
 			Map<String, String> metadata, String title, String additionalInfo,

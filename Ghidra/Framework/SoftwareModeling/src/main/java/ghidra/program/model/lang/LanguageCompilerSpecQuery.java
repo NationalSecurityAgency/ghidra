@@ -24,11 +24,13 @@ public class LanguageCompilerSpecQuery {
 	public final CompilerSpecID compilerSpecID;
 
 	/**
-	 * @param processor
-	 * @param endian
-	 * @param size
-	 * @param variant
-	 * @param compilerSpecName
+	 * Constructs a new LanguageCompilerSpecQuery
+	 * 
+	 * @param processor the language's processor
+	 * @param endian the processor's endianness
+	 * @param size the size of an address
+	 * @param variant the processor variant
+	 * @param compilerSpecID the compiler spec id
 	 */
 	public LanguageCompilerSpecQuery(Processor processor, Endian endian, Integer size,
 			String variant, CompilerSpecID compilerSpecID) {

@@ -239,7 +239,7 @@ public class LockFile {
 
 	/**
 	 * Return the name of the current lock owner
-	 * or "<Unknown>" if not locked or could not be determined.
+	 * or {@code "<Unknown>"} if not locked or could not be determined.
 	 */
 	public String getLockOwner() {
 		return getLockOwner(false);
@@ -346,7 +346,6 @@ public class LockFile {
 	/**
 	 * Create the lock file using the default timeout.
 	 * Lock is guaranteed for MAX_LOCK_LEASE_PERIOD seconds.
-	 * @param timeout maximum time in seconds to wait for lock.
 	 * @return true if lock creation was successful.
 	 */
 	public boolean createLock() {

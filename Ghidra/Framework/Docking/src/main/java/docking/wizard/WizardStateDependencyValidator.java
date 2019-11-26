@@ -31,7 +31,7 @@ public class WizardStateDependencyValidator<T> {
 	 * the dependent is registered such that a call to {@link #findAffectedDependants(WizardState)}
 	 * will include that property key only if its cached value is null.  (i.e. the first time it 
 	 * is called.)
-	 * @param dependant the property key that depends on a previous property being set.
+	 * @param dependent the property key that depends on a previous property being set.
 	 * @param predecessor the property key of the property that affects the dependent property.
 	 */
 	public void addDependency(T dependent, T predecessor) {

@@ -94,8 +94,6 @@ public class OperandRepresentationList extends ArrayList<Object> {
 	
 	/**
 	 * Returns a formatted string representation of the specified code unit operand.
-	 * @param cu code unit
-	 * @param opIndex 
 	 * @return formatted code unit representation
 	 */
 	@Override

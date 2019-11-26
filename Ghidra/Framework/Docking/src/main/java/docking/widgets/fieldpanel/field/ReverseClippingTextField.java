@@ -108,9 +108,6 @@ public class ReverseClippingTextField implements TextField {
 		textStartX = startX + DOT_DOT_DOT_WIDTH + margin;
 	}
 
-	/**
-	 * @see docking.widgets.fieldpanel.field.Field#contains(int, int)
-	 */
 	@Override
 	public boolean contains(int x, int y) {
 		if ((x >= startX) && (x < startX + width) && (y >= -textElement.getHeightAbove()) &&
@@ -120,9 +117,6 @@ public class ReverseClippingTextField implements TextField {
 		return false;
 	}
 
-	/**
-	 * @see docking.widgets.fieldpanel.field.Field#getCol(int, int)
-	 */
 	@Override
 	public int getCol(int row, int x) {
 		int xPos = Math.max(x - textStartX, 0); // make x relative to this fields
@@ -130,9 +124,6 @@ public class ReverseClippingTextField implements TextField {
 		return textElement.getMaxCharactersForWidth(xPos);
 	}
 
-	/**
-	 * @see docking.widgets.fieldpanel.field.Field#getCursorBounds(int, int)
-	 */
 	@Override
 	public Rectangle getCursorBounds(int row, int col) {
 		if (row != 0) {
@@ -145,17 +136,11 @@ public class ReverseClippingTextField implements TextField {
 			textElement.getHeightAbove() + textElement.getHeightBelow());
 	}
 
-	/**
-	 * @see docking.widgets.fieldpanel.field.Field#getHeight()
-	 */
 	@Override
 	public int getHeight() {
 		return textElement.getHeightAbove() + textElement.getHeightBelow();
 	}
 
-	/**
-	 * @see docking.widgets.fieldpanel.field.Field#getNumCols(int)
-	 */
 	@Override
 	public int getNumCols(int row) {
 		return getNumCols();
@@ -165,26 +150,16 @@ public class ReverseClippingTextField implements TextField {
 		return textElement.length() + 1; // allow one column past the end of the text
 	}
 
-	/**
-	 * @see docking.widgets.fieldpanel.field.Field#getNumRows()
-	 */
 	@Override
 	public int getNumRows() {
 		return 1;
 	}
 
-	/**
-	 * @see docking.widgets.fieldpanel.field.Field#getRow(int)
-	 */
 	@Override
 	public int getRow(int y) {
 		return 0;
 	}
 
-	/**
-	 * @see docking.widgets.fieldpanel.field.Field#getScrollableUnitIncrement(int, int,
-	 *      int)
-	 */
 	@Override
 	public int getScrollableUnitIncrement(int topOfScreen, int direction, int max) {
 
@@ -199,17 +174,11 @@ public class ReverseClippingTextField implements TextField {
 		return -getHeightAbove() - topOfScreen;
 	}
 
-	/**
-	 * @see docking.widgets.fieldpanel.field.Field#getStartX()
-	 */
 	@Override
 	public int getStartX() {
 		return startX;
 	}
 
-	/**
-	 * @see docking.widgets.fieldpanel.field.Field#getWidth()
-	 */
 	@Override
 	public int getWidth() {
 		return width;
@@ -220,9 +189,6 @@ public class ReverseClippingTextField implements TextField {
 		return preferredWidth;
 	}
 
-	/**
-	 * @see docking.widgets.fieldpanel.field.Field#getX(int, int)
-	 */
 	@Override
 	public int getX(int row, int col) {
 		if (col >= getNumCols()) {
@@ -231,33 +197,21 @@ public class ReverseClippingTextField implements TextField {
 		return findX(col) + textStartX;
 	}
 
-	/**
-	 * @see docking.widgets.fieldpanel.field.Field#getY(int)
-	 */
 	@Override
 	public int getY(int row) {
 		return -getHeightAbove();
 	}
 
-	/**
-	 * @see docking.widgets.fieldpanel.field.Field#isPrimary()
-	 */
 	@Override
 	public boolean isPrimary() {
 		return isPrimary;
 	}
 
-	/**
-	 * @see docking.widgets.fieldpanel.field.TextField#setPrimary(boolean)
-	 */
 	@Override
 	public void setPrimary(boolean b) {
 		isPrimary = b;
 	}
 
-	/**
-	 * @see docking.widgets.fieldpanel.field.Field#isValid(int, int)
-	 */
 	@Override
 	public boolean isValid(int row, int col) {
 		if (row != 0) {
@@ -274,11 +228,6 @@ public class ReverseClippingTextField implements TextField {
 		return fullText;
 	}
 
-	/**
-	 * @see docking.widgets.fieldpanel.field.Field#paint(java.awt.Graphics,
-	 *      docking.widgets.fieldpanel.internal.PaintContext, boolean,
-	 *      docking.widgets.fieldpanel.support.RowColLocation)
-	 */
 	@Override
 	public void paint(JComponent c, Graphics g, PaintContext context,
 			FieldBackgroundColorManager colorManager, RowColLocation cursorLoc, int rowHeight) {
@@ -389,9 +338,6 @@ public class ReverseClippingTextField implements TextField {
 
 	}
 
-	/**
-	 * @see docking.widgets.fieldpanel.field.TextField#dataToScreenLocation(int, int)
-	 */
 	@Override
 	public RowColLocation dataToScreenLocation(int dataRow, int dataColumn) {
 		int column = textElement.getCharacterIndexForDataLocation(dataRow, dataColumn);
@@ -413,33 +359,21 @@ public class ReverseClippingTextField implements TextField {
 		return isClipped;
 	}
 
-	/**
-	 * @see docking.widgets.fieldpanel.field.Field#getHeightAbove()
-	 */
 	@Override
 	public int getHeightAbove() {
 		return textElement.getHeightAbove();
 	}
 
-	/**
-	 * @see docking.widgets.fieldpanel.field.Field#getHeightBelow()
-	 */
 	@Override
 	public int getHeightBelow() {
 		return textElement.getHeightBelow();
 	}
 
-	/**
-	 * @see docking.widgets.fieldpanel.field.Field#rowHeightChanged(int, int)
-	 */
 	@Override
 	public void rowHeightChanged(int heightAbove, int heightBelow) {
 		// Don't care
 	}
 
-	/**
-	 * @see docking.widgets.fieldpanel.field.Field#getText()
-	 */
 	@Override
 	public String getText() {
 		// TODO: this gets the full string and not the clipped version--we want
@@ -452,9 +386,6 @@ public class ReverseClippingTextField implements TextField {
 		return getString();
 	}
 
-	/**
-	 * @see docking.widgets.fieldpanel.field.Field#textOffsetToScreenLocation(int)
-	 */
 	@Override
 	public RowColLocation textOffsetToScreenLocation(int textOffset) {
 		int col = textOffset + startingCharIndex;
@@ -462,9 +393,6 @@ public class ReverseClippingTextField implements TextField {
 		return new RowColLocation(0, Math.min(col, textElement.getText().length() - 1));
 	}
 
-	/**
-	 * @see docking.widgets.fieldpanel.field.Field#screenLocationToTextOffset(int, int)
-	 */
 	@Override
 	public int screenLocationToTextOffset(int row, int col) {
 		return col + startingCharIndex;

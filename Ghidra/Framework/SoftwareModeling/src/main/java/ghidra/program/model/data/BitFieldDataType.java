@@ -151,7 +151,7 @@ public class BitFieldDataType extends AbstractDataType {
 	/**
 	 * Check if a specified baseDataType is valid for use with a bitfield
 	 * @param baseDataType bitfield base data type (Enum, AbstractIntegerDataType and derived TypeDefs permitted)
-	 * @returns true if baseDataType is valid else false
+	 * @return true if baseDataType is valid else false
 	 */
 	public static boolean isValidBaseDataType(DataType baseDataType) {
 		if (baseDataType instanceof TypeDef) {

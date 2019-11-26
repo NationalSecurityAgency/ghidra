@@ -263,7 +263,7 @@ public class FileCache {
 	 *
 	 * @param pusher functional callback that will accept an {@link OutputStream} and write
 	 * to it.
-	 * <pre> (os) -> { os.write(.....); }</pre>
+	 * <pre> (os) -&gt; { os.write(.....); }</pre>
 	 * @param monitor {@link TaskMonitor} that will be checked for cancel and updated with
 	 * file io progress.
 	 * @return a new {@link FileCacheEntry} with the newly added cache file's File and MD5,

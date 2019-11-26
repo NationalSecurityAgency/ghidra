@@ -411,7 +411,7 @@ public class InformationBlock {
     /**
      * Returns the index to the start of the resource table,
      * relative to the beginning of the NE windows header.
-     * @returns the index to the start of the resource table
+     * @return the index to the start of the resource table
      */
     short getResourceTableOffset() {
         return ne_rsrctab;

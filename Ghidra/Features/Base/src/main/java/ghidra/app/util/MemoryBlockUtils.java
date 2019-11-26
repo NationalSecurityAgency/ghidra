@@ -77,7 +77,6 @@ public class MemoryBlockUtils {
 	 * @param isOverlay if true, the block will be created in a new overlay space for that block
 	 * @param name the name of the new block.
 	 * @param start the starting address of the new block.
-	 * @param is source of the data used to fill the block or null for zero initialization.
 	 * @param length the length of the new block
 	 * @param comment the comment text to associate with the new block.
 	 * @param source the source of the block (This field is not well defined - currently another comment)

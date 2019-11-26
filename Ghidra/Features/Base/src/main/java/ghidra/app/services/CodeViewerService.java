@@ -119,7 +119,6 @@ public interface CodeViewerService {
 	/**
 	 * Set a listing panel on the code viewer.
 	 * @param listingPanel the panel to add.
-	 * @param listener the listener to be notified if the new listingPanel is to be removed.
 	 */
 	public void setListingPanel(ListingPanel listingPanel);
 

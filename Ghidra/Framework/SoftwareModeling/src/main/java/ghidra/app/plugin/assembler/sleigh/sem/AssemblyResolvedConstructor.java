@@ -37,9 +37,10 @@ import ghidra.util.StringUtilities;
 /**
  * A {@link AssemblyResolution} indicating successful application of a constructor
  * 
- * This is almost analogous to {@link DisjointPattern}, in that is joins an instruction
- * {@link AssemblyPatternBlock} with a corresponding context {@link AssemblyPatternBlock}. However,
- * this object is mutable, and it collects backfill records, as well as forbidden patterns.
+ * This is almost analogous to {@link ghidra.app.plugin.processors.sleigh.pattern.DisjointPattern
+ * DisjointPattern}, in that is joins an instruction {@link AssemblyPatternBlock} with a corresponding
+ * context {@link AssemblyPatternBlock}. However, this object is mutable, and it collects backfill records,
+ * as well as forbidden patterns.
  * 
  * When the applied constructor is from the "instruction" subtable, this represents a fully-
  * constructed instruction with required context. All backfill records ought to be resolved and
@@ -112,7 +113,8 @@ public class AssemblyResolvedConstructor extends AssemblyResolution {
 	 * 
 	 * This was used primarily in testing, to specify expected results.
 	 * @param str the string representation: "{@code ins:[pattern],ctx:[pattern]}"
-	 * @see StringUtilities#convertHexStringToMaskedValue(AtomicLong, AtomicLong, String, int, int, String) 
+	 * @see ghidra.util.NumericUtilities#convertHexStringToMaskedValue(AtomicLong, AtomicLong, String, int, int, String)
+	 * NumericUtilities.convertHexStringToMaskedValue(AtomicLong, AtomicLong, String, int, int, String)
 	 * @param description a description of the resolution
 	 * @param children any children involved in the resolution
 	 * @return the decoded resolution
@@ -176,7 +178,7 @@ public class AssemblyResolvedConstructor extends AssemblyResolution {
 	/**
 	 * Truncate (unshift) the resolved instruction pattern from the left
 	 * 
-	 * @note This drops all backfill and forbidden pattern records, since this method is typically
+	 * NOTE: This drops all backfill and forbidden pattern records, since this method is typically
 	 *       used to read token fields rather than passed around for resolution.
 	 * @param amt the number of bytes to remove from the left
 	 * @return the result
@@ -338,7 +340,7 @@ public class AssemblyResolvedConstructor extends AssemblyResolution {
 	 * Duplicate this resolution, with additional description text appended
 	 * @param append the text to append
 	 * @return the duplicate
-	 * @note An additional separator {@code ": "} is inserted
+	 * NOTE: An additional separator {@code ": "} is inserted
 	 */
 	public AssemblyResolvedConstructor copyAppendDescription(String append) {
 		AssemblyResolvedConstructor cp = new AssemblyResolvedConstructor(
@@ -453,8 +455,8 @@ public class AssemblyResolvedConstructor extends AssemblyResolution {
 	 * This is used to ensure each operand is encoded at the correct offset
 	 * @return the length of the instruction block
 	 * 
-	 * @note this DOES include the offset
-	 * @note this DOES include pending backfills
+	 * NOTE: this DOES include the offset
+	 * NOTE: this DOES include pending backfills
 	 */
 	public int getInstructionLength() {
 		int inslen = ins.length();
@@ -468,8 +470,8 @@ public class AssemblyResolvedConstructor extends AssemblyResolution {
 	 * Get the length of the instruction encoding, excluding trailing undefined bytes
 	 * @return the length of the defined bytes in the instruction block
 	 * 
-	 * @note this DOES include the offset
-	 * @note this DOES NOT include pending backfills
+	 * NOTE: this DOES include the offset
+	 * NOTE: this DOES NOT include pending backfills
 	 */
 	public int getDefinedInstructionLength() {
 		byte[] imsk = ins.getMask();
@@ -628,7 +630,7 @@ public class AssemblyResolvedConstructor extends AssemblyResolution {
 	 * the sequence mentioned above, since {@link AssemblyPatternBlock#possibleVals()} on its own
 	 * may yield bytes that do not produce the desired instruction. 
 	 * 
-	 * @note The implementation is based on {@link AssemblyPatternBlock#possibleVals()}, so be
+	 * NOTE: The implementation is based on {@link AssemblyPatternBlock#possibleVals()}, so be
 	 * aware that a single array is reused for each iterate. You should not retain a pointer to the
 	 * array, but rather make a copy.
 	 * 

@@ -455,11 +455,13 @@ public class ParamEntry {
 	 * If it is contained, return the endian aware offset of (op2,sz2)
 	 * I.e. if the least significant byte of the op2 range falls on the least significant
 	 * byte of the op1 range, return 0.  If it intersects the second least significant, return 1, etc.
-	 * @param op1   base address of first range
-	 * @param sz1   size of first range
-	 * @param op2   base address of second range
-	 * @param sz2   size of second range
+	 * @param spc1  the first address space
+	 * @param offset1 the first offset
+	 * @param sz1   size of first space
+	 * @param spc2  the second address space
+	 * @param sz2   size of second space
 	 * @param forceleft  is true if containment is forced to be on the left even for big endian
+	 * @param isBigEndian true if big endian
 	 * @return the endian aware offset or -1
 	 */
 	public static int justifiedContainAddress(AddressSpace spc1,long offset1,int sz1,AddressSpace spc2,long offset2,int sz2,boolean forceleft,boolean isBigEndian) {

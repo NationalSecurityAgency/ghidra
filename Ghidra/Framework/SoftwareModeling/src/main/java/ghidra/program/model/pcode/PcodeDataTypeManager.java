@@ -155,8 +155,8 @@ public class PcodeDataTypeManager {
 
 	/**
 	 * Get the data type that corresponds to the given XML element.
-	 * @param el element
-	 * @return data type
+	 * @param parser the xml parser
+	 * @return the read data type
 	 * @throws PcodeXMLException if the data type could be resolved from the 
 	 * element 
 	 */

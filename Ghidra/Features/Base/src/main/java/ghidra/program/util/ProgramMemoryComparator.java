@@ -66,7 +66,7 @@ public class ProgramMemoryComparator {
 	private AddressSet compatibleOnlyInTwo;
 
     /**
-     * <CODE>ProgramMemoryComparator/CODE> is used to determine the memory
+     * <CODE>ProgramMemoryComparator</CODE> is used to determine the memory
      * address differences between two programs.
      *
      * @param program1 the first program

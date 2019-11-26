@@ -34,7 +34,7 @@ public class XmlPullParserFactory {
 	 * 
 	 * @param input
 	 *            the input XML stream
-	 * @param name
+	 * @param inputName
 	 *            the name of the stream
 	 * @param errHandler
 	 *            the XML error handler
@@ -100,8 +100,6 @@ public class XmlPullParserFactory {
 	 *            true if the parse should validate against the DTD
 	 * @throws SAXException
 	 *             if an XML parse error occurs
-	 * @throws IOException
-	 *             if an i/o error occurs
 	 */
 	public static XmlPullParser create(String input, String inputName, ErrorHandler errHandler,
 			boolean validate) throws SAXException {

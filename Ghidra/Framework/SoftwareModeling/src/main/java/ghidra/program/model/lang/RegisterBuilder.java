@@ -218,7 +218,7 @@ public class RegisterBuilder {
 	/**
 	 * Add a vector lane size to the specified register.
 	 * @param registerName register name
-	 * @param registerFlag Register defined flag bit(s)
+	 * @param laneSizeInBytes the size of the lane to add in bytes
 	 * @return true if register was found, else false
 	 * @throws UnsupportedOperationException if register is unable to support the definition of 
 	 * lanes.

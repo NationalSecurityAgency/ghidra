@@ -75,7 +75,7 @@ public interface ColorizingService {
 	 * @param set The address at which the given color will be applied
 	 * @param color The color to apply
 	 * 
-	 * @see #clearBackgroundColor(AddressSetView))
+	 * @see #clearBackgroundColor(AddressSetView)
 	 * @see #getBackgroundColor(Address)
 	 */
 	public void setBackgroundColor(AddressSetView set, Color color);

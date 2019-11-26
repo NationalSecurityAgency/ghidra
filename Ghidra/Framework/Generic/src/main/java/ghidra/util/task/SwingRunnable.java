@@ -22,8 +22,8 @@ package ghidra.util.task;
 * Pass a SwingRunnable to the RunManager if follow on work needs to be done
 * after the <code>run()</code> method completes.
 * 
-* @see RunManager#run(MonitoredRunnable, String)
-* @see ghidra.util.task.RunManager#run(MonitoredRunnable, String, int)
+* @see RunManager#runNext(MonitoredRunnable, String)
+* @see RunManager#runNext(MonitoredRunnable, String, int)
 *  
 */
 

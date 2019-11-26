@@ -57,7 +57,7 @@ public class GhidraRandomAccessFile {
 	 * but adds buffering to limit the amount.
 	 * <p>
 	 *
-	 * <a name="mode"><p> The <tt>mode</tt> argument specifies the access mode
+	 * <a name="mode"></a><p> The <tt>mode</tt> argument specifies the access mode
 	 * in which the file is to be opened.  The permitted values and their
 	 * meanings are:
 	 *
@@ -198,13 +198,13 @@ public class GhidraRandomAccessFile {
 	}
 
 	/**
-	 * Reads up to <code>len</code> bytes of data from this file into an
+	 * Reads up to <code>length</code> bytes of data from this file into an
 	 * array of bytes. This method blocks until at least one byte of input
 	 * is available.
 	 *
 	 * @param      b     the buffer into which the data is read.
-	 * @param      off   the start offset of the data.
-	 * @param      len   the maximum number of bytes read.
+	 * @param      offset   the start offset of the data.
+	 * @param      length   the maximum number of bytes read.
 	 * @return     the total number of bytes read into the buffer, or
 	 *             <code>-1</code> if there is no more data because the end of
 	 *             the file has been reached.

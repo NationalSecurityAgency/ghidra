@@ -45,7 +45,7 @@ import java.util.concurrent.locks.ReentrantLock;
  * <U>Suspending:</U><BR>
  * The GTaskManager can be suspended.  When suspended, any currently running task will continue to
  * run, but no new or currently scheduled tasks will be executed until the GTaskManager is resumed.
- * There is a special method, {@link #runNextTaskEvenIfSuspended()}, that will run the next scheduled task
+ * There is a special method, {@link #runNextTaskEvenWhenSuspended()}, that will run the next scheduled task
  * even if the GTaskManager is suspended.
  * <P>
  * <U>Yielding to Other Tasks:</U><BR>

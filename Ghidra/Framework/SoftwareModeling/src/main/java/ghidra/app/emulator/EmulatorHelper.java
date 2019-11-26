@@ -318,7 +318,7 @@ public class EmulatorHelper implements MemoryFaultHandler, EmulatorConfiguration
 
 	/**
 	 * Establish breakpoint
-	 * @param address memory address for new breakpoint
+	 * @param addr memory address for new breakpoint
 	 */
 	public void setBreakpoint(Address addr) {
 		emulator.getBreakTable().registerAddressCallback(addr, addressBreak);
@@ -326,7 +326,7 @@ public class EmulatorHelper implements MemoryFaultHandler, EmulatorConfiguration
 
 	/**
 	 * Clear breakpoint
-	 * @param address memory address for breakpoint to be cleared
+	 * @param addr memory address for breakpoint to be cleared
 	 */
 	public void clearBreakpoint(Address addr) {
 		emulator.getBreakTable().unregisterAddressCallback(addr);
@@ -363,8 +363,8 @@ public class EmulatorHelper implements MemoryFaultHandler, EmulatorConfiguration
 	 * Register callback for language defined pcodeop (call other).
 	 * WARNING! Using this method may circumvent the default CALLOTHER emulation support
 	 * when supplied by the Processor module.
-	 * @param pcodeOpName
-	 * @param callback
+	 * @param pcodeOpName the name of the pcode op
+	 * @param callback the callback to register
 	 */
 	public void registerCallOtherCallback(String pcodeOpName, BreakCallBack callback) {
 		emulator.getBreakTable().registerPcodeCallback(pcodeOpName, callback);
@@ -374,8 +374,7 @@ public class EmulatorHelper implements MemoryFaultHandler, EmulatorConfiguration
 	 * Register default callback for language defined pcodeops (call other).
 	 * WARNING! Using this method may circumvent the default CALLOTHER emulation support
 	 * when supplied by the Processor module.
-	 * @param pcodeOpName
-	 * @param callback
+	 * @param callback the default callback to register
 	 */
 	public void registerDefaultCallOtherCallback(BreakCallBack callback) {
 		emulator.getBreakTable().registerPcodeCallback("*", callback);
@@ -383,7 +382,7 @@ public class EmulatorHelper implements MemoryFaultHandler, EmulatorConfiguration
 
 	/**
 	 * Unregister callback for language defined pcodeop (call other).
-	 * @param pcodeOpName
+	 * @param pcodeOpName the name of the pcode op
 	 */
 	public void unregisterCallOtherCallback(String pcodeOpName) {
 		emulator.getBreakTable().unregisterPcodeCallback(pcodeOpName);

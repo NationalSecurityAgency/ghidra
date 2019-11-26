@@ -37,7 +37,7 @@ public interface InstructionContext {
 	 * Get the read-only processor context containing the context-register state
 	 * state at the corresponding instruction.  This is primarily used during the 
 	 * parse phase to provide the initial context-register state.
-	 * @returns the read-only processor context
+	 * @return the read-only processor context
 	 */
 	public ProcessorContextView getProcessorContext();
 

@@ -69,7 +69,6 @@ public interface ByteProvider extends Closeable {
 	 * Returns true if the specified index is valid.
 	 * @param index the index in the byte provider
 	 * @return returns true if the specified index is valid
-	 * @exception IOException if an I/O error occurs
 	 */
 	public boolean isValidIndex(long index);
 

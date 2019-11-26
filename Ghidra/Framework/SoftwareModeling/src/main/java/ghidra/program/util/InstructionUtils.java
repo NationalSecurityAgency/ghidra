@@ -129,7 +129,7 @@ public class InstructionUtils {
 	/**
 	 * Format instruction operand objects
 	 * @param instr instruction
-	 * @param int opIndex
+	 * @param opIndex the operand index
 	 * @return formatted array of strings
 	 */
 	public static String[] getFormatedOperandObjects(Instruction instr, int opIndex) {

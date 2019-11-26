@@ -74,7 +74,6 @@ public class CharacterIterator {
 	/**
 	 * Sets the position to the specified position in the text.
 	 * @param index the position within the text.  
-	 * @return the character at the specified position
 	 * @throws IllegalArgumentException if index is not in range from 0 to string.length()-1 
 	 */
 	public void setIndex(int index) {

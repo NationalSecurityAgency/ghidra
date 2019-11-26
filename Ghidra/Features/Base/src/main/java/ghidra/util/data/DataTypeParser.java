@@ -112,7 +112,7 @@ public class DataTypeParser {
 	 * @param dataTypeManagerService data-type manager tool service, or null
 	 * @param allowedTypes constrains which data-types may be parsed
 	 *
-	 * @see #DataTypeParser(DataTypeManagerService, AllowedDataTypes)
+	 * @see #DataTypeParser(DataTypeQueryService, AllowedDataTypes)
 	 */
 	public DataTypeParser(DataTypeManager sourceDataTypeManager,
 			DataTypeManager destinationDataTypeManager,

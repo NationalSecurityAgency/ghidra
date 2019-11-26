@@ -63,7 +63,6 @@ public interface BookmarkManager {
 	 * @param icon marker icon which may get scaled
 	 * @param color marker color
 	 * @return bookmark type object
-	 * @throws IOException if a database error occurs while adding the new type.
 	 */
 	BookmarkType defineType(String type, ImageIcon icon, Color color, int priority);
 

@@ -225,7 +225,7 @@ public interface Structure extends Composite {
 	 * For example, suppose dt1 contains dt2. Therefore it is not valid
 	 * to replace a dt2 component with dt1 since this would cause a cyclic 
 	 * dependency.  In addition, any attempt to replace an existing bit-field
-	 * component or specify a {@link BitFieldDatatype} will produce this error.
+	 * component or specify a {@link BitFieldDataType} will produce this error.
 	 * @throws ArrayIndexOutOfBoundsException if component index is out of bounds
 	 */
 	public DataTypeComponent replace(int index, DataType dataType, int length);
@@ -246,7 +246,7 @@ public interface Structure extends Composite {
 	 * For example, suppose dt1 contains dt2. Therefore it is not valid
 	 * to replace a dt2 component with dt1 since this would cause a cyclic 
 	 * dependency.  In addition, any attempt to replace an existing bit-field
-	 * component or specify a {@link BitFieldDatatype} will produce this error.
+	 * component or specify a {@link BitFieldDataType} will produce this error.
 	 * @throws ArrayIndexOutOfBoundsException if component index is out of bounds
 	 */
 	public DataTypeComponent replace(int index, DataType dataType, int length, String name,
@@ -272,7 +272,7 @@ public interface Structure extends Composite {
 	 * For example, suppose dt1 contains dt2. Therefore it is not valid
 	 * to replace a dt2 component with dt1 since this would cause a cyclic 
 	 * dependency.  In addition, any attempt to replace an existing bit-field
-	 * component or specify a {@link BitFieldDatatype} will produce this error.
+	 * component or specify a {@link BitFieldDataType} will produce this error.
 	 */
 	public DataTypeComponent replaceAtOffset(int offset, DataType dataType, int length, String name,
 			String comment);
@@ -340,7 +340,7 @@ public interface Structure extends Composite {
 	 * Increases the size of the structure by the given amount by adding undefined datatypes
 	 * at the end of the structure.
 	 * @param amount the amount by which to grow the structure.
-	 * @throws IllegalArgumentException if amount < 1
+	 * @throws IllegalArgumentException if amount &lt; 1
 	 */
 	public void growStructure(int amount);
 
@@ -348,7 +348,7 @@ public interface Structure extends Composite {
 
 	/**
 	 * <code>BitOffsetComparator</code> provides ability to compare an normalized bit offset
-	 * (see {@link #getNormalizedBitfieldOffset(int, int, int, int, boolean)} with a
+	 * (see {@link #getNormalizedBitfieldOffset(int, int, int, int, boolean)}) with a
 	 * {@link DataTypeComponent} object.  The offset will be considered equal (0) if the component 
 	 * contains the offset.  A normalized component bit numbering is used to establish the footprint
 	 * of each component with an ordinal-based ordering (assumes specific LE/BE allocation rules).  
@@ -359,6 +359,7 @@ public interface Structure extends Composite {
 	 * storage unit (assumes lsb-allocated-first).  Both cases result in a normalized view where 
 	 * normalized bit-0 is allocated first.
 	 * 
+	 * <pre>{@literal
 	 * Example:
 	 *    
 	 * Big-Endian (normalized view):
@@ -371,6 +372,7 @@ public interface Structure extends Composite {
 	 *    | . . . . . . 6 7 | 8 . . . . . . . |
 	 *    |------------>|                       bit-offset (6, lsb position within storage unit)
 	 *                  |<--->|                 bit-size (3)
+	 * }</pre>
 	 */
 	public static class BitOffsetComparator implements Comparator<Object> {
 

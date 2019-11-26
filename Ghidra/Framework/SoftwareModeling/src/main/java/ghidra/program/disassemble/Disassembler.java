@@ -181,7 +181,6 @@ public class Disassembler implements DisassemblerConflictHandler {
 	/**
 	 * Get a suitable disassembler instance.
 	 * @param program the program to be disassembled.
-	 * @param language the language module that "understands" the bytes.
 	 * @param markBadInstructions if true bad instructions will be marked
 	 * @param markUnimplementedPcode if true instructions with unimplemented pcode will be marked
 	 * @param restrictToExecuteMemory if true disassembly will only be permitted with executable memory blocks
@@ -243,7 +242,6 @@ public class Disassembler implements DisassemblerConflictHandler {
 	/**
 	 * Disassembler constructor
 	 * @param program the program to be disassembled.
-	 * @param language the language module that "understands" the bytes.
 	 * @param markBadInstructions if true bad instructions will be marked
 	 * @param markUnimplementedPcode if true instructions with unimplemented pcode will be marked
 	 * @param restrictToExecuteMemory if true disassembly will only be permitted with executable memory blocks

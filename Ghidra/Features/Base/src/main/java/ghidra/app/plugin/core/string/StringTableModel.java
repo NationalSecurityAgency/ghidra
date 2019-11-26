@@ -32,7 +32,7 @@ import ghidra.util.table.field.*;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * Table model for the Search -> For Strings... result dialog.
+ * Table model for the Search -&gt; For Strings... result dialog.
  * <p>
  */
 public class StringTableModel extends AddressBasedTableModel<FoundString> {

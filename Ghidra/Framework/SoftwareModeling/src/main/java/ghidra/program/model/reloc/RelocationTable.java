@@ -36,7 +36,7 @@ public interface RelocationTable {
 	 * @param type the type of relocation to perform
 	 * @param values the values needed when performing the relocation
 	 * @param bytes original instruction bytes affected by relocation
-	 * @param the name of the symbol being relocated; may be null 
+	 * @param symbolName the name of the symbol being relocated; may be null 
 	 * @return the newly added relocation object
 	 */
 	public Relocation add(Address addr, int type, long[] values, byte[] bytes, String symbolName);

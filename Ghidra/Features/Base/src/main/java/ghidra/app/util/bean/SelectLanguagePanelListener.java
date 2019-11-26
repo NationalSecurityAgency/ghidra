@@ -29,7 +29,8 @@ public interface SelectLanguagePanelListener {
     /**
      * This method is invoked every time a languauge is selected.
      * NOTE: the language could be null.
-     * @param language the selected language.
+     * @param langID the selected language id.
+     * @param compilerSpecID the selected compiler spec id.
      */
     public void selectIDValidation(LanguageID langID, CompilerSpecID compilerSpecID);
 }

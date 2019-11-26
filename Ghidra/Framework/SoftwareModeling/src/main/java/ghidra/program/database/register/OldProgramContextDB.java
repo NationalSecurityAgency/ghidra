@@ -72,15 +72,10 @@ public class OldProgramContextDB implements ProgramContext, DefaultProgramContex
 	/**
 	 * Constructs a new ProgramContextDB object
 	 * @param dbHandle the handle to the database.
-	 * @param openMode the mode that the program is opened.
 	 * @param errHandler the error handler
 	 * @param language the processor language
 	 * @param addrMap the address map.
 	 * @param lock the program synchronization lock
-	 * @param monitor the taskmonitor used if upgrading.
-	 * @throws VersionException thrown if the database is the save version as this class.
-	 * @throws CancelledException thrown if the user cancels the upgrade.
-	 * @throws IOException thrown if a database io error occurs.
 	 */
 	public OldProgramContextDB(DBHandle dbHandle, ErrorHandler errHandler, Language language,
 			AddressMap addrMap, Lock lock) {

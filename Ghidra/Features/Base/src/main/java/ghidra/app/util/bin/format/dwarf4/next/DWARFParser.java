@@ -175,7 +175,7 @@ public class DWARFParser {
 	/**
 	 * Imports DWARF information according to the {@link DWARFImportOptions} set.
 	 * <p>
-	 * {@link #checkPreconditions()} must be called before this.
+	 * {@link DWARFProgram#checkPreconditions(TaskMonitor)} must be called before this.
 	 * <p>
 	 * @return
 	 * @throws IOException

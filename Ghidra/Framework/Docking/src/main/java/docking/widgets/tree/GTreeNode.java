@@ -54,7 +54,7 @@ import util.CollectionUtils;
  *      i.e., new nodes are created), then, by default, the expanded and selected state
  *      feature will be unable to find the correct nodes, since the default <tt>equals()</tt>
  *      method on <tt>GTreeNode</tt> performs a comparison based upon instances.  To fix this problem,
- *      the {@link #equals()} method has been implemented such that nodes are considered equal if they have
+ *      the {@link #equals(Object)} method has been implemented such that nodes are considered equal if they have
  *      the same name. The {@link #hashCode()} method will return the hash of the name.  The name
  *      attribute was chosen because it should be the most unique and descriptive piece of information
  *      available in a generic GTreeNode.

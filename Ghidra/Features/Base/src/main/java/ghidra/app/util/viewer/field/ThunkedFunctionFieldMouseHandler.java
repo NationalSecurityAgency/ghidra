@@ -34,9 +34,6 @@ public class ThunkedFunctionFieldMouseHandler implements FieldMouseHandlerExtens
 	private final static Class<?>[] SUPPORTED_CLASSES = new Class[] {
 		ThunkedFunctionFieldLocation.class, FunctionNameFieldLocation.class };
 
-	/**
-	 * @see FieldMouseHandlerExtension#fieldElementClicked(Object, Navigatable, MouseEvent, ServiceProvider)
-	 */
 	@Override
 	public boolean fieldElementClicked(Object clickedObject, Navigatable navigatable,
 			ProgramLocation location, MouseEvent mouseEvent, ServiceProvider serviceProvider) {
@@ -85,9 +82,6 @@ public class ThunkedFunctionFieldMouseHandler implements FieldMouseHandlerExtens
 		return goToService.goTo(navigatable, gotoAddr);
 	}
 
-	/**
-	 * @see FieldMouseHandlerExtension#getSupportedProgramLocations()
-	 */
 	@Override
 	public Class<?>[] getSupportedProgramLocations() {
 		return SUPPORTED_CLASSES;

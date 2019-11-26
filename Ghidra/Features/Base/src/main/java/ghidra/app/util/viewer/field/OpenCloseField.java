@@ -76,25 +76,16 @@ public class OpenCloseField implements ListingField {
 		this.toggleHandleSize = OpenCloseField.getOpenCloseHandleSize();
 	}
 
-	/**
-	 * @see ghidra.app.util.viewer.field.ListingField#getFieldFactory()
-	 */
 	@Override
 	public FieldFactory getFieldFactory() {
 		return factory;
 	}
 
-	/**
-	 * @see ghidra.app.util.viewer.field.ListingField#getFieldModel()
-	 */
 	@Override
 	public FieldFormatModel getFieldModel() {
 		return factory.getFieldModel();
 	}
 
-	/**
-	 * @see ghidra.app.util.viewer.field.ListingField#getProxy()
-	 */
 	@Override
 	public ProxyObj getProxy() {
 		if (proxy == null) {
@@ -103,17 +94,11 @@ public class OpenCloseField implements ListingField {
 		return proxy;
 	}
 
-	/**
-	 * @see docking.widgets.fieldpanel.field.Field#getHeightAbove()
-	 */
 	@Override
 	public int getHeightAbove() {
 		return heightAbove;
 	}
 
-	/**
-	 * Returns the heightBelow the imaginary alignment line.
-	 */
 	@Override
 	public int getHeightBelow() {
 		return heightBelow;
@@ -131,9 +116,6 @@ public class OpenCloseField implements ListingField {
 		this.heightBelow = heightBelow;
 	}
 
-	/**
-	 * @see docking.widgets.fieldpanel.field.Field#getWidth()
-	 */
 	@Override
 	public int getWidth() {
 		return (indentLevel + 1) * fieldWidth;
@@ -144,17 +126,11 @@ public class OpenCloseField implements ListingField {
 		return getWidth(); // does the width of this field vary?
 	}
 
-	/**
-	 * @see docking.widgets.fieldpanel.field.Field#getHeight()
-	 */
 	@Override
 	public int getHeight() {
 		return heightAbove + heightBelow;
 	}
 
-	/**
-	 * @see docking.widgets.fieldpanel.field.Field#getStartX()
-	 */
 	@Override
 	public int getStartX() {
 		return startX;
@@ -175,9 +151,6 @@ public class OpenCloseField implements ListingField {
 		this.startY = startY;
 	}
 
-	/**
-	 * @see docking.widgets.fieldpanel.field.Field#paint(java.awt.Graphics, docking.widgets.fieldpanel.internal.PaintContext, boolean, docking.widgets.fieldpanel.support.RowColLocation)
-	 */
 	@Override
 	public void paint(JComponent c, Graphics g, PaintContext context,
 			FieldBackgroundColorManager map, RowColLocation cursorLoc, int rowHeight) {
@@ -249,9 +222,6 @@ public class OpenCloseField implements ListingField {
 		}
 	}
 
-	/**
-	 * @see docking.widgets.fieldpanel.field.Field#contains(int, int)
-	 */
 	@Override
 	public boolean contains(int x, int y) {
 		if ((x < startX) || (x >= startX + fieldWidth) || (y < startY) ||
@@ -261,65 +231,41 @@ public class OpenCloseField implements ListingField {
 		return true;
 	}
 
-	/**
-	 * @see docking.widgets.fieldpanel.field.Field#getNumRows()
-	 */
 	@Override
 	public int getNumRows() {
 		return 1;
 	}
 
-	/**
-	 * @see docking.widgets.fieldpanel.field.Field#getNumCols(int)
-	 */
 	@Override
 	public int getNumCols(int row) {
 		return 0;
 	}
 
-	/**
-	 * @see docking.widgets.fieldpanel.field.Field#getX(int, int)
-	 */
 	@Override
 	public int getX(int row, int col) {
 		return startX;
 	}
 
-	/**
-	 * @see docking.widgets.fieldpanel.field.Field#getY(int)
-	 */
 	@Override
 	public int getY(int row) {
 		return startY;
 	}
 
-	/**
-	 * @see docking.widgets.fieldpanel.field.Field#getRow(int)
-	 */
 	@Override
 	public int getRow(int y) {
 		return 0;
 	}
 
-	/**
-	 * @see docking.widgets.fieldpanel.field.Field#getCol(int, int)
-	 */
 	@Override
 	public int getCol(int row, int x) {
 		return 0;
 	}
 
-	/**
-	 * @see docking.widgets.fieldpanel.field.Field#isValid(int, int)
-	 */
 	@Override
 	public boolean isValid(int row, int col) {
 		return ((row == 0) && (col == 0));
 	}
 
-	/**
-	 * @see docking.widgets.fieldpanel.field.Field#getCursorBounds(int, int)
-	 */
 	@Override
 	public Rectangle getCursorBounds(int row, int col) {
 		if (!isValid(row, col)) {
@@ -329,9 +275,6 @@ public class OpenCloseField implements ListingField {
 		return new Rectangle(startX, -heightAbove, 2, heightAbove + heightBelow);
 	}
 
-	/**
-	 * @see docking.widgets.fieldpanel.field.Field#getScrollableUnitIncrement(int, int, int)
-	 */
 	@Override
 	public int getScrollableUnitIncrement(int topOfScreen, int direction, int max) {
 		if ((topOfScreen < startY) || (topOfScreen > startY + heightAbove + heightBelow)) {
@@ -344,26 +287,17 @@ public class OpenCloseField implements ListingField {
 		return startY - topOfScreen;
 	}
 
-	/**
-	 * @see docking.widgets.fieldpanel.field.Field#isPrimary()
-	 */
 	@Override
 	public boolean isPrimary() {
 		return false;
 	}
 
-	/**
-	 * @see docking.widgets.fieldpanel.field.Field#rowHeightChanged(int, int)
-	 */
 	@Override
 	public void rowHeightChanged(int newHeightAbove, int newHeightBelow) {
 		this.heightAbove = newHeightAbove;
 		this.heightBelow = newHeightBelow;
 	}
 
-	/**
-	 * @see docking.widgets.fieldpanel.field.Field#getText()
-	 */
 	@Override
 	public String getText() {
 		return "";
@@ -374,25 +308,16 @@ public class OpenCloseField implements ListingField {
 		return "";
 	}
 
-	/**
-	 * @see docking.widgets.fieldpanel.field.Field#textOffsetToScreenLocation(int)
-	 */
 	@Override
 	public RowColLocation textOffsetToScreenLocation(int textOffset) {
 		return new RowColLocation(0, 0);
 	}
 
-	/**
-	 * @see docking.widgets.fieldpanel.field.Field#screenLocationToTextOffset(int, int)
-	 */
 	@Override
 	public int screenLocationToTextOffset(int row, int col) {
 		return 0;
 	}
 
-	/**
-	 * @see ghidra.app.util.viewer.field.ListingField#getClickedObject(docking.widgets.fieldpanel.support.FieldLocation)
-	 */
 	@Override
 	public Object getClickedObject(FieldLocation fieldLocation) {
 		return this;

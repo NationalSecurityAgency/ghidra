@@ -80,9 +80,7 @@ public class FieldPanelCoordinator implements ViewListener {
 		panels = newPanels;
 	}
 	
-	/**
-	 * @see docking.widgets.fieldpanel.listener.ViewListener#viewChanged(docking.widgets.fieldpanel.FieldPanel, int, int)
-	 */
+	@Override
 	public void viewChanged(FieldPanel fp, BigInteger index, int xPos, int yPos) {
 		if (valuesChanging) return;
 		valuesChanging = true;

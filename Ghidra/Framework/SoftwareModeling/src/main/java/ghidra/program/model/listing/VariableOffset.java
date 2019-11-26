@@ -60,7 +60,8 @@ public class VariableOffset {
 
 	/**
 	 * Constructor for an explicit variable reference.
-	 * @param vref
+	 * @param ref the reference
+	 * @param var the variable being referenced
 	 */
 	public VariableOffset(Reference ref, Variable var) {
 

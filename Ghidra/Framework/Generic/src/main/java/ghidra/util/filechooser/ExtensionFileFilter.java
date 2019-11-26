@@ -32,7 +32,7 @@ import java.util.Hashtable;
  * <pre>
  *     GhidraFileChooser chooser = new GhidraFileChooser();
  *     ExtensionFileFilter filter = new ExtensionFileFilter(
- *                   new String{"gif", "jpg"}, "JPEG & GIF Images")
+ *                   new String{"gif", "jpg"}, "JPEG &amp; GIF Images")
  *     chooser.addFileFilter(filter);
  *</pre>
  */

@@ -34,7 +34,7 @@ import java.util.concurrent.LinkedBlockingQueue;
  * <P>
  * Examples:
  * <p>
- * <pre>
+ * <pre>{@literal
  * QCallback<I, R> callback = new AbstractQCallback<I, R>() {
  *     public R process(I item, TaskMonitor monitor) {
  *         // do work here...
@@ -53,7 +53,7 @@ import java.util.concurrent.LinkedBlockingQueue;
  * 				setMaxInProgress(1).
  * 				build(callback);
  * 
- * </pre>
+ * }</pre>
  * <p>
  *  
  * Note: if you wish to take advantage of blocking when adding items to the {@link ConcurrentQ}, 
@@ -180,7 +180,7 @@ public class ConcurrentQBuilder<I, R> {
 	}
 
 	/**
-	 * @see {@link ConcurrentQ#setMonitor(TaskMonitor, boolean)}
+	 * @see ConcurrentQ#setMonitor(TaskMonitor, boolean)
 	 * <p>
 	 * The default value is <tt>true</tt>. 
 	 */

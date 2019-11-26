@@ -25,7 +25,7 @@ import docking.widgets.checkbox.GHtmlCheckBox;
  * A 'dynamic' label (the text can be changed), with HTML rendering disabled.
  * <p>
  * See also:
- * <table border=1>
+ * <table border=1><caption></caption>
  * 	<tr><th>Class</th><th>Mutable text</th><th>HTML rendering</th><th>Description</th></tr>
  *  <tr><td>{@link GLabel}</td><td>Immutable</td><td>NO</td><td>Non-html unchangeable label</td></tr>
  *  <tr><td>{@link GDLabel}</td><td>Mutable</td><td>NO</td><td>Non-html changeable label</td></tr>

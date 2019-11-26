@@ -19,18 +19,18 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
 
 /**
- * The <CODE>FunctionCallFixupFieldLocation</CODE> class provides specific information
- * about the Function call-fixup field within a program location.
+ * The <CODE>ThunkedFunctionFieldLocation</CODE> class provides specific information
+ * about a thunked function within a program location.
  */
 public class ThunkedFunctionFieldLocation extends FunctionLocation {
 
 	/**
-	 * Construct a new FunctionCallFixupFieldLocation object.
+	 * Construct a new ThunkedFunctionFieldLocation object.
 	 * 
-	 * @param program
+	 * @param program the program containing the thinked function
 	 * @param locationAddr the address of the listing location (i.e., referent code unit)
 	 * @param functionAddr the function address
-	 * @param callFixupName the function call-fixup field text String at this location.
+	 * @param thunkedFunctionAddr the thunked function address
 	 * @param charOffset field character offset
 	 */
 	public ThunkedFunctionFieldLocation(Program program, Address locationAddr,

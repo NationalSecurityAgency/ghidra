@@ -45,9 +45,9 @@ import ghidra.util.task.TaskMonitor;
  * program and the modified program being checked into version control.
  * <br>Indirect conflicts include:
  * <ul>
- * <li>bytes & code units</li>
- * <li>bytes & equates</li>
- * <li>code units & equates</li>
+ * <li>bytes &amp; code units</li>
+ * <li>bytes &amp; equates</li>
+ * <li>code units &amp; equates</li>
  * </ul>
  * <br>Important: This class is intended to be used only for a single program
  * version merge. It should be constructed, followed by an autoMerge(), and lastly

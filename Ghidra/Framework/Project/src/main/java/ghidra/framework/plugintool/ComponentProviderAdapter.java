@@ -29,8 +29,9 @@ public abstract class ComponentProviderAdapter extends ComponentProvider {
 	protected PluginTool tool;
 
 	/**
-	 * Creates a new component provider with a default location of {@link PluginTool#WINDOW}.
-	 * @param windowMgr The window manager that will manage and show this provider.
+	 * Creates a new component provider with a default location of
+	 * {@link docking.WindowPosition#WINDOW WindowPosition.WINDOW}.
+	 * @param tool the plugin tool.
 	 * @param name The providers name.  This is used to group similar providers into a tab within
 	 *        the same window.
 	 * @param owner The owner of this provider, usually a plugin name.
@@ -40,8 +41,9 @@ public abstract class ComponentProviderAdapter extends ComponentProvider {
 	}
 
 	/**
-	 * Creates a new component provider with a default location of {@link PluginTool#WINDOW}.
-	 * @param windowMgr The window manager that will manage and show this provider.
+	 * Creates a new component provider with a default location of
+	 * {@link docking.WindowPosition#WINDOW WindowPosition.WINDOW}.
+	 * @param tool the plugin tool.
 	 * @param name The providers name.  This is used to group similar providers into a tab within
 	 *        the same window.
 	 * @param owner The owner of this provider, usually a plugin name.

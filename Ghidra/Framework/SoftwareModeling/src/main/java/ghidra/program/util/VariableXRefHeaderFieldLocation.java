@@ -30,11 +30,10 @@ public class VariableXRefHeaderFieldLocation extends VariableXRefFieldLocation {
 
 	/**
 	 * Creates a variable xref field program location
-	 * @param program the program
+	 * @param program the program of the location
 	 * @param var the variable
-	 * @param index the 
-	 * @param charOffset
-	 * @param refAddr
+	 * @param charOffset the character offset
+	 * @param refAddr the xref address
 	 */
 	public VariableXRefHeaderFieldLocation(Program program, Variable var, int charOffset,
 			Address refAddr) {

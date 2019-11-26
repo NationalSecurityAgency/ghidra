@@ -61,9 +61,8 @@ public class StringAttribute<T extends KeyedObject> extends Attribute<T> {
 		return false;
 	}
 
-	/** Return the value associated to the specied KeyedObject.
-	 * @throws NoValueException if the value has not been set or 
-	 * the KeyedObject does not belong to the owningSet.
+	/**
+	 * Return the value associated to the specied KeyedObject.
 	 */
 	public String getValue(KeyedObject o) //throws NoValueException
 	{

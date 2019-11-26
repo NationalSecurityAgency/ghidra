@@ -56,7 +56,6 @@ public class RelocationManager implements RelocationTable, ManagerDB {
 	 * @param monitor the task monitor
 	 * @throws VersionException
 	 * @throws IOException
-	 * @throws CancelledException
 	 */
 	public RelocationManager(DBHandle handle, AddressMap addrMap, int openMode, Lock lock,
 			TaskMonitor monitor) throws VersionException, IOException {

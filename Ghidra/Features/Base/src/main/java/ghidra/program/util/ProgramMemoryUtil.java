@@ -413,11 +413,9 @@ public class ProgramMemoryUtil {
 	 * Direct references are only found at addresses that match the indicated alignment. 
 	 * @param program the program whose memory is to be checked.
 	 * @param alignment direct references are to only be found at the indicated alignment in memory.
-	 * @param toAddressSet the set of addresses that we are interested in finding references to.
-	 * @param directReferenceList the list to be populated with possible direct references
+	 * @param codeUnit the code unit to to search for references to.
 	 * @param monitor a task monitor for progress or to allow canceling.
-	 * @return list of addresses referring directly to the toAddress
-	 * @throws CancelledException if the user cancels via the monitor.
+	 * @return list of addresses referring directly to the toAddress.
 	 */
 	public static List<Address> findDirectReferencesCodeUnit(Program program, int alignment,
 			CodeUnit codeUnit, TaskMonitor monitor) {

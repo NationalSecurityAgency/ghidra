@@ -17,7 +17,8 @@ package ghidra.program.model.listing;
 
 /**
  * Represents a function tag object that can be associated with 
- * functions. This maps to the {@link FunctionTagAdapter} table.
+ * functions. This maps to the
+ * {@link ghidra.program.database.function.FunctionTagAdapter FunctionTagAdapter} table.
  */
 public interface FunctionTag extends Comparable<FunctionTag> {
 

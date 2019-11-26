@@ -65,7 +65,6 @@ public class AddressRangeObjectMap<T> {
 	 * @param length the number of addresses to move.
 	 * @param monitor the task monitor.
 	 * @throws CancelledException if the user canceled the operation via the task monitor.
-	 * @throws AddressOverflowException if the length is such that a address wrap occurs
 	 */
 	public void moveAddressRange(Address fromAddr, Address toAddr, long length, TaskMonitor monitor)
 			throws CancelledException {

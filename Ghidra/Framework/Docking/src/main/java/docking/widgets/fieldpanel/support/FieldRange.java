@@ -82,9 +82,8 @@ public class FieldRange implements Comparable<FieldRange> {
 
 	/**
 	 * checks if the given location is contained in the range.
-	 * @param row
-	 * @param column
-	 * @return
+	 * @param loc the field location.
+	 * @return true if the field range contains the specified location.
 	 */
 	public boolean contains(FieldLocation loc) {
 		return (loc.compareTo(start) >= 0) && (loc.compareTo(end) < 0);

@@ -53,7 +53,6 @@ public abstract class GTreeTask extends PriorityJob {
 	 * values on later calls to getSelectedPaths().  So, to handle that 'feature' of the JTree, we
 	 * need to translate the given path to the equivalent path in the current tree (this code may
 	 * not be needed in all uses of this task, but it protects us from the aforementioned case).
-	 * @throws CancelledException 
 	 */
 	protected TreePath translatePath(TreePath path, TaskMonitor monitor) {
 

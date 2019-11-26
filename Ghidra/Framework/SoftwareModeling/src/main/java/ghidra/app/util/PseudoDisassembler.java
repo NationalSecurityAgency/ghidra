@@ -227,7 +227,7 @@ public class PseudoDisassembler {
 	 * 
 	 * @param addr address to disassemble
 	 * @param bytes bytes to use instead of those currently defined in program
-	 * @param PseudoDisassemblerContext the disassembler context to use.
+	 * @param disassemblerContext the disassembler context to use.
 	 * @return PseudoInstruction.
 	 * 
 	 * @throws InsufficientBytesException
@@ -277,9 +277,6 @@ public class PseudoDisassembler {
 	 * @param addr location to get a PseudoData item for
 	 * @param dt the data type to be applied
 	 * @return PsuedoData that acts like Data
-	 * 
-	 * @throws InsufficientBytesException
-	 * @throws UnknownContextException
 	 */
 	public PseudoData applyDataType(Address addr, DataType dt) {
 
@@ -326,10 +323,12 @@ public class PseudoDisassembler {
 
 	/**
 	 * Check that this entry point leads to a well behaved subroutine:
+	 * <ul>
 	 * <li>It should return.</li>
 	 * <li>Hit no bad instructions.</li>
 	 * <li>Have only one entry point.</li>
 	 * <li>Not overlap any existing data or instructions.</li>
+	 * </ul>
 	 * @param entryPoint entry point to check
 	 * @return true if entry point leads to a well behaved subroutine
 	 */
@@ -340,10 +339,12 @@ public class PseudoDisassembler {
 	/**
 	 * Check that this entry point leads to a well behaved subroutine, allow it
 	 * to fall into existing code.
+	 * <ul>
 	 * <li>It should return.</li>
 	 * <li>Hit no bad instructions.</li>
 	 * <li>Have only one entry point.</li>
 	 * <li>Not overlap any existing data or cause offcut references.</li>
+	 * </ul>
 	 * @param entryPoint entry point to check
 	 * @param allowExistingCode true allows this subroutine to flow into existing instructions.
 	 * @return true if entry point leads to a well behaved subroutine
@@ -355,11 +356,11 @@ public class PseudoDisassembler {
 	/**
 	 * Check that this entry point leads to a well behaved subroutine, allow it
 	 * to fall into existing code.
-	 * 
+	 * <ul>
 	 * <li>Hit no bad instructions.</li>
 	 * <li>Have only one entry point.</li>
 	 * <li>Not overlap any existing data or cause offcut references.</li>
-	 * 
+	 * </ul>
 	 * @param entryPoint         entry point to check
 	 * @param allowExistingCode  true allows this subroutine to flow into existing instructions.
 	 * @param mustTerminate      true if the subroutine must terminate
@@ -373,11 +374,12 @@ public class PseudoDisassembler {
 
 	/**
 	 * Check that this entry point leads to valid code:
+	 * <ul>
 	 * <li> May have multiple entries into the body of the code.
 	 * <li>The intent is that it be valid code, not nice code.
 	 * <li>Hit no bad instructions.
 	 * <li>It should return.
-	 * </li>
+	 * </ul>
 	 * @param entryPoint
 	 * @return true if the entry point leads to valid code
 	 */
@@ -388,11 +390,12 @@ public class PseudoDisassembler {
 
 	/**
 	 * Check that this entry point leads to valid code:
+	 * <ul>
 	 * <li> May have multiple entries into the body of the code.
 	 * <li>The intent is that it be valid code, not nice code.
 	 * <li>Hit no bad instructions.
 	 * <li>It should return.
-	 * </li>
+	 * </ul>
 	 * 
 	 * @param entryPoint location to test for valid code
 	 * @param context disassembly context for program

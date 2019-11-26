@@ -50,8 +50,8 @@ public interface OptionsService {
      * expected to be the name of a node in the options tree, residing under the root node.  You 
      * may also provide the name of such a node, followed by the options delimiter, followed by
      * the name of a child node under that node.  For example, suppose in the options tree exists
-     * a node <pre>Root->Foo</pre>  You may pass the value "Foo" to get that node.  Or, suppose
-     * in the options tree exists a node <pre>Root->Foo->childNode1</pre>  In this case, you may
+     * a node {@literal Root->Foo}  You may pass the value "Foo" to get that node.  Or, suppose
+     * in the options tree exists a node {@literal Root->Foo->childNode1}  In this case, you may
      * pass the value "Foo.childNode1", where the '.' character is the delimiter of the 
      * {@link ToolOptions} class (this is the value at the time of writing this documentation).
      * 

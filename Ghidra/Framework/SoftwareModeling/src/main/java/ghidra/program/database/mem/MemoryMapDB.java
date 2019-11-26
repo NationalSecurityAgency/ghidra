@@ -111,17 +111,11 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 		this.fileBytesAdapter = bytesAdapter;
 	}
 
-	/**
-	 * @see ghidra.program.model.mem.Memory#getProgram()
-	 */
 	@Override
 	public Program getProgram() {
 		return program;
 	}
 
-	/**
-	 * @see ghidra.program.database.ManagerDB#invalidateCache(boolean)
-	 */
 	@Override
 	public void invalidateCache(boolean all) throws IOException {
 		lock.acquire();
@@ -210,9 +204,6 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 		}
 	}
 
-	/**
-	 * @see ghidra.program.database.ManagerDB#programReady(int, int, ghidra.util.task.TaskMonitor)
-	 */
 	@Override
 	public void programReady(int openMode, int currentRevision, TaskMonitor monitor)
 			throws IOException, CancelledException {
@@ -254,9 +245,6 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 		return new AddressSetViewAdapter(allInitializedAddrSet);
 	}
 
-	/**
-	 * @see ghidra.program.model.mem.Memory#getLoadedAndInitializedAddressSet()
-	 */
 	@Override
 	public AddressSetView getLoadedAndInitializedAddressSet() {
 		if (liveMemory != null) {
@@ -297,17 +285,11 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 		return potentialOverlappingBlocks;
 	}
 
-	/**
-	 * @see ghidra.program.model.mem.Memory#getBlock(ghidra.program.model.address.Address)
-	 */
 	@Override
 	public MemoryBlock getBlock(Address addr) {
 		return getBlockDB(addr);
 	}
 
-	/**
-	 * @see ghidra.program.model.mem.Memory#getBlock(java.lang.String)
-	 */
 	@Override
 	public synchronized MemoryBlock getBlock(String blockName) {
 		// find block that might have been cached from previous call
@@ -445,9 +427,6 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 		}
 	}
 
-	/**
-	 * @see ghidra.program.model.mem.Memory#getLiveMemoryHandler()
-	 */
 	@Override
 	public LiveMemoryHandler getLiveMemoryHandler() {
 		return liveMemory;
@@ -721,17 +700,11 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 		}
 	}
 
-	/**
-	 * @see ghidra.program.model.mem.Memory#getSize()
-	 */
 	@Override
 	public long getSize() {
 		return addrSet.getNumAddresses();
 	}
 
-	/**
-	 * @see ghidra.program.model.mem.Memory#getBlocks()
-	 */
 	@Override
 	public MemoryBlock[] getBlocks() {
 		lock.acquire();
@@ -1119,7 +1092,7 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 	 * The test will be something like
 	 *
 	 * for(int i=0;i<bytes.length;i++) {
-	 *     if (bytes[i] != memory.getByte(addr+i) & masks[i]) {
+	 *     if (bytes[i] != memory.getByte(addr+i) &amp; masks[i]) {
 	 *         return false;
 	 *     }
 	 * }
@@ -1206,9 +1179,6 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 		}
 	}
 
-	/**
-	 * @see ghidra.program.model.mem.Memory#getByte(ghidra.program.model.address.Address)
-	 */
 	@Override
 	public byte getByte(Address addr) throws MemoryAccessException {
 		lock.acquire();
@@ -1267,9 +1237,6 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 		return numRead;
 	}
 
-	/**
-	 * @see ghidra.program.model.mem.Memory#getShort(ghidra.program.model.address.Address)
-	 */
 	@Override
 	public short getShort(Address addr) throws MemoryAccessException {
 		byte[] byteBuf = new byte[2];
@@ -1337,9 +1304,6 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 		return n;
 	}
 
-	/**
-	 * @see ghidra.program.model.mem.Memory#getInt(ghidra.program.model.address.Address)
-	 */
 	@Override
 	public int getInt(Address addr) throws MemoryAccessException {
 		byte[] byteBuf = new byte[4];
@@ -1350,9 +1314,6 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 		return defaultEndian.getInt(byteBuf);
 	}
 
-	/**
-	 * @see ghidra.program.model.mem.Memory#getInt(ghidra.program.model.address.Address, boolean)
-	 */
 	@Override
 	public int getInt(Address addr, boolean isBigEndian) throws MemoryAccessException {
 		byte[] byteBuf = new byte[4];
@@ -1366,9 +1327,6 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 		return LITTLE_ENDIAN.getInt(byteBuf);
 	}
 
-	/**
-	 * @see ghidra.program.model.mem.Memory#getInts(ghidra.program.model.address.Address, int[])
-	 */
 	@Override
 	public int getInts(Address addr, int[] dest) throws MemoryAccessException {
 		return getInts(addr, dest, 0, dest.length);
@@ -1413,9 +1371,6 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 		return n;
 	}
 
-	/**
-	 * @see ghidra.program.model.mem.Memory#getLong(ghidra.program.model.address.Address)
-	 */
 	@Override
 	public long getLong(Address addr) throws MemoryAccessException {
 		byte[] byteBuf = new byte[8];
@@ -1426,9 +1381,6 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 		return defaultEndian.getLong(byteBuf);
 	}
 
-	/**
-	 * @see ghidra.program.model.mem.Memory#getLong(ghidra.program.model.address.Address, boolean)
-	 */
 	@Override
 	public long getLong(Address addr, boolean isBigEndian) throws MemoryAccessException {
 		byte[] byteBuf = new byte[8];
@@ -1442,9 +1394,6 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 		return LITTLE_ENDIAN.getLong(byteBuf);
 	}
 
-	/**
-	 * @see ghidra.program.model.mem.Memory#getLongs(ghidra.program.model.address.Address, long[])
-	 */
 	@Override
 	public int getLongs(Address addr, long[] dest) throws MemoryAccessException {
 		return getLongs(addr, dest, 0, dest.length);
@@ -1489,9 +1438,6 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 		return n;
 	}
 
-	/**
-	 * @see ghidra.program.model.mem.Memory#setByte(ghidra.program.model.address.Address, byte)
-	 */
 	@Override
 	public void setByte(Address addr, byte value) throws MemoryAccessException {
 		if (liveMemory != null) {
@@ -1515,9 +1461,6 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 
 	}
 
-	/**
-	 * @see ghidra.program.model.mem.Memory#setBytes(ghidra.program.model.address.Address, byte[])
-	 */
 	@Override
 	public void setBytes(Address addr, byte[] source) throws MemoryAccessException {
 		setBytes(addr, source, 0, source.length);
@@ -1576,9 +1519,6 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 
 	}
 
-	/**
-	 * @see ghidra.program.model.mem.Memory#setShort(ghidra.program.model.address.Address, short)
-	 */
 	@Override
 	public void setShort(Address addr, short value) throws MemoryAccessException {
 		byte[] byteBuf = new byte[2];
@@ -1599,9 +1539,6 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 		setBytes(addr, byteBuf, 0, 2);
 	}
 
-	/**
-	 * @see ghidra.program.model.mem.Memory#setInt(ghidra.program.model.address.Address, int)
-	 */
 	@Override
 	public void setInt(Address addr, int value) throws MemoryAccessException {
 		byte[] byteBuf = new byte[4];
@@ -1621,9 +1558,6 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 		setBytes(addr, byteBuf, 0, 4);
 	}
 
-	/**
-	 * @see ghidra.program.model.mem.Memory#setLong(ghidra.program.model.address.Address, long)
-	 */
 	@Override
 	public void setLong(Address addr, long value) throws MemoryAccessException {
 		byte[] byteBuf = new byte[8];
@@ -1631,9 +1565,6 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 		setBytes(addr, byteBuf, 0, 8);
 	}
 
-	/**
-	 * @see ghidra.program.model.mem.Memory#setLong(ghidra.program.model.address.Address, long, boolean)
-	 */
 	@Override
 	public void setLong(Address addr, long value, boolean isBigEndian)
 			throws MemoryAccessException {
@@ -1647,9 +1578,6 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 		setBytes(addr, byteBuf, 0, 8);
 	}
 
-	/**
-	 * @see ghidra.program.model.address.AddressSetView#contains(ghidra.program.model.address.Address)
-	 */
 	@Override
 	public boolean contains(Address addr) {
 		return addrSet.contains(addr);
@@ -1665,41 +1593,26 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 		return addrSet.contains(set);
 	}
 
-	/**
-	 * @see ghidra.program.model.address.AddressSetView#isEmpty()
-	 */
 	@Override
 	public boolean isEmpty() {
 		return addrSet.isEmpty();
 	}
 
-	/**
-	 * @see ghidra.program.model.address.AddressSetView#getMinAddress()
-	 */
 	@Override
 	public Address getMinAddress() {
 		return addrSet.getMinAddress();
 	}
 
-	/**
-	 * @see ghidra.program.model.address.AddressSetView#getMaxAddress()
-	 */
 	@Override
 	public Address getMaxAddress() {
 		return addrSet.getMaxAddress();
 	}
 
-	/**
-	 * @see ghidra.program.model.address.AddressSetView#getNumAddressRanges()
-	 */
 	@Override
 	public int getNumAddressRanges() {
 		return addrSet.getNumAddressRanges();
 	}
 
-	/**
-	 * @see ghidra.program.model.address.AddressSetView#getAddressRanges()
-	 */
 	@Override
 	public AddressRangeIterator getAddressRanges() {
 		return addrSet.getAddressRanges();
@@ -1710,25 +1623,16 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 		return getAddressRanges();
 	}
 
-	/**
-	 * @see ghidra.program.model.address.AddressSetView#getAddressRanges(boolean)
-	 */
 	@Override
 	public AddressRangeIterator getAddressRanges(boolean startAtFront) {
 		return addrSet.getAddressRanges(startAtFront);
 	}
 
-	/**
-	 * @see ghidra.program.model.address.AddressSetView#getNumAddresses()
-	 */
 	@Override
 	public long getNumAddresses() {
 		return addrSet.getNumAddresses();
 	}
 
-	/**
-	 * @see ghidra.program.model.address.AddressSetView#getAddresses(boolean)
-	 */
 	@Override
 	public AddressIterator getAddresses(boolean forward) {
 		return addrSet.getAddresses(forward);
@@ -1920,9 +1824,6 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 		// never do anything here!!!
 	}
 
-	/**
-	 * @see java.lang.Object#toString()
-	 */
 	@Override
 	public final String toString() {
 		lock.acquire();
@@ -1973,9 +1874,6 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 		return super.hashCode();
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.program.model.mem.Memory#getExecuteSet()
-	 */
 	@Override
 	public AddressSetView getExecuteSet() {
 		AddressSetView set = executeSet;

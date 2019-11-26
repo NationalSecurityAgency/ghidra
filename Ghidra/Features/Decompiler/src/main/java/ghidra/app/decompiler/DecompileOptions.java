@@ -452,7 +452,7 @@ public class DecompileOptions { //
 	 * @param ownerPlugin  the plugin to which the options should be registered
 	 * @param opt          the options object to register with
 	 * @param program      the program
-	 * @param hlep
+	 * @param help         the help
 	 */
 	public void registerOptions(Plugin ownerPlugin, ToolOptions opt, Program program,
 			HelpLocation help) {

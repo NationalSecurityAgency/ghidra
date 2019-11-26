@@ -31,7 +31,7 @@ public class ToolState {
 	/**
 	 * Construct a new tool state.
 	 * @param tool tool's state to save
-	 * @param element element containing tool state
+	 * @param domainObject the object containing the tool state
 	 */
 	public ToolState(PluginTool tool, DomainObject domainObject) {
 		this.tool = tool;

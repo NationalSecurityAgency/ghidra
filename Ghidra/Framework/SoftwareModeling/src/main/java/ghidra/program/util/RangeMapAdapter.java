@@ -39,7 +39,6 @@ public interface RangeMapAdapter {
 	 * @param length the number of addresses to move.
 	 * @param monitor the task monitor.
 	 * @throws CancelledException if the user canceled the operation via the task monitor.
-	 * @throws AddressOverflowException if the length is such that a address wrap occurs
 	 */
 	public void moveAddressRange(Address fromAddr, Address toAddr, long length, TaskMonitor monitor)
 			throws CancelledException;
@@ -100,8 +99,7 @@ public interface RangeMapAdapter {
 	/**
 	 * Returns the bounding address-range containing addr and the the same value throughout.
 	 * This range will be limited by any value change associated with the base register.
-	 * @param register
-	 * @param addr
+	 * @param addr the containing address
 	 * @return single value address-range containing addr
 	 */
 	public AddressRange getValueRangeContaining(Address addr);

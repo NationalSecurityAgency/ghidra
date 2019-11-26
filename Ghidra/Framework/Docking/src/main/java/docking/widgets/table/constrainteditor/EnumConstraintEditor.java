@@ -96,7 +96,7 @@ public class EnumConstraintEditor<T extends Enum<T>> extends AbstractColumnConst
 	 * <tt>getName()</tt>, <tt>getDisplayName()</tt>, or <tt>getDisplayString()</tt>
 	 * before falling back to <tt>toString()</tt>.
 	 *
-	 * @returns a more user-friendly name for the value
+	 * @return a more user-friendly name for the value
 	 */
 	public String getElementDisplayName(T value) {
 		String displayName = getDisplayNameUsingMethodNamed("getName", value);

@@ -296,7 +296,7 @@ public class ReflectionUtilities {
 	/**
 	 * Uses the given <tt>patterns</tt> to remove elements from the given stack trace.     
 	 * The current implementation will simply perform a <tt>toString()</tt> on each element and
-	 * then check to see if that string contains any of the </tt>patterns</tt>.
+	 * then check to see if that string contains any of the <tt>patterns</tt>.
 	 * 
 	 * @param trace the trace to filter
 	 * @param patterns the non-regex patterns used to perform a 

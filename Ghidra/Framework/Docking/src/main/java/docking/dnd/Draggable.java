@@ -62,7 +62,7 @@ public interface Draggable {
 	 * <li>DnDConstants.ACTION_MOVE
 	 * <li>DnDConstants.ACTION_COPY
 	 * <li>DnDConstants.ACTION_COPY_OR_MOVE
-	 * </li>
+	 * </UL>
 	 * 
 	 * @return the drag actions
 	 */

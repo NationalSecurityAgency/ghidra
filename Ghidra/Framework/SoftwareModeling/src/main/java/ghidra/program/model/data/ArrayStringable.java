@@ -57,7 +57,7 @@ public interface ArrayStringable extends DataType {
 	 * default label prefix for the array.
 	 * @param buf memory buffer containing the bytes.
 	 * @param settings the Settings object
-	 * @param length the length of the data.
+	 * @param len the length of the data.
 	 * @param options options for how to format the default label prefix.
 	 * @return the default label prefix or null if none specified.
 	 */
@@ -70,10 +70,10 @@ public interface ArrayStringable extends DataType {
 	 * data that references <tt>offcutLength</tt> bytes into this type
 	 *
 	 * @param buf memory buffer containing the bytes.
-	 * @param settings the Settings object
-	 * @param length the length of the data.
+	 * @param settings the Settings object.
+	 * @param len the length of the data.
 	 * @param options options for how to format the default label prefix.
-	 * @param offcutOffset
+	 * @param offcutLength the length of the offcut label prefix.
 	 * @return the default label prefix or null if none specified.
 	 */
 	public String getArrayDefaultOffcutLabelPrefix(MemBuffer buf, Settings settings, int len,

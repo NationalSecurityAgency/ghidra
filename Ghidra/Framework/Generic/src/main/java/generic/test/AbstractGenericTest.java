@@ -1482,7 +1482,7 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 	/**
 	 * Invoke <code>fixupGUI</code> at the beginning of your JUnit test or in
 	 * its setup() method to make your GUI for the JUnit test appear using the
-	 * system Look & Feel. The system look and feel is the default that Ghidra
+	 * system Look &amp; Feel. The system look and feel is the default that Ghidra
 	 * uses. This will also change the default fonts for the JUnit test to be
 	 * the same as those in Ghidra.
 	 *

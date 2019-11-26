@@ -347,7 +347,7 @@ public class Record implements Comparable<Record> {
 	/**
 	 * Set the binary data array for the specified field.
 	 * @param colIndex field index
-	 * @param value field value
+	 * @param bytes field value
 	 * @throws IllegalFieldAccessException if field does support binary data access
 	 */
 	public void setBinaryData(int colIndex, byte[] bytes) {
@@ -369,7 +369,7 @@ public class Record implements Comparable<Record> {
 	/**
 	 * Set the string value for the specified field.
 	 * @param colIndex field index
-	 * @param value field value
+	 * @param str field value
 	 * @throws IllegalFieldAccessException if field does support string data access
 	 */
 	public void setString(int colIndex, String str) {

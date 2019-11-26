@@ -16,6 +16,8 @@
  */
 package ghidra.app.plugin.core.datamgr.archive;
 
+import ghidra.program.model.data.DataTypeManager;
+
 public interface ArchiveManagerListener {
 	/**
 	 * Called when a new Archive is opened.

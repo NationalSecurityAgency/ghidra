@@ -50,8 +50,8 @@ public class AssertException extends RuntimeException {
     /**
      * Create a new AssertException with the given message.
      *
-     * @param msg the exception message.
-     * @param t the Throwable which caused this exception to be generated.
+     * @param message the exception message.
+     * @param throwable the Throwable which caused this exception to be generated.
      */
     public AssertException( String message, Throwable throwable ) {
     	super( message, throwable );

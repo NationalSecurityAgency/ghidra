@@ -820,7 +820,7 @@ public class SymbolUtilities {
 	/**
 	 * Gets the base symbol name regardless of whether or not the address has been appended.
 	 * @param symbol the symbol to get the clean name for.
-	 * @return the base symbol name where the "@<address>" has been stripped away if it exists.
+	 * @return the base symbol name where the {@literal "@<address>"} has been stripped away if it exists.
 	 */
 	public static String getCleanSymbolName(Symbol symbol) {
 		return getCleanSymbolName(symbol.getName(), symbol.getAddress());
@@ -833,7 +833,7 @@ public class SymbolUtilities {
 	 * {@link #getAddressString(Address)} method for it to be recognized.
 	 * @param symbolName a symbol name to get the clean name for.
 	 * @param address the symbol's address
-	 * @return the base symbol name where the "@<address>" has been stripped away if it exists.
+	 * @return the base symbol name where the {@literal "@<address>"} has been stripped away if it exists.
 	 */
 	public static String getCleanSymbolName(String symbolName, Address address) {
 
@@ -971,7 +971,6 @@ public class SymbolUtilities {
 	 * @param namespace symbol namespace or null for global
 	 * @param name symbol name
 	 * @param source symbol source type
-	 * @param errorConsumer error logging consumer
 	 * @return new or existing label or function symbol or null if creating a global symbol
 	 * whose name already exists at address
 	 * @throws InvalidInputException if invalid symbol name provided

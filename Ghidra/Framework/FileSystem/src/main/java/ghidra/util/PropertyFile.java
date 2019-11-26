@@ -147,7 +147,7 @@ public class PropertyFile {
 
 	/**
 	 * Returns the FileID associated with this file.
-	 * @returns FileID associated with this file
+	 * @return FileID associated with this file
 	 */
 	public String getFileID() {
 		return getString(FILE_ID, null);

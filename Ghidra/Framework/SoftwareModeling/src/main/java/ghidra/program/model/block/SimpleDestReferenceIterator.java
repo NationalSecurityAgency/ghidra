@@ -78,6 +78,7 @@ public class SimpleDestReferenceIterator implements CodeBlockReferenceIterator {
      * @throws CancelledException if the monitor cancels the operation.
      * @deprecated this method should be avoided since it repeats the work of the iterator
      */
+	@Deprecated
     public static int getNumDestinations(CodeBlock block, boolean followIndirectFlows, TaskMonitor monitor) throws CancelledException {
     	return getDestinations(block, null, followIndirectFlows, monitor);
     }

@@ -242,7 +242,7 @@ class VarKeyInteriorNode extends VarKeyNode {
 	 * key index which corresponds to the specified key offset.  This facilitates
 	 * finding the key which utilizes the buffer storage at the specified 
 	 * offset.
-	 * @returns key index.
+	 * @return key index.
 	 */
 	private int getOffsetIndex(int offset) {
 

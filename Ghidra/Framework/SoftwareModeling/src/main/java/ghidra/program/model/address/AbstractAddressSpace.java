@@ -129,35 +129,21 @@ abstract class AbstractAddressSpace implements AddressSpace {
 		return cnt;
 	}
 
-	/**
-	 * @see ghidra.program.model.address.AddressSpace#hasSignedOffset()
-	 */
 	@Override
 	public boolean hasSignedOffset() {
 		return signed;
 	}
 
-	/**
-	 * 
-	 * @see ghidra.program.model.address.AddressSpace#getName()
-	 */
 	@Override
 	public String getName() {
 		return name;
 	}
 
-	/**
-	 * 
-	 * @see ghidra.program.model.address.AddressSpace#getSize()
-	 */
 	@Override
 	public int getSize() {
 		return size;
 	}
 
-	/**
-	 * @see ghidra.program.model.address.AddressSpace#getAddressableUnitSize()
-	 */
 	@Override
 	public int getAddressableUnitSize() {
 		return unitSize;
@@ -200,9 +186,6 @@ abstract class AbstractAddressSpace implements AddressSpace {
 		return MathUtilities.unsignedDivide(byteOffset, wordSize);
 	}
 
-	/**
-	 * @see ghidra.program.model.address.AddressSpace#getPointerSize()
-	 */
 	@Override
 	public int getPointerSize() {
 		int ptrSize = size / 8;
@@ -212,10 +195,6 @@ abstract class AbstractAddressSpace implements AddressSpace {
 		return ptrSize;
 	}
 
-	/**
-	 * 
-	 * @see ghidra.program.model.address.AddressSpace#getType()
-	 */
 	@Override
 	public int getType() {
 		return type;
@@ -229,10 +208,6 @@ abstract class AbstractAddressSpace implements AddressSpace {
 		return spaceID >> ID_UNIQUE_SHIFT;
 	}
 
-	/**
-	 * 
-	 * @see ghidra.program.model.address.AddressSpace#getAddress(java.lang.String)
-	 */
 	@Override
 	public Address getAddress(String addrString) throws AddressFormatException {
 		return getAddress(addrString, true);
@@ -303,10 +278,6 @@ abstract class AbstractAddressSpace implements AddressSpace {
 		}
 	}
 
-	/**
-	 * 
-	 * @see ghidra.program.model.address.AddressSpace#subtract(ghidra.program.model.address.Address, ghidra.program.model.address.Address)
-	 */
 	@Override
 	public long subtract(Address addr1, Address addr2) {
 		AddressSpace space1 = addr1.getAddressSpace();
@@ -321,28 +292,17 @@ abstract class AbstractAddressSpace implements AddressSpace {
 		return addr1.getOffset() - addr2.getOffset();
 	}
 
-	/**
-	 * 
-	 * @see ghidra.program.model.address.AddressSpace#subtractWrap(ghidra.program.model.address.Address, long)
-	 */
 	@Override
 	public Address subtractWrap(Address addr, long displacement) {
 		testAddressSpace(addr);
 		return getUncheckedAddress(truncateOffset(addr.getOffset() - displacement));
 	}
 
-	/**
-	 * @see ghidra.program.model.address.AddressSpace#subtractWrapSpace(ghidra.program.model.address.Address, long)
-	 */
 	@Override
 	public Address subtractWrapSpace(Address addr, long displacement) {
 		return subtractWrap(addr, displacement);
 	}
 
-	/**
-	 * 
-	 * @see ghidra.program.model.address.AddressSpace#subtractNoWrap(ghidra.program.model.address.Address, long)
-	 */
 	@Override
 	public Address subtractNoWrap(Address addr, long displacement) throws AddressOverflowException {
 		if (displacement < 0) {
@@ -383,10 +343,6 @@ abstract class AbstractAddressSpace implements AddressSpace {
 		return getUncheckedAddress(result);
 	}
 
-	/**
-	 * 
-	 * @see ghidra.program.model.address.AddressSpace#subtract(ghidra.program.model.address.Address, long)
-	 */
 	@Override
 	public Address subtract(Address addr, long displacement) {
 		try {
@@ -397,28 +353,17 @@ abstract class AbstractAddressSpace implements AddressSpace {
 		}
 	}
 
-	/**
-	 * 
-	 * @see ghidra.program.model.address.AddressSpace#addWrap(ghidra.program.model.address.Address, long)
-	 */
 	@Override
 	public Address addWrap(Address addr, long displacement) {
 		testAddressSpace(addr);
 		return getUncheckedAddress(truncateOffset(addr.getOffset() + displacement));
 	}
 
-	/**
-	 * @see ghidra.program.model.address.AddressSpace#addWrapSpace(ghidra.program.model.address.Address, long)
-	 */
 	@Override
 	public Address addWrapSpace(Address addr, long displacement) {
 		return addWrap(addr, displacement);
 	}
 
-	/**
-	 * 
-	 * @see ghidra.program.model.address.AddressSpace#addNoWrap(ghidra.program.model.address.Address, long)
-	 */
 	@Override
 	public Address addNoWrap(Address addr, long displacement) throws AddressOverflowException {
 
@@ -480,10 +425,6 @@ abstract class AbstractAddressSpace implements AddressSpace {
 		return getUncheckedAddress(resultOffset);
 	}
 
-	/**
-	 * 
-	 * @see ghidra.program.model.address.AddressSpace#add(ghidra.program.model.address.Address, long)
-	 */
 	@Override
 	public Address add(Address addr, long displacement) throws AddressOutOfBoundsException {
 		try {
@@ -515,10 +456,6 @@ abstract class AbstractAddressSpace implements AddressSpace {
 		return true;
 	}
 
-	/**
-	 * 
-	 * @see ghidra.program.model.address.AddressSpace#isSuccessor(ghidra.program.model.address.Address, ghidra.program.model.address.Address)
-	 */
 	@Override
 	public boolean isSuccessor(Address addr1, Address addr2) {
 		if (!addr1.getAddressSpace().equals(addr2.getAddressSpace())) {
@@ -531,17 +468,11 @@ abstract class AbstractAddressSpace implements AddressSpace {
 		return addr1.getOffset() == addr2.getOffset() - 1;
 	}
 
-	/**
-	 * @see ghidra.program.model.address.AddressSpace#getMaxAddress()
-	 */
 	@Override
 	public Address getMaxAddress() {
 		return maxAddress;
 	}
 
-	/**
-	 * @see ghidra.program.model.address.AddressSpace#getMinAddress()
-	 */
 	@Override
 	public Address getMinAddress() {
 		return minAddress;
@@ -559,10 +490,6 @@ abstract class AbstractAddressSpace implements AddressSpace {
 		return baseCompare;
 	}
 
-	/**
-	 * 
-	 * @see java.lang.Comparable#compareTo(java.lang.Object)
-	 */
 	@Override
 	public int compareTo(AddressSpace space) {
 		if (space == this) {
@@ -599,10 +526,6 @@ abstract class AbstractAddressSpace implements AddressSpace {
 		return c;
 	}
 
-	/**
-	 * 
-	 * @see java.lang.Object#equals(java.lang.Object)
-	 */
 	@Override
 	public boolean equals(Object obj) {
 		if (obj == this) {
@@ -628,19 +551,11 @@ abstract class AbstractAddressSpace implements AddressSpace {
 		return type == s.getType() && name.equals(s.getName()) && size == s.getSize();
 	}
 
-	/**
-	 * 
-	 * @see java.lang.Object#hashCode()
-	 */
 	@Override
 	public int hashCode() {
 		return hashcode;
 	}
 
-	/**
-	 * 
-	 * @see ghidra.program.model.address.AddressSpace#getBaseSpaceID()
-	 */
 	@Override
 	public int getBaseSpaceID() {
 		return spaceID;
@@ -658,17 +573,11 @@ abstract class AbstractAddressSpace implements AddressSpace {
 		}
 	}
 
-	/**
-	 * @see java.lang.Object#toString()
-	 */
 	@Override
 	public String toString() {
 		return name + ":";
 	}
 
-	/**
-	 * @see ghidra.program.model.address.AddressSpace#showSpaceName()
-	 */
 	@Override
 	public boolean showSpaceName() {
 		return showSpaceName;
@@ -692,9 +601,6 @@ abstract class AbstractAddressSpace implements AddressSpace {
 		return addr;
 	}
 
-	/**
-	 * @see ghidra.program.model.address.AddressSpace#makeValidOffset(long)
-	 */
 	@Override
 	public long makeValidOffset(long offset) throws AddressOutOfBoundsException {
 		// TODO: Verify that this handle all cases - seems like it would not
@@ -725,9 +631,6 @@ abstract class AbstractAddressSpace implements AddressSpace {
 			UnsignedDataUtils.unsignedLessThanOrEqual(offset, maxOffset);
 	}
 
-	/**
-	 * @see ghidra.program.model.address.AddressSpace#truncateOffset(long)
-	 */
 	@Override
 	public long truncateOffset(long offset) {
 		if ((offset >= minOffset && offset <= maxOffset) || spaceSize == 0) {
@@ -748,17 +651,11 @@ abstract class AbstractAddressSpace implements AddressSpace {
 		return offset;
 	}
 
-	/**
-	 * @see ghidra.program.model.address.AddressSpace#truncateOffset(long)
-	 */
 	@Override
 	public long truncateAddressableWordOffset(long wordOffset) {
 		return wordOffset & wordAddressMask;
 	}
 
-	/**
-	 * @see ghidra.program.model.address.AddressSpace#isMemorySpace()
-	 */
 	@Override
 	public boolean isMemorySpace() {
 		return type == TYPE_RAM || type == TYPE_CODE || type == TYPE_OTHER;
@@ -774,65 +671,41 @@ abstract class AbstractAddressSpace implements AddressSpace {
 		return type == TYPE_OTHER;
 	}
 
-	/**
-	 * @see ghidra.program.model.address.AddressSpace#isHashSpace()
-	 */
 	@Override
 	public boolean isHashSpace() {
 		return this == HASH_SPACE;
 	}
 
-	/**
-	 * @see ghidra.program.model.address.AddressSpace#isRegisterSpace()
-	 */
 	@Override
 	public boolean isRegisterSpace() {
 		return type == TYPE_REGISTER;
 	}
 
-	/**
-	 * @see ghidra.program.model.address.AddressSpace#isStackSpace()
-	 */
 	@Override
 	public boolean isStackSpace() {
 		return type == TYPE_STACK;
 	}
 
-	/**
-	 * @see ghidra.program.model.address.AddressSpace#isUniqueSpace()
-	 */
 	@Override
 	public boolean isUniqueSpace() {
 		return type == TYPE_UNIQUE;
 	}
 
-	/**
-	 * @see ghidra.program.model.address.AddressSpace#isConstantSpace()
-	 */
 	@Override
 	public boolean isConstantSpace() {
 		return type == TYPE_CONSTANT;
 	}
 
-	/**
-	 * @see ghidra.program.model.address.AddressSpace#isVariableSpace()
-	 */
 	@Override
 	public boolean isVariableSpace() {
 		return type == TYPE_VARIABLE;
 	}
 
-	/**
-	 * @see ghidra.program.model.address.AddressSpace#isExternalSpace()
-	 */
 	@Override
 	public boolean isExternalSpace() {
 		return type == TYPE_EXTERNAL;
 	}
 
-	/**
-	 * @see ghidra.program.model.address.AddressSpace#isOverlaySpace()
-	 */
 	@Override
 	public boolean isOverlaySpace() {
 		return false;
@@ -842,9 +715,6 @@ abstract class AbstractAddressSpace implements AddressSpace {
 		showSpaceName = b;
 	}
 
-	/**
-	 * @see ghidra.program.model.address.AddressSpace#hasMappedRegisters()
-	 */
 	@Override
 	public boolean hasMappedRegisters() {
 		return hasMemoryMappedRegisters;
@@ -859,9 +729,6 @@ abstract class AbstractAddressSpace implements AddressSpace {
 		hasMemoryMappedRegisters = hasRegisters;
 	}
 
-	/**
-	 * @see ghidra.program.model.address.AddressSpace#getPhysicalSpace()
-	 */
 	@Override
 	public AddressSpace getPhysicalSpace() {
 		return this;

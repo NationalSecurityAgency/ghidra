@@ -158,7 +158,6 @@ public class RepositoryAdapter implements RemoteAdapterListener {
 
 	/**
 	 * Attempt to connect to the server.
-	 * @return true if connected
 	 */
 	public void connect() throws IOException {
 		synchronized (serverAdapter) {
@@ -326,7 +325,7 @@ public class RepositoryAdapter implements RemoteAdapterListener {
 	 * @throws IOException
 	 * @throws UserAccessException user no longer has any permission to use repository.
 	 * @throws NotConnectedException if server/repository connection is down (user already informed)
-	 * @see ghidra.framework.remote.RemoteRepositoryHandle#getUserList()
+	 * @see RemoteRepositoryHandle#getUserList()
 	 */
 	public User[] getUserList() throws IOException {
 		synchronized (serverAdapter) {
@@ -348,7 +347,7 @@ public class RepositoryAdapter implements RemoteAdapterListener {
 	 * @throws IOException
 	 * @throws UserAccessException user no longer has any permission to use repository.
 	 * @throws NotConnectedException if server/repository connection is down (user already informed)
-	 * @see ghidra.framework.remote.RemoteRepositoryHandle#getServerUserList()
+	 * @see RemoteRepositoryHandle#getServerUserList()
 	 */
 	public String[] getServerUserList() throws IOException {
 		synchronized (serverAdapter) {
@@ -373,7 +372,7 @@ public class RepositoryAdapter implements RemoteAdapterListener {
 	 * @throws UserAccessException
 	 * @throws IOException
 	 * @throws NotConnectedException if server/repository connection is down (user already informed)
-	 * @see ghidra.framework.remote.RemoteRepositoryHandle#setUserList(ghidra.framework.remote.User[])
+	 * @see RemoteRepositoryHandle#setUserList(User[], boolean)
 	 */
 	public void setUserList(User[] users, boolean anonymousAccessAllowed) throws IOException {
 		synchronized (serverAdapter) {
@@ -391,8 +390,8 @@ public class RepositoryAdapter implements RemoteAdapterListener {
 		}
 	}
 
-	/*
-	 * @see ghidra.framework.remote.RepositoryHandle#createDatabase(java.lang.String, java.lang.String, java.lang.String, int, java.lang.String, java.lang.String)
+	/**
+	 * @see RepositoryHandle#createDatabase(String, String, String, int, String, String)
 	 */
 	public ManagedBufferFileAdapter createDatabase(String parentPath, String itemName,
 			int bufferSize, String contentType, String fileID, String projectPath)
