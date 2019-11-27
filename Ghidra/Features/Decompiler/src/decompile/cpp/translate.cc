@@ -490,9 +490,12 @@ AddrSpace *AddrSpaceManager::getSpaceByShortcut(char sc) const
 /// If there is a special resolver for the AddrSpace, this is invoked, otherwise
 /// basic wordsize conversion and wrapping is performed. If the address encoding is
 /// partial (as in a \e near pointer) and the full encoding can be recovered, it is passed back.
+/// The \e sz parameter indicates the number of bytes in constant and is used to determine if
+/// the constant is a partial or full pointer encoding. A value of -1 indicates the value is
+/// known to be a full encoding.
 /// \param spc is the space to generate the address from
 /// \param val is the constant encoding of the address
-/// \param sz is the size of the constant encoding
+/// \param sz is the size of the constant encoding (or -1)
 /// \param point is the context address (for recovering full encoding info if necessary)
 /// \param fullEncoding is used to pass back the recovered full encoding of the pointer
 /// \return the formal Address associated with the encoding

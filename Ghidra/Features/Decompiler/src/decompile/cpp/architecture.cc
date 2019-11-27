@@ -1142,7 +1142,7 @@ Address SegmentedResolver::resolve(uintb val,int4 sz,const Address &point,uintb 
 
 {
   int4 innersz = segop->getInnerSize();
-  if (sz <= innersz) { // If -sz- matches the inner size, consider the value a "near" pointer
+  if (sz >= 0 && sz <= innersz) { // If -sz- matches the inner size, consider the value a "near" pointer
   // In this case the address offset is not fully specified
   // we check if the rest is stored in a context variable
   // (as with near pointers)
