@@ -62,7 +62,7 @@ public class CreatePointerAction extends DockingAction {
 			Msg.showInfo(getClass(), gTree, "Pointers Filter Enabled",
 				"<html>Newly created pointer is filtered out of view.<br><br>Toggle the " +
 					"<b>Filter Pointers " + "Action</b> to view the pointer<br>Pointer: " +
-					newManager.getName() + newPath);
+					HTMLUtilities.escapeHTML(newManager.getName() + newPath));
 			return;
 		}
 
@@ -94,6 +94,11 @@ public class CreatePointerAction extends DockingAction {
 		}
 
 		ArchiveNode archiveNode = node.getArchiveNode();
+		if (archiveNode == null) {
+			// this can happen as the tree is changing
+			return false;
+		}
+
 		boolean enabled = archiveNode.isModifiable();
 		if (archiveNode instanceof BuiltInArchiveNode) {
 			// these will be put into the program archive

@@ -699,9 +699,10 @@ public class GraphViewerUtils {
 			return createHollowEgdeLoopInGraphSpace(vertexShape, startX, startY);
 		}
 
-		// translate the edge to the starting vertex
+		// translate the edge from 0,0 to the starting vertex point
 		AffineTransform xform = AffineTransform.getTranslateInstance(startX, startY);
 		Shape edgeShape = renderContext.getEdgeShapeTransformer().apply(e);
+
 		double deltaX = endX - startX;
 		double deltaY = endY - startY;
 
@@ -713,7 +714,7 @@ public class GraphViewerUtils {
 		double dist = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
 		xform.scale(dist, 1.0f);
 
-		// apply the transformations
+		// apply the transformations; converting the given shape from model space into graph space
 		return xform.createTransformedShape(edgeShape);
 	}
 
@@ -1052,7 +1053,7 @@ public class GraphViewerUtils {
 		LinkedList<E> filteredEdges = new LinkedList<>();
 		if (useHover) {
 			for (E edge : edges) {
-				if (edge.isInActivePath()) {
+				if (edge.isInHoveredVertexPath()) {
 					filteredEdges.add(edge);
 				}
 			}

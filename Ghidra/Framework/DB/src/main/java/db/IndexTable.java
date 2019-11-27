@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +15,12 @@
  */
 package db;
 
+import java.io.IOException;
+import java.util.NoSuchElementException;
+
 import ghidra.util.exception.AssertException;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
-
-import java.io.IOException;
-import java.util.NoSuchElementException;
 
 /**
  * <code>IndexTable</code> maintains a secondary index within a private Table instance.
@@ -69,7 +68,7 @@ abstract class IndexTable {
 	 * @param indexTableRecord specifies the index parameters.
 	 * @throws IOException thrown if IO error occurs
 	 */
-	IndexTable(Table primaryTable, TableRecord indexTableRecord) {
+	IndexTable(Table primaryTable, TableRecord indexTableRecord) throws IOException {
 		if (!primaryTable.useLongKeys())
 			throw new AssertException("Only long-key tables may be indexed");
 		this.db = primaryTable.getDBHandle();
@@ -88,7 +87,7 @@ abstract class IndexTable {
 	 * @return IndexTable index table
 	 * @throws IOException thrown if IO error occurs
 	 */
-	static IndexTable getIndexTable(DBHandle db, TableRecord indexTableRecord) {
+	static IndexTable getIndexTable(DBHandle db, TableRecord indexTableRecord) throws IOException {
 		String name = indexTableRecord.getName();
 		Table primaryTable = db.getTable(name);
 		if (primaryTable == null)
@@ -213,12 +212,12 @@ abstract class IndexTable {
 	 * by minField and maxField.  Index values are returned in an ascending sorted order.
 	 * @param minField minimum index column value, if null absolute minimum is used
 	 * @param maxField maximum index column value, if null absolute maximum is used
-	 * @param atStart if true initial position is before minField, else position
+	 * @param before if true initial position is before minField, else position
 	 * is after endField
 	 * @return index field iterator.
 	 * @throws IOException
 	 */
-	abstract DBFieldIterator indexIterator(Field minField, Field maxField, boolean atMin)
+	abstract DBFieldIterator indexIterator(Field minField, Field maxField, boolean before)
 			throws IOException;
 
 	/**
@@ -301,20 +300,27 @@ abstract class IndexTable {
 	/**
 	 * Iterate over all primary keys sorted based upon the associated index key.
 	 * The iterator is limited to range of index keys of minField through maxField, inclusive.
-	 * If atMin is true, the iterator is initially positioned before the first index 
+	 * If before is true, the iterator is initially positioned before the first index 
 	 * buffer whose index key is greater than or equal to the specified minField value. 
-	 * If atMin is false, the iterator is initially positioned after the first index 
+	 * If before is false, the iterator is initially positioned after the first index 
 	 * buffer whose index key is less than or equal to the specified maxField value. 
 	 * @param minField minimum index key value
 	 * @param maxField maximum index key value
-	 * @param atMin if true, position iterator before minField value, 
+	 * @param before if true, position iterator before minField value, 
 	 * Otherwise, position iterator after maxField value.
 	 * @return primary key iterator
 	 * @throws IOException thrown if IO error occurs
 	 */
-	DBLongIterator keyIterator(Field minField, Field maxField, boolean atMin) throws IOException {
-		return new PrimaryKeyIterator(minField, maxField, atMin ? minField : maxField,
-			atMin ? Long.MIN_VALUE : Long.MAX_VALUE, !atMin);
+	DBLongIterator keyIterator(Field minField, Field maxField, boolean before) throws IOException {
+
+		Field startField = before ? minField : maxField;
+
+		if (startField == null && !before) {
+
+		}
+
+		return new PrimaryKeyIterator(minField, maxField, before ? minField : maxField,
+			before ? Long.MIN_VALUE : Long.MAX_VALUE, !before);
 	}
 
 	/**
@@ -324,14 +330,14 @@ abstract class IndexTable {
 	 * @param minField minimum index key value
 	 * @param maxField maximum index key value
 	 * @param startField starting indexed value position
-	 * @param before if true positioned before startField value, else positioned after
+	 * @param before if true positioned before startField value, else positioned after maxField value
 	 * @return primary key iterator
 	 * @throws IOException thrown if IO error occurs
 	 */
 	DBLongIterator keyIterator(Field minField, Field maxField, Field startField, boolean before)
 			throws IOException {
-		return new PrimaryKeyIterator(minField, maxField, startField, before ? Long.MIN_VALUE
-				: Long.MAX_VALUE, !before);
+		return new PrimaryKeyIterator(minField, maxField, startField,
+			before ? Long.MIN_VALUE : Long.MAX_VALUE, !before);
 	}
 
 	/**
@@ -407,6 +413,7 @@ abstract class IndexTable {
 			}
 		}
 
+		@Override
 		public boolean hasNext() throws IOException {
 			if (hasNext) {
 				return true;
@@ -491,6 +498,7 @@ abstract class IndexTable {
 			}
 		}
 
+		@Override
 		public boolean hasPrevious() throws IOException {
 			if (hasPrev) {
 				return true;
@@ -574,6 +582,7 @@ abstract class IndexTable {
 			}
 		}
 
+		@Override
 		public long next() throws IOException {
 			if (hasNext || hasNext()) {
 				long key = indexBuffer.getPrimaryKey(index);
@@ -585,6 +594,7 @@ abstract class IndexTable {
 			throw new NoSuchElementException();
 		}
 
+		@Override
 		public long previous() throws IOException {
 			if (hasPrev || hasPrevious()) {
 				long key = indexBuffer.getPrimaryKey(index);
@@ -601,6 +611,7 @@ abstract class IndexTable {
 		 * after each record deletion.
 		 * @see db.DBLongIterator#delete()
 		 */
+		@Override
 		public boolean delete() throws IOException {
 			if (lastKey == null)
 				return false;

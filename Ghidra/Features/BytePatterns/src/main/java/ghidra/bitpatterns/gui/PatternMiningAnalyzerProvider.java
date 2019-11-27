@@ -62,7 +62,7 @@ public class PatternMiningAnalyzerProvider extends ByteSequenceAnalyzerProvider 
 	}
 
 	private void addMiningAction() {
-		mineClosedPatternsAction = new DockingAction(MINE_PATTERNS_BUTTON_TEXT, title, false) {
+		mineClosedPatternsAction = new DockingAction(MINE_PATTERNS_BUTTON_TEXT, title) {
 			@Override
 			public void actionPerformed(ActionContext context) {
 				List<ByteSequenceRowObject> lastSelectedObjects =

@@ -15,6 +15,8 @@
  */
 package ghidra.app.plugin.core.memory;
 
+import java.awt.Cursor;
+
 import ghidra.app.CorePluginPackage;
 import ghidra.app.events.ProgramLocationPluginEvent;
 import ghidra.app.plugin.PluginCategoryNames;
@@ -30,15 +32,6 @@ import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.util.ChangeManager;
 import ghidra.program.util.ProgramLocation;
-
-import java.awt.Cursor;
-
-import javax.swing.ImageIcon;
-
-import resources.ResourceManager;
-import docking.ActionContext;
-import docking.action.DockingAction;
-import docking.action.ToolBarData;
 
 /**
  * <CODE>MemoryMapPlugin</CODE> displays a memory map of all blocks in
@@ -61,20 +54,15 @@ public class MemoryMapPlugin extends ProgramPlugin implements DomainObjectListen
 	final static Cursor WAIT_CURSOR = new Cursor(Cursor.WAIT_CURSOR);
 	final static Cursor NORM_CURSOR = new Cursor(Cursor.DEFAULT_CURSOR);
 
-	private DockingAction memViewAction;
 	private MemoryMapProvider provider;
 	private GoToService goToService;
 	private MemoryMapManager memManager;
 
-	/**
-	  * Constructor
-	  */
 	public MemoryMapPlugin(PluginTool tool) {
 		super(tool, true, false);
 
 		memManager = new MemoryMapManager(this);
 		provider = new MemoryMapProvider(this);
-		createActions();
 	}
 
 	/**
@@ -83,9 +71,6 @@ public class MemoryMapPlugin extends ProgramPlugin implements DomainObjectListen
 	 */
 	@Override
 	public void dispose() {
-		if (memViewAction != null) {
-			memViewAction.dispose();
-		}
 		if (provider != null) {
 			provider.dispose();
 			provider = null;
@@ -122,8 +107,9 @@ public class MemoryMapPlugin extends ProgramPlugin implements DomainObjectListen
 	@Override
 	protected void init() {
 		goToService = tool.getService(GoToService.class);
-		if (currentProgram != null)
+		if (currentProgram != null) {
 			programActivated(currentProgram);
+		}
 	}
 
 	/**
@@ -168,29 +154,4 @@ public class MemoryMapPlugin extends ProgramPlugin implements DomainObjectListen
 		ProgramLocation loc = new ProgramLocation(currentProgram, addr);
 		goToService.goTo(loc);
 	}
-
-	/**
-	 * Create the action for toolbar.
-	 */
-	private void createActions() {
-
-		memViewAction = new DockingAction("View Memory Map", getName()) {
-			@Override
-			public void actionPerformed(ActionContext context) {
-				showMemory();
-			}
-		};
-		ImageIcon tableImage = ResourceManager.loadImage(MemoryMapProvider.MEMORY_IMAGE);
-		memViewAction.setToolBarData(new ToolBarData(tableImage, "View"));
-		memViewAction.setDescription("Display Memory Map");
-		tool.addAction(memViewAction);
-	}
-
-	/**
-	 * Callback for the View memory Action
-	 */
-	private void showMemory() {
-		tool.showComponentProvider(provider, true);
-	}
-
 }

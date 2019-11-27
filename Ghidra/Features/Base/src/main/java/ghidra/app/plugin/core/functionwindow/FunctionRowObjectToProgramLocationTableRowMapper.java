@@ -16,19 +16,19 @@
 package ghidra.app.plugin.core.functionwindow;
 
 import ghidra.framework.plugintool.ServiceProvider;
-import ghidra.program.model.listing.*;
+import ghidra.program.model.listing.Function;
+import ghidra.program.model.listing.Program;
 import ghidra.program.util.FunctionSignatureFieldLocation;
 import ghidra.program.util.ProgramLocation;
 import ghidra.util.table.ProgramLocationTableRowMapper;
 
-public class FunctionRowObjectToProgramLocationTableRowMapper extends
-		ProgramLocationTableRowMapper<FunctionRowObject, ProgramLocation> {
+public class FunctionRowObjectToProgramLocationTableRowMapper
+		extends ProgramLocationTableRowMapper<FunctionRowObject, ProgramLocation> {
 
 	@Override
 	public ProgramLocation map(FunctionRowObject rowObject, Program program,
 			ServiceProvider serviceProvider) {
-		FunctionManager functionManager = program.getFunctionManager();
-		Function function = functionManager.getFunction(rowObject.getKey());
+		Function function = rowObject.getFunction();
 		if (function == null) {
 			return null;
 		}

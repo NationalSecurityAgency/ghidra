@@ -26,7 +26,7 @@ import ghidra.util.SystemUtilities;
  * encapsulates the actual data, along with any filter applied, any sort applied, along with 
  * some convenience methods for performing operations on this group of data.
  *
- * @param <ROW_OBJECT>
+ * @param <ROW_OBJECT> the row type
  */
 public class TableData<ROW_OBJECT> implements Iterable<ROW_OBJECT> {
 
@@ -83,9 +83,13 @@ public class TableData<ROW_OBJECT> implements Iterable<ROW_OBJECT> {
 	}
 
 	TableData<ROW_OBJECT> copy() {
+		return copy(source);
+	}
+
+	TableData<ROW_OBJECT> copy(TableData<ROW_OBJECT> newSource) {
 		List<ROW_OBJECT> dataCopy = new ArrayList<>(data);
 		TableData<ROW_OBJECT> newData = new TableData<>(dataCopy, sortContext);
-		newData.source = source;
+		newData.source = newSource;
 		newData.tableFilter = tableFilter;
 		newData.ID = ID; // it is a copy, but represents the same data
 		return newData;
@@ -104,7 +108,7 @@ public class TableData<ROW_OBJECT> implements Iterable<ROW_OBJECT> {
 	}
 
 	boolean isSorted() {
-		return sortContext != null;
+		return sortContext != null && !sortContext.isUnsorted();
 	}
 
 	void setSortContext(TableSortingContext<ROW_OBJECT> sortContext) {
@@ -128,12 +132,25 @@ public class TableData<ROW_OBJECT> implements Iterable<ROW_OBJECT> {
 	}
 
 	/**
-	 * Uses the current sort to perform a fast lookup of the given item in the given list. 
+	 * Uses the current sort to perform a fast lookup of the given item in the given list when 
+	 * sorted; a brute-force lookup when not sorted
+	 * @param t the item
+	 * @return the index
 	 */
 	int indexOf(ROW_OBJECT t) {
-		Comparator<ROW_OBJECT> comparator = sortContext.getComparator();
-		int index = Collections.binarySearch(data, t, comparator);
-		return index;
+		if (!sortContext.isUnsorted()) {
+			Comparator<ROW_OBJECT> comparator = sortContext.getComparator();
+			return Collections.binarySearch(data, t, comparator);
+		}
+
+		// brute force
+		for (int i = 0; i < data.size(); i++) {
+			ROW_OBJECT item = data.get(i);
+			if (t.equals(item)) {
+				return i;
+			}
+		}
+		return -1;
 	}
 
 	boolean remove(ROW_OBJECT o) {
@@ -145,9 +162,9 @@ public class TableData<ROW_OBJECT> implements Iterable<ROW_OBJECT> {
 	}
 
 	/**
-	 * Adds the new <tt>value</tt> to the data at the appropriate location based on the sort.
-	 * @param value the row Object to insert.
-	 * @param comparator the comparator to use to find the appropriate location to insert the new data.
+	 * Adds the new <tt>value</tt> to the data at the appropriate location based on the sort
+	 * 
+	 * @param value the row Object to insert
 	 */
 	void insert(ROW_OBJECT value) {
 
@@ -160,10 +177,8 @@ public class TableData<ROW_OBJECT> implements Iterable<ROW_OBJECT> {
 			return; // this item is filtered out of this data
 		}
 
-		if (sortContext == null) {
-			//
-			// Not yet sorted; just add the item anywhere and it will get sorted later
-			//
+		if (!isSorted()) {
+			// Not yet sorted or intentionally unsorted; just add the item, it will get sorted later
 			data.add(value);
 			return;
 		}
@@ -180,7 +195,7 @@ public class TableData<ROW_OBJECT> implements Iterable<ROW_OBJECT> {
 		// The search thinks the item is in the list because a compareTo() result of 0 was 
 		// found.  If the two objects are not equal(), then add the new value.
 		ROW_OBJECT existingValue = data.get(index);
-		if (!SystemUtilities.isEqual(value, existingValue)) {
+		if (!Objects.equals(value, existingValue)) {
 			data.add(index, value);
 		}
 	}
@@ -248,9 +263,11 @@ public class TableData<ROW_OBJECT> implements Iterable<ROW_OBJECT> {
 	 * @return true if the source data nor the filter are different that what is used by this object.
 	 */
 	boolean matchesFilter(TableFilter<ROW_OBJECT> filter) {
-
 		// O.K., we are derived from the same source data, if the filter is the same, then there
-		// is no need to refilter
+		// is no need to refilter.  
+		// 
+		// Note: if a given filter does not override equals(), then this really means that they 
+		//       must be the same filter for this method to return true
 		return SystemUtilities.isEqual(tableFilter, filter);
 	}
 
@@ -275,6 +292,16 @@ public class TableData<ROW_OBJECT> implements Iterable<ROW_OBJECT> {
 
 		// see if our parent is the different
 		return source.isUnrelatedTo(other);
+	}
+
+	/**
+	 * Returns the ID of this table data.   It is possible that two data instances of this class
+	 * that have the same ID are considered to be the same data.
+	 * 
+	 * @return the ID
+	 */
+	int getId() {
+		return ID;
 	}
 
 	/**
@@ -309,5 +336,11 @@ public class TableData<ROW_OBJECT> implements Iterable<ROW_OBJECT> {
 		// Made final to ensure that nobody attempts to subclass this to check the contents 
 		// of 'data', as that could be expensive.
 		return super.equals(obj);
+	}
+
+	@Override
+	final public int hashCode() {
+		// Made final to match equals()
+		return super.hashCode();
 	}
 }

@@ -67,6 +67,14 @@ public class FilterOptions {
 		.sorted()
 		.map(c -> Character.toString(c))
 		.collect(Collectors.joining(""));
+	
+	public static final String[] VALID_MULTITERM_DELIMITERS_ARRAY =
+		DELIMITER_NAME_MAP.keySet()
+		.stream()
+		.sorted()
+		.map(c -> Character.toString(c))
+		.collect(Collectors.toList())
+		.toArray(new String[DELIMITER_NAME_MAP.size()]);
 	// @formatter:on
 
 	public static final Character DEFAULT_DELIMITER = ',';

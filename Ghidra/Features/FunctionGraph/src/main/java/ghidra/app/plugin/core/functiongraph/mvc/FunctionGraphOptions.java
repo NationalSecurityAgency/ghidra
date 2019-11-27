@@ -16,14 +16,19 @@
 package ghidra.app.plugin.core.functiongraph.mvc;
 
 import java.awt.Color;
+import java.util.*;
+import java.util.Map.Entry;
 
-import ghidra.framework.options.ToolOptions;
-import ghidra.framework.plugintool.Plugin;
+import ghidra.app.plugin.core.functiongraph.FunctionGraphPlugin;
+import ghidra.app.plugin.core.functiongraph.graph.layout.FGLayoutOptions;
+import ghidra.framework.options.Options;
 import ghidra.graph.viewer.options.*;
 import ghidra.program.model.symbol.FlowType;
 import ghidra.util.HelpLocation;
 
 public class FunctionGraphOptions extends VisualGraphOptions {
+
+	protected static final String OWNER = FunctionGraphPlugin.class.getSimpleName();
 
 	private static final String EDGE_FALLTHROUGH_HIGHLIGHT_COLOR_KEY =
 		"Edge Color - Fallthrough Highlight";
@@ -36,6 +41,25 @@ public class FunctionGraphOptions extends VisualGraphOptions {
 		"Edge Color - Unconditional Jump ";
 	private static final String EDGE_COLOR_CONDITIONAL_JUMP_KEY = "Edge Color - Conditional Jump ";
 
+	//@formatter:off
+	private static final String NAVIGATION_HISTORY_KEY = "Navigation History";	
+	private static final String NAVIGATION_HISTORY_DESCRIPTION =
+		"Determines how the navigation history will be updated when using the Function Graph. " +
+		"The basic options are:" +
+		"<ul>" +
+	    "<li><b>Navigation Events</b> - save a history entry when a navigation takes place " +
+	    	"(e.g., double-click or Go To event)</li>" +
+	    "<li><b>Vertex Changes</b> - save a history entry each time a new vertex is selected</li>" +
+	    "</ul>" +
+	    "<b><i>See help for more</i></b>";
+	//@formatter:on
+
+	private static final String USE_FULL_SIZE_TOOLTIP_KEY = "Use Full-size Tooltip";
+	private static final String USE_FULL_SIZE_TOOLTIP_DESCRIPTION = "Signals to use the " +
+		"full-size vertex inside of the tooltip popup.  When enabled the tooltip vertex will " +
+		"use the same format size as the Listing.  When disabled, the vertex will use the " +
+		"same format size as in the Function Graph.";
+
 	public static final String RELAYOUT_OPTIONS_KEY = "Automatic Graph Relayout";
 	public static final String RELAYOUT_OPTIONS_DESCRIPTION = "Signals to the Function Graph " +
 		"when an automatic relayout of the graph should take place.  The  basic options are:<ul>" +
@@ -43,12 +67,12 @@ public class FunctionGraphOptions extends VisualGraphOptions {
 		"<li><b>Block Model Changes Only</b> - relayout the graph when the block model changes " +
 		"(like when a label has been added to the program in the currently graphed function)</li>" +
 		"<li><b>Vertex Grouping Changes Only</b> - when vertices are grouped or ungrouped</li>" +
-		"<li><b>Never</b> - do not automatically relayout the graph</li></ul>" + "<br><br>" +
+		"<li><b>Never</b> - do not automatically relayout the graph</li></ul><br><br>" +
 		"<b><i>See help for more</i></b>";
 
 	private static final String DEFAULT_GROUP_BACKGROUND_COLOR_KEY = "Default Group Color";
 	private static final String DEFAULT_GROUP_BACKGROUND_COLOR_DESCRPTION =
-		"The default " + "background color applied to newly created group vertices";
+		"The default background color applied to newly created group vertices";
 
 	private static final String UPDATE_GROUP_AND_UNGROUP_COLORS =
 		"Update Vertex Colors When Grouping";
@@ -72,7 +96,13 @@ public class FunctionGraphOptions extends VisualGraphOptions {
 	private Color unconditionalJumpEdgeHighlightColor = HOVER_HIGHLIGHT_UNCONDITIONAL_COLOR;
 	private Color conditionalJumpEdgeHighlightColor = HOVER_HIGHLIGHT_CONDITIONAL_COLOR;
 
-	protected RelayoutOption relayoutOption = RelayoutOption.NEVER;
+	private boolean useFullSizeTooltip = false;
+
+	private RelayoutOption relayoutOption = RelayoutOption.VERTEX_GROUPING_CHANGES;
+	private NavigationHistoryChoices navigationHistoryChoice =
+		NavigationHistoryChoices.VERTEX_CHANGES;
+
+	private Map<String, FGLayoutOptions> layoutOptionsByName = new HashMap<>();
 
 	public Color getDefaultGroupBackgroundColor() {
 		return defaultGroupBackgroundColor;
@@ -110,22 +140,33 @@ public class FunctionGraphOptions extends VisualGraphOptions {
 		return relayoutOption;
 	}
 
-	public void initializeOptions(Plugin plugin, ToolOptions options) {
-		HelpLocation help = new HelpLocation(plugin.getName(), "Options");
+	public NavigationHistoryChoices getNavigationHistoryChoice() {
+		return navigationHistoryChoice;
+	}
+
+	public boolean useFullSizeTooltip() {
+		return useFullSizeTooltip;
+	}
+
+	public void registerOptions(Options options) {
+
+		HelpLocation help = new HelpLocation(OWNER, "Options");
 		options.setOptionsHelpLocation(help);
 
-		options.registerOption(RELAYOUT_OPTIONS_KEY, RelayoutOption.VERTEX_GROUPING_CHANGES, help,
+		options.registerOption(RELAYOUT_OPTIONS_KEY, relayoutOption, help,
 			RELAYOUT_OPTIONS_DESCRIPTION);
+
+		options.registerOption(NAVIGATION_HISTORY_KEY, navigationHistoryChoice, help,
+			NAVIGATION_HISTORY_DESCRIPTION);
 
 		options.registerOption(SHOW_ANIMATION_OPTIONS_KEY, useAnimation(), help,
 			SHOW_ANIMATION_DESCRIPTION);
 
-		options.registerOption(USE_MOUSE_RELATIVE_ZOOM, useMouseRelativeZoom(), help,
+		options.registerOption(USE_MOUSE_RELATIVE_ZOOM_KEY, useMouseRelativeZoom(), help,
 			USE_MOUSE_RELATIVE_ZOOM_DESCRIPTION);
 
-		options.registerOption(USE_CONDENSED_LAYOUT, useCondensedLayout(),
-			new HelpLocation(plugin.getName(), "Layout_Compressing"),
-			USE_CONDENSED_LAYOUT_DESCRIPTION);
+		options.registerOption(USE_CONDENSED_LAYOUT_KEY, useCondensedLayout(),
+			new HelpLocation(OWNER, "Layout_Compressing"), USE_CONDENSED_LAYOUT_DESCRIPTION);
 
 		options.registerOption(VIEW_RESTORE_OPTIONS_KEY, ViewRestoreOption.START_FULLY_ZOOMED_OUT,
 			help, VIEW_RESTORE_OPTIONS_DESCRIPTION);
@@ -138,6 +179,9 @@ public class FunctionGraphOptions extends VisualGraphOptions {
 
 		options.registerOption(UPDATE_GROUP_AND_UNGROUP_COLORS, updateGroupColorsAutomatically,
 			help, UPDATE_GROUP_AND_UNGROUP_COLORS_DESCRIPTION);
+
+		options.registerOption(USE_FULL_SIZE_TOOLTIP_KEY, useFullSizeTooltip, help,
+			USE_FULL_SIZE_TOOLTIP_DESCRIPTION);
 
 		options.registerOption(EDGE_COLOR_CONDITIONAL_JUMP_KEY, conditionalJumpEdgeColor, help,
 			"Conditional jump edge color");
@@ -161,7 +205,7 @@ public class FunctionGraphOptions extends VisualGraphOptions {
 
 	}
 
-	public void loadOptions(Plugin plugin, ToolOptions options) {
+	public void loadOptions(Options options) {
 		conditionalJumpEdgeColor =
 			options.getColor(EDGE_COLOR_CONDITIONAL_JUMP_KEY, conditionalJumpEdgeColor);
 
@@ -179,14 +223,19 @@ public class FunctionGraphOptions extends VisualGraphOptions {
 		fallthroughEdgeHighlightColor =
 			options.getColor(EDGE_FALLTHROUGH_HIGHLIGHT_COLOR_KEY, fallthroughEdgeHighlightColor);
 
-		relayoutOption =
-			options.getEnum(RELAYOUT_OPTIONS_KEY, RelayoutOption.VERTEX_GROUPING_CHANGES);
+		relayoutOption = options.getEnum(RELAYOUT_OPTIONS_KEY, relayoutOption);
+
+		navigationHistoryChoice =
+			options.getEnum(NAVIGATION_HISTORY_KEY, NavigationHistoryChoices.VERTEX_CHANGES);
 
 		useAnimation = options.getBoolean(SHOW_ANIMATION_OPTIONS_KEY, useAnimation);
 
-		useMouseRelativeZoom = options.getBoolean(USE_MOUSE_RELATIVE_ZOOM, useMouseRelativeZoom);
+		useMouseRelativeZoom =
+			options.getBoolean(USE_MOUSE_RELATIVE_ZOOM_KEY, useMouseRelativeZoom);
 
-		useCondensedLayout = options.getBoolean(USE_CONDENSED_LAYOUT, useCondensedLayout);
+		useCondensedLayout = options.getBoolean(USE_CONDENSED_LAYOUT_KEY, useCondensedLayout);
+
+		useFullSizeTooltip = options.getBoolean(USE_FULL_SIZE_TOOLTIP_KEY, useFullSizeTooltip);
 
 		viewRestoreOption =
 			options.getEnum(VIEW_RESTORE_OPTIONS_KEY, ViewRestoreOption.START_FULLY_ZOOMED_OUT);
@@ -198,6 +247,14 @@ public class FunctionGraphOptions extends VisualGraphOptions {
 
 		updateGroupColorsAutomatically =
 			options.getBoolean(UPDATE_GROUP_AND_UNGROUP_COLORS, updateGroupColorsAutomatically);
+
+		Set<Entry<String, FGLayoutOptions>> entries = layoutOptionsByName.entrySet();
+		for (Entry<String, FGLayoutOptions> entry : entries) {
+			String layoutName = entry.getKey();
+			FGLayoutOptions layoutOptions = entry.getValue();
+			Options layoutToolOptions = options.getOptions(layoutName);
+			layoutOptions.loadOptions(layoutToolOptions);
+		}
 	}
 
 	public Color getColor(FlowType flowType) {
@@ -227,4 +284,29 @@ public class FunctionGraphOptions extends VisualGraphOptions {
 
 		return Color.BLACK;
 	}
+
+	public boolean optionChangeRequiresRelayout(String optionName) {
+		if (USE_CONDENSED_LAYOUT_KEY.equals(optionName)) {
+			return true;
+		}
+
+		Set<Entry<String, FGLayoutOptions>> entries = layoutOptionsByName.entrySet();
+		for (Entry<String, FGLayoutOptions> entry : entries) {
+			FGLayoutOptions layoutOptions = entry.getValue();
+			if (layoutOptions.optionChangeRequiresRelayout(optionName)) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	public FGLayoutOptions getLayoutOptions(String layoutName) {
+		return layoutOptionsByName.get(layoutName);
+	}
+
+	public void setLayoutOptions(String layoutName, FGLayoutOptions options) {
+		layoutOptionsByName.put(layoutName, options);
+	}
+
 }

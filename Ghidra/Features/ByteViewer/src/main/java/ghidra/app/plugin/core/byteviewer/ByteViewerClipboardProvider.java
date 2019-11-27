@@ -46,14 +46,6 @@ public class ByteViewerClipboardProvider extends ByteCopier
 		return copyTypesList;
 	}
 
-	private static final List<ClipboardType> PASTE_TYPES = createPasteTypesList();
-
-	private static List<ClipboardType> createPasteTypesList() {
-		List<ClipboardType> pasteTypesList = new LinkedList<>();
-		pasteTypesList.add(BYTE_STRING_TYPE);
-		return pasteTypesList;
-	}
-
 	private boolean copyEnabled;
 	private boolean pasteEnabled;
 	private Set<ChangeListener> listeners = new CopyOnWriteArraySet<>();
@@ -86,8 +78,7 @@ public class ByteViewerClipboardProvider extends ByteCopier
 	@Override
 	public boolean paste(Transferable pasteData) {
 		if (!supportsPasteTransferable(pasteData)) {
-			tool.setStatusInfo("Paste failed: No valid data on clipboard");
-			tool.getToolFrame().getToolkit().beep();
+			tool.setStatusInfo("Paste failed: No valid data on clipboard", true);
 			return false;
 		}
 
@@ -96,8 +87,7 @@ public class ByteViewerClipboardProvider extends ByteCopier
 			return pasteBytes(pasteData);
 		}
 		catch (Exception e) {
-			tool.setStatusInfo("Paste failed: " + e.getMessage());
-			tool.getToolFrame().getToolkit().beep();
+			tool.setStatusInfo("Paste failed: " + e.getMessage(), true);
 		}
 		return false;
 	}

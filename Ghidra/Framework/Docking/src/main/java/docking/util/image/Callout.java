@@ -22,7 +22,6 @@ import java.awt.image.BufferedImage;
 import java.awt.image.VolatileImage;
 
 import generic.util.image.ImageUtils;
-import resources.ResourceManager;
 
 public class Callout {
 
@@ -386,7 +385,7 @@ public class Callout {
 		double magnification = calloutInfo.getMagnification();
 		int newWidth = (int) (compImage.getWidth(null) * magnification);
 		int newHeight = (int) (compImage.getHeight(null) * magnification);
-		compImage = ResourceManager.createScaledImage(compImage, newWidth, newHeight, 0);
+		compImage = ImageUtils.createScaledImage(compImage, newWidth, newHeight, 0);
 
 		Rectangle bounds = imageShape.getBounds();
 		VolatileImage image =

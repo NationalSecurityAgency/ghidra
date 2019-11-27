@@ -15,10 +15,18 @@
  */
 package ghidra.app.plugin.core.decompile;
 
+import static org.junit.Assert.*;
+
+import java.util.List;
+
 import org.junit.After;
 import org.junit.Before;
 
 import docking.widgets.fieldpanel.FieldPanel;
+import docking.widgets.fieldpanel.field.Field;
+import docking.widgets.fieldpanel.support.FieldLocation;
+import ghidra.app.decompiler.ClangToken;
+import ghidra.app.decompiler.component.ClangTextField;
 import ghidra.app.decompiler.component.DecompilerPanel;
 import ghidra.test.AbstractProgramBasedTest;
 
@@ -66,12 +74,44 @@ public abstract class AbstractDecompilerTest extends AbstractProgramBasedTest {
 	}
 
 	protected void setDecompilerLocation(int line, int charPosition) {
+
 		runSwing(() -> provider.setCursorLocation(line, charPosition));
+		DecompilerPanel panel = provider.getDecompilerPanel();
+		FieldPanel fp = panel.getFieldPanel();
+		click(fp, 1, true);
 	}
 
 	protected void doubleClick() {
 		DecompilerPanel panel = provider.getDecompilerPanel();
 		FieldPanel fp = panel.getFieldPanel();
 		click(fp, 2, true);
+		waitForSwing();
+	}
+
+	protected FieldLocation loc(int lineNumber, int col) {
+		FieldLocation loc = new FieldLocation(lineNumber, 0, 0, col);
+		return loc;
+	}
+
+	protected ClangTextField getFieldForLine(int lineNumber) {
+
+		DecompilerPanel panel = provider.getDecompilerPanel();
+		List<Field> fields = panel.getFields();
+		Field line = fields.get(lineNumber - 1); // 0-based
+		return (ClangTextField) line;
+	}
+
+	protected String getTokenText(FieldLocation loc) {
+		ClangTextField field = getFieldForLine(loc.getIndex().intValue());
+		ClangToken token = field.getToken(loc);
+		return token.getText();
+	}
+
+	protected void assertToken(String tokenText, int line, int... cols) {
+		for (int col : cols) {
+			FieldLocation loc = loc(line, col);
+			String text = getTokenText(loc);
+			assertEquals(tokenText, text);
+		}
 	}
 }

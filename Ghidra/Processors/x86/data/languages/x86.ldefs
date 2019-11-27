@@ -5,7 +5,7 @@
             endian="little"
             size="32"
             variant="default"
-            version="2.8"
+            version="2.9"
             slafile="x86.sla"
             processorspec="x86.pspec"
             manualindexfile="../manuals/x86.idx"
@@ -32,38 +32,51 @@
             endian="little"
             size="32"
             variant="System Management Mode"
-            version="2.8"
+            version="2.9"
             slafile="x86.sla"
-            processorspec="x86-smm.pspec"
+            processorspec="x86-16.pspec"
             manualindexfile="../manuals/x86.idx"
             id="x86:LE:32:System Management Mode">
     <description>Intel/AMD 32-bit x86 System Management Mode</description>
-    <compiler name="default" spec="x86-smm.cspec" id="default"/>
+    <compiler name="default" spec="x86-16.cspec" id="default"/>
     <external_name tool="DWARF.register.mapping.file" name="x86.dwarf"/>
   </language>
   <language processor="x86"
             endian="little"
             size="16"
             variant="Real Mode"
-            version="2.8"
+            version="2.9"
             slafile="x86.sla"
-            processorspec="x86-16.pspec"
+            processorspec="x86-16-real.pspec"
             manualindexfile="../manuals/x86.idx"
             id="x86:LE:16:Real Mode">
     <description>Intel/AMD 16-bit x86 Real Mode</description>
     <compiler name="default" spec="x86-16.cspec" id="default"/>
 	<external_name tool="IDA-PRO" name="8086"/>
 	<external_name tool="IDA-PRO" name="8086r"/>
-	<external_name tool="IDA-PRO" name="8086p"/>
 	<external_name tool="IDA-PRO" name="80386r"/>
 	<external_name tool="IDA-PRO" name="80486r"/>
 	<external_name tool="IDA-PRO" name="80586r"/>
-  </language>
+	<external_name tool="IDA-PRO" name="metapc"/>
+    </language>
+  <language processor="x86"
+            endian="little"
+            size="16"
+            variant="Protected Mode"
+            version="2.9"
+            slafile="x86.sla"
+            processorspec="x86-16.pspec"
+            manualindexfile="../manuals/x86.idx"
+            id="x86:LE:16:Protected Mode">
+    <description>Intel/AMD 16-bit x86 Protected Mode</description>
+    <compiler name="default" spec="x86-16.cspec" id="default"/>
+	<external_name tool="IDA-PRO" name="8086p"/>
+    </language>
     <language processor="x86"
             endian="little"
             size="64"
             variant="default"
-            version="2.8"
+            version="2.9"
             slafile="x86-64.sla"
             processorspec="x86-64.pspec"
             manualindexfile="../manuals/x86.idx"

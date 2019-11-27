@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +15,11 @@
  */
 package ghidra.pcodeCPort.slghsymbol;
 
+import java.io.PrintStream;
+import java.util.*;
+
+import org.jdom.Element;
+
 import generic.stl.IteratorSTL;
 import generic.stl.VectorSTL;
 import ghidra.pcodeCPort.context.*;
@@ -27,20 +31,12 @@ import ghidra.pcodeCPort.slghpattern.Pattern;
 import ghidra.pcodeCPort.utils.XmlUtils;
 import ghidra.sleigh.grammar.Location;
 
-import java.io.PrintStream;
-import java.util.Iterator;
-import java.util.List;
-
-import org.jdom.Element;
-
 public class SubtableSymbol extends TripleSymbol {
 
 	private TokenPattern pattern;
 	private boolean beingbuilt, errors;
-	private VectorSTL<Constructor> construct = new VectorSTL<Constructor>(); // All
-																				// the
-	// Constructors in
-	// this table
+	// All the Constructors in this table
+	private VectorSTL<Constructor> construct = new VectorSTL<Constructor>();
 	private DecisionNode decisiontree;
 
 	public SubtableSymbol(Location location) {
@@ -97,6 +93,13 @@ public class SubtableSymbol extends TripleSymbol {
 	@Override
 	public void print(PrintStream s, ParserWalker pos) {
 		throw new SleighError("Cannot use subtable in expression", null);
+	}
+
+	@Override
+	public void collectLocalValues(ArrayList<Long> results) {
+		for (Constructor curConstruct : construct) {
+			curConstruct.collectLocalExports(results);
+		}
 	}
 
 	@Override

@@ -120,7 +120,7 @@ public class DecompilerFindReferencesToNestedStructureActionTest
 		int line = 9;
 		int charPosition = 44;
 		setDecompilerLocation(line, charPosition);
-		perfomFindDataTypes();
+		performFindDataTypes();
 
 		assertFindAllReferencesToCompositeFieldWasCalled();
 	}

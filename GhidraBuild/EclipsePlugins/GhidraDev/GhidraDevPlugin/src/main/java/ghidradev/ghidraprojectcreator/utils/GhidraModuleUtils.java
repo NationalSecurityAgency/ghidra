@@ -42,7 +42,8 @@ public class GhidraModuleUtils {
 		PLUGIN("Plugin", "Extends the Ghidra user interface"),
 		LOADER("Loader", "Loads/imports a binary file format into Ghidra"),
 		FILESYSTEM("FileSystem", "Opens a file system format for browsing or batch import"),
-		EXPORTER("Exporter", "Exports/saves a Ghidra program to a specific file format");
+		EXPORTER("Exporter", "Exports/saves a Ghidra program to a specific file format"),
+		PROCESSOR("Processor", "Enables disassembly/decompilation of a processor/architecture");
 
 		private String name;
 		private String description;
@@ -136,7 +137,14 @@ public class GhidraModuleUtils {
 		List<String> excludeRegexes = new ArrayList<>();
 		for (ModuleTemplateType moduleTemplateType : ModuleTemplateType.values()) {
 			if (!moduleTemplateTypes.contains(moduleTemplateType)) {
-				excludeRegexes.add(SKELETON_CLASS + moduleTemplateType.getName() + "\\.java");
+				if (moduleTemplateType.equals(ModuleTemplateType.PROCESSOR)) {
+					excludeRegexes.add("languages");
+					excludeRegexes.add("buildLanguage\\.xml");
+					excludeRegexes.add("sleighArgs\\.txt");
+				}
+				else {
+					excludeRegexes.add(SKELETON_CLASS + moduleTemplateType.getName() + "\\.java");
+				}
 			}
 		}
 
@@ -199,7 +207,7 @@ public class GhidraModuleUtils {
 	 * Writes project-specific ant properties, which get imported by the module project's language
 	 * build.xml file to allow building against a Ghidra that lives in an external location. If the 
 	 * given project is not a Ghidra module project, or if the Ghidra module project does not have a 
-	 * language build.xml ant file, this method has no effect.
+	 * language buildLanguage.xml ant file, this method has no effect.
 	 * 
 	 * @param project The project to receive the ant properties.
 	 * @param ghidraLayout The layout that contains the Ghidra installation directory that the project
@@ -216,13 +224,13 @@ public class GhidraModuleUtils {
 		if (!dataFolder.exists()) {
 			return;
 		}
-		IFile buildXmlFile = dataFolder.getFile("build.xml");
+		IFile buildXmlFile = dataFolder.getFile("buildLanguage.xml");
 		if (!buildXmlFile.exists()) {
 			return;
 		}
 
 		File ghidraInstallDir = ghidraLayout.getApplicationInstallationDir().getFile(false);
-		File antFile = new File(project.getRawLocation().toFile(), ".antProperties.xml"); // hidden
+		File antFile = new File(project.getLocation().toFile(), ".antProperties.xml"); // hidden
 
 		try (PrintWriter writer = new PrintWriter(new FileWriter(antFile))) {
 			writer.println(

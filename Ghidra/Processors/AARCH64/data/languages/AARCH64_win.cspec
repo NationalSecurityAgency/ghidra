@@ -1,0 +1,196 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<compiler_spec>
+  <!-- Copied from AARCH.cspec and modified... 
+  See: https://docs.microsoft.com/en-us/cpp/build/arm64-windows-abi-conventions?view=vs-2019
+  The AARCH64 ABI refers to Windows ABI as LLP64 data model -->
+  <data_organization>
+     <absolute_max_alignment value="0" />
+     <machine_alignment value="4" />
+     <default_alignment value="1" />
+     <default_pointer_alignment value="8" />
+     <pointer_size value="8" />
+     <wchar_size value="2" />
+     <short_size value="2" />
+     <integer_size value="4" />
+     <long_size value="4" />
+     <long_long_size value="8" />
+     <float_size value="4" />
+     <double_size value="8" />
+     <long_double_size value="16" />
+     <size_alignment_map>
+          <entry size="1" alignment="1" />
+          <entry size="2" alignment="2" />
+          <entry size="4" alignment="4" />
+          <entry size="8" alignment="8" />
+          <entry size="16" alignment="16" />
+     </size_alignment_map>
+     <bitfield_packing>
+     	  <use_MS_convention value="true"/>
+     </bitfield_packing>
+  </data_organization>
+  
+  <global>
+    <range space="ram"/>
+  </global>
+  
+  <stackpointer register="sp" space="ram"/>
+  <funcptr align="4"/>     <!-- Function pointers are word aligned and leastsig bit may encode otherstuff -->
+  
+  <prefersplit style="inhalf">
+    <register name="q0"/>
+    <register name="q1"/>
+    <register name="q2"/>
+    <register name="q3"/>
+    <register name="q4"/>
+    <register name="q5"/>
+    <register name="q6"/>
+    <register name="q7"/>
+    <register name="q8"/>
+    <register name="q9"/>
+    <register name="q10"/>
+    <register name="q11"/>
+    <register name="q12"/>
+    <register name="q13"/>
+    <register name="q14"/>
+    <register name="q15"/>
+    <register name="q16"/>
+    <register name="q17"/>
+    <register name="q18"/>
+    <register name="q19"/>
+    <register name="q20"/>
+    <register name="q21"/>
+    <register name="q22"/>
+    <register name="q23"/>
+    <register name="q24"/>
+    <register name="q25"/>
+    <register name="q26"/>
+    <register name="q27"/>
+    <register name="q28"/>
+    <register name="q29"/>
+    <register name="q30"/>
+  </prefersplit>
+  
+  <default_proto>
+    <prototype name="__cdecl" extrapop="0" stackshift="0">
+      <input>
+        <pentry minsize="1" maxsize="8" metatype="float">
+          <register name="d0"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8" metatype="float">
+          <register name="d1"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8" metatype="float">
+          <register name="d2"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8" metatype="float">
+          <register name="d3"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8" metatype="float">
+          <register name="d4"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8" metatype="float">
+          <register name="d5"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8" metatype="float">
+          <register name="d6"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8" metatype="float">
+          <register name="d7"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8" extension="zero">
+          <register name="x0"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8" extension="zero">
+          <register name="x1"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8" extension="zero">
+          <register name="x2"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8" extension="zero">
+          <register name="x3"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8" extension="zero">
+          <register name="x4"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8" extension="zero">
+          <register name="x5"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8" extension="zero">
+          <register name="x6"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8" extension="zero">
+          <register name="x7"/>
+        </pentry>
+        <pentry minsize="1" maxsize="500" align="4">
+          <addr offset="0" space="stack"/>
+        </pentry>
+      </input>
+      <output>
+        <pentry minsize="1" maxsize="8" metatype="float">
+          <register name="d0"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8" extension="zero">
+          <register name="x0"/>
+        </pentry>
+      </output>
+      <unaffected>
+        <register name="x19"/>
+        <register name="x20"/>
+        <register name="x21"/>
+        <register name="x22"/> 
+        <register name="x23"/> 
+        <register name="x24"/> 
+        <register name="x25"/> 
+        <register name="x26"/> 
+        <register name="x27"/> 
+        <register name="x28"/>
+        <register name="x29"/>
+        <register name="x30"/>
+        <register name="sp"/>
+        <!-- vectors -->
+        <register name="d8"/>
+        <register name="d9"/>
+        <register name="d10"/>
+        <register name="d11"/>
+        <register name="d12"/>
+        <register name="d13"/>
+        <register name="d14"/>
+        <register name="d15"/>
+      </unaffected>
+      <killedbycall>
+        <!-- x8: indirect result location register, which is not
+         reflected in the pentry list -->
+        <register name="x8"/>
+        <register name="x9"/>
+        <register name="x10"/>
+        <register name="x11"/>
+        <register name="x12"/>
+        <register name="x13"/>
+        <register name="x14"/>
+        <register name="x15"/>
+        <register name="x16"/>
+        <register name="x17"/>
+        <register name="x18"/>
+        <!-- vectors -->
+        <register name="d16"/>
+        <register name="d17"/>
+        <register name="d18"/>
+        <register name="d19"/>
+        <register name="d20"/>
+        <register name="d21"/>
+        <register name="d22"/>
+        <register name="d23"/>
+        <register name="d24"/>
+        <register name="d25"/>
+        <register name="d26"/>
+        <register name="d27"/>
+        <register name="d28"/>
+        <register name="d29"/>
+        <register name="d30"/>
+        <register name="d31"/>
+        </killedbycall>
+    </prototype>
+  </default_proto>
+
+</compiler_spec>

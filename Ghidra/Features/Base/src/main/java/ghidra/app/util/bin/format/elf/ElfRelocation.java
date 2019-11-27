@@ -101,20 +101,24 @@ public class ElfRelocation implements ByteArrayConverter, StructConverter {
 
 	/**
 	 * GenericFactory construction and initialization method for a ELF representative 
-	 * relocation entry (entry data will be 0)
-	 * @param factory instantiation factory.
+	 * relocation entry 
+	 * @param reader binary reader positioned at start of relocation entry.
 	 * @param elfHeader ELF header
 	 * @param relocationIndex index of entry in relocation table
 	 * @param withAddend true if if RELA entry with addend, else false
+	 * @param r_offset The offset for the entry
+	 * @param r_info The info value for the entry
+	 * @param r_addend The addend for the entry
 	 * @return ELF relocation object
 	 */
 	static ElfRelocation createElfRelocation(GenericFactory factory, ElfHeader elfHeader,
-			int relocationIndex, boolean withAddend) {
+			int relocationIndex, boolean withAddend, long r_offset, long r_info, long r_addend) {
 
 		Class<? extends ElfRelocation> elfRelocationClass = getElfRelocationClass(elfHeader);
 		ElfRelocation elfRelocation = (ElfRelocation) factory.create(elfRelocationClass);
 		try {
-			elfRelocation.initElfRelocation(null, elfHeader, relocationIndex, withAddend);
+			elfRelocation.initElfRelocation(elfHeader, relocationIndex, withAddend, r_offset,
+				r_info, r_addend);
 		}
 		catch (IOException e) {
 			// absence of reader should prevent any IOException from occurring
@@ -158,6 +162,38 @@ public class ElfRelocation implements ByteArrayConverter, StructConverter {
 		this.hasAddend = withAddend;
 		if (reader != null) {
 			readEntryData(reader);
+		}
+	}
+
+	/**
+	 * Initialize ELF relocation entry using data provided via the parameters.
+	 * @param elfHeader ELF header
+	 * @param relocationTableIndex index of relocation within relocation table
+	 * @param withAddend true if if RELA entry with addend, else false
+	 * @param r_offset The offset for the entry
+	 * @param r_info The info value for the entry
+	 * @param r_addend The addend for the entry
+	 * @throws IOException
+	 */
+	protected void initElfRelocation(ElfHeader elfHeader, int relocationTableIndex,
+			boolean withAddend, long r_offset, long r_info, long r_addend) throws IOException {
+		this.is32bit = elfHeader.is32Bit();
+		this.relocationIndex = relocationTableIndex;
+		this.hasAddend = withAddend;
+
+		if (is32bit) {
+			this.r_offset = r_offset & Conv.INT_MASK;
+			this.r_info = r_info & Conv.INT_MASK;
+			if (hasAddend) {
+				this.r_addend = r_addend & Conv.INT_MASK;
+			}
+		}
+		else {
+			this.r_offset = r_offset;
+			this.r_info = r_info;
+			if (hasAddend) {
+				this.r_addend = r_addend;
+			}
 		}
 	}
 

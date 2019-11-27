@@ -1,10 +1,13 @@
+apply from: "$rootProject.projectDir/gradle/distributableGhidraModule.gradle"
+apply from: "$rootProject.projectDir/gradle/javaProject.gradle"
+apply from: "$rootProject.projectDir/gradle/helpProject.gradle"
+apply from: "$rootProject.projectDir/gradle/jacocoProject.gradle"
+apply from: "$rootProject.projectDir/gradle/javaTestProject.gradle"
+apply from: "$rootProject.projectDir/gradle/nativeProject.gradle"
 apply plugin: 'eclipse'
+
 eclipse.project.name = 'Features PDB'
 
-/*********************************************************************************
- * Imports
- *********************************************************************************/
-apply from: "$rootProject.projectDir/gradleScripts/nativeBuildProperties.gradle"
 
 /*********************************************************************************
  * Build dependencies
@@ -13,6 +16,13 @@ dependencies {
 	compile project(":Base")
     
     testCompile "org.jmockit:jmockit:1.44"	
+	
+    // Demangler Analyzer needs to find MicrosoftDemangler
+    compile project(":MicrosoftDemangler")
+	helpPath project(path: ':Base', configuration: 'helpPath')  // this module's help has links to Base help files
+
+    testCompile project(path: ':Base', configuration: 'testArtifacts')
+    testCompile project(path: ':SoftwareModeling', configuration: 'testArtifacts')
 }
 
 /**
@@ -23,7 +33,7 @@ dependencies {
  * inside the closure, 'project' refers to the root project, while 'this' refers to 
  * PDB.
  */
-rootProject.assembleCommon {
+rootProject.assembleDistribution {
 	into (getZipPath(this.project) + "/src/pdb") {
 		from projectDir.toString() + "/src/pdb"
 	}
@@ -33,19 +43,24 @@ if ("win64".equals(getCurrentPlatformName())) {
 
 	String makeName = "win64PDBMake"
 	task(type: Exec, makeName) {
-	
+
 		def projectPath = projectDir.toString()
 		def solutionBatchFilePath = projectPath + "/build/buildSolution.bat"
-		
 		def projectPathWindows = projectPath.replace("/", File.separator)
 		def solutionPathWindows = "${projectPathWindows}\\src\\pdb\\pdb.sln"
-		def outputPathWindows = "${projectPathWindows}\\build\\os\\win64\\pdb.exe"
 		
 		doFirst {
 			file("build/os/win64").mkdirs()
+			
+			def platformToolset = 'v' + VISUAL_STUDIO_TOOLS_VERSION_DEFAULT.substring(0, 4).replace('.', '');
+			def windowsTargetPlatformVersion = VISUAL_STUDIO_SDK_VERSION_OVERRIDE ?: VISUAL_STUDIO_SDK_VERSION_DEFAULT		
+			def msbuildCmd = "msbuild ${solutionPathWindows} /p:Configuration=Release /p:PlatformToolset=${platformToolset} /p:WindowsTargetPlatformVersion=${windowsTargetPlatformVersion}"
+			
+			println "Executing: " + msbuildCmd
+			
 			new File(solutionBatchFilePath).withWriter { out ->
 				out.println "call " + VISUAL_STUDIO_VCVARS_CMD
-				out.println "devenv ${solutionPathWindows} /build Release /project pdb"
+				out.println msbuildCmd
 			}
 		}
 		

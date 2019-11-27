@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +15,13 @@
  */
 package ghidra.framework.main.datatree;
 
-import ghidra.framework.plugintool.util.ToolConstants;
-
 import javax.swing.Icon;
 import javax.swing.UIManager;
 
-import docking.widgets.tree.AbstractGTreeRootNode;
+import docking.tool.ToolConstants;
+import docking.widgets.tree.GTreeNode;
 
-public class NoProjectNode extends AbstractGTreeRootNode {
+public class NoProjectNode extends GTreeNode {
 
 	@Override
 	public Icon getIcon(boolean expanded) {
@@ -32,7 +30,8 @@ public class NoProjectNode extends AbstractGTreeRootNode {
 
 	@Override
 	public String getName() {
-		return ToolConstants.NO_ACTIVE_PROJECT;	}
+		return ToolConstants.NO_ACTIVE_PROJECT;
+	}
 
 	@Override
 	public String getToolTip() {

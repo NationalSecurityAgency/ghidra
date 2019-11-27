@@ -15,6 +15,12 @@
  */
 package ghidra.app.util.pcode;
 
+import java.awt.Color;
+import java.awt.FontMetrics;
+import java.util.*;
+
+import docking.widgets.fieldpanel.field.AttributedString;
+import docking.widgets.fieldpanel.field.CompositeAttributedString;
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.app.plugin.processors.sleigh.template.*;
 import ghidra.app.util.viewer.options.OptionsGui;
@@ -26,13 +32,6 @@ import ghidra.program.model.listing.Program;
 import ghidra.program.model.pcode.PcodeOp;
 import ghidra.program.model.pcode.Varnode;
 import ghidra.util.Msg;
-
-import java.awt.Color;
-import java.awt.FontMetrics;
-import java.util.*;
-
-import docking.widgets.fieldpanel.field.AttributedString;
-import docking.widgets.fieldpanel.field.CompositeAttributedString;
 
 public class PcodeFormatter {
 
@@ -195,8 +194,7 @@ public class PcodeFormatter {
 			lineList.add(SPACE);
 		}
 
-		PcodeSpec opSpec = PcodeSpec.getSpec(opcode);
-		if (opSpec == null) {
+		if (opcode >= PcodeOp.PCODE_MAX) {
 			throw new RuntimeException("Unsupported opcode encountered: " + opcode);
 		}
 		VarnodeTpl output = op.getOutput();
@@ -205,8 +203,8 @@ public class PcodeFormatter {
 			lineList.add(EQUALS);
 		}
 		Color color =
-			(opSpec.getOpCode() == PcodeOp.UNIMPLEMENTED) ? Color.RED : Color.BLUE.darker();
-		lineList.add(new AttributedString(opSpec.getOpName(), color, metrics));
+			(opcode == PcodeOp.UNIMPLEMENTED) ? Color.RED : Color.BLUE.darker();
+		lineList.add(new AttributedString(PcodeOp.getMnemonic(opcode), color, metrics));
 		VarnodeTpl[] inputs = op.getInput();
 		for (int i = 0; i < inputs.length; i++) {
 			if (i > 0) {

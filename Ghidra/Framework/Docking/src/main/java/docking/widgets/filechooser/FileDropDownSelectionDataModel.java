@@ -15,8 +15,6 @@
  */
 package docking.widgets.filechooser;
 
-import ghidra.util.exception.AssertException;
-
 import java.awt.Component;
 import java.io.File;
 import java.util.*;
@@ -24,8 +22,12 @@ import java.util.*;
 import javax.swing.*;
 import javax.swing.filechooser.FileSystemView;
 
-import docking.widgets.DropDownTextFieldDataModel;
 import docking.widgets.DropDownSelectionTextField;
+import docking.widgets.DropDownTextFieldDataModel;
+import docking.widgets.list.GListCellRenderer;
+import ghidra.util.DateUtils;
+import ghidra.util.HTMLUtilities;
+import ghidra.util.exception.AssertException;
 
 /**
  * A model that allows the {@link DropDownSelectionTextField} to work with File objects.
@@ -93,7 +95,7 @@ public class FileDropDownSelectionDataModel implements DropDownTextFieldDataMode
 		if (files == null) {
 			return Collections.emptyList();
 		}
-		List<File> list = new ArrayList<File>();
+		List<File> list = new ArrayList<>();
 		for (File file : files) {
 			list.add(file);
 		}
@@ -126,10 +128,10 @@ public class FileDropDownSelectionDataModel implements DropDownTextFieldDataMode
 	public String getDescription(File file) {
 		boolean isDir = file.isDirectory();
 		return "<html><table>" + "<tr><td>" + (isDir ? "Directory: " : "File: ") + "</td><td>" +
-			"<b>" + file.getName() + "</b>" + "</td></tr>" + "<tr><td>Size:</td><td>" +
-			(isDir ? "0" : file.length()) + " bytes" + "</td></tr>" +
+			"<b>" + HTMLUtilities.escapeHTML(file.getName()) + "</b>" + "</td></tr>" +
+			"<tr><td>Size:</td><td>" + (isDir ? "0" : file.length()) + " bytes" + "</td></tr>" +
 			"<tr><td>Last modified:</td><td>" +
-			GhidraFileChooser.format.format(new Date(file.lastModified())) + "</td></tr>" +
+			DateUtils.formatDateTimestamp(new Date(file.lastModified())) + "</td></tr>" +
 			"</table>";
 	}
 
@@ -155,30 +157,23 @@ public class FileDropDownSelectionDataModel implements DropDownTextFieldDataMode
 		}
 	}
 
-	/**
-	 * Renderer for data types.  It uses delegation instead of inheritance, due typing issues
-	 * (DefaultListCellRenderer is already typed on Object).
-	 */
-	private class FileDropDownRenderer implements ListCellRenderer<File> {
-
-		private DefaultListCellRenderer delegate = new DefaultListCellRenderer();
+	private class FileDropDownRenderer extends GListCellRenderer<File> {
 
 		@Override
-		public Component getListCellRendererComponent(JList<? extends File> list, File value,
+		protected String getItemText(File file) {
+			return file.getName();
+		}
+
+		@Override
+		public Component getListCellRendererComponent(JList<? extends File> list, File file,
 				int index, boolean isSelected, boolean cellHasFocus) {
 
-			JLabel renderer =
-				(JLabel) delegate.getListCellRendererComponent(list, value, index, isSelected,
-					cellHasFocus);
+			super.getListCellRendererComponent(list, file, index, isSelected, cellHasFocus);
 
-			File file = value;
-			renderer.setText(file.getName());
+			setIcon(fileSystemView.getSystemIcon(file));
+			setVerticalAlignment(SwingConstants.TOP);
 
-			renderer.setIcon(fileSystemView.getSystemIcon(file));
-
-			renderer.setVerticalAlignment(SwingConstants.TOP);
-
-			return renderer;
+			return this;
 		}
 	}
 

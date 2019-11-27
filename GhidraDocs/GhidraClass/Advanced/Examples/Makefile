@@ -4,7 +4,7 @@ AS=gcc
 
 OUTDIR := out
 
-EXAMPLES := dataMutability override custom switch sharedReturn jumpWithinInstruction opaque globalRegVars.so setRegister compilerVsDecompiler noReturn createStructure animals ldiv inline
+EXAMPLES := dataMutability override custom switch sharedReturn jumpWithinInstruction opaque globalRegVars.so setRegister compilerVsDecompiler noReturn createStructure animals ldiv inline write
 
 $(EXAMPLES): | $(OUTDIR)
 
@@ -58,6 +58,9 @@ ldiv: ldiv.c
 
 inline: inline.s
 	$(AS) inline.s -o $(OUTDIR)/inline
+
+write: write.c
+	$(CC) write.c -o $(OUTDIR)/write -O1
 
 clean:
 	rm -rf $(OUTDIR)

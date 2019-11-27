@@ -319,7 +319,7 @@ class RootNode extends WindowNode {
 			invalid = false;
 		}
 
-		winMgr.getActionManager().update();
+		winMgr.getActionToGuiMapper().update();
 		windowWrapper.validate();
 	}
 
@@ -500,11 +500,13 @@ class RootNode extends WindowNode {
 	@Override
 	void dispose() {
 
+		dockingWindowListeners.clear();
 		if (child != null) {
 			child.dispose();
 		}
 
 		super.dispose();
+
 		if (rootDropTargetHandler != null) {
 			rootDropTargetHandler.dispose();
 		}

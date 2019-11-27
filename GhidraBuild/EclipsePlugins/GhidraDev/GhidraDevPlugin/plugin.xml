@@ -351,7 +351,7 @@
       </launchConfigurationTypeImage>
       <launchConfigurationTypeImage
             configTypeID="GhidraHeadlessLaunchConfigurationType"
-            icon="icons/GhidraIcon16.png"
+            icon="icons/GhidraIcon16_bw.png"
             id="GhidraHeadlessLaunchConfigurationTypeImage">
       </launchConfigurationTypeImage>
    </extension>
@@ -415,7 +415,7 @@
       </shortcut>
       <shortcut
             class="ghidradev.ghidraprojectcreator.launchers.GhidraHeadlessLaunchShortcut"
-            icon="icons/GhidraIcon16.png"
+            icon="icons/GhidraIcon16_bw.png"
             id="GhidraHeadlessLaunchShortcut"
             label="Ghidra Headless"
             modes="run, debug">

@@ -40,8 +40,7 @@
   </default_symbols>
   
   <default_memory_blocks>
-    <memory_block name="IO" start_address="0" length="0x20" initialized="false"/>
-    <memory_block name="LOW_RAM" start_address="0x20" length="0xff" initialized="false"/>
-    <memory_block name="STACK" start_address="0x0100" length="0x01ff" initialized="false"/>
+    <memory_block name="LOW_RAM" start_address="0x0000" length="0x0100" initialized="false"/>
+    <memory_block name="STACK" start_address="0x0100" length="0x0100" initialized="false"/>
   </default_memory_blocks>
 </processor_spec>

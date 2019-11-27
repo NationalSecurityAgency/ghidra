@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,47 +15,54 @@
  */
 package docking.widgets.tree.tasks;
 
-import ghidra.util.exception.CancelledException;
-import ghidra.util.task.TaskMonitor;
-
 import java.util.List;
 
 import javax.swing.tree.TreePath;
 
 import docking.widgets.tree.*;
+import ghidra.util.exception.CancelledException;
+import ghidra.util.task.TaskMonitor;
 
 public class GTreeExpandAllTask extends GTreeTask {
-
-	private final GTreeNode root;
+	// The MAX number of nodes to expand. Expanding nodes is fairly expensive and must
+	// be done in the Swing thread. So to avoid hanging up the GUI, we limit it to
+	// a reasonable number.  Also, this task is primarily used to show filter results
+	// and if you have too many results, you probably aren't going to look at them
+	// all anyway.
+	private static final int MAX = 1000;
+	private final GTreeNode node;
 
 	public GTreeExpandAllTask(GTree tree, GTreeNode node) {
 		super(tree);
-		this.root = node;
+		this.node = node;
 	}
 
 	@Override
 	public void run(TaskMonitor monitor) {
-		int max = 100; // Note: this used to be root.getNonLeafCount(), but that triggered a load
-		monitor.initialize(max);
+		monitor.initialize(1000);
 		monitor.setMessage("Expanding nodes...");
 		try {
-			expandNode(root, monitor);
+			expandNode(node, monitor);
 		}
 		catch (CancelledException e) {
 			// Not everything expanded which is ok
 		}
 	}
 
-	protected void expandNode(GTreeNode node, TaskMonitor monitor) throws CancelledException {
-		if (node.isLeaf()) {
+	protected void expandNode(GTreeNode parent, TaskMonitor monitor) throws CancelledException {
+		// only expand MAX number of nodes.
+		if (monitor.getProgress() >= MAX) {
+			return;
+		}
+		if (parent.isLeaf()) {
 			return;
 		}
 		monitor.checkCanceled();
-		List<GTreeNode> allChildren = node.getChildren();
+		List<GTreeNode> allChildren = parent.getChildren();
 		if (allChildren.size() == 0) {
 			return;
 		}
-		TreePath treePath = node.getTreePath();
+		TreePath treePath = parent.getTreePath();
 		if (!jTree.isExpanded(treePath)) {
 			expandPath(treePath, monitor);
 		}

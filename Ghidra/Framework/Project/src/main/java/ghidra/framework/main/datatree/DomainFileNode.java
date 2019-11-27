@@ -22,7 +22,7 @@ import java.util.Date;
 import javax.swing.Icon;
 import javax.swing.SwingWorker;
 
-import docking.widgets.tree.AbstractGTreeNode;
+import docking.widgets.tree.GTreeNode;
 import docking.widgets.tree.GTreeNode;
 import ghidra.framework.model.DomainFile;
 import ghidra.framework.store.ItemCheckoutStatus;
@@ -33,7 +33,7 @@ import resources.ResourceManager;
 /**
  * Class to represent a node in the Data tree.
  */
-public class DomainFileNode extends AbstractGTreeNode implements Cuttable {
+public class DomainFileNode extends GTreeNode implements Cuttable {
 
 	private static final Icon UNKNOWN_FILE_ICON =
 		ResourceManager.loadImage("images/unknownFile.gif");

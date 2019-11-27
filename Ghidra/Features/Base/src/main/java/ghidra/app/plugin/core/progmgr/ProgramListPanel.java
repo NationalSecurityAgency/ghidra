@@ -29,10 +29,13 @@ import javax.swing.event.DocumentListener;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
 
+import docking.widgets.list.GListCellRenderer;
 import ghidra.program.model.listing.Program;
 
 /**
- * Panel that shows a JList
+ * Panel that displays the overflow of currently open programs that can be choosen.
+ * <p>
+ * Programs that don't have a visible tab are displayed in bold. 
  */
 class ProgramListPanel extends JPanel {
 
@@ -123,7 +126,7 @@ class ProgramListPanel extends JPanel {
 			}
 		});
 
-		programList.setCellRenderer(new MyListCellRenderer<Program>());
+		programList.setCellRenderer(new ProgramListCellRenderer());
 		JScrollPane sp = new JScrollPane();
 		sp.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
 		sp.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
@@ -187,7 +190,7 @@ class ProgramListPanel extends JPanel {
 	}
 
 	private void filterList(String filterText) {
-		List<Program> allDataList = new ArrayList<Program>();
+		List<Program> allDataList = new ArrayList<>();
 		allDataList.addAll(hiddenList);
 		allDataList.addAll(shownList);
 
@@ -227,31 +230,20 @@ class ProgramListPanel extends JPanel {
 		}
 	}
 
-	private class MyListCellRenderer<T> extends JLabel implements ListCellRenderer<T> {
-		private Font boldFont;
-		private Font font;
+	private class ProgramListCellRenderer extends GListCellRenderer<Program> {
 
-		MyListCellRenderer() {
-			setOpaque(true);
+		@Override
+		protected String getItemText(Program program) {
+			return multiTabPlugin.getStringUsedInList(program);
 		}
 
 		@Override
-		public Component getListCellRendererComponent(JList<? extends T> list, T value, int index,
-				boolean isSelected, boolean cellHasFocus) {
+		public Component getListCellRendererComponent(JList<? extends Program> list, Program value,
+				int index, boolean isSelected, boolean hasFocus) {
+			super.getListCellRendererComponent(list, value, index, isSelected, hasFocus);
 
-			if (font == null) {
-				font = list.getFont();
-				font = new Font(font.getName(), Font.PLAIN, font.getSize());
-				boldFont = new Font(font.getName(), Font.BOLD, font.getSize());
-			}
-
-			String text = multiTabPlugin.getStringUsedInList((Program) value);
-			setText(text);
 			if (hiddenList.contains(value)) {
-				setFont(boldFont);
-			}
-			else {
-				setFont(font);
+				setBold();
 			}
 			if (isSelected) {
 				setBackground(list.getSelectionBackground());
@@ -261,7 +253,7 @@ class ProgramListPanel extends JPanel {
 				setBackground(list.getBackground());
 				setForeground(list.getForeground());
 			}
-			setBorder(BorderFactory.createEmptyBorder(0, 3, 0, 10));
+
 			return this;
 		}
 	}

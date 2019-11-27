@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +19,6 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
 import ghidra.app.cmd.comments.SetCommentCmd;
-import ghidra.app.cmd.comments.SetCommentsCmd;
 import ghidra.app.cmd.data.CreateArrayCmd;
 import ghidra.app.plugin.exceptionhandlers.gcc.*;
 import ghidra.app.plugin.exceptionhandlers.gcc.datatype.*;
@@ -213,8 +211,8 @@ public class Cie extends GccAnalysisClass {
 		createAndCommentData(program, addr, new StringDataType(), comment, CodeUnit.EOL_COMMENT);
 		Data dataAt = program.getListing().getDataAt(addr);
 		if (dataAt == null) {
-			throw new ExceptionHandlerFrameException("Couldn't process augmentation string @ " +
-				addr + ".");
+			throw new ExceptionHandlerFrameException(
+				"Couldn't process augmentation string @ " + addr + ".");
 		}
 		augmentationString = (String) dataAt.getValue();
 		curSize += augmentationString.length() + 1; // Add 1 for the NUL byte
@@ -435,14 +433,14 @@ public class Cie extends GccAnalysisClass {
 	 */
 	private Address processInitialInstructions(Address addr) throws MemoryAccessException {
 		CreateArrayCmd arrayCmd = null;
-		SetCommentsCmd commentCmd = null;
 
 		// Create initial instructions array with remaining bytes
 		initialInstructionCount = intLength - curSize;
 		arrayCmd = new CreateArrayCmd(addr, initialInstructionCount, new ByteDataType(), BYTE_LEN);
-		commentCmd = new SetCommentsCmd(addr, null, null, "(CIE) Initial Instructions", null, null);
 		arrayCmd.applyTo(program);
-		commentCmd.applyTo(program);
+		SetCommentCmd.createComment(program, addr, "(CIE) Initial Instructions",
+			CodeUnit.EOL_COMMENT);
+
 		initialInstructions = new byte[initialInstructionCount];
 		int numBytesRead = program.getMemory().getBytes(addr, initialInstructions);
 
@@ -469,8 +467,8 @@ public class Cie extends GccAnalysisClass {
 	 * @throws MemoryAccessException if memory for the CIE couldn't be read.
 	 * @throws ExceptionHandlerFrameException if some of the CIE information couldn't be created.
 	 */
-	public void create(Address cieAddress) throws MemoryAccessException,
-			ExceptionHandlerFrameException {
+	public void create(Address cieAddress)
+			throws MemoryAccessException, ExceptionHandlerFrameException {
 
 		if (cieAddress == null || monitor.isCancelled()) {
 			return;
@@ -605,9 +603,8 @@ public class Cie extends GccAnalysisClass {
 
 					case 'P':
 
-						DwarfEHDecoder personalityDecoder =
-							processPersonalityEncoding(augmentationDataAddr, augmentationDataIndex,
-								augData);
+						DwarfEHDecoder personalityDecoder = processPersonalityEncoding(
+							augmentationDataAddr, augmentationDataIndex, augData);
 						augmentationDataIndex++;
 
 						DwarfDecodeContext personalityDecodeContext =
@@ -669,8 +666,9 @@ public class Cie extends GccAnalysisClass {
 		DataType prnsFuncPtrDt = personalityDecoder.getDataType(program);
 
 		createAndCommentData(program, augmentationDataAddr.add(augmentationDataIndex),
-			prnsFuncPtrDt, "(CIE Augmentation Data) Personality Function Pointer (" +
-				personalityFuncAddr + ")", CodeUnit.EOL_COMMENT);
+			prnsFuncPtrDt,
+			"(CIE Augmentation Data) Personality Function Pointer (" + personalityFuncAddr + ")",
+			CodeUnit.EOL_COMMENT);
 
 		program.getReferenceManager().addMemoryReference(
 			augmentationDataAddr.add(augmentationDataIndex), personalityFuncAddr, RefType.DATA,

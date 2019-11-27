@@ -43,13 +43,10 @@ class MenuItemManager implements ManagedMenuItem, PropertyChangeListener, Action
 	// listeners to handle help activation
 	// -this listener covers activation by keyboard and by mouse *when enabled*
 	private ChangeListener buttonModelChangeListener;
+
 	// -this listener covers activation by mouse *when the action is disabled*
 	private MouseAdapter menuHoverListener;
 
-	/**
-	 * Constructs a new MenuItemManger
-	 * @param dockableAction the action whose menuItem is being managed.
-	 */
 	MenuItemManager(MenuHandler actionHandler, DockingActionIf dockingAction,
 			boolean usePopupPath) {
 		this.menuHandler = actionHandler;
@@ -104,9 +101,6 @@ class MenuItemManager implements ManagedMenuItem, PropertyChangeListener, Action
 		};
 	}
 
-	/**
-	 * @see ghidra.framework.docking.menu.ManagedMenuItem#getWindowGroup()
-	 */
 	@Override
 	public String getGroup() {
 		MenuData menuData = isPopup ? action.getPopupMenuData() : action.getMenuBarData();
@@ -119,10 +113,6 @@ class MenuItemManager implements ManagedMenuItem, PropertyChangeListener, Action
 		return menuData == null ? null : menuData.getMenuSubGroup();
 	}
 
-	/**
-	 *
-	 * @see ghidra.framework.docking.menu.ManagedMenuItem#dispose()
-	 */
 	@Override
 	public void dispose() {
 		if (action != null) {
@@ -138,9 +128,6 @@ class MenuItemManager implements ManagedMenuItem, PropertyChangeListener, Action
 		action = null;
 	}
 
-	/**
-	 * @see ghidra.framework.docking.menu.ManagedMenuItem#getMenuItem()
-	 */
 	@Override
 	public JMenuItem getMenuItem() {
 		if (menuItem != null) {
@@ -158,17 +145,10 @@ class MenuItemManager implements ManagedMenuItem, PropertyChangeListener, Action
 		return menuItem;
 	}
 
-	/**
-	 * Returns the owner associated with this items action.
-	 */
 	public String getOwner() {
 		return action.getOwner();
 	}
 
-	/**
-	 * Changes the menuItem to reflect changes in the actions properties.
-	 * @see java.beans.PropertyChangeListener#propertyChange(java.beans.PropertyChangeEvent)
-	 */
 	@Override
 	public void propertyChange(PropertyChangeEvent e) {
 		if (menuItem == null) {
@@ -209,35 +189,30 @@ class MenuItemManager implements ManagedMenuItem, PropertyChangeListener, Action
 		}
 	}
 
-	/**
-	 * Returns the action associated with this menu item.
-	 */
 	public DockingActionIf getAction() {
 		return action;
 	}
 
-	/**
-	 * @see java.awt.event.ActionListener#actionPerformed(java.awt.event.ActionEvent)
-	 */
 	@Override
 	public void actionPerformed(ActionEvent e) {
 		if (menuHandler != null) {
 			menuHandler.processMenuAction(action, e);
+			return;
 		}
-		else {
-			try {
-				ActionContext context = new ActionContext(null, null, e.getSource());
-				if (action.isEnabledForContext(context)) {
-					if (action instanceof ToggleDockingActionIf) {
-						ToggleDockingActionIf toggleAction = ((ToggleDockingActionIf) action);
-						toggleAction.setSelected(!toggleAction.isSelected());
-					}
-					action.actionPerformed(context);
+
+		try {
+			ActionContext context = new ActionContext();
+			context.setSourceObject(e.getSource());
+			if (action.isEnabledForContext(context)) {
+				if (action instanceof ToggleDockingActionIf) {
+					ToggleDockingActionIf toggleAction = ((ToggleDockingActionIf) action);
+					toggleAction.setSelected(!toggleAction.isSelected());
 				}
+				action.actionPerformed(context);
 			}
-			catch (Throwable t) {
-				Msg.error(this, "Unexpected Exception: " + t.getMessage(), t);
-			}
+		}
+		catch (Throwable t) {
+			Msg.error(this, "Unexpected Exception: " + t.getMessage(), t);
 		}
 	}
 

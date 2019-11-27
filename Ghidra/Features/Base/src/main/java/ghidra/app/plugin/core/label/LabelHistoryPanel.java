@@ -18,7 +18,6 @@ package ghidra.app.plugin.core.label;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.text.SimpleDateFormat;
 import java.util.List;
 
 import javax.swing.*;
@@ -42,13 +41,14 @@ class LabelHistoryPanel extends JPanel {
 
 	private LabelHistoryTableModel tableModel;
 	private JTable historyTable;
-	private SimpleDateFormat dateFormatter;
 	private LabelHistoryListener listener;
 	private boolean showAddresses;
 	private final Program program;
 
 	/**
-	 * Construct a new history panel. 
+	 * Construct a new history panel
+	 * 
+	 * @param program the program
 	 * @param list list of LabelHistory objects
 	 * @param listener listener that is notified when the user clicks on a
 	 * row in the table; null if only label history at a specific address
@@ -60,13 +60,9 @@ class LabelHistoryPanel extends JPanel {
 		showAddresses = listener != null;
 		this.listener = listener;
 
-		dateFormatter = new SimpleDateFormat("yyyy MMM dd hh:mm aaa");
 		create(list);
 	}
 
-	/**
-	 * Show the label history for the given address.
-	 */
 	void setCurrentAddress(java.util.List<LabelHistory> list) {
 		tableModel = new LabelHistoryTableModel(list, true);
 	}
@@ -91,7 +87,7 @@ class LabelHistoryPanel extends JPanel {
 			TableColumn column = columnModel.getColumn(i);
 			String name = (String) column.getIdentifier();
 			if (name.equals(LabelHistoryTableModel.DATE)) {
-				column.setCellRenderer(new GenericDateCellRenderer(dateFormatter));
+				column.setCellRenderer(new GenericDateCellRenderer());
 				column.setPreferredWidth(190);
 			}
 			else if (name.equals(LabelHistoryTableModel.LABEL)) {
@@ -131,8 +127,8 @@ class LabelHistoryPanel extends JPanel {
 		private Font monoFont;
 
 		LabelCellRenderer() {
-			Font defaultFont = getFont();
-			monoFont = new Font("monospaced", defaultFont.getStyle(), defaultFont.getSize());
+			Font f = getFont();
+			monoFont = new Font("monospaced", f.getStyle(), f.getSize());
 		}
 
 		@Override

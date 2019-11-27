@@ -149,8 +149,8 @@ public class DisassociateDataTypeAction extends DockingAction {
 	private void collapseArchiveNodes(DataTypeArchiveGTree tree) {
 		// Note: collapsing archive nodes will actually remove all the children of the archive
 		//       which means no event processing and less memory consumption.
-		GTreeRootNode root = tree.getRootNode();
-		List<GTreeNode> archives = root.getAllChildren();
+		GTreeNode root = tree.getViewRoot();
+		List<GTreeNode> archives = root.getChildren();
 		archives.forEach(archive -> tree.collapseAll(archive));
 	}
 

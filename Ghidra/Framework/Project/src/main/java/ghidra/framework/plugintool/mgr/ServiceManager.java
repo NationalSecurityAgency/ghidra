@@ -101,7 +101,7 @@ public class ServiceManager {
 	 * 
 	 * @see #setServiceAddedNotificationsOn(boolean) 
 	 */
-	public synchronized <T> void addService(Class<T> interfaceClass, T service) {
+	public synchronized <T> void addService(Class<? extends T> interfaceClass, T service) {
 		List<Object> list =
 			servicesByInterface.computeIfAbsent(interfaceClass, (k) -> new ArrayList<>());
 		if (list.contains(service)) {

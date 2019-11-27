@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,18 +15,18 @@
  */
 package ghidra.app.plugin.core.datamgr.tree;
 
-import ghidra.app.plugin.core.datamgr.archive.Archive;
-import ghidra.app.plugin.core.datamgr.archive.InvalidFileArchive;
-import ghidra.program.model.data.ArchiveType;
-
 import java.util.List;
 
 import docking.widgets.tree.GTreeNode;
+import ghidra.app.plugin.core.datamgr.archive.Archive;
+import ghidra.app.plugin.core.datamgr.archive.InvalidFileArchive;
+import ghidra.program.model.data.ArchiveType;
+import ghidra.util.HTMLUtilities;
 
 public class InvalidArchiveNode extends ArchiveNode {
 
 	public InvalidArchiveNode(InvalidFileArchive archive) {
-		super(archive);
+		super(archive, new ArrayPointerFilterState());
 	}
 
 	@Override
@@ -44,7 +43,8 @@ public class InvalidArchiveNode extends ArchiveNode {
 	public String getToolTip() {
 		ArchiveType archiveType = ((InvalidFileArchive) archive).getArchiveType();
 		String type = archiveType == ArchiveType.FILE ? "File" : "Project";
-		return "Unable to locate " + type + " data type archive: " + archive.getName();
+		return "<html>Unable to locate " + type + " data type archive: " +
+			HTMLUtilities.escapeHTML(archive.getName());
 	}
 
 	@Override
@@ -73,8 +73,8 @@ public class InvalidArchiveNode extends ArchiveNode {
 	}
 
 	@Override
-	public boolean isSystemNode() {
-		return true;
+	public boolean canDelete() {
+		return false;
 	}
 
 	@Override

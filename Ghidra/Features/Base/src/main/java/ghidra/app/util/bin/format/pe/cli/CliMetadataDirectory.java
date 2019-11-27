@@ -32,25 +32,27 @@ import ghidra.util.task.TaskMonitor;
  * The Metadata directory pointed found in {@link ImageCor20Header}.
  */
 public class CliMetadataDirectory extends DataDirectory {
-	
+
 	private final static String NAME = "CLI_METADATA_DIRECTORY";
 
 	private CliMetadataRoot metadataRoot;
 
 	public static CliMetadataDirectory createCliMetadataDirectory(NTHeader ntHeader,
 			FactoryBundledWithBinaryReader reader) throws IOException {
-        CliMetadataDirectory cliMetadataDirectory = (CliMetadataDirectory) reader.getFactory().create(CliMetadataDirectory.class);
+		CliMetadataDirectory cliMetadataDirectory =
+			(CliMetadataDirectory) reader.getFactory().create(CliMetadataDirectory.class);
 		cliMetadataDirectory.initCliMetadataDirectory(ntHeader, reader);
-        return cliMetadataDirectory;
+		return cliMetadataDirectory;
 	}
 
-    /**
-     * DO NOT USE THIS CONSTRUCTOR, USE create*(GenericFactory ...) FACTORY METHODS INSTEAD.
-     */
-    public CliMetadataDirectory() {}
+	/**
+	 * DO NOT USE THIS CONSTRUCTOR, USE create*(GenericFactory ...) FACTORY METHODS INSTEAD.
+	 */
+	public CliMetadataDirectory() {
+	}
 
-	private void initCliMetadataDirectory(NTHeader ntHeader,
-			FactoryBundledWithBinaryReader reader) throws IOException {
+	private void initCliMetadataDirectory(NTHeader ntHeader, FactoryBundledWithBinaryReader reader)
+			throws IOException {
 		this.ntHeader = ntHeader;
 		this.reader = reader;
 
@@ -72,31 +74,31 @@ public class CliMetadataDirectory extends DataDirectory {
 		return NAME;
 	}
 
-    @Override
+	@Override
 	public boolean parse() throws IOException {
 		int ptr = getPointer();
 		if (ptr < 0 || this.size == 0) {
 			return false;
 		}
-		
-        long origIndex = reader.getPointerIndex();
-        reader.setPointerIndex(ptr);
+
+		long origIndex = reader.getPointerIndex();
+		reader.setPointerIndex(ptr);
 		metadataRoot = new CliMetadataRoot(reader, virtualAddress);
 		hasParsed = metadataRoot.parse();
 		reader.setPointerIndex(origIndex);
 		return hasParsed;
-    }
+	}
 
 	@Override
 	public void markup(Program program, boolean isBinary, TaskMonitor monitor, MessageLog log,
 			NTHeader ntHeader) throws DuplicateNameException, CodeUnitInsertionException,
 			IOException, MemoryAccessException {
-		
+
 		if (metadataRoot == null) {
 			return;
 		}
 
-		monitor.setMessage(program.getName() + ": CLI metadata...");
+		monitor.setMessage("[" + program.getName() + "]: CLI metadata...");
 
 		// Get our program address
 		Address addr = PeUtils.getMarkupAddress(program, isBinary, ntHeader, virtualAddress);
@@ -116,12 +118,12 @@ public class CliMetadataDirectory extends DataDirectory {
 		metadataRoot.markup(program, isBinary, monitor, log, ntHeader);
 	}
 
-    @Override
+	@Override
 	public DataType toDataType() throws DuplicateNameException {
-        StructureDataType ddstruct = new StructureDataType(NAME,0);
-        ddstruct.add(DWordDataType.dataType, "VirtualAddress", null);
-        ddstruct.add(DWordDataType.dataType, "Size", null);
+		StructureDataType ddstruct = new StructureDataType(NAME, 0);
+		ddstruct.add(DWordDataType.dataType, "VirtualAddress", null);
+		ddstruct.add(DWordDataType.dataType, "Size", null);
 		ddstruct.setCategoryPath(new CategoryPath("/PE/CLI"));
-        return ddstruct;
-    }
+		return ddstruct;
+	}
 }

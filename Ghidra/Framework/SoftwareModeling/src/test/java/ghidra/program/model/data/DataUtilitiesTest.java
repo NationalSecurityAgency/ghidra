@@ -15,17 +15,18 @@
  */
 package ghidra.program.model.data;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 import org.junit.*;
 
-import generic.test.AbstractGenericTest;
+import generic.test.AbstractGTest;
 import ghidra.program.model.ProgramTestDouble;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.*;
 
-public class DataUtilitiesTest extends AbstractGenericTest {
+public class DataUtilitiesTest extends AbstractGTest {
 
 	private Program program;
 	private AddressSpace space;
@@ -45,11 +46,6 @@ public class DataUtilitiesTest extends AbstractGenericTest {
 		program = createProgram();
 		listing = new MyListing();
 		memory = new MyMemory();
-	}
-
-	@After
-	public void tearDown() throws Exception {
-
 	}
 
 	/**

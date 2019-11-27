@@ -26,6 +26,7 @@ import javax.swing.border.Border;
 import javax.swing.text.DefaultFormatter;
 import javax.swing.text.DefaultFormatterFactory;
 
+import docking.widgets.label.GDLabel;
 import docking.widgets.table.GTable;
 import ghidra.feature.vt.api.main.VTAssociation;
 import ghidra.feature.vt.api.main.VTSession;
@@ -69,7 +70,7 @@ public abstract class AbstractTextFilter<T> extends Filter<T> {
 		// we handle updates in real time, so ignore focus events, which trigger excess filtering
 		textField.disableFocusEventProcessing();
 
-		JLabel label = new JLabel(filterName + ": ");
+		JLabel label = new GDLabel(filterName + ": ");
 		panel.add(label, BorderLayout.WEST);
 		panel.add(textField, BorderLayout.CENTER);
 

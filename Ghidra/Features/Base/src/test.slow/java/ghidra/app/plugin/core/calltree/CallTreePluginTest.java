@@ -46,7 +46,6 @@ import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.database.ProgramBuilder;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressFactory;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.data.PointerDataType;
 import ghidra.program.model.listing.Function;
@@ -62,25 +61,17 @@ public class CallTreePluginTest extends AbstractGhidraHeadedIntegrationTest {
 	private TestEnv env;
 	private CodeBrowserPlugin codeBrowserPlugin;
 	private PluginTool tool;
-	private ProgramDB program;
 	private CallTreePlugin callTreePlugin;
 	private CallTreeProvider provider;
-	private List<CallTreeProvider> providers;
 
 	private GTree incomingTree;
 	private GTree outgoingTree;
 
-	private DockingAction showProviderAction;
+	private ProgramBuilder builder;
+	private ProgramDB program;
 
 	private GoToService goToService;
-	private AddressFactory addressFactory;
 
-	public CallTreePluginTest() {
-		super();
-	}
-
-	@SuppressWarnings("unchecked")
-	// cast to list
 	@Before
 	public void setUp() throws Exception {
 		env = new TestEnv();
@@ -90,8 +81,6 @@ public class CallTreePluginTest extends AbstractGhidraHeadedIntegrationTest {
 		tool.addPlugin(CallTreePlugin.class.getName());
 
 		callTreePlugin = env.getPlugin(CallTreePlugin.class);
-		providers = (List<CallTreeProvider>) getInstanceField("providers", callTreePlugin);
-		showProviderAction = (DockingAction) getInstanceField("showProviderAction", callTreePlugin);
 
 		GoToServicePlugin goToPlugin = env.getPlugin(GoToServicePlugin.class);
 		goToService = (GoToService) invokeInstanceMethod("getGotoService", goToPlugin);
@@ -100,19 +89,17 @@ public class CallTreePluginTest extends AbstractGhidraHeadedIntegrationTest {
 		env.showTool();
 
 		program = createProgram();
-		addressFactory = program.getAddressFactory();
 		ProgramManager pm = tool.getService(ProgramManager.class);
 		pm.openProgram(program.getDomainFile());
 
 		// setup a good start location
 		goTo(addr("5000"));
 
-		provider = getProvider();
+		provider = callTreePlugin.getPrimaryProvider();
+		tool.showComponentProvider(provider, true);
 		incomingTree = (GTree) getInstanceField("incomingTree", provider);
 		outgoingTree = (GTree) getInstanceField("outgoingTree", provider);
 	}
-
-	ProgramBuilder builder;
 
 	private ProgramDB createProgram() throws Exception {
 
@@ -228,16 +215,16 @@ public class CallTreePluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 		String existingCaller = "Function_1000";// four levels back
 		setIncomingFilter(existingCaller);
-		assertIncomingMaxDepth(depth);
+		assertIncomingMaxDepth(depth, true);
 
 		assertIncomingNode(existingCaller, depth);
 
 		depth = 3;
 		setDepth(depth);
 		setIncomingFilter(existingCaller);
-		assertIncomingMaxDepth(0);// filter no longer matches
+		assertIncomingMaxDepth(0, true);// filter no longer matches
 
-		assertIncomingNoNode(existingCaller, depth);
+		assertIncomingNoNode(existingCaller, depth, true);
 	}
 
 	@Test
@@ -249,16 +236,16 @@ public class CallTreePluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 		String existingCallee = "Function_8000";
 		setOutgoingFilter(existingCallee);
-		assertOutgoingMaxDepth(depth);
+		assertOutgoingMaxDepth(depth, true);
 
 		assertOutgoingNode(existingCallee, depth);
 
 		depth = 2;
 		setDepth(depth);
 		setOutgoingFilter(existingCallee);
-		assertOutgoingMaxDepth(0);// filter no longer matches
+		assertOutgoingMaxDepth(0, true);// filter no longer matches
 
-		assertOutgoingNoNode(existingCallee, depth);
+		assertOutgoingNoNode(existingCallee, depth, true);
 	}
 
 	@Test
@@ -274,7 +261,7 @@ public class CallTreePluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 		String existingCaller = "2000";// at depth 3
 		setIncomingFilter(existingCaller);
-		assertIncomingMaxDepth(depth);
+		assertIncomingMaxDepth(depth, true);
 
 		assertIncomingNode(existingCaller, depth);
 
@@ -284,7 +271,7 @@ public class CallTreePluginTest extends AbstractGhidraHeadedIntegrationTest {
 		existingCaller = "1000";// at depth 4
 		setIncomingFilter(existingCaller);
 
-		assertIncomingMaxDepth(depth);
+		assertIncomingMaxDepth(depth, true);
 		assertIncomingNode(existingCaller, depth);
 	}
 
@@ -300,8 +287,35 @@ public class CallTreePluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 		CallTreeProvider initialProvider = provider;
 		CallTreeProvider newProvider = showProvider("6000");
-		Assert.assertNotEquals(initialProvider, newProvider);
+		assertNotEquals(initialProvider, newProvider);
 		assertEquals(depth, currentDepthSetting(newProvider));
+	}
+
+	@Test
+	public void testShowingTransientProvider() {
+
+		goTo(addr("0x5000"));// new function
+		assertOnlyOneToolbarIcon(); // this was a regression
+
+		CallTreeProvider initialProvider = provider;
+		CallTreeProvider newProvider = showProvider("6000");
+		assertNotEquals(initialProvider, newProvider);
+		assertOnlyOneToolbarIcon();
+	}
+
+	private void assertOnlyOneToolbarIcon() {
+
+		int toolBarActionCount = 0;
+		Set<DockingActionIf> actions =
+			getActionsByOwnerAndName(tool, callTreePlugin.getName(), provider.getName());
+		for (DockingActionIf action : actions) {
+			ToolBarData data = action.getToolBarData();
+			if (data != null) {
+				toolBarActionCount++;
+			}
+		}
+
+		assertEquals("Expected exactly one toolbar action", 1, toolBarActionCount);
 	}
 
 	@Test
@@ -317,7 +331,7 @@ public class CallTreePluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 		fullyExpandIncomingNode(node);
 
-		assertIncomingMaxDepth(currentDepthSetting(provider));
+		assertIncomingMaxDepth(currentDepthSetting(provider), false);
 	}
 
 	@Test
@@ -333,7 +347,7 @@ public class CallTreePluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 		fullyExpandOutgoingNode(node);
 
-		assertOutgoingMaxDepth(currentDepthSetting(provider));
+		assertOutgoingMaxDepth(currentDepthSetting(provider), false);
 	}
 
 	@Test
@@ -351,7 +365,7 @@ public class CallTreePluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 		int nodeDepth = node.getTreePath().getPathCount() - 1;// -1 for root node 
 		int depth = 4 + nodeDepth;
-		assertIncomingMaxDepth(depth);
+		assertIncomingMaxDepth(depth, false);
 		assertDepth(node, depth);
 	}
 
@@ -369,7 +383,7 @@ public class CallTreePluginTest extends AbstractGhidraHeadedIntegrationTest {
 		fullyExpandOutgoingNode(node);
 
 		int depth = currentDepthSetting(provider);
-		assertOutgoingMaxDepth(depth);
+		assertOutgoingMaxDepth(depth, false);
 		assertDepth(node, depth);
 	}
 
@@ -381,26 +395,23 @@ public class CallTreePluginTest extends AbstractGhidraHeadedIntegrationTest {
 		// is selected.
 		//
 		assertTrue(provider.isVisible());
-
 		assertNotNull("Provider did not update its information when made visible",
 			providerFunction());
 
-		final ToggleDockingAction navigateIncomingLoctionsAction =
-			(ToggleDockingAction) getAction("Navigation Incoming Location Changes");
-		assertTrue(!navigateIncomingLoctionsAction.isSelected());
+		toggleFollowIncomingNavigation(false);
 
-		assertEquals("Provider's location does not match that of the listing.", currentFunction(),
-			providerFunction());
+		assertProviderMatchesListingFunction();
 
 		goTo(addr("0x6000"));
+		assertNotEquals(
+			"Provider's location should not have changed when not tracking location changes",
+			getListingFunction(), providerFunction());
 
-		assertTrue("Provider's location matches that of the listing when not following " +
-			"location changes.", !currentFunction().equals(providerFunction()));
+		toggleFollowIncomingNavigation(true);
+		assertProviderMatchesListingFunction();
 
-		performAction(navigateIncomingLoctionsAction, true);
-
-		assertEquals("Provider's location does not match that of the listing.", currentFunction(),
-			providerFunction());
+		goTo(addr("0x6100"));
+		assertProviderMatchesListingFunction();
 	}
 
 	@Test
@@ -411,10 +422,10 @@ public class CallTreePluginTest extends AbstractGhidraHeadedIntegrationTest {
 		//
 
 		myWaitForTree(incomingTree, provider);
-		GTreeRootNode rootNode = getRootNode(incomingTree);
+		GTreeNode rootNode = getRootNode(incomingTree);
 		List<GTreeNode> children = rootNode.getChildren();
 		assertTrue(
-			"Incoming tree does not have callers as expected for function: " + currentFunction(),
+			"Incoming tree does not have callers as expected for function: " + getListingFunction(),
 			children.size() > 0);
 
 		GTreeNode child0 = children.get(0);
@@ -431,10 +442,10 @@ public class CallTreePluginTest extends AbstractGhidraHeadedIntegrationTest {
 		setProviderFunction("0x5000");
 
 		myWaitForTree(outgoingTree, provider);
-		GTreeRootNode rootNode = getRootNode(outgoingTree);
+		GTreeNode rootNode = getRootNode(outgoingTree);
 		List<GTreeNode> children = rootNode.getChildren();
 		assertTrue(
-			"Outgoing tree does not have callers as expected for function: " + currentFunction(),
+			"Outgoing tree does not have callers as expected for function: " + getListingFunction(),
 			children.size() > 0);
 
 		GTreeNode child1 = children.get(1);
@@ -451,10 +462,10 @@ public class CallTreePluginTest extends AbstractGhidraHeadedIntegrationTest {
 		setProviderFunction("0x5000");
 
 		myWaitForTree(outgoingTree, provider);
-		GTreeRootNode rootNode = getRootNode(outgoingTree);
+		GTreeNode rootNode = getRootNode(outgoingTree);
 		List<GTreeNode> children = rootNode.getChildren();
 		assertTrue(
-			"Outgoing tree does not have callers as expected for function: " + currentFunction(),
+			"Outgoing tree does not have callers as expected for function: " + getListingFunction(),
 			children.size() > 0);
 
 		ProgramLocation originalLocation = currentLocation();
@@ -492,10 +503,10 @@ public class CallTreePluginTest extends AbstractGhidraHeadedIntegrationTest {
 		assertTrue(currentSelection.isEmpty());
 
 		myWaitForTree(outgoingTree, provider);
-		GTreeRootNode rootNode = getRootNode(outgoingTree);
+		GTreeNode rootNode = getRootNode(outgoingTree);
 		List<GTreeNode> children = rootNode.getChildren();
 		assertTrue(
-			"Outgoing tree does not have callers as expected for function: " + currentFunction(),
+			"Outgoing tree does not have callers as expected for function: " + getListingFunction(),
 			children.size() > 0);
 
 		OutgoingCallNode child0 = (OutgoingCallNode) children.get(0);
@@ -515,7 +526,13 @@ public class CallTreePluginTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	@Test
-	public void testHomeAction() {
+	public void testHomeAction_Navigation_DoNotFollow() {
+
+		//
+		// Test that the 'home' address does not change when the user navigates
+		// 
+
+		toggleFollowIncomingNavigation(false);
 		Address startAddress = addr("0x5000");
 		setProviderFunction("0x5000");
 
@@ -525,10 +542,32 @@ public class CallTreePluginTest extends AbstractGhidraHeadedIntegrationTest {
 		Address firstCallAddress = addr("0x6000");
 		goTo(firstCallAddress);
 
-		assertEquals(firstCallAddress, currentAddress());
+		assertEquals(firstCallAddress, getListingAddress());
 
 		performAction(homeAction, true);
-		assertEquals(startAddress, currentAddress());
+		assertEquals(startAddress, getListingAddress());
+	}
+
+	@Test
+	public void testHomeAction_Navigation_Follow() {
+
+		//
+		// Test that the 'home' address does not change when the user navigates
+		// 
+
+		toggleFollowIncomingNavigation(true);
+		setProviderFunction("0x5000");
+
+		DockingActionIf homeAction = getAction("Home");
+
+		// go to some other address
+		Address firstCallAddress = addr("0x6000");
+		goTo(firstCallAddress);
+
+		assertEquals(firstCallAddress, getListingAddress());
+
+		performAction(homeAction, true);
+		assertEquals(firstCallAddress, getListingAddress());
 	}
 
 	@Test
@@ -549,10 +588,10 @@ public class CallTreePluginTest extends AbstractGhidraHeadedIntegrationTest {
 		}
 
 		myWaitForTree(outgoingTree, provider);
-		GTreeRootNode rootNode = getRootNode(outgoingTree);
+		GTreeNode rootNode = getRootNode(outgoingTree);
 		List<GTreeNode> children = rootNode.getChildren();
 		assertTrue(
-			"Outgoing tree does not have callers as expected for function: " + currentFunction(),
+			"Outgoing tree does not have callers as expected for function: " + getListingFunction(),
 			children.size() > 0);
 
 		// copy the names of the children into a map so that we can verify that there are 
@@ -589,24 +628,24 @@ public class CallTreePluginTest extends AbstractGhidraHeadedIntegrationTest {
 		}
 
 		myWaitForTree(outgoingTree, provider);
-		GTreeRootNode rootNode = getRootNode(outgoingTree);
+		GTreeNode rootNode = getRootNode(outgoingTree);
 		List<GTreeNode> children = rootNode.getChildren();
 		assertTrue(
-			"Outgoing tree does not have callers as expected for function: " + currentFunction(),
+			"Outgoing tree does not have callers as expected for function: " + getListingFunction(),
 			children.size() > 0);
 
 		OutgoingCallNode child0 = (OutgoingCallNode) children.get(0);
 		clickNode(outgoingTree, child0);
 		waitForTree(outgoingTree);
 		Address expectedAddress0 = child0.getSourceAddress();
-		assertEquals("Node selection did not trigger navigation", currentAddress(),
+		assertEquals("Node selection did not trigger navigation", getListingAddress(),
 			expectedAddress0);
 
 		OutgoingCallNode child1 = (OutgoingCallNode) children.get(1);
 		clickNode(outgoingTree, child1);
 		waitForTree(outgoingTree);
 		Address expectedAddress1 = child1.getSourceAddress();
-		assertEquals("Node selection did not trigger navigation", currentAddress(),
+		assertEquals("Node selection did not trigger navigation", getListingAddress(),
 			expectedAddress1);
 
 		//
@@ -619,20 +658,20 @@ public class CallTreePluginTest extends AbstractGhidraHeadedIntegrationTest {
 		rootNode = getRootNode(outgoingTree);
 		children = rootNode.getChildren();
 		assertTrue(
-			"Outgoing tree does not have callers as expected for function: " + currentFunction(),
+			"Outgoing tree does not have callers as expected for function: " + getListingFunction(),
 			children.size() > 0);
 
 		child0 = (OutgoingCallNode) children.get(0);
 		clickNode(outgoingTree, child0);
 		waitForTree(outgoingTree);
 		assertEquals("Node selection triggered navigation when the action is disabled",
-			currentAddress(), startAddress);
+			getListingAddress(), startAddress);
 
 		child1 = (OutgoingCallNode) children.get(1);
 		clickNode(outgoingTree, child1);
 		waitForTree(outgoingTree);
 		assertEquals("Node selection triggered navigation when the action is disabled",
-			currentAddress(), startAddress);
+			getListingAddress(), startAddress);
 	}
 
 	@Test
@@ -659,7 +698,7 @@ public class CallTreePluginTest extends AbstractGhidraHeadedIntegrationTest {
 		setProviderFunction(addrString);
 
 		myWaitForTree(incomingTree, provider);
-		GTreeRootNode rootNode = getRootNode(incomingTree);
+		GTreeNode rootNode = getRootNode(incomingTree);
 		List<GTreeNode> children = rootNode.getChildren();
 		assertTrue("Incoming tree does not have callers as expected for function: " + addrString,
 			children.size() > 0);
@@ -674,10 +713,10 @@ public class CallTreePluginTest extends AbstractGhidraHeadedIntegrationTest {
 		setProviderFunction("0x5000");
 
 		myWaitForTree(incomingTree, provider);
-		GTreeRootNode rootNode = getRootNode(incomingTree);
+		GTreeNode rootNode = getRootNode(incomingTree);
 		List<GTreeNode> children = rootNode.getChildren();
 		assertTrue(
-			"Incoming tree does not have callers as expected for function: " + currentFunction(),
+			"Incoming tree does not have callers as expected for function: " + getListingFunction(),
 			children.size() > 0);
 
 		GTreeNode child1 = children.get(0);
@@ -693,7 +732,7 @@ public class CallTreePluginTest extends AbstractGhidraHeadedIntegrationTest {
 		rootNode = getRootNode(incomingTree);
 		children = rootNode.getChildren();
 		assertTrue(
-			"Incoming tree does not have callers as expected for function: " + currentFunction(),
+			"Incoming tree does not have callers as expected for function: " + getListingFunction(),
 			children.size() > 0);
 
 		assertContainsChild(children, newName);
@@ -705,10 +744,10 @@ public class CallTreePluginTest extends AbstractGhidraHeadedIntegrationTest {
 		setProviderFunction("0x5000");
 
 		myWaitForTree(incomingTree, provider);
-		GTreeRootNode rootNode = getRootNode(incomingTree);
+		GTreeNode rootNode = getRootNode(incomingTree);
 		List<GTreeNode> children = rootNode.getChildren();
 		assertTrue(
-			"Incoming tree does not have callers as expected for function: " + currentFunction(),
+			"Incoming tree does not have callers as expected for function: " + getListingFunction(),
 			children.size() > 0);
 
 		Function rootFunction = getFunction(addr("0x5000"));
@@ -720,7 +759,7 @@ public class CallTreePluginTest extends AbstractGhidraHeadedIntegrationTest {
 		rootNode = getRootNode(incomingTree);
 		children = rootNode.getChildren();
 		assertTrue(
-			"Incoming tree does not have callers as expected for function: " + currentFunction(),
+			"Incoming tree does not have callers as expected for function: " + getListingFunction(),
 			children.size() > 0);
 
 		assertEquals("Incoming References - " + newName, rootNode.getName());
@@ -729,6 +768,18 @@ public class CallTreePluginTest extends AbstractGhidraHeadedIntegrationTest {
 //==================================================================================================
 // Private Methods
 //==================================================================================================
+
+	private void assertProviderMatchesListingFunction() {
+		assertEquals("Provider's location does not match that of the listing.",
+			getListingFunction(), providerFunction());
+	}
+
+	private void toggleFollowIncomingNavigation(boolean selected) {
+		ToggleDockingAction navigateIncomingLoctionsAction =
+			(ToggleDockingAction) getAction("Navigation Incoming Location Changes");
+		setToggleActionSelected(navigateIncomingLoctionsAction, provider.getActionContext(null),
+			selected);
+	}
 
 	private void assertContainsChild(List<GTreeNode> children, String name) {
 		for (GTreeNode node : children) {
@@ -748,10 +799,14 @@ public class CallTreePluginTest extends AbstractGhidraHeadedIntegrationTest {
 		}
 	}
 
-	private GTreeRootNode getRootNode(final GTree tree) {
+	private GTreeNode getRootNode(GTree tree) {
+		return getRootNode(tree, false);
+	}
+
+	private GTreeNode getRootNode(final GTree tree, boolean filtered) {
 		myWaitForTree(tree, provider);
-		final AtomicReference<GTreeRootNode> ref = new AtomicReference<>();
-		runSwing(() -> ref.set(tree.getRootNode()));
+		final AtomicReference<GTreeNode> ref = new AtomicReference<>();
+		runSwing(() -> ref.set(filtered ? tree.getViewRoot() : tree.getModelRoot()));
 		return ref.get();
 	}
 
@@ -779,38 +834,8 @@ public class CallTreePluginTest extends AbstractGhidraHeadedIntegrationTest {
 		return functionManager.getFunctionAt(address);
 	}
 
-	private CallTreeProvider getProvider() {
-		final AtomicReference<CallTreeProvider> ref = new AtomicReference<>();
-
-		// run in swing, as two threads are accessing/manipulating a variable
-		runSwing(() -> {
-			if (providers.size() == 0) {
-				ref.set(showProvider());
-			}
-			else {
-				ref.set(providers.get(0));
-			}
-		});
-		return ref.get();
-	}
-
-	private CallTreeProvider getProvider(final String address) {
-		final CallTreeProvider[] providerBox = new CallTreeProvider[1];
-
-		// run in swing, as two threads are accessing/manipulating a variable
-		runSwing(() -> {
-			for (CallTreeProvider p : providers) {
-				if (p.toString().indexOf(address) != -1) {
-					providerBox[0] = p;
-					break;
-				}
-			}
-		});
-		return providerBox[0];
-	}
-
-	private void assertOutgoingNoNode(String name, int depth) {
-		List<NodeDepthInfo> nodes = getNodesByDepth(false);
+	private void assertOutgoingNoNode(String name, int depth, boolean filtered) {
+		List<NodeDepthInfo> nodes = getNodesByDepth(false, filtered);
 		for (NodeDepthInfo info : nodes) {
 			String nodeName = info.node.getName();
 			if (nodeName.indexOf(name) != -1) {
@@ -840,8 +865,8 @@ public class CallTreePluginTest extends AbstractGhidraHeadedIntegrationTest {
 		Assert.fail("Unable to find a node by name: " + name + " at depth: " + depth);
 	}
 
-	private void assertOutgoingMaxDepth(int depth) {
-		List<NodeDepthInfo> nodes = getNodesByDepth(false);
+	private void assertOutgoingMaxDepth(int depth, boolean filtered) {
+		List<NodeDepthInfo> nodes = getNodesByDepth(false, filtered);
 		NodeDepthInfo maxDepthNode = nodes.get(nodes.size() - 1);
 
 		assertEquals("Node max depth does not match: " + maxDepthNode, depth, maxDepthNode.depth);
@@ -867,7 +892,7 @@ public class CallTreePluginTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	private GTreeNode selectIncomingNode(String text) {
-		GTreeRootNode rootNode = getRootNode(incomingTree);
+		GTreeNode rootNode = getRootNode(incomingTree);
 		GTreeNode node = findNode(rootNode, text);
 		assertNotNull(node);
 		incomingTree.setSelectedNode(node);
@@ -876,7 +901,7 @@ public class CallTreePluginTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	private GTreeNode selectOutgoingNode(String text) {
-		GTreeRootNode rootNode = getRootNode(outgoingTree);
+		GTreeNode rootNode = getRootNode(outgoingTree);
 		GTreeNode node = findNode(rootNode, text);
 		assertNotNull(node);
 		outgoingTree.setSelectedNode(node);
@@ -891,7 +916,7 @@ public class CallTreePluginTest extends AbstractGhidraHeadedIntegrationTest {
 		}
 
 		if (node instanceof GTreeSlowLoadingNode) {
-			boolean loaded = ((GTreeSlowLoadingNode) node).isChildrenLoadedOrInProgress();
+			boolean loaded = ((GTreeSlowLoadingNode) node).isLoaded();
 			if (!loaded) {
 				return null;// children not loaded--don't load
 			}
@@ -908,23 +933,15 @@ public class CallTreePluginTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	private void assertDepth(GTreeNode node, int depth) {
-		int currentDepth = 0;
-		GTreeNode parent = node.getParent();
-		while (parent != null) {
-			currentDepth++;
-			parent = parent.getParent();
-		}
-
-		currentDepth--;// the root is considered depth 0, so we have to subtract one
-
+		int currentDepth = node.getTreePath().getPathCount() - 1;
 		int maxNodeDepth = getMaxNodeDepth(node, currentDepth);
 		assertEquals("Node depth is not correct " + node, depth, maxNodeDepth);
 	}
 
 	private int getMaxNodeDepth(GTreeNode node, int currentDepth) {
-		int maxDepth = currentDepth + 1;
+		int maxDepth = currentDepth;
 		if (node instanceof GTreeSlowLoadingNode) {
-			boolean loaded = ((GTreeSlowLoadingNode) node).isChildrenLoadedOrInProgress();
+			boolean loaded = ((GTreeSlowLoadingNode) node).isLoaded();
 			if (!loaded) {
 				return maxDepth;// children not loaded--don't load
 			}
@@ -939,13 +956,13 @@ public class CallTreePluginTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	private void fullyExpandIncomingNode(GTreeNode node) {
-		DockingActionIf expandAction = getAction(callTreePlugin, "Fully Expand Selected Nodes");
+		DockingActionIf expandAction = getLocalAction(provider, "Fully Expand Selected Nodes");
 		performAction(expandAction, new ActionContext(provider, incomingTree), false);
 		waitForTree(node.getTree());
 	}
 
 	private void fullyExpandOutgoingNode(GTreeNode node) {
-		DockingActionIf expandAction = getAction(callTreePlugin, "Fully Expand Selected Nodes");
+		DockingActionIf expandAction = getLocalAction(provider, "Fully Expand Selected Nodes");
 		performAction(expandAction, new ActionContext(provider, outgoingTree), false);
 		waitForTree(node.getTree());
 	}
@@ -970,8 +987,8 @@ public class CallTreePluginTest extends AbstractGhidraHeadedIntegrationTest {
 		Assert.fail("Unable to find a node by name: " + name + " at depth: " + depth);
 	}
 
-	private void assertIncomingNoNode(String name, int depth) {
-		List<NodeDepthInfo> nodes = getNodesByDepth(true);
+	private void assertIncomingNoNode(String name, int depth, boolean filtered) {
+		List<NodeDepthInfo> nodes = getNodesByDepth(true, filtered);
 		for (NodeDepthInfo info : nodes) {
 			String nodeName = info.node.getName();
 			if (nodeName.indexOf(name) != -1) {
@@ -981,16 +998,21 @@ public class CallTreePluginTest extends AbstractGhidraHeadedIntegrationTest {
 		}
 	}
 
-	private void assertIncomingMaxDepth(int depth) {
-		List<NodeDepthInfo> nodes = getNodesByDepth(true);
+	private void assertIncomingMaxDepth(int depth, boolean filtered) {
+		List<NodeDepthInfo> nodes = getNodesByDepth(true, filtered);
 		NodeDepthInfo maxDepthNode = nodes.get(nodes.size() - 1);
 
 		assertEquals("Node max depth does not match: " + maxDepthNode, depth, maxDepthNode.depth);
 	}
 
 	private List<NodeDepthInfo> getNodesByDepth(boolean incoming) {
+		return getNodesByDepth(incoming, false);
+	}
+
+	private List<NodeDepthInfo> getNodesByDepth(boolean incoming, boolean filtered) {
 		List<NodeDepthInfo> list = new ArrayList<>();
-		GTreeRootNode root = incoming ? getRootNode(incomingTree) : getRootNode(outgoingTree);
+		GTreeNode root =
+			incoming ? getRootNode(incomingTree, filtered) : getRootNode(outgoingTree, filtered);
 		accumulateNodeDepths(list, root, 0);
 		Collections.sort(list);
 		return list;
@@ -1004,7 +1026,7 @@ public class CallTreePluginTest extends AbstractGhidraHeadedIntegrationTest {
 		}
 
 		if (node instanceof GTreeSlowLoadingNode) {
-			boolean loaded = ((GTreeSlowLoadingNode) node).isChildrenLoadedOrInProgress();
+			boolean loaded = ((GTreeSlowLoadingNode) node).isLoaded();
 			if (!loaded) {
 				return;// children not loaded--don't load
 			}
@@ -1029,7 +1051,7 @@ public class CallTreePluginTest extends AbstractGhidraHeadedIntegrationTest {
 		return aProvider.getRecurseDepth();
 	}
 
-	private Function currentFunction() {
+	private Function getListingFunction() {
 		FunctionManager functionManager = program.getFunctionManager();
 		ProgramLocation codeBrowserLocation = codeBrowserPlugin.getCurrentLocation();
 		return functionManager.getFunctionContaining(codeBrowserLocation.getAddress());
@@ -1043,7 +1065,7 @@ public class CallTreePluginTest extends AbstractGhidraHeadedIntegrationTest {
 		return codeBrowserPlugin.getCurrentLocation();
 	}
 
-	private Address currentAddress() {
+	private Address getListingAddress() {
 		return codeBrowserPlugin.getCurrentAddress();
 	}
 
@@ -1054,11 +1076,11 @@ public class CallTreePluginTest extends AbstractGhidraHeadedIntegrationTest {
 			String name = child.getName();
 			Integer integer = map.get(name);
 			if (integer == null) {
-				integer = new Integer(0);
+				integer = 0;
 			}
 			int asInt = integer;
 			asInt++;
-			map.put(name, new Integer(asInt));
+			map.put(name, asInt);
 		}
 		return map;
 	}
@@ -1088,12 +1110,8 @@ public class CallTreePluginTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	private DockingActionIf getAction(String actionName) {
-		// make sure there is a provider from which to get actions
-		getProvider();
-		String fullActionName = actionName + " (CallTreePlugin)";
-		List<DockingActionIf> actions = tool.getDockingActionsByFullActionName(fullActionName);
-		Assert.assertTrue("Could not find action: " + fullActionName, actions.size() > 0);
-		return actions.get(0);
+		DockingActionIf action = getLocalAction(provider, actionName);
+		return action;
 	}
 
 	private void myWaitForTree(GTree gTree, CallTreeProvider treeProvider) {
@@ -1123,20 +1141,16 @@ public class CallTreePluginTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	/**
-	 * Shows and returns a provider for the current address.
-	 */
-	private CallTreeProvider showProvider() {
-		performAction(showProviderAction, true);
-		return getProvider();
-	}
-
-	/**
 	 * Shows and returns a provider for the specified address.
 	 */
 	private CallTreeProvider showProvider(String address) {
 		goTo(addr(address));
-		performAction(showProviderAction, true);
-		return getProvider(address);
+		ProgramLocation location = codeBrowserPlugin.getCurrentLocation();
+
+		DockingAction action = callTreePlugin.getShowCallTreeFromMenuAction();
+		performAction(action);
+
+		return runSwing(() -> callTreePlugin.findTransientProviderForLocation(location));
 	}
 
 	private Address addr(String address) {

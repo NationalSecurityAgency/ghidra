@@ -36,44 +36,42 @@ public class DecompilerStructureVariableAction extends CreateStructureVariableAc
 
 	@Override
 	public boolean isEnabledForContext(ActionContext context) {
-		DataType dt = null;
-		boolean isThisParam = false;
 
 		if (!(context instanceof DecompilerActionContext)) {
 			return false;
 		}
 
-		Function function = controller.getFunction();
-		if (function instanceof UndefinedFunction) {
-			return false;
-		}
+		DecompilerActionContext decompilerContext = (DecompilerActionContext) context;
+		return decompilerContext.checkActionEnablement(() -> {
 
-		DecompilerActionContext decompilerActionContext = (DecompilerActionContext) context;
-		if (decompilerActionContext.isDecompiling()) {
-			// Let this through here and handle it in actionPerformed().  This lets us alert 
-			// the user that they have to wait until the decompile is finished.  If we are not
-			// enabled at this point, then the keybinding will be propagated to the global 
-			// actions, which is not what we want.
+			Function function = controller.getFunction();
+			if (function == null || function instanceof UndefinedFunction) {
+				return false;
+			}
+
+			DataType dt = null;
+			boolean isThisParam = false;
+
+			// get the data type at the location and see if it is OK
+			DecompilerPanel decompilerPanel = controller.getDecompilerPanel();
+			ClangToken tokenAtCursor = decompilerPanel.getTokenAtCursor();
+			if (tokenAtCursor == null) {
+				return false;
+			}
+			int maxPointerSize = controller.getProgram().getDefaultPointerSize();
+			HighVariable var = tokenAtCursor.getHighVariable();
+			if (var != null && !(var instanceof HighConstant)) {
+				dt = var.getDataType();
+				isThisParam = testForAutoParameterThis(var, function);
+			}
+
+			if (dt == null || dt.getLength() > maxPointerSize) {
+				return false;
+			}
+
+			adjustCreateStructureMenuText(dt, isThisParam);
 			return true;
-		}
 
-		// get the data type at the location and see if it is OK
-		DecompilerPanel decompilerPanel = controller.getDecompilerPanel();
-		ClangToken tokenAtCursor = decompilerPanel.getTokenAtCursor();
-		if (tokenAtCursor == null) {
-			return false;
-		}
-		HighVariable var = tokenAtCursor.getHighVariable();
-		if (var != null && !(var instanceof HighConstant)) {
-			dt = var.getDataType();
-			isThisParam = testForAutoParameterThis(var, function);
-		}
-
-		if (dt == null) {
-			return false;
-		}
-
-		adjustCreateStructureMenuText(dt, isThisParam);
-		return true;
+		});
 	}
 }

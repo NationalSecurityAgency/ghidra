@@ -26,6 +26,8 @@ import javax.swing.event.*;
 
 import org.apache.commons.lang3.StringUtils;
 
+import docking.widgets.label.GDHtmlLabel;
+import docking.widgets.list.GList;
 import generic.util.WindowUtilities;
 import ghidra.util.StringUtilities;
 import ghidra.util.SystemUtilities;
@@ -56,7 +58,7 @@ import util.CollectionUtils;
  *
  * @param <T> The type of object that this model manipulates
  */
-public class DropDownTextField<T> extends JTextField {
+public class DropDownTextField<T> extends JTextField implements GComponent {
 
 	private static final int DEFAULT_MAX_UPDATE_DELAY = 2000;
 	private static final int MIN_HEIGHT = 300;
@@ -68,8 +70,8 @@ public class DropDownTextField<T> extends JTextField {
 	private DropDownWindowVisibilityListener<T> windowVisibilityListener =
 		new DropDownWindowVisibilityListener<>();
 
-	private JLabel previewLabel;
-	protected JList<T> list = new JList<>();
+	private GDHtmlLabel previewLabel;
+	protected GList<T> list = new GList<>();
 	private WeakSet<DropDownSelectionChoiceListener<T>> choiceListeners =
 		WeakDataStructureFactory.createSingleThreadAccessWeakSet();
 	private Collection<CellEditorListener> cellEditorListeners = new HashSet<>();
@@ -154,7 +156,7 @@ public class DropDownTextField<T> extends JTextField {
 	}
 
 	protected void setPreviewPaneAttributes() {
-		previewLabel = new JLabel();
+		previewLabel = new GDHtmlLabel();
 		previewLabel.setOpaque(true);
 		previewLabel.setBackground(TOOLTIP_WINDOW_BGCOLOR);
 		previewLabel.setVerticalAlignment(SwingConstants.TOP);
@@ -343,6 +345,8 @@ public class DropDownTextField<T> extends JTextField {
 		if (isShowing()) {
 			updateWindowLocation();
 			showMatchingWindow();
+
+			previewLabel.setBackground(TOOLTIP_WINDOW_BGCOLOR);
 			toolTipWindow.setVisible(hasPreview());
 		}
 	}

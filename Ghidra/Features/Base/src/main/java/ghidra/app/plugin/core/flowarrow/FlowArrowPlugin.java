@@ -267,12 +267,12 @@ public class FlowArrowPlugin extends Plugin implements MarginProvider, OptionsCh
 		return address.compareTo(screenBottom) > 0;
 	}
 
-	/** The y value of the start of the layout at the given address. */
+	/* The y value of the start of the layout at the given address. */
 	Integer getStartPos(Address addr) {
 		return startAddressToPixel.get(addr);
 	}
 
-	/** The y value of the end of the layout at the given address. */
+	/* The y value of the end of the layout at the given address. */
 	Integer getEndPos(Address addr) {
 		return endAddressToPixel.get(addr);
 	}
@@ -294,7 +294,7 @@ public class FlowArrowPlugin extends Plugin implements MarginProvider, OptionsCh
 		return flowArrows.iterator();
 	}
 
-	/** Those arrows starting at the current address */
+	/* Those arrows starting at the current address */
 	Iterator<FlowArrow> getActiveArrows() {
 		return activeArrows.iterator();
 	}
@@ -584,8 +584,8 @@ public class FlowArrowPlugin extends Plugin implements MarginProvider, OptionsCh
 		for (int layout = 0; layout < n; layout++) {
 			Address addr = layoutToPixel.getLayoutAddress(layout);
 			if (addr != null) {
-				startAddressToPixel.put(addr, new Integer(layoutToPixel.getBeginPosition(layout)));
-				endAddressToPixel.put(addr, new Integer(layoutToPixel.getEndPosition(layout)));
+				startAddressToPixel.put(addr, layoutToPixel.getBeginPosition(layout));
+				endAddressToPixel.put(addr, layoutToPixel.getEndPosition(layout));
 			}
 		}
 
@@ -640,11 +640,14 @@ public class FlowArrowPlugin extends Plugin implements MarginProvider, OptionsCh
 		ToolOptions opt = tool.getOptions(GhidraOptions.CATEGORY_BROWSER_DISPLAY);
 
 		opt.registerOption(OptionsGui.FLOW_ARROW_NON_ACTIVE.getColorOptionName(),
-			OptionsGui.FLOW_ARROW_NON_ACTIVE.getDefaultColor(), null, null);
+			OptionsGui.FLOW_ARROW_NON_ACTIVE.getDefaultColor(), null,
+			"The color for an arrow with no endpoint at the current address");
 		opt.registerOption(OptionsGui.FLOW_ARROW_ACTIVE.getColorOptionName(),
-			OptionsGui.FLOW_ARROW_ACTIVE.getDefaultColor(), null, null);
+			OptionsGui.FLOW_ARROW_ACTIVE.getDefaultColor(), null,
+			"The color for an arrow with an endpoint at the current address");
 		opt.registerOption(OptionsGui.FLOW_ARROW_SELECTED.getColorOptionName(),
-			OptionsGui.FLOW_ARROW_SELECTED.getDefaultColor(), null, null);
+			OptionsGui.FLOW_ARROW_SELECTED.getDefaultColor(), null,
+			"The color for an arrow that has been selected by the user");
 
 		Color c = opt.getColor(OptionsGui.BACKGROUND.getColorOptionName(),
 			OptionsGui.BACKGROUND.getDefaultColor());

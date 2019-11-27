@@ -25,6 +25,7 @@ import javax.swing.table.TableColumn;
 
 import org.jdom.Element;
 
+import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.table.DefaultRowFilterTransformer;
 import docking.widgets.table.RowFilterTransformer;
 import ghidra.app.services.GoToService;
@@ -36,7 +37,7 @@ import ghidra.util.table.*;
 
 class SymbolPanel extends JPanel {
 
-	private static final boolean FILTER_NAME_ONLY_DEFAULT = false;
+	private static final boolean FILTER_NAME_ONLY_DEFAULT = true;
 
 	private static final String FILTER_SETTINGS_ELEMENT_NAME = "FILTER_SETTINGS";
 
@@ -45,15 +46,14 @@ class SymbolPanel extends JPanel {
 	private GhidraTable symTable;
 	private TableModelListener listener;
 	private FilterDialog filterDialog;
-	private PluginTool tool;
-	private GhidraThreadedTablePanel<SymbolRowObject> threadedTablePanel;
-	private GhidraTableFilterPanel<SymbolRowObject> tableFilterPanel;
+	private GhidraThreadedTablePanel<Symbol> threadedTablePanel;
+	private GhidraTableFilterPanel<Symbol> tableFilterPanel;
 
 	SymbolPanel(SymbolProvider provider, SymbolTableModel model, SymbolRenderer renderer,
 			final PluginTool tool, GoToService gotoService) {
 
 		super(new BorderLayout());
-		this.tool = tool;
+
 		this.symProvider = provider;
 		this.tableModel = model;
 
@@ -98,7 +98,7 @@ class SymbolPanel extends JPanel {
 
 		tableFilterPanel.add(Box.createHorizontalStrut(5));
 
-		final JCheckBox nameColumnOnlyCheckbox = new JCheckBox("Name Only");
+		final JCheckBox nameColumnOnlyCheckbox = new GCheckBox("Name Only");
 		nameColumnOnlyCheckbox.setName("NameOnly"); // used by JUnit
 		nameColumnOnlyCheckbox.setToolTipText(
 			"<html><b>Selected</b> causes filter to only consider the symbol's name.");
@@ -116,7 +116,7 @@ class SymbolPanel extends JPanel {
 		return tableFilterPanel;
 	}
 
-	protected RowFilterTransformer<SymbolRowObject> updateRowDataTransformer(boolean nameOnly) {
+	protected RowFilterTransformer<Symbol> updateRowDataTransformer(boolean nameOnly) {
 		if (nameOnly) {
 			return new NameOnlyRowTransformer();
 		}
@@ -173,21 +173,19 @@ class SymbolPanel extends JPanel {
 
 		if (selectedRowCount == 1) {
 			int selectedRow = symTable.getSelectedRow();
-			Object obj = symTable.getValueAt(selectedRow,
-				symTable.convertColumnIndexToView(SymbolTableModel.LABEL_COL));
-			if (obj instanceof Symbol) {
-				symProvider.setCurrentSymbol((Symbol) obj);
-				return;
-			}
+			Symbol symbol = symProvider.getSymbolForRow(selectedRow);
+			symProvider.setCurrentSymbol(symbol);
 		}
-		symProvider.setCurrentSymbol(null);
+		else {
+			symProvider.setCurrentSymbol(null);
+		}
 	}
 
 	int getActualSymbolCount() {
 		return symTable.getRowCount();
 	}
 
-	List<SymbolRowObject> getSelectedSymbolKeys() {
+	List<Symbol> getSelectedSymbols() {
 		int[] rows = symTable.getSelectedRows();
 		return tableModel.getRowObjects(rows);
 	}
@@ -200,17 +198,38 @@ class SymbolPanel extends JPanel {
 // Inner Classes
 //==================================================================================================
 
-	private class NameOnlyRowTransformer implements RowFilterTransformer<SymbolRowObject> {
+	private static class NameOnlyRowTransformer implements RowFilterTransformer<Symbol> {
 		private List<String> list = new ArrayList<>();
 
 		@Override
-		public List<String> transform(SymbolRowObject rowObject) {
+		public List<String> transform(Symbol rowObject) {
 			list.clear();
-			Symbol symbol = tableModel.getSymbolForRowObject(rowObject);
-			if (symbol != null) {
-				list.add(symbol.getName());
+			if (rowObject != null) {
+				// The toString() returns the name for the symbol, which may be cached.  Calling
+				// toString() will also avoid locking for cached values.
+				list.add(rowObject.toString());
 			}
 			return list;
+		}
+
+		@Override
+		public int hashCode() {
+			// not meant to put in hashing structures; the data for equals may change over time
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			if (this == obj) {
+				return true;
+			}
+			if (obj == null) {
+				return false;
+			}
+			if (getClass() != obj.getClass()) {
+				return false;
+			}
+			return true;
 		}
 	}
 }

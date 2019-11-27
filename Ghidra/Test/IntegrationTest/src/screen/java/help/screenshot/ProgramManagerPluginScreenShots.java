@@ -15,8 +15,7 @@
  */
 package help.screenshot;
 
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 import java.awt.*;
 import java.io.IOException;
@@ -33,7 +32,8 @@ import docking.DialogComponentProvider;
 import docking.options.editor.DateEditor;
 import docking.options.editor.OptionsDialog;
 import docking.widgets.OptionDialog;
-import docking.widgets.tree.*;
+import docking.widgets.tree.GTree;
+import docking.widgets.tree.GTreeNode;
 import ghidra.app.plugin.core.codebrowser.CodeViewerProvider;
 import ghidra.app.plugin.core.datamgr.DataTypesProvider;
 import ghidra.app.plugin.core.progmgr.MultiTabPlugin;
@@ -111,8 +111,9 @@ public class ProgramManagerPluginScreenShots extends GhidraScreenShotGenerator
 	public void testOpenHistory() throws Exception {
 		Project project = env.getProject();
 		ProjectData projectData = project.getProjectData();
-		projectData.getRootFolder().createFile("WinHelloCpp.exe", program,
-			TaskMonitorAdapter.DUMMY_MONITOR);
+		projectData.getRootFolder()
+				.createFile("WinHelloCpp.exe", program,
+					TaskMonitorAdapter.DUMMY_MONITOR);
 
 		DomainFile df = program.getDomainFile();
 
@@ -138,7 +139,7 @@ public class ProgramManagerPluginScreenShots extends GhidraScreenShotGenerator
 		waitForSwing();
 		Object treePanel = getInstanceField("treePanel", dialog);
 		final GTree tree = (GTree) getInstanceField("tree", treePanel);
-		GTreeRootNode rootNode = tree.getRootNode();
+		GTreeNode rootNode = tree.getViewRoot();
 		GTreeNode child = rootNode.getChild(0);
 		tree.setSelectedNode(child);
 		assertNotNull(dialog);
@@ -184,7 +185,7 @@ public class ProgramManagerPluginScreenShots extends GhidraScreenShotGenerator
 		OptionsDialog dialog = (OptionsDialog) getDialog();
 		Object optionsPanel = getInstanceField("panel", dialog);
 		GTree tree = (GTree) getInstanceField("gTree", optionsPanel);
-		GTreeRootNode rootNode = tree.getRootNode();
+		GTreeNode rootNode = tree.getViewRoot();
 		GTreeNode child = rootNode.getChild("Program Information");
 		tree.setSelectedNode(child);
 		waitForTree(tree);
@@ -278,7 +279,7 @@ public class ProgramManagerPluginScreenShots extends GhidraScreenShotGenerator
 	@Test
 	public void testSaveProgram() {
 		runSwing(() -> OptionDialog.showOptionDialog(tool.getToolFrame(), "Save Program?",
-			"program1" + " has changed. Do you want to save it?", "&Save", "Do&n't Save",
+			"program1 has changed. Do you want to save it?", "&Save", "Do&n't Save",
 			OptionDialog.QUESTION_MESSAGE), false);
 		captureDialog();
 	}
@@ -307,8 +308,9 @@ public class ProgramManagerPluginScreenShots extends GhidraScreenShotGenerator
 		List<DomainFile> list = new ArrayList<>();
 		for (int i = 0; i < count; i++) {
 			String programName = "Program" + (i + 1) + ".exe";
-			list.add(projectData.getRootFolder().createFile(programName, program,
-				TaskMonitorAdapter.DUMMY_MONITOR));
+			list.add(projectData.getRootFolder()
+					.createFile(programName, program,
+						TaskMonitorAdapter.DUMMY_MONITOR));
 
 		}
 		program.flushEvents();

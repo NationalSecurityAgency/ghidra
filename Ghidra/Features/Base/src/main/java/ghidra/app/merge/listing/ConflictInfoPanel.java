@@ -20,8 +20,10 @@ import java.awt.BorderLayout;
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
 
+import docking.widgets.label.GDHtmlLabel;
 import ghidra.app.merge.util.ConflictUtility;
 import ghidra.program.model.address.*;
+import ghidra.util.HTMLUtilities;
 
 /**
  * <code>ConflictInfoPanel</code> appears above the 4 listings in the ListingMergeWindow.
@@ -58,8 +60,8 @@ public class ConflictInfoPanel extends JPanel {
 		setLayout(new BorderLayout());
 		setBorder(BorderFactory.createTitledBorder("Resolve Current Conflict"));
 
-		westLabel = new JLabel("<html></html>");
-		eastLabel = new JLabel("<html></html>");
+		westLabel = new GDHtmlLabel("<html></html>");
+		eastLabel = new GDHtmlLabel("<html></html>");
 		add(westLabel, BorderLayout.WEST);
 		add(eastLabel, BorderLayout.EAST);
 	}
@@ -154,7 +156,8 @@ public class ConflictInfoPanel extends JPanel {
 	}
 
 	private void addAddress(StringBuffer buf, Address addr) {
-		buf.append("<font color=\"#990000\">" + addr.toString() + "</font>");
+		buf.append(
+			"<font color=\"#990000\">" + HTMLUtilities.escapeHTML(addr.toString()) + "</font>");
 	}
 
 	private void updateWest() {

@@ -15,19 +15,19 @@
  */
 package ghidra.feature.vt.gui.wizard;
 
+import java.awt.Component;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+
+import docking.widgets.OptionDialog;
 import ghidra.feature.vt.api.impl.VTSessionContentHandler;
 import ghidra.feature.vt.gui.task.SaveTask;
 import ghidra.framework.main.DataTreeDialog;
 import ghidra.framework.model.DomainFile;
 import ghidra.framework.model.DomainFileFilter;
 import ghidra.program.database.ProgramDB;
+import ghidra.util.HTMLUtilities;
 import ghidra.util.task.TaskLauncher;
-
-import java.awt.Component;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-
-import docking.widgets.OptionDialog;
 
 public class VTWizardUtils {
 
@@ -57,10 +57,10 @@ public class VTWizardUtils {
 
 	static DomainFile chooseDomainFile(Component parent, String domainIdentifier,
 			DomainFileFilter filter, DomainFile fileToSelect) {
-		final DataTreeDialog dataTreeDialog =
-			filter == null ? new DataTreeDialog(parent, "Choose " + domainIdentifier,
-				DataTreeDialog.OPEN) : new DataTreeDialog(parent, "Choose " + domainIdentifier,
-				DataTreeDialog.OPEN, filter);
+		final DataTreeDialog dataTreeDialog = filter == null
+				? new DataTreeDialog(parent, "Choose " + domainIdentifier, DataTreeDialog.OPEN)
+				: new DataTreeDialog(parent, "Choose " + domainIdentifier, DataTreeDialog.OPEN,
+					filter);
 		final DomainFileBox box = new DomainFileBox();
 		dataTreeDialog.addOkActionListener(new ActionListener() {
 			@Override
@@ -80,10 +80,10 @@ public class VTWizardUtils {
 	static public boolean askUserToSave(Component parent, DomainFile domainFile) {
 
 		String filename = domainFile.getName();
-		int result =
-			OptionDialog.showYesNoDialog(parent, "Save Version Tracking Changes?",
-				"<html>Unsaved Version Tracking changes found for session: " + filename +
-					".  <br>" + "Would you like to save these changes?");
+		int result = OptionDialog.showYesNoDialog(parent, "Save Version Tracking Changes?",
+			"<html>Unsaved Version Tracking changes found for session: " +
+				HTMLUtilities.escapeHTML(filename) + ".  <br>" +
+				"Would you like to save these changes?");
 
 		boolean doSave = result == OptionDialog.YES_OPTION;
 		if (doSave) {
@@ -98,10 +98,10 @@ public class VTWizardUtils {
 	static public boolean askUserToSaveBeforeClosing(Component parent, DomainFile domainFile) {
 
 		String filename = domainFile.getName();
-		int result =
-			OptionDialog.showYesNoCancelDialog(parent, "Save Version Tracking Changes?",
-				"<html>Unsaved Version Tracking changes found for session: " + filename +
-					".  <br>" + "Would you like to save these changes?");
+		int result = OptionDialog.showYesNoCancelDialog(parent, "Save Version Tracking Changes?",
+			"<html>Unsaved Version Tracking changes found for session: " +
+				HTMLUtilities.escapeHTML(filename) + ".  <br>" +
+				"Would you like to save these changes?");
 
 		if (result == OptionDialog.CANCEL_OPTION) {
 			return false;

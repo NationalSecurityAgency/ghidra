@@ -55,14 +55,6 @@ public class ArchiveRemappedHeadedTest extends AbstractGhidraHeadedIntegrationTe
 	private File vs12ArchiveFile;
 	private File vs9ArchiveFile;
 
-	/**
-	 * Constructor for ArchiveRemappedTest.
-	 * @param testName
-	 */
-	public ArchiveRemappedHeadedTest() {
-		super();
-	}
-
 	@Before
 	public void setUp() throws Exception {
 
@@ -97,10 +89,9 @@ public class ArchiveRemappedHeadedTest extends AbstractGhidraHeadedIntegrationTe
 
 		env.showTool();
 
-		tool.showComponentProvider(provider, true);
-		waitForPostedSwingRunnables();
-
 		provider = plugin.getProvider();
+		tool.showComponentProvider(provider, true);
+
 		tree = provider.getGTree();
 		waitForTree(tree);
 	}
@@ -243,7 +234,7 @@ public class ArchiveRemappedHeadedTest extends AbstractGhidraHeadedIntegrationTe
 		assertNotNull(archiveDtm);
 		assertEquals("windows_vs12_32", archiveDtm.getName());
 
-		ArchiveRootNode archiveRootNode = (ArchiveRootNode) tree.getRootNode();
+		ArchiveRootNode archiveRootNode = (ArchiveRootNode) tree.getModelRoot();
 		ArchiveNode archiveNode = (ArchiveNode) archiveRootNode.getChild("windows_vs12_32");
 		assertNotNull(archiveNode);
 		ArchiveNode programNode = (ArchiveNode) archiveRootNode.getChild(program.getName());

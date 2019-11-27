@@ -26,21 +26,28 @@ import docking.ActionContext;
 import docking.action.DockingActionIf;
 import docking.widgets.table.threaded.ThreadedTableModel;
 import ghidra.app.actions.AbstractFindReferencesDataTypeAction;
+import ghidra.app.actions.AbstractFindReferencesToAddressAction;
+import ghidra.app.nav.Navigatable;
+import ghidra.app.plugin.core.decompile.actions.FindReferencesToSymbolAction;
 import ghidra.app.plugin.core.navigation.locationreferences.LocationReferencesProvider;
+import ghidra.app.plugin.core.navigation.locationreferences.LocationReferencesService;
 import ghidra.app.services.DataTypeReference;
 import ghidra.app.services.DataTypeReferenceFinder;
 import ghidra.program.model.data.Composite;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.listing.Program;
+import ghidra.program.util.ProgramLocation;
 import ghidra.util.task.TaskMonitor;
-import mockit.Mock;
-import mockit.MockUp;
+import mockit.*;
 
 public abstract class AbstractDecompilerFindReferencesActionTest extends AbstractDecompilerTest {
 
 	protected DockingActionIf findReferencesAction;
+	protected DockingActionIf findReferencesToSymbolAction;
+	protected DockingActionIf findReferencesToAddressAction;
 
 	protected SpyDataTypeReferenceFinder<DataTypeReferenceFinder> spyReferenceFinder;
+	protected SpyLocationReferencesService<LocationReferencesService> spyLocationReferenceService;
 
 	@Override
 	@Before
@@ -49,6 +56,9 @@ public abstract class AbstractDecompilerFindReferencesActionTest extends Abstrac
 		super.setUp();
 
 		findReferencesAction = getAction(decompiler, AbstractFindReferencesDataTypeAction.NAME);
+		findReferencesToSymbolAction = getAction(decompiler, FindReferencesToSymbolAction.NAME);
+		findReferencesToAddressAction =
+			getAction(decompiler, AbstractFindReferencesToAddressAction.NAME);
 
 		installSpyDataTypeReferenceFinder();
 	}
@@ -56,7 +66,9 @@ public abstract class AbstractDecompilerFindReferencesActionTest extends Abstrac
 	private void installSpyDataTypeReferenceFinder() {
 
 		spyReferenceFinder = new SpyDataTypeReferenceFinder<>();
-		replaceService(DataTypeReferenceFinder.class, StubDataTypeReferenceFinder.class);
+		replaceService(tool, DataTypeReferenceFinder.class, new StubDataTypeReferenceFinder());
+
+		spyLocationReferenceService = new SpyLocationReferencesService<>();
 	}
 
 	protected void assertFindAllReferencesToCompositeFieldWasCalled() {
@@ -69,7 +81,15 @@ public abstract class AbstractDecompilerFindReferencesActionTest extends Abstrac
 		assertEquals(1, spyReferenceFinder.getFindDataTypeReferencesCallCount());
 	}
 
-	protected ThreadedTableModel<?, ?> perfomFindDataTypes() {
+	protected void assertFindAllReferencesToSymbolWasCalled() {
+		assertEquals(1, spyLocationReferenceService.getShowReferencesCallCount());
+	}
+
+	protected void assertFindAllReferencesToAddressWasCalled() {
+		assertEquals(1, spyLocationReferenceService.getShowReferencesCallCount());
+	}
+
+	protected ThreadedTableModel<?, ?> performFindDataTypes() {
 		// tricky business - the 'finder' is being run in a thread pool, so we must wait for that
 		//                   model to finish loading
 
@@ -80,11 +100,34 @@ public abstract class AbstractDecompilerFindReferencesActionTest extends Abstrac
 		return model;
 	}
 
+	protected ThreadedTableModel<?, ?> performFindReferencesToAddress() {
+		// tricky business - the 'finder' is being run in a thread pool, so we must wait for that
+		//                   model to finish loading
+
+		DecompilerActionContext context = new DecompilerActionContext(provider, addr(0x0), false);
+		performAction(findReferencesToAddressAction, context, true);
+
+		ThreadedTableModel<?, ?> model = waitForSearchProvider();
+		return model;
+	}
+
+	protected ThreadedTableModel<?, ?> performFindReferencesToSymbol() {
+		// tricky business - the 'finder' is being run in a thread pool, so we must wait for that
+		//                   model to finish loading
+
+		DecompilerActionContext context = new DecompilerActionContext(provider, addr(0x0), false);
+		performAction(findReferencesToSymbolAction, context, true);
+
+		ThreadedTableModel<?, ?> model = waitForSearchProvider();
+		return model;
+	}
+
 	protected ThreadedTableModel<?, ?> waitForSearchProvider() {
 
 		LocationReferencesProvider searchProvider =
 			(LocationReferencesProvider) tool.getComponentProvider(LocationReferencesProvider.NAME);
 
+		assertNotNull("Could not find the Location References Provider", searchProvider);
 		ThreadedTableModel<?, ?> model = getTableModel(searchProvider);
 		waitForTableModel(model);
 
@@ -136,6 +179,23 @@ public abstract class AbstractDecompilerFindReferencesActionTest extends Abstrac
 
 		public int getFindCompositeFieldReferencesCallCount() {
 			return compositeFieldReferencesCallCount.get();
+		}
+	}
+
+	public class SpyLocationReferencesService<T extends LocationReferencesService>
+			extends MockUp<T> {
+
+		private AtomicInteger showReferencesCallCount = new AtomicInteger();
+
+		@Mock
+		public void showReferencesToLocation(Invocation invocation, ProgramLocation location,
+				Navigatable navigatable) {
+			showReferencesCallCount.incrementAndGet();
+			invocation.proceed(location, navigatable);
+		}
+
+		public int getShowReferencesCallCount() {
+			return showReferencesCallCount.get();
 		}
 	}
 }

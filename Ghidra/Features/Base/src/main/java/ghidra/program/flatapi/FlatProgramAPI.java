@@ -16,8 +16,8 @@
 package ghidra.program.flatapi;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.List;
+import java.text.SimpleDateFormat;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import ghidra.app.cmd.comments.SetCommentCmd;
@@ -42,28 +42,28 @@ import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.program.util.AddressEvaluator;
 import ghidra.program.util.string.*;
 import ghidra.util.Conv;
-import ghidra.util.SystemUtilities;
 import ghidra.util.ascii.AsciiCharSetRecognizer;
 import ghidra.util.datastruct.Accumulator;
 import ghidra.util.datastruct.ListAccumulator;
 import ghidra.util.exception.*;
 import ghidra.util.search.memory.*;
 import ghidra.util.task.TaskMonitor;
-import ghidra.util.task.TaskMonitorAdapter;
 
 /**
  * This class is a flattened version of the Program API.
- * <br>
+ * <p>
  * NOTE:
- * 1) NO METHODS SHOULD EVER BE REMOVED FROM THIS CLASS.
- * 2) NO METHOD SIGNATURES SHOULD EVER BE CHANGED IN THIS CLASS.
- * <br>
+ * <ol>
+ * 	<li>NO METHODS SHOULD EVER BE REMOVED FROM THIS CLASS.
+ * 	<li>NO METHOD SIGNATURES SHOULD EVER BE CHANGED IN THIS CLASS.
+ * </ol>
+ * <p>
  * This class is used by GhidraScript.
- * <br>
+ * <p>
  * Changing this class will break user scripts.
- * <br>
+ * <p>
  * That is bad. Don't do that.
- * <br>
+ * <p>
  */
 public class FlatProgramAPI {
 	public static final int MAX_REFERENCES_TO = 0x1000;
@@ -86,7 +86,7 @@ public class FlatProgramAPI {
 	 * @param program the program
 	 */
 	public FlatProgramAPI(Program program) {
-		this(program, TaskMonitorAdapter.DUMMY_MONITOR);
+		this(program, TaskMonitor.DUMMY);
 	}
 
 	/**
@@ -1918,8 +1918,7 @@ public class FlatProgramAPI {
 	 */
 	public final float getFloat(Address address) throws MemoryAccessException {
 		int bits = currentProgram.getMemory().getInt(address);
-		Float fl = new Float(Float.intBitsToFloat(bits));
-		return fl.floatValue();
+		return Float.intBitsToFloat(bits);
 	}
 
 	/**
@@ -1941,8 +1940,7 @@ public class FlatProgramAPI {
 	 */
 	public final double getDouble(Address address) throws MemoryAccessException {
 		long bits = currentProgram.getMemory().getLong(address);
-		Double db = new Double(Double.longBitsToDouble(bits));
-		return db.doubleValue();
+		return Double.longBitsToDouble(bits);
 	}
 
 	/**
@@ -2401,14 +2399,20 @@ public class FlatProgramAPI {
 	}
 
 	/**
-	 * Saves the changes to the specified program.
+	 * Saves changes to the specified program.
+	 * <p>
 	 * If the program does not already exist in the current project
-	 * then it will be saved into a project folder structures specified in the path.
-	 * If path is NULL or unable to be created, the program will be saved into the root folder.
-	 * If a program already exists with the specified
-	 * name, then a time stamp will be appended to the name to make it unique.
+	 * then it will be saved into a project folder path specified by the path parameter.
+	 * <p>
+	 * If path is NULL, the program will be saved into the root folder.  If parts of the path are
+	 * missing, they will be created if possible.
+	 * <p>
+	 * If a program already exists with the specified name, then a time stamp will be appended 
+	 * to the name to make it unique.
+	 * <p>
 	 * @param program the program to save
-	 * @param path the project folder path to save the program into
+	 * @param path list of string path elements (starting at the root of the project) that specify 
+	 * the project folder to save the program info.  Example: { "folder1", "subfolder2", "finalfolder" }
 	 * @throws Exception
 	 */
 	public void saveProgram(Program program, List<String> path) throws Exception {
@@ -2431,18 +2435,16 @@ public class FlatProgramAPI {
 		}
 		DomainFolder folder = getProjectRootFolder();
 		if (path != null) {
-			for (int i = 0; i < path.size(); ++i) {
-				if (path.get(i) == null || path.get(i).length() == 0) {
+			for (String folderName : path) {
+				if (folderName == null || folderName.isEmpty()) {
 					continue;
 				}
-				if (i < path.size()) {
-					DomainFolder existingFolder = folder.getFolder(path.get(i));
-					if (existingFolder == null) {
-						folder = folder.createFolder(path.get(i));
-					}
-					else {
-						folder = existingFolder;
-					}
+				DomainFolder existingFolder = folder.getFolder(folderName);
+				if (existingFolder == null) {
+					folder = folder.createFolder(folderName);
+				}
+				else {
+					folder = existingFolder;
 				}
 			}
 		}
@@ -2453,8 +2455,9 @@ public class FlatProgramAPI {
 			folder.createFile(program.getName(), program, monitor);
 		}
 		catch (DuplicateFileException e) {
-			folder.createFile(program.getName() + "_" + SystemUtilities.currentTimeStamp(), program,
-				monitor);
+			SimpleDateFormat formatter = new SimpleDateFormat("dd.MMM.yyyy_HH.mm.ss");
+			String time = formatter.format(new Date());
+			folder.createFile(program.getName() + "_" + time, program, monitor);
 		}
 		finally {
 			if (program == currentProgram) {
@@ -2470,7 +2473,7 @@ public class FlatProgramAPI {
 	 * the root domain folder.
 	 * @return the root domain folder of the current project
 	 */
-	protected DomainFolder getProjectRootFolder() {
+	public DomainFolder getProjectRootFolder() {
 		Project project = AppInfo.getActiveProject();
 		ProjectData projectData = project.getProjectData();
 		DomainFolder folder = projectData.getRootFolder();

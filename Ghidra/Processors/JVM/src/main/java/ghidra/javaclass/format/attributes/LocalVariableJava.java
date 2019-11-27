@@ -15,12 +15,12 @@
  */
 package ghidra.javaclass.format.attributes;
 
+import java.io.IOException;
+
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.StructConverter;
 import ghidra.program.model.data.*;
 import ghidra.util.exception.DuplicateNameException;
-
-import java.io.IOException;
 
 /**
  * NOTE: THE FOLLOWING TEXT EXTRACTED FROM JVMS7.PDF
@@ -90,12 +90,12 @@ public class LocalVariableJava implements StructConverter {
 	private short descriptorIndex;
 	private short index;
 
-	public LocalVariableJava( BinaryReader reader ) throws IOException {
-		startPC         = reader.readNextShort();
-		length          = reader.readNextShort();
-		nameIndex       = reader.readNextShort();
+	public LocalVariableJava(BinaryReader reader) throws IOException {
+		startPC = reader.readNextShort();
+		length = reader.readNextShort();
+		nameIndex = reader.readNextShort();
 		descriptorIndex = reader.readNextShort();
-		index           = reader.readNextShort();
+		index = reader.readNextShort();
 	}
 
 	/**
@@ -111,16 +111,16 @@ public class LocalVariableJava implements StructConverter {
 	 * or it must be the first index beyond the end of that code array.
 	 * @return the start PC
 	 */
-	public short getStartPC() {
-		return startPC;
+	public int getStartPC() {
+		return startPC & 0xffff;
 	}
 
 	/**
 	 * Returns the length of this local variable in bytes.
 	 * @return the length of this local variable in bytes
 	 */
-	public short getLength() {
-		return length;
+	public int getLength() {
+		return length & 0xffff;
 	}
 
 	/**
@@ -130,8 +130,8 @@ public class LocalVariableJava implements StructConverter {
 	 * name denoting a local variable.
 	 * @return a valid index into the constant_pool table
 	 */
-	public short getNameIndex() {
-		return nameIndex;
+	public int getNameIndex() {
+		return nameIndex & 0xffff;
 	}
 
 	/**
@@ -141,8 +141,8 @@ public class LocalVariableJava implements StructConverter {
 	 * encoding the type of a local variable in the source program.
 	 * @return a valid index into the constant_pool table
 	 */
-	public short getDescriptorIndex() {
-		return descriptorIndex;
+	public int getDescriptorIndex() {
+		return descriptorIndex & 0xffff;
 	}
 
 	/**
@@ -153,18 +153,18 @@ public class LocalVariableJava implements StructConverter {
 	 * index and index + 1.
 	 * @return index in the local variable array
 	 */
-	public short getIndex() {
-		return index;
+	public int getIndex() {
+		return index & 0xffff;
 	}
 
 	@Override
 	public DataType toDataType() throws DuplicateNameException, IOException {
-		Structure structure = new StructureDataType( "local_variable", 0 );
-		structure.add( WORD, "start_pc", null );
-		structure.add( WORD, "length", null );
-		structure.add( WORD, "name_index", null );
-		structure.add( WORD, "descriptor_index", null );
-		structure.add( WORD, "index", null );
+		Structure structure = new StructureDataType("local_variable", 0);
+		structure.add(WORD, "start_pc", null);
+		structure.add(WORD, "length", null);
+		structure.add(WORD, "name_index", null);
+		structure.add(WORD, "descriptor_index", null);
+		structure.add(WORD, "index", null);
 		return structure;
 	}
 

@@ -19,7 +19,6 @@ import static org.junit.Assert.*;
 
 import java.awt.*;
 import java.util.*;
-import java.util.List;
 
 import javax.swing.*;
 import javax.swing.table.JTableHeader;
@@ -117,10 +116,10 @@ public class MemoryMapProvider1Test extends AbstractGhidraHeadedIntegrationTest 
 		// select first row
 		// all actions except "merge" should be enabled
 		table.addRowSelectionInterval(0, 0);
-		List<DockingActionIf> actions = tool.getDockingActionsByOwnerName(plugin.getName());
+		Set<DockingActionIf> actions = getActionsByOwner(tool, plugin.getName());
 		for (DockingActionIf action : actions) {
 			if (action.getName().equals("Merge Blocks")) {
-				assertTrue(!action.isEnabled());
+				assertFalse(action.isEnabled());
 			}
 			else {
 				assertTrue(action.isEnabled());
@@ -133,16 +132,19 @@ public class MemoryMapProvider1Test extends AbstractGhidraHeadedIntegrationTest 
 
 		table.addRowSelectionInterval(0, 1);
 		assertEquals(2, table.getSelectedRowCount());
-		List<DockingActionIf> actions = tool.getDockingActionsByOwnerName(plugin.getName());
+		Set<DockingActionIf> actions = getActionsByOwner(tool, plugin.getName());
 		for (DockingActionIf action : actions) {
 			String name = action.getName();
 			if (name.equals("Add Block") || name.equals("Merge Blocks") ||
 				name.equals("Delete Block") || name.equals("Set Image Base") ||
-				name.equals("View Memory Map")) {
-				assertTrue(action.isEnabled());
+				name.equals("Memory Map") || name.equals("Close Window")) {
+				assertTrue("Action should be enabled for  a multi-row selection - '" + name + "'",
+					action.isEnabled());
 			}
 			else {
-				assertTrue(!action.isEnabled());
+				assertFalse(
+					"Action should not be enabled for  a multi-row selection - '" + name + "'",
+					action.isEnabled());
 			}
 		}
 	}
@@ -557,11 +559,13 @@ public class MemoryMapProvider1Test extends AbstractGhidraHeadedIntegrationTest 
 
 		for (int i = 0; i < sources.length; i++) {
 			boolean doAssert = true;
-			for (MemoryBlock element : blocks) {
-				if (element.getSourceName().equals(sources[i]) &&
-					element.getType() == MemoryBlockType.BIT_MAPPED) {
-					assertEquals(((MappedMemoryBlock) element).getOverlayedMinAddress().toString(),
-						model.getValueAt(i, MemoryMapModel.SOURCE));
+			for (MemoryBlock memBlock : blocks) {
+				if (memBlock.getSourceName().equals(sources[i]) &&
+					memBlock.getType() == MemoryBlockType.BIT_MAPPED) {
+					MemoryBlockSourceInfo info = memBlock.getSourceInfos().get(0);
+					Address addr = info.getMappedRange().get().getMinAddress();
+
+					assertEquals(addr.toString(), model.getValueAt(i, MemoryMapModel.SOURCE));
 					doAssert = false;
 					break;
 				}
@@ -600,11 +604,12 @@ public class MemoryMapProvider1Test extends AbstractGhidraHeadedIntegrationTest 
 		for (int i = 0; i < sources.length; i++) {
 			int idx = sources.length - 1 - i;
 			boolean doAssert = true;
-			for (MemoryBlock element : blocks) {
-				if (element.getSourceName().equals(sources[idx]) &&
-					element.getType() == MemoryBlockType.BIT_MAPPED) {
-					assertEquals(((MappedMemoryBlock) element).getOverlayedMinAddress().toString(),
-						model.getValueAt(i, MemoryMapModel.SOURCE));
+			for (MemoryBlock memBlock : blocks) {
+				if (memBlock.getSourceName().equals(sources[idx]) &&
+					memBlock.getType() == MemoryBlockType.BIT_MAPPED) {
+					MemoryBlockSourceInfo info = memBlock.getSourceInfos().get(0);
+					Address addr = info.getMappedRange().get().getMinAddress();
+					assertEquals(addr.toString(), model.getValueAt(i, MemoryMapModel.SOURCE));
 					doAssert = false;
 					break;
 				}
@@ -668,7 +673,7 @@ public class MemoryMapProvider1Test extends AbstractGhidraHeadedIntegrationTest 
 	/////////////////////////////////////////////////////////////////////
 
 	private void showProvider() {
-		DockingActionIf action = getAction(plugin, "View Memory Map");
+		DockingActionIf action = getAction(plugin, "Memory Map");
 		performAction(action, true);
 		waitForPostedSwingRunnables();
 		provider = plugin.getMemoryMapProvider();

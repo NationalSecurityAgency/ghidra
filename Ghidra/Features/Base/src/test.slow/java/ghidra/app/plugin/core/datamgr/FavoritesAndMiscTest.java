@@ -69,7 +69,7 @@ public class FavoritesAndMiscTest extends AbstractGhidraHeadedIntegrationTest {
 		tree = provider.getGTree();
 		waitForTree();
 
-		archiveRootNode = (ArchiveRootNode) tree.getRootNode();
+		archiveRootNode = (ArchiveRootNode) tree.getModelRoot();
 		builtInNode = (ArchiveNode) archiveRootNode.getChild("BuiltInTypes");
 		programNode = (ArchiveNode) archiveRootNode.getChild(PROGRAM_NAME);
 
@@ -349,7 +349,7 @@ public class FavoritesAndMiscTest extends AbstractGhidraHeadedIntegrationTest {
 		GTree gtree = (GTree) getInstanceField("tree", d);
 		waitForTree(gtree);
 
-		ArchiveRootNode root = (ArchiveRootNode) gtree.getRootNode();
+		ArchiveRootNode root = (ArchiveRootNode) gtree.getModelRoot();
 		ArchiveNode programNode1 = (ArchiveNode) root.getChild(PROGRAM_NAME);
 
 		assertNotNull("could not find " + PROGRAM_NAME + " in " + root, programNode1);

@@ -1124,13 +1124,17 @@ Datatype *TypeSpacebase::getSubType(uintb off,uintb *newoff) const
 
 {
   Scope *scope = getMap();
-  //  uintb unoff = (uintb)(intb)off; // Make sure this is a sign-extension
-  Address addr(spaceid,spaceid->wrapOffset(off));
+  off = AddrSpace::byteToAddress(off, spaceid->getWordSize());	// Convert from byte offset to address unit
+  // It should always be the case that the given offset represents a full encoding of the
+  // pointer, so the point of context is unused and the size is given as -1
+  Address nullPoint;
+  uintb fullEncoding;
+  Address addr = glb->resolveConstant(spaceid, off, -1, nullPoint, fullEncoding);
   SymbolEntry *smallest;
 
-  // Assume symbol being referenced is address tied,
-  // so we use empty usepoint
-  smallest = scope->queryContainer(addr,1,Address());
+  // Assume symbol being referenced is address tied so we use a null point of context
+  // FIXME: A valid point of context may be necessary in the future
+  smallest = scope->queryContainer(addr,1,nullPoint);
   
   if (smallest == (SymbolEntry *)0) {
     *newoff = 0;
@@ -1167,7 +1171,11 @@ int4 TypeSpacebase::compareDependency(const Datatype &op) const
 Address TypeSpacebase::getAddress(uintb off,int4 sz,const Address &point) const
 
 {
-  return glb->resolveConstant(spaceid,off,sz,point);
+  uintb fullEncoding;
+  // Currently a constant off of a global spacebase must be a full pointer encoding
+  if (localframe.isInvalid())
+    sz = -1;	// Set size to -1 to guarantee that full encoding recovery isn't launched
+  return glb->resolveConstant(spaceid,off,sz,point,fullEncoding);
 }
 
 void TypeSpacebase::saveXml(ostream &s) const
@@ -1886,6 +1894,24 @@ Datatype *TypeFactory::downChain(Datatype *ptrtype,uintb &off)
   if (pt == (Datatype *)0)
     return (Datatype *)0;
   return getTypePointer(ptype->size,pt,ptype->getWordSize());
+}
+
+/// The data-type propagation system can push around data-types that are \e partial or are
+/// otherwise unrepresentable in the source language.  This method substitutes those data-types
+/// with a concrete data-type that is representable, or returns the same data-type if is already concrete.
+/// Its important that the returned data-type have the same size as the original data-type regardless.
+/// \param ct is the given data-type
+/// \return the concrete data-type
+Datatype *TypeFactory::concretize(Datatype *ct)
+
+{
+  type_metatype metatype = ct->getMetatype();
+  if (metatype == TYPE_CODE) {
+    if (ct->getSize() != 1)
+      throw LowlevelError("Primitive code data-type that is not size 1");
+    ct = getBase(1, TYPE_UNKNOWN);
+  }
+  return ct;
 }
 
 /// Restore a Datatype object from an XML tag description: either \<type>, \<typeref>, or \<void>

@@ -175,7 +175,13 @@ public class ClientUtil {
 	 * should be obtained from RepositoryServerAdapter.getUser
 	 */
 	public static String getUserName() {
-		return SystemUtilities.getUserName();
+		String name = SystemUtilities.getUserName();
+		// exclude domain prefix which may be included
+		int slashIndex = name.lastIndexOf('\\');
+		if (slashIndex >= 0) {
+			name = name.substring(slashIndex + 1);
+		}
+		return name;
 	}
 
 	/**
@@ -217,7 +223,7 @@ public class ClientUtil {
 				excMsg = exc.toString();
 			}
 			if (exc instanceof IOException) {
-				Msg.showError(ClientUtil.class, parent, title, excMsg);
+				Msg.showError(ClientUtil.class, parent, title, excMsg, exc);
 			}
 			else {
 				// show the stacktrace for non-IOException

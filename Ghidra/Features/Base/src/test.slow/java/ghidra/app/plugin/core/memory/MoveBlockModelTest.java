@@ -21,9 +21,7 @@ import org.junit.*;
 
 import ghidra.app.cmd.memory.MoveBlockListener;
 import ghidra.app.cmd.memory.MoveBlockTask;
-import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.database.ProgramBuilder;
-import ghidra.program.database.ProgramDB;
 import ghidra.program.database.data.DataTypeManagerDB;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
@@ -31,34 +29,20 @@ import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.test.TestEnv;
-import ghidra.util.task.*;
+import ghidra.util.task.TaskBuilder;
 
-/**
- * Test the model that moves a block of memory.
- * 
- * 
- */
 public class MoveBlockModelTest extends AbstractGhidraHeadedIntegrationTest
 		implements MoveBlockListener {
+
 	private Program notepad;
 	private Program x8051;
-	private PluginTool tool;
 	private TestEnv env;
 	private MoveBlockModel model;
 	private MemoryBlock block;
-	private boolean expectedStatus;
-	private boolean moveCompleted;
-	private boolean status;
-	private String errMsg;
 
-	/**
-	 * Constructor for MoveBlockModelTest.
-	 * 
-	 * @param name
-	 */
-	public MoveBlockModelTest() {
-		super();
-	}
+	private volatile boolean moveCompleted;
+	private volatile boolean success;
+	private volatile String errMsg;
 
 	private Program buildProgram1(String programName) throws Exception {
 		ProgramBuilder builder = new ProgramBuilder(programName, ProgramBuilder._TOY);
@@ -84,13 +68,10 @@ public class MoveBlockModelTest extends AbstractGhidraHeadedIntegrationTest
 		return builder.getProgram();
 	}
 
-	/*
-	 * @see TestCase#setUp()
-	 */
 	@Before
 	public void setUp() throws Exception {
 		env = new TestEnv();
-		tool = env.getTool();
+
 		notepad = buildProgram1("notepad");
 		x8051 = buildProgram2("x08");
 		block = notepad.getMemory().getBlock(getNotepadAddr(0x1001000));
@@ -99,7 +80,7 @@ public class MoveBlockModelTest extends AbstractGhidraHeadedIntegrationTest
 		model.initialize(block);
 
 		int transactionID = x8051.startTransaction("Set settings");
-		DataTypeManagerDB dtm = ((ProgramDB) x8051).getDataManager();
+		DataTypeManagerDB dtm = (DataTypeManagerDB) x8051.getDataTypeManager();
 		for (int i = 0; i < 10; i++) {
 			Address a = getAddr(x8051, "BITS", i);
 			dtm.setStringSettingsValue(a, "color", "red" + i);
@@ -109,13 +90,8 @@ public class MoveBlockModelTest extends AbstractGhidraHeadedIntegrationTest
 		x8051.endTransaction(transactionID, true);
 	}
 
-	/*
-	 * @see TestCase#tearDown()
-	 */
 	@After
 	public void tearDown() {
-		env.release(x8051);
-		env.release(notepad);
 		env.dispose();
 	}
 
@@ -152,25 +128,23 @@ public class MoveBlockModelTest extends AbstractGhidraHeadedIntegrationTest
 	@Test
 	public void testMoveBlockStart() throws Exception {
 		model.setNewStartAddress(getNotepadAddr(0x2000000));
-		expectedStatus = true;
+
 		launch(model.makeTask());
+
 		// wait until the we get the move complete notification
-		while (!moveCompleted || !notepad.canLock()) {
-			Thread.sleep(1000);
-		}
-		assertEquals("Error message= [" + errMsg + "], ", expectedStatus, status);
+		waitForCondition(() -> moveCompleted && notepad.canLock());
+		assertTrue("Error message= [" + errMsg + "], ", success);
 	}
 
 	@Test
 	public void testMoveBlockEnd() throws Exception {
 		model.setNewEndAddress(getNotepadAddr(0x2007500));
-		expectedStatus = true;
+
 		launch(model.makeTask());
+
 		// wait until the we get the move complete notification
-		while (!moveCompleted || !notepad.canLock()) {
-			Thread.sleep(1000);
-		}
-		assertEquals("Error message= [" + errMsg + "], ", expectedStatus, status);
+		waitForCondition(() -> moveCompleted && notepad.canLock());
+		assertTrue("Error message= [" + errMsg + "], ", success);
 	}
 
 	@Test
@@ -194,13 +168,15 @@ public class MoveBlockModelTest extends AbstractGhidraHeadedIntegrationTest
 		start = getAddr(x8051, "INTMEM", 0x50);
 		model.setNewStartAddress(start);
 		assertEquals(getAddr(x8051, "INTMEM", 0xcf), model.getNewEndAddress());
-		expectedStatus = false;
+
+		setErrorsExpected(true);
 		launch(model.makeTask());
+
 		// wait until the we get the move complete notification
-		while (!moveCompleted || !x8051.canLock()) {
-			Thread.sleep(1000);
-		}
-		assertEquals("Error message= [" + errMsg + "], ", expectedStatus, status);
+		waitForCondition(() -> moveCompleted && x8051.canLock());
+		setErrorsExpected(false);
+
+		assertFalse("Error message= [" + errMsg + "], ", success);
 	}
 
 	@Test
@@ -213,16 +189,14 @@ public class MoveBlockModelTest extends AbstractGhidraHeadedIntegrationTest
 		model.initialize(block);
 		start = getAddr(x8051, "CODE", 0x2000);
 		model.setNewStartAddress(start);
-		expectedStatus = true;
-		moveCompleted = false;
-		launch(model.makeTask());
-		// wait until the we get the move complete notification
-		while (!moveCompleted || !x8051.canLock()) {
-			Thread.sleep(1000);
-		}
-		// make sure settings on data got moved
-		DataTypeManagerDB dtm = ((ProgramDB) x8051).getDataManager();
 
+		launch(model.makeTask());
+
+		// wait until the we get the move complete notification
+		waitForCondition(() -> moveCompleted && x8051.canLock());
+
+		// make sure settings on data got moved
+		DataTypeManagerDB dtm = (DataTypeManagerDB) x8051.getDataTypeManager();
 		for (int i = 0; i < 10; i++) {
 			Address a = getAddr(x8051, "CODE", 0x2000 + i);
 
@@ -257,24 +231,19 @@ public class MoveBlockModelTest extends AbstractGhidraHeadedIntegrationTest
 		Address newStart = memBlock.getStart().getNewAddress(0x01002000);
 		model.setNewStartAddress(newStart);
 
-		expectedStatus = false;
-		errMsg = null;
-
+		setErrorsExpected(true);
 		launch(model.makeTask());
-		while (!moveCompleted || !notepad.canLock()) {
-			Thread.sleep(1000);
-		}
-		assertTrue(!expectedStatus);
+
+		waitForCondition(() -> moveCompleted && notepad.canLock());
+		setErrorsExpected(false);
+
 		assertNotNull(errMsg);
 	}
 
-	private void launch(Task task) {
-		new TaskLauncher(task, new TaskMonitorAdapter() {
-			@Override
-			public void setMessage(String message) {
-				errMsg = message;
-			}
-		});
+	private void launch(MoveBlockTask task) {
+
+		TaskBuilder.withTask(task).launchModal();
+		errMsg = task.getStatusMessage();
 	}
 
 	private Address getNotepadAddr(int offset) {
@@ -286,21 +255,14 @@ public class MoveBlockModelTest extends AbstractGhidraHeadedIntegrationTest
 		return space.getAddress(offset);
 	}
 
-	/**
-	 * @see ghidra.app.plugin.contrib.memory.MoveBlockListener#moveBlockCompleted(boolean,
-	 *      java.lang.String)
-	 */
 	@Override
 	public void moveBlockCompleted(MoveBlockTask cmd) {
 		moveCompleted = true;
-		this.status = cmd.getStatus();
+		this.success = cmd.wasSuccessful();
 	}
 
-	/**
-	 * @see ghidra.app.plugin.contrib.memory.MoveBlockListener#stateChanged()
-	 */
 	@Override
 	public void stateChanged() {
+		// stub
 	}
-
 }

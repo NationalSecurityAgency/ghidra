@@ -62,6 +62,7 @@ struct PartialSymbolEntry {
 ///  - etc.
 class PrintC : public PrintLanguage {
 protected:
+  static OpToken hidden;		///< Hidden functional (that may force parentheses)
   static OpToken scope;			///< The sub-scope/namespace operator
   static OpToken object_member;		///< The \e member operator
   static OpToken pointer_member;	///< The \e points \e to \e member operator
@@ -116,6 +117,7 @@ protected:
   bool option_convention;	///< Set to \b true if we should print calling convention
   bool option_nocasts;		///< Don't print a cast if \b true
   bool option_unplaced;		///< Set to \b true if we should display unplaced comments
+  bool option_hide_exts;	///< Set to \b true if we should hide implied extension operations
   string nullToken;		///< Token to use for 'null'
   CommentSorter commsorter;	///< Container/organizer for comments in the current function
 
@@ -153,9 +155,11 @@ protected:
   void emitCommentGroup(const PcodeOp *inst);		///< Emit comments associated with a given statement
   void emitCommentFuncHeader(const Funcdata *fd);	///< Emit comments in the given function's header
   void opFunc(const PcodeOp *op);			///< Push a \e functional expression based on the given p-code op to the RPN stack
-  void opTypeCast(const PcodeOp *op);			///< Pus the given p-code op using type-cast syntax to the RPN stack
+  void opTypeCast(const PcodeOp *op);			///< Push the given p-code op using type-cast syntax to the RPN stack
+  void opHiddenFunc(const PcodeOp *op);			///< Push the given p-code op as a hidden token
   static bool hasCharTerminator(uint1 *buffer,int4 size,int4 charsize);
   bool printCharacterConstant(ostream &s,const Address &addr,int4 charsize) const;
+  bool isExtensionCastImplied(const PcodeOp *op) const;
   virtual void pushConstant(uintb val,const Datatype *ct,
 			    const Varnode *vn,const PcodeOp *op);
   virtual bool pushEquate(uintb val,int4 sz,const EquateSymbol *sym,
@@ -195,6 +199,7 @@ public:
   void setCStyleComments(void) { setCommentDelimeter("/* "," */",false); }	///< Set c-style "/* */" comment delimiters
   void setCPlusPlusStyleComments(void) { setCommentDelimeter("// ","",true); }	///< Set c++-style "//" comment delimiters
   void setDisplayUnplaced(bool val) { option_unplaced = val; }	///< Toggle whether \e unplaced comments are displayed in the header
+  void setHideImpliedExts(bool val) { option_hide_exts = val; }	///< Toggle whether implied extensions are hidden
   virtual ~PrintC(void) {}
   virtual void adjustTypeOperators(void);
   virtual void setCommentStyle(const string &nm);
@@ -285,6 +290,9 @@ public:
   virtual void opSegmentOp(const PcodeOp *op);
   virtual void opCpoolRefOp(const PcodeOp *op);
   virtual void opNewOp(const PcodeOp *op);
+  virtual void opInsertOp(const PcodeOp *op);
+  virtual void opExtractOp(const PcodeOp *op);
+  virtual void opPopcountOp(const PcodeOp *op) { opFunc(op); }
 };
 
 #endif

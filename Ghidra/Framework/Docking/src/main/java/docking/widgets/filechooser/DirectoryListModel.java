@@ -74,6 +74,10 @@ class DirectoryListModel extends AbstractListModel<File> {
 		return fileList.indexOf(file);
 	}
 
+	public List<File> getAllFiles() {
+		return new ArrayList<>(fileList);
+	}
+
 	@Override
 	public int getSize() {
 		return fileList.size();

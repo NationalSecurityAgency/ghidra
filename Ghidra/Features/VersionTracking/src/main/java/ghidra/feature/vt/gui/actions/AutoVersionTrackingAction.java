@@ -19,10 +19,10 @@ import javax.swing.Icon;
 
 import docking.ActionContext;
 import docking.action.*;
+import docking.tool.ToolConstants;
 import ghidra.feature.vt.api.main.VTSession;
 import ghidra.feature.vt.gui.plugin.VTController;
 import ghidra.feature.vt.gui.plugin.VTPlugin;
-import ghidra.framework.plugintool.util.ToolConstants;
 import ghidra.util.HTMLUtilities;
 import ghidra.util.HelpLocation;
 import resources.ResourceManager;

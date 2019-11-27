@@ -25,7 +25,8 @@ import org.junit.Test;
 import docking.ComponentProvider;
 import docking.DockingWindowManager;
 import docking.widgets.pathmanager.PathManager;
-import docking.widgets.tree.*;
+import docking.widgets.tree.GTree;
+import docking.widgets.tree.GTreeNode;
 import generic.jar.ResourceFile;
 import generic.util.Path;
 import ghidra.app.plugin.core.console.ConsoleComponentProvider;
@@ -244,7 +245,7 @@ public class GhidraScriptMgrPluginScreenShots extends GhidraScreenShotGenerator 
 
 	private void collapse(final GTree tree, final String nodeName) {
 		runSwing(() -> {
-			GTreeRootNode rootNode = tree.getRootNode();
+			GTreeNode rootNode = tree.getViewRoot();
 			GTreeNode exmaplesNode = rootNode.getChild(nodeName);
 			tree.collapseAll(exmaplesNode);
 		});
@@ -255,7 +256,7 @@ public class GhidraScriptMgrPluginScreenShots extends GhidraScreenShotGenerator 
 			Arrays.asList("Examples", "Data Types", "Binary", "Functions", "Import", "Analysis"));
 
 		List<GTreeNode> toRemove = new ArrayList<>();
-		final GTreeRootNode rootNode = scriptCategoryTree.getRootNode();
+		final GTreeNode rootNode = scriptCategoryTree.getViewRoot();
 		List<GTreeNode> children = rootNode.getChildren();
 		for (GTreeNode child : children) {
 			String name = child.getName();

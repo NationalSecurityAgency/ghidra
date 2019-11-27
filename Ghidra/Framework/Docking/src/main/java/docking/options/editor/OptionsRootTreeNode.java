@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,17 +15,15 @@
  */
 package docking.options.editor;
 
-import ghidra.framework.options.Options;
-
 import java.util.*;
 
 import javax.swing.JComponent;
 
-import docking.widgets.tree.*;
+import docking.widgets.tree.GTreeNode;
+import ghidra.framework.options.Options;
 
-class OptionsRootTreeNode extends OptionsTreeNode implements GTreeRootNode {
+class OptionsRootTreeNode extends OptionsTreeNode {
 	private Options[] options;
-	private GTree tree;
 
 	OptionsRootTreeNode(String name, Options[] options) {
 		super(name, null);
@@ -54,15 +51,5 @@ class OptionsRootTreeNode extends OptionsTreeNode implements GTreeRootNode {
 	// overridden because the root has no options to edit
 	protected JComponent getEditorComponent() {
 		return null;
-	}
-
-	@Override
-	public GTree getGTree() {
-		return tree;
-	}
-
-	@Override
-	public void setGTree(GTree tree) {
-		this.tree = tree;
 	}
 }

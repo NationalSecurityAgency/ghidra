@@ -72,37 +72,43 @@ public class HighFunctionDBUtil {
 
 	/**
 	 * Commit all parameters associated with HighFunction to the underlying database.
-	 * @param highFunction
-	 * @param renameConflicts if true any name conflicts will be resolved
-	 * by renaming the conflicting local variable/label
-	 * @param source source type
+	 * @param highFunction is the associated HighFunction
+	 * @param useDataTypes is true if the HighFunction's parameter data-types should be committed
+	 * @param source is the signature source type to set
 	 * @throws DuplicateNameException if commit of parameters caused conflict with other
-	 * local variable/label.  Should not occur if renameConflicts is true.
-	 * @throws InvalidInputException
+	 * local variable/label.
+	 * @throws InvalidInputException if specified storage is invalid
 	 */
-	public static void commitParamsToDatabase(HighFunction highFunction, boolean renameConflicts,
+	public static void commitParamsToDatabase(HighFunction highFunction, boolean useDataTypes,
 			SourceType source) throws DuplicateNameException, InvalidInputException {
 		Function function = highFunction.getFunction();
 
-		List<Parameter> params = getParameters(highFunction);
+		List<Parameter> params = getParameters(highFunction, useDataTypes);
 
 		commitParamsToDatabase(function, highFunction.getFunctionPrototype(), params,
-			highFunction.getFunctionPrototype().isVarArg(), renameConflicts, source);
+			highFunction.getFunctionPrototype().isVarArg(), true, source);
 	}
 
-	private static List<Parameter> getParameters(HighFunction highFunction)
+	private static List<Parameter> getParameters(HighFunction highFunction, boolean useDataTypes)
 			throws InvalidInputException {
 		Function function = highFunction.getFunction();
 		Program program = function.getProgram();
+		DataTypeManager dtm = program.getDataTypeManager();
 		LocalSymbolMap symbolMap = highFunction.getLocalSymbolMap();
 		List<Parameter> params = new ArrayList<Parameter>();
 		int paramCnt = symbolMap.getNumParams();
 		for (int i = 0; i < paramCnt; ++i) {
 			HighParam param = symbolMap.getParam(i);
 			String name = param.getName();
-			boolean nameLocked = param.getSymbol().isNameLocked();
-			name = (nameLocked ? name : null);
-			params.add(new ParameterImpl(name, param.getDataType(), param.getStorage(), program));
+			DataType dataType;
+			if (useDataTypes) {
+				dataType = param.getDataType();
+			}
+			else {
+				dataType = Undefined.getUndefinedDataType(param.getSize());
+				dataType = dataType.clone(dtm);
+			}
+			params.add(new ParameterImpl(name, dataType, param.getStorage(), program));
 		}
 		return params;
 	}
@@ -294,12 +300,9 @@ public class HighFunctionDBUtil {
 	 * database which conflict with this variable and return
 	 * one of them for re-use.  The returned variable still
 	 * exists within the function at the same first-use-offset.
-	 * @throws InvalidInputException
-	 * @returns variable with conflicting storage or null, all
-	 * aspects of variable returned should be reset (i.e., name, datatype and storage)
+	 * @returns existing variable with identical storage and first-use offset or null
 	 */
-	private static Variable clearConflictingLocalVariables(HighLocal local)
-			throws InvalidInputException {
+	private static Variable clearConflictingLocalVariables(HighLocal local) {
 
 		if (local instanceof HighParam) {
 			throw new IllegalArgumentException();
@@ -338,10 +341,7 @@ public class HighFunctionDBUtil {
 			VariableStorage otherStorage = otherVar.getVariableStorage();
 
 			if (otherStorage.intersects(storage)) {
-				if (matchingVariable == null || otherStorage.equals(storage)) {
-					if (matchingVariable != null) {
-						func.removeVariable(matchingVariable);
-					}
+				if (matchingVariable == null && otherStorage.equals(storage)) {
 					matchingVariable = otherVar;
 					continue;
 				}
@@ -353,12 +353,13 @@ public class HighFunctionDBUtil {
 	}
 
 	/**
-	 * Get database parameter which corresponds to HighParam committing all parameters to
-	 * database if necessary
-	 * @param param
-	 * @return matching parameter or null if not found
-	 * @throws DuplicateNameException
-	 * @throws InvalidInputException
+	 * Get database parameter which corresponds to HighParam, where we anticipate that
+	 * the parameter will be modified to match the HighParam. The entire prototype is
+	 * committed to the database if necessary. An exception is thrown if a modifiable parameter
+	 * can't be found/created.
+	 * @param param is the HighParam describing the desired function parameter
+	 * @return the matching parameter that can be modified
+	 * @throws InvalidInputException if the desired parameter cannot be modified
 	 */
 	private static Parameter getDatabaseParameter(HighParam param) throws InvalidInputException {
 
@@ -367,6 +368,12 @@ public class HighFunctionDBUtil {
 
 		int slot = param.getSlot();
 		Parameter[] parameters = function.getParameters();
+		if (slot < parameters.length) {
+			if (parameters[slot].isAutoParameter()) {
+				throw new InvalidInputException(
+					"Cannot modify auto-parameter: " + parameters[slot].getName());
+			}
+		}
 		if (slot >= parameters.length ||
 			!parameters[slot].getVariableStorage().equals(param.getStorage())) {
 			try {
@@ -407,14 +414,17 @@ public class HighFunctionDBUtil {
 		HighFunction highFunction = variable.getHighFunction();
 		Function function = highFunction.getFunction();
 		Program program = function.getProgram();
-		DataTypeManager dtm = program.getDataTypeManager();
 
-		dataType = dataType != null ? dataType.clone(dtm) : variable.getDataType();
-		if (dataType.getLength() <= 0) {
-			throw new InvalidInputException("Data type is not fixed-length: " + dataType.getName());
+		boolean resized = false;
+		if (dataType != null) {
+			dataType = dataType.clone(program.getDataTypeManager());
+			if (dataType.getLength() <= 0) {
+				throw new InvalidInputException(
+					"Data type is not fixed-length: " + dataType.getName());
+			}
+
+			resized = (dataType.getLength() != variable.getSize());
 		}
-
-		boolean resized = (dataType.getLength() != variable.getSize());
 
 		boolean isRename = name != null;
 
@@ -422,13 +432,15 @@ public class HighFunctionDBUtil {
 			HighParam param = (HighParam) variable;
 			Parameter dbParam = getDatabaseParameter(param);
 			VariableStorage storage = param.getStorage();
-			if (resized && function.hasCustomVariableStorage()) {
-				VariableStorage newStorage =
-					VariableUtilities.resizeStorage(storage, dataType, true, function);
-				dbParam.setDataType(dataType, newStorage, false, source);
-			}
-			else {
-				dbParam.setDataType(dataType, source);
+			if (dataType != null) {
+				if (resized && function.hasCustomVariableStorage()) {
+					VariableStorage newStorage =
+						VariableUtilities.resizeStorage(storage, dataType, true, function);
+					dbParam.setDataType(dataType, newStorage, false, source);
+				}
+				else {
+					dbParam.setDataType(dataType, source);
+				}
 			}
 			if (name != null && !name.equals(dbParam.getName())) {
 				dbParam.setName(name, source);
@@ -440,6 +452,15 @@ public class HighFunctionDBUtil {
 			boolean usesHashStorage = storage.isHashStorage();
 
 			Variable var = clearConflictingLocalVariables(local);
+			if (dataType == null) {
+				if (var != null) {
+					dataType = var.getDataType();	// Use preexisting datatype if it fits in desired storage
+				}
+				else {
+					dataType = Undefined.getUndefinedDataType(variable.getSize());
+					dataType = dataType.clone(program.getDataTypeManager());
+				}
+			}
 			if (resized) {
 				if (usesHashStorage) {
 					throw new InvalidInputException(
@@ -495,7 +516,9 @@ public class HighFunctionDBUtil {
 				}
 			}
 
-			setGlobalDataType(global, dataType);
+			if (dataType != null) {
+				setGlobalDataType(global, dataType);
+			}
 
 			if (name != null) {
 				try {

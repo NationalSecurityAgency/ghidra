@@ -32,8 +32,11 @@ import javax.swing.table.*;
 
 import docking.DialogComponentProvider;
 import docking.widgets.ListSelectionTableDialog;
+import docking.widgets.checkbox.GCheckBox;
+import docking.widgets.combobox.GComboBox;
 import docking.widgets.filechooser.GhidraFileChooser;
 import docking.widgets.filechooser.GhidraFileChooserMode;
+import docking.widgets.label.GDLabel;
 import docking.widgets.table.*;
 import ghidra.app.services.ProgramManager;
 import ghidra.formats.gfilesystem.*;
@@ -153,6 +156,7 @@ public class BatchImportDialog extends DialogComponentProvider {
 		TableColumn langColumn =
 			table.getColumnModel().getColumn(BatchImportTableModel.COLS.LANG.ordinal());
 		langColumn.setCellEditor(createLangColumnCellEditor());
+		langColumn.setCellRenderer(createLangColumnCellRenderer());
 
 		JScrollPane scrollPane = new JScrollPane(table);
 
@@ -185,7 +189,7 @@ public class BatchImportDialog extends DialogComponentProvider {
 		sourceListPanel.add(sourceOptionsPanel, BorderLayout.SOUTH);
 
 		JPanel maxDepthPanel = new JPanel();
-		JLabel maxDepthLabel = new JLabel("Depth limit:");
+		JLabel maxDepthLabel = new GDLabel("Depth limit:");
 		String maxDepthTip = "Maximum container (ie. nested zip, tar, etc) depth in the " +
 			"source file to recursively descend into";
 		maxDepthLabel.setToolTipText(maxDepthTip);
@@ -286,27 +290,19 @@ public class BatchImportDialog extends DialogComponentProvider {
 		JPanel outputChoicesPanel = new JPanel();
 		outputChoicesPanel.setLayout(new BoxLayout(outputChoicesPanel, BoxLayout.LINE_AXIS));
 
-		JCheckBox stripLeadingCb = new JCheckBox("Strip leading path");
-		stripLeadingCb.setSelected(stripLeading);
-		stripLeadingCb.addChangeListener(e -> {
-			setStripLeading(stripLeadingCb.isSelected());
-		});
+		GCheckBox stripLeadingCb = new GCheckBox("Strip leading path", stripLeading);
+		stripLeadingCb.addChangeListener(e -> setStripLeading(stripLeadingCb.isSelected()));
 		stripLeadingCb.setToolTipText("The destination folder for imported files will not " +
 			"include the source file's leading path");
 
-		JCheckBox stripContainerCb = new JCheckBox("Strip container paths");
-		stripContainerCb.setSelected(stripContainer);
-		stripContainerCb.addChangeListener(e -> {
-			setStripContainer(stripContainerCb.isSelected());
-		});
+		GCheckBox stripContainerCb = new GCheckBox("Strip container paths", stripContainer);
+		stripContainerCb.addChangeListener(e -> setStripContainer(stripContainerCb.isSelected()));
 		stripContainerCb.setToolTipText(
 			"The destination folder for imported files will not include any source path names");
 
-		JCheckBox openAfterImportCb = new JCheckBox("Open after import");
-		openAfterImportCb.setSelected(openAfterImporting);
-		openAfterImportCb.addChangeListener(e -> {
-			setOpenAfterImporting(openAfterImportCb.isSelected());
-		});
+		GCheckBox openAfterImportCb = new GCheckBox("Open after import", openAfterImporting);
+		openAfterImportCb.addChangeListener(
+			e -> setOpenAfterImporting(openAfterImportCb.isSelected()));
 		openAfterImportCb.setToolTipText("Open imported binaries in Code Browser");
 
 		outputChoicesPanel.add(stripLeadingCb);
@@ -454,7 +450,7 @@ public class BatchImportDialog extends DialogComponentProvider {
 	}
 
 	private TableCellEditor createFilesColumnCellEditor() {
-		JComboBox<Object> comboBox = new JComboBox<>();
+		JComboBox<Object> comboBox = new GComboBox<>();
 		DefaultCellEditor cellEditor = new DefaultCellEditor(comboBox) {
 			@Override
 			public boolean shouldSelectCell(EventObject anEvent) {
@@ -483,7 +479,6 @@ public class BatchImportDialog extends DialogComponentProvider {
 
 	private TableCellRenderer createFilesColumnCellRenderer() {
 		TableCellRenderer cellRenderer = new GTableCellRenderer() {
-
 			@Override
 			public Component getTableCellRendererComponent(GTableCellRenderingData data) {
 
@@ -506,7 +501,7 @@ public class BatchImportDialog extends DialogComponentProvider {
 	}
 
 	private TableCellEditor createLangColumnCellEditor() {
-		JComboBox<Object> comboBox = new JComboBox<>();
+		JComboBox<Object> comboBox = new GComboBox<>();
 		DefaultCellEditor cellEditor = new DefaultCellEditor(comboBox) {
 			@Override
 			public boolean shouldSelectCell(EventObject anEvent) {
@@ -527,6 +522,30 @@ public class BatchImportDialog extends DialogComponentProvider {
 		};
 
 		return cellEditor;
+	}
+
+	private TableCellRenderer createLangColumnCellRenderer() {
+		TableCellRenderer cellRenderer = new GTableCellRenderer() {
+			{
+				setHTMLRenderingEnabled(true);
+			}
+
+			@Override
+			public Component getTableCellRendererComponent(GTableCellRenderingData data) {
+				JLabel renderer = (JLabel) super.getTableCellRendererComponent(data);
+				renderer.setToolTipText("Click to set language");
+				return renderer;
+			}
+
+			@Override
+			protected String getText(Object value) {
+				BatchGroupLoadSpec bgls = (BatchGroupLoadSpec) value;
+				return (bgls != null) ? bgls.toString()
+						: "<html><font size=\"-2\" color=\"gray\">Click to set language</font>";
+			}
+		};
+
+		return cellRenderer;
 	}
 
 	private class SourcesListModel extends AbstractListModel<String> {

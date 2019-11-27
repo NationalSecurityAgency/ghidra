@@ -1,7 +1,12 @@
+apply from: "$rootProject.projectDir/gradle/distributableGhidraModule.gradle"
+apply from: "$rootProject.projectDir/gradle/javaProject.gradle"
+apply from: "$rootProject.projectDir/gradle/helpProject.gradle"
+apply from: "$rootProject.projectDir/gradle/jacocoProject.gradle"
+apply from: "$rootProject.projectDir/gradle/javaTestProject.gradle"
 apply plugin: 'eclipse'
+
 eclipse.project.name = 'Features Graph FunctionCalls'
 
-apply from: "$rootProject.projectDir/gradleScripts/buildHelp.gradle"
 
 // Note: this module's name is 'GraphFunctionCalls'
 dependencies {
@@ -15,7 +20,7 @@ dependencies {
 	helpPath project(path: ":FunctionGraph", configuration: 'helpPath')
 	
 	// These have abstract test classes and stubs needed by this module	
-	testCompile project(':Project').sourceSets.test.output
-	testCompile project(':SoftwareModeling').sourceSets.test.output
+	testCompile project(path: ':Project', configuration: 'testArtifacts')
+	testCompile project(path: ':SoftwareModeling', configuration: 'testArtifacts')
 
 }

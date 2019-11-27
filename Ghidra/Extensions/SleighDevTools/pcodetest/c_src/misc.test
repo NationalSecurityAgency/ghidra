@@ -1,0 +1,90 @@
+#include "pcode_test.h"
+#include "big_struct.h"
+
+TEST recursionTestLevel_Main()
+{
+	extern i4 recursionTestLevel (i4 level, u1 * array, i4 len);
+	i4 i;
+	u1 localArray[128];
+	i4 level = 0;
+	for (i = 0; i < sizeof(localArray); i++) localArray[i] = (8 * level) + i;
+	ASSERTI4(recursionTestLevel(1, localArray, sizeof(localArray)), 0);
+}
+
+TEST nalign_i2_Main()
+{
+	extern i2 nalign_i2(i2 in);
+	ASSERTI2(nalign_i2(1), 16);
+	ASSERTI2(nalign_i2(128), 2048);
+}
+
+TEST nalign_i4_Main()
+{
+	extern i4 nalign_i4(i4 in);
+	ASSERTI4(nalign_i4(1), 16);
+	ASSERTI4(nalign_i4(1000), 16000);
+}
+
+#ifdef HAS_LONGLONG
+TEST nalign_i8_Main()
+{
+	extern i8 nalign_i8(i8 in);
+	ASSERTI8(nalign_i8(1), 16);
+	ASSERTI8(nalign_i8(128), 2048);
+}
+#endif
+
+TEST nalign_struct_Main()
+{
+	extern i4 nalign_struct(big_struct_type * in);
+	big_struct_type bstruct;
+	ASSERTI4(nalign_struct(&bstruct), 0);
+}
+
+#if defined(HAS_FLOAT) && defined(HAS_DOUBLE) && defined(HAS_LONGLONG)
+TEST pcode_conversions_Main()
+{
+	extern i4 pcode_conversions(int argc);
+	ASSERTI4(pcode_conversions(0), 0 );
+}
+#endif
+
+TEST pcode_memcpy_Main()
+{
+	extern void *pcode_memcpy(u1* lhs, u1* rhs, u4 len);
+	char  buff1[32] = { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
+	char  buff2[32] = { 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2 };
+	char  ret[32];
+	ASSERTU4(* (u4 *) pcode_memcpy((u1*) ret, (u1*) buff1, 32), 0x01010101);
+	ASSERTU4(* (u4 *) pcode_memcpy((u1*) ret, (u1*) buff2, 32), 0x02020202);
+}
+
+TEST pcode_memcmp_u4_Main()
+{
+	extern u4 pcode_memcmp_u4(u4 lhs, u4 rhs);
+	u1 buff1[] = "this is a test string1";
+	u1 buff2[] = "this is a test string1";
+	u1 buff3[] = "this is a test string2";
+	ASSERTU4(pcode_memcmp_u4(0x1F1F1F1F, 0x1F1F1F1F), 0);
+	ASSERTU4(pcode_memcmp_u4(0x1F1F1F1F, 0x1F1E1F1F), 1);
+}
+
+TEST pcode_memcmp_n_Main()
+{
+	extern u4 pcode_memcmp_n(u1* lhs, u1* rhs, u4 len);
+	u1 buff1[] = "this is a test string1";
+	u1 buff2[] = "this is a test string1";
+	u1 buff3[] = "this is a test string2";
+	ASSERTU4(pcode_memcmp_n(buff1, buff2, 22), 0);
+	ASSERTU4(pcode_memcmp_n(buff1, buff3, 22), 1);
+}
+
+TEST pcode_memset_Main()
+{
+	extern u4 pcode_memset(u1* lhs, u1 val, u4 len);
+	u1 buff[32];
+	ASSERTU4(pcode_memset(buff, 1, 4), 0x01010101);
+	ASSERTU4(pcode_memset(buff, 2, 4), 0x02020202);
+}
+
+MAIN misc_main() { }

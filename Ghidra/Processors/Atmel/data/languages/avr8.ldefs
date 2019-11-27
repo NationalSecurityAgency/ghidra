@@ -9,6 +9,7 @@
             version="1.2"
             slafile="avr8.sla"
             processorspec="avr8.pspec"
+            manualindexfile="../manuals/AVR8.idx"
             id="avr8:LE:16:default">
     <description>AVR8 with 16-bit word addressable code space</description>
     <compiler name="gcc"        spec="avr8gcc.cspec"        id="gcc"/>
@@ -25,6 +26,7 @@
             version="1.3"
             slafile="avr8e.sla"
             processorspec="avr8.pspec"
+            manualindexfile="../manuals/AVR8.idx"
             id="avr8:LE:16:extended">
     <description>AVR8 with 22-bit word addressable code space</description>
     <compiler name="gcc"        spec="avr8egcc.cspec"        id="gcc"/>
@@ -35,10 +37,11 @@
     <language processor="AVR8"
             endian="little"
             size="16"
-            variant="Atmega256"
+            variant="atmega256"
             version="1.3"
             slafile="avr8eind.sla"
             processorspec="atmega256.pspec"
+            manualindexfile="../manuals/AVR8.idx"
             id="avr8:LE:16:atmega256">
     <description>AVR8 for an Atmega 256</description>
     <compiler name="gcc"        spec="avr8egcc.cspec"        id="gcc"/>

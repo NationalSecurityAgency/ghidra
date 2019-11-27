@@ -18,197 +18,165 @@ package ghidra.file.formats.sevenzip;
 import java.io.*;
 import java.util.*;
 
-import ghidra.app.util.bin.ByteProvider;
-import ghidra.app.util.recognizer.*;
 import ghidra.formats.gfilesystem.*;
 import ghidra.formats.gfilesystem.annotations.FileSystemInfo;
-import ghidra.formats.gfilesystem.factory.GFileSystemBaseFactory;
 import ghidra.util.Msg;
+import ghidra.util.NumericUtilities;
 import ghidra.util.exception.CancelledException;
-import ghidra.util.exception.CryptoException;
 import ghidra.util.task.TaskMonitor;
 import net.sf.sevenzipjbinding.*;
 import net.sf.sevenzipjbinding.impl.RandomAccessFileInStream;
 import net.sf.sevenzipjbinding.simple.ISimpleInArchive;
 import net.sf.sevenzipjbinding.simple.ISimpleInArchiveItem;
+import utilities.util.FileUtilities;
 
-@FileSystemInfo(type = "7zip", description = "7Zip", factory = GFileSystemBaseFactory.class)
-public class SevenZipFileSystem extends GFileSystemBase {
+@FileSystemInfo(type = "7zip", description = "7Zip", factory = SevenZipFileSystemFactory.class)
+public class SevenZipFileSystem implements GFileSystem {
 
-	private static final Recognizer[] RECOGNIZERS =
-		new Recognizer[] { new SevenZipRecognizer(), new XZRecognizer(), new Bzip2Recognizer(),
-			//new GzipRecognizer(),
-			//new TarRecognizer(),
-			//new PkzipRecognizer(),
-			new MSWIMRecognizer(), new ArjRecognizer(), new CabarcRecognizer(), new CHMRecognizer(),
-			//new CpioRecognizer(),
-			new CramFSRecognizer(), new DebRecognizer(),
-			//new DmgRecognizer(),
-			//new ISO9660Recognizer(),
-			new LhaRecognizer(), new RarRecognizer(), new RPMRecognizer(), new VHDRecognizer(),
-			new XarRecognizer(), new UnixCompressRecognizer() };
+	private FileSystemService fileSystemService;
+	private FileSystemIndexHelper<ISimpleInArchiveItem> fsIndexHelper;
+	private FSRLRoot fsrl;
+	private FileSystemRefManager refManager = new FileSystemRefManager(this);
 
-	private static final int MAX_BYTES;
-
-	static {
-		int max = 0;
-		for (Recognizer recognizer : RECOGNIZERS) {
-			int numberOfBytesRequired = recognizer.numberOfBytesRequired();
-			if (numberOfBytesRequired > max) {
-				max = numberOfBytesRequired;
-			}
-		}
-		MAX_BYTES = max;
-	}
-
-	private Map<GFile, ISimpleInArchiveItem> map = new HashMap<>();
 	private IInArchive archive;
 	private ISimpleInArchive archiveInterface;
 	private RandomAccessFile randomAccessFile;
 
-	public SevenZipFileSystem(String fileSystemName, ByteProvider provider) {
-		super(fileSystemName, provider);
+	public SevenZipFileSystem(FSRLRoot fsrl) {
+		this.fsrl = fsrl;
+		this.fsIndexHelper = new FileSystemIndexHelper<>(this, fsrl);
+		this.fileSystemService = FileSystemService.getInstance();
 	}
 
-	@Override
-	public boolean isValid(TaskMonitor monitor) throws IOException {
+	/**
+	 * Opens the specified sevenzip container file and initializes this file system with the
+	 * contents.
+	 *  
+	 * @param containerFile file to open
+	 * @param monitor {@link TaskMonitor} to allow the user to monitor and cancel
+	 * @throws CancelledException if user cancels
+	 * @throws IOException if error when reading data
+	 */
+	public void mount(File containerFile, TaskMonitor monitor)
+			throws CancelledException, IOException {
+		randomAccessFile = new RandomAccessFile(containerFile, "r");
 		try {
-			byte[] bytes = provider.readBytes(0, MAX_BYTES);
-			for (Recognizer recognizer : RECOGNIZERS) {
-				String recognized = recognizer.recognize(bytes);
-				if (recognized != null) {
-					return true;
-				}
-			}
-		}
-		catch (IOException e) {
-			// we squash exceptions here...not sure why we'd get an
-			// IOException...maybe permissions or something
-		}
-		return false;
-	}
-
-	@Override
-	public void open(TaskMonitor monitor) throws IOException, CryptoException, CancelledException {
-		monitor.setMessage("Opening ZIP...");
-
-		try {
-			if (openFile(monitor)) {
-				return;
-			}
-		}
-		catch (SevenZipException e) {
-			Msg.warn(this, "Problem opening 7-Zip archive", e);
-			throw new IOException(e);
-		}
-		if (openInputStream(monitor)) {
-			return;
-		}
-		throw new IOException("Unable to open zip file system.");
-	}
-
-	private boolean openFile(TaskMonitor monitor) throws FileNotFoundException, SevenZipException {
-		File file = provider.getFile();
-		if (file != null) {
-			randomAccessFile = new RandomAccessFile(file, "r");
 			archive = SevenZip.openInArchive(null, new RandomAccessFileInStream(randomAccessFile));
 			archiveInterface = archive.getSimpleInterface();
 
 			ISimpleInArchiveItem[] items = archiveInterface.getArchiveItems();
 			for (ISimpleInArchiveItem item : items) {
 				if (monitor.isCancelled()) {
-					break;
+					throw new CancelledException();
 				}
-				storeEntry(item, monitor);
+
+				fsIndexHelper.storeFile(item.getPath(), item.getItemIndex(), item.isFolder(),
+					getSize(item), item);
 			}
-			return true;
+			preCacheAll(monitor);
 		}
-		return false;
+		catch (SevenZipException e) {
+			throw new IOException("Failed to open archive: " + fsrl, e);
+		}
 	}
 
-	private void storeEntry(ISimpleInArchiveItem entry, TaskMonitor monitor)
-			throws SevenZipException {
-		String path = entry.getPath();
-		monitor.setMessage(path);
-		GFileImpl file =
-			GFileImpl.fromPathString(this, root, path, null, entry.isFolder(), getSize(entry));
-		storeFile(file, entry);
+	private void preCacheAll(TaskMonitor monitor) throws SevenZipException {
+		// Because the performance of single file extract is SOOOOOO SLOOOOOOOW, we pre-load
+		// all files in the sevenzip archive into the file cache using the faster sevenzip
+		// bulk extract method.
+		// Single file extract is still possible if file cache info is evicted from memory due
+		// to pressure.
+		SZExtractCallback szCallback = new SZExtractCallback(monitor);
+		archive.extract(null, false, szCallback);
 	}
 
-	private void storeFile(GFile file, ISimpleInArchiveItem entry) {
-		if (file == null) {
-			return;
+	@Override
+	public void close() throws IOException {
+		refManager.onClose();
+
+		if (randomAccessFile != null) {
+			// FYI: no need to close the iface, because the archive will
+			// shut it down on close anyways
+			try {
+				archive.close();
+			}
+			catch (SevenZipException e) {
+				Msg.warn(this, "Problem closing 7-Zip archive", e);
+			}
+			archive = null;
+			archiveInterface = null;
+
+			randomAccessFile.close();
+			randomAccessFile = null;
 		}
-		if (file.equals(root)) {
-			return;
-		}
-		if (!map.containsKey(file) || map.get(file) == null) {
-			map.put(file, entry);
-		}
-		GFile parentFile = file.getParentFile();
-		storeFile(parentFile, null);
+
+		fsIndexHelper.clear();
 	}
 
-	// at least until we implement it
-	private boolean openInputStream(TaskMonitor monitor) {
-		// TODO: is there any way 7Zip will let us work with a stream?
-		// moreover: will we ever be handed a stream???
-		return false;
+	@Override
+	public String getName() {
+		return fsrl.getContainer().getName();
+	}
+
+	@Override
+	public FSRLRoot getFSRL() {
+		return fsrl;
+	}
+
+	@Override
+	public boolean isClosed() {
+		return randomAccessFile == null;
+	}
+
+	@Override
+	public FileSystemRefManager getRefManager() {
+		return refManager;
+	}
+
+	@Override
+	public GFile lookup(String path) throws IOException {
+		return fsIndexHelper.lookup(path);
 	}
 
 	@Override
 	public List<GFile> getListing(GFile directory) throws IOException {
-		if (directory == null || directory.equals(root)) {
-			List<GFile> roots = new ArrayList<>();
-			for (GFile file : map.keySet()) {
-				if (file.getParentFile() == root || file.getParentFile().equals(root)) {
-					roots.add(file);
-				}
-			}
-			return roots;
-		}
-		List<GFile> tmp = new ArrayList<>();
-		for (GFile file : map.keySet()) {
-			if (file.getParentFile() == null) {
-				continue;
-			}
-			if (file.getParentFile().equals(directory)) {
-				tmp.add(file);
-			}
-		}
-		return tmp;
+		return fsIndexHelper.getListing(directory);
 	}
 
 	@Override
-	public String getInfo(GFile file, TaskMonitor monitor) throws IOException {
-		ISimpleInArchiveItem entry = map.get(file);
-		StringBuffer buffer = new StringBuffer();
+	public String getInfo(GFile file, TaskMonitor monitor) {
+		ISimpleInArchiveItem entry = fsIndexHelper.getMetadata(file);
+		return (entry != null) ? FSUtilities.infoMapToString(getInfoMap(entry)) : null;
+	}
+
+	private Map<String, String> getInfoMap(ISimpleInArchiveItem entry) {
+		Map<String, String> info = new LinkedHashMap<>();
 		try {
-			buffer.append("Path: " + entry.getPath() + "\n");
-			buffer.append("Folder?: " + entry.isFolder() + "\n");
-			buffer.append("Encrypted?: " + entry.isEncrypted() + "\n");
-			buffer.append("Comment: " + entry.getComment() + "\n");
-			final Long packedSize = entry.getPackedSize();
-			buffer.append("Compressed Size: " +
-				(packedSize == null ? "(null)" : " 0x" + Long.toHexString(packedSize)) + "\n");
-			buffer.append("Uncompressed Size: 0x" + getSize(entry) + "\n");
-			final Integer crc = entry.getCRC();
-			buffer.append(
-				"CRC: " + (crc == null ? "(null)" : " 0x" + Long.toHexString(crc)) + "\n");
-			buffer.append("Compression Method: " + entry.getMethod() + "\n");
-			buffer.append("Time: " + entry.getCreationTime() + "\n");
+			info.put("Name", entry.getPath());
+			info.put("Folder?", Boolean.toString(isFolder(entry)));
+			info.put("Encrypted?", Boolean.toString(entry.isEncrypted()));
+			info.put("Comment", entry.getComment());
+			Long compressedSize = getCompressedSize(entry);
+			info.put("Compressed Size",
+				compressedSize != null ? NumericUtilities.toHexString(compressedSize) : "NA");
+			info.put("Uncompressed Size", NumericUtilities.toHexString(getSize(entry)));
+			Integer crc = getCRC(entry);
+			info.put("CRC",
+				crc != null ? NumericUtilities.toHexString(crc.intValue() & 0xffffffffL) : "NA");
+			info.put("Compression Method", entry.getMethod());
+			Date creationTime = getCreateDate(entry);
+			info.put("Time", creationTime != null ? creationTime.toGMTString() : "NA");
 		}
 		catch (SevenZipException e) {
 			Msg.warn(this, "7-Zip exception trying to get info on item", e);
 		}
-		return buffer.toString();
+		return info;
 	}
 
 	@Override
-	protected InputStream getData(GFile file, TaskMonitor monitor)
+	public InputStream getInputStream(GFile file, TaskMonitor monitor)
 			throws IOException, CancelledException {
-
-		ISimpleInArchiveItem entry = map.get(file);
+		ISimpleInArchiveItem entry = fsIndexHelper.getMetadata(file);
 
 		if (entry == null) {
 			return null;
@@ -216,116 +184,229 @@ public class SevenZipFileSystem extends GFileSystemBase {
 
 		try {
 			if (entry.isFolder()) {
-				throw new IOException(file.getName() + " is a directory");
+				throw new IOException("Not a file: " + file.getName());
 			}
 		}
 		catch (SevenZipException e) {
-			throw new IOException("trying to test if " + file + " is a folder", e);
+			throw new IOException("Error getting status of file: " + file.getName(), e);
 		}
 
-		if (archiveInterface != null) {
-
-			MySequentialOutStream sequentialOutputStream = new MySequentialOutStream();
-
-			try {
-				entry.extractSlow(sequentialOutputStream);
-			}
-			catch (SevenZipException e1) {
-				throw new IOException(e1);
-			}
-
-			try {
-				ExtractOperationResult operationResult = entry.extractSlow(sequentialOutputStream);
-
-				if (operationResult == null) {
-					throw new IOException("7-Zip returned null operation result");
-				}
-
-				switch (operationResult) {
-					case CRCERROR: {
-						throw new IOException("7-Zip returned CRC error");
-					}
-					case DATAERROR: {
-						throw new IOException("7-Zip returned data error");
-					}
-					case UNSUPPORTEDMETHOD: {
-						throw new IOException("Unexpected: 7-Zip returned unsupported method");
-					}
-					case UNKNOWN_OPERATION_RESULT: {
-						throw new IOException(
-							"Unexpected: 7-Zip returned unknown operation result");
-					}
-					case OK:
-					default: {
-						// it's all ok!
-					}
-				}
-			}
-			catch (SevenZipException e) {
-				Throwable cause = e.getCause();
-				if (cause != null && cause instanceof IOException) {
-					throw (IOException) cause;
-				}
-				if (cause != null && cause instanceof CancelledException) {
-					throw (CancelledException) cause;
-				}
-				throw new IOException("7-Zip exception", e);
-			}
-
-			return sequentialOutputStream.getData();
-		}
-
-		return null;
+		File cachedFile = extractSZFile(file, entry, monitor);
+		return new FileInputStream(cachedFile);
 	}
 
-	private int getSize(ISimpleInArchiveItem entry) {
+	private File extractSZFile(GFile file, ISimpleInArchiveItem entry, TaskMonitor monitor)
+			throws CancelledException, IOException {
+		// push the sevenzip compressed file into the file cache (if not already there)
+		FileCacheEntry fce = FileSystemService.getInstance().getDerivedFilePush(fsrl.getContainer(),
+			Integer.toString(entry.getItemIndex()), (os) -> {
+				Msg.info(this, "Extracting singleton file from sevenzip (slow): " + file.getFSRL());
+				try {
+					ExtractOperationResult operationResult =
+						entry.extractSlow(new ISequentialOutStream() {
+
+							@Override
+							public int write(byte[] data) throws SevenZipException {
+								try {
+									os.write(data);
+									return data.length;
+								}
+								catch (IOException ioe) {
+									throw new SevenZipException(ioe);
+								}
+							}
+						});
+					extractOperationResultToException(operationResult);
+				}
+				catch (SevenZipException e) {
+					Throwable cause = e.getCause();
+					if (cause != null && cause instanceof IOException) {
+						throw (IOException) cause;
+					}
+					if (cause != null && cause instanceof CancelledException) {
+						throw (CancelledException) cause;
+					}
+					throw new IOException("7-Zip exception", e);
+				}
+
+			}, monitor);
+		return fce.file;
+	}
+
+	//----------------------------------------------------------------------------------------------
+
+	private static void extractOperationResultToException(ExtractOperationResult operationResult)
+			throws IOException {
+		if (operationResult == null) {
+			throw new IOException("7-Zip returned null operation result");
+		}
+		switch (operationResult) {
+			case CRCERROR: {
+				throw new IOException("7-Zip returned CRC error");
+			}
+			case DATAERROR: {
+				throw new IOException("7-Zip returned data error");
+			}
+			case UNSUPPORTEDMETHOD: {
+				throw new IOException("Unexpected: 7-Zip returned unsupported method");
+			}
+			case UNKNOWN_OPERATION_RESULT: {
+				throw new IOException("Unexpected: 7-Zip returned unknown operation result");
+			}
+			case OK:
+			default: {
+				// it's all ok!
+			}
+		}
+	}
+
+	private static long getSize(ISimpleInArchiveItem entry) throws SevenZipException {
+		Long tempSize = entry.getSize();
+		return tempSize == null ? -1 : tempSize.intValue();
+	}
+
+	private static Long getCompressedSize(ISimpleInArchiveItem entry) {
 		try {
-			Long tempSize = entry.getSize();
-			return tempSize == null ? 0 : tempSize.intValue();
+			return entry.getPackedSize();
 		}
 		catch (SevenZipException e) {
 			//don't care
 		}
-		return 0;
+		return null;
 	}
 
-	@Override
-	public void close() throws IOException {
-		// FYI: no need to close the iface, because the archive will
-		// shut it down on close anyways
+	private static Integer getCRC(ISimpleInArchiveItem entry) {
 		try {
-			archive.close();
+			return entry.getCRC();
 		}
 		catch (SevenZipException e) {
-			Msg.warn(this, "Problem closing 7-Zip archive", e);
+			//don't care
 		}
-		randomAccessFile.close();
-		super.close();
+		return null;
 	}
 
-	class MySequentialOutStream implements ISequentialOutStream {
-
-		private File tempFile = File.createTempFile("Ghidra_", ".tmp");
-		private OutputStream outputStream;
-
-		MySequentialOutStream() throws IOException {
-			outputStream = new FileOutputStream(tempFile);
+	private static Date getCreateDate(ISimpleInArchiveItem entry) {
+		try {
+			return entry.getCreationTime();
 		}
+		catch (SevenZipException e) {
+			//don't care
+		}
+		return null;
+	}
 
-		InputStream getData() throws IOException {
-			outputStream.close();
-			return new FileInputStream(tempFile);
+	private static boolean isFolder(ISimpleInArchiveItem entry) {
+		try {
+			return entry.isFolder();
+		}
+		catch (SevenZipException e) {
+			//don't care
+		}
+		return false;
+	}
+
+	//----------------------------------------------------------------------------------------------
+
+	/**
+	 * Implements SevenZip bulk extract callback.
+	 * <p>
+	 * For each file in the archive, SZ will call this class's 1) getStream(), 2) prepare(), 
+	 * 3) lots of write()s, and then 4) setOperationResult().
+	 * <p>
+	 * This class writes the extracted bytes to a temp file, and then pushes that temp file
+	 * into the FileSystem cache, and then deletes that temp file.
+	 * <p>
+	 * Without this bulk extract method, SevenZip takes ~500ms per file when used via the singleton
+	 * extract method.
+	 */
+	private class SZExtractCallback implements IArchiveExtractCallback, ISequentialOutStream {
+
+		private TaskMonitor monitor;
+		private int currentIndex;
+		private File currentTempFile;
+		private OutputStream currentTempFileOutputStream;
+
+		public SZExtractCallback(TaskMonitor monitor) {
+			this.monitor = monitor;
 		}
 
 		@Override
-		public int write(byte[] buffer) throws SevenZipException {
+		public ISequentialOutStream getStream(int index, ExtractAskMode extractAskMode)
+				throws SevenZipException {
+			// STEP 1: SevenZip calls this method to get a object it can use to write the bytes to.
+			// If we return null, SZ treats it as a skip.
 			try {
-				outputStream.write(buffer);
+				if (!fileSystemService.hasDerivedFile(fsrl.getContainer(), Integer.toString(index),
+					monitor)) {
+					this.currentIndex = index;
+					return this;
+				}
+			}
+			catch (CancelledException | IOException e) {
+				// ignore
+			}
+			return null;
+		}
+
+		@Override
+		public void prepareOperation(ExtractAskMode extractAskMode) throws SevenZipException {
+			// STEP 2: SevenZip calls this method to further prepare to operate on the file.
+			// In our case, we only handle extract operations.
+			if (extractAskMode == ExtractAskMode.EXTRACT) {
+				try {
+					currentTempFile = File.createTempFile("ghidra_sevenzip_", ".tmp");
+					currentTempFileOutputStream = new FileOutputStream(currentTempFile);
+				}
+				catch (IOException e) {
+					throw new SevenZipException(e);
+				}
+			}
+		}
+
+		@Override
+		public int write(byte[] data) throws SevenZipException {
+			// STEP 3: SevenZip calls this multiple times for all the bytes in the file.
+			// We write them to our temp file.
+			try {
+				currentTempFileOutputStream.write(data);
+				return data.length;
 			}
 			catch (IOException e) {
 				throw new SevenZipException(e);
 			}
-			return buffer.length;
 		}
+
+		@Override
+		public void setOperationResult(ExtractOperationResult extractOperationResult)
+				throws SevenZipException {
+			// STEP 4: SevenZip calls this to signal that the extract is done for this file.
+			if (currentTempFileOutputStream != null) {
+				try {
+					currentTempFileOutputStream.close();
+					extractOperationResultToException(extractOperationResult);
+					fileSystemService.getDerivedFilePush(fsrl.getContainer(),
+						Integer.toString(currentIndex), (os) -> {
+							try (InputStream is = new FileInputStream(currentTempFile)) {
+								FileUtilities.copyStreamToStream(is, os, monitor);
+							}
+						}, monitor);
+					currentTempFile.delete();
+				}
+				catch (IOException | CancelledException e) {
+					throw new SevenZipException(e);
+				}
+				finally {
+					currentTempFile = null;
+					currentTempFileOutputStream = null;
+				}
+			}
+		}
+
+		//@formatter:off
+		@Override public void setTotal(long total) throws SevenZipException { /* nada */ }
+		@Override public void setCompleted(long complete) throws SevenZipException {/* nada */ }
+		//@formatter:on
+
 	}
+
 }

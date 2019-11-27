@@ -109,6 +109,13 @@ public class VariableSymbolDB extends SymbolDB {
 		return type;
 	}
 
+	@Override
+	protected boolean refresh(Record rec) {
+		boolean isValid = super.refresh(rec);
+		variableStorage = null;
+		return isValid;
+	}
+
 	/**
 	 * @see ghidra.program.database.symbol.SymbolDB#equals(java.lang.Object)
 	 */
@@ -196,7 +203,7 @@ public class VariableSymbolDB extends SymbolDB {
 	}
 
 	@Override
-	public String getName() {
+	protected String doGetName() {
 		if (!checkIsValid()) {
 			// TODO: SCR
 			return "[Invalid VariableSymbol - Deleted!]";
@@ -206,7 +213,7 @@ public class VariableSymbolDB extends SymbolDB {
 			if (getSource() == SourceType.DEFAULT) {
 				return getParamName();
 			}
-			String storedName = super.getName();
+			String storedName = super.doGetName();
 			if (SymbolUtilities.isDefaultParameterName(storedName)) {
 				return getParamName();
 			}
@@ -225,7 +232,7 @@ public class VariableSymbolDB extends SymbolDB {
 		// TODO: we use to check for a default name and regenerate new default name but we should
 		// not need to do this if source remains at default
 
-		return super.getName();
+		return super.doGetName();
 	}
 
 	@Override

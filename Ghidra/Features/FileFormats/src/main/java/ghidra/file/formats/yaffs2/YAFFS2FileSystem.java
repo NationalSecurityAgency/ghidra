@@ -98,7 +98,7 @@ public class YAFFS2FileSystem extends GFileSystemBase {
 	}
 
 	@Override
-	public String getInfo(GFile file, TaskMonitor monitor) throws IOException {
+	public String getInfo(GFile file, TaskMonitor monitor) {
 		return "YAFFS2, Yet Another Flash File System V2, commonly used for Android System and UserData images.";
 	}
 

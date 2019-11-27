@@ -18,12 +18,15 @@ package docking.action;
 import static org.junit.Assert.*;
 
 import java.awt.event.KeyEvent;
+import java.util.Map;
 
 import javax.swing.*;
 
 import org.junit.*;
 
 import docking.*;
+import docking.actions.KeyEntryDialog;
+import docking.actions.ToolActions;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
 import ghidra.app.plugin.core.data.DataPlugin;
 import ghidra.app.plugin.core.function.FunctionPlugin;
@@ -185,20 +188,26 @@ public class KeyEntryDialogTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	public DockingAction getKeyBindingAction() {
-		DockingWindowManager dwm = DockingWindowManager.getInstance(tool.getToolFrame());
-		DockingActionManager dockingActionManager =
-			(DockingActionManager) getInstanceField("actionManager", dwm);
-		return (DockingAction) getInstanceField("keyBindingsAction", dockingActionManager);
+
+		ToolActions toolActions = tool.getToolActions();
+		KeyBindingsManager kbm =
+			(KeyBindingsManager) getInstanceField("keyBindingsManager", toolActions);
+		Map<KeyStroke, DockingKeyBindingAction> dockingKeyMap =
+			(Map<KeyStroke, DockingKeyBindingAction>) getInstanceField("dockingKeyMap", kbm);
+		KeyStroke ks = KeyStroke.getKeyStroke(KeyEvent.VK_F4, 0);
+		DockingKeyBindingAction dockingAction = dockingKeyMap.get(ks);
+		DockingAction f4Action = (DockingAction) getInstanceField("docakbleAction", dockingAction);
+		return f4Action;
 	}
 
 	private void showDialog(final DockingAction actionToEdit) throws Exception {
-		final DockingAction keyBindingAction = getKeyBindingAction();
+		DockingAction keyBindingAction = getKeyBindingAction();
 		executeOnSwingWithoutBlocking(() -> {
 			DockingWindowManager.setMouseOverAction(actionToEdit);
 			performAction(keyBindingAction, false);
 		});
 
-		keyEntryDialog = waitForDialogComponent(tool.getToolFrame(), KeyEntryDialog.class, 2000);
+		keyEntryDialog = waitForDialogComponent(KeyEntryDialog.class);
 		assertNotNull(keyEntryDialog);
 
 		collisionPane = (JTextPane) getInstanceField("collisionPane", keyEntryDialog);

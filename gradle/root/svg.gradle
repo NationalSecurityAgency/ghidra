@@ -1,0 +1,70 @@
+
+/*********************************************************************************
+ * SVG
+ *
+ * Summary:	Uses the Batik library to create PNG files from SVG's.
+ *
+ * This task will place all generated pngs in the 'build' folder for the project;
+ * which will eventually be placed in the 'resources' folder when prepDev is
+ * run.
+ *
+ * Command Line Format: "java -cp <classpath> <batik main class> -scriptSecurityOff -m <inputDir> -d <outputDir>"
+ *
+ *	TODO: 	Should we have this task place the pngs in the resources folder 
+ *			folder directly instead of waiting for prepDev to do it?
+ *
+ *********************************************************************************/
+task rasterizeSvg(type: JavaExec) {
+	group rootProject.GHIDRA_GROUP
+	description "   Converts .svg files to .png files.  [gradle/root/svg.gradle]\n"
+				
+	subprojects { p ->
+	
+		// Set up some vars for the Batik command line call.
+		def INPUT_DIR = "image/png"
+		def OUTPUT_DIR = p.projectDir.toString() + "/build/batik/png/main/images"
+		def MAIN_CLASS = "org.apache.batik.apps.rasterizer.Main"
+				
+		// The Batik lib requires a few dependencies to be added to the classpath; we could have
+		// added these in the individual projects which use this task (eg: to the 'compile' 
+		// configuration) but since this is the only task which requires them, it seemed 
+		// appropriate to just add them here.
+		def BIN_REPO = rootProject.file(BIN_REPO_PATH).toString()
+		classpath = files (	BIN_REPO + "/ExternalLibraries/libsforBuild/batik-all-1.7.jar",
+							BIN_REPO + "/ExternalLibraries/libsforBuild/xml-apis-ext.jar")					
+					
+		// Now build a list of all SVG files in the project.  We have to do the isEmpty() check
+		// afterwards since Batik will choke if we don't pass it a valid input list.			
+		FileTree tree = fileTree(p.projectDir.toString()) {
+			include "**src/**/*.svg"
+		}			
+		if (tree.isEmpty()) {
+			return
+		}
+		
+		// This is strictly for formatting the file list properly for placing in the command
+		// line string.	
+		def files = []
+		tree.each { File file ->
+			files.push(file.toString())
+		}
+						
+		main = MAIN_CLASS
+			
+		// Set up the entire arg list, minus the input files.
+		def argsList = ["-scriptSecurityOff",
+						"-m",
+						INPUT_DIR,
+						"-d",
+						OUTPUT_DIR
+						]
+						
+		// Now add the input files to the end of the argument list.
+		files.each { file ->
+			argsList.push(file)
+		}
+			
+		args = argsList
+	}
+
+}

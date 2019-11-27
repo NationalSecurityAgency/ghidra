@@ -26,7 +26,6 @@ import ghidra.app.plugin.core.datamgr.DataTypeManagerPlugin;
 import ghidra.app.plugin.core.datamgr.archive.Archive;
 import ghidra.app.plugin.core.datamgr.archive.DuplicateIdException;
 import ghidra.framework.plugintool.ServiceInfo;
-import ghidra.framework.store.LockException;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.DataTypeArchive;
 import ghidra.util.HelpLocation;
@@ -37,11 +36,18 @@ import ghidra.util.HelpLocation;
  * data and defining function return types and parameters.
  */
 @ServiceInfo(defaultProvider = DataTypeManagerPlugin.class, description = "Service to provide list of cycle groups and data types identified as 'Favorites.'")
-public interface DataTypeManagerService {
+public interface DataTypeManagerService extends DataTypeQueryService {
+
+	/**
+	 * Get the data type manager that has all of the built in types.
+	 * @return data type manager for built in data types
+	 */
+	public DataTypeManager getBuiltInDataTypesManager();
 
 	/**
 	 * Get the data types marked as favorites that will show up on
 	 * a popup menu.
+	 * @return list of favorite datatypess
 	 */
 	public List<DataType> getFavorites();
 
@@ -96,19 +102,6 @@ public interface DataTypeManagerService {
 	public void edit(DataType dt);
 
 	/**
-	 * Get the data type manager that has all of the built in types.
-	 * @return data type manager for built in data types
-	 */
-	public DataTypeManager getBuiltInDataTypesManager();
-
-	/**
-	 * Gets the open data type managers.
-	 * 
-	 * @return the open data type managers.
-	 */
-	public DataTypeManager[] getDataTypeManagers();
-
-	/**
 	 * Closes the archive for the given {@link DataTypeManager}.  This will ignore request to 
 	 * close the open Program's manager and the built-in manager.  
 	 * 
@@ -143,21 +136,12 @@ public interface DataTypeManagerService {
 	 * 
 	 * @param file data type archive file
 	 * @param acquireWriteLock true if write lock should be acquired (i.e., open for update)
-	 * @return an Archive based upon the given archive file
-	 * @throws LockException
+	 * @return an Archive based upon the given archive files
 	 * @throws IOException if an i/o error occurs opening the data type archive
 	 * @throws DuplicateIdException if another archive with the same ID is already open
 	 */
 	public Archive openArchive(File file, boolean acquireWriteLock)
 			throws IOException, DuplicateIdException;
-
-	/**
-	 * Gets the sorted list of all datatypes known by this service via it's owned DataTypeManagers.
-	 * This method can be called frequently, as the underlying data is indexed and only updated
-	 * as changes are made.
-	 * @return the sorted list of known data types.
-	 */
-	public List<DataType> getSortedDataTypeList();
 
 	/**
 	 * Selects the given data type in the display of data types.  A null <tt>dataType</tt>
@@ -166,16 +150,6 @@ public interface DataTypeManagerService {
 	 * @param dataType The data type to select.
 	 */
 	public void setDataTypeSelected(DataType dataType);
-
-	/**
-	 * Shows the user a dialog that allows them to choose a data type from a tree of all available
-	 * data types.
-	 * 
-	 * @param filterText If not null, this text filters the visible data types to only show those
-	 *                   that start with the given text
-	 * @return A data type chosen by the user
-	 */
-	public DataType getDataType(String filterText);
 
 	/**
 	 * Shows the user a dialog that allows them to choose a data type from a tree of all available

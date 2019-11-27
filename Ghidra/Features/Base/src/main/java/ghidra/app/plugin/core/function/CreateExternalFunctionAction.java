@@ -63,7 +63,7 @@ public class CreateExternalFunctionAction extends ProgramContextAction {
 				refMgr.getPrimaryReferenceFrom(opLoc.getAddress(), opLoc.getOperandIndex());
 			if (ref != null && ref.isExternalReference()) {
 				Symbol s = program.getSymbolTable().getPrimarySymbol(ref.getToAddress());
-				if (s.getSymbolType() == SymbolType.CODE) {
+				if (s.getSymbolType() == SymbolType.LABEL) {
 					return s;
 				}
 			}
@@ -84,7 +84,7 @@ public class CreateExternalFunctionAction extends ProgramContextAction {
 				return false;
 			}
 			for (Symbol s : symbolContext.getSymbols()) {
-				if (!s.isExternal() || s.getSymbolType() != SymbolType.CODE) {
+				if (!s.isExternal() || s.getSymbolType() != SymbolType.LABEL) {
 					return false;
 				}
 			}

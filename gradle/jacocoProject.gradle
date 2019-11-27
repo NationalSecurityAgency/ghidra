@@ -1,0 +1,35 @@
+/*****************************************************************************************
+      This file is a "mix-in" gradle script that individual gradle projects that should be included
+      when running jacoco
+	
+      A gradle project can add itself to the jacoco run by adding the following to its build.gradle
+      file:
+
+      apply from: "$rootProject.projectDir/gradle/jacocoProject.gradle"
+      
+      IMPORTANT!!!!!  If you include this script in your project, you must have source
+                      sets for both test and test.slow in your project, or jacoco will
+                      fail. 
+ *****************************************************************************************/
+								
+// Apply jacoco plugin to subprojects. This will create coverage files for each java Test task.
+apply plugin:'jacoco'
+
+dependencies {
+   jacocoAnt 'org.jacoco:org.jacoco.ant:0.8.2'
+   jacocoAgent 'org.jacoco:org.jacoco.agent:0.8.2'
+}
+   
+// Clean any jacoco files that may have been left behind previously.
+clean {
+   doFirst{
+      logger.debug("Deleting subproject jacoco execution data directory: $buildDir/jacoco/")
+      file("$buildDir/jacoco/").deleteDir() // delete jacoco executionData files in individual subprojects
+
+      logger.debug("Deleting root project jacoco execution data directory: $rootProject.buildDir/jacoco/")
+      file("$rootProject.buildDir/jacoco/").deleteDir() // delete jacocoMerge task output
+
+      logger.debug("Deleting jacoco report directory: $rootProject.buildDir/reports/jacoco/")
+      file("$rootProject.buildDir/reports/jacoco/").deleteDir() // delete jacocoReport, jacocoBranchReport output
+   }
+}

@@ -1,0 +1,5791 @@
+# common include file for HCS12, and HC12 constructors
+
+define endian=big;
+define alignment=1;
+
+define space RAM      type=ram_space      size=3  default;
+define space register type=register_space size=2;
+
+@define VECTOR_SWI 	"0xFFF6"
+@define VECTOR_TRAP "0xFFF8"
+
+################################################################
+# Registers
+################################################################
+
+define register offset=0x00 size=1 [ A B ];
+define register offset=0x00 size=2 [ D ];
+
+# IX also referred to as X or x; but must be distinct from X bit in CCR
+# IY also referred to as Y or y; made IY to be consistent with IX
+define register offset=0x10 size=2 [ IX        IY            TMP2           TMP3                 TMP1 ];
+define register offset=0x10 size=1 [ IXH IXL IYH IYL TMP2H TMP2L TMP3H TMP3L TMP1H TMP1L ];
+
+#define register offset=0x20 size=3 [ _  PCE _ SPE ];
+define register offset=0x20 size=3 [ _  PCE ];
+define register offset=0x20 size=2 [ _ _ PC _ _ SP ];
+define register offset=0x20 size=1 [ _ _ _ _ PCH PCL _ _ _ _ SPH SPL ];
+
+define register offset=0x30 size=2 [ CCRW ];
+define register offset=0x30 size=1 [ CCRH ];
+
+define register offset=0x31 size=1 [ CCR ];
+
+define register offset = 0x32 size=3 [physPage];
+
+
+define RAM offset=0x10 size=1 [GPAGE];
+define RAM offset=0x11 size=1 [DIRECT];
+define RAM offset=0x16 size=1 [RPAGE];
+define RAM offset=0x17 size=1 [EPAGE];
+define RAM offset=0x30 size=1 [PPAGE];
+
+
+# Define context bits
+# WARNING: when adjusting context keep compiler packing in mind
+# and make sure fields do not span a 32-bit boundary before or 
+# after context packing
+define register offset=0x40 size=4   contextreg;
+define context contextreg
+  	Prefix18	   = (0,0)    # 1 if 0x18 is the first byte
+  	PrefixHCS12X   = (0,0)    # 1 if first byte is 0x18 so that HCS12X to use GPAGE for memory access
+  	UseGPAGE       = (1,1)    # 1 if should use GPAGE concatenated to lower 16-bit EA
+  	XGATE          = (2,2)    # 1 if in xgate instruction decode mode
+;
+
+
+# individual status bits within CCRH
+
+@define IPL_2	"CCRH[2,1]"		
+@define IPL_1	"CCRH[1,1]"		
+@define IPL_0	"CCRH[0,1]"		
+
+@define IPL		"CCRH[0,3]"		# entire IPL 
+
+# individual status bits within CCR
+
+@define S		"CCR[7,1]"		# STOP Enable
+@define X		"CCR[6,1]"		# Non-maskable interrupt control bit
+@define H		"CCR[5,1]"		# Half Carry Flag
+@define I		"CCR[4,1]"		# Maskable interrupt control bit
+@define N		"CCR[3,1]"		# Negative Flag
+@define Z		"CCR[2,1]"		# Zero Flag
+@define V		"CCR[1,1]"		# Two's complement overflow Flag
+@define C		"CCR[0,1]"		# Carry/Borrow Flag
+
+################################################################
+# Tokens
+################################################################
+
+define token opbyte8 (8)
+	op8    = (0,7)
+	op7_4  = (4,7)
+	op6_4  = (4,6)
+	nIndex = (1,3)
+	op0_0  = (0,0)
+	trapnum = (0,7)
+;
+
+define token xb8 (8)
+	rr7_6  = (6,7)
+	rr7_6a = (6,7)
+	xb5_5  = (5,5)
+	nn4_0  = (0,4) signed
+	
+	xb7_5  = (5,7)
+	rr4_3  = (3,4)
+	xb2_2  = (2,2)
+	xb2_1  = (1,2) # actually needed this instead of xb2_2
+	z1_1   = (1,1)
+	s0_0   = (0,0)
+	
+	xb2_0  = (0,2)
+
+	p4_4   = (4,4)
+	decrement3_3 = (3,3)
+	nn3_0  = (0,3)
+	
+	aa1_0  = (0,1)	
+	aa0_0  = (0,0) # actually needed this instead of aa1_0	
+;
+
+define token eb8 (8)
+	notUsed7_7	= (7,7)
+	abcdxys6_4  = (4,6)
+	abc5_4		= (4,5)
+	dxys2_0		= (0,2)
+	abcdxys2_0  = (0,2)
+	columns7_4	= (4,7)
+	rows2_0		= (0,2)
+	rows3_0		= (0,3)
+	bytes_ABCl_6_4				= (4,6)
+	bytes_ABClT3lBXlYlSl_6_4	= (4,6)
+	bytes_ABChT3hBXhYhSh_6_4	= (4,6)
+	words_CT3DXYS_6_4			= (4,6)
+	words_T3DXYS_6_4			= (4,6)
+	bytes_ABCl_2_0				= (0,2)
+	bytes_T3lDlXlYlSl_6_4		= (4,6)
+	words_T2DXYS_2_0			= (0,2)
+	bytes_T2h_XhYhSh_2_0		= (0,2)
+	bytes_T2l_XlYlSl_2_0		= (0,2)
+	bytes_T3l_XlYlSl_6_4		= (4,6)
+	bytes_T3h_XhYhSh_6_4		= (4,6)
+	words_T3_XYS_6_4			= (4,6)
+	bytes_T2hDhXhYhSh_2_0		= (0,2)
+	bytes_T2lDlXlYlSl_2_0		= (0,2)  
+;
+
+define token opbyte16 (16)
+	op16		= (0,15)
+	op15_13		= (13,15)
+	sign12_12	= (12,12) signed
+	not_used11	= (11,11)
+	size10_10	= (10,10)
+	byte9_8		= (8,9)
+	word9_8		= (8,9)
+	rr7_0		= (0,7)
+;
+
+define token data8 (8)
+	imm8  = (0,7)
+	simm8 = (0,7) signed
+	rel   = (0,7) signed
+;
+
+define token data16 (16)
+	imm16  = (0,15)
+	imm16p = (12,15)
+	imm16e = (8,15)
+	imm16ev = (0,9)
+	imm16rv = (0,11)
+	imm16pv = (0,13)
+	simm16 = (0,15) signed
+;
+
+attach variables [ rr7_6 rr4_3 ]	[ IX IY SP PC ];
+attach variables [ rr7_6a ]		 	[ IX IY SP _  ]; # PC not valid choice in this case
+
+# TODO would be great if this worked
+# attach names     [ rr7_6 rr4_3 ] [ "X" "Y" "SP" "PC" ];
+
+
+# TODO do the negative values work?
+attach values [ nn3_0 ] [ 1 2 3 4 5 6 7 8 -8 -7 -6 -5 -4 -3 -2 -1 ];
+
+attach variables [ aa0_0 ] [ A B ];
+
+attach variables [ byte9_8 ] [ A B _ _ ];
+
+attach variables [ word9_8 ] [ D IX IY SP ];
+
+attach variables [ abc5_4 ] [ A B CCR _ ];
+
+attach variables [ dxys2_0 ] [ _ _ _ TMP2 D IX IY SP ];
+
+attach variables [ bytes_ABCl_2_0 ] [ A B CCR _ _ _ _ _ ];
+
+attach variables [ bytes_ABClT3lBXlYlSl_6_4 ] [ A B CCR TMP3L B IXL IYL SPL ];
+
+attach variables [ bytes_ABChT3hBXhYhSh_6_4 ] [ A B CCRH TMP3H B IXH IYH SPH ];
+
+attach variables [ words_T2DXYS_2_0 ] [ _ _ _ TMP2 D IX IY SP ];
+
+attach variables [ bytes_T3lDlXlYlSl_6_4 ] [ _ _ _ TMP3L B IXL IYL SPL ];
+
+attach variables [ words_T3DXYS_6_4 ] [ _ _ _ TMP3 D IX IY SP ];
+
+attach variables [ words_CT3DXYS_6_4 ] [ _ _ CCRW TMP3 D IX IY SP ];
+
+attach variables [ bytes_T2l_XlYlSl_2_0 ] [ _ _ _ TMP2L _ IXL IYL SPL ];
+
+attach variables [ bytes_T2h_XhYhSh_2_0 ] [ _ _ _ TMP2H _ IXH IYH SPH ];
+
+attach variables [ bytes_T3l_XlYlSl_6_4 ] [ _ _ _ TMP3L _ IXL IYL SPL ];
+
+attach variables [ bytes_T3h_XhYhSh_6_4 ] [ _ _ _ TMP3H _ IXH IYH SPH ];
+
+attach variables [ words_T3_XYS_6_4 ] [ _ _ _ TMP3 _ IX IY SP ];
+
+attach variables [ bytes_ABCl_6_4 ] [ A B CCR _ _ _ _ _ ];
+
+attach variables [ bytes_T2hDhXhYhSh_2_0 ] [ _ _ _ TMP2H A IXH IYH SPH ];
+
+attach variables [ bytes_T2lDlXlYlSl_2_0 ] [ _ _ _ TMP2L B IXL IYL SPL ];
+
+################################################################
+# Pseudo Instructions
+################################################################
+define pcodeop segment; # Define special pcodeop that calculates the RAM address
+# given the segment selector and offset as input
+
+define pcodeop readIRQ;
+define pcodeop stop;
+define pcodeop WaitForInterrupt;
+
+define pcodeop decimalAdjustAccumulator;
+define pcodeop decimalAdjustCarry;
+define pcodeop EMACS;
+define pcodeop ETBL;
+define pcodeop ETBL_Cflag;
+define pcodeop GradeOfMembership;
+define pcodeop TableLookupAndInterpolate;
+define pcodeop TableLookupAndInterpolateRoundable;
+define pcodeop WeightedAverageSOPHigh;
+define pcodeop WeightedAverageSOPLow;
+define pcodeop WeightedAverageSOW;
+define pcodeop WeightedAverageResume;
+define pcodeop MinMaxRuleEvaluation;
+define pcodeop MinMaxRuleEvaluationCorrect;
+define pcodeop MinMaxRuleEvaluationWeighted;
+define pcodeop MinMaxRuleEvaluationWeightedCorrect;
+
+define pcodeop backgroundDebugMode;
+
+macro setHCSphysPage(addr) {
+	local a3:3 = zext(addr);
+	
+	local isReg:1         = (a3  & 0xfC00) == 0x0;
+	local isEpage:1      = (a3 & 0xfc00) ==0x800;
+	local isEpage_FF:1 = (a3 & 0xfc00) ==0xC00;
+	local isRpage:1      = (a3 & 0xf000) ==0x1000;
+	local isRpage_FE:1 = (a3 & 0xf000) ==0x2000;
+	local isRpage_FF:1 = (a3 & 0xf000) ==0x3000;
+	local isPpage_FD:1 = (a3 & 0xc000) ==0x4000;
+	local isPpage:1       = (a3 & 0xc000) ==0x8000;
+	local isPpage_FF:1 = (a3 & 0xc000) ==0xC000;
+	
+	physPage = (zext(isReg) *          0x0) +
+	                       (zext(isEpage) *      (0x100000 | ((zext(EPAGE) << 10) ^ 0x800))) +
+	                       (zext(isEpage_FF) * ((0x4FF << 10) ^ 0xC00)) +
+	                       (zext(isRpage) *      (((zext(RPAGE) << 12) ^ 0x1000))) +
+	                       (zext(isRpage_FE) * (((0xFE << 12) ^ 0x2000))) +
+	                       (zext(isRpage_FF) * (((0xFF << 12) ^ 0x3000))) +
+	                       (zext(isPpage_FD) * (0x400000 | ((0x3F4000) ^ 0x4000))) +
+	                       (zext(isPpage) *       (0x400000 | ((zext(PPAGE) << 14 ) ^ 0x8000))) +
+	                       (zext(isPpage_FF) * (0x400000 | ((0x3FC000) ^ 0xC000))) ;
+}
+
+macro Load1(value, addr) {
+	setHCSphysPage(addr);
+
+    local paddr:3 = segment(physPage, addr);
+	value = *:1 paddr;
+}
+macro Load2(value, addr) {
+    setHCSphysPage(addr);
+    
+    local paddr:3 = segment(physPage, addr);
+	value = *:2 paddr;
+}
+
+macro GetPagedAddr(addr,paddr) {
+    setHCSphysPage(addr);
+    
+    paddr = segment(physPage, addr);
+}
+
+macro Store(addr, value) {
+    setHCSphysPage(addr);
+    
+    local paddr:3 = segment(physPage, addr);
+    
+	*paddr = value;
+}
+
+################################################################
+# Addressing tables
+################################################################
+
+#
+# TODO: Paging could be added here as these are constant addresses
+#    could factor the overlapping addresses here, unless the
+#    page register is always added in then will have to export as a constant
+#    since don't know the real address
+#
+
+# known EPAGE offsets
+opr16a:         imm16    is imm16e=0x8 & imm16 & imm16ev { local addr:3 = 0x100000 |  (zext(EPAGE) << 10) | imm16ev; export addr; }
+opr16a:         imm16    is imm16e=0x9 & imm16 & imm16ev { local addr:3 = 0x100000 |  (zext(EPAGE) << 10) | imm16ev; export addr; }
+opr16a:         imm16    is imm16e=0xa & imm16 & imm16ev { local addr:3 = 0x100000 |  (zext(EPAGE) << 10) | imm16ev; export addr; }
+opr16a:         imm16    is imm16e=0xb & imm16 & imm16ev { local addr:3 = 0x100000 |  (zext(EPAGE) << 10) | imm16ev; export addr; }
+
+opr16a:         imm16    is imm16e=0xc & imm16 & imm16ev { local addr:3 = (0xFF                        << 10) | imm16ev; export addr; }
+opr16a:         imm16    is imm16e=0xd & imm16 & imm16ev { local addr:3 = (0xFF                        << 10) | imm16ev; export addr; }
+opr16a:         imm16    is imm16e=0xe & imm16 & imm16ev { local addr:3 = (0xFF                        << 10) | imm16ev; export addr; }
+opr16a:         imm16    is imm16e=0xf & imm16 & imm16ev { local addr:3 = (0xFF                        << 10) | imm16ev; export addr; }
+
+# known RPAGE offsets
+opr16a:         imm16    is imm16p=0x1 & imm16 & imm16rv { local addr:3 = (zext(RPAGE) << 12) | imm16rv; export addr; }
+opr16a:         imm16    is imm16p=0x2 & imm16 & imm16rv { local addr:3 = (0xFE                << 12) | imm16rv; export addr; }
+opr16a:         imm16    is imm16p=0x3 & imm16 & imm16rv { local addr:3 = (0xFF                << 12) | imm16rv; export addr; }
+
+# known PPAGE offsets
+opr16a:         imm16    is imm16p=0x4 & imm16 & imm16pv { local addr:3 = 0x400000 |  (0xFD                << 14) | imm16pv; export addr; }
+opr16a:         imm16    is imm16p=0x5 & imm16 & imm16pv { local addr:3 = 0x400000 |  (0xFD                << 14) | imm16pv; export addr; }
+opr16a:         imm16    is imm16p=0x6 & imm16 & imm16pv { local addr:3 = 0x400000 |  (0xFD                << 14) | imm16pv; export addr; }
+opr16a:         imm16    is imm16p=0x7 & imm16 & imm16pv { local addr:3 = 0x400000 |  (0xFD                << 14) | imm16pv; export addr; }
+
+opr16a:         imm16    is imm16p=0x8 & imm16 & imm16pv { local addr:3 = 0x400000 |  (zext(PPAGE) << 14) | (imm16pv & 0x3fff); export addr; }
+opr16a:         imm16    is imm16p=0x9 & imm16 & imm16pv { local addr:3 = 0x400000 |  (zext(PPAGE) << 14) | (imm16pv & 0x3fff); export addr; }
+opr16a:         imm16    is imm16p=0xa & imm16 & imm16pv { local addr:3 = 0x400000 |  (zext(PPAGE) << 14) | (imm16pv & 0x3fff); export addr; }
+opr16a:         imm16    is imm16p=0xb & imm16 & imm16pv { local addr:3 = 0x400000 |  (zext(PPAGE) << 14) | (imm16pv & 0x3fff); export addr; }
+
+opr16a:         imm16    is imm16p=0xC & imm16 & imm16pv { local addr:3 = 0x400000 |  (0xFF                << 14) | imm16pv; export addr; }
+opr16a:         imm16    is imm16p=0xD & imm16 & imm16pv { local addr:3 = 0x400000 |  (0xFF                << 14) | imm16pv; export addr; }
+opr16a:         imm16    is imm16p=0xE & imm16 & imm16pv { local addr:3 = 0x400000 |  (0xFF                << 14) | imm16pv; export addr; }
+opr16a:         imm16    is imm16p=0xF & imm16 & imm16pv { local addr:3 = 0x400000 |  (0xFF                << 14) | imm16pv; export addr; }
+
+opr16a:			imm16    is imm16e & imm16                        { local addr:3 = imm16; export addr; }
+
+opr8a:			imm8    is imm8                        { export *[const]:3 imm8; }
+
+opr8a_8:			imm8     is UseGPAGE=0 & imm8       { export *:1 imm8; }
+opr8a_8:			imm8     is UseGPAGE=1 & imm8       { local addr:3 = (zext(GPAGE) << 16) | imm8; export *:1 addr; }
+opr8a_16:		imm8     is UseGPAGE=0 & imm8       { export *:2 imm8; }
+opr8a_16:		imm8     is UseGPAGE=1 & imm8       { local addr:3 = (zext(GPAGE) << 16) | imm8; export *:2 addr; }
+
+opr16a_8:	    opr16a   is UseGPAGE=0 & opr16a     { export *:1 opr16a; }
+opr16a_8:	    imm16   is UseGPAGE=1 & imm16      { local addr:3 = (zext(GPAGE) << 16) | imm16; export *:1 addr; }
+opr16a_16:	    opr16a   is UseGPAGE=0 & opr16a     { export *:2 opr16a; }
+opr16a_16:	    imm16   is UseGPAGE=1 & imm16      { local addr:3 = (zext(GPAGE) << 16) | imm16; export *:2 addr; }
+
+iopr8i:			"#"imm8  is imm8       { export *[const]:1 imm8; }
+iopr16i:			"#"imm16 is imm16      { export *[const]:2 imm16; }
+msk8:		    imm8     is imm8       { export *[const]:1 imm8; }
+page:		    imm8     is imm8       { export *[const]:1 imm8; }
+
+#PageDest: dest    is imm16p=0x8 & imm16 & imm16pv ; imm8 [ dest = (imm8 << 16) | imm16; ] { 	 export *:1 dest; }
+#PageDest: dest    is imm16p=0x9 & imm16 & imm16pv ; imm8 [ dest = (imm8 << 16) | imm16; ] { 	 export *:1 dest; }
+#PageDest: dest    is imm16p=0xa & imm16 & imm16pv ; imm8 [ dest = (imm8 << 16) | imm16; ] { 	 export *:1 dest; }
+#PageDest: dest    is imm16p=0xb & imm16 & imm16pv ; imm8 [ dest = (imm8 << 16) | imm16; ] { 	 export *:1 dest; }
+#PageDest: dest    is imm16p=0xc & imm16 & imm16pv ; imm8 [ dest = ($(MAXFLASHPage) << 16) | imm16; ] { 	 export *:1 dest; }
+#PageDest: dest    is imm16p=0xd & imm16 & imm16pv ; imm8 [ dest = ($(MAXFLASHPage) << 16) | imm16; ] { 	 export *:1 dest; }
+#PageDest: dest    is imm16p=0xe & imm16 & imm16pv ; imm8 [ dest = ($(MAXFLASHPage) << 16) | imm16; ] { 	 export *:1 dest; }
+#PageDest: dest    is imm16p=0xf & imm16 & imm16pv ; imm8 [ dest = ($(MAXFLASHPage) << 16) | imm16; ] { 	 export *:1 dest; }
+PageDest: opr16a   is opr16a; page  { 	 export opr16a; }
+
+#
+# Postbyte Code (xb) address decoding
+# for indexed addressing modes: IDX, IDX1, IDX2, [D,IDX] and [IDX2]
+#
+#
+# per page 29, 30, and 33
+#
+
+#**********
+#  IDX
+#**********
+#
+# rr0nnnnn 
+#
+# 5-bit constant offset n = -16 to +15
+IDX_a: 0,rr7_6			is  rr7_6 & xb5_5=0 & nn4_0=0
+	{ export rr7_6; }
+		
+# TODO make sure that nn4_0 is a signed extension	
+IDX_b: nn4_0, rr7_6	is  rr7_6 & xb5_5=0 & nn4_0
+	{ address:2 = rr7_6 + nn4_0; export address; }	
+
+# rr1pnnnn 
+#
+# used xb7_5 in all of these to prevent rr7_6a from ever being 0b11, and overlapping the 111rr0zs decodes
+#
+# Auto pre-decrement
+IDX_c: nn3_0, -rr7_6a	is  (xb7_5=0b001 | xb7_5=0b011 | xb7_5=0b101) & rr7_6a & p4_4=0 & decrement3_3=1 & nn3_0
+	{ rr7_6a = rr7_6a + nn3_0; address:2 = rr7_6a; export address; }
+	
+# Auto pre-increment
+IDX_d: nn3_0, +rr7_6a	is  (xb7_5=0b001 | xb7_5=0b011 | xb7_5=0b101) & rr7_6a & p4_4=0 & decrement3_3=0 & nn3_0
+	{ rr7_6a = rr7_6a + nn3_0; address:2 = rr7_6a; export address; }		
+
+# Auto post-decrement	
+IDX_e: nn3_0, rr7_6a-	is  (xb7_5=0b001 | xb7_5=0b011 | xb7_5=0b101) & rr7_6a & p4_4=1 & decrement3_3=1 & nn3_0
+	{ address:2 = rr7_6a; rr7_6a = rr7_6a + nn3_0; export address; }	
+	
+# Auto post-increment	
+IDX_f: nn3_0, rr7_6a+	is  (xb7_5=0b001 | xb7_5=0b011 | xb7_5=0b101) & rr7_6a & p4_4=1 & decrement3_3=0 & nn3_0
+	{ address:2 = rr7_6a; rr7_6a = rr7_6a + nn3_0; export address; }		
+
+# 111rr1aa 
+#
+# Accumulator unsigned 8-bit offset indexed
+IDX_g: aa0_0, rr4_3		is  xb7_5=0b111 & rr4_3 & xb2_1=0b10 & aa0_0
+	{ address:2 = rr4_3 + zext(aa0_0); export address; }		
+
+# Accumulator 16-bit offset indexed
+IDX_h: D, rr4_3			is  xb7_5=0b111 & rr4_3 & xb2_0=0b110 & D
+	{ address:2 = rr4_3 + D; export address; }		
+
+
+#**********
+#  IDX1
+#**********
+#
+# 111rr0zs imm8
+#
+# Constant offset (9-bit signed, positive)
+IDX_i: imm8, rr4_3		is  xb7_5=0b111 & rr4_3 & xb2_2=0 & z1_1=0 & s0_0=0; imm8
+	{ address:2 = rr4_3 + imm8; export address; }	
+
+# Constant offset (9-bit signed, negative)
+# TODO make sure that the -256 case works
+IDX_j: -neg, rr4_3		is  xb7_5=0b111 & rr4_3 & xb2_2=0 & z1_1=0 & s0_0=1; imm8 [ neg = -imm8; ]
+	{ address:2 = rr4_3 - neg; export address; }		
+
+
+#**********
+#  IDX2
+#**********
+#
+# 111rr0zs simm16
+#
+# Constant offset (16-bit signed)
+IDX_k: simm16, rr4_3	is  xb7_5=0b111 & rr4_3 & xb2_2=0 & z1_1=1 & s0_0=0; simm16
+	{ address:2 = rr4_3 + simm16; export address; }	
+
+#**********
+#  [IDX2]
+#**********
+#
+# 111rr011 simm16
+#
+# 16-bit offset indexed-indirect
+
+IDX_l: [simm16, rr4_3]	is  xb7_5=0b111 & rr4_3 & xb2_2=0 & z1_1=1 & s0_0=1; simm16
+	{ address:2 = rr4_3 + simm16; Load2(address,address); export address; }
+	
+IDX_l: [simm16, PC]	is  xb7_5=0b111 & rr4_3=3 & xb2_2=0 & z1_1=1 & s0_0=1; simm16 & PC
+	{ address:2 = inst_next + simm16; Load2(address,address); export address; }	
+
+#**********
+#  [D,IDX]
+#**********
+#
+# 111rr111 
+#
+# Accumulator D offset indexed-indirect
+IDX_m: [D, rr4_3]		is  xb7_5=0b111 & rr4_3 & xb2_0=0b111 & D
+	{ address:2 = rr4_3 + D; Load2(address,address); export address; }	
+
+
+######################################################################
+######################################################################
+#
+# effective address of IDX, IDX1, IDX2
+#
+indexed3: IDX_a is IDX_a { export IDX_a; }		
+indexed3: IDX_b is IDX_b { export IDX_b; }		
+indexed3: IDX_c is IDX_c { export IDX_c; }		
+indexed3: IDX_d is IDX_d { export IDX_d; }		
+indexed3: IDX_e is IDX_e { export IDX_e; }		
+indexed3: IDX_f is IDX_f { export IDX_f; }		
+indexed3: IDX_g is IDX_g { export IDX_g; }		
+indexed3: IDX_h is IDX_h { export IDX_h; }		
+indexed3: IDX_i is IDX_i { export IDX_i; }		
+indexed3: IDX_j is IDX_j { export IDX_j; }		
+indexed3: IDX_k is IDX_k { export IDX_k; }		
+# not indexed3: IDX_l is IDX_l { export IDX_l; }		
+# not indexed3: IDX_m is IDX_m { export IDX_m; }		
+
+#
+# effective address of [IDX2], [D,IDX]
+#
+# not indexedindexed3: IDX_a is IDX_a { export IDX_a; }		
+# not indexedindexed3: IDX_b is IDX_b { export IDX_b; }		
+# not indexedindexed3: IDX_c is IDX_c { export IDX_c; }		
+# not indexedindexed3: IDX_d is IDX_d { export IDX_d; }		
+# not indexedindexed3: IDX_e is IDX_e { export IDX_e; }		
+# not indexedindexed3: IDX_f is IDX_f { export IDX_f; }		
+# not indexedindexed3: IDX_g is IDX_g { export IDX_g; }		
+# not indexedindexed3: IDX_h is IDX_h { export IDX_h; }		
+# not indexedindexed3: IDX_i is IDX_i { export IDX_i; }		
+# not indexedindexed3: IDX_j is IDX_j { export IDX_j; }		
+# not indexedindexed3: IDX_k is IDX_k { export IDX_k; }		
+indexed2: IDX_l is IDX_l { export IDX_l; }		
+indexed2: IDX_m is IDX_m { export IDX_m; }		
+
+#
+# effective address of IDX, IDX1, IDX2, [IDX2], [D,IDX]
+#
+indexed5: IDX_a is IDX_a { export IDX_a; }		
+indexed5: IDX_b is IDX_b { export IDX_b; }		
+indexed5: IDX_c is IDX_c { export IDX_c; }		
+indexed5: IDX_d is IDX_d { export IDX_d; }		
+indexed5: IDX_e is IDX_e { export IDX_e; }		
+indexed5: IDX_f is IDX_f { export IDX_f; }		
+indexed5: IDX_g is IDX_g { export IDX_g; }		
+indexed5: IDX_h is IDX_h { export IDX_h; }		
+indexed5: IDX_i is IDX_i { export IDX_i; }		
+indexed5: IDX_j is IDX_j { export IDX_j; }		
+indexed5: IDX_k is IDX_k { export IDX_k; }		
+indexed5: IDX_l is IDX_l { export IDX_l; }		
+indexed5: IDX_m is IDX_m { export IDX_m; }
+
+#
+# effective address of IDX
+#
+indexed1: IDX_a is IDX_a { export IDX_a; }		
+indexed1: IDX_b is IDX_b { export IDX_b; }		
+indexed1: IDX_c is IDX_c { export IDX_c; }		
+indexed1: IDX_d is IDX_d { export IDX_d; }		
+indexed1: IDX_e is IDX_e { export IDX_e; }		
+indexed1: IDX_f is IDX_f { export IDX_f; }		
+indexed1: IDX_g is IDX_g { export IDX_g; }		
+indexed1: IDX_h is IDX_h { export IDX_h; }		
+# not indexed1: IDX_i is IDX_i { export IDX_i; }		
+# not indexed1: IDX_j is IDX_j { export IDX_j; }		
+# not indexed1: IDX_k is IDX_k { export IDX_k; }		
+# not indexed1: iIDX_l is iIDX_l { export iIDX_l; }		
+# not indexed1: IDX_m is IDX_m { export IDX_m; }		
+
+
+#
+# indexed0_x - exports the effective address (EA)
+# indexed1_x - exports a single byte at the effective address
+# indexed2_x - exports a double byte at the effective address
+#
+
+indexed1_1: indexed1 is indexed1 {
+	local paddr:3 = 0;
+	GetPagedAddr(indexed1,paddr);
+	export *:1 paddr;
+}
+indexed2_1: indexed1 is indexed1 {
+	local paddr:3 = 0;
+	GetPagedAddr(indexed1,paddr);
+	export *:2 paddr;
+}
+
+indexed0_2: indexed2 is indexed2 {
+	local val = indexed2; export val;
+}
+					
+indexed0_3: indexed3 is indexed3 {
+	local val = indexed3; export val;
+}
+indexed1_3: indexed3 is indexed3 {
+	local paddr:3 = 0;
+	GetPagedAddr(indexed3,paddr);
+	export *:1 paddr;
+}
+indexed2_3: indexed3 is indexed3 {
+	local paddr:3 = 0;
+	GetPagedAddr(indexed3,paddr);
+	export *:2 paddr;
+}
+
+indexedA_5: indexed5 is  UseGPAGE=0 & indexed5 {
+	local paddr:3 = 0;
+	GetPagedAddr(indexed5,paddr);
+    export paddr;
+}
+indexedA_5: indexed5 is UseGPAGE=1 & indexed5 {
+	local addr:3 = (zext(GPAGE) << 16) | zext(indexed5);
+	export addr;
+}
+indexed1_5: indexed5 is  UseGPAGE=0 & indexed5 {
+	local paddr:3 = 0;
+	GetPagedAddr(indexed5,paddr);
+	export *:1 paddr;
+}
+indexed1_5: indexed5 is UseGPAGE=1 & indexed5 {
+	local addr:3 = (zext(GPAGE) << 16) | zext(indexed5);
+	export *:1 addr;
+}
+indexed2_5: indexed5 is UseGPAGE=0 & indexed5 {
+	local paddr:3 = 0;
+	GetPagedAddr(indexed5,paddr);
+	export *:2 paddr;
+}
+indexed2_5: indexed5 is UseGPAGE=1 & indexed5 {
+	local addr:3 = (zext(GPAGE) << 16) | zext(indexed5);
+	export *:2 addr;
+}
+
+# range -128 through +127
+rel8: reloc is rel    [ reloc = inst_next + rel; ]  { export *:1 reloc; }
+
+# range -256 through +255
+rel9: reloc is XGATE=0 & sign12_12 & rr7_0   [ reloc = inst_next + ((sign12_12 << 8) | rr7_0); ]  { export *:1 reloc; }
+
+# positive range 0 through +65535
+rel16: reloc is simm16   [ reloc = inst_next + simm16; ]  { export *:1 reloc; }
+
+
+op2_opr16a_8:	opr16a_8		is opr16a_8			{ export opr16a_8; }
+op2_opr16a_16:	opr16a_16		is opr16a_16		{ export opr16a_16; }
+
+@if defined(HCS12X)
+op2_indexed1_5:	indexed1_5		is indexed1_5		{ export indexed1_5; }
+@else
+op2_indexed1_1:	indexed1_1		is indexed1_1		{ export indexed1_1; }
+@endif
+
+@if defined(HCS12X)
+op2_indexed2_5:	indexed2_5		is indexed2_5		{ export indexed2_5; }
+@else
+op2_indexed2_1:	indexed2_1		is indexed2_1		{ export indexed2_1; }
+@endif
+
+################################################################
+# Macros
+################################################################
+
+
+
+macro additionWithCarry(operand1, operand2, result) {
+	local Ccopy = zext($(C));
+	local AFmask = -1 >> 4;
+	$(H) = (((operand1 & AFmask) + (operand2 & AFmask) + Ccopy) & (AFmask + 1)) != 0;
+	$(C) = carry(operand1, operand2);
+	local tempResult = operand1 + operand2;
+	$(C) = $(C) || carry(tempResult, Ccopy);
+	$(V) = $(V) ^^ scarry(tempResult, Ccopy);
+	result = tempResult + Ccopy;
+	$(N) = (result s< 0);
+	$(Z) = (result == 0);
+}
+
+
+
+macro addition_flags1(operand1, operand2,result) {
+	local AFmask = -1 >> 4;
+	$(H) = (((operand1 & AFmask) + (operand2 & AFmask)) & (AFmask + 1)) != 0;
+	
+	$(N) = (result s< 0);
+	$(Z) = (result == 0);
+	$(V) = scarry(operand1,operand2);
+	$(C) = carry(operand1,operand2);
+}
+
+macro addition_flags2(operand1, operand2, result) {
+	$(N) = (result s< 0);
+	$(Z) = (result == 0);
+	$(V) = scarry(operand1,operand2);
+	$(C) = carry(operand1,operand2);
+}
+
+macro subtraction_flags1(register, operand, result) {	
+	$(V) = sborrow(register,operand);
+	$(N) = (result s< 0);
+	$(Z) = (result == 0);
+	$(C) = register < operand;
+}
+
+macro subtraction_flags2(register, operand, result) {
+	$(V) = sborrow(register,operand);
+	$(N) = (result s< 0);
+	$(Z) = (result == 0);
+	$(C) = register < operand;
+}
+
+macro V_equals_0() {
+	$(V) = 0;
+}
+
+macro V_equals_C() {
+	$(V) = $(C);
+}
+
+macro V_equals_N_xor_C() {
+	$(V) = $(N) ^ $(C);	
+}
+
+macro V_CMP_flag(register, operand) {
+	$(V) = sborrow(register,operand);
+}
+
+macro V_DEC_flag(operand) {
+	$(V) = sborrow(operand,1);
+}
+
+macro V_DEC_flag2(operand) {
+	$(V) = sborrow(operand,1);
+}
+
+macro V_INC_flag(operand) {
+	$(V) = scarry(operand,1);
+}
+
+macro V_INC_flag2(operand) {
+	$(V) = scarry(operand,1);
+}
+
+macro V_NEG_flag(operand) {
+	$(V) = sborrow(0,operand);
+}
+
+macro V_NEG_flag2(operand) {
+	$(V) = sborrow(0,operand);
+}
+
+macro Pull1(operand) {
+	setHCSphysPage(SP);
+	
+	paddr:3 = segment(physPage,SP);
+	operand = *paddr;
+	SP = SP + 1;
+}
+
+macro Pull2(operand) {
+	setHCSphysPage(SP);
+	
+	paddr:3 = segment(physPage,SP);
+	operand = *paddr;
+	SP = SP + 2;
+}
+
+macro Push1(operand) {
+	SP = SP - 1;
+	
+	setHCSphysPage(SP);
+	paddr:3 = segment(physPage,SP);
+	*paddr = operand;
+}
+
+macro Push2(operand) {
+	SP = SP - 2;
+
+	setHCSphysPage(SP);
+	
+	paddr:3 = segment(physPage,SP);
+	*paddr = operand;
+}
+
+macro setCCR( operand ) {
+	# when CCR is the destination, cannot set the X bit unless it is already set in CCR
+	CCR = operand & (CCR | 0b10111111);
+}
+
+macro setCCRW( operand ) {
+	# when CCRW is the destination, cannot set the X bit unless it is already set in CCRW
+	CCRW = operand & (CCRW | 0b1111111110111111);
+}
+
+:^instruction  is XGATE=0 & op8=0x18; instruction  [ Prefix18=1; ] {}
+
+################################################################
+# Constructors
+################################################################
+
+:ABA                     is XGATE=0 & (Prefix18=1 & op8=0x06)
+{
+	result:1 = A + B;
+	addition_flags1(A, B, result);
+	A = result;
+}
+
+:ABX                     is XGATE=0 & Prefix18=0 & (op16=0x1AE5)
+{
+	IX = zext(B) + IX;
+}
+
+:ABY                     is XGATE=0 & Prefix18=0 & (op16=0x19ED)
+{
+	IY = zext(B) + IY;
+}
+
+:ADCA iopr8i                 is XGATE=0 & Prefix18=0 & (op8=0x89); iopr8i
+{
+	op1:1 = iopr8i;
+
+	local result:1;
+	additionWithCarry(A, op1, result);
+	
+	A = result;
+}
+
+:ADCA opr8a_8                 is XGATE=0 & Prefix18=0 & (op8=0x99); opr8a_8
+{
+	op1:1 = opr8a_8;
+
+	local result:1;
+	additionWithCarry(A, op1, result);
+	
+	A = result;
+}
+
+:ADCA opr16a_8                 is XGATE=0 & Prefix18=0 & (op8=0xB9); opr16a_8
+{
+	op1:1 = opr16a_8;
+
+	local result:1;
+	additionWithCarry(A, op1, result);
+	
+	A = result;
+}
+
+:ADCA indexed1_5                 is XGATE=0 & Prefix18=0 & (op8=0xA9); indexed1_5
+{
+	op1:1 = indexed1_5;
+
+	result:1 = A + op1 + $(C);
+	addition_flags1(A, op1, result);
+	A = result;
+}
+
+:ADCB iopr8i                 is XGATE=0 & Prefix18=0 & (op8=0xC9); iopr8i
+{
+	op1:1 = iopr8i;
+
+	local result:1;
+	additionWithCarry(A, op1, result);
+	
+	B = result;
+}
+
+:ADCB opr8a_8                 is XGATE=0 & Prefix18=0 & (op8=0xD9); opr8a_8
+{
+	op1:1 = opr8a_8;
+
+	result:1 = B + op1 + $(C);
+	addition_flags1(B, op1, result);
+	B = result;
+}
+
+:ADCB opr16a_8                 is XGATE=0 & Prefix18=0 & (op8=0xF9); opr16a_8
+{
+	op1:1 = opr16a_8;
+
+	local result:1;
+	additionWithCarry(B, op1, result);
+	
+	B = result;
+}
+
+:ADCB indexed1_5                 is XGATE=0 & Prefix18=0 & (op8=0xE9); indexed1_5
+{
+	op1:1 = indexed1_5;
+	
+	local result:1;
+	additionWithCarry(B, op1, result);
+
+	B = result;
+}
+
+:ADDA iopr8i                 is XGATE=0 & Prefix18=0 & (op8=0x8B); iopr8i
+{ 
+	op1:1 = iopr8i;
+
+	result:1 = A + op1;
+	addition_flags1(A, op1, result);
+
+	A = result;
+}
+
+:ADDA opr8a_8                 is XGATE=0 & Prefix18=0 & (op8=0x9B); opr8a_8
+{ 
+	op1:1 = opr8a_8;
+
+	result:1 = A + op1;
+	addition_flags1(A, op1, result);
+	A = result;
+}
+
+:ADDA opr16a_8                 is XGATE=0 & Prefix18=0 & (op8=0xBB); opr16a_8
+{ 
+	op1:1 = opr16a_8;
+
+	result:1 = A + op1;
+	addition_flags1(A, op1, result);
+	A = result;
+}
+
+:ADDA indexed1_5                 is XGATE=0 & Prefix18=0 & (op8=0xAB); indexed1_5
+{ 
+	op1:1 = indexed1_5;
+
+	result:1 = A + op1;
+	addition_flags1(A, op1, result);
+	A = result;
+}
+
+:ADDB iopr8i                 is XGATE=0 & Prefix18=0 & (op8=0xCB); iopr8i
+{ 
+	op1:1 = iopr8i;
+
+	result:1 = B + op1;
+	addition_flags1(B, op1, result);
+	B = result;
+}
+
+:ADDB opr8a_8                 is XGATE=0 & Prefix18=0 & (op8=0xDB); opr8a_8
+{ 
+	op1:1 = opr8a_8;
+
+	result:1 = B + op1;
+	addition_flags1(B, op1, result);
+	B = result;
+}
+
+:ADDB opr16a_8                 is XGATE=0 & Prefix18=0 & (op8=0xFB); opr16a_8
+{ 
+	op1:1 = opr16a_8;
+
+	result:1 = B + op1;
+	addition_flags1(B, op1, result);
+	B = result;
+}
+
+:ADDB indexed1_5                 is XGATE=0 & Prefix18=0 & (op8=0xEB); indexed1_5
+{ 
+	op1:1 = indexed1_5;
+
+	result:1 = B + op1;
+	addition_flags1(B, op1, result);
+	B = result;
+}
+
+:ADDD iopr16i                 is XGATE=0 & Prefix18=0 & (op8=0xC3); iopr16i
+{ 
+	op1:2 = iopr16i;
+
+	result:2 = D + op1;
+	addition_flags2(D, op1, result);
+	D = result;
+}
+
+:ADDD opr8a_16                 is XGATE=0 & Prefix18=0 & (op8=0xD3); opr8a_16
+{ 
+	op1:2 = opr8a_16;
+
+	result:2 = D + op1;
+	addition_flags2(D, op1, result);
+	D = result;
+}
+
+:ADDD opr16a_16                 is XGATE=0 & Prefix18=0 & (op8=0xF3); opr16a_16
+{ 
+	op1:2 = opr16a_16;
+
+	result:2 = D + op1;
+	addition_flags2(D, op1, result);
+	D = result;
+}
+
+:ADDD indexed2_5                 is XGATE=0 & Prefix18=0 & (op8=0xE3); indexed2_5
+{ 
+	op1:2 = indexed2_5;
+
+	result:2 = D + op1;
+	addition_flags2(D, op1, result);
+	D = result;
+}
+
+@if defined(HCS12X)
+:ADDX iopr16i                 is XGATE=0 & Prefix18=1 & (op8=0x8B); iopr16i
+{ 
+	op1:2 = iopr16i;
+
+	result:2 = IX + op1;
+	addition_flags2(IX, op1, result);
+	IX = result;
+}
+@endif
+
+@if defined(HCS12X)
+:ADDX opr8a_16                 is XGATE=0 & Prefix18=1 & (op8=0x9B); opr8a_16
+{ 
+	op1:2 = opr8a_16;
+
+	result:2 = IX + op1;
+	addition_flags2(IX, op1, result);
+	IX = result;
+}
+@endif
+
+@if defined(HCS12X)
+:ADDX opr16a_16                 is XGATE=0 & Prefix18=1 & (op8=0xBB); opr16a_16
+{ 
+	op1:2 = opr16a_16;
+
+	result:2 = IX + op1;
+	addition_flags2(IX, op1, result);
+	IX = result;
+}
+@endif
+
+@if defined(HCS12X)
+:ADDX indexed2_5                 is XGATE=0 & Prefix18=1 & (op8=0xAB); indexed2_5
+{ 
+	op1:2 = indexed2_5;
+
+	result:2 = IX + op1;
+	addition_flags2(IX, op1, result);
+	IX = result;
+}
+@endif
+
+@if defined(HCS12X)
+:ADDY iopr16i                 is XGATE=0 & Prefix18=1 & (op8=0xCB); iopr16i
+{ 
+	op1:2 = iopr16i;
+
+	result:2 = IY + op1;
+	addition_flags2(IY, op1, result);
+	IY = result;
+}
+@endif
+
+@if defined(HCS12X)
+:ADDY opr8a_16                 is XGATE=0 & Prefix18=1 & (op8=0xDB); opr8a_16
+{ 
+	op1:2 = opr8a_16;
+
+	result:2 = IY + op1;
+	addition_flags2(IY, op1, result);
+	IY = result;
+}
+@endif
+
+@if defined(HCS12X)
+:ADDY opr16a_16                 is XGATE=0 & Prefix18=1 & (op8=0xFB); opr16a_16
+{ 
+	op1:2 = opr16a_16;
+
+	result:2 = IY + op1;
+	addition_flags2(IY, op1, result);
+	IY = result;
+}
+@endif
+
+@if defined(HCS12X)
+:ADDY indexed2_5                 is XGATE=0 & Prefix18=1 & (op8=0xEB); indexed2_5
+{ 
+	op1:2 = indexed2_5;
+
+	result:2 = IY + op1;
+	addition_flags2(IY, op1, result);
+	IY = result;
+}
+@endif
+
+@if defined(HCS12X)
+:ADED iopr16i                 is XGATE=0 & Prefix18=1 & (op8=0xC3); iopr16i
+{ 
+	op1:2 = iopr16i;
+
+	result:2 = D + op1 + zext($(C));
+	addition_flags2(D, op1, result);
+	D = result;
+}
+@endif
+
+@if defined(HCS12X)
+:ADED opr8a_16                 is XGATE=0 & Prefix18=1 & (op8=0xD3); opr8a_16
+{ 
+	op1:2 = opr8a_16;
+
+	result:2 = D + op1 + zext($(C));
+	addition_flags2(D, op1, result);
+	D = result;
+}
+@endif
+
+@if defined(HCS12X)
+:ADED opr16a_16                 is XGATE=0 & Prefix18=1 & (op8=0xF3); opr16a_16
+{ 
+	op1:2 = opr16a_16;
+
+	result:2 = D + op1 + zext($(C));
+	addition_flags2(D, op1, result);
+	D = result;
+}
+@endif
+
+@if defined(HCS12X)
+:ADED indexed2_5                 is XGATE=0 & Prefix18=1 & (op8=0xE3); indexed2_5
+{ 
+	op1:2 = indexed2_5;
+
+	result:2 = D + op1 + zext($(C));
+	addition_flags2(D, op1, result);
+	D = result;
+}
+@endif
+
+@if defined(HCS12X)
+:ADEX iopr16i                 is XGATE=0 & Prefix18=1 & (op8=0x89); iopr16i
+{ 
+	op1:2 = iopr16i;
+
+	result:2 = IX + op1 + zext($(C));
+	addition_flags2(IX, op1, result);
+	IX = result;
+}
+@endif
+
+@if defined(HCS12X)
+:ADEX opr8a_16                 is XGATE=0 & Prefix18=1 & (op8=0x99); opr8a_16
+{ 
+	op1:2 = opr8a_16;
+
+	result:2 = IX + op1 + zext($(C));
+	addition_flags2(IX, op1, result);
+	IX = result;
+}
+@endif
+
+@if defined(HCS12X)
+:ADEX opr16a_16                 is XGATE=0 & Prefix18=1 & (op8=0xb9); opr16a_16
+{ 
+	op1:2 = opr16a_16;
+
+	result:2 = IX + op1 + zext($(C));
+	addition_flags2(IX, op1, result);
+	IX = result;
+}
+@endif
+
+@if defined(HCS12X)
+:ADEX indexed2_5                 is XGATE=0 & Prefix18=1 & (op8=0xa9); indexed2_5
+{ 
+	op1:2 = indexed2_5;
+
+	result:2 = IX + op1 + zext($(C));
+	addition_flags2(IX, op1, result);
+	IX = result;
+}
+@endif
+
+@if defined(HCS12X)
+:ADEY iopr16i                 is XGATE=0 & Prefix18=1 & (op8=0xC9); iopr16i
+{ 
+	op1:2 = iopr16i;
+
+	result:2 = IY + op1 + zext($(C));
+	addition_flags2(IY, op1, result);
+	IY = result;
+}
+@endif
+
+@if defined(HCS12X)
+:ADEY opr8a_16                 is XGATE=0 & Prefix18=1 & (op8=0xD9); opr8a_16
+{ 
+	op1:2 = opr8a_16;
+
+	result:2 = IY + op1 + zext($(C));
+	addition_flags2(IY, op1, result);
+	IY = result;
+}
+@endif
+
+@if defined(HCS12X)
+:ADEY opr16a_16                 is XGATE=0 & Prefix18=1 & (op8=0xF9); opr16a_16
+{ 
+	op1:2 = opr16a_16;
+
+	result:2 = IY + op1 + zext($(C));
+	addition_flags2(IY, op1, result);
+	IY = result;
+}
+@endif
+
+@if defined(HCS12X)
+:ADEY indexed2_5                 is XGATE=0 & Prefix18=1 & (op8=0xE9); indexed2_5
+{ 
+	op1:2 = indexed2_5;
+
+	result:2 = IY + op1 + zext($(C));
+	addition_flags2(IY, op1, result);
+	IY = result;
+}
+@endif
+
+:ANDA iopr8i                 is XGATE=0 & Prefix18=0 & (op8=0x84); iopr8i
+{ 
+	A = A & iopr8i;
+	V_equals_0(); 
+	$(Z) = (A == 0);
+	$(N) = (A s< 0);
+}
+
+:ANDA opr8a_8                 is XGATE=0 & Prefix18=0 & (op8=0x94); opr8a_8
+{ 
+	A = A & opr8a_8;
+	V_equals_0(); 
+	$(Z) = (A == 0);
+	$(N) = (A s< 0);
+}
+
+:ANDA opr16a_8                 is XGATE=0 & Prefix18=0 & (op8=0xB4); opr16a_8
+{ 
+	A = A & opr16a_8;
+	V_equals_0(); 
+	$(Z) = (A == 0);
+	$(N) = (A s< 0);
+}
+
+:ANDA indexed1_5                 is XGATE=0 & Prefix18=0 & (op8=0xA4); indexed1_5
+{ 
+	A = A & indexed1_5;
+	V_equals_0(); 
+	$(Z) = (A == 0);
+	$(N) = (A s< 0);
+}
+
+:ANDB iopr8i                 is XGATE=0 & Prefix18=0 & (op8=0xC4); iopr8i
+{ 
+	B = B & iopr8i;
+	V_equals_0(); 
+	$(Z) = (B == 0);
+	$(N) = (B s< 0);
+}
+
+:ANDB opr8a_8                 is XGATE=0 & Prefix18=0 & (op8=0xD4); opr8a_8
+{ 
+	B = B & opr8a_8;
+	V_equals_0(); 
+	$(Z) = (B == 0);
+	$(N) = (B s< 0);
+}
+
+:ANDB opr16a_8                 is XGATE=0 & Prefix18=0 & (op8=0xF4); opr16a_8
+{ 
+	B = B & opr16a_8;
+	V_equals_0(); 
+	$(Z) = (B == 0);
+	$(N) = (B s< 0);
+}
+
+:ANDB indexed1_5                 is XGATE=0 & Prefix18=0 & (op8=0xE4); indexed1_5
+{ 
+	B = B & indexed1_5;
+	V_equals_0(); 
+	$(Z) = (B == 0);
+	$(N) = (B s< 0);
+}
+
+:ANDCC iopr8i                 is XGATE=0 & Prefix18=0 & (op8=0x10); iopr8i
+{ 
+	CCR = CCR & iopr8i;
+}
+
+@if defined(HCS12X)
+:ANDX iopr16i                 is XGATE=0 & Prefix18=1 & (op8=0x84); iopr16i
+{ 
+	IX = IX & iopr16i;
+	V_equals_0(); 
+	$(Z) = (IX == 0);
+	$(N) = (IX s< 0);
+}
+@endif
+
+@if defined(HCS12X)
+:ANDX opr8a_16                 is XGATE=0 & Prefix18=1 & (op8=0x94); opr8a_16
+{ 
+	IX = IX & opr8a_16;
+	V_equals_0(); 
+	$(Z) = (IX == 0);
+	$(N) = (IX s< 0);
+}
+@endif
+
+@if defined(HCS12X)
+:ANDX opr16a_16                 is XGATE=0 & Prefix18=1 & (op8=0xB4); opr16a_16
+{ 
+	IX = IX & opr16a_16;
+	V_equals_0(); 
+	$(Z) = (IX == 0);
+	$(N) = (IX s< 0);
+}
+@endif
+
+@if defined(HCS12X)
+:ANDX indexed2_5                 is XGATE=0 & Prefix18=1 & (op8=0xA4); indexed2_5
+{ 
+	IX = IX & indexed2_5;
+	V_equals_0(); 
+	$(Z) = (IX == 0);
+	$(N) = (IX s< 0);
+}
+@endif
+
+@if defined(HCS12X)
+:ANDY iopr16i                 is XGATE=0 & Prefix18=1 & (op8=0xC4); iopr16i
+{ 
+	IY = IY & iopr16i;
+	V_equals_0(); 
+	$(Z) = (IY == 0);
+	$(N) = (IY s< 0);
+}
+@endif
+
+@if defined(HCS12X)
+:ANDY opr8a_16                 is XGATE=0 & Prefix18=1 & (op8=0xD4); opr8a_16
+{ 
+	IY = IY & opr8a_16;
+	V_equals_0(); 
+	$(Z) = (IY == 0);
+	$(N) = (IY s< 0);
+}
+@endif
+
+@if defined(HCS12X)
+:ANDY opr16a_16                 is XGATE=0 & Prefix18=1 & (op8=0xF4); opr16a_16
+{ 
+	IY = IY & opr16a_16;
+	V_equals_0(); 
+	$(Z) = (IY == 0);
+	$(N) = (IY s< 0);
+}
+@endif
+
+@if defined(HCS12X)
+:ANDY indexed2_5                 is XGATE=0 & Prefix18=1 & (op8=0xE4); indexed2_5
+{ 
+	IY = IY & indexed2_5;
+	V_equals_0(); 
+	$(Z) = (IY == 0);
+	$(N) = (IY s< 0);
+}
+@endif
+
+:ASL opr16a_8                 is XGATE=0 & Prefix18=0 & (op8=0x78); opr16a_8
+{
+	tmp:1 = opr16a_8;
+	$(C) = tmp[7,1];
+	tmp = tmp << 1;
+	opr16a_8 = tmp;
+	$(Z) = (tmp == 0);
+	$(N) = (tmp s< 0);
+	V_equals_N_xor_C();	
+}
+
+:ASL indexed1_5                 is XGATE=0 & Prefix18=0 & (op8=0x68); indexed1_5 
+{
+	tmp:1 = indexed1_5;
+	$(C) = tmp[7,1];
+	tmp = tmp << 1;
+	indexed1_5 = tmp;
+	$(Z) = (tmp == 0);
+	$(N) = (tmp s< 0);
+	V_equals_N_xor_C();	
+}
+
+:ASLA                    is XGATE=0 & Prefix18=0 & op8=0x48 
+{
+	$(C) = A[7,1];
+	A = A << 1;
+	$(Z) = (A == 0);
+	$(N) = (A s< 0);	
+	V_equals_N_xor_C();	
+}
+
+:ASLB                    is XGATE=0 & Prefix18=0 & op8=0x58 
+{
+	$(C) = B[7,1];
+	B = B << 1;
+	$(Z) = (B == 0);
+	$(N) = (B s< 0);	
+	V_equals_N_xor_C();	
+}
+
+:ASLD                    is XGATE=0 & Prefix18=0 & op8=0x59 
+{
+	$(C) = D[15,1];
+	D = D << 1;
+	$(Z) = (D == 0);
+	$(N) = (D s< 0);	
+	V_equals_N_xor_C();	
+}
+
+@if defined(HCS12X)
+:ASLW opr16a_16                 is XGATE=0 & Prefix18=1 & (op8=0x78); opr16a_16
+{
+	local tmp = opr16a_16;
+	$(C) = tmp[15,1];
+	tmp = tmp << 1;
+	opr16a_16 = tmp;
+	$(Z) = (tmp == 0);
+	$(N) = (tmp s< 0);
+	V_equals_N_xor_C();	
+}
+@endif
+
+@if defined(HCS12X)
+:ASLW indexed2_5                 is XGATE=0 & Prefix18=1 & (op8=0x68); indexed2_5 
+{
+	local tmp = indexed2_5;
+	$(C) = tmp[15,1];
+	tmp = tmp << 1;
+	indexed2_5 = tmp;
+	$(Z) = (tmp == 0);
+	$(N) = (tmp s< 0);
+	V_equals_N_xor_C();	
+}
+@endif
+
+@if defined(HCS12X)
+:ASLX                    is XGATE=0 & Prefix18=1 & op8=0x48
+{
+	$(C) = IX[15,1];
+	IX = IX << 1;
+	$(Z) = (IX == 0);
+	$(N) = (IX s< 0);	
+	V_equals_N_xor_C();	
+}
+@endif
+
+@if defined(HCS12X)
+:ASLY                    is XGATE=0 & Prefix18=1 & op8=0x58
+{
+	$(C) = IY[15,1];
+	IY = IY << 1;
+	$(Z) = (IY == 0);
+	$(N) = (IY s< 0);	
+	V_equals_N_xor_C();	
+}
+@endif
+
+:ASR opr16a_8                 is XGATE=0 & Prefix18=0 & (op8=0x77); opr16a_8
+{
+	tmp:1 = opr16a_8;
+	$(C) = tmp[0,1];
+	tmp = tmp s>> 1;
+	opr16a_8 = tmp;
+	$(Z) = (tmp == 0);
+	$(N) = (tmp s< 0);	
+	V_equals_N_xor_C();	
+}
+
+:ASR indexed1_5                 is XGATE=0 & Prefix18=0 & (op8=0x67); indexed1_5 
+{
+	tmp:1 = indexed1_5;
+	$(C) = tmp[0,1];
+	tmp = tmp s>> 1;
+	indexed1_5 = tmp;
+	$(Z) = (tmp == 0);
+	$(N) = (tmp s< 0);	
+	V_equals_N_xor_C();	
+}
+
+:ASRA                    is XGATE=0 & Prefix18=0 & op8=0x47 
+{
+	$(C) = A[0,1];
+	A = A s>> 1;
+	$(Z) = (A == 0);
+	$(N) = (A s< 0);	
+	V_equals_N_xor_C();	
+}
+
+:ASRB                    is XGATE=0 & Prefix18=0 & op8=0x57 
+{
+	$(C) = B[0,1];
+	B = B s>> 1;
+	$(Z) = (B == 0);
+	$(N) = (B s< 0);	
+	V_equals_N_xor_C();	
+}
+
+@if defined(HCS12X)
+:ASRW opr16a_16                 is XGATE=0 & Prefix18=1 & (op8=0x77); opr16a_16
+{
+	local tmp = opr16a_16;
+	$(C) = tmp[0,1];
+	tmp = tmp s>> 1;
+	opr16a_16 = tmp;
+	$(Z) = (tmp == 0);
+	$(N) = (tmp s< 0);	
+	V_equals_N_xor_C();	
+}
+@endif
+
+@if defined(HCS12X)
+:ASRW indexed2_5                 is XGATE=0 & Prefix18=1 & (op8=0x67); indexed2_5 
+{
+	local tmp = indexed2_5;
+	$(C) = tmp[0,1];
+	tmp = tmp s>> 1;
+	indexed2_5 = tmp;
+	$(Z) = (tmp == 0);
+	$(N) = (tmp s< 0);	
+	V_equals_N_xor_C();	
+}
+@endif
+
+@if defined(HCS12X)
+:ASRX                    is XGATE=0 & Prefix18=1 & op8=0x47 
+{
+	$(C) = IX[0,1];
+	IX = IX s>> 1;
+	$(Z) = (IX == 0);
+	$(N) = (IX s< 0);	
+	V_equals_N_xor_C();	
+}
+@endif
+
+@if defined(HCS12X)
+:ASRY                    is XGATE=0 & Prefix18=1 & op8=0x57 
+{
+	$(C) = IY[0,1];
+	IY = IY s>> 1;
+	$(Z) = (IY == 0);
+	$(N) = (IY s< 0);	
+	V_equals_N_xor_C();	
+}
+@endif
+
+:BCC rel8                 is XGATE=0 & Prefix18=0 & op8=0x24; rel8
+{
+	if ($(C) == 0) goto rel8;
+}
+
+:BCLR opr8a_8, msk8		is XGATE=0 & Prefix18=0 & (op8=0x4D); opr8a_8; msk8
+{
+	op1:1 = opr8a_8;
+	op1 = op1 & ~msk8;
+	opr8a_8 = op1;
+	$(N) = (op1 s< 0);
+	$(Z) = (op1 == 0);
+	V_equals_0(); 
+}
+
+:BCLR opr16a_8, msk8	is XGATE=0 & Prefix18=0 & (op8=0x1D); opr16a_8; msk8
+{
+	op1:1 = opr16a_8;
+	op1 = op1 & ~msk8;
+	opr16a_8 = op1;
+	$(N) = (op1 s< 0);
+	$(Z) = (op1 == 0);
+	V_equals_0(); 
+}
+
+:BCLR indexed1_3, msk8	is XGATE=0 & Prefix18=0 & (op8=0x0D); indexed1_3; msk8
+{
+	op1:1 = indexed1_3;
+	op1 = op1 & ~msk8;
+	indexed1_3 = op1;
+	$(N) = (op1 s< 0);
+	$(Z) = (op1 == 0);
+	V_equals_0(); 
+}
+
+:BCS rel8                 is XGATE=0 & Prefix18=0 & op8=0x25; rel8
+{
+	if ($(C) == 1) goto rel8;
+}
+
+:BEQ rel8                 is XGATE=0 & Prefix18=0 & op8=0x27; rel8
+{
+	if ($(Z) == 1) goto rel8;
+}
+
+:BGE rel8                 is XGATE=0 & Prefix18=0 & op8=0x2C; rel8
+{
+	if (($(N) ^ $(V)) == 1) goto rel8;
+}
+
+@if  defined(HCS12)
+:BGND                    is XGATE=0 & Prefix18=0 & op8=0x00
+{
+	BDM_return:3 = inst_next;
+	# this could return BDM location, or BDM_return
+	PCE = backgroundDebugMode(BDM_return);
+	goto [PCE];
+}
+@endif
+
+:BGT rel8                 is XGATE=0 & Prefix18=0 & op8=0x2E; rel8
+{
+	if (($(Z) | ($(N) ^ $(V))) == 0) goto rel8;
+}
+
+:BHI rel8                 is XGATE=0 & Prefix18=0 & op8=0x22; rel8
+{
+	if (($(C) | $(Z)) == 0) goto rel8;
+}
+
+#:BHS rel8	is op8=0x24; rel8		See BCC
+
+:BITA iopr8i                 is XGATE=0 & Prefix18=0 & (op8=0x85); iopr8i
+{
+	result:1 = A & iopr8i;
+	$(Z) = (result == 0);
+	$(N) = (result s< 0);
+	V_equals_0();
+}
+
+:BITA opr8a_8                 is XGATE=0 & Prefix18=0 & (op8=0x95); opr8a_8
+{
+	result:1 = A & opr8a_8;
+	$(Z) = (result == 0);
+	$(N) = (result s< 0);
+	V_equals_0();
+}
+
+:BITA opr16a_8                 is XGATE=0 & Prefix18=0 & (op8=0xB5); opr16a_8
+{
+	result:1 = A & opr16a_8;
+	$(Z) = (result == 0);
+	$(N) = (result s< 0);
+	V_equals_0();
+}
+
+:BITA indexed1_5                 is XGATE=0 & Prefix18=0 & (op8=0xA5); indexed1_5
+{
+	result:1 = A & indexed1_5;
+	$(Z) = (result == 0);
+	$(N) = (result s< 0);
+	V_equals_0();
+}
+
+:BITB iopr8i                 is XGATE=0 & Prefix18=0 & (op8=0xC5); iopr8i
+{
+	result:1 = B & iopr8i;
+	$(Z) = (result == 0);
+	$(N) = (result s< 0);
+	V_equals_0();
+}
+
+:BITB opr8a_8                 is XGATE=0 & Prefix18=0 & (op8=0xD5); opr8a_8
+{
+	result:1 = B & opr8a_8;
+	$(Z) = (result == 0);
+	$(N) = (result s< 0);
+	V_equals_0();
+}
+
+:BITB opr16a_8                 is XGATE=0 & Prefix18=0 & (op8=0xF5); opr16a_8
+{
+	result:1 = B & opr16a_8;
+	$(Z) = (result == 0);
+	$(N) = (result s< 0);
+	V_equals_0();
+}
+
+:BITB indexed1_5                 is XGATE=0 & Prefix18=0 & (op8=0xE5); indexed1_5
+{
+	result:1 = B & indexed1_5;
+	$(Z) = (result == 0);
+	$(N) = (result s< 0);
+	V_equals_0();
+}
+
+@if defined(HCS12X)
+:BITX iopr16i                 is XGATE=0 & Prefix18=1 & (op8=0x85); iopr16i
+{
+	local result = IX & iopr16i;
+	$(Z) = (result == 0);
+	$(N) = (result s< 0);
+	V_equals_0();
+}
+@endif
+
+@if defined(HCS12X)
+:BITX opr8a_16                 is XGATE=0 & Prefix18=1 & (op8=0x95); opr8a_16
+{
+	local result = IX & opr8a_16;
+	$(Z) = (result == 0);
+	$(N) = (result s< 0);
+	V_equals_0();
+}
+@endif
+
+@if defined(HCS12X)
+:BITX opr16a_16                 is XGATE=0 & Prefix18=1 & (op8=0xB5); opr16a_16
+{
+	local result = IX & opr16a_16;
+	$(Z) = (result == 0);
+	$(N) = (result s< 0);
+	V_equals_0();
+}
+@endif
+
+@if defined(HCS12X)
+:BITX indexed2_5                 is XGATE=0 & Prefix18=1 & (op8=0xA5); indexed2_5
+{
+	local result = IX & indexed2_5;
+	$(Z) = (result == 0);
+	$(N) = (result s< 0);
+	V_equals_0();
+}
+@endif
+
+@if defined(HCS12X)
+:BITY iopr16i                 is XGATE=0 & Prefix18=1 & (op8=0xC5); iopr16i
+{
+	local result = IY & iopr16i;
+	$(Z) = (result == 0);
+	$(N) = (result s< 0);
+	V_equals_0();
+}
+@endif
+
+@if defined(HCS12X)
+:BITY opr8a_16                 is XGATE=0 & Prefix18=1 & (op8=0xD5); opr8a_16
+{
+	local result = IY & opr8a_16;
+	$(Z) = (result == 0);
+	$(N) = (result s< 0);
+	V_equals_0();
+}
+@endif
+
+@if defined(HCS12X)
+:BITY opr16a_16                 is XGATE=0 & Prefix18=1 & (op8=0xF5); opr16a_16
+{
+	local result = IY & opr16a_16;
+	$(Z) = (result == 0);
+	$(N) = (result s< 0);
+	V_equals_0();
+}
+@endif
+
+@if defined(HCS12X)
+:BITY indexed2_5                 is XGATE=0 & Prefix18=1 & (op8=0xE5); indexed2_5
+{
+	local result = IY & indexed2_5;
+	$(Z) = (result == 0);
+	$(N) = (result s< 0);
+	V_equals_0();
+}
+@endif
+
+
+:BLE rel8                 is XGATE=0 & Prefix18=0 & op8=0x2F; rel8
+{
+	if ($(Z) | ($(N) ^ $(V))) goto rel8;
+}
+
+#:BLO rel8	is op8=0x25; rel8		see BCS
+
+:BLS rel8                 is XGATE=0 & Prefix18=0 & op8=0x23; rel8
+{
+	if (($(C) | $(Z)) == 1) goto rel8;
+}
+
+:BLT rel8                 is XGATE=0 & Prefix18=0 & op8=0x2D; rel8
+{
+	if (($(N) ^ $(V)) ==1) goto rel8;
+}
+
+:BMI rel8                 is XGATE=0 & Prefix18=0 & op8=0x2B; rel8
+{
+	if ($(N) == 1) goto rel8;
+}
+
+:BNE rel8                 is XGATE=0 & Prefix18=0 & op8=0x26; rel8
+{
+	if ($(Z) == 0) goto rel8;
+}
+
+:BPL rel8                 is XGATE=0 & Prefix18=0 & op8=0x2A; rel8
+{
+	if ($(N) == 0) goto rel8;
+}
+
+:BRA rel8                 is XGATE=0 & Prefix18=0 & op8=0x20; rel8
+{
+	goto rel8;
+}
+
+:BRCLR opr8a_8, msk8, rel8    is XGATE=0 & Prefix18=0 & op8=0x4F; opr8a_8; msk8; rel8
+{
+	result:1 = opr8a_8 & msk8;
+	if (result == 0) goto rel8;
+}
+
+:BRCLR opr16a_8, msk8, rel8    is XGATE=0 & Prefix18=0 & op8=0x1F; opr16a_8; msk8; rel8
+{
+	result:1 = opr16a_8 & msk8;
+	if (result == 0) goto rel8;
+}
+
+:BRCLR indexed1_3, msk8, rel8    is XGATE=0 & Prefix18=0 & op8=0x0F; indexed1_3; msk8; rel8
+{
+	result:1 = indexed1_3 & msk8;
+	if (result == 0) goto rel8;
+}
+
+# branch never is a two-byte nop
+SkipNextInstr: dest is epsilon [ dest = inst_next + 1; ]  { export *[RAM]:1 dest; }
+
+:BRN SkipNextInstr                 is XGATE=0 & Prefix18=0 & op8=0x21 & SkipNextInstr
+{
+	goto SkipNextInstr;
+}
+
+:BRSET opr8a_8, msk8, rel8    is XGATE=0 & Prefix18=0 & op8=0x4E; opr8a_8; msk8; rel8
+{
+	result:1 = ~opr8a_8 & msk8;
+	if (result != 0) goto rel8;
+}
+
+:BRSET opr16a_8, msk8, rel8    is XGATE=0 & Prefix18=0 & op8=0x1E; opr16a_8; msk8; rel8
+{
+	result:1 = ~opr16a_8 & msk8;
+	if (result != 0) goto rel8;
+}
+
+:BRSET indexed1_3, msk8, rel8    is XGATE=0 & Prefix18=0 & op8=0x0E; indexed1_3; msk8; rel8
+{
+	result:1 = ~indexed1_3 & msk8;
+	if (result != 0) goto rel8;
+}
+
+:BSET opr8a_8, msk8          is XGATE=0 & Prefix18=0 & op8=0x4C; opr8a_8; msk8
+{
+	result:1 = opr8a_8 | msk8;
+	opr8a_8 = result;
+	$(N) = (result s< 0);
+	$(Z) = (result == 0);
+	V_equals_0();
+}
+
+:BSET opr16a_8, msk8          is XGATE=0 & Prefix18=0 & op8=0x1C; opr16a_8; msk8
+{
+	result:1 = opr16a_8 | msk8;
+	opr16a_8 = result;
+	$(N) = (result s< 0);
+	$(Z) = (result == 0);
+	V_equals_0();
+}
+
+:BSET indexed1_3, msk8          is XGATE=0 & Prefix18=0 & op8=0x0C; indexed1_3; msk8
+{
+	result:1 = indexed1_3 | msk8;
+	indexed1_3 = result;
+	$(N) = (result s< 0);
+	$(Z) = (result == 0);
+	V_equals_0();
+}
+
+:BSR rel8                 is XGATE=0 & Prefix18=0 & op8=0x07; rel8 
+{
+	tmp:2 = inst_next;
+	Push2( tmp );
+	 
+	call rel8;
+}
+
+@if defined(HCS12X)
+:BTAS  opr8a_8, msk8                 is XGATE=0 & Prefix18=1 & (op8=0x35); opr8a_8; msk8
+{ 
+	op1:1 = opr8a_8;
+	tmp:1 = op1 & msk8;
+	$(N) = tmp[7,1];
+	$(Z) = (tmp == 0);
+	$(V) = 0;
+	opr8a_8 = op1 | msk8;
+}
+@endif
+
+@if defined(HCS12X)
+:BTAS  opr16a_8, msk8                 is XGATE=0 & Prefix18=1 & (op8=0x36); opr16a_8; msk8
+{ 
+	op1:1 = opr16a_8;
+	tmp:1 = op1 & msk8;
+	$(N) = tmp[7,1];
+	$(Z) = (tmp == 0);
+	$(V) = 0;
+	opr16a_8 = op1 | msk8;
+}
+@endif
+
+@if defined(HCS12X)
+:BTAS  indexed1_3, msk8                 is XGATE=0 & Prefix18=1 & (op8=0x37); indexed1_3; msk8
+{ 
+	op1:1 = indexed1_3;
+	tmp:1 = op1 & msk8;
+	$(N) = tmp[7,1];
+	$(Z) = (tmp == 0);
+	$(V) = 0;
+	indexed1_3 = op1 | msk8;
+}
+@endif
+
+
+:BVC rel8                 is XGATE=0 & Prefix18=0 & op8=0x28; rel8
+{
+	if ($(V) == 0) goto rel8;
+}
+
+:BVS rel8                 is XGATE=0 & Prefix18=0 & op8=0x29; rel8
+{
+	if ($(V) == 1) goto rel8;
+}
+
+CallDest:  PageDest, imm8 is (imm16; imm8) & PageDest {
+	PPAGE = imm8;
+
+	build PageDest;
+	
+	export PageDest;
+}
+
+:CALL  CallDest   is XGATE=0 & Prefix18=0 & op8=0x4A;   CallDest
+{
+	tmp:2 = inst_next;
+	Push2( tmp );
+
+	Push1( PPAGE );	
+
+    build CallDest;
+    
+    local dest:3 = CallDest;
+	call [dest];
+}
+
+:CALL indexed2_3, page    is XGATE=0 & Prefix18=0 & (op8=0x4B); indexed2_3; page 
+{
+	tmp:2 = inst_next;
+	Push2( tmp );
+
+	Push1( PPAGE );
+	PPAGE = page;
+	
+	build indexed2_3;
+
+	local dest:3;	
+	GetPagedAddr(indexed2_3,dest);
+	call [dest];
+}
+
+:CALL indexed0_2    is XGATE=0 & Prefix18=0 & (op8=0x4B); indexed0_2 
+{
+	tmp:2 = inst_next;
+	Push2( tmp );
+
+	Push1( PPAGE );
+	Load1(PPAGE, indexed0_2 + 2);
+
+	local addr:2;
+	Load2(addr,indexed0_2);
+	
+	local dest:3;	
+	GetPagedAddr(addr,dest);
+	call [dest];
+}
+
+:CBA                is XGATE=0 & (Prefix18=1 & op8=0x17)
+{ 
+	tmp:1 = A - B;
+	$(N) = (tmp s< 0);
+	$(Z) = (tmp == 0);
+	V_CMP_flag(A, B);
+	$(C) = (B > A);
+}
+
+:CLC                     is XGATE=0 & Prefix18=0 & op16=0x10FE
+{
+	$(C) = 0;
+}
+
+:CLI                     is XGATE=0 & Prefix18=0 & op16=0x10EF
+{
+	$(I) = 0;
+}
+
+:CLR opr16a_8                 is XGATE=0 & Prefix18=0 & (op8=0x79); opr16a_8
+{
+	opr16a_8 = 0;
+	$(N) = 0;
+	$(Z) = 1;
+	V_equals_0();
+	$(C) = 0;
+}
+
+:CLR indexed1_5                 is XGATE=0 & Prefix18=0 & (op8=0x69); indexed1_5 
+{
+	indexed1_5 = 0;
+	$(N) = 0;
+	$(Z) = 1;
+	V_equals_0();
+	$(C) = 0;
+}
+
+:CLRA                    is XGATE=0 & Prefix18=0 & op8=0x87 
+{
+	A = 0;
+	$(N) = 0;
+	$(Z) = 1;
+	V_equals_0();
+	$(C) = 0;
+}
+
+:CLRB                    is XGATE=0 & Prefix18=0 & op8=0xC7 
+{
+	B = 0;
+	$(N) = 0;
+	$(Z) = 1;
+	V_equals_0();
+	$(C) = 0;
+}
+
+@if defined(HCS12X)
+:CLRW opr16a_16                 is XGATE=0 & Prefix18=1 & (op8=0x79); opr16a_16
+{
+	opr16a_16 = 0;
+	$(N) = 0;
+	$(Z) = 1;
+	V_equals_0();
+	$(C) = 0;
+}
+@endif
+
+@if defined(HCS12X)
+:CLRW indexed2_5                 is XGATE=0 & Prefix18=1 & (op8=0x69); indexed2_5 
+{
+	indexed2_5 = 0;
+	$(N) = 0;
+	$(Z) = 1;
+	V_equals_0();
+	$(C) = 0;
+}
+@endif
+
+@if defined(HCS12X)
+:CLRX                    is XGATE=0 & Prefix18=1 & op8=0x87 
+{
+	IX = 0;
+	$(N) = 0;
+	$(Z) = 1;
+	V_equals_0();
+	$(C) = 0;
+}
+@endif
+
+@if defined(HCS12X)
+:CLRY                    is XGATE=0 & Prefix18=1 & op8=0xC7 
+{
+	IY = 0;
+	$(N) = 0;
+	$(Z) = 1;
+	V_equals_0();
+	$(C) = 0;
+}
+@endif
+
+:CLV                     is XGATE=0 & Prefix18=0 & op16=0x10FD
+{
+	$(V) = 0;
+}
+
+:CMPA iopr8i                 is XGATE=0 & Prefix18=0 & (op8=0x81); iopr8i
+{ 
+	op1:1 = iopr8i;
+	tmp:1 = A - op1;
+	$(N) = (tmp s< 0);
+	$(Z) = (tmp == 0);
+	V_CMP_flag(A, op1);
+	$(C) = (op1 > A);
+}
+
+:CMPA opr8a_8                 is XGATE=0 & Prefix18=0 & (op8=0x91); opr8a_8
+{ 
+	op1:1 = opr8a_8;
+	tmp:1 = A - op1;
+	$(N) = (tmp s< 0);
+	$(Z) = (tmp == 0);
+	V_CMP_flag(A, op1);
+	$(C) = (op1 > A);
+}
+
+:CMPA opr16a_8                 is XGATE=0 & Prefix18=0 & (op8=0xB1); opr16a_8
+{ 
+	op1:1 = opr16a_8;
+	tmp:1 = A - op1;
+	$(N) = (tmp s< 0);
+	$(Z) = (tmp == 0);
+	V_CMP_flag(A, op1);
+	$(C) = (op1 > A);
+}
+
+:CMPA indexed1_5                 is XGATE=0 & Prefix18=0 & (op8=0xA1); indexed1_5
+{ 
+	op1:1 = indexed1_5;
+	tmp:1 = A - op1;
+	$(N) = (tmp s< 0);
+	$(Z) = (tmp == 0);
+	V_CMP_flag(A, op1);
+	$(C) = (op1 > A);
+}
+
+:CMPB iopr8i                 is XGATE=0 & Prefix18=0 & (op8=0xC1); iopr8i
+{ 
+	op1:1 = iopr8i;
+	tmp:1 = B - op1;
+	$(N) = (tmp s< 0);
+	$(Z) = (tmp == 0);
+	V_CMP_flag(B, op1);
+	$(C) = (op1 > B);
+}
+
+:CMPB opr8a_8                 is XGATE=0 & Prefix18=0 & (op8=0xD1); opr8a_8
+{ 
+	op1:1 = opr8a_8;
+	tmp:1 = B - op1;
+	$(N) = (tmp s< 0);
+	$(Z) = (tmp == 0);
+	V_CMP_flag(B, op1);
+	$(C) = (op1 > B);
+}
+
+:CMPB opr16a_8                 is XGATE=0 & Prefix18=0 & (op8=0xF1); opr16a_8
+{ 
+	op1:1 = opr16a_8;
+	tmp:1 = B - op1;
+	$(N) = (tmp s< 0);
+	$(Z) = (tmp == 0);
+	V_CMP_flag(B, op1);
+	$(C) = (op1 > B);
+}
+
+:CMPB indexed1_5                 is XGATE=0 & Prefix18=0 & (op8=0xE1); indexed1_5
+{ 
+	op1:1 = indexed1_5;
+	tmp:1 = B - op1;
+	$(N) = (tmp s< 0);
+	$(Z) = (tmp == 0);
+	V_CMP_flag(B, op1);
+	$(C) = (op1 > B);
+}
+
+:COM opr16a_8                 is XGATE=0 & Prefix18=0 & (op8=0x71); opr16a_8
+{
+	tmp:1 = ~opr16a_8;
+	opr16a_8 = tmp;
+	$(Z) = (tmp == 0);
+	$(N) = (tmp s< 0);
+	$(C) = 1;
+	V_equals_0();
+}
+
+:COM indexed1_5                 is XGATE=0 & Prefix18=0 & (op8=0x61); indexed1_5 
+{
+	tmp:1 = ~indexed1_5;
+	indexed1_5 = tmp;
+	$(Z) = (tmp == 0);
+	$(N) = (tmp s< 0);
+	$(C) = 1;
+	V_equals_0();
+}
+
+:COMA                    is XGATE=0 & Prefix18=0 & op8=0x41 
+{
+	A = ~A;
+	$(Z) = (A == 0);
+	$(N) = (A s< 0);
+	$(C) = 1;
+	V_equals_0();
+}
+
+:COMB                    is XGATE=0 & Prefix18=0 & op8=0x51 
+{
+	B = ~B;
+	$(Z) = (B == 0);
+	$(N) = (B s< 0);
+	$(C) = 1;
+	V_equals_0();
+}
+
+@if defined(HCS12X)
+:COMW opr16a_16                 is XGATE=0 & Prefix18=1 & (op8=0x71); opr16a_16
+{
+	local tmp = ~opr16a_16;
+	opr16a_16 = tmp;
+	$(Z) = (tmp == 0);
+	$(N) = (tmp s< 0);
+	$(C) = 1;
+	V_equals_0();
+}
+@endif
+
+@if defined(HCS12X)
+:COMW indexed2_5                 is XGATE=0 & Prefix18=1 & (op8=0x61); indexed2_5 
+{
+	local tmp = ~indexed2_5;
+	indexed2_5 = tmp;
+	$(Z) = (tmp == 0);
+	$(N) = (tmp s< 0);
+	$(C) = 1;
+	V_equals_0();
+}
+@endif
+
+@if defined(HCS12X)
+:COMX                    is XGATE=0 & Prefix18=1 & op8=0x41 
+{
+	IX = ~IX;
+	$(Z) = (IX == 0);
+	$(N) = (IX s< 0);
+	$(C) = 1;
+	V_equals_0();
+}
+@endif
+
+@if defined(HCS12X)
+:COMY                    is XGATE=0 & Prefix18=1 & op8=0x51 
+{
+	IY = ~IY;
+	$(Z) = (IY == 0);
+	$(N) = (IY s< 0);
+	$(C) = 1;
+	V_equals_0();
+}
+@endif
+
+:CPD iopr16i                 is XGATE=0 & Prefix18=0 & (op8=0x8C); iopr16i
+{ 
+	op1:2 = iopr16i;
+	tmp:2 = D - op1;
+	$(Z) = (tmp == 0);
+	$(N) = (tmp s< 0);
+	$(C) = (op1 > D);
+	V_CMP_flag(D, op1);
+}
+
+:CPD opr8a_16                 is XGATE=0 & Prefix18=0 & (op8=0x9C); opr8a_16
+{ 
+	op1:2 = opr8a_16;
+	tmp:2 = D - op1;
+	$(Z) = (tmp == 0);
+	$(N) = (tmp s< 0);
+	$(C) = (op1 > D);
+	V_CMP_flag(D, op1);
+}
+
+:CPD opr16a_16                 is XGATE=0 & Prefix18=0 & (op8=0xBC); opr16a_16
+{ 
+	op1:2 = opr16a_16;
+	tmp:2 = D - op1;
+	$(Z) = (tmp == 0);
+	$(N) = (tmp s< 0);
+	$(C) = (op1 > D);
+	V_CMP_flag(D, op1);
+}
+
+:CPD indexed2_5                 is XGATE=0 & Prefix18=0 & (op8=0xAC); indexed2_5
+{ 
+	op1:2 = indexed2_5;
+	tmp:2 = D - op1;
+	$(Z) = (tmp == 0);
+	$(N) = (tmp s< 0);
+	$(C) = (op1 > D);
+	V_CMP_flag(D, op1);
+}
+
+@if defined(HCS12X)
+:CPED iopr16i                 is XGATE=0 & Prefix18=1 & (op8=0x8C); iopr16i
+{ 
+	op1:2 = iopr16i;
+	tmp:2 = D - (op1 + zext($(C)));
+	$(Z) = (tmp == 0);
+	$(N) = (tmp s< 0);
+	$(C) = (op1 > D);
+	V_CMP_flag(D, op1);
+}
+@endif
+
+@if defined(HCS12X)
+:CPED opr8a_16                 is XGATE=0 & Prefix18=1 & (op8=0x9C); opr8a_16
+{ 
+	op1:2 = opr8a_16;
+	tmp:2 = D - (op1 + zext($(C)));
+	$(Z) = (tmp == 0);
+	$(N) = (tmp s< 0);
+	$(C) = (op1 > D);
+	V_CMP_flag(D, op1);
+}
+@endif
+
+@if defined(HCS12X)
+:CPED opr16a_16                 is XGATE=0 & Prefix18=1 & (op8=0xBC); opr16a_16
+{ 
+	op1:2 = opr16a_16;
+	tmp:2 = D - (op1 + zext($(C)));
+	$(Z) = (tmp == 0);
+	$(N) = (tmp s< 0);
+	$(C) = (op1 > D);
+	V_CMP_flag(D, op1);
+}
+@endif
+
+@if defined(HCS12X)
+:CPED indexed2_5                 is XGATE=0 & Prefix18=1 & (op8=0xAC); indexed2_5
+{ 
+	op1:2 = indexed2_5;
+	tmp:2 = D - (op1 + zext($(C)));
+	$(Z) = (tmp == 0);
+	$(N) = (tmp s< 0);
+	$(C) = (op1 > D);
+	V_CMP_flag(D, op1);
+}
+@endif
+
+@if defined(HCS12X)
+:CPES iopr16i                 is XGATE=0 & Prefix18=1 & (op8=0x8F); iopr16i
+{ 
+	op1:2 = iopr16i;
+	tmp:2 = SP - (op1 + zext($(C)));
+	$(Z) = (tmp == 0);
+	$(N) = (tmp s< 0);
+	$(C) = (op1 > SP);
+	V_CMP_flag(SP, op1);
+}
+@endif
+
+@if defined(HCS12X)
+:CPES opr8a_16                 is XGATE=0 & Prefix18=1 & (op8=0x9F); opr8a_16
+{ 
+	op1:2 = opr8a_16;
+	tmp:2 = SP - (op1 + zext($(C)));
+	$(Z) = (tmp == 0);
+	$(N) = (tmp s< 0);
+	$(C) = (op1 > SP);
+	V_CMP_flag(SP, op1);
+}
+@endif
+
+@if defined(HCS12X)
+:CPES opr16a_16                 is XGATE=0 & Prefix18=1 & (op8=0xBF); opr16a_16
+{ 
+	op1:2 = opr16a_16;
+	tmp:2 = SP - (op1 + zext($(C)));
+	$(Z) = (tmp == 0);
+	$(N) = (tmp s< 0);
+	$(C) = (op1 > SP);
+	V_CMP_flag(SP, op1);
+}
+@endif
+
+@if defined(HCS12X)
+:CPES indexed2_5                 is XGATE=0 & Prefix18=1 & (op8=0xAF); indexed2_5
+{ 
+	op1:2 = indexed2_5;
+	tmp:2 = SP - (op1 + zext($(C)));
+	$(Z) = (tmp == 0);
+	$(N) = (tmp s< 0);
+	$(C) = (op1 > SP);
+	V_CMP_flag(SP, op1);
+}
+@endif
+
+@if defined(HCS12X)
+:CPEX iopr16i                 is XGATE=0 & Prefix18=1 & (op8=0x8E); iopr16i
+{ 
+	op1:2 = iopr16i;
+	tmp:2 = IX - (op1 + zext($(C)));
+	$(Z) = (tmp == 0);
+	$(N) = (tmp s< 0);
+	$(C) = (op1 > IX);
+	V_CMP_flag(IX, op1);
+}
+@endif
+
+@if defined(HCS12X)
+:CPEX opr8a_16                 is XGATE=0 & Prefix18=1 & (op8=0x9E); opr8a_16
+{ 
+	op1:2 = opr8a_16;
+	tmp:2 = IX - (op1 + zext($(C)));
+	$(Z) = (tmp == 0);
+	$(N) = (tmp s< 0);
+	$(C) = (op1 > IX);
+	V_CMP_flag(IX, op1);
+}
+@endif
+
+@if defined(HCS12X)
+:CPEX opr16a_16                 is XGATE=0 & Prefix18=1 & (op8=0xBE); opr16a_16
+{ 
+	op1:2 = opr16a_16;
+	tmp:2 = IX - (op1 + zext($(C)));
+	$(Z) = (tmp == 0);
+	$(N) = (tmp s< 0);
+	$(C) = (op1 > IX);
+	V_CMP_flag(IX, op1);
+}
+@endif
+
+@if defined(HCS12X)
+:CPEX indexed2_5                 is XGATE=0 & Prefix18=1 & (op8=0xAE); indexed2_5
+{ 
+	op1:2 = indexed2_5;
+	tmp:2 = IX - (op1 + zext($(C)));
+	$(Z) = (tmp == 0);
+	$(N) = (tmp s< 0);
+	$(C) = (op1 > IX);
+	V_CMP_flag(IX, op1);
+}
+@endif
+
+@if defined(HCS12X)
+:CPEY iopr16i                 is XGATE=0 & Prefix18=1 & (op8=0x8D); iopr16i
+{ 
+	op1:2 = iopr16i;
+	tmp:2 = IY - (op1 + zext($(C)));
+	$(Z) = (tmp == 0);
+	$(N) = (tmp s< 0);
+	$(C) = (op1 > IY);
+	V_CMP_flag(IY, op1);
+}
+@endif
+
+@if defined(HCS12X)
+:CPEY opr8a_16                 is XGATE=0 & Prefix18=1 & (op8=0x9D); opr8a_16
+{ 
+	op1:2 = opr8a_16;
+	tmp:2 = IY - (op1 + zext($(C)));
+	$(Z) = (tmp == 0);
+	$(N) = (tmp s< 0);
+	$(C) = (op1 > IY);
+	V_CMP_flag(IY, op1);
+}
+@endif
+
+@if defined(HCS12X)
+:CPEY opr16a_16                 is XGATE=0 & Prefix18=1 & (op8=0xBD); opr16a_16
+{ 
+	op1:2 = opr16a_16;
+	tmp:2 = IY - (op1 + zext($(C)));
+	$(Z) = (tmp == 0);
+	$(N) = (tmp s< 0);
+	$(C) = (op1 > IY);
+	V_CMP_flag(IY, op1);
+}
+@endif
+
+@if defined(HCS12X)
+:CPEY indexed2_5                 is XGATE=0 & Prefix18=1 & (op8=0xAD); indexed2_5
+{ 
+	op1:2 = indexed2_5;
+	tmp:2 = IY - (op1 + zext($(C)));
+	$(Z) = (tmp == 0);
+	$(N) = (tmp s< 0);
+	$(C) = (op1 > IY);
+	V_CMP_flag(IY, op1);
+}
+@endif
+
+SkipNext2Bytes: dest is epsilon [ dest = inst_next + 2; ]  { export *[RAM]:1 dest; }
+
+:CPS loc                 is XGATE=0 & Prefix18=0 & (op8=0x8F) & SkipNext2Bytes [ loc = (inst_next & 0xffffff); ]
+{ 
+	local addr:3 = inst_next;
+	local op1:2 = *[RAM]:2 addr;
+	tmp:2 = SP - op1;
+	$(Z) = (tmp == 0);
+	$(N) = (tmp s< 0);
+	$(C) = (op1 > SP);
+	V_CMP_flag(SP, op1);
+	goto SkipNext2Bytes;
+}
+
+:CPS opr8a_16                 is XGATE=0 & Prefix18=0 & (op8=0x9F); opr8a_16
+{ 
+	op1:2 = opr8a_16;
+	tmp:2 = SP - op1;
+	$(Z) = (tmp == 0);
+	$(N) = (tmp s< 0);
+	$(C) = (op1 > SP);
+	V_CMP_flag(SP, op1);
+}
+
+:CPS loc                 is XGATE=0 & Prefix18=0 & (op8=0xBF) & SkipNext2Bytes [ loc = (inst_next & 0xffffff); ]
+{
+	local addr:3 = inst_next;
+	local op1:2 = *[RAM]:2 addr;
+	Load2(op1, op1);
+	tmp:2 = SP - op1;
+	$(Z) = (tmp == 0);
+	$(N) = (tmp s< 0);
+	$(C) = (op1 > SP);
+	V_CMP_flag(SP, op1);
+	goto SkipNext2Bytes;
+}
+
+:CPS indexed2_5                 is XGATE=0 & Prefix18=0 & (op8=0xAF); indexed2_5
+{ 
+	op1:2 = indexed2_5;
+	tmp:2 = SP - op1;
+	$(Z) = (tmp == 0);
+	$(N) = (tmp s< 0);
+	$(C) = (op1 > SP);
+	V_CMP_flag(SP, op1);
+}
+
+:CPX iopr16i                 is XGATE=0 & Prefix18=0 & (op8=0x8E); iopr16i
+{ 
+	op1:2 = iopr16i;
+	tmp:2 = IX - op1;
+	$(Z) = (tmp == 0);
+	$(N) = (tmp s< 0);
+	$(C) = (op1 > IX);
+	V_CMP_flag(IX, op1);
+}
+
+:CPX opr8a_16                 is XGATE=0 & Prefix18=0 & (op8=0x9E); opr8a_16
+{ 
+	op1:2 = opr8a_16;
+	tmp:2 = IX - op1;
+	$(Z) = (tmp == 0);
+	$(N) = (tmp s< 0);
+	$(C) = (op1 > IX);
+	V_CMP_flag(IX, op1);
+}
+
+:CPX opr16a_16                 is XGATE=0 & Prefix18=0 & (op8=0xBE); opr16a_16
+{ 
+	op1:2 = opr16a_16;
+	tmp:2 = IX - op1;
+	$(Z) = (tmp == 0);
+	$(N) = (tmp s< 0);
+	$(C) = (op1 > IX);
+	V_CMP_flag(IX, op1);
+}
+
+:CPX indexed2_5                 is XGATE=0 & Prefix18=0 & (op8=0xAE); indexed2_5
+{ 
+	op1:2 = indexed2_5;
+	tmp:2 = IX - op1;
+	$(Z) = (tmp == 0);
+	$(N) = (tmp s< 0);
+	$(C) = (op1 > IX);
+	V_CMP_flag(IX, op1);
+}
+
+:CPY iopr16i                 is XGATE=0 & Prefix18=0 & (op8=0x8D); iopr16i
+{ 
+	op1:2 = iopr16i;
+	tmp:2 = IY - op1;
+	$(Z) = (tmp == 0);
+	$(N) = (tmp s< 0);
+	$(C) = (op1 > IY);
+	V_CMP_flag(IY, op1);
+}
+
+:CPY opr8a_16                 is XGATE=0 & Prefix18=0 & (op8=0x9D); opr8a_16
+{ 
+	op1:2 = opr8a_16;
+	tmp:2 = IY - op1;
+	$(Z) = (tmp == 0);
+	$(N) = (tmp s< 0);
+	$(C) = (op1 > IY);
+	V_CMP_flag(IY, op1);
+}
+
+:CPY opr16a_16                 is XGATE=0 & Prefix18=0 & (op8=0xBD); opr16a_16
+{ 
+	op1:2 = opr16a_16;
+	tmp:2 = IY - op1;
+	$(Z) = (tmp == 0);
+	$(N) = (tmp s< 0);
+	$(C) = (op1 > IY);
+	V_CMP_flag(IY, op1);
+}
+
+:CPY indexed2_5                 is XGATE=0 & Prefix18=0 & (op8=0xAD); indexed2_5
+{ 
+	op1:2 = indexed2_5;
+	tmp:2 = IY - op1;
+	$(Z) = (tmp == 0);
+	$(N) = (tmp s< 0);
+	$(C) = (op1 > IY);
+	V_CMP_flag(IY, op1);
+}
+
+:DAA                     is XGATE=0 & Prefix18=1 & op8=0x07 
+{
+	A = decimalAdjustAccumulator(A, $(C), $(H));
+	$(C) = decimalAdjustCarry(A, $(C), $(H));
+	$(Z) = (A == 0);
+	$(N) = (A s< 0);
+	#V is undefined
+}
+
+:DBEQ byte9_8, rel9               is XGATE=0 & Prefix18=0 & op8=0x04; op15_13=0x0 & size10_10=0 & byte9_8 & rel9
+{
+	byte9_8 = byte9_8 - 1;
+	if (byte9_8 == 0) goto rel9;
+}
+
+:DBEQ word9_8, rel9               is XGATE=0 & Prefix18=0 & op8=0x04; op15_13=0x0 & size10_10=1 & word9_8 & rel9
+{
+	word9_8 = word9_8 - 1;
+	if (word9_8 == 0) goto rel9;
+}
+
+:DBNE byte9_8, rel9               is XGATE=0 & Prefix18=0 & op8=0x04; op15_13=0x1 & size10_10=0 & byte9_8 & rel9
+{
+	byte9_8 = byte9_8 - 1;
+	if (byte9_8 != 0) goto rel9;
+}
+
+:DBNE word9_8, rel9               is XGATE=0 & Prefix18=0 & op8=0x04; op15_13=0x1 & size10_10=1 & word9_8 & rel9
+{
+	word9_8 = word9_8 - 1;
+	if (word9_8 != 0) goto rel9;
+}
+
+:DEC opr16a_8                 is XGATE=0 & Prefix18=0 & (op8=0x73); opr16a_8
+{
+	tmp:1 = opr16a_8;
+	result:1 = tmp - 1;
+	opr16a_8 = result;
+	$(Z) = (result == 0);
+	$(N) = (result s< 0);
+	V_DEC_flag(tmp);
+}
+
+:DEC indexed1_5                 is XGATE=0 & Prefix18=0 & (op8=0x63); indexed1_5 
+{
+	tmp:1 = indexed1_5;
+	result:1 = tmp - 1;
+	indexed1_5 = result;
+	$(Z) = (result == 0);
+	$(N) = (result s< 0);
+	V_DEC_flag(tmp);
+}
+
+:DECA                    is XGATE=0 & Prefix18=0 & op8=0x43 
+{
+	tmp:1 = A;
+	A = tmp - 1;
+	$(Z) = (A == 0);
+	$(N) = (A s< 0);
+	V_DEC_flag(tmp);
+}
+
+:DECB                    is XGATE=0 & Prefix18=0 & op8=0x53 
+{
+	tmp:1 = B;
+	B = tmp - 1;
+	$(Z) = (B == 0);
+	$(N) = (B s< 0);
+	V_DEC_flag(tmp);
+}
+
+@if defined(HCS12X)
+:DECW opr16a_16                 is XGATE=0 & Prefix18=1 & (op8=0x73); opr16a_16
+{
+	local tmp = opr16a_16;
+	local result = tmp - 1;
+	opr16a_16 = result;
+	$(Z) = (result == 0);
+	$(N) = (result s< 0);
+	V_DEC_flag2(tmp);
+}
+@endif
+
+@if defined(HCS12X)
+:DECW indexed2_5                 is XGATE=0 & Prefix18=1 & (op8=0x63); indexed2_5 
+{
+	local tmp = indexed2_5;
+	local result = tmp - 1;
+	indexed2_5 = result;
+	$(Z) = (result == 0);
+	$(N) = (result s< 0);
+	V_DEC_flag2(tmp);
+}
+@endif
+
+@if defined(HCS12X)
+:DECX                    is XGATE=0 & Prefix18=1 & op8=0x43 
+{
+	local tmp = IX;
+	IX = tmp - 1;
+	$(Z) = (IX == 0);
+	$(N) = (IX s< 0);
+	V_DEC_flag2(tmp);
+}
+@endif
+
+@if defined(HCS12X)
+:DECY                    is XGATE=0 & Prefix18=1 & op8=0x53 
+{
+	local tmp = IY;
+	IY = tmp - 1;
+	$(Z) = (IY == 0);
+	$(N) = (IY s< 0);
+	V_DEC_flag2(tmp);
+}
+@endif
+
+:DES                    is XGATE=0 & Prefix18=0 & op16=0x1B9F 
+{
+	SP = SP - 1;
+}
+
+:DEX                    is XGATE=0 & Prefix18=0 & op8=0x09 
+{
+	IX = IX - 1;
+	$(Z) = (IX == 0);
+}
+
+:DEY                    is XGATE=0 & Prefix18=0 & op8=0x03 
+{
+	IY = IY - 1;
+	$(Z) = (IY == 0);
+}
+
+:EDIV                     is XGATE=0 & Prefix18=0 & op8=0x11 
+{
+	tmp:4 = (zext(IY) << 16) | (zext(D));
+	resultQ:4 = tmp / zext(IX);
+	resultR:4 = tmp % zext(IX);
+	IY = resultQ:2;
+	D  = resultR:2;
+	$(N) = (IY s< 0);
+	$(Z) = (IY == 0);
+	$(V) = (resultQ > 0x0000FFFF);
+	$(C) = (IX == 0);
+}
+
+:EDIVS                     is XGATE=0 & Prefix18=1 & op8=0x14 
+{
+	tmp:4 = (zext(IY) << 16) | (zext(D));
+	resultQ:4 = tmp s/ sext(IX);
+	resultR:4 = tmp s% sext(IX);
+	IY = resultQ:2;
+	D  = resultR:2;
+	$(N) = (IY s< 0);
+	$(Z) = (IY == 0);
+	$(V) = (resultQ s> 0x00007FFF) | (resultQ s< 0x00008000);
+	$(C) = (IX == 0);
+}
+
+:EMACS opr16a                    is XGATE=0 & Prefix18=1 & op8=0x12; opr16a 
+{
+	local valx:2 = 0;
+	local valy:2 = 0;
+	Load2(valx,IX);
+	Load2(valy,IY);
+	result:4 = sext(valx) * sext(valy);
+	Store(opr16a, result);
+	$(N) = (result s< 0);
+	$(Z) = (result == 0);
+	$(V) = (result s> 0x000000007FFFFFFF) | (result s< 0x0000000080000000);
+	$(C) = (result > 0x00000000FFFFFFFF);
+}
+
+:EMAXD indexed2_5                    is XGATE=0 & Prefix18=1 & op8=0x1A; indexed2_5 
+{
+	result:4 = zext(D) - zext(indexed2_5);
+	if (D > indexed2_5) goto <done>;
+		D = indexed2_5;
+	<done>
+	
+	$(N) = (result:2 s< 0);
+	$(Z) = (result:2 == 0);
+	$(V) = (result s> 0x00007FFF) | (result s< 0x00008000);
+	$(C) = (result > 0x0000FFFF);
+}
+
+:EMAXM indexed2_5                    is XGATE=0 & Prefix18=1 & op8=0x1E; indexed2_5 
+{
+	result:4 = zext(D) - zext(indexed2_5);
+	if (D > indexed2_5) goto <done>;
+		indexed2_5 = D;
+	<done>
+	
+	$(N) = (result:2 s< 0);
+	$(Z) = (result:2 == 0);
+	$(V) = (result s> 0x00007FFF) | (result s< 0x00008000);
+	$(C) = (result > 0x0000FFFF);
+}
+
+:EMIND indexed2_5                    is XGATE=0 & Prefix18=1 & op8=0x1B; indexed2_5 
+{
+	result:4 = zext(D) - zext(indexed2_5);
+	if (D < indexed2_5) goto <done>;
+		D = indexed2_5;
+	<done>
+	
+	$(N) = (result:2 s< 0);
+	$(Z) = (result:2 == 0);
+	$(V) = (result s> 0x00007FFF) | (result s< 0x00008000);
+	$(C) = (result > 0x0000FFFF);
+}
+
+:EMINM indexed2_5                    is XGATE=0 & Prefix18=1 & op8=0x1F; indexed2_5 
+{
+	result:4 = zext(D) - zext(indexed2_5);
+	if (D < indexed2_5) goto <done>;
+		indexed2_5 = D;
+	<done>
+	
+	$(N) = (result:2 s< 0);
+	$(Z) = (result:2 == 0);
+	$(V) = (result s> 0x00007FFF) | (result s< 0x00008000);
+	$(C) = (result > 0x0000FFFF);
+}
+
+:EMUL                     is XGATE=0 & Prefix18=0 & op8=0x13
+{
+	result:4 = zext(D) * zext(IY);
+	IY = result(2);
+	D = result:2;
+	$(N) = result[31,1];
+	$(Z) = (result == 0);
+	$(C) = result[15,1];
+}
+
+:EMULS                     is XGATE=0 & Prefix18=1 & op8=0x13
+{
+	result:4 = sext(D) * sext(IY);
+	IY = result(2);
+	D = result:2;
+	$(N) = result[31,1];
+	$(Z) = (result == 0);
+	$(C) = result[15,1];
+}
+
+:EORA iopr8i                 is XGATE=0 & Prefix18=0 & (op8=0x88); iopr8i
+{ 
+	op1:1 = iopr8i;
+	A = A ^ op1;
+	$(Z) = (A == 0);
+	$(N) = (A s< 0);
+	V_equals_0();
+}
+
+:EORA opr8a_8                 is XGATE=0 & Prefix18=0 & (op8=0x98); opr8a_8
+{ 
+	op1:1 = opr8a_8;
+	A = A ^ op1;
+	$(Z) = (A == 0);
+	$(N) = (A s< 0);
+	V_equals_0();
+}
+
+:EORA opr16a_8                 is XGATE=0 & Prefix18=0 & (op8=0xB8); opr16a_8
+{ 
+	op1:1 = opr16a_8;
+	A = A ^ op1;
+	$(Z) = (A == 0);
+	$(N) = (A s< 0);
+	V_equals_0();
+}
+
+:EORA indexed1_5                 is XGATE=0 & Prefix18=0 & (op8=0xA8); indexed1_5
+{ 
+	op1:1 = indexed1_5;
+	A = A ^ op1;
+	$(Z) = (A == 0);
+	$(N) = (A s< 0);
+	V_equals_0();
+}
+
+:EORB iopr8i                 is XGATE=0 & Prefix18=0 & (op8=0xC8); iopr8i
+{ 
+	op1:1 = iopr8i;
+	B = B ^ op1;
+	$(Z) = (B == 0);
+	$(N) = (B s< 0);
+	V_equals_0();
+}
+
+:EORB opr8a_8                 is XGATE=0 & Prefix18=0 & (op8=0xD8); opr8a_8
+{ 
+	op1:1 = opr8a_8;
+	B = B ^ op1;
+	$(Z) = (B == 0);
+	$(N) = (B s< 0);
+	V_equals_0();
+}
+
+:EORB opr16a_8                 is XGATE=0 & Prefix18=0 & (op8=0xF8); opr16a_8
+{ 
+	op1:1 = opr16a_8;
+	B = B ^ op1;
+	$(Z) = (B == 0);
+	$(N) = (B s< 0);
+	V_equals_0();
+}
+
+:EORB indexed1_5                 is XGATE=0 & Prefix18=0 & (op8=0xE8); indexed1_5
+{ 
+	op1:1 = indexed1_5;
+	B = B ^ op1;
+	$(Z) = (B == 0);
+	$(N) = (B s< 0);
+	V_equals_0();
+}
+
+@if defined(HCS12X)
+:EORX iopr16i                 is XGATE=0 & Prefix18=1 & (op8=0x88); iopr16i
+{ 
+	local op1 = iopr16i;
+	IX = IX ^ op1;
+	$(Z) = (IX == 0);
+	$(N) = (IX s< 0);
+	V_equals_0();
+}
+@endif
+
+@if defined(HCS12X)
+:EORX opr8a_16                 is XGATE=0 & Prefix18=1 & (op8=0x98); opr8a_16
+{ 
+	local op1 = opr8a_16;
+	IX = IX ^ op1;
+	$(Z) = (IX == 0);
+	$(N) = (IX s< 0);
+	V_equals_0();
+}
+@endif
+
+@if defined(HCS12X)
+:EORX opr16a_16                 is XGATE=0 & Prefix18=1 & (op8=0xB8); opr16a_16
+{ 
+	local op1 = opr16a_16;
+	IX = IX ^ op1;
+	$(Z) = (IX == 0);
+	$(N) = (IX s< 0);
+	V_equals_0();
+}
+@endif
+
+@if defined(HCS12X)
+:EORX indexed2_5                 is XGATE=0 & Prefix18=1 & (op8=0xA8); indexed2_5
+{ 
+	local op1 = indexed2_5;
+	IX = IX ^ op1;
+	$(Z) = (IX == 0);
+	$(N) = (IX s< 0);
+	V_equals_0();
+}
+@endif
+
+@if defined(HCS12X)
+:EORY iopr16i                 is XGATE=0 & Prefix18=1 & (op8=0xC8); iopr16i
+{ 
+	local op1 = iopr16i;
+	IY = IY ^ op1;
+	$(Z) = (IY == 0);
+	$(N) = (IY s< 0);
+	V_equals_0();
+}
+@endif
+
+@if defined(HCS12X)
+:EORY opr8a_16                 is XGATE=0 & Prefix18=1 & (op8=0xD8); opr8a_16
+{ 
+	local op1 = opr8a_16;
+	IY = IY ^ op1;
+	$(Z) = (IY == 0);
+	$(N) = (IY s< 0);
+	V_equals_0();
+}
+
+@if defined(HCS12X)
+:EORY opr16a_16                 is XGATE=0 & Prefix18=1 & (op8=0xF8); opr16a_16
+{ 
+	local op1 = opr16a_16;
+	IY = IY ^ op1;
+	$(Z) = (IY == 0);
+	$(N) = (IY s< 0);
+	V_equals_0();
+}
+@endif
+
+@if defined(HCS12X)
+:EORY indexed2_5                 is XGATE=0 & Prefix18=1 & (op8=0xE8); indexed2_5
+{ 
+	local op1 = indexed2_5;
+	IY = IY ^ op1;
+	$(Z) = (IY == 0);
+	$(N) = (IY s< 0);
+	V_equals_0();
+}
+@endif
+
+:ETBL indexed2_1                    is XGATE=0 & Prefix18=1 & op8=0x3F; indexed2_1 
+{
+	D = ETBL( indexed2_1, B );
+	$(N) = (D s< 0);
+	$(Z) = (D == 0);
+	$(C) = ETBL_Cflag( indexed2_1, B );
+}
+
+# this case 'C0' or 'C8', does not display similarly to other members of either its row or column
+:EXG D, A	is XGATE=0 & Prefix18=0 & ( op8=0xB7 );
+	(
+		( rows3_0=0x0 & (                                                                     columns7_4=0xC                                                    ) ) |
+
+		( rows3_0=0x8 & (                                                                     columns7_4=0xC                                                    ) ) 
+	) &
+	D & A
+{
+	tmp:1 = B;
+	B = A;
+	A = tmp;
+} 
+
+# this case 'C1' or 'C9', does not work similarly to other members of either its row or column
+:EXG D, B	is XGATE=0 & Prefix18=0 & ( op8=0xB7 );
+	(
+		( rows3_0=0x1 & (                                                                     columns7_4=0xC                                                    ) ) |
+
+		( rows3_0=0x9 & (                                                                     columns7_4=0xC                                                    ) ) 
+	) &
+	D & B
+{
+	B = B;
+	A = 0xFF;
+} 
+
+# this case '84' or '8C', does not work similarly to other members of either its row or column
+:EXG A, D	is XGATE=0 & Prefix18=0 & ( op8=0xB7 );
+	(
+		( rows3_0=0x4 & ( columns7_4=0x8                                                                                                                        ) ) |
+
+		( rows3_0=0xC & ( columns7_4=0x8                                                                                                                        ) ) 
+	) &
+	A & D
+{
+	D = zext(A);
+} 
+
+# this case '94' or '9C', does not work similarly to other members of either its row or column
+:EXG B, D	is XGATE=0 & Prefix18=0 & ( op8=0xB7 );
+	(
+		( rows3_0=0x4 & (                  columns7_4=0x9                                                                                                       ) ) |
+
+		( rows3_0=0xC & (                  columns7_4=0x9                                                                                                       ) ) 
+	) &
+	B & D
+{
+	D = zext(B);
+} 
+
+# this case 'A8', does not work the same as 'A0'
+:EXG CCRH, A	is XGATE=0 & Prefix18=0 & ( op8=0xB7 );
+	(
+		( rows3_0=0x8 & (                                   columns7_4=0xA                                                                                      ) ) 
+	) &
+	CCRH & A
+{
+	tmp:1 = CCRH;
+	CCRH = A;
+	A = tmp;
+} 
+
+# this case '8A', does not work the same as '82'
+:EXG A, CCRH	is XGATE=0 & Prefix18=0 & ( op8=0xB7 );
+	(
+		( rows3_0=0xA & ( columns7_4=0x8                                                                                                                        ) ) 
+	) &
+	A & CCRH
+{
+	tmp:1 = A;
+	A = CCRH;
+	CCRH = tmp;
+} 
+
+# this case 'AA', does not display the same as 'A2'
+:EXG CCRW, "CCRW"	is XGATE=0 & Prefix18=0 & ( op8=0xB7 );
+	(
+		( rows3_0=0xA & (                                   columns7_4=0xA                                                                                      ) ) 
+	) &
+	CCRW
+{
+	CCRW = CCRW;
+} 
+
+:EXG bytes_ABCl_6_4, bytes_ABCl_2_0	is XGATE=0 & Prefix18=0 & ( op8=0xB7 );
+	(
+		( rows3_0=0x0 & ( columns7_4=0x8 | columns7_4=0x9                                                                                                       ) ) |
+		( rows3_0=0x1 & ( columns7_4=0x8 | columns7_4=0x9                                                                                                       ) ) |
+
+		( rows3_0=0x8 & ( columns7_4=0x8 | columns7_4=0x9                                                                                                       ) ) |
+		( rows3_0=0x9 & ( columns7_4=0x8 | columns7_4=0x9                                                                                                       ) ) 
+	) &
+	bytes_ABCl_6_4 & bytes_ABCl_2_0 
+{
+	tmp:1 = bytes_ABCl_2_0;
+	bytes_ABCl_2_0 = bytes_ABCl_6_4;
+	bytes_ABCl_6_4 = tmp;
+}
+
+:EXG bytes_ABCl_6_4, CCR	is XGATE=0 & Prefix18=0 & ( op8=0xB7 );
+	(
+		( rows3_0=0x2 & ( columns7_4=0x8 | columns7_4=0x9                                                                                                       ) ) |
+
+		( rows3_0=0xA & (                  columns7_4=0x9                                                                                                       ) ) 
+	) &
+	bytes_ABCl_6_4 & CCR
+{
+	tmp:1 = bytes_ABCl_6_4;
+	bytes_ABCl_6_4 = CCR;
+	setCCR( tmp );
+}
+
+:EXG CCR, bytes_ABCl_2_0	is XGATE=0 & Prefix18=0 & ( op8=0xB7 );
+	(
+		( rows3_0=0x0 & (                                   columns7_4=0xA                                                                                      ) ) |
+		( rows3_0=0x1 & (                                   columns7_4=0xA                                                                                      ) ) |
+		( rows3_0=0x2 & (                                   columns7_4=0xA                                                                                      ) ) |
+
+		( rows3_0=0x9 & (                                   columns7_4=0xA                                                                                      ) ) 
+	) &
+	CCR & bytes_ABCl_2_0 
+{
+	tmp:1 = bytes_ABCl_2_0;
+	bytes_ABCl_2_0 = CCR;
+	setCCR( tmp );
+}
+
+:EXG bytes_T3l_XlYlSl_6_4, A	is XGATE=0 & Prefix18=0 & ( op8=0xB7 );
+	(
+		( rows3_0=0x0 & (                                                    columns7_4=0xB |                  columns7_4=0xD | columns7_4=0xE | columns7_4=0xF ) ) 
+	) &
+	bytes_T3l_XlYlSl_6_4 & words_T3_XYS_6_4 & A 
+{
+	tmp:2 = zext(A);
+	A = bytes_T3l_XlYlSl_6_4;
+	words_T3_XYS_6_4 = tmp;
+}
+
+:EXG bytes_T3h_XhYhSh_6_4, A	is XGATE=0 & Prefix18=0 & ( op8=0xB7 );
+	(
+		( rows3_0=0x8 & (                                                    columns7_4=0xB |                  columns7_4=0xD | columns7_4=0xE | columns7_4=0xF ) ) 
+	) &
+	bytes_T3h_XhYhSh_6_4 & words_T3_XYS_6_4 & A 
+{
+	tmp:2 = zext(A);
+	A = bytes_T3h_XhYhSh_6_4;
+	words_T3_XYS_6_4 = tmp;
+}
+
+:EXG bytes_T3l_XlYlSl_6_4, B	is XGATE=0 & Prefix18=0 & ( op8=0xB7 );
+	(
+		( rows3_0=0x1 & (                                                    columns7_4=0xB |                  columns7_4=0xD | columns7_4=0xE | columns7_4=0xF ) ) 
+	) &
+	bytes_T3l_XlYlSl_6_4 & words_T3_XYS_6_4 & B 
+{
+	tmp:2 = 0xFF00 | zext(B);
+	B = bytes_T3l_XlYlSl_6_4;
+	words_T3_XYS_6_4 = tmp;
+}
+
+:EXG bytes_T3l_XlYlSl_6_4, B	is XGATE=0 & Prefix18=0 & ( op8=0xB7 );
+	(
+		( rows3_0=0x9 & (                                                    columns7_4=0xB |                  columns7_4=0xD | columns7_4=0xE | columns7_4=0xF ) ) 
+	) &
+	bytes_T3l_XlYlSl_6_4 & B 
+{
+	tmp:1 = B;
+	B = bytes_T3l_XlYlSl_6_4;
+	bytes_T3l_XlYlSl_6_4 = tmp;
+}
+
+:EXG bytes_T3lDlXlYlSl_6_4, CCR	is XGATE=0 & Prefix18=0 & ( op8=0xB7 );
+	(
+		( rows3_0=0x2 & (                                                    columns7_4=0xB | columns7_4=0xC | columns7_4=0xD | columns7_4=0xE | columns7_4=0xF ) ) 
+	) &
+	bytes_T3lDlXlYlSl_6_4 & words_T3DXYS_6_4 & CCR
+{
+	tmp:2 = 0xFF00 | zext(CCR);
+	# when CCR is the destination, cannot set the X bit unless it is already set in CCR
+	setCCR( bytes_T3lDlXlYlSl_6_4 );
+	words_T3DXYS_6_4 = tmp;
+}
+
+:EXG words_T3DXYS_6_4, CCRW	is XGATE=0 & Prefix18=0 & ( op8=0xB7 );
+	(
+		( rows3_0=0xA & (                                                    columns7_4=0xB | columns7_4=0xC | columns7_4=0xD | columns7_4=0xE | columns7_4=0xF ) ) 
+	) &
+	words_T3DXYS_6_4 & CCRW
+{
+	tmp:2 = CCRW;
+	setCCRW( words_T3DXYS_6_4 );
+	words_T3DXYS_6_4 = tmp;
+}
+
+# this case 'CB', does not work similarly to other members of either its row or column
+:EXG D, TMP1	is XGATE=0 & Prefix18=0 & ( op8=0xB7 );
+	(
+		( rows3_0=0xB & (                                                                     columns7_4=0xC                                                    ) ) 
+	) &
+ 	D & TMP1
+{
+	tmp:2 = D;
+	D = TMP1;
+	TMP1 = tmp;
+} 
+
+# this case 'BC', does not work similarly to other members of either its row or column
+:EXG TMP1, D	is XGATE=0 & Prefix18=0 & ( op8=0xB7 );
+	(
+		( rows3_0=0xC & (                                                    columns7_4=0xB                                                                     ) ) 
+	) &
+	TMP1 & D
+{
+	tmp:2 = TMP1;
+	TMP1 = D;
+	D = tmp;
+} 
+
+:EXG words_T3DXYS_6_4, words_T2DXYS_2_0	is XGATE=0 & Prefix18=0 & ( op8=0xB7 );
+	(
+# Case "C5" is handled by XGDX
+# Case "C6" is handled by XGDY
+		( rows3_0=0x3 & (                                                    columns7_4=0xB | columns7_4=0xC | columns7_4=0xD | columns7_4=0xE | columns7_4=0xF ) ) |
+		( rows3_0=0x4 & (                                                    columns7_4=0xB | columns7_4=0xC | columns7_4=0xD | columns7_4=0xE | columns7_4=0xF ) ) |
+		( rows3_0=0x5 & (                                                    columns7_4=0xB |                  columns7_4=0xD | columns7_4=0xE | columns7_4=0xF ) ) |
+		( rows3_0=0x6 & (                                                    columns7_4=0xB |                  columns7_4=0xD | columns7_4=0xE | columns7_4=0xF ) ) |
+		( rows3_0=0x7 & (                                                    columns7_4=0xB | columns7_4=0xC | columns7_4=0xD | columns7_4=0xE | columns7_4=0xF ) ) |
+
+		( rows3_0=0xB & (                                                    columns7_4=0xB |                  columns7_4=0xD | columns7_4=0xE | columns7_4=0xF ) ) |
+		( rows3_0=0xC & (                                                                     columns7_4=0xC | columns7_4=0xD | columns7_4=0xE | columns7_4=0xF ) ) |
+		( rows3_0=0xD & (                                                    columns7_4=0xB | columns7_4=0xC | columns7_4=0xD | columns7_4=0xE | columns7_4=0xF ) ) |
+		( rows3_0=0xE & (                                                    columns7_4=0xB | columns7_4=0xC | columns7_4=0xD | columns7_4=0xE | columns7_4=0xF ) ) |
+		( rows3_0=0xF & (                                                    columns7_4=0xB | columns7_4=0xC | columns7_4=0xD | columns7_4=0xE | columns7_4=0xF ) ) 
+	) &
+	words_T3DXYS_6_4 & words_T2DXYS_2_0  
+{
+	tmp:2 = words_T3DXYS_6_4;
+	words_T3DXYS_6_4 = words_T2DXYS_2_0;
+	words_T2DXYS_2_0 = tmp;
+}
+
+:EXG bytes_ABCl_6_4, words_T2DXYS_2_0	is XGATE=0 & Prefix18=0 & ( op8=0xB7 );
+	(
+		( rows3_0=0x3 & ( columns7_4=0x8 | columns7_4=0x9                                                                                                       ) ) |
+
+		( rows3_0=0x5 & ( columns7_4=0x8 | columns7_4=0x9                                                                                                       ) ) |
+		( rows3_0=0x6 & ( columns7_4=0x8 | columns7_4=0x9                                                                                                       ) ) |
+		( rows3_0=0x7 & ( columns7_4=0x8 | columns7_4=0x9                                                                                                       ) ) 
+	) &
+	bytes_ABCl_6_4 & words_T2DXYS_2_0 & bytes_T2lDlXlYlSl_2_0  
+{
+	tmp:2 = zext(bytes_ABCl_6_4);
+	bytes_ABCl_6_4 = bytes_T2lDlXlYlSl_2_0;
+	words_T2DXYS_2_0 = tmp;
+}
+
+:EXG bytes_ABCl_6_4, bytes_T2hDhXhYhSh_2_0	is XGATE=0 & Prefix18=0 & ( op8=0xB7 );
+	(
+		( rows3_0=0xB & ( columns7_4=0x8                                                                                                                        ) ) |
+
+		( rows3_0=0xD & ( columns7_4=0x8                                                                                                                        ) ) |
+		( rows3_0=0xE & ( columns7_4=0x8                                                                                                                        ) ) |
+		( rows3_0=0xF & ( columns7_4=0x8                                                                                                                        ) ) 
+	) &
+	bytes_ABCl_6_4 & bytes_T2hDhXhYhSh_2_0  
+{
+	tmp:1 = bytes_ABCl_6_4;
+	bytes_ABCl_6_4 = bytes_T2hDhXhYhSh_2_0;
+	bytes_T2hDhXhYhSh_2_0 = tmp;
+}
+
+# only column 9 with rows B, (skip C), D, E, and F
+:EXG bytes_ABCl_6_4, bytes_T2lDlXlYlSl_2_0	is XGATE=0 & Prefix18=0 & ( op8=0xB7 );
+	(
+		( rows3_0=0xB & (                  columns7_4=0x9                                                                                                       ) ) |
+
+		( rows3_0=0xD & (                  columns7_4=0x9                                                                                                       ) ) |
+		( rows3_0=0xE & (                  columns7_4=0x9                                                                                                       ) ) |
+		( rows3_0=0xF & (                  columns7_4=0x9                                                                                                       ) ) 
+	) &
+	bytes_ABCl_6_4 & bytes_T2lDlXlYlSl_2_0  
+{
+	tmp:1 = bytes_ABCl_6_4;
+	bytes_ABCl_6_4 = bytes_T2lDlXlYlSl_2_0;
+	bytes_T2lDlXlYlSl_2_0 = tmp;
+}
+
+:EXG CCR, words_T2DXYS_2_0	is XGATE=0 & Prefix18=0 & ( op8=0xB7 );
+	(
+		( rows3_0=0x3 & (                                   columns7_4=0xA                                                                                      ) ) |
+		( rows3_0=0x4 & (                                   columns7_4=0xA                                                                                      ) ) |
+		( rows3_0=0x5 & (                                   columns7_4=0xA                                                                                      ) ) |
+		( rows3_0=0x6 & (                                   columns7_4=0xA                                                                                      ) ) |
+		( rows3_0=0x7 & (                                   columns7_4=0xA                                                                                      ) ) 
+	) &
+	CCR & words_T2DXYS_2_0 & bytes_T2lDlXlYlSl_2_0
+{
+	tmp:2 = zext(CCR);
+	setCCR( bytes_T2lDlXlYlSl_2_0 );
+	words_T2DXYS_2_0 = tmp;
+}
+
+:EXG CCRW, words_T2DXYS_2_0	is XGATE=0 & Prefix18=0 & ( op8=0xB7 );
+	(
+		( rows3_0=0xB & (                                   columns7_4=0xA                                                                                      ) ) |
+		( rows3_0=0xC & (                                   columns7_4=0xA                                                                                      ) ) |
+		( rows3_0=0xD & (                                   columns7_4=0xA                                                                                      ) ) |
+		( rows3_0=0xE & (                                   columns7_4=0xA                                                                                      ) ) |
+		( rows3_0=0xF & (                                   columns7_4=0xA                                                                                      ) ) 
+	) &
+	CCRW & words_T2DXYS_2_0
+{
+	tmp:2 = CCRW;
+	setCCRW( words_T2DXYS_2_0 );
+	words_T2DXYS_2_0 = tmp;
+}
+
+:FDIV                     is XGATE=0 & Prefix18=1 & op8=0x11 
+{
+	$(V) = (IX <= D);
+	$(C) = (IX == 0);
+	tmp:4 = (zext(D) << 16);
+	resultQ:4 = tmp / zext(IX);
+	resultR:4 = tmp % zext(IX);
+	IX = resultQ:2;
+	D  = resultR:2;
+	$(Z) = (IX == 0);
+}
+
+#:GLDAA 	is op16=0x1896		See GPAGE extended LDAA
+#:GLDAA 	is op16=0x18B6		See GPAGE extended LDAA
+#:GLDAA 	is op16=0x18A6		See GPAGE extended LDAA
+
+#:GLDAB 	is op16=0x18D6		See GPAGE extended LDAB
+#:GLDAB 	is op16=0x18F6		See GPAGE extended LDAB
+#:GLDAB 	is op16=0x18E6		See GPAGE extended LDAB
+
+#:GLDD 	is op16=0x18DC		See GPAGE extended LDD
+#:GLDD 	is op16=0x18FC		See GPAGE extended LDD
+#:GLDD 	is op16=0x18EC		See GPAGE extended LDD
+
+#:GLDS 	is op16=0x18DF		See GPAGE extended LDS
+#:GLDS 	is op16=0x18FF		See GPAGE extended LDS
+#:GLDS 	is op16=0x18EF		See GPAGE extended LDS
+
+#:GLDX 	is op16=0x18DE		See GPAGE extended LDX
+#:GLDX 	is op16=0x18FE		See GPAGE extended LDX
+#:GLDX 	is op16=0x18EE		See GPAGE extended LDX
+
+#:GLDY 	is op16=0x18DD		See GPAGE extended LDY
+#:GLDY 	is op16=0x18FD		See GPAGE extended LDY
+#:GLDY 	is op16=0x18ED		See GPAGE extended LDY
+
+#:GSTAA 	is op16=0x185A		See GPAGE extended STAA
+#:GSTAA 	is op16=0x187A		See GPAGE extended STAA
+#:GSTAA 	is op16=0x186A		See GPAGE extended STAA
+
+#:GSTAB 	is op16=0x185B		See GPAGE extended STAB
+#:GSTAB 	is op16=0x187B		See GPAGE extended STAB
+#:GSTAB 	is op16=0x186B		See GPAGE extended STAB
+
+#:GSTD 	is op16=0x185C		See GPAGE extended STD
+#:GSTD 	is op16=0x187C		See GPAGE extended STD
+#:GSTD 	is op16=0x186C		See GPAGE extended STD
+
+#:GSTS 	is op16=0x185F		See GPAGE extended STS
+#:GSTS 	is op16=0x187F		See GPAGE extended STS
+#:GSTS 	is op16=0x186F		See GPAGE extended STS
+
+#:GSTX 	is op16=0x185E		See GPAGE extended STX
+#:GSTX 	is op16=0x187E		See GPAGE extended STX
+#:GSTX 	is op16=0x186E		See GPAGE extended STX
+
+#:GSTY 	is op16=0x185D		See GPAGE extended STY
+#:GSTY 	is op16=0x187D		See GPAGE extended STY
+#:GSTY 	is op16=0x186D		See GPAGE extended STY
+
+
+:IBEQ byte9_8, rel9               is XGATE=0 & Prefix18=0 & op8=0x04; op15_13=0x4 & size10_10=0 & byte9_8 & rel9
+{
+	byte9_8 = byte9_8 + 1;
+	if (byte9_8 == 0) goto rel9;
+}
+
+:IBEQ word9_8, rel9               is XGATE=0 & Prefix18=0 & op8=0x04; op15_13=0x4 & size10_10=1 & word9_8 & rel9
+{
+	word9_8 = word9_8 + 1;
+	if (word9_8 == 0) goto rel9;
+}
+
+:IBNE byte9_8, rel9               is XGATE=0 & Prefix18=0 & op8=0x04; op15_13=0x5 & size10_10=0 & byte9_8 & rel9
+{
+	byte9_8 = byte9_8 + 1;
+	if (byte9_8 != 0) goto rel9;
+}
+
+:IBNE word9_8, rel9               is XGATE=0 & Prefix18=0 & op8=0x04; op15_13=0x5 & size10_10=1 & word9_8 & rel9
+{
+	word9_8 = word9_8 + 1;
+	if (word9_8 != 0) goto rel9;
+}
+
+:IDIV                     is XGATE=0 & Prefix18=1 & op8=0x10 
+{
+	$(C) = (IX == 0);
+	resultQ:2 = D / IX;
+	resultR:2 = D % IX;
+	IX = resultQ;
+	D  = resultR;
+	$(Z) = (IX == 0);
+	$(V) = 0;
+}
+
+:IDIVS                    is XGATE=0 & Prefix18=1 & op8=0x15 
+{
+	$(C) = (IX == 0);
+	resultQ:4 = sext(D) s/ sext(IX);
+	resultR:4 = sext(D) s% sext(IX);
+	IX = resultQ:2;
+	D  = resultR:2;
+	$(N) = (IX s< 0);
+	$(Z) = (IX == 0);
+	$(V) = (resultQ s> 0x00007FFF) | (resultQ s< 0x00008000);
+}
+
+:INC opr16a_8                 is XGATE=0 & Prefix18=0 & (op8=0x72); opr16a_8
+{
+	tmp:1 = opr16a_8;
+	result:1 = tmp + 1;
+	opr16a_8 = result;
+	$(Z) = (result == 0);
+	$(N) = (result s< 0);
+	V_INC_flag(tmp);
+}
+
+:INC indexed1_5                 is XGATE=0 & Prefix18=0 & (op8=0x62); indexed1_5 
+{
+	tmp:1 = indexed1_5;
+	result:1 = tmp + 1;
+	indexed1_5 = result;
+	$(Z) = (result == 0);
+	$(N) = (result s< 0);
+	V_INC_flag(tmp);
+}
+
+:INCA                    is XGATE=0 & Prefix18=0 & op8=0x42 
+{
+	tmp:1 = A;
+	A = tmp + 1;
+	$(Z) = (A == 0);
+	$(N) = (A s< 0);
+	V_INC_flag(tmp);
+}
+
+:INCB                    is XGATE=0 & Prefix18=0 & op8=0x52 
+{
+	tmp:1 = B;
+	B = tmp + 1;
+	$(Z) = (B == 0);
+	$(N) = (B s< 0);
+	V_INC_flag(tmp);
+}
+
+@if defined(HCS12X)
+:INCW opr16a_16                 is XGATE=0 & Prefix18=1 & (op8=0x72); opr16a_16
+{
+	tmp:2 = opr16a_16;
+	result:2 = tmp + 1;
+	opr16a_16 = result;
+	$(Z) = (result == 0);
+	$(N) = (result s< 0);
+	V_INC_flag2(tmp);
+}
+@endif
+
+@if defined(HCS12X)
+:INCW indexed2_5                 is XGATE=0 & Prefix18=1 & (op8=0x62); indexed2_5 
+{
+	tmp:2 = indexed2_5;
+	result:2 = tmp + 1;
+	indexed2_5 = result;
+	$(Z) = (result == 0);
+	$(N) = (result s< 0);
+	V_INC_flag2(tmp);
+}
+@endif
+
+@if defined(HCS12X)
+:INCX                    is XGATE=0 & Prefix18=1 & op8=0x42 
+{
+	local tmp = IX;
+	IX = tmp + 1;
+	$(Z) = (IX == 0);
+	$(N) = (IX s< 0);
+	V_INC_flag2(tmp);
+}
+@endif
+
+@if defined(HCS12X)
+:INCY                    is XGATE=0 & Prefix18=1 & op8=0x52 
+{
+	local tmp = IY;
+	IY = tmp + 1;
+	$(Z) = (IY == 0);
+	$(N) = (IY s< 0);
+	V_INC_flag2(tmp);
+}
+@endif
+
+:INS                    is XGATE=0 & Prefix18=0 & op16=0x1B81 
+{
+	SP = SP + 1;
+}
+
+:INX                    is XGATE=0 & Prefix18=0 & op8=0x08 
+{
+	IX = IX + 1;
+	$(Z) = (IX == 0);
+}
+
+:INY                    is XGATE=0 & Prefix18=0 & op8=0x02 
+{
+	IY = IY + 1;
+	$(Z) = (IY == 0);
+}
+
+:JMP opr16a                is XGATE=0 & Prefix18=0 & (op8=0x06); opr16a
+{
+	local target = opr16a;
+	goto [target];
+}
+
+:JMP indexed2_5               is XGATE=0 & Prefix18=0 & (op8=0x05); indexed2_5
+{
+	goto [indexed2_5];
+}
+
+:JSR opr8a                is XGATE=0 & Prefix18=0 & (op8=0x17); opr8a
+{
+	tmp:2 = inst_next;
+	Push2( tmp );
+	
+	local target = opr8a;
+	call [target];
+}
+
+:JSR opr16a              is XGATE=0 & Prefix18=0 & (op8=0x16); opr16a
+{
+	tmp:2 = inst_next;
+	Push2( tmp );
+	 
+	local target = opr16a;
+	call [target];
+}
+
+:JSR indexed2_5               is XGATE=0 & Prefix18=0 & (op8=0x15); indexed2_5
+{
+	tmp:2 = inst_next;
+	Push2( tmp );
+	 
+	call [indexed2_5];
+}
+
+:LBCC rel16                 is XGATE=0 & Prefix18=1 & op8=0x24; rel16
+{
+	if ($(C) == 0) goto rel16;
+}
+
+:LBCS rel16                 is XGATE=0 & Prefix18=1 & op8=0x25; rel16
+{
+	if ($(C) == 1) goto rel16;
+}
+
+:LBEQ rel16                 is XGATE=0 & Prefix18=1 & op8=0x27; rel16
+{
+	if ($(Z) == 1) goto rel16;
+}
+
+:LBGE rel16                 is XGATE=0 & Prefix18=1 & op8=0x2C; rel16
+{
+	if (($(N) ^ $(V)) == 1) goto rel16;
+}
+
+:LBGT rel16                 is XGATE=0 & Prefix18=1 & op8=0x2E; rel16
+{
+	if (($(Z) | ($(N) ^ $(V))) == 0) goto rel16;
+}
+
+:LBHI rel16                 is XGATE=0 & Prefix18=1 & op8=0x22; rel16
+{
+	if (($(C) | $(Z)) == 0) goto rel16;
+}
+
+#:LBHS rel16	is XGATE=0 & Prefix18=1 & op8=0x24; rel16		See LBCC
+
+:LBLE rel16                 is XGATE=0 & Prefix18=1 & op8=0x2F; rel16
+{
+	if ($(Z) | ($(N) ^ $(V))) goto rel16;
+}
+
+#:LBLO rel16	is XGATE=0 & Prefix18=1 & op8=0x25; rel16		see LBCS
+
+:LBLS rel16                 is XGATE=0 & Prefix18=1 & op8=0x23; rel16
+{
+	if (($(C) | $(Z)) == 1) goto rel16;
+}
+
+:LBLT rel16                 is XGATE=0 & Prefix18=1 & op8=0x2D; rel16
+{
+	if (($(N) ^ $(V)) == 1) goto rel16;
+}
+
+:LBMI rel16                 is XGATE=0 & Prefix18=1 & op8=0x2B; rel16
+{
+	if ($(N) == 1) goto rel16;
+}
+
+:LBNE rel16                 is XGATE=0 & Prefix18=1 & op8=0x26; rel16
+{
+	if ($(Z) == 0) goto rel16;
+}
+
+:LBPL rel16                 is XGATE=0 & Prefix18=1 & op8=0x2A; rel16
+{
+	if ($(N) == 0) goto rel16;
+}
+
+:LBRA rel16                 is XGATE=0 & Prefix18=1 & op8=0x20; rel16
+{
+	goto rel16;
+}
+
+# branch never is a four-byte nop
+:LBRN rel16                 is XGATE=0 & Prefix18=1 & op8=0x21; rel16
+{
+}
+
+:LBVC rel16                 is XGATE=0 & Prefix18=1 & op8=0x28; rel16
+{
+	if ($(V) == 0) goto rel16;
+}
+
+:LBVS rel16                 is XGATE=0 & Prefix18=1 & op8=0x29; rel16
+{
+	if ($(V) == 1) goto rel16;
+}
+
+:LDAA iopr8i                 is XGATE=0 & Prefix18=0 & (op8=0x86); iopr8i
+{ 
+	A = iopr8i;
+	$(Z) = (A == 0);
+	$(N) = (A s< 0);
+	V_equals_0();
+}
+
+GPaged: "G" is XGATE=0 & Prefix18=1 [ UseGPAGE=1; ] {}
+GPaged:     is XGATE=0 & Prefix18=0 [ UseGPAGE=0; ] {}
+
+:^GPaged^"LDAA" opr8a_8                 is XGATE=0 & GPaged & (op8=0x96); opr8a_8 [ UseGPAGE=Prefix18; ]
+{
+	build GPaged;
+	A = opr8a_8;
+	$(Z) = (A == 0);
+	$(N) = (A s< 0);
+	V_equals_0();
+}
+
+:^GPaged^"LDAA" opr16a_8                 is XGATE=0 & GPaged & (op8=0xB6); opr16a_8 [ UseGPAGE=Prefix18; ]
+{
+    build GPaged;
+	A = opr16a_8;
+	$(Z) = (A == 0);
+	$(N) = (A s< 0);
+	V_equals_0();
+}
+
+:^GPaged^"LDAA" indexed1_5                 is XGATE=0 & GPaged & (op8=0xA6); indexed1_5 [ UseGPAGE=Prefix18; ]
+{
+	build GPaged;
+	A = indexed1_5;
+	$(Z) = (A == 0);
+	$(N) = (A s< 0);
+	V_equals_0();
+}
+
+:LDAB iopr8i                 is XGATE=0 & Prefix18=0 & (op8=0xC6); iopr8i
+{ 
+	B = iopr8i;
+	$(Z) = (B == 0);
+	$(N) = (B s< 0);
+	V_equals_0();
+}
+
+:^GPaged^"LDAB" opr8a_8                 is XGATE=0 & GPaged & (op8=0xD6); opr8a_8 [ UseGPAGE=Prefix18; ]
+{ 
+    build GPaged;
+	B = opr8a_8;
+	$(Z) = (B == 0);
+	$(N) = (B s< 0);
+	V_equals_0();
+}
+
+:^GPaged^"LDAB" opr16a_8                 is XGATE=0 & GPaged & (op8=0xF6); opr16a_8 [ UseGPAGE=Prefix18; ]
+{
+	build GPaged;
+	B = opr16a_8;
+	$(Z) = (B == 0);
+	$(N) = (B s< 0);
+	V_equals_0();
+}
+
+:^GPaged^"LDAB" indexed1_5                 is XGATE=0 & GPaged & (op8=0xE6); indexed1_5 [ UseGPAGE=Prefix18; ]
+{
+	build GPaged;
+	B = indexed1_5;
+	$(Z) = (B == 0);
+	$(N) = (B s< 0);
+	V_equals_0();
+}
+
+:LDD iopr16i                 is XGATE=0 & Prefix18=0 & (op8=0xCC); iopr16i
+{ 
+	D = iopr16i;
+	$(Z) = (D == 0);
+	$(N) = (D s< 0);
+	V_equals_0();
+}
+
+:^GPaged^"LDD" opr8a_16                 is XGATE=0 & GPaged & (op8=0xDC); opr8a_16 [ UseGPAGE=Prefix18; ]
+{
+	build GPaged;
+	D = opr8a_16;
+	$(Z) = (D == 0);
+	$(N) = (D s< 0);
+	V_equals_0();
+}
+
+:^GPaged^"LDD" opr16a_16                 is XGATE=0 & GPaged & (op8=0xFC); opr16a_16 [ UseGPAGE=Prefix18; ]
+{
+	build GPaged;
+	D = opr16a_16;
+	$(Z) = (D == 0);
+	$(N) = (D s< 0);
+	V_equals_0();
+}
+
+:^GPaged^"LDD" indexed2_5                 is XGATE=0 & GPaged & (op8=0xEC); indexed2_5 [ UseGPAGE=Prefix18; ]
+{
+	build GPaged;
+	D = indexed2_5;
+	$(Z) = (D == 0);
+	$(N) = (D s< 0);
+	V_equals_0();
+}
+
+
+define pcodeop LoadStack;
+
+:LDS iopr16i                 is XGATE=0 & Prefix18=0 & (op8=0xCF); iopr16i
+{
+	SP = LoadStack(iopr16i);
+	$(Z) = (SP == 0);
+	$(N) = (SP s< 0);
+	V_equals_0();
+}
+
+:^GPaged^"LDS" opr8a_16                 is XGATE=0 & GPaged & (op8=0xDF); opr8a_16 [ UseGPAGE=Prefix18; ]
+{
+	build GPaged;
+	SP = LoadStack(opr8a_16);
+	$(Z) = (SP == 0);
+	$(N) = (SP s< 0);
+	V_equals_0();
+}
+
+:^GPaged^"LDS" opr16a_16                 is XGATE=0 & GPaged & (op8=0xFF); opr16a_16 [ UseGPAGE=Prefix18; ]
+{
+	build GPaged;
+	SP = LoadStack(opr16a_16);
+	$(Z) = (SP == 0);
+	$(N) = (SP s< 0);
+	V_equals_0();
+}
+
+:^GPaged^"LDS" indexed2_5                 is XGATE=0 & GPaged & (op8=0xEF); indexed2_5 [ UseGPAGE=Prefix18; ]
+{
+	build GPaged;
+	SP = LoadStack(indexed2_5);
+	$(Z) = (SP == 0);
+	$(N) = (SP s< 0);
+	V_equals_0();
+}
+
+:LDX iopr16i                 is XGATE=0 & Prefix18=0 & (op8=0xCE); iopr16i
+{ 
+	IX = iopr16i;
+	$(Z) = (IX == 0);
+	$(N) = (IX s< 0);
+	V_equals_0();
+}
+
+:^GPaged^"LDX" opr8a_16                 is XGATE=0 & GPaged & (op8=0xDE); opr8a_16 [ UseGPAGE=Prefix18; ]
+{
+	build GPaged;
+	IX = opr8a_16;
+	$(Z) = (IX == 0);
+	$(N) = (IX s< 0);
+	V_equals_0();
+}
+
+:^GPaged^"LDX" opr16a_16                 is XGATE=0 & GPaged & (op8=0xFE); opr16a_16 [ UseGPAGE=Prefix18; ]
+{
+	build GPaged;
+	IX = opr16a_16;
+	$(Z) = (IX == 0);
+	$(N) = (IX s< 0);
+	V_equals_0();
+}
+
+:^GPaged^"LDX" indexed2_5                 is XGATE=0 & GPaged & (op8=0xEE); indexed2_5 [ UseGPAGE=Prefix18; ]
+{
+	build GPaged;
+	IX = indexed2_5;
+	$(Z) = (IX == 0);
+	$(N) = (IX s< 0);
+	V_equals_0();
+}
+
+:LDY iopr16i                 is XGATE=0 & Prefix18=0 & (op8=0xCD); iopr16i
+{ 
+	IY = iopr16i;
+	$(Z) = (IY == 0);
+	$(N) = (IY s< 0);
+	V_equals_0();
+}
+
+:^GPaged^"LDY" opr8a_16                 is XGATE=0 & GPaged & (op8=0xDD); opr8a_16 [ UseGPAGE=Prefix18; ]
+{
+	build GPaged;
+	IY = opr8a_16;
+	$(Z) = (IY == 0);
+	$(N) = (IY s< 0);
+	V_equals_0();
+}
+
+:^GPaged^"LDY" opr16a_16                 is XGATE=0 & GPaged & (op8=0xFD); opr16a_16 [ UseGPAGE=Prefix18; ]
+{
+	build GPaged;
+	IY = opr16a_16;
+	$(Z) = (IY == 0);
+	$(N) = (IY s< 0);
+	V_equals_0();
+}
+
+:^GPaged^"LDY" indexed2_5                 is XGATE=0 & GPaged & (op8=0xED); indexed2_5 [ UseGPAGE=Prefix18; ]
+{
+	build GPaged;
+	IY = indexed2_5;
+	$(Z) = (IY == 0);
+	$(N) = (IY s< 0);
+	V_equals_0();
+}
+
+:LEAS indexed0_3                 is XGATE=0 & Prefix18=0 & (op8=0x1B); indexed0_3
+{ 
+	SP = indexed0_3;
+}
+
+:LEAX indexed0_3                 is XGATE=0 & Prefix18=0 & (op8=0x1A); indexed0_3
+{ 
+	IX = indexed0_3;
+}
+
+:LEAY indexed0_3                 is XGATE=0 & Prefix18=0 & (op8=0x19); indexed0_3
+{ 
+	IY = indexed0_3;
+}
+
+## Logical Shift left is same as arithmetic shift left
+#:LSL 		is (op8=0x68 | op8=0x78)
+#:LSLA		is op8=0x48 
+#:LSLB		is op8=0x58 
+#:LSLD		is op8=0x59 
+
+#:LSLW		is op16=0x1878 | op16=0x1868	see ASLW
+#:LSLX		is op16=0x1848					see ASLX
+#:LSLY		is op16=0x1858					see ASLY
+
+:LSR opr16a_8                 is XGATE=0 & Prefix18=0 & (op8=0x74); opr16a_8
+{
+	tmp:1 = opr16a_8;
+	$(C) = tmp & 1;
+	tmp = tmp >> 1;
+	opr16a_8 = tmp;
+	$(Z) = (tmp == 0);
+	$(N) = 0;
+	V_equals_C();	
+}
+
+:LSR indexed1_5                 is XGATE=0 & Prefix18=0 & (op8=0x64); indexed1_5 
+{
+	tmp:1 = indexed1_5;
+	$(C) = tmp & 1;
+	tmp = tmp >> 1;
+	indexed1_5 = tmp;
+	$(Z) = (tmp == 0);
+	$(N) = 0;
+	V_equals_C();	
+}
+
+:LSRA                    is XGATE=0 & Prefix18=0 & op8=0x44 
+{
+	$(C) = A[0,1];
+	A = (A >> 1);
+	$(Z) = (A == 0);
+	$(N) = 0;
+	V_equals_C();	
+}
+
+:LSRB                    is XGATE=0 & Prefix18=0 & op8=0x54 
+{
+	$(C) = B[0,1];
+	B = (B >> 1);
+	$(Z) = (B == 0);
+	$(N) = 0;
+	V_equals_C();	
+}
+
+:LSRD                    is XGATE=0 & Prefix18=0 & op8=0x49 
+{
+	$(C) = D[0,1];
+	D = (D >> 1);
+	$(Z) = (D == 0);
+	$(N) = 0;
+	V_equals_C();	
+}
+
+@if defined(HCS12X)
+:LSRW opr16a_16                 is XGATE=0 & Prefix18=1 & (op8=0x74); opr16a_16
+{
+	local tmp = opr16a_16;
+	$(C) = tmp[0,1];
+	tmp = tmp >> 1;
+	opr16a_16 = tmp;
+	$(Z) = (tmp == 0);
+	$(N) = (tmp s< 0);	
+	V_equals_N_xor_C();	
+}
+@endif
+
+@if defined(HCS12X)
+:LSRW indexed2_5                 is XGATE=0 & Prefix18=1 & (op8=0x64); indexed2_5 
+{
+	local tmp = indexed2_5;
+	$(C) = tmp[0,1];
+	tmp = tmp >> 1;
+	indexed2_5 = tmp;
+	$(Z) = (tmp == 0);
+	$(N) = (tmp s< 0);	
+	V_equals_N_xor_C();	
+}
+@endif
+
+@if defined(HCS12X)
+:LSRX                    is XGATE=0 & Prefix18=1 & op8=0x44 
+{
+	$(C) = IX[0,1];
+	IX = IX >> 1;
+	$(Z) = (IX == 0);
+	$(N) = (IX s< 0);	
+	V_equals_N_xor_C();	
+}
+@endif
+
+@if defined(HCS12X)
+:LSRY                    is XGATE=0 & Prefix18=1 & op8=0x54 
+{
+	$(C) = IY[0,1];
+	IY = IY >> 1;
+	$(Z) = (IY == 0);
+	$(N) = (IY s< 0);	
+	V_equals_N_xor_C();	
+}
+@endif
+
+:MAXA indexed1_5                    is XGATE=0 & Prefix18=1 & op8=0x18; indexed1_5 
+{
+	tmp:1 = indexed1_5;
+	result:2 = zext(A) - zext(tmp);
+	if (A > tmp) goto <done>;
+		A = tmp;
+	<done>
+	
+	$(N) = (result:1 s< 0);
+	$(Z) = (result:1 == 0);
+	$(V) = (result s> 0x007F) | (result s< 0x0080);
+	$(C) = (result > 0x00FF);
+}
+
+:MAXM indexed1_5                    is XGATE=0 & Prefix18=1 & op8=0x1C; indexed1_5 
+{
+	tmp:1 = indexed1_5;
+	result:4 = zext(A) - zext(tmp);
+	if (tmp > A) goto <done>;
+		indexed1_5 = A;
+	<done>
+	
+	$(N) = (result:2 s< 0);
+	$(Z) = (result:2 == 0);
+	$(V) = (result s> 0x007F) | (result s< 0x0080);
+	$(C) = (result > 0x00FF);
+}
+
+:MEM                     is XGATE=0 & Prefix18=0 & op8=0x01
+{
+	local val:1 = GradeOfMembership(A, IX, IY);
+	Store(IY, val);
+	IY = IY + 1;
+	IX = IX + 4;
+}
+
+:MINA indexed1_5                    is XGATE=0 & Prefix18=1 & op8=0x19; indexed1_5 
+{
+	tmp:1 = indexed1_5;
+	result:2 = zext(A) - zext(tmp);
+	if (A < tmp) goto <done>;
+		A = tmp;
+	<done>
+	
+	$(N) = (result:1 s< 0);
+	$(Z) = (result:1 == 0);
+	$(V) = (result s> 0x007F) | (result s< 0x0080);
+	$(C) = (result > 0x00FF);
+}
+
+:MINM indexed1_5                    is XGATE=0 & Prefix18=1 & op8=0x1D; indexed1_5 
+{
+	tmp:1 = indexed1_5;
+	result:4 = zext(A) - zext(tmp);
+	if (tmp < A) goto <done>;
+		indexed1_5 = A;
+	<done>
+	
+	$(N) = (result:2 s< 0);
+	$(Z) = (result:2 == 0);
+	$(V) = (result s> 0x007F) | (result s< 0x0080);
+	$(C) = (result > 0x00FF);
+}
+
+:MOVB iopr8i, opr16a_8				is XGATE=0 & Prefix18=1 & op8=0x0B; iopr8i; opr16a_8 
+{
+	opr16a_8 = iopr8i;
+}
+
+@if defined(HCS12X)
+:MOVB iopr8i, indexed1_5			is XGATE=0 & Prefix18=1 & op8=0x08; indexed1_5; iopr8i
+{
+	indexed1_5 = iopr8i;
+}
+@else
+:MOVB iopr8i, indexed1_1			is XGATE=0 & Prefix18=1 & op8=0x08; indexed1_1; iopr8i
+{
+	indexed1_1 = iopr8i;
+}
+@endif
+
+:MOVB opr16a_8, op2_opr16a_8		is XGATE=0 & Prefix18=1 & op8=0x0C; opr16a_8; op2_opr16a_8 
+{
+	build opr16a_8;
+	local tmp = opr16a_8;
+	build op2_opr16a_8;
+	op2_opr16a_8 = tmp;
+}
+
+@if defined(HCS12X)
+:MOVB opr16a_8, indexed1_5			is XGATE=0 & Prefix18=1 & op8=0x09; indexed1_5; opr16a_8 
+{
+	indexed1_5 = opr16a_8;
+}
+@else
+:MOVB opr16a_8, indexed1_1			is XGATE=0 & Prefix18=1 & op8=0x09; indexed1_1; opr16a_8 
+{
+	indexed1_1 = opr16a_8;
+}
+@endif
+
+@if defined(HCS12X)
+:MOVB indexed1_5, opr16a_8			is XGATE=0 & Prefix18=1 & op8=0x0D; indexed1_5; opr16a_8 
+{
+	opr16a_8 = indexed1_5;
+}
+@else
+:MOVB indexed1_1, opr16a_8			is XGATE=0 & Prefix18=1 & op8=0x0D; indexed1_1; opr16a_8 
+{
+	opr16a_8 = indexed1_1;
+}
+@endif
+
+@if defined(HCS12X)
+:MOVB indexed1_5, op2_indexed1_5	is XGATE=0 & Prefix18=1 & op8=0x0A; indexed1_5; op2_indexed1_5 
+{
+	# two operands share a lower level subconstructor
+	#  MUST do the builds and store the value, or the first operands results will be overwritten
+	build indexed1_5;
+	local tmp = indexed1_5;
+	build op2_indexed1_5;
+	op2_indexed1_5 = tmp;
+}
+@else
+:MOVB indexed1_1, op2_indexed1_1	is XGATE=0 & Prefix18=1 & op8=0x0A; indexed1_1; op2_indexed1_1 
+{
+	# two operands share a lower level subconstructor
+	#  MUST do the builds and store the value, or the first operands results will be overwritten
+	build indexed1_1;
+	local tmp = indexed1_1;
+	build op2_indexed1_1;
+	op2_indexed1_1 = tmp;
+}
+@endif
+
+:MOVW iopr16i, opr16a_16				is XGATE=0 & Prefix18=1 & op8=0x03; iopr16i; opr16a_16 
+{
+	opr16a_16 = iopr16i;
+}
+
+@if defined(HCS12X)
+:MOVW iopr16i, indexed2_5			is XGATE=0 & Prefix18=1 & op8=0x00; indexed2_5; iopr16i
+{
+	indexed2_5 = iopr16i;
+}
+@else
+:MOVW iopr16i, indexed2_1			is XGATE=0 & Prefix18=1 & op8=0x00; indexed2_1; iopr16i
+{
+	indexed2_1 = iopr16i;
+}
+@endif
+
+:MOVW opr16a_16, op2_opr16a_16		is XGATE=0 & Prefix18=1 & op8=0x04; opr16a_16; op2_opr16a_16 
+{
+	# two operands share a lower level subconstructor
+	#  MUST do the builds and store the value, or the first operands results will be overwritten
+	build opr16a_16;
+	local tmp = opr16a_16;
+	build op2_opr16a_16;
+	op2_opr16a_16 = tmp;
+}
+
+@if defined(HCS12X)
+:MOVW opr16a_16, indexed2_5			is XGATE=0 & Prefix18=1 & op8=0x01; indexed2_5; opr16a_16 
+{
+	indexed2_5 = opr16a_16;
+}
+@else
+:MOVW opr16a_16, indexed2_1			is XGATE=0 & Prefix18=1 & op8=0x01; indexed2_1; opr16a_16 
+{
+	indexed2_1 = opr16a_16;
+}
+@endif
+
+@if defined(HCS12X)
+:MOVW indexed2_5, opr16a_16			is XGATE=0 & Prefix18=1 & op8=0x05; indexed2_5; opr16a_16 
+{
+	opr16a_16 = indexed2_5;
+}
+@else
+:MOVW indexed2_1, opr16a_16			is XGATE=0 & Prefix18=1 & op8=0x05; indexed2_1; opr16a_16 
+{
+	opr16a_16 = indexed2_1;
+}
+@endif
+
+@if defined(HCS12X)
+:MOVW indexed2_5, op2_indexed2_5	is XGATE=0 & Prefix18=1 & op8=0x02; indexed2_5; op2_indexed2_5 
+{
+	# two operands share a lower level subconstructor
+	#  MUST do the builds and store the value, or the first operands results will be overwritten
+	build indexed2_5;
+	local tmp = indexed2_5;
+	build op2_indexed2_5;
+	op2_indexed2_5 = tmp;
+}
+@else
+:MOVW indexed2_1, op2_indexed2_1	is XGATE=0 & Prefix18=1 & op8=0x02; indexed2_1; op2_indexed2_1 
+{
+	# two operands share a lower level subconstructor
+	#  MUST do the builds and store the value, or the first operands results will be overwritten
+	build indexed2_1;
+	local tmp = indexed2_1;
+	build op2_indexed2_1;
+	op2_indexed2_1 = tmp;
+}
+@endif
+
+
+:MUL                     is XGATE=0 & Prefix18=0 & op8=0x12
+{
+	D = zext(A) * zext(B);
+	$(C) = B[7,1];
+}
+
+:NEG opr16a_8                 is XGATE=0 & Prefix18=0 & (op8=0x70); opr16a_8
+{
+	tmp:1 = opr16a_8;
+	result:1 = -tmp;
+	opr16a_8 = result;
+	$(C) = (result != 0);
+	$(Z) = (result == 0);
+	$(N) = (result s< 0);
+	V_NEG_flag(tmp); 
+}
+
+:NEG indexed1_5                 is XGATE=0 & Prefix18=0 & (op8=0x60); indexed1_5 
+{
+	tmp:1 = indexed1_5;
+	result:1 = -tmp;
+	indexed1_5 = result;
+	$(C) = (result != 0);
+	$(Z) = (result == 0);
+	$(N) = (result s< 0);
+	V_NEG_flag(tmp); 
+}
+
+:NEGA                    is XGATE=0 & Prefix18=0 & op8=0x40 
+{
+	tmp:1 = A;
+	A = -tmp;
+	$(C) = (A != 0);
+	$(Z) = (A == 0);
+	$(N) = (A s< 0);
+	V_NEG_flag(tmp); 
+}
+
+:NEGB                    is XGATE=0 & Prefix18=0 & op8=0x50 
+{
+	tmp:1 = B;
+	B = -tmp;
+	$(C) = (B != 0);
+	$(Z) = (B == 0);
+	$(N) = (B s< 0);
+	V_NEG_flag(tmp); 
+}
+
+@if defined(HCS12X)
+:NEGW opr16a_16                 is XGATE=0 & Prefix18=1 & (op8=0x70); opr16a_16
+{
+	tmp:2 = opr16a_16;
+	result:2 = -tmp;
+	opr16a_16 = result;
+	$(C) = (result != 0);
+	$(Z) = (result == 0);
+	$(N) = (result s< 0);
+	V_NEG_flag2(tmp); 
+}
+
+@if defined(HCS12X)
+:NEGW indexed2_5                 is XGATE=0 & Prefix18=1 & (op8=0x60); indexed2_5 
+{
+	tmp:2 = indexed2_5;
+	result:2 = -tmp;
+	indexed2_5 = result;
+	$(C) = (result != 0);
+	$(Z) = (result == 0);
+	$(N) = (result s< 0);
+	V_NEG_flag2(tmp); 
+}
+@endif
+
+@if defined(HCS12X)
+:NEGX                    is XGATE=0 & Prefix18=1 & op8=0x40 
+{
+	tmp:2 = IX;
+	IX = -tmp;
+	$(C) = (IX != 0);
+	$(Z) = (IX == 0);
+	$(N) = (IX s< 0);
+	V_NEG_flag2(tmp); 
+}
+@endif
+
+:NEGY                    is XGATE=0 & Prefix18=1 & op8=0x50 
+{
+	tmp:2 = IY;
+	IY = -tmp;
+	$(C) = (IY != 0);
+	$(Z) = (IY == 0);
+	$(N) = (IY s< 0);
+	V_NEG_flag2(tmp); 
+}
+@endif
+
+:NOP                     is XGATE=0 & Prefix18=0 & op8=0xA7
+{
+}
+
+:ORAA iopr8i                 is XGATE=0 & Prefix18=0 & (op8=0x8A); iopr8i
+{ 
+	A = A | iopr8i; 
+	$(Z) = (A == 0);
+	$(N) = (A s< 0);
+	V_equals_0();
+}
+
+:ORAA opr8a_8                 is XGATE=0 & Prefix18=0 & (op8=0x9A); opr8a_8
+{ 
+	A = A | opr8a_8; 
+	$(Z) = (A == 0);
+	$(N) = (A s< 0);
+	V_equals_0();
+}
+
+:ORAA opr16a_8                 is XGATE=0 & Prefix18=0 & (op8=0xBA); opr16a_8
+{ 
+	A = A | opr16a_8; 
+	$(Z) = (A == 0);
+	$(N) = (A s< 0);
+	V_equals_0();
+}
+
+:ORAA indexed1_5                 is XGATE=0 & Prefix18=0 & (op8=0xAA); indexed1_5
+{ 
+	A = A | indexed1_5; 
+	$(Z) = (A == 0);
+	$(N) = (A s< 0);
+	V_equals_0();
+}
+
+:ORAB iopr8i                 is XGATE=0 & Prefix18=0 & (op8=0xCA); iopr8i
+{ 
+	B = B | iopr8i; 
+	$(Z) = (B == 0);
+	$(N) = (B s< 0);
+	V_equals_0();
+}
+
+:ORAB opr8a_8                 is XGATE=0 & Prefix18=0 & (op8=0xDA); opr8a_8
+{ 
+	B = B | opr8a_8; 
+	$(Z) = (B == 0);
+	$(N) = (B s< 0);
+	V_equals_0();
+}
+
+:ORAB opr16a_8                 is XGATE=0 & Prefix18=0 & (op8=0xFA); opr16a_8
+{ 
+	B = B | opr16a_8; 
+	$(Z) = (B == 0);
+	$(N) = (B s< 0);
+	V_equals_0();
+}
+
+:ORAB indexed1_5                 is XGATE=0 & Prefix18=0 & (op8=0xEA); indexed1_5
+{ 
+	B = B | indexed1_5; 
+	$(Z) = (B == 0);
+	$(N) = (B s< 0);
+	V_equals_0();
+}
+
+:ORCC iopr8i                 is XGATE=0 & Prefix18=0 & (op8=0x14); iopr8i
+{ 
+	CCR = CCR | (iopr8i & 0b10111111); 
+}
+
+@if defined(HCS12X)
+:ORX iopr16i                 is XGATE=0 & Prefix18=1 & (op8=0x8A); iopr16i
+{ 
+	IX = IX | iopr16i;
+	V_equals_0(); 
+	$(Z) = (IX == 0);
+	$(N) = (IX s< 0);
+}
+@endif
+
+@if defined(HCS12X)
+:ORX opr8a_16                 is XGATE=0 & Prefix18=1 & (op8=0x9A); opr8a_16
+{ 
+	IX = IX | opr8a_16;
+	V_equals_0(); 
+	$(Z) = (IX == 0);
+	$(N) = (IX s< 0);
+}
+@endif
+
+@if defined(HCS12X)
+:ORX opr16a_16                 is XGATE=0 & Prefix18=1 & (op8=0xBA); opr16a_16
+{ 
+	IX = IX | opr16a_16;
+	V_equals_0(); 
+	$(Z) = (IX == 0);
+	$(N) = (IX s< 0);
+}
+@endif
+
+@if defined(HCS12X)
+:ORX indexed2_5                 is XGATE=0 & Prefix18=1 & (op8=0xAA); indexed2_5
+{ 
+	IX = IX | indexed2_5;
+	V_equals_0(); 
+	$(Z) = (IX == 0);
+	$(N) = (IX s< 0);
+}
+@endif
+
+@if defined(HCS12X)
+:ORY iopr16i                 is XGATE=0 & Prefix18=1 & (op8=0xCA); iopr16i
+{ 
+	IY = IY | iopr16i;
+	V_equals_0(); 
+	$(Z) = (IY == 0);
+	$(N) = (IY s< 0);
+}
+@endif
+
+@if defined(HCS12X)
+:ORY opr8a_16                 is XGATE=0 & Prefix18=1 & (op8=0xDA); opr8a_16
+{ 
+	IY = IY | opr8a_16;
+	V_equals_0(); 
+	$(Z) = (IY == 0);
+	$(N) = (IY s< 0);
+}
+@endif
+
+@if defined(HCS12X)
+:ORY opr16a_16                 is XGATE=0 & Prefix18=1 & (op8=0xFA); opr16a_16
+{ 
+	IY = IY | opr16a_16;
+	V_equals_0(); 
+	$(Z) = (IY == 0);
+	$(N) = (IY s< 0);
+}
+@endif
+
+@if defined(HCS12X)
+:ORY indexed2_5                 is XGATE=0 & Prefix18=1 & (op8=0xEA); indexed2_5
+{ 
+	IY = IY | indexed2_5;
+	V_equals_0(); 
+	$(Z) = (IY == 0);
+	$(N) = (IY s< 0);
+}
+@endif
+
+:PSHA                    is XGATE=0 & Prefix18=0 & op8=0x36
+{
+	Push1( A );
+}
+
+:PSHB                    is XGATE=0 & Prefix18=0 & op8=0x37
+{
+	Push1( B );
+}
+
+:PSHC                    is XGATE=0 & Prefix18=0 & op8=0x39
+{
+	Push1( CCR );
+}
+
+@if defined(HCS12X)
+:PSHCW                    is XGATE=0 & Prefix18=1 & op8=0x39
+{
+	Push2( CCRW );
+}
+@endif
+
+:PSHD                    is XGATE=0 & Prefix18=0 & op8=0x3B
+{
+	Push2( D );
+}
+
+:PSHX                    is XGATE=0 & Prefix18=0 & op8=0x34
+{
+	Push2( IX );
+}
+
+:PSHY                    is XGATE=0 & Prefix18=0 & op8=0x35
+{
+	Push2( IY );
+}
+
+:PULA                    is XGATE=0 & Prefix18=0 & op8=0x32
+{
+	Pull1( A );
+}
+
+:PULB                    is XGATE=0 & Prefix18=0 & op8=0x33
+{
+	Pull1( B );
+}
+
+:PULC                    is XGATE=0 & Prefix18=0 & op8=0x38
+{
+	Pull1( CCR );
+}
+
+@if defined(HCS12X)
+:PULCW                    is XGATE=0 & Prefix18=1 & op8=0x38
+{
+	Pull2( CCRW );
+}
+@endif
+
+:PULD                    is XGATE=0 & Prefix18=0 & op8=0x3A
+{
+	Pull2( D );
+}
+
+:PULX                    is XGATE=0 & Prefix18=0 & op8=0x30
+{
+	Pull2( IX );
+}
+
+:PULY                    is XGATE=0 & Prefix18=0 & op8=0x31
+{
+	Pull2( IY );
+}
+
+:REV                    is XGATE=0 & Prefix18=1 & op8=0x3A
+{
+	tempIX:2 = MinMaxRuleEvaluation(IX, IY, A, $(V));
+	$(V) = MinMaxRuleEvaluationCorrect(IX, IY, A, $(V));
+
+	IX = tempIX;
+}
+
+:REVW                   is XGATE=0 & Prefix18=1 & op8=0x3B
+{
+	tempIX:2 = MinMaxRuleEvaluationWeighted(IX, IY, A, $(V), $(C));
+	tempIY:2 = MinMaxRuleEvaluationWeighted(IX, IY, A, $(V), $(C));
+	$(V) = MinMaxRuleEvaluationWeightedCorrect(IX, IY, A, $(V), $(C));
+	
+	IX = tempIX;
+	IY = tempIY;
+}
+
+:ROL opr16a_8                 is XGATE=0 & Prefix18=0 & (op8=0x75); opr16a_8
+{
+	tmpC:1 = $(C);
+	op1:1 = opr16a_8;
+	$(C) = op1 >> 7;
+	result:1 = op1 << 1;
+	result = result | tmpC;
+	opr16a_8 = result;
+	$(Z) = (result == 0);
+	$(N) = (result s< 0);	
+	V_equals_N_xor_C();	
+}
+
+:ROL indexed1_5                 is XGATE=0 & Prefix18=0 & (op8=0x65); indexed1_5 
+{
+	tmpC:1 = $(C);
+	op1:1 = indexed1_5;
+	$(C) = op1 >> 7;
+	result:1 = op1 << 1;
+	result = result | tmpC;
+	indexed1_5 = result;
+	$(Z) = (result == 0);
+	$(N) = (result s< 0);	
+	V_equals_N_xor_C();	
+}
+
+:ROLA                    is XGATE=0 & Prefix18=0 & op8=0x45 
+{
+	tmpC:1 = $(C) ;
+	$(C) = A >> 7;
+	A = A << 1;
+	A = A | tmpC;
+	$(Z) = (A == 0);
+	$(N) = (A s< 0);
+	V_equals_N_xor_C();	
+}
+
+:ROLB                    is XGATE=0 & Prefix18=0 & op8=0x55 
+{
+	tmpC:1 = $(C) ;
+	$(C) = B >> 7;
+	B = B << 1;
+	B = B | tmpC;
+	$(Z) = (B == 0);
+	$(N) = (B s< 0);
+	V_equals_N_xor_C();	
+}
+
+@if defined(HCS12X)
+:ROLW opr16a_16                 is XGATE=0 & Prefix18=1 & (op8=0x75); opr16a_16
+{
+	local tmp = opr16a_16;
+	local tmpC = $(C);
+	$(C) = tmp[15,1];
+	tmp = tmp << 1;
+	tmp = tmp | zext(tmpC);
+	opr16a_16 = tmp;
+	$(Z) = (tmp == 0);
+	$(N) = (tmp s< 0);
+	V_equals_N_xor_C();	
+}
+@endif
+
+@if defined(HCS12X)
+:ROLW indexed2_5                 is XGATE=0 & Prefix18=1 & (op8=0x65); indexed2_5 
+{
+	local tmp = indexed2_5;
+	local tmpC = $(C);
+	$(C) = tmp[15,1];
+	tmp = tmp << 1;
+	tmp = tmp | zext(tmpC);
+	indexed2_5 = tmp;
+	$(Z) = (tmp == 0);
+	$(N) = (tmp s< 0);
+	V_equals_N_xor_C();	
+}
+@endif
+
+@if defined(HCS12X)
+:ROLX                    is XGATE=0 & Prefix18=1 & op8=0x45
+{
+	local tmpC = $(C);
+	$(C) = IX[15,1];
+	IX = IX << 1;
+	IX = IX | zext(tmpC);
+	$(Z) = (IX == 0);
+	$(N) = (IX s< 0);	
+	V_equals_N_xor_C();	
+}
+@endif
+
+@if defined(HCS12X)
+:ROLY                    is XGATE=0 & Prefix18=1 & op8=0x55
+{
+	local tmpC = $(C);
+	$(C) = IY[15,1];
+	IY = IY << 1;
+	IY = IY | zext(tmpC);
+	$(Z) = (IY == 0);
+	$(N) = (IY s< 0);	
+	V_equals_N_xor_C();	
+}
+@endif
+
+:ROR opr16a_8                 is XGATE=0 & Prefix18=0 & (op8=0x76); opr16a_8
+{
+	tmpC:1 = $(C) << 7;
+	tmp:1 = opr16a_8;
+	$(C) = tmp & 1;
+	tmp = tmp >> 1;
+	tmp = tmp | tmpC;
+	opr16a_8 = tmp;
+	$(Z) = (tmp == 0);
+	$(N) = (tmp s< 0);	
+	V_equals_N_xor_C();	
+}
+
+:ROR indexed1_5                 is XGATE=0 & Prefix18=0 & (op8=0x66); indexed1_5 
+{
+	tmpC:1 = $(C) << 7;
+	tmp:1 = indexed1_5;
+	$(C) = tmp & 1;
+	tmp = tmp >> 1;
+	tmp = tmp | tmpC;
+	indexed1_5 = tmp;
+	$(Z) = (tmp == 0);
+	$(N) = (tmp s< 0);	
+	V_equals_N_xor_C();	
+}
+
+:RORA                    is XGATE=0 & Prefix18=0 & op8=0x46 
+{
+	tmpC:1 = $(C) << 7;
+	$(C) = A & 1;
+	A = A >> 1;
+	A = A | tmpC;
+	$(Z) = (A == 0);
+	$(N) = (A s< 0);	
+	V_equals_N_xor_C();	
+}
+
+:RORB                    is XGATE=0 & Prefix18=0 & op8=0x56 
+{
+	tmpC:1 = $(C) << 7;
+	$(C) = B & 1;
+	B = B >> 1;
+	B = B | tmpC;
+	$(Z) = (B == 0);
+	$(N) = (B s< 0);	
+	V_equals_N_xor_C();	
+}
+
+@if defined(HCS12X)
+:RORW opr16a_16                 is XGATE=0 & Prefix18=1 & (op8=0x76); opr16a_16
+{
+	local tmp = opr16a_16;
+	local tmpC = $(C);
+	$(C) = tmp[0,1];
+	tmp = tmp >> 1;
+	tmp = tmp | (zext(tmpC) << 15);
+	opr16a_16 = tmp;
+	$(Z) = (tmp == 0);
+	$(N) = (tmp s< 0);
+	V_equals_N_xor_C();	
+}
+@endif
+
+@if defined(HCS12X)
+:RORW indexed2_5                 is XGATE=0 & Prefix18=1 & (op8=0x66); indexed2_5 
+{
+	local tmp = indexed2_5;
+	local tmpC = $(C);
+	$(C) = tmp[0,1];
+	tmp = tmp >> 1;
+	tmp = tmp | (zext(tmpC) << 15);
+	indexed2_5 = tmp;
+	$(Z) = (tmp == 0);
+	$(N) = (tmp s< 0);
+	V_equals_N_xor_C();	
+}
+@endif
+
+@if defined(HCS12X)
+:RORX                    is XGATE=0 & Prefix18=1 & op8=0x46
+{
+	local tmpC = $(C);
+	$(C) = IX[0,1];
+	IX = IX >> 1;
+	IX = IX | (zext(tmpC) << 15);
+	$(Z) = (IX == 0);
+	$(N) = (IX s< 0);	
+	V_equals_N_xor_C();	
+}
+@endif
+
+@if defined(HCS12X)
+:RORY                    is XGATE=0 & Prefix18=1 & op8=0x56
+{
+	local tmpC = $(C);
+	$(C) = IY[0,1];
+	IY = IY >> 1;
+	IY = IY | (zext(tmpC) << 15);
+	$(Z) = (IY == 0);
+	$(N) = (IY s< 0);	
+	V_equals_N_xor_C();	
+}
+@endif
+
+:RTC                     is XGATE=0 & Prefix18=0 & op8=0x0A
+{
+	Pull1( PPAGE );
+
+	tmp:2 = 0;
+	Pull2( tmp );
+	
+	return [tmp];
+}
+
+:RTI                     is XGATE=0 & Prefix18=0 & op8=0x0B
+{
+	tmp:2 = 0;
+	Pull1( CCR );
+	Pull1( B );
+	Pull1( A );
+	Pull2( IX );
+	Pull2( IY );
+	Pull2( tmp ); # as ordered on page 289, not as documented in RTI description
+	
+	return [tmp];
+}
+
+:RTS                     is XGATE=0 & Prefix18=0 & op8=0x3D
+{
+	tmp:2 = 0;
+	Pull2( tmp );
+	
+	return [tmp];
+}
+
+:SBA	                 is XGATE=0 & Prefix18=1 & (op8=0x16)
+{ 
+	result:1 = A - B;
+	subtraction_flags1(A, B, result);
+	A = result;
+}
+
+:SBCA iopr8i                 is XGATE=0 & Prefix18=0 & (op8=0x82); iopr8i
+{ 
+	op1:1 = iopr8i;
+	
+	result:1 = A - op1 - $(C);
+	subtraction_flags1(A, op1, result);
+	A = result;
+}
+
+:SBCA opr8a_8                 is XGATE=0 & Prefix18=0 & (op8=0x92); opr8a_8
+{ 
+	op1:1 = opr8a_8;
+	
+	result:1 = A - op1 - $(C);
+	subtraction_flags1(A, op1, result);
+	A = result;
+}
+
+:SBCA opr16a_8                 is XGATE=0 & Prefix18=0 & (op8=0xB2); opr16a_8
+{ 
+	op1:1 = opr16a_8;
+	
+	result:1 = A - op1 - $(C);
+	subtraction_flags1(A, op1, result);
+	A = result;
+}
+
+:SBCA indexed1_5                 is XGATE=0 & Prefix18=0 & (op8=0xA2); indexed1_5
+{ 
+	op1:1 = indexed1_5;
+	
+	result:1 = A - op1 - $(C);
+	subtraction_flags1(A, op1, result);
+	A = result;
+}
+
+:SBCB iopr8i                 is XGATE=0 & Prefix18=0 & (op8=0xC2); iopr8i
+{ 
+	op1:1 = iopr8i;
+	
+	result:1 = B - op1 - $(C);
+	subtraction_flags1(B, op1, result);
+	B = result;
+}
+
+:SBCB opr8a_8                 is XGATE=0 & Prefix18=0 & (op8=0xD2); opr8a_8
+{ 
+	op1:1 = opr8a_8;
+	
+	result:1 = B - op1 - $(C);
+	subtraction_flags1(B, op1, result);
+	B = result;
+}
+
+:SBCB opr16a_8                 is XGATE=0 & Prefix18=0 & (op8=0xF2); opr16a_8
+{ 
+	op1:1 = opr16a_8;
+	
+	result:1 = B - op1 - $(C);
+	subtraction_flags1(B, op1, result);
+	B = result;
+}
+
+:SBCB indexed1_5                 is XGATE=0 & Prefix18=0 & (op8=0xE2); indexed1_5
+{ 
+	op1:1 = indexed1_5;
+	
+	result:1 = B - op1 - $(C);
+	subtraction_flags1(B, op1, result);
+	B = result;
+}
+
+@if defined(HCS12X)
+:SBED iopr16i                 is XGATE=0 & Prefix18=1 & (op8=0x83); iopr16i
+{
+	op1:2 = iopr16i;
+	
+	result:2 = D - op1 - zext($(C));
+	subtraction_flags2(D, op1, result);
+	D = result;
+}
+@endif
+
+@if defined(HCS12X)
+:SBED opr8a_16                 is XGATE=0 & Prefix18=1 & (op8=0x93); opr8a_16
+{ 
+	op1:2 = opr8a_16;
+	
+	result:2 = D - op1 - zext($(C));
+	subtraction_flags2(D, op1, result);
+	D = result;
+}
+@endif
+
+@if defined(HCS12X)
+:SBED opr16a_16                 is XGATE=0 & Prefix18=1 & (op8=0xB3); opr16a_16
+{ 
+	op1:2 = opr16a_16;
+	
+	result:2 = D - op1 - zext($(C));
+	subtraction_flags2(D, op1, result);
+	D = result;
+}
+@endif
+
+@if defined(HCS12X)
+:SBED indexed2_5                 is XGATE=0 & Prefix18=1 & (op8=0xA3); indexed2_5
+{ 
+	op1:2 = indexed2_5;
+	
+	result:2 = D - op1 - zext($(C));
+	subtraction_flags2(D, op1, result);
+	D = result;
+}
+@endif
+
+@if defined(HCS12X)
+:SBEX iopr16i                 is XGATE=0 & Prefix18=1 & (op8=0x82); iopr16i
+{ 
+	op1:2 = iopr16i;
+	
+	result:2 = IX - op1 - zext($(C));
+	subtraction_flags2(IX, op1, result);
+	IX = result;
+}
+@endif
+
+@if defined(HCS12X)
+:SBEX opr8a_16                 is XGATE=0 & Prefix18=1 & (op8=0x92); opr8a_16
+{ 
+	op1:2 = opr8a_16;
+	
+	result:2 = IX - op1 - zext($(C));
+	subtraction_flags2(IX, op1, result);
+	IX = result;
+}
+@endif
+
+@if defined(HCS12X)
+:SBEX opr16a_16                 is XGATE=0 & Prefix18=1 & (op8=0xB2); opr16a_16
+{ 
+	op1:2 = opr16a_16;
+	
+	result:2 = IX - op1 - zext($(C));
+	subtraction_flags2(IX, op1, result);
+	IX = result;
+}
+@endif
+
+@if defined(HCS12X)
+:SBEX indexed2_5                 is XGATE=0 & Prefix18=1 & (op8=0xA2); indexed2_5
+{ 
+	op1:2 = indexed2_5;
+	
+	result:2 = IX - op1 - zext($(C));
+	subtraction_flags2(IX, op1, result);
+	IX = result;
+}
+@endif
+
+@if defined(HCS12X)
+:SBEY iopr16i                 is XGATE=0 & Prefix18=1 & (op8=0xC2); iopr16i
+{ 
+	op1:2 = iopr16i;
+	
+	result:2 = IY - op1 - zext($(C));
+	subtraction_flags2(IY, op1, result);
+	IY = result;
+}
+@endif
+
+@if defined(HCS12X)
+:SBEY opr8a_16                 is XGATE=0 & Prefix18=1 & (op8=0xD2); opr8a_16
+{ 
+	op1:2 = opr8a_16;
+	
+	result:2 = IY - op1 - zext($(C));
+	subtraction_flags2(IY, op1, result);
+	IY = result;
+}
+@endif
+
+@if defined(HCS12X)
+:SBEY opr16a_16                 is XGATE=0 & Prefix18=1 & (op8=0xF2); opr16a_16
+{ 
+	op1:2 = opr16a_16;
+	
+	result:2 = IY - op1 - zext($(C));
+	subtraction_flags2(IY, op1, result);
+	IY = result;
+}
+@endif
+
+@if defined(HCS12X)
+:SBEY indexed2_5                 is XGATE=0 & Prefix18=1 & (op8=0xE2); indexed2_5
+{ 
+	op1:2 = indexed2_5;
+	
+	result:2 = IY - op1 - zext($(C));
+	subtraction_flags2(IY, op1, result);
+	IY = result;
+}
+@endif
+
+:SEC                     is XGATE=0 & Prefix18=0 & op16=0x1401 
+{
+	$(C) = 1;
+}
+
+:SEI                     is XGATE=0 & Prefix18=0 & op16=0x1410 
+{
+	$(I) = 1;
+}
+
+:SEV                     is XGATE=0 & Prefix18=0 & op16=0x1402 
+{
+	$(V) = 1;
+}
+
+
+
+@if defined(HCS12X)
+:SEX  A, D          is XGATE=0 & Prefix18=0 & op8=0xB7;
+	(
+		( rows3_0=0xC & ( columns7_4=0x0                                                                                                                        ) ) 
+	) &
+	A & D
+{
+	D = sext( A );
+}
+@endif
+
+@if defined(HCS12X)
+:SEX  B, D          is XGATE=0 & Prefix18=0 & op8=0xB7;
+	(
+		( rows3_0=0xC & (                  columns7_4=0x1                                                                                                       ) ) 
+	) &
+	B & D
+{
+	D = sext( B );
+}
+@endif
+
+@if defined(HCS12X)
+:SEX  D, IX          is XGATE=0 & Prefix18=0 & op8=0xB7;
+	(
+		( rows3_0=0xD & (                                                                     columns7_4=0x4                                                    ) )  
+	) &
+	D & IX
+{
+	# generate the sign extension upper word and assign it to destination
+	local tmp:4 = sext( D );
+	IX = tmp(2);
+}
+@endif
+
+@if defined(HCS12X)
+:SEX  D, IY          is XGATE=0 & Prefix18=0 & op8=0xB7;
+	(
+		( rows3_0=0xE & (                                                                     columns7_4=0x4                                                    ) )  
+	) &
+	D & IY
+{
+	# generate the sign extension upper word and assign it to destination
+	local tmp:4 = sext( D );
+	IY = tmp(2);
+}
+@endif
+
+:SEX  abc5_4, dxys2_0          is XGATE=0 & Prefix18=0 & op8=0xB7;
+	(
+		( rows3_0=0x3 & ( columns7_4=0x0 | columns7_4=0x1 | columns7_4=0x2                                                                                      ) ) | 
+		( rows3_0=0x4 & ( columns7_4=0x0 | columns7_4=0x1 | columns7_4=0x2                                                                                      ) ) | 
+		( rows3_0=0x5 & ( columns7_4=0x0 | columns7_4=0x1 | columns7_4=0x2                                                                                      ) ) | 
+		( rows3_0=0x6 & ( columns7_4=0x0 | columns7_4=0x1 | columns7_4=0x2                                                                                      ) ) | 
+		( rows3_0=0x7 & ( columns7_4=0x0 | columns7_4=0x1 | columns7_4=0x2                                                                                      ) ) 
+	) &
+	abc5_4 & dxys2_0
+{
+	dxys2_0 = sext(abc5_4);
+}
+
+:^GPaged^"STAA" opr8a_8                 is XGATE=0 & GPaged & (op8=0x5A); opr8a_8 [ UseGPAGE=Prefix18; ]
+{
+	build GPaged;
+	opr8a_8 = A;
+	$(Z) = (A == 0);
+	$(N) = (A s< 0);
+	V_equals_0();
+}
+
+:^GPaged^"STAA" opr16a_8                 is XGATE=0 & GPaged & (op8=0x7A); opr16a_8 [ UseGPAGE=Prefix18; ]
+{
+	build GPaged;
+	opr16a_8 = A;
+	$(Z) = (A == 0);
+	$(N) = (A s< 0);
+	V_equals_0();
+}
+
+:^GPaged^"STAA" indexed1_5                 is XGATE=0 & GPaged & (op8=0x6A); indexed1_5 [ UseGPAGE=Prefix18; ]
+{
+	build GPaged;
+	indexed1_5 = A;
+	$(Z) = (A == 0);
+	$(N) = (A s< 0);
+	V_equals_0();
+}
+
+:^GPaged^"STAB" opr8a_8                 is XGATE=0 & GPaged & (op8=0x5B); opr8a_8 [ UseGPAGE=Prefix18; ]
+{
+	build GPaged;
+	opr8a_8 = B;
+	$(Z) = (B == 0);
+	$(N) = (B s< 0);
+	V_equals_0();
+}
+
+:^GPaged^"STAB" opr16a_8                 is XGATE=0 & GPaged & (op8=0x7B); opr16a_8 [ UseGPAGE=Prefix18; ]
+{
+	build GPaged;
+	opr16a_8 = B;
+	$(Z) = (B == 0);
+	$(N) = (B s< 0);
+	V_equals_0();
+}
+
+:^GPaged^"STAB" indexed1_5                 is XGATE=0 & GPaged & (op8=0x6B); indexed1_5 [ UseGPAGE=Prefix18; ]
+{
+	build GPaged;
+	indexed1_5 = B;
+	$(Z) = (B == 0);
+	$(N) = (B s< 0);
+	V_equals_0();
+}
+
+:^GPaged^"STD" opr8a_16                 is XGATE=0 & GPaged & (op8=0x5C); opr8a_16 [ UseGPAGE=Prefix18; ]
+{
+	build GPaged;
+	opr8a_16 = D;
+	$(Z) = (D == 0);
+	$(N) = (D s< 0);
+	V_equals_0();
+}
+
+:^GPaged^"STD" opr16a_16                 is XGATE=0 & GPaged & (op8=0x7C); opr16a_16 [ UseGPAGE=Prefix18; ]
+{
+	build GPaged;
+	opr16a_16 = D;
+	$(Z) = (D == 0);
+	$(N) = (D s< 0);
+	V_equals_0();
+}
+
+:^GPaged^"STD" indexed2_5                 is XGATE=0 & GPaged & (op8=0x6C); indexed2_5 [ UseGPAGE=Prefix18; ]
+{
+	build GPaged;
+	indexed2_5 = D;
+	$(Z) = (D == 0);
+	$(N) = (D s< 0);
+	V_equals_0();
+}
+
+:STOP                    is XGATE=0 & Prefix18=1 & op8=0x3E
+{
+	if ($(S) == 0) goto <continue>;
+		tmp:2 = inst_next;
+		Push2( tmp );
+		Push2( IY );
+		Push2( IX );
+		Push1( A );
+		Push1( B );
+		Push1( CCR );
+		stop();
+	<continue>
+}
+
+:^GPaged^"STS" opr8a_16                 is XGATE=0 & GPaged & (op8=0x5F); opr8a_16 [ UseGPAGE=Prefix18; ]
+{
+	build GPaged;
+	opr8a_16 = SP;
+	$(Z) = (SP == 0);
+	$(N) = (SP s< 0);
+	V_equals_0();
+}
+
+:^GPaged^"STS" opr16a_16                 is XGATE=0 & GPaged & (op8=0x7F); opr16a_16 [ UseGPAGE=Prefix18; ]
+{
+	build GPaged;
+	opr16a_16 = SP;
+	$(Z) = (SP == 0);
+	$(N) = (SP s< 0);
+	V_equals_0();
+}
+
+:^GPaged^"STS" indexed2_5                 is XGATE=0 & GPaged & (op8=0x6F); indexed2_5 [ UseGPAGE=Prefix18; ]
+{
+	build GPaged;
+	indexed2_5 = SP;
+	$(Z) = (SP == 0);
+	$(N) = (SP s< 0);
+	V_equals_0();
+}
+
+:^GPaged^"STX" opr8a_16                 is XGATE=0 & GPaged & (op8=0x5E); opr8a_16 [ UseGPAGE=Prefix18; ]
+{
+	build GPaged;
+	opr8a_16 = IX;
+	$(Z) = (IX == 0);
+	$(N) = (IX s< 0);
+	V_equals_0();
+}
+
+:^GPaged^"STX" opr16a_16                 is XGATE=0 & GPaged & (op8=0x7E); opr16a_16 [ UseGPAGE=Prefix18; ]
+{
+	build GPaged;
+	opr16a_16 = IX;
+	$(Z) = (IX == 0);
+	$(N) = (IX s< 0);
+	V_equals_0();
+}
+
+:^GPaged^"STX" indexed2_5                 is XGATE=0 & GPaged & (op8=0x6E); indexed2_5 [ UseGPAGE=Prefix18; ]
+{
+	build GPaged;
+	indexed2_5 = IX;
+	$(Z) = (IX == 0);
+	$(N) = (IX s< 0);
+	V_equals_0();
+}
+
+:^GPaged^"STY" opr8a_16                 is XGATE=0 & GPaged & (op8=0x5D); opr8a_16 [ UseGPAGE=Prefix18; ]
+{
+	build GPaged;
+	opr8a_16 = IY;
+	$(Z) = (IY == 0);
+	$(N) = (IY s< 0);
+	V_equals_0();
+}
+
+:^GPaged^"STY" opr16a_16                 is XGATE=0 & GPaged & (op8=0x7D); opr16a_16 [ UseGPAGE=Prefix18; ]
+{
+	build GPaged;
+	opr16a_16 = IY;
+	$(Z) = (IY == 0);
+	$(N) = (IY s< 0);
+	V_equals_0();
+}
+
+:^GPaged^"STY" indexed2_5                 is XGATE=0 & GPaged & (op8=0x6D); indexed2_5 [ UseGPAGE=Prefix18; ]
+{
+	build GPaged;
+	indexed2_5 = IY;
+	$(Z) = (IY == 0);
+	$(N) = (IY s< 0);
+	V_equals_0();
+}
+
+:SUBA iopr8i                 is XGATE=0 & Prefix18=0 & (op8=0x80); iopr8i
+{ 
+	op1:1 = iopr8i;
+	
+	result:1 = A - op1;
+	subtraction_flags1(A, op1, result);
+	A = result;
+}
+
+:SUBA opr8a_8                 is XGATE=0 & Prefix18=0 & (op8=0x90); opr8a_8
+{ 
+	op1:1 = opr8a_8;
+	
+	result:1 = A - op1;
+	subtraction_flags1(A, op1, result);
+	A = result;
+}
+
+:SUBA opr16a_8                 is XGATE=0 & Prefix18=0 & (op8=0xB0); opr16a_8
+{ 
+	op1:1 = opr16a_8;
+	
+	result:1 = A - op1;
+	subtraction_flags1(A, op1, result);
+	A = result;
+}
+
+:SUBA indexed1_5                 is XGATE=0 & Prefix18=0 & (op8=0xA0); indexed1_5
+{ 
+	op1:1 = indexed1_5;
+	
+	result:1 = A - op1;
+	subtraction_flags1(A, op1, result);
+	A = result;
+}
+
+:SUBB iopr8i                 is XGATE=0 & Prefix18=0 & (op8=0xC0); iopr8i
+{ 
+	op1:1 = iopr8i;
+	
+	result:1 = B - op1;
+	subtraction_flags1(B, op1, result);
+	B = result;
+}
+
+:SUBB opr8a_8                 is XGATE=0 & Prefix18=0 & (op8=0xD0); opr8a_8
+{ 
+	op1:1 = opr8a_8;
+	
+	result:1 = B - op1;
+	subtraction_flags1(B, op1, result);
+	B = result;
+}
+
+:SUBB opr16a_8                 is XGATE=0 & Prefix18=0 & (op8=0xF0); opr16a_8
+{ 
+	op1:1 = opr16a_8;
+	
+	result:1 = B - op1;
+	subtraction_flags1(B, op1, result);
+	B = result;
+}
+
+:SUBB indexed1_5                 is XGATE=0 & Prefix18=0 & (op8=0xE0); indexed1_5
+{ 
+	op1:1 = indexed1_5;
+	
+	result:1 = B - op1;
+	subtraction_flags1(B, op1, result);
+	B = result;
+}
+
+:SUBD iopr16i                 is XGATE=0 & Prefix18=0 & (op8=0x83); iopr16i
+{ 
+	op1:2 = iopr16i;
+	
+	result:2 = D - op1;
+	subtraction_flags2(D, op1, result);
+	D = result;
+}
+
+:SUBD opr8a_16                 is XGATE=0 & Prefix18=0 & (op8=0x93); opr8a_16
+{ 
+	op1:2 = opr8a_16;
+	
+	result:2 = D - op1;
+	subtraction_flags2(D, op1, result);
+	D = result;
+}
+
+:SUBD opr16a_16                 is XGATE=0 & Prefix18=0 & (op8=0xB3); opr16a_16
+{ 
+	op1:2 = opr16a_16;
+	
+	result:2 = D - op1;
+	subtraction_flags2(D, op1, result);
+	D = result;
+}
+
+:SUBD indexed2_5                 is XGATE=0 & Prefix18=0 & (op8=0xA3); indexed2_5
+{ 
+	op1:2 = indexed2_5;
+	
+	result:2 = D - op1;
+	subtraction_flags2(D, op1, result);
+	D = result;
+}
+
+@if defined(HCS12X)
+:SUBX iopr16i                 is XGATE=0 & Prefix18=1 & (op8=0x80); iopr16i
+{ 
+	op1:2 = iopr16i;
+	
+	result:2 = IX - op1;
+	subtraction_flags2(IX, op1, result);
+	IX = result;
+}
+@endif
+
+@if defined(HCS12X)
+:SUBX opr8a_16                 is XGATE=0 & Prefix18=1 & (op8=0x90); opr8a_16
+{ 
+	op1:2 = opr8a_16;
+	
+	result:2 = IX - op1;
+	subtraction_flags2(IX, op1, result);
+	IX = result;
+}
+@endif
+
+@if defined(HCS12X)
+:SUBX opr16a_16                 is XGATE=0 & Prefix18=1 & (op8=0xB0); opr16a_16
+{ 
+	op1:2 = opr16a_16;
+	
+	result:2 = IX - op1;
+	subtraction_flags2(IX, op1, result);
+	IX = result;
+}
+@endif
+
+@if defined(HCS12X)
+:SUBX indexed2_5                 is XGATE=0 & Prefix18=1 & (op8=0xA0); indexed2_5
+{ 
+	op1:2 = indexed2_5;
+	
+	result:2 = IX - op1;
+	subtraction_flags2(IX, op1, result);
+	IX = result;
+}
+
+@if defined(HCS12X)
+:SUBY iopr16i                 is XGATE=0 & Prefix18=1 & (op8=0xC0); iopr16i
+{ 
+	op1:2 = iopr16i;
+	
+	result:2 = IY - op1;
+	subtraction_flags2(IY, op1, result);
+	IY = result;
+}
+@endif
+
+@if defined(HCS12X)
+:SUBY opr8a_16                 is XGATE=0 & Prefix18=1 & (op8=0xD0); opr8a_16
+{ 
+	op1:2 = opr8a_16;
+	
+	result:2 = IY - op1;
+	subtraction_flags2(IY, op1, result);
+	IY = result;
+}
+@endif
+
+@if defined(HCS12X)
+:SUBY opr16a_16                 is XGATE=0 & Prefix18=1 & (op8=0xF0); opr16a_16
+{ 
+	op1:2 = opr16a_16;
+	
+	result:2 = IY - op1;
+	subtraction_flags2(IY, op1, result);
+	IY = result;
+}
+@endif
+
+@if defined(HCS12X)
+:SUBY indexed2_5                 is XGATE=0 & Prefix18=1 & (op8=0xE0); indexed2_5
+{ 
+	op1:2 = indexed2_5;
+	
+	result:2 = IY - op1;
+	subtraction_flags2(IY, op1, result);
+	IY = result;
+}
+@endif
+
+:SWI                     is XGATE=0 & Prefix18=0 & op8=0x3F
+{
+	tmp:2 = inst_next;
+	Push2( tmp );
+	Push2( IY );
+	Push2( IX );
+	Push1( A );
+	Push1( B );
+	Push1( CCR );
+	
+	$(I) = 1;
+	
+	addr:2 = $(VECTOR_SWI);
+	call [addr];
+}
+
+:TAB                     is XGATE=0 & Prefix18=1 & op8=0x0E 
+{
+	B = A;
+	$(Z) = (B == 0);
+	$(N) = (B s< 0);
+	V_equals_0();	
+}
+
+:TAP                     is XGATE=0 & Prefix18=0 & op16=0xB702 
+{
+	setCCR( A );
+}
+
+:TBA                     is XGATE=0 & Prefix18=1 & op8=0x0F 
+{
+	A = B;
+	$(Z) = (A == 0);
+	$(N) = (A s< 0);
+	V_equals_0();	
+}
+
+:TBEQ byte9_8, rel9               is XGATE=0 & Prefix18=0 & op8=0x04; op15_13=0x2 & size10_10=0 & byte9_8 & rel9
+{
+	if (byte9_8 == 0) goto rel9;
+}
+
+:TBEQ word9_8, rel9               is XGATE=0 & Prefix18=0 & op8=0x04; op15_13=0x2 & size10_10=1 & word9_8 & rel9
+{
+	if (word9_8 == 0) goto rel9;
+}
+
+:TBL indexed1_3                    is XGATE=0 & Prefix18=1 & op8=0x3D; indexed1_3
+{
+	A = TableLookupAndInterpolate(indexed1_3, B);
+	$(Z) = (A == 0);
+	$(N) = (A s< 0);
+@if  defined(HC12)
+	$(C) = TableLookupAndInterpolateRoundable(indexed1_3, B);
+@endif
+}
+
+:TBNE byte9_8, rel9               is XGATE=0 & Prefix18=0 & op8=0x04; op15_13=0x3 & size10_10=0 & byte9_8 & rel9
+{
+	if (byte9_8 != 0) goto rel9;
+}
+
+:TBNE word9_8, rel9               is XGATE=0 & Prefix18=0 & op8=0x04; op15_13=0x3 & size10_10=1 & word9_8 & rel9
+{
+	if (word9_8 != 0) goto rel9;
+}
+
+:TFR bytes_ABClT3lBXlYlSl_6_4, bytes_ABCl_2_0	is XGATE=0 & Prefix18=0 & ( op8=0xB7 );
+	(
+# The case "20" is covered by TPA
+		( rows3_0=0x0 & ( columns7_4=0x0 | columns7_4=0x1 |                  columns7_4=0x3 | columns7_4=0x4 | columns7_4=0x5 | columns7_4=0x6 | columns7_4=0x7 ) ) | 
+		( rows3_0=0x1 & ( columns7_4=0x0 | columns7_4=0x1 | columns7_4=0x2 | columns7_4=0x3 | columns7_4=0x4 | columns7_4=0x5 | columns7_4=0x6 | columns7_4=0x7 ) ) | 
+
+		( rows3_0=0x8 & ( columns7_4=0x0 | columns7_4=0x1 |                                   columns7_4=0x4                                                    ) ) | 
+		( rows3_0=0x9 & ( columns7_4=0x0 | columns7_4=0x1 | columns7_4=0x2 | columns7_4=0x3 | columns7_4=0x4 | columns7_4=0x5 | columns7_4=0x6 | columns7_4=0x7 ) ) 
+	) &
+	bytes_ABClT3lBXlYlSl_6_4 & bytes_ABCl_2_0 
+{
+	bytes_ABCl_2_0 = bytes_ABClT3lBXlYlSl_6_4;
+}
+
+:TFR bytes_ABClT3lBXlYlSl_6_4, CCR	is XGATE=0 & Prefix18=0 & ( op8=0xB7 );
+	(
+# The case "02" is covered by TAP
+		( rows3_0=0x2 & (                  columns7_4=0x1 | columns7_4=0x2 | columns7_4=0x3 | columns7_4=0x4 | columns7_4=0x5 | columns7_4=0x6 | columns7_4=0x7 ) ) | 
+
+		( rows3_0=0xA & (                  columns7_4=0x1                                                                                                       ) ) 
+	) &
+	bytes_ABClT3lBXlYlSl_6_4 & CCR 
+{
+	setCCR( bytes_ABClT3lBXlYlSl_6_4 );
+}
+
+:TFR bytes_ABChT3hBXhYhSh_6_4, A	is XGATE=0 & Prefix18=0 & ( op8=0xB7 );
+	(
+		( rows3_0=0x8 & (                                   columns7_4=0x2 | columns7_4=0x3 |                  columns7_4=0x5 | columns7_4=0x6 | columns7_4=0x7 ) ) 
+	) &
+	bytes_ABChT3hBXhYhSh_6_4 & A 
+{
+	A = bytes_ABChT3hBXhYhSh_6_4;
+}
+
+:TFR A, CCRH	is XGATE=0 & Prefix18=0 & ( op8=0xB7 );
+	(
+		( rows3_0=0xA & ( columns7_4=0x0                                                                                                                        ) )  
+	) &
+	A & CCRH 
+{
+	CCRH = A;
+}
+
+:TFR words_CT3DXYS_6_4, CCRW	is XGATE=0 & Prefix18=0 & ( op8=0xB7 );
+	(
+		( rows3_0=0xA & (                                   columns7_4=0x2 | columns7_4=0x3 | columns7_4=0x4 | columns7_4=0x5 | columns7_4=0x6 | columns7_4=0x7 ) )  
+	) &
+	words_CT3DXYS_6_4 & CCRW 
+{
+	setCCRW( words_CT3DXYS_6_4 );
+}
+
+:TFR words_T3DXYS_6_4, words_T2DXYS_2_0	is XGATE=0 & Prefix18=0 & ( op8=0xB7 );
+	(
+# The case "57" is covered by TXS
+# The case "67" is covered by TYS
+# The case "75" is covered by TSX
+# The case "76" is covered by TSY
+		( rows3_0=0x3 & (                                                    columns7_4=0x3 | columns7_4=0x4 | columns7_4=0x5 | columns7_4=0x6 | columns7_4=0x7 ) ) | 
+		( rows3_0=0x4 & (                                                    columns7_4=0x3 | columns7_4=0x4 | columns7_4=0x5 | columns7_4=0x6 | columns7_4=0x7 ) ) | 
+		( rows3_0=0x5 & (                                                    columns7_4=0x3 | columns7_4=0x4 | columns7_4=0x5 | columns7_4=0x6                  ) ) | 
+		( rows3_0=0x6 & (                                                    columns7_4=0x3 | columns7_4=0x4 | columns7_4=0x5 | columns7_4=0x6                  ) ) | 
+		( rows3_0=0x7 & (                                                    columns7_4=0x3 | columns7_4=0x4 |                                   columns7_4=0x7 ) ) |
+		
+		( rows3_0=0xB & (                                                    columns7_4=0x3 |                  columns7_4=0x5 | columns7_4=0x6 | columns7_4=0x7 ) ) | 
+		( rows3_0=0xC & (                                                                     columns7_4=0x4 | columns7_4=0x5 | columns7_4=0x6 | columns7_4=0x7 ) ) | 
+		( rows3_0=0xD & (                                                    columns7_4=0x3 |                  columns7_4=0x5 | columns7_4=0x6 | columns7_4=0x7 ) ) | 
+		( rows3_0=0xE & (                                                    columns7_4=0x3 |                  columns7_4=0x5 | columns7_4=0x6 | columns7_4=0x7 ) ) | 
+		( rows3_0=0xF & (                                                    columns7_4=0x3 | columns7_4=0x4 | columns7_4=0x5 | columns7_4=0x6 | columns7_4=0x7 ) )  
+	) &
+	words_T3DXYS_6_4 & words_T2DXYS_2_0 
+{
+	words_T2DXYS_2_0 = words_T3DXYS_6_4;
+}
+
+:TFR D, TMP1	is XGATE=0 & Prefix18=0 & ( op8=0xB7 );
+	(
+		( rows3_0=0xB & (                                                                     columns7_4=0x4                                                    ) )  
+	) &
+	D & TMP1 
+{
+	TMP1 = D;
+}
+
+:TFR TMP1, D	is XGATE=0 & Prefix18=0 & ( op8=0xB7 );
+	(
+		( rows3_0=0xC & (                                                    columns7_4=0x3                                                                     ) ) 
+	) &
+	TMP1 & D 
+{
+	D = TMP1;
+}
+
+:TFR CCRW, words_T2DXYS_2_0	is XGATE=0 & Prefix18=0 & ( op8=0xB7 );
+	(
+		( rows3_0=0xB & (                                   columns7_4=0x2                                                                                      ) ) |
+		( rows3_0=0xC & (                                   columns7_4=0x2                                                                                      ) ) |
+		( rows3_0=0xD & (                                   columns7_4=0x2                                                                                      ) ) |
+		( rows3_0=0xE & (                                   columns7_4=0x2                                                                                      ) ) |
+		( rows3_0=0xF & (                                   columns7_4=0x2                                                                                      ) ) 
+	) &
+	CCRW & words_T2DXYS_2_0 
+{
+	words_T2DXYS_2_0 = CCRW;
+}
+
+:TFR A, bytes_T2h_XhYhSh_2_0	is XGATE=0 & Prefix18=0 & ( op8=0xB7 );
+	(
+		( rows3_0=0xB & ( columns7_4=0x0                                                                                                                        ) ) |
+
+		( rows3_0=0xD & ( columns7_4=0x0                                                                                                                        ) ) |
+		( rows3_0=0xE & ( columns7_4=0x0                                                                                                                        ) ) |
+		( rows3_0=0xF & ( columns7_4=0x0                                                                                                                        ) ) 
+	) &
+	A & bytes_T2h_XhYhSh_2_0 
+{
+	bytes_T2h_XhYhSh_2_0 = A;
+}
+
+:TFR A, bytes_T2l_XlYlSl_2_0	is XGATE=0 & Prefix18=0 & ( op8=0xB7 );
+	(
+		( rows3_0=0xB & (                  columns7_4=0x1                                                                                                       ) ) |
+
+		( rows3_0=0xD & (                  columns7_4=0x1                                                                                                       ) ) |
+		( rows3_0=0xE & (                  columns7_4=0x1                                                                                                       ) ) |
+		( rows3_0=0xF & (                  columns7_4=0x1                                                                                                       ) ) 
+	) &
+	A & bytes_T2l_XlYlSl_2_0 
+{
+	bytes_T2l_XlYlSl_2_0 = A;
+}
+
+:TPA                     is XGATE=0 & Prefix18=0 & op16=0xB720 
+{
+	A = CCR;
+}
+
+# TODO Not working properly with context regis XGATE=0 & ter for Prefix18
+:TRAP trapnum	is XGATE=0 & Prefix18=1 & op8=0x30 & trapnum
+{
+	tmp:2 = inst_next;
+	Push2( tmp );
+	Push2( IY );
+	Push2( IX );
+	Push1( A );
+	Push1( B );
+	Push1( CCR );
+	
+	$(I) = 1;
+	
+	addr:2 = $(VECTOR_TRAP);
+	call [addr];
+}
+
+:TST opr16a_8                 is XGATE=0 & Prefix18=0 & (op8=0xF7); opr16a_8
+{
+	op1:1 = opr16a_8;
+	$(Z) = (op1 == 0);
+	$(N) = (op1 s< 0);	
+	V_equals_0();
+	$(C) = 0;	
+}
+
+:TST indexed1_5                 is XGATE=0 & Prefix18=0 & (op8=0xE7); indexed1_5 
+{
+	op1:1 = indexed1_5;
+	$(Z) = (op1 == 0);
+	$(N) = (op1 s< 0);	
+	V_equals_0();	
+	$(C) = 0;	
+}
+
+:TSTA                    is XGATE=0 & Prefix18=0 & op8=0x97 
+{
+	$(Z) = (A == 0);
+	$(N) = (A s< 0);
+	V_equals_0();	
+}
+
+:TSTB                    is XGATE=0 & Prefix18=0 & op8=0xD7 
+{
+	$(Z) = (B == 0);
+	$(N) = (B s< 0);
+	$(V) = 0;
+	$(C) = 0;
+}
+
+@if defined(HCS12X)
+:TSTW opr16a_16                 is XGATE=0 & Prefix18=1 & (op8=0xF7); opr16a_16
+{
+	op1:2 = opr16a_16;
+	$(Z) = (op1 == 0);
+	$(N) = (op1 s< 0);	
+	V_equals_0();
+	$(C) = 0;	
+}
+@endif
+
+@if defined(HCS12X)
+:TSTW indexed2_5                 is XGATE=0 & Prefix18=1 & (op8=0xE7); indexed2_5 
+{
+	op1:2 = indexed2_5;
+	$(Z) = (op1 == 0);
+	$(N) = (op1 s< 0);	
+	V_equals_0();	
+	$(C) = 0;	
+}
+@endif
+
+:TSTX                    is XGATE=0 & Prefix18=1 & op8=0x97
+{
+	$(Z) = (IX == 0);
+	$(N) = (IX s< 0);
+	V_equals_0();	
+}
+
+
+:TSTY                    is XGATE=0 & Prefix18=1 & op8=0xD7 
+{
+	$(Z) = (IY == 0);
+	$(N) = (IY s< 0);
+	V_equals_0();	
+}
+
+:TSX                     is XGATE=0 & Prefix18=0 & op16=0xB775 
+{
+	IX = SP;
+}
+
+:TSY                     is XGATE=0 & Prefix18=0 & op16=0xB776 
+{
+	IY = SP;
+}
+
+:TXS                     is XGATE=0 & Prefix18=0 & op16=0xB757 
+{
+	SP = IX;
+}
+
+:TYS                     is XGATE=0 & Prefix18=0 & op16=0xB767 
+{
+	SP = IY;
+}
+
+:WAI                    is XGATE=0 & Prefix18=0 & op8=0x3E 
+{
+	tmp:2 = inst_next;
+	Push2( tmp );
+	Push2( IY );
+	Push2( IX );
+	Push1( A );
+	Push1( B );
+	Push1( CCR );
+	
+	WaitForInterrupt();
+}
+ 
+:WAV                    is XGATE=0 & Prefix18=1 & op8=0x3C 
+{
+	tempIY:2 = WeightedAverageSOPHigh(B, IY, IX);
+	tempD:2  = WeightedAverageSOPLow (B, IY, IX);
+	tempIX:2 = WeightedAverageSOW(B, IY, IX);
+	
+	B = 0;
+	
+	IY = tempIY;
+	D  = tempD;
+	IX = tempIX;
+}
+ 
+:WAVR                    is XGATE=0 & Prefix18=0 & op8=0x3C 
+{
+	WeightedAverageResume();
+}
+
+:XGDX                     is XGATE=0 & Prefix18=0 & op16=0xB7C5 
+{
+	tmp:2 = IX;
+	IX = D;
+	D = tmp;
+}
+
+:XGDY                     is XGATE=0 & Prefix18=0 & op16=0xB7C6 
+{
+	tmp:2 = IY;
+	IY = D;
+	D = tmp;
+}

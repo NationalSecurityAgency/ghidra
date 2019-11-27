@@ -37,7 +37,7 @@ public class RegisterTree extends GTree {
 
 	public RegisterTree() {
 		super(new RegisterTreeRootNode());
-		root = (RegisterTreeRootNode) getRootNode();
+		root = (RegisterTreeRootNode) getModelRoot();
 
 		setEditable(false);
 
@@ -138,9 +138,9 @@ public class RegisterTree extends GTree {
 	}
 }
 
-abstract class SearchableRegisterTreeNode extends AbstractGTreeNode {
+abstract class SearchableRegisterTreeNode extends GTreeNode {
 	public GTreeNode findNode(Register register) {
-		List<GTreeNode> allChildren = getAllChildren();
+		List<GTreeNode> allChildren = getChildren();
 		for (GTreeNode child : allChildren) {
 			if (!(child instanceof RegisterTreeNode)) {
 				continue;
@@ -160,9 +160,8 @@ abstract class SearchableRegisterTreeNode extends AbstractGTreeNode {
 	}
 }
 
-class RegisterTreeRootNode extends SearchableRegisterTreeNode implements GTreeRootNode {
+class RegisterTreeRootNode extends SearchableRegisterTreeNode {
 	private Register[] lastRegisters;
-	private GTree tree;
 
 	@Override
 	public Icon getIcon(boolean expanded) {
@@ -197,7 +196,8 @@ class RegisterTreeRootNode extends SearchableRegisterTreeNode implements GTreeRo
 		List<GTreeNode> nodes = new ArrayList<GTreeNode>();
 
 		for (Register register : registers) {
-			if (register.getBaseRegister() != register && !register.getParentRegister().isHidden()) {
+			if (register.getBaseRegister() != register &&
+				!register.getParentRegister().isHidden()) {
 				continue;
 			}
 			String groupName = register.getGroup();
@@ -216,17 +216,6 @@ class RegisterTreeRootNode extends SearchableRegisterTreeNode implements GTreeRo
 		}
 		Collections.sort(nodes);
 		setChildren(nodes);
-	}
-
-	@Override
-	public GTree getGTree() {
-		return tree;
-	}
-
-	@Override
-	public void setGTree(GTree tree) {
-		this.tree = tree;
-
 	}
 }
 

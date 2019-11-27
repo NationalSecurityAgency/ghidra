@@ -144,12 +144,12 @@ public class ConfigureGradleWizardPage extends WizardPage {
 		if (visible) {
 			IProject project = projectPage.getGhidraModuleProject().getProject();
 			IFolder ghidraFolder = project.getFolder(GhidraProjectUtils.GHIDRA_FOLDER_NAME);
-			File ghidraDir = ghidraFolder.getRawLocation().toFile();
+			File ghidraDir = ghidraFolder.getLocation().toFile();
 			try {
 				GhidraApplicationLayout ghidraLayout = new GhidraApplicationLayout(ghidraDir);
 				ApplicationProperties props = ghidraLayout.getApplicationProperties();
 				gradleVersion =
-					props.getProperty(ApplicationProperties.APPLICATION_GRADLE_VERSION_PROPERTY);
+					props.getProperty(ApplicationProperties.APPLICATION_GRADLE_MIN_PROPERTY);
 				if (gradleVersion != null && !gradleVersion.isEmpty()) {
 					setDescription("Configure Gradle.  Version " + gradleVersion + " is expected.");
 				}

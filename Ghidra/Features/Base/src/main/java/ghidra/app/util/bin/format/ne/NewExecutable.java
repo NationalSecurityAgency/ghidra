@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +15,13 @@
  */
 package ghidra.app.util.bin.format.ne;
 
-import generic.continues.*;
-import ghidra.app.util.bin.*;
-import ghidra.app.util.bin.format.*;
-import ghidra.app.util.bin.format.mz.*;
+import java.io.IOException;
 
-import java.io.*;
+import generic.continues.GenericFactory;
+import ghidra.app.util.bin.ByteProvider;
+import ghidra.app.util.bin.format.FactoryBundledWithBinaryReader;
+import ghidra.app.util.bin.format.mz.DOSHeader;
+import ghidra.program.model.address.SegmentedAddress;
 
 /**
  * A class to manage loading New Executables (NE).
@@ -34,17 +34,20 @@ public class NewExecutable {
     private WindowsHeader winHeader;
 
     /**
-     * Constructs a new instance of an new executable.
-     * @param bp the byte provider
-     * @throws IOException if an I/O error occurs.
-     */
-    public NewExecutable(GenericFactory factory, ByteProvider bp) throws IOException {
+	 * Constructs a new instance of an new executable.
+	 * @param factory is the object factory to bundle with the reader
+	 * @param bp the byte provider
+	 * @param baseAddr the image base of the executable
+	 * @throws IOException if an I/O error occurs.
+	 */
+	public NewExecutable(GenericFactory factory, ByteProvider bp, SegmentedAddress baseAddr)
+			throws IOException {
         reader = new FactoryBundledWithBinaryReader(factory, bp, true);
         dosHeader = DOSHeader.createDOSHeader(reader);
 
         if (dosHeader.isDosSignature()) {
             try {
-                winHeader = new WindowsHeader(reader, (short)dosHeader.e_lfanew());
+				winHeader = new WindowsHeader(reader, baseAddr, (short) dosHeader.e_lfanew());
             }
             catch (InvalidWindowsHeaderException e) {
             }

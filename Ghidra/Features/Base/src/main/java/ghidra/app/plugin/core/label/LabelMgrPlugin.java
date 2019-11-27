@@ -149,7 +149,7 @@ public class LabelMgrPlugin extends Plugin {
 
 		Symbol s = getSymbol(context);
 		if (s != null) {
-			if (s.getSource() == SourceType.DEFAULT && s.getSymbolType() == SymbolType.CODE) {
+			if (s.getSource() == SourceType.DEFAULT && s.getSymbolType() == SymbolType.LABEL) {
 				getAddEditDialog().addLabel(s.getAddress(), context.getProgram());
 			}
 			else {

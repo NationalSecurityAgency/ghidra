@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,12 +21,13 @@
 #include "dia2.h"
 #include "diacreate.h"
 #include "cvconst.h"
+#include <string>
 
-wchar_t * printVariant( VARIANT & v );
-BSTR printType( IDiaSymbol* pType, BSTR prefix );
+std::wstring printVariant( VARIANT & v );
+std::wstring printType( IDiaSymbol* pType, const std::wstring& prefix );
 
-void printBound( IDiaSymbol* pBound );
-void printScopeName( IDiaSymbol* pscope );
-void printNameFromScope( wchar_t* name, IDiaSymbol* pscope, IDiaEnumSymbols* pEnum );
+void printBound( IDiaSymbol& pBound );
+void printScopeName( IDiaSymbol& pscope );
+void printNameFromScope( IDiaSymbol& pscope, IDiaEnumSymbols& pEnum );
 
 #endif

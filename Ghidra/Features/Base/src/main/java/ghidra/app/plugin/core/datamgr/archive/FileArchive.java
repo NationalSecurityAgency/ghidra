@@ -138,6 +138,9 @@ public class FileArchive implements Archive {
 
 	@Override
 	public boolean isChanged() {
+		if (isClosed()) {
+			return false;
+		}
 		return changed || fileDataTypeManager.isChanged();
 	}
 

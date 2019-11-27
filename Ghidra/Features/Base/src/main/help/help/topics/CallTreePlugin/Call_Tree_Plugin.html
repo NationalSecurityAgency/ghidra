@@ -37,6 +37,31 @@
 	  right-clicking in the Listing and selecting 
 	  <B>References<IMG src="../../shared/arrow.gif" alt="-&gt;" border="0">Show Call Trees</B>	  
 	  </P>
+	  
+	  <BLOCKQUOTE>
+	  <P>
+	  	<IMG border="0" src="../../shared/note.png">Unlike most widgets in Ghidra, the Call
+	  	Trees display functions differently depending upon how you launch it.  
+	  	<UL>
+	  		<LI>
+	  		When launched from the toolbar icon, the provider that is shown will track the 
+	  		current location in the Listing (the <IMG src="images/locationIn.gif" border="1">
+		      <A href="#Call_Tree_Action_Incoming_Navigation">Navigate on Incoming Location Changes 
+      			button</A> is on).
+	  		</LI>
+	  		<LI>
+	  		When launched from the context popup menu, the provider that is shown will not track
+	  		the current location in the Listing.  This allows you to open multiple windows for 
+	  		different functions, functioning much like <A HREF="help/topics/Snapshots/Snapshots.html">
+	  		snapshots</A>, allowing you to keep a watchful eye on particular functions, regardless
+	  		of where you navigate within the tool.
+	  		</LI>
+	  	</UL>
+	  </P>
+	  </BLOCKQUOTE>
+
+	  <BR><BR>
+
 
       <P><A name="Incoming_Call_Tree"></A>The <B>Incoming Calls</B> tree shows all caller
       functions. Each node in the tree has the incoming function call icon (<IMG src=
@@ -139,7 +164,8 @@
           <!-- Home -->
 
           <P align="left"><A name="Call_Tree_Action_Home"></A>The <IMG src="images/go-home.png"
-          border="1"> home button will navigate to function label of the main function.</P>
+          border="1"> home button will navigate to the function label of the main function
+          for which the call trees are being displayed.</P>
           
           <P align="left"><A name="Call_Tree_Action_Refresh"></A>The <IMG src="Icons.REFRESH_ICON"
           border="1"> refresh button will reload the trees.   This is needed due to the fact that

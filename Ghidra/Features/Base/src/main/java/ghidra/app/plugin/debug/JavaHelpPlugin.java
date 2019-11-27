@@ -25,15 +25,15 @@ import javax.swing.JButton;
 import docking.*;
 import docking.action.DockingAction;
 import docking.action.MenuData;
+import docking.actions.SharedStubKeyBindingAction;
 import docking.help.*;
+import docking.tool.ToolConstants;
 import ghidra.app.DeveloperPluginPackage;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.framework.main.FrontEndable;
 import ghidra.framework.model.Project;
-import ghidra.framework.options.DummyKeyBindingsOptionsAction;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
-import ghidra.framework.plugintool.util.ToolConstants;
 import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
 import ghidra.util.task.*;
@@ -191,7 +191,7 @@ public class JavaHelpPlugin extends Plugin implements FrontEndable {
 
 	private boolean shouldSkipHelpCheck(DockingAction action) {
 		String actionName = action.getOwner() + " - " + action.getName();
-		if (action instanceof DummyKeyBindingsOptionsAction) {
+		if (action instanceof SharedStubKeyBindingAction) {
 			return true;
 		}
 		if (noHelpActions.contains(actionName)) {

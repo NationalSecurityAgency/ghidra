@@ -26,6 +26,7 @@ import javax.swing.text.View;
 
 import docking.DockingUtils;
 import docking.widgets.*;
+import docking.widgets.label.*;
 import generic.util.WindowUtilities;
 import ghidra.framework.Application;
 import ghidra.framework.ApplicationProperties;
@@ -95,6 +96,8 @@ class InfoPanel extends JPanel {
 
 	private Component buildDistributionLabel() {
 		String content = distributionInfo;
+
+		// Use java native JLabel and let it auto-detect html content
 		JLabel resizer = new JLabel(content);
 
 		final int desiredTextViewWidth = imageWidth - (MARGIN * 2);
@@ -104,7 +107,7 @@ class InfoPanel extends JPanel {
 		if (view == null) {
 			// must not be HTML content in the splash screen text (this shouldn't 
 			// happen, but let's just protect against this anyway).
-			JLabel label = new JLabel(content) {
+			JLabel label = new GDLabel(content) {
 				@Override
 				public Dimension getPreferredSize() {
 					Dimension preferredSize = super.getPreferredSize();
@@ -119,7 +122,7 @@ class InfoPanel extends JPanel {
 		float w = view.getPreferredSpan(View.X_AXIS);
 		float h = view.getPreferredSpan(View.Y_AXIS);
 
-		JLabel distribLabel = new JLabel(content);
+		JLabel distribLabel = new GHtmlLabel(content);
 		distribLabel.setPreferredSize(new Dimension((int) Math.ceil(w), (int) Math.ceil(h + 10)));
 		return distribLabel;
 	}
@@ -150,13 +153,13 @@ class InfoPanel extends JPanel {
 		panel.setBorder(BorderFactory.createEmptyBorder(4, 0, 4, 0));
 		ImageIcon cloudRevImage = ResourceManager.loadImage(CLOUD_REV_FILENAME);
 		if (cloudRevImage != null) {
-			JLabel cloudRevLabel = new JLabel(cloudRevImage);
+			JLabel cloudRevLabel = new GIconLabel(cloudRevImage);
 			panel.add(cloudRevLabel, BorderLayout.NORTH);
 		}
 
 		ImageIcon cloudImage = ResourceManager.loadImage(CLOUD_FILENAME);
 		if (cloudImage != null) {
-			JLabel cloudLabel = new JLabel(cloudImage);
+			JLabel cloudLabel = new GIconLabel(cloudImage);
 			panel.add(cloudLabel, BorderLayout.SOUTH);
 		}
 
@@ -182,7 +185,7 @@ class InfoPanel extends JPanel {
 		imagePanel.setLayout(new BorderLayout());
 		ImageIcon ghidraSplashImage = ResourceManager.loadImage(GHIDRA_FILENAME);
 
-		JLabel l = new JLabel(ghidraSplashImage);
+		JLabel l = new GIconLabel(ghidraSplashImage);
 		imagePanel.add(l, BorderLayout.CENTER);
 		imageWidth = ghidraSplashImage.getIconWidth();
 		return imagePanel;

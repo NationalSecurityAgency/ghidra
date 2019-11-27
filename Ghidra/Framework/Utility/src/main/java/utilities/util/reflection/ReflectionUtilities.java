@@ -18,6 +18,7 @@ package utilities.util.reflection;
 import java.io.*;
 import java.lang.reflect.*;
 import java.util.*;
+import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
 import ghidra.util.exception.AssertException;
@@ -26,6 +27,7 @@ public class ReflectionUtilities {
 
 	private static final String JAVA_AWT_PATTERN = "java.awt";
 	private static final String JAVA_REFLECT_PATTERN = "java.lang.reflect";
+	private static final String JDK_INTERNAL_REFLECT_PATTERN = "jdk.internal.reflect";
 	private static final String SWING_JAVA_PATTERN = "java.swing";
 	private static final String SWING_JAVAX_PATTERN = "javax.swing";
 	private static final String SUN_AWT_PATTERN = "sun.awt";
@@ -158,8 +160,8 @@ public class ReflectionUtilities {
 	 * Get the first field specification contained within containingClass which has the type classType.
 	 * This method is only really useful if it is known that only a single field of 
 	 * classType exists within the containingClass hierarchy.
-	 * @param classType
-	 * @param containingClass
+	 * @param classType the class
+	 * @param containingClass the class that contains a field of the given type
 	 * @return field which corresponds to type classType or null
 	 */
 	public static Field locateFieldByTypeOnClass(Class<?> classType, Class<?> containingClass) {
@@ -255,12 +257,11 @@ public class ReflectionUtilities {
 
 	/**
 	 * Finds the first occurrence of the given pattern and then stops filtering when it finds 
-	 * something that is not that pattern.
+	 * something that is not that pattern
 	 * 
 	 * @param trace the trace to update
-	 * @param patterns the non-regex patterns used to perform a 
-	 * 				   {@link String#contains(CharSequence)} on each {@link StackTraceElement}
-	 * 				   line.
+	 * @param pattern the non-regex patterns used to perform a 
+	 * 				  {@link String#contains(CharSequence)} on each {@link StackTraceElement} line
 	 * @return the updated trace
 	 */
 	public static StackTraceElement[] movePastStackTracePattern(StackTraceElement[] trace,
@@ -351,17 +352,36 @@ public class ReflectionUtilities {
 	}
 
 	/**
+	 * A convenience method to create a throwable, filtering boiler-plate Java-related 
+	 * lines (e.g., AWT, Swing, Security, etc).  
+	 * This can be useful for emitting diagnostic stack traces with reduced noise.  
+	 * 
+	 * <p>This method differs from {@link #createJavaFilteredThrowable()} in that this method
+	 * returns a String, which is useful when printing log messages without having to directly
+	 * print the stack trace.
+	 * 
+	 * @return the new throwable
+	 */
+	public static String createJavaFilteredThrowableString() {
+		Throwable t = createThrowableWithStackOlderThan();
+		Throwable filtered = filterJavaThrowable(t);
+		return stackTraceToString(filtered);
+	}
+
+	/**
 	 * A convenience method to take a throwable, filter boiler-plate Java-related 
 	 * lines (e.g., AWT, Swing, Security, etc).  
 	 * This can be useful for emitting diagnostic stack traces with reduced noise.
 	 * 
+	 * @param t the throwable to filter
 	 * @return the throwable
 	 */
 	public static Throwable filterJavaThrowable(Throwable t) {
 		StackTraceElement[] trace = t.getStackTrace();
 		StackTraceElement[] filtered = filterStackTrace(trace, JAVA_AWT_PATTERN,
-			JAVA_REFLECT_PATTERN, SWING_JAVA_PATTERN, SWING_JAVAX_PATTERN, SECURITY_PATTERN,
-			SUN_AWT_PATTERN, SUN_REFLECT_PATTERN, MOCKIT_PATTERN, JUNIT_PATTERN);
+			JAVA_REFLECT_PATTERN, JDK_INTERNAL_REFLECT_PATTERN, SWING_JAVA_PATTERN,
+			SWING_JAVAX_PATTERN, SECURITY_PATTERN, SUN_AWT_PATTERN, SUN_REFLECT_PATTERN,
+			MOCKIT_PATTERN, JUNIT_PATTERN);
 		t.setStackTrace(filtered);
 		return t;
 	}
@@ -373,6 +393,26 @@ public class ReflectionUtilities {
 			}
 		}
 		return false;
+	}
+
+	/**
+	 * Returns a string which is a printout of a stack trace for each thread running in the
+	 * current JVM
+	 * @return the stack trace string
+	 */
+	public static String createStackTraceForAllThreads() {
+		Map<Thread, StackTraceElement[]> allStackTraces = Thread.getAllStackTraces();
+		Set<Entry<Thread, StackTraceElement[]>> entrySet = allStackTraces.entrySet();
+		StringBuilder builder = new StringBuilder();
+		for (Entry<Thread, StackTraceElement[]> entry : entrySet) {
+			builder.append("Thread: " + entry.getKey().getName()).append('\n');
+			StackTraceElement[] value = entry.getValue();
+			for (StackTraceElement stackTraceElement : value) {
+				builder.append('\t').append("at ").append(stackTraceElement).append('\n');
+			}
+		}
+
+		return builder.toString();
 	}
 
 	/**

@@ -1227,7 +1227,7 @@ public class ReferenceDBManager implements ReferenceManager, ManagerDB, ErrorHan
 		if (symbol.isDynamic()) {
 			return;
 		}
-		if (symbol.getSymbolType() != SymbolType.CODE) {
+		if (symbol.getSymbolType() != SymbolType.LABEL) {
 			checkFunctionChange(symbol);
 			return;
 		}
@@ -1268,7 +1268,7 @@ public class ReferenceDBManager implements ReferenceManager, ManagerDB, ErrorHan
 	 */
 	@Override
 	public void setAssociation(Symbol s, Reference ref) {
-		if (s.getSymbolType() != SymbolType.CODE || s.isDynamic()) {
+		if (s.getSymbolType() != SymbolType.LABEL || s.isDynamic()) {
 			return;
 		}
 		lock.acquire();

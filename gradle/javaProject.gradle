@@ -1,0 +1,184 @@
+/*****************************************************************************************
+	This file is a "mix-in" gradle script that individual gradle projects should include if they
+	have java code.
+	
+	A gradle project can add java support by including the following to its build.gradle file:
+
+		apply from: "$rootProject.projectDir/gradle/support/distributableGhidraModule.gradle"
+ *****************************************************************************************/
+
+import org.gradle.plugins.ide.eclipse.model.Container;
+import org.gradle.plugins.ide.eclipse.model.Library;
+
+
+/*********************************************************************************
+ * Subproject configuration 
+ *  - all subs will have access to these properties.
+ *********************************************************************************/
+
+apply plugin: 'java'
+
+compileJava {
+	options.compilerArgs << '-Xlint:none'
+	options.compilerArgs << '-XDignore.symbol.file'
+	options.fork = true
+	options.warnings = false
+}
+
+compileTestJava {
+	options.compilerArgs << '-Xlint:none'
+	options.compilerArgs << '-XDignore.symbol.file'
+	options.fork = true
+	options.warnings = false
+}
+	
+plugins.withId('java') {
+	sourceCompatibility = "${rootProject.JAVA_COMPILER}"
+	targetCompatibility = "${rootProject.JAVA_COMPILER}"
+}
+
+
+jar {
+    manifest {
+        attributes (
+            "Specification-Title": "${project.name}",
+            "Specification-Version": "${rootProject.RELEASE_VERSION}",
+            "Specification-Vendor": "Ghidra"
+        )
+    }
+}
+
+
+sourceSets {
+	main {
+		java {
+			srcDir 'src/main/java'
+		}
+		resources {
+			srcDir 'src/main/resources'
+		}
+	}
+	test {
+		java {
+			srcDir 'src/test/java'
+		}
+		resources {
+			srcDir 'src/test/resources'
+		}
+	}
+	integrationTest {
+		java {
+			srcDirs = ['src/test.slow/java'] // overwrite srcDir with new path
+			compileClasspath += main.output + test.output
+			runtimeClasspath += main.output + test.output
+		}
+		resources {
+			srcDirs = ['src/test.slow/resources']
+		}
+	}
+	screenShots {
+		java {
+			srcDir 'src/screen/java'
+			
+			// Screenshots are essentially tests, and depend on classes in several other
+			// test directories so they must be included here
+			compileClasspath += main.output + test.output + integrationTest.output
+			runtimeClasspath += main.output + test.output + integrationTest.output
+		}
+	}
+	pcodeTest {
+		java {
+			srcDir 'src/test.processors/java'
+			compileClasspath += main.output
+			runtimeClasspath += main.output
+		}
+		resources {
+			srcDir 'src/test.processors/resources'
+		}
+	}
+	scripts {
+		java {
+			srcDir 'developer_scripts'
+			srcDir 'ghidra_scripts'
+		}
+	}
+}
+	
+configurations {
+	integrationTestCompile.extendsFrom testCompile
+	integrationTestRuntime.extendsFrom testRuntime, integrationTestCompile
+	pcodeTestCompile.extendsFrom compile
+	testArtifacts.extendsFrom testRuntime
+	integrationTestArtifacts.extendsFrom integrationTestRuntime
+	screenShotsCompile.extendsFrom integrationTestCompile
+}
+
+task testJar(type: Jar) {
+	classifier "test" // value part of file name
+	from sourceSets.test.output
+}
+
+task integrationTestJar(type: Jar) {
+	classifier "integrationTest" // value part of file name
+	from sourceSets.integrationTest.output
+}
+artifacts {
+	testArtifacts testJar
+	integrationTestArtifacts integrationTestJar
+	
+}
+
+/*
+	Provide test dependencies here so each build file does not have to.
+*/  
+dependencies {
+	integrationTestCompile "org.hamcrest:hamcrest-all:1.3"
+	integrationTestCompile "org.jmockit:jmockit:1.44"
+
+	testCompile "org.hamcrest:hamcrest-all:1.3"
+	testCompile "org.jmockit:jmockit:1.44"
+
+	testCompile "junit:junit:4.12"
+	pcodeTestCompile "junit:junit:4.12"
+}
+
+// For Java 9, we must explicitly export references to the internal classes we are using.
+// We export them to all "unnamed" modules, which are modules that don't define themselves
+// as a new Java 9 style module.  Ghidra is currently using unnamed modules everywhere.
+ext.addExports = { List<String> exports ->
+	tasks.withType(JavaCompile) {
+		exports.each {
+			options.compilerArgs.addAll(['--add-exports', it])
+		}
+	}
+
+	eclipse.classpath.file.whenMerged { classpath ->
+		classpath.entries.each { ent ->
+			if (ent instanceof Container && ent.path.contains('JRE_CONTAINER')) {
+				ent.entryAttributes.put('module', true);
+				ent.entryAttributes.put('add-exports', exports.join(':'));
+			}
+		}
+	}
+}
+
+// Fixup generated Eclipse projects
+apply plugin: 'eclipse'
+eclipse.classpath.file.whenMerged { classpath ->
+
+	// Gradle 5.6 has a bug that creates duplicate classpath entries, so we must dedupe them.
+	// https://github.com/gradle/gradle/issues/10393 
+	classpath.entries.unique(true) {
+		(it instanceof org.gradle.plugins.ide.eclipse.model.ProjectDependency) ? it.path : it
+	}
+	
+	// Prevent Gradle 5.6 from setting the 'test' attribute on our test source folders and jars. 
+	// If we don't do this, things that we have outside of test directories that depend on test 
+	// libraries (like junit) will not compile in Eclipse.
+	classpath.entries.findAll {
+		it.kind == 'src' || it.kind == 'lib'
+	}.each { 
+		it.entryAttributes['test'] = 'false' 
+	}
+}
+

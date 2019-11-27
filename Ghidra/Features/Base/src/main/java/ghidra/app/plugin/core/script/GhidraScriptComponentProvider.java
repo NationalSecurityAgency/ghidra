@@ -27,6 +27,8 @@ import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 
+import org.apache.commons.lang3.StringUtils;
+
 import docking.ActionContext;
 import docking.action.KeyBindingData;
 import docking.event.mouse.GMouseListenerAdapter;
@@ -35,7 +37,8 @@ import docking.widgets.filechooser.GhidraFileChooserMode;
 import docking.widgets.pathmanager.PathManager;
 import docking.widgets.pathmanager.PathManagerListener;
 import docking.widgets.table.*;
-import docking.widgets.tree.*;
+import docking.widgets.tree.GTree;
+import docking.widgets.tree.GTreeNode;
 import docking.widgets.tree.support.BreadthFirstIterator;
 import generic.jar.ResourceFile;
 import generic.util.Path;
@@ -44,12 +47,14 @@ import ghidra.app.services.ConsoleService;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.program.model.listing.Program;
-import ghidra.util.*;
+import ghidra.util.HelpLocation;
+import ghidra.util.Msg;
 import ghidra.util.datastruct.WeakDataStructureFactory;
 import ghidra.util.datastruct.WeakSet;
 import ghidra.util.table.GhidraTableFilterPanel;
 import ghidra.util.task.*;
 import resources.ResourceManager;
+import util.CollectionUtils;
 import utilities.util.FileUtilities;
 
 public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
@@ -99,6 +104,7 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 
 		setHelpLocation(new HelpLocation(plugin.getName(), plugin.getName()));
 		setIcon(ResourceManager.loadImage("images/play.png"));
+		addToToolbar();
 		setWindowGroup(WINDOW_GROUP);
 
 		build();
@@ -160,6 +166,10 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 			return;
 		}
 		action.setKeyBindingData(new KeyBindingData(dialog.getKeyStroke()));
+		scriptTable.repaint();
+	}
+
+	void keyBindingUpdated() {
 		scriptTable.repaint();
 	}
 
@@ -226,7 +236,7 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 			reader.close();
 			writer.close();
 
-			FileUtilities.copyFile(temp, renameFile, TaskMonitorAdapter.DUMMY_MONITOR);
+			FileUtilities.copyFile(temp, renameFile, TaskMonitor.DUMMY);
 
 			if (!renameFile.exists()) {
 				Msg.showWarn(getClass(), getComponent(), "Unable to rename script",
@@ -378,8 +388,7 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 
 			checkNewScriptDirectoryEnablement(newFile);
 
-			String category = StringUtilities.convertStringArray(getSelectedCategoryPath(),
-				ScriptInfo.DELIMITTER);
+			String category = StringUtils.join(getSelectedCategoryPath(), ScriptInfo.DELIMITTER);
 			provider.createNewScript(newFile, category);
 
 			GhidraScriptEditorComponentProvider editor =
@@ -477,14 +486,6 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 		tableModel.fireTableDataChanged();
 	}
 
-	/**
-	 * is more than just root node selected?
-	 */
-	boolean isSelectedCategory() {
-		TreePath path = scriptCategoryTree.getSelectionPath();
-		return path != null && path.getPathCount() > 1;
-	}
-
 	String[] getSelectedCategoryPath() {
 		TreePath currentPath = scriptCategoryTree.getSelectionPath();
 
@@ -526,7 +527,7 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 
 		tableModel.fireTableDataChanged();
 
-		updateTreeNodesToReflectAvailableScripts();
+		trimUnusedTreeCategories();
 
 		scriptRoot.fireNodeStructureChanged(scriptRoot);
 		if (preRefreshSelectionPath != null) {
@@ -535,6 +536,7 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 	}
 
 	private void updateAvailableScriptFilesForAllPaths() {
+
 		List<ResourceFile> scriptsToRemove = tableModel.getScripts();
 		List<ResourceFile> scriptAccumulator = new ArrayList<>();
 		List<Path> dirPaths = pathManager.getPaths();
@@ -551,7 +553,7 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 		}
 
 		GhidraScriptUtil.refreshDuplicates();
-		refreshActions();
+		refreshScriptData();
 	}
 
 	private void updateAvailableScriptFilesForDirectory(List<ResourceFile> scriptsToRemove,
@@ -575,7 +577,7 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 
 	}
 
-	private void refreshActions() {
+	private void refreshScriptData() {
 		List<ResourceFile> scripts = tableModel.getScripts();
 
 		for (ResourceFile script : scripts) {
@@ -591,26 +593,43 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 		}
 	}
 
-	private void updateTreeNodesToReflectAvailableScripts() {
-		ArrayList<GTreeNode> nodesToRemove = new ArrayList<>();
-		Iterator<GTreeNode> it = new BreadthFirstIterator(scriptCategoryTree, scriptRoot);
-		while (it.hasNext()) {
-			GTreeNode node = it.next();
-			String[] category = getCategoryPath(node);
-			Iterator<ScriptInfo> iter = GhidraScriptUtil.getScriptInfoIterator();
-			boolean found = false;
-			while (iter.hasNext()) {
-				if (iter.next().isCategory(category)) {
-					found = true;
-					break;
-				}
-			}
-			if (!found) {
-				nodesToRemove.add(node);
+	// note: we really should just rebuild the tree instead of using this method
+	private void trimUnusedTreeCategories() {
+
+		/*
+		 			Unusual Algorithm
+		 			
+		 	The tree nodes represent categories, but do not contain nodes for individual 
+		 	scripts.  We wish to remove any of the tree nodes that no longer represent script
+		 	categories.  (This can happen when a script is deleted or its category is changed.)
+		 	This algorithm will assume that all nodes need to be deleted.  Then, each script is
+		 	examined, using its category to mark a given node as 'safe'; that node's parents are
+		 	also marked as safe.   Any nodes remaining unmarked have no reference script and 
+		 	will be deleted. 
+		 */
+
+		// note: turn String[] to List<String> to use hashing
+		Iterator<ScriptInfo> scripts = GhidraScriptUtil.getScriptInfoIterator();
+		Set<List<String>> categories = new HashSet<>();
+		for (ScriptInfo info : CollectionUtils.asIterable(scripts)) {
+			String[] path = info.getCategory();
+			List<String> category = Arrays.asList(path);
+			for (int i = 1; i <= category.size(); i++) {
+				categories.add(category.subList(0, i));
 			}
 		}
 
-		for (GTreeNode node : nodesToRemove) {
+		List<GTreeNode> toDelete = new LinkedList<>();
+		Iterator<GTreeNode> nodes = new BreadthFirstIterator(scriptRoot);
+		for (GTreeNode node : CollectionUtils.asIterable(nodes)) {
+			String[] path = getCategoryPath(node);
+			List<String> category = Arrays.asList(path);
+			if (!categories.contains(category)) {
+				toDelete.add(node);
+			}
+		}
+
+		for (GTreeNode node : toDelete) {
 			GTreeNode parent = node.getParent();
 			if (parent != null) {
 				parent.removeNode(node);
@@ -630,7 +649,7 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 			return;
 		}
 		if (!script.exists()) {
-			plugin.getTool().setStatusInfo(script.getName() + " does not exist.");
+			plugin.getTool().setStatusInfo("Script " + script.getName() + " does not exist.");
 			return;
 		}
 
@@ -644,7 +663,7 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 			return;
 		}
 		if (!script.exists()) {
-			plugin.getTool().setStatusInfo(script.getName() + " does not exist.");
+			plugin.getTool().setStatusInfo("Script " + script.getName() + " does not exist.");
 			return;
 		}
 
@@ -762,8 +781,9 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 			}
 		});
 
-		scriptCategoryTree.getSelectionModel().setSelectionMode(
-			TreeSelectionModel.SINGLE_TREE_SELECTION);
+		scriptCategoryTree.getSelectionModel()
+				.setSelectionMode(
+					TreeSelectionModel.SINGLE_TREE_SELECTION);
 
 		tableModel = new GhidraScriptTableModel(this);
 
@@ -872,7 +892,7 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 
 	private void updateCategoryTree(ResourceFile script) {
 		scriptRoot.insert(script);
-		updateTreeNodesToReflectAvailableScripts();
+		trimUnusedTreeCategories();
 	}
 
 	private void buildFilter() {
@@ -1047,6 +1067,12 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 	}
 
 	@Override
+	public void componentActivated() {
+		// put the user focus in the filter field, as often the user wishes to search for a script
+		tableFilterPanel.requestFocus();
+	}
+
+	@Override
 	public ActionContext getActionContext(MouseEvent event) {
 		Object source = scriptTable;
 		if (event != null) {
@@ -1111,7 +1137,7 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 			// with a filter, only things in the available children match the root node (this is
 			// so filtering in the tree will show all matching results when the
 			// root is selected, instead of all results).
-			GTreeRootNode rootNode = scriptCategoryTree.getRootNode();
+			GTreeNode rootNode = scriptCategoryTree.getViewRoot();
 			List<GTreeNode> children = rootNode.getChildren();
 			for (GTreeNode node : children) {
 				String[] path = getCategoryPath(node);

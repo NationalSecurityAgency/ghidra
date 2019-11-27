@@ -24,6 +24,7 @@ import javax.swing.border.Border;
 
 import org.apache.commons.lang3.StringUtils;
 
+import docking.widgets.label.GDLabel;
 import docking.widgets.numberformat.BoundedRangeDecimalFormatterFactory;
 import ghidra.feature.vt.gui.filters.*;
 import ghidra.framework.options.SaveState;
@@ -84,8 +85,8 @@ public abstract class AbstractDoubleRangeFilter<T> extends Filter<T>
 		Border outsideBorder = BorderFactory.createBevelBorder(BevelBorder.LOWERED);
 		panel.setBorder(BorderFactory.createCompoundBorder(outsideBorder, paddingBorder));
 
-		JLabel filterLabel = new JLabel(filterName + " Filter: ");
-		JLabel middleLabel = new JLabel("to");
+		JLabel filterLabel = new GDLabel(filterName + " Filter: ");
+		JLabel middleLabel = new GDLabel("to");
 
 		panel.add(filterLabel);
 		panel.add(lowerBoundField);

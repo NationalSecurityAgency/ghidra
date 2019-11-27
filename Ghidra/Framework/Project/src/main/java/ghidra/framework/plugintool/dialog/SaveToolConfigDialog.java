@@ -27,13 +27,14 @@ import javax.swing.event.*;
 
 import docking.DialogComponentProvider;
 import docking.options.editor.ButtonPanelFactory;
+import docking.util.image.ToolIconURL;
 import docking.widgets.OptionDialog;
 import docking.widgets.filechooser.GhidraFileChooser;
+import docking.widgets.label.GLabel;
 import ghidra.framework.model.*;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.preferences.Preferences;
 import ghidra.framework.project.tool.GhidraToolTemplate;
-import ghidra.framework.project.tool.ToolIconURL;
 import ghidra.util.HelpLocation;
 import ghidra.util.NamingUtilities;
 import ghidra.util.filechooser.ExtensionFileFilter;
@@ -280,7 +281,7 @@ public class SaveToolConfigDialog extends DialogComponentProvider implements Lis
 		nameField = new JTextField(11);
 		nameField.setName("ToolName");
 
-		namePanel.add(new JLabel("Tool Name:", SwingConstants.RIGHT));
+		namePanel.add(new GLabel("Tool Name:", SwingConstants.RIGHT));
 		namePanel.add(nameField);
 
 		return namePanel;
@@ -293,7 +294,7 @@ public class SaveToolConfigDialog extends DialogComponentProvider implements Lis
 		iconList = new JList<>(iconListModel);
 		iconList.setLayoutOrientation(JList.HORIZONTAL_WRAP);
 		iconList.setName("IconList");
-		iconList.setCellRenderer(new IconUrlRenderer());
+		iconList.setCellRenderer(new ToolIconUrlRenderer());
 		iconList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		iconList.setSelectedIndex(0);
 		iconList.setVisibleRowCount(2);
@@ -315,7 +316,7 @@ public class SaveToolConfigDialog extends DialogComponentProvider implements Lis
 
 		JPanel panel = new JPanel(new BorderLayout(5, 0));
 		panel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-		panel.add(new JLabel("Icon Name:"), BorderLayout.WEST);
+		panel.add(new GLabel("Icon Name:"), BorderLayout.WEST);
 		panel.add(iconField, BorderLayout.CENTER);
 		panel.add(browseButton, BorderLayout.EAST);
 		return panel;
@@ -405,8 +406,8 @@ public class SaveToolConfigDialog extends DialogComponentProvider implements Lis
 		iconFileChooser.setFileSelectionMode(GhidraFileChooser.FILES_ONLY);
 		iconFileChooser.setTitle("Choose Icon");
 		iconFileChooser.setApproveButtonToolTipText("Choose Icon");
-		iconFileChooser.setFileFilter(new ExtensionFileFilter(new String[] { "gif", "jpg", "bmp",
-			"png" }, "Image Files"));
+		iconFileChooser.setFileFilter(
+			new ExtensionFileFilter(new String[] { "gif", "jpg", "bmp", "png" }, "Image Files"));
 		String iconDir = Preferences.getProperty(LAST_ICON_DIRECTORY);
 		if (iconDir != null) {
 			iconFileChooser.setCurrentDirectory(new File(iconDir));

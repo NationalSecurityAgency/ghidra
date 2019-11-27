@@ -1,0 +1,172 @@
+#include "pcode_test.h"
+
+#ifdef HAS_FLOAT
+TEST f4_compareLogic_Main()
+{
+	extern f4 f4_compareLogic(f4 lhs, f4 rhs);
+	ASSERTF4(f4_compareLogic(0x1, 0x1), 21);
+	ASSERTF4(f4_compareLogic(0x1, 0x2), 21);
+	ASSERTF4(f4_compareLogic(0x2, 0x1), 22);
+	ASSERTF4(f4_compareLogic(-0x1, -0x1), 21);
+	ASSERTF4(f4_compareLogic(-0x1, -0x2), 21);
+	ASSERTF4(f4_compareLogic(-0x2, -0x1), 24);
+}
+#endif
+
+#ifdef HAS_DOUBLE
+TEST f8_compareLogic_Main()
+{
+	extern f8 f8_compareLogic(f8 lhs, f8 rhs);
+	ASSERTF8(f8_compareLogic(0x1, 0x1), 21);
+	ASSERTF8(f8_compareLogic(0x1, 0x2), 21);
+	ASSERTF8(f8_compareLogic(0x2, 0x1), 22);
+	ASSERTF8(f8_compareLogic(-0x1, -0x1), 21);
+	ASSERTF8(f8_compareLogic(-0x1, -0x2), 21);
+	ASSERTF8(f8_compareLogic(-0x2, -0x1), 24);
+}
+#endif
+
+/* Comparison operators */
+#ifdef HAS_FLOAT
+TEST f4_greaterThan_Main()
+{
+	extern f4 f4_greaterThan(f4 lhs, f4 rhs);
+	ASSERTF4(f4_greaterThan(2, 1), 1);
+	ASSERTF4(f4_greaterThan(PI_SHORT, PI_SHORT), 0.0);
+	ASSERTF4(f4_greaterThan(PI_SHORT, 2*PI_SHORT), 0.0);
+	ASSERTF4(f4_greaterThan(2*PI_SHORT, PI_SHORT), 1.0);
+}
+#endif
+
+#ifdef HAS_FLOAT
+TEST f4_greaterThanEquals_Main()
+{
+	extern f4 f4_greaterThanEquals(f4 lhs, f4 rhs);
+	ASSERTF4(f4_greaterThanEquals(2, 1), 1);
+	ASSERTF4(f4_greaterThanEquals(PI_SHORT, PI_SHORT), 1.0);
+	ASSERTF4(f4_greaterThanEquals(PI_SHORT, 2*PI_SHORT), 0.0);
+	ASSERTF4(f4_greaterThanEquals(2*PI_SHORT, PI_SHORT), 1.0);
+}
+#endif
+
+#ifdef HAS_FLOAT
+TEST f4_lessThan_Main()
+{
+	extern f4 f4_lessThan(f4 lhs, f4 rhs);
+	f4 lhs = 2;
+	f4 rhs = 1;
+	f4 retVal;
+	ASSERTF4(f4_lessThan(lhs, rhs), 0);
+}
+#endif
+
+#ifdef HAS_FLOAT
+TEST f4_lessThanEquals_Main()
+{
+	extern f4 f4_lessThanEquals(f4 lhs, f4 rhs);
+	ASSERTF4(f4_lessThanEquals(2, 1), 0);
+	ASSERTF4(f4_lessThanEquals(PI_SHORT, 2*PI_SHORT), 1.0);
+	ASSERTF4(f4_lessThanEquals(PI_SHORT, PI_SHORT), 1.0);
+	ASSERTF4(f4_lessThanEquals(2*PI_SHORT, PI_SHORT), 0.0);
+}
+#endif
+
+#ifdef HAS_FLOAT
+TEST f4_equals_Main()
+{
+	extern f4 f4_equals(f4 lhs, f4 rhs);
+	ASSERTF4(f4_equals(2, 1), 0);
+	ASSERTF4(f4_equals(PI_SHORT, PI_SHORT), 1.0);
+	ASSERTF4(f4_equals(PI_SHORT, 2*PI_SHORT), 0.0);
+	ASSERTF4(f4_equals(2*PI_SHORT, PI_SHORT), 0.0);
+}
+#endif
+
+#ifdef HAS_FLOAT
+TEST f4_notEquals_Main()
+{
+	extern f4 f4_notEquals(f4 lhs, f4 rhs);
+	ASSERTF4(f4_notEquals(2, 1), 1);
+	ASSERTF4(f4_notEquals(PI_SHORT, PI_SHORT), 0.0);
+	ASSERTF4(f4_notEquals(PI_SHORT, 2*PI_SHORT), 1.0);
+	ASSERTF4(f4_notEquals(2*PI_SHORT, PI_SHORT), 1.0);
+}
+#endif
+
+/* Logical operators */
+#ifdef HAS_FLOAT
+TEST f4_logicalAnd_Main()
+{
+	extern f4 f4_logicalAnd(f4 lhs, f4 rhs);
+	ASSERTF4(f4_logicalAnd(2, 1), 1);
+	ASSERTF4(f4_logicalAnd(PI_SHORT, PI_SHORT), 1);
+	ASSERTF4(f4_logicalAnd(PI_SHORT, 0), 0.0);
+}
+#endif
+
+#ifdef HAS_FLOAT
+TEST f4_logicalOr_Main()
+{
+	extern f4 f4_logicalOr(f4 lhs, f4 rhs);
+	ASSERTF4(f4_logicalOr(2, 1), 1);
+	ASSERTF4(f4_logicalOr(PI_SHORT, PI_SHORT), 1);
+	ASSERTF4(f4_logicalOr(PI_SHORT, 0), 1);
+}
+#endif
+
+#ifdef HAS_FLOAT
+TEST f4_logicalNot_Main()
+{
+	extern f4 f4_logicalNot(f4 lhs);
+	ASSERTF4(f4_logicalNot(2), 0);
+	ASSERTF4(f4_logicalNot(PI_SHORT), 0);
+}
+#endif
+
+/* Arithmetic operators */
+#ifdef HAS_FLOAT
+TEST f4_unaryMinus_Main()
+{
+	extern f4 f4_unaryMinus(f4 lhs);
+	ASSERTF4(f4_unaryMinus(2), -2);
+	ASSERTF4(f4_unaryMinus(PI_SHORT), -3.14);
+}
+#endif
+
+#ifdef HAS_FLOAT
+TEST f4_unaryPlus_Main()
+{
+	extern f4 f4_unaryPlus(f4 lhs);
+	ASSERTF4(f4_unaryPlus(2), 2);
+	ASSERTF4(f4_unaryPlus(PI_SHORT), PI_SHORT);
+}
+#endif
+
+#ifdef HAS_FLOAT
+TEST f4_addition_Main()
+{
+	extern f4 f4_addition(f4 lhs, f4 rhs);
+	ASSERTF4(f4_addition(2, 1), 3);
+	ASSERTF4(f4_addition(PI_SHORT, PI_SHORT), 6.280000);
+}
+#endif
+
+#ifdef HAS_FLOAT
+TEST f4_subtract_Main()
+{
+	extern f4 f4_subtract(f4 lhs, f4 rhs);
+	ASSERTF4(f4_subtract(2, 1), 1);
+	ASSERTF4(f4_subtract(PI_SHORT, PI_SHORT), 0.0);
+}
+#endif
+
+#ifdef HAS_FLOAT
+TEST f4_multiply_Main()
+{
+	extern f4 f4_multiply(f4 lhs, f4 rhs);
+	ASSERTF4(f4_multiply(2, 1), 2);
+	ASSERTF4(f4_multiply(PI_SHORT, PI_SHORT), 9.859601);
+}
+#endif
+
+MAIN BIOPS_FLOAT_main() { }

@@ -521,6 +521,42 @@ Varnode *Funcdata::opStackLoad(AddrSpace *spc,uintb off,uint4 sz,PcodeOp *op,Var
     return res;
 }
 
+/// Convert the given CPUI_PTRADD into the equivalent CPUI_INT_ADD.  This may involve inserting a
+/// CPUI_INT_MULT PcodeOp. If finalization is requested and a new PcodeOp is needed, the output
+/// Varnode is marked as \e implicit and has its data-type set
+/// \param op is the given PTRADD
+void Funcdata::opUndoPtradd(PcodeOp *op,bool finalize)
+
+{
+  Varnode *multVn = op->getIn(2);
+  int4 multSize = multVn->getOffset(); // Size the PTRADD thinks we are pointing
+
+  opRemoveInput(op,2);
+  opSetOpcode(op,CPUI_INT_ADD);
+  if (multSize == 1) return;	// If no multiplier, we are done
+  Varnode *offVn = op->getIn(1);
+  if (offVn->isConstant()) {
+    uintb newVal = multSize * offVn->getOffset();
+    newVal &= calc_mask(offVn->getSize());
+    Varnode *newOffVn = newConstant(offVn->getSize(), newVal);
+    if (finalize)
+      newOffVn->updateType(offVn->getType(), false, false);
+    opSetInput(op,newOffVn,1);
+    return;
+  }
+  PcodeOp *multOp = newOp(2,op->getAddr());
+  opSetOpcode(multOp,CPUI_INT_MULT);
+  Varnode *addVn = newUniqueOut(offVn->getSize(),multOp);
+  if (finalize) {
+    addVn->updateType(multVn->getType(), false, false);
+    addVn->setImplied();
+  }
+  opSetInput(multOp,offVn,0);
+  opSetInput(multOp,multVn,1);
+  opSetInput(op,addVn,1);
+  opInsertBefore(multOp,op);
+}
+
 /// Make a clone of the given PcodeOp, copying control-flow properties as well.  The data-type
 /// is \e not cloned.
 /// \param op is the PcodeOp to clone
@@ -532,7 +568,7 @@ PcodeOp *Funcdata::cloneOp(const PcodeOp *op,const SeqNum &seq)
   PcodeOp *newop = newOp(op->numInput(),seq);
   opSetOpcode(newop,op->code());
   uint4 flags = op->flags & (PcodeOp::startmark | PcodeOp::startbasic);
-  opSetFlag(newop,flags);
+  newop->setFlag(flags);
   if (op->getOut() != (Varnode *)0)
     opSetOutput(newop,cloneVarnode(op->getOut()));
   for(int4 i=0;i<op->numInput();++i)
@@ -608,8 +644,9 @@ PcodeOp *Funcdata::newOpBefore(PcodeOp *follow,OpCode opc,Varnode *in1,Varnode *
 /// \param indeffect is the PcodeOp with the indirect effect
 /// \param addr is the starting address of the storage range to protect
 /// \param size is the number of bytes in the storage range
+/// \param extraFlags are extra boolean properties to put on the INDIRECT
 /// \return the new CPUI_INDIRECT op
-PcodeOp *Funcdata::newIndirectOp(PcodeOp *indeffect,const Address &addr,int4 size)
+PcodeOp *Funcdata::newIndirectOp(PcodeOp *indeffect,const Address &addr,int4 size,uint4 extraFlags)
 
 {
   Varnode *newin;
@@ -617,6 +654,7 @@ PcodeOp *Funcdata::newIndirectOp(PcodeOp *indeffect,const Address &addr,int4 siz
 
   newin = newVarnode(size,addr);
   newop = newOp(2,indeffect->getAddr());
+  newop->flags |= extraFlags;
   newVarnodeOut(size,addr,newop);
   opSetOpcode(newop,CPUI_INDIRECT);
   opSetInput(newop,newin,0);
@@ -970,8 +1008,8 @@ void Funcdata::overrideFlow(const Address &addr,uint4 type)
 }
 
 /// Do in-place replacement of
-///   - `#c <= x`   with  `#c-1 < x`   OR
-///   - `x <= #c`   with  `x < #c+1`
+///   - `c <= x`   with  `c-1 < x`   OR
+///   - `x <= c`   with  `x < c+1`
 ///
 /// \param data is the function being analyzed
 /// \param op is comparison PcodeOp

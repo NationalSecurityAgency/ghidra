@@ -1,7 +1,0 @@
-sourceSets {
-	scripts {
-		java {
-			srcDir 'developer_scripts'
-		}
-	}
-}

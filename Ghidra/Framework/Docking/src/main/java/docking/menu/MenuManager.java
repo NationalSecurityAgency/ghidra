@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,8 +29,8 @@ import docking.action.MenuData;
 public class MenuManager implements ManagedMenuItem {
 	private static String NULL_GROUP_NAME = "<null group>";
 
-	private Set<ManagedMenuItem> managedMenuItems = new HashSet<ManagedMenuItem>();
-	private Map<String, MenuManager> subMenus = new HashMap<String, MenuManager>();
+	private Set<ManagedMenuItem> managedMenuItems = new HashSet<>();
+	private Map<String, MenuManager> subMenus = new HashMap<>();
 
 	private String name;
 	private final String[] menuPath;
@@ -50,9 +49,9 @@ public class MenuManager implements ManagedMenuItem {
 	 * @param name the name of the menu.
 	 * @param mnemonicKey the key to use for the menu mnemonic
 	 * @param group the group of the menu.
-	 * @param showKeyBindings if true, includes the keybinding text on the menu item.
 	 * @param usePopupPath if true, registers actions with popup paths as popup items.
 	 * @param menuHandler Listener to be notified of menu behavior.
+	 * @param menuGroupMap maps menu groups to menu paths
 	 */
 	public MenuManager(String name, char mnemonicKey, String group, boolean usePopupPath,
 			MenuHandler menuHandler, MenuGroupMap menuGroupMap) {
@@ -68,9 +67,9 @@ public class MenuManager implements ManagedMenuItem {
 	 * @param mnemonicKey the key to use for the menu mnemonic
 	 * @param level the number of parent menus that this menu is in.
 	 * @param group the group of this menu.
-	 * @param showKeyBindings if true, includes the keybinding text on the menu item.
 	 * @param usePopupPath if true, registers actions with popup paths as popup items.
 	 * @param menuHandler Listener to be notified of menu behavior.
+	 * @param menuGroupMap maps menu groups to menu paths
 	 */
 	MenuManager(String name, String[] menuPath, char mnemonicKey, int level, String group,
 			boolean usePopupPath, MenuHandler menuHandler, MenuGroupMap menuGroupMap) {
@@ -96,43 +95,84 @@ public class MenuManager implements ManagedMenuItem {
 	}
 
 	/**
-	 * Adds an action to this menu. Can create subMenus depending on the menuPath of the
-	 * action.
-	 * @param action the action to be added.
-	 * @param menuGroupMap group map for menuItems
+	 * Adds an action to this menu. Can create subMenus depending on the menuPath of the action
+	 * @param action the action to be added
 	 */
 	public void addAction(DockingActionIf action) {
 		checkForSwingThread();
 		resetMenus();
 		MenuData menuData = usePopupPath ? action.getPopupMenuData() : action.getMenuBarData();
-		String[] actionMenuPath = menuData.getMenuPath();
-		if (actionMenuPath.length > level + 1) {
-			String subMenuName = actionMenuPath[level];
-			String cleanSubMenuName = stripMnemonicAmp(subMenuName);
-			MenuManager mgr = subMenus.get(cleanSubMenuName);
-
-			if (mgr == null) {
-				char mnemonic = getMnemonicKey(subMenuName);
-
-				int submenuLevel = level + 1;
-				String[] submenuPath = new String[submenuLevel];
-				System.arraycopy(actionMenuPath, 0, submenuPath, 0, submenuLevel);
-				String submenuGroup = menuGroupMap.getMenuGroup(submenuPath);
-				if (submenuGroup == null) {
-					submenuGroup = subMenuName;
-				}
-
-				mgr =
-					new MenuManager(cleanSubMenuName, submenuPath, mnemonic, submenuLevel,
-						submenuGroup, usePopupPath, menuHandler, menuGroupMap);
-				subMenus.put(cleanSubMenuName, mgr);
-				managedMenuItems.add(mgr);
-			}
+		if (isSubMenu(menuData)) {
+			MenuManager mgr = getSubMenu(menuData);
 			mgr.addAction(action);
 		}
 		else {
 			managedMenuItems.add(new MenuItemManager(menuHandler, action, usePopupPath));
 		}
+	}
+
+	private boolean isSubMenu(MenuData menuData) {
+		String[] actionMenuPath = menuData.getMenuPath();
+		return actionMenuPath.length > level + 1;
+	}
+
+	private MenuManager getSubMenu(MenuData menuData) {
+
+		String[] fullPath = menuData.getMenuPath();
+		String displayName = fullPath[level];
+		char mnemonic = getMnemonicKey(displayName);
+		String realName = stripMnemonicAmp(displayName);
+		MenuManager subMenu = subMenus.get(realName);
+		if (subMenu != null) {
+			return subMenu;
+		}
+
+		int subMenuLevel = level + 1;
+		String[] subMenuPath = new String[subMenuLevel];
+		System.arraycopy(fullPath, 0, subMenuPath, 0, subMenuLevel);
+
+		String subMenuGroup = getSubMenuGroup(menuData, realName, subMenuPath);
+		subMenu = new MenuManager(realName, subMenuPath, mnemonic, subMenuLevel, subMenuGroup,
+			usePopupPath, menuHandler, menuGroupMap);
+		subMenus.put(realName, subMenu);
+		managedMenuItems.add(subMenu);
+
+		return subMenu;
+	}
+
+	private String getSubMenuGroup(MenuData menuData, String menuName, String[] subMenuPath) {
+
+		// prefer the group defined in the menu data, if any
+		String pullRightGroup = getPullRightMenuGroup(menuData);
+		if (pullRightGroup != null) {
+			return pullRightGroup;
+		}
+
+		// check the global registry
+		pullRightGroup = menuGroupMap.getMenuGroup(subMenuPath);
+		if (pullRightGroup != null) {
+			return pullRightGroup;
+		}
+
+		// default to the menu name
+		return menuName;
+	}
+
+	private String getPullRightMenuGroup(MenuData menuData) {
+
+		// note: currently, the client can specify the group for the pull-right menu only for
+		//       the immediate parent of the menu item.  We can change this later if we find
+		//       we have a need for a multi-level cascaded menu that needs to specify groups for
+		//       each pull-right in the menu path
+
+		String[] actionMenuPath = menuData.getMenuPath();
+		int leafLevel = actionMenuPath.length - 1;
+		boolean isParentOfLeaf = level == (leafLevel - 1);
+		if (!isParentOfLeaf) {
+			return null;
+		}
+
+		return menuData.getParentMenuGroup();
 	}
 
 	public DockingActionIf getAction(String actionName) {
@@ -162,17 +202,18 @@ public class MenuManager implements ManagedMenuItem {
 	}
 
 	/***
-	 * Removes the Mnemonic indicator character (&) from the text.
-	 * @param str the text to strip.
+	 * Removes the Mnemonic indicator character (&) from the text
+	 * @param text the text to strip
+	 * @return the stripped mnemonic
 	 */
-	public static String stripMnemonicAmp(String str) {
-		int ampLoc = str.indexOf('&');
+	public static String stripMnemonicAmp(String text) {
+		int ampLoc = text.indexOf('&');
 		if (ampLoc < 0) {
-			return str;
+			return text;
 		}
-		String s = str.substring(0, ampLoc);
-		if (ampLoc < (str.length() - 1)) {
-			s += str.substring(++ampLoc);
+		String s = text.substring(0, ampLoc);
+		if (ampLoc < (text.length() - 1)) {
+			s += text.substring(++ampLoc);
 		}
 		return s;
 	}
@@ -186,7 +227,8 @@ public class MenuManager implements ManagedMenuItem {
 	}
 
 	/**
-	 * Returns a Menu hierarchy of all the actions.
+	 * Returns a Menu hierarchy of all the actions
+	 * @return the menu
 	 */
 	public JMenu getMenu() {
 		if (menu == null) {
@@ -198,7 +240,7 @@ public class MenuManager implements ManagedMenuItem {
 				menu.addMenuListener(menuHandler);
 			}
 
-			List<ManagedMenuItem> list = new ArrayList<ManagedMenuItem>(managedMenuItems);
+			List<ManagedMenuItem> list = new ArrayList<>(managedMenuItems);
 			Collections.sort(list, comparator);
 			String lastGroup = null;
 
@@ -240,9 +282,6 @@ public class MenuManager implements ManagedMenuItem {
 		return menuSubGroup;
 	}
 
-	/**
-	 * @see docking.menu.ManagedMenuItem#dispose()
-	 */
 	@Override
 	public void dispose() {
 		for (ManagedMenuItem item : managedMenuItems) {
@@ -253,13 +292,14 @@ public class MenuManager implements ManagedMenuItem {
 	}
 
 	/**
-	 * Returns a JPopupMenu for the action hierarchy.
+	 * Returns a JPopupMenu for the action hierarchy
+	 * @return the popup menu
 	 */
 	public JPopupMenu getPopupMenu() {
 		if (popupMenu == null) {
 			popupMenu = new JPopupMenu(name);
 
-			List<ManagedMenuItem> list = new ArrayList<ManagedMenuItem>(managedMenuItems);
+			List<ManagedMenuItem> list = new ArrayList<>(managedMenuItems);
 			Collections.sort(list, comparator);
 			String lastGroup = NULL_GROUP_NAME;
 			boolean hasMenuItems = false;

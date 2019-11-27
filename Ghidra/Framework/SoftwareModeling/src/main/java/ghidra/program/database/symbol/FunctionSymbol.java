@@ -33,7 +33,6 @@ import ghidra.util.Msg;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.exception.InvalidInputException;
 import ghidra.util.task.TaskMonitor;
-import ghidra.util.task.TaskMonitorAdapter;
 
 /**
  * Symbol class for functions.
@@ -152,7 +151,7 @@ public class FunctionSymbol extends SymbolDB {
 			SymbolDB newSym;
 			try {
 				newSym = symbolMgr.createSpecialSymbol(entryPoint, symName, namespace,
-					SymbolType.CODE, -1, -1, data3, source);
+					SymbolType.LABEL, -1, -1, data3, source);
 				if (pinned) {
 					newSym.setPinned(true);
 				}
@@ -237,11 +236,8 @@ public class FunctionSymbol extends SymbolDB {
 			isExternal());
 	}
 
-	/**
-	 * @see ghidra.program.model.symbol.Symbol#getName()
-	 */
 	@Override
-	public String getName() {
+	protected String doGetName() {
 		if (getSource() == SourceType.DEFAULT) {
 			if (isExternal()) {
 				return ExternalManagerDB.getDefaultExternalName(this);
@@ -251,17 +247,17 @@ public class FunctionSymbol extends SymbolDB {
 			Symbol thunkedSymbol = getThunkedSymbol();
 			if (thunkedSymbol instanceof FunctionSymbol) {
 				FunctionSymbol thunkedFuncSym = (FunctionSymbol) thunkedSymbol;
-				String name = thunkedFuncSym.getName();
+				String thunkName = thunkedFuncSym.getName();
 				if (thunkedFuncSym.getSource() == SourceType.DEFAULT &&
 					thunkedFuncSym.getThunkedSymbol() == null) {
 					// if thunking a default non-thunk function
-					name = "thunk_" + name;
+					thunkName = "thunk_" + thunkName;
 				}
-				return name;
+				return thunkName;
 			}
 			return SymbolUtilities.getDefaultFunctionName(address);
 		}
-		return super.getName();
+		return super.doGetName();
 	}
 
 //	@Override
@@ -363,7 +359,7 @@ public class FunctionSymbol extends SymbolDB {
 			checkIsValid();
 			Reference[] refs = super.getReferences(monitor);
 			if (monitor == null) {
-				monitor = TaskMonitorAdapter.DUMMY_MONITOR;
+				monitor = TaskMonitor.DUMMY;
 			}
 			if (monitor.isCancelled()) {
 				return refs;

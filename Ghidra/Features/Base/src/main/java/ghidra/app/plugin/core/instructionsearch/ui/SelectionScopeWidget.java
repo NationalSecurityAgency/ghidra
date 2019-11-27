@@ -21,6 +21,7 @@ import java.util.*;
 
 import javax.swing.*;
 
+import docking.widgets.button.GRadioButton;
 import ghidra.app.plugin.core.instructionsearch.InstructionSearchPlugin;
 import ghidra.program.model.address.AddressRange;
 import ghidra.program.model.address.AddressRangeIterator;
@@ -36,7 +37,7 @@ public class SelectionScopeWidget extends ControlPanelWidget {
 	private JRadioButton searchSelectionRB;
 
 	// Stores the current search range settings.
-	private List<AddressRange> searchRanges = new ArrayList<AddressRange>();
+	private List<AddressRange> searchRanges = new ArrayList<>();
 
 	private InstructionSearchDialog dialog;
 	private InstructionSearchPlugin plugin;
@@ -183,7 +184,7 @@ public class SelectionScopeWidget extends ControlPanelWidget {
 	 * @return
 	 */
 	private JRadioButton createSearchRB(AbstractAction action, String name, String tooltip) {
-		JRadioButton button = new JRadioButton(action);
+		GRadioButton button = new GRadioButton(action);
 		button.setName(name);
 		button.setText(name);
 		button.setToolTipText(tooltip);

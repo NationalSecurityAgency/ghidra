@@ -18,8 +18,6 @@ package docking;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.*;
 
 import javax.swing.*;
@@ -30,9 +28,9 @@ import org.jdesktop.animation.timing.Animator;
 
 import docking.util.AnimationUtils;
 import docking.widgets.EmptyBorderButton;
+import docking.widgets.label.GDLabel;
 import generic.util.WindowUtilities;
-import ghidra.util.HTMLUtilities;
-import ghidra.util.SystemUtilities;
+import ghidra.util.*;
 import ghidra.util.layout.HorizontalLayout;
 import ghidra.util.layout.MiddleLayout;
 
@@ -61,7 +59,6 @@ public class StatusBar extends JPanel {
 	private LinkedList<String> messageQueue = new LinkedList<>();
 
 	// fading and flashing members
-	private DateFormat timeStampFormatter = new SimpleDateFormat("hh:mm:ss");
 	private Timer messageFadeTimer = new FadeTimer();
 	private Timer flashTimer = new FlashTimer();
 	private Timer animationDelayTimer = new AnimationDelayTimer();
@@ -83,7 +80,7 @@ public class StatusBar extends JPanel {
 		JPanel eastPanel = createEastPanel(statusAreaPanel);
 		add(eastPanel, BorderLayout.EAST);
 
-		statusLabel = new JLabel(" ");
+		statusLabel = new GDLabel(" ");
 		statusLabel.setOpaque(true);
 
 		statusLabel.setName("Tool Status");
@@ -131,7 +128,7 @@ public class StatusBar extends JPanel {
 	 * Add a new status item component to the status area.  The preferred height and border
 	 * for the component will be altered.
 	 * @param c component
-	 * @param width the preferred width of this status item.
+	 * @param addBorder true if a border is desired
 	 * @param rightSide component will be added to the right-side of the status
 	 * area if true, else it will be added immediately after the status text area
 	 * if false.
@@ -233,7 +230,7 @@ public class StatusBar extends JPanel {
 			if (message.endsWith("\n")) {
 				message = message.substring(0, message.length() - 1);
 			}
-			messageQueue.add(0, message + " [" + timeStampFormatter.format(new Date()) + "]");
+			messageQueue.add(0, message + " [" + DateUtils.formatCurrentTime() + "]");
 
 			if (messageQueue.size() > MESSAGE_QUEUE_MAX_SIZE) {
 				messageQueue.removeLast();

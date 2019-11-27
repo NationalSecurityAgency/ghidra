@@ -15,13 +15,13 @@
  */
 package resources;
 
-import java.awt.*;
+import java.awt.Image;
+import java.awt.MediaTracker;
 import java.awt.image.BufferedImage;
 import java.io.*;
 import java.net.*;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.List;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.stream.Collectors;
@@ -96,7 +96,7 @@ public class ResourceManager {
 			return is;
 		}
 
-		URL url = getResource(testSearchPaths, filename);
+		URL url = getResource(getTestSearchPaths(), filename);
 		if (url == null) {
 			return null;
 		}
@@ -311,7 +311,7 @@ public class ResourceManager {
 	}
 
 //==================================================================================================
-// Image Related Methods
+// Icon Related Methods
 //==================================================================================================	
 
 	/**
@@ -338,57 +338,6 @@ public class ResourceManager {
 	 */
 	public static ImageIcon getScaledIcon(Icon icon, int width, int height) {
 		return new ScaledImageIconWrapper(icon, width, height);
-	}
-
-	/**
-	 * This is really a package-level method.  From outside of this package you should instead
-	 * be calling {@link ResourceManager#getScaledIcon(Icon, int, int, int)}.
-	 * 
-	 * @param icon the icon to scale 
-	 * @param width the new width
-	 * @param height the new height
-	 * @param hints any hints to apply to the scaling operation
-	 * @return the new icon
-	 * @deprecated use {@link #getScaledIcon(Icon, int, int, int)} instead
-	 */
-	@Deprecated
-	public static ImageIcon createScaledIcon(Icon icon, int width, int height, int hints) {
-		return getScaledIcon(icon, width, height, hints);
-	}
-
-	/**
-	 * This is really a package-level method.  From outside of this package you should instead
-	 * be calling {@link ResourceManager#getScaledIcon(Icon, int, int)}.
-	 * 
-	 * @param icon the icon to scale 
-	 * @param width the new width
-	 * @param height the new height
-	 * @return the new icon
-	 * @deprecated use {@link #getScaledIcon(Icon, int, int, int)} instead
-	 */
-	@Deprecated
-	public static ImageIcon createScaledIcon(Icon icon, int width, int height) {
-		return getScaledIcon(icon, width, height, Image.SCALE_AREA_AVERAGING);
-	}
-
-	/**
-	 * Creates a scaled image based upon the given image.
-	 * NOTE: Avoid invocation by a static initializer.
-	 * @param image the image to scale
-	 * @param width the new width
-	 * @param height the new height
-	 * @param hints {@link RenderingHints} used by {@link Graphics2D}
-	 * @return a scaled version of the given image
-	 */
-	public static Image createScaledImage(Image image, int width, int height, int hints) {
-		BufferedImage scaledImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
-		Graphics graphics = scaledImage.getGraphics();
-		Graphics2D g2 = (Graphics2D) graphics;
-		g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
-			RenderingHints.VALUE_INTERPOLATION_BILINEAR);
-		graphics.drawImage(image, 0, 0, width, height, null);
-		graphics.dispose();
-		return scaledImage;
 	}
 
 	/**
@@ -421,24 +370,6 @@ public class ResourceManager {
 		return new DisabledImageIconWrapper(icon, brightnessPercent);
 	}
 
-	/** 
-	 * Algorithm for filtering an image to make it appear disabled
-	 * 
-	 * <P>Note: you should use one of the {@link #getDisabledIcon(Icon)} methods, as this is 
-	 *          an internal API method.
-	 * 
-	 * @param icon the icon
-	 * @param brightnessPercent the percentage of brightness, 0-100, with 100 being the 
-	 *        brightest possible value
-	 * @return the new icon
-	 * @see #getDisabledIcon(Icon)
-	 * @deprecated use {@link #getDisabledIcon(Icon)} instead
-	 */
-	@Deprecated
-	public static ImageIcon createDisabledIcon(Icon icon, final int brightnessPercent) {
-		return getDisabledIcon(icon, brightnessPercent);
-	}
-
 	/**
 	 * Creates an image icon from the given image.  This method will create an <tt>ImageIcon</tt>
 	 * the <a href="safe">"safe"</a> way by avoiding the constructor 
@@ -469,14 +400,18 @@ public class ResourceManager {
 	}
 
 	/**
-	 * Get the name of this icon. If icon is an ImageIcon, its getDescription() is called to 
-	 * get the name
+	 * Get the name of this icon.  The value is usually going to be the URL from which the icon 
+	 * was loaded
 	 * 
 	 * @param icon the icon for which the name is desired
-	 * @return  the name
+	 * @return the name
 	 */
 	public static String getIconName(Icon icon) {
 		String iconName = icon.toString();
+
+		if (icon instanceof FileBasedIcon) {
+			return ((FileBasedIcon) icon).getFilename();
+		}
 		if (icon instanceof ImageIcon) {
 			iconName = ((ImageIcon) icon).getDescription();
 		}
@@ -539,7 +474,9 @@ public class ResourceManager {
 	}
 
 	/**
-	 * Load the image specified by filename; returns null if problems occur trying to load the file
+	 * Load the image specified by filename; returns the default bomb icon
+	 * if problems occur trying to load the file.
+	 * <p>
 	 * 
 	 * @param filename name of file to load, e.g., "images/home.gif"
 	 * @return the image icon stored in the bytes
@@ -572,6 +509,22 @@ public class ResourceManager {
 		}
 
 		return getDefaultIcon();
+	}
+
+	/**
+	 * Load the images specified by filenames; substitutes the default bomb icon
+	 * if problems occur trying to load an individual file.
+	 * <p>
+	 * @param filenames vararg list of string filenames (ie. "images/home.gif")
+	 * @return list of ImageIcons with each image, problem / missing images replaced with
+	 * the default icon.
+	 */
+	public static List<ImageIcon> loadImages(String... filenames) {
+		List<ImageIcon> results = new ArrayList<>(filenames.length);
+		for (String filename : filenames) {
+			results.add(loadImage(filename));
+		}
+		return results;
 	}
 
 	/**

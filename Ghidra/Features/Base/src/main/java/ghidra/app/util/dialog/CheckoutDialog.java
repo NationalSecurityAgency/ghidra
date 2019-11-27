@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +15,6 @@
  */
 package ghidra.app.util.dialog;
 
-import ghidra.app.util.HelpTopics;
-import ghidra.framework.model.DomainFile;
-import ghidra.framework.remote.User;
-import ghidra.util.HelpLocation;
-
 import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -31,6 +25,12 @@ import docking.DialogComponentProvider;
 import docking.DockingWindowManager;
 import docking.widgets.MultiLineLabel;
 import docking.widgets.OptionDialog;
+import docking.widgets.checkbox.GCheckBox;
+import docking.widgets.label.GIconLabel;
+import ghidra.app.util.HelpTopics;
+import ghidra.framework.model.DomainFile;
+import ghidra.framework.remote.User;
+import ghidra.util.HelpLocation;
 
 /**
  * 
@@ -55,6 +55,7 @@ public class CheckoutDialog extends DialogComponentProvider {
 
 		JButton checkoutButton = new JButton("Yes");
 		checkoutButton.addActionListener(new ActionListener() {
+			@Override
 			public void actionPerformed(ActionEvent e) {
 				actionID = CHECKOUT;
 				close();
@@ -64,6 +65,7 @@ public class CheckoutDialog extends DialogComponentProvider {
 
 		JButton noCheckoutButton = new JButton("No");
 		noCheckoutButton.addActionListener(new ActionListener() {
+			@Override
 			public void actionPerformed(ActionEvent e) {
 				actionID = DO_NOT_CHECKOUT;
 				close();
@@ -84,6 +86,7 @@ public class CheckoutDialog extends DialogComponentProvider {
 		else {
 			try {
 				SwingUtilities.invokeAndWait(new Runnable() {
+					@Override
 					public void run() {
 						DockingWindowManager.showDialog(null, CheckoutDialog.this);
 					}
@@ -105,15 +108,14 @@ public class CheckoutDialog extends DialogComponentProvider {
 		innerPanel.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 10));
 
 		JPanel msgPanel = new JPanel(new BorderLayout());
-		JLabel warnIcon =
-			new JLabel(OptionDialog.getIconForMessageType(OptionDialog.WARNING_MESSAGE));
-		msgPanel.add(warnIcon, BorderLayout.WEST);
+		msgPanel.add(
+			new GIconLabel(OptionDialog.getIconForMessageType(OptionDialog.WARNING_MESSAGE)),
+			BorderLayout.WEST);
 
-		MultiLineLabel msgText =
-			new MultiLineLabel(df.getName() + " file is NOT CHECKED OUT.\n" +
-				"If you want to make changes and save them\n" +
-				"to THIS file, then you must first check out the file.\n" +
-				"Do you want to Check Out this file?");
+		MultiLineLabel msgText = new MultiLineLabel("File " + df.getName() +
+			" is NOT CHECKED OUT.\n" + "If you want to make changes and save them\n" +
+			"to THIS file, then you must first check out the file.\n" +
+			"Do you want to Check Out this file?");
 		msgText.setMaximumSize(msgText.getPreferredSize());
 		msgPanel.add(msgText, BorderLayout.CENTER);
 
@@ -123,9 +125,10 @@ public class CheckoutDialog extends DialogComponentProvider {
 		if (user != null) {
 			exclusiveCheckout = false;
 			if (user.hasWritePermission()) {
-				final JCheckBox exclusiveCB = new JCheckBox("Request exclusive check out");
+				final JCheckBox exclusiveCB = new GCheckBox("Request exclusive check out");
 				exclusiveCB.setSelected(false);
 				exclusiveCB.addActionListener(new ActionListener() {
+					@Override
 					public void actionPerformed(ActionEvent e) {
 						exclusiveCheckout = exclusiveCB.isSelected();
 					}

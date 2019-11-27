@@ -76,7 +76,7 @@ public class CodeBrowserTest extends AbstractGhidraHeadedIntegrationTest {
 		pm.openProgram(program.getDomainFile());
 
 		NextPrevAddressPlugin np = env.getPlugin(NextPrevAddressPlugin.class);
-		getAction(np, "Previous in History Buffer");
+		getAction(np, "Previous Location in History");
 		getAction(np, "Clear History Buffer");
 		cb = env.getPlugin(CodeBrowserPlugin.class);
 		fp = cb.getFieldPanel();

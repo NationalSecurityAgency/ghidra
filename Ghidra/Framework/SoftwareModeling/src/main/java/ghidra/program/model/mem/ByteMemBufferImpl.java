@@ -35,8 +35,9 @@ public class ByteMemBufferImpl implements MemBuffer {
 
 	/**
 	 * Construct a ByteMemBufferImpl object
-	 * @param addr that address to associate with the bytes
-	 * @param bytes the data that normally would be comming from memory.
+	 * @param addr the address to associate with the bytes
+	 * @param bytes the data that normally would be coming from memory.
+	 * @param isBigEndian true for BigEndian, false for LittleEndian.
 	 */
 	public ByteMemBufferImpl(Address addr, byte[] bytes, boolean isBigEndian) {
 		this.addr = addr;
@@ -44,6 +45,26 @@ public class ByteMemBufferImpl implements MemBuffer {
 		this.isBigEndian = isBigEndian;
 	}
 
+	/**
+	 * Convenience constructor using varargs for specifying byte values.
+	 * @param addr the address to associate with the bytes
+	 * @param isBigEndian true for BigEndian, false for LittleEndian.
+	 * @param byteValues varargs for specifying the individual byte values.  The int argument
+	 * will be truncated to a byte value.
+	 */
+	public ByteMemBufferImpl(Address addr, boolean isBigEndian, int... byteValues) {
+		this.addr = addr;
+		this.isBigEndian = isBigEndian;
+		bytes = new byte[byteValues.length];
+		for (int i = 0; i < bytes.length; i++) {
+			bytes[i] = (byte) byteValues[i];
+		}
+	}
+
+	/**
+	 * Get number of bytes contained within buffer
+	 * @return byte count
+	 */
 	public int getLength() {
 		return bytes.length;
 	}

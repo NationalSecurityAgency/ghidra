@@ -72,6 +72,10 @@ public class ArrayDataType extends DataTypeImpl implements Array {
 	}
 
 	private void validate(DataType dt) {
+		if (dt instanceof BitFieldDataType) {
+			throw new IllegalArgumentException(
+				"Array data-type may not be a bitfield: " + dt.getName());
+		}
 		if (dt instanceof FactoryDataType) {
 			throw new IllegalArgumentException(
 				"Array data-type may not be a Factory data-type: " + dt.getName());
@@ -165,11 +169,11 @@ public class ArrayDataType extends DataTypeImpl implements Array {
 
 	@Override
 	public Class<?> getValueClass(Settings settings) {
-		return DataTypeUtilities.getArrayValueClass(this, settings);
+		return getArrayValueClass(settings);
 	}
 
 	@Override
-	public void setName(String name) throws InvalidNameException, DuplicateNameException {
+	public void setName(String name) throws InvalidNameException {
 		// unsupported - ignore
 	}
 
@@ -253,18 +257,13 @@ public class ArrayDataType extends DataTypeImpl implements Array {
 	@Override
 	public String getDefaultLabelPrefix(MemBuffer buf, Settings settings, int len,
 			DataTypeDisplayOptions options) {
-		String prefix =
-			ArrayStringable.getArrayStringableLabelPrefix(this, buf, settings, len, options);
-		return prefix != null ? prefix : super.getDefaultLabelPrefix(buf, settings, len, options);
+		return getArrayDefaultLabelPrefix(buf, settings, len, options);
 	}
 
 	@Override
 	public String getDefaultOffcutLabelPrefix(MemBuffer buf, Settings settings, int len,
 			DataTypeDisplayOptions options, int offcutLength) {
-		String prefix = ArrayStringable.getArrayStringableOffcutLabelPrefix(this, buf, settings,
-			len, options, offcutLength);
-		return prefix != null ? prefix
-				: super.getDefaultOffcutLabelPrefix(buf, settings, len, options, offcutLength);
+		return getArrayDefaultOffcutLabelPrefix(buf, settings, len, options, offcutLength);
 	}
 
 	@Override
@@ -274,12 +273,12 @@ public class ArrayDataType extends DataTypeImpl implements Array {
 
 	@Override
 	public Object getValue(MemBuffer buf, Settings settings, int length) {
-		return DataTypeUtilities.getArrayValue(this, buf, settings, length);
+		return getArrayValue(buf, settings, length);
 	}
 
 	@Override
 	public String getRepresentation(MemBuffer buf, Settings settings, int length) {
-		return DataTypeUtilities.getArrayRepresentation(this, buf, settings, length);
+		return getArrayRepresentation(buf, settings, length);
 	}
 
 }

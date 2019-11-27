@@ -67,9 +67,9 @@ public class ImporterPlugin extends Plugin
 		implements FileImporterService, FrontEndable, ProjectListener {
 
 	private static final String IMPORT_MENU_GROUP = "Import";
-	private static final String ADD_TO_PROGRAM_MENU_GROUP = "Import: Add To Program";
 	static final String IMPORTER_PLUGIN_DESC =
-		"This plugin manages importing files, including those contained within firmware/filesystem images.";
+		"This plugin manages importing files, including those contained within " +
+			"firmware/filesystem images.";
 
 	private DockingAction importAction;
 	private DockingAction importSelectionAction;// NA in front-end
@@ -165,9 +165,10 @@ public class ImporterPlugin extends Plugin
 
 	@Override
 	public void importFile(DomainFolder folder, File file) {
+
 		FSRL fsrl = FileSystemService.getInstance().getLocalFSRL(file);
-		ImporterUtilities.showImportDialog(fsrl, folder, null, getTool(),
-			getTool().getService(ProgramManager.class));
+		ProgramManager manager = tool.getService(ProgramManager.class);
+		ImporterUtilities.showImportDialog(tool, manager, fsrl, folder, null);
 	}
 
 	@Override
@@ -280,8 +281,6 @@ public class ImporterPlugin extends Plugin
 		};
 		addToProgramAction.setMenuBarData(new MenuData(new String[] { "&File", title + "..." },
 			null, IMPORT_MENU_GROUP, MenuData.NO_MNEMONIC, "zz"));
-		addToProgramAction.setKeyBindingData(
-			new KeyBindingData(KeyEvent.VK_I, InputEvent.ALT_DOWN_MASK));
 		addToProgramAction.setDescription(IMPORTER_PLUGIN_DESC);
 		addToProgramAction.setEnabled(false);
 
@@ -353,7 +352,8 @@ public class ImporterPlugin extends Plugin
 	private void addToProgram(File file) {
 		GFile gFile = FileSystemService.getInstance().getLocalGFile(file);
 		if (gFile.getLength() == 0) {
-			Msg.showInfo(this, null, "Import File Failed", file.getName() + " is empty (0 bytes).");
+			Msg.showInfo(this, null, "Import File Failed",
+				"File " + file.getName() + " is empty (0 bytes).");
 			return;
 		}
 
@@ -361,55 +361,50 @@ public class ImporterPlugin extends Plugin
 		Program program = manager.getCurrentProgram();
 
 		FSRL fsrl = FileSystemService.getInstance().getLocalFSRL(file);
-		TaskLauncher.launchNonModal("Show Add To Program Dialog", monitor -> {
+		TaskLauncher.launchModal("Show Add To Program Dialog", monitor -> {
 			ImporterUtilities.showAddToProgramDialog(fsrl, program, tool, monitor);
 		});
 
 	}
 
-	/**
-	 * Import a selection of bytes from the listing window.
-	 */
 	protected void doImportSelectionAction(ProgramSelection selection) {
-		if (selection != null && selection.getNumAddressRanges() == 1) {
-			AddressRange range = selection.getFirstRange();// should only be 1
-			if (range.getLength() < (Integer.MAX_VALUE & 0xffffffffL)) {
-				ProgramManager programManager = tool.getService(ProgramManager.class);
-				Program program = programManager.getCurrentProgram();
-				if (program != null) {
-					Memory memory = program.getMemory();
-					MemoryBlock block = memory.getBlock(range.getMinAddress());
-					String tempFileName = block.getName() + "_[" + range.getMinAddress() + "," +
-						range.getMaxAddress() + "]_";
-					try {
-						File tempFile = File.createTempFile(tempFileName, ".tmp");
-						OutputStream outputStream = new FileOutputStream(tempFile);
-						try {
-							byte[] bytes = new byte[(int) range.getLength()];
-							memory.getBytes(range.getMinAddress(), bytes);
-							outputStream.write(bytes);
-						}
-						finally {
-							outputStream.close();
-						}
-						DomainFolder folder =
-							AppInfo.getActiveProject().getProjectData().getRootFolder();
-						importFile(folder, tempFile);
-					}
-					catch (IOException e) {
-						Msg.showInfo(getClass(), tool.getActiveWindow(), "I/O Error Occurred",
-							e.getMessage());
-					}
-					catch (MemoryAccessException e) {
-						Msg.showInfo(getClass(), tool.getActiveWindow(),
-							"Memory Access Error Occurred", e.getMessage());
-					}
-				}
+		if (selection == null || selection.getNumAddressRanges() != 1) {
+			return;
+		}
+
+		AddressRange range = selection.getFirstRange();// should only be 1
+		if (range.getLength() >= (Integer.MAX_VALUE & 0xffffffffL)) {
+			Msg.showInfo(getClass(), tool.getActiveWindow(), "Selection Too Large",
+				"The selection is too large to extract.");
+			return;
+		}
+
+		ProgramManager programManager = tool.getService(ProgramManager.class);
+		Program program = programManager.getCurrentProgram();
+		if (program == null) {
+			return;
+		}
+
+		Memory memory = program.getMemory();
+		MemoryBlock block = memory.getBlock(range.getMinAddress());
+		String tempFileName =
+			block.getName() + "_[" + range.getMinAddress() + "," + range.getMaxAddress() + "]_";
+		try {
+			File tempFile = File.createTempFile(tempFileName, ".tmp");
+			try (OutputStream outputStream = new FileOutputStream(tempFile)) {
+				byte[] bytes = new byte[(int) range.getLength()];
+				memory.getBytes(range.getMinAddress(), bytes);
+				outputStream.write(bytes);
 			}
-			else {
-				Msg.showInfo(getClass(), tool.getActiveWindow(), "Selection Too Large",
-					"The selection is too large to extract.");
-			}
+
+			DomainFolder folder = AppInfo.getActiveProject().getProjectData().getRootFolder();
+			importFile(folder, tempFile);
+		}
+		catch (IOException e) {
+			Msg.showError(this, null, "I/O Error Occurred", e.getMessage(), e);
+		}
+		catch (MemoryAccessException e) {
+			Msg.showError(this, null, "Memory Access Error Occurred", e.getMessage(), e);
 		}
 	}
 }

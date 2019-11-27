@@ -855,11 +855,15 @@ public abstract class LocalFileSystem implements FileSystem {
 	}
 
 	/**
-	 * Determines if the specified storage name corresponds to a hidden name
-	 * @param name
-	 * @return true if name is a hidden name
+	 * Determines if the specified storage directory name corresponds to a 
+	 * hidden directory (includes both system and application hidden directories).
+	 * @param name directory name as it appears on storage file system.
+	 * @return true if name is a hidden name, else false
 	 */
 	public static final boolean isHiddenDirName(String name) {
+		if (name.startsWith(".")) {
+			return true;
+		}
 		// odd number of prefix chars at start of name indicates hidden name
 		return (countHiddenDirPrefixChars(name) & 1) == 1;
 	}

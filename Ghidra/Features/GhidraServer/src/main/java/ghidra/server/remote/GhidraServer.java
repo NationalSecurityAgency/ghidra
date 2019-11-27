@@ -15,6 +15,8 @@
  */
 package ghidra.server.remote;
 
+import static ghidra.server.remote.GhidraServer.AuthMode.*;
+
 import java.io.*;
 import java.net.*;
 import java.rmi.NoSuchObjectException;
@@ -24,6 +26,7 @@ import java.rmi.registry.Registry;
 import java.rmi.server.*;
 import java.security.cert.CertificateException;
 import java.util.Enumeration;
+import java.util.List;
 
 import javax.rmi.ssl.SslRMIClientSocketFactory;
 import javax.rmi.ssl.SslRMIServerSocketFactory;
@@ -39,7 +42,8 @@ import org.apache.logging.log4j.Logger;
 
 import generic.jar.ResourceFile;
 import generic.random.SecureRandomFactory;
-import ghidra.framework.*;
+import ghidra.framework.Application;
+import ghidra.framework.ApplicationConfiguration;
 import ghidra.framework.remote.*;
 import ghidra.net.ApplicationKeyManagerFactory;
 import ghidra.net.SSLContextInitializer;
@@ -50,7 +54,9 @@ import ghidra.server.stream.BlockStreamServer;
 import ghidra.server.stream.RemoteBlockStreamHandle;
 import ghidra.util.SystemUtilities;
 import ghidra.util.exception.AssertException;
+import ghidra.util.exception.DuplicateNameException;
 import resources.ResourceManager;
+import utilities.util.FileUtilities;
 import utility.application.ApplicationLayout;
 
 /**
@@ -63,24 +69,46 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 
 	private static SslRMIServerSocketFactory serverSocketFactory;
 	private static SslRMIClientSocketFactory clientSocketFactory;
+	private static InetAddress bindAddress;
 
 	private static Logger log;
 
 	private static String HELP_FILE = "/ghidra/server/remote/ServerHelp.txt";
 	private static String USAGE_ARGS =
-		" [-p<port>] [-a<authMode>] [-d<domain>] [-u] [-anonymous] [-ssh] [-ip<ipAddr>] [-e<expireDays>] [-n] <serverPath>";
+		"[-ip <hostname>] [-i #.#.#.#] [-p#] [-n] [-a#] [-d<ad_domain>] [-e<days>] [-jaas <config_file>] [-u] [-autoProvision] [-anonymous] [-ssh] <repository_path>";
 
 	private static final String RMI_SERVER_PROPERTY = "java.rmi.server.hostname";
-	// private static final String RMI_CODEBASE_PROPERTY = "java.rmi.server.codebase";
 
-	private static final String[] AUTH_MODES =
-		{ "None", "Password File", "OS Password", "PKI", "OS Password & Password File" };
+	enum AuthMode {
 
-	public static final int NO_AUTH_LOGIN = -1;
-	public static final int PASSWORD_FILE_LOGIN = 0;
-	public static final int OS_PASSWORD_LOGIN = 1;
-	public static final int PKI_LOGIN = 2;
-	public static final int ALT_OS_PASSWORD_LOGIN = 3;
+		NO_AUTH_LOGIN("None"),
+		PASSWORD_FILE_LOGIN("Password File"),
+		KRB5_AD_LOGIN("Active Directory via Kerberos"),
+		PKI_LOGIN("PKI"),
+		JAAS_LOGIN("JAAS");
+
+		private String description;
+
+		AuthMode(String description) {
+			this.description = description;
+		}
+
+		public String getDescription() {
+			return description;
+		}
+
+		public static AuthMode fromIndex(int index) {
+			//@formatter:off
+			switch ( index) {
+				case 0: return PASSWORD_FILE_LOGIN;
+				case 1: return KRB5_AD_LOGIN;
+				case 2: return PKI_LOGIN;
+				case 4: return JAAS_LOGIN;
+				default: return null;
+			}
+			//@formatter:on
+		}
+	}
 
 	private static GhidraServer server;
 
@@ -88,30 +116,36 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 	private AuthenticationModule authModule;
 	private SSHAuthenticationModule sshAuthModule; // only supported in conjunction with password authentication modes (0 & 1)
 	private AnonymousAuthenticationModule anonymousAuthModule;
-
 	private BlockStreamServer blockStreamServer;
+	private boolean autoProvisionAuthedUsers;
 
 	/**
 	 * Server handle constructor.
-	 * 
+	 *
 	 * @param rootDir
 	 *            root repositories directory for server
 	 * @param authMode
 	 *            authentication mode
 	 * @param loginDomain
 	 *            login domain or null (used for OS_PASSWORD_LOGIN mode only)
-	 * @param nameCallbackAllowed if true user name may be altered 
+	 * @param allowUserToSpecifyName if true user name may be altered
 	 * @param altSSHLoginAllowed if true SSH authentication will be permitted
 	 * as an alternate form of authentication
 	 * @param defaultPasswordExpirationDays number of days default password will be valid
 	 * @param allowAnonymousAccess allow anonymous access if true
+	 * @param autoProvisionAuthedUsers flag to turn on automatically adding successfully
+	 * authenticated users to the user manager if they don't already exist
 	 * @throws IOException
 	 */
-	GhidraServer(File rootDir, int authMode, final String loginDomain, boolean nameCallbackAllowed,
-			boolean altSSHLoginAllowed, int defaultPasswordExpirationDays,
-			boolean allowAnonymousAccess) throws IOException, CertificateException {
+	GhidraServer(File rootDir, AuthMode authMode, String loginDomain,
+			boolean allowUserToSpecifyName, boolean altSSHLoginAllowed,
+			int defaultPasswordExpirationDays, boolean allowAnonymousAccess,
+			boolean autoProvisionAuthedUsers, File jaasConfigFile)
+			throws IOException, CertificateException {
 
 		super(ServerPortFactory.getRMISSLPort(), clientSocketFactory, serverSocketFactory);
+
+		this.autoProvisionAuthedUsers = autoProvisionAuthedUsers;
 
 		if (log == null) {
 			// logger generally initialized by main method, however during
@@ -129,24 +163,8 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 			case PASSWORD_FILE_LOGIN:
 				supportLocalPasswords = true;
 				requireExplicitPasswordReset = false;
-				authModule = new PasswordFileAuthenticationModule(nameCallbackAllowed);
+				authModule = new PasswordFileAuthenticationModule(allowUserToSpecifyName);
 				break;
-//			case ALT_OS_PASSWORD_LOGIN:
-//				supportLocalPasswords = true;
-//			case OS_PASSWORD_LOGIN:
-//				OperatingSystem os = OperatingSystem.CURRENT_OPERATING_SYSTEM;
-//				if (os == OperatingSystem.WINDOWS) {
-//					authModule = new NTPasswordAuthenticationModule(loginDomain,
-//						nameCallbackAllowed, authMode == ALT_OS_PASSWORD_LOGIN);
-//				}
-//				else if (os == UNIX) {
-//					authModule = new UnixPasswordAuthenticationModule(nameCallbackAllowed);
-//				}
-//				else {
-//					throw new IllegalArgumentException(
-//						"OS Password Authentication only supported for Microsoft Windows");
-//				}
-//				break;
 			case PKI_LOGIN:
 				if (altSSHLoginAllowed) {
 					log.warn("SSH authentication option ignored when PKI authentication used");
@@ -161,13 +179,24 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 					altSSHLoginAllowed = false;
 				}
 				break;
+			case JAAS_LOGIN:
+				authModule =
+					new JAASAuthenticationModule("auth", allowUserToSpecifyName, jaasConfigFile);
+				break;
+			case KRB5_AD_LOGIN:
+				if (loginDomain == null || loginDomain.isBlank()) {
+					throw new IllegalArgumentException("Missing login domain value -d<ad_domain>");
+				}
+				authModule = new Krb5ActiveDirectoryAuthenticationModule(loginDomain,
+					allowUserToSpecifyName);
+				break;
 			default:
 				throw new IllegalArgumentException("Unsupported Authentication mode: " + authMode);
 		}
 
 		if (altSSHLoginAllowed) {
 			SecureRandomFactory.getSecureRandom(); // incur initialization delay up-front
-			sshAuthModule = new SSHAuthenticationModule(nameCallbackAllowed);
+			sshAuthModule = new SSHAuthenticationModule(allowUserToSpecifyName);
 		}
 
 		mgr = new RepositoryManager(rootDir, supportLocalPasswords, requireExplicitPasswordReset,
@@ -175,13 +204,20 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 
 		GhidraServer.server = this;
 
+		// Start block stream server - use RMI serverSocketFactory
 		blockStreamServer = BlockStreamServer.getBlockStreamServer();
-		blockStreamServer.startServer();
+		ServerSocket streamServerSocket;
+		if (serverSocketFactory != null) {
+			streamServerSocket =
+				serverSocketFactory.createServerSocket(ServerPortFactory.getStreamPort());
+		}
+		else {
+			streamServerSocket = new GhidraSSLServerSocket(ServerPortFactory.getStreamPort(),
+				bindAddress, null, null, authMode == PKI_LOGIN);
+		}
+		blockStreamServer.startServer(streamServerSocket, initRemoteAccessHostname());
 	}
 
-	/*
-	 * @see ghidra.framework.remote.GhidraServerHandle#getAuthenticationCallbacks(javax.security.auth.Subject)
-	 */
 	@Override
 	public Callback[] getAuthenticationCallbacks() throws RemoteException {
 		log.info("Authentication callbacks requested by " + RepositoryManager.getRMIClient());
@@ -203,9 +239,6 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 		}
 	}
 
-	/*
-	 * @see ghidra.framework.remote.GhidraServerHandle#checkCompatibility(int)
-	 */
 	@Override
 	public void checkCompatibility(int serverInterfaceVersion) throws RemoteException {
 		if (serverInterfaceVersion > INTERFACE_VERSION) {
@@ -219,9 +252,6 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 		}
 	}
 
-	/*
-	 * @see ghidra.framework.remote.GhidraServerHandle#getRepositoryServer(javax.security.auth.callback.Callback[])
-	 */
 	@Override
 	public RemoteRepositoryServerHandle getRepositoryServer(Subject user, Callback[] authCallbacks)
 			throws LoginException, RemoteException {
@@ -242,25 +272,22 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 			RepositoryManager.log(null, null, "Anonymous access allowed", principal.getName());
 		}
 		else if (authModule != null) {
-			for (Callback cb : authCallbacks) {
-				if (cb instanceof NameCallback) {
-					if (!authModule.isNameCallbackAllowed()) {
-						RepositoryManager.log(null, null,
-							"Illegal authentictaion callback: NameCallback not permitted",
-							username);
-						throw new LoginException("Illegal authentictaion callback");
-					}
-					NameCallback nameCb = (NameCallback) cb;
-					String name = nameCb.getName();
-					if (name == null) {
-						RepositoryManager.log(null, null,
-							"Illegal authentictaion callback: NameCallback must specify login name",
-							username);
-						throw new LoginException("Illegal authentictaion callback");
-					}
-					username = name;
-					break;
+			NameCallback nameCb =
+				AuthenticationModule.getFirstCallbackOfType(NameCallback.class, authCallbacks);
+			if (nameCb != null) {
+				if (!authModule.isNameCallbackAllowed()) {
+					RepositoryManager.log(null, null,
+						"Illegal authentication callback: NameCallback not permitted", username);
+					throw new LoginException("Illegal authentication callback");
 				}
+				String name = nameCb.getName();
+				if (name == null) {
+					RepositoryManager.log(null, null,
+						"Illegal authentication callback: NameCallback must specify login name",
+						username);
+					throw new LoginException("Illegal authentication callback");
+				}
+				username = name;
 			}
 		}
 
@@ -285,6 +312,36 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 					username = authModule.authenticate(mgr.getUserManager(), user, authCallbacks);
 					anonymousAccess = UserManager.ANONYMOUS_USERNAME.equals(username);
 					if (!anonymousAccess) {
+						if (!mgr.getUserManager().isValidUser(username)) {
+							if (autoProvisionAuthedUsers) {
+								try {
+									mgr.getUserManager().addUser(username);
+									RepositoryManager.log(null, null,
+										"User '" + username + "' successful auto provision",
+										username);
+								}
+								catch (DuplicateNameException | IOException e) {
+									RepositoryManager.log(
+										null, null, "User '" + username +
+											"' auto provision failed.  Cause: " + e.getMessage(),
+										username);
+									throw new LoginException(
+										"Error when trying to auto provision successfully authenticated user: " +
+											username);
+								}
+							}
+							else {
+								RepositoryManager.log(null, null,
+									"User successfully authenticated, but does not exist in Ghidra user list: " +
+										username,
+									null);
+								// Throw LoginException instead of FailedLoginException to prevent
+								// the user from being asked to retry the login, which might
+								// lead them to try older/different passwords and get their system
+								// account locked.
+								throw new LoginException("Unknown user: " + username);
+							}
+						}
 						RepositoryManager.log(null, null, "User '" + username + "' authenticated",
 							principal.getName());
 					}
@@ -292,16 +349,15 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 				catch (LoginException e) {
 					RepositoryManager.log(null, null, "Login failed (" + e.getMessage() + ")",
 						username);
-					throw e;
+					// Create new exceptions so we don't leak config info to the client.
+					if (e instanceof FailedLoginException) {
+						throw new FailedLoginException("User authentication failed");
+					}
+					throw new LoginException("User login system failure");
 				}
 				if (authModule instanceof PasswordFileAuthenticationModule) {
 					supportPasswordChange = true;
 				}
-//				else if (authModule instanceof NTPasswordAuthenticationModule) {
-//					supportPasswordChange =
-//						((NTPasswordAuthenticationModule) authModule).usingLocalAuthentication(
-//							authCallbacks);
-//				}
 			}
 			else if (!mgr.getUserManager().isValidUser(username)) {
 				FailedLoginException e = new FailedLoginException("Unknown user: " + username);
@@ -345,7 +401,7 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 
 	/**
 	 * Display an optional message followed by usage syntax.
-	 * 
+	 *
 	 * @param msg
 	 */
 	private static void displayUsage(String msg) {
@@ -356,27 +412,13 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 	}
 
 	private static void displayHelp() {
-		InputStream in = ResourceManager.getResourceAsStream(HELP_FILE);
-		try {
-			BufferedReader br = new BufferedReader(new InputStreamReader(in));
-			while (true) {
-				String line = br.readLine();
-				if (line == null) {
-					break;
-				}
-				System.out.println(line);
-			}
+
+		try (InputStream in = ResourceManager.getResourceAsStream(HELP_FILE)) {
+			List<String> lines = FileUtilities.getLines(in);
+			lines.stream().forEach(s -> System.out.println(s));
 		}
 		catch (IOException e) {
 			// don't care
-		}
-		finally {
-			try {
-				in.close();
-			}
-			catch (IOException e) {
-				// we tried
-			}
 		}
 	}
 
@@ -419,9 +461,48 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 		return null;
 	}
 
+	private static String initRemoteAccessHostname() throws UnknownHostException {
+		String hostname = System.getProperty(RMI_SERVER_PROPERTY);
+		if (hostname == null) {
+			if (bindAddress != null) {
+				hostname = bindAddress.getHostAddress();
+			}
+			else {
+				InetAddress localhost = InetAddress.getLocalHost();
+				if (localhost.isLoopbackAddress()) {
+					localhost = findHost();
+					if (localhost == null) {
+						log.fatal("Can't find host ip address!");
+						System.exit(-1);
+					}
+				}
+				hostname = localhost.getHostAddress();
+			}
+			System.setProperty(RMI_SERVER_PROPERTY, hostname);
+		}
+		return hostname;
+	}
+
+	private static File getServerCfgFile(String cfgFileName) {
+		File tmp = new File(cfgFileName);
+		if (tmp.isAbsolute()) {
+			return tmp;
+		}
+
+		ResourceFile serverRoot = new ResourceFile(Application.getInstallationDirectory(),
+			SystemUtilities.isInDevelopmentMode() ? "ghidra/Ghidra/RuntimeScripts/Common/server"
+					: "server");
+		if (serverRoot == null || serverRoot.getFile(false) == null) {
+			System.err.println(
+				"Failed to resolve installation root directory!: " + serverRoot.getAbsolutePath());
+			System.exit(-1);
+		}
+		return new File(serverRoot.getFile(false), cfgFileName);
+	}
+
 	/**
 	 * Main method for starting the Ghidra server.
-	 * 
+	 *
 	 * @param args  command line arguments
 	 */
 	public static synchronized void main(String[] args) {
@@ -440,16 +521,30 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 		}
 
 		int basePort = DEFAULT_PORT;
-		int authMode = NO_AUTH_LOGIN;
+		AuthMode authMode = NO_AUTH_LOGIN;
 		boolean nameCallbackAllowed = false;
 		boolean altSSHLoginAllowed = false;
 		boolean allowAnonymousAccess = false;
 		String loginDomain = null;
 		String rootPath = null;
 		int defaultPasswordExpiration = -1;
+		boolean autoProvision = false;
+		File jaasConfigFile = null;
 
 		// Network name resolution disabled by default
 		InetNameLookup.setLookupEnabled(false);
+		
+		// Initialize application
+		try {
+			ApplicationLayout layout = new GhidraServerApplicationLayout();
+			ApplicationConfiguration configuration = new ApplicationConfiguration();
+			configuration.setInitializeLogging(false);
+			Application.initializeApplication(layout, configuration);
+		}
+		catch (IOException e) {
+			System.err.println("Failed to initialize the application!");
+			System.exit(-1);
+		}
 
 		// Process command line options
 		for (int i = 0; i < args.length; i++) {
@@ -467,16 +562,59 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 				}
 			}
 			else if (s.startsWith("-a") && s.length() == 3) { // Authentication Mode
+				int authModeNum = Integer.MIN_VALUE;
 				try {
-					authMode = Integer.parseInt(s.substring(2));
+					authModeNum = Integer.parseInt(s.substring(2));
 				}
 				catch (NumberFormatException e1) {
 					displayUsage("Invalid option: " + s);
 					System.exit(-1);
 				}
+
+				authMode = AuthMode.fromIndex(authModeNum);
+
+				if (authMode == null) {
+					displayUsage("Invalid authentication mode: " + s);
+					System.exit(-1);
+				}
 			}
-			else if (s.startsWith("-ip")) { // Setting server ip address to bind to
-				System.setProperty(RMI_SERVER_PROPERTY, s.substring(3));
+			else if (s.startsWith("-ip")) { // setting server remote access hostname
+				int nextArgIndex = i + 1;
+				String hostname;
+				if (s.length() == 3 && nextArgIndex < args.length) {
+					hostname = args[++i];
+				}
+				else {
+					hostname = s.substring(3);
+				}
+				hostname = hostname.trim();
+				if (hostname.length() == 0 || hostname.startsWith("-")) {
+					displayUsage("Missing -ip hostname");
+					System.exit(-1);
+				}
+				System.setProperty(RMI_SERVER_PROPERTY, hostname);
+			}
+			else if (s.startsWith("-i")) {  // setting server bind address
+				int nextArgIndex = i + 1;
+				String bindIp;
+				if (s.length() == 2 && nextArgIndex < args.length) {
+					bindIp = args[++i];
+				}
+				else {
+					bindIp = s.substring(2);
+				}
+				bindIp = bindIp.trim();
+				if (bindIp.length() == 0 || bindIp.startsWith("-")) {
+					displayUsage("Missing -i interface bind address");
+					System.exit(-1);
+				}
+				try {
+					bindAddress = InetAddress.getByName(bindIp);
+				}
+				catch (UnknownHostException e) {
+					System.err.println("Unknown server interface bind address: " + bindIp);
+					System.exit(-1);
+				}
 			}
 			else if (s.startsWith("-d") && s.length() > 2) { // Login Domain
 				loginDomain = s.substring(2);
@@ -508,6 +646,31 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 					System.out.println("Default password expiration has been disbaled.");
 				}
 			}
+			else if (s.startsWith("-jaas")) {
+				String jaasConfigFileStr;
+				if (s.length() == 5) {
+					i++;
+					jaasConfigFileStr = (i < args.length) ? args[i] : "";
+				}
+				else {
+					jaasConfigFileStr = s.substring(5);
+				}
+				jaasConfigFileStr = jaasConfigFileStr.trim();
+				if (jaasConfigFileStr.isEmpty()) {
+					displayUsage("Missing -jaas config file path argument");
+					System.exit(-1);
+				}
+				jaasConfigFile = getServerCfgFile(jaasConfigFileStr);
+				if (!jaasConfigFile.isFile()) {
+					displayUsage(
+						"JAAS config file (-jaas <configfile>) does not exist or is not file: " +
+							jaasConfigFile.getAbsolutePath());
+					System.exit(-1);
+				}
+			}
+			else if (s.equals("-autoProvision")) {
+				autoProvision = true;
+			}
 			else {
 				if (i < (args.length - 1)) {
 					displayUsage("Invalid usage!");
@@ -517,32 +680,8 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 			}
 		}
 
-		if (authMode < NO_AUTH_LOGIN || authMode > ALT_OS_PASSWORD_LOGIN) {
-			displayUsage("Invalid authentication mode!");
-			System.exit(-1);
-		}
-		if (authMode == OS_PASSWORD_LOGIN || authMode == ALT_OS_PASSWORD_LOGIN) {
-			if (OperatingSystem.CURRENT_OPERATING_SYSTEM != OperatingSystem.WINDOWS) {
-				displayUsage("Authentication mode (" + authMode +
-					") only supported under Microsoft Windows");
-				System.exit(-1);
-			}
-		}
-
 		if (rootPath == null) {
 			displayUsage("Repository directory must be specified!");
-			System.exit(-1);
-		}
-
-		// Initialize application
-		try {
-			ApplicationLayout layout = new GhidraServerApplicationLayout();
-			ApplicationConfiguration configuration = new ApplicationConfiguration();
-			configuration.setInitializeLogging(false);
-			Application.initializeApplication(layout, configuration);
-		}
-		catch (IOException e) {
-			System.err.println("Failed to initialize the application!");
 			System.exit(-1);
 		}
 
@@ -554,6 +693,13 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 				System.exit(-1);
 			}
 			serverRoot = new File(installRoot.getFile(false), rootPath);
+		}
+
+		if (authMode == JAAS_LOGIN) {
+			if (jaasConfigFile == null) {
+				displayUsage("JAAS config file argument (-jaas <configfile>) not specified");
+				System.exit(-1);
+			}
 		}
 
 		try {
@@ -592,24 +738,8 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 		// }
 
 		try {
-			// Determine IP interface to bind to
-			String hostname = System.getProperty(RMI_SERVER_PROPERTY);
-			if (hostname == null) {
-				InetAddress localhost = InetAddress.getLocalHost();
-				if (localhost.isLoopbackAddress()) {
-					localhost = findHost();
-					if (localhost == null) {
-						log.fatal("Can't find host ip address!");
-						System.exit(0);
-						return;
-					}
-				}
-				System.setProperty(RMI_SERVER_PROPERTY, localhost.getHostAddress());
-				hostname = localhost.getCanonicalHostName();
-			}
-			else {
-				log.warn("forcing server to bind to " + hostname);
-			}
+			// Ensure that remote access hostname is properly set for RMI registration
+			String hostname = initRemoteAccessHostname();
 
 			if (ApplicationKeyManagerFactory.getPreferredKeyStore() == null) {
 				// keystore has not been identified - use self-signed certificate
@@ -629,8 +759,13 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 			// System.setProperty(RMI_CODEBASE_PROPERTY, codeBaseProp);
 
 			log.info("Ghidra Server " + Application.getApplicationVersion());
-
-			log.info("   Server bound to " + System.getProperty(RMI_SERVER_PROPERTY));
+			log.info("   Server remote access address: " + hostname);
+			if (bindAddress == null) {
+				log.info("   Server listening on all interfaces");
+			}
+			else {
+				log.info("   Server listening on interface: " + bindAddress.getHostAddress());
+			}
 			log.info("   RMI Registry port: " + ServerPortFactory.getRMIRegistryPort());
 			log.info("   RMI SSL port: " + ServerPortFactory.getRMISSLPort());
 			log.info("   Block Stream port: " + ServerPortFactory.getStreamPort());
@@ -639,7 +774,7 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 						: "disabled"));
 //			log.info("   Class server port: " + ??);
 			log.info("   Root: " + rootPath);
-			log.info("   Auth: " + AUTH_MODES[authMode + 1]);
+			log.info("   Auth: " + authMode.getDescription());
 			if (authMode == PASSWORD_FILE_LOGIN && defaultPasswordExpiration >= 0) {
 				log.info("   Default password expiration: " +
 					(defaultPasswordExpiration == 0 ? "disabled"
@@ -659,20 +794,20 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 			serverSocketFactory = new SslRMIServerSocketFactory(null, null, authMode == PKI_LOGIN) {
 				@Override
 				public ServerSocket createServerSocket(int port) throws IOException {
-					return new GhidraSSLServerSocket(port, getEnabledCipherSuites(),
+					return new GhidraSSLServerSocket(port, bindAddress, getEnabledCipherSuites(),
 						getEnabledProtocols(), getNeedClientAuth());
 				}
 			};
 			clientSocketFactory = new SslRMIClientSocketFactory();
 
-			GhidraServer svr =
-				new GhidraServer(serverRoot, authMode, loginDomain, nameCallbackAllowed,
-					altSSHLoginAllowed, defaultPasswordExpiration, allowAnonymousAccess);
+			GhidraServer svr = new GhidraServer(serverRoot, authMode, loginDomain,
+				nameCallbackAllowed, altSSHLoginAllowed, defaultPasswordExpiration,
+				allowAnonymousAccess, autoProvision, jaasConfigFile);
 
 			log.info("Registering Ghidra Server...");
 
-			Registry registry =
-				LocateRegistry.createRegistry(ServerPortFactory.getRMIRegistryPort());
+			Registry registry = LocateRegistry.createRegistry(
+				ServerPortFactory.getRMIRegistryPort(), clientSocketFactory, serverSocketFactory);
 			registry.bind(BIND_NAME, svr);
 
 			log.info("Registered Ghidra Server.");

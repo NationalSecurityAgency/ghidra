@@ -18,7 +18,8 @@ package ghidra.app.plugin.core.function.tags;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.ProgramPlugin;
-import ghidra.framework.plugintool.*;
+import ghidra.framework.plugintool.PluginInfo;
+import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramLocation;
@@ -58,6 +59,11 @@ public class FunctionTagPlugin extends ProgramPlugin {
 	 * PUBLIC METHODS
 	 ******************************************************************************/
 
+	/**
+	 * Returns the component provider for this plugin
+	 * 
+	 * @return the component provider
+	 */
 	public FunctionTagsComponentProvider getProvider() {
 		return provider;
 	}

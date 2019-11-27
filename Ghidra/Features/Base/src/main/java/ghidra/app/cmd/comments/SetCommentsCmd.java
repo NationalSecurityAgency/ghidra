@@ -65,8 +65,8 @@ public class SetCommentsCmd implements Command {
 
 	/**
 	 * return true if the newValue and oldValue are different
-	 * @param newValue
-	 * @param oldValue
+	 * @param newValue the value that we desire to set
+	 * @param oldValue the existing value
 	 * @return boolean
 	 */
 	private boolean commentChanged(String newValue, String oldValue) {
@@ -139,42 +139,6 @@ public class SetCommentsCmd implements Command {
 	@Override
 	public String getStatusMsg() {
 		return msg;
-	}
-
-	/**
-	 * Creates the specified comment of the specified type at address.
-	 * 
-	 * @param program the program being analyzed
-	 * @param addr the address where data is created
-	 * @param comment the comment about the data
-	 * @param commentType the type of comment ({@link CodeUnit#PLATE_COMMENT}, 
-	 * {@link CodeUnit#PRE_COMMENT}, {@link CodeUnit#EOL_COMMENT}, {@link CodeUnit#POST_COMMENT},
-	 * {@link CodeUnit#REPEATABLE_COMMENT}) 
-	 */
-	public static void createComment(Program program, Address addr, String comment,
-			int commentType) {
-
-		SetCommentsCmd commentCmd = null;
-		switch (commentType) {
-			case CodeUnit.PRE_COMMENT:
-				commentCmd = new SetCommentsCmd(addr, comment, null, null, null, null);
-				break;
-			case CodeUnit.POST_COMMENT:
-				commentCmd = new SetCommentsCmd(addr, null, comment, null, null, null);
-				break;
-			case CodeUnit.EOL_COMMENT:
-				commentCmd = new SetCommentsCmd(addr, null, null, comment, null, null);
-				break;
-			case CodeUnit.PLATE_COMMENT:
-				commentCmd = new SetCommentsCmd(addr, null, null, null, comment, null);
-				break;
-			case CodeUnit.REPEATABLE_COMMENT:
-				commentCmd = new SetCommentsCmd(addr, null, null, null, null, comment);
-				break;
-			default:
-				commentCmd = new SetCommentsCmd(addr, null, null, comment, null, null);
-		}
-		commentCmd.applyTo(program);
 	}
 
 }

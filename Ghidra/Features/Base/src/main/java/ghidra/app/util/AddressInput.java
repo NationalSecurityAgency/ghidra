@@ -25,6 +25,7 @@ import java.util.Comparator;
 import javax.swing.*;
 import javax.swing.event.*;
 
+import docking.widgets.combobox.GComboBox;
 import ghidra.program.model.address.*;
 
 /**
@@ -41,9 +42,9 @@ public class AddressInput extends JPanel {
 	private boolean updateSpaceField;
 	private boolean stateChanging;
 	private JTextField spaceField;
-	
+
 	private static final Comparator<AddressSpace> ADDRESS_SPACE_SORT_COMPARATOR =
-		new Comparator<AddressSpace>() {
+		new Comparator<>() {
 			@Override
 			public int compare(AddressSpace s1, AddressSpace s2) {
 				if (s1.isOverlaySpace()) {
@@ -66,7 +67,7 @@ public class AddressInput extends JPanel {
 		setLayout(new BorderLayout());
 		textField = new JTextField(10);
 		textField.setName("JTextField");//for JUnits...
-		combo = new JComboBox<>();
+		combo = new GComboBox<>();
 		combo.setName("JComboBox");//for JUnits...
 		add(textField, BorderLayout.CENTER);
 		//add(combo, BorderLayout.WEST);
@@ -162,7 +163,7 @@ public class AddressInput extends JPanel {
 	 * if there is more than one space.
 	 */
 	public void setAddressFactory(AddressFactory factory) {
-		setAddressFactory(factory, false);
+		setAddressFactory(factory, false, false);
 	}
 
 	public AddressFactory getAddressFactory() {
@@ -175,8 +176,11 @@ public class AddressInput extends JPanel {
 	 * @param factory address factory to use
 	 * @param filterOverlaySpaces true if overlay spaces should not appear in the combo box
 	 * for the address spaces.
+	 * @param allowOtherSpace true if the OTHER space should appear in the combo box for 
+	 * the address spaces
 	 */
-	public void setAddressFactory(AddressFactory factory, boolean filterOverlaySpaces) {
+	public void setAddressFactory(AddressFactory factory, boolean filterOverlaySpaces,
+			boolean allowOtherSpace) {
 		this.addrFactory = factory;
 		AddressSpace[] spaces = factory.getAddressSpaces();
 
@@ -186,21 +190,19 @@ public class AddressInput extends JPanel {
 
 		FontMetrics fm = combo.getFontMetrics(combo.getFont());
 		int width = 0;
-		for (int i = 0; i < spaces.length; i++) {
-			if (filterOverlaySpaces && spaces[i].isOverlaySpace()) {
+		for (AddressSpace space : spaces) {
+			if (filterOverlaySpaces && space.isOverlaySpace()) {
 				continue;
 			}
 
-			// We don't want to let users create functions in certain memory spaces (eg: OTHER),
-			// so don't populate the model with them.
-			if (!spaces[i].isLoadedMemorySpace()) {
+			if (!allowOtherSpace && space.equals(AddressSpace.OTHER_SPACE)) {
 				continue;
 			}
 
-			String s = spaces[i].toString();
+			String s = space.toString();
 			width = Math.max(width, fm.stringWidth(s));
 
-			model.addElement(spaces[i]);
+			model.addElement(space);
 		}
 
 //      // Commented out the following 2 lines since they were causing the Combo to only

@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,20 +15,19 @@
  */
 package ghidra.feature.vt.gui.actions;
 
-import ghidra.feature.vt.api.db.VTSessionDB;
-import ghidra.feature.vt.gui.plugin.VTController;
-import ghidra.feature.vt.gui.plugin.VTPlugin;
-import ghidra.framework.plugintool.util.ToolConstants;
-import ghidra.util.*;
-
 import java.awt.event.InputEvent;
 import java.io.IOException;
 
 import javax.swing.Icon;
 
-import resources.ResourceManager;
 import docking.ActionContext;
 import docking.action.*;
+import docking.tool.ToolConstants;
+import ghidra.feature.vt.api.db.VTSessionDB;
+import ghidra.feature.vt.gui.plugin.VTController;
+import ghidra.feature.vt.gui.plugin.VTPlugin;
+import ghidra.util.*;
+import resources.ResourceManager;
 
 public class UndoAction extends DockingAction {
 	private final VTController controller;
@@ -37,7 +35,7 @@ public class UndoAction extends DockingAction {
 	public UndoAction(VTController controller) {
 		super("Undo", VTPlugin.OWNER);
 		this.controller = controller;
-		setHelpLocation(new HelpLocation("Tool", "Undo"));
+		setHelpLocation(new HelpLocation(ToolConstants.TOOL_HELP_TOPIC, "Undo"));
 		String[] menuPath = { ToolConstants.MENU_EDIT, "&Undo" };
 		String group = "ZZUndo";
 		Icon icon = ResourceManager.loadImage("images/undo.png");

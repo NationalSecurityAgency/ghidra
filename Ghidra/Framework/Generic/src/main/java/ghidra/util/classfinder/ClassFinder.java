@@ -29,7 +29,7 @@ import ghidra.util.task.TaskMonitor;
 import utility.module.ModuleUtilities;
 
 /**
- * Finds classes in the classPath that match one of the filter classes.
+ * Finds extension classes in the classpath
  */
 public class ClassFinder {
 	static final Logger log = LogManager.getLogger(ClassFinder.class);
@@ -37,10 +37,8 @@ public class ClassFinder {
 	private static List<Class<?>> FILTER_CLASSES =
 		Collections.unmodifiableList(Arrays.asList(ExtensionPoint.class));
 
-	private List<ClassDir> classDirs = new ArrayList<>();
-	private List<ClassJar> classJars = new ArrayList<>();
-
-	private Map<String, List<Class<?>>> classesByName;
+	private Set<ClassDir> classDirs = new HashSet<>();
+	private Set<ClassJar> classJars = new HashSet<>();
 
 	public ClassFinder(List<String> searchPaths, TaskMonitor monitor) throws CancelledException {
 		initialize(searchPaths, monitor);
@@ -48,45 +46,8 @@ public class ClassFinder {
 
 	private void initialize(List<String> searchPaths, TaskMonitor monitor)
 			throws CancelledException {
-		classDirs.clear();
-		classJars.clear();
-		reconcileClasses(searchPaths, monitor);
-	}
-
-	private void reconcileClasses(List<String> searchPaths, TaskMonitor monitor)
-			throws CancelledException {
 
 		Set<String> pathSet = new LinkedHashSet<>(searchPaths);
-
-		Iterator<ClassDir> dirs = classDirs.iterator();
-		while (dirs.hasNext()) {
-			monitor.checkCanceled();
-			ClassDir classDir = dirs.next();
-			String dirPath = classDir.getDirPath();
-			if (!pathSet.contains(dirPath)) {
-				log.trace(dirPath + " dropped from previous classpath");
-				dirs.remove();
-			}
-			else {
-				classDir.rescan(monitor);
-				pathSet.remove(dirPath);
-			}
-		}
-
-		Iterator<ClassJar> jars = classJars.iterator();
-		while (jars.hasNext()) {
-			monitor.checkCanceled();
-			ClassJar classJar = jars.next();
-			String jarPath = classJar.getJarPath();
-			if (!pathSet.contains(jarPath)) {
-				log.trace(jarPath + " dropped from previous classpath");
-				jars.remove();
-			}
-			else {
-				classJar.rescan(monitor);
-				pathSet.remove(jarPath);
-			}
-		}
 
 		Iterator<String> pathIterator = pathSet.iterator();
 		while (pathIterator.hasNext()) {
@@ -109,47 +70,23 @@ public class ClassFinder {
 				classDirs.add(new ClassDir(path, monitor));
 			}
 		}
-
 	}
 
-	public List<Class<?>> getClasses(Class<?> filterClass, TaskMonitor monitor)
-			throws CancelledException {
-		if (classesByName == null) {
-			Map<String, List<Class<?>>> map = new HashMap<>();
+	Set<Class<?>> getClasses(TaskMonitor monitor) throws CancelledException {
 
-			Set<Class<?>> classSet = new HashSet<>();
-			Iterator<ClassDir> classDirIterator = classDirs.iterator();
-			while (classDirIterator.hasNext()) {
-				monitor.checkCanceled();
-				ClassDir classDir = classDirIterator.next();
-				classDir.getClasses(classSet, monitor);
-			}
-			Iterator<ClassJar> classJarsIterator = classJars.iterator();
-			while (classJarsIterator.hasNext()) {
-				monitor.checkCanceled();
-				ClassJar classJar = classJarsIterator.next();
-				classJar.getClasses(classSet, monitor);
-			}
+		Set<Class<?>> classes = new HashSet<>();
 
-			for (Class<?> filterClasse : FILTER_CLASSES) {
-				monitor.checkCanceled();
-				List<Class<?>> list = new ArrayList<>();
-				Iterator<Class<?>> classSetIterator = classSet.iterator();
-				while (classSetIterator.hasNext()) {
-					Class<?> c = classSetIterator.next();
-					if (filterClasse.isAssignableFrom(c)) {
-						list.add(c);
-					}
-				}
-
-				map.put(filterClasse.getName(), list);
-			}
-
-			classesByName = map;
+		for (ClassDir dir : classDirs) {
+			monitor.checkCanceled();
+			dir.getClasses(classes, monitor);
 		}
 
-		List<Class<?>> classes = classesByName.get(filterClass.getName());
-		return classes != null ? classes : Collections.emptyList();
+		for (ClassJar jar : classJars) {
+			monitor.checkCanceled();
+			jar.getClasses(classes, monitor);
+		}
+
+		return classes;
 	}
 
 	/*package*/ static Class<?> loadExtensionPoint(String path, String fullName) {

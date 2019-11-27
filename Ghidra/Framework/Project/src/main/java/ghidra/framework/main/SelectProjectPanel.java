@@ -27,6 +27,8 @@ import javax.swing.text.Document;
 
 import docking.options.editor.ButtonPanelFactory;
 import docking.widgets.filechooser.GhidraFileChooser;
+import docking.widgets.filechooser.GhidraFileChooserMode;
+import docking.widgets.label.GDLabel;
 import docking.wizard.AbstractWizardJPanel;
 import docking.wizard.WizardManager;
 import ghidra.app.util.GenericHelpTopics;
@@ -72,6 +74,7 @@ class SelectProjectPanel extends AbstractWizardJPanel {
 	/* (non Javadoc)
 	 * @see ghidra.util.bean.wizard.WizardPanel#getTitle()
 	 */
+	@Override
 	public String getTitle() {
 		if (panelManager.isSharedProject()) {
 			return "Select Local Project Location for Repository " +
@@ -83,6 +86,7 @@ class SelectProjectPanel extends AbstractWizardJPanel {
 	/* (non Javadoc)
 	 * @see ghidra.util.bean.wizard.WizardPanel#initialize()
 	 */
+	@Override
 	public void initialize() {
 		projectLocator = null;
 		Document doc = projectNameField.getDocument();
@@ -95,6 +99,7 @@ class SelectProjectPanel extends AbstractWizardJPanel {
 	/**
 	 * Return true if the user has entered a valid project file
 	 */
+	@Override
 	public boolean isValidInformation() {
 		return projectLocator != null;
 	}
@@ -131,7 +136,7 @@ class SelectProjectPanel extends AbstractWizardJPanel {
 		GridBagLayout gbl = new GridBagLayout();
 		outerPanel.setLayout(gbl);
 
-		JLabel dirLabel = new JLabel("Project Directory:", SwingConstants.RIGHT);
+		JLabel dirLabel = new GDLabel("Project Directory:", SwingConstants.RIGHT);
 		directoryField = new JTextField(25);
 		directoryField.setName("Project Directory");
 
@@ -144,24 +149,28 @@ class SelectProjectPanel extends AbstractWizardJPanel {
 			directoryField.setText(projectDirectory.getAbsolutePath());
 		}
 		directoryField.setCaretPosition(directoryField.getText().length() - 1);
-		JLabel projectNameLabel = new JLabel("Project Name:", SwingConstants.RIGHT);
+		JLabel projectNameLabel = new GDLabel("Project Name:", SwingConstants.RIGHT);
 		projectNameField = new JTextField(25);
 		projectNameField.setName("Project Name");
 		projectNameField.addActionListener(new ActionListener() {
+			@Override
 			public void actionPerformed(ActionEvent e) {
 				setProjectFile();
 			}
 		});
 
 		docListener = new DocumentListener() {
+			@Override
 			public void insertUpdate(DocumentEvent e) {
 				setProjectFile();
 			}
 
+			@Override
 			public void removeUpdate(DocumentEvent e) {
 				setProjectFile();
 			}
 
+			@Override
 			public void changedUpdate(DocumentEvent e) {
 				setProjectFile();
 			}
@@ -171,12 +180,13 @@ class SelectProjectPanel extends AbstractWizardJPanel {
 
 		browseButton = ButtonPanelFactory.createButton(ButtonPanelFactory.BROWSE_TYPE);
 		browseButton.addActionListener(new ActionListener() {
+			@Override
 			public void actionPerformed(ActionEvent e) {
 				displayFileChooser();
 			}
 		});
 
-//		sharedProjectCB = new JCheckBox("Project can be Shared with Others"); 
+//		sharedProjectCB = new GCheckBox("Project can be Shared with Others"); 
 //		sharedProjectCB.addItemListener(new ItemListener() {
 //			public void itemStateChanged(ItemEvent e) {
 //				panelManager.getWizardManager().validityChanged();
@@ -247,7 +257,7 @@ class SelectProjectPanel extends AbstractWizardJPanel {
 			wm.setStatusMessage("");
 		}
 		projectLocator = null;
-		ProjectLocator projectLocator = null;
+		ProjectLocator locator = null;
 		String msg = null;
 		String dir = directoryField.getText().trim();
 		if (dir.length() == 0) {
@@ -262,31 +272,29 @@ class SelectProjectPanel extends AbstractWizardJPanel {
 				projectName =
 					projectName.substring(0, projectName.length() - PROJECT_EXTENSION.length());
 			}
-			if (projectName.length() == 0 || !NamingUtilities.isValidName(projectName)) {
+			if (!NamingUtilities.isValidProjectName(projectName)) {
 				msg = "Please specify valid project name";
 			}
 			else {
 				try {
-					projectLocator = new ProjectLocator(dir, projectName);
+					locator = new ProjectLocator(dir, projectName);
 				}
 				catch (IllegalArgumentException e) {
 					msg = e.getMessage();
 				}
 			}
 		}
-		if (projectLocator != null) {
+		if (locator != null) {
 			File parentDir = new File(dir);
 			if (!parentDir.isDirectory()) {
 				msg = "Please specify a Project Directory";
 			}
-			else if (projectLocator.getMarkerFile().exists() ||
-				projectLocator.getProjectDir().exists()) {
-				msg =
-					getProjectName("A project named " + projectLocator.getName() +
-						" already exists in " + parentDir.getAbsolutePath());
+			else if (locator.getMarkerFile().exists() || locator.getProjectDir().exists()) {
+				msg = getProjectName("A project named " + locator.getName() +
+					" already exists in " + parentDir.getAbsolutePath());
 			}
 			else {
-				this.projectLocator = projectLocator;
+				this.projectLocator = locator;
 			}
 		}
 		wm.validityChanged();
@@ -334,12 +342,14 @@ class SelectProjectPanel extends AbstractWizardJPanel {
 		if (lastDirSelected != null) {
 			projectDirectory = new File(lastDirSelected);
 		}
-		fileChooser.setFileSelectionMode(GhidraFileChooser.DIRECTORIES_ONLY);
+		fileChooser.setFileSelectionMode(GhidraFileChooserMode.DIRECTORIES_ONLY);
 		fileChooser.setFileFilter(new GhidraFileFilter() {
+			@Override
 			public String getDescription() {
 				return "All Directories";
 			}
 
+			@Override
 			public boolean accept(File f, GhidraFileChooserModel model) {
 				return model.isDirectory(f) &&
 					!f.getName().endsWith(ProjectLocator.getProjectDirExtension());

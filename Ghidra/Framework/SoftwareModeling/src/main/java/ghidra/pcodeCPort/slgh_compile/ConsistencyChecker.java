@@ -25,7 +25,6 @@ import ghidra.pcodeCPort.semantics.ConstTpl.const_type;
 import ghidra.pcodeCPort.semantics.ConstTpl.v_field;
 import ghidra.pcodeCPort.slghsymbol.*;
 import ghidra.pcodeCPort.space.AddrSpace;
-import ghidra.util.Msg;
 
 class ConsistencyChecker {
 
@@ -34,6 +33,7 @@ class ConsistencyChecker {
 	int writenoread;
 	boolean printextwarning;
 	boolean printdeadwarning;
+	SleighCompile compiler;
 	SubtableSymbol root_symbol;
 	VectorSTL<SubtableSymbol> postorder = new VectorSTL<>();
 
@@ -97,7 +97,8 @@ class ConsistencyChecker {
 				if ((vnout == 0) || (vn0 == 0)) {
 					return true;
 				}
-				printOpError(op, ct, -1, 0, "Input and output sizes must match");
+				printOpError(op, ct, -1, 0, "Input and output sizes must match; " +
+								op.getIn(0).getSize() + " != " + op.getOut().getSize());
 				return false;
 			case CPUI_INT_ADD:
 			case CPUI_INT_SUB:
@@ -324,7 +325,7 @@ class ConsistencyChecker {
 				if ((vnout == 0) || (vn0 == 0)) {
 					return true;
 				}
-				if ((vnout == vn0) && (vn1 == 0)) { // No actual truncation is occuring
+				if ((vnout == vn0) && (vn1 == 0)) { // No actual truncation is occurring
 					dealWithUnnecessaryTrunc(op, ct);
 					return true;
 				}
@@ -489,24 +490,30 @@ class ConsistencyChecker {
 		else {
 			op2 = null;
 		}
-		Msg.error(this, "Size restriction error in table \"" + sym.getName() +
-			"\" in constructor at " + ct.location + " from operation located at " + op.location);
 
 		StringBuilder sb = new StringBuilder();
+		sb.append("Size restriction error in table '")
+			.append(sym.getName())
+			.append("' in constructor at ").append(ct.location)
+			.append("\n");
+
+
 		sb.append("  Problem");
 		if ((op1 != null) && (op2 != null)) {
-			sb.append(" with \"" + op1.getName() + "\" and \"" + op2.getName() + "\"");
+			sb.append(" with '" + op1.getName() + "' and '" + op2.getName() + "'");
 		}
 		else if (op1 != null) {
-			sb.append(" with \"" + op1.getName() + "\"");
+			sb.append(" with '" + op1.getName() + "'");
 		}
 		else if (op2 != null) {
-			sb.append(" with \"" + op2.getName() + "\"");
+			sb.append(" with '" + op2.getName() + "'");
 		}
-		sb.append(" in \"" + getOpName(op) + "\" operator");
-		Msg.error(this, sb.toString());
+		sb.append(" in '" + getOpName(op) + "' operator");
 
-		Msg.error(this, "  " + message);
+		sb.append("\n  ").append(message);
+
+		compiler.reportError(op.location, sb.toString());
+
 	}
 
 	int recoverSize(ConstTpl sizeconst, Constructor ct) {
@@ -544,7 +551,7 @@ class ConsistencyChecker {
 	}
 
 	private void handle(String msg, Constructor ct) {
-		Msg.error(this, "Unsigned comparison with " + msg + " in constructor at " + ct.location);
+		compiler.reportWarning(ct.location, " Unsigned comparison with " + msg + " in constructor");
 	}
 
 	private void handleZero(String trueOrFalse, Constructor ct) {
@@ -708,8 +715,9 @@ class ConsistencyChecker {
 			HandleTpl exportres = ct.getTempl().getResult();
 			if (exportres != null) {
 				if (seenemptyexport && (!seennonemptyexport)) {
-					Msg.error(this, "Table " + sym.getName() + " exports inconsistently");
-					Msg.error(this, "Constructor at " + ct.location + " is first inconsistency");
+					compiler.reportError(ct.location, String.format(
+						"Table '%s' exports inconsistently; Constructor at %s is first inconsitency",
+						sym.getName(), ct.location));
 					testresult = false;
 				}
 				seennonemptyexport = true;
@@ -718,15 +726,17 @@ class ConsistencyChecker {
 					tablesize = exsize;
 				}
 				if ((exsize != 0) && (exsize != tablesize)) {
-					Msg.error(this, "Table " + sym.getName() + " has inconsistent export size.");
-					Msg.error(this, "Constructor at " + ct.location + " is first conflict");
+					compiler.reportError(ct.location, String.format(
+						"Table '%s' has inconsistent export size; Constructor at %s is first conflict",
+						sym.getName(), ct.location));
 					testresult = false;
 				}
 			}
 			else {
 				if (seennonemptyexport && (!seenemptyexport)) {
-					Msg.error(this, "Table " + sym.getName() + " exports inconsistently");
-					Msg.error(this, "Constructor at " + ct.location + " is first inconsistency");
+					compiler.reportError(ct.location, String.format(
+						"Table '%s' exports inconsistently; Constructor at %s is first inconsitency",
+						sym.getName(), ct.location));
 					testresult = false;
 				}
 				seenemptyexport = true;
@@ -734,7 +744,9 @@ class ConsistencyChecker {
 		}
 		if (seennonemptyexport) {
 			if (tablesize == 0) {
-				Msg.error(this, "Warning: Table " + sym.getName() + " exports size 0");
+				compiler.reportWarning(sym.location,
+					"Table '" + sym.getName() + "' exports size 0");
+
 			}
 			sizemap.put(sym, tablesize);	// Remember recovered size
 		}
@@ -749,8 +761,7 @@ class ConsistencyChecker {
 	// input size is the same as the output size
 	void dealWithUnnecessaryExt(OpTpl op, Constructor ct) {
 		if (printextwarning) {
-			Msg.error(this, "Unnecessary \"" + getOpName(op) + "\" in constructor from " +
-				ct.getFilename() + " starting at line " + ct.getLineno());
+			compiler.reportWarning(op.location, "Unnecessary '" + getOpName(op) + "'");
 		}
 		op.setOpcode(OpCode.CPUI_COPY); // Equivalent to copy
 		unnecessarypcode += 1;
@@ -758,8 +769,7 @@ class ConsistencyChecker {
 
 	void dealWithUnnecessaryTrunc(OpTpl op, Constructor ct) {
 		if (printextwarning) {
-			Msg.error(this, "Unnecessary \"" + getOpName(op) + "\" in constructor from " +
-				ct.getFilename() + " starting at line " + ct.getLineno());
+			compiler.reportWarning(op.location, "Unnecessary '" + getOpName(op) + "'");
 		}
 		op.setOpcode(OpCode.CPUI_COPY); // Equivalent to copy
 		op.removeInput(1);
@@ -853,14 +863,8 @@ class ConsistencyChecker {
 		}
 	}
 
-	static boolean possibleIntersection(VarnodeTpl vn1, VarnodeTpl vn2) { // Conservatively
-		// test
-		// whether
-		// vn1
-		// and
-		// vn2
-		// can
-		// intersect
+	static boolean possibleIntersection(VarnodeTpl vn1, VarnodeTpl vn2) {
+		// Conservatively test whether vn1 and vn2 can intersect
 		if (vn1.getSpace().isConstSpace()) {
 			return false;
 		}
@@ -1116,15 +1120,12 @@ class ConsistencyChecker {
 			OptimizeRecord currec = pair.second;
 			if (currec.readcount == 0) {
 				if (printdeadwarning) {
-					Msg.error(this,
-						"Warning: temporary is written but not read in constructor at " +
-							ct.location);
+					compiler.reportWarning(ct.location, "Temporary is written but not read");
 				}
 				writenoread += 1;
 			}
 			else if (currec.writecount == 0) {
-				Msg.error(this,
-					"Error: temporary is read but not written in constructor at " + ct.location);
+				compiler.reportError(ct.location, "Temporary is read but not written");
 				readnowrite += 1;
 			}
 			iter.increment();
@@ -1150,7 +1151,8 @@ class ConsistencyChecker {
 		checkUnusedTemps(ct, recs);
 	}
 
-	ConsistencyChecker(SubtableSymbol rt, boolean unnecessary, boolean warndead) {
+	ConsistencyChecker(SleighCompile cp, SubtableSymbol rt, boolean unnecessary, boolean warndead) {
+		compiler = cp;
 		root_symbol = rt;
 		unnecessarypcode = 0;
 		readnowrite = 0;

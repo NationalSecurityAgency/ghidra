@@ -53,22 +53,25 @@ public interface DataTypeManager {
 	public final UniversalID BUILT_IN_ARCHIVE_UNIVERSAL_ID = new UniversalID(BUILT_IN_ARCHIVE_KEY);
 
 	/**
-	 * Returns the universal ID for this dataType manager.
+	 * Returns the universal ID for this dataType manager
+	 * @return the universal ID for this dataType manager
 	 */
 	public UniversalID getUniversalID();
 
 	/**
-	 * Returns true if the given category path exists in this datatype manager.
-	 * @param path
-	 * @return
+	 * Returns true if the given category path exists in this datatype manager
+	 * @param path the path
+	 * @return true if the given category path exists in this datatype manager
 	 */
 	public boolean containsCategory(CategoryPath path);
 
 	/**
 	 * Returns a unique name not currently used by any other dataType or category
-	 * with the same baseName.
-	 * @param baseName the base name to be made unique.
-	 * @return a unique name starting with baseName.
+	 * with the same baseName
+	 * 
+	 * @param path the path of the name 
+	 * @param baseName the base name to be made unique
+	 * @return a unique name starting with baseName
 	 */
 	public String getUniqueName(CategoryPath path, String baseName);
 
@@ -96,22 +99,26 @@ public interface DataTypeManager {
 
 	/**
 	 * Returns an iterator over all the dataTypes in this manager
+	 * @return an iterator over all the dataTypes in this manager
 	 */
 	public Iterator<DataType> getAllDataTypes();
 
 	/**
-	 * Adds all data types to the specified list.
-	 * @param list
+	 * Adds all data types to the specified list.]
+	 * 
+	 * @param list the result list into which the types will be placed
 	 */
 	public void getAllDataTypes(List<DataType> list);
 
 	/**
-	 * Returns an iterator over all structures in this manager.
+	 * Returns an iterator over all structures in this manager
+	 * @return the iterator
 	 */
 	public Iterator<Structure> getAllStructures();
 
 	/**
-	 * Returns an iterator over all composite data types (structures and unions) in this manager.
+	 * Returns an iterator over all composite data types (structures and unions) in this manager
+	 * @return the iterator
 	 */
 	public Iterator<Composite> getAllComposites();
 
@@ -159,8 +166,9 @@ public interface DataTypeManager {
 	 * there is also a category "b" under category "a".  A better solution is to use
 	 * the {@link #getDataType(DataTypePath)} method because the DataTypePath keeps the 
 	 * category and datatype name separate.
-	 * @param dataType path;
-	 * @return the dataType or null if it isn't found.
+	 * 
+	 * @param dataTypePath path
+	 * @return the dataType or null if it isn't found
 	 */
 	public DataType getDataType(String dataTypePath);
 
@@ -182,31 +190,44 @@ public interface DataTypeManager {
 
 	/**
 	* Returns the dataTypeId for the given dataType.  If the dataType is not 
-	* currently in the dataTypeManger, it will be added. 
+	* currently in the dataTypeManger, it will be added
+	*  
+	 * @param dt the data type 
+	 * @return the ID of the resolved type
 	*/
 	public long getResolvedID(DataType dt);
 
 	/**
 	 * Returns the dataTypeId for the given dataType.  If the dataType does not exist,
 	 * a -1 will be returned
-	 * @param dt the datatype to get an id for.
+	 * 
+	 * @param dt the datatype to get an id for
+	 * @return the ID of the type
 	 */
 	public long getID(DataType dt);
 
 	/**
-	 * Returns the dataType associated with the given dataTypeId or null if the
-	 * dataTypeId is not valid.
+	 * Returns the dataType associated with the given dataTypeId or null if the dataTypeId is 
+	 * not valid
+	 * 
+	 * @param dataTypeID the ID 
+	 * @return the type
 	 */
 	public DataType getDataType(long dataTypeID);
 
 	/** 
-	 * Returns the Category with the given id.
-	 * @param categoryID id of the desired category.
+	 * Returns the Category with the given id
+	 * 
+	 * @param categoryID id of the desired category
+	 * @return the category
 	 */
 	public Category getCategory(long categoryID);
 
 	/**
-	 * Get the category that has the given path.
+	 * Get the category that has the given path
+	 * 
+	 * @param path the path
+	 * @return the category
 	 */
 	public Category getCategory(CategoryPath path);
 
@@ -244,18 +265,25 @@ public interface DataTypeManager {
 
 	/**
 	 * Remove the given datatype from this manager
-	 * @param dataType the dataType to be removed.
+	 * @param dataType the dataType to be removed
 	 * @param monitor the task monitor
+	 * @return true if the data type existed and was removed
 	 */
 	public boolean remove(DataType dataType, TaskMonitor monitor);
 
 	/**
-	 * Return true if the given dataType exists in this data type manager.
+	 * Return true if the given dataType exists in this data type manager
+	 * 
+	 * @param dataType the type 
+	 * @return true if the type is in this manager
 	 */
 	public boolean contains(DataType dataType);
 
 	/**
-	 * @param path
+	 * Create a category for the given path; returns the current category if it already exits
+	 * 
+	 * @param path the path
+	 * @return the category
 	 */
 	public Category createCategory(CategoryPath path);
 
@@ -268,19 +296,22 @@ public interface DataTypeManager {
 	public DataType getDataType(CategoryPath path, String name);
 
 	/**
-	 * Returns this data type manager's name.
+	 * Returns this data type manager's name
+	 * @return the name
 	 */
 	public String getName();
 
 	/**
-	 * Sets this data type manager's name.
+	 * Sets this data type manager's name
 	 * @param name the new name
+	 * @throws InvalidNameException if the given name is invalid (such as when null or empty)
 	 */
 	public void setName(String name) throws InvalidNameException;
 
 	/**
 	 * Starts a transaction for making changes in this data type manager.
 	 * @param description a short description of the changes to be made.
+	 * @return the transaction ID
 	 */
 	public int startTransaction(String description);
 
@@ -293,22 +324,27 @@ public interface DataTypeManager {
 	/**
 	 * Ends the current transaction
 	 * @param transactionID id of the transaction to end
-	 * @param commit if true the changes are commited, otherwise all changes in transaction are revoked.
+	 * @param commit true if changes are committed, false if changes in transaction are revoked
 	 */
 	public void endTransaction(int transactionID, boolean commit);
 
+	/**
+	 * Force all pending notification events to be flushed
+	 * @throws IllegalStateException if the client is holding this object's lock
+	 */
 	public void flushEvents();
 
 	/**
-	 * Closes this dataType manager.
-	 *
+	 * Closes this dataType manager
 	 */
 	public void close();
 
 	/**
 	 * Returns a default sized pointer to the given datatype.  The pointer size is established
 	 * dynamically based upon the data organization established by the compiler specification.
-	 * @param datatype the pointed to data type.
+	 * 
+	 * @param datatype the pointed to data type
+	 * @return the pointer
 	 */
 	public Pointer getPointer(DataType datatype);
 
@@ -316,13 +352,16 @@ public interface DataTypeManager {
 	 * Returns a pointer of the given size to the given datatype.
 	 * Note: It is preferred to use default sized pointers when possible (i.e., size=-1, 
 	 * see {@link #getPointer(DataType)}) instead of explicitly specifying the size value.
-	 * @param datatype the pointed to data type.
-	 * @param size the size of the pointer to be created or -1 for a default sized pointer.
+	 * 
+	 * @param datatype the pointed to data type
+	 * @param size the size of the pointer to be created or -1 for a default sized pointer
+	 * @return the pointer 
 	 */
 	public Pointer getPointer(DataType datatype, int size);
 
 	/**
 	 * Returns the root category Manager
+	 * @return the category
 	 */
 	public Category getRootCategory();
 
@@ -350,13 +389,14 @@ public interface DataTypeManager {
 
 	/**
 	 * Returns the total number of data type categories
+	 * @return the count
 	 */
 	public int getCategoryCount();
 
 	/**
 	 * Returns the total number of defined data types.
-	 * @param includePointersAndArrays if true all pointers and array
-	 * data types will be included.
+	 * @param includePointersAndArrays if true all pointers and array data types will be included
+	 * @return the count
 	 */
 	public int getDataTypeCount(boolean includePointersAndArrays);
 
@@ -376,16 +416,46 @@ public interface DataTypeManager {
 	 */
 	public DataType findDataTypeForID(UniversalID datatypeID);
 
+	/**
+	 * Returns the timestamp of the last time this manager was changed
+	 * @return the timestamp
+	 */
 	public long getLastChangeTimeForMyManager();
 
+	/**
+	 * Returns the source archive for the given ID
+	 * 
+	 * @param sourceID the ID
+	 * @return the archive; null if the ID is null; null if the archive does not exist
+	 */
 	public SourceArchive getSourceArchive(UniversalID sourceID);
 
+	/**
+	 * Returns this manager's archive type
+	 * @return the type
+	 */
 	public ArchiveType getType();
 
+	/**
+	 * Returns all data types within this manager that have as their source the given archive
+	 * 
+	 * @param sourceArchive the archive
+	 * @return the types
+	 */
 	public List<DataType> getDataTypes(SourceArchive sourceArchive);
 
+	/**
+	 * Returns the source archive for this manager
+	 * @return the archive; null if the ID is null; null if the archive does not exist
+	 */
 	public SourceArchive getLocalSourceArchive();
 
+	/**
+	 * Change the given data type so that its source archive is the given archive
+	 * 
+	 * @param datatype the type
+	 * @param archive the archive
+	 */
 	public void associateDataTypeWithArchive(DataType datatype, SourceArchive archive);
 
 	/**
@@ -414,7 +484,8 @@ public interface DataTypeManager {
 	public boolean updateSourceArchiveName(UniversalID sourceID, String name);
 
 	/**
-	 * Get the data organization associated with this data type manager
+	 * Get the data organization associated with this data type manager.  Note that the 
+	 * DataOrganization settings may not be changed dynamically. 
 	 * @return data organization (will never be null)
 	 */
 	public DataOrganization getDataOrganization();
@@ -425,8 +496,19 @@ public interface DataTypeManager {
 	 */
 	public List<SourceArchive> getSourceArchives();
 
+	/**
+	 * Removes the source archive from this manager.  This will disassociate all data types in
+	 * this manager from the given archive.
+	 * 
+	 * @param sourceArchive the archive
+	 */
 	public void removeSourceArchive(SourceArchive sourceArchive);
 
+	/**
+	 * Returns or creates a persisted version of the given source archive
+	 * @param sourceArchive the archive 
+	 * @return the archive
+	 */
 	public SourceArchive resolveSourceArchive(SourceArchive sourceArchive);
 
 	/**

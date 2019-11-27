@@ -24,6 +24,7 @@ import javax.swing.*;
 import javax.swing.text.*;
 
 import docking.DockingUtils;
+import docking.actions.KeyBindingUtils;
 import generic.util.WindowUtilities;
 import ghidra.app.plugin.core.console.CodeCompletion;
 import ghidra.framework.options.OptionsChangeListener;
@@ -121,10 +122,12 @@ public class InterpreterPanel extends JPanel implements OptionsChangeListener {
 
 	private void build() {
 		outputTextPane = new JTextPane();
+		outputTextPane.setName("Interpreter Output Display");
 		outputScrollPane = new JScrollPane(outputTextPane);
 		outputScrollPane.setBorder(BorderFactory.createEmptyBorder());
 		promptTextPane = new JTextPane();
 		inputTextPane = new JTextPane();
+		inputTextPane.setName("Interpreter Input Field");
 
 		history = new HistoryManagerImpl();
 
@@ -167,7 +170,7 @@ public class InterpreterPanel extends JPanel implements OptionsChangeListener {
 					return text;
 				}
 				catch (BadLocationException e) {
-					Msg.error(this, "internal document positioning error", e);
+					Msg.error(this, "Interpreter document positioning error", e);
 				}
 				return "";
 			}
@@ -198,9 +201,8 @@ public class InterpreterPanel extends JPanel implements OptionsChangeListener {
 
 		outputTextPane.addKeyListener(new KeyListener() {
 			private void handleEvent(KeyEvent e) {
-				KeyboardFocusManager kfm = KeyboardFocusManager.getCurrentKeyboardFocusManager();
 
-				// If it's a copy, do nothing.  The copy will have worked.
+				// Ignore the copy event, as the output text pane knows how to copy its text
 				KeyStroke copyKeyStroke =
 					KeyStroke.getKeyStroke(KeyEvent.VK_C, DockingUtils.CONTROL_KEY_MODIFIER_MASK);
 				if (copyKeyStroke.equals(KeyStroke.getKeyStrokeForEvent(e))) {
@@ -208,7 +210,7 @@ public class InterpreterPanel extends JPanel implements OptionsChangeListener {
 				}
 
 				// Send everything else down to the inputTextPane.
-				kfm.redispatchEvent(inputTextPane, e);
+				KeyBindingUtils.retargetEvent(inputTextPane, e);
 			}
 
 			@Override
@@ -276,20 +278,6 @@ public class InterpreterPanel extends JPanel implements OptionsChangeListener {
 					case KeyEvent.VK_ESCAPE:
 						completionWindow.setVisible(false);
 						e.consume();
-						break;
-					case KeyEvent.VK_D:
-						if (e.isControlDown()) {
-							// Ctrl+D - reset interpreter
-							e.consume();
-							interpreter.reset();
-						}
-						break;
-					case KeyEvent.VK_I:
-						if (e.isControlDown()) {
-							// Ctrl+I - interrupt interpreter
-							e.consume();
-							interpreter.interrupt();
-						}
 						break;
 					default:
 
@@ -693,14 +681,14 @@ public class InterpreterPanel extends JPanel implements OptionsChangeListener {
 			}
 
 			if (bytes != null) {
-				int length = Math.min(bytes.length, len);
-				System.arraycopy(bytes, 0, b, off, length);
-				if (length == bytes.length) {
+				int length = Math.min(bytes.length - position, len);
+				System.arraycopy(bytes, position, b, off, length);
+				if (position + length == bytes.length) {
 					position = 0;
 					bytes = null;
 				}
 				else {
-					position = b.length;
+					position += length;
 				}
 				return length;
 			}

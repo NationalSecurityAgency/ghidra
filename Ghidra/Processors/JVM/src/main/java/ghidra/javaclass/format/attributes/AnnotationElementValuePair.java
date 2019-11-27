@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +15,13 @@
  */
 package ghidra.javaclass.format.attributes;
 
+import java.io.IOException;
+
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.StructConverter;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.data.StructureDataType;
 import ghidra.util.exception.DuplicateNameException;
-
-import java.io.IOException;
 
 /**
  * NOTE: THE FOLLOWING TEXT EXTRACTED FROM JVMS7.PDF
@@ -43,9 +42,9 @@ public class AnnotationElementValuePair implements StructConverter {
 	private short elementNameIndex;
 	private AnnotationElementValue value;
 
-	public AnnotationElementValuePair( BinaryReader reader ) throws IOException {
+	public AnnotationElementValuePair(BinaryReader reader) throws IOException {
 		elementNameIndex = reader.readNextShort();
-		value = new AnnotationElementValue( reader );
+		value = new AnnotationElementValue(reader);
 	}
 
 	/**
@@ -56,8 +55,8 @@ public class AnnotationElementValuePair implements StructConverter {
 	 * element represented by this element_value_pairs entry.
 	 * @return a valid index into the constant_pool table
 	 */
-	public short getElementNameIndex() {
-		return elementNameIndex;
+	public int getElementNameIndex() {
+		return elementNameIndex & 0xffff;
 	}
 
 	/**
@@ -71,9 +70,9 @@ public class AnnotationElementValuePair implements StructConverter {
 
 	@Override
 	public DataType toDataType() throws DuplicateNameException, IOException {
-		StructureDataType structure = new StructureDataType( "element_value_pair", 0 );
-		structure.add( WORD, "element_name_index", null );
-		structure.add( value.toDataType(), "element_value_pair", null );
+		StructureDataType structure = new StructureDataType("element_value_pair", 0);
+		structure.add(WORD, "element_name_index", null);
+		structure.add(value.toDataType(), "element_value_pair", null);
 		return structure;
 	}
 }

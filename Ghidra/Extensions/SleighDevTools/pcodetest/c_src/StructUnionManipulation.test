@@ -1,0 +1,339 @@
+#include "pcode_test.h"
+#include "big_struct.h"
+
+extern void bs_init(big_struct_type *);
+
+TEST pcode_SUM28_BigStructPtrAccessUnsignedInt_Main()
+{
+	extern u4 pcode_SUM28_BigStructPtrAccessUnsignedInt(big_struct_type *arg);
+	big_struct_type bs;
+	bs_init(&bs);
+	ASSERTU4(pcode_SUM28_BigStructPtrAccessUnsignedInt(&bs), 8);
+}
+
+TEST pcode_SUM29_BigStructPtrAccessUnsignedShort_Main()
+{
+	extern u2 pcode_SUM29_BigStructPtrAccessUnsignedShort(big_struct_type *arg);
+	big_struct_type bs;
+	bs_init(&bs);
+	ASSERTU2(pcode_SUM29_BigStructPtrAccessUnsignedShort(&bs), 8);
+}
+
+TEST pcode_SUM30_BigStructPtrAccessUnsignedChar_Main()
+{
+	extern u1 pcode_SUM30_BigStructPtrAccessUnsignedChar(big_struct_type *arg);
+	big_struct_type bs;
+	bs_init(&bs);
+	ASSERTU1(pcode_SUM30_BigStructPtrAccessUnsignedChar(&bs), 8);
+}
+
+#ifdef HAS_FLOAT
+TEST pcode_SUM31_BigStructPtrAccessFloat_Main()
+{
+	extern f4 pcode_SUM31_BigStructPtrAccessFloat(big_struct_type *arg);
+	big_struct_type bs;
+	bs_init(&bs);
+	ASSERTF4(pcode_SUM31_BigStructPtrAccessFloat(&bs), 8);
+}
+#endif
+
+#ifdef HAS_DOUBLE
+TEST pcode_SUM32_BigStructPtrAccessDouble_Main()
+{
+	extern f8 pcode_SUM32_BigStructPtrAccessDouble(big_struct_type *arg);
+	big_struct_type bs;
+	bs_init(&bs);
+	ASSERTF8(pcode_SUM32_BigStructPtrAccessDouble(&bs), 8);
+}
+#endif
+
+#ifdef HAS_LONGLONG
+TEST pcode_SUM34_BigUnionPtrAccessLongLong_Main()
+{
+	extern i8 pcode_SUM34_BigUnionPtrAccessLongLong(big_union_type *arg);
+	big_union_type  bu = { 0 };
+	ASSERTI8(pcode_SUM34_BigUnionPtrAccessLongLong(&bu), 7);
+}
+#endif
+
+TEST pcode_SUM35_BigUnionPtrAccessInt_Main()
+{
+	extern i4 pcode_SUM35_BigUnionPtrAccessInt(big_union_type *arg);
+	big_union_type  bu = { 0 };
+	ASSERTI4(pcode_SUM35_BigUnionPtrAccessInt(&bu), 7);
+}
+
+#ifdef HAS_LONGLONG
+TEST pcode_SUM1_BigStructAccessLongLong_Main()
+{
+	extern i8 pcode_SUM1_BigStructAccessLongLong(big_struct_type arg);
+	big_struct_type bs;
+	bs_init(&bs);
+	ASSERTI8(pcode_SUM1_BigStructAccessLongLong(bs), 8);
+}
+#endif
+
+TEST pcode_SUM36_BigUnionPtrAccessShort_Main()
+{
+	extern i2 pcode_SUM36_BigUnionPtrAccessShort(big_union_type *arg);
+	big_union_type  bu = { 0 };
+	ASSERTI2(pcode_SUM36_BigUnionPtrAccessShort(&bu), 7);
+}
+
+TEST pcode_SUM2_BigStructAccessInt_Main()
+{
+	extern i4 pcode_SUM2_BigStructAccessInt(big_struct_type arg);
+	big_struct_type bs;
+	bs_init(&bs);
+	ASSERTI4(pcode_SUM2_BigStructAccessInt(bs), 8);
+}
+
+TEST pcode_SUM37_BigUnionPtrAccessChar_Main()
+{
+	extern i1 pcode_SUM37_BigUnionPtrAccessChar(big_union_type *arg);
+	big_union_type  bu = { 0 };
+	ASSERTI1(pcode_SUM37_BigUnionPtrAccessChar(&bu), 7);
+}
+
+
+TEST pcode_SUM3_BigStructAccessShort_Main()
+{
+	extern i2 pcode_SUM3_BigStructAccessShort(big_struct_type arg);
+	big_struct_type bs;
+	bs_init(&bs);
+	ASSERTI2(pcode_SUM3_BigStructAccessShort(bs), 8);
+}
+
+#ifdef HAS_LONGLONG
+TEST pcode_SUM38_BigUnionPtrAccessUnsignedLongLong_Main()
+{
+	extern u8 pcode_SUM38_BigUnionPtrAccessUnsignedLongLong(big_union_type *arg);
+	big_union_type  bu = { 0 };
+	ASSERTU8(pcode_SUM38_BigUnionPtrAccessUnsignedLongLong(&bu), 7);
+}
+#endif
+
+TEST pcode_SUM4_BigStructAccessChar_Main()
+{
+	extern i1 pcode_SUM4_BigStructAccessChar(big_struct_type arg);
+	big_struct_type bs;
+	bs_init(&bs);
+	ASSERTI1(pcode_SUM4_BigStructAccessChar(bs), 8);
+}
+
+TEST pcode_SUM39_BigUnionPtrAccessUnsignedInt_Main()
+{
+	extern u4 pcode_SUM39_BigUnionPtrAccessUnsignedInt(big_union_type *arg);
+	big_union_type  bu = { 0 };
+	ASSERTU4(pcode_SUM39_BigUnionPtrAccessUnsignedInt(&bu), 7);
+}
+
+TEST pcode_SUM40_BigUnionPtrAccessUnsignedShort_Main()
+{
+	extern u2 pcode_SUM40_BigUnionPtrAccessUnsignedShort(big_union_type *arg);
+	big_union_type  bu = { 0 };
+	ASSERTU2(pcode_SUM40_BigUnionPtrAccessUnsignedShort(&bu), 7);
+}
+
+#ifdef HAS_LONGLONG
+TEST pcode_SUM5_BigStructAccessUnsignedLongLong_Main()
+{
+	extern u8 pcode_SUM5_BigStructAccessUnsignedLongLong(big_struct_type arg);
+	big_struct_type bs;
+	bs_init(&bs);
+	ASSERTU8(pcode_SUM5_BigStructAccessUnsignedLongLong(bs), 8);
+}
+#endif
+
+TEST pcode_SUM41_BigUnionPtrAccessUnsignedChar_Main()
+{
+	extern u1 pcode_SUM41_BigUnionPtrAccessUnsignedChar(big_union_type *arg);
+	big_union_type  bu = { 0 };
+	ASSERTU1(pcode_SUM41_BigUnionPtrAccessUnsignedChar(&bu), 7);
+}
+
+TEST pcode_SUM6_BigStructAccessUnsignedInt_Main()
+{
+	extern u4 pcode_SUM6_BigStructAccessUnsignedInt(big_struct_type arg);
+	big_struct_type bs;
+	bs_init(&bs);
+	ASSERTU4(pcode_SUM6_BigStructAccessUnsignedInt(bs), 8);
+}
+
+TEST pcode_SUM8_BigStructAccessUnsignedChar_Main()
+{
+	extern u1 pcode_SUM8_BigStructAccessUnsignedChar(big_struct_type arg);
+	big_struct_type bs;
+	bs_init(&bs);
+	ASSERTU1(pcode_SUM8_BigStructAccessUnsignedChar(bs), 8);
+}
+
+TEST pcode_SUM7_BigStructAccessUnsignedShort_Main()
+{
+	extern u2 pcode_SUM7_BigStructAccessUnsignedShort(big_struct_type arg);
+	big_struct_type bs;
+	bs_init(&bs);
+	ASSERTU2(pcode_SUM7_BigStructAccessUnsignedShort(bs), 8);
+}
+
+#ifdef HAS_FLOAT
+TEST pcode_SUM42_BigUnionPtrAccessFloat_Main()
+{
+	extern f4 pcode_SUM42_BigUnionPtrAccessFloat(big_union_type *arg);
+	big_union_type  bu = { 0 };
+	ASSERTF4(pcode_SUM42_BigUnionPtrAccessFloat(&bu), 7);
+}
+#endif
+
+#ifdef HAS_DOUBLE
+TEST pcode_SUM43_BigUnionPtrAccessDouble_Main()
+{
+	extern f8 pcode_SUM43_BigUnionPtrAccessDouble(big_union_type *arg);
+	big_union_type  bu = { 0 };
+	ASSERTF8(pcode_SUM43_BigUnionPtrAccessDouble(&bu), 7);
+}
+#endif
+
+#ifdef HAS_FLOAT
+TEST pcode_SUM9_BigStructAccessFloat_Main()
+{
+	extern f4 pcode_SUM9_BigStructAccessFloat(big_struct_type arg);
+	big_struct_type bs;
+	bs_init(&bs);
+	ASSERTF4(pcode_SUM9_BigStructAccessFloat(bs), 8);
+}
+#endif
+
+#ifdef HAS_DOUBLE
+TEST pcode_SUM10_BigStructAccessDouble_Main()
+{
+	extern f8 pcode_SUM10_BigStructAccessDouble(big_struct_type arg);
+	big_struct_type bs;
+	bs_init(&bs);
+	ASSERTF8(pcode_SUM10_BigStructAccessDouble(bs), 8);
+}
+#endif
+
+#ifdef HAS_LONGLONG
+TEST pcode_SUM12_BigUnionAccessLongLong_Main()
+{
+	extern i8 pcode_SUM12_BigUnionAccessLongLong(big_union_type arg);
+	big_union_type  bu = { 0 };
+	ASSERTI8(pcode_SUM12_BigUnionAccessLongLong(bu), 7);
+}
+#endif
+
+TEST pcode_SUM13_BigUnionAccessInt_Main()
+{
+	extern i4 pcode_SUM13_BigUnionAccessInt(big_union_type arg);
+	big_union_type  bu = { 0 };
+	ASSERTI4(pcode_SUM13_BigUnionAccessInt(bu), 7);
+}
+
+TEST pcode_SUM14_BigUnionAccessShort_Main()
+{
+	extern i2 pcode_SUM14_BigUnionAccessShort(big_union_type arg);
+	big_union_type  bu = { 0 };
+	ASSERTI2(pcode_SUM14_BigUnionAccessShort(bu), 7);
+}
+
+TEST pcode_SUM15_BigUnionAccessChar_Main()
+{
+	extern i1 pcode_SUM15_BigUnionAccessChar(big_union_type arg);
+	big_union_type  bu = { 0 };
+	ASSERTI1(pcode_SUM15_BigUnionAccessChar(bu), 7);
+}
+
+#ifdef HAS_LONGLONG
+TEST pcode_SUM16_BigUnionAccessUnsignedLongLong_Main()
+{
+	extern u8 pcode_SUM16_BigUnionAccessUnsignedLongLong(big_union_type arg);
+	big_union_type  bu = { 0 };
+	ASSERTU8(pcode_SUM16_BigUnionAccessUnsignedLongLong(bu), 7);
+}
+#endif
+
+TEST pcode_SUM17_BigUnionAccessUnsignedInt_Main()
+{
+	extern u4 pcode_SUM17_BigUnionAccessUnsignedInt(big_union_type arg);
+	big_union_type  bu = { 0 };
+	ASSERTU4(pcode_SUM17_BigUnionAccessUnsignedInt(bu), 7);
+}
+
+TEST pcode_SUM18_BigUnionAccessUnsignedShort_Main()
+{
+	extern u2 pcode_SUM18_BigUnionAccessUnsignedShort(big_union_type arg);
+	big_union_type  bu = { 0 };
+	ASSERTU2(pcode_SUM18_BigUnionAccessUnsignedShort(bu), 7);
+}
+
+TEST pcode_SUM19_BigUnionAccessUnsignedChar_Main()
+{
+	extern u1 pcode_SUM19_BigUnionAccessUnsignedChar(big_union_type arg);
+	big_union_type  bu = { 0 };
+	ASSERTU1(pcode_SUM19_BigUnionAccessUnsignedChar(bu), 7);
+}
+
+#ifdef HAS_FLOAT
+TEST pcode_SUM20_BigUnionAccessFloat_Main()
+{
+	extern f4 pcode_SUM20_BigUnionAccessFloat(big_union_type arg);
+	big_union_type  bu = { 0 };
+	ASSERTF4(pcode_SUM20_BigUnionAccessFloat(bu), 7);
+}
+#endif
+
+#ifdef HAS_DOUBLE
+TEST pcode_SUM21_BigUnionAccessDouble_Main()
+{
+	extern f8 pcode_SUM21_BigUnionAccessDouble(big_union_type arg);
+	big_union_type  bu = { 0 };
+	ASSERTF8(pcode_SUM21_BigUnionAccessDouble(bu), 7);
+}
+#endif
+
+#ifdef HAS_LONGLONG
+TEST pcode_SUM23_BigStructPtrAccessLongLong_Main()
+{
+	extern i8 pcode_SUM23_BigStructPtrAccessLongLong(big_struct_type *arg);
+	big_struct_type bs;
+	bs_init(&bs);
+	ASSERTI8(pcode_SUM23_BigStructPtrAccessLongLong(&bs), 8);
+}
+#endif
+
+TEST pcode_SUM24_BigStructPtrAccessInt_Main()
+{
+	extern i4 pcode_SUM24_BigStructPtrAccessInt(big_struct_type *arg);
+	big_struct_type bs;
+	bs_init(&bs);
+	ASSERTI4(pcode_SUM24_BigStructPtrAccessInt(&bs), 8);
+}
+
+TEST pcode_SUM25_BigStructPtrAccessShort_Main()
+{
+	extern i2 pcode_SUM25_BigStructPtrAccessShort(big_struct_type *arg);
+	big_struct_type bs;
+	bs_init(&bs);
+	ASSERTI2(pcode_SUM25_BigStructPtrAccessShort(&bs), 8);
+}
+
+TEST pcode_SUM26_BigStructPtrAccessChar_Main()
+{
+	extern i1 pcode_SUM26_BigStructPtrAccessChar(big_struct_type *arg);
+	big_struct_type bs;
+	bs_init(&bs);
+	ASSERTI1(pcode_SUM26_BigStructPtrAccessChar(&bs), 8);
+}
+
+#ifdef HAS_LONGLONG
+TEST pcode_SUM27_BigStructPtrAccessUnsignedLongLong_Main()
+{
+	extern u8 pcode_SUM27_BigStructPtrAccessUnsignedLongLong(big_struct_type *arg);
+	big_struct_type bs;
+	bs_init(&bs);
+	ASSERTU8(pcode_SUM27_BigStructPtrAccessUnsignedLongLong(&bs), 8);
+}
+#endif
+
+MAIN StructUnionManipulation_main() { }

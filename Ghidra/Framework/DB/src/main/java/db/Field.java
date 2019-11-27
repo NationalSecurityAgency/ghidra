@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +14,6 @@
  * limitations under the License.
  */
 package db;
-
-import ghidra.util.exception.AssertException;
 
 import java.io.IOException;
 
@@ -308,10 +305,11 @@ public abstract class Field implements Comparable<Field> {
 
 	/**
 	 * Get the field associated with the specified type value.
-	 * @param fieldType
+	 * @param fieldType encoded Field type
 	 * @return Field
+	 * @throws UnsupportedFieldException if unsupported fieldType specified
 	 */
-	static Field getField(byte fieldType) {
+	static Field getField(byte fieldType) throws UnsupportedFieldException {
 		if ((fieldType & INDEX_TYPE_FLAG) == 0) {
 			switch (fieldType & BASE_TYPE_MASK) {
 				case LONG_TYPE:
@@ -333,7 +331,13 @@ public abstract class Field implements Comparable<Field> {
 		else {
 			return IndexField.getIndexField(fieldType);
 		}
-		throw new AssertException();
+		throw new UnsupportedFieldException(fieldType);
+	}
+
+	public static class UnsupportedFieldException extends IOException {
+		UnsupportedFieldException(byte fieldType) {
+			super("Unsupported DB field type: 0x" + Integer.toHexString(fieldType & 0xff));
+		}
 	}
 
 }

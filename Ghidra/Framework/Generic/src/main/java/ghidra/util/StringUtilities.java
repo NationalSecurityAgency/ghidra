@@ -18,6 +18,7 @@ package ghidra.util;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -138,7 +139,9 @@ public class StringUtilities {
 	}
 
 	/**
-	 * Returns true if the character is displayable.
+	 * Returns true if the character is in displayable character range
+	 * @param c the character
+	 * @return true if the character is in displayable character range
 	 */
 	public static boolean isDisplayable(int c) {
 		return c >= 0x20 && c < 0x7F;
@@ -346,22 +349,6 @@ public class StringUtilities {
 	}
 
 	/**
-	 * Returns true if the given <tt>containingString</tt> contains the given
-	 * <tt>substring</tt>, ignoring case.
-	 *
-	 * @param containingString the string which may contain the prefix
-	 * @param substring the string for which to search within the containing string
-	 * @return true if the given <tt>containingString</tt> contains the given
-	 *         <tt>substring</tt>, ignoring case.
-	 */
-	public static boolean containsIgnoreCase(String containingString, String substring) {
-		if ((containingString == null) || (substring == null)) {
-			return false;
-		}
-		return (indexOfIgnoreCase(containingString, substring, 0) >= 0);
-	}
-
-	/**
 	 * Returns true if all the given <tt>searches</tt> are contained in the given string.
 	 *
 	 * @param toSearch the string to search
@@ -453,61 +440,6 @@ public class StringUtilities {
 	}
 
 	/**
-	 * Returns the index of the first occurrence the given <tt>substring</tt> in the given
-	 * <tt>containingString</tt>, ignoring case to look for the substring.
-	 * <p>
-	 * This method is a convenience method for calling:
-	 * <pre>
-	 *     <tt>indexOfIgnoreCase( containingString, substring, 0 );</tt>
-	 * </pre>
-	 * @param containingString the string which may contain the substring
-	 * @param substring the string for which to search within the containing string
-	 * @return index of substring within the given containing string
-	 */
-	public static int indexOfIgnoreCase(String containingString, String substring) {
-		if ((containingString == null) || (substring == null)) {
-			return -1;
-		}
-		return indexOfIgnoreCase(containingString, substring, 0);
-	}
-
-	/**
-	 * Returns the index of the first occurrence the given <tt>substring</tt> in the given
-	 * <tt>containingString</tt>, starting at the given <tt>index</tt>,
-	 * ignoring case to look for the substring.
-	 * <p>
-	 * @param containingString the string which may contain the substring
-	 * @param substring the string for which to search within the containing string
-	 * @param index the index from which to start the comparison
-	 * @return index of substring within the given containing string
-	 */
-	public static int indexOfIgnoreCase(String containingString, String substring, int index) {
-		if ((containingString == null) || (substring == null)) {
-			return -1;
-		}
-		return (containingString.toLowerCase().indexOf(substring.toLowerCase(), index));
-	}
-
-	/**
-	 * Returns the index of the last occurrence the given <tt>substring</tt> in the given
-	 * <tt>containingString</tt>, ignoring case to look for the substring.
-	 * <p>
-	 * This method is a convenience method for calling:
-	 * <pre>
-	 *     <tt>lastIndexOfIgnoreCase( containingString, substring, 0 );</tt>
-	 * </pre>
-	 * @param containingString the string which may contain the substring
-	 * @param substring the string for which to search within the containing string
-	 * @return index of substring within the given containing string
-	 */
-	public static int lastIndexOfIgnoreCase(String containingString, String substring) {
-		if ((containingString == null) || (substring == null)) {
-			return -1;
-		}
-		return (containingString.toLowerCase().lastIndexOf(substring.toLowerCase()));
-	}
-
-	/**
 	 * Convert tabs in the given string to spaces.
 	 *
 	 * @param str
@@ -529,10 +461,8 @@ public class StringUtilities {
 			char c = str.charAt(i);
 			if (c == '\t') {
 				int nSpaces = tabSize - (linepos % tabSize);
-				String pad = padString("", ' ', nSpaces);
-
+				String pad = pad("", ' ', nSpaces);
 				buffer.append(pad);
-
 				linepos += nSpaces;
 			}
 			else {
@@ -545,33 +475,6 @@ public class StringUtilities {
 		}
 
 		return buffer.toString();
-	}
-
-	/**
-	 * Convert a string array to single string with new line chars.
-	 */
-	public static String convertStringArray(String[] strings) {
-		return convertStringArray(strings, "\n");
-	}
-
-	/**
-	 * Convert a string array to single string with the given delimiter.
-	 */
-	public static String convertStringArray(String[] strings, String delimiter) {
-		if (strings == null || strings.length == 0) {
-			return null;
-		}
-		StringBuffer sb = new StringBuffer();
-		for (int i = 0; i < strings.length; i++) {
-			if (strings[i] == null) {
-				continue;
-			}
-			sb.append(strings[i]);
-			if (i < strings.length - 1) {
-				sb.append(delimiter);
-			}
-		}
-		return sb.toString();
 	}
 
 	/**
@@ -638,22 +541,7 @@ public class StringUtilities {
 	 * @param source the original string to pad.
 	 * @param filler the type of characters with which to pad
 	 * @param length the length of padding to add (0 results in no changes)
-	 * @deprecated use {@link #pad(String, char, int)}; functionally the same, but smaller
-	 *             and more consistent name
-	 */
-	@Deprecated
-	public static String padString(String source, char filler, int length) {
-		return pad(source, filler, length);
-	}
-
-	/**
-	 * Pads the source string to the specified length, using the filler string
-	 * as the pad. If length is negative, left justifies the string, appending
-	 * the filler; if length is positive, right justifies the source string.
-	 *
-	 * @param source the original string to pad.
-	 * @param filler the type of characters with which to pad
-	 * @param length the length of padding to add (0 results in no changes)
+	 * @return the padded string
 	 */
 	public static String pad(String source, char filler, int length) {
 
@@ -690,6 +578,7 @@ public class StringUtilities {
 	 * This is useful for constructing complicated <code>toString()</code> representations.
 	 *
 	 * @param s the input string
+	 * @param indent the indent string; this will be appended as needed
 	 * @return the output string
 	 */
 	public static String indentLines(String s, String indent) {
@@ -868,27 +757,20 @@ public class StringUtilities {
 	}
 
 	/**
-	 * Turn the given list into an attractive string, with the separator of you choosing.
+	 * Turn the given data into an attractive string, with the separator of your choosing
 	 *
-	 * @param list the list from which a string will be generated
+	 * @param collection the data from which a string will be generated
 	 * @param separator the string used to separate elements
 	 * @return a string representation of the given list
 	 */
-	public static String toString(List<?> list, String separator) {
-		if (list == null) {
+	public static String toString(Collection<?> collection, String separator) {
+		if (collection == null) {
 			return null;
 		}
 
-		StringBuffer buffer = new StringBuffer("[ ");
-		for (int i = 0; i < list.size(); i++) {
-			buffer.append(list.get(i).toString());
-			if (i + 1 < list.size()) {
-				buffer.append(separator);
-			}
-		}
-
-		buffer.append(" ]");
-		return buffer.toString();
+		String asString =
+			collection.stream().map(o -> o.toString()).collect(Collectors.joining(separator));
+		return "[ " + asString + " ]";
 	}
 
 	public static String toStringWithIndent(Object o) {

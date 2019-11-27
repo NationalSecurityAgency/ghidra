@@ -18,6 +18,7 @@
 
 // Operator tokens for expressions
 //                        token #in prec assoc   optype       space bump
+OpToken PrintC::hidden = { "", 1, 70, false, OpToken::hiddenfunction, 0, 0, (OpToken *)0 };
 OpToken PrintC::scope = { "::", 2, 70, true, OpToken::binary, 0, 0, (OpToken *)0 };
 OpToken PrintC::object_member = { ".", 2, 66, true, OpToken::binary, 0, 0, (OpToken *)0  };
 OpToken PrintC::pointer_member = { "->", 2, 66, true, OpToken::binary, 0, 0, (OpToken *)0 };
@@ -98,6 +99,7 @@ PrintC::PrintC(Architecture *g,const string &nm) : PrintLanguage(g,nm)
   option_convention = true;
   option_nocasts = false;
   option_unplaced = false;
+  option_hide_exts = true;
   nullToken = "NULL";
   
   // Set the flip tokens
@@ -316,6 +318,21 @@ void PrintC::opTypeCast(const PcodeOp *op)
     pushOp(&typecast,op);
     pushType(op->getOut()->getHigh()->getType());
   }
+  pushVnImplied(op->getIn(0),op,mods);
+}
+
+/// The syntax represents the given op using a function with one input,
+/// where the function name is not printed. The input expression is simply printed
+/// without adornment inside the larger expression, with one minor difference.
+/// The hidden operator protects against confusing evaluation order between
+/// the operators inside and outside the hidden function.  If both the inside
+/// and outside operators are the same associative token, the hidden token
+/// makes sure the inner expression is surrounded with parentheses.
+/// \param op is the given PcodeOp
+void PrintC::opHiddenFunc(const PcodeOp *op)
+
+{
+  pushOp(&hidden,op);
   pushVnImplied(op->getIn(0),op,mods);
 }
 
@@ -577,8 +594,12 @@ void PrintC::opReturn(const PcodeOp *op)
 void PrintC::opIntZext(const PcodeOp *op)
 
 {
-  if (castStrategy->isZextCast(op->getOut()->getHigh()->getType(),op->getIn(0)->getHigh()->getType()))
-    opTypeCast(op);
+  if (castStrategy->isZextCast(op->getOut()->getHigh()->getType(),op->getIn(0)->getHigh()->getType())) {
+    if (isExtensionCastImplied(op))
+      opHiddenFunc(op);
+    else
+      opTypeCast(op);
+  }
   else
     opFunc(op);
 }
@@ -586,8 +607,12 @@ void PrintC::opIntZext(const PcodeOp *op)
 void PrintC::opIntSext(const PcodeOp *op)
 
 {
-  if (castStrategy->isSextCast(op->getOut()->getHigh()->getType(),op->getIn(0)->getHigh()->getType()))
-    opTypeCast(op);
+  if (castStrategy->isSextCast(op->getOut()->getHigh()->getType(),op->getIn(0)->getHigh()->getType())) {
+    if (isExtensionCastImplied(op))
+      opHiddenFunc(op);
+    else
+      opTypeCast(op);
+  }
   else
     opFunc(op);
 }
@@ -945,6 +970,18 @@ void PrintC::opNewOp(const PcodeOp *op)
   pushVnImplied(vn0,op,mods);
 }
 
+void PrintC::opInsertOp(const PcodeOp *op)
+
+{
+  opFunc(op);	// If no other way to print it, print as functional operator
+}
+
+void PrintC::opExtractOp(const PcodeOp *op)
+
+{
+  opFunc(op);	// If no other way to print it, print as functional operator
+}
+
 /// \brief Push a constant with an integer data-type to the RPN stack
 ///
 /// Various checks are made to see if the integer should be printed as an \e equate
@@ -1247,10 +1284,64 @@ bool PrintC::printCharacterConstant(ostream &s,const Address &addr,int4 charsize
   return res;
 }
 
+/// \brief Is the given ZEXT/SEXT cast implied by the expression its in
+///
+/// We know that the given ZEXT or SEXT op can be viewed as a natural \e cast operation.
+/// Sometimes such a cast is implied by the expression its in, and the cast itself
+/// doesn't need to be printed.
+/// \param op is the given ZEXT or SEXT PcodeOp
+/// \return \b true if the op as a cast does not need to be printed
+bool PrintC::isExtensionCastImplied(const PcodeOp *op) const
+
+{
+  if (!option_hide_exts)
+    return false;		// If hiding extensions is not on, we must always print extension
+  const Varnode *outVn = op->getOut();
+  if (outVn->isExplicit()) {
+
+  }
+  else {
+    type_metatype metatype = outVn->getHigh()->getType()->getMetatype();
+    list<PcodeOp *>::const_iterator iter;
+    for(iter=outVn->beginDescend();iter!=outVn->endDescend();++iter) {
+      PcodeOp *expOp = *iter;
+      Varnode *otherVn;
+      int4 slot;
+      switch(expOp->code()) {
+	case CPUI_PTRADD:
+	  break;
+	case CPUI_INT_ADD:
+	case CPUI_INT_SUB:
+	case CPUI_INT_MULT:
+	case CPUI_INT_DIV:
+	case CPUI_INT_AND:
+	case CPUI_INT_OR:
+	case CPUI_INT_XOR:
+	case CPUI_INT_LESS:
+	case CPUI_INT_LESSEQUAL:
+	case CPUI_INT_SLESS:
+	case CPUI_INT_SLESSEQUAL:
+	  slot = expOp->getSlot(outVn);
+	  otherVn = expOp->getIn(1-slot);
+	  // Check if the expression involves an explicit variable of the right integer type
+	  if (!otherVn->isExplicit())
+	    return false;
+	  if (otherVn->getHigh()->getType()->getMetatype() != metatype)
+	    return false;
+	  break;
+	default:
+	  return false;
+      }
+    }
+    return true;	// Everything is integer promotion
+  }
+  return false;
+}
+
 /// \brief Push a single character constant to the RPN stack
 ///
 /// For C, a character constant is usually emitted as the character in single quotes.
-/// Handle unicode, wide characters, etc.
+/// Handle unicode, wide characters, etc. Characters come in with the compiler's raw encoding.
 /// \param val is the constant value
 /// \param ct is data-type attached to the value
 /// \param vn is the Varnode holding the value
@@ -1259,10 +1350,17 @@ void PrintC::pushCharConstant(uintb val,const TypeChar *ct,const Varnode *vn,con
 
 {
   ostringstream t;
-  if ((ct->getSize()==1)&&
-      ((val<7)||(val>0x7e)||((val>13)&&(val<0x20)))) // not a good character constant
+  if ((ct->getSize()==1)&&(val >= 0x80)) {
+    // For byte characters, the encoding is assumed to be ASCII, UTF-8, or some other
+    // code-page that extends ASCII. At 0x80 and above, we cannot treat the value as a
+    // unicode code-point. Its either part of a multi-byte UTF-8 encoding or an unknown
+    // code-page value. In either case, we print it as an integer.
     push_integer(val,1,true,vn,op);
+  }
   else {
+    // From here we assume, the constant value is a direct unicode code-point.
+    // The value could be an illegal code-point (surrogates or beyond the max code-point),
+    // but this will just be emitted as an escape sequence.
     if (doEmitWideCharPrefix() && ct->getSize() > 1)
       t << 'L';			// Print symbol indicating wide character
     t << '\'';			// char is surrounded with single quotes
@@ -1317,7 +1415,8 @@ bool PrintC::pushPtrCharConstant(uintb val,const TypePointer *ct,const Varnode *
 {
   if (val==0) return false;
   AddrSpace *spc = glb->getDefaultSpace();
-  Address stringaddr = glb->resolveConstant(spc,val,ct->getSize(),op->getAddr());
+  uintb fullEncoding;
+  Address stringaddr = glb->resolveConstant(spc,val,ct->getSize(),op->getAddr(),fullEncoding);
   if (stringaddr.isInvalid()) return false;
   if (!glb->symboltab->getGlobalScope()->isReadOnly(stringaddr,1,Address()))
     return false;	     // Check that string location is readonly

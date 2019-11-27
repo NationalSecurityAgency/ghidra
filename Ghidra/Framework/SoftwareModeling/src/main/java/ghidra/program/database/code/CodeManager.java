@@ -227,7 +227,7 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 		contextMgr = program.getProgramContext();
 		refManager = program.getReferenceManager();
 		propertyMapMgr = program.getUsrPropertyManager();
-		dataManager = program.getDataManager();
+		dataManager = program.getDataTypeManager();
 		protoMgr.setProgram(program);
 	}
 
@@ -1976,6 +1976,10 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 		DataDB data = null;
 		try {
 
+			if (dataType instanceof BitFieldDataType) {
+				throw new CodeUnitInsertionException("Bitfields not supported for Data");
+			}
+
 			DataType originalDataType = dataType;
 			if (dataType instanceof FactoryDataType) {
 				MemBuffer memBuffer = new MemoryBufferImpl(program.getMemory(), addr);
@@ -2147,7 +2151,7 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 	}
 
 	private void createReference(Data data, Address toAddr, List<Address> longSegmentAddressList) {
-		if (toAddr == null) {
+		if (toAddr == null || !toAddr.isLoadedMemoryAddress()) {
 			return;
 		}
 
@@ -3365,12 +3369,15 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 		if (newComment == null) {
 			newComment = "";
 		}
-		StringDiff[] diffs = getLineDiffs(newComment, oldComment);
+
+		StringDiff[] diffs = StringDiffUtils.getLineDiffs(newComment, oldComment);
+
+		long date = System.currentTimeMillis();
 		long addr = addrMap.getKey(address, true);
 		try {
 			for (StringDiff diff : diffs) {
-				historyAdapter.createRecord(addr, (byte) commentType, diff.pos1, diff.pos2,
-					diff.insertData);
+				historyAdapter.createRecord(addr, (byte) commentType, diff.start, diff.end,
+					diff.text, date);
 			}
 		}
 		catch (IOException e) {
@@ -3379,7 +3386,8 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 	}
 
 	/**
-	 * Get the comment history for the comment type at the given address.
+	 * Get the comment history for the comment type at the given address 
+	 * 
 	 * @param addr address for the comment history
 	 * @param commentType comment type
 	 * @return zero length array if no history exists
@@ -3387,47 +3395,37 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 	public CommentHistory[] getCommentHistory(Address addr, int commentType) {
 		lock.acquire();
 		try {
-			RecordIterator iter = historyAdapter.getRecordsByAddress(addr);
 
-			List<Record> list = new ArrayList<>();
-			while (iter.hasNext()) {
-				Record rec = iter.next();
+			// records are sorted by date ascending						
+			List<Record> allRecords = getHistoryRecords(addr, commentType);
 
-				if (rec.getByteValue(CommentHistoryAdapter.HISTORY_TYPE_COL) == commentType) {
-					list.add(rec);
-				}
-			}
-			List<CommentHistory> historyList = new ArrayList<>(); // CommentHistory objects
-			String comments = getComments(addr, commentType);
-			while (list.size() > 0) {
-				Record rec = list.get(list.size() - 1);
+			List<CommentHistory> results = new ArrayList<>();
+			String comment = getComment(addr, commentType);
+			while (!allRecords.isEmpty()) {
+
+				Record rec = allRecords.get(allRecords.size() - 1);
 				long date = rec.getLongValue(CommentHistoryAdapter.HISTORY_DATE_COL);
-				List<Record> subList = findHistoryRecords(date, list);
-				StringDiff[] diffs = new StringDiff[subList.size()];
+				List<Record> records = subListByDate(allRecords, date);
 
-				String userName = null;
-				Date modDate = null;
-				for (int j = 0; j < subList.size(); j++) {
-					Record r = subList.get(j);
-					userName = r.getString(CommentHistoryAdapter.HISTORY_USER_COL);
-					modDate = new Date(r.getLongValue(CommentHistoryAdapter.HISTORY_DATE_COL));
+				List<StringDiff> diffs = new ArrayList<>(records.size());
 
-					diffs[j] = new StringDiff(r.getIntValue(CommentHistoryAdapter.HISTORY_POS1_COL),
-						r.getIntValue(CommentHistoryAdapter.HISTORY_POS2_COL),
-						r.getString(CommentHistoryAdapter.HISTORY_STRING_COL));
+				String user = null;
+				for (Record r : records) {
+					user = r.getString(CommentHistoryAdapter.HISTORY_USER_COL);
+					int pos1 = r.getIntValue(CommentHistoryAdapter.HISTORY_POS1_COL);
+					int pos2 = r.getIntValue(CommentHistoryAdapter.HISTORY_POS2_COL);
+					String data = r.getString(CommentHistoryAdapter.HISTORY_STRING_COL);
+					diffs.add(StringDiff.restore(data, pos1, pos2));
 				}
-				if (comments == null) {
-					comments = "";
-				}
-				historyList.add(new CommentHistory(addr, commentType, userName, comments, modDate));
-				comments = applyDiffs(comments, diffs);
 
-				int from = list.size() - subList.size();
-				// remove the subList elements from the list
-				list.subList(from, list.size()).clear();
+				results.add(new CommentHistory(addr, commentType, user, comment, new Date(date)));
+				comment = StringDiffUtils.applyDiffs(comment, diffs);
+
+				records.clear(); // remove the subList elements from the list
 			}
-			CommentHistory[] h = new CommentHistory[historyList.size()];
-			return historyList.toArray(h);
+
+			CommentHistory[] h = new CommentHistory[results.size()];
+			return results.toArray(h);
 		}
 		catch (IOException e) {
 			dbError(e);
@@ -3438,23 +3436,39 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 		return new CommentHistory[0];
 	}
 
-	private List<Record> findHistoryRecords(long date, List<Record> recList) {
-		int i;
-		for (i = recList.size() - 1; i >= 0; i--) {
-			Record rec = recList.get(i);
-			if (date != rec.getLongValue(CommentHistoryAdapter.HISTORY_DATE_COL)) {
-				break;
+	// note: you must have the lock when calling this method
+	private List<Record> getHistoryRecords(Address addr, int commentType) throws IOException {
+		RecordIterator it = historyAdapter.getRecordsByAddress(addr);
+		List<Record> list = new ArrayList<>();
+		while (it.hasNext()) {
+			Record rec = it.next();
+			if (rec.getByteValue(CommentHistoryAdapter.HISTORY_TYPE_COL) == commentType) {
+				list.add(rec);
 			}
 		}
-		return recList.subList(i + 1, recList.size());
+		return list;
 	}
 
-	private String getComments(Address addr, int commentType) throws IOException {
+	// note: records are sorted by date; assume that the date we seek is at the end
+	private List<Record> subListByDate(List<Record> records, long date) {
+
+		for (int i = records.size() - 1; i >= 0; i--) {
+			Record rec = records.get(i);
+			if (date != rec.getLongValue(CommentHistoryAdapter.HISTORY_DATE_COL)) {
+				return records.subList(i + 1, records.size());
+			}
+		}
+
+		// all records have the same date
+		return records.subList(0, records.size());
+	}
+
+	private String getComment(Address addr, int commentType) throws IOException {
 		Record record = commentAdapter.getRecord(addrMap.getKey(addr, false));
 		if (record != null) {
 			return record.getString(commentType);
 		}
-		return null;
+		return "";
 	}
 
 	public void replaceDataTypes(long oldDataTypeID, long newDataTypeID) {
@@ -3629,183 +3643,6 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 	 */
 	InstructionPrototype getInstructionPrototype(int protoID) {
 		return protoMgr.getPrototype(protoID);
-	}
-
-	/**
-	 * Returns the list of StringDiff objects that if applied to s1 would result in s2;  The
-	 * given text will look only for whole lines using '\n'.
-	 *
-	 * @param s1 the original string
-	 * @param s2 the result string
-	 *        this value, then a completely different string will be returned
-	 * @return an array of StringDiff objects that change s1 into s2;
-	 */
-	private static StringDiff[] getLineDiffs(String s1, String s2) {
-
-		/**
-		 * Minimum size used to determine whether a new StringDiff object will be
-		 * created just using a string (no positions)
-		 * in the <code>getDiffs(String, String)</code> method.
-		 * @see #getLineDiffs(String, String)
-		 */
-		int MINIMUM_DIFF_SIZE = 100;
-		return getLineDiffs(s1, s2, MINIMUM_DIFF_SIZE);
-	}
-
-	/**
-	 * Returns the list of StringDiff objects that if applied to s1 would result in s2;  The
-	 * given text will look only for whole lines using '\n'.
-	 *
-	 * @param s1 the original string
-	 * @param s2 the result string
-	 * @param minimumDiffSize the minimum length of s2 required for a diff; if s2 is less than
-	 *        this value, then a completely different string will be returned
-	 * @return an array of StringDiff objects that change s1 into s2;
-	 */
-	private static StringDiff[] getLineDiffs(String s1, String s2, int minimumDiffSize) {
-		if (s2.length() < minimumDiffSize) {
-			return new StringDiff[] { new StringDiff(s2) };
-		}
-
-		List<StringDiff> list = new LinkedList<>();
-		int pos1 = 0;
-		int pos2 = 0;
-		int len1 = s1.length();
-		int len2 = s2.length();
-		int origPos;
-
-		while (pos1 < len1 || pos2 < len2) {
-			String line1 = getLine(s1, pos1);
-			String line2 = getLine(s2, pos2);
-			if (line1.equals(line2)) {
-				pos1 += line1.length();
-				pos2 += line2.length();
-				continue;
-			}
-			int posInOther1 = findLine(s2, pos2, line1);
-			origPos = pos1;
-			while (posInOther1 < 0) {
-				pos1 += line1.length();
-				line1 = getLine(s1, pos1);
-				posInOther1 = findLine(s2, pos2, line1);
-			}
-			if (pos1 > origPos) {
-				list.add(new StringDiff(origPos, pos1));
-			}
-			int posInOther2 = findLine(s1, pos1, line2);
-			origPos = pos2;
-			while (posInOther2 < 0) {
-				pos2 += line2.length();
-				line2 = getLine(s2, pos2);
-				posInOther2 = findLine(s1, pos1, line2);
-			}
-			if (pos2 > origPos) {
-				list.add(new StringDiff(pos1, s2.substring(origPos, pos2)));
-				continue;
-			}
-			int advance1 = posInOther2 - pos1;
-			int advance2 = posInOther1 - pos2;
-			if (advance1 > advance2) {
-				list.add(new StringDiff(pos1, s2.substring(pos2, posInOther1)));
-				pos2 = posInOther1;
-			}
-			else if (advance2 > advance1) {
-				list.add(new StringDiff(pos1, posInOther2));
-				pos1 = posInOther2;
-			}
-		}
-		return list.toArray(new StringDiff[list.size()]);
-	}
-
-	/**
-	 * Finds a position in s that contains the string line.  The matching string in
-	 * s must be a "complete" line, in other words if pos > 0 then s.charAt(index-1) must be
-	 * a newLine character and s.charAt(index+line.length()) must be a newLine or the end of
-	 * the string.
-	 * @param s the string to scan
-	 * @param pos the position to begin the scan.
-	 * @param line the line to scan for
-	 * @return the position in s containing the line string.
-	 */
-	private static int findLine(String s, int pos, String line) {
-		if (line.length() == 0) {
-			return pos;
-		}
-		while (true) {
-			int index = s.indexOf(line, pos);
-			if (index < 0) {
-				return index;
-			}
-			if (index > 0 && s.charAt(index - 1) != '\n') {
-				pos = index + line.length();
-				continue;
-			}
-			if (line.endsWith("\n")) {
-				return index;
-			}
-			if (index + line.length() == s.length()) {
-				return index;
-			}
-			pos = index + line.length();
-		}
-	}
-
-	/**
-	 * Returns a substring of s beginning at start and ending at either the end of the string or
-	 * the first newLine at or after start.
-	 * @param s the string to scan
-	 * @param start the starting position for the scan
-	 * @return A string that represents a line within s.
-	 */
-	public static String getLine(String s, int start) {
-		int n = s.length();
-		if (start >= n) {
-			return "";
-		}
-		int pos = start;
-		while (pos < n && s.charAt(pos) != '\n') {
-			pos++;
-		}
-		if (pos < n) {
-			pos++;
-		}
-		return s.substring(start, pos);
-	}
-
-	/**
-	 * Applies the array of StringObjects to the string s to produce a new string. Warning - the
-	 * diff objects cannot be applied to an arbitrary string, the String s must be the original
-	 * String used to compute the diffs.
-	 * @param s the original string
-	 * @param diffs the array of StringDiff object to apply
-	 * @return a new String resulting from applying the diffs to s.
-	 */
-	private static String applyDiffs(String s, StringDiff[] diffs) {
-		if (diffs.length == 0) {
-			return s;
-		}
-		if (diffs[0].pos1 < 0) {
-			return diffs[0].insertData;
-		}
-		StringBuffer buf = new StringBuffer(s.length());
-		int pos = 0;
-
-		for (StringDiff element : diffs) {
-			if (element.pos1 > pos) {
-				buf.append(s.substring(pos, element.pos1));
-				pos = element.pos1;
-			}
-			if (element.insertData != null) {
-				buf.append(element.insertData);
-			}
-			else {
-				pos = element.pos2;
-			}
-		}
-		if (pos < s.length()) {
-			buf.append(s.substring(pos));
-		}
-		return buf.toString();
 	}
 
 }

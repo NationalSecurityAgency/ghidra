@@ -134,7 +134,7 @@ class DirectoryTable extends GTable implements GhidraFileChooserDirectoryModelIf
 		column.setCellRenderer(new FileSizeRenderer());
 
 		column = columnModel.getColumn(DirectoryTableModel.TIME_COL);
-		column.setCellRenderer(new GenericDateCellRenderer(GhidraFileChooser.format));
+		column.setCellRenderer(new GenericDateCellRenderer());
 	}
 
 	private void maybeSelectItem(MouseEvent e) {

@@ -19,22 +19,29 @@ import java.text.ParseException;
 
 /**
  * Class to more conveniently represent a Java version string.
+ * <p>
+ * Note: this class has a natural ordering that is inconsistent with equals 
+ * (the <code>architecture</code> part of the version is disregarded in the 
+ * {@link #compareTo(JavaVersion)} method).
  */
 public class JavaVersion implements Comparable<JavaVersion> {
 
 	private int major;
 	private int minor;
 	private int patch;
+	private int arch;
 
 	/**
 	 * Creates a new {@link JavaVersion} object from the given version string.
 	 * 
 	 * @param version A version string.
-	 * @throws ParseException if the version string failed to parse.  The exception's 
-	 *   message has more detailed information about why it failed.
+	 * @param architecture An architecture string (32 or 64).
+	 * @throws ParseException if the version or architecture string failed to parse.  
+	 *   The exception's message has more detailed information about why it failed.
 	 */
-	public JavaVersion(String version) throws ParseException {
-		parse(version);
+	public JavaVersion(String version, String architecture) throws ParseException {
+		parseVersion(version);
+		parseArchitecture(architecture);
 	}
 
 	/**
@@ -64,12 +71,21 @@ public class JavaVersion implements Comparable<JavaVersion> {
 		return patch;
 	}
 
+	/**
+	 * Gets the architecture.
+	 * 
+	 * @return The architecture.
+	 */
+	public int getArchitecture() {
+		return arch;
+	}
+
 	@Override
 	public String toString() {
 		if (major < 9) {
-			return String.format("1.%d.%d_%d", major, minor, patch);
+			return String.format("1.%d.%d_%d (%d-bit)", major, minor, patch, arch);
 		}
-		return String.format("%d.%d.%d", major, minor, patch);
+		return String.format("%d.%d.%d (%d-bit)", major, minor, patch, arch);
 	}
 
 	@Override
@@ -102,6 +118,7 @@ public class JavaVersion implements Comparable<JavaVersion> {
 		result = prime * result + major;
 		result = prime * result + minor;
 		result = prime * result + patch;
+		result = prime * result + arch;
 		return result;
 	}
 
@@ -126,6 +143,9 @@ public class JavaVersion implements Comparable<JavaVersion> {
 		if (patch != other.patch) {
 			return false;
 		}
+		if (arch != other.arch) {
+			return false;
+		}
 		return true;
 	}
 
@@ -136,7 +156,7 @@ public class JavaVersion implements Comparable<JavaVersion> {
 	 * @throws ParseException if the version string failed to parse.  The exception's message 
 	 * has more detailed information about why it failed.
 	 */
-	private void parse(String version) throws ParseException {
+	private void parseVersion(String version) throws ParseException {
 		if (version == null) {
 			throw new ParseException("Version is null", 0);
 		}
@@ -155,26 +175,26 @@ public class JavaVersion implements Comparable<JavaVersion> {
 		}
 
 		String[] versionParts = version.split("[._]");
-		int firstValue = parse(versionParts[0], "first value");
+		int firstValue = parseVersionPart(versionParts[0], "first value");
 		if (firstValue == 1) {
 			// Follows the Java 8 and earlier format of 1.major.minor_patch
 			if (versionParts.length > 1) {
-				major = parse(versionParts[1], "major");
+				major = parseVersionPart(versionParts[1], "major");
 				if (versionParts.length > 2) {
-					minor = parse(versionParts[2], "minor");
+					minor = parseVersionPart(versionParts[2], "minor");
 					if (versionParts.length > 3) {
-						patch = parse(versionParts[3], "patch");
+						patch = parseVersionPart(versionParts[3], "patch");
 					}
 				}
 			}
 		}
 		else if (firstValue >= 9) {
 			// Follows the Java 9 and later format of major.minor.patch
-			major = parse(versionParts[0], "major");
+			major = parseVersionPart(versionParts[0], "major");
 			if (versionParts.length > 1) {
-				minor = parse(versionParts[1], "minor");
+				minor = parseVersionPart(versionParts[1], "minor");
 				if (versionParts.length > 2) {
-					patch = parse(versionParts[2], "patch");
+					patch = parseVersionPart(versionParts[2], "patch");
 				}
 			}
 		}
@@ -192,7 +212,7 @@ public class JavaVersion implements Comparable<JavaVersion> {
 	 * @throws ParseException if the version part string failed to parse to a valid version part 
 	 *   integer.
 	 */
-	private int parse(String versionPart, String versionPartName) throws ParseException {
+	private int parseVersionPart(String versionPart, String versionPartName) throws ParseException {
 		try {
 			int i = Integer.parseInt(versionPart);
 			if (i < 0) {
@@ -203,6 +223,21 @@ public class JavaVersion implements Comparable<JavaVersion> {
 		catch (NumberFormatException e) {
 			throw new ParseException("Failed to convert " + versionPartName + " version to integer",
 				0);
+		}
+	}
+
+	/**
+	 * Parses the architecture integer out of the given architecture string.
+	 * 
+	 * @param architecture An architecture string.
+	 * @throws ParseException if the architecture string failed to parse.
+	 */
+	private void parseArchitecture(String architecture) throws ParseException {
+		try {
+			arch = Integer.parseInt(architecture);
+		}
+		catch (NumberFormatException e) {
+			throw new ParseException("Failed to parse architecture: " + architecture, 0);
 		}
 	}
 }

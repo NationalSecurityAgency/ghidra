@@ -1,21 +1,27 @@
-apply plugin: 'eclipse'
-eclipse {
-	project {
-		name = 'Eclipse GhidraDevPlugin'
-		buildCommand 'org.eclipse.pde.ManifestBuilder'
-		buildCommand 'org.eclipse.pde.SchemaBuilder'
-		natures 'org.eclipse.pde.PluginNature'
-		classpath.file {
-			def requiredPlugins = 'org.eclipse.pde.core.requiredPlugins'
-			beforeMerged { classpath ->
-				classpath.entries.removeAll { entry ->
-					entry.path == requiredPlugins
+apply plugin: 'java'
+
+//This project requires the eclpse PDE plugin. To create eclipse files for this project, run 
+//	"gradle eclipse -PeclipsePDE" 
+if (hasProperty("eclipsePDE")) {
+	apply plugin: 'eclipse'
+	eclipse {
+		project {
+			name = 'Eclipse GhidraDevPlugin'
+			buildCommand 'org.eclipse.pde.ManifestBuilder'
+			buildCommand 'org.eclipse.pde.SchemaBuilder'
+			natures 'org.eclipse.pde.PluginNature'
+			classpath.file {
+				def requiredPlugins = 'org.eclipse.pde.core.requiredPlugins'
+				beforeMerged { classpath ->
+					classpath.entries.removeAll { entry ->
+						entry.path == requiredPlugins
+					}
 				}
-			}
-			whenMerged { classpath ->
-				withXml {
-					def node = it.asNode()
-					node.appendNode('classpathentry', [kind: 'con', path: requiredPlugins])
+				whenMerged { classpath ->
+					withXml {
+						def node = it.asNode()
+						node.appendNode('classpathentry', [kind: 'con', path: requiredPlugins])
+					}
 				}
 			}
 		}
@@ -36,36 +42,37 @@ dependencies {
 compileJava.enabled = false
 jar.enabled = false
 
-File libraryJarDestDir = file("build/data")
-
-File pyDevSourceZipFile = file("${BIN_REPO}/GhidraBuild/EclipsePlugins/GhidraDev/buildDependencies/PyDev 6.3.1.zip")
-File cdtSourceZipFile = file("${BIN_REPO}/GhidraBuild/EclipsePlugins/GhidraDev/buildDependencies/cdt-8.6.0.zip")
-
-File pyDevDestDir = file("build/data/buildDependencies/pydev")
-File cdtDestDir = file("build/data/buildDependencies/cdt")
-
 task utilityJar(type:Copy) {
-	from (project(':Utility').jar)
+	destinationDir file("build/data")
 
-	destinationDir libraryJarDestDir
+	from { project(':Utility').jar } // using closure to delay until all projects evaluated
 }
 
 task launchSupportJar(type:Copy) {
-	from (project(':LaunchSupport').jar)
+	destinationDir file("build/data")
 
-	destinationDir libraryJarDestDir
+	from { project(':LaunchSupport').jar } // using closure to delay until all projects evaluated
 }
 
 task pyDevUnpack(type:Copy) {
 	description "Unpack PyDev plugin archive for development use"
 	group "Development Preparation"
+	
+	File pyDevDestDir = file("build/data/buildDependencies/pydev")
 
 	// Without this, the copyTask will unzip the file to check for "up to date"
 	onlyIf {
 		!pyDevDestDir.exists()
 	}
+	
+	File localFile = file("build/PyDev 6.3.1.zip")
+	File binFile = file("${BIN_REPO}/GhidraBuild/EclipsePlugins/GhidraDev/buildDependencies/PyDev 6.3.1.zip")
 
-	from zipTree(pyDevSourceZipFile)
+	// First check if the file was downloaded and dropped in locally.  If not, check in the bin
+	// repo.
+	def pyDevZipTree = localFile.exists() ? zipTree(localFile) : zipTree(binFile)
+
+	from pyDevZipTree
 	exclude "**/.project", "**/.pydevproject"
 
 	destinationDir pyDevDestDir
@@ -74,19 +81,40 @@ task pyDevUnpack(type:Copy) {
 task cdtUnpack(type:Copy) {
 	description "Unpack CDT plugin archive for development use"
 	group "Development Preparation"
+	
+	File cdtDestDir = file("build/data/buildDependencies/cdt")
 
 	// Without this, the copyTask will unzip the file to check for "up to date"
 	onlyIf {
 		!cdtDestDir.exists()
 	}
+	
+	File localFile = file("build/cdt-8.6.0.zip")
+	File binFile = file("${BIN_REPO}/GhidraBuild/EclipsePlugins/GhidraDev/buildDependencies/cdt-8.6.0.zip")
 
-	from zipTree(cdtSourceZipFile)
+	// First check if the file was downloaded and dropped in locally.  If not, check in the bin
+	// repo.
+	def cdtZipTree = localFile.exists() ? zipTree(localFile) : zipTree(binFile)
+
+	from cdtZipTree
 
 	destinationDir cdtDestDir
 }
 
+// We do not currently build GhidraDev plugin at Ghidra build time so we must 
+// copy the prebuilt zip file from the BIN_REPO
+rootProject.assembleDistribution {
+	from ("${BIN_REPO}/GhidraBuild/EclipsePlugins/GhidraDev") {
+		include 'GhidraDev*.zip'
+		into "Extensions/Eclipse/GhidraDev/"
+	}
+	from ("${this.projectDir}/GhidraDev_README.html") {
+		into "Extensions/Eclipse/GhidraDev/"
+	}
+} 
+
 // PrepDev dependencies
-prepDev.dependsOn utilityJar
-prepDev.dependsOn launchSupportJar
-prepDev.dependsOn pyDevUnpack
-prepDev.dependsOn cdtUnpack
+rootProject.prepDev.dependsOn utilityJar
+rootProject.prepDev.dependsOn launchSupportJar
+rootProject.prepDev.dependsOn pyDevUnpack
+rootProject.prepDev.dependsOn cdtUnpack

@@ -22,7 +22,6 @@ import java.awt.event.KeyEvent;
 import java.io.File;
 
 import javax.swing.JTable;
-import javax.swing.JTextField;
 
 import org.junit.*;
 
@@ -780,10 +779,5 @@ public class StructureEditorLockedCellEditTest extends AbstractStructureEditorTe
 
 		escape();
 		assertNotEditingField();
-	}
-
-	protected void setText(String s) {
-		JTextField tf = getActiveEditorTextField();
-		setText(tf, s);
 	}
 }

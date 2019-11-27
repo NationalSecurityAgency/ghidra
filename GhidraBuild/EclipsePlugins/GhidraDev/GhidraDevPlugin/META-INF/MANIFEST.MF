@@ -3,7 +3,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: GhidraDev
 Bundle-SymbolicName: ghidra.ghidradev;singleton:=true
-Bundle-Version: 2.0.0.qualifier
+Bundle-Version: 2.1.0.qualifier
 Bundle-Activator: ghidradev.Activator
 Require-Bundle: org.eclipse.ant.core;bundle-version="3.5.200",
  org.eclipse.buildship.core;bundle-version="3.0.0",
@@ -14,6 +14,7 @@ Require-Bundle: org.eclipse.ant.core;bundle-version="3.5.200",
  org.eclipse.jdt.core;bundle-version="3.16.0",
  org.eclipse.jdt.core.manipulation;bundle-version="1.11.0",
  org.eclipse.jdt.debug.ui;bundle-version="3.10.100",
+ org.eclipse.jdt.junit.core;bundle-version="3.10.200",
  org.eclipse.jdt.launching;bundle-version="3.12.0",
  org.eclipse.jdt.ui;bundle-version="3.16.0",
  org.eclipse.ltk.core.refactoring;bundle-version="3.9.200",

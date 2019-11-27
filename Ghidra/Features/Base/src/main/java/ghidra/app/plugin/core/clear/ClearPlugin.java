@@ -19,6 +19,7 @@ import java.awt.event.KeyEvent;
 
 import docking.ActionContext;
 import docking.action.*;
+import docking.tool.ToolConstants;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.context.ListingActionContext;
 import ghidra.app.context.ListingContextAction;

@@ -1,0 +1,199 @@
+#include "pcode_test.h"
+
+/* Comparison operators */
+#ifdef HAS_DOUBLE
+TEST f8_greaterThan_Main()
+{
+	extern f8 f8_greaterThan(f8 lhs, f8 rhs);
+	f8 lhs = 2;
+	f8 rhs = 1;
+	f8 retVal;
+	retVal = f8_greaterThan(lhs, rhs);
+	ASSERTF8(retVal, 1);
+	ASSERTF8(f8_greaterThan(PI_SHORT, PI_SHORT), 0.0);
+	ASSERTF8(f8_greaterThan(PI_SHORT, 2*PI_SHORT), 0.0);
+	ASSERTF8(f8_greaterThan(2*PI_SHORT, PI_SHORT), 1.0);
+}
+#endif
+
+#ifdef HAS_DOUBLE
+TEST f8_greaterThanEquals_Main()
+{
+	extern f8 f8_greaterThanEquals(f8 lhs, f8 rhs);
+	f8 lhs = 2;
+	f8 rhs = 1;
+	f8 retVal;
+	retVal = f8_greaterThanEquals(lhs, rhs);
+	ASSERTF8(retVal, 1);
+	ASSERTF8(f8_greaterThanEquals(PI_SHORT, PI_SHORT), 1.0);
+	ASSERTF8(f8_greaterThanEquals(PI_SHORT, 2*PI_SHORT), 0.0);
+	ASSERTF8(f8_greaterThanEquals(2*PI_SHORT, PI_SHORT), 1.0);
+}
+#endif
+
+#ifdef HAS_DOUBLE
+TEST f8_lessThan_Main()
+{
+	extern f8 f8_lessThan(f8 lhs, f8 rhs);
+	f8 lhs = 2;
+	f8 rhs = 1;
+	f8 retVal;
+	retVal = f8_lessThan(lhs, rhs);
+	ASSERTF8(retVal, 0);
+	ASSERTF8(f8_lessThan(PI_SHORT, PI_SHORT), 0.0);
+	ASSERTF8(f8_lessThan(PI_SHORT, 2*PI_SHORT), 1.0);
+	ASSERTF8(f8_lessThan(2*PI_SHORT, PI_SHORT), 0.0);
+}
+#endif
+
+#ifdef HAS_DOUBLE
+TEST f8_lessThanEquals_Main()
+{
+	extern f8 f8_lessThanEquals(f8 lhs, f8 rhs);
+	f8 lhs = 2;
+	f8 rhs = 1;
+	f8 retVal;
+	retVal = f8_lessThanEquals(lhs, rhs);
+	ASSERTF8(retVal, 0);
+	ASSERTF8(f8_lessThanEquals(PI_SHORT, PI_SHORT), 1.0);
+	ASSERTF8(f8_lessThanEquals(PI_SHORT, 2*PI_SHORT), 1.0);
+	ASSERTF8(f8_lessThanEquals(2*PI_SHORT, PI_SHORT), 0.0);
+}
+#endif
+
+#ifdef HAS_DOUBLE
+TEST f8_equals_Main()
+{
+	extern f8 f8_equals(f8 lhs, f8 rhs);
+	f8 lhs = 2;
+	f8 rhs = 1;
+	f8 retVal;
+	retVal = f8_equals(lhs, rhs);
+	ASSERTF8(retVal, 0);
+	ASSERTF8(f8_equals(PI_SHORT, PI_SHORT), 1.0);
+	ASSERTF8(f8_equals(PI_SHORT, 2*PI_SHORT), 0.0);
+	ASSERTF8(f8_equals(2*PI_SHORT, PI_SHORT), 0.0);
+}
+#endif
+
+#ifdef HAS_DOUBLE
+TEST f8_notEquals_Main()
+{
+	extern f8 f8_notEquals(f8 lhs, f8 rhs);
+	f8 lhs = 2;
+	f8 rhs = 1;
+	f8 retVal;
+	retVal = f8_notEquals(lhs, rhs);
+	ASSERTF8(retVal, 1);
+	ASSERTF8(f8_notEquals(PI_SHORT, PI_SHORT), 0.0);
+	ASSERTF8(f8_notEquals(PI_SHORT, 2*PI_SHORT), 1.0);
+	ASSERTF8(f8_notEquals(2*PI_SHORT, PI_SHORT), 1.0);
+}
+#endif
+
+/* Logical operators */
+#ifdef HAS_DOUBLE
+TEST f8_logicalAnd_Main()
+{
+	extern f8 f8_logicalAnd(f8 lhs, f8 rhs);
+	f8 lhs = 2;
+	f8 rhs = 1;
+	f8 retVal;
+	retVal = f8_logicalAnd(lhs, rhs);
+	ASSERTF8(retVal, 1);
+	ASSERTF8(f8_logicalAnd(PI_SHORT, PI_SHORT), 1);
+	ASSERTF8(f8_logicalAnd(PI_SHORT, 0), 0.0);
+}
+#endif
+
+#ifdef HAS_DOUBLE
+TEST f8_logicalOr_Main()
+{
+	extern f8 f8_logicalOr(f8 lhs, f8 rhs);
+	f8 lhs = 2;
+	f8 rhs = 1;
+	f8 retVal;
+	retVal = f8_logicalOr(lhs, rhs);
+	ASSERTF8(retVal, 1);
+	ASSERTF8(f8_logicalOr(PI_SHORT, PI_SHORT), 1);
+	ASSERTF8(f8_logicalOr(PI_SHORT, 0), 1);
+}
+#endif
+
+#ifdef HAS_DOUBLE
+TEST f8_logicalNot_Main()
+{
+	extern f8 f8_logicalNot(f8 lhs);
+	f8 lhs = 2;
+	f8 retVal;
+	retVal = f8_logicalNot(lhs);
+	ASSERTF8(retVal, 0);
+	ASSERTF8(f8_logicalNot(PI_SHORT), 0);
+}
+#endif
+
+/* Arithmetic operators */
+#ifdef HAS_DOUBLE
+TEST f8_unaryMinus_Main()
+{
+	extern f8 f8_unaryMinus(f8 lhs);
+	f8 lhs = 2;
+	f8 retVal;
+	retVal = f8_unaryMinus(lhs);
+	ASSERTF8(retVal, -2);
+	ASSERTF8(f8_unaryMinus(PI_SHORT), -3.14);
+}
+#endif
+
+#ifdef HAS_DOUBLE
+TEST f8_unaryPlus_Main()
+{
+	extern f8 f8_unaryPlus(f8 lhs);
+	f8 lhs = 2;
+	f8 retVal;
+	retVal = f8_unaryPlus(lhs);
+	ASSERTF8(retVal, 2);
+	ASSERTF8(f8_unaryPlus(PI_SHORT), PI_SHORT);
+}
+#endif
+
+#ifdef HAS_DOUBLE
+TEST f8_addition_Main()
+{
+	extern f8 f8_addition(f8 lhs, f8 rhs);
+	f8 lhs = 2;
+	f8 rhs = 1;
+	f8 retVal;
+	retVal = f8_addition(lhs, rhs);
+	ASSERTF8(retVal, 3);
+	ASSERTF8(f8_addition(PI_SHORT, PI_SHORT), 6.28);
+}
+#endif
+
+#ifdef HAS_DOUBLE
+TEST f8_subtract_Main()
+{
+	extern f8 f8_subtract(f8 lhs, f8 rhs);
+	f8 lhs = 2;
+	f8 rhs = 1;
+	f8 retVal;
+	retVal = f8_subtract(lhs, rhs);
+	ASSERTF8(retVal, 1);
+	ASSERTF8(f8_subtract(PI_SHORT, PI_SHORT), 0.0);
+}
+#endif
+
+#ifdef HAS_DOUBLE
+TEST f8_multiply_Main()
+{
+	extern f8 f8_multiply(f8 lhs, f8 rhs);
+	f8 lhs = 2;
+	f8 rhs = 1;
+	f8 retVal;
+	retVal = f8_multiply(lhs, rhs);
+	ASSERTF8(retVal, 2);
+	ASSERTF8(f8_multiply(PI_SHORT, PI_SHORT), 9.8596);
+}
+#endif
+
+MAIN BIOPS_DOUBLE_main() { }

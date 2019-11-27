@@ -47,5 +47,4 @@ public interface StatusListener {
 	 * without being recorded
 	 */
 	void clearStatusText();
-
 }

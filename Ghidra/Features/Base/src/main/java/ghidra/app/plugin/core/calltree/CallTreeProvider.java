@@ -29,6 +29,7 @@ import docking.WindowPosition;
 import docking.action.*;
 import docking.util.GraphicsUtils;
 import docking.widgets.dialogs.NumberInputDialog;
+import docking.widgets.label.GLabel;
 import docking.widgets.tree.*;
 import docking.widgets.tree.support.GTreeSelectionEvent.EventOrigin;
 import docking.widgets.tree.support.GTreeSelectionListener;
@@ -56,7 +57,7 @@ import resources.ResourceManager;
 public class CallTreeProvider extends ComponentProviderAdapter implements DomainObjectListener {
 
 	static final String EXPAND_ACTION_NAME = "Fully Expand Selected Nodes";
-	private static final String TITLE = "Function Call Trees";
+	static final String TITLE = "Function Call Trees";
 	private static final Icon EMPTY_ICON = ResourceManager.loadImage("images/EmptyIcon16.gif");
 	private static final Icon EXPAND_ICON = Icons.EXPAND_ALL_ICON;
 	private static final Icon COLLAPSE_ICON = Icons.COLLAPSE_ALL_ICON;
@@ -73,6 +74,7 @@ public class CallTreeProvider extends ComponentProviderAdapter implements Domain
 	private JSplitPane splitPane;
 	private GTree incomingTree;
 	private GTree outgoingTree;
+	private boolean isPrimary;
 
 	private SwingUpdateManager reloadUpdateManager = new SwingUpdateManager(500, () -> doUpdate());
 
@@ -92,19 +94,25 @@ public class CallTreeProvider extends ComponentProviderAdapter implements Domain
 	private AtomicInteger recurseDepth = new AtomicInteger();
 	private NumberIcon recurseIcon;
 
-	public CallTreeProvider(CallTreePlugin plugin) {
+	public CallTreeProvider(CallTreePlugin plugin, boolean isPrimary) {
 		super(plugin.getTool(), TITLE, plugin.getName());
 		this.plugin = plugin;
+		this.isPrimary = isPrimary;
 
 		component = buildComponent();
 
 		// try to give the trees a suitable amount of space by default
 		component.setPreferredSize(new Dimension(800, 400));
 
-		setTransient();
 		setWindowMenuGroup(TITLE);
 		setDefaultWindowPosition(WindowPosition.BOTTOM);
 
+		if (isPrimary) {
+			addToToolbar();
+		}
+		else {
+			setTransient();
+		}
 		setIcon(CallTreePlugin.PROVIDER_ICON);
 		setHelpLocation(new HelpLocation(plugin.getName(), "Call_Tree_Plugin"));
 
@@ -174,7 +182,7 @@ public class CallTreeProvider extends ComponentProviderAdapter implements Domain
 			public void actionPerformed(ActionContext context) {
 				Object contextObject = context.getContextObject();
 				GTree gTree = (GTree) contextObject;
-				GTreeRootNode rootNode = gTree.getRootNode();
+				GTreeNode rootNode = gTree.getViewRoot();
 				List<GTreeNode> children = rootNode.getChildren();
 				for (GTreeNode child : children) {
 					gTree.collapseAll(child);
@@ -275,7 +283,7 @@ public class CallTreeProvider extends ComponentProviderAdapter implements Domain
 
 					for (TreePath path : selectionPaths) {
 						GTreeNode node = (GTreeNode) path.getLastPathComponent();
-						if (node instanceof GTreeRootNode) {
+						if (node instanceof GTreeNode) {
 							return false;
 						}
 					}
@@ -335,7 +343,7 @@ public class CallTreeProvider extends ComponentProviderAdapter implements Domain
 
 				for (TreePath path : selectionPaths) {
 					GTreeNode node = (GTreeNode) path.getLastPathComponent();
-					if (node instanceof GTreeRootNode) {
+					if (node.isRoot()) {
 						return false;
 					}
 				}
@@ -429,7 +437,11 @@ public class CallTreeProvider extends ComponentProviderAdapter implements Domain
 					}
 				}
 			};
-		navigateIncomingToggleAction.setSelected(false);
+
+		// note: the default state is to follow navigation events for the primary provider; 
+		//       non-primary providers will function like snapshots of the function with 
+		//       which they were activated.
+		navigateIncomingToggleAction.setSelected(isPrimary);
 		navigateIncomingToggleAction.setToolBarData(new ToolBarData(
 			Icons.NAVIGATE_ON_INCOMING_EVENT_ICON, navigationOptionsToolbarGroup, "2"));
 		navigateIncomingToggleAction.setDescription(HTMLUtilities.toHTML("Incoming Navigation" +
@@ -484,7 +496,7 @@ public class CallTreeProvider extends ComponentProviderAdapter implements Domain
 
 					for (TreePath path : selectionPaths) {
 						GTreeNode node = (GTreeNode) path.getLastPathComponent();
-						if (node instanceof GTreeRootNode) {
+						if (node.isRoot()) {
 							return false;
 						}
 					}
@@ -539,7 +551,7 @@ public class CallTreeProvider extends ComponentProviderAdapter implements Domain
 
 					for (TreePath path : selectionPaths) {
 						GTreeNode node = (GTreeNode) path.getLastPathComponent();
-						if (node instanceof GTreeRootNode) {
+						if (node.isRoot()) {
 							return false;
 						}
 					}
@@ -648,7 +660,7 @@ public class CallTreeProvider extends ComponentProviderAdapter implements Domain
 
 					for (TreePath path : selectionPaths) {
 						GTreeNode node = (GTreeNode) path.getLastPathComponent();
-						if (node instanceof GTreeRootNode) {
+						if (node.isRoot()) {
 							return false;
 						}
 					}
@@ -792,10 +804,7 @@ public class CallTreeProvider extends ComponentProviderAdapter implements Domain
 	private JPanel createTreePanel(boolean isIncoming, GTree tree) {
 		JPanel panel = new JPanel(new BorderLayout());
 
-		String name = isIncoming ? "Incoming Calls" : "Outgoing Calls";
-		JLabel label = new JLabel(name);
-
-		panel.add(label, BorderLayout.NORTH);
+		panel.add(new GLabel(isIncoming ? "Incoming Calls" : "Outgoing Calls"), BorderLayout.NORTH);
 		panel.add(tree, BorderLayout.CENTER);
 
 		return panel;
@@ -820,7 +829,9 @@ public class CallTreeProvider extends ComponentProviderAdapter implements Domain
 
 	@Override
 	public void componentHidden() {
-		plugin.removeProvider(this);
+		if (!isPrimary) {
+			plugin.removeProvider(this);
+		}
 	}
 
 	private void reload() {
@@ -835,12 +846,6 @@ public class CallTreeProvider extends ComponentProviderAdapter implements Domain
 			currentProgram.removeListener(this);
 			currentProgram = null;
 		}
-
-		tool.removeLocalAction(this, recurseDepthAction);
-		tool.removeLocalAction(this, refreshAction);
-		tool.removeLocalAction(this, filterDuplicates);
-		tool.removeLocalAction(this, navigationOutgoingAction);
-		tool.removeLocalAction(this, navigateIncomingToggleAction);
 
 		recurseDepthAction.dispose();
 		refreshAction.dispose();
@@ -877,6 +882,7 @@ public class CallTreeProvider extends ComponentProviderAdapter implements Domain
 			// changes, which means we will get here while setting the location, but our program
 			// will have been null'ed out.
 			currentProgram = plugin.getCurrentProgram();
+			currentProgram.addListener(this);
 		}
 
 		Function function = plugin.getFunction(location);
@@ -909,7 +915,7 @@ public class CallTreeProvider extends ComponentProviderAdapter implements Domain
 	}
 
 	private void clearTrees() {
-		if (incomingTree.getRootNode() instanceof EmptyRootNode) {
+		if (incomingTree.getModelRoot() instanceof EmptyRootNode) {
 			// already empty
 			return;
 		}
@@ -931,7 +937,7 @@ public class CallTreeProvider extends ComponentProviderAdapter implements Domain
 	}
 
 	private void updateIncomingReferencs(Function function) {
-		GTreeRootNode rootNode = null;
+		GTreeNode rootNode = null;
 		if (function == null) {
 			rootNode = new EmptyRootNode();
 		}
@@ -943,7 +949,7 @@ public class CallTreeProvider extends ComponentProviderAdapter implements Domain
 	}
 
 	private void updateOutgoingReferences(Function function) {
-		GTreeRootNode rootNode = null;
+		GTreeNode rootNode = null;
 		if (function == null) {
 			rootNode = new EmptyRootNode();
 		}
@@ -1077,12 +1083,12 @@ public class CallTreeProvider extends ComponentProviderAdapter implements Domain
 	}
 
 	private boolean isEmpty() {
-		GTreeRootNode rootNode = incomingTree.getRootNode();
+		GTreeNode rootNode = incomingTree.getModelRoot();
 		return rootNode instanceof EmptyRootNode;
 	}
 
 	private boolean updateRootNodes(Function function) {
-		CallNode callNode = (CallNode) incomingTree.getRootNode();
+		CallNode callNode = (CallNode) incomingTree.getModelRoot();
 		Function nodeFunction = callNode.getContainingFunction();
 		if (nodeFunction.equals(function)) {
 			reloadUpdateManager.update();
@@ -1103,7 +1109,7 @@ public class CallTreeProvider extends ComponentProviderAdapter implements Domain
 
 		@Override
 		public void run(TaskMonitor monitor) throws CancelledException {
-			CallNode rootNode = (CallNode) tree.getRootNode();
+			CallNode rootNode = (CallNode) tree.getModelRoot();
 			List<GTreeNode> children = rootNode.getChildren();
 			for (GTreeNode node : children) {
 				updateFunction((CallNode) node);
@@ -1111,7 +1117,7 @@ public class CallTreeProvider extends ComponentProviderAdapter implements Domain
 		}
 
 		private void updateFunction(CallNode node) {
-			if (!node.isChildrenLoadedOrInProgress()) {
+			if (!node.isLoaded()) {
 				// children not loaded, don't force a load by asking for them
 				return;
 			}
@@ -1183,6 +1189,8 @@ public class CallTreeProvider extends ComponentProviderAdapter implements Domain
 		this.recurseIcon.setNumber(depth);
 
 		removeFilterCache();
+		incomingTree.refilterLater();
+		outgoingTree.refilterLater();
 
 		saveRecurseDepth();
 	}
@@ -1197,9 +1205,9 @@ public class CallTreeProvider extends ComponentProviderAdapter implements Domain
 		// you have done.  Normally this is not that big of a problem.  However, if the loading
 		// takes a long time, then you lose some work.
 		//
-		GTreeRootNode rootNode = incomingTree.getRootNode();
+		GTreeNode rootNode = incomingTree.getModelRoot();
 		rootNode.removeAll();
-		rootNode = outgoingTree.getRootNode();
+		rootNode = outgoingTree.getModelRoot();
 		rootNode.removeAll();
 	}
 
@@ -1358,7 +1366,7 @@ public class CallTreeProvider extends ComponentProviderAdapter implements Domain
 		}
 	}
 
-	private class PendingRootNode extends AbstractGTreeRootNode {
+	private class PendingRootNode extends GTreeNode {
 
 		@Override
 		public Icon getIcon(boolean expanded) {
@@ -1381,7 +1389,7 @@ public class CallTreeProvider extends ComponentProviderAdapter implements Domain
 		}
 	}
 
-	private class EmptyRootNode extends AbstractGTreeRootNode {
+	private class EmptyRootNode extends GTreeNode {
 
 		@Override
 		public Icon getIcon(boolean expanded) {

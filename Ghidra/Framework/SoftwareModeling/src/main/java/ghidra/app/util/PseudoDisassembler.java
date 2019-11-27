@@ -19,15 +19,39 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Iterator;
 
-import ghidra.program.model.address.*;
+import ghidra.program.model.address.Address;
+import ghidra.program.model.address.AddressIterator;
+import ghidra.program.model.address.AddressOutOfBoundsException;
+import ghidra.program.model.address.AddressOverflowException;
+import ghidra.program.model.address.AddressSet;
+import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.data.PointerDataType;
-import ghidra.program.model.lang.*;
-import ghidra.program.model.listing.*;
-import ghidra.program.model.mem.*;
+import ghidra.program.model.lang.InstructionPrototype;
+import ghidra.program.model.lang.InsufficientBytesException;
+import ghidra.program.model.lang.Language;
+import ghidra.program.model.lang.Register;
+import ghidra.program.model.lang.RegisterValue;
+import ghidra.program.model.lang.UnknownContextException;
+import ghidra.program.model.lang.UnknownInstructionException;
+import ghidra.program.model.listing.ContextChangeException;
+import ghidra.program.model.listing.Data;
+import ghidra.program.model.listing.Function;
+import ghidra.program.model.listing.Instruction;
+import ghidra.program.model.listing.Program;
+import ghidra.program.model.listing.ProgramContext;
+import ghidra.program.model.mem.ByteMemBufferImpl;
+import ghidra.program.model.mem.DumbMemBufferImpl;
+import ghidra.program.model.mem.MemBuffer;
+import ghidra.program.model.mem.Memory;
+import ghidra.program.model.mem.MemoryAccessException;
+import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.model.pcode.PcodeOp;
-import ghidra.program.model.symbol.*;
-import ghidra.program.util.ProgramContextImpl;
+import ghidra.program.model.symbol.FlowType;
+import ghidra.program.model.symbol.RefType;
+import ghidra.program.model.symbol.Reference;
+import ghidra.program.model.symbol.Symbol;
+import ghidra.program.model.symbol.SymbolType;
 
 /**
  * PseudoDisassembler.java
@@ -84,18 +108,6 @@ public class PseudoDisassembler {
 		pointerSize = program.getDefaultPointerSize();
 
 		this.programContext = program.getProgramContext();
-	}
-
-	public PseudoDisassembler(Language lang, Memory mem) {
-		program = null;
-
-		this.language = lang;
-
-		this.memory = mem;
-
-		pointerSize = language.getDefaultSpace().getPointerSize();
-
-		programContext = new ProgramContextImpl(language.getRegisters());
 	}
 
 	/**
@@ -591,6 +603,7 @@ public class PseudoDisassembler {
 			boolean allowExistingInstructions, boolean mustTerminate) {
 		AddressSet body = new AddressSet();
 		AddressSet instrStarts = new AddressSet();
+		AddressSetView execSet = memory.getExecuteSet();
 
 		if (hasLowBitCodeModeInAddrValues(program)) {
 			entryPoint = setTargeContextForDisassembly(procContext, entryPoint);
@@ -614,8 +627,6 @@ public class PseudoDisassembler {
 		catch (AddressOutOfBoundsException e2) {
 			return false;
 		}
-
-		AddressSetView executeSet = memory.getExecuteSet();
 
 		RepeatInstructionByteTracker repeatInstructionByteTracker =
 			new RepeatInstructionByteTracker(MAX_REPEAT_BYTES_LIMIT, null);
@@ -777,8 +788,7 @@ public class PseudoDisassembler {
 								}
 							}
 							// if respecting execute flag on memory, test to make sure we did flow into non-execute memory
-							if (respectExecuteFlag && !executeSet.isEmpty() &&
-								!executeSet.contains(flows[j])) {
+							if (respectExecuteFlag && !execSet.isEmpty() && !execSet.contains(flows[j])) {
 								if (!flows[j].isExternalAddress()) {
 									MemoryBlock block = memory.getBlock(flows[j]);
 									// flowing into non-executable, but readable memory is bad
@@ -878,8 +888,8 @@ public class PseudoDisassembler {
 		}
 
 		// check that body does not wander into non-executable memory
-		AddressSetView executeSet = program.getMemory().getExecuteSet();
-		if (respectExecuteFlag && !executeSet.isEmpty() && !body.subtract(executeSet).isEmpty()) {
+		AddressSetView execSet = memory.getExecuteSet();
+		if (respectExecuteFlag && !execSet.isEmpty() && !execSet.contains(body)) {
 			return false;
 		}
 
@@ -890,8 +900,9 @@ public class PseudoDisassembler {
 			return false;
 		}
 
+		boolean canHaveOffcutEntry = hasLowBitCodeModeInAddrValues(program);
 		AddressSet strictlyBody = body.subtract(starts);
-		if (hasLowBitCodeModeInAddrValues(program)) {
+		if (canHaveOffcutEntry) {
 			strictlyBody.deleteRange(entry, entry.add(1));
 		}
 		AddressIterator addrIter =

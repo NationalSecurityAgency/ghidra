@@ -1,0 +1,256 @@
+#include "pcode_test.h"
+
+TEST pcode_PP1_12_InferPointerArgumentInt_Main()
+{
+	extern i4 pcode_PP1_12_InferPointerArgumentInt(i4 * arg1);
+	i4 arg = 5;
+	ASSERTI4(pcode_PP1_12_InferPointerArgumentInt(&arg), -1);
+	arg = sizeof(i4)*8-1;
+	ASSERTI4(pcode_PP1_12_InferPointerArgumentInt(&arg), -1);
+	arg = 0;
+	ASSERTI4(pcode_PP1_12_InferPointerArgumentInt(&arg), -7);
+}
+
+TEST pcode_PP1_13_InferPointerArgumentShort_Main()
+{
+	extern i2 pcode_PP1_13_InferPointerArgumentShort(i2 * arg1);
+	i2 arg = 5;
+	ASSERTI4(pcode_PP1_13_InferPointerArgumentShort(&arg), -1);
+	arg = sizeof(i2)*8-1;
+	ASSERTI4(pcode_PP1_13_InferPointerArgumentShort(&arg), -1);
+	arg = 1;
+	ASSERTI4(pcode_PP1_13_InferPointerArgumentShort(&arg), -4);
+}
+
+TEST pcode_PP1_14_InferPointerArgumentChar_Main()
+{
+	extern i1 pcode_PP1_14_InferPointerArgumentChar(i1 * arg1);
+	i1 arg = 5;
+	ASSERTI4(pcode_PP1_14_InferPointerArgumentChar(&arg), -1);
+	arg = sizeof(i1)*8-1;
+	ASSERTI4(pcode_PP1_14_InferPointerArgumentChar(&arg), -1);
+	arg = 1;
+	ASSERTI4(pcode_PP1_14_InferPointerArgumentChar(&arg), -4);
+}
+
+#ifdef HAS_LONGLONG
+TEST pcode_PP1_15_InferPointerArgumentUnsignedLongLong_Main()
+{
+	extern u8 pcode_PP1_15_InferPointerArgumentUnsignedLongLong(u8 * arg1);
+	u8 arg = 5;
+	ASSERTI4(pcode_PP1_15_InferPointerArgumentUnsignedLongLong(&arg), -1);
+	arg = sizeof(u8)*8-1;
+	ASSERTI4(pcode_PP1_15_InferPointerArgumentUnsignedLongLong(&arg), -1);
+	arg = 1;
+	ASSERTI4(pcode_PP1_15_InferPointerArgumentUnsignedLongLong(&arg), -4);
+}
+#endif
+
+TEST pcode_PP1_16_InferPointerArgumentUnsignedInt_Main()
+{
+	extern u4 pcode_PP1_16_InferPointerArgumentUnsignedInt(u4 * arg1);
+	u4 arg = 5;
+	ASSERTI4(pcode_PP1_16_InferPointerArgumentUnsignedInt(&arg), -1);
+	arg = sizeof(u4)*8-1;
+	ASSERTI4(pcode_PP1_16_InferPointerArgumentUnsignedInt(&arg), -1);
+	arg = 0;
+	ASSERTI4(pcode_PP1_16_InferPointerArgumentUnsignedInt(&arg), -7);
+}
+
+TEST pcode_PP1_17_InferPointerArgumentUnsignedShort_Main()
+{
+	extern u2 pcode_PP1_17_InferPointerArgumentUnsignedShort(u2 * arg1);
+	u2 arg = 5;
+	ASSERTI4(pcode_PP1_17_InferPointerArgumentUnsignedShort(&arg), 65535);
+	arg = sizeof(u2)*8-1;
+	ASSERTI4(pcode_PP1_17_InferPointerArgumentUnsignedShort(&arg), 65535);
+	arg = 0;
+	ASSERTI4(pcode_PP1_17_InferPointerArgumentUnsignedShort(&arg), 65529);
+}
+
+TEST pcode_PP1_18_InferPointerArgumentUnsignedChar_Main()
+{
+	extern u1 pcode_PP1_18_InferPointerArgumentUnsignedChar(u1 * arg1);
+	u1 arg = 5;
+	ASSERTI4(pcode_PP1_18_InferPointerArgumentUnsignedChar(&arg), 255);
+	arg = sizeof(u1)*8-1;
+	ASSERTI4(pcode_PP1_18_InferPointerArgumentUnsignedChar(&arg), 255);
+	arg = 0;
+	ASSERTI4(pcode_PP1_18_InferPointerArgumentUnsignedChar(&arg), 249);
+}
+
+#ifdef HAS_FLOAT
+TEST pcode_PP1_19_InferPointerArgumentFloat_Main()
+{
+	extern f4 pcode_PP1_19_InferPointerArgumentFloat(f4 * arg1);
+	f4 arg = 5;
+	ASSERTF4(pcode_PP1_19_InferPointerArgumentFloat(&arg), -2.0);
+	arg = PI_SHORT;
+	ASSERTF4(pcode_PP1_19_InferPointerArgumentFloat(&arg), -3.860000);
+	arg = -PI_SHORT;
+	ASSERTF4(pcode_PP1_19_InferPointerArgumentFloat(&arg), -10.1400000);
+	arg = 0.0;
+	ASSERTF4(pcode_PP1_19_InferPointerArgumentFloat(&arg), -7.000000);
+}
+#endif
+
+#ifdef HAS_DOUBLE
+TEST pcode_PP1_20_InferPointerArgumentDouble_Main()
+{
+	extern f8 pcode_PP1_20_InferPointerArgumentDouble(f8 * arg1);
+	f8 arg = 5;
+	ASSERTF8(pcode_PP1_20_InferPointerArgumentDouble(&arg), -2.0);
+	arg = PI_SHORT;
+	ASSERTF8(pcode_PP1_20_InferPointerArgumentDouble(&arg), -3.86);
+	arg = -PI_SHORT;
+	ASSERTF8(pcode_PP1_20_InferPointerArgumentDouble(&arg), -10.14);
+	arg = 0.0;
+	ASSERTF8(pcode_PP1_20_InferPointerArgumentDouble(&arg), -7);
+}
+#endif
+
+#ifdef HAS_LONGLONG
+TEST pcode_PP1_1_InferArgumentLongLong_Main()
+{
+	extern i8 pcode_PP1_1_InferArgumentLongLong(i8* arg1);
+	i8 arg = 5;
+	ASSERTI4(pcode_PP1_1_InferArgumentLongLong(&arg), -1);
+	arg = sizeof(i8)*8-1;
+	ASSERTI4(pcode_PP1_1_InferArgumentLongLong(&arg), -1);
+	arg = 1;
+	ASSERTI4(pcode_PP1_1_InferArgumentLongLong(&arg), -4);
+}
+#endif
+
+TEST pcode_PP1_2_InferArgumentInt_Main()
+{
+	extern i4 pcode_PP1_2_InferArgumentInt(i4 arg1);
+	i4 arg = 5;
+	ASSERTI4(pcode_PP1_2_InferArgumentInt(arg), -1);
+	arg = sizeof(i4)*8-1;
+	ASSERTI4(pcode_PP1_2_InferArgumentInt(arg), -1);
+	arg = 1;
+	ASSERTI4(pcode_PP1_2_InferArgumentInt(arg), -4);
+	arg = 0;
+	ASSERTI4(pcode_PP1_2_InferArgumentInt(arg), -7);
+}
+
+TEST pcode_PP1_3_InferArgumentShort_Main()
+{
+	extern i2 pcode_PP1_3_InferArgumentShort(i2 arg1);
+	i2 arg = 5;
+	ASSERTI4(pcode_PP1_3_InferArgumentShort(arg), -1);
+	arg = sizeof(i2)*8-1;
+	ASSERTI4(pcode_PP1_3_InferArgumentShort(arg), -1);
+	arg = 1;
+	ASSERTI4(pcode_PP1_3_InferArgumentShort(arg), -4);
+	arg = 0;
+	ASSERTI4(pcode_PP1_3_InferArgumentShort(arg), -7);
+}
+
+TEST pcode_PP1_4_InferArgumentChar_Main()
+{
+	extern i1 pcode_PP1_4_InferArgumentChar(i1 arg1);
+	i1 arg = 5;
+	ASSERTI4(pcode_PP1_4_InferArgumentChar(arg), -1);
+	arg = sizeof(i1)*8-1;
+	ASSERTI4(pcode_PP1_4_InferArgumentChar(arg), -1);
+	arg = 1;
+	ASSERTI4(pcode_PP1_4_InferArgumentChar(arg), -4);
+	arg = 0;
+	ASSERTI4(pcode_PP1_4_InferArgumentChar(arg), -7);
+}
+
+#ifdef HAS_LONGLONG
+TEST pcode_PP1_5_InferArgumentUnsignedLongLong_Main()
+{
+	extern u8 pcode_PP1_5_InferArgumentUnsignedLongLong(u8 arg1);
+	u8 arg = 5;
+	ASSERTI4(pcode_PP1_5_InferArgumentUnsignedLongLong(arg), -1);
+	arg = sizeof(u8)*8-1;
+	ASSERTI4(pcode_PP1_5_InferArgumentUnsignedLongLong(arg), -1);
+	arg = 0;
+	ASSERTI4(pcode_PP1_5_InferArgumentUnsignedLongLong(arg), -7);
+}
+#endif
+
+TEST pcode_PP1_6_InferArgumentUnsignedInt_Main()
+{
+	extern u4 pcode_PP1_6_InferArgumentUnsignedInt(u4 arg1);
+	u4 arg = 5;
+	ASSERTI4(pcode_PP1_6_InferArgumentUnsignedInt(arg), -1);
+	arg = sizeof(u4)*8-1;
+	ASSERTI4(pcode_PP1_6_InferArgumentUnsignedInt(arg), -1);
+	arg = 0;
+	ASSERTI4(pcode_PP1_6_InferArgumentUnsignedInt(arg), -7);
+}
+
+TEST pcode_PP1_7_InferArgumentUnsignedShort_Main()
+{
+	extern u2 pcode_PP1_7_InferArgumentUnsignedShort(u2 arg1);
+	u2 arg = 5;
+	ASSERTI4(pcode_PP1_7_InferArgumentUnsignedShort(arg), 65535);
+	arg = sizeof(u2)*8-1;
+	ASSERTI4(pcode_PP1_7_InferArgumentUnsignedShort(arg), 65535);
+	arg = 0;
+	ASSERTI4(pcode_PP1_7_InferArgumentUnsignedShort(arg), 65529);
+}
+
+TEST pcode_PP1_8_InferArgumentUnsignedChar_Main()
+{
+	extern u1 pcode_PP1_8_InferArgumentUnsignedChar(u1 arg1);
+	u1 arg = 5;
+	ASSERTI4(pcode_PP1_8_InferArgumentUnsignedChar(arg), 255);
+	arg = sizeof(u2)*8-1;
+	ASSERTI4(pcode_PP1_8_InferArgumentUnsignedChar(arg), 255);
+	arg = 0;
+	ASSERTI4(pcode_PP1_8_InferArgumentUnsignedChar(arg), 249);
+}
+
+#ifdef HAS_FLOAT
+TEST pcode_PP1_9_InferArgumentFloat_Main()
+{
+	extern f4 pcode_PP1_9_InferArgumentFloat(f4 arg1);
+	f4 arg = 5;
+	ASSERTF4(pcode_PP1_9_InferArgumentFloat(arg), (f4) -2.0);
+	arg = PI_SHORT;
+	ASSERTF4(pcode_PP1_9_InferArgumentFloat(arg), (f4) -3.860000);
+	arg = -PI_SHORT;
+	ASSERTF4(pcode_PP1_9_InferArgumentFloat(arg), (f4) -10.140000);
+	arg = 0.0;
+	ASSERTF4(pcode_PP1_9_InferArgumentFloat(arg), (f4) -7.000000);
+}
+#endif
+
+#ifdef HAS_DOUBLE
+TEST pcode_PP1_10_InferArgumentDouble_Main()
+{
+	extern f8 pcode_PP1_10_InferArgumentDouble(f8 arg1);
+	f8 arg = 5;
+	ASSERTF8(pcode_PP1_10_InferArgumentDouble(arg), (f8) -2.0);
+	arg = PI_SHORT;
+	ASSERTF8(pcode_PP1_10_InferArgumentDouble(arg), (f8) -3.86);
+	arg = -PI_SHORT;
+	ASSERTF8(pcode_PP1_10_InferArgumentDouble(arg), (f8) -10.14);
+	arg = 0.0;
+	ASSERTF8(pcode_PP1_10_InferArgumentDouble(arg), (f8) -7);
+}
+#endif
+
+#ifdef HAS_LONGLONG
+TEST pcode_PP1_11_InferPointerArgumentLongLong_Main()
+{
+	extern i8 pcode_PP1_11_InferPointerArgumentLongLong(i8 * arg1);
+	i8 arg = 5;
+	ASSERTI4(pcode_PP1_11_InferPointerArgumentLongLong(&arg), -1);
+	arg = sizeof(i8)*8-1;
+	ASSERTI4(pcode_PP1_11_InferPointerArgumentLongLong(&arg), -1);
+	arg = 1;
+	ASSERTI4(pcode_PP1_11_InferPointerArgumentLongLong(&arg), -4);
+	arg = 0;
+	ASSERTI4(pcode_PP1_11_InferPointerArgumentLongLong(&arg), -7);
+}
+#endif
+
+MAIN ParameterPassing1_main() { }
+

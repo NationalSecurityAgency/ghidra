@@ -56,6 +56,34 @@ public abstract class CreateStructureVariableAction extends DockingAction {
 		return false;
 	}
 
+	/**
+	 * Check if a variable has a data-type that is suitable for being extended.
+	 * If so return the structure data-type, otherwise return null.
+	 * Modulo typedefs, the data-type of the variable must be exactly a
+	 * "pointer to a structure".  Not a "structure" itself, or a
+	 * "pointer to a pointer to ... a structure".
+	 * @param dt is the data-type of the variable to test
+	 * @return the extendable structure data-type or null
+	 */
+	public static Structure getStructureForExtending(DataType dt) {
+		if (dt instanceof TypeDef) {
+			dt = ((TypeDef) dt).getBaseDataType();
+		}
+		if (dt instanceof Pointer) {
+			dt = ((Pointer) dt).getDataType();
+		}
+		else {
+			return null;
+		}
+		if (dt instanceof TypeDef) {
+			dt = ((TypeDef) dt).getBaseDataType();
+		}
+		if (dt instanceof Structure) {
+			return (Structure) dt;
+		}
+		return null;
+	}
+
 	@Override
 	public abstract boolean isEnabledForContext(ActionContext context);
 
@@ -67,13 +95,9 @@ public abstract class CreateStructureVariableAction extends DockingAction {
 	 */
 	protected void adjustCreateStructureMenuText(DataType dt, boolean isThisParam) {
 
-		// rip off any multi-level pointers
-		while (dt instanceof Pointer) {
-			dt = ((Pointer) dt).getDataType();
-		}
-
+		dt = getStructureForExtending(dt);
 		String menuString = "Auto Create Structure";
-		if (dt instanceof Structure) {
+		if (dt != null) {
 			if (isThisParam) {
 				menuString = "Auto Fill in Class Structure";
 			}
@@ -120,13 +144,5 @@ public abstract class CreateStructureVariableAction extends DockingAction {
 
 		FillOutStructureCmd task = new FillOutStructureCmd(program, location, tool);
 		task.applyTo(program);
-
-//    	if (commitRequired) {
-//    		int resp = OptionDialog.showOptionDialog(tool.getToolFrame(), "Parameter Commit Required",
-//    				"Retyping a parameter requires all other parameters to be committed!\nContinue with retype?", "Continue");
-//    		if (resp != OptionDialog.OPTION_ONE) {
-//    			return;
-//    		}
-//    	}
 	}
 }

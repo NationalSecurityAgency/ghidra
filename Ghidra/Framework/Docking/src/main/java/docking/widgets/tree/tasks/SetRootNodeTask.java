@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,17 +15,17 @@
  */
 package docking.widgets.tree.tasks;
 
-import ghidra.util.exception.CancelledException;
-import ghidra.util.task.TaskMonitor;
 import docking.widgets.tree.*;
 import docking.widgets.tree.internal.GTreeModel;
+import ghidra.util.exception.CancelledException;
+import ghidra.util.task.TaskMonitor;
 
 public class SetRootNodeTask extends GTreeTask {
 
 	private final GTreeModel model;
-	private final GTreeRootNode rootNode;
+	private final GTreeNode rootNode;
 
-	public SetRootNodeTask(GTree tree, GTreeRootNode rootNode, GTreeModel model) {
+	public SetRootNodeTask(GTree tree, GTreeNode rootNode, GTreeModel model) {
 		super(tree);
 		this.model = model;
 		this.rootNode = rootNode;

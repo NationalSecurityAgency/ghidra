@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,6 +44,7 @@ public class IntegerDataType extends AbstractIntegerDataType {
 	/**
 	 * @see ghidra.program.model.data.DataType#getLength()
 	 */
+	@Override
 	public int getLength() {
 		return getDataOrganization().getIntegerSize();
 	}
@@ -53,6 +53,7 @@ public class IntegerDataType extends AbstractIntegerDataType {
 	 * 
 	 * @see ghidra.program.model.data.DataType#getDescription()
 	 */
+	@Override
 	public String getDescription() {
 		return "Signed Integer (compiler-specific size)";
 	}
@@ -63,11 +64,12 @@ public class IntegerDataType extends AbstractIntegerDataType {
 	}
 
 	@Override
-	public DataType getOppositeSignednessDataType() {
+	public UnsignedIntegerDataType getOppositeSignednessDataType() {
 		return UnsignedIntegerDataType.dataType.clone(getDataTypeManager());
 	}
 
-	public DataType clone(DataTypeManager dtm) {
+	@Override
+	public IntegerDataType clone(DataTypeManager dtm) {
 		if (dtm == getDataTypeManager()) {
 			return this;
 		}

@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,8 +31,8 @@ abstract class VarKeyNode implements BTreeNode {
 	private static final int KEY_TYPE_OFFSET = NodeMgr.NODE_HEADER_SIZE;
 	private static final int KEY_COUNT_OFFSET = KEY_TYPE_OFFSET + KEY_TYPE_SIZE;
 
-	static final int VARKEY_NODE_HEADER_SIZE = NodeMgr.NODE_HEADER_SIZE + KEY_TYPE_SIZE +
-		KEY_COUNT_SIZE;
+	static final int VARKEY_NODE_HEADER_SIZE =
+		NodeMgr.NODE_HEADER_SIZE + KEY_TYPE_SIZE + KEY_COUNT_SIZE;
 
 	protected final Field keyType;
 	protected final int maxKeyLength;
@@ -47,8 +46,9 @@ abstract class VarKeyNode implements BTreeNode {
 	 * Construct an existing variable-length-key node.
 	 * @param nodeMgr table node manager instance
 	 * @param buf node buffer
+	 * @throws IOException if IO error occurs
 	 */
-	VarKeyNode(NodeMgr nodeMgr, DataBuffer buf) {
+	VarKeyNode(NodeMgr nodeMgr, DataBuffer buf) throws IOException {
 		this.nodeMgr = nodeMgr;
 		this.buffer = buf;
 		keyType = Field.getField(buf.getByte(KEY_TYPE_OFFSET));
@@ -75,17 +75,11 @@ abstract class VarKeyNode implements BTreeNode {
 		nodeMgr.addNode(this);
 	}
 
-	/*
-	 * @see ghidra.framework.store.db.BTreeNode#getBufferId()
-	 */
 	@Override
 	public int getBufferId() {
 		return buffer.getId();
 	}
 
-	/*
-	 * @see ghidra.framework.store.db.BTreeNode#getBuffer()
-	 */
 	@Override
 	public DataBuffer getBuffer() {
 		return buffer;
@@ -102,17 +96,11 @@ abstract class VarKeyNode implements BTreeNode {
 		return this;
 	}
 
-	/*
-	 * @see ghidra.framework.store.db.BTreeNode#getKeyCount()
-	 */
 	@Override
 	public int getKeyCount() {
 		return keyCount;
 	}
 
-	/*
-	 * @see ghidra.framework.store.db.BTreeNode#setKeyCount(int)
-	 */
 	@Override
 	public void setKeyCount(int cnt) {
 		keyCount = cnt;
@@ -142,10 +130,11 @@ abstract class VarKeyNode implements BTreeNode {
 	 */
 	abstract VarKeyRecordNode getLeftmostLeafNode() throws IOException;
 
-	/*
-	 * @see ghidra.framework.store.db.BTreeNode#delete()
+	/**
+	 * Get the right-most leaf node within the tree.
+	 * @return right-most leaf node.
+	 * @throws IOException thrown if IO error occurs
 	 */
-	@Override
-	public abstract void delete() throws IOException;
+	abstract VarKeyRecordNode getRightmostLeafNode() throws IOException;
 
 }

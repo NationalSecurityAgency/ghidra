@@ -48,7 +48,6 @@ import ghidra.program.model.symbol.*;
 import ghidra.program.util.*;
 import ghidra.util.Msg;
 import ghidra.util.task.TaskMonitor;
-import ghidra.util.task.TaskMonitorAdapter;
 
 public class CodeBrowserClipboardProvider extends ByteCopier
 		implements ClipboardContentProviderService {
@@ -173,8 +172,7 @@ public class CodeBrowserClipboardProvider extends ByteCopier
 				return pasteByteString(string);
 			}
 
-			tool.setStatusInfo("Paste failed: unsupported data type");
-			tool.getToolFrame().getToolkit().beep();
+			tool.setStatusInfo("Paste failed: unsupported data type", true);
 		}
 		catch (Exception e) {
 			String msg = e.getMessage();
@@ -182,8 +180,7 @@ public class CodeBrowserClipboardProvider extends ByteCopier
 				msg = e.toString();
 				Msg.error(this, "Unexpected Exception: " + e.getMessage(), e);
 			}
-			tool.setStatusInfo("Paste failed: " + msg);
-			tool.getToolFrame().getToolkit().beep();
+			tool.setStatusInfo("Paste failed: " + msg, true);
 		}
 		return false;
 	}
@@ -213,16 +210,14 @@ public class CodeBrowserClipboardProvider extends ByteCopier
 
 	@Override
 	public List<ClipboardType> getCurrentCopyTypes() {
-		if (copyFromSelectionEnabled) {
-			return COPY_TYPES;
-		}
-		return EMPTY_LIST;
+		return COPY_TYPES;
 	}
 
 	@Override
 	public Transferable copySpecial(ClipboardType copyType, TaskMonitor monitor) {
+
 		if (copyType == ADDRESS_TEXT_TYPE) {
-			return copyAddress(currentSelection.getAddresses(true));
+			return copyAddress();
 		}
 		else if (copyType == CODE_TEXT_TYPE) {
 			return copyCode(monitor);
@@ -237,15 +232,23 @@ public class CodeBrowserClipboardProvider extends ByteCopier
 			return copyLabelsComments(false, true);
 		}
 		else if (copyType == BYTE_STRING_TYPE) {
-			String byteString = copyBytesAsString(currentSelection, true, monitor);
+			String byteString = copyBytesAsString(getSelectedAddresses(), true, monitor);
 			return new ByteViewerTransferable(byteString);
 		}
 		else if (copyType == BYTE_STRING_NO_SPACE_TYPE) {
-			String byteString = copyBytesAsString(currentSelection, false, monitor);
+			String byteString = copyBytesAsString(getSelectedAddresses(), false, monitor);
 			return new ByteViewerTransferable(byteString);
 		}
 
 		return null;
+	}
+
+	private AddressSetView getSelectedAddresses() {
+		AddressSetView addressSet = currentSelection;
+		if (addressSet == null || addressSet.isEmpty()) {
+			return new AddressSet(currentLocation.getAddress());
+		}
+		return currentSelection;
 	}
 
 	public void setSelection(ProgramSelection selection) {
@@ -356,27 +359,32 @@ public class CodeBrowserClipboardProvider extends ByteCopier
 		return new NonLabelStringTransferable(location.getOperandRepresentation());
 	}
 
-	private Transferable copyAddress(AddressIterator addressIterator) {
+	private Transferable copyAddress() {
+
+		AddressSetView addressSet = getSelectedAddresses();
 		StringBuilder buffy = new StringBuilder();
-		while (addressIterator.hasNext()) {
-			buffy.append(addressIterator.next()).append('\n');
+		AddressIterator it = addressSet.getAddresses(true);
+		while (it.hasNext()) {
+			buffy.append(it.next()).append('\n');
 		}
 		return createStringTransferable(buffy.toString());
 	}
 
 	protected Transferable copyCode(TaskMonitor monitor) {
+
+		AddressSetView addressSet = getSelectedAddresses();
 		try {
 			TextLayoutGraphics g = new TextLayoutGraphics();
 
 			Rectangle rect = new Rectangle(2048, 2048);
 
-			AddressRangeIterator rangeItr = currentSelection.getAddressRanges();
+			AddressRangeIterator rangeItr = addressSet.getAddressRanges();
 			while (rangeItr.hasNext()) {
 				AddressRange curRange = rangeItr.next();
 				Address curAddress = curRange.getMinAddress();
 				Address maxAddress = curRange.getMaxAddress();
-				// check curAddress against null because getAddressAfter(curAddress) returns null
-				// in certain situations
+
+				// getAddressAfter(curAddress) returns null in certain situations
 				while (curAddress != null && curAddress.compareTo(maxAddress) <= 0) {
 					if (monitor.isCancelled()) {
 						break;
@@ -405,8 +413,7 @@ public class CodeBrowserClipboardProvider extends ByteCopier
 
 			String message = "Copy failed: " + msg;
 			Msg.error(this, message, e);
-			tool.setStatusInfo(message);
-			tool.getToolFrame().getToolkit().beep();
+			tool.setStatusInfo(message, true);
 		}
 
 		return null;
@@ -414,18 +421,19 @@ public class CodeBrowserClipboardProvider extends ByteCopier
 
 	private Transferable copyByteString(Address address) {
 		AddressSet set = new AddressSet(address);
-		return copyBytes(set, false, TaskMonitorAdapter.DUMMY_MONITOR);
+		return copyBytes(set, false, TaskMonitor.DUMMY);
 	}
 
 	private CodeUnitInfoTransferable copyLabelsComments(boolean copyLabels, boolean copyComments) {
+
+		AddressSetView addressSet = getSelectedAddresses();
 		List<CodeUnitInfo> list = new ArrayList<>();
-		Address startAddr = currentSelection.getMinAddress();
-		getCodeUnitInfo(currentSelection, startAddr, list, copyLabels, copyComments);
+		Address startAddr = addressSet.getMinAddress();
+		getCodeUnitInfo(addressSet, startAddr, list, copyLabels, copyComments);
 		return new CodeUnitInfoTransferable(list);
 	}
 
-	@SuppressWarnings("unchecked")
-	// assumed correct data; handled in exception case
+	@SuppressWarnings("unchecked") // assumed correct data; handled in exception case
 	private boolean pasteLabelsComments(Transferable pasteData, boolean pasteLabels,
 			boolean pasteComments) {
 		try {
@@ -440,8 +448,7 @@ public class CodeBrowserClipboardProvider extends ByteCopier
 			if (msg == null) {
 				msg = e.toString();
 			}
-			tool.setStatusInfo("Paste failed: " + msg);
-			tool.getToolFrame().getToolkit().beep();
+			tool.setStatusInfo("Paste failed: " + msg, true);
 		}
 
 		return false;
@@ -631,7 +638,7 @@ public class CodeBrowserClipboardProvider extends ByteCopier
 
 	@Override
 	public boolean canCopySpecial() {
-		return copyFromSelectionEnabled;
+		return currentLocation != null;
 	}
 
 	private boolean canCopyCurrentLocationWithNoSelection() {

@@ -101,36 +101,6 @@ public class StructureEditorProviderTest extends AbstractStructureEditorTest {
 		}
 	}
 
-//	public void testReplaceDataType() throws Exception {
-//		try {
-//			txId = program.startTransaction("Replace DataType");
-//			assertEquals(87, complexStructure.getComponent(12).getDataType().getLength());
-//			assertEquals(29, complexStructure.getComponent(15).getDataType().getLength());
-//			assertEquals(29, complexStructure.getComponent(20).getDataType().getLength());
-//			assertEquals(87, complexStructure.getComponent(12).getLength());
-//			assertEquals(29, complexStructure.getComponent(15).getLength());
-//			assertEquals(29, complexStructure.getComponent(20).getLength());
-//			assertEquals(87, complexStructure.getLength());
-//			assertEquals(21, complexStructure.getNumComponents());
-//			final Structure newSimpleStructure = new StructureDataType(new CategoryPath("/aa/bb"), "simpleStructure", 10);
-//			newSimpleStructure.add(new PointerDataType(), 8);
-//			newSimpleStructure.replace(2, new AsciiDataType(), 1);
-//			int newStructLen = newSimpleStructure.getLength();
-//			// Change the struct.  simpleStructure was 29 bytes.
-//			programDTM.replaceDataType(simpleStructure, newSimpleStructure, true);
-//			assertEquals(54, complexStructure.getComponent(12).getDataType().getLength());
-//			assertEquals(18, complexStructure.getComponent(15).getDataType().getLength());
-//			assertEquals(18, complexStructure.getComponent(20).getDataType().getLength());
-//			assertEquals(54, complexStructure.getComponent(12).getLength());
-//			assertEquals(18, complexStructure.getComponent(15).getLength());
-//			assertEquals(18, complexStructure.getComponent(20).getLength());
-//			assertEquals(56, complexStructure.getLength());
-//			assertEquals(21, complexStructure.getNumComponents());
-//		} finally {
-//			program.endTransaction(txId, true);
-//		}
-//	}
-//	
 	// Test Undo / Redo of program.
 	@Test
 	public void testModifiedDtAndProgramRestored() throws Exception {
@@ -140,7 +110,7 @@ public class StructureEditorProviderTest extends AbstractStructureEditorTest {
 			init(complexStructure, pgmTestCat, false);
 			program.addListener(restoreListener);
 
-			// Change the union.
+			// Change the structure
 			runSwingLater(() -> {
 				getTable().requestFocus();
 				setSelection(new int[] { 4, 5 });
@@ -476,7 +446,7 @@ public class StructureEditorProviderTest extends AbstractStructureEditorTest {
 			init(complexStructure, pgmTestCat, false);
 			program.addListener(restoreListener);
 
-			// Change the union.
+			// Change the structure
 			runSwingLater(() -> {
 				getTable().requestFocus();
 				setSelection(new int[] { 4, 5 });
@@ -531,7 +501,7 @@ public class StructureEditorProviderTest extends AbstractStructureEditorTest {
 		init(complexStructure, pgmTestCat, false);
 		DataType oldDt = model.viewComposite.clone(null);
 
-		// Change the union.
+		// Change the structure
 		runSwingLater(() -> {
 			getTable().requestFocus();
 			setSelection(new int[] { 4, 5 });
@@ -567,7 +537,7 @@ public class StructureEditorProviderTest extends AbstractStructureEditorTest {
 		init(complexStructure, pgmTestCat, false);
 		DataType oldDt = model.viewComposite.clone(null);
 
-		// Change the union.
+		// Change the structure
 		runSwing(() -> {
 			getTable().requestFocus();
 			setSelection(new int[] { 4, 5 });
@@ -601,7 +571,7 @@ public class StructureEditorProviderTest extends AbstractStructureEditorTest {
 		Window dialog;
 		init(complexStructure, pgmTestCat, false);
 
-		// Change the union.
+		// Change the structure
 		runSwingLater(() -> {
 			getTable().requestFocus();
 			setSelection(new int[] { 4, 5 });
@@ -630,8 +600,64 @@ public class StructureEditorProviderTest extends AbstractStructureEditorTest {
 		assertTrue(newDt.isEquivalent(model.viewComposite));
 	}
 
-	private void runSwingLater(Runnable r) {
-		runSwing(r, false);
+	@Test
+	public void testEditWillReEditLastColumnWhenPressingKeyboardEditAction() throws Exception {
+		//
+		// This is a regression test.   The user would edit a field by pressing the keyboard edit
+		// action (F2).  The user would finish the edit by pressing Enter.   The UI would show the
+		// current table cell as the cell that was just edited (this is correct).  When the user
+		// again presses the edit actions, the first editable cell in the current row would start
+		// to be edited (this was incorrect).   This test ensures that the currently selected cell
+		// is edited in this case.
+		//
+
+		init(simpleStructure, pgmBbCat, false);
+
+		int row = 3;
+		int column = model.getNameColumn();
+		assertNull(getComment(3));
+		clickTableCell(getTable(), row, column, 1);
+		performAction(editFieldAction, provider, true);
+
+		assertIsEditingField(row, column);
+
+		setText("Wow");
+		enter();
+
+		assertNotEditingField();
+		assertEquals(1, model.getNumSelectedRows());
+		assertEquals(3, model.getMinIndexSelected());
+		assertEquals("Wow", getFieldName(3));
+
+		performAction(editFieldAction, provider, true);
+		assertIsEditingField(row, column);
+	}
+
+	@Test
+	public void testEditAfterUsingArrowKeys() throws Exception {
+
+		//
+		// This is a regression test.  Using F2 to start an edit would edit the wrong cell after
+		// the user had navigated the table using the left/right arrow keys.
+		//
+
+		init(simpleStructure, pgmBbCat, false);
+
+		int row = 3;
+		int column = model.getNameColumn();
+		assertNull(getComment(3));
+		clickTableCell(getTable(), row, column, 1);
+		assertColumn(column);
+
+		leftArrow();
+		assertColumn(column - 1);
+
+		rightArrow();
+		assertColumn(column);
+
+		performAction(editFieldAction, provider, true);
+		assertIsEditingField(row, column);
+		escape();
 	}
 
 	@Test
@@ -727,6 +753,10 @@ public class StructureEditorProviderTest extends AbstractStructureEditorTest {
 		assertEquals("47", model.getValueAt(15, model.getOffsetColumn()));
 		assertEquals("45", model.getValueAt(15, model.getLengthColumn()));
 		assertEquals("325", model.getLengthAsString());
+	}
+
+	private void runSwingLater(Runnable r) {
+		runSwing(r, false);
 	}
 
 }

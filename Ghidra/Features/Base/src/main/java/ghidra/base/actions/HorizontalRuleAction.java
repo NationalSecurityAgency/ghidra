@@ -18,6 +18,7 @@ package ghidra.base.actions;
 import docking.ActionContext;
 import docking.action.DockingAction;
 import docking.action.MenuData;
+import ghidra.util.HTMLUtilities;
 
 /**
  * An action that can be added to a menu in order to separate menu items into groups
@@ -31,20 +32,29 @@ public class HorizontalRuleAction extends DockingAction {
 	 * 
 	 * @param owner the action owner
 	 * @param topName the name that will appear above the separator bar
-	 * @param bottomName the name that will apppear below the separator bar
+	 * @param bottomName the name that will appear below the separator bar
 	 */
 	public HorizontalRuleAction(String owner, String topName, String bottomName) {
 		super("HorizontalRuleAction: " + ++idCount, owner, false);
 		setEnabled(false);
 
-		// the menu name is both names, one over the other, in a small, light grayish font
+		// The menu name is both names, one over the other, in a small, light grayish font.
 		setMenuBarData(new MenuData(new String[] { "<HTML><CENTER><FONT SIZE=2 COLOR=SILVER>" +
-			topName + "<BR>" + bottomName + "</FONT></CENTER>" }));
+			fixupFirstAmp(
+				HTMLUtilities.escapeHTML(topName) + "<BR>" + HTMLUtilities.escapeHTML(bottomName)) +
+			"</FONT></CENTER>" }));
 
 		// the description is meant to be used for the tooltip and is larger
 		String padding = "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;";
-		setDescription("<HTML><CENTER><B>" + padding + topName + padding + "<B><HR><B>" + padding +
-			bottomName + padding + "</B></CENTER>");
+		setDescription("<HTML><CENTER><B>" + padding + HTMLUtilities.escapeHTML(topName) + padding +
+			"<B><HR><B>" + padding + HTMLUtilities.escapeHTML(bottomName) + padding +
+			"</B></CENTER>");
+	}
+
+	private String fixupFirstAmp(String text) {
+		// add an extra & to replace the one that the MenuData will eat
+		int index = text.indexOf('&');
+		return index < 0 ? text : text.substring(0, index) + "&" + text.substring(index);
 	}
 
 	@Override

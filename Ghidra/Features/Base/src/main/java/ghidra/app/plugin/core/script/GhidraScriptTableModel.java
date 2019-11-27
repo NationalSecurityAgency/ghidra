@@ -199,7 +199,7 @@ class GhidraScriptTableModel extends GDynamicColumnTableModel<ResourceFile, Obje
 
 		@Override
 		public String getColumnName() {
-			return "In Tool";
+			return SCRIPT_ACTION_COLUMN_NAME;
 		}
 
 		@Override

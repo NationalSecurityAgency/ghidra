@@ -26,6 +26,7 @@ import javax.swing.border.Border;
 
 import org.apache.commons.lang3.StringUtils;
 
+import docking.widgets.label.GDLabel;
 import ghidra.feature.vt.api.main.VTMatch;
 import ghidra.feature.vt.gui.filters.*;
 import ghidra.framework.options.SaveState;
@@ -45,7 +46,7 @@ public class LengthFilter extends Filter<VTMatch> {
 	}
 
 	private JComponent createComponent() {
-		final JLabel label = new JLabel("Length Filter: ");
+		final JLabel label = new GDLabel("Length Filter: ");
 
 		Integer defaultValue = DEFAULT_FILTER_VALUE;
 		textField = new FilterFormattedTextField(new IntegerFormatterFactory(false), defaultValue);

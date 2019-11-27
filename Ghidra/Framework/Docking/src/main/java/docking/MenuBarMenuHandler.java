@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,7 +62,7 @@ public class MenuBarMenuHandler extends MenuHandler {
 			return;  // context is not valid, nothing to do
 		}
 
-		tempContext.setSource(event.getSource());
+		tempContext.setSourceObject(event.getSource());
 		final ActionContext finalContext = tempContext;
 
 		// this gives the UI some time to repaint before executing the action

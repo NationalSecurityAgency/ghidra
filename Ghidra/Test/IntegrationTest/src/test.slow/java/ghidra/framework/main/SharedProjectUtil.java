@@ -18,14 +18,12 @@
  */
 package ghidra.framework.main;
 
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
 import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.List;
 
 import javax.swing.*;
 
@@ -239,10 +237,10 @@ public class SharedProjectUtil {
 	}
 
 	private static DockingActionIf getAction(FrontEndTool frontEndTool, String actionName) {
-		List<DockingActionIf> actions =
-			frontEndTool.getDockingActionsByFullActionName(actionName + " (FrontEndPlugin)");
-		assertEquals(1, actions.size());
-		return actions.get(0);
+
+		DockingActionIf action =
+			AbstractDockingTest.getAction(frontEndTool, "FrontEndPlugin", actionName);
+		return action;
 	}
 
 	private static class UtilProjectListener implements ProjectListener {

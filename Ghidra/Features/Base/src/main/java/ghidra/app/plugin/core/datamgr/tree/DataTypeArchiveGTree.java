@@ -53,9 +53,6 @@ public class DataTypeArchiveGTree extends GTree {
 	private MyFolderListener folderListener;
 	private DataTypeTreeExpansionListener cleanupListener = new DataTypeTreeExpansionListener();
 
-	private boolean filterArrays = true;
-	private boolean filterPointers = true;
-
 	public DataTypeArchiveGTree(DataTypeManagerPlugin dataTypeManagerPlugin) {
 		super(new ArchiveRootNode(dataTypeManagerPlugin.getDataTypeManagerHandler()));
 
@@ -65,7 +62,7 @@ public class DataTypeArchiveGTree extends GTree {
 
 		// setting the row height may provide speed improvements, as the tree does not have to
 		// ask for the height for each cell from the renderer.
-		setRowHeight(getHeight(getRootNode(), renderer));
+		setRowHeight(getHeight(getViewRoot(), renderer));
 		setCellRenderer(renderer);
 		Project project = plugin.getTool().getProject();
 		if (project != null) {
@@ -79,7 +76,7 @@ public class DataTypeArchiveGTree extends GTree {
 		addTreeExpansionListener(cleanupListener);
 	}
 
-	private int getHeight(GTreeRootNode rootNode, DataTypeTreeRenderer renderer) {
+	private int getHeight(GTreeNode rootNode, DataTypeTreeRenderer renderer) {
 		Component c = renderer.getTreeCellRendererComponent(getJTree(), rootNode, false, false,
 			false, 0, false);
 		Dimension size = c.getPreferredSize();
@@ -89,7 +86,7 @@ public class DataTypeArchiveGTree extends GTree {
 	@Override
 	public void expandedStateRestored(TaskMonitor monitor) {
 		// walk all of our nodes and reclaim any that aren't expanded
-		GTreeRootNode rootNode = getRootNode();
+		GTreeNode rootNode = getViewRoot();
 		if (rootNode == null) {
 			return; // in a state of flux; been disposed
 		}
@@ -108,7 +105,7 @@ public class DataTypeArchiveGTree extends GTree {
 		if (!isExpanded(node.getTreePath())) {
 			int leafCount = node.getLeafCount();
 			if (node instanceof GTreeLazyNode) {
-				((GTreeLazyNode) node).removeAll();
+				((GTreeLazyNode) node).unloadChildren();
 			}
 			monitor.incrementProgress(leafCount);
 			return;
@@ -122,7 +119,7 @@ public class DataTypeArchiveGTree extends GTree {
 
 	@Override
 	public void dispose() {
-		((ArchiveRootNode) getRootNode()).dispose();
+		((ArchiveRootNode) getModelRoot()).dispose();
 		PluginTool tool = plugin.getTool();
 		if (tool == null) {
 			return; // this can happen when the plugin is disposed off the swing thread
@@ -141,12 +138,14 @@ public class DataTypeArchiveGTree extends GTree {
 	}
 
 	public void enableArrayFilter(boolean enabled) {
-		this.filterArrays = enabled;
+		ArchiveRootNode root = (ArchiveRootNode) getModelRoot();
+		root.setFilterArray(enabled);
 		reloadTree();
 	}
 
 	public void enablePointerFilter(boolean enabled) {
-		this.filterPointers = enabled;
+		ArchiveRootNode root = (ArchiveRootNode) getModelRoot();
+		root.setFilterPointer(enabled);
 		reloadTree();
 	}
 
@@ -159,20 +158,10 @@ public class DataTypeArchiveGTree extends GTree {
 	private void reloadTree() {
 		GTreeState treeState = getTreeState();
 
-		ArchiveRootNode rootNode = (ArchiveRootNode) getRootNode();
-		rootNode.removeAll();
-		// calling getChildCount() will "kick" the root node to reload its children
-		rootNode.getChildCount();
+		ArchiveRootNode rootNode = (ArchiveRootNode) getModelRoot();
+		rootNode.unloadChildren();
 		updateModelFilter();
 		restoreTreeState(treeState);
-	}
-
-	public boolean isFilterPointers() {
-		return filterPointers;
-	}
-
-	public boolean isFilterArrays() {
-		return filterArrays;
 	}
 
 	@Override
@@ -314,7 +303,7 @@ public class DataTypeArchiveGTree extends GTree {
 			GTreeNode node = (GTreeNode) path.getLastPathComponent();
 			if ((node instanceof CategoryNode)) {
 				CategoryNode categoryNode = (CategoryNode) node;
-				categoryNode.removeAll();
+				categoryNode.setChildren(null);
 			}
 		}
 
@@ -337,7 +326,6 @@ public class DataTypeArchiveGTree extends GTree {
 			// Background icon uses the label's color so set it to match the 
 			// tree's background. Otherwise the icon's in the tree might have a 
 			// different background and look odd.
-			label.setBackground(tree.getBackground());
 			MultiIcon multiIcon = new MultiIcon(new BackgroundIcon(ICON_WIDTH, ICON_HEIGHT, false));
 
 			Icon icon = getIcon();
@@ -463,7 +451,7 @@ public class DataTypeArchiveGTree extends GTree {
 
 		@Override
 		public void domainFileStatusChanged(DomainFile file, boolean fileIDset) {
-			List<GTreeNode> archiveNodes = getRootNode().getChildren();
+			List<GTreeNode> archiveNodes = getModelRoot().getChildren();
 			for (GTreeNode treeNode : archiveNodes) {
 				if (treeNode instanceof ProjectArchiveNode) {
 					ProjectArchiveNode projectArchiveNode = (ProjectArchiveNode) treeNode;

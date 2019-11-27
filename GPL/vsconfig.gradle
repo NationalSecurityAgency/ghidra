@@ -1,0 +1,64 @@
+/****************************************************************************
+ * Establish Visual Studio configuration environment for Windows native builds
+ * 
+ * NOTE: We do not rely on the VisualCpp plugin to identify paths since it has
+ * proven in the past to be unreliable when multiple versions of Visual Studio
+ * and SDKs are installed.
+ ****************************************************************************/
+ 
+if (!hasProperty("VISUAL_STUDIO_INSTALL_DIR")) {
+	configureVisualStudio()
+}
+
+def configureVisualStudio() { 
+	
+	if (org.gradle.internal.os.OperatingSystem.current().isWindows()) {
+		
+		// Initialize variables
+		rootProject.ext.VISUAL_STUDIO_INSTALL_DIR = ""
+		rootProject.ext.VISUAL_STUDIO_TOOLS_VERSION_DEFAULT = ""
+		rootProject.ext.VISUAL_STUDIO_SDK_DIR_DEFAULT = ""
+		rootProject.ext.VISUAL_STUDIO_SDK_VERSION_DEFAULT = ""
+		rootProject.ext.VISUAL_STUDIO_SDK_VERSION_OVERRIDE = ""
+		rootProject.ext.VISUAL_STUDIO_VCVARS_CMD = ""
+	
+		// Use vswhere.exe to search for latest Visual Studio installation 
+		println "Searching for latest Visual Studio and required components..."
+		def vswherePath = "C:\\Program Files (x86)\\Microsoft Visual Studio\\Installer\\vswhere.exe"
+		if (!file(vswherePath).exists()) {
+			println "Visual Studio not found!"
+			return
+		}
+		def vswhereOutput = "${vswherePath} -latest -format json".execute().text.trim()
+		def vswhereJson = new groovy.json.JsonSlurper().parseText(vswhereOutput);
+		if (vswhereJson.isEmpty()) {
+			println "Visual Studio not found!"
+			return
+		}
+		def vsInstallDir = vswhereJson[0].installationPath
+		println "  -> Installation Directory: ${vsInstallDir}"
+
+		// Use vcvarsall.bat to determine the latest Visual Studio's default SDK and tool versions
+		def vcvarsPath = "${vsInstallDir}\\VC\\Auxiliary\\Build\\vcvarsall.bat"
+		def vcvarsCmd = "\"${vcvarsPath}\" x86_amd64"
+		def vcvarsEnvCmd = "cmd /v:ON /c ${vcvarsCmd} > nul && cmd /c echo"
+		def toolsVersion = "${vcvarsEnvCmd} !VCToolsVersion!".execute().text.trim()
+		println "  -> VCTools Version (default): ${toolsVersion}"
+		def sdkDir = "${vcvarsEnvCmd} !WindowsSdkDir!".execute().text.trim()
+		println "  -> SDK Directory (default): ${sdkDir}"
+		def sdkVersion = "${vcvarsEnvCmd} !WindowsSDKVersion!".execute().text.trim().replace('\\', '')
+		println "  -> SDK Version (default): ${sdkVersion}"
+		
+		// Check Gradle properties for override values
+		def windowsTargetPlatformVersion = findProperty("WindowsTargetPlatformVersion")
+		println "  -> SDK Version (override): " + (windowsTargetPlatformVersion ?: "N/A")
+		
+		// Save Visual Studio information so other projects can access it
+		rootProject.ext.VISUAL_STUDIO_INSTALL_DIR = vsInstallDir
+		rootProject.ext.VISUAL_STUDIO_TOOLS_VERSION_DEFAULT = toolsVersion
+		rootProject.ext.VISUAL_STUDIO_SDK_DIR_DEFAULT = sdkDir
+		rootProject.ext.VISUAL_STUDIO_SDK_VERSION_DEFAULT = sdkVersion
+		rootProject.ext.VISUAL_STUDIO_SDK_VERSION_OVERRIDE = windowsTargetPlatformVersion
+		rootProject.ext.VISUAL_STUDIO_VCVARS_CMD = vcvarsCmd
+	}
+}

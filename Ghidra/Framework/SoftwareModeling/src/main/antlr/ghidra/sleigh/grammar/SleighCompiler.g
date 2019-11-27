@@ -20,6 +20,7 @@ scope Block {
 @header {
 	import generic.stl.Pair;
 	import generic.stl.VectorSTL;
+	import ghidra.pcodeCPort.context.SleighError;
 	import ghidra.pcodeCPort.opcodes.OpCode;
 	import ghidra.pcodeCPort.semantics.*;
 	import ghidra.pcodeCPort.slgh_compile.*;
@@ -65,7 +66,7 @@ scope Block {
 	}
 
 	private void redefinedError(SleighSymbol sym, Tree t, String what) {
-	    String msg = "symbol " + sym.getName() + " (from " + sym.getLocation() + ") redefined as " + what;
+	    String msg = "symbol '" + sym.getName() + "' (from " + sym.getLocation() + ") redefined as " + what;
 	    reportError(find(t), msg);
 	}
 
@@ -75,17 +76,17 @@ scope Block {
 	}
 
 	private void wrongSymbolTypeError(SleighSymbol sym, Location where, String type, String purpose) {
-	    String msg = sym.getType() + " " + sym + " (defined at " + sym.getLocation() + ") is wrong type (should be " + type + ") in " + purpose;
+	    String msg = sym.getType() + " '" + sym + "' (defined at " + sym.getLocation() + ") is wrong type (should be " + type + ") in " + purpose;
 	    reportError(where, msg);
 	}
 
 	private void undeclaredSymbolError(SleighSymbol sym, Location where, String purpose) {
-	    String msg = sym + " (used in " + purpose + ") is not declared in the pattern list";
+	    String msg = "'" + sym + "' (used in " + purpose + ") is not declared in the pattern list";
 	    reportError(where, msg);
 	}
 
 	private void unknownSymbolError(String text, Location loc, String type, String purpose) {
-	    String msg = "unknown " + type + " " + text + " in " + purpose;
+	    String msg = "unknown " + type + " '" + text + "' in " + purpose;
 	    reportError(loc, msg);
 	}
 
@@ -204,7 +205,7 @@ fielddef
                 long start = $s.value.longValue();
                 long finish = $e.value.longValue();
                 if (finish < start) {
-                    reportError(find($t), "field " + $n.value.getText() + " starts at " + start + " and ends at " + finish);
+                    reportError(find($t), "field '" + $n.value.getText() + "' starts at " + start + " and ends at " + finish);
                 }
                 $fielddef::fieldQuality = new FieldQuality($n.value.getText(), find($t), $s.value.longValue(), $e.value.longValue());
 			}
@@ -425,7 +426,7 @@ typemod
 					space_class type = space_class.valueOf(typeName);
 					$spacedef::quality.type = type;
 				} catch(IllegalArgumentException e) {
-					reportError(find(n), "invalid space type " + typeName);
+					reportError(find(n), "invalid space type '" + typeName + "'");
 				}
 			}
 		}
@@ -445,7 +446,15 @@ wordsizemod
 
 varnodedef
 	:	^(OP_VARNODE s=space_symbol["varnode definition"] offset=integer size=integer l=identifierlist) {
-			sc.defineVarnodes(s, $offset.value.longValue(), $size.value.longValue(), l.first, l.second);
+			if (offset.bitLength() > 64) {
+				throw new SleighError("Unsupported offset: " + String.format("0x\%x", offset),
+					l.second.get(0));
+			}
+			if (size.bitLength() >= 32) {
+				throw new SleighError("Unsupported size: " + String.format("0x\%x", size),
+					l.second.get(0));
+			}
+			sc.defineVarnodes(s, $offset.value.longValue(), $size.value.intValue(), l.first, l.second);
 		}
 	;
 
@@ -563,7 +572,7 @@ macrodef
 	}
 	:	^(t=OP_MACRO n=unbound_identifier["macro"] a=arguments {
 			symbol = sc.createMacro(find(n), n.getText(), a.first, a.second);
-		} s=semantic[env, sc.pcode, $t, false, true]) {
+		} s=semantic[env, null, sc.pcode, $t, false, true]) {
 			if (symbol != null) {
 				sc.buildMacro(symbol, $macrodef::macrobody);
 			}
@@ -612,13 +621,13 @@ constructorlikelist
 	;
 
 constructor
-	:	^(OP_CONSTRUCTOR c=ctorstart e=bitpattern b=contextblock r=ctorsemantic) {
+	:	^(OP_CONSTRUCTOR c=ctorstart e=bitpattern b=contextblock r=ctorsemantic[c]) {
 			sc.buildConstructor(c, e, b, r);
 		}
 	;
 
-ctorsemantic returns [SectionVector value]
-	:	^(t=OP_PCODE p=semantic[env, sc.pcode, $t, true, false]) {       $value = p; }
+ctorsemantic[Constructor ctor] returns [SectionVector value]
+	:	^(t=OP_PCODE p=semantic[env, ctor.location, sc.pcode, $t, true, false]) {       $value = p; }
 	|	^(OP_PCODE OP_UNIMPL) { /*unimpl unimplemented ; */ $value = null; }
 	;
 
@@ -820,7 +829,7 @@ pattern_symbol[String purpose] returns [PatternExpression expr]
             } else if(sym.getType() == symbol_type.operand_symbol) {
                 OperandSymbol os = (OperandSymbol) sym;
                 if (os.getDefiningSymbol() != null && os.getDefiningSymbol().getType() == symbol_type.subtable_symbol) {
-                    reportError(find($s), "Subtable symbol " + sym.getName() + " is not allowed in context block");
+                    reportError(find($s), "Subtable symbol '" + sym.getName() + "' is not allowed in context block");
                 }
                 $expr = os.getPatternExpression();
 			} else if(sym.getType() == symbol_type.start_symbol
@@ -838,7 +847,7 @@ pattern_symbol[String purpose] returns [PatternExpression expr]
 					FamilySymbol z = (FamilySymbol) sym;
 					$expr = z.getPatternValue();
 				} else {
-					reportError(find($s), "Global symbol " + sym.getName() + " is not allowed in action expression");
+					reportError(find($s), "Global symbol '" + sym.getName() + "' is not allowed in action expression");
 				}
 			} else {
 				wrongSymbolTypeError(sym, find($s), "start, end, operand, epsilon, or varnode", purpose);
@@ -899,7 +908,7 @@ cstatement[VectorSTL<ContextChange> r]
 			} else if(sym.getType() == symbol_type.context_symbol) {
 				ContextSymbol t = (ContextSymbol) sym;
 				if (!sc.contextMod(r, t, e)) {
-					reportError(find($id), "Cannot use 'inst_next' to set context variable: " + t.getName());
+					reportError(find($id), "Cannot use 'inst_next' to set context variable: '" + t.getName() + "'");
 				}
 			} else if(sym.getType() == symbol_type.operand_symbol) {
 				OperandSymbol t = (OperandSymbol) sym;
@@ -910,7 +919,7 @@ cstatement[VectorSTL<ContextChange> r]
 		}
 	|	^(OP_APPLY ^(OP_IDENTIFIER id=.) ^(OP_IDENTIFIER arg1=.) ^(OP_IDENTIFIER arg2=.)) {
 			if (!"globalset".equals(id.getText())) {
-				reportError(find($id), "unknown context block function " + id.getText());
+				reportError(find($id), "unknown context block function '" + id.getText() + "'");
 			} else {
 				SleighSymbol sym = sc.findSymbol($arg2.getText());
 				if (sym == null) {
@@ -941,7 +950,7 @@ cstatement[VectorSTL<ContextChange> r]
 		}
 	;
 
-semantic[ParsingEnvironment pe, PcodeCompile pcode, Tree where, boolean sectionsAllowed, boolean isMacroParse] returns [SectionVector rtl]
+semantic[ParsingEnvironment pe, Location containerLoc, PcodeCompile pcode, Tree where, boolean sectionsAllowed, boolean isMacroParse] returns [SectionVector rtl]
 	scope {
 		SectionVector sections;
 		boolean containsMultipleSections;
@@ -966,7 +975,11 @@ semantic[ParsingEnvironment pe, PcodeCompile pcode, Tree where, boolean sections
 	:	^(x=OP_SEMANTIC c=code_block[find($x)] {
 			if (c != null) {
 				if (c.getOpvec().empty() && c.getResult() == null) {
-					pcode.recordNop(find(where));
+				    Location loc = find(where);
+				    if (loc == null) {
+				       loc = containerLoc;
+				    }
+					pcode.recordNop(loc);
 				}
 				if ($semantic::containsMultipleSections) {
 					$semantic::sections = pcode.finalNamedSection($semantic::sections, c);
@@ -1233,7 +1246,17 @@ funcall returns [VectorSTL<OpTpl> value]
 	@init {
 		$Return::noReturn = true;
 	}
-	:	e=expr_apply { $value = (VectorSTL<OpTpl>) e; }
+	:	e=expr_apply {
+			if (e instanceof VectorSTL<?>)
+				$value = (VectorSTL<OpTpl>) e;
+			else {
+				Location loc = null;
+				if (e instanceof ExprTree) {
+					loc = ((ExprTree)e).location;
+				}
+				reportError(loc,"Functional operator requires a return value");
+			}
+		}
 	;
 
 build_stmt returns [VectorSTL<OpTpl> ops]

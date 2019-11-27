@@ -17,10 +17,10 @@ package ghidra.app.plugin.core.script;
 
 import javax.swing.Icon;
 
-import docking.widgets.tree.AbstractGTreeNode;
+import docking.widgets.tree.GTreeNode;
 import resources.ResourceManager;
 
-public class ScriptCategoryNode extends AbstractGTreeNode {
+public class ScriptCategoryNode extends GTreeNode {
 
 	private static Icon OPEN_FOLDER = ResourceManager.loadImage("images/openSmallFolder.png");
 	private static Icon CLOSED_FOLDER = ResourceManager.loadImage("images/closedSmallFolder.png");
@@ -49,7 +49,7 @@ public class ScriptCategoryNode extends AbstractGTreeNode {
 
 	@Override
 	public boolean isLeaf() {
-		return getAllChildCount() == 0;
+		return getChildCount() == 0;
 	}
 
 }

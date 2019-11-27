@@ -111,6 +111,11 @@ public class ElfSectionHeaderConstants {
 
 	// OS Specific Section Types
 
+	/**Android relocation entries w/o explicit addends*/
+	public static final int SHT_ANDROID_REL = 0x60000001;
+	/**Android relocation entries with explicit addends*/
+	public static final int SHT_ANDROID_RELA = 0x60000002;
+
 	/**Object attributes */
 	public static final int SHT_GNU_ATTRIBUTES = 0x6ffffff5;
 	/**GNU-style hash table */

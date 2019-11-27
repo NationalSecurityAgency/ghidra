@@ -21,19 +21,19 @@ import java.util.*;
 import javax.swing.Icon;
 
 import docking.widgets.tree.GTreeNode;
-import docking.widgets.tree.GTreeSlowLoadingNode;
 import ghidra.app.cmd.label.CreateNamespacesCmd;
 import ghidra.app.util.SymbolPath;
 import ghidra.program.model.address.GlobalNamespace;
 import ghidra.program.model.listing.CircularDependencyException;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.*;
+import ghidra.util.HTMLUtilities;
 import ghidra.util.Msg;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.exception.InvalidInputException;
 import ghidra.util.task.TaskMonitor;
 
-public class SymbolNode extends GTreeSlowLoadingNode implements SymbolTreeNode {
+public class SymbolNode extends SymbolTreeNode {
 
 	protected final Program program;
 	protected final Symbol symbol;
@@ -41,6 +41,7 @@ public class SymbolNode extends GTreeSlowLoadingNode implements SymbolTreeNode {
 	private boolean isCut;
 
 	SymbolNode(Program program, Symbol symbol) {
+		super();
 		this.program = program;
 		this.symbol = symbol;
 	}
@@ -137,7 +138,7 @@ public class SymbolNode extends GTreeSlowLoadingNode implements SymbolTreeNode {
 
 	@Override
 	public String getToolTip() {
-		return symbol.getName(true);
+		return "<html>" + HTMLUtilities.escapeHTML(symbol.getName(true));
 	}
 
 	@Override
@@ -169,7 +170,7 @@ public class SymbolNode extends GTreeSlowLoadingNode implements SymbolTreeNode {
 			return this;
 		}
 
-		return SymbolTreeNode.super.findSymbolTreeNode(key, loadChildren, taskMonitor);
+		return super.findSymbolTreeNode(key, loadChildren, taskMonitor);
 	}
 
 	public static SymbolNode createKeyNode(Symbol symbol, String searchSymbolName,
@@ -184,7 +185,7 @@ public class SymbolNode extends GTreeSlowLoadingNode implements SymbolTreeNode {
 		if (symbolType.equals(SymbolType.CLASS)) {
 			return new ClassSymbolNode(program, symbol);
 		}
-		else if (symbolType.equals(SymbolType.CODE)) {
+		else if (symbolType.equals(SymbolType.LABEL)) {
 			return new CodeSymbolNode(program, symbol);
 		}
 		else if (symbolType.equals(SymbolType.FUNCTION)) {

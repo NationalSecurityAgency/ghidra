@@ -84,16 +84,38 @@ public class X86_64_ElfRelocationHandler extends ElfRelocationHandler {
 				value = symbolValue + addend;
 				memory.setLong(relocationAddress, value);
 				break;
-			case X86_64_ElfRelocationConstants.R_X86_64_PC32:
-				symbolValue += addend - offset;
-				int ivalue = (int) (symbolValue & 0xffffffff);
-				memory.setInt(relocationAddress, ivalue);
+			case X86_64_ElfRelocationConstants.R_X86_64_16:
+				value = symbolValue + addend;
+				value = value & 0xffff;
+				memory.setShort(relocationAddress, (short) value);
 				break;
-			// we punt on these because they're not linked yet!
+			case X86_64_ElfRelocationConstants.R_X86_64_8:
+				value = symbolValue + addend;
+				value = value & 0xff;
+				memory.setByte(relocationAddress, (byte) value);
+				break;
+			case X86_64_ElfRelocationConstants.R_X86_64_PC32:
+				value = symbolValue + addend - offset;
+				value = value & 0xffffffff;
+				memory.setInt(relocationAddress, (int) value);
+				break;
+			case X86_64_ElfRelocationConstants.R_X86_64_PC16:
+				value = symbolValue + addend - offset;
+				value = value & 0xffff;
+				memory.setShort(relocationAddress, (short) value);
+				break;
+			case X86_64_ElfRelocationConstants.R_X86_64_PC8:
+				value = symbolValue + addend - offset;
+				value = value & 0xff;
+				memory.setByte(relocationAddress, (byte) value);
+				break;
 			case X86_64_ElfRelocationConstants.R_X86_64_GOT32:
+				value = symbolValue + addend;
+				memory.setInt(relocationAddress, (int) value);
+				break;
 			case X86_64_ElfRelocationConstants.R_X86_64_PLT32:
-				value = symbolValue;
-				memory.setLong(relocationAddress, value);
+				value = symbolValue + addend - offset;
+				memory.setInt(relocationAddress, (int) value);
 				break;
 			case X86_64_ElfRelocationConstants.R_X86_64_GLOB_DAT:
 			case X86_64_ElfRelocationConstants.R_X86_64_JUMP_SLOT:
@@ -108,17 +130,17 @@ public class X86_64_ElfRelocationHandler extends ElfRelocationHandler {
 			case X86_64_ElfRelocationConstants.R_X86_64_32:  // this one complains for unsigned overflow
 			case X86_64_ElfRelocationConstants.R_X86_64_32S: // this one complains for signed overflow
 				symbolValue += addend;
-				ivalue = (int) (symbolValue & 0xffffffff);
-				memory.setInt(relocationAddress, ivalue);
+				value = (symbolValue & 0xffffffff);
+				memory.setInt(relocationAddress, (int) value);
 				break;
 			case X86_64_ElfRelocationConstants.R_X86_64_SIZE32:
-				value = symbolSize;
+				value = symbolSize + addend;
+				value = (value & 0xffffffff);
 				memory.setInt(relocationAddress, (int) value);
 				break;
 			case X86_64_ElfRelocationConstants.R_X86_64_SIZE64:
 				value = symbolSize + addend;
-				ivalue = (int) (value & 0xffffffff);
-				memory.setInt(relocationAddress, ivalue);
+				memory.setLong(relocationAddress, value);
 				break;
 
 			// Thread Local Symbol relocations (unimplemented concept)
@@ -153,8 +175,14 @@ public class X86_64_ElfRelocationHandler extends ElfRelocationHandler {
 				appliedSymbol = false; // symbol not used, symbolIndex of 0 expected
 				dotgot = elfRelocationContext.getGOTValue();
 				value = dotgot + addend - offset;
-				memory.setLong(relocationAddress, value);
+				memory.setInt(relocationAddress, (int) value);
 				break;
+			case X86_64_ElfRelocationConstants.R_X86_64_GOTPCREL:
+				dotgot = elfRelocationContext.getGOTValue();
+				value = symbolValue + dotgot + addend - offset;
+				memory.setInt(relocationAddress, (int) value);
+				break;
+
 			case X86_64_ElfRelocationConstants.R_X86_64_RELATIVE:
 				// word64 for LP64 and specifies word32 for ILP32,
 				// we assume LP64 only.  We probably need a hybrid
@@ -163,14 +191,13 @@ public class X86_64_ElfRelocationHandler extends ElfRelocationHandler {
 				// dl_machine.h
 				// value = (Elf64_64Addr) map->l_addr + reloc->r_addend
 				appliedSymbol = false; // symbol not used, symbolIndex of 0 expected
-				long base = program.getImageBase().getAddressableWordOffset();
+				long imageBaseAdjustment = elfRelocationContext.getImageBaseWordAdjustmentOffset();
 				if (elf.isPreLinked()) {
 					// adjust prelinked value that is already in memory
-					value = memory.getLong(relocationAddress) +
-						elfRelocationContext.getImageBaseWordAdjustmentOffset();
+					value = memory.getLong(relocationAddress) + imageBaseAdjustment;
 				}
 				else {
-					value = base + addend;
+					value = addend + imageBaseAdjustment;
 				}
 				memory.setLong(relocationAddress, value);
 				break;
@@ -182,10 +209,6 @@ public class X86_64_ElfRelocationHandler extends ElfRelocationHandler {
 					"indirect computed relocation not supported", elfRelocationContext.getLog());
 				break;
 
-//			case ElfRelocationConstants.R_X86_64_16:
-//			case ElfRelocationConstants.R_X86_64_PC16:
-//			case ElfRelocationConstants.R_X86_64_8:
-//			case ElfRelocationConstants.R_X86_64_PC8:
 //			case ElfRelocationConstants.R_X86_64_TLSGD:
 //			case ElfRelocationConstants.R_X86_64_TLSLD:
 //			case ElfRelocationConstants.R_X86_64_DTPOFF32:

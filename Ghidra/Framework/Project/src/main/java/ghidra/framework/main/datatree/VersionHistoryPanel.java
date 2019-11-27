@@ -21,7 +21,6 @@ import java.awt.dnd.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.IOException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -31,32 +30,34 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
 
-import docking.*;
+import docking.ActionContext;
 import docking.action.*;
 import docking.dnd.*;
 import docking.widgets.OptionDialog;
 import docking.widgets.table.*;
+import ghidra.app.util.GenericHelpTopics;
 import ghidra.framework.client.ClientUtil;
 import ghidra.framework.main.GetVersionedObjectTask;
 import ghidra.framework.model.*;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.store.ItemCheckoutStatus;
 import ghidra.framework.store.Version;
-import ghidra.util.HTMLUtilities;
-import ghidra.util.Msg;
+import ghidra.util.*;
 import ghidra.util.task.*;
 
 /**
- * Panel that shows version history in a JTable.
+ * Panel that shows version history in a JTable
  */
 public class VersionHistoryPanel extends JPanel implements Draggable {
+
+	private static final HelpLocation HELP =
+		new HelpLocation(GenericHelpTopics.VERSION_CONTROL, "Show History");
 
 	private PluginTool tool;
 	private DomainFile domainFile;
 	private String domainFilePath;
 	private VersionHistoryTableModel tableModel;
 	private GTable table;
-	private SimpleDateFormat formatter;
 
 	private DragSource dragSource;
 	private DragGestureAdapter dragGestureAdapter;
@@ -79,13 +80,11 @@ public class VersionHistoryPanel extends JPanel implements Draggable {
 	 * @param tool tool
 	 * @param domainFile domain file
 	 * @param enableUserInteraction if true Draggable support will be enabled
-	 * @throws IOException
 	 */
 	VersionHistoryPanel(PluginTool tool, DomainFile domainFile, boolean enableUserInteraction) {
 		super(new BorderLayout());
 		this.tool = tool;
 		create();
-		formatter = new SimpleDateFormat("yyyy MMM dd hh:mm aaa");
 		if (enableUserInteraction) {
 			setUpDragSite();
 			table.addMouseListener(new MyMouseListener());
@@ -94,11 +93,11 @@ public class VersionHistoryPanel extends JPanel implements Draggable {
 	}
 
 	/**
-	 * Set the domain file to show its history.
+	 * Set the domain file to show its history
+	 * @param domainFile the file
 	 */
 	public void setDomainFile(DomainFile domainFile) {
 		this.domainFile = domainFile;
-		domainFilePath = null;
 		if (domainFile != null) {
 			this.domainFilePath = domainFile.getPathname();
 		}
@@ -122,21 +121,25 @@ public class VersionHistoryPanel extends JPanel implements Draggable {
 	}
 
 	/**
-	 * Add the list selection listener to the history table.
+	 * Add the list selection listener to the history table
+	 * @param selectionListener the listener
 	 */
-	public void addListSelectionListener(ListSelectionListener listener1) {
-		table.getSelectionModel().addListSelectionListener(listener1);
+	public void addListSelectionListener(ListSelectionListener selectionListener) {
+		table.getSelectionModel().addListSelectionListener(selectionListener);
 	}
 
 	/**
 	 * Remove the list selection listener from history table.
+	 * @param selectionListener the listener
 	 */
-	public void removeListSelectionListener(ListSelectionListener listener1) {
-		table.getSelectionModel().removeListSelectionListener(listener1);
+	public void removeListSelectionListener(ListSelectionListener selectionListener) {
+		table.getSelectionModel().removeListSelectionListener(selectionListener);
 	}
 
 	/**
 	 * Get the domain object for the selected version.
+	 * @param consumer the consumer
+	 * @param readOnly true if read only
 	 * @return null if there is no selection
 	 */
 	public DomainObject getSelectedVersion(Object consumer, boolean readOnly) {
@@ -148,16 +151,10 @@ public class VersionHistoryPanel extends JPanel implements Draggable {
 		return null;
 	}
 
-	/**
-	 * Return whether a version is selected.
-	 */
 	public boolean isVersionSelected() {
 		return !table.getSelectionModel().isSelectionEmpty();
 	}
 
-	/**
-	 * Get the version number that was selected.
-	 */
 	public int getSelectedVersionNumber() {
 		int row = table.getSelectedRow();
 		if (row >= 0) {
@@ -167,33 +164,21 @@ public class VersionHistoryPanel extends JPanel implements Draggable {
 		return -1;
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.util.bean.dnd.Draggable#dragCanceled()
-	 */
 	@Override
 	public void dragCanceled(DragSourceDropEvent event) {
 		// no-op
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.util.bean.dnd.Draggable#getDragAction()
-	 */
 	@Override
 	public int getDragAction() {
 		return dragAction;
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.util.bean.dnd.Draggable#getDragSourceListener()
-	 */
 	@Override
 	public DragSourceListener getDragSourceListener() {
 		return dragSourceAdapter;
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.util.bean.dnd.Draggable#getTransferable(java.awt.Point)
-	 */
 	@Override
 	public Transferable getTransferable(Point p) {
 		int row = table.rowAtPoint(p);
@@ -204,9 +189,6 @@ public class VersionHistoryPanel extends JPanel implements Draggable {
 		return null;
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.util.bean.dnd.Draggable#isStartDragOk(java.awt.dnd.DragGestureEvent)
-	 */
 	@Override
 	public boolean isStartDragOk(DragGestureEvent e) {
 		int row = table.rowAtPoint(e.getDragOrigin());
@@ -216,9 +198,6 @@ public class VersionHistoryPanel extends JPanel implements Draggable {
 		return false;
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.util.bean.dnd.Draggable#move()
-	 */
 	@Override
 	public void move() {
 		// no-op
@@ -363,6 +342,38 @@ public class VersionHistoryPanel extends JPanel implements Draggable {
 		openWith(null);
 	}
 
+	public List<DockingActionIf> createPopupActions() {
+
+		List<DockingActionIf> list = new ArrayList<>();
+		list.add(new DeleteAction());
+
+		Project project = tool.getProject();
+		ToolChest toolChest = project.getLocalToolChest();
+		if (toolChest == null) {
+			return list;
+		}
+
+		ToolTemplate[] templates = toolChest.getToolTemplates();
+		if (templates.length == 0) {
+			return list;
+		}
+
+		list.add(new OpenDefaultAction());
+		for (ToolTemplate toolTemplate : templates) {
+			list.add(new OpenWithAction(toolTemplate.getName()));
+		}
+
+		return list;
+	}
+
+	GTable getTable() {
+		return table;
+	}
+
+//==================================================================================================
+// Inner Classes
+//==================================================================================================	
+
 	private class MyCellRenderer extends GTableCellRenderer {
 
 		@Override
@@ -375,7 +386,7 @@ public class VersionHistoryPanel extends JPanel implements Draggable {
 			int col = data.getColumnModelIndex();
 
 			if (value instanceof Date) {
-				setText(formatter.format((Date) value));
+				setText(DateUtils.formatDateTimestamp((Date) value));
 			}
 
 			setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 0));
@@ -398,36 +409,11 @@ public class VersionHistoryPanel extends JPanel implements Draggable {
 
 	}
 
-	public void addPopupActions(DialogComponentProvider provider) {
-		provider.addAction(new DeleteAction());
-	}
-
-	public List<DockingActionIf> getDockingActions(ActionContext currentContext) {
-		List<DockingActionIf> list = new ArrayList<>(table.getDefaultDockingActions());
-		Project project = tool.getProject();
-		ToolChest toolChest = project.getLocalToolChest();
-		if (toolChest == null) {
-			return list;
-		}
-
-		ToolTemplate[] templates = toolChest.getToolTemplates();
-		if (templates.length == 0) {
-			return list;
-		}
-
-		ToolTemplate defaultConfig = tool.getToolServices().getDefaultToolTemplate(domainFile);
-		if (defaultConfig != null) {
-			list.add(new OpenDefaultAction());
-		}
-		for (final ToolTemplate toolTemplate : templates) {
-			list.add(new OpenWithAction(toolTemplate.getName()));
-		}
-		return list;
-	}
-
 	private abstract class HistoryTableAction extends DockingAction {
+
 		HistoryTableAction(String name) {
 			super(name, "Version History Panel", false);
+			setHelpLocation(HELP);
 		}
 
 		@Override
@@ -436,6 +422,15 @@ public class VersionHistoryPanel extends JPanel implements Draggable {
 			if (mouseEvent == null) {
 				return false;
 			}
+
+			if (context.getSourceComponent() != table) {
+				return false;
+			}
+
+			if (domainFile == null) {
+				return false;
+			}
+
 			int rowAtPoint = table.rowAtPoint(mouseEvent.getPoint());
 			return rowAtPoint >= 0;
 		}
@@ -479,8 +474,6 @@ public class VersionHistoryPanel extends JPanel implements Draggable {
 			setDescription("Opens the version using the " + toolName + " tool.");
 			MenuData data = new MenuData(new String[] { "Open With", toolName }, "AAB");
 			setPopupMenuData(data);
-			DockingWindowManager dwm = DockingWindowManager.getInstance(table);
-			dwm.setMenuGroup(new String[] { "Open With" }, "AAB", "2");
 		}
 
 		@Override
@@ -526,9 +519,4 @@ public class VersionHistoryPanel extends JPanel implements Draggable {
 		}
 
 	}
-
-	GTable getTable() {
-		return table;
-	}
-
 }

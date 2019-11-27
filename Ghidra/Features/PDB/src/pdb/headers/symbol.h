@@ -20,23 +20,24 @@
 #include "dia2.h"
 #include "diacreate.h"
 #include "cvconst.h"
+#include <string>
+#include <atlcomcli.h>
 
-BSTR          getName(IDiaSymbol * pSymbol);
-BSTR          getUndecoratedName(IDiaSymbol * pSymbol);
-DWORD         getRVA(IDiaSymbol * pSymbol);
-ULONGLONG     getLength(IDiaSymbol * pSymbol);
-DWORD         getTag(IDiaSymbol * pSymbol);
-BSTR          getTagAsString(IDiaSymbol * pSymbol);
-DWORD         getKind(IDiaSymbol * pSymbol);
-BSTR          getKindAsString(IDiaSymbol * pSymbol);
-DWORD         getUdtKind(IDiaSymbol * pSymbol);
-LONG          getOffset(IDiaSymbol * pSymbol);
-DWORD         getIndex(IDiaSymbol * pSymbol);
-wchar_t *     getValue(IDiaSymbol * pSymbol);
-DWORD         getBaseType(IDiaSymbol * pSymbol);
-BSTR          getBaseTypeAsString(IDiaSymbol * pSymbol);
-IDiaSymbol *  getType(IDiaSymbol * pSymbol);
-BSTR          getTypeAsString(IDiaSymbol * pSymbol);
+std::wstring   getName(IDiaSymbol& pSymbol);
+std::wstring   getUndecoratedName(IDiaSymbol& pSymbol);
+DWORD          getRVA(IDiaSymbol& pSymbol);
+ULONGLONG      getLength(IDiaSymbol& pSymbol);
+DWORD          getTag(IDiaSymbol& pSymbol);
+std::wstring   getTagAsString(IDiaSymbol& pSymbol);
+DWORD          getKind(IDiaSymbol& pSymbol);
+std::wstring   getKindAsString(IDiaSymbol& pSymbol);
+DWORD          getUdtKind(IDiaSymbol& pSymbol);
+LONG           getOffset(IDiaSymbol& pSymbol);
+DWORD          getIndex(IDiaSymbol& pSymbol);
+std::wstring   getValue(IDiaSymbol& pSymbol);
+std::wstring   getBaseTypeAsString(IDiaSymbol& pSymbol);
+CComPtr<IDiaSymbol> getType(IDiaSymbol& pSymbol);
+std::wstring   getTypeAsString(IDiaSymbol& pSymbol);
 
 bool          isScopeSym( DWORD tag );
 

@@ -17,10 +17,8 @@ package ghidra.util;
 
 import static ghidra.util.HTMLUtilities.HTML;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
 
 import java.awt.Color;
-import java.util.Arrays;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -53,7 +51,7 @@ public class HTMLUtilitiesTest {
 		String s = "This text has<BR>an existing BR tag";
 		String html = HTMLUtilities.toHTML(s);
 		assertEquals(HTML + s, html);
-		assertLogMessage("cannot", "wrap");
+		spyLogger.assertLogMessage("cannot", "wrap");
 	}
 
 	@Test
@@ -61,7 +59,7 @@ public class HTMLUtilitiesTest {
 		String s = "This text has<BR>\nan existing BR tag and a newline";
 		String html = HTMLUtilities.toHTML(s);
 		assertEquals(HTML + s, html);
-		assertLogMessage("cannot", "wrap");
+		spyLogger.assertLogMessage("cannot", "wrap");
 	}
 
 	@Test
@@ -140,16 +138,6 @@ public class HTMLUtilitiesTest {
 		assertEquals("#FF0000", rgb);
 	}
 
-	private void assertLogMessage(String... words) {
-		for (String message : spyLogger) {
-			if (StringUtilities.containsAllIgnoreCase(message, words)) {
-				return;
-			}
-		}
-
-		fail("Did not find log message containing all these words: " + Arrays.toString(words));
-	}
-
 	@Test
 	public void testLinkPlaceholder() {
 		String placeholderStr =
@@ -172,5 +160,18 @@ public class HTMLUtilitiesTest {
 			HTMLUtilities.wrapWithLinkPlaceholder("Stuff inside <b>link</b> tag", "test");
 		String htmlStr = HTMLUtilities.convertLinkPlaceholdersToHyperlinks(placeholderStr);
 		assertEquals("<A HREF=\"test\">Stuff inside <b>link</b> tag</A>", htmlStr);
+	}
+
+	@Test
+	public void testEscapeHTML() {
+		assertEquals("abc", HTMLUtilities.escapeHTML("abc"));
+		assertEquals("&#x2222;", HTMLUtilities.escapeHTML("\u2222"));
+
+		// unicode char above 0xffff encoded with 2 utf-16 characters
+		assertEquals("&#x1F344;", HTMLUtilities.escapeHTML("\uD83C\uDF44"));
+
+		assertEquals("&lt;abc&gt;", HTMLUtilities.escapeHTML("<abc>"));
+		assertEquals("a&amp;b", HTMLUtilities.escapeHTML("a&b"));
+
 	}
 }

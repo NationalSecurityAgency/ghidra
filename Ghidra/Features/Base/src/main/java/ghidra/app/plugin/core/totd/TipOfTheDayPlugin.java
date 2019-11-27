@@ -22,11 +22,12 @@ import java.util.List;
 import docking.ActionContext;
 import docking.action.DockingAction;
 import docking.action.MenuData;
+import docking.tool.ToolConstants;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.framework.main.FrontEndOnly;
 import ghidra.framework.plugintool.*;
-import ghidra.framework.plugintool.util.*;
+import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.framework.preferences.Preferences;
 import ghidra.util.HelpLocation;
 import ghidra.util.SystemUtilities;
@@ -63,7 +64,7 @@ public class TipOfTheDayPlugin extends Plugin implements FrontEndOnly {
 			ToolConstants.HELP_CONTENTS_MENU_GROUP));
 
 		action.setEnabled(true);
-		action.setHelpLocation(new HelpLocation("Tool", "Tip_of_the_day"));
+		action.setHelpLocation(new HelpLocation(ToolConstants.TOOL_HELP_TOPIC, "Tip_of_the_day"));
 		tool.addAction(action);
 
 		List<String> tips = null;

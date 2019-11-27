@@ -32,15 +32,17 @@ public class ArchiveNode extends CategoryNode {
 	protected ArchiveNodeCategoryChangeListener listener;
 	private DataTypeManager dataTypeManager; // may be null
 
-	public ArchiveNode(Archive archive) {
+	public ArchiveNode(Archive archive, ArrayPointerFilterState filterState) {
 		this(archive, archive.getDataTypeManager() == null ? null
-				: archive.getDataTypeManager().getRootCategory());
+				: archive.getDataTypeManager().getRootCategory(),
+			filterState);
 		this.dataTypeManager = archive.getDataTypeManager();
 		installDataTypeManagerListener();
 	}
 
-	protected ArchiveNode(Archive archive, Category rootCategory) {
-		super(rootCategory);
+	protected ArchiveNode(Archive archive, Category rootCategory,
+			ArrayPointerFilterState filterState) {
+		super(rootCategory, filterState);
 		this.archive = archive;
 	}
 
@@ -51,7 +53,7 @@ public class ArchiveNode extends CategoryNode {
 	protected void dataTypeManagerChanged() {
 		installDataTypeManagerListener();
 		// old children are no longer valid--clear the cache and fire a node structure changed event
-		removeAll();
+		setChildren(null);
 		nodeChanged(); // notify that this nodes display data has changed
 		structureChanged(); // notify that his children have been refreshed and the tree cache needs to be wiped.
 
@@ -61,7 +63,6 @@ public class ArchiveNode extends CategoryNode {
 		if (dataTypeManager == null) {
 			return; // some nodes do not have DataTypeManagers, like InvalidFileArchives
 		}
-
 		dataTypeManager.removeDataTypeManagerListener(listener);
 		dataTypeManager = archive.getDataTypeManager();
 		listener = new ArchiveNodeCategoryChangeListener();
@@ -112,8 +113,7 @@ public class ArchiveNode extends CategoryNode {
 	}
 
 	public void structureChanged() {
-		removeAll();
-		getTree().scheduleFilterTask(this);
+		setChildren(null);
 	}
 
 	public void nodeChanged() {
@@ -206,7 +206,7 @@ public class ArchiveNode extends CategoryNode {
 	public CategoryNode findCategoryNode(Category localCategory, boolean loadChildren) {
 
 		// if we don't have to loadChildren and we are not loaded get out.
-		if (!loadChildren && !isChildrenLoadedOrInProgress()) {
+		if (!loadChildren && !isLoaded()) {
 			return null;
 		}
 
@@ -223,12 +223,12 @@ public class ArchiveNode extends CategoryNode {
 			return null;
 		}
 
-		CategoryNode node = findCategoryNode(parentCategory);
+		CategoryNode node = findCategoryNode(parentCategory, loadChildren);
 		if (node == null) {
 			return null;
 		}
 
-		List<GTreeNode> children = node.getAllChildren();
+		List<GTreeNode> children = node.getChildren();
 		for (GTreeNode child : children) {
 			if (!(child instanceof CategoryNode)) {
 				continue;

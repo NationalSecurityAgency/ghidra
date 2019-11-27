@@ -15,22 +15,23 @@
  */
 package ghidra.app.plugin.core.datamgr.util;
 
-import java.net.URL;
 import java.util.*;
 
+import org.junit.Before;
 import org.junit.Test;
 
-import generic.test.AbstractGenericTest;
-import ghidra.app.plugin.core.datamgr.archive.SourceArchive;
-import ghidra.docking.settings.Settings;
-import ghidra.docking.settings.SettingsDefinition;
-import ghidra.program.model.data.*;
+import generic.test.AbstractGTest;
+import ghidra.program.model.data.DataType;
 import ghidra.program.model.data.DataTypeComparator;
-import ghidra.program.model.mem.MemBuffer;
-import ghidra.util.*;
-import ghidra.util.exception.DuplicateNameException;
+import ghidra.program.model.data.TestDoubleDataType;
+import ghidra.util.UniversalIdGenerator;
 
 public class DataTypeUtilsTest {
+
+	@Before
+	public void setUp() {
+		UniversalIdGenerator.initialize();
+	}
 
 	@Test
 	public void testDataSearch() throws Exception {
@@ -43,7 +44,7 @@ public class DataTypeUtilsTest {
 		final List<DataType> data = new ArrayList<>();
 
 		for (String element : TEST_DATA) {
-			data.add(new DataTypeDummy(element));
+			data.add(new FakeDataType(element));
 		}
 
 		// sort them how our data will be sorted
@@ -110,260 +111,18 @@ public class DataTypeUtilsTest {
 		List<DataType> actualMatches =
 			DataTypeUtils.getMatchingSubList(text, text + endChar, sourceData);
 
-		AbstractGenericTest.assertListEqualUnordered(null, expectedMatches, actualMatches);
+		AbstractGTest.assertListEqualUnordered(null, expectedMatches, actualMatches);
 	}
 
-	private class DataTypeDummy implements DataType {
-		String wrappedString;
-		UniversalID id;
+	private class FakeDataType extends TestDoubleDataType {
 
-		DataTypeDummy(String wrappedString) {
-			this.wrappedString = wrappedString;
-			id = UniversalIdGenerator.nextID();
-		}
-
-		@Override
-		public String toString() {
-			return wrappedString;
-		}
-
-		@Override
-		public DataTypeManager getDataTypeManager() {
-			return null;
-		}
-
-		@Override
-		public String getDisplayName() {
-			return "This is a wrapper for: " + wrappedString;
-		}
-
-		@Override
-		public String getName() {
-			return wrappedString;
-		}
-
-		@Override
-		public boolean isNotYetDefined() {
-			return false;
-		}
-
-		@Override
-		public boolean isDynamicallySized() {
-			return false;
+		FakeDataType(String name) {
+			super(name);
 		}
 
 		@Override
 		public String getPathName() {
-			return "/" + wrappedString;
-		}
-
-		@Override
-		public SettingsDefinition[] getSettingsDefinitions() {
-			return null;
-		}
-
-		@Override
-		public Settings getDefaultSettings() {
-			return null;
-		}
-
-		@Override
-		public CategoryPath getCategoryPath() {
-			return null;
-		}
-
-		@Override
-		public DataTypePath getDataTypePath() {
-			return null;
-		}
-
-		@Override
-		public void setCategoryPath(CategoryPath path) throws DuplicateNameException {
-			// no-op
-		}
-
-		@Override
-		public void setName(String name) throws InvalidNameException, DuplicateNameException {
-			// no-op
-		}
-
-		@Override
-		public void setNameAndCategory(CategoryPath path, String name)
-				throws InvalidNameException, DuplicateNameException {
-			// no-op
-		}
-
-		@Override
-		public String getMnemonic(Settings settings) {
-			return null;
-		}
-
-		@Override
-		public int getLength() {
-			return 0;
-		}
-
-		@Override
-		public String getDescription() {
-			return null;
-		}
-
-		@Override
-		public void setDescription(String description) throws UnsupportedOperationException {
-			throw new UnsupportedOperationException(
-				getClass().getName() + " doesn't allow the description to be changed.");
-		}
-
-		@Override
-		public URL getDocs() {
-			return null;
-		}
-
-		@Override
-		public Object getValue(MemBuffer buf, Settings settings, int length) {
-			return null;
-		}
-
-		@Override
-		public Class<?> getValueClass(Settings settings) {
-			return null;
-		}
-
-		@Override
-		public String getRepresentation(MemBuffer buf, Settings settings, int length) {
-			return null;
-		}
-
-		@Override
-		public boolean isDeleted() {
-			return false;
-		}
-
-		@Override
-		public boolean isEquivalent(DataType dt) {
-			return false;
-		}
-
-		@Override
-		public void dataTypeSizeChanged(DataType dt) {
-			// no-op
-		}
-
-		@Override
-		public void dataTypeDeleted(DataType dt) {
-			// no-op
-		}
-
-		@Override
-		public void dataTypeReplaced(DataType oldDt, DataType newDt) {
-			// no-op
-		}
-
-		@Override
-		public void setDefaultSettings(Settings settings) {
-			// no-op
-		}
-
-		@Override
-		public void addParent(DataType dt) {
-			// no-op
-		}
-
-		@Override
-		public void removeParent(DataType dt) {
-			// no-op
-		}
-
-		@Override
-		public void dataTypeNameChanged(DataType dt, String oldName) {
-			// no-op
-		}
-
-		@Override
-		public DataType[] getParents() {
-			return null;
-		}
-
-		@Override
-		public boolean dependsOn(DataType dt) {
-			return false;
-		}
-
-		@Override
-		public String getDefaultLabelPrefix() {
-			return null;
-		}
-
-		@Override
-		public String getDefaultAbbreviatedLabelPrefix() {
-			return null;
-		}
-
-		@Override
-		public String getDefaultLabelPrefix(MemBuffer buf, Settings settings, int len,
-				DataTypeDisplayOptions options) {
-			return null;
-		}
-
-		@Override
-		public String getDefaultOffcutLabelPrefix(MemBuffer buf, Settings settings, int len,
-				DataTypeDisplayOptions options, int offcutLength) {
-			return null;
-		}
-
-		@Override
-		public long getLastChangeTimeInSourceArchive() {
-			return DataType.NO_SOURCE_SYNC_TIME;
-		}
-
-		@Override
-		public long getLastChangeTime() {
-			return DataType.NO_LAST_CHANGE_TIME;
-		}
-
-		@Override
-		public SourceArchive getSourceArchive() {
-			return null;
-		}
-
-		@Override
-		public UniversalID getUniversalID() {
-			return id;
-		}
-
-		@Override
-		public void replaceWith(DataType dataType) {
-			// no-op
-		}
-
-		@Override
-		public void setLastChangeTime(long lastChangeTime) {
-			// no-op
-		}
-
-		@Override
-		public void setLastChangeTimeInSourceArchive(long lastChangeTimeInSourceArchive) {
-			// no-op
-		}
-
-		@Override
-		public void setSourceArchive(SourceArchive archive) {
-			// no-op
-		}
-
-		@Override
-		public DataType clone(DataTypeManager dtm) {
-			return this;
-		}
-
-		@Override
-		public DataType copy(DataTypeManager dtm) {
-			return this;
-		}
-
-		@Override
-		public int getAlignment() {
-			return 1;
+			return "/" + getName();
 		}
 	}
 }

@@ -33,7 +33,7 @@ import ghidra.program.model.symbol.SourceType;
 import ghidra.program.model.util.AcyclicCallGraphBuilder;
 import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
-import ghidra.util.graph.DependencyGraph;
+import ghidra.util.graph.AbstractDependencyGraph;
 import ghidra.util.task.TaskMonitor;
 
 public class DecompilerCallConventionAnalyzer extends AbstractAnalyzer {
@@ -138,7 +138,7 @@ public class DecompilerCallConventionAnalyzer extends AbstractAnalyzer {
 			monitor.setMessage("Analyzing Call Hierarchy...");
 			AcyclicCallGraphBuilder builder =
 				new AcyclicCallGraphBuilder(program, functionEntries, true);
-			DependencyGraph<Address> graph = builder.getDependencyGraph(monitor);
+			AbstractDependencyGraph<Address> graph = builder.getDependencyGraph(monitor);
 			if (graph.isEmpty()) {
 				return;
 			}

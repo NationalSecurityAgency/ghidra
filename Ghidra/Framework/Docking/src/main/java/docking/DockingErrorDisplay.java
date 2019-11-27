@@ -19,6 +19,7 @@ import java.awt.Component;
 import java.awt.Window;
 import java.io.*;
 
+import docking.widgets.OkDialog;
 import docking.widgets.OptionDialog;
 import ghidra.util.*;
 import ghidra.util.exception.MultipleCauses;
@@ -97,7 +98,7 @@ public class DockingErrorDisplay implements ErrorDisplay {
 			dialog = createErrorDialog(title, message, throwable, messageString);
 		}
 		else {
-			dialog = new OptionDialog(title, messageString, dialogType, null);
+			dialog = new OkDialog(title, messageString, dialogType);
 		}
 		DockingWindowManager.showDialog(parent, dialog);
 	}

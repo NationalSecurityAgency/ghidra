@@ -1,4 +1,3 @@
 ##VERSION: 2.0
-.classpath||NONE||||END|
-.project||NONE||||END|
 build.gradle||GHIDRA||||END|
+src/test.slow/resources/ghidra/pcodeCPort/slgh_compile/pcode1.xml||GHIDRA||||END|

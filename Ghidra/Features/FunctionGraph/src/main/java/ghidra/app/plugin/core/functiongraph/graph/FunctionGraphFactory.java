@@ -27,6 +27,7 @@ import ghidra.app.plugin.core.functiongraph.graph.layout.*;
 import ghidra.app.plugin.core.functiongraph.graph.vertex.FGVertex;
 import ghidra.app.plugin.core.functiongraph.graph.vertex.ListingFunctionGraphVertex;
 import ghidra.app.plugin.core.functiongraph.mvc.*;
+import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.block.*;
 import ghidra.program.model.listing.Function;
@@ -131,6 +132,7 @@ public class FunctionGraphFactory {
 	 * 
 	 * @param function the function to graph
 	 * @param controller the controller needed by the function graph
+	 * @param program the function's program
 	 * @param monitor the task monitor
 	 * @return the new graph
 	 * @throws CancelledException if the task is cancelled via the monitor
@@ -313,6 +315,10 @@ public class FunctionGraphFactory {
 
 			FlowType flowType = codeBlock.getFlowType();
 			boolean isEntry = isEntry(codeBlock);
+			Address cbStart = codeBlock.getFirstStartAddress();
+			if (cbStart.equals(function.getEntryPoint())) {
+				isEntry = true;
+			}
 
 			FGVertex vertex =
 				new ListingFunctionGraphVertex(controller, codeBlock, flowType, isEntry);

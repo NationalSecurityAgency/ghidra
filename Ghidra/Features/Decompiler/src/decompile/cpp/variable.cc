@@ -99,6 +99,8 @@ void HighVariable::updateType(void) const
   Varnode *vn;
 
   if ((highflags&HighVariable::typedirty)==0) return; // Type is up to date
+  highflags &= ~HighVariable::typedirty; // Mark type as clean
+  if ((highflags & type_finalized)!=0) return;	// Type has been finalized
   vn = getTypeRepresentative();
 
   type = vn->getType();
@@ -106,7 +108,6 @@ void HighVariable::updateType(void) const
   flags &= ~Varnode::typelock;
   if (vn->isTypeLock())
     flags |= Varnode::typelock;
-  highflags &= ~HighVariable::typedirty; // Mark type as clean
 }
 
 /// Compare two Varnode objects based just on their storage address
@@ -196,6 +197,16 @@ void HighVariable::remove(Varnode *vn)
       return;
     }
   }
+}
+
+/// The data-type its dirtying mechanism is disabled.  The data-type will not change, unless
+/// this method is called again.
+/// \param tp is the data-type to set
+void HighVariable::finalizeDatatype(Datatype *tp)
+
+{
+  type = tp;
+  highflags |= type_finalized;
 }
 
 /// The lists of members are merged and the other HighVariable is deleted.
@@ -348,23 +359,28 @@ int4 HighVariable::instanceIndex(const Varnode *vn) const
   return -1;
 }
 
-// Varnode *HighVariable::findGlobalRep(void) const
+#ifdef MERGEMULTI_DEBUG
+/// \brief Check that there are no internal Cover intersections within \b this
+///
+/// Look for any pair of Varnodes whose covers intersect, but they are not
+/// COPY shadows.  Throw an exception in this case.
+void HighVariable::verifyCover(void) const
 
-// {
-//   vector<Varnode *>::const_iterator iter;
-//   Varnode *vn = (Varnode *)0;
-//   Varnode *vn2;
+{
+  Cover accumCover;
 
-//   for(iter=inst.begin();iter!=inst.end();++iter) {
-//     vn2 = *iter;
-//     if (!vn2->getSpace()->globalDiscovery())
-//       continue;
-//     if (vn==(Varnode *)0)
-//       vn = vn2;
-//     else {
-//       if (vn->getAddr()!=vn2->getAddr()) // Not a consistent address
-// 	return (Varnode *)0;
-//     }
-//   }
-//   return vn;
-// }
+  for(int4 i=0;i<inst.size();++i) {
+    Varnode *vn = inst[i];
+    if (accumCover.intersect(*vn->getCover()) == 2) {
+      for(int4 j=0;j<i;++j) {
+	Varnode *otherVn = inst[j];
+	if (otherVn->getCover()->intersect(*vn->getCover())==2) {
+	  if (!otherVn->copyShadow(vn))
+	    throw LowlevelError("HighVariable has internal intersection");
+	}
+      }
+    }
+    accumCover.merge(*vn->getCover());
+  }
+}
+#endif

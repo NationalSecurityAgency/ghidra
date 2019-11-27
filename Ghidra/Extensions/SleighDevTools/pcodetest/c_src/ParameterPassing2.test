@@ -1,0 +1,52 @@
+#include "pcode_test.h"
+
+TEST pcode_PP2_1_OrderingIntShortChar_Main()
+{
+	extern i4 pcode_PP2_1_OrderingIntShortChar(i4 i, i2 s, i1 c);
+	ASSERTI4(pcode_PP2_1_OrderingIntShortChar(1, 2, 3), 1); 
+	ASSERTI4(pcode_PP2_1_OrderingIntShortChar(I4_MAX, I2_MAX, I1_MAX), -2147450754); 
+	ASSERTI4(pcode_PP2_1_OrderingIntShortChar(I4_MIN, I2_MIN, I1_MIN), -128); 
+}
+
+TEST pcode_PP2_2_OrderingShortIntChar_Main()
+{
+	extern i4 pcode_PP2_2_OrderingShortIntChar(i2 s, i4 i, i1 c);
+	ASSERTI4(pcode_PP2_2_OrderingShortIntChar(2, 1, 3), 1); 
+	ASSERTI4(pcode_PP2_2_OrderingShortIntChar(I2_MAX, I4_MAX, I1_MAX), -2147450754); 
+	ASSERTI4(pcode_PP2_2_OrderingShortIntChar(I2_MIN, I4_MIN, I1_MIN), -128); 
+}
+
+TEST pcode_PP2_3_OrderingIntCharShort_Main()
+{
+	extern i4 pcode_PP2_3_OrderingIntCharShort(i4 i, i1 c, i2 s);
+	ASSERTI4(pcode_PP2_3_OrderingIntCharShort(1, 3, 2), -1); 
+	ASSERTI4(pcode_PP2_3_OrderingIntCharShort(I4_MAX, I1_MAX, I2_MAX), -2147450754); 
+	ASSERTI4(pcode_PP2_3_OrderingIntCharShort(I4_MIN, I1_MIN, I2_MIN), -32768); 
+}
+
+TEST pcode_PP2_4_OrderingShortCharInt_Main()
+{
+	extern i4 pcode_PP2_4_OrderingShortCharInt(i2 s, i1 c, i4 i);
+	ASSERTI4(pcode_PP2_4_OrderingShortCharInt(2, 3, 1), -5); 
+	ASSERTI4(pcode_PP2_4_OrderingShortCharInt(I2_MAX, I1_MAX, I4_MAX), 2143322238); 
+	ASSERTI4(pcode_PP2_4_OrderingShortCharInt(I2_MIN, I1_MIN, I4_MIN), 2143289344); 
+}
+
+TEST pcode_PP2_5_OrderingCharShortInt_Main()
+{
+	extern i4 pcode_PP2_5_OrderingCharShortInt(i1 c, i2 s, i4 i);
+	ASSERTI4(pcode_PP2_5_OrderingCharShortInt(3, 2, 1), -5); 
+	ASSERTI4(pcode_PP2_5_OrderingCharShortInt(I1_MAX, I2_MAX, I4_MAX), 2143322238); 
+	ASSERTI4(pcode_PP2_5_OrderingCharShortInt(I1_MIN, I2_MIN, I4_MIN), 2143289344); 
+}
+
+TEST pcode_PP2_6_OrderingCharIntShort_Main()
+{
+	extern i4 pcode_PP2_6_OrderingCharIntShort(i1 c, i4 i, i2 s);
+	ASSERTI4(pcode_PP2_6_OrderingCharIntShort(3, 1, 2), -1); 
+	ASSERTI4(pcode_PP2_6_OrderingCharIntShort(I1_MAX, I4_MAX, I2_MAX), -2147450754); 
+	ASSERTI4(pcode_PP2_6_OrderingCharIntShort(I1_MIN, I4_MIN, I2_MIN), -32768); 
+}
+
+MAIN ParameterPassing2_main() { }
+

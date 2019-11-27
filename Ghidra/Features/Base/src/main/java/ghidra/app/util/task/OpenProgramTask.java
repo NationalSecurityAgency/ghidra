@@ -18,7 +18,6 @@ package ghidra.app.util.task;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import docking.widgets.OptionDialog;
 import ghidra.app.util.dialog.CheckoutDialog;
@@ -40,9 +39,10 @@ public class OpenProgramTask extends Task {
 
 	private final List<DomainFileInfo> domainFileInfoList = new ArrayList<>();
 	private List<Program> programList = new ArrayList<>();
-	private TaskMonitor monitor;
+
 	private final Object consumer;
-	private boolean silent;
+	private boolean silent; // if true operation does not permit interaction
+	private boolean noCheckout; // if true operation should not perform optional checkout
 
 	private String openPromptText = "Open";
 
@@ -91,8 +91,23 @@ public class OpenProgramTask extends Task {
 		domainFileInfoList.add(new DomainFileInfo(domainFile, version, forceReadOnly));
 	}
 
+	/**
+	 * Invoking this method prior to task execution will prevent
+	 * any confirmation interaction with the user (e.g., 
+	 * optional checkout, snapshot recovery, etc.).  Errors
+	 * may still be displayed if they occur.
+	 */
 	public void setSilent() {
 		this.silent = true;
+	}
+
+	/**
+	 * Invoking this method prior to task execution will prevent
+	 * the use of optional checkout which require prompting the
+	 * user.
+	 */
+	public void setNoCheckout() {
+		this.noCheckout = true;
 	}
 
 	public List<Program> getOpenPrograms() {
@@ -107,20 +122,17 @@ public class OpenProgramTask extends Task {
 	}
 
 	@Override
-	public void run(TaskMonitor taskMonitor) {
-		this.monitor = taskMonitor;
+	public void run(TaskMonitor monitor) {
 
-		if (domainFileInfoList.size() > 1) {
-			monitor.initialize(domainFileInfoList.size());
-		}
+		taskMonitor.initialize(domainFileInfoList.size());
 
 		for (DomainFileInfo domainFileInfo : domainFileInfoList) {
-			if (monitor.isCancelled()) {
+			if (taskMonitor.isCancelled()) {
 				return;
 			}
 			openDomainFile(domainFileInfo);
 
-			monitor.incrementProgress(1);
+			taskMonitor.incrementProgress(1);
 		}
 	}
 
@@ -139,12 +151,12 @@ public class OpenProgramTask extends Task {
 	}
 
 	private void openReadOnlyFile(DomainFile domainFile, int version) {
-		monitor.setMessage("Opening " + domainFile.getName());
+		taskMonitor.setMessage("Opening " + domainFile.getName());
 		openReadOnly(domainFile, version);
 	}
 
 	private void openVersionedFile(DomainFile domainFile, int version) {
-		monitor.setMessage("Getting Version " + version + " for " + domainFile.getName());
+		taskMonitor.setMessage("Getting Version " + version + " for " + domainFile.getName());
 		openReadOnly(domainFile, version);
 	}
 
@@ -153,7 +165,7 @@ public class OpenProgramTask extends Task {
 		try {
 			contentType = domainFile.getContentType();
 			Program program =
-				(Program) domainFile.getReadOnlyDomainObject(consumer, version, monitor);
+				(Program) domainFile.getReadOnlyDomainObject(consumer, version, taskMonitor);
 
 			if (program == null) {
 				String errorMessage = "Can't open program - \"" + domainFile.getPathname() + "\"";
@@ -188,11 +200,8 @@ public class OpenProgramTask extends Task {
 
 	private void openUnversionedFile(DomainFile domainFile) {
 		String filename = domainFile.getName();
-		monitor.setMessage("Opening " + filename);
-		if (!silent && domainFile.canCheckout() && domainFile.isInWritableProject()) {
-			checkout(domainFile);
-		}
-
+		taskMonitor.setMessage("Opening " + filename);
+		performOptionalCheckout(domainFile);
 		try {
 			openFileMaybeUgrade(domainFile);
 		}
@@ -229,7 +238,7 @@ public class OpenProgramTask extends Task {
 
 		try {
 			Program program =
-				(Program) domainFile.getDomainObject(consumer, false, recoverFile, monitor);
+				(Program) domainFile.getDomainObject(consumer, false, recoverFile, taskMonitor);
 
 			if (program != null) {
 				programList.add(program);
@@ -239,7 +248,7 @@ public class OpenProgramTask extends Task {
 		catch (VersionException e) {
 			if (VersionExceptionHandler.isUpgradeOK(null, domainFile, openPromptText, e)) {
 				Program program =
-					(Program) domainFile.getDomainObject(consumer, true, recoverFile, monitor);
+					(Program) domainFile.getDomainObject(consumer, true, recoverFile, taskMonitor);
 				if (program != null) {
 					programList.add(program);
 				}
@@ -249,26 +258,26 @@ public class OpenProgramTask extends Task {
 
 	private boolean askRecoverFile(final String filename) {
 
-		final AtomicBoolean result = new AtomicBoolean();
-
-		SystemUtilities.runSwingNow(() -> {
-			int option = OptionDialog.showYesNoDialog(null, "Crash Recovery Data Found",
-				filename + " has crash data.\n" + "Would you like to recover unsaved changes?");
-			result.set(option == OptionDialog.OPTION_ONE);
-		});
-
-		return result.get();
+		int option = OptionDialog.showYesNoDialog(null, "Crash Recovery Data Found",
+			"<html>" + HTMLUtilities.escapeHTML(filename) + " has crash data.<br>" +
+				"Would you like to recover unsaved changes?");
+		return option == OptionDialog.OPTION_ONE;
 	}
 
-	private boolean checkout(DomainFile domainFile) {
-		User user = AppInfo.getActiveProject().getProjectData().getUser();
+	private void performOptionalCheckout(DomainFile domainFile) {
+
+		if (silent || noCheckout || !domainFile.canCheckout()) {
+			return;
+		}
+
+		User user = domainFile.getParent().getProjectData().getUser();
 
 		CheckoutDialog dialog = new CheckoutDialog(domainFile, user);
 		if (dialog.showDialog() == CheckoutDialog.CHECKOUT) {
 			try {
-				monitor.setMessage("Checking Out " + domainFile.getName());
-				if (domainFile.checkout(dialog.exclusiveCheckout(), monitor)) {
-					return true;
+				taskMonitor.setMessage("Checking Out " + domainFile.getName());
+				if (domainFile.checkout(dialog.exclusiveCheckout(), taskMonitor)) {
+					return;
 				}
 				Msg.showError(this, null, "Checkout Failed", "Exclusive checkout failed for: " +
 					domainFile.getName() + "\nOne or more users have file checked out!");
@@ -283,7 +292,6 @@ public class OpenProgramTask extends Task {
 				Msg.showError(this, null, "Error on Check Out", e.getMessage(), e);
 			}
 		}
-		return false;
 	}
 
 	static class DomainFileInfo {

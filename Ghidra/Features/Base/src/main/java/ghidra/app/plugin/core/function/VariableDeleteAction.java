@@ -43,19 +43,19 @@ class VariableDeleteAction extends ListingContextAction {
 	 * @param plugin the plugin this action is associated with.
 	 */
 	VariableDeleteAction(FunctionPlugin plugin) {
-		super("Delete Function Variable", plugin.getName(), true);
+		super("Delete Function Variable", plugin.getName());
 		this.funcPlugin = plugin;
 
 		setPopupMenuPath(false);
 
 		setKeyBindingData(new KeyBindingData(KeyEvent.VK_DELETE, 0));
-
 	}
 
 	private void setPopupMenuPath(boolean isParameter) {
-		setPopupMenuData(new MenuData(new String[] { FunctionPlugin.VARIABLE_MENU_PULLRIGHT,
-			"Delete " + (isParameter ? "Parameter" : "Local Variable") }, null,
-			FunctionPlugin.VARIABLE_MENU_SUBGROUP));
+		setPopupMenuData(new MenuData(
+			new String[] { FunctionPlugin.VARIABLE_MENU_PULLRIGHT,
+				"Delete " + (isParameter ? "Parameter" : "Local Variable") },
+			null, FunctionPlugin.VARIABLE_MENU_SUBGROUP));
 	}
 
 	@Override

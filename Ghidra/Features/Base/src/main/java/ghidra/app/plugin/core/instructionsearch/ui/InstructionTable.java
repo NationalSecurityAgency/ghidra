@@ -17,14 +17,11 @@ package ghidra.app.plugin.core.instructionsearch.ui;
 
 import java.awt.Color;
 import java.awt.event.*;
-import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.*;
 
-import docking.ActionContext;
 import docking.DockingWindowManager;
-import docking.action.DockingActionIf;
 import docking.widgets.EmptyBorderButton;
 import ghidra.app.plugin.core.instructionsearch.InstructionSearchPlugin;
 import ghidra.app.plugin.core.instructionsearch.model.*;
@@ -97,13 +94,9 @@ public class InstructionTable extends AbstractInstructionTable {
 		dialog.getSearchData().registerForGuiUpdates(this);
 	}
 
-	/**
-	 * Override from abstract class so we can remove the select and copy options
-	 * (which is all of them).
-	 */
 	@Override
-	public List<DockingActionIf> getDockingActions(ActionContext context) {
-		return new ArrayList<>();
+	protected boolean supportsPopupActions() {
+		return false;
 	}
 
 	public InsertBytesWidget getInsertBytesWidget() {

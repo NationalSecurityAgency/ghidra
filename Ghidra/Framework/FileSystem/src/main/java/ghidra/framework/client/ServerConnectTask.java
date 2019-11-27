@@ -16,7 +16,6 @@
 package ghidra.framework.client;
 
 import java.io.IOException;
-import java.net.*;
 import java.net.UnknownHostException;
 import java.rmi.*;
 import java.rmi.registry.LocateRegistry;
@@ -124,16 +123,6 @@ class ServerConnectTask extends Task {
 		return name;
 	}
 
-	private static void setOutgoingIpAddress(InetAddress destAddr, int serverPort)
-			throws IOException {
-		InetSocketAddress sockAddr = new InetSocketAddress(destAddr, serverPort);
-		Socket s = new Socket();
-		s.connect(sockAddr, 5000);
-		String ip = s.getLocalAddress().getHostAddress();
-		System.setProperty("java.rmi.server.hostname", ip);
-		s.close();
-	}
-
 	private static boolean isSSLHandshakeCancelled(SSLHandshakeException e) throws IOException {
 		if (e.getMessage().indexOf("bad_certificate") > 0) {
 			if (ApplicationKeyManagerFactory.getPreferredKeyStore() == null) {
@@ -158,10 +147,6 @@ class ServerConnectTask extends Task {
 	 */
 	public static GhidraServerHandle getGhidraServerHandle(ServerInfo server) throws IOException {
 
-		setOutgoingIpAddress(InetAddress.getByName(server.getServerName()), server.getPortNumber());
-		Registry reg = LocateRegistry.getRegistry(server.getServerName(), server.getPortNumber());
-		checkServerBindNames(reg);
-
 		GhidraServerHandle gsh = null;
 		try {
 			// Test SSL Handshake to ensure that user is able to decrypt keystore.
@@ -169,6 +154,18 @@ class ServerConnectTask extends Task {
 			// retry condition can occur when a user cancels the password entry
 			// for their keystore which should cancel any connection attempt
 			testServerSSLConnection(server);
+
+			Registry reg;
+			try {
+				// attempt to connect with older Ghidra Server registry without using SSL/TLS
+				reg = LocateRegistry.getRegistry(server.getServerName(), server.getPortNumber());
+				checkServerBindNames(reg);
+			}
+			catch (IOException e) {
+				reg = LocateRegistry.getRegistry(server.getServerName(), server.getPortNumber(),
+					new SslRMIClientSocketFactory());
+				checkServerBindNames(reg);
+			}
 
 			gsh = (GhidraServerHandle) reg.lookup(GhidraServerHandle.BIND_NAME);
 			gsh.checkCompatibility(GhidraServerHandle.INTERFACE_VERSION);

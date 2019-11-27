@@ -32,8 +32,8 @@ import resources.ResourceManager;
  * Manages to toolbar for the dockable components.
  */
 class DockableToolBarManager {
-	private static final ImageIcon closeIcon = ResourceManager.loadImage("images/close16.gif");
-	private static final ImageIcon menuIcon = ResourceManager.loadImage("images/menu16.gif");
+	private static final ImageIcon CLOSE_ICON = ResourceManager.loadImage("images/close16.gif");
+	private static final ImageIcon MENU_ICON = ResourceManager.loadImage("images/menu16.gif");
 
 	private GenericHeader dockableHeader;
 	private ToolBarManager toolBarManager;
@@ -45,6 +45,7 @@ class DockableToolBarManager {
 
 	private SwingUpdateManager headerUpdater =
 		new SwingUpdateManager(() -> dockableHeader.update());
+	private DockableComponent dockableComponent;
 
 	DockableToolBarManager(GenericHeader header) {
 		this.dockableHeader = header;
@@ -52,22 +53,31 @@ class DockableToolBarManager {
 	}
 
 	/**
-	 * Constructs a new DockableToolBarManger for the given ComponentInfo.
-	 * @param info the componentInfo object containing the component.
+	 * Constructs a new DockableToolBarManger for the given ComponentInfo
+	 * 
+	 * @param dockableComponent the component to which this toolbar belongs
+	 * @param header the header to which this toolbar belongs
 	 */
-	DockableToolBarManager(DockableComponent dockableComp, DockableHeader header) {
+	DockableToolBarManager(DockableComponent dockableComponent, DockableHeader header) {
+		this.dockableComponent = dockableComponent;
 		this.dockableHeader = header;
-		ComponentPlaceholder placeholder = dockableComp.getComponentWindowingPlaceholder();
-		DockingWindowManager winMgr =
-			dockableComp.getComponentWindowingPlaceholder().getNode().winMgr;
-		DockingActionManager actionManager = winMgr.getActionManager();
+		ComponentPlaceholder placeholder = dockableComponent.getComponentWindowingPlaceholder();
+		DockingWindowManager winMgr = dockableComponent.getDockingWindowManager();
+		ActionToGuiMapper actionManager = winMgr.getActionToGuiMapper();
 		menuGroupMap = actionManager.getMenuGroupMap();
 
 		MenuHandler menuHandler = actionManager.getMenuHandler();
 		Iterator<DockingActionIf> iter = placeholder.getActions();
 		initialize(winMgr, menuHandler, iter);
 
-		closeButtonManager = new ToolBarItemManager(new ToolBarCloseAction(dockableComp), winMgr);
+		ComponentProvider provider = placeholder.getProvider();
+		String owner = provider.getOwner();
+		ToolBarCloseAction closeAction = new ToolBarCloseAction(owner);
+		closeButtonManager = new ToolBarItemManager(closeAction, winMgr);
+		DockingTool tool = winMgr.getTool();
+
+		// we need to add this action to the tool in order to use key bindings
+		tool.addLocalAction(provider, closeAction);
 	}
 
 	private void initialize(DockingWindowManager winMgr, MenuHandler menuHandler,
@@ -152,6 +162,15 @@ class DockableToolBarManager {
 	}
 
 	void dispose() {
+
+		// this will be null for non-standard use cases
+		if (dockableComponent != null) {
+			DockingWindowManager dwm = dockableComponent.getDockingWindowManager();
+			DockingTool tool = dwm.getTool();
+			ComponentProvider provider = dockableComponent.getComponentProvider();
+			tool.removeLocalAction(provider, closeButtonManager.getAction());
+		}
+
 		headerUpdater.dispose();
 		menuManager.dispose();
 		toolBarManager.dispose();
@@ -165,13 +184,12 @@ class DockableToolBarManager {
 	 * Action added to toolbar for "hiding" the component.
 	 */
 	private class ToolBarCloseAction extends DockingAction {
-		private DockableComponent dockableComponent;
 
-		ToolBarCloseAction(DockableComponent dockableComponent) {
-			super("Close Window", DockingWindowManager.DOCKING_WINDOWS_OWNER);
-			this.dockableComponent = dockableComponent;
+		ToolBarCloseAction(String owner) {
+			super("Close Window", owner, KeyBindingType.SHARED);
 			setDescription("Close Window");
-			setToolBarData(new ToolBarData(closeIcon, null));
+			setToolBarData(new ToolBarData(CLOSE_ICON, null));
+			markHelpUnnecessary();
 		}
 
 		@Override
@@ -180,6 +198,12 @@ class DockableToolBarManager {
 			if (placeholder != null) {
 				placeholder.close();
 			}
+		}
+
+		@Override
+		public boolean isEnabledForContext(ActionContext context) {
+			ComponentProvider provider = context.getComponentProvider();
+			return provider == dockableComponent.getComponentProvider();
 		}
 	}
 
@@ -191,7 +215,7 @@ class DockableToolBarManager {
 		ToolBarMenuAction() {
 			super("Local Menu", DockingWindowManager.DOCKING_WINDOWS_OWNER);
 			setDescription("Menu");
-			setToolBarData(new ToolBarData(menuIcon, null));
+			setToolBarData(new ToolBarData(MENU_ICON, null));
 		}
 
 		@Override

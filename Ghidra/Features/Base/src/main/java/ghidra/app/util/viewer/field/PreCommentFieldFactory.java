@@ -46,7 +46,7 @@ public class PreCommentFieldFactory extends FieldFactory {
 	public static final String FIELD_NAME = "Pre-Comment";
 
 	private final static String GROUP_TITLE = "Format Code";
-	private final static String FIELD_GROUP_TITLE = "Pre-Comment";
+	private final static String FIELD_GROUP_TITLE = "Pre-comments Field";
 	public final static String ENABLE_WORD_WRAP_MSG =
 		FIELD_GROUP_TITLE + Options.DELIMITER + "Enable Word Wrapping";
 	public final static String ENABLE_ALWAYS_SHOW_AUTOMATIC_MSG =
@@ -77,17 +77,18 @@ public class PreCommentFieldFactory extends FieldFactory {
 	/**
 	 * Constructor
 	 * @param model the model that the field belongs to.
-	 * @param hsProvider the HightLightStringProvider.
+	 * @param hlProvider the HightLightStringProvider.
 	 * @param displayOptions the Options for display properties.
 	 * @param fieldOptions the Options for field specific properties.
-	 * @param serviceProvider the provider for services.
 	 */
 	private PreCommentFieldFactory(FieldFormatModel model, HighlightProvider hlProvider,
 			Options displayOptions, Options fieldOptions) {
 		super(FIELD_NAME, model, hlProvider, displayOptions, fieldOptions);
 
-		fieldOptions.registerOption(FLAG_FUNCTION_ENTRY_OPTION, false, null, null);
-		fieldOptions.registerOption(FLAG_SUBROUTINE_ENTRY_OPTION, false, null, null);
+		fieldOptions.registerOption(FLAG_FUNCTION_ENTRY_OPTION, false, null,
+			"Toggles the display of a pre-comment for a function entry");
+		fieldOptions.registerOption(FLAG_SUBROUTINE_ENTRY_OPTION, false, null,
+			"Toggles the display of a pre-comment for a sub-routine entry");
 
 		flagFunctionEntry = fieldOptions.getBoolean(FLAG_FUNCTION_ENTRY_OPTION, false);
 		flagSubroutineEntry = fieldOptions.getBoolean(FLAG_SUBROUTINE_ENTRY_OPTION, false);
@@ -183,8 +184,8 @@ public class PreCommentFieldFactory extends FieldFactory {
 
 	@Override
 	public FieldFactory newInstance(FieldFormatModel formatModel, HighlightProvider provider,
-			ToolOptions displayOptions, ToolOptions fieldOptions) {
-		return new PreCommentFieldFactory(formatModel, provider, displayOptions, fieldOptions);
+			ToolOptions toolOptions, ToolOptions fieldOptions) {
+		return new PreCommentFieldFactory(formatModel, provider, toolOptions, fieldOptions);
 	}
 
 	@Override
@@ -257,10 +258,8 @@ public class PreCommentFieldFactory extends FieldFactory {
 
 	private String[] getFlexArrayComment(Data data, Address addr) {
 
-		Data originalParent = data.getParent();
-
 		int levelsToIgnore = 0;
-		boolean includeStructureName = true;
+		String label = null;
 
 		int[] cpath = data.getComponentPath();
 		if (cpath != null && cpath.length > 0) {
@@ -269,34 +268,35 @@ public class PreCommentFieldFactory extends FieldFactory {
 				return null; // case not handled
 			}
 			data = data.getParent().getComponent(cpath[cpath.length - 1] - 1);
+			if (data == null || !data.isStructure()) {
+				return null;
+			}
 			levelsToIgnore = cpath.length - 1;
-			includeStructureName = false;
 		}
 		else {
-			data = data.getProgram().getListing().getDefinedDataContaining(addr);
+			Program p = data.getProgram();
+			data = p.getListing().getDefinedDataContaining(addr);
+			if (data == null || !data.isStructure()) {
+				return null;
+			}
+			Symbol s = p.getSymbolTable().getPrimarySymbol(data.getAddress());
+			label = s != null ? s.getName(true) : data.getDataType().getName();
 		}
 
-		while (data != null) {
-			DataType dt = data.getBaseDataType();
-			if ((dt instanceof Union) || (dt instanceof Array) || (dt instanceof Dynamic)) {
-				return null; // case not handled
-			}
+		// locate deepest structure containing addr which will be checked for flex array
+		while (true) {
 			int offset = (int) addr.subtract(data.getMinAddress());
 			Data component = data.getComponentAt(offset);
-			if (component == null) {
-				data = data.getParent(); // back-up to container
+			if (component == null || !component.isStructure()) {
 				break;
 			}
 			data = component;
 		}
-		if (data == null || (originalParent != null && data == originalParent)) {
-			return null;
-		}
-		return buildFlexArrayComment(data, levelsToIgnore, includeStructureName);
+
+		return buildFlexArrayComment(data, levelsToIgnore, label);
 	}
 
-	private String[] buildFlexArrayComment(Data data, int levelsToIgnore,
-			boolean includeStructureName) {
+	private String[] buildFlexArrayComment(Data data, int levelsToIgnore, String label) {
 
 		DataType dt = data.getBaseDataType();
 		if (!(dt instanceof Structure)) {
@@ -325,8 +325,8 @@ public class PreCommentFieldFactory extends FieldFactory {
 			data = component;
 		}
 
-		if (includeStructureName) {
-			flexName.insert(0, data.getDataType().getName() + ".");
+		if (label != null) {
+			flexName.insert(0, label + ".");
 		}
 
 		return new String[] { "Flexible Array: " + flexComponent.getDataType().getName() + "[] " +
@@ -380,7 +380,8 @@ public class PreCommentFieldFactory extends FieldFactory {
 				"wrapping is off, comments are displayed in line format " +
 				"however the user entered them.  Lines that are too long " +
 				"for the field, are truncated.");
-		options.registerOption(ENABLE_ALWAYS_SHOW_AUTOMATIC_MSG, true, null, null);
+		options.registerOption(ENABLE_ALWAYS_SHOW_AUTOMATIC_MSG, true, null,
+			"Toggles the display of the automatic pre-comment");
 
 		isWordWrap = options.getBoolean(ENABLE_WORD_WRAP_MSG, false);
 		alwaysShowAutomatic = options.getBoolean(ENABLE_ALWAYS_SHOW_AUTOMATIC_MSG, true);

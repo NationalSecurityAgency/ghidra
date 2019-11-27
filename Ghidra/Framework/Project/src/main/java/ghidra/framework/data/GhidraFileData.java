@@ -23,6 +23,7 @@ import java.util.Map;
 import javax.swing.Icon;
 
 import db.DBHandle;
+import db.Field;
 import db.buffers.*;
 import ghidra.framework.client.ClientUtil;
 import ghidra.framework.client.NotConnectedException;
@@ -893,6 +894,11 @@ public class GhidraFileData {
 			catch (InvalidNameException e) {
 				throw new AssertException("Unexpected error", e);
 			}
+			finally {
+				if (folderItem == null) {
+					versionedFolderItem.terminateCheckout(checkout.getCheckoutId(), false);
+				}
+			}
 			folderItem.setCheckout(checkout.getCheckoutId(), exclusive, checkoutVersion,
 				folderItem.getCurrentVersion());
 
@@ -1680,20 +1686,31 @@ public class GhidraFileData {
 	 * @throws IOException
 	 */
 	void convertToPrivateFile(TaskMonitor monitor) throws IOException, CancelledException {
-		if (!isVersioned()) {
-			return;
-		}
-		// TODO: If file is checked-out this will likely fail
-		// copy this file to make a private copy
-		GhidraFolderData oldParent = getParent();
-		GhidraFile df = copyTo(oldParent, monitor);
-		versionedFolderItem.delete(-1, ClientUtil.getUserName());
-		oldParent.fileChanged(name);
-		try {
-			df.setName(name);
-		}
-		catch (InvalidNameException e) {
-			throw new AssertException("Unexpected error", e);
+		synchronized (fileSystem) {
+			if (!(versionedFileSystem instanceof LocalFileSystem)) {
+				throw new UnsupportedOperationException("not supported for project");
+			}
+			if (!isVersioned()) {
+				return;
+			}
+			GhidraFolderData oldParent = getParent();
+			if (isCheckedOut()) {
+				// keep local changed file - discard revision information
+				folderItem.clearCheckout();
+				oldParent.fileChanged(name);
+			}
+			else {
+				// copy this file to make a private copy
+				GhidraFile df = copyTo(oldParent, monitor);
+				versionedFolderItem.delete(-1, ClientUtil.getUserName());
+				oldParent.fileChanged(name);
+				try {
+					df.setName(name);
+				}
+				catch (InvalidNameException e) {
+					throw new AssertException("Unexpected error", e);
+				}
+			}
 		}
 	}
 
@@ -1731,6 +1748,9 @@ public class GhidraFileData {
 		}
 		catch (FileNotFoundException e) {
 			// file has been deleted, just return an empty map.
+		}
+		catch (Field.UnsupportedFieldException e) {
+			// file created with newer version of Ghidra
 		}
 		catch (IOException e) {
 			Msg.error(this, "Read meta-data error", e);

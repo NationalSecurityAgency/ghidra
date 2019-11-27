@@ -39,18 +39,18 @@ with : phase=1 {
 } 
 
 :LDW^",M" OFF_BASE_14,R1dst		is opfam=0x13 & OFF_BASE_14 & R1dst & RB & SPCBASE & lse14 {
-	offset:$(ADDRSIZE) = 0;
+	off:$(ADDRSIZE) = 0;
 	if (lse14 s>=  0x0) goto <IGNOREIMM>;
-	offset = sext(lse14);
+	off = sext(lse14);
 	<IGNOREIMM> 
-	addr:$(ADDRSIZE) = SPCBASE + offset;
+	addr:$(ADDRSIZE) = SPCBASE + off;
 	RB = RB + lse14;
     R1dst = zext( *[ram]:4 addr );
 } 
 
 :STW^",M" R1,OFF_BASE_14		is opfam=0x1B & OFF_BASE_14 & R1 & RB & SPCBASE & lse14 {
 	addr:$(ADDRSIZE) = SPCBASE;
-	imm = sext(lse14);
+    local imm = sext(lse14);
 	if (imm s>=  0x0) goto <IGNOREIMM>;
 	addr = addr + imm;
 	<IGNOREIMM> 
@@ -145,9 +145,9 @@ with : phase=1 {
 	# get the address, which is most likely not word aligned
 	addr:$(ADDRSIZE) = storeBytesShortCmplt;
 	# figure out how many bytes need to be written
-	numBytes = 4 - (addr & 0x3);
+	local numBytes = 4 - (addr & 0x3);
 	# this is the address where we stop (one byte past the last address to which we write)
-	finalAddr = addr + numBytes;
+	local finalAddr = addr + numBytes;
 	# copy the contents of RR
 	data:$(REGSIZE) = RR >> ((4 - numBytes) * 8);
 	# use a for loop to write out the 1,2,3, or 4 bytes
@@ -165,11 +165,11 @@ with : phase=1 {
 	# get the address, which is most likely not word aligned
 	addr:$(ADDRSIZE) = storeBytesShortCmplt;
 	# figure out how many bytes need to be written
-	numBytes = (addr & 0x3);
+	local numBytes = (addr & 0x3);
 	# now make a word aligned address
 	addr = addr & 0x3;
 	# this is the address where we stop (one byte past the last address to which we write)
-	finalAddr = addr + numBytes;
+	local finalAddr = addr + numBytes;
 	# copy the contents of RR
 	data:$(REGSIZE) = RR >> ((4 - numBytes) * 8);
 
@@ -216,7 +216,7 @@ with : phase=1 {
 # unconditional immediate calls
 ################################################################################
 # non-nullifying unconditional immediate call
-:B^",L"^nullifyForBranch branchTarget3W,R2dst						is opfam=0x3A & c=0x0 & R2dst & nullifyForBranch & n=0 & branchTarget3W $(COMMON) 
+:B^",L"^nullifyForBranch branchTarget3W,R2dst						is opfam=0x3A & c=0x0 & R2dst & nullifyForBranch & n=0 & branchTarget3W & $(COMMON) 
 	[
 	  branchEnable = 1;
 	  globalset(inst_next, branchEnable);
@@ -232,7 +232,7 @@ with : phase=1 {
 
 # nullifying unconditional immediate call
 # special case that doesn't need the deferral mechanism 
-:B^",L"^nullifySymForBranch branchTarget3W,R2dst						is opfam=0x3A & c=0x0 & R2dst & nullifySymForBranch & n=1 & branchTarget3W $(COMMON) 
+:B^",L"^nullifySymForBranch branchTarget3W,R2dst						is opfam=0x3A & c=0x0 & R2dst & nullifySymForBranch & n=1 & branchTarget3W & $(COMMON) 
 {
 	R2dst = inst_start+8;
 	call branchTarget3W;
@@ -244,7 +244,7 @@ with : phase=1 {
 # By having a second op for it, we can use a goto and prevent analysis tools from thinking this is a legitimate subroutine call
 ################################################################################
 # non-nullifying unconditional immediate branch (no link)
-:B^nullifyForBranch branchTarget3W							is opfam=0x3A & c=0x0 & reg2=0 & nullifyForBranch & n=0 & branchTarget3W $(COMMON) 
+:B^nullifyForBranch branchTarget3W							is opfam=0x3A & c=0x0 & reg2=0 & nullifyForBranch & n=0 & branchTarget3W & $(COMMON) 
 	[
 	  branchEnable = 1;
 	  globalset(inst_next, branchEnable);
@@ -261,7 +261,7 @@ with : phase=1 {
 # nullifying unconditional immediate branch (no link)
 # This is a special case, as we just do the branch and don't use
 # our defered branching mechanism
-:B^nullifySymForBranch branchTarget3W							is opfam=0x3A & c=0x0 & reg2=0 & nullifySymForBranch & n=1 & branchTarget3W $(COMMON) 
+:B^nullifySymForBranch branchTarget3W							is opfam=0x3A & c=0x0 & reg2=0 & nullifySymForBranch & n=1 & branchTarget3W & $(COMMON) 
 {
 	goto branchTarget3W;
 }
@@ -269,7 +269,7 @@ with : phase=1 {
 ################################################################################
 # conditional immediate branches - comparison with registers
 ################################################################################
-:CMPBT^RegCSCondSym^nullifyForBranch R1,R2,branchTarget2W		is opfam=0x20 & R1 & R2 & nullifyForBranch & n=0 & branchTarget2W & RegCSCondSym & RegCSCond $(COMMON)
+:CMPBT^RegCSCondSym^nullifyForBranch R1,R2,branchTarget2W		is opfam=0x20 & R1 & R2 & nullifyForBranch & n=0 & branchTarget2W & RegCSCondSym & RegCSCond & $(COMMON)
  	[ branchEnable = 1;
 	  globalset(inst_next, branchEnable);
 	  branchType = 2; # conditional imm branch
@@ -282,7 +282,7 @@ with : phase=1 {
 	branchExecuted = 1;
 }
 
- :CMPBT^RegCSCondSym^nullifyForBranch R1,R2,branchTarget2W		is opfam=0x20 & R1 & R2 & nullifyForBranch & n=1 & branchTarget2W & displacement2W & RegCSCondSym & RegCSCond $(COMMON)
+ :CMPBT^RegCSCondSym^nullifyForBranch R1,R2,branchTarget2W		is opfam=0x20 & R1 & R2 & nullifyForBranch & n=1 & branchTarget2W & displacement2W & RegCSCondSym & RegCSCond & $(COMMON)
  	[ branchEnable = 1;
 	  globalset(inst_next, branchEnable);
 	  branchType = 2; # conditional imm branch
@@ -296,7 +296,7 @@ with : phase=1 {
 	nullifyNextCond = ( ! branchCond && (displacement2W s< 0)) || ( branchCond && (displacement2W s>= 0) );
 }
 
-:CMPBF^RegCSCondSym^nullifyForBranch R1,R2,branchTarget2W		is opfam=0x22 & R1 & R2 & nullifyForBranch & n=0 & branchTarget2W & RegCSCondSym & RegCSCond $(COMMON)
+:CMPBF^RegCSCondSym^nullifyForBranch R1,R2,branchTarget2W		is opfam=0x22 & R1 & R2 & nullifyForBranch & n=0 & branchTarget2W & RegCSCondSym & RegCSCond & $(COMMON)
  	[ branchEnable = 1;
 	  globalset(inst_next, branchEnable);
 	  branchType = 2; # conditional imm branch
@@ -309,7 +309,7 @@ with : phase=1 {
 	branchExecuted = 1;
 }
 
-:CMPBF^RegCSCondSym^nullifyForBranch R1,R2,branchTarget2W		is opfam=0x22 & R1 & R2 & nullifyForBranch & n=1 & branchTarget2W & displacement2W & RegCSCondSym & RegCSCond $(COMMON)
+:CMPBF^RegCSCondSym^nullifyForBranch R1,R2,branchTarget2W		is opfam=0x22 & R1 & R2 & nullifyForBranch & n=1 & branchTarget2W & displacement2W & RegCSCondSym & RegCSCond & $(COMMON)
  	[ branchEnable = 1;
 	  globalset(inst_next, branchEnable);
 	  branchType = 2; # conditional imm branch
@@ -326,7 +326,7 @@ with : phase=1 {
 ################################################################################
 # conditional immediate branches -- comparison with immediates
 ################################################################################
-:CMPIBT^RegCSCondSym^nullifyForBranch highlse5,R2,branchTarget2W	is opfam=0x21 & highlse5 & R2 & nullifyForBranch & branchTarget2W & RegCSCondSym & RegCSCondI & n=0 $(COMMON)
+:CMPIBT^RegCSCondSym^nullifyForBranch highlse5,R2,branchTarget2W	is opfam=0x21 & highlse5 & R2 & nullifyForBranch & branchTarget2W & RegCSCondSym & RegCSCondI & n=0 & $(COMMON)
  	[ branchEnable = 1;
 	  globalset(inst_next, branchEnable);
 	  branchType = 2; # conditional imm branch
@@ -339,7 +339,7 @@ with : phase=1 {
 	branchExecuted = 1;
 }
 
-:CMPIBT^RegCSCondSym^nullifyForBranch highlse5,R2,branchTarget2W	is opfam=0x21 & highlse5 & R2 & nullifyForBranch & branchTarget2W & displacement2W & RegCSCondSym & RegCSCondI & n=1 $(COMMON)
+:CMPIBT^RegCSCondSym^nullifyForBranch highlse5,R2,branchTarget2W	is opfam=0x21 & highlse5 & R2 & nullifyForBranch & branchTarget2W & displacement2W & RegCSCondSym & RegCSCondI & n=1 & $(COMMON)
  	[ branchEnable = 1;
 	  globalset(inst_next, branchEnable);
 	  branchType = 2; # conditional imm branch
@@ -353,7 +353,7 @@ with : phase=1 {
 	nullifyNextCond = ( ! branchCond && (displacement2W s< 0)) || ( branchCond && (displacement2W s>= 0) );
 }
 
-:CMPIBF^RegCSCondSym^nullifyForBranch highlse5,R2,branchTarget2W	is opfam=0x23 & highlse5 & R2 & nullifyForBranch & branchTarget2W & RegCSCondSym & RegCSCondI & n=0 $(COMMON)
+:CMPIBF^RegCSCondSym^nullifyForBranch highlse5,R2,branchTarget2W	is opfam=0x23 & highlse5 & R2 & nullifyForBranch & branchTarget2W & RegCSCondSym & RegCSCondI & n=0 & $(COMMON)
  	[ branchEnable = 1;
 	  globalset(inst_next, branchEnable);
 	  branchType = 2; # conditional imm branch
@@ -366,7 +366,7 @@ with : phase=1 {
 	branchExecuted = 1;
 }
 
-:CMPIBF^RegCSCondSym^nullifyForBranch highlse5,R2,branchTarget2W	is opfam=0x23 & highlse5 & R2 & nullifyForBranch & branchTarget2W & displacement2W & RegCSCondSym & RegCSCondI & n=1 $(COMMON)
+:CMPIBF^RegCSCondSym^nullifyForBranch highlse5,R2,branchTarget2W	is opfam=0x23 & highlse5 & R2 & nullifyForBranch & branchTarget2W & displacement2W & RegCSCondSym & RegCSCondI & n=1 & $(COMMON)
  	[ branchEnable = 1;
 	  globalset(inst_next, branchEnable);
 	  branchType = 2; # conditional imm branch
@@ -384,7 +384,7 @@ with : phase=1 {
 # unconditional indirect calls & branches
 ################################################################################
 # IP relative unconditional indirect call
-:BLR^nullifyForBranch RR,R2dst									is opfam=0x3A & c=0x2 & R2dst & nullifyForBranch & RR & IPRelativeIndexedTarget & n=0 $(COMMON)
+:BLR^nullifyForBranch RR,R2dst									is opfam=0x3A & c=0x2 & R2dst & nullifyForBranch & RR & IPRelativeIndexedTarget & n=0 & $(COMMON)
 	[
 	  branchEnable = 1;
 	  globalset(inst_next, branchEnable);
@@ -399,14 +399,14 @@ with : phase=1 {
 }
 
 # IP relative unconditional indirect call
-:BLR^nullifySymForBranch RR,R2dst									is opfam=0x3A & c=0x2 & R2dst & nullifySymForBranch & RR & IPRelativeIndexedTarget & n=1 $(COMMON)
+:BLR^nullifySymForBranch RR,R2dst									is opfam=0x3A & c=0x2 & R2dst & nullifySymForBranch & RR & IPRelativeIndexedTarget & n=1 & $(COMMON)
 {
 	R2dst = inst_start+8;
 	call [branchIndDest];
 }
 
 # vectored (offset register plus index register) unconditional indirect branch
-:BV^nullifyForBranch RX(RB)									is opfam=0x3A & c=0x6 & RB & nullifyForBranch & RX & IndexedTarget & bit0=0 & n=0 $(COMMON)
+:BV^nullifyForBranch RX(RB)									is opfam=0x3A & c=0x6 & RB & nullifyForBranch & RX & IndexedTarget & bit0=0 & n=0 & $(COMMON)
 	[
 	  branchEnable = 1;
 	  globalset(inst_next, branchEnable);
@@ -420,14 +420,14 @@ with : phase=1 {
 }
 
 # vectored (offset register plus index register) unconditional indirect branch
-:BV^nullifySymForBranch RX(RB)								is opfam=0x3A & c=0x6 & RB & nullifySymForBranch & RX & IndexedTarget & bit0=0 & n=1 $(COMMON)
+:BV^nullifySymForBranch RX(RB)								is opfam=0x3A & c=0x6 & RB & nullifySymForBranch & RX & IndexedTarget & bit0=0 & n=1 & $(COMMON)
 {
 	goto [branchIndDest];
 }
 
 # this is the idiom for return from subroutine
 # currently we pull it out so we don't print out the R0, but we could modify this to do a return...
-:BV^nullifyForBranch (RB)									is opfam=0x3A & c=0x6 & RB & nullifyForBranch & reg1=0 & ReturnTarget & bit0=0 & n=0 $(COMMON)
+:BV^nullifyForBranch (RB)									is opfam=0x3A & c=0x6 & RB & nullifyForBranch & reg1=0 & ReturnTarget & bit0=0 & n=0 & $(COMMON)
 	[
 	  branchEnable = 1;
 	  globalset(inst_next, branchEnable);
@@ -444,7 +444,7 @@ with : phase=1 {
 
 # this is the idiom for return from subroutine
 # currently we pull it out so we don't print out the R0, but we could modify this to do a return...
-:BV^nullifyForBranch (RB)									is opfam=0x3A & c=0x6 & RB & nullifyForBranch & reg1=0 & ReturnTarget & bit0=0 & n=1 $(COMMON)
+:BV^nullifyForBranch (RB)									is opfam=0x3A & c=0x6 & RB & nullifyForBranch & reg1=0 & ReturnTarget & bit0=0 & n=1 & $(COMMON)
 {
 	return [branchIndDest];
 }
@@ -453,7 +453,7 @@ with : phase=1 {
 
 #### MOVB
 
-:MOVB^SEDCondSym^nullifyForBranch R1,R2dst,branchTarget2W			is opfam=0x32 & R2dst & R1 & nullifyForBranch & branchTarget2W & DepCond & SEDCondSym & n=0 $(COMMON)
+:MOVB^SEDCondSym^nullifyForBranch R1,R2dst,branchTarget2W			is opfam=0x32 & R2dst & R1 & nullifyForBranch & branchTarget2W & DepCond & SEDCondSym & n=0 & $(COMMON)
  	[ branchEnable = 1;
 	  globalset(inst_next, branchEnable);
 	  branchType = 2; # conditional imm branch
@@ -469,7 +469,7 @@ with : phase=1 {
 	branchExecuted = 1;
 }
 
-:MOVB^SEDCondSym^nullifyForBranch R1,R2dst,branchTarget2W			is opfam=0x32 & R2dst & R1 & nullifyForBranch & branchTarget2W & displacement2W & DepCond & SEDCondSym & n=1 $(COMMON)
+:MOVB^SEDCondSym^nullifyForBranch R1,R2dst,branchTarget2W			is opfam=0x32 & R2dst & R1 & nullifyForBranch & branchTarget2W & displacement2W & DepCond & SEDCondSym & n=1 & $(COMMON)
  	[ branchEnable = 1;
 	  globalset(inst_next, branchEnable);
 	  branchType = 2; # conditional imm branch
@@ -490,7 +490,7 @@ with : phase=1 {
 
 #### MOVIB
 
-:MOVIB^SEDCondSym^nullifyForBranch im5,R2dst,branchTarget2W		is opfam=0x33 & R2dst & im5 & nullifyForBranch & branchTarget2W & DepCond & SEDCondSym & n=0 $(COMMON)
+:MOVIB^SEDCondSym^nullifyForBranch im5,R2dst,branchTarget2W		is opfam=0x33 & R2dst & im5 & nullifyForBranch & branchTarget2W & DepCond & SEDCondSym & n=0 & $(COMMON)
  	[ branchEnable = 1;
 	  globalset(inst_next, branchEnable);
 	  branchType = 2; # conditional imm branch
@@ -506,7 +506,7 @@ with : phase=1 {
 	branchCond = DepCond;
 }
 
-:MOVIB^SEDCondSym^nullifyForBranch im5,R2dst,branchTarget2W		is opfam=0x33 & R2dst & im5 & nullifyForBranch & branchTarget2W & displacement2W & DepCond & SEDCondSym & n=1 $(COMMON)
+:MOVIB^SEDCondSym^nullifyForBranch im5,R2dst,branchTarget2W		is opfam=0x33 & R2dst & im5 & nullifyForBranch & branchTarget2W & displacement2W & DepCond & SEDCondSym & n=1 & $(COMMON)
  	[ branchEnable = 1;
 	  globalset(inst_next, branchEnable);
 	  branchType = 2; # conditional imm branch
@@ -524,7 +524,7 @@ with : phase=1 {
 }
 
 ###########################
-:ADDBT^RegAddCondSym^nullifyForBranch R1,R2dst,branchTarget2W		is opfam=0x28 & R1 & R2dst & R2 & nullifyForBranch & branchTarget2W & RegAddCond & RegAddCondSym & n=0 $(COMMON) 
+:ADDBT^RegAddCondSym^nullifyForBranch R1,R2dst,branchTarget2W		is opfam=0x28 & R1 & R2dst & R2 & nullifyForBranch & branchTarget2W & RegAddCond & RegAddCondSym & n=0 & $(COMMON) 
  	[ branchEnable = 1;
 	  globalset(inst_next, branchEnable);
 	  branchType = 2; # conditional imm branch
@@ -539,7 +539,7 @@ with : phase=1 {
 	R2dst = R1 + R2;
 }
 
-:ADDBT^RegAddCondSym^nullifyForBranch R1,R2dst,branchTarget2W		is opfam=0x28 & R1 & R2dst & R2 & nullifyForBranch & branchTarget2W & displacement2W & RegAddCond & RegAddCondSym & n=1 $(COMMON) 
+:ADDBT^RegAddCondSym^nullifyForBranch R1,R2dst,branchTarget2W		is opfam=0x28 & R1 & R2dst & R2 & nullifyForBranch & branchTarget2W & displacement2W & RegAddCond & RegAddCondSym & n=1 & $(COMMON) 
  	[ branchEnable = 1;
 	  globalset(inst_next, branchEnable);
 	  branchType = 2; # conditional imm branch
@@ -557,7 +557,7 @@ with : phase=1 {
 }
 
 ###########################
-:ADDBF^RegAddCondSym^nullifyForBranch R1,R2dst,branchTarget2W		is opfam=0x2A & R1 & R2dst & R2 & nullifyForBranch & branchTarget2W & RegAddCond & RegAddCondSym & n=0 $(COMMON)
+:ADDBF^RegAddCondSym^nullifyForBranch R1,R2dst,branchTarget2W		is opfam=0x2A & R1 & R2dst & R2 & nullifyForBranch & branchTarget2W & RegAddCond & RegAddCondSym & n=0 & $(COMMON)
  	[ branchEnable = 1;
 	  globalset(inst_next, branchEnable);
 	  branchType = 2; # conditional imm branch
@@ -572,7 +572,7 @@ with : phase=1 {
 	R2dst = R1 + R2;
 }
 
-:ADDBF^RegAddCondSym^nullifyForBranch R1,R2dst,branchTarget2W		is opfam=0x2A & R1 & R2 & R2dst & nullifyForBranch & branchTarget2W & displacement2W & RegAddCondSym & RegAddCond & n=1 $(COMMON)
+:ADDBF^RegAddCondSym^nullifyForBranch R1,R2dst,branchTarget2W		is opfam=0x2A & R1 & R2 & R2dst & nullifyForBranch & branchTarget2W & displacement2W & RegAddCondSym & RegAddCond & n=1 & $(COMMON)
  	[ branchEnable = 1;
 	  globalset(inst_next, branchEnable);
 	  branchType = 2; # conditional imm branch
@@ -589,7 +589,7 @@ with : phase=1 {
 }
 
 ###########################
-:ADDIBT^RegAddCondSym^nullifyForBranch highlse5,R2dst,branchTarget2W	is opfam=0x29 & highlse5 & R2 & R2dst & nullifyForBranch & branchTarget2W & RegAddCondI & RegAddCondSym & n=0 $(COMMON)
+:ADDIBT^RegAddCondSym^nullifyForBranch highlse5,R2dst,branchTarget2W	is opfam=0x29 & highlse5 & R2 & R2dst & nullifyForBranch & branchTarget2W & RegAddCondI & RegAddCondSym & n=0 & $(COMMON)
  	[ branchEnable = 1;
 	  globalset(inst_next, branchEnable);
 	  branchType = 2; # conditional imm branch
@@ -604,7 +604,7 @@ with : phase=1 {
 	R2dst = R2 + sext(highlse5);
 }
 
-:ADDIBT^RegAddCondSym^nullifyForBranch highlse5,R2dst,branchTarget2W	is opfam=0x29 & highlse5 & R2 & R2dst & nullifyForBranch & branchTarget2W & displacement2W & RegAddCondI & RegAddCondSym & n=1 $(COMMON)
+:ADDIBT^RegAddCondSym^nullifyForBranch highlse5,R2dst,branchTarget2W	is opfam=0x29 & highlse5 & R2 & R2dst & nullifyForBranch & branchTarget2W & displacement2W & RegAddCondI & RegAddCondSym & n=1 & $(COMMON)
  	[ branchEnable = 1;
 	  globalset(inst_next, branchEnable);
 	  branchType = 2; # conditional imm branch
@@ -620,7 +620,7 @@ with : phase=1 {
 	R2dst = R2 + sext(highlse5);
 }
 
-:ADDIBF^RegAddCondSym^nullifyForBranch highlse5,R2dst,branchTarget2W	is opfam=0x2B & highlse5 & R2 & R2dst & nullifyForBranch & branchTarget2W & RegAddCondI & RegAddCondSym & n=0 $(COMMON)
+:ADDIBF^RegAddCondSym^nullifyForBranch highlse5,R2dst,branchTarget2W	is opfam=0x2B & highlse5 & R2 & R2dst & nullifyForBranch & branchTarget2W & RegAddCondI & RegAddCondSym & n=0 & $(COMMON)
  	[ branchEnable = 1;
 	  globalset(inst_next, branchEnable);
 	  branchType = 2; # conditional imm branch
@@ -635,7 +635,7 @@ with : phase=1 {
 	R2dst = R2 + sext(highlse5);
 }
 
-:ADDIBF^RegAddCondSym^nullifyForBranch highlse5,R2dst,branchTarget2W	is opfam=0x2B & highlse5 & R2 & R2dst & nullifyForBranch & branchTarget2W & displacement2W & RegAddCondI & RegAddCondSym & n=1 $(COMMON)
+:ADDIBF^RegAddCondSym^nullifyForBranch highlse5,R2dst,branchTarget2W	is opfam=0x2B & highlse5 & R2 & R2dst & nullifyForBranch & branchTarget2W & displacement2W & RegAddCondI & RegAddCondSym & n=1 & $(COMMON)
  	[ branchEnable = 1;
 	  globalset(inst_next, branchEnable);
 	  branchType = 2; # conditional imm branch
@@ -652,7 +652,7 @@ with : phase=1 {
 }
 	
 #######################################
-:BB^SEDCondSym^nullifyForBranch R1,SAR,branchTarget2W				is opfam=0x30 & branchTarget2W & nullifyForBranch & R1 & BVBCond & SEDCondSym & SAR & n=0 $(COMMON)
+:BB^SEDCondSym^nullifyForBranch R1,SAR,branchTarget2W				is opfam=0x30 & branchTarget2W & nullifyForBranch & R1 & BVBCond & SEDCondSym & SAR & n=0 & $(COMMON)
 	[ branchEnable = 1;
 	  globalset(inst_next, branchEnable);
 	  branchType = 2; # conditional imm branch
@@ -665,7 +665,7 @@ with : phase=1 {
 	branchExecuted = 1;
 }						
 
-:BB^SEDCondSym^nullifyForBranch R1,SAR,branchTarget2W				is opfam=0x30 & branchTarget2W & nullifyForBranch & displacement2W & R1 & BVBCond & SEDCondSym & SAR & n=1 $(COMMON) 
+:BB^SEDCondSym^nullifyForBranch R1,SAR,branchTarget2W				is opfam=0x30 & branchTarget2W & nullifyForBranch & displacement2W & R1 & BVBCond & SEDCondSym & SAR & n=1 & $(COMMON) 
 	[ branchEnable = 1;
 	  globalset(inst_next, branchEnable);
 	  branchType = 2; # conditional imm branch
@@ -680,7 +680,7 @@ with : phase=1 {
 }
 
 #######################################
-:BB^SEDCondSym^nullifyForBranch R1,bboffset,branchTarget2W			is opfam=0x31 & branchTarget2W & nullifyForBranch & R1 & BBCond & SEDCondSym & n=0 & bboffset $(COMMON)
+:BB^SEDCondSym^nullifyForBranch R1,bboffset,branchTarget2W			is opfam=0x31 & branchTarget2W & nullifyForBranch & R1 & BBCond & SEDCondSym & n=0 & bboffset & $(COMMON)
 	[ branchEnable = 1;
 	  globalset(inst_next, branchEnable);
 	  branchType = 2; # conditional imm branch
@@ -693,7 +693,7 @@ with : phase=1 {
 	branchExecuted = 1;
 }						
 
-:BB^SEDCondSym^nullifyForBranch R1,bboffset,branchTarget2W			is opfam=0x31 & branchTarget2W & displacement2W & nullifyForBranch & R1 & BBCond & SEDCondSym & n=1 & bboffset $(COMMON)
+:BB^SEDCondSym^nullifyForBranch R1,bboffset,branchTarget2W			is opfam=0x31 & branchTarget2W & displacement2W & nullifyForBranch & R1 & BBCond & SEDCondSym & n=1 & bboffset & $(COMMON)
 	[ branchEnable = 1;
 	  globalset(inst_next, branchEnable);
 	  branchType = 2; # conditional imm branch
@@ -713,7 +713,7 @@ define pcodeop changePrivLevel;
 define pcodeop changeSpace;
 define pcodeop getCurrentSpace;
 
-:BE^nullifyForBranch externalTarget		is opfam=0x38 & nullifyForBranch & externalTarget & SR3bit & n=0 $(COMMON)
+:BE^nullifyForBranch externalTarget		is opfam=0x38 & nullifyForBranch & externalTarget & SR3bit & n=0 & $(COMMON)
 	[
 	  branchEnable = 1;
 	  globalset(inst_next, branchEnable);
@@ -728,13 +728,13 @@ define pcodeop getCurrentSpace;
 	branchExecuted = 1;
 }
 
-:BE^nullifyForBranch externalTarget		is opfam=0x38 & nullifyForBranch & externalTarget & SR3bit & n=1 $(COMMON)
+:BE^nullifyForBranch externalTarget		is opfam=0x38 & nullifyForBranch & externalTarget & SR3bit & n=1 & $(COMMON)
 {
 	iasq_front = SR3bit; # set the space ID to the new space ID
 	goto [externalTarget];
 }
 
-:BE^",L"^nullifyForBranch externalTarget,SR0,R31	is opfam=0x39 & nullifyForBranch & SR0 & R31 & SR3bit & externalTarget & n=0 $(COMMON)
+:BE^",L"^nullifyForBranch externalTarget,SR0,R31	is opfam=0x39 & nullifyForBranch & SR0 & R31 & SR3bit & externalTarget & n=0 & $(COMMON)
 	[
 	  branchEnable = 1;
 	  globalset(inst_next, branchEnable);
@@ -751,7 +751,7 @@ define pcodeop getCurrentSpace;
 	branchExecuted = 1;
 }
 
-:BE^",L"^nullifyForBranch externalTarget,SR0,R31	is opfam=0x39 & nullifyForBranch & SR0 & R31 & SR3bit & externalTarget & n=1 $(COMMON)
+:BE^",L"^nullifyForBranch externalTarget,SR0,R31	is opfam=0x39 & nullifyForBranch & SR0 & R31 & SR3bit & externalTarget & n=1 & $(COMMON)
 {
 	r31 = inst_next+4; # store the link/return address
 	sr0 = iasq_front; # store the link/return space ID 
@@ -759,7 +759,7 @@ define pcodeop getCurrentSpace;
 	call [externalTarget];
 }
 
-:B^",GATE"^nullifyForBranch branchTarget3W,R2dst					is opfam=0x3A & c=0x1 & R2dst & nullifyForBranch & branchTarget3W & n=0 $(COMMON) 
+:B^",GATE"^nullifyForBranch branchTarget3W,R2dst					is opfam=0x3A & c=0x1 & R2dst & nullifyForBranch & branchTarget3W & n=0 & $(COMMON) 
 	[
 	  branchEnable = 1;
 	  globalset(inst_next, branchEnable);
@@ -773,7 +773,7 @@ define pcodeop getCurrentSpace;
 	branchExecuted = 1;
 }
 
-:B^",GATE"^nullifyForBranch branchTarget3W,R2dst					is opfam=0x3A & c=0x1 & R2dst & nullifyForBranch & branchTarget3W & n=1 $(COMMON)
+:B^",GATE"^nullifyForBranch branchTarget3W,R2dst					is opfam=0x3A & c=0x1 & R2dst & nullifyForBranch & branchTarget3W & n=1 & $(COMMON)
 {
 	R2dst = changePrivLevel();
 	goto [branchTarget3W];
@@ -811,7 +811,7 @@ define pcodeop trap;
 }
 
 :ADD^",C"^AddCondSym R1,R2,RT	is opfam=0x02 & op=0x1C & m=0 & R1 & R2 & RT & AddCondSym & AddCondNullify {
-	partialSum = R2 + zext(pswCB);
+	local partialSum = R2 + zext(pswCB);
 	pswCB = carry(partialSum, R1);
 	RT = partialSum + R1;
 	build AddCondNullify;
@@ -819,7 +819,7 @@ define pcodeop trap;
 
 # TODO This may need some work
 :ADD^",CO"^AddCondSym R1,R2,RT	is opfam=0x02 & op=0x3C & m=0 & R1 & R2 & RT & AddCondSym & AddCondNullify {
-	partialSum = R2 + zext(pswCB);
+	local partialSum = R2 + zext(pswCB);
 	partialCarry:1 = carry(R2, zext(pswCB));
 	partialOverflow:1 = scarry(R2, zext(pswCB));
 	takeTrap:1 = partialOverflow == 0x1:1; 
@@ -838,20 +838,20 @@ define pcodeop trap;
 }
 
 :SH1ADD^AddCondSym R1,R2,RT	is opfam=0x02 & op=0x19 & m=0 & R1 & R2 & RT & AddCond & AddCondSym & AddCondNullify {
-	shiftedR1 = R1 << 1;
+	local shiftedR1 = R1 << 1;
 	pswCB = carry(shiftedR1,R2);
 	RT = shiftedR1 + R2;
 	build AddCondNullify;
 }
 
 :SH1ADDL^AddCondSym R1,R2,RT	is opfam=0x02 & op=0x29 & m=0 & R1 & R2 & RT & AddCondNullify & AddCondSym {
-	shiftedR1 = R1 << 1;
+	local shiftedR1 = R1 << 1;
 	RT = shiftedR1 + R2;
 	build AddCondNullify;
 }
 
 :SH1ADDO^SEDCondSym R1,R2,RT	is opfam=0x02 & op=0x39 & m=0 & R1 & R2 & RT & AddCondNullify & SEDCondSym {
-	shiftedR1 = R1 << 1;
+	local shiftedR1 = R1 << 1;
 	if (scarry(shiftedR1, R2)) goto <TRAP>;
 	pswCB = carry(shiftedR1,R2);
 	RT = shiftedR1 + R2;
@@ -863,20 +863,20 @@ define pcodeop trap;
 }
 
 :SH2ADD^SEDCondSym R1,R2,RT	is opfam=0x02 & op=0x1A & m=0 & R1 & R2 & RT & AddCondNullify & SEDCondSym {
-	shiftedR1 = R1 << 2;
+	local shiftedR1 = R1 << 2;
 	pswCB = carry(shiftedR1,R2);
 	RT = shiftedR1 + R2;
 	build AddCondNullify;
 }
 
 :SH2ADDL^AddCondSym R1,R2,RT	is opfam=0x02 & op=0x2A & m=0 & R1 & R2 & RT & AddCondNullify & AddCondSym {
-	shiftedR1 = R1 << 2;
+	local shiftedR1 = R1 << 2;
 	RT = shiftedR1 + R2;
 	build AddCondNullify;
 }
 
 :SH2ADDO^AddCondSym R1,R2,RT	is opfam=0x02 & op=0x3A & m=0 & R1 & R2 & RT & AddCondNullify & AddCondSym {
-	shiftedR1 = R1 << 2;
+	local shiftedR1 = R1 << 2;
 	if (scarry(shiftedR1, R2)) goto <TRAP>;
 	pswCB = carry(shiftedR1,R2);
 	RT = shiftedR1 + R2;
@@ -888,20 +888,20 @@ define pcodeop trap;
 }
 
 :SH3ADD^AddCondSym R1,R2,RT	is opfam=0x02 & op=0x1B & m=0 & R1 & R2 & RT & AddCondNullify & AddCondSym {
-	shiftedR1 = R1 << 3;
+	local shiftedR1 = R1 << 3;
 	pswCB = carry(shiftedR1,R2);
 	RT = shiftedR1 + R2;
 	build AddCondNullify;
 }
 
 :SH3ADDL^AddCondSym R1,R2,RT	is opfam=0x02 & op=0x2B & m=0 & R1 & R2 & RT & AddCondNullify & AddCondSym {
-	shiftedR1 = R1 << 3;
+	local shiftedR1 = R1 << 3;
 	RT = shiftedR1 + R2;
 	build AddCondNullify;
 }
 
 :SH3ADDO^AddCondSym R1,R2,RT	is opfam=0x02 & op=0x3B & m=0 & R1 & R2 & RT & AddCondNullify & AddCondSym {
-	shiftedR1 = R1 << 3;
+	local shiftedR1 = R1 << 3;
 	if (scarry(shiftedR1, R2)) goto <TRAP>;
 	pswCB = carry(shiftedR1,R2);
 	RT = shiftedR1 + R2;
@@ -975,7 +975,7 @@ define pcodeop trap;
 
 # R1 is partial remainder, R2 is denominator, RT is updated partial remainder
 :DS^CSCondSym R1,R2,RT	is opfam=0x02 & op=0x11 & m=0 & R1 & R2 & RT & CSCondSym & CSCondNullify {
-	origR2 = R2;
+	local origR2 = R2;
 	left:$(REGSIZE) =  (R1 << 1) | zext(pswCB);
 	if (pswV) goto <MINUS>;
 		right:$(REGSIZE) = R2;
@@ -1004,12 +1004,12 @@ define pcodeop trap;
 }
 
 # COPY is a pseudo-op using OR to move values between registers
-:COPY R1,RT				is opfam=0x02 & op=0x09 & m=0 & R1 & reg2=0 & RT & c=0 & f=0 {
+:COPY R1,RT				is opfam=0x02 & op=0x09 & m=0 & R1 & reg2=0 & RT & c=0 & fv=0 {
 	RT = R1;
  }
  
 # nop is a pseudo-op for OR R0,R0, which is one way to make a nop
-:NOP					is opfam=0x02 & op=0x09 & m=0 & reg1=0 & reg2=0 & t=0 & c=0 & f=0 { } # intentionally left blank
+:NOP					is opfam=0x02 & op=0x09 & m=0 & reg1=0 & reg2=0 & t=0 & c=0 & fv=0 { } # intentionally left blank
 
 :OR^LogicCondSym R1,R2,RT	is opfam=0x02 & op=0x09 & m=0 & R1 & R2 & RT & LogicCondSym & LogicCondNullify {
 	RT = R1 | R2;
@@ -1145,7 +1145,7 @@ define pcodeop trap;
 
 # extract unsigned using SAR
 :EXTRW",U"^SEDCondSym R2,SAR,shiftCLen,R1dst	is opfam=0x34 & bits59=0 & subop1012=4 & R2 & shiftCLen & R1dst & SEDCondSym & ExtrCondNullify & SAR {
-	value = R2 >> (31-SAR);
+	local value = R2 >> (31-SAR);
 	mask:4 = 0xffffffff >> (32 - shiftCLen);
 	nullifyCondResult = value & mask;
 	R1dst = nullifyCondResult;
@@ -1155,7 +1155,7 @@ define pcodeop trap;
 
 # extract signed using SAR
 :EXTRW",S"^SEDCondSym R2,SAR,shiftCLen,R1dst	is opfam=0x34 & bits59=0 & subop1012=5 & R2 & shiftCLen & R1dst & SEDCondSym & ExtrCondNullify & SAR {
-	value = R2 s>> (31-SAR);
+	local value = R2 s>> (31-SAR);
 	value = value << (32 - shiftCLen);
 	value = value s>> (32 - shiftCLen);
 	nullifyCondResult = value;
@@ -1165,7 +1165,7 @@ define pcodeop trap;
 
 # extract unsigned using immediate
 :EXTRW^",U"^SEDCondSym R2,cp,shiftCLen,R1dst	is opfam=0x34 & subop1012=6 & cp & R2 & shiftCLen & R1dst & SEDCondSym & ExtrCondNullify & shiftC {
-	value = R2 >> shiftC;
+	local value = R2 >> shiftC;
 	mask:4 = 0xffffffff >> (32-shiftCLen);
 	nullifyCondResult = value & mask;
 	R1dst = nullifyCondResult;
@@ -1175,7 +1175,7 @@ define pcodeop trap;
 
 # extract signed using immediate
 :EXTRW^",S"^SEDCondSym R2,cp,shiftCLen,R1dst	is opfam=0x34 & subop1012=7 & cp & R2 & shiftC & shiftCLen & R1dst & SEDCondSym & ExtrCondNullify {
-	value = R2 s>> shiftC;
+	local value = R2 s>> shiftC;
 	value = value << (32 - shiftCLen);
 	value = value s>> (32 - shiftCLen);
 	nullifyCondResult = value;
@@ -1186,10 +1186,10 @@ define pcodeop trap;
 # non-zeroing SAR version (VDEP)
 :DEPW^SEDCondSym R1,SAR,shiftCLen,R2dst       is opfam=0x35 & bits59=0 & subop1012=1 & R1 & R2 & R2dst & shiftCLen & DepCondNullify & SEDCondSym & SAR {
         mask:4 = 0xffffffff >> (32-shiftCLen);
-        value = R1 & mask;
+        local value = R1 & mask;
         value = value << (31-SAR);
         mask = mask << (31-SAR);
-        result = R2 & ~mask;
+        local result = R2 & ~mask;
         result = result | value; 
         R2dst = result;
         nullifyCondResult = result;
@@ -1200,10 +1200,10 @@ define pcodeop trap;
 # non-zeroing constant version (DEP)
 :DEPW^SEDCondSym R1,shiftC,shiftCLen,R2dst is opfam=0x35 & subop1012=3 & shiftC & shiftCLen & R1 & R2 & R2dst & DepCondNullify & SEDCondSym & cp {
         mask:4 = 0xffffffff >> (32-shiftCLen);
-        value = R1 & mask;
+        local value = R1 & mask;
         value = value << cp;
         mask = mask << cp;
-        result = R2 & ~mask;
+        local result = R2 & ~mask;
         result = result | value;
         R2dst = result;
         nullifyCondResult = result;
@@ -1215,10 +1215,10 @@ define pcodeop trap;
         mask:4 = 0xffffffff >> (32 - shiftCLen);
         depbits:4 = sext(highlse5);
         depbits = sext(depbits); 
-        value = depbits & mask;
+        local value = depbits & mask;
         value = value << (31-SAR);
         mask = mask << (31-SAR);
-        result = R2 & ~mask;
+        local result = R2 & ~mask;
         result = result | value;
         R2dst = result;
         nullifyCondResult = result;
@@ -1229,10 +1229,10 @@ define pcodeop trap;
 :DEPWI^SEDCondSym highlse5,shiftC,shiftCLen,R2dst  is opfam=0x35 & subop1012=7 & shiftC & highlse5 & R2 & R2dst & shiftCLen & DepCondNullify & SEDCondSym & cp {
         mask:4 = 0xffffffff >> (32-shiftCLen);
         depbits:4 = sext(highlse5);
-        value = depbits & mask;
+        local value = depbits & mask;
         value = value << cp;
         mask = mask << cp;
-        result = R2 & ~mask;
+        local result = R2 & ~mask;
         result = result | value;
         R2dst = result;
         nullifyCondResult = result;
@@ -1242,7 +1242,7 @@ define pcodeop trap;
 # DEPW,Z SAR version (ZVDEP)
 :DEPW",Z"^SEDCondSym R1,SAR,shiftCLen,R2dst        is opfam=0x35 & bits59=0 & subop1012=0 & R1 & shiftCLen & R2 & R2dst & DepCondNullify & SEDCondSym & SAR {
         mask:4 = 0xffffffff >> (32-shiftCLen);
-        value = R1 & mask;
+        local value = R1 & mask;
         value = value << (31-SAR);
         R2dst = value;
         nullifyCondResult = value;
@@ -1252,7 +1252,7 @@ define pcodeop trap;
 # DEPW,Z constant version (ZDEP)
 :DEPW^",Z"^SEDCondSym R1,shiftC,shiftCLen,R2dst    is opfam=0x35 & subop1012=2 & shiftC & R2 & R2dst & shiftCLen & R1 & DepCondNullify & SEDCondSym & cp {
         mask:4 = 0xffffffff >> (32-shiftCLen);
-        value = R1 & mask;
+        local value = R1 & mask;
         value = value << cp;
         R2dst = value;
         nullifyCondResult = value;
@@ -1263,7 +1263,7 @@ define pcodeop trap;
 :DEPWI",Z"^SEDCondSym highlse5,SAR,shiftCLen,R2dst is opfam=0x35 & SAR & bits59=0 & subop1012=4 & shiftCLen & highlse5 & R2dst & DepCondNullify & SEDCondSym {
         mask:4 = 0xffffffff >> (32-shiftCLen);
         depbits:4 = sext(highlse5);
-        value = depbits & mask;
+        local value = depbits & mask;
         value = value << (31-SAR);
         R2dst = value;
         nullifyCondResult = value;
@@ -1274,7 +1274,7 @@ define pcodeop trap;
 :DEPWI",Z"^SEDCondSym highlse5,shiftC,shiftCLen,R2dst      is opfam=0x35 & subop1012=6 & shiftC & highlse5 & R2dst & shiftCLen & DepCondNullify & SEDCondSym & cp {
         mask:4 = 0xffffffff >> (32-shiftCLen);
         depbits:4 = sext(highlse5);
-        value = depbits & mask;
+        local value = depbits & mask;
         value = value << cp;
         nullifyCondResult = value;
         R2dst = value;
@@ -1300,7 +1300,7 @@ define pcodeop break;
 	iasq_front = cr17; 
 	upperBits:8 = zext(iasq_front);
 	lowerBits:8 = zext(iaoq_front);
-	returnAddr = (upperBits << 32) | lowerBits;
+	local returnAddr = (upperBits << 32) | lowerBits;
 	goto [returnAddr];
  }
 
@@ -1671,7 +1671,6 @@ define pcodeop diag;
 	if (isSS) goto <SGLSGL>;
 	if (isSD) goto <SGLDBL>;
 	if (isDS) goto <DBLSGL>;
-	<DBLDBL>
 	FPRT64 = int2float(FPR264);
 	goto <DONE>;
 	<SGLDBL>
@@ -1880,7 +1879,7 @@ define pcodeop diag;
 	compareBit = result;
 }
 
-:FTEST^fptest										is opfam=0x0C & fpclass=2 & fpsub=1 & fptest $(COMMON)
+:FTEST^fptest										is opfam=0x0C & fpclass=2 & fpsub=1 & fptest & $(COMMON)
 	[
 	  nullifyEnable = 1;
 	  globalset(inst_next, nullifyEnable);

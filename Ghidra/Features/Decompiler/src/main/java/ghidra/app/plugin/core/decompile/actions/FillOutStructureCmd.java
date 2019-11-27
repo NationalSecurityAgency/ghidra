@@ -85,7 +85,7 @@ public class FillOutStructureCmd extends BackgroundCommand {
 		super("Fill Out Structure", true, false, true);
 		this.tool = tool;
 		this.currentProgram = program;
-		this.currentLocation = location;
+		this.currentLocation = Objects.requireNonNull(location);
 	}
 
 	@Override
@@ -370,21 +370,8 @@ public class FillOutStructureCmd extends BackgroundCommand {
 	 */
 	private Structure createStructure(HighVariable var, Function f, boolean isThisParam) {
 
-		Structure structDT = null;
-
-		DataType varDT = var.getDataType();
-		if (varDT instanceof Structure) {
-			structDT = (StructureDataType) varDT;
-		}
-		else if (varDT instanceof Pointer) {
-			DataType dt = ((Pointer) varDT).getDataType();
-			while (dt instanceof Pointer) {
-				dt = ((Pointer) dt).getDataType();
-			}
-			if (dt instanceof Structure) {
-				structDT = (Structure) dt;
-			}
-		}
+		Structure structDT =
+			CreateStructureVariableAction.getStructureForExtending(var.getDataType());
 
 		if (structDT == null) {
 			structDT = createNewStruct(var, (int) maxOffset, f, isThisParam);

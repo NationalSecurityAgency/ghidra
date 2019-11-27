@@ -15,14 +15,16 @@
  */
 package ghidra.framework.plugintool.dialog;
 
+import static ghidra.util.HTMLUtilities.*;
+
 import java.awt.*;
-import java.util.StringTokenizer;
 
 import javax.swing.*;
 import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.StyleConstants;
 
-import org.apache.commons.lang3.StringUtils;
+import docking.widgets.label.GDHtmlLabel;
+import ghidra.util.HTMLUtilities;
 
 /**
  * Abstract class that defines a panel for displaying name/value pairs with html-formatting. 
@@ -31,6 +33,7 @@ import org.apache.commons.lang3.StringUtils;
  */
 public abstract class AbstractDetailsPanel extends JPanel {
 
+	private static final int MIN_WIDTH = 700;
 	protected static final int LEFT_COLUMN_WIDTH = 150;
 	protected static final int RIGHT_MARGIN = 30;
 
@@ -38,7 +41,6 @@ public abstract class AbstractDetailsPanel extends JPanel {
 	protected static SimpleAttributeSet titleAttrSet;
 
 	protected JLabel textLabel;
-	protected Font defaultFont;
 	protected JScrollPane sp;
 
 	/**
@@ -61,7 +63,7 @@ public abstract class AbstractDetailsPanel extends JPanel {
 
 		SimpleAttributeSet attrSet = new SimpleAttributeSet();
 		attrSet.addAttribute(StyleConstants.FontFamily, fontFamily);
-		attrSet.addAttribute(StyleConstants.FontSize, new Integer(fontSize));
+		attrSet.addAttribute(StyleConstants.FontSize, Integer.valueOf(fontSize));
 		attrSet.addAttribute(StyleConstants.Bold, bold);
 		attrSet.addAttribute(StyleConstants.Foreground, color);
 
@@ -83,7 +85,7 @@ public abstract class AbstractDetailsPanel extends JPanel {
 
 		SimpleAttributeSet attrSet = new SimpleAttributeSet();
 		attrSet.addAttribute(StyleConstants.FontFamily, "Tahoma");
-		attrSet.addAttribute(StyleConstants.FontSize, new Integer(11));
+		attrSet.addAttribute(StyleConstants.FontSize, Integer.valueOf(11));
 		attrSet.addAttribute(StyleConstants.Bold, Boolean.TRUE);
 		attrSet.addAttribute(StyleConstants.Foreground, color);
 
@@ -102,15 +104,25 @@ public abstract class AbstractDetailsPanel extends JPanel {
 	 */
 	protected void createMainPanel() {
 		setLayout(new BorderLayout());
-		textLabel = new JLabel("");
+		textLabel = new GDHtmlLabel() {
+			@Override
+			public Dimension getPreferredSize() {
+
+				// overridden to force word-wrapping by limiting the preferred size of the label
+				Dimension mySize = super.getPreferredSize();
+				int rightColumnWidth = AbstractDetailsPanel.this.getWidth() - LEFT_COLUMN_WIDTH;
+				mySize.width = Math.max(MIN_WIDTH, rightColumnWidth);
+				return mySize;
+			}
+		};
+
 		textLabel.setVerticalAlignment(SwingConstants.TOP);
 		textLabel.setOpaque(true);
 		textLabel.setBackground(Color.WHITE);
 		sp = new JScrollPane(textLabel);
 		sp.getVerticalScrollBar().setUnitIncrement(10);
-		sp.setPreferredSize(new Dimension(700, 200));
+		sp.setPreferredSize(new Dimension(MIN_WIDTH, 200));
 		add(sp, BorderLayout.CENTER);
-		defaultFont = new Font("Tahoma", Font.BOLD, 12);
 	}
 
 	/**
@@ -123,7 +135,7 @@ public abstract class AbstractDetailsPanel extends JPanel {
 	protected void insertRowTitle(StringBuilder buffer, String rowName) {
 		buffer.append("<TR>");
 		buffer.append("<TD VALIGN=\"TOP\">");
-		insertHTMLLine(rowName + ":", titleAttrSet, buffer);
+		insertHTMLLine(buffer, rowName + ":", titleAttrSet);
 		buffer.append("</TD>");
 	}
 
@@ -133,11 +145,12 @@ public abstract class AbstractDetailsPanel extends JPanel {
 	 * 
 	 * @param buffer the string buffer to add to
 	 * @param value the text to add
-	 * @param attrSet the structure containing formatting information 
+	 * @param attributes the structure containing formatting information 
 	 */
-	protected void insertRowValue(StringBuilder buffer, String value, SimpleAttributeSet attrSet) {
-		buffer.append("<TD VALIGN=\"TOP\">");
-		insertHTMLLine(value, attrSet, buffer);
+	protected void insertRowValue(StringBuilder buffer, String value,
+			SimpleAttributeSet attributes) {
+		buffer.append("<TD VALIGN=\"TOP\" WIDTH=\"80%\">");
+		insertHTMLLine(buffer, value, attributes);
 		buffer.append("</TD>");
 		buffer.append("</TR>");
 	}
@@ -145,127 +158,54 @@ public abstract class AbstractDetailsPanel extends JPanel {
 	/**
 	 * Adds text to a string buffer as an html-formatted string, adding formatting information
 	 * as specified.
-	 * 
-	 * @param string the string to add
-	 * @param attributeSet the formatting instructions
 	 * @param buffer the string buffer to add to
+	 * @param string the string to add
+	 * @param attributes the formatting instructions
 	 */
-	protected void insertHTMLString(String string, SimpleAttributeSet attributeSet,
-			StringBuilder buffer) {
+	protected void insertHTMLString(StringBuilder buffer, String string,
+			SimpleAttributeSet attributes) {
+
 		if (string == null) {
 			return;
 		}
-		buffer.append("<FONT COLOR=\"#");
 
-		Color foregroundColor = (Color) attributeSet.getAttribute(StyleConstants.Foreground);
-		buffer.append(createColorString(foregroundColor));
+		buffer.append("<FONT COLOR=\"");
+
+		Color foregroundColor = (Color) attributes.getAttribute(StyleConstants.Foreground);
+		buffer.append(HTMLUtilities.toHexString(foregroundColor));
 
 		buffer.append("\" FACE=\"");
-
-		buffer.append(attributeSet.getAttribute(StyleConstants.FontFamily).toString());
+		buffer.append(attributes.getAttribute(StyleConstants.FontFamily).toString());
 
 		buffer.append("\">");
 
-		Boolean isBold = (Boolean) attributeSet.getAttribute(StyleConstants.Bold);
+		Boolean isBold = (Boolean) attributes.getAttribute(StyleConstants.Bold);
 		isBold = (isBold == null) ? Boolean.FALSE : isBold;
+		String text = HTMLUtilities.escapeHTML(string);
 		if (isBold) {
-			buffer.append("<B>");
+			text = HTMLUtilities.bold(text);
 		}
 
-		buffer.append(string);
-
-		if (isBold) {
-			buffer.append("</B>");
-		}
+		buffer.append(text);
 
 		buffer.append("</FONT>");
 	}
 
 	/**
 	 * Inserts a single line of html into a {@link StringBuffer}, with the given attributes.
-	 * 
-	 * @param string the string to insert
-	 * @param attributeSet the attributes to apply
 	 * @param buffer the string buffer
+	 * @param string the string to insert
+	 * @param attributes the attributes to apply
 	 */
-	protected void insertHTMLLine(String string, SimpleAttributeSet attributeSet,
-			StringBuilder buffer) {
+	protected void insertHTMLLine(StringBuilder buffer, String string,
+			SimpleAttributeSet attributes) {
 		if (string == null) {
 			return;
 		}
 
-		insertHTMLString(string, attributeSet, buffer);
+		insertHTMLString(buffer, string, attributes);
 
 		// row padding - newline space
-		buffer.append("<BR>");
-	}
-
-	/**
-	 * Returns a stringified version of the {@link Color} provided; eg: "8c0000"
-	 * 
-	 * @param color the color to parse
-	 * @return string version of the color
-	 */
-	protected String createColorString(Color color) {
-
-		int red = color.getRed();
-		int green = color.getGreen();
-		int blue = color.getBlue();
-
-		return StringUtils.leftPad(Integer.toHexString(red), 2, "0") +
-			StringUtils.leftPad(Integer.toHexString(green), 2, "0") +
-			StringUtils.leftPad(Integer.toHexString(blue), 2, "0");
-	}
-
-	/**
-	 * Returns a string with line breaks at the boundary of the window it's being displayed in. 
-	 * Without this the description would just run on in one long line.
-	 * 
-	 * @param descr the string to format
-	 * @return the formatted string
-	 */
-	protected String formatDescription(String descr) {
-		if (descr == null) {
-			return "";
-		}
-		int maxWidth = getMaxStringWidth();
-		int remainingWidth = maxWidth;
-		FontMetrics fm = textLabel.getFontMetrics(defaultFont);
-		int spaceSize = fm.charWidth(' ');
-		StringBuffer sb = new StringBuffer();
-		StringTokenizer st = new StringTokenizer(descr, " ");
-		while (st.hasMoreTokens()) {
-			String str = st.nextToken();
-			if (str.endsWith(".")) {
-				str = str + "  ";
-			}
-			int strWidth = fm.stringWidth(str);
-			if (strWidth + spaceSize <= remainingWidth) {
-				sb.append(" ");
-				sb.append(str);
-				remainingWidth -= strWidth + spaceSize;
-			}
-			else {
-				sb.append("<BR>");
-				sb.append(str + " ");
-				remainingWidth = maxWidth - strWidth;
-			}
-		}
-		return sb.toString();
-	}
-
-	/**
-	 * Returns the maximum size that one line of text can be when formatting the description.
-	 * 
-	 * @return the number of characters in the string
-	 */
-	protected int getMaxStringWidth() {
-
-		int width = textLabel.getWidth();
-		if (width == 0) {
-			width = 700;
-		}
-		width -= LEFT_COLUMN_WIDTH + RIGHT_MARGIN; // allow for tabs and right margin
-		return width;
+		buffer.append(BR);
 	}
 }

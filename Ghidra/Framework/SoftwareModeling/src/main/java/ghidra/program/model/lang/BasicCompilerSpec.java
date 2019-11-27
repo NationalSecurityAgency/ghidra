@@ -41,17 +41,22 @@ public class BasicCompilerSpec implements CompilerSpec {
 	public static final String DECOMPILER_OUTPUT_LANGUAGE = "Output Language";
 	public final static DecompilerLanguage DECOMPILER_OUTPUT_DEF = DecompilerLanguage.C_LANGUAGE;
 	public final static String DECOMPILER_OUTPUT_DESC =
-			"Select the source language output by the decompiler.";
+		"Select the source language output by the decompiler.";
 	private static final String EVALUATION_MODEL_PROPERTY_NAME = "Prototype Evaluation";
 
 	public static final String STACK_SPACE_NAME = "stack";
 	public static final String JOIN_SPACE_NAME = "join";
+	public static final String OTHER_SPACE_NAME = "OTHER";
+
+	//must match AddrSpace enum (see space.hh)
+	public static final int CONSTANT_SPACE_INDEX = 0;
+	public static final int OTHER_SPACE_INDEX = 1;
 
 	private final CompilerSpecDescription description;
 	private String sourceName;
 	private final SleighLanguage language;
 	private DataOrganizationImpl dataOrganization;
-	private List<ContextSetting> ctxsetting = new ArrayList<ContextSetting>();
+	private List<ContextSetting> ctxsetting = new ArrayList<>();
 	private PrototypeModel defaultModel;
 	private PrototypeModel defaultEvaluationModel;
 	private PrototypeModel[] models;
@@ -62,12 +67,11 @@ public class BasicCompilerSpec implements CompilerSpec {
 	private AddressSpace joinSpace;
 	private boolean stackGrowsNegative = true;
 	private boolean reverseJustifyStack = false;
-	private Map<String, AddressSpace> spaceBases = new HashMap<String, AddressSpace>();
+	private Map<String, AddressSpace> spaceBases = new HashMap<>();
 	private PcodeInjectLibrary pcodeInject;
 	private AddressSet globalSet;
-	private LinkedHashMap<String, String> properties = new LinkedHashMap<String, String>();
-	private Map<String, PrototypeModel> callingConventionMap =
-		new HashMap<String, PrototypeModel>();
+	private LinkedHashMap<String, String> properties = new LinkedHashMap<>();
+	private Map<String, PrototypeModel> callingConventionMap = new HashMap<>();
 	private String[] evaluationModelChoices;
 	private String specString;
 	private ResourceFile specFile;
@@ -118,8 +122,9 @@ public class BasicCompilerSpec implements CompilerSpec {
 			parseException = e;
 			Throwable cause = e.getCause();		// Recover the cause (from the validator exception)
 			if (cause != null) {
-				if (cause instanceof SAXException || cause instanceof IOException)
-					parseException = (Exception)cause;
+				if (cause instanceof SAXException || cause instanceof IOException) {
+					parseException = (Exception) cause;
+				}
 			}
 		}
 		catch (FileNotFoundException e) {
@@ -137,7 +142,7 @@ public class BasicCompilerSpec implements CompilerSpec {
 
 		if (parseException != null) {
 			throw new CompilerSpecNotFoundException(language.getLanguageID(),
-				description.getCompilerSpecID(), cspecFile.getName(),parseException);
+				description.getCompilerSpecID(), cspecFile.getName(), parseException);
 		}
 	}
 
@@ -155,31 +160,33 @@ public class BasicCompilerSpec implements CompilerSpec {
 	@SuppressWarnings("unchecked")
 	private void buildInjectLibrary() {
 		String classname =
-				language.getProperty(GhidraLanguagePropertyKeys.PCODE_INJECT_LIBRARY_CLASS);
+			language.getProperty(GhidraLanguagePropertyKeys.PCODE_INJECT_LIBRARY_CLASS);
 		if (classname == null) {
 			pcodeInject = new PcodeInjectLibrary(language);		// This is the default implementation
-			return;
 		}
-		try {
-			Class<?> c = Class.forName(classname);
-			if (!PcodeInjectLibrary.class.isAssignableFrom(c)) {
-				Msg.error(this, "Language " + language.getLanguageID() +
-						" does not specify a valid " +
-						GhidraLanguagePropertyKeys.PCODE_INJECT_LIBRARY_CLASS);
-				throw new RuntimeException(classname + " does not implement interface " +
+		else {
+			try {
+				Class<?> c = Class.forName(classname);
+				if (!PcodeInjectLibrary.class.isAssignableFrom(c)) {
+					Msg.error(this,
+						"Language " + language.getLanguageID() + " does not specify a valid " +
+							GhidraLanguagePropertyKeys.PCODE_INJECT_LIBRARY_CLASS);
+					throw new RuntimeException(classname + " does not implement interface " +
 						PcodeInjectLibrary.class.getName());
-			}
-			Class<? extends PcodeInjectLibrary> injectLibraryClass =
+				}
+				Class<? extends PcodeInjectLibrary> injectLibraryClass =
 					(Class<? extends PcodeInjectLibrary>) c;
-			Constructor<? extends PcodeInjectLibrary> constructor =
+				Constructor<? extends PcodeInjectLibrary> constructor =
 					injectLibraryClass.getConstructor(SleighLanguage.class);
-			pcodeInject = constructor.newInstance(language);
-		}
-		catch (Exception e) {
-			Msg.error(this, "Language " + language.getLanguageID() + " does not specify a valid " +
-					GhidraLanguagePropertyKeys.PCODE_INJECT_LIBRARY_CLASS);
-			throw new RuntimeException("Failed to instantiate " + classname + " for language " +
+				pcodeInject = constructor.newInstance(language);
+			}
+			catch (Exception e) {
+				Msg.error(this,
+					"Language " + language.getLanguageID() + " does not specify a valid " +
+						GhidraLanguagePropertyKeys.PCODE_INJECT_LIBRARY_CLASS);
+				throw new RuntimeException("Failed to instantiate " + classname + " for language " +
 					language.getLanguageID(), e);
+			}
 		}
 		List<InjectPayloadSleigh> additionalInject = language.getAdditionalInject();
 		if (additionalInject != null) {
@@ -188,7 +195,7 @@ public class BasicCompilerSpec implements CompilerSpec {
 			}
 		}
 	}
-	
+
 	private void addThisCallConventionIfMissing() {
 		boolean foundThisCall = false;
 		for (PrototypeModel model : models) {
@@ -246,16 +253,6 @@ public class BasicCompilerSpec implements CompilerSpec {
 
 	void addContextSetting(Register reg, BigInteger value, Address begad, Address endad) {
 		ctxsetting.add(new ContextSetting(reg, value, begad, endad));
-	}
-
-	@Override
-	public int getCallStackMod() {
-		return defaultModel.getExtrapop();
-	}
-
-	@Override
-	public int getCallStackShift() {
-		return defaultModel.getStackshift();
 	}
 
 	@Override
@@ -361,6 +358,9 @@ public class BasicCompilerSpec implements CompilerSpec {
 		else {
 			space = language.getAddressFactory().getAddressSpace(spaceName);
 		}
+		if (spaceName.equals(OTHER_SPACE_NAME)) {
+			space = AddressSpace.OTHER_SPACE;
+		}
 		if (space == null) {
 			throw new SleighException("Unknown address space: " + spaceName);
 		}
@@ -434,7 +434,7 @@ public class BasicCompilerSpec implements CompilerSpec {
 
 	private void restoreXml(XmlPullParser parser) throws XmlParseException {
 		stackPointer = null;
-		List<PrototypeModel> modelList = new ArrayList<PrototypeModel>();
+		List<PrototypeModel> modelList = new ArrayList<>();
 		String evalCurrentPrototype = null;
 
 		parser.start("compiler_spec");
@@ -482,6 +482,12 @@ public class BasicCompilerSpec implements CompilerSpec {
 				evalCurrentPrototype = parser.start().getAttribute("name");
 				parser.end();
 			}
+			else if (name.equals("segmentop")) {
+				XmlElement el = parser.start();
+				InjectPayloadSleigh payload = language.parseSegmentOp(el, parser);
+				parser.end();
+				pcodeInject.registerInject(payload);
+			}
 			else {
 				XmlElement el = parser.start();
 				parser.discardSubTree(el);
@@ -489,9 +495,9 @@ public class BasicCompilerSpec implements CompilerSpec {
 		}
 
 		if (stackPointer == null) {
-			stackSpace =
-				new GenericAddressSpace(STACK_SPACE_NAME, language.getDefaultSpace().getSize(),
-					language.getDefaultSpace().getAddressableUnitSize(), AddressSpace.TYPE_STACK, 0);
+			stackSpace = new GenericAddressSpace(STACK_SPACE_NAME,
+				language.getDefaultSpace().getSize(),
+				language.getDefaultSpace().getAddressableUnitSize(), AddressSpace.TYPE_STACK, 0);
 		}
 
 		buildModelArrays(modelList);
@@ -534,22 +540,22 @@ public class BasicCompilerSpec implements CompilerSpec {
 		parser.end();
 	}
 
-	private void restoreDataOrganization(XmlPullParser parser) {
+	private void restoreDataOrganization(XmlPullParser parser) throws XmlParseException {
 
 		parser.start();
 		while (parser.peek().isStart()) {
 			XmlElement subel = parser.start();
 			String name = subel.getName();
-			
+
 			if (name.equals("char_type")) {
 				String boolStr = subel.getAttribute("signed");
 				dataOrganization.setCharIsSigned(SpecXmlUtils.decodeBoolean(boolStr));
 				parser.end(subel);
 				continue;
 			}
-			
+
 			String value = subel.getAttribute("value");
-			
+
 			if (name.equals("absolute_max_alignment")) {
 				dataOrganization.setAbsoluteMaxAlignment(SpecXmlUtils.decodeInt(value));
 			}
@@ -605,10 +611,35 @@ public class BasicCompilerSpec implements CompilerSpec {
 					parser.end(subsubel);
 				}
 			}
+			else if (name.equals("bitfield_packing")) {
+				dataOrganization.setBitFieldPacking(parseBitFieldPacking(parser));
+			}
 			parser.end(subel);
 		}
 
 		parser.end();
+	}
+
+	private BitFieldPacking parseBitFieldPacking(XmlPullParser parser) {
+		BitFieldPackingImpl bitFieldPacking = new BitFieldPackingImpl();
+		while (parser.peek().isStart()) {
+			XmlElement subel = parser.start();
+			String name = subel.getName();
+			String value = subel.getAttribute("value");
+
+			if (name.equals("use_MS_convention")) {
+				bitFieldPacking.setUseMSConvention(SpecXmlUtils.decodeBoolean(value));
+			}
+			else if (name.equals("type_alignment_enabled")) {
+				bitFieldPacking.setTypeAlignmentEnabled(SpecXmlUtils.decodeBoolean(value));
+			}
+			else if (name.equals("zero_length_boundary")) {
+				bitFieldPacking.setZeroLengthBoundary(SpecXmlUtils.decodeInt(value));
+			}
+
+			parser.end(subel);
+		}
+		return bitFieldPacking;
 	}
 
 	private void restoreSpaceBase(XmlPullParser parser) {
@@ -749,8 +780,8 @@ public class BasicCompilerSpec implements CompilerSpec {
 			stackGrowsNegative = false;
 		}
 		else {
-			throw new SleighException("Bad stack growth " + growth +
-				" should be 'positive' or 'negative'");
+			throw new SleighException(
+				"Bad stack growth " + growth + " should be 'positive' or 'negative'");
 		}
 		parser.end(el);
 	}
@@ -833,7 +864,7 @@ public class BasicCompilerSpec implements CompilerSpec {
 	public DecompilerLanguage getDecompilerOutputLanguage(Program program) {
 		Options options = program.getOptions(DECOMPILER_PROPERTY_LIST_NAME);
 		if (options.contains(DECOMPILER_OUTPUT_LANGUAGE)) {
-			return options.getEnum(DECOMPILER_OUTPUT_LANGUAGE,DECOMPILER_OUTPUT_DEF);
+			return options.getEnum(DECOMPILER_OUTPUT_LANGUAGE, DECOMPILER_OUTPUT_DEF);
 		}
 		return DECOMPILER_OUTPUT_DEF;
 	}
@@ -846,21 +877,15 @@ public class BasicCompilerSpec implements CompilerSpec {
 		// for upgrading/moving old property values.
 
 		Options decompilerPropertyList = program.getOptions(DECOMPILER_PROPERTY_LIST_NAME);
-		decompilerPropertyList.registerOption(
-			EVALUATION_MODEL_PROPERTY_NAME,
-			OptionType.STRING_TYPE,
-			evaluationModelChoices[0],
-			null,
+		decompilerPropertyList.registerOption(EVALUATION_MODEL_PROPERTY_NAME,
+			OptionType.STRING_TYPE, evaluationModelChoices[0], null,
 			"Select the default function prototype/evaluation model to be used during Decompiler analysis",
 			new StringWithChoicesEditor(evaluationModelChoices));
-		
+
 		if (decompilerPropertyList.contains(DECOMPILER_OUTPUT_LANGUAGE)) {
-			decompilerPropertyList.registerOption(
-					DECOMPILER_OUTPUT_LANGUAGE,
-					DECOMPILER_OUTPUT_DEF,
-					null,
-					DECOMPILER_OUTPUT_DESC);
-			
+			decompilerPropertyList.registerOption(DECOMPILER_OUTPUT_LANGUAGE, DECOMPILER_OUTPUT_DEF,
+				null, DECOMPILER_OUTPUT_DESC);
+
 		}
 
 		Options analysisPropertyList =
@@ -939,12 +964,12 @@ public class BasicCompilerSpec implements CompilerSpec {
 	 * @param program to be enabled
 	 */
 	public static void enableJavaLanguageDecompilation(Program program) {
-		Options decompilerPropertyList = program.getOptions(BasicCompilerSpec.DECOMPILER_PROPERTY_LIST_NAME);
-		decompilerPropertyList.registerOption(
-			BasicCompilerSpec.DECOMPILER_OUTPUT_LANGUAGE,
-			BasicCompilerSpec.DECOMPILER_OUTPUT_DEF,
-			null,
+		Options decompilerPropertyList =
+			program.getOptions(BasicCompilerSpec.DECOMPILER_PROPERTY_LIST_NAME);
+		decompilerPropertyList.registerOption(BasicCompilerSpec.DECOMPILER_OUTPUT_LANGUAGE,
+			BasicCompilerSpec.DECOMPILER_OUTPUT_DEF, null,
 			BasicCompilerSpec.DECOMPILER_OUTPUT_DESC);
-		decompilerPropertyList.setEnum(BasicCompilerSpec.DECOMPILER_OUTPUT_LANGUAGE, DecompilerLanguage.JAVA_LANGUAGE);
+		decompilerPropertyList.setEnum(BasicCompilerSpec.DECOMPILER_OUTPUT_LANGUAGE,
+			DecompilerLanguage.JAVA_LANGUAGE);
 	}
 }

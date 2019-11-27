@@ -19,23 +19,23 @@ import java.util.*;
 
 import javax.swing.Icon;
 
-import docking.widgets.tree.GTreeLazyNode;
 import docking.widgets.tree.GTreeNode;
 import ghidra.app.plugin.core.datamgr.util.DataTypeUtils;
 import ghidra.program.model.data.*;
-import ghidra.util.InvalidNameException;
-import ghidra.util.Msg;
+import ghidra.util.*;
 import ghidra.util.exception.AssertException;
 import ghidra.util.exception.DuplicateNameException;
 
-public class CategoryNode extends GTreeLazyNode implements DataTypeTreeNode {
+public class CategoryNode extends DataTypeTreeNode {
 
 	private Category category;
 	private String name;
 
 	private boolean isCut;
+	private ArrayPointerFilterState filterState;
 
-	public CategoryNode(Category category) {
+	public CategoryNode(Category category, ArrayPointerFilterState filterState) {
+		this.filterState = filterState;
 		setCategory(category);
 	}
 
@@ -47,49 +47,34 @@ public class CategoryNode extends GTreeLazyNode implements DataTypeTreeNode {
 	}
 
 	@Override
-	protected synchronized int doGetIndexOfChild(GTreeNode node, List<GTreeNode> children) {
-		if (children == null) {
-			return -1;
-		}
-		return Collections.binarySearch(children, node);
-	}
-
-	@Override
 	protected List<GTreeNode> generateChildren() {
 		if (category == null) {
 			return Collections.emptyList();
 		}
-
-		DataTypeArchiveGTree tree = (DataTypeArchiveGTree) getTree();
-		if (tree == null) {
-			return Collections.emptyList(); // must have been disposed
-		}
-
 		Category[] subCategories = category.getCategories();
 		DataType[] dataTypes = category.getDataTypes();
-		List<GTreeNode> children =
-			new ArrayList<>(subCategories.length + dataTypes.length);
+		List<GTreeNode> list = new ArrayList<>(subCategories.length + dataTypes.length);
 		for (Category subCategory : subCategories) {
-			children.add(new CategoryNode(subCategory));
+			list.add(new CategoryNode(subCategory, filterState));
 		}
 
 		for (DataType dataType : dataTypes) {
-			if (!isFilteredType(tree, dataType)) {
-				children.add(new DataTypeNode(dataType));
+			if (!isFilteredType(dataType)) {
+				list.add(new DataTypeNode(dataType));
 			}
 		}
 
-		Collections.sort(children);
+		Collections.sort(list);
 
-		return children;
+		return list;
 	}
 
-	private boolean isFilteredType(DataTypeArchiveGTree tree, DataType dataType) {
-		if (tree.isFilterArrays() && dataType instanceof Array) {
+	private boolean isFilteredType(DataType dataType) {
+		if (filterState.filterArrays() && dataType instanceof Array) {
 			return true;
 		}
 
-		if (tree.isFilterPointers() && (dataType instanceof Pointer) &&
+		if (filterState.filterPointers() && (dataType instanceof Pointer) &&
 			!(dataType.getDataTypeManager() instanceof BuiltInDataTypeManager)) {
 			return true;
 		}
@@ -106,6 +91,10 @@ public class CategoryNode extends GTreeLazyNode implements DataTypeTreeNode {
 		return -1; // CategoryNodes are always come before ****everything else****
 	}
 
+	@Override
+	public int hashCode() {
+		return name.hashCode();
+	}
 	/**
 	 * @see java.lang.Object#equals(java.lang.Object)
 	 */
@@ -142,7 +131,7 @@ public class CategoryNode extends GTreeLazyNode implements DataTypeTreeNode {
 
 	@Override
 	public String getToolTip() {
-		return category.getCategoryPathName();
+		return "<html>" + HTMLUtilities.escapeHTML(category.getCategoryPathName());
 	}
 
 	@Override
@@ -174,13 +163,19 @@ public class CategoryNode extends GTreeLazyNode implements DataTypeTreeNode {
 
 	public void categoryAdded(Category newCategory) {
 
-		if (!isChildrenLoadedOrInProgress()) {
+		if (!isLoaded()) {
 			return;
 		}
 
-		CategoryNode node = new CategoryNode(newCategory);
-		List<GTreeNode> allChildrenList = getAllChildren();
-		int index = Collections.binarySearch(allChildrenList, node);
+		CategoryNode node = new CategoryNode(newCategory, filterState);
+		List<GTreeNode> children = getChildren();
+		int index = Collections.binarySearch(children, node);
+		if (index >= 0) {
+			// if a node with that name exists, then we don't need to add one for the new category
+			if (node.getName().equals(children.get(index).getName())) {
+				return;
+			}
+		}
 		if (index < 0) {
 			index = -index - 1;
 		}
@@ -188,7 +183,7 @@ public class CategoryNode extends GTreeLazyNode implements DataTypeTreeNode {
 	}
 
 	public void dataTypeAdded(DataType dataType) {
-		if (!isChildrenLoadedOrInProgress()) {
+		if (!isLoaded()) {
 			return;
 		}
 
@@ -198,12 +193,12 @@ public class CategoryNode extends GTreeLazyNode implements DataTypeTreeNode {
 			return;
 		}
 
-		if (isFilteredType(tree, dataType)) {
+		if (isFilteredType(dataType)) {
 			return;
 		}
 
 		DataTypeNode node = new DataTypeNode(dataType);
-		List<GTreeNode> allChildrenList = getAllChildren();
+		List<GTreeNode> allChildrenList = getChildren();
 		int index = Collections.binarySearch(allChildrenList, node);
 		if (index >= 0) {
 			if (node.getName().equals(allChildrenList.get(index).getName())) {
@@ -217,7 +212,10 @@ public class CategoryNode extends GTreeLazyNode implements DataTypeTreeNode {
 	}
 
 	public void categoryRemoved(String categoryName) {
-		for (GTreeNode node : getAllChildrenIfLoaded()) {
+		if (!isLoaded()) {
+			return;
+		}
+		for (GTreeNode node : getChildren()) {
 			if ((node instanceof CategoryNode) && node.getName().equals(categoryName)) {
 				removeNode(node);
 				return;
@@ -226,8 +224,11 @@ public class CategoryNode extends GTreeLazyNode implements DataTypeTreeNode {
 	}
 
 	public void dataTypeRemoved(String dataTypeName) {
+		if (!isLoaded()) {
+			return;
+		}
 
-		for (GTreeNode node : getAllChildrenIfLoaded()) {
+		for (GTreeNode node : getChildren()) {
 			if ((node instanceof DataTypeNode) && node.getName().equals(dataTypeName)) {
 				removeNode(node);
 				return;
@@ -236,8 +237,12 @@ public class CategoryNode extends GTreeLazyNode implements DataTypeTreeNode {
 	}
 
 	public void dataTypeChanged(DataType dataType) {
+		if (!isLoaded()) {
+			return;
+		}
+
 		String dataTypeName = dataType.getName();
-		for (GTreeNode node : getAllChildrenIfLoaded()) {
+		for (GTreeNode node : getChildren()) {
 			if ((node instanceof DataTypeNode) && node.getName().equals(dataTypeName)) {
 				((DataTypeNode) node).dataTypeChanged();
 				return;
@@ -349,7 +354,7 @@ public class CategoryNode extends GTreeLazyNode implements DataTypeTreeNode {
 	}
 
 	@Override
-	public boolean isSystemNode() {
-		return false;
+	public boolean canDelete() {
+		return true;
 	}
 }

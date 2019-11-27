@@ -1,11 +1,9 @@
 ##VERSION: 2.0
-.classpath||GHIDRA||||END|
-.project||GHIDRA||||END|
 Module.manifest||GHIDRA||reviewed||END|
 build.gradle||GHIDRA||||END|
 buildTemplate.gradle||GHIDRA||||END|
 data/README.txt||GHIDRA||||END|
-data/build.xml||GHIDRA||||END|
+data/buildLanguage.xml||GHIDRA||||END|
 data/languages/skel.cspec||GHIDRA||||END|
 data/languages/skel.ldefs||GHIDRA||||END|
 data/languages/skel.opinion||GHIDRA||||END|

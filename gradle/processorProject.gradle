@@ -1,0 +1,261 @@
+/*****************************************************************************************
+	This file is a "mix-in" gradle script that individual gradle projects should include if they
+	have processor definitions.
+	
+	A gradle project can add native code support by including the following it its build.gradle file:
+
+		apply from: "$rootProject.projectDir/gradle/nativeProject.gradle"
+ *****************************************************************************************/
+
+/*****************************************************************************************
+ *
+ *  Create a configuration so the a dependency can be declared on the the software modeling
+ *  project which is where the sleigh compiler java code lives.  This will be used to
+ *  form the classpath of the sleighCompile task that follows.
+ *
+ *****************************************************************************************/
+configurations {
+	sleighConfig
+}
+
+dependencies {
+	sleighConfig project(':SoftwareModeling')
+}
+
+/*****************************************************************************************
+ *
+ *  Sleigh compile options to be written to sleighArgs.txt in support of the following
+ *  use cases:
+ *    - Ant build using data/build.xml (development and distribution)
+ *    - Eclipse Sleigh launcher (development only)
+ *    - Ghidra runtime language rebuild (SleighLanguage.reloadLanguage; development and distribution)
+ *    - Distribution build (sleighCompile task; development layout)
+ *
+ *  This list may be added to or replaced by a specific processor project/module.
+ *
+ *  Example: MIPS processor module dependency within a slaspec specified as:
+ *
+ *    @include "$(BaseDir)$(MIPS)/data/language/maips.sinc
+ *
+ *  with the corresponding MIPS definition specified within the sleighCompileOptions
+ *  list specified within the module's build.gradle file:
+ *
+ *      sleighCompileOptions.add "-DMIPS=%%MIPS%%"
+ *  -or-
+ *      sleighCompileOptions = [
+ *          "-l",
+ *          "-DMIPS=%%MIPS%%"
+ *      ]
+ *
+ *****************************************************************************************/
+ ext.sleighCompileOptions = [ ]
+ 
+ /*****************************************************************************************
+ *
+ *  Check for invalid sleighCompileOptions
+ *
+ *****************************************************************************************/
+ def checkSleighCompileOptions() {
+ 	sleighCompileOptions.each { a ->
+ 		def arg = a.trim()
+ 		assert !(arg.startsWith("-a") || arg.startsWith("-i")) : "Invalid sleighCompileOption: ${arg}"
+ 	}
+ }
+ 
+/*****************************************************************************************
+ *
+ * Task to write sleigh compiler args for use with sleigh compiler.
+ * Due to the possible presence of module dependency paths two different sleighArgs.txt
+ * files are produced: one for development layout (build/tmp/sleighArgs.txt) and
+ * one for distribution layout ([build/]data/sleighArgs.txt).  When invoking the 
+ * Sleigh compiler and using a sleighArgs.txt file the appropriate 'BaseDir' property
+ * must be specified.  Withing a distribution install 'BaseDir' must specifiy the 
+ * path to the install directory while in a development layout 'BaseDir' must specify
+ * the repos root directory which contains the 'ghidra' repo directory.
+ *
+ *****************************************************************************************/
+task saveSleighArgs {
+	def sleighArgsFile = file("build/data/sleighArgs.txt")
+	def sleighArgsDevFile = file("build/tmp/sleighArgs.txt")
+	outputs.files sleighArgsFile, sleighArgsDevFile
+	outputs.upToDateWhen { false }
+	doLast {
+		checkSleighCompileOptions()
+		sleighArgsFile.withWriter { out->
+			sleighCompileOptions.each { a-> 
+				out.println resolveSleighArg(a, false) 
+			}
+		}
+		sleighArgsDevFile.withWriter { out->
+			sleighCompileOptions.each { a-> 
+				out.println resolveSleighArg(a, true) 
+			}
+		}
+	}
+}
+rootProject.prepDev.dependsOn(saveSleighArgs)
+
+apply plugin: 'base'
+clean {
+	delete file("build/data/sleighArgs.txt")
+	delete file("build/tmp/sleighArgs.txt")
+}
+
+/*****************************************************************************************
+ *
+ *  Task to write sleigh build.xml file for use is development mode only.
+ *
+ *****************************************************************************************/
+task writeSleighDevBuild {
+	def templateFilePath = project(':BuildFiles').projectDir.toString() + "/sleighDevBuild.template"
+
+	doLast {
+		// Generate build.xml with injected classpath for running sleigh compiler
+		def sleighDevClasspath = project(':SoftwareModeling').sourceSets.main.runtimeClasspath.collect { it.absolutePath }.join(':')		
+		copy {
+			into "data"
+			from (templateFilePath) {
+				rename { "build.xml" }
+				expand ( [ 'gradleSleighDevClasspath': sleighDevClasspath ] )
+			}
+		}
+	}
+}
+
+rootProject.prepDev.dependsOn(writeSleighDevBuild)
+
+/*****************************************************************************************
+ *
+ *  Write sleigh build.xml file for each language module into assembleDistribution
+ *
+ *****************************************************************************************/
+rootProject.assembleDistribution { 
+	into (getZipPath(this.project)  + "/data") {
+		from (rootProject.projectDir.toString() + "/GhidraBuild/BuildFiles/sleighDistBuild.template") {
+	        rename { "build.xml" }
+	    }
+	}
+}
+
+/*****************************************************************************************
+ *
+ *  Task to compile language files using the sleigh compiler.
+ *
+ *****************************************************************************************/
+task sleighCompile (type: JavaExec) {
+	dependsOn saveSleighArgs
+	group = rootProject.GHIDRA_GROUP
+	description "  Compiles all the sleigh languages.    [gradle/processorProject.gradle]\n"
+	 
+	// define standard parameters for JavaExec
+	classpath configurations.sleighConfig
+	main = 'ghidra.pcodeCPort.slgh_compile.SleighCompile'
+	
+	// Delay adding the directory argument until the first part of the execution phase, so
+	// that any extra args added by a project override will be added to the arg list before
+	// these arguments.
+	// NOTE: projects should no longer add arguments to this task and should instead
+	// add such args to the sleighCompileOptions list.
+	doFirst {
+		args "-i"
+		args "./build/tmp/sleighArgs.txt"
+		args "-DBaseDir=${getProjectReposRootPath()}"
+		args '-a'
+		args './data/languages'
+	}
+	
+	jvmArgs '-Xmx2048M'	
+}
+
+// The task that copies the common files to the distribution folder must depend on
+// the sleigh tasks before executing.
+rootProject.assembleDistribution.dependsOn sleighCompile
+
+// Add in this projects sleighCompile to the allSleighCompile task
+rootProject.allSleighCompile.dependsOn sleighCompile
+
+/*****************************************************************************************
+ *
+ *  Task to clean out the compile language files (*.sla)
+ *
+ *****************************************************************************************/
+task cleanSleigh  {
+	group rootProject.GHIDRA_GROUP
+	description "Removes all the compile sleigh language files (*.sla).   [gradle/processorProject.gradle]\n"
+ 	doLast {
+		def deleteTree = fileTree(dir: "data/languages", include: "*.sla")
+		deleteTree.each { File file ->
+			delete file
+		}
+	}
+}
+
+/****************************************************************************************
+ *
+ * Set up inputs and outputs for the sleighCompile task so that languages only get build
+ * when the inputs change
+ *
+ * sleigh compile outputs to same directory as input. All files except .sla are input
+ *
+ ******************************************************************************************/
+def taskInputs  = fileTree(dir: 'data/languages', exclude: '**/*.sla')
+def taskOutputs = fileTree(dir: 'data/languages', include: '**/*.sla')
+	
+// define the sleigh compile inputs and outputs so that gradle can check if they need building
+sleighCompile.inputs.files (taskInputs)
+sleighCompile.outputs.files (taskOutputs)
+
+// define the sleigh compile inputs to saveSleighArgs to limit task creation to language modules
+saveSleighArgs.inputs.files (taskInputs)
+
+/*****************************************************************************************
+ *
+ * Gets the absolute repos root directory path with a trailing File separator.
+ * This path may be used for specifying 'BaseDir' to the sleigh compiler within a 
+ * development layout.
+ *
+ *****************************************************************************************/
+def getProjectReposRootPath() {
+	return rootProject.projectDir.getParent() + File.separator
+}
+
+/*****************************************************************************************
+ *
+ * Filter a sleigh compiler argument replacing any project/module reference of the form
+ * %%MODULE%% witha that MODULE's relative path.  If useDevPath is true the path will
+ * include the containing repo directory (e.g., ghidra/Ghidra/...), otherwise the
+ * path should start at the application root 'Ghidra/'.  Only a single replacement per
+ * arg is supported.
+ *
+ * This mechanism relies on the relative depth of a language module project within a
+ * repository directory hierarchy.  In general language module projects must reside 
+ * within the directory Ghidra/Processors.
+ *
+ *****************************************************************************************/
+def resolveSleighArg(String arg, boolean useDevPath) {
+	arg = arg.trim()
+	int index = arg.indexOf("%%")
+	if (index < 0) {
+		return arg
+	}
+	String newArg = arg.substring(0, index)
+	String tail = arg.substring(index+2)
+	index = tail.indexOf("%%")
+	assert index > 0 : "Badly formed sleigh path-replacment option: ${arg}"
+	String moduleName = tail.substring(0, index)
+	tail = tail.substring(index+2)
+	def moduleProject = project(":${moduleName}")
+	def modulePath
+	if (useDevPath) {
+		// first path element is the containing repo directory
+		modulePath = moduleProject.projectDir.absolutePath
+		modulePath = modulePath.substring(getProjectReposRootPath().length())
+	}
+	else {
+		// first path element is the Ghidra directory
+		modulePath =  getZipPath(moduleProject)
+	}
+	newArg += modulePath
+	newArg += tail
+	return newArg
+}

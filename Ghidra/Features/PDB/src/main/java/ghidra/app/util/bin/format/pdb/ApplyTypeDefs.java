@@ -20,7 +20,6 @@ import java.util.List;
 
 import org.xml.sax.SAXParseException;
 
-import ghidra.app.util.bin.format.pdb.PdbParserNEW.WrappedDataType;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.program.model.data.TypedefDataType;
 import ghidra.program.model.symbol.SymbolUtilities;
@@ -31,7 +30,7 @@ import ghidra.xml.XmlPullParser;
 
 class ApplyTypeDefs {
 
-	private PdbParserNEW pdbParser;
+	private PdbParser pdbParser;
 	private MessageLog log;
 	private List<XmlElement> todo = new ArrayList<>();
 
@@ -49,7 +48,7 @@ class ApplyTypeDefs {
 	 * @throws CancelledException if monitor is cancelled
 	 * @throws SAXParseException PDB XML parse failure
 	 */
-	ApplyTypeDefs(PdbParserNEW pdbParser, XmlPullParser xmlParser, TaskMonitor monitor,
+	ApplyTypeDefs(PdbParser pdbParser, XmlPullParser xmlParser, TaskMonitor monitor,
 			MessageLog log) throws CancelledException, SAXParseException {
 		this.pdbParser = pdbParser;
 		this.log = log;
@@ -98,19 +97,20 @@ class ApplyTypeDefs {
 				continue;//TODO is this actually a global function
 			}
 
-			WrappedDataType baseDataType = pdbParser.findDataType(baseDatatypeName, monitor);
+			WrappedDataType baseDataType = pdbParser.findDataType(baseDatatypeName);
 			if (baseDataType == null) {
 				log.appendMsg("Error: failed to resolve typedef: " + datatypeName + " -> " +
 					baseDatatypeName);
 				continue;
 			}
-			if (baseDataType.isZeroLengthArray) {
+			if (baseDataType.isZeroLengthArray()) {
 				log.appendMsg(
 					"Error: zero length array not supported for typedef: " + datatypeName);
 				continue;
 			}
 
-			TypedefDataType typedef = pdbParser.createTypeDef(datatypeName, baseDataType.dataType);
+			TypedefDataType typedef =
+				pdbParser.createTypeDef(datatypeName, baseDataType.getDataType());
 			pdbParser.cacheDataType(datatypeName, typedef); // cache with namespace-based name
 		}
 	}

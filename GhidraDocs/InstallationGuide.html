@@ -9,8 +9,8 @@
     p { font-family:times new roman; font-size:14pt; }
     td { font-family:times new roman; font-size:14pt; padding-left:10px; padding-right:10px; }
     th { font-family:times new roman; font-size:14pt; font-weight:bold; padding-left:10px; padding-right:10px; }
-    code { color:black; font-family:courier new font-size: 14pt; }
-    span.code { font-family:courier new font-size: 14pt; color:#000000; }
+    code { color:black; font-family:courier new; font-size: 14pt; }
+    span.code { font-family:courier new; font-size: 14pt; color:#000000; }
   </style>
 </head>
 
@@ -18,7 +18,7 @@
 
 <h1>Ghidra Installation Guide</h1>
 <p>
-The installation information provided is effective as of Ghidra 9.0.1 and is subject to change with
+The installation information provided is effective as of Ghidra 9.1 and is subject to change with
 future releases.
 </p>
 
@@ -81,9 +81,19 @@ Ghidra team if you have a specific need.</p></blockquote>
 </ul>
 <h3>Software</h3>
 <ul>
-  <li>Java 11 Runtime and Development Kit (JDK) (see <a href="#JavaNotes">Java Notes</a>)</li>
+  <li>Java 11 64-bit Runtime and Development Kit (JDK) (see <a href="#JavaNotes">Java Notes</a>)</li>
   <ul>
-    <li>OpenJDK distributed from <i>jdk.java.net</i> is suggested</i></li>
+    <li>Free long term support (LTS) versions of JDK 11 are provided by:</li>
+    <ul>
+      <li>
+        <a href="https://adoptopenjdk.net/releases.html?variant=openjdk11&jvmVariant=hotspot">
+        AdoptOpenJDK</a>
+      </li>
+      <li>
+        <a href="https://docs.aws.amazon.com/corretto/latest/corretto-11-ug/downloads-list.html">
+        Amazon Corretto</a>
+      </li>
+    </ul>
   </ul>
 </ul>
 <p>(<a href="#top">Back to Top</a>)</p>
@@ -129,13 +139,9 @@ destination using any unzip program (built-in OS utilities, 7-Zip, WinZip, WinRA
     pre-existing configurations of Java that other software may rely on.
   </li>  
   <li>
-    Ghidra is developed and tested against OpenJDK distributed from <i>jdk.java.net</i>.  Consider 
-    using this OpenJDK distribution for the most stable experience.
-  </li>
-  <li>
     If Ghidra failed to run because <i>no versions</i> of Java were on the PATH, a 
     <a href="#Requirements">supported</a> JDK should be manually installed and added to the 
-    PATH.  The following steps outline how to add an OpenJDK distribution to the operating system's 
+    PATH.  The following steps outline how to add a JDK distribution to the operating system's 
     PATH.
     <ul>
       <li>
@@ -400,7 +406,7 @@ be installed in a pre-existing Eclipse installation.</p>
 <p>(<a href="#top">Back to Top</a>)</p>
 
 <h2><a name="Upgrading"></a>Upgrade Instructions</h2>
-<h3><a name="GeneralUpgrade"</a>General Upgrade Instructions</h3>
+<h3><a name="GeneralUpgrade"></a>General Upgrade Instructions</h3>
 <ol>
   <li>
     <b><font color="red">!!!Important!!!</font> BACKUP YOUR OLD PROJECTS FIRST!!<font color="red">
@@ -430,7 +436,7 @@ be installed in a pre-existing Eclipse installation.</p>
   </li>
 </ol>
 
-<h3><a name="ServerUpgrade"</a>Server Upgrade Instructions</h3>
+<h3><a name="ServerUpgrade"></a>Server Upgrade Instructions</h3>
 <ul>
   <li>
     Please refer to the<i>&lt;GhidraInstallDir&gt;</i>/server/svrREADME.html file for details on
@@ -545,13 +551,13 @@ be installed in a pre-existing Eclipse installation.</p>
 <h3><a name="LinuxIssues"></a>Linux</h3>
 <ul>
   <li>
-    Some users have reported Ghidra GUI rendering issues on 4k displays and multi-monitor thin 
-    client setups.  These problems are attributed to reported bugs in Java.  Upgrading to a newer
-    version of Java may fix the issue.
-  </li>
+    Ghidra may not display correctly when run from a Linux remote desktop session that uses 32-bit 
+    color depth.  Setting the remote desktop application's color depth to 24-bit has been known to 
+    improve this issue. 
   <li>
-    At the time of writing, installing the openjdk-11 package in Ubuntu 18.04 results in openjdk-10 
-    being installed which is incompatible with Ghidra.
+    Some users have reported Ghidra GUI rendering issues on multi-monitor thin client setups.  
+    These problems are attributed to reported bugs in Java, which will hopefully be fixed in the 
+    future.  Disabling the 2nd or 3rd monitor may be necessary to work around the issue.
   </li>
 </ul>
 <h3><a name="MacOSIssues"></a>macOS (OS X)</h3>

@@ -62,7 +62,7 @@ public class StructureEditorArchiveTest extends AbstractStructureEditorTest {
 		tool.addPlugin(DataTypeManagerPlugin.class.getName());
 		dtmService = tool.getService(DataTypeManagerService.class);
 		plugin = (DataTypeManagerPlugin) dtmService;
-		manageDts = getAction(plugin, "Data Type Manager");
+		manageDts = getAction(plugin, "DataTypes Provider");
 		DataTypesProvider dataTypesProvider = plugin.getProvider();
 		dtTree = dataTypesProvider.getGTree();
 
@@ -139,7 +139,7 @@ public class StructureEditorArchiveTest extends AbstractStructureEditorTest {
 //		openArchive = getDockingAction(plugin, "Open Data Type Archive");
 		closeArchive = getAction(plugin, "Close Archive");
 		waitForTree(dtTree);
-		GTreeNode rootNode = dtTree.getRootNode();
+		GTreeNode rootNode = dtTree.getModelRoot();
 		GTreeNode newNode = rootNode.getChild("New Archive");
 		selectNode(newNode);
 	}
@@ -189,7 +189,7 @@ public class StructureEditorArchiveTest extends AbstractStructureEditorTest {
 		assertTrue(comp0.getDataType().isEquivalent(DataType.DEFAULT));
 		assertTrue(comp1.getDataType().isEquivalent(new WordDataType()));
 
-		GTreeNode rootNode = dtTree.getRootNode();
+		GTreeNode rootNode = dtTree.getModelRoot();
 		GTreeNode child = rootNode.getChild("New Archive");
 		selectNode(child);
 

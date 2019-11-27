@@ -54,7 +54,7 @@ public class UnionEditorActions1Test extends AbstractUnionEditorTest {
 		assertEquals(model.getTypeName(), "Union");
 
 		// Check enablement.
-		CompositeEditorAction[] pActions = provider.getActions();
+		CompositeEditorTableAction[] pActions = provider.getActions();
 		for (int i = 0; i < pActions.length; i++) {
 			if ((pActions[i] instanceof FavoritesAction) ||
 				(pActions[i] instanceof CycleGroupAction) ||
@@ -92,7 +92,7 @@ public class UnionEditorActions1Test extends AbstractUnionEditorTest {
 		assertEquals(pgmBbCat.getCategoryPathName(), model.getOriginalCategoryPath().getPath());
 
 		// Check enablement on blank line selected.
-		for (CompositeEditorAction action : actions) {
+		for (CompositeEditorTableAction action : actions) {
 			if ((action instanceof FavoritesAction) || (action instanceof CycleGroupAction) ||
 				(action instanceof EditFieldAction) || (action instanceof PointerAction) ||
 				(action instanceof HexNumbersAction)) {
@@ -111,7 +111,7 @@ public class UnionEditorActions1Test extends AbstractUnionEditorTest {
 
 		// Check enablement on first component selected.
 		setSelection(new int[] { 0 });
-		for (CompositeEditorAction action : actions) {
+		for (CompositeEditorTableAction action : actions) {
 			if ((action instanceof FavoritesAction) || (action instanceof CycleGroupAction) ||
 				(action instanceof EditFieldAction) ||
 				(action instanceof ShowComponentPathAction) || (action instanceof MoveDownAction) ||
@@ -134,7 +134,7 @@ public class UnionEditorActions1Test extends AbstractUnionEditorTest {
 
 		// Check enablement on central component selected.
 		setSelection(new int[] { 1 });
-		for (CompositeEditorAction action : actions) {
+		for (CompositeEditorTableAction action : actions) {
 			if ((action instanceof FavoritesAction) || (action instanceof CycleGroupAction) ||
 				(action instanceof EditFieldAction) ||
 				(action instanceof ShowComponentPathAction) || (action instanceof MoveUpAction) ||
@@ -157,7 +157,7 @@ public class UnionEditorActions1Test extends AbstractUnionEditorTest {
 
 		// Check enablement on last component selected.
 		setSelection(new int[] { model.getNumComponents() - 1 });
-		for (CompositeEditorAction action : actions) {
+		for (CompositeEditorTableAction action : actions) {
 			if ((action instanceof FavoritesAction) || (action instanceof CycleGroupAction) ||
 				(action instanceof EditFieldAction) ||
 				(action instanceof ShowComponentPathAction) || (action instanceof MoveUpAction) ||
@@ -180,7 +180,7 @@ public class UnionEditorActions1Test extends AbstractUnionEditorTest {
 
 		// Check enablement on a contiguous multi-component selection.
 		setSelection(new int[] { 2, 3, 4 });
-		for (CompositeEditorAction action : actions) {
+		for (CompositeEditorTableAction action : actions) {
 			if ((action instanceof FavoritesAction) || (action instanceof CycleGroupAction)// enabled to show message
 				|| (action instanceof MoveDownAction) || (action instanceof MoveUpAction) ||
 				(action instanceof DeleteAction) || (action instanceof PointerAction) ||
@@ -201,7 +201,7 @@ public class UnionEditorActions1Test extends AbstractUnionEditorTest {
 
 		// Check enablement on a non-contiguous multi-component selection.
 		setSelection(new int[] { 2, 3, 6, 7 });
-		for (CompositeEditorAction action : actions) {
+		for (CompositeEditorTableAction action : actions) {
 			if ((action instanceof FavoritesAction) || (action instanceof CycleGroupAction) ||
 				(action instanceof DeleteAction) || (action instanceof HexNumbersAction)) {
 				checkEnablement(action, true);

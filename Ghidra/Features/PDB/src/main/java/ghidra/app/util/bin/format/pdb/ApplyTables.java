@@ -27,7 +27,7 @@ class ApplyTables {
 		// static use only
 	}
 
-	static void applyTo(PdbParserNEW pdbParser, XmlPullParser xmlParser, TaskMonitor monitor,
+	static void applyTo(PdbParser pdbParser, XmlPullParser xmlParser, TaskMonitor monitor,
 			MessageLog log) throws CancelledException {
 		while (xmlParser.hasNext()) {
 			if (monitor.isCancelled()) {

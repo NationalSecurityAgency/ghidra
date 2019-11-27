@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,22 +15,25 @@
  */
 package help.validator;
 
-import help.GHelpBuilder;
-import help.HelpBuildUtils;
-import help.validator.location.HelpModuleLocation;
-import help.validator.model.IMG;
-
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
 
+import org.apache.commons.lang3.StringUtils;
+
+import help.HelpBuildUtils;
+import help.validator.location.HelpModuleLocation;
+import help.validator.model.IMG;
+import util.CollectionUtils;
+
 public class UnusedHelpImageFileFinder {
 
+	private static final String HELP_PATHS_OPTION = "-hp"; // taken from GHelpBuilder
 	private static final String DEBUG_SWITCH = "-debug";
 
-	private static List<String> moduleHelpPaths;
+	private static List<String> moduleHelpPaths = new ArrayList<>();
 	private static boolean debugEnabled = false;
 
 	private SortedSet<Path> unusedFiles;
@@ -78,24 +80,20 @@ public class UnusedHelpImageFileFinder {
 	}
 
 	public SortedSet<Path> getUnusedImages() {
-		return new TreeSet<Path>(unusedFiles);
+		return new TreeSet<>(unusedFiles);
 	}
 
 	private static SortedSet<Path> getUnusedFiles(Collection<IMG> referencedIMGs,
 			Collection<Path> imageFiles) {
 
-		Map<Path, IMG> fileToIMGMap = new HashMap<Path, IMG>();
+		Map<Path, IMG> fileToIMGMap = new HashMap<>();
 		for (IMG img : referencedIMGs) {
 			fileToIMGMap.put(img.getImageFile(), img);
 		}
 
-		SortedSet<Path> set = new TreeSet<Path>(new Comparator<Path>() {
-			@Override
-			public int compare(Path f1, Path f2) {
-				return f1.toUri().toString().toLowerCase().compareTo(
-					f2.toUri().toString().toLowerCase());
-			}
-		});
+		SortedSet<Path> set =
+			new TreeSet<>((f1, f2) -> f1.toUri().toString().toLowerCase().compareTo(
+				f2.toUri().toString().toLowerCase()));
 		for (Path file : imageFiles) {
 			IMG img = fileToIMGMap.get(file);
 			if (img == null && !isExcludedImageFile(file)) {
@@ -111,8 +109,9 @@ public class UnusedHelpImageFileFinder {
 		return absolutePath.indexOf("help/shared/") != -1;
 	}
 
-	private static Collection<IMG> getReferencedIMGs(Collection<HelpModuleLocation> helpCollections) {
-		Set<IMG> set = new HashSet<IMG>();
+	private static Collection<IMG> getReferencedIMGs(
+			Collection<HelpModuleLocation> helpCollections) {
+		Set<IMG> set = new HashSet<>();
 		for (HelpModuleLocation help : helpCollections) {
 			Collection<IMG> IMGs = help.getAllIMGs();
 			set.addAll(IMGs);
@@ -122,7 +121,7 @@ public class UnusedHelpImageFileFinder {
 
 	private static Collection<Path> getAllImagesOnDisk(
 			Collection<HelpModuleLocation> helpDirectories) {
-		List<Path> files = new ArrayList<Path>();
+		List<Path> files = new ArrayList<>();
 		for (HelpModuleLocation help : helpDirectories) {
 			Path helpDir = help.getHelpLocation();
 			gatherImageFiles(helpDir, files);
@@ -155,10 +154,10 @@ public class UnusedHelpImageFileFinder {
 
 	private static List<HelpModuleLocation> collectHelp() {
 		debug("Parsing help dirs...");
-		List<HelpModuleLocation> helpCollections =
-			new ArrayList<HelpModuleLocation>(moduleHelpPaths.size());
+		List<HelpModuleLocation> helpCollections = new ArrayList<>(moduleHelpPaths.size());
 		for (String helpDirName : moduleHelpPaths) {
-			// 1) Make sure the help directory exists
+
+			// Make sure the help directory exists
 			File helpDirectoryFile = null;
 			try {
 				helpDirectoryFile = new File(helpDirName).getCanonicalFile();
@@ -172,14 +171,8 @@ public class UnusedHelpImageFileFinder {
 				errorMessage("Help directory not found - skipping: " + helpDirName);
 				continue;
 			}
-			File moduleDir = helpDirectoryFile.getParentFile();
-			File manifestFile = new File(moduleDir, "Module.manifest");
-			if (!manifestFile.exists()) {
-				errorMessage("Help directory not inside valid module: " + helpDirName);
-				continue;
-			}
 
-			// 3) Create the help directory
+			// Create the help directory
 			helpCollections.add(HelpBuildUtils.toLocation(helpDirectoryFile));
 		}
 
@@ -188,8 +181,8 @@ public class UnusedHelpImageFileFinder {
 
 	private static void debug(String string) {
 		if (debugEnabled) {
-			System.out.println("[" + UnusedHelpImageFileFinder.class.getSimpleName() + "] " +
-				string);
+			System.out.println(
+				"[" + UnusedHelpImageFileFinder.class.getSimpleName() + "] " + string);
 		}
 	}
 
@@ -197,7 +190,7 @@ public class UnusedHelpImageFileFinder {
 		StringBuilder buffy = new StringBuilder();
 
 		errorMessage("Usage:\n");
-		buffy.append("<module help path1[;module help path2;module help path3;...]> [-debug]");
+		buffy.append("-hp path1[-hp path2 -hp path3 ...]> [-debug]");
 
 		errorMessage(buffy.toString());
 	}
@@ -209,23 +202,53 @@ public class UnusedHelpImageFileFinder {
 			System.exit(1);
 		}
 
-		List<String> argList = Arrays.asList(args);
-
-		// get module directory paths
-		String modulePathsString = argList.get(args.length - 1);
-		moduleHelpPaths = new ArrayList<String>();
-		StringTokenizer tokenizer = new StringTokenizer(modulePathsString, File.pathSeparator);
-		while (tokenizer.hasMoreTokens()) {
-			moduleHelpPaths.add(tokenizer.nextToken());
+		List<String> argList = CollectionUtils.asList(args);
+		int debugIndex = argList.indexOf(DEBUG_SWITCH);
+		if (debugIndex > -1) {
+			debugEnabled = true;
+			argList.remove(debugIndex);
 		}
+
+		Map<Integer, String> mapped = new TreeMap<>();
+		for (int i = 0; i < argList.size(); i++) {
+			mapped.put(i, argList.get(i));
+		}
+
+		for (int i = 0; i < argList.size(); i++) {
+			String opt = argList.get(i);
+			if (opt.equals(HELP_PATHS_OPTION)) {
+
+				if (i >= argList.size()) {
+					errorMessage(HELP_PATHS_OPTION + " requires an argument");
+					printUsage();
+					System.exit(1);
+				}
+
+				mapped.remove(i);
+				String paths = mapped.remove(++i);
+				if (StringUtils.isBlank(paths)) {
+					errorMessage(HELP_PATHS_OPTION + " requires an argument");
+					printUsage();
+					System.exit(1);
+				}
+
+				// each entry should be just one value, but handle multiple paths anyway
+				for (String p : paths.split(File.pathSeparator)) {
+					moduleHelpPaths.add(p);
+				}
+			}
+		}
+
 		if (moduleHelpPaths.size() == 0) {
-			errorMessage("Missing molule help path(s) argument - it must be last in the arg list");
+			errorMessage(
+				"Missing molule help path(s) arguments - actual arguments:\n\t'" + argList + "'");
 			printUsage();
 			System.exit(1);
 		}
 
-		int debugIndex = argList.indexOf(DEBUG_SWITCH);
-		debugEnabled = debugIndex != -1;
+		if (!mapped.isEmpty()) {
+			errorMessage("Ignoring unknown arguments: " + mapped.values());
+		}
 	}
 
 	private static void errorMessage(String message) {
@@ -233,7 +256,7 @@ public class UnusedHelpImageFileFinder {
 	}
 
 	private static void errorMessage(String message, Throwable t) {
-		System.err.println("[" + GHelpBuilder.class.getSimpleName() + "] " + message);
+		System.err.println("[" + UnusedHelpImageFileFinder.class.getSimpleName() + "] " + message);
 		if (t != null) {
 			t.printStackTrace();
 		}

@@ -15,7 +15,7 @@
  */
 package ghidra.app.plugin.core.functiongraph;
 
-import static ghidra.graph.viewer.GraphViewerUtils.getGraphScale;
+import static ghidra.graph.viewer.GraphViewerUtils.*;
 import static org.junit.Assert.*;
 
 import java.awt.*;
@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Supplier;
 
 import javax.swing.*;
 
@@ -34,6 +35,7 @@ import docking.*;
 import docking.action.*;
 import docking.menu.ActionState;
 import docking.menu.MultiStateDockingAction;
+import docking.test.AbstractDockingTest;
 import docking.widgets.EventTrigger;
 import docking.widgets.OptionDialog;
 import docking.widgets.dialogs.MultiLineInputDialog;
@@ -43,6 +45,7 @@ import edu.uci.ics.jung.graph.Graph;
 import edu.uci.ics.jung.visualization.VisualizationModel;
 import edu.uci.ics.jung.visualization.VisualizationViewer;
 import edu.uci.ics.jung.visualization.picking.PickedState;
+import generic.test.AbstractGenericTest;
 import generic.test.TestUtils;
 import ghidra.app.cmd.label.AddLabelCmd;
 import ghidra.app.cmd.label.SetLabelPrimaryCmd;
@@ -51,7 +54,6 @@ import ghidra.app.plugin.core.clipboard.ClipboardPlugin;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
 import ghidra.app.plugin.core.functiongraph.graph.*;
 import ghidra.app.plugin.core.functiongraph.graph.layout.FGLayoutProvider;
-import ghidra.app.plugin.core.functiongraph.graph.layout.TestFGLayoutProvider;
 import ghidra.app.plugin.core.functiongraph.graph.vertex.*;
 import ghidra.app.plugin.core.functiongraph.mvc.*;
 import ghidra.app.services.*;
@@ -73,7 +75,6 @@ import ghidra.program.util.ProgramSelection;
 import ghidra.test.*;
 import ghidra.util.Msg;
 import ghidra.util.task.RunManager;
-import util.CollectionUtils;
 
 public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedIntegrationTest {
 
@@ -469,13 +470,11 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 	protected void performReload() throws Exception {
 
 		String name = "Reset Graph";
-		List<DockingActionIf> actions =
-			tool.getDockingActionsByFullActionName(name + " (FunctionGraphPlugin)");
-		assertEquals("Could not find action: " + name, 1, actions.size());
 
+		DockingActionIf action = getAction(tool, graphPlugin.getName(), name);
 		long start = System.currentTimeMillis();
 
-		performAction(actions.get(0), false);
+		performAction(action, false);
 
 		Window window = waitForWindow("Reset Graph?");
 		pressButtonByText(window, "Yes");
@@ -552,15 +551,12 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 	}
 
 	protected void showFunctionGraphProvider() {
-		DockingAction showGraphAction =
-			(DockingAction) TestUtils.getInstanceField("showFunctionGraphAction", graphPlugin);
-		performAction(showGraphAction, true);
+
+		ComponentProvider provider = tool.getComponentProvider("Function Graph");
+		tool.showComponentProvider(provider, true);
 
 		graphProvider = waitForComponentProvider(FGProvider.class);
 		assertNotNull("Graph not shown", graphProvider);
-
-		FGActionManager actionManager = graphProvider.getActionManager();
-		actionManager.setLayoutFinder(() -> CollectionUtils.asSet(new TestFGLayoutProvider()));
 	}
 
 	protected ProgramSelection makeSingleVertexSelectionInCodeBrowser() {
@@ -624,7 +620,7 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 		assertNotNull(action);
 
 		FieldHeaderLocation fhLoc = createFieldHeaderLocation(provider);
-		ActionContext context = new ActionContext(null, fhLoc);
+		ActionContext context = createContext(fhLoc);
 		performAction(action, context, true);
 
 		waitForConditionWithoutFailing(() -> fieldIsVisible(provider, actionName));
@@ -728,7 +724,7 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 		assertNotNull(action);
 
 		FieldHeaderLocation fhLoc = createFieldHeaderLocation(provider);
-		ActionContext context = new ActionContext(null, fhLoc);
+		ActionContext context = createContext(fhLoc);
 		performAction(action, context, false);
 
 		Window dialog = waitForWindow("Reset All Formats?");
@@ -777,13 +773,13 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 //		long start = System.nanoTime();
 
 		waitForSwing();
-		
+
 		int tryCount = 3;
-		while (tryCount++ < 5 && updater.isBusy()) { 
+		while (tryCount++ < 5 && updater.isBusy()) {
 			waitForConditionWithoutFailing(() -> !updater.isBusy());
 		}
 		waitForSwing();
-		
+
 		assertFalse(updater.isBusy());
 
 //		long end = System.nanoTime();
@@ -864,6 +860,11 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 		waitForBusyGraph();
 	}
 
+	protected void setProviderAlwaysFocused() {
+		Supplier<Boolean> focusDelegate = () -> true;
+		runSwing(() -> graphProvider.setFocusStatusDelegate(focusDelegate));
+	}
+
 	protected void assertSatelliteVisible(boolean visible) {
 		boolean satelliteVisible = isSatelliteVisible();
 		if (visible) {
@@ -911,20 +912,16 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 
 	private void toggleSatellite() {
 		String name = "Display Satellite View";
-		List<DockingActionIf> actions =
-			tool.getDockingActionsByFullActionName(name + " (FunctionGraphPlugin)");
-		assertEquals("Could not find action: " + name, 1, actions.size());
-		ToggleDockingAction dockAction = (ToggleDockingAction) actions.get(0);
+		DockingActionIf action = getAction(tool, "FunctionGraphPlugin", name);
+		ToggleDockingAction dockAction = (ToggleDockingAction) action;
 		performAction(dockAction, true);
 	}
 
 	protected void undockSatellite() {
 		String name = "Dock Satellite View";
-		List<DockingActionIf> actions =
-			tool.getDockingActionsByFullActionName(name + " (FunctionGraphPlugin)");
-		assertEquals("Could not find action: " + name, 1, actions.size());
 
-		ToggleDockingAction dockAction = (ToggleDockingAction) actions.get(0);
+		DockingActionIf action = getAction(tool, "FunctionGraphPlugin", name);
+		ToggleDockingAction dockAction = (ToggleDockingAction) action;
 		assertTrue(name + " action is not selected as expected", dockAction.isSelected());
 
 		performAction(dockAction, true);
@@ -932,11 +929,9 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 
 	protected void redockSatellite() {
 		String name = "Dock Satellite View";
-		List<DockingActionIf> actions =
-			tool.getDockingActionsByFullActionName(name + " (FunctionGraphPlugin)");
-		assertEquals("Could not find action: " + name, 1, actions.size());
 
-		ToggleDockingAction dockAction = (ToggleDockingAction) actions.get(0);
+		DockingActionIf action = getAction(tool, "FunctionGraphPlugin", name);
+		ToggleDockingAction dockAction = (ToggleDockingAction) action;
 		assertFalse(name + " action is not selected as expected", dockAction.isSelected());
 
 		performAction(dockAction, true);
@@ -1204,10 +1199,8 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 
 	protected FGController cloneGraph() {
 
-		List<DockingActionIf> actions = tool.getDockingActionsByFullActionName(
-			"Function Graph Clone (" + graphPlugin.getName() + ")");
-		assertEquals(1, actions.size());
-		DockingActionIf snapshotAction = actions.get(0);
+		DockingActionIf snapshotAction =
+			AbstractDockingTest.getAction(tool, graphPlugin.getName(), "Function Graph Clone");
 		performAction(snapshotAction, true);
 
 		@SuppressWarnings("unchecked")
@@ -1423,6 +1416,7 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 		assertSelected(ungroupedVertices);
 		
 	}
+	// @formatter:on
 
 	protected void doTestGroupingProperlyTranslatesEdgesFromGroupedVerticesToRealVertices() {
 		//
@@ -1431,7 +1425,7 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 		// need to test this functionality, but we don't have a jComplicatedTest, so we will do
 		// it here.
 		//
-	
+
 		//
 		// Desired Behavior: We want to be able to group vertices, group grouped vertices and then
 		//                   ungroup them in any order.  For us to be able to do this, our group
@@ -1451,7 +1445,7 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 		// 
 		// The fix is mentioned in the Desired Behavior section.  
 		//
-	
+
 		/*
 		 
 		 0) Initial Graph
@@ -1462,26 +1456,26 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 		           5
 		           
 		*/
-	
+
 		create12345Graph();
-	
+
 		//
 		// Our graph maps from number to address like so:
 		//
-	
+
 		FGVertex v1 = vertex("100415a");
 		FGVertex v2 = vertex("1004178");
 		FGVertex v3 = vertex("1004192");
 		FGVertex v4 = vertex("1004196");
 		FGVertex v5 = vertex("100419c");
-	
+
 		// verify initial graph 
 		verifyEdge(v1, v2);
 		verifyEdge(v2, v3);
 		verifyEdge(v3, v4);
 		verifyEdge(v3, v5);
 		verifyEdgeCount(4);
-	
+
 		/*
 		 1) Create two separate group vertices (A and B), such that A has an edge to B.
 		            
@@ -1491,14 +1485,14 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 		                               5
 		                               		 
 		 */
-	
+
 		GroupedFunctionGraphVertex groupA = group("A", v1, v2);
 		GroupedFunctionGraphVertex groupB = group("B", v3, v4);
-	
+
 		verifyEdge(groupA, groupB);
 		verifyEdge(groupB, v5);
 		verifyEdgeCount(2);// no other edges
-	
+
 		/*
 		 2) Create a third group vertex (Z) that contains a non-grouped vertex *and* one 
 		    of the other groups (B).
@@ -1509,12 +1503,12 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 		 								  )          
 		
 		*/
-	
+
 		GroupedFunctionGraphVertex groupZ = group("Z", groupB, v5);
-	
+
 		verifyEdge(groupA, groupZ);
 		verifyEdgeCount(1);
-	
+
 		/*
 		 3) Now, ungroup the 1 remaining originally grouped vertex (A).
 		 
@@ -1524,13 +1518,13 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 					  )   
 		 
 		 */
-	
+
 		ungroup(groupA);
-	
+
 		verifyEdge(v1, v2);
 		verifyEdge(v2, groupZ);
 		verifyEdgeCount(2);
-	
+
 		/*
 		 
 		 4) Now, ungroup Z and go back to having one remaining group vertex (B)
@@ -1541,14 +1535,14 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 		              5
 		            		  
 		*/
-	
+
 		ungroup(groupZ);
-	
+
 		verifyEdge(v1, v2);
 		verifyEdge(v2, groupB);
 		verifyEdge(groupB, v5);
 		verifyEdgeCount(3);
-	
+
 		/*
 		 5) Finally, ungroup the last group and make sure the graph is restored
 		              
@@ -1558,15 +1552,15 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 		           5		
 		  
 		 */
-	
+
 		ungroup(groupB);
-	
+
 		verifyEdge(v1, v2);
 		verifyEdge(v2, v3);
 		verifyEdge(v3, v4);
 		verifyEdge(v3, v5);
 		verifyEdgeCount(4);
-	
+
 	}
 
 	private void doTestRestoringWhenCodeBlocksHaveChanged_DoesntRegroup() {
@@ -1581,28 +1575,28 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 		// be found by the regrouping algorithm.  Furthermore, the regrouping will not take place
 		// if at least two vertices cannot be found.
 		//
-	
+
 		// 
 		// Pick a function and group some nodes.
 		//
 		FGData graphData = graphFunction("01002cf5");
 		FunctionGraph functionGraph = graphData.getFunctionGraph();
-	
+
 		Set<FGVertex> ungroupedVertices =
 			selectVertices(functionGraph, "01002d11" /* LAB_01002d11 */, "01002cf5" /* ghidra */);
-	
+
 		group(ungroupedVertices);
-	
+
 		// 5 edges expected: 
 		// -01002cf5: 2 out 
 		// -01002cf5: 2 in, 1 out
 		int expectedGroupedEdgeCount = 5;
 		GroupedFunctionGraphVertex groupedVertex = validateNewGroupedVertexFromVertices(
 			functionGraph, ungroupedVertices, expectedGroupedEdgeCount);
-	
+
 		AddressSetView addresses = groupedVertex.getAddresses();
 		Address minAddress = addresses.getMinAddress();
-	
+
 		//
 		// Ideally, we would like to save, close and re-open the program so that we can get 
 		// a round-trip saving and reloading.  However, in the test environment, we cannot save 
@@ -1612,12 +1606,12 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 		//
 		graphFunction("0100415a");
 		clearCache();
-	
+
 		//
 		// Add a label to trigger a code block change
 		//
 		createLabel("01002d18");// in the middle of the LAB_01002d11 code block
-	
+
 		//
 		// Relaunch the graph, which will use the above persisted group settings...
 		//
@@ -1640,18 +1634,18 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 		// be found by the regrouping algorithm.  Furthermore, the regrouping *will* still
 		// take place, as at least two vertices cannot be found.
 		//
-	
+
 		// 
 		// Pick a function and group some nodes.
 		//
 		FGData graphData = graphFunction("01002cf5");
 		FunctionGraph functionGraph = graphData.getFunctionGraph();
-	
+
 		Set<FGVertex> ungroupedVertices = selectVertices(functionGraph,
 			"01002d11" /* LAB_01002d11 */, "01002cf5" /* ghidra */, "01002d1f" /* MyLocal */);
-	
+
 		group(ungroupedVertices);
-	
+
 		// 5 edges expected: 
 		// -01002cf5: 2 out 
 		// -01002d11: 2 in, (1 out that was removed)
@@ -1659,11 +1653,11 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 		int expectedGroupedEdgeCount = 6;
 		GroupedFunctionGraphVertex groupedVertex = validateNewGroupedVertexFromVertices(
 			functionGraph, ungroupedVertices, expectedGroupedEdgeCount);
-	
+
 		AddressSetView addresses = groupedVertex.getAddresses();
 		Address minAddress = addresses.getMinAddress();
 		Address maxAddress = addresses.getMaxAddress();
-	
+
 		//
 		// Ideally, we would like to save, close and re-open the program so that we can get 
 		// a round-trip saving and reloading.  However, in the test environment, we cannot save 
@@ -1673,12 +1667,12 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 		//
 		graphFunction("0100415a");
 		clearCache();
-	
+
 		//
 		// Add a label to trigger a code block change
 		//
 		Address labelAddress = createLabel("01002d18");// in the middle of the LAB_01002d11 code block
-	
+
 		//
 		// Relaunch the graph, which will use the above persisted group settings...
 		//
@@ -1688,22 +1682,22 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 		FGVertex expectedGroupVertex = functionGraph.getVertexForAddress(minAddress);
 		assertTrue(expectedGroupVertex instanceof GroupedFunctionGraphVertex);
 		assertEquals(maxAddress, expectedGroupVertex.getAddresses().getMaxAddress());
-	
+
 		// ...we expect that the two original grouped vertices have again been grouped...
 		FGVertex splitVertex =
 			functionGraph.getVertexForAddress(getAddress("01002d11") /* LAB_01002d11 */);
 		assertTrue("The split vertex should not have been regrouped",
 			!(splitVertex instanceof GroupedFunctionGraphVertex));
-	
+
 		FGVertex unchangedVertex =
 			functionGraph.getVertexForAddress(getAddress("01002cf5") /* ghidra */);
 		assertTrue("An unchanged vertex should have been regrouped: " + unchangedVertex,
 			(unchangedVertex instanceof GroupedFunctionGraphVertex));
-	
+
 		unchangedVertex = functionGraph.getVertexForAddress(getAddress("01002d1f") /* MyLocal */);
 		assertTrue("An unchanged vertex should have been regrouped: " + unchangedVertex,
 			(unchangedVertex instanceof GroupedFunctionGraphVertex));
-	
+
 		// ...but the newly created code block has not
 		FGVertex newlyCreatedVertex = functionGraph.getVertexForAddress(labelAddress);
 		assertNotNull(newlyCreatedVertex);
@@ -1716,30 +1710,30 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 		// However, if the affected vertex is grouped, then the FG will not split the node, but
 		// should still show the 'stale' indicator.
 		//
-	
+
 		// 
 		// Pick a function and group some nodes.
 		//
 		FGData graphData = graphFunction("01002cf5");
 		FunctionGraph functionGraph = graphData.getFunctionGraph();
-	
+
 		Set<FGVertex> ungroupedVertices =
 			selectVertices(functionGraph, "01002d11" /* LAB_01002d11 */, "01002cf5" /* ghidra */);
-	
+
 		group(ungroupedVertices);
-	
+
 		// 5 edges expected: 
 		// -01002cf5: 2 out 
 		// -01002cf5: 2 in, 1 out
 		int expectedGroupedEdgeCount = 5;
 		GroupedFunctionGraphVertex groupedVertex = validateNewGroupedVertexFromVertices(
 			functionGraph, ungroupedVertices, expectedGroupedEdgeCount);
-	
+
 		//
 		// Add a label to trigger a code block change
 		//
 		Address labelAddress = createLabel("01002d18");// in the middle of the LAB_01002d11 code block
-	
+
 		//
 		// Make sure the newly created code block does not have a corresponding vertex
 		//
@@ -1786,7 +1780,7 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 					Msg.debug(this, "\t" + v);
 				}
 			}
-	
+
 			Assert.fail("Did not find group vertex at " + address + ".  Instead found " + vertex);
 		}
 		return (GroupedFunctionGraphVertex) vertex;
@@ -1813,7 +1807,7 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 	protected FGData graphFunction(String functionAddress) {
 		// Find a good test function.
 		goToAddress(functionAddress);
-	
+
 		FGData graphData = getFunctionGraphData();
 		assertNotNull(graphData);
 		assertTrue("Unexpectedly received an empty FunctionGraphData", graphData.hasResults());
@@ -1832,22 +1826,22 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 		DockingAction action = (DockingAction) TestUtils.getInstanceField("groupAction", component);
 		performAction(action, graphProvider, false);
 		waitForAnimation();
-	
+
 		MultiLineInputDialog dialog = waitForDialogComponent(MultiLineInputDialog.class);
 		if (groupVertexText != null) {
 			final JTextArea inputTextArea = (JTextArea) getInstanceField("inputTextArea", dialog);
 			runSwing(() -> inputTextArea.setText(groupVertexText));
 		}
-	
+
 		pressButtonByText(dialog.getComponent(), "OK");
-	
+
 		if (groupVertexText != null) {
 			String value = dialog.getValue();
 			assertEquals("Group vertex text was not set in the dialog", groupVertexText, value);
 		}
-	
+
 		waitForAnimation();
-	
+
 		FGController controller = getFunctionGraphController();
 		FGData data = controller.getFunctionGraphData();
 		FunctionGraph fg = data.getFunctionGraph();
@@ -1855,49 +1849,56 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 	}
 
 	protected GroupedFunctionGraphVertex group(String groupName, FGVertex... vertices) {
-	
+
 		HashSet<FGVertex> set = new HashSet<>();
 		for (FGVertex v : vertices) {
 			set.add(v);
 		}
-	
+
 		pickVertices(set);
 		GroupedFunctionGraphVertex groupVertex = group(set, groupName);
-	
+
 		// for debugging
 		Object componentPanel = getComponent(groupVertex);
 		setInstanceField("title", componentPanel, groupName);
-	
+
 		return groupVertex;
 	}
 
-	private boolean isUncollapsed(final FGVertex vertex) {
+	protected boolean isUncollapsed(final FGVertex vertex) {
 		final AtomicReference<Boolean> reference = new AtomicReference<>();
 		runSwing(() -> reference.set(vertex.isUncollapsedGroupMember()));
 		return reference.get();
 	}
 
-	private void pickVertices(final Set<FGVertex> vertices) {
+	protected void pickVertex(FGVertex v) {
 		runSwing(() -> {
 			PickedState<FGVertex> pickedState = getPickedState();
 			pickedState.clear();
-	
+			pickedState.pick(v, true);
+		});
+	}
+
+	protected void pickVertices(final Set<FGVertex> vertices) {
+		runSwing(() -> {
+			PickedState<FGVertex> pickedState = getPickedState();
+			pickedState.clear();
+
 			for (FGVertex vertex : vertices) {
 				pickedState.pick(vertex, true);
 			}
 		});
 	}
 
-
 	protected GroupedFunctionGraphVertex regroup(FGVertex vertex) {
-	
+
 		DockingActionIf regroupAction = getRegroupAction(vertex);
 		if (regroupAction == null) {
 			Assert.fail("Did not find the regroup action on vertex: " + vertex.getTitle());
 		}
 		performAction(regroupAction, false);
 		waitForBusyGraph();
-	
+
 		FGController controller = getFunctionGraphController();
 		FGData data = controller.getFunctionGraphData();
 		FunctionGraph fg = data.getFunctionGraph();
@@ -1906,12 +1907,12 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 
 	private void removeEdge(FunctionGraph functionGraph, Address startAddress,
 			Address destinationAddress) {
-	
+
 		Graph<FGVertex, FGEdge> graph = functionGraph;
-	
+
 		FGVertex startVertex = functionGraph.getVertexForAddress(startAddress);
 		FGVertex destinationVertex = functionGraph.getVertexForAddress(destinationAddress);
-	
+
 		FGEdge edge = graph.findEdge(startVertex, destinationVertex);
 		runSwing(() -> graph.removeEdge(edge));
 		FGController controller = getFunctionGraphController();
@@ -1921,10 +1922,10 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 	protected void removeFromUncollapsedGroup(FGVertex... vertices) {
 		FunctionGraph functionGraph = getFunctionGraph();
 		selectVertices(functionGraph, vertices);
-	
+
 		DockingActionIf action = getAction(graphPlugin, "Remove From Group");
 		assertNotNull(action);
-	
+
 		performAction(action, graphProvider, false);
 		waitForBusyGraph();
 	}
@@ -1938,35 +1939,32 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 	}
 
 	protected FGData reset() {
-		List<DockingActionIf> actions =
-			tool.getDockingActionsByFullActionName("Reset Graph (FunctionGraphPlugin)");
-		assertEquals(1, actions.size());
-		DockingActionIf action = actions.get(0);
-	
+
+		DockingActionIf action = getAction(tool, graphPlugin.getName(), "Reset Graph");
 		performAction(action, graphProvider, false);
-	
+
 		OptionDialog dialog = waitForDialogComponent(OptionDialog.class);
 		pressButtonByText(dialog, "Yes");
-	
+
 		// wait for the threaded graph layout code
 		return getFunctionGraphData();
 	}
 
 	private Set<FGVertex> selectVertices(FunctionGraph functionGraph, FGVertex... vertices) {
-	
+
 		Set<FGVertex> set = new HashSet<>();
 		for (FGVertex vertex : vertices) {
 			set.add(vertex);
 		}
-	
+
 		pickVertices(set);
-	
+
 		waitForSwing();
 		return set;
 	}
 
 	protected Set<FGVertex> selectVertices(FunctionGraph functionGraph, String... addressString) {
-	
+
 		Set<FGVertex> vertices = new HashSet<>();
 		for (String string : addressString) {
 			Address vertexAddress = getAddress(string);
@@ -1974,26 +1972,26 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 			assertNotNull("No vertex for address: " + vertexAddress, vertex);
 			vertices.add(vertex);
 		}
-	
+
 		pickVertices(vertices);
-	
+
 		waitForSwing();
 		return vertices;
 	}
 
 	protected void setGroupText(GroupedFunctionGraphVertex group, final String newText) {
-	
+
 		final GroupedFunctionGraphVertex updatedGroup = update(group);
 		runSwing(() -> updatedGroup.editLabel(null), false);
-	
+
 		Window window = waitForWindow("Enter Group Vertex Text");
 		assertNotNull(window);
-	
+
 		final JTextArea textArea = findComponent(window, JTextArea.class);
 		runSwing(() -> textArea.setText(newText));
-	
+
 		pressButtonByText(window, "OK");
-	
+
 		waitForSwing();
 	}
 
@@ -2012,12 +2010,12 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 					action.setCurrentActionState(state);
 				}
 			}
-	
+
 		});
-	
+
 	}
 
-	protected FGData triggerPersistence(String functionAddress) {
+	protected FGData triggerPersistenceAndReload(String functionAddress) {
 		//
 		// Ideally, we would like to save, close and re-open the program so that we can get 
 		// a round-trip saving and reloading.  However, in the test environment, we cannot save 
@@ -2025,9 +2023,10 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 		// the cache (to make sure that we read the settings again), and then verify that the 
 		// data saved in the program has been used to re-group.
 		//
-		graphFunction("0100415a");
-		clearCache();
-	
+		String otherAddress = "0100415a";
+		assertNotEquals(functionAddress, otherAddress);
+		graphFunction(otherAddress);
+
 		//
 		// Graph the original function and make sure that the previously grouped nodes is again
 		// grouped.
@@ -2040,9 +2039,9 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 		// Unusual Code: for some of the regroup actions, group vertices are created and restored,
 		//               but are always equal.  Thus, the Function Graph works correctly, but the
 		//				 test can get out-of-sync, so we update before we use it
-	
+
 		groupedVertex = getGroupVertex(getFunctionGraph(), groupedVertex.getVertexAddress());
-	
+
 		ungroup(groupedVertex);
 	}
 
@@ -2057,45 +2056,42 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 	}
 
 	protected void ungroupAll() {
-		List<DockingActionIf> actions =
-			tool.getDockingActionsByFullActionName("Ungroup All Vertices (FunctionGraphPlugin)");
-		assertEquals(1, actions.size());
-		DockingActionIf action = actions.get(0);
-	
+
+		DockingActionIf action = getAction(tool, "FunctionGraphPlugin", "Ungroup All Vertices");
 		performAction(action, graphProvider, false);
-	
+
 		OptionDialog dialog = waitForDialogComponent(OptionDialog.class);
 		pressButtonByText(dialog, "Yes");
-	
+
 		// wait for the threaded graph layout code
 		waitForBusyGraph();
 	}
 
-	//==================================================================================================
-	// Private Methods
-	//==================================================================================================
-	
-		private GroupedFunctionGraphVertex update(GroupedFunctionGraphVertex group) {
-			// Unusual Code: for some of the regroup actions, group vertices are created and restored,
-			//               but are always equal.  Thus, the Function Graph works correctly, but the
-			//				 test can get out-of-sync, so we update before we use it
-			return getGroupVertex(getFunctionGraph(), group.getVertexAddress());
-		}
+//==================================================================================================
+// Private Methods
+//==================================================================================================
+
+	private GroupedFunctionGraphVertex update(GroupedFunctionGraphVertex group) {
+		// Unusual Code: for some of the regroup actions, group vertices are created and restored,
+		//               but are always equal.  Thus, the Function Graph works correctly, but the
+		//				 test can get out-of-sync, so we update before we use it
+		return getGroupVertex(getFunctionGraph(), group.getVertexAddress());
+	}
 
 	protected GroupedFunctionGraphVertex validateNewGroupedVertexFromVertices(
 			FunctionGraph functionGraph, Set<FGVertex> vertices, int expectedGroupedEdgeCount) {
-	
+
 		FGVertex aVertex = vertices.iterator().next();
 		FGVertex currentVertex = functionGraph.getVertexForAddress(aVertex.getVertexAddress());
 		assertTrue(currentVertex instanceof GroupedFunctionGraphVertex);
 		GroupedFunctionGraphVertex groupedVertex = (GroupedFunctionGraphVertex) currentVertex;
-	
+
 		//
 		// make sure we have new edges
 		//
 		Graph<FGVertex, FGEdge> graph = functionGraph;
 		Collection<FGEdge> groupedEdges = graph.getIncidentEdges(groupedVertex);
-	
+
 		assertEquals("Ungrouped edges not replaced with new edges for the grouped vertex",
 			expectedGroupedEdgeCount, groupedEdges.size());
 		assertSelected(groupedVertex);
@@ -2121,7 +2117,7 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 		FGData data = getFunctionGraphData();
 		FunctionGraph functionGraph = data.getFunctionGraph();
 		Graph<FGVertex, FGEdge> graph = functionGraph;
-	
+
 		FGEdge edge = graph.findEdge(start, destination);
 		assertNotNull("No edge exists for vertices: " + start + "   and   " + destination, edge);
 	}
@@ -2160,7 +2156,7 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 		ComponentProvider provider = tool.getComponentProvider(FGSatelliteUndockedProvider.NAME);
 		assertUndockedProviderShowing(provider);
 	}
-	
+
 	protected void assertUndockedProviderShowing(ComponentProvider satellite) {
 		assertNotNull("Undocked provider is not installed when it should be", satellite);
 		assertTrue("Undocked provider is not showing after being undocked", satellite.isVisible());
@@ -2170,7 +2166,7 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 		Double scale = getGraphScale(getPrimaryGraphViewer());
 		int result = Double.compare(scale, 1.0);
 		assertEquals("Graph not fully zoomed-in; scale: " + scale, 0, result);
-	
+
 		FGVertex v = getFocusedVertex();
 		Rectangle cursorBounds = v.getCursorBounds();
 		Window graphWindow = windowForComponent(getPrimaryGraphViewer());
@@ -2190,13 +2186,13 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 		DockingAction action =
 			(DockingAction) TestUtils.getInstanceField("chooseColorAction", setColorAction);
 		performAction(action, graphProvider, false);
-	
+
 		Window chooserWindow = waitForWindow("Please Select Background Color");
 		Object colorChooserDialog = chooserWindow;// the name is the real type
 		JColorChooser chooser =
 			(JColorChooser) TestUtils.getInstanceField("chooserPane", colorChooserDialog);
 		chooser.setColor(testColor);
-	
+
 		JButton okButton = findButtonByText(chooserWindow, "OK");
 		runSwing(() -> okButton.doClick());
 		waitForSwing();
@@ -2210,32 +2206,32 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 	}
 
 	protected void debugAction(DockingAction copyAction, ActionContext context) {
-	
+
 		Msg.debug(this, "Copy action not enabled at location " + codeBrowser.getCurrentLocation());
-	
+
 		FGVertex focusedVertex = getFocusedVertex();
 		Msg.debug(this, "\tfocused vertex: " + focusedVertex);
-	
+
 		Msg.debug(this, "\tcontext: " + context);
-	
+
 		// Figure out which check in the action failed
 		Object clipboardService = getInstanceField("clipboardService", copyAction);
 		Msg.debug(this, "\tservice: " + clipboardService);
-	
+
 		Boolean result = (Boolean) invokeInstanceMethod("isValidContext", clipboardService,
 			new Class[] { ActionContext.class }, new Object[] { context });
 		Msg.debug(this, "\tisValidContext()?: " + result);
-	
+
 		result = (Boolean) invokeInstanceMethod("canCopy", clipboardService);
 		Msg.debug(this, "\tcanCopy: " + result);
-	
+
 		Boolean copyFromSelectionEnabled =
 			(Boolean) getInstanceField("copyFromSelectionEnabled", clipboardService);
 		Msg.debug(this, "\tcopyFromSelectionEnabled: " + copyFromSelectionEnabled);
-	
+
 		String stringContent = (String) getInstanceField("stringContent", clipboardService);
 		Msg.debug(this, "\tstringContent: " + stringContent);
-	
+
 		Object location = getInstanceField("currentLocation", clipboardService);
 		Msg.debug(this, "\tservice location: " + location);
 	}
@@ -2252,7 +2248,7 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 		ProgramLocation location = getLocationForAddressString(startAddressString);
 		assertTrue(graphData.containsLocation(location));
 		FunctionGraph functionGraph = graphData.getFunctionGraph();
-	
+
 		// locate vertex with cursor
 		FGVertex focusedVertex = getFocusVertex(functionGraph);
 		assertNotNull("We did not start with a focused vertex", focusedVertex);
@@ -2268,7 +2264,7 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 	protected SetVertexMostRecentColorAction getSetMostRecentColorAction(FGVertex vertex) {
 		// this action is odd in that it is not installed in the tool, but is owned by each
 		// vertex directly
-	
+
 		JComponent internalGraphComponent = vertex.getComponent();
 		return (SetVertexMostRecentColorAction) getInstanceField("setVertexMostRecentAction",
 			internalGraphComponent);
@@ -2276,9 +2272,12 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 
 	protected void goTo(String address) {
 		Address addr = getAddress(address);
+		goTo(addr);
+	}
+
+	protected void goTo(Address address) {
 		GoToService goToService = tool.getService(GoToService.class);
-		goToService.goTo(addr);
-	
+		goToService.goTo(address);
 		waitForBusyGraph();
 	}
 
@@ -2292,12 +2291,10 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 	}
 
 	protected void navigateBack() {
-		String name = "Previous in History Buffer";
-		List<DockingActionIf> actions =
-			tool.getDockingActionsByFullActionName(name + " (NextPrevAddressPlugin)");
-		assertEquals("Could not find action: " + name, 1, actions.size());
-	
-		performAction(actions.get(0), true);
+		String name = "Previous Location in History";
+
+		DockingActionIf action = getAction(tool, "NextPrevAddressPlugin", name);
+		performAction(action, true);
 		waitForBusyGraph();
 	}
 
@@ -2314,18 +2311,16 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 	}
 
 	protected void setGraphWindowSize(final int width, final int height) {
-	
+
 		final Window graphWindow = windowForComponent(getPrimaryGraphViewer());
 		runSwing(() -> graphWindow.setSize(width, height));
 	}
 
 	protected void toggleSatalliteVisible(boolean expectedVisible) {
 		String name = "Display Satellite View";
-		List<DockingActionIf> actions =
-			tool.getDockingActionsByFullActionName(name + " (FunctionGraphPlugin)");
-		assertEquals("Could not find action: " + name, 1, actions.size());
-			
-		ToggleDockingAction displayAction = (ToggleDockingAction) actions.get(0);
+
+		DockingActionIf action = getAction(tool, "FunctionGraphPlugin", name);
+		ToggleDockingAction displayAction = (ToggleDockingAction) action;
 		setToggleActionSelected(displayAction, new ActionContext(), expectedVisible);
 //	
 //		// make sure the action is not already in the state we expect
@@ -2339,6 +2334,14 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 		FGData graphData = getFunctionGraphData();
 		assertNotNull(graphData);
 		assertTrue("Unexpectedly received an empty FunctionGraphData", graphData.hasResults());
+	}
+
+	protected void swing(Runnable r) {
+		AbstractGenericTest.runSwing(r);
+	}
+
+	protected <T> T swing(Supplier<T> s) {
+		return AbstractGenericTest.runSwing(s);
 	}
 
 	static class DummyTransferable implements Transferable {

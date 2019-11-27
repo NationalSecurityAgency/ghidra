@@ -37,9 +37,11 @@ class LocationReferencesHighlighter {
 	private static final String MARKER_SET_DESCRIPTION = "Shows the location of references " +
 		"currently displayed in the Location References window.";
 
-	private static final String OPTIONS_TITLE = GhidraOptions.CATEGORY_BROWSER_FIELDS;
-	private static final String HIGHLIGHT_COLOR =
-		"References Highlight" + GhidraOptions.DELIMITER + "Color";
+	private static final String OPTIONS_TITLE = GhidraOptions.OPTION_SEARCH_TITLE;
+	private static final String HIGHLIGHT_COLOR_KEY =
+		"Reference Search" + GhidraOptions.DELIMITER + "Highlight Match Color";
+	private static final String HIGHLIGHT_COLOR_DESCRIPTION =
+		"The highlight color of matches for the 'Show References' searcher";
 	private static Color DEFAULT_HIGHLIGHT_COLOR = new Color(168, 202, 242);
 
 	private boolean isHighlighting = false;
@@ -54,11 +56,20 @@ class LocationReferencesHighlighter {
 		@Override
 		public void optionsChanged(ToolOptions options, String name, Object oldValue,
 				Object newValue) {
-			if (name.equals(HIGHLIGHT_COLOR)) {
+			if (name.equals(HIGHLIGHT_COLOR_KEY)) {
 				highlightColor = (Color) newValue;
 			}
 		}
 	};
+
+	// This is a bit unusual, but we do this here, since this highlighter will come and 
+	// go with each search.  If we do not register a priori, then the option will not appear in the
+	// tool until a search has happened, which is odd.
+	static void registerHighlighterOptions(LocationReferencesPlugin plugin) {
+		ToolOptions options = plugin.getTool().getOptions(OPTIONS_TITLE);
+		options.registerOption(HIGHLIGHT_COLOR_KEY, DEFAULT_HIGHLIGHT_COLOR,
+			plugin.getHelpLocation(), HIGHLIGHT_COLOR_DESCRIPTION);
+	}
 
 	LocationReferencesHighlighter(LocationReferencesPlugin locationReferencesPlugin,
 			LocationReferencesProvider provider, Navigatable navigatable) {
@@ -71,8 +82,7 @@ class LocationReferencesHighlighter {
 		this.provider = provider;
 
 		ToolOptions options = locationReferencesPlugin.getTool().getOptions(OPTIONS_TITLE);
-		options.registerOption(HIGHLIGHT_COLOR, DEFAULT_HIGHLIGHT_COLOR, null, null);
-		highlightColor = options.getColor(HIGHLIGHT_COLOR, DEFAULT_HIGHLIGHT_COLOR);
+		highlightColor = options.getColor(HIGHLIGHT_COLOR_KEY, DEFAULT_HIGHLIGHT_COLOR);
 		options.addOptionsChangeListener(optionsListener);
 	}
 
@@ -183,7 +193,9 @@ class LocationReferencesHighlighter {
 		DataType locationDataType = null;
 		if (enable) {
 			locationDataType = dataTypeDescriptor.getSourceDataType();
+			locationDataType = ReferenceUtils.getBaseDataType(locationDataType);
 		}
+
 		dataTypeManagerService.setDataTypeSelected(locationDataType);
 	}
 

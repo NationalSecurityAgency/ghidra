@@ -15,6 +15,10 @@
  */
 package ghidra.program.model;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.*;
+
 import ghidra.framework.model.*;
 import ghidra.framework.options.Options;
 import ghidra.framework.store.LockException;
@@ -33,10 +37,6 @@ import ghidra.program.model.util.PropertyMapManager;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.task.TaskMonitor;
-
-import java.io.File;
-import java.io.IOException;
-import java.util.*;
 
 public class ProgramTestDouble implements Program {
 
@@ -111,8 +111,8 @@ public class ProgramTestDouble implements Program {
 	}
 
 	@Override
-	public void saveToPackedFile(File outputFile, TaskMonitor monitor) throws IOException,
-			CancelledException {
+	public void saveToPackedFile(File outputFile, TaskMonitor monitor)
+			throws IOException, CancelledException {
 		throw new UnsupportedOperationException();
 	}
 
@@ -407,6 +407,16 @@ public class ProgramTestDouble implements Program {
 	}
 
 	@Override
+	public String getExecutableSHA256() {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public void setExecutableSHA256(String sha256) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
 	public Date getCreationDate() {
 		throw new UnsupportedOperationException();
 	}
@@ -507,8 +517,8 @@ public class ProgramTestDouble implements Program {
 	}
 
 	@Override
-	public void setImageBase(Address base, boolean commit) throws AddressOverflowException,
-			LockException, IllegalStateException {
+	public void setImageBase(Address base, boolean commit)
+			throws AddressOverflowException, LockException, IllegalStateException {
 		throw new UnsupportedOperationException();
 	}
 
@@ -519,8 +529,8 @@ public class ProgramTestDouble implements Program {
 
 	@Override
 	public void setLanguage(Language language, CompilerSpecID compilerSpecID,
-			boolean forceRedisassembly, TaskMonitor monitor) throws IllegalStateException,
-			IncompatibleLanguageException, LockException {
+			boolean forceRedisassembly, TaskMonitor monitor)
+			throws IllegalStateException, IncompatibleLanguageException, LockException {
 		throw new UnsupportedOperationException();
 	}
 

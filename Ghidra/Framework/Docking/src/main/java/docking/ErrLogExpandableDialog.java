@@ -28,12 +28,14 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.tree.TreePath;
 
+import docking.widgets.label.GHtmlLabel;
 import docking.widgets.tree.*;
 import docking.widgets.tree.support.GTreeDragNDropHandler;
 import ghidra.util.*;
 import ghidra.util.exception.*;
 import ghidra.util.html.HTMLElement;
 import resources.ResourceManager;
+import util.CollectionUtils;
 
 public class ErrLogExpandableDialog extends DialogComponentProvider {
 	public static ImageIcon IMG_REPORT = ResourceManager.loadImage("images/report.png");
@@ -171,7 +173,7 @@ public class ErrLogExpandableDialog extends DialogComponentProvider {
 		msgPanel.setLayout(new BorderLayout(16, 16));
 		msgPanel.setBorder(new EmptyBorder(16, 16, 16, 16));
 		{
-			JLabel msgText = new JLabel(getHTML(msg, report)) {
+			JLabel msgText = new GHtmlLabel(getHTML(msg, report)) {
 				@Override
 				public Dimension getPreferredSize() {
 					// when rendering HTML the label can expand larger than the screen;
@@ -245,10 +247,9 @@ public class ErrLogExpandableDialog extends DialogComponentProvider {
 				}
 			};
 
-			for (TreePath path : root.allPaths()) {
-				Object last = path.getLastPathComponent();
-				if (last instanceof ReportExceptionNode) {
-					excTree.expandTree((GTreeNode) last);
+			for (GTreeNode node : CollectionUtils.asIterable(root.iterator(true))) {
+				if (node instanceof ReportExceptionNode) {
+					excTree.expandTree(node);
 				}
 			}
 
@@ -405,8 +406,8 @@ public class ErrLogExpandableDialog extends DialogComponentProvider {
 						indent += 1;
 					}
 				}
-				boolean doAll = (included == null || !containsAny(included, cur.getAllChildren()));
-				for (GTreeNode node : cur.getAllChildren()) {
+				boolean doAll = (included == null || !containsAny(included, cur.getChildren()));
+				for (GTreeNode node : cur.getChildren()) {
 					if (node instanceof NodeWithText && (doAll || included.contains(node))) {
 						NodeWithText nwt = (NodeWithText) node;
 
@@ -426,7 +427,7 @@ public class ErrLogExpandableDialog extends DialogComponentProvider {
 		}
 	}
 
-	static class ReportRootNode extends AbstractGTreeRootNode implements NodeWithText {
+	static class ReportRootNode extends GTreeNode implements NodeWithText {
 		protected Collection<? extends Throwable> report;
 		protected String title;
 		protected boolean loaded = false;
@@ -434,21 +435,14 @@ public class ErrLogExpandableDialog extends DialogComponentProvider {
 		public ReportRootNode(String title, Collection<? extends Throwable> report) {
 			this.title = title;
 			this.report = report;
+			for (Throwable exc : report) {
+				addNode(new ReportExceptionNode(exc));
+			}
 		}
 
 		@Override
 		public String getName() {
 			return title;
-		}
-
-		@Override
-		protected void loadChildren() {
-			if (!loaded) {
-				loaded = true;
-				for (Throwable exc : report) {
-					addNode(new ReportExceptionNode(exc));
-				}
-			}
 		}
 
 		@Override
@@ -482,7 +476,7 @@ public class ErrLogExpandableDialog extends DialogComponentProvider {
 		}
 	}
 
-	static class ReportExceptionNode extends AbstractGTreeNode implements NodeWithText {
+	static class ReportExceptionNode extends GTreeLazyNode implements NodeWithText {
 		protected Throwable exc;
 		protected boolean loaded = false;
 
@@ -496,22 +490,21 @@ public class ErrLogExpandableDialog extends DialogComponentProvider {
 		}
 
 		@Override
-		protected void loadChildren() {
-			if (!loaded) {
-				loaded = true;
-				addNode(new ReportStackTraceNode(exc));
-				Throwable c = exc.getCause();
-				if (c != null) {
-					if (c instanceof MultipleCauses) {
-						for (Throwable t : ((MultipleCauses) c).getCauses()) {
-							addNode(new ReportExceptionNode(t));
-						}
-					}
-					else {
-						addNode(new ReportCauseNode(c));
+		protected List<GTreeNode> generateChildren() {
+			List<GTreeNode> list = new ArrayList<GTreeNode>();
+			list.add(new ReportStackTraceNode(exc));
+			Throwable c = exc.getCause();
+			if (c != null) {
+				if (c instanceof MultipleCauses) {
+					for (Throwable t : ((MultipleCauses) c).getCauses()) {
+						list.add(new ReportExceptionNode(t));
 					}
 				}
+				else {
+					list.add(new ReportCauseNode(c));
+				}
 			}
+			return list;
 		}
 
 		@Override
@@ -552,7 +545,7 @@ public class ErrLogExpandableDialog extends DialogComponentProvider {
 		}
 	}
 
-	static class ReportStackTraceNode extends AbstractGTreeNode implements NodeWithText {
+	static class ReportStackTraceNode extends GTreeLazyNode implements NodeWithText {
 		protected Throwable exc;
 		protected boolean loaded = false;
 
@@ -566,13 +559,12 @@ public class ErrLogExpandableDialog extends DialogComponentProvider {
 		}
 
 		@Override
-		public void loadChildren() {
-			if (!loaded) {
-				loaded = true;
-				for (StackTraceElement te : exc.getStackTrace()) {
-					addNode(new ReportStackFrameNode(te));
-				}
+		protected List<GTreeNode> generateChildren() {
+			List<GTreeNode> list = new ArrayList<>();
+			for (StackTraceElement te : exc.getStackTrace()) {
+				list.add(new ReportStackFrameNode(te));
 			}
+			return list;
 		}
 
 		@Override
@@ -627,7 +619,7 @@ public class ErrLogExpandableDialog extends DialogComponentProvider {
 		}
 	}
 
-	static class ReportStackFrameNode extends AbstractGTreeNode implements NodeWithText {
+	static class ReportStackFrameNode extends GTreeNode implements NodeWithText {
 		private StackTraceElement te;
 
 		public ReportStackFrameNode(StackTraceElement te) {

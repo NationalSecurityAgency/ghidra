@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +31,15 @@ public class TableSortState implements Iterable<ColumnSortState> {
 
 	private static final String XML_TABLE_SORT_STATE = "TABLE_SORT_STATE";
 
-	private List<ColumnSortState> columnSortStates = new ArrayList<ColumnSortState>();
+	private List<ColumnSortState> columnSortStates = new ArrayList<>();
+
+	/**
+	 * Creates a sort state that represents being unsorted
+	 * @return a sort state that represents being unsorted
+	 */
+	public static TableSortState createUnsortedSortState() {
+		return new TableSortState();
+	}
 
 	/**
 	 * Creates a sort state with the given column as the sorted column (sorted ascending).
@@ -64,8 +71,8 @@ public class TableSortState implements Iterable<ColumnSortState> {
 	}
 
 	public TableSortState(List<ColumnSortState> sortStates) {
-		List<Integer> sortOrders = new ArrayList<Integer>();
-		List<Integer> columnIndices = new ArrayList<Integer>();
+		List<Integer> sortOrders = new ArrayList<>();
+		List<Integer> columnIndices = new ArrayList<>();
 		for (ColumnSortState state : sortStates) {
 			int sortOrder = state.getSortOrder();
 			if (sortOrders.contains(sortOrder)) {
@@ -84,7 +91,7 @@ public class TableSortState implements Iterable<ColumnSortState> {
 			columnIndices.add(columnModelIndex);
 		}
 
-		this.columnSortStates = new ArrayList<ColumnSortState>(sortStates);
+		this.columnSortStates = new ArrayList<>(sortStates);
 	}
 
 	public TableSortState(ColumnSortState columnSortState) {
@@ -100,6 +107,10 @@ public class TableSortState implements Iterable<ColumnSortState> {
 		return columnSortStates.size();
 	}
 
+	public boolean isUnsorted() {
+		return columnSortStates.isEmpty();
+	}
+
 	public ColumnSortState getColumnSortState(int columnIndex) {
 		for (ColumnSortState sortState : columnSortStates) {
 			if (sortState.getColumnModelIndex() == columnIndex) {
@@ -110,7 +121,7 @@ public class TableSortState implements Iterable<ColumnSortState> {
 	}
 
 	public List<ColumnSortState> getAllSortStates() {
-		return new ArrayList<ColumnSortState>(columnSortStates);
+		return new ArrayList<>(columnSortStates);
 	}
 
 	@Override
@@ -140,7 +151,7 @@ public class TableSortState implements Iterable<ColumnSortState> {
 		Element sortStateElement = (Element) tableSortStateElementList.get(0);
 		List<?> children = sortStateElement.getChildren(ColumnSortState.XML_COLUMN_SORT_STATE);
 
-		List<ColumnSortState> columnStates = new ArrayList<ColumnSortState>(children.size());
+		List<ColumnSortState> columnStates = new ArrayList<>(children.size());
 		for (Object object : children) {
 			columnStates.add(ColumnSortState.restoreFromXML((Element) object));
 		}

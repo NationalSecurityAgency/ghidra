@@ -15,6 +15,8 @@
  */
 #include "sleighbase.hh"
 
+const int4 SleighBase::SLA_FORMAT_VERSION = 2;
+
 SleighBase::SleighBase(void)
 
 {
@@ -26,13 +28,12 @@ SleighBase::SleighBase(void)
 
 /// Assuming the symbol table is populated, iterate through the table collecting
 /// registers (for the map), user-op names, and context fields.
-void SleighBase::buildXrefs(void)
+void SleighBase::buildXrefs(vector<string> &errorPairs)
 
 {
   SymbolScope *glb = symtab.getGlobalScope();
   SymbolTree::const_iterator iter;
   SleighSymbol *sym;
-  int4 errors = 0;
   ostringstream s;
 
   for(iter=glb->begin();iter!=glb->end();++iter) {
@@ -41,9 +42,8 @@ void SleighBase::buildXrefs(void)
       pair<VarnodeData,string> ins(((VarnodeSymbol *)sym)->getFixedVarnode(),sym->getName());
       pair<map<VarnodeData,string>::iterator,bool> res = varnode_xref.insert(ins);
       if (!res.second) {
-	s << "Duplicate (offset,size) pair for registers: ";
-	s << sym->getName() << " and " << (*(res.first)).second << '\n';
-	errors += 1;
+	errorPairs.push_back(sym->getName());
+	errorPairs.push_back((*(res.first)).second);
       }
     }
     else if (sym->getType() == SleighSymbol::userop_symbol) {
@@ -60,8 +60,6 @@ void SleighBase::buildXrefs(void)
       registerContext(csym->getName(),startbit,endbit);
     }
   }
-  if (errors > 0)
-    throw SleighError(s.str());
 }
 
 /// If \b this SleighBase is being reused with a new program, the context
@@ -146,6 +144,7 @@ void SleighBase::saveXml(ostream &s) const
 
 {
   s << "<sleigh";
+  a_v_i(s,"version",SLA_FORMAT_VERSION);
   a_v_b(s,"bigendian",isBigEndian());
   a_v_i(s,"align",alignment);
   a_v_u(s,"uniqbase",getUniqueBase());
@@ -162,6 +161,7 @@ void SleighBase::saveXml(ostream &s) const
   s << ">\n";
   for(int4 i=0;i<numSpaces();++i) {
     AddrSpace *spc = getSpace(i);
+    if (spc == (AddrSpace *)0) continue;
     if ((spc->getType()==IPTR_CONSTANT) || 
 	(spc->getType()==IPTR_FSPEC)||
 	(spc->getType()==IPTR_IOP)||
@@ -183,6 +183,7 @@ void SleighBase::restoreXml(const Element *el)
   maxdelayslotbytes = 0;
   unique_allocatemask = 0;
   numSections = 0;
+  int4 version = 0;
   setBigEndian(xml_readbool(el->getAttributeValue("bigendian")));
   {
     istringstream s(el->getAttributeValue("align"));
@@ -214,7 +215,14 @@ void SleighBase::restoreXml(const Element *el)
       s3.unsetf(ios::dec | ios::hex | ios::oct);
       s3 >> numSections;
     }
+    else if (attrname == "version") {
+      istringstream s(el->getAttributeValue(i));
+      s.unsetf(ios::dec | ios::hex | ios::oct);
+      s >> version;
+    }
   }
+  if (version != SLA_FORMAT_VERSION)
+    throw LowlevelError(".sla file has wrong format");
   const List &list(el->getChildren());
   List::const_iterator iter;
   iter = list.begin();
@@ -227,5 +235,8 @@ void SleighBase::restoreXml(const Element *el)
   iter++;
   symtab.restoreXml(*iter,this);
   root = (SubtableSymbol *)symtab.getGlobalScope()->findSymbol("instruction");
-  buildXrefs();
+  vector<string> errorPairs;
+  buildXrefs(errorPairs);
+  if (!errorPairs.empty())
+    throw SleighError("Duplicate register pairs");
 }

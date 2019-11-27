@@ -49,15 +49,22 @@ public abstract class DemangledObject {
 	protected String specialSuffix;
 	protected DemangledType namespace;
 	protected String visibility;//public, protected, etc.
-	//TODO: storageClass refers to things such as "static" but const and volatile are typeQualifiers.  Should change this everywhere(?).
-	protected String storageClass;//const, volatile, etc
+
+	//TODO: storageClass refers to things such as "static" but const and volatile are 
+	// typeQualifiers.  Should change this everywhere(?).
+	protected String storageClass; //const, volatile, etc
+
+	//TODO: see above regarding this belonging to the "true" storageClass items.
+	protected boolean isStatic;
+
+	//TODO: determine what type of keyword this is (not type qualifier or storage class).
+	protected boolean isVirtual;
 	private String demangledName;
 	private String name;
 	private boolean isConst;
 	private boolean isVolatile;
 	private boolean isPointer64;
-	protected boolean isStatic; //TODO: see above regarding this belonging to the "true" storageClass items.
-	protected boolean isVirtual; //TODO: determine what type of keyword this is (not type qualifier or storage class).
+
 	protected boolean isThunk;
 	protected boolean isUnaligned;
 	protected boolean isRestrict;
@@ -339,7 +346,7 @@ public abstract class DemangledObject {
 		for (Symbol symbol : symbols) {
 			if (symbol.getName().equals(symbolName) && !symbol.getParentNamespace().isGlobal()) {
 				SymbolType symbolType = symbol.getSymbolType();
-				if (symbolType == SymbolType.CODE || symbolType == SymbolType.FUNCTION) {
+				if (symbolType == SymbolType.LABEL || symbolType == SymbolType.FUNCTION) {
 					return true;
 				}
 			}
@@ -528,7 +535,12 @@ public abstract class DemangledObject {
 		return functionPermitted && symbolType == SymbolType.FUNCTION;
 	}
 
-	/** Ensure name does not pass the limit defined by Ghidra */
+	/** 
+	 * Ensure name does not pass the limit defined by Ghidra
+	 * 
+	 * @param name the name whose length to restrict 
+	 * @return the name, updated as needed
+	 */
 	protected static String ensureNameLength(String name) {
 		int length = name.length();
 		if (length <= SymbolUtilities.MAX_SYMBOL_NAME_LENGTH) {
@@ -544,7 +556,7 @@ public abstract class DemangledObject {
 		StringBuilder buffy = new StringBuilder();
 		buffy.append(name.substring(0, SymbolUtilities.MAX_SYMBOL_NAME_LENGTH / 2));
 		buffy.append("...");
-		buffy.append(length - 100); // trailing data
+		buffy.append(name.substring(length - 100)); // trailing data
 		return buffy.toString();
 	}
 

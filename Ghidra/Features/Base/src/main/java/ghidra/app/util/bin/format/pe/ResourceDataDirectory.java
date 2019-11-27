@@ -198,7 +198,7 @@ public class ResourceDataDirectory extends DataDirectory {
 		if (rootDirectory == null) {
 			return;
 		}
-		monitor.setMessage(program.getName() + ": resources...");
+		monitor.setMessage("[" + program.getName() + "]: resources...");
 		Address addr = PeUtils.getMarkupAddress(program, isBinary, ntHeader, virtualAddress);
 		if (!program.getMemory().contains(addr)) {
 			return;
@@ -363,15 +363,12 @@ public class ResourceDataDirectory extends DataDirectory {
 				}
 				else if (info.getTypeID() == ResourceDataDirectory.RT_DIALOG) {
 					DialogResourceDataType dialogResourceDataType = new DialogResourceDataType();
-					//new DialogResourceDataType(info.getSize());
-
 					Data createData =
 						PeUtils.createData(program, addr, dialogResourceDataType, log);
 					if (createData != null) {
 						extraComment.append("\n" + setExtraCommentForDialogResource(createData));
 					}
 				}
-
 				else if (info.getTypeID() == ResourceDataDirectory.RT_VERSION) {
 					processVersionInfo(addr, info, program, log, monitor);
 				}

@@ -152,6 +152,7 @@ public:
   virtual void getFixedHandle(FixedHandle &hand,ParserWalker &walker) const=0;
   virtual int4 getSize(void) const { return 0; }	// Size out of context
   virtual void print(ostream &s,ParserWalker &walker) const=0;
+  virtual void collectLocalValues(vector<uintb> &results) const {}
 };
   
 class FamilySymbol : public TripleSymbol {
@@ -254,6 +255,7 @@ public:
   virtual int4 getSize(void) const { return fix.size; }
   virtual void print(ostream &s,ParserWalker &walker) const {
     s << getName(); }
+  virtual void collectLocalValues(vector<uintb> &results) const;
   virtual symbol_type getType(void) const { return varnode_symbol; }
   virtual void saveXml(ostream &s) const;
   virtual void saveXmlHeader(ostream &s) const;
@@ -348,6 +350,7 @@ public:
   virtual void getFixedHandle(FixedHandle &hnd,ParserWalker &walker) const;
   virtual int4 getSize(void) const;
   virtual void print(ostream &s,ParserWalker &walker) const;
+  virtual void collectLocalValues(vector<uintb> &results) const;
   virtual symbol_type getType(void) const { return operand_symbol; }
   virtual void saveXml(ostream &s) const;
   virtual void saveXmlHeader(ostream &s) const;
@@ -513,6 +516,7 @@ public:
       (*iter)->apply(walker);
   }
   void markSubtableOperands(vector<int4> &check) const;
+  void collectLocalExports(vector<uintb> &results) const;
   void setError(bool val) const { inerror = val; }
   bool isError(void) const { return inerror; }
   bool isRecursive(void) const;
@@ -521,13 +525,13 @@ public:
 };
 
 class DecisionProperties {
-  vector<string> identerrors;
-  vector<string> conflicterrors;
+  vector<pair<Constructor *, Constructor *> > identerrors;
+  vector<pair<Constructor *, Constructor *> > conflicterrors;
 public:
   void identicalPattern(Constructor *a,Constructor *b);
   void conflictingPattern(Constructor *a,Constructor *b);
-  const vector<string> &getIdentErrors(void) const { return identerrors; }
-  const vector<string> &getConflictErrors(void) const { return conflicterrors; }
+  const vector<pair<Constructor *, Constructor *> > &getIdentErrors(void) const { return identerrors; }
+  const vector<pair<Constructor *, Constructor *> > &getConflictErrors(void) const { return conflicterrors; }
 };
 
 class DecisionNode {
@@ -578,6 +582,7 @@ public:
   virtual int4 getSize(void) const { return -1; }
   virtual void print(ostream &s,ParserWalker &walker) const {
     throw SleighError("Cannot use subtable in expression"); }
+  virtual void collectLocalValues(vector<uintb> &results) const;
   virtual symbol_type getType(void) const { return subtable_symbol; }
   virtual void saveXml(ostream &s) const;
   virtual void saveXmlHeader(ostream &s) const;

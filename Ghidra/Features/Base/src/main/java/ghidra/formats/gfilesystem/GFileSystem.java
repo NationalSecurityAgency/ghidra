@@ -15,13 +15,15 @@
  */
 package ghidra.formats.gfilesystem;
 
+import java.io.Closeable;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.List;
+
 import ghidra.formats.gfilesystem.annotations.FileSystemInfo;
 import ghidra.util.classfinder.ExtensionPoint;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
-
-import java.io.*;
-import java.util.List;
 
 /**
  * Interface that represents a filesystem that contains files.
@@ -116,7 +118,8 @@ public interface GFileSystem extends Closeable, ExtensionPoint {
 	/**
 	 * Retrieves a {@link GFile} from this filesystem based on its full path and filename.
 	 * <p>
-	 * @param path string path and filename of a file located in this filesystem
+	 * @param path string path and filename of a file located in this filesystem.  Use 
+	 * {@code null} or "/" to retrieve the root directory 
 	 * @return {@link GFile} instance of requested file, null if not found.
 	 * @throws IOException if IO error when looking up file.
 	 */
@@ -155,9 +158,10 @@ public interface GFileSystem extends Closeable, ExtensionPoint {
 	 * <p>
 	 * @param file {@link GFile} to get info message for.
 	 * @param monitor {@link TaskMonitor} to watch and update progress.
-	 * @return multi-line formatted string with info about the file.
-	 * @throws IOException if IO problem.
+	 * @return multi-line formatted string with info about the file, or null.
 	 */
-	public String getInfo(GFile file, TaskMonitor monitor) throws IOException;
+	default public String getInfo(GFile file, TaskMonitor monitor) {
+		return null;
+	}
 
 }

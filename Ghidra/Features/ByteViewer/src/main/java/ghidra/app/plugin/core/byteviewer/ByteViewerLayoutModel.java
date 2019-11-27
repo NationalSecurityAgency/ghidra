@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +15,6 @@
  */
 package ghidra.app.plugin.core.byteviewer;
 
-import ghidra.app.plugin.core.format.DataFormatModel;
-
 import java.awt.Dimension;
 import java.awt.FontMetrics;
 import java.math.BigInteger;
@@ -28,8 +25,10 @@ import docking.widgets.fieldpanel.Layout;
 import docking.widgets.fieldpanel.LayoutModel;
 import docking.widgets.fieldpanel.field.EmptyTextField;
 import docking.widgets.fieldpanel.field.Field;
+import docking.widgets.fieldpanel.listener.IndexMapper;
 import docking.widgets.fieldpanel.listener.LayoutModelListener;
 import docking.widgets.fieldpanel.support.SingleRowLayout;
+import ghidra.app.plugin.core.format.DataFormatModel;
 
 /**
  * Implements the LayoutModel for ByteViewer Components.
@@ -88,7 +87,7 @@ class ByteViewerLayoutModel implements LayoutModel {
 
 	public void indexSetChanged() {
 		for (LayoutModelListener listener : listeners) {
-			listener.modelSizeChanged();
+			listener.modelSizeChanged(IndexMapper.IDENTITY_MAPPER);
 		}
 	}
 
@@ -117,6 +116,7 @@ class ByteViewerLayoutModel implements LayoutModel {
 	/**
 	 * Returns the total number of valid indexes.
 	 */
+	@Override
 	public BigInteger getNumIndexes() {
 		return numIndexes;
 	}
@@ -127,8 +127,8 @@ class ByteViewerLayoutModel implements LayoutModel {
 			return null;
 		}
 		List<Field> fields = new ArrayList<Field>(8);
-		for (int i = 0; i < factorys.length; i++) {
-			Field field = factorys[i].getField(index);
+		for (FieldFactory factory : factorys) {
+			Field field = factory.getField(index);
 			if (field != null) {
 				fields.add(field);
 			}
@@ -137,8 +137,8 @@ class ByteViewerLayoutModel implements LayoutModel {
 			if (factorys.length > 0) {
 				FontMetrics fm = factorys[0].getMetrics();
 				int height = fm.getMaxAscent() + fm.getMaxDescent();
-				fields.add(new EmptyTextField(height, factorys[0].getStartX(), 0,
-					factorys[0].getWidth()));
+				fields.add(
+					new EmptyTextField(height, factorys[0].getStartX(), 0, factorys[0].getWidth()));
 			}
 			else {
 				fields.add(new EmptyTextField(20, 0, 0, 10));

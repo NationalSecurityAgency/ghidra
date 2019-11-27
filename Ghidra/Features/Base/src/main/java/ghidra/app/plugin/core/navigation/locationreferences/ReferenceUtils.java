@@ -80,7 +80,7 @@ public final class ReferenceUtils {
 	 * @param accumulator The Accumulator into which LocationReferences will be placed.
 	 * @param location The location for which to find references
 	 * @param monitor the task monitor used to track progress and cancel the work
-	 * @throws CancelledException 
+	 * @throws CancelledException if the operation was cancelled 
 	 */
 	public static void getReferences(Accumulator<LocationReference> accumulator,
 			ProgramLocation location, TaskMonitor monitor) throws CancelledException {
@@ -104,7 +104,7 @@ public final class ReferenceUtils {
 	 * @param location the location for which to find references
 	 * @param monitor the task monitor used to track progress and cancel the work
 	 * @return A set of addresses or an empty set if there are no references.
-	 * @throws CancelledException 
+	 * @throws CancelledException if the operation was cancelled
 	*/
 	public static Set<Address> getReferenceAddresses(ProgramLocation location, TaskMonitor monitor)
 			throws CancelledException {
@@ -122,7 +122,7 @@ public final class ReferenceUtils {
 	 * @param accumulator the results accumulator
 	 * @param location the location for which to find references
 	 * @param monitor the task monitor used to track progress and cancel the work
-	 * @throws CancelledException 
+	 * @throws CancelledException if the operation was cancelled
 	 */
 	private static void getReferenceAddresses(Accumulator<Address> accumulator,
 			ProgramLocation location, TaskMonitor monitor) throws CancelledException {
@@ -319,7 +319,7 @@ public final class ReferenceUtils {
 	/**
 	 * A recursive function to get the base highest level data type for the given data type.  For
 	 * example, if the give data type is an {@link Array}, then this
-	 * method will be called again in its data type.
+	 * method will be called again on its data type.
 	 * <p>
 	 * It is not always appropriate to find the base data type. This method contains the
 	 * logic for determining when it is appropriate the seek out the
@@ -329,22 +329,38 @@ public final class ReferenceUtils {
 	 * @return The highest level data type for the given data type.
 	 */
 	public static DataType getBaseDataType(DataType dataType) {
+		return getBaseDataType(dataType, false);
+	}
+
+	/**
+	 * A recursive function to get the base highest level data type for the given data type.  For
+	 * example, if the give data type is an {@link Array}, then this
+	 * method will be called again on its data type.
+	 * <p>
+	 * It is not always appropriate to find the base data type. This method contains the
+	 * logic for determining when it is appropriate the seek out the
+	 * base data type, as in the case of an Array object.
+	 *
+	 * @param dataType The data type for which to find the highest level data type
+	 * @param includeTypedefs if true, then Typedef data types will be replaced with their base
+	 *        data type
+	 * @return The highest level data type for the given data type
+	 * @see #getBaseDataType(DataType)
+	 */
+	public static DataType getBaseDataType(DataType dataType, boolean includeTypedefs) {
 		if (dataType instanceof Array) {
-			return getBaseDataType(((Array) dataType).getDataType());
+			return getBaseDataType(((Array) dataType).getDataType(), includeTypedefs);
 		}
 		else if (dataType instanceof Pointer) {
 			DataType baseDataType = ((Pointer) dataType).getDataType();
 			if (baseDataType != null) {
-				return getBaseDataType(baseDataType);
+				return getBaseDataType(baseDataType, includeTypedefs);
 			}
 		}
-
-		// NOTE: we do not unroll TypeDefs.  This allows clients of this API to search for
-		//       TypeDefs.  If we get the base type, then the client cannot search for them.
-		//else if (dataType instanceof TypeDef) {
-		//	DataType baseDataType = ((TypeDef) dataType).getBaseDataType();
-		//	return getBaseDataType(baseDataType);
-		//}
+		else if (includeTypedefs && dataType instanceof TypeDef) {
+			DataType baseDataType = ((TypeDef) dataType).getBaseDataType();
+			return getBaseDataType(baseDataType, includeTypedefs);
+		}
 		return dataType;
 	}
 
@@ -800,7 +816,7 @@ public final class ReferenceUtils {
 	 */
 	private static DataType findLeafDataType(DataType parent, Stack<String> path) {
 
-		DataType baseParent = getBaseDataType(parent);
+		DataType baseParent = getBaseDataType(parent, true);
 		if (path.isEmpty()) {
 			return baseParent; // this must be the one
 		}
@@ -949,7 +965,7 @@ public final class ReferenceUtils {
 	 * @param dataMatcher the predicate that determines a successful match
 	 * @param fieldName the optional field name for which to search
 	 * @param monitor the task monitor used to track progress and cancel the work
-	 * @throws CancelledException 
+	 * @throws CancelledException if the operation was cancelled 
 	 */
 	public static void findDataTypeMatchesInDefinedData(Accumulator<LocationReference> accumulator,
 			Program program, Predicate<Data> dataMatcher, String fieldName, TaskMonitor monitor)

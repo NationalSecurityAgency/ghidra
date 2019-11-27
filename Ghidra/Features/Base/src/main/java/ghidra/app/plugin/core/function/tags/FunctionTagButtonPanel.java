@@ -15,8 +15,7 @@
  */
 package ghidra.app.plugin.core.function.tags;
 
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
+import java.awt.*;
 import java.awt.event.ActionListener;
 
 import javax.swing.*;
@@ -70,8 +69,9 @@ public class FunctionTagButtonPanel extends JPanel {
 
 		boolean hasSelection = sourcePanel.hasSelection();
 		boolean isImmutable = sourcePanel.isSelectionImmutable();
+		boolean isEnabled = sourcePanel.isSelectionEnabled();
 
-		addBtn.setEnabled(hasSelection && validFunction);
+		addBtn.setEnabled(hasSelection && validFunction && isEnabled);
 		removeBtn.setEnabled(false);
 
 		if (!hasSelection) {
@@ -112,7 +112,9 @@ public class FunctionTagButtonPanel extends JPanel {
 		gbc.gridx = 0;
 		gbc.gridy = 0;
 		addBtn = createButton("addBtn", ADD_IMG, "Add selected tags to the function",
-			e -> sourcePanel.addSelectedTags());
+			e -> {
+				sourcePanel.addSelectedTags();
+			});
 		add(addBtn, gbc);
 
 		gbc.gridy = 1;
@@ -127,6 +129,9 @@ public class FunctionTagButtonPanel extends JPanel {
 				targetPanel.deleteSelectedTags();
 			});
 		add(deleteBtn, gbc);
+
+		setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+		setMaximumSize(new Dimension(30, 300));
 	}
 
 	/**

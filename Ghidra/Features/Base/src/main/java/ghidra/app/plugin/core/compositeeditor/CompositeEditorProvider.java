@@ -64,6 +64,7 @@ public abstract class CompositeEditorProvider extends ComponentProviderAdapter
 		super(plugin.getTool(), "Composite Editor", plugin.getName());
 		this.plugin = plugin;
 		setIcon(EDITOR_ICON);
+		setTransient();
 		listeners = WeakDataStructureFactory.createSingleThreadAccessWeakSet();
 		initializeServices();
 	}
@@ -104,26 +105,26 @@ public abstract class CompositeEditorProvider extends ComponentProviderAdapter
 	}
 
 	protected void addActionsToTool() {
-		CompositeEditorAction[] allActions = actionMgr.getAllActions();
-		for (CompositeEditorAction allAction : allActions) {
+		CompositeEditorTableAction[] allActions = actionMgr.getAllActions();
+		for (CompositeEditorTableAction allAction : allActions) {
 			tool.addLocalAction(this, allAction);
 		}
 	}
 
-	protected CompositeEditorAction[] getActions() {
+	protected CompositeEditorTableAction[] getActions() {
 		return actionMgr.getAllActions();
 	}
 
 	@Override
-	public void actionsAdded(CompositeEditorAction[] actions) {
-		for (CompositeEditorAction action : actions) {
+	public void actionsAdded(CompositeEditorTableAction[] actions) {
+		for (CompositeEditorTableAction action : actions) {
 			tool.addLocalAction(this, action);
 		}
 	}
 
 	@Override
-	public void actionsRemoved(CompositeEditorAction[] actions) {
-		for (CompositeEditorAction action : actions) {
+	public void actionsRemoved(CompositeEditorTableAction[] actions) {
+		for (CompositeEditorTableAction action : actions) {
 			tool.removeLocalAction(this, action);
 		}
 	}
@@ -206,11 +207,6 @@ public abstract class CompositeEditorProvider extends ComponentProviderAdapter
 
 	@Override
 	public void dispose() {
-		CompositeEditorAction[] allActions = actionMgr.getAllActions();
-		for (CompositeEditorAction allAction : allActions) {
-			tool.removeLocalAction(this, allAction);
-		}
-		tool.showComponentProvider(this, false);
 		tool.removeComponentProvider(this);
 		for (EditorListener el : listeners) {
 			el.closed(this);
@@ -254,8 +250,8 @@ public abstract class CompositeEditorProvider extends ComponentProviderAdapter
 		tool.setStatusInfo(msg);
 	}
 
-	protected CompositeEditorAction[] createActions() {
-		return new CompositeEditorAction[0];
+	protected CompositeEditorTableAction[] createActions() {
+		return new CompositeEditorTableAction[0];
 	}
 
 	protected boolean applyChanges() {

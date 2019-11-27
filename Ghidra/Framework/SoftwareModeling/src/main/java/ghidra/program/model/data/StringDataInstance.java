@@ -15,10 +15,10 @@
  */
 package ghidra.program.model.data;
 
-import static ghidra.program.model.data.EndianSettingsDefinition.ENDIAN;
-import static ghidra.program.model.data.RenderUnicodeSettingsDefinition.RENDER;
+import static ghidra.program.model.data.EndianSettingsDefinition.*;
+import static ghidra.program.model.data.RenderUnicodeSettingsDefinition.*;
 import static ghidra.program.model.data.StringLayoutEnum.*;
-import static ghidra.program.model.data.TranslationSettingsDefinition.TRANSLATION;
+import static ghidra.program.model.data.TranslationSettingsDefinition.*;
 
 import java.nio.charset.Charset;
 import java.util.HashMap;
@@ -51,7 +51,7 @@ public class StringDataInstance {
 	 * @return boolean true if string data.
 	 */
 	public static boolean isString(Data data) {
-		if (data == null) {
+		if (data == null || !data.isInitializedMemory()) {
 			return false;
 		}
 		DataType dt = data.getBaseDataType();
@@ -89,36 +89,38 @@ public class StringDataInstance {
 			return ((AbstractStringDataType) dt).getStringDataInstance(data, data,
 				data.getLength());
 		}
-		if (dt instanceof Array) {
+		if (dt instanceof Array && !data.isInitializedMemory()) {
 			ArrayStringable arrayStringable =
 				ArrayStringable.getArrayStringable(((Array) dt).getDataType());
-			return arrayStringable.getStringDataInstance(data, data, data.getLength());
+			if (arrayStringable != null && arrayStringable.hasStringValue(data)) {
+				return new StringDataInstance(arrayStringable, data, data, data.getLength());
+			}
 		}
 		return NULL_INSTANCE;
+
 	}
 
 	/**
 	 * Returns a new {@link StringDataInstance} using the bytes in the MemBuffer.
 	 * <p>
-	 * @param stringDataType {@link DataType} of the bytes in the buffer.
+	 * @param dataType {@link DataType} of the bytes in the buffer.
 	 * @param buf memory buffer containing the bytes.
 	 * @param settings the Settings object
 	 * @param length the length of the data.
 	 * @return new {@link StringDataInstance}, never NULL.  See {@link #NULL_INSTANCE}.
 	 */
-	public static StringDataInstance getStringDataInstance(DataType stringDataType, MemBuffer buf,
+	public static StringDataInstance getStringDataInstance(DataType dataType, MemBuffer buf,
 			Settings settings, int length) {
-		if (stringDataType instanceof AbstractStringDataType) {
-			return ((AbstractStringDataType) stringDataType).getStringDataInstance(buf, settings,
-				length);
+		if (dataType instanceof AbstractStringDataType) {
+			return ((AbstractStringDataType) dataType).getStringDataInstance(buf, settings, length);
 		}
-		if (stringDataType instanceof Array &&
-			((Array) stringDataType).getDataType() instanceof ArrayStringable) {
-			stringDataType = ((Array) stringDataType).getDataType();
+		if (dataType instanceof Array) {
+			dataType = ArrayStringable.getArrayStringable(((Array) dataType).getDataType());
 		}
-		if (stringDataType instanceof ArrayStringable &&
-			((ArrayStringable) stringDataType).hasStringValue(settings)) {
-			return ((ArrayStringable) stringDataType).getStringDataInstance(buf, settings, length);
+		if (dataType instanceof ArrayStringable &&
+			((ArrayStringable) dataType).hasStringValue(settings) && buf.isInitializedMemory()) {
+
+			return new StringDataInstance(dataType, settings, buf, length);
 		}
 		return NULL_INSTANCE;
 	}
@@ -153,10 +155,10 @@ public class StringDataInstance {
 	private final String translatedValue;
 	private final Endian endianSetting;
 
-	private boolean showTranslation;
-	private RENDER_ENUM renderSetting;
+	private final boolean showTranslation;
+	private final RENDER_ENUM renderSetting;
 
-	private int length;
+	private final int length;
 	private final MemBuffer buf;
 
 	protected StringDataInstance() {
@@ -169,13 +171,16 @@ public class StringDataInstance {
 		stringLayout = StringLayoutEnum.FIXED_LEN;
 		endianSetting = null;
 		renderSetting = RENDER_ENUM.ALL;
+		length = 0;
+		showTranslation = false;
 	}
 
 	/**
 	 * Creates a string instance using the data in the {@link MemBuffer} and the settings
 	 * pulled from the {@link AbstractStringDataType string data type}.
-	 *
-	 * @param stringDataType {@link AbstractStringDataType} common string base data type.
+	 * 
+	 * @param dataType {@link DataType} of the string, either a {@link AbstractStringDataType} derived type
+	 * or an {@link ArrayStringable} element-of-char-array type. 
 	 * @param settings {@link Settings} attached to the data location.
 	 * @param buf {@link MemBuffer} containing the data.
 	 * @param length Length passed from the caller to the datatype.  -1 indicates a 'probe'
@@ -187,11 +192,11 @@ public class StringDataInstance {
 		this.buf = buf;
 		this.charsetName = getCharsetNameFromDataTypeOrSettings(dataType, settings);
 		this.charSize = CharsetInfo.getInstance().getCharsetCharSize(charsetName);
-		// TODO: determine padding of char data type from the dataOrg()
-		this.paddedCharSize = charSize; // stringDataType.getPaddedCharSize(charSize);
-
+		// NOTE: for now only handle padding for charSize == 1 and the data type is an array of elements, not a "string" 
+		this.paddedCharSize = (dataType instanceof ArrayStringable) && (charSize == 1) //
+				? getDataOrganization(dataType).getCharSize()
+				: charSize;
 		this.stringLayout = getLayoutFromDataType(dataType);
-
 		this.showTranslation = TRANSLATION.isShowTranslated(settings);
 		this.translatedValue = TRANSLATION.getTranslatedValue(settings);
 		this.renderSetting = RENDER.getEnumValue(settings);
@@ -212,6 +217,17 @@ public class StringDataInstance {
 		this.length = newLen;
 		this.buf = newBuf;
 		this.endianSetting = copyFrom.endianSetting;
+	}
+
+	private static DataOrganization getDataOrganization(DataType dataType) {
+		// The dataType should be correspond to the target program
+		if (dataType != null) {
+			DataTypeManager dtm = dataType.getDataTypeManager();
+			if (dtm != null) {
+				return dtm.getDataOrganization();
+			}
+		}
+		return DataOrganizationImpl.getDefaultOrganization();
 	}
 
 	private static StringLayoutEnum getLayoutFromDataType(DataType dataType) {
@@ -410,7 +426,7 @@ public class StringDataInstance {
 	}
 
 	private String getStringValueNoTrim() {
-		if (isProbe() || isBadCharSize()) {
+		if (isProbe() || isBadCharSize() || !buf.isInitializedMemory()) {
 			return null;
 		}
 		byte[] stringBytes = convertPaddedToUnpadded(getStringBytes());
@@ -495,7 +511,7 @@ public class StringDataInstance {
 
 	private byte[] getBytesFromMemBuff(MemBuffer memBuffer, int copyLen) {
 		// round copyLen down to multiple of paddedCharSize
-		copyLen &= ~(paddedCharSize - 1);
+		copyLen = (copyLen / paddedCharSize) * paddedCharSize;
 
 		byte[] bytes = new byte[copyLen];
 		if (memBuffer.getBytes(bytes, 0) != bytes.length) {
@@ -613,7 +629,7 @@ public class StringDataInstance {
 	 */
 	public String getStringRepresentation() {
 
-		if (isProbe() || isBadCharSize()) {
+		if (isProbe() || isBadCharSize() || !buf.isInitializedMemory()) {
 			return UNKNOWN;
 		}
 
@@ -775,7 +791,7 @@ public class StringDataInstance {
 	 * @return String containing the representation of the single char.
 	 */
 	public String getCharRepresentation() {
-		if (length < charSize) {
+		if (length < charSize /* also covers case of isProbe() */ ) {
 			return UNKNOWN_DOT_DOT_DOT;
 		}
 
@@ -883,7 +899,10 @@ public class StringDataInstance {
 		}
 
 		String str = getStringValue();
-		if (str == null || str.length() == 0) {
+		if (str == null) {
+			return defaultStr;
+		}
+		if (str.length() == 0) {
 			return prefixStr;
 		}
 

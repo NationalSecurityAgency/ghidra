@@ -24,6 +24,7 @@ import ghidra.framework.main.AppInfo;
 import ghidra.framework.main.datatable.ProjectDataActionContext;
 import ghidra.framework.main.datatable.ProjectDataContextAction;
 import ghidra.framework.model.*;
+import ghidra.util.HTMLUtilities;
 import ghidra.util.HelpLocation;
 
 public class ProjectDataOpenToolAction extends ProjectDataContextAction {
@@ -32,7 +33,7 @@ public class ProjectDataOpenToolAction extends ProjectDataContextAction {
 	public ProjectDataOpenToolAction(String owner, String group, String toolName, Icon icon) {
 		super("Open" + toolName, owner);
 		this.toolName = toolName;
-		String[] menuPath = { "Open With", toolName };
+		String[] menuPath = { "Open With", HTMLUtilities.escapeHTML(toolName) };
 		setPopupMenuData(new MenuData(menuPath, icon, "Open"));
 		setHelpLocation(new HelpLocation(owner, "Open_File_With"));
 

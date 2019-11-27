@@ -283,6 +283,8 @@ bool CommentSorter::findPosition(Subsort &subsort,Comment *comm,const Funcdata *
   if (opiter != fd->endOpAll()) {	// If there is an op at or after the comment
     PcodeOp *op = (*opiter).second;
     BlockBasic *block = op->getParent();
+    if (block == (BlockBasic *)0)
+      throw LowlevelError("Dead op reaching CommentSorter");
     if (block->contains(comm->getAddr())) { // If the op's block contains the address
       // Associate comment with this op
       subsort.setBlock(block->getIndex(), (uint4)op->getSeqNum().getOrder());
@@ -295,6 +297,8 @@ bool CommentSorter::findPosition(Subsort &subsort,Comment *comm,const Funcdata *
     --opiter;
     PcodeOp *op = (*opiter).second;
     BlockBasic *block = op->getParent();
+    if (block == (BlockBasic *)0)
+      throw LowlevelError("Dead op reaching CommentSorter");
     if (block->contains(comm->getAddr())) { // If the op's block contains the address
       // Treat the comment as being in this block at the very end
       subsort.setBlock(block->getIndex(),0xffffffff);

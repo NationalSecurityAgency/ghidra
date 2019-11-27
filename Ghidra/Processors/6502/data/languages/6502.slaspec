@@ -36,7 +36,7 @@ macro popSR() {
 	V = ccr[6,1];
 	B = ccr[4,1];
 	D = ccr[3,1];
-	I = ccr[3,1];
+	I = ccr[2,1];
 	Z = ccr[1,1];
 	C = ccr[0,1];
 }
@@ -47,7 +47,7 @@ macro pushSR() {
 	ccr[6,1] = V;
 	ccr[4,1] = B;
 	ccr[3,1] = D;
-	ccr[3,1] = I;
+	ccr[2,1] = I;
 	ccr[1,1] = Z;
 	ccr[0,1] = C;
 	*:1 (SP) = ccr;
@@ -78,35 +78,46 @@ define pcodeop readIRQ;
 ################################################################
 REL: reloc		is rel	[ reloc = inst_next + rel; ] { export *:2 reloc; } 
 
+# Immediate
+OP1: "#"imm8    is bbb=2; imm8			{ tmp:1 = imm8; export tmp; }
+# Zero Page
+OP1: imm8       is bbb=1; imm8			{ export *:1 imm8; }
+# Zero Page Indexed X
+OP1: imm8,X     is bbb=5 & X; imm8		{ tmp:2 = zext(imm8 + X); export *:1 tmp; }
+# Absolute
+OP1: imm16      is bbb=3; imm16			{ export *:1 imm16; }
+# Absolute Indexed X
+OP1: imm16,X    is bbb=7 & X; imm16		{ tmp:2 = imm16 + zext(X); export *:1 tmp; }
+# Absolute Indexed Y
+OP1: imm16,Y    is bbb=6 & Y; imm16		{ tmp:2 = imm16 + zext(Y); export *:1 tmp; }
+# Indirect X
+OP1: (imm8,X)   is bbb=0 & X; imm8		{ addr:2 = zext(imm8 + X); tmp:2 = *:2 addr; export *:1 tmp; }
+# Indirect Y
+OP1: (imm8),Y   is bbb=4 & Y; imm8		{ addr:2 = imm8; tmp:2 = *:2 addr; tmp = tmp + zext(Y); export *:1 tmp; }
 
-OP1: (imm8,X)		is bbb=0 & X; imm8		{ addr:2 = imm8 + zext(X); tmp:2 = *:2 addr; export *:1 tmp; }
-OP1: imm8			is bbb=1; imm8			{ export *:1 imm8; }
-OP1: "#"imm8		is bbb=2; imm8			{ tmp:1 = imm8; export tmp; }
-OP1: imm16			is bbb=3; imm16			{ export *:1 imm16; }
-OP1: (imm8),Y		is bbb=4 & Y; imm8		{ addr:2 = imm8; tmp:2 = *:2 addr; tmp = tmp + zext(Y); export *:1 tmp; }
-OP1: imm8,X		is bbb=5 & X; imm8		{ tmp:2 = imm8 + zext(X); export *:1 tmp; }
-OP1: imm16,Y		is bbb=6 & Y; imm16		{ tmp:2 = imm16 + zext(Y); export *:1 tmp; }
-OP1: imm16,X		is bbb=7 & X; imm16		{ tmp:2 = imm16 + zext(X); export *:1 tmp; }
+# Immediate
+OP2: "#"imm8    is bbb=0; imm8			{ tmp:1 = imm8; export tmp; }
+# Zero Page
+OP2: imm8       is bbb=1; imm8			{ export *:1 imm8; }
+OP2: A          is bbb=2 & A            { export A; }
+# Absolute
+OP2: imm16      is bbb=3; imm16			{ export *:1 imm16; }
+# Zero Page Indexed X
+OP2: imm8,X     is bbb=5 & X; imm8		{ tmp:2 = zext(imm8 + X); export *:1 tmp; }
+# Absolute Indexed X
+OP2: imm16,X    is bbb=7 & X; imm16		{ tmp:2 = imm16 + zext(X); export *:1 tmp; }
+
+OP2ST: OP2      is OP2                  { export OP2; }
+OP2ST: imm8,Y   is bbb=5 & Y; imm8		{ tmp:2 = zext(imm8 + Y); export *:1 tmp; }
+
+OP2LD: OP2      is OP2                  { export OP2; }
+OP2LD: imm8,Y   is bbb=5 & Y; imm8		{ tmp:2 = zext(imm8 + Y); export *:1 tmp; }
+OP2LD: imm16,Y  is bbb=7 & Y; imm16		{ tmp:2 = imm16 + zext(Y); export *:1 tmp; }
 
 
-OP2: "#"imm8		is bbb=0; imm8			{ tmp:1 = imm8; export tmp; }
-OP2: imm8			is bbb=1; imm8			{ export *:1 imm8; }
-OP2: A              is bbb=2 & A            { export A; }
-OP2: imm16			is bbb=3; imm16			{ export *:1 imm16; }
-OP2: imm8,X		is bbb=5 & X; imm8		{ tmp:2 = imm8 + zext(X); export *:1 tmp; }
-OP2: imm16,X		is bbb=7 & X; imm16		{ tmp:2 = imm16 + zext(X); export *:1 tmp; }
-
-OP2ST: OP2          is OP2                  { export OP2; }
-OP2ST: imm8,Y		is bbb=5 & Y; imm8		{ tmp:2 = imm8 + zext(Y); export *:1 tmp; }
-
-OP2LD: OP2          is OP2                  { export OP2; }
-OP2LD: imm8,Y		is bbb=5 & Y; imm8		{ tmp:2 = imm8 + zext(Y); export *:1 tmp; }
-OP2LD: imm16,Y		is bbb=7 & Y; imm16		{ tmp:2 = imm16 + zext(Y); export *:1 tmp; }
-
-
-ADDR8: imm8 		is imm8		{ export *:1 imm8; }
-ADDR16: imm16 		is imm16   	{ export *:1 imm16; }
-ADDRI: imm16        is imm16    { tmp:2 = imm16; export *:2 tmp; }
+ADDR8:  imm8    is imm8		{ export *:1 imm8; }
+ADDR16: imm16   is imm16   	{ export *:1 imm16; }
+ADDRI:  imm16   is imm16    { tmp:2 = imm16; export *:2 tmp; }
 
 
 # Instructions

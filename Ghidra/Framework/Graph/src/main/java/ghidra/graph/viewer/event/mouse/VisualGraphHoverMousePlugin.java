@@ -22,6 +22,7 @@ import edu.uci.ics.jung.visualization.control.AbstractGraphMousePlugin;
 import ghidra.graph.VisualGraph;
 import ghidra.graph.viewer.*;
 import ghidra.graph.viewer.edge.VisualGraphPathHighlighter;
+import ghidra.util.task.SwingUpdateManager;
 
 /**
  * A mouse plugin to handle vertex hovers, to include animating paths in the graph, based 
@@ -45,6 +46,8 @@ public class VisualGraphHoverMousePlugin<V extends VisualVertex, E extends Visua
 	private final VisualizationViewer<V, E> sourceViewer;
 	private final VisualizationViewer<V, E> otherViewer;
 
+	private SwingUpdateManager mouseHoverUpdater = new SwingUpdateManager(this::updateMouseHovers);
+	private MouseEvent lastMouseEvent;
 	private V hoveredVertex;
 
 	public VisualGraphHoverMousePlugin(GraphComponent<V, E, ?> graphComponent,
@@ -60,16 +63,18 @@ public class VisualGraphHoverMousePlugin<V extends VisualVertex, E extends Visua
 
 	@Override
 	public void mouseMoved(MouseEvent e) {
-		updateMouseHovers(e);
+		lastMouseEvent = e;
+		mouseHoverUpdater.update();
 	}
 
-	private void updateMouseHovers(MouseEvent e) {
+	private void updateMouseHovers() {
 		if (graphComponent.isUninitialized()) {
 			return;
 		}
 
-		GraphViewer<V, E> viewer = getGraphViewer(e);
-		V newHoveredVertex = GraphViewerUtils.getVertexFromPointInViewSpace(viewer, e.getPoint());
+		GraphViewer<V, E> viewer = getGraphViewer(lastMouseEvent);
+		V newHoveredVertex =
+			GraphViewerUtils.getVertexFromPointInViewSpace(viewer, lastMouseEvent.getPoint());
 		if (newHoveredVertex == hoveredVertex) {
 			return;
 		}
@@ -123,7 +128,9 @@ public class VisualGraphHoverMousePlugin<V extends VisualVertex, E extends Visua
 		if (e.isPopupTrigger()) {
 			return;
 		}
-		updateMouseHovers(e);
+
+		lastMouseEvent = e;
+		updateMouseHovers();
 	}
 
 	@Override
@@ -139,5 +146,10 @@ public class VisualGraphHoverMousePlugin<V extends VisualVertex, E extends Visua
 	@Override
 	public void mouseClicked(MouseEvent e) {
 		// handled by dragged and released
+	}
+
+	@Override
+	public void dispose() {
+		mouseHoverUpdater.dispose();
 	}
 }

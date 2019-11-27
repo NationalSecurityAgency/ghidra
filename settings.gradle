@@ -1,4 +1,4 @@
-apply from: "gradleScripts/settingsUtil.gradle"
+apply from: "gradle/support/settingsUtil.gradle"
 
 /*******************************************************************************************
  * Include all the standard Ghidra modules.  See documentation below for more information
@@ -24,13 +24,10 @@ includeProject('BuildFiles', 'GhidraBuild', true)
 includeProject('GhidraTest', '.', true)
 includeProject('decompile', 'Ghidra/Features/Decompiler/src', true)
 includeProject('RuntimeScripts', 'Ghidra', true)
-includeProject('GhidraBuild', '.', true)
+includeProject('IDAPro', 'GhidraBuild', true)
 includeProject('GhidraDocs', '.', true)
-
-/*******************************************************************************************
- * Include modules that are deactivated by default
- *******************************************************************************************/
-//includeProjects('GhidraBuild/EclipsePlugins/GhidraDev') // requires Eclipse PDE
+includeProjects('GhidraBuild/EclipsePlugins/GhidraDev') // requires Eclipse PDE
+includeProjects('GhidraBuild/EclipsePlugins/GhidraSleighEditor') // requires Eclipse DSL
 
 /*******************************************************************************************
  * Apply additional Ghidra respositories
@@ -43,8 +40,9 @@ if (extensionsList.isFile()) {
 			return // Skip just this one
 		}
 		File extraSettings = file("../$line/extraSettings.gradle")
-		assert extraSettings.exists() : "Missing extraSettings.gradle in extension repo: $line"
-		assert extraSettings.parentFile.parentFile == rootProject.projectDir.parentFile : "Extension must be sibling of ghidra repository"	
-		apply from: extraSettings.absolutePath
+		if (extraSettings.exists()) {
+			assert extraSettings.parentFile.parentFile == rootProject.projectDir.parentFile : "Extension must be sibling of ghidra repository"	
+			apply from: extraSettings.absolutePath
+		}
 	}
 }

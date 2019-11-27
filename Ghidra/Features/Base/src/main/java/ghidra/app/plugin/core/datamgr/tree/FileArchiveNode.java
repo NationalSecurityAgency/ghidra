@@ -20,6 +20,7 @@ import javax.swing.ImageIcon;
 
 import generic.jar.ResourceFile;
 import ghidra.app.plugin.core.datamgr.archive.FileArchive;
+import ghidra.util.HTMLUtilities;
 import resources.MultiIcon;
 import resources.ResourceManager;
 import resources.icons.TranslateIcon;
@@ -31,8 +32,8 @@ public class FileArchiveNode extends ArchiveNode {
 
 	FileArchive fileArchive; // casted reference for easy access
 
-	public FileArchiveNode(FileArchive archive) {
-		super(archive);
+	public FileArchiveNode(FileArchive archive, ArrayPointerFilterState filterState) {
+		super(archive, filterState);
 		this.fileArchive = archive;
 	}
 
@@ -53,7 +54,7 @@ public class FileArchiveNode extends ArchiveNode {
 	public String getToolTip() {
 		ResourceFile file = fileArchive.getFile();
 		if (file != null) {
-			return file.getAbsolutePath();
+			return "<html>" + HTMLUtilities.escapeHTML(file.getAbsolutePath());
 		}
 		return "[Unsaved New Archive]";
 	}

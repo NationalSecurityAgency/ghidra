@@ -22,7 +22,7 @@ import java.util.Arrays;
 
 import org.junit.Test;
 
-import generic.test.AbstractGenericTest;
+import generic.test.AbstractGTest;
 import ghidra.docking.settings.Settings;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.address.GenericAddressSpace;
@@ -30,7 +30,7 @@ import ghidra.program.model.data.RenderUnicodeSettingsDefinition.RENDER_ENUM;
 import ghidra.program.model.mem.ByteMemBufferImpl;
 import ghidra.program.model.mem.MemBuffer;
 
-public class StringDataTypeTest extends AbstractGenericTest {
+public class StringDataTypeTest extends AbstractGTest {
 
 	private StringDataType fixedlenString = new StringDataType();
 	private StringUTF8DataType fixedUtf8String = new StringUTF8DataType();
@@ -44,6 +44,19 @@ public class StringDataTypeTest extends AbstractGenericTest {
 	private PascalString255DataType pascal255String = new PascalString255DataType();
 	private PascalStringDataType pascalString = new PascalStringDataType();
 	private PascalUnicodeDataType pascalUtf16String = new PascalUnicodeDataType();
+
+	private static class DataOrgDTM extends TestDummyDataTypeManager {
+		private DataOrganization dataOrg;
+
+		public DataOrgDTM(DataOrganization dataOrg) {
+			this.dataOrg = dataOrg;
+		}
+
+		@Override
+		public DataOrganization getDataOrganization() {
+			return dataOrg;
+		}
+	}
 
 	private ByteMemBufferImpl mb(boolean isBE, int... values) {
 		byte[] bytes = new byte[values.length];
@@ -214,6 +227,21 @@ public class StringDataTypeTest extends AbstractGenericTest {
 		String actual = (String) fixedUtf8String.getValue(buf, newset(), buf.getLength());
 
 		assertEquals("ab\ucc01\u1202", actual);
+	}
+
+	@Test
+	public void testGetStringValue_utf8_2bytechar_dataorg() {
+		// test UTF-8 when the dataorg specifies a 2byte character (ie. JVM)
+		ByteMemBufferImpl buf = mb(false, 'a', 'b', 'c');
+
+		DataOrganizationImpl dataOrg = DataOrganizationImpl.getDefaultOrganization(null);
+		dataOrg.setCharSize(2);
+		DataOrgDTM dtm = new DataOrgDTM(dataOrg);
+		StringUTF8DataType wideCharUTF8DT = new StringUTF8DataType(dtm);
+
+		String actual = (String) wideCharUTF8DT.getValue(buf, newset(), buf.getLength());
+
+		assertEquals("abc", actual);
 	}
 
 	@Test

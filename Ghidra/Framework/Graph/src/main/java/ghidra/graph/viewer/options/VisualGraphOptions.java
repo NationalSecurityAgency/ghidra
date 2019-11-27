@@ -23,11 +23,11 @@ public class VisualGraphOptions {
 	public static final String SHOW_ANIMATION_DESCRIPTION = "Signals to the Function Graph to " +
 		"use animated transitions for certain operations, like navigation.";
 
-	public static final String USE_MOUSE_RELATIVE_ZOOM = "Use Mouse-relative Zoom";
+	public static final String USE_MOUSE_RELATIVE_ZOOM_KEY = "Use Mouse-relative Zoom";
 	public static final String USE_MOUSE_RELATIVE_ZOOM_DESCRIPTION = "When true the Function " +
 		"Graph will perform zoom operations relative to the mouse point.";
 
-	public static final String USE_CONDENSED_LAYOUT = "Use Condensed Layout";
+	public static final String USE_CONDENSED_LAYOUT_KEY = "Use Condensed Layout";
 	public static final String USE_CONDENSED_LAYOUT_DESCRIPTION = "Place vertices as close " +
 		"together as possible.  For example, when true, the graph will use little spacing " +
 		"between vertices.  Each layout will handle this option differently.";
@@ -37,7 +37,7 @@ public class VisualGraphOptions {
 		"wheel will pan the view vertically.  When not enabled, you must hold the <b>" +
 		DockingUtils.CONTROL_KEY_NAME + "</b> key while using the mouse wheel";
 
-	public static final String USE_STICKY_SELECTION = "Use Sticky Selection";
+	public static final String USE_STICKY_SELECTION_KEY = "Use Sticky Selection";
 	public static final String USE_STICKY_SELECTION_DESCRIPTION = "When enabled " +
 		"Selecting code units in one vertex will not clear the selection in another.  When " +
 		"disabled, every new selection clears the previous selection <b>unless the Control</b>" +

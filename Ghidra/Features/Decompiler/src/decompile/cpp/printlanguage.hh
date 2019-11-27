@@ -87,6 +87,7 @@ public:
     postsurround,		///< Function or array operator form
     presurround,		///< Modifier form (like a cast operation)
     space,			///< No explicitly printed token
+    hiddenfunction		///< Operation that isn't explicitly printed
   };
   const char *print;		///< Printing characters for the token
   int4 stage;			///< Additional elements consumed from the RPN stack when emitting this token
@@ -96,7 +97,6 @@ public:
   int4 spacing;			///< Spaces to print around operator
   int4 bump;			///< Spaces to indent if we break here
   OpToken *negate;		///< The token representing the negation of this token
-  bool parentheses(const OpToken &op2,int4 stage) const;
 };
 
 /// \brief The base class API for emitting a high-level language
@@ -263,6 +263,7 @@ protected:
   void pushVnExplicit(const Varnode *vn,const PcodeOp *op);		///< Push an explicit variable onto the RPN stack
   void pushVnLHS(const Varnode *vn,const PcodeOp *op);			///< Push a variable as the left-hand side of an expression
 
+  bool parentheses(const OpToken *op2);	///< Determine if the given token should be emitted in its own parenthetic expression
   void emitOp(const ReversePolish &entry);				///< Send an operator token from the RPN to the emitter
   void emitAtom(const Atom &atom);					///< Send an variable token from the RPN to the emitter
   static bool unicodeNeedsEscape(int4 codepoint);			///< Determine if the given codepoint needs to be escaped
@@ -537,6 +538,9 @@ public:
   virtual void opSegmentOp(const PcodeOp *op)=0;			///< Emit a SEGMENTOP operator
   virtual void opCpoolRefOp(const PcodeOp *op)=0;			///< Emit a CPOOLREF operator
   virtual void opNewOp(const PcodeOp *op)=0;				///< Emit a NEW operator
+  virtual void opInsertOp(const PcodeOp *op)=0;				///< Emit an INSERT operator
+  virtual void opExtractOp(const PcodeOp *op)=0;			///< Emit an EXTRACT operator
+  virtual void opPopcountOp(const PcodeOp *op)=0;			///< Emit a POPCOUNT operator
 
   static int4 mostNaturalBase(uintb val); 			///< Determine the most natural base for an integer
   static void formatBinary(ostream &s,uintb val);		///< Print a number in binary form

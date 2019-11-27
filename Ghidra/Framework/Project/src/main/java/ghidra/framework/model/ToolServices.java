@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +15,10 @@
  */
 package ghidra.framework.model;
 
-import ghidra.framework.plugintool.PluginEvent;
-
 import java.io.*;
 import java.util.Set;
+
+import ghidra.framework.plugintool.PluginEvent;
 
 /**
  * Services that the Tool uses.
@@ -47,13 +46,12 @@ public interface ToolServices {
 	/**
 	 * Save the tool to the given location on the local file system.
 	 * 
-	 * @param location file to export tool description into
-	 * @param tool tool to export
-	 * 
+	 * @param tool the tool template to write
+	 * @return the file to which the tool was saved
 	 * @throws FileNotFoundException thrown if the file's directory doesn't exist.
 	 * @throws IOException thrown if there is an error writing the file.
 	 */
-	public void exportTool(File location, Tool tool) throws FileNotFoundException, IOException;
+	public File exportTool(ToolTemplate tool) throws FileNotFoundException, IOException;
 
 	/**
 	 * Get the tool chest for the project.

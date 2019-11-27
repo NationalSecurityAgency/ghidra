@@ -24,7 +24,6 @@ import java.util.*;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.concurrent.atomic.AtomicReference;
 
 import javax.help.*;
 import javax.help.Map.ID;
@@ -497,9 +496,7 @@ public class HelpManager implements HelpService {
 	private Map<Object, HelpLocation> copyHelpLocations() {
 		// we must copy the help locations, since we are in a background thread and the 
 		// locations map is frequently updated by the Swing thread
-		AtomicReference<Map<Object, HelpLocation>> ref = new AtomicReference<>();
-		SystemUtilities.runSwingNow(() -> ref.set(new HashMap<>(helpLocations)));
-		return ref.get();
+		return Swing.runNow(() -> new HashMap<>(helpLocations));
 	}
 
 	//

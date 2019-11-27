@@ -22,7 +22,7 @@ import java.util.*;
 
 import javax.swing.Icon;
 
-import docking.widgets.tree.*;
+import docking.widgets.tree.GTreeNode;
 import ghidra.app.plugin.core.symboltree.SymbolCategory;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.Symbol;
@@ -30,10 +30,9 @@ import ghidra.program.model.symbol.SymbolType;
 import ghidra.util.task.TaskMonitor;
 import resources.ResourceManager;
 
-public class SymbolTreeRootNode extends SymbolCategoryNode implements GTreeRootNode {
+public class SymbolTreeRootNode extends SymbolCategoryNode {
 	private static Icon GLOBAL_ICON = ResourceManager.loadImage("images/bullet_green.png");
 	private final String name;
-	private GTree tree;
 
 	public SymbolTreeRootNode() {
 		name = "No Symbol Tree";
@@ -89,7 +88,7 @@ public class SymbolTreeRootNode extends SymbolCategoryNode implements GTreeRootN
 		else if (type == LIBRARY || type == NAMESPACE) {
 			return findNamespaceSymbol(key, loadChildren, monitor);
 		}
-		else if (type == CODE) {
+		else if (type == LABEL) {
 			return findCodeSymbol(key, loadChildren, monitor);
 		}
 		//else { GLOBAL, GLOBAL_VAR } // not sure where these end up
@@ -229,19 +228,24 @@ public class SymbolTreeRootNode extends SymbolCategoryNode implements GTreeRootN
 	}
 
 	@Override
-	public void symbolAdded(Symbol symbol) {
-		List<GTreeNode> allChildren = getAllChildren();
+	public SymbolNode symbolAdded(Symbol symbol) {
+		SymbolNode returnNode = null;
+		List<GTreeNode> allChildren = getChildren();
 		for (GTreeNode gNode : allChildren) {
 			SymbolCategoryNode symbolNode = (SymbolCategoryNode) gNode;
-			symbolNode.symbolAdded(symbol);
+			SymbolNode newNode = symbolNode.symbolAdded(symbol);
+			if (newNode != null) {
+				returnNode = newNode;  // doesn't matter which one we return
+			}
 		}
+		return returnNode;
 	}
 
 	@Override
 	public void symbolRemoved(Symbol symbol, String oldName, TaskMonitor monitor) {
 
 		// we have to loop--the symbol may exist in more than one category
-		List<GTreeNode> allChildren = getAllChildren();
+		List<GTreeNode> allChildren = getChildren();
 		for (GTreeNode gNode : allChildren) {
 			SymbolCategoryNode symbolNode = (SymbolCategoryNode) gNode;
 			symbolNode.symbolRemoved(symbol, oldName, monitor);
@@ -249,8 +253,7 @@ public class SymbolTreeRootNode extends SymbolCategoryNode implements GTreeRootN
 	}
 
 	public void rebuild() {
-		removeAll();
-		fireNodeStructureChanged(this);
+		setChildren(null);
 	}
 
 	@Override
@@ -301,15 +304,5 @@ public class SymbolTreeRootNode extends SymbolCategoryNode implements GTreeRootN
 	@Override
 	public void setNodeCut(boolean isCut) {
 		throw new UnsupportedOperationException("Cannot cut the symbol tree root node");
-	}
-
-	@Override
-	public GTree getGTree() {
-		return tree;
-	}
-
-	@Override
-	public void setGTree(GTree tree) {
-		this.tree = tree;
 	}
 }

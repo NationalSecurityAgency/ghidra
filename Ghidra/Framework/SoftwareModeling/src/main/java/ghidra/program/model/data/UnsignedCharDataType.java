@@ -43,7 +43,10 @@ public class UnsignedCharDataType extends CharDataType {
 	}
 
 	@Override
-	public DataType clone(DataTypeManager dtm) {
+	public UnsignedCharDataType clone(DataTypeManager dtm) {
+		if (dtm == getDataTypeManager()) {
+			return this;
+		}
 		return new UnsignedCharDataType(dtm);
 	}
 

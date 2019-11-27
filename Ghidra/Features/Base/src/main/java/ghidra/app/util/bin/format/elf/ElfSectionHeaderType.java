@@ -68,6 +68,11 @@ public class ElfSectionHeaderType {
 		ElfSectionHeaderConstants.SHT_SYMTAB_SHNDX, "SHT_SYMTAB_SHNDX", "Extended section indeces");
 
 	// OS-specific range: 0x60000000 - 0x6fffffff
+	
+	public static ElfSectionHeaderType SHT_ANDROID_REL = addDefaultSectionHeaderType(
+		ElfSectionHeaderConstants.SHT_ANDROID_REL, "SHT_ANDROID_REL", "Android relocation entries w/o explicit addends");
+	public static ElfSectionHeaderType SHT_ANDROID_RELA = addDefaultSectionHeaderType(
+		ElfSectionHeaderConstants.SHT_ANDROID_RELA, "SHT_ANDROID_RELA", "Android relocation entries with explicit addends");
 
 	public static ElfSectionHeaderType SHT_GNU_ATTRIBUTES = addDefaultSectionHeaderType(
 		ElfSectionHeaderConstants.SHT_GNU_ATTRIBUTES, "SHT_GNU_ATTRIBUTES", "Object attributes");

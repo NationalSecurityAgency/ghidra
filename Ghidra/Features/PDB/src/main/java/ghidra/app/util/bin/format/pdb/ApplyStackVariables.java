@@ -16,7 +16,7 @@
 package ghidra.app.util.bin.format.pdb;
 
 import ghidra.app.cmd.function.CallDepthChangeInfo;
-import ghidra.app.util.bin.format.pdb.PdbParserNEW.WrappedDataType;
+import ghidra.app.util.bin.format.pdb.PdbParser.PdbXmlMember;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSet;
@@ -31,11 +31,11 @@ import ghidra.xml.XmlElement;
 import ghidra.xml.XmlPullParser;
 
 class ApplyStackVariables {
-	private PdbParserNEW pdbParser;
+	private PdbParser pdbParser;
 	private XmlPullParser xmlParser;
 	private Function function;
 
-	ApplyStackVariables(PdbParserNEW pdbParser, XmlPullParser xmlParser, Function function) {
+	ApplyStackVariables(PdbParser pdbParser, XmlPullParser xmlParser, Function function) {
 		this.pdbParser = pdbParser;
 		this.xmlParser = xmlParser;
 		this.function = function;
@@ -56,25 +56,26 @@ class ApplyStackVariables {
 			}
 			elem = xmlParser.next();//stack variable number start tag
 
-			PdbMember member = new PdbMember(elem, monitor);
+			PdbXmlMember member = pdbParser.getPdbXmlMember(elem);
 
-			if ("StaticLocal".equals(member.memberKind)) {
+			if (PdbKind.STATIC_LOCAL == member.kind) {
 				xmlParser.next();//stack variable number end tag
 				continue;
 			}
 
-			DataType dt = getDataType(member, log, monitor);
+			DataType dt = getDataType(member, log);
 			if (dt == null) {
+				xmlParser.next();//stack variable number end tag
 				continue;
 			}
 
-			if ("ObjectPointer".equals(member.memberKind)) {
+			if (PdbKind.OBJECT_POINTER == member.kind) {
 				createRegisterParameter(member.memberName, dt, log);
 			}
-			else if ("Parameter".equals(member.memberKind)) {
+			else if (PdbKind.PARAMETER == member.kind) {
 				createStackVariable(member.memberName, frameBase + member.memberOffset, dt, log);
 			}
-			else if ("Local".equals(member.memberKind)) {
+			else if (PdbKind.LOCAL == member.kind) {
 				createStackVariable(member.memberName, frameBase + member.memberOffset, dt, log);
 			}
 
@@ -188,20 +189,19 @@ class ApplyStackVariables {
 		return variable;
 	}
 
-	private DataType getDataType(PdbMember member, MessageLog log, TaskMonitor monitor)
-			throws CancelledException {
-		WrappedDataType wrappedDataType =
-			pdbParser.findDataType(member.memberDataTypeName, monitor);
+	private DataType getDataType(PdbXmlMember member, MessageLog log) throws CancelledException {
+		WrappedDataType wrappedDataType = pdbParser.findDataType(member.memberDataTypeName);
 		if (wrappedDataType == null) {
-			log.appendMsg("Error: failed to resolve data type for " + member.memberKind + ": " +
+			log.appendMsg("Error: failed to resolve data type for " + member.kind + ": " +
 				member.memberDataTypeName);
 			return null;
 		}
-		if (wrappedDataType.isZeroLengthArray) {
-			log.appendMsg("Error: zero length array not supported for for " + member.memberKind +
-				": " + member.memberDataTypeName);
+		if (wrappedDataType.isZeroLengthArray()) {
+			log.appendMsg("Error: zero length array not supported for for " + member.kind + ": " +
+				member.memberDataTypeName);
 			return null;
 		}
-		return wrappedDataType.dataType;
+		return wrappedDataType.getDataType();
 	}
+
 }

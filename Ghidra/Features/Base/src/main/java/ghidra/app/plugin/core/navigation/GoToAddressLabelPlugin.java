@@ -18,6 +18,7 @@ package ghidra.app.plugin.core.navigation;
 import java.awt.event.KeyEvent;
 
 import docking.action.*;
+import docking.tool.ToolConstants;
 import ghidra.GhidraOptions;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.context.NavigatableActionContext;

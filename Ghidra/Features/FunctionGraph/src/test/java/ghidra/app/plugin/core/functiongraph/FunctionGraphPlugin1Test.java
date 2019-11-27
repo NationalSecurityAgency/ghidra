@@ -15,7 +15,7 @@
  */
 package ghidra.app.plugin.core.functiongraph;
 
-import static ghidra.graph.viewer.GraphViewerUtils.getGraphScale;
+import static ghidra.graph.viewer.GraphViewerUtils.*;
 import static org.junit.Assert.*;
 
 import java.awt.*;
@@ -23,6 +23,8 @@ import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.Transferable;
 import java.awt.geom.Point2D;
 import java.util.*;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import org.junit.*;
 
@@ -36,7 +38,8 @@ import edu.uci.ics.jung.visualization.util.Caching;
 import generic.test.TestUtils;
 import ghidra.app.cmd.label.AddLabelCmd;
 import ghidra.app.events.ProgramSelectionPluginEvent;
-import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
+import ghidra.app.nav.LocationMemento;
+import ghidra.app.nav.Navigatable;
 import ghidra.app.plugin.core.colorizer.ColorizingPlugin;
 import ghidra.app.plugin.core.colorizer.ColorizingService;
 import ghidra.app.plugin.core.functiongraph.graph.*;
@@ -44,8 +47,7 @@ import ghidra.app.plugin.core.functiongraph.graph.vertex.FGVertex;
 import ghidra.app.plugin.core.functiongraph.mvc.*;
 import ghidra.app.plugin.core.navigation.GoToAddressLabelPlugin;
 import ghidra.app.plugin.core.navigation.NextPrevAddressPlugin;
-import ghidra.app.services.BlockModelService;
-import ghidra.app.services.ProgramManager;
+import ghidra.app.services.*;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.block.*;
@@ -640,6 +642,12 @@ public class FunctionGraphPlugin1Test extends AbstractFunctionGraphTest {
 	// test that navigating a vertex updates the code browser's location
 	@Test
 	public void testNavigationFromVertexToCodeBrowser() {
+
+		//
+		// This test covers navigation, which relies on the provider being focused to work
+		//
+		setProviderAlwaysFocused();
+
 		FGData graphData = getFunctionGraphData();
 		assertNotNull(graphData);
 		assertTrue("Unexpectedly received an empty FunctionGraphData", graphData.hasResults());
@@ -670,8 +678,9 @@ public class FunctionGraphPlugin1Test extends AbstractFunctionGraphTest {
 
 		// we must 'fake out' the listing to generate a location event from within the listing
 		pressRightArrowKey(otherVertex);
+		waitForSwing();
 
-		ProgramLocation codeBrowserLocation = codeBrowser.getCurrentLocation();
+		ProgramLocation codeBrowserLocation = runSwing(() -> codeBrowser.getCurrentLocation());
 		ProgramLocation actualVertexLocation = otherVertex.getProgramLocation();
 		assertEquals(newVertexLocation.getAddress(), actualVertexLocation.getAddress());
 		assertEquals(actualVertexLocation.getAddress(), codeBrowserLocation.getAddress());
@@ -695,7 +704,136 @@ public class FunctionGraphPlugin1Test extends AbstractFunctionGraphTest {
 		assertZoomedIn();
 	}
 
-	protected void doTestLabelChangeAtVertexEntryUpdatesTitle() {
+	@Test
+	public void testNavigationHistory_VertexChangesOption() throws Exception {
+
+		setNavigationHistoryOption(NavigationHistoryChoices.VERTEX_CHANGES);
+
+		FGData graphData = getFunctionGraphData();
+		FunctionGraph graph = graphData.getFunctionGraph();
+		Collection<FGVertex> vertices = graph.getVertices();
+
+		FGVertex start = getFocusedVertex();
+
+		Iterator<FGVertex> it = vertices.iterator();
+		FGVertex v1 = it.next();
+		pickVertex(v1);
+
+		FGVertex v2 = it.next();
+		pickVertex(v2);
+
+		FGVertex v3 = it.next();
+		pickVertex(v3);
+
+		assertInHistory(start, v1, v2);
+	}
+
+	@Test
+	public void testNavigationHistory_NavigationEventsOption() throws Exception {
+
+		setNavigationHistoryOption(NavigationHistoryChoices.NAVIGATION_EVENTS);
+
+		FGVertex start = getFocusedVertex();
+
+		FGVertex v1 = vertex("01004178");
+		pickVertex(v1);
+
+		FGVertex v2 = vertex("01004192");
+		pickVertex(v2);
+
+		FGVertex v3 = vertex("010041a4");
+		pickVertex(v3);
+
+		assertInHistory(start);
+		assertNotInHistory(v1, v2);
+
+		//
+		// Now leave the function and verify the old function is in the history
+		//
+		Address ghidra = getAddress("0x01002cf5");
+		goTo(ghidra);
+
+		Address foo = getAddress("0x01002339");
+		goTo(foo);
+
+		assertInHistory(start.getVertexAddress(), ghidra);
+	}
+
+//==================================================================================================
+// Private Methods
+//==================================================================================================	
+
+	private void assertNotInHistory(FGVertex... vertices) {
+
+		List<Address> vertexAddresses =
+			Arrays.stream(vertices)
+					.map(v -> v.getVertexAddress())
+					.collect(Collectors.toList());
+		assertNotInHistory(vertexAddresses);
+	}
+
+	private void assertNotInHistory(List<Address> addresses) {
+
+		GoToService goTo = tool.getService(GoToService.class);
+		Navigatable navigatable = goTo.getDefaultNavigatable();
+
+		NavigationHistoryService service = tool.getService(NavigationHistoryService.class);
+		List<LocationMemento> locations = service.getPreviousLocations(navigatable);
+
+		List<Address> actualAddresses =
+			locations.stream()
+					.map(memento -> memento.getProgramLocation().getAddress())
+					.collect(Collectors.toList());
+
+		for (Address a : addresses) {
+			assertFalse("Vertex address should not be in the history list: " + a + ".\nHistory: " +
+				actualAddresses + "\nNavigated vertices: " + Arrays.asList(addresses),
+				actualAddresses.contains(a));
+		}
+	}
+
+	private void assertInHistory(FGVertex... vertices) {
+
+		List<Address> vertexAddresses =
+			Arrays.stream(vertices)
+					.map(v -> v.getVertexAddress())
+					.collect(Collectors.toList());
+		assertInHistory(vertexAddresses);
+	}
+
+	private void assertInHistory(Address... addresses) {
+		assertInHistory(Arrays.asList(addresses));
+	}
+
+	private void assertInHistory(List<Address> addresses) {
+
+		GoToService goTo = tool.getService(GoToService.class);
+		Navigatable navigatable = goTo.getDefaultNavigatable();
+
+		NavigationHistoryService service = tool.getService(NavigationHistoryService.class);
+		List<LocationMemento> locations = service.getPreviousLocations(navigatable);
+		assertTrue("Vertex locations not added to history", addresses.size() <= locations.size());
+
+		List<Address> actualAddresses =
+			locations.stream()
+					.map(memento -> memento.getProgramLocation().getAddress())
+					.collect(Collectors.toList());
+
+		for (Address a : addresses) {
+
+			assertTrue("Vertex address should be in the history list: " + a + ".\nHistory: " +
+				actualAddresses + "\nNavigated vertices: " + addresses,
+				actualAddresses.contains(a));
+		}
+	}
+
+	private void setNavigationHistoryOption(NavigationHistoryChoices choice) throws Exception {
+		FGController controller = getFunctionGraphController();
+		FunctionGraphOptions options = controller.getFunctionGraphOptions();
+		setInstanceField("navigationHistoryChoice", options, choice);
+	}
+
+	private void doTestLabelChangeAtVertexEntryUpdatesTitle() {
 		// get the graph contents
 		FGData graphData = getFunctionGraphData();
 		assertNotNull(graphData);
@@ -721,7 +859,13 @@ public class FunctionGraphPlugin1Test extends AbstractFunctionGraphTest {
 		assertTrue(updatedTitle.indexOf(testName.getMethodName()) != -1);
 	}
 
-	protected void doTestRelayout(boolean fullReload) throws Exception {
+	private void doTestRelayout(boolean fullReload) throws Exception {
+
+		//
+		// This test covers navigation, which relies on the provider being focused to work
+		//
+		setProviderAlwaysFocused();
+
 		//
 		// Test that we can move a node, call relayout and that the moved node will not be 
 		// at the moved position.
@@ -784,8 +928,8 @@ public class FunctionGraphPlugin1Test extends AbstractFunctionGraphTest {
 		assertNotNull(newGraphData);
 		assertTrue("Unexpectedly received an empty FunctionGraphData", newGraphData.hasResults());
 
-		graph = newGraphData.getFunctionGraph();
-		FGVertex newRootVertex = graph.getRootVertex();
+		FunctionGraph newGraph = newGraphData.getFunctionGraph();
+		FGVertex newRootVertex = newGraph.getRootVertex();
 		assertNotNull(newRootVertex);
 
 		waitForSwing();
@@ -799,11 +943,23 @@ public class FunctionGraphPlugin1Test extends AbstractFunctionGraphTest {
 				"original point: " + originalPoint + " - reloaded point: " + reloadedPoint,
 			pointsAreSimilar(originalPoint, reloadedPoint));
 
-		// make sure the CodeBrowser's location matches ours
-		FGVertex focusedVertex = graph.getFocusedVertex();
+		//
+		// Make sure the CodeBrowser's location matches ours after the relayout (the location should
+		// get broadcast to the CodeBrowser)
+		//
+
+		// Note: there is a timing failure that happens for this check; the event broadcast 
+		//       only happens if the FG provider has focus; in parallel batch mode focus is 
+		//       unreliable
+		if (!BATCH_MODE) {
+			assertTrue(graphAddressMatchesCodeBrowser(newGraph));
+		}
+	}
+
+	private boolean graphAddressMatchesCodeBrowser(FunctionGraph graph) {
+		FGVertex focusedVertex = runSwing(() -> graph.getFocusedVertex());
 		ProgramLocation graphLocation = focusedVertex.getProgramLocation();
-		CodeBrowserPlugin codeBrowserPlugin = env.getPlugin(CodeBrowserPlugin.class);
-		ProgramLocation codeBrowserLocation = codeBrowserPlugin.getCurrentLocation();
-		assertEquals(graphLocation.getAddress(), codeBrowserLocation.getAddress());
+		ProgramLocation codeBrowserLocation = runSwing(() -> codeBrowser.getCurrentLocation());
+		return graphLocation.getAddress().equals(codeBrowserLocation.getAddress());
 	}
 }

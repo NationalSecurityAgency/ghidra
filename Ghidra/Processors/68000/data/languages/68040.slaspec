@@ -1,2 +1,2 @@
-@define MC68040
+@define MC68040 ""
 @include "68000.sinc"

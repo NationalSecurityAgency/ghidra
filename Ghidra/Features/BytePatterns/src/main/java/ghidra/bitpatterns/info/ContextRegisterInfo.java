@@ -17,13 +17,17 @@ package ghidra.bitpatterns.info;
 
 import java.math.BigInteger;
 
+import org.jdom.Element;
+
 /**
  * class for representing the values a specific context register assumes within a function body. 
  */
 public class ContextRegisterInfo {
+
+	static final String XML_ELEMENT_NAME = "ContextRegisterInfo";
+
 	String contextRegister;//the context register
-	String value;//the value it assumes (needed because a BigInteger will not serialize to xml)
-	BigInteger valueAsBigInteger;//the value it assumes
+	BigInteger value;//the value it assumes
 
 	/**
 	 * Default constructor (used by XMLEncoder)
@@ -56,21 +60,11 @@ public class ContextRegisterInfo {
 	}
 
 	/**
-	 * Returns the value associated with this {@link ContextRegisterInfo} object as a 
-	 * {@link BigInteger}.
-	 * @return
-	 */
-	public BigInteger getValueAsBigInteger() {
-		return valueAsBigInteger;
-	}
-
-	/**
 	 * Sets the value associated with this {@link ContextRegisterInfo} object
-	 * @param valueAsBigInteger
+	 * @param value
 	 */
-	public void setValue(BigInteger valueAsBigInteger) {
-		this.valueAsBigInteger = valueAsBigInteger;
-		this.value = valueAsBigInteger.toString();
+	public void setValue(BigInteger value) {
+		this.value = value;
 
 	}
 
@@ -79,17 +73,8 @@ public class ContextRegisterInfo {
 	 * {@link String}.
 	 * @return
 	 */
-	public String getValue() {
+	public BigInteger getValue() {
 		return value;
-	}
-
-	/**
-	 * Sets the value associated with this {@link ContextRegisterInfo} object
-	 * @param value
-	 */
-	public void setValue(String value) {
-		this.value = value;
-		this.valueAsBigInteger = new BigInteger(value);
 	}
 
 	@Override
@@ -132,5 +117,39 @@ public class ContextRegisterInfo {
 		hashCode = 31 * hashCode + contextRegister.hashCode();
 		hashCode = 31 * hashCode + value.hashCode();
 		return hashCode;
+	}
+
+	/**
+	 * Creates a {@link ContextRegisterInfo} object using data in the supplied XML node.
+	 * 
+	 * @param ele xml Element
+	 * @return new {@link ContextRegisterInfo} object, never null
+	 */
+	public static ContextRegisterInfo fromXml(Element ele) {
+
+		String contextRegister = ele.getAttributeValue("contextRegister");
+		String value = ele.getAttributeValue("value");
+
+		ContextRegisterInfo result = new ContextRegisterInfo();
+		result.setContextRegister(contextRegister);
+		result.setValue(value != null ? new BigInteger(value) : null);
+
+		return result;
+	}
+
+	/**
+	 * Converts this object into XML
+	 * 
+	 * @return new jdom Element
+	 */
+	public Element toXml() {
+
+		Element e = new Element(XML_ELEMENT_NAME);
+		e.setAttribute("contextRegister", contextRegister);
+		if (value != null) {
+			e.setAttribute("value", value.toString());
+		}
+
+		return e;
 	}
 }

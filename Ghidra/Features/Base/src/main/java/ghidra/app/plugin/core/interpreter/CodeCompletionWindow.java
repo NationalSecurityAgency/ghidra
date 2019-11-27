@@ -24,6 +24,7 @@ import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.ListDataListener;
 
+import docking.widgets.list.GListCellRenderer;
 import generic.util.WindowUtilities;
 import ghidra.app.plugin.core.console.CodeCompletion;
 
@@ -407,7 +408,12 @@ class CodeCompletionListSelectionModel extends DefaultListSelectionModel {
  * 
  *
  */
-class CodeCompletionListCellRenderer extends DefaultListCellRenderer {
+class CodeCompletionListCellRenderer extends GListCellRenderer<CodeCompletion> {
+
+	@Override
+	protected String getItemText(CodeCompletion value) {
+		return value.getDescription();
+	}
 
 	/**
 	 * Render either a default list cell, or use the one provided.
@@ -416,12 +422,11 @@ class CodeCompletionListCellRenderer extends DefaultListCellRenderer {
 	 * Otherwise, we use the DefaultListCellRenderer routine.
 	 */
 	@Override
-	public Component getListCellRendererComponent(JList list, Object completion, int index,
-			boolean isSelected, boolean cellHasFocus) {
-		CodeCompletion codeCompletion = (CodeCompletion) completion;
+	public Component getListCellRendererComponent(JList<? extends CodeCompletion> list,
+			CodeCompletion codeCompletion, int index, boolean isSelected, boolean cellHasFocus) {
 		if (null == codeCompletion.getComponent()) {
-			return super.getListCellRendererComponent(list, codeCompletion.getDescription(), index,
-				isSelected, cellHasFocus);
+			return super.getListCellRendererComponent(list, codeCompletion, index, isSelected,
+				cellHasFocus);
 		}
 
 		/* ooh, we have a fancy component! */

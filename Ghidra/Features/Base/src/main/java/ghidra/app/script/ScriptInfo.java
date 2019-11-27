@@ -25,9 +25,11 @@ import java.util.regex.Pattern;
 import javax.swing.ImageIcon;
 import javax.swing.KeyStroke;
 
-import docking.DockingKeyBindingAction;
+import org.apache.commons.lang3.StringUtils;
+
+import docking.actions.KeyBindingUtils;
 import generic.jar.ResourceFile;
-import ghidra.util.*;
+import ghidra.util.Msg;
 import resources.ResourceManager;
 
 /**
@@ -77,8 +79,8 @@ public class ScriptInfo {
 		this.sourceFile = sourceFile;
 
 		if (!sourceFile.exists()) {
-			throw new IllegalArgumentException("Source file for script does not exist!: " +
-				sourceFile);
+			throw new IllegalArgumentException(
+				"Source file for script does not exist!: " + sourceFile);
 		}
 	}
 
@@ -92,7 +94,7 @@ public class ScriptInfo {
 		toolbarImage = null;
 		keybindingErrorMessage = null;
 	}
-	
+
 	/**
 	 * Setting the toolbar image to null forces it to be reloaded on the next request.
 	 */
@@ -304,7 +306,7 @@ public class ScriptInfo {
 			String token = tokenizer.nextToken();
 
 			if (i == tokenCount - 1) { // the key char value is the last element 
-				// ...all key character values must be upper case 
+				// ...all key character values must be upper case
 				buildy.append(token.toUpperCase());
 			}
 			else {
@@ -314,7 +316,7 @@ public class ScriptInfo {
 			}
 		}
 
-		keyBinding = DockingKeyBindingAction.parseKeyStroke(buildy.toString());
+		keyBinding = KeyBindingUtils.parseKeyStroke(buildy.toString());
 		if (keyBinding == null) {
 			// note: this message will be cleared by the parseHeader() method
 			keybindingErrorMessage = "Unable to parse keybinding: " + buildy;
@@ -402,7 +404,7 @@ public class ScriptInfo {
 	 * @return the script tool bar icon
 	 */
 	public ImageIcon getToolBarImage(boolean scaled) {
-		
+
 		parseHeader();
 		if (toolbar == null) {
 			return null;
@@ -427,40 +429,39 @@ public class ScriptInfo {
 	}
 
 	/**
-	 * Returns a string designed to be used as a tool tip
-	 * for describing this script.
+	 * Returns a string designed to be used as a tool tip for describing this script
 	 * @return a string designed to be used as a tool tip
 	 */
 	public String getToolTipText() {
-		String htmlDescription =
-			description == null ? "No Description" : description.replaceAll("\n", HTML_NEW_LINE +
-				HTML_SPACE);
-		String htmlAuthor = HTMLUtilities.bold("Author:") + HTML_SPACE + (toToolTip(author));
-		String htmlCategory =
-			HTMLUtilities.bold("Category:") + HTML_SPACE +
-				toToolTip(StringUtilities.convertStringArray(category, "."));
-		String htmlKeyBinding =
-			HTMLUtilities.bold("Key Binding:") + HTML_SPACE + getKeybindingToolTip();
-		String htmlMenuPath =
-			HTMLUtilities.bold("Menu Path:") + HTML_SPACE +
-				toToolTip(StringUtilities.convertStringArray(menupath, "."));
+		String htmlDescription = "No Description";
+		if (description != null) {
+			htmlDescription = escapeHTML(description);
+			htmlDescription = htmlDescription.replaceAll("\n", HTML_NEW_LINE + HTML_SPACE);
+		}
 
-		StringBuffer buffer = new StringBuffer();
-		buffer.append("<h3>").append(HTML_SPACE).append(getName()).append("</h3>");
+		String space = HTML_SPACE;
+		String htmlAuthor = bold("Author:") + space + escapeHTML(toString(author));
+		String htmlCategory = bold("Category:") + space + escapeHTML(toString(category));
+
+		String htmlKeyBinding = bold("Key Binding:") + space + getKeybindingToolTip();
+		String htmlMenuPath = bold("Menu Path:") + space + escapeHTML(toString(menupath));
+
+		StringBuilder buffer = new StringBuilder();
+		buffer.append("<h3>").append(space).append(escapeHTML(getName())).append("</h3>");
 		buffer.append(HTML_NEW_LINE);
-		buffer.append(HTML_SPACE).append(htmlDescription);
-		buffer.append(HTML_NEW_LINE);
-		buffer.append(HTML_NEW_LINE);
-		buffer.append(HTML_SPACE).append(htmlAuthor);
-		buffer.append(HTML_NEW_LINE);
-		buffer.append(HTML_SPACE).append(htmlCategory);
-		buffer.append(HTML_NEW_LINE);
-		buffer.append(HTML_SPACE).append(htmlKeyBinding);
-		buffer.append(HTML_NEW_LINE);
-		buffer.append(HTML_SPACE).append(htmlMenuPath);
+		buffer.append(space).append(htmlDescription);
 		buffer.append(HTML_NEW_LINE);
 		buffer.append(HTML_NEW_LINE);
-		return HTMLUtilities.wrapAsHTML(buffer.toString());
+		buffer.append(space).append(htmlAuthor);
+		buffer.append(HTML_NEW_LINE);
+		buffer.append(space).append(htmlCategory);
+		buffer.append(HTML_NEW_LINE);
+		buffer.append(space).append(htmlKeyBinding);
+		buffer.append(HTML_NEW_LINE);
+		buffer.append(space).append(htmlMenuPath);
+		buffer.append(HTML_NEW_LINE);
+		buffer.append(HTML_NEW_LINE);
+		return wrapAsHTML(buffer.toString());
 	}
 
 	private String getKeybindingToolTip() {
@@ -474,14 +475,16 @@ public class ScriptInfo {
 			}
 			return "";
 		}
-		return DockingKeyBindingAction.parseKeyStroke(keyStroke);
+		return KeyBindingUtils.parseKeyStroke(keyStroke);
 	}
 
-	private String toToolTip(String string) {
-		if (string == null || string.length() == 0) {
-			return "";
-		}
-		return string;
+	private String toString(String string) {
+		return StringUtils.defaultString(string);
+	}
+
+	private String toString(String[] path) {
+		String joined = StringUtils.join(path, DELIMITTER);
+		return StringUtils.defaultString(joined);
 	}
 
 	public boolean hasErrors() {

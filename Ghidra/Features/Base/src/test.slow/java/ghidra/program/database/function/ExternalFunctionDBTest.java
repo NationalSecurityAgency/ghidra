@@ -73,7 +73,7 @@ public class ExternalFunctionDBTest extends AbstractGhidraHeadedIntegrationTest 
 			extMgr.addExtLocation("TestLibrary", name, null, SourceType.USER_DEFINED);
 		Symbol extSym = extLoc.getSymbol();
 		assertNotNull(extSym);
-		assertEquals(SymbolType.CODE, extSym.getSymbolType());
+		assertEquals(SymbolType.LABEL, extSym.getSymbolType());
 		assertEquals(extLoc, extSym.getObject());
 		assertNull(extLoc.getFunction());
 
@@ -234,7 +234,7 @@ public class ExternalFunctionDBTest extends AbstractGhidraHeadedIntegrationTest 
 			program.getExternalManager().getUniqueExternalLocation(parentNamespace, "foo");
 		assertNotNull(externalLocation);
 		assertTrue(!externalLocation.isFunction());
-		assertEquals(SymbolType.CODE, externalLocation.getSymbol().getSymbolType());
+		assertEquals(SymbolType.LABEL, externalLocation.getSymbol().getSymbolType());
 	}
 
 	@Test
@@ -250,7 +250,7 @@ public class ExternalFunctionDBTest extends AbstractGhidraHeadedIntegrationTest 
 			program.getExternalManager().getUniqueExternalLocation(parentNamespace, "EXT_00001000");
 		assertNotNull(externalLocation);
 		assertTrue(!externalLocation.isFunction());
-		assertEquals(SymbolType.CODE, externalLocation.getSymbol().getSymbolType());
+		assertEquals(SymbolType.LABEL, externalLocation.getSymbol().getSymbolType());
 	}
 
 	private Address addr(long offset) {

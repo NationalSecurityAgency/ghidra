@@ -90,7 +90,7 @@ public class SymbolTreePlugin1Test extends AbstractGhidraHeadedIntegrationTest {
 		tool.addPlugin(SymbolTreePlugin.class.getName());
 		plugin = env.getPlugin(SymbolTreePlugin.class);
 
-		symTreeAction = getAction(plugin, "Display Symbol Tree");
+		symTreeAction = getAction(plugin, "Symbol Tree");
 		cbPlugin = env.getPlugin(CodeBrowserPlugin.class);
 
 		util = new SymbolTreeTestUtils(plugin);
@@ -105,15 +105,6 @@ public class SymbolTreePlugin1Test extends AbstractGhidraHeadedIntegrationTest {
 	public void tearDown() throws Exception {
 		closeProgram();
 		env.dispose();
-	}
-
-	@Test
-	public void testActionEnabled() {
-		assertTrue(symTreeAction.isEnabledForContext(null));
-
-		util.openProgram();
-
-		assertTrue(symTreeAction.isEnabledForContext(null));
 	}
 
 	@Test
@@ -168,7 +159,7 @@ public class SymbolTreePlugin1Test extends AbstractGhidraHeadedIntegrationTest {
 		util.selectNode(fNode);
 
 		Symbol extSym = ((SymbolNode) fNode).getSymbol();
-		assertEquals(SymbolType.CODE, extSym.getSymbolType());
+		assertEquals(SymbolType.LABEL, extSym.getSymbolType());
 		assertTrue(extSym.isExternal());
 		assertNotNull(extSym);
 		assertEquals("IsTextUnicode", extSym.getName());
@@ -866,7 +857,7 @@ public class SymbolTreePlugin1Test extends AbstractGhidraHeadedIntegrationTest {
 		while (it.hasNext()) {
 			Symbol s = it.next();
 			if (s.getSymbolType() == type) {
-				if (type != SymbolType.CODE || s.isGlobal()) {
+				if (type != SymbolType.LABEL || s.isGlobal()) {
 					list.add(s);
 				}
 			}

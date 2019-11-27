@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<compiler_spec>
+  <global>
+    <range space="RAM"/>
+  </global>
+  <stackpointer register="SP" space="RAM" growth="negative"/>
+  <returnaddress>
+    <varnode space="stack" offset="0" size="2"/>
+  </returnaddress>
+  <default_proto>
+    <prototype name="__fastcall" extrapop="2" stackshift="2">
+      <input>
+        <pentry minsize="1" maxsize="1">
+          <register name="A"/>
+        </pentry>
+      </input>
+      <output>
+        <pentry minsize="1" maxsize="1">
+          <register name="A"/>
+        </pentry>
+      </output>
+      <unaffected>
+        <register name="SP"/>
+        <register name="HIX"/>
+      </unaffected>
+    </prototype>
+  </default_proto>
+  <prototype name="__stdcall" extrapop="2" stackshift="2">
+	  <input>
+	    <pentry minsize="1" maxsize="500" align="1">
+	      <addr offset="3" space="stack"/>
+	    </pentry>
+	  </input>
+	  <output>
+	    <pentry minsize="1" maxsize="1">
+	      <register name="A"/>
+	    </pentry>
+	  </output>
+	  <unaffected>
+	    <register name="SP"/>
+	    <register name="HIX"/>
+	  </unaffected>
+  </prototype>
+  <resolveprototype name="__fastcall/__stdcall">
+     <model name="__stdcall"/>      <!-- The default case -->
+     <model name="__fastcall"/>
+  </resolveprototype>
+  <eval_current_prototype name="__fastcall/__stdcall"/>
+</compiler_spec>

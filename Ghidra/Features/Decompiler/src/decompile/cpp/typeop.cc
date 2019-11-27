@@ -100,6 +100,9 @@ void TypeOp::registerInstructions(vector<TypeOp *> &inst,TypeFactory *tlst,
   inst[CPUI_SEGMENTOP] = new TypeOpSegment(tlst);
   inst[CPUI_CPOOLREF] = new TypeOpCpoolref(tlst);
   inst[CPUI_NEW] = new TypeOpNew(tlst);
+  inst[CPUI_INSERT] = new TypeOpInsert(tlst);
+  inst[CPUI_EXTRACT] = new TypeOpExtract(tlst);
+  inst[CPUI_POPCOUNT] = new TypeOpPopcount(tlst);
 }
 
 /// Change basic data-type info (signed vs unsigned) and operator names ( '>>' vs '>>>' )
@@ -427,17 +430,37 @@ TypeOpStore::TypeOpStore(TypeFactory *t) : TypeOp(t,CPUI_STORE,"store")
 Datatype *TypeOpStore::getInputCast(const PcodeOp *op,int4 slot,const CastStrategy *castStrategy) const
 
 {
-  if (slot!=1) return (Datatype *)0;
-  Datatype *reqtype = op->getIn(2)->getHigh()->getType();	// Cast storage pointer to match what's being stored
-  Datatype *curtype = op->getIn(1)->getHigh()->getType();
+  if (slot==0) return (Datatype *)0;
+  const Varnode *pointerVn = op->getIn(1);
+  Datatype *pointerType = pointerVn->getHigh()->getType();
+  Datatype *valueType = op->getIn(2)->getHigh()->getType();
   AddrSpace *spc = Address::getSpaceFromConst(op->getIn(0)->getAddr());
-  if (curtype->getMetatype() == TYPE_PTR)
-    curtype = ((TypePointer *)curtype)->getPtrTo();
+  int4 destSize;
+  if (pointerType->getMetatype() == TYPE_PTR) {
+    pointerType = ((TypePointer *)pointerType)->getPtrTo();
+    destSize = pointerType->getSize();
+  }
   else
-    return tlst->getTypePointer(op->getIn(1)->getSize(),reqtype,spc->getWordSize());
-  reqtype = castStrategy->castStandard(reqtype,curtype,false,true);
-  if (reqtype == (Datatype *)0) return reqtype;
-  return tlst->getTypePointer(op->getIn(1)->getSize(),reqtype,spc->getWordSize());
+    destSize = -1;
+  if (destSize != valueType->getSize()) {
+    if (slot == 1)
+      return tlst->getTypePointer(pointerVn->getSize(),valueType,spc->getWordSize());
+    else
+      return (Datatype *)0;
+  }
+  if (slot == 1) {
+    if (pointerVn->isWritten() && pointerVn->getDef()->code() == CPUI_CAST) {
+      if (pointerVn->isImplied() && pointerVn->loneDescend() == op) {
+	// CAST is already in place, test if it is casting to the right type
+	Datatype *newType = tlst->getTypePointer(pointerVn->getSize(), valueType, spc->getWordSize());
+	if (pointerVn->getHigh()->getType() != newType)
+	  return newType;
+      }
+    }
+    return (Datatype *)0;
+  }
+  // If we reach here, cast the value, not the pointer
+  return castStrategy->castStandard(pointerType,valueType,false,true);
 }
 
 void TypeOpStore::printRaw(ostream &s,const PcodeOp *op)
@@ -1788,4 +1811,41 @@ void TypeOpNew::printRaw(ostream &s,const PcodeOp *op)
     op->getIn(i)->printRaw(s);
   }
   s << ')';
+}
+
+TypeOpInsert::TypeOpInsert(TypeFactory *t)
+  : TypeOpFunc(t,CPUI_INSERT,"INSERT",TYPE_UNKNOWN,TYPE_INT)
+{
+  opflags = PcodeOp::special;
+  behave = new OpBehavior(CPUI_INSERT,false,true);	// Dummy behavior
+}
+
+Datatype *TypeOpInsert::getInputLocal(const PcodeOp *op,int4 slot) const
+
+{
+  if (slot == 0)
+    return tlst->getBase(op->getIn(slot)->getSize(),TYPE_UNKNOWN);
+  return TypeOpFunc::getInputLocal(op, slot);
+}
+
+TypeOpExtract::TypeOpExtract(TypeFactory *t)
+  : TypeOpFunc(t,CPUI_EXTRACT,"EXTRACT",TYPE_INT,TYPE_INT)
+{
+  opflags = PcodeOp::special;
+  behave = new OpBehavior(CPUI_EXTRACT,false,true);	// Dummy behavior
+}
+
+Datatype *TypeOpExtract::getInputLocal(const PcodeOp *op,int4 slot) const
+
+{
+  if (slot == 0)
+    return tlst->getBase(op->getIn(slot)->getSize(),TYPE_UNKNOWN);
+  return TypeOpFunc::getInputLocal(op, slot);
+}
+
+TypeOpPopcount::TypeOpPopcount(TypeFactory *t)
+  : TypeOpFunc(t,CPUI_POPCOUNT,"POPCOUNT",TYPE_INT,TYPE_UNKNOWN)
+{
+  opflags = PcodeOp::unary;
+  behave = new OpBehaviorPopcount();
 }

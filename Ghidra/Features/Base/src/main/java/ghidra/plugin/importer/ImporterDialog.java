@@ -35,6 +35,8 @@ import docking.options.editor.ButtonPanelFactory;
 import docking.widgets.EmptyBorderButton;
 import docking.widgets.combobox.GhidraComboBox;
 import docking.widgets.dialogs.MultiLineMessageDialog;
+import docking.widgets.label.GLabel;
+import docking.widgets.list.GListCellRenderer;
 import ghidra.app.services.ProgramManager;
 import ghidra.app.util.*;
 import ghidra.app.util.bin.ByteProvider;
@@ -154,13 +156,13 @@ public class ImporterDialog extends DialogComponentProvider {
 	private Component buildMainPanel() {
 		JPanel panel = new JPanel(new PairLayout(5, 5));
 		panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-		panel.add(new JLabel("Format: ", SwingConstants.RIGHT));
+		panel.add(new GLabel("Format: ", SwingConstants.RIGHT));
 		panel.add(buildLoaderChooser());
-		panel.add(new JLabel("Language: ", SwingConstants.RIGHT));
+		panel.add(new GLabel("Language: ", SwingConstants.RIGHT));
 		panel.add(buildLanguagePanel());
-		panel.add(new JLabel("Destination Folder: ", SwingConstants.RIGHT));
+		panel.add(new GLabel("Destination Folder: ", SwingConstants.RIGHT));
 		panel.add(buildFolderPanel());
-		panel.add(new JLabel("Program Name: ", SwingConstants.RIGHT));
+		panel.add(new GLabel("Program Name: ", SwingConstants.RIGHT));
 		panel.add(buildFilenameTextField());
 		return panel;
 	}
@@ -260,22 +262,8 @@ public class ImporterDialog extends DialogComponentProvider {
 		loaderComboBox = new GhidraComboBox<>(new Vector<>(set));
 		loaderComboBox.addItemListener(e -> selectedLoaderChanged());
 		loaderComboBox.setEnterKeyForwarding(true);
-		loaderComboBox.setRenderer(new DefaultListCellRenderer() {
-			@Override
-			public Component getListCellRendererComponent(JList<?> list, Object value, int index,
-					boolean isSelected, boolean cellHasFocus) {
-				Component renderer = super.getListCellRendererComponent(list, value, index,
-					isSelected, cellHasFocus);
-				if (renderer instanceof JLabel) {
-					if (value instanceof Loader) {
-						Loader loader = (Loader) value;
-						JLabel label = (JLabel) renderer;
-						label.setText(loader.getName());
-					}
-				}
-				return renderer;
-			}
-		});
+		loaderComboBox.setRenderer(
+			GListCellRenderer.createDefaultCellTextRenderer(loader -> loader.getName()));
 
 		if (!set.isEmpty()) {
 			loaderComboBox.setSelectedIndex(0);
@@ -358,10 +346,10 @@ public class ImporterDialog extends DialogComponentProvider {
 			String programPath = removeTrailingSlashes(getName());
 			DomainFolder importFolder = getOrCreateImportFolder(destinationFolder, programPath);
 			String programName = FilenameUtils.getName(programPath);
-			List<Option> localOptions = getOptions(loadSpec);
+			options = getOptions(loadSpec);  // make sure you get the options now, before the ByteProvider is closed.
 			TaskLauncher.launchNonModal("Import File", monitor -> {
-				ImporterUtilities.doSingleImport(fsrl, importFolder, loadSpec, programName,
-					localOptions, tool, programManager, monitor);
+				ImporterUtilities.importSingleFile(tool, programManager, fsrl, importFolder,
+					loadSpec, programName, options, monitor);
 			});
 			close();
 		}
@@ -416,24 +404,24 @@ public class ImporterDialog extends DialogComponentProvider {
 			AddressFactory addressFactory = selectedLanguage.getLanguage().getAddressFactory();
 			LoadSpec loadSpec = getSelectedLoadSpec(loader);
 			OptionValidator validator =
-				optionList -> loader.validateOptions(byteProvider, loadSpec, optionList);
+				optionList -> loader.validateOptions(byteProvider, loadSpec, optionList, null);
 
 			AddressFactoryService service = () -> addressFactory;
 
-			List<Option> defaultOptions = getOptions(loadSpec);
-			if (defaultOptions.isEmpty()) {
+			List<Option> currentOptions = getOptions(loadSpec);
+			if (currentOptions.isEmpty()) {
 				Msg.showInfo(this, null, "Options", "There are no options for this importer!");
 				return;
 			}
 
-			OptionsDialog optionsDialog = new OptionsDialog(defaultOptions, validator, service);
+			OptionsDialog optionsDialog = new OptionsDialog(currentOptions, validator, service);
 			optionsDialog.setHelpLocation(
 				new HelpLocation("ImporterPlugin", getAnchorForSelectedLoader(loader)));
 			tool.showDialog(optionsDialog);
 			if (!optionsDialog.wasCancelled()) {
 				options = optionsDialog.getOptions();
 			}
-
+			validateFormInput();
 		}
 		catch (LanguageNotFoundException e) {
 			Msg.showError(this, null, "Language Error",

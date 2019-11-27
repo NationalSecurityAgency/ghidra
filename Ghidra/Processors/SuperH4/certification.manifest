@@ -1,0 +1,19 @@
+##VERSION: 2.0
+.project||GHIDRA||||END|
+Module.manifest||GHIDRA||||END|
+build.gradle||GHIDRA||||END|
+data/build.xml||GHIDRA||||END|
+data/languages/SuperH4.cspec||GHIDRA||||END|
+data/languages/SuperH4.ldefs||GHIDRA||||END|
+data/languages/SuperH4.opinion||GHIDRA||||END|
+data/languages/SuperH4.pspec||GHIDRA||||END|
+data/languages/SuperH4.sinc||GHIDRA||||END|
+data/languages/SuperH4_be.slaspec||GHIDRA||||END|
+data/languages/SuperH4_le.slaspec||GHIDRA||||END|
+data/languages/old/SuperH4-BE-16.lang||GHIDRA||||END|
+data/languages/old/SuperH4-BE-16.trans||GHIDRA||||END|
+data/languages/old/SuperH4-LE-16.lang||GHIDRA||||END|
+data/languages/old/SuperH4-LE-16.trans||GHIDRA||||END|
+data/manuals/superh4.idx||GHIDRA||||END|
+data/patterns/SuperH4_patterns.xml||GHIDRA||||END|
+data/patterns/patternconstraints.xml||GHIDRA||||END|

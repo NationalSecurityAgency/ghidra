@@ -22,18 +22,22 @@ import javax.swing.KeyStroke;
 
 import docking.ActionContext;
 import docking.DockingUtils;
+import docking.action.*;
 import ghidra.app.plugin.core.navigation.FindAppliedDataTypesService;
 import ghidra.app.plugin.core.navigation.locationreferences.ReferenceUtils;
+import ghidra.app.util.HelpTopics;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.data.Composite;
 import ghidra.program.model.data.DataType;
 import ghidra.util.*;
 
-public abstract class AbstractFindReferencesDataTypeAction extends AbstractSharedKeybindingAction {
+public abstract class AbstractFindReferencesDataTypeAction extends DockingAction {
 
+	private static final String HELP_TOPIC = HelpTopics.FIND_REFERENCES;
 	public static final String NAME = "Find References To";
 	public static final KeyStroke DEFAULT_KEY_STROKE = KeyStroke.getKeyStroke(KeyEvent.VK_F,
 		DockingUtils.CONTROL_KEY_MODIFIER_MASK | InputEvent.SHIFT_DOWN_MASK);
+	private PluginTool tool;
 
 	protected AbstractFindReferencesDataTypeAction(PluginTool tool, String name, String owner) {
 		this(tool, name, owner, null);
@@ -41,10 +45,13 @@ public abstract class AbstractFindReferencesDataTypeAction extends AbstractShare
 
 	protected AbstractFindReferencesDataTypeAction(PluginTool tool, String name, String owner,
 			KeyStroke defaultKeyStroke) {
-		super(tool, name, owner, defaultKeyStroke);
+		super(name, owner, KeyBindingType.SHARED);
+		this.tool = tool;
 
-		setHelpLocation(new HelpLocation("LocationReferencesPlugin", "Data_Types"));
+		setHelpLocation(new HelpLocation(HELP_TOPIC, "Data_Types"));
 		setDescription("Shows all uses of the selected data type");
+
+		initKeyStroke(defaultKeyStroke);
 	}
 
 	protected abstract DataType getDataType(ActionContext context);
@@ -53,6 +60,14 @@ public abstract class AbstractFindReferencesDataTypeAction extends AbstractShare
 		// The base implementation only searches for references to the data type, not specific
 		// fields.  Subclasses can change this behavior
 		return null;
+	}
+
+	private void initKeyStroke(KeyStroke keyStroke) {
+		if (keyStroke == null) {
+			return;
+		}
+
+		setKeyBindingData(new KeyBindingData(keyStroke));
 	}
 
 	@Override
@@ -80,17 +95,15 @@ public abstract class AbstractFindReferencesDataTypeAction extends AbstractShare
 		if (field != null && !(baseDataType instanceof Composite)) {
 			Msg.error(this, "Somehow have a field without a Composite parent--searching " +
 				"only for the parent type '" + dataType + "'; field '" + field + "'");
-			SystemUtilities.runSwingLater(
-				() -> service.findAndDisplayAppliedDataTypeAddresses(dataType));
+			Swing.runLater(() -> service.findAndDisplayAppliedDataTypeAddresses(dataType));
 			return;
 		}
 
 		if (field == null) {
-			SystemUtilities.runSwingLater(
-				() -> service.findAndDisplayAppliedDataTypeAddresses(dataType));
+			Swing.runLater(() -> service.findAndDisplayAppliedDataTypeAddresses(dataType));
 		}
 		else {
-			SystemUtilities.runSwingLater(() -> service.findAndDisplayAppliedDataTypeAddresses(
+			Swing.runLater(() -> service.findAndDisplayAppliedDataTypeAddresses(
 				(Composite) baseDataType, field));
 		}
 	}

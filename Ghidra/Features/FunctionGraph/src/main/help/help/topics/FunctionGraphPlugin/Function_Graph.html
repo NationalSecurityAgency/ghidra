@@ -786,9 +786,31 @@
         graph groups changes (during a group or ungroup operation)</LI>
 
         <LI><B>Never</B> - never perform a relayout of the graph automatically</LI>
-      </UL><BR>
+      </UL>
       <BR>
-       
+      <BR>      
+      
+      
+      <P>The <B>Navigation History</B> option determines how the navigation history 
+      will be updated when using the Function Graph.  The values are:</P>
+      
+      <UL>
+        <LI><B>Navigation Events</B> - save a history entry when a navigation takes place
+	    	(e.g., double-click or Go To event).  This setting will record less history.  Further, 
+	    	this setting works the same as the Tool's general history saving mechanism.  This 
+	    	setting should be preferred if you wish to use the navigation actions to go back
+	    	to previously visited <b>functions</b> more than individual addresses.
+	    </LI>
+
+        <LI><B>Vertex Changes</B> - save a history entry each time a new vertex is selected.  This
+        setting allows users to move throughout the graph view while using the navigation actions
+        to go back to previously visited vertices.  This setting will create a much larger
+        and more detailed history list.
+        </LI>
+      </UL>
+      <BR>
+      <BR>
+      
 
       <P>The <B>Scroll Wheel Pans</B> option signals to move the graph vertical when scrolling the
       mouse scroll wheel. Disabling this option restores the original function graph scroll wheel
@@ -808,6 +830,11 @@
       graph to bring vertices as close together as possible when laying out the graph. Using this
       option to fit as many vertices on the screen as possible. Disable this option to make the
       overall layout of the graph more aesthetic.</P>
+
+	  <P>The <B>Use Full-size Tooltip</B>When toggled off, the tooltip for a vertex will be 
+	  the same size and layout of the vertices in the graph.  When toggled on, the tooltip
+	  for a vertex will be larger, using the layout of the Listing.   The larger size is 
+	  more informative, but also takes up more space.</P>
 
       <P>The <B>Use Mouse-relative Zoom</B> option signals zoom the graph to and from the mouse
       location when zooming from the middle-mouse. The default for this option is off, which

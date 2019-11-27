@@ -38,7 +38,7 @@ public class BowTieLayoutProvider
 	public VisualGraphLayout<FcgVertex, FcgEdge> getLayout(FunctionCallGraph graph,
 			TaskMonitor monitor) throws CancelledException {
 
-		BowTieLayout layout = new BowTieLayout(graph);
+		BowTieLayout layout = new BowTieLayout(graph, NAME);
 		initVertexLocations(graph, layout);
 		return layout;
 	}

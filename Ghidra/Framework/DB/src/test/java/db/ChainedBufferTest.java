@@ -18,6 +18,6 @@ package db;
 public class ChainedBufferTest extends AbstractChainedBufferTest {
 
 	public ChainedBufferTest() {
-		super(false);
+		super(false, null, -1);
 	}
 }

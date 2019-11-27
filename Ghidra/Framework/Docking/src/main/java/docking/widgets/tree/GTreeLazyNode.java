@@ -15,53 +15,67 @@
  */
 package docking.widgets.tree;
 
-import java.util.Collections;
 import java.util.List;
 
 /**
- * Base class for GTNodes that want to use a lazy loading approach.  By using lazy
- * nodes, you don't have to create all the nodes up front and the nodes will only
- * be created as needed.  If you extend this base class, you have to implement one
- * additional method than if you extended AbstractGTreeNode and that is generateChildren().
- * The generateChildren() method will be called automatically when needed.
+ * Base class for GTreeNodes that populate their children on demand (typically when expanded). 
+ * Also, children of this node can be unloaded by calling {@link #unloadChildren()}.  This
+ * can be used by nodes in large trees to save memory by unloading children that are no longer
+ * in the current tree view (collapsed).  Of course, that decision would need to be balanced
+ * against the extra time to reload the nodes in the event that a filter is applied.
  */
+public abstract class GTreeLazyNode extends GTreeNode {
 
-public abstract class GTreeLazyNode extends AbstractGTreeNode {
+	/**
+	 * Subclasses must be able to generate their children nodes on demand by implementing this method.
+	 * @return the list of GTreeNodes that make up the children for this node.
+	 */
+	@Override
 	protected abstract List<GTreeNode> generateChildren();
 
+	/**
+	 * Sets this lazy node back to the "unloaded" state such that if
+	 * its children are accessed, it will reload its children as needed.
+	 */
+	public void unloadChildren() {
+		if (isLoaded()) {
+			doSetChildren(null);
+		}
+	}
+
 	@Override
-	protected final void loadChildren() {
-		if (isChildrenLoadedOrInProgress()) {
-			return;
+	public void addNode(GTreeNode node) {
+		if (isLoaded()) {
+			super.addNode(node);
 		}
-		List<GTreeNode> generateChildren = generateChildren();
-		if (isChildrenLoadedOrInProgress()) {
-			return;
-		}
-		doSetChildren(generateChildren, false);
 	}
 
 	@Override
 	public void addNode(int index, GTreeNode node) {
-		if (!isChildrenLoadedOrInProgress()) {
-			return;
+		if (isLoaded()) {
+			super.addNode(index, node);
 		}
-		super.addNode(index, node);
 	}
 
-	/**
-	 * A convenience method to return this node's children if they are loaded; an empty list
-	 * if they are not loaded.  This allows clients that don't care either way to use the 
-	 * list returned here without checking for null.
-	 * 
-	 * @return the loaded children 
-	 */
-	public List<GTreeNode> getAllChildrenIfLoaded() {
-		if (isChildrenLoadedOrInProgress()) {
-			return getAllChildren();
+	@Override
+	public void addNodes(List<GTreeNode> nodes) {
+		if (isLoaded()) {
+			super.addNodes(nodes);
 		}
+	}
 
-		// not loaded; do not load
-		return Collections.emptyList();
+	@Override
+	public void removeAll() {
+		if (isLoaded()) {
+			unloadChildren();
+		}
+	}
+
+	@Override
+	public void removeNode(GTreeNode node) {
+		if (!isLoaded()) {
+			return;
+		}
+		super.removeNode(node);
 	}
 }

@@ -58,7 +58,7 @@ class RichObjectCountDataType extends DataTypeImpl {
 	}
 
 	@Override
-	public void setName(String name) throws InvalidNameException, DuplicateNameException {
+	public void setName(String name) throws InvalidNameException {
 		// ignored
 	}
 

@@ -45,6 +45,7 @@ import ghidra.program.model.address.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.*;
 import ghidra.program.util.*;
+import ghidra.util.Msg;
 import ghidra.util.layout.HorizontalLayout;
 
 public class ListingPanel extends JPanel implements FieldMouseListener, FieldLocationListener,
@@ -79,7 +80,7 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 	private LayoutModelListener layoutModelListener = new LayoutModelListener() {
 
 		@Override
-		public void modelSizeChanged() {
+		public void modelSizeChanged(IndexMapper mapper) {
 			updateProviders();
 		}
 
@@ -88,6 +89,7 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 			// don't care
 		}
 	};
+	private List<ListingDisplayListener> displayListeners = new ArrayList<>();
 
 	/**
 	 * Constructs a new ListingPanel using the given FormatManager and ServiceProvider.
@@ -252,8 +254,8 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 		for (OverviewProvider element : overviewProviders) {
 			element.setAddressIndexMap(addressIndexMap);
 		}
-		for (int i = 0; i < indexMapChangeListeners.size(); i++) {
-			indexMapChangeListeners.get(i).stateChanged(null);
+		for (ChangeListener indexMapChangeListener : indexMapChangeListeners) {
+			indexMapChangeListener.stateChanged(null);
 		}
 		if (layeredColorModel != null) {
 			layeredColorModel.modelDataChanged(this);
@@ -460,6 +462,21 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 		this.pixmap = new VerticalPixelAddressMapImpl(layouts, layoutModel.getAddressIndexMap());
 		for (MarginProvider element : marginProviders) {
 			element.setPixelMap(pixmap);
+		}
+
+		for (ListingDisplayListener listener : displayListeners) {
+			notifyDisplayListener(listener);
+		}
+	}
+
+	private void notifyDisplayListener(ListingDisplayListener listener) {
+		AddressSetView displayAddresses = pixmap.getAddressSet();
+		try {
+			listener.visibleAddressesChanged(displayAddresses);
+		}
+		catch (Throwable t) {
+			Msg.showError(this, fieldPanel, "Error in Display Listener",
+				"Exception encountered when notifying listeners of change in display", t);
 		}
 	}
 
@@ -843,8 +860,8 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 		FieldLocation dropLoc = new FieldLocation();
 		ListingField field = (ListingField) fieldPanel.getFieldAt(point.x, point.y, dropLoc);
 		if (field != null) {
-			return field.getFieldFactory().getProgramLocation(dropLoc.getRow(), dropLoc.getCol(),
-				field);
+			return field.getFieldFactory()
+					.getProgramLocation(dropLoc.getRow(), dropLoc.getCol(), field);
 		}
 		return null;
 	}
@@ -1091,4 +1108,11 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 		layoutModel.dataChanged(true);
 	}
 
+	public void addListingDisplayListener(ListingDisplayListener listener) {
+		displayListeners.add(listener);
+	}
+
+	public void removeListingDisplayListener(ListingDisplayListener listener) {
+		displayListeners.remove(listener);
+	}
 }

@@ -15,15 +15,18 @@
  */
 package ghidra.app.plugin.core.codebrowser;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import org.junit.*;
 
+import docking.help.Help;
+import docking.help.HelpService;
 import docking.widgets.fieldpanel.field.*;
+import generic.test.TestUtils;
 import ghidra.GhidraOptions;
 import ghidra.app.cmd.comments.SetCommentCmd;
 import ghidra.app.cmd.data.CreateDataCmd;
@@ -32,6 +35,7 @@ import ghidra.app.cmd.refs.AddMemRefCmd;
 import ghidra.app.cmd.refs.AddRegisterRefCmd;
 import ghidra.app.services.ProgramManager;
 import ghidra.app.util.viewer.field.*;
+import ghidra.base.help.GhidraHelpService;
 import ghidra.framework.cmd.Command;
 import ghidra.framework.options.Options;
 import ghidra.framework.options.ToolOptions;
@@ -45,6 +49,8 @@ import ghidra.program.model.symbol.SourceType;
 import ghidra.program.util.BytesFieldLocation;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.test.TestEnv;
+import ghidra.util.HelpLocation;
+import util.CollectionUtils;
 
 public class CodeBrowserOptionsTest extends AbstractGhidraHeadedIntegrationTest {
 	private TestEnv env;
@@ -178,17 +184,17 @@ public class CodeBrowserOptionsTest extends AbstractGhidraHeadedIntegrationTest 
 		assertEquals("Cursor", groups[idx++]);
 		assertEquals("Cursor Text Highlight", groups[idx++]);
 		assertEquals("EOL Comments Field", groups[idx++]);
-		assertEquals("Field Name", groups[idx++]);
 		assertEquals("Format Code", groups[idx++]);
 		assertEquals("Function Pointers", groups[idx++]);
 		assertEquals("Function Signature Field", groups[idx++]);
 		assertEquals("Labels Field", groups[idx++]);
 		assertEquals("Mnemonic Field", groups[idx++]);
+		assertEquals("Mouse", groups[idx++]);
 		assertEquals("Operands Field", groups[idx++]);
 		assertEquals("Pcode Field", groups[idx++]);
-		assertEquals("Plate Comment", groups[idx++]);
-		assertEquals("Post Comment", groups[idx++]);
-		assertEquals("Pre-Comment", groups[idx++]);
+		assertEquals("Plate Comments Field", groups[idx++]);
+		assertEquals("Post-comments Field", groups[idx++]);
+		assertEquals("Pre-comments Field", groups[idx++]);
 		assertEquals("Register Field", groups[idx++]);
 		assertEquals("Selection Colors", groups[idx++]);
 		assertEquals("XREFs Field", groups[idx++]);
@@ -966,6 +972,72 @@ public class CodeBrowserOptionsTest extends AbstractGhidraHeadedIntegrationTest 
 		btf = (ListingTextField) cb.getCurrentField();
 		assertEquals(3, btf.getNumRows());
 		assertTrue(btf.getText().endsWith("[more]"));
+	}
+
+	@Test
+	public void testEveryOptionHasHelp() throws Exception {
+		showTool(tool);
+		loadProgram();
+		List<String> missing = new ArrayList<>();
+		ToolOptions[] toolOptions = tool.getOptions();
+		GhidraHelpService.install();
+		for (ToolOptions options : toolOptions) {
+
+			HelpLocation optionsHelp = options.getOptionsHelpLocation();
+			boolean hasParentHelp = optionsHelp != null;
+			if (CollectionUtils.isOneOf(options.getName(), "Key Bindings", "Listing Display")) {
+				continue; // these custom widgets are known to have help
+			}
+
+			List<String> optionNames = options.getOptionNames();
+			for (String name : optionNames) {
+
+				HelpLocation hl = options.getHelpLocation(name);
+				if (hl == null) {
+					if (!hasParentHelp) {
+						missing.add("Option missing help: " + options.getName() + "." + name);
+					}
+				}
+
+				List<HelpLocation> nestedHelp = getParentHelpLocations(options, name);
+				for (HelpLocation help : nestedHelp) {
+					if (help != null && !isValidHelpLocation(help)) {
+						missing.add("Bad help location: " + help.toString());
+					}
+				}
+
+				// it has a help location; is it valid?
+				if (hl != null && !isValidHelpLocation(hl)) {
+					missing.add(name + "." + name);
+				}
+			}
+		}
+
+		if (!missing.isEmpty()) {
+			fail(missing.size() + " Tool Options is missing/invalid help\n" +
+				missing.stream().collect(Collectors.joining("\n")));
+		}
+	}
+
+	private List<HelpLocation> getParentHelpLocations(ToolOptions options, String name) {
+
+		List<HelpLocation> list = new LinkedList<>();
+		List<String> parts = CollectionUtils.asList(name.split("\\."));
+		Collections.reverse(parts); // put lowest-level first
+		for (String optionName : parts) {
+			Options parentOption = options.getOptions(optionName);
+			HelpLocation help = parentOption.getOptionsHelpLocation();
+			list.add(help);
+		}
+		return list;
+	}
+
+	private boolean isValidHelpLocation(HelpLocation helpLocation) {
+
+		HelpService help = Help.getHelpService();
+		boolean isValid =
+			(boolean) TestUtils.invokeInstanceMethod("isValidHelpLocation", help, helpLocation);
+		return isValid;
 	}
 
 	enum DUMMY {

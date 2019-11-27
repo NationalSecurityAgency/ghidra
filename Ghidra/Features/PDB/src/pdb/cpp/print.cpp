@@ -17,10 +17,13 @@
 #include "find.h"
 #include "print.h"
 #include "symbol.h"
+#include <atlcomcli.h>
+#include <comutil.h>
+#include <vector>
 
 // Returns a mixture of static strings and allocated strings.
 // Abandon all hope of memory management, ye who enter here
-wchar_t * printVariant( VARIANT & v ) {
+std::wstring printVariant( VARIANT & v ) {
 	
 	// handle results that don't need a format buffer
 	switch( v.vt ) {
@@ -34,68 +37,68 @@ wchar_t * printVariant( VARIANT & v ) {
 			return L"null";
 	}
 
-	size_t printfFormatBufferLen = 100;
-	wchar_t * variant = (wchar_t *)calloc(printfFormatBufferLen, sizeof(wchar_t));
+	const int blen = 100;
+	wchar_t variant[blen] = {};
 	switch( v.vt ) {
 		case VT_ARRAY://Indicates a SAFEARRAY pointer. 
-			swprintf(variant, L"%d", v.parray);//TODO
+			swprintf_s(variant, blen, L"%I64d", (ULONGLONG) v.parray);//TODO
 			return variant;
 		case VT_BYREF://Indicates that a value is a reference. 
-			swprintf(variant, L"%d", v.cVal);//TODO
+			swprintf_s(variant, blen, L"%I64d", (ULONGLONG) v.cVal);//TODO
 			return variant;
 		case VT_CY://Indicates a currency value. 
-			swprintf(variant, L"%f", v.cyVal);
+			swprintf_s(variant, blen, L"%I64d", (ULONGLONG) v.cyVal.int64);
 			return variant;
 		case VT_DATE://Indicates a DATE value. 
-			swprintf(variant, L"%d", v.date);
+			swprintf_s(variant, blen, L"%I64d", (ULONGLONG) v.date);
 			return variant;
 		case VT_DISPATCH://Indicates an IDispatch pointer. 
-			swprintf(variant, L"%d", v.pdispVal);
+			swprintf_s(variant, blen, L"%I64d", (ULONGLONG) v.pdispVal);
 			return variant;
 		case VT_ERROR://Indicates an SCODE. 
-			swprintf(variant, L"0x%x", v.scode);
+			swprintf_s(variant, blen, L"0x%x", v.scode);
 			return variant;
 		case VT_I1://CHAR
-			swprintf(variant, L"%d", v.cVal);
+			swprintf_s(variant, blen, L"%d", v.cVal);
 			return variant;
 		case VT_I2://SHORT
-			swprintf(variant, L"%d", v.iVal);
+			swprintf_s(variant, blen, L"%d", v.iVal);
 			return variant;
 		case VT_I4://LONG
-			swprintf(variant, L"%d", v.lVal );
+			swprintf_s(variant, blen, L"%d", v.lVal );
 			return variant;
 		case VT_I8: //LONGLONG
-			swprintf(variant, L"%ld", v.llVal );
+			swprintf_s(variant, blen, L"%I64d", v.llVal );
 			return variant;
 		case VT_INT://INT
-			swprintf(variant, L"%d", v.intVal);
+			swprintf_s(variant, blen, L"%d", v.intVal);
 			return variant;
 		case VT_R4://Indicates a float value. 
-			swprintf(variant, L"%f", v.fltVal);
+			swprintf_s(variant, blen, L"%f", v.fltVal);
 			return variant;
 		case VT_R8://Indicates a double value. 
-			swprintf(variant, L"%f", v.dblVal);
+			swprintf_s(variant, blen, L"%f", v.dblVal);
 			return variant;
 		case VT_UI1://BYTE
-			swprintf(variant, L"%d", v.bVal);
+			swprintf_s(variant, blen, L"%d", v.bVal);
 			return variant;
 		case VT_UI2://USHORT
-			swprintf(variant, L"%d", v.uiVal);
+			swprintf_s(variant, blen, L"%d", v.uiVal);
 			return variant;
 		case VT_UI4://ULONG
-			swprintf(variant, L"%d", v.ulVal);
+			swprintf_s(variant, blen, L"%d", v.ulVal);
 			return variant;
 		case VT_UI8://ULONGLONG
-			swprintf(variant, L"%ld", v.ullVal);
+			swprintf(variant, blen, L"%I64d", v.ullVal);
 			return variant;
 		case VT_UINT://UINT
-			swprintf(variant, L"%d", v.uintVal);
+			swprintf_s(variant, blen, L"%d", v.uintVal);
 			return variant;
 		case VT_UNKNOWN://Indicates an IUnknown pointer. 
-			swprintf(variant, L"%d", v.punkVal);
+			swprintf_s(variant, blen, L"%I64d", (ULONGLONG) v.punkVal);
 			return variant;
 		case VT_VARIANT://Indicates a VARIANT far pointer. 
-			swprintf(variant, L"%d", v.pvarVal);
+			swprintf_s(variant, blen, L"%I64d", (ULONGLONG) v.pvarVal);
 			return variant;
 
 		default:
@@ -103,39 +106,35 @@ wchar_t * printVariant( VARIANT & v ) {
 	}
 }
 
-void printBound( IDiaSymbol* pBound ) {
+void printBound( IDiaSymbol& bound ) {
 
 	DWORD tag = 0;
-	BSTR name;
-	DWORD kind;
-	pBound->get_symTag( &tag );
-	pBound->get_locationType( &kind );
+	DWORD kind = 0;
+	bound.get_symTag( &tag );
+	bound.get_locationType( &kind );
+	bstr_t name;
 	if ( tag == SymTagData && kind == LocIsConstant ) {
 		//TODO
 		//CComVariant v;
 		//pBound->get_value( &v );
 		//printVariant( v );
 	} 
-	else if ( pBound->get_name( &name ) == S_OK ) {
-		printf( "%ws", name );
+	else if ( bound.get_name( name.GetAddress()) == S_OK ) {
+		printf( "%ws", name.GetBSTR() );
 	}
 }
 
-// Returns mixture of allocated and static strings
-BSTR printType( IDiaSymbol * pType, BSTR suffix ) {
+std::wstring printType( IDiaSymbol * pType, const std::wstring& suffix ) {
 	if (pType == NULL) {
 		return L"";
 	}
-	BSTR name = getName(pType);
-	DWORD tag = getTag(pType);
+	std::wstring name = getName(*pType);
+	DWORD tag = getTag(*pType);
 
 	if ( tag == SymTagPointerType ) {
-		IDiaSymbol * pBaseType;
+		CComPtr<IDiaSymbol> pBaseType;
 		if ( pType->get_type( &pBaseType ) == S_OK ) {
-			size_t length = wcslen(suffix) + 3;	// length of: suffix + " *\0"
-			wchar_t * str = (wchar_t *)calloc(length, sizeof(wchar_t));
-			swprintf(str, L"%ws *", suffix );
-			return (BSTR)printType( pBaseType, (BSTR)str );
+			return printType(pBaseType, suffix + L" *");
 		}
 		else {
 			return L"";
@@ -143,28 +142,23 @@ BSTR printType( IDiaSymbol * pType, BSTR suffix ) {
 	} 
 
 	if ( tag == SymTagBaseType ) {
-		BSTR bt = getBaseTypeAsString( pType );
-		size_t length = wcslen(bt) + wcslen(suffix) + 1;	// length of: bt + suffix + "\0"
-		wchar_t * str = (wchar_t *)calloc(length, sizeof(wchar_t));
-		swprintf(str, L"%ws%ws", bt, suffix );
-		return str;
+		return getBaseTypeAsString( *pType ) + suffix;
 	}
 
 	if ( tag == SymTagArrayType ) {
-		IDiaSymbol * pBaseType = getType( pType );
+		CComPtr<IDiaSymbol> pBaseType = getType( *pType );
 		if ( pBaseType == NULL ) {
 			return L"";
 		}
-		ULONGLONG lenArray = getLength( pType );
-		ULONGLONG lenElem  = getLength( pBaseType );
+		ULONGLONG lenArray = getLength( *pType );
+		ULONGLONG lenElem  = getLength( *pBaseType );
 		if (lenElem == 0) {//prevent divide by zero...
 			lenElem = lenArray;
 		}
-		size_t strLen = wcslen(suffix) + 64 + 3;	// length of suffix + wag_for_numeric_value + "[]\0" 
-		wchar_t * str = (wchar_t *)calloc(strLen, sizeof(wchar_t));
-		swprintf(str, L"%ws[%ld]", suffix, lenArray/lenElem );
-
-		return printType( pBaseType, (BSTR)str);
+		const size_t strLen = suffix.length() + 64 + 3;	// length of suffix + wag_for_numeric_value + "[]\0" 
+		std::vector<wchar_t> str(strLen);
+		swprintf_s(str.data(), strLen, L"%s[%I64d]", suffix.c_str(), lenArray / lenElem);
+		return printType(pBaseType, str.data());
 	} 
 
 	if ( tag == SymTagFunctionType ) {
@@ -172,48 +166,46 @@ BSTR printType( IDiaSymbol * pType, BSTR suffix ) {
 	}
 
 	if ( tag == SymTagCustomType ) {
-		DWORD id;
-		DWORD rec;
-		GUID guid;
-		if ( pType->get_guid( &guid ) == S_OK ) {
-			size_t maxGUIDStrLen = 64;
-			wchar_t * guidStr = (wchar_t *)calloc(maxGUIDStrLen, sizeof(wchar_t));
-			StringFromGUID2(guid, guidStr, maxGUIDStrLen);
-			return (BSTR)guidStr;
+		DWORD id = 0;
+		DWORD rec = 0;
+		GUID guid = GUID_NULL;
+		if ( pType->get_guid(&guid) == S_OK ) {
+			const int maxGUIDStrLen = 64 + 1;
+			std::vector<wchar_t> guidStr(maxGUIDStrLen);
+			if (StringFromGUID2(guid, guidStr.data(), maxGUIDStrLen) > 0) {
+				return guidStr.data();
+			}
 		} 
 		else if ( pType->get_oemId( &id ) == S_OK && pType->get_oemSymbolId( &rec ) == S_OK ) {
-			size_t strLen = 256;		// wag_for_2_hex_numbers "0xNNNNN:0xNNNNN"
-			wchar_t * str = (wchar_t *)calloc(strLen, sizeof(wchar_t));
-			swprintf(str, L"0x%x:0x%x", id, rec);
-			return (BSTR)str;
+			const size_t strLen = 256;		// wag_for_2_hex_numbers "0xNNNNN:0xNNNNN"
+			wchar_t str[strLen] = {};
+			if (str != NULL) {
+				swprintf_s(str, L"0x%x:0x%x", id, rec);
+				return str;
+			}
 		}
 		return L"";
 	}
 
-	if ( name != NULL ) {
-		size_t length = wcslen(name) + wcslen(suffix) + 1;	// length of name + suffix + "\0"
-		wchar_t * str = (wchar_t *)calloc(length, sizeof(wchar_t));
-		swprintf(str, L"%ws%ws", name, suffix);
-		return (BSTR)str;
+	if ( !name.empty() ) {
+		return name + suffix;
 	} 
 
 	return L"Undefined";
 }
 
-void printScopeName( IDiaSymbol* pscope ) {
-	printf("<scope name=\"%ws\" tag=\"%ws\" />\n", getName( pscope ), getTagAsString( pscope ));
+void printScopeName( IDiaSymbol& pscope ) {
+	printf("<scope name=\"%S\" tag=\"%S\" />\n", getName( pscope ).c_str(), getTagAsString( pscope ).c_str());
 }
 
-void printNameFromScope( wchar_t* name, IDiaSymbol* pscope, IDiaEnumSymbols* pEnum ) {
+void printNameFromScope( IDiaSymbol& scope, IDiaEnumSymbols& myEnum ) {
 
-	IDiaSymbol * pSym;
-	DWORD celt;
-	while ( SUCCEEDED( pEnum->Next( 1, &pSym, &celt ) ) && celt == 1 ) {
-		BSTR  name = getName( pSym );
-		BSTR  tag  = getTagAsString( pSym );
-		wprintf( L"\t%ws %ws found in ", tag, name );
-		printScopeName( pscope );
-		wprintf( L"\n" );
+	CComPtr<IDiaSymbol> pSym;
+	DWORD celt = 0;
+	while ( myEnum.Next( 1, &pSym, &celt ) == S_OK && celt == 1 ) {
+		printf( "\t%S %S found in ", getTagAsString(*pSym).c_str(), getName(*pSym).c_str() );
+		printScopeName( scope );
+		printf( "\n" );
 		pSym = 0;
 	}
 }

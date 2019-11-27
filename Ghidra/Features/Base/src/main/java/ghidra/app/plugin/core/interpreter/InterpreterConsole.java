@@ -18,8 +18,8 @@ package ghidra.app.plugin.core.interpreter;
 import java.io.*;
 
 import docking.action.DockingAction;
-import ghidra.generic.function.Callback;
 import ghidra.util.Disposable;
+import utility.function.Callback;
 
 /**
  * Interactive interpreter console.

@@ -25,15 +25,16 @@ import ghidra.app.util.OptionUtils;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.bin.format.elf.ElfException;
 import ghidra.app.util.bin.format.elf.ElfHeader;
-import ghidra.app.util.importer.*;
+import ghidra.app.util.importer.MessageLog;
+import ghidra.app.util.importer.MessageLogContinuesFactory;
 import ghidra.framework.model.DomainFolder;
 import ghidra.framework.model.DomainObject;
-import ghidra.program.model.address.AddressSpace;
+import ghidra.framework.options.Options;
 import ghidra.program.model.lang.Endian;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.ELFExternalSymbolResolver;
 import ghidra.util.Msg;
-import ghidra.util.StringUtilities;
+import ghidra.util.NumericUtilities;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
@@ -46,8 +47,24 @@ public class ElfLoader extends AbstractLibrarySupportLoader {
 
 	public final static String ELF_ENTRY_FUNCTION_NAME = "entry";
 
+	public final static String ELF_FILE_TYPE_PROPERTY = "ELF File Type";
+	public final static String ELF_ORIGINAL_IMAGE_BASE_PROPERTY = "ELF Original Image Base";
+	public final static String ELF_PRELINKED_PROPERTY = "ELF Prelinked";
+
 	public final static String ELF_REQUIRED_LIBRARY_PROPERTY_PREFIX = "ELF Required Library ["; // followed by "#]"
 	public final static String ELF_SOURCE_FILE_PROPERTY_PREFIX = "ELF Source File ["; // followed by "#]"
+
+	/**
+	 * Getter for the {@link #ELF_ORIGINAL_IMAGE_BASE_PROPERTY} property.
+	 * 
+	 * @param program Ghidra program that has the property to get
+	 * @return Long value of the original image base, or null if the property is not present
+	 */
+	public static Long getElfOriginalImageBase(Program program) {
+		Options props = program.getOptions(Program.PROGRAM_INFO);
+		String oibStr = props.getString(ElfLoader.ELF_ORIGINAL_IMAGE_BASE_PROPERTY, null);
+		return (oibStr != null) ? NumericUtilities.parseHexLong(oibStr) : null;
+	}
 
 	public ElfLoader() {
 	}
@@ -72,32 +89,16 @@ public class ElfLoader extends AbstractLibrarySupportLoader {
 		return options;
 	}
 
-	private String getBaseOffsetString(long imageBase, AddressSpace defaultSpace) {
-		int maxNibbles = defaultSpace.getSize() / 4;
-		int minNibbles = Math.min(8, maxNibbles);
-		String baseOffsetStr = Long.toHexString(imageBase);
-		int baseOffsetStrLen = baseOffsetStr.length();
-		if (imageBase < 0) {
-			if (baseOffsetStrLen > maxNibbles) {
-				baseOffsetStr = baseOffsetStr.substring(baseOffsetStrLen - maxNibbles);
-			}
-		}
-		else if (baseOffsetStrLen < minNibbles) {
-			baseOffsetStr =
-				StringUtilities.pad(baseOffsetStr, '0', minNibbles - baseOffsetStrLen);
-		}
-		return baseOffsetStr;
-	}
-
 	@Override
-	public String validateOptions(ByteProvider provider, LoadSpec loadSpec, List<Option> options) {
+	public String validateOptions(ByteProvider provider, LoadSpec loadSpec, List<Option> options,
+			Program program) {
 		if (options != null) {
 			String validationErrorStr = ElfLoaderOptionsFactory.validateOptions(loadSpec, options);
 			if (validationErrorStr != null) {
 				return validationErrorStr;
 			}
 		}
-		return super.validateOptions(provider, loadSpec, options);
+		return super.validateOptions(provider, loadSpec, options, program);
 	}
 
 	@Override
@@ -143,20 +144,15 @@ public class ElfLoader extends AbstractLibrarySupportLoader {
 
 	@Override
 	public void load(ByteProvider provider, LoadSpec loadSpec, List<Option> options,
-			Program program,
-			MemoryConflictHandler handler, TaskMonitor monitor, MessageLog log)
-			throws IOException {
+			Program program, TaskMonitor monitor, MessageLog log)
+			throws IOException, CancelledException {
 
 		try {
 			GenericFactory factory = MessageLogContinuesFactory.create(log);
 			ElfHeader elf = ElfHeader.createElfHeader(factory, provider);
-			ElfProgramBuilder.loadElf(elf, program, options, log, handler, monitor);
+			ElfProgramBuilder.loadElf(elf, program, options, log, monitor);
 		}
 		catch (ElfException e) {
-			throw new IOException(e.getMessage());
-		}
-		catch (CancelledException e) {
-			// TODO: Caller should properly handle CancelledException instead
 			throw new IOException(e.getMessage());
 		}
 	}

@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,9 +20,9 @@ import ghidra.program.model.symbol.SymbolType;
 public class SymbolCategory {
 
 	public static final SymbolCategory FUNCTION_CATEGORY = new SymbolCategory("Functions", SymbolType.FUNCTION);
-	public static final SymbolCategory EXPORTS_CATEGORY = new SymbolCategory("Exports", SymbolType.CODE);
+	public static final SymbolCategory EXPORTS_CATEGORY = new SymbolCategory("Exports", SymbolType.LABEL);
 	public static final SymbolCategory IMPORTS_CATEGORY = new SymbolCategory("Imports", SymbolType.LIBRARY);
-	public static final SymbolCategory LABEL_CATEGORY = new SymbolCategory("Labels", SymbolType.CODE);
+	public static final SymbolCategory LABEL_CATEGORY = new SymbolCategory("Labels", SymbolType.LABEL);
 	public static final SymbolCategory ROOT_CATEGORY = new SymbolCategory("Global", null);
 	public static final SymbolCategory NAMESPACE_CATEGORY = new SymbolCategory("Namespaces", SymbolType.NAMESPACE);
 	public static final SymbolCategory CLASS_CATEGORY = new SymbolCategory("Classes", SymbolType.CLASS);

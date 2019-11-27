@@ -22,16 +22,17 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.swing.JComponent;
-import javax.swing.JLabel;
 
 import org.apache.commons.collections4.Factory;
 import org.apache.commons.collections4.map.LazyMap;
 
-import ghidra.graph.graphs.TestEdge;
+import docking.widgets.label.GDHtmlLabel;
 import ghidra.graph.graphs.AbstractTestVertex;
+import ghidra.graph.graphs.TestEdge;
 import ghidra.graph.viewer.event.mouse.VertexTooltipProvider;
 
-public class TestVertexTooltipProvider implements VertexTooltipProvider<AbstractTestVertex, TestEdge> {
+public class TestVertexTooltipProvider
+		implements VertexTooltipProvider<AbstractTestVertex, TestEdge> {
 
 	private AtomicBoolean tooltipTriggered = new AtomicBoolean();
 	private Map<AbstractTestVertex, List<SpyTooltip>> shownTooltipsByVertex =
@@ -104,7 +105,7 @@ public class TestVertexTooltipProvider implements VertexTooltipProvider<Abstract
 
 	}
 
-	public class SpyTooltipLabel extends JLabel implements SpyTooltip {
+	public class SpyTooltipLabel extends GDHtmlLabel implements SpyTooltip {
 
 		SpyTooltipLabel(String text) {
 			setText(text);

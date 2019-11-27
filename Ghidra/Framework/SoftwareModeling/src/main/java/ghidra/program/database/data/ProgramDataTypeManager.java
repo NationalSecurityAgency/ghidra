@@ -40,8 +40,8 @@ import ghidra.util.task.TaskMonitor;
 /**
  * Class for managing data types in a program
  */
-public class ProgramDataTypeManager extends DataTypeManagerDB implements ManagerDB,
-		ProgramBasedDataTypeManager {
+public class ProgramDataTypeManager extends DataTypeManagerDB
+		implements ManagerDB, ProgramBasedDataTypeManager {
 
 	private static final String OLD_DT_ARCHIVE_FILENAMES = "DataTypeArchiveFilenames"; // eliminated with Ghidra 4.3
 
@@ -61,18 +61,16 @@ public class ProgramDataTypeManager extends DataTypeManagerDB implements Manager
 	 * @throws IOException if a database io error occurs.
 	 */
 	public ProgramDataTypeManager(DBHandle handle, AddressMap addrMap, int openMode,
-			ErrorHandler errHandler, Lock lock, TaskMonitor monitor) throws CancelledException,
-			VersionException, IOException {
+			ErrorHandler errHandler, Lock lock, TaskMonitor monitor)
+			throws CancelledException, VersionException, IOException {
 		super(handle, addrMap, openMode, errHandler, lock, monitor);
 		upgrade = (openMode == DBConstants.UPGRADE);
 	}
 
-	/**
-	 * @see ghidra.program.database.ManagerDB#setProgram(ghidra.program.database.ProgramDB)
-	 */
 	@Override
 	public void setProgram(ProgramDB p) {
 		this.program = p;
+		dataOrganization = p.getCompilerSpec().getDataOrganization();
 		removeOldFileNameList();
 	}
 
@@ -85,17 +83,11 @@ public class ProgramDataTypeManager extends DataTypeManagerDB implements Manager
 		}
 	}
 
-	/**
-	 * @see ghidra.program.database.ManagerDB#invalidateCache(boolean)
-	 */
 	@Override
 	public void invalidateCache(boolean all) throws IOException {
 		super.invalidateCache();
 	}
 
-	/**
-	 * @see ghidra.program.database.ManagerDB#programReady(int, int, ghidra.util.task.TaskMonitor)
-	 */
 	@Override
 	public void programReady(int openMode, int currentRevision, TaskMonitor monitor)
 			throws IOException, CancelledException {
@@ -104,9 +96,6 @@ public class ProgramDataTypeManager extends DataTypeManagerDB implements Manager
 		}
 	}
 
-	/**
-	 * @see ghidra.program.model.data.DataTypeManager#getName()
-	 */
 	@Override
 	public String getName() {
 		return program.getName();
@@ -117,9 +106,6 @@ public class ProgramDataTypeManager extends DataTypeManagerDB implements Manager
 		return PointerDataType.getPointer(dt, this);
 	}
 
-	/**
-	 * @see ghidra.program.model.data.DataTypeManager#setName(java.lang.String)
-	 */
 	@Override
 	public void setName(String name) throws InvalidNameException {
 		if (name == null || name.length() == 0) {
@@ -127,10 +113,10 @@ public class ProgramDataTypeManager extends DataTypeManagerDB implements Manager
 		}
 
 		program.setName(name);
-		categoryRenamed(CategoryPath.ROOT, null);
+		Category root = getRootCategory();
+		categoryRenamed(CategoryPath.ROOT, root);
 	}
 
-	////////////////////
 	@Override
 	public void sourceArchiveChanged(UniversalID sourceArchiveID) {
 		super.sourceArchiveChanged(sourceArchiveID);
@@ -219,7 +205,6 @@ public class ProgramDataTypeManager extends DataTypeManagerDB implements Manager
 		super.favoritesChanged(dataType, isFavorite);
 	}
 
-	///////////////////
 	@Override
 	protected void replaceDataTypeIDs(long oldDataTypeID, long newDataTypeID) {
 		if (oldDataTypeID == newDataTypeID) {
@@ -249,9 +234,6 @@ public class ProgramDataTypeManager extends DataTypeManagerDB implements Manager
 		return program.isChangeable();
 	}
 
-	/**
-	 * @see ghidra.program.model.data.DataTypeManager#startTransaction(java.lang.String)
-	 */
 	@Override
 	public int startTransaction(String description) {
 		return program.startTransaction(description);
@@ -262,34 +244,22 @@ public class ProgramDataTypeManager extends DataTypeManagerDB implements Manager
 		program.flushEvents();
 	}
 
-	/**
-	 * @see ghidra.program.model.data.DataTypeManager#endTransaction(int, boolean)
-	 */
 	@Override
 	public void endTransaction(int transactionID, boolean commit) {
 		program.endTransaction(transactionID, commit);
 
 	}
 
-	/**
-	 * @see ghidra.program.model.data.DataTypeManager#close()
-	 */
 	@Override
 	public void close() {
 		// do nothing - cannot close the program's data type manager
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.program.model.data.ProgramDataTypeManager#getProgram()
-	 */
 	@Override
 	public Program getProgram() {
 		return program;
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.program.model.data.DomainFileBasedDataTypeManager#getDomainFile()
-	 */
 	@Override
 	public DomainFile getDomainFile() {
 		return program.getDomainFile();
@@ -319,5 +289,4 @@ public class ProgramDataTypeManager extends DataTypeManagerDB implements Manager
 		}
 		return dataOrganization;
 	}
-
 }

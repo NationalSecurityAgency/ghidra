@@ -232,7 +232,6 @@ public class NTHeader implements StructConverter, OffsetValidator {
 	private void parse() throws InvalidNTHeaderException, IOException {
 
 		if (index < 0 || index > reader.length()) {
-			Msg.error(this, "Invalid NtHeader " + Integer.toHexString(index));
 			return;
 		}
 

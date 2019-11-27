@@ -26,17 +26,16 @@ import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
 public class PIC30_ElfExtension extends ElfExtension {
-	
-	public static final int EM_DSPIC30F = 118;     /* Microchip Technology dsPIC30F DSC */
-	
-	public static final int SHF_PSV     = (1 << 28);  /* Constants in program memory */
-	
+
+	public static final int EM_DSPIC30F = 118; /* Microchip Technology dsPIC30F DSC */
+
+	public static final int SHF_PSV = (1 << 28); /* Constants in program memory */
 
 	@Override
 	public boolean canHandle(ElfHeader elf) {
 		return elf.e_machine() == EM_DSPIC30F;
 	}
-	
+
 	@Override
 	public boolean canHandle(ElfLoadHelper elfLoadHelper) {
 		// TODO: The PIC-30/24 utilize too many different processor names instead of
@@ -54,7 +53,7 @@ public class PIC30_ElfExtension extends ElfExtension {
 			throws CancelledException {
 		// TODO: Create mapped blocks
 	}
-	
+
 	@Override
 	public AddressSpace getPreferredSegmentAddressSpace(ElfLoadHelper elfLoadHelper,
 			ElfProgramHeader elfProgramHeader) {
@@ -64,7 +63,7 @@ public class PIC30_ElfExtension extends ElfExtension {
 		}
 		return language.getDefaultSpace();
 	}
-	
+
 	@Override
 	public AddressSpace getPreferredSectionAddressSpace(ElfLoadHelper elfLoadHelper,
 			ElfSectionHeader elfSectionHeader) {
@@ -74,15 +73,15 @@ public class PIC30_ElfExtension extends ElfExtension {
 		}
 		return language.getDefaultSpace();
 	}
-	
+
 	private long getAdjustedDataLoadSize(long dataLoadFileSize) {
 		return dataLoadFileSize / 2;
 	}
-	
+
 	private boolean isDataLoad(ElfProgramHeader elfProgramHeader) {
 		return !elfProgramHeader.isExecute();
 	}
-	
+
 	private boolean isDataLoad(ElfSectionHeader section) {
 		if (!section.isAlloc()) {
 			return false;
@@ -109,13 +108,13 @@ public class PIC30_ElfExtension extends ElfExtension {
 	}
 
 	@Override
-	public InputStream getFilteredLoadInputStream(ElfLoadHelper elfLoadHelper, MemoryLoadable loadable, Address start, long dataLength,
-			InputStream dataInput) {
+	public InputStream getFilteredLoadInputStream(ElfLoadHelper elfLoadHelper,
+			MemoryLoadable loadable, Address start, long dataLength, InputStream dataInput) {
 		Language language = elfLoadHelper.getProgram().getLanguage();
 		if (!language.getDefaultDataSpace().equals(start.getAddressSpace().getPhysicalSpace())) {
-			return dataInput; 
+			return dataInput;
 		}
-		
+
 		if (loadable instanceof ElfSectionHeader) {
 			ElfSectionHeader section = (ElfSectionHeader) loadable;
 			if ((section.getFlags() & SHF_PSV) != 0) {
@@ -124,25 +123,32 @@ public class PIC30_ElfExtension extends ElfExtension {
 				return new PIC30FilteredPSVDataInputStream(dataInput);
 			}
 		}
-		
+
 		// Data space loading pads after every byte with Microchip toolchain 
 		// NOTE: this could vary and we may need to improve detection of this situation
-		
+
 		return new PIC30FilteredDataInputStream(dataInput);
 	}
-	
+
+	@Override
+	public boolean hasFilteredLoadInputStream(ElfLoadHelper elfLoadHelper, MemoryLoadable loadable,
+			Address start) {
+		Language language = elfLoadHelper.getProgram().getLanguage();
+		return language.getDefaultDataSpace().equals(start.getAddressSpace().getPhysicalSpace());
+	}
+
 	private static class PIC30FilteredDataInputStream extends FilterInputStream {
-		
+
 		// BYTES:  <byte> <pad>
-		
-		protected boolean padByteToggle;		
+
+		protected boolean padByteToggle;
 		protected long pos;
 
 		protected PIC30FilteredDataInputStream(InputStream in) {
 			super(in);
 			padByteToggle = false; // first byte is data not padding
 		}
-		
+
 		protected int readNextByte() throws IOException {
 			int r = in.read();
 			if (padByteToggle && r != 0) {
@@ -153,7 +159,7 @@ public class PIC30_ElfExtension extends ElfExtension {
 			padByteToggle = !padByteToggle;
 			return r;
 		}
-		
+
 		@Override
 		public int read() throws IOException {
 			while (padByteToggle) {
@@ -164,42 +170,45 @@ public class PIC30_ElfExtension extends ElfExtension {
 			}
 			return readNextByte();
 		}
-		
+
 		@Override
 		public int read(byte b[], int off, int len) throws IOException {
 			if (b == null) {
-	            throw new NullPointerException();
-	        } else if (off < 0 || len < 0 || len > b.length - off) {
-	            throw new IndexOutOfBoundsException();
-	        } else if (len == 0) {
-	            return 0;
-	        }
-	        
+				throw new NullPointerException();
+			}
+			else if (off < 0 || len < 0 || len > b.length - off) {
+				throw new IndexOutOfBoundsException();
+			}
+			else if (len == 0) {
+				return 0;
+			}
+
 			int numRead = -1;
 			for (int i = 1; i <= len; i++) {
 				int c = read();
-                if (c == -1) {
-                    break;
-                }
-                b[off++] = (byte)c;
-                numRead = i;
+				if (c == -1) {
+					break;
+				}
+				b[off++] = (byte) c;
+				numRead = i;
 			}
 			return numRead;
 		}
-		
+
 	}
 
 	private static class PIC30FilteredPSVDataInputStream extends PIC30FilteredDataInputStream {
 
 		// BYTES:  <byte0> <byte1> <pad0> <pad1>
-		
+
 		private boolean firstByteToggle; // firstByte of data or pad 
-		
+
 		protected PIC30FilteredPSVDataInputStream(InputStream in) {
 			super(in);
 			firstByteToggle = true;
 		}
-		
+
+		@Override
 		protected int readNextByte() throws IOException {
 			int r = in.read();
 			++pos;

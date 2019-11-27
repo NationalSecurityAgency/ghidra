@@ -18,8 +18,6 @@ package ghidra.framework.main.datatable;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.List;
 
@@ -27,15 +25,15 @@ import javax.swing.*;
 
 import docking.ActionContext;
 import docking.ComponentProvider;
-import docking.action.DockingActionIf;
 import docking.help.Help;
 import docking.help.HelpService;
+import docking.widgets.label.GHtmlLabel;
 import docking.widgets.table.*;
 import docking.widgets.table.threaded.*;
 import ghidra.framework.main.FrontEndPlugin;
 import ghidra.framework.model.*;
 import ghidra.framework.plugintool.PluginTool;
-import ghidra.util.HelpLocation;
+import ghidra.util.*;
 import ghidra.util.bean.GGlassPane;
 import ghidra.util.bean.GGlassPanePainter;
 
@@ -79,12 +77,12 @@ public class ProjectDataTablePanel extends JPanel {
 	private void buildContent() {
 		model = new ProjectDataTableModel(tool);
 		model.addThreadedTableModelListener(new SelectPendingFilesListener());
-		table = new GFilterTable<DomainFileInfo>(model) {
+		table = new GFilterTable<>(model) {
 			@Override
 			protected GThreadedTablePanel<DomainFileInfo> createThreadedTablePanel(
 					ThreadedTableModel<DomainFileInfo, ?> threadedModel) {
 
-				return new GThreadedTablePanel<DomainFileInfo>(threadedModel) {
+				return new GThreadedTablePanel<>(threadedModel) {
 					@Override
 					protected GTable createTable(ThreadedTableModel<DomainFileInfo, ?> m) {
 						// the table's default actions aren't that useful in the Front End
@@ -116,16 +114,12 @@ public class ProjectDataTablePanel extends JPanel {
 		table.dispose(); // this will dispose the gTable as well
 	}
 
-	/**
-	 * Set the help location for the data tree.
-	 */
 	public void setHelpLocation(HelpLocation helpLocation) {
 		HelpService help = Help.getHelpService();
 		help.registerHelp(table, helpLocation);
 	}
 
 	private class DateCellRenderer extends GTableCellRenderer {
-		DateFormat formatter = new SimpleDateFormat("MMM dd, yyyy HH:mm");
 
 		@Override
 		public Component getTableCellRendererComponent(GTableCellRenderingData data) {
@@ -135,7 +129,7 @@ public class ProjectDataTablePanel extends JPanel {
 			Object value = data.getValue();
 
 			if (value != null) {
-				renderer.setText(formatter.format((Date) value));
+				renderer.setText(DateUtils.formatDateTimestamp((Date) value));
 			}
 			else {
 				renderer.setText("");
@@ -221,8 +215,8 @@ public class ProjectDataTablePanel extends JPanel {
 		}
 	}
 
-	private JLabel capacityExceededText =
-		new JLabel("<HTML><CENTER><I>Table view disabled for very large projects, or<BR>" +
+	private GHtmlLabel capacityExceededText =
+		new GHtmlLabel("<HTML><CENTER><I>Table view disabled for very large projects, or<BR>" +
 			"if an older project/repository filesystem is in use.<BR>" +
 			"View will remain disabled until project is closed.</I></CENTER></HTML>");
 
@@ -267,10 +261,11 @@ public class ProjectDataTablePanel extends JPanel {
 			capacityExceeded = true;
 			this.projectData.removeDomainFolderChangeListener(changeListener);
 			model.setProjectData(null);
-
-			GGlassPane glassPane = (GGlassPane) gTable.getRootPane().getGlassPane();
-			glassPane.removePainter(painter);
-			glassPane.addPainter(painter);
+			SystemUtilities.runSwingLater(() -> {
+				GGlassPane glassPane = (GGlassPane) gTable.getRootPane().getGlassPane();
+				glassPane.removePainter(painter);
+				glassPane.addPainter(painter);
+			});
 		}
 	}
 
@@ -286,7 +281,7 @@ public class ProjectDataTablePanel extends JPanel {
 			list.add(info.getDomainFile());
 		}
 		return new ProjectDataActionContext(provider, projectData,
-			model.getRowObject(selectedRows[0]), null, list, table, true);
+			model.getRowObject(selectedRows[0]), null, list, gTable, true);
 	}
 
 	private void checkOpen(MouseEvent e) {
@@ -487,9 +482,8 @@ public class ProjectDataTablePanel extends JPanel {
 		}
 
 		@Override
-		public List<DockingActionIf> getDockingActions(ActionContext context) {
-			// the table's default actions aren't that useful in the Front End
-			return Collections.emptyList();
+		protected boolean supportsPopupActions() {
+			return false;
 		}
 	}
 }

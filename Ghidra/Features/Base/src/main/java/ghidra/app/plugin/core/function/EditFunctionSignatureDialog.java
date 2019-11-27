@@ -22,7 +22,10 @@ import java.util.List;
 import javax.swing.*;
 
 import docking.DialogComponentProvider;
+import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.combobox.GhidraComboBox;
+import docking.widgets.label.GDLabel;
+import docking.widgets.label.GLabel;
 import ghidra.app.cmd.function.ApplyFunctionSignatureCmd;
 import ghidra.app.services.DataTypeManagerService;
 import ghidra.app.util.cparser.C.ParseException;
@@ -37,6 +40,7 @@ import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.SourceType;
 import ghidra.util.Msg;
+import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.InvalidInputException;
 
 /**
@@ -127,7 +131,7 @@ public class EditFunctionSignatureDialog extends DialogComponentProvider {
 		String signature = function.getPrototypeString(false, false);
 		signatureField = new JTextField(signature.length()); // add some extra room to edit
 		signatureField.setText(signature);
-		signatureLabel = new JLabel("Signature:");
+		signatureLabel = new GDLabel("Signature:");
 		signaturePanel.add(signatureLabel);
 		signaturePanel.add(signatureField);
 
@@ -164,12 +168,12 @@ public class EditFunctionSignatureDialog extends DialogComponentProvider {
 			function.getProgram().getFunctionManager().getCallingConventionNames();
 		String[] choices = callingConventions.toArray(new String[callingConventions.size()]);
 		setCallingConventionChoices(choices);
-		parentPanel.add(new JLabel("Calling Convention:"));
+		parentPanel.add(new GLabel("Calling Convention:"));
 		parentPanel.add(callingConventionComboBox);
 	}
 
 	protected void installInlineWidget(JPanel parentPanel) {
-		inlineCheckBox = new JCheckBox("Inline");
+		inlineCheckBox = new GCheckBox("Inline");
 		inlineCheckBox.addChangeListener(e -> {
 			if (inlineCheckBox.isSelected() && callFixupComboBox != null) {
 				callFixupComboBox.setSelectedItem(NONE_CHOICE);
@@ -179,7 +183,7 @@ public class EditFunctionSignatureDialog extends DialogComponentProvider {
 	}
 
 	protected void installNoReturnWidget(JPanel parentPanel) {
-		noReturnCheckBox = new JCheckBox("No Return");
+		noReturnCheckBox = new GCheckBox("No Return");
 		parentPanel.add(noReturnCheckBox);
 	}
 
@@ -214,7 +218,7 @@ public class EditFunctionSignatureDialog extends DialogComponentProvider {
 			callFixupComboBox.setSelectedItem(callFixupName);
 		}
 
-		callFixupPanel.add(new JLabel("Call-Fixup:"));
+		callFixupPanel.add(new GLabel("Call-Fixup:"));
 		callFixupPanel.add(callFixupComboBox);
 
 		callFixupPanel.add(Box.createGlue());
@@ -291,8 +295,13 @@ public class EditFunctionSignatureDialog extends DialogComponentProvider {
 	@Override
 	protected void okCallback() {
 		// only close the dialog if the user made valid changes
-		if (applyChanges()) {
-			close();
+		try {
+			if (applyChanges()) {
+				close();
+			}
+		}
+		catch (CancelledException e) {
+			// ignore - do not close
 		}
 	}
 
@@ -307,8 +316,9 @@ public class EditFunctionSignatureDialog extends DialogComponentProvider {
 	 * command and executed.
 	 *
 	 * @return true if the command was successfully created.
+	 * @throws CancelledException if operation cancelled by user
 	 */
-	protected boolean applyChanges() {
+	protected boolean applyChanges() throws CancelledException {
 		// create the command
 		Command command = createCommand();
 
@@ -326,9 +336,9 @@ public class EditFunctionSignatureDialog extends DialogComponentProvider {
 		return true;
 	}
 
-	protected FunctionDefinitionDataType parseSignature() {
-		FunctionSignatureParser parser = new FunctionSignatureParser(getProgram(),
-			tool.getService(DataTypeManagerService.class));
+	protected FunctionDefinitionDataType parseSignature() throws CancelledException {
+		FunctionSignatureParser parser = new FunctionSignatureParser(
+			getProgram().getDataTypeManager(), tool.getService(DataTypeManagerService.class));
 		try {
 			return parser.parse(getFunction().getSignature(), getSignature());
 		}
@@ -338,7 +348,7 @@ public class EditFunctionSignatureDialog extends DialogComponentProvider {
 		return null;
 	}
 
-	private Command createCommand() {
+	private Command createCommand() throws CancelledException {
 
 		Command cmd = null;
 		if (!getSignature().equals(this.oldFunctionSignature) || !isSameCallingConvention() ||

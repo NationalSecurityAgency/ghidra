@@ -15,38 +15,6 @@
 apply plugin: 'cpp'
 apply plugin: 'c'
 
-project.ext.VISUAL_STUDIO_BASE_DIR = "C:\\Program Files (x86)\\Microsoft Visual Studio\\2017"
-
-// Ok, this is stupid, but mac and linux can't handle files paths that start with c:
-// These paths are actually only used when running on windows, but the paths gets evaulated
-// as a file no matter what platform you run gradle on.  So the best solution I can think of is as
-// follows.
-if (org.gradle.internal.os.OperatingSystem.current().isWindows()) {
-	
-	project.ext.VISUAL_STUDIO_INSTALL_DIR = project.ext.VISUAL_STUDIO_BASE_DIR + "\\Professional"
-	if (!file(project.ext.VISUAL_STUDIO_INSTALL_DIR).exists()) {
-		project.ext.VISUAL_STUDIO_INSTALL_DIR = project.ext.VISUAL_STUDIO_BASE_DIR + "\\Community"
-	}
-
-	// TODO: Use of this will require coping with VC version in path
-	project.ext.WINDOWS_KITS_DIR = "C:/Program Files (x86)/Windows Kits/10.0"
-	
-	project.ext.VISUAL_STUDIO_VCVARS_CMD = "\"${VISUAL_STUDIO_INSTALL_DIR}\\VC\\Auxiliary\\Build\\vcvarsall.bat\" x86_amd64"
-	
-	// TODO: force VisualCpp installDir and windowsSdkDir
-	
-	// NOTE: Windows 7 targeting requires the use of the Windows 8.1 SDK and setting the
-	// WINVER property a value of "0x0601" which may be specified to the compiler/linker.
-	// If using a VS Solution this must be specified within the project file(s).
-	project.ext.WINVER = "0x0601"
-}
-else {
-	project.ext.VISUAL_STUDIO_INSTALL_DIR = "/"
-	project.ext.WINDOWS_KITS_DIR = "/"
-	project.ext.VISUAL_STUDIO_VCVARS_CMD = "NA"
-}
-
-
 /****************************************************************************
  * Defines the platforms we have to support in Ghidra.  This model is used 
  * for all native builds and should be extended by each module as-needed.
@@ -75,6 +43,21 @@ model {
 }
 
 /*******************************************************************************************
+ * Task: verify presence of correct tool chain version for current platform
+ ******************************************************************************************/
+task CheckToolChain {
+	// Native C/Cpp plugins will trigger failure if no tool chain found
+	doFirst {
+		if (org.gradle.internal.os.OperatingSystem.current().isWindows()) {
+			// ensure that required MS Visual Studio is installed
+			if (!VISUAL_STUDIO_INSTALL_DIR) {
+				throw new GradleException("Visual Studio not found!");
+			}	
+		}
+	}
+}
+
+/*******************************************************************************************
  * If task1 contains the given platform name, then it needs to be executed before 
  * task2.  The task1 must be of type LinkExecutable or LinkSharedLibrary so that the
  * targetPlatform may be inspected.
@@ -83,6 +66,7 @@ model {
 def addTaskDependencyForMyPlatform(task1, task2, platform) {
 	if (platform.equals(task1.targetPlatform.get().name)) {
 		task2.dependsOn task1.path
+		task1.dependsOn CheckToolChain
 	}
 }
 
@@ -110,10 +94,11 @@ def isNativeBinaryMakeTask(Task task, String platform) {
  ******************************************************************************************/
 tasks.addRule("Pattern: buildNatives_<platform name>]: build all natives for given platform") { String taskName ->
 
-	if (taskName.startsWith("buildNatives_") && !project.hasProperty('EXCLUDE_FROM_NATIVE_BUILD')) {
+	if (taskName.startsWith("buildNatives_")) {
 		String platform = taskName - "buildNatives_"
 		
 		task(taskName)  { myTask ->
+		
 			project.tasks.withType(LinkExecutable) { t ->
 				addTaskDependencyForMyPlatform(t, myTask, platform)
 			}
@@ -123,6 +108,7 @@ tasks.addRule("Pattern: buildNatives_<platform name>]: build all natives for giv
 			project.tasks.each { t -> 
 				if (isNativeBinaryMakeTask(t, platform)) {
 					myTask.dependsOn t.path
+					t.dependsOn CheckToolChain
 				}
 			}
 			
@@ -136,15 +122,7 @@ tasks.addRule("Pattern: buildNatives_<platform name>]: build all natives for giv
 			project.tasks.whenTaskAdded { t -> 
 				if (isNativeBinaryMakeTask(t, platform)) {
 					myTask.dependsOn t.path
-				}
-			}
-			doFirst {
-				if (org.gradle.internal.os.OperatingSystem.current().isWindows()) {
-					// ensure that required MS Visual Studio is installed where expected
-					String msg = "Microsoft Visual Studio install not found: ${project.ext.VISUAL_STUDIO_BASE_DIR}\n" + 
-						"Adjust path in Ghidra/GPL/nativeBuildProperties.gradle if needed."
-					assert file(project.ext.VISUAL_STUDIO_BASE_DIR).exists() : msg
-					assert file(project.ext.VISUAL_STUDIO_INSTALL_DIR).exists() : msg
+					t.dependsOn CheckToolChain
 				}
 			}
 		}
@@ -180,3 +158,32 @@ tasks.addRule("Pattern: prebuildNatives_<platform name>]: build all natives for 
 		}
 	}
 }
+
+/*****************************************************************************************
+ * The following block of code changes the output directory for native builds
+ * to <projectDir>/build/os/<platform>/<executable>  ?? is there a better way to do this?
+ ****************************************************************************************/
+gradle.taskGraph.whenReady {
+		def p = this.project
+		p.tasks.withType(LinkExecutable).each { t ->
+			File f = t.linkedFile.getAsFile().get()
+			String filename = f.getName()
+			NativePlatform platform = t.targetPlatform.get()
+			String osName = platform.getName()
+			t.linkedFile = p.file("build/os/${osName}/$filename")
+		}
+		p.tasks.withType(LinkSharedLibrary).each { t ->
+			File f = t.linkedFile.getAsFile().get()
+			String filename = f.getName()
+			NativePlatform platform = t.targetPlatform.get()
+			String osName = platform.getName()
+			t.linkedFile = p.file("build/os/${osName}/$filename")
+		}
+}
+
+/*****************************************************************************************
+ * The following block of code ensures that the buildNatives_<platform> task is used
+ * during assembly to ensure that missing toolchain generates an appropriate error
+ ****************************************************************************************/
+def currentPlatform = getCurrentPlatformName()
+assemble.dependsOn "buildNatives_$currentPlatform" 

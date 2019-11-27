@@ -15,8 +15,7 @@
  */
 package docking.widgets.table;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 /**
  * Combines multiple Table Filters into a single TableFilter that can be applied.  All contained
@@ -50,6 +49,11 @@ public class CombinedTableFilter<T> implements TableFilter<T> {
 			}
 		}
 		return true;
+	}
+
+	@Override
+	public boolean isEmpty() {
+		return filters.isEmpty();
 	}
 
 	/**
@@ -101,4 +105,30 @@ public class CombinedTableFilter<T> implements TableFilter<T> {
 		}
 		return false;
 	}
+
+	@Override
+	public int hashCode() {
+		// not meant to put in hashing structures; the data for equals may change over time
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null) {
+			return false;
+		}
+		if (getClass() != obj.getClass()) {
+			return false;
+		}
+
+		CombinedTableFilter<?> other = (CombinedTableFilter<?>) obj;
+		if (!Objects.equals(filters, other.filters)) {
+			return false;
+		}
+		return true;
+	}
+
 }

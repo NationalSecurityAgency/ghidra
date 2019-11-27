@@ -17,7 +17,7 @@ package ghidra.app.util.bin.format.elf.relocation;
 
 import java.util.*;
 
-import ghidra.app.util.MemoryBlockUtil;
+import ghidra.app.util.MemoryBlockUtils;
 import ghidra.app.util.bin.format.elf.*;
 import ghidra.app.util.bin.format.elf.extend.MIPS_ElfExtension;
 import ghidra.app.util.importer.MessageLog;
@@ -30,7 +30,6 @@ import ghidra.program.model.symbol.SymbolUtilities;
 import ghidra.util.*;
 import ghidra.util.exception.AssertException;
 import ghidra.util.exception.NotFoundException;
-import ghidra.util.task.TaskMonitor;
 
 public class MIPS_ElfRelocationHandler extends ElfRelocationHandler {
 
@@ -38,8 +37,6 @@ public class MIPS_ElfRelocationHandler extends ElfRelocationHandler {
 //	private static final int DTP_OFFSET = 0x8000;
 
 //	private static final String GOT_SYMBOL_NAME = "_GLOBAL_OFFSET_TABLE_";
-	private static final String GP_DISP_SYMBOL_NAME = "_gp_disp";
-	private static final String GP_GNU_LOCAL_SYMBOL_NAME = "__gnu_local_gp";
 
 	@Override
 	public boolean canRelocate(ElfHeader elf) {
@@ -160,13 +157,14 @@ public class MIPS_ElfRelocationHandler extends ElfRelocationHandler {
 		mipsRelocationContext.savedAddend = 0;
 
 		boolean isGpDisp = false;
-		if (GP_DISP_SYMBOL_NAME.equals(symbolName)) {
+		if (MIPS_ElfExtension.MIPS_GP_DISP_SYMBOL_NAME.equals(symbolName)) {
 			isGpDisp = true;
 		}
-		else if (GP_GNU_LOCAL_SYMBOL_NAME.equals(symbolName)) {
+		else if (MIPS_ElfExtension.MIPS_GP_GNU_LOCAL_SYMBOL_NAME.equals(symbolName)) {
 			// TODO: GP based relocation not yet supported - need to evaluate an example
 			markAsError(program, relocationAddress, Integer.toString(relocType), symbolName,
-				GP_GNU_LOCAL_SYMBOL_NAME + " relocation not yet supported", log);
+				MIPS_ElfExtension.MIPS_GP_GNU_LOCAL_SYMBOL_NAME + " relocation not yet supported",
+				log);
 			if (saveValue) {
 				mipsRelocationContext.savedAddendHasError = true;
 			}
@@ -404,10 +402,9 @@ public class MIPS_ElfRelocationHandler extends ElfRelocationHandler {
 				break;
 
 			case MIPS_ElfRelocationConstants.R_MIPS_REL32:
-				// TODO: some guess-work was used here
+				// TODO: unsure if reloc valid for symbolIndex != 0
 				if (symbolIndex == 0) {
-					// TODO: may need to use relocation section load address if applicable
-					symbolValue = program.getImageBase().getOffset();
+					symbolValue = mipsRelocationContext.getImageBaseWordAdjustmentOffset();
 				}
 				value = (int) symbolValue;
 				value += mipsRelocationContext.extractAddend() ? oldValue : addend;
@@ -421,21 +418,15 @@ public class MIPS_ElfRelocationHandler extends ElfRelocationHandler {
 			case MIPS_ElfRelocationConstants.R_MICROMIPS_26_S1:
 				int shift = (relocType == MIPS_ElfRelocationConstants.R_MICROMIPS_26_S1) ? 1 : 2;
 				if (mipsRelocationContext.extractAddend()) {
-					addend = oldValue;
-					addend &= MIPS_ElfRelocationConstants.MIPS_LOW26;
-					addend <<= shift;
+					addend = (oldValue & MIPS_ElfRelocationConstants.MIPS_LOW26) << shift;
+				}
+				if (!elfSymbol.isLocal() && !elfSymbol.isSection()) {
+					addend = signExtend((int) addend, 26 + shift);
 				}
 				// TODO: cross-mode jump detection/handling is unsupported
-				if (elfSymbol.isLocal()) {
-					value = (int) ((addend |
-						((offset + 4) & (0xfc000000 << shift)) + symbolValue) >> shift);
-				}
-				else {
-					value = (signExtend((int) addend, 26 + shift) + (int) symbolValue) >> shift;
-				}
-				value &= MIPS_ElfRelocationConstants.MIPS_LOW26;
-
-				newValue = (oldValue & ~MIPS_ElfRelocationConstants.MIPS_LOW26) | value;
+				value = (int) (addend + symbolValue) >> shift;
+				newValue = (oldValue & ~MIPS_ElfRelocationConstants.MIPS_LOW26) |
+					(value & MIPS_ElfRelocationConstants.MIPS_LOW26);
 				writeNewValue = true;
 				break;
 
@@ -564,24 +555,47 @@ public class MIPS_ElfRelocationHandler extends ElfRelocationHandler {
 				break;
 
 			case MIPS_ElfRelocationConstants.R_MIPS_GPREL16:
+			case MIPS_ElfRelocationConstants.R_MIPS_GPREL32:
 			case MIPS_ElfRelocationConstants.R_MIPS16_GPREL:
 			case MIPS_ElfRelocationConstants.R_MICROMIPS_GPREL16:
 			case MIPS_ElfRelocationConstants.R_MICROMIPS_GPREL7_S2:
 			case MIPS_ElfRelocationConstants.R_MIPS_LITERAL:
 			case MIPS_ElfRelocationConstants.R_MICROMIPS_LITERAL:
 				if (mipsRelocationContext.extractAddend()) {
-					if (relocType == MIPS_ElfRelocationConstants.R_MICROMIPS_GPREL7_S2) {
-						addend = (oldValue & 0x7f0000) >> 14;
+					if (relocType == MIPS_ElfRelocationConstants.R_MIPS_GPREL32) {
+						addend = oldValue;
 					}
 					else {
 						addend = oldValue & 0xffff;
+						if (relocType == MIPS_ElfRelocationConstants.R_MICROMIPS_GPREL7_S2) {
+							addend <<= 2;
+						}
+						addend = signExtend((int) addend, 16);
 					}
-					addend = signExtend((int) addend, 16);
+				}
+
+				long gp0 = 0;
+				if (elfSymbol.isLocal() &&
+					(relocType == MIPS_ElfRelocationConstants.R_MIPS_GPREL16 ||
+						relocType == MIPS_ElfRelocationConstants.R_MIPS_GPREL32)) {
+					gp0 = mipsRelocationContext.getGP0Value();
+					if (gp0 == -1) {
+						markAsError(mipsRelocationContext.getProgram(), relocationAddress,
+							Integer.toString(relocType), symbolName,
+							"Failed to perform local GP0-based relocation (requires .reginfo data)",
+							mipsRelocationContext.getLog());
+						if (saveValue) {
+							mipsRelocationContext.savedAddendHasError = true;
+						}
+						return;
+					}
+					if (gp0 == 0) {
+						gp0 = mipsRelocationContext.getImageBaseWordAdjustmentOffset();
+					}
 				}
 
 				long gp = mipsRelocationContext.getGPValue();
 				if (gp == -1) {
-					// Unhandled GOT/GP case
 					markAsError(mipsRelocationContext.getProgram(), relocationAddress,
 						Integer.toString(relocType), symbolName,
 						"Failed to perform GP-based relocation", mipsRelocationContext.getLog());
@@ -591,24 +605,12 @@ public class MIPS_ElfRelocationHandler extends ElfRelocationHandler {
 					return;
 				}
 
-				if (elfSymbol.isSection()) {
-					// TODO: this computation has been completely fudged to get the desired results.
-					// It is unclear why the addend is not needed or the 0x10 factor.  This could
-					// be specific to the test sample and may break for others.  This may reflect
-					// the offset from the start of the function which could easily vary and may break.
-					value = (int) (offset - gp - 0x10); // value appears to be functionStart (t9) - gp, but we don't know where the function start is
-				}
-				else {
-					value = (int) (symbolValue + addend - gp);
-				}
+				value = (int) (symbolValue + addend - gp + gp0);
 
-				// TODO: unsure if local symbol needs additional gp adjustment
-				if (relocType == MIPS_ElfRelocationConstants.R_MICROMIPS_GPREL7_S2) {
-					newValue = (oldValue & ~0x7f0000) | ((value & 0x7f) << 16);
-				}
-				else {
-					newValue = (oldValue & ~0xffff) | (value & 0xffff);
-				}
+				int mask =
+					relocType == MIPS_ElfRelocationConstants.R_MIPS_GPREL32 ? 0xffffffff : 0xffff;
+				newValue = (oldValue & ~mask) | (value & mask);
+
 				writeNewValue = true;
 				break;
 
@@ -1073,8 +1075,6 @@ public class MIPS_ElfRelocationHandler extends ElfRelocationHandler {
 		 */
 		public long getGPValue() {
 
-			// TODO: 64-bit should really use .MIPS.options REGINFO.ri_gp_value in some capacity
-
 			long gp = getAdjustedGPValue();
 			if (gp == -1) {
 
@@ -1088,7 +1088,7 @@ public class MIPS_ElfRelocationHandler extends ElfRelocationHandler {
 				if (sectionGotAddress == Address.NO_ADDRESS) {
 					return -1;
 				}
-				// gp if defined as 0x7ff0 byte offset into the global offset table
+				// gp is defined as 0x7ff0 byte offset into the global offset table
 				return sectionGotAddress.getOffset() + 0x7ff0;
 			}
 
@@ -1152,14 +1152,13 @@ public class MIPS_ElfRelocationHandler extends ElfRelocationHandler {
 			if (lastSectionGotEntryAddress == null) {
 				return;
 			}
-			MemoryBlockUtil mbu = loadHelper.getMemoryBlockUtil();
 			int size = (int) lastSectionGotEntryAddress.subtract(sectionGotAddress) + 1;
 			String sectionName = relocationTable.getSectionToBeRelocated().getNameAsString();
 			String blockName = getSectionGotName();
 			try {
-				MemoryBlock block = mbu.createInitializedBlock(blockName, sectionGotAddress, null,
-					size, "GOT for " + sectionName + " section", "MIPS-Elf Loader", true, false,
-					false, TaskMonitor.DUMMY);
+				MemoryBlock block = MemoryBlockUtils.createInitializedBlock(program, false,
+					blockName, sectionGotAddress, size, "GOT for " + sectionName + " section",
+					"MIPS-Elf Loader", true, false, false, loadHelper.getLog());
 				DataConverter converter =
 					program.getMemory().isBigEndian() ? BigEndianDataConverter.INSTANCE
 							: LittleEndianDataConverter.INSTANCE;
@@ -1176,24 +1175,35 @@ public class MIPS_ElfRelocationHandler extends ElfRelocationHandler {
 					loadHelper.createData(addr, PointerDataType.dataType);
 				}
 			}
-			catch (AddressOverflowException | MemoryAccessException e) {
+			catch (MemoryAccessException e) {
 				throw new AssertException(e); // unexpected
 			}
 		}
 
 		/**
 		 * Get the GP value
-		 * @param mipsRelocationContext
 		 * @return adjusted GP value or -1 if _mips_gp_value symbol not defined.
 		 */
-		long getAdjustedGPValue(/* reloc_object */) {
-
-			// TODO: should we try using reginfo and gp_value information if needed
+		long getAdjustedGPValue() {
 
 			// TODO: this is a simplified use of GP and could be incorrect when multiple GPs exist
 
 			Symbol symbol = SymbolUtilities.getLabelOrFunctionSymbol(program,
 				MIPS_ElfExtension.MIPS_GP_VALUE_SYMBOL, err -> getLog().error("MIPS_ELF", err));
+			if (symbol == null) {
+				return -1;
+			}
+			return symbol.getAddress().getOffset();
+		}
+
+		/**
+		 * Get the GP0 value (from .reginfo and generated symbol)
+		 * @param mipsRelocationContext
+		 * @return adjusted GP0 value or -1 if _mips_gp0_value symbol not defined.
+		 */
+		long getGP0Value() {
+			Symbol symbol = SymbolUtilities.getLabelOrFunctionSymbol(program,
+				MIPS_ElfExtension.MIPS_GP0_VALUE_SYMBOL, err -> getLog().error("MIPS_ELF", err));
 			if (symbol == null) {
 				return -1;
 			}

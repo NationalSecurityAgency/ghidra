@@ -16,7 +16,6 @@
 package ghidra.program.model.data;
 
 import ghidra.docking.settings.Settings;
-import ghidra.program.model.listing.Data;
 import ghidra.program.model.mem.MemBuffer;
 
 /**
@@ -38,23 +37,6 @@ public interface ArrayStringable extends DataType {
 	public boolean hasStringValue(Settings settings);
 
 	/**
-	 * Returns a {@link StringDataInstance} representing this ArrayStringable's contents.
-	 *
-	 * <p>
-	 * @param buf {@link MemBuffer} containing the data bytes.
-	 * @param settings {@link Settings} object containing settings, usually the {@link Data}
-	 * element.
-	 * @param length number of bytes that this data object contains (ie. how big was the array)
-	 * @return a new {@link StringDataInstance} representing this ArrayStringable's contents,
-	 * never NULL.  See {@link StringDataInstance#NULL_INSTANCE}.
-	 */
-	public default StringDataInstance getStringDataInstance(MemBuffer buf, Settings settings,
-			int length) {
-		return hasStringValue(settings) ? new StringDataInstance(this, settings, buf, length)
-				: StringDataInstance.NULL_INSTANCE;
-	}
-
-	/**
 	 * For cases where an array of this type exists, get the array value as a String.
 	 * When data corresponds to character data it should generally be expressed as a string.
 	 * A null value is returned if not supported or memory is uninitialized.
@@ -64,19 +46,10 @@ public interface ArrayStringable extends DataType {
 	 * @return array value expressed as a string or null if data is not character data
 	 */
 	public default String getArrayString(MemBuffer buf, Settings settings, int length) {
-		return getStringDataInstance(buf, settings, length).getStringValue();
-	}
-
-	/**
-	 * For cases where an array of this type exists, get the representation string which
-	 * corresponds to the array (example: String for an array of chars).
-	 * @param buf memory buffer containing the bytes.
-	 * @param settings the Settings object
-	 * @param length the length of the data.
-	 * @return array representation or null of an array representation is not supported.
-	 */
-	public default String getArrayRepresentation(MemBuffer buf, Settings settings, int length) {
-		return getStringDataInstance(buf, settings, length).getStringRepresentation();
+		if (hasStringValue(settings) && buf.isInitializedMemory()) {
+			return new StringDataInstance(this, settings, buf, length).getStringValue();
+		}
+		return null;
 	}
 
 	/**
@@ -126,40 +99,4 @@ public interface ArrayStringable extends DataType {
 		return (dt instanceof ArrayStringable) ? (ArrayStringable) dt : null;
 	}
 
-	/**
-	 * Get the appropriate string to use as the label prefix
-	 * for an array which corresponds to an ArrayStringable
-	 * element data type.
-	 * @param arrayDt array data type
-	 * @param buf memory buffer containing the bytes.
-	 * @param settings the Settings object
-	 * @param length the length of the data.
-	 * @param options options for how to format the default label prefix.
-	 * @return the ArrayStringable label prefix or null if not applicable
-	 */
-	public static String getArrayStringableLabelPrefix(Array arrayDt, MemBuffer buf,
-			Settings settings, int len, DataTypeDisplayOptions options) {
-		ArrayStringable as = getArrayStringable(arrayDt.getDataType());
-		return (as != null) ? as.getArrayDefaultLabelPrefix(buf, settings, len, options) : null;
-	}
-
-	/**
-	 * Get the appropriate string to use as the offcut label prefix
-	 * for an array which corresponds to an ArrayStringable
-	 * element data type.
-	 * @param arrayDt array data type
-	 * @param buf memory buffer containing the bytes.
-	 * @param settings the Settings object
-	 * @param length the length of the data.
-	 * @param options options for how to format the default label prefix.
-	 * @param offcutLength offcut offset from start of buf
-	 * @return the ArrayStringable offcut label prefix or null if not applicable
-	 */
-	public static String getArrayStringableOffcutLabelPrefix(Array arrayDt, MemBuffer buf,
-			Settings settings, int len, DataTypeDisplayOptions options, int offcutLength) {
-		ArrayStringable as = getArrayStringable(arrayDt.getDataType());
-		return (as != null)
-				? as.getArrayDefaultOffcutLabelPrefix(buf, settings, len, options, offcutLength)
-				: null;
-	}
 }

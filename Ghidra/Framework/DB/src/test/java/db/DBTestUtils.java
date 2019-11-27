@@ -372,11 +372,15 @@ public class DBTestUtils {
 				rec.setLongValue(i, random.nextLong());
 			}
 			else if (fields[i] instanceof StringField) {
-				if (varDataSize < 0) {
+				int size = varDataSize;
+				if (size < 0) {
+					size = random.nextInt(6) - 1;
+				}
+				if (size < 0) {
 					rec.setString(i, null);
 				}
 				else {
-					char[] chars = new char[varDataSize];
+					char[] chars = new char[size];
 					for (int n = 0; n < chars.length; n++) {
 						chars[n] = (char) (random.nextInt() & 0x7fff);
 					}
@@ -385,11 +389,15 @@ public class DBTestUtils {
 				}
 			}
 			else if (fields[i] instanceof BinaryField) {
-				if (varDataSize < 0) {
+				int size = varDataSize;
+				if (size < 0) {
+					size = random.nextInt(6) - 1;
+				}
+				if (size < 0) {
 					rec.setBinaryData(i, null);
 				}
 				else {
-					byte[] bytes = new byte[varDataSize];
+					byte[] bytes = new byte[size];
 					random.nextBytes(bytes);
 					rec.setBinaryData(i, bytes);
 				}

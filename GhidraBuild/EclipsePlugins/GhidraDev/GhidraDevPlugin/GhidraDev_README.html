@@ -19,7 +19,7 @@
 <h1>GhidraDev README</h1>
 <p>GhidraDev provides support for developing and debugging Ghidra scripts and modules in Eclipse.
 </p>
-<p>The information provided in this document is effective as of GhidraDev 2.0.0 and is subject to
+<p>The information provided in this document is effective as of GhidraDev 2.1.0 and is subject to
 change with future releases.</p>
 
 <ul>
@@ -31,8 +31,6 @@ change with future releases.</p>
     <li><a href="#ManualInstall">Manual Installation in Eclipse</a></li>
     <li><a href="#AutoInstall">Automatic Installation through Ghidra</a></li>
   </ul>
-  <li><a href="#Uninstall">Uninstalling</a></li>
-  <li><a href="#Upgrade">Upgrading</a></li>
   <li><a href="#Features">GhidraDev Features</a></li>
   <ul>
     <li><a href="#NewGhidraScript">New Ghidra Script</a></li>
@@ -48,12 +46,30 @@ change with future releases.</p>
     <li><a href="#PyDevInstall">Installing PyDev</a></li>
     <li><a href="#PyDevConfigure">Configuring PyDev</a></li>
   </ul>
+  <li><a href="#Upgrade">Upgrading</a></li>
+  <li><a href="#Uninstall">Uninstalling</a></li>
   <li><a href="#FAQ">Frequently Asked Questions</a></li>
   <li><a href="#AdditionalResources">Additional Resources</a></li>
 </ul>
 
 <h2><a name="ChangeHistory"></a>Change History</h2>
-<p><u><b>2.0.0</b>:</u></p>
+<p><u><b>2.1.0</b>:</u> 
+<ul>
+  <li>
+    Added support for Ghidra 9.1.  GhidraDev 2.1.0 will be unable to create new Eclipse projects for
+    versions of Ghidra earlier than 9.1.
+  </li>
+  <li>
+    Prevented Ghidra projects from being created inside of a Ghidra installation directory.
+  </li>
+  <li>
+    Added an <i>Environments</i> tab to the Ghidra run configuration for setting environment
+    variables when launching Ghidra.
+  </li>
+</ul>
+<p><u><b>2.0.1</b>:</u> Fixed exception that occurred when performing certain actions on a Ghidra 
+project that was imported from a previously exported Archive File.</p>
+<p><u><b>2.0.0</b>:</u> 
 <ul>
   <li>
     Improved Ghidra module project starting templates for Analyzer and Plugin and added new
@@ -92,7 +108,7 @@ that specify other projects on their build paths.</p>
 <h2><a name="MinimumRequirements"></a>Minimum Requirements</h2>
 <ul>
   <li>Eclipse 2018-12 4.10 or later</li>
-  <li>Ghidra 9.0 or later</li>
+  <li>Ghidra 9.1 or later</li>
 </ul>
 <p>(<a href="#top">Back to Top</a>)</p>
 
@@ -134,39 +150,7 @@ Eclipse, it will attempt to install GhidraDev into Eclipse's <i>dropins</i> dire
 is not already installed.</p>
 <p>(<a href="#top">Back to Top</a>)</p>
 
-<h2><a name="Uninstall"></a>Uninstalling</h2>
-<p>GhidraDev is uninstalled differently depending on how it was installed.  If GhidraDev was
-<a href="#ManualInstall">manually installed in Eclipse</a>, it can be uninstalled as follows from
-Eclipse:</p>
-<ol>
-  <li>Click <b>Help &#8594; About Eclipse</b></li>
-  <ul>
-    <li><i>For macOS:</i> <b>Eclipse &#8594; About Eclipse</b></li>
-  </ul>
-  <li>Click <b>Installation Details</b></li>
-  <li>Select GhidraDev</li>
-  <li>Click <b>Uninstall...</b></li>
-  <li>Select GhidraDev</li>
-  <li>Click <b>Finish</b></li>
-  <li>Click <b>Restart Now</b></li>
-</ol>
-<p>If GhidraDev was <a href="#AutoInstall">automatically installed through Ghidra</a>, it can be
-uninstalled by simply removing the GhidraDev file from Eclipse's <i>dropins</i> directory and
-restarting Eclipse.  The <i>dropins</i> directory can be found at the top level of Eclipse's
-installation directory.</p>
-<p>(<a href="#top">Back to Top</a>)</p>
-
-<h2><a name="Upgrade"></a>Upgrading</h2>
-<p>GhidraDev is upgraded differently depending on how it was installed.  If GhidraDev was
-<a href="#ManualInstall">manually installed in Eclipse</a>, it can be upgraded the same was it was
-<a href="#ManualInstall">installed</a>.</p>
-<p>If GhidraDev was <a href="#AutoInstall">automatically installed through Ghidra</a>, it can be
-upgraded by simply removing the GhidraDev file from Eclipse's <i>dropins</i> directory before
-following one of the two techniques described in the <a href="#Install">Installing GhidraDev</a>
-section.</p>
-<p>(<a href="#top">Back to Top</a>)</p>
-
-<h2><a name="Features"></a>GhidraDev Features</h2>
+<h2><a name="Features"></a>Features</h2>
 <p>GhidraDev provides a variety of features for creating and interacting with Ghidra-related
 projects in Eclipse.  GhidraDev supports creating both Ghidra script and Ghidra module projects.
 Ghidra scripts are typically designed as a single Java source file that is compiled by Ghidra at
@@ -174,8 +158,6 @@ runtime and run through Ghidra's Script Manager or passed to the Headless Analyz
 line for execution.  Ghidra modules are intended to represent larger, more complex features such as
 Analyzers or Plugins.  When Ghidra modules are ready for production, they can be exported and
 installed into Ghidra as an "extension".</p>
-<p>When GhidraDev is installed, a <i>GhidraDev</i> menu appears in Eclipse's
-title bar that provides direct access to these features:</p>
 <ul>
   <li>New</li>
   <ul>
@@ -313,6 +295,38 @@ reason GhidraDev was unable to find a Jython interpreter in the Ghidra installat
 to be added manually in the PyDev preferences.</p>
 <p>(<a href="#top">Back to Top</a>)</p>
 
+<h2><a name="Upgrade"></a>Upgrading</h2>
+<p>GhidraDev is upgraded differently depending on how it was installed.  If GhidraDev was
+<a href="#ManualInstall">manually installed in Eclipse</a>, it can be upgraded the same was it was
+<a href="#ManualInstall">installed</a>.</p>
+<p>If GhidraDev was <a href="#AutoInstall">automatically installed through Ghidra</a>, it can be
+upgraded by simply removing the GhidraDev file from Eclipse's <i>dropins</i> directory before
+following one of the two techniques described in the <a href="#Install">Installing GhidraDev</a>
+section.</p>
+<p>(<a href="#top">Back to Top</a>)</p>
+
+<h2><a name="Uninstall"></a>Uninstalling</h2>
+<p>GhidraDev is uninstalled differently depending on how it was installed.  If GhidraDev was
+<a href="#ManualInstall">manually installed in Eclipse</a>, it can be uninstalled as follows from
+Eclipse:</p>
+<ol>
+  <li>Click <b>Help &#8594; About Eclipse</b></li>
+  <ul>
+    <li><i>For macOS:</i> <b>Eclipse &#8594; About Eclipse</b></li>
+  </ul>
+  <li>Click <b>Installation Details</b></li>
+  <li>Select GhidraDev</li>
+  <li>Click <b>Uninstall...</b></li>
+  <li>Select GhidraDev</li>
+  <li>Click <b>Finish</b></li>
+  <li>Click <b>Restart Now</b></li>
+</ol>
+<p>If GhidraDev was <a href="#AutoInstall">automatically installed through Ghidra</a>, it can be
+uninstalled by simply removing the GhidraDev file from Eclipse's <i>dropins</i> directory and
+restarting Eclipse.  The <i>dropins</i> directory can be found at the top level of Eclipse's
+installation directory.</p>
+<p>(<a href="#top">Back to Top</a>)</p>
+
 <h2><a name="FAQ"></a>Frequently Asked Questions</h2>
 <ul>
   <li>
@@ -334,7 +348,7 @@ to be added manually in the PyDev preferences.</p>
     <ul>
       <li>
         <p>GhidraDev provides custom run configurations to launch Ghidra installations both in GUI
-        mode and headlessly.  See the <a href="#Launching"> Launching</a> section for information on
+        mode and headlessly.  See the <a href="#Launching">Launching</a> section for information on
         how to launch Ghidra from Eclipse.</p>
       </li>
     </ul>
@@ -359,7 +373,7 @@ to be added manually in the PyDev preferences.</p>
 please see:
 <ul>
   <li>
-    <b>Ghidra Scripting  slide deck:</b>
+    <b>Ghidra Scripting slide deck:</b>
     <i>&lt;GhidraInstallDir&gt;</i>/docs/GhidraClass/Intermediate/Scripting.html</li>
   </li>
 </ul>

@@ -102,31 +102,30 @@ class FunctionCategoryNode extends SymbolCategoryNode {
 	}
 
 	@Override
-	public void symbolAdded(Symbol symbol) {
-		if (!isChildrenLoadedOrInProgress()) {
-			return;
+	public SymbolNode symbolAdded(Symbol symbol) {
+		if (!isLoaded()) {
+			return null;
 		}
 
 		if (!supportsSymbol(symbol)) {
-			return;
+			return null;
 		}
 
 		// variables and parameters will be beneath function nodes, and our parent method
 		// will find them
 		if (isVariableParameterOrCodeSymbol(symbol)) {
-			super.symbolAdded(symbol);
-			return;
+			return super.symbolAdded(symbol);
 		}
 
 		// this namespace will be beneath function nodes, and our parent method will find them
 		if (isChildNamespaceOfFunction(symbol)) {
-			super.symbolAdded(symbol);
-			return;
+			return super.symbolAdded(symbol);
 		}
 
 		// ...otherwise, we have a function and we need to add it as a child of our parent node
-		GTreeNode newNode = SymbolNode.createNode(symbol, program);
+		SymbolNode newNode = SymbolNode.createNode(symbol, program);
 		doAddNode(this, newNode);
+		return newNode;
 	}
 
 	private boolean isChildNamespaceOfFunction(Symbol symbol) {
@@ -147,7 +146,7 @@ class FunctionCategoryNode extends SymbolCategoryNode {
 	private boolean isVariableParameterOrCodeSymbol(Symbol symbol) {
 		SymbolType symbolType = symbol.getSymbolType();
 		return symbolType.equals(SymbolType.LOCAL_VAR) || symbolType.equals(SymbolType.PARAMETER) ||
-			symbolType.equals(SymbolType.CODE);
+			symbolType.equals(SymbolType.LABEL);
 	}
 
 	@Override
@@ -171,7 +170,7 @@ class FunctionCategoryNode extends SymbolCategoryNode {
 	public GTreeNode findSymbolTreeNode(SymbolNode key, boolean loadChildren, TaskMonitor monitor) {
 
 		// if we don't have to loadChildren and we are not loaded get out.
-		if (!loadChildren && !isChildrenLoadedOrInProgress()) {
+		if (!loadChildren && !isLoaded()) {
 			return null;
 		}
 

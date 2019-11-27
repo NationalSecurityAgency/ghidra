@@ -16,14 +16,12 @@
 package ghidra.app.plugin.core.instructionsearch.ui;
 
 import java.awt.Font;
-import java.util.List;
 
 import javax.swing.JToolBar;
 import javax.swing.table.TableCellRenderer;
 
-import docking.ActionContext;
-import docking.action.DockingActionIf;
 import docking.widgets.table.GTable;
+import ghidra.app.plugin.core.instructionsearch.InstructionSearchPlugin;
 import ghidra.app.plugin.core.instructionsearch.model.*;
 import ghidra.util.table.GhidraTable;
 
@@ -88,6 +86,10 @@ public abstract class AbstractInstructionTable extends GhidraTable {
 		this.setRowHeight(this.getRowHeight() + CELL_HEIGHT_PADDING);
 	}
 
+	InstructionSearchPlugin getPlugin() {
+		return dialog.getPlugin();
+	}
+
 	/**
 	 * Returns the data object at the given cell location. We need to check
 	 * first to make sure the row/col values map to a valid cell.
@@ -107,17 +109,6 @@ public abstract class AbstractInstructionTable extends GhidraTable {
 			return null;
 		}
 		return (InstructionTableDataObject) getModel().getValueAt(row, col);
-	}
-
-	/**
-	 * Must invoke the parent implementation of this to have the context menu
-	 * created.
-	 *
-	 */
-	@Override
-	public List<DockingActionIf> getDockingActions(ActionContext context) {
-		List<DockingActionIf> list = super.getDockingActions(context);
-		return list;
 	}
 
 	/**

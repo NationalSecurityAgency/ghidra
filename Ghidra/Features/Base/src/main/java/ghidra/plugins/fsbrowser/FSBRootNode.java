@@ -20,7 +20,7 @@ import java.util.*;
 
 import javax.swing.Icon;
 
-import docking.widgets.tree.*;
+import docking.widgets.tree.GTreeNode;
 import ghidra.formats.gfilesystem.*;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
@@ -33,10 +33,9 @@ import ghidra.util.task.TaskMonitor;
  * <p>
  * Visible to just this package.
  */
-public class FSBRootNode extends GTreeSlowLoadingNode implements GTreeRootNode, FSBNode {
+public class FSBRootNode extends FSBNode {
 
 	private FileSystemRef fsRef;
-	private GTree tree;
 	private FSBFileNode prevNode;
 	private List<FSBRootNode> subRootNodes = new ArrayList<>();
 
@@ -44,9 +43,8 @@ public class FSBRootNode extends GTreeSlowLoadingNode implements GTreeRootNode, 
 		this.fsRef = fsRef;
 	}
 
-	FSBRootNode(FileSystemRef fsRef, GTree gTree, FSBFileNode prevNode) {
+	FSBRootNode(FileSystemRef fsRef, FSBFileNode prevNode) {
 		this.fsRef = fsRef;
-		this.tree = gTree;
 		this.prevNode = prevNode;
 	}
 
@@ -104,16 +102,6 @@ public class FSBRootNode extends GTreeSlowLoadingNode implements GTreeRootNode, 
 			}
 		}
 		return Collections.emptyList();
-	}
-
-	@Override
-	public void setGTree(GTree tree) {
-		this.tree = tree;
-	}
-
-	@Override
-	public GTree getGTree() {
-		return tree;
 	}
 
 	@Override

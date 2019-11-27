@@ -26,6 +26,7 @@ import javax.swing.SwingUtilities;
 
 import docking.ActionContext;
 import docking.action.*;
+import docking.tool.ToolConstants;
 import docking.widgets.fieldpanel.*;
 import docking.widgets.fieldpanel.support.AnchoredLayout;
 import ghidra.app.CorePluginPackage;
@@ -36,7 +37,6 @@ import ghidra.app.util.viewer.util.AddressIndexMap;
 import ghidra.framework.plugintool.PluginInfo;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.util.PluginStatus;
-import ghidra.framework.plugintool.util.ToolConstants;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Program;
 import ghidra.util.HelpLocation;

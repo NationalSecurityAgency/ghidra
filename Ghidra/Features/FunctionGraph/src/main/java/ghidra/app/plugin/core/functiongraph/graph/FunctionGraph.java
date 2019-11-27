@@ -30,6 +30,7 @@ import ghidra.graph.viewer.layout.LayoutListener.ChangeType;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSet;
 import ghidra.program.model.listing.Function;
+import ghidra.program.model.symbol.RefType;
 import ghidra.program.util.ProgramSelection;
 
 /**
@@ -478,7 +479,7 @@ public class FunctionGraph extends GroupingVisualGraph<FGVertex, FGEdge> {
 		HashSet<FGVertex> result = new LinkedHashSet<>();
 		for (FGVertex vertex : getVertices()) {
 			FGVertexType vertexType = vertex.getVertexType();
-			if (vertexType.isEntry()) {
+			if (vertex.isEntry()) {
 				result.add(vertex);
 			}
 			else if (vertexType == FGVertexType.GROUP) {
@@ -494,7 +495,7 @@ public class FunctionGraph extends GroupingVisualGraph<FGVertex, FGEdge> {
 		Set<FGVertex> groupVertices = vertex.getVertices();
 		for (FGVertex groupedVertex : groupVertices) {
 			FGVertexType vertexType = groupedVertex.getVertexType();
-			if (vertexType.isEntry()) {
+			if (vertex.isEntry()) {
 				return true;
 			}
 			else if (vertexType == FGVertexType.GROUP) {
@@ -586,6 +587,60 @@ public class FunctionGraph extends GroupingVisualGraph<FGVertex, FGEdge> {
 		FunctionGraph newGraph = new FunctionGraph(getFunction(), getSettings(), v, e);
 		newGraph.setOptions(getOptions());
 		return newGraph;
+	}
+
+	/**
+	 * A method to create dummy edges (with dummy vertices).  This is used to add entry and 
+	 * exit vertices as needed when a user grouping operation has consumed the entries or exits.
+	 * The returned edge will connect the current vertex containing the entry to a new dummy 
+	 * vertex that is a source for the graph.   Calling this method does not mutate this graph.
+	 * 
+	 * @return the edge
+	 */
+	public Set<FGEdge> createDummySources() {
+
+		Set<FGEdge> dummyEdges = new HashSet<>();
+		Set<FGVertex> entries = getEntryPoints();
+		for (FGVertex entry : entries) {
+			AbstractFunctionGraphVertex abstractVertex = (AbstractFunctionGraphVertex) entry;
+			FGController controller = abstractVertex.getController();
+			ListingFunctionGraphVertex newEntry = new DummyListingFGVertex(controller,
+				abstractVertex.getAddresses(), RefType.UNCONDITIONAL_JUMP, true);
+			newEntry.setVertexType(FGVertexType.ENTRY);
+			FGVertex groupVertex = getVertexForAddress(entry.getVertexAddress());
+			FGEdgeImpl edge =
+				new FGEdgeImpl(newEntry, groupVertex, RefType.UNCONDITIONAL_JUMP, options);
+			dummyEdges.add(edge);
+		}
+
+		return dummyEdges;
+	}
+
+	/**
+	 * A method to create dummy edges (with dummy vertices).  This is used to add entry and 
+	 * exit vertices as needed when a user grouping operation has consumed the entries or exits.
+	 * The returned edge will connect the current vertex containing the exit to a new dummy 
+	 * vertex that is a sink for the graph.   Calling this method does not mutate this graph.
+	 * 
+	 * @return the edge
+	 */
+	public Set<FGEdge> createDummySinks() {
+
+		Set<FGEdge> dummyEdges = new HashSet<>();
+		Set<FGVertex> exits = getExitPoints();
+		for (FGVertex exit : exits) {
+			AbstractFunctionGraphVertex abstractVertex = (AbstractFunctionGraphVertex) exit;
+			FGController controller = abstractVertex.getController();
+			ListingFunctionGraphVertex newExit = new ListingFunctionGraphVertex(controller,
+				abstractVertex.getAddresses(), RefType.UNCONDITIONAL_JUMP, true);
+			newExit.setVertexType(FGVertexType.EXIT);
+			FGVertex groupVertex = getVertexForAddress(exit.getVertexAddress());
+			FGEdgeImpl edge =
+				new FGEdgeImpl(groupVertex, newExit, RefType.UNCONDITIONAL_JUMP, options);
+			dummyEdges.add(edge);
+		}
+
+		return dummyEdges;
 	}
 
 //==================================================================================================

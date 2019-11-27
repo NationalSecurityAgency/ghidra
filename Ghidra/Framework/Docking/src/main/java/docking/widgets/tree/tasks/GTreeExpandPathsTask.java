@@ -17,7 +17,6 @@ package docking.widgets.tree.tasks;
 
 import java.util.List;
 
-import javax.swing.JTree;
 import javax.swing.tree.TreePath;
 
 import docking.widgets.tree.*;
@@ -26,11 +25,9 @@ import ghidra.util.task.TaskMonitor;
 public class GTreeExpandPathsTask extends GTreeTask {
 
 	private final List<TreePath> paths;
-	private final JTree jTree;
 
-	public GTreeExpandPathsTask(GTree gTree, JTree tree, List<TreePath> paths) {
+	public GTreeExpandPathsTask(GTree gTree, List<TreePath> paths) {
 		super(gTree);
-		this.jTree = tree;
 		this.paths = paths;
 	}
 
@@ -46,13 +43,16 @@ public class GTreeExpandPathsTask extends GTreeTask {
 	}
 
 	private void ensurePathLoaded(TreePath path, TaskMonitor monitor) {
-		GTreeNode parent = tree.getRootNode();
+		GTreeNode parent = tree.getViewRoot();
 		if (parent == null) {
 			return; // disposed?
 		}
 
-		List<GTreeNode> allChildren = parent.getAllChildren();
 		Object[] nodeList = path.getPath();
+		if (nodeList.length < 2) {
+			return;  // only the root is in the path
+		}
+		List<GTreeNode> allChildren = parent.getChildren();
 		for (int i = 1; i < nodeList.length; i++) {
 			if (monitor.isCancelled()) {
 				return;
@@ -61,7 +61,7 @@ public class GTreeExpandPathsTask extends GTreeTask {
 			if (node == null) {
 				return;
 			}
-			allChildren = node.getAllChildren();
+			allChildren = node.getChildren();
 			parent = node;
 		}
 	}

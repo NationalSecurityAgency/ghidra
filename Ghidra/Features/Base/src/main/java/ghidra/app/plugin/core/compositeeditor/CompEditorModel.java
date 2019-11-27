@@ -23,8 +23,7 @@ import ghidra.program.database.data.DataTypeUtilities;
 import ghidra.program.model.data.*;
 import ghidra.program.model.data.Composite.AlignmentType;
 import ghidra.program.model.lang.InsufficientBytesException;
-import ghidra.util.InvalidNameException;
-import ghidra.util.Msg;
+import ghidra.util.*;
 import ghidra.util.exception.*;
 
 public abstract class CompEditorModel extends CompositeEditorModel {
@@ -458,8 +457,8 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 	protected abstract DataTypeComponent insert(int rowIndex, DataType dataType, int length,
 			String name, String comment) throws InvalidDataTypeException;
 
-	protected abstract void insert(int rowIndex, DataType dataType, int length, String name,
-			String comment, int numCopies) throws InvalidDataTypeException;
+	protected abstract void insert(int rowIndex, DataType dataType, int length, int numCopies)
+			throws InvalidDataTypeException;
 
 	/**
 	 * Add a DataType component into to an editable structure
@@ -480,7 +479,7 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 			return;
 		}
 
-		insert(rowIndex, dataType, dtLen, null, null, multiple);
+		insert(rowIndex, dataType, dtLen, multiple);
 	}
 
 	/* (non-Javadoc)
@@ -1224,94 +1223,6 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 	}
 
 	/**
-	 * Unpackage the selected component in the structure or array. This means replace the structure
-	 * with the data types for its component parts. For an array replace the array with the data type 
-	 * for each array element.
-	 * If the component isn't a structure or union then returns false.
-	 * @return true if unpackage succeeded.
-	 *
-	 * @throws UsrException if the component can't be unpackaged.
-	 */
-	@Override
-	public void unpackage(int rowIndex) throws UsrException {
-		int componentOrdinal = convertRowToOrdinal(rowIndex);
-		DataTypeComponent currentComp = viewComposite.getComponent(componentOrdinal);
-		if (currentComp == null) {
-			throw new UsrException("Can only unpackage an array or structure.");
-		}
-		DataType currentDataType = currentComp.getDataType();
-		if (!((currentDataType instanceof Array) || (currentDataType instanceof Structure))) {
-			throw new UsrException("Can only unpackage an array or structure.");
-		}
-		if (isEditingField()) {
-			endFieldEditing();
-		}
-
-		// Get the fieldname and comment before removing.
-		String fieldName = currentComp.getFieldName();
-		String comment = currentComp.getComment();
-
-		int numComps = 0;
-		// This component is an array so unpackage it.
-		if (currentDataType instanceof Array) {
-			Array array = (Array) currentDataType;
-			int elementLen = array.getElementLength();
-			numComps = array.getNumElements();
-			// Remove the array.
-			delete(componentOrdinal);
-			if (numComps > 0) {
-				// Add the array's elements
-				try {
-					DataType dt = array.getDataType();
-					insertMultiple(rowIndex, dt, elementLen, numComps);
-				}
-				catch (InvalidDataTypeException ie) {
-					// Do nothing.
-				}
-				catch (OutOfMemoryError memExc) {
-					throw memExc; // rethrow the exception.
-				}
-			}
-		}
-		// This component is a structure so unpackage it.
-		else if (currentDataType instanceof Structure) {
-			Structure struct = (Structure) currentDataType;
-			numComps = struct.getNumComponents();
-			if (numComps > 0) {
-				// Remove the structure.
-				deleteComponent(rowIndex);
-				try {
-					// Add the structure's elements
-					for (int i = 0; i < numComps; i++) {
-						DataTypeComponent dtc = struct.getComponent(i);
-						insert(rowIndex + i, dtc.getDataType(), dtc.getLength(), dtc.getFieldName(),
-							dtc.getComment());
-					}
-				}
-				catch (OutOfMemoryError memExc) {
-					throw memExc; // re-throw the exception.
-				}
-			}
-		}
-		selection.clear();
-		selection.addRange(rowIndex, rowIndex + numComps);
-
-		DataTypeComponent comp = getComponent(rowIndex);
-		// Set the field name and comment the same as before
-		try {
-			comp.setFieldName(fieldName);
-		}
-		catch (DuplicateNameException exc) {
-			Msg.showError(this, null, null, null);
-		}
-		comp.setComment(comment);
-
-		fixSelection();
-		componentEdited();
-		selectionChanged();
-	}
-
-	/**
 	 * Returns the number of component rows in the editor. If unlocked, there 
 	 * is a blank row at the end for inserting. Therefore this number can be
 	 * different than the actual number of components currently in the
@@ -1417,8 +1328,9 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 	 */
 	@Override
 	public boolean isMoveUpAllowed() {
-		if (!isContiguousSelection())
+		if (!isContiguousSelection()) {
 			return false;
+		}
 		int start = selection.getFieldRange(0).getStart().getIndex().intValue();
 		return ((start > 0) && (start < getNumComponents()));
 	}
@@ -1466,7 +1378,8 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 					originalIsChanging = true;
 					try {
 						if (hadChanges) {
-							String message = oldName + " has changed outside the editor.\n" +
+							String message = "<html>" + HTMLUtilities.escapeHTML(oldName) +
+								" has changed outside the editor.<br>" +
 								"Discard edits & reload the " + getTypeName() + "?";
 							String title = "Reload " + getTypeName() + " Editor?";
 							int response = OptionDialog.showYesNoDialogWithNoAsDefaultButton(
@@ -1569,7 +1482,8 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 							consideringReplacedDataType = true;
 							try {
 								String message =
-									oldPath.getPath() + " has changed outside the editor.\n" +
+									"<html>" + HTMLUtilities.escapeHTML(oldPath.getPath()) +
+										" has changed outside the editor.<br>" +
 										"Discard edits & reload the " + getTypeName() + "?";
 								String title = "Reload " + getTypeName() + " Editor?";
 								int response = OptionDialog.showYesNoDialogWithNoAsDefaultButton(

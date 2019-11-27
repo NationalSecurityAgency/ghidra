@@ -16,7 +16,6 @@
 package ghidra.app.plugin.core.navigation.locationreferences;
 
 import ghidra.app.nav.Navigatable;
-import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramLocation;
 import ghidra.util.HelpLocation;
 
@@ -25,6 +24,8 @@ import ghidra.util.HelpLocation;
  * to a given <b><i>to</i></b> location.
  */
 public interface LocationReferencesService {
+
+	public static final String MENU_GROUP = "References";
 
 	/**
 	 * Returns the help location for help content that describes this service.
@@ -37,8 +38,6 @@ public interface LocationReferencesService {
 	 * location.
 	 * @param location The location for which to show references.
 	 * @param navigatable The navigatable in which the references should be shown
-	 * @throws IllegalArgumentException if a call to {@link #canProcessLocation(Program, ProgramLocation)}
-	 *         returns false.
 	 * @throws NullPointerException if <tt>location</tt> is null.
 	 */
 	public void showReferencesToLocation(ProgramLocation location, Navigatable navigatable);

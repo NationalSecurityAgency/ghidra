@@ -19,6 +19,7 @@ import java.util.*;
 
 import docking.action.DockingAction;
 import docking.action.MenuData;
+import docking.tool.ToolConstants;
 import edu.uci.ics.jung.graph.DirectedSparseGraph;
 import edu.uci.ics.jung.graph.Graph;
 import ghidra.app.CorePluginPackage;
@@ -29,7 +30,6 @@ import ghidra.app.plugin.ProgramPlugin;
 import ghidra.framework.plugintool.PluginInfo;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.util.PluginStatus;
-import ghidra.framework.plugintool.util.ToolConstants;
 import ghidra.graph.GDirectedGraph;
 import ghidra.graph.GraphAlgorithms;
 import ghidra.graph.jung.JungToGDirectedGraphAdapter;

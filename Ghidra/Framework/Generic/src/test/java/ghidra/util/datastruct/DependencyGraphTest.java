@@ -22,14 +22,95 @@ import java.util.*;
 import org.junit.Assert;
 import org.junit.Test;
 
-import ghidra.util.graph.DependencyGraph;
+import ghidra.util.graph.*;
 
 public class DependencyGraphTest {
 
 	@Test
-    public void testSimpleCase() {
-		DependencyGraph<Integer> graph = new DependencyGraph<Integer>();
+	public void testSimpleCaseDependencyGraph() {
+		AbstractDependencyGraph<Integer> graph = new DependencyGraph<>();
+		runSimpleCase(graph);
+	}
 
+	@Test
+	public void testSimpleCaseDeterministicDependencyGraph() {
+		AbstractDependencyGraph<Integer> graph = new DeterministicDependencyGraph<>();
+		runSimpleCase(graph);
+	}
+
+	@Test
+	public void testMultipleDependencyCaseDependencyGraph() {
+		AbstractDependencyGraph<Integer> graph = new DependencyGraph<>();
+		runMultipleDependencyCase(graph);
+	}
+
+	@Test
+	public void testMultipleDependencyCaseDeterministicDependencyGraph() {
+		AbstractDependencyGraph<Integer> graph = new DeterministicDependencyGraph<>();
+		runMultipleDependencyCase(graph);
+	}
+
+	@Test
+	public void testPopDependencyGraph() {
+		AbstractDependencyGraph<Integer> graph = new DependencyGraph<>();
+		runPop(graph);
+	}
+
+	@Test
+	public void testPopDeterministicDependencyGraph() {
+		AbstractDependencyGraph<Integer> graph = new DeterministicDependencyGraph<>();
+		runPop(graph);
+	}
+
+	@Test
+	public void testPopWithCycleDependencyGraph() {
+		AbstractDependencyGraph<Integer> graph = new DependencyGraph<>();
+		runPopWithCycle(graph);
+	}
+
+	@Test
+	public void testPopWithCycleDeterministicDependencyGraph() {
+		AbstractDependencyGraph<Integer> graph = new DeterministicDependencyGraph<>();
+		runPopWithCycle(graph);
+	}
+
+	@Test
+	public void testCycleDetectionDependencyGraph() {
+		AbstractDependencyGraph<Integer> graph = new DependencyGraph<>();
+		runCycleDetection(graph);
+	}
+
+	@Test
+	public void testCycleDetectionDeterministicDependencyGraph() {
+		AbstractDependencyGraph<Integer> graph = new DeterministicDependencyGraph<>();
+		runCycleDetection(graph);
+	}
+
+	@Test
+	public void testCycleDetectionDoesNotCorruptGraphDependencyGraph() {
+		AbstractDependencyGraph<Integer> graph = new DependencyGraph<>();
+		runCycleDetectionDoesNotCorruptGraph(graph);
+	}
+
+	@Test
+	public void testCycleDetectionDoesNotCorruptGraphDeterministicDependencyGraph() {
+		AbstractDependencyGraph<Integer> graph = new DeterministicDependencyGraph<>();
+		runCycleDetectionDoesNotCorruptGraph(graph);
+	}
+
+	@Test
+	public void testRandomProcessingOfDependenciesSimulationDependencyGraph() {
+		AbstractDependencyGraph<String> graph = new DependencyGraph<>();
+		runRandomProcessingOfDependenciesSimulation(graph);
+	}
+
+	@Test
+	public void testRandomProcessingOfDependenciesSimulationDeterministicDependencyGraph() {
+		AbstractDependencyGraph<String> graph = new DeterministicDependencyGraph<>();
+		runRandomProcessingOfDependenciesSimulation(graph);
+	}
+
+	private void runSimpleCase(AbstractDependencyGraph<Integer> graph) {
 		graph.addDependency(1, 2);
 		graph.addDependency(2, 3);
 		graph.addDependency(3, 4);
@@ -56,13 +137,9 @@ public class DependencyGraphTest {
 		graph.remove(1);
 		set = graph.getUnvisitedIndependentValues();
 		assertTrue(set.isEmpty());
-
 	}
 
-	@Test
-    public void testMultipleDependencyCase() {
-		DependencyGraph<Integer> graph = new DependencyGraph<Integer>();
-
+	private void runMultipleDependencyCase(AbstractDependencyGraph<Integer> graph) {
 		graph.addDependency(1, 2);
 		graph.addDependency(2, 3);
 		graph.addDependency(1, 3);
@@ -84,13 +161,9 @@ public class DependencyGraphTest {
 		graph.remove(1);
 		set = graph.getUnvisitedIndependentValues();
 		assertTrue(set.isEmpty());
-
 	}
 
-	@Test
-    public void testPop() {
-		DependencyGraph<Integer> graph = new DependencyGraph<Integer>();
-
+	private void runPop(AbstractDependencyGraph<Integer> graph) {
 		graph.addDependency(1, 2);
 		graph.addDependency(2, 3);
 		graph.addDependency(3, 4);
@@ -103,10 +176,7 @@ public class DependencyGraphTest {
 		assertNull(graph.pop());
 	}
 
-	@Test
-    public void testPopWithCycle() {
-		DependencyGraph<Integer> graph = new DependencyGraph<Integer>();
-
+	private void runPopWithCycle(AbstractDependencyGraph<Integer> graph) {
 		graph.addDependency(1, 2);
 		graph.addDependency(2, 3);
 		graph.addDependency(3, 4);
@@ -121,13 +191,9 @@ public class DependencyGraphTest {
 		catch (IllegalStateException e) {
 			// expected
 		}
-
 	}
 
-	@Test
-    public void testCycleDetection() {
-		DependencyGraph<Integer> graph = new DependencyGraph<Integer>();
-
+	private void runCycleDetection(AbstractDependencyGraph<Integer> graph) {
 		graph.addDependency(1, 2);
 		graph.addDependency(2, 3);
 		graph.addDependency(3, 4);
@@ -137,13 +203,9 @@ public class DependencyGraphTest {
 		graph.addDependency(4, 1);
 
 		assertTrue(graph.hasCycles());
-
 	}
 
-	@Test
-    public void testCycleDetectionDoesNotCorruptGraph() {
-		DependencyGraph<Integer> graph = new DependencyGraph<Integer>();
-
+	private void runCycleDetectionDoesNotCorruptGraph(AbstractDependencyGraph<Integer> graph) {
 		graph.addDependency(1, 2);
 		graph.addDependency(2, 3);
 		graph.addDependency(3, 4);
@@ -172,14 +234,12 @@ public class DependencyGraphTest {
 		graph.remove(1);
 		set = graph.getUnvisitedIndependentValues();
 		assertTrue(set.isEmpty());
-
 	}
 
-	@Test
-    public void testRandomProcessingOfDependenciesSimulation() {
-		final ArrayList<String> completionOrder = new ArrayList<String>();
+	private void runRandomProcessingOfDependenciesSimulation(
+			AbstractDependencyGraph<String> graph) {
+		final ArrayList<String> completionOrder = new ArrayList<>();
 
-		DependencyGraph<String> graph = new DependencyGraph<String>();
 		graph.addDependency("@0", "A8");
 		graph.addDependency("@1", "A1");
 		graph.addDependency("@2", "A7");
@@ -214,7 +274,7 @@ public class DependencyGraphTest {
 
 		assertTrue(!graph.hasCycles());
 
-		DependencyGraph<String> savedGraph = graph.copy();
+		AbstractDependencyGraph<String> savedGraph = graph.copy();
 
 		while (!graph.isEmpty()) {
 			completionOrder.add(graph.pop());
@@ -231,7 +291,7 @@ public class DependencyGraphTest {
 	 * @param visitedOrder the actual execution order to be tested
 	 * @return
 	 */
-	public void checkOrderSatisfiesDependencies(DependencyGraph<String> dependencyGraph,
+	private void checkOrderSatisfiesDependencies(AbstractDependencyGraph<String> dependencyGraph,
 			List<String> visitedOrder) {
 
 		if (visitedOrder.size() > dependencyGraph.size()) {
@@ -241,12 +301,12 @@ public class DependencyGraphTest {
 			Assert.fail("Not all items in the graph were visited");
 		}
 
-		HashSet<String> items = new HashSet<String>(visitedOrder);
+		HashSet<String> items = new HashSet<>(visitedOrder);
 		if (items.size() != visitedOrder.size()) {
 			Assert.fail("duplicate item(s) in linearOrder\n");
 		}
 
-		HashMap<String, Integer> visitedOrderMap = new HashMap<String, Integer>();
+		HashMap<String, Integer> visitedOrderMap = new HashMap<>();
 		for (int i = 0; i < visitedOrder.size(); i++) {
 			visitedOrderMap.put(visitedOrder.get(i), i);
 		}

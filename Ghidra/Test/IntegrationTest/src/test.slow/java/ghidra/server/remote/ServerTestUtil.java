@@ -26,6 +26,8 @@ import java.util.ArrayList;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
+import javax.rmi.ssl.SslRMIClientSocketFactory;
+
 import org.apache.commons.lang3.RandomStringUtils;
 
 import generic.test.*;
@@ -40,7 +42,7 @@ import ghidra.framework.store.local.LocalFileSystem;
 import ghidra.framework.store.local.LocalFolderItem;
 import ghidra.net.*;
 import ghidra.program.model.listing.Program;
-import ghidra.server.UserAdmin;
+import ghidra.server.ServerAdmin;
 import ghidra.server.UserManager;
 import ghidra.test.ToyProgramBuilder;
 import ghidra.util.*;
@@ -550,7 +552,7 @@ public class ServerTestUtil {
 	}
 
 	private static boolean isServerRegistered(int port) throws IOException {
-		Registry reg = LocateRegistry.getRegistry(LOCALHOST, port);
+		Registry reg = LocateRegistry.getRegistry(LOCALHOST, port, new SslRMIClientSocketFactory());
 		try {
 			reg.lookup(GhidraServerHandle.BIND_NAME);
 			return true;
@@ -786,7 +788,7 @@ public class ServerTestUtil {
 				funcAddr += 2;
 			}
 
-			setProgramMd5(program);
+			setProgramHashes(program);
 
 			ContentHandler contentHandler = DomainObjectAdapter.getContentHandler(program);
 			long checkoutId = contentHandler.createFile(repoFilesystem, null, folderPath, name,
@@ -856,15 +858,17 @@ public class ServerTestUtil {
 	}
 
 	/**
-	 * Sets a dummy MD5 value for the given program.
-	 * 
+	 * Sets dummy hash values for the given program.
+	 *
 	 * @param program the current program
 	 */
-	private static void setProgramMd5(Program program) {
-		int id = program.startTransaction("setmd5");
+	private static void setProgramHashes(Program program) {
+		int id = program.startTransaction("sethashes");
 		try {
 			String md5 = RandomStringUtils.randomNumeric(32);
 			program.setExecutableMD5(md5);
+			String sha256 = RandomStringUtils.randomNumeric(64);
+			program.setExecutableSHA256(sha256);
 		}
 		finally {
 			program.endTransaction(id, true);
@@ -940,11 +944,12 @@ public class ServerTestUtil {
 	 * @throws Exception
 	 */
 	public static void addPKIUser(File serverRoot, String userName, String dn) throws Exception {
+		ServerAdmin serverAdmin = new ServerAdmin();
 		if (dn != null) {
-			UserAdmin.main(new String[] { serverRoot.getAbsolutePath(), "-dn", userName, dn });
+			serverAdmin.execute(new String[] { serverRoot.getAbsolutePath(), "-dn", userName, dn });
 		}
 		else {
-			UserAdmin.main(new String[] { serverRoot.getAbsolutePath(), "-add", userName });
+			serverAdmin.execute(new String[] { serverRoot.getAbsolutePath(), "-add", userName });
 		}
 	}
 

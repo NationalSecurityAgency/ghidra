@@ -16,6 +16,9 @@
 // Opens all programs under a chosen domain folder, scans them for functions
 // that match a user supplied FID hash and prints info about the matching function
 //@category FunctionID
+import java.io.IOException;
+import java.util.*;
+
 import ghidra.app.script.GhidraScript;
 import ghidra.feature.fid.hash.FidHashQuad;
 import ghidra.feature.fid.plugin.HashLookupListMode;
@@ -29,9 +32,6 @@ import ghidra.util.NumericUtilities;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.VersionException;
 
-import java.io.IOException;
-import java.util.ArrayList;
-
 public class FindFunctionByHash extends GhidraScript {
 
 	FidService service;
@@ -40,24 +40,23 @@ public class FindFunctionByHash extends GhidraScript {
 	protected void run() throws Exception {
 		service = new FidService();
 
-		DomainFolder folder =
-			askProjectFolder("Please select a project folder to RECURSIVELY look for a named function:");
-		String hashString =
-			askString("Please enter function hash",
-				"Please enter the (hex) function hash you're looking for:");
+		DomainFolder folder = askProjectFolder(
+			"Please select a project folder to RECURSIVELY look for a named function:");
+		String hashString = askString("Please enter function hash",
+			"Please enter the (hex) function hash you're looking for:");
 		long hash = NumericUtilities.parseHexLong(hashString);
-		HashLookupListMode[] choices =
-			new HashLookupListMode[] { HashLookupListMode.FULL, HashLookupListMode.SPECIFIC };
-		HashLookupListMode hashType =
-			askChoice("Please choose hash type", "Please select the type of hash", choices,
-				choices[1]);
+		List<HashLookupListMode> choices =
+			Arrays.asList(HashLookupListMode.FULL, HashLookupListMode.SPECIFIC);
+		HashLookupListMode hashType = askChoice("Please choose hash type",
+			"Please select the type of hash", choices, choices.get(1));
 
-		ArrayList<DomainFile> programs = new ArrayList<DomainFile>();
+		ArrayList<DomainFile> programs = new ArrayList<>();
 		findPrograms(programs, folder);
 		findFunction(programs, hash, hashType);
 	}
 
-	private void findFunction(ArrayList<DomainFile> programs, long hash, HashLookupListMode hashType) {
+	private void findFunction(ArrayList<DomainFile> programs, long hash,
+			HashLookupListMode hashType) {
 		for (DomainFile domainFile : programs) {
 			if (monitor.isCancelled()) {
 				return;
@@ -76,7 +75,8 @@ public class FindFunctionByHash extends GhidraScript {
 						continue;
 					}
 					if ((hashType == HashLookupListMode.FULL && hashQuad.getFullHash() == hash) ||
-						(hashType == HashLookupListMode.SPECIFIC && hashQuad.getSpecificHash() == hash)) {
+						(hashType == HashLookupListMode.SPECIFIC &&
+							hashQuad.getSpecificHash() == hash)) {
 						println("found " + function.getName() + " at " + function.getEntryPoint() +
 							" in " + domainFile.getPathname());
 					}

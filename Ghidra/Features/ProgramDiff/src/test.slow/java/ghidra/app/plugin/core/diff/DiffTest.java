@@ -665,7 +665,7 @@ public class DiffTest extends DiffTestAdapter {
 		checkDiffAction("Ignore Selection and Goto Next Difference", true, false);
 		checkDiffAction("Next Difference", true, true);
 		checkDiffAction("Previous Difference", true, false);
-		checkDiffAction("Diff Location Details", true, true);
+		checkDiffAction("Show Diff Location Details", true, true);
 		checkDiffAction("Show Diff Apply Settings", true, true);
 		checkDiffAction("Get Differences", true, true);
 		checkDiffAction("Select All Differences", true, true);
@@ -699,7 +699,7 @@ public class DiffTest extends DiffTestAdapter {
 		checkDiffAction("Ignore Selection and Goto Next Difference", false, false);
 		checkDiffAction("Next Difference", false, false);
 		checkDiffAction("Previous Difference", false, false);
-		checkDiffAction("Diff Location Details", false, false);
+		checkDiffAction("Show Diff Location Details", false, false);
 		checkDiffAction("Show Diff Apply Settings", false, false);
 		checkDiffAction("Get Differences", false, false);
 		checkDiffAction("Select All Differences", false, false);
@@ -715,7 +715,7 @@ public class DiffTest extends DiffTestAdapter {
 		checkDiffAction("Ignore Selection and Goto Next Difference", false, false);
 		checkDiffAction("Next Difference", false, false);
 		checkDiffAction("Previous Difference", false, false);
-		checkDiffAction("Diff Location Details", false, false);
+		checkDiffAction("Show Diff Location Details", false, false);
 		checkDiffAction("Show Diff Apply Settings", false, false);
 		checkDiffAction("Get Differences", false, false);
 		checkDiffAction("Select All Differences", false, false);
@@ -732,7 +732,7 @@ public class DiffTest extends DiffTestAdapter {
 		checkDiffAction("Ignore Selection and Goto Next Difference", true, false);
 		checkDiffAction("Next Difference", true, true);
 		checkDiffAction("Previous Difference", true, true);
-		checkDiffAction("Diff Location Details", true, true);
+		checkDiffAction("Show Diff Location Details", true, true);
 		checkDiffAction("Show Diff Apply Settings", true, true);
 		checkDiffAction("Get Differences", true, true);
 		checkDiffAction("Select All Differences", true, true);

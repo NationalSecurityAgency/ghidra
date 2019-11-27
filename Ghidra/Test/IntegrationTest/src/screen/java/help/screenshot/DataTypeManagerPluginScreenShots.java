@@ -28,7 +28,8 @@ import docking.*;
 import docking.action.DockingActionIf;
 import docking.widgets.table.GTable;
 import docking.widgets.table.GTableCellRenderer;
-import docking.widgets.tree.*;
+import docking.widgets.tree.GTree;
+import docking.widgets.tree.GTreeNode;
 import ghidra.app.plugin.core.datamgr.*;
 import ghidra.app.plugin.core.datamgr.archive.DataTypeManagerHandler;
 import ghidra.app.plugin.core.datamgr.archive.InvalidFileArchive;
@@ -88,7 +89,7 @@ public class DataTypeManagerPluginScreenShots extends GhidraScreenShotGenerator 
 	public void testDataTypeTreeWithAssociations() {
 		DataTypesProvider provider = getProvider(DataTypesProvider.class);
 		GTree tree = (GTree) getInstanceField("archiveGTree", provider);
-		GTreeRootNode rootNode = tree.getRootNode();
+		GTreeNode rootNode = tree.getViewRoot();
 		GTreeNode child = rootNode.getChild("WinHelloCPP.exe");
 		child = child.getChild("basetsd.h");
 		tree.expandPath(child);
@@ -140,7 +141,7 @@ public class DataTypeManagerPluginScreenShots extends GhidraScreenShotGenerator 
 	public void testFavoriteDts() {
 		DataTypesProvider provider = getProvider(DataTypesProvider.class);
 		GTree tree = (GTree) getInstanceField("archiveGTree", provider);
-		GTreeRootNode rootNode = tree.getRootNode();
+		GTreeNode rootNode = tree.getViewRoot();
 		GTreeNode child = rootNode.getChild("BuiltInTypes");
 		tree.expandPath(child);
 		captureIsolatedProvider(DataTypesProvider.class, 500, 400);
@@ -156,13 +157,13 @@ public class DataTypeManagerPluginScreenShots extends GhidraScreenShotGenerator 
 
 	@Test
 	public void testPreviewWindow() {
-		String fullActionName = "Show Preview Window (DataTypeManagerPlugin)";
-		List<DockingActionIf> action = tool.getDockingActionsByFullActionName(fullActionName);
-		performAction(action.get(0));
-//		performAction("Show Preview Window", "DataTypeManagerPlugin", false);
+
+		DockingActionIf action = getAction(tool, "DataTypeManagerPlugin", "Show Preview Window");
+		performAction(action);
+
 		DataTypesProvider provider = getProvider(DataTypesProvider.class);
 		GTree tree = (GTree) getInstanceField("archiveGTree", provider);
-		GTreeRootNode rootNode = tree.getRootNode();
+		GTreeNode rootNode = tree.getViewRoot();
 		GTreeNode child = rootNode.getChild("WinHelloCPP.exe");
 		child = child.getChild("DOS");
 		tree.expandPath(child);

@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<compiler_spec>
+  <global>
+    <range space="RAM"/>
+  </global>
+  <stackpointer register="SP" space="RAM" growth="negative"/>
+  <returnaddress>
+    <varnode space="stack" offset="0" size="2"/>
+  </returnaddress>
+  <default_proto>
+    <prototype name="__stdcall" extrapop="2" stackshift="2">
+      <input>
+         <pentry minsize="1" maxsize="500" align="2">
+           <addr offset="2" space="stack"/>
+         </pentry>
+      </input>
+      <output>
+        <pentry minsize="1" maxsize="2">
+          <register name="RW1C"/>
+        </pentry>
+      </output>
+      <unaffected>
+        <register name="SP"/>
+      </unaffected>
+      <localrange>
+        <range space="stack" first="0xffff" last="0xf000" />
+      </localrange>
+    </prototype>
+  </default_proto>
+</compiler_spec>

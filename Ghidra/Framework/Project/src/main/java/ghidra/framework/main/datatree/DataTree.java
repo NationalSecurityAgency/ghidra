@@ -18,13 +18,13 @@ package ghidra.framework.main.datatree;
 import java.awt.Component;
 import java.awt.event.KeyEvent;
 
-import javax.swing.JTree;
-import javax.swing.KeyStroke;
+import javax.swing.*;
 import javax.swing.tree.TreePath;
 
 import docking.DockingUtils;
-import docking.util.KeyBindingUtils;
-import docking.widgets.tree.*;
+import docking.actions.KeyBindingUtils;
+import docking.widgets.tree.GTree;
+import docking.widgets.tree.GTreeNode;
 import docking.widgets.tree.support.GTreeRenderer;
 import ghidra.framework.main.FrontEndTool;
 
@@ -36,14 +36,14 @@ public class DataTree extends GTree {
 	private boolean isActive;
 	private DataTreeDragNDropHandler dragNDropHandler;
 
-	DataTree(FrontEndTool tool, GTreeRootNode root) {
+	DataTree(FrontEndTool tool, GTreeNode root) {
 
 		super(root);
 		setName("Data Tree");
 		setCellRenderer(new DataTreeCellRenderer());
 		setShowsRootHandles(true); // need this to "drill down"
 
-		docking.ToolTipManager.sharedInstance().registerComponent(this);
+		ToolTipManager.sharedInstance().registerComponent(this);
 
 		if (tool != null) {
 			dragNDropHandler = new DataTreeDragNDropHandler(tool, this, isActive);

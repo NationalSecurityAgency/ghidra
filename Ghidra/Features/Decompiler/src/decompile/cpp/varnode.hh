@@ -28,6 +28,7 @@ class VarnodeBank;
 class Merge;
 class Funcdata;
 class SymbolEntry;
+class ValueSet;
 
 /// \brief Compare two Varnode pointers by location then definition
 struct VarnodeCompareLocDef {
@@ -115,7 +116,8 @@ public:
     ptrcheck = 0x10,	        ///< The Varnode value is \e NOT a pointer
     ptrflow = 0x20,             ///< If this varnode flows to or from a pointer
     unsignedprint = 0x40,	///< Constant that must be explicitly printed as unsigned
-    stack_store = 0x80		///< Created by an explicit STORE
+    stack_store = 0x80,		///< Created by an explicit STORE
+    locked_input = 0x100	///< Input that exists even if its unused
   };
 private:
   mutable uint4 flags;		///< The collection of boolean attributes for this Varnode
@@ -134,7 +136,10 @@ private:
   VarnodeDefSet::iterator defiter;	///< Iterator into VarnodeBank sorted by definition
   list<PcodeOp *> descend;		///< List of every op using this varnode as input
   mutable Cover *cover;		///< Addresses covered by the def->use of this Varnode
-  mutable Datatype *temptype;	///< For type propagate algorithm
+  mutable union {
+    Datatype *dataType;		///< For type propagate algorithm
+    ValueSet *valueSet;
+  } temp;
   uintb consumed;		///< What parts of this varnode are used
   uintb nzm;			///< Which bits do we know are zero
   friend class VarnodeBank;
@@ -167,8 +172,10 @@ public:
   SymbolEntry *getSymbolEntry(void) const { return mapentry; } ///< Get symbol and scope information associated with this Varnode
   uint4 getFlags(void) const { return flags; } ///< Get all the boolean attributes
   Datatype *getType(void) const { return type; } ///< Get the Datatype associated with this Varnode
-  void setTempType(Datatype *t) const { temptype = t; }	///< Set the temporary Datatype
-  Datatype *getTempType(void) const { return temptype; } ///< Get the temporary Datatype (used during type propagation)
+  void setTempType(Datatype *t) const { temp.dataType = t; }	///< Set the temporary Datatype
+  Datatype *getTempType(void) const { return temp.dataType; } ///< Get the temporary Datatype (used during type propagation)
+  void setValueSet(ValueSet *v) const { temp.valueSet = v; }	///< Set the temporary ValueSet record
+  ValueSet *getValueSet(void) const { return temp.valueSet; }	///< Get the temporary ValueSet record
   uint4 getCreateIndex(void) const { return create_index; } ///< Get the creation index
   Cover *getCover(void) const { updateCover(); return cover; } ///< Get Varnode coverage information
   list<PcodeOp *>::const_iterator beginDescend(void) const { return descend.begin(); } ///< Get iterator to list of syntax tree descendants (reads)
@@ -231,6 +238,7 @@ public:
   bool isMark(void) const { return ((flags&Varnode::mark)!=0); } ///< Has \b this been visited by the current algorithm?
   bool isActiveHeritage(void) const { return ((addlflags&Varnode::activeheritage)!=0); } ///< Is \b this currently being traced by the Heritage algorithm?
   bool isStackStore(void) const { return ((addlflags&Varnode::stack_store)!=0); } ///< Was this originally produced by an explicit STORE
+  bool isLockedInput(void) const { return ((addlflags&Varnode::locked_input)!=0); }	///< Is always an input, even if unused
 
   /// Is \b this just a special placeholder representing INDIRECT creation?
   bool isIndirectZero(void) const { return ((flags&(Varnode::indirect_creation|Varnode::constant))==(Varnode::indirect_creation|Varnode::constant)); }
@@ -291,6 +299,7 @@ public:
   void setUnsignedPrint(void) { addlflags |= Varnode::unsignedprint; } ///< Force \b this to be printed as unsigned
   bool updateType(Datatype *ct,bool lock,bool override); ///< (Possibly) set the Datatype given various restrictions
   void setStackStore(void) { addlflags |= Varnode::stack_store; } ///< Mark as produced by explicit CPUI_STORE
+  void setLockedInput(void) { addlflags |= Varnode::locked_input; }	///< Mark as existing input, even if unused
   void copySymbol(const Varnode *vn); ///< Copy symbol info from \b vn
   void copySymbolIfValid(const Varnode *vn);	///< Copy symbol info from \b vn if constant value matches
   Datatype *getLocalType(void) const; ///< Calculate type of Varnode based on local information

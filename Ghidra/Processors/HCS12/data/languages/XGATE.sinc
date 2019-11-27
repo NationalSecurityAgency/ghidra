@@ -1,0 +1,993 @@
+# sleigh specification file for XGATE MCU peripheral co-processor
+
+################################################################
+# Registers
+################################################################
+
+# register R0 always contains the value 0
+define register offset=0x100 size=2 [R0             R1           R2            R3            R4            R5            R6            R7];
+define register offset=0x100 size=1 [R0.H R0.L R1.H R1.L R2.H R2.L R3.H R3.L R4.H R4.L R5.H R5.L R6.H R6.L R7.H R7.L];
+define register offset=0x110 size=2 [XPC XCCR];
+define register offset=0x120 size=1 [XC XV XZ XN];
+
+# Individual status bits within the XCCR
+@define XN "XN" # XCCR[3,1] # Negative Flag
+@define XZ "XZ" # XCCR[2,1] # Zero Flag
+@define XV "XV" # XCCR[1,1] # Overflow Flag
+@define XC "XC" # XCCR[0,1] # Carry Flag
+
+################################################################
+# Tokens
+################################################################
+define token XOpWord16 (16)
+    xop16		= (0,15)
+    opcode      = (11,15)
+    reg8        = (8,10)
+    reg8_lo     = (8,10)
+    reg8_hi     = (8,10)
+    imm3        = (8,10)
+    op9_10      = (9,10)
+    bit_10      = (10,10)
+	immrel9     = (0,9) signed
+	immrel8     = (0,8) signed
+    xop8        = (0,7)
+    reg5        = (5,7)
+    ximm4       = (4,7)
+    ximm8       = (0,7)
+    op4         = (0,4)
+    op3         = (0,3)
+    offs5       = (0,5)
+    reg2        = (2,4)
+    op2         = (0,1)
+;
+
+################################################################
+# Attach variables
+################################################################
+
+attach variables [reg8 reg5 reg2] [R0 R1 R2 R3 R4 R5 R6 R7];
+
+attach variables [reg8_lo ] [R0.L R1.L R2.L R3.L R4.L R5.L R6.L R7.L];
+attach variables [reg8_hi ] [R0.H R1.H R2.H R3.H R4.H R5.H R6.H R7.H];
+
+################################################################
+# Pseudo Instructions
+################################################################
+
+define pcodeop findFirstOne;
+define pcodeop leftShiftCarry;
+define pcodeop rightShiftCarry;
+define pcodeop parity;
+define pcodeop clearSemaphore;
+define pcodeop setSemaphore;
+define pcodeop setInterruptFlag;
+define pcodeop TerminateThread;
+
+################################################################
+# Macros Instructions
+################################################################
+
+macro default_flags(result)
+{
+    $(XZ) = (result == 0);
+	$(XN) = (result s< 0);
+	$(XV) = 0;
+	#$(XC) not affected
+}
+
+macro addition_flags(operand1, operand2, result)
+{
+	$(XN) = (result s< 0);
+    $(XZ) = ((result == 0) & ($(XZ)==1));
+	$(XV) = (((operand1 & operand2 & ~result) | (~operand1 & ~operand2 & result)) & 0x8000) != 0;
+	$(XC) = (((operand1 & operand2) | (operand2 & ~result) | (~result & operand1)) & 0x8000) != 0;
+}
+
+macro subtraction_flags(register, operand, result) {
+	$(XN) = (result s< 0);
+	$(XZ) = (result == 0);
+	$(XV) = ( ((register & ~operand & ~result) | (~register & operand & result)) & 0x8000 ) != 0;
+	$(XC) = ( ((~register & operand) | (operand & result) | (~register & result)) & 0x8000 ) != 0;
+}
+
+macro subtraction_flagsB(register, operand, result) {
+	$(XN) = (result s< 0);
+	$(XZ) = (result == 0);
+	$(XV) = ( ((register & ~operand & ~result) | (~register & operand & result)) & 0x80 ) != 0;
+	$(XC) = ( ((~register & operand) | (operand & result) | (result & ~register)) & 0x80 ) != 0;
+}
+
+macro subtraction_flagsC(register, operand, result) {
+	$(XN) = (result s< 0);
+	$(XZ) = ( (result == 0) & ($(XZ) == 1));
+	$(XV) = ( ((register & ~operand & ~result) | (~register & operand & result)) & 0x8000 ) != 0;
+	$(XC) = ( ((~register & operand) | (operand & result) | (~register & result)) & 0x8000 ) != 0;
+}
+
+macro shiftFlags(result,old)
+{
+	$(XN) = (result s< 0);
+	$(XZ) = (result == 0);
+	tmp:2 = (old >> 15) ^ (result >> 15);
+	$(XV) = tmp(1);
+}
+
+macro getbit(res,in,bitnum) {
+  res = ((in >> bitnum) & 1) != 0;
+}
+
+#
+# computes a fake PPAGE page mapping based on the 16 bit input address
+# The XGATE memory is mapped to the pages of physical memory
+# Warning: This might not be the correct mapping on all XGATE processors
+#
+# 0000-07ff = 0x00_0000 - 0x00_07ff
+# 0800-7fff = 0x78_0800 - XGFLASH_HIGH
+# 8000-ffff = 0x0f_0800 - 0x0f_ffff
+#
+macro computePage(addr) {
+	local isReg:1 = addr < 0x800;
+	local isFlash:1 = addr >= 0x800 & addr < 0x7fff;
+	local isRam:1 = addr >= 0x8000;
+	physPage = (zext(isReg) * 0x0)+ (zext(isFlash) * (0x78 << 16)) + (zext(isRam) * (0xf<<16));
+}
+
+################################################################
+# Constructors
+################################################################
+
+#rel9 defined in HCS_HC12.sinc
+# range -256 through +255
+with : XGATE=1 {
+rel9: reloc is immrel8   [ reloc = inst_next + (immrel8 * 2); ]  { export * reloc; }
+
+# range -512 through +512
+rel10: reloc is immrel9   [ reloc = inst_next + (immrel9 * 2); ]  { export * reloc; }
+
+rd : reg8 is reg8 { export reg8; }
+
+rs1: reg5 is reg5 & reg5=0 { export 0:2; }
+rs1: reg5 is reg5 { export reg5; }
+
+rs2: reg2 is reg2 & reg2=0 { export 0:2; }
+rs2: reg2 is reg2 { export reg2; }
+
+
+rd_lo: reg8 is reg8 & reg8_lo { export reg8_lo; }
+rd_hi: reg8 is reg8 & reg8_hi { export reg8_hi; }
+
+
+
+# Add with carry
+:ADC rd, rs1, rs2 is opcode=0x3 & rd & rs1 & rs2 & op2=0x3
+{
+    local result:2 = rs1 + rs2 + zext($(XC));
+    rd = result;
+    
+    addition_flags(rs1, rs2, result);
+}
+
+# Add without carry
+:ADD rd, rs1, rs2 is opcode=0x3 & rd & rs1 & rs2 & op2=0x2
+{
+    local result:2 = rs1 + rs2;
+    rd = result;
+    
+    addition_flags(rs1, rs2, result);
+}
+
+# Add immediate 8-bit constant (high byte)
+:ADDH rd, ximm8 is opcode=0x1d & rd & ximm8
+{
+	local val:2 = ximm8 << 8;
+    local result:2 = rd + val;
+    
+    addition_flags(rd, val, result);
+    
+    rd = result;
+}
+
+# Add immediate 8-bit constant (low byte)
+:ADDL rd, ximm8 is opcode=0x1c & rd & ximm8
+{
+    local result:2 = rd + ximm8;
+    
+	$(XN) = (result s< 0);
+    $(XZ) = ((result == 0) & ($(XZ)==1));
+	$(XV) = ((~rd & result) & 0x8000) != 0;
+	$(XC) = ((rd & ~result) & 0x8000) != 0;
+    rd = result;
+}
+
+# Logical AND
+:AND rd, rs1, rs2 is opcode=0x2 & rd & rs1 & rs2 & op2=0x0
+{
+    rd = rs1 & rs2;
+    
+    default_flags(rd);
+}
+
+# Logical AND immediate 8-bit constant (high byte)
+:ANDH rd, ximm8 is opcode=0x11 & rd & ximm8 & rd_hi
+{
+    rd_hi = rd_hi & ximm8;
+    
+	default_flags(rd_hi);
+}
+
+# Logical AND immediate 8-bit constant (low byte)
+:ANDL rd, ximm8 is opcode=0x10 & rd & ximm8 & rd_lo
+{
+    rd_lo = rd_lo & ximm8;
+    
+	default_flags(rd_lo);
+}
+
+# Arithmetic Shift Right
+:ASR rd, ximm4 is opcode=0x1 & rd & ximm4 & op3=0x9
+{
+	getbit($(XC), rd, ximm4-1);
+    rd = rd s>> ximm4;
+    
+    default_flags(rd);
+}
+
+:ASR rd, rs1 is opcode=0x1 & rd & rs1 & op4=0x11
+{
+	getbit($(XC), rd, rs1-1);
+    rd = rd s>> rs1;
+    
+    default_flags(rd);
+}
+
+# Branch if Carry Cleared
+:BCC rel9 is opcode=0x4 & op9_10=0x0 & rel9
+{
+    if ($(XC) == 0) goto rel9;
+}
+
+
+# Branch if Carry Set
+:BCS rel9 is opcode=0x4 & op9_10=0x1 & rel9
+{
+    if ($(XC) == 1) goto rel9;
+}
+
+# Branch of Equal
+:BEQ rel9 is opcode=0x4 & op9_10=0x3 & rel9
+{
+    if ($(XZ) == 1) goto rel9;
+}
+
+# Bit Field Extract
+:BFEXT rd, rs1, rs2 is opcode=0xc & rd & rs1 & rs2 & op2=0x3
+{
+    local origin:2 = rs2 & 0xf;
+    local width:2 = (rs2 >> 4) & 0xf;
+    local mask:2 = (0xffff >> (16-(width + 1))) << origin;
+    local result:2 = (rs1 & mask) >> origin;
+    
+    rd = result;
+    
+    default_flags(rd);
+}
+
+# Bit Field Find First One
+:BFFO rd, rs1 is opcode=0x1 & rd & rs1 & op4=0x10
+{
+    # 15 - count leading zeros
+    tmp:2 = rs1;
+    $(XC) = (rd == 0);
+    #TODO: implement findFirstOne behavior
+    rd = findFirstOne(tmp);
+
+	default_flags(rd);
+}
+
+# Bit Field Insert
+:BFINS rd, rs1, rs2 is opcode=0xd & rd & rs1 & rs2 & op2=0x3
+{
+    local origin:2 = rs2 & 0xf;
+    local width:2 = (rs2 >> 4) & 0xf;
+    local mask:2 = (0xffff >> (16-(width + 1))) << origin;
+    local result:2 = (rs1 & mask);
+    
+    rd = (rd & ~mask) | result;
+    
+	default_flags(rd);
+}
+
+# Bit Field Insert and Invert
+:BFINSI rd, rs1, rs2 is opcode=0xe & rd & rs1 & rs2 & op2=0x3
+{
+    local origin:2 = rs2 & 0xf;
+    local width:2 = (rs2 >> 4) & 0xf;
+    local mask:2 = (0xffff >> (16-(width + 1))) << origin;
+    local result:2 = (~rs1 & mask);
+    
+    rd = (rd & ~mask) | result;
+    
+    default_flags(rd);
+}
+
+# Bit Field Insert and XNOR
+:BFINSX rd, rs1, rs2 is opcode=0xf & rd & rs1 & rs2 & op2=0x3
+{
+    local origin:2 = rs2 & 0xf;
+    local width:2 = (rs2 >> 4) & 0xf;
+    local mask:2 = (0xffff >> (16-(width + 1))) << origin;
+    local result:2 = (~(rs1 ^ rd) & mask);
+    
+    rd = (rd & ~mask) | result;
+    
+    default_flags(rd);
+}
+
+# Branch if Greater than or Equal to Zero
+:BGE rel9 is opcode=0x6 & op9_10=0x2 & rel9
+{
+    if (($(XN) ^ $(XV)) == 0) goto rel9;
+}
+
+# Branch if Greater than Zero
+:BGT rel9 is opcode=0x7 & op9_10=0x0 & rel9
+{
+    if (($(XZ) | ($(XN) ^ $(XV))) == 0) goto rel9;
+}
+
+# Branch if Higher
+:BHI rel9 is opcode=0x6 & op9_10=0x0 & rel9
+{
+    if (($(XC) | $(XZ)) == 0) goto rel9;
+}
+
+#:BHS rel9 is opcode=0x4 & op9_10=0x0 & rel9    see BCC
+
+# Bit Test immediate 8-bit constant (high byte)
+:BITH rd, ximm8 is opcode=0x13 & rd & ximm8 & rd_hi
+{
+    local val = rd_hi & ximm8;
+    
+    default_flags(val);
+}
+
+# Bit Test immediate 8-bit constant (low byte)
+:BITL reg8, ximm8 is opcode=0x12 & reg8 & ximm8 & rd_lo
+{
+    local val  = rd_lo & ximm8;
+    
+    default_flags(val);
+}
+
+# Branch if Less or Equal to Zero
+:BLE rel9 is opcode=0x7 & op9_10=0x1 & rel9
+{
+    if ($(XZ) | ($(XN) ^ $(XV))) goto rel9;
+}
+
+#:BLO rel9 is opcode=0x4 & op9_10=0x1 & rel9    See BCS
+
+# Branch if Lower or Same
+:BLS rel9 is opcode=0x6 & op9_10=0x1 & rel9
+{
+    if (($(XC) | $(XZ)) == 1) goto rel9;
+}
+
+# Branch of Lower than Zero
+:BLT rel9 is opcode=0x6 & op9_10=0x3 & rel9
+{
+    if (($(XN) ^ $(XV)) == 1) goto rel9;
+}
+
+# Branch if Minus
+:BMI rel9 is opcode=0x5 & op9_10=0x1 & rel9
+{
+    if ($(XN) == 1) goto rel9;
+}
+
+# Branch if Not Equal
+:BNE rel9 is opcode=0x4 & op9_10=0x2 & rel9
+{
+    if ($(XZ) == 0) goto rel9;
+}
+
+# Branch if Plus
+:BPL rel9 is opcode=0x5 & op9_10=0x0 & rel9
+{
+	if ($(XN) == 0) goto rel9;
+}
+
+# Branch Always
+:BRA rel10 is opcode=0x7 & bit_10=0x1 & rel10
+{
+	goto rel10;
+}
+# Break
+:BRK is xop16=0x0
+{
+    # put xgate into debug mode and set breakpoint
+	goto inst_next;
+}
+
+# Branch if Overflow Cleared
+:BVC rel9 is opcode=0x5 & op9_10=0x2 & rel9
+{
+	if ($(XV) == 0) goto rel9;
+}
+
+# Branch if Overflow Set
+:BVS rel9 is opcode=0x5 & op9_10=0x3 & rel9
+{
+	if ($(XV) == 2) goto rel9;
+}
+
+# Compare
+# synonym for SUB R0, RS1, RS2
+:CMP rs1, rs2 is opcode=0x3 & reg8=0x0 & rs1 & rs2 & op2=0x0
+{
+	tmp:2 = rs1 - rs2;
+	subtraction_flags(rs1, rs2, tmp);
+}
+
+# Compare Immediate 8-bit constant (low byte)
+:CMPL rd, ximm8 is opcode=0x1a & rd & ximm8
+{
+	local val:1 = rd:1;
+	local tmp:1 = val - ximm8;
+	local xtmp:1 = ximm8;
+	subtraction_flagsB(val, xtmp, tmp);
+}
+
+# One's Complement
+:COM rd, rs2 is opcode=0x2 & rd & reg5=0x0 & rs2 & op2=0x3
+{
+	local val:2 = ~rs2;
+	rd = val;
+	
+	default_flags(rd);
+}
+
+:COM rd is opcode=0x2 & rd & reg5=0x0 & rs2 & reg8=reg2 & op2=0x3
+{
+	local val:2 = ~rs2;
+	rd = val;
+	
+	default_flags(rd);
+}
+
+# Compare with Carry
+:CPC rs1, rs2 is opcode=0x3 & reg8=0x0 & rs1 & rs2 & op2=0x1
+{
+	local tmp:2 = rs1 - rs2 - zext($(XC));
+	subtraction_flags(rs1, rs2, tmp);
+}
+
+# Compare Immediate 8-bit constant with carry (high byte)
+:CPCH rd, ximm8 is opcode=0x1b & rd & ximm8
+{
+	local val:2 = rd >> 8;
+	local tmp:1 = val(1) - ximm8 - $(XC);
+	local xtmp:1 = ximm8;
+	subtraction_flagsB(val(1), xtmp, tmp);
+}
+
+# Clear Semaphore
+:CSEM rd is opcode=0x0 & rd & xop8=0xf0
+{
+    # treat as NOP
+    clearSemaphore(rd);
+}
+
+:CSEM imm3 is opcode=0x0 & imm3 & xop8=0xf1
+{
+	local sem:1 = imm3;
+    clearSemaphore(sem);
+}
+
+
+# Logical Shift Left with Carry
+:CSL rd, ximm4 is opcode=0x1 & rd & ximm4 & op3=0xa
+{
+	local Ctmp:2 = zext($(XC));
+	local shift:2 = ((ximm4-1)%16+1);
+	local oldRd:2 = rd >> 15;
+	getbit($(XC), rd, 16-shift);
+	leftShiftCarry(rd,Ctmp,shift,rd);
+	shiftFlags(rd,oldRd);
+}
+
+:CSL rd, rs1 is opcode=0x1 & rd & rs1 & op4=0x12
+{
+	local Ctmp:2 = zext($(XC));
+	#if rs1 > 16, then rs1 = 16
+	local rsgt:2 = zext(rs1>16);
+	local rslt:2 = zext(rs1<16);
+	local shift:2 = rs1*rsgt + 16*rslt;
+	local oldRd:2 = rd >> 15;
+	getbit($(XC), rd, 16-shift);
+	leftShiftCarry(rd,Ctmp,shift,rd);
+	shiftFlags(rd,oldRd);
+}
+
+# Logical Shift Right with Carry
+:CSR rd, ximm4 is opcode=0x1 & rd & ximm4 & op3=0xb
+{
+	local Ctmp:2 = zext($(XC));
+	local shift:2 = ((ximm4-1)%16+1);
+	local oldRd:2 = rd >> 15;
+	getbit($(XC), rd, shift-1);
+	rightShiftCarry(rd,Ctmp,shift,rd);
+	shiftFlags(rd,oldRd);
+}
+
+:CSR rd, rs1 is opcode=0x1 & rd & rs1 & op4=0x13
+{
+	local Ctmp:2 = zext($(XC));
+	#if rs1 > 16, then rs1 = 16
+	local rsgt:2 = zext(rs1>16);
+	local rslt:2 = zext(rs1<16);
+	local shift:2 = rs1*rsgt + 16*rslt;
+	local oldRd:2 = rd >> 15;
+	getbit($(XC), rd, shift-1);
+	rightShiftCarry(rd,Ctmp,shift,rd);
+	shiftFlags(rd,oldRd);
+}
+
+:CSR rd, rs1 is opcode=0x1 & rd & rs1 & reg5=0 & op4=0x13
+{
+	$(XN) = (rd s< 0);
+	$(XZ) = (rd == 0);
+	$(XV) = 0;
+	# $(XC) is unaffected
+}
+
+# Jump and Link
+:JAL rd is opcode=0x0 & rd & xop8=0xf6
+{
+	local dest:2 = rd;
+	rd = inst_next;
+	call [dest];
+}
+
+# Load byte from memory (low byte)
+:LDB rd, (rs1, offs5) is opcode=0x8 & rd & rs1 & offs5
+{
+	local addr = rs1 + offs5;
+	computePage(addr);
+	local dst:3 = segment(PPAGE,addr);
+	local val:1 = *:1 (dst);
+	rd = (rd & 0xff00) | zext(val);
+}
+
+:LDB rd, (rs1, rs2)   is opcode=0xc & rd & rs1 & rs2 & op2=0x0
+{
+	local addr = rs1 + rs2;
+	computePage(addr);
+	local dst:3 = segment(PPAGE,addr);
+	local val:1 = *:1 (dst);
+	rd = (rd & 0xff00) | zext(val);
+}
+
+:LDB rd, (rs1, rs2+)  is opcode=0xc & rd & rs1 & rs2 & op2=0x1
+{
+	local addr = rs1 + rs2;
+	computePage(addr);
+	local dst:3 = segment(PPAGE,addr);
+	local val:1 = *:1 (dst);
+	rd = (rd & 0xff00) | zext(val);
+	rs1 = rs1 + 1;
+}
+
+:LDB rd, (rs1, -rs2)  is opcode=0xc & rd & rs1 & rs2 & op2=0x2
+{
+	rs2 = rs2 - 1;
+	local addr = rs1 + rs2;
+	computePage(addr);
+	local dst:3 = segment(PPAGE,addr);
+	local val:1 = *:1 (dst);
+	rd = (rd & 0xff00) | zext(val);
+}
+
+
+# Load Immediate 8-bit constant (high byte)
+:LDH rd, ximm8 is opcode=0x1f & rd & ximm8 & rd_hi
+{
+	rd_hi = ximm8;
+}
+
+
+# Load Immediate 8-bit constant (low byte)
+:LDL rd, ximm8 is opcode=0x1e & rd & ximm8
+{
+	rd = ximm8;
+}
+
+# Load Word from Memory
+:LDW rd, (rs1, offs5) is opcode=0x9 & rd & rs1 & offs5
+{
+	local addr = rs1 + offs5;
+	computePage(addr);
+	local dst:3 = segment(PPAGE,addr);
+	local val:2 = *:2 (dst);
+	rd = val;
+}
+
+:LDW rd, (rs1, rs2)   is opcode=0xd & rd & rs1 & rs2 & op2=0x0
+{
+	local addr = rs1 + rs2;
+	computePage(addr);
+	local dst:3 = segment(PPAGE,addr);
+	local val:2 = *:2 (dst);
+	rd = val;	
+}
+
+:LDW rd, (rs1, rs2+)  is opcode=0xd & rd & rs1 & rs2 & op2=0x1
+{
+	local addr = rs1 + rs2;
+	computePage(addr);
+	local dst:3 = segment(PPAGE,addr);
+	local val:2 = *:2 (dst);
+	rd = val;
+	rs1 = rs1 + 2;
+}
+:LDW rd, (rs1, -rs2)  is opcode=0xd & rd & rs1 & rs2 & op2=0x2
+{
+	rs2 = rs2 - 2;
+	local addr = rs1 + rs2;
+	computePage(addr);
+	local dst:3 = segment(PPAGE,addr);
+	local val:2 = *:2 (dst);
+	rd = val;
+}
+
+# Logical Shift Left
+:LSL rd, ximm4 is opcode=0x1 & rd & ximm4 & op3=0xc
+{
+	local shift:2 = ((ximm4-1)%16+1);
+	getbit($(XC), rd, 16-shift);
+	local oldRd:2 = rd >> 15;
+	rd = rd << shift;
+	shiftFlags(rd,oldRd);
+}
+
+:LSL rd, rs1 is opcode=0x1 & rd & rs1 & op4=0x14
+{
+	getbit($(XC), rd, 16-rs1);
+	local oldRd:2 = rd >> 15;
+	rd = rd << rs1;
+	shiftFlags(rd,oldRd);
+}
+
+# Logical Shift Right
+:LSR rd, ximm4 is opcode=0x1 & rd & ximm4 & op3=0xd
+{
+	getbit($(XC), rd, ximm4-1);
+	local oldRd:2 = rd >> 15;
+	rd = rd >> ximm4;
+	shiftFlags(rd,oldRd);
+}
+
+:LSR rd, rs1 is opcode=0x1 & rd & rs1 & op4=0x15
+{
+	getbit($(XC), rd, rs1-1);
+	local oldRd:2 = (rd >> 15);
+	rd = rd >> rs1;
+	shiftFlags(rd,oldRd);
+}
+
+# Move Register Content
+# Synonym for OR RD, R0, RS
+:MOV rd, rs2 is opcode=0x2 & rd & reg5=0 & rs2 & op2=0x2
+{
+	rd = rs2;
+
+	default_flags(rd);
+}
+
+# Two's Complement
+:NEG rd, rs2 is opcode=0x3 & rd & reg8!=0 & reg5=0x0 & rs2 & op2=0x0
+{
+	local tmp:2 = -rs2;
+	rd = tmp;
+	$(XN) = (rd s< 0);
+	$(XZ) = (rd == 0);
+	$(XV) = (((rs2 & rd) & 0x8000) != 0);
+	$(XC) = (((rs2 | rd) & 0x8000) != 0);
+}
+
+:NEG rd is opcode=0x3 & rd & reg5=0x0 & rs2 & reg2=reg8 & op2=0x0
+{
+	local tmp:2 = -rs2;
+	rd = tmp;
+	$(XN) = (rd s< 0);
+	$(XZ) = (rd == 0);
+	$(XV) = (((rs2 & rd) & 0x8000) != 0);
+	$(XC) = (((rs2 | rd) & 0x8000) != 0);
+}
+
+# No Op
+:NOP is xop16=0x100 {}
+
+# Logical OR
+:OR rd, rs1, rs2 is opcode=0x2 & rd & rs1 & rs2 & op2=0x2
+{
+    local result:2 = rs1 | rs2;
+    rd = result;
+
+	default_flags(result);
+}
+
+# Logical OR Immediate 8-bit Constant (high byte)
+:ORH rd, ximm8 is opcode=0x15 & rd & ximm8 & rd_hi
+{
+    rd_hi = rd_hi | ximm8;
+    
+	default_flags(rd_hi);
+}
+
+# Logical OR Immediate 8-bit Constant (low byte)
+:ORL rd, ximm8 is opcode=0x14 & rd & ximm8 & rd_lo
+{
+    rd_lo = rd_lo | ximm8;
+ 
+ 	default_flags(rd_lo);
+}
+
+# Calculate Parity
+:PAR rd is opcode=0x0 & rd & xop8=0xf5
+{
+	parity(rd, $(XC));
+	
+    default_flags(rd);
+}
+
+# Rotate Left
+:ROL rd, ximm4 is opcode=0x1 & rd & ximm4 & op3=0xe
+{
+	local cnt:2 = ximm4;
+	rd = (rd << cnt) | (rd >> (16 - cnt));
+	
+    default_flags(rd);
+}
+
+:ROL rd, rs1 is opcode=0x1 & rd & rs1 & op4=0x16
+{
+	local cnt:2 = rs1 & 0xf;
+	rd = (rd << cnt) | (rd >> (16 - cnt));
+	
+    default_flags(rd);
+}
+
+# Rotate Right
+:ROR rd, ximm4 is opcode=0x1 & rd & ximm4 & op3=0xf
+{
+	local cnt:2 = ximm4;
+	rd = (rd >> cnt) | (rd << (16 - rd));
+	
+    default_flags(rd);
+}
+
+:ROR rd, rs1 is opcode=0x1 & rd & rs1 & op4=0x17
+{
+	local cnt:2 = rs1 & 0xf;
+	rd = (rd >> cnt) | (rd << (16 - rd));
+	
+    default_flags(rd);
+}
+# Return to Scheduler
+# Implement as NOP for now
+:RTS is xop16=0x0200 {
+	XPC = TerminateThread();
+	return [XPC];
+}
+
+# Subtract with Carry
+:SBC rd, rs1, rs2 is opcode=0x3 & rd & rs1 & rs2 & op2=0x1
+{
+	local result:2 = rs1 - rs2 - zext($(XC));
+	rd = result;
+	subtraction_flagsC(rs1, rs2, result);
+}
+
+# Sign Extent Byte to Word
+:SEX rd is opcode=0x0 & rd & xop8=0xf4
+{
+	local result:1 = rd:1 & 0xff;
+	rd = sext(result);
+	
+    default_flags(rd);
+}
+# Set Interrupt Flag
+# TODO: implement interrupt flags
+:SIF is xop16=0x0300
+{
+	setInterruptFlag();
+}
+
+:SIF rd is opcode=0x0 & rd & xop8=0xf7
+{
+	setInterruptFlag();
+}
+
+# Set Semaphore
+# TODO: implement semaphores
+:SSEM imm3 is opcode=0x0 & imm3 & xop8=0xf2
+{
+	local sem:1 = imm3;
+	setSemaphore(sem);
+}
+
+:SSEM rd  is opcode=0x0 & rd & xop8=0xf3
+{
+	setSemaphore(rd);
+}
+
+# Store Byte to Memory (low byte)
+:STB rd, (rs1, offs5) is opcode=0xa & rd & rs1 & offs5
+{
+	local addr = rs1 + offs5;
+	computePage(addr);
+	local dst:3 = segment(PPAGE,addr);
+	local val:1 = rd:1;
+	*dst = val;
+}
+
+:STB rd, (rs1, rs2)   is opcode=0xe & rd & rs1 & rs2 & op2=0x0
+{
+	local addr = rs1 + rs2;
+	computePage(addr);
+	local dst:3 = segment(PPAGE,addr);
+	local val:1 = rd:1;
+	*dst = val;
+}
+
+:STB rd, (rs1, rs2+)  is opcode=0xe & rd & rs1 & rs2 & op2=0x1
+{
+	local addr = rs1 + rs2;
+	computePage(addr);
+	local dst:3 = segment(PPAGE,addr);
+	local val:1 = rd:1;
+	*dst = val;
+	rs2 = rs2 + 1;
+}
+
+:STB rd, (rs1, -rs2)  is opcode=0xe & rd & rs1 & rs2 & op2=0x2
+{
+	rs2 = rs2 - 1;
+	local addr = rs1 + rs2;
+	computePage(addr);
+	local dst:3 = segment(PPAGE,addr);
+	local val:1 = rd:1;
+	*dst = val;
+}
+
+# Store Word to Memory
+:STW rd, (rs1, offs5) is opcode=0xb & rd & rs1 & offs5
+{
+	local addr = rs1 + offs5;
+	computePage(addr);
+	local dst:3 = segment(PPAGE,addr);
+	local val:2 = rd;
+	*dst = val;
+}
+
+:STW rd, (rs1, rs2)   is opcode=0xf & rd & rs1 & rs2 & op2=0x0
+{
+	local addr = rs1 + rs2;
+	computePage(addr);
+	local dst:3 = segment(PPAGE,addr);
+	local val:2 = rd;
+	*dst = val;
+	rs2 = rs2 + 1;
+}
+
+:STW rd, (rs1, rs2+)  is opcode=0xf & rd & rs1 & rs2 & op2=0x1
+{
+	local addr = rs1 + rs2;
+	computePage(addr);
+	local dst:3 = segment(PPAGE,addr);
+	local val:2 = rd;
+	*dst = val;
+	rs2 = rs2 + 2;
+}
+
+:STW rd, (rs1, -rs2)  is opcode=0xf & rd & rs1 & rs2 & op2=0x2
+{
+	rs2 = rs2 - 2;
+	local addr = rs1 + rs2;
+	computePage(addr);
+	local dst:3 = segment(PPAGE,addr);
+	local val:2 = rd;
+	*dst = val;
+}
+
+# Subtract without Carry
+:SUB rd, rs1, rs2 is opcode=0x3 & rd & rs1 & rs2 & op2=0x0
+{
+	local result:2 = rs1 - rs2;
+	rd = result;
+	
+	subtraction_flags(rs1, rs2, result);
+}
+
+
+# Subtract Immediate 8-bit constant (high byte)
+:SUBH rd, ximm8 is opcode=0x19 & rd & ximm8
+{
+	local val:2 = ximm8 << 8;
+    local result:2 = rd - val;
+    
+    subtraction_flags(rd, val, result);
+    
+    rd = result;
+}
+
+# Subtract Immediate 8-bit constant (low byte)
+:SUBL rd, ximm8 is opcode=0x18 & rd & ximm8
+{
+	local val:2 = ximm8;
+    local result:2 = rd - val;
+    
+	$(XN) = (result s< 0);
+    $(XZ) = ((result == 0) & ($(XZ)==1));
+	$(XV) = ((~rd & result) & 0x8000) != 0;
+	$(XC) = ((rd & ~result) & 0x8000) != 0;
+    rd = result;
+}
+
+# Transfer from and to Special Registers
+:TFR rd, XCCR is opcode=0x0 & rd & xop8=0xf8 & XCCR
+{
+	local val:1 = ((($(XN) << 1) | $(XZ) << 1) | $(XV) << 1) | $(XC);
+	rd = zext(val);
+}
+
+:TFR XCCR, rd is opcode=0x0 & rd & xop8=0xf9 & XCCR
+{
+	XCCR = rd & 0xf;
+	$(XN) = rd[3,1];
+	$(XZ) = rd[2,1];
+	$(XV) = rd[1,1];
+	$(XC) = rd[0,1];
+}
+
+:TFR rd, XPC  is opcode=0x0 & rd & xop8=0xfa & XPC
+{
+	rd = inst_next + 2;
+}
+
+# Test Register
+# Synonym for SUB R0, RS, R0
+:TST rs1 is opcode=0x3 & reg8=0x0 & rs1 & reg2=0x0 & op2=0x0
+{
+	local result:2 = rs1;
+	
+	subtraction_flags(rs1,0,result);
+}
+
+# Logical Exclusive NOR
+:XNOR rd, rs1, rs2 is opcode=0x2 & rd & rs1 & rs2 & op2=0x3
+{
+    local result:2 = ~(rs1 ^ rs2);
+    rd = result;
+    
+    default_flags(result);
+}
+
+# Logical Exclusive NOR Immediate 8-bit constant (high byte)
+:XNORH rd, ximm8 is opcode=0x17 & rd & ximm8 & rd_hi
+{
+    rd_hi = ~(rd_hi ^ ximm8);
+    
+	default_flags(rd_hi);
+}
+
+# Logical Exclusive NOR Immediate 8-bit constant (low byte)
+:XNORL rd, ximm8 is opcode=0x16 & rd & ximm8 & rd_lo
+{
+    rd_lo= ~(rd_lo^ ximm8);
+    
+	default_flags(rd_lo);
+}
+
+}

@@ -26,7 +26,7 @@ import ghidra.util.exception.DuplicateNameException;
 /**
  * Basic implementation of a DataTypeComponent
  */
-public class DataTypeComponentImpl implements DataTypeComponent, Serializable {
+public class DataTypeComponentImpl implements InternalDataTypeComponent, Serializable {
 	private final static long serialVersionUID = 1;
 
 	private DataType dataType;
@@ -53,17 +53,21 @@ public class DataTypeComponentImpl implements DataTypeComponent, Serializable {
 	public DataTypeComponentImpl(DataType dataType, CompositeDataTypeImpl parent, int length,
 			int ordinal, int offset, String fieldName, String comment) {
 
-		this.dataType = dataType;
 		this.parent = parent;
 		this.ordinal = ordinal;
 		this.offset = offset;
 		this.length = length;
 		this.fieldName = fieldName;
 		this.comment = comment;
+		setDataType(dataType);
 		initFlexibleArrayComponent();
 	}
 
 	private void initFlexibleArrayComponent() {
+		if (dataType instanceof BitFieldDataType || dataType instanceof Dynamic ||
+			dataType instanceof FactoryDataType) {
+			return;
+		}
 		isFlexibleArrayComponent =
 			length == 0 && offset < 0 && ordinal < 0 && (parent instanceof Structure);
 	}
@@ -87,6 +91,20 @@ public class DataTypeComponentImpl implements DataTypeComponent, Serializable {
 	}
 
 	@Override
+	public boolean isBitFieldComponent() {
+		return dataType instanceof BitFieldDataType;
+	}
+
+	@Override
+	public boolean isZeroBitFieldComponent() {
+		if (isBitFieldComponent()) {
+			BitFieldDataType bitField = (BitFieldDataType) getDataType();
+			return bitField.getBitSize() == 0;
+		}
+		return false;
+	}
+
+	@Override
 	public int getOffset() {
 		if (isFlexibleArrayComponent) {
 			if (parent.isNotYetDefined()) {
@@ -96,6 +114,13 @@ public class DataTypeComponentImpl implements DataTypeComponent, Serializable {
 			return parent.getLength();
 		}
 		return offset;
+	}
+
+	boolean containsOffset(int off) {
+		if (isFlexibleArrayComponent) {
+			return false;
+		}
+		return off >= offset && off <= (offset + length - 1);
 	}
 
 	@Override
@@ -115,11 +140,17 @@ public class DataTypeComponentImpl implements DataTypeComponent, Serializable {
 
 	@Override
 	public String getFieldName() {
+		if (isZeroBitFieldComponent()) {
+			return "";
+		}
 		return fieldName;
 	}
 
 	@Override
 	public String getDefaultFieldName() {
+		if (isZeroBitFieldComponent()) {
+			return "";
+		}
 		if (parent instanceof Structure) {
 			return DEFAULT_FIELD_NAME_PREFIX + "_0x" + Integer.toHexString(getOffset());
 		}
@@ -186,6 +217,13 @@ public class DataTypeComponentImpl implements DataTypeComponent, Serializable {
 		return parent;
 	}
 
+	@Override
+	public void update(int ordinal, int offset, int length) {
+		this.ordinal = ordinal;
+		this.offset = offset;
+		this.length = length;
+	}
+
 	/**
 	 * Set the byte offset of where this component begins in its immediate parent
 	 * data type.
@@ -248,10 +286,13 @@ public class DataTypeComponentImpl implements DataTypeComponent, Serializable {
 		DataTypeComponent dtc = (DataTypeComponent) obj;
 		DataType myDt = getDataType();
 		DataType otherDt = dtc.getDataType();
-		if (offset != dtc.getOffset() || length != dtc.getLength() || ordinal != dtc.getOrdinal() ||
+
+		// NOTE: use getOffset() and getOrdinal() methods since returned values will differ from
+		// stored values for flexible array component
+		if (getOffset() != dtc.getOffset() || getLength() != dtc.getLength() ||
+			getOrdinal() != dtc.getOrdinal() ||
 			!SystemUtilities.isEqual(getFieldName(), dtc.getFieldName()) ||
 			!SystemUtilities.isEqual(getComment(), dtc.getComment())) {
-
 			return false;
 		}
 		if (!(myDt instanceof Pointer)) {
@@ -285,25 +326,48 @@ public class DataTypeComponentImpl implements DataTypeComponent, Serializable {
 	public boolean isEquivalent(DataTypeComponent dtc) {
 		DataType myDt = getDataType();
 		DataType otherDt = dtc.getDataType();
-		int otherLength = dtc.getLength();
 		DataType myParent = getParent();
 		boolean aligned =
 			(myParent instanceof Composite) ? ((Composite) myParent).isInternallyAligned() : false;
 		// Components don't need to have matching offset when they are aligned, only matching ordinal.
 		if ((!aligned && (getOffset() != dtc.getOffset())) ||
 			// Components don't need to have matching length when they are aligned. Is this correct?
-			(!aligned && (getLength() != otherLength)) || getOrdinal() != dtc.getOrdinal() ||
+			// NOTE: use getOffset() and getOrdinal() methods since returned values will differ from
+			// stored values for flexible array component
+			(!aligned && (getLength() != dtc.getLength())) || getOrdinal() != dtc.getOrdinal() ||
 			!SystemUtilities.isEqual(getFieldName(), dtc.getFieldName()) ||
 			!SystemUtilities.isEqual(getComment(), dtc.getComment())) {
-
 			return false;
 		}
 
 		return DataTypeUtilities.isSameOrEquivalentDataType(myDt, otherDt);
 	}
 
-	void setDataType(DataType dt) {
+	@Override
+	public void setDataType(DataType dt) {
 		dataType = dt;
+		if (dt instanceof BitFieldDataType) {
+			// bit-field packing may change component size
+			setLength(dt.getLength());
+		}
+	}
+
+	@Override
+	public String toString() {
+		StringBuffer buffer = new StringBuffer();
+		buffer.append("  " + ordinal);
+		buffer.append("  " + offset);
+		buffer.append("  " + dataType.getDisplayName());
+		if (isFlexibleArrayComponent) {
+			buffer.append("[ ]");
+		}
+		else if (dataType instanceof BitFieldDataType) {
+			buffer.append("(" + ((BitFieldDataType) dataType).getBitOffset() + ")");
+		}
+		buffer.append("  " + length);
+		buffer.append("  " + fieldName);
+		buffer.append("  " + ((comment != null) ? ("\"" + comment + "\"") : comment));
+		return buffer.toString();
 	}
 
 }

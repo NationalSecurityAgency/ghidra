@@ -312,7 +312,7 @@
             <tocdef id="Set Fallthrough Address" sortgroup="m" text="Set Fallthrough Address"  target="help/topics/FallThroughPlugin/Override_Fallthrough.htm" />
             <tocdef id="Navigation" sortgroup="n" text="Navigation"  target="help/topics/Navigation/Navigation.htm" >
                 <tocdef id="Go to Address Label" sortgroup="a" text="Go to Address Label"  target="help/topics/Navigation/Navigation.htm" />
-                <tocdef id="Go to Next/Previous" sortgroup="b" text="Go to Next/Previous"  target="help/topics/Navigation/Navigation.htm#History_Buffer" />
+                <tocdef id="Go to Next/Previous" sortgroup="b" text="Go to Next/Previous"  target="help/topics/Navigation/Navigation.htm#Navigation_History" />
                 <tocdef id="Margin and Navigation Markers" sortgroup="c" text="Margin and Navigation Markers"  target="help/topics/CodeBrowserPlugin/CodeBrowser.htm#CBNavigationMarkers" />
             </tocdef>
             
@@ -333,11 +333,6 @@
                 <tocdef id="Query Results Window" sortgroup="h" text="Query Results Window" target="help/topics/Search/Query_Results_Dialog.htm" />
             </tocdef>
             
-            <tocdef id="PDB" sortgroup="q" text="PDB" target="help/topics/PDB/PDB.htm" >
-            	<tocdef id="README_PDB" sortgroup="a" text="PDB Parser (README_PDB)" target="docs/README_PDB.html" />
-                <tocdef id="Download PDB" sortgroup="b" text="Download PDB File"     target="help/topics/PDB/download_pdb_file.html" />
-            </tocdef>
-        
         </tocdef> <!-- End Program Annotation -->
         
         <tocdef id="Scripting" text="Scripting" target="help/topics/GhidraScriptMgrPlugin/GhidraScriptMgrPlugin.htm" >

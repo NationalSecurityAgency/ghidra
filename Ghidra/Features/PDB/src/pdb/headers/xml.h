@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,9 +17,10 @@
 #define __PDB__XML__H__
 
 #include <stdio.h>
-#include "comutil.h"
+#include <string>
+#include <comutil.h>
 
-char * indent(int nSpaces);
-BSTR escapeXmlEntities(BSTR bstr);
+std::wstring indent(size_t nSpaces);
+std::wstring escapeXmlEntities(const std::wstring& bstr);
 
 #endif

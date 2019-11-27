@@ -21,13 +21,14 @@ import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.InputStream;
 import java.net.URL;
-import java.util.List;
 
 import javax.swing.*;
 
 import org.junit.*;
 
 import docking.action.DockingActionIf;
+import docking.tool.ToolConstants;
+import docking.util.image.ToolIconURL;
 import docking.widgets.OptionDialog;
 import docking.widgets.filechooser.GhidraFileChooser;
 import generic.test.AbstractGTest;
@@ -45,9 +46,7 @@ import ghidra.framework.model.ToolChest;
 import ghidra.framework.model.ToolTemplate;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.util.PluginException;
-import ghidra.framework.plugintool.util.ToolConstants;
 import ghidra.framework.preferences.Preferences;
-import ghidra.framework.project.tool.ToolIconURL;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.test.TestEnv;
 import ghidra.util.exception.AssertException;
@@ -97,9 +96,9 @@ public class SaveToolConfigDialogTest extends AbstractGhidraHeadedIntegrationTes
 		tc.remove("MyTestTool");
 		tc.remove("TestTool");
 
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		tool.setConfigChanged(false);
-		SwingUtilities.invokeAndWait(() -> saveDialog.close());
+		runSwing(() -> saveDialog.close());
 		env.dispose();
 	}
 
@@ -125,7 +124,7 @@ public class SaveToolConfigDialogTest extends AbstractGhidraHeadedIntegrationTes
 		pressButtonByText(saveDialog, "Save");
 
 		assertTrue(!tool.hasConfigChanged());
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		assertTrue(!saveDialog.isVisible());
 		ToolChest tc = tool.getProject().getLocalToolChest();
 		ToolTemplate config = tc.getToolTemplate("MyTestTool");
@@ -142,7 +141,7 @@ public class SaveToolConfigDialogTest extends AbstractGhidraHeadedIntegrationTes
 		while (saveDialog.isVisible()) {
 			Thread.sleep(5);
 		}
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		assertEquals("Name cannot have spaces.", msg);
 	}
 
@@ -156,7 +155,7 @@ public class SaveToolConfigDialogTest extends AbstractGhidraHeadedIntegrationTes
 		pressButtonByText(saveDialog, "Save");
 
 		assertTrue(!tool.hasConfigChanged());
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		assertTrue(!saveDialog.isVisible());
 		ToolChest tc = tool.getProject().getLocalToolChest();
 		ToolTemplate template = tc.getToolTemplate("MyTestTool");
@@ -180,7 +179,7 @@ public class SaveToolConfigDialogTest extends AbstractGhidraHeadedIntegrationTes
 		while (saveDialog.isVisible()) {
 			Thread.sleep(5);
 		}
-		waitForPostedSwingRunnables();
+		waitForSwing();
 	}
 
 	@Test
@@ -208,8 +207,7 @@ public class SaveToolConfigDialogTest extends AbstractGhidraHeadedIntegrationTes
 		final JButton browseButton = (JButton) findComponentByName(saveDialog, "BrowseButton");
 		pressButton(browseButton, false);
 
-		final GhidraFileChooser chooser =
-			waitForDialogComponent(GhidraFileChooser.class);
+		final GhidraFileChooser chooser = waitForDialogComponent(GhidraFileChooser.class);
 
 		assertNotNull(chooser);
 		runSwing(() -> chooser.setSelectedFile(destFile));
@@ -240,7 +238,7 @@ public class SaveToolConfigDialogTest extends AbstractGhidraHeadedIntegrationTes
 		while (tc.getToolTemplate("MyTestTool") == null) {
 			Thread.sleep(10);
 		}
-		waitForPostedSwingRunnables();
+		waitForSwing();
 
 		setText(toolNameField, "MyTestTool", false);
 
@@ -256,10 +254,9 @@ public class SaveToolConfigDialogTest extends AbstractGhidraHeadedIntegrationTes
 			JButton saveButton = findButtonByText(saveDialog, "Save");
 			saveButton.getActionListeners()[0].actionPerformed(null);
 		});
-		waitForPostedSwingRunnables();
+		waitForSwing();
 
-		final OptionDialog d =
-			waitForDialogComponent(tool.getToolFrame(), OptionDialog.class, 2000);
+		final OptionDialog d = waitForDialogComponent(OptionDialog.class);
 		assertNotNull(d);
 		assertEquals("Overwrite Tool?", d.getTitle());
 		pressButtonByText(d.getComponent(), "Overwrite");
@@ -267,7 +264,7 @@ public class SaveToolConfigDialogTest extends AbstractGhidraHeadedIntegrationTes
 		while (d.isVisible()) {
 			Thread.sleep(10);
 		}
-		waitForPostedSwingRunnables();
+		waitForSwing();
 
 		assertTrue(!tool.hasConfigChanged());
 	}
@@ -282,11 +279,11 @@ public class SaveToolConfigDialogTest extends AbstractGhidraHeadedIntegrationTes
 		while (tc.getToolTemplate("MyTestTool") == null) {
 			Thread.sleep(10);
 		}
-		waitForPostedSwingRunnables();
+		waitForSwing();
 
 		setText(toolNameField, "MyTestTool", false);
 
-		SwingUtilities.invokeAndWait(() -> {
+		runSwing(() -> {
 			// force a change to the tool config
 			try {
 				tool.addPlugin(ByteViewerPlugin.class.getName());
@@ -301,10 +298,9 @@ public class SaveToolConfigDialogTest extends AbstractGhidraHeadedIntegrationTes
 			JButton saveButton = findButtonByText(saveDialog, "Save");
 			saveButton.getActionListeners()[0].actionPerformed(null);
 		});
-		waitForPostedSwingRunnables();
+		waitForSwing();
 
-		final OptionDialog d =
-			waitForDialogComponent(OptionDialog.class);
+		final OptionDialog d = waitForDialogComponent(OptionDialog.class);
 		assertNotNull(d);
 		assertEquals("Overwrite Tool?", d.getTitle());
 		pressButtonByText(d.getComponent(), "Cancel");
@@ -312,17 +308,16 @@ public class SaveToolConfigDialogTest extends AbstractGhidraHeadedIntegrationTes
 		while (d.isVisible()) {
 			Thread.sleep(10);
 		}
-		waitForPostedSwingRunnables();
+		waitForSwing();
 
 		assertTrue(tool.hasConfigChanged());
 	}
 
-	/////////////////////////////////////////////////////////////////////
 	private void showDialogs() throws Exception {
-		List<DockingActionIf> actions =
-			tool.getDockingActionsByFullActionName("Save Tool As (Tool)");
-		performAction(actions.get(0), false);
-		waitForPostedSwingRunnables();
+
+		DockingActionIf action = getAction(tool, ToolConstants.TOOL_OWNER, "Save Tool As");
+		performAction(action, false);
+		waitForSwing();
 
 		saveDialog = waitForDialogComponent(SaveToolConfigDialog.class);
 
@@ -335,7 +330,7 @@ public class SaveToolConfigDialogTest extends AbstractGhidraHeadedIntegrationTes
 	private void setText(final JTextField field, final String text, final boolean doAction)
 			throws Exception {
 
-		SwingUtilities.invokeAndWait(() -> {
+		runSwing(() -> {
 			field.setText(text);
 			if (doAction) {
 				ActionListener[] listeners = field.getActionListeners();
@@ -344,6 +339,6 @@ public class SaveToolConfigDialogTest extends AbstractGhidraHeadedIntegrationTes
 				}
 			}
 		});
-		waitForPostedSwingRunnables();
+		waitForSwing();
 	}
 }

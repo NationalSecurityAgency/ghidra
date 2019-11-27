@@ -17,7 +17,6 @@ package ghidra.framework.main.datatree;
 
 import java.awt.*;
 import java.io.IOException;
-import java.text.SimpleDateFormat;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -52,7 +51,6 @@ public class CheckoutsPanel extends JPanel {
 	private DomainFile domainFile;
 	private CheckoutsTableModel tableModel;
 	private GTable table;
-	private SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyy MMM dd hh:mm aaa");
 	private MyFolderListener listener;
 
 	private User user;
@@ -62,8 +60,8 @@ public class CheckoutsPanel extends JPanel {
 	 * @param parent parent dialog
 	 * @param tool tool to get project data for adding a listener
 	 * @param user user that is logged in
-	 * @param domainFile domain file to view checkouts 
-	 * @throws IOException
+	 * @param domainFile domain file to view checkouts
+	 * @param checkouts the checkouts to show
 	 */
 	public CheckoutsPanel(Component parent, PluginTool tool, User user, DomainFile domainFile,
 			ItemCheckoutStatus[] checkouts) {
@@ -115,8 +113,7 @@ public class CheckoutsPanel extends JPanel {
 
 		column = columnModel.getColumn(CheckoutsTableModel.DATE_COL);
 		column.setPreferredWidth(120);
-		column.setCellRenderer(
-			new GenericDateCellRenderer(dateFormatter, "Date when file was checked out"));
+		column.setCellRenderer(new GenericDateCellRenderer("Date when file was checked out"));
 		columnModel.getColumn(CheckoutsTableModel.VERSION_COL).setPreferredWidth(50);
 		columnModel.getColumn(CheckoutsTableModel.USER_COL).setPreferredWidth(80);
 		columnModel.getColumn(CheckoutsTableModel.HOST_COL).setPreferredWidth(120);
@@ -127,8 +124,8 @@ public class CheckoutsPanel extends JPanel {
 	private void terminateCheckout(int[] rows) {
 
 		Set<ItemCheckoutStatus> toTerminate = new HashSet<>();
-		for (int i = 0; i < rows.length; i++) {
-			ItemCheckoutStatus item = tableModel.getRowObject(i);
+		for (int row : rows) {
+			ItemCheckoutStatus item = tableModel.getRowObject(row);
 			toTerminate.add(item);
 		}
 

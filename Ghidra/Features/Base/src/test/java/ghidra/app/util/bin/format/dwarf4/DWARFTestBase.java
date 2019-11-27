@@ -63,7 +63,7 @@ public class DWARFTestBase extends AbstractGhidraHeadedIntegrationTest {
 	@Before
 	public void setUp() throws Exception {
 		program = createDefaultProgram(testName.getMethodName(), ProgramBuilder._TOY, this);
-		dataMgr = program.getDataManager();
+		dataMgr = program.getDataTypeManager();
 		startTransaction();
 
 		AutoAnalysisManager mgr = AutoAnalysisManager.getAnalysisManager(program);
@@ -261,4 +261,21 @@ public class DWARFTestBase extends AbstractGhidraHeadedIntegrationTest {
 				DW_AT_data_member_location, offset).setParent(parentStruct);
 		return field;
 	}
+
+	protected DebugInfoEntry newArray(MockDWARFCompilationUnit dcu, DebugInfoEntry baseTypeDIE,
+			boolean elideEmptyDimRangeValue, int... dimensions) {
+		DebugInfoEntry arrayType = new DIECreator(DWARFTag.DW_TAG_array_type) //
+			.addRef(DW_AT_type, baseTypeDIE).create(dcu);
+		for (int dimIndex = 0; dimIndex < dimensions.length; dimIndex++) {
+			int dim = dimensions[dimIndex];
+			DIECreator dimDIE = new DIECreator(DWARFTag.DW_TAG_subrange_type) //
+				.setParent(arrayType);
+			if (dim != -1 || !elideEmptyDimRangeValue) {
+				dimDIE.addInt(DW_AT_upper_bound, dimensions[dimIndex]);
+			}
+			dimDIE.create(dcu);
+		}
+		return arrayType;
+	}
+
 }

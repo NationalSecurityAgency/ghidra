@@ -200,8 +200,8 @@ public class DockingActionProxy
 	}
 
 	@Override
-	public boolean isKeyBindingManaged() {
-		return dockingAction.isKeyBindingManaged();
+	public KeyBindingType getKeyBindingType() {
+		return dockingAction.getKeyBindingType();
 	}
 
 	@Override
@@ -212,6 +212,11 @@ public class DockingActionProxy
 	@Override
 	public void setUnvalidatedKeyBindingData(KeyBindingData newKeyBindingData) {
 		dockingAction.setUnvalidatedKeyBindingData(newKeyBindingData);
+	}
+
+	@Override
+	public void dispose() {
+		dockingAction.dispose();
 	}
 
 	@Override

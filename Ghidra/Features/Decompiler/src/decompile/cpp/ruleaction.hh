@@ -128,6 +128,16 @@ public:
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
 };
+class RuleOrConsume : public Rule {
+public:
+  RuleOrConsume(const string &g) : Rule(g, 0, "orconsume") {}	///< Constructor
+  virtual Rule *clone(const ActionGroupList &grouplist) const {
+    if (!grouplist.contains(getGroup())) return (Rule *)0;
+    return new RuleOrConsume(getGroup());
+  }
+  virtual void getOpList(vector<uint4> &oplist) const;
+  virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+};
 class RuleOrCollapse : public Rule {
 public:
   RuleOrCollapse(const string &g) : Rule(g, 0, "orcollapse") {}	///< Constructor
@@ -164,6 +174,16 @@ public:
   virtual Rule *clone(const ActionGroupList &grouplist) const {
     if (!grouplist.contains(getGroup())) return (Rule *)0;
     return new RuleShiftBitops(getGroup());
+  }
+  virtual void getOpList(vector<uint4> &oplist) const;
+  virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+};
+class RuleRightShiftAnd : public Rule {
+public:
+  RuleRightShiftAnd(const string &g) : Rule(g, 0, "rightshiftand") {}	///< Constructor
+  virtual Rule *clone(const ActionGroupList &grouplist) const {
+    if (!grouplist.contains(getGroup())) return (Rule *)0;
+    return new RuleRightShiftAnd(getGroup());
   }
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
@@ -341,6 +361,16 @@ public:
   virtual Rule *clone(const ActionGroupList &grouplist) const {
     if (!grouplist.contains(getGroup())) return (Rule *)0;
     return new RuleDoubleShift(getGroup());
+  }
+  virtual void getOpList(vector<uint4> &oplist) const;
+  virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+};
+class RuleDoubleArithShift : public Rule {
+public:
+  RuleDoubleArithShift(const string &g) : Rule(g, 0, "doublearithshift") {}	///< Constructor
+  virtual Rule *clone(const ActionGroupList &grouplist) const {
+    if (!grouplist.contains(getGroup())) return (Rule *)0;
+    return new RuleDoubleArithShift(getGroup());
   }
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
@@ -531,6 +561,27 @@ public:
   virtual Rule *clone(const ActionGroupList &grouplist) const {
     if (!grouplist.contains(getGroup())) return (Rule *)0;
     return new RuleTrivialShift(getGroup());
+  }
+  virtual void getOpList(vector<uint4> &oplist) const;
+  virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+};
+class RuleSignShift : public Rule {
+public:
+  RuleSignShift(const string &g) : Rule(g, 0, "signshift") {}		///< Constructor
+  virtual Rule *clone(const ActionGroupList &grouplist) const {
+    if (!grouplist.contains(getGroup())) return (Rule *)0;
+    return new RuleSignShift(getGroup());
+  }
+  virtual void getOpList(vector<uint4> &oplist) const;
+  virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+};
+class RuleTestSign : public Rule {
+  void findComparisons(Varnode *vn,vector<PcodeOp *> &res);
+public:
+  RuleTestSign(const string &g) : Rule(g, 0, "testsign") {}		///< Constructor
+  virtual Rule *clone(const ActionGroupList &grouplist) const {
+    if (!grouplist.contains(getGroup())) return (Rule *)0;
+    return new RuleTestSign(getGroup());
   }
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
@@ -1074,6 +1125,17 @@ public:
 //   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
 // };
 
+class RulePositiveDiv : public Rule {
+public:
+  RulePositiveDiv(const string &g) : Rule( g, 0, "positivediv") {}	///< Constructor
+  virtual Rule *clone(const ActionGroupList &grouplist) const {
+    if (!grouplist.contains(getGroup())) return (Rule *)0;
+    return new RulePositiveDiv(getGroup());
+  }
+  virtual void getOpList(vector<uint4> &oplist) const;
+  virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+};
+
 class RuleDivTermAdd : public Rule {
 public:
   RuleDivTermAdd(const string &g) : Rule( g, 0, "divtermadd") {}	///< Constructor
@@ -1083,6 +1145,7 @@ public:
   }
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+  static PcodeOp *findSubshift(PcodeOp *op,int4 &n,OpCode &shiftopc);
 };
 
 class RuleDivTermAdd2 : public Rule {
@@ -1098,6 +1161,7 @@ public:
 
 class RuleDivOpt : public Rule {
   static uintb calcDivisor(uintb n,uint8 y,int4 xsize);		///< Calculate the divisor
+  static void moveSignBitExtraction(Varnode *firstVn,Varnode *replaceVn,Funcdata &data);
 public:
   RuleDivOpt(const string &g) : Rule( g, 0, "divopt") {}	///< Constructor
   virtual Rule *clone(const ActionGroupList &grouplist) const {
@@ -1106,7 +1170,7 @@ public:
   }
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
-  static PcodeOp *findSubshift(PcodeOp *op,int4 &n,OpCode &shiftopc);
+  static Varnode *findForm(PcodeOp *op,int4 &n,uintb &y,int4 &xsize,OpCode &extopc);
 };
 
 class RuleSignDiv2 : public Rule {

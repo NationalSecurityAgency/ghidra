@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,27 +15,20 @@
  */
 package ghidra.framework.plugintool.mgr;
 
+import java.io.File;
+
+import ghidra.framework.model.ToolServices;
+import ghidra.framework.model.ToolTemplate;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.dialog.SaveToolConfigDialog;
-import ghidra.framework.preferences.Preferences;
 import ghidra.util.Msg;
-import ghidra.util.filechooser.GhidraFileChooserModel;
-import ghidra.util.filechooser.GhidraFileFilter;
-
-import java.io.File;
-import java.io.IOException;
-
-import docking.widgets.OptionDialog;
-import docking.widgets.filechooser.GhidraFileChooser;
 
 /**
- * Helper class to manage actions for saving and exporting the tool. 
- *
+ * Helper class to manage actions for saving and exporting the tool
  */
 public class DialogManager {
 	private PluginTool tool;
 	private SaveToolConfigDialog saveToolDialog;
-	private GhidraFileChooser ghidraFileChooser;
 
 	public DialogManager(PluginTool tool) {
 		this.tool = tool;
@@ -45,7 +37,7 @@ public class DialogManager {
 	/**
 	 * Show the "Save Tool" dialog.  Returns true if the user performed a 'save as'; returns false
 	 * if the user cancelled.
-	 *
+	 * @return false if the user cancelled
 	 */
 	public boolean saveToolAs() {
 		if (saveToolDialog == null) {
@@ -57,81 +49,33 @@ public class DialogManager {
 	}
 
 	/**
-	 * Write this tool to a filename; the user is prompted for
-	 * a filename.
+	 * Write our tool to a filename; the user is prompted for a filename
 	 */
 	public void exportTool() {
-		GhidraFileChooser fileChooser = getFileChooser();
+		ToolTemplate template = tool.getToolTemplate(true);
+		exportTool(template);
+	}
 
-		File exportFile = null;
-		while (exportFile == null) {
-			exportFile = fileChooser.getSelectedFile(); // show the chooser
-			if (exportFile == null) {
-				return; // user cancelled
-			}
+	/**
+	 * Exports a version of our tool without any config settings.  This is useful for making a
+	 * new 'default' tool to be shared with others, which will not contain any user settings.
+	 */
+	public void exportDefaultTool() {
+		ToolTemplate template = tool.getToolTemplate(false);
+		exportTool(template);
+	}
 
-			Preferences.setProperty(Preferences.LAST_TOOL_EXPORT_DIRECTORY, exportFile.getParent());
-			if (!exportFile.getName().endsWith(".tool")) {
-				exportFile = new File(exportFile.getAbsolutePath() + ".tool");
-			}
-			if (exportFile.exists()) {
-				int result =
-					OptionDialog.showOptionDialog(tool.getToolFrame(), "Overwrite?",
-						"Overwrite existing file, " + exportFile.getName() + "?", "Overwrite",
-						OptionDialog.QUESTION_MESSAGE);
-				if (result != OptionDialog.OPTION_ONE) {
-					exportFile = null; // user chose not to overwrite
-				}
-			}
-		}
-
+	private void exportTool(ToolTemplate template) {
+		ToolServices services = tool.getProject().getToolServices();
 		try {
-			tool.getProject().getToolServices().exportTool(exportFile, tool);
-			Msg.info(this, "Successfully exported " + tool.getName() + " to " +
-				exportFile.getAbsolutePath());
-		}
-		catch (IOException e) {
-			Msg.showError(this, tool.getToolFrame(), "Error Exporting Tool",
-				"Error exporting tool: " + e.getMessage(), e);
+			File savedFile = services.exportTool(template);
+			if (savedFile != null) {
+				Msg.info(this, "Successfully exported " + tool.getName() + " to " +
+					savedFile.getAbsolutePath());
+			}
 		}
 		catch (Exception e) {
 			Msg.showError(this, null, "Error", "Error exporting tool tool", e);
 		}
-
-	}
-
-	private GhidraFileChooser getFileChooser() {
-		if (ghidraFileChooser != null) {
-			return ghidraFileChooser; // lazy inited
-		}
-
-		GhidraFileChooser newFileChooser = new GhidraFileChooser(tool.getToolFrame());
-		newFileChooser.setFileFilter(new GhidraFileFilter() {
-			public boolean accept(File file, GhidraFileChooserModel model) {
-				if (file == null) {
-					return false;
-				}
-
-				if (file.isDirectory()) {
-					return true;
-				}
-
-				return file.getAbsolutePath().toLowerCase().endsWith("tool");
-			}
-
-			public String getDescription() {
-				return "Tools";
-			}
-		});
-
-		String exportDir = Preferences.getProperty(Preferences.LAST_TOOL_EXPORT_DIRECTORY);
-		if (exportDir != null) {
-			newFileChooser.setCurrentDirectory(new File(exportDir));
-		}
-
-		newFileChooser.setTitle("Export Tool");
-		newFileChooser.setApproveButtonText("Export");
-
-		return newFileChooser;
 	}
 }

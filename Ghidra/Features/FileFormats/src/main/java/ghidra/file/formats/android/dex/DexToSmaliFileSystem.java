@@ -146,7 +146,6 @@ public class DexToSmaliFileSystem extends GFileSystemBase {
 		}
 	}
 
-
 	private void storeFile(GFile file, File entry) {
 		if (file == null) {
 			return;
@@ -165,11 +164,6 @@ public class DexToSmaliFileSystem extends GFileSystemBase {
 	public void close() throws IOException {
 		map.clear();
 		super.close();
-	}
-
-	@Override
-	public String getInfo(GFile file, TaskMonitor monitor) throws IOException {
-		return null;
 	}
 }
 

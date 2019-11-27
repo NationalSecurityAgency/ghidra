@@ -15,8 +15,7 @@
  */
 package ghidra.app.plugin.core.codebrowser;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.*;
 
 import javax.swing.table.TableColumnModel;
 import javax.swing.table.TableModel;
@@ -40,6 +39,7 @@ import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.ExternalLocation;
 import ghidra.program.util.OperandFieldLocation;
 import ghidra.program.util.ProgramLocation;
+import ghidra.util.Msg;
 import ghidra.util.table.GhidraTable;
 import ghidra.util.task.TaskMonitor;
 import mockit.*;
@@ -63,8 +63,22 @@ public class ExternalCodeBrowserNavigationTest extends AbstractCodeBrowserNaviga
 
 		int txId = program.startTransaction("Set Path");
 		program.getExternalManager().setExternalPath("ADVAPI32.dll", "/FILE1", true);
-		program.endTransaction(txId, true);
 
+		//
+		// Create a call reference to a thunk function
+		// Create a thunk function to an external location
+		//
+		String arbitraryAddress = "0x1001000";
+		ExternalLocation externalLocation = builder.createExternalFunction(arbitraryAddress,
+			"ADVAPI32.dll", "externalFunctionXyz", "_Zxyz");
+		String thunkAddress = "0x1006300";
+		Function thunk = builder.createFunction(thunkAddress);
+		thunk.setThunkedFunction(externalLocation.getFunction());
+
+		builder.createMemoryCallReference("0x1001030", thunkAddress);
+
+		program.endTransaction(txId, true);
+		program.flushEvents();
 		waitForSwing();
 	}
 
@@ -81,13 +95,11 @@ public class ExternalCodeBrowserNavigationTest extends AbstractCodeBrowserNaviga
 		program.endTransaction(txId, true);
 	}
 
-	/**
+	/*
 	 * This test is intended to verify proper navigation on operand external
 	 * reference associated with an operand when the External Navigation option
 	 * indicates Navigate to Linkage (default behavior) and external program
 	 * path has already been established.
-	 *
-	 * @throws Exception
 	 */
 	@Test
 	public void testOperandExternalLinkageNavigation() throws Exception {
@@ -118,14 +130,12 @@ public class ExternalCodeBrowserNavigationTest extends AbstractCodeBrowserNaviga
 
 	}
 
-	/**
+	/*
 	 * This test is intended to verify proper navigation on operand external
 	 * reference associated with an operand when the External Navigation option
 	 * indicates Navigate to Linkage (default behavior) and multiple linkages
 	 * exist which will cause a list of linkage locations to be displayed
 	 * allowing one to be selected.
-	 *
-	 * @throws Exception
 	 */
 	@Test
 	public void testOperandExternalMultipleLinkageNavigation() throws Exception {
@@ -164,13 +174,11 @@ public class ExternalCodeBrowserNavigationTest extends AbstractCodeBrowserNaviga
 		runSwing(() -> table.navigate(row, col));
 	}
 
-	/**
+	/*
 	 * This test is intended to verify proper navigation on operand external
 	 * reference associated with an operand when the External Navigation option
 	 * indicates Navigate to External Program (non-default behavior) and
 	 * external program path has already been established.
-	 *
-	 * @throws Exception
 	 */
 	@Test
 	public void testOperandExternalProgramNavigation() throws Exception {
@@ -180,26 +188,48 @@ public class ExternalCodeBrowserNavigationTest extends AbstractCodeBrowserNaviga
 
 		cb.goTo(new OperandFieldLocation(program, addr("1001020"), null, null, null, 0, 0));
 		assertEquals(addr("1001020"), cb.getCurrentAddress());
-
 		assertEquals("FILE2", program.getDomainFile().getName());
 
 		// verify that navigation to the external program, address 0x1001888, is performed
 		// since navigation initiated from linkage location
 		click(cb, 2);
-		assertEquals(addr("1001888"), cb.getCurrentAddress());
+
+		// note: we have to use a 'wait' here, since the tool must open another program
+		Address expected = addr("1001888");
+		waitForCondition(() -> expected.equals(cb.getCurrentAddress()));
 
 		assertEquals("FILE1", lastNavigationProgram.getDomainFile().getName());
 		assertEquals(addr("1001888"), lastNavigationLocation.getAddress());
-
 	}
 
-	/**
+	@Test
+	public void testOperandExternalProgramNavigation_OnThunk() throws Exception {
+
+		getTool().getOptions("Navigation").setEnum("External Navigation",
+			NavigationOptions.ExternalNavigationEnum.NavigateToExternalProgram);
+
+		String fromAddress = "1001030";
+		cb.goTo(new OperandFieldLocation(program, addr(fromAddress), null, null, null, 0, 0));
+		assertEquals(addr(fromAddress), cb.getCurrentAddress());
+		assertEquals("FILE2", program.getDomainFile().getName());
+
+		// verify that navigation to the external program, address 0x1001888, is performed
+		// since navigation initiated from linkage location
+		click(cb, 2);
+
+		// note: we have to use a 'wait' here, since the tool must open another program
+		Address expected = addr("0x01001000");
+		waitForCondition(() -> expected.equals(cb.getCurrentAddress()));
+
+		assertEquals("FILE1", lastNavigationProgram.getDomainFile().getName());
+		assertEquals(expected, lastNavigationLocation.getAddress());
+	}
+
+	/*
 	 * This test is intended to verify proper navigation on operand external
 	 * reference associated with an operand when the External Navigation option
 	 * indicates Navigate to External Program (non-default behavior) and
 	 * external program path has NOT been established.
-	 *
-	 * @throws Exception
 	 */
 	@Test
 	public void testOperandExternalProgramMissingPathNavigation() throws Exception {
@@ -221,7 +251,7 @@ public class ExternalCodeBrowserNavigationTest extends AbstractCodeBrowserNaviga
 		// since navigation initiated from linkage location
 		click(cb, 2, false);
 
-		DockingDialog dialog = (DockingDialog) waitForWindow("No Program Association", 2000);
+		DockingDialog dialog = (DockingDialog) waitForWindow("No Program Association");
 		assertNotNull("Expected No Program Association Dialog", dialog);
 		pressButtonByText(dialog, "Cancel"); // cancel on first try
 		waitForSwing();
@@ -230,7 +260,7 @@ public class ExternalCodeBrowserNavigationTest extends AbstractCodeBrowserNaviga
 
 		click(cb, 2, false); // try again
 
-		dialog = (DockingDialog) waitForWindow("No Program Association", 2000);
+		dialog = (DockingDialog) waitForWindow("No Program Association");
 		assertNotNull("Expected No Program Association Dialog", dialog);
 		pressButtonByText(dialog, "Create Association");
 		waitForSwing();
@@ -248,7 +278,7 @@ public class ExternalCodeBrowserNavigationTest extends AbstractCodeBrowserNaviga
 		DomainFile extFile = getTool().getProject().getProjectData().getFile(filePath);
 		assertNotNull("FILE1 not found", extFile);
 
-		DataTreeDialog projectTreeDialog = waitForDialogComponent(null, DataTreeDialog.class, 2000);
+		DataTreeDialog projectTreeDialog = waitForDialogComponent(DataTreeDialog.class);
 		projectTreeDialog.selectDomainFile(extFile);
 
 		waitForDialogTree(projectTreeDialog);
@@ -270,6 +300,9 @@ public class ExternalCodeBrowserNavigationTest extends AbstractCodeBrowserNaviga
 		@Mock
 		public boolean goTo(Invocation inv, final Navigatable navigatable, ProgramLocation loc,
 				Program p) {
+
+			Msg.debug(this, "goTo() called with " + loc);
+
 			// Track last navigation location
 			lastNavigationLocation = loc;
 			lastNavigationProgram = p;

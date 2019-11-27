@@ -1231,4 +1231,12 @@ public abstract class CompositeEditorModel extends CompositeViewerModel implemen
 			throw new DuplicateNameException("Data type named " + name + " already exists");
 		}
 	}
+
+	/**
+	 * @return true if presence of bitfields is supported, else false
+	 */
+	protected boolean bitfieldsSupported() {
+		return (viewComposite instanceof Structure) || (viewComposite instanceof Union);
+	}
+
 }

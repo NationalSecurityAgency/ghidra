@@ -27,12 +27,12 @@ import ghidra.program.model.symbol.Symbol;
 import resources.ResourceManager;
 
 public class CodeSymbolNode extends SymbolNode {
-	static final DataFlavor LOCAL_DATA_FLAVOR = new SymbolTreeDataFlavor(
-		"Symbol Tree Data Flavor - Local Labels");
-	static final DataFlavor GLOBAL_DATA_FLAVOR = new SymbolTreeDataFlavor(
-		"Symbol Tree Data Flavor - Global Labels");
-	static final DataFlavor EXTERNAL_DATA_FLAVOR = new SymbolTreeDataFlavor(
-		"Symbol Tree Data Flavor - External Data");
+	static final DataFlavor LOCAL_DATA_FLAVOR =
+		new SymbolTreeDataFlavor("Symbol Tree Data Flavor - Local Labels");
+	static final DataFlavor GLOBAL_DATA_FLAVOR =
+		new SymbolTreeDataFlavor("Symbol Tree Data Flavor - Global Labels");
+	static final DataFlavor EXTERNAL_DATA_FLAVOR =
+		new SymbolTreeDataFlavor("Symbol Tree Data Flavor - External Data");
 
 	private static final Icon CODE_ICON = ResourceManager.loadImage("images/label.png");
 	private static final Icon PINNED_ICON = ResourceManager.loadImage("images/pin.png");

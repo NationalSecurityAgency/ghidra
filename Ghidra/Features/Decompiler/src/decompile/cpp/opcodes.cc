@@ -41,14 +41,15 @@ static const char *opcode_name[] = {
   "FLOAT_ABS", "FLOAT_SQRT", "INT2FLOAT", "FLOAT2FLOAT",
   "TRUNC", "CEIL", "FLOOR", "ROUND",
   "BUILD", "DELAY_SLOT", "PIECE", "SUBPIECE", "CAST",
-  "LABEL", "CROSSBUILD", "SEGMENTOP", "CPOOLREF", "NEW"
+  "LABEL", "CROSSBUILD", "SEGMENTOP", "CPOOLREF", "NEW",
+  "INSERT", "EXTRACT", "POPCOUNT"
 };
 
 static const int4 opcode_indices[] = {
   0, 39, 37, 40, 38,  4,  6, 60,  7,  8,  9, 64,  5, 57,  1, 68, 66,
-  61, 55, 52, 47, 48, 41, 43, 44, 49, 46, 51, 42, 53, 50, 58,
+  61, 71, 55, 52, 47, 48, 41, 43, 44, 49, 46, 51, 42, 53, 50, 58, 70,
   54, 24, 19, 27, 21, 33, 11, 29, 15, 16, 32, 25, 12, 28, 35, 30,
-  23, 22, 34, 18, 13, 14, 36, 31, 20, 26, 17, 65,  2, 69, 62, 10, 59,
+  23, 22, 34, 18, 13, 14, 36, 31, 20, 26, 17, 65,  2, 69, 62, 72, 10, 59,
   67,  3, 63, 56, 45
 };
 

@@ -15,22 +15,30 @@
  */
 package ghidra.app.plugin.core.memory;
 
-import java.awt.BorderLayout;
-import java.awt.CardLayout;
+import java.awt.*;
+import java.util.List;
 
 import javax.swing.*;
 import javax.swing.event.*;
 
 import docking.DialogComponentProvider;
+import docking.widgets.button.GRadioButton;
+import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.combobox.GhidraComboBox;
+import docking.widgets.label.GDLabel;
+import docking.widgets.label.GLabel;
+import ghidra.app.plugin.core.memory.AddBlockModel.InitializedType;
 import ghidra.app.plugin.core.misc.RegisterField;
 import ghidra.app.util.*;
 import ghidra.framework.plugintool.PluginTool;
+import ghidra.program.database.mem.FileBytes;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressFactory;
 import ghidra.program.model.listing.Program;
+import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryBlockType;
 import ghidra.util.HelpLocation;
+import ghidra.util.layout.HorizontalLayout;
 import ghidra.util.layout.PairLayout;
 
 /**
@@ -46,10 +54,9 @@ class AddBlockDialog extends DialogComponentProvider implements ChangeListener {
 	private JTextField commentField;
 
 	private JPanel viewPanel;
-	private CardLayout cardLayout;
-	private JPanel initializedPanel;
-	private JPanel bottomPanel;
+	private CardLayout typeCardLayout;
 	private JRadioButton initializedRB;
+	private GRadioButton initializedFromFileBytesRB;
 	private JRadioButton uninitializedRB;
 
 	private JCheckBox readCB;
@@ -64,13 +71,25 @@ class AddBlockDialog extends DialogComponentProvider implements ChangeListener {
 	private AddBlockModel model;
 	private GhidraComboBox<MemoryBlockType> comboBox;
 	private boolean updatingInitializedRB;
+	private CardLayout initializedTypeCardLayout;
 
 	private final static String MAPPED = "Mapped";
-	private final static String OTHER = "Other";
+	private final static String UNMAPPED = "Unmapped";
+	private static final String UNITIALIZED = "UNITIALIZED";
+	private static final String INITIALIZED = "INITIALIZED";
+	private static final String FILE_BYTES = "FILE_BYTES";
+	private JPanel inializedTypePanel;
+	private RegisterField fileOffsetField;
+	private GhidraComboBox<FileBytes> fileBytesComboBox;
 
 	AddBlockDialog(AddBlockModel model) {
 		super("Add Memory Block", true, true, true, false);
-		init(model);
+		this.model = model;
+		model.setChangeListener(this);
+		setHelpLocation(new HelpLocation(HelpTopics.MEMORY_MAP, "Add Block"));
+		addWorkPanel(buildWorkPanel());
+		addOKButton();
+		addCancelButton();
 	}
 
 	/**
@@ -80,173 +99,215 @@ class AddBlockDialog extends DialogComponentProvider implements ChangeListener {
 	public void stateChanged(ChangeEvent e) {
 		setStatusText(model.getMessage());
 		setOkEnabled(model.isValidInfo());
-		readCB.setEnabled(model.isReadEnabled());
-		writeCB.setEnabled(model.isWriteEnabled());
-		executeCB.setEnabled(model.isExecuteEnabled());
-		volatileCB.setEnabled(model.isVolatileEnabled());
-		if (initializedRB != null) {
-			updatingInitializedRB = true;
-			try {
-				initializedRB.setSelected(model.getInitializedState());
-			}
-			finally {
-				updatingInitializedRB = false;
-			}
-		}
-	}
-
-	private void init(AddBlockModel blockModel) {
-		this.model = blockModel;
-		blockModel.setChangeListener(this);
-		create();
-		setHelpLocation(new HelpLocation(HelpTopics.MEMORY_MAP, "Add Block"));
+		readCB.setSelected(model.isRead());
+		writeCB.setSelected(model.isWrite());
+		executeCB.setSelected(model.isExecute());
+		volatileCB.setSelected(model.isVolatile());
 	}
 
 	/**
 	 * Define the Main panel for the dialog here.
 	 */
-	private void create() {
-		cardLayout = new CardLayout();
-		viewPanel = new JPanel(cardLayout);
+	private JComponent buildWorkPanel() {
+		JPanel panel = new JPanel(new BorderLayout());
+		panel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
+		panel.add(buildMainPanel(), BorderLayout.NORTH);
+		panel.add(buildVariablePanel(), BorderLayout.CENTER);
+		return panel;
+	}
 
-		nameField = new JTextField();
-		nameField.setName("Block Name");
+	private Component buildMainPanel() {
+		JPanel panel = new JPanel(new BorderLayout());
+		panel.add(buildBasicInfoPanel(), BorderLayout.NORTH);
+		panel.add(buildPermissionsPanel(), BorderLayout.CENTER);
+		panel.add(buildTypesPanel(), BorderLayout.SOUTH);
 
-		addrField = new AddressInput();
-		addrField.setName("Start Addr");
+		return panel;
+	}
 
-		lengthField = new RegisterField(32, null, false);
-		lengthField.setName("Length");
+	private Component buildBasicInfoPanel() {
+		JPanel panel = new JPanel(new PairLayout(4, 10, 150));
+		panel.setBorder(BorderFactory.createEmptyBorder(5, 7, 4, 5));
 
-		commentField = new JTextField();
-		commentField.setName("Comment");
+		panel.add(new GLabel("Block Name:", SwingConstants.RIGHT));
+		panel.add(buildNameField());
+		panel.add(new GLabel("Start Addr:", SwingConstants.RIGHT));
+		panel.add(buildAddressField());
+		panel.add(new GLabel("Length:", SwingConstants.RIGHT));
+		panel.add(buildLengthField());
+		panel.add(new GLabel("Comment:", SwingConstants.RIGHT));
+		panel.add(buildCommentField());
 
-		addrFactory = model.getProgram().getAddressFactory();
-		addrField.setAddressFactory(addrFactory, true);
+		return panel;
+	}
 
-		nameField.getDocument().addDocumentListener(new DocumentListener() {
-			@Override
-			public void insertUpdate(DocumentEvent e) {
-				nameChanged();
-			}
+	private Component buildPermissionsPanel() {
 
-			@Override
-			public void removeUpdate(DocumentEvent e) {
-				nameChanged();
-			}
-
-			@Override
-			public void changedUpdate(DocumentEvent e) {
-				nameChanged();
-			}
-		});
-
-		lengthField.setChangeListener(e -> lengthChanged());
-		addrField.addChangeListener(ev -> addrChanged());
-
-		JLabel readLabel = new JLabel("Read");
-		readCB = new JCheckBox();
+		readCB = new GCheckBox("Read");
 		readCB.setName("Read");
+		readCB.setSelected(model.isRead());
+		readCB.addActionListener(e -> model.setRead(readCB.isSelected()));
 
-		JLabel writeLabel = new JLabel("Write");
-		writeCB = new JCheckBox();
+		writeCB = new GCheckBox("Write");
 		writeCB.setName("Write");
+		writeCB.setSelected(model.isWrite());
+		writeCB.addActionListener(e -> model.setWrite(writeCB.isSelected()));
 
-		JLabel executeLabel = new JLabel("Execute");
-		executeCB = new JCheckBox();
+		executeCB = new GCheckBox("Execute");
 		executeCB.setName("Execute");
+		executeCB.setSelected(model.isExecute());
+		executeCB.addActionListener(e -> model.setExecute(executeCB.isSelected()));
 
-		JLabel volatileLabel = new JLabel("Volatile");
-		volatileCB = new JCheckBox();
+		volatileCB = new GCheckBox("Volatile");
 		volatileCB.setName("Volatile");
+		volatileCB.setSelected(model.isVolatile());
+		volatileCB.addActionListener(e -> model.setVolatile(volatileCB.isSelected()));
 
-		JPanel topPanel = new JPanel(new PairLayout(4, 10, 150));
-		topPanel.setBorder(BorderFactory.createEmptyBorder(5, 7, 4, 5));
-		topPanel.add(new JLabel("Block Name:", SwingConstants.RIGHT));
-		topPanel.add(nameField);
-		topPanel.add(new JLabel("Start Addr:", SwingConstants.RIGHT));
-		topPanel.add(addrField);
-		topPanel.add(new JLabel("Length:", SwingConstants.RIGHT));
-		topPanel.add(lengthField);
-		topPanel.add(new JLabel("Comment:", SwingConstants.RIGHT));
-		topPanel.add(commentField);
+		JPanel panel = new JPanel(new HorizontalLayout(10));
+		panel.setBorder(BorderFactory.createEmptyBorder(10, 30, 20, 30));
+		panel.add(readCB);
+		panel.add(writeCB);
+		panel.add(executeCB);
+		panel.add(volatileCB);
 
-		JPanel execPanel = new JPanel();
-		BoxLayout bl = new BoxLayout(execPanel, BoxLayout.X_AXIS);
-		execPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+		return panel;
+	}
 
-		execPanel.setLayout(bl);
-		execPanel.add(Box.createHorizontalStrut(10));
-		execPanel.add(readLabel);
-		execPanel.add(readCB);
-		execPanel.add(Box.createHorizontalStrut(10));
+	private Component buildTypesPanel() {
+		JPanel panel = new JPanel(new BorderLayout());
+		panel.setBorder(BorderFactory.createTitledBorder("Block Types"));
 
-		execPanel.add(writeLabel);
-		execPanel.add(writeCB);
-		execPanel.add(Box.createHorizontalStrut(10));
+		MemoryBlockType[] items = new MemoryBlockType[] { MemoryBlockType.DEFAULT,
+			MemoryBlockType.OVERLAY, MemoryBlockType.BIT_MAPPED, MemoryBlockType.BYTE_MAPPED };
 
-		execPanel.add(executeLabel);
-		execPanel.add(executeCB);
-		execPanel.add(Box.createHorizontalStrut(10));
+		comboBox = new GhidraComboBox<>(items);
+		comboBox.addItemListener(e -> blockTypeSelected());
+		panel.add(comboBox);
+		return panel;
+	}
 
-		execPanel.add(volatileLabel);
-		execPanel.add(volatileCB);
+	private Component buildVariablePanel() {
+		typeCardLayout = new CardLayout();
+		viewPanel = new JPanel(typeCardLayout);
+		viewPanel.setBorder(BorderFactory.createEtchedBorder());
 
-		JPanel panel = new JPanel();
-		panel.add(execPanel);
+		viewPanel.add(buildMappedPanel(), MAPPED);
+		viewPanel.add(buildUnmappedPanel(), UNMAPPED);
+		typeCardLayout.show(viewPanel, UNMAPPED);
+		return viewPanel;
+	}
 
-		JPanel outerTopPanel = new JPanel(new BorderLayout());
-		outerTopPanel.add(topPanel, BorderLayout.NORTH);
-		outerTopPanel.add(panel, BorderLayout.CENTER);
+	private Component buildUnmappedPanel() {
+		JPanel panel = new JPanel(new BorderLayout());
+		panel.add(buildInitializedRadioButtonPanel(), BorderLayout.NORTH);
+		panel.add(buildVariableInitializedPanel());
+		return panel;
+	}
 
-		bottomPanel = new JPanel();
-		BoxLayout layout = new BoxLayout(bottomPanel, BoxLayout.Y_AXIS);
-		bottomPanel.setLayout(layout);
-		bottomPanel.setBorder(BorderFactory.createEmptyBorder(0, 7, 4, 5));
-		bottomPanel.add(createComboBoxPanel());
-		bottomPanel.add(viewPanel);
+	private Component buildInitializedRadioButtonPanel() {
+		JPanel panel = new JPanel(new HorizontalLayout(10));
 
-		JPanel mainPanel = new JPanel();
-		layout = new BoxLayout(mainPanel, BoxLayout.Y_AXIS);
-		mainPanel.setLayout(layout);
-		mainPanel.add(outerTopPanel);
-		mainPanel.add(bottomPanel);
-		mainPanel.validate();
+		ButtonGroup radioGroup = new ButtonGroup();
+		initializedRB = new GRadioButton("Initialized", false);
+		initializedRB.setName(initializedRB.getText());
+		initializedRB.addActionListener(ev -> initializeRBChanged());
 
-		JPanel mainPanel2 = new JPanel(new BorderLayout());
-		mainPanel2.add(mainPanel, BorderLayout.NORTH);
-		mainPanel2.add(new JPanel(), BorderLayout.CENTER);
+		initializedFromFileBytesRB = new GRadioButton("File Bytes", false);
+		initializedFromFileBytesRB.setName(initializedRB.getText());
+		initializedFromFileBytesRB.addActionListener(ev -> initializeRBChanged());
 
-		createCardPanels();
+		uninitializedRB = new GRadioButton("Uninitialized", true);
+		uninitializedRB.setName(uninitializedRB.getText());
+		uninitializedRB.addActionListener(ev -> initializeRBChanged());
 
-		addWorkPanel(mainPanel2);
-		addOKButton();
-		addCancelButton();
+		radioGroup.add(initializedRB);
+		radioGroup.add(initializedFromFileBytesRB);
+		radioGroup.add(uninitializedRB);
+
+		panel.add(initializedRB);
+		panel.add(initializedFromFileBytesRB);
+		panel.add(uninitializedRB);
+
+		return panel;
+	}
+
+	private Component buildVariableInitializedPanel() {
+		initializedTypeCardLayout = new CardLayout();
+
+		inializedTypePanel = new JPanel(initializedTypeCardLayout);
+		inializedTypePanel.add(new JPanel(), UNITIALIZED);
+		inializedTypePanel.add(buildInitalValuePanel(), INITIALIZED);
+		inializedTypePanel.add(buildFileBytesPanel(), FILE_BYTES);
+		return inializedTypePanel;
+	}
+
+	private Component buildInitalValuePanel() {
+		initialValueLabel = new GDLabel("Initial Value");
+		initialValueField = new RegisterField(8, null, false);
+		initialValueField.setName("Initial Value");
+
+		initialValueField.setChangeListener(e -> initialValueChanged());
+
+		JPanel panel = new JPanel(new PairLayout(4, 10));
+		panel.setBorder(BorderFactory.createEmptyBorder(5, 7, 4, 5));
+		panel.add(initialValueLabel);
+		panel.add(initialValueField);
+		return panel;
+	}
+
+	private Component buildFileBytesPanel() {
+		JPanel panel = new JPanel(new PairLayout(5, 5));
+		panel.setBorder(BorderFactory.createEmptyBorder(5, 7, 4, 5));
+
+		panel.add(new GLabel("File Bytes:"));
+		panel.add(buildFileBytesCombo());
+		panel.add(new GLabel("File Offset:"));
+		panel.add(buildFileOffsetField());
+
+		return panel;
+	}
+
+	private Component buildFileBytesCombo() {
+		Memory memory = model.getProgram().getMemory();
+		List<FileBytes> allFileBytes = memory.getAllFileBytes();
+		FileBytes[] fileBytes = allFileBytes.toArray(new FileBytes[allFileBytes.size()]);
+
+		fileBytesComboBox = new GhidraComboBox<>(fileBytes) {
+			public Dimension getPreferredSize() {
+				Dimension preferredSize = super.getPreferredSize();
+				preferredSize.width = 100;
+				return preferredSize;
+			}
+		};
+		fileBytesComboBox.addItemListener(e -> fileBytesChanged());
+		if (!allFileBytes.isEmpty()) {
+			model.setFileBytes(allFileBytes.get(0));
+		}
+		return fileBytesComboBox;
 	}
 
 	/**
 	 * Display the dialog filled with default values.
 	 * Used to enter a new MemoryBlock.
-	 * @param nlines default value displayed in the text field.
+	 * @param tool the tool that owns this dialog
 	 */
 	void showDialog(PluginTool tool) {
 
 		nameField.setText("");
 		addrField.setAddress(model.getStartAddress());
 
-		lengthField.setValue(new Long(0));
+		lengthField.setValue(Long.valueOf(0));
 		model.setLength(0);
 		commentField.setText("");
-
-		readCB.setSelected(true);
-		writeCB.setSelected(true);
-		executeCB.setSelected(false);
-		volatileCB.setSelected(false);
-
-		initialValueField.setValue(new Long(0));
+		initialValueField.setValue(Long.valueOf(0));
 		model.setBlockType(MemoryBlockType.DEFAULT);
-		model.setIsInitialized(initializedRB.isSelected());
+		model.setInitializedType(AddBlockModel.InitializedType.UNITIALIZED);
 		model.setInitialValue(0);
+
+		readCB.setSelected(model.isRead());
+		writeCB.setSelected(model.isWrite());
+		executeCB.setSelected(model.isExecute());
+		volatileCB.setSelected(model.isVolatile());
 
 		setOkEnabled(false);
 		tool.showDialog(this, tool.getComponentProvider(PluginConstants.MEMORY_MAP));
@@ -262,9 +323,7 @@ class AddBlockDialog extends DialogComponentProvider implements ChangeListener {
 	 */
 	@Override
 	protected void okCallback() {
-
-		if (model.execute(commentField.getText(), readCB.isSelected(), writeCB.isSelected(),
-			executeCB.isSelected(), volatileCB.isSelected())) {
+		if (model.execute()) {
 			close();
 		}
 		else {
@@ -277,27 +336,17 @@ class AddBlockDialog extends DialogComponentProvider implements ChangeListener {
 		if (updatingInitializedRB) {
 			return;
 		}
-		boolean selected = initializedRB.isSelected();
-		model.setIsInitialized(selected);
-		initialValueField.setEnabled(selected);
-		initialValueLabel.setEnabled(selected);
-		if (!selected) {
-			initialValueField.setValue(new Long(0));
-			model.setInitialValue(0);
+		if (initializedRB.isSelected()) {
+			model.setInitializedType(InitializedType.INITIALIZED_FROM_VALUE);
+			initializedTypeCardLayout.show(inializedTypePanel, INITIALIZED);
 		}
-	}
-
-	private void uninitializedRBChanged() {
-		if (updatingInitializedRB) {
-			return;
+		else if (uninitializedRB.isSelected()) {
+			model.setInitializedType(InitializedType.UNITIALIZED);
+			initializedTypeCardLayout.show(inializedTypePanel, UNITIALIZED);
 		}
-		boolean selected = uninitializedRB.isSelected();
-		model.setIsInitialized(!selected);
-		initialValueField.setEnabled(!selected);
-		initialValueLabel.setEnabled(!selected);
-		if (!selected) {
-			initialValueField.setValue(new Long(0));
-			model.setInitialValue(0);
+		else if (initializedFromFileBytesRB.isSelected()) {
+			model.setInitializedType(InitializedType.INITIALIZED_FROM_FILE_BYTES);
+			initializedTypeCardLayout.show(inializedTypePanel, FILE_BYTES);
 		}
 	}
 
@@ -318,13 +367,31 @@ class AddBlockDialog extends DialogComponentProvider implements ChangeListener {
 		model.setBlockName(name);
 	}
 
+	private void commentChanged() {
+		String comment = commentField.getText().trim();
+		model.setComment(comment);
+	}
+
 	private void lengthChanged() {
-		int length = 0;
+		long length = 0;
 		Long val = lengthField.getValue();
 		if (val != null) {
-			length = val.intValue();
+			length = val.longValue();
 		}
 		model.setLength(length);
+	}
+
+	private void fileOffsetChanged() {
+		long fileOffset = -1;
+		Long val = fileOffsetField.getValue();
+		if (val != null) {
+			fileOffset = val.longValue();
+		}
+		model.setFileOffset(fileOffset);
+	}
+
+	private void fileBytesChanged() {
+		model.setFileBytes((FileBytes) fileBytesComboBox.getSelectedItem());
 	}
 
 	private void addrChanged() {
@@ -333,6 +400,7 @@ class AddBlockDialog extends DialogComponentProvider implements ChangeListener {
 			addr = addrField.getAddress();
 		}
 		catch (IllegalArgumentException e) {
+			// just let it be null
 		}
 		model.setStartAddress(addr);
 	}
@@ -342,92 +410,20 @@ class AddBlockDialog extends DialogComponentProvider implements ChangeListener {
 		model.setBaseAddress(baseAddress);
 	}
 
-	private JPanel createComboBoxPanel() {
-		JPanel panel = new JPanel(new BorderLayout());
-		panel.setBorder(BorderFactory.createTitledBorder("Block Types"));
-
-		MemoryBlockType[] items = new MemoryBlockType[] { MemoryBlockType.DEFAULT,
-			MemoryBlockType.OVERLAY, MemoryBlockType.BIT_MAPPED, MemoryBlockType.BYTE_MAPPED };
-
-		comboBox = new GhidraComboBox<>(items);
-		comboBox.addItemListener(e -> blockTypeSelected());
-		panel.add(comboBox);
-		return panel;
-	}
-
 	private void blockTypeSelected() {
-
 		MemoryBlockType blockType = (MemoryBlockType) comboBox.getSelectedItem();
 		model.setBlockType(blockType);
-		if (blockType == MemoryBlockType.DEFAULT) {
-			cardLayout.show(viewPanel, OTHER);
-		}
-		else if (blockType == MemoryBlockType.OVERLAY) {
-			cardLayout.show(viewPanel, OTHER);
-		}
-		else if (blockType == MemoryBlockType.BIT_MAPPED) {
-			cardLayout.show(viewPanel, MAPPED);
+		if (blockType == MemoryBlockType.DEFAULT || blockType == MemoryBlockType.OVERLAY) {
+			typeCardLayout.show(viewPanel, UNMAPPED);
 		}
 		else {
-			// type is Byte mapped
-			cardLayout.show(viewPanel, MAPPED);
+			typeCardLayout.show(viewPanel, MAPPED);
 		}
 	}
 
-	private JPanel createRadioPanel() {
-		JPanel panel = new JPanel();
-		BoxLayout bl = new BoxLayout(panel, BoxLayout.X_AXIS);
-		panel.setLayout(bl);
+	private JPanel buildMappedPanel() {
+		JPanel panel = new JPanel(new PairLayout());
 
-		ButtonGroup radioGroup = new ButtonGroup();
-		initializedRB = new JRadioButton("Initialized", false);
-		initializedRB.setName(initializedRB.getText());
-		initializedRB.addActionListener(ev -> initializeRBChanged());
-
-		uninitializedRB = new JRadioButton("Uninitialized", true);
-		uninitializedRB.setName(uninitializedRB.getText());
-		uninitializedRB.addActionListener(ev -> uninitializedRBChanged());
-
-		radioGroup.add(initializedRB);
-		radioGroup.add(uninitializedRB);
-
-		panel.add(initializedRB);
-		panel.add(uninitializedRB);
-
-		JPanel outerPanel = new JPanel();
-		BoxLayout bl2 = new BoxLayout(outerPanel, BoxLayout.Y_AXIS);
-		outerPanel.setLayout(bl2);
-		outerPanel.add(panel);
-		createInitializedPanel();
-		outerPanel.add(initializedPanel);
-		outerPanel.setBorder(BorderFactory.createEtchedBorder());
-		return outerPanel;
-	}
-
-	private void createCardPanels() {
-		viewPanel.add(createAddressPanel(), MAPPED);
-		viewPanel.add(createRadioPanel(), OTHER);
-		cardLayout.show(viewPanel, OTHER);
-	}
-
-	private void createInitializedPanel() {
-		initialValueLabel = new JLabel("Initial Value");
-		initialValueField = new RegisterField(8, null, false);
-		initialValueField.setName("Initial Value");
-		initialValueField.setEnabled(false);
-
-		initialValueField.setChangeListener(e -> initialValueChanged());
-
-		initializedPanel = new JPanel(new PairLayout(4, 10));
-		initializedPanel.setBorder(BorderFactory.createEmptyBorder(5, 7, 4, 5));
-		initializedPanel.add(initialValueLabel);
-		initializedPanel.add(initialValueField);
-	}
-
-	private JPanel createAddressPanel() {
-		JPanel addressPanel = new JPanel(new PairLayout());
-
-		JLabel addrToAddLabel = new JLabel("Source Addr:");
 		baseAddrField = new AddressInput();
 		baseAddrField.setAddressFactory(addrFactory);
 		baseAddrField.setName("Source Addr");
@@ -441,10 +437,77 @@ class AddBlockDialog extends DialogComponentProvider implements ChangeListener {
 		}
 		baseAddrField.setAddress(minAddr);
 		model.setBaseAddress(minAddr);
-		addressPanel.add(addrToAddLabel);
-		addressPanel.add(baseAddrField);
-		addressPanel.setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0));
-		return addressPanel;
+		panel.add(new GLabel("Source Addr:"));
+		panel.add(baseAddrField);
+		panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+		return panel;
+	}
+
+	private Component buildCommentField() {
+		commentField = new JTextField();
+		commentField.setName("Comment");
+		commentField.getDocument().addDocumentListener(new DocumentListener() {
+			@Override
+			public void insertUpdate(DocumentEvent e) {
+				commentChanged();
+			}
+
+			@Override
+			public void removeUpdate(DocumentEvent e) {
+				commentChanged();
+			}
+
+			@Override
+			public void changedUpdate(DocumentEvent e) {
+				commentChanged();
+			}
+		});
+		return commentField;
+	}
+
+	private Component buildLengthField() {
+		lengthField = new RegisterField(36, null, false);
+		lengthField.setName("Length");
+		lengthField.setChangeListener(e -> lengthChanged());
+		return lengthField;
+	}
+
+	private Component buildFileOffsetField() {
+		fileOffsetField = new RegisterField(60, null, false);
+		fileOffsetField.setName("File Offset");
+		fileOffsetField.setChangeListener(e -> fileOffsetChanged());
+		return fileOffsetField;
+	}
+
+	private Component buildAddressField() {
+		addrField = new AddressInput();
+		addrField.setName("Start Addr");
+		addrFactory = model.getProgram().getAddressFactory();
+		addrField.setAddressFactory(addrFactory, true, true);
+		addrField.addChangeListener(ev -> addrChanged());
+		return addrField;
+	}
+
+	private Component buildNameField() {
+		nameField = new JTextField();
+		nameField.setName("Block Name");
+		nameField.getDocument().addDocumentListener(new DocumentListener() {
+			@Override
+			public void insertUpdate(DocumentEvent e) {
+				nameChanged();
+			}
+
+			@Override
+			public void removeUpdate(DocumentEvent e) {
+				nameChanged();
+			}
+
+			@Override
+			public void changedUpdate(DocumentEvent e) {
+				nameChanged();
+			}
+		});
+		return nameField;
 	}
 
 }

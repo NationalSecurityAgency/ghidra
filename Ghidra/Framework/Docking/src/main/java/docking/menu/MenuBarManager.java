@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +23,7 @@ import docking.action.DockingActionIf;
 import docking.action.MenuData;
 
 /**
- * Manages the main menu bar on the main frame.
+ * Manages the main menu bar on the main frame
  */
 public class MenuBarManager implements MenuGroupListener {
 
@@ -32,36 +31,41 @@ public class MenuBarManager implements MenuGroupListener {
 	private Map<String, MenuManager> menuManagers;
 	private final MenuGroupMap menuGroupMap;
 
-	/**
-	 * Constructs a new MenuBarManager
-	 */
 	public MenuBarManager(MenuHandler actionHandler, MenuGroupMap menuGroupMap) {
 		this.menuGroupMap = menuGroupMap;
-		menuManagers = new TreeMap<String, MenuManager>();
+		menuManagers = new TreeMap<>();
 		this.menuHandler = actionHandler;
 	}
 
 	public void clearActions() {
-		menuManagers = new TreeMap<String, MenuManager>();
+		menuManagers = new TreeMap<>();
 	}
 
 	/**
-	 * Adds an action to the menu.
-	 * @param action the action to be added.
-	 * @param groupMgr the MenuGroupMap
+	 * Adds an action to the menu
+	 * @param action the action to be added
 	 */
 	public void addAction(DockingActionIf action) {
+		MenuManager menuManager = getMenuManager(action);
+		if (menuManager == null) {
+			return;
+		}
+
+		menuManager.addAction(action);
+	}
+
+	private MenuManager getMenuManager(DockingActionIf action) {
 		MenuData menuBarData = action.getMenuBarData();
 		if (menuBarData == null) {
-			return;
+			return null;
 		}
+
 		String[] menuPath = menuBarData.getMenuPath();
 		if (menuPath == null || menuPath.length <= 1) {
-			return;
+			return null;
 		}
-		MenuManager menuMgr = getMenuManager(menuPath[0]);
-		menuMgr.addAction(action);
 
+		return getMenuManager(menuPath[0]);
 	}
 
 	/**
@@ -104,17 +108,13 @@ public class MenuBarManager implements MenuGroupListener {
 
 		MenuManager mgr = menuManagers.get(menuName);
 		if (mgr == null) {
-			mgr =
-				new MenuManager(menuName, new String[] { menuName }, mk, 1, null, false,
-					menuHandler, menuGroupMap);
+			mgr = new MenuManager(menuName, new String[] { menuName }, mk, 1, null, false,
+				menuHandler, menuGroupMap);
 			menuManagers.put(menuName, mgr);
 		}
 		return mgr;
 	}
 
-	/**
-	 * Returns a JMenuBar for all the actions.
-	 */
 	public JMenuBar getMenuBar() {
 		MenuManager fileMenu = menuManagers.get("File");
 		MenuManager editMenu = menuManagers.get("Edit");
@@ -153,6 +153,7 @@ public class MenuBarManager implements MenuGroupListener {
 	 * @param menuPath the menu path whose group changed.
 	 * @param group the new group for the given menuPath.
 	 */
+	@Override
 	public void menuGroupChanged(String[] menuPath, String group) {
 		if (menuPath != null && menuPath.length > 1) {
 			MenuManager mgr = getMenuManager(menuPath[0]);

@@ -28,6 +28,7 @@ import docking.DockingWindowManager;
 import docking.help.Help;
 import docking.help.HelpService;
 import docking.widgets.EmptyBorderButton;
+import docking.widgets.label.GDLabel;
 import ghidra.util.*;
 import resources.ResourceManager;
 
@@ -215,8 +216,8 @@ public class WizardManager extends DialogComponentProvider implements WizardPane
 			}
 		});
 
-		titleLabel = (wizardIcon == null ? new JLabel(INIT_TITLE)
-				: new JLabel(INIT_TITLE, wizardIcon, SwingConstants.TRAILING));
+		titleLabel = (wizardIcon == null ? new GDLabel(INIT_TITLE)
+				: new GDLabel(INIT_TITLE, wizardIcon, SwingConstants.TRAILING));
 
 		EmptyBorderButton helpButton =
 			new EmptyBorderButton(ResourceManager.loadImage("images/information.png"));

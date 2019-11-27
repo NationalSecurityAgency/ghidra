@@ -83,7 +83,7 @@ class OptionsTreeNode extends GTreeLazyNode {
 
 	@Override
 	public boolean isLeaf() {
-		return getAllChildCount() == 0;
+		return getChildCount() == 0;
 	}
 
 	@Override

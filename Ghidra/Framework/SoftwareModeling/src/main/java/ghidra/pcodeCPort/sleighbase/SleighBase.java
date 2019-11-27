@@ -16,6 +16,7 @@
 package ghidra.pcodeCPort.sleighbase;
 
 import java.io.PrintStream;
+import java.util.ArrayList;
 
 import generic.stl.*;
 import ghidra.pcodeCPort.context.SleighError;
@@ -29,8 +30,11 @@ import ghidra.pcodeCPort.utils.XmlUtils;
 
 public abstract class SleighBase extends Translate implements NamedSymbolProvider {
 
-	// NOTE: restoreXml method removed as it is only used by the decompiler's implementation
+	// NOTE: restoreXml method removed as it is only used by the decompiler's
+	// implementation
 
+	public static final int SLA_FORMAT_VERSION = 2;	// What format of the .sla file this produces
+													// This value should always match SleighLanguage.SLA_FORMAT_VERSION
 	private VectorSTL<String> userop = new VectorSTL<>();
 	private address_set varnode_xref = new address_set(); // Cross-reference registers by address
 	protected SubtableSymbol root;
@@ -63,47 +67,31 @@ public abstract class SleighBase extends Translate implements NamedSymbolProvide
 		return (root != null);
 	}
 
-	protected void buildXrefs() {
+	protected void buildXrefs(ArrayList<SleighSymbol> errorPairs) {
 		SymbolScope glb = symtab.getGlobalScope();
-		int errors = 0;
 		glb.begin();
 		IteratorSTL<SleighSymbol> iter;
-		StringBuffer buffer = new StringBuffer();
 		for (iter = glb.begin(); !iter.isEnd(); iter.increment()) {
 			SleighSymbol sym = iter.get();
 			if (sym.getType() == symbol_type.varnode_symbol) {
-				Pair<IteratorSTL<VarnodeSymbol>, Boolean> res =
-					varnode_xref.insert((VarnodeSymbol) sym);
+				Pair<IteratorSTL<VarnodeSymbol>, Boolean> res = varnode_xref.insert((VarnodeSymbol) sym);
 				if (!res.second) {
-					buffer.append("Duplicate (offset,size) pair for registers: ");
-					buffer.append(sym.getName());
-					buffer.append(" (");
-					buffer.append(sym.getLocation());
-					buffer.append(") and ");
-					buffer.append(res.first.get().getName());
-					buffer.append(" (");
-					buffer.append(res.first.get().getLocation());
-					buffer.append(")\n");
-					errors += 1;
+					errorPairs.add(sym);
+					errorPairs.add(res.first.get());
 				}
-			}
-			else if (sym.getType() == symbol_type.userop_symbol) {
+			} else if (sym.getType() == symbol_type.userop_symbol) {
 				int index = ((UserOpSymbol) sym).getIndex();
 				while (userop.size() <= index) {
 					userop.push_back("");
 				}
 				userop.set(index, sym.getName());
-			}
-			else if (sym.getType() == symbol_type.context_symbol) {
+			} else if (sym.getType() == symbol_type.context_symbol) {
 				ContextSymbol csym = (ContextSymbol) sym;
 				ContextField field = (ContextField) csym.getPatternValue();
 				int startbit = field.getStartBit();
 				int endbit = field.getEndBit();
 				registerContext(csym.getName(), startbit, endbit);
 			}
-		}
-		if (errors > 0) {
-			throw new SleighError(buffer.toString(), null);
 		}
 	}
 
@@ -135,10 +123,10 @@ public abstract class SleighBase extends Translate implements NamedSymbolProvide
 	public VarnodeData getRegister(String nm) {
 		VarnodeSymbol sym = (VarnodeSymbol) findSymbol(nm);
 		if (sym == null) {
-			throw new SleighError("Unknown register name: " + nm, null);
+			throw new SleighError("Unknown register name '" + nm + "'", null);
 		}
 		if (sym.getType() != symbol_type.varnode_symbol) {
-			throw new SleighError("Symbol is not a register: " + nm, null);
+			throw new SleighError("Symbol is not a register '" + nm + "'", sym.location);
 		}
 		return sym.getFixedVarnode();
 	}
@@ -187,6 +175,7 @@ public abstract class SleighBase extends Translate implements NamedSymbolProvide
 
 	public void saveXml(PrintStream s) {
 		s.append("<sleigh");
+		XmlUtils.a_v_i(s, "version", SLA_FORMAT_VERSION);
 		XmlUtils.a_v_b(s, "bigendian", isBigEndian());
 		XmlUtils.a_v_i(s, "align", alignment);
 		XmlUtils.a_v_u(s, "uniqbase", getUniqueBase());
@@ -205,8 +194,8 @@ public abstract class SleighBase extends Translate implements NamedSymbolProvide
 		s.append(">\n");
 		for (int i = 0; i < numSpaces(); ++i) {
 			AddrSpace spc = getSpace(i);
-			if ((spc.getType() == spacetype.IPTR_CONSTANT) ||
-				(spc.getType() == spacetype.IPTR_FSPEC) || (spc.getType() == spacetype.IPTR_IOP)) {
+			if ((spc.getType() == spacetype.IPTR_CONSTANT) || (spc.getType() == spacetype.IPTR_FSPEC)
+					|| (spc.getType() == spacetype.IPTR_IOP)) {
 				continue;
 			}
 			spc.saveXml(s);

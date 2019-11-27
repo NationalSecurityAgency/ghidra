@@ -45,6 +45,7 @@ public class AbstractCodeBrowserNavigationTest extends AbstractGhidraHeadedInteg
 	private DockingActionIf nextFunction;
 	private DockingActionIf prevFunction;
 
+	protected ToyProgramBuilder builder;
 	protected Program program;
 	protected CodeBrowserPlugin cb;
 
@@ -58,7 +59,7 @@ public class AbstractCodeBrowserNavigationTest extends AbstractGhidraHeadedInteg
 		addrFactory = program.getAddressFactory();
 
 		NextPrevAddressPlugin np = env.getPlugin(NextPrevAddressPlugin.class);
-		prev = getAction(np, "Previous in History Buffer");
+		prev = getAction(np, "Previous Location in History");
 		clearHistory = getAction(np, "Clear History Buffer");
 		cb = env.getPlugin(CodeBrowserPlugin.class);
 
@@ -83,7 +84,7 @@ public class AbstractCodeBrowserNavigationTest extends AbstractGhidraHeadedInteg
 	}
 
 	private Program buildProgram() throws Exception {
-		ToyProgramBuilder builder = new ToyProgramBuilder("Test", true, this);
+		builder = new ToyProgramBuilder("Test", true, this);
 		builder.createMemory(".text", "0x1001000", 0x6600);
 		builder.createMemory(".data", "0x1008000", 0x600);
 		builder.createMemory(".rsrc", "0x100a000", 0x5400);
@@ -98,7 +99,6 @@ public class AbstractCodeBrowserNavigationTest extends AbstractGhidraHeadedInteg
 
 		builder.applyDataType("0x1001000", PointerDataType.dataType, 1);
 		builder.createExternalReference("0x1001000", "ADVAPI32.dll", "IsTextUnicode", 0); // linkage location
-
 		builder.createExternalReference("0x1001020", "ADVAPI32.dll", "IsTextUnicode", 0); // without pointer
 
 		builder.addBytesBranch("1004000", "1004010");

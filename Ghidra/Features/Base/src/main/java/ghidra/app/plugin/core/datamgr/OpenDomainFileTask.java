@@ -197,7 +197,7 @@ class OpenDomainFileTask extends Task {
 		if (dfile.isInWritableProject() && dfile.canRecover()) {
 			Runnable r = () -> {
 				int option = OptionDialog.showYesNoDialog(null, "Crash Recovery Data Found",
-					dfile.getName() + " has crash data.\n" +
+					"<html>" + HTMLUtilities.escapeHTML(dfile.getName()) + " has crash data.<br>" +
 						"Would you like to recover unsaved changes?");
 				recoverFile[0] = (option == OptionDialog.OPTION_ONE);
 			};
@@ -219,8 +219,8 @@ class OpenDomainFileTask extends Task {
 	}
 
 	private GTreeNode getNodeForArchive(GTree tree, Archive archive) {
-		GTreeNode rootNode = tree.getRootNode();
-		for (GTreeNode node : rootNode) {
+		GTreeNode rootNode = tree.getModelRoot();
+		for (GTreeNode node : rootNode.getChildren()) {
 			if (node instanceof ArchiveNode) {
 				ArchiveNode archiveNode = (ArchiveNode) node;
 				if (archiveNode.getArchive() == archive) {

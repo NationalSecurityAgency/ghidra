@@ -48,7 +48,7 @@ import resources.ResourceManager;
 	packageName = CorePluginPackage.NAME,
 	category = PluginCategoryNames.GRAPH,
 	shortDescription = "Call Trees Plugin",
-	description = "This plugin shows incoming and outging calls for a give function.  " +
+	description = "This plugin shows incoming and outgoing calls for a given function.  " +
 			"More specifically, one tree of the plugin will show all callers of the " +
 			"function and the other tree of the plugin will show all calls made " +
 			"by the function"
@@ -62,12 +62,15 @@ public class CallTreePlugin extends ProgramPlugin {
 		ResourceManager.loadImage("images/arrow_rotate_clockwise.png");
 
 	private List<CallTreeProvider> providers = new ArrayList<>();
-	private DockingAction showProviderAction;
+	private DockingAction showCallTreeFromMenuAction;
+	private CallTreeProvider primaryProvider;
 
 	public CallTreePlugin(PluginTool tool) {
 		super(tool, true, false, false);
 
 		createActions();
+		primaryProvider = new CallTreeProvider(this, true);
+		providers.add(primaryProvider);
 	}
 
 	@Override
@@ -106,8 +109,12 @@ public class CallTreePlugin extends ProgramPlugin {
 		}
 	}
 
-	private CallTreeProvider findProviderForLocation(ProgramLocation location) {
+	CallTreeProvider findTransientProviderForLocation(ProgramLocation location) {
 		for (CallTreeProvider provider : providers) {
+			if (!provider.isTransient()) {
+				continue;
+			}
+
 			if (provider.isShowingLocation(location)) {
 				return provider;
 			}
@@ -116,30 +123,42 @@ public class CallTreePlugin extends ProgramPlugin {
 	}
 
 	private void createActions() {
-		showProviderAction = new DockingAction("Show Function Call Trees", getName()) {
 
-			@Override
-			public void actionPerformed(ActionContext context) {
-				showOrCreateNewCallTree(currentLocation);
-			}
+		// use the name of the provider so that the shared key binding data will get used
+		String actionName = CallTreeProvider.TITLE;
+		showCallTreeFromMenuAction =
+			new DockingAction(actionName, getName(), KeyBindingType.SHARED) {
+				@Override
+				public void actionPerformed(ActionContext context) {
+					showOrCreateNewCallTree(currentLocation);
+				}
 
-			@Override
-			public boolean isAddToPopup(ActionContext context) {
-				return (context instanceof ListingActionContext);
-			}
-		};
-		showProviderAction.setPopupMenuData(new MenuData(
+				@Override
+				public boolean isAddToPopup(ActionContext context) {
+					return (context instanceof ListingActionContext);
+				}
+			};
+
+		showCallTreeFromMenuAction.setPopupMenuData(new MenuData(
 			new String[] { "References", "Show Call Trees" }, PROVIDER_ICON, "ShowReferencesTo"));
-		showProviderAction.setToolBarData(new ToolBarData(PROVIDER_ICON, "View"));
-		showProviderAction.setHelpLocation(new HelpLocation("CallTreePlugin", "Call_Tree_Plugin"));
-		tool.addAction(showProviderAction);
+		showCallTreeFromMenuAction.setHelpLocation(
+			new HelpLocation("CallTreePlugin", "Call_Tree_Plugin"));
+		tool.addAction(showCallTreeFromMenuAction);
 	}
 
 	private void creatAndShowProvider() {
-		CallTreeProvider provider = new CallTreeProvider(this);
+		CallTreeProvider provider = new CallTreeProvider(this, false);
 		providers.add(provider);
 		provider.initialize(currentProgram, currentLocation);
 		tool.showComponentProvider(provider, true);
+	}
+
+	CallTreeProvider getPrimaryProvider() {
+		return primaryProvider;
+	}
+
+	DockingAction getShowCallTreeFromMenuAction() {
+		return showCallTreeFromMenuAction;
 	}
 
 	ProgramLocation getCurrentLocation() {
@@ -163,7 +182,7 @@ public class CallTreePlugin extends ProgramPlugin {
 			return; // no program; cannot show tool
 		}
 
-		CallTreeProvider provider = findProviderForLocation(location);
+		CallTreeProvider provider = findTransientProviderForLocation(location);
 		if (provider != null) {
 			tool.showComponentProvider(provider, true);
 			return;

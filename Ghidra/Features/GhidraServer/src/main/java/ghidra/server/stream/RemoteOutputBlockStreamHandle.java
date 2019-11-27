@@ -60,8 +60,10 @@ public class RemoteOutputBlockStreamHandle extends RemoteBlockStreamHandle<Outpu
 
 		ClientOutputBlockStream(Socket socket) throws IOException {
 			this.socket = socket;
-			out = compressed ? new DeflaterOutputStream(socket.getOutputStream(),
-				new Deflater(Deflater.BEST_SPEED)) : socket.getOutputStream();
+			out = compressed
+					? new DeflaterOutputStream(socket.getOutputStream(),
+						new Deflater(Deflater.BEST_SPEED))
+					: socket.getOutputStream();
 		}
 
 		@Override
@@ -76,7 +78,8 @@ public class RemoteOutputBlockStreamHandle extends RemoteBlockStreamHandle<Outpu
 
 		@Override
 		public void close() throws IOException {
-			socket.getOutputStream().close();
+			out.close();
+			socket.close();
 		}
 
 		@Override

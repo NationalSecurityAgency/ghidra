@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,4 +34,14 @@ public interface SwingAnimationCallback {
 	 * finalization work.
 	 */
 	public void done();
+
+	/**
+	 * Returns the duration of this callback.  The default is <code>1000 ms</code>.  Subclasses
+	 * can override this as needed.
+	 * 
+	 * @return the duration
+	 */
+	public default int getDuration() {
+		return 1000;
+	}
 }

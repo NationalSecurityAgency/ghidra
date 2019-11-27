@@ -30,11 +30,13 @@ import ghidra.program.model.listing.CircularDependencyException;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.*;
 import ghidra.program.util.ChangeManager;
+import ghidra.program.util.ProgramLocation;
 import ghidra.util.Lock;
 import ghidra.util.SystemUtilities;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.exception.InvalidInputException;
-import ghidra.util.task.*;
+import ghidra.util.task.TaskMonitor;
+import ghidra.util.task.UnknownProgressWrappingTaskMonitor;
 
 /**
  * Base class for symbols
@@ -46,6 +48,23 @@ public abstract class SymbolDB extends DatabaseObject implements Symbol {
 	protected Address address;
 	protected SymbolManager symbolMgr;
 	protected Lock lock;
+
+	private volatile String cachedName;
+	private volatile long cachedNameModCount;
+
+	/**
+	 * Creates a Symbol that is just a placeholder for use when trying to find symbols by using
+	 * {@link Symbol#getID()}.   This is useful for locating symbols in Java collections when
+	 * a symbol has been deleted and the only remaining information is that symbol's ID.
+	 * 
+	 * @param manager the manager for the new symbol
+	 * @param address the address of the symbol
+	 * @param id the id of the symbol
+	 * @return the fake symbol
+	 */
+	static SymbolDB createSymbolPlaceholder(SymbolManager manager, Address address, long id) {
+		return new PlaceholderSymbolDB(manager, address, id);
+	}
 
 	SymbolDB(SymbolManager symbolMgr, DBObjectCache<SymbolDB> cache, Address address,
 			Record record) {
@@ -141,19 +160,42 @@ public abstract class SymbolDB extends DatabaseObject implements Symbol {
 	}
 
 	@Override
-	public String getName() {
+	public final String getName() {
+		String name = cachedName;
+		if (hasValidCachedName(name)) {
+			return name;
+		}
+
 		lock.acquire();
 		try {
 			checkIsValid();
-			if (record != null) {
-				return record.getString(SymbolDatabaseAdapter.SYMBOL_NAME_COL);
-			}
-
-			return SymbolUtilities.getDynamicName(symbolMgr.getProgram(), address);
+			cachedName = doGetName();
+			cachedNameModCount = symbolMgr.getProgram().getModificationNumber();
+			return cachedName;
 		}
 		finally {
 			lock.release();
 		}
+	}
+
+	private boolean hasValidCachedName(String name) {
+		if (name == null) {
+			return false;
+		}
+		return symbolMgr.getProgram().getModificationNumber() == cachedNameModCount;
+	}
+
+	/**
+	 * The code for creating the name content for this symbol.  This code will be called 
+	 * with the symbol's lock.
+	 * 
+	 * @return the name
+	 */
+	protected String doGetName() {
+		if (record != null) {
+			return record.getString(SymbolDatabaseAdapter.SYMBOL_NAME_COL);
+		}
+		return SymbolUtilities.getDynamicName(symbolMgr.getProgram(), address);
 	}
 
 	@Override
@@ -238,7 +280,7 @@ public abstract class SymbolDB extends DatabaseObject implements Symbol {
 		try {
 			checkIsValid();
 			if (monitor == null) {
-				monitor = TaskMonitorAdapter.DUMMY_MONITOR;
+				monitor = TaskMonitor.DUMMY;
 			}
 
 			if (monitor.getMaximum() == 0) {
@@ -275,7 +317,7 @@ public abstract class SymbolDB extends DatabaseObject implements Symbol {
 
 	@Override
 	public Reference[] getReferences() {
-		return getReferences(TaskMonitorAdapter.DUMMY_MONITOR);
+		return getReferences(TaskMonitor.DUMMY);
 	}
 
 	@Override
@@ -470,7 +512,11 @@ public abstract class SymbolDB extends DatabaseObject implements Symbol {
 
 	/**
 	 * Allow symbol implementations to validate the source when setting the name of
-	 * this symbol.
+	 * this symbol
+	 * 
+	 * @param newName the new name 
+	 * @param source the source type
+	 * @return the validated source type
 	 */
 	protected SourceType validateNameSource(String newName, SourceType source) {
 		return source;
@@ -537,14 +583,15 @@ public abstract class SymbolDB extends DatabaseObject implements Symbol {
 				record.setString(SymbolDatabaseAdapter.SYMBOL_NAME_COL, newName);
 				updateSymbolSource(record, source);
 				updateRecord();
-
+				cachedName = null;  // we can't clear it until now, since any call to getName()
+									// will cause the cached name to reset to the old name
 				if (namespaceChange) {
 					symbolMgr.symbolNamespaceChanged(this, oldNamespace);
 				}
 				if (nameChange) {
 					SymbolType symbolType = getSymbolType();
 					if (isExternal() &&
-						(symbolType == SymbolType.FUNCTION || symbolType == SymbolType.CODE)) {
+						(symbolType == SymbolType.FUNCTION || symbolType == SymbolType.LABEL)) {
 						ExternalManagerDB externalManager = symbolMgr.getExternalManager();
 						ExternalLocationDB externalLocation =
 							(ExternalLocationDB) externalManager.getExternalLocation(this);
@@ -576,7 +623,7 @@ public abstract class SymbolDB extends DatabaseObject implements Symbol {
 	}
 
 	private void checkEditOK() throws InvalidInputException {
-		if (getSymbolType() == SymbolType.CODE) {
+		if (getSymbolType() == SymbolType.LABEL) {
 			for (Register reg : symbolMgr.getProgram().getRegisters(getAddress())) {
 				if (reg.getName().equals(getName())) {
 					throw new InvalidInputException("Register symbol may not be renamed");
@@ -613,10 +660,16 @@ public abstract class SymbolDB extends DatabaseObject implements Symbol {
 		if (obj == this) {
 			return true;
 		}
+
 		Symbol s = (Symbol) obj;
+		if (getID() == s.getID()) {
+			return true;
+		}
+
 		if (!getName().equals(s.getName())) {
 			return false;
 		}
+
 		if (!getAddress().equals(s.getAddress())) {
 			return false;
 		}
@@ -776,6 +829,7 @@ public abstract class SymbolDB extends DatabaseObject implements Symbol {
 
 	/**
 	 * gets the generic symbol data 2 data.
+	 * @return the symbol data
 	 */
 	public int getSymbolData2() {
 		lock.acquire();
@@ -852,10 +906,64 @@ public abstract class SymbolDB extends DatabaseObject implements Symbol {
 
 	/**
 	 * Change the record and key associated with this symbol
-	 * @param the record.
+	 * @param record the record
 	 */
 	void setRecord(Record record) {
 		this.record = record;
 		keyChanged(record.getKey());
+	}
+
+	private static class PlaceholderSymbolDB extends SymbolDB {
+
+		PlaceholderSymbolDB(SymbolManager symbolMgr, Address address, long key) {
+			super(symbolMgr, null, address, key);
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			if ((obj == null) || (!(obj instanceof Symbol))) {
+				return false;
+			}
+			if (obj == this) {
+				return true;
+			}
+
+			// this class is only ever equal if the id matches
+			Symbol s = (Symbol) obj;
+			if (getID() == s.getID()) {
+				return true;
+			}
+			return false;
+		}
+
+		@Override
+		public SymbolType getSymbolType() {
+			throw new IllegalArgumentException();
+		}
+
+		@Override
+		public ProgramLocation getProgramLocation() {
+			throw new IllegalArgumentException();
+		}
+
+		@Override
+		public boolean isExternal() {
+			throw new IllegalArgumentException();
+		}
+
+		@Override
+		public Object getObject() {
+			throw new IllegalArgumentException();
+		}
+
+		@Override
+		public boolean isPrimary() {
+			throw new IllegalArgumentException();
+		}
+
+		@Override
+		public boolean isValidParent(Namespace parent) {
+			throw new IllegalArgumentException();
+		}
 	}
 }

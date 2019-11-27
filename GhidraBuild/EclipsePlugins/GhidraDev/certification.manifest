@@ -1,11 +1,9 @@
 ##VERSION: 2.0
 ##MODULE IP: FAMFAMFAM Icons - CC 2.5
-GhidraDevFeature/.gitignore||GHIDRA||||END|
 GhidraDevFeature/build.gradle||GHIDRA||||END|
 GhidraDevFeature/build.properties||GHIDRA||||END|
 GhidraDevFeature/category.xml||GHIDRA||||END|
 GhidraDevFeature/feature.xml||GHIDRA||||END|
-GhidraDevPlugin/.gitignore||GHIDRA||||END|
 GhidraDevPlugin/.launch/GhidraDev.launch||GHIDRA||||END|
 GhidraDevPlugin/GhidraDev.target||GHIDRA||||END|
 GhidraDevPlugin/GhidraDev_README.html||GHIDRA||||END|
@@ -14,6 +12,7 @@ GhidraDevPlugin/build.gradle||GHIDRA||||END|
 GhidraDevPlugin/build.properties||GHIDRA||||END|
 GhidraDevPlugin/build_README.txt||GHIDRA||||END|
 GhidraDevPlugin/icons/GhidraIcon16.png||GHIDRA||||END|
+GhidraDevPlugin/icons/GhidraIcon16_bw.png||GHIDRA||||END|
 GhidraDevPlugin/icons/brick_add.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
 GhidraDevPlugin/icons/brick_go.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
 GhidraDevPlugin/icons/folder_link.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|

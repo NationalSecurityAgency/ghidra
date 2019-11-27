@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,10 +20,10 @@ import java.awt.event.ItemListener;
 
 import javax.swing.*;
 
+import docking.widgets.button.GRadioButton;
 import docking.wizard.AbstractWizardJPanel;
 import docking.wizard.PanelManager;
-
-import ghidra.app.util.*;
+import ghidra.app.util.GenericHelpTopics;
 import ghidra.util.HelpLocation;
 import ghidra.util.layout.VerticalLayout;
 
@@ -47,29 +46,29 @@ class ProjectTypePanel extends AbstractWizardJPanel {
 		buildPanel();
 		setBorder(NewProjectPanelManager.EMPTY_BORDER);
 	}
-	
 
 	private void buildPanel() {
 		JPanel innerPanel = new JPanel(new VerticalLayout(10));
 		innerPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 		ItemListener listener = new ItemListener() {
+			@Override
 			public void itemStateChanged(ItemEvent e) {
 				panelManager.getWizardManager().validityChanged();
 			}
 		};
 
-		nonSharedRB = new JRadioButton("Non-Shared Project", true);
+		nonSharedRB = new GRadioButton("Non-Shared Project", true);
 		nonSharedRB.addItemListener(listener);
 		nonSharedRB.setToolTipText("Create a project that is not shared with others");
-		
-		sharedRB = new JRadioButton("Shared Project");
+
+		sharedRB = new GRadioButton("Shared Project");
 		sharedRB.addItemListener(listener);
 		sharedRB.setToolTipText("Create a project that can be shared with others");
-		
+
 		buttonGroup = new ButtonGroup();
 		buttonGroup.add(nonSharedRB);
 		buttonGroup.add(sharedRB);
-		
+
 		innerPanel.add(nonSharedRB);
 		innerPanel.add(sharedRB);
 		JPanel outerPanel = new JPanel();
@@ -77,17 +76,19 @@ class ProjectTypePanel extends AbstractWizardJPanel {
 		outerPanel.add(innerPanel);
 		add(outerPanel);
 	}
-		
-		
+
 	/* (non-Javadoc)
 	 * @see ghidra.util.bean.wizard.WizardPanel#getTitle()
 	 */
+	@Override
 	public String getTitle() {
 		return "Select Project Type";
 	}
+
 	/* (non-Javadoc)
 	 * @see ghidra.util.bean.wizard.WizardPanel#initialize()
 	 */
+	@Override
 	public void initialize() {
 		buttonGroup.remove(sharedRB);
 		buttonGroup.remove(nonSharedRB);
@@ -96,22 +97,23 @@ class ProjectTypePanel extends AbstractWizardJPanel {
 		buttonGroup.add(nonSharedRB);
 		buttonGroup.add(sharedRB);
 	}
+
 	/**
 	 * Return true if the user has entered a valid project file
-	 */	
+	 */
+	@Override
 	public boolean isValidInformation() {
 		return sharedRB.isSelected() || nonSharedRB.isSelected();
 	}
 
-	
 	/* (non-Javadoc)
 	 * @see ghidra.util.bean.wizard.WizardPanel#getHelpLocation()
 	 */
 	@Override
-    public HelpLocation getHelpLocation() {
+	public HelpLocation getHelpLocation() {
 		return new HelpLocation(GenericHelpTopics.FRONT_END, "SelectProjectType");
 	}
-	
+
 	boolean isSharedProject() {
 		return sharedRB.isSelected();
 	}

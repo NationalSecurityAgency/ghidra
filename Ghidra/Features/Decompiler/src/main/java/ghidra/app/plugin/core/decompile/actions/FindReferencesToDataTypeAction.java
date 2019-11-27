@@ -18,14 +18,13 @@ package ghidra.app.plugin.core.decompile.actions;
 import docking.ActionContext;
 import docking.action.MenuData;
 import ghidra.app.actions.AbstractFindReferencesDataTypeAction;
-import ghidra.app.decompiler.*;
+import ghidra.app.decompiler.ClangFieldToken;
+import ghidra.app.decompiler.ClangToken;
 import ghidra.app.decompiler.component.*;
 import ghidra.app.plugin.core.decompile.DecompilerActionContext;
+import ghidra.app.plugin.core.navigation.locationreferences.LocationReferencesService;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.data.DataType;
-import ghidra.program.model.pcode.HighVariable;
-import ghidra.program.model.pcode.Varnode;
-import ghidra.util.Msg;
 
 public class FindReferencesToDataTypeAction extends AbstractFindReferencesDataTypeAction {
 
@@ -36,41 +35,14 @@ public class FindReferencesToDataTypeAction extends AbstractFindReferencesDataTy
 		super(tool, NAME, owner, DEFAULT_KEY_STROKE);
 		this.controller = controller;
 
-		setPopupMenuData(new MenuData(new String[] { "Find Uses of " }));
+		setPopupMenuData(
+			new MenuData(new String[] { LocationReferencesService.MENU_GROUP, "Find Uses of " }));
 	}
 
 	@Override
 	public DataType getDataType(ActionContext context) {
 
-		DecompilerPanel decompilerPanel = controller.getDecompilerPanel();
-
-		// prefer the selection over the current location
-		ClangToken token = decompilerPanel.getSelectedToken();
-		if (token == null) {
-			token = decompilerPanel.getTokenAtCursor();
-		}
-
-		Varnode varnode = DecompilerUtils.getVarnodeRef(token);
-		if (varnode != null) {
-			HighVariable highVariable = varnode.getHigh();
-			if (highVariable != null) {
-				DataType dataType = highVariable.getDataType();
-				return dataType;
-
-			}
-		}
-
-		if (token instanceof ClangTypeToken) {
-			DataType dataType = ((ClangTypeToken) token).getDataType();
-			return dataType;
-		}
-
-		if (token instanceof ClangFieldToken) {
-			DataType dataType = ((ClangFieldToken) token).getDataType();
-			return dataType;
-		}
-
-		return null;
+		return DecompilerUtils.getDataType((DecompilerActionContext) context);
 	}
 
 	@Override
@@ -91,34 +63,23 @@ public class FindReferencesToDataTypeAction extends AbstractFindReferencesDataTy
 			return false;
 		}
 
-		DecompilerActionContext decompilerActionContext = (DecompilerActionContext) context;
-		if (decompilerActionContext.isDecompiling()) {
-			// Let this through here and handle it in actionPerformed().  This lets us alert 
-			// the user that they have to wait until the decompile is finished.  If we are not
-			// enabled at this point, then the keybinding will be propagated to the global 
-			// actions, which is not what we want.
-			return true;
-		}
+		DecompilerActionContext decompilerContext = (DecompilerActionContext) context;
+		return decompilerContext.checkActionEnablement(() -> {
 
-		DataType dataType = getDataType(context);
-		updateMenuName(dataType);
+			DataType dataType = getDataType(context);
+			updateMenuName(dataType);
 
-		return super.isEnabledForContext(context);
+			return super.isEnabledForContext(context);
+		});
 	}
 
 	@Override
 	public void actionPerformed(ActionContext context) {
-		// Note: we intentionally do this check here and not in isEnabledForContext() so 
-		// that global events do not get triggered.
-		DecompilerActionContext decompilerActionContext = (DecompilerActionContext) context;
-		if (decompilerActionContext.isDecompiling()) {
-			Msg.showInfo(getClass(), context.getComponentProvider().getComponent(),
-				"Decompiler Action Blocked",
-				"You cannot perform Decompiler actions while the Decompiler is busy");
-			return;
-		}
 
-		super.actionPerformed(context);
+		DecompilerActionContext decompilerContext = (DecompilerActionContext) context;
+		decompilerContext.performAction(() -> {
+			super.actionPerformed(context);
+		});
 	}
 
 	private void updateMenuName(DataType type) {
@@ -136,7 +97,7 @@ public class FindReferencesToDataTypeAction extends AbstractFindReferencesDataTy
 		}
 
 		MenuData data = getPopupMenuData().cloneData();
-		data.setMenuPath(new String[] { menuName });
+		data.setMenuPath(new String[] { LocationReferencesService.MENU_GROUP, menuName });
 		setPopupMenuData(data);
 	}
 }

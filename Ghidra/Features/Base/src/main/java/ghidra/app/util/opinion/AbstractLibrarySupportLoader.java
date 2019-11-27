@@ -25,7 +25,8 @@ import org.apache.commons.io.FilenameUtils;
 import ghidra.app.util.Option;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.bin.RandomAccessByteProvider;
-import ghidra.app.util.importer.*;
+import ghidra.app.util.importer.LibrarySearchPathManager;
+import ghidra.app.util.importer.MessageLog;
 import ghidra.formats.gfilesystem.FSRL;
 import ghidra.framework.model.*;
 import ghidra.framework.options.Options;
@@ -59,14 +60,13 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 	 * @param loadSpec The {@link LoadSpec} to use during load.
 	 * @param options The load options.
 	 * @param program The {@link Program} to load into.
-	 * @param handler How to handle memory conflicts that occur during the load.
 	 * @param monitor A cancelable task monitor.
 	 * @param log The message log.
 	 * @throws IOException if there was an IO-related problem loading.
 	 * @throws CancelledException if the user cancelled the load.
 	 */
 	protected abstract void load(ByteProvider provider, LoadSpec loadSpec, List<Option> options,
-			Program program, MemoryConflictHandler handler, TaskMonitor monitor, MessageLog log)
+			Program program, TaskMonitor monitor, MessageLog log)
 			throws CancelledException, IOException;
 
 	@Override
@@ -110,8 +110,8 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 
 	@Override
 	protected boolean loadProgramInto(ByteProvider provider, LoadSpec loadSpec,
-			List<Option> options, MessageLog log, Program program, TaskMonitor monitor,
-			MemoryConflictHandler memoryConflictHandler) throws CancelledException, IOException {
+			List<Option> options, MessageLog log, Program program, TaskMonitor monitor)
+			throws CancelledException, IOException {
 
 		LanguageCompilerSpecPair pair = loadSpec.getLanguageCompilerSpec();
 		LanguageID languageID = program.getLanguageID();
@@ -122,7 +122,7 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 			return false;
 		}
 		log.appendMsg("----- Loading " + provider.getAbsolutePath() + " -----");
-		load(provider, loadSpec, options, program, memoryConflictHandler, monitor, log);
+		load(provider, loadSpec, options, program, monitor, log);
 		return true;
 	}
 
@@ -139,7 +139,7 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 	}
 
 	@Override
-	public String validateOptions(ByteProvider provider, LoadSpec loadSpec, List<Option> options) {
+	public String validateOptions(ByteProvider provider, LoadSpec loadSpec, List<Option> options, Program program) {
 
 		if (options != null) {
 			for (Option option : options) {
@@ -151,7 +151,7 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 				}
 			}
 		}
-		return super.validateOptions(provider, loadSpec, options);
+		return super.validateOptions(provider, loadSpec, options, program);
 	}
 
 	@Override
@@ -343,8 +343,7 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 		boolean success = false;
 		try {
 			log.appendMsg("----- Loading " + provider.getAbsolutePath() + " -----");
-			load(provider, loadSpec, options, program, MemoryConflictHandler.ALWAYS_OVERWRITE,
-				monitor, log);
+			load(provider, loadSpec, options, program, monitor, log);
 
 			createDefaultMemoryBlocks(program, language, log);
 
@@ -893,14 +892,14 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 				if (expSym.hasNoReturn()) {
 					extFunc.setNoReturn(true);
 				}
-				int stackShift = program.getCompilerSpec().getCallStackShift();
-				if (stackShift == -1) {
-					stackShift = 0;
-				}
+// TODO: This should not be done at time of import and should be done
+// by a late running analyzer (e.g., stack analyzer) if no signature
+// has been established
+//				int stackShift = program.getCompilerSpec().getDefaultCallingConvention().getStackshift();
+//				if (stackShift == -1) {
+//					stackShift = 0;
+//				}
 
-				// TODO: This should not be done at time of import and should be done
-				// by a late running analyzer (e.g., stack analyzer) if no signature
-				// has been established
 //				int numParams = expSym.getPurge() / 4;
 //				if (numParams > 0) {
 //					// HACK: assumes specific stack-based x86 convention

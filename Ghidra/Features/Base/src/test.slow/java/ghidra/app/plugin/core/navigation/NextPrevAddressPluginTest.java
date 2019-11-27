@@ -33,10 +33,9 @@ import generic.test.TestUtils;
 import ghidra.app.nav.LocationMemento;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
 import ghidra.app.plugin.core.codebrowser.CodeViewerProvider;
-import ghidra.app.util.navigation.GoToAddressLabelDialog;
+import ghidra.app.services.GoToService;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressFactory;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.symbol.Symbol;
@@ -47,80 +46,39 @@ import ghidra.test.*;
 public class NextPrevAddressPluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 	private TestEnv env;
-	private Program baseProgram;
+	private Program program;
 	private PluginTool tool;
 
 	private MultiActionDockingAction previousAction;
 	private MultiActionDockingAction nextAction;
-	private GoToAddressLabelDialog dialog;
-	private CodeBrowserPlugin codeBrowserPlugin;
+	private DockingAction previousFunctionAction;
+	private DockingAction nextFunctionAction;
+	private CodeBrowserPlugin cbPlugin;
 	private CodeViewerProvider provider;
-	private AddressFactory addressFactory;
 
 	@Before
 	public void setUp() throws Exception {
 		env = new TestEnv();
 
 		ClassicSampleX86ProgramBuilder builder = new ClassicSampleX86ProgramBuilder();
-		baseProgram = builder.getProgram();
+		program = builder.getProgram();
 
-		addressFactory = baseProgram.getAddressFactory();
-		tool = env.launchDefaultTool(baseProgram);
+		tool = env.launchDefaultTool(program);
 		builder.dispose();
 
 		NextPrevAddressPlugin plugin = env.getPlugin(NextPrevAddressPlugin.class);
-		previousAction =
-			(MultiActionDockingAction) TestUtils.getInstanceField("previousAction", plugin);
-		nextAction =
-			(MultiActionDockingAction) TestUtils.getInstanceField("nextAction", plugin);
+		previousAction = plugin.getPreviousAction();
+		nextAction = plugin.getNextAction();
+		previousFunctionAction = plugin.getPreviousFunctionAction();
+		nextFunctionAction = plugin.getNextFunctionAction();
 
-		GoToAddressLabelPlugin goToPlugin = env.getPlugin(GoToAddressLabelPlugin.class);
-		dialog = goToPlugin.getDialog();
-
-		codeBrowserPlugin = env.getPlugin(CodeBrowserPlugin.class);
-		provider = codeBrowserPlugin.getProvider();
+		cbPlugin = env.getPlugin(CodeBrowserPlugin.class);
+		provider = cbPlugin.getProvider();
 	}
 
 	@After
 	public void tearDown() throws Exception {
 		env.dispose();
-	}
-
-	@Test
-	public void testBackwardAndForward() throws Exception {
-		// disabled by default
-		assertTrue(!nextAction.isEnabledForContext(provider.getActionContext(null)));
-		assertTrue(!previousAction.isEnabledForContext(provider.getActionContext(null)));
-
-		// perform a goto
-		Address startAddress = codeBrowserPlugin.getCurrentAddress();
-		goTo("010018a0");
-		codeBrowserPlugin.updateNow();
-		waitForPostedSwingRunnables();
-
-		// go backward generically
-		backwardByAction();
-		codeBrowserPlugin.updateNow();
-		waitForPostedSwingRunnables();
-		assertEquals(startAddress, codeBrowserPlugin.getCurrentAddress());
-
-		// go forward generically
-		forwardByAction();
-		codeBrowserPlugin.updateNow();
-		waitForPostedSwingRunnables();
-		assertEquals(addr("0x010018a0"), codeBrowserPlugin.getCurrentAddress());
-
-		// go backward from the dropdown
-		backwardByDropdown();
-		codeBrowserPlugin.updateNow();
-		waitForPostedSwingRunnables();
-		assertEquals(startAddress, codeBrowserPlugin.getCurrentAddress());
-
-		// go forward from the dropdown
-		forwardByDrowdown();
-		codeBrowserPlugin.updateNow();
-		waitForPostedSwingRunnables();
-		assertEquals(addr("0x010018a0"), codeBrowserPlugin.getCurrentAddress());
 	}
 
 	@Test
@@ -133,7 +91,7 @@ public class NextPrevAddressPluginTest extends AbstractGhidraHeadedIntegrationTe
 
 		// the previous list of actions should be the size of the list - 1
 		List<DockingActionIf> actionList =
-			previousAction.getActionList(provider.getActionContext(null));
+			previousAction.getActionList(getContext());
 
 		// verify the size...
 		// (the navigated symbols plus the original location before we started)
@@ -160,10 +118,10 @@ public class NextPrevAddressPluginTest extends AbstractGhidraHeadedIntegrationTe
 		Symbol navigatedSymbol = navigatedSymbols.get(navigatedIndex);
 		performAction(action, true);
 
-		assertEquals(navigatedSymbol.getAddress(), codeBrowserPlugin.getCurrentAddress());
+		assertEquals(navigatedSymbol.getAddress(), currentAddress());
 
 		// ...make sure the 'previous' list is updated with only actions after the one in our list
-		actionList = previousAction.getActionList(provider.getActionContext(null));
+		actionList = previousAction.getActionList(getContext());
 		n = actionList.size() - 1; // don't compare the first location
 		int navigatedIndexOffset = (navigatedIndex + 1); // don't count the navigated index
 		int remainingSymbols = navigatedSymbols.size() - navigatedIndexOffset;
@@ -182,7 +140,7 @@ public class NextPrevAddressPluginTest extends AbstractGhidraHeadedIntegrationTe
 
 		// ...make sure the next list is updated with the correct items from after that position
 		// in the list
-		actionList = nextAction.getActionList(provider.getActionContext(null));
+		actionList = nextAction.getActionList(getContext());
 
 		List<Symbol> nextNavigatedSymbols = subList(navigatedSymbols, 0, navigatedIndex);
 		nextNavigatedSymbols.add(0, bulkNavigationSymbol); // put on the original location from the bulk navigation
@@ -207,10 +165,10 @@ public class NextPrevAddressPluginTest extends AbstractGhidraHeadedIntegrationTe
 
 		performAction(navigatedAction, true);
 
-		assertEquals(navigatedSymbol.getAddress(), codeBrowserPlugin.getCurrentAddress());
+		assertEquals(navigatedSymbol.getAddress(), currentAddress());
 
 		// ...make sure that the 'previous' list is properly updated
-		actionList = previousAction.getActionList(provider.getActionContext(null));
+		actionList = previousAction.getActionList(getContext());
 		n = actionList.size() - 1; // don't compare the first location
 		navigatedIndexOffset = (navigatedIndex + 1); // don't count the navigated index
 		remainingSymbols = navigatedSymbols.size() - navigatedIndexOffset;
@@ -228,7 +186,7 @@ public class NextPrevAddressPluginTest extends AbstractGhidraHeadedIntegrationTe
 		}
 
 		// ...make sure the 'next' list is properly updated
-		actionList = nextAction.getActionList(provider.getActionContext(null));
+		actionList = nextAction.getActionList(getContext());
 
 		nextNavigatedSymbols = subList(navigatedSymbols, 0, navigatedIndex);
 		nextNavigatedSymbols.add(0, bulkNavigationSymbol); // put on the original location from the bulk navigation
@@ -242,6 +200,129 @@ public class NextPrevAddressPluginTest extends AbstractGhidraHeadedIntegrationTe
 			Symbol symbol = nextNavigatedSymbols.get(i);
 			assertEquals(location.getProgramLocation().getAddress(), symbol.getAddress());
 		}
+	}
+
+	@Test
+	public void testBackwardAndForward() throws Exception {
+		// disabled by default; no history
+		assertFalse(nextAction.isEnabledForContext(getContext()));
+		assertFalse(previousAction.isEnabledForContext(getContext()));
+
+		Address startAddress = currentAddress();
+		Address secondAddress = addr("010018a0");
+		goTo(secondAddress);
+
+		previous();
+		assertCurrentAddress(startAddress);
+
+		next();
+		assertCurrentAddress(secondAddress);
+
+		// try the drop-down popup
+		previousByDropdown();
+		assertCurrentAddress(startAddress);
+
+		nextByDrowdown();
+		assertCurrentAddress(secondAddress);
+	}
+
+	@Test
+	public void testFunctionNavigation_OnlyFunctionsInHistory() throws Exception {
+		Address f1 = addr("01002cf5"); // ghidra
+		Address f2 = addr("01006420"); // entry
+		Address f3 = addr("0100415a"); // sscanf 
+
+		assertDisabled(previousFunctionAction);
+		assertDisabled(nextFunctionAction);
+		goTo(f1);
+		assertDisabled(previousFunctionAction);
+		assertDisabled(nextFunctionAction);
+
+		goTo(f2);
+		assertEnabled(previousFunctionAction);
+		assertDisabled(nextFunctionAction);
+
+		goTo(f3);
+		assertEnabled(previousFunctionAction);
+		assertDisabled(nextFunctionAction);
+
+		previousFunction();
+		assertCurrentAddress(f2);
+		assertEnabled(previousFunctionAction);
+		assertEnabled(nextFunctionAction);
+
+		previousFunction();
+		assertCurrentAddress(f1);
+		assertDisabled(previousFunctionAction);
+		assertEnabled(nextFunctionAction);
+
+		nextFunction();
+		assertCurrentAddress(f2);
+		assertEnabled(previousFunctionAction);
+		assertEnabled(nextFunctionAction);
+	}
+
+	@Test
+	public void testFunctionNavigation_MixedHistory() throws Exception {
+		Address f1 = addr("01002cf5"); // ghidra
+		Address a1 = f1.add(1);
+		Address a2 = f1.add(3);
+		Address a3 = f1.add(8);
+		Address f2 = addr("01006420"); // entry
+
+		assertDisabled(previousFunctionAction);
+		assertDisabled(nextFunctionAction);
+		goTo(f1);
+		assertDisabled(previousFunctionAction);
+		assertDisabled(nextFunctionAction);
+
+		goTo(a1);
+		assertDisabled(previousFunctionAction);
+		assertDisabled(nextFunctionAction);
+		goTo(a2);
+		goTo(a3);
+		assertDisabled(previousFunctionAction);
+		assertDisabled(nextFunctionAction);
+
+		// new function
+		goTo(f2);
+		assertEnabled(previousFunctionAction);
+		assertDisabled(nextFunctionAction);
+
+		previousFunction();
+		assertCurrentAddress(a3); // last location in a different function
+		assertDisabled(previousFunctionAction);
+		assertEnabled(nextFunctionAction);
+
+		nextFunction();
+		assertCurrentAddress(f2);
+		assertEnabled(previousFunctionAction);
+		assertDisabled(nextFunctionAction);
+	}
+
+//==================================================================================================
+// Private Methods
+//==================================================================================================	
+
+	private ComponentProvider showDecompiler() {
+		ComponentProvider cp = tool.getComponentProvider("Decompiler");
+		tool.showComponentProvider(cp, true);
+		cp.requestFocus();
+		return cp;
+	}
+
+	private void assertCurrentAddress(Address expected) {
+		assertEquals(expected, currentAddress());
+	}
+
+	private void assertEnabled(DockingAction action) {
+		assertTrue("Action should have been enabled: " + action.getName(),
+			action.isEnabledForContext(getContext()));
+	}
+
+	private void assertDisabled(DockingAction action) {
+		assertFalse("Action should have been disabled: " + action.getName(),
+			action.isEnabledForContext(getContext()));
 	}
 
 	private Symbol findSymbolForLocation(List<Symbol> navigatedSymbols, ProgramLocation location) {
@@ -263,38 +344,64 @@ public class NextPrevAddressPluginTest extends AbstractGhidraHeadedIntegrationTe
 	}
 
 	private Address addr(String address) {
-		return addressFactory.getAddress(address);
+		return program.getAddressFactory().getAddress(address);
 	}
 
-	private void goTo(String locationName) throws Exception {
-		setText(locationName);
-		performOkCallback();
+	private void goTo(Symbol s) throws Exception {
+		goTo(s.getAddress());
 	}
 
-	private void forwardByAction() {
-		assertTrue(nextAction.isEnabled());
+	private void goTo(Address a) throws Exception {
+		GoToService goToService = tool.getService(GoToService.class);
+		goToService.goTo(a);
+		cbPlugin.updateNow();
+		waitForSwing();
+	}
+
+	private void next() {
+		assertTrue(nextAction.isEnabledForContext(getContext()));
 		performAction(nextAction, true);
+		cbPlugin.updateNow();
+		waitForSwing();
 	}
 
-	private void backwardByAction() {
-		assertTrue(previousAction.isEnabled());
+	private void previous() {
+		assertTrue(previousAction.isEnabledForContext(getContext()));
 		performAction(previousAction, true);
+		cbPlugin.updateNow();
+		waitForSwing();
 	}
 
-	private void backwardByDropdown() {
-		assertTrue(previousAction.isEnabled());
+	private void previousFunction() {
+		assertTrue(previousFunctionAction.isEnabledForContext(getContext()));
+		performAction(previousFunctionAction, getContext(), true);
+		cbPlugin.updateNow();
+		waitForSwing();
+	}
+
+	private void nextFunction() {
+		assertTrue(nextFunctionAction.isEnabledForContext(getContext()));
+		performAction(nextFunctionAction, getContext(), true);
+		cbPlugin.updateNow();
+		waitForSwing();
+	}
+
+	private void previousByDropdown() {
+		assertTrue(previousAction.isEnabledForContext(getContext()));
 		JFrame toolFrame = tool.getToolFrame();
 		DockingWindowManager dwm = DockingWindowManager.getInstance(toolFrame);
 		JButton previousButton = findButtonForAction(dwm, previousAction);
 		clickDropdownForButton(previousButton);
+		waitForSwing();
 	}
 
-	private void forwardByDrowdown() {
-		assertTrue(nextAction.isEnabled());
+	private void nextByDrowdown() {
+		assertTrue(nextAction.isEnabledForContext(getContext()));
 		JFrame toolFrame = tool.getToolFrame();
 		DockingWindowManager dwm = DockingWindowManager.getInstance(toolFrame);
 		JButton nextButton = findButtonForAction(dwm, nextAction);
 		clickDropdownForButton(nextButton);
+		waitForSwing();
 	}
 
 	private void clickDropdownForButton(JButton button) {
@@ -332,32 +439,12 @@ public class NextPrevAddressPluginTest extends AbstractGhidraHeadedIntegrationTe
 		clickMouse(component, MouseEvent.BUTTON1, x, y, 1, 0);
 	}
 
-	private JPopupMenu getPopupMenu(Container parent) {
-		Component[] components = parent.getComponents();
-		for (Component component : components) {
-			if (component instanceof JPopupMenu) {
-				return (JPopupMenu) component;
-			}
-		}
-
-		for (Component component : components) {
-			if (component instanceof Container) {
-				JPopupMenu popupMenu = getPopupMenu((Container) component);
-				if (popupMenu != null) {
-					return popupMenu;
-				}
-			}
-		}
-
-		return null;
-	}
-
 	@SuppressWarnings("unchecked")
 	// let caution fly
 	private JButton findButtonForAction(DockingWindowManager windowManager, DockingAction action) {
-		Object actionManager = TestUtils.getInstanceField("actionManager", windowManager);
+		Object actionToGuiMapper = TestUtils.getInstanceField("actionToGuiMapper", windowManager);
 		Object menuAndToolBarManager =
-			TestUtils.getInstanceField("menuAndToolBarManager", actionManager);
+			TestUtils.getInstanceField("menuAndToolBarManager", actionToGuiMapper);
 		Map<WindowNode, WindowActionManager> map =
 			(Map<WindowNode, WindowActionManager>) TestUtils.getInstanceField(
 				"windowToActionManagerMap", menuAndToolBarManager);
@@ -393,9 +480,9 @@ public class NextPrevAddressPluginTest extends AbstractGhidraHeadedIntegrationTe
 
 	private List<Symbol> doBulkGoTo() throws Exception {
 		List<Symbol> list = new ArrayList<>();
-		Memory memory = baseProgram.getMemory();
+		Memory memory = program.getMemory();
 		int count = 0;
-		SymbolIterator iter = baseProgram.getSymbolTable().getAllSymbols(true);
+		SymbolIterator iter = program.getSymbolTable().getAllSymbols(true);
 		while (iter.hasNext() && count < 11) {
 			Symbol symbol = iter.next();
 			Address addr = symbol.getAddress();
@@ -403,19 +490,17 @@ public class NextPrevAddressPluginTest extends AbstractGhidraHeadedIntegrationTe
 				continue;
 			}
 			list.add(symbol);
-			setText(symbol.getName());
-			performOkCallback();
+			goTo(symbol);
 			++count;
 		}
 		return list;
 	}
 
-	private void setText(final String text) throws Exception {
-		SwingUtilities.invokeAndWait(() -> dialog.setText(text));
+	private Address currentAddress() {
+		return cbPlugin.getCurrentAddress();
 	}
 
-	private void performOkCallback() throws Exception {
-		runSwing(() -> dialog.okCallback());
-		waitForPostedSwingRunnables();
+	private ActionContext getContext() {
+		return provider.getActionContext(null);
 	}
 }

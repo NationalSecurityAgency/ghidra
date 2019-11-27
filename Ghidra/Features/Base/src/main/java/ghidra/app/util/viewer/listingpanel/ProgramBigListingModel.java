@@ -36,6 +36,7 @@ import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.Reference;
+import ghidra.util.datastruct.LRUMap;
 import ghidra.util.task.TaskMonitor;
 
 public class ProgramBigListingModel implements ListingModel, FormatModelListener,
@@ -51,6 +52,9 @@ public class ProgramBigListingModel implements ListingModel, FormatModelListener
 	private DummyFieldFactory dummyFactory;
 	private List<ListingModelListener> listeners = new ArrayList<>();
 
+	// Use a cache so that simple arrowing to-and-fro with the keyboard will respond quickly
+	private LayoutCache layoutCache = new LayoutCache();
+
 	public ProgramBigListingModel(Program program, FormatManager formatMgr) {
 		this.program = program;
 		this.listing = program.getListing();
@@ -65,11 +69,6 @@ public class ProgramBigListingModel implements ListingModel, FormatModelListener
 	}
 
 	private void initOptions() {
-		fieldOptions.registerOption(DISPLAY_EXTERNAL_FUNCTION_POINTER_OPTION_NAME, true, null,
-			"Shows/hides function header format for pointers to external functions");
-		fieldOptions.registerOption(DISPLAY_NONEXTERNAL_FUNCTION_POINTER_OPTION_NAME, false, null,
-			"Shows/hides function header format for pointers to non-external functions");
-
 		showExternalFunctionPointerFormat =
 			fieldOptions.getBoolean(DISPLAY_EXTERNAL_FUNCTION_POINTER_OPTION_NAME, true);
 		showNonExternalFunctionPointerFormat =
@@ -87,6 +86,10 @@ public class ProgramBigListingModel implements ListingModel, FormatModelListener
 			showNonExternalFunctionPointerFormat = (Boolean) newValue;
 			formatModelChanged(null);
 		}
+
+		// There are quite a few options that affect the display of the the layouts.  Flush
+		// the cache on any change, as it is simpler than tracking individual options.
+		layoutCache.clear();
 	}
 
 	@Override
@@ -115,6 +118,16 @@ public class ProgramBigListingModel implements ListingModel, FormatModelListener
 
 	@Override
 	public Layout getLayout(Address addr, boolean isGapAddress) {
+
+		Layout layout = layoutCache.get(addr, isGapAddress);
+		if (layout == null) {
+			layout = doGetLayout(addr, isGapAddress);
+			layoutCache.put(addr, layout, isGapAddress);
+		}
+		return layout;
+	}
+
+	private Layout doGetLayout(Address addr, boolean isGapAddress) {
 		List<RowLayout> list = new ArrayList<>();
 		FieldFormatModel format;
 		CodeUnit cu = listing.getCodeUnitAt(addr);
@@ -253,8 +266,8 @@ public class ProgramBigListingModel implements ListingModel, FormatModelListener
 			int offset = (int) address.subtract(parent.getMinAddress());
 			data = parent.getComponentAt(offset);
 
-			// Need to handle filler in aligned structures in a special way.
-			if (data == null && ((Structure) dt).isInternallyAligned()) {
+			// Need to handle filler in a special way.
+			if (data == null) {
 				// So look for next non-filler address.
 				offset++;
 				int length = dt.getLength();
@@ -262,7 +275,7 @@ public class ProgramBigListingModel implements ListingModel, FormatModelListener
 					// If not beyond structure's end, check for non-filler.
 					data = parent.getComponentAt(offset);
 					if (data != null) { // Found non filler address so return it.
-						return parent.getMinAddress().add(offset);
+						return data.getMinAddress();
 					}
 				}
 			}
@@ -297,9 +310,12 @@ public class ProgramBigListingModel implements ListingModel, FormatModelListener
 			}
 		}
 		else {
-			// otherwise just return the next dataComponent after this one
-			if (index < parent.getNumComponents() - 1) {
-				return parent.getComponent(index + 1).getMinAddress();
+			while (index < parent.getNumComponents() - 1) {
+				index++;
+				Data component = parent.getComponent(index);
+				if (address.compareTo(component.getMinAddress()) < 0) {
+					return component.getAddress();
+				}
 			}
 		}
 		return null;
@@ -351,7 +367,9 @@ public class ProgramBigListingModel implements ListingModel, FormatModelListener
 		}
 		else {
 			int offset = (int) addr.subtract(parent.getMinAddress());
-			data = parent.getComponentAt(offset - 1);
+			List<Data> componentsContaining = parent.getComponentsContaining(offset - 1);
+			data = componentsContaining.isEmpty() ? null
+					: componentsContaining.get(componentsContaining.size() - 1);
 		}
 		if (data == null) {
 			return addr.previous();
@@ -397,14 +415,18 @@ public class ProgramBigListingModel implements ListingModel, FormatModelListener
 					}
 				}
 			}
-			else {
-				Data tmpData = data.getComponentAt((int) addr.subtract(dataAddr));
-				if (tmpData != null) {
-					if (tmpData.getMinAddress().equals(addr)) {
-						list.add(tmpData);
-					}
-					if (tmpData.getNumComponents() > 0) {
-						addOpenData(list, tmpData, addr);
+			else { // Structure
+				List<Data> dataList = data.getComponentsContaining((int) addr.subtract(dataAddr));
+				if (dataList != null) {  // nested flex-arrays can cause odd behavior
+					for (Data subData : dataList) {
+						// The only case where more than one subData exists is for bit-fields.
+						// Depending upon the packing, bit-fields at different offsets may overlap
+						if (subData.getMinAddress().equals(addr)) {
+							list.add(subData);
+						}
+						if (subData.getNumComponents() > 0) {
+							addOpenData(list, subData, addr);
+						}
 					}
 				}
 			}
@@ -477,12 +499,16 @@ public class ProgramBigListingModel implements ListingModel, FormatModelListener
 	}
 
 	protected void notifyDataChanged(boolean updateImmediately) {
+		layoutCache.clear();
+
 		for (ListingModelListener listener : listeners) {
 			listener.dataChanged(updateImmediately);
 		}
 	}
 
 	private void notifyModelSizeChanged() {
+		layoutCache.clear();
+
 		for (ListingModelListener listener : listeners) {
 			listener.modelSizeChanged();
 		}
@@ -523,15 +549,14 @@ public class ProgramBigListingModel implements ListingModel, FormatModelListener
 		return program.isClosed();
 	}
 
-	/**
-	 * @see ghidra.framework.model.DomainObjectListener#domainObjectChanged(ghidra.framework.model.DomainObjectChangedEvent)
-	 */
 	@Override
 	public void domainObjectChanged(DomainObjectChangedEvent ev) {
-		if (!program.isClosed()) {
-			boolean updateImmediately = ev.numRecords() <= 5;
-			notifyDataChanged(updateImmediately);
+		if (program.isClosed()) {
+			return;
 		}
+
+		boolean updateImmediately = ev.numRecords() <= 5;
+		notifyDataChanged(updateImmediately);
 	}
 
 	@Override
@@ -559,5 +584,32 @@ public class ProgramBigListingModel implements ListingModel, FormatModelListener
 			}
 		}
 		return addressSet;
+	}
+
+	private class LayoutCache {
+
+		private LRUMap<Address, Layout> cache = new LRUMap<>(10);
+		private LRUMap<Address, Layout> gapCache = new LRUMap<>(10);
+
+		void clear() {
+			cache.clear();
+			gapCache.clear();
+		}
+
+		Layout get(Address addr, boolean isGapAddress) {
+			if (isGapAddress) {
+				return gapCache.get(addr);
+			}
+			return cache.get(addr);
+		}
+
+		void put(Address addr, Layout layout, boolean isGapAddress) {
+			if (isGapAddress) {
+				gapCache.put(addr, layout);
+			}
+			else {
+				cache.put(addr, layout);
+			}
+		}
 	}
 }

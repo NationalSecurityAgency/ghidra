@@ -20,9 +20,6 @@ import java.net.*;
 import java.util.HashMap;
 import java.util.Map;
 
-import javax.net.ServerSocketFactory;
-import javax.net.ssl.SSLServerSocketFactory;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -30,6 +27,7 @@ import db.buffers.BlockStream;
 import db.buffers.InputBlockStream;
 import ghidra.server.remote.ServerPortFactory;
 import ghidra.server.stream.RemoteBlockStreamHandle.StreamRequest;
+import ghidra.util.StringUtilities;
 import ghidra.util.timer.GTimer;
 import ghidra.util.timer.GTimerMonitor;
 
@@ -64,7 +62,7 @@ public class BlockStreamServer extends Thread {
 	 */
 	public static synchronized BlockStreamServer getBlockStreamServer() {
 		if (server == null) {
-			server = new BlockStreamServer(ServerPortFactory.getStreamPort());
+			server = new BlockStreamServer();
 		}
 		return server;
 	}
@@ -73,21 +71,17 @@ public class BlockStreamServer extends Thread {
 
 	private long nextStreamID = System.currentTimeMillis();
 
-	private int port;
-	private String ipAddress;
+	private String hostname;
 	private volatile boolean running;
 	private ServerSocket serverSocket;
 
 	private GTimerMonitor cleanupTimerMonitor;
 
 	/**
-	 * Construct a block stream server instance.  The optional Ghidra Server IP 
-	 * interface binding will be used (i.e., java.rmi.server.hostname property). 
-	 * @param port TCP port to listen on for this server instance
+	 * Construct a block stream server instance.  
 	 */
-	private BlockStreamServer(int port) {
-		super("BlockStreamServer-" + port);
-		this.port = port;
+	private BlockStreamServer() {
+		super("BlockStreamServer");
 	}
 
 	/**
@@ -100,18 +94,18 @@ public class BlockStreamServer extends Thread {
 
 	/**
 	 * Get the server port
-	 * @return server port
+	 * @return server port, -1 if server not yet started
 	 */
 	public int getServerPort() {
-		return port;
+		return serverSocket != null ? serverSocket.getLocalPort() : -1;
 	}
 
 	/**
-	 * Get the server host IP address
-	 * @return IP address or null if server has not been started
+	 * Get the server remote access hostname
+	 * @return hostname or IP address to be used for remote access, null if server not yet started
 	 */
-	public String getServerIpAddress() {
-		return ipAddress;
+	public String getServerHostname() {
+		return hostname;
 	}
 
 	/**
@@ -191,42 +185,24 @@ public class BlockStreamServer extends Thread {
 	/**
 	 * Start this server instance. If the server has already been started
 	 * this method will return immediately. 
+	 * @param s server socket to be used for accepting connections
+	 * @param host remote access hostname to be used by clients
 	 * @throws IOException
 	 */
-	public synchronized void startServer() throws IOException {
+	public synchronized void startServer(ServerSocket s, String host) throws IOException {
 
 		if (running) {
-			return;
+			throw new IOException("server already started");
 		}
 
-		InetAddress inetAddress = null;
-
-		try {
-			// use RMI hostname property which corresponds to server -ip command option
-			String hostname = System.getProperty("java.rmi.server.hostname");
-			if (hostname != null) {
-				inetAddress = InetAddress.getByName(hostname);
-			}
-			else {
-				inetAddress = InetAddress.getLocalHost();
-			}
+		if (s == null || s.isClosed() || StringUtilities.isAllBlank(host)) {
+			throw new IllegalArgumentException("invalid startServer parameters");
 		}
-		catch (UnknownHostException e) {
-			throw new IOException("failed to resolve server hostname: " + e.getMessage(), e);
-		}
-
-		ipAddress = inetAddress.getHostAddress();
-
-		ServerSocketFactory serverSocketFactory = SSLServerSocketFactory.getDefault();
-
-		// TODO: make backlog setting a property
-		int backlog = 0; // default backlog used
-
-		serverSocket = serverSocketFactory.createServerSocket(port, backlog, inetAddress);
-
-		log.info("Started Block Stream Server on " + ipAddress + ":" + port);
-
+		serverSocket = s;
+		hostname = host;
 		running = true;
+
+		log.info("Starting Block Stream Server...");
 
 		cleanupTimerMonitor = GTimer.scheduleRepeatingRunnable(CLEANUP_PERIOD, CLEANUP_PERIOD,
 			() -> cleanupStaleRequests(false));
@@ -260,8 +236,6 @@ public class BlockStreamServer extends Thread {
 			Socket socket = null;
 			try {
 				socket = serverSocket.accept();
-				// TODO: add parameters to control socket options
-
 				BlockStreamHandler handler = new BlockStreamHandler(socket);
 				handler.start();
 			}
@@ -305,7 +279,6 @@ public class BlockStreamServer extends Thread {
 		BlockStreamHandler(Socket socket) {
 			super("BlockStreamHandler-" + socket.getInetAddress() + "-" + socket.getPort());
 			this.socket = socket;
-			// TODO: socket options?
 		}
 
 		@Override
@@ -341,7 +314,8 @@ public class BlockStreamServer extends Thread {
 						": failed to read stream header");
 				}
 				else if (!(e instanceof EOFException)) { // silent on closed connection
-					log.error("file block stream failed from " + socket.getInetAddress(), e);
+					log.error("file block stream failed from " + socket.getInetAddress() + ": " +
+						e.getMessage());
 				}
 			}
 			finally {

@@ -49,7 +49,7 @@ attach variables [ fregCore ] [
 
 @elif PROCESSOR == "PIC_16F"
 attach variables [ fregCore ] [
-	INDF0	INDF1	PCL		STATUS	FSR0L	FSR0H	FSR1L	FSR1H	BSR	WREG	PCLATH	INTCON	_ _ _ _
+	INDF0	INDF1	PCL		STATUS	FSR0L	FSR0H	FSR1L	FSR1H	BSR	W	PCLATH	INTCON	_ _ _ _
 ];
 
 attach names [IntConBits] [ IOCIF INTF TMR0IF IOCIE INTE TMR0IE PEIE GIE  ];
@@ -737,10 +737,12 @@ srcFSRk: sk6"["fsrk"]" is fsrk & sk6 {
 
 :MOVIW srcFSR			is op11=2 & srcFSR {
 	W = srcFSR;
+	setResultFlags(W);
 }
 
 :MOVIW srcFSRk			is op7=0x7e & srcFSRk {
 	W = srcFSRk;
+	setResultFlags(W);
 }
 
 :MOVWI srcFSR			is op11=3 & srcFSR {

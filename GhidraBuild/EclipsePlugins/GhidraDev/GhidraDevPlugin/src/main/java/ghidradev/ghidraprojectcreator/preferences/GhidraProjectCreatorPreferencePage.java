@@ -43,7 +43,7 @@ import utility.application.ApplicationLayout;
 public class GhidraProjectCreatorPreferencePage extends PreferencePage
 implements IWorkbenchPreferencePage {
 
-	private static ApplicationVersion MIN_GHIDRA_VERSION = new ApplicationVersion("9.0");
+	private static ApplicationVersion MIN_GHIDRA_VERSION = new ApplicationVersion("9.1");
 
 	private Table table;
 	private Button addButton;
@@ -76,9 +76,9 @@ implements IWorkbenchPreferencePage {
 
 		// Description label
 		Label descriptionLabel = new Label(container, SWT.NULL);
-		descriptionLabel.setText("Add or remove Ghidra installations.\n" +
+		descriptionLabel.setText("Add or remove Ghidra installation directories.\n" +
 			"The checked Ghidra installation is the default used when creating new projects.\n" +
-			"Red entries correspond to invalid Ghidra installations.");
+			"Red entries correspond to invalid Ghidra installation directories.");
 		new Label(container, SWT.NONE).setText(""); // filler
 
 		// Ghidra installations table

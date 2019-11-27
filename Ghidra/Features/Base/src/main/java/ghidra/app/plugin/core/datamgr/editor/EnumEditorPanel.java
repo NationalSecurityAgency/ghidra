@@ -26,6 +26,8 @@ import javax.swing.table.TableModel;
 
 import docking.widgets.OptionDialog;
 import docking.widgets.combobox.GhidraComboBox;
+import docking.widgets.label.GDLabel;
+import docking.widgets.label.GLabel;
 import docking.widgets.table.GTableCellRenderer;
 import docking.widgets.table.GTableTextCellEditor;
 import docking.widgets.textfield.GValidatedTextField;
@@ -111,24 +113,21 @@ class EnumEditorPanel extends JPanel {
 
 		// invoke later because the key press on the table causes the selection
 		// to change
-		SwingUtilities.invokeLater(new Runnable() {
-			@Override
-			public void run() {
-				try {
-					if (table.isEditing()) {
-						return; // don't change the selection if a new edit is in progress
-					}
+		SwingUtilities.invokeLater(() -> {
+			try {
+				if (table.isEditing()) {
+					return; // don't change the selection if a new edit is in progress
+				}
 
-					int row = tableModel.getRow(name);
-					if (row >= 0 && row < tableModel.getRowCount()) {
-						table.setRowSelectionInterval(row, row);
-						Rectangle rect = table.getCellRect(row, 0, false);
-						table.scrollRectToVisible(rect);
-					}
+				int row = tableModel.getRow(name);
+				if (row >= 0 && row < tableModel.getRowCount()) {
+					table.setRowSelectionInterval(row, row);
+					Rectangle rect = table.getCellRect(row, 0, false);
+					table.scrollRectToVisible(rect);
 				}
-				catch (NoSuchElementException e) {
-					// ignore
-				}
+			}
+			catch (NoSuchElementException e) {
+				// ignore
 			}
 		});
 	}
@@ -230,8 +229,8 @@ class EnumEditorPanel extends JPanel {
 	void deleteSelectedEntries() {
 		EnumDataType enuum = getEnum();
 		int[] rows = getSelectedRows();
-		for (int i = 0; i < rows.length; i++) {
-			String name = tableModel.getNameAt(rows[i]);
+		for (int row : rows) {
+			String name = tableModel.getNameAt(row);
 			enuum.remove(name);
 		}
 		tableModel.setEnum(enuum, true);
@@ -260,15 +259,12 @@ class EnumEditorPanel extends JPanel {
 				"All possible Enum values have already been used");
 			return;
 		}
-		SwingUtilities.invokeLater(new Runnable() {
-			@Override
-			public void run() {
-				table.setRowSelectionInterval(newRow, newRow);
-				table.editCellAt(newRow, EnumTableModel.NAME_COL);
-				Rectangle r = table.getCellRect(newRow, 0, true);
-				table.scrollRectToVisible(r);
-				provider.stateChanged(null);
-			}
+		SwingUtilities.invokeLater(() -> {
+			table.setRowSelectionInterval(newRow, newRow);
+			table.editCellAt(newRow, EnumTableModel.NAME_COL);
+			Rectangle r = table.getCellRect(newRow, 0, true);
+			table.scrollRectToVisible(r);
+			provider.stateChanged(null);
 		});
 	}
 
@@ -381,7 +377,7 @@ class EnumEditorPanel extends JPanel {
 		JPanel panel = new JPanel();
 		panel.setLayout(new BoxLayout(panel, BoxLayout.X_AXIS));
 
-		JLabel label = new JLabel("Name:", SwingConstants.RIGHT);
+		JLabel label = new GLabel("Name:", SwingConstants.RIGHT);
 		label.setPreferredSize(new Dimension(descLabel.getPreferredSize()));
 		panel.add(label);
 		panel.add(Box.createHorizontalStrut(2));
@@ -397,7 +393,7 @@ class EnumEditorPanel extends JPanel {
 		JPanel panel = new JPanel();
 		panel.setLayout(new BoxLayout(panel, BoxLayout.X_AXIS));
 
-		descLabel = new JLabel("Description:", SwingConstants.RIGHT);
+		descLabel = new GDLabel("Description:", SwingConstants.RIGHT);
 
 		panel.add(descLabel);
 		panel.add(Box.createHorizontalStrut(2));
@@ -416,27 +412,24 @@ class EnumEditorPanel extends JPanel {
 
 		sizeComboBox = new GhidraComboBox(new Integer[] { 1, 2, 4, 8 });
 		sizeComboBox.setName("Size");
-		sizeComboBox.addItemListener(new ItemListener() {
-			@Override
-			public void itemStateChanged(ItemEvent e) {
-				Integer length = (Integer) sizeComboBox.getSelectedItem();
-				if (!validateNewLength(length)) {
-					return;
-				}
-
-				setStatusMessage("");
-				tableModel.setLength(length);
-				provider.stateChanged(null);
+		sizeComboBox.addItemListener(e -> {
+			Integer length = (Integer) sizeComboBox.getSelectedItem();
+			if (!validateNewLength(length)) {
+				return;
 			}
+
+			setStatusMessage("");
+			tableModel.setLength(length);
+			provider.stateChanged(null);
 		});
 
-		JLabel label = new JLabel("Category:", SwingConstants.RIGHT);
+		JLabel label = new GLabel("Category:", SwingConstants.RIGHT);
 		label.setPreferredSize(new Dimension(descLabel.getPreferredSize()));
 		panel.add(label);
 		panel.add(Box.createHorizontalStrut(2));
 		panel.add(categoryField);
 		panel.add(Box.createHorizontalStrut(20));
-		panel.add(new JLabel("Size:"));
+		panel.add(new GLabel("Size:"));
 		panel.add(Box.createHorizontalStrut(5));
 		panel.add(sizeComboBox);
 
@@ -463,13 +456,10 @@ class EnumEditorPanel extends JPanel {
 	}
 
 	private void vetoSizeChange(final int newLength, final int currentLength, final long badValue) {
-		SwingUtilities.invokeLater(new Runnable() {
-			@Override
-			public void run() {
-				setStatusMessage("Enum size of " + newLength + " cannot contain the value " + "0x" +
-					Long.toHexString(badValue));
-				sizeComboBox.setSelectedItem(new Integer(currentLength));
-			}
+		SwingUtilities.invokeLater(() -> {
+			setStatusMessage("Enum size of " + newLength + " cannot contain the value " + "0x" +
+				Long.toHexString(badValue));
+			sizeComboBox.setSelectedItem(new Integer(currentLength));
 		});
 	}
 
@@ -493,12 +483,9 @@ class EnumEditorPanel extends JPanel {
 	}
 
 	private void focus(final JTextField field) {
-		SwingUtilities.invokeLater(new Runnable() {
-			@Override
-			public void run() {
-				field.requestFocusInWindow();
-				field.selectAll();
-			}
+		SwingUtilities.invokeLater(() -> {
+			field.requestFocusInWindow();
+			field.selectAll();
 		});
 	}
 
@@ -508,7 +495,8 @@ class EnumEditorPanel extends JPanel {
 
 	private class EnumTable extends GhidraTable {
 		EnumTable(TableModel model) {
-			super(model, true);
+			super(model);
+			setAutoEditEnabled(true);
 		}
 	}
 
@@ -532,12 +520,7 @@ class EnumEditorPanel extends JPanel {
 		public EnumCellEditor(JTextField textField) {
 			super(textField);
 			textField.addKeyListener(editingKeyListener);
-			textField.addActionListener(new ActionListener() {
-				@Override
-				public void actionPerformed(ActionEvent e) {
-					table.editingStopped(null);
-				}
-			});
+			textField.addActionListener(e -> table.editingStopped(null));
 		}
 
 		@Override

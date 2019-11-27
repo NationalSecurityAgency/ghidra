@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +15,18 @@
  */
 package docking;
 
+import docking.action.DockingActionIf;
+
+/**
+ * A listener to be notified when the tool's context changes.   Normally context is used to 
+ * manage {@link DockingActionIf} enablement directly by the system.  This class allows 
+ * clients to listen to context change as well.
+ */
 public interface DockingContextListener {
-	void contextChanged(ActionContext context);
+
+	/**
+	 * Called when the context changes
+	 * @param context the context
+	 */
+	public void contextChanged(ActionContext context);
 }

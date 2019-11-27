@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +15,11 @@
  */
 package ghidra.program.database.symbol;
 
+import java.io.IOException;
+import java.util.HashSet;
+import java.util.Set;
+
+import db.*;
 import ghidra.program.database.map.*;
 import ghidra.program.database.util.DatabaseTableUtils;
 import ghidra.program.database.util.RecordFilter;
@@ -24,12 +28,6 @@ import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.symbol.*;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
-
-import java.io.IOException;
-import java.util.HashSet;
-import java.util.Set;
-
-import db.*;
 
 /**
  * SymbolDatabaseAdapter for version 2
@@ -183,13 +181,12 @@ class SymbolDatabaseAdapterV2 extends SymbolDatabaseAdapter {
 		}
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.program.database.symbol.SymbolDatabaseAdapter#createSymbol(java.lang.String, ghidra.program.model.address.Address, long, ghidra.program.model.symbol.SymbolType, long, int, int)
-	 */
 	@Override
 	Record createSymbol(String name, Address address, long namespaceID, SymbolType symbolType,
 			long data1, int data2, String data3, SourceType source) throws IOException {
 		long nextID = symbolTable.getKey();
+
+		// avoiding key 0, because we use the negative of the address offset as keys for dynamic symbols
 		if (nextID == 0) {
 			nextID++;
 		}

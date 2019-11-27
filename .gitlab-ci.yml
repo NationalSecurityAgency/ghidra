@@ -1,0 +1,15 @@
+stages:
+  - test
+
+test-parallel:
+  stage: test
+  script:
+    - echo $REPO_TOKEN
+    - "curl -X POST -F token=$REPO_TOKEN -F ref=$CI_COMMIT_REF_NAME $REPO_URL"
+  tags:
+    - docker
+    - ghidratest 
+  image: ghidra/ubuntu
+  only:
+    - master
+    - web

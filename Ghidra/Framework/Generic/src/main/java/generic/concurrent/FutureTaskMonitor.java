@@ -18,9 +18,10 @@ package generic.concurrent;
 import java.util.concurrent.Callable;
 import java.util.concurrent.FutureTask;
 
-import ghidra.util.Issue;
+import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
-import ghidra.util.task.*;
+import ghidra.util.task.CancelledListener;
+import ghidra.util.task.TaskMonitor;
 
 /**
  * This is the FutureTask that will be used to call the {@link QCallback} to work on
@@ -40,15 +41,20 @@ import ghidra.util.task.*;
  * On ConcurrentQs that only allow one task to run at a time, when a task is cancelled,
  * the next task can begin.  Most likely, the thread that was running the cancelled
  * task won't be free, and a new thread will be used to start running the next task.
+ * 
+ * @param <I> the input type 
+ * @param <R> the output type
  */
 class FutureTaskMonitor<I, R> extends FutureTask<R> implements TaskMonitor {
 
 	private final ConcurrentQ<I, R> queue;
 	private final I item;
 	private final long id;
+	private volatile String lastMessage;
 	private volatile long currentProgress;
 	private volatile long maxProgress;
 	private volatile CancelledListener cancelledListener;
+	private volatile boolean isIndeterminate;
 
 	FutureTaskMonitor(ConcurrentQ<I, R> queue, Callable<R> callable, I item, long id) {
 		super(callable);
@@ -104,6 +110,11 @@ class FutureTaskMonitor<I, R> extends FutureTask<R> implements TaskMonitor {
 	}
 
 	@Override
+	public String getMessage() {
+		return lastMessage;
+	}
+
+	@Override
 	public void initialize(long max) {
 		currentProgress = 0;
 		maxProgress = max;
@@ -123,17 +134,18 @@ class FutureTaskMonitor<I, R> extends FutureTask<R> implements TaskMonitor {
 
 	@Override
 	public void setIndeterminate(boolean indeterminate) {
+		this.isIndeterminate = indeterminate;
 		queue.progressModeChanged(id, item, indeterminate);
+	}
+
+	@Override
+	public boolean isIndeterminate() {
+		return isIndeterminate;
 	}
 
 	@Override
 	public long getProgress() {
 		return currentProgress;
-	}
-
-	@Override
-	public void reportIssue(Issue issue) {
-		// TODO
 	}
 
 	@Override
@@ -189,16 +201,6 @@ class FutureTaskMonitor<I, R> extends FutureTask<R> implements TaskMonitor {
 			cancelledListener =
 				((ChainedCancelledListener) cancelledListener).removeListener(listener);
 		}
-	}
-
-	@Override
-	public void addIssueListener(IssueListener listener) {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public void removeIssueListener(IssueListener listener) {
-		throw new UnsupportedOperationException();
 	}
 
 	private static class ChainedCancelledListener implements CancelledListener {

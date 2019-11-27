@@ -101,12 +101,6 @@ class ViewPanel extends JPanel implements ChangeListener {
 		}
 	}
 
-	/**
-	 * Remove the view.
-	 * 
-	 * @param viewName name of view to remove
-	 * @return true if the view was removed
-	 */
 	boolean removeView(ViewProviderService vps) {
 		String viewName = vps.getViewName();
 		tabbedPane.removeChangeListener(this);
@@ -242,9 +236,6 @@ class ViewPanel extends JPanel implements ChangeListener {
 		return null;
 	}
 
-	/**
-	 * Get the number of views in the tabbed pane.
-	 */
 	int getNumberOfViews() {
 		return map.size();
 	}
@@ -296,7 +287,8 @@ class ViewPanel extends JPanel implements ChangeListener {
 	 */
 	private void createActions() {
 
-		closeAction = new DockingAction("Close Tree View", provider.getName()) {
+		String owner = provider.getOwner();
+		closeAction = new DockingAction("Close Tree View", owner) {
 			@Override
 			public void actionPerformed(docking.ActionContext context) {
 				closeView(getCurrentViewProvider(), true);
@@ -311,7 +303,7 @@ class ViewPanel extends JPanel implements ChangeListener {
 
 		closeAction.setPopupMenuData(new MenuData(new String[] { "Close" }, null, "TreeView"));
 
-		deleteAction = new DockingAction("Delete Tree View", provider.getName()) {
+		deleteAction = new DockingAction("Delete Tree View", owner) {
 			@Override
 			public void actionPerformed(docking.ActionContext context) {
 				deleteView();
@@ -326,7 +318,7 @@ class ViewPanel extends JPanel implements ChangeListener {
 
 		deleteAction.setPopupMenuData(new MenuData(new String[] { "Delete" }, null, "TreeView"));
 
-		renameAction = new DockingAction("Rename Tree View", provider.getName()) {
+		renameAction = new DockingAction("Rename Tree View", owner) {
 			@Override
 			public void actionPerformed(docking.ActionContext context) {
 				renameView();

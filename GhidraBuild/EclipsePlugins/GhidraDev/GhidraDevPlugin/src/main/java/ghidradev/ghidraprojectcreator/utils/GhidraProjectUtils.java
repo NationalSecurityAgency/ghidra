@@ -26,6 +26,7 @@ import org.eclipse.core.runtime.*;
 import org.eclipse.debug.core.ILaunchConfiguration;
 import org.eclipse.jdt.core.*;
 import org.eclipse.jdt.internal.launching.StandardVMType;
+import org.eclipse.jdt.junit.JUnitCore;
 import org.eclipse.jdt.launching.*;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.IStructuredSelection;
@@ -298,6 +299,10 @@ public class GhidraProjectUtils {
 		IFolder binFolder = project.getFolder("bin");
 		javaProject.setOutputLocation(binFolder.getFullPath(), monitor);
 
+		// Add Eclipse's built-in JUnit to classpath
+		addToClasspath(javaProject, JavaCore.newContainerEntry(JUnitCore.JUNIT4_CONTAINER_PATH),
+			monitor);
+
 		// Link in Ghidra to the project
 		linkGhidraToProject(javaProject, ghidraLayout, javaConfig, jythonInterpreterName, monitor);
 
@@ -352,7 +357,7 @@ public class GhidraProjectUtils {
 		IFolder ghidraFolder =
 			javaProject.getProject().getFolder(GhidraProjectUtils.GHIDRA_FOLDER_NAME);
 		IPath oldGhidraInstallPath = ghidraFolder.exists()
-				? new Path(ghidraFolder.getRawLocation().toFile().getAbsolutePath())
+				? new Path(ghidraFolder.getLocation().toFile().getAbsolutePath())
 				: null;
 
 		// Loop through the project's existing classpath to decide what to keep (things that aren't
@@ -369,6 +374,11 @@ public class GhidraProjectUtils {
 				if (oldGhidraInstallPath == null) {
 					vmEntryCandidate = entry;
 				}
+			}
+			else if (entry.getEntryKind() == IClasspathEntry.CPE_CONTAINER &&
+				entry.getPath().toString().startsWith(JUnitCore.JUNIT_CONTAINER_ID)) {
+				// Keep existing JUnit
+				classpathEntriesToKeep.add(entry);
 			}
 			else if (entry.getEntryKind() == IClasspathEntry.CPE_PROJECT) {
 				// Keep all project dependencies

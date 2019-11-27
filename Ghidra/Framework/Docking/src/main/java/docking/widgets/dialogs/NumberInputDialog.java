@@ -23,6 +23,7 @@ import javax.swing.*;
 
 import docking.DialogComponentProvider;
 import docking.DockingWindowManager;
+import docking.widgets.label.GDLabel;
 import docking.widgets.textfield.IntegerTextField;
 
 /**
@@ -268,7 +269,7 @@ public class NumberInputDialog extends DialogComponentProvider {
 		JPanel panel = new JPanel(new BorderLayout());
 		panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-		label = new JLabel(prompt);
+		label = new GDLabel(prompt);
 		numberInputField = new IntegerTextField(12);
 		numberInputField.addChangeListener(e -> updateOKButtonEnablement());
 

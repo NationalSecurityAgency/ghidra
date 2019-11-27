@@ -1,13 +1,10 @@
+apply from: "$rootProject.projectDir/gradle/distributableGhidraModule.gradle"
+apply from: "$rootProject.projectDir/gradle/javaProject.gradle"
+apply from: "$rootProject.projectDir/gradle/processorProject.gradle"
 apply plugin: 'eclipse'
-eclipse.project.name = 'Processors 8051'
 
-/*********************************************************************************
- * Imports
- *********************************************************************************/
-apply from: "$rootProject.projectDir/gradleScripts/processorUtils.gradle"
-apply from: "$rootProject.projectDir/gradleScripts/ghidraScripts.gradle"
+eclipse.project.name = 'Processors 8051'
 
 dependencies {
 	compile project(':Base')
 }
-

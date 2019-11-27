@@ -173,7 +173,8 @@ public class XRefFieldFactory extends FieldFactory {
 	private void setupNamespaceOptions(Options fieldOptions) {
 		// we need to install a custom editor that allows us to edit a group of related options
 		fieldOptions.registerOption(NAMESPACE_OPTIONS, OptionType.CUSTOM_TYPE,
-			new NamespaceWrappedOption(), null, null, namespaceOptionsEditor);
+			new NamespaceWrappedOption(), null, "Adjusts the XREFs Field namespace display",
+			namespaceOptionsEditor);
 		CustomOption customOption = fieldOptions.getCustomOption(NAMESPACE_OPTIONS, null);
 		fieldOptions.getOptions(NAMESPACE_OPTIONS).setOptionsHelpLocation(
 			new HelpLocation("CodeBrowserPlugin", "XREFs_Field"));
@@ -529,6 +530,7 @@ public class XRefFieldFactory extends FieldFactory {
 	 * Get an address location for this object.
 	 *
 	 * @param obj object to get location from
+	 * @return the address
 	 */
 	protected Address getXRefLocation(Object obj) {
 		if (obj == null || !(obj instanceof CodeUnit)) {
@@ -556,7 +558,7 @@ public class XRefFieldFactory extends FieldFactory {
 
 	@Override
 	public FieldFactory newInstance(FieldFormatModel formatModel, HighlightProvider provider,
-			ToolOptions displayOptions, ToolOptions fieldOptions) {
-		return new XRefFieldFactory(formatModel, provider, displayOptions, fieldOptions);
+			ToolOptions toolOptions, ToolOptions fieldOptions) {
+		return new XRefFieldFactory(formatModel, provider, toolOptions, fieldOptions);
 	}
 }

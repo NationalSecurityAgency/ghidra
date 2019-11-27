@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,62 +52,68 @@ public class RowColumnLayout implements LayoutManager {
 		this.maxSize = maxSize;
 		this.fillOrder = LEFT_TO_RIGHT;
 	}
+
 	/**
 	 * @see LayoutManager#addLayoutComponent(String, Component)
 	 */
+	@Override
 	public void addLayoutComponent(String name, Component comp) {
 	}
 
 	/**
 	 * @see LayoutManager#removeLayoutComponent(Component)
 	 */
+	@Override
 	public void removeLayoutComponent(Component comp) {
 	}
 
 	/**
 	 * @see LayoutManager#preferredLayoutSize(Container)
 	 */
+	@Override
 	public Dimension preferredLayoutSize(Container parent) {
 		Insets insets = parent.getInsets();
 		int n = parent.getComponentCount();
 		computeComponentSize(parent);
-				
+
 		int numRows = 1;
 		int numCols = 1;
-		
+
 		if (orientation == ROW) {
-			int width = Math.max(maxSize-insets.left-insets.right, compWidth);
-			numCols = (width+hgap)/(compWidth + hgap);
-			numRows = (n+numCols-1) / numCols;
-			numCols = (n+numRows-1) / numRows;
+			int width = Math.max(maxSize - insets.left - insets.right, compWidth);
+			numCols = (width + hgap) / (compWidth + hgap);
+			numRows = (n + numCols - 1) / numCols;
+			numCols = (n + numRows - 1) / numRows;
 		}
-		else {					
-			int height = Math.max(maxSize-insets.top-insets.left, compHeight);
-			numRows = (height+vgap)/(compHeight + vgap);
-			numCols = (n+numRows-1) / numRows;
-			numRows = (n+numCols-1) / numCols;
+		else {
+			int height = Math.max(maxSize - insets.top - insets.bottom, compHeight);
+			numRows = (height + vgap) / (compHeight + vgap);
+			numCols = (n + numRows - 1) / numRows;
+			numRows = (n + numCols - 1) / numCols;
 		}
-				
-		int height = numRows*compHeight + (numRows-1)*vgap;
-		int width = numCols*compWidth + (numCols-1)*hgap;
-		Dimension d = new Dimension(width+insets.left+insets.right+2,
-							  height+insets.top + insets.bottom+2);
+
+		int height = numRows * compHeight + (numRows - 1) * vgap;
+		int width = numCols * compWidth + (numCols - 1) * hgap;
+		Dimension d = new Dimension(width + insets.left + insets.right + 2,
+			height + insets.top + insets.bottom + 2);
 
 		return d;
-	} 
+	}
 
 	/**
 	 * @see LayoutManager#minimumLayoutSize(Container)
 	 */
+	@Override
 	public Dimension minimumLayoutSize(Container parent) {
 		Insets insets = parent.getInsets();
 		return new Dimension(compWidth + insets.left + insets.right,
-							 compHeight+insets.top+insets.bottom);
+			compHeight + insets.top + insets.bottom);
 	}
 
 	/**
 	 * @see LayoutManager#layoutContainer(Container)
 	 */
+	@Override
 	public void layoutContainer(Container parent) {
 
 		computeComponentSize(parent);
@@ -117,83 +122,61 @@ public class RowColumnLayout implements LayoutManager {
 		Insets insets = parent.getInsets();
 		int parentWidth = d.width - insets.left - insets.right;
 		int parentHeight = d.height - insets.top - insets.bottom;
-		
+
 		int numRows = 1;
 		int numCols = 1;
 		if (orientation == ROW) {
-			numCols = (parentWidth +hgap)/(compWidth+hgap);
-			if (numCols < 1) numCols = 1;
-			numRows = (n + numCols -1) / numCols;
-			numCols = (n + numRows -1) / numRows;
+			numCols = (parentWidth + hgap) / (compWidth + hgap);
+			if (numCols < 1) {
+				numCols = 1;
+			}
+			numRows = (n + numCols - 1) / numCols;
+			numCols = (n + numRows - 1) / numRows;
 		}
 		else {
-			numRows = (parentHeight +vgap)/(compHeight+vgap);
-			if (numRows < 1) numRows = 1;
-			numCols = (n + numRows -1) / numRows;
-			numRows = (n + numCols -1) / numCols;
+			numRows = (parentHeight + vgap) / (compHeight + vgap);
+			if (numRows < 1) {
+				numRows = 1;
+			}
+			numCols = (n + numRows - 1) / numRows;
+			numRows = (n + numCols - 1) / numCols;
 		}
-
 
 //		int left = insets.left + (parentWidth - numCols*compWidth- (numCols-1)*hgap)/2;
 //		int top = insets.top + (parentHeight - numRows*compHeight - (numRows-1)*vgap)/2;
 		int left = insets.left;
 		int top = insets.top;
-		
-		for(int i = 0;i<numRows;i++) {
-			for(int j = 0;j<numCols;j++) {
-				int x = left + j*(compWidth+hgap);
-				int y = top + i*(compHeight+vgap);
-				int k = fillOrder == LEFT_TO_RIGHT ? i*numCols+j : j*numRows+i;
+
+		for (int i = 0; i < numRows; i++) {
+			for (int j = 0; j < numCols; j++) {
+				int x = left + j * (compWidth + hgap);
+				int y = top + i * (compHeight + vgap);
+				int k = fillOrder == LEFT_TO_RIGHT ? i * numCols + j : j * numRows + i;
 				if (k < n) {
-					Component c= parent.getComponent(k);
+					Component c = parent.getComponent(k);
 					c.setBounds(x, y, compWidth, compHeight);
 				}
 			}
 		}
 	}
-//	/**
-//	 * Test main
-//	 * @param args execution arguments
-//	 */
-//	public static void main(String[] args) {
-//		try {
-//			UIManager.setLookAndFeel(
-//									UIManager.getSystemLookAndFeelClassName());
-//		}
-//		catch (Exception exc) {
-//			System.out.println("Error loading L&F: " + exc);
-//		}
-//	
-//		JFrame frame = new JFrame("Test");
-//		JPanel panel = new JPanel(new RowColumnLayout(0,0,2));
-//		panel.add(new JLabel("One ",JLabel.LEFT));
-//		panel.add(new JLabel("Two ",JLabel.LEFT));
-//		panel.add(new JLabel("Three ",JLabel.LEFT));
-//		panel.add(new JLabel("Four ",JLabel.LEFT));
-//		panel.add(new JLabel("This is a test of the ",JLabel.LEFT));
-//
-//		panel.setBorder(BorderFactory.createEmptyBorder(10,10,10,10));
-//		frame.getContentPane().add(panel);
-//		frame.pack();
-//		frame.show();
-//	}		
+
 	private void computeComponentSize(Container parent) {
 		int n = parent.getComponentCount();
 		compWidth = 0;
 		compHeight = 0;
-			
-	
-		for(int i=0;i<n;i++) {
+
+		for (int i = 0; i < n; i++) {
 			Component c = parent.getComponent(i);
 			Dimension d = c.getPreferredSize();
 			compWidth = Math.max(compWidth, d.width);
 			compHeight = Math.max(compHeight, d.height);
-		}				
+		}
 	}
+
 	/**
 	 * @param maxSize
 	 */
 	public void setMaxSize(int maxSize) {
-		this.maxSize = maxSize;	
+		this.maxSize = maxSize;
 	}
 }

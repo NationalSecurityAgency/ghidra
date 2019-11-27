@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +15,12 @@
  */
 package ghidra.feature.vt.gui.wizard;
 
+import java.awt.Dimension;
+
+import javax.swing.*;
+
+import docking.DialogComponentProvider;
+import docking.widgets.label.GDLabel;
 import ghidra.app.util.AddressInput;
 import ghidra.app.util.HelpTopics;
 import ghidra.program.model.address.Address;
@@ -23,12 +28,6 @@ import ghidra.program.model.address.AddressFactory;
 import ghidra.program.model.listing.Program;
 import ghidra.util.HelpLocation;
 import ghidra.util.layout.PairLayout;
-
-import java.awt.Dimension;
-
-import javax.swing.*;
-
-import docking.DialogComponentProvider;
 
 public class AddRemoveAddressRangeDialog extends DialogComponentProvider {
 
@@ -65,7 +64,7 @@ public class AddRemoveAddressRangeDialog extends DialogComponentProvider {
 		addressRangePanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 0, 0));
 		addressRangePanel.setLayout(new PairLayout(5, 5));
 
-		minLabel = new JLabel("Minimum:");
+		minLabel = new GDLabel("Minimum:");
 		minLabel.setToolTipText("Enter minimum address to add or remove");
 		addressRangePanel.add(minLabel);
 
@@ -76,7 +75,7 @@ public class AddRemoveAddressRangeDialog extends DialogComponentProvider {
 		minAddressField.setPreferredSize(minPreferredSize);
 		addressRangePanel.add(minAddressField);
 
-		maxLabel = new JLabel("Maximum:");
+		maxLabel = new GDLabel("Maximum:");
 		maxLabel.setToolTipText("Enter maximum address to add or remove");
 		addressRangePanel.add(maxLabel);
 

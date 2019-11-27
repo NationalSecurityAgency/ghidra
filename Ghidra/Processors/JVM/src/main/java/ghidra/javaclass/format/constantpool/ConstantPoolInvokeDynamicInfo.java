@@ -15,19 +15,17 @@
  */
 package ghidra.javaclass.format.constantpool;
 
-import ghidra.app.util.bin.BinaryReader;
-import ghidra.program.model.data.DataType;
-import ghidra.program.model.data.Structure;
-import ghidra.program.model.data.StructureDataType;
-import ghidra.util.exception.DuplicateNameException;
-
 import java.io.IOException;
+
+import ghidra.app.util.bin.BinaryReader;
+import ghidra.program.model.data.*;
+import ghidra.util.exception.DuplicateNameException;
 
 /**
  * NOTE: THE FOLLOWING TEXT EXTRACTED FROM JVMS7.PDF
  * <p>
  * The CONSTANT_InvokeDynamic_info structure is used by an invokedynamic
- * instruction (?invokedynamic) to specify a bootstrap method, the dynamic
+ * instruction to specify a bootstrap method, the dynamic
  * invocation name, the argument and return types of the call, and optionally, a
  * sequence of additional constants called static arguments to the bootstrap method.
  * <pre>
@@ -43,8 +41,8 @@ public class ConstantPoolInvokeDynamicInfo extends AbstractConstantPoolInfoJava 
 	private short bootstrapMethodAttrIndex;
 	private short nameAndTypeIndex;
 
-	public ConstantPoolInvokeDynamicInfo( BinaryReader reader ) throws IOException {
-		super( reader );
+	public ConstantPoolInvokeDynamicInfo(BinaryReader reader) throws IOException {
+		super(reader);
 		bootstrapMethodAttrIndex = reader.readNextShort();
 		nameAndTypeIndex = reader.readNextShort();
 	}
@@ -55,8 +53,8 @@ public class ConstantPoolInvokeDynamicInfo extends AbstractConstantPoolInfoJava 
 	 * this class file.
 	 * @return a valid index into the bootstrap_methods array
 	 */
-	public short getBootstrapMethodAttrIndex() {
-		return bootstrapMethodAttrIndex;
+	public int getBootstrapMethodAttrIndex() {
+		return bootstrapMethodAttrIndex & 0xffff;
 	}
 
 	/**
@@ -66,17 +64,17 @@ public class ConstantPoolInvokeDynamicInfo extends AbstractConstantPoolInfoJava 
 	 * and method descriptor.
 	 * @return a valid index into the constant_pool table
 	 */
-	public short getNameAndTypeIndex() {
-		return nameAndTypeIndex;
+	public int getNameAndTypeIndex() {
+		return nameAndTypeIndex & 0xffff;
 	}
 
 	@Override
 	public DataType toDataType() throws DuplicateNameException, IOException {
 		String name = "CONSTANT_InvokeDynamic_info";
-		Structure structure = new StructureDataType( name, 0 );
-		structure.add( BYTE, "tag", null );
-		structure.add( WORD, "bootstrap_method_attr_index", null );
-		structure.add( WORD, "name_and_type_index", null );
+		Structure structure = new StructureDataType(name, 0);
+		structure.add(BYTE, "tag", null);
+		structure.add(WORD, "bootstrap_method_attr_index", null);
+		structure.add(WORD, "name_and_type_index", null);
 		return structure;
 	}
 

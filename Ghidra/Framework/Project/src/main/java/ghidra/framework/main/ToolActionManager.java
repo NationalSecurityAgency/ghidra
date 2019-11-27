@@ -20,17 +20,15 @@ import java.awt.event.KeyEvent;
 import java.io.*;
 import java.util.*;
 
-import javax.swing.JMenuItem;
-
 import org.jdom.Element;
 import org.jdom.input.SAXBuilder;
 
 import docking.ActionContext;
 import docking.action.*;
+import docking.tool.ToolConstants;
 import docking.widgets.filechooser.GhidraFileChooser;
 import ghidra.framework.model.*;
 import ghidra.framework.plugintool.PluginTool;
-import ghidra.framework.plugintool.util.ToolConstants;
 import ghidra.framework.preferences.Preferences;
 import ghidra.framework.project.tool.GhidraToolTemplate;
 import ghidra.util.HelpLocation;
@@ -50,7 +48,7 @@ class ToolActionManager implements ToolChestChangeListener {
 	private static final String MENU_ITEM_RUN_TOOL = "&Run Tool"; // Group: BTools	
 	private static final String MENU_ITEM_DELETE_TOOL = "Delete Tool"; // Group: CTools	
 	private static final String MENU_ITEM_IMPORT_TOOL = "&Import Tool..."; // Group: DTools
-	private static final String MENU_ITEM_IMPORT_DEFTOOLS = "Import &Default Tools...";
+	private static final String MENU_ITEM_IMPORT_DEFAULT_TOOLS = "Import &Default Tools...";
 	private static final String MENU_ITEM_EXPORT_TOOL = "&Export Tool";
 	private static final String MENU_ITEM_CONNECT_TOOLS = "Connect &Tools..."; // Group: ETools     
 	private static final String MENU_ITEM_SET_DEFAULT_TOOL = "&Set As Default"; // Group: FTools 
@@ -82,9 +80,6 @@ class ToolActionManager implements ToolChestChangeListener {
 		createActions();
 	}
 
-	/**
-	 * Enable actions according to enabled param.
-	 */
 	void enableActions(boolean enabled) {
 		createToolAction.setEnabled(enabled);
 		enableConnectTools();
@@ -97,9 +92,6 @@ class ToolActionManager implements ToolChestChangeListener {
 		setToolAssociationsAction.setEnabled(enabled);
 	}
 
-	/**
-	 * Update the tool connection dialog.
-	 */
 	void updateConnectionDialog() {
 		if (toolConnectionDialog != null) {
 			toolConnectionDialog.updateDisplay();
@@ -107,9 +99,6 @@ class ToolActionManager implements ToolChestChangeListener {
 		enableConnectTools();
 	}
 
-	/**
-	 * Set the active project; update tool menus.
-	 */
 	void setActiveProject(Project activeProject) {
 		if (toolConnectionDialog != null) {
 			if (activeProject != null) {
@@ -135,7 +124,8 @@ class ToolActionManager implements ToolChestChangeListener {
 		createToolAction.setMenuBarData(new MenuData(
 			new String[] { ToolConstants.MENU_TOOLS, MENU_ITEM_CREATE_TOOL }, null, "ATools"));
 		createToolAction.setEnabled(false);
-		createToolAction.setHelpLocation(new HelpLocation("Tool", "Create_Tool"));
+		createToolAction.setHelpLocation(
+			new HelpLocation(ToolConstants.TOOL_HELP_TOPIC, "Create_Tool"));
 
 		tool.addAction(createToolAction);
 
@@ -147,7 +137,8 @@ class ToolActionManager implements ToolChestChangeListener {
 		};
 		importAction.setMenuBarData(new MenuData(
 			new String[] { ToolConstants.MENU_TOOLS, MENU_ITEM_IMPORT_TOOL }, null, "DTools"));
-		importAction.setHelpLocation(new HelpLocation("Tool", "Import Tool"));
+		importAction.setHelpLocation(
+			new HelpLocation(ToolConstants.TOOL_HELP_TOPIC, "Import Tool"));
 		importAction.setEnabled(false);
 
 		tool.addAction(importAction);
@@ -158,9 +149,11 @@ class ToolActionManager implements ToolChestChangeListener {
 				addDefaultTools();
 			}
 		};
-		importDefaultToolsAction.setMenuBarData(new MenuData(
-			new String[] { ToolConstants.MENU_TOOLS, MENU_ITEM_IMPORT_DEFTOOLS }, null, "DTools"));
-		importDefaultToolsAction.setHelpLocation(new HelpLocation("Tool", "Import Ghidra Tools"));
+		importDefaultToolsAction.setMenuBarData(
+			new MenuData(new String[] { ToolConstants.MENU_TOOLS, MENU_ITEM_IMPORT_DEFAULT_TOOLS },
+				null, "DTools"));
+		importDefaultToolsAction.setHelpLocation(
+			new HelpLocation(ToolConstants.TOOL_HELP_TOPIC, "Import Ghidra Tools"));
 		importDefaultToolsAction.setEnabled(false);
 		tool.addAction(importDefaultToolsAction);
 
@@ -187,7 +180,7 @@ class ToolActionManager implements ToolChestChangeListener {
 		tool.addAction(setToolAssociationsAction);
 
 		setToolAssociationsAction.setHelpLocation(
-			new HelpLocation("Tool", "Set Tool Associations"));
+			new HelpLocation(ToolConstants.TOOL_HELP_TOPIC, "Set Tool Associations"));
 
 		tool.setMenuGroup(new String[] { ToolConstants.MENU_TOOLS, MENU_ITEM_RUN_TOOL }, "BTools");
 		tool.setMenuGroup(new String[] { ToolConstants.MENU_TOOLS, MENU_ITEM_DELETE_TOOL },
@@ -224,12 +217,6 @@ class ToolActionManager implements ToolChestChangeListener {
 		}
 	}
 
-	/**
-	 * Add default tool to the project tool chest.
-	 * 
-	 * @param filename tool template filename
-	 * @param toolName tool name
-	 */
 	private void addDefaultTool(String filename) {
 		try {
 			InputStream is = ResourceManager.getResourceAsStream(filename);
@@ -240,12 +227,6 @@ class ToolActionManager implements ToolChestChangeListener {
 		}
 	}
 
-	/**
-	 * Enable/disable actions in the given map.
-	 * 
-	 * @param map
-	 * @param enabled
-	 */
 	private void enableActions(Map<String, DockingAction> map, boolean enabled) {
 		Iterator<String> iter = map.keySet().iterator();
 		while (iter.hasNext()) {
@@ -255,11 +236,6 @@ class ToolActionManager implements ToolChestChangeListener {
 		}
 	}
 
-	/**
-	 * Rebuild the tool menus.
-	 * 
-	 * @param activeProject
-	 */
 	private void populateToolMenus(Project activeProject) {
 		removeActions(runToolActionMap);
 		removeActions(delToolActionMap);
@@ -282,9 +258,6 @@ class ToolActionManager implements ToolChestChangeListener {
 		}
 	}
 
-	/**
-	 * Remove actions in the given map.
-	 */
 	private void removeActions(Map<String, DockingAction> map) {
 		Iterator<String> iter = map.keySet().iterator();
 		while (iter.hasNext()) {
@@ -404,7 +377,7 @@ class ToolActionManager implements ToolChestChangeListener {
 		};
 		action.setMenuBarData(new MenuData(
 			new String[] { ToolConstants.MENU_TOOLS, MENU_ITEM_RUN_TOOL }, null, "BTools"));
-		action.setHelpLocation(new HelpLocation("Tool", "Run Tool"));
+		action.setHelpLocation(new HelpLocation(ToolConstants.TOOL_HELP_TOPIC, "Run Tool"));
 		action.setEnabled(false);
 
 		tool.addAction(action);
@@ -418,7 +391,7 @@ class ToolActionManager implements ToolChestChangeListener {
 		};
 		action.setMenuBarData(new MenuData(
 			new String[] { ToolConstants.MENU_TOOLS, MENU_ITEM_DELETE_TOOL }, null, "CTools"));
-		action.setHelpLocation(new HelpLocation("Tool", "Delete Tool"));
+		action.setHelpLocation(new HelpLocation(ToolConstants.TOOL_HELP_TOPIC, "Delete Tool"));
 		action.setEnabled(false);
 
 		tool.addAction(action);
@@ -432,7 +405,7 @@ class ToolActionManager implements ToolChestChangeListener {
 		};
 		action.setMenuBarData(new MenuData(
 			new String[] { ToolConstants.MENU_TOOLS, MENU_ITEM_EXPORT_TOOL }, null, "DTools"));
-		action.setHelpLocation(new HelpLocation("Tool", "Export Tool"));
+		action.setHelpLocation(new HelpLocation(ToolConstants.TOOL_HELP_TOPIC, "Export Tool"));
 		action.setEnabled(false);
 
 		exportToolActionMap.put(action.getName(), action);
@@ -511,7 +484,7 @@ class ToolActionManager implements ToolChestChangeListener {
 		ToolAction runAction = new ToolAction(toolName, "Run_Tool") {
 			@Override
 			public void actionPerformed(ActionContext context) {
-				String name = ((JMenuItem) context.getSourceObject()).getText();
+				String name = getName();
 				Workspace ws = plugin.getActiveWorkspace();
 				ToolChest toolChest = plugin.getActiveProject().getLocalToolChest();
 				ws.runTool(toolChest.getToolTemplate(name));
@@ -521,7 +494,7 @@ class ToolActionManager implements ToolChestChangeListener {
 		runAction.setMenuBarData(
 			new MenuData(new String[] { ToolConstants.MENU_TOOLS, MENU_ITEM_RUN_TOOL, toolName },
 				null, "BTools"));
-		runAction.setHelpLocation(new HelpLocation("Tool", "Run_Tool"));
+		runAction.setHelpLocation(new HelpLocation(ToolConstants.TOOL_HELP_TOPIC, "Run_Tool"));
 
 		runToolActionMap.put(toolName, runAction);
 		tool.addAction(runAction);
@@ -529,7 +502,7 @@ class ToolActionManager implements ToolChestChangeListener {
 		ToolAction deleteAction = new ToolAction(toolName, "Delete_Tool") {
 			@Override
 			public void actionPerformed(ActionContext context) {
-				String name = ((JMenuItem) context.getSourceObject()).getText();
+				String name = getName();
 				if (!plugin.confirmDelete(name + " from the project tool chest?")) {
 					return;
 				}
@@ -541,27 +514,29 @@ class ToolActionManager implements ToolChestChangeListener {
 		deleteAction.setMenuBarData(
 			new MenuData(new String[] { ToolConstants.MENU_TOOLS, MENU_ITEM_DELETE_TOOL, toolName },
 				null, "CTools"));
-		deleteAction.setHelpLocation(new HelpLocation("Tool", "Delete_Tool"));
+		deleteAction.setHelpLocation(
+			new HelpLocation(ToolConstants.TOOL_HELP_TOPIC, "Delete_Tool"));
 
 		delToolActionMap.put(toolName, deleteAction);
 		tool.addAction(deleteAction);
 
-		ToolAction exportAction = new ToolAction(toolName, "Export_Tool") {
+		ToolAction exportToolAction = new ToolAction(toolName, "Export_Tool") {
 			@Override
 			public void actionPerformed(ActionContext context) {
-				String name = ((JMenuItem) context.getSourceObject()).getText();
+				String name = getName();
 				ToolChest toolChest = plugin.getActiveProject().getLocalToolChest();
 				plugin.exportToolConfig(toolChest.getToolTemplate(name), "Tool Menu");
 			}
 		};
-		exportAction.setEnabled(true);
-		exportAction.setMenuBarData(
+		exportToolAction.setEnabled(true);
+		exportToolAction.setMenuBarData(
 			new MenuData(new String[] { ToolConstants.MENU_TOOLS, MENU_ITEM_EXPORT_TOOL, toolName },
 				null, "DTools"));
-		exportAction.setHelpLocation(new HelpLocation("Tool", "Export_Tool"));
+		exportToolAction.setHelpLocation(
+			new HelpLocation(ToolConstants.TOOL_HELP_TOPIC, "Export_Tool"));
 
-		exportToolActionMap.put(toolName, exportAction);
-		tool.addAction(exportAction);
+		exportToolActionMap.put(toolName, exportToolAction);
+		tool.addAction(exportToolAction);
 	}
 
 	/////////////////////////////////////////////////////////////////////

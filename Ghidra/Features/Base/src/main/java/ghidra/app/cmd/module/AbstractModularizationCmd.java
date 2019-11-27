@@ -83,7 +83,7 @@ public abstract class AbstractModularizationCmd extends BackgroundCommand {
 		}
 		catch (Exception e) {
 			Msg.error(this, "Unexpected exception modularizing the program tree", e);
-			setStatusMsg("Unexepected Exception (see console)");
+			setStatusMsg("Unexpected Exception (see console)");
 		}
 		return false;
 	}

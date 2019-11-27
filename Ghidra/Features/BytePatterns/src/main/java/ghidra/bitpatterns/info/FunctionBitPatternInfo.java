@@ -18,6 +18,8 @@ package ghidra.bitpatterns.info;
 import java.math.BigInteger;
 import java.util.*;
 
+import org.jdom.Element;
+
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.lang.Register;
@@ -26,14 +28,16 @@ import ghidra.program.model.mem.*;
 import ghidra.program.model.symbol.FlowType;
 import ghidra.program.model.symbol.RefType;
 import ghidra.util.Msg;
+import ghidra.util.xml.XmlUtilities;
 
 /**
  * This class represents information about small neighborhoods around the start and returns of a
  * single function
  */
 
-//@XmlRootElement
 public class FunctionBitPatternInfo {
+
+	static final String XML_ELEMENT_NAME = "FunctionBitPatternInfo";
 
 	private InstructionSequence firstInst;
 	private InstructionSequence preInst;
@@ -59,7 +63,7 @@ public class FunctionBitPatternInfo {
 	}
 
 	/**
-	 * No-arg constructor for use by JAXB when restoring from XML
+	 * No-arg constructor
 	 */
 	public FunctionBitPatternInfo() {
 		returnBytes = new ArrayList<String>();
@@ -492,6 +496,101 @@ public class FunctionBitPatternInfo {
 	 */
 	public void setContextRegisters(List<ContextRegisterInfo> contextRegisters) {
 		this.contextRegisters = contextRegisters;
+	}
+
+	/**
+	 * Converts a XML element into a FunctionBitPatternInfo object.
+	 * 
+	 * @param e xml {@link Element} to convert
+	 * @return new {@link FunctionBitPatternInfo} object, never null
+	 */
+	public static FunctionBitPatternInfo fromXml(Element e) {
+		String preBytes = e.getAttributeValue("preBytes");
+		String firstBytes = e.getAttributeValue("firstBytes");
+		String address = e.getAttributeValue("address");
+
+		List<String> returnBytes = new ArrayList<>();
+		Element returnBytesListEle = e.getChild("returnBytesList");
+		if (returnBytesListEle != null) {
+			for (Element rbEle : XmlUtilities.getChildren(returnBytesListEle, "returnBytes")) {
+				returnBytes.add(rbEle.getAttributeValue("value"));
+			}
+		}
+
+		InstructionSequence firstInst = InstructionSequence.fromXml(e.getChild("firstInst"));
+		InstructionSequence preInst = InstructionSequence.fromXml(e.getChild("preInst"));
+
+		List<InstructionSequence> returnInst = new ArrayList<>();
+		Element returnInstListEle = e.getChild("returnInstList");
+		if (returnInstListEle != null) {
+			for (Element isEle : XmlUtilities.getChildren(returnInstListEle,
+				InstructionSequence.XML_ELEMENT_NAME)) {
+				returnInst.add(InstructionSequence.fromXml(isEle));
+			}
+		}
+
+		List<ContextRegisterInfo> contextRegisters = new ArrayList<>();
+		Element contextRegistersListEle = e.getChild("contextRegistersList");
+		if ( contextRegistersListEle != null ) {
+			for (Element criElement : XmlUtilities.getChildren(contextRegistersListEle,
+				ContextRegisterInfo.XML_ELEMENT_NAME)) {
+				contextRegisters.add(ContextRegisterInfo.fromXml(criElement));
+			}
+		}
+		
+		FunctionBitPatternInfo result = new FunctionBitPatternInfo();
+		result.setPreBytes(preBytes);
+		result.setFirstBytes(firstBytes);
+		result.setAddress(address);
+		result.setReturnBytes(returnBytes);
+		result.setFirstInst(firstInst);
+		result.setPreInst(preInst);
+		result.setReturnInst(returnInst);
+		result.setContextRegisters(contextRegisters);
+
+		return result;
+	}
+
+	/**
+	 * Converts this object instance into XML.
+	 * 
+	 * @return new jdom Element populated with all the datas
+	 */
+	public Element toXml() {
+		Element result = new Element(XML_ELEMENT_NAME);
+
+		XmlUtilities.setStringAttr(result, "preBytes", preBytes);
+		XmlUtilities.setStringAttr(result, "firstBytes", firstBytes);
+		XmlUtilities.setStringAttr(result, "address", address);
+		Element returnBytesListEle = new Element("returnBytesList");
+		result.addContent(returnBytesListEle);
+		for (String s : returnBytes) {
+			Element rbNode = new Element("returnBytes");
+			XmlUtilities.setStringAttr(rbNode, "value", s);
+			returnBytesListEle.addContent(rbNode);
+		}
+		if (firstInst != null) {
+			result.addContent(firstInst.toXml("firstInst"));
+		}
+		if (preInst != null) {
+			result.addContent(preInst.toXml("preInst"));
+		}
+		if (returnInst != null) {
+			Element returnInstListEle = new Element("returnInstList");
+			result.addContent(returnInstListEle);
+			for (InstructionSequence is : returnInst) {
+				returnInstListEle.addContent(is.toXml());
+			}
+		}
+		if (contextRegisters != null) {
+			Element contextRegistersListEle = new Element("contextRegistersList");
+			result.addContent(contextRegistersListEle);
+			for (ContextRegisterInfo cri : contextRegisters) {
+				contextRegistersListEle.addContent(cri.toXml());
+			}
+		}
+
+		return result;
 	}
 
 }

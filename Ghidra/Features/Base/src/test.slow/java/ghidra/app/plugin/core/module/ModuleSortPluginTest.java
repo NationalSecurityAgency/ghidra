@@ -18,12 +18,10 @@ package ghidra.app.plugin.core.module;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 import org.junit.*;
 
-import docking.ActionContext;
 import docking.action.DockingActionIf;
 import ghidra.app.plugin.core.programtree.ProgramTreePlugin;
 import ghidra.app.plugin.core.programtree.ViewProviderService;
@@ -42,7 +40,7 @@ public class ModuleSortPluginTest extends AbstractGhidraHeadedIntegrationTest {
 	private PluginTool tool;
 	private Program program;
 	private ModuleSortPlugin plugin;
-	private List<DockingActionIf> actions;
+	private Set<DockingActionIf> actions;
 	private ProgramTreeService service;
 
 	public ModuleSortPluginTest() {
@@ -63,7 +61,7 @@ public class ModuleSortPluginTest extends AbstractGhidraHeadedIntegrationTest {
 				break;
 			}
 		}
-		actions = tool.getDockingActionsByOwnerName(plugin.getName());
+		actions = getActionsByOwner(tool, plugin.getName());
 		service = tool.getService(ProgramTreeService.class);
 
 		ProgramBuilder builder = new ProgramBuilder("notepad", ProgramBuilder._TOY);
@@ -114,7 +112,8 @@ public class ModuleSortPluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 		Object context = vps.getActivePopupObject(null);
 		for (DockingActionIf action : actions) {
-			assertTrue(action.isAddToPopup(new ActionContext(null, context)));
+
+			assertTrue(action.isAddToPopup(vps.getActionContext(null)));
 		}
 
 		gps = new GroupPath[1];
@@ -123,7 +122,7 @@ public class ModuleSortPluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 		context = vps.getActivePopupObject(null);
 		for (DockingActionIf action : actions) {
-			assertTrue(!action.isAddToPopup(new ActionContext(null, context)));
+			assertTrue(!action.isAddToPopup(vps.getActionContext(null)));
 		}
 	}
 
@@ -160,11 +159,10 @@ public class ModuleSortPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		ViewManagerService vmService = tool.getService(ViewManagerService.class);
 		ViewProviderService vps = vmService.getCurrentViewProvider();
 
-		Object context = vps.getActivePopupObject(null);
-
 		for (DockingActionIf action : actions) {
 			if (action.getName().indexOf("Name") > 0) {
-				action.actionPerformed(new ActionContext(null, context));
+
+				action.actionPerformed(vps.getActionContext(null));
 				break;
 			}
 		}
@@ -206,7 +204,7 @@ public class ModuleSortPluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 		for (DockingActionIf action : actions) {
 			if (action.getName().indexOf("Address") > 0) {
-				action.actionPerformed(new ActionContext(null, context));
+				action.actionPerformed(vps.getActionContext(null));
 				break;
 			}
 		}
@@ -233,7 +231,7 @@ public class ModuleSortPluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 		Object context = vps.getActivePopupObject(null);
 		for (DockingActionIf action : actions) {
-			assertTrue(!action.isAddToPopup(new ActionContext(null, context)));
+			assertTrue(!action.isAddToPopup(vps.getActionContext(null)));
 		}
 	}
 

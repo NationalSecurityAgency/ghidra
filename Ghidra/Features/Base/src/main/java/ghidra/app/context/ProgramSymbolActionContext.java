@@ -15,85 +15,35 @@
  */
 package ghidra.app.context;
 
-import java.util.Iterator;
-import java.util.NoSuchElementException;
+import java.awt.Component;
+import java.util.*;
 
 import docking.ComponentProvider;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.Symbol;
-import ghidra.program.model.symbol.SymbolIterator;
 
 public class ProgramSymbolActionContext extends ProgramActionContext {
 
-	private final long[] symbolIDs;
+	private List<Symbol> symbols = new ArrayList<Symbol>();
 
 	public ProgramSymbolActionContext(ComponentProvider provider, Program program,
-			long[] symbolIDs) {
-		this(provider, program, symbolIDs, null);
-	}
-
-	public ProgramSymbolActionContext(ComponentProvider provider, Program program, long[] symbolIDs,
-			Object contextObj) {
-		super(provider, program, contextObj);
-		this.symbolIDs = symbolIDs;
+			List<Symbol> symbols, Component sourceComponent) {
+		super(provider, program, sourceComponent);
+		this.symbols = symbols == null ? Collections.emptyList() : symbols;
 	}
 
 	public int getSymbolCount() {
-		return symbolIDs != null ? symbolIDs.length : 0;
+		return symbols.size();
 	}
 
 	public Symbol getFirstSymbol() {
-		if (symbolIDs == null || symbolIDs.length == 0) {
+		if (symbols.isEmpty()) {
 			return null;
 		}
-		return program.getSymbolTable().getSymbol(symbolIDs[0]);
+		return symbols.get(0);
 	}
 
-	public SymbolIterator getSymbols() {
-		return new MySymbolIterator();
-	}
-
-	private class MySymbolIterator implements SymbolIterator {
-
-		private int index = -1;
-		private Symbol symbol = null;
-
-		@Override
-		public void remove() {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public Iterator<Symbol> iterator() {
-			return this;
-		}
-
-		@Override
-		public boolean hasNext() {
-			if (symbol != null) {
-				return true;
-			}
-			if (symbolIDs == null) {
-				return false;
-			}
-			while (index < (symbolIDs.length - 1)) {
-				symbol = program.getSymbolTable().getSymbol(symbolIDs[++index]);
-				if (symbol != null) {
-					return true;
-				}
-			}
-			return false;
-		}
-
-		@Override
-		public Symbol next() {
-			if (hasNext()) {
-				Symbol s = symbol;
-				symbol = null;
-				return s;
-			}
-			throw new NoSuchElementException();
-		}
-
+	public Iterable<Symbol> getSymbols() {
+		return symbols;
 	}
 }

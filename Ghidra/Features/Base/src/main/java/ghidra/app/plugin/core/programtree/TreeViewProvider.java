@@ -15,6 +15,15 @@
  */
 package ghidra.app.plugin.core.programtree;
 
+import java.awt.event.MouseEvent;
+import java.util.ArrayList;
+import java.util.LinkedList;
+
+import javax.swing.JComponent;
+import javax.swing.event.ChangeEvent;
+
+import docking.ActionContext;
+import docking.action.DockingAction;
 import ghidra.app.events.ViewChangedPluginEvent;
 import ghidra.app.services.GoToService;
 import ghidra.app.services.ViewManagerService;
@@ -24,15 +33,6 @@ import ghidra.program.model.listing.*;
 import ghidra.program.util.*;
 import ghidra.util.Msg;
 import ghidra.util.task.*;
-
-import java.awt.event.MouseEvent;
-import java.util.ArrayList;
-import java.util.LinkedList;
-
-import javax.swing.JComponent;
-import javax.swing.event.ChangeEvent;
-
-import docking.action.DockingAction;
 
 /**
  * Provides a view of the program tree.
@@ -51,9 +51,6 @@ class TreeViewProvider implements ViewProviderService {
 
 	private final static int DELAY = 500;
 
-	/**
-	 * Constructor for TreeViewProvider.
-	 */
 	public TreeViewProvider(String treeName, final ProgramTreePlugin plugin) {
 
 		treePanel = new ProgramTreePanel(treeName, plugin);
@@ -72,25 +69,16 @@ class TreeViewProvider implements ViewProviderService {
 		});
 	}
 
-	/**
-	 * @see ghidra.app.plugin.core.programtree.ViewProviderService#getViewComponent()
-	 */
 	@Override
 	public JComponent getViewComponent() {
 		return treePanel;
 	}
 
-	/**
-	 * @see ghidra.app.plugin.core.programtree.ViewProviderService#getViewName()
-	 */
 	@Override
 	public String getViewName() {
 		return treePanel.getTreeName();
 	}
 
-	/**
-	 * @see ghidra.app.plugin.core.programtree.ViewProviderService#setHasFocus(JComponent, boolean)
-	 */
 	@Override
 	public void setHasFocus(boolean hasFocus) {
 		treePanel.setHasFocus(hasFocus);
@@ -107,33 +95,26 @@ class TreeViewProvider implements ViewProviderService {
 		}
 	}
 
-	/**
-	 * @see ghidra.app.plugin.core.programtree.ViewProviderService#getActivePopupObject(MouseEvent)
-	 */
 	@Override
 	public Object getActivePopupObject(MouseEvent event) {
 		return treePanel.prepareSelectionForPopup(event);
 	}
 
-	/**
-	 * @see ghidra.app.plugin.core.programtree.ViewProviderService#getActiveObject()
-	 */
+	@Override
+	public ActionContext getActionContext(MouseEvent event) {
+		return new ActionContext().setContextObject(getActivePopupObject(event));
+	}
+
 	@Override
 	public Object getActiveObject() {
 		return treePanel.getSelectedNode();
 	}
 
-	/**
-	 * @see ghidra.app.plugin.core.programtree.ViewProviderService#getToolBarActions()
-	 */
 	@Override
 	public DockingAction[] getToolBarActions() {
 		return plugin.getToolBarActions();
 	}
 
-	/**
-	 * @see ghidra.app.plugin.core.programtree.ViewProviderService#viewClosed()
-	 */
 	@Override
 	public boolean viewClosed() {
 		if (program == null) {
@@ -146,9 +127,6 @@ class TreeViewProvider implements ViewProviderService {
 		return false;
 	}
 
-	/**
-	 * @see ghidra.app.plugin.core.programtree.ViewProviderService#viewDeleted()
-	 */
 	@Override
 	public boolean viewDeleted() {
 		if (program == null) {
@@ -161,9 +139,6 @@ class TreeViewProvider implements ViewProviderService {
 		return false;
 	}
 
-	/**
-	 * @see ghidra.app.plugin.core.programtree.ViewProviderService#viewRenamed(String)
-	 */
 	@Override
 	public boolean viewRenamed(String newName) {
 		if (program == null) {
@@ -177,9 +152,6 @@ class TreeViewProvider implements ViewProviderService {
 		return false;
 	}
 
-	/**
-	 * @see ghidra.app.plugin.core.programtree.ViewProviderService#addToView(ProgramLocation)
-	 */
 	@Override
 	public AddressSetView addToView(ProgramLocation loc) {
 		if (program != null && loc != null && loc.getAddress() != null) {
@@ -192,9 +164,6 @@ class TreeViewProvider implements ViewProviderService {
 
 	}
 
-	/**
-	 * @see ghidra.app.plugin.core.programtree.ViewProviderService#getCurrentView()
-	 */
 	@Override
 	public AddressSetView getCurrentView() {
 		return view;
@@ -212,14 +181,14 @@ class TreeViewProvider implements ViewProviderService {
 		ProgramModule root = program.getListing().getRootModule(group.getTreeName());
 		ProgramModule[] parents = group.getParents();
 		if (parents != null && parents.length > 0) {
-			for (int i = 0; i < parents.length; i++) {
-				LinkedList<String> myList = new LinkedList<String>(list);
-				myList.addFirst(parents[i].getName());
-				if (parents[i] == root) {
+			for (ProgramModule parent : parents) {
+				LinkedList<String> myList = new LinkedList<>(list);
+				myList.addFirst(parent.getName());
+				if (parent == root) {
 					pathNameList.add(myList);
 				}
 				else {
-					setAncestorList(parents[i], myList, pathNameList);
+					setAncestorList(parent, myList, pathNameList);
 				}
 			}
 		}
@@ -278,15 +247,12 @@ class TreeViewProvider implements ViewProviderService {
 
 	/**
 	 * Set the tree selection.
-	 * @param groupPaths
+	 * @param paths the paths to select
 	 */
 	void setGroupSelection(GroupPath[] paths) {
 		treePanel.setGroupSelection(paths);
 	}
 
-	/**
-	 * Write group paths in the view.
-	 */
 	void writeDataState(SaveState saveState) {
 		GroupView currentView = treePanel.getGroupView();
 		String treeName = treePanel.getTreeName();
@@ -299,9 +265,6 @@ class TreeViewProvider implements ViewProviderService {
 		}
 	}
 
-	/**
-	 * Read the state from save state object.
-	 */
 	void readDataState(SaveState saveState) {
 		String treeName = treePanel.getTreeName();
 		int numGroups = saveState.getInt(NUMBER_OF_GROUPS + treeName, 0);
@@ -329,9 +292,6 @@ class TreeViewProvider implements ViewProviderService {
 		return treePanel.getDnDTree();
 	}
 
-	/**
-	 * Get the address set currently being viewed.
-	 */
 	AddressSet getView() {
 		if (program == null) {
 			return new AddressSet();
@@ -342,8 +302,8 @@ class TreeViewProvider implements ViewProviderService {
 			return set;
 		}
 		String treeName = treePanel.getTreeName();
-		for (int i = 0; i < gp.length; i++) {
-			Group group = gp[i].getGroup(program, treeName);
+		for (GroupPath element : gp) {
+			Group group = element.getGroup(program, treeName);
 			if (group == null) {
 				continue;
 			}
@@ -365,8 +325,8 @@ class TreeViewProvider implements ViewProviderService {
 			return;
 		}
 		view = getView();
-		plugin.firePluginEvent(new ViewChangedPluginEvent(plugin.getName(),
-			treePanel.getTreeName(), view));
+		plugin.firePluginEvent(
+			new ViewChangedPluginEvent(plugin.getName(), treePanel.getTreeName(), view));
 	}
 
 	/**
@@ -379,7 +339,7 @@ class TreeViewProvider implements ViewProviderService {
 		if (fragment == null) {
 			return;
 		}
-		LinkedList<String> list = new LinkedList<String>();
+		LinkedList<String> list = new LinkedList<>();
 		list.add(fragment.getName());
 		Group group = fragment;
 		while (group != null) {
@@ -408,8 +368,8 @@ class TreeViewProvider implements ViewProviderService {
 		}
 		else {
 			Group[] groups = ((ProgramModule) group).getChildren();
-			for (int i = 0; i < groups.length; i++) {
-				getAddressSet(groups[i], set);
+			for (Group group2 : groups) {
+				getAddressSet(group2, set);
 			}
 		}
 	}
@@ -439,11 +399,11 @@ class TreeViewProvider implements ViewProviderService {
 				if (fragment == null) {
 					return;
 				}
-				LinkedList<String> list = new LinkedList<String>();
+				LinkedList<String> list = new LinkedList<>();
 				list.add(fragment.getName());
 				Group group = fragment;
 
-				ArrayList<LinkedList<String>> pathNameList = new ArrayList<LinkedList<String>>();
+				ArrayList<LinkedList<String>> pathNameList = new ArrayList<>();
 				// need GroupPath for all occurrences of fragment
 				setAncestorList(group, list, pathNameList);
 

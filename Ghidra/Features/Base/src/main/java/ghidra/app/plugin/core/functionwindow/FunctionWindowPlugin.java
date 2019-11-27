@@ -18,7 +18,6 @@ package ghidra.app.plugin.core.functionwindow;
 import java.util.List;
 
 import javax.swing.ImageIcon;
-import javax.swing.KeyStroke;
 
 import docking.ActionContext;
 import docking.action.*;
@@ -30,11 +29,9 @@ import ghidra.app.plugin.ProgramPlugin;
 import ghidra.app.plugin.core.functioncompare.FunctionComparisonProvider;
 import ghidra.app.plugin.core.functioncompare.FunctionComparisonProviderManager;
 import ghidra.framework.model.*;
-import ghidra.framework.options.*;
 import ghidra.framework.plugintool.PluginInfo;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.util.PluginStatus;
-import ghidra.framework.plugintool.util.ToolConstants;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.Symbol;
@@ -42,6 +39,7 @@ import ghidra.program.util.*;
 import ghidra.util.Msg;
 import ghidra.util.table.GhidraTable;
 import ghidra.util.table.SelectionNavigationAction;
+import ghidra.util.table.actions.MakeProgramSelectionAction;
 import ghidra.util.task.SwingUpdateManager;
 import resources.ResourceManager;
 
@@ -55,8 +53,7 @@ import resources.ResourceManager;
 	eventsConsumed = { ProgramClosedPluginEvent.class }
 )
 //@formatter:on
-public class FunctionWindowPlugin extends ProgramPlugin
-		implements DomainObjectListener, OptionsChangeListener {
+public class FunctionWindowPlugin extends ProgramPlugin implements DomainObjectListener {
 
 	private DockingAction selectAction;
 	private DockingAction compareAction;
@@ -64,19 +61,12 @@ public class FunctionWindowPlugin extends ProgramPlugin
 	private SwingUpdateManager swingMgr;
 	private FunctionComparisonProviderManager functionComparisonManager;
 
-	///////////////////////////////////////////////////////////
-
 	public FunctionWindowPlugin(PluginTool tool) {
 		super(tool, true, false);
 
 		functionComparisonManager = new FunctionComparisonProviderManager(this);
 
-		swingMgr = new SwingUpdateManager(1000, new Runnable() {
-			@Override
-			public void run() {
-				provider.reload();
-			}
-		});
+		swingMgr = new SwingUpdateManager(1000, () -> provider.reload());
 
 	}
 
@@ -97,12 +87,6 @@ public class FunctionWindowPlugin extends ProgramPlugin
 		provider.dispose();
 		super.dispose();
 	}
-
-	////////////////////////////////////////////////////////////////////////////
-	//
-	//  Implementation of DomainObjectListener
-	//
-	////////////////////////////////////////////////////////////////////////////
 
 	@Override
 	public void domainObjectChanged(DomainObjectChangedEvent ev) {
@@ -168,19 +152,17 @@ public class FunctionWindowPlugin extends ProgramPlugin
 						provider.update(function);
 					}
 					break;
-			/*case ChangeManager.DOCR_SYMBOL_REMOVED:
-				rec = (ProgramChangeRecord)ev.getChangeRecord(i);
-				addr = (Address)rec.getObject();
-				function = currentProgram.getListing().getFunctionAt(addr);
-				if (function != null) {
-					provider.functionChanged(function);
-				}
-				break;*/
+				/*case ChangeManager.DOCR_SYMBOL_REMOVED:
+					rec = (ProgramChangeRecord)ev.getChangeRecord(i);
+					addr = (Address)rec.getObject();
+					function = currentProgram.getListing().getFunctionAt(addr);
+					if (function != null) {
+						provider.functionChanged(function);
+					}
+					break;*/
 			}
 		}
 	}
-
-	////////////////////////////////////////////////////////////////////////////
 
 	@Override
 	protected void programActivated(Program program) {
@@ -194,17 +176,10 @@ public class FunctionWindowPlugin extends ProgramPlugin
 		provider.programClosed();
 	}
 
-	////////////////////////////////////////////////////////////////////////////
-
 	Program getProgram() {
 		return currentProgram;
 	}
 
-	////////////////////////////////////////////////////////////////////////////
-
-	/**
-	 * Create the action objects for this plugin.
-	 */
 	private void createActions() {
 		addSelectAction();
 		addCompareAction();
@@ -214,65 +189,25 @@ public class FunctionWindowPlugin extends ProgramPlugin
 	}
 
 	private void addSelectAction() {
-		selectAction = new DockingAction("Make Selection", getName(), false) {
-			@Override
-			public void actionPerformed(ActionContext context) {
-				selectFunctions(provider.selectFunctions());
-			}
-		};
-		selectAction.setEnabled(false);
-		ImageIcon icon = ResourceManager.loadImage("images/text_align_justify.png");
-		selectAction.setPopupMenuData(new MenuData(new String[] { "Make Selection" }, icon));
-		selectAction.setDescription("Selects currently selected function(s) in table");
-		selectAction.setToolBarData(new ToolBarData(icon));
 
-		installDummyAction(selectAction);
-
+		selectAction = new MakeProgramSelectionAction(this, provider.getTable());
 		tool.addLocalAction(provider, selectAction);
 	}
 
 	private void addCompareAction() {
-		compareAction = new DockingAction("Compare Selected Functions", getName(), false) {
+		compareAction = new DockingAction("Compare Selected Functions", getName()) {
 			@Override
 			public void actionPerformed(ActionContext context) {
 				compareSelectedFunctions();
 			}
 		};
-		compareAction.setEnabled(false);
+
 		ImageIcon icon = ResourceManager.loadImage("images/page_white_c.png");
 		compareAction.setPopupMenuData(new MenuData(new String[] { "Compare Functions" }, icon));
 		compareAction.setDescription("Compares the currently selected function(s) in the table.");
 		compareAction.setToolBarData(new ToolBarData(icon));
 
-		installDummyAction(compareAction);
-
 		tool.addLocalAction(provider, compareAction);
-	}
-
-	private void installDummyAction(DockingAction action) {
-		DummyKeyBindingsOptionsAction dummyAction =
-			new DummyKeyBindingsOptionsAction(action.getName(), null);
-		tool.addAction(dummyAction);
-
-		ToolOptions options = tool.getOptions(ToolConstants.KEY_BINDINGS);
-		options.addOptionsChangeListener(this);
-
-		KeyStroke keyStroke = options.getKeyStroke(dummyAction.getFullName(), null);
-		if (keyStroke != null) {
-			action.setUnvalidatedKeyBindingData(new KeyBindingData(keyStroke));
-		}
-	}
-
-	@Override
-	public void optionsChanged(ToolOptions options, String optionName, Object oldValue, Object newValue) {
-		if (optionName.startsWith(selectAction.getName())) {
-			KeyStroke keyStroke = (KeyStroke) newValue;
-			selectAction.setUnvalidatedKeyBindingData(new KeyBindingData(keyStroke));
-		}
-		if (optionName.startsWith(compareAction.getName())) {
-			KeyStroke keyStroke = (KeyStroke) newValue;
-			compareAction.setUnvalidatedKeyBindingData(new KeyBindingData(keyStroke));
-		}
 	}
 
 	void setActionsEnabled(boolean enabled) {

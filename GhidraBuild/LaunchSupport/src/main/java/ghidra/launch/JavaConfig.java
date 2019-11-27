@@ -33,8 +33,9 @@ public class JavaConfig {
 	private LaunchProperties launchProperties;
 	private File javaHomeSaveFile;
 
-	private String applicationName;
-	private String applicationVersion;
+	private String applicationName; // example: Ghidra
+	private String applicationVersion; // example: 9.0.1
+	private String applicationReleaseName; // example: PUBLIC, DEV, etc
 	private int minSupportedJava;
 	private int maxSupportedJava;
 	private String compilerComplianceLevel;
@@ -81,6 +82,16 @@ public class JavaConfig {
 	 */
 	public int getMaxSupportedJava() {
 		return maxSupportedJava;
+	}
+
+	/**
+	 * Gets the Java configuration's supported Java architecture.  All supported Java 
+	 * configurations must have an architecture of <code>64</code>.
+	 * 
+	 * @return The Java configuration's supported Java architecture (64).  
+	 */
+	public int getSupportedArchitecture() {
+		return 64;
 	}
 
 	/**
@@ -160,6 +171,10 @@ public class JavaConfig {
 	 * @return True if the given Java version is supported by this Java launch configuration.
 	 */
 	public boolean isJavaVersionSupported(JavaVersion javaVersion) {
+		if (javaVersion.getArchitecture() != getSupportedArchitecture()) {
+			return false;
+		}
+
 		int major = javaVersion.getMajor();
 		return major >= minSupportedJava &&
 			(maxSupportedJava == 0 || major <= maxSupportedJava);
@@ -228,29 +243,34 @@ public class JavaConfig {
 	 */
 	private JavaVersion runAndGetJavaVersion(File javaExecutable)
 			throws ParseException, IOException {
-		Runtime rt = Runtime.getRuntime();
-		Process proc = rt.exec(new String[] { javaExecutable.getAbsolutePath(), "-version" });
+		String version = "";
+		String arch = "";
+		Process proc = Runtime.getRuntime().exec(new String[] { javaExecutable.getAbsolutePath(),
+			"-XshowSettings:properties", "-version" });
 		try (BufferedReader reader =
 			new BufferedReader(new InputStreamReader(proc.getErrorStream()))) {
 			String line;
-			while ((line = reader.readLine()) != null) {
+			while ((version.isEmpty() || arch.isEmpty()) && (line = reader.readLine()) != null) {
 				line = line.trim();
-				
-				// If the _JAVA_OPTIONS or JAVA_TOOL_OPTIONS environment variables are set, STDERR
-				// will start with "Picked up..." lines that need to be ignored so we can get to the
-				// java version line.
-				if (line.startsWith("Picked up")) {
-					continue;
-				}
 
-				String[] parts = line.split("\\s");
-				if (parts.length < 3) {
-					throw new ParseException("Failed to parse version: " + line, 0);
+				String searchString = "java.version = ";
+				if (line.startsWith(searchString)) {
+					version = line.substring(searchString.length());
 				}
-				return new JavaVersion(parts[2]);
+				
+				searchString = "sun.arch.data.model = ";
+				if (line.startsWith(searchString)) {
+					arch = line.substring(searchString.length());
+				}
 			}
+		}
+		if (version.isEmpty()) {
 			throw new ParseException("Failed to find Java version", 0);
 		}
+		if (arch.isEmpty()) {
+			throw new ParseException("Failed to find Java architecture", 0);
+		}
+		return new JavaVersion(version, arch);
 	}
 
 	/**
@@ -277,6 +297,8 @@ public class JavaConfig {
 		// Required properties
 		applicationName = getDefinedProperty(applicationProperties, "application.name");
 		applicationVersion = getDefinedProperty(applicationProperties, "application.version");
+		applicationReleaseName =
+			getDefinedProperty(applicationProperties, "application.release.name");
 		compilerComplianceLevel =
 			getDefinedProperty(applicationProperties, "application.java.compiler");
 		try {
@@ -349,13 +371,17 @@ public class JavaConfig {
 		}
 
 		// Get the java home save file from user home directory (it might not exist yet).
-		String prefix = "." + applicationName.replaceAll("\\s", "").toLowerCase();
-		String suffix = applicationVersion;
+		File userSettingsParentDir =
+			new File(userHomeDir, "." + applicationName.replaceAll("\\s", "").toLowerCase());
+
+		String userSettingsDirName = userSettingsParentDir.getName() + "_" + applicationVersion +
+			"_" + applicationReleaseName.replaceAll("\\s", "").toUpperCase();
+
 		if (isDev) {
-			suffix += "_location_" + installDir.getParentFile().getName();
+			userSettingsDirName += "_location_" + installDir.getParentFile().getName();
 		}
-		File userSettingsDir =
-			new File(userHomeDir, prefix + File.separator + prefix + "-" + suffix);
+
+		File userSettingsDir = new File(userSettingsParentDir, userSettingsDirName);
 		javaHomeSaveFile = new File(userSettingsDir, JAVA_HOME_SAVE_NAME);
 	}
 

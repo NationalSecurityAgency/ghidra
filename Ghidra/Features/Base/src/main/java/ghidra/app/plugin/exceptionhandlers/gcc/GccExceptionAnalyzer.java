@@ -147,6 +147,8 @@ public class GccExceptionAnalyzer extends AbstractAnalyzer {
 		// handleArmSections(program, monitor, log);
 
 		visitedPrograms.add(program);
+		monitor.setIndeterminate(false);
+		monitor.setShowProgressValue(true);
 
 		return true;
 	}

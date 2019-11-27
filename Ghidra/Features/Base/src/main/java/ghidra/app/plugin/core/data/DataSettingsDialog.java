@@ -16,19 +16,18 @@
 package ghidra.app.plugin.core.data;
 
 import java.awt.*;
-import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
-import javax.swing.event.TableModelEvent;
-import javax.swing.event.TableModelListener;
-import javax.swing.table.*;
+import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.TableCellEditor;
 
 import docking.DialogComponentProvider;
+import docking.widgets.combobox.GComboBox;
 import docking.widgets.dialogs.StringChoices;
-import docking.widgets.table.DefaultSortedTableModel;
+import docking.widgets.table.AbstractSortedTableModel;
 import docking.widgets.table.GTable;
 import ghidra.docking.settings.*;
 import ghidra.program.model.data.Composite;
@@ -66,9 +65,6 @@ public class DataSettingsDialog extends DialogComponentProvider {
 	private boolean appliedSettings;
 	private Program program;
 
-	/**
-	 * Construct instance settings dialog.
-	 */
 	public DataSettingsDialog(Program program, ProgramSelection sel) throws CancelledException {
 		super("Data Settings", true, false, true, false);
 		this.program = program;
@@ -82,9 +78,6 @@ public class DataSettingsDialog extends DialogComponentProvider {
 		buildPanel();
 	}
 
-	/**
-	 * Construct instance settings dialog.
-	 */
 	public DataSettingsDialog(Program program, Data data) {
 		super("Data Settings", true, false, true, false);
 		this.data = data;
@@ -110,9 +103,6 @@ public class DataSettingsDialog extends DialogComponentProvider {
 		buildPanel();
 	}
 
-	/**
-	 * Construct default data type settings dialog.
-	 */
 	public DataSettingsDialog(Program program, DataType dataType) {
 		super("Data Settings", true, false, true, false);
 		this.dataType = dataType;
@@ -125,9 +115,6 @@ public class DataSettingsDialog extends DialogComponentProvider {
 		setHelpLocation(new HelpLocation("DataPlugin", "Default_Data_Settings"));
 	}
 
-	/**
-	 * Construct default data type component settings dialog.
-	 */
 	DataSettingsDialog(Program program, DataTypeComponent dtc) {
 		super("Data Settings", true, false, true, false);
 		this.dtc = dtc;
@@ -138,6 +125,10 @@ public class DataSettingsDialog extends DialogComponentProvider {
 		defaultSettings = dtc.getDefaultSettings();
 		buildPanel();
 		setHelpLocation(new HelpLocation("DataPlugin", "SettingsOnStructureComponents"));
+	}
+
+	GTable getSettingsTable() {
+		return settingsTable;
 	}
 
 	SettingsTableModel getSettingsTableModel() {
@@ -203,12 +194,7 @@ public class DataSettingsDialog extends DialogComponentProvider {
 		addOKButton();
 
 		JButton newApplyButton = new JButton("Apply");
-		newApplyButton.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				applySettings();
-			}
-		});
+		newApplyButton.addActionListener(e -> applySettings());
 		addButton(newApplyButton);
 
 		addCancelButton();
@@ -218,17 +204,9 @@ public class DataSettingsDialog extends DialogComponentProvider {
 		JPanel workPanel = new JPanel(new BorderLayout());
 		workPanel.setBorder(new EmptyBorder(10, 10, 10, 10));
 
-		settingsTableModel = new SettingsTableModel();
-
-		DefaultSortedTableModel sorter = new DefaultSortedTableModel(settingsTableModel);
-		sorter.sortByColumn(SettingsTableModel.DEFAULT_SORT_COL);
-		sorter.addTableModelListener(new TableModelListener() {
-			@Override
-			public void tableChanged(TableModelEvent e) {
-				appliedSettings = false;
-			}
-		});
-		settingsTable = new GhidraTable(sorter);
+		settingsTableModel = new SettingsTableModel(settingsDefs);
+		settingsTableModel.addTableModelListener(e -> appliedSettings = false);
+		settingsTable = new GhidraTable(settingsTableModel);
 		settingsTable.setAutoscrolls(true);
 		settingsTable.setRowSelectionAllowed(false);
 		settingsTable.setColumnSelectionAllowed(false);
@@ -250,18 +228,12 @@ public class DataSettingsDialog extends DialogComponentProvider {
 		return workPanel;
 	}
 
-	/**
-	 * @see ghidra.util.bean.GhidraDialog#cancelCallback()
-	 */
 	@Override
 	protected void cancelCallback() {
 		close();
 		dispose();
 	}
 
-	/**
-	 * @see ghidra.util.bean.GhidraDialog#okCallback()
-	 */
 	@Override
 	protected void okCallback() {
 		applySettings();
@@ -564,7 +536,7 @@ public class DataSettingsDialog extends DialogComponentProvider {
 
 		// For selection case we must ensure that settings has a non-null value even for defaults
 		if (selection != null && settings.getValue(def.getName()) == null) {
-			settings.setValue(def.getName(), new Long(def.getChoice(settings)));
+			settings.setValue(def.getName(), Long.valueOf(def.getChoice(settings)));
 		}
 	}
 
@@ -593,81 +565,98 @@ public class DataSettingsDialog extends DialogComponentProvider {
 		return newChoices;
 	}
 
-	class SettingsTableModel extends AbstractTableModel {
+//==================================================================================================
+// Inner Classes
+//==================================================================================================
 
-		private static final long serialVersionUID = 1L;
+	class SettingsRowObject {
 
-		static final int DEFAULT_SORT_COL = 0;
+		private SettingsDefinition definition;
+
+		SettingsRowObject(SettingsDefinition definition) {
+			this.definition = definition;
+		}
+
+		public String getName() {
+			return definition.getName();
+		}
+
+		Object getSettingsChoices() {
+			if (definition instanceof EnumSettingsDefinition) {
+				StringChoices choices = getChoices((EnumSettingsDefinition) definition);
+				return choices;
+			}
+			else if (definition instanceof BooleanSettingsDefinition) {
+				StringChoices choices = getChoices((BooleanSettingsDefinition) definition);
+				return choices;
+			}
+			return "<Unsupported>";
+		}
+
+		boolean useDefault() {
+			if (definition instanceof EnumSettingsDefinition) {
+				EnumSettingsDefinition def = (EnumSettingsDefinition) definition;
+				return def.getChoice(settings) == def.getChoice(defaultSettings);
+			}
+			else if (definition instanceof BooleanSettingsDefinition) {
+				BooleanSettingsDefinition def = (BooleanSettingsDefinition) definition;
+				return def.getValue(settings) == def.getValue(defaultSettings);
+			}
+			return false;
+		}
+
+		boolean setSettingsChoice(Object value) {
+			if (definition instanceof EnumSettingsDefinition) {
+				setChoice(value, (EnumSettingsDefinition) definition);
+				return true;
+			}
+			else if (definition instanceof BooleanSettingsDefinition) {
+				setChoice(value, (BooleanSettingsDefinition) definition);
+				return true;
+			}
+			return false;
+		}
+
+		void clear(SettingsImpl s) {
+			definition.clear(s);
+		}
+	}
+
+	private class SettingsTableModel extends AbstractSortedTableModel<SettingsRowObject> {
+
+		private List<SettingsRowObject> rows = new ArrayList<>();
+
+		SettingsTableModel(SettingsDefinition[] settingsDefs) {
+			for (SettingsDefinition sd : settingsDefs) {
+				rows.add(new SettingsRowObject(sd));
+			}
+		}
+
+		@Override
+		public List<SettingsRowObject> getModelData() {
+			return rows;
+		}
+
+		@Override
+		public String getName() {
+			return "Settings Definition Model";
+		}
+
+		@Override
+		public boolean isSortable(int columnIndex) {
+			return columnIndex == 0;
+		}
+
+		@Override
+		public boolean isCellEditable(int row, int col) {
+			return col != 0;
+		}
 
 		@Override
 		public int getColumnCount() {
 			return (selection != null || editingDefaults) ? 2 : 3;
 		}
 
-		@Override
-		public int getRowCount() {
-			return settingsDefs != null ? settingsDefs.length : 0;
-		}
-
-		@Override
-		public Object getValueAt(int row, int col) {
-			switch (col) {
-				case 0:
-					return settingsDefs[row].getName();
-				case 1:
-					if (settingsDefs[row] instanceof EnumSettingsDefinition) {
-						return getChoices((EnumSettingsDefinition) settingsDefs[row]);
-					}
-					else if (settingsDefs[row] instanceof BooleanSettingsDefinition) {
-						return getChoices((BooleanSettingsDefinition) settingsDefs[row]);
-					}
-					return "<Unsupported>";
-
-				case 2:
-					if (settingsDefs[row] instanceof EnumSettingsDefinition) {
-						EnumSettingsDefinition def = (EnumSettingsDefinition) settingsDefs[row];
-						return new Boolean(
-							def.getChoice(settings) == def.getChoice(defaultSettings));
-					}
-					else if (settingsDefs[row] instanceof BooleanSettingsDefinition) {
-						BooleanSettingsDefinition def =
-							(BooleanSettingsDefinition) settingsDefs[row];
-						return new Boolean(def.getValue(settings) == def.getValue(defaultSettings));
-					}
-					break;
-			}
-			return null;
-		}
-
-		/**
-		 * @see TableModel#setValueAt(Object, int, int)
-		 */
-		@Override
-		public void setValueAt(Object value, int row, int col) {
-			switch (col) {
-				case 1:
-					if (settingsDefs[row] instanceof EnumSettingsDefinition) {
-						setChoice(value, (EnumSettingsDefinition) settingsDefs[row]);
-						fireTableDataChanged();
-					}
-					else if (settingsDefs[row] instanceof BooleanSettingsDefinition) {
-						setChoice(value, (BooleanSettingsDefinition) settingsDefs[row]);
-						fireTableDataChanged();
-					}
-					break;
-
-				case 2:
-					if (((Boolean) value).booleanValue()) {
-						settingsDefs[row].clear(settings);
-						fireTableDataChanged();
-					}
-					break;
-			}
-		}
-
-		/**
-		 * @see TableModel#getColumnName(int)
-		 */
 		@Override
 		public String getColumnName(int col) {
 			switch (col) {
@@ -681,9 +670,7 @@ public class DataSettingsDialog extends DialogComponentProvider {
 			return null;
 		}
 
-		/**
-		 * @see TableModel#getColumnClass(int)
-		 */
+		// override this to force the correct cell editors to be used
 		@Override
 		public Class<?> getColumnClass(int col) {
 			switch (col) {
@@ -697,42 +684,54 @@ public class DataSettingsDialog extends DialogComponentProvider {
 			return null;
 		}
 
-		public boolean isColumnSortable(int col) {
-			return col == 0;
-		}
-
-		/**
-		 * @see TableModel#isCellEditable(int, int)
-		 */
 		@Override
-		public boolean isCellEditable(int row, int col) {
-			return col != 0;
+		public Object getColumnValueForRow(SettingsRowObject t, int columnIndex) {
+			switch (columnIndex) {
+				case 0:
+					return t.getName();
+				case 1:
+					return t.getSettingsChoices();
+				case 2:
+					return t.useDefault();
+			}
+			return null;
 		}
 
+		@Override
+		public void setValueAt(Object value, int row, int col) {
+			SettingsRowObject rowObject = rows.get(row);
+			switch (col) {
+				case 1:
+					if (rowObject.setSettingsChoice(value)) {
+						fireTableDataChanged();
+					}
+					break;
+				case 2:
+					if (((Boolean) value).booleanValue()) {
+						rowObject.clear(settings);
+						fireTableDataChanged();
+					}
+					break;
+			}
+		}
 	}
 
-	private class SettingsEditor extends AbstractCellEditor implements TableCellEditor {
-
-		private static final long serialVersionUID = 1L;
+	class SettingsEditor extends AbstractCellEditor implements TableCellEditor {
 
 		final static int ENUM = 0;
 		final static int BOOLEAN = 1;
 
 		private int mode;
-		private JComboBox comboBox = new JComboBox();
+		private GComboBox<String> comboBox = new GComboBox<>();
 
 		SettingsEditor() {
-			comboBox.addItemListener(new ItemListener() {
-				@Override
-				public void itemStateChanged(ItemEvent e) {
-					fireEditingStopped();
-				}
-			});
+			comboBox.addItemListener(e -> fireEditingStopped());
 		}
 
-		/**
-		 * @see javax.swing.CellEditor#getCellEditorValue()
-		 */
+		GComboBox<String> getComboBox() {
+			return comboBox;
+		}
+
 		@Override
 		public Object getCellEditorValue() {
 			switch (mode) {
@@ -747,16 +746,13 @@ public class DataSettingsDialog extends DialogComponentProvider {
 		private StringChoices getComboBoxEnum() {
 			String[] items = new String[comboBox.getItemCount()];
 			for (int i = 0; i < items.length; i++) {
-				items[i] = (String) comboBox.getItemAt(i);
+				items[i] = comboBox.getItemAt(i);
 			}
 			StringChoices enuum = new StringChoices(items);
 			enuum.setSelectedValue(comboBox.getSelectedIndex());
 			return enuum;
 		}
 
-		/**
-		 * @see javax.swing.table.TableCellEditor#getTableCellEditorComponent(javax.swing.JTable, java.lang.Object, boolean, int, int)
-		 */
 		@Override
 		public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected,
 				int row, int column) {

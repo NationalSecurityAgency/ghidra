@@ -15,11 +15,6 @@
  */
 package ghidra.app.plugin.core.symboltree;
 
-import javax.swing.ImageIcon;
-
-import docking.ActionContext;
-import docking.action.DockingAction;
-import docking.action.ToolBarData;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.events.*;
 import ghidra.app.plugin.PluginCategoryNames;
@@ -30,8 +25,6 @@ import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.*;
 import ghidra.program.util.ProgramLocation;
-import ghidra.util.HelpLocation;
-import resources.ResourceManager;
 
 //@formatter:off
 @PluginInfo(
@@ -50,17 +43,13 @@ public class SymbolTreePlugin extends Plugin {
 
 	public static final String PLUGIN_NAME = "SymbolTreePlugin";
 
-	private DockingAction symTreeAction;
 	private SymbolTreeProvider provider;
 	private Program program;
 	private GoToService goToService;
 	private boolean processingGoTo;
 
-	final static ImageIcon SYMBOL_TREE_ICON = ResourceManager.loadImage("images/sitemap_color.png");
-
 	public SymbolTreePlugin(PluginTool tool) {
 		super(tool);
-		createAction();
 		provider = new SymbolTreeProvider(tool, this);
 	}
 
@@ -149,26 +138,6 @@ public class SymbolTreePlugin extends Plugin {
 
 	public void goTo(ExternalLocation extLoc) {
 		goToService.goToExternalLocation(extLoc, false);
-	}
-
-	private void createAction() {
-		symTreeAction = new DockingAction("Display Symbol Tree", getName()) {
-			@Override
-			public void actionPerformed(ActionContext context) {
-				showProvider();
-			}
-		};
-		symTreeAction.setToolBarData(new ToolBarData(SYMBOL_TREE_ICON, "View"));
-
-		symTreeAction.setDescription("Display Symbol Tree");
-
-		symTreeAction.setHelpLocation(new HelpLocation(getName(), "SymbolTree"));
-
-		tool.addAction(symTreeAction);
-	}
-
-	private void showProvider() {
-		provider.showComponent(program);
 	}
 
 	public Program getProgram() {

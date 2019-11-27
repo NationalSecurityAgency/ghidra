@@ -21,6 +21,7 @@ import ghidra.program.database.data.DataTypeUtilities;
 import ghidra.program.model.mem.MemBuffer;
 import ghidra.util.InvalidNameException;
 import ghidra.util.UniversalID;
+import ghidra.util.exception.AssertException;
 import ghidra.util.exception.NotYetImplementedException;
 
 /**
@@ -34,7 +35,7 @@ public abstract class CompositeDataTypeImpl extends GenericDataType implements C
 										// subtle errors - One I know of is in the StructureDataType
 										// copyComponent method.  It has built in assumptions about this.
 
-	protected AlignmentType currentAlignment = AlignmentType.DEFAULT_ALIGNED;
+	protected AlignmentType alignmentType = AlignmentType.DEFAULT_ALIGNED;
 	protected int packingValue = NOT_PACKING;
 	protected int externalAlignment = DEFAULT_ALIGNMENT_VALUE;
 
@@ -58,6 +59,34 @@ public abstract class CompositeDataTypeImpl extends GenericDataType implements C
 		description = "";
 	}
 
+	/**
+	 * Get the preferred length for a new component.  For Unions and internally aligned
+	 * structures the preferred component length for a fixed-length dataType will be the 
+	 * length of that dataType.  Otherwise the length returned will be no larger than the
+	 * specified length.
+	 * @param dataType new component datatype
+	 * @param length constrained length or -1 to force use of dataType size.  Dynamic types
+	 * such as string must have a positive length specified.
+	 * @return preferred component length
+	 */
+	protected int getPreferredComponentLength(DataType dataType, int length) {
+		if ((isInternallyAligned() || (this instanceof Union)) && !(dataType instanceof Dynamic)) {
+			length = -1; // force use of datatype size
+		}
+		int dtLength = dataType.getLength();
+		if (length <= 0) {
+			length = dtLength;
+		}
+		else if (dtLength > 0 && dtLength < length) {
+			length = dtLength;
+		}
+		if (length <= 0) {
+			throw new IllegalArgumentException("Positive length must be specified for " +
+				dataType.getDisplayName() + " component");
+		}
+		return length;
+	}
+
 	@Override
 	public boolean isDynamicallySized() {
 		return isInternallyAligned();
@@ -77,6 +106,7 @@ public abstract class CompositeDataTypeImpl extends GenericDataType implements C
 	 * data type.
 	 */
 	protected void checkAncestry(DataType dataType) {
+		// TODO: cyclic checks are easily bypassed by renaming multiple composite instances 
 		if (this.equals(dataType)) {
 			throw new IllegalArgumentException(
 				"Data type " + getDisplayName() + " can't contain itself.");
@@ -94,6 +124,10 @@ public abstract class CompositeDataTypeImpl extends GenericDataType implements C
 	 * @throws IllegalArgumentException if the data type is invalid.
 	 */
 	protected void validateDataType(DataType dataType) {
+		if (isInternallyAligned() && dataType == DataType.DEFAULT) {
+			throw new IllegalArgumentException(
+				"The DEFAULT data type is not allowed in an aligned composite data type.");
+		}
 		if (dataType instanceof FactoryDataType) {
 			throw new IllegalArgumentException("The \"" + dataType.getName() +
 				"\" data type is not allowed in a composite data type.");
@@ -107,10 +141,45 @@ public abstract class CompositeDataTypeImpl extends GenericDataType implements C
 		}
 	}
 
-	@Override
-	public DataTypeComponent add(DataType dataType) {
-		dataType = dataType.clone(getDataTypeManager());
-		return add(dataType, dataType.getLength(), null, null);
+	/**
+	 * Handle replacement of datatype which may impact bitfield datatype.
+	 * @param bitfieldComponent bitfield component
+	 * @param oldDt affected datatype which has been removed or replaced
+	 * @param newDt replacement datatype
+	 * @param true if bitfield component was modified
+	 * @throws InvalidDataTypeException if new datatype is not 
+	 */
+	protected boolean updateBitFieldDataType(DataTypeComponentImpl bitfieldComponent,
+			DataType oldDt, DataType newDt) throws InvalidDataTypeException {
+		if (!bitfieldComponent.isBitFieldComponent()) {
+			throw new AssertException("expected bitfield component");
+		}
+
+		BitFieldDataType bitfieldDt = (BitFieldDataType) bitfieldComponent.getDataType();
+		if (bitfieldDt.getBaseDataType() != oldDt) {
+			return false;
+		}
+
+		if (newDt != null) {
+			BitFieldDataType.checkBaseDataType(newDt);
+			int maxBitSize = 8 * newDt.getLength();
+			if (bitfieldDt.getBitSize() > maxBitSize) {
+				throw new InvalidDataTypeException("Replacement datatype too small for bitfield");
+			}
+		}
+
+		try {
+			BitFieldDataType newBitfieldDt = new BitFieldDataType(newDt,
+				bitfieldDt.getDeclaredBitSize(), bitfieldDt.getBitOffset());
+			bitfieldComponent.setDataType(newBitfieldDt);
+			oldDt.removeParent(this);
+			newDt.addParent(this);
+		}
+		catch (InvalidDataTypeException e) {
+			throw new AssertException("unexpected");
+		}
+
+		return true;
 	}
 
 	@Override
@@ -133,23 +202,28 @@ public abstract class CompositeDataTypeImpl extends GenericDataType implements C
 	}
 
 	@Override
-	public DataTypeComponent add(DataType dataType, int length) {
+	public final DataTypeComponent add(DataType dataType) {
+		return add(dataType, -1, null, null);
+	}
+
+	@Override
+	public final DataTypeComponent add(DataType dataType, int length) {
 		return add(dataType, length, null, null);
 	}
 
 	@Override
-	public DataTypeComponent add(DataType dataType, String fieldName, String comment) {
-		return add(dataType, dataType.getLength(), fieldName, comment);
+	public final DataTypeComponent add(DataType dataType, String fieldName, String comment) {
+		return add(dataType, -1, fieldName, comment);
 	}
 
 	@Override
-	public DataTypeComponent insert(int ordinal, DataType dataType, int length) {
+	public final DataTypeComponent insert(int ordinal, DataType dataType, int length) {
 		return insert(ordinal, dataType, length, null, null);
 	}
 
 	@Override
-	public DataTypeComponent insert(int ordinal, DataType dataType) {
-		return insert(ordinal, dataType, dataType.getLength(), null, null);
+	public final DataTypeComponent insert(int ordinal, DataType dataType) {
+		return insert(ordinal, dataType, -1, null, null);
 	}
 
 	@Override
@@ -170,6 +244,9 @@ public abstract class CompositeDataTypeImpl extends GenericDataType implements C
 
 	@Override
 	public void setPackingValue(int packingValue) {
+		if (packingValue < 0) {
+			packingValue = NOT_PACKING;
+		}
 		aligned = true;
 		this.packingValue = packingValue;
 		adjustInternalAlignment();
@@ -177,17 +254,31 @@ public abstract class CompositeDataTypeImpl extends GenericDataType implements C
 
 	@Override
 	public int getMinimumAlignment() {
+		if (alignmentType == AlignmentType.MACHINE_ALIGNED) {
+			return getMachineAlignment();
+		}
+		if (alignmentType == AlignmentType.DEFAULT_ALIGNED) {
+			return Composite.DEFAULT_ALIGNMENT_VALUE;
+		}
 		return externalAlignment;
 	}
 
 	@Override
 	public void setMinimumAlignment(int externalAlignment) {
-		aligned = true;
-		if (currentAlignment != AlignmentType.ALIGNED_BY_VALUE) {
-			currentAlignment = AlignmentType.ALIGNED_BY_VALUE;
+		if (externalAlignment < 1) {
+			this.externalAlignment = DEFAULT_ALIGNMENT_VALUE;
+			alignmentType = AlignmentType.DEFAULT_ALIGNED;
 		}
-		this.externalAlignment = externalAlignment;
+		else {
+			this.externalAlignment = externalAlignment;
+			alignmentType = AlignmentType.ALIGNED_BY_VALUE;
+		}
+		aligned = true;
 		adjustInternalAlignment();
+	}
+
+	private int getMachineAlignment() {
+		return getDataOrganization().getMachineAlignment();
 	}
 
 	@Override
@@ -197,12 +288,12 @@ public abstract class CompositeDataTypeImpl extends GenericDataType implements C
 
 	@Override
 	public boolean isDefaultAligned() {
-		return currentAlignment == AlignmentType.DEFAULT_ALIGNED;
+		return alignmentType == AlignmentType.DEFAULT_ALIGNED;
 	}
 
 	@Override
 	public boolean isMachineAligned() {
-		return currentAlignment == AlignmentType.MACHINE_ALIGNED;
+		return alignmentType == AlignmentType.MACHINE_ALIGNED;
 	}
 
 	@Override
@@ -210,7 +301,7 @@ public abstract class CompositeDataTypeImpl extends GenericDataType implements C
 		if (this.aligned != aligned) {
 			this.aligned = aligned;
 			if (!aligned) {
-				currentAlignment = AlignmentType.DEFAULT_ALIGNED;
+				alignmentType = AlignmentType.DEFAULT_ALIGNED;
 				packingValue = Composite.NOT_PACKING;
 			}
 		}
@@ -220,14 +311,14 @@ public abstract class CompositeDataTypeImpl extends GenericDataType implements C
 	@Override
 	public void setToDefaultAlignment() {
 		aligned = true;
-		currentAlignment = AlignmentType.DEFAULT_ALIGNED;
+		alignmentType = AlignmentType.DEFAULT_ALIGNED;
 		adjustInternalAlignment();
 	}
 
 	@Override
 	public void setToMachineAlignment() {
 		aligned = true;
-		currentAlignment = AlignmentType.MACHINE_ALIGNED;
+		alignmentType = AlignmentType.MACHINE_ALIGNED;
 		adjustInternalAlignment();
 	}
 
@@ -254,23 +345,23 @@ public abstract class CompositeDataTypeImpl extends GenericDataType implements C
 
 	@Override
 	public int getAlignment() {
-		return getDataOrganization().getAlignment(this, getLength());
+		return CompositeAlignmentHelper.getAlignment(getDataOrganization(), this);
 	}
 
 	// set my alignment info to the same as the given composite
-	protected void setDataAlignmentInfo(Composite composite) {
+	protected void setAlignment(Composite composite) {
 
 		aligned = composite.isInternallyAligned();
 
 		if (composite.isDefaultAligned()) {
-			currentAlignment = AlignmentType.DEFAULT_ALIGNED;
+			alignmentType = AlignmentType.DEFAULT_ALIGNED;
 		}
 		else if (composite.isMachineAligned()) {
-			currentAlignment = AlignmentType.MACHINE_ALIGNED;
+			alignmentType = AlignmentType.MACHINE_ALIGNED;
 		}
 		else {
-			if (currentAlignment != AlignmentType.ALIGNED_BY_VALUE) {
-				currentAlignment = AlignmentType.ALIGNED_BY_VALUE;
+			if (alignmentType != AlignmentType.ALIGNED_BY_VALUE) {
+				alignmentType = AlignmentType.ALIGNED_BY_VALUE;
 			}
 			externalAlignment = composite.getMinimumAlignment();
 		}
@@ -288,7 +379,14 @@ public abstract class CompositeDataTypeImpl extends GenericDataType implements C
 	protected void dumpComponents(StringBuilder buffer, String pad) {
 		for (DataTypeComponent dtc : getComponents()) {
 			DataType dataType = dtc.getDataType();
+			buffer.append(pad + dtc.getOffset());
 			buffer.append(pad + dataType.getDisplayName());
+			if (dataType instanceof BitFieldDataType) {
+				BitFieldDataType bfDt = (BitFieldDataType) dataType;
+				buffer.append("(");
+				buffer.append(Integer.toString(bfDt.getBitOffset()));
+				buffer.append(")");
+			}
 			buffer.append(pad + dtc.getLength());
 			buffer.append(pad + dtc.getFieldName());
 			String comment = dtc.getComment();

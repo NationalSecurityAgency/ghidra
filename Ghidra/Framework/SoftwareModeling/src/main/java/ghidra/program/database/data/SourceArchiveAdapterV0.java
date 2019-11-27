@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,15 +15,14 @@
  */
 package ghidra.program.database.data;
 
-import ghidra.app.plugin.core.datamgr.archive.SourceArchive;
-import ghidra.program.model.data.DataTypeManager;
-import ghidra.util.UniversalID;
-import ghidra.util.exception.VersionException;
-
 import java.io.IOException;
 import java.util.*;
 
 import db.*;
+import ghidra.app.plugin.core.datamgr.archive.SourceArchive;
+import ghidra.program.model.data.DataTypeManager;
+import ghidra.util.UniversalID;
+import ghidra.util.exception.VersionException;
 
 /**
  * Version 0 implementation for accessing the Data Type Archive ID database table. 
@@ -39,8 +37,8 @@ class SourceArchiveAdapterV0 extends SourceArchiveAdapter {
 
 	static final Schema V0_SCHEMA = new Schema(VERSION, "Archive ID",
 		new Class[] { StringField.class, StringField.class, ByteField.class, LongField.class,
-			BooleanField.class }, new String[] { "Domain File ID", "Name", "Type",
-			"Last Sync Time", "Dirty Flag" });
+			BooleanField.class },
+		new String[] { "Domain File ID", "Name", "Type", "Last Sync Time", "Dirty Flag" });
 
 	private Table table;
 
@@ -51,8 +49,8 @@ class SourceArchiveAdapterV0 extends SourceArchiveAdapter {
 	 * @throws VersionException if the the table's version does not match the expected version
 	 * for this adapter.
 	 */
-	public SourceArchiveAdapterV0(DBHandle handle, boolean create) throws VersionException,
-			IOException {
+	public SourceArchiveAdapterV0(DBHandle handle, boolean create)
+			throws VersionException, IOException {
 
 		if (create) {
 			table = handle.createTable(TABLE_NAME, V0_SCHEMA);
@@ -66,9 +64,8 @@ class SourceArchiveAdapterV0 extends SourceArchiveAdapter {
 			}
 			int version = table.getSchema().getVersion();
 			if (version != VERSION) {
-				String msg =
-					"Expected version " + VERSION + " for table " + TABLE_NAME + " but got " +
-						table.getSchema().getVersion();
+				String msg = "Expected version " + VERSION + " for table " + TABLE_NAME +
+					" but got " + table.getSchema().getVersion();
 				if (version < VERSION) {
 					throw new VersionException(msg, VersionException.OLDER_VERSION, true);
 				}
@@ -112,7 +109,7 @@ class SourceArchiveAdapterV0 extends SourceArchiveAdapter {
 
 	@Override
 	public List<Record> getRecords() throws IOException {
-		List<Record> records = new ArrayList<Record>();
+		List<Record> records = new ArrayList<>();
 		RecordIterator iterator = table.iterator();
 		while (iterator.hasNext()) {
 			records.add(iterator.next());

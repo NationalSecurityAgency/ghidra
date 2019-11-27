@@ -66,7 +66,7 @@ public class CodeSymbol extends SymbolDB {
 	 */
 	@Override
 	public SymbolType getSymbolType() {
-		return SymbolType.CODE;
+		return SymbolType.LABEL;
 	}
 
 	@Override
@@ -217,7 +217,8 @@ public class CodeSymbol extends SymbolDB {
 	 */
 	@Override
 	public boolean isValidParent(Namespace parent) {
-		return SymbolType.CODE.isValidParent(symbolMgr.getProgram(), parent, address, isExternal());
+		return SymbolType.LABEL.isValidParent(symbolMgr.getProgram(), parent, address,
+			isExternal());
 
 //		if (isExternal() != parent.isExternal()) {
 //			return false;
@@ -241,15 +242,12 @@ public class CodeSymbol extends SymbolDB {
 //		return true;
 	}
 
-	/**
-	 * @see ghidra.program.model.symbol.Symbol#getName()
-	 */
 	@Override
-	public String getName() {
+	protected String doGetName() {
 		if (getSource() == SourceType.DEFAULT && isExternal()) {
 			return ExternalManagerDB.getDefaultExternalName(this);
 		}
-		return super.getName();
+		return super.doGetName();
 	}
 
 	@Override

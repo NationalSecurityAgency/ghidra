@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,120 +15,101 @@
  */
 package docking.widgets.tree;
 
-import ghidra.util.SystemUtilities;
-import ghidra.util.exception.AssertException;
-import ghidra.util.exception.CancelledException;
-import ghidra.util.task.TaskMonitor;
-import ghidra.util.task.TaskMonitorAdapter;
-
 import java.util.List;
 
-import javax.swing.SwingUtilities;
-
-import docking.widgets.tree.tasks.GTreeLoadChildrenTask;
+import docking.widgets.tree.internal.InProgressGTreeNode;
+import ghidra.util.Swing;
+import ghidra.util.exception.CancelledException;
+import ghidra.util.task.TaskMonitor;
+import util.CollectionUtils;
 
 /**
- * Base class for GTNodes that want to use a lazy loading approach, but the loading may
- * be slow and therefor should be done in another thread.  By using SlowLoadingNode
- * nodes, you don't have to create all the nodes up front and the nodes will only
- * be created as needed.  If you extend this base class, you have to implement one
- * additional method than if you extended AbstractGTreeNode and that is
- * generateChildren(TaskMonitor monitor).
- * The generateChildren(TaskMonitor monitor) method will be called
- * automatically from a task thread when needed. While the loading is taking place,
- * An "In Progress" node will be displayed.
+ * Base class for nodes that generate their children on demand, but because generating their children
+ * is slow, that operation is moved to a background thread.  While the children are being generated,
+ * an {@link InProgressGTreeNode} will appear in the tree until the {@link LoadChildrenTask} has completed.
  */
-public abstract class GTreeSlowLoadingNode extends AbstractGTreeNode {
+public abstract class GTreeSlowLoadingNode extends GTreeLazyNode {
+
+	/**
+	 * Subclass must implement this method to generate their children. This operation will always be
+	 * performed in a background thread (i.e. Not the swing thread)
+	 * @param monitor a TaskMonitor for reporting progress and cancel notification.
+	 * @return the list of children for this node.
+	 * @throws CancelledException if the monitor is cancelled
+	 */
 	public abstract List<GTreeNode> generateChildren(TaskMonitor monitor) throws CancelledException;
 
 	@Override
-	protected final void loadChildren() {
-
+	protected final List<GTreeNode> generateChildren() {
 		final GTree tree = getTree();
-		if (SystemUtilities.isEventDispatchThread()) {
-			if (isChildrenLoadedOrInProgress()) {
-				return;
-			}
-
-			setInProgress(); // this will make isChildrenLoaded() return true for any subsequent calls.			
-			if (tree != null) {
-				GTreeLoadChildrenTask loadTask = new GTreeLoadChildrenTask(tree, this);
-				tree.runTask(loadTask);
-				return;
-			}
+		if (Swing.isSwingThread() && tree != null) {
+			LoadChildrenTask loadTask = new LoadChildrenTask(tree);
+			tree.runTask(loadTask);
+			return CollectionUtils.asList(new InProgressGTreeNode());
 		}
+		return generateChildrenNow(getMonitor(tree));
+	}
 
-		if (isChildrenLoadedOrInProgress() && !isInProgress()) {
-			return; // fully loaded
+	@Override
+	public int loadAll(TaskMonitor monitor) throws CancelledException {
+		if (!isLoaded()) {
+			monitor = new TreeTaskMonitor(monitor, 2);
+			doSetChildren(generateChildren(new TreeTaskMonitor(monitor, 0)));
+			monitor.incrementProgress(1);
 		}
+		return super.loadAll(monitor);
+	}
 
-		setInProgress();
-		doLoadChildren(tree, getMonitor(tree));
+	private List<GTreeNode> generateChildrenNow(TaskMonitor monitor) {
+		try {
+			return generateChildren(monitor);
+		}
+		catch (CancelledException e) {
+			return null;
+		}
 	}
 
 	private TaskMonitor getMonitor(GTree tree) {
 		if (tree == null) {
-			return TaskMonitorAdapter.DUMMY_MONITOR;
+			return TaskMonitor.DUMMY;
 		}
 		return tree.getThreadLocalMonitor();
 	}
 
-	private void doLoadChildren(final GTree tree, TaskMonitor monitor) {
-		if (isChildrenLoaded()) {
-			// Odd case where we have been told to load even though we are already loaded.
-			// Probably in the middle of a filter job.  Need to reset the active chi
-			// in any case.  Calling setChildren will effectively set the allChildren to its
-			// current contents, but will also set the active children.
-			setChildren(doGetAllChildren());
-			return;
+	private class LoadChildrenTask extends GTreeTask {
+
+		LoadChildrenTask(GTree tree) {
+			super(tree);
 		}
 
-		long progressValue = monitor.getProgress();
-		long maxValue = monitor.getMaximum();
-		try {
-			setChildren(generateChildren(monitor));
-		}
-		catch (CancelledException e) {
-			SystemUtilities.runSwingNow(new Runnable() {
-				@Override
-				public void run() {
-					if (tree != null) {
-						tree.collapseAll(tree.getRootNode());
-					}
+		@Override
+		public void run(TaskMonitor monitor) {
+			if (isLoaded()) {
+				return;
+			}
+
+			long progressValue = monitor.getProgress();
+			long maxValue = monitor.getMaximum();
+			monitor.setMessage("Loading children");
+			try {
+				setChildren(generateChildren(monitor));
+			}
+			catch (CancelledException e) {
+				if (!tree.isDisposed()) {
+					runOnSwingThread(new Runnable() {
+						@Override
+						public void run() {
+							tree.collapseAll(tree.getViewRoot());
+						}
+					});
 				}
-			});
-			doSetChildren(null, true);
+				doSetChildren(null);
+			}
+			finally {
+				monitor.initialize(maxValue);
+				monitor.setProgress(progressValue);
+			}
 		}
-		finally {
-			// restore monitor min/max/progress values to original state since we don't know
-			// where we fit into the bigger progress picture.
-			monitor.initialize(maxValue);
-			monitor.setProgress(progressValue);
 
-		}
 	}
-
-	@Override
-	protected void swingSetChildren(List<GTreeNode> childList, boolean notify,
-			boolean onlyIfInProgress) {
-		// intentionally ignore 'onlyIfInProgress'
-		super.swingSetChildren(childList, notify, true);
-	}
-
-	/**
-	 * Note: you cannot call this method from the Swing thread, as the data may not have been 
-	 * loaded.  Instead, this method should be called from a {@link GTreeTask}.
-	 * 
-	 * @param index The index where the node should be inserted
-	 * @param node The node to insert
-	 */
-	@Override
-	public void addNode(int index, GTreeNode node) {
-		if (SwingUtilities.isEventDispatchThread()) {
-			throw new AssertException(
-				"You may not invoke this method on a GTReeSlowLoadingNode from the Swing thread");
-		}
-		super.addNode(index, node);
-	}
-
 }

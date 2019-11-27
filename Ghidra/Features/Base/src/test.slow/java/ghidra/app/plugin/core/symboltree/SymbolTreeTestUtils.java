@@ -15,11 +15,10 @@
  */
 package ghidra.app.plugin.core.symboltree;
 
-import static generic.test.AbstractGTest.waitForCondition;
+import static generic.test.AbstractGTest.*;
 import static generic.test.AbstractGenericTest.*;
-import static ghidra.test.AbstractGhidraHeadedIntegrationTest.getAction;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static ghidra.test.AbstractGhidraHeadedIntegrationTest.*;
+import static org.junit.Assert.*;
 
 import java.awt.Container;
 import java.awt.datatransfer.Clipboard;
@@ -32,11 +31,14 @@ import javax.swing.JTree;
 import javax.swing.tree.DefaultTreeCellEditor;
 import javax.swing.tree.TreePath;
 
+import org.apache.commons.lang3.StringUtils;
+
 import docking.ActionContext;
 import docking.action.DockingActionIf;
 import docking.action.ToggleDockingAction;
 import docking.test.AbstractDockingTest;
-import docking.widgets.tree.*;
+import docking.widgets.tree.GTree;
+import docking.widgets.tree.GTreeNode;
 import docking.widgets.tree.support.GTreeNodeTransferable;
 import ghidra.app.plugin.core.symboltree.nodes.*;
 import ghidra.app.services.ProgramManager;
@@ -46,7 +48,6 @@ import ghidra.program.model.data.Undefined1DataType;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.*;
 import ghidra.test.ToyProgramBuilder;
-import ghidra.util.StringUtilities;
 
 /**
  * Utility class that has common methods needed by the Junit tests.
@@ -57,7 +58,7 @@ class SymbolTreeTestUtils {
 	private SymbolTreePlugin plugin;
 	private DockingActionIf symTreeAction;
 	private SymbolGTree tree;
-	private GTreeRootNode rootGTreeNode;
+	private GTreeNode rootGTreeNode;
 	private SymbolTreeProvider provider;
 	private DockingActionIf renameAction;
 	private DockingActionIf cutAction;
@@ -89,14 +90,14 @@ class SymbolTreeTestUtils {
 		this.plugin = plugin;
 		this.program = buildProgram();
 
-		symTreeAction = getAction(plugin, "Display Symbol Tree");
+		symTreeAction = getAction(plugin, "Symbol Tree");
 	}
 
 	SymbolTreeTestUtils(SymbolTreePlugin plugin, Program program) {
 		this.plugin = plugin;
 		this.program = program;
 
-		symTreeAction = getAction(plugin, "Display Symbol Tree");
+		symTreeAction = getAction(plugin, "Symbol Tree");
 	}
 
 	public static Program buildProgram() throws Exception {
@@ -223,7 +224,7 @@ class SymbolTreeTestUtils {
 	}
 
 	void collapseTree() {
-		GTreeRootNode root = tree.getRootNode();
+		GTreeNode root = tree.getViewRoot();
 		List<GTreeNode> topLevelNodes = root.getChildren();
 		topLevelNodes.forEach(n -> tree.collapseAll(n));
 		waitForTree();
@@ -333,7 +334,7 @@ class SymbolTreeTestUtils {
 		provider = plugin.getProvider();
 		tree = findComponent(provider.getComponent(), SymbolGTree.class);
 		waitForTree();
-		rootGTreeNode = tree.getRootNode();
+		rootGTreeNode = tree.getViewRoot();
 		renameAction = getAction(plugin, "Rename Symbol");
 		assertNotNull(renameAction);
 		cutAction = getAction(plugin, "Cut SymbolTree Node");
@@ -405,13 +406,12 @@ class SymbolTreeTestUtils {
 	}
 
 	public static GTreeNode getNode(GTree tree, String... path) {
-		GTreeRootNode rootNode = tree.getRootNode();
+		GTreeNode rootNode = tree.getModelRoot();
 		String rootName = path[0];
 		if (!rootNode.getName().equals(rootName)) {
 			throw new RuntimeException(
 				"When selecting paths by name the first path element must be the " +
-					"name of the root node - path: " +
-					StringUtilities.convertStringArray(path, "."));
+					"name of the root node - path: " + StringUtils.join(path, '.'));
 		}
 		GTreeNode node = rootNode;
 		for (int i = 1; i < path.length; i++) {

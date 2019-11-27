@@ -28,9 +28,14 @@ import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.Symbol;
 import ghidra.util.HelpLocation;
+import ghidra.util.Swing;
 import ghidra.util.table.GhidraTable;
+import resources.ResourceManager;
 
 class ReferenceProvider extends ComponentProviderAdapter {
+
+	private static final ImageIcon ICON = ResourceManager.loadImage("images/table_go.png");
+
 	private SymbolTablePlugin plugin;
 	private SymbolReferenceModel referenceKeyModel;
 	private ReferencePanel referencePanel;
@@ -39,15 +44,21 @@ class ReferenceProvider extends ComponentProviderAdapter {
 	ReferenceProvider(SymbolTablePlugin plugin) {
 		super(plugin.getTool(), "Symbol References", plugin.getName(), ProgramActionContext.class);
 		this.plugin = plugin;
+
+		setIcon(ICON);
+		addToToolbar();
 		setHelpLocation(new HelpLocation(plugin.getName(), "Symbol_References"));
 		setWindowGroup("symbolTable");
 		setIntraGroupPosition(WindowPosition.RIGHT);
+
 		renderer = new SymbolRenderer();
 
 		referenceKeyModel =
 			new SymbolReferenceModel(plugin.getBlockModelService(), plugin.getTool());
 		referencePanel =
 			new ReferencePanel(this, referenceKeyModel, renderer, plugin.getGoToService());
+
+		addToTool();
 	}
 
 	void dispose() {
@@ -74,9 +85,9 @@ class ReferenceProvider extends ComponentProviderAdapter {
 		}
 	}
 
-	void symbolRemoved(long symbolID) {
+	void symbolRemoved(Symbol symbol) {
 		if (isVisible()) {
-			referenceKeyModel.symbolRemoved(symbolID);
+			referenceKeyModel.symbolRemoved(symbol);
 		}
 	}
 
@@ -119,11 +130,6 @@ class ReferenceProvider extends ComponentProviderAdapter {
 		return "(" + referenceKeyModel.getDescription() + ")";
 	}
 
-	@Override
-	public ImageIcon getIcon() {
-		return SymbolTablePlugin.REF_GIF;
-	}
-
 	void open() {
 		setVisible(true);
 	}
@@ -136,7 +142,11 @@ class ReferenceProvider extends ComponentProviderAdapter {
 	@Override
 	public void componentShown() {
 		referenceKeyModel.setProgram(plugin.getProgram());
-		plugin.openSymbolProvider();
+
+		// Note: this is a bit of a hack--if we do this during a tool's restore process, then
+		//       there is a chance that the Symbol Provider has not yet been re-loaded.   This
+		//       is only needed due to the odd dependency of this provider upon the Symbol Provider.
+		Swing.runLater(plugin::openSymbolProvider);
 	}
 
 	@Override
@@ -147,5 +157,4 @@ class ReferenceProvider extends ComponentProviderAdapter {
 	public void updateTitle() {
 		setSubTitle(generateSubTitle());
 	}
-
 }

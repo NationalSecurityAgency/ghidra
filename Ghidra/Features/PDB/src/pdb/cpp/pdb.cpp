@@ -17,64 +17,61 @@
 #include "find.h"
 #include "print.h"
 #include "symbol.h"
+#include <stdlib.h>
 
-IDiaSession     * pSession;//Provides a query context for debug symbols
-IDiaSymbol      * pGlobal;
-IDiaDataSource  * pSource;
+PDBApiContext::PDBApiContext(const std::wstring& szFilename, const std::wstring& szSignature, const std::wstring& szAge)
+{
+	if (FAILED(mCoInit.Result())) {
+		fatal("Unable to initialize\n");
+	}
+	init(szFilename, szSignature, szAge);
+}
 
-wchar_t * szLookup = NULL;
+PDBApiContext::~PDBApiContext()
+{
+	dispose();
+}
 
-void dispose() {
-	CoUninitialize();
-	pSource  = 0;
-	pSession = 0;
-	pGlobal  = 0;
+void PDBApiContext::dispose() {
 	printf("</pdb>\n");
 }
 
-int init(const char * szFilename, const char * szSignature, const char * szAge) {
-
-	if ( CoInitialize(NULL) < 0) {
-		fatal("Unable to initialize\n");
-	}
+int PDBApiContext::init(const std::wstring& szFilename, const std::wstring& szSignature, const std::wstring& szAge) {
 
 	HRESULT hr = CoCreateInstance(_uuidof( DiaSource ), 
 									NULL, 
 									CLSCTX_INPROC_SERVER, 
-									_uuidof( IDiaDataSource ), 
-									(void **) &pSource);
-	if (hr < 0) {
+									IID_PPV_ARGS(&pSource));
+	if (FAILED(hr)) {
 		switch (hr) {
 			case REGDB_E_CLASSNOTREG:
 				fatal("Unable to locate the DIA SDK. It is required to load PDB files.\n" \
 					  "* See docs/README_PDB.html for DLL registration instructions.\n");
 				break;
 			default:
-				char msg[256];
-				sprintf(msg, "Unspecified error occurred: 0x%x\n", hr);
+				char msg[256] = {};
+				sprintf_s(msg, "Unspecified error occurred: 0x%lx\n", hr);
 				fatal(msg);
 				break;
 		}
 	}
 
-	wchar_t wszFilename[ _MAX_PATH ];
-	mbstowcs( wszFilename, szFilename, sizeof( wszFilename ) );
-
-	if (szSignature == NULL && szAge == NULL) {
-		hr = pSource->loadDataFromPdb( wszFilename );
+	if (szSignature.empty() && szAge.empty()) {
+		hr = pSource->loadDataFromPdb(szFilename.c_str() );
 	}
-	else if (szSignature != NULL && szAge != NULL) {
-		GUID guid;
-		int isValidGUID = atog(&guid, szSignature);
+	else if (!szSignature.empty() && !szAge.empty()) {
+		GUID guid = {};
+		std::wstring bracedGuidString = L"{" + szSignature + L"}";;
+		const HRESULT guidConv = CLSIDFromString(bracedGuidString.c_str(), &guid);
 
-		DWORD age = strtol(szAge, NULL, 16);
+		const DWORD age = wcstol(szAge.c_str(), NULL, 16);
 
-		if (isValidGUID == 0) {// .NET or later PDB file
-			hr = pSource->loadAndValidateDataFromPdb( wszFilename, &guid, 0, age );
+		if (SUCCEEDED(guidConv)) {// .NET or later PDB file
+			hr = pSource->loadAndValidateDataFromPdb(szFilename.c_str(), &guid, 0, age );
 		}
 		else {
-			DWORD signature = strtol(szSignature, NULL, 16);
-			hr = pSource->loadAndValidateDataFromPdb( wszFilename, NULL, signature, age );
+			const DWORD signature = wcstol(szSignature.c_str(), NULL, 16);
+			hr = pSource->loadAndValidateDataFromPdb(szFilename.c_str(), NULL, signature, age );
 		}
 	}
 	else {
@@ -82,10 +79,10 @@ int init(const char * szFilename, const char * szSignature, const char * szAge) 
 	}
 	checkErr(hr);
 
-	if (pSource->openSession( &pSession ) < 0) {
+	if (pSource->openSession( &pSession ) != S_OK) {
 		fatal("Unable to open session\n");
 	}
-	if (pSession->get_globalScope( &pGlobal ) < 0) {
+	if (pSession->get_globalScope( &pGlobal ) != S_OK) {
 		fatal("Unable to get global scope\n");
 	}
 
@@ -95,30 +92,27 @@ int init(const char * szFilename, const char * szSignature, const char * szAge) 
 		fatal("Unable to get global symbol index\n");
 	}
 
-	BSTR exename = getName(pGlobal);
-	
-	GUID currGUID;
-	BSTR guidString;
-
-	DWORD currAge;
+	const std::wstring exename = getName(*pGlobal);
 
 	// Include PDB GUID and age in XML output for compatibility checking
-	if (pGlobal->get_guid( &currGUID ) == S_OK) {
-		size_t maxGUIDStrLen = 64;
-		wchar_t * guidStr = (wchar_t *)calloc(maxGUIDStrLen, sizeof(wchar_t));
-		StringFromGUID2(currGUID, guidStr, maxGUIDStrLen);
-		guidString = guidStr;
+	GUID currGUID = {};
+	DWORD currAge = 0;
+	int maxGUIDStrLen = 64;
+	std::wstring guidStr(maxGUIDStrLen, L'\0');
 
-		if (pGlobal->get_age( &currAge ) == S_OK) {
-			// don't do anything?
-		} else {
+	if (pGlobal->get_guid( &currGUID ) == S_OK) {
+		if (StringFromGUID2(currGUID, &guidStr[0], maxGUIDStrLen) <= 0) {
+			fatal("Unable to convert GUID\n");
+		}
+
+		if (pGlobal->get_age( &currAge ) != S_OK) {
 			fatal("Unable to get PDB age\n");
 		}
 	} else {
 		fatal("Unable to get GUID\n");
 	}
 
-	printf("<pdb file=\"%s\" exe=\"%ws\" guid=\"%ws\" age=\"%ld\">\n", szFilename, exename, guidString, currAge);
+	printf("<pdb file=\"%S\" exe=\"%S\" guid=\"%S\" age=\"%ld\">\n", szFilename.c_str(), exename.c_str(), guidStr.c_str(), currAge);
 
 	return hr;
 }

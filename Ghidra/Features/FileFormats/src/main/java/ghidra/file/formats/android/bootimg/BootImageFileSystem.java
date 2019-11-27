@@ -86,7 +86,7 @@ public class BootImageFileSystem extends GFileSystemBase {
 	}
 
 	@Override
-	public String getInfo(GFile file, TaskMonitor monitor) throws IOException {
+	public String getInfo(GFile file, TaskMonitor monitor) {
 		if (file == kernelFile) {
 			return "This is the actual KERNEL for the android device. You can analyze this file.";
 		}

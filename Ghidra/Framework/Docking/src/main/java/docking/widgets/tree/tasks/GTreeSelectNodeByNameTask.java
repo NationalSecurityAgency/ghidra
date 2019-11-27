@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,17 +15,17 @@
  */
 package docking.widgets.tree.tasks;
 
-import ghidra.util.Msg;
-import ghidra.util.StringUtilities;
-import ghidra.util.exception.CancelledException;
-import ghidra.util.task.TaskMonitor;
-
 import javax.swing.JTree;
 import javax.swing.tree.TreePath;
+
+import org.apache.commons.lang3.StringUtils;
 
 import docking.widgets.tree.*;
 import docking.widgets.tree.internal.GTreeSelectionModel;
 import docking.widgets.tree.support.GTreeSelectionEvent.EventOrigin;
+import ghidra.util.Msg;
+import ghidra.util.exception.CancelledException;
+import ghidra.util.task.TaskMonitor;
 
 public class GTreeSelectNodeByNameTask extends GTreeTask {
 
@@ -44,12 +43,12 @@ public class GTreeSelectNodeByNameTask extends GTreeTask {
 	@Override
 	public void run(TaskMonitor monitor) throws CancelledException {
 		monitor.setMessage("Selecting paths");
-		GTreeNode node = tree.getRootNode();
+		GTreeNode node = tree.getViewRoot();
 
 		String rootName = names[0];
 		if (!node.getName().equals(rootName)) {
 			Msg.debug(this, "When selecting paths by name the first path element must be the " +
-				"name of the root node - path: " + StringUtilities.convertStringArray(names, "."));
+				"name of the root node - path: " + StringUtils.join(names, '.'));
 			return;
 		}
 
@@ -57,10 +56,8 @@ public class GTreeSelectNodeByNameTask extends GTreeTask {
 			monitor.checkCanceled();
 			node = findNodeByName(node, names[i], monitor);
 			if (node == null) {
-				Msg.debug(
-					this,
-					"Could not find node to select - path: " +
-						StringUtilities.convertStringArray(names, "."));
+				Msg.debug(this,
+					"Could not find node to select - path: " + StringUtils.join(names, '.'));
 				return;
 			}
 		}
@@ -80,17 +77,14 @@ public class GTreeSelectNodeByNameTask extends GTreeTask {
 	}
 
 	private void selectPath(final TreePath treePath, final TaskMonitor monitor) {
-		runOnSwingThread(new Runnable() {
-			@Override
-			public void run() {
-				if (monitor.isCancelled()) {
-					return; // we can be cancelled while waiting for Swing to run us
-				}
-
-				GTreeSelectionModel selectionModel = tree.getGTSelectionModel();
-				selectionModel.setSelectionPaths(new TreePath[] { treePath }, origin);
-				jTree.scrollPathToVisible(treePath);
+		runOnSwingThread(() -> {
+			if (monitor.isCancelled()) {
+				return; // we can be cancelled while waiting for Swing to run us
 			}
+
+			GTreeSelectionModel selectionModel = tree.getGTSelectionModel();
+			selectionModel.setSelectionPaths(new TreePath[] { treePath }, origin);
+			jTree.scrollPathToVisible(treePath);
 		});
 	}
 

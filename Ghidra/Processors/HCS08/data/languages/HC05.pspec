@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+     This is the processor specification for the HC05 (6805).
+-->
+<processor_spec>
+  <programcounter register="PC"/>
+  <volatile outputop="write_volatile" inputop="read_volatile">
+    <range space="RAM" first="0x0"    last="0x1F"/>
+  </volatile>
+  <default_symbols>
+    <symbol name="PORTA" address="0"/>
+    <symbol name="PORTB" address="1"/>
+    <symbol name="PORTC" address="2"/>
+    <symbol name="DDRA"  address="4"/>
+    <symbol name="DDRB"  address="5"/>
+    <symbol name="DDRC"  address="6"/>
+    <symbol name="TSC"   address="8"/>
+    <symbol name="TCR"   address="9"/>
+    <symbol name="SPCR"  address="A"/>
+    <symbol name="SPSR"  address="B"/>
+    <symbol name="SPDR"  address="C"/>
+    <symbol name="COP_Register"            address="1FF0" entry="true" type="code_ptr"/>
+    <symbol name="MaskOption"              address="1FF1" entry="true" type="code_ptr"/>
+    <symbol name="VECTOR_On-Chip_Timer"           address="1FF8" entry="true" type="code_ptr"/>
+    <symbol name="VECTOR_IRQ"                     address="1FFA" entry="true" type="code_ptr"/>
+    <symbol name="VECTOR_SWI"                     address="1FFC" entry="true" type="code_ptr"/>
+    <symbol name="VECTOR_Reset"                   address="1FFE" entry="true" type="code_ptr"/>
+  </default_symbols>
+  <default_memory_blocks>
+    <memory_block name="IO"      start_address="0"    length="0x20" initialized="false"/>
+    <memory_block name="LOW_RAM" start_address="0xC0" length="0x40" initialized="false"/>
+  </default_memory_blocks>
+</processor_spec>

@@ -642,6 +642,38 @@ define pcodeop vcvtps2pd_avx ;
 	# TODO ZmmReg1 = zext(YmmReg1)
 }
 
+# VCVTPH2PS 5-33 PAGE 1857 LINE 96839
+define pcodeop vcvtph2ps_f16c ;
+:VCVTPH2PS XmmReg1, XmmReg2_m64 is $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W0); byte=0x13; (XmmReg1 & YmmReg1) ... & XmmReg2_m64
+{
+        local tmp:16 = vcvtph2ps_f16c( XmmReg2_m64 );
+        YmmReg1 = zext(tmp);
+        # TODO ZmmReg1 = zext(XmmReg1)
+}
+
+# VCVTPH2PS 5-33 PAGE 1857 LINE 96842
+:VCVTPH2PS YmmReg1, XmmReg2_m128 is $(VEX_L256) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W0); byte=0x13; YmmReg1 ... & XmmReg2_m128
+{
+        YmmReg1 = vcvtph2ps_f16c( XmmReg2_m128 );
+        # TODO ZmmReg1 = zext(YmmReg1)
+}
+
+# VCVTPS2PH 5-36 PAGE 1860 LINE 96992
+define pcodeop vcvtps2ph_f16c ;
+:VCVTPS2PH XmmReg2_m64, XmmReg1, imm8 is $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F3A) & $(VEX_W0); byte=0x1D; XmmReg1 ... & XmmReg2_m64; imm8
+{
+        XmmReg2_m64 = vcvtps2ph_f16c( XmmReg1, imm8:1 );
+        # TODO ZmmReg2 = zext(XmmReg2)
+}
+
+# VCVTPS2PH 5-36 PAGE 1860 LINE 96995
+:VCVTPS2PH XmmReg2_m128, YmmReg1, imm8 is $(VEX_L256) & $(VEX_PRE_66) & $(VEX_0F3A) & $(VEX_W0); byte=0x1D; YmmReg1 ... & XmmReg2_m128; imm8
+{
+        XmmReg2_m128 = vcvtps2ph_f16c( YmmReg1, imm8:1 );
+        # TODO ZmmReg2 = zext(XmmReg2)
+}
+
+
 # CVTSD2SI 3-253 PAGE 823 LINE 44315
 define pcodeop vcvtsd2si_avx ;
 :VCVTSD2SI Reg32, XmmReg2_m64 is $(VEX_NONE) & $(VEX_L128) & $(VEX_PRE_F2) & $(VEX_0F) & $(VEX_W0); byte=0x2D; Reg32 ... & XmmReg2_m64
@@ -1828,6 +1860,9 @@ define pcodeop vpblendw_avx ;
 	YmmReg1 = zext(tmp);
 	# TODO ZmmReg1 = zext(XmmReg1)
 }
+
+
+
 
 # PCMPEQB/PCMPEQW/PCMPEQD 4-244 PAGE 1364 LINE 70821
 define pcodeop vpcmpeqb_avx ;
@@ -3080,37 +3115,66 @@ define pcodeop vunpcklps_avx ;
 	# TODO ZmmReg1 = zext(YmmReg1)
 }
 
-# VBROADCAST 5-12 PAGE 1836 LINE 94909
+
+# VBROADCAST 5-12 PAGE 1836 LINE 95843
 define pcodeop vbroadcastss_avx ;
-:VBROADCASTSS XmmReg1, m32 is $(VEX_NONE) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W0); byte=0x18; (XmmReg1 & YmmReg1) ... & m32
+:VBROADCASTSS XmmReg1, m32 is $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W0); byte=0x18; (XmmReg1 & YmmReg1) ... & m32
 {
-	local tmp:16 = vbroadcastss_avx( m32 );
-	YmmReg1 = zext(tmp);
-	# TODO ZmmReg1 = zext(XmmReg1)
+        local tmp:16 = vbroadcastss_avx( m32 );
+        YmmReg1 = zext(tmp);
+        # TODO ZmmReg1 = zext(XmmReg1)
 }
 
-# VBROADCAST 5-12 PAGE 1836 LINE 94911
-:VBROADCASTSS YmmReg1, m32 is $(VEX_NONE) & $(VEX_L256) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W0); byte=0x18; YmmReg1 ... & m32
+# VBROADCAST 5-12 PAGE 1836 LINE 95845
+:VBROADCASTSS YmmReg1, m32 is $(VEX_L256) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W0); byte=0x18; YmmReg1 ... & m32
 {
-	YmmReg1 = vbroadcastss_avx( m32 );
-	# TODO ZmmReg1 = zext(YmmReg1)
+        YmmReg1 = vbroadcastss_avx( m32 );
+        # TODO ZmmReg1 = zext(YmmReg1)
 }
 
-# VBROADCAST 5-12 PAGE 1836 LINE 94913
+# VBROADCAST 5-12 PAGE 1836 LINE 95847
 define pcodeop vbroadcastsd_avx ;
-:VBROADCASTSD YmmReg1, m64 is $(VEX_NONE) & $(VEX_L256) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W0); byte=0x19; YmmReg1 ... & m64
+:VBROADCASTSD YmmReg1, m64 is $(VEX_L256) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W0); byte=0x19; YmmReg1 ... & m64
 {
-	YmmReg1 = vbroadcastsd_avx( m64 );
-	# TODO ZmmReg1 = zext(YmmReg1)
+        YmmReg1 = vbroadcastsd_avx( m64 );
+        # TODO ZmmReg1 = zext(YmmReg1)
 }
 
-# VBROADCAST 5-12 PAGE 1836 LINE 94915
+# VBROADCAST 5-12 PAGE 1836 LINE 95849
 define pcodeop vbroadcastf128_avx ;
-:VBROADCASTF128 YmmReg1, m128 is $(VEX_NONE) & $(VEX_L256) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W0); byte=0x1A; YmmReg1 ... & m128
+:VBROADCASTF128 YmmReg1, m128 is $(VEX_L256) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W0); byte=0x1A; YmmReg1 ... & m128
 {
-	YmmReg1 = vbroadcastf128_avx( m128 );
-	# TODO ZmmReg1 = zext(YmmReg1)
+        YmmReg1 = vbroadcastf128_avx( m128 );
+        # TODO ZmmReg1 = zext(YmmReg1)
 }
+
+# VBROADCAST 5-12 PAGE 1836 LINE 95851
+# WARNING: duplicate opcode VEX.128.66.0F38.W0 18 /r last seen on 5-12 PAGE 1836 LINE 95843 for "VBROADCASTSS xmm1, xmm2"
+define pcodeop vbroadcastss_avx2 ;
+:VBROADCASTSS XmmReg1, XmmReg2 is $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W0); byte=0x18; (XmmReg1 & YmmReg1) & (mod=0x3 & XmmReg2)
+{
+        local tmp:16 = vbroadcastss_avx2( XmmReg2 );
+        YmmReg1 = zext(tmp);
+        # TODO ZmmReg1 = zext(XmmReg1)
+}
+
+# VBROADCAST 5-12 PAGE 1836 LINE 95854
+# WARNING: duplicate opcode VEX.256.66.0F38.W0 18 /r last seen on 5-12 PAGE 1836 LINE 95845 for "VBROADCASTSS ymm1, xmm2"
+:VBROADCASTSS YmmReg1, XmmReg2 is $(VEX_L256) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W0); byte=0x18; YmmReg1 & (mod=0x3 & XmmReg2)
+{
+        YmmReg1 = vbroadcastss_avx2( XmmReg2 );
+        # TODO ZmmReg1 = zext(YmmReg1)
+}
+
+# VBROADCAST 5-12 PAGE 1836 LINE 95856
+# WARNING: duplicate opcode VEX.256.66.0F38.W0 19 /r last seen on 5-12 PAGE 1836 LINE 95847 for "VBROADCASTSD ymm1, xmm2"
+define pcodeop vbroadcastsd_avx2 ;
+:VBROADCASTSD YmmReg1, XmmReg2 is $(VEX_L256) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W0); byte=0x19; YmmReg1 & (mod=0x3 & XmmReg2)
+{
+        YmmReg1 = vbroadcastsd_avx2( XmmReg2 );
+        # TODO ZmmReg1 = zext(YmmReg1)
+}
+
 
 # VEXTRACTF128/VEXTRACTF32x4/VEXTRACTF64x2/VEXTRACTF32x8/VEXTRACTF64x4 5-99 PAGE 1923 LINE 99102
 define pcodeop vextractf128_avx ;

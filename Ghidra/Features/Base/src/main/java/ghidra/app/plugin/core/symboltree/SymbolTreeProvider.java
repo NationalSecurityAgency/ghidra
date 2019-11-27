@@ -45,9 +45,11 @@ import ghidra.util.*;
 import ghidra.util.exception.*;
 import ghidra.util.task.SwingUpdateManager;
 import ghidra.util.task.TaskMonitor;
+import resources.ResourceManager;
 
 public class SymbolTreeProvider extends ComponentProviderAdapter {
 
+	private static final ImageIcon ICON = ResourceManager.loadImage("images/sitemap_color.png");
 	private final static String NAME = "Symbol Tree";
 
 	private ClipboardOwner clipboardOwner;
@@ -101,6 +103,9 @@ public class SymbolTreeProvider extends ComponentProviderAdapter {
 		super(tool, NAME, plugin.getName());
 		this.plugin = plugin;
 
+		setIcon(ICON);
+		addToToolbar();
+
 		domainObjectListener = new SymbolTreeProviderDomainObjectListener();
 
 		localClipboard = new Clipboard(NAME);
@@ -132,7 +137,7 @@ public class SymbolTreeProvider extends ComponentProviderAdapter {
 
 	private SymbolGTree createTree(SymbolTreeRootNode rootNode) {
 		if (tree != null) {
-			GTreeNode oldRootNode = tree.getRootNode();
+			GTreeNode oldRootNode = tree.getModelRoot();
 			tree.setProgram(rootNode.getProgram());
 			tree.setRootNode(rootNode);
 
@@ -229,11 +234,6 @@ public class SymbolTreeProvider extends ComponentProviderAdapter {
 	@Override
 	public void componentShown() {
 		setProgram(program);
-	}
-
-	@Override
-	public ImageIcon getIcon() {
-		return SymbolTreePlugin.SYMBOL_TREE_ICON;
 	}
 
 //==================================================================================================
@@ -357,13 +357,14 @@ public class SymbolTreeProvider extends ComponentProviderAdapter {
 
 	private boolean canReparentSymbol(Symbol symbol) {
 		SymbolType symbolType = symbol.getSymbolType();
-		return (symbolType == SymbolType.CODE) || (symbolType == SymbolType.FUNCTION) ||
+		return (symbolType == SymbolType.LABEL) || (symbolType == SymbolType.FUNCTION) ||
 			(symbolType == SymbolType.NAMESPACE) || (symbolType == SymbolType.CLASS);
 	}
 
 	private void rebuildTree() {
-		GTreeNode node = tree.getRootNode();
-		node.removeAll();
+		SymbolTreeRootNode node = (SymbolTreeRootNode) tree.getModelRoot();
+		node.setChildren(null);
+		tree.refilterLater();
 	}
 
 	private void symbolChanged(Symbol symbol, String oldName) {
@@ -446,8 +447,7 @@ public class SymbolTreeProvider extends ComponentProviderAdapter {
 			return;
 		}
 
-		GTreeNode node = tree.getRootNode();
-		SymbolTreeRootNode rootNode = (SymbolTreeRootNode) node;
+		SymbolTreeRootNode rootNode = (SymbolTreeRootNode) tree.getViewRoot();
 		tree.runTask(new SearchTask(tree, rootNode, symbol));
 	}
 
@@ -535,12 +535,12 @@ public class SymbolTreeProvider extends ComponentProviderAdapter {
 		@Override
 		void doRun(TaskMonitor monitor) throws CancelledException {
 
-			GTreeNode node = tree.getRootNode();
-			SymbolTreeRootNode rootNode = (SymbolTreeRootNode) node;
+			SymbolTreeRootNode rootNode = (SymbolTreeRootNode) tree.getModelRoot();
 
 			// the symbol may have been deleted while we are processing bulk changes
 			if (symbol.checkIsValid()) {
-				rootNode.symbolAdded(symbol);
+				GTreeNode newNode = rootNode.symbolAdded(symbol);
+				tree.refilterLater(newNode);
 			}
 		}
 	}
@@ -562,15 +562,14 @@ public class SymbolTreeProvider extends ComponentProviderAdapter {
 		@Override
 		void doRun(TaskMonitor monitor) throws CancelledException {
 
-			GTreeNode node = tree.getRootNode();
-			SymbolTreeRootNode rootNode = (SymbolTreeRootNode) node;
-
-			rootNode.symbolRemoved(symbol, oldName, monitor);
+			SymbolTreeRootNode root = (SymbolTreeRootNode) tree.getModelRoot();
+			root.symbolRemoved(symbol, monitor);
 
 			// the symbol may have been deleted while we are processing bulk changes
 			if (symbol.checkIsValid()) {
-				rootNode.symbolAdded(symbol);
+				root.symbolAdded(symbol);
 			}
+			tree.refilterLater();
 		}
 	}
 
@@ -582,9 +581,9 @@ public class SymbolTreeProvider extends ComponentProviderAdapter {
 
 		@Override
 		void doRun(TaskMonitor monitor) throws CancelledException {
-			GTreeNode node = tree.getRootNode();
-			SymbolTreeRootNode rootNode = (SymbolTreeRootNode) node;
-			rootNode.symbolRemoved(symbol, monitor);
+			SymbolTreeRootNode root = (SymbolTreeRootNode) tree.getModelRoot();
+			root.symbolRemoved(symbol, monitor);
+			tree.refilterLater();
 		}
 	}
 

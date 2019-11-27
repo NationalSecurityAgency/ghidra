@@ -1,0 +1,13 @@
+// Format: LanguageID#CustomGDISExecutable
+//
+// Mapping of LanguageNameFromGhidra to external (gdis) architecture names is no longer done here.
+// This functionality has been moved to each language's ldefs file.
+// External names are mapped via 'external_name' tags in language definitions.
+// The CustomGDISExecutable is found via a call to Application.getOSFile(), which will search in
+// the platform-specific OS directory within all modules.
+//
+// Lines starting with "//" are not parsed.
+//
+// '*' can be used to wild-card parts of the languageID
+//
+

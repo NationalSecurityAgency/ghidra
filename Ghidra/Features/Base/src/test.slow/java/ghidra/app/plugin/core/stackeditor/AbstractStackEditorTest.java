@@ -17,8 +17,6 @@ package ghidra.app.plugin.core.stackeditor;
 
 import static org.junit.Assert.*;
 
-import java.awt.event.KeyEvent;
-
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 
@@ -31,6 +29,7 @@ import ghidra.app.plugin.core.analysis.AutoAnalysisPlugin;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
 import ghidra.app.plugin.core.compositeeditor.*;
 import ghidra.app.plugin.core.function.FunctionPlugin;
+import ghidra.framework.plugintool.util.PluginException;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressFactory;
 import ghidra.program.model.data.*;
@@ -76,10 +75,6 @@ public abstract class AbstractStackEditorTest extends AbstractEditorTest {
 
 	private final boolean positiveStack;
 
-	/**
-	 * Constructor for an StructureEditorTest.
-	 * @param name the testcase name.
-	 */
 	public AbstractStackEditorTest(boolean positiveStack) {
 		super();
 		this.positiveStack = positiveStack;
@@ -139,7 +134,7 @@ public abstract class AbstractStackEditorTest extends AbstractEditorTest {
 
 		super.tearDown();
 
-		closeAllWindowsAndFrames();
+		closeAllWindows();
 	}
 
 	private void cancelEditing() {
@@ -153,11 +148,8 @@ public abstract class AbstractStackEditorTest extends AbstractEditorTest {
 		waitForPostedSwingRunnables();// some editing notifications are in an invokeLater
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.compositeeditor.EditorTestAdapter#setUpPlugins()
-	 */
 	@Override
-	protected void setUpPlugins() throws Exception {
+	protected void setUpPlugins() throws PluginException {
 		super.setUpPlugins();
 
 		tool.addPlugin(AutoAnalysisPlugin.class.getName());
@@ -279,7 +271,7 @@ public abstract class AbstractStackEditorTest extends AbstractEditorTest {
 
 	void getActions() {
 		actions = ((StackEditorProvider) provider).getActions();
-		for (CompositeEditorAction element : actions) {
+		for (CompositeEditorTableAction element : actions) {
 			if (element instanceof FavoritesAction) {
 				favorites.add((FavoritesAction) element);
 			}
@@ -316,19 +308,6 @@ public abstract class AbstractStackEditorTest extends AbstractEditorTest {
 		}
 	}
 
-	@Override
-	protected void backspace(final int repeat) {
-		runSwing(() -> {
-			for (int i = 0; i < repeat; i++) {
-				triggerActionInCellEditor(KeyEvent.VK_BACK_SPACE);
-			}
-		});
-	}
-
-	/**
-	 * @param offset
-	 * @return ordinal or -1
-	 */
 	int getOrdinalAtOffset(int offset) {
 		DataTypeComponent dtc = stackModel.getEditorStack().getComponentAt(offset);
 		if (dtc != null) {

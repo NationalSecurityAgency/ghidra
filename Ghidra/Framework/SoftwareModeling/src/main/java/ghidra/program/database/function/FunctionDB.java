@@ -826,7 +826,7 @@ public class FunctionDB extends DatabaseObject implements Function {
 				DataType dt = VariableUtilities.getAutoDataType(this,
 					returnParam.getFormalDataType(), storage);
 				try {
-					autoParams.add(new AutoParameterImpl(dt, autoIndex, storage, this));
+					autoParams.add(new AutoParameterImpl(dt, autoIndex++, storage, this));
 				}
 				catch (InvalidInputException e) {
 					Msg.error(this,
@@ -2886,7 +2886,7 @@ public class FunctionDB extends DatabaseObject implements Function {
 			checkDeleted();
 			ArrayList<Symbol> list = new ArrayList<>(20);
 			for (Symbol childSymbol : program.getSymbolTable().getSymbols(this)) {
-				if ((childSymbol.getSymbolType() == SymbolType.CODE) &&
+				if ((childSymbol.getSymbolType() == SymbolType.LABEL) &&
 					(childSymbol.getSource() == SourceType.USER_DEFINED)) {
 					list.add(childSymbol);
 				}

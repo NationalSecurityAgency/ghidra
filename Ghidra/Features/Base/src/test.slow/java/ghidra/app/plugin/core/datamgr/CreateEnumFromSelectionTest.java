@@ -38,16 +38,13 @@ import ghidra.program.model.data.*;
 import ghidra.program.model.data.Enum;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.test.TestEnv;
-import ghidra.util.InvalidNameException;
 
 /**
- * Tests for the make enum from a selection of enums action
+ * Tests for the 'make enum from a selection' action
  */
 public class CreateEnumFromSelectionTest extends AbstractGhidraHeadedIntegrationTest {
 	private static final String PROGRAM_FILENAME = "notepad";
-	private static final int TASK_TIMEOUT = 2000;
 
-	//private Program program;
 	private PluginTool tool;
 	private ProgramDB program;
 	private TestEnv env;
@@ -56,10 +53,6 @@ public class CreateEnumFromSelectionTest extends AbstractGhidraHeadedIntegration
 	private DataTypeArchiveGTree tree;
 	private ArchiveRootNode archiveRootNode;
 	private ArchiveNode programNode;
-
-	public CreateEnumFromSelectionTest() {
-		super();
-	}
 
 	@Before
 	public void setUp() throws Exception {
@@ -79,7 +72,7 @@ public class CreateEnumFromSelectionTest extends AbstractGhidraHeadedIntegration
 		provider = plugin.getProvider();
 		tree = provider.getGTree();
 		waitForTree();
-		archiveRootNode = (ArchiveRootNode) tree.getRootNode();
+		archiveRootNode = (ArchiveRootNode) tree.getModelRoot();
 		programNode = (ArchiveNode) archiveRootNode.getChild(PROGRAM_FILENAME);
 		assertNotNull("Did not successfully wait for the program node to load", programNode);
 
@@ -93,16 +86,6 @@ public class CreateEnumFromSelectionTest extends AbstractGhidraHeadedIntegration
 		return builder.getProgram();
 	}
 
-//	@Override
-//	protected void tearDown() throws Exception {
-//		executeOnSwingWithoutBlocking(new Runnable() {
-//			public void run() {
-//				ProgramManager pm = tool.getService(ProgramManager.class);
-//				pm.closeProgram();
-//
-//			}
-//		});
-//	}
 	@After
 	public void tearDown() throws Exception {
 
@@ -116,8 +99,7 @@ public class CreateEnumFromSelectionTest extends AbstractGhidraHeadedIntegration
 		});
 
 		// this handles the save changes dialog and potential analysis dialogs
-		closeAllWindowsAndFrames();
-		env.release(program);
+		closeAllWindows();
 		env.dispose();
 	}
 
@@ -174,7 +156,7 @@ public class CreateEnumFromSelectionTest extends AbstractGhidraHeadedIntegration
 			}
 		});
 
-		Window window = waitForWindow(tool.getToolFrame(), "Name new ENUM", TASK_TIMEOUT);
+		Window window = waitForWindow("Name new ENUM");
 		assertNotNull(window);
 
 		final JTextField tf = findComponent(window, JTextField.class);
@@ -274,7 +256,7 @@ public class CreateEnumFromSelectionTest extends AbstractGhidraHeadedIntegration
 			}
 		});
 
-		Window window = waitForWindow(tool.getToolFrame(), "Name new ENUM", TASK_TIMEOUT);
+		Window window = waitForWindow("Name new ENUM");
 		assertNotNull(window);
 
 		final JTextField tf = findComponent(window, JTextField.class);
@@ -283,7 +265,7 @@ public class CreateEnumFromSelectionTest extends AbstractGhidraHeadedIntegration
 		tf.setText("myNewEnum");
 		pressButtonByText(window, "OK");
 
-		Window window2 = waitForWindow(tool.getToolFrame(), "Duplicate ENUM Name", TASK_TIMEOUT);
+		Window window2 = waitForWindow("Duplicate ENUM Name");
 		assertNotNull(window2);
 
 		final JTextField tf2 = findComponent(window2, JTextField.class);
@@ -334,27 +316,6 @@ public class CreateEnumFromSelectionTest extends AbstractGhidraHeadedIntegration
 
 	}
 
-	private DataTypeNode createEnum(CategoryNode categoryNode, String newEnumName, int size) {
-		Category category = categoryNode.getCategory();
-		DataTypeManager dataTypeManager = category.getDataTypeManager();
-		int id = dataTypeManager.startTransaction("new category");
-		Enum newEnum = new EnumDataType(newEnumName, size);
-		category.addDataType(newEnum, null);
-		dataTypeManager.endTransaction(id, true);
-		waitForTree();
-		return getDataTypeNode(categoryNode, newEnumName);
-	}
-
-	private DataTypeNode getDataTypeNode(GTreeNode parent, String dataTypeName) {
-		List<GTreeNode> children = parent.getChildren();
-		for (GTreeNode node : children) {
-			if (node instanceof DataTypeNode && node.getName().equals(dataTypeName)) {
-				return (DataTypeNode) node;
-			}
-		}
-		return null;
-	}
-
 	private void expandNode(GTreeNode node) {
 		tree.expandPath(node);
 		waitForTree();
@@ -372,38 +333,5 @@ public class CreateEnumFromSelectionTest extends AbstractGhidraHeadedIntegration
 
 	private void waitForTree() {
 		waitForTree(tree);
-	}
-
-	private void waitForProgram() throws Exception {
-		program.flushEvents();
-		waitForTasks();
-		waitForPostedSwingRunnables();
-	}
-
-	private CategoryNode createCategory(CategoryNode categoryNode, String newCategoryName) {
-		Category category = categoryNode.getCategory();
-		DataTypeManager dataTypeManager = category.getDataTypeManager();
-		int id = dataTypeManager.startTransaction("new category");
-		try {
-			category.createCategory(newCategoryName);
-		}
-		catch (InvalidNameException e) {
-			// shouldn't happen
-		}
-		dataTypeManager.endTransaction(id, true);
-		waitForTree();
-
-		CategoryNode node = getCategoryNode(categoryNode, newCategoryName);
-		return node;
-	}
-
-	private CategoryNode getCategoryNode(GTreeNode parent, String categoryName) {
-		List<GTreeNode> children = parent.getChildren();
-		for (GTreeNode node : children) {
-			if (node instanceof CategoryNode && node.getName().equals(categoryName)) {
-				return (CategoryNode) node;
-			}
-		}
-		return null;
 	}
 }

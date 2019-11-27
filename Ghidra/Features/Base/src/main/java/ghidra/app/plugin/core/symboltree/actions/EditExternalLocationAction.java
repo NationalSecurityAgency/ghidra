@@ -63,7 +63,7 @@ public class EditExternalLocationAction extends DockingAction {
 		if (s == null || !s.isExternal()) {
 			return null;
 		}
-		if (s.getSymbolType() == SymbolType.CODE || s.getSymbolType() == SymbolType.FUNCTION) {
+		if (s.getSymbolType() == SymbolType.LABEL || s.getSymbolType() == SymbolType.FUNCTION) {
 			return s;
 		}
 		return null;

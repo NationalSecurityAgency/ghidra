@@ -211,7 +211,7 @@
 }
 
 #wrteei 0       0x7c 00 01 46
-:wrteei BIT_16	is OP=31 & BIT_16 & XOP_1_10=163
+:wrteei BIT_15	is OP=31 & BIT_15 & XOP_1_10=163
 {
-	WriteExternalEnableImmediate(BIT_16:1);
+	WriteExternalEnableImmediate(BIT_15:1);
 }

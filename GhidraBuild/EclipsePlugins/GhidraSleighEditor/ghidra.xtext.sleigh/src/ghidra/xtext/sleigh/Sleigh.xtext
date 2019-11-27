@@ -1,0 +1,1142 @@
+/* ###
+ * IP: GHIDRA
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+grammar ghidra.xtext.sleigh.Sleigh  hidden(WS, ML_COMMENT, SL_COMMENT)
+
+generate sleigh "http://www.xtext.ghidra/sleigh/Sleigh"
+
+import "http://www.eclipse.org/emf/2002/Ecore" as ecore
+
+Model:
+	elements+=spec*;
+
+Import:
+    '@include' importURI = STRING;
+    
+macroDefine :
+	defineType='@define' definename=DefineSym value=DefineValue
+	|
+	defineType='@if' tests=DefineTest
+	|
+	defineType='@ifdef' sym=DefineSym
+	|
+	defineType='@ifndef' sym=DefineSym
+	|
+	defineType='@elif' ( (isdefined+=IsDefined (OP_BOOL_OR isdefined+=IsDefined )*) | (symref=DefineSym OP_EQUAL value=STRING))
+	|
+	defineType='@else'
+	|
+	defineType='@endif'
+;
+
+IsDefined:
+	'defined' '(' DefineSym')'
+;
+
+DefineTest:
+	( '(' test=DefineTest ')'
+	| symref=DefineSym OP_EQUAL value=(STRING|intvalue|ID)
+	| isdefined=IsDefined )  ( (OP_BOOL_AND andtest=DefineTest) | (OP_BOOL_OR ortest=DefineTest) )?
+;
+
+
+DefineValue:
+//	STRING | ( sym=[constraintsym] | OP_AND | OP_OR | ';' | '...' | '(' | ')' | '=' | '<' | '>' | OP_LESSEQUAL| OP_GREATEQUAL )+
+	STRING | intvalue // | ( OP_AND | OP_OR | ';' | '...' | '(' | ')' | '=' | '<' | '>' /* | OP_LESSEQUAL | OP_GREATEQUAL */ )+
+;
+    
+spec:
+    iswith?='with' withTableName+=(SUBTABLESYM)* ':' withmatch+=pequation '{' elements+=spec+ '}'
+	|  Import
+	| macroDefine
+	| endiandef
+	| aligndef
+	| definition
+	| constructorlike
+;
+
+endiandef :
+	'define' 'endian' '=' (is_big?='big' | is_little?='little' | is_define=DefineUsage) ';'
+;
+
+definition :
+	tokendef
+	| contextdef
+	| spacedef
+	| varnodedef
+	| bitrangedef
+	| pcodeopdef
+	| valueattach
+	| nameattach
+	| varattach
+//	// | error ';'
+;
+//
+constructorlike:
+	constructor
+	| macrodef
+	//| error '}' // { slgh->resetConstructors(); }
+;
+//
+//
+aligndef :
+	'define' 'alignment' '=' align=integerValue ';' // { slgh->setAlignment(*$4); delete $4; }
+;
+
+tokendef :
+	'define' 'token' ID '(' size=integerValue ')' fields=tokenprop ';' // {}
+;
+//
+tokenprop:
+	 tokens+=(
+	 	fielddef
+	 	// Don't like allowing macros use internal to blocks...
+		| macroUse)+ // { $$ = slgh->defineToken($3,$5); }
+;
+
+contextdef:
+	('define' 'context' name=[VARSYM])  fields=contextprop ';' // {}
+;
+
+contextprop :
+	{contextDefs}
+	(contextDefs+=(
+		contextfielddef
+		// Don't like allowing macros use internal to blocks...
+		|macroUse
+	))*
+;
+
+fielddef:
+	name=ID '=' '(' start=integerValue ',' end=integerValue ')' (signed?='signed' | hex?='hex' | dec?='dec')* //{ $$ = new FieldQuality($1 $4 $6); }
+;
+
+macroUse:
+	define=macroDefine
+;
+
+contextfielddef:
+	name=ID '=' '(' start=integerValue ',' end=integerValue ')' (signed?='signed' | noflow?='noflow' | hex?='hex' | dec?='dec')*
+;
+
+spacedef:
+	spaceprop ';'
+;
+
+spaceprop :
+	'define' 'space' space=SPACESYM
+	(('type' '=' isram?='ram_space'
+	| 'type' '=' isregister?='register_space'
+	| 'size' '=' size=integerValue
+	| 'wordsize' '=' wordsize=integerValue
+	| isdefault?='default'))*
+;
+
+varnodedef :
+	'define' (space=[SPACESYM] | define=DefineUsage) 'offset' '=' offset=integerValue 'size' '=' size=integerValue vars=vardeflist ';'
+;
+
+vardeflist:
+	'[' varDefList += vardef+ ']'
+	| varDefList += vardef
+;
+
+vardef:
+	varname=VARSYM
+	| isempty?=EMPTYVARSYM
+	| macroUse
+;
+
+bitrangedef :
+	'define' 'bitrange' list=bitrangelist ';';
+
+bitrangelist:
+	bitrangeEntries+=bitrangesingle+
+	// | bitrangelist bitrangesingle;
+;
+
+bitrangesingle:
+	name=ID '=' vnode=[VARSYM] '[' start=integerValue ',' end=integerValue ']'
+;
+
+pcodeopdef :
+	'define' 'pcodeop' ops+=(USEROPSYM)+ ';'
+;
+
+valueattach :
+	'attach' 'values' valuelist=valuesymlist blist=intblist ';'
+;
+
+nameattach :
+	'attach' 'names' valuelist=namesymlist slist=anystringlist ';'
+;
+
+varattach :
+	'attach' 'variables' valuelist=varsymlist vlist=varlist ';'
+;
+
+macrodef:
+	'macro' name=QualifiedName '(' args=oplist ')' body=rtlbody
+;
+
+QualifiedName: ID ('.' ID)* ;
+
+
+rtlbody:
+	'{' body=xrtl '}'
+	| unimpl?='unimpl'
+;
+
+constructor:
+	baseconstructor | subconstructor
+;
+
+baseconstructor:
+	':' print=constructprint match=pequation (cblock=contextblock)? body=rtlbody
+;
+
+subconstructor:
+	tableName=SUBTABLESYM ':' print=constructprint match=pequation (cblock=contextblock)? body=rtlbody // { slgh->buildConstructor($1,$3,$4,$5); }
+;
+
+constructprint:
+	{constructprint}
+	printpieces+=(printpiece)* is=isKeyword
+;
+
+isKeyword: {isKeyword} 'is';
+
+printpiece:
+	str=OP_XOR | str=STRING | str=charsymbol | sym=aliasSym | str=Keywords
+;
+
+Keywords:
+	'call' | 'if' | 'define' | 'goto' | 'return' | 'offset' | 'size' | 'round' | 'abs' | 'dec' | 'instruction'
+;
+
+aliasSymID:
+	aliasSym
+;
+
+aliasSym:
+	sym=ID
+;
+
+subconstructdef:
+	SUBTABLESYM
+;
+
+pexpression :
+	pexprAdd;
+
+pexprAdd:
+	pexprSub ({pexprAdd.left=current} op='+' right=pexprSub)*;
+
+pexprSub:
+	pexprMult ({pexprSub.left=current} op='-' right=pexprMult)*;
+
+pexprMult:
+	pexprLeft ({pexprMult.left=current} op='*' right=pexprLeft)*;
+
+pexprLeft:
+	pexprRight ({pexprLeft.left=current} op=OP_LEFT right=pexprRight)*;
+
+pexprRight:
+	pexprAnd ({pexprRight.left=current} op=OP_RIGHT right=pexprAnd)*;
+
+pexprAnd:
+	pexprOr ({pexprAnd.left=current} (op=OP_DAND | op=OP_AND) right=pexprOr)*;
+
+pexprOr:
+	pexprXor ({pexprOr.left=current} (op=OP_DOR | op=OP_OR) right=pexprXor)*;
+
+pexprXor:
+	pexprDiv ({pexprXor.left=current} (op=OP_DXOR | op=OP_XOR) right=pexprDiv)*;
+
+pexprDiv:
+	pexprNegate ({pexprDiv.left=current} op='/' right=pexprNegate)*;
+
+pexprNegate:
+	pexprInvert | ({pexprNegate} op='-' left=pexprInvert); 
+
+pexprInvert:
+	singlePexpression | ({pexprInvert} op='~' left=singlePexpression);
+
+singlePexpression:
+	intval=integerValue // { $$ = new ConstantValue(*$1); delete $1; }
+	| is_instruction?='instruction'
+	| is_epsilon?='epsilon'
+	| sym=pexprSym
+	| is_paren='(' right=pexpression ')'
+;
+
+constraintPexpression :
+	constraintAdd;
+
+constraintAdd:
+	constraintSub ({constraintAdd.left=current} op='+' right=constraintSub)*;
+
+constraintSub:
+	constraintMult ({constraintSub.left=current} op='-' right=constraintMult)*;
+
+constraintMult:
+	constraintLeft ({constraintMult.left=current} op='*' right=constraintLeft)*;
+
+constraintLeft:
+	constraintRight ({constraintLeft.left=current} op=OP_LEFT right=constraintRight)*;
+
+constraintRight:
+	constraintAnd ({constraintRight.left=current} op=OP_RIGHT right=constraintAnd)*;
+
+constraintAnd:
+	constraintOr ({constraintAnd.left=current} (op=OP_DAND) right=constraintOr)*;
+
+constraintOr:
+	constraintXor ({constraintOr.left=current} (op=OP_DOR) right=constraintXor)*;
+
+constraintXor:
+	constraintDiv ({constraintXor.left=current} (op=OP_DXOR) right=constraintDiv)*;
+
+constraintDiv:
+	constraintNegate ({constraintDiv.left=current} op='/' right=constraintNegate)*;
+
+constraintNegate:
+	constraintInvert | ({constraintNegate} op='-' expr=constraintInvert)
+;
+
+constraintInvert:
+	constraintSinglePexpression | ({constraintInvert} op='~' expr=constraintSinglePexpression)
+;
+
+constraintSinglePexpression:
+	intval=integerValue
+	| is_instruction?='instruction'
+	| is_epsilon?='epsilon'
+	| sym=pexprSym
+	| is_subexpr='(' right=constraintPexpression ')'
+;
+
+
+pexprSym:
+	inst_start?='inst_start' | inst_next?='inst_next' | sym=[specificsymbol]
+;
+
+pequation :
+   constraints=pNextSet
+;
+
+
+pNextSet:
+	pAnd ({pNextSet.left=current} op=';' right=pAnd)*;
+
+pAnd:
+	pOr ({pAnd.left=current} op=OP_AND right=pOr)*;
+
+pOr:
+	elleqRight ({pOr.left=current} op=OP_OR right=elleqRight)*;
+	
+elleqRight:
+	elleqLeft ({elleqRight.left=current} op='...')?;
+
+elleqLeft:
+	('...')? atomic;
+	
+elleq:
+	('...') atomic
+    | atomic ('...')
+;
+
+atomic:
+	constraint
+	| define=DefineUsage
+	| '(' right=pequation ')'
+;
+
+constraint:
+	sym=[constraintvalue]   compareOp='='            value=constraintPexpression
+	| sym=[constraintvalue] compareOp=OP_NOTEQUAL    value=constraintPexpression
+	| sym=[constraintvalue] compareOp='<'            value=constraintPexpression
+	| sym=[constraintvalue] compareOp=OP_LESSEQUAL   value=constraintPexpression
+	| sym=[constraintvalue] compareOp='>'            value=constraintPexpression
+	| sym=[constraintvalue] compareOp=OP_GREATEQUAL  value=constraintPexpression
+	| sym=[constraintsym]
+	| isinstruction?='instruction'
+	| isepsilon?='epsilon'
+;
+
+constraintvalue:
+	OPERANDSYM
+	| VALUESYM
+	| CONTEXTSYM
+	| NAMESYM
+	| VARLISTSYM
+;
+
+constraintsym:
+	OPERANDSYM
+	| SUBTABLESYM
+	| CONTEXTSYM
+	| NAMESYM
+	| VARLISTSYM
+;
+
+contextblock:
+   ('[' block=contextlist ']')
+;
+
+contextlist:
+	(entry+=contextentry ';')+;
+
+contextentry:
+	(lhs=[consymref] '=' rhs=pexpression)
+	| ('globalset' '(' tsym=globalLoc ',' csym=[CONTEXTSYM] ')')
+	| 'local' OPERANDSYM '=' rhs=pexpression
+;
+
+globalLoc:
+    inst_start?=STARTSYM | inst_next?=ENDSYM | tsym=[globalLocRef]
+;
+
+globalLocRef:
+	// familysymbol
+	VALUESYM
+	| CONTEXTSYM
+	| NAMESYM
+	| VARLISTSYM
+	// specificsymbol 
+	| VARSYM
+	| LOCALSYM
+	| CONTEXTSYM | TOKENSYM // should really be special, must appear in match pattern
+	| SPECSYM
+	| OPERANDSYM
+	| STARTSYM
+	| ENDSYM
+	| SUBTABLESYM
+	| aliasSym
+;
+
+consymref:
+	CONTEXTSYM | OPERANDSYM | aliasSym
+;
+
+section_def:
+	OP_LEFT SECTIONSYM OP_RIGHT
+;
+
+
+xrtl:
+	statements=rtlmid
+    ( export=exportStmt (additionalStatements=rtlmid))?
+;
+
+exportStmt:
+	'export' (resultsize=sizedstar)? result=exportedSym ';'
+;
+
+exportedSym:	
+	symref=[exportvarnode]
+	| is_start?='inst_start'
+	| is_next?='inst_next'
+	| isaddrof?=OP_AND varnode=varnode
+	| isaddrof?=OP_AND sizeOpColon size=integerValue varnode=varnode
+	| const=integerValue sizeOpColon size=integerValue
+	| define=DefineUsage
+;
+
+sizeOpColon:
+	':'
+;
+
+rtlmid:
+	 {rtlmid}
+	 (rtllist+=statement | macro+=macroUse)*
+	    // Don't like allowing macros use internal to blocks...
+;
+
+statement :
+	section_name=section_def
+    | lhs=assignSym '=' rhs=expr semi=';'
+	| ldef=localDefine semi=';'
+	| ptrsize=sizedstar lhsexpr=expr '=' rhs=expr semi=';'
+	| lhs=assignSym '[' start=integerValue ',' end=integerValue ']' '=' rhs=expr semi=';'
+	| isbuild?='build' (is_instr?='instruction' | def=[SUBTABLESYM]) semi=';'
+	| iscross?='crossbuild' crossvnode=varnode ',' (crossname=[SECTIONSYM] | crossstring=STRING) semi=';'
+	| isdelay?='delayslot' '(' delayslot=integerValue ')' semi=';'
+	| isgoto?='goto' dest=jumpdest semi=';'
+	| isif?='if' ifexpr=expr 'goto' dest=jumpdest semi=';'
+	| isgoto?='goto' '[' gotodest=expr ']' semi=';'
+	| iscall?='call' dest=jumpdest semi=';'
+	| iscallind?='call' '[' dest=expr ']' semi=';'
+	| isreturn?='return' semi=';'
+	| isreturn?='return' '[' dest=expr ']' semi=';'
+	| macro=[macroOrPcode] args=paramlist semi=';'
+	| label=label
+;
+
+assignSym:
+   symref=[lhsvarnode] | local=localDefine | define=DefineUsage
+;
+
+localDefine:
+	'local' sym=LOCALSYM | 'local'? sym=LOCALSYM sizeOpColon size=integerValue
+//	hasLocalDef?='local' sym=LOCALSYM | hasLocalDef?='local'? sym=LOCALSYM sizeOpColon size=integerValue
+;
+
+macroOrPcode:
+	  MACROSYM
+	| USEROPSYM
+	| BITSYM
+	| VARSYM
+	| LOCALSYM
+	| SPECSYM
+	| OPERANDSYM
+	| SUBTABLESYM
+	| MACROPARAMSYM
+	| TOKENSYM    // allow subpiece
+	| aliasSym
+;
+
+expr returns Expression:
+	exprAdd;
+
+exprAdd returns Expression:
+	exprMinus ({exprrAdd.left=current} '+' right=exprMinus)*;
+
+exprMinus returns Expression:
+	exprEqual ({exprMinus.left=current} '-' right=exprEqual)*;
+
+exprEqual returns Expression:
+	exprNotEqual ({exprEqual.left=current} OP_EQUAL right=exprNotEqual)*;
+
+exprNotEqual returns Expression:
+	exprLess ({exprNotEqual.left=current} OP_NOTEQUAL right=exprLess)*;
+
+exprLess returns Expression:
+	exprGtEqual ({exprLess.left=current} '<' right=exprGtEqual)*;
+
+exprGtEqual returns Expression:
+	exprLtEqual ({exprGtEqual.left=current} OP_GREATEQUAL right=exprLtEqual)*;
+
+exprLtEqual returns Expression:
+	exprGt ({exprLtEqual.left=current} OP_LESSEQUAL right=exprGt)*;
+
+exprGt returns Expression:
+	exprSLess ({exprGt.left=current} '>' right=exprSLess)*;
+
+exprSLess returns Expression:
+	exprSGtEqual ({exprSLess.left=current} OP_SLESS right=exprSGtEqual)*;
+
+exprSGtEqual returns Expression:
+	exprSLtEqual ({exprSGtEqual.left=current} OP_SGREATEQUAL right=exprSLtEqual)*;
+
+exprSLtEqual returns Expression:
+	exprSGt ({exprSLtEqual.left=current} OP_SLESSEQUAL right=exprSGt)*;
+
+exprSGt returns Expression:
+	exprXor ({exprSGt.left=current} OP_SGREAT right=exprXor)*;
+
+exprXor returns Expression:
+	exprAnd ({exprXor.left=current} OP_XOR right=exprAnd)*;
+
+exprAnd returns Expression:
+	exprOr ({exprAnd.left=current} OP_AND right=exprOr)*;
+
+exprOr returns Expression:
+	exprLeft ({exprOr.left=current} OP_OR right=exprLeft)*;
+
+exprLeft returns Expression:
+	exprRight ({exprLeft.left=current} OP_LEFT right=exprRight)*;
+
+exprRight returns Expression:
+	exprSRight ({exprRight.left=current} OP_RIGHT right=exprSRight)*;
+
+exprSRight returns Expression:
+	exprMult ({exprSRight.left=current} OP_SRIGHT right=exprMult)*;
+	
+exprMult returns Expression:
+	exprDiv ({exprMult.left=current} '*' right=exprDiv)*;
+
+exprDiv returns Expression:
+	exprSDiv ({exprDiv.left=current} '/' right=exprSDiv)*;
+
+exprSDiv returns Expression:
+	exprRem ({exprSDiv.left=current} OP_SDIV right=exprRem)*;
+
+exprRem returns Expression:
+	exprSRem ({exprRem.left=current} '%' right=exprSRem)*;
+
+exprSRem returns Expression:
+	exprBoolXor ({exprSRem.left=current} OP_SREM right=exprBoolXor)*;
+	
+exprBoolXor returns Expression:
+	exprBoolAnd ({exprBoolXor.left=current} OP_BOOL_XOR right=exprBoolAnd)*;
+
+exprBoolAnd returns Expression:
+	exprBoolOr ({exprBoolAnd.left=current} OP_BOOL_AND right=exprBoolOr)*;
+
+exprBoolOr returns Expression:
+	exprFEqual ({exprBoolOr.left=current} OP_BOOL_OR right=exprFEqual)*;
+
+exprFEqual returns Expression:
+	exprFNotEqual ({exprFEqual.left=current} OP_FEQUAL right=exprFNotEqual)*;
+
+exprFNotEqual returns Expression:
+	exprFLess ({exprFNotEqual.left=current} OP_FNOTEQUAL right=exprFLess)*;
+
+exprFLess returns Expression:
+	exprFGt ({exprFLess.left=current} OP_FLESS right=exprFGt)*;
+
+exprFGt returns Expression:
+	exprFLessEqual ({exprFGt.left=current} OP_FGREAT right=exprFLessEqual)*;
+
+exprFLessEqual returns Expression:
+	exprFGtEqual ({exprFLessEqual.left=current} OP_FLESSEQUAL right=exprFGtEqual)*;
+
+exprFGtEqual returns Expression:
+	exprFAdd ({exprFGtEqual.left=current} OP_FGREATEQUAL right=exprFAdd)*;
+
+exprFAdd returns Expression:
+	exprFSub ( {exprFAdd.left=current} OP_FADD right=exprFSub)*;
+
+exprFSub returns Expression:
+	exprFMult ({exprFSub.left=current} OP_FSUB right=exprFMult)*;
+
+exprFMult returns Expression:
+	exprFDiv ({exprFMult.left=current} OP_FMULT right=exprFDiv)*;
+
+exprFDiv returns Expression:
+	exprNegate ({exprFDiv.left=current} OP_FDIV right=exprNegate)*;
+
+exprNegate returns Expression:
+	exprFNegate | ({exprNegate} '-' expr=exprFNegate)
+;
+
+exprFNegate returns Expression:
+	exprInvert | ({exprFNegate} OP_FSUB expr=exprInvert)
+;
+
+exprInvert returns Expression:
+	exprNot | ({exprNegate} '~' expr=exprNot)
+;
+
+exprNot returns Expression:
+	exprLoad | ({exprNegate} '!' expr=exprLoad)
+;
+
+exprLoad returns Expression:
+	exprSingle | ({exprLoad} loc=sizedstar expr=exprSingle)
+;
+
+exprSingle returns Expression:
+	vnode=exprSym
+	| '(' right=expr ')'
+	| pcodeop='unordered' '(' op1=expr ',' op2=expr ')'
+	| pcodeop='abs' '(' right=expr ')'
+	| pcodeop='sqrt' '(' right=expr ')'
+	| pcodeop='sext' '(' right=expr ')'
+	| pcodeop='zext' '(' right=expr ')'
+	| pcodeop='carry' '(' op1=expr ',' op2=expr ')'
+	| pcodeop='scarry' '(' op1=expr ',' op2=expr ')'
+	| pcodeop='sborrow' '(' op1=expr ',' op2=expr ')'
+	| pcodeop='float2float' '(' op1=expr ')'
+	| pcodeop='int2float' '(' op1=expr ')'
+	| pcodeop='nan' '(' op1=expr ')'
+	| pcodeop='trunc' '(' op1=expr ')'
+	| pcodeop='ceil' '(' op1=expr ')'
+	| pcodeop='floor' '(' op1=expr ')'
+	| pcodeop='round' '(' op1=expr ')'
+	| pcodeop='cpool' '(' op1=expr ',' op2=expr ',' op3=expr ')'
+	| pcodeop='newobject' '(' op1=newObjParams ')'
+	| op=[macroOrPcode] op1=paramlist
+;
+
+newObjParams:
+	((parameters+=expr) (',' parameters+=expr)*)
+;
+
+exprSym:
+	vnode=[vnoderef]
+	| vnode=[specificsymbol] sizeOpColon size=integerValue
+	| vnode=[specificsymbol] '[' start=integerValue ',' end=integerValue ']'
+	| inode=integervarnode
+;
+
+vnoderef:
+	BITSYM
+	| VARSYM
+	| LOCALSYM
+	| SPECSYM
+	| OPERANDSYM
+	| assignSym
+	| aliasSym
+;
+
+
+sizedstar:
+	  '*' '[' space=spacename ']' sizeOpColon size=integerValue
+	| '*' '[' space=spacename']'
+	| '*' sizeOpColon size=integerValue
+	| isdefault?='*'
+;
+
+spacename:
+	const?='const' | space=[SPACESYM]
+;
+
+jumpdest:
+	  inst_start=STARTSYM
+	| inst_end=ENDSYM
+	| const=integerValue
+	| const=integerValue '[' space=spacename ']'
+	| dest=[SUBTABLESYM]
+	| label='<' dest=[label] '>'
+;
+
+varnode:
+	val=[specificsymbol]
+	| integervarnode
+;
+
+integervarnode:
+	reladdr=STARTSYM
+	| reladdr=ENDSYM
+	| const=integerValue
+	| const=integerValue sizeOpColon size=integerValue
+	| isaddrof=OP_AND vnode=[specificsymbol]
+	| isaddrof=OP_AND sizeOpColon size=integerValue (inode=instSymbol | vnode=[specificsymbol])
+;
+
+instSymbol: 
+	STARTSYM | ENDSYM
+;
+
+lhsvarnode:
+	  VARSYM
+	// have to be crossed checked another way | VARLISTSYM
+	| CONTEXTSYM | TOKENSYM
+	| SPECSYM
+	| OPERANDSYM
+	| BITSYM
+	| LOCALSYM
+	| SUBTABLESYM
+	| MACROPARAMSYM
+;
+
+label:
+	'<' name=ID '>'
+;
+
+exportvarnode:
+	  VARSYM
+	| SUBTABLESYM
+	| SPECSYM
+	| OPERANDSYM
+	| STARTSYM
+	| ENDSYM
+	// These will need to be checked for valid VARLIST tokens
+	| CONTEXTSYM | TOKENSYM
+	| LOCALSYM
+	| assignSym
+	| aliasSym
+;
+
+familysymbol:
+	 VALUESYM
+	| CONTEXTSYM
+	| NAMESYM
+	| VARLISTSYM
+;
+
+specificsymbol:
+	VARSYM
+	| LOCALSYM
+	| CONTEXTSYM | TOKENSYM // should really be special, must appear in match pattern
+	| SPECSYM
+	| OPERANDSYM
+	| STARTSYM
+	| ENDSYM
+	| SUBTABLESYM
+	| MACROPARAMSYM
+	| aliasSym
+	;
+	
+//specificsymbol:
+//	(vardef | contextfielddef | bitrange | MACROSYM)
+//	| sym=[SPECSYM]
+//	| sym=[OPERANDSYM]
+//	| sym=[STARTSYM]
+//	| sym=[ENDSYM]
+//;
+
+intblist:
+	{intblist} '[' args+=intbpart+ ']'
+	| args+= intbpart
+;
+
+intbpart:
+	value=integerValue
+	| isnegative?='-' value=integerValue
+	| isempty?=EMPTYVARSYM
+;
+
+anystringlist:
+	'[' namelist+=anystringpart+ ']'
+;
+
+anystringpart:
+	  str = STRING
+	| sym = STRINGNAME
+	| isempty?=EMPTYVARSYM
+;
+
+STRINGNAME:
+	name=ID;
+
+valuesymlist:
+	'[' valuelist+=valuepart+ ']'
+	| value=valuepart
+;
+
+valuepart:
+	VALUESYM;
+
+VALUESYM:
+	sym=[mapdef]
+;
+
+namesymlist:
+	'[' valuelist+=NAMESYM+ ']'
+	| value=NAMESYM // { $$ = new vector<SleighSymbol *>; $$->push back($1); }
+//	| value=[CONTEXTSYM] // { $$ = new vector<SleighSymbol *>; $$->push_back($1); }
+;
+
+NAMESYM:
+	sym=[mapdef]
+;
+
+varsymlist:
+	'[' valuelist+=valuepartdef+ ']'
+	| valuelist+=valuepartdef
+;
+
+valuepartdef:
+	sym=[mapdef]
+;
+
+VARLISTSYM:
+	name=ID
+;
+
+mapdef:
+   TOKENSYM | CONTEXTSYM
+;
+
+varlist:
+	'[' varDefList+=varpart+ ']'
+	| varDefList+=varpart
+;
+
+varpart:
+	varpart=[VARSYM] | hasunder?=EMPTYVARSYM  // TODO: somehow '_' is OK at head of STRING?
+	| macroUse 
+;
+
+paramlist:
+	{paramlist}
+	'(' ((parameters+=expr)? (',' parameters+=expr)*) ')'
+;
+
+oplist:
+	{oplist}
+	((args+=MACROPARAMSYM (',' args+=MACROPARAMSYM)*))?
+;
+
+MACROPARAMSYM:
+	name=ID;
+
+anysymbol:
+	 sym=SPACESYM
+	| sym=SECTIONSYM
+	| sym=TOKENSYM
+	| sym=USEROPSYM
+	| sym=MACROSYM
+	| sym=SUBTABLESYM
+	| sym=VALUESYM
+//	| sym=VALUEMAPSYM
+	| sym=CONTEXTSYM
+	| sym=NAMESYM
+	| sym=VARNODESYM
+	| sym=VARLISTSYM
+	| sym=OPERANDSYM
+	| sym=STARTSYM
+	| sym=ENDSYM
+	| sym=BITSYM
+	| sym=LOCALSYM
+	| sym=MACROPARAMSYM
+;
+
+LOCALSYM:
+	name=ID;
+
+SPACESYM:
+	spacesymbol;
+
+spacesymbol:
+	name=ID;
+
+SECTIONSYM:
+	sectionsymbol;
+
+sectionsymbol:
+	name=ID;
+	
+VarnodeSymbol:
+	VARSYM;
+
+VARSYM:
+	name=ID;
+	
+TOKENGROUPSYM:
+	tokengroup;
+
+tokengroup:
+	ID;
+
+USEROPSYM:
+	name=ID;
+
+TOKENSYM:
+	fielddef;
+
+CONTEXTSYM:
+	contextfielddef;
+
+VARNODESYM:
+	varsymbol;
+
+varsymbol:
+	name=ID;
+	
+EMPTYVARSYM:
+	'_'
+;
+
+BITSYM:
+	bitrangesingle;
+
+SPECSYM:
+	specsymbol;
+
+specsymbol:
+	name=ID;
+
+OPERANDSYM:
+	name=ID;
+
+STARTSYM:
+	name='inst_start';
+
+startsymbol:
+	name=ID;
+
+ENDSYM:
+	name='inst_next';
+
+endsymbol:
+	name=ID;
+
+MACROSYM:
+	macrodef;
+
+LABELSYM:
+	labelsymbol;
+
+labelsymbol:
+	name=ID;
+
+SUBTABLESYM:
+	name=ID;
+
+
+charsymbol:
+	('!' | '@' | '#' | '$' | '%' | OP_AND | '*' | '(' | ')' | '-' | '=' | '+' | '[' | ']' | '{' | '}' | OP_OR | ';' | ':' | '<'
+	| '>' | '?' | ',' | '/' | NUMVAL );
+
+DefineSym:
+	name=ID;
+
+DefineUsage:
+	'$' '(' symref=[DefineSym] ')'
+;
+
+integerValue:
+	value=intvalue | sym=DefineUsage
+	;
+	
+intvalue:
+	HEXVAL | BINVAL | NUMVAL
+	;
+
+terminal NUMVAL returns ecore::EBigInteger:
+	(DIGIT)+
+;
+
+terminal HEXVAL returns ecore::EBigInteger:
+	'0x' HEX_DIGIT+
+;
+
+terminal fragment HEX_DIGIT:
+	(DIGIT | 'a'..'f' | 'A'..'F')
+;
+	
+terminal BINVAL returns ecore::EBigInteger:
+	'0b' BIN_DIGIT+
+;
+
+terminal fragment BIN_DIGIT:
+	('0' | '1')
+;
+
+terminal fragment DIGIT:
+	('0'..'9')
+;
+
+//terminal MACRO_KEY:
+////macro								{BEGIN(macroblock); return MACRO_KEY; }
+//	'macro';
+//
+//terminal DEFINE_KEY:
+//	'define';
+// define								{ BEGIN(defblock); return DEFINE_KEY; }
+	
+
+//terminal ATTACH_KEY:
+//// 'attach'								{ BEGIN(defblock); slgh->calcContextLayout(); return ATTACH_KEY; }
+//	'attach';
+terminal ID returns ecore::EString:
+//[a-zA-Z_.][a-zA-Z0-9_.]*			{ return find_symbol(); } { return yytext[0]; }
+	('a'..'z' | 'A'..'Z' | '.' | '_') ('a'..'z' | 'A'..'Z' | '.' | '_' | '0'..'9')*;
+
+terminal OP_RIGHT:
+	'>>';
+
+terminal OP_LEFT:
+	'<<';
+
+terminal OP_NOTEQUAL:
+	'!=';
+
+terminal OP_LESSEQUAL:
+	'<=';
+
+terminal OP_GREATEQUAL:
+	'>=';
+
+terminal OP_DAND:
+	'$and';
+
+terminal OP_DOR:
+	'$or';
+
+terminal OP_DXOR:
+	'$xor';
+
+terminal OP_AND:
+	'&';
+
+terminal OP_OR:
+	'|';
+
+terminal OP_XOR:
+	'^';
+
+terminal OP_BOOL_OR:
+	'||';
+
+terminal OP_BOOL_AND:
+	'&&';
+
+terminal OP_BOOL_XOR:
+	'^^';
+
+terminal OP_EQUAL:
+	'==';
+
+terminal OP_SDIV:
+	's/';
+
+terminal OP_SREM:
+	's%';
+
+terminal OP_SRIGHT:
+	's>>';
+
+terminal OP_SLESS:
+	's<';
+
+terminal OP_SGREAT:
+	's>';
+
+terminal OP_SLESSEQUAL:
+	's<=';
+
+terminal OP_SGREATEQUAL:
+	's>=';
+
+terminal OP_FADD:
+	'f+';
+
+terminal OP_FSUB:
+	'f-';
+
+terminal OP_FMULT:
+	'f*';
+
+terminal OP_FDIV:
+	'f/';
+
+terminal OP_FEQUAL:
+	'f==';
+
+terminal OP_FNOTEQUAL:
+	'f!=';
+
+terminal OP_FLESS:
+	'f<';
+
+terminal OP_FGREAT:
+	'f>';
+
+terminal OP_FLESSEQUAL:
+	'f<=';
+
+terminal OP_FGREATEQUAL:
+	'f>=';
+
+terminal STRING	: 
+			'"' ( '\\' . /* 'b'|'t'|'n'|'f'|'r'|'u'|'"'|"'"|'\\' */ | !('\\'|'"') )* '"' |
+			"'" ( '\\' . /* 'b'|'t'|'n'|'f'|'r'|'u'|'"'|"'"|'\\' */ | !('\\'|"'") )* "'"
+		; 
+terminal ML_COMMENT	: '/*' -> '*/';
+terminal SL_COMMENT 	: '#' !('\n'|'\r')* ('\r'? '\n')?;
+
+terminal WS			: (' '|'\t'|'\r'|'\n')+;
+
+//terminal ANY_OTHER: .;
+//
+//terminal DEFINENAME: 'synthetic:DEFINENAME';
+//terminal BEGINDEFINE: 'synthetic:BEGINDEFINE';  
+//terminal ENDDEFINE: 'synthetic:ENDDEFINE';

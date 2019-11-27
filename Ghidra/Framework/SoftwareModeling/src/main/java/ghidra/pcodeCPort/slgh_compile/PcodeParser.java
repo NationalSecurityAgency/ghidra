@@ -17,6 +17,7 @@ package ghidra.pcodeCPort.slgh_compile;
 
 import java.io.*;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import org.antlr.runtime.*;
 import org.antlr.runtime.tree.CommonTreeNodeStream;
@@ -27,6 +28,7 @@ import org.jdom.*;
 import generic.stl.VectorSTL;
 import ghidra.app.plugin.processors.sleigh.SleighException;
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
+import ghidra.pcode.utils.MessageFormattingUtils;
 import ghidra.pcodeCPort.address.Address;
 import ghidra.pcodeCPort.context.SleighError;
 import ghidra.pcodeCPort.error.LowlevelError;
@@ -171,24 +173,24 @@ public class PcodeParser extends PcodeCompile {
 
 	// Make sure label symbols are used properly
 	private String checkLabels() {
-		StringBuilder s = new StringBuilder();
+		List<String> errors = new ArrayList<>();
 		for (SleighSymbol sym : symbolMap.values()) {
 			if (sym.getType() != symbol_type.label_symbol) {
 				continue;
 			}
 			LabelSymbol labsym = (LabelSymbol) sym;
 			if (labsym.getRefCount() == 0) {
-				s.append("   Label <");
-				s.append(sym.getName());
-				s.append("> was placed but not used");
+				errors.add(MessageFormattingUtils.format(labsym.location,
+						String.format("Label <%s> was placed but never used",  sym.getName())));
+
 			}
 			else if (!labsym.isPlaced()) {
-				s.append("   Label <");
-				s.append(sym.getName());
-				s.append("> was referenced but never placed");
+				errors.add(MessageFormattingUtils.format(labsym.location,
+						String.format("Label <%s> was referenced but never placed",  sym.getName())));
 			}
 		}
-		return s.toString();
+		return errors.stream().collect(Collectors.joining("  "));
+
 	}
 
 	private ConstructTpl buildConstructor(ConstructTpl rtl) {
@@ -312,7 +314,7 @@ public class PcodeParser extends PcodeCompile {
 			// ANTLRUtil.debugNodeStream(nodes, System.out);
 			SleighCompiler walker = new SleighCompiler(nodes);
 
-			SectionVector rtl = walker.semantic(env, this, semantic.getTree(), false, false);
+			SectionVector rtl = walker.semantic(env, null, this, semantic.getTree(), false, false);
 
 			if (getErrors() != 0) {
 				return null;

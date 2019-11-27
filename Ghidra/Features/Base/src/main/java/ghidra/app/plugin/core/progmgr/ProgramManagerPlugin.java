@@ -30,6 +30,7 @@ import javax.swing.Icon;
 import docking.ActionContext;
 import docking.action.*;
 import docking.options.editor.*;
+import docking.tool.ToolConstants;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.context.ProgramActionContext;
 import ghidra.app.context.ProgramContextAction;
@@ -45,7 +46,7 @@ import ghidra.framework.main.OpenVersionedFileDialog;
 import ghidra.framework.model.*;
 import ghidra.framework.options.*;
 import ghidra.framework.plugintool.*;
-import ghidra.framework.plugintool.util.*;
+import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.framework.protocol.ghidra.*;
 import ghidra.program.database.ProgramContentHandler;
 import ghidra.program.model.address.*;
@@ -262,7 +263,7 @@ public class ProgramManagerPlugin extends Plugin implements ProgramManager {
 			if (type == SymbolType.FUNCTION) {
 				loc = new FunctionSignatureFieldLocation(sym.getProgram(), sym.getAddress());
 			}
-			else if (type == SymbolType.CODE) {
+			else if (type == SymbolType.LABEL) {
 				loc = new LabelFieldLocation(sym);
 			}
 		}
@@ -557,7 +558,7 @@ public class ProgramManagerPlugin extends Plugin implements ProgramManager {
 				Program program = context.getProgram();
 				String programName = "'" + program.getDomainFile().getName() + "'";
 				getMenuBarData().setMenuItemName("&Close " + programName);
-				setDescription("Close " + programName);
+				setDescription("<html>Close " + HTMLUtilities.escapeHTML(programName));
 				return true;
 			}
 		};
@@ -1016,6 +1017,11 @@ public class ProgramManagerPlugin extends Plugin implements ProgramManager {
 		if (openTask == null) {
 			return;
 		}
+
+		// Restore state should not ask about checking out since
+		// hopefully it is in the same state it was in when project
+		// was closed and state was saved.
+		openTask.setNoCheckout();
 
 		try {
 			new TaskLauncher(openTask, tool.getToolFrame(), 100);

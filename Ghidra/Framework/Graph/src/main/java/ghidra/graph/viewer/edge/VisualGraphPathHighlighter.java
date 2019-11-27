@@ -23,7 +23,6 @@ import java.util.function.Supplier;
 
 import docking.DockingWindowManager;
 import generic.concurrent.GThreadPool;
-import ghidra.generic.function.Callback;
 import ghidra.graph.*;
 import ghidra.graph.algo.ChkDominanceAlgorithm;
 import ghidra.graph.algo.ChkPostDominanceAlgorithm;
@@ -34,6 +33,7 @@ import ghidra.util.SystemUtilities;
 import ghidra.util.datastruct.CallbackAccumulator;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.*;
+import utility.function.Callback;
 
 /**
  * A class that calculates flow between vertices and then triggers that flow to be painted
@@ -149,9 +149,16 @@ public class VisualGraphPathHighlighter<V extends VisualVertex, E extends Visual
 			TaskMonitor timeoutMonitor = TimeoutTaskMonitor.timeoutIn(ALGORITHM_TIMEOUT,
 				TimeUnit.SECONDS, new TaskMonitorAdapter(true));
 
+			GDirectedGraph<V, E> dominanceGraph = getDominanceGraph(graph, true);
+			if (dominanceGraph == null) {
+				Msg.debug(this, "No sources found for graph; cannot calculate dominance: " +
+					graph.getClass().getSimpleName());
+				return null;
+			}
+
 			try {
 				// note: calling the constructor performs the work
-				return new ChkDominanceAlgorithm<>(graph, timeoutMonitor);
+				return new ChkDominanceAlgorithm<>(dominanceGraph, timeoutMonitor);
 			}
 			catch (CancelledException e) {
 				// shouldn't happen
@@ -161,6 +168,17 @@ public class VisualGraphPathHighlighter<V extends VisualVertex, E extends Visual
 			return null;
 		}, executor);
 		return dominanceFuture;
+	}
+
+	protected GDirectedGraph<V, E> getDominanceGraph(VisualGraph<V, E> visualGraph,
+			boolean forward) {
+
+		Set<V> sources = GraphAlgorithms.getSources(visualGraph);
+		if (!sources.isEmpty()) {
+			return visualGraph;
+		}
+
+		return null;
 	}
 
 	private CompletableFuture<ChkDominanceAlgorithm<V, E>> lazyCreatePostDominanceFuture() {
@@ -268,15 +286,18 @@ public class VisualGraphPathHighlighter<V extends VisualVertex, E extends Visual
 
 	public void setVertexHoverMode(PathHighlightMode mode) {
 		this.vertexHoverMode = Objects.requireNonNull(mode);
+		if (vertexHoverMode == PathHighlightMode.OFF) {
+			clearHoveredEdgesSwing();
+		}
 	}
 
 	public void setHoveredVertex(V hoveredVertex) {
 
-		if (workPauser.isPaused()) {
-			return; // hovers a transient, no need to remember the request
-		}
-
 		clearHoveredEdgesSwing();
+
+		if (workPauser.isPaused()) {
+			return; // hovers are transient, no need to remember the request
+		}
 
 		if (hoveredVertex == null) {
 			return;
@@ -362,13 +383,13 @@ public class VisualGraphPathHighlighter<V extends VisualVertex, E extends Visual
 
 	private void clearHoveredEdgesSwing() {
 		for (E edge : graph.getEdges()) {
-			edge.setInActivePath(false);
+			edge.setInHoveredVertexPath(false);
 		}
 	}
 
 	private void clearFocusedEdgesSwing() {
 		for (E edge : graph.getEdges()) {
-			edge.setSelected(false);
+			edge.setInFocusedVertexPath(false);
 		}
 	}
 
@@ -498,25 +519,25 @@ public class VisualGraphPathHighlighter<V extends VisualVertex, E extends Visual
 	private void setInFocusedEdges(V vertex) {
 
 		Supplier<Set<E>> supplier = () -> getReverseFlowEdgesForVertexAsync(vertex);
-		focusRunManager.runNow(new SelectRunnable(supplier), null);
+		focusRunManager.runNow(new SetFocusedEdgesRunnable(supplier), null);
 	}
 
 	private void setOutFocusedEdgesSwing(V vertex) {
 
 		Supplier<Set<E>> supplier = () -> getForwardFlowEdgesForVertexAsync(vertex);
-		focusRunManager.runNow(new SelectRunnable(supplier), null);
+		focusRunManager.runNow(new SetFocusedEdgesRunnable(supplier), null);
 	}
 
 	private void setForwardScopedFlowFocusedEdgesSwing(V vertex) {
 
 		Supplier<Set<E>> supplier = () -> getForwardScopedFlowEdgesForVertexAsync(vertex);
-		focusRunManager.runNow(new SelectRunnable(supplier), null);
+		focusRunManager.runNow(new SetFocusedEdgesRunnable(supplier), null);
 	}
 
 	private void setReverseScopedFlowFocusedEdgesSwing(V vertex) {
 
 		Supplier<Set<E>> supplier = () -> getReverseScopedFlowEdgesForVertexAsync(vertex);
-		focusRunManager.runNow(new SelectRunnable(supplier), null);
+		focusRunManager.runNow(new SetFocusedEdgesRunnable(supplier), null);
 	}
 
 	private void setInOutFocusedEdgesSwing(V vertex) {
@@ -525,46 +546,46 @@ public class VisualGraphPathHighlighter<V extends VisualVertex, E extends Visual
 		// Select ins and outs, one after the other.
 		//
 		Supplier<Set<E>> inSupplier = () -> getReverseFlowEdgesForVertexAsync(vertex);
-		focusRunManager.runNow(new SelectRunnable(inSupplier), null);
+		focusRunManager.runNow(new SetFocusedEdgesRunnable(inSupplier), null);
 
 		Supplier<Set<E>> outSupplier = () -> getForwardFlowEdgesForVertexAsync(vertex);
-		focusRunManager.runNext(new SelectRunnable(outSupplier), null);
+		focusRunManager.runNext(new SetFocusedEdgesRunnable(outSupplier), null);
 	}
 
 	private void setVertexCycleFocusedEdgesSwing(V vertex) {
 
 		Supplier<Set<E>> supplier = () -> getCircuitEdgesAsync(vertex);
-		focusRunManager.runNow(new SelectRunnable(supplier), null);
+		focusRunManager.runNow(new SetFocusedEdgesRunnable(supplier), null);
 	}
 
 	private void setAllCycleFocusedEdgesSwing() {
 
 		Supplier<Set<E>> supplier = () -> getAllCircuitFlowEdgesAsync();
-		focusRunManager.runNow(new SelectRunnable(supplier), null);
+		focusRunManager.runNow(new SetFocusedEdgesRunnable(supplier), null);
 	}
 
 	private void setInHoveredEdgesSwing(V vertex) {
 
 		Supplier<Set<E>> supplier = () -> getReverseFlowEdgesForVertexAsync(vertex);
-		hoverRunManager.runNow(new HoverRunnable(supplier), null);
+		hoverRunManager.runNow(new SetHoveredEdgesRunnable(supplier), null);
 	}
 
 	private void setOutHoveredEdgesSwing(V vertex) {
 
 		Supplier<Set<E>> supplier = () -> getForwardFlowEdgesForVertexAsync(vertex);
-		hoverRunManager.runNow(new HoverRunnable(supplier), null);
+		hoverRunManager.runNow(new SetHoveredEdgesRunnable(supplier), null);
 	}
 
 	private void setForwardScopedFlowHoveredEdgesSwing(V vertex) {
 
 		Supplier<Set<E>> supplier = () -> getForwardScopedFlowEdgesForVertexAsync(vertex);
-		hoverRunManager.runNow(new HoverRunnable(supplier), null);
+		hoverRunManager.runNow(new SetHoveredEdgesRunnable(supplier), null);
 	}
 
 	private void setReverseScopedFlowHoveredEdgesSwing(V vertex) {
 
 		Supplier<Set<E>> supplier = () -> getReverseScopedFlowEdgesForVertexAsync(vertex);
-		hoverRunManager.runNow(new HoverRunnable(supplier), null);
+		hoverRunManager.runNow(new SetHoveredEdgesRunnable(supplier), null);
 	}
 
 	private void setInOutHoveredEdgesSwing(V vertex) {
@@ -573,32 +594,32 @@ public class VisualGraphPathHighlighter<V extends VisualVertex, E extends Visual
 		// Select ins and outs, one after the other.
 		//
 		Supplier<Set<E>> inSupplier = () -> getReverseFlowEdgesForVertexAsync(vertex);
-		hoverRunManager.runNow(new HoverRunnable(inSupplier), null);
+		hoverRunManager.runNow(new SetHoveredEdgesRunnable(inSupplier), null);
 
 		Supplier<Set<E>> outSupplier = () -> getForwardFlowEdgesForVertexAsync(vertex);
-		hoverRunManager.runNext(new HoverRunnable(outSupplier), null);
+		hoverRunManager.runNext(new SetHoveredEdgesRunnable(outSupplier), null);
 	}
 
 	private void setVertexCycleHoveredEdgesSwing(V vertex) {
 
 		Supplier<Set<E>> supplier = () -> getCircuitEdgesAsync(vertex);
-		hoverRunManager.runNow(new HoverRunnable(supplier), null);
+		hoverRunManager.runNow(new SetHoveredEdgesRunnable(supplier), null);
 	}
 
 	private void setVertexToVertexPathHoveredEdgesSwing(V start, V end) {
 
 		Callback callback = () -> calculatePathsBetweenVerticesAsync(start, end);
-		focusRunManager.runNow(new SlowHoverRunnable(callback), null);
+		focusRunManager.runNow(new SlowSetHoveredEdgesRunnable(callback), null);
 
 	}
 
-	private void selectSwing(Collection<E> edges) {
-		edges.forEach(e -> e.setSelected(true));
+	private void setInFocusedPathOnSwing(Collection<E> edges) {
+		edges.forEach(e -> e.setInFocusedVertexPath(true));
 		listener.pathHighlightChanged(false);
 	}
 
-	private void activateSwing(Collection<E> edges) {
-		edges.forEach(e -> e.setInActivePath(true));
+	private void setInHoverPathOnSwing(Collection<E> edges) {
+		edges.forEach(e -> e.setInHoveredVertexPath(true));
 		listener.pathHighlightChanged(true);
 	}
 
@@ -626,9 +647,14 @@ public class VisualGraphPathHighlighter<V extends VisualVertex, E extends Visual
 			return;
 		}
 
-		if (!cf.isCompletedExceptionally()) {
-			// clear the contents of the future, as it is acting like a cache
-			clearer.accept(cf.getNow(null));
+		if (cf.isCompletedExceptionally()) {
+			return;
+		}
+
+		// clear the contents of the future, as it is acting like a cache
+		T result = cf.getNow(null);
+		if (result != null) {
+			clearer.accept(result);
 		}
 	}
 
@@ -722,10 +748,12 @@ public class VisualGraphPathHighlighter<V extends VisualVertex, E extends Visual
 			return t;
 		}
 		catch (InterruptedException e) {
-			Msg.trace(VisualGraphPathHighlighter.this, "Unable to complete the future", e);
+			Msg.trace(VisualGraphPathHighlighter.this,
+				"Unable to calculate graph path highlights - interrupted", e);
 		}
 		catch (ExecutionException e) {
-			Msg.debug(VisualGraphPathHighlighter.this, "Unable to complete the future", e);
+			Msg.debug(VisualGraphPathHighlighter.this, "Unable to calculate graph path highlights",
+				e);
 		}
 		return null;
 	}
@@ -824,10 +852,14 @@ public class VisualGraphPathHighlighter<V extends VisualVertex, E extends Visual
 
 	private void calculatePathsBetweenVerticesAsync(V v1, V v2) {
 
+		if (v1.equals(v2)) {
+			return;
+		}
+
 		CallbackAccumulator<List<V>> accumulator = new CallbackAccumulator<>(path -> {
 
 			Collection<E> edges = pathToEdgesAsync(path);
-			SystemUtilities.runSwingLater(() -> activateSwing(edges));
+			SystemUtilities.runSwingLater(() -> setInHoverPathOnSwing(edges));
 		});
 
 		TaskMonitor timeoutMonitor = TimeoutTaskMonitor.timeoutIn(ALGORITHM_TIMEOUT,
@@ -884,12 +916,12 @@ public class VisualGraphPathHighlighter<V extends VisualVertex, E extends Visual
 	 * A class to handle off-loading the calculation of edges to be hovered.   The results will
 	 * then be used to update the UI.
 	 */
-	private class HoverRunnable implements SwingRunnable {
+	private class SetHoveredEdgesRunnable implements SwingRunnable {
 
 		private Supplier<Set<E>> edgeSupplier;
 		private Set<E> edges;
 
-		HoverRunnable(Supplier<Set<E>> edgeSupplier) {
+		SetHoveredEdgesRunnable(Supplier<Set<E>> edgeSupplier) {
 			this.edgeSupplier = edgeSupplier;
 		}
 
@@ -909,20 +941,20 @@ public class VisualGraphPathHighlighter<V extends VisualVertex, E extends Visual
 			if (isCancelled) {
 				return;
 			}
-			activateSwing(edges);
+			setInHoverPathOnSwing(edges);
 		}
 	}
 
 	/**
-	 * A class to handle off-loading the calculation of edges to be focused/selected.  
+	 * A class to handle off-loading the calculation of edges to be focused.  
 	 * The results will then be used to update the UI.
 	 */
-	private class SelectRunnable implements SwingRunnable {
+	private class SetFocusedEdgesRunnable implements SwingRunnable {
 
 		private Supplier<Set<E>> edgeSupplier;
 		private Set<E> edges;
 
-		SelectRunnable(Supplier<Set<E>> edgeSupplier) {
+		SetFocusedEdgesRunnable(Supplier<Set<E>> edgeSupplier) {
 			this.edgeSupplier = edgeSupplier;
 		}
 
@@ -942,7 +974,7 @@ public class VisualGraphPathHighlighter<V extends VisualVertex, E extends Visual
 			if (isCancelled) {
 				return;
 			}
-			selectSwing(edges);
+			setInFocusedPathOnSwing(edges);
 		}
 	}
 
@@ -950,11 +982,11 @@ public class VisualGraphPathHighlighter<V extends VisualVertex, E extends Visual
 	 * A class meant to run in the hover RunManager that is slow or open-ended.  Work will
 	 * be performed as long as possible, updating results along the way.  
 	 */
-	private class SlowHoverRunnable implements MonitoredRunnable {
+	private class SlowSetHoveredEdgesRunnable implements MonitoredRunnable {
 
 		private Callback callback;
 
-		SlowHoverRunnable(Callback callback) {
+		SlowSetHoveredEdgesRunnable(Callback callback) {
 			this.callback = callback;
 		}
 

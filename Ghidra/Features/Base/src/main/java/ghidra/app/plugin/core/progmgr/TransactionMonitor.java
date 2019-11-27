@@ -15,21 +15,19 @@
  */
 package ghidra.app.plugin.core.progmgr;
 
+import java.awt.Dimension;
+import java.awt.Graphics;
+import java.util.Iterator;
+import java.util.List;
+
+import javax.swing.*;
+
 import ghidra.framework.data.DomainObjectAdapterDB;
 import ghidra.framework.model.Transaction;
 import ghidra.framework.model.TransactionListener;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.model.listing.Program;
 import ghidra.util.HTMLUtilities;
-
-import java.awt.Dimension;
-import java.awt.Graphics;
-import java.util.Iterator;
-import java.util.List;
-
-import javax.swing.ImageIcon;
-import javax.swing.JComponent;
-
 import resources.ResourceManager;
 
 class TransactionMonitor extends JComponent implements TransactionListener {
@@ -44,7 +42,7 @@ class TransactionMonitor extends JComponent implements TransactionListener {
 		super();
 		busyIcon = ResourceManager.loadImage("images/editbytes.gif");
 		prefSize = new Dimension(busyIcon.getIconWidth(), busyIcon.getIconHeight());
-		docking.ToolTipManager.sharedInstance().registerComponent(this);
+		ToolTipManager.sharedInstance().registerComponent(this);
 	}
 
 	void setProgram(Program p) {

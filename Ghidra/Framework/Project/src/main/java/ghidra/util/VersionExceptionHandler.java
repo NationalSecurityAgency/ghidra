@@ -17,7 +17,6 @@ package ghidra.util;
 
 import java.awt.Component;
 
-import docking.DockingWindowManager;
 import docking.widgets.OptionDialog;
 import ghidra.framework.model.DomainFile;
 import ghidra.util.exception.VersionException;
@@ -57,16 +56,14 @@ public class VersionExceptionHandler {
 
 	private static void showNeedExclusiveCheckoutDialog(final Component parent, String filename,
 			String contentType, String actionName) {
-		final OptionDialog dialog = new OptionDialog(actionName + " Failed!",
+
+		Msg.showError(VersionExceptionHandler.class, parent, actionName + " Failed!",
 			"Unable to " + actionName + " " + contentType + ": " + filename + "\n \n" +
 				"An upgrade of the " + contentType +
 				" data is required, however, you must have an exclusive checkout\n" +
 				"to upgrade a shared file!\n \n" +
 				"NOTE: If you are unable to obtain an exclusive checkout, you may be able to " +
-				actionName + "\nthe file with an older version of Ghidra.",
-			OptionDialog.ERROR_MESSAGE,
-			OptionDialog.getIconForMessageType(OptionDialog.ERROR_MESSAGE));
-		DockingWindowManager.showDialog(parent, dialog);
+				actionName + "\nthe file with an older version of Ghidra.");
 	}
 
 	private static int showUpgradeDialog(final Component parent, VersionException ve,
@@ -74,28 +71,23 @@ public class VersionExceptionHandler {
 		final String detailMessage =
 			ve.getDetailMessage() == null ? "" : "\n" + ve.getDetailMessage();
 
-		OptionDialog dialog = new OptionDialog("Upgrade " + contentType + " Data? " + filename,
-			"The " + contentType + " file you are attempting to " + actionName +
-				" is an older version." + detailMessage + "\n \n" +
-				"Would you like to Upgrade it now?",
-			"Upgrade", "Cancel", OptionDialog.QUESTION_MESSAGE,
-			OptionDialog.getIconForMessageType(OptionDialog.QUESTION_MESSAGE), false);
-		DockingWindowManager.showDialog(parent, dialog);
-		return dialog.getResult();
+		String title = "Upgrade " + contentType + " Data? " + filename;
+		String message = "The " + contentType + " file you are attempting to " + actionName +
+			" is an older version." + detailMessage + "\n \n" + "Would you like to Upgrade it now?";
+		return OptionDialog.showOptionDialog(parent, title, message, "Upgrade",
+			OptionDialog.QUESTION_MESSAGE);
 	}
 
 	private static int showWarningDialog(final Component parent, String filename,
 			String contentType, String actionName) {
-		final OptionDialog dialog = new OptionDialog(
-			"Upgrade Shared " + contentType + " Data? " + filename,
-			"This " + contentType +
-				" file is shared with other users.  If you upgrade this file,\n" +
-				"other users will not be able to read the new version until they upgrade to \n" +
-				"the same version of Ghidra. Do you want to continue?",
-			"Upgrade", "Cancel", OptionDialog.WARNING_MESSAGE,
-			OptionDialog.getIconForMessageType(OptionDialog.WARNING_MESSAGE), false);
-		DockingWindowManager.showDialog(parent, dialog);
-		return dialog.getResult();
+
+		String title = "Upgrade Shared " + contentType + " Data? " + filename;
+		String message = "This " + contentType +
+			" file is shared with other users.  If you upgrade this file,\n" +
+			"other users will not be able to read the new version until they upgrade to \n" +
+			"the same version of Ghidra. Do you want to continue?";
+		return OptionDialog.showOptionDialog(parent, title, message, "Upgrade",
+			OptionDialog.WARNING_MESSAGE);
 	}
 
 	public static void showVersionError(final Component parent, final String filename,

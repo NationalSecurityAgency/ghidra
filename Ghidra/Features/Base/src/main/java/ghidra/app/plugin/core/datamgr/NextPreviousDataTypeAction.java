@@ -23,6 +23,7 @@ import javax.swing.Icon;
 import docking.ActionContext;
 import docking.action.*;
 import docking.menu.MultiActionDockingAction;
+import ghidra.app.util.datatype.DataTypeUrl;
 import ghidra.base.actions.HorizontalRuleAction;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.data.DataTypeManager;
@@ -38,7 +39,7 @@ class NextPreviousDataTypeAction extends MultiActionDockingAction {
 	private boolean isNext;
 	private String owner;
 	private DataTypesProvider provider;
-	private HistoryList<DataType> history;
+	private HistoryList<DataTypeUrl> history;
 
 	public NextPreviousDataTypeAction(DataTypesProvider provider, String owner, boolean isNext) {
 		super(isNext ? "Next Data Type in History" : "Previous Data Type in History", owner);
@@ -65,22 +66,17 @@ class NextPreviousDataTypeAction extends MultiActionDockingAction {
 
 	@Override
 	public void actionPerformed(ActionContext context) {
-		if (isNext) {
-			history.goForward();
-		}
-		else {
-			history.goBack();
-		}
+		// rely on the individual actions to navigate, as they know them item that is being
+		// navigated to, allowing them to skip through the list
+		List<DockingActionIf> actions = getActionList(context);
+		DockingActionIf action = actions.get(0);
+		action.actionPerformed(context);
 		provider.contextChanged();
 	}
 
 	@Override
 	public boolean isEnabledForContext(ActionContext context) {
-
-		if (isNext) {
-			return history.hasNext();
-		}
-		return history.hasPrevious();
+		return !getActionList(context).isEmpty();
 	}
 
 	@Override
@@ -92,19 +88,25 @@ class NextPreviousDataTypeAction extends MultiActionDockingAction {
 
 		DataTypeManager lastDtm = null;
 		List<DockingActionIf> results = new ArrayList<>();
-		List<DataType> types =
+		List<DataTypeUrl> types =
 			isNext ? history.getNextHistoryItems() : history.getPreviousHistoryItems();
 
-		for (DataType dt : types) {
+		for (DataTypeUrl url : types) {
+
+			DataType dt = url.getDataType(provider.getPlugin());
+			if (dt == null) {
+				// The type may have been removed; maybe an undo happened.  Leave the item in
+				// the list in case a redo is performed
+				continue;
+			}
 
 			DataTypeManager dtm = dt.getDataTypeManager();
-
 			if (dtm != lastDtm && !results.isEmpty()) {
 				// add a separator to show the user they are navigating across managers
 				results.add(createHorizontalRule(lastDtm, dtm));
 			}
 
-			results.add(new NavigationAction(dt));
+			results.add(new NavigationAction(url, dt));
 			lastDtm = dtm;
 		}
 
@@ -122,8 +124,11 @@ class NextPreviousDataTypeAction extends MultiActionDockingAction {
 
 	private class NavigationAction extends DockingAction {
 
-		private NavigationAction(DataType dt) {
-			super("DataTypeNavigationAction_" + ++navigationActionIdCount, owner, false);
+		private DataTypeUrl url;
+
+		private NavigationAction(DataTypeUrl url, DataType dt) {
+			super("DataTypeNavigationAction_" + ++navigationActionIdCount, owner);
+			this.url = url;
 
 			setMenuBarData(new MenuData(new String[] { dt.getDisplayName() }));
 			setEnabled(true);
@@ -132,11 +137,15 @@ class NextPreviousDataTypeAction extends MultiActionDockingAction {
 
 		@Override
 		public void actionPerformed(ActionContext context) {
+
+			// note: we use 'goBackTo()' and 'goForwardTo()' since items in the history list
+			//       may not have been added to the multi-action; we have to tell the list
+			//       to skip those items.
 			if (isNext) {
-				history.goForward();
+				history.goForwardTo(url);
 			}
 			else {
-				history.goBack();
+				history.goBackTo(url);
 			}
 			provider.contextChanged();
 		}

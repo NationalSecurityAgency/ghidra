@@ -28,6 +28,7 @@ public class WindowsJavaFinder extends JavaFinder {
 	protected List<File> getJavaRootInstallDirs() {
 		List<File> javaRootInstallDirs = new ArrayList<>();
 		javaRootInstallDirs.add(new File("C:\\Program Files\\Java"));
+		javaRootInstallDirs.add(new File("C:\\Program Files\\Amazon Corretto"));
 		return javaRootInstallDirs;
 	}
 

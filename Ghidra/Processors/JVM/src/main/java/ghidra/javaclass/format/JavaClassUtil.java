@@ -15,42 +15,41 @@
  */
 package ghidra.javaclass.format;
 
-import ghidra.framework.options.Options;
+import java.util.Arrays;
+
+import ghidra.app.util.opinion.JavaLoader;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Program;
 import ghidra.util.Msg;
 
-import java.util.Arrays;
-
 public class JavaClassUtil {
-	
+
 	public final static long LOOKUP_ADDRESS = 0xE0000000L;
 	//65536 is the maximum size of the methods_count item in a class file
 	public static final long METHOD_INDEX_SIZE = 65536 * 4;
 
 	public final static boolean isClassFile(Program program) {
-		Options options = program.getOptions(Program.PROGRAM_INFO);
-		String firmwarePath = options.getString("Firmware Path", "");
 
-		if (program.getExecutablePath().toLowerCase().endsWith(".class") ||
-			firmwarePath.toLowerCase().endsWith(".class")) {
-			byte[] bytes = new byte[4];
-			try {
-				Address address = program.getAddressFactory().getAddressSpace("constantPool").getMinAddress();
+		AddressFactory factory = program.getAddressFactory();
+		byte[] bytes = new byte[4];
+		try {
+			AddressSpace space = factory.getAddressSpace(JavaLoader.CONSTANT_POOL);
+			if (space != null) {
+				Address address = space.getMinAddress();
 				program.getMemory().getBytes(address, bytes);
 			}
-			catch (Exception e) {
-			    Msg.info(JavaClassUtil.class, e.getLocalizedMessage());
-			}
-			return Arrays.equals(bytes, JavaClassConstants.MAGIC_BYTES);
 		}
-		return false;
+		catch (Exception e) {
+			Msg.error(JavaClassUtil.class, "Exception reading program bytes: " + e.getMessage(), e);
+			return false;
+		}
+		return Arrays.equals(bytes, JavaClassConstants.MAGIC_BYTES);
 	}
-	
-	public static Address toLookupAddress( Program program, int methodIndex ) {
-		AddressFactory addressFactory = program.getAddressFactory( );
-		AddressSpace defaultAddressSpace = addressFactory.getDefaultAddressSpace( );
-		return defaultAddressSpace.getAddress( JavaClassUtil.LOOKUP_ADDRESS + ( methodIndex * 4 ) );
+
+	public static Address toLookupAddress(Program program, int methodIndex) {
+		AddressFactory addressFactory = program.getAddressFactory();
+		AddressSpace defaultAddressSpace = addressFactory.getDefaultAddressSpace();
+		return defaultAddressSpace.getAddress(JavaClassUtil.LOOKUP_ADDRESS + (methodIndex * 4));
 	}
 
 }

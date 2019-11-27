@@ -31,11 +31,12 @@ import docking.help.Help;
 import docking.help.HelpService;
 import docking.widgets.MultiLineLabel;
 import docking.widgets.OptionDialog;
-import docking.widgets.tree.*;
+import docking.widgets.label.GIconLabel;
+import docking.widgets.tree.GTree;
+import docking.widgets.tree.GTreeNode;
 import docking.widgets.tree.internal.DefaultGTreeDataTransformer;
 import ghidra.framework.options.*;
-import ghidra.util.HelpLocation;
-import ghidra.util.Msg;
+import ghidra.util.*;
 import ghidra.util.bean.opteditor.OptionsVetoException;
 import ghidra.util.layout.MiddleLayout;
 import ghidra.util.task.SwingUpdateManager;
@@ -138,7 +139,7 @@ public class OptionsPanel extends JPanel {
 			Options currentOptions = getSelectedOptions();
 
 			int userChoice = OptionDialog.showOptionDialog(viewPanel, "Restore Defaults?",
-				"<html>Restore <b>" + currentOptions.getName() +
+				"<html>Restore <b>" + HTMLUtilities.escapeHTML(currentOptions.getName()) +
 					"</b> to default option values <b>and erase current settings?</b>",
 				"Restore Defaults");
 			if (userChoice == OptionDialog.CANCEL_OPTION) {
@@ -231,7 +232,7 @@ public class OptionsPanel extends JPanel {
 	public void displayCategory(String category, String filterText) {
 		String escapedDelimiter = Pattern.quote(Options.DELIMITER_STRING);
 
-		GTreeRootNode root = gTree.getRootNode();
+		GTreeNode root = gTree.getModelRoot();
 		category = root.getName() + Options.DELIMITER_STRING + category;
 		String[] categories = category.split(escapedDelimiter);
 		gTree.setFilterText(filterText);
@@ -241,9 +242,6 @@ public class OptionsPanel extends JPanel {
 	private JPanel createDefaultPanel() {
 		JPanel panel = new JPanel(new MiddleLayout());
 		panel.setName("Default");
-
-		Icon icon = ResourceManager.loadImage("images/information.png");
-		JLabel imageLabel = new JLabel(icon);
 
 		MultiLineLabel label =
 			new MultiLineLabel("To change Options, select a Folder or Option Group from the\n" +
@@ -255,7 +253,7 @@ public class OptionsPanel extends JPanel {
 		BoxLayout bl = new BoxLayout(labelPanel, BoxLayout.X_AXIS);
 		labelPanel.setLayout(bl);
 		labelPanel.add(Box.createHorizontalStrut(5));
-		labelPanel.add(imageLabel);
+		labelPanel.add(new GIconLabel(ResourceManager.loadImage("images/information.png")));
 		labelPanel.add(Box.createHorizontalStrut(5));
 		labelPanel.add(label);
 
@@ -322,14 +320,15 @@ public class OptionsPanel extends JPanel {
 			return; // not sure this can happen
 		}
 
+		HelpService help = Help.getHelpService();
 		HelpLocation location = options.getOptionsHelpLocation();
 		if (location == null) {
 			// The tree node may or may not have help.  The leaf options should all have help.
-			return;
+			help.clearHelp(this);
 		}
-
-		HelpService help = Help.getHelpService();
-		help.registerHelp(this, location);
+		else {
+			help.registerHelp(this, location);
+		}
 	}
 
 	private OptionsEditor getOptionsEditor(OptionsTreeNode node) {

@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,26 +17,26 @@ package ghidra.app.plugin.core.datamgr.tree;
 
 import ghidra.app.plugin.core.datamgr.archive.ProjectArchive;
 import ghidra.framework.model.DomainFile;
+import ghidra.util.HTMLUtilities;
 
 public class ProjectArchiveNode extends DomainFileArchiveNode {
 
-	public ProjectArchiveNode(ProjectArchive archive) {
-		super(archive);
+	public ProjectArchiveNode(ProjectArchive archive, ArrayPointerFilterState filterState) {
+		super(archive, filterState);
 	}
 
 	@Override
 	protected void dataTypeManagerChanged() {
-		removeAll(); // old children are no longer valid.
+		setChildren(null); // old children are no longer valid.
 		installDataTypeManagerListener();
 		nodeChanged();
-		fireNodeStructureChanged(this); // all the children have changed.
 	}
 
 	@Override
 	public String getToolTip() {
 		DomainFile file = ((ProjectArchive) archive).getDomainFile();
 		if (file != null) {
-			return file.getPathname();
+			return "<html>" + HTMLUtilities.escapeHTML(file.getPathname());
 		}
 		return "[Unsaved New Project Archive]";
 	}

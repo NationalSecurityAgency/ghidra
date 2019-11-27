@@ -139,7 +139,7 @@ public class JavaClassDecompilerFileSystem implements GFileSystem {
 	}
 
 	@Override
-	public String getInfo(GFile file, TaskMonitor monitor) throws IOException {
+	public String getInfo(GFile file, TaskMonitor monitor) {
 		if (fsIndexHelper.getPayloadFile().equals(file)) {
 			Map<String, String> info = new HashMap<>();
 			info.put("Class name", className);

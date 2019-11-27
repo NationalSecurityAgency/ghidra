@@ -16,13 +16,13 @@
 package docking.widgets;
 
 import java.awt.Component;
-import java.text.DateFormat;
 import java.util.Date;
 
 import javax.swing.JComponent;
 
 import docking.widgets.table.GTableCellRenderer;
 import docking.widgets.table.GTableCellRenderingData;
+import ghidra.util.DateUtils;
 
 /**
  * The JDK-provided DateRenderer does not inherit the backgrounds and such properly.
@@ -30,16 +30,15 @@ import docking.widgets.table.GTableCellRenderingData;
  * column does not have the correct background. This fixes that.
  */
 public class GenericDateCellRenderer extends GTableCellRenderer {
-	private DateFormat format;
+
 	private String toolTip;
 
-	public GenericDateCellRenderer(DateFormat format, String toolTip) {
-		this.format = format;
-		this.toolTip = toolTip;
+	public GenericDateCellRenderer() {
+		this(null);
 	}
 
-	public GenericDateCellRenderer(DateFormat format) {
-		this(format, null);
+	public GenericDateCellRenderer(String toolTip) {
+		this.toolTip = toolTip;
 	}
 
 	@Override
@@ -47,7 +46,8 @@ public class GenericDateCellRenderer extends GTableCellRenderer {
 
 		Date value = (Date) data.getValue();
 
-		GTableCellRenderingData newData = data.copyWithNewValue(format.format(value));
+		GTableCellRenderingData newData =
+			data.copyWithNewValue(DateUtils.formatDateTimestamp(value));
 
 		JComponent c = (JComponent) super.getTableCellRendererComponent(newData);
 		if (toolTip != null) {

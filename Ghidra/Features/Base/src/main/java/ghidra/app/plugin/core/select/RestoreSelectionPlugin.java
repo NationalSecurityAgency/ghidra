@@ -34,6 +34,7 @@ import java.util.Map;
 import docking.ActionContext;
 import docking.action.DockingAction;
 import docking.action.MenuData;
+import docking.tool.ToolConstants;
 
 //@formatter:off
 @PluginInfo(

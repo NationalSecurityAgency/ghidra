@@ -99,15 +99,7 @@
         <input name="cpool_index_ldc2_w"/>
       </pcode>
     </callotherfixup>
-   
-   <callotherfixup targetop="lookupswitchCallOther">
-     <pcode dynamic="true">
-       <input name="default"/>
-       <input name="numPairs"/>
-       <input name ="padding"/>
-     </pcode>
-   </callotherfixup>
-   
+    
    <callotherfixup targetop="multianewarrayCallOther">
      <pcode dynamic="true">
        <input name="cpool_index_multianewarray"/>

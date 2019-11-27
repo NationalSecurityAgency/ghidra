@@ -32,8 +32,8 @@ import ghidra.util.exception.CancelledException;
 public class SampleGraphPluginDependencyLayout
 		extends AbstractVisualGraphLayout<SampleVertex, SampleEdge> {
 
-	protected SampleGraphPluginDependencyLayout(SampleGraph graph) {
-		super(graph);
+	protected SampleGraphPluginDependencyLayout(SampleGraph graph, String name) {
+		super(graph, name);
 	}
 
 	@Override
@@ -50,7 +50,7 @@ public class SampleGraphPluginDependencyLayout
 		}
 
 		SampleGraphPluginDependencyLayout newLayout =
-			new SampleGraphPluginDependencyLayout((SampleGraph) newGraph);
+			new SampleGraphPluginDependencyLayout((SampleGraph) newGraph, getLayoutName());
 		return newLayout;
 	}
 

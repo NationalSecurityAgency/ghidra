@@ -20,11 +20,11 @@ import java.lang.reflect.Method;
 import java.util.*;
 
 import javax.swing.JComponent;
-import javax.swing.JLabel;
 
 import org.python.core.PyInstance;
 import org.python.core.PyObject;
 
+import docking.widgets.label.GDLabel;
 import ghidra.app.plugin.core.console.CodeCompletion;
 import ghidra.framework.options.Options;
 import ghidra.util.Msg;
@@ -36,14 +36,14 @@ import ghidra.util.Msg;
  *
  */
 public class PythonCodeCompletionFactory {
-	private static List<Class<?>> classes = new ArrayList<Class<?>>();
-	private static Map<Class<?>, Color> classToColorMap = new HashMap<Class<?>, Color>();
+	private static List<Class<?>> classes = new ArrayList<>();
+	private static Map<Class<?>, Color> classToColorMap = new HashMap<>();
 	/* necessary because we only want to show the user the simple class name
 	 * Well, that, and the Options.DELIMITER is a '.' which totally messes
 	 * things up.
 	 */
-	private static Map<String, Class<?>> simpleNameToClass = new HashMap<String, Class<?>>();
-	private static Map<Class<?>, String> classDescription = new HashMap<Class<?>, String>();
+	private static Map<String, Class<?>> simpleNameToClass = new HashMap<>();
+	private static Map<Class<?>, String> classDescription = new HashMap<>();
 	public static final String COMPLETION_LABEL = "Code Completion Colors";
 
 	/* package-level accessibility so that PythonPlugin can tell this is
@@ -51,9 +51,9 @@ public class PythonCodeCompletionFactory {
 	 */
 	final static String INCLUDE_TYPES_LABEL = "Include type names in code completion popup?";
 	private final static String INCLUDE_TYPES_DESCRIPTION =
-		"Whether or not to include the type names (classes) of the possible "
-			+ "completions in the code completion window.  The class name will be "
-			+ "parenthesized after the completion.";
+		"Whether or not to include the type names (classes) of the possible " +
+			"completions in the code completion window.  The class name will be " +
+			"parenthesized after the completion.";
 	private final static boolean INCLUDE_TYPES_DEFAULT = true;
 	private static boolean includeTypes = INCLUDE_TYPES_DEFAULT;
 
@@ -84,12 +84,12 @@ public class PythonCodeCompletionFactory {
 //				"Python's built-in functions collection (note that many are " +
 //				"re-implemented in Java)");
 		setupClass("org.python.core.__builtin__", FUNCTION_COLOR,
-			"Python's built-in functions collection (note that many are "
-				+ "re-implemented in Java)");
+			"Python's built-in functions collection (note that many are " +
+				"re-implemented in Java)");
 		setupClass("org.python.core.PyFunction", FUNCTION_COLOR, "functions written in Python");
 		setupClass("org.python.core.PyMethodDescr", FUNCTION_COLOR,
-			"unbound Python builtin instance methods (they take an "
-				+ "Object as the first argument)");
+			"unbound Python builtin instance methods (they take an " +
+				"Object as the first argument)");
 
 		setupClass("org.python.core.PyJavaPackage", PACKAGE_COLOR, "Java packages");
 		setupClass("org.python.core.PyModule", PACKAGE_COLOR, "Python modules");
@@ -107,8 +107,8 @@ public class PythonCodeCompletionFactory {
 
 		setupClass("org.python.core.PyMethod", METHOD_COLOR, "methods");
 		setupClass("org.python.core.PyBuiltinFunction", METHOD_COLOR,
-			"core Python methods, often inherited from Python's Object "
-				+ "(overriding these methods is very powerful)");
+			"core Python methods, often inherited from Python's Object " +
+				"(overriding these methods is very powerful)");
 
 		setupClass("org.python.core.PySequence", SEQUENCE_COLOR,
 			"iterable sequences, including arrays, list, and strings");
@@ -122,8 +122,8 @@ public class PythonCodeCompletionFactory {
 		setupClass("org.python.core.PyComplex", NUMBER_COLOR, "complex numbers");
 
 		setupClass("org.python.core.PyCompoundCallable", SPECIAL_COLOR,
-			"special Python properties for "
-				+ "assigning Python functions as EventListeners on Java objects");
+			"special Python properties for " +
+				"assigning Python functions as EventListeners on Java objects");
 
 		/* changed for Jython 2.5 */
 		setupClass("org.python.core.PyObjectDerived", INSTANCE_COLOR, "Java Objects");
@@ -171,7 +171,8 @@ public class PythonCodeCompletionFactory {
 			classDescription.put(klass, description);
 		}
 		catch (ClassNotFoundException cnfe) {
-			Msg.debug(PythonCodeCompletionFactory.class, "Unable to find class: " + className, cnfe);
+			Msg.debug(PythonCodeCompletionFactory.class, "Unable to find class: " + className,
+				cnfe);
 		}
 	}
 
@@ -202,7 +203,7 @@ public class PythonCodeCompletionFactory {
 				description = description + " (" + className + ")";
 			}
 
-			comp = new JLabel(description);
+			comp = new GDLabel(description);
 			Iterator<Class<?>> iter = classes.iterator();
 			while (iter.hasNext()) {
 				Class<?> testClass = iter.next();
@@ -228,11 +229,13 @@ public class PythonCodeCompletionFactory {
 		Iterator<?> iter = classes.iterator();
 		while (iter.hasNext()) {
 			Class<?> currentClass = (Class<?>) iter.next();
-			options.registerOption(COMPLETION_LABEL + Options.DELIMITER +
-				getSimpleName(currentClass), classToColorMap.get(currentClass), null,
+			options.registerOption(
+				COMPLETION_LABEL + Options.DELIMITER + getSimpleName(currentClass),
+				classToColorMap.get(currentClass), null,
 				"Color to use for " + classDescription.get(currentClass) + ".");
-			classToColorMap.put(currentClass, options.getColor(COMPLETION_LABEL +
-				Options.DELIMITER + getSimpleName(currentClass), classToColorMap.get(currentClass)));
+			classToColorMap.put(currentClass,
+				options.getColor(COMPLETION_LABEL + Options.DELIMITER + getSimpleName(currentClass),
+					classToColorMap.get(currentClass)));
 		}
 	}
 
@@ -250,7 +253,8 @@ public class PythonCodeCompletionFactory {
 	 * @param oldValue the old value
 	 * @param newValue the new value
 	 */
-	public static void changeOptions(Options options, String name, Object oldValue, Object newValue) {
+	public static void changeOptions(Options options, String name, Object oldValue,
+			Object newValue) {
 		String classSimpleName = name.substring((COMPLETION_LABEL + Options.DELIMITER).length());
 		Class<?> klass = simpleNameToClass.get(classSimpleName);
 
@@ -277,7 +281,7 @@ public class PythonCodeCompletionFactory {
 	 * @return the Java __call__ methods declared for the Python object
 	 */
 	public static Object[] getCallMethods(PyObject obj) {
-		List<Method> callMethodList = new ArrayList<Method>();
+		List<Method> callMethodList = new ArrayList<>();
 		Method[] declaredMethods = obj.getClass().getDeclaredMethods();
 
 		for (Method declaredMethod : declaredMethods) {

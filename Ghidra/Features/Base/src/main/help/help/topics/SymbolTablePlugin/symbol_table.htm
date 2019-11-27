@@ -31,7 +31,7 @@
 
     <BLOCKQUOTE>
       <BLOCKQUOTE>
-        <P>The columns in the table are:</P>
+        <P>Some of the columns in the table are:</P>
 
         <CENTER>
           <TABLE border="1" width="73%" height="159">
@@ -52,13 +52,6 @@
                 <TD width="11%" height="22"><B>Type</B></TD>
 
                 <TD width="89%" height="22">Symbol type (Function, External, Class, etc).</TD>
-              </TR>
-
-              <TR>
-                <TD width="11%" height="15"><B>Datatype</B></TD>
-
-                <TD width="89%" height="15">Datatype (i.e., byte, float, etc.) applied at symbol
-                address.</TD>
               </TR>
 
               <TR>
@@ -89,7 +82,15 @@
         <P><I><IMG src="../../shared/note.png"> You can sort the table on any column by clicking on
         the column header. The column can be sorted in ascending or descending order.</I></P>
 
-        <P><I><IMG src="../../shared/tip.png"></I> The colors for <B><FONT color="#ff0000">bad
+		<BLOCKQUOTE>
+	      <P><IMG src="../../shared/warning.png">
+	      Sorting a column in the symbol table when the program has a large number of symbols 
+	      can be slow.  If you do not need sorting, then you can control-click the sorted column
+	      to remove the sort.
+	      </p>
+        </BLOCKQUOTE>
+
+        <P><IMG src="../../shared/tip.png"> The colors for <B><FONT color="#ff0000">bad
         references</FONT></B>, <B><FONT color="#ff00ff">entry points</FONT></B>, <B>dead code</B>,
         <B><FONT color="#c0c0c0">offcut code</FONT></B>, <B><FONT color="#0000ff">function
         names</FONT></B>, <B><FONT color="#008040">local symbols</FONT></B>, <B><FONT color=
@@ -112,6 +113,15 @@
 
       <P>The <I>Name Only</I> checkbox allows you to toggle whether to filter on only the name
       column or all the columns in the table.</P>
+      
+      <BLOCKQUOTE>
+      <P><IMG src="../../shared/tip.png">
+      Filtering the symbol table when the program has a large number of symbols can be slow.  
+      When only filtering on the symbol name, via the checkbox above, the overall filtering 
+      is considerably faster.
+      </p>
+      </BLOCKQUOTE>
+      
 
       <P>The filter text field will accept basic globbing characters such as '<B>*</B>' and
       '<B>?</B>' within the filter text unless the "Regular Expression" filter strategy is
@@ -189,7 +199,7 @@
       for more discussion on the use of the edit dialog). 
     </BLOCKQUOTE>
 
-    <H2><A name="Make_Selection"></A>Making a Selection&nbsp;<IMG src="images/text_align_justify.png"></H2>
+    <H2><A name="Make_Selection"></A>Making a Selection&nbsp;<IMG src="Icons.MAKE_SELECTION_ICON"></H2>
 
     <BLOCKQUOTE>
       <P>You can make a selection that corresponds to the symbol addresses that are selected in the
@@ -205,7 +215,7 @@
           Right-mouse-click and select "Make Selection" from the popup menu. 
 
           <UL>
-            <LI>Or, click the&nbsp;<IMG src="images/text_align_justify.png"> &nbsp;button in the <I>Symbol
+            <LI>Or, click the&nbsp;<IMG src="Icons.MAKE_SELECTION_ICON"> &nbsp;button in the <I>Symbol
             Table</I> toolbar.</LI>
           </UL>
         </LI>

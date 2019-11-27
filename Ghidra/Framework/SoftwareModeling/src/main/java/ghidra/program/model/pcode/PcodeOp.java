@@ -15,13 +15,13 @@
  */
 package ghidra.program.model.pcode;
 
+import java.util.*;
+
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.UnknownInstructionException;
 import ghidra.util.xml.SpecXmlUtils;
 import ghidra.xml.XmlElement;
 import ghidra.xml.XmlPullParser;
-
-import java.util.*;
 
 /**
  * 
@@ -36,7 +36,6 @@ import java.util.*;
  *    Some number of input parameter varnodes
  *    possible output varnode
  * 
- * TODO: write an emulator for each PcodeOp.  It should execute on a Pcode machine state.
  */
 public class PcodeOp {
 
@@ -129,8 +128,11 @@ public class PcodeOp {
 	public static final int SEGMENTOP = 67;
 	public static final int CPOOLREF = 68;
 	public static final int NEW = 69;
+	public static final int INSERT = 70;
+	public static final int EXTRACT = 71;
+	public static final int POPCOUNT = 72;
 
-	public static final int PCODE_MAX = 70;
+	public static final int PCODE_MAX = 73;
 
 	private static Hashtable<String, Integer> opcodeTable;
 
@@ -189,6 +191,7 @@ public class PcodeOp {
 	 * Constructor - no output
 	 * 
 	 * @param a address pcode is attached to
+	 * @param sequencenumber id within a single address
 	 * @param op operation pcode performs
 	 * @param in inputs from pcode operation
 	 */
@@ -200,6 +203,7 @@ public class PcodeOp {
 	 * Constructor - no inputs, output
 	 * 
 	 * @param a address pcode is attached to
+	 * @param sequencenumber id within a single address
 	 * @param op pcode operation
 	 */
 	public PcodeOp(Address a, int sequencenumber, int op) {
@@ -217,8 +221,9 @@ public class PcodeOp {
 	 * @return number of input varnodes
 	 */
 	public final int getNumInputs() {
-		if (input == null)
+		if (input == null) {
 			return 0;
+		}
 		return input.length;
 	}
 
@@ -234,8 +239,9 @@ public class PcodeOp {
 	 * @return the i'th input varnode
 	 */
 	public final Varnode getInput(int i) {
-		if (i >= input.length || i < 0)
+		if (i >= input.length || i < 0) {
 			return null;
+		}
 		return input[i];
 	}
 
@@ -255,8 +261,9 @@ public class PcodeOp {
 		int n = input.length;
 		int i;
 		for (i = 0; i < n; ++i) {
-			if (input[i] == vn)
+			if (input[i] == vn) {
 				break;
+			}
 		}
 		return i;
 	}
@@ -324,15 +331,18 @@ public class PcodeOp {
 	public final void setInput(Varnode vn, int slot) {
 		if (input == null) {
 			input = new Varnode[slot + 1];
-			for (int i = 0; i < input.length; ++i)
+			for (int i = 0; i < input.length; ++i) {
 				input[i] = null;
+			}
 		}
 		else if (slot >= input.length) {
 			Varnode[] newinput = new Varnode[slot + 1];
-			for (int i = 0; i < input.length; ++i)
+			for (int i = 0; i < input.length; ++i) {
 				newinput[i] = input[i];
-			for (int i = input.length; i < newinput.length; ++i)
+			}
+			for (int i = input.length; i < newinput.length; ++i) {
 				newinput[i] = null;
+			}
 			input = newinput;
 		}
 		input[slot] = vn;
@@ -349,10 +359,12 @@ public class PcodeOp {
 			return;
 		}
 		Varnode[] newinput = new Varnode[input.length - 1];
-		for (int i = 0; i < slot; ++i)
+		for (int i = 0; i < slot; ++i) {
 			newinput[i] = input[i];
-		for (int i = slot; i < newinput.length; ++i)
+		}
+		for (int i = slot; i < newinput.length; ++i) {
 			newinput[i] = input[i + 1];
+		}
 		input = newinput;
 	}
 
@@ -368,10 +380,12 @@ public class PcodeOp {
 			return;
 		}
 		Varnode[] newinput = new Varnode[input.length + 1];
-		for (int i = 0; i < slot; ++i)
+		for (int i = 0; i < slot; ++i) {
 			newinput[i] = input[i];
-		for (int i = slot + 1; i < newinput.length; ++i)
+		}
+		for (int i = slot + 1; i < newinput.length; ++i) {
 			newinput[i] = input[i - 1];
+		}
 		newinput[slot] = vn;
 		input = newinput;
 	}
@@ -409,10 +423,12 @@ public class PcodeOp {
 		SpecXmlUtils.encodeSignedIntegerAttribute(resBuf, "code", opcode);
 		resBuf.append('>');
 		resBuf.append(seqnum.buildXML());
-		if (output == null)
+		if (output == null) {
 			resBuf.append("<void/>");
-		else
+		}
+		else {
 			output.buildXML(resBuf);
+		}
 		if ((opcode == PcodeOp.LOAD) || (opcode == PcodeOp.STORE)) {
 			int spaceId = (int) input[0].getOffset();
 			resBuf.append("<spaceid");
@@ -420,31 +436,35 @@ public class PcodeOp {
 			SpecXmlUtils.encodeStringAttribute(resBuf, "name", space.getName());
 			resBuf.append("/>");
 		}
-		else if (input.length > 0)
+		else if (input.length > 0) {
 			input[0].buildXML(resBuf);
-		for (int i = 1; i < input.length; ++i)
+		}
+		for (int i = 1; i < input.length; ++i) {
 			input[i].buildXML(resBuf);
+		}
 		resBuf.append("</op>");
 	}
 
 	/**
-	 * Read pcode from SAX tree parse node.
+	 * Read p-code from XML stream
 	 * 
-	 * @param el SAX tree parse node
-	 * @param pfact factory used to create pcode correctly
+	 * @param parser is the XML stream
+	 * @param pfact factory used to create p-code correctly
 	 * 
 	 * @return new PcodeOp
-	 * @throws PcodeXMLException
+	 * @throws PcodeXMLException if XML layout is incorrect
 	 */
 	public static PcodeOp readXML(XmlPullParser parser, PcodeFactory pfact)
 			throws PcodeXMLException {
 		XmlElement el = parser.start("op");
 		int opc = SpecXmlUtils.decodeInt(el.getAttribute("code"));
-		if (!parser.peek().isStart())
+		if (!parser.peek().isStart()) {
 			throw new PcodeXMLException("Missing <seqnum> in PcodeOp");
+		}
 		SequenceNumber seqnum = SequenceNumber.readXML(parser, pfact.getAddressFactory());
-		if (!parser.peek().isStart())
+		if (!parser.peek().isStart()) {
 			throw new PcodeXMLException("Missing output in PcodeOp");
+		}
 		Varnode output = Varnode.readXML(parser, pfact);
 		ArrayList<Varnode> inputlist = new ArrayList<Varnode>();
 		while (parser.peek().isStart()) {
@@ -468,10 +488,12 @@ public class PcodeOp {
 	@Override
 	public String toString() {
 		String s;
-		if (output != null)
+		if (output != null) {
 			s = output.toString();
-		else
+		}
+		else {
 			s = " --- ";
+		}
 		s += " " + getMnemonic() + " ";
 		for (int i = 0; i < input.length; i++) {
 			if (input[i] == null) {
@@ -481,8 +503,9 @@ public class PcodeOp {
 				s += input[i].toString();
 			}
 
-			if (i < input.length - 1)
+			if (i < input.length - 1) {
 				s += " , ";
+			}
 		}
 		return s;
 	}
@@ -511,13 +534,10 @@ public class PcodeOp {
 	}
 
 	/**
-	 * Get string representation for pcode operation
+	 * Get string representation for p-code operation
 	 * 
 	 * @param op operation code
-	 * 
-	 * @return String rep of pcode operation
-	 * 
-	 * @throws UnknownInstructionException
+	 * @return String representation of p-code operation
 	 */
 	public final static String getMnemonic(int op) {
 		switch (op) {
@@ -664,6 +684,12 @@ public class PcodeOp {
 				return "CPOOLREF";
 			case NEW:
 				return "NEW";
+			case INSERT:
+				return "INSERT";
+			case EXTRACT:
+				return "EXTRACT";
+			case POPCOUNT:
+				return "POPCOUNT";
 
 			default:
 				return "INVALID_OP";
@@ -671,20 +697,20 @@ public class PcodeOp {
 	}
 
 	/**
-	 * Get the pcode op code for the given pcode mnemonic string.
+	 * Get the p-code op code for the given mnemonic string.
+	 * @param s is the mnemonic string
+	 * @return the op code
 	 * 
-	 * @param s pcode op mnemonic string
-	 * 
-	 * @return the pcode op code
-	 * 
-	 * @throws UnknownInstructionException
+	 * @throws UnknownInstructionException if there is no matching mnemonic
 	 */
 	public static int getOpcode(String s) throws UnknownInstructionException {
-		if (opcodeTable == null)
+		if (opcodeTable == null) {
 			generateOpcodeTable();
+		}
 		Integer i = opcodeTable.get(s);
-		if (i == null)
+		if (i == null) {
 			throw new UnknownInstructionException();
+		}
 		return i.intValue();
 	}
 }

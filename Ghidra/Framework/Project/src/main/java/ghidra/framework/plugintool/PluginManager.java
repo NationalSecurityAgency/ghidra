@@ -82,10 +82,6 @@ class PluginManager {
 		return set.toArray(cl);
 	}
 
-	void addPlugin(String className) throws PluginException {
-		addPlugins(new String[] { className });
-	}
-
 	void addPlugin(Plugin plugin) throws PluginException {
 		addPlugins(new Plugin[] { plugin });
 	}
@@ -369,12 +365,6 @@ class PluginManager {
 		}
 	}
 
-	/**
-	 * Save the data state for all plugins in the tool to an XML element.
-	 * @param isTransactionState true if saving the toolstate is for a potential undo/redo
-	 * (database transaction)
-	 * @return XML element containing data state for all plugins.
-	 */
 	Element saveDataStateToXml(boolean savingProject) {
 		Element root = new Element("DATA_STATE");
 		for (int i = 0; i < pluginList.size(); i++) {

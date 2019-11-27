@@ -120,8 +120,11 @@ enum OpCode {
   CPUI_SEGMENTOP = 67,		///< Look-up a \e segmented address
   CPUI_CPOOLREF = 68,		///< Recover a value from the \e constant \e pool
   CPUI_NEW = 69,		///< Allocate a new object (new)
+  CPUI_INSERT = 70,		///< Insert a bit-range
+  CPUI_EXTRACT = 71,		///< Extract a bit-range
+  CPUI_POPCOUNT = 72,		///< Count the 1-bits
 
-  CPUI_MAX = 70			///< Value indicating the end of the op-code values
+  CPUI_MAX = 73			///< Value indicating the end of the op-code values
 };
 
 extern const char *get_opname(OpCode opc);		///< Convert an OpCode to the name as a string

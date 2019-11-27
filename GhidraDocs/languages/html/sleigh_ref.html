@@ -1,0 +1,601 @@
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<title>9. P-code Tables</title>
+<link rel="stylesheet" type="text/css" href="Frontpage.css">
+<link rel="stylesheet" type="text/css" href="languages.css">
+<meta name="generator" content="DocBook XSL Stylesheets V1.78.1">
+<link rel="home" href="sleigh.html" title="SLEIGH">
+<link rel="up" href="sleigh.html" title="SLEIGH">
+<link rel="prev" href="sleigh_context.html" title="8. Using Context">
+</head>
+<body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
+<div class="navheader">
+<table width="100%" summary="Navigation header">
+<tr><th colspan="3" align="center">9. P-code Tables</th></tr>
+<tr>
+<td width="20%" align="left">
+<a accesskey="p" href="sleigh_context.html">Prev</a> </td>
+<th width="60%" align="center"> </th>
+<td width="20%" align="right"> </td>
+</tr>
+</table>
+<hr>
+</div>
+<div class="sect1">
+<div class="titlepage"><div><div><h2 class="title" style="clear: both">
+<a name="sleigh_ref"></a>9. P-code Tables</h2></div></div></div>
+<p>
+We list all the p-code operations by name along with the syntax for
+invoking them within the semantic section of a constructor definition
+(see <a class="xref" href="sleigh_constructors.html#sleigh_semantic_section" title="7.7. The Semantic Section">Section 7.7, &#8220;The Semantic Section&#8221;</a>), and with a
+description of the operator. The terms <span class="emphasis"><em>v0</em></span>
+and <span class="emphasis"><em>v1</em></span> represent identifiers of individual input
+varnodes to the operation. In terms of syntax, <span class="emphasis"><em>v0</em></span>
+and <span class="emphasis"><em>v1</em></span> can be replaced with any semantic
+expression, in which case the final output varnode of the expression
+becomes the input to the operator. The term <span class="emphasis"><em>spc</em></span>
+represents the identifier of an address space, which is a special
+input to the <span class="emphasis"><em>LOAD</em></span> and <span class="emphasis"><em>STORE</em></span>
+operations. The identifier of any address space can be used.
+</p>
+<p>
+This table lists all the operators for building semantic
+expressions. The operators are listed in order of precedence, highest
+to lowest.
+</p>
+<div class="informalexample">
+<div class="table">
+<a name="syntaxref.htmltable"></a><p class="title"><b>Table 5. Semantic Expression Operators and Syntax</b></p>
+<div class="table-contents"><table width="95%" frame="box" rules="all">
+<col width="25%">
+<col width="25%">
+<col width="50%">
+<thead><tr>
+  <td><span class="bold"><strong>P-code Name</strong></span></td>
+  <td><span class="bold"><strong>SLEIGH Syntax</strong></span></td>
+  <td><span class="bold"><strong>Description</strong></span></td>
+</tr></thead>
+<tbody>
+<tr>
+  <td><code class="code">SUBPIECE</code></td>
+  <td>
+    <div class="informaltable">
+<a name="subpieceref.htmltable"></a><table frame="none"><tbody>
+<tr>
+          <td><code class="code">v0:2</code></td>
+        </tr>
+<tr>
+          <td><code class="code">v0(2)</code></td>
+        </tr>
+</tbody></table>
+</div>
+  </td>
+  <td>The least significant n bytes of v0.
+      Truncate least significant n bytes of
+      v0. Most significant bytes may be
+      truncated depending on result size.
+  </td>
+</tr>
+<tr>
+  <td><code class="code">POPCOUNT</code></td>
+  <td><code class="code">popcount(v0)</code></td>
+  <td>Count the number of 1 bits in v0.
+  </td>
+</tr>
+<tr>
+  <td><code class="code">(simulated)</code></td>
+  <td><code class="code">v0[6,1]</code></td>
+  <td>Extract a range of bits from v0,
+      putting result in a minimum number of
+      bytes. The bracketed numbers give
+      respectively, the least significant
+      bit and the number of bits in the
+      range.
+   </td>
+</tr>
+<tr>
+  <td><code class="code">LOAD</code></td>
+  <td>
+    <div class="informaltable">
+<a name="loadref.htmltable"></a><table frame="none"><tbody>
+<tr>
+          <td><code class="code">* v1</code></td>
+        </tr>
+<tr>
+          <td><code class="code">*[spc]v1</code></td>
+        </tr>
+<tr>
+          <td><code class="code">*:2 v1</code></td>
+        </tr>
+<tr>
+          <td><code class="code">*[spc]:2 v1</code></td>
+        </tr>
+</tbody></table>
+</div>
+  </td>
+  <td>Dereference v1 as pointer into
+      default space. Optionally specify
+      space to load from and size of data
+      in bytes.
+  </td>
+</tr>
+<tr>
+  <td><code class="code">BOOL_NEGATE</code></td>
+  <td><code class="code">!v0</code></td>
+  <td>Negation of boolean value v0.</td>
+</tr>
+<tr>
+  <td><code class="code">INT_NEGATE</code></td>
+  <td><code class="code">~v0</code></td>
+  <td>Bitwise negation of v0.</td>
+</tr>
+<tr>
+  <td><code class="code">INT_2COMP</code></td>
+  <td><code class="code">-v0</code></td>
+  <td>Twos complement of v0.</td>
+</tr>
+<tr>
+  <td><code class="code">FLOAT_NEG</code></td>
+  <td><code class="code">f- v0</code></td>
+  <td>Additive inverse of v0 as a floating-point number.</td>
+</tr>
+<tr>
+  <td><code class="code">INT_MULT</code></td>
+  <td><code class="code">v0 * v1</code></td>
+  <td>Integer multiplication of v0 and v1.</td>
+</tr>
+<tr>
+  <td><code class="code">INT_DIV</code></td>
+  <td><code class="code">v0 / v1</code></td>
+  <td>Unsigned division of v0 by v1.</td>
+</tr>
+<tr>
+  <td><code class="code">INT_SDIV</code></td>
+  <td><code class="code">v0 s/ v1</code></td>
+  <td>Signed division of v0 by v1.</td>
+</tr>
+<tr>
+  <td><code class="code">INT_REM</code></td>
+  <td><code class="code">v0 % v1</code></td>
+  <td>Unsigned remainder of v0 modulo v1.</td>
+</tr>
+<tr>
+  <td><code class="code">INT_SREM</code></td>
+  <td><code class="code">v0 s% v1</code></td>
+  <td>Signed remainder of v0 modulo v1.</td>
+</tr>
+<tr>
+  <td><code class="code">FLOAT_DIV</code></td>
+  <td><code class="code">v0 f/ v1</code></td>
+  <td>Division of v0 by v1 as floating-point numbers.</td>
+</tr>
+<tr>
+  <td><code class="code">FLOAT_MULT</code></td>
+  <td><code class="code">v0 f* v1</code></td>
+  <td>Multiplication of v0 and v1 as floating-point numbers.</td>
+</tr>
+<tr>
+  <td><code class="code">INT_ADD</code></td>
+  <td><code class="code">v0 + v1</code></td>
+  <td>Addition of v0 and v1 as integers.</td>
+</tr>
+<tr>
+  <td><code class="code">INT_SUB</code></td>
+  <td><code class="code">v0 - v1</code></td>
+  <td>Subtraction of v1 from v0 as integers.</td>
+</tr>
+<tr>
+  <td><code class="code">FLOAT_ADD</code></td>
+  <td><code class="code">v0 f+ v1</code></td>
+  <td>Addition of v0 and v1 as floating-point numbers.</td>
+</tr>
+<tr>
+  <td><code class="code">FLOAT_SUB</code></td>
+  <td><code class="code">v0 f- v1</code></td>
+  <td>Subtraction of v1 from v0 as floating-point numbers.</td>
+</tr>
+<tr>
+  <td><code class="code">INT_LEFT</code></td>
+  <td><code class="code">v0 &lt;&lt; v1</code></td>
+  <td>Left shift of v0 by v1 bits.</td>
+</tr>
+<tr>
+  <td><code class="code">INT_RIGHT</code></td>
+  <td><code class="code">v0 &gt;&gt; v1</code></td>
+  <td>Unsigned (logical) right shift of v0 by v1 bits.</td>
+</tr>
+<tr>
+  <td><code class="code">INT_SRIGHT</code></td>
+  <td><code class="code">v0 s&gt;&gt; v1</code></td>
+  <td>Signed (arithmetic) right shift of v0 by b1 bits.</td>
+</tr>
+<tr>
+  <td><code class="code">INT_SLESS</code></td>
+  <td>
+    <div class="informaltable">
+<a name="slessref.htmltable"></a><table frame="none"><tbody>
+<tr>
+          <td><code class="code">v0 s&lt; v1</code></td>
+        </tr>
+<tr>
+          <td><code class="code">v1 s&gt; v0</code></td>
+        </tr>
+</tbody></table>
+</div>
+  </td>
+  <td>True if v0 is less than v1 as a signed integer.</td>
+</tr>
+<tr>
+  <td><code class="code">INT_SLESSEQUAL</code></td>
+  <td>
+    <div class="informaltable">
+<a name="slessequalref.htmltable"></a><table frame="none"><tbody>
+<tr>
+          <td><code class="code">v0 s&lt;= v1</code></td>
+        </tr>
+<tr>
+          <td><code class="code">v1 s&gt;= v0</code></td>
+        </tr>
+</tbody></table>
+</div>
+  </td>
+  <td>True if v0 is less than or equal to v1 as a signed integer.</td>
+</tr>
+<tr>
+  <td><code class="code">INT_LESS</code></td>
+  <td>
+    <div class="informaltable">
+<a name="lessref.htmltable"></a><table frame="none"><tbody>
+<tr>
+          <td><code class="code">v0 &lt; v1</code></td>
+        </tr>
+<tr>
+          <td><code class="code">v1 &gt; v0</code></td>
+        </tr>
+</tbody></table>
+</div>
+  </td>
+  <td>True if v0 is less than v1 as an unsigned integer.</td>
+</tr>
+<tr>
+  <td><code class="code">INT_LESSEQUAL</code></td>
+  <td>
+    <div class="informaltable">
+<a name="lessequalref.htmltable"></a><table frame="none"><tbody>
+<tr>
+          <td><code class="code">v0 &lt;= v1</code></td>
+        </tr>
+<tr>
+          <td><code class="code">v1 &gt;= v0</code></td>
+        </tr>
+</tbody></table>
+</div>
+  </td>
+  <td>True if v0 is less than or equal to v1 as an unsigned integer.</td>
+</tr>
+<tr>
+  <td><code class="code">FLOAT_LESS</code></td>
+  <td>
+    <div class="informaltable">
+<a name="flessref.htmltable"></a><table frame="none"><tbody>
+<tr>
+          <td><code class="code">v0 f&lt; v1</code></td>
+        </tr>
+<tr>
+          <td><code class="code">v1 f&gt; v0</code></td>
+        </tr>
+</tbody></table>
+</div>
+  </td>
+  <td>True if v0 is less than v1 viewed as floating-point numbers.</td>
+</tr>
+<tr>
+  <td><code class="code">FLOAT_LESSEQUAL</code></td>
+  <td>
+    <div class="informaltable">
+<a name="flessequalref.htmltable"></a><table frame="none"><tbody>
+<tr>
+          <td><code class="code">v0 f&lt;= v1</code></td>
+        </tr>
+<tr>
+          <td><code class="code">v1 f&gt;= v0</code></td>
+        </tr>
+</tbody></table>
+</div>
+  </td>
+  <td>True if v0 is less than or equal to v1 as floating-point.</td>
+</tr>
+<tr>
+  <td><code class="code">INT_EQUAL</code></td>
+  <td><code class="code">v0 == v1</code></td>
+  <td>True if v0 equals v1.</td>
+</tr>
+<tr>
+  <td><code class="code">INT_NOTEQUAL</code></td>
+  <td><code class="code">v0 != v1</code></td>
+  <td>True if v0 does not equal v1.</td>
+</tr>
+<tr>
+  <td><code class="code">FLOAT_EQUAL</code></td>
+  <td><code class="code">v0 f== v1</code></td>
+  <td>True if v0 equals v1 viewed as floating-point numbers.</td>
+</tr>
+<tr>
+  <td><code class="code">FLOAT_NOTEQUAL</code></td>
+  <td><code class="code">v0 f!= v1</code></td>
+  <td>True if v0 does not equal v1 viewed as floating-point numbers.</td>
+</tr>
+<tr>
+  <td><code class="code">INT_AND</code></td>
+  <td><code class="code">v0 &amp; v1</code></td>
+  <td>Bitwise Logical And of v0 with v1.</td>
+</tr>
+<tr>
+  <td><code class="code">INT_XOR</code></td>
+  <td><code class="code">v0 ^ v1</code></td>
+  <td>Bitwise Exclusive Or of v0 with v1.</td>
+</tr>
+<tr>
+  <td><code class="code">INT_OR</code></td>
+  <td><code class="code">v0 | v1</code></td>
+  <td>Bitwise Logical Or of v0 with v1.</td>
+</tr>
+<tr>
+  <td><code class="code">BOOL_XOR</code></td>
+  <td><code class="code">v0 ^^ v1</code></td>
+  <td>Exclusive-Or of booleans v0 and v1.</td>
+</tr>
+<tr>
+  <td><code class="code">BOOL_AND</code></td>
+  <td><code class="code">v0 &amp;&amp; v1</code></td>
+  <td>Logical-And of booleans v0 and v1.</td>
+</tr>
+<tr>
+  <td><code class="code">BOOL_OR</code></td>
+  <td><code class="code">v0 || v1</code></td>
+  <td>Logical-Or of booleans v0 and v1.</td>
+</tr>
+<tr>
+  <td><code class="code">INT_ZEXT</code></td>
+  <td><code class="code">zext(v0)</code></td>
+  <td>Zero extension of v0.</td>
+</tr>
+<tr>
+  <td><code class="code">INT_SEXT</code></td>
+  <td><code class="code">sext(v0)</code></td>
+  <td>Sign extension of v0.</td>
+</tr>
+<tr>
+  <td><code class="code">INT_CARRY</code></td>
+  <td><code class="code">carry(v0,v1)</code></td>
+  <td>True if adding v0 and v1 would produce an unsigned carry.</td>
+</tr>
+<tr>
+  <td><code class="code">INT_SCARRY</code></td>
+  <td><code class="code">scarry(v0,v1)</code></td>
+  <td>True if adding v0 and v1 would produce a signed carry.</td>
+</tr>
+<tr>
+  <td><code class="code">INT_SBORROW</code></td>
+  <td><code class="code">sborrow(v0,v1)</code></td>
+  <td>True if subtracting v1 from v0 would produce a signed borrow.</td>
+</tr>
+<tr>
+  <td><code class="code">FLOAT_NAN</code></td>
+  <td><code class="code">nan(v0)</code></td>
+  <td>True if v0 is not a valid floating-point number (NaN).</td>
+</tr>
+<tr>
+  <td><code class="code">FLOAT_ABS</code></td>
+  <td><code class="code">abs(v0)</code></td>
+  <td>Absolute value of v0 as floating point number.</td>
+</tr>
+<tr>
+  <td><code class="code">FLOAT_SQRT</code></td>
+  <td><code class="code">sqrt(v0)</code></td>
+  <td>Square root of v0 as floating-point number.</td>
+</tr>
+<tr>
+  <td><code class="code">INT2FLOAT</code></td>
+  <td><code class="code">int2float(v0)</code></td>
+  <td>Floating-point representation of v0 viewed as an integer.</td>
+</tr>
+<tr>
+  <td><code class="code">FLOAT2FLOAT</code></td>
+  <td><code class="code">float2float(v0)</code></td>
+  <td>Copy of floating-point number v0 with more or less precision.</td>
+</tr>
+<tr>
+  <td><code class="code">TRUNC</code></td>
+  <td><code class="code">trunc(v0)</code></td>
+  <td>Signed integer obtained by truncating v0.</td>
+</tr>
+<tr>
+  <td><code class="code">FLOAT_CEIL</code></td>
+  <td><code class="code">ceil(v0)</code></td>
+  <td>Nearest integer greater than v0.</td>
+</tr>
+<tr>
+  <td><code class="code">FLOAT_FLOOR</code></td>
+  <td><code class="code">floor(v0)</code></td>
+  <td>Nearest integer less than v0.</td>
+</tr>
+<tr>
+  <td><code class="code">FLOAT_ROUND</code></td>
+  <td><code class="code">round(v0)</code></td>
+  <td>Nearest integer to v0.</td>
+</tr>
+<tr>
+  <td><code class="code">CPOOLREF</code></td>
+  <td><code class="code">cpool(v0,...)</code></td>
+  <td>Access value from the constant pool.</td>
+</tr>
+<tr>
+  <td><code class="code">NEW</code></td>
+  <td><code class="code">newobject(v0)</code></td>
+  <td>Allocate object of type described by v0.</td>
+</tr>
+<tr>
+  <td><code class="code"><span class="emphasis"><em>USER_DEFINED</em></span></code></td>
+  <td><code class="code"><span class="emphasis"><em>ident</em></span>(v0,...)</code></td>
+  <td>User defined operator <span class="emphasis"><em>ident</em></span>, with functional syntax.</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<br class="table-break">
+</div>
+<p>
+</p>
+<p>
+The following table lists the basic forms of a semantic statement.
+</p>
+<div class="informalexample">
+<div class="table">
+<a name="statementref.htmltable"></a><p class="title"><b>Table 6. Basic Statements and Associated Operators</b></p>
+<div class="table-contents"><table width="95%" frame="box" rules="all">
+<col width="25%">
+<col width="25%">
+<col width="50%">
+<thead><tr>
+  <td><span class="bold"><strong>P-code Name</strong></span></td>
+  <td><span class="bold"><strong>SLEIGH Syntax</strong></span></td>
+  <td><span class="bold"><strong>Description</strong></span></td>
+</tr></thead>
+<tbody>
+<tr>
+  <td><code class="code">COPY, <span class="emphasis"><em>other</em></span></code></td>
+  <td><code class="code">v0 = v1;</code></td>
+  <td>Assignment of v1 to v0.</td>
+</tr>
+<tr>
+  <td><code class="code">STORE</code></td>
+  <td>
+    <div class="informaltable">
+<a name="storeref.htmltable"></a><table frame="none"><tbody>
+<tr>
+          <td><code class="code">*v0 = v1</code></td>
+        </tr>
+<tr>
+          <td><code class="code">*[spc]v0 = v1;</code></td>
+        </tr>
+<tr>
+          <td><code class="code">*:4 v0 = v1;</code></td>
+        </tr>
+<tr>
+          <td><code class="code">*[spc]:4 v0 = v1;</code></td>
+        </tr>
+</tbody></table>
+</div>
+  </td>
+  <td>Store v1 in default space using v0
+      As pointer. Optionally specify space
+      to store in and size of data in
+      bytes.
+  </td>
+</tr>
+<tr>
+  <td><code class="code"><span class="emphasis"><em>USER_DEFINED</em></span></code></td>
+  <td><code class="code"><span class="emphasis"><em>ident</em></span>(v0,...);</code></td>
+  <td>Invoke user-defined operation ident as a standalone statement, with no output.</td>
+</tr>
+<tr>
+  <td></td>
+  <td><code class="code">v0[8,1] = v1;</code></td>
+  <td>Fill a bit range within v0 using v1, leaving the rest of v0 unchanged.</td>
+</tr>
+<tr>
+  <td></td>
+  <td><code class="code"><span class="emphasis"><em>ident</em></span>(v0,...);</code></td>
+  <td>Invoke the macro named <span class="emphasis"><em>ident</em></span>.</td>
+</tr>
+<tr>
+  <td></td>
+  <td><code class="code">build <span class="emphasis"><em>ident</em></span>;</code></td>
+  <td>Execute the p-code to build operand <span class="emphasis"><em>ident</em></span>.</td>
+</tr>
+<tr>
+  <td></td>
+  <td><code class="code">delayslot(1);</code></td>
+  <td>Execute the p-code for the following instruction.</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<br class="table-break">
+</div>
+<p>
+</p>
+<p>
+The following table lists the branching operations and the statements which invoke them.
+</p>
+<div class="informalexample">
+<div class="table">
+<a name="branchref.htmltable"></a><p class="title"><b>Table 7. Branching Statements</b></p>
+<div class="table-contents"><table width="95%" frame="box" rules="all">
+<col width="25%">
+<col width="25%">
+<col width="50%">
+<thead><tr>
+  <td><span class="bold"><strong>P-code Name</strong></span></td>
+  <td><span class="bold"><strong>SLEIGH Syntax</strong></span></td>
+  <td><span class="bold"><strong>Description</strong></span></td>
+</tr></thead>
+<tbody>
+<tr>
+  <td><code class="code">BRANCH</code></td>
+  <td><code class="code">goto v0;</code></td>
+  <td>Branch execution to address of v0.</td>
+</tr>
+<tr>
+  <td><code class="code">CBRANCH</code></td>
+  <td><code class="code">if (v0) goto v1;</code></td>
+  <td>Branch execution to address of v1 if v0 equals 1 (true).</td>
+</tr>
+<tr>
+  <td><code class="code">BRANCHIND</code></td>
+  <td><code class="code">goto [v0];</code></td>
+  <td>Branch execution to v0 viewed as an offset in current space.</td>
+</tr>
+<tr>
+  <td><code class="code">CALL</code></td>
+  <td><code class="code">call v0;</code></td>
+  <td>Branch execution to address of v0. Hint that branch is subroutine call.</td>
+</tr>
+<tr>
+  <td><code class="code">CALLIND</code></td>
+  <td><code class="code">call [v0];</code></td>
+  <td>Branch execution to v0 viewed as an offset in current space. Hint that branch is subroutine call.</td>
+</tr>
+<tr>
+  <td><code class="code">RETURN</code></td>
+  <td><code class="code">return [v0];</code></td>
+  <td>Branch execution to v0 viewed as an offset in current space. Hint that branch is a subroutine return.</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<br class="table-break">
+</div>
+<p>
+</p>
+</div>
+<div class="navfooter">
+<hr>
+<table width="100%" summary="Navigation footer">
+<tr>
+<td width="40%" align="left">
+<a accesskey="p" href="sleigh_context.html">Prev</a> </td>
+<td width="20%" align="center"> </td>
+<td width="40%" align="right"> </td>
+</tr>
+<tr>
+<td width="40%" align="left" valign="top">8. Using Context </td>
+<td width="20%" align="center"><a accesskey="h" href="sleigh.html">Home</a></td>
+<td width="40%" align="right" valign="top"> </td>
+</tr>
+</table>
+</div>
+</body>
+</html>

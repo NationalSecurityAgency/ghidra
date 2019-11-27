@@ -36,8 +36,8 @@ abstract public class AbstractStoredProgramContext extends AbstractProgramContex
 
 	protected AbstractStoredProgramContext(Register[] registers) {
 		super(registers);
-		registerValueMap = new HashMap<Register, RegisterValueStore>();
-		defaultRegisterValueMap = new HashMap<Register, RegisterValueStore>();
+		registerValueMap = new HashMap<>();
+		defaultRegisterValueMap = new HashMap<>();
 	}
 
 	/**
@@ -79,7 +79,7 @@ abstract public class AbstractStoredProgramContext extends AbstractProgramContex
 	public void setRegisterValue(Address start, Address end, RegisterValue value)
 			throws ContextChangeException {
 		if (value == null) {
-			throw new IllegalArgumentException("Value cannot be null, use clear() instead!");
+			throw new IllegalArgumentException("Value cannot be null, use remove() instead!");
 		}
 		Register baseRegister = value.getRegister().getBaseRegister();
 		RegisterValueStore store = registerValueMap.get(baseRegister);
@@ -177,8 +177,8 @@ abstract public class AbstractStoredProgramContext extends AbstractProgramContex
 		if (store == null) {
 			return new AddressSet().getAddressRanges();
 		}
-		return new RegisterAddressRangeIterator(register,
-			store.getAddressRangeIterator(start, end), registerValueMap);
+		return new RegisterAddressRangeIterator(register, store.getAddressRangeIterator(start, end),
+			registerValueMap);
 	}
 
 	@Override
@@ -198,14 +198,14 @@ abstract public class AbstractStoredProgramContext extends AbstractProgramContex
 		if (store == null) {
 			return new AddressSet().getAddressRanges();
 		}
-		return new RegisterAddressRangeIterator(register,
-			store.getAddressRangeIterator(start, end), defaultRegisterValueMap);
+		return new RegisterAddressRangeIterator(register, store.getAddressRangeIterator(start, end),
+			defaultRegisterValueMap);
 	}
 
 	@Override
 	public Register[] getRegistersWithValues() {
 		if (registersWithValues == null) {
-			registersWithValues = new HashSet<Register>();
+			registersWithValues = new HashSet<>();
 			for (Register register : registers) {
 				RegisterValueStore store = registerValueMap.get(register.getBaseRegister());
 				if (store != null && !store.isEmpty()) {
@@ -247,7 +247,8 @@ abstract public class AbstractStoredProgramContext extends AbstractProgramContex
 	}
 
 	@Override
-	public void remove(Address start, Address end, Register register) throws ContextChangeException {
+	public void remove(Address start, Address end, Register register)
+			throws ContextChangeException {
 		if (start.getAddressSpace() != end.getAddressSpace()) {
 			throw new AssertException("start and end address must be in the same address space");
 		}

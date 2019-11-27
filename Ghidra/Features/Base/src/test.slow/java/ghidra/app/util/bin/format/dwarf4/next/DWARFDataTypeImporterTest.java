@@ -19,8 +19,7 @@ import static ghidra.app.util.bin.format.dwarf4.encoding.DWARFAttribute.*;
 import static org.junit.Assert.*;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 import org.junit.Test;
 
@@ -631,6 +630,86 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 	}
 
 	@Test
+	public void testStructFlexarray() throws CancelledException, IOException, DWARFException {
+
+		DebugInfoEntry intDIE = addInt(cu);
+		DebugInfoEntry arrayDIE = newArray(cu, intDIE, false, -1);
+
+		DebugInfoEntry structDIE = newStruct("mystruct", 100).create(cu);
+		newMember(structDIE, "f1", intDIE, 0).create(cu);
+		newMember(structDIE, "flexarray", arrayDIE, 100).create(cu);
+
+		importAllDataTypes();
+
+		Structure structdt = (Structure) dataMgr.getDataType(rootCP, "mystruct");
+		assertNotNull(structdt.getFlexibleArrayComponent());
+
+	}
+
+	@Test
+	public void testStructInteriorFlexarray()
+			throws CancelledException, IOException, DWARFException {
+
+		DebugInfoEntry intDIE = addInt(cu);
+		DebugInfoEntry arrayDIE = newArray(cu, intDIE, false, -1);
+
+		DebugInfoEntry structDIE = newStruct("mystruct", 100).create(cu);
+		newMember(structDIE, "f1", intDIE, 0).create(cu);
+		newMember(structDIE, "flexarray", arrayDIE, 99).create(cu);
+
+		importAllDataTypes();
+
+		Structure structdt = (Structure) dataMgr.getDataType(rootCP, "mystruct");
+		assertTrue(structdt.getDescription().contains("Missing member flexarray"));
+		assertNull(structdt.getFlexibleArrayComponent());
+
+	}
+
+	@Test
+	public void testStructBitfields() throws CancelledException, IOException, DWARFException {
+
+		DebugInfoEntry intDIE = addInt(cu);
+
+		DebugInfoEntry structDIE = newStruct("mystruct", 100).create(cu);
+		newMember(structDIE, "f1", intDIE, 0).create(cu);
+		newMember(structDIE, "bitfield1_3", intDIE, 4) //
+			.addInt(DW_AT_bit_size, 3) //
+			.addInt(DW_AT_bit_offset, 29) //
+			.create(cu);
+		newMember(structDIE, "bitfield2_2", intDIE, 4) //
+			.addInt(DW_AT_bit_size, 2) //
+			.addInt(DW_AT_bit_offset, 27) //
+			.create(cu);
+		newMember(structDIE, "bitfield3_9", intDIE, 4) //
+			.addInt(DW_AT_bit_size, 9) //
+			.addInt(DW_AT_bit_offset, 18) //
+			.create(cu);
+
+		importAllDataTypes();
+
+		Structure structdt = (Structure) dataMgr.getDataType(rootCP, "mystruct");
+		List<DataTypeComponent> bitfields = getBitFieldComponents(structdt);
+		Set<Integer> expectedBitfieldSizes = new HashSet<Integer>(Set.of(2, 3, 9));
+		for (DataTypeComponent dtc : bitfields) {
+			BitFieldDataType bfdt = (BitFieldDataType) dtc.getDataType();
+			expectedBitfieldSizes.remove(bfdt.getBitSize());
+		}
+		assertTrue(expectedBitfieldSizes.size() == 0);
+	}
+
+	List<DataTypeComponent> getBitFieldComponents(Structure struct) {
+		List<DataTypeComponent> results = new ArrayList<>();
+		for (DataTypeComponent dtc : struct.getComponents()) {
+			if (dtc.getDataType() instanceof BitFieldDataType) {
+				results.add(dtc);
+			}
+		}
+		return results;
+	}
+
+	//----------------------------------------------------------------------------------------------------
+
+	@Test
 	public void testUnion() throws CancelledException, IOException, DWARFException {
 
 		DebugInfoEntry intDIE = addInt(cu);
@@ -660,14 +739,38 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 		assertEquals("f1", uniondt.getComponent(0).getFieldName());
 		// "f2_self" field should not have been added as it was a recursive reference back to ourself
 		assertEquals("f3", uniondt.getComponent(1).getFieldName());
-
-		// This test is not valid as Ghidra does not allow unions with statically specified size
-		// Needs research to see what DWARF does and if this could ever be different than
-		// what the contents of the union are
-		//assertEquals(UNION_STATIC_SIZE, uniondt.getLength());
-
+		assertEquals(UNION_STATIC_SIZE, uniondt.getLength());
 	}
 
+	@Test
+	public void testUnionFlexArray() throws CancelledException, IOException, DWARFException {
+		// flex array in a union is converted to an 1 element array (if it can fit)
+
+		DebugInfoEntry intDIE = addInt(cu);
+		DebugInfoEntry arrayDIE = newArray(cu, intDIE, false, -1);
+
+		int UNION_STATIC_SIZE = 10;
+		DebugInfoEntry unionDIE = new DIECreator(DWARFTag.DW_TAG_union_type) //
+			.addString(DW_AT_name, "myunion") //
+			.addInt(DW_AT_byte_size, UNION_STATIC_SIZE) //
+			.create(cu);
+
+		newMember(unionDIE, "f1", intDIE, -1).create(cu);
+		newMember(unionDIE, "flexarray", arrayDIE, -1).create(cu);
+
+		//----------------------
+
+		importAllDataTypes();
+
+		Union uniondt = (Union) dataMgr.getDataType(rootCP, "myunion");
+
+		assertEquals("f1", uniondt.getComponent(0).getFieldName());
+		DataTypeComponent flexDTC = uniondt.getComponent(1);
+		assertEquals("flexarray", flexDTC.getFieldName());
+		assertTrue(flexDTC.getDataType() instanceof Array);
+	}
+
+	//----------------------------------------------------------------------------------------------
 	/**
 	 * Test skipping const, volatile data types.
 	 * @throws CancelledException
@@ -719,9 +822,15 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 		// anon struct
 	}
 
-	// not implemented yet
-	public void testArray() {
-		// multi dim, emtpy [],
+	@Test
+	public void testArray() throws CancelledException, IOException, DWARFException {
+		DebugInfoEntry intDIE = addInt(cu);
+		DebugInfoEntry arrayDIE = newArray(cu, intDIE, false, 10);
+
+		importAllDataTypes();
+
+		Array arr = (Array) dwarfDTM.getDataType(arrayDIE.getOffset(), null);
+		assertNotNull(arr);
 	}
 
 	// not implemented yet

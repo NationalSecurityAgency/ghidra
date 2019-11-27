@@ -82,6 +82,10 @@ public class HistoryList<T> {
 	 * True signals that this list will allow duplicate entries.  False signals to not only not
 	 * allow duplicates, but to also move the position of an item if it is re-added to the 
 	 * list.
+	 *   
+	 * <p>For correct behavior when not allowing duplicates, ensure you have defined an 
+	 * <code>equals</code> method to work as you expect.  If two different items are considered
+	 * equal, then this class will only remove the duplicate if the equals method returns true.
 	 * 
 	 * <p>The default is false
 	 * 
@@ -162,7 +166,6 @@ public class HistoryList<T> {
 	 * <p>No action is taken if the current pointer is already at the beginning of the list.
 	 */
 	public void goBack() {
-
 		if (historyIndex == 0) {
 			return;
 		}
@@ -170,6 +173,18 @@ public class HistoryList<T> {
 		T t = historyStack.get(--historyIndex);
 		dropNull();
 		broadcast(t);
+	}
+
+	/**
+	 * Performs a {@link #goBack()} until the given item becomes the current item.  This is 
+	 * useful if you wish to go backward to a specific item in the list.
+	 * 
+	 * @param t the item
+	 */
+	public void goBackTo(T t) {
+		while (!getCurrentHistoryItem().equals(t) && hasPrevious()) {
+			goBack();
+		}
 	}
 
 	/**
@@ -185,6 +200,18 @@ public class HistoryList<T> {
 
 		T t = historyStack.get(++historyIndex);
 		broadcast(t);
+	}
+
+	/**
+	 * Performs a {@link #goForward()} until the given item becomes the current item.  This is 
+	 * useful if you wish to go forward to a specific item in the list.
+	 * 
+	 * @param t the item
+	 */
+	public void goForwardTo(T t) {
+		while (!getCurrentHistoryItem().equals(t) && hasNext()) {
+			goForward();
+		}
 	}
 
 	/**
@@ -217,7 +244,7 @@ public class HistoryList<T> {
 
 	/**
 	 * Get all items in the history that come after the current history item.  They are 
-	 * returned in navigation order, as traversed if {@link #goForward() is called.
+	 * returned in navigation order, as traversed if {@link #goForward()} is called.
 	 * 
 	 * @return the items
 	 */

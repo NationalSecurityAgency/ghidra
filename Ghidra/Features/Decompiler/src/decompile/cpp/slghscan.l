@@ -43,7 +43,7 @@ int4 negative_if = -1;
 void preproc_error(const string &err)
 
 {
-  slgh->reportError(err,true);
+  slgh->reportError((const Location *)0, err);
   cerr << "Terminating due to error in preprocessing" << endl;
   exit(1);
 }
@@ -637,6 +637,7 @@ with   { BEGIN(pattern); withsection = 1; slgh->calcContextLayout(); return WITH
 <sem>trunc         { return OP_TRUNC; }
 <sem>cpool         { return OP_CPOOLREF; }
 <sem>newobject     { return OP_NEW; }
+<sem>popcount      { return OP_POPCOUNT; }
 <sem>if            { return IF_KEY; }
 <sem>goto          { return GOTO_KEY; }
 <sem>call          { return CALL_KEY; }
@@ -669,4 +670,3 @@ with   { BEGIN(pattern); withsection = 1; slgh->calcContextLayout(); return WITH
           filebuffers.pop_back();
           slgh->parseFileFinished();
         }
-

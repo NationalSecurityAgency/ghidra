@@ -9,10 +9,15 @@
     <range space="io"/>
   </global>
   <stackpointer register="SP" space="ram"/>
-  <segmentop space="ram" userop="segment" baseinsize="2" innerinsize="2" farpointer="yes">
-    <baseop code="INT_ZEXT"/>
-    <baseop code="INT_LEFT" value="12"/>
-    <innerop code="INT_ZEXT"/>
+  <segmentop space="ram" userop="segment" farpointer="yes">
+    <pcode>
+      <input name="inner" size="2"/>
+      <input name="base" size="2"/>
+      <output name="res" size="2"/>
+      <body><![CDATA[
+        res = (base << 12) + inner;
+      ]]></body>
+    </pcode>
     <constresolve>
       <register name="rBBR"/>
     </constresolve>

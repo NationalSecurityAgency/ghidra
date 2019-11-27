@@ -16,12 +16,15 @@
 package ghidra.bitpatterns.gui;
 
 import java.awt.BorderLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.*;
 
+import org.apache.commons.collections4.list.LazyList;
+
+import docking.widgets.label.GLabel;
+import docking.widgets.table.AbstractSortedTableModel;
 import docking.widgets.table.GTable;
 import docking.widgets.textfield.IntegerTextField;
 import ghidra.bitpatterns.info.FileBitPatternInfoReader;
@@ -33,8 +36,6 @@ import ghidra.util.layout.PairLayout;
  */
 public class AlignmentPanelBuilder extends ContextRegisterFilterablePanelBuilder {
 	private static final int DEFAULT_MODULUS = 16;
-	private static final String[] alignmentTableColumnNames =
-		{ "Modulus", "Number of Functions", "Percentage" };
 	private static final String MODULUS_FIELD_TEXT = " Alignment Modulus ";
 	private static final String RECOMPUTE_BUTTON_TEXT = "Compute Alignment Info";
 
@@ -68,18 +69,13 @@ public class AlignmentPanelBuilder extends ContextRegisterFilterablePanelBuilder
 		JPanel modulusPanel = new JPanel();
 		PairLayout modulusLayout = new PairLayout();
 		modulusPanel.setLayout(modulusLayout);
-		modulusPanel.add(new JLabel(MODULUS_FIELD_TEXT));
+		modulusPanel.add(new GLabel(MODULUS_FIELD_TEXT));
 		modulusField = new IntegerTextField();
 		modulusField.setValue(DEFAULT_MODULUS);
 		modulusPanel.add(modulusField.getComponent());
 
 		JButton recomputeButton = new JButton(RECOMPUTE_BUTTON_TEXT);
-		recomputeButton.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				updateAlignmentPanel();
-			}
-		});
+		recomputeButton.addActionListener(e -> updateAlignmentPanel());
 
 		getButtonPanel().add(recomputeButton);
 
@@ -108,11 +104,13 @@ public class AlignmentPanelBuilder extends ContextRegisterFilterablePanelBuilder
 	}
 
 	private GTable createAlignmentTable(List<Long> startingAddresses, int numFuncs) {
-		String[][] modulusInfo = new String[modulus][3];
+
+		List<ModulusInfo> data = LazyList.lazyList(new ArrayList<>(), () -> new ModulusInfo());
 		if (startingAddresses != null) {
 			for (int i = 0; i < modulus; i++) {
-				modulusInfo[i][0] = Long.toString(i);
+				data.get(0).modulus = Long.toString(i);
 			}
+
 			long[] countsAsLongs = new long[modulus];
 			for (Long currentAddress : startingAddresses) {
 				countsAsLongs[(int) (Long.remainderUnsigned(currentAddress, modulus))] =
@@ -120,11 +118,13 @@ public class AlignmentPanelBuilder extends ContextRegisterFilterablePanelBuilder
 			}
 			for (int i = 0; i < modulus; i++) {
 				double percent = (100.0 * countsAsLongs[i]) / numFuncs;
-				modulusInfo[i][2] = Double.toString(Math.round(percent));
-				modulusInfo[i][1] = Long.toString(countsAsLongs[i]);
+				data.get(i).counts = Long.toString(countsAsLongs[i]);
+				data.get(i).percent = Double.toString(Math.round(percent));
 			}
 		}
-		GTable table = new GTable(modulusInfo, alignmentTableColumnNames);
+
+		AlignmentTableModel model = new AlignmentTableModel(data);
+		GTable table = new GTable(model);
 		return table;
 	}
 
@@ -160,4 +160,69 @@ public class AlignmentPanelBuilder extends ContextRegisterFilterablePanelBuilder
 		updateAlignmentPanel();
 	}
 
+	private class ModulusInfo {
+
+		private String modulus;
+		private String percent;
+		private String counts;
+
+		ModulusInfo() {
+			this.modulus = modulus;
+			this.percent = percent;
+			this.counts = counts;
+		}
+	}
+
+	private class AlignmentTableModel extends AbstractSortedTableModel<ModulusInfo> {
+
+		private final String[] columnNames = { "Modulus", "Number of Functions", "Percentage" };
+		private List<ModulusInfo> data;
+
+		AlignmentTableModel(List<ModulusInfo> data) {
+			this.data = data;
+		}
+
+		@Override
+		public String getColumnName(int column) {
+			return columnNames[column];
+		}
+
+		@Override
+		public Class<?> getColumnClass(int columnIndex) {
+			return String.class;
+		}
+
+		@Override
+		public boolean isSortable(int columnIndex) {
+			return true;
+		}
+
+		@Override
+		public int getColumnCount() {
+			return 2;
+		}
+
+		@Override
+		public String getName() {
+			return "Function Start Alignment";
+		}
+
+		@Override
+		public List<ModulusInfo> getModelData() {
+			return data;
+		}
+
+		@Override
+		public Object getColumnValueForRow(ModulusInfo t, int columnIndex) {
+			switch (columnIndex) {
+				case 0:
+					return t.modulus;
+				case 1:
+					return t.counts;
+				case 2:
+					return t.percent;
+			}
+			return null;
+		}
+	}
 }

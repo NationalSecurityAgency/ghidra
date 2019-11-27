@@ -57,6 +57,10 @@ public class ObjectChooserDialog<T> extends DialogComponentProvider {
 		table.focusFilter();
 	}
 
+	public GTableWidget<T> getTable() {
+		return table;
+	}
+
 	private JComponent buildWorkPanel() {
 		table = new GTableWidget<>(getTitle(), objectClass, methodsForColumns);
 		table.setData(choosableObjects);
@@ -80,5 +84,9 @@ public class ObjectChooserDialog<T> extends DialogComponentProvider {
 
 	public T getSelectedObject() {
 		return selectedObject;
+	}
+
+	public void setFilterText(String text) {
+		table.setFilterText(text);
 	}
 }

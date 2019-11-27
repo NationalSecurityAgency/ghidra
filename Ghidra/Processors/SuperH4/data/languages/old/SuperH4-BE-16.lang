@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<language version="1" endian="big">
+    <description>
+        <id>SuperH4:BE:16:default</id>
+        <processor>SuperH4</processor>
+        <variant>default</variant>
+        <size>16</size>
+    </description>
+    <compiler name="default" id="default" />
+    <spaces>
+        <space name="ram" type="ram" size="4" default="yes" />
+        <space name="register" type="register" size="4" />
+    </spaces>
+    <registers>
+        <context_register name="FPSCR" offset="0x810" bitsize="32">
+            <field name="doubleWidthMoveMode" range="1,1" />
+            <field name="doublePrecMode" range="0,0" />
+        </context_register>
+        <register name="r0" offset="0x0" bitsize="32" />
+        <register name="r1" offset="0x4" bitsize="32" />
+        <register name="r2" offset="0x8" bitsize="32" />
+        <register name="r3" offset="0xc" bitsize="32" />
+        <register name="r4" offset="0x10" bitsize="32" />
+        <register name="r5" offset="0x14" bitsize="32" />
+        <register name="r6" offset="0x18" bitsize="32" />
+        <register name="r7" offset="0x1c" bitsize="32" />
+        <register name="r8" offset="0x20" bitsize="32" />
+        <register name="r9" offset="0x24" bitsize="32" />
+        <register name="r10" offset="0x28" bitsize="32" />
+        <register name="r11" offset="0x2c" bitsize="32" />
+        <register name="r12" offset="0x30" bitsize="32" />
+        <register name="r13" offset="0x34" bitsize="32" />
+        <register name="r14" offset="0x38" bitsize="32" />
+        <register name="r15" offset="0x3c" bitsize="32" />
+        <register name="R0_BANK" offset="0x40" bitsize="32" />
+        <register name="R1_BANK" offset="0x44" bitsize="32" />
+        <register name="R2_BANK" offset="0x48" bitsize="32" />
+        <register name="R3_BANK" offset="0x4c" bitsize="32" />
+        <register name="R4_BANK" offset="0x50" bitsize="32" />
+        <register name="R5_BANK" offset="0x54" bitsize="32" />
+        <register name="R6_BANK" offset="0x58" bitsize="32" />
+        <register name="R7_BANK" offset="0x5c" bitsize="32" />
+        <register name="R_BANK0" offset="0x0" bitsize="256" />
+        <register name="R_UNBANKED" offset="0x20" bitsize="256" />
+        <register name="R_BANK1" offset="0x40" bitsize="256" />
+        <register name="fr0" offset="0x200" bitsize="32" />
+        <register name="fr1" offset="0x204" bitsize="32" />
+        <register name="fr2" offset="0x208" bitsize="32" />
+        <register name="fr3" offset="0x20c" bitsize="32" />
+        <register name="fr4" offset="0x210" bitsize="32" />
+        <register name="fr5" offset="0x214" bitsize="32" />
+        <register name="fr6" offset="0x218" bitsize="32" />
+        <register name="fr7" offset="0x21c" bitsize="32" />
+        <register name="fr8" offset="0x220" bitsize="32" />
+        <register name="fr9" offset="0x224" bitsize="32" />
+        <register name="fr10" offset="0x228" bitsize="32" />
+        <register name="fr11" offset="0x22c" bitsize="32" />
+        <register name="fr12" offset="0x230" bitsize="32" />
+        <register name="fr13" offset="0x234" bitsize="32" />
+        <register name="fr14" offset="0x238" bitsize="32" />
+        <register name="fr15" offset="0x23c" bitsize="32" />
+        <register name="xf0" offset="0x240" bitsize="32" />
+        <register name="xf1" offset="0x244" bitsize="32" />
+        <register name="xf2" offset="0x248" bitsize="32" />
+        <register name="xf3" offset="0x24c" bitsize="32" />
+        <register name="xf4" offset="0x250" bitsize="32" />
+        <register name="xf5" offset="0x254" bitsize="32" />
+        <register name="xf6" offset="0x258" bitsize="32" />
+        <register name="xf7" offset="0x25c" bitsize="32" />
+        <register name="xf8" offset="0x260" bitsize="32" />
+        <register name="xf9" offset="0x264" bitsize="32" />
+        <register name="xf10" offset="0x268" bitsize="32" />
+        <register name="xf11" offset="0x26c" bitsize="32" />
+        <register name="xf12" offset="0x270" bitsize="32" />
+        <register name="xf13" offset="0x274" bitsize="32" />
+        <register name="xf14" offset="0x278" bitsize="32" />
+        <register name="xf15" offset="0x27c" bitsize="32" />
+        <register name="dr0" offset="0x200" bitsize="64" />
+        <register name="dr2" offset="0x208" bitsize="64" />
+        <register name="dr4" offset="0x210" bitsize="64" />
+        <register name="dr6" offset="0x218" bitsize="64" />
+        <register name="dr8" offset="0x220" bitsize="64" />
+        <register name="dr10" offset="0x228" bitsize="64" />
+        <register name="dr12" offset="0x230" bitsize="64" />
+        <register name="dr14" offset="0x238" bitsize="64" />
+        <register name="xd0" offset="0x240" bitsize="64" />
+        <register name="xd2" offset="0x248" bitsize="64" />
+        <register name="xd4" offset="0x250" bitsize="64" />
+        <register name="xd6" offset="0x258" bitsize="64" />
+        <register name="xd8" offset="0x260" bitsize="64" />
+        <register name="xd10" offset="0x268" bitsize="64" />
+        <register name="xd12" offset="0x270" bitsize="64" />
+        <register name="xd14" offset="0x278" bitsize="64" />
+        <register name="fv0" offset="0x200" bitsize="128" />
+        <register name="fv4" offset="0x210" bitsize="128" />
+        <register name="fv8" offset="0x220" bitsize="128" />
+        <register name="fv12" offset="0x230" bitsize="128" />
+        <register name="FPR_BANK0" offset="0x200" bitsize="512" />
+        <register name="FPR_BANK1" offset="0x240" bitsize="512" />
+        <register name="GBR" offset="0x400" bitsize="32" />
+        <register name="SR" offset="0x404" bitsize="32" />
+        <register name="SSR" offset="0x408" bitsize="32" />
+        <register name="SPC" offset="0x40c" bitsize="32" />
+        <register name="VBR" offset="0x410" bitsize="32" />
+        <register name="SGR" offset="0x414" bitsize="32" />
+        <register name="DBR" offset="0x418" bitsize="32" />
+        <register name="MD" offset="0x600" bitsize="8" />
+        <register name="RB" offset="0x601" bitsize="8" />
+        <register name="BL" offset="0x602" bitsize="8" />
+        <register name="FD" offset="0x603" bitsize="8" />
+        <register name="M" offset="0x604" bitsize="8" />
+        <register name="Q" offset="0x605" bitsize="8" />
+        <register name="IMASK" offset="0x606" bitsize="8" />
+        <register name="S" offset="0x607" bitsize="8" />
+        <register name="T" offset="0x608" bitsize="8" />
+        <register name="MACH" offset="0x800" bitsize="32" />
+        <register name="MACL" offset="0x804" bitsize="32" />
+        <register name="PR" offset="0x808" bitsize="32" />
+        <register name="PC" offset="0x80c" bitsize="32" />
+        <register name="FPUL" offset="0x814" bitsize="32" />
+        <register name="FPSCR_RM" offset="0xa00" bitsize="8" />
+        <register name="FPSCR_FLAG" offset="0xa01" bitsize="8" />
+        <register name="FPSCR_ENABLE" offset="0xa02" bitsize="8" />
+        <register name="FPSCR_CAUSE" offset="0xa03" bitsize="8" />
+        <register name="FPSCR_DN" offset="0xa04" bitsize="8" />
+        <register name="FPSCR_PR" offset="0xa05" bitsize="8" />
+        <register name="FPSCR_SZ" offset="0xa06" bitsize="8" />
+        <register name="FPSCR_FR" offset="0xa07" bitsize="8" />
+    </registers>
+</language>
+

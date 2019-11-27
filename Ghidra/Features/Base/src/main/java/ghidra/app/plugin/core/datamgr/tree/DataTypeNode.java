@@ -15,13 +15,15 @@
  */
 package ghidra.app.plugin.core.datamgr.tree;
 
+import java.util.Collections;
 import java.util.List;
 
 import javax.swing.Icon;
 
 import org.apache.commons.lang3.StringUtils;
 
-import docking.widgets.tree.*;
+import docking.widgets.tree.GTree;
+import docking.widgets.tree.GTreeNode;
 import ghidra.app.plugin.core.datamgr.archive.SourceArchive;
 import ghidra.app.plugin.core.datamgr.util.DataTypeUtils;
 import ghidra.app.util.ToolTipUtils;
@@ -30,7 +32,7 @@ import ghidra.program.model.data.Enum;
 import ghidra.util.*;
 import ghidra.util.exception.DuplicateNameException;
 
-public class DataTypeNode extends AbstractGTreeNode implements DataTypeTreeNode {
+public class DataTypeNode extends DataTypeTreeNode {
 	private final DataType dataType;
 	private final String name;
 	private String displayName;
@@ -43,7 +45,7 @@ public class DataTypeNode extends AbstractGTreeNode implements DataTypeTreeNode 
 	public DataTypeNode(DataType dataType) {
 		this.dataType = dataType;
 		this.name = dataType.getName();
-		this.displayName = dataType.getName();
+		this.displayName = getCurrentDisplayName();
 	}
 
 	@Override
@@ -222,12 +224,13 @@ public class DataTypeNode extends AbstractGTreeNode implements DataTypeTreeNode 
 
 	@Override
 	public boolean isModifiable() {
-		return getArchiveNode().isModifiable();
+		ArchiveNode archiveNode = getArchiveNode();
+		return archiveNode != null && archiveNode.isModifiable();
 	}
 
 	@Override
-	public boolean isSystemNode() {
-		return false;
+	public boolean canDelete() {
+		return true;
 	}
 
 	public void dataTypeStatusChanged() {
@@ -266,5 +269,10 @@ public class DataTypeNode extends AbstractGTreeNode implements DataTypeTreeNode 
 		}
 
 		return baseDisplayName;
+	}
+
+	@Override
+	protected List<GTreeNode> generateChildren() {
+		return Collections.emptyList();
 	}
 }

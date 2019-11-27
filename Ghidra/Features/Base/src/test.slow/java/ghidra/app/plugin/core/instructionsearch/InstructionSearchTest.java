@@ -684,7 +684,7 @@ public class InstructionSearchTest extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals(0, dialog.getSearchData().getInstructions().size());
 		assertEquals(0, instructionTable.getRowCount());
 
-		Window errorDialog = waitForWindowByTitleContaining(null, "Input Error", 2000);
+		Window errorDialog = waitForWindowByTitleContaining("Input Error");
 		assertNotNull(errorDialog);
 		runSwing(() -> errorDialog.setVisible(false));
 	}
@@ -708,7 +708,7 @@ public class InstructionSearchTest extends AbstractGhidraHeadedIntegrationTest {
 
 		waitForSwing();
 
-		dialog = waitForDialogComponent(tool.getToolFrame(), InstructionSearchDialog.class, 2000);
+		dialog = waitForDialogComponent(InstructionSearchDialog.class);
 		component = dialog.getComponent();
 
 		instructionTable = dialog.getTablePanel().getTable();
@@ -744,7 +744,7 @@ public class InstructionSearchTest extends AbstractGhidraHeadedIntegrationTest {
 
 		waitForSwing();
 
-		dialog = waitForDialogComponent(tool.getToolFrame(), InstructionSearchDialog.class, 2000);
+		dialog = waitForDialogComponent(InstructionSearchDialog.class);
 		component = dialog.getComponent();
 
 		instructionTable = dialog.getTablePanel().getTable();
@@ -778,19 +778,19 @@ public class InstructionSearchTest extends AbstractGhidraHeadedIntegrationTest {
 
 	private void loadBytes(String byteString) {
 
-		dialog.clear();
-
-		runSwing(() -> dialog.loadBytes(byteString));
+		runSwing(() -> {
+			dialog.clear();
+			dialog.loadBytes(byteString);
+		});
 
 		// the call above uses an invokeLater
 		waitForSwing();
-
 	}
 
 	private void assertResultsTableRowCount(int rowCount) {
 
 		// Wait for the results window...
-		Window window = waitForWindowByTitleContaining(null, "Addresses", 2000);
+		Window window = waitForWindowByTitleContaining("Addresses");
 		GhidraTable gTable = findComponent(window, GhidraTable.class, true);
 
 		// (the results dialog is shown using the TableService, which uses a ThreadedTableModel)
