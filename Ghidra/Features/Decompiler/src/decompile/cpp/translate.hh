@@ -144,8 +144,12 @@ public:
   /// \brief The main resolver method.
   ///
   /// Given a native constant in a specific context, resolve what address is being referred to.
+  /// The constant can be a partially encoded pointer, in which case the full pointer encoding
+  /// is recovered as well as the address.  Whether or not a pointer is partially encoded or not
+  /// is determined by the \e sz parameter, indicating the number of bytes in the pointer. A value
+  /// of -1 here indicates that the pointer is known to be a full encoding.
   /// \param val is constant to be resolved to an address
-  /// \param sz is the size of \e val in context.
+  /// \param sz is the size of \e val in context (or -1).
   /// \param point is the address at which this constant is being used
   /// \param fullEncoding is used to hold the full pointer encoding if \b val is a partial encoding
   /// \return the resolved Address
