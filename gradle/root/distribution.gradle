@@ -382,7 +382,6 @@ task createInstallationZip(type: Zip) { t ->
 		dependsOn ":assembleDistribution_win64"
 		dependsOn ":assembleDistribution_linux64"
 		dependsOn ":assembleDistribution_osx64"
-		dependsOn ":assembleSource"
 	}
 
 	if (project.hasProperty("allPlatforms")) {
