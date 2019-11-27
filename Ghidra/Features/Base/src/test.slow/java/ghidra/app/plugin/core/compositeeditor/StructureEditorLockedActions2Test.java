@@ -252,6 +252,7 @@ public class StructureEditorLockedActions2Test extends AbstractStructureEditorLo
 		okInput(dialog, 2);
 		dialog = null;
 		waitUntilDialogProviderGone(NumberInputDialog.class, 2000);
+		waitForBusyTool(tool); // the 'Duplicate Multiple' action uses a task
 
 		assertEquals(num - 2, getModel().getNumComponents());
 		checkSelection(new int[] { 2 });
@@ -263,10 +264,6 @@ public class StructureEditorLockedActions2Test extends AbstractStructureEditorLo
 		assertEquals("comment 2", getComment(2));
 	}
 
-	/**
-	 * Edit an existing aligned structure and create a structure from a selection. Use the default name.
-	 * @throws Exception
-	 */
 	@Test
 	public void testExistingAlignedDtEditInternalStructureOnSelectionDefaultName()
 			throws Exception {

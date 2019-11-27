@@ -25,6 +25,7 @@ import ghidra.program.model.data.Composite.AlignmentType;
 import ghidra.program.model.lang.InsufficientBytesException;
 import ghidra.util.*;
 import ghidra.util.exception.*;
+import ghidra.util.task.TaskMonitor;
 
 public abstract class CompEditorModel extends CompositeEditorModel {
 
@@ -131,11 +132,13 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 		}
 	}
 
-	// **********************************************************************
-	// * OVERRIDDEN METHODS FOR THE SELECTION
-	// **********************************************************************
+//==================================================================================================
+// OVERRIDDEN METHODS FOR THE SELECTION
+//==================================================================================================	
+
 	/**
-	 *  Returns true if the GUI has the blank last line selected.
+	 * Returns true if the GUI has the blank last line selected
+	 * @return true if the GUI has the blank last line selected
 	 */
 	boolean isBlankLastLineSelected() {
 		return selection.contains(new FieldLocation(getNumComponents(), 0, 0, 0));
@@ -147,11 +150,12 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 	 *
 	 * @param range the range of indices for the component's whose sizes should
 	 * be added together.
+	 * @return the number of bytes
 	 */
 	protected abstract int getNumBytesInRange(FieldRange range);
 
 	/**
-	 *  Saves the current selection in the components viewing area.
+	 * Saves the current selection in the components viewing area.
 	 *
 	 * @param rows the indexes for the selected rows.
 	 */
@@ -168,10 +172,10 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 		else {
 			// restrict multi-selection to defined components only
 			int numComponents = getNumComponents();
-			for (int i = 0; i < rows.length; i++) {
+			for (int row2 : rows) {
 				// Only add valid component rows (i.e. don't include blank last line)
-				if (rows[i] < numComponents) {
-					tmpSelection.addRange(rows[i], rows[i] + 1);
+				if (row2 < numComponents) {
+					tmpSelection.addRange(row2, row2 + 1);
 				}
 			}
 		}
@@ -244,9 +248,6 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 		return true;
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.compositeeditor.CompositeEditorModel#setDataType(int, ghidra.program.model.data.DataType, int)
-	 */
 	protected void setDataType(int rowIndex, DataType dt, int length) throws UsrException {
 		if (rowIndex < getNumComponents()) {
 			replace(rowIndex, dt, length);
@@ -277,9 +278,6 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 		return super.validateComponentDataType(rowIndex, dtString);
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.compositeeditor.EditorModel#isAddAllowed(ghidra.program.model.data.DataType)
-	 */
 	@Override
 	public boolean isAddAllowed(DataType dataType) {
 		int rowIndex = getMinIndexSelected();
@@ -289,26 +287,16 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 		return isAddAllowed(rowIndex, dataType);
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.compositeeditor.CompositeEditorModel#isClearAllowed()
-	 */
 	@Override
 	public boolean isClearAllowed() {
 		return (getNumSelectedRows() > 0) && !isBlankLastLineSelected();
 	}
 
-	/**
-	 * @param cycleGroup
-	 * @return
-	 */
 	@Override
 	public boolean isCycleAllowed(CycleGroup cycleGroup) {
 		return (getNumSelectedRows() == 1);
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.compositeeditor.EditorModel#isInsertAllowed(ghidra.program.model.data.DataType)
-	 */
 	public boolean isInsertAllowed(DataType dataType) {
 		int rowIndex = getMinIndexSelected();
 		if (rowIndex == -1) {
@@ -329,9 +317,6 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 		return true;
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.compositeeditor.EditorModel#isReplaceAllowed(ghidra.program.model.data.DataType)
-	 */
 	public boolean isReplaceAllowed(DataType dataType) {
 		if (getNumSelectedComponentRows() != 1) {
 			return false;
@@ -348,13 +333,17 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 	 * @param componentOrdinal the ordinal of the component to be deleted.
 	 */
 	void delete(int componentOrdinal) {
+		doDelete(componentOrdinal);
+		selection.removeRange(componentOrdinal, componentOrdinal + 1);
+		adjustSelection(componentOrdinal + 1, -1);
+		notifyCompositeChanged();
+	}
+
+	private void doDelete(int componentOrdinal) {
 		viewComposite.delete(componentOrdinal);
 		if (componentOrdinal < row) {
 			row--;
 		}
-		selection.removeRange(componentOrdinal, componentOrdinal + 1);
-		adjustSelection(componentOrdinal + 1, -1);
-		notifyCompositeChanged();
 	}
 
 	/**
@@ -365,12 +354,24 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 	 * @param rows array with each row (component) index to delete.
 	 */
 	private void delete(int[] rows) {
+
+		int[] selectedRows = getSelectedRows();
 		Arrays.sort(rows);
 		for (int i = rows.length - 1; i >= 0; i--) {
 			int rowIndex = rows[i];
 			int componentOrdinal = convertRowToOrdinal(rowIndex);
-			delete(componentOrdinal);
+			doDelete(componentOrdinal);
 		}
+
+		// Not sure if this is the right behavior.  Assuming the deleted rows were selected, 
+		// restore the selection to be the first row that was deleted so that the UI leaves the
+		// user's selection close to where it was.
+		if (selectedRows.length > 0) {
+			setSelection(new int[] { selectedRows[0] });
+		}
+
+		notifyCompositeChanged();
+
 	}
 
 	/**
@@ -396,22 +397,30 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 	 *
 	 * @param startRowIndex index of the starting row for the components to delete.
 	 * @param endRowIndex index of the ending row (inclusive) for the components to delete.
+	 * @param monitor the task monitor
+	 * @throws CancelledException if the work was cancelled 
 	 */
-	void deleteComponentRange(int startRowIndex, int endRowIndex) {
+	void deleteComponentRange(int startRowIndex, int endRowIndex, TaskMonitor monitor)
+			throws CancelledException {
 		if (isEditingField()) {
 			endFieldEditing();
 		}
+
 		final int entries = endRowIndex - startRowIndex + 1;
 		int[] ordinals = new int[entries];
-		int ii = 0;
-		for (int rowIndex = endRowIndex; rowIndex >= startRowIndex; rowIndex--, ++ii) {
+
+		monitor.initialize(entries);
+		int i = 0;
+		for (int rowIndex = endRowIndex; rowIndex >= startRowIndex; rowIndex--, i++) {
+			monitor.checkCanceled();
 			int componentOrdinal = convertRowToOrdinal(rowIndex);
-			ordinals[ii] = componentOrdinal;
+			ordinals[i] = componentOrdinal;
 			if (componentOrdinal < row) {
 				row--;
 			}
 			selection.removeRange(componentOrdinal, componentOrdinal + 1);
 			adjustSelection(componentOrdinal + 1, -1);
+			monitor.incrementProgress(1);
 		}
 		viewComposite.delete(ordinals);
 		fixSelection();
@@ -420,11 +429,6 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 		selectionChanged();
 	}
 
-	/**
-	 *  Delete the selected components.
-	 *
-	 * @throws UsrException if the data type isn't allowed to be deleted.
-	 */
 	@Override
 	public void deleteSelectedComponents() throws UsrException {
 		if (!isDeleteAllowed()) {
@@ -457,8 +461,8 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 	protected abstract DataTypeComponent insert(int rowIndex, DataType dataType, int length,
 			String name, String comment) throws InvalidDataTypeException;
 
-	protected abstract void insert(int rowIndex, DataType dataType, int length, int numCopies)
-			throws InvalidDataTypeException;
+	protected abstract void insert(int rowIndex, DataType dataType, int length, int numCopies,
+			TaskMonitor monitor) throws InvalidDataTypeException, CancelledException;
 
 	/**
 	 * Add a DataType component into to an editable structure
@@ -468,23 +472,23 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 	 * @param dataType data type to be inserted into the structure
 	 * @param dtLen the length of the data type
 	 * @param multiple number of copies of the item to be added.
+	 * @param monitor the task monitor
 	 *
 	 * @throws NoSuchElementException if there is no component with the specified index.
 	 * @throws InvalidDataTypeException if the structure being edited is part
 	 *         of the data type being inserted.
+	 * @throws CancelledException if the work was cancelled
 	 */
-	protected void insertMultiple(int rowIndex, DataType dataType, int dtLen, int multiple)
-			throws java.util.NoSuchElementException, InvalidDataTypeException {
+	protected void insertMultiple(int rowIndex, DataType dataType, int dtLen, int multiple,
+			TaskMonitor monitor)
+			throws NoSuchElementException, InvalidDataTypeException, CancelledException {
 		if (multiple < 1) {
 			return;
 		}
 
-		insert(rowIndex, dataType, dtLen, multiple);
+		insert(rowIndex, dataType, dtLen, multiple, monitor);
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.compositeeditor.EditorModel#insert(ghidra.program.model.data.DataType)
-	 */
 	@Override
 	public DataTypeComponent insert(DataType dataType) throws UsrException {
 		if (hasSelection()) {
@@ -551,26 +555,27 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 	 * @param dataType data type to be inserted into the structure
 	 * @param dtLen the length of the data type
 	 * @param multiple number of copies of the item to be added.
+	 * @param monitor the task monitor
 	 *
 	 * @throws NoSuchElementException if there is no component with the specified index.
 	 * @throws InvalidDataTypeException if the structure being edited is part
 	 *         of the data type being inserted.
+	 * @throws CancelledException if the work was cancelled
 	 */
-	protected void insertComponentMultiple(int rowIndex, DataType dataType, int dtLen, int multiple)
-			throws java.util.NoSuchElementException, InvalidDataTypeException {
+	protected void insertComponentMultiple(int rowIndex, DataType dataType, int dtLen, int multiple,
+			TaskMonitor monitor)
+			throws NoSuchElementException, InvalidDataTypeException, CancelledException {
 		if (isEditingField()) {
 			endFieldEditing();
 		}
+
 		checkIsAllowableDataType(dataType, true);
-		insertMultiple(rowIndex, dataType, dtLen, multiple);
+		insertMultiple(rowIndex, dataType, dtLen, multiple, monitor);
 		fixSelection();
 		componentEdited();
 		selectionChanged();
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.compositeeditor.EditorModel#add(ghidra.program.model.data.DataType)
-	 */
 	@Override
 	public DataTypeComponent add(DataType dataType) throws UsrException {
 		if (isContiguousSelection()) {
@@ -634,9 +639,6 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 		return dtc;
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.compositeeditor.EditorModel#replace(ghidra.program.model.data.DataType)
-	 */
 	public DataTypeComponent replace(DataType dataType) throws UsrException {
 		if (isContiguousComponentSelection()) {
 			return replace(getMinIndexSelected(), dataType);
@@ -693,31 +695,26 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 			String name, String comment) throws InvalidDataTypeException;
 
 	/**
-	 *  Replace the structure components from the start index to the end index
-	 *  (inclusive) with as many of the specified data type as will fit.
-	 *  Pad any left over bytes as undefineds.
+	 * Replace the structure components from the start index to the end index
+	 * (inclusive) with as many of the specified data type as will fit.
+	 * Pad any left over bytes as undefined bytes.
 	 *
 	 * @param startRowIndex index of the first row (component) to replace.
 	 * @param endRowIndex index of the last row (component) to replace.
 	 * @param datatype the new data type
+	 * @param length the length of the range
+	 * @param monitor the task monitor
+	 * @return true if the replacement worked
 	 *
 	 * @throws InvalidDataTypeException if the structure being edited is part
-	 *         of the data type being inserted.
-	 * @throws InsufficientBytesException if ther aren't enough bytes in the
-	 * specified range.
+	 *         of the data type being inserted
+	 * @throws InsufficientBytesException if there aren't enough bytes in the specified range
+	 * @throws CancelledException the the work is cancelled
 	 */
 	protected abstract boolean replaceRange(int startRowIndex, int endRowIndex, DataType datatype,
-			int length) throws InvalidDataTypeException, InsufficientBytesException;
+			int length, TaskMonitor monitor)
+			throws InvalidDataTypeException, InsufficientBytesException, CancelledException;
 
-	/**
-	 * Replaces the component at the indicated index.
-	 * The existing fieldname and comment are retained.
-	 * The selection is adjusted and change notification occurs.
-	 * @param rowIndex
-	 * @param datatype
-	 * @return
-	 * @throws InvalidDataTypeException
-	 */
 	@Override
 	public DataTypeComponent replace(int rowIndex, DataType datatype, int length)
 			throws UsrException {
@@ -769,15 +766,14 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 
 	/**
 	 * Replaces the range of components between the start and end index (inclusive).
-	 * The existing fieldname and comment are retained for the component at startIndex.
+	 * The existing field name and comment are retained for the component at startIndex.
 	 * The selection is adjusted and change notification occurs.
-	 * @param startRowIndex
-	 * @param endRowIndex
-	 * @param datatype
-	 * @param length
-	 * @return
-	 * @throws InvalidDataTypeException
-	 * @throws InsufficientBytesException
+	 * @param startRowIndex the start index
+	 * @param endRowIndex the end index
+	 * @param datatype the data type
+	 * @param length the length of the range
+	 * @return the newly create component
+	 * @throws UsrException if there is an exception replacing
 	 */
 	protected DataTypeComponent replaceComponentRange(int startRowIndex, int endRowIndex,
 			DataType datatype, int length) throws UsrException {
@@ -797,14 +793,22 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 
 		checkIsAllowableDataType(datatype, true);
 
-		replaceRange(startRowIndex, endRowIndex, datatype, length);
+		//
+		// Note: if the range being replaced is large enough, then the UI could lock-up.  If we 
+		//       find that is the case, then we can update this method to take in a task monitor 
+		//       and update the clients accordingly.  For now, it does not seem worth the effort.
+		// 
+		TaskMonitor monitor = TaskMonitor.DUMMY;
+
+		replaceRange(startRowIndex, endRowIndex, datatype, length, monitor);
 		DataTypeComponent dtc = getComponent(startRowIndex);
-		// Set the fieldname and comment the same as before
+
+		// Set the field name and comment the same as before
 		try {
 			dtc.setFieldName(oldDtc.getFieldName());
 		}
-		catch (DuplicateNameException exc) {
-			Msg.showError(this, null, null, null);
+		catch (DuplicateNameException e) {
+			Msg.showError(this, null, "Unexcected Exception", "Exception applying field name", e);
 		}
 		dtc.setComment(oldDtc.getComment());
 		fixSelection();
@@ -814,13 +818,15 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 	}
 
 	/**
-	 *  Check to see if the specified data type fits in place of the data type
-	 *  at the specified index of the data structure.<BR>
-	 *  If the new data type is smaller, then it can replace the current one.<BR>
-	 *  If the new data type is larger, then replace if we have enough
-	 *  undefined bytes following the specified index.
+	 * Check to see if the specified data type fits in place of the data type
+	 * at the specified index of the data structure.<BR>
+	 * If the new data type is smaller, then it can replace the current one.<BR>
+	 * If the new data type is larger, then replace if we have enough
+	 * undefined bytes following the specified index.
 	 *
 	 * @param rowIndex index of the row (component).
+	 * @param datatype the type
+	 * @return true if the replace is allowed
 	 */
 	boolean checkForReplace(int rowIndex, DataType datatype) {
 		DataTypeComponent dtc = getComponent(rowIndex);
@@ -927,9 +933,6 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 		return true;
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.compositeeditor.EditorModel#moveUp()
-	 */
 	@Override
 	public boolean moveUp() throws NoSuchElementException {
 		if (selection.getNumRanges() != 1) {
@@ -954,9 +957,6 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 		return moved;
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.compositeeditor.EditorModel#moveDown()
-	 */
 	@Override
 	public boolean moveDown() throws NoSuchElementException {
 		if (selection.getNumRanges() != 1) {
@@ -981,32 +981,19 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 		return moved;
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.compositeeditor.EditorModel#duplicateMultiple(int, int)
-	 */
 	@Override
-	public void duplicateMultiple(int rowIndex, int multiple) throws UsrException {
+	public void duplicateMultiple(int rowIndex, int multiple, TaskMonitor monitor)
+			throws UsrException {
 		DataTypeComponent originalComp = getComponent(rowIndex);
 		DataType dt = originalComp.getDataType();
 		int dtLen = originalComp.getLength();
 
-		try {
-			insertComponentMultiple(rowIndex + 1, dt, dtLen, multiple);
-		}
-		catch (OutOfMemoryError memExc) {
-			throw memExc; // rethrow the exception.
-		}
+		insertComponentMultiple(rowIndex + 1, dt, dtLen, multiple, monitor);
 
 		componentEdited();
 		lastNumDuplicates = multiple;
 	}
 
-	/**
-	 *  Clear the components at the specified indices.
-	 *
-	 * @param rows ordered array of the selected row's indices.
-	 * @throws UsrException if clearing isn't allowed.
-	 */
 	@Override
 	public abstract void clearComponents(int[] rows) throws UsrException;
 
@@ -1051,6 +1038,7 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 	 * beginning at the specified row index.
 	 *
 	 * @param rowIndex the index of the row
+	 * @return the number of bytes
 	 */
 	protected int getNumUndefinedBytesAt(int rowIndex) {
 		int numRowComponents = getNumComponents();
@@ -1099,7 +1087,7 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 	 * until the end of the composite. There must be at least one undefined data type to return true.
 	 *
 	 * @param rowIndex the index of the row to begin checking for undefined data types.
-	 * @return true if an undefined data type is at the indicated row index and all componnents 
+	 * @return true if an undefined data type is at the indicated row index and all components 
 	 * from there to the end of the composite are undefined data types.
 	 */
 	protected boolean onlyUndefinedsUntilEnd(int rowIndex) {
@@ -1128,6 +1116,8 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 	 * Cause the component at the specified index to consume undefined bytes
 	 * that follow it.
 	 * Note: this method adjusts the selection.
+	 * 
+	 * @param rowIndex the row index
 	 * @return the number of Undefined bytes consumed.
 	 */
 	protected int consumeByComponent(int rowIndex) {
@@ -1222,14 +1212,6 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 		return numIndicesRemoved;
 	}
 
-	/**
-	 * Returns the number of component rows in the editor. If unlocked, there 
-	 * is a blank row at the end for inserting. Therefore this number can be
-	 * different than the actual number of components currently in the
-	 * structure being edited.
-	 *
-	 * @return the number of rows in the model
-	 */
 	@Override
 	public int getRowCount() {
 		int numRows = 0;
@@ -1242,13 +1224,6 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 		return numRows;
 	}
 
-	/**
-	 *  This updates one of the values for a component that is a field of
-	 *  this data structure.
-	 *  @param aValue the new value for the field
-	 *  @param rowIndex the index of the row for the component
-	 *  @param modelColumnIndex the model field index within the component
-	 */
 	@Override
 	public void setValueAt(Object aValue, int rowIndex, int modelColumnIndex) {
 		try {
@@ -1262,9 +1237,6 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 		}
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.compositeeditor.EditorModel#setComponentDataType(int, ghidra.program.model.data.DataType, int)
-	 */
 	@Override
 	public void setComponentDataTypeInstance(int rowIndex, DataTypeInstance dti)
 			throws UsrException {
@@ -1280,9 +1252,6 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 		}
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.compositeeditor.CompositeEditorModel#validateComponentName(int, java.lang.String)
-	 */
 	@Override
 	public void validateComponentName(int rowIndex, String name) throws UsrException {
 		if (nameExistsElsewhere(name, rowIndex)) {
@@ -1290,9 +1259,6 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 		}
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.compositeeditor.EditorModel#setComponentName(int, java.lang.String)
-	 */
 	@Override
 	public void setComponentName(int rowIndex, String name)
 			throws InvalidInputException, InvalidNameException, DuplicateNameException {
@@ -1310,9 +1276,6 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 		}
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.compositeeditor.EditorModel#setComponentComment(int, java.lang.String)
-	 */
 	@Override
 	public void setComponentComment(int rowIndex, String comment) throws InvalidInputException {
 		if (comment.equals("")) {
@@ -1344,13 +1307,13 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 			(selection.getFieldRange(0).getEnd().getIndex().intValue() < getNumComponents()));
 	}
 
-	// *************************************************************
-	// End of methods for determining if a type of edit action is allowed.
-	// *************************************************************
+//==================================================================================================
+// End of methods for determining if a type of edit action is allowed.
+//==================================================================================================	
 
-	// *************************************************************
-	// Override CompositeViewerModel CategoryChangeListener methods
-	// *************************************************************
+//==================================================================================================
+// Override CompositeViewerModel CategoryChangeListener methods
+//==================================================================================================	
 
 	@Override
 	public void dataTypeChanged(DataTypeManager dtm, DataTypePath path) {
@@ -1516,7 +1479,6 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 		}
 	}
 
-	// *** HELPER METHODS for use with CategoryChangeListener methods. ***
 	/**
 	 * Removes the indicated data type from any components to prevent a cycle
 	 * being created by this component being updated. Structures will actually
@@ -1526,13 +1488,10 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 	 */
 	abstract void removeDtFromComponents(Composite comp);
 
-	// *************************************************************
-	// End of Override CompositeViewerModel CategoryChangeListener methods
-	// *************************************************************
+//==================================================================================================
+// End of Override CompositeViewerModel CategoryChangeListener methods
+//==================================================================================================	
 
-	/* (non-Javadoc)
-	 * @see javax.swing.table.AbstractTableModel#fireTableDataChanged()
-	 */
 	@Override
 	public void fireTableDataChanged() {
 		boolean tmpUpdatingSelection = updatingSelection;
@@ -1689,7 +1648,8 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 	}
 
 	/**
-	 *  Return the external (minimum) alignment type for the structure or union being viewed.
+	 * Return the external (minimum) alignment type for the structure or union being viewed
+	 * @return the alignment type
 	 */
 	public AlignmentType getMinimumAlignmentType() {
 		if (viewComposite.isDefaultAligned()) {
@@ -1702,7 +1662,8 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 	}
 
 	/**
-	 *  Return the external (minimum) alignment value for the structure or union being viewed.
+	 * Return the external (minimum) alignment value for the structure or union being viewed.
+	 * @return the alignment
 	 */
 	public int getMinimumAlignment() {
 		if (viewComposite != null) {
@@ -1711,7 +1672,7 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 		return 0;
 	}
 
-	public void setAlignmentType(AlignmentType alignmentType) throws InvalidInputException {
+	public void setAlignmentType(AlignmentType alignmentType) {
 		if (alignmentType == AlignmentType.DEFAULT_ALIGNED) {
 			viewComposite.setToDefaultAlignment();
 		}
@@ -1730,7 +1691,7 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 
 	public abstract void setAlignment(int alignmentValue) throws InvalidInputException;
 
-	public void setPackingValue(int packingValue) throws InvalidInputException {
+	public void setPackingValue(int packingValue) {
 		int currentViewPackingValue = viewComposite.getPackingValue();
 		if (currentViewPackingValue == packingValue) {
 			return;

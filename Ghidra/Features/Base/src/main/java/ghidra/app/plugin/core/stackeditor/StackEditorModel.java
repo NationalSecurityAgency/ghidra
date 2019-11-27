@@ -45,6 +45,7 @@ import ghidra.program.model.symbol.SourceType;
 import ghidra.program.model.symbol.SymbolUtilities;
 import ghidra.util.*;
 import ghidra.util.exception.*;
+import ghidra.util.task.TaskMonitor;
 
 class StackEditorModel extends CompositeEditorModel {
 
@@ -59,7 +60,6 @@ class StackEditorModel extends CompositeEditorModel {
 	private static final int MAX_PARAM_SIZE = Integer.MAX_VALUE;
 
 	private StackFrame originalStack;
-	private boolean hasCustomParameterStorage;
 	private DataTypeManager dtm;
 
 	private boolean stackChangedExternally;
@@ -86,7 +86,6 @@ class StackEditorModel extends CompositeEditorModel {
 
 	void load(Function function) {
 		originalStack = function.getStackFrame();
-		hasCustomParameterStorage = function.hasCustomVariableStorage();
 		StackFrameDataType stackFrameDataType = new StackFrameDataType(originalStack, dtm);
 		stackFrameDataType.setCategoryPath(dtm.getRootCategory().getCategoryPath());
 		load(stackFrameDataType, false);
@@ -102,9 +101,6 @@ class StackEditorModel extends CompositeEditorModel {
 		return (StackFrameDataType) viewComposite;
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.compositeeditor.CompositeEditorModel#checkChanges()
-	 */
 	@Override
 	public boolean updateAndCheckChangeState() {
 		if (originalIsChanging) {
@@ -169,9 +165,6 @@ class StackEditorModel extends CompositeEditorModel {
 		return COMMENT;
 	}
 
-	/* (non-Javadoc)
-	 * @see javax.swing.table.TableModel#getValueAt(int, int)
-	 */
 	@Override
 	public Object getValueAt(int rowIndex, int columnIndex) {
 		if ((viewComposite == null) || (rowIndex >= viewComposite.getNumComponents()) ||
@@ -266,12 +259,12 @@ class StackEditorModel extends CompositeEditorModel {
 	}
 
 	/**
-	 * Gets called to update/validate the current editable location in the table.
+	 * Gets called to update/validate the current editable location in the table
+	 * 
 	 * @param value the new cell value
-	 * @param rowIndex the row index in the component table.
-	 * @param mColumn the column index for the table cell in the 
-	 * current model.
-	 * @return true if the field was updated or validated successfully.
+	 * @param rowIndex the row index in the component table
+	 * @param columnIndex the column index for the table cell in the current model
+	 * @return true if the field was updated or validated successfully
 	 */
 	@Override
 	protected boolean fieldEdited(Object value, int rowIndex, int columnIndex) {
@@ -311,10 +304,6 @@ class StackEditorModel extends CompositeEditorModel {
 		}
 	}
 
-	/**
-	 * @param index the component index
-	 * @param offset
-	 */
 	@Override
 	public void validateComponentOffset(int index, String offset) throws UsrException {
 		try {
@@ -376,12 +365,6 @@ class StackEditorModel extends CompositeEditorModel {
 		}
 	}
 
-	/**
-	 * 
-	 * @param rowIndex
-	 * @param value
-	 * @throws UsrException
-	 */
 	public void setComponentOffset(int rowIndex, String value) throws UsrException {
 		DataTypeComponent element = viewComposite.getComponent(rowIndex);
 		int offset = element.getOffset();
@@ -395,9 +378,6 @@ class StackEditorModel extends CompositeEditorModel {
 		notifyCompositeChanged();
 	}
 
-	/* (non-Javadoc)
-	 * @see javax.swing.table.TableModel#isCellEditable(int, int)
-	 */
 	@Override
 	public boolean isCellEditable(int rowIndex, int columnIndex) {
 		StackFrameDataType stackDt = (StackFrameDataType) viewComposite;
@@ -451,9 +431,6 @@ class StackEditorModel extends CompositeEditorModel {
 		((StackFrameDataType) viewComposite).clearComponent(ordinal);
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.compositeeditor.EditorModel#clearSelectedComponents()
-	 */
 	@Override
 	public void clearSelectedComponents() throws UsrException {
 		OffsetPairs offsetSelection = getRelOffsetSelection();
@@ -598,35 +575,22 @@ class StackEditorModel extends CompositeEditorModel {
 		return ((StackFrameDataType) viewComposite).getReturnAddressOffset();
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.compositeeditor.EditorModel#getMaxAddLength(int)
-	 */
 	@Override
 	public int getMaxAddLength(int index) {
 		return getMaxReplaceLength(index);
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.compositeeditor.EditorModel#getMaxReplaceLength(int)
-	 */
 	@Override
 	public int getMaxReplaceLength(int currentIndex) {
 		int offset = viewComposite.getComponent(currentIndex).getOffset();
 		return ((StackFrameDataType) viewComposite).getMaxLength(offset);
 	}
 
-	/**
-	 * @see ghidra.app.plugin.core.compositeeditor.EditorModel#getMaxDuplicates(int)
-	 */
 	@Override
 	public int getMaxDuplicates(int rowIndex) {
 		return 0;
 	}
 
-	/**
-	 * @param dataType
-	 * @return
-	 */
 	@Override
 	public boolean isAddAllowed(DataType dataType) {
 		if (isSingleRowSelection()) {
@@ -796,9 +760,6 @@ class StackEditorModel extends CompositeEditorModel {
 		}
 	}
 
-	/**
-	 * @param dataType
-	 */
 	private void replaceComponents(DataType oldDataType, DataType newDataType) {
 		StackFrameDataType stackDt = (StackFrameDataType) viewComposite;
 		DataTypeComponent[] comps = stackDt.getDefinedComponents();
@@ -826,9 +787,6 @@ class StackEditorModel extends CompositeEditorModel {
 		}
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.compositeeditor.EditorModel#setComponentDataTypeInstance(int, ghidra.program.model.data.DataTypeInstance)
-	 */
 	@Override
 	public void setComponentDataTypeInstance(int index, DataTypeInstance dti) throws UsrException {
 		DataType dt = dti.getDataType();
@@ -914,16 +872,13 @@ class StackEditorModel extends CompositeEditorModel {
 		return replace(index, dt);
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.compositeeditor.EditorModel#add(int, ghidra.program.model.data.DataType, java.awt.Component)
-	 */
 	@Override
 	public DataTypeComponent add(int index, DataType dt, int dtLength) throws UsrException {
 		return replace(index, dt, dtLength);
 	}
 
 	private Variable getVariableContaining(int offset, List<Variable> sortedVariables) {
-		Object key = new Integer(offset);
+		Object key = offset;
 		int index = Collections.binarySearch(sortedVariables, key, StackVariableComparator.get());
 		if (index >= 0) {
 			return sortedVariables.get(index);
@@ -1107,57 +1062,37 @@ class StackEditorModel extends CompositeEditorModel {
 		}
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.compositeeditor.EditorModel#duplicateMultiple(int, int)
-	 */
 	@Override
-	public void duplicateMultiple(int index, int multiple) throws UsrException {
+	public void duplicateMultiple(int index, int multiple, TaskMonitor monitor)
+			throws UsrException {
 		// do nothing
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.compositeeditor.EditorModel#insert(ghidra.program.model.data.DataType)
-	 */
 	@Override
 	public DataTypeComponent insert(DataType dataType) throws UsrException {
 		return null;
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.compositeeditor.EditorModel#insert(int, ghidra.program.model.data.DataType)
-	 */
 	@Override
 	public DataTypeComponent insert(int index, DataType dataType) throws UsrException {
 		return null;
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.compositeeditor.EditorModel#insert(int, ghidra.program.model.data.DataType)
-	 */
 	@Override
 	public DataTypeComponent insert(int index, DataType dt, int dtLength) throws UsrException {
 		return null;
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.compositeeditor.EditorModel#moveUp()
-	 */
 	@Override
 	public boolean moveUp() {
 		return false;
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.compositeeditor.EditorModel#moveDown()
-	 */
 	@Override
 	public boolean moveDown() {
 		return false;
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.compositeeditor.EditorModel#replace(ghidra.program.model.data.DataType, java.awt.Component)
-	 */
 	public DataTypeComponent replace(DataType dataType) throws UsrException {
 		int rowIndex = getMinIndexSelected();
 		if (rowIndex < 0) {
@@ -1179,9 +1114,6 @@ class StackEditorModel extends CompositeEditorModel {
 		}
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.compositeeditor.EditorModel#replace(int, ghidra.program.model.data.DataTypeInstance)
-	 */
 	@Override
 	public DataTypeComponent replace(int index, DataType dt, int dtLength) throws UsrException {
 		OffsetPairs offsetSelection = getRelOffsetSelection();
@@ -1197,9 +1129,6 @@ class StackEditorModel extends CompositeEditorModel {
 		return getComponent(index);
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.compositeeditor.EditorModel#getMaxElements()
-	 */
 	@Override
 	public int getMaxElements() {
 		if (getNumSelectedComponentRows() != 1) {
@@ -1270,15 +1199,16 @@ class StackEditorModel extends CompositeEditorModel {
 			if (dataTypeManager != originalDataTypeManager) {
 				return;
 			}
-			DataTypePath originalDataTypePath = getOriginalDataTypePath();
-			if (originalDataTypeManager == null || originalDataTypePath == null) {
+			DataTypePath originalPath = getOriginalDataTypePath();
+			if (originalDataTypeManager == null || originalPath == null) {
 				return;
 			}
-			if (!oldPath.equals(originalDataTypePath)) {
+			if (!oldPath.equals(originalPath)) {
 				return;
 			}
-			// Don't try to actually rename, since we shouldn't get name change on a fabricated stack data type.
 
+			// Don't try to actually rename, since we shouldn't get name change on a 
+			// fabricated stack data type.
 			OffsetPairs offsetSelection = getRelOffsetSelection();
 			fireTableDataChanged();
 			componentDataChanged();
@@ -1299,36 +1229,24 @@ class StackEditorModel extends CompositeEditorModel {
 		}
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.compositeeditor.CompositeViewerModel#getOriginalComposite()
-	 */
 	@Override
 	protected Composite getOriginalComposite() {
 		// This is to allow the stack editor panel to have access.
 		return super.getOriginalComposite();
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.compositeeditor.CompositeViewerModel#getOriginalDataTypeManager()
-	 */
 	@Override
 	protected DataTypeManager getOriginalDataTypeManager() {
 		// This is to allow the stack editor panel to have access.
 		return super.getOriginalDataTypeManager();
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.compositeeditor.CompositeViewerModel#fixupOriginalPath(ghidra.program.model.data.Composite)
-	 */
 	@Override
 	protected void fixupOriginalPath(Composite composite) {
 		// This is to allow the stack editor panel to have access.
 		super.fixupOriginalPath(composite);
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.compositeeditor.CompositeViewerModel#getCompositeID()
-	 */
 	@Override
 	protected long getCompositeID() {
 		// This is to allow the stack editor panel to have access.

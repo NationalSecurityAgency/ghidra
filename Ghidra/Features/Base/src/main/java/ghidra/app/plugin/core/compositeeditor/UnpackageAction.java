@@ -23,7 +23,10 @@ import javax.swing.KeyStroke;
 import docking.ActionContext;
 import docking.action.KeyBindingData;
 import docking.widgets.OptionDialog;
+import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.UsrException;
+import ghidra.util.task.TaskLauncher;
+import ghidra.util.task.TaskMonitor;
 import resources.ResourceManager;
 
 /**
@@ -63,18 +66,26 @@ public class UnpackageAction extends CompositeEditorTableAction {
 				return;
 			}
 		}
+
+		TaskLauncher.launchModal("Unpackaging Component",
+			monitor -> doUnpackage(currentRowIndex, monitor));
+
+		requestTableFocus();
+	}
+
+	private void doUnpackage(int row, TaskMonitor monitor) {
 		try {
-			((StructureEditorModel) model).unpackage(currentRowIndex);
+			((StructureEditorModel) model).unpackage(row, monitor);
+		}
+		catch (CancelledException e) {
+			// user cancelled
 		}
 		catch (UsrException e1) {
 			model.setStatus(e1.getMessage(), true);
 		}
-		requestTableFocus();
+		model.fireTableDataChanged();
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.datamanager.editor.CompositeEditorAction#adjustEnablement()
-	 */
 	@Override
 	public void adjustEnablement() {
 		setEnabled(model.isUnpackageAllowed());

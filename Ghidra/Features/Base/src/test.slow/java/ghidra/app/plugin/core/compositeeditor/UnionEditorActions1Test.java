@@ -589,9 +589,7 @@ public class UnionEditorActions1Test extends AbstractUnionEditorTest {
 		// Can't duplicate blank line
 		listener.clearStatus();
 		setSelection(new int[] { model.getNumComponents() });
-		invoke(duplicateAction);
-		assertEquals(num, model.getNumComponents());
-		assertEquals(len, model.getLength());
+		assertFalse(runSwing(() -> duplicateAction.isEnabled()));
 	}
 
 	@Test
