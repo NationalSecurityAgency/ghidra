@@ -1233,7 +1233,8 @@ macro subCarryFlags ( op1, op2 ) {
 macro resultflags(result) {
  SF = result s< 0;
  ZF = result == 0;
- # PF, AF not implemented
+ PF = popcount(result) & 1;
+ # AF not implemented
 }
 
 macro shiftresultflags(result,count) {
@@ -1245,7 +1246,8 @@ macro shiftresultflags(result,count) {
 
  local newZF = (result == 0);
  ZF = (!notzero & ZF) | (notzero & newZF);
- # PF, AF not implemented
+ PF = popcount(result) & 1;
+ # AF not implemented
 }
 
 macro subflags(op1,op2) {
