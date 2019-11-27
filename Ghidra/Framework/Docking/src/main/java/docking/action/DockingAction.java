@@ -304,7 +304,12 @@ public abstract class DockingAction implements DockingActionIf {
 			return true;
 		}
 
-		if (kbData.getKeyBindingPrecedence() == KeyBindingPrecedence.ReservedActionsLevel) {
+		KeyBindingPrecedence precedence = null;
+		if (kbData != null) {
+			precedence = kbData.getKeyBindingPrecedence();
+		}
+
+		if (precedence == KeyBindingPrecedence.ReservedActionsLevel) {
 			return true; // reserved actions are special
 		}
 
