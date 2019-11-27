@@ -82,6 +82,7 @@ public class OpBehaviorFactory {
 		opBehaviorMap.put(PcodeOp.FLOAT_NOTEQUAL, new OpBehaviorFloatNotEqual());
 		opBehaviorMap.put(PcodeOp.FLOAT_LESS, new OpBehaviorFloatLess());
 		opBehaviorMap.put(PcodeOp.FLOAT_LESSEQUAL, new OpBehaviorFloatLessEqual());
+		opBehaviorMap.put(PcodeOp.FLOAT_INF, new OpBehaviorFloatInf());
 		opBehaviorMap.put(PcodeOp.FLOAT_NAN, new OpBehaviorFloatNan());
 
 		opBehaviorMap.put(PcodeOp.FLOAT_ADD, new OpBehaviorFloatAdd());

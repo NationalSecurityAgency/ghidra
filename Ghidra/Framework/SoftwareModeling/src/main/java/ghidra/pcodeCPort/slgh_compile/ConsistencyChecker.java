@@ -142,6 +142,7 @@ class ConsistencyChecker {
 					return false;
 				}
 				return true;
+			case CPUI_FLOAT_INF:
 			case CPUI_FLOAT_NAN:
 				vnout = recoverSize(op.getOut().getSize(), ct);
 				if (vnout == -1) {
@@ -434,6 +435,8 @@ class ConsistencyChecker {
 				return "Float less than(f<)";
 			case CPUI_FLOAT_LESSEQUAL:
 				return "Float less than or equal(f<=)";
+			case CPUI_FLOAT_INF:
+				return "+/- inifity";
 			case CPUI_FLOAT_NAN:
 				return "Not a number(nan)";
 			case CPUI_FLOAT_ADD:
