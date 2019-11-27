@@ -405,6 +405,21 @@ public class SharedKeyBindingDockingActionTest extends AbstractDockingTest {
 		spyLogger.assertLogMessage("does", "not", "support", "bindings");
 	}
 
+	@Test
+	public void testNonKeyBindingAction_CannotSetKeyBinding_NullBinding() {
+
+		DockingAction action = new DockingAction("Test Action", "Test Action Owner", false) {
+			@Override
+			public void actionPerformed(ActionContext context) {
+				// stub
+			}
+		};
+
+		action.setKeyBindingData(null);
+		assertNull(action.getKeyBindingData());
+		spyLogger.assertLogMessage("does", "not", "support", "bindings");
+	}
+
 //==================================================================================================
 // Private Methods
 //==================================================================================================
