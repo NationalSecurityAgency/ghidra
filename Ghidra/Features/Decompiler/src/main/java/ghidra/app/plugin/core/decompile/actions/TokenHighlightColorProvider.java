@@ -13,14 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.app.decompiler.component;
+package ghidra.app.plugin.core.decompile.actions;
 
-import docking.widgets.fieldpanel.LayoutModel;
+import java.awt.Color;
 
-public interface DecompilerHighlightService {
-	
-	public LayoutModel getLayoutModel();
-	
-	public void clearHighlights();
+import ghidra.app.decompiler.ClangToken;
 
+/**
+ * Provides highlight color for the given token
+ */
+public interface TokenHighlightColorProvider {
+
+	// TODO null if no match;  d0cme
+	public Color getColor(ClangToken token);
 }

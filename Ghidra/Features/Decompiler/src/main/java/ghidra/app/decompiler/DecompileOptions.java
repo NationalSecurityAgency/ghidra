@@ -158,11 +158,6 @@ public class DecompileOptions { //
 	private final static CommentStyleEnum COMMENTSTYLE_OPTIONDEFAULT = CommentStyleEnum.CStyle;
 	private CommentStyleEnum commentStyle;
 
-	private final static String HIGHLIGHT_OPTIONSTRING = "Display.Custom Highlights";
-	private final static String HIGHLIGHT_OPTIONDESCRIPTION = "If set, custom highlights is enabled";
-	private final static boolean HIGHLIGHT_OPTIONDEFAULT = false;
-	private boolean highlightInclude;
-
 	private final static String COMMENTPRE_OPTIONSTRING = "Display.Display PRE comments";
 	private final static String COMMENTPRE_OPTIONDESCRIPTION =
 		"If set, disassembly pre-instruction (PRE) comments are displayed " +
@@ -371,7 +366,6 @@ public class DecompileOptions { //
 		indentwidth = opt.getInt(INDENTWIDTH_OPTIONSTRING, INDENTWIDTH_OPTIONDEFAULT);
 		commentindent = opt.getInt(COMMENTINDENT_OPTIONSTRING, COMMENTINDENT_OPTIONDEFAULT);
 		commentStyle = opt.getEnum(COMMENTSTYLE_OPTIONSTRING, COMMENTSTYLE_OPTIONDEFAULT);
-		highlightInclude = opt.getBoolean(HIGHLIGHT_OPTIONSTRING, HIGHLIGHT_OPTIONDEFAULT);
 		commentEOLInclude = opt.getBoolean(COMMENTEOL_OPTIONSTRING, COMMENTEOL_OPTIONDEFAULT);
 		commentPREInclude = opt.getBoolean(COMMENTPRE_OPTIONSTRING, COMMENTPRE_OPTIONDEFAULT);
 		commentPOSTInclude = opt.getBoolean(COMMENTPOST_OPTIONSTRING, COMMENTPOST_OPTIONDEFAULT);
@@ -458,7 +452,7 @@ public class DecompileOptions { //
 	 * @param ownerPlugin  the plugin to which the options should be registered
 	 * @param opt          the options object to register with
 	 * @param program      the program
-	 * @param hlep
+	 * @param help		   the help
 	 */
 	public void registerOptions(Plugin ownerPlugin, ToolOptions opt, Program program,
 			HelpLocation help) {
@@ -493,8 +487,6 @@ public class DecompileOptions { //
 			COMMENTSTYLE_OPTIONDESCRIPTION);
 		opt.registerOption(COMMENTEOL_OPTIONSTRING, COMMENTEOL_OPTIONDEFAULT, help,
 			COMMENTEOL_OPTIONDESCRIPTION);
-		opt.registerOption(HIGHLIGHT_OPTIONSTRING, HIGHLIGHT_OPTIONDEFAULT, help,
-				HIGHLIGHT_OPTIONDESCRIPTION);
 		opt.registerOption(COMMENTPRE_OPTIONSTRING, COMMENTPRE_OPTIONDEFAULT, help,
 			COMMENTPRE_OPTIONDESCRIPTION);
 		opt.registerOption(COMMENTPOST_OPTIONSTRING, COMMENTPOST_OPTIONDEFAULT, help,
@@ -687,10 +679,6 @@ public class DecompileOptions { //
 
 	public int getMiddleMouseHighlightButton() {
 		return middleMouseHighlightButton;
-	}
-
-	public boolean isHighlightIncluded() {
-		return highlightInclude;
 	}
 
 	public boolean isPRECommentIncluded() {

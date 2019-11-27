@@ -25,13 +25,11 @@ import ghidra.app.decompiler.component.DecompilerController;
 import ghidra.app.decompiler.component.DecompilerPanel;
 import ghidra.app.plugin.core.decompile.DecompilerActionContext;
 import ghidra.framework.plugintool.PluginTool;
-import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.pcode.HighFunction;
 import ghidra.program.model.pcode.HighFunctionDBUtil;
 import ghidra.program.model.symbol.SourceType;
 import ghidra.util.Msg;
-import ghidra.util.UndefinedFunction;
 import ghidra.util.exception.*;
 
 public class CommitParamsAction extends AbstractDecompilerAction {
@@ -65,9 +63,7 @@ public class CommitParamsAction extends AbstractDecompilerAction {
 
 	@Override
 	protected boolean isEnabledForDecompilerContext(DecompilerActionContext context) {
-
-		Function function = controller.getFunction();
-		if (function == null || function instanceof UndefinedFunction) {
+		if (!context.hasRealFunction()) {
 			return false;
 		}
 		return getHighFunction() != null;
@@ -83,7 +79,7 @@ public class CommitParamsAction extends AbstractDecompilerAction {
 			if (hfunc.getFunction().getSignatureSource() == SourceType.USER_DEFINED) {
 				source = SourceType.USER_DEFINED;
 			}
-			
+
 			HighFunctionDBUtil.commitReturnToDatabase(hfunc, source);
 			HighFunctionDBUtil.commitParamsToDatabase(hfunc, true, source);
 		}

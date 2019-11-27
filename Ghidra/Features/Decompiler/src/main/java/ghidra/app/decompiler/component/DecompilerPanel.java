@@ -20,6 +20,7 @@ import java.awt.event.MouseEvent;
 import java.math.BigInteger;
 import java.util.*;
 import java.util.List;
+import java.util.function.Supplier;
 
 import javax.swing.JComponent;
 import javax.swing.JPanel;
@@ -40,6 +41,7 @@ import ghidra.app.decompiler.*;
 import ghidra.app.decompiler.component.hover.DecompilerHoverService;
 import ghidra.app.plugin.core.decompile.DecompilerClipboardProvider;
 import ghidra.app.plugin.core.decompile.actions.FieldBasedSearchLocation;
+import ghidra.app.plugin.core.decompile.actions.TokenHighlightColorProvider;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
@@ -72,7 +74,7 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 	private Color currentSearchHighlightColor;
 	private Color currentHighlightColor;
 	private SearchLocation currentSearchLocation;
-	private HighlightTokenObservableList<HighlightToken> highlightedTokens = new HighlightTokenObservableList<HighlightToken>(this);
+	private TokenHighlights secondaryHighlights = new TokenHighlights(this);
 
 	private DecompileData decompileData = new EmptyDecompileData("No Function");
 	private final DecompilerClipboardProvider clipboard;
@@ -117,8 +119,8 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 		setDecompileData(new EmptyDecompileData("No Function"));
 	}
 
-	public HighlightTokenObservableList<HighlightToken> getHighlightedTokens() {
-		return highlightedTokens;
+	public TokenHighlights getHighlightedTokens() {
+		return secondaryHighlights;
 	}
 
 	public List<ClangLine> getLines() {
@@ -137,8 +139,8 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 	 * This function replace the highlighting tokens with the new list
 	 * @param newTokens the new data
 	 */
-	public void setHighlightedTokens(HighlightTokenObservableList<HighlightToken> newTokens) {
-		highlightedTokens = newTokens;
+	public void setHighlightedTokens(TokenHighlights newTokens) {
+		secondaryHighlights = newTokens;
 	}
 
 	@Override
@@ -439,7 +441,7 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 		layoutMgr = null;
 
 		decompilerHoverProvider.dispose();
-
+		secondaryHighlights.clear();
 	}
 
 	private FontMetrics getFontMetrics(DecompileOptions decompileOptions) {
@@ -478,7 +480,7 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 		}
 
 		if (buttonState == currentMiddleMouseHighlightButton && clickCount == 1) {
-			highlightVariable(location, field, currentHighlightColor);
+			setPrimaryHighlight(location, field, currentHighlightColor);
 		}
 	}
 
@@ -637,52 +639,35 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 		}
 	}
 
-	private void highlightVariable(FieldLocation location, Field field, Color highlightColor) {
-		if (highlightController != null) {
-			ClangToken token = ((ClangTextField) field).getToken(location);
-			List<ClangToken> tokenList = new ArrayList<>();
-			findTokensByName(tokenList, layoutMgr.getRoot(), token.getText());
-			highlightController.clearHighlights();
-			highlightController.addTokensToHighlights(tokenList, highlightColor);
-			repaint();
-		}
+	private void setPrimaryHighlight(FieldLocation location, Field field, Color highlightColor) {
+		ClangToken token = ((ClangTextField) field).getToken(location);
+		Supplier<List<ClangToken>> lazyTokens = () -> findTokensByName(token.getText());
+
+		clearPrimaryHighlights();
+		highlightController.addPrimaryHighlights(lazyTokens, highlightColor);
+		repaint();
 	}
 
 	/**
-	 * This function is used to add highlighting to a token.
-	 * The function behaves differently from highlightVariable in that
-	 * it does not erase existing highlights
+	 * This function is used to add highlighting to a token. The function behaves differently 
+	 * from highlightVariable in that it does not erase existing highlights.
 	 *
-	 * @param token the token to search for
-	 * @param highlightColor the color to apply
+	 * @param highlight the new highlight
 	 */
-	public void addTokenHighlight(ClangToken token, Color highlightColor) {
-		if (highlightController != null) {
-			List<ClangToken> tokenList = new ArrayList<>();
-			findTokensByName(tokenList, layoutMgr.getRoot(), token.getText());
-			highlightController.addTokensToHighlights(tokenList, highlightColor);
-			repaint();
-		}
+	private void addSecondaryHighlight(HighlightToken highlight) {
+		ClangToken token = highlight.getToken();
+		Supplier<List<ClangToken>> lazyTokens = () -> findTokensByName(token.getText());
+		highlightController.addPrimaryHighlights(lazyTokens, highlight.getColor());
+		repaint();
 	}
 
-	/**
-	 * Add highlighting to all the tokens in highlightedTokens,
-	 * the highlighting accounting structure
-	 */
-	public void repaintHighlightTokens(boolean clearHighlights) {
-		if (clearHighlights) {
-			clearHighlights();
-		}
-		highlightedTokens.forEach(ht -> {
-			ClangToken token = ht.getToken();
-			Function tokenFunc = ht.getFunction();
-			Function decompiledFunc = decompileData.getFunction();
-			if ((token != null) && (tokenFunc != null) && (decompiledFunc != null) &&
-				(tokenFunc.getName().equals(decompileData.getFunction().getName()))) {
-				addTokenHighlight(token, ht.getColor());
-			}
-		});
-		tokenHighlightsChanged();
+	public void rebuildSecondaryHighlightTokens() {
+
+		Function function = decompileData.getFunction();
+		Collection<HighlightToken> highlights = secondaryHighlights.get(function);
+		highlights.forEach(this::addSecondaryHighlight);
+
+		repaint();
 	}
 
 	Program getProgram() {
@@ -704,12 +689,7 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 			return;
 		}
 
-		if (highlightController != null) {
-			highlightController.fieldLocationChanged(location, field, trigger);
-
-			// We need this because fieldLocationChanged clears the highlighting.
-			repaintHighlightTokens(false);
-		}
+		highlightController.fieldLocationChanged(location, field, trigger);
 
 		if (!(field instanceof ClangTextField)) {
 			return;
@@ -796,19 +776,21 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 // End Search Methods
 //==================================================================================================
 
-	public Color getDefaultHighlightColor() {
+	public Color getPrimaryHighlightColor() {
 		return currentHighlightColor;
 	}
 
-	public Color getDefaultSpecialColor() {
+	/**
+	 * The color used in a primary highlight to mark the token that was clicked.  This is used
+	 * in 'slice' actions to mark the source of the slice.
+	 * @return the color
+	 */
+	public Color getSpecialHighlightColor() {
 		return SPECIAL_COLOR_DEF;
 	}
 
 	public String getHighlightedText() {
-		if (highlightController != null) {
-			return highlightController.getHighlightedText();
-		}
-		return null;
+		return highlightController.getHighlightedText();
 	}
 
 	public FieldLocation getCursorPosition() {
@@ -872,38 +854,52 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 		return decompilerHoverProvider.isShowing();
 	}
 
+	// TODO delete and replace with clearStandardHiglights();
 	public void clearHighlights() {
-		if (highlightController != null) {
-			highlightController.clearHighlights();
-		}
+		clearAllHighlights();
 	}
 
-	public void addVarnodeHighlights(Set<Varnode> varnodes, Color highlightColor,
-			Varnode specificvn, PcodeOp specificop, Color specialColor) {
-		if (highlightController != null) {
-			ClangTokenGroup root = layoutMgr.getRoot();
-			highlightController.addVarnodesToHighlight(root, varnodes, highlightColor, specificvn,
-				specificop, specialColor);
-		}
+	public void clearAllHighlights() {
+		// TODO
+		highlightController.clearAllHighlights();
+		repaint();
 	}
 
-	public void addPcodeOpHighlights(Set<PcodeOp> ops, Color highlightColor) {
-		if (highlightController != null) {
-			ClangTokenGroup root = layoutMgr.getRoot();
-			highlightController.addPcodeOpsToHighlight(root, ops, highlightColor);
-		}
+	public void clearPrimaryHighlights() {
+		highlightController.clearPrimaryHighlights();
 	}
 
-	private void findTokensByName(List<ClangToken> tokenList, ClangTokenGroup group, String name) {
+	public void addVarnodeHighlights(Set<Varnode> varnodes,
+			TokenHighlightColorProvider colorProvider) {
+
+		ClangTokenGroup root = layoutMgr.getRoot();
+		highlightController.addPrimaryHighlights(root, colorProvider);
+	}
+
+	public void addPcodeOpHighlights(Set<PcodeOp> ops, Color hlColor) {
+		ClangTokenGroup root = layoutMgr.getRoot();
+		highlightController.addPrimaryHighlights(root, ops, hlColor);
+	}
+
+	public List<ClangToken> findTokensByName(String name) {
+		List<ClangToken> tokens = new ArrayList<>();
+		doFindTokensByName(tokens, layoutMgr.getRoot(), name);
+		return tokens;
+	}
+
+	private void doFindTokensByName(List<ClangToken> tokens, ClangTokenGroup group, String name) {
+
+		// TODO is 'name' sufficient, or will that allow for conflicts
+
 		for (int i = 0; i < group.numChildren(); ++i) {
 			ClangNode child = group.Child(i);
 			if (child instanceof ClangTokenGroup) {
-				findTokensByName(tokenList, (ClangTokenGroup) child, name);
+				doFindTokensByName(tokens, (ClangTokenGroup) child, name);
 			}
 			else if (child instanceof ClangToken) {
 				ClangToken token = (ClangToken) child;
 				if (name.equals(token.getText())) {
-					tokenList.add(token);
+					tokens.add(token);
 				}
 			}
 		}
@@ -937,19 +933,30 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 		currentHighlightColor = decompilerOptions.getMiddleMouseHighlightColor();
 		currentMiddleMouseHighlightButton = decompilerOptions.getMiddleMouseHighlightButton();
 		currentSearchHighlightColor = decompilerOptions.getSearchHighlightColor();
-		if (highlightController != null) {
-			highlightController.loadOptions(decompilerOptions);
-		}
+		highlightController.loadOptions(decompilerOptions);
 	}
 
 	public void setHighlightController(ClangHighlightController highlightController) {
-		this.highlightController = highlightController;
+		if (this.highlightController != null) {
+			this.highlightController.removeListener(this);
+		}
+
+		this.highlightController = ClangHighlightController.dummyIfNull(highlightController);
 		highlightController.loadOptions(options);
 		highlightController.addListener(this);
 	}
 
 	@Override
 	public void tokenHighlightsChanged() {
+		repaint();
+	}
+
+	public void tokenHighlightsAdded(HighlightToken highlight) {
+		addSecondaryHighlight(highlight);
+	}
+
+	public void tokenHighlightsRemoved(HighlightToken highlight) {
+		highlightController.clearHighlight(highlight.getToken());
 		repaint();
 	}
 
@@ -962,21 +969,20 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 	 * @param name the new name of the token
 	 */
 	public void tokenRenamed(ClangToken token, String name) {
-		HighlightToken htoken = new HighlightToken(token, null, null);
-		int idx = highlightedTokens.indexOf(htoken);
-		if (idx >= 0) {
-			HighlightToken hltok = highlightedTokens.get(idx);
-			highlightedTokens.remove(hltok);
-			ClangToken ct = new ClangToken((ClangNode)token, name);
-			HighlightToken ht = new HighlightToken(ct, hltok.getColor(), null);
-			highlightedTokens.add(ht);
-			if (highlightController != null) {
-				List<ClangToken> tokenList = new ArrayList<>();
-				findTokensByName(tokenList, layoutMgr.getRoot(), name);
-				highlightController.addTokensToHighlights(tokenList, getDefaultHighlightColor());
-				repaint();
-			}
+		HighlightToken oldHighlight = secondaryHighlights.get(token);
+		if (oldHighlight == null) {
+			return;
 		}
+
+		secondaryHighlights.remove(oldHighlight);
+		ClangToken ct = new ClangToken(token, name);
+
+		// TODO replace this with a 'create' method?
+		secondaryHighlights.add(new HighlightToken(ct, oldHighlight.getColor()));
+		Supplier<List<ClangToken>> lazyTokens = () -> findTokensByName(name);
+		Color color = getPrimaryHighlightColor();
+		highlightController.addPrimaryHighlights(lazyTokens, color);
+		repaint();
 	}
 
 //==================================================================================================

@@ -53,7 +53,7 @@ public class BackwardsSliceToPCodeOpsAction extends AbstractDecompilerAction {
 			backwardSlice.add(op);
 			decompilerPanel.clearHighlights();
 			decompilerPanel.addPcodeOpHighlights(backwardSlice,
-				decompilerPanel.getDefaultHighlightColor());
+				decompilerPanel.getPrimaryHighlightColor());
 			decompilerPanel.repaint();
 		}
 	}

@@ -15,18 +15,22 @@
  */
 package ghidra.app.plugin.core.decompile;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 
+import java.awt.Color;
+import java.util.List;
 import java.util.Set;
 
 import org.junit.Test;
 
 import docking.action.DockingActionIf;
+import docking.widgets.dialogs.InputDialog;
 import docking.widgets.fieldpanel.support.FieldLocation;
 import ghidra.app.cmd.comments.SetCommentCmd;
-import ghidra.app.decompiler.component.ClangTextField;
-import ghidra.app.decompiler.component.DecompilerPanel;
+import ghidra.app.decompiler.ClangToken;
+import ghidra.app.decompiler.component.*;
+import ghidra.app.plugin.core.decompile.actions.RemoveSecondaryHighlightsAction;
+import ghidra.app.plugin.core.decompile.actions.ToggleSecondaryHighlightAction;
 import ghidra.program.model.listing.CodeUnit;
 
 public class DecompilerClangTest extends AbstractDecompilerTest {
@@ -143,7 +147,7 @@ public class DecompilerClangTest extends AbstractDecompilerTest {
 		assertEquals("void", copiedText);
 
 		line = 5; 			// _printf
-		charPosition = 2; 	// 
+		charPosition = 2;
 		setDecompilerLocation(line, charPosition);
 
 		copy();
@@ -151,9 +155,340 @@ public class DecompilerClangTest extends AbstractDecompilerTest {
 		assertEquals("_printf", copiedText);
 	}
 
+	@Test
+	public void testMultiColorHighlighting() {
+
+		/*
+		
+		 Decomp of '_call_structure_A':
+		 
+			1|
+			2| void _call_structure_A(A *a)
+			3|
+			4| {
+			5|  	_printf("call_structure_A: %s\n",a->name);
+			6|  	_printf("call_structure_A: %s\n",(a->b).name);
+			7|  	_printf("call_structure_A: %s\n",(a->b).c.name);
+			8|  	_printf("call_structure_A: %s\n",(a->b).c.d.name);
+			9|  	_printf("call_structure_A: %s\n",(a->b).c.d.e.name);
+		   10|  	_call_structure_B(&a->b);
+		   11|  	return;
+		   12|	}
+		
+		 */
+
+		decompile("100000d60"); // '_call_structure_A'
+
+		// 5:2 "_printf"
+		int line = 5;
+		int charPosition = 2;
+		setDecompilerLocation(line, charPosition);
+
+		ClangToken token = getToken();
+		String text = token.getText();
+		assertEquals("_printf", text);
+
+		Color color = highlight();
+
+		assertAllFieldsHighlighted(text, color);
+
+		// 5:30 "a->name"
+		line = 5;
+		charPosition = 38;
+		setDecompilerLocation(line, charPosition);
+		ClangToken token2 = getToken();
+		String text2 = token2.getText();
+		assertEquals("name", text2);
+
+		Color color2 = highlight();
+		assertAllFieldsHighlighted(text, color);
+		assertAllFieldsHighlighted(text2, color2);
+
+		// 2:1 "void"
+		line = 2;
+		charPosition = 1;
+		setDecompilerLocation(line, charPosition);
+		ClangToken token3 = getToken();
+		String text3 = token3.getText();
+		assertEquals("void", text3);
+
+		Color color3 = highlight();
+		assertAllFieldsHighlighted(text, color);
+		assertAllFieldsHighlighted(text2, color2);
+		assertAllFieldsHighlighted(text3, color3);
+	}
+
+	@Test
+	public void testMultiColorHighlighting_ClearHighlight_WithMultipleHighlights() {
+
+		/*
+		
+		 Decomp of '_call_structure_A':
+		 
+			1|
+			2| void _call_structure_A(A *a)
+			3|
+			4| {
+			5|  	_printf("call_structure_A: %s\n",a->name);
+			6|  	_printf("call_structure_A: %s\n",(a->b).name);
+			7|  	_printf("call_structure_A: %s\n",(a->b).c.name);
+			8|  	_printf("call_structure_A: %s\n",(a->b).c.d.name);
+			9|  	_printf("call_structure_A: %s\n",(a->b).c.d.e.name);
+		   10|  	_call_structure_B(&a->b);
+		   11|  	return;
+		   12|	}
+		
+		 */
+
+		decompile("100000d60"); // '_call_structure_A'
+
+		// 5:2 "_printf"
+		int line = 5;
+		int charPosition = 2;
+		setDecompilerLocation(line, charPosition);
+
+		ClangToken token = getToken();
+		String text = token.getText();
+		assertEquals("_printf", text);
+
+		highlight();
+
+		// 5:30 "a->name"
+		line = 5;
+		charPosition = 38;
+		setDecompilerLocation(line, charPosition);
+		ClangToken token2 = getToken();
+		String text2 = token2.getText();
+		assertEquals("name", text2);
+
+		Color color2 = highlight();
+
+		// 5:2 "_printf"
+		line = 5;
+		charPosition = 2;
+		setDecompilerLocation(line, charPosition);
+		clearHighlight();
+
+		Color noHighlight = null;
+		assertAllFieldsHighlighted(text, noHighlight);
+		assertAllFieldsHighlighted(text2, color2);
+	}
+
+	@Test
+	public void testMultiColorHighlighting_ClearAll() {
+
+		/*
+		
+		 Decomp of '_call_structure_A':
+		 
+			1|
+			2| void _call_structure_A(A *a)
+			3|
+			4| {
+			5|  	_printf("call_structure_A: %s\n",a->name);
+			6|  	_printf("call_structure_A: %s\n",(a->b).name);
+			7|  	_printf("call_structure_A: %s\n",(a->b).c.name);
+			8|  	_printf("call_structure_A: %s\n",(a->b).c.d.name);
+			9|  	_printf("call_structure_A: %s\n",(a->b).c.d.e.name);
+		   10|  	_call_structure_B(&a->b);
+		   11|  	return;
+		   12|	}
+		
+		 */
+
+		decompile("100000d60"); // '_call_structure_A'
+
+		// 5:2 "_printf"
+		int line = 5;
+		int charPosition = 2;
+		setDecompilerLocation(line, charPosition);
+
+		ClangToken token = getToken();
+		String text = token.getText();
+		assertEquals("_printf", text);
+
+		highlight();
+
+		// 5:30 "a->name"
+		line = 5;
+		charPosition = 38;
+		setDecompilerLocation(line, charPosition);
+		ClangToken token2 = getToken();
+		String text2 = token2.getText();
+		assertEquals("name", text2);
+
+		highlight();
+
+		clearAllHighlights();
+
+		Color noHighlight = null;
+		assertAllFieldsHighlighted(text, noHighlight);
+		assertAllFieldsHighlighted(text2, noHighlight);
+	}
+
+	@Test
+	public void testMultiColorHighlighting_RenameHighlightedVariable() {
+
+		/*
+		
+		 Decomp of '_call_structure_A':
+		 
+			1|
+			2| void _call_structure_A(A *a)
+			3|
+			4| {
+			5|  	_printf("call_structure_A: %s\n",a->name);
+			6|  	_printf("call_structure_A: %s\n",(a->b).name);
+			7|  	_printf("call_structure_A: %s\n",(a->b).c.name);
+			8|  	_printf("call_structure_A: %s\n",(a->b).c.d.name);
+			9|  	_printf("call_structure_A: %s\n",(a->b).c.d.e.name);
+		   10|  	_call_structure_B(&a->b);
+		   11|  	return;
+		   12|	}
+		
+		 */
+
+		decompile("100000d60"); // '_call_structure_A'
+
+		// 2:26 "a"
+		int line = 2;
+		int charPosition = 26;
+		setDecompilerLocation(line, charPosition);
+
+		ClangToken token = getToken();
+		String text = token.getText();
+		assertEquals("a", text);
+
+		Color color = highlight();
+
+		rename("bob");
+
+		token = getToken();
+		text = token.getText();
+		assertEquals("bob", text);
+		assertAllFieldsHighlighted(text, color);
+	}
+
+	@Test
+	public void testMultiColorHighlighting_HighlightColorGetsReused() {
+
+		/*
+		
+		 Decomp of '_call_structure_A':
+		 
+			1|
+			2| void _call_structure_A(A *a)
+			3|
+			4| {
+			5|  	_printf("call_structure_A: %s\n",a->name);
+			6|  	_printf("call_structure_A: %s\n",(a->b).name);
+			7|  	_printf("call_structure_A: %s\n",(a->b).c.name);
+			8|  	_printf("call_structure_A: %s\n",(a->b).c.d.name);
+			9|  	_printf("call_structure_A: %s\n",(a->b).c.d.e.name);
+		   10|  	_call_structure_B(&a->b);
+		   11|  	return;
+		   12|	}
+		
+		 */
+
+		decompile("100000d60"); // '_call_structure_A'
+
+		// 5:2 "_printf"
+		int line = 5;
+		int charPosition = 2;
+		setDecompilerLocation(line, charPosition);
+
+		ClangToken token = getToken();
+		String text = token.getText();
+		assertEquals("_printf", text);
+
+		Color color = highlight();
+
+		clearHighlight();
+
+		Color noHighlight = null;
+		assertAllFieldsHighlighted(text, noHighlight);
+
+		Color secondColor = highlight();
+		assertEquals(color, secondColor);
+	}
+
+	// TODO how does highlight interplay with slice highlight?	
+	// -toggling a color highlight should not remove the other highlights
+	// --test on and off
+	// -test setting primary highlight does not clear secondary highlights
+
+	// TODO test color chooser
+
+	// TODO test persistence
+
+	// TODO test highlights passed to clone
+
+	// TODO allow for any text, not just variables?=
+	// TODO - follow-up test that 2 variables with the same name do not get highlighted
+
+	// TODO Energy
+	//  		-highlight tokens between parens
+
 //==================================================================================================
 // Private Methods
 //==================================================================================================
+
+	private void rename(String newName) {
+		DockingActionIf action = getAction(decompiler, "Rename Variable");
+		performAction(action, false);
+
+		InputDialog dialog = waitForDialogComponent(InputDialog.class);
+		runSwing(() -> dialog.setValue(newName));
+
+		pressButtonByText(dialog, "OK");
+		waitForDecompiler();
+	}
+
+	private void clearAllHighlights() {
+
+		DockingActionIf highlightAction = getAction(decompiler, RemoveSecondaryHighlightsAction.NAME);
+		performAction(highlightAction);
+	}
+
+	private Color highlight() {
+
+		ClangToken token = getToken();
+
+		DockingActionIf highlightAction = getAction(decompiler, ToggleSecondaryHighlightAction.NAME);
+		performAction(highlightAction);
+
+		DecompilerController controller = provider.getController();
+		DecompilerPanel panel = controller.getDecompilerPanel();
+		TokenHighlights highlights = panel.getHighlightedTokens();
+		HighlightToken ht = highlights.get(token);
+		assertNotNull("No highlight for token: " + token, ht);
+		return ht.getColor();
+	}
+
+	private void clearHighlight() {
+
+		ClangToken token = getToken();
+
+		DockingActionIf highlightAction = getAction(decompiler, ToggleSecondaryHighlightAction.NAME);
+		performAction(highlightAction);
+
+		DecompilerController controller = provider.getController();
+		DecompilerPanel panel = controller.getDecompilerPanel();
+		TokenHighlights highlights = panel.getHighlightedTokens();
+		HighlightToken ht = highlights.get(token);
+		assertNull("Token should not be highlighted: " + token, ht);
+	}
+
+	private void assertAllFieldsHighlighted(String name, Color color) {
+		DecompilerController controller = provider.getController();
+		DecompilerPanel panel = controller.getDecompilerPanel();
+		List<ClangToken> tokensWithName = panel.findTokensByName(name);
+		assertFalse(tokensWithName.isEmpty());
+		for (ClangToken otherToken : tokensWithName) {
+			assertEquals(color, otherToken.getHighlight());
+		}
+	}
 
 	private void copy() {
 

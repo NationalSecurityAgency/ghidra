@@ -46,15 +46,17 @@ public class ForwardSliceAction extends AbstractDecompilerAction {
 		DecompilerPanel decompilerPanel = controller.getDecompilerPanel();
 		ClangToken tokenAtCursor = decompilerPanel.getTokenAtCursor();
 		Varnode varnode = DecompilerUtils.getVarnodeRef(tokenAtCursor);
-		if (varnode != null) {
-			PcodeOp op = tokenAtCursor.getPcodeOp();
-			Set<Varnode> forwardSlice = DecompilerUtils.getForwardSlice(varnode);
-			decompilerPanel.clearHighlights();
-			decompilerPanel.addVarnodeHighlights(forwardSlice,
-				decompilerPanel.getDefaultHighlightColor(), varnode, op,
-				decompilerPanel.getDefaultSpecialColor());
-			decompilerPanel.repaint();
+		if (varnode == null) {
+			return;
 		}
+
+		PcodeOp op = tokenAtCursor.getPcodeOp();
+		Set<Varnode> forwardSlice = DecompilerUtils.getForwardSlice(varnode);
+		decompilerPanel.clearPrimaryHighlights();
+
+		SliceHighlightColorProvider colorProvider =
+			new SliceHighlightColorProvider(decompilerPanel, forwardSlice, varnode, op);
+		decompilerPanel.addVarnodeHighlights(forwardSlice, colorProvider);
 	}
 
 }

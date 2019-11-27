@@ -53,7 +53,7 @@ public class ForwardSliceToPCodeOpsAction extends AbstractDecompilerAction {
 			forwardSlice.add(op);
 			decompilerPanel.clearHighlights();
 			decompilerPanel.addPcodeOpHighlights(forwardSlice,
-				decompilerPanel.getDefaultHighlightColor());
+				decompilerPanel.getPrimaryHighlightColor());
 			decompilerPanel.repaint();
 		}
 

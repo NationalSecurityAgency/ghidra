@@ -15,49 +15,37 @@
  */
 package ghidra.app.decompiler.component;
 
-import ghidra.app.decompiler.ClangSyntaxToken;
-import ghidra.app.decompiler.ClangToken;
 import docking.widgets.EventTrigger;
 import docking.widgets.fieldpanel.field.Field;
 import docking.widgets.fieldpanel.support.FieldLocation;
+import ghidra.app.decompiler.ClangSyntaxToken;
+import ghidra.app.decompiler.ClangToken;
 
 /**
  * Class to handle location based highlights for a decompiled function.
  */
-
 public class LocationClangHighlightController extends ClangHighlightController {
-
-	public LocationClangHighlightController() {
-	}
 
 	@Override
 	public void fieldLocationChanged(FieldLocation location, Field field, EventTrigger trigger) {
 
+		clearPrimaryHighlights();
+
 		if (!(field instanceof ClangTextField)) {
-			clearHighlights();
 			return;
 		}
 
 		ClangToken tok = ((ClangTextField) field).getToken(location);
 		if (tok == null) {
-			clearHighlights();
 			return;
 		}
 
-//		// clear any highlighted searchResults
-//		decompilerPanel.setSearchResults(null);
+		// TODO revisit cursor location highlight
+		// TODO it should probably darken the color
 
-		// Token is already highlighted, break out
-		if (tok.getHighlight() != null) {
-			return;
-		}
-
-		// Token is not highlighted, clear and re-apply highlighting
-		clearHighlights();
-
-		addHighlight(tok, defaultHighlightColor);
+		addPrimaryHighlight(tok, defaultHighlightColor);
 		if (tok instanceof ClangSyntaxToken) {
-			addHighlightParen((ClangSyntaxToken) tok, defaultParenColor);
+			addPrimaryHighlightToTokensForParenthesis((ClangSyntaxToken) tok, defaultParenColor);
 			addHighlightBrace((ClangSyntaxToken) tok, defaultParenColor);
 		}
 	}

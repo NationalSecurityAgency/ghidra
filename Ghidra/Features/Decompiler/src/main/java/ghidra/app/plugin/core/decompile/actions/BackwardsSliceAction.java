@@ -46,15 +46,18 @@ public class BackwardsSliceAction extends AbstractDecompilerAction {
 		DecompilerPanel decompilerPanel = controller.getDecompilerPanel();
 		ClangToken tokenAtCursor = decompilerPanel.getTokenAtCursor();
 		Varnode varnode = DecompilerUtils.getVarnodeRef(tokenAtCursor);
-		if (varnode != null) {
-			PcodeOp op = tokenAtCursor.getPcodeOp();
-			Set<Varnode> backwardSlice = DecompilerUtils.getBackwardSlice(varnode);
-			decompilerPanel.clearHighlights();
-			decompilerPanel.addVarnodeHighlights(backwardSlice,
-				decompilerPanel.getDefaultHighlightColor(), varnode, op,
-				decompilerPanel.getDefaultSpecialColor());
-			decompilerPanel.repaint();
+		if (varnode == null) {
+			return;
 		}
+
+		decompilerPanel.clearHighlights();
+
+		PcodeOp op = tokenAtCursor.getPcodeOp();
+		Set<Varnode> backwardSlice = DecompilerUtils.getBackwardSlice(varnode);
+
+		SliceHighlightColorProvider colorProvider =
+			new SliceHighlightColorProvider(decompilerPanel, backwardSlice, varnode, op);
+		decompilerPanel.addVarnodeHighlights(backwardSlice, colorProvider);
 	}
 
 }

@@ -69,6 +69,7 @@ public abstract class AbstractDecompilerTest extends AbstractProgramBasedTest {
 	}
 
 	protected void waitForDecompiler() {
+		waitForSwing();
 		waitForCondition(() -> !provider.isDecompiling());
 		waitForSwing();
 	}
@@ -89,7 +90,7 @@ public abstract class AbstractDecompilerTest extends AbstractProgramBasedTest {
 	}
 
 	protected FieldLocation loc(int lineNumber, int col) {
-		FieldLocation loc = new FieldLocation(lineNumber, 0, 0, col);
+		FieldLocation loc = new FieldLocation(lineNumber - 1, 0, 0, col);
 		return loc;
 	}
 
@@ -97,20 +98,47 @@ public abstract class AbstractDecompilerTest extends AbstractProgramBasedTest {
 
 		DecompilerPanel panel = provider.getDecompilerPanel();
 		List<Field> fields = panel.getFields();
-		Field line = fields.get(lineNumber - 1); // 0-based
+		Field line = fields.get(lineNumber - 1); // -1 for 1-based line number
 		return (ClangTextField) line;
 	}
 
-	protected String getTokenText(FieldLocation loc) {
-		ClangTextField field = getFieldForLine(loc.getIndex().intValue());
+	protected ClangToken getToken(int line, int col) {
+		FieldLocation loc = loc(line, col);
+		ClangTextField field = getFieldForLine(line);
 		ClangToken token = field.getToken(loc);
+		return token;
+	}
+
+	protected ClangToken getToken(FieldLocation loc) {
+		int lineNumber = loc.getIndex().intValue() + 1; // 0-based
+		ClangTextField field = getFieldForLine(lineNumber);
+		ClangToken token = field.getToken(loc);
+		return token;
+	}
+
+	protected DecompilerPanel getDecompilerPanel() {
+		return provider.getDecompilerPanel();
+	}
+
+	/**
+	 * Returns the token under the cursor
+	 * @return the token under the cursor
+	 */
+	protected ClangToken getToken() {
+		DecompilerPanel panel = getDecompilerPanel();
+		FieldLocation loc = panel.getCursorPosition();
+		return getToken(loc);
+	}
+
+	protected String getTokenText(FieldLocation loc) {
+		ClangToken token = getToken(loc);
 		return token.getText();
 	}
 
 	protected void assertToken(String tokenText, int line, int... cols) {
 		for (int col : cols) {
-			FieldLocation loc = loc(line, col);
-			String text = getTokenText(loc);
+			ClangToken token = getToken(line, col);
+			String text = token.getText();
 			assertEquals(tokenText, text);
 		}
 	}
