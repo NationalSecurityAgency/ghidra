@@ -45,10 +45,12 @@ public abstract class SymbolDB extends DatabaseObject implements Symbol {
 
 	private Record record;
 	private boolean isDeleting = false;
-	protected String name;
 	protected Address address;
 	protected SymbolManager symbolMgr;
 	protected Lock lock;
+
+	private volatile String cachedName;
+	private volatile long cachedNameModCount;
 
 	/**
 	 * Creates a Symbol that is just a placeholder for use when trying to find symbols by using
@@ -82,11 +84,6 @@ public abstract class SymbolDB extends DatabaseObject implements Symbol {
 
 	@Override
 	public String toString() {
-		// prefer cached name for speed; it may be stale; call getName() for current value
-		String temp = name;
-		if (temp != null) {
-			return temp;
-		}
 		return getName();
 	}
 
@@ -97,7 +94,6 @@ public abstract class SymbolDB extends DatabaseObject implements Symbol {
 
 	@Override
 	protected boolean refresh(Record rec) {
-		name = null;
 		if (record != null) {
 			if (rec == null) {
 				rec = symbolMgr.getSymbolRecord(key);
@@ -164,18 +160,29 @@ public abstract class SymbolDB extends DatabaseObject implements Symbol {
 	}
 
 	@Override
-	public String getName() {
+	public final String getName() {
+		String name = cachedName;
+		if (hasValidCachedName(name)) {
+			return name;
+		}
+
 		lock.acquire();
 		try {
 			checkIsValid();
-			if (name == null) {
-				name = doGetName();
-			}
-			return name;
+			cachedName = doGetName();
+			cachedNameModCount = symbolMgr.getProgram().getModificationNumber();
+			return cachedName;
 		}
 		finally {
 			lock.release();
 		}
+	}
+
+	private boolean hasValidCachedName(String name) {
+		if (name == null) {
+			return false;
+		}
+		return symbolMgr.getProgram().getModificationNumber() == cachedNameModCount;
 	}
 
 	/**
@@ -521,7 +528,6 @@ public abstract class SymbolDB extends DatabaseObject implements Symbol {
 
 		lock.acquire();
 		try {
-			name = null;
 			checkDeleted();
 			checkEditOK();
 
@@ -575,10 +581,10 @@ public abstract class SymbolDB extends DatabaseObject implements Symbol {
 
 				record.setLongValue(SymbolDatabaseAdapter.SYMBOL_PARENT_COL, newNamespace.getID());
 				record.setString(SymbolDatabaseAdapter.SYMBOL_NAME_COL, newName);
-				name = newName;
 				updateSymbolSource(record, source);
 				updateRecord();
-
+				cachedName = null;  // we can't clear it until now, since any call to getName()
+									// will cause the cached name to reset to the old name
 				if (namespaceChange) {
 					symbolMgr.symbolNamespaceChanged(this, oldNamespace);
 				}
