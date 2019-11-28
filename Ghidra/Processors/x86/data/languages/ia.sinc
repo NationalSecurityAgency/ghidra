@@ -7963,9 +7963,27 @@ define pcodeop pmovzxdq;
 :PMOVZXDQ XmmReg, m64      is vexMode=0 & $(PRE_66) & byte=0x0F; byte=0x38; byte=0x35; XmmReg ... & m64 { XmmReg = pmovzxdq(XmmReg, m64); }
 :PMOVZXDQ XmmReg1, XmmReg2 is vexMode=0 & $(PRE_66) & byte=0x0F; byte=0x38; byte=0x35; xmmmod=3 & XmmReg1 & XmmReg2 { XmmReg1 = pmovzxdq(XmmReg1, XmmReg2); }
 
-define pcodeop ptest;
-:PTEST XmmReg, m128     is vexMode=0 & $(PRE_66) & byte=0x0F; byte=0x38; byte=0x17; XmmReg ... & m128 { XmmReg = ptest(XmmReg, m128); }
-:PTEST XmmReg1, XmmReg2 is vexMode=0 & $(PRE_66) & byte=0x0F; byte=0x38; byte=0x17; xmmmod=3 & XmmReg1 & XmmReg2 { XmmReg1 = ptest(XmmReg1, XmmReg2); }
+:PTEST XmmReg, m128     is vexMode=0 & $(PRE_66) & byte=0x0F; byte=0x38; byte=0x17; XmmReg ... & m128 {
+    local tmp = m128 & XmmReg;
+    ZF = tmp == 0;
+    local tmp2 = m128 & ~XmmReg;
+    CF = tmp2 == 0;
+    AF = 0;
+    OF = 0;
+    PF = 0;
+    SF = 0;
+}
+
+:PTEST XmmReg1, XmmReg2 is vexMode=0 & $(PRE_66) & byte=0x0F; byte=0x38; byte=0x17; xmmmod=3 & XmmReg1 & XmmReg2 {
+    local tmp = XmmReg2 & XmmReg1;
+    ZF = tmp == 0;
+    local tmp2 = XmmReg2 & ~XmmReg1;
+    CF = tmp2 == 0;
+    AF = 0;
+    OF = 0;
+    PF = 0;
+    SF = 0;
+}
 
 define pcodeop pcmpeqq;
 :PCMPEQQ XmmReg, m128     is vexMode=0 & $(PRE_66) & byte=0x0F; byte=0x38; byte=0x29; XmmReg ... & m128 { XmmReg = pcmpeqq(XmmReg, m128); }
