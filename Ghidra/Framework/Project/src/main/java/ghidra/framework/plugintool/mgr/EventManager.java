@@ -15,38 +15,39 @@
  */
 package ghidra.framework.plugintool.mgr;
 
-import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 
-import javax.swing.SwingUtilities;
+import org.apache.commons.collections4.IterableUtils;
+import org.apache.commons.collections4.map.LazyMap;
 
 import ghidra.framework.model.ToolListener;
 import ghidra.framework.plugintool.PluginEvent;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.util.PluginEventListener;
 import ghidra.util.Msg;
+import ghidra.util.Swing;
 
 /**
- * Helper class to manage the events that plugins consume and produce.
- * This class keeps track of the last events that went out so that when
- * a plugin is added, it receives those events. 
- *
+ * Helper class to manage the events that plugins consume and produce.  This class keeps 
+ * track of the last events that went out so that when a plugin is added, it receives those events.
  */
 public class EventManager {
-	private ArrayList<ToolListener> toolListeners = new ArrayList<>();
-	private HashMap<Class<? extends PluginEvent>, Set<PluginEventListener>> pluginListenerMap =
-		new HashMap<>();
-	private HashMap<String, Counter> producerMap = new HashMap<>();
-	private HashMap<String, Counter> consumerMap = new HashMap<>();
-	private LinkedHashMap<Class<? extends PluginEvent>, PluginEvent> lastEvents =
+	private List<ToolListener> toolListeners = new ArrayList<>();
+	private Map<Class<? extends PluginEvent>, Set<PluginEventListener>> listenersByEventType =
+		LazyMap.lazyMap(new HashMap<>(), clazz -> new HashSet<>());
+	private Map<String, Counter> producerMap =
+		LazyMap.lazyMap(new HashMap<>(), name -> new Counter());
+	private Map<String, Counter> consumerMap =
+		LazyMap.lazyMap(new HashMap<>(), name -> new Counter());
+	private LinkedHashMap<Class<? extends PluginEvent>, PluginEvent> lastEventsByType =
 		new LinkedHashMap<>();
 	private LinkedList<PluginEvent> eventQ = new LinkedList<>();
 	private Set<PluginEventListener> allEventListeners = new HashSet<>();
 
-	private PluginEvent currentEvent;
-	private Runnable sendEventsRunnable;
 	private PluginTool tool;
-	private boolean sendingToolEvent;
+	private PluginEvent currentEvent;
+	private final Runnable sendEventsRunnable = () -> sendEvents();
+	private volatile boolean sendingToolEvent;
 
 	/**
 	 * Construct a new EventManager.
@@ -54,8 +55,6 @@ public class EventManager {
 	 */
 	public EventManager(PluginTool tool) {
 		this.tool = tool;
-
-		sendEventsRunnable = () -> sendEvents();
 	}
 
 	/**
@@ -66,18 +65,11 @@ public class EventManager {
 	 */
 	public void addEventListener(Class<? extends PluginEvent> eventClass,
 			PluginEventListener listener) {
-		Set<PluginEventListener> set = pluginListenerMap.get(eventClass);
-		if (set == null) {
-			set = new HashSet<>();
-			pluginListenerMap.put(eventClass, set);
+		Set<PluginEventListener> set = listenersByEventType.get(eventClass);
+		if (set.isEmpty()) {
 			String name = PluginEvent.lookupToolEventName(eventClass);
 			if (name != null) {
-				Counter counter = consumerMap.get(name);
-				if (counter == null) {
-					counter = new Counter();
-					consumerMap.put(name, counter);
-				}
-				counter.count++;
+				consumerMap.get(name).count++;
 			}
 		}
 		set.add(listener);
@@ -99,25 +91,27 @@ public class EventManager {
 	 */
 	public void removeEventListener(Class<? extends PluginEvent> eventClass,
 			PluginEventListener listener) {
-		Set<PluginEventListener> set = pluginListenerMap.get(eventClass);
-		if (set != null) {
-			set.remove(listener);
-			if (set.size() == 0) {
-				pluginListenerMap.remove(eventClass);
-				String name = PluginEvent.lookupToolEventName(eventClass);
-				if (name != null) {
-					Counter counter = consumerMap.get(name);
-					if (counter != null && --counter.count == 0) {
-						consumerMap.remove(name);
-					}
-				}
-			}
+		Set<PluginEventListener> set = listenersByEventType.get(eventClass);
+		set.remove(listener);
+		if (set.isEmpty()) {
+			eventConsumerRemoved(eventClass);
+		}
+	}
+
+	private void eventConsumerRemoved(Class<? extends PluginEvent> eventClass) {
+		String name = PluginEvent.lookupToolEventName(eventClass);
+		if (name == null) {
+			return;
+		}
+
+		Counter counter = consumerMap.get(name);
+		if (--counter.count == 0) {
+			consumerMap.remove(name);
 		}
 	}
 
 	/**
-	 * Add the given tool listener to a list of tool listeners notified
-	 * when tool events are generated.
+	 * Add the given tool listener to be notified notified when tool events are generated
 	 * @param listener listener to add
 	 */
 	public void addToolListener(ToolListener listener) {
@@ -125,7 +119,7 @@ public class EventManager {
 	}
 
 	/**
-	 * Remove the given tool listener from the list of tool listeners.
+	 * Remove the given tool listener from the list of tool listeners
 	 * @param listener listener to remove
 	 */
 	public void removeToolListener(ToolListener listener) {
@@ -133,25 +127,22 @@ public class EventManager {
 	}
 
 	/**
-	 * Return whether there are any registered tool listeners for the
-	 * tool associated with this EventManager.
+	 * Return whether there are any registered tool listeners for the tool associated with class 
+	 * 
+	 * @return true if there are any listeners
 	 */
 	public boolean hasToolListeners() {
 		return !toolListeners.isEmpty();
 	}
 
 	/**
-	 * Add the class for the PluginEvent that a plugin will produce.   
+	 * Add the class for the PluginEvent that a plugin will produce
 	 * @param eventClass class for the PluginEvent
 	 */
 	public void addEventProducer(Class<? extends PluginEvent> eventClass) {
 		String name = PluginEvent.lookupToolEventName(eventClass);
 		if (name != null) {
 			Counter counter = producerMap.get(name);
-			if (counter == null) {
-				counter = new Counter();
-				producerMap.put(name, counter);
-			}
 			counter.count++;
 		}
 	}
@@ -162,11 +153,13 @@ public class EventManager {
 	 */
 	public void removeEventProducer(Class<? extends PluginEvent> eventClass) {
 		String name = PluginEvent.lookupToolEventName(eventClass);
-		if (name != null) {
-			Counter counter = producerMap.get(name);
-			if (counter != null && --counter.count == 0) {
-				producerMap.remove(name);
-			}
+		if (name == null) {
+			return;
+		}
+
+		Counter counter = producerMap.get(name);
+		if (--counter.count == 0) {
+			producerMap.remove(name);
 		}
 	}
 
@@ -195,117 +188,129 @@ public class EventManager {
 
 		synchronized (eventQ) {
 			if (currentEvent != null) {
-				if (validateEventChain(event)) {
+				if (validateEventChain(currentEvent, event)) {
+
+					// note: it is a bit odd that we assume any event passed to this method is 
+					//       triggered by that event.  This may not be the case if we are on a 
+					//       background thread.
 					event.setTriggerEvent(currentEvent);
 					eventQ.add(event);
 				}
-				return;
+
+				return; // allow the current event processing to finish
 			}
-			currentEvent = event;
 		}
 
-		if (SwingUtilities.isEventDispatchThread()) {
-			sendEvents();
+		// no event processing running right now; start it
+		eventQ.add(event);
+		Swing.runNow(sendEventsRunnable);
+	}
+
+	private boolean validateEventChain(PluginEvent startEvent, PluginEvent newEvent) {
+		while (startEvent != null) {
+			if (startEvent.getClass().isAssignableFrom(newEvent.getClass()) &&
+				startEvent.getEventName().equals(newEvent.getEventName())) {
+				return false;
+			}
+			startEvent = startEvent.getTriggerEvent();
 		}
-		else {
-			try {
-				SwingUtilities.invokeAndWait(sendEventsRunnable);
-			}
-			catch (InterruptedException e) {
-			}
-			catch (InvocationTargetException e) {
-			}
-		}
+		return true;
 	}
 
 	/**
-	 * Convert the given tool event to a plugin event, and notify the
-	 * appropriate plugin event listeners.
+	 * Convert the given tool event to a plugin event; notify the appropriate plugin listeners.
+	 * This method allows one tool's event manager to send events to another connected tool.
 	 * @param event tool event
 	 */
 	public void processToolEvent(PluginEvent event) {
+		// only process the event if we are the receiving tool
 		if (!sendingToolEvent) {
 			fireEvent(event);
 		}
 	}
 
 	/**
-	 * Clear the list of last plugin events fired.
-	 *
+	 * Clear the list of last plugin events fired
 	 */
 	public void clearLastEvents() {
-		lastEvents.clear();
+		lastEventsByType.clear();
 	}
 
 	/**
-	 * Return an array of the last plugin events fired. EventManager 
-	 * maps the event class to the last event fired.
+	 * Return an array of the last plugin events fired. EventManager maps the event class to the 
+	 * last event fired.
+	 * 
 	 * @return array of plugin events
 	 */
 	public PluginEvent[] getLastEvents() {
-		return lastEvents.values().toArray(new PluginEvent[lastEvents.size()]);
+		return lastEventsByType.values().toArray(new PluginEvent[lastEventsByType.size()]);
 	}
 
-	/**
-	 * Send all events on the queue
-	 */
 	private void sendEvents() {
+
+		Swing.assertThisIsTheSwingThread("Events must be sent on the Swing thread");
+
+		synchronized (eventQ) {
+			currentEvent = eventQ.poll();
+		}
 
 		while (currentEvent != null) {
 			Class<? extends PluginEvent> eventClass = currentEvent.getClass();
-			lastEvents.remove(eventClass);
-			lastEvents.put(eventClass, currentEvent);
+			lastEventsByType.put(eventClass, currentEvent);
 
-			Set<PluginEventListener> set = pluginListenerMap.get(eventClass);
-			if (set != null) {
-				for (PluginEventListener listener : set) {
-					try {
-						listener.eventSent(currentEvent);
-					}
-					catch (Throwable t) {
-						Msg.showError(this, tool.getToolFrame(), "Plugin Event Error",
-							"Error in plugin event listener", t);
-					}
+			for (PluginEventListener listener : getListeners(eventClass)) {
+				try {
+					listener.eventSent(currentEvent);
+				}
+				catch (Throwable t) {
+					Msg.showError(this, tool.getToolFrame(), "Plugin Event Error",
+						"Error in plugin event listener", t);
 				}
 			}
-			for (PluginEventListener pluginEventListener : allEventListeners) {
-				pluginEventListener.eventSent(currentEvent);
-			}
-			sendToolEvent();
+
+			sendToolEvent(currentEvent);
+
 			synchronized (eventQ) {
-				currentEvent = eventQ.isEmpty() ? null : (PluginEvent) eventQ.removeFirst();
+				currentEvent = eventQ.poll();
 			}
 		}
 		tool.contextChanged(null);
 	}
 
-	private void sendToolEvent() {
-		if (!toolListeners.isEmpty() && currentEvent.isToolEvent()) {
-			sendingToolEvent = true;
-			try {
-				currentEvent.setSourceName(PluginEvent.EXTERNAL_SOURCE_NAME);
-				currentEvent.setTriggerEvent(null);
-				for (int i = 0; i < toolListeners.size(); i++) {
-					ToolListener tl = toolListeners.get(i);
-					tl.processToolEvent(currentEvent);
-				}
-			}
-			finally {
-				sendingToolEvent = false;
-			}
-		}
+	private Iterable<PluginEventListener> getListeners(Class<? extends PluginEvent> eventClass) {
+		Set<PluginEventListener> specificListeners = listenersByEventType.get(eventClass);
+		return IterableUtils.chainedIterable(specificListeners, allEventListeners);
 	}
 
-	private boolean validateEventChain(PluginEvent event) {
-		PluginEvent tempEvent = currentEvent;
-		while (tempEvent != null) {
-			if (tempEvent.getClass().isAssignableFrom(event.getClass()) &&
-				tempEvent.getEventName().equals(event.getEventName())) {
-				return false;
-			}
-			tempEvent = tempEvent.getTriggerEvent();
+	// note: this is expected to be on the Swing thread, called from sendEvent()
+	private void sendToolEvent(PluginEvent event) {
+		if (toolListeners.isEmpty()) {
+			return;
 		}
-		return true;
+
+		if (!event.isToolEvent()) {
+			return;
+		}
+
+		sendingToolEvent = true;
+		try {
+			event.setSourceName(PluginEvent.EXTERNAL_SOURCE_NAME);
+			event.setTriggerEvent(null);
+			for (int i = 0; i < toolListeners.size(); i++) {
+				ToolListener tl = toolListeners.get(i);
+
+				try {
+					tl.processToolEvent(event);
+				}
+				catch (Throwable t) {
+					Msg.showError(this, tool.getToolFrame(), "Plugin Event Error",
+						"Error sending event to connected tool", t);
+				}
+			}
+		}
+		finally {
+			sendingToolEvent = false;
+		}
 	}
 
 	/**
@@ -314,35 +319,29 @@ public class EventManager {
 	 * @param className class name of the plugin (event listener)
 	 */
 	public void removeEventListener(String className) {
-		ArrayList<Class<? extends PluginEvent>> unusedList =
-			new ArrayList<>();
 
-		Iterator<Class<? extends PluginEvent>> iter = pluginListenerMap.keySet().iterator();
+		List<Class<? extends PluginEvent>> unusedList = new ArrayList<>();
+
+		Iterator<Class<? extends PluginEvent>> iter = listenersByEventType.keySet().iterator();
 		while (iter.hasNext()) {
 			Class<? extends PluginEvent> eventClass = iter.next();
-			Set<PluginEventListener> set = pluginListenerMap.get(eventClass);
-			Iterator<PluginEventListener> iterator = set.iterator();
-			for (; iterator.hasNext();) {
-				PluginEventListener listener = iterator.next();
+			Set<PluginEventListener> set = listenersByEventType.get(eventClass);
+			Iterator<PluginEventListener> it = set.iterator();
+			while (it.hasNext()) {
+				PluginEventListener listener = it.next();
 				if (listener.getClass().getName().equals(className)) {
-					iterator.remove();
-					if (set.size() == 0) {
+					it.remove();
+					if (set.isEmpty()) {
 						unusedList.add(eventClass);
 					}
 					break;
 				}
 			}
 		}
+
 		for (int i = 0; i < unusedList.size(); i++) {
 			Class<? extends PluginEvent> eventClass = unusedList.get(i);
-			pluginListenerMap.remove(eventClass);
-			String name = PluginEvent.lookupToolEventName(eventClass);
-			if (name != null) {
-				Counter counter = consumerMap.get(name);
-				if (counter != null && --counter.count == 0) {
-					consumerMap.remove(name);
-				}
-			}
+			eventConsumerRemoved(eventClass);
 		}
 	}
 
