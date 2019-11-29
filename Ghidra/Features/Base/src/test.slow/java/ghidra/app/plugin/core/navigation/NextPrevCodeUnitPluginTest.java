@@ -15,7 +15,7 @@
  */
 package ghidra.app.plugin.core.navigation;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 import java.awt.Color;
 
@@ -82,7 +82,7 @@ public class NextPrevCodeUnitPluginTest extends AbstractGhidraHeadedIntegrationT
 		tool.addPlugin(BookmarkPlugin.class.getName());
 
 		NextPrevCodeUnitPlugin p = getPlugin(tool, NextPrevCodeUnitPlugin.class);
-		direction = getAction(p, "Toggle Code Unit Search Direction");
+		direction = getAction(p, "Toggle Search Direction");
 		nextInst = getAction(p, "Next Instruction");
 		nextData = getAction(p, "Next Data");
 		nextUndef = getAction(p, "Next Undefined");

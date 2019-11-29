@@ -17,6 +17,8 @@ package ghidra.util;
 
 import static org.junit.Assert.*;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 
 import org.junit.Test;
@@ -30,9 +32,11 @@ public class DateUtilsTest {
 	}
 
 	@Test
-	public void testFormatDateTime() {
-		Date date = new Date(1572896586687L);
-		assertEquals("Nov 04, 2019 02:43 PM", DateUtils.formatDateTimestamp(date));
+	public void testFormatDateTime() throws ParseException {
+		SimpleDateFormat format = new SimpleDateFormat("MMM dd, yyyy hh:mm a");
+		String dateString = "Nov 04, 2019 02:43 PM";
+		Date date = format.parse(dateString);
+		assertEquals(dateString, DateUtils.formatDateTimestamp(date));
 	}
 
 	@Test
