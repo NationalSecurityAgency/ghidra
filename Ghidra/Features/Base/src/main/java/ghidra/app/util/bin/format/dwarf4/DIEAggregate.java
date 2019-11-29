@@ -21,7 +21,6 @@ import java.util.*;
 import org.apache.commons.lang3.ArrayUtils;
 
 import ghidra.app.util.bin.BinaryReader;
-import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.bin.format.dwarf4.attribs.*;
 import ghidra.app.util.bin.format.dwarf4.encoding.*;
 import ghidra.app.util.bin.format.dwarf4.expression.*;
@@ -804,10 +803,7 @@ public class DIEAggregate {
 	 */
 	public List<DWARFRange> parseDebugRange(int attribute) throws IOException {
 		byte pointerSize = getCompilationUnit().getPointerSize();
-		boolean isLittleEndian = getCompilationUnit().getProgram().isLittleEndian();
-
-		ByteProvider debug_ranges = getCompilationUnit().getProgram().getDebugRanges();
-		BinaryReader reader = new BinaryReader(debug_ranges, isLittleEndian);
+		BinaryReader reader = getCompilationUnit().getProgram().getDebugRanges();
 
 		long offset = getUnsignedLong(attribute, -1);
 		if (offset == -1) {
