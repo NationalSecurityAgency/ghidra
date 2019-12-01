@@ -89,6 +89,7 @@ public:
 
   virtual SymbolEntry *findOverlap(const Address &addr,int4 size) const { throw LowlevelError("findOverlap unimplemented"); }
   virtual void findByName(const string &name,vector<Symbol *> &res) const { throw LowlevelError("findByName unimplemented"); }
+  virtual bool isNameUsed(const string &name) const { throw LowlevelError("isNameUsed unimplemented"); }
 
   virtual MapIterator begin(void) const { throw LowlevelError("begin unimplemented"); }
   virtual MapIterator end(void) const { throw LowlevelError("end unimplemented"); }

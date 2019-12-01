@@ -202,6 +202,7 @@ public:
   Scope *getScope(void) const { return scope; }			///< Get the scope owning \b this Symbol
   SymbolEntry *getFirstWholeMap(void) const;	 		///< Get the first entire mapping of the symbol
   SymbolEntry *getMapEntry(const Address &addr) const;	 	///< Get first mapping of the symbol that contains the given Address
+  int4 getResolutionDepth(const Scope *useScope) const;		///< Get the number of scope names to print to resolve symbol in given context
   void saveXmlHeader(ostream &s) const;				///< Save basic Symbol properties as XML attributes
   void restoreXmlHeader(const Element *el);			///< Restore basic Symbol properties from XML
   void saveXmlBody(ostream &s) const;				///< Save details of the Symbol to XML
@@ -587,6 +588,14 @@ public:
   /// \param res will contain any matching Symbols
   virtual void findByName(const string &name,vector<Symbol *> &res) const=0;
 
+  /// \brief Check if the given name is used within \b this scope.
+  ///
+  /// Only \b this scope is checked. If one or more symbols exist with the given name,
+  /// \b true is returned.
+  /// \param name is the given name to check for
+  /// \return \b true if the name is used within \b this scope
+  virtual bool isNameUsed(const string &name) const=0;
+
   /// \brief Convert an \e external \e reference to the referenced function
   ///
   /// \param sym is the Symbol marking the external reference
@@ -669,6 +678,9 @@ public:
   bool isSubScope(const Scope *scp) const;			///< Is this a sub-scope of the given Scope
   string getFullName(void) const;				///< Get the full name of \b this Scope
   void getNameSegments(vector<string> &vec) const;		///< Get the fullname of \b this in segments
+  void getScopePath(vector<Scope *> &vec) const;		///< Get the ordered list of parent scopes to \b this
+  bool isNameUsed(const string &nm,const Scope *op2) const;	///< Is the given name in use within given scope path
+  const Scope *findDistinguishingScope(const Scope *op2) const;	///< Find first ancestor of \b this not shared by given scope
   Architecture *getArch(void) const { return glb; }		///< Get the Architecture associated with \b this
   Scope *getParent(void) const { return parent; }		///< Get the parent Scope (or NULL if \b this is the global Scope)
   Symbol *addSymbol(const string &name,Datatype *ct);		///< Add a new Symbol \e without mapping it to an address
@@ -734,6 +746,7 @@ public:
   virtual SymbolEntry *findOverlap(const Address &addr,int4 size) const;
 
   virtual void findByName(const string &name,vector<Symbol *> &res) const;
+  virtual bool isNameUsed(const string &name) const;
   virtual Funcdata *resolveExternalRefFunction(ExternRefSymbol *sym) const;
 
   virtual string buildVariableName(const Address &addr,

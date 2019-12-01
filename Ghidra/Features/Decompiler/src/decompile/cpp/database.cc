@@ -260,6 +260,39 @@ SymbolEntry *Symbol::getMapEntry(const Address &addr) const
   return (SymbolEntry *)0;
 }
 
+/// A value of 0 means the base Symbol name is visible and not overridden in the given use scope.
+/// A value of 1 means the base name may be overridden, but the parent scope name is not.
+/// The minimual number of names that distinguishes \b this Symbol uniquely within the
+/// use scope is returned.
+/// \param useScope is the given scope where \b this Symbol is being used
+/// \return the number of (extra) names needed to distinguish \b this Symbol
+int4 Symbol::getResolutionDepth(const Scope *useScope) const
+
+{
+  if (scope == useScope) return 0;	// Symbol is in scope where it is used
+  const Scope *distinguishScope = scope->findDistinguishingScope(useScope);
+  int4 depth = 0;
+  string distinguishName;
+  const Scope *terminatingScope;
+  if (distinguishScope == (const Scope *)0) {	// Symbol scope is ancestor of use scope
+    distinguishName = name;
+    terminatingScope = scope;
+  }
+  else {
+    distinguishName = distinguishScope->getName();
+    const Scope *currentScope = scope;
+    while(currentScope != distinguishScope) {	// For any scope up to the distinguishing scope
+      depth += 1;				// Print its name
+      currentScope = currentScope->getParent();
+    }
+    depth += 1;		// Also print the distinguishing scope name
+    terminatingScope = distinguishScope->getParent();
+  }
+  if (useScope->isNameUsed(distinguishName,terminatingScope))
+    depth += 1;		// Name was overridden, we need one more distinguishing name
+  return depth;
+}
+
 /// \param s is the output stream
 void Symbol::saveXmlHeader(ostream &s) const
 
@@ -1257,6 +1290,74 @@ void Scope::getNameSegments(vector<string> &vec) const
   }
 }
 
+/// Put the parent scopes of \b this into an array in order, starting with the global scope.
+/// This scope itself will not be in the array.
+/// \param vec is storage for the array of scopes
+void Scope::getScopePath(vector<Scope *> &vec) const
+
+{
+  int4 count = 0;
+  Scope *cur = parent;
+  while(cur != (Scope *)0) {	// Count number of elements in path
+    count += 1;
+    cur = cur->parent;
+  }
+  vec.resize(count);
+  cur = parent;
+  while(cur != (Scope *)0) {
+    count -= 1;
+    vec[count] = cur;
+    cur = cur->parent;
+  }
+}
+
+/// Test for the presence of a symbol with the given name in either \b this scope or
+/// an ancestor scope up to but not including the given terminating scope.
+/// If the name is used \b true is returned.
+/// \param nm is the given name to test
+/// \param op2 is the terminating ancestor scope (or null)
+bool Scope::isNameUsed(const string &nm,const Scope *op2) const
+
+{
+  const Scope *currentScope = this;
+  while(currentScope != op2) {
+    if (currentScope->isNameUsed(name))
+      return true;
+    currentScope = currentScope->parent;
+  }
+  return false;
+}
+
+/// Any two scopes share at least the \e global scope as a common ancestor. We find the first scope
+/// that is \e not in common.  The scope returned will always be an ancestor of \b this.
+/// If \b this is an ancestor of the other given scope, then null is returned.
+/// \param op2 is the other given Scope
+/// \return the first ancestor Scope that is not in common or null
+const Scope *Scope::findDistinguishingScope(const Scope *op2) const
+
+{
+  if (this == op2) return (Scope *)0;	// Quickly check most common cases
+  if (parent == op2) return this;
+  if (op2->parent == this) return op2;
+  if (parent == op2->parent) return this;
+  vector<Scope *> thisPath;
+  vector<Scope *> op2Path;
+  getScopePath(thisPath);
+  op2->getScopePath(op2Path);
+  int4 min = thisPath.size();
+  if (op2Path.size() < min)
+    min = op2Path.size();
+  for(int4 i=0;i<min;++i) {
+    if (thisPath[i] != op2Path[i])
+      return thisPath[i];
+  }
+  if (min < thisPath.size())
+    return thisPath[min];	// thisPath matches op2Path but is longer
+  if (min < op2Path.size())
+    return (Scope *)0;		// op2Path matches thisPath but is longer
+  return this;			// ancestor paths are identical (only base scopes differ)
+}
+
 /// The Symbol is created and added to any name map, but no SymbolEntry objects are created for it.
 /// \param name is the name of the new Symbol
 /// \param ct is a data-type to assign to the new Symbol
@@ -2019,6 +2120,15 @@ void ScopeInternal::findByName(const string &name,vector<Symbol *> &res) const
     res.push_back(sym);
     ++iter;
   }
+}
+
+bool ScopeInternal::isNameUsed(const string &name) const
+
+{
+  Symbol sym((Scope *)0,name,(Datatype *)0);
+  SymbolNameTree::const_iterator iter = nametree.lower_bound(&sym);
+  if (iter == nametree.end()) return false;
+  return ((*iter)->getName() == name);
 }
 
 string ScopeInternal::buildVariableName(const Address &addr,
