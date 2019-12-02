@@ -747,7 +747,8 @@ define pcodeop break;
 	RdFull = val:1;
 }
 
-:elpm RdFull, Z^"+"              is phase=1 & ophi7=0x48 & oplow4=0x7 & RdFull & Z {
+ElpmPlus: Z^"+" is Z {}
+:elpm RdFull, ElpmPlus is phase=1 & ophi7=0x48 & oplow4=0x7 & RdFull & ElpmPlus {
 	ptr:3 = zext(Z) | (zext(RAMPZ) << 16);
 	tmp:2 = *[code]:2 (ptr >> 1);
 	val:2 = (tmp >> (8 * (Z & 0x1)));
@@ -836,10 +837,9 @@ define pcodeop break;
 }
 
 # ld Rd,Y+ ; ld Rd, X+; ld Rd, Z+
-:ld RdFull,RstPtr"+"             is phase=1 & ophi7=0x48 & oplow2=0x01 & RdFull & RstPtr {
-	tmp:2 = RstPtr;
-	RdFull = *[mem]:1 tmp;
-	RstPtr = RstPtr + 0x01;
+LdPlus: RstPtr^"+" is RstPtr { tmp:2 = RstPtr; RstPtr = RstPtr + 0x01; export tmp; }
+:ld RdFull,LdPlus is phase=1 & ophi7=0x48 & oplow2=0x01 & RdFull & LdPlus {
+  RdFull = *[mem]:1 LdPlus;
 }
 
 # ld Rd,-Y ; ld Rd, -X; ld Rd, -Z
@@ -852,9 +852,9 @@ LdPredec:  "-"^RstPtr  is RstPtr { RstPtr = RstPtr - 0x01; export RstPtr; }
 
 # ldd Rd,Y+q
 # ldd Rd,Z+q
-:ldd RdFull,Rstq"+"q6            is phase=1 & ophi2=0x2 & opbit12=0 & opbit9=0 & Rstq & RdFull & q6 {
-	local ptr = Rstq + zext(q6);
-	RdFull = *[mem]:1 ptr;
+LddYq: Rstq^"+"^q6 is Rstq & q6 { local ptr = Rstq + zext(q6); export ptr; }
+:ldd RdFull,LddYq is phase=1 & ophi2=0x2 & opbit12=0 & opbit9=0 & LddYq & RdFull {
+  RdFull = *[mem]:1 LddYq;
 }
 
 # Rd,K
@@ -903,12 +903,13 @@ LdPredec:  "-"^RstPtr  is RstPtr { RstPtr = RstPtr - 0x01; export RstPtr; }
 	RdFull = val:1;
 }
 # lpm Rd,Z+
-:lpm RdFull,Z"+"                 is phase=1 & ophi7=0x48 & op1to3=0x2 & RdFull & Z & opbit0=1 {
-	ptr:$(PCBYTESIZE) = zext(Z);
-	tmp:$(PCBYTESIZE) = *[code]:$(PCBYTESIZE) (ptr >> 1);
-	val:$(PCBYTESIZE) = (tmp >> (8 * (Z & 0x1)));
-	RdFull = val:1;
-	Z = Z + 1;
+LpmPlus: Z^"+" is Z {}
+:lpm RdFull,LpmPlus is phase=1 & ophi7=0x48 & op1to3=0x2 & RdFull & LpmPlus & opbit0=1 {
+  ptr:$(PCBYTESIZE) = zext(Z);
+  tmp:$(PCBYTESIZE) = *[code]:$(PCBYTESIZE) (ptr >> 1);
+  val:$(PCBYTESIZE) = (tmp >> (8 * (Z & 0x1)));
+  RdFull = val:1;
+  Z = Z + 1;
 }
 # lsl  - just an assembly mnemonic for add
 :lsr RdFull                      is phase=1 & ophi7=0x4a & oplow4=0x6 & RdFull {
@@ -1086,11 +1087,13 @@ define pcodeop store_program_mem; # make this stand out.
 	*[code]:$(PCBYTESIZE) ptr = R1R0;
 	store_program_mem();
 }
-:spm Z^"+"                       is phase=1 & ophi16=0x95f8 & Z {
-	ptr:$(PCBYTESIZE) = zext(Z) << 1;
-	*[code]:$(PCBYTESIZE) ptr = R1R0;
-	Z = Z + 1;
-	store_program_mem();
+
+SpmPlus: Z^"+" is Z {}
+:spm SpmPlus is phase=1 & ophi16=0x95f8 & SpmPlus {
+  ptr:$(PCBYTESIZE) = zext(Z) << 1;
+  *[code]:$(PCBYTESIZE) ptr = R1R0;
+  Z = Z + 1;
+  store_program_mem();
 }
 # For stores, see the ld code  (just flip bit 9)
 :st X, RdFull                    is phase=1 & ophi7=0x49 & oplow4=0xc & X & RdFull {
@@ -1105,7 +1108,6 @@ define pcodeop store_program_mem; # make this stand out.
 
 # st Rd,Y+ ; st Rd, X+; st Rd, Z+
 StPlus: RstPtr^"+"  is  RstPtr { tmp:2 = RstPtr; RstPtr = RstPtr + 0x01; export tmp; }
-
 :st StPlus, RdFull               is phase=1 & ophi7=0x49 & oplow2=0x01 & RdFull & StPlus {
 	*[mem]:1 StPlus = RdFull;
 }
