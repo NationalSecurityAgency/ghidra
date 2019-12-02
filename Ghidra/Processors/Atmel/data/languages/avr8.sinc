@@ -905,9 +905,9 @@ LddYq: Rstq^"+"^q6 is Rstq & q6 { local ptr = Rstq + zext(q6); export ptr; }
 # lpm Rd,Z+
 LpmPlus: Z^"+" is Z {}
 :lpm RdFull,LpmPlus is phase=1 & ophi7=0x48 & op1to3=0x2 & RdFull & LpmPlus & opbit0=1 {
-  ptr:3 = zext(Z);
-  tmp:2 = *[code]:2 (ptr >> 1);
-  val:2 = (tmp >> (Z & 0x1));
+  ptr:$(PCBYTESIZE) = zext(Z);
+  tmp:$(PCBYTESIZE) = *[code]:$(PCBYTESIZE) (ptr >> 1);
+  val:$(PCBYTESIZE) = (tmp >> (8 * (Z & 0x1)));
   RdFull = val:1;
   Z = Z + 1;
 }
@@ -1090,8 +1090,8 @@ define pcodeop store_program_mem; # make this stand out.
 
 SpmPlus: Z^"+" is Z {}
 :spm SpmPlus is phase=1 & ophi16=0x95f8 & SpmPlus {
-  ptr:3 = zext(Z) << 1;
-  *[code]:2 ptr = R1R0;
+  ptr:$(PCBYTESIZE) = zext(Z) << 1;
+  *[code]:$(PCBYTESIZE) ptr = R1R0;
   Z = Z + 1;
   store_program_mem();
 }
