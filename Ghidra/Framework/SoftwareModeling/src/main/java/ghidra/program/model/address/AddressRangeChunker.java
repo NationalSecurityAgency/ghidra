@@ -81,7 +81,11 @@ public class AddressRangeChunker implements Iterable<AddressRange> {
 				}
 
 				long available = end.subtract(nextStartAddress) + 1; // +1 to be inclusive
-				int size = Math.min(chunkSize, (int) available);
+
+				int size = chunkSize;
+				if (available >= 0 && available < chunkSize) {
+					size = (int) available;
+				}
 
 				Address currentStart = nextStartAddress;
 				Address currentEnd = nextStartAddress.add(size - 1); // -1 since inclusive
