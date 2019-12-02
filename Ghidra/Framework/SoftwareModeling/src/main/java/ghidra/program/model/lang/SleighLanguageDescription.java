@@ -87,7 +87,7 @@ public class SleighLanguageDescription extends BasicLanguageDescription {
 	/**
 	 * Set the (optional) specification file associated with this language
 	 * 
-	 * @param specFile
+	 * @param defsFile
 	 *            the specFile to associate with this description.
 	 */
 	public void setDefsFile(ResourceFile defsFile) {

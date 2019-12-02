@@ -1345,7 +1345,7 @@ public class DataTypeMergeManager implements MergeResolver {
 	 * Get the resolved data type for either the return type or a variable.
 	 * @param id id of FunctionDefinition
 	 * @param paramID ID of either the return type or a variable
-	 * @param index >=0 is the index of the variable; <0 means the paramID is
+	 * @param index &gt;=0 is the index of the variable; &lt;0 means the paramID is
 	 * the return type
 	 * @param resolvedDataTypes hashtable to use for resolving
 	 * @return resolved data type or the default data type if the data type

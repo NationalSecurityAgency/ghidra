@@ -27,7 +27,7 @@ import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * Command object for performing Arm/Thumb disassembly
+ * Command object for performing Mips disassembly
  */
 public class MipsDisassembleCommand extends DisassembleCommand {
 
@@ -48,9 +48,8 @@ public class MipsDisassembleCommand extends DisassembleCommand {
 	}
 
 	/**
-	* Constructor for DisassembleCommand.
-	* @param startSet set of addresses to be the start of a disassembly.  The
-	* Command object will attempt to start a disassembly at each address in this set.
+	* Constructor for MipsDisassembleCommand.
+	* @param start address to be the start of a disassembly.
 	* @param restrictedSet addresses that can be disassembled.
 	* a null set implies no restrictions
 	* @param mips16Mode pass true if the disassembling in mips16e Mode
@@ -60,9 +59,6 @@ public class MipsDisassembleCommand extends DisassembleCommand {
 		this.mips16Mode = mips16Mode;
 	}
 
-	/**
-	 * @see ghidra.framework.cmd.Command#getName()
-	 */
 	@Override
 	public String getName() {
 		return "Disassemble " + (mips16Mode ? "Mips16" : "Mips");
@@ -78,10 +74,6 @@ public class MipsDisassembleCommand extends DisassembleCommand {
 		throw new UnsupportedOperationException();
 	}
 
-	/**
-	 * 
-	 * @see ghidra.framework.cmd.BackgroundCommand#applyTo(ghidra.framework.model.DomainObject, ghidra.util.task.TaskMonitor)
-	 */
 	@Override
 	synchronized public boolean applyTo(DomainObject obj, TaskMonitor monitor) {
 		Program program = (Program) obj;

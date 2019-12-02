@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +28,7 @@ import java.math.BigInteger;
  * attrs.add("BAR", "foo");
  * attrs.add("PI", 3.14159);
  * </pre><br>
- * The output would be: <code>FIVE="0x20" BAR="foo" PI="3.14159".
+ * The output would be: <code>FIVE="0x20" BAR="foo" PI="3.14159".</code>
  * 
  */
 public class XmlAttributes {

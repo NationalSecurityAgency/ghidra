@@ -26,7 +26,7 @@ public class AssemblyParseErrorResult extends AssemblyParseResult {
 	private final Set<String> suggestions;
 
 	/**
-	 * @see {@link AssemblyParseResult#error(String, Set)}
+	 * @see AssemblyParseResult#error(String, Set)
 	 */
 	protected AssemblyParseErrorResult(String got, Set<String> suggestions) {
 		this.buffer = got;

@@ -182,7 +182,7 @@ public class ElfSectionHeaderConstants {
 	public static final short SHN_ABS = (short) 0xfff1;
 	/**common symbols, such as Fortran COMMON or unallocated C external vars*/
 	public static final short SHN_COMMON = (short) 0xfff2;
-	/** Mark that the index is >= SHN_LORESERVE */
+	/** Mark that the index is &gt;= SHN_LORESERVE */
 	public static final short SHN_XINDEX = (short) 0xffff;
 	/**upper bound on range of reserved indexes*/
 	public static final short SHN_HIRESERVE = (short) 0xffff;

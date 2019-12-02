@@ -249,8 +249,10 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 	 * Constructor
 	 * @param handle database handle
 	 * @param addrMap map to convert addresses to longs and longs to addresses
-	 * @param createTables true if tables should be created
-	 * @param rootCategoryName name of the root category
+	 * @param openMode mode to open the DataTypeManager in
+	 * @param errHandler the error handler
+	 * @param lock database lock
+	 * @param monitor the current task monitor
 	 */
 	protected DataTypeManagerDB(DBHandle handle, AddressMap addrMap, int openMode,
 			ErrorHandler errHandler, Lock lock, TaskMonitor monitor)
@@ -883,7 +885,6 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 	/**
 	 * This method gets a ".conflict" name that is not currently used by any data types
 	 * in the indicated category of the data type manager.
-	 * @param dtm the data type manager.
 	 * @param path the category path of the category where the new data type live in the data type manager.
 	 * @param name The name of the data type. This name may or may not contain ".conflict" as part of it.
 	 * If the name contains ".conflict", only the part of the name that comes prior to the ".conflict"
@@ -1167,9 +1168,9 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 	 * Replace one source archive (oldDTM) with another (newDTM). Any data types whose source
 	 * was the oldDTM will be changed to have a source that is the newDTM.  The oldDTM will no
 	 * longer be referenced as a source by this data type manager.
-	 * @param oldDTM data type manager for the old source archive
-	 * @param newDTM data type manager for the new source archive
-	 * @throws InvalidInputException if the oldDTM isn't currently a source archive for this
+	 * @param oldSourceArchive data type manager for the old source archive
+	 * @param newSourceArchive data type manager for the new source archive
+	 * @throws IllegalArgumentException if the oldDTM isn't currently a source archive for this
 	 * data type manager or if the old and new source archives already have the same unique ID.
 	 */
 	public void replaceSourceArchive(SourceArchive oldSourceArchive,

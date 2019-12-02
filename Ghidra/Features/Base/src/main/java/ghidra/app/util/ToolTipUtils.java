@@ -66,10 +66,7 @@ public class ToolTipUtils {
 
 	/**
 	 * Return dataType details as HTML.
-	 * @param dataType
-	 * @param htmlFragmentOnly if true only a fragment of HTML, suitable for combining 
-	 * with other fragments will be Returned.  If false, the fragment will be enclosed 
-	 * within an HTML tag element.
+	 * @param dataType the dataType to be represented
 	 * @return dataType details formatted as HTML
 	 */
 	public static HTMLDataTypeRepresentation getHTMLRepresentation(DataType dataType) {

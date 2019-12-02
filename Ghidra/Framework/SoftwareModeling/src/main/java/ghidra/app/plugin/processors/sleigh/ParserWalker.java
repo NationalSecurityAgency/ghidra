@@ -50,8 +50,8 @@ public class ParserWalker {
 
 	/**
 	 * For use with pcode cross-build 
-	 * @param c
-	 * @param nextAddr
+	 * @param c context
+	 * @param cross cross context
 	 */
 	public ParserWalker(SleighParserContext c, SleighParserContext cross) {
 		this(c);

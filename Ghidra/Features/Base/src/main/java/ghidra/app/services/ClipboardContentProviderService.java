@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,14 +64,14 @@ public interface ClipboardContentProviderService {
 
 	/**
 	 * Return whether the given context is valid for actions on popup menus.
-	 * @param contextObject the context of where the popup menu will be
-	 * positioned
+	 * @param context the context of where the popup menu will be positioned.
 	 */
 	public boolean isValidContext(ActionContext context);
 
+	// TODO needs updating. Assumed copyAddToPopup became copy(TaskMonitor monitor)
 	/**
 	 * Returns true if copy should be enabled; false if it should be disabled.  This method can
-	 * be used in conjunction with {@link #copyAddToPopup()} in order to add menu items to
+	 * be used in conjunction with {@link #copy(TaskMonitor)} in order to add menu items to
 	 * popup menus but to have them enabled when appropriate.
 	 */
 	public boolean enableCopy();
@@ -83,9 +82,10 @@ public interface ClipboardContentProviderService {
 	 */
 	public boolean enableCopySpecial();
 
+	// TODO needs updating. Assumed pasteAddToPopup became paste(Transferable pasteData)
 	/**
 	 * Returns true if paste should be enabled; false if it should be disabled.  This method can
-	 * be used in conjunction with {@link #pasteAddToPopup()} in order to add menu items to
+	 * be used in conjunction with {@link #paste(Transferable)} in order to add menu items to
 	 * popup menus but to have them enabled when appropriate.
 	 */
 	public boolean enablePaste();

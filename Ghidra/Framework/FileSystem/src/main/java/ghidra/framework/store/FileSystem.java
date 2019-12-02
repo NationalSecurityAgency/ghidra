@@ -143,7 +143,6 @@ public interface FileSystem {
 	 * @param parentPath folder path of parent
 	 * @param name new database name
 	 * @param fileID file ID to be associated with new database or null
-	 * @param bufferFile data source
 	 * @param contentType application defined content type
 	 * @param bufferSize buffer size.  If copying an existing BufferFile, the buffer 
 	 * size must be the same as the source file.
@@ -164,7 +163,7 @@ public interface FileSystem {
 	 * Creates a new empty data file within the specified parent folder.
 	 * @param parentPath folder path of parent
 	 * @param name new data file name
-	 * @param inputStream source data
+	 * @param istream source data
 	 * @param comment version comment (used for versioned file system only)
 	 * @param contentType application defined content type
 	 * @param monitor progress monitor (used for cancel support, 
@@ -286,7 +285,7 @@ public interface FileSystem {
 	public boolean isShared();
 
 	/**
-	 * Cleanup & release resources
+	 * Cleanup and release resources
 	 */
 	public void dispose();
 

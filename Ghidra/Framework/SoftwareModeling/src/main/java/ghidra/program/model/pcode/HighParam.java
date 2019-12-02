@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +28,7 @@ public class HighParam extends HighLocal {
 
 	/**
 	 * @param tp data type of variable
-	 * @param store variable storage
+	 * @param rep represented varnode
 	 * @param pc null or Address of PcodeOp which defines the representative
 	 * @param slot parameter index starting at 0
 	 * @param sym associated symbol

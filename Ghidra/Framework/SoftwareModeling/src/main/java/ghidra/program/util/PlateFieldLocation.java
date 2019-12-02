@@ -36,7 +36,7 @@ public class PlateFieldLocation extends CommentFieldLocation {
 	/**
 	 * Construct a new PlateFieldLocation.
 	 * 
-	 * @param the program of the location
+	 * @param program the program of the location
 	 * @param addr the address of the code unit.
 	 * @param componentPath the componentPath of the codeUnit
 	 * @param row the line of the location
@@ -79,7 +79,7 @@ public class PlateFieldLocation extends CommentFieldLocation {
 	 * the comment row that was clicked.  <tt>-1</tt> will be returned if the border of the 
 	 * plate field was clicked. 
 	 * <p>
-	 * <b>Note: </b> This value is different than that returned by {@link #getRowIndex()}, as that
+	 * <b>Note: </b> This value is different than that returned by {@link #getRow()}, as that
 	 *         value represents the screen row clicked.  Further, the PlateField adds screen
 	 *         decoration to the comments, which causes the screen row to differ from the comment
 	 *         row.

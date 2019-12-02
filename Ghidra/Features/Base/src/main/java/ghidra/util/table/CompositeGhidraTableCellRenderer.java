@@ -30,7 +30,7 @@ import docking.widgets.table.GTableCellRenderingData;
  * Why:  Sometimes the need arises to be able to use the default table rendering while adding 
  *       additional rendering (e.g., to be able to add row coloring).
  * How:  Create a cell renderer that extends this class and install that into your table.  Then,
- *       override {@link #getTableCellRendererComponent(JTable, Object, Settings, boolean, boolean, int, int)}
+ *       override {@link #getTableCellRendererComponent(JTable, Object, boolean, boolean, int, int)}
  *       to call this class' implementation.  Finally, add desired decoration.
  *  
  */

@@ -51,7 +51,7 @@ public interface Array extends DataType {
 	 * 
 	 * @param buf memory buffer containing the bytes.
 	 * @param settings the Settings object
-	 * @param length the length of the data.
+	 * @param len the length of the data.
 	 * @param options options for how to format the default label prefix.
 	 * @return the label prefix or null if not applicable
 	 */
@@ -72,7 +72,7 @@ public interface Array extends DataType {
 	 * 
 	 * @param buf memory buffer containing the bytes.
 	 * @param settings the Settings object
-	 * @param length the length of the data.
+	 * @param len the length of the data.
 	 * @param options options for how to format the default label prefix.
 	 * @param offcutLength offcut offset from start of buf
 	 * @return the offcut label prefix or null if not applicable
@@ -148,7 +148,7 @@ public interface Array extends DataType {
 
 	/**
 	 * Get the value Class of a specific arrayDt with settings
-	 * ( see {@link #getArrayValueClass(Array, Settings)} ).
+	 * ( see {@link #getArrayValueClass(Settings)} ).
 	 * 
 	 * @param settings the relevant settings to use or null for default.
 	 * @return Class of the value to be returned by the array or null if it can vary

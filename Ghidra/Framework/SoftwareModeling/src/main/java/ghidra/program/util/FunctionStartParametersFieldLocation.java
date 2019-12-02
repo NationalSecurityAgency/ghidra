@@ -27,10 +27,11 @@ public class FunctionStartParametersFieldLocation extends FunctionSignatureField
 	/**
 	 * Construct a new FunctionStartParametersFieldLocation object.
 	 * 
-	 * @param the program of the location
+	 * @param program the program of the location
 	 * @param locationAddr the address of the listing location (i.e., referent code unit)
 	 * @param functionAddr the function address
-	 * @param index the position within the function name string for this location.
+	 * @param charOffset the position within the function name string for this location.
+	 * @param signature the function signature
 	 */
 	public FunctionStartParametersFieldLocation(Program program, Address locationAddr,
 			Address functionAddr, int charOffset, String signature) {

@@ -804,7 +804,7 @@ public class Application {
 	/**
 	 * Returns a list of all directories in any module that have the given module relative path.  For
 	 * example, a relative path of "foo/bar" will return all directories that are of the form
-	 * <module root>/data/foo/bar
+	 * {@code <module root>/data/foo/bar}
 	 * @param relativePath the module relative path to search for.
 	 * @return a list of all directories in any module that have the given module relative path.
 	 */
@@ -890,7 +890,7 @@ public class Application {
 	/**
 	 * Returns the file relative to the named module's directory.
 	 * @param moduleName the name of the module.
-	 * @param relativeDataPath the path relative to the module's data directory.
+	 * @param relativePath the path relative to the module's data directory.
 	 * @throws FileNotFoundException if the file does not exist.
 	 */
 	public static ResourceFile getModuleFile(String moduleName, String relativePath)

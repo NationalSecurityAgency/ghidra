@@ -401,7 +401,7 @@ public class TableUpdateJob<T> {
 
 	/** 
 	 * Gets any existing data that matches the current filter, if any.
-	 * @returns data that should be the start point for the next filter state; null if there 
+	 * @return data that should be the start point for the next filter state; null if there 
 	 *          is no filter set or if the current data's filter does not match the pending filter
 	 */
 	private TableData<T> getReusableFilteredData() {

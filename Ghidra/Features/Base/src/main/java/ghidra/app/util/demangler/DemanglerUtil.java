@@ -98,7 +98,7 @@ public class DemanglerUtil {
 	/**
 	 * Converts the list of names into a namespace linked list.
 	 * Given names = { "A", "B", "C" }, which represents "A::B::C".
-	 * The following will be created "Namespace{A}->Namespace{B}->Namespace{C}"
+	 * The following will be created {@literal "Namespace{A}->Namespace{B}->Namespace{C}"}
 	 * and Namespace{C} will be returned.
 	 * 
 	 * NOTE: the list will be empty after the call.

@@ -44,9 +44,9 @@ import ghidra.graph.viewer.vertex.VisualGraphVertexShapeTransformer;
 /**
  * Edge render for the {@link VisualGraph} system
  * 
- * <h3><center>Implementation Notes</center></h3>
+ * <h2><center>Implementation Notes</center></h2>
  * 
- * <h4>Jung Vertex/Edge Rendering</h4>
+ * <h3>Jung Vertex/Edge Rendering</h3>
  * <p>Jung creates shapes for vertices (see {@link VertexShapeFactory}) that are centered.  They
  * do this by getting the width/height of the shape and then creating an x/y value that is 
  * half of the width and height, respectively.  This has the effect of the vertex appearing 
@@ -55,7 +55,7 @@ import ghidra.graph.viewer.vertex.VisualGraphVertexShapeTransformer;
  * Jung's.
  * <p>If we ever decide instead to not center our shapes, then this renderer would have to be
  * updated to itself center the edge shape created herein, like this:
- * <pre>
+ * <pre>{@literal
  * 		Rectangle b1 = s1.getBounds();
  *		Rectangle b2 = s2.getBounds();
  *
@@ -70,7 +70,7 @@ import ghidra.graph.viewer.vertex.VisualGraphVertexShapeTransformer;
  *		float tx2 = x2 + w2;
  *		float ty2 = y2 + h2;
  * 		Shape edgeShape = getEdgeShape(rc, graph, e, tx1, ty1, tx2, ty2, isLoop, xs1);
- * </pre>
+ * }</pre>
  * <p>Also, there are other spots in the system where we account for this center that would 
  * have to be changed, such as the {@link AbstractVisualGraphLayout}, which needs the centering
  * offsets to handle vertex clipping.

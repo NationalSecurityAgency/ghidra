@@ -1497,11 +1497,10 @@ public class Table {
 	 * @param columnIndex schema column to sort on.
 	 * @param startValue the starting and minimum value of the secondary index field.
 	 * @param endValue the ending and maximum value of the secondary index field.
-	 * @param primaryKey the primary key associated with the startField.
 	 * @param atStart if true, position the iterator before the start value. 
 	 * Otherwise, position the iterator after the end value.
 	 * 
-	 * @return RecordIterator record iterator.
+	 * @return record iterator.
 	 * @throws IOException if a secondary index does not exist for the specified
 	 * column, or the wrong field type was specified, or an I/O error occurs.
 	 */
@@ -1787,7 +1786,7 @@ public class Table {
 	 * Iterate over the records in ascending sorted order.  Sorting occurs on the primary key value
 	 * starting at the specified startKey.
 	 * @param minKey the minimum primary key.
-	 * @param endKey the maximum primary key.
+	 * @param maxKey the maximum primary key.
 	 * @param startKey the initial iterator position.
 	 * @return record iterator
 	 * @throws IOException if an I/O error occurs.
@@ -1823,7 +1822,7 @@ public class Table {
 	 * Iterate over the records in ascending sorted order.  Sorting occurs on the primary key value
 	 * starting at the specified startKey.
 	 * @param minKey the minimum primary key, may be null.
-	 * @param endKey the maximum primary key, may be null.
+	 * @param maxKey the maximum primary key, may be null.
 	 * @param startKey the initial iterator position, if null minKey is also start.
 	 * @return record iterator
 	 * @throws IOException if an I/O error occurs.
@@ -1872,7 +1871,7 @@ public class Table {
 	 * Iterate over the long primary keys in ascending sorted order
 	 * starting at the specified startKey.
 	 * @param minKey the minimum primary key.
-	 * @param endKey the maximum primary key.
+	 * @param maxKey the maximum primary key.
 	 * @param startKey the initial iterator position.
 	 * @return long key iterator
 	 * @throws IOException if an I/O error occurs.
@@ -1888,7 +1887,6 @@ public class Table {
 
 	/**
 	 * Iterate over all primary keys in ascending sorted order.
-	 * @param startKey the first primary key, may be null.
 	 * @return Field type key iterator
 	 * @throws IOException if an I/O error occurs.
 	 */

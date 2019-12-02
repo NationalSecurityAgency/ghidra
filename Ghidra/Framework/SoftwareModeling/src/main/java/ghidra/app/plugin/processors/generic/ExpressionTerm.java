@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +21,7 @@ import ghidra.program.model.mem.MemBuffer;
 import java.io.Serializable;
 import java.util.Hashtable;
 
+// TODO needs documentation
 /**
  * 
  */
@@ -58,8 +58,8 @@ public class ExpressionTerm implements Serializable {
 	public ExpressionValue getValue() { return val; }
 
 	/**
-	 * Method addSpace.
-	 * @param id
+	 * Sets the address space of the expression value
+	 * @param space the address space to set
 	 */
 	public void setSpace(AddressSpace space) throws SledException {
 		if (val.getClass() != BinaryExpression.class)

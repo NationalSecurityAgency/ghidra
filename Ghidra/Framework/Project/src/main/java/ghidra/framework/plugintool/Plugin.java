@@ -67,7 +67,8 @@ import ghidra.util.classfinder.ExtensionPoint;
  * 			{@link Plugin#registerServiceProvided(Class, Object) registerServiceProvided()}.
  * 			(required)
  *  			<LI>Create Actions (optional)
- *  			<LI>Register {@link Options} with the {@link PluginTool#getOptions(String)}. (optional)<br>
+ *  			<LI>Register {@link ghidra.framework.options.Options Options} with the
+ * {@link PluginTool#getOptions(String)}. (optional)<br>
  * 		</OL>
  * 	<LI>Other Plugins are constructed, dependencies evaluated, etc.<br>
  * 	If your dependencies are not available (ie. not installed, threw an exception during their
@@ -104,8 +105,7 @@ import ghidra.util.classfinder.ExtensionPoint;
  * All Plugins must be tagged with a {@link PluginInfo @PluginInfo(...)} annotation.
  * <p>
  * The annotation gives you the ability to declare a dependency on another Plugin
- * via the {@link PluginInfo#servicesRequired() servicesRequired} /
- * {@link PluginInfo#servicesUsed() servicesUsed}
+ * via the {@link PluginInfo#servicesRequired() servicesRequired}
  * <p>
  * Ghidra will ensure that your Plugin will not be {@link #init() initialized} until all
  * of its required services are loaded successfully and are available for use when your Plugin
@@ -491,7 +491,7 @@ public abstract class Plugin implements ExtensionPoint, PluginEventListener, Ser
 	 * Plugins should override this method if they update their state
 	 * when a particular service is added.
 	 *
-	 * @param interfaceClass The <b>interface</i> of the added service
+	 * @param interfaceClass The <b>interface</b> of the added service
 	 * @param service service that is being added
 	 */
 	@Override
@@ -505,7 +505,7 @@ public abstract class Plugin implements ExtensionPoint, PluginEventListener, Ser
 	 * Plugins should override this method if they update their state
 	 * when a particular service is removed.
 	 *
-	 * @param interfaceClass The <b>interface</i> of the added service
+	 * @param interfaceClass The <b>interface</b> of the added service
 	 * @param service that is being removed.
 	 */
 	@Override

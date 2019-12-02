@@ -28,7 +28,7 @@ import ghidra.util.ReversedListIterator;
  * Such a tree may be useful as a priority queue where the cost of an entry may change over time.
  * As such, the collections returned by {@link #entrySet()}, {@link #keySet()}, and
  * {@link #values()} all implement {@link Deque}. The order of the entries will be updated on any
- * call to {@link #put(Object, Object))}, or a call to {@link Collection#add(Object)} on the entry
+ * call to {@link #put(Object, Object)}, or a call to {@link Collection#add(Object)} on the entry
  * set. Additionally, if the values are mutable objects, whose costs may change, there is an
  * {@link #update(Object)} method, which notifies the map that the given key may need to be
  * repositioned. The associated collections also implement the {@link List} interface, providing
@@ -38,9 +38,9 @@ import ghidra.util.ReversedListIterator;
  * 
  * The underlying implementation is currently an unbalanced binary tree whose nodes also comprise a
  * doubly-linked list. Currently, it is not thread safe.
- * @TODO Consider changing to an AVL tree implementation
- * @TODO Consider implementing the {@link NavigableMap} interface
- * @TODO Consider making the implementation thread-safe
+ * TODO Consider changing to an AVL tree implementation
+ * TODO Consider implementing the {@link NavigableMap} interface
+ * TODO Consider making the implementation thread-safe
  * 
  * @param <K> the type of the keys
  * @param <V> the type of the values
@@ -340,7 +340,7 @@ public class DynamicValueSortedTreeMap<K, V> extends AbstractMap<K, V> {
 
 		/**
 		 * Insert a node as a successor to this node in the linked list
-		 * @note Called only after the node is inserted into the tree
+		 * NOTE: Called only after the node is inserted into the tree
 		 */
 		private void insertAfter(Node item) {
 			item.prev = this;
@@ -357,7 +357,7 @@ public class DynamicValueSortedTreeMap<K, V> extends AbstractMap<K, V> {
 
 		/**
 		 * Insert a node as a predecessor to this node in the linked list
-		 * @note Called only after the node is inserted into the tree
+		 * NOTE: Called only after the node is inserted into the tree
 		 */
 		private void insertBefore(Node item) {
 			item.prev = prev;
@@ -498,7 +498,7 @@ public class DynamicValueSortedTreeMap<K, V> extends AbstractMap<K, V> {
 	/**
 	 * When searching for values, identifies which instance to find
 	 * 
-	 * @TODO When/if implementing {@link NavigableMap}, this seems an appropriate place to put
+	 * TODO When/if implementing {@link NavigableMap}, this seems an appropriate place to put
 	 * FLOOR, CEILING, etc.
 	 */
 	private enum SearchMode {

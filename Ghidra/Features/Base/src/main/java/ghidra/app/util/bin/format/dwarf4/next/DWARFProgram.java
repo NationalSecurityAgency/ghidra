@@ -657,7 +657,8 @@ public class DWARFProgram implements Closeable {
 	/**
 	 * Returns the count of the DIE records in this compilation unit.
 	 * <p>
-	 * Only valid if called after {@link #readDIEs()} and before {@link #clearEntries()}.
+	 * Only valid if called after {@link #checkPreconditions(TaskMonitor)}
+	 * and before {@link #clearDIEIndexes()}.
 	 * @return number of DIE records in the compunit.
 	 * @throws IOException
 	 * @throws CancelledException
@@ -667,7 +668,8 @@ public class DWARFProgram implements Closeable {
 	}
 
 	/**
-	 * Releases the memory used by the DIE entries read by {@link #readDIEs()}.
+	 * Releases the memory used by the DIE entries read when invoking
+	 * {@link #checkPreconditions(TaskMonitor)}.
 	 */
 	public void clearDIEIndexes() {
 		offsetMap.clear();

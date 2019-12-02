@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,8 +59,8 @@ public class ConstantTemplate implements Serializable {
 
 	/**
 	 * Constructor ConstantTemplate.
-	 * @param o
-	 * @param i
+	 * @param o the operand
+	 * @param sel1 the first selection
 	 */
 	public ConstantTemplate(Operand o, int sel1) throws SledException {
 		this(o,sel1,0);
@@ -84,9 +83,8 @@ public class ConstantTemplate implements Serializable {
 	
 	/**
 	 * Method resolve.
-	 * @param handles
-	 * @param position
-	 * @param off
+	 * @param position the position of the constant to resolve
+	 * @param off the offset of the constant
 	 * @return long
 	 */
 	public long resolve(Position position, int off) throws Exception {
@@ -111,9 +109,8 @@ public class ConstantTemplate implements Serializable {
 	}
 
 	/**
-	 * @param handles
-	 * @param position
-	 * @param off
+	 * @param handles optional map of handles to be used for resolving
+	 * @see #resolve(Position, int)
 	 * @return long
 	 */
 	public long resolve(HashMap<Object, Handle> handles, Position position, int off) throws Exception {

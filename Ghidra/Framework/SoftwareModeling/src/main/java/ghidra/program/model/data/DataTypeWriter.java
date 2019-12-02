@@ -132,7 +132,7 @@ public class DataTypeWriter {
 
 	/**
 	 * Converts all data types in the data type manager into ANSI-C code. 
-	 * @param writer to writer to write the ANSI-C code
+	 * @param dataTypeManager the manager containing the data types to write
 	 * @param monitor the task monitor
 	 * @throws IOException if an I/O error occurs when writing the data types to the specified writer
 	 * @throws CancelledException 
@@ -144,7 +144,7 @@ public class DataTypeWriter {
 
 	/**
 	 * Converts all data types in the category into ANSI-C code. 
-	 * @param writer to writer to write the ANSI-C code
+	 * @param category the category containing the datatypes to write
 	 * @param monitor the task monitor
 	 * @throws IOException if an I/O error occurs when writing the data types to the specified writer
 	 * @throws CancelledException 
@@ -165,7 +165,7 @@ public class DataTypeWriter {
 
 	/**
 	 * Converts all data types in the array into ANSI-C code. 
-	 * @param writer to writer to write the C code
+	 * @param dataTypes the data types to write
 	 * @param monitor the task monitor
 	 * @throws IOException if an I/O error occurs when writing the data types to the specified writer
 	 * @throws CancelledException 
@@ -183,7 +183,7 @@ public class DataTypeWriter {
 
 	/**
 	 * Converts all data types in the list into ANSI-C code. 
-	 * @param writer to writer to write the ANSI-C code
+	 * @param dataTypes the data types to write
 	 * @param monitor the task monitor
 	 * @throws IOException if an I/O error occurs when writing the data types to the specified writer
 	 * @throws CancelledException 

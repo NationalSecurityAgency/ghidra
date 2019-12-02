@@ -43,8 +43,7 @@ public class ToolBarItemManager implements PropertyChangeListener, ActionListene
 	/**
 	 * Constructs a new ToolBarItemManager
 	 * @param action the action to be managed on the toolbar.
-	 * @param iconSize the iconSize to scale to.
-	 * @param buttonListener listener for button state changes.
+	 * @param windowManager the window manager.
 	 */
 	public ToolBarItemManager(DockingActionIf action, DockingWindowManager windowManager) {
 		this.toolBarAction = action;

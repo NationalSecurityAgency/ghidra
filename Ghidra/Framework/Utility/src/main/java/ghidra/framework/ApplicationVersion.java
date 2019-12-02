@@ -24,9 +24,11 @@ package ghidra.framework;
  * part of the version is disregarded in the {@link #compareTo(ApplicationVersion)} method).
  * <p>
  * Examples:
+ * <ul>
  * <li>7.4
  * <li>7.4.1
  * <li>7.4.1-BETA
+ * </ul>
  */
 public class ApplicationVersion implements Comparable<ApplicationVersion> {
 

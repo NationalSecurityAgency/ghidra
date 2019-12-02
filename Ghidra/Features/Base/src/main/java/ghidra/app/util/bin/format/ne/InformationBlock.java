@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -411,7 +410,7 @@ public class InformationBlock {
     /**
      * Returns the index to the start of the resource table,
      * relative to the beginning of the NE windows header.
-     * @returns the index to the start of the resource table
+     * @return the index to the start of the resource table
      */
     short getResourceTableOffset() {
         return ne_rsrctab;

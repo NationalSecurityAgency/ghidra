@@ -110,7 +110,7 @@ public class DisassembleCommand extends BackgroundCommand {
 	 * {@link #setSeedContext(DisassemblerContextImpl)} method.
 	 * The defaultSeedContext should remain unchanged while disassembler command
 	 * is actively running.
-	 * @param contextOverrideValue context override value or null
+	 * @param initialContextValue the initial context value to set or null to clear it
 	 */
 	public void setInitialContext(RegisterValue initialContextValue) {
 		if (initialContextValue != null) {
@@ -129,9 +129,6 @@ public class DisassembleCommand extends BackgroundCommand {
 		this.enableAnalysis = enable;
 	}
 
-	/**
-	 * @see ghidra.framework.cmd.Command#getStatusMsg()
-	 */
 	@Override
 	public String getStatusMsg() {
 		if (disassemblyPerformed) {
@@ -147,10 +144,6 @@ public class DisassembleCommand extends BackgroundCommand {
 		return "Disassembler requires a start which is an undefined code unit";
 	}
 
-	/**
-	 *
-	 * @see ghidra.framework.cmd.BackgroundCommand#applyTo(ghidra.framework.model.DomainObject, ghidra.util.task.TaskMonitor)
-	 */
 	@Override
 	synchronized public boolean applyTo(DomainObject obj, TaskMonitor monitor) {
 		Program program = (Program) obj;

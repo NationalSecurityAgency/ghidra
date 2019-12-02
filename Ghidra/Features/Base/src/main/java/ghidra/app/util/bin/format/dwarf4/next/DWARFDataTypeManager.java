@@ -127,7 +127,7 @@ public class DWARFDataTypeManager {
 	 * <p>
 	 * A {@link DataTypeGraphComparator} is used to walk the 'impl' DataType object graph
 	 * in lock-step with the resultant 'db' DataType object graph, and the mapping between
-	 * the 'impl' object and its creator DIEA (held in {@link #currentImplDataTypeToDIE})
+	 * the 'impl' object and its creator DIEA (held in {@link DWARFDataType})
 	 * is used to create a mapping to the resultant 'db' DataType's path.
 	 *
 	 * @param diea DWARF {@link DIEAggregate} with datatype information that needs to be converted
@@ -225,14 +225,12 @@ public class DWARFDataTypeManager {
 	/**
 	 * Returns a Ghidra {@link DataType} corresponding to the specified {@link DIEAggregate},
 	 * or the specified defaultValue if the DIEA param is null or does not map to an already
-	 * defined datatype (registered with {@link #addType(long, DataType, DWARFImportSummary)}).
+	 * defined datatype (registered with {@link #addDataType(long, DataType, DWARFSourceInfo)}).
 	 * <p>
 	 * @param diea {@link DIEAggregate} that defines a data type
 	 * @param defaultValue Ghidra {@link DataType} to return if the specified DIEA is null
 	 * or not already defined.
 	 * @return Ghidra {@link DataType}
-	 * @throws DWARFExpressionException
-	 * @throws IOException
 	 */
 	public DataType getDataType(DIEAggregate diea, DataType defaultValue) {
 		if (diea == null) {
@@ -259,7 +257,7 @@ public class DWARFDataTypeManager {
 	/**
 	 * Returns a Ghidra {@link DataType} corresponding to the specified DIE (based on its
 	 * offset), or the specified defaultValue if the DIE does not map to a defined
-	 * datatype (registered with {@link #addType(long, DataType, DWARFImportSummary)}).
+	 * datatype (registered with {@link #addDataType(long, DataType, DWARFSourceInfo)}).
 	 * <p>
 	 *
 	 * @param dieOffset offset of a DIE record that defines a data type
@@ -599,7 +597,7 @@ public class DWARFDataTypeManager {
 	 * Does the actual import work.  Updates the {@link #importSummary summary} object
 	 * with information about the types imported and errors encountered.
 	 *
-	 * @param TaskMonitor monitor to watch for cancel
+	 * @param monitor to watch for cancel
 	 * @throws IOException if errors are encountered reading data
 	 * @throws DWARFException if errors are encountered processing
 	 * @throws CancelledException if the {@link TaskMonitor} is canceled by the user.
@@ -756,7 +754,7 @@ public class DWARFDataTypeManager {
 	 * but the impls can't be shared without excessive over-engineering.
 	 * <p>
 	 * This impl uses DataType's that have already been resolved and committed to the DTM, and
-	 * a cache mapping entry of the DWARF die -> DataType has been registered via {@link #addDataType(long, DataType, DWARFSourceInfo)}.
+	 * a cache mapping entry of the DWARF die -&gt; DataType has been registered via {@link #addDataType(long, DataType, DWARFSourceInfo)}.
 	 * <p>
 	 * This approach is necessary because of speed issues that arise if the referred datatypes
 	 * are created from scratch from the DWARF information and then have to go through a

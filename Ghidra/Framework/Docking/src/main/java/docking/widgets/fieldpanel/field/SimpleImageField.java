@@ -88,10 +88,6 @@ public class SimpleImageField implements Field {
 		}
 	}
 
-	/**
-	 * 
-	 * @see docking.widgets.fieldpanel.field.Field#contains(int, int)
-	 */
 	@Override
 	public boolean contains(int x, int y) {
 		if ((x >= startX) && (x < startX + width) && (y >= -heightAbove) &&
@@ -101,19 +97,11 @@ public class SimpleImageField implements Field {
 		return false;
 	}
 
-	/**
-	 * 
-	 * @see docking.widgets.fieldpanel.field.Field#getCol(int, int)
-	 */
 	@Override
 	public int getCol(int row, int x) {
 		return 0;
 	}
 
-	/**
-	 * 
-	 * @see docking.widgets.fieldpanel.field.Field#getCursorBounds(int, int)
-	 */
 	@Override
 	public Rectangle getCursorBounds(int row, int col) {
 		if (row != 0) {
@@ -122,46 +110,26 @@ public class SimpleImageField implements Field {
 		return new Rectangle(startX, -heightAbove, width, height);
 	}
 
-	/**
-	 * 
-	 * @see docking.widgets.fieldpanel.field.Field#getHeight()
-	 */
 	@Override
 	public int getHeight() {
 		return height;
 	}
 
-	/**
-	 * 
-	 * @see docking.widgets.fieldpanel.field.Field#getNumRows()
-	 */
 	@Override
 	public int getNumRows() {
 		return 1;
 	}
 
-	/**
-	 * 
-	 * @see docking.widgets.fieldpanel.field.Field#getNumCols(int)
-	 */
 	@Override
 	public int getNumCols(int row) {
 		return 1;
 	}
 
-	/**
-	 * 
-	 * @see docking.widgets.fieldpanel.field.Field#getRow(int)
-	 */
 	@Override
 	public int getRow(int y) {
 		return 0;
 	}
 
-	/**
-	 * 
-	 * @see docking.widgets.fieldpanel.field.Field#getScrollableUnitIncrement(int, int, int)
-	 */
 	@Override
 	public int getScrollableUnitIncrement(int topOfScreen, int direction, int max) {
 		if ((topOfScreen < -heightAbove) || (topOfScreen > height - heightAbove)) {
@@ -174,19 +142,11 @@ public class SimpleImageField implements Field {
 		return -heightAbove - topOfScreen;
 	}
 
-	/**
-	 * 
-	 * @see docking.widgets.fieldpanel.field.Field#getStartX()
-	 */
 	@Override
 	public int getStartX() {
 		return startX;
 	}
 
-	/**
-	 * 
-	 * @see docking.widgets.fieldpanel.field.Field#getWidth()
-	 */
 	@Override
 	public int getWidth() {
 		return width;
@@ -197,28 +157,16 @@ public class SimpleImageField implements Field {
 		return icon.getIconWidth();
 	}
 
-	/**
-	 * 
-	 * @see docking.widgets.fieldpanel.field.Field#getX(int, int)
-	 */
 	@Override
 	public int getX(int row, int col) {
 		return 0;
 	}
 
-	/**
-	 * 
-	 * @see docking.widgets.fieldpanel.field.Field#getY(int)
-	 */
 	@Override
 	public int getY(int row) {
 		return -heightAbove;
 	}
 
-	/**
-	 * 
-	 * @see docking.widgets.fieldpanel.field.Field#isValid(int, int)
-	 */
 	@Override
 	public boolean isValid(int row, int col) {
 		if (row != 0) {
@@ -230,9 +178,6 @@ public class SimpleImageField implements Field {
 		return true;
 	}
 
-	/**
-	 * @see docking.widgets.fieldpanel.field.Field#paint(java.awt.Graphics, docking.widgets.fieldpanel.internal.PaintContext, boolean, docking.widgets.fieldpanel.support.RowColLocation)
-	 */
 	@Override
 	public void paint(JComponent c, Graphics g, PaintContext context,
 			FieldBackgroundColorManager map, RowColLocation cursorLoc, int rowHeight) {
@@ -278,10 +223,6 @@ public class SimpleImageField implements Field {
 		}
 	}
 
-	/**
-	 * 
-	 * @see docking.widgets.fieldpanel.field.Field#isPrimary()
-	 */
 	@Override
 	public boolean isPrimary() {
 		return isPrimary;
@@ -295,33 +236,21 @@ public class SimpleImageField implements Field {
 		isPrimary = state;
 	}
 
-	/**
-	 * @see docking.widgets.fieldpanel.field.Field#getHeightAbove()
-	 */
 	@Override
 	public int getHeightAbove() {
 		return heightAbove;
 	}
 
-	/**
-	 * @see docking.widgets.fieldpanel.field.Field#getHeightBelow()
-	 */
 	@Override
 	public int getHeightBelow() {
 		return height - heightAbove;
 	}
 
-	/**
-	 * @see docking.widgets.fieldpanel.field.Field#rowHeightChanged(int, int)
-	 */
 	@Override
 	public void rowHeightChanged(int newHeightAbove, int newHeightBelow) {
 		// don't care
 	}
 
-	/**
-	 * @see docking.widgets.fieldpanel.field.Field#getText()
-	 */
 	@Override
 	public String getText() {
 		return "";
@@ -332,17 +261,11 @@ public class SimpleImageField implements Field {
 		return "";
 	}
 
-	/**
-	 * @see docking.widgets.fieldpanel.field.Field#textOffsetToScreenLocation(int)
-	 */
 	@Override
 	public RowColLocation textOffsetToScreenLocation(int textOffset) {
 		return new RowColLocation(0, 0);
 	}
 
-	/**
-	 * @see docking.widgets.fieldpanel.field.Field#screenLocationToTextOffset(int, int)
-	 */
 	@Override
 	public int screenLocationToTextOffset(int row, int col) {
 		return 0;

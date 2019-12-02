@@ -34,7 +34,7 @@ public interface DataService {
 	 * location is contained within the current program selection, the entire
 	 * selection is examined.
 	 *
-	 * @param programActionContext contains program, location, and selection information
+	 * @param context the context containing program, location, and selection information
 	 * @return true if create data is allowed, else false.
 	 */
 	public boolean isCreateDataAllowed(ListingActionContext context);
@@ -44,8 +44,8 @@ public interface DataService {
 	 *
 	 * @param dt
 	 *            dataType to create at the location
-	 * @param location
-	 *            program location to create the data type
+	 * @param context
+	 *            the context containing program, location, and selection information
 	 * @param enableConflictHandling
 	 * 				if true, the service may prompt the user to resolve data conflicts
 	 * @return true if the data could be created at the current location

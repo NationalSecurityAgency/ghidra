@@ -45,9 +45,9 @@ import ghidra.util.task.TaskMonitor;
  * program and the modified program being checked into version control.
  * <br>Indirect conflicts include:
  * <ul>
- * <li>bytes & code units</li>
- * <li>bytes & equates</li>
- * <li>code units & equates</li>
+ * <li>bytes and code units</li>
+ * <li>bytes and equates</li>
+ * <li>code units and equates</li>
  * </ul>
  * <br>Important: This class is intended to be used only for a single program
  * version merge. It should be constructed, followed by an autoMerge(), and lastly
@@ -919,10 +919,10 @@ class CodeUnitMerger extends AbstractListingMerger {
 		if (hasNewData) {
 			Data newData = resultListing.getDataAt(minAddress);
 			String[] settingNames = data.getNames();
-			for (int i = 0; i < settingNames.length; i++) {
-				Object obj = data.getValue(settingNames[i]);
+			for (String settingName : settingNames) {
+				Object obj = data.getValue(settingName);
 				if (obj != null) {
-					newData.setValue(settingNames[i], obj);
+					newData.setValue(settingName, obj);
 				}
 			}
 		}

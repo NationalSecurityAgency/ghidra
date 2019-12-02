@@ -1354,8 +1354,7 @@ public class ProgramDiff {
 
 		for (BookmarkType element : types2) {
 			boolean found = false;
-			for (int i = 0; i < list.size(); ++i) {
-				BookmarkType type = list.get(i);
+			for (BookmarkType type : list) {
 				if (element.getTypeString().compareTo(type.getTypeString()) == 0) {
 					found = true;
 					break;
@@ -3202,7 +3201,7 @@ public class ProgramDiff {
 	}
 
 	/** An IteratorWrapper provides a common class for accessing the methods
-	 * for several different iterator types (Iterator, CodeUnitIterator, &
+	 * for several different iterator types (Iterator, CodeUnitIterator, and
 	 * AddressIterator).
 	 */
 	private static class IteratorWrapper {

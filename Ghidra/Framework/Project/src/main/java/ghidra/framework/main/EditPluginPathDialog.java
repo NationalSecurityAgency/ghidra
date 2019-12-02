@@ -109,7 +109,7 @@ class EditPluginPathDialog extends DialogComponentProvider {
 
 	/**
 	 * Define the Main panel for the dialog here.
-	 * @return JPanel the completed <CODE>Main Panel<\CODE>
+	 * @return JPanel the completed <CODE>Main Panel</CODE>
 	 */
 	protected JPanel buildMainPanel() {
 		// give base class the panel it needs to complete its construction

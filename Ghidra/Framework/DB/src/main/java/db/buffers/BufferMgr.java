@@ -1439,7 +1439,7 @@ public class BufferMgr {
 	 * @param changeSet an optional database-backed change set which reflects changes
 	 * made since the last version.
 	 * @param monitor task monitor
-	 * @returns true if snapshot successful, false if
+	 * @return true if snapshot successful, false if
 	 */
 	public boolean takeRecoverySnapshot(DBChangeSet changeSet, TaskMonitor monitor)
 			throws IOException, CancelledException {

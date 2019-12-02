@@ -116,7 +116,6 @@ public class ProgramBuilder {
 	 * Construct program builder using specified language and default compiler spec
 	 * @param name program name
 	 * @param languageName supported language ID (includes all Toy language IDs)
-	 * @param compilerSpecID compiler specification ID (if null default spec will be used)
 	 * @param consumer program consumer (if null this builder will be used as consumer and must be disposed to release program)
 	 * @throws Exception
 	 */
@@ -368,7 +367,7 @@ public class ProgramBuilder {
 	 * <p>
 	 * @param address String containing numeric value, preferably hex encoded: "0x1004000"
 	 * @param byteString String containing 2 digit hex values, separated by ' ' space chars
-	 * or by comma ',' chars: "12 05 ff".  See {@link NumericUtilities#parseBytes(String)}.
+	 * or by comma ',' chars: "12 05 ff".  See {@link NumericUtilities#parseHexLong(String)}.
 	 * @throws Exception
 	 */
 	public void setBytes(String address, String byteString) throws Exception {
@@ -384,7 +383,7 @@ public class ProgramBuilder {
 	 * <p>
 	 * @param address String containing numeric value, preferably hex encoded: "0x1004000"
 	 * @param byteString String containing 2 digit hex values, separated by ' ' space chars
-	 * or by comma ',' chars: "12 05 ff".  See {@link NumericUtilities#parseBytes(String)}.
+	 * or by comma ',' chars: "12 05 ff".  See {@link NumericUtilities#parseHexLong(String)}.
 	 * @param disassemble boolean flag.
 	 * @throws Exception
 	 */

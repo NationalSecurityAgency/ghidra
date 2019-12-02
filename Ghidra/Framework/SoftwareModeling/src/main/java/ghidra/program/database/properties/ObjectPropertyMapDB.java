@@ -246,9 +246,6 @@ public class ObjectPropertyMapDB extends PropertyMapDB implements ObjectProperty
 		return allRecordsUpgraded;
 	}
 
-	/**
-	 * @see ghidra.program.model.util.ObjectPropertyMap#add(ghidra.program.model.address.Address, ghidra.util.Saveable)
-	 */
 	@Override
 	public void add(Address addr, Saveable value) {
 		lock.acquire();
@@ -318,17 +315,11 @@ public class ObjectPropertyMapDB extends PropertyMapDB implements ObjectProperty
 		}
 	}
 
-	/**
-	 * @see ghidra.program.model.util.ObjectPropertyMap#getObjectClass()
-	 */
 	@Override
 	public Class<?> getObjectClass() {
 		return saveableObjectClass;
 	}
 
-	/**
-	 * @see ghidra.program.model.util.ObjectPropertyMap#getObject(ghidra.program.model.address.Address)
-	 */
 	@Override
 	public Object getObject(Address addr) {
 		if (propertyTable == null) {
@@ -381,9 +372,6 @@ public class ObjectPropertyMapDB extends PropertyMapDB implements ObjectProperty
 		return obj;
 	}
 
-	/**
-	 * @see ghidra.program.model.util.PropertyMap#applyValue(ghidra.util.prop.PropertyVisitor, ghidra.program.model.address.Address)
-	 */
 	@Override
 	public void applyValue(PropertyVisitor visitor, Address addr) {
 		Saveable obj = (Saveable) getObject(addr);
@@ -392,9 +380,9 @@ public class ObjectPropertyMapDB extends PropertyMapDB implements ObjectProperty
 		}
 	}
 
+	// @see PropertyMapDB#getPropertyFieldClass() <- doesn't exist
 	/**
 	 * NOTE: Custom schema is utilized.
-	 * @see ghidra.program.database.properties.PropertyMapDB#getPropertyFieldClass()
 	 */
 	protected Class<?> getPropertyFieldClass() {
 		throw new AssertException();

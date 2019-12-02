@@ -98,7 +98,7 @@ public class ProgramMerge implements PropertyVisitor {
 	 * which changes are made.
 	 * The source program from the translator is the origin program for obtaining the changes.
 	 *
-	 * @param addressTranslator converts addresses from the origin program into an
+	 * @param originToResultTranslator converts addresses from the origin program into an
 	 * equivalent address in the destination program.
 	 * @see AddressTranslator
 	 */
@@ -490,13 +490,13 @@ public class ProgramMerge implements PropertyVisitor {
 	// **** CODE UNIT methods ****
 
 	/**
-	 * <CODE>mergeCodeUnits</CODE> merges all instructions &/or data
+	 * <CODE>mergeCodeUnits</CODE> merges all instructions and/or data
 	 * (as indicated) in the specified address set from the origin program.
 	 * It merges them into the result program. When merging
 	 * instructions, the bytes are also replaced if they differ.
 	 * This assumes originToResultTranslator maps address spaces and does
 	 * not do fine-grained mapping of addresses.
-	 * @param addrSet the addresses to be merged.
+	 * @param originAddressSet the addresses to be merged.
 	 * The addresses in this set should be derived from the origin program.
 	 * @param byteDiffs address set indicating addresses where the bytes differ
 	 * between the result program and the origin program.
@@ -1141,13 +1141,13 @@ public class ProgramMerge implements PropertyVisitor {
 			originToResultMap.put(origRef, resultRef);
 		}
 		// Remove references we don't need any more or those that are there but not the same.
-		for (int i = 0; i < resultRefs.length; i++) {
+		for (Reference resultRef : resultRefs) {
 			// Leave fallthroughs as they are, so the code unit merge can handle them.
-			if (resultRefs[i].getReferenceType().isFallthrough()) {
+			if (resultRef.getReferenceType().isFallthrough()) {
 				continue;
 			}
-			if (!originToResultMap.containsKey(resultRefs[i])) {
-				resultRM.delete(resultRefs[i]);
+			if (!originToResultMap.containsKey(resultRef)) {
+				resultRM.delete(resultRef);
 			}
 		}
 		// Add the references that aren't there yet and those that weren't the same.
@@ -1260,9 +1260,9 @@ public class ProgramMerge implements PropertyVisitor {
 			resultsToKeep.put(originRef, resultRef); // resultRef may be null
 		}
 		// Remove references we don't need any more or those that are there but not the same.
-		for (int i = 0; i < resultRefs.length; i++) {
-			if (!resultsToKeep.containsValue(resultRefs[i])) {
-				resultRM.delete(resultRefs[i]);
+		for (Reference resultRef : resultRefs) {
+			if (!resultsToKeep.containsValue(resultRef)) {
+				resultRM.delete(resultRef);
 			}
 		}
 		// Add the references that aren't there yet and those that weren't the same.
@@ -1610,7 +1610,7 @@ public class ProgramMerge implements PropertyVisitor {
 	 * type in program1 with the comment in program2 at the specified address.
 	 * @param commentType comment type to merge (from CodeUnit class).
 	 * <br>EOL_COMMENT, PRE_COMMENT, POST_COMMENT, REPEATABLE_COMMENT, OR PLATE_COMMENT.
-	 * @param addr the address
+	 * @param originAddress the address
 	 * This address should be derived from the origin program.
 	 */
 	public void mergeComments(int commentType, Address originAddress) {
@@ -1626,7 +1626,7 @@ public class ProgramMerge implements PropertyVisitor {
 	 * type in program1 with the comment in program2 at the specified address.
 	 * @param commentType comment type to replace (from CodeUnit class).
 	 * <br>EOL_COMMENT, PRE_COMMENT, POST_COMMENT, REPEATABLE_COMMENT, OR PLATE_COMMENT.
-	 * @param addr the address
+	 * @param originAddress the address
 	 * This address should be derived from the origin program.
 	 */
 	public void replaceComment(int commentType, Address originAddress) {
@@ -2271,9 +2271,8 @@ public class ProgramMerge implements PropertyVisitor {
 	 * <CODE>mergeFunctionReturn</CODE> replaces the return type/storage of the
 	 * function in program1 with the return type/storage of the function in program2
 	 * at the specified entry point address.
-	 * @param entry the entry point address of the function.
+	 * @param entry2 the entry point address of the function.
 	 * This address should be derived from the origin program.
-	 * @param monitor the task monitor for notifying the user of this merge's progress.
 	 */
 	public void mergeFunctionReturn(Address entry2) {
 		Address entry = originToResultTranslator.getAddress(entry2);
@@ -2361,11 +2360,9 @@ public class ProgramMerge implements PropertyVisitor {
 	 * <CODE>mergeFunctionName</CODE> replaces the name of the
 	 * function in program1 with the name of the function in program2
 	 * at the specified entry point address.
-	 * @param entry the entry point address of the function.
+	 * @param entry2 the entry point address of the function.
 	 * This address should be derived from the origin program.
 	 * @param monitor the task monitor for notifying the user of this merge's progress.
-	 * @throws InvalidInputException
-	 * @throws DuplicateNameException
 	 */
 	public void mergeFunctionName(Address entry2, TaskMonitor monitor) {
 		Address entry = originToResultTranslator.getAddress(entry2);
@@ -3423,12 +3420,11 @@ public class ProgramMerge implements PropertyVisitor {
 	/**
 	 * <CODE>replaceFunctionVariable</CODE> replaces the name of the indicated
 	 * function variable in program1 with that from the origin program.
-	 * @param entry the entry point address of the function to modify.
+	 * @param originEntryPoint the entry point address of the function to modify.
 	 * This address should be derived from program1.
 	 * @param var a variable that is equivalent to the one in program1 to be replaced.
 	 * The variable passed here could be from another program.
 	 * @param monitor the task monitor for notifying the user of progress.
-	 * @throws DuplicateNameException
 	 */
 	public void replaceFunctionVariable(Address originEntryPoint, Variable var,
 			TaskMonitor monitor) {
@@ -3471,12 +3467,11 @@ public class ProgramMerge implements PropertyVisitor {
 	/**
 	 * <CODE>replaceFunctionVariables</CODE> replaces the
 	 * function variables/parameters in program1 with that from the origin program.
-	 * @param entry the entry point address of the function to modify.
+	 * @param originEntryPoint the entry point address of the function to modify.
 	 * This address should be derived from program1.
-	 * @param var a variable that is equivalent to the one in program1 to be replaced.
-	 * The variable passed here could be from another program.
+	 * @param varList the list of variables to replace.
 	 * @param monitor the task monitor for notifying the user of progress.
-	 * @throws DuplicateNameException
+	 * @throws CancelledException if the user canceled the operation via the task monitor.
 	 */
 	public void replaceVariables(Address originEntryPoint, List<Variable> varList,
 			TaskMonitor monitor) throws CancelledException {

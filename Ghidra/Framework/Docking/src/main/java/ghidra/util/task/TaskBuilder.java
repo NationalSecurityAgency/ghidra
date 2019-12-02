@@ -33,7 +33,7 @@ import util.CollectionUtils;
  * the {@link Task} interface, which means less boiler-plate code.
  * 
  * <P>An example of usage:
- * <pre>
+ * <pre>{@literal
  * 		MonitoredRunnable r = 
  *			monitor -> doWork(parameter, monitor);
  *		new TaskBuilder("Task Title", r)
@@ -41,18 +41,18 @@ import util.CollectionUtils;
  *			.setCanCancel(true)
  *			.setStatusTextAlignment(SwingConstants.LEADING)
  *			.launchModal();		
- * </pre>
+ * }</pre>
  * 
  * Or,
  * 
- * <pre>
+ * <pre>{@literal
  *	    TaskBuilder.withRunnable(monitor -> doWork(parameter, monitor))
  *			.setTitle("Task Title")
  *			.setHasProgress(true)
  *			.setCanCancel(true)
  *			.setStatusTextAlignment(SwingConstants.LEADING)
  *			.launchModal();		
- * </pre>
+ * }</pre>
  * 
  *  Or,
  *  

@@ -60,7 +60,6 @@ public class DijkstraShortestPathsAlgorithm<V, E extends GEdge<V>> {
 	 * likely encounter a {@link ClassCastException}.
 	 * 
 	 * @param graph the graph
-	 * @param maxDistance the maximum distance, or null for no maximum
 	 */
 	public DijkstraShortestPathsAlgorithm(GImplicitDirectedGraph<V, E> graph) {
 		this.graph = graph;
@@ -87,7 +86,6 @@ public class DijkstraShortestPathsAlgorithm<V, E extends GEdge<V>> {
 	 * Use Dijstra's algorithm on the given graph with a custom edge weight metric
 	 * 
 	 * @param graph the graph
-	 * @param maxDistance the maximum distance, or null for no maximum
 	 * @param metric the function to compute the weight of an edge
 	 */
 	public DijkstraShortestPathsAlgorithm(GImplicitDirectedGraph<V, E> graph,

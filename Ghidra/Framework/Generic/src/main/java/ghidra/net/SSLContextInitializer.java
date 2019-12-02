@@ -45,7 +45,7 @@ public class SSLContextInitializer implements ModuleInitializer {
 	/**
 	 * Initialize default SSLContext with optional reset.
 	 * This method is primarily intended for testing.
-	 * @param if true a complete reset will be done to force use of
+	 * @param reset if true a complete reset will be done to force use of
 	 * any new certificate or keystores previously used.
 	 * @return true if successful, else false (see logged error)
 	 */

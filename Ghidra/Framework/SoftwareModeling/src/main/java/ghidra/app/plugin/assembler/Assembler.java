@@ -39,7 +39,7 @@ public interface Assembler {
 	 * implement this method without a program binding. In that case, the returned instruction
 	 * block will refer to pseudo instructions.
 	 * 
-	 * @note There must be an active transaction on the bound program for this method to succeed.
+	 * NOTE: There must be an active transaction on the bound program for this method to succeed.
 	 * 
 	 * @param at the location where the resulting instructions should be placed
 	 * @param listing a new-line separated or array sequence of instructions
@@ -136,7 +136,7 @@ public interface Assembler {
 	/**
 	 * Assemble a line instruction at the given address.
 	 * 
-	 * This method works like {@link #resolveLine(Address, String, AssemblyPatternBlock), except
+	 * This method works like {@link #resolveLine(Address, String, AssemblyPatternBlock)}, except
 	 * that it derives the context using {@link #getContextAt(Address)}.
 	 * @param at the location of the start of the instruction
 	 * @param line the textual assembly code
@@ -149,7 +149,7 @@ public interface Assembler {
 	/**
 	 * Assemble a line instruction at the given address, assuming the given context.
 	 * 
-	 * This method works like {@link #assembleLine(Address,String,AssemblyPatternBlock}, except
+	 * This method works like {@link #assembleLine(Address, String, AssemblyPatternBlock)}, except
 	 * that it returns all possible resolutions for the parse trees that pass the
 	 * {@link AssemblySelector}.
 	 * @param at the location of the start of the instruction

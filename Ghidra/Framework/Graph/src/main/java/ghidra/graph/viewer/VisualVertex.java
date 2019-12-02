@@ -135,7 +135,7 @@ public interface VisualVertex extends GVertex {
 	 * Set the alpha, which determines how much of the vertex is visible/see through.  0 is 
 	 * completely transparent.  This attribute allows transitional for animations.
 	 * 
-	 * @param the alpha value
+	 * @param alpha the alpha value
 	 */
 	public void setAlpha(double alpha);
 

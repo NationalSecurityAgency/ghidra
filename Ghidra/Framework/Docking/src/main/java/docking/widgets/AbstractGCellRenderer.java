@@ -34,7 +34,7 @@ public abstract class AbstractGCellRenderer extends GDHtmlLabel {
 
 	private static final Color ALTERNATE_BACKGROUND_COLOR = new Color(237, 243, 254);
 
-	/** Allows the user to disable alternating row colors on JLists & JTables */
+	/** Allows the user to disable alternating row colors on JLists and JTables */
 	private static final String DISABLE_ALTERNATING_ROW_COLORS_PROPERTY =
 		"disable.alternating.row.colors";
 

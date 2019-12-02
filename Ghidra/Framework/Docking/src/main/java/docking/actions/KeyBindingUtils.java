@@ -633,7 +633,7 @@ public class KeyBindingUtils {
 
 	/**
 	 * Convert the toString() form of the keyStroke.
-	 * <br>In Java 1.4.2 & earlier, Ctrl-M is returned as "keyCode CtrlM-P"
+	 * <br>In Java 1.4.2 and earlier, Ctrl-M is returned as "keyCode CtrlM-P"
 	 * and we want it to look like: "Ctrl-M".
 	 * <br>In Java 1.5.0, Ctrl-M is returned as "ctrl pressed M"
 	 * and we want it to look like: "Ctrl-M".

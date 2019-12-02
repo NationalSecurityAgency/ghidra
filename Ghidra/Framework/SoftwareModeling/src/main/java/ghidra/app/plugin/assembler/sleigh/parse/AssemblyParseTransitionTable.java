@@ -37,7 +37,7 @@ public class AssemblyParseTransitionTable {
 	 * @param newState the destination state
 	 * @return the previous value for newState
 	 * 
-	 * @note Generally, if this return non-null, something is probably wrong with your LR(0)
+	 * NOTE: Generally, if this return non-null, something is probably wrong with your LR(0)
 	 *       machine generator
 	 */
 	public Integer put(int fromState, AssemblySymbol next, int newState) {

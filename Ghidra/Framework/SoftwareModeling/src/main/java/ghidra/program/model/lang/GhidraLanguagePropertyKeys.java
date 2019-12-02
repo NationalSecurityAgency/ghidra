@@ -92,9 +92,9 @@ public final class GhidraLanguagePropertyKeys {
 	/**
 	 * PCODE_INJECT_LIBRARY_CLASS indicates the classname of a PcodeInjectLibrary implementation
 	 * that is used to generate p-code injection payloads which can replace either CALLs or CALLOTHERs
-	 * during any form of p-code analysis.  The injections are primarily provided by <callfixup> and
-	 * <callotherfixup> tags in the compiler spec, but this provides a hook point for providing other means of
-	 * injection.
+	 * during any form of p-code analysis.  The injections are primarily provided by {@code <callfixup>}
+	 * and {@code <callotherfixup>} tags in the compiler spec, but this provides a hook point for
+	 * providing other means of injection.
 	 */
 	public static final String PCODE_INJECT_LIBRARY_CLASS = "pcodeInjectLibraryClass";
 

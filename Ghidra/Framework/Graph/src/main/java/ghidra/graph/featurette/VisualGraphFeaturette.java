@@ -50,7 +50,7 @@ public interface VisualGraphFeaturette<V extends VisualVertex,
 	 * Called when the client wishes to restore configuration state.  Features can read state
 	 * previously saved from a call to {@link #writeConfigState(SaveState)}.
 	 * 
-	 * @param state the container for state information
+	 * @param saveState the container for state information
 	 */
 	public void readConfigState(SaveState saveState);
 

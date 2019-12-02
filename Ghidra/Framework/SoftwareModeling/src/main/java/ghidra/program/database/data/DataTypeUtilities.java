@@ -242,7 +242,7 @@ public class DataTypeUtilities {
 	 * away pointers and arrays only.  A null will be returned for a
 	 * default pointer.
 	 *
-	 * @param baseDataType the data type whose base data type is to be determined.
+	 * @param dt the data type whose base data type is to be determined.
 	 * @return the base data type.
 	 */
 	public static DataType getBaseDataType(DataType dt) {
@@ -376,7 +376,6 @@ public class DataTypeUtilities {
 	 * NOTE: name parsing assumes :: delimiter and can be thrown off if name include template
 	 * information which could contain namespaces.
 	 * @param dataTypeManager data type manager
-	 * @param namespace namespace associated with dtName (null indicates no namespace constraint)
 	 * @param dtNameWithNamespace name of data type qualified with namespace (e.g., ns1::ns2::dtname)
 	 * @param classConstraint optional data type interface constraint (e.g., Structure), or null
 	 * @return best matching data type

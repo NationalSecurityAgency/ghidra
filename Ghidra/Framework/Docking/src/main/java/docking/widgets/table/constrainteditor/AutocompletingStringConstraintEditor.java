@@ -34,7 +34,7 @@ import ghidra.util.HTMLUtilities;
 
 /**
  * An editor that provides suggestions of values that, according to
- * {@linkplain StringMatchStrategy}, match a user-supplied
+ * {@linkplain StringColumnConstraint}, match a user-supplied
  * pattern.
  */
 public class AutocompletingStringConstraintEditor extends DataLoadingConstraintEditor<String> {

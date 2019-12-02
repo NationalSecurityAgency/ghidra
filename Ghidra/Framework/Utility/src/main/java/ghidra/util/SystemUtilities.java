@@ -203,9 +203,9 @@ public class SystemUtilities {
 	 * {@link SwingUtilities#invokeAndWait(Runnable)}.  Use this method when you need to get
 	 * a value while being on the Swing thread.
 	 *
-	 * <pre>
+	 * <pre>{@literal
 	 * 		String value = runSwingNow(() -> label.getText());
-	 * </pre>
+	 * }</pre>
 	 *
 	 * @param s the supplier that will be called on the Swing thread
 	 * @return the result of the supplier

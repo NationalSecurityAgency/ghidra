@@ -17,7 +17,7 @@ package ghidra.framework.main.logviewer.event;
 
 /**
  * Custom events to be used in conjunction with the {@link FVEventListener} module. Users should
- * construct an event, then fire it using {@link FVEventListener#sendEvent(FVEvent)}.
+ * construct an event, then fire it using {@link FVEventListener#send(FVEvent)}.
  * 
  * Two items are passed along with each event:
  * 	- The {@link #eventType} attribute specifies the event that is being fired.

@@ -26,7 +26,7 @@ public class StringEndsWithColumnConstraint extends StringColumnConstraint {
 
 	/**
 	 * Constructor
-	 * @param spec the string to use to create an "ends with" pattern.
+	 * @param patternString the string to use to create an "ends with" pattern.
 	 */
 	public StringEndsWithColumnConstraint(String patternString) {
 		super(patternString);

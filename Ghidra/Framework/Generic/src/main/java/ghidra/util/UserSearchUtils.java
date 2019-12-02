@@ -73,7 +73,7 @@ public class UserSearchUtils {
 	 * Create a regular expression from the given input. <b>Note:</b> the regular expression
 	 * created by this method is not a pure regular expression.  More specifically, many
 	 * regular expression characters passed to this method will be escaped
-	 * (see {@link #escapeRegexCharacters(String, boolean, boolean)}.
+	 * (see {@link #escapeAllRegexCharacters(String)}.
 	 * <p>
 	 * Also, globbing characters
 	 * <b><u>will</u></b> be changed from a regular expression meaning to a
@@ -96,7 +96,7 @@ public class UserSearchUtils {
 	 * @param caseSensitive
 	 *            true if the regular expression is case sensitive
 	 * @return Pattern the compiled regular expression
-	 * @throws PatternSyntaxExpression
+	 * @throws java.util.regex.PatternSyntaxException
 	 *             if the input could be compiled
 	 */
 	public static Pattern createSearchPattern(String input, boolean caseSensitive) {
@@ -122,7 +122,7 @@ public class UserSearchUtils {
 	 * @param text
 	 *            search string
 	 * @return Pattern the compiled regular expression
-	 * @throws PatternSyntaxExpression
+	 * @throws java.util.regex.PatternSyntaxException
 	 *             if the input could be compiled
 	 */
 	public static Pattern createLiteralSearchPattern(String text) {

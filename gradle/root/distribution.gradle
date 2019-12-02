@@ -56,8 +56,10 @@ task createJavadocs(type: Javadoc, description: 'Generate javadocs for all proje
 	classpath =  rootProject.ext.ghidraPath
 	
 	// If we don't exclude module directories, the javascript search feature doesn't work
-	options.addBooleanOption("-no-module-directories", true)
-	
+	if (JavaVersion.current().isJava11()) {
+		options.addBooleanOption("-no-module-directories", true)
+	}
+
 	// Some internal packages are not public and need to be exported.
     options.addMultilineStringsOption("-add-exports").setValue(["java.desktop/sun.awt.image=ALL-UNNAMED", 
     															"java.desktop/sun.awt=ALL-UNNAMED", 
@@ -108,6 +110,10 @@ task createJsondocs(type: Javadoc, description: 'Generate JSON docs for all proj
 	// Generate at package level because user may try to get help directly on an object they have 
 	// rather than its public interface.
 	options.addBooleanOption("package", true)
+
+	// Newer versions of gradle set this to true by default.
+	// The JsonDoclet doesn't have the -notimestamp option so ensure it isn't set.
+	options.setNoTimestamp(false)
 		
 	// Some internal packages are not public and need to be exported. 
     options.addMultilineStringsOption("-add-exports").setValue(["java.desktop/sun.awt.image=ALL-UNNAMED", 

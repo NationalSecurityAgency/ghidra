@@ -533,15 +533,13 @@ public class LocalManagedBufferFile extends LocalBufferFile implements ManagedBu
 	}
 
 	/**
-	 * Create a new buffer file version (used for checkin) 
-	 * @param srcFile must be a revision of destFile since change data from
-	 * srcFile will control the actual modifications made to destFile.
+	 * Create a new buffer file version (used for check-in) 
 	 * @param destFile must be an versioned file representing an earlier version
 	 * of srcFile.
-	 * @param fileComment
-	 * @param monitor
-	 * @throws CancelledException
-	 * @throws IOException
+	 * @param fileComment a comment for the new version.
+	 * @param monitor the current monitor.
+	 * @throws CancelledException if the operation is canceled.
+	 * @throws IOException if the file is in an unexpected state.
 	 */
 	public void createNewVersion(ManagedBufferFile destFile, String fileComment,
 			TaskMonitor monitor) throws CancelledException, IOException {
@@ -568,13 +566,13 @@ public class LocalManagedBufferFile extends LocalBufferFile implements ManagedBu
 
 			changeDataFile = getNextChangeDataFile(true);
 			if (changeDataFile == null) {
-				throw new IOException("Unexpected state for checkin file");
+				throw new IOException("Unexpected state for check-in file");
 			}
 
 			BufferFile nextChangeDataFile = getNextChangeDataFile(false);
 			if (nextChangeDataFile != null) {
 				nextChangeDataFile.dispose();
-				throw new IOException("Unexpected state for checkin file");
+				throw new IOException("Unexpected state for check-in file");
 			}
 
 			// Create new version

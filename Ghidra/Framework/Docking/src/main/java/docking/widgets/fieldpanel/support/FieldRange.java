@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -82,9 +81,8 @@ public class FieldRange implements Comparable<FieldRange> {
 
 	/**
 	 * checks if the given location is contained in the range.
-	 * @param row
-	 * @param column
-	 * @return
+	 * @param loc the field location.
+	 * @return true if the field range contains the specified location.
 	 */
 	public boolean contains(FieldLocation loc) {
 		return (loc.compareTo(start) >= 0) && (loc.compareTo(end) < 0);

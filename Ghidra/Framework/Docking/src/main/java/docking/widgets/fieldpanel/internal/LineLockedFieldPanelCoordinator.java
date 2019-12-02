@@ -113,9 +113,6 @@ public class LineLockedFieldPanelCoordinator extends FieldPanelCoordinator {
 		super.remove(fp);
 	}
 
-	/**
-	 * @see docking.widgets.fieldpanel.listener.ViewListener#viewChanged(docking.widgets.fieldpanel.FieldPanel, int, int)
-	 */
 	@Override
 	public void viewChanged(FieldPanel fp, BigInteger index, int xPos, int yPos) {
 		if (valuesChanging)

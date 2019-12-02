@@ -71,10 +71,11 @@ public class XmlTestHelper {
 	/**
 	 * Read an XML file as a resource.
 	 *
-	 * @param package
+	 * @param pkg
 	 *            where resource resides
 	 * @param name
 	 *            name of the resource that is in the given package
+	 * @throws IOException thrown if there was a problem accessing the xml resource.
 	 */
 	public void loadXmlResource(Package pkg, String name) throws IOException {
 		String pkgName = pkg.getName();
@@ -200,12 +201,13 @@ public class XmlTestHelper {
 	}
 
 	/**
-	 * @param string
-	 * @return
+	 * @param programName the program name
+	 * @return the program
 	 * @throws VersionException
 	 * @throws InvalidNameException
 	 * @throws DuplicateNameException
 	 * @throws CancelledException
+	 * @throws FileNotFoundException if the file is not found
 	 */
 	public Program loadResourceProgram(String programName) throws IOException, CancelledException,
 			DuplicateNameException, InvalidNameException, VersionException {

@@ -191,14 +191,8 @@ public class ExternalFunctionMerger extends AbstractFunctionMerger implements Li
 	/**
 	 * Manages changes and conflicts for externals between the latest versioned
 	 * program and the modified program being checked into version control.
-	 * @param mergeManager the top level merge manager for merging a program version.
-	 * @param resultPgm the program to be updated with the result of the merge.
-	 * This is the program that will actually get checked in.
-	 * @param originalPgm the program that was checked out.
-	 * @param latestPgm the latest checked-in version of the program.
-	 * @param myPgm the program requesting to be checked in.
-	 * @param latestChanges the address set of changes between original and latest versioned program.
-	 * @param myChanges the address set of changes between original and my modified program.
+	 * @param listingMergeManager the top level merge manager for merging a program version.
+	 * @param showListingPanel true to show the listing panel.
 	 */
 	public ExternalFunctionMerger(ListingMergeManager listingMergeManager,
 			boolean showListingPanel) {

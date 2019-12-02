@@ -20,7 +20,7 @@ import ghidra.util.xml.SpecXmlUtils;
 import ghidra.xml.XmlElement;
 
 /**
- * Block representing and '&&' or '||' control flow path within a conditional expression
+ * Block representing and '&amp;&amp;' or '||' control flow path within a conditional expression
  *     possible multiple incoming edges
  *     2 outgoing edges,  one for true control flow, one for false control flow
  *     

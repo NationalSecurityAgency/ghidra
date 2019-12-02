@@ -240,7 +240,7 @@ public class Scalar implements Comparable<Scalar> {
 	 * with 0 being the least significant bit.</p>
 	 * @param n the bit to clear in this scalar.
 	 *
-	 * @throws  IndexOutOfBoundsException if n >= bitLength().
+	 * @throws  IndexOutOfBoundsException if n &gt;= bitLength().
 	 */
 	public Scalar clearBit(int n) {
 		if (n < 0 || n > bitLength - 1) {

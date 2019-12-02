@@ -353,7 +353,7 @@ public final class FileUtilities {
 	 * <p>
 	 * Throws an {@link IOException} if there is any problem while creating the directory.
 	 * <p>
-	 * Does not create any missing parent directories.  See {@link #checkMkdirs(File)} instead.
+	 * Does not create any missing parent directories.  See {@link #checkedMkdirs(File)} instead.
 	 * <p>
 	 * Takes into account race conditions with external threads/processes
 	 * creating the same directory at the same time.
@@ -499,7 +499,10 @@ public final class FileUtilities {
 	 *
 	 * @param originalDir The directory from which to extract contents
 	 * @param copyDir The directory in which the extracted contents will be placed
-	 * @param fileFilte a filter to apply against the directory's contents
+	 * @param filter a filter to apply against the directory's contents
+	 * @param monitor the task monitor
+	 * @throws IOException if there was a problem accessing the files
+	 * @throws CancelledException if the copy is cancelled
 	 */
 	public final static int copyDir(File originalDir, File copyDir, FileFilter filter,
 			TaskMonitor monitor) throws IOException, CancelledException {
@@ -608,7 +611,7 @@ public final class FileUtilities {
 	/**
 	 * Copy the contents of the specified fromFile to the out stream.
 	 * @param fromFile file data source
-	 * @param toFile destination stream
+	 * @param out destination stream
 	 * @param monitor if specified the progress will be reset and will advance to
 	 * 100% when the copy is complete.
 	  * @throws IOException thrown if there was a problem accessing the files
@@ -714,9 +717,9 @@ public final class FileUtilities {
 	 * <p>
 	 * The file is treated as UTF-8 encoded.
 	 * <p>
-	 * @param is the input stream from which to read
+	 * @param url the input stream from which to read
 	 * @return a list of file lines
-	 * @throws IOException
+	 * @throws IOException thrown if there was a problem accessing the files
 	 */
 	public static List<String> getLines(URL url) throws IOException {
 
@@ -1039,8 +1042,8 @@ public final class FileUtilities {
 	 * no case sensitivity checks are done and the original specified File param is returned
 	 * unchanged.
 	 * <p>
-	 * (Put another way: symlink "FILE1" -> "../path/file2", no case sensitive enforcing can be done,
-	 * but symlink "FILE1" -> "../path/file1" will be enforced by this method.)
+	 * (Put another way: symlink "FILE1" -&gt; "../path/file2", no case sensitive enforcing can be done,
+	 * but symlink "FILE1" -&gt; "../path/file1" will be enforced by this method.)
 	 * <p>
 	 * Querying a filepath that does not exist will result in a 'success' and the caller will
 	 * receive the non-existent File instance back.

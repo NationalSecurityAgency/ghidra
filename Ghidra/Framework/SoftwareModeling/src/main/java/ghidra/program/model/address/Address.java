@@ -73,8 +73,9 @@ public interface Address extends Comparable<Address> {
 	 * is specified.
 	 * @param offset the offset for the new address.
 	 * @param isAddressableWordOffset if true the specified offset is an addressable unit/word offset,
-	 * otherwise offset is a byte offset.  See {@link #getAddressableUnitSize()}
-	 * to understand the distinction (i.e., wordOffset = byteOffset * addressableUnitSize).
+	 * otherwise offset is a byte offset.  See {@link ghidra.program.model.address.AddressSpace#getAddressableUnitSize()
+	 * AddressSpace#getAddressableUnitSize()} to understand the distinction
+	 * (i.e., wordOffset = byteOffset * addressableUnitSize).
 	 * @return address with given offset
 	 * @throws AddressOutOfBoundsException if the offset is less than 0 or greater
 	 * than the max offset allowed for this space.
@@ -90,8 +91,9 @@ public interface Address extends Comparable<Address> {
 	 * is specified.
 	 * @param offset the offset for the new address.
 	 * @param isAddressableWordOffset if true the specified offset is an addressable unit/word offset,
-	 * otherwise offset is a byte offset.  See {@link #getAddressableUnitSize()}
-	 * to understand the distinction (i.e., wordOffset = byteOffset * addressableUnitSize).
+	 * otherwise offset is a byte offset.  See {@link ghidra.program.model.address.AddressSpace#getAddressableUnitSize()
+	 * AddressSpace#getAddressableUnitSize()} to understand the distinction
+	 * (i.e., wordOffset = byteOffset * addressableUnitSize).
 	 * @return address with given byte offset truncated to the physical space size
 	 */
 	Address getNewTruncatedAddress(long offset, boolean isAddressableWordOffset);
@@ -387,10 +389,11 @@ public interface Address extends Comparable<Address> {
 
 	/**
 	 * Returns true if this address represents a location in register space.
-	 * @depricate use of this method is highly discouraged since since registers
+	 * @deprecated use of this method is highly discouraged since since registers
 	 * may also exist in a memory space. The address for such registers 
 	 * would return false from this method. 
 	 */
+	@Deprecated
 	public boolean isRegisterAddress();
 
 	/**

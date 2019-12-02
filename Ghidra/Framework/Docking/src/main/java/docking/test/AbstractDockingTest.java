@@ -1564,7 +1564,7 @@ public abstract class AbstractDockingTest extends AbstractGenericTest {
 	 * <br>ABCDEFGHIJKLMNOPQRSTUVWXYZ
 	 * <br>abcdefghijklmnopqrstuvwxyz
 	 * <br>`1234567890-=[]\;',./
-	 * <br>~!@#$%^&*()_+{}|:"&lt&gt?
+	 * <br>{@literal ~!@#$%^&*()_+{}|:"<>?}
 	 * <br>
 	 * <br>It also handles '\n', '\t', and '\b'.
 	 *
@@ -1588,7 +1588,7 @@ public abstract class AbstractDockingTest extends AbstractGenericTest {
 	 * <br>ABCDEFGHIJKLMNOPQRSTUVWXYZ
 	 * <br>abcdefghijklmnopqrstuvwxyz
 	 * <br>`1234567890-=[]\;',./
-	 * <br>~!@#$%^&*()_+{}|:"&lt&gt?
+	 * <br>{@literal ~!@#$%^&*()_+{}|:"<>?}
 	 * <br>
 	 * <br>It also handles '\n', '\t', and '\b'.
 	 *

@@ -49,7 +49,9 @@ public class OptionsEditorPanel extends JPanel implements OptionsEditor {
 	/**
 	 * Creates a panel for editing the given options.
 	 * @param title The title of the options panel
-	 * @param optionsList The list of options to display
+	 * @param options The options to display
+	 * @param optionNames The list of option names
+	 * @param editorStateFactory The EditorStateFactory
 	 */
 	public OptionsEditorPanel(String title, Options options, List<String> optionNames,
 			EditorStateFactory editorStateFactory) {
@@ -118,10 +120,6 @@ public class OptionsEditorPanel extends JPanel implements OptionsEditor {
 // OptionsEditor Interface Methods
 //==================================================================================================
 
-	/**
-	 * @throws InvalidInputException 
-	 * @see ghidra.framework.options.OptionsEditor#apply()
-	 */
 	@Override
 	public void apply() throws InvalidInputException {
 		for (EditorState state : editorInfoList) {
@@ -129,9 +127,6 @@ public class OptionsEditorPanel extends JPanel implements OptionsEditor {
 		}
 	}
 
-	/**
-	 * @see ghidra.framework.options.OptionsEditor#cancel()
-	 */
 	@Override
 	public void cancel() {
 		// nothing to do
@@ -142,17 +137,11 @@ public class OptionsEditorPanel extends JPanel implements OptionsEditor {
 		// nothing to do, as this component is reloaded when options are changed
 	}
 
-	/**
-	 * @see ghidra.framework.options.OptionsEditor#getEditorComponent()
-	 */
 	@Override
 	public JComponent getEditorComponent(Options o, EditorStateFactory factory) {
 		return this;
 	}
 
-	/**
-	 * @see OptionsEditor#setOptionsPropertyChangeListener(PropertyChangeListener)
-	 */
 	@Override
 	public void setOptionsPropertyChangeListener(PropertyChangeListener listener) {
 		this.propertyChangeListener = listener;

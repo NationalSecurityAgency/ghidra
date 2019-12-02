@@ -578,10 +578,10 @@ public class FieldPanel extends JPanel
 	}
 
 	/**
-	 * Add a new hover service to be managed.
+	 * Add a new hover provider to be managed.
 	 *
-	 * @param hoverService
-	 *            the new hover service to be managed.
+	 * @param hoverProvider
+	 *            the new hover provider to be managed.
 	 */
 	public void setHoverProvider(HoverProvider hoverProvider) {
 		hoverHandler.setHoverProvider(hoverProvider);
@@ -864,7 +864,7 @@ public class FieldPanel extends JPanel
 	/**
 	 * Scrolls the display to show the layout specified by index at the vertical
 	 * position specified by yPos. Generally, the index will be layout at the
-	 * top of the screen and the yPos will be <= 0, meaning the layout may be
+	 * top of the screen and the yPos will be &lt;= 0, meaning the layout may be
 	 * partially off the top of the screen.
 	 *
 	 * @param index

@@ -300,7 +300,7 @@ public class HighFunctionDBUtil {
 	 * database which conflict with this variable and return
 	 * one of them for re-use.  The returned variable still
 	 * exists within the function at the same first-use-offset.
-	 * @returns existing variable with identical storage and first-use offset or null
+	 * @return existing variable with identical storage and first-use offset or null
 	 */
 	private static Variable clearConflictingLocalVariables(HighLocal local) {
 
@@ -593,9 +593,9 @@ public class HighFunctionDBUtil {
 
 	/**
 	 * Commit an override of a calls prototype to the database
-	 * @param func is the Function whose call is being overriden
+	 * @param function is the Function whose call is being overriden
 	 * @param callsite is the address of the call
-	 * @param function signature override
+	 * @param sig signature override
 	 * @throws InvalidInputException
 	 * @throws DuplicateNameException
 	 */

@@ -48,45 +48,26 @@ public class ShiftedAddressDataType extends BuiltIn {
 		super(null, "ShiftedAddress", dtm);
 	}
 
-	/**
-	 * 
-	 * @see ghidra.program.model.data.DataType#getMnemonic(Settings)
-	 */
 	@Override
 	public String getMnemonic(Settings settings) {
 		return "addr";
 	}
 
-	/**
-	 * 
-	 * @see ghidra.program.model.data.DataType#getLength()
-	 */
 	@Override
 	public int getLength() {
 		return getDataOrganization().getPointerSize();
 	}
 
-	/**
-	 * @see ghidra.program.model.data.DataType#isDynamicallySized()
-	 */
 	@Override
 	public boolean isDynamicallySized() {
 		return true;
 	}
 
-	/**
-	 * 
-	 * @see ghidra.program.model.data.DataType#getDescription()
-	 */
 	@Override
 	public String getDescription() {
 		return "shifted address (as specified by compiler spec)";
 	}
 
-	/**
-	 * 
-	 * @see ghidra.program.model.data.DataType#getValue(ghidra.program.model.mem.MemBuffer, ghidra.program.model.lang.ProcessorContext, ghidra.docking.settings.Settings, int)
-	 */
 	@Override
 	public Object getValue(MemBuffer buf, Settings settings, int length) {
 		DataOrganization dataOrg = getDataOrganization();
@@ -166,18 +147,11 @@ public class ShiftedAddressDataType extends BuiltIn {
 		return "??";
 	}
 
-	/**
-	 * 
-	 * @see ghidra.program.model.data.DataType#getRepresentation(MemBuffer, ProcessorContext, Settings, int)
-	 */
 	@Override
 	public String getRepresentation(MemBuffer buf, Settings settings, int length) {
 		return getString(buf, settings);
 	}
 
-	/**
-	 * @see ghidra.program.model.data.BuiltIn#getBuiltInSettingsDefinitions()
-	 */
 	@Override
 	protected SettingsDefinition[] getBuiltInSettingsDefinitions() {
 		return SETTINGS_DEFS;

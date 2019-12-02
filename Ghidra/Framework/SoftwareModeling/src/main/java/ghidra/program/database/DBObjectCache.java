@@ -79,7 +79,7 @@ public class DBObjectCache<T extends DatabaseObject> {
 	 * record query during a possible object refresh.  To benefit from the record the cached
 	 * object must implement the {@link DatabaseObject#refresh(Record)} method which by default
 	 * ignores the record and simply calls {@link DatabaseObject#refresh()}.
-	 * @param record the valid record corresponding to the object to be retrieved and possibly
+	 * @param objectRecord the valid record corresponding to the object to be retrieved and possibly
 	 * used to refresh the associated object if found in cache
 	 * @return the cached object or null if the object with that key is not currently cached.
 	 */

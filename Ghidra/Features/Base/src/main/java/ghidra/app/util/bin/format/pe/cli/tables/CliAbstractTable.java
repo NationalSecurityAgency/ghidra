@@ -217,7 +217,7 @@ public abstract class CliAbstractTable implements StructConverter, PeMarkupable 
 	/**
 	 * Convenience method for getting a safe row representation of a table.
 	 * 
-	 * @param table The table that has the row.
+	 * @param otherTable The table that has the row.
 	 * @param index The index of the row.
 	 * @return The safe row representation of a table.
 	 */

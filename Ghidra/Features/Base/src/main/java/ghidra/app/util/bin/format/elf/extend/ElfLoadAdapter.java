@@ -166,7 +166,7 @@ public class ElfLoadAdapter {
 
 	/**
 	 * Get the default alignment within the default address space.
-	 * @param load helper object
+	 * @param elfLoadHelper helper object
 	 * @return default alignment within the default address space.
 	 */
 	public int getDefaultAlignment(ElfLoadHelper elfLoadHelper) {
@@ -234,7 +234,7 @@ public class ElfLoadAdapter {
 	 * a more accurate check based upon the actual language utilized.  While the ELF header
 	 * may have stipulated a specific processor via the machine-id, a completely different
 	 * and incompatible language may have been used.
-	 * @param elf elf header
+	 * @param elfLoadHelper elf header
 	 * @return true if this extension can properly support the ELF header and the 
 	 * current program/language.
 	 */
@@ -425,7 +425,7 @@ public class ElfLoadAdapter {
 	/**
 	 * Return the memory section size in bytes for the specified section header.
 	 * The returned value will be consistent with any byte filtering which may be required.
-	 * @param ElfSectionHeader
+	 * @param section the section header
 	 * @return preferred memory block size in bytes which corresponds to the specified section header
 	 */
 	public long getAdjustedSize(ElfSectionHeader section) {

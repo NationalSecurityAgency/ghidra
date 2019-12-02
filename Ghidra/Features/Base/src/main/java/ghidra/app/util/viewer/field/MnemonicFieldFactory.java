@@ -97,9 +97,6 @@ public class MnemonicFieldFactory extends FieldFactory {
 		super.displayOptionsChanged(options, optionName, oldValue, newValue);
 	}
 
-	/**
-	 * @see ghidra.app.util.viewer.field.FieldFactory#fieldOptionsChanged(ghidra.framework.options.ToolOptions, java.lang.String, java.lang.Object, java.lang.Object)
-	 */
 	@Override
 	public void fieldOptionsChanged(Options options, String optionName, Object oldValue,
 			Object newValue) {
@@ -153,9 +150,6 @@ public class MnemonicFieldFactory extends FieldFactory {
 			width, hlProvider);
 	}
 
-	/**
-	 * @see ghidra.app.util.viewer.field.FieldFactory#getProgramLocation(int, int, ghidra.app.util.viewer.field.ListingField)
-	 */
 	@Override
 	public ProgramLocation getProgramLocation(int row, int col, ListingField bf) {
 		Object obj = bf.getProxy().getObject();
@@ -197,9 +191,6 @@ public class MnemonicFieldFactory extends FieldFactory {
 		return null;
 	}
 
-	/**
-	 * @see ghidra.app.util.viewer.field.FieldFactory#getFieldLocation(ghidra.app.util.viewer.field.ListingField, BigInteger, int, ghidra.program.util.ProgramLocation)
-	 */
 	@Override
 	public FieldLocation getFieldLocation(ListingField bf, BigInteger index, int fieldNum,
 			ProgramLocation programLoc) {
@@ -214,9 +205,6 @@ public class MnemonicFieldFactory extends FieldFactory {
 		return new FieldLocation(index, fieldNum, 0, loc.getCharOffset());
 	}
 
-	/**
-	 * @see ghidra.app.util.viewer.field.FieldFactory#acceptsType(int, java.lang.Class)
-	 */
 	@Override
 	public boolean acceptsType(int category, Class<?> proxyObjectClass) {
 		if (!CodeUnit.class.isAssignableFrom(proxyObjectClass)) {
@@ -232,9 +220,6 @@ public class MnemonicFieldFactory extends FieldFactory {
 		return new MnemonicFieldFactory(formatModel, hsProvider, displayOptions, fieldOptions);
 	}
 
-	/**
-	 * @see ghidra.app.util.viewer.field.FieldFactory#getDefaultColor()
-	 */
 	@Override
 	public Color getDefaultColor() {
 		return OptionsGui.MNEMONIC.getDefaultColor();

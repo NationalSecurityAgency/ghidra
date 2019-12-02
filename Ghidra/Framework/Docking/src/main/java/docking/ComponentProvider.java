@@ -532,7 +532,7 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 	 * text returned from {@link #getTitle()} will be used by default.
 	 * 
 	 * @return the optionally set text to display in the tab for a component provider.
-	 * @set {@link #setTabText(String)}
+	 * @see #setTabText(String)
 	 */
 
 	public String getTabText() {

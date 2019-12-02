@@ -945,7 +945,7 @@ public class ExtensionUtils {
 	 * Attempts to delete any extension directories that do not contain a Module.manifest 
 	 * file. This indicates that the extension was slated to be uninstalled by the user.
 	 * 
-	 * @see ExtensionTableModel#uninstallExtension
+	 * @see #uninstall
 	 */
 	public static void cleanupUninstalledExtensions() {
 		if (SystemUtilities.isInDevelopmentMode()) {

@@ -25,9 +25,9 @@ import ghidra.util.UniversalID;
 
 /**
  * A class to produce and parse URLs of the form:
- * <pre>
+ * <pre>{@literal
  * 	datatype:/12345678?uid=12345678&name=Bob
- * </pre>
+ * }</pre>
  * where the first number is the ID of the {@link DataTypeManager} and the second number is 
  * the {@link DataType} ID.
  */

@@ -147,8 +147,6 @@ public abstract class DefaultPropertyMap implements PropertyMap {
 	/**
 	 * Get the next address where the property value exists.
 	 * @param addr the address from which to begin the search (exclusive).
-	 * @throws NoSuchIndexException thrown if there is no address with
-	 *   a property value after the given address.
 	 */
 	@Override
 	public Address getNextPropertyAddress(Address addr) {
@@ -167,8 +165,6 @@ public abstract class DefaultPropertyMap implements PropertyMap {
 	 * Get the previous Address where a property value exists.
 	 * @param addr the address from which
 	 * 		to begin the search (exclusive).
-	 * @throws NoSuchIndexException when there is no address
-	 * 		with a property value before the given address.
 	 */
 	@Override
 	public Address getPreviousPropertyAddress(Address addr) {
@@ -198,8 +194,6 @@ public abstract class DefaultPropertyMap implements PropertyMap {
 
 	/**
 	 * Get the last Address where a property value exists.
-	 * @exception NoSuchIndexException
-	 *                   thrown if there is no address having the property value.
 	 */
 	@Override
 	public Address getLastPropertyAddress() {

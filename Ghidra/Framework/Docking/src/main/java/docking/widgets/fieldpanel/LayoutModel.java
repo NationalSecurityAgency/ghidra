@@ -98,8 +98,6 @@ public interface LayoutModel {
 	/**
 	 * Returns true if the model knows about changes that haven't yet been told to the 
 	 * LayoutModelListeners.
-	 * @return true if changes have occurred, but no one has been notified. False if no changes
-	 * since last listener notification.
 	 */
 	public void flushChanges();
 }

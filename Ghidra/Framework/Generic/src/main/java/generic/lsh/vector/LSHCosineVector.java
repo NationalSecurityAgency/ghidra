@@ -38,7 +38,7 @@ public class LSHCosineVector implements LSHVector {
 
 	/**
 	 * Install a set of features as an int[].   Each integer is a hash.  The integers MUST already be sorted.
-	 * The same integer can occur more than once in the array (term frequency (TF) > 1).
+	 * The same integer can occur more than once in the array (term frequency (TF) &gt; 1).
 	 * Weights are determined by TF and Inverse Document Frequency (IDF) of individual features
 	 * @param feature is the sorted array of integer hashes
 	 * @param wfactory is the container of weighting information

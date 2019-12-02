@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,8 +49,8 @@ public class AssertException extends RuntimeException {
     /**
      * Create a new AssertException with the given message.
      *
-     * @param msg the exception message.
-     * @param t the Throwable which caused this exception to be generated.
+     * @param message the exception message.
+     * @param throwable the Throwable which caused this exception to be generated.
      */
     public AssertException( String message, Throwable throwable ) {
     	super( message, throwable );

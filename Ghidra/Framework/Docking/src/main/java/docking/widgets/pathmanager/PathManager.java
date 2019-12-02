@@ -110,7 +110,7 @@ public class PathManager {
 	 * Add a new file path and set its enablement
 	 * @param file 
 	 * @param enabled
-	 * @returns true if the enabled path did not already exist
+	 * @return true if the enabled path did not already exist
 	 */
 	public boolean addPath(ResourceFile file, boolean enabled) {
 		ResourceFile dir = file.isDirectory() ? file : file.getParentFile();

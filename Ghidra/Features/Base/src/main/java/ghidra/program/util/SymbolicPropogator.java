@@ -125,10 +125,13 @@ public class SymbolicPropogator {
 	 * Process a subroutine using the processor function.
 	 * The process function can control what flows are followed and when to stop.
 	 * 
-	 * @param entryPoint start address
-	 * @param processor processor to use
+	 * @param startAddr start address
+	 * @param restrictSet the address set to restrict the constant flow to
+	 * @param eval the context evaluator to use
+	 * @param saveContext true if the context should be saved
+	 * @param monitor the task monitor
 	 * @return the address set of instructions that were followed
-	 * @throws CancelledException 
+	 * @throws CancelledException if the task is cancelled
 	 */
 	public AddressSet flowConstants(Address startAddr, AddressSetView restrictSet,
 			ContextEvaluator eval, boolean saveContext, TaskMonitor monitor)
@@ -278,7 +281,7 @@ public class SymbolicPropogator {
 	/**
 	 * Get constant or register relative value assigned to the 
 	 * specified register at the specified address
-	 * @param addr address
+	 * @param toAddr address
 	 * @param reg register
 	 * @return register value
 	 */
@@ -2165,14 +2168,14 @@ public class SymbolicPropogator {
 	 *  The target could be an external Address carried along and then finally used.
 	 *  External addresses are OK as long as nothing is done to the offset.
 	 *  
-	 * @param varnodeContext - context to use for any other infomation needed
+	 * @param vContext - context to use for any other infomation needed
 	 * @param instruction - instruction to place the reference on.
 	 * @param opIndex - operand it should be placed on, or -1 if unknown
-	 * @param spaceID target space ID or -1 if only offset is known
+	 * @param knownSpaceID target space ID or -1 if only offset is known
 	 * @param wordOffset - target offset that is word addressing based
 	 * @param refType - type of reference
 	 * @param pcodeop - pcode op that caused the reference
-	 * @param monitor
+	 * @param monitor - the task monitor
 	 */
 	public void makeReference(VarnodeContext vContext, Instruction instruction, int opIndex,
 			long knownSpaceID, long wordOffset, int size, RefType refType, int pcodeop,

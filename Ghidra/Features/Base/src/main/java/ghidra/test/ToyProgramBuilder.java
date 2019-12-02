@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -293,7 +292,7 @@ public class ToyProgramBuilder extends ProgramBuilder {
 
 	/**
 	 * Add move immediate instruction (consumes 2-bytes)
-	 * @param addr instruction address
+	 * @param offset instruction offset
 	 * @param imm immediate byte value
 	 * @throws MemoryAccessException
 	 */
@@ -395,7 +394,7 @@ public class ToyProgramBuilder extends ProgramBuilder {
 	/**
 	 * Add call (consumes 2-bytes)
 	 * @param addr instruction address
-	 * @param dest call destination address
+	 * @param destAddr call destination address
 	 * @throws MemoryAccessException
 	 */
 	public void addBytesCall(String addr, String destAddr) throws MemoryAccessException {
@@ -418,7 +417,7 @@ public class ToyProgramBuilder extends ProgramBuilder {
 	/**
 	 * Add call w/ delayslot (consumes 4-bytes)
 	 * @param addr instruction address
-	 * @param dest call destination address
+	 * @param destAddr call destination address
 	 * @throws MemoryAccessException
 	 */
 	public void addBytesCallWithDelaySlot(String addr, String destAddr)

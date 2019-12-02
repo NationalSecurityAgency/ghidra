@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,7 +62,6 @@ public interface BookmarkManager {
 	 * @param icon marker icon which may get scaled
 	 * @param color marker color
 	 * @return bookmark type object
-	 * @throws IOException if a database error occurs while adding the new type.
 	 */
 	BookmarkType defineType(String type, ImageIcon icon, Color color, int priority);
 

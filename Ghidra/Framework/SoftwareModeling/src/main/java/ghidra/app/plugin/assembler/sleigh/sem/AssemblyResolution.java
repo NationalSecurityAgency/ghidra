@@ -67,7 +67,7 @@ public abstract class AssemblyResolution implements Comparable<AssemblyResolutio
 	/**
 	 * Build the result of successfully resolving a SLEIGH constructor
 	 * 
-	 * @note This is not used strictly for resolved SLEIGH constructors. It may also be used to
+	 * NOTE: This is not used strictly for resolved SLEIGH constructors. It may also be used to
 	 * store intermediates, e.g., encoded operands, during constructor resolution.
 	 * @param ins the instruction pattern block
 	 * @param ctx the context pattern block
@@ -83,7 +83,7 @@ public abstract class AssemblyResolution implements Comparable<AssemblyResolutio
 
 	/**
 	 * Build an instruction-only successful resolution result
-	 * @see #resolved(AssemblyPatternBlock, AssemblyPatternBlock, String, List)
+	 * @see #resolved(AssemblyPatternBlock, AssemblyPatternBlock, String, ImmutableList)
 	 * @param ins the instruction pattern block
 	 * @param description a description of the resolution
 	 * @param children the children selected to resolve this constructor, or null
@@ -96,7 +96,7 @@ public abstract class AssemblyResolution implements Comparable<AssemblyResolutio
 
 	/**
 	 * Build a context-only successful resolution result
-	 * @see #resolved(AssemblyPatternBlock, AssemblyPatternBlock, String, List)
+	 * @see #resolved(AssemblyPatternBlock, AssemblyPatternBlock, String, ImmutableList)
 	 * @param ctx the context pattern block
 	 * @param description a description of the resolution
 	 * @param children the children selected to resolve this constructor, or null

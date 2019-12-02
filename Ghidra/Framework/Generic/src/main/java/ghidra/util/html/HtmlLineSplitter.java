@@ -47,7 +47,7 @@ public class HtmlLineSplitter {
 	 * @param maxLineLength the max desired length of each output line; 0 or less signals not
 	 *        to wrap the line based upon length
 	 * @return the new lines
-	 * @see #wrap(String, int)
+	 * @see #wrap(String, int, WhitespaceHandler)
 	 * @see #split(String, int, boolean)
 	 */
 	public static List<String> split(String text, int maxLineLength) {
@@ -66,7 +66,7 @@ public class HtmlLineSplitter {
 	 * @param retainSpacing true signals to keep whitespace on line breaks; false discards 
 	 *        leading whitespace
 	 * @return the new lines
-	 * @see #wrap(String, int)
+	 * @see #wrap(String, int, WhitespaceHandler)
 	 */
 	public static List<String> split(String text, int maxLineLength, boolean retainSpacing) {
 

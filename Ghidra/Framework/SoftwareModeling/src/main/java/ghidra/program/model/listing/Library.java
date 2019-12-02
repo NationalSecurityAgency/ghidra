@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +25,7 @@ public interface Library extends Namespace {
 	public static final String UNKNOWN = "<EXTERNAL>";
 
 	/**
-	 * @returns the associated program within the project which corresponds to this library
+	 * @return the associated program within the project which corresponds to this library
 	 */
 	public String getAssociatedProgramPath();
 

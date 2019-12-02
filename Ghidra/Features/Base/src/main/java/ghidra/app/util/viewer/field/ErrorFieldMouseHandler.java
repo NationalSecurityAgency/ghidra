@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,9 +30,6 @@ public class ErrorFieldMouseHandler implements FieldMouseHandlerExtension {
 
 	private final static Class<?>[] SUPPORTED_CLASSES = new Class[] { ErrorListingField.class };
 
-	/**
-	 * @see ghidra.app.util.viewer.field.FieldMouseHandlerExtension#fieldElementClicked(java.lang.Object, Navigatable, java.awt.event.MouseEvent, ghidra.framework.plugintool.ServiceProvider)
-	 */
 	@Override
 	public boolean fieldElementClicked(Object clickedObject, Navigatable sourceNavigatable,
 			ProgramLocation location, MouseEvent mouseEvent, ServiceProvider serviceProvider) {
@@ -48,9 +44,6 @@ public class ErrorFieldMouseHandler implements FieldMouseHandlerExtension {
 		return true;
 	}
 
-	/**
-	 * @see FieldMouseHandlerExtension#getSupportedProgramLocations()
-	 */
 	@Override
 	public Class<?>[] getSupportedProgramLocations() {
 		return SUPPORTED_CLASSES;

@@ -64,19 +64,19 @@ public interface Variable extends Comparable<Variable> {
 	 * @param source signature source 
 	 * @throws InvalidInputException if data type is not a fixed length or violates storage constraints.
 	 * @throws VariableSizeException if data type size causes a conflict with other variables
-	 * @see #setDataType(DataType, boolean)
+	 * @see #setDataType(DataType, boolean, boolean, SourceType)
 	 */
 	public void setDataType(DataType type, SourceType source) throws InvalidInputException;
 
 	/**
 	 * Set the Data Type of this variable. The given dataType must have a fixed length.
 	 * @param type the data type
-	 * @param force overwrite conflicting variables
-	 * @param source signature source
-	 * @param align maintain proper stack alignment/justification if supported by implementation.
+	 * @param alignStack maintain proper stack alignment/justification if supported by implementation.
 	 * 			If false and this is a stack variable, the current stack address/offset will not change.
 	 * 			If true, the affect is implementation dependent since alignment can
-	 * 			not be performed without access to a compiler specification. 
+	 * 			not be performed without access to a compiler specification.
+	 * @param force overwrite conflicting variables
+	 * @param source signature source
 	 * @throws InvalidInputException if data type is not a fixed length or violates storage constraints.
 	 * @throws VariableSizeException if force is false and data type size causes a conflict 
 	 * with other variables
@@ -159,14 +159,14 @@ public interface Variable extends Comparable<Variable> {
 	/**
 	 * Get the first storage varnode for this variable
 	 * @return the first storage varnode associated with this variable
-	 * @see #getStorageElements()
+	 * @see #getVariableStorage()
 	 */
 	public Varnode getFirstStorageVarnode();
 
 	/**
 	 * Get the last storage varnode for this variable
 	 * @return the last storage varnode associated with this variable
-	 * @see #getStorageElements()
+	 * @see #getVariableStorage()
 	 */
 	public Varnode getLastStorageVarnode();
 
@@ -214,8 +214,8 @@ public interface Variable extends Comparable<Variable> {
 
 	/**
 	 * @return the minimum address corresponding to the first varnode of this storage
-	 * or null if this is a special empty storage: {@link #BAD_STORAGE}, {@link #UNASSIGNED_STORAGE},
-	 * {@link #VOID_STORAGE}
+	 * or null if this is a special empty storage: {@link VariableStorage#BAD_STORAGE},
+	 * {@link VariableStorage#UNASSIGNED_STORAGE}, {@link VariableStorage#VOID_STORAGE}
 	 */
 	public Address getMinAddress();
 
@@ -229,21 +229,21 @@ public interface Variable extends Comparable<Variable> {
 	/** 
 	 * @return true if this is a simple variable consisting of a single storage memory element
 	 * which will be returned by either the {@link #getFirstStorageVarnode()} or 
-	 * {@link getStorageElements()} methods.
+	 * {@link #getVariableStorage()} methods.
 	 */
 	public boolean isMemoryVariable();
 
 	/** 
 	 * @return true if this is a simple variable consisting of a single storage unique/hash element
 	 * which will be returned by either the {@link #getFirstStorageVarnode()} or 
-	 * {@link getStorageElements()} methods.  The unique hash can be obtained from the 
+	 * {@link #getVariableStorage()} methods.  The unique hash can be obtained from the 
 	 * storage address offset corresponding to the single storage element.
 	 */
 	public boolean isUniqueVariable();
 
 	/**
 	 * @return true if this variable uses compound storage consisting of two or more storage elements
-	 * which will be returned by the {@link getStorageElements()} method.  Compound variables will
+	 * which will be returned by the {@link #getVariableStorage()} method.  Compound variables will
 	 * always use a register(s) optionally followed by other storage (i.e., stack).
 	 */
 	public boolean isCompoundVariable();

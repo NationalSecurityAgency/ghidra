@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -198,7 +197,6 @@ public interface ProgramContext {
 	 * Returns the default value of a register at a given address.
 	 * @param register the register for which to get a default value.
 	 * @param address the address at which to get a default value.
-	 * @param signed if true, the fix-bit register value will be interpreted as a signed number.
 	 * @return the default value of the register at the given address or null if no default value
 	 * has been assigned.
 	 */

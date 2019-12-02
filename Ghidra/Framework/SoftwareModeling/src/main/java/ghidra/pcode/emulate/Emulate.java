@@ -145,7 +145,7 @@ public class Emulate {
 	}
 
 	/**
-	 * @returns the current emulator execution state
+	 * @return the current emulator execution state
 	 */
 	public EmulateExecutionState getExecutionState() {
 		return executionState;

@@ -242,7 +242,7 @@ public final class NumericUtilities {
 	/**
 	 * Get an unsigned aligned value corresponding to the specified unsigned value
 	 * which will be greater than or equal the specified value.
-	 * @param value value to be aligned
+	 * @param unsignedValue value to be aligned
 	 * @param alignment alignment
 	 * @return aligned value
 	 */
@@ -270,7 +270,7 @@ public final class NumericUtilities {
 	 *
 	 * For example, consider the mask 00001111:01011100, and the value 00001001:00011000. This
 	 * will display as {@code X8:[x0x1][10xx]}. To see the correlation, consider the table:
-	 * <table>
+	 * <table><caption></caption>
 	 *   <tr><th>Display</th><th>{@code X}</th>   <th>{@code 8}</th>   <th>{@code :}</th>
 	 *                           <th>{@code [x0x1]}</th><th>{@code [10xx]}</th></tr>
 	 *   <tr><th>Mask</th>   <td>{@code 0000}</td><td>{@code 1111}</td><td>{@code :}</td>
@@ -514,7 +514,7 @@ public final class NumericUtilities {
 	 * <li> 10 - renders <code>number</code> as a base-10 integer</li>
 	 * <li> 16 (default) - renders <code>number</code> base-16 integer</li>
 	 * </ul>
-	 * <table>
+	 * <table><caption></caption>
 	 * <tr><th>Number</th><th>Radix</th><th>DEFAULT Mode Alias</th><th><i>UNSIGNED</i> Mode Value</th><th><i>SIGNED</i> Mode Value</th></tr>
 	 * <tr><td>&nbsp;</td><td></td><td><i></i></td><td></td><td></td></tr>
 	 * <tr align=right><td>100</td><td>2</td><td><i>UNSIGNED</i></td><td>1100100b</td><td>1100100b</td></tr>

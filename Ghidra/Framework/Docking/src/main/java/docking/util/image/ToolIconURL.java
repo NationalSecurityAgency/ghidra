@@ -243,7 +243,7 @@ public class ToolIconURL implements Comparable<ToolIconURL> {
 	}
 
 	/**
-	 * Return the icon as {@link ToolConstants#ICON_SIZE} pixel size.
+	 * Return the icon as {@link ToolConstants#LARGE_ICON_SIZE} pixel size.
 	 */
 	public ImageIcon getIcon() {
 		if (largeIcon == null) {

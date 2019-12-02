@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +37,7 @@ public final class XCoffFileHeaderFlags {
 	public final static int F_AR32WR       = 0x0100;
 	/** file is 32-bit big-endian */
 	public final static int F_AR32W        = 0x0200;
-	/** rs/6000 aix: dynamically loadable w/imports & exports */
+	/** rs/6000 aix: dynamically loadable w/imports and exports */
 	public final static int F_DYNLOAD      = 0x1000;
 	/** rs/6000 aix: file is a shared object */
 	public final static int F_SHROBJ       = 0x2000;

@@ -81,7 +81,6 @@ public class CliStreamStrings extends CliAbstractStream {
 	/**
 	 * Gets the string at the given index.
 	 * 
-	 * @param The {@link CliMetadataRoot} that may point to the {@link CliStreamStrings}.
 	 * @param index The index of the string to get.
 	 * @return The string at the given index.  Could be null if the index was invalid or there was
 	 *   a problem reading the string.

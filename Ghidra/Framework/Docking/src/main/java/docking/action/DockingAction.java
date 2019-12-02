@@ -92,6 +92,10 @@ public abstract class DockingAction implements DockingActionIf {
 			supportsKeyBindings ? KeyBindingType.INDIVIDUAL : KeyBindingType.UNSUPPORTED;
 	}
 
+	protected KeyBindingType getPreferredKeyBindingType() {
+		return KeyBindingType.INDIVIDUAL;
+	}
+
 	@Override
 	public abstract void actionPerformed(ActionContext context);
 

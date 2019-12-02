@@ -33,17 +33,11 @@ public class CommentFieldMouseHandler implements FieldMouseHandlerExtension {
 		new Class[] { CommentFieldLocation.class, EolCommentFieldLocation.class,
 			PlateFieldLocation.class, AutomaticCommentFieldLocation.class };
 
-	/**
-	 * @see ghidra.app.util.viewer.field.FieldMouseHandlerExtension#getSupportedProgramLocations()
-	 */
 	@Override
 	public Class<?>[] getSupportedProgramLocations() {
 		return SUPPORTED_CLASSES;
 	}
 
-	/**
-	 * @see FieldMouseHandlerExtension#fieldElementClicked(Object, Navigatable, MouseEvent, ServiceProvider)
-	 */
 	@Override
 	public boolean fieldElementClicked(Object clickedObject, Navigatable sourceNavigatable,
 			ProgramLocation location, MouseEvent mouseEvent, ServiceProvider serviceProvider) {

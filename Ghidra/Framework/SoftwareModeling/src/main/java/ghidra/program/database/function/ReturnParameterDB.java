@@ -59,9 +59,6 @@ public class ReturnParameterDB extends ParameterDB {
 		throw new UnsupportedOperationException();
 	}
 
-	/**
-	 * @see ghidra.program.database.function.model.Parameter#getOrdinal()
-	 */
 	@Override
 	public final int getOrdinal() {
 		return RETURN_ORIDINAL;

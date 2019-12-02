@@ -134,7 +134,7 @@ public interface DataConverter extends Serializable {
 	 * @param value value to convert to bytes
 	 * @param b byte array to store bytes
 	 * @param offset offset into byte array to put the bytes
-	 * @throws IndexOutOfBoundsException if (offset+2)>b.length
+	 * @throws IndexOutOfBoundsException if (offset+2)&gt;b.length
 	 */
 	public void getBytes(short value, byte[] b, int offset);
 
@@ -152,7 +152,7 @@ public interface DataConverter extends Serializable {
 	 * @param value value to convert to bytes
 	 * @param b byte array to store bytes
 	 * @param offset offset into byte array to put the bytes
-	 * @throws IndexOutOfBoundsException if (offset+4)>b.length
+	 * @throws IndexOutOfBoundsException if (offset+4)&gt;b.length
 	 */
 	public void getBytes(int value, byte[] b, int offset);
 
@@ -170,7 +170,7 @@ public interface DataConverter extends Serializable {
 	 * @param value value to convert to bytes
 	 * @param b byte array to store bytes
 	 * @param offset offset into byte array to put the bytes
-	 * @throws IndexOutOfBoundsException if (offset+8)>b.length
+	 * @throws IndexOutOfBoundsException if (offset+8)&gt;b.length
 	 */
 	public void getBytes(long value, byte[] b, int offset);
 
@@ -181,7 +181,7 @@ public interface DataConverter extends Serializable {
 	 * @param size number of least significant bytes of value to be written to the byte array
 	 * @param b byte array to store bytes
 	 * @param offset offset into byte array to put the bytes
-	 * @throws IndexOutOfBoundsException if (offset+size)>b.length.
+	 * @throws IndexOutOfBoundsException if (offset+size)&gt;b.length.
 	 */
 	public void getBytes(long value, int size, byte[] b, int offset);
 
@@ -192,7 +192,7 @@ public interface DataConverter extends Serializable {
 	 * @param size number of least significant bytes of value to be written to the byte array
 	 * @param b byte array to store bytes
 	 * @param offset offset into byte array to put the bytes
-	 * @throws IndexOutOfBoundsException if (offset+size)>b.length.
+	 * @throws IndexOutOfBoundsException if (offset+size)&gt;b.length.
 	 */
 	public void getBytes(BigInteger value, int size, byte[] b, int offset);
 

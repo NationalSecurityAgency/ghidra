@@ -53,7 +53,7 @@ public interface ListingModel {
 	public boolean isOpen(Data data);
 
 	/**
-	 * Changes the open state of the given data (open -> closes; closed-> open).
+	 * Changes the open state of the given data (open -&gt; closes; closed-&gt; open).
 	 * 
 	 * @param data the data to open
 	 */

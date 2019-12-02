@@ -29,7 +29,7 @@ import ghidra.program.model.listing.Program;
  * The primary class for obtaining an {@link Assembler} for a Ghidra-supported language.
  * 
  * The general flow is: First, obtain an assembler for a language or program. Second, call its
- * {@link Assembler#assemble(Address, String)} and related methods to perform assembly. More
+ * {@link Assembler#assemble(Address, String...)} and related methods to perform assembly. More
  * advanced uses pass a {@link AssemblySelector} to control certain aspects of assembly instruction
  * selection, and to obtain advanced diagnostics, like detailed errors and code completion.
  * 

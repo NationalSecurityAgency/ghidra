@@ -39,8 +39,6 @@ public class GTreeModel implements TreeModel {
 	 * Constructs a GTreeModel with the given root node.
 	 * 
 	 * @param root The root of the tree.
-	 * @param isThreaded True signals to perform all tree tasks in a threaded environment to 
-	 *        avoid hanging the swing thread.
 	 */
 	public GTreeModel(GTreeNode root) {
 		this.root = root;

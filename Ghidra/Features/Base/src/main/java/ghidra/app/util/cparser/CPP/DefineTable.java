@@ -63,9 +63,9 @@ public class DefineTable {
 	}
 
 	/**
-	 * @param image
-	 * @param pos
-	 * @return
+	 * @param buf the buffer containing the define
+	 * @param pos the position of the define
+	 * @return the define
 	 */
 	public String getDefineAt(StringBuffer buf, int pos) {
 		Hashtable findTable = lookupTable;
@@ -540,9 +540,10 @@ public class DefineTable {
 	}
 
 	/**
-	 * @param image
-	 * @param i
-	 * @return
+	 * @param buf the buffer containing the parameters
+	 * @param start the starting index of the parameters in the buffer
+	 * @param endChar the delimiter for the parameters
+	 * @return the parameters
 	 */
 	public String getParams(StringBuffer buf, int start, char endChar) {
 		int len = buf.length();

@@ -60,7 +60,7 @@ public class RandomAccessByteProvider implements ByteProvider {
 	/**
 	 * Constructs a byte provider using the specified file and permissions string
 	 * @param file the file to open for random access
-	 * @param string indicating permissions used for open
+	 * @param permissions indicating permissions used for open
 	 * @throws FileNotFoundException if the file does not exist
 	 */
 	public RandomAccessByteProvider(File file, String permissions) throws IOException {

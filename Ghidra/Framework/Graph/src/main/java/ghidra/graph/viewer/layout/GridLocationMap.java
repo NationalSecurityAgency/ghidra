@@ -29,7 +29,7 @@ import org.apache.commons.collections4.map.LazyMap;
  * class are row, column grid values, starting at 0,0.
  * 
  * <P>Note: the Point2D values for the edge articulations use x,y values that are row and 
- * column index values, the same values as calling {@link #row(V)} and {@link #col(V)}.
+ * column index values, the same values as calling {@link #row(Object) row(V)} and {@link #col(Object) col(V)}.
  *
  * <P>After building the grid using this class, clients can call {@link #rows()} to get 
  * high-order object that represent rows.

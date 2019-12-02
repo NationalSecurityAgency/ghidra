@@ -69,7 +69,7 @@ public class TaskLauncher {
 	 * <code>
 	 * TaskLauncher.launchNonModal( "My task", <br>
 	 *  &nbsp;&nbsp;null, // parent<br>
-	 * 	&nbsp;&nbsp;monitor -> { while ( !monitor.isCanceled() ) { longRunningWork(); } }<br>
+	 * 	&nbsp;&nbsp;monitor -&gt; { while ( !monitor.isCanceled() ) { longRunningWork(); } }<br>
 	 * );
 	 * </code>
 	 *
@@ -99,7 +99,7 @@ public class TaskLauncher {
 	 * <code>
 	 * TaskLauncher.launchModal( "My task", <br>
 	 *  &nbsp;&nbsp;null, // parent<br>
-	 * 	&nbsp;&nbsp;monitor -> { while ( !monitor.isCanceled() ) { longRunningWork(); } }<br>
+	 * 	&nbsp;&nbsp;monitor -&gt; { while ( !monitor.isCanceled() ) { longRunningWork(); } }<br>
 	 * );
 	 * </code>
 	 *
@@ -132,7 +132,7 @@ public class TaskLauncher {
 	 *
 	 * <p><code>
 	 * TaskLauncher.launchModal( "My task", <br>
-	 * 	&nbsp;&nbsp;monitor -> { { foo(); }<br>
+	 * 	&nbsp;&nbsp;monitor -&gt; { { foo(); }<br>
 	 * );
 	 * </code>
 	 *

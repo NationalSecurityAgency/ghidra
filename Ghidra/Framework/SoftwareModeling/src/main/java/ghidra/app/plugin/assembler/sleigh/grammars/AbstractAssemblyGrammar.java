@@ -41,14 +41,13 @@ import ghidra.generic.util.datastruct.TreeSetValuedTreeMap;
  * 
  * To define a grammar, simply construct an appropriate subclass (probably {@link AssemblyGrammar})
  * and call {@link #addProduction(AbstractAssemblyProduction)} or
- * {@link #addProduction(AssemblyNonTerminal, AssemblySentential). The grammar object will collect
+ * {@link #addProduction(AssemblyNonTerminal, AssemblySentential)}. The grammar object will collect
  * the non-terminals and terminals.
  * 
  * By default, the start symbol is taken from the left-hand side of the first production added to
  * the grammar.
  * 
  * @param <NT> the type of non-terminals
- * @param <T> the type of terminals
  * @param <P> the type of productions, which must have the same types of (non-)terminals.
  */
 public abstract class AbstractAssemblyGrammar<NT extends AssemblyNonTerminal, P extends AbstractAssemblyProduction<NT>>
@@ -115,7 +114,7 @@ public abstract class AbstractAssemblyGrammar<NT extends AssemblyNonTerminal, P 
 	}
 
 	/**
-	 * Check if the given production is purely recursive, i.e., of the form I => I
+	 * Check if the given production is purely recursive, i.e., of the form I =&gt; I
 	 * @param prod the production to check
 	 * @return true iff the production is purely recursive
 	 */

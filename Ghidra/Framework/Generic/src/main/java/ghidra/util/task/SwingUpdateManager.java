@@ -42,9 +42,9 @@ import utilities.util.reflection.ReflectionUtilities;
  *  <li>Non-blocking update now - this is a conceptual use-case, where the client wishes to perform an
  *                          immediate update, but not during the current Swing event.  To achieve
  *                          this, you could call something like:
- *                          <pre>
+ *                          <pre>{@literal
  *                          	SwingUtilities.invokeLater(() -> updateManager.updateNow());
- *                          </pre>
+ *                          }</pre>
  *  </li>
  * </ul>
  *

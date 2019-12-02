@@ -79,7 +79,12 @@ public class StructureDataType extends CompositeDataTypeImpl implements Structur
 	 * @param path the category path indicating where this data type is located.
 	 * @param name the name of the new structure
 	 * @param length the initial size of the structure
-	 * @param dataTypeManager the data type manager associated with this data type. This can be null. 
+	 * @param universalID the id for the data type
+	 * @param sourceArchive the source archive for this data type
+	 * @param lastChangeTime the last time this data type was changed
+	 * @param lastChangeTimeInSourceArchive the last time this data type was changed in
+	 * its source archive.
+	 * @param dtm the data type manager associated with this data type. This can be null. 
 	 * Also, the data type manager may not contain this actual data type.
 	 */
 	public StructureDataType(CategoryPath path, String name, int length, UniversalID universalID,

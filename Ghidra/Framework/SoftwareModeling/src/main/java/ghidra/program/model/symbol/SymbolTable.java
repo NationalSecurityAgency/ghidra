@@ -158,7 +158,7 @@ public interface SymbolTable {
 	 * @param name the name of the symbol to retrieve
 	 * @param addr the address of the symbol to retrieve
 	 * @param namespace the namespace of the symbol to retrieve. May be null which indicates global namespace.
-	 * @See {@link getGlobalSymbol(String, Address)} for a convenience method if the namespace is the global namespace.
+	 * @see #getGlobalSymbol(String, Address) for a convenience method if the namespace is the global namespace.
 	 */
 	public Symbol getSymbol(String name, Address addr, Namespace namespace);
 
@@ -172,18 +172,18 @@ public interface SymbolTable {
 	 *
 	 * @param name the name of the symbol to retrieve
 	 * @param addr the address of the symbol to retrieve
-	 * @See {@link getSymbol(String, Address, Namespace)}
+	 * @see #getSymbol(String, Address, Namespace)
 	 */
 	public Symbol getGlobalSymbol(String name, Address addr);
 
 	/**
 	 * Returns the first symbol with the given name found in the given namespace. Ghidra now
 	 * allows multiple symbols with the same name in the same namespace, so using this method
-	 * is likely to produce unintended results. Use {@link #getSymbols(Namespace, String)} instead.
+	 * is likely to produce unintended results. Use {@link #getSymbols(String, Namespace)} instead.
 	 * @param name the name of the symbol to retreive
 	 * @param namespace the namespace of the symbol to retrieve (null assumes global namespace)
 	 * @deprecated This method is no longer useful as Ghidra allows duplicate symbol names in
-	 * the same namespace. Use {@link #getSymbols(Namespace, String)} instead.
+	 * the same namespace. Use {@link #getSymbols(String, Namespace)} instead.
 	 * Deprecated in version 7.5, will be removed a few versions later.
 	 */
 	@Deprecated
@@ -213,8 +213,6 @@ public interface SymbolTable {
 	 * @param name the name of the symbols to search for.
 	 * @param namespace the namespace to search.  If null, then the global namespace is assumed.
 	 * @return a list of all the label or function symbols with the given name in the given namespace.
-	 * @throws DuplicateNameException if more than one label or function symbol has the name in
-	 * the given namespace.
 	 */
 	public List<Symbol> getLabelOrFunctionSymbols(String name, Namespace namespace);
 
@@ -269,7 +267,7 @@ public interface SymbolTable {
 	 * Returns a symbol that is either a parameter or local variable.  There can be only
 	 * one because these symbol types have a unique name requirement.
 	 * @param name the naem of the variable.
-	 * @param namespace the namespace (function) to search.
+	 * @param function the function to search.
 	 * @return a parameter or local variable symbol with the given name.
 	 */
 	public Symbol getVariableSymbol(String name, Function function);

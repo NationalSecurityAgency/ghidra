@@ -23,7 +23,7 @@ import docking.widgets.GComponent;
  * A {@link JCheckBox} that has HTML rendering disabled.
  * <p>
  * See also:
- * <table border=1>
+ * <table border=1><caption></caption>
  * 	<tr><th>Class</th><th>HTML rendering</th><th>Description</th></tr>
  *  <tr><td>{@link GCheckBox}</td><td>NO</td><td>HTML disabled JCheckBox</td></tr>
  *  <tr><td>{@link GHtmlCheckBox}</td><td>YES</td><td>HTML allowed JCheckBox</td></tr>

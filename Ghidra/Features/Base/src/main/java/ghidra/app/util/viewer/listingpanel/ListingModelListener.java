@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,8 +25,7 @@ public interface ListingModelListener {
 
 	/**
 	 * Called when the data at an index or range of indexes changes.
-	 * @param start the starting address for the region of data changes.
-	 * @param end the ending address (inclusive) for the region of data changes.
+	 * @param updateImmediately true to immediately update the listing upon change.
 	 *
 	 */
 	void dataChanged(boolean updateImmediately);

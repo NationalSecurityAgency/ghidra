@@ -73,7 +73,7 @@ public interface FunctionSignature {
 	/**
 	 * Returns true if the given signature is equivalent to this signature.  The
 	 * precise meaning of "equivalent" is dependent upon return/parameter dataTypes.
-	 * @param dt the dataType being tested for equivalence.
+	 * @param signature the function signature being tested for equivalence.
 	 * @return true if the if the given signature is equivalent to this signature.
 	 */
 	public boolean isEquivalentSignature(FunctionSignature signature);
