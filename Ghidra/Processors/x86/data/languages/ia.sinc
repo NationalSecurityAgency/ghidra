@@ -3491,6 +3491,9 @@ define pcodeop smm_restore_state;
 
 :SET^cc rm8     is vexMode=0 & byte=0xf; row=9 & cc; rm8                { rm8 = cc; }
 
+# Undocumented instruction (officially "invalid")
+:SETALC         is vexMode=0 & byte=0xd6 { AL = CF * 0xff; }
+
 # manual is not consistent on operands
 :SGDT m16       is vexMode=0 & opsize=0 & byte=0xf; byte=0x1; ( mod != 0b11 & reg_opcode=0 ) ... & m16
 {
