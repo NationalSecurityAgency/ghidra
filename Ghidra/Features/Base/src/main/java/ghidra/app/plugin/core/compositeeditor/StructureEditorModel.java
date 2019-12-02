@@ -627,13 +627,14 @@ class StructureEditorModel extends CompEditorModel {
 	}
 
 	@Override
-	public void deleteSelectedComponents() throws UsrException {
+	public void deleteSelectedComponents(TaskMonitor monitor) throws UsrException {
 		if (!isDeleteAllowed()) {
 			throw new UsrException("Deleting is not allowed.");
 		}
 		if (isEditingField()) {
 			endFieldEditing();
 		}
+
 		int rowIndex = selection.getFieldRange(0).getStart().getIndex().intValue();
 		DataTypeComponent dtc = getComponent(rowIndex);
 		if (dtc.isFlexibleArrayComponent()) {
@@ -645,7 +646,7 @@ class StructureEditorModel extends CompEditorModel {
 			selectionChanged();
 			return;
 		}
-		super.deleteSelectedComponents();
+		super.deleteSelectedComponents(monitor);
 	}
 
 	@Override
@@ -1210,7 +1211,7 @@ class StructureEditorModel extends CompEditorModel {
 		return !viewComposite.isInternallyAligned();
 	}
 
-	public void createInternalStructure()
+	public void createInternalStructure(TaskMonitor monitor)
 			throws InvalidDataTypeException, DataTypeConflictException, UsrException {
 
 		if (selection.getNumRanges() != 1) {
@@ -1230,6 +1231,7 @@ class StructureEditorModel extends CompEditorModel {
 				return;
 			}
 		}
+
 		if (isEditingField()) {
 			endFieldEditing();
 		}
@@ -1295,7 +1297,7 @@ class StructureEditorModel extends CompEditorModel {
 		}
 		DataType addedDataType = createDataTypeInOriginalDTM(structureDataType);
 		if (viewComposite.isInternallyAligned()) {
-			deleteSelectedComponents();
+			deleteSelectedComponents(monitor);
 			insert(minRow, addedDataType, addedDataType.getLength());
 		}
 		else {
@@ -1313,7 +1315,7 @@ class StructureEditorModel extends CompEditorModel {
 				}
 			}
 			clearSelectedComponents();
-			insertMultiple(minRow, DataType.DEFAULT, 1, adjustmentBytes, TaskMonitor.DUMMY);
+			insertMultiple(minRow, DataType.DEFAULT, 1, adjustmentBytes, monitor);
 			replace(minRow, addedDataType, addedDataType.getLength());
 		}
 	}

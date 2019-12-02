@@ -27,6 +27,7 @@ import docking.widgets.dialogs.NumberInputDialog;
 import ghidra.program.model.data.*;
 import ghidra.util.InvalidNameException;
 import ghidra.util.exception.*;
+import ghidra.util.task.TaskMonitor;
 
 public class StructureEditorUnlockedActions4Test
 		extends AbstractStructureEditorUnlockedActionsTest {
@@ -253,7 +254,7 @@ public class StructureEditorUnlockedActions4Test
 		runSwing(() -> {
 			try {
 				model.clearSelectedComponents();
-				model.deleteSelectedComponents();
+				model.deleteSelectedComponents(TaskMonitor.DUMMY);
 			}
 			catch (UsrException e) {
 				failWithException("Unexpected error", e);

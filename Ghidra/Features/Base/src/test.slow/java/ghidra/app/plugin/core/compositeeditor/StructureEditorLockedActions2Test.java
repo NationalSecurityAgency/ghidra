@@ -291,10 +291,11 @@ public class StructureEditorLockedActions2Test extends AbstractStructureEditorLo
 		invoke(createInternalStructureAction);
 
 		// Specify name for structure.
-		JDialog inputDialog = waitForJDialog(null, "Specify the Structure's Name", 2000);
+		JDialog inputDialog = waitForJDialog("Specify the Structure's Name");
 		assertNotNull(inputDialog);
 		pressButtonByText(inputDialog, "OK");
-		waitForSwing();
+
+		waitForTasks();
 
 		assertEquals(5, getModel().getNumComponents());
 		Structure internalStruct = (Structure) getDataType(1);
@@ -315,7 +316,7 @@ public class StructureEditorLockedActions2Test extends AbstractStructureEditorLo
 	/**
 	 * Edit an existing structure and create a structure from a selection, 
 	 * but cancel out of name dialog.
-	 * @throws Exception
+	 * @throws Exception it the test throws an exception
 	 */
 	@Test
 	public void testExistingDtEditInternalStructureOnSelectionCancelOnName() throws Exception {
@@ -333,7 +334,7 @@ public class StructureEditorLockedActions2Test extends AbstractStructureEditorLo
 		invoke(createInternalStructureAction);
 
 		// Specify name for structure.
-		JDialog inputDialog = waitForJDialog(null, "Specify the Structure's Name", 2000);
+		JDialog inputDialog = waitForJDialog("Specify the Structure's Name");
 		assertNotNull(inputDialog);
 		pressButtonByText(inputDialog, "Cancel");
 		waitForSwing();
@@ -349,7 +350,7 @@ public class StructureEditorLockedActions2Test extends AbstractStructureEditorLo
 
 	/**
 	 * Edit an existing structure and create a structure from a selection. Use the default name.
-	 * @throws Exception
+	 * @throws Exception if the test throws an exception
 	 */
 	@Test
 	public void testExistingDtEditInternalStructureOnSelectionDefaultName() throws Exception {
@@ -367,10 +368,11 @@ public class StructureEditorLockedActions2Test extends AbstractStructureEditorLo
 		invoke(createInternalStructureAction);
 
 		// Specify name for structure.
-		JDialog inputDialog = waitForJDialog(null, "Specify the Structure's Name", 2000);
+		JDialog inputDialog = waitForJDialog("Specify the Structure's Name");
 		assertNotNull(inputDialog);
 		pressButtonByText(inputDialog, "OK");
-		waitForSwing();
+
+		waitForTasks();
 
 		assertEquals(6, getModel().getNumComponents());
 		Structure internalStruct = (Structure) getDataType(1);

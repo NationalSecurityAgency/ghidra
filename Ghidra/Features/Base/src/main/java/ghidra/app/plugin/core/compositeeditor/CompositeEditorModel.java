@@ -35,6 +35,7 @@ import ghidra.program.model.data.*;
 import ghidra.program.model.data.Enum;
 import ghidra.util.*;
 import ghidra.util.exception.*;
+import ghidra.util.task.TaskMonitor;
 
 /**
  * Model for editing a composite data type. Specific composite data type editors
@@ -157,16 +158,15 @@ public abstract class CompositeEditorModel extends CompositeViewerModel implemen
 	}
 
 	/**
-	 * Gets the data type of the appropriate size to be placed at the 
-	 * indicated component index.
+	 * Gets the data type of the appropriate size to be placed at the indicated component index
 	 *
-	 * @param rowIndex index of the row (component).
-	 * @param datatype the data type to be placed at the row index.
+	 * @param rowIndex index of the row (component)
+	 * @param dt the data type to be placed at the row index
 	 * @return a new data type instance
 	 * @throws InvalidDataTypeException if the resulting data type is not allowed to be 
-	 * added at the indicated index.
+	 * added at the indicated index
+	 * @throws CancelledException if cancelled
 	 */
-
 	protected DataTypeInstance getDropDataType(int rowIndex, DataType dt)
 			throws InvalidDataTypeException, CancelledException {
 
@@ -240,7 +240,7 @@ public abstract class CompositeEditorModel extends CompositeViewerModel implemen
 	 * Gets called to update/validate the current editable location in the table.
 	 * @param value the new cell value
 	 * @param rowIndex the index of the row in the component table.
-	 * @param mColumn the column index for the table cell in the 
+	 * @param columnIndex the column index for the table cell in the 
 	 * current model.
 	 * @return true if the field was updated or validated successfully.
 	 */
@@ -274,9 +274,10 @@ public abstract class CompositeEditorModel extends CompositeViewerModel implemen
 		}
 	}
 
-	// **********************************************************************
-	// * METHODS FOR CHANGING THE COMPOSITE
-	// **********************************************************************
+//==================================================================================================
+// METHODS FOR CHANGING THE COMPOSITE
+//==================================================================================================	
+
 	/**
 	 * Called whenever the edit state of the data structure changes.
 	 *
@@ -347,9 +348,6 @@ public abstract class CompositeEditorModel extends CompositeViewerModel implemen
 		editorStateChanged(type);
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.compositeeditor.EditorModel#setComponentDataType(int, java.lang.Object)
-	 */
 	@Override
 	public void setComponentDataType(int rowIndex, Object dataTypeObject) throws UsrException {
 		DataType previousDt = null;
@@ -431,11 +429,7 @@ public abstract class CompositeEditorModel extends CompositeViewerModel implemen
 		return resolveDtm.resolve(dt, conflictHandler);
 	}
 
-	/**
-	 * 
-	 * @param rows
-	 * @throws UsrException if clearing isn't allowed.
-	 */
+	@SuppressWarnings("unused") // the exception is thrown by subclasses1d
 	protected void clearComponents(int[] rows) throws UsrException {
 		for (int i = rows.length - 1; i >= 0; i--) {
 			clearComponent(rows[i]);
@@ -510,11 +504,6 @@ public abstract class CompositeEditorModel extends CompositeViewerModel implemen
 		return false;
 	}
 
-	/**
-	 * Transform the specified component row into a flexible array if permitted
-	 * @param rowIndex existing component row index
-	 * @throws UsrException
-	 */
 	protected void convertToFlexibleArray(int rowIndex) throws UsrException {
 		throw new UsrException("Flexible array not permitted");
 	}
@@ -557,13 +546,8 @@ public abstract class CompositeEditorModel extends CompositeViewerModel implemen
 		clearComponents(getSelectedComponentRows());
 	}
 
-	/**
-	 *  Delete the selected components.
-	 *
-	 * @throws UsrException if the data type isn't allowed to be deleted.
-	 */
 	@Override
-	public void deleteSelectedComponents() throws UsrException {
+	public void deleteSelectedComponents(TaskMonitor monitor) throws UsrException {
 		if (!isDeleteAllowed()) {
 			throw new UsrException("Deleting is not allowed.");
 		}
@@ -583,9 +567,12 @@ public abstract class CompositeEditorModel extends CompositeViewerModel implemen
 	 * an offline data type manager instance. In other words, changes to the data type
 	 * being edited don't directly affect the original data type manager is unaffected
 	 * until editor changes are applied.
-	 * <br> If this returns false, then the editor directly affects the original
+	 * 
+	 * <p>If this returns false, then the editor directly affects the original
 	 * data type manager. For example, as data types are added to the composite data type,
 	 * they are also added to the original data type manager if not already there.
+	 * 
+	 * @return true if editing offline
 	 */
 	public boolean isOffline() {
 		return offline;
@@ -622,11 +609,6 @@ public abstract class CompositeEditorModel extends CompositeViewerModel implemen
 		return hadChanges;
 	}
 
-	/**
-	 * @param currentViewComposite
-	 * @param oldComposite
-	 * @return
-	 */
 	private boolean hasCompPathNameChanges(Composite currentViewComposite, Composite oldComposite) {
 		// Check component data type pathnames.
 		DataTypeComponent[] comps = currentViewComposite.getComponents();
@@ -651,16 +633,15 @@ public abstract class CompositeEditorModel extends CompositeViewerModel implemen
 		componentDataChanged();
 	}
 
-	// **********************************************************************
-	// * METHODS FOR THE FIELD EDITING
-	// **********************************************************************
-	/**
-	 *  Change the edit state to indicate editing the specified field.
-	 */
+//==================================================================================================
+// METHODS FOR THE FIELD EDITING
+//==================================================================================================	
+
 	@Override
 	public boolean beginEditingField(int rowIndex, int columnIndex) {
-		if (isEditingField())
+		if (isEditingField()) {
 			return false;
+		}
 		try {
 			stillBeginningEdit = true; // We want to know we are still beginning an edit when we fix the selection.
 			editingField = true;
@@ -674,32 +655,21 @@ public abstract class CompositeEditorModel extends CompositeViewerModel implemen
 		return true;
 	}
 
-	/**
-	 *  Change the edit state to indicate no longer editing a field.
-	 */
 	@Override
 	public boolean endEditingField() {
-		if (!isEditingField())
+		if (!isEditingField()) {
 			return false;
+		}
 		editingField = false;
 		notifyEditingChanged();
 		return true;
 	}
 
-	/**
-	 *  Returns whether the user is currently editing a field's value.
-	 */
 	@Override
 	public boolean isEditingField() {
 		return !settingValueAt && editingField;
 	}
 
-	/**
-	 * Gets the column number of the first editable field found for the indicated row.
-	 * 
-	 * @param rowIndex the index number of the row
-	 * @return the number of the editable column or -1 if no fields are editable.
-	 */
 	@Override
 	public int getFirstEditableColumn(int rowIndex) {
 		int numFields = this.getColumnCount();
@@ -720,9 +690,6 @@ public abstract class CompositeEditorModel extends CompositeViewerModel implemen
 		}
 	}
 
-	/**
-	 * @param cycleGroup
-	 */
 	@Override
 	public void cycleDataType(CycleGroup cycleGroup) {
 
@@ -761,6 +728,7 @@ public abstract class CompositeEditorModel extends CompositeViewerModel implemen
 	 *
 	 * @param cycleGroup the cycle group of data types to choose from.
 	 * @return the next data type or null
+	 * @throws UsrException if more than 1 row is selected
 	 */
 	protected DataType getNextCycleDataType(CycleGroup cycleGroup) throws UsrException {
 
@@ -823,11 +791,11 @@ public abstract class CompositeEditorModel extends CompositeViewerModel implemen
 	}
 
 	/**
-	 * Determine if the data type is a valid one to place into the current
-	 * structure being edited. If this returns true, it still doesn't mean
-	 * the data type will fit where inserted or replaced
-	 *
-	 * @return true if it is valid.
+	 * Determine if the data type is a valid one to place into the current structure being edited.
+	 * If invalid, an exception will be thrown.
+	 * 
+	 * @param datatype the data type
+	 * @param dynamicSizingAllowed true signals to allow dynamic types
 	 * @throws InvalidDataTypeException if the structure being edited is part
 	 *         of the data type being inserted or doesn't have a valid size.
 	 */
@@ -852,57 +820,36 @@ public abstract class CompositeEditorModel extends CompositeViewerModel implemen
 		}
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.compositeeditor.EditorModel#isAddAllowed(int, ghidra.program.model.data.DataType)
-	 */
 	@Override
 	public boolean isAddAllowed(int currentIndex, DataType datatype) {
 		return false;
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.compositeeditor.EditorModel#isArrayAllowed()
-	 */
 	@Override
 	public boolean isArrayAllowed() {
 		return false;
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.compositeeditor.EditorModel#isClearAllowed()
-	 */
 	@Override
 	public boolean isClearAllowed() {
 		return false;
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.compositeeditor.EditorModel#isCycleAllowed(ghidra.program.model.data.CycleGroup)
-	 */
 	@Override
 	public boolean isCycleAllowed(CycleGroup cycleGroup) {
 		return false;
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.compositeeditor.EditorModel#isDeleteAllowed()
-	 */
 	@Override
 	public boolean isDeleteAllowed() {
 		return false;
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.compositeeditor.EditorModel#isDuplicateAllowed()
-	 */
 	@Override
 	public boolean isDuplicateAllowed() {
 		return false;
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.compositeeditor.EditorModel#isEditComponentAllowed()
-	 */
 	@Override
 	public boolean isEditComponentAllowed() {
 		if (this.getNumSelectedComponentRows() != 1) {
@@ -920,49 +867,31 @@ public abstract class CompositeEditorModel extends CompositeViewerModel implemen
 			((baseDt instanceof Structure) || baseDt instanceof Union || baseDt instanceof Enum));
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.compositeeditor.EditorModel#isEditFieldAllowed(int, int)
-	 */
 	@Override
 	public boolean isEditFieldAllowed(int rowIndex, int columnIndex) {
 		return !isEditingField();
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.compositeeditor.EditorModel#isInsertAllowed(int, ghidra.program.model.data.DataType)
-	 */
 	@Override
 	public boolean isInsertAllowed(int rowIndex, DataType datatype) {
 		return false;
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.compositeeditor.EditorModel#isMoveDownAllowed()
-	 */
 	@Override
 	public boolean isMoveDownAllowed() {
 		return false;
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.compositeeditor.EditorModel#isMoveUpAllowed()
-	 */
 	@Override
 	public boolean isMoveUpAllowed() {
 		return false;
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.compositeeditor.EditorModel#isReplaceAllowed(int, ghidra.program.model.data.DataType)
-	 */
 	@Override
 	public boolean isReplaceAllowed(int rowIndex, DataType dataType) {
 		return false;
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.compositeeditor.EditorModel#isUnpackageAllowed()
-	 */
 	@Override
 	public boolean isUnpackageAllowed() {
 		return false;
@@ -1033,61 +962,49 @@ public abstract class CompositeEditorModel extends CompositeViewerModel implemen
 		return 0;
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.compositeeditor.EditorModel#getLastNumBytes()
-	 */
 	@Override
 	public int getLastNumBytes() {
 		return lastNumBytes;
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.compositeeditor.EditorModel#getLastNumDuplicates()
-	 */
 	@Override
 	public int getLastNumDuplicates() {
 		return lastNumDuplicates;
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.compositeeditor.EditorModel#getLastNumElements()
-	 */
 	@Override
 	public int getLastNumElements() {
 		return lastNumElements;
 	}
 
 	/**
-	 * Sets the last number of bytes the user entered for a data type.
-	 * @param numBytes the last number of bytes entered.
+	 * Sets the last number of bytes the user entered for a data type
+	 * @param numBytes the last number of bytes entered
 	 */
 	public void setLastNumBytes(int numBytes) {
 		lastNumBytes = numBytes;
 	}
 
 	/**
-	 * Sets the last number of bytes the user entered for a data type.
-	 * @param numBytes the last number of bytes entered.
+	 * Sets the last number of bytes the user entered for a data type
+	 * @param numDuplicates the last number of bytes entered
 	 */
 	public void setLastNumDuplicates(int numDuplicates) {
 		lastNumDuplicates = numDuplicates;
 	}
 
 	/**
-	 * Sets the last number of bytes the user entered for a data type.
-	 * @param numBytes the last number of bytes entered.
+	 * Sets the last number of bytes the user entered for a data type
+	 * @param numElements the last number of bytes entered
 	 */
 	public void setLastNumElements(int numElements) {
 		lastNumElements = numElements;
 	}
 
-	// *************************************************************
-	// End of methods for determining if a type of edit action is allowed.
-	// *************************************************************
+//==================================================================================================
+// End of methods for determining if a type of edit action is allowed
+//==================================================================================================	
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.compositeeditor.CompositeViewerModel#getOriginalComposite()
-	 */
 	@Override
 	protected Composite getOriginalComposite() {
 		if (!offline) {
@@ -1108,10 +1025,10 @@ public abstract class CompositeEditorModel extends CompositeViewerModel implemen
 		}
 		FieldSelection tmpSelection = new FieldSelection();
 		int numComponents = getNumComponents();
-		for (int i = 0; i < rows.length; i++) {
+		for (int row2 : rows) {
 			// Only add valid component rows (i.e. don't include blank last line)
-			if (rows[i] < numComponents) {
-				tmpSelection.addRange(rows[i], rows[i] + 1);
+			if (row2 < numComponents) {
+				tmpSelection.addRange(row2, row2 + 1);
 			}
 		}
 		if (this.selection.equals(tmpSelection)) {
@@ -1155,22 +1072,22 @@ public abstract class CompositeEditorModel extends CompositeViewerModel implemen
 		selectionChanged();
 	}
 
-	/**
-	 * @param rowIndex the component index
-	 * @param offset
-	 */
-	@SuppressWarnings("unused")
+	@SuppressWarnings("unused") // the exception is thrown by subclasses1
 	public void validateComponentOffset(int rowIndex, String offset) throws UsrException {
 		// If the offset actually needs validating then override this method.
 	}
 
 	/**
-	 * @param rowIndex the index of the row
-	 * @param dtString
-	 * @return
+	 * Validates that the data type indicated by the string can be set as the data type
+	 * at the indicated row index. If the named data type can be various sizes, this
+	 * method will prompt the user.
+	 * @param rowIndex the row index
+	 * @param dtString the string representing the data type.
+	 * @return a valid data type instance or null if at blank line with no data type name.
+	 * @throws UsrException indicating that the data type is not valid.
 	 */
 	public DataTypeInstance validateComponentDataType(int rowIndex, String dtString)
-			throws CancelledException, UsrException {
+			throws UsrException {
 		DataType dt = null;
 		String dtName = "";
 		dtString = DataTypeHelper.stripWhiteSpace(dtString);
@@ -1215,13 +1132,9 @@ public abstract class CompositeEditorModel extends CompositeViewerModel implemen
 		return DataTypeInstance.getDataTypeInstance(newDt, newLength);
 	}
 
-	/**
-	 * @param rowIndex the component index
-	 * @param string
-	 */
-	@SuppressWarnings("unused")
+	@SuppressWarnings("unused") // the exception is thrown by subclasses
 	public void validateComponentName(int rowIndex, String name) throws UsrException {
-		// If the name actually needs validating then overide this method.
+		// If the name actually needs validating then override this method.
 	}
 
 	private void checkName(String name) throws DuplicateNameException {

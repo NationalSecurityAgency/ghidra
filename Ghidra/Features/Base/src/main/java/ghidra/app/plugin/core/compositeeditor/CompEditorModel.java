@@ -257,15 +257,6 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 		}
 	}
 
-	/**
-	 * Validates that the data type indicated by the string can be set as the data type
-	 * at the indicated row index. If the named data type can be various sizes, this
-	 * method will prompt the user.
-	 * @param rowIndex the row index
-	 * @param dtString the string representing the data type.
-	 * @return a valid data type instance or null if at blank line with no data type name.
-	 * @throws UsrException indicating that the data type is not valid.
-	 */
 	@Override
 	public DataTypeInstance validateComponentDataType(int rowIndex, String dtString)
 			throws UsrException {
@@ -348,19 +339,28 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 
 	/**
 	 * Delete the components at the specified indices.
+	 * 
 	 * <br> Note: this method does not fix the selection based on lock mode
 	 * and does not perform any edit notification.
 	 *
-	 * @param rows array with each row (component) index to delete.
+	 * @param rows array with each row (component) index to delete
+	 * @param monitor the task monitor
+	 * @throws CancelledException if cancelled 
 	 */
-	private void delete(int[] rows) {
+	private void delete(int[] rows, TaskMonitor monitor) throws CancelledException {
+
+		int n = rows.length;
+		monitor.initialize(n);
 
 		int[] selectedRows = getSelectedRows();
 		Arrays.sort(rows);
 		for (int i = rows.length - 1; i >= 0; i--) {
+			monitor.checkCanceled();
+			monitor.setMessage("Deleting " + (n - i + 1) + " of " + n);
 			int rowIndex = rows[i];
 			int componentOrdinal = convertRowToOrdinal(rowIndex);
 			doDelete(componentOrdinal);
+			monitor.incrementProgress(1);
 		}
 
 		// Not sure if this is the right behavior.  Assuming the deleted rows were selected, 
@@ -430,17 +430,22 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 	}
 
 	@Override
-	public void deleteSelectedComponents() throws UsrException {
+	public void deleteSelectedComponents(TaskMonitor monitor) throws UsrException {
 		if (!isDeleteAllowed()) {
 			throw new UsrException("Deleting is not allowed.");
 		}
 		if (isEditingField()) {
 			endFieldEditing();
 		}
+
 		int[] selectedComponents = getSelectedComponentRows();
 		int firstRowIndex = !selection.isEmpty() ? selectedComponents[0] : getRowCount();
-		delete(selectedComponents);
-		componentEdited();
+		try {
+			delete(selectedComponents, monitor);
+		}
+		finally {
+			componentEdited();
+		}
 		selection.addRange(firstRowIndex, firstRowIndex + 1);
 		fixSelection();
 		selectionChanged();

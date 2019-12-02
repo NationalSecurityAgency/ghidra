@@ -331,9 +331,10 @@ public interface EditorModel {
 	/**
 	 *  Delete the selected components.
 	 *
+	 * @param monitor the task monitor
 	 * @throws UsrException if the data type isn't allowed to be deleted.
 	 */
-	public void deleteSelectedComponents() throws UsrException;
+	public void deleteSelectedComponents(TaskMonitor monitor) throws UsrException;
 
 	/**
 	 * Creates multiple duplicates of the indicated component.
