@@ -359,12 +359,12 @@ public class DataManagerTest extends AbstractGhidraHeadedIntegrationTest {
 //
 //		if (!bp.isDeleted()) {
 //			Msg.debug(this, "bp: " + bp.getDisplayName());
-//			fail("Expected barray to be replaced by bp");
+//			fail("Expected bp to be replaced by ip");
 //		}
 //
 //		if (!bp2.isDeleted()) {
-//			Msg.debug(this, "bp2: " + bp.getDisplayName());
-//			fail("Expected barray to be replaced by bp2");
+//			Msg.debug(this, "bp2: " + bp2.getDisplayName());
+//			fail("Expected bp2 to be replaced by ip2");
 //		}
 //
 //		assertTrue(itd.getBaseDataType() == btd.getBaseDataType());
