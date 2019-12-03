@@ -234,16 +234,19 @@ DIRECT: imm8	is imm8					{ export *:1 imm8; }
 	local result = DIRECT & mask;
 	if (result == 0) goto REL;
 }
+
 :BRSET n,DIRECT,REL		is op4_7=0 & bit_0=0 & n; DIRECT; REL
 {
 	local mask = (1 << n);
 	local result = DIRECT & mask;
 	if (result != 0) goto REL;
 }
+
 :BSET n,DIRECT	is op4_7=1 & bit_0=0 & n; DIRECT {
-	local mask = ~(1 << n);
-	DIRECT = DIRECT & mask;
+	local mask = (1 << n);
+	DIRECT = DIRECT | mask;
 }
+
 :BSR REL		is op=0xAD; REL 
 {
 	SP=SP-1;
