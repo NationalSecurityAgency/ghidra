@@ -15,18 +15,6 @@
  */
 package ghidra.app.plugin.core.validator;
 
-import ghidra.app.CorePluginPackage;
-import ghidra.app.context.ProgramActionContext;
-import ghidra.app.context.ProgramContextAction;
-import ghidra.app.plugin.PluginCategoryNames;
-import ghidra.app.plugin.core.analysis.validator.PostAnalysisValidator;
-import ghidra.framework.plugintool.*;
-import ghidra.framework.plugintool.util.*;
-import ghidra.program.model.listing.Program;
-import ghidra.util.HelpLocation;
-import ghidra.util.Msg;
-import ghidra.util.classfinder.ClassSearcher;
-
 import java.lang.reflect.Constructor;
 import java.util.*;
 
@@ -35,6 +23,17 @@ import docking.action.DockingAction;
 import docking.action.MenuData;
 import docking.tool.ToolConstants;
 import docking.widgets.conditiontestpanel.ConditionTester;
+import ghidra.app.CorePluginPackage;
+import ghidra.app.context.ProgramActionContext;
+import ghidra.app.context.ProgramContextAction;
+import ghidra.app.plugin.PluginCategoryNames;
+import ghidra.app.plugin.core.analysis.validator.PostAnalysisValidator;
+import ghidra.framework.plugintool.*;
+import ghidra.framework.plugintool.util.PluginStatus;
+import ghidra.program.model.listing.Program;
+import ghidra.util.HelpLocation;
+import ghidra.util.Msg;
+import ghidra.util.classfinder.ClassSearcher;
 
 /**
  * Display a pop-up dialog to run PostAnalysisValidator tests on the Program
@@ -117,7 +116,7 @@ public class ValidateProgramPlugin extends Plugin {
 	private List<ConditionTester> getConditionTests(Program program) {
 		List<ConditionTester> list = new ArrayList<ConditionTester>();
 
-		Set<Class<? extends PostAnalysisValidator>> validatorClasses =
+		List<Class<? extends PostAnalysisValidator>> validatorClasses =
 			ClassSearcher.getClasses(PostAnalysisValidator.class);
 		for (Class<? extends PostAnalysisValidator> validatorClass : validatorClasses) {
 			try {

@@ -59,7 +59,7 @@ public class FidService {
 		this.digestFactory = new FNV1a64MessageDigestFactory();
 		this.skippers = new HashMap<>();
 
-		Set<Class<? extends InstructionSkipper>> classes =
+		List<Class<? extends InstructionSkipper>> classes =
 			ClassSearcher.getClasses(InstructionSkipper.class);
 		for (Class<? extends InstructionSkipper> clazz : classes) {
 			try {

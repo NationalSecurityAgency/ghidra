@@ -135,7 +135,7 @@ public class FunctionGraphPlugin extends ProgramPlugin implements OptionsChangeL
 	private List<FGLayoutProvider> loadLayoutProviders() {
 
 		FGLayoutFinder layoutFinder = new DiscoverableFGLayoutFinder();
-		Set<FGLayoutProvider> instances = layoutFinder.findLayouts();
+		List<FGLayoutProvider> instances = layoutFinder.findLayouts();
 		if (instances.isEmpty()) {
 			throw new AssertException("Could not find any layout providers. You project may not " +
 				"be configured properly.");

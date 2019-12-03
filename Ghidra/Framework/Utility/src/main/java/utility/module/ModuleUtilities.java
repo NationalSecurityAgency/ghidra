@@ -26,6 +26,7 @@ import ghidra.util.Msg;
 import ghidra.util.SystemUtilities;
 import ghidra.util.exception.AssertException;
 import utilities.util.FileUtilities;
+import utility.application.ApplicationLayout;
 
 /**
  * Utility methods for module related things.
@@ -333,5 +334,22 @@ public class ModuleUtilities {
 			return f;
 		}
 		return findRepo(f.getParentFile());
+	}
+
+	/**
+	 * Checks to see if the given {@link GModule module} is external to the Ghidra installation
+	 * directory
+	 * 
+	 * @param module the module to check
+	 * @param layout Ghidra's layout
+	 * @return true if the given {@link GModule module} is external to the Ghidra installation
+	 *   directory
+	 */
+	public static boolean isExternalModule(GModule module, ApplicationLayout layout) {
+		File moduleRootDir = module.getModuleRoot().getFile(false);
+		return !layout.getApplicationRootDirs()
+				.stream()
+				.map(dir -> dir.getParentFile().getFile(false))
+				.anyMatch(dir -> FileUtilities.isPathContainedWithin(dir, moduleRootDir));
 	}
 }

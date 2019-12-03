@@ -16,7 +16,7 @@
 package ghidra.framework;
 
 import java.io.File;
-import java.util.Set;
+import java.util.List;
 
 import generic.jar.ResourceFile;
 import ghidra.GhidraClassLoader;
@@ -111,7 +111,7 @@ public class HeadlessGhidraApplicationConfiguration extends ApplicationConfigura
 	}
 
 	private void performModuleInitialization() {
-		Set<ModuleInitializer> instances = ClassSearcher.getInstances(ModuleInitializer.class);
+		List<ModuleInitializer> instances = ClassSearcher.getInstances(ModuleInitializer.class);
 		for (ModuleInitializer initializer : instances) {
 			monitor.setMessage("Initializing " + initializer.getName() + "...");
 			initializer.run();

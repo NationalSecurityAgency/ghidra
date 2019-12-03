@@ -390,7 +390,7 @@ class ToolServicesImpl implements ToolServices {
 		}
 
 		contentHandlers = new HashSet<>();
-		Set<ContentHandler> instances = ClassSearcher.getInstances(ContentHandler.class);
+		List<ContentHandler> instances = ClassSearcher.getInstances(ContentHandler.class);
 		for (ContentHandler contentHandler : instances) {
 			// a bit of validation
 			String contentType = contentHandler.getContentType();

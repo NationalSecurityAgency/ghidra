@@ -208,7 +208,7 @@ public class DiscoverableTableUtils {
 		Set<TableRowMapper<ROW_TYPE, EXPECTED_TYPE, DATA_SOURCE>> set = new HashSet<>();
 
 		@SuppressWarnings("rawtypes")
-		Set<TableRowMapper> instances = ClassSearcher.getInstances(TableRowMapper.class);
+		List<TableRowMapper> instances = ClassSearcher.getInstances(TableRowMapper.class);
 		for (TableRowMapper<ROW_TYPE, EXPECTED_TYPE, DATA_SOURCE> mapper : instances) {
 			if (mapper.getSourceType() == fromType && mapper.getDestinationType() == toType) {
 				set.add(mapper);
@@ -293,7 +293,7 @@ public class DiscoverableTableUtils {
 		List<ColumnConstraint<?>> mappedConstraints = new ArrayList<>();
 
 		@SuppressWarnings("rawtypes")
-		Set<ColumnTypeMapper> mappers = ClassSearcher.getInstances(ColumnTypeMapper.class);
+		List<ColumnTypeMapper> mappers = ClassSearcher.getInstances(ColumnTypeMapper.class);
 
 		for (ColumnTypeMapper<?, ?> mapper : mappers) {
 			mappedConstraints.addAll(generateMappedConstraints(mapper, foundConstraints));
@@ -371,7 +371,7 @@ public class DiscoverableTableUtils {
 	private static List<ColumnConstraint<?>> findColumnConstraints() {
 		List<ColumnConstraint<?>> constraints = new ArrayList<>();
 
-		Set<ColumnConstraintProvider> constraintProviders =
+		List<ColumnConstraintProvider> constraintProviders =
 			ClassSearcher.getInstances(ColumnConstraintProvider.class);
 
 		for (ColumnConstraintProvider provider : constraintProviders) {

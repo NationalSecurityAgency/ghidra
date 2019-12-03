@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +15,12 @@
  */
 package ghidra.framework.analysis;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import ghidra.app.services.Analyzer;
 import ghidra.program.model.listing.Program;
 import ghidra.util.classfinder.ClassSearcher;
-
-import java.util.*;
 
 public class AnalysisRecipeBuilder {
 
@@ -39,7 +39,7 @@ public class AnalysisRecipeBuilder {
 
 	private static AnalysisRecipe buildDefaultRecipe(Program program) {
 		List<Analyzer> analyzerList = new ArrayList<Analyzer>();
-		Set<Analyzer> anayzers = ClassSearcher.getInstances(Analyzer.class);
+		List<Analyzer> anayzers = ClassSearcher.getInstances(Analyzer.class);
 		for (Analyzer analyzer : anayzers) {
 			if (analyzer.canAnalyze(program)) {
 				analyzerList.add(analyzer);

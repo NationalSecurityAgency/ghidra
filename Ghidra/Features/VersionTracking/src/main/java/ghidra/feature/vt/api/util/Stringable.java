@@ -40,7 +40,7 @@ public abstract class Stringable implements ExtensionPoint, DisplayStringProvide
 
 	private static void initializeNameMap() {
 		shortNameToClassnameMap = new HashMap<String, Class<? extends Stringable>>();
-		Set<Class<? extends Stringable>> classes = ClassSearcher.getClasses(Stringable.class);
+		List<Class<? extends Stringable>> classes = ClassSearcher.getClasses(Stringable.class);
 		for (Class<? extends Stringable> clazz : classes) {
 			String name = getShortNameFieldValue(clazz);
 			shortNameToClassnameMap.put(name, clazz);

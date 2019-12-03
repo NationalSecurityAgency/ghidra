@@ -66,7 +66,7 @@ public class ClassSearcher {
 	static final Logger log = LogManager.getLogger(ClassSearcher.class);
 
 	private static ClassFinder searcher;
-	private static Set<Class<?>> extensionPoints;
+	private static List<Class<?>> extensionPoints;
 
 	private static WeakSet<ChangeListener> listenerList =
 		WeakDataStructureFactory.createCopyOnReadWeakSet();
@@ -82,53 +82,67 @@ public class ClassSearcher {
 	}
 
 	/**
-	 * Get classes that implement or derive from the given class
+	 * Get {@link ExtensionPointProperties#priority() priority-sorted} classes that implement or 
+	 * derive from the given class
 	 * 
-	 * @param c class  filter class
+	 * @param c the filter class
 	 * @return set of classes that implement or extend T
 	 */
-	public static <T> Set<Class<? extends T>> getClasses(Class<T> c) {
+	public static <T> List<Class<? extends T>> getClasses(Class<T> c) {
 		return getClasses(c, null);
 	}
 
 	/**
-	 * Get classes that implement or derive from the given class
+	 * Get {@link ExtensionPointProperties#priority() priority-sorted} classes that 
+	 * implement or derive from the given class
 	 * 
-	 * @param c class  filter class
+	 * @param c the filter class
 	 * @param classFilter A Predicate that tests class objects (that are already of type T)
 	 * 			for further filtering, <code>null</code> is equivalent to "return true"
-	 * @return set of classes that implement or extend T and pass the filtering test performed
-	 * 			by the predicate.
+	 * @return {@link ExtensionPointProperties#priority() priority-sorted} list of 
+	 * 			classes that implement or extend T and pass the filtering test performed by the 
+	 * 			predicate
 	 */
 	@SuppressWarnings("unchecked") // we checked the type of each use so we know the casts are safe
-	public static <T> Set<Class<? extends T>> getClasses(Class<T> c,
+	public static <T> List<Class<? extends T>> getClasses(Class<T> c,
 			Predicate<Class<? extends T>> classFilter) {
 		if (isSearching) {
 			throw new IllegalStateException(
 				"Cannot call the getClasses() while the ClassSearcher is searching!");
 		}
 
-		Set<Class<? extends T>> set = new HashSet<>();
+		List<Class<? extends T>> list = new ArrayList<>();
 		if (extensionPoints == null) {
-			return set;
+			return list;
 		}
 
 		for (Class<?> extensionPoint : extensionPoints) {
 			if (c.isAssignableFrom(extensionPoint) &&
 				(classFilter == null || classFilter.test((Class<T>) extensionPoint))) {
-				set.add((Class<? extends T>) extensionPoint);
+				list.add((Class<? extends T>) extensionPoint);
 			}
 		}
-		return set;
+		return list;
 	}
 
-	public static <T> Set<T> getInstances(Class<T> c) {
+	public static <T> List<T> getInstances(Class<T> c) {
 		return getInstances(c, DO_NOTHING_FILTER);
 	}
 
-	public static <T> Set<T> getInstances(Class<T> c, ClassFilter filter) {
-		Set<Class<? extends T>> classes = getClasses(c);
-		Set<T> instances = new HashSet<>();
+	/**
+	 * Get {@link ExtensionPointProperties#priority() priority-sorted} classes 
+	 * instances that implement or derive from the given class
+	 * 
+	 * @param c the filter class
+	 * @param filter A Predicate that tests class objects (that are already of type T)
+	 * 			for further filtering, <code>null</code> is equivalent to "return true"
+	 * @return {@link ExtensionPointProperties#priority() priority-sorted} list of 
+	 * 			classes instances that implement or extend T and pass the filtering test performed by 
+	 *          the predicate
+	 */
+	public static <T> List<T> getInstances(Class<T> c, ClassFilter filter) {
+		List<Class<? extends T>> classes = getClasses(c);
+		List<T> instances = new ArrayList<>();
 
 		for (Class<? extends T> clazz : classes) {
 			if (!filter.accepts(clazz)) {
@@ -298,7 +312,7 @@ public class ClassSearcher {
 		ResourceFile extensionClassesFile = new ResourceFile(appRoot, "EXTENSION_POINT_CLASSES");
 		try {
 			List<String> classNames = FileUtilities.getLines(extensionClassesFile);
-			Set<Class<?>> extensionClasses = new HashSet<>();
+			List<Class<?>> extensionClasses = new ArrayList<>();
 			for (String className : classNames) {
 				try {
 					Class<?> clazz = Class.forName(className);
@@ -308,7 +322,7 @@ public class ClassSearcher {
 					Msg.warn(ClassSearcher.class, "Can't load extension point: " + className);
 				}
 			}
-			extensionPoints = Collections.unmodifiableSet(extensionClasses);
+			extensionPoints = Collections.unmodifiableList(extensionClasses);
 
 		}
 		catch (IOException e) {

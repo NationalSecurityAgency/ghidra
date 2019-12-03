@@ -52,7 +52,7 @@ public class Annotation {
 		Map<String, AnnotatedStringHandler> map = new HashMap<>();
 
 		// find all instances of AnnotatedString
-		Set<AnnotatedStringHandler> instances =
+		List<AnnotatedStringHandler> instances =
 			ClassSearcher.getInstances(AnnotatedStringHandler.class);
 
 		for (AnnotatedStringHandler instance : instances) {

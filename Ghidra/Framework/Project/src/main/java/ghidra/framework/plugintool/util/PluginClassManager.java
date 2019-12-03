@@ -48,7 +48,7 @@ public class PluginClassManager {
 				(localExclusionClass == null || !localExclusionClass.isAssignableFrom(c)) &&
 				!ProgramaticUseOnly.class.isAssignableFrom(c);
 
-		Set<Class<? extends Plugin>> classes =
+		List<Class<? extends Plugin>> classes =
 			ClassSearcher.getClasses(Plugin.class, myClassFilter);
 
 		for (Class<? extends Plugin> pluginClass : classes) {
