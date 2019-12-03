@@ -662,7 +662,7 @@ public abstract class SymbolDB extends DatabaseObject implements Symbol {
 		}
 
 		Symbol s = (Symbol) obj;
-		if (getID() == s.getID()) {
+		if (hasSameId(s)) {
 			return true;
 		}
 
@@ -680,6 +680,13 @@ public abstract class SymbolDB extends DatabaseObject implements Symbol {
 		Symbol otherParent = s.getParentSymbol();
 
 		return SystemUtilities.isEqual(myParent, otherParent);
+	}
+
+	private boolean hasSameId(Symbol s) {
+		if (getID() == s.getID()) {
+			return getProgram() == s.getProgram();
+		}
+		return false;
 	}
 
 	@Override

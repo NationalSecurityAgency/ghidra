@@ -1072,13 +1072,13 @@ public abstract class AbstractGhidraScriptMgrPluginTest
 	protected void assertSaveButtonEnabled() {
 		waitForSwing();
 		DockingActionIf saveAction = getAction(plugin, "Save Script");
-		assertTrue(saveAction.isEnabled());
+		assertTrue(saveAction.isEnabledForContext(editor.getActionContext(null)));
 	}
 
 	protected void assertSaveButtonDisabled() {
 		waitForSwing();
 		DockingActionIf saveAction = getAction(plugin, "Save Script");
-		assertFalse(saveAction.isEnabled());
+		assertFalse(saveAction.isEnabledForContext(editor.getActionContext(null)));
 
 		assertEditorHasNoChanges();
 	}

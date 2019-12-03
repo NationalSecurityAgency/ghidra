@@ -772,7 +772,7 @@ public class GoToPluginTest extends AbstractGhidraHeadedIntegrationTest {
 	private void setOptionToAllowNavigationToOtherOpenPrograms() throws Exception {
 		runSwing(() -> {
 			ToolOptions options = tool.getOptions("Navigation");
-			options.setBoolean("'Go To' in current program only", false);
+			options.setBoolean("'Go To' in Current Program Only", false);
 		});
 	}
 
