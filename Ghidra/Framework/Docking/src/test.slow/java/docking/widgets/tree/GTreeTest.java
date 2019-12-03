@@ -545,26 +545,34 @@ public class GTreeTest extends AbstractDockingTest {
 		assertEquals(3, expandedPaths.size());
 
 		// make sure one of the expanded paths contains the originalNode
-		TreePath path = expandedPaths.parallelStream()
-				.filter(p -> p.getLastPathComponent().equals(originalNode))
-				.findAny()
-				.orElse(null);
-		assertTrue(path != null);
+		assertExpanded(originalNode);
 
-		GTreeState treeState = gTree.getTreeState();
+		GTreeState savedState = gTree.getTreeState();
 
+		// now collapse the tree and restore the state
 		gTree.collapseAll(gTree.getViewRoot());
 		waitForTree();
 
 		expandedPaths = gTree.getExpandedPaths();
 		assertTrue(expandedPaths.isEmpty());
 
-		gTree.restoreTreeState(treeState);
+		gTree.restoreTreeState(savedState);
 		waitForTree();
 
 		expandedPaths = gTree.getExpandedPaths();
 		assertEquals(3, expandedPaths.size());
-		assertEquals(originalNode, expandedPaths.get(0).getLastPathComponent());
+		assertExpanded(originalNode);
+	}
+
+	private void assertExpanded(GTreeNode node) {
+
+		List<TreePath> expandedPaths = gTree.getExpandedPaths();
+		TreePath path = expandedPaths
+				.stream()
+				.filter(p -> p.getLastPathComponent().equals(node))
+				.findAny()
+				.orElse(null);
+		assertNotNull(path);
 	}
 
 	@Test
