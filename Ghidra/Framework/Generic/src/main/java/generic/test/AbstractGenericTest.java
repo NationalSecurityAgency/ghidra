@@ -1305,8 +1305,7 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 	 * @param count the number of rows to select
 	 * @throws Exception if there's a problem simulating the click
 	 */
-	public static void clickListRange(final JList list, final int row, int count)
-			throws Exception {
+	public static void clickListRange(final JList list, final int row, int count) throws Exception {
 		waitForSwing();
 		for (int i = row; i < row + count; i++) {
 			Rectangle rect = list.getCellBounds(i, i);
@@ -1315,7 +1314,7 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 		}
 		waitForSwing();
 	}
-	
+
 	/**
 	 * Clicks a range of items in a table (simulates holding SHIFT and selecting
 	 * each item in the range)
