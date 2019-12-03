@@ -3426,6 +3426,8 @@ define pcodeop smm_restore_state;
                                           PF = (AH & 0x04) != 0;
                                           CF = (AH & 0x01) != 0; }
 
+:SALC         is vexMode=0 & bit64=0 & byte=0xd6 { AL = CF * 0xff; }
+
 :SAR  rm8,n1    is vexMode=0 & byte=0xD0; rm8 & n1 & reg_opcode=7 ...               { CF = rm8 & 1; OF = 0; rm8 = rm8 s>> 1; resultflags(rm8); }
 :SAR  rm8,CL    is vexMode=0 & byte=0xD2; CL & rm8 & reg_opcode=7 ...           { local count =   CL & 0x1f; local tmp = rm8; rm8 = rm8 s>> count;
                                           sarflags(tmp, rm8,count); shiftresultflags(rm8,count); }
@@ -3490,9 +3492,6 @@ define pcodeop smm_restore_state;
 @endif
 
 :SET^cc rm8     is vexMode=0 & byte=0xf; row=9 & cc; rm8                { rm8 = cc; }
-
-# Undocumented instruction (officially "invalid")
-:SETALC         is vexMode=0 & byte=0xd6 { AL = CF * 0xff; }
 
 # manual is not consistent on operands
 :SGDT m16       is vexMode=0 & opsize=0 & byte=0xf; byte=0x1; ( mod != 0b11 & reg_opcode=0 ) ... & m16
