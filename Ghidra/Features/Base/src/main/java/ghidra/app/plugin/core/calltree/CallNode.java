@@ -48,11 +48,13 @@ public abstract class CallNode extends GTreeSlowLoadingNode {
 
 	/**
 	 * Returns a location that represents the caller of the callee.
+	 * @return the location
 	 */
 	public abstract ProgramLocation getLocation();
 
 	/**
 	 * Returns the address that for the caller of the callee.
+	 * @return the address
 	 */
 	public abstract Address getSourceAddress();
 
@@ -83,34 +85,23 @@ public abstract class CallNode extends GTreeSlowLoadingNode {
 	}
 
 	/**
-	 * Signals that this node should not override the equals method to treat all nodes with the
-	 * same name as the same.  When the user wants to see duplicates, each node should rely on
-	 * Java's default notion of equality; otherwise, the JTree goes out to lunch.
+	 * True allows this node to contains children with the same name
+	 * 
+	 * @param allowDuplicates true to allow duplicate nodes
 	 */
 	protected void setAllowsDuplicates(boolean allowDuplicates) {
 		this.allowDuplicates = allowDuplicates;
 	}
 
-	@Override
-	public boolean equals(Object other) {
+	protected void addNode(List<GTreeNode> nodes, GTreeNode node) {
 		if (allowDuplicates) {
-			return super.equals(other);
+			nodes.add(node);
+			return;
 		}
 
-		if (other == this) {
-			return true;
+		if (!nodes.contains(node)) {
+			nodes.add(node);
 		}
-
-		if (other == null) {
-			return false;
-		}
-
-		if (!getClass().equals(other.getClass())) {
-			return false;
-		}
-
-		CallNode otherCallNode = (CallNode) other;
-		return getName().equals(otherCallNode.getName());
 	}
 
 	protected class CallNodeComparator implements Comparator<GTreeNode> {
