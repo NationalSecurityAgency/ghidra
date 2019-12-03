@@ -743,7 +743,7 @@ public class DataTypeSelectionDialogTest extends AbstractGhidraHeadedIntegration
 
 	private void pickSingleDataType(DataTypeChooserDialog chooserDialog) {
 		GTree gTree = (GTree) getInstanceField("tree", chooserDialog);
-		GTreeNode rootNode = gTree.getModelRoot();
+		GTreeNode rootNode = gTree.getViewRoot();
 		waitForTree(gTree);
 		List<GTreeNode> children = rootNode.getChildren();
 		assertEquals(1, children.size());// one archive
@@ -764,7 +764,7 @@ public class DataTypeSelectionDialogTest extends AbstractGhidraHeadedIntegration
 
 	private void pickFromMultipleDataTypes(DataTypeChooserDialog chooserDialog) {
 		GTree gTree = (GTree) getInstanceField("tree", chooserDialog);
-		GTreeNode rootNode = gTree.getModelRoot();
+		GTreeNode rootNode = gTree.getViewRoot();
 		waitForTree(gTree);
 		List<GTreeNode> children = rootNode.getChildren();
 		assertEquals(2, children.size());// two archives

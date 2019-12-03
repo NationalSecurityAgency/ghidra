@@ -148,12 +148,6 @@ public abstract class OutgoingCallNode extends CallNode {
 		return calledFunction.isExternal();
 	}
 
-	private void addNode(List<GTreeNode> nodes, GTreeNode node) {
-		if (!nodes.contains(node)) {
-			nodes.add(node);
-		}
-	}
-
 	private boolean isCallReference(Reference reference) {
 		RefType type = reference.getReferenceType();
 		if (type.isCall()) {
