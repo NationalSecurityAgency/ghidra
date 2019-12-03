@@ -17,6 +17,8 @@
 #include "funcdata.hh"
 #include <ctype.h>
 
+uint8 Symbol::ID_BASE = 0x4000000000000000L;
+
 /// This SymbolEntry is unintegrated. An address or hash must be provided
 /// either directly or via restoreXml().
 /// \param sym is the Symbol \b this will be a map for
@@ -338,50 +340,79 @@ void Symbol::restoreXmlHeader(const Element *el)
 {
   name.clear();
   category = -1;
+  symbolId = 0;
   for(int4 i=0;i<el->getNumAttributes();++i) {
-    if (el->getAttributeName(i)=="name")
-      name = el->getAttributeValue(i);
-    else if (el->getAttributeName(i)=="cat") {
-      istringstream s(el->getAttributeValue("cat"));
-      s.unsetf(ios::dec | ios::hex | ios::oct);
-      s >> category;
-    }
-    else if (el->getAttributeName(i)=="namelock") {
-      if (xml_readbool(el->getAttributeValue(i)))
-	flags |= Varnode::namelock;
-    }
-    else if (el->getAttributeName(i)=="typelock") {
-      if (xml_readbool(el->getAttributeValue(i)))
-	flags |= Varnode::typelock;
-    }
-    else if (el->getAttributeName(i)=="readonly") {
-      if (xml_readbool(el->getAttributeValue(i)))
-	flags |= Varnode::readonly;
-    }
-    else if (el->getAttributeName(i)=="volatile") {
-      if (xml_readbool(el->getAttributeValue(i)))
-	flags |= Varnode::volatil;
-    }
-    else if (el->getAttributeName(i)=="indirectstorage") {
-      if (xml_readbool(el->getAttributeValue(i)))
-	flags |= Varnode::indirectstorage;
-    }
-    else if (el->getAttributeName(i)=="hiddenretparm") {
-      if (xml_readbool(el->getAttributeValue(i)))
-	flags |= Varnode::hiddenretparm;
-    }
-    else if (el->getAttributeName(i)=="format") {
-      const string &formString( el->getAttributeValue(i));
-      if (formString == "hex")
-	dispflags |= Symbol::force_hex;
-      else if (formString == "dec")
-	dispflags |= Symbol::force_dec;
-      else if (formString == "char")
-	dispflags |= Symbol::force_char;
-      else if (formString == "oct")
-	dispflags |= Symbol::force_oct;
-      else if (formString == "bin")
-	dispflags |= Symbol::force_bin;
+    const string &attName(el->getAttributeName(i));
+    switch (attName[0]) {
+      case 'c':
+	if (attName == "cat") {
+	  istringstream s(el->getAttributeValue(i));
+	  s.unsetf(ios::dec | ios::hex | ios::oct);
+	  s >> category;
+	}
+	break;
+      case 'f':
+	if (attName == "format") {
+	  const string &formString(el->getAttributeValue(i));
+	  if (formString == "hex")
+	    dispflags |= Symbol::force_hex;
+	  else if (formString == "dec")
+	    dispflags |= Symbol::force_dec;
+	  else if (formString == "char")
+	    dispflags |= Symbol::force_char;
+	  else if (formString == "oct")
+	    dispflags |= Symbol::force_oct;
+	  else if (formString == "bin")
+	    dispflags |= Symbol::force_bin;
+	}
+	break;
+      case 'h':
+	if (attName == "hiddenretparm") {
+	  if (xml_readbool(el->getAttributeValue(i)))
+	    flags |= Varnode::hiddenretparm;
+	}
+	break;
+      case 'i':
+	if (attName == "id") {
+	  istringstream s(el->getAttributeValue(i));
+	  s.unsetf(ios::dec | ios::hex | ios::oct);
+	  s >> symbolId;
+	  if ((symbolId >> 56) == (ID_BASE >> 56))
+	    symbolId = 0;		// Don't keep old internal id's
+	}
+	else if (attName == "indirectstorage") {
+	  if (xml_readbool(el->getAttributeValue(i)))
+	    flags |= Varnode::indirectstorage;
+	}
+	break;
+      case 'n':
+	if (attName == "name")
+	  name = el->getAttributeValue(i);
+	else if (attName == "namelock") {
+	  if (xml_readbool(el->getAttributeValue(i)))
+	    flags |= Varnode::namelock;
+	}
+	break;
+      case 'r':
+	if (attName == "readonly") {
+	  if (xml_readbool(el->getAttributeValue(i)))
+	    flags |= Varnode::readonly;
+	}
+	break;
+      case 't':
+	if (attName == "typelock") {
+	  if (xml_readbool(el->getAttributeValue(i)))
+	    flags |= Varnode::typelock;
+	}
+	break;
+      case 'v':
+	if (attName == "volatile") {
+	  if (xml_readbool(el->getAttributeValue(i)))
+	    flags |= Varnode::volatil;
+	}
+	break;
+      default:
+	break;
     }
   }
   if (category == 0) {
@@ -716,7 +747,7 @@ void Scope::attachScope(Scope *child)
 
 {
   child->parent = this;
-  pair<const ScopeKey,Scope *> value(ScopeKey(child->name,child->dedupId),child);
+  pair<const ScopeKey,Scope *> value(ScopeKey(child->name,child->uniqueId),child);
   pair<ScopeMap::iterator,bool> res;
   if (child->name.size()==0)
     throw LowlevelError("Non-global scope has empty name");
@@ -1574,6 +1605,10 @@ bool Scope::isReadOnly(const Address &addr,int4 size,const Address &usepoint) co
 void ScopeInternal::addSymbolInternal(Symbol *sym)
 
 {
+  if (sym->symbolId == 0) {
+    sym->symbolId = Symbol::ID_BASE + (((uint8)uniqueId & 0xffff) << 40) + nextUniqueId;
+    nextUniqueId += 1;
+  }
   try {
     if (sym->name.size() == 0)
       sym->name = buildUndefinedName();
@@ -1695,6 +1730,7 @@ list<SymbolEntry>::iterator ScopeInternal::endDynamic(void)
 ScopeInternal::ScopeInternal(const string &nm,Architecture *g)
   : Scope(nm,g)
 {
+  nextUniqueId = 0;
   int4 numspaces = g->numSpaces();
   for(int4 i=0;i<numspaces;++i)
     maptable.push_back((EntryMap *)0);
@@ -1725,6 +1761,7 @@ void ScopeInternal::clear(void)
     Symbol *sym = *iter++;
     removeSymbol(sym);
   }
+  nextUniqueId = 0;
 }
 
 /// Look for NULL entries in the category tables. If there are,
@@ -2619,9 +2656,12 @@ void Database::attachScope(Scope *newscope,Scope *parent)
       throw LowlevelError("Multiple global scopes");
     if (newscope->name.size() != 0)
       throw LowlevelError("Global scope does not have empty name");
+    newscope->assignId(0);
     globalscope = newscope;
     return;
   }
+  newscope->assignId(nextScopeId);
+  nextScopeId += 1;
   parent->attachScope(newscope);
 }
 
@@ -2635,7 +2675,7 @@ void Database::deleteScope(Scope *scope)
     delete scope;
   }
   else {
-    ScopeKey key(scope->name,scope->dedupId);
+    ScopeKey key(scope->name,scope->uniqueId);
     ScopeMap::iterator iter = scope->parent->children.find(key);
     if (iter == scope->parent->children.end())
       throw LowlevelError("Could not remove parent reference to: "+scope->name);

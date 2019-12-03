@@ -24,6 +24,7 @@ import ghidra.xml.XmlPullParser;
 
 public abstract class HighSymbol {
 	
+	public static final long ID_BASE = 0x4000000000000000L;	// Put keys in the dynamic symbol portion of the key space
 	protected String name;
 	protected DataType type;
 	protected int size;				// Size of this variable
@@ -32,13 +33,15 @@ public abstract class HighSymbol {
 	private boolean namelock;		// Is this variable's name locked
 	private boolean typelock;		// Is this variable's datatype locked
 	private boolean readonly;
+	private long id;				// Unique id of this symbol
 	
 	private HighVariable highVariable;
 
 	public HighSymbol() {	// For use with restoreXML
 	}
 
-	public HighSymbol(String nm,DataType tp,int sz,Address pc,HighFunction func) {
+	public HighSymbol(long uniqueId, String nm, DataType tp, int sz, Address pc,
+			HighFunction func) {
 		name = nm;
 		type = tp;
 		size = sz;
@@ -46,8 +49,13 @@ public abstract class HighSymbol {
 		namelock = false;
 		typelock = false;
 		function = func;
+		id = uniqueId;
 	}
-	
+
+	public long getId() {
+		return id;
+	}
+
 	public void setHighVariable(HighVariable high) {
 		this.highVariable = high;
 	}
@@ -102,25 +110,26 @@ public abstract class HighSymbol {
 
 	public abstract String buildXML();
 	
-	public abstract int restoreXML(XmlPullParser parser,HighFunction func) throws PcodeXMLException;
+	public abstract void restoreXML(XmlPullParser parser, HighFunction func)
+			throws PcodeXMLException;
 	
-	protected int restoreSymbolXML(XmlElement symel,HighFunction func) throws PcodeXMLException {
+	protected void restoreSymbolXML(XmlElement symel, HighFunction func) throws PcodeXMLException {
 		function = func;
-		int symbolId = SpecXmlUtils.decodeInt(symel.getAttribute("id"));
-		if (symbolId == 0) {
+		id = SpecXmlUtils.decodeLong(symel.getAttribute("id"));
+		if (id == 0) {
 			throw new PcodeXMLException("missing unique symbol id");
 		}
 		typelock = false;
 		String typelockstr = symel.getAttribute("typelock");
-		if ((typelockstr != null) && (SpecXmlUtils.decodeBoolean(typelockstr)))
+		if ((typelockstr != null) && (SpecXmlUtils.decodeBoolean(typelockstr))) {
 			typelock = true;
+		}
 		namelock = false;
 		String namelockstr = symel.getAttribute("namelock");
-		if ((namelockstr != null) && (SpecXmlUtils.decodeBoolean(namelockstr)))
+		if ((namelockstr != null) && (SpecXmlUtils.decodeBoolean(namelockstr))) {
 			namelock = true;
+		}
 		name = symel.getAttribute("name");
-
-		return symbolId;
 	}
 
 	protected Address parseRangeList(XmlPullParser parser) {

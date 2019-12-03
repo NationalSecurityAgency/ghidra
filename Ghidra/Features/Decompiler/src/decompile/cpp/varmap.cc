@@ -305,7 +305,6 @@ ScopeLocal::ScopeLocal(AddrSpace *spc,Funcdata *fd,Architecture *g) : ScopeInter
   rangeLocked = false;
   stackGrowsNegative = true;
   restrictScope(fd);
-  dedupId = fd->getAddress().getOffset();		// Allow multiple scopes with same name
 } 
 
 /// Turn any symbols that are \e name \e locked but not \e type \e locked into name recommendations

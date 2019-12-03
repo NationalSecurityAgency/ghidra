@@ -44,8 +44,9 @@ public class DynamicSymbol extends HighSymbol {
 		refs = new Entry[0];
 	}
 
-	public DynamicSymbol(String nm,DataType tp,int size,HighFunction func,Address addr,long hash,int format) {
-		super(nm,tp,size,addr,func);
+	public DynamicSymbol(long uniqueId, String nm, DataType tp, int size, HighFunction func,
+			Address addr, long hash, int format) {
+		super(uniqueId, nm, tp, size, addr, func);
 		refs = new Entry[1];
 		refs[0] = new Entry(addr,hash,format);
 	}
@@ -56,18 +57,21 @@ public class DynamicSymbol extends HighSymbol {
 
 	public void addReference(Address addr,long hash,int format) {
 		Entry[] newrefs = new Entry[refs.length + 1];
-		for(int i=0;i<refs.length;++i)
+		for(int i=0;i<refs.length;++i) {
 			newrefs[i] = refs[i];
+		}
 		newrefs[refs.length] = new Entry(addr,hash,format);
 		refs = newrefs;
 		if (refs.length == 1)
+		 {
 			pcaddr = addr;		// Store first address as official pcaddr for symbol
+		}
 	}
 
 	protected void buildHashXML(StringBuilder buf) {
-		for(int i=0;i<refs.length;++i) {
-			buf.append("<hash val=\"0x").append(Long.toHexString(refs[i].hash)).append("\"/>");
-			buildRangelistXML(buf, refs[i].pcaddr);
+		for (Entry ref : refs) {
+			buf.append("<hash val=\"0x").append(Long.toHexString(ref.hash)).append("\"/>");
+			buildRangelistXML(buf, ref.pcaddr);
 		}		
 	}
 
@@ -84,15 +88,16 @@ public class DynamicSymbol extends HighSymbol {
 	}
 
 	@Override
-	public int restoreXML(XmlPullParser parser, HighFunction func) throws PcodeXMLException {
+	public void restoreXML(XmlPullParser parser, HighFunction func) throws PcodeXMLException {
 		XmlElement symel = parser.start("symbol");
-		int symbolId = restoreSymbolXML(symel, func);
+		restoreSymbolXML(symel, func);
 		type = func.getDataTypeManager().readXMLDataType(parser);
 		size = type.getLength();
 		parser.end(symel);
 
-		if (size == 0)
+		if (size == 0) {
 			throw new PcodeXMLException("Invalid symbol 0-sized data-type: " + type.getName());
+		}
 		while(parser.peek().isStart()) {
 			long hash = 0;
 			int format = 0;
@@ -103,7 +108,6 @@ public class DynamicSymbol extends HighSymbol {
 			Address addr = parseRangeList(parser);
 			addReference(addr,hash,format);
 		}
-		return symbolId;
 	}
 
 	public static String buildSymbolXML(PcodeDataTypeManager dtmanage, String nm,
@@ -117,8 +121,9 @@ public class DynamicSymbol extends HighSymbol {
 		SpecXmlUtils.encodeBooleanAttribute(res, "typelock", tl);
 		SpecXmlUtils.encodeBooleanAttribute(res, "namelock", nl);
 		SpecXmlUtils.encodeBooleanAttribute(res, "readonly", ro);
-		if (isVolatile)
+		if (isVolatile) {
 			SpecXmlUtils.encodeBooleanAttribute(res, "volatile", true);
+		}
 		res.append(">\n");
 		res.append(dtmanage.buildTypeRef(dt, length));
 		res.append("</symbol>\n");

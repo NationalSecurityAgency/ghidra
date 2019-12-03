@@ -120,7 +120,7 @@ public class HighFunction extends PcodeSyntaxTree {
 	}
 
 	@Override
-	public HighSymbol getSymbol(int symbolId) {
+	public HighSymbol getSymbol(long symbolId) {
 		return localSymbols.getSymbol(symbolId);
 	}
 
@@ -469,9 +469,8 @@ public class HighFunction extends PcodeSyntaxTree {
 				// Note that we don't need to distinguish between unique,register,ram etc. and don't
 				// need to separate out first use versus mapped use.  When the high local is written
 				// to database, these issues will be resolved at that point.
-				sym = localSymbols.newMappedSymbol(highloc.getName(), highloc.getDataType(),
-					new VariableStorage(func.getProgram(), vn), vn.getPCAddress(), -1,
-					vn.hashCode());
+				sym = localSymbols.newMappedSymbol(0, highloc.getName(), highloc.getDataType(),
+					new VariableStorage(func.getProgram(), vn), vn.getPCAddress(), -1);
 				reslocal = new HighLocal(highloc.getDataType(), vn, null, vn.getPCAddress(), sym);
 
 				resremain = highloc; // Keep remaining varnodes in old high

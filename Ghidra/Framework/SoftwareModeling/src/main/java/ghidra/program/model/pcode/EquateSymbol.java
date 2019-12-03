@@ -36,14 +36,16 @@ public class EquateSymbol extends DynamicSymbol {
 	public EquateSymbol() {
 	}
 
-	public EquateSymbol(String nm,long val,HighFunction func,Address addr,long hash,int format) {
-		super(nm, DataType.DEFAULT, 1, func, addr, hash, format);
+	public EquateSymbol(long uniqueId, String nm, long val, HighFunction func, Address addr,
+			long hash, int format) {
+		super(uniqueId, nm, DataType.DEFAULT, 1, func, addr, hash, format);
 		value = val;
 		convert = FORMAT_DEFAULT;
 	}
 	
-	public EquateSymbol(int conv,long val,HighFunction func,Address addr,long hash,int format) {
-		super("", DataType.DEFAULT, 1, func, addr, hash, format);
+	public EquateSymbol(long uniqueId, int conv, long val, HighFunction func, Address addr,
+			long hash, int format) {
+		super(uniqueId, "", DataType.DEFAULT, 1, func, addr, hash, format);
 		value = val;
 		convert = conv;
 	}
@@ -51,9 +53,9 @@ public class EquateSymbol extends DynamicSymbol {
 	public long getValue() { return value; }
 
 	@Override
-	public int restoreXML(XmlPullParser parser, HighFunction func) throws PcodeXMLException {
+	public void restoreXML(XmlPullParser parser, HighFunction func) throws PcodeXMLException {
 		XmlElement symel = parser.start("equatesymbol");
-		int symbolId = restoreSymbolXML(symel, func);
+		restoreSymbolXML(symel, func);
 		type = DataType.DEFAULT;
 		size = 1;
 		convert = FORMAT_DEFAULT;
@@ -92,7 +94,6 @@ public class EquateSymbol extends DynamicSymbol {
 			Address addr = parseRangeList(parser);
 			addReference(addr,hash,format);
 		}
-		return symbolId;
 	}
 
 	@Override

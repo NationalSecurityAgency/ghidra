@@ -831,12 +831,20 @@ public class DecompileCallback {
 		if ((data.getDataType() == DataType.DEFAULT) && (sym == null) && !isVolatile && !readonly) {
 			return null;
 		}
-
-		String name = sym != null ? sym.getName() : SymbolUtilities.getDynamicName(program, addr);
+		long uniqueId;
+		String name;
+		if (sym != null) {
+			name = sym.getName();
+			uniqueId = sym.getID();
+		}
+		else {
+			name = SymbolUtilities.getDynamicName(program, addr);
+			uniqueId = 0;
+		}
 
 		int sz = data.getLength();
-		String symstring = MappedSymbol.buildSymbolXML(dtmanage, name, data.getDataType(), sz, true,
-			true, readonly, isVolatile, -1, -1);
+		String symstring = MappedSymbol.buildSymbolXML(dtmanage, uniqueId, name, data.getDataType(),
+			sz, true, true, readonly, isVolatile, -1, -1);
 		if (debug != null) {
 			debug.getType(data.getDataType());
 		}

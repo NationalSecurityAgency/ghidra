@@ -39,8 +39,9 @@ public class LocalSymbolMap {
 	private HighFunction func;				// Function to which these variables are local
 	private String spacename;
 	private HashMap<MappedVarKey, HighSymbol> addrMappedSymbols;	// Hashed by addr and pcaddr
-	private HashMap<Integer, HighSymbol> symbolMap;  			// Hashed by unique key
+	private HashMap<Long, HighSymbol> symbolMap;  			// Hashed by unique key
 	private MappedSymbol[] paramSymbols;
+	private long uniqueSymbolId;		// Next available symbol id
 
 	/**
 	 * @param highFunc HighFunction the local variables are defined within.
@@ -50,12 +51,23 @@ public class LocalSymbolMap {
 		func = highFunc;
 		spacename = spcname;
 		addrMappedSymbols = new HashMap<MappedVarKey, HighSymbol>();
-		symbolMap = new HashMap<Integer, HighSymbol>();
+		symbolMap = new HashMap<Long, HighSymbol>();
 		paramSymbols = new MappedSymbol[0];
+		uniqueSymbolId = 0;
 	}
 
 	public HighFunction getHighFunction() {
 		return func;
+	}
+
+	/**
+	 * Assign a unique id to a new symbol being put in this container.
+	 * @return the unique id
+	 */
+	private long getNextId() {
+		long key = HighSymbol.ID_BASE + uniqueSymbolId;
+		uniqueSymbolId += 1;
+		return key;
 	}
 
 	/**
@@ -64,7 +76,6 @@ public class LocalSymbolMap {
 	 */
 	public void grabFromFunction(boolean includeDefaultNames) {
 		Function dbFunction = func.getFunction();
-		int uniqueSymbolId = 0;
 		Variable locals[] = dbFunction.getLocalVariables();
 		for (Variable local : locals) {
 			Variable var = local;
@@ -82,18 +93,18 @@ public class LocalSymbolMap {
 			String name = var.getName();
 
 			VariableStorage storage = var.getVariableStorage();
+			long id = getNextId();
 			Address defAddr = null;
 			if (!storage.isStackStorage()) {
 				defAddr = dbFunction.getEntryPoint().addWrap(var.getFirstUseOffset());
 			}
 			HighSymbol sym;
 			if (storage.isHashStorage()) {
-				sym =
-					newDynamicSymbol(name, dt, sz, storage.getFirstVarnode().getOffset(), defAddr,
-						0, ++uniqueSymbolId);
+				sym = newDynamicSymbol(id, name, dt, sz, storage.getFirstVarnode().getOffset(),
+					defAddr, 0);
 			}
 			else {
-				sym = newMappedSymbol(name, dt, storage, defAddr, -1, ++uniqueSymbolId);
+				sym = newMappedSymbol(id, name, dt, storage, defAddr, -1);
 			}
 			sym.setTypeLock(istypelock);
 			sym.setNameLock(isnamelock);
@@ -116,8 +127,9 @@ public class LocalSymbolMap {
 			String name = var.getName();
 			VariableStorage storage = var.getVariableStorage();
 			Address resAddr = storage.isStackStorage() ? null : pcaddr;
+			long id = getNextId();
 			MappedSymbol paramSymbol =
-				newMappedSymbol(name, dt, storage, resAddr, i, ++uniqueSymbolId);
+				newMappedSymbol(id, name, dt, storage, resAddr, i);
 			paramList.add(paramSymbol);
 			boolean namelock = true;
 			if (!includeDefaultNames) {
@@ -131,7 +143,7 @@ public class LocalSymbolMap {
 		paramList.toArray(paramSymbols);
 		Arrays.sort(paramSymbols, PARAM_SYMBOL_SLOT_COMPARATOR);
 
-		uniqueSymbolId = grabEquates(dbFunction, uniqueSymbolId);
+		grabEquates(dbFunction);
 	}
 
 	private boolean isUserDefinedName(String name) {
@@ -164,9 +176,9 @@ public class LocalSymbolMap {
 			res = new EquateSymbol();
 		}
 
-		int symbolId = res.restoreXML(parser, func);
+		res.restoreXML(parser, func);
 		parser.end(node);
-		insertSymbol(res,symbolId);
+		insertSymbol(res);
 		return res;
 	}
 
@@ -290,7 +302,7 @@ public class LocalSymbolMap {
 	 * @param id symbol-id
 	 * @return variable or null if not found
 	 */
-	public HighSymbol getSymbol(int id) {
+	public HighSymbol getSymbol(long id) {
 		return symbolMap.get(id);
 	}
 
@@ -316,43 +328,60 @@ public class LocalSymbolMap {
 		return false;
 	}
 
-	public MappedSymbol newMappedSymbol(String nm, DataType dt, VariableStorage store,
-			Address pcaddr, int slot, int id) {
-		MappedSymbol sym = new MappedSymbol(nm, dt, store, pcaddr, func, slot);
-		insertSymbol(sym,id);
+	public MappedSymbol newMappedSymbol(long id, String nm, DataType dt, VariableStorage store,
+			Address pcaddr, int slot) {
+		if (id == 0) {
+			id = getNextId();
+		}
+		MappedSymbol sym = new MappedSymbol(id, nm, dt, store, pcaddr, func, slot);
+		insertSymbol(sym);
 		return sym;
 	}
 
-	public DynamicSymbol newDynamicSymbol(String nm, DataType dt, int sz, long hash,
-			Address pcaddr, int format, int id) {
-		DynamicSymbol sym = new DynamicSymbol(nm, dt, sz, func, pcaddr, hash, format);
-		insertSymbol(sym,id);
+	public DynamicSymbol newDynamicSymbol(long id, String nm, DataType dt, int sz, long hash,
+			Address pcaddr, int format) {
+		if (id == 0) {
+			id = getNextId();
+		}
+		DynamicSymbol sym = new DynamicSymbol(id, nm, dt, sz, func, pcaddr, hash, format);
+		insertSymbol(sym);
 		return sym;
 	}
 
-	private void insertSymbol(HighSymbol sym,int id) {
+	private void insertSymbol(HighSymbol sym) {
+		long uniqueId = sym.getId();
+		if ((uniqueId >> 56) == (HighSymbol.ID_BASE >> 56)) {
+			long val = uniqueId & 0x7fffffff;
+			if (val > uniqueSymbolId) {
+				uniqueSymbolId = val;
+			}
+		}
 		if (sym instanceof MappedSymbol) {
 			MappedSymbol mapSym = (MappedSymbol)sym;
 			MappedVarKey key = new MappedVarKey(mapSym.getStorage(),mapSym.getPCAddress());
 			addrMappedSymbols.put(key, sym);
 		}
-		symbolMap.put(id, sym);
+		symbolMap.put(uniqueId, sym);
 	}
 
-	private void newEquateSymbol(String nm, long val, long hash, Address addr, int format,
+	private void newEquateSymbol(long uniqueId, String nm, long val, long hash, Address addr,
+			int format,
 			TreeMap<String, DynamicSymbol> constantSymbolMap) {
 		DynamicSymbol eqSymbol = constantSymbolMap.get(nm);
 		if (eqSymbol != null) {
 			eqSymbol.addReference(addr, hash, format);	// New reference to same symbol
 			return;
 		}
+		if (uniqueId == 0) {
+			uniqueId = getNextId();
+		}
 		int conv = EquateSymbol.convertName(nm, val);
 		if (conv < 0) {
-			eqSymbol = new EquateSymbol(nm, val, func, addr, hash, format);
+			eqSymbol = new EquateSymbol(uniqueId, nm, val, func, addr, hash, format);
 			eqSymbol.setNameLock(true);
 		}
 		else {
-			eqSymbol = new EquateSymbol(conv, val, func, addr, hash, format);
+			eqSymbol = new EquateSymbol(uniqueId, conv, val, func, addr, hash, format);
 		}
 		//Do NOT setTypeLock
 		constantSymbolMap.put(nm, eqSymbol);
@@ -361,10 +390,8 @@ public class LocalSymbolMap {
 	/**
 	 * Build dynamic symbols based on equates
 	 * @param dbFunction is the function to pull equates for
-	 * @param uniqueSymbolId is the next available symbol id
-	 * @return the next available symbol id
 	 */
-	private int grabEquates(Function dbFunction, int uniqueSymbolId) {
+	private void grabEquates(Function dbFunction) {
 		TreeMap<String, DynamicSymbol> constantSymbolMap = null;
 		// Find named constants via Equates
 		Program program = dbFunction.getProgram();
@@ -383,7 +410,7 @@ public class LocalSymbolMap {
 					if (constantSymbolMap == null) {
 						constantSymbolMap = new TreeMap<String, DynamicSymbol>();
 					}
-					newEquateSymbol(eq.getDisplayName(), eq.getValue(), element, defAddr, 0,
+					newEquateSymbol(0, eq.getDisplayName(), eq.getValue(), element, defAddr, 0,
 						constantSymbolMap);
 				}
 			}
@@ -405,10 +432,10 @@ public class LocalSymbolMap {
 // Add constant dynamic symbols to map
 		if (constantSymbolMap != null) {
 			for (DynamicSymbol sym : constantSymbolMap.values()) {
-				symbolMap.put(++uniqueSymbolId, sym);
+				long id = getNextId();
+				symbolMap.put(id, sym);
 			}
 		}
-		return uniqueSymbolId;
 	}
 
 	/**

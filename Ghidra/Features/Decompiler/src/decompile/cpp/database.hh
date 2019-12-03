@@ -157,17 +157,19 @@ class Symbol {
 protected:
   Scope *scope;			///< The scope that owns this symbol
   string name;			///< The local name of the symbol
-  uint4 nameDedup;		///< id to distinguish symbols with the same name
   Datatype *type;		///< The symbol's data-type
+  uint4 nameDedup;		///< id to distinguish symbols with the same name
   uint4 flags;			///< Varnode-like properties of the symbol
 				// only typelock,namelock,readonly,externref
 				// addrtied, persist inherited from scope
   uint4 dispflags;		///< Flags affecting the display of this symbol
   int2 category;		///< Special category (-1==none 0=parameter 1=equate)
   uint2 catindex;		///< Index within category
+  uint8 symbolId;		///< Unique id, 0=unassigned
   vector<list<SymbolEntry>::iterator> mapentry;	///< List of storage locations labeled with \b this Symbol
   virtual ~Symbol(void) {}	///< Destructor
   void setDisplayFormat(uint4 val);	///< Set the display format for \b this Symbol
+  void setSymbolId(uint8 val) { symbolId = val; }	///< Assign a unique id to the symbol
   void checkSizeTypeLock(void);	///< Calculate if \b size_typelock property is on
 public:
   /// \brief Possible display (dispflag) properties for a Symbol
@@ -181,14 +183,14 @@ public:
   };
   /// \brief Construct given a name and data-type
   Symbol(Scope *sc,const string &nm,Datatype *ct)
-  { scope=sc; name=nm; nameDedup=0; type=ct; flags=0; dispflags=0; category=-1; }
+  { scope=sc; name=nm; nameDedup=0; type=ct; flags=0; dispflags=0; category=-1; symbolId = 0; }
 
   /// \brief Construct for use with restoreXml()
-  Symbol(Scope *sc) { scope=sc; nameDedup=0; flags=0; dispflags=0; category=-1; }
+  Symbol(Scope *sc) { scope=sc; nameDedup=0; flags=0; dispflags=0; category=-1; symbolId = 0; }
 
   const string &getName(void) const { return name; }		///< Get the local name of the symbol
   Datatype *getType(void) const { return type; }		///< Get the data-type
-  uint4 getId(void) const { return (uint4)(uintp)this; }	///< Get a unique id for the symbol
+  uint8 getId(void) const { return symbolId; }			///< Get a unique id for the symbol
   uint4 getFlags(void) const { return flags; }			///< Get the boolean properties of the Symbol
   uint4 getDisplayFormat(void) const { return (dispflags & 7); }	///< Get the format to display the Symbol in
   int2 getCategory(void) const { return category; }		///< Get the Symbol category
@@ -210,6 +212,7 @@ public:
   virtual void saveXml(ostream &s) const;			///< Save \b this Symbol to an XML stream
   virtual void restoreXml(const Element *el);			///< Restore \b this Symbol from an XML stream
   virtual int4 getBytesConsumed(void) const;			///< Get number of bytes consumed within the address->symbol map
+  static uint8 ID_BASE;						///< Base of internal ID's
 };
 
 /// Force a specific display format for constant symbols
@@ -405,12 +408,13 @@ class Scope {
   ScopeMap children;				///< Sorted list of child scopes
   void attachScope(Scope *child);		///< Attach a new child Scope to \b this
   void detachScope(ScopeMap::iterator iter);	///< Detach a child Scope from \b this
+  void assignId(uint4 val) { uniqueId = val; }	///< Let the database assign a unique id to \b this scope
 
 protected:
   Architecture *glb;				///< Architecture of \b this scope
   string name;					///< Name of \b this scope
   Funcdata *fd;					///< (If non-null) the function which \b this is the local Scope for
-  uint4 dedupId;				///< Id to dedup scopes with same name (when allowed)
+  uint4 uniqueId;				///< Unique id for the scope, for deduping scope names, assigning symbol ids
   static const Scope *stackAddr(const Scope *scope1,
 				     const Scope *scope2,
 				     const Address &addr,
@@ -488,7 +492,7 @@ public:
 #endif
   /// \brief Construct an empty scope, given a name and Architecture
   Scope(const string &nm,Architecture *g) {
-    name = nm; glb = g; parent = (Scope *)0; fd = (Funcdata *)0; dedupId = 0;
+    name = nm; glb = g; parent = (Scope *)0; fd = (Funcdata *)0; uniqueId = 0;
 #ifdef OPACTION_DEBUG
     debugon = false;
 #endif
@@ -714,6 +718,7 @@ protected:
   vector<EntryMap *> maptable;			///< Rangemaps of SymbolEntry, one map for each address space
   vector<vector<Symbol *> > category;		///< References to Symbol objects organized by category
   list<SymbolEntry> dynamicentry;		///< Dynamic symbol entries
+  uint8 nextUniqueId;				///< Next available symbol id
 public:
   ScopeInternal(const string &nm,Architecture *g);	///< Construct the Scope
   virtual void clear(void);
@@ -817,12 +822,13 @@ class Database {
   Scope *globalscope;			///< A quick reference to the \e global Scope
   ScopeResolve resolvemap;		///< The Address to \e namespace map
   partmap<Address,uint4> flagbase;	///< Map of global properties
+  uint4 nextScopeId;			///< Id for next attached scope (0 reserved for global scope)
   void clearResolve(Scope *scope);	///< Clear the \e ownership ranges associated with the given Scope
   void clearResolveRecursive(Scope *scope);	///< Clear the \e ownership ranges of a given Scope and its children
   void fillResolve(Scope *scope);	///< Add the \e ownership ranges of the given Scope to the map
   static void parseParentTag(const Element *el,string &name,vector<string> &parnames);
 public:
-  Database(Architecture *g) { glb=g; globalscope=(Scope *)0; flagbase.defaultValue() = 0; }	///< Constructor
+  Database(Architecture *g) { glb=g; globalscope=(Scope *)0; flagbase.defaultValue()=0; nextScopeId=1; }	///< Constructor
   ~Database(void);						///< Destructor
   Architecture *getArch(void) const { return glb; }		///< Get the Architecture associate with \b this
   void attachScope(Scope *newscope,Scope *parent);		///< Register a new Scope
