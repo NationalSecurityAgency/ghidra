@@ -319,7 +319,7 @@ DIRECT: imm8	is imm8					{ export *:1 imm8; }
 	local tmp = X - op1;
 	Z = tmp == 0;
 	N = tmp s< 0;
-	C = (A < op1);
+	C = (X < op1);
 }
 :DECA		is op=0x4A 
 {
@@ -630,7 +630,7 @@ DIRECT: imm8	is imm8					{ export *:1 imm8; }
 	*:1 SP = A;
 	tmp:1 = (H << 4) | (I << 3) | (N << 2) | ( Z << 1) | C;
 	I = 1;
-	addr:2 = $(SWI_VECTOR);
+	addr:2 = *$(SWI_VECTOR);
 	call [addr];
 }
 
