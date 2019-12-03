@@ -28,7 +28,7 @@ public class HighParam extends HighLocal {
 
 	/**
 	 * @param tp data type of variable
-	 * @param rep represented varnode
+	 * @param rep is the representative input Varnode
 	 * @param pc null or Address of PcodeOp which defines the representative
 	 * @param slot parameter index starting at 0
 	 * @param sym associated symbol

@@ -19,7 +19,6 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.data.AbstractIntegerDataType;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.scalar.Scalar;
-import ghidra.util.exception.InvalidInputException;
 
 /**
  * 
@@ -38,10 +37,8 @@ public class HighConstant extends HighVariable {
 	 * @param vn constant varnode
 	 * @param pc code unit address where constant is used
 	 * @param func the associated high function
-	 * @throws InvalidInputException 
 	 */
-	public HighConstant(String name, DataType type, Varnode vn, Address pc, HighFunction func)
-			throws InvalidInputException {
+	public HighConstant(String name, DataType type, Varnode vn, Address pc, HighFunction func) {
 		super(name, type, vn, null, func);
 		pcaddr = pc;
 	}
@@ -53,18 +50,14 @@ public class HighConstant extends HighVariable {
 	 * @param vn constant varnode
 	 * @param pc code unit address where constant is used
 	 * @param sym associated dynamic symbol
-	 * @throws InvalidInputException 
 	 */
-	public HighConstant(String name, DataType type, Varnode vn, Address pc, DynamicSymbol sym)
-			throws InvalidInputException {
+	public HighConstant(String name, DataType type, Varnode vn, Address pc, DynamicSymbol sym) {
 		this(name, type, vn, pc, sym.getHighFunction());
 		symbol = sym;
 	}
 
-	/**
-	 * @return associated dynamic symbol or null
-	 */
-	public DynamicSymbol getSymbol() {
+	@Override
+	public HighSymbol getSymbol() {
 		return symbol;
 	}
 

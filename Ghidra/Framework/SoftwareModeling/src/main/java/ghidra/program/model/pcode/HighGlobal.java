@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +15,6 @@
  */
 package ghidra.program.model.pcode;
 
-import ghidra.program.model.data.DataType;
-import ghidra.util.exception.InvalidInputException;
-
 /**
  * 
  *
@@ -26,16 +22,15 @@ import ghidra.util.exception.InvalidInputException;
  */
 public class HighGlobal extends HighVariable {
 
-	/**
-	 * @param name name of global variable
-	 * @param type data type of variable
-	 * @param vn global variable storage
-	 * @param func the associated high function
-	 * @throws InvalidInputException 
-	 */
-	public HighGlobal(String name, DataType type, Varnode vn, Varnode[] inst, HighFunction func)
-			throws InvalidInputException {
-		super(name, type, vn, inst, func);
+	private HighCodeSymbol symbol;
+
+	public HighGlobal(HighCodeSymbol sym, Varnode vn, Varnode[] inst) {
+		super(sym.getName(), sym.getDataType(), vn, inst, sym.getHighFunction());
+		symbol = sym;
 	}
 
+	@Override
+	public HighSymbol getSymbol() {
+		return symbol;
+	}
 }

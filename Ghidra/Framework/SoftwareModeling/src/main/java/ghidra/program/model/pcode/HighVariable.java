@@ -46,9 +46,10 @@ public abstract class HighVariable {
 	 * Link Varnodes directly to this HighVariable
 	 */
 	protected void setHighOnInstances() {
-		for(int i=0;i<instances.length;++i) {
-			if (instances[i] instanceof VarnodeAST)
-				((VarnodeAST)instances[i]).setHigh(this);
+		for (Varnode instance : instances) {
+			if (instance instanceof VarnodeAST) {
+				((VarnodeAST)instance).setHigh(this);
+			}
 		}
 	}
 
@@ -98,6 +99,12 @@ public abstract class HighVariable {
 	}
 
 	/**
+	 * Retrieve any underlying HighSymbol
+	 * @return the HighSymbol
+	 */
+	public abstract HighSymbol getSymbol();
+
+	/**
 	 * Attach an instance or additional location the variable can be found in.
 	 * 
 	 * @param inst varnode where variable can reside.
@@ -109,8 +116,9 @@ public abstract class HighVariable {
 			instances = new Varnode[1];
 			instances[0] = rep;
 		}
-		else
+		else {
 			instances = inst;
+		}
 	}
 
 	public VariableStorage getStorage() {

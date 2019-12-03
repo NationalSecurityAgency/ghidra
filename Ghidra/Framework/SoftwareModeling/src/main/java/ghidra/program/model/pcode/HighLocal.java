@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,38 +35,10 @@ public class HighLocal extends HighVariable {
 		symbol = sym;
 	}
 
+	@Override
 	public HighSymbol getSymbol() {
 		return symbol;
 	}
-
-//	@Override
-//	public void retype(DataType newtype, SourceType srctype) throws InvalidInputException {
-//		Function f = getHighFunction().getFunction();
-//		Varnode rep = getRepresentative();
-//		Program program = f.getProgram();
-//		newtype = newtype.clone(program.getDataTypeManager());
-//		VariableStorage storage = rep.getStorage(program);
-//		VariableStorage newStorage =
-//			VariableUtilities.resizeStorage(storage, newtype, true, getHighFunction().getFunction());
-//		Varnode newrep = getHighFunction().createFromPieces(newStorage);
-//		Varnode[] inst = getInstances();
-//		int pos;
-//		for (pos = 0; pos < inst.length; ++pos)
-//			if (inst[pos] == rep) {
-//				inst[pos] = newrep;
-//				break;
-//			}
-//		attachInstances(inst, newrep);
-//		try {
-//			super.retype(newtype, srctype);
-//		}
-//		catch (InvalidInputException e) {
-//			if (pos < inst.length)
-//				inst[pos] = rep;
-//			attachInstances(inst, rep);				// Restore original varnode
-//			throw e;
-//		}
-//	}
 
 	/**
 	 * @return instruction address the variable comes into scope within the function
@@ -77,35 +48,11 @@ public class HighLocal extends HighVariable {
 	}
 
 	protected int getFirstUseOffset() {
-		Address pcaddr = getPCAddress();
 		if (pcaddr == null || getRepresentative().getAddress().isStackAddress()) {
 			return 0;
 		}
 		return (int) pcaddr.subtract(getHighFunction().getFunction().getEntryPoint());
 	}
-
-//	static DataType getUndefinedType(DataType originalType) {
-//
-//		// handle pointer conversion
-//		if (originalType instanceof Pointer) {
-//			Pointer ptr = (Pointer) originalType;
-//			DataType innerDt = ptr.getDataType();
-//			DataType replacementDt = innerDt;
-//			if (!(originalType instanceof Undefined)) {
-//				replacementDt = getUndefinedType(innerDt);
-//			}
-//			if (replacementDt != innerDt) {
-//				return new PointerDataType(replacementDt, ptr.getLength(), ptr.getDataTypeManager());
-//			}
-//			return originalType;
-//		}
-//
-//		int size = originalType.getLength();
-//		if (size <= 8) {
-//			return Undefined.getUndefinedDataType(size);
-//		}
-//		return originalType; // too big for undefined type
-//	}
 
 	@Override
 	public VariableStorage getStorage() {
@@ -114,9 +61,9 @@ public class HighLocal extends HighVariable {
 		Varnode represent = getRepresentative();
 
 		if (symbol instanceof DynamicSymbol || represent.isUnique()) {
-			long hash = buildDynamicHash();
+			long ourHash = buildDynamicHash();
 			try {
-				return new VariableStorage(program, AddressSpace.HASH_SPACE.getAddress(hash),
+				return new VariableStorage(program, AddressSpace.HASH_SPACE.getAddress(ourHash),
 					represent.getSize());
 			}
 			catch (InvalidInputException e) {

@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +17,6 @@ package ghidra.program.model.pcode;
 
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.DataType;
-import ghidra.util.exception.InvalidInputException;
 
 /**
  * 
@@ -34,13 +32,12 @@ public class HighOther extends HighVariable {
 	/**
 	 * Construct a unique high NOT associated with a symbol
 	 * @param type data type of variable
-	 * @param vn variable storage
+	 * @param vn is the representative Varnode
+	 * @param inst is the list of Varnodes making up the variable
 	 * @param pc code unit address where unique is first assigned (first-use)
 	 * @param func the associated high function
-	 * @throws InvalidInputException 
 	 */
-	public HighOther(DataType type, Varnode vn, Varnode[] inst, Address pc, HighFunction func)
-			throws InvalidInputException {
+	public HighOther(DataType type, Varnode vn, Varnode[] inst, Address pc, HighFunction func) {
 		super(null, type, vn, inst, func);
 		pcaddr = pc;
 	}
@@ -48,6 +45,7 @@ public class HighOther extends HighVariable {
 	/**
 	 * @return associated dynamic symbol or null
 	 */
+	@Override
 	public DynamicSymbol getSymbol() {
 		return symbol;
 	}

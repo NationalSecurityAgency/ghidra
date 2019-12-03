@@ -48,6 +48,7 @@ public class HighFunction extends PcodeSyntaxTree {
 	private CompilerSpec compilerSpec;
 	private FunctionPrototype proto; // The high-level prototype associated with the function
 	private LocalSymbolMap localSymbols;
+	private GlobalSymbolMap globalSymbols;
 	private List<JumpTable> jumpTables;
 	private List<DataTypeSymbol> protoOverrides;
 	private boolean showNamespace = true;
@@ -67,6 +68,7 @@ public class HighFunction extends PcodeSyntaxTree {
 		this.compilerSpec = compilerSpec;
 		this.showNamespace = showNamespace;
 		localSymbols = new LocalSymbolMap(this, "stack");
+		globalSymbols = new GlobalSymbolMap(this);
 		proto = new FunctionPrototype(localSymbols, function);
 		jumpTables = null;
 		protoOverrides = null;
@@ -113,6 +115,13 @@ public class HighFunction extends PcodeSyntaxTree {
 	 */
 	public LocalSymbolMap getLocalSymbolMap() {
 		return localSymbols;
+	}
+
+	/**
+	 * @return a map describing global variables accessed by this function
+	 */
+	public GlobalSymbolMap getGlobalSymbolMap() {
+		return globalSymbols;
 	}
 
 	public HighSymbol getMappedSymbol(Address addr, Address pcaddr) {
@@ -202,7 +211,7 @@ public class HighFunction extends PcodeSyntaxTree {
 	private void readHighXML(XmlPullParser parser) throws PcodeXMLException {
 		XmlElement el = parser.start("high");
 		String classstring = el.getAttribute("class");
-		int symref = SpecXmlUtils.decodeInt(el.getAttribute("symref"));
+		long symref = SpecXmlUtils.decodeLong(el.getAttribute("symref"));
 		int repref = SpecXmlUtils.decodeInt(el.getAttribute("repref"));
 		Varnode rep = getRef(repref);
 		if (rep == null) {
@@ -320,75 +329,84 @@ public class HighFunction extends PcodeSyntaxTree {
 		parser.end(el);
 	}
 
-	private HighVariable newHigh(int symref, DataType tp, int sz, Varnode[] inst, Varnode rep,
+	private HighVariable newHigh(long symref, DataType tp, int sz, Varnode[] inst, Varnode rep,
 			String classstring) throws PcodeXMLException {
-		try {
-			HighVariable var = null;
-			if (classstring.equals("local")) {
-				HighSymbol sym = null;
-				if (symref != 0) {
-					sym = localSymbols.getSymbol(symref);
+		HighVariable var = null;
+		if (classstring.equals("local")) {
+			HighSymbol sym = null;
+			if (symref != 0) {
+				sym = localSymbols.getSymbol(symref);
+			}
+			if (sym != null) {
+				var = sym.getHighVariable();
+			}
+			if (var == null) {
+				if (sym instanceof DynamicSymbol) {
+					// establish HighLocal for DynamicSymbol
+					var = new HighLocal(tp, rep, inst, sym.getPCAddress(), sym);
+					sym.setHighVariable(var);
 				}
+				else {
+					// The variable may be a partial, in which case
+					// we treat it as special
+					var = new HighOther(tp, rep, inst, getPCAddress(rep), this);
+				}
+			}
+		}
+		else if (classstring.equals("constant")) {
+			HighSymbol sym = null;
+			if (symref != 0) {
+				sym = localSymbols.getSymbol(symref);
 				if (sym != null) {
 					var = sym.getHighVariable();
 				}
-				if (var == null) {
-					if (sym instanceof DynamicSymbol) {
-						// establish HighLocal for DynamicSymbol
-						var = new HighLocal(tp, rep, inst, sym.getPCAddress(), sym);
-						sym.setHighVariable(var);
-					}
-					else {
-						// The variable may be a partial, in which case
-						// we treat it as special
-						var = new HighOther(tp, rep, inst, getPCAddress(rep), this);
+			}
+			if (var == null) {
+				if (sym instanceof DynamicSymbol) {
+					var = new HighConstant(sym.getName(), tp, rep, getPCAddress(rep),
+						(DynamicSymbol) sym);
+					sym.setHighVariable(var);
+				}
+				else {
+					var = new HighConstant(null, tp, rep, getPCAddress(rep), this);
+				}
+			}
+		}
+		else if (classstring.equals("global")) {
+			HighCodeSymbol sym = null;
+			if (symref != 0) {
+				sym = globalSymbols.getSymbol(symref);
+			}
+			if (sym == null) {
+				sym = globalSymbols.populateSymbol(symref, tp, sz);
+				if (sym == null) {
+					sym = globalSymbols.newSymbol(symref, rep.getAddress(), tp, sz);
+					if (sym == null) {
+						throw new PcodeXMLException(
+							"Bad global storage: " + rep.getAddress().toString());
 					}
 				}
 			}
-			else if (classstring.equals("constant")) {
-				HighSymbol sym = null;
-				if (symref != 0) {
-					sym = localSymbols.getSymbol(symref);
-					if (sym != null) {
-						var = sym.getHighVariable();
-					}
-				}
-				if (var == null) {
-					if (sym instanceof DynamicSymbol) {
-						var = new HighConstant(sym.getName(), tp, rep, getPCAddress(rep),
-							(DynamicSymbol) sym);
-						sym.setHighVariable(var);
-					}
-					else {
-						var = new HighConstant(null, tp, rep, getPCAddress(rep), this);
-					}
-				}
-			}
-			else if (classstring.equals("global")) {
-// TODO: should we have access to global symbols
-				var = new HighGlobal(null, tp, rep, inst, this);
-			}
-			else if (classstring.equals("other")) {
+			var = new HighGlobal(sym, rep, inst);
+			sym.setHighVariable(var);
+		}
+		else if (classstring.equals("other")) {
 // TODO: How do these compare with local ??
-				var = new HighOther(tp, rep, inst, getPCAddress(rep), this);
-			}
-			else {
-				throw new PcodeXMLException("Bad class string: " + classstring);
-			}
-			if (rep.getSize() == var.getSize()) {
-				var.attachInstances(inst, rep);
-			}
-			else { // Make sure varnodes are linked to HighVariable even if not formal instances, why do we do this???
-				for (Varnode element : inst) {
-					((VarnodeAST) element).setHigh(var);
-				}
-			}
-			var.setHighOnInstances();
-			return var;
+			var = new HighOther(tp, rep, inst, getPCAddress(rep), this);
 		}
-		catch (InvalidInputException e) {
-			throw new PcodeXMLException("Bad storage node", e);
+		else {
+			throw new PcodeXMLException("Bad class string: " + classstring);
 		}
+		if (rep.getSize() == var.getSize()) {
+			var.attachInstances(inst, rep);
+		}
+		else { // Make sure varnodes are linked to HighVariable even if not formal instances, why do we do this???
+			for (Varnode element : inst) {
+				((VarnodeAST) element).setHigh(var);
+			}
+		}
+		var.setHighOnInstances();
+		return var;
 	}
 
 	private Address getPCAddress(Varnode rep) {

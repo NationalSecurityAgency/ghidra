@@ -27,7 +27,8 @@ import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.data.*;
-import ghidra.program.model.listing.*;
+import ghidra.program.model.listing.Function;
+import ghidra.program.model.listing.Program;
 import ghidra.program.model.pcode.*;
 import ghidra.program.model.symbol.SourceType;
 import ghidra.util.Msg;
@@ -83,7 +84,6 @@ public class RenameVariableAction extends AbstractDecompilerAction {
 
 	public static HighVariable forgeHighVariable(Address addr, DecompilerController controller) {
 		HighVariable res = null;
-		Program program = controller.getProgram();
 		HighFunction hfunc = controller.getDecompileData().getHighFunction();
 		if (addr.isStackAddress()) {
 			LocalSymbolMap lsym = hfunc.getLocalSymbolMap();
@@ -93,16 +93,10 @@ public class RenameVariableAction extends AbstractDecompilerAction {
 			}
 		}
 		else {
-			Data data = program.getListing().getDataAt(addr);
-			if (data != null) {
-				DataType dt = data.getDataType();
-				try {
-					res = new HighGlobal(data.getLabel(), dt, new Varnode(addr, dt.getLength()),
-						null, hfunc);
-				}
-				catch (InvalidInputException e) {
-					Msg.error(RenameVariableAction.class, e.getMessage());
-				}
+			GlobalSymbolMap gsym = hfunc.getGlobalSymbolMap();
+			HighSymbol hsym = gsym.getSymbol(addr);
+			if (hsym != null) {
+				res = hsym.getHighVariable();
 			}
 		}
 		return res;
