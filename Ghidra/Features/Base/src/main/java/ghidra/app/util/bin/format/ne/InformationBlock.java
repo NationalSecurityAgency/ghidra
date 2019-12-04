@@ -102,10 +102,10 @@ public class InformationBlock {
     /**
      * Is application designed for OS/2?
      */
-    public final static byte FLAGS_APP_OS2                   = (byte) 0x04;
-    public final static byte FLAGS_APP_LOAD_CODE             = (byte) 0x08;
-    public final static byte FLAGS_APP_LINK_ERRS             = (byte) 0x10;
-    public final static byte FLAGS_APP_NONCONFORMING_PROG    = (byte) 0x20;
+    public final static byte FLAGS_APP_OS2                   = (byte) 0x08;
+    public final static byte FLAGS_APP_LOAD_CODE             = (byte) 0x10;
+    public final static byte FLAGS_APP_LINK_ERRS             = (byte) 0x20;
+    public final static byte FLAGS_APP_NONCONFORMING_PROG    = (byte) 0x40;
     public final static byte FLAGS_APP_LIBRARY_MODULE        = (byte) 0x80;
 
 	/**
