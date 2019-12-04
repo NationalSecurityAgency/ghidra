@@ -542,8 +542,8 @@ public abstract class AbstractGhidraHeadlessIntegrationTest extends AbstractDock
 
 		ServiceManager serviceManager = (ServiceManager) getInstanceField("serviceMgr", tool);
 
-		Set<Class<?>> extentions =
-			(Set<Class<?>>) getInstanceField("extensionPoints", ClassSearcher.class);
+		List<Class<?>> extentions =
+			(List<Class<?>>) getInstanceField("extensionPoints", ClassSearcher.class);
 		Set<Class<?>> set = new HashSet<>(extentions);
 		Iterator<Class<?>> iterator = set.iterator();
 		while (iterator.hasNext()) {
@@ -558,7 +558,7 @@ public abstract class AbstractGhidraHeadlessIntegrationTest extends AbstractDock
 		set.add(replacement.getClass());
 		serviceManager.addService(service, replacement);
 
-		Set<Class<?>> newExtensionPoints = new HashSet<>(set);
+		List<Class<?>> newExtensionPoints = new ArrayList<>(set);
 		setInstanceField("extensionPoints", ClassSearcher.class, newExtensionPoints);
 	}
 
