@@ -28,7 +28,6 @@ import ghidra.program.model.symbol.*;
 import ghidra.program.util.OperandFieldLocation;
 import ghidra.program.util.ProgramLocation;
 
-
 public class CreateDefaultReferenceAction extends ListingContextAction {
 
 	static String DEFAULT_MENU_ITEM_NAME = "Create Default Reference";
@@ -40,39 +39,45 @@ public class CreateDefaultReferenceAction extends ListingContextAction {
 	static final int MEMORY_REF_CLASS = 0;
 	static final int STACK_REF_CLASS = 1;
 	static final int REGISTER_REF_CLASS = 2;
-	
+
 	private ReferencesPlugin plugin;
-	
+
 	private ListingActionContext context;
 	private int refClass = UNKNOWN_REF_CLASS;
 	private Register reg;
 	private Address memAddr;
 	private int stackOffset;
-	
+
 	public CreateDefaultReferenceAction(ReferencesPlugin plugin) {
 		super("Create Default Reference", plugin.getName());
 		this.plugin = plugin;
 	}
-	
+
 	@Override
 	protected void actionPerformed(ListingActionContext context) {
 		if (this.context != context && !isEnabledForContext(context)) {
 			return;
 		}
-		OperandFieldLocation opLoc = (OperandFieldLocation)context.getLocation();
+		OperandFieldLocation opLoc = (OperandFieldLocation) context.getLocation();
 		switch (refClass) {
 			case MEMORY_REF_CLASS:
-				plugin.addDefaultReference(context.getProgram(), opLoc.getAddress(), opLoc.getOperandIndex(), memAddr);
+				CodeUnit cu =
+					opLoc.getProgram().getListing().getCodeUnitContaining(opLoc.getAddress());
+				RefType refType = (cu instanceof Instruction) ? null : RefType.DATA;
+				plugin.addDefaultReference(context.getProgram(), opLoc.getAddress(),
+					opLoc.getOperandIndex(), memAddr, refType);
 				break;
 			case STACK_REF_CLASS:
-				plugin.addDefaultReference(context.getProgram(), opLoc.getAddress(), opLoc.getOperandIndex(), stackOffset);
+				plugin.addDefaultReference(context.getProgram(), opLoc.getAddress(),
+					opLoc.getOperandIndex(), stackOffset);
 				break;
 			case REGISTER_REF_CLASS:
-				plugin.addDefaultReference(context.getProgram(), opLoc.getAddress(), opLoc.getOperandIndex(), reg);
-				break;	
+				plugin.addDefaultReference(context.getProgram(), opLoc.getAddress(),
+					opLoc.getOperandIndex(), reg);
+				break;
 		}
 	}
-	
+
 	/**
 	 * Invalidate cached context
 	 */
@@ -83,7 +88,6 @@ public class CreateDefaultReferenceAction extends ListingContextAction {
 		reg = null;
 	}
 
-	
 	@Override
 	protected boolean isAddToPopup(ListingActionContext context) {
 		ProgramLocation loc = context.getLocation();
@@ -92,52 +96,48 @@ public class CreateDefaultReferenceAction extends ListingContextAction {
 
 	@Override
 	protected boolean isEnabledForContext(ListingActionContext context) {
-//		if (contextObject != null && contextObject == contextLoc) {
-//			return true;
-//		}
+
 		invalidateContext();
 		boolean actionOK = false;
 
-//		if (contextObject instanceof MnemonicFieldLocation) {
-//			contextOK = true;
-//		}
 		ProgramLocation loc = context.getLocation();
 		if (loc instanceof OperandFieldLocation) {
-			OperandFieldLocation opLoc = (OperandFieldLocation)context.getLocation();
+			OperandFieldLocation opLoc = (OperandFieldLocation) context.getLocation();
 			this.context = context;
 
 			Program program = context.getProgram();
-			opLoc = (OperandFieldLocation)loc;
+			opLoc = (OperandFieldLocation) loc;
 			Address addr = opLoc.getAddress();
 			int opIndex = opLoc.getOperandIndex();
-			
+
 			CodeUnit cu = program.getListing().getCodeUnitContaining(addr);
 			if (cu != null) {
-			
+
 				if (cu instanceof Data) {
-					Object obj = ((Data)cu).getValue();
+					Data data = ((Data) cu).getComponent(opLoc.getComponentPath());
+					Object obj = data.getValue();
 					if (obj instanceof Scalar) {
 						refClass = MEMORY_REF_CLASS;
 						actionOK = initMemoryAddress(program.getAddressFactory(),
-								((Scalar)obj).getUnsignedValue());
+							((Scalar) obj).getUnsignedValue());
 					}
 					else if (obj instanceof Address) {
-						memAddr = (Address)obj;
+						memAddr = (Address) obj;
 						refClass = MEMORY_REF_CLASS;
 						actionOK = true;
 					}
-				}	
-				else {	
-					Instruction instr = (Instruction)cu;
+				}
+				else {
+					Instruction instr = (Instruction) cu;
 					int subOpIndex = opLoc.getSubOperandIndex();
 					List<?> opList = instr.getDefaultOperandRepresentationList(opIndex);
 					if (opList == null || subOpIndex < 0 || opList.size() <= subOpIndex) {
 						return false;
 					}
-					
+
 					Object opObj = opList.get(subOpIndex);
 					if (opObj instanceof Address) {
-						Address opAddr = (Address)opObj;
+						Address opAddr = (Address) opObj;
 						if (opAddr.isMemoryAddress()) {
 							memAddr = opAddr;
 							refClass = MEMORY_REF_CLASS;
@@ -155,8 +155,10 @@ public class CreateDefaultReferenceAction extends ListingContextAction {
 									Object[] opObjs = instr.getOpObjects(opIndex);
 									for (int i = 0; !actionOK && i < opObjs.length; i++) {
 										if (opObjs[i] instanceof Register) {
-											int regDepth = cdInfo.getRegDepth(addr, (Register)opObjs[i]);
-											actionOK = (regDepth != Function.INVALID_STACK_DEPTH_CHANGE &&
+											int regDepth =
+												cdInfo.getRegDepth(addr, (Register) opObjs[i]);
+											actionOK =
+												(regDepth != Function.INVALID_STACK_DEPTH_CHANGE &&
 													regDepth != Function.UNKNOWN_STACK_DEPTH_CHANGE);
 										}
 									}
@@ -165,9 +167,11 @@ public class CreateDefaultReferenceAction extends ListingContextAction {
 							else if (opObj instanceof VariableOffset) {
 								VariableOffset varOff = (VariableOffset) opObj;
 								Object replacedObj = varOff.getReplacedElement();
-								if ((replacedObj instanceof Register) && RefTypeFactory.getDefaultRegisterRefType(instr, (Register)replacedObj, opIndex).isWrite()) {
+								if ((replacedObj instanceof Register) &&
+									RefTypeFactory.getDefaultRegisterRefType(instr,
+										(Register) replacedObj, opIndex).isWrite()) {
 									refClass = REGISTER_REF_CLASS;
-									reg = (Register)replacedObj;
+									reg = (Register) replacedObj;
 									actionOK = true;
 								}
 							}
@@ -182,14 +186,15 @@ public class CreateDefaultReferenceAction extends ListingContextAction {
 							// Try memory reference
 							refClass = MEMORY_REF_CLASS;
 							actionOK = initMemoryAddress(program.getAddressFactory(),
-									((Scalar)opObj).getUnsignedValue());
+								((Scalar) opObj).getUnsignedValue());
 						}
 					}
 				}
-					
+
 				if (actionOK) {
 					// Make sure default ref does not already exist
-					Reference[] refs = program.getReferenceManager().getReferencesFrom(addr, opIndex);
+					Reference[] refs =
+						program.getReferenceManager().getReferencesFrom(addr, opIndex);
 					if (refs.length != 0) {
 						Address toAddr = refs[0].getToAddress();
 						if (toAddr.isExternalAddress()) {
@@ -200,7 +205,8 @@ public class CreateDefaultReferenceAction extends ListingContextAction {
 								case MEMORY_REF_CLASS:
 									if (memAddr != null && toAddr.isMemoryAddress()) {
 										for (int i = 0; i < refs.length; i++) {
-											if (refs[i].getSource() != SourceType.DEFAULT && memAddr.equals(toAddr)) {
+											if (refs[i].getSource() != SourceType.DEFAULT &&
+												memAddr.equals(toAddr)) {
 												actionOK = false;
 												break;
 											}
@@ -227,7 +233,7 @@ public class CreateDefaultReferenceAction extends ListingContextAction {
 		updatePopupMenuPath(actionOK);
 		return actionOK;
 	}
-	
+
 	private boolean initMemoryAddress(AddressFactory addrFactory, long offset) {
 		AddressSpace contextAddrSpace = context.getAddress().getAddressSpace();
 		try {
@@ -250,30 +256,30 @@ public class CreateDefaultReferenceAction extends ListingContextAction {
 		}
 		return false;
 	}
-	
+
 	private void updatePopupMenuPath(boolean actionOK) {
 		if (actionOK) {
 			switch (refClass) {
 				case MEMORY_REF_CLASS:
-				    getPopupMenuData().setMenuItemName( MEMORY_MENU_ITEM_NAME );
+					getPopupMenuData().setMenuItemName(MEMORY_MENU_ITEM_NAME);
 					break;
 				case STACK_REF_CLASS:
-				    getPopupMenuData().setMenuItemName( STACK_MENU_ITEM_NAME );
+					getPopupMenuData().setMenuItemName(STACK_MENU_ITEM_NAME);
 					break;
 				case REGISTER_REF_CLASS:
-				    getPopupMenuData().setMenuItemName( REGISTER_MENU_ITEM_NAME );
+					getPopupMenuData().setMenuItemName(REGISTER_MENU_ITEM_NAME);
 					break;
 				default:
-				    getPopupMenuData().setMenuItemName( DEFAULT_MENU_ITEM_NAME );
+					getPopupMenuData().setMenuItemName(DEFAULT_MENU_ITEM_NAME);
 			}
 		}
 		else {
-		    getPopupMenuData().setMenuItemName( DEFAULT_MENU_ITEM_NAME );
+			getPopupMenuData().setMenuItemName(DEFAULT_MENU_ITEM_NAME);
 		}
 	}
-	
+
 	int getDefaultRefClass() {
 		return refClass;
 	}
-	
+
 }
