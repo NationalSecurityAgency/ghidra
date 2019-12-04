@@ -536,9 +536,6 @@ public class InformationBlock {
         if ((ne_flags_app & FLAGS_APP_NONCONFORMING_PROG) != 0) {
             buffer.append(TAB+"Nonconforming"+"\n");
         }
-        if ((ne_flags_app & FLAGS_APP_OS2) != 0) {
-            buffer.append(TAB+"OS/2"+"\n");
-        }
         return buffer.toString();
     }
     /**
