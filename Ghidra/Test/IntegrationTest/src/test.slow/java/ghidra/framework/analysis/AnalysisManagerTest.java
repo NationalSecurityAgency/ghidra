@@ -15,7 +15,7 @@
  */
 package ghidra.framework.analysis;
 
-import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.*;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -50,7 +50,12 @@ public class AnalysisManagerTest extends AbstractGhidraHeadlessIntegrationTest {
 		}
 
 		void validate(GScheduledTask scheduledTask) {
-			Assert.assertEquals(name, scheduledTask.getTask().getClass().getSimpleName());
+
+			String clazz = scheduledTask.getTask().getClass().getSimpleName();
+			if (!clazz.equals(name)) {
+				assertEquals("Found unexpected class.  Found task with name '" +
+					scheduledTask.getTask().getName() + "'", name, clazz);
+			}
 		}
 	}
 
