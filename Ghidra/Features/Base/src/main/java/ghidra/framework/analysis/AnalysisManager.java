@@ -15,6 +15,10 @@
  */
 package ghidra.framework.analysis;
 
+import java.util.*;
+
+import org.apache.commons.collections4.map.HashedMap;
+
 import ghidra.app.services.Analyzer;
 import ghidra.app.services.AnalyzerType;
 import ghidra.app.util.importer.MessageLog;
@@ -25,10 +29,6 @@ import ghidra.program.model.listing.Program;
 import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
-
-import java.util.*;
-
-import org.apache.commons.collections4.map.HashedMap;
 
 public class AnalysisManager {
 
@@ -143,7 +143,7 @@ public class AnalysisManager {
 		@Override
 		public void run(UndoableDomainObject domainObject, TaskMonitor monitor)
 				throws CancelledException {
-			Msg.debug(this, "starting phase " + phase);
+			Msg.debug(this, "Starting phase " + phase);
 			setPhase(phase);
 		}
 	}
@@ -193,6 +193,10 @@ public class AnalysisManager {
 					AddressSpace.EXTERNAL_SPACE.getMaxAddress()));
 		}
 
+		@Override
+		public String toString() {
+			return getName() + ": " + restrictSet;
+		}
 	}
 
 	public MessageLog getMessageLog() {
