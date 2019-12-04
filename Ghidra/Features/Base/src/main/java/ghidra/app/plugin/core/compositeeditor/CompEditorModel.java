@@ -164,6 +164,7 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 		if (updatingSelection) {
 			return;
 		}
+
 		FieldSelection tmpSelection = new FieldSelection();
 		// allow any single row to be selected
 		if (rows.length == 1) {
@@ -172,10 +173,10 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 		else {
 			// restrict multi-selection to defined components only
 			int numComponents = getNumComponents();
-			for (int row2 : rows) {
+			for (int r : rows) {
 				// Only add valid component rows (i.e. don't include blank last line)
-				if (row2 < numComponents) {
-					tmpSelection.addRange(row2, row2 + 1);
+				if (r < numComponents) {
+					tmpSelection.addRange(r, r + 1);
 				}
 			}
 		}
@@ -354,7 +355,7 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 
 		int[] selectedRows = getSelectedRows();
 		Arrays.sort(rows);
-		for (int i = rows.length - 1; i >= 0; i--) {
+		for (int i = n - 1; i >= 0; i--) {
 			monitor.checkCanceled();
 			monitor.setMessage("Deleting " + (n - i + 1) + " of " + n);
 			int rowIndex = rows[i];
