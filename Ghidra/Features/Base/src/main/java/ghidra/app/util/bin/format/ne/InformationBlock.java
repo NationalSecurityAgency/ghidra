@@ -516,9 +516,15 @@ public class InformationBlock {
      */
     public String getApplicationFlagsAsString() {
         StringBuffer buffer = new StringBuffer();
-        if ((ne_flags_app & FLAGS_APP_FULL_SCREEN) != 0) {
+        byte application_type = ne_flags_app & 0x03;
+        if (application_type == FLAGS_APP_FULL_SCREEN) {
             buffer.append(TAB+"Full Screen"+"\n");
+        } else if (application_type == FLAGS_APP_WIN_PM_COMPATIBLE) {
+            buffer.append(TAB+"Windows P.M. API Compatible"+"\n");
+        } else if (application_type == FLAGS_APP_WINDOWS_PM) {
+            buffer.append(TAB+"Windows P.M. API"+"\n");
         }
+
         if ((ne_flags_app & FLAGS_APP_LIBRARY_MODULE) != 0) {
             buffer.append(TAB+"Library Module"+"\n");
         }
@@ -533,12 +539,6 @@ public class InformationBlock {
         }
         if ((ne_flags_app & FLAGS_APP_OS2) != 0) {
             buffer.append(TAB+"OS/2"+"\n");
-        }
-        if ((ne_flags_app & FLAGS_APP_WINDOWS_PM) != 0) {
-            buffer.append(TAB+"Windows P.M. API"+"\n");
-        }
-        if ((ne_flags_app & FLAGS_APP_WIN_PM_COMPATIBLE) != 0) {
-            buffer.append(TAB+"Windows P.M. API Compatible"+"\n");
         }
         return buffer.toString();
     }
