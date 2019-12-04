@@ -152,7 +152,7 @@ class IdaXml:
             what: String indicating Exporter, Importer, or Loader 
         """
         if os.path.isfile(os.path.join(ida_diskio.get_user_idadir(), 'python', 'idaxml.py')):
-            f = ida_diskio.get_user_idadir(), 'python', 'idaxml.py')
+            f = os.path.join(ida_diskio.get_user_idadir(), 'python', 'idaxml.py')
         else:
             f = os.path.join(ida_diskio.idadir('python'), '/idaxml.py')
         ftime = time.localtime(os.path.getmtime(f))
