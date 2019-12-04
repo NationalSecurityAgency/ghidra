@@ -51,10 +51,9 @@ public class BackwardsSliceToPCodeOpsAction extends AbstractDecompilerAction {
 			PcodeOp op = tokenAtCursor.getPcodeOp();
 			Set<PcodeOp> backwardSlice = DecompilerUtils.getBackwardSliceToPCodeOps(varnode);
 			backwardSlice.add(op);
-			decompilerPanel.clearHighlights();
+			decompilerPanel.clearPrimaryHighlights();
 			decompilerPanel.addPcodeOpHighlights(backwardSlice,
-				decompilerPanel.getPrimaryHighlightColor());
-			decompilerPanel.repaint();
+				decompilerPanel.getCurrentVariableHighlightColor());
 		}
 	}
 

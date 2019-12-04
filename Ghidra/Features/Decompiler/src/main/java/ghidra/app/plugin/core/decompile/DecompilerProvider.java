@@ -18,8 +18,8 @@ package ghidra.app.plugin.core.decompile;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.math.BigInteger;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 import javax.swing.*;
 
@@ -50,6 +50,7 @@ import ghidra.util.bean.field.AnnotatedTextFieldElement;
 import ghidra.util.task.SwingUpdateManager;
 import resources.Icons;
 import resources.ResourceManager;
+import utility.function.Callback;
 
 public class DecompilerProvider extends NavigatableComponentProviderAdapter
 		implements DomainObjectListener, OptionsChangeListener, DecompilerCallbackHandler {
@@ -105,6 +106,12 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 	private ViewerPosition pendingViewerPosition;
 
 	private SwingUpdateManager redecompileUpdater;
+
+	// Follow-up work can be items that need to happen after a pending decompile is finished, such
+	// as updating highlights after a variable rename
+	private SwingUpdateManager followUpWorkUpdater;
+	private Queue<Callback> followUpWork = new ConcurrentLinkedQueue<>();
+
 	private ServiceListener serviceListener = new ServiceListener() {
 
 		@Override
@@ -132,9 +139,11 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 
 		decompilerOptions = new DecompileOptions();
 		initializeDecompilerOptions();
-		highlightController = new LocationClangHighlightController();
 		controller = new DecompilerController(this, decompilerOptions, clipboardProvider);
 		DecompilerPanel decompilerPanel = controller.getDecompilerPanel();
+
+		// TODO move the hl controller into the panel
+		highlightController = new LocationClangHighlightController();
 		decompilerPanel.setHighlightController(highlightController);
 		decorationPanel = new DecoratorPanel(decompilerPanel, isConnected);
 
@@ -157,6 +166,7 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 		addToTool();
 
 		redecompileUpdater = new SwingUpdateManager(500, 5000, () -> doRefresh());
+		followUpWorkUpdater = new SwingUpdateManager(() -> doFollowUpWork());
 
 		plugin.getTool().addServiceListener(serviceListener);
 	}
@@ -301,6 +311,20 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 		}
 	}
 
+	private void doFollowUpWork() {
+		if (isBusy()) {
+			// try again later
+			followUpWorkUpdater.updateLater();
+			return;
+		}
+
+		Callback work = followUpWork.poll();
+		while (work != null) {
+			work.call();
+			work = followUpWork.poll();
+		}
+	}
+
 //==================================================================================================
 // OptionsListener methods
 //==================================================================================================
@@ -334,6 +358,7 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 		super.dispose();
 
 		redecompileUpdater.dispose();
+		followUpWorkUpdater.dispose();
 
 		if (clipboardService != null) {
 			clipboardService.deRegisterClipboardContentProvider(clipboardProvider);
@@ -421,8 +446,8 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 		return null;
 	}
 
-	boolean isDecompiling() {
-		return controller.isDecompiling();
+	boolean isBusy() {
+		return redecompileUpdater.isBusy() || controller.isDecompiling();
 	}
 
 	/**
@@ -471,10 +496,6 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 		tool.setStatusInfo(message);
 	}
 
-	/**
-	 * Called from the DecompilerController to indicate that the decompilerData has changed.
-	 * @param decompileData the new DecompilerData
-	 */
 	@Override
 	public void decompileDataChanged(DecompileData decompileData) {
 		updateTitle();
@@ -606,6 +627,12 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 		}
 	}
 
+	@Override
+	public void doWheNotBusy(Callback c) {
+		followUpWork.offer(c);
+		followUpWorkUpdater.update();
+	}
+
 //==================================================================================================
 // methods called from other members
 //==================================================================================================
@@ -624,11 +651,10 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 
 			// Any change in the HighlightTokens should be delivered to the new panel
 			DecompilerPanel panel = getDecompilerPanel();
-			TokenHighlights highlightedTokens = panel.getHighlightedTokens();
+			TokenHighlights highlightedTokens = panel.getSecondaryHighlightedTokens();
 
 			DecompilerPanel newPanel = newProvider.getDecompilerPanel();
-			TokenHighlights copiedTokens =
-				highlightedTokens.copyHighlights(newPanel, controller.getFunction());
+			TokenHighlights copiedTokens = highlightedTokens.copyHighlights();
 
 			// Transfer the highlighted tokens			
 			newPanel.setHighlightedTokens(copiedTokens);
@@ -757,7 +783,7 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 		forwardSliceAction = new ForwardSliceAction(controller);
 		setGroupInfo(forwardSliceAction, variableGroup, subGroupPosition++);
 
-		backwardSliceAction = new BackwardsSliceAction(controller);
+		backwardSliceAction = new BackwardsSliceAction();
 		setGroupInfo(backwardSliceAction, variableGroup, subGroupPosition++);
 
 		forwardSliceToOpsAction = new ForwardSliceToPCodeOpsAction(controller);

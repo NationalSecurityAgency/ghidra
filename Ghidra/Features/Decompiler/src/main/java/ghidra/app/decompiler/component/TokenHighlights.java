@@ -15,51 +15,33 @@
  */
 package ghidra.app.decompiler.component;
 
-import java.awt.Color;
 import java.util.*;
-
-import org.apache.commons.collections4.map.LazyMap;
+import java.util.Map.Entry;
 
 import ghidra.app.decompiler.*;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.pcode.HighFunction;
 
-// TODO revisit having the panel's live here... we need this if clients interact with this 
-// object directly.  If they go through the panel, then we do not need them here
-public class TokenHighlights {
+/**
+ * A simple class to manage {@link HighlightToken}s used to create secondary highlights in the
+ * Decompiler
+ */
+public class TokenHighlights implements Iterable<HighlightToken> {
 
-	private int minColorSaturation = 100;
-	private int defaultColorAlpha = 100;
+	private Map<TokenKey, HighlightToken> highlightsByToken = new HashMap<>();
 
-	// TODO private HighlightColorSource
-
-	private DecompilerPanel panel;
-	// TODO private Map<TokenKey, HighlightToken> highlightsByToken = new HashMap<>();
-
-	private Map<TokenKey, HighlightToken> nullMap = Collections.unmodifiableMap(new HashMap<>());
-	private Map<Function, Map<TokenKey, HighlightToken>> highlightsByFunction =
-		LazyMap.lazyMap(new HashMap<>(), f -> f == null ? nullMap : new HashMap<>());
-
-	public TokenHighlights(DecompilerPanel panel) {
-		this.panel = panel;
-	}
-
-	public TokenHighlights copyHighlights(DecompilerPanel otherPanel, Function function) {
-
-		TokenHighlights newHighlights = new TokenHighlights(otherPanel);
-
-		Map<TokenKey, HighlightToken> highlightsByToken = highlightsByFunction.get(function);
-		Map<TokenKey, HighlightToken> newHighlightsByToken = new HashMap<>(highlightsByToken);
-		newHighlights.highlightsByFunction.put(function, newHighlightsByToken);
+	public TokenHighlights copyHighlights() {
+		TokenHighlights newHighlights = new TokenHighlights();
+		newHighlights.highlightsByToken = new HashMap<>(highlightsByToken);
 		return newHighlights;
 	}
 
-	private Map<TokenKey, HighlightToken> getHighlightsByToken(HighlightToken t) {
-		return highlightsByFunction.get(getFunction(t.getToken()));
+	private TokenKey getKey(HighlightToken ht) {
+		return new TokenKey(ht);
 	}
 
-	private Map<TokenKey, HighlightToken> getHighlightsByToken(ClangToken t) {
-		return highlightsByFunction.get(getFunction(t));
+	private TokenKey getKey(ClangToken t) {
+		return new TokenKey(t);
 	}
 
 	private Function getFunction(ClangToken t) {
@@ -78,68 +60,81 @@ public class TokenHighlights {
 		return highFunction.getFunction();
 	}
 
+	public int size() {
+		return highlightsByToken.size();
+	}
+
 	public void add(HighlightToken t) {
-		Function f = t.getFunction();
-		Map<TokenKey, HighlightToken> highlightsByToken = highlightsByFunction.get(f);
-		highlightsByToken.put(new TokenKey(t), t);
-		notifyListeners();
+		highlightsByToken.put(getKey(t), t);
 	}
 
 	public HighlightToken get(ClangToken t) {
-		Map<TokenKey, HighlightToken> highlightsByToken = getHighlightsByToken(t);
-		TokenKey key = new TokenKey(t);
-		return highlightsByToken.get(key);
+		return highlightsByToken.get(getKey(t));
 	}
 
-	public Collection<HighlightToken> get(Function f) {
-		return highlightsByFunction.get(f).values();
+	public boolean contains(ClangToken t) {
+		return highlightsByToken.containsKey(getKey(t));
 	}
 
 	public void clear() {
-		highlightsByFunction.clear();
-		notifyListeners();
+		highlightsByToken.clear();
 	}
 
 	public boolean contains(HighlightToken t) {
-		TokenKey key = new TokenKey(t);
-		Map<TokenKey, HighlightToken> highlightsByToken = getHighlightsByToken(t);
-		return highlightsByToken.containsKey(key);
+		return highlightsByToken.containsKey(getKey(t));
 	}
 
+	// TODO examine this method and others for removal
 	public void remove(HighlightToken t) {
-		TokenKey key = new TokenKey(t);
-		Map<TokenKey, HighlightToken> highlightsByToken = getHighlightsByToken(t);
-		highlightsByToken.remove(key);
-		notifyListeners();
+		highlightsByToken.remove(getKey(t));
 	}
 
-	public void remove(Function function) {
-		highlightsByFunction.remove(function);
-		notifyListeners();
+	public void remove(ClangToken t) {
+		highlightsByToken.remove(getKey(t));
 	}
 
-	// TODO remove this
-	public void notifyListeners() {
+	public Set<HighlightToken> removeTokensByFunction(Function function) {
+		Set<HighlightToken> oldHighlights = new HashSet<>();
+		Set<TokenKey> keys = getHighlightKeys(function);
+		for (TokenKey key : keys) {
+			HighlightToken hl = highlightsByToken.remove(key);
+			oldHighlights.add(hl);
+		}
 
-		//
-		// TODO to remove this, the clients that change this class would have to forcibly rebuild the highlights
-		//  -it seems simpler to have one place manager notifications
-		//  -OTOH, it seems wasteful to completely rebuild all secondary highlights when adding
-		//         or removing a single one
-		// 
+		return oldHighlights;
+	}
 
-		panel.rebuildSecondaryHighlightTokens();
+	private Set<TokenKey> getHighlightKeys(Function function) {
+		Set<TokenKey> results = new HashSet<>();
+
+		Set<Entry<TokenKey, HighlightToken>> entries = highlightsByToken.entrySet();
+		for (Entry<TokenKey, HighlightToken> entry : entries) {
+			HighlightToken highlight = entry.getValue();
+			ClangToken token = highlight.getToken();
+			Function tokenFunction = getFunction(token);
+			if (function.equals(tokenFunction)) {
+				results.add(entry.getKey());
+			}
+		}
+
+		return results;
+	}
+
+	@Override
+	public Iterator<HighlightToken> iterator() {
+		return highlightsByToken.values().iterator();
 	}
 
 	@Override
 	public String toString() {
-		return highlightsByFunction.values().toString();
+		return highlightsByToken.values().toString();
 	}
 
 //==================================================================================================
 // Inner Classes
 //==================================================================================================	
 
+	// a key that allows us to equate tokens that are not the same instance
 	private class TokenKey {
 		private ClangToken token;
 
@@ -209,21 +204,5 @@ public class TokenHighlights {
 		public String toString() {
 			return token.toString();
 		}
-	}
-
-	// TODO move up; clean up
-
-	private Map<String, Color> colorsByName =
-		LazyMap.lazyMap(new HashMap<>(), s -> generateColor());
-
-	private Color generateColor() {
-		return new Color((int) (minColorSaturation + Math.random() * (256 - minColorSaturation)),
-			(int) (minColorSaturation + Math.random() * (256 - minColorSaturation)),
-			(int) (minColorSaturation + Math.random() * (256 - minColorSaturation)),
-			defaultColorAlpha);
-	}
-
-	public Color getColor(String text) {
-		return colorsByName.get(text);
 	}
 }

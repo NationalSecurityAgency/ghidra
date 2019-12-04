@@ -20,19 +20,25 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-import org.apache.commons.collections4.IterableUtils;
-
 import docking.widgets.EventTrigger;
 import docking.widgets.fieldpanel.field.Field;
 import docking.widgets.fieldpanel.support.FieldLocation;
 import ghidra.app.decompiler.*;
 import ghidra.app.plugin.core.decompile.actions.TokenHighlightColorProvider;
 import ghidra.program.model.pcode.PcodeOp;
+import ghidra.util.ColorUtils;
+import util.CollectionUtils;
 
 /**
- * Class to handle highlights for a decompiled function
+ * Class to handle highlights for a decompiled function.
+ * 
+ * <p>This class does not painting directly.  Rather, this class tracks the currently highlighted
+ * tokens and then sets the highlight color on the token when it is highlighted and clears the 
+ * highlight color when the highlight is removed.
  */
 public abstract class ClangHighlightController {
+
+	public static Color DEFAULT_HIGHLIGHT_COLOR = new Color(255, 255, 0, 128);
 
 	public static ClangHighlightController dummyIfNull(ClangHighlightController c) {
 		if (c == null) {
@@ -44,49 +50,22 @@ public abstract class ClangHighlightController {
 	// Note: Most of the methods in this class were extracted from the ClangLayoutController class
 	//       and the DecompilerPanel class.
 
-	protected Color defaultHighlightColor = new Color(255, 255, 0, 128); // Default color for highlighting tokens
-	protected Color defaultSpecialColor = new Color(255, 100, 0, 128); // Default color for specially highlighted tokens
-	protected Color defaultParenColor = new Color(255, 255, 0, 128); // Default color for highlighting parentheses
+	protected Color defaultHighlightColor = DEFAULT_HIGHLIGHT_COLOR;
+	protected Color defaultParenColor = DEFAULT_HIGHLIGHT_COLOR;
 
-	private Set<ClangToken> primaryHighlightTokens = new HashSet<>();
-	private Set<ClangToken> secondaryHighlightTokens = new HashSet<>();
+	private TokenHighlights primaryHighlightTokens = new TokenHighlights();
+	private TokenHighlights secondaryHighlightTokens = new TokenHighlights();
+
+	// TODO rename 'secondary highlight color manager'
+	private TokenHighlightColors secondaryHighlightColors = new TokenHighlightColors();
+
 	private List<ClangHighlightListener> listeners = new ArrayList<>();
 
 	public abstract void fieldLocationChanged(FieldLocation location, Field field,
 			EventTrigger trigger);
 
-	void loadOptions(DecompileOptions options) {
-		Color currentVariableHighlightColor = options.getCurrentVariableHighlightColor();
-		if (currentVariableHighlightColor != null) {
-			setDefaultHighlightColor(currentVariableHighlightColor);
-		}
-	}
-
-	public void setDefaultHighlightColor(Color highlightColor) {
-		defaultHighlightColor = highlightColor;
-		notifyListeners();
-	}
-
-	public void setDefaultSpecialColor(Color specialColor) {
-		defaultSpecialColor = specialColor;
-		notifyListeners();
-	}
-
-	public void setDefaultParenColor(Color parenColor) {
-		defaultParenColor = parenColor;
-		notifyListeners();
-	}
-
-	public Color getDefaultHighlightColor() {
-		return defaultHighlightColor;
-	}
-
-	public Color getDefaultSpecialColor() {
-		return defaultSpecialColor;
-	}
-
-	public Color getDefaultParenColor() {
-		return defaultParenColor;
+	void setHighlightColor(Color c) {
+		defaultHighlightColor = c;
 	}
 
 	public String getHighlightedText() {
@@ -97,15 +76,18 @@ public abstract class ClangHighlightController {
 		return null;
 	}
 
+	public TokenHighlights getSecondaryHighlightedTokens() {
+		return secondaryHighlightTokens;
+	}
+
 	/**
 	 * Return the current highlighted token (if exists and unique)
 	 * @return token or null
 	 */
 	private ClangToken getHighlightedToken() {
 		if (primaryHighlightTokens.size() == 1) {
-			ClangToken[] tokenArray =
-				primaryHighlightTokens.toArray(new ClangToken[primaryHighlightTokens.size()]);
-			return tokenArray[0];
+			HighlightToken hlToken = CollectionUtils.any(primaryHighlightTokens);
+			return hlToken.getToken();
 		}
 		return null;
 	}
@@ -126,38 +108,87 @@ public abstract class ClangHighlightController {
 
 	public void clearPrimaryHighlights() {
 		doClearHighlights(primaryHighlightTokens);
+		notifyListeners();
+	}
+
+	public void clearSecondaryHighlights() {
+		doClearHighlights(secondaryHighlightTokens);
+		notifyListeners();
 	}
 
 	public void clearAllHighlights() {
-		Iterable<ClangToken> allTokens =
-			IterableUtils.chainedIterable(primaryHighlightTokens, secondaryHighlightTokens);
-		for (ClangToken clangToken : allTokens) {
-			clangToken.setHighlight(null);
-			clangToken.setMatchingToken(false);
-		}
-
-		primaryHighlightTokens.clear();
-		secondaryHighlightTokens.clear();
+		doClearHighlights(primaryHighlightTokens);
+		doClearHighlights(secondaryHighlightTokens);
 		notifyListeners();
 	}
 
-	private void doClearHighlights(Set<ClangToken> highlightTokens) {
+	// TODO try to reconcile 'tokenhighlights' vs 'highlighttokens' ( and highlighttoken)
+	private void doClearHighlights(TokenHighlights highlightTokens) {
 
-		for (ClangToken clangToken : highlightTokens) {
-			clangToken.setHighlight(null);
-			clangToken.setMatchingToken(false);
+		Iterator<HighlightToken> it = highlightTokens.iterator();
+		while (it.hasNext()) {
+			HighlightToken highlight = it.next();
+			it.remove();
+			ClangToken token = highlight.getToken();
+			token.setMatchingToken(false);
+			updateHighlightColor(token);
 		}
-
 		highlightTokens.clear();
+	}
+
+	public void toggleSecondaryHighlight(ClangToken token,
+			Supplier<? extends Collection<ClangToken>> lazyTokens) {
+
+		String text = token.getText();
+
+		// toggle the highlight		
+		HighlightToken highlight = secondaryHighlightTokens.get(token);
+		if (highlight == null) {
+			Color highlightColor = secondaryHighlightColors.getColor(text);
+			addSecondaryHighlights(lazyTokens, highlightColor);
+		}
+		else {
+			removeSecondaryHighlights(lazyTokens);
+		}
+	}
+
+	public boolean hasSecondaryHighlight(ClangToken token) {
+		return secondaryHighlightTokens.contains(token);
+	}
+
+	public void removeSecondaryHighlights(ghidra.program.model.listing.Function function) {
+		Set<HighlightToken> oldHighlights =
+			secondaryHighlightTokens.removeTokensByFunction(function);
+		for (HighlightToken hl : oldHighlights) {
+			ClangToken token = hl.getToken();
+			updateHighlightColor(token);
+		}
 		notifyListeners();
 	}
 
-	public void addPrimaryHighlight() {
-		// TODO 
+	public HighlightToken removeSecondaryHighlight(ClangToken token) {
+		HighlightToken hlToken = secondaryHighlightTokens.get(token);
+		secondaryHighlightTokens.remove(token);
+		return hlToken;
 	}
 
-	public void addSecondaryHighlight() {
-		// TODO 
+	private void removeSecondaryHighlights(Supplier<? extends Collection<ClangToken>> tokens) {
+		for (ClangToken clangToken : tokens.get()) {
+			secondaryHighlightTokens.remove(clangToken);
+			updateHighlightColor(clangToken);
+		}
+		notifyListeners();
+	}
+
+	public void addSecondaryHighlights(Supplier<? extends Collection<ClangToken>> tokens,
+			Color hlColor) {
+		Function<ClangToken, Color> colorProvider = token -> hlColor;
+		addTokensToHighlights(tokens.get(), colorProvider, secondaryHighlightTokens);
+	}
+
+	@Deprecated // for use by subclasses 
+	protected void addHighlight(ClangToken tok, Color hlColor) {
+		addPrimaryHighlight(tok, hlColor);
 	}
 
 	public void addPrimaryHighlights(Supplier<? extends Collection<ClangToken>> tokens,
@@ -171,7 +202,7 @@ public abstract class ClangHighlightController {
 
 		Set<ClangToken> tokens = new HashSet<>();
 		gatherAllTokens(parentNode, tokens);
-		addTokensToHighlights(tokens, colorProvider::getColor, tokens);
+		addTokensToHighlights(tokens, colorProvider::getColor, primaryHighlightTokens);
 	}
 
 	public void addPrimaryHighlights(ClangNode parentNode, Set<PcodeOp> ops, Color hlColor) {
@@ -188,7 +219,7 @@ public abstract class ClangHighlightController {
 	}
 
 	private void addTokensToHighlights(Collection<ClangToken> tokens,
-			Function<ClangToken, Color> colorProvider, Set<ClangToken> currentHighlights) {
+			Function<ClangToken, Color> colorProvider, TokenHighlights currentHighlights) {
 		for (ClangToken clangToken : tokens) {
 			Color color = colorProvider.apply(clangToken);
 			doAddHighlight(clangToken, color, currentHighlights);
@@ -201,20 +232,42 @@ public abstract class ClangHighlightController {
 	}
 
 	private void doAddHighlight(ClangToken clangToken, Color highlightColor,
-			Set<ClangToken> currentHighlights) {
+			TokenHighlights currentHighlights) {
 
 		if (highlightColor == null) {
 			return;
 		}
 
-		clangToken.setHighlight(highlightColor);
-		currentHighlights.add(clangToken);
+		// store the actual requested color
+		currentHighlights.add(new HighlightToken(clangToken, highlightColor));
+		updateHighlightColor(clangToken);
 	}
 
-	public void clearHighlight(ClangToken clangToken) {
-		clangToken.setHighlight(null);
-		primaryHighlightTokens.remove(clangToken);
-		notifyListeners();
+	private void updateHighlightColor(ClangToken t) {
+		// set the color to the current combined value of both highlight types
+		Color combinedColor = getCombinedColor(t);
+		t.setHighlight(combinedColor);
+	}
+
+	public Color getCombinedColor(ClangToken t) {
+
+		HighlightToken primaryHl = primaryHighlightTokens.get(t);
+		HighlightToken secondaryHl = secondaryHighlightTokens.get(t);
+		Color primary = primaryHl == null ? null : primaryHl.getColor();
+		Color secondary = secondaryHl == null ? null : secondaryHl.getColor();
+
+		if (primary == null) {
+			if (secondary == null) {
+				return null;
+			}
+			return secondary;
+		}
+
+		if (secondary == null) {
+			return primary;
+		}
+
+		return ColorUtils.blend(primary, secondary, .8f);
 	}
 
 	/**

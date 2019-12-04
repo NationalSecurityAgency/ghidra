@@ -51,10 +51,9 @@ public class ForwardSliceToPCodeOpsAction extends AbstractDecompilerAction {
 			PcodeOp op = tokenAtCursor.getPcodeOp();
 			Set<PcodeOp> forwardSlice = DecompilerUtils.getForwardSliceToPCodeOps(varnode);
 			forwardSlice.add(op);
-			decompilerPanel.clearHighlights();
+			decompilerPanel.clearPrimaryHighlights();
 			decompilerPanel.addPcodeOpHighlights(forwardSlice,
-				decompilerPanel.getPrimaryHighlightColor());
-			decompilerPanel.repaint();
+				decompilerPanel.getCurrentVariableHighlightColor());
 		}
 
 	}

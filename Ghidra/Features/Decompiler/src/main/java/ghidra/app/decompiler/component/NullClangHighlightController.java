@@ -27,46 +27,14 @@ import ghidra.app.decompiler.*;
 import ghidra.app.plugin.core.decompile.actions.TokenHighlightColorProvider;
 import ghidra.program.model.pcode.PcodeOp;
 
+/**
+ * A stub implementation of the highlight controller that allows clients to avoid null checks
+ */
 public class NullClangHighlightController extends ClangHighlightController {
 
 	@Override
 	public void fieldLocationChanged(FieldLocation location, Field field, EventTrigger trigger) {
 		// stub
-	}
-
-	@Override
-	void loadOptions(DecompileOptions options) {
-		// stub
-	}
-
-	@Override
-	public void setDefaultHighlightColor(Color highlightColor) {
-		// stub
-	}
-
-	@Override
-	public void setDefaultSpecialColor(Color specialColor) {
-		// stub
-	}
-
-	@Override
-	public void setDefaultParenColor(Color parenColor) {
-		// stub
-	}
-
-	@Override
-	public Color getDefaultHighlightColor() {
-		return null;
-	}
-
-	@Override
-	public Color getDefaultSpecialColor() {
-		return null;
-	}
-
-	@Override
-	public Color getDefaultParenColor() {
-		return null;
 	}
 
 	@Override
@@ -93,11 +61,6 @@ public class NullClangHighlightController extends ClangHighlightController {
 
 	@Override
 	public void clearAllHighlights() {
-		// stub
-	}
-
-	@Override
-	public void clearHighlight(ClangToken clangToken) {
 		// stub
 	}
 

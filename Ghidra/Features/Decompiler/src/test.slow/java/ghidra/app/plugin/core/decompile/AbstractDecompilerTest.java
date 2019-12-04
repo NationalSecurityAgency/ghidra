@@ -70,7 +70,7 @@ public abstract class AbstractDecompilerTest extends AbstractProgramBasedTest {
 
 	protected void waitForDecompiler() {
 		waitForSwing();
-		waitForCondition(() -> !provider.isDecompiling());
+		waitForCondition(() -> !provider.isBusy());
 		waitForSwing();
 	}
 
@@ -80,6 +80,7 @@ public abstract class AbstractDecompilerTest extends AbstractProgramBasedTest {
 		DecompilerPanel panel = provider.getDecompilerPanel();
 		FieldPanel fp = panel.getFieldPanel();
 		click(fp, 1, true);
+		waitForSwing();
 	}
 
 	protected void doubleClick() {
@@ -99,6 +100,15 @@ public abstract class AbstractDecompilerTest extends AbstractProgramBasedTest {
 		DecompilerPanel panel = provider.getDecompilerPanel();
 		List<Field> fields = panel.getFields();
 		Field line = fields.get(lineNumber - 1); // -1 for 1-based line number
+		return (ClangTextField) line;
+	}
+
+	// note: the index is 0-based; use getFieldForLine() when using 1-based line numbers
+	protected ClangTextField getFieldForIndex(int lineIndex) {
+
+		DecompilerPanel panel = provider.getDecompilerPanel();
+		List<Field> fields = panel.getFields();
+		Field line = fields.get(lineIndex);
 		return (ClangTextField) line;
 	}
 

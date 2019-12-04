@@ -15,13 +15,14 @@
  */
 package ghidra.app.plugin.core.decompile.actions;
 
-import java.awt.Color;
 import java.awt.event.KeyEvent;
+import java.util.List;
+import java.util.function.Supplier;
 
 import docking.action.KeyBindingData;
 import docking.action.MenuData;
 import ghidra.app.decompiler.ClangToken;
-import ghidra.app.decompiler.component.*;
+import ghidra.app.decompiler.component.DecompilerPanel;
 import ghidra.app.plugin.core.decompile.DecompilerActionContext;
 import ghidra.app.util.HelpTopics;
 import ghidra.program.model.pcode.HighVariable;
@@ -74,23 +75,8 @@ public class ToggleSecondaryHighlightAction extends AbstractDecompilerAction {
 	protected void decompilerActionPerformed(DecompilerActionContext context) {
 
 		DecompilerPanel panel = context.getDecompilerPanel();
-		TokenHighlights highlights = panel.getHighlightedTokens();
-		ClangToken tokenAtCursor = panel.getTokenAtCursor();
-		String text = tokenAtCursor.getText();
-
-		// toggle the highlight
-		HighlightToken highlight = highlights.get(tokenAtCursor);
-		if (highlight == null) {
-			// TODO maybe move this to a 'createHighlight()' method on the highlights
-			Color highlightColor = highlights.getColor(text);
-			HighlightToken newHiglight = new HighlightToken(tokenAtCursor, highlightColor);
-			highlights.add(highlight);
-			panel.tokenHighlightsAdded(newHiglight);
-		}
-		else {
-			highlights.remove(highlight);
-			panel.tokenHighlightsRemoved(highlight);
-
-		}
+		ClangToken token = panel.getTokenAtCursor();
+		Supplier<List<ClangToken>> lazyTokens = () -> panel.findTokensByName(token.getText());
+		panel.toggleSecondaryHighlight(token, lazyTokens);
 	}
 }

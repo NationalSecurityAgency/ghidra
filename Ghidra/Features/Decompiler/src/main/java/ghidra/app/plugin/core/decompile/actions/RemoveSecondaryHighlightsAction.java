@@ -17,10 +17,8 @@ package ghidra.app.plugin.core.decompile.actions;
 
 import docking.action.MenuData;
 import ghidra.app.decompiler.component.DecompilerPanel;
-import ghidra.app.decompiler.component.TokenHighlights;
 import ghidra.app.plugin.core.decompile.DecompilerActionContext;
 import ghidra.app.util.HelpTopics;
-import ghidra.program.model.listing.Function;
 import ghidra.util.HelpLocation;
 
 public class RemoveSecondaryHighlightsAction extends AbstractDecompilerAction {
@@ -41,9 +39,7 @@ public class RemoveSecondaryHighlightsAction extends AbstractDecompilerAction {
 
 	@Override
 	protected void decompilerActionPerformed(DecompilerActionContext context) {
-		Function function = context.getFunction();
 		DecompilerPanel panel = context.getDecompilerPanel();
-		TokenHighlights highlightTokens = panel.getHighlightedTokens();
-		highlightTokens.remove(function);
+		panel.removeSecondaryHighlights();
 	}
 }

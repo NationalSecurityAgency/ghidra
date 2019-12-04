@@ -39,7 +39,7 @@ public class SliceHighlightColorProvider implements TokenHighlightColorProvider 
 		this.specialVn = specialVn;
 		this.specialOp = specialOp;
 
-		hlColor = panel.getPrimaryHighlightColor();
+		hlColor = panel.getCurrentVariableHighlightColor();
 		specialHlColor = panel.getSpecialHighlightColor();
 	}
 
@@ -47,18 +47,23 @@ public class SliceHighlightColorProvider implements TokenHighlightColorProvider 
 	public Color getColor(ClangToken token) {
 
 		Varnode vn = DecompilerUtils.getVarnodeRef(token);
+		if (vn == null) {
+			return null;
+		}
+
+		Color c = null;
 		if (varnodes.contains(vn)) {
-			return hlColor;
+			c = hlColor;
 		}
 
 		if (specialOp == null) {
-			return null;
+			return c;
 		}
 
 		// look for specific varnode to label with special color
 		if (vn == specialVn && token.getPcodeOp() == specialOp) {
-			return specialHlColor;
+			c = specialHlColor;
 		}
-		return null;
+		return c;
 	}
 }

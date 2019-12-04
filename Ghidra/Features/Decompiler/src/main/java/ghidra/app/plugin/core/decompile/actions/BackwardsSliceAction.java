@@ -19,23 +19,24 @@ import java.util.Set;
 
 import docking.action.MenuData;
 import ghidra.app.decompiler.ClangToken;
-import ghidra.app.decompiler.component.*;
+import ghidra.app.decompiler.component.DecompilerPanel;
+import ghidra.app.decompiler.component.DecompilerUtils;
 import ghidra.app.plugin.core.decompile.DecompilerActionContext;
 import ghidra.program.model.pcode.PcodeOp;
 import ghidra.program.model.pcode.Varnode;
 
 public class BackwardsSliceAction extends AbstractDecompilerAction {
-	private final DecompilerController controller;
 
-	public BackwardsSliceAction(DecompilerController controller) {
+	public static final String NAME = "Highlight Backward Slice";
+
+	public BackwardsSliceAction() {
 		super("Highlight Backward Slice");
-		this.controller = controller;
-		setPopupMenuData(new MenuData(new String[] { "Highlight Backward Slice" }, "Decompile"));
+		setPopupMenuData(new MenuData(new String[] { NAME }, "Decompile"));
 	}
 
 	@Override
 	protected boolean isEnabledForDecompilerContext(DecompilerActionContext context) {
-		DecompilerPanel decompilerPanel = controller.getDecompilerPanel();
+		DecompilerPanel decompilerPanel = context.getDecompilerPanel();
 		ClangToken tokenAtCursor = decompilerPanel.getTokenAtCursor();
 		Varnode varnode = DecompilerUtils.getVarnodeRef(tokenAtCursor);
 		return varnode != null;
@@ -43,18 +44,18 @@ public class BackwardsSliceAction extends AbstractDecompilerAction {
 
 	@Override
 	protected void decompilerActionPerformed(DecompilerActionContext context) {
-		DecompilerPanel decompilerPanel = controller.getDecompilerPanel();
+
+		DecompilerPanel decompilerPanel = context.getDecompilerPanel();
 		ClangToken tokenAtCursor = decompilerPanel.getTokenAtCursor();
 		Varnode varnode = DecompilerUtils.getVarnodeRef(tokenAtCursor);
 		if (varnode == null) {
 			return;
 		}
 
-		decompilerPanel.clearHighlights();
+		decompilerPanel.clearPrimaryHighlights();
 
 		PcodeOp op = tokenAtCursor.getPcodeOp();
 		Set<Varnode> backwardSlice = DecompilerUtils.getBackwardSlice(varnode);
-
 		SliceHighlightColorProvider colorProvider =
 			new SliceHighlightColorProvider(decompilerPanel, backwardSlice, varnode, op);
 		decompilerPanel.addVarnodeHighlights(backwardSlice, colorProvider);

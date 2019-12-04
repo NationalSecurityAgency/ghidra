@@ -40,9 +40,6 @@ public class LocationClangHighlightController extends ClangHighlightController {
 			return;
 		}
 
-		// TODO revisit cursor location highlight
-		// TODO it should probably darken the color
-
 		addPrimaryHighlight(tok, defaultHighlightColor);
 		if (tok instanceof ClangSyntaxToken) {
 			addPrimaryHighlightToTokensForParenthesis((ClangSyntaxToken) tok, defaultParenColor);
