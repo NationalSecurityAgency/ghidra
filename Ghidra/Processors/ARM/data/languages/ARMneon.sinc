@@ -1168,7 +1168,7 @@ roundMode: 		is TMode=0 & c0707=1		{ tmp:1 = 3; export tmp; } # Round towards ze
 roundMode: "r"	is TMode=1 & thv_c0707=0	{ tmp:1 = $(FPSCR_RMODE); export tmp; }
 roundMode: 		is TMode=1 & thv_c0707=1	{ tmp:1 = 3; export tmp; } # Round towards zero
 
-:vcvt^roundMode^COND^".s32.f32" Sd,Sm	is COND & ( ($(AMODE) & c2327=0x1b & c1921=7 & c1618=5 & c0911=5 & c0808=0 & c0606=1 & c0404=0) | 
+:vcvt^roundMode^COND^".s32.f32" Sd,Sm	is COND & ( ($(AMODE) & c2327=0x1d & c1921=7 & c1618=5 & c0911=5 & c0808=0 & c0606=1 & c0404=0) | 
                                                     ($(TMODE_E) & thv_c2327=0x1b & thv_c1921=7 & thv_c1618=5 & thv_c0911=5 & thv_c0808=0 & thv_c0606=1 & thv_c0404=0) ) & Sd & Sm & roundMode
 {
 	build COND;
