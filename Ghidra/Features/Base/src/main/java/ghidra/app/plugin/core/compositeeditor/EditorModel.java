@@ -19,6 +19,7 @@ import ghidra.app.util.datatype.EmptyCompositeException;
 import ghidra.program.model.data.*;
 import ghidra.util.InvalidNameException;
 import ghidra.util.exception.*;
+import ghidra.util.task.TaskMonitor;
 
 public interface EditorModel {
 
@@ -330,9 +331,10 @@ public interface EditorModel {
 	/**
 	 *  Delete the selected components.
 	 *
+	 * @param monitor the task monitor
 	 * @throws UsrException if the data type isn't allowed to be deleted.
 	 */
-	public void deleteSelectedComponents() throws UsrException;
+	public void deleteSelectedComponents(TaskMonitor monitor) throws UsrException;
 
 	/**
 	 * Creates multiple duplicates of the indicated component.
@@ -340,9 +342,11 @@ public interface EditorModel {
 	 * indicated component.
 	 * @param rowIndex the index of the row whose component is to be duplicated.
 	 * @param multiple the number of duplicates to create.
+	 * @param monitor the task monitor
 	 * @throws UsrException if component can't be duplicated the indicated number of times.
 	 */
-	public void duplicateMultiple(int rowIndex, int multiple) throws UsrException;
+	public void duplicateMultiple(int rowIndex, int multiple, TaskMonitor monitor)
+			throws UsrException;
 
 	/**
 	 * 

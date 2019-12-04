@@ -446,6 +446,8 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 
 	// TODO deprecate this; at time of writing there are 1174 references; wait until it is
 	//      a more reasonable number
+	//
+	//      Update: 744 references at 12/1/19
 	public static void waitForPostedSwingRunnables() {
 		waitForSwing();
 	}
@@ -1288,7 +1290,7 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 	}
 
 	public static void clickTableCell(final JTable table, final int row, final int col,
-			int clickCount) throws Exception {
+			int clickCount) {
 		runSwing(() -> table.setRowSelectionInterval(row, row));
 		waitForSwing();
 		Rectangle rect = table.getCellRect(row, col, true);
@@ -1303,9 +1305,8 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 	 * @param list the list to select from
 	 * @param row the initial index
 	 * @param count the number of rows to select
-	 * @throws Exception if there's a problem simulating the click
 	 */
-	public static void clickListRange(final JList list, final int row, int count) throws Exception {
+	public static void clickListRange(final JList<?> list, final int row, int count) {
 		waitForSwing();
 		for (int i = row; i < row + count; i++) {
 			Rectangle rect = list.getCellBounds(i, i);
@@ -1322,10 +1323,8 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 	 * @param table the table to select
 	 * @param row the starting row index
 	 * @param count the number of rows to select
-	 * @throws Exception
 	 */
-	public static void clickTableRange(final JTable table, final int row, int count)
-			throws Exception {
+	public static void clickTableRange(final JTable table, final int row, int count) {
 		waitForSwing();
 		for (int i = row; i < row + count; i++) {
 			Rectangle rect = table.getCellRect(i, 0, true);

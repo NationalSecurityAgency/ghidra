@@ -32,7 +32,7 @@ public class StructureEditorLockedActions3Test extends AbstractStructureEditorLo
 	/**
 	 * Edit an existing structure and create a structure from a selection. Use the conflicting 
 	 * names followed by a good non-default name.
-	 * @throws Exception
+	 * @throws Exception if the test throws an exception
 	 */
 	@Test
 	public void testExistingDtEditInternalStructureOnSelectionVariousNames() throws Exception {
@@ -58,6 +58,7 @@ public class StructureEditorLockedActions3Test extends AbstractStructureEditorLo
 		triggerText(textField, "simpleStructure");
 		pressButtonByText(inputDialog, "OK");
 		waitForSwing();
+
 		assertEquals("The name cannot match the external structure name.",
 			getStatusText(inputDialog));
 		assertTrue(inputDialog.isShowing());
@@ -72,7 +73,7 @@ public class StructureEditorLockedActions3Test extends AbstractStructureEditorLo
 		pressButtonByText(inputDialog, "OK");
 		assertEquals(" ", getStatusText(inputDialog));
 		assertFalse(inputDialog.isShowing());
-		waitForSwing();
+		waitForTasks();
 
 		assertEquals(6, getModel().getNumComponents());
 		Structure internalStruct = (Structure) getDataType(1);

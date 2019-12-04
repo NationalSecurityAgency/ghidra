@@ -74,11 +74,12 @@ public class StructureEditorUnlockedActions3Test
 		DataType dt1 = getDataType(1);
 
 		invoke(duplicateMultipleAction);
-		dialog = env.waitForDialogComponent(NumberInputDialog.class, 1000);
+		dialog = waitForDialogComponent(NumberInputDialog.class);
 		assertNotNull(dialog);
 		okInput(dialog, 2);
 		dialog = null;
 		waitUntilDialogProviderGone(NumberInputDialog.class, 2000);
+		waitForBusyTool(tool); // the 'Duplicate Multiple' action uses a task
 
 		num += 2;
 		assertEquals(num, model.getNumComponents());

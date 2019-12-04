@@ -53,6 +53,7 @@ import ghidra.program.model.listing.Program;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.test.TestEnv;
 import ghidra.util.Msg;
+import utilities.util.reflection.ReflectionUtilities;
 
 public abstract class AbstractEditorTest extends AbstractGhidraHeadedIntegrationTest {
 	protected String languageName;
@@ -333,7 +334,8 @@ public abstract class AbstractEditorTest extends AbstractGhidraHeadedIntegration
 		assertNotNull(action);
 		boolean isEnabled = runSwing(() -> action.isEnabled());
 		if (!isEnabled) {
-			Msg.debug(this, "Calling actionPerformed() on a disabled action: " + action.getName());
+			Msg.debug(this, "Calling actionPerformed() on a disabled action: " + action.getName(),
+				ReflectionUtilities.createJavaFilteredThrowable());
 		}
 		runSwing(() -> action.actionPerformed(new ActionContext()), false);
 		waitForSwing();
