@@ -57,12 +57,12 @@ class XmlExporterPlugin(ida_idaapi.plugin_t):
             except idaxml.Cancelled:
                 ida_kernwin.hide_wait_box()
                 msg = "XML Export cancelled!"
-                print "\n" + msg
+                print("\n" + msg)
                 idc.warning(msg)
             except:
                 ida_kernwin.hide_wait_box()
                 msg = "***** Exception occurred: XML Exporter failed! *****"
-                print "\n" + msg + "\n", sys.exc_type, sys.exc_value
+                print("\n" + msg + "\n", sys.exc_type, sys.exc_value)
                 idc.warning(msg)
         finally:
             xml.cleanup()
