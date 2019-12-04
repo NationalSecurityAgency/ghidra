@@ -68,19 +68,19 @@ def load_file(li, neflags, format):
         status = xml.import_xml()
     except idaxml.Cancelled:
         msg = "XML PROGRAM import cancelled!"
-        print "\n" + msg
+        print("\n" + msg)
         idc.warning(msg)
     except idaxml.MultipleAddressSpacesNotSupported:
         msg  = "XML Import cancelled!"
         msg += "\n\nXML Import does not currently support"
         msg += "\nimporting multiple address spaces."
-        print "\n" + msg
+        print("\n" + msg)
         idc.warning(msg)
     except:
-        print "\nHouston, we have a problem!"
+        print("\nHouston, we have a problem!")
         msg = "***** Exception occurred: XML loader failed! *****"
-        print "\n" + msg + "\n", sys.exc_type, sys.exc_value
-        print event, element.tag, element.attrib
+        print("\n" + msg + "\n", sys.exc_type, sys.exc_value)
+        print(event, element.tag, element.attrib)
         idc.warning(msg)
     finally:
         idc.set_ida_state(st)
