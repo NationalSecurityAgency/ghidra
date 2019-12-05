@@ -17,26 +17,32 @@ package ghidra.util;
 
 import static org.junit.Assert.*;
 
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
+import org.junit.Before;
 import org.junit.Test;
 
 public class DateUtilsTest {
 
-	@Test
-	public void testFormatDate() {
-		Date date = new Date(1572896586687L);
-		assertEquals("11/04/2019", DateUtils.formatDate(date));
+	private String testDateString;
+	private Date testDate;
+
+	@Before
+	public void setUp() throws Exception {
+		SimpleDateFormat format = new SimpleDateFormat("MMM dd, yyyy hh:mm a");
+		testDateString = "Nov 04, 2019 02:43 PM";
+		testDate = format.parse(testDateString);
 	}
 
 	@Test
-	public void testFormatDateTime() throws ParseException {
-		SimpleDateFormat format = new SimpleDateFormat("MMM dd, yyyy hh:mm a");
-		String dateString = "Nov 04, 2019 02:43 PM";
-		Date date = format.parse(dateString);
-		assertEquals(dateString, DateUtils.formatDateTimestamp(date));
+	public void testFormatDate() {
+		assertEquals("11/04/2019", DateUtils.formatDate(testDate));
+	}
+
+	@Test
+	public void testFormatDateTime() {
+		assertEquals(testDateString, DateUtils.formatDateTimestamp(testDate));
 	}
 
 	@Test
@@ -59,10 +65,10 @@ public class DateUtilsTest {
 
 	@Test
 	public void testNormalize() {
-		long now = System.currentTimeMillis();
+		long time = testDate.getTime();
 		long threeHourOffset = 3 * (60 * 60 * 1000);
-		long future = now + threeHourOffset;
-		Date nowDate = new Date(now);
+		long future = time + threeHourOffset;
+		Date nowDate = new Date(time);
 		Date futureDate = new Date(future);
 
 		assertNotEquals(nowDate, futureDate);
@@ -74,12 +80,12 @@ public class DateUtilsTest {
 	@Test
 	public void testGetDaysBetween() {
 
-		long now = System.currentTimeMillis();
+		long time = testDate.getTime();
 		int days = 3;
 		long threeDaysOffset = days * (24 * 60 * 60 * 1000);
-		long future = now + threeDaysOffset;
+		long future = time + threeDaysOffset;
 
-		Date nowDate = new Date(now);
+		Date nowDate = new Date(time);
 		Date futureDate = new Date(future);
 		int daysBetween = DateUtils.getDaysBetween(nowDate, futureDate);
 		assertEquals(days, daysBetween);
@@ -88,21 +94,21 @@ public class DateUtilsTest {
 	@Test
 	public void testGetDaysBetween_SameDay() {
 
-		long now = System.currentTimeMillis();
-		Date nowDate = new Date(now);
-		int daysBetween = DateUtils.getDaysBetween(nowDate, nowDate);
+		long time = testDate.getTime();
+		Date date = new Date(time);
+		int daysBetween = DateUtils.getDaysBetween(date, date);
 		assertEquals(0, daysBetween);
 	}
 
 	@Test
 	public void testGetDaysBetween_MostRecentDateFirst() {
 
-		long now = System.currentTimeMillis();
+		long time = testDate.getTime();
 		int days = 3;
 		long threeDaysOffset = days * (24 * 60 * 60 * 1000);
-		long future = now + threeDaysOffset;
+		long future = time + threeDaysOffset;
 
-		Date nowDate = new Date(now);
+		Date nowDate = new Date(time);
 		Date futureDate = new Date(future);
 		int daysBetween = DateUtils.getDaysBetween(futureDate, nowDate);
 		assertEquals(days, daysBetween);
