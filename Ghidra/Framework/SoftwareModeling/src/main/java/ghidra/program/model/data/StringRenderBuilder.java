@@ -121,7 +121,7 @@ public class StringRenderBuilder {
 			if (valStr.length() < 2) {
 				sb.append("0");
 			}
-			sb.append(valStr);
+			sb.append(valStr).append("h");
 		}
 	}
 
