@@ -19,15 +19,14 @@ import java.awt.Color;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.apache.commons.collections4.map.LazyMap;
-
-// TODO docme
+/**
+ * A class to create and store colors related to token names
+ */
 public class TokenHighlightColors {
 
 	private int minColorSaturation = 100;
 	private int defaultColorAlpha = 100;
-	private Map<String, Color> colorsByName =
-		LazyMap.lazyMap(new HashMap<>(), s -> generateColor());
+	private Map<String, Color> colorsByName = new HashMap<>();
 
 	private Color generateColor() {
 		return new Color((int) (minColorSaturation + Math.random() * (256 - minColorSaturation)),
@@ -37,6 +36,6 @@ public class TokenHighlightColors {
 	}
 
 	public Color getColor(String text) {
-		return colorsByName.get(text);
+		return colorsByName.computeIfAbsent(text, t -> generateColor());
 	}
 }

@@ -15,6 +15,7 @@
  */
 package ghidra.app.plugin.core.decompile;
 
+import java.awt.Color;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.math.BigInteger;
@@ -642,23 +643,28 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 	}
 
 	public void cloneWindow() {
-		final DecompilerProvider newProvider = plugin.createNewDisconnectedProvider();
+		DecompilerProvider newProvider = plugin.createNewDisconnectedProvider();
+
 		// invoke later to give the window manage a chance to create the new window
 		// (its done in an invoke later)
 		Swing.runLater(() -> {
+
+			ViewerPosition myViewPosition = controller.getDecompilerPanel().getViewerPosition();
 			newProvider.doSetProgram(program);
-			newProvider.controller.setDecompileData(controller.getDecompileData());
 
 			// Any change in the HighlightTokens should be delivered to the new panel
-			DecompilerPanel panel = getDecompilerPanel();
-			TokenHighlights highlightedTokens = panel.getSecondaryHighlightedTokens();
+			DecompilerPanel myPanel = getDecompilerPanel();
+			TokenHighlights myHighlights = myPanel.getSecondaryHighlightedTokens();
+			newProvider.setLocation(currentLocation, myPanel.getViewerPosition());
 
+			// transfer any state after the new decompiler is initialized 
 			DecompilerPanel newPanel = newProvider.getDecompilerPanel();
-			TokenHighlights copiedTokens = highlightedTokens.copyHighlights();
+			Map<String, Color> highlightsByName = myHighlights.copyHighlightsByName();
+			newProvider.doWheNotBusy(() -> {
 
-			// Transfer the highlighted tokens			
-			newPanel.setHighlightedTokens(copiedTokens);
-			newProvider.setLocation(currentLocation, panel.getViewerPosition());
+				newPanel.setViewerPosition(myViewPosition);
+				newPanel.applySecondaryHighlights(highlightsByName);
+			});
 		});
 	}
 

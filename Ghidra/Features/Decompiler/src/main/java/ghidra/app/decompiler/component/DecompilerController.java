@@ -123,7 +123,7 @@ public class DecompilerController {
 			return false;
 		}
 
-		// cancel any pending decompile tasks, so that previous requests don't overwrite the latest request
+		// cancel pending decompile tasks; previous requests shouldn't overwrite the latest request
 		decompilerMgr.cancelAll();
 		setDecompileData(
 			new DecompileData(program, function, location, results, null, null, viewerPosition));

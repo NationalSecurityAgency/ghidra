@@ -35,6 +35,15 @@ import util.CollectionUtils;
  * <p>This class does not painting directly.  Rather, this class tracks the currently highlighted
  * tokens and then sets the highlight color on the token when it is highlighted and clears the 
  * highlight color when the highlight is removed.
+ * 
+ * <p>This class maintains the notion of 'primary' highlights and 'secondary' highlights.  
+ * Primary highlights are considered transient and get cleared whenever the location changes.
+ * Secondary highlights will stay until they are manually cleared by a user action.  Primary
+ * highlights happen when the user clicks around the Decompiler.  They show state such as the
+ * current field, impact of a variable (via a slicing action), or related syntax (such as 
+ * matching braces).  Secondary highlights are triggered by the user to show all occurrences of
+ * a particular variable.  Further,  the user can apply multiple secondary highlights at the 
+ * same time, with different colors for each highlight.  
  */
 public abstract class ClangHighlightController {
 
@@ -55,8 +64,6 @@ public abstract class ClangHighlightController {
 
 	private TokenHighlights primaryHighlightTokens = new TokenHighlights();
 	private TokenHighlights secondaryHighlightTokens = new TokenHighlights();
-
-	// TODO rename 'secondary highlight color manager'
 	private TokenHighlightColors secondaryHighlightColors = new TokenHighlightColors();
 
 	private List<ClangHighlightListener> listeners = new ArrayList<>();
@@ -74,6 +81,10 @@ public abstract class ClangHighlightController {
 			return highlightedToken.getText();
 		}
 		return null;
+	}
+
+	public TokenHighlights getPrimaryHighlightedTokens() {
+		return primaryHighlightTokens;
 	}
 
 	public TokenHighlights getSecondaryHighlightedTokens() {
@@ -111,21 +122,15 @@ public abstract class ClangHighlightController {
 		notifyListeners();
 	}
 
-	public void clearSecondaryHighlights() {
-		doClearHighlights(secondaryHighlightTokens);
-		notifyListeners();
-	}
-
 	public void clearAllHighlights() {
 		doClearHighlights(primaryHighlightTokens);
 		doClearHighlights(secondaryHighlightTokens);
 		notifyListeners();
 	}
 
-	// TODO try to reconcile 'tokenhighlights' vs 'highlighttokens' ( and highlighttoken)
-	private void doClearHighlights(TokenHighlights highlightTokens) {
+	private void doClearHighlights(TokenHighlights tokenHighlights) {
 
-		Iterator<HighlightToken> it = highlightTokens.iterator();
+		Iterator<HighlightToken> it = tokenHighlights.iterator();
 		while (it.hasNext()) {
 			HighlightToken highlight = it.next();
 			it.remove();
@@ -133,10 +138,33 @@ public abstract class ClangHighlightController {
 			token.setMatchingToken(false);
 			updateHighlightColor(token);
 		}
-		highlightTokens.clear();
+		tokenHighlights.clear();
 	}
 
-	public void toggleSecondaryHighlight(ClangToken token,
+	public void togglePrimaryMultiHighlight(ClangToken token, Color hlColor,
+			Supplier<List<ClangToken>> tokens) {
+
+		boolean isAllHighlighted = true;
+		for (ClangToken otherToken : tokens.get()) {
+			if (!hasPrimaryHighlight(otherToken)) {
+				isAllHighlighted = false;
+				break;
+			}
+		}
+
+		// this is a bit odd, but whenever we change the primary highlights, we always reset any
+		// previous primary highlight (see javadoc header)
+		clearPrimaryHighlights();
+
+		if (isAllHighlighted) {
+			// nothing to do; we toggled from 'all on' to 'all off'
+			return;
+		}
+
+		addPrimaryHighlights(tokens, hlColor);
+	}
+
+	public void toggleSecondaryMultiHighlight(ClangToken token,
 			Supplier<? extends Collection<ClangToken>> lazyTokens) {
 
 		String text = token.getText();
@@ -150,6 +178,10 @@ public abstract class ClangHighlightController {
 		else {
 			removeSecondaryHighlights(lazyTokens);
 		}
+	}
+
+	public boolean hasPrimaryHighlight(ClangToken token) {
+		return primaryHighlightTokens.contains(token);
 	}
 
 	public boolean hasSecondaryHighlight(ClangToken token) {

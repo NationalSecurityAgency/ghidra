@@ -18,6 +18,7 @@ package ghidra.app.plugin.core.decompile;
 import static org.junit.Assert.*;
 
 import java.awt.Color;
+import java.awt.event.MouseEvent;
 import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -26,8 +27,11 @@ import org.junit.Test;
 
 import docking.action.DockingActionIf;
 import docking.widgets.dialogs.InputDialog;
+import docking.widgets.fieldpanel.FieldPanel;
+import docking.widgets.fieldpanel.field.Field;
 import docking.widgets.fieldpanel.support.FieldLocation;
 import ghidra.app.cmd.comments.SetCommentCmd;
+import ghidra.app.decompiler.ClangLine;
 import ghidra.app.decompiler.ClangToken;
 import ghidra.app.decompiler.component.*;
 import ghidra.app.plugin.core.decompile.actions.*;
@@ -232,6 +236,38 @@ public class DecompilerClangTest extends AbstractDecompilerTest {
 		copy();
 		copiedText = getClipboardText();
 		assertEquals("_printf", copiedText);
+	}
+
+	@Test
+	public void testPrimaryHighlighting_ParenthesesContents() {
+
+		/*
+		
+		 Decomp of '_call_structure_A':
+		 
+			1|
+			2| void _call_structure_A(A *a)
+			3|
+			4| {
+			5|  	_printf("call_structure_A: %s\n",a->name);
+			6|  	_printf("call_structure_A: %s\n",(a->b).name);
+			7|  	_printf("call_structure_A: %s\n",(a->b).c.name);
+			8|  	_printf("call_structure_A: %s\n",(a->b).c.d.name);
+			9|  	_printf("call_structure_A: %s\n",(a->b).c.d.e.name);
+		   10|  	_call_structure_B(&a->b);
+		   11|  	return;
+		   12|	}
+		
+		 */
+
+		decompile("100000d60"); // '_call_structure_A'
+
+		// 5:7 "_printf | ("..."
+		int line = 5;
+		int charPosition = 7;
+		setDecompilerLocation(line, charPosition);
+
+		assertPrimaryHighlights("(\"call_structure_A: %s\\n\",a->name)");
 	}
 
 	@Test
@@ -638,30 +674,127 @@ public class DecompilerClangTest extends AbstractDecompilerTest {
 		assertAllFieldsHighlighted(secondaryHighlightText, color);
 	}
 
-	// TODO how does highlight interplay with slice highlight?	
-	// -toggling a color highlight should not remove the other highlights
-	// --test on and off
-	// -test setting primary highlight does not clear secondary highlights
-	//  -- secondary remains after clicking away
-	//  --middle-mouse
-	//  --slicing
+	@Test
+	public void testSecondaryHighlighting_MiddleMouseDoesNotClearSecondaryHighlight() {
 
-	// TODO test highlights passed to clone
+		/*
+		
+		 Decomp of '_call_structure_A':
+		 
+			1|
+			2| void _call_structure_A(A *a)
+			3|
+			4| {
+			5|  	_printf("call_structure_A: %s\n",a->name);
+			6|  	_printf("call_structure_A: %s\n",(a->b).name);
+			7|  	_printf("call_structure_A: %s\n",(a->b).c.name);
+			8|  	_printf("call_structure_A: %s\n",(a->b).c.d.name);
+			9|  	_printf("call_structure_A: %s\n",(a->b).c.d.e.name);
+		   10|  	_call_structure_B(&a->b);
+		   11|  	return;
+		   12|	}
+		
+		 */
 
-	// TODO allow for any text, not just variables?
-	// TODO - follow-up test that 2 variables with the same name do not get highlighted
+		decompile("100000d60"); // '_call_structure_A'
 
-	// TODO test color chooser
+		// 5:2 "_printf"
+		int line = 5;
+		int charPosition = 2;
+		setDecompilerLocation(line, charPosition);
 
-	// TODO test persistence
-	// TODO Energy
-	//  		-highlight tokens between parens
+		ClangToken token = getToken();
+		String tokenText = token.getText();
+		assertEquals("_printf", tokenText);
 
-	// TODO test clone copies highlights
+		Color color = highlight();
+
+		middleMouse();
+		assertCombinedHighlightColor(token);
+
+		middleMouse();
+		assertAllFieldsHighlighted(tokenText, color);
+	}
+
+	@Test
+	public void testSecondaryHighlighting_CloneDecompiler() {
+
+		/*
+		
+		 Decomp of '_call_structure_A':
+		 
+			1|
+			2| void _call_structure_A(A *a)
+			3|
+			4| {
+			5|  	_printf("call_structure_A: %s\n",a->name);
+			6|  	_printf("call_structure_A: %s\n",(a->b).name);
+			7|  	_printf("call_structure_A: %s\n",(a->b).c.name);
+			8|  	_printf("call_structure_A: %s\n",(a->b).c.d.name);
+			9|  	_printf("call_structure_A: %s\n",(a->b).c.d.e.name);
+		   10|  	_call_structure_B(&a->b);
+		   11|  	return;
+		   12|	}
+		
+		 */
+
+		decompile("100000d60"); // '_call_structure_A'
+
+		// 5:2 "_printf"
+		int line = 5;
+		int charPosition = 2;
+		setDecompilerLocation(line, charPosition);
+		ClangToken token = getToken();
+		String secondaryHighlightText = token.getText();
+		assertEquals("_printf", secondaryHighlightText);
+
+		Color color = highlight();
+
+		DecompilerProvider clone = cloneDecompiler();
+		assertAllFieldsHighlighted(clone, secondaryHighlightText, color);
+
+		// ensure one field provider does not affect the other
+		clearSecondaryHighlight();
+		assertNoFieldsSecondaryHighlighted(secondaryHighlightText);
+		assertAllFieldsHighlighted(clone, secondaryHighlightText, color);
+	}
+
+	@Test
+	public void testSecondaryHighlighting_ChooseColors() {
+		fail();
+	}
+
+	@Test
+	public void testSecondaryHighlighting_PersistColors() {
+		fail();
+	}
 
 //==================================================================================================
 // Private Methods
 //==================================================================================================
+
+	private DecompilerProvider cloneDecompiler() {
+
+		DockingActionIf action = getAction(decompiler, "Decompile Clone");
+		performAction(action);
+		waitForSwing();
+
+		@SuppressWarnings("unchecked")
+		List<DecompilerProvider> disconnectedProviders =
+			(List<DecompilerProvider>) getInstanceField("disconnectedProviders", decompiler);
+		assertFalse(disconnectedProviders.isEmpty());
+		return disconnectedProviders.get(0);
+	}
+
+	private void assertPrimaryHighlights(String text) {
+		List<ClangToken> tokens = getPrimaryHighlightTokens();
+		StringBuilder buffy = new StringBuilder();
+		for (ClangToken token : tokens) {
+			buffy.append(token.getText());
+		}
+
+		assertEquals(text, buffy.toString());
+	}
 
 	private void assertCombinedHighlightColor(ClangToken token) {
 
@@ -701,9 +834,46 @@ public class DecompilerClangTest extends AbstractDecompilerTest {
 		return highlightController.getCombinedColor(token);
 	}
 
+	private List<ClangToken> getPrimaryHighlightTokens() {
+		DecompilerController controller = provider.getController();
+		DecompilerPanel panel = controller.getDecompilerPanel();
+		ClangHighlightController highlightController = panel.getHighlightController();
+		TokenHighlights tokens = highlightController.getPrimaryHighlightedTokens();
+
+		List<ClangToken> results = new ArrayList<>();
+		for (HighlightToken hl : tokens) {
+			results.add(hl.getToken());
+		}
+
+		results.sort((t1, t2) -> indexInParent(t1) - indexInParent(t2));
+		return results;
+	}
+
+	private int indexInParent(ClangToken t) {
+		ClangLine line = t.getLineParent();
+		return line.indexOfToken(t);
+	}
+
 	private void backwardSlice() {
 		DockingActionIf action = getAction(decompiler, BackwardsSliceAction.NAME);
 		performAction(action);
+	}
+
+	private void middleMouse() {
+		DecompilerController controller = provider.getController();
+		DecompilerPanel panel = controller.getDecompilerPanel();
+		FieldLocation location = panel.getCursorPosition();
+		FieldPanel fp = panel.getFieldPanel();
+		Field field = fp.getCurrentField();
+
+		// x,y shouldn't matter
+		int x = 0;
+		int y = 0;
+		int clickCount = 1;
+		MouseEvent event = new MouseEvent(fp, 1, System.currentTimeMillis(), 0, x, y, clickCount,
+			false, MouseEvent.BUTTON2);
+
+		runSwing(() -> panel.buttonPressed(location, field, event));
 	}
 
 	private void assertPrimaryHighlight(ClangToken token) {
@@ -711,11 +881,6 @@ public class DecompilerClangTest extends AbstractDecompilerTest {
 		DecompilerPanel panel = controller.getDecompilerPanel();
 		Color hlColor = panel.getCurrentVariableHighlightColor();
 		assertEquals(hlColor, token.getHighlight());
-	}
-
-	private void assertPrimaryAndSecondaryHighlight(ClangToken token) {
-		// TODO Auto-generated method stub
-		fail();
 	}
 
 	private void rename(String newName) {
@@ -757,8 +922,8 @@ public class DecompilerClangTest extends AbstractDecompilerTest {
 		ClangToken token = getToken();
 
 		DockingActionIf highlightAction =
-			getAction(decompiler, ToggleSecondaryHighlightAction.NAME);
-		performAction(highlightAction);
+			getLocalAction(provider, ToggleSecondaryHighlightAction.NAME);
+		performAction(highlightAction, provider.getActionContext(null), true);
 
 		DecompilerController controller = provider.getController();
 		DecompilerPanel panel = controller.getDecompilerPanel();
@@ -772,18 +937,9 @@ public class DecompilerClangTest extends AbstractDecompilerTest {
 		Color hlColor = getDefaultHighlightColor();
 		Color specialColor = getSpecialHighlightColor();
 
-		DecompilerController controller = provider.getController();
-		DecompilerPanel panel = controller.getDecompilerPanel();
-		List<ClangToken> tokensWithName = panel.findTokensByName(name);
-		assertFalse(tokensWithName.isEmpty());
-		for (ClangToken otherToken : tokensWithName) {
-
-			Color tokenColor = otherToken.getHighlight();
-			boolean yes = hlColor.equals(tokenColor) || specialColor.equals(tokenColor);
-
-			assertTrue("Token is not highlighted: '" + otherToken + "'" + "\n\texpected: " +
-				toString(hlColor) + "; found: " + toString(otherToken.getHighlight()), yes);
-		}
+		ColorMatcher cm = new ColorMatcher(hlColor, specialColor);
+		Predicate<ClangToken> noIgnores = t -> false;
+		assertAllFieldsHighlighted(name, cm, noIgnores);
 	}
 
 	private void assertAllFieldsHighlightedExceptForToken(ClangToken token, Color color) {
@@ -817,7 +973,21 @@ public class DecompilerClangTest extends AbstractDecompilerTest {
 
 	private void assertAllFieldsHighlighted(String name, ColorMatcher colorMatcher,
 			Predicate<ClangToken> ignore) {
-		DecompilerController controller = provider.getController();
+		assertAllFieldsHighlighted(provider, name, colorMatcher, ignore);
+	}
+
+	private void assertAllFieldsHighlighted(DecompilerProvider theProvider, String name,
+			Color color) {
+
+		ColorMatcher cm = new ColorMatcher(color);
+		Predicate<ClangToken> noIgnores = t -> false;
+		assertAllFieldsHighlighted(theProvider, name, cm, noIgnores);
+	}
+
+	private void assertAllFieldsHighlighted(DecompilerProvider theProvider, String name,
+			ColorMatcher colorMatcher, Predicate<ClangToken> ignore) {
+
+		DecompilerController controller = theProvider.getController();
 		DecompilerPanel panel = controller.getDecompilerPanel();
 		List<ClangToken> tokensWithName = panel.findTokensByName(name);
 		assertFalse(tokensWithName.isEmpty());

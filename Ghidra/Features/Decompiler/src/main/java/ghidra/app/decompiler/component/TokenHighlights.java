@@ -15,6 +15,7 @@
  */
 package ghidra.app.decompiler.component;
 
+import java.awt.Color;
 import java.util.*;
 import java.util.Map.Entry;
 
@@ -30,10 +31,16 @@ public class TokenHighlights implements Iterable<HighlightToken> {
 
 	private Map<TokenKey, HighlightToken> highlightsByToken = new HashMap<>();
 
-	public TokenHighlights copyHighlights() {
-		TokenHighlights newHighlights = new TokenHighlights();
-		newHighlights.highlightsByToken = new HashMap<>(highlightsByToken);
-		return newHighlights;
+	public Map<String, Color> copyHighlightsByName() {
+		Map<String, Color> results = new HashMap<>();
+
+		Collection<HighlightToken> values = highlightsByToken.values();
+		for (HighlightToken hl : values) {
+			String name = hl.getToken().getText();
+			results.put(name, hl.getColor());
+		}
+
+		return results;
 	}
 
 	private TokenKey getKey(HighlightToken ht) {

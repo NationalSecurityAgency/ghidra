@@ -20,6 +20,7 @@ import java.awt.event.MouseEvent;
 import java.math.BigInteger;
 import java.util.*;
 import java.util.List;
+import java.util.Map.Entry;
 import java.util.function.Supplier;
 
 import javax.swing.JComponent;
@@ -141,16 +142,15 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 		return fieldPanel;
 	}
 
-	/**
-	 * This function replace the highlighting tokens with the new list
-	 * @param newTokens the new data
-	 */
-	public void setHighlightedTokens(TokenHighlights newTokens) {
+	public void applySecondaryHighlights(Map<String, Color> highlightsByName) {
 
-		// TODO pass these in or copy ourselves?
-		//highlightController.setSecondaryHighlightedTokens(newTokens);
-
-		throw new RuntimeException("Fixme");
+		Set<Entry<String, Color>> entries = highlightsByName.entrySet();
+		for (Entry<String, Color> entry : entries) {
+			String tokenName = entry.getKey();
+			Color color = entry.getValue();
+			Supplier<List<ClangToken>> lazyTokens = () -> findTokensByName(tokenName);
+			highlightController.addSecondaryHighlights(lazyTokens, color);
+		}
 	}
 
 	public TokenHighlights getSecondaryHighlightedTokens() {
@@ -163,7 +163,15 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 	}
 
 	public void toggleSecondaryHighlight(ClangToken token, Supplier<List<ClangToken>> lazyTokens) {
-		highlightController.toggleSecondaryHighlight(token, lazyTokens);
+		highlightController.toggleSecondaryMultiHighlight(token, lazyTokens);
+	}
+
+	private void togglePrimaryHighlight(FieldLocation location, Field field, Color highlightColor) {
+
+		ClangToken token = ((ClangTextField) field).getToken(location);
+		Supplier<List<ClangToken>> lazyTokens = () -> findTokensByName(token.getText());
+		highlightController.togglePrimaryMultiHighlight(token, middleMouseHighlightColor,
+			lazyTokens);
 	}
 
 	@Override
@@ -503,7 +511,7 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 		}
 
 		if (buttonState == middleMouseHighlightButton && clickCount == 1) {
-			setPrimaryHighlight(location, field, middleMouseHighlightColor);
+			togglePrimaryHighlight(location, field, middleMouseHighlightColor);
 		}
 	}
 
@@ -660,15 +668,6 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 		catch (Exception e) {
 			return; // give up
 		}
-	}
-
-	private void setPrimaryHighlight(FieldLocation location, Field field, Color highlightColor) {
-		ClangToken token = ((ClangTextField) field).getToken(location);
-		Supplier<List<ClangToken>> lazyTokens = () -> findTokensByName(token.getText());
-
-		clearPrimaryHighlights();
-		highlightController.addPrimaryHighlights(lazyTokens, highlightColor);
-		repaint();
 	}
 
 	Program getProgram() {
@@ -888,8 +887,7 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 
 	private void doFindTokensByName(List<ClangToken> tokens, ClangTokenGroup group, String name) {
 
-		// TODO is 'name' sufficient, or will that allow for conflicts
-
+		// TODO is it possible that two or more different variable tokens share the same name? 
 		for (int i = 0; i < group.numChildren(); ++i) {
 			ClangNode child = group.Child(i);
 			if (child instanceof ClangTokenGroup) {

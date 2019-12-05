@@ -15,11 +15,9 @@
  */
 package ghidra.app.plugin.core.decompile.actions;
 
-import java.awt.event.KeyEvent;
 import java.util.List;
 import java.util.function.Supplier;
 
-import docking.action.KeyBindingData;
 import docking.action.MenuData;
 import ghidra.app.decompiler.ClangToken;
 import ghidra.app.decompiler.component.DecompilerPanel;
@@ -36,10 +34,6 @@ public class ToggleSecondaryHighlightAction extends AbstractDecompilerAction {
 		super(NAME);
 
 		setPopupMenuData(new MenuData(new String[] { "Highlight Toggle" }, "Decompile"));
-
-		// TODO new key binding: 'h'
-		// TODO how about mouse actions?
-		setKeyBindingData(new KeyBindingData(KeyEvent.VK_C, 0));
 
 		// TODO new help
 		setHelpLocation(new HelpLocation(HelpTopics.SELECTION, getName()));
