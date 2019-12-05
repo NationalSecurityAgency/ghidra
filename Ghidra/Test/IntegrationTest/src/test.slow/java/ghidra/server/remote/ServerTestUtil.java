@@ -117,7 +117,7 @@ public class ServerTestUtil {
 	private static class ShutdownHook extends Thread {
 		@Override
 		public void run() {
-			Msg.debug(ServerTestUtil.class, "\n\n\n\n\tSHUTDONW HOOK RUNNING");
+			Msg.debug(ServerTestUtil.class, "\n\n\n\n\tSHUTDOWN HOOK RUNNING");
 			disposeServer();
 		}
 	}
