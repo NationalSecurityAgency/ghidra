@@ -213,8 +213,9 @@ public class VersionControlAction2Test extends AbstractVersionControlActionTest 
 		waitForSwing();
 		waitForTasks();
 
-		Program program = (Program) ((DomainFileNode) node).getDomainFile().getDomainObject(this,
-			true, false, TaskMonitor.DUMMY);
+		Program program = (Program) ((DomainFileNode) node).getDomainFile()
+				.getDomainObject(this,
+					true, false, TaskMonitor.DUMMY);
 		int transactionID = program.startTransaction("test");
 		try {
 			SymbolTable symTable = program.getSymbolTable();
@@ -410,7 +411,7 @@ public class VersionControlAction2Test extends AbstractVersionControlActionTest 
 
 		assertNotNull(dialog);
 
-		final GTable table = findComponent(dialog.getComponent(), GTable.class);
+		GTable table = findComponent(dialog.getComponent(), GTable.class);
 		assertNotNull(table);
 		waitForBusyTable(table);
 
@@ -419,14 +420,11 @@ public class VersionControlAction2Test extends AbstractVersionControlActionTest 
 
 		selectInTable(table, node);
 
-		JButton checkInButton =
-			findButtonByIcon(dialog, ResourceManager.loadImage("images/vcCheckIn.png"));
-
-		assertNotNull(checkInButton);
-		assertTrue(checkInButton.isEnabled());
-		pressButton(checkInButton, false);
+		DockingActionIf checkInAction = getAction("CheckIn");
+		ActionContext context = dialog.getActionContext(null);
+		assertTrue(checkInAction.isEnabledForContext(context));
+		performAction(checkInAction, context, false);
 		VersionControlDialog d = waitForDialogComponent(VersionControlDialog.class);
-		assertNotNull(d);
 
 		pressButtonByText(d, "Cancel");
 
